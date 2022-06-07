@@ -1,100 +1,78 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 245A2C43334
-	for <dm-devel@archiver.kernel.org>; Tue,  7 Jun 2022 09:58:00 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1654595879;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=dksQScKP9V4cvI3D20ysZZpMyHIMw5u7XQVGVQs3YO0=;
-	b=KCb5pxIEG1bBqI9XZxvwVMij3cR1j4EYDYT8D1LvjiPCAJZBoLSzWIqFtGb5VxVRJT2gm6
-	0xk/guFjzfkoBqDDcLscDdcsyIRES3VxrpaGh8lLPWRgVZJzz3JlvUSffVZV1wMedvYjJR
-	RdEhX9FocLn49IAyY1mC3P5kI5RNJHs=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1355FC43334
+	for <dm-devel@archiver.kernel.org>; Tue,  7 Jun 2022 17:56:37 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-478-dvp5wTQhOZCMkMpJDPP10w-1; Tue, 07 Jun 2022 05:57:56 -0400
-X-MC-Unique: dvp5wTQhOZCMkMpJDPP10w-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-85-FrBaAqzNNdShDbQq5tbBiQ-1; Tue, 07 Jun 2022 13:56:33 -0400
+X-MC-Unique: FrBaAqzNNdShDbQq5tbBiQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 30BD31C161D8;
-	Tue,  7 Jun 2022 09:57:45 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3C7D83815D24;
+	Tue,  7 Jun 2022 17:56:31 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 45EE441047E8;
-	Tue,  7 Jun 2022 09:57:43 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 834954328CB;
+	Tue,  7 Jun 2022 17:56:29 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1CCC119451F1;
-	Tue,  7 Jun 2022 09:57:43 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5181A1947B83;
+	Tue,  7 Jun 2022 17:56:29 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 71A2A19451F0
- for <dm-devel@listman.corp.redhat.com>; Tue,  7 Jun 2022 09:57:42 +0000 (UTC)
+ ESMTP id 0B17A19452D2
+ for <dm-devel@listman.corp.redhat.com>; Tue,  7 Jun 2022 17:56:29 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5760E1121315; Tue,  7 Jun 2022 09:57:42 +0000 (UTC)
+ id F0AEFC28114; Tue,  7 Jun 2022 17:56:28 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4DE0D1121314
- for <dm-devel@redhat.com>; Tue,  7 Jun 2022 09:57:42 +0000 (UTC)
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id ECAE8C27E97
+ for <dm-devel@redhat.com>; Tue,  7 Jun 2022 17:56:28 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 75C501D3388F
- for <dm-devel@redhat.com>; Tue,  7 Jun 2022 09:57:36 +0000 (UTC)
-Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
- [209.85.128.71]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-591-f4NQMzKwOyywTtuZBwCU9g-1; Tue, 07 Jun 2022 05:57:32 -0400
-X-MC-Unique: f4NQMzKwOyywTtuZBwCU9g-1
-Received: by mail-wm1-f71.google.com with SMTP id
- k32-20020a05600c1ca000b0039c4cf75023so3568779wms.9
- for <dm-devel@redhat.com>; Tue, 07 Jun 2022 02:57:31 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:content-transfer-encoding
- :in-reply-to;
- bh=IHBszC15Ld8OVnvNMdu421xiC276w+hlRiTxIc/O7YY=;
- b=Yq1sv1MqJXfK1AXBpCm+7n3Rvhhjk5wB2v0aBysCUPrdL7Ru8JSAHinV1PTAk1yV5i
- fGlu37QKkzy1P5EvKIX58E5YTP5XSVuvCM89W8t5b2Cy/BXwWemrFSJmJy/CQI9I3v70
- b1tP1368UgnkjTBRmQOOrmpWtQSfACV1jxUJNplsQXtZLSz3AajoNeKX/m9WnyZYndGq
- gOP7nvUuLT4feCv7iaLUygiPEc+Eib1TKChgBRQP1UI+o5e5W7cqpXM/ypTM2/gN1E3P
- bTz8gXiypq746x1+sgagltzlQnaE2+Ho+tDVFXrAS5HkV7ZLQ9O1MXuZCMQpaiFQi6yd
- Av3w==
-X-Gm-Message-State: AOAM530iYJZD9UcWyyh8QNI0080LQboQeyG5PCAY6Tvo19Cq/3pCXkAu
- b40/SpnObaOy7DOcaEnGu6/EpHutqTszKcZuFPYZ6wjgUsuOI/HDyjSZ1xHR81pBm9+8Vx50gT/
- yRdVPC5EP1yarRT4=
-X-Received: by 2002:a05:6000:2a8:b0:213:ba0c:fef8 with SMTP id
- l8-20020a05600002a800b00213ba0cfef8mr22079059wry.485.1654595850463; 
- Tue, 07 Jun 2022 02:57:30 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJyzFDPtVoQMvowE46SaprV3ZVELYOY8maj61XTL2sJ4xtRialw/Ny0uzrJy4hdgckLmnPzOSg==
-X-Received: by 2002:a05:6000:2a8:b0:213:ba0c:fef8 with SMTP id
- l8-20020a05600002a800b00213ba0cfef8mr22079048wry.485.1654595850244; 
- Tue, 07 Jun 2022 02:57:30 -0700 (PDT)
-Received: from redhat.com (128.19.187.81.in-addr.arpa. [81.187.19.128])
- by smtp.gmail.com with ESMTPSA id
- h6-20020adfa4c6000000b0020fe61acd09sm18419893wrb.12.2022.06.07.02.57.29
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 07 Jun 2022 02:57:29 -0700 (PDT)
-Date: Tue, 7 Jun 2022 10:57:27 +0100
-From: "Bryn M. Reeves" <breeves@redhat.com>
-To: Tony Camuso <tcamuso@redhat.com>
-Message-ID: <Yp8hB/tJBVNxDXgy@redhat.com>
-References: <b65d1bbb-7367-3a51-ba21-9de057a435fc@redhat.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D5912833973
+ for <dm-devel@redhat.com>; Tue,  7 Jun 2022 17:56:28 +0000 (UTC)
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-593-FdR4-U5ZO9Gci6MM1bpLZQ-1; Tue, 07 Jun 2022 13:56:27 -0400
+X-MC-Unique: FdR4-U5ZO9Gci6MM1bpLZQ-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by ams.source.kernel.org (Postfix) with ESMTPS id 4C236B8233D;
+ Tue,  7 Jun 2022 17:51:00 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DA95FC3411F;
+ Tue,  7 Jun 2022 17:50:57 +0000 (UTC)
+From: Sasha Levin <sashal@kernel.org>
+To: linux-kernel@vger.kernel.org,
+	stable@vger.kernel.org
+Date: Tue,  7 Jun 2022 13:48:01 -0400
+Message-Id: <20220607174846.477972-35-sashal@kernel.org>
+In-Reply-To: <20220607174846.477972-1-sashal@kernel.org>
+References: <20220607174846.477972-1-sashal@kernel.org>
 MIME-Version: 1.0
-In-Reply-To: <b65d1bbb-7367-3a51-ba21-9de057a435fc@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-Subject: Re: [dm-devel] Device Mapper being derailed in tboot launch
+X-stable: review
+X-Patchwork-Hint: Ignore
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Mimecast-Bulk-Signature: yes
+X-Mimecast-Spam-Signature: bulk
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: [dm-devel] [PATCH AUTOSEL 5.18 35/68] md: don't unregister
+ sync_thread with reconfig_mutex held
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -106,42 +84,144 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com
+Cc: Sasha Levin <sashal@kernel.org>,
+ Guoqing Jiang <guoqing.jiang@cloud.ionos.com>, snitzer@kernel.org,
+ linux-raid@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com,
+ Donald Buczek <buczek@molgen.mpg.de>, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gTW9uLCBKdW4gMDYsIDIwMjIgYXQgMTE6NDM6NThBTSAtMDQwMCwgVG9ueSBDYW11c28gd3Jv
-dGU6CiAKPiBTdWNjZXNzZnVsIGJvb3Rsb2cgc25pcHBldDoKPiAKPiBbICAgIDMuODQzOTExXSBz
-ZCA1OjA6MDowOiBbc2RhXSBBdHRhY2hlZCBTQ1NJIGRpc2sKPiBbICAgIDMuODQ4MzcwXSBzZCA2
-OjA6MDowOiBbc2RiXSBBdHRhY2hlZCBTQ1NJIGRpc2sKPiBbICAgIDMuOTI1NjM5XSBtZDEyNjog
-ZGV0ZWN0ZWQgY2FwYWNpdHkgY2hhbmdlIGZyb20gMCB0byAxOTAwMzgyNTE5Mjk2Cj4gWyAgICAz
-Ljk0NjMwN10gIG1kMTI2OiBwMSBwMiBwMwoKQXJlIHRoZSBNRCBhcnJheSBwYXJ0aXRpb25zIGJl
-aW5nIHVzZWQgYXMgdGhlIFBWcyBmb3IgdGhlIHJoZWxfbGVub3ZvCnZvbHVtZSBncm91cD8gSXQn
-cyB0aGUgbWFqb3IgZGlmZmVyZW5jZSBpbiB0aGUgdHdvIHNuaXBwZXRzIG90aGVyIHRoYW4KdGlt
-aW5nLCBhbmQgd291bGQgYWNjb3VudCBmb3Igd2h5IHRoZSB2b2x1bWUgZ3JvdXAgY2Fubm90IGJl
-IGRpc2NvdmVyZWQKaW4gdGhlIHRib290IGNhc2UuCgo+IFsgIE9LICBdIEZvdW5kIGRldmljZSAv
-ZGV2L21hcHBlci9yaGVsX2xlbm92by0tc3QyNTB2Mi0tMDItcm9vdC4KPiBbICBPSyAgXSBSZWFj
-aGVkIHRhcmdldCBJbml0cmQgUm9vdCBEZXZpY2UuCj4gWyAgT0sgIF0gRm91bmQgZGV2aWNlIC9k
-ZXYvbWFwcGVyL3JoZWxfbGVub3ZvLS1zdDI1MHYyLS0wMi1zd2FwLgo+ICAgICAgICAgIFN0YXJ0
-aW5nIFJlc3VtZSBmcm9tIGhpYmVybmF0aW9uIHVz4oCmci9yaGVsX2xlbm92by0tc3QyNTB2Mi0t
-MDItc3dhcC4uLgo+IFsgIE9LICBdIFN0YXJ0ZWQgUmVzdW1lIGZyb20gaGliZXJuYXRpb24gdXNp
-4oCmcGVyL3JoZWxfbGVub3ZvLS1zdDI1MHYyLS0wMi1zd2FwLgo+IFsgIE9LICBdIFJlYWNoZWQg
-dGFyZ2V0IExvY2FsIEZpbGUgU3lzdGVtcyAoUHJlKS4KPiAKPiBGYWlsaW5nIGJvb3Rsb2cgc25p
-cHBldDoKPiAKPiBbICAgIDQuNTc4MjA1XSBzZCA1OjA6MDowOiBbc2RhXSBBdHRhY2hlZCBTQ1NJ
-IGRpc2sKPiBbICAgIDQuNTgxMDAwXSBzZCA2OjA6MDowOiBbc2RiXSBBdHRhY2hlZCBTQ1NJIGRp
-c2sKPiBbIFRJTUUgXSBUaW1lZCBvdXQgd2FpdGluZyBmb3IgZGV2aWNlIGRldi1tYeKApmRzdDI1
-MHYyXHgyZFx4MmQwMlx4MmRzd2FwLmRldmljZS4KPiBbREVQRU5EXSBEZXBlbmRlbmN5IGZhaWxl
-ZCBmb3IgUmVzdW1lIGZyb20gaOKApnBlci9yaGVsX2xlbm92by0tc3QyNTB2Mi0tMDItc3dhcC4K
-CkFueSBkaWZmZXJlbmNlcyBpbiBrZXJuZWwgY29tbWFuZCBsaW5lL2RyYWN1dCBhcmd1bWVudHMg
-YmV0d2VlbiB0aGUgdHdvCmNhc2VzPyBFc3BlY2lhbGx5IHRoZSByZC5tZC4qIGJpdHM/CgpSZWdh
-cmRzLApCcnluLgogCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
-bQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
+From: Guoqing Jiang <guoqing.jiang@cloud.ionos.com>
+
+[ Upstream commit 8b48ec23cc51a4e7c8dbaef5f34ebe67e1a80934 ]
+
+Unregister sync_thread doesn't need to hold reconfig_mutex since it
+doesn't reconfigure array.
+
+And it could cause deadlock problem for raid5 as follows:
+
+1. process A tried to reap sync thread with reconfig_mutex held after echo
+   idle to sync_action.
+2. raid5 sync thread was blocked if there were too many active stripes.
+3. SB_CHANGE_PENDING was set (because of write IO comes from upper layer)
+   which causes the number of active stripes can't be decreased.
+4. SB_CHANGE_PENDING can't be cleared since md_check_recovery was not able
+   to hold reconfig_mutex.
+
+More details in the link:
+https://lore.kernel.org/linux-raid/5ed54ffc-ce82-bf66-4eff-390cb23bc1ac@molgen.mpg.de/T/#t
+
+And add one parameter to md_reap_sync_thread since it could be called by
+dm-raid which doesn't hold reconfig_mutex.
+
+Reported-and-tested-by: Donald Buczek <buczek@molgen.mpg.de>
+Signed-off-by: Guoqing Jiang <guoqing.jiang@cloud.ionos.com>
+Signed-off-by: Song Liu <song@kernel.org>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+---
+ drivers/md/dm-raid.c |  2 +-
+ drivers/md/md.c      | 14 +++++++++-----
+ drivers/md/md.h      |  2 +-
+ 3 files changed, 11 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 2b26435a6946..a5cc73d8f535 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3730,7 +3730,7 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 	if (!strcasecmp(argv[0], "idle") || !strcasecmp(argv[0], "frozen")) {
+ 		if (mddev->sync_thread) {
+ 			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+-			md_reap_sync_thread(mddev);
++			md_reap_sync_thread(mddev, false);
+ 		}
+ 	} else if (decipher_sync_action(mddev, mddev->recovery) != st_idle)
+ 		return -EBUSY;
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 309b3af906ad..e3c1450b9e69 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -4842,7 +4842,7 @@ action_store(struct mddev *mddev, const char *page, size_t len)
+ 				flush_workqueue(md_misc_wq);
+ 			if (mddev->sync_thread) {
+ 				set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+-				md_reap_sync_thread(mddev);
++				md_reap_sync_thread(mddev, true);
+ 			}
+ 			mddev_unlock(mddev);
+ 		}
+@@ -6212,7 +6212,7 @@ static void __md_stop_writes(struct mddev *mddev)
+ 		flush_workqueue(md_misc_wq);
+ 	if (mddev->sync_thread) {
+ 		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+-		md_reap_sync_thread(mddev);
++		md_reap_sync_thread(mddev, true);
+ 	}
+ 
+ 	del_timer_sync(&mddev->safemode_timer);
+@@ -9320,7 +9320,7 @@ void md_check_recovery(struct mddev *mddev)
+ 			 * ->spare_active and clear saved_raid_disk
+ 			 */
+ 			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+-			md_reap_sync_thread(mddev);
++			md_reap_sync_thread(mddev, true);
+ 			clear_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
+ 			clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
+ 			clear_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
+@@ -9355,7 +9355,7 @@ void md_check_recovery(struct mddev *mddev)
+ 			goto unlock;
+ 		}
+ 		if (mddev->sync_thread) {
+-			md_reap_sync_thread(mddev);
++			md_reap_sync_thread(mddev, true);
+ 			goto unlock;
+ 		}
+ 		/* Set RUNNING before clearing NEEDED to avoid
+@@ -9428,14 +9428,18 @@ void md_check_recovery(struct mddev *mddev)
+ }
+ EXPORT_SYMBOL(md_check_recovery);
+ 
+-void md_reap_sync_thread(struct mddev *mddev)
++void md_reap_sync_thread(struct mddev *mddev, bool reconfig_mutex_held)
+ {
+ 	struct md_rdev *rdev;
+ 	sector_t old_dev_sectors = mddev->dev_sectors;
+ 	bool is_reshaped = false;
+ 
++	if (reconfig_mutex_held)
++		mddev_unlock(mddev);
+ 	/* resync has finished, collect result */
+ 	md_unregister_thread(&mddev->sync_thread);
++	if (reconfig_mutex_held)
++		mddev_lock_nointr(mddev);
+ 	if (!test_bit(MD_RECOVERY_INTR, &mddev->recovery) &&
+ 	    !test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery) &&
+ 	    mddev->degraded != mddev->raid_disks) {
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 6ac283864533..1870864c9fc9 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -711,7 +711,7 @@ extern struct md_thread *md_register_thread(
+ extern void md_unregister_thread(struct md_thread **threadp);
+ extern void md_wakeup_thread(struct md_thread *thread);
+ extern void md_check_recovery(struct mddev *mddev);
+-extern void md_reap_sync_thread(struct mddev *mddev);
++extern void md_reap_sync_thread(struct mddev *mddev, bool reconfig_mutex_held);
+ extern int mddev_init_writes_pending(struct mddev *mddev);
+ extern bool md_write_start(struct mddev *mddev, struct bio *bi);
+ extern void md_write_inc(struct mddev *mddev, struct bio *bi);
+-- 
+2.35.1
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
