@@ -4,59 +4,60 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 42326CCA47E
-	for <dm-devel@archiver.kernel.org>; Tue,  7 Jun 2022 18:00:02 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 76FB5C43334
+	for <dm-devel@archiver.kernel.org>; Tue,  7 Jun 2022 18:01:43 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-171-6EqcdRw3PtuHiKTeNHHTTg-1; Tue, 07 Jun 2022 13:59:57 -0400
-X-MC-Unique: 6EqcdRw3PtuHiKTeNHHTTg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-629-Df582tySOPGrFZ3n2q3gVQ-1; Tue, 07 Jun 2022 14:01:40 -0400
+X-MC-Unique: Df582tySOPGrFZ3n2q3gVQ-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6A7C0801756;
-	Tue,  7 Jun 2022 17:59:53 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D37FE1C006B7;
+	Tue,  7 Jun 2022 18:01:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 575B12026D64;
-	Tue,  7 Jun 2022 17:59:53 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8517540D2827;
+	Tue,  7 Jun 2022 18:01:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 03C471947B83;
-	Tue,  7 Jun 2022 17:59:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6A8E51947B83;
+	Tue,  7 Jun 2022 18:01:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1059F19452D2
- for <dm-devel@listman.corp.redhat.com>; Tue,  7 Jun 2022 17:59:51 +0000 (UTC)
+ ESMTP id 6B1D81947B83
+ for <dm-devel@listman.corp.redhat.com>; Tue,  7 Jun 2022 18:01:31 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 005AF4010E30; Tue,  7 Jun 2022 17:59:51 +0000 (UTC)
+ id 4B1A1112131B; Tue,  7 Jun 2022 18:01:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F019E400F3E9
- for <dm-devel@redhat.com>; Tue,  7 Jun 2022 17:59:50 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D817E185A7A4
- for <dm-devel@redhat.com>; Tue,  7 Jun 2022 17:59:50 +0000 (UTC)
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-169-uTIfp9JQM5ChkYmSOA4A6A-1; Tue, 07 Jun 2022 13:59:49 -0400
-X-MC-Unique: uTIfp9JQM5ChkYmSOA4A6A-1
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 46BB51121314
+ for <dm-devel@redhat.com>; Tue,  7 Jun 2022 18:01:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6AA9B8517C8
+ for <dm-devel@redhat.com>; Tue,  7 Jun 2022 18:01:19 +0000 (UTC)
+Received: from dfw.source.kernel.org (dfw.source.kernel.org
+ [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-287-4YPpk4gDPF2P23qImZ8iOA-1; Tue, 07 Jun 2022 14:01:16 -0400
+X-MC-Unique: 4YPpk4gDPF2P23qImZ8iOA-1
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by ams.source.kernel.org (Postfix) with ESMTPS id 7FD72B8236C;
- Tue,  7 Jun 2022 17:59:47 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6EA42C34115;
- Tue,  7 Jun 2022 17:59:45 +0000 (UTC)
+ by dfw.source.kernel.org (Postfix) with ESMTPS id DBE4D617AE;
+ Tue,  7 Jun 2022 18:01:08 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1CA46C34115;
+ Tue,  7 Jun 2022 18:01:07 +0000 (UTC)
 From: Sasha Levin <sashal@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	stable@vger.kernel.org
-Date: Tue,  7 Jun 2022 13:58:19 -0400
-Message-Id: <20220607175835.480735-24-sashal@kernel.org>
-In-Reply-To: <20220607175835.480735-1-sashal@kernel.org>
-References: <20220607175835.480735-1-sashal@kernel.org>
+Date: Tue,  7 Jun 2022 13:59:56 -0400
+Message-Id: <20220607180011.481266-21-sashal@kernel.org>
+In-Reply-To: <20220607180011.481266-1-sashal@kernel.org>
+References: <20220607180011.481266-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
@@ -69,8 +70,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Mimecast-Bulk-Signature: yes
 X-Mimecast-Spam-Signature: bulk
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: [dm-devel] [PATCH AUTOSEL 5.10 24/38] md: don't unregister
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+Subject: [dm-devel] [PATCH AUTOSEL 5.4 21/34] md: don't unregister
  sync_thread with reconfig_mutex held
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -89,7 +90,7 @@ Cc: Sasha Levin <sashal@kernel.org>,
  Donald Buczek <buczek@molgen.mpg.de>, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -131,10 +132,10 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  3 files changed, 11 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index f5083b4a0195..95380e91d59a 100644
+index 5e73cc6ad0ce..637c0265f4b8 100644
 --- a/drivers/md/dm-raid.c
 +++ b/drivers/md/dm-raid.c
-@@ -3691,7 +3691,7 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
+@@ -3705,7 +3705,7 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
  	if (!strcasecmp(argv[0], "idle") || !strcasecmp(argv[0], "frozen")) {
  		if (mddev->sync_thread) {
  			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
@@ -144,11 +145,11 @@ index f5083b4a0195..95380e91d59a 100644
  	} else if (decipher_sync_action(mddev, mddev->recovery) != st_idle)
  		return -EBUSY;
 diff --git a/drivers/md/md.c b/drivers/md/md.c
-index cc3876500c4b..e4e855976dca 100644
+index c178b2f406de..25c51746957f 100644
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@ -4862,7 +4862,7 @@ action_store(struct mddev *mddev, const char *page, size_t len)
- 				flush_workqueue(md_misc_wq);
+@@ -4715,7 +4715,7 @@ action_store(struct mddev *mddev, const char *page, size_t len)
+ 			flush_workqueue(md_misc_wq);
  			if (mddev->sync_thread) {
  				set_bit(MD_RECOVERY_INTR, &mddev->recovery);
 -				md_reap_sync_thread(mddev);
@@ -156,8 +157,8 @@ index cc3876500c4b..e4e855976dca 100644
  			}
  			mddev_unlock(mddev);
  		}
-@@ -6229,7 +6229,7 @@ static void __md_stop_writes(struct mddev *mddev)
- 		flush_workqueue(md_misc_wq);
+@@ -6026,7 +6026,7 @@ static void __md_stop_writes(struct mddev *mddev)
+ 	flush_workqueue(md_misc_wq);
  	if (mddev->sync_thread) {
  		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
 -		md_reap_sync_thread(mddev);
@@ -165,7 +166,7 @@ index cc3876500c4b..e4e855976dca 100644
  	}
  
  	del_timer_sync(&mddev->safemode_timer);
-@@ -9254,7 +9254,7 @@ void md_check_recovery(struct mddev *mddev)
+@@ -9059,7 +9059,7 @@ void md_check_recovery(struct mddev *mddev)
  			 * ->spare_active and clear saved_raid_disk
  			 */
  			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
@@ -174,7 +175,7 @@ index cc3876500c4b..e4e855976dca 100644
  			clear_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
  			clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
  			clear_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
-@@ -9289,7 +9289,7 @@ void md_check_recovery(struct mddev *mddev)
+@@ -9094,7 +9094,7 @@ void md_check_recovery(struct mddev *mddev)
  			goto unlock;
  		}
  		if (mddev->sync_thread) {
@@ -183,7 +184,7 @@ index cc3876500c4b..e4e855976dca 100644
  			goto unlock;
  		}
  		/* Set RUNNING before clearing NEEDED to avoid
-@@ -9362,14 +9362,18 @@ void md_check_recovery(struct mddev *mddev)
+@@ -9167,14 +9167,18 @@ void md_check_recovery(struct mddev *mddev)
  }
  EXPORT_SYMBOL(md_check_recovery);
  
@@ -204,10 +205,10 @@ index cc3876500c4b..e4e855976dca 100644
  	    !test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery) &&
  	    mddev->degraded != mddev->raid_disks) {
 diff --git a/drivers/md/md.h b/drivers/md/md.h
-index c94811cf2600..9ac60a5df73e 100644
+index 5f86f8adb0a4..30a41af57822 100644
 --- a/drivers/md/md.h
 +++ b/drivers/md/md.h
-@@ -704,7 +704,7 @@ extern struct md_thread *md_register_thread(
+@@ -693,7 +693,7 @@ extern struct md_thread *md_register_thread(
  extern void md_unregister_thread(struct md_thread **threadp);
  extern void md_wakeup_thread(struct md_thread *thread);
  extern void md_check_recovery(struct mddev *mddev);
