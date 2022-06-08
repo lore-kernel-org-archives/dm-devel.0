@@ -1,59 +1,59 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 447E2CCA47D
-	for <dm-devel@archiver.kernel.org>; Wed,  8 Jun 2022 19:07:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 875B2C43334
+	for <dm-devel@archiver.kernel.org>; Wed,  8 Jun 2022 19:07:40 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-323-0wCI9VlkNtGGgCYHtezNOw-1; Wed, 08 Jun 2022 15:07:35 -0400
-X-MC-Unique: 0wCI9VlkNtGGgCYHtezNOw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-228-Udxysoa6Puu413xUV9Tm7g-1; Wed, 08 Jun 2022 15:07:35 -0400
+X-MC-Unique: Udxysoa6Puu413xUV9Tm7g-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A6F1C8339A5;
-	Wed,  8 Jun 2022 19:07:32 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C939518A6522;
+	Wed,  8 Jun 2022 19:07:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8DAF740CFD14;
-	Wed,  8 Jun 2022 19:07:32 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B23D32026D64;
+	Wed,  8 Jun 2022 19:07:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C53AB1947B99;
-	Wed,  8 Jun 2022 19:07:31 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 59E3D194705B;
+	Wed,  8 Jun 2022 19:07:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E96821947061
+ ESMTP id AE485194704E
  for <dm-devel@listman.corp.redhat.com>; Wed,  8 Jun 2022 19:07:30 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id DE7FE1731B; Wed,  8 Jun 2022 19:07:30 +0000 (UTC)
+ id 9E8BC1415102; Wed,  8 Jun 2022 19:07:30 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DA8451131A
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 9AD5F1415100
  for <dm-devel@redhat.com>; Wed,  8 Jun 2022 19:07:30 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C1E9129DD9AB
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7F30C3C0F720
  for <dm-devel@redhat.com>; Wed,  8 Jun 2022 19:07:30 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-670-f1ufsZq4NFKVCrGlwYZZUg-1; Wed,
+ relay.mimecast.com with ESMTP id us-mta-637-XztqD4BAMzemGZb78_ePFg-1; Wed,
  08 Jun 2022 15:07:27 -0400
-X-MC-Unique: f1ufsZq4NFKVCrGlwYZZUg-1
+X-MC-Unique: XztqD4BAMzemGZb78_ePFg-1
 Received: from
  linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net
  (linux.microsoft.com [13.77.154.182])
- by linux.microsoft.com (Postfix) with ESMTPSA id D439320BE676;
- Wed,  8 Jun 2022 12:01:44 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com D439320BE676
+ by linux.microsoft.com (Postfix) with ESMTPSA id 4E5E020BE67D;
+ Wed,  8 Jun 2022 12:01:45 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 4E5E020BE67D
 From: Deven Bowers <deven.desai@linux.microsoft.com>
 To: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
  tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
  snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
-Date: Wed,  8 Jun 2022 12:01:22 -0700
-Message-Id: <1654714889-26728-11-git-send-email-deven.desai@linux.microsoft.com>
+Date: Wed,  8 Jun 2022 12:01:26 -0700
+Message-Id: <1654714889-26728-15-git-send-email-deven.desai@linux.microsoft.com>
 In-Reply-To: <1654714889-26728-1-git-send-email-deven.desai@linux.microsoft.com>
 References: <1654714889-26728-1-git-send-email-deven.desai@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -63,9 +63,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-Subject: [dm-devel] [RFC PATCH v8 10/17] block|security: add LSM blob to
- block_device
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: [dm-devel] [RFC PATCH v8 14/17] ipe: enable support for fs-verity
+ as a trust provider
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -84,7 +84,7 @@ Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org, roberto.sassu@huawei.com,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -92,292 +92,323 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-block_device structures can have valuable security properties,
-based on how they are created, and what subsystem manages them.
+From: Fan Wu <wufan@linux.microsoft.com>
 
-By adding LSM storage to this structure, this data can be accessed
-at the LSM layer.
+Enable IPE policy authors to indicate trust for a singular fsverity
+file, identified by the digest information, through "fsverity_digest"
+and all files using fsverity's builtin signatures via
+"fsverity_signature".
 
+This enables file-level integrity claims to be expressed in IPE,
+allowing individual files to be authorized, giving some flexibility
+for policy authors. Such file-level claims are important to be expressed
+for enforcing the integrity of packages, as well as address some of the
+scalability issues in a sole dm-verity based solution (# of loop back
+devices, etc).
+
+This solution cannot be done in userspace as the minimum threat that
+IPE should mitigate is an attacker downloads malicious payload with
+all required dependencies. These dependencies can lack the userspace
+check, bypassing the protection entirely. A similar attack succeeds if
+the userspace component is replaced with a version that does not
+perform the check. As a result, this can only be done in the common
+entry point - the kernel.
+
+Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
-
 ---
-v2:
-  + No Changes
-
-v3:
-  + Minor style changes from checkpatch --strict
-
-v4:
-  + No Changes
-
-v5:
-  + Allow multiple callers to call security_bdev_setsecurity
-
-v6:
-  + Simplify security_bdev_setsecurity break condition
+v1-v6:
+  + Not present
 
 v7:
-  + Squash all dm-verity related patches to two patches,
-    the additions to dm-verity/fs, and the consumption of
-    the additions.
+  Introduced
 
 v8:
-  + Split dm-verity related patches squashed in v7 to 3 commits based on
-    topic:
-      + New LSM hook
-      + Consumption of hook outside LSM
-      + Consumption of hook inside LSM.
-
-  + change return of security_bdev_alloc / security_bdev_setsecurity
-    to LSM_RET_DEFAULT instead of 0.
-
-  + Change return code to -EOPNOTSUPP, bring inline with other
-    setsecurity hooks.
+  * Undo squash of 08/12, 10/12 - separating drivers/md/ from security/
+  * Use common-audit function for fsverity_signature.
+  + Change fsverity implementation to use fsverity_get_digest
+  + prevent unnecessary copy of fs-verity signature data, instead
+    just check for presence of signature data.
+  + Remove free_inode_security hook, as the digest is now acquired
+    at runtime instead of via LSM blob.
 ---
- block/bdev.c                  |  7 ++++
- include/linux/blk_types.h     |  1 +
- include/linux/lsm_hook_defs.h |  5 +++
- include/linux/lsm_hooks.h     | 12 ++++++
- include/linux/security.h      | 22 +++++++++++
- security/security.c           | 70 +++++++++++++++++++++++++++++++++++
- 6 files changed, 117 insertions(+)
+ security/ipe/eval.c                       |  1 +
+ security/ipe/eval.h                       |  5 +++
+ security/ipe/hooks.c                      | 29 +++++++++++++++++
+ security/ipe/hooks.h                      |  5 +++
+ security/ipe/ipe.c                        |  7 ++++
+ security/ipe/ipe.h                        |  1 +
+ security/ipe/modules/Kconfig              | 23 +++++++++++++
+ security/ipe/modules/Makefile             |  2 ++
+ security/ipe/modules/fsverity_digest.c    | 39 +++++++++++++++++++++++
+ security/ipe/modules/fsverity_signature.c | 34 ++++++++++++++++++++
+ 10 files changed, 146 insertions(+)
+ create mode 100644 security/ipe/modules/fsverity_digest.c
+ create mode 100644 security/ipe/modules/fsverity_signature.c
 
-diff --git a/block/bdev.c b/block/bdev.c
-index 5fe06c1f2def..e7ef2c7a22c9 100644
---- a/block/bdev.c
-+++ b/block/bdev.c
-@@ -24,6 +24,7 @@
- #include <linux/pseudo_fs.h>
- #include <linux/uio.h>
- #include <linux/namei.h>
-+#include <linux/security.h>
- #include <linux/part_stat.h>
- #include <linux/uaccess.h>
- #include "../fs/internal.h"
-@@ -397,6 +398,11 @@ static struct inode *bdev_alloc_inode(struct super_block *sb)
- 	if (!ei)
- 		return NULL;
- 	memset(&ei->bdev, 0, sizeof(ei->bdev));
-+
-+	if (unlikely(security_bdev_alloc(&ei->bdev))) {
-+		kmem_cache_free(bdev_cachep, ei);
-+		return NULL;
-+	}
- 	return &ei->vfs_inode;
- }
- 
-@@ -406,6 +412,7 @@ static void bdev_free_inode(struct inode *inode)
- 
- 	free_percpu(bdev->bd_stats);
- 	kfree(bdev->bd_meta_info);
-+	security_bdev_free(bdev);
- 
- 	if (!bdev_is_partition(bdev)) {
- 		if (bdev->bd_disk && bdev->bd_disk->bdi)
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index a24d4078fb21..a014ffa14b2d 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -68,6 +68,7 @@ struct block_device {
- #ifdef CONFIG_FAIL_MAKE_REQUEST
- 	bool			bd_make_it_fail;
- #endif
-+	void			*security;
- } __randomize_layout;
- 
- #define bdev_whole(_bdev) \
-diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
-index eafa1d2489fd..3449c004bd84 100644
---- a/include/linux/lsm_hook_defs.h
-+++ b/include/linux/lsm_hook_defs.h
-@@ -407,3 +407,8 @@ LSM_HOOK(int, 0, perf_event_write, struct perf_event *event)
- LSM_HOOK(int, 0, uring_override_creds, const struct cred *new)
- LSM_HOOK(int, 0, uring_sqpoll, void)
- #endif /* CONFIG_IO_URING */
-+
-+LSM_HOOK(int, 0, bdev_alloc_security, struct block_device *bdev)
-+LSM_HOOK(void, LSM_RET_VOID, bdev_free_security, struct block_device *bdev)
-+LSM_HOOK(int, 0, bdev_setsecurity, struct block_device *bdev, const char *name,
-+	 const void *value, size_t size)
-diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-index 91c8146649f5..9f011d705ea8 100644
---- a/include/linux/lsm_hooks.h
-+++ b/include/linux/lsm_hooks.h
-@@ -1550,6 +1550,17 @@
-  *
-  *     @what: kernel feature being accessed
-  *
-+ * @bdev_alloc_security:
-+ *	Initialize the security field inside a block_device structure.
-+ *
-+ * @bdev_free_security:
-+ *	Cleanup the security information stored inside a block_device structure.
-+ *
-+ * @bdev_setsecurity:
-+ *	Set a security property associated with @name for @bdev with
-+ *	value @value. @size indicates the size of @value in bytes.
-+ *	If a @name is not implemented, return -EOPNOTSUPP.
-+ *
-  * Security hooks for perf events
-  *
-  * @perf_event_open:
-@@ -1610,6 +1621,7 @@ struct lsm_blob_sizes {
- 	int	lbs_ipc;
- 	int	lbs_msg_msg;
- 	int	lbs_task;
-+	int	lbs_bdev;
+diff --git a/security/ipe/eval.c b/security/ipe/eval.c
+index 9b29d83cd466..e8205a6fce44 100644
+--- a/security/ipe/eval.c
++++ b/security/ipe/eval.c
+@@ -95,6 +95,7 @@ static struct ipe_eval_ctx *build_ctx(const struct file *file,
+ 	ctx->ci_ctx = ipe_current_ctx();
+ 	ctx->from_init_sb = from_pinned(file);
+ 	if (file) {
++		ctx->ipe_inode = ipe_inode(file->f_inode);
+ 		if (FILE_BLOCK_DEV(file))
+ 			ctx->ipe_bdev = ipe_bdev(FILE_BLOCK_DEV(file));
+ 	}
+diff --git a/security/ipe/eval.h b/security/ipe/eval.h
+index 57b7b2b424f8..541251125e8e 100644
+--- a/security/ipe/eval.h
++++ b/security/ipe/eval.h
+@@ -22,6 +22,10 @@ struct ipe_bdev {
+ 	const char     *digest_algo;
  };
  
- /*
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 7fc4e9f49f54..30b663de301f 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -473,6 +473,11 @@ int security_inode_notifysecctx(struct inode *inode, void *ctx, u32 ctxlen);
- int security_inode_setsecctx(struct dentry *dentry, void *ctx, u32 ctxlen);
- int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen);
- int security_locked_down(enum lockdown_reason what);
-+int security_bdev_alloc(struct block_device *bdev);
-+void security_bdev_free(struct block_device *bdev);
-+int security_bdev_setsecurity(struct block_device *bdev,
-+			      const char *name, const void *value,
-+			      size_t size);
- #else /* CONFIG_SECURITY */
++struct ipe_inode {
++	bool fs_verity_signed;
++};
++
+ struct ipe_eval_ctx {
+ 	enum ipe_operation op;
  
- static inline int call_blocking_lsm_notifier(enum lsm_event event, void *data)
-@@ -1349,6 +1354,23 @@ static inline int security_locked_down(enum lockdown_reason what)
- {
- 	return 0;
+@@ -29,6 +33,7 @@ struct ipe_eval_ctx {
+ 	struct ipe_context *ci_ctx;
+ 
+ 	const struct ipe_bdev *ipe_bdev;
++	const struct ipe_inode *ipe_inode;
+ 
+ 	bool from_init_sb;
+ };
+diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
+index 1072ee5bb8f6..7c99afad4924 100644
+--- a/security/ipe/hooks.c
++++ b/security/ipe/hooks.c
+@@ -267,3 +267,32 @@ int ipe_bdev_setsecurity(struct block_device *bdev, const char *key,
+ 
+ 	return -EOPNOTSUPP;
  }
 +
-+static inline int security_bdev_alloc(struct block_device *bdev)
-+{
-+	return 0;
-+}
-+
-+static inline void security_bdev_free(struct block_device *bdev)
-+{
-+}
-+
-+static inline int security_bdev_setsecurity(struct block_device *bdev,
-+					    const char *name,
-+					    const void *value, size_t size)
-+{
-+	return 0;
-+}
-+
- #endif	/* CONFIG_SECURITY */
- 
- #if defined(CONFIG_SECURITY) && defined(CONFIG_WATCH_QUEUE)
-diff --git a/security/security.c b/security/security.c
-index 188b8f782220..59ec336788e8 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -29,6 +29,7 @@
- #include <linux/string.h>
- #include <linux/msg.h>
- #include <net/flow.h>
-+#include <linux/fs.h>
- 
- #define MAX_LSM_EVM_XATTR	2
- 
-@@ -208,6 +209,7 @@ static void __init lsm_set_blob_sizes(struct lsm_blob_sizes *needed)
- 	lsm_set_blob_size(&needed->lbs_msg_msg, &blob_sizes.lbs_msg_msg);
- 	lsm_set_blob_size(&needed->lbs_superblock, &blob_sizes.lbs_superblock);
- 	lsm_set_blob_size(&needed->lbs_task, &blob_sizes.lbs_task);
-+	lsm_set_blob_size(&needed->lbs_bdev, &blob_sizes.lbs_bdev);
- }
- 
- /* Prepare LSM for initialization. */
-@@ -344,6 +346,7 @@ static void __init ordered_lsm_init(void)
- 	init_debug("msg_msg blob size    = %d\n", blob_sizes.lbs_msg_msg);
- 	init_debug("superblock blob size = %d\n", blob_sizes.lbs_superblock);
- 	init_debug("task blob size       = %d\n", blob_sizes.lbs_task);
-+	init_debug("bdev blob size       = %d\n", blob_sizes.lbs_bdev);
- 
- 	/*
- 	 * Create any kmem_caches needed for blobs
-@@ -660,6 +663,28 @@ static int lsm_msg_msg_alloc(struct msg_msg *mp)
- 	return 0;
- }
- 
 +/**
-+ * lsm_bdev_alloc - allocate a composite block_device blob
-+ * @bdev: the block_device that needs a blob
++ * ipe_inode_setsecurity: Sets the a certain field of a inode security
++ *			 blob, based on @key.
++ * @inode: The inode to source the security blob from.
++ * @name: The name representing the information to be stored.
++ * @value: The value to be stored.
++ * @size: The size of @value.
++ * @flags: unused
 + *
-+ * Allocate the block_device blob for all the modules
++ * Saves fsverity signature & digest into inode security blob
 + *
-+ * Returns 0, or -ENOMEM if memory can't be allocated.
++ * Return:
++ * 0 - OK
++ * !0 - Error
 + */
-+static int lsm_bdev_alloc(struct block_device *bdev)
++int ipe_inode_setsecurity(struct inode *inode, const char *name,
++			  const void *value, size_t size,
++			  int flags)
 +{
-+	if (blob_sizes.lbs_bdev == 0) {
-+		bdev->security = NULL;
++	struct ipe_inode *inode_sec = ipe_inode(inode);
++
++	if (!strcmp(name, FS_VERITY_INODE_SEC_NAME)) {
++		inode_sec->fs_verity_signed = size > 0 && value;
 +		return 0;
 +	}
 +
-+	bdev->security = kzalloc(blob_sizes.lbs_bdev, GFP_KERNEL);
-+	if (!bdev->security)
-+		return -ENOMEM;
-+
-+	return 0;
++	return -EOPNOTSUPP;
 +}
-+
- /**
-  * lsm_early_task - during initialization allocate a composite task blob
-  * @task: the task that needs a blob
-@@ -2617,6 +2642,51 @@ int security_locked_down(enum lockdown_reason what)
- }
- EXPORT_SYMBOL(security_locked_down);
+diff --git a/security/ipe/hooks.h b/security/ipe/hooks.h
+index 0d1589e47f8f..1edcc91d6d33 100644
+--- a/security/ipe/hooks.h
++++ b/security/ipe/hooks.h
+@@ -10,6 +10,7 @@
+ #include <linux/sched.h>
+ #include <linux/binfmts.h>
+ #include <linux/security.h>
++#include <linux/fsverity.h>
+ #include <linux/device-mapper.h>
  
-+int security_bdev_alloc(struct block_device *bdev)
+ int ipe_task_alloc(struct task_struct *task,
+@@ -37,4 +38,8 @@ void ipe_bdev_free_security(struct block_device *bdev);
+ int ipe_bdev_setsecurity(struct block_device *bdev, const char *key,
+ 			 const void *value, size_t len);
+ 
++int ipe_inode_setsecurity(struct inode *inode, const char *name,
++			  const void *value, size_t size,
++			  int flags);
++
+ #endif /* IPE_HOOKS_H */
+diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
+index 398014ac6004..caf0ebf8381a 100644
+--- a/security/ipe/ipe.c
++++ b/security/ipe/ipe.c
+@@ -24,6 +24,7 @@ bool ipe_enabled;
+ static struct lsm_blob_sizes ipe_blobs __lsm_ro_after_init = {
+ 	.lbs_task = sizeof(struct ipe_context __rcu *),
+ 	.lbs_bdev = sizeof(struct ipe_bdev),
++	.lbs_inode = sizeof(struct ipe_inode),
+ };
+ 
+ struct ipe_bdev *ipe_bdev(struct block_device *b)
+@@ -31,6 +32,11 @@ struct ipe_bdev *ipe_bdev(struct block_device *b)
+ 	return b->security + ipe_blobs.lbs_bdev;
+ }
+ 
++struct ipe_inode *ipe_inode(const struct inode *inode)
 +{
-+	int rc = 0;
-+
-+	rc = lsm_bdev_alloc(bdev);
-+	if (unlikely(rc))
-+		return rc;
-+
-+	rc = call_int_hook(bdev_alloc_security, 0, bdev);
-+	if (unlikely(rc))
-+		security_bdev_free(bdev);
-+
-+	return LSM_RET_DEFAULT(bdev_alloc_security);
++	return inode->i_security + ipe_blobs.lbs_inode;
 +}
-+EXPORT_SYMBOL(security_bdev_alloc);
 +
-+void security_bdev_free(struct block_device *bdev)
+ static struct security_hook_list ipe_hooks[] __lsm_ro_after_init = {
+ 	LSM_HOOK_INIT(task_alloc, ipe_task_alloc),
+ 	LSM_HOOK_INIT(task_free, ipe_task_free),
+@@ -42,6 +48,7 @@ static struct security_hook_list ipe_hooks[] __lsm_ro_after_init = {
+ 	LSM_HOOK_INIT(sb_free_security, ipe_sb_free_security),
+ 	LSM_HOOK_INIT(bdev_free_security, ipe_bdev_free_security),
+ 	LSM_HOOK_INIT(bdev_setsecurity, ipe_bdev_setsecurity),
++	LSM_HOOK_INIT(inode_setsecurity, ipe_inode_setsecurity),
+ };
+ 
+ /**
+diff --git a/security/ipe/ipe.h b/security/ipe/ipe.h
+index df2b56d8b5e9..cd7e5c1bb343 100644
+--- a/security/ipe/ipe.h
++++ b/security/ipe/ipe.h
+@@ -23,5 +23,6 @@ extern struct ipe_parser __start_ipe_parsers[], __end_ipe_parsers[];
+ extern struct ipe_module __start_ipe_modules[], __end_ipe_modules[];
+ 
+ struct ipe_bdev *ipe_bdev(struct block_device *b);
++struct ipe_inode *ipe_inode(const struct inode *inode);
+ 
+ #endif /* IPE_H */
+diff --git a/security/ipe/modules/Kconfig b/security/ipe/modules/Kconfig
+index a6ea06cf0737..8f823a1edf96 100644
+--- a/security/ipe/modules/Kconfig
++++ b/security/ipe/modules/Kconfig
+@@ -40,4 +40,27 @@ config IPE_PROP_DM_VERITY_ROOTHASH
+ 
+ 	  If unsure, answer Y.
+ 
++config IPE_PROP_FS_VERITY_SIGNATURE
++	bool "Enable property for signed fs-verity files"
++	depends on FS_VERITY_BUILTIN_SIGNATURES
++	help
++	  This option enables IPE's integration with FSVerity's
++	  signed hashes. This enables the usage of the property,
++	  "fsverity_signature" in IPE's policy.
++
++	  if unsure, answer Y.
++
++config IPE_PROP_FS_VERITY_DIGEST
++	bool "Enable property for authorizing fs-verity files via digest"
++	depends on FS_VERITY
++	help
++	  This option enables IPE's integration with FSVerity.
++	  This enables the usage of the property "fsverity_digest" in IPE's
++	  policy. This property allows authorization or revocation via a
++	  a hex-string representing the digest of a fsverity file.
++
++	  if unsure, answer Y.
++
++
++
+ endmenu
+diff --git a/security/ipe/modules/Makefile b/security/ipe/modules/Makefile
+index 84fadce85193..890440b9050f 100644
+--- a/security/ipe/modules/Makefile
++++ b/security/ipe/modules/Makefile
+@@ -8,3 +8,5 @@
+ obj-$(CONFIG_IPE_PROP_BOOT_VERIFIED) += boot_verified.o
+ obj-$(CONFIG_IPE_PROP_DM_VERITY_SIGNATURE) += dmverity_signature.o
+ obj-$(CONFIG_IPE_PROP_DM_VERITY_ROOTHASH) += dmverity_roothash.o
++obj-$(CONFIG_IPE_PROP_FS_VERITY_SIGNATURE) += fsverity_signature.o
++obj-$(CONFIG_IPE_PROP_FS_VERITY_DIGEST) += fsverity_digest.o
+diff --git a/security/ipe/modules/fsverity_digest.c b/security/ipe/modules/fsverity_digest.c
+new file mode 100644
+index 000000000000..c3e7998393f5
+--- /dev/null
++++ b/security/ipe/modules/fsverity_digest.c
+@@ -0,0 +1,39 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
++
++#include "ipe_module.h"
++
++#include <linux/fs.h>
++#include <linux/types.h>
++#include <linux/fsverity.h>
++#include <crypto/hash_info.h>
++
++static bool evaluate(const struct ipe_eval_ctx *ctx, const void *val)
 +{
-+	if (!bdev->security)
-+		return;
++	enum hash_algo alg;
++	u8 digest[FS_VERITY_MAX_DIGEST_SIZE];
++	struct inode *ino;
 +
-+	call_void_hook(bdev_free_security, bdev);
++	if (!ctx->file)
++		return false;
 +
-+	kfree(bdev->security);
-+	bdev->security = NULL;
++	ino = file_inode(ctx->file);
++	if (!ino)
++		return false;
++
++	if (fsverity_get_digest(ino, digest, &alg))
++		return false;
++
++	return ipe_digest_eval(val, digest, hash_digest_size[alg], hash_algo_name[alg]);
 +}
-+EXPORT_SYMBOL(security_bdev_free);
 +
-+int security_bdev_setsecurity(struct block_device *bdev,
-+			      const char *name, const void *value,
-+			      size_t size)
++IPE_MODULE(fsv_digest) = {
++	.name = "fsverity_digest",
++	.version = 1,
++	.parse = ipe_digest_parse,
++	.free = ipe_digest_free,
++	.eval = evaluate,
++	.audit = ipe_digest_audit,
++};
+diff --git a/security/ipe/modules/fsverity_signature.c b/security/ipe/modules/fsverity_signature.c
+new file mode 100644
+index 000000000000..26442af0a2ba
+--- /dev/null
++++ b/security/ipe/modules/fsverity_signature.c
+@@ -0,0 +1,34 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
++
++#include "ipe_module.h"
++
++#include <linux/fs.h>
++#include <linux/types.h>
++#include <linux/slab.h>
++#include <linux/audit.h>
++#include <linux/mount.h>
++
++static bool evaluate(const struct ipe_eval_ctx *ctx, const void *value)
 +{
-+	int rc = 0;
-+	struct security_hook_list *p;
++	bool expect = (bool)value;
 +
-+	hlist_for_each_entry(p, &security_hook_heads.bdev_setsecurity, list) {
-+		rc = p->hook.bdev_setsecurity(bdev, name, value, size);
-+		if (rc && rc != -EOPNOTSUPP)
-+			return rc;
-+	}
++	if (!ctx->file || !IS_VERITY(ctx->file->f_inode))
++		return false;
 +
-+	return LSM_RET_DEFAULT(bdev_setsecurity);
++	if (!ctx->ipe_inode)
++		return false;
++
++	return (!!ctx->ipe_inode->fs_verity_signed) == expect;
 +}
-+EXPORT_SYMBOL(security_bdev_setsecurity);
 +
- #ifdef CONFIG_PERF_EVENTS
- int security_perf_event_open(struct perf_event_attr *attr, int type)
- {
++IPE_MODULE(fsvs) = {
++	.name = "fsverity_signature",
++	.version = 1,
++	.parse = ipe_bool_parse,
++	.free = NULL,
++	.eval = evaluate,
++	.audit = ipe_bool_audit,
++};
 -- 
 2.25.1
 
