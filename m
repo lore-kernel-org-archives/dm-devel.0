@@ -4,88 +4,79 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C1071C43334
-	for <dm-devel@archiver.kernel.org>; Thu,  9 Jun 2022 17:01:02 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 362B4C43334
+	for <dm-devel@archiver.kernel.org>; Thu,  9 Jun 2022 18:16:25 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-341-Nn77s8MuOZ-1UaQ_WBVRUg-1; Thu, 09 Jun 2022 13:00:58 -0400
-X-MC-Unique: Nn77s8MuOZ-1UaQ_WBVRUg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-267-Lw3rk0bhO022qbyAcY2w-A-1; Thu, 09 Jun 2022 14:16:20 -0400
+X-MC-Unique: Lw3rk0bhO022qbyAcY2w-A-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 640FE185A7A4;
-	Thu,  9 Jun 2022 17:00:56 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4BA90C53360;
-	Thu,  9 Jun 2022 17:00:56 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D85DE1C06902;
+	Thu,  9 Jun 2022 18:16:18 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5AC7C1730C;
+	Thu,  9 Jun 2022 18:16:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1D87D1947061;
-	Thu,  9 Jun 2022 17:00:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 284631947062;
+	Thu,  9 Jun 2022 18:16:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 01CC61947040
- for <dm-devel@listman.corp.redhat.com>; Thu,  9 Jun 2022 17:00:54 +0000 (UTC)
+ ESMTP id 4A4461947040
+ for <dm-devel@listman.corp.redhat.com>; Thu,  9 Jun 2022 18:16:15 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E3A39C53361; Thu,  9 Jun 2022 17:00:54 +0000 (UTC)
+ id 32489404E4AD; Thu,  9 Jun 2022 18:16:15 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DF58EC53360
- for <dm-devel@redhat.com>; Thu,  9 Jun 2022 17:00:54 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C81543815D23
- for <dm-devel@redhat.com>; Thu,  9 Jun 2022 17:00:54 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-657-g1Tm5yKwOAKVmmG9VntEjQ-1; Thu, 09 Jun 2022 13:00:51 -0400
-X-MC-Unique: g1Tm5yKwOAKVmmG9VntEjQ-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2DD564010E32
+ for <dm-devel@redhat.com>; Thu,  9 Jun 2022 18:16:15 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id A15991F992;
- Thu,  9 Jun 2022 17:00:49 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 5308313A8C;
- Thu,  9 Jun 2022 17:00:49 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id 6ptMEkEnomK9MQAAMHmgww
- (envelope-from <mwilck@suse.com>); Thu, 09 Jun 2022 17:00:49 +0000
-Message-ID: <f0179be809d54aeaaa13eb2edb320542d07d0513.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, "Schremmer, Steven"
- <Steve.Schremmer@netapp.com>
-Date: Thu, 09 Jun 2022 19:00:48 +0200
-In-Reply-To: <7510d16e-b821-3030-16cf-ef39854109f5@gmail.com>
-References: <20220514230148.139675-1-xose.vazquez@gmail.com>
- <20220514230148.139675-5-xose.vazquez@gmail.com>
- <SN6PR06MB4495FAEC26D7A272C2DEDA498CD19@SN6PR06MB4495.namprd06.prod.outlook.com>
- <e014a5ee6e313404bb4d1d29c1cd4791f9660c5e.camel@suse.com>
- <SN6PR06MB44955631FFA648B74BB939318CD09@SN6PR06MB4495.namprd06.prod.outlook.com>
- <6d6f31c7e9c03eead93cc5b528bcd8979446fc91.camel@suse.com>
- <SN6PR06MB4495843B676A209F9AA0085A8CD99@SN6PR06MB4495.namprd06.prod.outlook.com>
- <f29d01dd-676d-0d1e-77b0-df951fb7f99a@gmail.com>
- <8ab798a93edf33a550f0c78f113d8943d76916b6.camel@suse.com>
- <7510d16e-b821-3030-16cf-ef39854109f5@gmail.com>
-User-Agent: Evolution 3.44.2
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1688B294EDEA
+ for <dm-devel@redhat.com>; Thu,  9 Jun 2022 18:16:15 +0000 (UTC)
+Received: from mail-qt1-f171.google.com (mail-qt1-f171.google.com
+ [209.85.160.171]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-624--NIy73JiMBO3rZsMbtMbtA-1; Thu, 09 Jun 2022 14:16:13 -0400
+X-MC-Unique: -NIy73JiMBO3rZsMbtMbtA-1
+Received: by mail-qt1-f171.google.com with SMTP id t21so10735821qtw.11
+ for <dm-devel@redhat.com>; Thu, 09 Jun 2022 11:16:13 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+ :mime-version:content-disposition:in-reply-to;
+ bh=IqBa9uKPuzMBYw7EO8+JYWz3LeyC2Z89LKKu3TPj9R0=;
+ b=Zuu20LB7yE9hGQdkRE7wcMMFucZw8fusKJn55VcaOActO0In251Wrd94BJm+O3zow/
+ wLTHWwAMG4w67NHGjRdzZN/0plybJjg80vAXkIhhZPxX6AB2zfbq85v3INuZ8SXRbs/B
+ a1IIlFQmMEZTQheD1h9YiKfJD3fFVZZ2c9IG3FV6xLdYLzgwch2cre6QOO3/HiI4v8k8
+ oLnSSJ/JTQEpcCrD+baoQWS+SAbgTvfz8Yin4gixr/+YgGPsLXQqTZ1H1/ra/Ike+iq0
+ Fm0p4gI/2E9zcejlXqaVL7aaTLShZRyXyjXEDqzWSTnPHOOQfk5lou9IfQJjq+wiQLDt
+ gYkA==
+X-Gm-Message-State: AOAM5320LIBAmimDl0ktWje0LuwjPxsCxvTiV/9GJq2Fv5Fw5UR4HoWE
+ 3AENzEVXPRE4sk5/JZQzm5zR24B5uS7xhpQ=
+X-Google-Smtp-Source: ABdhPJytzPNfgq8ZJoYGppEW1woIaioYo1mXF5NBN1eY+hf5YvYEfiA0kUdl0ynUP975PfILGVrNaA==
+X-Received: by 2002:a05:622a:47:b0:305:1ab:e52d with SMTP id
+ y7-20020a05622a004700b0030501abe52dmr7932244qtw.688.1654798572745; 
+ Thu, 09 Jun 2022 11:16:12 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+ [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+ d19-20020a05620a241300b006a6c230f5e0sm10910899qkn.31.2022.06.09.11.16.12
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Thu, 09 Jun 2022 11:16:12 -0700 (PDT)
+Date: Thu, 9 Jun 2022 14:16:11 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Christoph Hellwig <hch@lst.de>
+Message-ID: <YqI460bUfFdsn3I5@redhat.com>
+References: <20220608063409.1280968-1-hch@lst.de> <YqDneqyp33PvkCLm@redhat.com>
+ <20220609041149.GA31649@lst.de>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH 4/9] multipath-tools: add NetApp E-Series
- NVMe to hardware table
+In-Reply-To: <20220609041149.GA31649@lst.de>
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Subject: Re: [dm-devel] fix and cleanup device mapper bioset initialization
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -97,53 +88,39 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "George, Martin" <Martin.George@netapp.com>,
- Hannes Reinecke <hare@suse.com>,
- ng-eseries-upstream-maintainers <ng-eseries-upstream-maintainers@netapp.com>,
- DM-DEVEL ML <dm-devel@redhat.com>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+ dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Thu, 2022-06-09 at 18:56 +0200, Xose Vazquez Perez wrote:
-> On 6/9/22 18:49, Martin Wilck wrote:
->=20
-> > IIUC NetApp's concern is not the generic entry, but the entries
-> > mentioning E-Series or it's OEM products in NVMe configuration
-> > explicitly. I also have some trouble understanding the concern, but
-> > NetApp is in charge of these entries, so I believe we should
-> > respect
-> > what they're saying.
-> >=20
-> > With the late patches I submitted, the generic NVMe defaults would
-> > work
-> > for the NetApp devices without those being explicitly mentioned. I
-> > hope
-> > this is ok for everyone. Only the no_path_retry setting would get
-> > lost,
-> > which is acceptable IMO because this is rather an admin setting
-> > than
-> > product-specific.
->=20
-> And now (IMO) it is worse, because NetApp NVMe arrays are under a
-> generic config.
->=20
-> What do they hate?=A0 just ".product =3D "NetApp E-Series"" ???
+On Thu, Jun 09 2022 at 12:11P -0400,
+Christoph Hellwig <hch@lst.de> wrote:
 
-I can't speak for Steve, but yes, this is what I understood. The
-concern is that someone would read the entry and conclude that this
-configuration is officially endorsed and supported by NetApp.
-This is why I added the disclaimer in the man page.
+> On Wed, Jun 08, 2022 at 02:16:26PM -0400, Mike Snitzer wrote:
+> > All looks good to me.  Are you OK with me picking up the first 3 to
+> > send to Linus for 5.19-rc2 (given the integrity bioset fix)?
+> > 
+> > And hold patch 4 until 5.20 merge?
+> 
+> Sounds good to me.
+> 
+> > Or would you prefer that cleanup to land now too?
+> 
+> I don't think Linus would like that :)  In fact even patch 3 might be
+> 5.20 material.
 
-Regards,
-Martin
+Ha, yeah I agree.  I'll just send the first 2 (likely tomorrow after
+more testing today).
+
+Thanks.
 
 --
 dm-devel mailing list
