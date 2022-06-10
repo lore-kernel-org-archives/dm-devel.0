@@ -1,82 +1,79 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 03ACEC433EF
-	for <dm-devel@archiver.kernel.org>; Fri, 10 Jun 2022 18:56:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2B482C43334
+	for <dm-devel@archiver.kernel.org>; Fri, 10 Jun 2022 23:02:28 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-637-GT8AEGKPNNKd-ZUIEvkOVw-1; Fri, 10 Jun 2022 14:56:34 -0400
-X-MC-Unique: GT8AEGKPNNKd-ZUIEvkOVw-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-564-ftIZaYqHMB2eOG6aHdV_rA-1; Fri, 10 Jun 2022 19:02:23 -0400
+X-MC-Unique: ftIZaYqHMB2eOG6aHdV_rA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E13A4802804;
-	Fri, 10 Jun 2022 18:56:32 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BAFA394AF44;
+	Fri, 10 Jun 2022 23:02:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 391A8492C3B;
-	Fri, 10 Jun 2022 18:56:31 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 79F2440D2827;
+	Fri, 10 Jun 2022 23:02:19 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DB3B31947055;
-	Fri, 10 Jun 2022 18:56:30 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0F6691947058;
+	Fri, 10 Jun 2022 23:02:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C890E1947054
- for <dm-devel@listman.corp.redhat.com>; Fri, 10 Jun 2022 18:56:29 +0000 (UTC)
+ ESMTP id 64B2B1947054
+ for <dm-devel@listman.corp.redhat.com>; Fri, 10 Jun 2022 23:02:18 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8C2A21121319; Fri, 10 Jun 2022 18:56:29 +0000 (UTC)
+ id 4D6D640CFD0A; Fri, 10 Jun 2022 23:02:18 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 883E61121314
- for <dm-devel@redhat.com>; Fri, 10 Jun 2022 18:56:29 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6CF56811E7A
- for <dm-devel@redhat.com>; Fri, 10 Jun 2022 18:56:29 +0000 (UTC)
-Received: from mail-qt1-f174.google.com (mail-qt1-f174.google.com
- [209.85.160.174]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 4981340CF8EF
+ for <dm-devel@redhat.com>; Fri, 10 Jun 2022 23:02:18 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 30B391C04B79
+ for <dm-devel@redhat.com>; Fri, 10 Jun 2022 23:02:18 +0000 (UTC)
+Received: from mail-qk1-f171.google.com (mail-qk1-f171.google.com
+ [209.85.222.171]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-508-8fb_RGqnP7WTlZ71HFzOFA-1; Fri, 10 Jun 2022 14:56:27 -0400
-X-MC-Unique: 8fb_RGqnP7WTlZ71HFzOFA-1
-Received: by mail-qt1-f174.google.com with SMTP id f13so2066qtb.5
- for <dm-devel@redhat.com>; Fri, 10 Jun 2022 11:56:27 -0700 (PDT)
+ us-mta-97-ZrzKL032OheDUIMQqyNTcw-1; Fri, 10 Jun 2022 19:02:16 -0400
+X-MC-Unique: ZrzKL032OheDUIMQqyNTcw-1
+Received: by mail-qk1-f171.google.com with SMTP id o73so273143qke.7
+ for <dm-devel@redhat.com>; Fri, 10 Jun 2022 16:02:16 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=OvHTHLkhrUIWEvLDS0A9yBAIxMsiXZxW5mBwv3CZzSo=;
- b=3OcyyaZtHq0NhNG9Fs+/dmVVv5bBQf0x9CNWPfWQlx/realkU3+CPK5dPbeplwNayw
- xVL0d2sSR24Z4q3GFRT3Emw5YnLV/TA7Bvr92alja34nvVlcVnVqcwsgj1mM7YZQqu6Z
- hi5hMmLZrJ0AvsxYDu4tLPNmQW/qOkqdGa9i1GEHTgmSBApGtvI+e8rPk8gyvMY5FPg8
- GOL02xO8IkXO+xfEFvjBmZSGhz4jnMXdE/eGTO7eVg9/xNCNFlxqWooN/343V+RBj6GB
- jD+kLdJ95rtBmXQBmsNJ6SL0PRQjf4yXYARCgwauuTh1Y5EbpvkCxrtDv2tYykcyP4YQ
- 5ohw==
-X-Gm-Message-State: AOAM533xuNhMGemDnbWOA2ofGkJQJtV/DVf/KznoUEfmv+OetIpoWxZX
- xW/tvofgEer1m+4kuIXSs1ecqnM=
-X-Google-Smtp-Source: ABdhPJyd97sX7qPx1H39m7yLOxF3pvcBOTKsn0CW78R+DHz88Sv/pd2uXSh+4AjjxRjLX/BDeatMDA==
-X-Received: by 2002:a05:622a:13d0:b0:305:11b9:b53 with SMTP id
- p16-20020a05622a13d000b0030511b90b53mr7402132qtk.348.1654887387296; 
- Fri, 10 Jun 2022 11:56:27 -0700 (PDT)
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:mime-version
+ :content-disposition;
+ bh=9LGrN71hGYmCGD2rOU7fZmr62+xJ1Vp6jjk3/W+3clI=;
+ b=ZgjxCcqS/DRRWsdZDzqofO3wsYuQfKD4wRtDKmmFGw2Ik3Dn318XHmyLEHEWtP8IA9
+ loSpuUrE5xOX+lQyLNvLeMW/067l0T4s6NgLmpNUXMIa0tT3z9zXJNobUyW2HaoElHje
+ PpWswcFLotLDS24TfMIHlddNUIlhax4InMviF8gcUBmTA8xt2MdwYvutTcvYbvs2tX8b
+ Kj6/cVre1tr6LUplmT8wwdiu+rPeJrMMWwR9ySxAJuMhmqVA+mY8yVBcsF56+N6oD0gC
+ bQjfEd2Fqo/jssjQUsPyu5ivr679Ypus13TuV5MBVSzdqONkXjUVh2l5xPh4c1nBUn9l
+ Jaeg==
+X-Gm-Message-State: AOAM531fkkZDohnsDo+/wJHMBR7aiz7z/kesS3xuDED43AkVgfPj3+a1
+ yiC4Y4fWn+jp62+Rm4PMi5w4zes=
+X-Google-Smtp-Source: ABdhPJy9eMmKIo9FfcxP4rXP3miTML9aPzFtMs1wjmo4pmTYde2sojL+C8P77Bnn0rwBp9BsZbBlKA==
+X-Received: by 2002:a05:620a:1a1b:b0:6a7:aa:d474 with SMTP id
+ bk27-20020a05620a1a1b00b006a700aad474mr11216024qkb.680.1654902136194; 
+ Fri, 10 Jun 2022 16:02:16 -0700 (PDT)
 Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
  [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
- de37-20020a05620a372500b006a71729a139sm175233qkb.44.2022.06.10.11.56.26
+ q12-20020a05622a030c00b00304dd83a9b1sm296245qtw.82.2022.06.10.16.02.15
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 10 Jun 2022 11:56:26 -0700 (PDT)
-Date: Fri, 10 Jun 2022 14:56:25 -0400
+ Fri, 10 Jun 2022 16:02:15 -0700 (PDT)
+Date: Fri, 10 Jun 2022 19:02:15 -0400
 From: Mike Snitzer <snitzer@kernel.org>
-To: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-Message-ID: <YqOT2QGR5YaZQyIb@redhat.com>
-References: <20220609114300.453650-1-shinichiro.kawasaki@wdc.com>
- <YqNwqGeI/4sy9zn1@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <YqPNd1xK0MIqRnev@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <YqNwqGeI/4sy9zn1@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-Subject: Re: [dm-devel] dm crypt: set bdev to clone bio
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+Subject: [dm-devel] [git pull] device mapper fixes for 5.19-rc2
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -88,10 +85,11 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Christoph Hellwig <hch@lst.de>, Alasdair G Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -100,162 +98,46 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Jun 10 2022 at 12:26P -0400,
-Mike Snitzer <snitzer@kernel.org> wrote:
+Hi Linus,
 
-> On Thu, Jun 09 2022 at  7:43P -0400,
-> Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com> wrote:
-> 
-> > After the commit ca522482e3ea ("dm: pass NULL bdev to bio_alloc_clone"),
-> > bdev is no longer set to clone bio for ->map function. Instead, each DM
-> > targets shall set bdev to the clone bio by calling bio_set_dev() before
-> > issuing IO. Also the commit ensured that dm_zone_endio() is called from
-> > clone_endio() only when DM targets set bdev to the clone bio.
-> > 
-> > However, crypt_map() of dm-crypt does not call bio_set_dev() for every
-> > clone bio. Then dm_zone_endio() is not called at completion of the bios
-> > and zone locks are not properly unlocked. This triggers a hang when
-> > blktests block/004 is run for dm-crypt on zoned block devices [1]. To
-> > avoid the hang, call bio_set_dev() for every bio in crypt_map().
-> > 
-> > [1]
-> > 
-> > [ 6596.702977][T55017] run blktests block/004 at 2022-06-07 20:18:01
-> 
-> <snip>
-> 
-> Please refrain from putting stack traces in patch headers whenever
-> possible.  Really no need for this, especially given how long this one
-> is!
-> 
-> I revised the header as follows:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.19&id=cae0053631cd4b02bb882b53c7da20652b038049
->  
-> > Fixes: ca522482e3ea ("dm: pass NULL bdev to bio_alloc_clone")
-> > Signed-off-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-> > ---
-> >  drivers/md/dm-crypt.c | 3 ++-
-> >  1 file changed, 2 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> > index 159c6806c19b..c68523a89428 100644
-> > --- a/drivers/md/dm-crypt.c
-> > +++ b/drivers/md/dm-crypt.c
-> > @@ -3378,6 +3378,8 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
-> >  	struct dm_crypt_io *io;
-> >  	struct crypt_config *cc = ti->private;
-> >  
-> > +	bio_set_dev(bio, cc->dev->bdev);
-> > +
-> >  	/*
-> >  	 * If bio is REQ_PREFLUSH or REQ_OP_DISCARD, just bypass crypt queues.
-> >  	 * - for REQ_PREFLUSH device-mapper core ensures that no IO is in-flight
-> > @@ -3385,7 +3387,6 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
-> >  	 */
-> >  	if (unlikely(bio->bi_opf & REQ_PREFLUSH ||
-> >  	    bio_op(bio) == REQ_OP_DISCARD)) {
-> > -		bio_set_dev(bio, cc->dev->bdev);
-> >  		if (bio_sectors(bio))
-> >  			bio->bi_iter.bi_sector = cc->start +
-> >  				dm_target_offset(ti, bio->bi_iter.bi_sector);
-> > -- 
-> > 2.36.1
-> > 
-> 
-> BUT something isn't quite adding up with why you need this change
-> given commit ca522482e3ea has this compatibility code:
-> 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 9650ba2075b8..d62f1354ecbf 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -581,7 +581,9 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
->         struct dm_target_io *tio;
->         struct bio *clone;
-> 
-> -       clone = bio_alloc_clone(bio->bi_bdev, bio, GFP_NOIO, &md->io_bs);
-> +       clone = bio_alloc_clone(NULL, bio, GFP_NOIO, &md->io_bs);
-> +       /* Set default bdev, but target must bio_set_dev() before issuing IO */
-> +       clone->bi_bdev = md->disk->part0;
-> 
->         tio = clone_to_tio(clone);
->         tio->flags = 0;
-> 
-> The clone bio passed to crypt_map() _should_ be the same as was passed
-> before commit ca522482e3ea (It gets set to md->disk->part0 rather than
-> bio->bi_bdev but they really should point to the same top-level DM
-> bdev).
-> 
-> So why is your extra override to have dm-crypt point to its underlying
-> data device important now?
+The following changes since commit f2906aa863381afb0015a9eb7fefad885d4e5a56:
 
-Think the issue is not that the clone->bi_bdev isn't set.  It is that
-it is merely not changed from the md->disk->part0 default.
+  Linux 5.19-rc1 (2022-06-05 17:18:54 -0700)
 
-Commit ca522482e3ea added this to clone_endio:
+are available in the Git repository at:
 
-if (likely(bio->bi_bdev != md->disk->part0)) {
-      ...
-      if (static_branch_unlikely(&zoned_enabled) &&
-	  unlikely(blk_queue_is_zoned(q)))
-	      dm_zone_endio(io, bio);
-}
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.19/dm-fixes-2
 
-So dm_zone_endio() isn't called unless you force dm-crypt (or any
-other target) to remap the clone bio to a different bdev.
+for you to fetch changes up to dddf30564054796696bcd4c462b232a5beacf72c:
 
-It is weird that a bio is completing without having been remapped by
-dm-crypt; but there could be any number of reasons why that hasn't
-happened.
+  dm: fix zoned locking imbalance due to needless check in clone_endio (2022-06-10 15:23:54 -0400)
 
-Anyway, I think a correct fix needs to be to the logic in
-clone_endio().  Could be that its best to just remove the gating
-likely() conditional.
-
-Can you please test this patch instead of your patch?
-
-Thanks,
+Please pull, thanks.
 Mike
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 8b21155d3c4f..d8f16183bf27 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1016,23 +1016,19 @@ static void clone_endio(struct bio *bio)
- 	struct dm_io *io = tio->io;
- 	struct mapped_device *md = io->md;
- 
--	if (likely(bio->bi_bdev != md->disk->part0)) {
--		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
--
--		if (unlikely(error == BLK_STS_TARGET)) {
--			if (bio_op(bio) == REQ_OP_DISCARD &&
--			    !bdev_max_discard_sectors(bio->bi_bdev))
--				disable_discard(md);
--			else if (bio_op(bio) == REQ_OP_WRITE_ZEROES &&
--				 !q->limits.max_write_zeroes_sectors)
--				disable_write_zeroes(md);
--		}
--
--		if (static_branch_unlikely(&zoned_enabled) &&
--		    unlikely(blk_queue_is_zoned(q)))
--			dm_zone_endio(io, bio);
-+	if (unlikely(error == BLK_STS_TARGET)) {
-+		if (bio_op(bio) == REQ_OP_DISCARD &&
-+		    !bdev_max_discard_sectors(bio->bi_bdev))
-+			disable_discard(md);
-+		else if (bio_op(bio) == REQ_OP_WRITE_ZEROES &&
-+			 !bdev_write_zeroes_sectors(bio->bi_bdev))
-+			disable_write_zeroes(md);
- 	}
- 
-+	if (static_branch_unlikely(&zoned_enabled) &&
-+	    unlikely(blk_queue_is_zoned(bdev_get_queue(bio->bi_bdev))))
-+		dm_zone_endio(io, bio);
-+
- 	if (endio) {
- 		int r = endio(ti, bio, &error);
- 		switch (r) {
+----------------------------------------------------------------
+- Fix DM core's bioset initialization so that blk integrity pool is
+  properly setup. Remove now unused bioset_init_from_src.
+
+- Fix DM zoned hang from locking imbalance due to needless check in
+  clone_endio().
+
+----------------------------------------------------------------
+Christoph Hellwig (2):
+      dm: fix bio_set allocation
+      block: remove bioset_init_from_src
+
+Mike Snitzer (1):
+      dm: fix zoned locking imbalance due to needless check in clone_endio
+
+ block/bio.c           |  20 ---------
+ drivers/md/dm-core.h  |  11 ++++-
+ drivers/md/dm-rq.c    |   2 +-
+ drivers/md/dm-table.c |  11 -----
+ drivers/md/dm.c       | 110 +++++++++++++++++---------------------------------
+ drivers/md/dm.h       |   2 -
+ include/linux/bio.h   |   1 -
+ 7 files changed, 46 insertions(+), 111 deletions(-)
 
 --
 dm-devel mailing list
