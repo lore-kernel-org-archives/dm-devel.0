@@ -1,82 +1,128 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7D190C433EF
-	for <dm-devel@archiver.kernel.org>; Mon, 13 Jun 2022 17:15:57 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0D4D2CCA47A
+	for <dm-devel@archiver.kernel.org>; Tue, 14 Jun 2022 06:37:47 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-434-UWtt2y-MNUCekUADyqEx7w-1; Mon, 13 Jun 2022 13:15:55 -0400
-X-MC-Unique: UWtt2y-MNUCekUADyqEx7w-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-39-8FmhmV2CMtCIJKcvhPgi7Q-1; Tue, 14 Jun 2022 02:37:43 -0400
+X-MC-Unique: 8FmhmV2CMtCIJKcvhPgi7Q-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8B554380670E;
-	Mon, 13 Jun 2022 17:15:53 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A3FE98058A4;
+	Tue, 14 Jun 2022 06:37:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 089B61121314;
-	Mon, 13 Jun 2022 17:15:51 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 77669404E4C3;
+	Tue, 14 Jun 2022 06:37:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 95E7F1947065;
-	Mon, 13 Jun 2022 17:15:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1A8781947B87;
+	Tue, 14 Jun 2022 06:37:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B4531194705B
- for <dm-devel@listman.corp.redhat.com>; Mon, 13 Jun 2022 17:15:49 +0000 (UTC)
+ ESMTP id B806A194705B
+ for <dm-devel@listman.corp.redhat.com>; Mon, 13 Jun 2022 12:05:32 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9352A2026D2D; Mon, 13 Jun 2022 17:15:49 +0000 (UTC)
+ id A6CC2415F5E; Mon, 13 Jun 2022 12:05:32 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8F4522026D64
- for <dm-devel@redhat.com>; Mon, 13 Jun 2022 17:15:49 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A1600492C3B
+ for <dm-devel@redhat.com>; Mon, 13 Jun 2022 12:05:32 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7035685A585
- for <dm-devel@redhat.com>; Mon, 13 Jun 2022 17:15:49 +0000 (UTC)
-Received: from mail-pg1-f173.google.com (mail-pg1-f173.google.com
- [209.85.215.173]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-36-_xBPNe-ENimKYVhNnUCrZg-1; Mon, 13 Jun 2022 13:15:29 -0400
-X-MC-Unique: _xBPNe-ENimKYVhNnUCrZg-1
-Received: by mail-pg1-f173.google.com with SMTP id f65so6098638pgc.7
- for <dm-devel@redhat.com>; Mon, 13 Jun 2022 10:15:29 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=HplHX2Dj1z/sWHxSKlJW/gqEIj/eDK55kENWjykpP0s=;
- b=PTWy2i3bjJiRAf0/kMAK4aBmHKG70njNzCa4bUji4SUv+OV5SMCMuVGXt5Ppo9ezRt
- Y2NlymRYaOvsWHFPE58wc3Tsx5OyKC9tCAovcLBrpTtsjhhlQ6A0CG2aggpoA3VwCfWR
- uAZsDIXig6EWhe/1ItgR+LUgaXudMG2I8JWx/PlBPysEg5Lv0KV3pD7Tw2//ncCwg7j+
- y4jtisAlu8p2vbeyUun9P7wP9yuUN0Tb7UNrA00zj7PShWeV/+BSsc1d/JuFKS7W6S+B
- ndHDei10cx95w1TIn76GWr1GOJe2rqMd3332lUx5DDHnGsFMGs2l+ZWFV143rit6eSeg
- ajBQ==
-X-Gm-Message-State: AOAM5308mpBlPp7aNwjELE1ukhaYhujDynjxkK6obO3N1hMbpInYIPeJ
- G1/O2kCjb208S7+F3zhy9sIfVQ==
-X-Google-Smtp-Source: ABdhPJxeMM7KYRXm0u0KsG75RyBBXv3/0OQRUh4WZMtUklEUzQc43TFu+c9tkQBt+JNomJsFdNFtlg==
-X-Received: by 2002:a63:30f:0:b0:3fd:f9de:a35d with SMTP id
- 15-20020a63030f000000b003fdf9dea35dmr519789pgd.317.1655140528387; 
- Mon, 13 Jun 2022 10:15:28 -0700 (PDT)
-Received: from localhost ([2620:15c:11a:202:c4fb:a1d8:47ef:f10c])
- by smtp.gmail.com with UTF8SMTPSA id
- x12-20020a17090300cc00b00167705fd12asm5374876plc.135.2022.06.13.10.15.27
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Mon, 13 Jun 2022 10:15:27 -0700 (PDT)
-Date: Mon, 13 Jun 2022 10:15:25 -0700
-From: Matthias Kaehlcke <mka@chromium.org>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Kees Cook <keescook@chromium.org>, James Morris <jmorris@namei.org>,
- "Serge E . Hallyn" <serge@hallyn.com>
-Message-ID: <YqdwrWFXNtsKaTm7@google.com>
-References: <20220523211400.290537-1-mka@chromium.org>
- <20220523141325.v6.1.I3e928575a23481121e73286874c4c2bdb403355d@changeid>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 84901811E81
+ for <dm-devel@redhat.com>; Mon, 13 Jun 2022 12:05:32 +0000 (UTC)
+Received: from esa1.hgst.iphmx.com (esa1.hgst.iphmx.com [68.232.141.245]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-245-g1MWnLHRMZK20yKnRkvXeA-1; Mon, 13 Jun 2022 08:05:30 -0400
+X-MC-Unique: g1MWnLHRMZK20yKnRkvXeA-1
+X-IronPort-AV: E=Sophos;i="5.91,297,1647273600"; d="scan'208";a="315056561"
+Received: from mail-mw2nam10lp2104.outbound.protection.outlook.com (HELO
+ NAM10-MW2-obe.outbound.protection.outlook.com) ([104.47.55.104])
+ by ob1.hgst.iphmx.com with ESMTP; 13 Jun 2022 20:04:26 +0800
+Received: from DM8PR04MB8037.namprd04.prod.outlook.com (2603:10b6:8:f::6) by
+ SN6PR04MB4256.namprd04.prod.outlook.com (2603:10b6:805:31::11) with Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.5332.16; Mon, 13 Jun 2022 12:04:24 +0000
+Received: from DM8PR04MB8037.namprd04.prod.outlook.com
+ ([fe80::39dc:d3d:686a:9e7]) by DM8PR04MB8037.namprd04.prod.outlook.com
+ ([fe80::39dc:d3d:686a:9e7%3]) with mapi id 15.20.5332.020; Mon, 13 Jun 2022
+ 12:04:24 +0000
+From: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+To: Mike Snitzer <snitzer@kernel.org>
+Thread-Topic: dm crypt: set bdev to clone bio
+Thread-Index: AQHYfObTwnjRTz/m7kiP8aqM4x7tpK1I/cOAgARD34A=
+Date: Mon, 13 Jun 2022 12:04:23 +0000
+Message-ID: <20220613120423.vmqnsv6qdqugps57@shindev>
+References: <20220609114300.453650-1-shinichiro.kawasaki@wdc.com>
+ <YqNwqGeI/4sy9zn1@redhat.com> <YqOT2QGR5YaZQyIb@redhat.com>
+In-Reply-To: <YqOT2QGR5YaZQyIb@redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 8fc40fc2-dccb-4b0c-1d88-08da4d34db6c
+x-ms-traffictypediagnostic: SN6PR04MB4256:EE_
+x-microsoft-antispam-prvs: <SN6PR04MB4256B820CF3C69149C4C5DBFEDAB9@SN6PR04MB4256.namprd04.prod.outlook.com>
+wdcipoutbound: EOP-TRUE
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: GGuRe6CAJFfG4RVc72/jLPbC58dljqhgCb92BGj+wtOivqoRt+M3qPKUsHE98DnkGqxZqD1nXRLD2ZV+URI5KyKjomYA8DdHtFEE/+3KGAU9yq1d76KkZBDn7WuGPw/DqBUTQJdctNWdqLu8pLFe+Z4nhwuak0TDv0t9QoWCvRbyVU825I+K0jjkHfbTc0EMGYydVjxD9ZugDzbcSAD5DLR/xj1n9Ectk3R+/oSehajIZ2v5UIXkLsmuAIhgxaB99klykqRO/gOD2vPR1h2hCHgr3cs2yXssz48yzmgrrNBJBtiJbNcO/05yYyUkZBdsZ+qc5ODO8jVSW1IE9g0PuUgWkh22LtW3OUM55h/DTFUbNv5IvKHdy/3kxNHyGXP/VqlOOxUyPB6kmmUXFfpl4RQlJpUsZgG3Ul+pnuiEER/8oqXmGEVnRoEBV+oNBTURMetRQ3Y/gm78LZ7ocsDxslosXZpq19FFXxXXsYyh7Znryha6aZpdPg/Ufw/uc6oI2b10DP60Hxr0zZw7Wuoq0xCqmXoucFokunxVpUZuIGFzJsARhYRTVw5DhYXhhH8hv1EfPPG14RZo1MqBRgmNW6dNGrA96UmNeFE4wXlBnwi1ccbkFmyEegN0hM6wHqZUjuL2ykKuXnywRR5da0CMXE/rzSVjZpJsOZse0R/eFCEnmK2dEZgca4bWUOb0Uxse3HYgIdTUXyojeFpKsc+iINDH/mfNRiTMdKnWqhOB1RGHqwkZazVxJYyvARP3lfQggfbx4EHKYmTGSpCC5CJUe42EyCmcemQPDlpJ+aModtY=
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:DM8PR04MB8037.namprd04.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230016)(7916004)(4636009)(366004)(186003)(86362001)(1076003)(82960400001)(83380400001)(71200400001)(91956017)(66946007)(4326008)(8676002)(66476007)(6916009)(64756008)(54906003)(316002)(76116006)(66446008)(6506007)(66556008)(5660300002)(8936002)(6486002)(33716001)(38070700005)(38100700002)(6512007)(26005)(9686003)(122000001)(2906002)(966005)(44832011)(508600001);
+ DIR:OUT; SFP:1102
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?eMz2i17+kR9PUGv+rN9mEDoMg5KyqWWWxHbcbJZPU4vAgSxtAV7DFbEJGHl5?=
+ =?us-ascii?Q?R87WZZckcDu4V+e8UX4t1b/Iz79pHKgXdHLyAAEBH6bt7XvLSKeVADusJD4S?=
+ =?us-ascii?Q?hsfu8TpqWyrfZXk3s6n0ZOZLHoHT1bxOl4wDIsGGyewf+g4Tc2J+vLcmqXSI?=
+ =?us-ascii?Q?MXHYegBT1Jch99hUuRaVGVpBBIbe2/ingyYdGpOra8d9fKID73mvgOrEJjQj?=
+ =?us-ascii?Q?UNyIuyrfuu5lWVOpu9kV6UVUcMBalwFpdkUM+g13zyUIrJ5qxudRBA9IeEQ0?=
+ =?us-ascii?Q?iDHaG+StFBElqIN6/CAtzgOGVysX4kR3hfzWhmpRf8x9ZimU5IrHOiA2Btq5?=
+ =?us-ascii?Q?fUQQ+iUOIwGaBBDlCfV0AWJ0cTEn5QJCXD8ZFJjxcTPOYc1xiUyU+htPcjK8?=
+ =?us-ascii?Q?ned23HNOulpe0D0rLWn58Lpf059QO3Dpa4zUD5SE9gGkIRqZvBDomB6K00r6?=
+ =?us-ascii?Q?1ueFPp4YCS9X1XNY4hEzBCOt8+K4/vJLPUKWU3TPk4dwYmkYjZwrIEX/dSVC?=
+ =?us-ascii?Q?svlq6Wt4AG2XPStKSv/xiCGixjdnI7PP4/tfvnG+OFF2WbPuqcJ3x0UDH6Lc?=
+ =?us-ascii?Q?QxHEKMNuO4JrtYIS9yHIWaYb8hMqm+HcsvE6GQ0htZXn1/hi72pxpW2YqTVY?=
+ =?us-ascii?Q?uun+IK7hg7sX/rxBkBmcM7ScrC5Vi5rtuXEafRI7ze60UhsywmkT56hLgDXL?=
+ =?us-ascii?Q?KAyozyp1xTkCP1P4i7odwnik/IVmQ+JEpgBfeZ3pZf+yfpNbW7me9vQuZnSu?=
+ =?us-ascii?Q?nCV9kgoNq8DW4Pefh9a27HVlnArZnDkuYgjkE3ehgFVa5xJR/fz35JOdKaGr?=
+ =?us-ascii?Q?WiT5ze/2Z5WG9KJAGX1Z299gvtXtOrko92FzN8MIRAjBsJhNrpwEbLaADaDu?=
+ =?us-ascii?Q?xlbKcRU76rvR7zyGeNewvyAuqnU3bQy1nHMKze6eFIzMcHAGlN6k1l6FWTbg?=
+ =?us-ascii?Q?eXxAdzj8zWwW4ZPJRbs9PPJt9CVLrbhibivZwYKVGskwg5mpxopIROinh4Lk?=
+ =?us-ascii?Q?Qi7mq5JShIaI9JclvVBN026zvbex+dlAZV/LYLaTq6yPhElna232gPUoBi5I?=
+ =?us-ascii?Q?vfAa4h+C9gYYAKk60V8DhGRCc/KfaFVQCt0o2l643YyvWXe6Vb+NxoznHnVg?=
+ =?us-ascii?Q?OMxziqmrRg1GxjUSFrZVXffvbVvbv1JyxJzpXvdnZb2oQc1IYQ79Ez/MKctZ?=
+ =?us-ascii?Q?9JNjXcrPfA2SIWPohqNov4ijhvT6YL3/zcfj0gTMa69R1K3knz+p7ThQVPJm?=
+ =?us-ascii?Q?vxYRrbamKU2DSAed+Jsh/C/fkdm9J8f5MeJkTLCP6bC9u6rk9HGw4ZW8WF01?=
+ =?us-ascii?Q?Wy/zzVMb5VyvrDKUvuAqRs27JRiYSvrsMfB0i2WGjO5ZwhcEQ/1VFO6r0KNk?=
+ =?us-ascii?Q?WcisvBY7prqvfGpv9EfxHHdjxxiIqHlf0IGmLX5DS8K9AOrQ9MIceJVWAV4k?=
+ =?us-ascii?Q?SGbxNwVeZyp7apE/61kK99xrQwASDIcrv3HqXeqEymSKBhHDUqeq8ZS3IxSZ?=
+ =?us-ascii?Q?tolqBcyYTWRjqREhHoIq3MsdwvggiQ/lSCZpfC9PGvLesaXa5dvd4Z/8VQhi?=
+ =?us-ascii?Q?KAZOJRtWUPSxC/mkUGhmAIrY9nfVrHZTESORrqskwedDxZZTGWLLw7I9J/E3?=
+ =?us-ascii?Q?6FHnG+qfkwceAjS5KIKEAk2ocxXLG4toQvdlSK50aetwg9qHel43vMfn/W+s?=
+ =?us-ascii?Q?Ssk/LdIg6Ecc7fQRY+lDvYDs6591Hgrsjl5+avwcwsIia2KTSn/S67i91v7i?=
+ =?us-ascii?Q?+sYeZUPBC8DmdPWYMrze93L6YaQqtFrBPJU89fgphQiSLqq5xk4p?=
 MIME-Version: 1.0
-In-Reply-To: <20220523141325.v6.1.I3e928575a23481121e73286874c4c2bdb403355d@changeid>
+X-OriginatorOrg: wdc.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DM8PR04MB8037.namprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 8fc40fc2-dccb-4b0c-1d88-08da4d34db6c
+X-MS-Exchange-CrossTenant-originalarrivaltime: 13 Jun 2022 12:04:24.0811 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: vvlsMPcmS9DmFyLyaqg4hyWkWEfZxP1hgtDJZsoqmoPMKyNTCRuaOWXFUL/S46LyrfPhEsUuw7y3yGF2fOGdeiWf55TpqAi5cT1Uya4w3Yc=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SN6PR04MB4256
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -84,8 +130,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-Subject: Re: [dm-devel] [PATCH v6 1/3] dm: Add verity helpers for LoadPin
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Mailman-Approved-At: Tue, 14 Jun 2022 06:37:38 +0000
+Subject: Re: [dm-devel] dm crypt: set bdev to clone bio
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -97,285 +144,151 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-security-module@vger.kernel.org,
- Douglas Anderson <dianders@chromium.org>, linux-kernel@vger.kernel.org,
- linux-raid@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com,
- Milan Broz <gmazyland@gmail.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
+Content-ID: <74FF9DCDB4D19D49B1C60398F45A22B4@namprd04.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Mike, does this look good to you or are any further changes needed
-to get this landed?
+On Jun 10, 2022 / 14:56, Mike Snitzer wrote:
+> On Fri, Jun 10 2022 at 12:26P -0400,
+> Mike Snitzer <snitzer@kernel.org> wrote:
+> 
+> > On Thu, Jun 09 2022 at  7:43P -0400,
+> > Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com> wrote:
+> > 
+> > > After the commit ca522482e3ea ("dm: pass NULL bdev to bio_alloc_clone"),
+> > > bdev is no longer set to clone bio for ->map function. Instead, each DM
+> > > targets shall set bdev to the clone bio by calling bio_set_dev() before
+> > > issuing IO. Also the commit ensured that dm_zone_endio() is called from
+> > > clone_endio() only when DM targets set bdev to the clone bio.
+> > > 
+> > > However, crypt_map() of dm-crypt does not call bio_set_dev() for every
+> > > clone bio. Then dm_zone_endio() is not called at completion of the bios
+> > > and zone locks are not properly unlocked. This triggers a hang when
+> > > blktests block/004 is run for dm-crypt on zoned block devices [1]. To
+> > > avoid the hang, call bio_set_dev() for every bio in crypt_map().
+> > > 
+> > > [1]
+> > > 
+> > > [ 6596.702977][T55017] run blktests block/004 at 2022-06-07 20:18:01
+> > 
+> > <snip>
+> > 
+> > Please refrain from putting stack traces in patch headers whenever
+> > possible.  Really no need for this, especially given how long this one
+> > is!
+> > 
+> > I revised the header as follows:
+> > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.19&id=cae0053631cd4b02bb882b53c7da20652b038049
 
-Thanks
+I see. I will keep this in mind for my future patches. Thanks.
 
-Matthias
+> >  
+> > > Fixes: ca522482e3ea ("dm: pass NULL bdev to bio_alloc_clone")
+> > > Signed-off-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+> > > ---
+> > >  drivers/md/dm-crypt.c | 3 ++-
+> > >  1 file changed, 2 insertions(+), 1 deletion(-)
+> > > 
+> > > diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> > > index 159c6806c19b..c68523a89428 100644
+> > > --- a/drivers/md/dm-crypt.c
+> > > +++ b/drivers/md/dm-crypt.c
+> > > @@ -3378,6 +3378,8 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
+> > >  	struct dm_crypt_io *io;
+> > >  	struct crypt_config *cc = ti->private;
+> > >  
+> > > +	bio_set_dev(bio, cc->dev->bdev);
+> > > +
+> > >  	/*
+> > >  	 * If bio is REQ_PREFLUSH or REQ_OP_DISCARD, just bypass crypt queues.
+> > >  	 * - for REQ_PREFLUSH device-mapper core ensures that no IO is in-flight
+> > > @@ -3385,7 +3387,6 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
+> > >  	 */
+> > >  	if (unlikely(bio->bi_opf & REQ_PREFLUSH ||
+> > >  	    bio_op(bio) == REQ_OP_DISCARD)) {
+> > > -		bio_set_dev(bio, cc->dev->bdev);
+> > >  		if (bio_sectors(bio))
+> > >  			bio->bi_iter.bi_sector = cc->start +
+> > >  				dm_target_offset(ti, bio->bi_iter.bi_sector);
+> > > -- 
+> > > 2.36.1
+> > > 
+> > 
+> > BUT something isn't quite adding up with why you need this change
+> > given commit ca522482e3ea has this compatibility code:
+> > 
+> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > index 9650ba2075b8..d62f1354ecbf 100644
+> > --- a/drivers/md/dm.c
+> > +++ b/drivers/md/dm.c
+> > @@ -581,7 +581,9 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
+> >         struct dm_target_io *tio;
+> >         struct bio *clone;
+> > 
+> > -       clone = bio_alloc_clone(bio->bi_bdev, bio, GFP_NOIO, &md->io_bs);
+> > +       clone = bio_alloc_clone(NULL, bio, GFP_NOIO, &md->io_bs);
+> > +       /* Set default bdev, but target must bio_set_dev() before issuing IO */
+> > +       clone->bi_bdev = md->disk->part0;
+> > 
+> >         tio = clone_to_tio(clone);
+> >         tio->flags = 0;
+> > 
+> > The clone bio passed to crypt_map() _should_ be the same as was passed
+> > before commit ca522482e3ea (It gets set to md->disk->part0 rather than
+> > bio->bi_bdev but they really should point to the same top-level DM
+> > bdev).
+> > 
+> > So why is your extra override to have dm-crypt point to its underlying
+> > data device important now?
+> 
+> Think the issue is not that the clone->bi_bdev isn't set.  It is that
+> it is merely not changed from the md->disk->part0 default.
+> 
+> Commit ca522482e3ea added this to clone_endio:
+> 
+> if (likely(bio->bi_bdev != md->disk->part0)) {
+>       ...
+>       if (static_branch_unlikely(&zoned_enabled) &&
+> 	  unlikely(blk_queue_is_zoned(q)))
+> 	      dm_zone_endio(io, bio);
+> }
+> 
+> So dm_zone_endio() isn't called unless you force dm-crypt (or any
+> other target) to remap the clone bio to a different bdev.
 
-On Mon, May 23, 2022 at 02:13:58PM -0700, Matthias Kaehlcke wrote:
-> LoadPin limits loading of kernel modules, firmware and certain
-> other files to a 'pinned' file system (typically a read-only
-> rootfs). To provide more flexibility LoadPin is being extended
-> to also allow loading these files from trusted dm-verity
-> devices. For that purpose LoadPin can be provided with a list
-> of verity root digests that it should consider as trusted.
+Yes, I have same understanding. I assumed the bio->bi_bdev != md->disk->part0
+can not be removed, and suggested to dm-crypt to remap all clone bios.
+
 > 
-> Add a bunch of helpers to allow LoadPin to check whether a DM
-> device is a trusted verity device. The new functions broadly
-> fall in two categories: those that need access to verity
-> internals (like the root digest), and the 'glue' between
-> LoadPin and verity. The new file dm-verity-loadpin.c contains
-> the glue functions.
+> It is weird that a bio is completing without having been remapped by
+> dm-crypt; but there could be any number of reasons why that hasn't
+> happened.
 > 
-> Signed-off-by: Matthias Kaehlcke <mka@chromium.org>
-> Acked-by: Kees Cook <keescook@chromium.org>
-> ---
+> Anyway, I think a correct fix needs to be to the logic in
+> clone_endio().  Could be that its best to just remove the gating
+> likely() conditional.
 > 
-> Changes in v6:
-> - s/loadpin_trusted_verity_root_digests/dm_verity_loadpin_trusted_root_digests/
-> - s/trusted_root_digest/dm_verity_loadpin_trusted_root_digest/
-> - removed unnecessary symbol exports
-> 
-> Changes in v5:
-> - changed dm_verity_loadpin_is_sb_trusted() to
->   dm_verity_loadpin_is_bdev_trusted()
-> - bumped version number to 1.8.1
-> - deleted bad semicolon in declaration of stub for
->   dm_verity_loadpin_is_bdev_trusted()
-> - added 'Acked-by' tag from Kees
-> 
-> Changes in v4:
-> - a trusted verity device must have a single target of
->   type 'verity'
-> - share list of verity digests with loadpin, deleted
->   dm_verity_loadpin_set_trusted_root_digests()
-> - dm_verity_loadpin_is_md_trusted() is now dm_verity_loadpin_is_sb_trusted(),
->   it receives a super_block instead of mapped_device. Updated kernel doc.
-> - changed struct trusted_root_digest to have an unsized
->   u8 array instead of a pointer
-> - extend 'dm-verity-objs' instead of 'dm-mod-objs'
-> 
-> Changes in v3:
-> - none
-> 
-> Changes in v2:
-> - none
-> 
->  drivers/md/Makefile               |  6 +++
->  drivers/md/dm-verity-loadpin.c    | 74 +++++++++++++++++++++++++++++++
->  drivers/md/dm-verity-target.c     | 33 +++++++++++++-
->  drivers/md/dm-verity.h            |  4 ++
->  include/linux/dm-verity-loadpin.h | 27 +++++++++++
->  5 files changed, 143 insertions(+), 1 deletion(-)
->  create mode 100644 drivers/md/dm-verity-loadpin.c
->  create mode 100644 include/linux/dm-verity-loadpin.h
-> 
-> diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-> index 0454b0885b01..71771901c823 100644
-> --- a/drivers/md/Makefile
-> +++ b/drivers/md/Makefile
-> @@ -108,6 +108,12 @@ ifeq ($(CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG),y)
->  dm-verity-objs			+= dm-verity-verify-sig.o
->  endif
->  
-> +ifeq ($(CONFIG_DM_VERITY),y)
-> +ifeq ($(CONFIG_SECURITY_LOADPIN),y)
-> +dm-verity-objs			+= dm-verity-loadpin.o
-> +endif
-> +endif
-> +
->  ifeq ($(CONFIG_DM_AUDIT),y)
->  dm-mod-objs			+= dm-audit.o
->  endif
-> diff --git a/drivers/md/dm-verity-loadpin.c b/drivers/md/dm-verity-loadpin.c
-> new file mode 100644
-> index 000000000000..10c18bc1652c
-> --- /dev/null
-> +++ b/drivers/md/dm-verity-loadpin.c
-> @@ -0,0 +1,74 @@
-> +// SPDX-License-Identifier: GPL-2.0-only
-> +
-> +#include <linux/list.h>
-> +#include <linux/kernel.h>
-> +#include <linux/dm-verity-loadpin.h>
-> +
-> +#include "dm.h"
-> +#include "dm-verity.h"
-> +
-> +#define DM_MSG_PREFIX	"verity-loadpin"
-> +
-> +LIST_HEAD(dm_verity_loadpin_trusted_root_digests);
-> +
-> +static bool is_trusted_verity_target(struct dm_target *ti)
-> +{
-> +	u8 *root_digest;
-> +	unsigned int digest_size;
-> +	struct dm_verity_loadpin_trusted_root_digest *trd;
-> +	bool trusted = false;
-> +
-> +	if (!dm_is_verity_target(ti))
-> +		return false;
-> +
-> +	if (dm_verity_get_root_digest(ti, &root_digest, &digest_size))
-> +		return false;
-> +
-> +	list_for_each_entry(trd, &dm_verity_loadpin_trusted_root_digests, node) {
-> +		if ((trd->len == digest_size) &&
-> +		    !memcmp(trd->data, root_digest, digest_size)) {
-> +			trusted = true;
-> +			break;
-> +		}
-> +	}
-> +
-> +	kfree(root_digest);
-> +
-> +	return trusted;
-> +}
-> +
-> +/*
-> + * Determines whether the file system of a superblock is located on
-> + * a verity device that is trusted by LoadPin.
-> + */
-> +bool dm_verity_loadpin_is_bdev_trusted(struct block_device *bdev)
-> +{
-> +	struct mapped_device *md;
-> +	struct dm_table *table;
-> +	struct dm_target *ti;
-> +	int srcu_idx;
-> +	bool trusted = false;
-> +
-> +	if (list_empty(&dm_verity_loadpin_trusted_root_digests))
-> +		return false;
-> +
-> +	md = dm_get_md(bdev->bd_dev);
-> +	if (!md)
-> +		return false;
-> +
-> +	table = dm_get_live_table(md, &srcu_idx);
-> +
-> +	if (dm_table_get_num_targets(table) != 1)
-> +		goto out;
-> +
-> +	ti = dm_table_get_target(table, 0);
-> +
-> +	if (is_trusted_verity_target(ti))
-> +		trusted = true;
-> +
-> +out:
-> +	dm_put_live_table(md, srcu_idx);
-> +	dm_put(md);
-> +
-> +	return trusted;
-> +}
-> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> index 80133aae0db3..c5395e93525a 100644
-> --- a/drivers/md/dm-verity-target.c
-> +++ b/drivers/md/dm-verity-target.c
-> @@ -19,6 +19,7 @@
->  #include <linux/module.h>
->  #include <linux/reboot.h>
->  #include <linux/scatterlist.h>
-> +#include <linux/string.h>
->  
->  #define DM_MSG_PREFIX			"verity"
->  
-> @@ -1310,9 +1311,39 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  	return r;
->  }
->  
-> +/*
-> + * Check whether a DM target is a verity target.
-> + */
-> +bool dm_is_verity_target(struct dm_target *ti)
-> +{
-> +	return ti->type->module == THIS_MODULE;
-> +}
-> +
-> +/*
-> + * Get the root digest of a verity target.
-> + *
-> + * Returns a copy of the root digest, the caller is responsible for
-> + * freeing the memory of the digest.
-> + */
-> +int dm_verity_get_root_digest(struct dm_target *ti, u8 **root_digest, unsigned int *digest_size)
-> +{
-> +	struct dm_verity *v = ti->private;
-> +
-> +	if (!dm_is_verity_target(ti))
-> +		return -EINVAL;
-> +
-> +	*root_digest = kmemdup(v->root_digest, v->digest_size, GFP_KERNEL);
-> +	if (*root_digest == NULL)
-> +		return -ENOMEM;
-> +
-> +	*digest_size = v->digest_size;
-> +
-> +	return 0;
-> +}
-> +
->  static struct target_type verity_target = {
->  	.name		= "verity",
-> -	.version	= {1, 8, 0},
-> +	.version	= {1, 8, 1},
->  	.module		= THIS_MODULE,
->  	.ctr		= verity_ctr,
->  	.dtr		= verity_dtr,
-> diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-> index 4e769d13473a..c832cc3e3d24 100644
-> --- a/drivers/md/dm-verity.h
-> +++ b/drivers/md/dm-verity.h
-> @@ -129,4 +129,8 @@ extern int verity_hash(struct dm_verity *v, struct ahash_request *req,
->  extern int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
->  				 sector_t block, u8 *digest, bool *is_zero);
->  
-> +extern bool dm_is_verity_target(struct dm_target *ti);
-> +extern int dm_verity_get_root_digest(struct dm_target *ti, u8 **root_digest,
-> +				     unsigned int *digest_size);
-> +
->  #endif /* DM_VERITY_H */
-> diff --git a/include/linux/dm-verity-loadpin.h b/include/linux/dm-verity-loadpin.h
-> new file mode 100644
-> index 000000000000..fb695ecaa5d5
-> --- /dev/null
-> +++ b/include/linux/dm-verity-loadpin.h
-> @@ -0,0 +1,27 @@
-> +/* SPDX-License-Identifier: GPL-2.0 */
-> +
-> +#ifndef __LINUX_DM_VERITY_LOADPIN_H
-> +#define __LINUX_DM_VERITY_LOADPIN_H
-> +
-> +#include <linux/list.h>
-> +
-> +struct block_device;
-> +
-> +extern struct list_head dm_verity_loadpin_trusted_root_digests;
-> +
-> +struct dm_verity_loadpin_trusted_root_digest {
-> +	struct list_head node;
-> +	unsigned int len;
-> +	u8 data[];
-> +};
-> +
-> +#if IS_ENABLED(CONFIG_SECURITY_LOADPIN) && IS_BUILTIN(CONFIG_DM_VERITY)
-> +bool dm_verity_loadpin_is_bdev_trusted(struct block_device *bdev);
-> +#else
-> +static inline bool dm_verity_loadpin_is_bdev_trusted(struct block_device *bdev)
-> +{
-> +	return false;
-> +}
-> +#endif
-> +
-> +#endif /* __LINUX_DM_VERITY_LOADPIN_H */
-> -- 
-> 2.36.1.124.g0e6072fb45-goog
-> 
+> Can you please test this patch instead of your patch?
+
+I tried this new patch and confirmed it avoids the hang. Looks good :)
+
+Also, I ran my test set for the patch in same manner I did for the dm-5.19
+branch, and observed no failure. Good. I found that this patch is already
+pulled into v5.19-rc2, and a bit surprised. It looks too late to put my
+Tested-by tag. Anyway, thanks for the fix.
+
+-- 
+Shin'ichiro Kawasaki
 
 --
 dm-devel mailing list
