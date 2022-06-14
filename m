@@ -1,70 +1,60 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7790BCCA47A
-	for <dm-devel@archiver.kernel.org>; Tue, 14 Jun 2022 09:50:08 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id EA0B2C433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 14 Jun 2022 16:10:46 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1655223045;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=t6MT0rNgNI2ZgPwhKh7O4tWkJ9ZCXQjYiD/QtPC21No=;
+	b=OHz+FmR4kn3s94EQRn3B95O0O25Hj84h8WY6ixt0TQl7K3qLfhtWMG485PM5hAEBt2oGsn
+	KhSs1LJ2VxYvCqPQxBL2Ofx1GEFwBFsp62EqQHOVqWtpOr/750Sfa1kQpeBso55ISOzdGn
+	6aDZ2xTpWwx6rUeivfWlUi5eu8KEli8=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-232-ErYnC5bWOduqjcqvOuigXA-1; Tue, 14 Jun 2022 05:50:04 -0400
-X-MC-Unique: ErYnC5bWOduqjcqvOuigXA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-623-4z5-phzcMGiiPGJnnjz1KQ-1; Tue, 14 Jun 2022 12:10:37 -0400
+X-MC-Unique: 4z5-phzcMGiiPGJnnjz1KQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B3DAA398CA65;
-	Tue, 14 Jun 2022 09:50:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5AEF980159B;
+	Tue, 14 Jun 2022 16:10:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A100C404E4C2;
-	Tue, 14 Jun 2022 09:50:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2AF6DC53360;
+	Tue, 14 Jun 2022 16:10:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7F8581947070;
-	Tue, 14 Jun 2022 09:50:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BACD2194706D;
+	Tue, 14 Jun 2022 16:10:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6A19D1947070
- for <dm-devel@listman.corp.redhat.com>; Tue, 14 Jun 2022 09:50:01 +0000 (UTC)
+ ESMTP id 533C01947B97
+ for <dm-devel@listman.corp.redhat.com>; Tue, 14 Jun 2022 16:10:30 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 23A971121319; Tue, 14 Jun 2022 09:50:01 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F5171121314
- for <dm-devel@redhat.com>; Tue, 14 Jun 2022 09:50:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 02ADB811E81
- for <dm-devel@redhat.com>; Tue, 14 Jun 2022 09:50:01 +0000 (UTC)
-Received: from bombadil.infradead.org (bombadil.infradead.org
- [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-643-aCyjsfl2Nmy4DERtoJ5QBw-1; Tue, 14 Jun 2022 05:49:59 -0400
-X-MC-Unique: aCyjsfl2Nmy4DERtoJ5QBw-1
-Received: from [2001:4bb8:180:36f6:1fed:6d48:cf16:d13c] (helo=localhost)
- by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
- id 1o12Ya-008Ziu-T7; Tue, 14 Jun 2022 09:09:53 +0000
-From: Christoph Hellwig <hch@lst.de>
-To: Jens Axboe <axboe@kernel.dk>
-Date: Tue, 14 Jun 2022 11:09:33 +0200
-Message-Id: <20220614090934.570632-6-hch@lst.de>
-In-Reply-To: <20220614090934.570632-1-hch@lst.de>
-References: <20220614090934.570632-1-hch@lst.de>
-MIME-Version: 1.0
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
- bombadil.infradead.org. See http://www.infradead.org/rpr.html
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-Subject: [dm-devel] [PATCH 5/6] block: fold blk_max_size_offset into
- get_max_io_size
+ id D5D9718EA5; Tue, 14 Jun 2022 16:10:30 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C166410725;
+ Tue, 14 Jun 2022 16:10:30 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 25EGATOp003241;
+ Tue, 14 Jun 2022 11:10:29 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 25EGATjN003239;
+ Tue, 14 Jun 2022 11:10:29 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Mike Snitzer <snitzer@kernel.org>
+Date: Tue, 14 Jun 2022 11:10:28 -0500
+Message-Id: <1655223028-3199-1-git-send-email-bmarzins@redhat.com>
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+Subject: [dm-devel] [PATCH] dm: fix possible race in dm_start_io_acct
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -76,11 +66,11 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
- Mike Snitzer <snitzer@kernel.org>
+Cc: dm-devel@redhat.com
+MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -88,66 +78,48 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Now that blk_max_size_offset has a single caller left, fold it into that
-and clean up the naming convention for the local variables there.
+After commit 82f6cdcc3676c ("dm: switch dm_io booleans over to proper
+flags") dm_start_io_acct stopped atomically checking and setting
+was_accounted, which turned into the DM_IO_ACCOUNTED flag. This opened
+the possibility for a race where IO accounting is started twice for
+duplicate bios. To remove the race, check the flag while holding the
+io->lock.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
+Fixes: 82f6cdcc3676c ("dm: switch dm_io booleans over to proper flags")
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- block/blk-merge.c      |  9 +++++++--
- include/linux/blkdev.h | 19 -------------------
- 2 files changed, 7 insertions(+), 21 deletions(-)
+ drivers/md/dm.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
 
-diff --git a/block/blk-merge.c b/block/blk-merge.c
-index 4da981efddeed..0f5f42ebd0bb0 100644
---- a/block/blk-merge.c
-+++ b/block/blk-merge.c
-@@ -166,9 +166,14 @@ static inline unsigned get_max_io_size(struct request_queue *q,
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index d8f16183bf27..c7d2dbf03ccb 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -544,17 +544,20 @@ static void dm_start_io_acct(struct dm_io *io, struct bio *clone)
  {
- 	unsigned pbs = queue_physical_block_size(q) >> SECTOR_SHIFT;
- 	unsigned lbs = queue_logical_block_size(q) >> SECTOR_SHIFT;
--	unsigned max_sectors, start, end;
-+	unsigned max_sectors = queue_max_sectors(q), start, end;
-+
-+	if (q->limits.chunk_sectors) {
-+		max_sectors = min(max_sectors,
-+			blk_chunk_sectors_left(bio->bi_iter.bi_sector,
-+					       q->limits.chunk_sectors));
-+	}
- 
--	max_sectors = blk_max_size_offset(q, bio->bi_iter.bi_sector, 0);
- 	start = bio->bi_iter.bi_sector & (pbs - 1);
- 	end = (start + max_sectors) & ~(pbs - 1);
- 	if (end > start)
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index e66ad451274ec..05e60ee269d91 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -944,25 +944,6 @@ static inline unsigned int blk_chunk_sectors_left(sector_t offset,
- 	return chunk_sectors - (offset & (chunk_sectors - 1));
- }
- 
--/*
-- * Return maximum size of a request at given offset. Only valid for
-- * file system requests.
-- */
--static inline unsigned int blk_max_size_offset(struct request_queue *q,
--					       sector_t offset,
--					       unsigned int chunk_sectors)
--{
--	if (!chunk_sectors) {
--		if (q->limits.chunk_sectors)
--			chunk_sectors = q->limits.chunk_sectors;
--		else
--			return q->limits.max_sectors;
--	}
+ 	/*
+ 	 * Ensure IO accounting is only ever started once.
++	 * Expect no possibility for race unless DM_TIO_IS_DUPLICATE_BIO.
+ 	 */
+-	if (dm_io_flagged(io, DM_IO_ACCOUNTED))
+-		return;
 -
--	return min(q->limits.max_sectors,
--			blk_chunk_sectors_left(offset, chunk_sectors));
--}
--
- /*
-  * Access functions for manipulating queue properties
-  */
+-	/* Expect no possibility for race unless DM_TIO_IS_DUPLICATE_BIO. */
+ 	if (!clone || likely(dm_tio_is_normal(clone_to_tio(clone)))) {
++		if (WARN_ON_ONCE(dm_io_flagged(io, DM_IO_ACCOUNTED)))
++			return;
+ 		dm_io_set_flag(io, DM_IO_ACCOUNTED);
+ 	} else {
+ 		unsigned long flags;
+ 		/* Can afford locking given DM_TIO_IS_DUPLICATE_BIO */
+ 		spin_lock_irqsave(&io->lock, flags);
++		if (dm_io_flagged(io, DM_IO_ACCOUNTED)) {
++			spin_unlock_irqrestore(&io->lock, flags);
++			return;
++		}
+ 		dm_io_set_flag(io, DM_IO_ACCOUNTED);
+ 		spin_unlock_irqrestore(&io->lock, flags);
+ 	}
 -- 
 2.30.2
 
