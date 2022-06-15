@@ -1,76 +1,86 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B427ACCA47F
-	for <dm-devel@archiver.kernel.org>; Wed, 15 Jun 2022 22:12:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5B376C43334
+	for <dm-devel@archiver.kernel.org>; Wed, 15 Jun 2022 23:59:51 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-257-B1UH3I1JNq6KIS7IKaXePA-1; Wed, 15 Jun 2022 18:12:50 -0400
-X-MC-Unique: B1UH3I1JNq6KIS7IKaXePA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-668-f5_E6DcZO_K7c6k6zT8YKA-1; Wed, 15 Jun 2022 19:59:49 -0400
+X-MC-Unique: f5_E6DcZO_K7c6k6zT8YKA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 985AA395AFE2;
-	Wed, 15 Jun 2022 22:12:48 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 949A91C1CB83;
+	Wed, 15 Jun 2022 23:59:47 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8601940C141F;
-	Wed, 15 Jun 2022 22:12:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0904B401E68;
+	Wed, 15 Jun 2022 23:59:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 568021947041;
-	Wed, 15 Jun 2022 22:12:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A10FB194704D;
+	Wed, 15 Jun 2022 23:59:45 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7638919466DF
- for <dm-devel@listman.corp.redhat.com>; Wed, 15 Jun 2022 22:12:47 +0000 (UTC)
+ ESMTP id 7869419466DF
+ for <dm-devel@listman.corp.redhat.com>; Wed, 15 Jun 2022 23:59:44 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6BEBD2166B29; Wed, 15 Jun 2022 22:12:47 +0000 (UTC)
+ id 65D2A40334D; Wed, 15 Jun 2022 23:59:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 6795B2166B26
- for <dm-devel@redhat.com>; Wed, 15 Jun 2022 22:12:47 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 48B55811E75
- for <dm-devel@redhat.com>; Wed, 15 Jun 2022 22:12:47 +0000 (UTC)
-Received: from mail-wm1-f43.google.com (mail-wm1-f43.google.com
- [209.85.128.43]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 615AE401E68
+ for <dm-devel@redhat.com>; Wed, 15 Jun 2022 23:59:44 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 459463803901
+ for <dm-devel@redhat.com>; Wed, 15 Jun 2022 23:59:44 +0000 (UTC)
+Received: from mail-pj1-f45.google.com (mail-pj1-f45.google.com
+ [209.85.216.45]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-288-dQe4796wNwimW9KQb0NhLw-1; Wed, 15 Jun 2022 18:12:45 -0400
-X-MC-Unique: dQe4796wNwimW9KQb0NhLw-1
-Received: by mail-wm1-f43.google.com with SMTP id
- o37-20020a05600c512500b0039c4ba4c64dso1879327wms.2
- for <dm-devel@redhat.com>; Wed, 15 Jun 2022 15:12:45 -0700 (PDT)
+ us-mta-391-2vitV_vZNOCFYDZka2uFIA-1; Wed, 15 Jun 2022 19:59:40 -0400
+X-MC-Unique: 2vitV_vZNOCFYDZka2uFIA-1
+Received: by mail-pj1-f45.google.com with SMTP id e9so12028pju.5;
+ Wed, 15 Jun 2022 16:59:40 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=x-gm-message-state:mime-version:references:in-reply-to:from:date
- :message-id:subject:to:cc;
- bh=CSOtOkDkOk9qsY6xSh9C/I7r4Ll5CO5SNVnf8+8fJm0=;
- b=QXISRhv5Aa7WPFt1LdfxpzfUbbNC58ZqBAzGqs5Px7cHUvpGRfb4ZcayvVhCIIe3G1
- t4fvE/nHKnk3sMriisei2mlcDCSJMt/Hj6c3VYyb4qKixtTAU8mHpsxkveMlki3MFIgB
- FAv0j1W6BnS7LzCi4xgDjWFyB3wd4TRTa44b6YRtfhfnDyGDowSB+TBKFkeVmCnUEdRl
- b2DTCGWEdc/dRWlHiJMjgurkQdXDhBva1ICMy1mblNLgmU8k7lhuCNLvNzc68ZxVJqDV
- 8PgH6cv+ajgN+0qcfbOd4tOgS1EGKGl7m8tGzBuFI2ykeFLqu1wqCT0JhzgZ5u1LX7v3
- +ExA==
-X-Gm-Message-State: AJIora8/QQmrzDpzywU/Uu2CZferek6XOhtnchG3QfC/E9UpoZBHsGRU
- cYSHYb9oo9qU2Fhobkmquu4vAze7QOkuHg67PJsJ
-X-Google-Smtp-Source: AGRyM1u8WHYJxyChRm93HhK2qOXy/iIT8DfeKlH463+I0qcRUIk50BumzQ3i3t1k/DfR1laWs4EYR2MJ1g0kM5yv8Zw=
-X-Received: by 2002:a7b:c38b:0:b0:39c:6964:34a2 with SMTP id
- s11-20020a7bc38b000000b0039c696434a2mr1587311wmj.165.1655331164083; Wed, 15
- Jun 2022 15:12:44 -0700 (PDT)
+ h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
+ :references:mime-version:content-disposition:in-reply-to;
+ bh=5Prk+LICDaQOvsjdPKZk/RmR44xaZYCmvqstzf4ym1E=;
+ b=gCLuKzeS6SAkJl0isGRmBvBkZdi4M8twAhgY5mZTkMi4iXapxG71tm4W8ZC/Y4MWQ9
+ sB750doo8pNwBueFGJmg2uABysq/jgQfLfHGjV3zdU0NDtTiA63IkFlkeQm9Bz43zke2
+ L+8X12eiY/DU9zcFRw/hKtbnSKC72NRmI512uLpZJHWbSAzeqA2eTO6Y8Lz/P0QkWd/w
+ n9U5Xr6Rn13W0T3UyuCyQc1W9a6cqW033r3AXvsts3OqltwzpbmCPQ/yfviCQnafEIog
+ /s54XbmBxEN8rkYHna57YpNI1jsNEY018gPR+N0rbT3cSwNXIwt9lJbiF3pym5omCF9Z
+ N7vg==
+X-Gm-Message-State: AJIora8uv4cDJTjlw8Udn16iekArR2k0d7+x0JTpcJXR0imHaoV4fxh3
+ pOj6td75mqaliS0m1VsSPpqv7Zmlx/A=
+X-Google-Smtp-Source: AGRyM1ui0eMwXDVveGgNtUMLZHRWr7Zn0AhmXvc3pIKMYDMhBAALz21WwHFM20ztgk0Var9OcLuqfw==
+X-Received: by 2002:a17:902:dacb:b0:167:621b:f2ec with SMTP id
+ q11-20020a170902dacb00b00167621bf2ecmr2185382plx.19.1655337578882; 
+ Wed, 15 Jun 2022 16:59:38 -0700 (PDT)
+Received: from server.roeck-us.net ([2600:1700:e321:62f0:329c:23ff:fee3:9d7c])
+ by smtp.gmail.com with ESMTPSA id
+ r24-20020a638f58000000b00401a7b4f137sm172579pgn.41.2022.06.15.16.59.35
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 15 Jun 2022 16:59:36 -0700 (PDT)
+Date: Wed, 15 Jun 2022 16:59:35 -0700
+From: Guenter Roeck <linux@roeck-us.net>
+To: Mike Snitzer <snitzer@redhat.com>
+Message-ID: <20220615235935.GA1236726@roeck-us.net>
+References: <20220603173816.944766454@linuxfoundation.org>
+ <20220610042200.2561917-1-ovt@google.com>
+ <YqLTV+5Q72/jBeOG@kroah.com> <YqNfBMOR9SE2TuCm@redhat.com>
+ <Yqb/sT205Lrhl6Bv@kroah.com>
+ <20220615143642.GA2386944@roeck-us.net>
+ <Yqn64AMwoIzQXwXM@redhat.com>
+ <50eeff2e-45c5-5eb2-c41d-3e0092a84483@roeck-us.net>
+ <Yqo63CvFpTDFnH3x@redhat.com>
 MIME-Version: 1.0
-References: <1654714889-26728-1-git-send-email-deven.desai@linux.microsoft.com>
- <1654714889-26728-8-git-send-email-deven.desai@linux.microsoft.com>
-In-Reply-To: <1654714889-26728-8-git-send-email-deven.desai@linux.microsoft.com>
-From: Paul Moore <paul@paul-moore.com>
-Date: Wed, 15 Jun 2022 18:12:33 -0400
-Message-ID: <CAHC9VhRYE_YFpD5BwwFaNmvSbLDnvvQKO6zNUqAkxLu1aSwuGw@mail.gmail.com>
-To: Deven Bowers <deven.desai@linux.microsoft.com>
+In-Reply-To: <Yqo63CvFpTDFnH3x@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,8 +88,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-Subject: Re: [dm-devel] [RFC PATCH v8 07/17] ipe: add auditing support
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: Re: [dm-devel] [PATCH 5.4 26/34] dm verity: set DM_TARGET_IMMUTABLE
+ feature flag
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,477 +102,355 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, tytso@mit.edu,
- dm-devel@redhat.com, corbet@lwn.net, roberto.sassu@huawei.com,
- linux-doc@vger.kernel.org, snitzer@kernel.org, jmorris@namei.org,
- zohar@linux.ibm.com, linux-kernel@vger.kernel.org, ebiggers@kernel.org,
- linux-security-module@vger.kernel.org, linux-audit@redhat.com,
- eparis@redhat.com, linux-fscrypt@vger.kernel.org,
- linux-integrity@vger.kernel.org, agk@redhat.com, serge@hallyn.com
+Cc: keescook@chromium.org, sarthakkukreti@google.com,
+ Greg KH <gregkh@linuxfoundation.org>, Mike Snitzer <snitzer@kernel.org>,
+ stable@vger.kernel.org, Oleksandr Tymoshenko <ovt@google.com>,
+ dm-devel@redhat.com, regressions@lists.linux.dev
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Jun 8, 2022 at 3:01 PM Deven Bowers
-<deven.desai@linux.microsoft.com> wrote:
->
-> Users of IPE require a way to identify when and why an operation fails,
-> allowing them to both respond to violations of policy and be notified
-> of potentially malicious actions on their systens with respect to IPE
-> itself.
->
-> The new 1420 audit, AUDIT_IPE_ACCESS indicates the result of a policy
-> evaulation of a resource. The other two events, AUDIT_MAC_POLICY_LOAD,
-> and AUDIT_MAC_CONFIG_CHANGE represent a new policy was loaded into the
-> kernel and the currently active policy changed, respectively.
->
-> This patch also adds support for success auditing, allowing users to
-> identify how a resource passed policy. It is recommended to use this
-> option with caution, as it is quite noisy.
->
-> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+On Wed, Jun 15, 2022 at 04:02:36PM -0400, Mike Snitzer wrote:
+> On Wed, Jun 15 2022 at  1:50P -0400,
+> Guenter Roeck <linux@roeck-us.net> wrote:
+> 
+> > On 6/15/22 08:29, Mike Snitzer wrote:
+> > > On Wed, Jun 15 2022 at 10:36P -0400,
+> > > Guenter Roeck <linux@roeck-us.net> wrote:
+> > > 
+> > > > On Mon, Jun 13, 2022 at 11:13:21AM +0200, Greg KH wrote:
+> > > > > On Fri, Jun 10, 2022 at 11:11:00AM -0400, Mike Snitzer wrote:
+> > > > > > On Fri, Jun 10 2022 at  1:15P -0400,
+> > > > > > Greg KH <gregkh@linuxfoundation.org> wrote:
+> > > > > > 
+> > > > > > > On Fri, Jun 10, 2022 at 04:22:00AM +0000, Oleksandr Tymoshenko wrote:
+> > > > > > > > I believe this commit introduced a regression in dm verity on systems
+> > > > > > > > where data device is an NVME one. Loading table fails with the
+> > > > > > > > following diagnostics:
+> > > > > > > > 
+> > > > > > > > device-mapper: table: table load rejected: including non-request-stackable devices
+> > > > > > > > 
+> > > > > > > > The same kernel works with the same data drive on the SCSI interface.
+> > > > > > > > NVME-backed dm verity works with just this commit reverted.
+> > > > > > > > 
+> > > > > > > > I believe the presence of the immutable partition is used as an indicator
+> > > > > > > > of special case NVME configuration and if the data device's name starts
+> > > > > > > > with "nvme" the code tries to switch the target type to
+> > > > > > > > DM_TYPE_NVME_BIO_BASED (drivers/md/dm-table.c lines 1003-1010).
+> > > > > > > > 
+> > > > > > > > The special NVME optimization case was removed in
+> > > > > > > > 5.10 by commit 9c37de297f6590937f95a28bec1b7ac68a38618f, so only 5.4 is
+> > > > > > > > affected.
+> > > > > > > > 
+> > > > > > > 
+> > > > > > > Why wouldn't 4.9, 4.14, and 4.19 also be affected here?  Should I also
+> > > > > > > just queue up 9c37de297f65 ("dm: remove special-casing of bio-based
+> > > > > > > immutable singleton target on NVMe") to those older kernels?  If so,
+> > > > > > > have you tested this and verified that it worked?
+> > > > > > 
+> > > > > > Sorry for the unforeseen stable@ troubles here!
+> > > > > > 
+> > > > > > In general we'd be fine to apply commit 9c37de297f65 but to do it
+> > > > > > properly would require also making sure commits that remove
+> > > > > > "DM_TYPE_NVME_BIO_BASED", like 8d47e65948dd ("dm mpath: remove
+> > > > > > unnecessary NVMe branching in favor of scsi_dh checks") are applied --
+> > > > > > basically any lingering references to DM_TYPE_NVME_BIO_BASED need to
+> > > > > > be removed.
+> > > > > > 
+> > > > > > The commit header for 8d47e65948dd documents what
+> > > > > > DM_TYPE_NVME_BIO_BASED was used for.. it was dm-mpath specific and
+> > > > > > "nvme" mode really never got used by any userspace that I'm aware of.
+> > > > > > 
+> > > > > > Sadly I currently don't have the time to do this backport for all N
+> > > > > > stable kernels... :(
+> > > > > > 
+> > > > > > But if that backport gets out of control: A simpler, albeit stable@
+> > > > > > unicorn, way to resolve this is to simply revert 9c37de297f65 and make
+> > > > 
+> > > > 9c37de297f65 can not be reverted in 5.4 and older because it isn't there,
+> > > > and trying to apply it results in conflicts which at least I can not
+> > > > resolve.
+> > > > 
+> > > > > > it so that DM-mpath and DM core just used bio-based if "nvme" is
+> > > > > > requested by dm-mpath, so also in drivers/md/dm-mpath.c e.g.:
+> > > > > > 
+> > > > > > @@ -1091,8 +1088,6 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
+> > > > > > 
+> > > > > >                          if (!strcasecmp(queue_mode_name, "bio"))
+> > > > > >                                  m->queue_mode = DM_TYPE_BIO_BASED;
+> > > > > > 			else if (!strcasecmp(queue_mode_name, "nvme"))
+> > > > > > -                               m->queue_mode = DM_TYPE_NVME_BIO_BASED;
+> > > > > > +                               m->queue_mode = DM_TYPE_BIO_BASED;
+> > > > > >                          else if (!strcasecmp(queue_mode_name, "rq"))
+> > > > > >                                  m->queue_mode = DM_TYPE_REQUEST_BASED;
+> > > > > >                          else if (!strcasecmp(queue_mode_name, "mq"))
+> > > > > > 
+> > > > > > Mike
+> > > > > > 
+> > > > > 
+> > > > > Ok, please submit a working patch for the kernels that need it so that
+> > > > > we can review and apply it to solve this regression.
+> > > > > 
+> > > > 
+> > > > So, effectively, v5.4.y and older are broken right now for use cases
+> > > > with dm on NVME drives.
+> > > > 
+> > > > Given that the regression does affect older branches, and given that we
+> > > > have to revert this patch to avoid regressions in ChromeOS, would it be
+> > > > possible to revert it from v5.4.y and older until a fix is found ?
+> > > 
+> > > I obviously would prefer to not have this false-start.
+> > > 
+> > The false start has already happened since we had to revert the patch
+> > from chromeos-5.4 and older branches.
+> 
+> OK, well this is pretty easy to fix in general.  If there are slight
+> differences across older trees they are easily resolved.  Fact that
+> stable@ couldn't cope with backporting 9c37de297f65 is.. what it is.
+> 
+> But this will fix the issue on 5.4.y:
+> 
+> From: Mike Snitzer <snitzer@kernel.org>
+> Date: Wed, 15 Jun 2022 14:07:09 -0400
+> Subject: [5.4.y PATCH] dm: remove special-casing of bio-based immutable singleton target on NVMe
+> 
+> Commit 9c37de297f6590937f95a28bec1b7ac68a38618f upstream.
+> 
+> There is no benefit to DM special-casing NVMe. Remove all code used to
+> establish DM_TYPE_NVME_BIO_BASED.
+> 
+> Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 > ---
+>  drivers/md/dm-table.c         | 32 ++----------------
+>  drivers/md/dm.c               | 64 +++--------------------------------
+>  include/linux/device-mapper.h |  1 -
+>  3 files changed, 7 insertions(+), 90 deletions(-)
+> 
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 06b382304d92..81bc36a43b32 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -872,8 +872,7 @@ EXPORT_SYMBOL(dm_consume_args);
+>  static bool __table_type_bio_based(enum dm_queue_mode table_type)
+>  {
+>  	return (table_type == DM_TYPE_BIO_BASED ||
+> -		table_type == DM_TYPE_DAX_BIO_BASED ||
+> -		table_type == DM_TYPE_NVME_BIO_BASED);
+> +		table_type == DM_TYPE_DAX_BIO_BASED);
+>  }
+>  
+>  static bool __table_type_request_based(enum dm_queue_mode table_type)
+> @@ -929,8 +928,6 @@ bool dm_table_supports_dax(struct dm_table *t,
+>  	return true;
+>  }
+>  
+> -static bool dm_table_does_not_support_partial_completion(struct dm_table *t);
+> -
+>  static int device_is_rq_stackable(struct dm_target *ti, struct dm_dev *dev,
+>  				  sector_t start, sector_t len, void *data)
+>  {
+> @@ -960,7 +957,6 @@ static int dm_table_determine_type(struct dm_table *t)
+>  			goto verify_bio_based;
+>  		}
+>  		BUG_ON(t->type == DM_TYPE_DAX_BIO_BASED);
+> -		BUG_ON(t->type == DM_TYPE_NVME_BIO_BASED);
+>  		goto verify_rq_based;
+>  	}
+>  
+> @@ -999,15 +995,6 @@ static int dm_table_determine_type(struct dm_table *t)
+>  		if (dm_table_supports_dax(t, device_not_dax_capable, &page_size) ||
+>  		    (list_empty(devices) && live_md_type == DM_TYPE_DAX_BIO_BASED)) {
+>  			t->type = DM_TYPE_DAX_BIO_BASED;
+> -		} else {
+> -			/* Check if upgrading to NVMe bio-based is valid or required */
+> -			tgt = dm_table_get_immutable_target(t);
+> -			if (tgt && !tgt->max_io_len && dm_table_does_not_support_partial_completion(t)) {
+> -				t->type = DM_TYPE_NVME_BIO_BASED;
+> -				goto verify_rq_based; /* must be stacked directly on NVMe (blk-mq) */
+> -			} else if (list_empty(devices) && live_md_type == DM_TYPE_NVME_BIO_BASED) {
+> -				t->type = DM_TYPE_NVME_BIO_BASED;
+> -			}
+>  		}
+>  		return 0;
+>  	}
+> @@ -1024,8 +1011,7 @@ static int dm_table_determine_type(struct dm_table *t)
+>  	 * (e.g. request completion process for partial completion.)
+>  	 */
+>  	if (t->num_targets > 1) {
+> -		DMERR("%s DM doesn't support multiple targets",
+> -		      t->type == DM_TYPE_NVME_BIO_BASED ? "nvme bio-based" : "request-based");
+> +		DMERR("request-based DM doesn't support multiple targets");
+>  		return -EINVAL;
+>  	}
+>  
+> @@ -1714,20 +1700,6 @@ static int device_is_not_random(struct dm_target *ti, struct dm_dev *dev,
+>  	return q && !blk_queue_add_random(q);
+>  }
+>  
+> -static int device_is_partial_completion(struct dm_target *ti, struct dm_dev *dev,
+> -					sector_t start, sector_t len, void *data)
+> -{
+> -	char b[BDEVNAME_SIZE];
+> -
+> -	/* For now, NVMe devices are the only devices of this class */
+> -	return (strncmp(bdevname(dev->bdev, b), "nvme", 4) != 0);
+> -}
+> -
+> -static bool dm_table_does_not_support_partial_completion(struct dm_table *t)
+> -{
+> -	return !dm_table_any_dev_attr(t, device_is_partial_completion, NULL);
+> -}
+> -
+>  static int device_not_write_same_capable(struct dm_target *ti, struct dm_dev *dev,
+>  					 sector_t start, sector_t len, void *data)
+>  {
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 37b8bb4d80f0..3c45c389ded9 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1000,7 +1000,7 @@ static void clone_endio(struct bio *bio)
+>  	struct mapped_device *md = tio->io->md;
+>  	dm_endio_fn endio = tio->ti->type->end_io;
+>  
+> -	if (unlikely(error == BLK_STS_TARGET) && md->type != DM_TYPE_NVME_BIO_BASED) {
+> +	if (unlikely(error == BLK_STS_TARGET)) {
+>  		if (bio_op(bio) == REQ_OP_DISCARD &&
+>  		    !bio->bi_disk->queue->limits.max_discard_sectors)
+>  			disable_discard(md);
+> @@ -1340,10 +1340,7 @@ static blk_qc_t __map_bio(struct dm_target_io *tio)
+>  		/* the bio has been remapped so dispatch it */
+>  		trace_block_bio_remap(clone->bi_disk->queue, clone,
+>  				      bio_dev(io->orig_bio), sector);
+> -		if (md->type == DM_TYPE_NVME_BIO_BASED)
+> -			ret = direct_make_request(clone);
+> -		else
+> -			ret = generic_make_request(clone);
 
-One quick comment: I would suggest squashing patch 6/17 together with
-this one (7/17), as there is no real need for the AUDIT_IPE_ACCESS
-definition to be in its own patch.
+drivers/md/dm.c:1340:24: error: unused variable 'md'
 
-... and now the hard questions: why are the audit record examples not
-included in the commit description? :)
+I'll try again with this fixed.
 
-> This patch adds the following audit records:
->
->   type=1420 audit(1653364735.161:64):
->     rule="DEFAULT op=EXECUTE action=DENY"
+Guenter
 
-I suspect I'll have more comments on this when I get to the relevant
-chunk in this patch, but if the "rule" string is coming directly from
-userspace we should make sure it is recorded as an untrusted string.
-Given the extensible nature of IPE, it might be a good idea to make it
-untrusted regardless just so we don't run into problems in the future.
-
-What does this record actually indicate?  With it being type 1420, I'm
-assuming it is the result of an IPE access control decision, but for
-what?
-
->   type=1420 audit(1653364370.067:61): path="/root/fs/rw/plain/execve"
->     dev="vdc1" ino=16 rule="DEFAULT op=EXECUTE action=DENY"
-
-Why are we repeating the rule in the record which reports on the
-access control verdict?  There is always a concern around the size of
-heavily configured audit streams, this is not going to help.
-
->   type=1405 audit(1653425583.136:54): policy_name="dmverity_roothash"
->     policy_version=0.0.0 sha256=A9C5803309F80D2B84D7C047534BE8B60EF121C8E1F351F2A8EFFA617B7F0686
-
-What changed?  How is this record useful?
-
->   type=1403 audit(1653425529.927:53): policy_name="dmverity_roothash"
->     policy_version=0.0.0 sha256=A9C5803309F80D2B84D7C047534BE8B60EF121C8E1F351F2A8EFFA617B7F0686
-
-The policy loads should probably attempt to mimic some of the existing
-LSMs, for example:
-
-  type=MAC_POLICY_LOAD msg=audit(06/15/2022 17:31:54.281:878) : \
-    auid=root ses=4 lsm=selinux res=yes
-
-> This results in the following events (the audit records are always
-> prior to a SYSCALL record):
->
->   type=1420 audit(1653364735.161:64):
->     rule="DEFAULT op=EXECUTE action=DENY"
->   type=1300 audit(1653364735.161:64): arch=c000003e syscall=9
->     success=no exit=-13 a0=0 a1=1000 a2=4 a3=20 items=0 ppid=455 pid=774
->     auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0
->     tty=ttyS0 ses=3 comm="mmap" exe="/root/host/mmap" subj=kernel
->     key=(null)
->   audit: type=1327 audit(1653364735.161:64):
->     proctitle=686F73742F6D6D617000410058
->
->   type=1420 audit(1653364370.067:61): path="/root/fs/rw/plain/execve"
->     dev="vdc1" ino=16 rule="DEFAULT op=EXECUTE action=DENY"
->   type=1300 audit(1653364370.067:61): arch=c000003e syscall=10
->     success=no exit=-13 a0=7f0bf0644000 a1=4f80 a2=5 a3=7f0bf043d300
->     items=0 ppid=455 pid=737 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0
->     egid=0 sgid=0 fsgid=0 tty=ttyS0 ses=3 comm="mprotect"
->     exe="/root/host/mprotect" subj=kernel key=(null)
->   type=1327 audit(1653364370.067:61):
->     proctitle=686F73742F6D70726F7465637400534800527C5700527C5800706C61696E2F657865637665
->
->   type=1403 audit(1653425529.927:53): policy_name="dmverity_roothash"
->     policy_version=0.0.0 sha256=A9C5803309F80D2B84D7C047534BE8B60EF121C8E1F351F2A8EFFA617B7F0686
->   type=1300 audit(1653425529.927:53): arch=c000003e syscall=1
->     success=yes exit=6215 a0=1 a1=7f07adfe4000 a2=1847 a3=22 items=0
->     ppid=441 pid=445 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=)
->   type=1327 audit(1653425529.927:53):
->     proctitle=63617400706F6C69636965732F646D7665726974795F726F6F74686173682E706F6C2E703762
->
->   type=1405 audit(1653425583.136:54): policy_name="dmverity_roothash"
->     policy_version=0.0.0 sha256=A9C5803309F80D2B84D7C047534BE8B60EF121C8E1F351F2A8EFFA617B7F0686
->   type=1300 audit(1653425583.136:54): arch=c000003e syscall=1 success=yes
->     exit=2 a0=1 a1=55c1065e5c60 a2=2 a3=7fe683990020 items=0 ppid=405
->     pid=441 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 e)
->   type=1327 audit(1653425583.136:54): proctitle="-bash"
->
-> ---
-> v2:
->   + Split evaluation loop, access control hooks,
->     and evaluation loop from policy parser and userspace
->     interface to pass mailing list character limit
->
-> v3:
->   + Move ipe_load_properties to patch 04.
->   + Remove useless 0-initializations
->   + Prefix extern variables with ipe_
->   + Remove kernel module parameters, as these are
->     exposed through sysctls.
->   + Add more prose to the IPE base config option
->     help text.
->   + Use GFP_KERNEL for audit_log_start.
->   + Remove unnecessary caching system.
->   + Remove comments from headers
->   + Use rcu_access_pointer for rcu-pointer null check
->   + Remove usage of reqprot; use prot only.
->   + Move policy load and activation audit event to 03/12
->
-> v4:
->   + Remove sysctls in favor of securityfs nodes
->   + Re-add kernel module parameters, as these are now
->     exposed through securityfs.
->   + Refactor property audit loop to a separate function.
->
-> v5:
->   + fix minor grammatical errors
->   + do not group rule by curly-brace in audit record,
->     reconstruct the exact rule.
->
-> v6:
->   + No changes
->
-> v7:
->   + Further split lsm creation, the audit system, the evaluation loop,
->     and access control hooks into separate patches.
->   + Further split audit system patch into two separate patches; one
->     for include/uapi, and the usage of the new defines.
->   + Split out the permissive functionality into another separate patch,
->     for easier review.
->   + Correct misuse of audit_log_n_untrusted string to audit_log_format
->   + Use get_task_comm instead of comm directly.
->   + Quote certain audit values
->   + Remove unnecessary help text on choice options - these were previously
->     idented at the wrong level
->   + Correct a stale string constant (ctx_ns_enforce to ctx_enforce)
->
-> v8:
->
->   + Change dependency for CONFIG_AUDIT to CONFIG_AUDITSYSCALL
->   + Drop ctx_* prefix
->   + Reuse, where appropriate, the audit fields from the field
->     dictionary. This transforms:
->       ctx_pathname  -> path
->       ctx_ino       -> ino
->       ctx_dev       -> dev
->
->   + Add audit records and event examples to commit description.
->   + Remove new_audit_ctx, replace with audit_log_start. All data that
->     would provided by new_audit_ctx is already present in the syscall
->     audit record, that is always emitted on these actions. The audit
->     records should be correlated as such.
->   + Change audit types:
->     + AUDIT_TRUST_RESULT                -> AUDIT_IPE_ACCESS
->       +  This prevents overloading of the AVC type.
->     + AUDIT_TRUST_POLICY_ACTIVATE       -> AUDIT_MAC_CONFIG_CHANGE
->     + AUDIT_TRUST_POLICY_LOAD           -> AUDIT_MAC_POLICY_LOAD
->       + There were no significant difference in meaning between
->         these types.
->
->   + Remove enforcing parameter passed from the context structure
->     for AUDIT_IPE_ACCESS.
->     +  This field can be inferred from the SYSCALL audit event,
->        based on the success field.
->
->   + Remove all fields already captured in the syscall record. "hook",
->     an IPE specific field, can be determined via the syscall field in
->     the syscall record itself, so it has been removed.
->       + ino, path, and dev in IPE's record refer to the subject of the
->         syscall, while the syscall record refers to the calling process.
->
->   + remove IPE prefix from policy load/policy activation events
->   + fix a bug wherein a policy change audit record was not fired when
->     updating a policy
-> ---
->  security/ipe/Kconfig              |  55 +++++++++
->  security/ipe/Makefile             |   2 +
->  security/ipe/audit.c              | 184 ++++++++++++++++++++++++++++++
->  security/ipe/audit.h              |  34 ++++++
->  security/ipe/ctx.c                |  21 ++++
->  security/ipe/ctx.h                |   2 +
->  security/ipe/eval.c               |   9 ++
->  security/ipe/eval.h               |   7 ++
->  security/ipe/fs.c                 |  79 +++++++++++++
->  security/ipe/modules/ipe_module.h |   2 +
->  10 files changed, 395 insertions(+)
->  create mode 100644 security/ipe/audit.c
->  create mode 100644 security/ipe/audit.h
->
-> diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
-> index e4875fb04883..1ad2f34b98ec 100644
-> --- a/security/ipe/Kconfig
-> +++ b/security/ipe/Kconfig
-> @@ -15,3 +15,58 @@ menuconfig SECURITY_IPE
->           admins to reconfigure trust requirements on the fly.
->
->           If unsure, answer N.
-> +
-> +if SECURITY_IPE
-> +
-> +config IPE_AUDIT
-> +       bool "Enable IPE's audit events"
-> +       depends on AUDIT && AUDITSYSCALL
-> +       help
-> +         This option causes IPE to emit audit records on certain key
-> +         events during IPE's normal operation. Examples include:
-> +         when an action is denied by IPE policy, when a new policy is
-> +         loaded, and when a new policy is active. This allows system
-> +         admins to analyze what is happening on their systems, and
-> +         validate through audit records that IPE is responsible for
-> +         certain behaviors.
-> +
-> +         if unsure, answer Y.
-
-Do you ever envision someone using IPE without auditing built into the kernel?
-
-> +choice
-> +       prompt "Hash algorithm used in auditing policies"
-> +       default IPE_AUDIT_HASH_SHA1
-> +       depends on IPE_AUDIT
-> +       help
-> +         Specify the hash algorithm used when auditing policies.
-> +         The hash is used to uniquely identify a policy from other
-> +         policies on the system.
-> +
-> +         If unsure, leave default.
-> +
-> +       config IPE_AUDIT_HASH_SHA1
-> +               bool "sha1"
-> +               select CRYPTO_SHA1
-> +
-> +       config IPE_AUDIT_HASH_SHA256
-> +               bool "sha256"
-> +               select CRYPTO_SHA256
-> +
-> +       config IPE_AUDIT_HASH_SHA384
-> +               bool "sha384"
-> +               select CRYPTO_SHA512
-> +
-> +       config IPE_AUDIT_HASH_SHA512
-> +               bool "sha512"
-> +               select CRYPTO_SHA512
-> +
-> +endchoice
-> +
-> +config IPE_AUDIT_HASH_ALG
-> +       string
-> +       depends on IPE_AUDIT
-> +       default "sha1" if IPE_AUDIT_HASH_SHA1
-> +       default "sha256" if IPE_AUDIT_HASH_SHA256
-> +       default "sha384" if IPE_AUDIT_HASH_SHA384
-> +       default "sha512" if IPE_AUDIT_HASH_SHA512
-> +
-> +endif
-
-...
-
-> diff --git a/security/ipe/audit.c b/security/ipe/audit.c
-> new file mode 100644
-> index 000000000000..0442cc51a4bd
-> --- /dev/null
-> +++ b/security/ipe/audit.c
-> @@ -0,0 +1,184 @@
-> +// SPDX-License-Identifier: GPL-2.0
-> +/*
-> + * Copyright (C) Microsoft Corporation. All rights reserved.
-> + */
-> +
-> +#include "ipe.h"
-> +#include "eval.h"
-> +#include "hooks.h"
-> +#include "policy.h"
-> +#include "audit.h"
-> +#include "modules/ipe_module.h"
-> +
-> +#include <linux/slab.h>
-> +#include <linux/audit.h>
-> +#include <linux/types.h>
-> +#include <crypto/hash.h>
-> +
-> +#define ACTSTR(x) ((x) == ipe_action_allow ? "ALLOW" : "DENY")
-> +
-> +#define POLICY_LOAD_FMT "policy_name=\"%s\" policy_version=%hu.%hu.%hu "\
-> +                       CONFIG_IPE_AUDIT_HASH_ALG "="
-> +
-> +static const char *const audit_op_names[ipe_operation_max] = {
-> +       "EXECUTE",
-> +       "FIRMWARE",
-> +       "KMODULE",
-> +       "KEXEC_IMAGE",
-> +       "KEXEC_INITRAMFS",
-> +       "IMA_POLICY",
-> +       "IMA_X509_CERT",
-> +};
-> +
-> +/**
-> + * audit_rule: audit an IPE policy rule approximation.
-> + * @ab: Supplies a poniter to the audit_buffer to append to.
-> + * @r: Supplies a pointer to the ipe_rule to approximate a string form for.
-> + *
-> + * This is an approximation because aliases like "KERNEL_READ" will be
-> + * emitted in their expanded form.
-> + */
-> +static void audit_rule(struct audit_buffer *ab, const struct ipe_rule *r)
-> +{
-> +       const struct ipe_policy_mod *ptr;
-> +
-> +       audit_log_format(ab, "rule=\"op=%s ", audit_op_names[r->op]);
-> +
-> +       list_for_each_entry(ptr, &r->modules, next) {
-> +               audit_log_format(ab, "%s=", ptr->mod->name);
-
-The module names must always be alphanumeric, yes?
-
-> +               ptr->mod->audit(ab, ptr->mod_value);
-
-Regardless of the module names, I suspect the module specific audit
-value is going to push this to being an untrusted string ... which is
-a bit interesting as I think the only way to do that would be to build
-up the rule string first and do something like this:
-
-  audit_log_format(ab, "rule=");
-  audit_log_untrustedstring(ab, rule_string);
-
-> +               audit_log_format(ab, " ");
-> +       }
-> +
-> +       audit_log_format(ab, "action=%s\"", ACTSTR(r->action));
-> +}
-> +
-> +/**
-> + * ipe_audit_match: audit a match for IPE policy.
-> + * @ctx: Supplies a poniter to the evaluation context that was used in the
-> + *      evaluation.
-> + * @match_type: Supplies the scope of the match: rule, operation default,
-> + *             global default.
-> + * @act: Supplies the IPE's evaluation decision, deny or allow.
-> + * @r: Supplies a pointer to the rule that was matched, if possible.
-> + * @enforce: Supplies the enforcement/permissive state at the point
-> + *          the enforcement decision was made.
-> + */
-> +void ipe_audit_match(const struct ipe_eval_ctx *const ctx,
-> +                    enum ipe_match match_type,
-> +                    enum ipe_action act, const struct ipe_rule *const r)
-> +{
-> +       bool success_audit;
-> +       struct inode *inode;
-> +       struct audit_buffer *ab;
-> +       const char *op = audit_op_names[ctx->op];
-> +
-> +       rcu_read_lock();
-> +       success_audit = READ_ONCE(ctx->ci_ctx->success_audit);
-> +       rcu_read_unlock();
-> +
-> +       if (act != ipe_action_deny && !success_audit)
-> +               return;
-> +
-> +       ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_IPE_ACCESS);
-> +       if (!ab)
-> +               return;
-> +
-> +       if (ctx->file) {
-> +               audit_log_d_path(ab, "path=", &ctx->file->f_path);
-> +               inode = file_inode(ctx->file);
-> +               if (inode) {
-> +                       audit_log_format(ab, " dev=");
-> +                       audit_log_untrustedstring(ab, inode->i_sb->s_id);
-> +                       audit_log_format(ab, " ino=%lu ", inode->i_ino);
-> +               }
-
-I noticed in the execve/mprotect example above that your "path" (and
-presumably the "dev"/"inode" too) field doesn't match the "comm" field
-in the syscall record.  Granted, the "comm" field can be manipulated,
-but I'm guessing that isn't the case here and instead you just wrote a
-script that calls a "/root/host/mprotect" helper, is that correct?
-
-If yes, the IPE "path" field seems a little misleading, is that
-intentional?  What happens in the case of a proper application binary?
- Perhaps we need to use a different field name than "path"?
-
-> +       }
-> +
-> +       if (match_type == ipe_match_rule)
-> +               audit_rule(ab, r);
-> +       else if (match_type == ipe_match_table)
-> +               audit_log_format(ab, "rule=\"DEFAULT op=%s action=%s\"", op,
-> +                                ACTSTR(act));
-> +       else
-> +               audit_log_format(ab, "rule=\"DEFAULT action=%s\"",
-> +                                ACTSTR(act));
-> +
-> +       audit_log_end(ab);
-> +}
-> +
-> +/**
-> + * audit_policy: Audit a policy's name, version and thumprint to @ab
-
-Thum*b*print :)
-
-
-> + * @ab: Supplies a pointer to the audit buffer to append to.
-> + * @p: Supplies a pointer to the policy to audit
-> + */
-> +static void audit_policy(struct audit_buffer *ab,
-> +                        const struct ipe_policy *const p)
-> +{
-> +       u8 *digest = NULL;
-> +       struct crypto_shash *tfm;
-> +       SHASH_DESC_ON_STACK(desc, tfm);
-> +
-> +       tfm = crypto_alloc_shash(CONFIG_IPE_AUDIT_HASH_ALG, 0, 0);
-> +       if (IS_ERR(tfm))
-> +               return;
-> +
-> +       desc->tfm = tfm;
-> +
-> +       digest = kzalloc(crypto_shash_digestsize(tfm), GFP_KERNEL);
-> +       if (!digest)
-> +               goto out;
-> +
-> +       if (crypto_shash_init(desc))
-> +               goto out;
-> +
-> +       if (crypto_shash_update(desc, p->pkcs7, p->pkcs7len))
-> +               goto out;
-> +
-> +       if (crypto_shash_final(desc, digest))
-> +               goto out;
-> +
-> +       audit_log_format(ab, POLICY_LOAD_FMT, p->parsed->name,
-> +                        p->parsed->version.major, p->parsed->version.minor,
-> +                        p->parsed->version.rev);
-> +       audit_log_n_hex(ab, digest, crypto_shash_digestsize(tfm));
-> +
-> +out:
-> +       kfree(digest);
-> +       crypto_free_shash(tfm);
-> +}
-
---
-paul-moore.com
+> +		ret = generic_make_request(clone);
+>  		break;
+>  	case DM_MAPIO_KILL:
+>  		if (unlikely(swap_bios_limit(ti, clone))) {
+> @@ -1732,51 +1729,6 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
+>  	return ret;
+>  }
+>  
+> -/*
+> - * Optimized variant of __split_and_process_bio that leverages the
+> - * fact that targets that use it do _not_ have a need to split bios.
+> - */
+> -static blk_qc_t __process_bio(struct mapped_device *md, struct dm_table *map,
+> -			      struct bio *bio, struct dm_target *ti)
+> -{
+> -	struct clone_info ci;
+> -	blk_qc_t ret = BLK_QC_T_NONE;
+> -	int error = 0;
+> -
+> -	init_clone_info(&ci, md, map, bio);
+> -
+> -	if (bio->bi_opf & REQ_PREFLUSH) {
+> -		struct bio flush_bio;
+> -
+> -		/*
+> -		 * Use an on-stack bio for this, it's safe since we don't
+> -		 * need to reference it after submit. It's just used as
+> -		 * the basis for the clone(s).
+> -		 */
+> -		bio_init(&flush_bio, NULL, 0);
+> -		flush_bio.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC;
+> -		ci.bio = &flush_bio;
+> -		ci.sector_count = 0;
+> -		error = __send_empty_flush(&ci);
+> -		bio_uninit(ci.bio);
+> -		/* dec_pending submits any data associated with flush */
+> -	} else {
+> -		struct dm_target_io *tio;
+> -
+> -		ci.bio = bio;
+> -		ci.sector_count = bio_sectors(bio);
+> -		if (__process_abnormal_io(&ci, ti, &error))
+> -			goto out;
+> -
+> -		tio = alloc_tio(&ci, ti, 0, GFP_NOIO);
+> -		ret = __clone_and_map_simple_bio(&ci, tio, NULL);
+> -	}
+> -out:
+> -	/* drop the extra reference count */
+> -	dec_pending(ci.io, errno_to_blk_status(error));
+> -	return ret;
+> -}
+> -
+>  static blk_qc_t dm_process_bio(struct mapped_device *md,
+>  			       struct dm_table *map, struct bio *bio)
+>  {
+> @@ -1807,8 +1759,6 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
+>  		/* regular IO is split by __split_and_process_bio */
+>  	}
+>  
+> -	if (dm_get_md_type(md) == DM_TYPE_NVME_BIO_BASED)
+> -		return __process_bio(md, map, bio, ti);
+>  	return __split_and_process_bio(md, map, bio);
+>  }
+>  
+> @@ -2200,12 +2150,10 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+>  	if (request_based)
+>  		dm_stop_queue(q);
+>  
+> -	if (request_based || md->type == DM_TYPE_NVME_BIO_BASED) {
+> +	if (request_based) {
+>  		/*
+> -		 * Leverage the fact that request-based DM targets and
+> -		 * NVMe bio based targets are immutable singletons
+> -		 * - used to optimize both dm_request_fn and dm_mq_queue_rq;
+> -		 *   and __process_bio.
+> +		 * Leverage the fact that request-based DM targets are
+> +		 * immutable singletons - used to optimize dm_mq_queue_rq.
+>  		 */
+>  		md->immutable_target = dm_table_get_immutable_target(t);
+>  	}
+> @@ -2334,7 +2282,6 @@ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t)
+>  		break;
+>  	case DM_TYPE_BIO_BASED:
+>  	case DM_TYPE_DAX_BIO_BASED:
+> -	case DM_TYPE_NVME_BIO_BASED:
+>  		dm_init_congested_fn(md);
+>  		break;
+>  	case DM_TYPE_NONE:
+> @@ -3070,7 +3017,6 @@ struct dm_md_mempools *dm_alloc_md_mempools(struct mapped_device *md, enum dm_qu
+>  	switch (type) {
+>  	case DM_TYPE_BIO_BASED:
+>  	case DM_TYPE_DAX_BIO_BASED:
+> -	case DM_TYPE_NVME_BIO_BASED:
+>  		pool_size = max(dm_get_reserved_bio_based_ios(), min_pool_size);
+>  		front_pad = roundup(per_io_data_size, __alignof__(struct dm_target_io)) + offsetof(struct dm_target_io, clone);
+>  		io_front_pad = roundup(front_pad,  __alignof__(struct dm_io)) + offsetof(struct dm_io, tio);
+> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+> index a53d7d2c2d95..60631f3abddb 100644
+> --- a/include/linux/device-mapper.h
+> +++ b/include/linux/device-mapper.h
+> @@ -28,7 +28,6 @@ enum dm_queue_mode {
+>  	DM_TYPE_BIO_BASED	 = 1,
+>  	DM_TYPE_REQUEST_BASED	 = 2,
+>  	DM_TYPE_DAX_BIO_BASED	 = 3,
+> -	DM_TYPE_NVME_BIO_BASED	 = 4,
+>  };
+>  
+>  typedef enum { STATUSTYPE_INFO, STATUSTYPE_TABLE } status_type_t;
+> -- 
+> 2.30.0
+> 
 
 --
 dm-devel mailing list
