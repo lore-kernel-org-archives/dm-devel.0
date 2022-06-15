@@ -1,127 +1,93 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 59631C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 15 Jun 2022 10:20:23 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7B5A8C43334
+	for <dm-devel@archiver.kernel.org>; Wed, 15 Jun 2022 11:01:54 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-660-57-KQd7tO7K9Q40D6QH0hQ-1; Wed, 15 Jun 2022 06:20:19 -0400
-X-MC-Unique: 57-KQd7tO7K9Q40D6QH0hQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-315-QkjPq-M8PNOIXel-RXbNcA-1; Wed, 15 Jun 2022 07:01:50 -0400
+X-MC-Unique: QkjPq-M8PNOIXel-RXbNcA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C8ABA3804519;
-	Wed, 15 Jun 2022 10:20:17 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0FEDC811E80;
+	Wed, 15 Jun 2022 11:01:48 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B5564401E68;
-	Wed, 15 Jun 2022 10:20:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 849001415106;
+	Wed, 15 Jun 2022 11:01:47 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 92EE81947B84;
-	Wed, 15 Jun 2022 10:20:17 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5405A1947040;
+	Wed, 15 Jun 2022 11:01:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 76C8D194705C
- for <dm-devel@listman.corp.redhat.com>; Wed, 15 Jun 2022 10:20:16 +0000 (UTC)
+ ESMTP id 975D019466DF
+ for <dm-devel@listman.corp.redhat.com>; Wed, 15 Jun 2022 11:01:46 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 58A4E400DF1D; Wed, 15 Jun 2022 10:20:16 +0000 (UTC)
+ id 57EA140334F; Wed, 15 Jun 2022 11:01:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 545CC40CF8E7
- for <dm-devel@redhat.com>; Wed, 15 Jun 2022 10:20:16 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 350AC101AA52
- for <dm-devel@redhat.com>; Wed, 15 Jun 2022 10:20:16 +0000 (UTC)
-Received: from mailout2.w1.samsung.com (mailout2.w1.samsung.com
- [210.118.77.12]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-214-gec-nxqWOdasQ9iEmNs5RA-1; Wed, 15 Jun 2022 06:20:14 -0400
-X-MC-Unique: gec-nxqWOdasQ9iEmNs5RA-1
-Received: from eucas1p1.samsung.com (unknown [182.198.249.206])
- by mailout2.w1.samsung.com (KnoxPortal) with ESMTP id
- 20220615102013euoutp02962e95fde311bc900a7139d39dc94850~4xAq-4c0m2870528705euoutp02o
- for <dm-devel@redhat.com>; Wed, 15 Jun 2022 10:20:13 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w1.samsung.com
- 20220615102013euoutp02962e95fde311bc900a7139d39dc94850~4xAq-4c0m2870528705euoutp02o
-Received: from eusmges1new.samsung.com (unknown [203.254.199.242]) by
- eucas1p2.samsung.com (KnoxPortal) with ESMTP id
- 20220615102011eucas1p27927ddf4d6c43741b27aa5073cb46fc2~4xApc1BVV1912519125eucas1p2M;
- Wed, 15 Jun 2022 10:20:11 +0000 (GMT)
-Received: from eucas1p2.samsung.com ( [182.198.249.207]) by
- eusmges1new.samsung.com (EUCPMTA) with SMTP id 10.5B.09664.B52B9A26; Wed, 15
- Jun 2022 11:20:11 +0100 (BST)
-Received: from eusmtrp2.samsung.com (unknown [182.198.249.139]) by
- eucas1p2.samsung.com (KnoxPortal) with ESMTPA id
- 20220615102011eucas1p220368db4a186181b1927dea50a79e5d4~4xAo7795N0710507105eucas1p2s;
- Wed, 15 Jun 2022 10:20:11 +0000 (GMT)
-Received: from eusmgms1.samsung.com (unknown [182.198.249.179]) by
- eusmtrp2.samsung.com (KnoxPortal) with ESMTP id
- 20220615102011eusmtrp2227b720bc5fb53cd1c83b1d6c4bc4bce~4xAo6uDdB0361403614eusmtrp2W;
- Wed, 15 Jun 2022 10:20:11 +0000 (GMT)
-X-AuditID: cbfec7f2-d81ff700000025c0-4c-62a9b25bf383
-Received: from eusmtip2.samsung.com ( [203.254.199.222]) by
- eusmgms1.samsung.com (EUCPMTA) with SMTP id 2A.65.09095.B52B9A26; Wed, 15
- Jun 2022 11:20:11 +0100 (BST)
-Received: from localhost (unknown [106.210.248.244]) by eusmtip2.samsung.com
- (KnoxPortal) with ESMTPA id
- 20220615102010eusmtip2dbad86de53e6f9e7136701b3cc5cabba~4xAnvRvtz0472904729eusmtip2g;
- Wed, 15 Jun 2022 10:20:09 +0000 (GMT)
-From: Pankaj Raghav <p.raghav@samsung.com>
-To: hch@lst.de, snitzer@redhat.com, damien.lemoal@opensource.wdc.com,
- axboe@kernel.dk
-Date: Wed, 15 Jun 2022 12:19:20 +0200
-Message-Id: <20220615101920.329421-14-p.raghav@samsung.com>
-In-Reply-To: <20220615101920.329421-1-p.raghav@samsung.com>
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 53543401E68
+ for <dm-devel@redhat.com>; Wed, 15 Jun 2022 11:01:46 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3ADAE185A7B2
+ for <dm-devel@redhat.com>; Wed, 15 Jun 2022 11:01:46 +0000 (UTC)
+Received: from esa3.hgst.iphmx.com (esa3.hgst.iphmx.com [216.71.153.141]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-453-USq0RiDBMaePjQ7U6_tDRQ-1; Wed, 15 Jun 2022 07:01:44 -0400
+X-MC-Unique: USq0RiDBMaePjQ7U6_tDRQ-1
+X-IronPort-AV: E=Sophos;i="5.91,302,1647273600"; d="scan'208";a="208069838"
+Received: from uls-op-cesaip01.wdc.com (HELO uls-op-cesaep01.wdc.com)
+ ([199.255.45.14])
+ by ob1.hgst.iphmx.com with ESMTP; 15 Jun 2022 19:01:41 +0800
+IronPort-SDR: 0K3bD6rZB7Ba1fW2RSy11Zas/Q7BAQN/hs8DMHogb4Bto7u7J++WmWhVC5EkrHb9DaICzbOHQx
+ MVdzCChoqYI0eyI9596DI4qsIcW05ENTtZODblBi7W5rK4Cc5d2cWXGCAMXEyCjHyqFq4HUi+0
+ PS+N5sPBwcnk5tTz9Ol1j3nJ+du75sa9EP3IWS/staBVOsfgIjx1M7MGS02RyhZ23vEBK4ArrG
+ iq00x6Mvc9kq+rfvqOO9x0ghpdSsO3bpIheraY0fXM+IsV4V7qA9TZHPbkIva1br8kmD2VM73k
+ wXI0Tm1GI4fCDgjAGfL0Do4c
+Received: from uls-op-cesaip01.wdc.com ([10.248.3.36])
+ by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 15 Jun 2022 03:24:33 -0700
+IronPort-SDR: dRwt6Txa2iNTltpnmWvsjQStV43XGMFfuW+vfbeireRE9F3UkbDA+NWBJNWDEYLADm5n+nPL5L
+ tHgY9Cj6IktJCRY7w3QUSU6Q/pW42Bzh9P8nj1qxvUQoHbC9D08LCdIltykxp5Yb4qI4ojaEEw
+ QieXjZyZheu1L0EIKZXF2hghDeTC2LxKbO9gmHFy2ABPf7h/7No0G2A//5pHCibMDnJLlESy4z
+ i0KV6HX1IYxff1hmoONu/jZsN3c9Ddryeaw2/VTD+GpFeECfnWwGSfC/t5OGvginZfHxIBqpCM
+ Rdw=
+WDCIronportException: Internal
+Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
+ by uls-op-cesaip01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 15 Jun 2022 04:01:42 -0700
+Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4LNMnK5nR5z1Rwrw
+ for <dm-devel@redhat.com>; Wed, 15 Jun 2022 04:01:41 -0700 (PDT)
+X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
+Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
+ by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
+ port 10026) with ESMTP id CEz4siVbDUOy for <dm-devel@redhat.com>;
+ Wed, 15 Jun 2022 04:01:40 -0700 (PDT)
+Received: from [10.225.163.82] (unknown [10.225.163.82])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4LNMnG1fD0z1Rvlc;
+ Wed, 15 Jun 2022 04:01:38 -0700 (PDT)
+Message-ID: <f7b586a3-5370-f3b9-72dc-f9bea0b63f1f@opensource.wdc.com>
+Date: Wed, 15 Jun 2022 20:01:36 +0900
 MIME-Version: 1.0
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFvrJKsWRmVeSWpSXmKPExsWy7djP87rRm1YmGezfr2mx+m4/m8W0Dz+Z
- LX6fPc9s0dr+jcli77vZrBYXfjQyWdw8sJPJYs+iSUwWK1cfZbJ4sn4Ws0XPgQ8sFn+77gHF
- Wh4yW+y9pW1xedccNov5y56yW3xe2sJusebmUxaLto1fGR2EPS5f8fb4d2INm8fOWXfZPS6f
- LfXYtKqTzWNhw1Rmj81L6j1232wAyrXeZ/V4v+8qm0ffllWMHuu3XGXx2Hy62uPzJjmP9gPd
- TAH8UVw2Kak5mWWpRfp2CVwZvV3rmAo6oyvObWplaWDc4NXFyMkhIWAicfrNfcYuRi4OIYEV
- jBJfdjezQThfGCX+n21kgXA+M0p0z73MCNNyaflpJojEckaJGU8WQzkvGSWmXf8I1MLBwSag
- JdHYyQ7SICIQLnF0zz2wGmaBw8wSt1d2gyWEBWwlNm59xAZiswioSmw884QFxOYVsJY48/M/
- O8Q2eYmZl76D2ZxA8R2ze1ghagQlTs6EqGcGqmneOpsZov4Sp8Smbh0I20Vi3q0DLBC2sMSr
- 41ugZspI/N85nwnCrpZ4euM3M8hxEgItjBL9O9ezgTwgAbSs70wOiMksoCmxfpc+RLmjxKqW
- J4wQFXwSN94KQlzAJzFp23RmiDCvREebEES1ksTOn0+glkpIXG6aA3WMh8Sp80uYJjAqzkLy
- yywkv8xC2LuAkXkVo3hqaXFuemqxYV5quV5xYm5xaV66XnJ+7iZGYOo8/e/4px2Mc1991DvE
- yMTBeIhRgoNZSYTXLHhlkhBvSmJlVWpRfnxRaU5q8SFGaQ4WJXHe5MwNiUIC6YklqdmpqQWp
- RTBZJg5OqQYm5tgIo21fbAsyVdVWneL4rdvJZfjyyJ4C9y/FTq8PxW1mkU232jmb62+i4Uae
- M88rts3ZsHSTglpKrcoi3+tOurca8qys1IoTc+6fWnmovyfo1M/p+90TObX4Et3mb/zhdPE/
- 468L3n/zZry7e3/Xjhu21ZL8CjcetwvPv8k3dcEm9rJZqbk7v4tVBIefXT55TsbVT78FbE6d
- 6LOYm+Mo+KAk6HvYiQXzt//R1bE5KLMvSTjKrZu7z/xzuvcuzk+nJVfw6zpddOv/qMfEF/K3
- Mdk3Y+nua34bym+0zjq8YGNllka6Yv1bo8MOX17x3FWtXzXPaML3kEXBHNPSk2b0PCjn/pLh
- xCi2qpfH8PZOJZbijERDLeai4kQAT3SOQAwEAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFnrOIsWRmVeSWpSXmKPExsVy+t/xe7rRm1YmGcx5xmax+m4/m8W0Dz+Z
- LX6fPc9s0dr+jcli77vZrBYXfjQyWdw8sJPJYs+iSUwWK1cfZbJ4sn4Ws0XPgQ8sFn+77gHF
- Wh4yW+y9pW1xedccNov5y56yW3xe2sJusebmUxaLto1fGR2EPS5f8fb4d2INm8fOWXfZPS6f
- LfXYtKqTzWNhw1Rmj81L6j1232wAyrXeZ/V4v+8qm0ffllWMHuu3XGXx2Hy62uPzJjmP9gPd
- TAH8UXo2RfmlJakKGfnFJbZK0YYWRnqGlhZ6RiaWeobG5rFWRqZK+nY2Kak5mWWpRfp2CXoZ
- vV3rmAo6oyvObWplaWDc4NXFyMkhIWAicWn5aaYuRi4OIYGljBKLXneyQCQkJG4vbGKEsIUl
- /lzrYgOxhQSeM0ocmS7axcjBwSagJdHYyQ4SFhGIlui8+Z4NZA6zwFVmie8N85hBEsICthIb
- tz4C62URUJXYeOYJ2HxeAWuJMz//s0PMl5eYeek7mM0JFN8xu4cVZL6QgJXErnfxEOWCEidn
- QrQyA5U3b53NPIFRYBaS1CwkqQWMTKsYRVJLi3PTc4sN9YoTc4tL89L1kvNzNzECY3zbsZ+b
- dzDOe/VR7xAjEwfjIUYJDmYlEV6z4JVJQrwpiZVVqUX58UWlOanFhxhNgc6eyCwlmpwPTDJ5
- JfGGZgamhiZmlgamlmbGSuK8ngUdiUIC6YklqdmpqQWpRTB9TBycUg1MLusnXT7wbF+fdX9z
- bOnsuTFXu3c7rQkRVUkTvBvSKJ7DveVO0Zm9Z6Yq28vtPDnvtqqLQcUkMT1LjhfnbaZ4CnF0
- ZZ+YuOCf8iqJU1EelhXvZta28v4+m3VbhHlS3xH2rsu5SvoWHQF9lzzkNzGVFk7gij+8Lt9S
- /UuK0GcNg9snWh4KJH9lP3Ne/ajFvl+JjUznE7+5z14jcS3pZYltaruhfeC21umzY2/29fba
- 7+9a/8R3bt6eEBsZl4k9O6vuq57dOPcnO6/uTjb7J5sa86sbul6XK1f9Loq+Y/ezKPKdn6/V
- xd6jfW/Ot+/Zrb7ewDXVMDF+7/TzAfGvLjk9/BHp8vTx7hX1lTkJ5dFKLMUZiYZazEXFiQDr
- 6t5jegMAAA==
-X-CMS-MailID: 20220615102011eucas1p220368db4a186181b1927dea50a79e5d4
-X-Msg-Generator: CA
-X-RootMTR: 20220615102011eucas1p220368db4a186181b1927dea50a79e5d4
-X-EPHeader: CA
-CMS-TYPE: 201P
-X-CMS-RootMailID: 20220615102011eucas1p220368db4a186181b1927dea50a79e5d4
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.10.0
+To: Pankaj Raghav <p.raghav@samsung.com>, hch@lst.de, snitzer@redhat.com,
+ axboe@kernel.dk
 References: <20220615101920.329421-1-p.raghav@samsung.com>
- <CGME20220615102011eucas1p220368db4a186181b1927dea50a79e5d4@eucas1p2.samsung.com>
+ <CGME20220615102007eucas1p1106f9520e2a86beb3792107dffd8071b@eucas1p1.samsung.com>
+ <20220615101920.329421-13-p.raghav@samsung.com>
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Organization: Western Digital Research
+In-Reply-To: <20220615101920.329421-13-p.raghav@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -129,8 +95,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-Subject: [dm-devel] [PATCH v7 13/13] dm: add non power of 2 zoned target
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: Re: [dm-devel] [PATCH v7 12/13] dm: call dm_zone_endio after the
+ target endio callback for zoned devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -142,408 +109,81 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Pankaj Raghav <p.raghav@samsung.com>,
- Damien Le Moal <damien.lemoal@wdc.com>, bvanassche@acm.org,
- pankydev8@gmail.com, gost.dev@samsung.com, jiangbo.365@bytedance.com,
- linux-nvme@lists.infradead.org, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com, jonathan.derrick@linux.dev,
- Johannes Thumshirn <johannes.thumshirn@wdc.com>, dsterba@suse.com,
+Cc: bvanassche@acm.org, pankydev8@gmail.com, gost.dev@samsung.com,
+ linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
+ jiangbo.365@bytedance.com, linux-block@vger.kernel.org, dm-devel@redhat.com,
+ jonathan.derrick@linux.dev, Johannes.Thumshirn@wdc.com, dsterba@suse.com,
  jaegeuk@kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Only power of 2(po2) zoned devices were supported in linux but now non
-power of 2(npo2) zoned device support has been added to the block layer.
+On 6/15/22 19:19, Pankaj Raghav wrote:
+> dm_zone_endio() updates the bi_sector of orig bio for zoned devices that
+> uses either native append or append emulation and it is called before the
+> endio of the target. But target endio can still update the clone bio
+> after dm_zone_endio is called, thereby, the orig bio does not contain
+> the updated information anymore. Call dm_zone_endio for zoned devices
+> after calling the target's endio function
+> 
+> Signed-off-by: Pankaj Raghav <p.raghav@samsung.com>
+> ---
+> @Damien and @Hannes: I couldn't come up with a testcase that uses endio callback and
+> zone append or append emulation for zoned devices to test for
+> regression in this change. It would be great if you can suggest
+> something. This change is required for the npo2 target as we update the
+> clone bio sector in the endio callback function and the orig bio should
+> be updated only after the endio callback for zone appends.
 
-Filesystems such as F2FS and btrfs have support for zoned devices with
-po2 zone size assumption. Before adding native support for npo2 zoned
-devices, it was suggested to create a dm target for npo2 zoned device to
-appear as po2 device so that file systems can initially work without any
-explicit changes by using this target.
+Running zonefs tests on top of dm-crypt will exercise DM zone append
+emulation.
 
-The design of this target is very simple: introduce gaps between the zone
-capacity and the po2 zone size of the underlying device. All IOs will be
-remapped from target to the actual device location. For devices that use
-zone append, the bi_sector is remapped from device to target's layout.
+> 
+>  drivers/md/dm.c | 8 ++++----
+>  1 file changed, 4 insertions(+), 4 deletions(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 3f17fe1de..3a74e1038 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1025,10 +1025,6 @@ static void clone_endio(struct bio *bio)
+>  			disable_write_zeroes(md);
+>  	}
+>  
+> -	if (static_branch_unlikely(&zoned_enabled) &&
+> -	    unlikely(blk_queue_is_zoned(bdev_get_queue(bio->bi_bdev))))
+> -		dm_zone_endio(io, bio);
+> -
+>  	if (endio) {
+>  		int r = endio(ti, bio, &error);
+>  		switch (r) {
+> @@ -1057,6 +1053,10 @@ static void clone_endio(struct bio *bio)
+>  		}
+>  	}
+>  
+> +	if (static_branch_unlikely(&zoned_enabled) &&
+> +	    unlikely(blk_queue_is_zoned(bdev_get_queue(bio->bi_bdev))))
 
-The read IOs that fall in the "emulated" gap area will return 0 and all
-the other IOs in that area will result in an error. If an read IO span
-across the zone capacity boundary, then the IOs are split between the
-boundary. All other IO operations that span across a zone capacity
-boundary will result in an error.
+blk_queue_is_zoned(bdev_get_queue(bio->bi_bdev))) ->
+bdev_is_zoned(bio->bi_bdev)
 
-The target can be easily updated as follows:
-dmsetup create <label> --table '0 <size_sects> zoned-npo2 /dev/nvme<id>'
+> +		dm_zone_endio(io, bio);
+> +
+>  	if (static_branch_unlikely(&swap_bios_enabled) &&
+>  	    unlikely(swap_bios_limit(ti, bio)))
+>  		up(&md->swap_bios_semaphore);
 
-Signed-off-by: Pankaj Raghav <p.raghav@samsung.com>
-Suggested-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-Suggested-by: Damien Le Moal <damien.lemoal@wdc.com>
-Suggested-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/Kconfig                |   9 +
- drivers/md/Makefile               |   2 +
- drivers/md/dm-zone.c              |   9 +
- drivers/md/dm-zoned-npo2-target.c | 268 ++++++++++++++++++++++++++++++
- 4 files changed, 288 insertions(+)
- create mode 100644 drivers/md/dm-zoned-npo2-target.c
 
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 998a5cfdb..773314536 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -518,6 +518,15 @@ config DM_FLAKEY
- 	help
- 	 A target that intermittently fails I/O for debugging purposes.
- 
-+config DM_ZONED_NPO2
-+	tristate "Zoned non power of 2 target"
-+	depends on BLK_DEV_DM
-+	depends on BLK_DEV_ZONED
-+	help
-+	A target that converts a zoned device with non power of 2 zone size to
-+	be power of 2. This is done by introducing gaps in between the zone
-+	capacity and the power of 2 zone size.
-+
- config DM_VERITY
- 	tristate "Verity target support"
- 	depends on BLK_DEV_DM
-diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-index 0454b0885..2863a94a7 100644
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
-@@ -26,6 +26,7 @@ dm-era-y	+= dm-era-target.o
- dm-clone-y	+= dm-clone-target.o dm-clone-metadata.o
- dm-verity-y	+= dm-verity-target.o
- dm-zoned-y	+= dm-zoned-target.o dm-zoned-metadata.o dm-zoned-reclaim.o
-+dm-zoned-npo2-y       += dm-zoned-npo2-target.o
- 
- md-mod-y	+= md.o md-bitmap.o
- raid456-y	+= raid5.o raid5-cache.o raid5-ppl.o
-@@ -60,6 +61,7 @@ obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
- obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
- obj-$(CONFIG_DM_DUST)		+= dm-dust.o
- obj-$(CONFIG_DM_FLAKEY)		+= dm-flakey.o
-+obj-$(CONFIG_DM_ZONED_NPO2)	+= dm-zoned-npo2.o
- obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
- obj-$(CONFIG_DM_MULTIPATH_QL)	+= dm-queue-length.o
- obj-$(CONFIG_DM_MULTIPATH_ST)	+= dm-service-time.o
-diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-index af36d33f9..5efb31ba0 100644
---- a/drivers/md/dm-zone.c
-+++ b/drivers/md/dm-zone.c
-@@ -210,6 +210,11 @@ static int dm_zone_revalidate_cb(struct blk_zone *zone, unsigned int idx,
- 		}
- 		md->zwp_offset[idx] = dm_get_zone_wp_offset(zone);
- 
-+		if (q->limits.chunk_sectors != zone->len) {
-+			blk_queue_chunk_sectors(q, zone->len);
-+			q->nr_zones = blkdev_nr_zones(md->disk);
-+		}
-+
- 		break;
- 	default:
- 		DMERR("Invalid zone type 0x%x at sectors %llu",
-@@ -307,6 +312,9 @@ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q)
- 	if (dm_table_supports_zone_append(t)) {
- 		clear_bit(DMF_EMULATE_ZONE_APPEND, &md->flags);
- 		dm_cleanup_zoned_dev(md);
-+
-+		if (!is_power_of_2(blk_queue_zone_sectors(q)))
-+			goto revalidate_zones;
- 		return 0;
- 	}
- 
-@@ -318,6 +326,7 @@ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q)
- 	if (!get_capacity(md->disk))
- 		return 0;
- 
-+revalidate_zones:
- 	return dm_revalidate_zones(md, t);
- }
- 
-diff --git a/drivers/md/dm-zoned-npo2-target.c b/drivers/md/dm-zoned-npo2-target.c
-new file mode 100644
-index 000000000..c1373d3ea
---- /dev/null
-+++ b/drivers/md/dm-zoned-npo2-target.c
-@@ -0,0 +1,268 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) 2022 Samsung Electronics Co., Ltd.
-+ */
-+
-+#include <linux/device-mapper.h>
-+
-+#define DM_MSG_PREFIX "zoned-npo2"
-+
-+struct dmz_npo2_target {
-+	struct dm_dev *dev;
-+	sector_t zsze;
-+	sector_t zsze_po2;
-+	sector_t zsze_diff;
-+	u32 nr_zones;
-+};
-+
-+enum dmz_npo2_io_cond {
-+	DMZ_NPO2_IO_INSIDE_ZONE,
-+	DMZ_NPO2_IO_ACROSS_ZONE,
-+	DMZ_NPO2_IO_OUTSIDE_ZONE,
-+};
-+
-+static inline u32 npo2_zone_no(struct dmz_npo2_target *dmh, sector_t sect)
-+{
-+	return div64_u64(sect, dmh->zsze);
-+}
-+
-+static inline u32 po2_zone_no(struct dmz_npo2_target *dmh, sector_t sect)
-+{
-+	return sect >> ilog2(dmh->zsze_po2);
-+}
-+
-+static inline sector_t target_to_device_sect(struct dmz_npo2_target *dmh,
-+					     sector_t sect)
-+{
-+	u32 zone_idx = po2_zone_no(dmh, sect);
-+
-+	sect -= (zone_idx * dmh->zsze_diff);
-+
-+	return sect;
-+}
-+
-+static inline sector_t device_to_target_sect(struct dmz_npo2_target *dmh,
-+					     sector_t sect)
-+{
-+	u32 zone_idx = npo2_zone_no(dmh, sect);
-+
-+	sect += (zone_idx * dmh->zsze_diff);
-+
-+	return sect;
-+}
-+
-+/*
-+ * <dev-path>
-+ * This target works on the complete zoned device. Partial mapping is not
-+ * supported
-+ */
-+static int dmz_npo2_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-+{
-+	struct dmz_npo2_target *dmh = NULL;
-+	int ret = 0;
-+	sector_t zsze;
-+	sector_t disk_size;
-+
-+	if (argc < 1)
-+		return -EINVAL;
-+
-+	dmh = kmalloc(sizeof(*dmh), GFP_KERNEL);
-+	if (!dmh)
-+		return -ENOMEM;
-+
-+	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
-+			    &dmh->dev);
-+
-+	zsze = blk_queue_zone_sectors(bdev_get_queue(dmh->dev->bdev));
-+
-+	disk_size = get_capacity(dmh->dev->bdev->bd_disk);
-+
-+	if (ti->len != disk_size || ti->begin) {
-+		DMERR("%pg Partial mapping of the target not supported",
-+		      dmh->dev->bdev);
-+		return -EINVAL;
-+	}
-+
-+	if (is_power_of_2(zsze)) {
-+		DMERR("%pg zone size is power of 2", dmh->dev->bdev);
-+		return -EINVAL;
-+	}
-+
-+	dmh->zsze = zsze;
-+	dmh->zsze_po2 = 1 << get_count_order_long(zsze);
-+	dmh->zsze_diff = dmh->zsze_po2 - dmh->zsze;
-+
-+	ti->private = dmh;
-+	ti->num_flush_bios = 1;
-+	ti->num_discard_bios = 1;
-+	ti->num_secure_erase_bios = 1;
-+	ti->num_write_zeroes_bios = 1;
-+
-+	dmh->nr_zones = npo2_zone_no(dmh, ti->len);
-+	ti->len = dmh->zsze_po2 * dmh->nr_zones;
-+
-+	return 0;
-+}
-+
-+static int dmz_npo2_report_zones_cb(struct blk_zone *zone, unsigned int idx,
-+				    void *data)
-+{
-+	struct dm_report_zones_args *args = data;
-+	struct dmz_npo2_target *dmh = args->tgt->private;
-+
-+	zone->start = device_to_target_sect(dmh, zone->start);
-+	zone->wp = device_to_target_sect(dmh, zone->wp);
-+	zone->len = dmh->zsze_po2;
-+	args->next_sector = zone->start + zone->len;
-+
-+	return args->orig_cb(zone, args->zone_idx++, args->orig_data);
-+}
-+
-+static int dmz_npo2_report_zones(struct dm_target *ti,
-+				 struct dm_report_zones_args *args,
-+				 unsigned int nr_zones)
-+{
-+	struct dmz_npo2_target *dmh = ti->private;
-+	int ret = 0;
-+	sector_t sect = po2_zone_no(dmh, args->next_sector) * dmh->zsze;
-+
-+	ret = blkdev_report_zones(dmh->dev->bdev, sect, nr_zones,
-+				  dmz_npo2_report_zones_cb, args);
-+	if (ret < 0)
-+		DMERR("report zones error");
-+
-+	return ret;
-+}
-+
-+static int check_zone_boundary_violation(struct dmz_npo2_target *dmh,
-+					 sector_t sect, sector_t size)
-+{
-+	u32 zone_idx = po2_zone_no(dmh, sect);
-+	sector_t relative_sect = 0;
-+
-+	sect = target_to_device_sect(dmh, sect);
-+	relative_sect = sect - (zone_idx * dmh->zsze);
-+
-+	if ((relative_sect + size) <= dmh->zsze)
-+		return DMZ_NPO2_IO_INSIDE_ZONE;
-+	else if (relative_sect >= dmh->zsze)
-+		return DMZ_NPO2_IO_OUTSIDE_ZONE;
-+
-+	return DMZ_NPO2_IO_ACROSS_ZONE;
-+}
-+
-+static void split_io_across_zone_boundary(struct dmz_npo2_target *dmh,
-+					  struct bio *bio)
-+{
-+	sector_t sect = bio->bi_iter.bi_sector;
-+	sector_t sects_from_zone_start;
-+
-+	sect = target_to_device_sect(dmh, sect);
-+	div64_u64_rem(sect, dmh->zsze, &sects_from_zone_start);
-+	dm_accept_partial_bio(bio, dmh->zsze - sects_from_zone_start);
-+	bio->bi_iter.bi_sector = sect;
-+}
-+
-+static int handle_zone_boundary_violation(struct dmz_npo2_target *dmh,
-+					  struct bio *bio,
-+					  enum dmz_npo2_io_cond cond)
-+{
-+	/* Read should return zeroed page */
-+	if (bio_op(bio) == REQ_OP_READ) {
-+		if (cond == DMZ_NPO2_IO_ACROSS_ZONE) {
-+			split_io_across_zone_boundary(dmh, bio);
-+			return DM_MAPIO_REMAPPED;
-+		}
-+		zero_fill_bio(bio);
-+		bio_endio(bio);
-+		return DM_MAPIO_SUBMITTED;
-+	}
-+	return DM_MAPIO_KILL;
-+}
-+
-+static int dmz_npo2_end_io(struct dm_target *ti, struct bio *bio,
-+			   blk_status_t *error)
-+{
-+	struct dmz_npo2_target *dmh = ti->private;
-+
-+	if (bio->bi_status == BLK_STS_OK && bio_op(bio) == REQ_OP_ZONE_APPEND)
-+		bio->bi_iter.bi_sector =
-+			device_to_target_sect(dmh, bio->bi_iter.bi_sector);
-+
-+	return DM_ENDIO_DONE;
-+}
-+
-+static int dmz_npo2_map(struct dm_target *ti, struct bio *bio)
-+{
-+	struct dmz_npo2_target *dmh = ti->private;
-+	enum dmz_npo2_io_cond cond;
-+
-+	bio_set_dev(bio, dmh->dev->bdev);
-+	if (bio_sectors(bio) || op_is_zone_mgmt(bio_op(bio))) {
-+		cond = check_zone_boundary_violation(dmh, bio->bi_iter.bi_sector,
-+						     bio->bi_iter.bi_size >> SECTOR_SHIFT);
-+
-+		/*
-+		 * If the starting sector is in the emulated area then fill
-+		 * all the bio with zeros. If bio is across boundaries,
-+		 * split the bio across boundaries and fill zeros only for the
-+		 * bio that is outside the zone capacity
-+		 */
-+		switch (cond) {
-+		case DMZ_NPO2_IO_INSIDE_ZONE:
-+			bio->bi_iter.bi_sector = target_to_device_sect(dmh,
-+								       bio->bi_iter.bi_sector);
-+			break;
-+		case DMZ_NPO2_IO_ACROSS_ZONE:
-+		case DMZ_NPO2_IO_OUTSIDE_ZONE:
-+			return handle_zone_boundary_violation(dmh, bio, cond);
-+		}
-+	}
-+	return DM_MAPIO_REMAPPED;
-+}
-+
-+static int dmz_npo2_iterate_devices(struct dm_target *ti,
-+				    iterate_devices_callout_fn fn, void *data)
-+{
-+	struct dmz_npo2_target *dmh = ti->private;
-+	sector_t len = 0;
-+
-+	len = dmh->nr_zones * dmh->zsze;
-+	return fn(ti, dmh->dev, 0, len, data);
-+}
-+
-+static struct target_type dmz_npo2_target = {
-+	.name = "zoned-npo2",
-+	.version = { 1, 0, 0 },
-+	.features = DM_TARGET_ZONED_HM,
-+	.map = dmz_npo2_map,
-+	.end_io = dmz_npo2_end_io,
-+	.report_zones = dmz_npo2_report_zones,
-+	.iterate_devices = dmz_npo2_iterate_devices,
-+	.module = THIS_MODULE,
-+	.ctr = dmz_npo2_ctr,
-+};
-+
-+static int __init dmz_npo2_init(void)
-+{
-+	int r = dm_register_target(&dmz_npo2_target);
-+
-+	if (r < 0)
-+		DMERR("register failed %d", r);
-+
-+	return r;
-+}
-+
-+static void __exit dmz_npo2_exit(void)
-+{
-+	dm_unregister_target(&dmz_npo2_target);
-+}
-+
-+/* Module hooks */
-+module_init(dmz_npo2_init);
-+module_exit(dmz_npo2_exit);
-+
-+MODULE_DESCRIPTION(DM_NAME " non power 2 zoned target");
-+MODULE_AUTHOR("Pankaj Raghav <p.raghav@samsung.com>");
-+MODULE_LICENSE("GPL");
-+
 -- 
-2.25.1
+Damien Le Moal
+Western Digital Research
 
 --
 dm-devel mailing list
