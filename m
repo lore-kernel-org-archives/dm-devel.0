@@ -4,64 +4,91 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 54B4CC433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 16 Jun 2022 18:14:48 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1655403287;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=5P8oQnPxuHRD0Oekc5DByME3dAEiQBK4P43sEAJUq7k=;
-	b=SD3fcbfj/JDmhlaOg87vhzIZnsStJN4UPpxoJx4DFrJ8i75N6VfO1z1gt1tJ2q4od0Wfl1
-	xKQF1NC1xevebdjj3GSX0eW95lmFqbhoaeoP91IjxxfYFALOs9dYQaegpKk8BDCODyHsvZ
-	KbzbzllIlCrCp5wguqMnwUBlfujRW7w=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B26A6C43334
+	for <dm-devel@archiver.kernel.org>; Thu, 16 Jun 2022 20:32:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-675-2ghyBr7kMkiN5F9RUW36yw-1; Thu, 16 Jun 2022 14:14:44 -0400
-X-MC-Unique: 2ghyBr7kMkiN5F9RUW36yw-1
+ us-mta-355-5xz9mgw3N7S_03CpG9uokA-1; Thu, 16 Jun 2022 16:32:12 -0400
+X-MC-Unique: 5xz9mgw3N7S_03CpG9uokA-1
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 187A61066543;
-	Thu, 16 Jun 2022 18:14:42 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 52134101AA46;
+	Thu, 16 Jun 2022 20:32:10 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9BDDA1121319;
-	Thu, 16 Jun 2022 18:14:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D58091121314;
+	Thu, 16 Jun 2022 20:32:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 57C4C194705F;
-	Thu, 16 Jun 2022 18:14:41 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B79C1194705F;
+	Thu, 16 Jun 2022 20:32:08 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4F75B1947064
- for <dm-devel@listman.corp.redhat.com>; Thu, 16 Jun 2022 18:14:39 +0000 (UTC)
+ ESMTP id 5CD71194705D
+ for <dm-devel@listman.corp.redhat.com>; Thu, 16 Jun 2022 20:32:07 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2B41A40C1289; Thu, 16 Jun 2022 18:14:39 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
- (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2431940C1288;
- Thu, 16 Jun 2022 18:14:39 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 25GIEdXj027031; Thu, 16 Jun 2022 14:14:39 -0400
-Received: from localhost (mpatocka@localhost)
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 25GIEde0027027; Thu, 16 Jun 2022 14:14:39 -0400
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
- owned process doing -bs
-Date: Thu, 16 Jun 2022 14:14:39 -0400 (EDT)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
-Message-ID: <alpine.LRH.2.02.2206161412490.26972@file01.intranet.prod.int.rdu2.redhat.com>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+ id 3AF0EC23DBF; Thu, 16 Jun 2022 20:32:07 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 372DDC08087
+ for <dm-devel@redhat.com>; Thu, 16 Jun 2022 20:32:07 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1EBCF3817A6F
+ for <dm-devel@redhat.com>; Thu, 16 Jun 2022 20:32:07 +0000 (UTC)
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com
+ [209.85.128.54]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-93-QDVC6ceJOoGljTw0oFEGsQ-1; Thu, 16 Jun 2022 16:32:03 -0400
+X-MC-Unique: QDVC6ceJOoGljTw0oFEGsQ-1
+Received: by mail-wm1-f54.google.com with SMTP id z17so1341471wmi.1;
+ Thu, 16 Jun 2022 13:32:03 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:message-id:date:mime-version:subject
+ :content-language:to:cc:references:from:in-reply-to
+ :content-transfer-encoding;
+ bh=Nhv8AFueLhsJdYQbBTxVg+GTWN7yx+aYmJx09zF/dG0=;
+ b=o29pti0DY9qGPp442Gm6GcGL9/WB7YAvJm8U0qJ9bpNpENTXdbQ4AkHGDymeVp+3mt
+ S0OpebD5vXP0rfkDXOzGQCj43F46nvqYHsgvgbOFi7gggkvpNggfIVZRfxD/os5zWuCl
+ wPTsGhLi6opFSHZFC4nSuuX7SUC0fZRN4lgdYP1SyKYCqpLHHfNFSwWJT4c33cC8cv/y
+ tiMxCnSYNeZKaxpqDyhukfS+QPIi/R2/O8cpeGGmBpaeYXj8sDM9+0FWz7ecBOIR4HTw
+ n71DhtwzJcxtHMs1ebwjEWCI6T3b2JqVQm4ujvZ7wiHpPWcuh2a7l2g2qOC/XnXexpDh
+ 7obA==
+X-Gm-Message-State: AJIora8hu40Q/kUSgp2CyEgq2a2TJDMdr04fMZ2jnl0B2R04a+H9iOcn
+ F5XCdGND/Bm8Mn7e+cNgvKbjevuz3A==
+X-Google-Smtp-Source: AGRyM1vAT+ILREd9ONDNG8k8Hm8X6CFlidrh50/Z+5+B7CZNAsGzpF4Tm5TxnQ9k2yHSo9I+86z6KA==
+X-Received: by 2002:a05:600c:4f4e:b0:39c:1bbb:734f with SMTP id
+ m14-20020a05600c4f4e00b0039c1bbb734fmr6678268wmq.116.1655411521885; 
+ Thu, 16 Jun 2022 13:32:01 -0700 (PDT)
+Received: from localhost (226.red-81-44-147.dynamicip.rima-tde.net.
+ [81.44.147.226]) by smtp.gmail.com with ESMTPSA id
+ o12-20020a05600c4fcc00b0039751bb8c62sm7464580wmq.24.2022.06.16.13.32.01
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Thu, 16 Jun 2022 13:32:01 -0700 (PDT)
+Message-ID: <950f4ffe-7cf6-b385-1141-f27fbf5ebef9@gmail.com>
+Date: Thu, 16 Jun 2022 22:32:00 +0200
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: [dm-devel] [PATCH] dm: double-check REQ_NOWAIT flag while we hold
- the table lock
+To: Martin Wilck <mwilck@suse.com>
+References: <20220328170404.8565-1-xose.vazquez@gmail.com>
+ <5187f68e1a6595d47d10a05ea01931e1ce8cad27.camel@suse.com>
+ <9bdd8437-741b-ff0c-068c-9d8cf211fff0@gmail.com>
+ <6e92e5c8678e66808f94b844f86f2573e41ebb01.camel@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <6e92e5c8678e66808f94b844f86f2573e41ebb01.camel@suse.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH] multipath-tools: add basic info on how to
+ use multipath-tools with NVMe devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -73,7 +100,8 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ DM-DEVEL ML <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
@@ -81,70 +109,29 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-Starting with the commit 63a225c9fd20, device mapper has an optimization
-that it will take cheaper table lock (dm_get_live_table_fast instead of
-dm_get_live_table) if the bio has REQ_NOWAIT. The bios with REQ_NOWAIT
-must not block in the target request routine, if they did, we would be
-blocking while holding rcu_read_lock, which is prohibited.
-
-The targets that are suitable for REQ_NOWAIT optimization (and that don't
-block in the map routine) have the flag DM_TARGET_NOWAIT set. Device
-mapper will test if all the targets and all the devices in a table
-support nowait (see the function dm_table_supports_nowait) and it will set
-or clear the QUEUE_FLAG_NOWAIT flag on it's request queue according to
-this check.
-
-There's a test in submit_bio_noacct: "if ((bio->bi_opf & REQ_NOWAIT) &&
-!blk_queue_nowait(q)) goto not_supported" - this will make sure that
-REQ_NOWAIT bios can't enter a request queue that doesn't support them.
-
-This mechanism works to prevent REQ_NOWAIT bios from reaching dm targets
-that don't support the REQ_NOWAIT flag (and that may block in the map
-routine) - except that there is a small race condition:
-
-submit_bio_noacct checks if the queue has the QUEUE_FLAG_NOWAIT without
-holding any locks. Immediatelly after this check, the device mapper table
-may be reloaded with a table that doesn't support REQ_NOWAIT (for example,
-if we start moving the logical volume or if we activate a snapshot).
-However the REQ_NOWAIT bio that already passed the check in
-submit_bio_noacct would be sent to device mapper, where it could be
-redirected to a dm target that doesn't support REQ_NOWAIT - the result is
-sleeping while we hold rcu_read_lock.
-
-In order to fix this race, we double-check if the target supports
-REQ_NOWAIT while we hold the table lock (so that the table can't change
-under us).
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Fixes: 63a225c9fd20 ("dm: introduce dm_{get,put}_live_table_bio called from dm_submit_bio")
-
----
- drivers/md/dm.c |    7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
-
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c	2022-06-16 09:20:45.000000000 +0200
-+++ linux-2.6/drivers/md/dm.c	2022-06-16 19:39:04.000000000 +0200
-@@ -1609,7 +1609,12 @@ static blk_status_t __split_and_process_
- 	ti = dm_table_find_target(ci->map, ci->sector);
- 	if (unlikely(!ti))
- 		return BLK_STS_IOERR;
--	else if (unlikely(ci->is_abnormal_io))
-+
-+	if (unlikely((ci->bio->bi_opf & REQ_NOWAIT) != 0) &&
-+	    unlikely(!dm_target_supports_nowait(ti->type)))
-+		return BLK_STS_NOTSUPP;
-+
-+	if (unlikely(ci->is_abnormal_io))
- 		return __process_abnormal_io(ci, ti);
- 
- 	/*
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gNC8xLzIyIDEyOjIwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cgo+IE9uIE1vbiwgMjAyMi0wMy0y
+OCBhdCAxOTo1NyArMDIwMCwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+PiBPbiAzLzI4LzIy
+IDE5OjQ4LCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4+PiBPbiBNb24sIDIwMjItMDMtMjggYXQgMTk6
+MDQgKzAyMDAsIFhvc2UgVmF6cXVleiBQZXJleiB3cm90ZToKPj4+PiBDYzogTWFydGluIFdpbGNr
+IDxtd2lsY2tAc3VzZS5jb20+Cj4+Pj4gQ2M6IEJlbmphbWluIE1hcnppbnNraSA8Ym1hcnppbnNA
+cmVkaGF0LmNvbT4KPj4+PiBDYzogQ2hyaXN0b3BoZSBWYXJvcXVpIDxjaHJpc3RvcGhlLnZhcm9x
+dWlAb3BlbnN2Yy5jb20+Cj4+Pj4gQ2M6IERNLURFVkVMIE1MIDxkbS1kZXZlbEByZWRoYXQuY29t
+Pgo+Pj4+IFNpZ25lZC1vZmYtYnk6IFhvc2UgVmF6cXVleiBQZXJleiA8eG9zZS52YXpxdWV6QGdt
+YWlsLmNvbT4KPj4+PiAtLS0KPj4+PiAgwqDCoFJFQURNRS5udm1lIHwgMTIgKysrKysrKysrKysr
+Cj4+Pj4gIMKgwqAxIGZpbGUgY2hhbmdlZCwgMTIgaW5zZXJ0aW9ucygrKQo+Pj4+ICDCoMKgY3Jl
+YXRlIG1vZGUgMTAwNjQ0IFJFQURNRS5udm1lCj4+Pgo+Pj4gV2h5IGFub3RoZXIgc2VwYXJhdGUg
+UkVBRE1FIHdpdGgganVzdCAxMiBsaW5lcz8KPj4+Cj4+PiBNYXJ0aW4KPj4KPj4gUkVBRE1FLm1k
+IGlzIGludGVuZGVkIG11bHRpcGF0aC10b29scyBkZXZlbG9wZXJzLgo+PiBBbmQgUkVBRE1FLmFs
+dWEgYW5kIFJFQURNRS5udm1lIGFyZSBmb3Igc3lzYWRtaW5zLgo+Pgo+IAo+IEkgc2VlIG5vIGZ1
+bmRhbWVudGFsIHJlYXNvbiBub3QgdG8gbWVyZ2UgYWxsIFJFQURNRXMgaW50byBvbmUsCj4gYW5k
+IGNyZWF0ZSAic3lzYWRtaW4iIGFuZCAiZGV2ZWxvcGVyIiBzZWN0aW9ucy4KClJFQURNRS5tZCBp
+cyBpbiBtYXJrZG93biBzeW50YXguClJFQURNRS5hbHVhIGFuZCBSRUFETUUubnZtZSBhcmUgcGxh
+aW4gdGV4dCwgYW5kIGl0cyBjb250ZW50IGlzIGVhc2llciB0byBpZGVudGlmeS4KQXJlIHlvdSBy
+dW5uaW5nIG91dCBvZiBpbm9kZXM/IDotKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
+dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
+by9kbS1kZXZlbAo=
 
