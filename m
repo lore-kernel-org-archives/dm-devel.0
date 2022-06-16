@@ -1,71 +1,67 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E99D6C43334
-	for <dm-devel@archiver.kernel.org>; Thu, 16 Jun 2022 17:20:28 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8F338C433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 16 Jun 2022 17:29:18 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1655400557;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=qsWQpfP+NOGO1f+KOCTAtC8/IGVxol1nF8ZaCTB/5lw=;
+	b=PteFp5dRHTuXz1EKvUYbkbMRlezCMWv4UfZkZWoec8NY9piq8TmeCBMlewD5WwRycgnoEk
+	iEm3qCXkWX3iieLegxzARpvCwMkcu5BTp6XXw3htasLU500Z3Ou4tsSIf4qfzATrT0kG1N
+	McWjKbbrAdWvxZiQjmtw3uJFaxAcMHE=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-348-KnAmMt-XP2eKP7uHYDH92A-1; Thu, 16 Jun 2022 13:20:24 -0400
-X-MC-Unique: KnAmMt-XP2eKP7uHYDH92A-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-433-U-0OGuGuPLmWYF7oEb14yg-1; Thu, 16 Jun 2022 13:29:14 -0400
+X-MC-Unique: U-0OGuGuPLmWYF7oEb14yg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ABF653C0D85C;
-	Thu, 16 Jun 2022 17:20:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4BC03101A56D;
+	Thu, 16 Jun 2022 17:29:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 75E3D1121319;
-	Thu, 16 Jun 2022 17:20:19 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id ED9A01415106;
+	Thu, 16 Jun 2022 17:29:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2BE041947069;
-	Thu, 16 Jun 2022 17:20:19 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D192C1947062;
+	Thu, 16 Jun 2022 17:29:11 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7DC3D194705D
- for <dm-devel@listman.corp.redhat.com>; Thu, 16 Jun 2022 17:09:10 +0000 (UTC)
+ ESMTP id CF310194705D
+ for <dm-devel@listman.corp.redhat.com>; Thu, 16 Jun 2022 17:21:27 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2BF6740CFD0A; Thu, 16 Jun 2022 17:09:10 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 27C7B40CF8E4
- for <dm-devel@redhat.com>; Thu, 16 Jun 2022 17:09:10 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EB6198517C2
- for <dm-devel@redhat.com>; Thu, 16 Jun 2022 17:09:00 +0000 (UTC)
-Received: from bombadil.infradead.org (bombadil.infradead.org
- [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-502-9EFktPZ5NVSoCxORf56_nQ-1; Thu, 16 Jun 2022 13:08:56 -0400
-X-MC-Unique: 9EFktPZ5NVSoCxORf56_nQ-1
-Received: from mcgrof by bombadil.infradead.org with local (Exim 4.94.2 #2
- (Red Hat Linux)) id 1o1rzE-003Jg0-9g; Thu, 16 Jun 2022 16:04:48 +0000
-Date: Thu, 16 Jun 2022 09:04:48 -0700
-From: Luis Chamberlain <mcgrof@kernel.org>
-To: Pankaj Raghav <p.raghav@samsung.com>
-Message-ID: <YqtUoK4KzvG7NQS0@bombadil.infradead.org>
-References: <20220615101920.329421-1-p.raghav@samsung.com>
- <CGME20220615101931eucas1p15ed09ae433a2c378b599e9086130d8eb@eucas1p1.samsung.com>
- <20220615101920.329421-3-p.raghav@samsung.com>
- <857c444a-02b9-9cef-0c5b-2ecdb2fd46f6@acm.org>
- <e04db101-5628-2a1d-6b5c-997090484d7d@samsung.com>
+ id 9B0BA40E80E2; Thu, 16 Jun 2022 17:21:27 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 93E4140E80E1;
+ Thu, 16 Jun 2022 17:21:27 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 25GHLRnt024919; Thu, 16 Jun 2022 13:21:27 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 25GHLRRV024915; Thu, 16 Jun 2022 13:21:27 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Thu, 16 Jun 2022 13:21:27 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>
+Message-ID: <alpine.LRH.2.02.2206161222001.22594@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-In-Reply-To: <e04db101-5628-2a1d-6b5c-997090484d7d@samsung.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH v7 02/13] block: allow blk-zoned devices to
- have non-power-of-2 zone size
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Subject: [dm-devel] [PATCH] dm: fix accessing of freed memory in
+ dm_put_live_table_bio
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -77,50 +73,82 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, Bart Van Assche <bvanassche@acm.org>, pankydev8@gmail.com,
- gost.dev@samsung.com, damien.lemoal@opensource.wdc.com,
- jiangbo.365@bytedance.com, linux-nvme@lists.infradead.org,
- linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com,
- snitzer@redhat.com, jonathan.derrick@linux.dev, Johannes.Thumshirn@wdc.com,
- dsterba@suse.com, jaegeuk@kernel.org, hch@lst.de
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Thu, Jun 16, 2022 at 12:09:35PM +0200, Pankaj Raghav wrote:
-> On 2022-06-15 22:28, Bart Van Assche wrote:
-> >> +=A0=A0=A0=A0=A0=A0=A0 if (!is_power_of_2(zone->len) && zone->capacity=
- < zone->len) {
-> >> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pr_warn("%s: Invalid zone capacity =
-for non power of 2
-> >> zone size",
-> >> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 disk->disk_name);
-> >> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 return -ENODEV;
-> >> =A0=A0=A0=A0=A0=A0=A0=A0=A0 }
-> >=20
-> > The above check seems wrong to me. I don't see why devices that report =
-a
-> > capacity that is less than the zone size should be rejected.
-> >=20
-> This was brought up by Damien during previous reviews. The argument was
-> that the reason to allow non power-of-2 zoned device is to remove the
-> gaps between zone size and zone capacity. Allowing a npo2 zone size with
-> a different capacity, even though it is technically possible, it does
-> not make any practical sense. That is why this check was introduced.
-> Does that answer your question?
+dm_put_live_table_bio is called from the end of dm_submit_bio. However, at
+this point, the bio may be already finished and the caller may have freed
+the bio. Consequently, dm_put_live_table_bio accesses the stale "bio"
+pointer.
 
-Perhaps just add a comment because unless you are involved in the prior
-reviews this might not be clear.
+This patch fixes the bug by loading the bi_opf value and passing this
+value to dm_get_live_table_bio and dm_put_live_table_bio
+instead of the bio.
 
-  Luis
+This bug was found by running the lvm testsuite with kasan.
 
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Fixes: 563a225c9fd20 ("dm: introduce dm_{get,put}_live_table_bio called from dm_submit_bio")
+
+---
+ drivers/md/dm.c |   13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c	2022-06-13 13:01:16.000000000 +0200
++++ linux-2.6/drivers/md/dm.c	2022-06-16 09:20:45.000000000 +0200
+@@ -711,18 +711,18 @@ static void dm_put_live_table_fast(struc
+ }
+ 
+ static inline struct dm_table *dm_get_live_table_bio(struct mapped_device *md,
+-						     int *srcu_idx, struct bio *bio)
++						     int *srcu_idx, unsigned bio_opf)
+ {
+-	if (bio->bi_opf & REQ_NOWAIT)
++	if (bio_opf & REQ_NOWAIT)
+ 		return dm_get_live_table_fast(md);
+ 	else
+ 		return dm_get_live_table(md, srcu_idx);
+ }
+ 
+ static inline void dm_put_live_table_bio(struct mapped_device *md, int srcu_idx,
+-					 struct bio *bio)
++					 unsigned bio_opf)
+ {
+-	if (bio->bi_opf & REQ_NOWAIT)
++	if (bio_opf & REQ_NOWAIT)
+ 		dm_put_live_table_fast(md);
+ 	else
+ 		dm_put_live_table(md, srcu_idx);
+@@ -1711,8 +1711,9 @@ static void dm_submit_bio(struct bio *bi
+ 	struct mapped_device *md = bio->bi_bdev->bd_disk->private_data;
+ 	int srcu_idx;
+ 	struct dm_table *map;
++	unsigned bio_opf = bio->bi_opf;
+ 
+-	map = dm_get_live_table_bio(md, &srcu_idx, bio);
++	map = dm_get_live_table_bio(md, &srcu_idx, bio_opf);
+ 
+ 	/* If suspended, or map not yet available, queue this IO for later */
+ 	if (unlikely(test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags)) ||
+@@ -1728,7 +1729,7 @@ static void dm_submit_bio(struct bio *bi
+ 
+ 	dm_split_and_process_bio(md, map, bio);
+ out:
+-	dm_put_live_table_bio(md, srcu_idx, bio);
++	dm_put_live_table_bio(md, srcu_idx, bio_opf);
+ }
+ 
+ static bool dm_poll_dm_io(struct dm_io *io, struct io_comp_batch *iob,
 --
 dm-devel mailing list
 dm-devel@redhat.com
