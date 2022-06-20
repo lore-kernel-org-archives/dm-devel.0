@@ -4,71 +4,57 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9B1E9C433EF
-	for <dm-devel@archiver.kernel.org>; Fri, 17 Jun 2022 17:07:36 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C4BFEC433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 20 Jun 2022 07:12:46 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-614-fzCvmrzfN-iialK79SjsbQ-1; Fri, 17 Jun 2022 13:07:32 -0400
-X-MC-Unique: fzCvmrzfN-iialK79SjsbQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-608-pso0iYD2O_-OM2-XCKxGPQ-1; Mon, 20 Jun 2022 03:12:42 -0400
+X-MC-Unique: pso0iYD2O_-OM2-XCKxGPQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6222E294EDD1;
-	Fri, 17 Jun 2022 17:07:30 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DB97E83397C;
+	Mon, 20 Jun 2022 07:12:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F31172166B26;
-	Fri, 17 Jun 2022 17:07:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EE4879D5F;
+	Mon, 20 Jun 2022 07:12:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 98C081947063;
-	Fri, 17 Jun 2022 17:07:29 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CBA57194706D;
+	Mon, 20 Jun 2022 07:12:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0307C194705F
- for <dm-devel@listman.corp.redhat.com>; Fri, 17 Jun 2022 17:07:28 +0000 (UTC)
+ ESMTP id 50A7B1947069
+ for <dm-devel@listman.corp.redhat.com>; Mon, 20 Jun 2022 07:12:36 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E1C1A8179; Fri, 17 Jun 2022 17:07:27 +0000 (UTC)
+ id 2F96A2026987; Mon, 20 Jun 2022 07:12:36 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DD511814B
- for <dm-devel@redhat.com>; Fri, 17 Jun 2022 17:07:27 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C286785A580
- for <dm-devel@redhat.com>; Fri, 17 Jun 2022 17:07:27 +0000 (UTC)
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2B59B2026985
+ for <dm-devel@redhat.com>; Mon, 20 Jun 2022 07:12:36 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 13D131C04B41
+ for <dm-devel@redhat.com>; Mon, 20 Jun 2022 07:12:36 +0000 (UTC)
+Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-20-TN_46hugPCqQs-AoEgXQJA-1; Fri, 17 Jun 2022 13:07:24 -0400
-X-MC-Unique: TN_46hugPCqQs-AoEgXQJA-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by ams.source.kernel.org (Postfix) with ESMTPS id BEB7AB82A3D;
- Fri, 17 Jun 2022 17:07:22 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 74677C3411B;
- Fri, 17 Jun 2022 17:07:21 +0000 (UTC)
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org
- (localhost.localdomain [127.0.0.1])
- by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id
- 54FAFE56ADF; Fri, 17 Jun 2022 17:07:21 +0000 (UTC)
-From: pr-tracker-bot@kernel.org
-In-Reply-To: <YqyqXocn0lrLVJ1R@redhat.com>
-References: <YqyqXocn0lrLVJ1R@redhat.com>
-X-PR-Tracked-List-Id: <linux-block.vger.kernel.org>
-X-PR-Tracked-Message-Id: <YqyqXocn0lrLVJ1R@redhat.com>
-X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git
- tags/for-5.19/dm-fixes-3
-X-PR-Tracked-Commit-Id: 85e123c27d5cbc22cfdc01de1e2ca1d9003a02d0
-X-PR-Merge-Tree: torvalds/linux.git
-X-PR-Merge-Refname: refs/heads/master
-X-PR-Merge-Commit-Id: 274295c6e53f8b8b8dfa8b24a3fcb8a9d670c22c
-Message-Id: <165548564134.14433.14161801830891893060.pr-tracker-bot@kernel.org>
-Date: Fri, 17 Jun 2022 17:07:21 +0000
-To: Mike Snitzer <snitzer@kernel.org>
+ us-mta-25-RscCIJuvMwuWd063jWFOCg-1; Mon, 20 Jun 2022 03:12:33 -0400
+X-MC-Unique: RscCIJuvMwuWd063jWFOCg-1
+Received: by verein.lst.de (Postfix, from userid 2407)
+ id 8F79668AA6; Mon, 20 Jun 2022 09:12:29 +0200 (CEST)
+Date: Mon, 20 Jun 2022 09:12:29 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Mike Christie <michael.christie@oracle.com>
+Message-ID: <20220620071229.GB11418@lst.de>
+References: <20220603065536.5641-1-michael.christie@oracle.com>
+ <20220603114645.GA14309@lst.de>
+ <2634b3ae-f63d-c711-36cd-bf8f56ecc43b@oracle.com>
+MIME-Version: 1.0
+In-Reply-To: <2634b3ae-f63d-c711-36cd-bf8f56ecc43b@oracle.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -76,8 +62,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-Subject: Re: [dm-devel] [git pull] device mapper fixes for 5.19-rc3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH 0/8] Use block pr_ops in LIO
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -89,33 +75,46 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
- Mikulas Patocka <mpatocka@redhat.com>,
- Linus Torvalds <torvalds@linux-foundation.org>,
- Alasdair G Kergon <agk@redhat.com>
-MIME-Version: 1.0
+Cc: axboe@kernel.dk, james.bottomley@hansenpartnership.com,
+ linux-scsi@vger.kernel.org, martin.petersen@oracle.com, snitzer@kernel.org,
+ linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, target-devel@vger.kernel.org,
+ Christoph Hellwig <hch@lst.de>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The pull request you sent on Fri, 17 Jun 2022 12:22:54 -0400:
+On Fri, Jun 03, 2022 at 12:55:33PM -0500, Mike Christie wrote:
+> However, for nvme and for the interface we want to provide to userspace,
+> do we want to implement an interface like READ_FULL_STATUS and report
+> reservations where we report the host/controller/port info? If so, below
+> is a patch I started.
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.19/dm-fixes-3
+If we wire the ops up to the nvme target we'd need that.  But for now
+I think the more useful case would be to use nvme as the underlying
+devices for the scsi target that already has all the PR infrastructure
+and helps to validate the interface.
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/274295c6e53f8b8b8dfa8b24a3fcb8a9d670c22c
+> Notes:
+> 1. I hit some issues with SCSI targets not reporting the IDs sometimes or
+> sometimes they report it incorrectly. For nvme, it seems easier. SCSI has 
+> to handle a hand full of ways to report the ID where nvme has 2 ways to
+> do the host ID.
 
-Thank you!
+Yeah.
 
--- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/prtracker.html
+> 2. I couldn't find a nvme device to test. Qemu and nvmet don't seem to
+> support reservations.
+
+Basically any dual ported PCIe SSD should support them, typically those
+are the U.2 format factor ones found in servers or enclosures.
 
 --
 dm-devel mailing list
