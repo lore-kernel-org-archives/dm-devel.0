@@ -4,61 +4,66 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2E38FC43334
-	for <dm-devel@archiver.kernel.org>; Mon, 20 Jun 2022 07:23:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 48674CCA47C
+	for <dm-devel@archiver.kernel.org>; Mon, 20 Jun 2022 11:52:17 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-646-wIiYF8spOg2SIYFJJM4PDA-1; Mon, 20 Jun 2022 03:23:19 -0400
-X-MC-Unique: wIiYF8spOg2SIYFJJM4PDA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-378-W4yq5gm7NpCxre2HEVGNKg-1; Mon, 20 Jun 2022 07:52:12 -0400
+X-MC-Unique: W4yq5gm7NpCxre2HEVGNKg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4E2B629ABA3B;
-	Mon, 20 Jun 2022 07:23:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5CD5E3C11E6C;
+	Mon, 20 Jun 2022 11:52:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BD5A32166B26;
-	Mon, 20 Jun 2022 07:23:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2E84E40CFD0A;
+	Mon, 20 Jun 2022 11:52:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7667C194706D;
-	Mon, 20 Jun 2022 07:23:17 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E4146194706D;
+	Mon, 20 Jun 2022 11:52:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D58971947069
- for <dm-devel@listman.corp.redhat.com>; Mon, 20 Jun 2022 07:23:16 +0000 (UTC)
+ ESMTP id 933A61947069
+ for <dm-devel@listman.corp.redhat.com>; Mon, 20 Jun 2022 11:52:06 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6BB5A112131B; Mon, 20 Jun 2022 07:23:16 +0000 (UTC)
+ id 7E632141510C; Mon, 20 Jun 2022 11:52:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 67AF01121314
- for <dm-devel@redhat.com>; Mon, 20 Jun 2022 07:23:16 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 79DB01415109
+ for <dm-devel@redhat.com>; Mon, 20 Jun 2022 11:52:06 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6225C811E7A
+ for <dm-devel@redhat.com>; Mon, 20 Jun 2022 11:52:06 +0000 (UTC)
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-379-x84vHnkZNn-1JUeEV6njuQ-1; Mon, 20 Jun 2022 07:51:57 -0400
+X-MC-Unique: x84vHnkZNn-1JUeEV6njuQ-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 509D61C18265
- for <dm-devel@redhat.com>; Mon, 20 Jun 2022 07:23:16 +0000 (UTC)
-Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-663-C4iUfHBfOJKF9tLDtcl2wQ-1; Mon, 20 Jun 2022 03:23:14 -0400
-X-MC-Unique: C4iUfHBfOJKF9tLDtcl2wQ-1
-Received: by verein.lst.de (Postfix, from userid 2407)
- id D4DB868AA6; Mon, 20 Jun 2022 09:23:10 +0200 (CEST)
-Date: Mon, 20 Jun 2022 09:23:10 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Hannes Reinecke <hare@suse.de>
-Message-ID: <20220620072310.GI11418@lst.de>
-References: <20220603065536.5641-1-michael.christie@oracle.com>
- <20220603065536.5641-10-michael.christie@oracle.com>
- <Yppkz4HIPVxr54hn@kbusch-mbp.dhcp.thefacebook.com>
- <fdd77f3b-691a-a9bf-b31f-0aa845e68e59@suse.de>
- <6cc818cf-fac4-d485-ea9d-0b8597f24a33@oracle.com>
- <b612013c-46e4-d1c3-81f8-b28a026240e6@suse.de>
+ by ams.source.kernel.org (Postfix) with ESMTPS id 9BD35B810A2;
+ Mon, 20 Jun 2022 11:44:53 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 04141C3411B;
+ Mon, 20 Jun 2022 11:44:51 +0000 (UTC)
+Date: Mon, 20 Jun 2022 13:44:49 +0200
+From: Greg KH <gregkh@linuxfoundation.org>
+To: Mike Snitzer <snitzer@redhat.com>
+Message-ID: <YrBdsTDrreF3H82o@kroah.com>
+References: <20220603173816.944766454@linuxfoundation.org>
+ <20220610042200.2561917-1-ovt@google.com>
+ <YqLTV+5Q72/jBeOG@kroah.com> <YqNfBMOR9SE2TuCm@redhat.com>
+ <Yqb/sT205Lrhl6Bv@kroah.com>
+ <20220615143642.GA2386944@roeck-us.net>
+ <Yqn64AMwoIzQXwXM@redhat.com>
+ <50eeff2e-45c5-5eb2-c41d-3e0092a84483@roeck-us.net>
+ <Yqo63CvFpTDFnH3x@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <b612013c-46e4-d1c3-81f8-b28a026240e6@suse.de>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <Yqo63CvFpTDFnH3x@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -66,9 +71,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-Subject: Re: [dm-devel] [PATCH 09/11] block,
- nvme: Add error for reservation conflicts.
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: Re: [dm-devel] [PATCH 5.4 26/34] dm verity: set DM_TARGET_IMMUTABLE
+ feature flag
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -80,13 +85,13 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, james.bottomley@hansenpartnership.com,
- linux-scsi@vger.kernel.org, martin.petersen@oracle.com, snitzer@kernel.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com, target-devel@vger.kernel.org,
- Keith Busch <kbusch@kernel.org>, hch@lst.de, michael.christie@oracle.com
+Cc: keescook@chromium.org, sarthakkukreti@google.com,
+ Mike Snitzer <snitzer@kernel.org>, stable@vger.kernel.org,
+ Oleksandr Tymoshenko <ovt@google.com>, dm-devel@redhat.com,
+ Guenter Roeck <linux@roeck-us.net>, regressions@lists.linux.dev
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -95,22 +100,128 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sun, Jun 05, 2022 at 11:42:11AM +0200, Hannes Reinecke wrote:
-> Well ... we tried to find a generic error for reservation failure, as we 
-> thought that reservation failure was too SCSI specific.
-> And we wanted the error to describe what the resulting handling should be, 
-> not what the cause was. Hence we ended up with BLK_STS_NEXUS.
->
-> But turns out that our initial assumption wasn't valid, and that 
-> reservations are a general concept. So by all means, rename BLK_STS_NEXUS 
-> to BLK_STS_RSV_CONFLICT to make it clear what this error is about.
+On Wed, Jun 15, 2022 at 04:02:36PM -0400, Mike Snitzer wrote:
+> On Wed, Jun 15 2022 at  1:50P -0400,
+> Guenter Roeck <linux@roeck-us.net> wrote:
+> 
+> > On 6/15/22 08:29, Mike Snitzer wrote:
+> > > On Wed, Jun 15 2022 at 10:36P -0400,
+> > > Guenter Roeck <linux@roeck-us.net> wrote:
+> > > 
+> > > > On Mon, Jun 13, 2022 at 11:13:21AM +0200, Greg KH wrote:
+> > > > > On Fri, Jun 10, 2022 at 11:11:00AM -0400, Mike Snitzer wrote:
+> > > > > > On Fri, Jun 10 2022 at  1:15P -0400,
+> > > > > > Greg KH <gregkh@linuxfoundation.org> wrote:
+> > > > > > 
+> > > > > > > On Fri, Jun 10, 2022 at 04:22:00AM +0000, Oleksandr Tymoshenko wrote:
+> > > > > > > > I believe this commit introduced a regression in dm verity on systems
+> > > > > > > > where data device is an NVME one. Loading table fails with the
+> > > > > > > > following diagnostics:
+> > > > > > > > 
+> > > > > > > > device-mapper: table: table load rejected: including non-request-stackable devices
+> > > > > > > > 
+> > > > > > > > The same kernel works with the same data drive on the SCSI interface.
+> > > > > > > > NVME-backed dm verity works with just this commit reverted.
+> > > > > > > > 
+> > > > > > > > I believe the presence of the immutable partition is used as an indicator
+> > > > > > > > of special case NVME configuration and if the data device's name starts
+> > > > > > > > with "nvme" the code tries to switch the target type to
+> > > > > > > > DM_TYPE_NVME_BIO_BASED (drivers/md/dm-table.c lines 1003-1010).
+> > > > > > > > 
+> > > > > > > > The special NVME optimization case was removed in
+> > > > > > > > 5.10 by commit 9c37de297f6590937f95a28bec1b7ac68a38618f, so only 5.4 is
+> > > > > > > > affected.
+> > > > > > > > 
+> > > > > > > 
+> > > > > > > Why wouldn't 4.9, 4.14, and 4.19 also be affected here?  Should I also
+> > > > > > > just queue up 9c37de297f65 ("dm: remove special-casing of bio-based
+> > > > > > > immutable singleton target on NVMe") to those older kernels?  If so,
+> > > > > > > have you tested this and verified that it worked?
+> > > > > > 
+> > > > > > Sorry for the unforeseen stable@ troubles here!
+> > > > > > 
+> > > > > > In general we'd be fine to apply commit 9c37de297f65 but to do it
+> > > > > > properly would require also making sure commits that remove
+> > > > > > "DM_TYPE_NVME_BIO_BASED", like 8d47e65948dd ("dm mpath: remove
+> > > > > > unnecessary NVMe branching in favor of scsi_dh checks") are applied --
+> > > > > > basically any lingering references to DM_TYPE_NVME_BIO_BASED need to
+> > > > > > be removed.
+> > > > > > 
+> > > > > > The commit header for 8d47e65948dd documents what
+> > > > > > DM_TYPE_NVME_BIO_BASED was used for.. it was dm-mpath specific and
+> > > > > > "nvme" mode really never got used by any userspace that I'm aware of.
+> > > > > > 
+> > > > > > Sadly I currently don't have the time to do this backport for all N
+> > > > > > stable kernels... :(
+> > > > > > 
+> > > > > > But if that backport gets out of control: A simpler, albeit stable@
+> > > > > > unicorn, way to resolve this is to simply revert 9c37de297f65 and make
+> > > > 
+> > > > 9c37de297f65 can not be reverted in 5.4 and older because it isn't there,
+> > > > and trying to apply it results in conflicts which at least I can not
+> > > > resolve.
+> > > > 
+> > > > > > it so that DM-mpath and DM core just used bio-based if "nvme" is
+> > > > > > requested by dm-mpath, so also in drivers/md/dm-mpath.c e.g.:
+> > > > > > 
+> > > > > > @@ -1091,8 +1088,6 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
+> > > > > > 
+> > > > > >                          if (!strcasecmp(queue_mode_name, "bio"))
+> > > > > >                                  m->queue_mode = DM_TYPE_BIO_BASED;
+> > > > > > 			else if (!strcasecmp(queue_mode_name, "nvme"))
+> > > > > > -                               m->queue_mode = DM_TYPE_NVME_BIO_BASED;
+> > > > > > +                               m->queue_mode = DM_TYPE_BIO_BASED;
+> > > > > >                          else if (!strcasecmp(queue_mode_name, "rq"))
+> > > > > >                                  m->queue_mode = DM_TYPE_REQUEST_BASED;
+> > > > > >                          else if (!strcasecmp(queue_mode_name, "mq"))
+> > > > > > 
+> > > > > > Mike
+> > > > > > 
+> > > > > 
+> > > > > Ok, please submit a working patch for the kernels that need it so that
+> > > > > we can review and apply it to solve this regression.
+> > > > > 
+> > > > 
+> > > > So, effectively, v5.4.y and older are broken right now for use cases
+> > > > with dm on NVME drives.
+> > > > 
+> > > > Given that the regression does affect older branches, and given that we
+> > > > have to revert this patch to avoid regressions in ChromeOS, would it be
+> > > > possible to revert it from v5.4.y and older until a fix is found ?
+> > > 
+> > > I obviously would prefer to not have this false-start.
+> > > 
+> > The false start has already happened since we had to revert the patch
+> > from chromeos-5.4 and older branches.
+> 
+> OK, well this is pretty easy to fix in general.  If there are slight
+> differences across older trees they are easily resolved.  Fact that
+> stable@ couldn't cope with backporting 9c37de297f65 is.. what it is.
+> 
+> But this will fix the issue on 5.4.y:
+> 
+> From: Mike Snitzer <snitzer@kernel.org>
+> Date: Wed, 15 Jun 2022 14:07:09 -0400
+> Subject: [5.4.y PATCH] dm: remove special-casing of bio-based immutable singleton target on NVMe
+> 
+> Commit 9c37de297f6590937f95a28bec1b7ac68a38618f upstream.
+> 
+> There is no benefit to DM special-casing NVMe. Remove all code used to
+> establish DM_TYPE_NVME_BIO_BASED.
+> 
+> Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+> ---
+>  drivers/md/dm-table.c         | 32 ++----------------
+>  drivers/md/dm.c               | 64 +++--------------------------------
+>  include/linux/device-mapper.h |  1 -
+>  3 files changed, 7 insertions(+), 90 deletions(-)
 
-I think think this is a good ida, but we'll need to involve the
-s390 dasd folks.  Maybe do this as a separate prep patch?
+Can someone resend this in the proper format (and fixed up), with
+Guenter's tested-by so that I can queue it up?
 
-While thinking about DASD I think it would benefit from returning
-the blk_status_t from ->free_cp insted of the hand crafted conversion
-as well.
+thanks,
+
+greg k-h
 
 --
 dm-devel mailing list
