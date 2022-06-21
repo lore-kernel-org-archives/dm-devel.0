@@ -4,63 +4,63 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 11AAAC433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 22 Jun 2022 06:47:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id EB489C43334
+	for <dm-devel@archiver.kernel.org>; Wed, 22 Jun 2022 06:47:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-608--fe5FxsCN3KNA7FetuS0Vw-1; Wed, 22 Jun 2022 02:46:11 -0400
-X-MC-Unique: -fe5FxsCN3KNA7FetuS0Vw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-608-a0o7qYm7NVSEb6Y-Em7LhQ-1; Wed, 22 Jun 2022 02:46:11 -0400
+X-MC-Unique: a0o7qYm7NVSEb6Y-Em7LhQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DC08E1C06EDE;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DCF4F3C01DA5;
 	Wed, 22 Jun 2022 06:46:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F014640E80E0;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 222301121314;
 	Wed, 22 Jun 2022 06:46:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 05EED1947057;
-	Wed, 22 Jun 2022 06:46:08 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C6C36194704A;
+	Wed, 22 Jun 2022 06:46:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 714E81947041
- for <dm-devel@listman.corp.redhat.com>; Tue, 21 Jun 2022 11:32:53 +0000 (UTC)
+ ESMTP id EB38B1947041
+ for <dm-devel@listman.corp.redhat.com>; Tue, 21 Jun 2022 11:32:46 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5F491141510D; Tue, 21 Jun 2022 11:32:53 +0000 (UTC)
+ id AD7722026D07; Tue, 21 Jun 2022 11:32:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 5B4F9141510C
- for <dm-devel@redhat.com>; Tue, 21 Jun 2022 11:32:53 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A99AA2026D64
+ for <dm-devel@redhat.com>; Tue, 21 Jun 2022 11:32:46 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
  bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4762A3C1014A
- for <dm-devel@redhat.com>; Tue, 21 Jun 2022 11:32:53 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 92B153C10148
+ for <dm-devel@redhat.com>; Tue, 21 Jun 2022 11:32:46 +0000 (UTC)
 Received: from smtpbg.qq.com (smtpbg138.qq.com [106.55.201.18]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-315-s9QzS46DPVCQ3_ebpKgRlg-1; Tue, 21 Jun 2022 07:32:51 -0400
-X-MC-Unique: s9QzS46DPVCQ3_ebpKgRlg-1
-X-QQ-mid: bizesmtp74t1655811164tal19zhj
+ us-mta-497-LSMo6STcMBS3rj5m8q9KBw-1; Tue, 21 Jun 2022 07:32:44 -0400
+X-MC-Unique: LSMo6STcMBS3rj5m8q9KBw-1
+X-QQ-mid: bizesmtp74t1655811081tarqjyg8
 Received: from ubuntu.localdomain ( [106.117.99.68])
  by bizesmtp.qq.com (ESMTP) with 
- id ; Tue, 21 Jun 2022 19:32:37 +0800 (CST)
+ id ; Tue, 21 Jun 2022 19:31:16 +0800 (CST)
 X-QQ-SSF: 0100000000700040B000B00A0000000
-X-QQ-FEAT: ZHWZeLXy+8d2xuswuyUwRi0lS84veAPfD6Hezb0MfVUM+ugSTumRnET3T1Yk3
- EYFF/an33BSniNIqs89pyDNLXWfNAWQ+jqYXe4IW2NpwK3FcYWvKX+hgfO8o5PXAN/l0N/j
- vMXHKqblTjZfRCpcJwCHfoQJXxECYVT7qmrrWErWN6FXEby5stq1LXGTYZskBvlw7at8KiF
- Lf53+44eAqHJSk74ag1cm2pZPObUfeLb1y4gVPIWomiBMqZE5Sd2iUOpO3YhuS8eO3q8khH
- SazdqzbI/I+HO19KBZr+pAwAi+WpOr1TKfQFxR4fhaopp57+vOlHh3gLuEMlTDdYz+ffMP1
- 0aSgsfJvjphvdyw/uu4Fvf/wXejmA==
+X-QQ-FEAT: FD+6NgJX7e4dWuNFedCyJOrBBS+15CwHkrSPEzAmeeApVBXGEbQudpw2IhfYs
+ wKMlCgsqqQaSp+gEZXUJZX5fAsZr5v7B5Vn5zSyYTJycZCiX0GX4j61rZnvtNeX4MB8XsNh
+ tFWdokoOtHZHsVP6hdi8K6TYs1NnOryavYpvQhy+dQn+4sggdoGVQpYKMK5Lbg5IHvVJH/m
+ fY7+GcgGFzn2HV8gC2/6dizizp93nmCY4oipH23WXlz8KOgtc6jHbX/iW9nibsHLoh1TnYJ
+ oMqmewSVh4NekyMmtlNXbGlCa8eYPQgTf5uyMmWZs9K7q/89t5yX+CWlqZlcOBmHHJAdyX0
+ eftQqxP34H9PnG/Vak=
 X-QQ-GoodBg: 0
 From: Jiang Jian <jiangjian@cdjrlc.com>
 To: agk@redhat.com,
-	snitzer@kernel.org,
+	snitzer@kernel.or,
 	dm-devel@redhat.com
-Date: Tue, 21 Jun 2022 19:32:34 +0800
-Message-Id: <20220621113234.99140-1-jiangjian@cdjrlc.com>
+Date: Tue, 21 Jun 2022 19:31:14 +0800
+Message-Id: <20220621113114.98823-1-jiangjian@cdjrlc.com>
 X-QQ-SENDSIZE: 520
 Feedback-ID: bizesmtp:cdjrlc.com:qybgspam:qybgspam10
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -70,7 +70,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-Mailman-Approved-At: Wed, 22 Jun 2022 06:46:06 +0000
 Subject: [dm-devel] [PATCH] dm raid: drop unexpected word "the" in the
  comments
@@ -89,7 +89,7 @@ Cc: Jiang Jian <jiangjian@cdjrlc.com>, linux-kernel@vger.kernel.org
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
