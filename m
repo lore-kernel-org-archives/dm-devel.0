@@ -1,94 +1,75 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3F243C43334
-	for <dm-devel@archiver.kernel.org>; Mon, 27 Jun 2022 22:37:44 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1656369463;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=cW2VpfHFuFdj+oY2Bo61WLBad2hFdlNZoDNj+0Ist3Y=;
-	b=GYpn3mZ3NBOIanJ47dvG16gMuyVjP8f8fEG7/PMw4QPNYaMJiDLnP6I8mWiulKzStUEKJ7
-	CF8B3A2hcgagTPFaTSvx06+dxBPRLDMXKlz8I1jfWYMAM8mcegJarUdBERMeWH1qnH6ZXd
-	Wdg+2HxwgQGF1ntloJb5YpldlhFoXr4=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7A6BCC43334
+	for <dm-devel@archiver.kernel.org>; Tue, 28 Jun 2022 06:38:09 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-601-dsUyJlf3OUu0umjDLRTzFw-1; Mon, 27 Jun 2022 18:37:39 -0400
-X-MC-Unique: dsUyJlf3OUu0umjDLRTzFw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-216-VzsfBHJuPxi6SdN5SaHsHQ-1; Tue, 28 Jun 2022 02:38:05 -0400
+X-MC-Unique: VzsfBHJuPxi6SdN5SaHsHQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6A58E29AB450;
-	Mon, 27 Jun 2022 22:37:37 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6C8181C068CE;
+	Tue, 28 Jun 2022 06:38:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 51D021121314;
-	Mon, 27 Jun 2022 22:37:37 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EDB1E40466A4;
+	Tue, 28 Jun 2022 06:38:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2A7F9194704A;
-	Mon, 27 Jun 2022 22:37:37 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0C748194705C;
+	Tue, 28 Jun 2022 06:38:01 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D2CE119466DF
- for <dm-devel@listman.corp.redhat.com>; Mon, 27 Jun 2022 22:37:35 +0000 (UTC)
+ ESMTP id 01C5919466DF
+ for <dm-devel@listman.corp.redhat.com>; Tue, 28 Jun 2022 00:58:33 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id BE3D49D54; Mon, 27 Jun 2022 22:37:35 +0000 (UTC)
+ id D5CDC41637B; Tue, 28 Jun 2022 00:58:33 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B9F0B815B
- for <dm-devel@redhat.com>; Mon, 27 Jun 2022 22:37:35 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D1510415F5E
+ for <dm-devel@redhat.com>; Tue, 28 Jun 2022 00:58:33 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B8D18811E80
+ for <dm-devel@redhat.com>; Tue, 28 Jun 2022 00:58:33 +0000 (UTC)
+Received: from dfw.source.kernel.org (dfw.source.kernel.org
+ [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-609-dBM7baQtNI2uCaXbIsttTg-1; Mon, 27 Jun 2022 20:58:31 -0400
+X-MC-Unique: dBM7baQtNI2uCaXbIsttTg-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A7F51C04B61
- for <dm-devel@redhat.com>; Mon, 27 Jun 2022 22:37:35 +0000 (UTC)
-Received: from mail-oa1-f71.google.com (mail-oa1-f71.google.com
- [209.85.160.71]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-26-oQKaVaWiMA61wN08XdU7iw-1; Mon, 27 Jun 2022 18:37:34 -0400
-X-MC-Unique: oQKaVaWiMA61wN08XdU7iw-1
-Received: by mail-oa1-f71.google.com with SMTP id
- 586e51a60fabf-f2bdeb5298so7408900fac.5
- for <dm-devel@redhat.com>; Mon, 27 Jun 2022 15:37:33 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:mime-version:references:in-reply-to:from:date
- :message-id:subject:to:cc;
- bh=TFa66qRM6exFQouj4lF7x/ZwP4/mAeWgLGYTtSCTK0U=;
- b=SPJ1OGPgC80WunRbJM1XZfpxlnifQYc7wziUZBOIFOeOniEQANDpdHJ0UH5QAoLRML
- ESfV1Z1GIJohd0Mx8R8TQQ1dMDJcy8Kbs4dxW67X0fDC4hkCM8WniO/zSqAnvA/YXaXF
- lT8BNhvd7uPKk55U2LiafF8MUxwOV5I2jfqHBLGDtSBfZeSi2lMmDlyKXKZYX9QsFlTJ
- CICSZz6Z3mWqUF1RgR9wDKq2Qmjdc2FPawdhg4Op1/E5jDnjEoVgemAxofZyAUc98f7V
- nbVob05B7RNZpq2VjlGnTCGuBjSHApqnIvI7K3328zm8TS0ksbXMrqNhXy6ZIOtAohkP
- ux/w==
-X-Gm-Message-State: AJIora+ZT8lVAsrauDe4EYX3co1oqT723lPugRVH/TgC626he0funp7+
- hSjbTwUX1APoqnNdV+bJqx5ED/ZQ7AGeVdy3oMwh2BxotIipQGxKacwSc/k7L5jvYNtlZlO2+6G
- +qXQq3kFniY5UxXHuE2B3lNdtd9Q7dgc=
-X-Received: by 2002:a05:6870:9a28:b0:fe:4636:98aa with SMTP id
- fo40-20020a0568709a2800b000fe463698aamr9124118oab.21.1656369453333; 
- Mon, 27 Jun 2022 15:37:33 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1vkxfQJJHnTgghD6HtmsI7Y59sb+pppArEWZ0gJeHYndzkwlZHM4PHmrbG3lNDll/frCmi9nAzcwt/3YZLb5rw=
-X-Received: by 2002:a05:6870:9a28:b0:fe:4636:98aa with SMTP id
- fo40-20020a0568709a2800b000fe463698aamr9124105oab.21.1656369453096; Mon, 27
- Jun 2022 15:37:33 -0700 (PDT)
+ by dfw.source.kernel.org (Postfix) with ESMTPS id B6EC2616BE;
+ Tue, 28 Jun 2022 00:58:30 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id BBEABC341C8;
+ Tue, 28 Jun 2022 00:58:27 +0000 (UTC)
+Date: Tue, 28 Jun 2022 02:58:25 +0200
+From: "Gustavo A. R. Silva" <gustavoars@kernel.org>
+To: Jason Gunthorpe <jgg@ziepe.ca>
+Message-ID: <20220628005825.GA161566@embeddedor>
+References: <20220627180432.GA136081@embeddedor>
+ <6bc1e94c-ce1d-a074-7d0c-8dbe6ce22637@iogearbox.net>
+ <20220628004052.GM23621@ziepe.ca>
 MIME-Version: 1.0
-References: <alpine.LRH.2.02.2206270858520.13562@file01.intranet.prod.int.rdu2.redhat.com>
- <CAM23VxqOH9SeZFvfbFD2zUF_WFDUVY1Xh0ngp_1E+7n=7+7TUQ@mail.gmail.com>
- <alpine.LRH.2.02.2206270954570.16147@file01.intranet.prod.int.rdu2.redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2206270954570.16147@file01.intranet.prod.int.rdu2.redhat.com>
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Date: Tue, 28 Jun 2022 00:37:22 +0200
-Message-ID: <CAM23Vxqd2RVywyEumbPC=JMCaus5neYNTRJ6kqbmSbs3rVmNQQ@mail.gmail.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH v2] dm-raid: fix out of memory accesses in
- dm-raid
+In-Reply-To: <20220628004052.GM23621@ziepe.ca>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Mailman-Approved-At: Tue, 28 Jun 2022 06:38:00 +0000
+Subject: Re: [dm-devel] [PATCH][next] treewide: uapi: Replace zero-length
+ arrays with flexible-array members
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -100,462 +81,119 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Marian Csontos <mcsontos@redhat.com>,
- linux-raid <linux-raid@vger.kernel.org>, Song Liu <song@kernel.org>,
- dm-devel@redhat.com, Ming Lei <minlei@redhat.com>
+Cc: nvdimm@lists.linux.dev, alsa-devel@alsa-project.org, kvm@vger.kernel.org,
+ dri-devel@lists.freedesktop.org, linux-mips@vger.kernel.org,
+ dm-devel@redhat.com, target-devel@vger.kernel.org,
+ linux-mtd@lists.infradead.org, linux-hardening@vger.kernel.org,
+ linux1394-devel@lists.sourceforge.net,
+ linux-stm32@st-md-mailman.stormreply.com, linux-s390@vger.kernel.org,
+ Daniel Borkmann <daniel@iogearbox.net>, linux-rdma@vger.kernel.org,
+ x86@kernel.org, kasan-dev@googlegroups.com, lvs-devel@vger.kernel.org,
+ coreteam@netfilter.org, v9fs-developer@lists.sourceforge.net,
+ Kees Cook <keescook@chromium.org>, intel-gfx@lists.freedesktop.org,
+ linux-can@vger.kernel.org, linux-raid@vger.kernel.org,
+ linux-m68k@lists.linux-m68k.org, virtualization@lists.linux-foundation.org,
+ io-uring@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+ linux-scsi@vger.kernel.org, netdev@vger.kernel.org, linux-usb@vger.kernel.org,
+ linux-mmc@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-perf-users@vger.kernel.org, linux-sctp@vger.kernel.org,
+ netfilter-devel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ bpf@vger.kernel.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============4482733968574758919=="
-
---===============4482733968574758919==
-Content-Type: multipart/alternative; boundary="000000000000de7aa805e2759093"
-
---000000000000de7aa805e2759093
-Content-Type: text/plain; charset="UTF-8"
-
-From 852b91efc183e9b87ac50f15fb4df86f26f73532 Mon Sep 17 00:00:00 2001
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Date: Mon, 27 Jun 2022 23:54:24 +0200
-Subject: [PATCH] dm-raid: fix array out of bounds (OOB)
-
-Supersedes "[PATCH] dm-raid: fix out of memory accesses in dm-raid"
-
-
-On RAID mapping construction, dm-raid allocates an array
-rs->devs[rs->raid_disks]
-for the raid device members.  rs->raid_disks is defined by the number of
-raid
-metadata and image tupples passed into the target's constructor.
-
-That number can be different from the current number of members for
-existing raid
-sets as defined in their superblocks in case of layout changes requested:
-
-- raid1 legs being added/removed
-
-- raid4/5/6/10 number of stripes changed (stripe reshaping)
-
-- takeover to higher raid level (e.g. raid5 -> raid6)
-
-Accessing array members, rs->raid_disks has to be used in loops instead of
-potentially larger rs->md.raid_disks causing OOB access on the devices
-array.
-
-Patch changes instances prone to OOB.
-Also ensures added devices are validated in validate_raid_redundancy().
-
-Initially discovered by KASAN.
-
-Passes all LVM2 RAID tests (KASAN enabled).
-
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-Tested-by: Heinz Mauelshagen <heinzm@redhat.com>
----
- drivers/md/dm-raid.c | 22 ++++++++++++----------
- 1 file changed, 12 insertions(+), 10 deletions(-)
-
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 2b26435a6946..bcec0e1a049d 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -1001,12 +1001,13 @@ static int validate_region_size(struct raid_set
-*rs, unsigned long region_size)
- static int validate_raid_redundancy(struct raid_set *rs)
- {
-        unsigned int i, rebuild_cnt = 0;
--       unsigned int rebuilds_per_group = 0, copies;
-+       unsigned int rebuilds_per_group = 0, copies, raid_disks;
-        unsigned int group_size, last_group_start;
-
--       for (i = 0; i < rs->md.raid_disks; i++)
--               if (!test_bit(In_sync, &rs->dev[i].rdev.flags) ||
--                   !rs->dev[i].rdev.sb_page)
-+       for (i = 0; i < rs->raid_disks; i++)
-+               if (!test_bit(FirstUse, &rs->dev[i].rdev.flags) &&
-+                   ((!test_bit(In_sync, &rs->dev[i].rdev.flags) ||
-+                     !rs->dev[i].rdev.sb_page)))
-                        rebuild_cnt++;
-
-        switch (rs->md.level) {
-@@ -1046,8 +1047,9 @@ static int validate_raid_redundancy(struct raid_set
-*rs)
-                 *          A    A    B    B    C
-                 *          C    D    D    E    E
-                 */
-+               raid_disks = min(rs->raid_disks, rs->md.raid_disks);
-                if (__is_raid10_near(rs->md.new_layout)) {
--                       for (i = 0; i < rs->md.raid_disks; i++) {
-+                       for (i = 0; i < raid_disks; i++) {
-                                if (!(i % copies))
-                                        rebuilds_per_group = 0;
-                                if ((!rs->dev[i].rdev.sb_page ||
-@@ -1070,10 +1072,10 @@ static int validate_raid_redundancy(struct raid_set
-*rs)
-                 * results in the need to treat the last (potentially
-larger)
-                 * set differently.
-                 */
--               group_size = (rs->md.raid_disks / copies);
--               last_group_start = (rs->md.raid_disks / group_size) - 1;
-+               group_size = (raid_disks / copies);
-+               last_group_start = (raid_disks / group_size) - 1;
-                last_group_start *= group_size;
--               for (i = 0; i < rs->md.raid_disks; i++) {
-+               for (i = 0; i < raid_disks; i++) {
-                        if (!(i % copies) && !(i > last_group_start))
-                                rebuilds_per_group = 0;
-                        if ((!rs->dev[i].rdev.sb_page ||
-@@ -1588,7 +1590,7 @@ static sector_t __rdev_sectors(struct raid_set *rs)
- {
-        int i;
-
--       for (i = 0; i < rs->md.raid_disks; i++) {
-+       for (i = 0; i < rs->raid_disks; i++) {
-                struct md_rdev *rdev = &rs->dev[i].rdev;
-
-                if (!test_bit(Journal, &rdev->flags) &&
-@@ -3771,7 +3773,7 @@ static int raid_iterate_devices(struct dm_target *ti,
-        unsigned int i;
-        int r = 0;
-
--       for (i = 0; !r && i < rs->md.raid_disks; i++)
-+       for (i = 0; !r && i < rs->raid_disks; i++)
-                if (rs->dev[i].data_dev)
-                        r = fn(ti,
-                                 rs->dev[i].data_dev,
--- 
-2.36.1
-
-
-On Mon, Jun 27, 2022 at 3:56 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
-
-> dm-raid allocates the array of devices with rs->raid_disks entries and
-> then accesses it in a loop for rs->md.raid_disks. During reshaping,
-> rs->md.raid_disks may be greater than rs->raid_disks, so it accesses
-> entries beyond the end of the array.
->
-> We fix this bug by limiting the iteration to rs->raid_disks.
->
-> The bug is triggered when running lvm test shell/lvconvert-raid.sh and the
-> kernel is compiled with kasan.
->
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@vger.kernel.org
->
-> ---
->  drivers/md/dm-raid.c |   12 ++++++------
->  1 file changed, 6 insertions(+), 6 deletions(-)
->
-> Index: linux-2.6/drivers/md/dm-raid.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/md/dm-raid.c 2022-06-27 15:44:12.000000000 +0200
-> +++ linux-2.6/drivers/md/dm-raid.c      2022-06-27 15:44:12.000000000 +0200
-> @@ -1004,7 +1004,7 @@ static int validate_raid_redundancy(stru
->         unsigned int rebuilds_per_group = 0, copies;
->         unsigned int group_size, last_group_start;
->
-> -       for (i = 0; i < rs->md.raid_disks; i++)
-> +       for (i = 0; i < rs->raid_disks; i++)
->                 if (!test_bit(In_sync, &rs->dev[i].rdev.flags) ||
->                     !rs->dev[i].rdev.sb_page)
->                         rebuild_cnt++;
-> @@ -1047,7 +1047,7 @@ static int validate_raid_redundancy(stru
->                  *          C    D    D    E    E
->                  */
->                 if (__is_raid10_near(rs->md.new_layout)) {
-> -                       for (i = 0; i < rs->md.raid_disks; i++) {
-> +                       for (i = 0; i < rs->raid_disks; i++) {
->                                 if (!(i % copies))
->                                         rebuilds_per_group = 0;
->                                 if ((!rs->dev[i].rdev.sb_page ||
-> @@ -1073,7 +1073,7 @@ static int validate_raid_redundancy(stru
->                 group_size = (rs->md.raid_disks / copies);
->                 last_group_start = (rs->md.raid_disks / group_size) - 1;
->                 last_group_start *= group_size;
-> -               for (i = 0; i < rs->md.raid_disks; i++) {
-> +               for (i = 0; i < rs->raid_disks; i++) {
->                         if (!(i % copies) && !(i > last_group_start))
->                                 rebuilds_per_group = 0;
->                         if ((!rs->dev[i].rdev.sb_page ||
-> @@ -1588,7 +1588,7 @@ static sector_t __rdev_sectors(struct ra
->  {
->         int i;
->
-> -       for (i = 0; i < rs->md.raid_disks; i++) {
-> +       for (i = 0; i < rs->raid_disks; i++) {
->                 struct md_rdev *rdev = &rs->dev[i].rdev;
->
->                 if (!test_bit(Journal, &rdev->flags) &&
-> @@ -3766,7 +3766,7 @@ static int raid_iterate_devices(struct d
->         unsigned int i;
->         int r = 0;
->
-> -       for (i = 0; !r && i < rs->md.raid_disks; i++)
-> +       for (i = 0; !r && i < rs->raid_disks; i++)
->                 if (rs->dev[i].data_dev)
->                         r = fn(ti,
->                                  rs->dev[i].data_dev,
-> @@ -3817,7 +3817,7 @@ static void attempt_restore_of_faulty_de
->
->         memset(cleared_failed_devices, 0, sizeof(cleared_failed_devices));
->
-> -       for (i = 0; i < mddev->raid_disks; i++) {
-> +       for (i = 0; i < rs->raid_disks; i++) {
->                 r = &rs->dev[i].rdev;
->                 /* HM FIXME: enhance journal device recovery processing */
->                 if (test_bit(Journal, &r->flags))
->
->
-
---000000000000de7aa805e2759093
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">From 852b91efc183e9b87ac50f15fb4df86f26f73532 Mon Sep 17 0=
-0:00:00 2001<br>From: Heinz Mauelshagen &lt;<a href=3D"mailto:heinzm@redhat=
-.com">heinzm@redhat.com</a>&gt;<br>Date: Mon, 27 Jun 2022 23:54:24 +0200<br=
->Subject: [PATCH] dm-raid: fix array out of bounds (OOB)<br><br>Supersedes =
-&quot;[PATCH] dm-raid: fix out of memory accesses in dm-raid&quot;<br><br><=
-br>On RAID mapping construction, dm-raid allocates an array rs-&gt;devs[rs-=
-&gt;raid_disks]<br>for the raid device members. =C2=A0rs-&gt;raid_disks is =
-defined by the number of raid<br>metadata and image tupples passed into the=
- target&#39;s constructor.<br><br>That number can be different from the cur=
-rent number of members for existing raid<br>sets as defined in their superb=
-locks in case of layout changes requested:<br><br>- raid1 legs being added/=
-removed<br><br>- raid4/5/6/10 number of stripes changed (stripe reshaping)<=
-br><br>- takeover to higher raid level (e.g. raid5 -&gt; raid6)<br><br>Acce=
-ssing array members, rs-&gt;raid_disks has to be used in loops instead of<b=
-r>potentially larger rs-&gt;md.raid_disks causing OOB access on the devices=
- array.<br><br>Patch changes instances prone to OOB.<br>Also ensures added =
-devices are validated in validate_raid_redundancy().<br><br>Initially disco=
-vered by KASAN.<br><br>Passes all LVM2 RAID tests (KASAN enabled).<br><br>S=
-igned-off-by: Heinz Mauelshagen &lt;<a href=3D"mailto:heinzm@redhat.com">he=
-inzm@redhat.com</a>&gt;<br>Tested-by: Heinz Mauelshagen &lt;<a href=3D"mail=
-to:heinzm@redhat.com">heinzm@redhat.com</a>&gt;<br>---<br>=C2=A0drivers/md/=
-dm-raid.c | 22 ++++++++++++----------<br>=C2=A01 file changed, 12 insertion=
-s(+), 10 deletions(-)<br><br>diff --git a/drivers/md/dm-raid.c b/drivers/md=
-/dm-raid.c<br>index 2b26435a6946..bcec0e1a049d 100644<br>--- a/drivers/md/d=
-m-raid.c<br>+++ b/drivers/md/dm-raid.c<br>@@ -1001,12 +1001,13 @@ static in=
-t validate_region_size(struct raid_set *rs, unsigned long region_size)<br>=
-=C2=A0static int validate_raid_redundancy(struct raid_set *rs)<br>=C2=A0{<b=
-r>=C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned int i, rebuild_cnt =3D 0;<br>- =C2=
-=A0 =C2=A0 =C2=A0 unsigned int rebuilds_per_group =3D 0, copies;<br>+ =C2=
-=A0 =C2=A0 =C2=A0 unsigned int rebuilds_per_group =3D 0, copies, raid_disks=
-;<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned int group_size, last_group_start;=
-<br>=C2=A0<br>- =C2=A0 =C2=A0 =C2=A0 for (i =3D 0; i &lt; rs-&gt;md.raid_di=
-sks; i++)<br>- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!test_b=
-it(In_sync, &amp;rs-&gt;dev[i].rdev.flags) ||<br>- =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 !rs-&gt;dev[i].rdev.sb_page)<br>+ =
-=C2=A0 =C2=A0 =C2=A0 for (i =3D 0; i &lt; rs-&gt;raid_disks; i++)<br>+ =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!test_bit(FirstUse, &amp;=
-rs-&gt;dev[i].rdev.flags) &amp;&amp;<br>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ((!test_bit(In_sync, &amp;rs-&gt;dev[i].rde=
-v.flags) ||<br>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 !rs-&gt;dev[i].rdev.sb_page)))<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 rebuild_cnt++;<br>=
-=C2=A0<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 switch (rs-&gt;md.level) {<br>@@ -104=
-6,8 +1047,9 @@ static int validate_raid_redundancy(struct raid_set *rs)<br>=
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0A =C2=A0 =C2=A0A =C2=A0 =C2=A0B =C2=A0 =C2=A0B =C2=
-=A0 =C2=A0C<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0* =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0C =C2=A0 =C2=A0D =C2=A0 =C2=A0D =C2=
-=A0 =C2=A0E =C2=A0 =C2=A0E<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0*/<br>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 r=
-aid_disks =3D min(rs-&gt;raid_disks, rs-&gt;md.raid_disks);<br>=C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (__is_raid10_near(rs-&gt;m=
-d.new_layout)) {<br>- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 for (i =3D 0; i &lt; rs-&gt;md.raid_disks; i++) {<=
-br>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 for (i =3D 0; i &lt; raid_disks; i++) {<br>=C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 if (!(i % copies))<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 rebuilds_per_group =3D 0;<br>=C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 if ((!rs-&gt;dev[i].rdev.sb_page ||<br>@@ -1070,10 +10=
-72,10 @@ static int validate_raid_redundancy(struct raid_set *rs)<br>=C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* results in the ne=
-ed to treat the last (potentially larger)<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* set differently.<br>=C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/<br>- =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 group_size =3D (rs-&gt;md.raid_disks / copies);=
-<br>- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 last_group_start =3D=
- (rs-&gt;md.raid_disks / group_size) - 1;<br>+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 group_size =3D (raid_disks / copies);<br>+ =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 last_group_start =3D (raid_disks / g=
-roup_size) - 1;<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-last_group_start *=3D group_size;<br>- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 for (i =3D 0; i &lt; rs-&gt;md.raid_disks; i++) {<br>+ =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 for (i =3D 0; i &lt; raid_disks;=
- i++) {<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 if (!(i % copies) &amp;&amp; !(i &gt; last_group_start=
-))<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 rebuilds_per_group =3D 0;<br>=C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 if ((!rs-&gt;dev[i].rdev.sb_page ||<br>@@ -1588,7 +1590,7 @@ static =
-sector_t __rdev_sectors(struct raid_set *rs)<br>=C2=A0{<br>=C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 int i;<br>=C2=A0<br>- =C2=A0 =C2=A0 =C2=A0 for (i =3D 0; i &l=
-t; rs-&gt;md.raid_disks; i++) {<br>+ =C2=A0 =C2=A0 =C2=A0 for (i =3D 0; i &=
-lt; rs-&gt;raid_disks; i++) {<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 struct md_rdev *rdev =3D &amp;rs-&gt;dev[i].rdev;<br>=C2=A0<b=
-r>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!test_bit(Jou=
-rnal, &amp;rdev-&gt;flags) &amp;&amp;<br>@@ -3771,7 +3773,7 @@ static int r=
-aid_iterate_devices(struct dm_target *ti,<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 un=
-signed int i;<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 int r =3D 0;<br>=C2=A0<br>- =
-=C2=A0 =C2=A0 =C2=A0 for (i =3D 0; !r &amp;&amp; i &lt; rs-&gt;md.raid_disk=
-s; i++)<br>+ =C2=A0 =C2=A0 =C2=A0 for (i =3D 0; !r &amp;&amp; i &lt; rs-&gt=
-;raid_disks; i++)<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 if (rs-&gt;dev[i].data_dev)<br>=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 r =3D fn(ti,<br>=C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0rs-&gt;dev[i].data_dev,<br>-- <br>2.36.1<br>=
-<div><br></div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr" class=
-=3D"gmail_attr">On Mon, Jun 27, 2022 at 3:56 PM Mikulas Patocka &lt;<a href=
-=3D"mailto:mpatocka@redhat.com">mpatocka@redhat.com</a>&gt; wrote:<br></div=
-><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border=
--left:1px solid rgb(204,204,204);padding-left:1ex">dm-raid allocates the ar=
-ray of devices with rs-&gt;raid_disks entries and<br>
-then accesses it in a loop for rs-&gt;md.raid_disks. During reshaping,<br>
-rs-&gt;md.raid_disks may be greater than rs-&gt;raid_disks, so it accesses<=
-br>
-entries beyond the end of the array.<br>
-<br>
-We fix this bug by limiting the iteration to rs-&gt;raid_disks.<br>
-<br>
-The bug is triggered when running lvm test shell/lvconvert-raid.sh and the<=
-br>
-kernel is compiled with kasan.<br>
-<br>
-Signed-off-by: Mikulas Patocka &lt;<a href=3D"mailto:mpatocka@redhat.com" t=
-arget=3D"_blank">mpatocka@redhat.com</a>&gt;<br>
-Cc: <a href=3D"mailto:stable@vger.kernel.org" target=3D"_blank">stable@vger=
-.kernel.org</a><br>
-<br>
----<br>
-=C2=A0drivers/md/dm-raid.c |=C2=A0 =C2=A012 ++++++------<br>
-=C2=A01 file changed, 6 insertions(+), 6 deletions(-)<br>
-<br>
-Index: linux-2.6/drivers/md/dm-raid.c<br>
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<br>
---- linux-2.6.orig/drivers/md/dm-raid.c 2022-06-27 15:44:12.000000000 +0200=
-<br>
-+++ linux-2.6/drivers/md/dm-raid.c=C2=A0 =C2=A0 =C2=A0 2022-06-27 15:44:12.=
-000000000 +0200<br>
-@@ -1004,7 +1004,7 @@ static int validate_raid_redundancy(stru<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned int rebuilds_per_group =3D 0, copies;<=
-br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned int group_size, last_group_start;<br>
-<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0for (i =3D 0; i &lt; rs-&gt;md.raid_disks; i++)=
-<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0for (i =3D 0; i &lt; rs-&gt;raid_disks; i++)<br=
->
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!test_bit(In_sy=
-nc, &amp;rs-&gt;dev[i].rdev.flags) ||<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 !rs-&=
-gt;dev[i].rdev.sb_page)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 rebuild_cnt++;<br>
-@@ -1047,7 +1047,7 @@ static int validate_raid_redundancy(stru<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*=C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 C=C2=A0 =C2=A0 D=C2=A0 =C2=A0 D=C2=A0 =C2=A0 E=C2=
-=A0 =C2=A0 E<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (__is_raid10_nea=
-r(rs-&gt;md.new_layout)) {<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0for (i =3D 0; i &lt; rs-&gt;md.raid_disks; i++) {<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0for (i =3D 0; i &lt; rs-&gt;raid_disks; i++) {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!(i % copies))<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 rebuilds=
-_per_group =3D 0;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if ((!rs-&gt;dev[i].rdev.sb_page ||<=
-br>
-@@ -1073,7 +1073,7 @@ static int validate_raid_redundancy(stru<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 group_size =3D (rs-=
-&gt;md.raid_disks / copies);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 last_group_start =
-=3D (rs-&gt;md.raid_disks / group_size) - 1;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 last_group_start *=
-=3D group_size;<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0for (i =3D 0; i &lt=
-; rs-&gt;md.raid_disks; i++) {<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0for (i =3D 0; i &lt=
-; rs-&gt;raid_disks; i++) {<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 if (!(i % copies) &amp;&amp; !(i &gt; last_group_start))<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 rebuilds_per_group =3D 0;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 if ((!rs-&gt;dev[i].rdev.sb_page ||<br>
-@@ -1588,7 +1588,7 @@ static sector_t __rdev_sectors(struct ra<br>
-=C2=A0{<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 int i;<br>
-<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0for (i =3D 0; i &lt; rs-&gt;md.raid_disks; i++)=
- {<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0for (i =3D 0; i &lt; rs-&gt;raid_disks; i++) {<=
-br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 struct md_rdev *rde=
-v =3D &amp;rs-&gt;dev[i].rdev;<br>
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!test_bit(Journ=
-al, &amp;rdev-&gt;flags) &amp;&amp;<br>
-@@ -3766,7 +3766,7 @@ static int raid_iterate_devices(struct d<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned int i;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 int r =3D 0;<br>
-<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0for (i =3D 0; !r &amp;&amp; i &lt; rs-&gt;md.ra=
-id_disks; i++)<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0for (i =3D 0; !r &amp;&amp; i &lt; rs-&gt;raid_=
-disks; i++)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (rs-&gt;dev[i].d=
-ata_dev)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 r =3D fn(ti,<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0rs-&gt;dev[i].data_dev,<br>
-@@ -3817,7 +3817,7 @@ static void attempt_restore_of_faulty_de<br>
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 memset(cleared_failed_devices, 0, sizeof(cleare=
-d_failed_devices));<br>
-<br>
--=C2=A0 =C2=A0 =C2=A0 =C2=A0for (i =3D 0; i &lt; mddev-&gt;raid_disks; i++)=
- {<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0for (i =3D 0; i &lt; rs-&gt;raid_disks; i++) {<=
-br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 r =3D &amp;rs-&gt;d=
-ev[i].rdev;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* HM FIXME: enhanc=
-e journal device recovery processing */<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (test_bit(Journa=
-l, &amp;r-&gt;flags))<br>
-<br>
-</blockquote></div>
-
---000000000000de7aa805e2759093--
-
---===============4482733968574758919==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
-
---===============4482733968574758919==--
+T24gTW9uLCBKdW4gMjcsIDIwMjIgYXQgMDk6NDA6NTJQTSAtMDMwMCwgSmFzb24gR3VudGhvcnBl
+IHdyb3RlOgo+IE9uIE1vbiwgSnVuIDI3LCAyMDIyIGF0IDA4OjI3OjM3UE0gKzAyMDAsIERhbmll
+bCBCb3JrbWFubiB3cm90ZToKPiA+IE9uIDYvMjcvMjIgODowNCBQTSwgR3VzdGF2byBBLiBSLiBT
+aWx2YSB3cm90ZToKPiA+ID4gVGhlcmUgaXMgYSByZWd1bGFyIG5lZWQgaW4gdGhlIGtlcm5lbCB0
+byBwcm92aWRlIGEgd2F5IHRvIGRlY2xhcmUKPiA+ID4gaGF2aW5nIGEgZHluYW1pY2FsbHkgc2l6
+ZWQgc2V0IG9mIHRyYWlsaW5nIGVsZW1lbnRzIGluIGEgc3RydWN0dXJlLgo+ID4gPiBLZXJuZWwg
+Y29kZSBzaG91bGQgYWx3YXlzIHVzZSDigJxmbGV4aWJsZSBhcnJheSBtZW1iZXJz4oCdWzFdIGZv
+ciB0aGVzZQo+ID4gPiBjYXNlcy4gVGhlIG9sZGVyIHN0eWxlIG9mIG9uZS1lbGVtZW50IG9yIHpl
+cm8tbGVuZ3RoIGFycmF5cyBzaG91bGQKPiA+ID4gbm8gbG9uZ2VyIGJlIHVzZWRbMl0uCj4gPiA+
+IAo+ID4gPiBUaGlzIGNvZGUgd2FzIHRyYW5zZm9ybWVkIHdpdGggdGhlIGhlbHAgb2YgQ29jY2lu
+ZWxsZToKPiA+ID4gKGxpbnV4LTUuMTktcmMyJCBzcGF0Y2ggLS1qb2JzICQoZ2V0Y29uZiBfTlBS
+T0NFU1NPUlNfT05MTikgLS1zcC1maWxlIHNjcmlwdC5jb2NjaSAtLWluY2x1ZGUtaGVhZGVycyAt
+LWRpciAuID4gb3V0cHV0LnBhdGNoKQo+ID4gPiAKPiA+ID4gQEAKPiA+ID4gaWRlbnRpZmllciBT
+LCBtZW1iZXIsIGFycmF5Owo+ID4gPiB0eXBlIFQxLCBUMjsKPiA+ID4gQEAKPiA+ID4gCj4gPiA+
+IHN0cnVjdCBTIHsKPiA+ID4gICAgLi4uCj4gPiA+ICAgIFQxIG1lbWJlcjsKPiA+ID4gICAgVDIg
+YXJyYXlbCj4gPiA+IC0gMAo+ID4gPiAgICBdOwo+ID4gPiB9Owo+ID4gPiAKPiA+ID4gLWZzdHJp
+Y3QtZmxleC1hcnJheXM9MyBpcyBjb21pbmcgYW5kIHdlIG5lZWQgdG8gbGFuZCB0aGVzZSBjaGFu
+Z2VzCj4gPiA+IHRvIHByZXZlbnQgaXNzdWVzIGxpa2UgdGhlc2UgaW4gdGhlIHNob3J0IGZ1dHVy
+ZToKPiA+ID4gCj4gPiA+IC4uL2ZzL21pbml4L2Rpci5jOjMzNzozOiB3YXJuaW5nOiAnc3RyY3B5
+JyB3aWxsIGFsd2F5cyBvdmVyZmxvdzsgZGVzdGluYXRpb24gYnVmZmVyIGhhcyBzaXplIDAsCj4g
+PiA+IGJ1dCB0aGUgc291cmNlIHN0cmluZyBoYXMgbGVuZ3RoIDIgKGluY2x1ZGluZyBOVUwgYnl0
+ZSkgWy1XZm9ydGlmeS1zb3VyY2VdCj4gPiA+IAkJc3RyY3B5KGRlMy0+bmFtZSwgIi4iKTsKPiA+
+ID4gCQleCj4gPiA+IAo+ID4gPiBTaW5jZSB0aGVzZSBhcmUgYWxsIFswXSB0byBbXSBjaGFuZ2Vz
+LCB0aGUgcmlzayB0byBVQVBJIGlzIG5lYXJseSB6ZXJvLiBJZgo+ID4gPiB0aGlzIGJyZWFrcyBh
+bnl0aGluZywgd2UgY2FuIHVzZSBhIHVuaW9uIHdpdGggYSBuZXcgbWVtYmVyIG5hbWUuCj4gPiA+
+IAo+ID4gPiBbMV0gaHR0cHM6Ly9lbi53aWtpcGVkaWEub3JnL3dpa2kvRmxleGlibGVfYXJyYXlf
+bWVtYmVyCj4gPiA+IFsyXSBodHRwczovL3d3dy5rZXJuZWwub3JnL2RvYy9odG1sL3Y1LjE2L3By
+b2Nlc3MvZGVwcmVjYXRlZC5odG1sI3plcm8tbGVuZ3RoLWFuZC1vbmUtZWxlbWVudC1hcnJheXMK
+PiA+ID4gCj4gPiA+IExpbms6IGh0dHBzOi8vZ2l0aHViLmNvbS9LU1BQL2xpbnV4L2lzc3Vlcy83
+OAo+ID4gPiBCdWlsZC10ZXN0ZWQtYnk6IGh0dHBzOi8vbG9yZS5rZXJuZWwub3JnL2xrbWwvNjJi
+Njc1ZWMud0tYNkFPWjZjYkU3MXZ0RiUyNWxrcEBpbnRlbC5jb20vCj4gPiA+IFNpZ25lZC1vZmYt
+Ynk6IEd1c3Rhdm8gQS4gUi4gU2lsdmEgPGd1c3Rhdm9hcnNAa2VybmVsLm9yZz4KPiA+ID4gLS0t
+Cj4gPiA+IEhpIGFsbCEKPiA+ID4gCj4gPiA+IEpGWUk6IEknbSBhZGRpbmcgdGhpcyB0byBteSAt
+bmV4dCB0cmVlLiA6KQo+ID4gCj4gPiBGeWksIHRoaXMgYnJlYWtzIEJQRiBDSToKPiA+IAo+ID4g
+aHR0cHM6Ly9naXRodWIuY29tL2tlcm5lbC1wYXRjaGVzL2JwZi9ydW5zLzcwNzg3MTkzNzI/Y2hl
+Y2tfc3VpdGVfZm9jdXM9dHJ1ZQo+ID4gCj4gPiAgIFsuLi5dCj4gPiAgIHByb2dzL21hcF9wdHJf
+a2Vybi5jOjMxNDoyNjogZXJyb3I6IGZpZWxkICd0cmllX2tleScgd2l0aCB2YXJpYWJsZSBzaXpl
+ZCB0eXBlICdzdHJ1Y3QgYnBmX2xwbV90cmllX2tleScgbm90IGF0IHRoZSBlbmQgb2YgYSBzdHJ1
+Y3Qgb3IgY2xhc3MgaXMgYSBHTlUgZXh0ZW5zaW9uIFstV2Vycm9yLC1XZ251LXZhcmlhYmxlLXNp
+emVkLXR5cGUtbm90LWF0LWVuZF0KPiA+ICAgICAgICAgICBzdHJ1Y3QgYnBmX2xwbV90cmllX2tl
+eSB0cmllX2tleTsKPiA+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBeCj4gCj4g
+VGhpcyB3aWxsIGJyZWFrIHRoZSByZG1hLWNvcmUgdXNlcnNwYWNlIGFzIHdlbGwsIHdpdGggYSBz
+aW1pbGFyCj4gZXJyb3I6Cj4gCj4gL3Vzci9iaW4vY2xhbmctMTMgLURWRVJCU19ERUJVRyAtRGli
+dmVyYnNfRVhQT1JUUyAtSWluY2x1ZGUgLUkvdXNyL2luY2x1ZGUvbGlibmwzIC1JL3Vzci9pbmNs
+dWRlL2RybSAtZyAtTzIgLWZkZWJ1Zy1wcmVmaXgtbWFwPS9fX3cvMS9zPS4gLWZzdGFjay1wcm90
+ZWN0b3Itc3Ryb25nIC1XZm9ybWF0IC1XZXJyb3I9Zm9ybWF0LXNlY3VyaXR5IC1XZGF0ZS10aW1l
+IC1EX0ZPUlRJRllfU09VUkNFPTIgLVdtaXNzaW5nLXByb3RvdHlwZXMgLVdtaXNzaW5nLWRlY2xh
+cmF0aW9ucyAtV3dyaXRlLXN0cmluZ3MgLVdmb3JtYXQ9MiAtV2Nhc3QtZnVuY3Rpb24tdHlwZSAt
+V2Zvcm1hdC1ub25saXRlcmFsIC1XZGF0ZS10aW1lIC1XbmVzdGVkLWV4dGVybnMgLVdzaGFkb3cg
+LVdzdHJpY3QtcHJvdG90eXBlcyAtV29sZC1zdHlsZS1kZWZpbml0aW9uIC1XZXJyb3IgLVdyZWR1
+bmRhbnQtZGVjbHMgLWcgLWZQSUMgICAtc3RkPWdudTExIC1NRCAtTVQgbGliaWJ2ZXJicy9DTWFr
+ZUZpbGVzL2lidmVyYnMuZGlyL2NtZF9mbG93LmMubyAtTUYgbGliaWJ2ZXJicy9DTWFrZUZpbGVz
+L2lidmVyYnMuZGlyL2NtZF9mbG93LmMuby5kIC1vIGxpYmlidmVyYnMvQ01ha2VGaWxlcy9pYnZl
+cmJzLmRpci9jbWRfZmxvdy5jLm8gICAtYyAuLi9saWJpYnZlcmJzL2NtZF9mbG93LmMKPiBJbiBm
+aWxlIGluY2x1ZGVkIGZyb20gLi4vbGliaWJ2ZXJicy9jbWRfZmxvdy5jOjMzOgo+IEluIGZpbGUg
+aW5jbHVkZWQgZnJvbSBpbmNsdWRlL2luZmluaWJhbmQvY21kX3dyaXRlLmg6MzY6Cj4gSW4gZmls
+ZSBpbmNsdWRlZCBmcm9tIGluY2x1ZGUvaW5maW5pYmFuZC9jbWRfaW9jdGwuaDo0MToKPiBJbiBm
+aWxlIGluY2x1ZGVkIGZyb20gaW5jbHVkZS9pbmZpbmliYW5kL3ZlcmJzLmg6NDg6Cj4gSW4gZmls
+ZSBpbmNsdWRlZCBmcm9tIGluY2x1ZGUvaW5maW5pYmFuZC92ZXJic19hcGkuaDo2NjoKPiBJbiBm
+aWxlIGluY2x1ZGVkIGZyb20gaW5jbHVkZS9pbmZpbmliYW5kL2liX3VzZXJfaW9jdGxfdmVyYnMu
+aDozODoKPiBpbmNsdWRlL3JkbWEvaWJfdXNlcl92ZXJicy5oOjQzNjozNDogZXJyb3I6IGZpZWxk
+ICdiYXNlJyB3aXRoIHZhcmlhYmxlIHNpemVkIHR5cGUgJ3N0cnVjdCBpYl91dmVyYnNfY3JlYXRl
+X2NxX3Jlc3AnIG5vdCBhdCB0aGUgZW5kIG9mIGEgc3RydWN0IG9yIGNsYXNzIGlzIGEgR05VIGV4
+dGVuc2lvbiBbLVdlcnJvciwtV2dudS12YXJpYWJsZS1zaXplZC10eXBlLW5vdC1hdC1lbmRdCj4g
+ICAgICAgICBzdHJ1Y3QgaWJfdXZlcmJzX2NyZWF0ZV9jcV9yZXNwIGJhc2U7Cj4gICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIF4KPiBpbmNsdWRlL3JkbWEvaWJfdXNlcl92
+ZXJicy5oOjY0NDozNDogZXJyb3I6IGZpZWxkICdiYXNlJyB3aXRoIHZhcmlhYmxlIHNpemVkIHR5
+cGUgJ3N0cnVjdCBpYl91dmVyYnNfY3JlYXRlX3FwX3Jlc3AnIG5vdCBhdCB0aGUgZW5kIG9mIGEg
+c3RydWN0IG9yIGNsYXNzIGlzIGEgR05VIGV4dGVuc2lvbiBbLVdlcnJvciwtV2dudS12YXJpYWJs
+ZS1zaXplZC10eXBlLW5vdC1hdC1lbmRdCj4gICAgICAgICBzdHJ1Y3QgaWJfdXZlcmJzX2NyZWF0
+ZV9xcF9yZXNwIGJhc2U7Cj4gCj4gV2hpY2ggaXMgd2h5IEkgZ2F2ZSB1cCB0cnlpbmcgdG8gY2hh
+bmdlIHRoZXNlLi4KPiAKPiBUaG91Z2ggbWF5YmUgd2UgY291bGQganVzdCBzd2l0Y2ggb2ZmIC1X
+Z251LXZhcmlhYmxlLXNpemVkLXR5cGUtbm90LWF0LWVuZCAgZHVyaW5nIGNvbmZpZ3VyYXRpb24g
+PwoKTm8uIEkgdGhpbmsgbm93IHdlIGNhbiBlYXNpbHkgd29ya2Fyb3VuZCB0aGVzZSBzb3J0cyBv
+ZiBwcm9ibGVtcyB3aXRoCnNvbWV0aGluZyBsaWtlIHRoaXM6CgoJc3RydWN0IGZsZXggewoJCWFu
+eV90eXBlIGFueV9tZW1iZXI7CgkJdW5pb24gewoJCQl0eXBlIGFycmF5WzBdOwoJCQlfX0RFQ0xB
+UkVfRkxFWF9BUlJBWSh0eXBlLCBhcnJheV9mbGV4KTsKCQl9OwoJfTsKCmFuZCB1c2UgYXJyYXlf
+ZmxleCBpbiBrZXJuZWwtc3BhY2UuCgpUaGUgc2FtZSBmb3IgdGhlIG9uZS1lbG1lbnQgYXJyYXlz
+IGluIFVBUEk6CgogICAgICAgIHN0cnVjdCBmbGV4IHsKICAgICAgICAgICAgICAgIGFueV90eXBl
+IGFueV9tZW1iZXI7CiAgICAgICAgICAgICAgICB1bmlvbiB7CiAgICAgICAgICAgICAgICAgICAg
+ICAgIHR5cGUgYXJyYXlbMV07CiAgICAgICAgICAgICAgICAgICAgICAgIF9fREVDTEFSRV9GTEVY
+X0FSUkFZKHR5cGUsIGFycmF5X2ZsZXgpOwogICAgICAgICAgICAgICAgfTsKICAgICAgICB9OwoK
+SSdsbCB1c2UgdGhlIGlkaW9tIGFib3ZlIHRvIHJlc29sdmUgYWxsIHRoZXNlIHdhcm5pbmdzIGlu
+IGEgZm9sbG93LXVwCnBhdGNoLiA6KQoKVGhhbmtzCi0tCkd1c3Rhdm8KCi0tCmRtLWRldmVsIG1h
+aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29t
+L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
 
