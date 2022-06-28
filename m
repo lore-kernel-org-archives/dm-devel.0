@@ -1,97 +1,62 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 11591C43334
-	for <dm-devel@archiver.kernel.org>; Tue, 28 Jun 2022 07:27:48 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B1CF5C43334
+	for <dm-devel@archiver.kernel.org>; Tue, 28 Jun 2022 07:43:12 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1656402191;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=njcikWwaC/6nvnN7sxANbuZrHOwR/7+Sgy+tCHA9Hpc=;
+	b=auWAUfYMuSK/AWlQey06tFJKlSRSb28sv+j3wG+5wRTQOAjKdgeqsK9tcP+J8ifKv6qByi
+	eixifwiSx4jBa5sTOjW/qJTeqkM+wY09xlaBIBvgEUbmjUaUIDle2dhCW7kr1cODFnBYdn
+	Zw+8cKpfqW5yG9y4z3Z3Tnm311wBzn8=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-9-K2Qxt9-cOIyDIp3ny_csSA-1; Tue, 28 Jun 2022 03:27:44 -0400
-X-MC-Unique: K2Qxt9-cOIyDIp3ny_csSA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-390-1EAxDEwkPyaKkxu_Qp0ZYA-1; Tue, 28 Jun 2022 03:43:08 -0400
+X-MC-Unique: 1EAxDEwkPyaKkxu_Qp0ZYA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 66BAF802C17;
-	Tue, 28 Jun 2022 07:27:42 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4D8F01C068CE;
+	Tue, 28 Jun 2022 07:43:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1318D18EAA;
-	Tue, 28 Jun 2022 07:27:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CD15C1415108;
+	Tue, 28 Jun 2022 07:43:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BF05F194704D;
-	Tue, 28 Jun 2022 07:27:41 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B81E4194704D;
+	Tue, 28 Jun 2022 07:43:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 50F56194704D
- for <dm-devel@listman.corp.redhat.com>; Tue, 28 Jun 2022 07:27:40 +0000 (UTC)
+ ESMTP id B2FF51947052
+ for <dm-devel@listman.corp.redhat.com>; Tue, 28 Jun 2022 07:43:03 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 30B0D492CA4; Tue, 28 Jun 2022 07:27:40 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2CA46492C3B
- for <dm-devel@redhat.com>; Tue, 28 Jun 2022 07:27:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1400D811E7A
- for <dm-devel@redhat.com>; Tue, 28 Jun 2022 07:27:40 +0000 (UTC)
-Received: from mail-qv1-f44.google.com (mail-qv1-f44.google.com
- [209.85.219.44]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-619-2bNAAdWeOLe2CdVIFaIvZw-1; Tue, 28 Jun 2022 03:27:38 -0400
-X-MC-Unique: 2bNAAdWeOLe2CdVIFaIvZw-1
-Received: by mail-qv1-f44.google.com with SMTP id i17so18728498qvo.13
- for <dm-devel@redhat.com>; Tue, 28 Jun 2022 00:27:36 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:mime-version:references:in-reply-to:from:date
- :message-id:subject:to:cc:content-transfer-encoding;
- bh=hwgLtruPC06mcRCnQAsf+kJqHCP1mf00hTNnpiQ34M0=;
- b=OHOhwftnmSO+WdZFDOqcho76utpWNZRYuWoZ0Gjfwaca5sqHJHYkzpdeyNCYsDj90i
- BRmcxqfLmdwlR4hshZPxIDCBeHk8kkFc5WN8zEAIjx+8VaaVv4FPBZKxHz7XLbUSEKWX
- 4rFOvNQSLLRIpS3X8I/fXQffozi1ZeqrI+dRSDKgIccVFC6k6Z/wxMiz83bbzFQFU/A7
- 5vgvhVyCivek40g3KK6o43KvJmGHYNwmTBPCmVeaEg8jgJ9w2zmuAX9aGQ/NvtpEqYno
- KCinx/SSbT/04aFdqKhRtBE8empciHgwvDMohI8vAPkCATpS1QRTrB5ihOBIEOZXynNv
- XZxQ==
-X-Gm-Message-State: AJIora8TMP9y+XwQGi+7j+V9KZPDW5Ibg8fWyKj0E2bSEZiO+0GhgwOw
- WaNmEp9KUMlFgwlTUpIyH2PTfkT/Fa0oB99L
-X-Google-Smtp-Source: AGRyM1sqAoNEKLxLMygjcE4y83dLsZostehO348m2YbPVRkKUrNFbLsylbn4g1Vwkn0gx7qDq8g7ZQ==
-X-Received: by 2002:ac8:5803:0:b0:305:2f14:269a with SMTP id
- g3-20020ac85803000000b003052f14269amr12345564qtg.290.1656401255912; 
- Tue, 28 Jun 2022 00:27:35 -0700 (PDT)
-Received: from mail-yw1-f169.google.com (mail-yw1-f169.google.com.
- [209.85.128.169]) by smtp.gmail.com with ESMTPSA id
- he18-20020a05622a601200b00317c38c8606sm3111221qtb.20.2022.06.28.00.27.33
- for <dm-devel@redhat.com>
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Tue, 28 Jun 2022 00:27:34 -0700 (PDT)
-Received: by mail-yw1-f169.google.com with SMTP id
- 00721157ae682-31bf327d4b5so18159367b3.13
- for <dm-devel@redhat.com>; Tue, 28 Jun 2022 00:27:33 -0700 (PDT)
-X-Received: by 2002:a81:a092:0:b0:318:5c89:a935 with SMTP id
- x140-20020a81a092000000b003185c89a935mr20762801ywg.383.1656401253054; Tue, 28
- Jun 2022 00:27:33 -0700 (PDT)
+ id 8BFEF1121319; Tue, 28 Jun 2022 07:43:03 +0000 (UTC)
+Received: from T590 (ovpn-8-29.pek2.redhat.com [10.72.8.29])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2A4891121314;
+ Tue, 28 Jun 2022 07:42:57 +0000 (UTC)
+Date: Tue, 28 Jun 2022 15:42:52 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Kent Overstreet <kent.overstreet@gmail.com>
+Message-ID: <Yrqw/KY94DDtFVfl@T590>
+References: <20220624141255.2461148-1-ming.lei@redhat.com>
+ <20220624141255.2461148-2-ming.lei@redhat.com>
+ <20220626201458.ytn4mrix2pobm2mb@moria.home.lan>
+ <Yrld9rLPY6L3MhlZ@T590>
+ <20220628042016.wd65amvhbjuduqou@moria.home.lan>
 MIME-Version: 1.0
-References: <20220627180432.GA136081@embeddedor>
-In-Reply-To: <20220627180432.GA136081@embeddedor>
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Date: Tue, 28 Jun 2022 09:27:21 +0200
-X-Gmail-Original-Message-ID: <CAMuHMdU27TG_rpd=WTRPRcY22A4j4aN-6d_8OmK2aNpX06G3ig@mail.gmail.com>
-Message-ID: <CAMuHMdU27TG_rpd=WTRPRcY22A4j4aN-6d_8OmK2aNpX06G3ig@mail.gmail.com>
-To: "Gustavo A. R. Silva" <gustavoars@kernel.org>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: Re: [dm-devel] [PATCH][next] treewide: uapi: Replace zero-length
- arrays with flexible-array members
+In-Reply-To: <20220628042016.wd65amvhbjuduqou@moria.home.lan>
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH 5.20 1/4] block: add bio_rewind() API
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,60 +68,100 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: nvdimm@lists.linux.dev,
- ALSA Development Mailing List <alsa-devel@alsa-project.org>,
- KVM list <kvm@vger.kernel.org>,
- DRI Development <dri-devel@lists.freedesktop.org>,
- Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, dm-devel@redhat.com,
- target-devel <target-devel@vger.kernel.org>,
- MTD Maling List <linux-mtd@lists.infradead.org>,
- linux-hardening@vger.kernel.org, linux1394-devel@lists.sourceforge.net,
- linux-stm32@st-md-mailman.stormreply.com,
- linux-s390 <linux-s390@vger.kernel.org>, scsi <linux-scsi@vger.kernel.org>,
- linux-rdma <linux-rdma@vger.kernel.org>,
- the arch/x86 maintainers <x86@kernel.org>,
- kasan-dev <kasan-dev@googlegroups.com>, lvs-devel@vger.kernel.org,
- coreteam@netfilter.org, V9FS Developers <v9fs-developer@lists.sourceforge.net>,
- Kees Cook <keescook@chromium.org>,
- Intel Graphics Development <intel-gfx@lists.freedesktop.org>,
- linux-can@vger.kernel.org, linux-raid@vger.kernel.org,
- linux-m68k <linux-m68k@lists.linux-m68k.org>,
- virtualization@lists.linux-foundation.org, io-uring@vger.kernel.org,
- Linux ARM <linux-arm-kernel@lists.infradead.org>,
- netdev <netdev@vger.kernel.org>, USB list <linux-usb@vger.kernel.org>,
- Linux MMC List <linux-mmc@vger.kernel.org>,
- "open list:BROADCOM NVRAM DRIVER" <linux-mips@vger.kernel.org>,
- linux-perf-users@vger.kernel.org, linux-sctp@vger.kernel.org,
- NetFilter <netfilter-devel@vger.kernel.org>,
- Linux FS Devel <linux-fsdevel@vger.kernel.org>, bpf <bpf@vger.kernel.org>,
- linux-btrfs <linux-btrfs@vger.kernel.org>
+Cc: Jens Axboe <axboe@kernel.dk>,
+ "Martin K . Petersen" <martin.petersen@oracle.com>,
+ Mike Snitzer <snitzer@redhat.com>, Eric Biggers <ebiggers@google.com>,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Dmitry Monakhov <dmonakhov@openvz.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-SGkgR3VzdGF2bywKClRoYW5rcyBmb3IgeW91ciBwYXRjaCEKCk9uIE1vbiwgSnVuIDI3LCAyMDIy
-IGF0IDg6MDQgUE0gR3VzdGF2byBBLiBSLiBTaWx2YQo8Z3VzdGF2b2Fyc0BrZXJuZWwub3JnPiB3
-cm90ZToKPiBUaGVyZSBpcyBhIHJlZ3VsYXIgbmVlZCBpbiB0aGUga2VybmVsIHRvIHByb3ZpZGUg
-YSB3YXkgdG8gZGVjbGFyZQo+IGhhdmluZyBhIGR5bmFtaWNhbGx5IHNpemVkIHNldCBvZiB0cmFp
-bGluZyBlbGVtZW50cyBpbiBhIHN0cnVjdHVyZS4KPiBLZXJuZWwgY29kZSBzaG91bGQgYWx3YXlz
-IHVzZSDigJxmbGV4aWJsZSBhcnJheSBtZW1iZXJz4oCdWzFdIGZvciB0aGVzZQo+IGNhc2VzLiBU
-aGUgb2xkZXIgc3R5bGUgb2Ygb25lLWVsZW1lbnQgb3IgemVyby1sZW5ndGggYXJyYXlzIHNob3Vs
-ZAo+IG5vIGxvbmdlciBiZSB1c2VkWzJdLgoKVGhlc2UgcnVsZXMgYXBwbHkgdG8gdGhlIGtlcm5l
-bCwgYnV0IHVhcGkgaXMgbm90IGNvbnNpZGVyZWQgcGFydCBvZiB0aGUKa2VybmVsLCBzbyBkaWZm
-ZXJlbnQgcnVsZXMgYXBwbHkuICBVYXBpIGhlYWRlciBmaWxlcyBzaG91bGQgd29yayB3aXRoCndo
-YXRldmVyIGNvbXBpbGVyIHRoYXQgY2FuIGJlIHVzZWQgZm9yIGNvbXBpbGluZyB1c2Vyc3BhY2Uu
-CgpHcntvZXRqZSxlZXRpbmd9cywKCiAgICAgICAgICAgICAgICAgICAgICAgIEdlZXJ0CgotLQpH
-ZWVydCBVeXR0ZXJob2V2ZW4gLS0gVGhlcmUncyBsb3RzIG9mIExpbnV4IGJleW9uZCBpYTMyIC0t
-IGdlZXJ0QGxpbnV4LW02OGsub3JnCgpJbiBwZXJzb25hbCBjb252ZXJzYXRpb25zIHdpdGggdGVj
-aG5pY2FsIHBlb3BsZSwgSSBjYWxsIG15c2VsZiBhIGhhY2tlci4gQnV0CndoZW4gSSdtIHRhbGtp
-bmcgdG8gam91cm5hbGlzdHMgSSBqdXN0IHNheSAicHJvZ3JhbW1lciIgb3Igc29tZXRoaW5nIGxp
-a2UgdGhhdC4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAtLSBMaW51cyBUb3J2YWxk
-cwoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9s
-aXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
+On Tue, Jun 28, 2022 at 12:20:16AM -0400, Kent Overstreet wrote:
+> On Mon, Jun 27, 2022 at 03:36:22PM +0800, Ming Lei wrote:
+> > On Sun, Jun 26, 2022 at 04:14:58PM -0400, Kent Overstreet wrote:
+> > > On Fri, Jun 24, 2022 at 10:12:52PM +0800, Ming Lei wrote:
+> > > > Commit 7759eb23fd98 ("block: remove bio_rewind_iter()") removes
+> > > > the similar API because the following reasons:
+> > > > 
+> > > >     ```
+> > > >     It is pointed that bio_rewind_iter() is one very bad API[1]:
+> > > > 
+> > > >     1) bio size may not be restored after rewinding
+> > > > 
+> > > >     2) it causes some bogus change, such as 5151842b9d8732 (block: reset
+> > > >     bi_iter.bi_done after splitting bio)
+> > > > 
+> > > >     3) rewinding really makes things complicated wrt. bio splitting
+> > > > 
+> > > >     4) unnecessary updating of .bi_done in fast path
+> > > > 
+> > > >     [1] https://marc.info/?t=153549924200005&r=1&w=2
+> > > > 
+> > > >     So this patch takes Kent's suggestion to restore one bio into its original
+> > > >     state via saving bio iterator(struct bvec_iter) in bio_integrity_prep(),
+> > > >     given now bio_rewind_iter() is only used by bio integrity code.
+> > > >     ```
+> > > > 
+> > > > However, it isn't easy to restore bio by saving 32 bytes bio->bi_iter, and saving
+> > > > it only can't restore crypto and integrity info.
+> > > > 
+> > > > Add bio_rewind() back for some use cases which may not be same with
+> > > > previous generic case:
+> > > > 
+> > > > 1) most of bio has fixed end sector since bio split is done from front of the bio,
+> > > > if driver just records how many sectors between current bio's start sector and
+> > > > the bio's end sector, the original position can be restored
+> > > > 
+> > > > 2) if one bio's end sector won't change, usually bio_trim() isn't called, user can
+> > > > restore original position by storing sectors from current ->bi_iter.bi_sector to
+> > > > bio's end sector; together by saving bio size, 8 bytes can restore to
+> > > > original bio.
+> > > > 
+> > > > 3) dm's requeue use case: when BLK_STS_DM_REQUEUE happens, dm core needs to
+> > > > restore to the original bio which represents current dm io to be requeued.
+> > > > By storing sectors to the bio's end sector and dm io's size,
+> > > > bio_rewind() can restore such original bio, then dm core code needn't to
+> > > > allocate one bio beforehand just for handling BLK_STS_DM_REQUEUE which
+> > > > is actually one unusual event.
+> > > > 
+> > > > 4) Not like original rewind API, this one needn't to add .bi_done, and no any
+> > > > effect on fast path
+> > > 
+> > > It seems like perhaps the real issue here is that we need a real bio_iter,
+> > > separate from bvec_iter, that also encapsulates iterating over integrity &
+> > > fscrypt. 
+> > 
+> > Not mention bio_iter, bvec_iter has been 32 bytes, which is too big to
+> > hold in per-io data structure. With this patch, 8bytes is enough
+> > to rewind one bio if the end sector is fixed.
+> 
+> Hold on though, does that check out? Why is that too big for per IO data
+> structures?
+> 
+> By definition these structures are only for IOs in flight, and we don't _want_
+> there to ever be very many of these or we're going to run into latency issues
+> due to queue depth.
+
+I don't see there is 'queue depth' for bio or bio driver.
+
+32 bytes have been big, and memory footprint is increased too since the data has been
+prepared for the future possible rewind. If crypt or integrity is considered, it
+can be bigger.
+
+
+
+Thanks, 
+Ming
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
