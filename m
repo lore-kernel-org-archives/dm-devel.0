@@ -1,10 +1,10 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2BB0CCCA47C
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 87338CCA482
 	for <dm-devel@archiver.kernel.org>; Wed, 29 Jun 2022 07:31:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1656487869;
@@ -14,84 +14,66 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=tbtSL7au9LAdZ2Dv0pSrObmOyfUWvQn+317V/IvO4ng=;
-	b=FH+rkp7HEjnnZt0PmZWnpPcpiIT1dXtzZSc5B5Ber+xi015FiHB4R2NfpCUvZIQC2uHcpJ
-	SdU/Bjs10i0UL6eASThJfueaQkOg9YfVuLxps8Zlz7O60SNCdHGMyUeECzWcNGrcQjBFPe
-	1dh/KZKjPB/sZ4Rx530N+G6OKPCuDAA=
+	bh=s7Fuqxq/6TjcNx3/MHsTo3bEt0csMHb9wXbo2ue5a2g=;
+	b=dRAsleXoLvB5MNfPucifDMdHoBVjXNVu5WYrDCs/fWZUkrnZt9MR7CD0bsryOV3CUDyMU9
+	u4nvG5xRKgcyIf8bYq9JdjCOHe4ThGWrIY+ow5FrBuhxlF8yqkzaMFYFYgGO4XGLOk5jb/
+	0tPB2znV4m2qJz9WnWle/oF/p7jPzfk=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-449-wIgDwJWXMmqehMrMMTyTVw-1; Wed, 29 Jun 2022 03:31:05 -0400
-X-MC-Unique: wIgDwJWXMmqehMrMMTyTVw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-30-5VNmQRaJN3iGwFoLzCBRjw-1; Wed, 29 Jun 2022 03:31:06 -0400
+X-MC-Unique: 5VNmQRaJN3iGwFoLzCBRjw-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8B3D01019DE0;
-	Wed, 29 Jun 2022 07:31:03 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5EABA824062;
+	Wed, 29 Jun 2022 07:31:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 754E39D7F;
-	Wed, 29 Jun 2022 07:31:03 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 45DE0492C3B;
+	Wed, 29 Jun 2022 07:31:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9E8CB1947068;
-	Wed, 29 Jun 2022 07:31:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3E04C1947064;
+	Wed, 29 Jun 2022 07:31:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 29E4619466DF
- for <dm-devel@listman.corp.redhat.com>; Tue, 28 Jun 2022 16:16:18 +0000 (UTC)
+ ESMTP id D69BC19466DF
+ for <dm-devel@listman.corp.redhat.com>; Tue, 28 Jun 2022 14:02:16 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0E06C4010150; Tue, 28 Jun 2022 16:16:18 +0000 (UTC)
+ id ABE4B404E4C8; Tue, 28 Jun 2022 14:02:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0A0C540466A4
- for <dm-devel@redhat.com>; Tue, 28 Jun 2022 16:16:18 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A816C40C1240
+ for <dm-devel@redhat.com>; Tue, 28 Jun 2022 14:02:06 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E69761C01B58
- for <dm-devel@redhat.com>; Tue, 28 Jun 2022 16:16:17 +0000 (UTC)
-Received: from mail-qv1-f48.google.com (mail-qv1-f48.google.com
- [209.85.219.48]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-132-qnPIdDz6PmSSrFGVbEmI1Q-1; Tue, 28 Jun 2022 12:16:15 -0400
-X-MC-Unique: qnPIdDz6PmSSrFGVbEmI1Q-1
-Received: by mail-qv1-f48.google.com with SMTP id c1so20699209qvi.11;
- Tue, 28 Jun 2022 09:16:15 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=fkrHLl+pC0T2wzEqJ1VmdS709M7bO1Mk3oguAYoCHsA=;
- b=24+XVJHzPWp/PMhpWMdLOJOulvWnJF5NL9hSF9w5RnJd8Rz9kfMNWJpgvPcaf6XFwp
- Vc/UlXGqATWQm13d0RBTyjR0w9WYtqP19Gm7+tPGw/djanZS6X8HWFqlP2yr7rWeA78d
- bxZLR+UvLSBCkLvt3cJ4YTrXklte6hpfzi8oz1Uzew784KCtBzi6GPspxz8UOY1eKG6B
- n3zFh7kKEIPOluXRSfXGiXzK9xb48l8AFxIL80AypRaDLvgXu6sbSg+DI7oBs3MdRSzV
- 8nX3DcE8bCufX7pIZRPY1GpbNhDI5u0l/GqkVrvNyVMp+jkizb/+qJfO+Hb1fgNKc9g5
- sx8w==
-X-Gm-Message-State: AJIora9k5gW6ISNR2wYaPzfKIWLw/2S2Nw3fAuQJvKEjDBjPBsFjJ10Z
- Vs80xOBVhzDcXjL/LrIzz8YgWvnCl0wLvZCa4Q==
-X-Google-Smtp-Source: AGRyM1sKkjEL7f9wSHLYpBtisYe/9DkZXLFCV6xhCzLO5Lsi0TS0+cJ3QYNT1nLShEcNWimNSwTK/w==
-X-Received: by 2002:a05:622a:58d:b0:317:ca0d:91a5 with SMTP id
- c13-20020a05622a058d00b00317ca0d91a5mr13633763qtb.601.1656432974892; 
- Tue, 28 Jun 2022 09:16:14 -0700 (PDT)
-Received: from localhost (c-73-219-103-14.hsd1.vt.comcast.net. [73.219.103.14])
- by smtp.gmail.com with ESMTPSA id
- w11-20020a05622a190b00b003162a22f8f4sm4312465qtc.49.2022.06.28.09.16.13
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 28 Jun 2022 09:16:13 -0700 (PDT)
-Date: Tue, 28 Jun 2022 12:16:12 -0400
-From: Kent Overstreet <kent.overstreet@gmail.com>
-To: Ming Lei <ming.lei@redhat.com>
-Message-ID: <20220628161612.ajbyb723zx7w6b24@moria.home.lan>
-References: <20220624141255.2461148-1-ming.lei@redhat.com>
- <20220624141255.2461148-2-ming.lei@redhat.com>
- <20220626201458.ytn4mrix2pobm2mb@moria.home.lan>
- <Yrld9rLPY6L3MhlZ@T590>
- <20220628042016.wd65amvhbjuduqou@moria.home.lan>
- <Yrqw/KY94DDtFVfl@T590>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 910E1801E80
+ for <dm-devel@redhat.com>; Tue, 28 Jun 2022 14:02:06 +0000 (UTC)
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-90-6NOSacCPPNe8mIVwcLA7aQ-1; Tue, 28 Jun 2022 10:02:05 -0400
+X-MC-Unique: 6NOSacCPPNe8mIVwcLA7aQ-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by ams.source.kernel.org (Postfix) with ESMTPS id 0A731B81B97;
+ Tue, 28 Jun 2022 13:56:30 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C80ADC341CA;
+ Tue, 28 Jun 2022 13:56:25 +0000 (UTC)
+Date: Tue, 28 Jun 2022 15:56:23 +0200
+From: "Gustavo A. R. Silva" <gustavoars@kernel.org>
+To: Jason Gunthorpe <jgg@ziepe.ca>
+Message-ID: <20220628135623.GA25163@embeddedor>
+References: <20220627180432.GA136081@embeddedor>
+ <6bc1e94c-ce1d-a074-7d0c-8dbe6ce22637@iogearbox.net>
+ <20220628004052.GM23621@ziepe.ca>
+ <20220628005825.GA161566@embeddedor>
+ <20220628022129.GA8452@embeddedor>
+ <20220628133651.GO23621@ziepe.ca>
 MIME-Version: 1.0
-In-Reply-To: <Yrqw/KY94DDtFVfl@T590>
+In-Reply-To: <20220628133651.GO23621@ziepe.ca>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -99,9 +81,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-Mailman-Approved-At: Wed, 29 Jun 2022 07:31:01 +0000
-Subject: Re: [dm-devel] [PATCH 5.20 1/4] block: add bio_rewind() API
+Subject: Re: [dm-devel] [PATCH][next] treewide: uapi: Replace zero-length
+ arrays with flexible-array members
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -113,14 +96,27 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>,
- "Martin K . Petersen" <martin.petersen@oracle.com>,
- Mike Snitzer <snitzer@redhat.com>, Eric Biggers <ebiggers@google.com>,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- Dmitry Monakhov <dmonakhov@openvz.org>
+Cc: nvdimm@lists.linux.dev, alsa-devel@alsa-project.org, kvm@vger.kernel.org,
+ dri-devel@lists.freedesktop.org, linux-mips@vger.kernel.org,
+ dm-devel@redhat.com, target-devel@vger.kernel.org,
+ linux-mtd@lists.infradead.org, linux-hardening@vger.kernel.org,
+ linux1394-devel@lists.sourceforge.net,
+ linux-stm32@st-md-mailman.stormreply.com, linux-s390@vger.kernel.org,
+ Daniel Borkmann <daniel@iogearbox.net>, linux-rdma@vger.kernel.org,
+ x86@kernel.org, kasan-dev@googlegroups.com, lvs-devel@vger.kernel.org,
+ coreteam@netfilter.org, v9fs-developer@lists.sourceforge.net,
+ Kees Cook <keescook@chromium.org>, intel-gfx@lists.freedesktop.org,
+ linux-can@vger.kernel.org, linux-raid@vger.kernel.org,
+ linux-m68k@lists.linux-m68k.org, virtualization@lists.linux-foundation.org,
+ io-uring@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+ linux-scsi@vger.kernel.org, netdev@vger.kernel.org, linux-usb@vger.kernel.org,
+ linux-mmc@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-perf-users@vger.kernel.org, linux-sctp@vger.kernel.org,
+ netfilter-devel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ bpf@vger.kernel.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -129,20 +125,48 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Jun 28, 2022 at 03:42:52PM +0800, Ming Lei wrote:
-> I don't see there is 'queue depth' for bio or bio driver.
+On Tue, Jun 28, 2022 at 10:36:51AM -0300, Jason Gunthorpe wrote:
+> On Tue, Jun 28, 2022 at 04:21:29AM +0200, Gustavo A. R. Silva wrote:
 > 
-> 32 bytes have been big, and memory footprint is increased too since the data has been
-> prepared for the future possible rewind. If crypt or integrity is considered, it
-> can be bigger.
+> > > > Though maybe we could just switch off -Wgnu-variable-sized-type-not-at-end  during configuration ?
+> 
+> > We need to think in a different strategy.
+> 
+> I think we will need to switch off the warning in userspace - this is
+> doable for rdma-core.
+> 
+> On the other hand, if the goal is to enable the array size check
+> compiler warning I would suggest focusing only on those structs that
+> actually hit that warning in the kernel. IIRC infiniband doesn't
+> trigger it because it just pointer casts the flex array to some other
+> struct.
 
-Put some thought into this, Ming. I think you've absorbed some "received
-wisdom", some of the implicit assumptions everyone seems to be making without
-ever doing any math to check if they make sense.
+Yep; this is actually why I reverted those changes in rdma (before
+sending out the patch) when 0-day reported the same problems you pointed
+out[1].
 
-There may not be a "queue depth" for all drivers, but the same latency
-considerations apply - if you have an unbounded number of IOs in flight, you're
-going to be having other, much more significant issues.
+Also, that's the strategy I'm following right now with the one-element
+array into flex-array member transformations. I'm addressing those cases
+in which the trailing array is actually being iterated over, first.
+
+I just added the patch to my -next tree, so it can be build-tested by
+other people, and let's see what else is reported this week. :)
+
+--
+Gustavo
+
+[1] https://lore.kernel.org/lkml/620ca2a5.NkAEIDEfiYoxE9%2Fu%25lkp@intel.com/
+
+> 
+> It isn't actually an array it is a placeholder for a trailing
+> structure, so it is never indexed.
+> 
+> This is also why we hit the warning because the convient way for
+> userspace to compose the message is to squash the header and trailer
+> structs together in a super struct on the stack, then invoke the
+> ioctl.
+> 
+> Jason 
 
 --
 dm-devel mailing list
