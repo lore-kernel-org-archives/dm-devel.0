@@ -4,88 +4,86 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0BA40CCA47E
-	for <dm-devel@archiver.kernel.org>; Thu, 30 Jun 2022 07:31:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CDEADCCA47B
+	for <dm-devel@archiver.kernel.org>; Thu, 30 Jun 2022 07:31:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1656574290;
+	s=mimecast20190719; t=1656574291;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=H9jM5gq+oXdIdw+dmsIraNgOjw/WW4/GkgChw4JIURc=;
-	b=NRjzXOgzMiZpSVATZpiP/hVu4xWDUtIJXIWSZMqv6iftt+OseX2Dae0UkW0pByEtE1kvo/
-	0sJMbsMl06MNILenQv4rLYxJdw22t3vGn5qXKTaIfNH7X42EK8vgrDBhEZJaaOPjDavb8M
-	VxW5N1NSCvUlts91WmjGA0ifqVNMDtA=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=0JQ+hAHeUVQJw6/Xzqcff4n1yisTkydbnz7cdf45yqA=;
+	b=fUGSdD4XcW9PmQIGVgSp7Xj/14fb45XLXSy/z07yBfbeDunSdxwevcfpsJ5sFm+uBQ0N6O
+	eAQ0dOdY7zodC7yTJPijdqHv/OtCURVR4aGez7bS25qHEFWsua6ZW1uVEh6Q3DjVG+kMcC
+	IoKNk4ix3vMsftB1XChJYSDoTGmyzqI=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-664-CAh8gGoTPwWT5Z5HM1hNNA-1; Thu, 30 Jun 2022 03:31:27 -0400
-X-MC-Unique: CAh8gGoTPwWT5Z5HM1hNNA-1
+ us-mta-62-RkBuLcTXP4i8eJpz2U_mnw-1; Thu, 30 Jun 2022 03:31:28 -0400
+X-MC-Unique: RkBuLcTXP4i8eJpz2U_mnw-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5A9062919ECF;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9B82E100AF8B;
 	Thu, 30 Jun 2022 07:31:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 480491415108;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 88683141510C;
 	Thu, 30 Jun 2022 07:31:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 62FF81947070;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A0B691947B99;
 	Thu, 30 Jun 2022 07:31:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D7AE81947058
- for <dm-devel@listman.corp.redhat.com>; Wed, 29 Jun 2022 19:05:44 +0000 (UTC)
+ ESMTP id DA6251947058
+ for <dm-devel@listman.corp.redhat.com>; Wed, 29 Jun 2022 19:50:32 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C64B940334D; Wed, 29 Jun 2022 19:05:44 +0000 (UTC)
+ id 7547240D0166; Wed, 29 Jun 2022 19:50:32 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C21AC40336E
- for <dm-devel@redhat.com>; Wed, 29 Jun 2022 19:05:44 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A91DF3C0E218
- for <dm-devel@redhat.com>; Wed, 29 Jun 2022 19:05:44 +0000 (UTC)
-Received: from mail-qk1-f175.google.com (mail-qk1-f175.google.com
- [209.85.222.175]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 70A0940D0160
+ for <dm-devel@redhat.com>; Wed, 29 Jun 2022 19:50:32 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 591BE811E90
+ for <dm-devel@redhat.com>; Wed, 29 Jun 2022 19:50:32 +0000 (UTC)
+Received: from mail-qv1-f42.google.com (mail-qv1-f42.google.com
+ [209.85.219.42]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-611-__WVWlNIOc-8HPrxLBfbsQ-1; Wed, 29 Jun 2022 15:05:42 -0400
-X-MC-Unique: __WVWlNIOc-8HPrxLBfbsQ-1
-Received: by mail-qk1-f175.google.com with SMTP id z12so12788532qki.3;
- Wed, 29 Jun 2022 12:05:42 -0700 (PDT)
+ us-mta-446-7Tz8W5QwM5G7SqNTKn8YZg-1; Wed, 29 Jun 2022 15:50:27 -0400
+X-MC-Unique: 7Tz8W5QwM5G7SqNTKn8YZg-1
+Received: by mail-qv1-f42.google.com with SMTP id i17so26383297qvo.13;
+ Wed, 29 Jun 2022 12:50:27 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:date:from:to:cc:subject:message-id:references
  :mime-version:content-disposition:in-reply-to;
- bh=+/ROI7j6XCNaDwyMGvVc2IaTPuaglS7jy5/jfdxPf9U=;
- b=zAALsMBLlyN2zsBE2pQ7sNW9O4e6xKhnhMNk2xuTpjYRtet/JDuOCKNYSCWchv0vu9
- MicZBZ4qOXL3ZAwcI0ys4NLFBJiCMzB+YWd0PX+zM3XdlkXdLE3PwflZDRhdNQv5NXE/
- xuzgtXHJUontRRKU6/aQE6Z32iyBcb+kMUAux4R9rxVFYQbtIFwMJ4T/qA766ljJWOe0
- jRGJGS4RAg+z1TmUJEWgd495oH8l736HgzcOvgAY7ppOhyjVYPmoRJjro+37i9+TyK7/
- /+i0kSKvS9FtNxJz2GuUY1oB+UD1nyztnSCUDRMb/vAOs7bC93WjxTRFIdF4xmS3XqLI
- oVnA==
-X-Gm-Message-State: AJIora8dIgN5Qcxgv8HvBX8mhbNcAg6qzChPUNNKLVNwFiMEx+ZFtl61
- pwZ2UW2j8Ym4e5x+KuGteywOZ5kx/NXW34g=
-X-Google-Smtp-Source: AGRyM1tVeCJUGS2aol+VvZfxynL1eHutTl8RCZi/SI3TvJoy/Vatp2e3ezxQ0Pclb5eXY/ZcZ+EfKw==
-X-Received: by 2002:ae9:f718:0:b0:6af:5c0:6cdf with SMTP id
- s24-20020ae9f718000000b006af05c06cdfmr3381385qkg.426.1656529541996; 
- Wed, 29 Jun 2022 12:05:41 -0700 (PDT)
+ bh=NcdUTjmMiq15qzZoGka90GPHW1G+61I7lzpRQwsVmx8=;
+ b=Kq6tYdX997pd27qGZM98GRhH6fCz9+OTvC2TLISK8WLwOfgEQLSSvREsUyTXP6lNBy
+ Onq3p80wI9HEVSFSUsBgD7tQFTM9shJJJdnTuBi1bppMAHkuerbmwEn59KW/V9L5KXMR
+ oGhA1OZFo2xb6qaEpGmBh7tsreXxkLP/dwrhJdSaQ6U+0o2aUedoEMnL+jxXxm0ak7Qv
+ wo1EMS34/XQ829TUbCfU7Wh7QZ6smXfFY+QDF3FRw2ZsBGPRL+KeCP/GvSc2hPKNeauT
+ l8Gt1afzRM8EQZOMlPLqkVuV6tZlof7ITenfO+JggmB0Z/GKtygbxcedplYXEffnKy01
+ 9Y9Q==
+X-Gm-Message-State: AJIora/B2roInCwueWGzADEE1JcksRkrltfk3DUjqhiby2BLxOAIYrq5
+ VfSklNKL+oZBNWky17z8nw==
+X-Google-Smtp-Source: AGRyM1v/EeCDMtPB2OY0rjuSz2sM6wW1C1DrePeXrTyAVsNXCHoOEl9CLBSNhd/wgxef86eeQ0iz6w==
+X-Received: by 2002:ac8:7d52:0:b0:319:51f0:e418 with SMTP id
+ h18-20020ac87d52000000b0031951f0e418mr4149475qtb.481.1656532226717; 
+ Wed, 29 Jun 2022 12:50:26 -0700 (PDT)
 Received: from localhost (c-73-219-103-14.hsd1.vt.comcast.net. [73.219.103.14])
  by smtp.gmail.com with ESMTPSA id
- g19-20020ac87d13000000b00307aed25fc7sm11799668qtb.31.2022.06.29.12.05.41
+ bm9-20020a05620a198900b006a73ad95d40sm13568984qkb.55.2022.06.29.12.50.25
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 29 Jun 2022 12:05:41 -0700 (PDT)
-Date: Wed, 29 Jun 2022 15:05:40 -0400
+ Wed, 29 Jun 2022 12:50:26 -0700 (PDT)
+Date: Wed, 29 Jun 2022 15:50:25 -0400
 From: Kent Overstreet <kent.overstreet@gmail.com>
 To: Bart Van Assche <bvanassche@acm.org>
-Message-ID: <20220629190540.fwspv66a4byzqxmg@moria.home.lan>
-References: <20220624141255.2461148-1-ming.lei@redhat.com>
- <20220624141255.2461148-2-ming.lei@redhat.com>
- <20220626201458.ytn4mrix2pobm2mb@moria.home.lan>
+Message-ID: <20220629195025.zqggtojkgt7bqvky@moria.home.lan>
+References: <20220626201458.ytn4mrix2pobm2mb@moria.home.lan>
  <Yrld9rLPY6L3MhlZ@T590>
  <20220628042016.wd65amvhbjuduqou@moria.home.lan>
  <3ad782c3-4425-9ae6-e61b-9f62f76ce9f4@kernel.dk>
@@ -93,8 +91,10 @@ References: <20220624141255.2461148-1-ming.lei@redhat.com>
  <6f8db146-d4b3-d17b-4e58-08adc0010cba@kernel.dk>
  <20220629184001.b66bt4jnppjquzia@moria.home.lan>
  <486ec9e2-d34d-abd5-8667-f58a07f5efad@acm.org>
+ <20220629190540.fwspv66a4byzqxmg@moria.home.lan>
+ <75aa2055-0f50-47ce-b9cc-8f79eba77807@acm.org>
 MIME-Version: 1.0
-In-Reply-To: <486ec9e2-d34d-abd5-8667-f58a07f5efad@acm.org>
+In-Reply-To: <75aa2055-0f50-47ce-b9cc-8f79eba77807@acm.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -102,7 +102,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-Mailman-Approved-At: Thu, 30 Jun 2022 07:31:23 +0000
 Subject: Re: [dm-devel] [PATCH 5.20 1/4] block: add bio_rewind() API
 X-BeenThere: dm-devel@redhat.com
@@ -132,19 +132,40 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Jun 29, 2022 at 11:51:27AM -0700, Bart Van Assche wrote:
-> On 6/29/22 11:40, Kent Overstreet wrote:
-> > But Jens, to be blunt - I know we have different priorities in the way we write code.
+On Wed, Jun 29, 2022 at 12:37:59PM -0700, Bart Van Assche wrote:
+> On 6/29/22 12:05, Kent Overstreet wrote:
+> > On Wed, Jun 29, 2022 at 11:51:27AM -0700, Bart Van Assche wrote:
+> > > On 6/29/22 11:40, Kent Overstreet wrote:
+> > > > But Jens, to be blunt - I know we have different priorities in the way we write code.
+> > > 
+> > > Please stay professional in your communication and focus on the technical
+> > > issues instead of on the people involved.
+> > > 
+> > > BTW, I remember that some time ago I bisected a kernel bug to one of your
+> > > commits and that you refused to fix the bug introduced by that commit. I had
+> > > to spend my time on root-causing it and sending a fix upstream.
+> > 
+> > I'd be genuinely appreciative if you'd refresh my memory on what it was. Because
+> > yeah, if I did that that was my fuckup and I want to learn from my mistakes.
 > 
-> Please stay professional in your communication and focus on the technical
-> issues instead of on the people involved.
-> 
-> BTW, I remember that some time ago I bisected a kernel bug to one of your
-> commits and that you refused to fix the bug introduced by that commit. I had
-> to spend my time on root-causing it and sending a fix upstream.
+> I was referring to the following two conversations from May 2018:
+> * [PATCH] Revert "block: Add warning for bi_next not NULL in bio_endio()" (https://lore.kernel.org/linux-block/20180522235505.20937-1-bart.vanassche@wdc.com/)
+> * [PATCH v2] Revert "block: Add warning for bi_next not NULL in bio_endio()" (https://lore.kernel.org/linux-block/20180619172640.15246-1-bart.vanassche@wdc.com/)
 
-I'd be genuinely appreciative if you'd refresh my memory on what it was. Because
-yeah, if I did that that was my fuckup and I want to learn from my mistakes.
+Oh yeah, that.
+
+So, we had - still have - a situation where we have a struct bio field, bi_next,
+that's used in different ways by different chunks of code, and where that field
+being left in an indeterminate state when bios are being handed off across
+module boundaries was likely to be a source of bugs. And having debugged one of
+those I decided to introduce a check, and then when that broke device mapper (an
+unfortunate sitation I agree) you decided to just... revert the check I added.
+
+Like I said, I would have been happy to fix the device mapper code if I'd been
+able to get your tests working (did we ever get this added to blk-tests?) - but
+I wasn't MIA on the list and I would've been happy to work with you on this.
+
+Was there something you thought I should've done differently?
 
 --
 dm-devel mailing list
