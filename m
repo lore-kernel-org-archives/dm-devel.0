@@ -1,101 +1,94 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7E444C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 29 Jun 2022 20:58:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CFC2BC433EF
+	for <dm-devel@archiver.kernel.org>; Wed, 29 Jun 2022 21:56:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1656536296;
+	s=mimecast20190719; t=1656539780;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Tsq8ZH+9z848g8mTdOvcpkRT2yNeOTyN2b4OUKL8GXE=;
-	b=gqPaRuYS787a/YK4B54LNPxbVgcOAYlekVS3qzJP0i9x2DkSHKVheVo9MGVjiq5h/brp4T
-	+3xGUHl9vU9JOC5rVQ8aLyicpvz3wV35s3Lp1hkHkdAPnHWNepp9zejqdGvm9e4ey4QgXZ
-	iNKXY0AyJmhyAj4AkOGlPW5RYkXZObM=
+	bh=+7/7rXMttfdsrETlSgu5bDlDoOOjeUhsnlkEGw1RhGk=;
+	b=hLMJTveVR5NqbsStbcDr63PYzmskbWgfL4yLMmzqnkRbwS9URSXspYCo4kYdLAJluMP83P
+	8+AlDIge5gsys0/JbSuufS1Pk2/DOHg+TfsH/MlkLElKLqejdvdItplEzlPeFZfKXsIBMF
+	KbU7j/bgfU78cTUU6QG9wMzb3ZDv1Oo=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-98-pTTCrqZ3NaW6I5ke_8ROXg-1; Wed, 29 Jun 2022 16:58:11 -0400
-X-MC-Unique: pTTCrqZ3NaW6I5ke_8ROXg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-25-ArTAk73YMOyr9A4veh-nGQ-1; Wed, 29 Jun 2022 17:56:16 -0400
+X-MC-Unique: ArTAk73YMOyr9A4veh-nGQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 18AEB293249D;
-	Wed, 29 Jun 2022 20:58:10 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0871E1C05144;
+	Wed, 29 Jun 2022 21:56:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4EA4E9D7F;
-	Wed, 29 Jun 2022 20:58:08 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9DAE61410F3B;
+	Wed, 29 Jun 2022 21:56:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 05B2D194705B;
-	Wed, 29 Jun 2022 20:58:08 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 46843194705B;
+	Wed, 29 Jun 2022 21:56:14 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
  [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3DF181947058
- for <dm-devel@listman.corp.redhat.com>; Wed, 29 Jun 2022 20:51:55 +0000 (UTC)
+ ESMTP id 558171947058
+ for <dm-devel@listman.corp.redhat.com>; Wed, 29 Jun 2022 21:55:21 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 18E1617452; Wed, 29 Jun 2022 20:51:55 +0000 (UTC)
+ id 4849F17452; Wed, 29 Jun 2022 21:55:21 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 148099D63
- for <dm-devel@redhat.com>; Wed, 29 Jun 2022 20:51:55 +0000 (UTC)
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 440489D63
+ for <dm-devel@redhat.com>; Wed, 29 Jun 2022 21:55:21 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EDFDD185A7A4
- for <dm-devel@redhat.com>; Wed, 29 Jun 2022 20:51:54 +0000 (UTC)
-Received: from mail-pl1-f180.google.com (mail-pl1-f180.google.com
- [209.85.214.180]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 24A01801E67
+ for <dm-devel@redhat.com>; Wed, 29 Jun 2022 21:55:21 +0000 (UTC)
+Received: from mail-qv1-f49.google.com (mail-qv1-f49.google.com
+ [209.85.219.49]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-96-haPrxdKIM2y4OiUIigMdIQ-1; Wed, 29 Jun 2022 16:51:51 -0400
-X-MC-Unique: haPrxdKIM2y4OiUIigMdIQ-1
-Received: by mail-pl1-f180.google.com with SMTP id c4so15181346plc.8
- for <dm-devel@redhat.com>; Wed, 29 Jun 2022 13:51:51 -0700 (PDT)
+ us-mta-253-gv-48aF3MZq93htb2c0Y1g-1; Wed, 29 Jun 2022 17:55:19 -0400
+X-MC-Unique: gv-48aF3MZq93htb2c0Y1g-1
+Received: by mail-qv1-f49.google.com with SMTP id c1so26900634qvi.11
+ for <dm-devel@redhat.com>; Wed, 29 Jun 2022 14:55:19 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=x-gm-message-state:content-transfer-encoding:from:mime-version
- :subject:date:message-id:references:cc:in-reply-to:to;
- bh=QzwBZ8MiKHCkHQs6ubFBUeLJm2aPz3uAJ0SJNl3Iybc=;
- b=w8S085TzTlC1HYzB0wc9QG9e46+G4VCng4X22KOthPX+OxrhJ1ZAVBfWtwiv/qc8Fe
- YKMkKLzfea+wepIg+MIwb+tDJPjuqZ+y+vl8BT8jN6gJsd89uijvbyeNNkHSCK/Pkx9c
- qo0ZU4ApZpkKR62P1/L3hmF2MDUn6KeWaSzTFRbS64scAjpfLAWxulTEMcJGSg5myTUB
- ZSsjDcIfhj96t3gEd9OCu7AhRR6XPCbHOZAHpXyc1VJ4jP8M5eT/kV5r6KkNQJjml2VR
- fqWBVgDZKEU/fqVEs1zor0fi8M8Y07dFH5UZYHoBJwaFItD7azKKJ6V1KwfJVTp1MQSe
- qKmA==
-X-Gm-Message-State: AJIora9MXvSxY9YO/0mjNmUOGdfGah9H5jmCCO840vzAyRrOoYQBEKQ7
- C0S4quMZr37r/mrQHmxPdRjO8A==
-X-Google-Smtp-Source: AGRyM1v1OkLy4OUlV7ZRW9VidqYwr1vCmgGeLPlNdNyB/wtkvJBb7FkK3KxiVGvVDMaUmxrLSBvU+A==
-X-Received: by 2002:a17:90b:1753:b0:1ef:2e75:8811 with SMTP id
- jf19-20020a17090b175300b001ef2e758811mr2120687pjb.22.1656535910048; 
- Wed, 29 Jun 2022 13:51:50 -0700 (PDT)
-Received: from smtpclient.apple ([2600:380:b421:9fb9:5830:e8f6:f44a:f844])
- by smtp.gmail.com with ESMTPSA id
- s9-20020a62e709000000b00527ab697c6asm6035747pfh.18.2022.06.29.13.51.49
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Wed, 29 Jun 2022 13:51:49 -0700 (PDT)
-From: Jens Axboe <axboe@kernel.dk>
-Mime-Version: 1.0 (1.0)
-Date: Wed, 29 Jun 2022 14:51:48 -0600
-Message-Id: <788DCE4B-8992-436B-B0D4-D101E9176345@kernel.dk>
-References: <20220629192646.aoj5c7xdqkifwjdg@moria.home.lan>
-In-Reply-To: <20220629192646.aoj5c7xdqkifwjdg@moria.home.lan>
-To: Kent Overstreet <kent.overstreet@gmail.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+ h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+ :references;
+ bh=wOc7PiTHWWO7hPXQjf/yGdfIN9CM5Q88rtx5tDXMxXM=;
+ b=MWZ/p005nAg+zDKwiNqeIPy1x4BPDD/aFRMi+DP1Tg+SIH6vM5ghqFqHJdDyV8bHV9
+ WF8kN20o6Gg55k/kA90GUX+8/zN5z56bdpPS6Y2IxnXIKv6gM8E5BHh87wFowIuA7fXy
+ oDYihl97a7SlCQ3+ghz72Djgjz8XtfBjtSatmSxbDmtP90f/hgQ2ceq+3f8SMiGVtN1S
+ /lrkKi2CgyHv4Tndm/8KQTQZcER5qy93ci5CvKKzaw1kRHNVnhz3yF/OsqMuN2wKNdA2
+ Q3ufcmCkEMy0hxAq8CMV7q0oFqXtU7kNI7PzkIAKzsBAG4AkkB3009ygibvDZzgSYgjt
+ 0KCQ==
+X-Gm-Message-State: AJIora8++Cq4D9luqR3XltYmboLXqgBb6abG5uh56pQ/oGJt+C9QNy3t
+ o82iFEv2Qq66Pgkz1CBMMbINi8E=
+X-Google-Smtp-Source: AGRyM1uXWFM4Etdb50ZR4c5bvr+DgE+PjjwwOvUEI19IrTZJ4Bb+AbEhv5B+1yw64d9qox0dk66ECQ==
+X-Received: by 2002:a05:622a:1883:b0:305:1ce4:59d2 with SMTP id
+ v3-20020a05622a188300b003051ce459d2mr4577175qtc.638.1656539718984; 
+ Wed, 29 Jun 2022 14:55:18 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+ [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+ y21-20020ac87095000000b0031b18d29864sm5335568qto.64.2022.06.29.14.55.18
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 29 Jun 2022 14:55:18 -0700 (PDT)
+From: Mike Snitzer <snitzer@kernel.org>
+To: Jens Axboe <axboe@kernel.dk>,
+	Ming Lei <ming.lei@redhat.com>
+Date: Wed, 29 Jun 2022 17:55:13 -0400
+Message-Id: <20220629215513.37860-4-snitzer@kernel.org>
+In-Reply-To: <20220629215513.37860-1-snitzer@kernel.org>
+References: <20220629215513.37860-1-snitzer@kernel.org>
 X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH 5.20 1/4] block: add bio_rewind() API
+Subject: [dm-devel] [PATCH 5.20 v2 3/3] dm: add two stage requeue mechanism
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -107,59 +100,313 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "Martin K . Petersen" <martin.petersen@oracle.com>,
- Mike Snitzer <snitzer@redhat.com>, Eric Biggers <ebiggers@google.com>,
- Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org,
- dm-devel@redhat.com, Dmitry Monakhov <dmonakhov@openvz.org>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Kent Overstreet <kent.overstreet@gmail.com>,
+ "Martin K . Petersen" <martin.petersen@oracle.com>,
+ Eric Biggers <ebiggers@google.com>
+MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gSnVuIDI5LCAyMDIyLCBhdCAxOjI2IFBNLCBLZW50IE92ZXJzdHJlZXQgPGtlbnQub3ZlcnN0
-cmVldEBnbWFpbC5jb20+IHdyb3RlOgo+IAo+IO+7v09uIFdlZCwgSnVuIDI5LCAyMDIyIGF0IDAx
-OjAwOjUyUE0gLTA2MDAsIEplbnMgQXhib2Ugd3JvdGU6Cj4+PiBPbiA2LzI5LzIyIDEyOjQwIFBN
-LCBLZW50IE92ZXJzdHJlZXQgd3JvdGU6Cj4+PiBPbiBXZWQsIEp1biAyOSwgMjAyMiBhdCAxMTox
-NjoxMEFNIC0wNjAwLCBKZW5zIEF4Ym9lIHdyb3RlOgo+Pj4+IE5vdCBzdXJlIHdoYXQgQ2hyaXN0
-b3BoIGNoYW5nZSB5b3UgYXJlIHJlZmVycmluZyB0bywgYnV0IGFsbCB0aGUgb25lcwo+Pj4+IHRo
-YXQgSSBkaWQgdG8gaW1wcm92ZSB0aGUgaW5pdCBzaWRlIHdlcmUgYWxsIGJhY2tlZCBieSBudW1i
-ZXJzIEkgcmFuIGF0Cj4+Pj4gdGhhdCB0aW1lIChhbmQgbW9zdC9hbGwgb2YgdGhlIGNvbW1pdCBt
-ZXNzYWdlcyB3aWxsIGhhdmUgdGhhdCBkYXRhKS4gU28KPj4+PiB5ZXMsIGl0IGlzIGluZGVlZCBz
-dGlsbCB2ZXJ5IG5vdGljZWFibGUuIE1heWJlIG5vdCBhdCAxMDBLIElPUFMsIGJ1dCBhdAo+Pj4+
-IDEwTSBvbiBhIGNvcmUgaXQgbW9zdCBjZXJ0YWlubHkgaXMuCj4+PiAKPj4+IEkgd2FzIHJlZmVy
-cmluZyB0byA2MDliZTEwNjY3MzFmZWE4NjQzNmY1ZjkxMDIyZjgyZTU5MmFiNDU2LiBZb3UKPj4+
-IHNpZ25lZCBvZmYgb24gaXQsIHlvdSBtdXN0IHJlbWVtYmVyIGl0Li4uPwo+PiAKPj4gSSdtIHN1
-cmUgd2UgYWxsIHJlbWVtYmVyIGVhY2ggYW5kIGV2ZXJ5IGNvbW1pdCB0aGF0IGdldHMgYXBwbGll
-ZCwKPj4gcGFydGljdWxhcmx5IHdpdGggc3VjaCBhIHByZWNpc2UgZGVzY3JpcHRpb24gb2YgdGhl
-IGNoYW5nZS4KPj4gCj4+Pj4gSSdtIGFsbCBmb3IgaGF2aW5nIHNvbGlkIGFuZCBtYWludGFpbmFi
-bGUgY29kZSwgb2J2aW91c2x5LCBidXQgZnJpdm9sb3VzCj4+Pj4gYmxvYXRpbmcgb2Ygc3RydWN0
-dXJlcyBhbmQgbW9yZSBleHBlbnNpdmUgc2V0dXAgY2Fubm90IGJlIGhhbmQgd2F2ZWQKPj4+PiBh
-d2F5IHdpdGggIml0IGRvZXNuJ3QgbWF0dGVyIGlmIHdlIHRvdWNoIDMgb3IgNiBjYWNoZWxpbmVz
-IiBiZWNhdXNlIHdlCj4+Pj4gb2J2aW91c2x5IGhhdmUgYSBkaXNhZ3JlZW1lbnQgb24gdGhhdC4K
-Pj4+IAo+Pj4gSSB3b3VsZG4ndCBwcm9wb3NlIGluZmxhdGluZyBzdHJ1Y3QgX2Jpb18gbGlrZSB0
-aGF0LiBCdXQgSmVucywgdG8gYmUKPj4+IGJsdW50IC0gSSBrbm93IHdlIGhhdmUgZGlmZmVyZW50
-IHByaW9yaXRpZXMgaW4gdGhlIHdheSB3ZSB3cml0ZSBjb2RlLgo+Pj4gWW91ciB3cml0ZWJhY2sg
-dGhyb3R0bGluZyBjb2RlIHdhcyBidWdneSBmb3IgX2FnZXNfIGFuZCBJIGhhZCB1c2Vycwo+Pj4g
-aGl0dGluZyBkZWFkbG9ja3MgdGhlcmUgdGhhdCBJIHBpbmdlZCB5b3UgYWJvdXQsIGFuZCBJIGNv
-dWxkIG5vdCBtYWtlCj4+PiBoZWFkcyBvciB0YWlscyBvZiBob3cgdGhhdCBjb2RlIHdhcyBzdXBw
-b3NlZCB0byB3b3JrIGFuZCBub3QgZm9yIGxhY2sKPj4+IG9mIHRpbWUgc3BlbnQgdHJ5aW5nIQo+
-PiAKPj4gT0sgS2VudCwgeW91IGp1c3Qgd2FzdGVkIHlvdXIgMm5kIGNoYW5jZSBoZXJlLiBQbG9u
-ay4gVGhlcmUgYXJlIG1hbnkKPj4gcmVidXR0YWxzIHRoYXQgY291bGQgYmUgbWFkZSBoZXJlLCBi
-dXQgSSB3b24ndCB3YXN0ZSBteSB0aW1lIG9uIGl0LCBub3IKPj4gd291bGQgaXQgYmUgYXBwcm9w
-cmlhdGUuCj4+IAo+PiBDb21lIGJhY2sgd2hlbiB5b3Uga25vdyBob3cgdG8gYWN0IHByb2Zlc3Np
-b25hbGx5LiBPciBkb24ndCBjb21lIGJhY2sKPj4gYXQgYWxsLgo+IAo+IEplbnMsIHlvdSdyZSBq
-dXN0IGFjdGluZyBsaWtlIHlvdXIgY29kZSBpcyBpbW11bmUgdG8gY3JpdGljaXNtLCBhbmQgSSBk
-b24ndCBoYXZlCj4gYW4gZXllcm9sbCBiaWcgZW5vdWdoIGZvciB0aGF0LiBXZSBhbGwga25vdyBo
-b3cgeW91IGNhcmUgYWJvdXQgY2hhc2luZyBldmVyeQo+IGxhc3Qgb2YgdGhvc2UgMTAgbWlsbGlv
-biBpb3BzIC0gYW5kIG5vdCBtdWNoIGVsc2UuCgpLZW50LCB0aGUgdGltZSBmb3IgeW91ciB1bnNv
-bGljaXRlZCBvcGluaW9ucyBhbmQgYXR0YWNrcyBoYXZlIHBhc3NlZC4gSnVzdCBnbyBhd2F5LCBu
-b3QgaW50ZXJlc3RlZCBpbiBpbnRlcmFjdGluZyB3aXRoIHlvdS4gWW91IGhhdmUgbm8gaWRlYSB3
-aGF0IHlvdeKAmXJlIHRhbGtpbmcgYWJvdXQuIAoKCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
-CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9s
-aXN0aW5mby9kbS1kZXZlbAo=
+From: Ming Lei <ming.lei@redhat.com>
+
+Commit 61b6e2e5321d ("dm: fix BLK_STS_DM_REQUEUE handling when dm_io
+represents split bio") reverted DM core's bio splitting back to using
+bio_split()+bio_chain() because it was found that otherwise DM's
+BLK_STS_DM_REQUEUE would trigger a live-lock waiting for bio
+completion that would never occur.
+
+Restore using bio_trim()+bio_inc_remaining(), like was done in commit
+7dd76d1feec7 ("dm: improve bio splitting and associated IO
+accounting"), but this time with proper handling for the above
+scenario that is covered in more detail in the commit header for
+61b6e2e5321d.
+
+Solve this issue by adding a two staged dm_io requeue mechanism that
+uses the new bio_rewind():
+
+1) requeue the dm_io into the requeue_list added to struct
+   mapped_device, and schedule it via new added requeue work. This
+   workqueue just clones the dm_io->orig_bio (which DM saves and
+   ensures its end sector isn't modified). Using the sectors and
+   sectors_offset members of the dm_io that are recorded relative to
+   the end of orig_bio: bio_rewind()+bio_trim() are then used to make
+   that cloned bio reflect the subset of the original bio that is
+   represented by the dm_io that is being requeued.
+
+2) the 2nd stage requeue is same with original requeue, but
+   io->orig_bio points to new cloned bio (which matches the requeued
+   dm_io as described above).
+
+This allows DM core to shift the need for bio cloning from bio-split
+time (during IO submission) to the less likely BLK_STS_DM_REQUEUE
+handling (after IO completes with that error).
+
+Signed-off-by: Ming Lei <ming.lei@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+---
+ drivers/md/dm-core.h |  11 ++++-
+ drivers/md/dm.c      | 133 +++++++++++++++++++++++++++++++++++++++++----------
+ 2 files changed, 118 insertions(+), 26 deletions(-)
+
+diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+index 5d9afca0d105..2999f135b16f 100644
+--- a/drivers/md/dm-core.h
++++ b/drivers/md/dm-core.h
+@@ -22,6 +22,8 @@
+ 
+ #define DM_RESERVED_MAX_IOS		1024
+ 
++struct dm_io;
++
+ struct dm_kobject_holder {
+ 	struct kobject kobj;
+ 	struct completion completion;
+@@ -91,6 +93,14 @@ struct mapped_device {
+ 	spinlock_t deferred_lock;
+ 	struct bio_list deferred;
+ 
++	/*
++	 * requeue work context is needed for cloning one new bio
++	 * to represent the dm_io to be requeued, since each
++	 * dm_io may point to the original bio from FS.
++	 */
++	struct work_struct requeue_work;
++	struct dm_io *requeue_list;
++
+ 	void *interface_ptr;
+ 
+ 	/*
+@@ -275,7 +285,6 @@ struct dm_io {
+ 	atomic_t io_count;
+ 	struct mapped_device *md;
+ 
+-	struct bio *split_bio;
+ 	/* The three fields represent mapped part of original bio */
+ 	struct bio *orig_bio;
+ 	unsigned int sector_offset; /* offset to end of orig_bio */
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index c987f9ad24a4..563206c6c2cb 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -590,7 +590,6 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
+ 	atomic_set(&io->io_count, 2);
+ 	this_cpu_inc(*md->pending_io);
+ 	io->orig_bio = bio;
+-	io->split_bio = NULL;
+ 	io->md = md;
+ 	spin_lock_init(&io->lock);
+ 	io->start_time = jiffies;
+@@ -880,13 +879,35 @@ static int __noflush_suspending(struct mapped_device *md)
+ 	return test_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
+ }
+ 
++static void dm_requeue_add_io(struct dm_io *io, bool first_stage)
++{
++	struct mapped_device *md = io->md;
++
++	if (first_stage) {
++		struct dm_io *next = md->requeue_list;
++
++		md->requeue_list = io;
++		io->next = next;
++	} else {
++		bio_list_add_head(&md->deferred, io->orig_bio);
++	}
++}
++
++static void dm_kick_requeue(struct mapped_device *md, bool first_stage)
++{
++	if (first_stage)
++		queue_work(md->wq, &md->requeue_work);
++	else
++		queue_work(md->wq, &md->work);
++}
++
+ /*
+  * Return true if the dm_io's original bio is requeued.
+  * io->status is updated with error if requeue disallowed.
+  */
+-static bool dm_handle_requeue(struct dm_io *io)
++static bool dm_handle_requeue(struct dm_io *io, bool first_stage)
+ {
+-	struct bio *bio = io->split_bio ? io->split_bio : io->orig_bio;
++	struct bio *bio = io->orig_bio;
+ 	bool handle_requeue = (io->status == BLK_STS_DM_REQUEUE);
+ 	bool handle_polled_eagain = ((io->status == BLK_STS_AGAIN) &&
+ 				     (bio->bi_opf & REQ_POLLED));
+@@ -912,8 +933,8 @@ static bool dm_handle_requeue(struct dm_io *io)
+ 		spin_lock_irqsave(&md->deferred_lock, flags);
+ 		if ((__noflush_suspending(md) &&
+ 		     !WARN_ON_ONCE(dm_is_zone_write(md, bio))) ||
+-		    handle_polled_eagain) {
+-			bio_list_add_head(&md->deferred, bio);
++		    handle_polled_eagain || first_stage) {
++			dm_requeue_add_io(io, first_stage);
+ 			requeued = true;
+ 		} else {
+ 			/*
+@@ -926,19 +947,21 @@ static bool dm_handle_requeue(struct dm_io *io)
+ 	}
+ 
+ 	if (requeued)
+-		queue_work(md->wq, &md->work);
++		dm_kick_requeue(md, first_stage);
+ 
+ 	return requeued;
+ }
+ 
+-static void dm_io_complete(struct dm_io *io)
++static void __dm_io_complete(struct dm_io *io, bool first_stage)
+ {
+-	struct bio *bio = io->split_bio ? io->split_bio : io->orig_bio;
++	struct bio *bio = io->orig_bio;
+ 	struct mapped_device *md = io->md;
+ 	blk_status_t io_error;
+ 	bool requeued;
+ 
+-	requeued = dm_handle_requeue(io);
++	requeued = dm_handle_requeue(io, first_stage);
++	if (requeued && first_stage)
++		return;
+ 
+ 	io_error = io->status;
+ 	if (dm_io_flagged(io, DM_IO_ACCOUNTED))
+@@ -978,6 +1001,76 @@ static void dm_io_complete(struct dm_io *io)
+ 	}
+ }
+ 
++static void dm_wq_requeue_work(struct work_struct *work)
++{
++	struct mapped_device *md = container_of(work, struct mapped_device,
++						requeue_work);
++	unsigned long flags;
++	struct dm_io *io;
++
++	/* reuse deferred lock to simplify dm_handle_requeue  */
++	spin_lock_irqsave(&md->deferred_lock, flags);
++	io = md->requeue_list;
++	md->requeue_list = NULL;
++	spin_unlock_irqrestore(&md->deferred_lock, flags);
++
++	while (io) {
++		struct dm_io *next = io->next;
++		struct bio *orig = io->orig_bio;
++		struct bio *new_orig = bio_alloc_clone(orig->bi_bdev,
++				orig, GFP_NOIO, &md->queue->bio_split);
++
++		/*
++		 * bio_rewind can restore to previous position since the end
++		 * sector is fixed for original bio, but we still need to
++		 * restore bio's size manually (using io->sectors).
++		 */
++		bio_rewind(new_orig, ((io->sector_offset << 9) -
++				      orig->bi_iter.bi_size));
++		bio_trim(new_orig, 0, io->sectors);
++
++		bio_chain(new_orig, orig);
++		/*
++		 * __bi_remaining was increased by dm_split_and_process_bio,
++		 *  so must drop the one added in bio_chain.
++		 */
++		atomic_dec(&orig->__bi_remaining);
++		io->orig_bio = new_orig;
++
++		io->next = NULL;
++		__dm_io_complete(io, false);
++		io = next;
++	}
++}
++
++/*
++ * Two staged requeue:
++ *
++ * 1) io->orig_bio points to the real original bio, and the part mapped to
++ *    this io must be requeued, instead of other parts of the original bio.
++ *
++ * 2) io->orig_bio points to new cloned bio which matches the requeued dm_io.
++ */
++static void dm_io_complete(struct dm_io *io)
++{
++	bool first_requeue;
++
++	/*
++	 * Only dm_io that has been split needs two stage requeue, otherwise
++	 * we may run into long bio clone chain during suspend and OOM could
++	 * be triggered.
++	 *
++	 * Also flush data dm_io won't be marked as DM_IO_WAS_SPLIT, so they
++	 * also aren't handled via the first stage requeue.
++	 */
++	if (dm_io_flagged(io, DM_IO_WAS_SPLIT))
++		first_requeue = true;
++	else
++		first_requeue = false;
++
++	__dm_io_complete(io, first_requeue);
++}
++
+ /*
+  * Decrements the number of outstanding ios that a bio has been
+  * cloned into, completing the original io if necc.
+@@ -1395,17 +1488,7 @@ static void setup_split_accounting(struct clone_info *ci, unsigned len)
+ 		 */
+ 		dm_io_set_flag(io, DM_IO_WAS_SPLIT);
+ 		io->sectors = len;
+-	}
+-
+-	if (static_branch_unlikely(&stats_enabled) &&
+-	    unlikely(dm_stats_used(&io->md->stats))) {
+-		/*
+-		 * Save bi_sector in terms of its offset from end of
+-		 * original bio, only needed for DM-stats' benefit.
+-		 * - saved regardless of whether split needed so that
+-		 *   dm_accept_partial_bio() doesn't need to.
+-		 */
+-		io->sector_offset = bio_end_sector(ci->bio) - ci->sector;
++		io->sector_offset = bio_sectors(ci->bio);
+ 	}
+ }
+ 
+@@ -1705,11 +1788,9 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+ 	 * Remainder must be passed to submit_bio_noacct() so it gets handled
+ 	 * *after* bios already submitted have been completely processed.
+ 	 */
+-	WARN_ON_ONCE(!dm_io_flagged(io, DM_IO_WAS_SPLIT));
+-	io->split_bio = bio_split(bio, io->sectors, GFP_NOIO,
+-				  &md->queue->bio_split);
+-	bio_chain(io->split_bio, bio);
+-	trace_block_split(io->split_bio, bio->bi_iter.bi_sector);
++	bio_trim(bio, io->sectors, ci.sector_count);
++	trace_block_split(bio, bio->bi_iter.bi_sector);
++	bio_inc_remaining(bio);
+ 	submit_bio_noacct(bio);
+ out:
+ 	/*
+@@ -1985,9 +2066,11 @@ static struct mapped_device *alloc_dev(int minor)
+ 
+ 	init_waitqueue_head(&md->wait);
+ 	INIT_WORK(&md->work, dm_wq_work);
++	INIT_WORK(&md->requeue_work, dm_wq_requeue_work);
+ 	init_waitqueue_head(&md->eventq);
+ 	init_completion(&md->kobj_holder.completion);
+ 
++	md->requeue_list = NULL;
+ 	md->swap_bios = get_swap_bios();
+ 	sema_init(&md->swap_bios_semaphore, md->swap_bios);
+ 	mutex_init(&md->swap_bios_lock);
+-- 
+2.15.0
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
