@@ -1,90 +1,67 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 430FBCCA482
-	for <dm-devel@archiver.kernel.org>; Wed, 29 Jun 2022 22:54:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 871C1C43334
+	for <dm-devel@archiver.kernel.org>; Thu, 30 Jun 2022 00:52:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1656543259;
+	s=mimecast20190719; t=1656550341;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=KbaCzPhany6FQ2j0AbjnWGvAkETPuB3DOkN5Mi09ZEk=;
-	b=NCNKUx2kv+guvBmXDtWM6103tzIW3pnPc0OiB/swBBFsb+uYjF5kyHTZKD7j1Lga8R/p2X
-	phbN76TgpmfRNFvqu3rfudwZ7GfBRo0fY7fypeWWl5JHBwk4Lcb7wGaTj9OlE2enl6Mso5
-	CHSE3aQ94oeBulOdqjHvaWBhOiEkfi4=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=JP+lk7IQFNLsN7+PqsPsMcDMiD28KZr26efQgYLYZoc=;
+	b=bL0cwjePINlt5YKzJXj/iwCkUskLr+b+gp2msf+Iu8Vgn/gRzz2+2pYSnPxH0AhEn8xT4d
+	FSN/z8WDZ+B+TgQOZVrFkHS8jujB2n+oBAXf0IEqyGN/R46SaI+E5oS8Qi4sU6/KKYL5LC
+	BhCzLV+YsUzjPvZ3wtoDrugqwOifktc=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-617-zF0_niazN3-IqADdStvNyg-1; Wed, 29 Jun 2022 18:54:16 -0400
-X-MC-Unique: zF0_niazN3-IqADdStvNyg-1
+ us-mta-488-H4EC5xN3N9O3FkSpR7OPog-1; Wed, 29 Jun 2022 20:52:18 -0400
+X-MC-Unique: H4EC5xN3N9O3FkSpR7OPog-1
 Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EA7BC1C01B53;
-	Wed, 29 Jun 2022 22:54:14 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4A50A801231;
+	Thu, 30 Jun 2022 00:52:16 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 950CC40334D;
-	Wed, 29 Jun 2022 22:54:14 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 71D3140336E;
+	Thu, 30 Jun 2022 00:52:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4058F194705D;
-	Wed, 29 Jun 2022 22:54:14 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1EE9A194705F;
+	Thu, 30 Jun 2022 00:52:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 104BF1947058
- for <dm-devel@listman.corp.redhat.com>; Wed, 29 Jun 2022 21:55:17 +0000 (UTC)
+ ESMTP id C317E1947058
+ for <dm-devel@listman.corp.redhat.com>; Thu, 30 Jun 2022 00:47:23 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id EE67F112131B; Wed, 29 Jun 2022 21:55:16 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id EA2661121314
- for <dm-devel@redhat.com>; Wed, 29 Jun 2022 21:55:16 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CF0113C025CE
- for <dm-devel@redhat.com>; Wed, 29 Jun 2022 21:55:16 +0000 (UTC)
-Received: from mail-qk1-f179.google.com (mail-qk1-f179.google.com
- [209.85.222.179]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-310-t7JicFM9PHGuiYO9AsaJCA-1; Wed, 29 Jun 2022 17:55:15 -0400
-X-MC-Unique: t7JicFM9PHGuiYO9AsaJCA-1
-Received: by mail-qk1-f179.google.com with SMTP id g1so236296qkl.9
- for <dm-devel@redhat.com>; Wed, 29 Jun 2022 14:55:15 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:from:to:cc:subject:date:message-id;
- bh=mgLvicxygsgFWfkkr4Nfr2kLCpJ+k85KjEN3Gw0z4Zk=;
- b=J0hJGuTPy8My3YEWHVO1StR8ZSslbvm4SHhP03BZcAtfCubIWfHdANm8C5WdRhP0np
- +9CyEqe4U979u2Cmf0Is8UOVyCxePMFPyHX1EqxJy01sVwRLk+C+4/sVKsl1CDM2LCfw
- Ys/xrO5Ip4oKbcN7d/F6UqAHhvxveEOIsphANbpi7XXKg7cd1TivIU/zoL7Q97IHYCCg
- E4v//QKjW+bgRwSHAGLw6s8YDs5Zn/3L3s44QuKTp3jYrOK4d5DvIHCBf/E69T06qtv6
- EGDb4ApSNs31DOlAo+3gvrRocWnfdm5adLNJSmwrMzx34IadHeIBk9fe/8002WOFfCgg
- AH8w==
-X-Gm-Message-State: AJIora8ClZO2N6tny3Lsn87r88R/jkqT2gbYCjK+NePNSg7K9ytfzqfd
- PZouxNP1gf5N71qKp4WelRNO1Uw=
-X-Google-Smtp-Source: AGRyM1uXQvQsptKSLy23DUES/xRH4SfsIle9GVnQzewwll2BBUehX9+zCu4ZlGzioPk5MgGrHAZPcQ==
-X-Received: by 2002:a37:a589:0:b0:6b1:ba97:5dbf with SMTP id
- o131-20020a37a589000000b006b1ba975dbfmr1611512qke.772.1656539714605; 
- Wed, 29 Jun 2022 14:55:14 -0700 (PDT)
-Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
- [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
- d8-20020ac85ac8000000b00304e70585f9sm12400080qtd.72.2022.06.29.14.55.13
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 29 Jun 2022 14:55:14 -0700 (PDT)
-From: Mike Snitzer <snitzer@kernel.org>
-To: Jens Axboe <axboe@kernel.dk>,
-	Ming Lei <ming.lei@redhat.com>
-Date: Wed, 29 Jun 2022 17:55:10 -0400
-Message-Id: <20220629215513.37860-1-snitzer@kernel.org>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-Subject: [dm-devel] [PATCH 5.20 v2 0/3] block/dm: add bio_rewind to improve
- DM requeue
+ id 89BC8C28115; Thu, 30 Jun 2022 00:47:23 +0000 (UTC)
+Received: from T590 (ovpn-8-23.pek2.redhat.com [10.72.8.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6A0BEC2810D;
+ Thu, 30 Jun 2022 00:47:17 +0000 (UTC)
+Date: Thu, 30 Jun 2022 08:47:13 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Kent Overstreet <kent.overstreet@gmail.com>
+Message-ID: <YrzykX0jTWpq5DYQ@T590>
+References: <20220624141255.2461148-2-ming.lei@redhat.com>
+ <20220626201458.ytn4mrix2pobm2mb@moria.home.lan>
+ <Yrld9rLPY6L3MhlZ@T590>
+ <20220628042610.wuittagsycyl4uwa@moria.home.lan>
+ <YrqyiCcnvPCqsn8F@T590>
+ <20220628163617.h3bmq3opd7yuiaop@moria.home.lan>
+ <Yrs9OLNZ8xUs98OB@redhat.com>
+ <20220628175253.s2ghizfucumpot5l@moria.home.lan>
+ <YrvsDNltq+h6mphN@redhat.com>
+ <20220629181154.eejrlfhj5n4la446@moria.home.lan>
+MIME-Version: 1.0
+In-Reply-To: <20220629181154.eejrlfhj5n4la446@moria.home.lan>
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH 5.20 1/4] block: add bio_rewind() API
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -96,11 +73,11 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
- Kent Overstreet <kent.overstreet@gmail.com>,
+Cc: Jens Axboe <axboe@kernel.dk>,
  "Martin K . Petersen" <martin.petersen@oracle.com>,
- Eric Biggers <ebiggers@google.com>
-MIME-Version: 1.0
+ Mike Snitzer <snitzer@redhat.com>, Eric Biggers <ebiggers@google.com>,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Dmitry Monakhov <dmonakhov@openvz.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
@@ -108,54 +85,134 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi,
+On Wed, Jun 29, 2022 at 02:11:54PM -0400, Kent Overstreet wrote:
+> On Wed, Jun 29, 2022 at 02:07:08AM -0400, Mike Snitzer wrote:
+> > Please try to dial down the hyperbole and judgment. Ming wrote this
+> > code. And you haven't been able to point out anything _actually_ wrong
+> > with it (yet).
+> > 
+> > This patch's header does need editing for clarity, but we can help
+> > improve it and the documentation above bio_rewind() in the code.
+> > 
+> > > So, and I'm sorry I have to be the killjoy here, but hard NACK on this patchset.
+> > > Hard, hard NACK.
+> > 
+> > <insert tom-delonge-wtf.gif>
+> > 
+> > You see this bio_rewind() as history repeating itself, but it isn't
+> > like what you ranted about in the past:
+> > https://marc.info/?l=linux-block&m=153549921116441&w=2
+> > 
+> > I can certainly see why you think it similar at first glance. But this
+> > patchset shows how bio_rewind() must be used, and how DM benefits from
+> > using it safely (with no impact to struct bio or DM's per-bio-data).
+> > 
+> > bio_rewind() usage will be as niche as DM's use-case for it. If other
+> > code respects the documented constraint, that the original bio's end
+> > sector be preserved, then they can use it too.
+> > 
+> > The key is for a driver to maintain enough state to allow this fixed
+> > end be effectively immutable. (DM happens to get this state "for free"
+> > simply because it was already established for its IO accounting of
+> > split bios).
+> > 
+> > The Linux codebase requires precision. This isn't new.
+> 
+> Mike, that's not justification for making things _more_ dangerous.
+> 
+> > 
+> > > I'll be happy to assist in coming up with alternate, less dangerous solutions
+> > > though (and I think introducing a real bio_iter is overdue, so that's probably
+> > > the first thing we should look at).
+> > 
+> > It isn't dangerous. It is an interface whose constraint needs to be
+> > respected. Just like is documented for a myriad other kernel
+> > interfaces.
+> > 
+> > Factoring out a bio_iter will bloat struct bio for functionality most
+> > consumers don't need. And gating DM's ability to achieve this
+> > patchset's functionality with some overdue refactoring is really _not_
+> > acceptable.
+> 
+> Mike, you're the one who's getting seriously hyperbolic here. You're getting
+> frustrated because you've got this one thing you really want to get done, and
+> you feel like you're running into a brick wall when I tell you "no".
+> 
+> And yes, coding in the kernel is a complicated, dangerous environment with many
+> rules that need to be respected.
+> 
+> That does not mean it's ok to be adding to that complexity, and making it even
+> more dangerous, without a _really fucking good reason_. This doesn't fly. Maybe
+> it would if it was some device mapper private thing, but you're acting like it's
+> only going to be used by device mapper when you're trying to add it to the
+> public interface for core block layer bio code. _That_ needs real justification.
+> 
+> Also, bio_iter is something we should definitely be considering because of the
+> way integrity and now crypt has been tacked on to struct bio.
+> 
+> When I originally wrote the modern bvec_iter code, the ability to use an
+> iterator besides the one in struct bio was an important piece of functionality,
+> one that's still in use (including in device mapper; see
+> __bio_for_each_segment()). The fact that we're growing additional data
+> structures that in theory want to be iterated in lockstep with the main bio
+> payload but _aren't_ iterated over with bi_iter is, at best, a code smell and a
+> lurking footgun.
+> 
+> However, I can see that the two of you are not likely take on figuring out how
+> to clean that up, and truthfully I don't have the time right now either, much as
+> it pains me.
+> 
+> Here's an alternative approach:
+> 
+> The fundamental problem with bio_rewind() (and I know that you two are super
+> serious that this is completely safe for your use case and no one else is going
+> to use it for anything else) is that we're using it to get back to some initial
+> state, but it's not invariant w.r.t. what's been done to the bio since then, and
+> the nature of the block layer is that that's a problem.
+> 
+> So here's what you do:
+> 
+> You bring back bi_done: bi_done counts bytes advanced, total, since the start
+> of the bio. Then we introduce a type:
+> 
+> struct bio_pos {
+> 	unsigned	bi_done;
+> 	unsigned	bi_size;
+> };
+> 
+> And two new functions:
+> 
+> struct bio_pos bio_get_pos(struct bio *)
+> {
+> 	...
+> }
+> 
+> void bio_set_pos(struct bio *, struct bio_pos)
+> {
+> 	...
+> }
+> 
+> That gets you the same functionality as bio_rewind(), but it'll be much more
+> broadly useful.
 
-This v2 is the by-product of my having picked up v1's patch 2+3 and
-folding them (into patch 1 of this v2 series). So patch 1 of this v2
-is settled and will be merged into 5.20.
+What is the difference between bio_set_pos and bio_rewind()? Both have
+to restore bio->bi_iter(the sector part and the bvec part).
 
-Patches 2 and 3 are the result of me having gone over the v1 code. I
-folded in the copy-n-paste bugfix that Eric Biggers kindly pointed out
-in v1. I also updated patch headers and code comments for clarity. And
-I also renamed some variables, tweaked some style knits (subjective
-but whatever).
+Also how to update ->bi_done which 'counts bytes advanced'? You meant doing it in
+very bio_advance()? then no, why do we have to pay the cost for very unusual
+bio_rewind()?
 
-This code is available in linux-dm.git's 'dm-5.20' branch:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-5.20
-Which is based on Jens's for-5.20/block
+Or if I misunderstood your point, please cook a patch and I am happy to
+take a close look, and posting one very raw idea with random data
+structure looks not helpful much for this discussion technically.
 
-I'll obviously rebase 'dm-5.20' ontop of Jens's branch if/when he
-picks up patch 2 in this series.
 
-This code is passing all my tests so far but testing is ongoing.
-
-All comments welcome.
-
-ps. I was told Kent had replied to the v1 thread while I was working
-on this v2, I kept focus on finishing this v2. I'll check my email in
-a bit.
-
-Ming Lei (3):
-  dm: improve BLK_STS_DM_REQUEUE and BLK_STS_AGAIN handling
-  block: add bio_rewind() API
-  dm: add two stage requeue mechanism
-
- block/bio-integrity.c       |  19 +++++
- block/bio.c                 |  20 +++++
- block/blk-crypto-internal.h |   7 ++
- block/blk-crypto.c          |  25 ++++++
- drivers/md/dm-core.h        |  11 ++-
- drivers/md/dm.c             | 189 ++++++++++++++++++++++++++++++++++----------
- include/linux/bio.h         |  21 +++++
- include/linux/bvec.h        |  33 ++++++++
- 8 files changed, 281 insertions(+), 44 deletions(-)
-
--- 
-2.15.0
-
+Thanks,
+Ming
 --
 dm-devel mailing list
 dm-devel@redhat.com
