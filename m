@@ -4,88 +4,86 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 75F54CCA481
-	for <dm-devel@archiver.kernel.org>; Thu, 30 Jun 2022 07:31:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A1E17C43334
+	for <dm-devel@archiver.kernel.org>; Thu, 30 Jun 2022 07:31:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1656574291;
+	s=mimecast20190719; t=1656574292;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=SlmyCqL0ZjZm5kvqq4AQ/xyOvXZK7CbQgiQxNFEoFnM=;
-	b=BvhS/+FfwrdZG6Q5b89Nx/24ex3Qu9+FHAr+6AXEeBz1K8EuMkWM9ZaeS9iP9y673K9YTg
-	lFUwdNTrkKT/e7oAxAFJMVM6KPaERlIFg+w6r6bkcQKco3+lq4gRQga7htbZ4kLBCsiwFa
-	mLhzKC/V4UndsYYuG5boRZZHdUDFucQ=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=P7zag+0ApYi6Tp6CdRZw07Vo74s8sJXLFSHeWlyj+MU=;
+	b=Mz4mTcpNrc+wpXM/YO4/NW5RJHQzs0eJwqTELcmsueuCJXdEFlkqIVbdFPS8BXhei9x0P1
+	8iGHEmQhAp6ciV3rQWjlSgPVXVrodQTfnsGUNo8IfTIUp1yhU0WsOhVzGCvZedtYB3Kjq5
+	nIpeqLFHlnq/SjssREZ/RFpVGEVAPQc=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-75-ugqzC3ZQMg2JcgkwzdAZEQ-1; Thu, 30 Jun 2022 03:31:28 -0400
-X-MC-Unique: ugqzC3ZQMg2JcgkwzdAZEQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-381-qFZPzomqMiOSb1u8kz0IXg-1; Thu, 30 Jun 2022 03:31:27 -0400
+X-MC-Unique: qFZPzomqMiOSb1u8kz0IXg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0E0F41C0CE70;
-	Thu, 30 Jun 2022 07:31:26 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B45218ED5C8;
+	Thu, 30 Jun 2022 07:31:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EDCF040EC003;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9D6A21400C2B;
 	Thu, 30 Jun 2022 07:31:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 10F081947B8F;
-	Thu, 30 Jun 2022 07:31:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9ED741947B86;
+	Thu, 30 Jun 2022 07:31:24 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0FC191947058
- for <dm-devel@listman.corp.redhat.com>; Wed, 29 Jun 2022 18:12:03 +0000 (UTC)
+ ESMTP id D227E1947058
+ for <dm-devel@listman.corp.redhat.com>; Thu, 30 Jun 2022 01:15:04 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C84E6C2811A; Wed, 29 Jun 2022 18:12:02 +0000 (UTC)
+ id C399340CFD0A; Thu, 30 Jun 2022 01:15:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C4614C28118
- for <dm-devel@redhat.com>; Wed, 29 Jun 2022 18:12:02 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id BF80040CFD05
+ for <dm-devel@redhat.com>; Thu, 30 Jun 2022 01:15:04 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
  bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AC1702932497
- for <dm-devel@redhat.com>; Wed, 29 Jun 2022 18:12:02 +0000 (UTC)
-Received: from mail-qv1-f45.google.com (mail-qv1-f45.google.com
- [209.85.219.45]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 967FC3C0D843
+ for <dm-devel@redhat.com>; Thu, 30 Jun 2022 01:15:04 +0000 (UTC)
+Received: from mail-qv1-f50.google.com (mail-qv1-f50.google.com
+ [209.85.219.50]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-527-vzdqUNVBNfCWhK_BJjUZvg-1; Wed, 29 Jun 2022 14:11:58 -0400
-X-MC-Unique: vzdqUNVBNfCWhK_BJjUZvg-1
-Received: by mail-qv1-f45.google.com with SMTP id u14so23384878qvv.2;
- Wed, 29 Jun 2022 11:11:58 -0700 (PDT)
+ us-mta-411-2NXiWxTqNd-Gfr_DO-Fqew-1; Wed, 29 Jun 2022 21:14:58 -0400
+X-MC-Unique: 2NXiWxTqNd-Gfr_DO-Fqew-1
+Received: by mail-qv1-f50.google.com with SMTP id i17so27463251qvo.13;
+ Wed, 29 Jun 2022 18:14:58 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:date:from:to:cc:subject:message-id:references
  :mime-version:content-disposition:in-reply-to;
- bh=Gijk56NMdB/sja9dAmbjVTkCB9EEiLswQtfTGFbcORI=;
- b=b9NBFVv4BoRCwhAScA4R5Z+5ALlb3w2eaOBETqF6KYhsStm/PXR/6NNF28KJmlmDez
- GE08GthGEaxp4jMcgmtTvOYIzv8E5SXnUmpN88ZtbmiPX3egXLZMzoUjrLPQ6g/FCKf2
- juxaZX1OuLrngwdfR7150kVbYGSjzrsJqt9v7vri6vgjkzfaSZVUNKkoQvv9hUjGR9yI
- p6xSjfkL9ZbGbWr76AMU56AHE6ndimEJ5p+xjoRDtZKr/k/H9xWfRa3g3DhJwr2TD29S
- HF4T/nC4kKfOR4s7wLNEJZXIP9CqIcjEQuEDO12yMJ1xyZBlfP3qgTnIudxVnNault9g
- z+ig==
-X-Gm-Message-State: AJIora8xM3+GPfkWxL4t8NMUoIf2owzFqFA2cf1Uww8SaXsP4mQQU9kv
- QC2Bp6ncd0cw9Sc8Cpu002ZFOoNjBCF3H6Xu6g==
-X-Google-Smtp-Source: AGRyM1sPrUbtuaytU8RpCVUWuNrZiasGP0JPuy3ZOunsnIkksLe8Hvawxu7sMDiOu7MTU+ctUVOggA==
-X-Received: by 2002:ac8:5fc3:0:b0:31d:2637:7ed6 with SMTP id
- k3-20020ac85fc3000000b0031d26377ed6mr2811002qta.282.1656526316309; 
- Wed, 29 Jun 2022 11:11:56 -0700 (PDT)
+ bh=Gl/c8nuC+5QRtDx07zWeNG3YZxONGy7n4nyvGdDLURw=;
+ b=zSj8gZhAzBLaBgdRpa3NQjqSICGut7bRp5w7yIMpfsgVZYJ+zxNHuzAWi5g0gNSp3o
+ jV8dlqgnR9LEBUWQa5syTpfGSgLrPEGBNuIqfdX48IJOdwKg86NgIRVtZHxEAE5LaB0V
+ i7zd+nJAAMrxMRke+hTLwHaqPkisCaB6luDNFlcsBtvENKlA/DTO1kiGWhlWzNk0H08f
+ gnTlGu/TiGn0T0aQzEyuSyCBVTksjx5E8Cg1vYwU7wOYtMIoiSIPBh1opnPG53qOn/89
+ vIq4rrumyLwp0veF9j+jeG8qJccqW/V2PwBKqMgUc8GvL47PfLhw26MGQ0bcspxHwnZ3
+ apoQ==
+X-Gm-Message-State: AJIora8W3ziAX0EGAncQTe1ox+e2dbxFkIuPRJIhMQq3AKicrR2XLfYC
+ r8dq2gSomQt8I43IZmWsn7La/rAQLLIYTbU=
+X-Google-Smtp-Source: AGRyM1sqmU0naLkYdXVNgxW69ymdkkC/CmVnMOdnUw2DWkshZEVWvBZwdnJrML9H8C7sJs1azHg+KA==
+X-Received: by 2002:ac8:5e46:0:b0:317:6146:6f05 with SMTP id
+ i6-20020ac85e46000000b0031761466f05mr5456516qtx.490.1656551696440; 
+ Wed, 29 Jun 2022 18:14:56 -0700 (PDT)
 Received: from localhost (c-73-219-103-14.hsd1.vt.comcast.net. [73.219.103.14])
  by smtp.gmail.com with ESMTPSA id
- g6-20020ac842c6000000b00317ccc66971sm10357618qtm.52.2022.06.29.11.11.54
+ ci27-20020a05622a261b00b00316dc1ffbb9sm4533576qtb.32.2022.06.29.18.14.55
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 29 Jun 2022 11:11:55 -0700 (PDT)
-Date: Wed, 29 Jun 2022 14:11:54 -0400
+ Wed, 29 Jun 2022 18:14:55 -0700 (PDT)
+Date: Wed, 29 Jun 2022 21:14:54 -0400
 From: Kent Overstreet <kent.overstreet@gmail.com>
-To: Mike Snitzer <snitzer@redhat.com>
-Message-ID: <20220629181154.eejrlfhj5n4la446@moria.home.lan>
-References: <20220624141255.2461148-1-ming.lei@redhat.com>
- <20220624141255.2461148-2-ming.lei@redhat.com>
- <20220626201458.ytn4mrix2pobm2mb@moria.home.lan>
+To: Ming Lei <ming.lei@redhat.com>
+Message-ID: <20220630011454.c6djuzkwsn33x7y6@moria.home.lan>
+References: <20220626201458.ytn4mrix2pobm2mb@moria.home.lan>
  <Yrld9rLPY6L3MhlZ@T590>
  <20220628042610.wuittagsycyl4uwa@moria.home.lan>
  <YrqyiCcnvPCqsn8F@T590>
@@ -93,8 +91,10 @@ References: <20220624141255.2461148-1-ming.lei@redhat.com>
  <Yrs9OLNZ8xUs98OB@redhat.com>
  <20220628175253.s2ghizfucumpot5l@moria.home.lan>
  <YrvsDNltq+h6mphN@redhat.com>
+ <20220629181154.eejrlfhj5n4la446@moria.home.lan>
+ <YrzykX0jTWpq5DYQ@T590>
 MIME-Version: 1.0
-In-Reply-To: <YrvsDNltq+h6mphN@redhat.com>
+In-Reply-To: <YrzykX0jTWpq5DYQ@T590>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -102,7 +102,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-Mailman-Approved-At: Thu, 30 Jun 2022 07:31:23 +0000
 Subject: Re: [dm-devel] [PATCH 5.20 1/4] block: add bio_rewind() API
 X-BeenThere: dm-devel@redhat.com
@@ -118,12 +118,12 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Cc: Jens Axboe <axboe@kernel.dk>,
  "Martin K . Petersen" <martin.petersen@oracle.com>,
- Eric Biggers <ebiggers@google.com>, Ming Lei <ming.lei@redhat.com>,
+ Mike Snitzer <snitzer@redhat.com>, Eric Biggers <ebiggers@google.com>,
  linux-block@vger.kernel.org, dm-devel@redhat.com,
  Dmitry Monakhov <dmonakhov@openvz.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -132,114 +132,330 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Jun 29, 2022 at 02:07:08AM -0400, Mike Snitzer wrote:
-> Please try to dial down the hyperbole and judgment. Ming wrote this
-> code. And you haven't been able to point out anything _actually_ wrong
-> with it (yet).
-> 
-> This patch's header does need editing for clarity, but we can help
-> improve it and the documentation above bio_rewind() in the code.
-> 
-> > So, and I'm sorry I have to be the killjoy here, but hard NACK on this patchset.
-> > Hard, hard NACK.
-> 
-> <insert tom-delonge-wtf.gif>
-> 
-> You see this bio_rewind() as history repeating itself, but it isn't
-> like what you ranted about in the past:
-> https://marc.info/?l=linux-block&m=153549921116441&w=2
-> 
-> I can certainly see why you think it similar at first glance. But this
-> patchset shows how bio_rewind() must be used, and how DM benefits from
-> using it safely (with no impact to struct bio or DM's per-bio-data).
-> 
-> bio_rewind() usage will be as niche as DM's use-case for it. If other
-> code respects the documented constraint, that the original bio's end
-> sector be preserved, then they can use it too.
-> 
-> The key is for a driver to maintain enough state to allow this fixed
-> end be effectively immutable. (DM happens to get this state "for free"
-> simply because it was already established for its IO accounting of
-> split bios).
-> 
-> The Linux codebase requires precision. This isn't new.
+On Thu, Jun 30, 2022 at 08:47:13AM +0800, Ming Lei wrote:
+> Or if I misunderstood your point, please cook a patch and I am happy to
+> take a close look, and posting one very raw idea with random data
+> structure looks not helpful much for this discussion technically.
 
-Mike, that's not justification for making things _more_ dangerous.
+Based it on your bio_rewind() patch - what do you think of this?
 
-> 
-> > I'll be happy to assist in coming up with alternate, less dangerous solutions
-> > though (and I think introducing a real bio_iter is overdue, so that's probably
-> > the first thing we should look at).
-> 
-> It isn't dangerous. It is an interface whose constraint needs to be
-> respected. Just like is documented for a myriad other kernel
-> interfaces.
-> 
-> Factoring out a bio_iter will bloat struct bio for functionality most
-> consumers don't need. And gating DM's ability to achieve this
-> patchset's functionality with some overdue refactoring is really _not_
-> acceptable.
+-- >8 --
+From: Kent Overstreet <kent.overstreet@gmail.com>
+Subject: [PATCH] block: add bio_(get|set)_pos()
 
-Mike, you're the one who's getting seriously hyperbolic here. You're getting
-frustrated because you've got this one thing you really want to get done, and
-you feel like you're running into a brick wall when I tell you "no".
+Commit 7759eb23fd98 ("block: remove bio_rewind_iter()") removes
+the similar API because the following reasons:
 
-And yes, coding in the kernel is a complicated, dangerous environment with many
-rules that need to be respected.
+    ```
+    It is pointed that bio_rewind_iter() is one very bad API[1]:
 
-That does not mean it's ok to be adding to that complexity, and making it even
-more dangerous, without a _really fucking good reason_. This doesn't fly. Maybe
-it would if it was some device mapper private thing, but you're acting like it's
-only going to be used by device mapper when you're trying to add it to the
-public interface for core block layer bio code. _That_ needs real justification.
+    1) bio size may not be restored after rewinding
 
-Also, bio_iter is something we should definitely be considering because of the
-way integrity and now crypt has been tacked on to struct bio.
+    2) it causes some bogus change, such as 5151842b9d8732 (block: reset
+    bi_iter.bi_done after splitting bio)
 
-When I originally wrote the modern bvec_iter code, the ability to use an
-iterator besides the one in struct bio was an important piece of functionality,
-one that's still in use (including in device mapper; see
-__bio_for_each_segment()). The fact that we're growing additional data
-structures that in theory want to be iterated in lockstep with the main bio
-payload but _aren't_ iterated over with bi_iter is, at best, a code smell and a
-lurking footgun.
+    3) rewinding really makes things complicated wrt. bio splitting
 
-However, I can see that the two of you are not likely take on figuring out how
-to clean that up, and truthfully I don't have the time right now either, much as
-it pains me.
+    4) unnecessary updating of .bi_done in fast path
 
-Here's an alternative approach:
+    [1] https://marc.info/?t=153549924200005&r=1&w=2
 
-The fundamental problem with bio_rewind() (and I know that you two are super
-serious that this is completely safe for your use case and no one else is going
-to use it for anything else) is that we're using it to get back to some initial
-state, but it's not invariant w.r.t. what's been done to the bio since then, and
-the nature of the block layer is that that's a problem.
+    So this patch takes Kent's suggestion to restore one bio into its original
+    state via saving bio iterator(struct bvec_iter) in bio_integrity_prep(),
+    given now bio_rewind_iter() is only used by bio integrity code.
+    ```
 
-So here's what you do:
+However, saving and restoring bi_iter isn't sufficient anymore, because
+of integrity and now per-bio crypt context.
 
-You bring back bi_done: bi_done counts bytes advanced, total, since the start
-of the bio. Then we introduce a type:
+This patch implements the same functionality as bio_rewind(), based on a
+patch by Ming, but with a different (safer!) interface.
 
-struct bio_pos {
-	unsigned	bi_done;
-	unsigned	bi_size;
-};
+ - bio_get_pos() gets the current state of a a bio, i.e. how far it has
+   been advanced and its current (remaining) size
+ - bio_set_pos() restores a bio to a previous state, advancing or
+   rewinding it as needed
 
-And two new functions:
+Co-authored-by: Ming Lei <ming.lei@redhat.com>
+Signed-off-by: Kent Overstreet <kent.overstreet@gmail.com>
+---
+ block/bio-integrity.c       | 19 +++++++++++++++++++
+ block/bio.c                 | 26 ++++++++++++++++++++++++++
+ block/blk-crypto-internal.h |  7 +++++++
+ block/blk-crypto.c          | 25 +++++++++++++++++++++++++
+ include/linux/bio.h         | 22 ++++++++++++++++++++++
+ include/linux/blk_types.h   | 19 +++++++++++++++++++
+ include/linux/bvec.h        | 36 +++++++++++++++++++++++++++++++++++-
+ 7 files changed, 153 insertions(+), 1 deletion(-)
 
-struct bio_pos bio_get_pos(struct bio *)
-{
-	...
-}
-
-void bio_set_pos(struct bio *, struct bio_pos)
-{
-	...
-}
-
-That gets you the same functionality as bio_rewind(), but it'll be much more
-broadly useful.
+diff --git a/block/bio-integrity.c b/block/bio-integrity.c
+index 32929c89ba..06c2fe81fd 100644
+--- a/block/bio-integrity.c
++++ b/block/bio-integrity.c
+@@ -378,6 +378,25 @@ void bio_integrity_advance(struct bio *bio, unsigned int bytes_done)
+ 	bvec_iter_advance(bip->bip_vec, &bip->bip_iter, bytes);
+ }
+ 
++/**
++ * bio_integrity_rewind - Rewind integrity vector
++ * @bio:	bio whose integrity vector to update
++ * @bytes_done:	number of data bytes to rewind
++ *
++ * Description: This function calculates how many integrity bytes the
++ * number of completed data bytes correspond to and rewind the
++ * integrity vector accordingly.
++ */
++void bio_integrity_rewind(struct bio *bio, unsigned int bytes_done)
++{
++	struct bio_integrity_payload *bip = bio_integrity(bio);
++	struct blk_integrity *bi = blk_get_integrity(bio->bi_bdev->bd_disk);
++	unsigned bytes = bio_integrity_bytes(bi, bytes_done >> 9);
++
++	bip->bip_iter.bi_sector -= bio_integrity_intervals(bi, bytes_done >> 9);
++	bvec_iter_rewind(bip->bip_vec, &bip->bip_iter, bytes);
++}
++
+ /**
+  * bio_integrity_trim - Trim integrity vector
+  * @bio:	bio whose integrity vector to update
+diff --git a/block/bio.c b/block/bio.c
+index b2425b8d88..bbf8aa4e62 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -1329,6 +1329,32 @@ void __bio_advance(struct bio *bio, unsigned bytes)
+ }
+ EXPORT_SYMBOL(__bio_advance);
+ 
++/**
++ * bio_set_pos - restore a bio to a previous state, after having been iterated
++ * or trimmed
++ * @bio: bio to reset
++ * @pos: pos to reset it to, from bio_get_pos()
++ */
++void bio_set_pos(struct bio *bio, struct bio_pos pos)
++{
++	int delta = bio->bi_iter.bi_done - pos.bi_done;
++
++	if (delta > 0) {
++		if (bio_integrity(bio))
++			bio_integrity_rewind(bio, delta);
++		bio_crypt_rewind(bio, delta);
++		bio_rewind_iter(bio, &bio->bi_iter, delta);
++	} else {
++		bio_advance(bio, -delta);
++	}
++
++	bio->bi_iter.bi_size = pos.bi_size;
++
++	if (bio_integrity(bio))
++		bio_integrity_trim(bio);
++}
++EXPORT_SYMBOL(bio_set_pos);
++
+ void bio_copy_data_iter(struct bio *dst, struct bvec_iter *dst_iter,
+ 			struct bio *src, struct bvec_iter *src_iter)
+ {
+diff --git a/block/blk-crypto-internal.h b/block/blk-crypto-internal.h
+index e6818ffadd..b723599bbf 100644
+--- a/block/blk-crypto-internal.h
++++ b/block/blk-crypto-internal.h
+@@ -114,6 +114,13 @@ static inline void bio_crypt_advance(struct bio *bio, unsigned int bytes)
+ 		__bio_crypt_advance(bio, bytes);
+ }
+ 
++void __bio_crypt_rewind(struct bio *bio, unsigned int bytes);
++static inline void bio_crypt_rewind(struct bio *bio, unsigned int bytes)
++{
++	if (bio_has_crypt_ctx(bio))
++		__bio_crypt_rewind(bio, bytes);
++}
++
+ void __bio_crypt_free_ctx(struct bio *bio);
+ static inline void bio_crypt_free_ctx(struct bio *bio)
+ {
+diff --git a/block/blk-crypto.c b/block/blk-crypto.c
+index a496aaef85..e3584b5a68 100644
+--- a/block/blk-crypto.c
++++ b/block/blk-crypto.c
+@@ -134,6 +134,23 @@ void bio_crypt_dun_increment(u64 dun[BLK_CRYPTO_DUN_ARRAY_SIZE],
+ 	}
+ }
+ 
++/* Decrements @dun by @dec, treating @dun as a multi-limb integer. */
++void bio_crypt_dun_decrement(u64 dun[BLK_CRYPTO_DUN_ARRAY_SIZE],
++			     unsigned int dec)
++{
++	int i;
++
++	for (i = 0; dec && i < BLK_CRYPTO_DUN_ARRAY_SIZE; i++) {
++		u64 prev = dun[i];
++
++		dun[i] -= dec;
++		if (dun[i] > prev)
++			dec = 1;
++		else
++			dec = 0;
++	}
++}
++
+ void __bio_crypt_advance(struct bio *bio, unsigned int bytes)
+ {
+ 	struct bio_crypt_ctx *bc = bio->bi_crypt_context;
+@@ -142,6 +159,14 @@ void __bio_crypt_advance(struct bio *bio, unsigned int bytes)
+ 				bytes >> bc->bc_key->data_unit_size_bits);
+ }
+ 
++void __bio_crypt_rewind(struct bio *bio, unsigned int bytes)
++{
++	struct bio_crypt_ctx *bc = bio->bi_crypt_context;
++
++	bio_crypt_dun_decrement(bc->bc_dun,
++				bytes >> bc->bc_key->data_unit_size_bits);
++}
++
+ /*
+  * Returns true if @bc->bc_dun plus @bytes converted to data units is equal to
+  * @next_dun, treating the DUNs as multi-limb integers.
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index c11103a872..5fff008913 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -105,6 +105,19 @@ static inline void bio_advance_iter(const struct bio *bio,
+ 		/* TODO: It is reasonable to complete bio with error here. */
+ }
+ 
++static inline void bio_rewind_iter(const struct bio *bio,
++				    struct bvec_iter *iter, unsigned int bytes)
++{
++	iter->bi_sector -= bytes >> 9;
++
++	/* No advance means no rewind */
++	if (bio_no_advance_iter(bio))
++		iter->bi_size += bytes;
++	else
++		bvec_iter_rewind(bio->bi_io_vec, iter, bytes);
++		/* TODO: It is reasonable to complete bio with error here. */
++}
++
+ /* @bytes should be less or equal to bvec[i->bi_idx].bv_len */
+ static inline void bio_advance_iter_single(const struct bio *bio,
+ 					   struct bvec_iter *iter,
+@@ -133,6 +146,8 @@ void __bio_advance(struct bio *, unsigned bytes);
+  */
+ static inline void bio_advance(struct bio *bio, unsigned int nbytes)
+ {
++	bio->bi_iter.bi_done += nbytes;
++
+ 	if (nbytes == bio->bi_iter.bi_size) {
+ 		bio->bi_iter.bi_size = 0;
+ 		return;
+@@ -707,6 +722,7 @@ extern struct bio_integrity_payload *bio_integrity_alloc(struct bio *, gfp_t, un
+ extern int bio_integrity_add_page(struct bio *, struct page *, unsigned int, unsigned int);
+ extern bool bio_integrity_prep(struct bio *);
+ extern void bio_integrity_advance(struct bio *, unsigned int);
++extern void bio_integrity_rewind(struct bio *, unsigned int);
+ extern void bio_integrity_trim(struct bio *);
+ extern int bio_integrity_clone(struct bio *, struct bio *, gfp_t);
+ extern int bioset_integrity_create(struct bio_set *, int);
+@@ -747,6 +763,12 @@ static inline void bio_integrity_advance(struct bio *bio,
+ 	return;
+ }
+ 
++static inline void bio_integrity_rewind(struct bio *bio,
++					 unsigned int bytes_done)
++{
++	return;
++}
++
+ static inline void bio_integrity_trim(struct bio *bio)
+ {
+ 	return;
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index 1973ef9bd4..eff756a96f 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -306,6 +306,25 @@ struct bio {
+ 	struct bio_vec		bi_inline_vecs[];
+ };
+ 
++/*
++ * These are for saving & restoring all the iterators within a bio to a previous
++ * state
++ */
++struct bio_pos {
++	unsigned int	bi_done;
++	unsigned int	bi_size;
++};
++
++static inline struct bio_pos bio_get_pos(struct bio *bio)
++{
++	return (struct bio_pos) {
++		.bi_done	= bio->bi_iter.bi_done,
++		.bi_size	= bio->bi_iter.bi_size,
++	};
++}
++
++extern void bio_set_pos(struct bio *bio, struct bio_pos pos);
++
+ #define BIO_RESET_BYTES		offsetof(struct bio, bi_max_vecs)
+ #define BIO_MAX_SECTORS		(UINT_MAX >> SECTOR_SHIFT)
+ 
+diff --git a/include/linux/bvec.h b/include/linux/bvec.h
+index 35c25dff65..1606ebe1da 100644
+--- a/include/linux/bvec.h
++++ b/include/linux/bvec.h
+@@ -44,7 +44,8 @@ struct bvec_iter {
+ 
+ 	unsigned int            bi_bvec_done;	/* number of bytes completed in
+ 						   current bvec */
+-} __packed;
++	unsigned int		bi_done;	/* number of bytes completed, total */
++};
+ 
+ struct bvec_iter_all {
+ 	struct bio_vec	bv;
+@@ -122,6 +123,39 @@ static inline bool bvec_iter_advance(const struct bio_vec *bv,
+ 	return true;
+ }
+ 
++static inline bool bvec_iter_rewind(const struct bio_vec *bv,
++				     struct bvec_iter *iter,
++				     unsigned int bytes)
++{
++	int idx;
++
++	iter->bi_size += bytes;
++	if (bytes <= iter->bi_bvec_done) {
++		iter->bi_bvec_done -= bytes;
++		return true;
++	}
++
++	bytes -= iter->bi_bvec_done;
++	idx = iter->bi_idx - 1;
++
++	while (idx >= 0 && bytes && bytes > bv[idx].bv_len) {
++		bytes -= bv[idx].bv_len;
++		idx--;
++	}
++
++	if (WARN_ONCE(idx < 0 && bytes,
++		      "Attempted to rewind iter beyond bvec's boundaries\n")) {
++		iter->bi_size -= bytes;
++		iter->bi_bvec_done = 0;
++		iter->bi_idx = 0;
++		return false;
++	}
++
++	iter->bi_idx = idx;
++	iter->bi_bvec_done = bv[idx].bv_len - bytes;
++	return true;
++}
++
+ /*
+  * A simpler version of bvec_iter_advance(), @bytes should not span
+  * across multiple bvec entries, i.e. bytes <= bv[i->bi_idx].bv_len
+-- 
+2.36.1
 
 --
 dm-devel mailing list
