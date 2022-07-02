@@ -1,92 +1,93 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id EE53FC43334
-	for <dm-devel@archiver.kernel.org>; Thu,  7 Jul 2022 07:28:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4F00ECCA481
+	for <dm-devel@archiver.kernel.org>; Thu,  7 Jul 2022 07:28:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1657178894;
+	s=mimecast20190719; t=1657178895;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=CQc5Gu3jyFyjsZsL1wJinjlf4O+oNxwlz5BHXkkX+5Y=;
-	b=UanyivAcbUKLBOvK+v8ZKCem+fR0VZqcHZ+dmJu4i8DvTT2K8c7351GHAwDCOPC0p8ZQgX
-	kqC77lRD/UTTkEgALMJXOTm4Yk0E1S+/KOh2fOBwNHlSdqDA/vQJ/wu+u5AZIBOLtTpDpm
-	U7FGlL2n5EETXKXe7N2qsNWqb/w23Ng=
+	bh=MZrnnRERUm5iRgcda5mn92JJAOlw9wKMnqG+x0QT/Ns=;
+	b=WyoAlu0rO1eQh+PoRBkvGSFpB7nEAE4b2tqOeXfoSI2AnT9jN5xZJbbFBq62Mx1hSBdAfv
+	y7TcRHEpBV5ldFHU9YCO8JEIjVQAWQOM0B+Hk093TPV4e2I24eM8xC737wh0prKSoB+EH4
+	ExeFINDMmlNkSEDFkgKzTXBS9v0LgeU=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-347-Z57T8St1Nf6_B6e7iexNXw-1; Thu, 07 Jul 2022 03:28:12 -0400
-X-MC-Unique: Z57T8St1Nf6_B6e7iexNXw-1
+ us-mta-158-SJ-rMG2VP2-bAySkQ-bJtg-1; Thu, 07 Jul 2022 03:28:12 -0400
+X-MC-Unique: SJ-rMG2VP2-bAySkQ-bJtg-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D170180D08D;
-	Thu,  7 Jul 2022 07:28:05 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B296B181E06C;
+	Thu,  7 Jul 2022 07:28:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BF4112166B29;
-	Thu,  7 Jul 2022 07:28:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A1A7E2166B29;
+	Thu,  7 Jul 2022 07:28:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B4398194706D;
-	Thu,  7 Jul 2022 07:28:04 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8FBB6194706B;
+	Thu,  7 Jul 2022 07:28:09 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3F8921947042
- for <dm-devel@listman.corp.redhat.com>; Sat,  2 Jul 2022 20:44:16 +0000 (UTC)
+ ESMTP id B586A1947042
+ for <dm-devel@listman.corp.redhat.com>; Sat,  2 Jul 2022 20:46:34 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2C69B18EB7; Sat,  2 Jul 2022 20:44:16 +0000 (UTC)
+ id A8D642166B29; Sat,  2 Jul 2022 20:46:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2856618EA8
- for <dm-devel@redhat.com>; Sat,  2 Jul 2022 20:44:16 +0000 (UTC)
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A48622166B26
+ for <dm-devel@redhat.com>; Sat,  2 Jul 2022 20:46:34 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0C0373C025C3
- for <dm-devel@redhat.com>; Sat,  2 Jul 2022 20:44:16 +0000 (UTC)
-Received: from mail-qt1-f178.google.com (mail-qt1-f178.google.com
- [209.85.160.178]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8995F185A7A4
+ for <dm-devel@redhat.com>; Sat,  2 Jul 2022 20:46:34 +0000 (UTC)
+Received: from mail-qt1-f171.google.com (mail-qt1-f171.google.com
+ [209.85.160.171]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-487-Fb354nQEMFmDP5UsE824TQ-1; Sat, 02 Jul 2022 16:44:14 -0400
-X-MC-Unique: Fb354nQEMFmDP5UsE824TQ-1
-Received: by mail-qt1-f178.google.com with SMTP id x1so4550620qtv.8;
- Sat, 02 Jul 2022 13:44:14 -0700 (PDT)
+ us-mta-349-LBV15yAGMeKFKaI8DH5WFQ-1; Sat, 02 Jul 2022 16:46:32 -0400
+X-MC-Unique: LBV15yAGMeKFKaI8DH5WFQ-1
+Received: by mail-qt1-f171.google.com with SMTP id x1so4555927qtv.8;
+ Sat, 02 Jul 2022 13:46:32 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:date:from:to:cc:subject:message-id:references
  :mime-version:content-disposition:in-reply-to;
- bh=DlqK/gCHCDGy5OSRXAYFxnfYX+I9GxfO75TGVC+FALo=;
- b=gAXvpnlS7qG/ay0lLJVFBbpY/JUYApvOI28MVTVrDzUACxobffsFqCPrXeRX7e5bdi
- J6vexvsH33nzoQTVrRZd8w5CSy13kfiJadvXoqqQKT9hDRggE9j91nqLUh2wAzw3m4Xo
- e3ZE17zR6sS57nWC9MnQBiSluX+zNME9aLYO8xp6sAQDU/jXcVnse+irSIeu8KUDtWnP
- URGqXHSswnVo+X76qxTW/+bOE/1mSZWOBka408BqODHoqvpx8YIerNu82CUllN3UViqe
- B5BctKHIeXhWG7zgdoIpryevFW6iXCwhwqErxHPlF3by8KM+eVRt82AEDkkc33nnQQqz
- rAxw==
-X-Gm-Message-State: AJIora8w+FfhAxS0YcAi/KoZUJmA4eK+xeC28ibh5WdK9GYCpyONhxRx
- FTwDr8aCSthmymePBE4u/Z8=
-X-Google-Smtp-Source: AGRyM1v9Om7l6fke9TMJ9NBQOtPQriWNRvL7GNoiNXCdxK+C+aPoOgahYt70QVZO5kMXfNiYT220JQ==
-X-Received: by 2002:a05:6214:e83:b0:470:54c3:e18e with SMTP id
- hf3-20020a0562140e8300b0047054c3e18emr22253839qvb.3.1656794653736; 
- Sat, 02 Jul 2022 13:44:13 -0700 (PDT)
+ bh=N+mq0Y7evuA/KRdL0BLthRO/Vn35FRdsKAND75BcEFY=;
+ b=dikFs6n12Sy5bWrmPiI/so4G3LZQhTp1ssAz+3UyXQDcNWZQ4R7HLoe9d4XGz3dFvF
+ RrDW5vlhrR+RT6CZa8wRbSgYyyf+udaMbrLaLSyOwSCfnNX67+xZld4hy9DPE8uesQzi
+ tChZJfvEikag13xiMT0K+/c8KT+WLt/a3mU4Yq3h8Z5vRpnzZOgZYYEsAl0Buhj+xF88
+ weh46O3LXe2dyqHd9X6CXa0evM16DfvvpC9zvJVblqfs1BMUZiNt6iTsryia4x7Mm28c
+ d/ThsQGhuDWOX1dWLElkIjYX0ULMunKaJZFvB4wwhMndrQeo+LxYIad0fns/k7+hlU1Y
+ qQhw==
+X-Gm-Message-State: AJIora8/9PM9UbWGuDgphbLOA6XHzIhPc7CeucYTaSjId717ODMS3FMC
+ HNYu2Qa1tfGiUgnZa72ScAs=
+X-Google-Smtp-Source: AGRyM1vjFgjitLBuQOeSuo/OKde0C2zCG2i7rCQmnsS9b/7NGq3EkHHEPjctpLsqsrGPdIjCur6S0A==
+X-Received: by 2002:a05:6214:19cb:b0:470:8fae:eb90 with SMTP id
+ j11-20020a05621419cb00b004708faeeb90mr21566832qvc.92.1656794792059; 
+ Sat, 02 Jul 2022 13:46:32 -0700 (PDT)
 Received: from localhost ([2601:4c1:c100:1230:e838:b1c2:b125:986a])
  by smtp.gmail.com with ESMTPSA id
- c19-20020a05622a059300b00304edcfa109sm18513614qtb.33.2022.07.02.13.44.13
+ r132-20020a37a88a000000b006af373cec2csm12713874qke.70.2022.07.02.13.46.31
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Sat, 02 Jul 2022 13:44:13 -0700 (PDT)
-Date: Sat, 2 Jul 2022 13:44:12 -0700
+ Sat, 02 Jul 2022 13:46:31 -0700 (PDT)
+Date: Sat, 2 Jul 2022 13:46:31 -0700
 From: Yury Norov <yury.norov@gmail.com>
 To: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
-Message-ID: <YsCuHLTsKGCO/jsL@yury-laptop>
+Message-ID: <YsCup7Kjzm9QWeZ5@yury-laptop>
 References: <cover.1656785856.git.christophe.jaillet@wanadoo.fr>
+ <3f2ad7fb91948525f6c52e0d36ec223cd3049c88.1656785856.git.christophe.jaillet@wanadoo.fr>
 MIME-Version: 1.0
-In-Reply-To: <cover.1656785856.git.christophe.jaillet@wanadoo.fr>
+In-Reply-To: <3f2ad7fb91948525f6c52e0d36ec223cd3049c88.1656785856.git.christophe.jaillet@wanadoo.fr>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -94,9 +95,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-Mailman-Approved-At: Thu, 07 Jul 2022 07:28:03 +0000
-Subject: Re: [dm-devel] [PATCH 0/4] Introduce bitmap_size()
+Subject: Re: [dm-devel] [PATCH 1/4] s390/cio: Rename bitmap_size() as
+ idset_bitmap_size()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -126,69 +128,62 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sat, Jul 02, 2022 at 08:28:53PM +0200, Christophe JAILLET wrote:
-> This serie introduces bitmap_size() which returns the size, in bytes, of a
-> bitmap. Such a function is useful to simplify some drivers that use vmalloc() or
-> other functions to allocate some butmaps.
-
-This generally looks like a step in a wrong direction. Bitmap is by
-definition an array of bits. If someone has a reason to handle bitmap
-on a per-byte basis, the guy is probably doing something wrong.
-
-We already have quite comprehensive list of functions that help to
-allocate, fill, clear, copy etc bitmap without considering it as an
-array of bytes or words.
-
-> ... some drivers that use vmalloc() ...
-
-If a driver needs vmalloc() for a bitmap, we should introduce
-bitmap_vmalloc(), not bitmap_size().
-
-> It also hides some implementation details about how bitmaps are stored (array of
-> longs)
-
-Sorry, I don't understand that. How bitmap_size() helps to hide a fact that
-bitmap is an array of unsigned longs? (Except that it makes an impression
-that it's an array of bytes.)
-
-> Before introducing this function in patch 3, patch 1 and 2 rename some functions
-> with the same name but with different meaning.
+On Sat, Jul 02, 2022 at 08:29:09PM +0200, Christophe JAILLET wrote:
+> In order to introduce a bitmap_size() function in the bitmap API, we have
+> to rename functions with a similar name.
 > 
-> Finaly, patch 4 makes use of the new function in bitmap.h.
-
-You mentioned, you need bitmap_size() to use with vmalloc(), but in
-patch 4, there's no such code. 
- 
-> Other follow-up patches to simplify some drivers will be proposed later if/when
-> this serie is merged.
-
-This series doesn't show an example of how you're going to use new
-API, and therefore it's hard to judge, do we really need bitmap_size(),
-or we just need more helpers around.
-
-As I already said, bitmaps are evolving in 2nd direction, which is the
-right approach, I think.
-
-Thanks,
-Yury
-
-> Christophe JAILLET (4):
->   s390/cio: Rename bitmap_size() as idset_bitmap_size()
->   fs/ntfs3: Rename bitmap_size() as ntfs3_bitmap_size()
->   bitmap: Introduce bitmap_size()
->   bitmap: Use bitmap_size()
+> Add a "idset_" prefix and change bitmap_size() into idset_bitmap_size().
 > 
->  drivers/md/dm-clone-metadata.c |  5 -----
->  drivers/s390/cio/idset.c       |  8 ++++----
->  fs/ntfs3/bitmap.c              |  4 ++--
->  fs/ntfs3/fsntfs.c              |  2 +-
->  fs/ntfs3/index.c               |  6 +++---
->  fs/ntfs3/ntfs_fs.h             |  2 +-
->  fs/ntfs3/super.c               |  2 +-
->  include/linux/bitmap.h         | 15 +++++++++------
->  lib/math/prime_numbers.c       |  2 --
->  9 files changed, 21 insertions(+), 25 deletions(-)
+> No functional change.
 > 
+> Signed-off-by: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
+> ---
+>  drivers/s390/cio/idset.c | 8 ++++----
+>  1 file changed, 4 insertions(+), 4 deletions(-)
+> 
+> diff --git a/drivers/s390/cio/idset.c b/drivers/s390/cio/idset.c
+> index 45f9c0736be4..e1e77fe080bf 100644
+> --- a/drivers/s390/cio/idset.c
+> +++ b/drivers/s390/cio/idset.c
+> @@ -16,7 +16,7 @@ struct idset {
+>  	unsigned long bitmap[];
+>  };
+>  
+> -static inline unsigned long bitmap_size(int num_ssid, int num_id)
+> +static inline unsigned long idset_bitmap_size(int num_ssid, int num_id)
+>  {
+>  	return BITS_TO_LONGS(num_ssid * num_id) * sizeof(unsigned long);
+>  }
+> @@ -25,11 +25,11 @@ static struct idset *idset_new(int num_ssid, int num_id)
+>  {
+>  	struct idset *set;
+>  
+> -	set = vmalloc(sizeof(struct idset) + bitmap_size(num_ssid, num_id));
+> +	set = vmalloc(sizeof(struct idset) + idset_bitmap_size(num_ssid, num_id));
+>  	if (set) {
+>  		set->num_ssid = num_ssid;
+>  		set->num_id = num_id;
+> -		memset(set->bitmap, 0, bitmap_size(num_ssid, num_id));
+> +		memset(set->bitmap, 0, idset_bitmap_size(num_ssid, num_id));
+
+We don't need bitmap_size() here, we need to replace memset() with
+bitmap_zero().
+
+>  	}
+>  	return set;
+>  }
+> @@ -41,7 +41,7 @@ void idset_free(struct idset *set)
+>  
+>  void idset_fill(struct idset *set)
+>  {
+> -	memset(set->bitmap, 0xff, bitmap_size(set->num_ssid, set->num_id));
+> +	memset(set->bitmap, 0xff, idset_bitmap_size(set->num_ssid, set->num_id));
+
+Same, but bitmap_fill().
+
+>  }
+>  
+>  static inline void idset_add(struct idset *set, int ssid, int id)
 > -- 
 > 2.34.1
 
