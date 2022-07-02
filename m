@@ -1,76 +1,76 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CA967CCA47F
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1A79DC3F2D4
 	for <dm-devel@archiver.kernel.org>; Thu,  7 Jul 2022 07:28:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1657178892;
+	s=mimecast20190719; t=1657178893;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=h1NBeb7ZjrwgvKnkL4L2rgBvjqT6t55A4Nr3wpeqIbs=;
-	b=d2EXxfSDy4zFKcSGU2hQ8GcXFJXE2x1uZYIxc2oHrB3Ni3+vOr+N0XpGDYj6xzpIxoE+Ve
-	nBSJAnUW1r/RGzFgHuYPfEpFDlZnIC4RnULcnocYQfwsdY+adQoewxL8jaW9hiVyfLwUKi
-	7s2D43UilnOHmO5cTK0/+0obn1KR7OY=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=bvxaOV40F5NTQsE+YKvnug+QdMiou1q2x2VLbTmdG9U=;
+	b=Kfi7hw87rJGvumMSAy18j++8Z6h4ziEkUUQrKmY1AU2mUFHYX4U4KyiGsKPbb8gM45kdoP
+	BY13el5utKPc8KkjV8gLF86Rh6Qy2sLKfNfloc3R+7qfEKlbu262VQwrntQfwlyMn/fM8m
+	ULoQN6tVIrnpJArZxgQEJ3Zc2mDL4So=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-124-i0Vk62PsOlmbZe1haM4WiQ-1; Thu, 07 Jul 2022 03:28:11 -0400
-X-MC-Unique: i0Vk62PsOlmbZe1haM4WiQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-673-1IxyVeFFPeezfS2eILbrMg-1; Thu, 07 Jul 2022 03:28:10 -0400
+X-MC-Unique: 1IxyVeFFPeezfS2eILbrMg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8D3BB3C0E211;
-	Thu,  7 Jul 2022 07:28:09 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4D94C89C8E3;
+	Thu,  7 Jul 2022 07:28:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6FC322166B29;
-	Thu,  7 Jul 2022 07:28:09 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 30E0E1415118;
+	Thu,  7 Jul 2022 07:28:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 469FA1947068;
-	Thu,  7 Jul 2022 07:28:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BC6941947072;
+	Thu,  7 Jul 2022 07:28:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 42674194705D
- for <dm-devel@listman.corp.redhat.com>; Tue,  5 Jul 2022 23:42:24 +0000 (UTC)
+ ESMTP id 9BC191947070
+ for <dm-devel@listman.corp.redhat.com>; Sat,  2 Jul 2022 00:59:38 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 22596112131E; Tue,  5 Jul 2022 23:42:24 +0000 (UTC)
+ id 7D5D52026D07; Sat,  2 Jul 2022 00:59:38 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1CACC112131B
- for <dm-devel@redhat.com>; Tue,  5 Jul 2022 23:42:24 +0000 (UTC)
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 776CF2026D64
+ for <dm-devel@redhat.com>; Sat,  2 Jul 2022 00:59:38 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E3EAA185A7A4
- for <dm-devel@redhat.com>; Tue,  5 Jul 2022 23:42:23 +0000 (UTC)
-Received: from mga14.intel.com (mga14.intel.com [192.55.52.115]) by
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4AC7F85A581
+ for <dm-devel@redhat.com>; Sat,  2 Jul 2022 00:59:38 +0000 (UTC)
+Received: from mga09.intel.com (mga09.intel.com [134.134.136.24]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-633-lUT3gLoNNzSlFn8C8S4gtQ-1; Tue, 05 Jul 2022 19:42:21 -0400
-X-MC-Unique: lUT3gLoNNzSlFn8C8S4gtQ-1
-X-IronPort-AV: E=McAfee;i="6400,9594,10399"; a="283602064"
-X-IronPort-AV: E=Sophos;i="5.92,248,1650956400"; d="scan'208";a="283602064"
-Received: from fmsmga003.fm.intel.com ([10.253.24.29])
- by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
- 05 Jul 2022 16:42:20 -0700
+ us-mta-562-0g83MHzlPomjlUZrOG8fWg-1; Fri, 01 Jul 2022 20:59:36 -0400
+X-MC-Unique: 0g83MHzlPomjlUZrOG8fWg-1
+X-IronPort-AV: E=McAfee;i="6400,9594,10395"; a="283505157"
+X-IronPort-AV: E=Sophos;i="5.92,238,1650956400"; d="scan'208";a="283505157"
+Received: from fmsmga001.fm.intel.com ([10.253.24.23])
+ by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 01 Jul 2022 17:59:34 -0700
 X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.92,248,1650956400"; d="scan'208";a="682693984"
+X-IronPort-AV: E=Sophos;i="5.92,238,1650956400"; d="scan'208";a="734236333"
 Received: from lkp-server01.sh.intel.com (HELO 68b931ab7ac1) ([10.239.97.150])
- by FMSMGA003.fm.intel.com with ESMTP; 05 Jul 2022 16:42:01 -0700
+ by fmsmga001.fm.intel.com with ESMTP; 01 Jul 2022 17:59:14 -0700
 Received: from kbuild by 68b931ab7ac1 with local (Exim 4.95)
- (envelope-from <lkp@intel.com>) id 1o8sB7-000JiD-7d;
- Tue, 05 Jul 2022 23:42:01 +0000
-Date: Wed, 06 Jul 2022 07:41:36 +0800
+ (envelope-from <lkp@intel.com>) id 1o7RTe-000EY4-8h;
+ Sat, 02 Jul 2022 00:59:14 +0000
+Date: Sat, 02 Jul 2022 08:58:58 +0800
 From: kernel test robot <lkp@intel.com>
 To: Andrew Morton <akpm@linux-foundation.org>
-Message-ID: <62c4cc30.05O9fixuQpRmfYPQ%lkp@intel.com>
+Message-ID: <62bf9852.zVBEob/KwdY4BJrm%lkp@intel.com>
 User-Agent: Heirloom mailx 12.5 6/20/10
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -80,10 +80,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-Mailman-Approved-At: Thu, 07 Jul 2022 07:28:03 +0000
 Subject: [dm-devel] [linux-next:master] BUILD REGRESSION
- 2a2aa3f05338270aecbe2492fda910d6c17e0102
+ c4185b16aba73929aa76f0d030efbe79ae867808
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -98,36 +98,35 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: nvdimm@lists.linux.dev, legousb-devel@lists.sourceforge.net,
  dri-devel@lists.freedesktop.org, linux-sctp@vger.kernel.org,
  linux-stm32@st-md-mailman.stormreply.com, linux-samsung-soc@vger.kernel.org,
- ceph-devel@vger.kernel.org, linux-pm@vger.kernel.org,
+ openipmi-developer@lists.sourceforge.net, linux-pm@vger.kernel.org,
  usbb2k-api-dev@nongnu.org, linux-omap@vger.kernel.org,
  megaraidlinux.pdl@broadcom.com, linux-usb@vger.kernel.org,
- linux-wireless@vger.kernel.org, linux-perf-users@vger.kernel.org,
- netfilter-devel@vger.kernel.org, linux-crypto@vger.kernel.org,
- linux-fsdevel@vger.kernel.org, linux-wpan@vger.kernel.org,
- linux-fbdev@vger.kernel.org, linux-parport@lists.infradead.org,
- samba-technical@lists.samba.org, linux-cxl@vger.kernel.org,
- virtualization@lists.linux-foundation.org, dm-devel@redhat.com,
- target-devel@vger.kernel.org, dev@openvswitch.org, linux-cifs@vger.kernel.org,
- linux-clk@vger.kernel.org, linux-rockchip@lists.infradead.org,
- iommu@lists.linux.dev, coreteam@netfilter.org, linux-media@vger.kernel.org,
+ linux-wireless@vger.kernel.org, netfilter-devel@vger.kernel.org,
+ linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ linux-wpan@vger.kernel.org, linux-fbdev@vger.kernel.org,
+ linux-parport@lists.infradead.org, samba-technical@lists.samba.org,
+ linux-cxl@vger.kernel.org, virtualization@lists.linux-foundation.org,
+ dm-devel@redhat.com, target-devel@vger.kernel.org, dev@openvswitch.org,
+ linux-cifs@vger.kernel.org, linux-clk@vger.kernel.org,
+ linux-rockchip@lists.infradead.org, iommu@lists.linux.dev,
+ coreteam@netfilter.org, linux-media@vger.kernel.org,
  linux-watchdog@vger.kernel.org, linux-arm-msm@vger.kernel.org,
- linux-can@vger.kernel.org, linaro-mm-sig@lists.linaro.org,
- linux-amlogic@lists.infradead.org, linux-arm-kernel@lists.infradead.org,
- linux-block@vger.kernel.org, linux-renesas-soc@vger.kernel.org,
- linux-integrity@vger.kernel.org, linux-efi@vger.kernel.org,
- linux-iio@vger.kernel.org, linux-pci@vger.kernel.org,
- linux-fpga@vger.kernel.org, alsa-devel@alsa-project.org,
- linux-mtd@lists.infradead.org, cgroups@vger.kernel.org,
- linux-phy@lists.infradead.org, sound-open-firmware@alsa-project.org,
- linux-rdma@vger.kernel.org, linux-staging@lists.linux.dev,
- amd-gfx@lists.freedesktop.org, isdn4linux@listserv.isdn4linux.de,
- linux-input@vger.kernel.org, linux-ext4@vger.kernel.org,
- mjpeg-users@lists.sourceforge.net, openipmi-developer@lists.sourceforge.net,
- linux-hwmon@vger.kernel.org, linux-parisc@vger.kernel.org,
- linux-ide@vger.kernel.org, linux-mmc@vger.kernel.org,
- iommu@lists.linux-foundation.org, keyrings@vger.kernel.org,
- netdev@vger.kernel.org, kvm@vger.kernel.org, damon@lists.linux.dev,
- Linux Memory Management List <linux-mm@kvack.org>,
+ linaro-mm-sig@lists.linaro.org, cgroups@vger.kernel.org,
+ linux-arm-kernel@lists.infradead.org, linux-block@vger.kernel.org,
+ linux-renesas-soc@vger.kernel.org, linux-integrity@vger.kernel.org,
+ linux-efi@vger.kernel.org, linux-iio@vger.kernel.org,
+ linux-pci@vger.kernel.org, linux-fpga@vger.kernel.org,
+ alsa-devel@alsa-project.org, linux-mtd@lists.infradead.org,
+ linux-amlogic@lists.infradead.org, linux-phy@lists.infradead.org,
+ sound-open-firmware@alsa-project.org, linux-rdma@vger.kernel.org,
+ linux-staging@lists.linux.dev, amd-gfx@lists.freedesktop.org,
+ isdn4linux@listserv.isdn4linux.de, linux-input@vger.kernel.org,
+ linux-ext4@vger.kernel.org, mjpeg-users@lists.sourceforge.net,
+ ceph-devel@vger.kernel.org, linux-hwmon@vger.kernel.org,
+ linux-parisc@vger.kernel.org, linux-ide@vger.kernel.org,
+ linux-mmc@vger.kernel.org, iommu@lists.linux-foundation.org,
+ keyrings@vger.kernel.org, netdev@vger.kernel.org, kvm@vger.kernel.org,
+ damon@lists.linux.dev, Linux Memory Management List <linux-mm@kvack.org>,
  accessrunner-general@lists.sourceforge.net,
  linux1394-devel@lists.sourceforge.net, linux-leds@vger.kernel.org,
  rds-devel@oss.oracle.com, linux-x25@vger.kernel.org, dccp@vger.kernel.org,
@@ -142,7 +141,7 @@ Cc: nvdimm@lists.linux.dev, legousb-devel@lists.sourceforge.net,
  linuxppc-dev@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -151,16 +150,10 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
 tree/branch: https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git master
-branch HEAD: 2a2aa3f05338270aecbe2492fda910d6c17e0102  Add linux-next specific files for 20220705
-
-Error/Warning reports:
-
-https://lore.kernel.org/linux-doc/202207051821.3f0eRIsL-lkp@intel.com
+branch HEAD: c4185b16aba73929aa76f0d030efbe79ae867808  Add linux-next specific files for 20220701
 
 Error/Warning: (recently discovered and may have been fixed)
 
-Documentation/PCI/endpoint/pci-vntb-function.rst:82: WARNING: Unexpected indentation.
-Documentation/PCI/endpoint/pci-vntb-howto.rst:131: WARNING: Title underline too short.
 drivers/pci/endpoint/functions/pci-epf-vntb.c:975:5: warning: no previous prototype for 'pci_read' [-Wmissing-prototypes]
 drivers/pci/endpoint/functions/pci-epf-vntb.c:984:5: warning: no previous prototype for 'pci_write' [-Wmissing-prototypes]
 
@@ -172,7 +165,7 @@ crypto/asymmetric_keys/pkcs7_verify.c:311:1: internal compiler error: in arc_ifc
 drivers/ata/libata-core.c:2802:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/ata/libata-eh.c:2842:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/ata/sata_dwc_460ex.c:691:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/base/power/runtime.c:1570:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+drivers/base/power/runtime.c:1573:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/block/rbd.c:6142:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/bluetooth/hci_ll.c:588:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/bluetooth/hci_qca.c:2137:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
@@ -192,7 +185,6 @@ drivers/cxl/core/pci.c:67:1: internal compiler error: in arc_ifcvt, at config/ar
 drivers/dma-buf/dma-buf.c:1100:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/firmware/arm_scmi/bus.c:152:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/firmware/arm_scmi/clock.c:394:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/firmware/arm_scmi/powercap.c:376:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/firmware/arm_scmi/sensors.c:673:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/firmware/arm_scmi/voltage.c:363:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/fpga/dfl-fme-mgr.c:163:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
@@ -262,7 +254,7 @@ drivers/md/dm-zoned-target.c:528:1: internal compiler error: in arc_ifcvt, at co
 drivers/md/md-multipath.c:204:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/md/raid1.c:1715:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/md/raid10.c:2040:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/md/raid5.c:8078:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+drivers/md/raid5.c:7883:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/media/cec/platform/s5p/s5p_cec.c:128:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/media/cec/usb/pulse8/pulse8-cec.c:787:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/media/common/saa7146/saa7146_core.c:495:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
@@ -375,9 +367,6 @@ drivers/mtd/spi-nor/xilinx.c:95:1: internal compiler error: in arc_ifcvt, at con
 drivers/net/bonding/bond_3ad.c:1962:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/bonding/bond_main.c:4647:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/bonding/bond_options.c:997:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/net/can/slcan/slcan-core.c:365:14: sparse:    void *
-drivers/net/can/slcan/slcan-core.c:365:14: sparse:    void [noderef] __rcu *
-drivers/net/can/slcan/slcan-core.c:365:14: sparse: sparse: incompatible types in comparison expression (different address spaces):
 drivers/net/dsa/microchip/ksz9477.c:501:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/dsa/mv88e6xxx/chip.c:68:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/dsa/mv88e6xxx/global1_atu.c:74:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
@@ -390,13 +379,13 @@ drivers/net/ethernet/altera/altera_tse_main.c:1308:1: internal compiler error: i
 drivers/net/ethernet/amd/xgbe/xgbe-mdio.c:1258:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/amd/xgbe/xgbe-phy-v2.c:1957:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/atheros/atl1c/atl1c_hw.c:765:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/net/ethernet/atheros/atl1c/atl1c_main.c:2601:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+drivers/net/ethernet/atheros/atl1c/atl1c_main.c:2600:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/chelsio/cxgb3/cxgb3_main.c:1388:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/davicom/dm9000.c:870:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/faraday/ftgmac100.c:854:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/faraday/ftmac100.c:382:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/freescale/fman/fman_port.c:915:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/net/ethernet/freescale/gianfar.c:2743:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+drivers/net/ethernet/freescale/gianfar.c:2742:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/fungible/funcore/fun_queue.c:536:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/hisilicon/hns/hnae.c:436:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/hisilicon/hns/hns_dsaf_mac.c:948:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
@@ -408,10 +397,10 @@ drivers/net/ethernet/intel/e1000e/ich8lan.c:5725:1: internal compiler error: in 
 drivers/net/ethernet/intel/e1000e/netdev.c:3188:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/intel/e1000e/nvm.c:597:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/intel/e1000e/phy.c:3018:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/net/ethernet/intel/i40e/i40e_ethtool.c:1539:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/net/ethernet/intel/i40e/i40e_main.c:9347:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/net/ethernet/intel/i40e/i40e_ptp.c:738:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/net/ethernet/intel/iavf/iavf_virtchnl.c:32:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+drivers/net/ethernet/intel/i40e/i40e_ethtool.c:1541:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+drivers/net/ethernet/intel/i40e/i40e_main.c:9274:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+drivers/net/ethernet/intel/i40e/i40e_ptp.c:739:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+drivers/net/ethernet/intel/iavf/iavf_virtchnl.c:36:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/intel/ice/ice_base.c:1003:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/intel/ice/ice_common.c:2500:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/intel/ice/ice_dcb_lib.c:520:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
@@ -427,10 +416,10 @@ drivers/net/ethernet/intel/ice/ice_ptp.c:2687:1: internal compiler error: in arc
 drivers/net/ethernet/intel/ice/ice_ptp_hw.c:2587:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/intel/ice/ice_sched.c:3646:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/intel/ice/ice_sriov.c:240:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/net/ethernet/intel/ice/ice_switch.c:1803:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+drivers/net/ethernet/intel/ice/ice_switch.c:1932:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/intel/ice/ice_vf_lib.c:444:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/intel/ice/ice_vf_vsi_vlan_ops.c:186:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/net/ethernet/intel/ice/ice_vlan_mode.c:379:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+drivers/net/ethernet/intel/ice/ice_vlan_mode.c:380:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/intel/igb/e1000_82575.c:2419:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/intel/igb/e1000_nvm.c:678:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/ethernet/intel/igb/e1000_phy.c:1185:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
@@ -500,8 +489,8 @@ drivers/net/usb/rndis_host.c:208:1: internal compiler error: in arc_ifcvt, at co
 drivers/net/usb/rtl8150.c:176:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/usb/sierra_net.c:561:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/usb/smsc75xx.c:2260:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/net/usb/smsc95xx.c:1027:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/net/usb/usbnet.c:2124:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+drivers/net/usb/smsc95xx.c:1068:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+drivers/net/usb/usbnet.c:2127:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/wireless/ath/carl9170/rx.c:440:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/wireless/intersil/orinoco/fw.c:197:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/net/wireless/intersil/orinoco/orinoco_usb.c:1487:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
@@ -563,8 +552,6 @@ drivers/staging/media/zoran/zoran_driver.c:994:1: internal compiler error: in ar
 drivers/staging/media/zoran/zr36016.c:430:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/staging/media/zoran/zr36050.c:829:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/staging/media/zoran/zr36060.c:869:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-drivers/staging/r8188eu/core/rtw_mlme.c:1120:49: sparse: sparse: incorrect type in argument 2 (different base types)
-drivers/staging/r8188eu/core/rtw_mlme_ext.c:6711:58: sparse: sparse: incorrect type in argument 2 (different base types)
 drivers/staging/rtl8192e/rtl819x_BAProc.c:176:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/staging/rtl8192e/rtllib_crypt_ccmp.c:316:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 drivers/staging/rtl8192e/rtllib_crypt_tkip.c:454:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
@@ -692,7 +679,7 @@ fs/cifs/smb1ops.c:284:1: internal compiler error: in arc_ifcvt, at config/arc/ar
 fs/cifs/smb2file.c:287:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 fs/cifs/smb2pdu.c:349:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 fs/ext4/mballoc.c:3612:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-fs/notify/fanotify/fanotify.c:666:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+fs/notify/fanotify/fanotify.c:663:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 fs/overlayfs/copy_up.c:503:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 fs/overlayfs/overlayfs.h:302:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 fs/ubifs/find.c:963:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
@@ -702,13 +689,13 @@ fs/ubifs/recovery.c:1062:1: internal compiler error: in arc_ifcvt, at config/arc
 fs/udf/balloc.c:169:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 kernel/cgroup/cgroup-v1.c:861:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 kernel/cgroup/cgroup.c:2813:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-kernel/sched/fair.c:4568:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+kernel/sched/fair.c:4514:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 kernel/sched/rt.c:1768:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 mm/damon/core.c:1133:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 mm/filemap.c:1354:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 mm/page_alloc.c:7743:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 mm/slub.c:5434:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-mm/vmscan.c:2478:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
+mm/vmscan.c:2484:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 net/bluetooth/hci_event.c:5926:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 net/bluetooth/hci_sync.c:4937:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 net/bluetooth/rfcomm/tty.c:995:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
@@ -799,14 +786,28 @@ sound/usb/mixer.c:451:1: internal compiler error: in arc_ifcvt, at config/arc/ar
 sound/usb/pcm.c:1249:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 sound/usb/quirks.c:991:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
 sound/usb/stream.c:1232:1: internal compiler error: in arc_ifcvt, at config/arc/arc.c:9637
-{standard input}:2311: Error: expecting )
 
 Error/Warning ids grouped by kconfigs:
 
 gcc_recent_errors
 |-- alpha-allyesconfig
 |   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_read
-|   `-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- alpha-randconfig-r001-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- alpha-randconfig-r003-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- alpha-randconfig-r015-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
 |-- arc-allyesconfig
 |   |-- block-partitions-efi.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   |-- block-sed-opal.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
@@ -834,7 +835,6 @@ gcc_recent_errors
 |   |-- drivers-dma-buf-dma-buf.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   |-- drivers-firmware-arm_scmi-bus.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   |-- drivers-firmware-arm_scmi-clock.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
-|   |-- drivers-firmware-arm_scmi-powercap.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   |-- drivers-firmware-arm_scmi-sensors.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   |-- drivers-firmware-arm_scmi-voltage.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   |-- drivers-fpga-dfl-fme-mgr.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
@@ -1346,8 +1346,11 @@ gcc_recent_errors
 |   |-- mm-damon-core.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   |-- mm-filemap.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   |-- mm-page_alloc.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
 |   |-- mm-slub.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   |-- mm-vmscan.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
 |   |-- net-bluetooth-hci_event.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   |-- net-bluetooth-hci_sync.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   |-- net-bluetooth-rfcomm-tty.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
@@ -1438,128 +1441,287 @@ gcc_recent_errors
 |   |-- sound-usb-pcm.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   |-- sound-usb-quirks.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
 |   `-- sound-usb-stream.c:internal-compiler-error:in-arc_ifcvt-at-config-arc-arc.c
+|-- arc-randconfig-r021-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- arc-randconfig-r032-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- arc-randconfig-r043-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
 |-- arm-allyesconfig
 |   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_read
-|   `-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
-|-- arm-randconfig-s032-20220703
-|   |-- sound-usb-mixer_quirks.c:sparse:sparse:cast-to-restricted-__be32
-|   `-- sound-usb-mixer_quirks.c:sparse:sparse:incorrect-type-in-initializer-(different-base-types)-expected-unsigned-int-usertype-buf-got-restricted-__be32-usertype
+|   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- arm-defconfig
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- arm-randconfig-r036-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
 |-- arm64-allyesconfig
 |   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_read
-|   `-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
-|-- i386-allnoconfig
-|   |-- Documentation-PCI-endpoint-pci-vntb-function.rst:WARNING:Unexpected-indentation.
-|   `-- Documentation-PCI-endpoint-pci-vntb-howto.rst:WARNING:Title-underline-too-short.
+|   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
 |-- i386-allyesconfig
 |   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_read
-|   `-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
-|-- i386-randconfig-m021
-|   `-- arch-x86-events-core.c-init_hw_perf_events()-warn:missing-error-code-err
-|-- i386-randconfig-s002
-|   |-- drivers-net-can-slcan-slcan-core.c:sparse:sparse:incompatible-types-in-comparison-expression-(different-address-spaces):
-|   |-- drivers-net-can-slcan-slcan-core.c:sparse:void
-|   `-- drivers-net-can-slcan-slcan-core.c:sparse:void-noderef-__rcu
+|   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- i386-defconfig
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- i386-randconfig-a001
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- i386-randconfig-a003
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- i386-randconfig-a005
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- i386-randconfig-a012
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- i386-randconfig-a014
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- i386-randconfig-a016
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
 |-- ia64-allmodconfig
 |   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_read
-|   `-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- m68k-allmodconfig
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- m68k-allyesconfig
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- microblaze-randconfig-r005-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- microblaze-randconfig-r026-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
 |-- mips-allyesconfig
 |   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_read
-|   `-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- mips-randconfig-r034-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- nios2-randconfig-r013-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- openrisc-randconfig-r024-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
 |-- powerpc-allmodconfig
 |   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_read
-|   `-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
-|-- riscv-allyesconfig
-|   |-- drivers-staging-r8188eu-core-rtw_mlme.c:sparse:sparse:incorrect-type-in-argument-(different-base-types)-expected-restricted-__le16-usertype-mstatus_rpt-got-unsigned-short-assigned-usertype-media_statu
-|   `-- drivers-staging-r8188eu-core-rtw_mlme_ext.c:sparse:sparse:incorrect-type-in-argument-(different-base-types)-expected-restricted-__le16-usertype-mstatus_rpt-got-unsigned-short-assigned-usertype-media_s
+|   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- riscv-buildonly-randconfig-r006-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- riscv-randconfig-r012-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- riscv-randconfig-r042-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- s390-randconfig-r044-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
 |-- sh-allmodconfig
-|   `-- standard-input:Error:expecting-)
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- sh-buildonly-randconfig-r001-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
 |-- sparc-allyesconfig
 |   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_read
-|   `-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- sparc-randconfig-r022-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- sparc64-randconfig-r004-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- sparc64-randconfig-r035-20220629
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
 |-- x86_64-allyesconfig
 |   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_read
-|   `-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
-|-- x86_64-randconfig-m001
-|   `-- arch-x86-events-core.c-init_hw_perf_events()-warn:missing-error-code-err
-`-- x86_64-randconfig-m001-20220704
-    `-- fs-kernel_read_file.c-kernel_read_file()-warn:impossible-condition-(i_size-(((-)-)))-(s64min-s64max-s64max)
+|   |-- drivers-pci-endpoint-functions-pci-epf-vntb.c:warning:no-previous-prototype-for-pci_write
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- x86_64-defconfig
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- x86_64-randconfig-a002
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- x86_64-randconfig-a004
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- x86_64-randconfig-a006
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- x86_64-randconfig-a011
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- x86_64-randconfig-a013
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- x86_64-randconfig-a015
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- x86_64-rhel-8.3
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- x86_64-rhel-8.3-func
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- x86_64-rhel-8.3-kselftests
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|-- x86_64-rhel-8.3-kunit
+|   |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+|   |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+|   `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+`-- x86_64-rhel-8.3-syz
+    |-- mm-shrinker_debug.c:warning:function-shrinker_debugfs_rename-might-be-a-candidate-for-gnu_printf-format-attribute
+    |-- mm-vmscan.c:warning:function-prealloc_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
+    `-- mm-vmscan.c:warning:function-register_shrinker-might-be-a-candidate-for-gnu_printf-format-attribute
 
 clang_recent_errors
-|-- i386-randconfig-a015
-|   |-- mm-memory-failure.c:error:conflicting-types-for-free_raw_hwp_pages
-|   `-- mm-memory-failure.c:error:use-of-undeclared-identifier-SUBPAGE_INDEX_HWPOISON
+|-- arm64-buildonly-randconfig-r002-20220629
+|   `-- drivers-vfio-vfio_iommu_type1.c:warning:cast-to-smaller-integer-type-enum-iommu_cap-from-void
+|-- s390-randconfig-r031-20220629
+|   `-- drivers-vfio-vfio_iommu_type1.c:warning:cast-to-smaller-integer-type-enum-iommu_cap-from-void
 |-- x86_64-randconfig-a001
 |   `-- drivers-vfio-vfio_iommu_type1.c:warning:cast-to-smaller-integer-type-enum-iommu_cap-from-void
 |-- x86_64-randconfig-a005
 |   `-- drivers-vfio-vfio_iommu_type1.c:warning:cast-to-smaller-integer-type-enum-iommu_cap-from-void
-|-- x86_64-randconfig-a012
-|   |-- drivers-vfio-vfio_iommu_type1.c:warning:cast-to-smaller-integer-type-enum-iommu_cap-from-void
-|   |-- mm-memory-failure.c:error:conflicting-types-for-free_raw_hwp_pages
-|   `-- mm-memory-failure.c:error:use-of-undeclared-identifier-SUBPAGE_INDEX_HWPOISON
-`-- x86_64-randconfig-a014
-    |-- mm-memory-failure.c:error:conflicting-types-for-free_raw_hwp_pages
-    `-- mm-memory-failure.c:error:use-of-undeclared-identifier-SUBPAGE_INDEX_HWPOISON
+`-- x86_64-randconfig-a012
+    `-- drivers-vfio-vfio_iommu_type1.c:warning:cast-to-smaller-integer-type-enum-iommu_cap-from-void
 
-elapsed time: 726m
+elapsed time: 723m
 
 configs tested: 52
-configs skipped: 2
+configs skipped: 3
 
 gcc tested configs:
 arm                                 defconfig
-arm                              allyesconfig
 arm64                            allyesconfig
+arm                              allyesconfig
 ia64                             allmodconfig
-powerpc                           allnoconfig
-sh                               allmodconfig
-powerpc                          allmodconfig
-mips                             allyesconfig
 arc                              allyesconfig
 alpha                            allyesconfig
 m68k                             allmodconfig
 m68k                             allyesconfig
+powerpc                           allnoconfig
+sh                               allmodconfig
+mips                             allyesconfig
+powerpc                          allmodconfig
 i386                                defconfig
 i386                             allyesconfig
+x86_64                        randconfig-a004
+x86_64                        randconfig-a002
+x86_64                        randconfig-a006
 i386                          randconfig-a001
 i386                          randconfig-a003
 i386                          randconfig-a005
-x86_64                        randconfig-a002
-x86_64                        randconfig-a004
-x86_64                        randconfig-a006
 x86_64                        randconfig-a013
 x86_64                        randconfig-a011
 x86_64                        randconfig-a015
 i386                          randconfig-a014
 i386                          randconfig-a012
 i386                          randconfig-a016
-riscv                randconfig-r042-20220703
-arc                  randconfig-r043-20220703
-s390                 randconfig-r044-20220703
+arc                  randconfig-r043-20220629
+s390                 randconfig-r044-20220629
+riscv                randconfig-r042-20220629
 um                             i386_defconfig
 um                           x86_64_defconfig
+x86_64                         rhel-8.3-kunit
+x86_64                          rhel-8.3-func
+x86_64                           rhel-8.3-syz
+x86_64                    rhel-8.3-kselftests
 x86_64                              defconfig
 x86_64                               rhel-8.3
 x86_64                           allyesconfig
-x86_64                          rhel-8.3-func
-x86_64                         rhel-8.3-kunit
-x86_64                    rhel-8.3-kselftests
-x86_64                           rhel-8.3-syz
 
 clang tested configs:
+x86_64                        randconfig-a005
+x86_64                        randconfig-a001
+x86_64                        randconfig-a003
 i386                          randconfig-a002
 i386                          randconfig-a006
 i386                          randconfig-a004
-x86_64                        randconfig-a001
-x86_64                        randconfig-a003
-x86_64                        randconfig-a005
+x86_64                        randconfig-a016
 x86_64                        randconfig-a012
 x86_64                        randconfig-a014
-x86_64                        randconfig-a016
 i386                          randconfig-a013
 i386                          randconfig-a011
 i386                          randconfig-a015
-hexagon              randconfig-r041-20220703
-hexagon              randconfig-r045-20220703
+hexagon              randconfig-r045-20220629
+hexagon              randconfig-r041-20220629
 
 -- 
 0-DAY CI Kernel Test Service
