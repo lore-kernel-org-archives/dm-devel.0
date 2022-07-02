@@ -1,93 +1,73 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CFC32CCA485
-	for <dm-devel@archiver.kernel.org>; Thu,  7 Jul 2022 07:28:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A70C7CCA483
+	for <dm-devel@archiver.kernel.org>; Thu,  7 Jul 2022 07:28:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1657178896;
+	s=mimecast20190719; t=1657178895;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=AboTauQiPA/JYxSD7fIUQ1qrcSnZa1yU/NnavPmbgg4=;
-	b=QPZ5UXquIZYhUpZzfqwQ6P7whjYp6DRTYKxdb6Q6YvE/DbuN8RvNp0hAs+lEF1g9+hhS0c
-	MXS+OvRrRzQDigVXTs1QkjLEoUEcvLt2MjXmzfiqveNeDJ9wqBuU83TIe7/2slCREu6hfY
-	Zp6K4rEsLMTSA3mal6tli9DL41UzX8o=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=cyUo65E54/FwIHmyISLvPUaARE+LFNkQJRO7YHPhyqs=;
+	b=B2K+zi5rpiPGUCqa8Dc/dy5V/NHrXozx0sdJcADwwLkPeCg977F1/7SV6FgVzs2xxhxCzv
+	5sX+jdzTHWP/3Cg6dG6o+ciROFIRQLMbOKJWuSPG3TpjvmAA1mnAZoWI0VZ12A6lY+AUVz
+	m3yxJIXJGG3EvbqL9qIkHWixz22amrU=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-619-eOoefn2INOGsBzpDQI2QMw-1; Thu, 07 Jul 2022 03:28:13 -0400
-X-MC-Unique: eOoefn2INOGsBzpDQI2QMw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-616-sBurOaoqP-66W_juuivrfA-1; Thu, 07 Jul 2022 03:28:11 -0400
+X-MC-Unique: sBurOaoqP-66W_juuivrfA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B404F1034ADA;
-	Thu,  7 Jul 2022 07:28:09 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9205F38041C7;
+	Thu,  7 Jul 2022 07:28:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A1FA52026D64;
-	Thu,  7 Jul 2022 07:28:09 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 80EB2492C3B;
+	Thu,  7 Jul 2022 07:28:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7E1231947072;
-	Thu,  7 Jul 2022 07:28:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6758E1947068;
+	Thu,  7 Jul 2022 07:28:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8B9771947040
- for <dm-devel@listman.corp.redhat.com>; Sun,  3 Jul 2022 03:26:27 +0000 (UTC)
+ ESMTP id 63D2E1947070
+ for <dm-devel@listman.corp.redhat.com>; Sat,  2 Jul 2022 01:10:16 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5DE6840334D; Sun,  3 Jul 2022 03:26:27 +0000 (UTC)
+ id 2E4A240E7F29; Sat,  2 Jul 2022 01:10:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 59DCD416362
- for <dm-devel@redhat.com>; Sun,  3 Jul 2022 03:26:27 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 424AC185A7A4
- for <dm-devel@redhat.com>; Sun,  3 Jul 2022 03:26:27 +0000 (UTC)
-Received: from mail-pj1-f47.google.com (mail-pj1-f47.google.com
- [209.85.216.47]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-645-8bRWMlGgNaaN_TFJ8xfEvw-1; Sat, 02 Jul 2022 23:26:23 -0400
-X-MC-Unique: 8bRWMlGgNaaN_TFJ8xfEvw-1
-Received: by mail-pj1-f47.google.com with SMTP id o15so1751576pjh.1;
- Sat, 02 Jul 2022 20:26:23 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=/LE3/OvnxwC10hHaqp2JoOJSN7rfZOpUu2WCyCiyCz4=;
- b=MEFGQXGnnk6W6ABy966ZS2Bdq7xbyyF+Fgz2L4ZmNsv8keeVdZsj6y8mllSXXvKaXe
- GCZRJJO2g5fZTd1JunEBzy2AuMANWqHqXWrw4oBhn1OfhoqSSwX3gib2DlzT2qhoyPyu
- UC21QkMYCZTTdgIs1132JQAzxeuuRAkmIcdr8Q5ZYqKN9OkJyqNTzkr9w9aarHztG0X5
- +20wnmo42NVpAaLruE6vOaPHCbyev+yWlmE9nt/TpCM9CBOvs3XPYS/jEer0nrP/3Cu2
- coHumVsWs5J6vYJ3rR86RLmGwg15N6pgO2nJ6ikEnxCzfOenx4ayofH4M91ae+gB3EOG
- x0NA==
-X-Gm-Message-State: AJIora9drBvSWjArLfIvcRXcJNOyvxECtne0A2pTfjsJyZ5KaJHLQAh9
- dQNQG7q/d548NpGz9UJxD8A=
-X-Google-Smtp-Source: AGRyM1v/qGK0NX2/G7uiSvuhmywhBxQ+rRzGPCB7tQOWN8p4Gfx3qW4Qvkfllc0ImMReMYjkXPk5jA==
-X-Received: by 2002:a17:903:2c6:b0:16a:276a:ad81 with SMTP id
- s6-20020a17090302c600b0016a276aad81mr29074812plk.65.1656818782428; 
- Sat, 02 Jul 2022 20:26:22 -0700 (PDT)
-Received: from debian.me (subs32-116-206-28-33.three.co.id. [116.206.28.33])
- by smtp.gmail.com with ESMTPSA id
- u17-20020a170902e81100b0016a0db8c5b4sm1866809plg.156.2022.07.02.20.26.20
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Sat, 02 Jul 2022 20:26:21 -0700 (PDT)
-Received: by debian.me (Postfix, from userid 1000)
- id EA78810390C; Sun,  3 Jul 2022 10:26:16 +0700 (WIB)
-Date: Sun, 3 Jul 2022 10:26:16 +0700
-From: Bagas Sanjaya <bagasdotme@gmail.com>
-To: Mauro Carvalho Chehab <mchehab@kernel.org>
-Message-ID: <YsEMWDYCdjxiUZ1P@debian.me>
-References: <cover.1656759988.git.mchehab@kernel.org>
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2A4BF40E7F28
+ for <dm-devel@redhat.com>; Sat,  2 Jul 2022 01:10:16 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1014138041DE
+ for <dm-devel@redhat.com>; Sat,  2 Jul 2022 01:10:16 +0000 (UTC)
+Received: from out1.migadu.com (out1.migadu.com [91.121.223.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-462-TXLlFhc2OrShfULoCqztGw-1; Fri, 01 Jul 2022 21:10:14 -0400
+X-MC-Unique: TXLlFhc2OrShfULoCqztGw-1
+Date: Fri, 1 Jul 2022 18:03:10 -0700
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and
+ include these headers.
+From: Roman Gushchin <roman.gushchin@linux.dev>
+To: Andrew Morton <akpm@linux-foundation.org>,
+ kernel test robot <lkp@intel.com>
+Message-ID: <Yr+ZTnLb9lJk6fJO@castle>
+References: <62be3696.+PAAAVlbtWK6G2hk%lkp@intel.com>
 MIME-Version: 1.0
-In-Reply-To: <cover.1656759988.git.mchehab@kernel.org>
+In-Reply-To: <62be3696.+PAAAVlbtWK6G2hk%lkp@intel.com>
+X-Migadu-Flow: FLOW_OUT
+X-Migadu-Auth-User: linux.dev
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -95,10 +75,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-Mailman-Approved-At: Thu, 07 Jul 2022 07:28:03 +0000
-Subject: Re: [dm-devel] [PATCH 00/12] Fix several documentation build
- warnings with Sphinx 2.4.4
+Subject: Re: [dm-devel] [linux-next:master] BUILD REGRESSION
+ 6cc11d2a1759275b856e464265823d94aabd5eaf
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -110,25 +90,53 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Krzysztof =?utf-8?Q?Wilczy=C5=84ski?= <kw@linux.com>,
- Gwendal Grignou <gwendal@chromium.org>, kvm@vger.kernel.org,
- Linux Doc Mailing List <linux-doc@vger.kernel.org>, linux-pci@vger.kernel.org,
- Brendan Higgins <brendanhiggins@google.com>, alsa-devel@alsa-project.org,
- Jaroslav Kysela <perex@perex.cz>, dm-devel@redhat.com,
- Andreas Dilger <adilger.kernel@dilger.ca>, linux-kselftest@vger.kernel.org,
- Alasdair Kergon <agk@redhat.com>, Jonathan Corbet <corbet@lwn.net>,
- Mauro Carvalho Chehab <mchehab+huawei@kernel.org>,
- Takashi Iwai <tiwai@suse.com>, Jakub Kicinski <kuba@kernel.org>,
- Paolo Abeni <pabeni@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- linux-tegra@vger.kernel.org, kunit-dev@googlegroups.com,
- linux-ext4@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>,
- Eric Dumazet <edumazet@google.com>, Dipen Patel <dipenp@nvidia.com>,
- netdev@vger.kernel.org, linux-wireless@vger.kernel.org,
- linux-kernel@vger.kernel.org, Johannes Berg <johannes@sipsolutions.net>,
- "David S. Miller" <davem@davemloft.net>
+Cc: nvdimm@lists.linux.dev, legousb-devel@lists.sourceforge.net,
+ dri-devel@lists.freedesktop.org, linux-sctp@vger.kernel.org,
+ linux-stm32@st-md-mailman.stormreply.com, linux-samsung-soc@vger.kernel.org,
+ ceph-devel@vger.kernel.org, linux-pm@vger.kernel.org,
+ usbb2k-api-dev@nongnu.org, linux-omap@vger.kernel.org,
+ megaraidlinux.pdl@broadcom.com, linux-usb@vger.kernel.org,
+ linux-wireless@vger.kernel.org, linux-perf-users@vger.kernel.org,
+ netfilter-devel@vger.kernel.org, linux-crypto@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org, linux-wpan@vger.kernel.org,
+ linux-fbdev@vger.kernel.org, linux-parport@lists.infradead.org,
+ samba-technical@lists.samba.org, linux-cxl@vger.kernel.org,
+ virtualization@lists.linux-foundation.org, dm-devel@redhat.com,
+ target-devel@vger.kernel.org, dev@openvswitch.org, linux-cifs@vger.kernel.org,
+ linux-clk@vger.kernel.org, linux-rockchip@lists.infradead.org,
+ iommu@lists.linux.dev, coreteam@netfilter.org, linux-media@vger.kernel.org,
+ linux-watchdog@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ linaro-mm-sig@lists.linaro.org, cgroups@vger.kernel.org,
+ linux-arm-kernel@lists.infradead.org, linux-block@vger.kernel.org,
+ linux-renesas-soc@vger.kernel.org, linux-integrity@vger.kernel.org,
+ linux-efi@vger.kernel.org, linux-iio@vger.kernel.org,
+ linux-pci@vger.kernel.org, linux-fpga@vger.kernel.org,
+ alsa-devel@alsa-project.org, linux-mtd@lists.infradead.org,
+ linux-amlogic@lists.infradead.org, linux-phy@lists.infradead.org,
+ sound-open-firmware@alsa-project.org, linux-rdma@vger.kernel.org,
+ linux-staging@lists.linux.dev, amd-gfx@lists.freedesktop.org,
+ isdn4linux@listserv.isdn4linux.de, linux-input@vger.kernel.org,
+ linux-ext4@vger.kernel.org, mjpeg-users@lists.sourceforge.net,
+ openipmi-developer@lists.sourceforge.net, linux-hwmon@vger.kernel.org,
+ linux-parisc@vger.kernel.org, linux-ide@vger.kernel.org,
+ linux-mmc@vger.kernel.org, iommu@lists.linux-foundation.org,
+ keyrings@vger.kernel.org, netdev@vger.kernel.org, kvm@vger.kernel.org,
+ damon@lists.linux.dev, linux-mm@kvack.org,
+ accessrunner-general@lists.sourceforge.net,
+ linux1394-devel@lists.sourceforge.net, linux-leds@vger.kernel.org,
+ rds-devel@oss.oracle.com, linux-x25@vger.kernel.org, dccp@vger.kernel.org,
+ intel-wired-lan@lists.osuosl.org, linux-serial@vger.kernel.org,
+ devicetree@vger.kernel.org, linux-nfc@lists.01.org,
+ osmocom-net-gprs@lists.osmocom.org, apparmor@lists.ubuntu.com,
+ linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org,
+ linux-mediatek@lists.infradead.org, linux-tegra@vger.kernel.org,
+ linux-scsi@vger.kernel.org, patches@opensource.cirrus.com,
+ linux-unionfs@vger.kernel.org, linux-bluetooth@vger.kernel.org,
+ ntb@lists.linux.dev, tipc-discussion@lists.sourceforge.net,
+ linuxppc-dev@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -137,50 +145,101 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sat, Jul 02, 2022 at 12:07:32PM +0100, Mauro Carvalho Chehab wrote:
-> This series is against next-20220701. It fixes several warnings
-> that are currently produced while building html docs.
+esOn Fri, Jul 01, 2022 at 07:49:42AM +0800, kbuild test robot wrote:
+> tree/branch: https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git master
+> branch HEAD: 6cc11d2a1759275b856e464265823d94aabd5eaf  Add linux-next specific files for 20220630
 > 
-> Each patch in this series is independent from the others, as
-> each one touches a different file.
+> Error/Warning reports:
 > 
-> Mauro Carvalho Chehab (12):
->   docs: ext4: blockmap.rst: fix a broken table
->   docs: tegra194-hte.rst: don't include gpiolib.c twice
->   docs: device-mapper: add a blank line at writecache.rst
->   docs: PCI: pci-vntb-function.rst: Properly include ascii artwork
->   docs: PCI: pci-vntb-howto.rst: fix a title markup
->   docs: virt: kvm: fix a title markup at api.rst
->   docs: ABI: sysfs-bus-nvdimm
->   kunit: test.h: fix a kernel-doc markup
->   net: mac80211: fix a kernel-doc markup
->   docs: alsa: alsa-driver-api.rst: remove a kernel-doc file
->   docs: arm: index.rst: add google/chromebook-boot-flow
->   docs: leds: index.rst: add leds-qcom-lpg to it
+> https://lore.kernel.org/linux-mm/202206301859.UodBCrva-lkp@intel.com
 > 
+> Error/Warning: (recently discovered and may have been fixed)
+> 
+> arch/powerpc/kernel/interrupt.c:542:55: error: suggest braces around empty body in an 'if' statement [-Werror=empty-body]
+> arch/powerpc/kernel/interrupt.c:542:55: warning: suggest braces around empty body in an 'if' statement [-Wempty-body]
+> drivers/pci/endpoint/functions/pci-epf-vntb.c:975:5: warning: no previous prototype for 'pci_read' [-Wmissing-prototypes]
+> drivers/pci/endpoint/functions/pci-epf-vntb.c:984:5: warning: no previous prototype for 'pci_write' [-Wmissing-prototypes]
+> mm/shrinker_debug.c:143:9: warning: function 'shrinker_debugfs_rename' might be a candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
+> mm/shrinker_debug.c:217:9: warning: function 'shrinker_debugfs_rename' might be a candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
+> mm/vmscan.c:637:9: warning: function 'prealloc_shrinker' might be a candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
+> mm/vmscan.c:642:9: warning: function 'prealloc_shrinker' might be a candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
+> mm/vmscan.c:697:9: warning: function 'register_shrinker' might be a candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
+> mm/vmscan.c:702:9: warning: function 'register_shrinker' might be a candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
 
-Hi Mauro,
+Shrinker-related warnings should be fixed by the following patch.
 
-Thanks for cleaning up these warning above. However, I have already
-submitted some of these cleanups (pending reviews or integration):
+Thanks!
 
-[1]: https://lore.kernel.org/linux-doc/20220702042350.23187-1-bagasdotme@gmail.com/
-[2]: https://lore.kernel.org/linux-doc/20220612000125.9777-1-bagasdotme@gmail.com/
-[3]: https://lore.kernel.org/linux-doc/20220627095151.19339-1-bagasdotme@gmail.com/
-[4]: https://lore.kernel.org/linux-doc/20220627082928.11239-1-bagasdotme@gmail.com/
+--
 
-There's still a warning left:
+From c399aff65c7745a209397a531c5b28fd404d83c2 Mon Sep 17 00:00:00 2001
+From: Roman Gushchin <roman.gushchin@linux.dev>
+Date: Fri, 1 Jul 2022 17:38:31 -0700
+Subject: [PATCH] mm:shrinkers: fix build warnings
 
-Documentation/ABI/testing/sysfs-bus-iio-sx9324:2: WARNING: Unexpected indentation.
+Add __printf(a, b) attributes to shrinker functions taking shrinker
+name as an argument to avoid compiler warnings like:
 
-But I think the Date: field that triggered the warning above looks OK.
+mm/shrinker_debug.c:143:9: warning: function 'shrinker_debugfs_rename'
+  might be a candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
+mm/shrinker_debug.c:217:9: warning: function 'shrinker_debugfs_rename'
+  might be a candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
+mm/vmscan.c:637:9: warning: function 'prealloc_shrinker' might be a
+  candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
+mm/vmscan.c:642:9: warning: function 'prealloc_shrinker' might be a
+  candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
+mm/vmscan.c:697:9: warning: function 'register_shrinker' might be a
+  candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
+mm/vmscan.c:702:9: warning: function 'register_shrinker' might be a
+  candidate for 'gnu_printf' format attribute [-Wsuggest-attribute=format]
 
-Regardless of that, the build successed.
+Signed-off-by: Roman Gushchin <roman.gushchin@linux.dev>
+---
+ include/linux/shrinker.h | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
 
-Reviewed-by: Bagas Sanjaya <bagasdotme@gmail.com>
-
+diff --git a/include/linux/shrinker.h b/include/linux/shrinker.h
+index 64416f3e0a1f..08e6054e061f 100644
+--- a/include/linux/shrinker.h
++++ b/include/linux/shrinker.h
+@@ -93,9 +93,11 @@ struct shrinker {
+  */
+ #define SHRINKER_NONSLAB	(1 << 3)
+ 
+-extern int prealloc_shrinker(struct shrinker *shrinker, const char *fmt, ...);
++extern int __printf(2, 3) prealloc_shrinker(struct shrinker *shrinker,
++					    const char *fmt, ...);
+ extern void register_shrinker_prepared(struct shrinker *shrinker);
+-extern int register_shrinker(struct shrinker *shrinker, const char *fmt, ...);
++extern int __printf(2, 3) register_shrinker(struct shrinker *shrinker,
++					    const char *fmt, ...);
+ extern void unregister_shrinker(struct shrinker *shrinker);
+ extern void free_prealloced_shrinker(struct shrinker *shrinker);
+ extern void synchronize_shrinkers(void);
+@@ -103,8 +105,8 @@ extern void synchronize_shrinkers(void);
+ #ifdef CONFIG_SHRINKER_DEBUG
+ extern int shrinker_debugfs_add(struct shrinker *shrinker);
+ extern void shrinker_debugfs_remove(struct shrinker *shrinker);
+-extern int shrinker_debugfs_rename(struct shrinker *shrinker,
+-				   const char *fmt, ...);
++extern int __printf(2, 3) shrinker_debugfs_rename(struct shrinker *shrinker,
++						  const char *fmt, ...);
+ #else /* CONFIG_SHRINKER_DEBUG */
+ static inline int shrinker_debugfs_add(struct shrinker *shrinker)
+ {
+@@ -113,8 +115,8 @@ static inline int shrinker_debugfs_add(struct shrinker *shrinker)
+ static inline void shrinker_debugfs_remove(struct shrinker *shrinker)
+ {
+ }
+-static inline int shrinker_debugfs_rename(struct shrinker *shrinker,
+-					  const char *fmt, ...)
++static inline __printf(2, 3)
++int shrinker_debugfs_rename(struct shrinker *shrinker, const char *fmt, ...)
+ {
+ 	return 0;
+ }
 -- 
-An old man doll... just what I always wanted! - Clara
+2.36.1
 
 --
 dm-devel mailing list
