@@ -1,11 +1,11 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1EB5EC43334
-	for <dm-devel@archiver.kernel.org>; Thu,  7 Jul 2022 07:28:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C7C0ECCA479
+	for <dm-devel@archiver.kernel.org>; Thu,  7 Jul 2022 07:28:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1657178892;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
@@ -14,79 +14,80 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=QqymCkN+NNGic7cVz5+9uiJO4fPxkicvKyia3gMiXwM=;
-	b=GLerxqYEy3ScgrBoslVdqBWACkietfxGJsIGXQbX2TaCaBAucNznjDVM01kyBarAC0CbZX
-	dUahS37Wp0wf3VsxpbSrfOVsqO3pifXjrXJMtYETUQi9wxneX/0ozxeNHpwZUuwl7d2C2K
-	Ar4IMpa4pUt1h+RGZy82isEI/4Nk96I=
+	bh=AkIO7jcx+CeUOIFMrtgf6OG/gS5TYPtM7styDCaABjI=;
+	b=gMjbxAcFnikiKNdEQfX35/p6L5omQ5abnJNJPyQWpgB2s0W/hOH4uTkp60JdSRvKBhzTED
+	ueyqhqajxJKVIrdAGenjjOpLXLgsmoP7RmM0E3pnU7ZHG7PRguKtwoc3nUR+Bmz/nYNZId
+	KsfxCWEZQndOBBLb2rCxmoaTiWgWeTY=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-583-vgRiAPITMjCpQb-b0uFsfw-1; Thu, 07 Jul 2022 03:28:08 -0400
-X-MC-Unique: vgRiAPITMjCpQb-b0uFsfw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-634-CGtgcrA7OCOGed5qXFU4Aw-1; Thu, 07 Jul 2022 03:28:09 -0400
+X-MC-Unique: CGtgcrA7OCOGed5qXFU4Aw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2524438041D3;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DC53A3C0E21B;
 	Thu,  7 Jul 2022 07:28:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 104E4400DFA6;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 973661121315;
 	Thu,  7 Jul 2022 07:28:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 22403194707F;
-	Thu,  7 Jul 2022 07:28:05 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 732C31947068;
+	Thu,  7 Jul 2022 07:28:06 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
  [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 61E0E1947042
- for <dm-devel@listman.corp.redhat.com>; Sat,  2 Jul 2022 21:09:50 +0000 (UTC)
+ ESMTP id 852581947042
+ for <dm-devel@listman.corp.redhat.com>; Sat,  2 Jul 2022 20:57:58 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3B53040E7F29; Sat,  2 Jul 2022 21:09:50 +0000 (UTC)
+ id 7656340E7F2A; Sat,  2 Jul 2022 20:57:58 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 371C240E7F28
- for <dm-devel@redhat.com>; Sat,  2 Jul 2022 21:09:50 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1F1D43C025D3
- for <dm-devel@redhat.com>; Sat,  2 Jul 2022 21:09:50 +0000 (UTC)
-Received: from mail-qt1-f177.google.com (mail-qt1-f177.google.com
- [209.85.160.177]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 71F1640E7F29
+ for <dm-devel@redhat.com>; Sat,  2 Jul 2022 20:57:58 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 58F22811E75
+ for <dm-devel@redhat.com>; Sat,  2 Jul 2022 20:57:58 +0000 (UTC)
+Received: from mail-qt1-f182.google.com (mail-qt1-f182.google.com
+ [209.85.160.182]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-591-NDHd8T5ANQqbWVXqGPBPYQ-1; Sat, 02 Jul 2022 17:09:48 -0400
-X-MC-Unique: NDHd8T5ANQqbWVXqGPBPYQ-1
-Received: by mail-qt1-f177.google.com with SMTP id he28so4605473qtb.13;
- Sat, 02 Jul 2022 14:09:48 -0700 (PDT)
+ us-mta-626-jJYDbCsJOg2OBO6dNkcesg-1; Sat, 02 Jul 2022 16:57:56 -0400
+X-MC-Unique: jJYDbCsJOg2OBO6dNkcesg-1
+Received: by mail-qt1-f182.google.com with SMTP id bs20so4585131qtb.11;
+ Sat, 02 Jul 2022 13:57:56 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:date:from:to:cc:subject:message-id:references
  :mime-version:content-disposition:in-reply-to;
- bh=sMAa2iLeQqiv/ZzIKaEzdmiyv2BKPN4LO2LUx74OXts=;
- b=f+OcmiZHw3TwB+JgkTWKYaS5TNr0tvSZ7Cxkx2EIUj+6i3mnZCZlHD5dYTHtBzOKfb
- yMvI/JMSX65NyOVafyrRXYIlUDSdIHwUXafyqRpSIyvQ4GIf2RJDOfbpJCa4FpFw6EmI
- +i2yje77FdMFl8Bjbry0Y3nyPkgGKx+GNNb6Io1o2Z9/Z/soC+mdkYEAk80rtfJ3/zak
- 2KBD7fUWKoZuYCadnJUgBjcP1ozjB+b+tT1K0qv8EFk3m4MJ78xheZJjGJUGzJU9UHTU
- +yi3TwRTbjOv3PI63Z+kG2O0E1sQ1SyvIBIpk63A7U47ihAZIKyBhmiHbXnHug3Ku1vg
- G03Q==
-X-Gm-Message-State: AJIora+Y7uhc70VDPSwpt3NQyPTxWGvpD0DweXf0C48UyM4eGnRYPRvq
- SDW6St5L5XyaHSREBNC4Esc=
-X-Google-Smtp-Source: AGRyM1vI0vuCSLmgu6ot91FWxWNvpuMeLByWm6OnSRKXaOezOBQwCg2H7Y1rdlq+T8yiEhPqf1YmXg==
-X-Received: by 2002:a05:622a:1104:b0:31d:2a1c:a4fb with SMTP id
- e4-20020a05622a110400b0031d2a1ca4fbmr14927580qty.327.1656796187972; 
- Sat, 02 Jul 2022 14:09:47 -0700 (PDT)
+ bh=tmTe/j9IQg6kfh2nkxJHNkkQGZhhodot4AonVc2ypEg=;
+ b=vgaYzcPktzN+ev51JsI+4UIZhTHeq39hJz42cdTaTkS+z83ahx/E4wzLArYQ24j3iH
+ dM0Tk04aBQLsk1kba05YdlSYBoT1whlWI0yIGn3bwQ6KkGyNuChe0AymUGXIPbfN2mdA
+ kxLZxXWzVT5U9zE97bjAp2vm4/PzFLAVn+jOgQwkUG4LorKgWI98qjfnBY6PW3d800VA
+ 65vALt0hekQsrVM9Z2NIJ0R4YEZjEGh62AAINNF6X74mzZ2lD0YuD/yzU8yiqZWcQfBl
+ vm/xYk1xqD3E7mY+vxqpeiiQFtRIpYTJprirrD6O9owozvKU0fm4KX3KC2q0mBwruxsR
+ chyw==
+X-Gm-Message-State: AJIora/j111CYFZWw7J+2K/wW44PcLG94HMaK4ORCxdM5SuKAdqg2ptC
+ 6y40QpsGVQA/kJHWiIyxmrA=
+X-Google-Smtp-Source: AGRyM1vMHV2C70cJUaiTyxu/YwSJ8XyP2OTkuYOtM18QdLzUztKGlOFKlbFY1e8fLJy/XDzQVTFpKw==
+X-Received: by 2002:ac8:57d1:0:b0:31d:3e00:dfdc with SMTP id
+ w17-20020ac857d1000000b0031d3e00dfdcmr4112648qta.333.1656795475669; 
+ Sat, 02 Jul 2022 13:57:55 -0700 (PDT)
 Received: from localhost ([2601:4c1:c100:1230:e838:b1c2:b125:986a])
  by smtp.gmail.com with ESMTPSA id
- c3-20020ac84e03000000b00304f55e56e4sm17032646qtw.40.2022.07.02.14.09.47
+ n20-20020a05620a223400b006a6b564e9b8sm19311052qkh.4.2022.07.02.13.57.54
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Sat, 02 Jul 2022 14:09:47 -0700 (PDT)
-Date: Sat, 2 Jul 2022 14:09:46 -0700
+ Sat, 02 Jul 2022 13:57:55 -0700 (PDT)
+Date: Sat, 2 Jul 2022 13:57:54 -0700
 From: Yury Norov <yury.norov@gmail.com>
 To: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
-Message-ID: <YsC0GpltMVaCPhkJ@yury-laptop>
+Message-ID: <YsCxUrTKd1N4aVoJ@yury-laptop>
 References: <cover.1656785856.git.christophe.jaillet@wanadoo.fr>
- <98f5d3d855a9c687ccc035edf62016b02a6876b7.1656785856.git.christophe.jaillet@wanadoo.fr>
+ <56a3cb896ec446ca24e4756042d9f0829afc671a.1656785856.git.christophe.jaillet@wanadoo.fr>
 MIME-Version: 1.0
-In-Reply-To: <98f5d3d855a9c687ccc035edf62016b02a6876b7.1656785856.git.christophe.jaillet@wanadoo.fr>
+In-Reply-To: <56a3cb896ec446ca24e4756042d9f0829afc671a.1656785856.git.christophe.jaillet@wanadoo.fr>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -96,7 +97,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-Mailman-Approved-At: Thu, 07 Jul 2022 07:28:03 +0000
-Subject: Re: [dm-devel] [PATCH 3/4] bitmap: Introduce bitmap_size()
+Subject: Re: [dm-devel] [PATCH 2/4] fs/ntfs3: Rename bitmap_size() as
+ ntfs3_bitmap_size()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -117,7 +119,7 @@ Cc: linux-s390@vger.kernel.org, kernel-janitors@vger.kernel.org,
  borntraeger@linux.ibm.com, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -126,80 +128,127 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sat, Jul 02, 2022 at 08:29:36PM +0200, Christophe JAILLET wrote:
-> The new bitmap_size() function returns the size, in bytes, of a bitmap.
+On Sat, Jul 02, 2022 at 08:29:27PM +0200, Christophe JAILLET wrote:
+> In order to introduce a bitmap_size() function in the bitmap API, we have
+> to rename functions with a similar name.
 > 
-> Remove the already existing bitmap_size() functions and macro in some
-> files.
-> These files already use the bitmap API and will use the new function
-> in bitmap.h automatically.
+> Add a "ntfs3_" prefix and change bitmap_size() into ntfs3_bitmap_size().
+> 
+> No functional change.
 > 
 > Signed-off-by: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
 > ---
->  drivers/md/dm-clone-metadata.c | 5 -----
->  include/linux/bitmap.h         | 6 ++++++
->  lib/math/prime_numbers.c       | 2 --
->  3 files changed, 6 insertions(+), 7 deletions(-)
+>  fs/ntfs3/bitmap.c  | 4 ++--
+>  fs/ntfs3/fsntfs.c  | 2 +-
+>  fs/ntfs3/index.c   | 6 +++---
+>  fs/ntfs3/ntfs_fs.h | 2 +-
+>  fs/ntfs3/super.c   | 2 +-
+>  5 files changed, 8 insertions(+), 8 deletions(-)
 > 
-> diff --git a/drivers/md/dm-clone-metadata.c b/drivers/md/dm-clone-metadata.c
-> index c43d55672bce..47c1fa7aad8b 100644
-> --- a/drivers/md/dm-clone-metadata.c
-> +++ b/drivers/md/dm-clone-metadata.c
-> @@ -465,11 +465,6 @@ static void __destroy_persistent_data_structures(struct dm_clone_metadata *cmd)
+> diff --git a/fs/ntfs3/bitmap.c b/fs/ntfs3/bitmap.c
+> index e3b5680fd516..f98327453d83 100644
+> --- a/fs/ntfs3/bitmap.c
+> +++ b/fs/ntfs3/bitmap.c
+> @@ -661,7 +661,7 @@ int wnd_init(struct wnd_bitmap *wnd, struct super_block *sb, size_t nbits)
+>  	wnd->total_zeroes = nbits;
+>  	wnd->extent_max = MINUS_ONE_T;
+>  	wnd->zone_bit = wnd->zone_end = 0;
+> -	wnd->nwnd = bytes_to_block(sb, bitmap_size(nbits));
+> +	wnd->nwnd = bytes_to_block(sb, ntfs3_bitmap_size(nbits));
+>  	wnd->bits_last = nbits & (wbits - 1);
+>  	if (!wnd->bits_last)
+>  		wnd->bits_last = wbits;
+> @@ -1323,7 +1323,7 @@ int wnd_extend(struct wnd_bitmap *wnd, size_t new_bits)
+>  		return -EINVAL;
 >  
->  /*---------------------------------------------------------------------------*/
+>  	/* Align to 8 byte boundary. */
+> -	new_wnd = bytes_to_block(sb, bitmap_size(new_bits));
+> +	new_wnd = bytes_to_block(sb, ntfs3_bitmap_size(new_bits));
+>  	new_last = new_bits & (wbits - 1);
+>  	if (!new_last)
+>  		new_last = wbits;
+> diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
+> index 3de5700a9b83..9c74d88ce0f0 100644
+> --- a/fs/ntfs3/fsntfs.c
+> +++ b/fs/ntfs3/fsntfs.c
+> @@ -493,7 +493,7 @@ static int ntfs_extend_mft(struct ntfs_sb_info *sbi)
+>  	ni->mi.dirty = true;
 >  
-> -static size_t bitmap_size(unsigned long nr_bits)
-> -{
-> -	return BITS_TO_LONGS(nr_bits) * sizeof(long);
-> -}
-> -
->  static int __dirty_map_init(struct dirty_map *dmap, unsigned long nr_words,
->  			    unsigned long nr_regions)
+>  	/* Step 2: Resize $MFT::BITMAP. */
+> -	new_bitmap_bytes = bitmap_size(new_mft_total);
+> +	new_bitmap_bytes = ntfs3_bitmap_size(new_mft_total);
+>  
+>  	err = attr_set_size(ni, ATTR_BITMAP, NULL, 0, &sbi->mft.bitmap.run,
+>  			    new_bitmap_bytes, &new_bitmap_bytes, true, NULL);
+> diff --git a/fs/ntfs3/index.c b/fs/ntfs3/index.c
+> index 84ccc1409874..5c5ea05a5ef1 100644
+> --- a/fs/ntfs3/index.c
+> +++ b/fs/ntfs3/index.c
+> @@ -1353,7 +1353,7 @@ static int indx_create_allocate(struct ntfs_index *indx, struct ntfs_inode *ni,
+>  
+>  	alloc->nres.valid_size = alloc->nres.data_size = cpu_to_le64(data_size);
+>  
+> -	err = ni_insert_resident(ni, bitmap_size(1), ATTR_BITMAP, in->name,
+> +	err = ni_insert_resident(ni, ntfs3_bitmap_size(1), ATTR_BITMAP, in->name,
+>  				 in->name_len, &bitmap, NULL, NULL);
+>  	if (err)
+>  		goto out2;
+> @@ -1415,7 +1415,7 @@ static int indx_add_allocate(struct ntfs_index *indx, struct ntfs_inode *ni,
+>  	if (bmp) {
+>  		/* Increase bitmap. */
+>  		err = attr_set_size(ni, ATTR_BITMAP, in->name, in->name_len,
+> -				    &indx->bitmap_run, bitmap_size(bit + 1),
+> +				    &indx->bitmap_run, ntfs3_bitmap_size(bit + 1),
+>  				    NULL, true, NULL);
+>  		if (err)
+>  			goto out1;
+> @@ -1973,7 +1973,7 @@ static int indx_shrink(struct ntfs_index *indx, struct ntfs_inode *ni,
+>  	if (err)
+>  		return err;
+>  
+> -	bpb = bitmap_size(bit);
+> +	bpb = ntfs3_bitmap_size(bit);
+>  	if (bpb * 8 == nbits)
+>  		return 0;
+>  
+> diff --git a/fs/ntfs3/ntfs_fs.h b/fs/ntfs3/ntfs_fs.h
+> index 55d686e3c4ec..85210e610a3a 100644
+> --- a/fs/ntfs3/ntfs_fs.h
+> +++ b/fs/ntfs3/ntfs_fs.h
+> @@ -945,7 +945,7 @@ static inline bool run_is_empty(struct runs_tree *run)
+>  }
+>  
+>  /* NTFS uses quad aligned bitmaps. */
+> -static inline size_t bitmap_size(size_t bits)
+> +static inline size_t ntfs3_bitmap_size(size_t bits)
 >  {
-> diff --git a/include/linux/bitmap.h b/include/linux/bitmap.h
-> index f091a1664bf1..f66fb98a4126 100644
-> --- a/include/linux/bitmap.h
-> +++ b/include/linux/bitmap.h
-> @@ -48,6 +48,7 @@ struct device;
->   *  bitmap_equal(src1, src2, nbits)             Are *src1 and *src2 equal?
->   *  bitmap_intersects(src1, src2, nbits)        Do *src1 and *src2 overlap?
->   *  bitmap_subset(src1, src2, nbits)            Is *src1 a subset of *src2?
-> + *  bitmap_size(nbits)                          Size, in bytes, of a bitmap
->   *  bitmap_empty(src, nbits)                    Are all bits zero in *src?
->   *  bitmap_full(src, nbits)                     Are all bits set in *src?
->   *  bitmap_weight(src, nbits)                   Hamming Weight: number set bits
-> @@ -124,6 +125,11 @@ unsigned long *bitmap_alloc_node(unsigned int nbits, gfp_t flags, int node);
->  unsigned long *bitmap_zalloc_node(unsigned int nbits, gfp_t flags, int node);
->  void bitmap_free(const unsigned long *bitmap);
+>  	return ALIGN((bits + 7) >> 3, 8);
+>  }
+
+Here everything looks OK for me. NTFS3 has their own good reasons
+to reserve 64-bit words for their bitmaps, and they need their own
+functions for this. And the prefix looks OK because it underlines
+that this is a local story.
+
+Maybe we can turn it into BITS_TO_LLONGS() and put into 
+include/linux/bitops.h... But unless we have another subsystem that
+needs it, I'm OK with current approach.
+
+Acked-by: Yury Norov <yury.norov@gmail.com>
+
+> diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+> index b41d7c824a50..7d48f886ac82 100644
+> --- a/fs/ntfs3/super.c
+> +++ b/fs/ntfs3/super.c
+> @@ -1101,7 +1101,7 @@ static int ntfs_fill_super(struct super_block *sb, struct fs_context *fc)
 >  
-> +static __always_inline size_t bitmap_size(unsigned long nbits)
-> +{
-> +	return BITS_TO_LONGS(nbits) * sizeof(unsigned long);
-> +}
-> +
->  /* Managed variants of the above. */
->  unsigned long *devm_bitmap_alloc(struct device *dev,
->  				 unsigned int nbits, gfp_t flags);
-> diff --git a/lib/math/prime_numbers.c b/lib/math/prime_numbers.c
-> index d42cebf7407f..d3b64b10da1c 100644
-> --- a/lib/math/prime_numbers.c
-> +++ b/lib/math/prime_numbers.c
-> @@ -6,8 +6,6 @@
->  #include <linux/prime_numbers.h>
->  #include <linux/slab.h>
->  
-> -#define bitmap_size(nbits) (BITS_TO_LONGS(nbits) * sizeof(unsigned long))
-> -
-
-This should be dropped, for sure, and kmalloc() at line 128 should be
-replaced with bitmap_alloc().
-
-For the driver, we need to introduce bitmap_kvmalloc/bitmap_kvfree etc. 
-
->  struct primes {
->  	struct rcu_head rcu;
->  	unsigned long last, sz;
+>  	/* Check bitmap boundary. */
+>  	tt = sbi->used.bitmap.nbits;
+> -	if (inode->i_size < bitmap_size(tt)) {
+> +	if (inode->i_size < ntfs3_bitmap_size(tt)) {
+>  		err = -EINVAL;
+>  		goto put_inode_out;
+>  	}
 > -- 
 > 2.34.1
 
