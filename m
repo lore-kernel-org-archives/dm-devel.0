@@ -4,65 +4,66 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D1EA7C433EF
-	for <dm-devel@archiver.kernel.org>; Mon,  4 Jul 2022 15:10:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CA828C43334
+	for <dm-devel@archiver.kernel.org>; Mon,  4 Jul 2022 16:56:23 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1656947420;
+	s=mimecast20190719; t=1656953782;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=rE9fr/99RMhuVLhlsoIonjkQWOLfqxuGs1VaOhXC+bk=;
-	b=FvSj4hjhnvCODrGJLQ83VwN9eoSmb1GTLBtusqMhrPC3cdjEiLKDZynm9Uc38h9qw7FbOq
-	Ag7/MBmvZA7BOaZcR8dfwA8tZOvPGdHifJOclryISEuyZy2GJdXDgciWXn9wbCR8y4Wtm1
-	B7Kdzlo74Cw/yhhtu6nT/kkQ6Zuj1SU=
+	bh=FSBOkTTw1kCHvCWPJkzWJgh2NXPlubecopSSpZIf42s=;
+	b=aTFfFWQmYbZY3n5F0twQj9ab6igt5ACNo3rarq71sYnceWJnjT/H2HC+k3X+dNcuakd3oo
+	Mnz/x1va+OKF2mFRHbL0rH8HSRbahsaSse47T+ofCaEQAFeVfAgBhpnPSAzMB5n0EBO/QO
+	OsepiH1unK0TTbzTqE+lA8/9l1I5hWk=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-390-R3gwUF_jMJGFr1PbAjfjxg-1; Mon, 04 Jul 2022 11:10:17 -0400
-X-MC-Unique: R3gwUF_jMJGFr1PbAjfjxg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-224-alRxCfuQNR-Yf8DPjzlHTg-1; Mon, 04 Jul 2022 12:56:21 -0400
+X-MC-Unique: alRxCfuQNR-Yf8DPjzlHTg-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B6C61185A79C;
-	Mon,  4 Jul 2022 15:10:15 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 437F9801755;
+	Mon,  4 Jul 2022 16:56:19 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5FF78141510F;
-	Mon,  4 Jul 2022 15:10:15 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4AE12401E54;
+	Mon,  4 Jul 2022 16:56:16 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DD6DC1947041;
-	Mon,  4 Jul 2022 15:10:14 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 03498194704A;
+	Mon,  4 Jul 2022 16:56:16 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id DCCCD19466DF
- for <dm-devel@listman.corp.redhat.com>; Mon,  4 Jul 2022 15:10:13 +0000 (UTC)
+ ESMTP id 6D69419466DF
+ for <dm-devel@listman.corp.redhat.com>; Mon,  4 Jul 2022 16:56:15 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D17C4112131E; Mon,  4 Jul 2022 15:10:13 +0000 (UTC)
+ id 5C99E40334D; Mon,  4 Jul 2022 16:56:15 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id CD7C1112131B
- for <dm-devel@redhat.com>; Mon,  4 Jul 2022 15:10:13 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B22AB803520
- for <dm-devel@redhat.com>; Mon,  4 Jul 2022 15:10:13 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 56DFF401E54
+ for <dm-devel@redhat.com>; Mon,  4 Jul 2022 16:56:15 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4058B3C0D841
+ for <dm-devel@redhat.com>; Mon,  4 Jul 2022 16:56:15 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-59-E42Ly9WTP8KWGWKX97Y1kQ-1; Mon, 04 Jul 2022 11:10:12 -0400
-X-MC-Unique: E42Ly9WTP8KWGWKX97Y1kQ-1
+ us-mta-586-gutI0SNjNVmbVz6J5LYKzg-1; Mon, 04 Jul 2022 12:56:13 -0400
+X-MC-Unique: gutI0SNjNVmbVz6J5LYKzg-1
 Received: from [2001:4bb8:189:3c4a:8758:74d9:4df6:6417] (helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
- id 1o8LRu-008sC2-9Y; Mon, 04 Jul 2022 12:45:10 +0000
+ id 1o8LS2-008sGf-C7; Mon, 04 Jul 2022 12:45:18 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>,
  Damien Le Moal <damien.lemoal@opensource.wdc.com>
-Date: Mon,  4 Jul 2022 14:44:46 +0200
-Message-Id: <20220704124500.155247-4-hch@lst.de>
+Date: Mon,  4 Jul 2022 14:44:49 +0200
+Message-Id: <20220704124500.155247-7-hch@lst.de>
 In-Reply-To: <20220704124500.155247-1-hch@lst.de>
 References: <20220704124500.155247-1-hch@lst.de>
 MIME-Version: 1.0
@@ -75,9 +76,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-Subject: [dm-devel] [PATCH 03/17] block: use bdev_is_zoned instead of open
- coding it
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: [dm-devel] [PATCH 06/17] nvmet: use blkdev_zone_mgmt_all
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -93,7 +93,7 @@ Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
  linux-scsi@vger.kernel.org, linux-nvme@lists.infradead.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -101,153 +101,139 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use bdev_is_zoned in all places where a block_device is available instead
-of open coding it.
+Use blkdev_zone_mgmt_all instead of a copy and pasted version.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/bio.c           | 2 +-
- block/blk-core.c      | 6 +++---
- block/blk-mq.h        | 2 +-
- block/blk-zoned.c     | 9 ++++-----
- drivers/md/dm-table.c | 2 +-
- drivers/md/dm-zone.c  | 2 +-
- drivers/md/dm.c       | 2 +-
- 7 files changed, 12 insertions(+), 13 deletions(-)
+ drivers/nvme/target/zns.c | 104 ++------------------------------------
+ 1 file changed, 3 insertions(+), 101 deletions(-)
 
-diff --git a/block/bio.c b/block/bio.c
-index 933ea32109547..888ee81ea3034 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -1033,7 +1033,7 @@ int bio_add_zone_append_page(struct bio *bio, struct page *page,
- 	if (WARN_ON_ONCE(bio_op(bio) != REQ_OP_ZONE_APPEND))
- 		return 0;
+diff --git a/drivers/nvme/target/zns.c b/drivers/nvme/target/zns.c
+index 82b61acf7a72b..c6f0a775efdee 100644
+--- a/drivers/nvme/target/zns.c
++++ b/drivers/nvme/target/zns.c
+@@ -337,110 +337,12 @@ static u16 blkdev_zone_mgmt_errno_to_nvme_status(int ret)
+ 	}
+ }
  
--	if (WARN_ON_ONCE(!blk_queue_is_zoned(q)))
-+	if (WARN_ON_ONCE(!bdev_is_zoned(bio->bi_bdev)))
- 		return 0;
+-struct nvmet_zone_mgmt_send_all_data {
+-	unsigned long *zbitmap;
+-	struct nvmet_req *req;
+-};
+-
+-static int zmgmt_send_scan_cb(struct blk_zone *z, unsigned i, void *d)
+-{
+-	struct nvmet_zone_mgmt_send_all_data *data = d;
+-
+-	switch (zsa_req_op(data->req->cmd->zms.zsa)) {
+-	case REQ_OP_ZONE_OPEN:
+-		switch (z->cond) {
+-		case BLK_ZONE_COND_CLOSED:
+-			break;
+-		default:
+-			return 0;
+-		}
+-		break;
+-	case REQ_OP_ZONE_CLOSE:
+-		switch (z->cond) {
+-		case BLK_ZONE_COND_IMP_OPEN:
+-		case BLK_ZONE_COND_EXP_OPEN:
+-			break;
+-		default:
+-			return 0;
+-		}
+-		break;
+-	case REQ_OP_ZONE_FINISH:
+-		switch (z->cond) {
+-		case BLK_ZONE_COND_IMP_OPEN:
+-		case BLK_ZONE_COND_EXP_OPEN:
+-		case BLK_ZONE_COND_CLOSED:
+-			break;
+-		default:
+-			return 0;
+-		}
+-		break;
+-	default:
+-		return -EINVAL;
+-	}
+-
+-	set_bit(i, data->zbitmap);
+-
+-	return 0;
+-}
+-
+-static u16 nvmet_bdev_zone_mgmt_emulate_all(struct nvmet_req *req)
+-{
+-	struct block_device *bdev = req->ns->bdev;
+-	unsigned int nr_zones = blkdev_nr_zones(bdev->bd_disk);
+-	struct request_queue *q = bdev_get_queue(bdev);
+-	struct bio *bio = NULL;
+-	sector_t sector = 0;
+-	int ret;
+-	struct nvmet_zone_mgmt_send_all_data d = {
+-		.req = req,
+-	};
+-
+-	d.zbitmap = kcalloc_node(BITS_TO_LONGS(nr_zones), sizeof(*(d.zbitmap)),
+-				 GFP_NOIO, q->node);
+-	if (!d.zbitmap) {
+-		ret = -ENOMEM;
+-		goto out;
+-	}
+-
+-	/* Scan and build bitmap of the eligible zones */
+-	ret = blkdev_report_zones(bdev, 0, nr_zones, zmgmt_send_scan_cb, &d);
+-	if (ret != nr_zones) {
+-		if (ret > 0)
+-			ret = -EIO;
+-		goto out;
+-	} else {
+-		/* We scanned all the zones */
+-		ret = 0;
+-	}
+-
+-	while (sector < get_capacity(bdev->bd_disk)) {
+-		if (test_bit(blk_queue_zone_no(q, sector), d.zbitmap)) {
+-			bio = blk_next_bio(bio, bdev, 0,
+-				zsa_req_op(req->cmd->zms.zsa) | REQ_SYNC,
+-				GFP_KERNEL);
+-			bio->bi_iter.bi_sector = sector;
+-			/* This may take a while, so be nice to others */
+-			cond_resched();
+-		}
+-		sector += blk_queue_zone_sectors(q);
+-	}
+-
+-	if (bio) {
+-		ret = submit_bio_wait(bio);
+-		bio_put(bio);
+-	}
+-
+-out:
+-	kfree(d.zbitmap);
+-
+-	return blkdev_zone_mgmt_errno_to_nvme_status(ret);
+-}
+-
+ static u16 nvmet_bdev_execute_zmgmt_send_all(struct nvmet_req *req)
+ {
++	unsigned int op = zsa_req_op(req->cmd->zms.zsa);
+ 	int ret;
  
- 	return bio_add_hw_page(q, bio, page, len, offset,
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 5ad7bd93077c8..6bcca0b686de4 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -569,7 +569,7 @@ static inline blk_status_t blk_check_zone_append(struct request_queue *q,
- 	int nr_sectors = bio_sectors(bio);
- 
- 	/* Only applicable to zoned block devices */
--	if (!blk_queue_is_zoned(q))
-+	if (!bdev_is_zoned(bio->bi_bdev))
- 		return BLK_STS_NOTSUPP;
- 
- 	/* The bio sector must point to the start of a sequential zone */
-@@ -775,11 +775,11 @@ void submit_bio_noacct(struct bio *bio)
+-	switch (zsa_req_op(req->cmd->zms.zsa)) {
++	switch (op) {
+ 	case REQ_OP_ZONE_RESET:
+ 		ret = blkdev_zone_mgmt(req->ns->bdev, REQ_OP_ZONE_RESET, 0,
+ 				       get_capacity(req->ns->bdev->bd_disk),
+@@ -451,7 +353,7 @@ static u16 nvmet_bdev_execute_zmgmt_send_all(struct nvmet_req *req)
  	case REQ_OP_ZONE_OPEN:
  	case REQ_OP_ZONE_CLOSE:
  	case REQ_OP_ZONE_FINISH:
--		if (!blk_queue_is_zoned(q))
-+		if (!bdev_is_zoned(bio->bi_bdev))
- 			goto not_supported;
- 		break;
- 	case REQ_OP_ZONE_RESET_ALL:
--		if (!blk_queue_is_zoned(q) || !blk_queue_zone_resetall(q))
-+		if (!bdev_is_zoned(bio->bi_bdev) || !blk_queue_zone_resetall(q))
- 			goto not_supported;
- 		break;
- 	case REQ_OP_WRITE_ZEROES:
-diff --git a/block/blk-mq.h b/block/blk-mq.h
-index 54e20edf0da30..31d75a83a562d 100644
---- a/block/blk-mq.h
-+++ b/block/blk-mq.h
-@@ -317,7 +317,7 @@ static inline struct blk_plug *blk_mq_plug(struct request_queue *q,
- 	 * For regular block devices or read operations, use the context plug
- 	 * which may be NULL if blk_start_plug() was not executed.
- 	 */
--	if (!blk_queue_is_zoned(q) || !op_is_write(bio_op(bio)))
-+	if (!bdev_is_zoned(bio->bi_bdev) || !op_is_write(bio_op(bio)))
- 		return current->plug;
- 
- 	/* Zoned block device write operation case: do not plug the BIO */
-diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index 38cd840d88387..90a5c9cc80ab3 100644
---- a/block/blk-zoned.c
-+++ b/block/blk-zoned.c
-@@ -149,8 +149,7 @@ int blkdev_report_zones(struct block_device *bdev, sector_t sector,
- 	struct gendisk *disk = bdev->bd_disk;
- 	sector_t capacity = get_capacity(disk);
- 
--	if (!blk_queue_is_zoned(bdev_get_queue(bdev)) ||
--	    WARN_ON_ONCE(!disk->fops->report_zones))
-+	if (!bdev_is_zoned(bdev) || WARN_ON_ONCE(!disk->fops->report_zones))
- 		return -EOPNOTSUPP;
- 
- 	if (!nr_zones || sector >= capacity)
-@@ -268,7 +267,7 @@ int blkdev_zone_mgmt(struct block_device *bdev, enum req_opf op,
- 	struct bio *bio = NULL;
- 	int ret = 0;
- 
--	if (!blk_queue_is_zoned(q))
-+	if (!bdev_is_zoned(bdev))
- 		return -EOPNOTSUPP;
- 
- 	if (bdev_read_only(bdev))
-@@ -350,7 +349,7 @@ int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
- 	if (!q)
- 		return -ENXIO;
- 
--	if (!blk_queue_is_zoned(q))
-+	if (!bdev_is_zoned(bdev))
- 		return -ENOTTY;
- 
- 	if (copy_from_user(&rep, argp, sizeof(struct blk_zone_report)))
-@@ -408,7 +407,7 @@ int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
- 	if (!q)
- 		return -ENXIO;
- 
--	if (!blk_queue_is_zoned(q))
-+	if (!bdev_is_zoned(bdev))
- 		return -ENOTTY;
- 
- 	if (!(mode & FMODE_WRITE))
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index bd539afbfe88f..b36b528e56cff 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1623,7 +1623,7 @@ static int device_not_matches_zone_sectors(struct dm_target *ti, struct dm_dev *
- 	struct request_queue *q = bdev_get_queue(dev->bdev);
- 	unsigned int *zone_sectors = data;
- 
--	if (!blk_queue_is_zoned(q))
-+	if (!bdev_is_zoned(dev->bdev))
- 		return 0;
- 
- 	return blk_queue_zone_sectors(q) != *zone_sectors;
-diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-index 3e7b1fe1580b9..ae616b87c91ae 100644
---- a/drivers/md/dm-zone.c
-+++ b/drivers/md/dm-zone.c
-@@ -270,7 +270,7 @@ static int device_not_zone_append_capable(struct dm_target *ti,
- 					  struct dm_dev *dev, sector_t start,
- 					  sector_t len, void *data)
- {
--	return !blk_queue_is_zoned(bdev_get_queue(dev->bdev));
-+	return !bdev_is_zoned(dev->bdev);
- }
- 
- static bool dm_table_supports_zone_append(struct dm_table *t)
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 8872f9c636889..33d3799bb66ec 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1033,7 +1033,7 @@ static void clone_endio(struct bio *bio)
- 	}
- 
- 	if (static_branch_unlikely(&zoned_enabled) &&
--	    unlikely(blk_queue_is_zoned(bdev_get_queue(bio->bi_bdev))))
-+	    unlikely(bdev_is_zoned(bio->bi_bdev)))
- 		dm_zone_endio(io, bio);
- 
- 	if (endio) {
+-		return nvmet_bdev_zone_mgmt_emulate_all(req);
++		return blkdev_zone_mgmt_all(req->ns->bdev, op, GFP_KERNEL);
+ 	default:
+ 		/* this is needed to quiet compiler warning */
+ 		req->error_loc = offsetof(struct nvme_zone_mgmt_send_cmd, zsa);
 -- 
 2.30.2
 
