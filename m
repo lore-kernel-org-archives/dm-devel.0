@@ -1,96 +1,93 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AC1C3C433EF
-	for <dm-devel@archiver.kernel.org>; Thu,  7 Jul 2022 03:29:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 146D2C43334
+	for <dm-devel@archiver.kernel.org>; Thu,  7 Jul 2022 03:58:31 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1657164591;
+	s=mimecast20190719; t=1657166310;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Tbl7BczCIzPHyFIAmpxRi/CjzSVeiL7NmV6PMGwJXAc=;
-	b=GX93STJkllEal/Ax1hVTT4HLWxWFiUZ7lTd+MSI408sz3zbN4KSZy7NmtEI7Z8/7TwLSUW
-	ILreo1ISTS8xpa5/PXh36iU5OKgphM7YQPPsQ4PisXOr3XZtgXA08alq4RB1o3M4elMdyi
-	EJvCYI1PAQj6HirFjR2sN1/Zqhz9tLM=
+	bh=/gEA5mpldHmwcY7dMp81eaHRLkW3APwM76tSRFn9mpo=;
+	b=TsTXkxR740g/r7LmTCI7LYD6j2Viv4m4/Iyk9NWbNviCkES+MiKXhPL9wF75mVckuG3EiU
+	LyJLhYLZeG6rvyU7UJ/GwUWNoTwBaN4MITicPgWA64LEaJNLs3lukWaCWfjLfDYSxmroqv
+	IgapHNG/ycUiM07QtQ1eYevaTWq86QM=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-186-yFWQ6VMpOFyjJXTjaGfK2Q-1; Wed, 06 Jul 2022 23:29:48 -0400
-X-MC-Unique: yFWQ6VMpOFyjJXTjaGfK2Q-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-621-tBiT3gK9MpiC_k4uaCZ3VQ-1; Wed, 06 Jul 2022 23:58:27 -0400
+X-MC-Unique: tBiT3gK9MpiC_k4uaCZ3VQ-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BCF0629AA2FA;
-	Thu,  7 Jul 2022 03:29:46 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 034BD1C0518A;
+	Thu,  7 Jul 2022 03:58:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 99B171121320;
-	Thu,  7 Jul 2022 03:29:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9E64B40D2853;
+	Thu,  7 Jul 2022 03:58:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4FD391947067;
-	Thu,  7 Jul 2022 03:29:42 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 524CF1947058;
+	Thu,  7 Jul 2022 03:58:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 58B28194704E
- for <dm-devel@listman.corp.redhat.com>; Thu,  7 Jul 2022 03:29:41 +0000 (UTC)
+ ESMTP id 5095F194704E
+ for <dm-devel@listman.corp.redhat.com>; Thu,  7 Jul 2022 03:58:24 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3904118EC9; Thu,  7 Jul 2022 03:29:41 +0000 (UTC)
+ id 321BD1121320; Thu,  7 Jul 2022 03:58:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 34AA12EF99
- for <dm-devel@redhat.com>; Thu,  7 Jul 2022 03:29:41 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2D4771121315
+ for <dm-devel@redhat.com>; Thu,  7 Jul 2022 03:58:24 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 156C180192F
- for <dm-devel@redhat.com>; Thu,  7 Jul 2022 03:29:41 +0000 (UTC)
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com
- [45.249.212.51]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 11A20101A54E
+ for <dm-devel@redhat.com>; Thu,  7 Jul 2022 03:58:24 +0000 (UTC)
+Received: from mail-pg1-f177.google.com (mail-pg1-f177.google.com
+ [209.85.215.177]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-572-w8mTnj5EOKmsellNez_DLQ-1; Wed, 06 Jul 2022 23:29:38 -0400
-X-MC-Unique: w8mTnj5EOKmsellNez_DLQ-1
-Received: from mail02.huawei.com (unknown [172.30.67.143])
- by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4LdhhT635Rzkr7D;
- Thu,  7 Jul 2022 11:28:41 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
- by APP3 (Coremail) with SMTP id _Ch0CgAXemkWU8ZiH__bAQ--.22982S3;
- Thu, 07 Jul 2022 11:29:28 +0800 (CST)
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>,
- Mike Snitzer <snitzer@redhat.com>
-References: <20210804094147.459763-1-hch@lst.de>
- <20210804094147.459763-8-hch@lst.de>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <ad2c7878-dabb-cb41-1bba-60ef48fa1a9f@huaweicloud.com>
-Date: Thu, 7 Jul 2022 11:29:26 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+ us-mta-413-OXcBk8XvO-6gP5Mf7cVBbQ-1; Wed, 06 Jul 2022 23:58:22 -0400
+X-MC-Unique: OXcBk8XvO-6gP5Mf7cVBbQ-1
+Received: by mail-pg1-f177.google.com with SMTP id o18so15020206pgu.9
+ for <dm-devel@redhat.com>; Wed, 06 Jul 2022 20:58:21 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+ :mime-version:content-disposition:in-reply-to;
+ bh=JxCvx3Wm6aJVrrCk9KxbfLNMLkjb2WQRHJLc9xDV7wo=;
+ b=EjfDGHHMK6ucLEdIpkirUJkjPBfafW3Cw+V6H2huZ6AxVpysBTda4pQnozTnbRFT7b
+ 1CI1l4AIOnx7aRrueNzr3mAjnfL8gkbNHJGPDTVJJEkMHmS2FFeRWLTKgsk74pBIpujK
+ EQhkueJim0fPmJTPWeVOOrmSDm7qyyteW/t6cBLsKgjulSVcFMm3qu8h+g7orTpikwoa
+ IeZh1h9yyxzs1DrHhWaPz8DBW78yg56VLXRAfsPLalrRk6/K3zwEuzKw08E9BM6I9YxH
+ /pxInIpEkSy/iMRR68E2eeN5E3bxWVAbYySnCoNVHmEL72UmxYQjftwMv7z+ZTGwk0XY
+ 4UPw==
+X-Gm-Message-State: AJIora/bOFPrOkm1CkjfQSNgGsVMvv305keq+CM+MiJQkZY5Mzh2Svrn
+ kIQEDKmXy1WA5wmw6CjQb3nGEA==
+X-Google-Smtp-Source: AGRyM1t4S2EttzYuHEUjp0/XnuFNsoOvI4ExjjU9puQ2Rr17H7beMyUoSMv6NJayHK6t/EwYutkiyw==
+X-Received: by 2002:a17:903:1c7:b0:16a:2844:8c1f with SMTP id
+ e7-20020a17090301c700b0016a28448c1fmr51071550plh.30.1657166300753; 
+ Wed, 06 Jul 2022 20:58:20 -0700 (PDT)
+Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
+ by smtp.gmail.com with ESMTPSA id
+ c10-20020a170903234a00b0016b9b6d67a2sm17284819plh.155.2022.07.06.20.58.20
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 06 Jul 2022 20:58:20 -0700 (PDT)
+Date: Wed, 6 Jul 2022 20:58:19 -0700
+From: Kees Cook <keescook@chromium.org>
+To: Mike Snitzer <snitzer@kernel.org>
+Message-ID: <202207062058.49046961A4@keescook>
+References: <20220627153526.3750341-1-mka@chromium.org>
+ <YsWmPt7xwTlvTfAf@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <20210804094147.459763-8-hch@lst.de>
-X-CM-TRANSID: _Ch0CgAXemkWU8ZiH__bAQ--.22982S3
-X-Coremail-Antispam: 1UD129KBjvJXoW3Gw1xuw43ZrWDZrW5Zw1UKFg_yoW3tr15pF
- 4UXrW5CrW8tr1Uta17tF1UAr1rtrsrAa4UXr4xAr10v3Wjkw1YqFy7CFWUAry7Jr4kXry7
- tFyDJw1ktr1UKaUanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
- 9KBjDU0xBIdaVrnRJUUUyEb4IE77IF4wAFF20E14v26r1j6r4UM7CY07I20VC2zVCF04k2
- 6cxKx2IYs7xG6r1F6r1fM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
- vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
- xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
- 0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
- 6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
- Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JMxk0xIA0c2IEe2xFo4CEbIxvr21l42xK82IYc2Ij
- 64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x
- 8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r126r1DMIIYrxkI7VAKI48JMIIF0xvE
- 2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r1j6r4UMIIF0xvE42
- xK8VAvwI8IcIk0rVWrZr1j6s0DMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIE
- c7CjxVAFwI0_Jr0_GrUvcSsGvfC2KfnxnUUI43ZEXa7IU1CPfJUUUUU==
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
-X-CFilter-Loop: Reflected
+In-Reply-To: <YsWmPt7xwTlvTfAf@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -98,8 +95,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH 7/8] dm: delay registering the gendisk
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH v7 0/3] LoadPin: Enable loading from trusted
+ dm-verity devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -111,164 +109,69 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
+Cc: linux-security-module@vger.kernel.org,
+ Douglas Anderson <dianders@chromium.org>, linux-kernel@vger.kernel.org,
+ James Morris <jmorris@namei.org>, linux-raid@vger.kernel.org,
+ Song Liu <song@kernel.org>, dm-devel@redhat.com,
+ Matthias Kaehlcke <mka@chromium.org>, Milan Broz <gmazyland@gmail.com>,
+ Alasdair Kergon <agk@redhat.com>, "Serge E . Hallyn" <serge@hallyn.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="gbk"; Format="flowed"
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-SGksIENocmlzdG9waAoK1NogMjAyMS8wOC8wNCAxNzo0MSwgQ2hyaXN0b3BoIEhlbGx3aWcg0LS1
-wDoKPiBkZXZpY2UgbWFwcGVyIGlzIGN1cnJlbnRseSB0aGUgb25seSBvdXRsaWVyIHRoYXQgdHJp
-ZXMgdG8gY2FsbAo+IHJlZ2lzdGVyX2Rpc2sgYWZ0ZXIgYWRkX2Rpc2ssIGxlYWRpbmcgdG8gZmFp
-cmx5IGluY29uc2lzdGVudCBzdGF0ZQo+IG9mIHRoZXNlIGJsb2NrIGxheWVyIGRhdGEgc3RydWN0
-dXJlcy4gIEluc3RlYWQgY2hhbmdlIGRldmljZS1tYXBwZXIKPiB0byBqdXN0IHJlZ2lzdGVyIHRo
-ZSBnZW5kaXNrIGxhdGVyIG5vdyB0aGF0IHRoZSBob2xkZXIgbWVjaGFuaXNtCj4gY2FuIGNvcGUg
-d2l0aCB0aGF0Lgo+IAo+IE5vdGUgdGhhdCB0aGlzIGludHJvZHVjZXMgYSB1c2VyIHZpc2libGUg
-Y2hhbmdlOiB0aGUgZG0ga29iamVjdCBpcwo+IG5vdyBvbmx5IHZpc2libGUgYWZ0ZXIgdGhlIGlu
-aXRpYWwgdGFibGUgaGFzIGJlZW4gbG9hZGVkLgo+IAo+IFNpZ25lZC1vZmYtYnk6IENocmlzdG9w
-aCBIZWxsd2lnIDxoY2hAbHN0LmRlPgo+IFJldmlld2VkLWJ5OiBNaWtlIFNuaXR6ZXIgPHNuaXR6
-ZXJAcmVkaGF0LmNvbT4KCldlIGZvdW5kIHRoYXQgdGhpcyBwYXRjaCBmaXggYSBudWxscHRyIGNy
-YXNoIGluIG91ciB0ZXN0OgpbICAgODguNzI3OTE4XSBCVUc6IGtlcm5lbCBOVUxMIHBvaW50ZXIg
-ZGVyZWZlcmVuY2UsIGFkZHJlc3M6IAowMDAwMDAwMDAwMDAwMWEwClsgICA4OC43MzA2OThdICNQ
-Rjogc3VwZXJ2aXNvciByZWFkIGFjY2VzcyBpbiBrZXJuZWwgbW9kZQpbICAgODguNzMxMzgxXSAj
-UEY6IGVycm9yX2NvZGUoMHgwMDAwKSAtIG5vdC1wcmVzZW50IHBhZ2UKWyAgIDg4LjczMjA4Nl0g
-UEdEIDAgUDREIDAKWyAgIDg4LjczMjQ0MV0gT29wczogMDAwMCBbIzFdIFBSRUVNUFQgU01QClsg
-ICA4OC43MzI5NjRdIENQVTogMSBQSUQ6IDEzMTcgQ29tbTogbW91bnQgTm90IHRhaW50ZWQgCjUu
-MTAuMC0xNjY5MS1nZjYwNzY0MzI4MjdkLWRpcnR5ICMxNjkKWyAgIDg4LjczNDA1NV0gSGFyZHdh
-cmUgbmFtZTogUUVNVSBTdGFuZGFyZCBQQyAoaTQ0MEZYICsgUElJWCwgMTk5NiksIApCSU9TID8t
-MjAxOTA3MjdfMDczODM2LTQKWyAgIDg4LjczNTgxOV0gUklQOiAwMDEwOl9fYmxrX21xX3NjaGVk
-X2Jpb19tZXJnZSsweDlkLzB4MWEwClsgICA4OC43MzY1NDRdIENvZGU6IDg3IDFlIDlkIDg5IGQw
-IDI1IDAwIDAwIDAwIDAxIDBmIDg1IGFkIDAwIDAwIDAwIDQ4IAo4MyAwNSAyNSBhMSAzNyAwYyAw
-MSAzClsgICA4OC43MzkwNDBdIFJTUDogMDAxODpmZmZmYzkwMDAwNDczYjUwIEVGTEFHUzogMDAw
-MTAyMDIKWyAgIDg4LjczOTc0NF0gUkFYOiAwMDAwMDAwMDAwMDAwMDAwIFJCWDogMDAwMDAwMDAw
-MDAwMDAwMCBSQ1g6IApmZmZmYzkwMDAwNDczYjk4ClsgICA4OC43NDA2OTddIFJEWDogMDAwMDAw
-MDAwMDAwMTAwMCBSU0k6IGZmZmY4ODgxMDgwYzc1MDAgUkRJOiAKZmZmZjg4ODEwM2E5Y2MxOApb
-ICAgODguNzQxNjU5XSBSQlA6IGZmZmY4ODgxM2JjODAwMDAgUjA4OiAwMDAwMDAwMDAwMDAwMDAx
-IFIwOTogCjAwMDAwMDAwMDAwMDAwMDAKWyAgIDg4Ljc0MjYxMV0gUjEwOiBmZmZmODg4MTA3MTBi
-ZTMwIFIxMTogMDAwMDAwMDAwMDAwMDAwMCBSMTI6IApmZmZmODg4MTAzYTljYzE4ClsgICA4OC43
-NDM1NTFdIFIxMzogZmZmZjg4ODEwODBjNzUwMCBSMTQ6IDAwMDAwMDAwMDAwMDAwMDEgUjE1OiAK
-MDAwMDAwMDAwMDAwMDAwMApbICAgODguNzQ0NTAxXSBGUzogIDAwMDA3ZjUxYmNkYmIwNDAoMDAw
-MCkgR1M6ZmZmZjg4ODEzYmM4MDAwMCgwMDAwKSAKa25sR1M6MDAwMDAwMDAwMDAwMDAwMApbICAg
-ODguNzQ1NTgxXSBDUzogIDAwMTAgRFM6IDAwMDAgRVM6IDAwMDAgQ1IwOiAwMDAwMDAwMDgwMDUw
-MDMzClsgICA4OC43NDYzNDVdIENSMjogMDAwMDAwMDAwMDAwMDFhMCBDUjM6IDAwMDAwMDAxMGQ3
-MTUwMDAgQ1I0OiAKMDAwMDAwMDAwMDAwMDZlMApbICAgODguNzQ3Mjk4XSBEUjA6IDAwMDAwMDAw
-MDAwMDAwMDAgRFIxOiAwMDAwMDAwMDAwMDAwMDAwIERSMjogCjAwMDAwMDAwMDAwMDAwMDAKWyAg
-IDg4Ljc0ODI1M10gRFIzOiAwMDAwMDAwMDAwMDAwMDAwIERSNjogMDAwMDAwMDBmZmZlMGZmMCBE
-Ujc6IAowMDAwMDAwMDAwMDAwNDAwCgpbICAgODguNzQ5MjA0XSBDYWxsIFRyYWNlOgpbICAgODgu
-NzQ5NTQ5XSAgYmxrX21xX3N1Ym1pdF9iaW8rMHgxMTUvMHhkODAKWyAgIDg4Ljc1MDEyNF0gIHN1
-Ym1pdF9iaW9fbm9hY2N0KzB4NGZmLzB4NjEwClsgICA4OC43NTA2OTJdICBzdWJtaXRfYmlvKzB4
-YWEvMHgxYTAKWyAgIDg4Ljc1MTE0OV0gIHN1Ym1pdF9iaF93YmMrMHgxY2IvMHgyZjAKWyAgIDg4
-Ljc1MTY2Ml0gIHN1Ym1pdF9iaCsweDE3LzB4MjAKWyAgIDg4Ljc1MjEwMl0gIGV4dDRfcmVhZF9i
-aCsweDYzLzB4MTcwClsgICA4OC43NTI1ODhdICBleHQ0X3JlYWRfYmhfbG9jaysweDJjLzB4ZDAK
-WyAgIDg4Ljc1MzEyNV0gIF9fZXh0NF9zYl9icmVhZF9nZnAuaXNyYS4wKzB4YTAvMHhmMApbICAg
-ODguNzUzNzY2XSAgZXh0NF9maWxsX3N1cGVyKzB4MjFmLzB4NTYxMApbICAgODguNzU0MzE3XSAg
-PyBwb2ludGVyKzB4MzFiLzB4NWEwClsgICA4OC43NTQ3OTZdICA/IHZzbnByaW50ZisweDEzMS8w
-eDdkMApbICAgODguNzU1MzA0XSAgbW91bnRfYmRldisweDIzMy8weDI4MApbICAgODguNzU1Nzkx
-XSAgPyBleHQ0X2NhbGN1bGF0ZV9vdmVyaGVhZCsweDY2MC8weDY2MApbICAgODguNzU2NDYxXSAg
-ZXh0NF9tb3VudCsweDE5LzB4MzAKWyAgIDg4Ljc1NjkyNl0gIGxlZ2FjeV9nZXRfdHJlZSsweDM1
-LzB4OTAKWyAgIDg4Ljc1NzQ1MF0gIHZmc19nZXRfdHJlZSsweDI5LzB4MTAwClsgICA4OC43NTc5
-NTVdICA/IGNhcGFibGUrMHgxZC8weDMwClsgICA4OC43NTg0MDZdICBwYXRoX21vdW50KzB4OGE3
-LzB4MTE1MApbICAgODguNzU4OTE4XSAgZG9fbW91bnQrMHg4ZC8weGMwClsgICA4OC43NTkzNjBd
-ICBfX3NlX3N5c19tb3VudCsweDE0YS8weDIyMApbICAgODguNzU5OTA2XSAgX194NjRfc3lzX21v
-dW50KzB4MjkvMHg0MApbICAgODguNzYwNDMxXSAgZG9fc3lzY2FsbF82NCsweDQ1LzB4NzAKWyAg
-IDg4Ljc2MDkzMV0gIGVudHJ5X1NZU0NBTExfNjRfYWZ0ZXJfaHdmcmFtZSsweDQ0LzB4YTkKWyAg
-IDg4Ljc2MTYzNF0gUklQOiAwMDMzOjB4N2Y1MWJiZTE2MjNhClsgICA4OC43NjIxMzVdIENvZGU6
-IDQ4IDhiIDBkIDUxIGRjIDJiIDAwIGY3IGQ4IDY0IDg5IDAxIDQ4IDgzIGM4IGZmIGMzIAo2NiAy
-ZSAwZiAxZiA4NCAwMCAwMCA4ClsgICA4OC43NjQ2NTddIFJTUDogMDAyYjowMDAwN2ZmZjE3M2Fl
-ODk4IEVGTEFHUzogMDAwMDAyNDYgT1JJR19SQVg6IAowMDAwMDAwMDAwMDAwMGE1ClsgICA4OC43
-NjU3MDBdIFJBWDogZmZmZmZmZmZmZmZmZmZkYSBSQlg6IDAwMDA1NjE2OWExMjAwMzAgUkNYOiAK
-MDAwMDdmNTFiYmUxNjIzYQpbICAgODguNzY2Njc1XSBSRFg6IDAwMDA1NjE2OWExMjAyMTAgUlNJ
-OiAwMDAwNTYxNjlhMTIwMjUwIFJESTogCjAwMDA1NjE2OWExMjAyMzAKWyAgIDg4Ljc2NzY0Ml0g
-UkJQOiAwMDAwMDAwMDAwMDAwMDAwIFIwODogMDAwMDAwMDAwMDAwMDAwMCBSMDk6IAowMDAwN2Zm
-ZjE3M2FkNzk4ClsgICA4OC43Njg2MTldIFIxMDogMDAwMDAwMDBjMGVkMDAwMCBSMTE6IDAwMDAw
-MDAwMDAwMDAyNDYgUjEyOiAKMDAwMDU2MTY5YTEyMDIzMApbICAgODguNzY5NjA1XSBSMTM6IDAw
-MDA1NjE2OWExMjAyMTAgUjE0OiAwMDAwMDAwMDAwMDAwMDAwIFIxNTogCjAwMDA3ZjUxYmNiYWMx
-ODQKWyAgIDg4Ljc3MDYxMV0gTW9kdWxlcyBsaW5rZWQgaW46IGRtX3NlcnZpY2VfdGltZSBkbV9t
-dWx0aXBhdGgKWyAgIDg4Ljc3MTM4OF0gQ1IyOiAwMDAwMDAwMDAwMDAwMWEwClsgICA4OC43NzYz
-MjNdIC0tLVsgZW5kIHRyYWNlIGFjNWQ4NmUwOWZkYzdjOTggXS0tLQpbICAgODguNzc3MDA5XSBS
-SVA6IDAwMTA6X19ibGtfbXFfc2NoZWRfYmlvX21lcmdlKzB4OWQvMHgxYTAKWyAgIDg4Ljc3ODAz
-OF0gQ29kZTogODcgMWUgOWQgODkgZDAgMjUgMDAgMDAgMDAgMDEgMGYgODUgYWQgMDAgMDAgMDAg
-NDggCjgzIDA1IDI1IGExIDM3IDBjIDAxIDMKWyAgIDg4Ljc4MDcwOF0gUlNQOiAwMDE4OmZmZmZj
-OTAwMDA0NzNiNTAgRUZMQUdTOiAwMDAxMDIwMgpbICAgODguNzgxNDQzXSBSQVg6IDAwMDAwMDAw
-MDAwMDAwMDAgUkJYOiAwMDAwMDAwMDAwMDAwMDAwIFJDWDogCmZmZmZjOTAwMDA0NzNiOTgKWyAg
-IDg4Ljc4MjY5Ml0gUkRYOiAwMDAwMDAwMDAwMDAxMDAwIFJTSTogZmZmZjg4ODEwODBjNzUwMCBS
-REk6IApmZmZmODg4MTAzYTljYzE4ClsgICA4OC43ODM4MzldIFJCUDogZmZmZjg4ODEzYmM4MDAw
-MCBSMDg6IDAwMDAwMDAwMDAwMDAwMDEgUjA5OiAKMDAwMDAwMDAwMDAwMDAwMApbICAgODguNzg0
-OTQyXSBSMTA6IGZmZmY4ODgxMDcxMGJlMzAgUjExOiAwMDAwMDAwMDAwMDAwMDAwIFIxMjogCmZm
-ZmY4ODgxMDNhOWNjMTgKWyAgIDg4Ljc4NjA1MV0gUjEzOiBmZmZmODg4MTA4MGM3NTAwIFIxNDog
-MDAwMDAwMDAwMDAwMDAwMSBSMTU6IAowMDAwMDAwMDAwMDAwMDAwClsgICA4OC43ODcxNDJdIEZT
-OiAgMDAwMDdmNTFiY2RiYjA0MCgwMDAwKSBHUzpmZmZmODg4MTNiYzgwMDAwKDAwMDApIAprbmxH
-UzowMDAwMDAwMDAwMDAwMDAwClsgICA4OC43ODgzOTldIENTOiAgMDAxMCBEUzogMDAwMCBFUzog
-MDAwMCBDUjA6IDAwMDAwMDAwODAwNTAwMzMKWyAgIDg4Ljc4OTQ0NF0gQ1IyOiAwMDAwN2YxMGU5
-N2E1MDAwIENSMzogMDAwMDAwMDEwZDcxNTAwMCBDUjQ6IAowMDAwMDAwMDAwMDAwNmUwClsgICA4
-OC43OTA1ODZdIERSMDogMDAwMDAwMDAwMDAwMDAwMCBEUjE6IDAwMDAwMDAwMDAwMDAwMDAgRFIy
-OiAKMDAwMDAwMDAwMDAwMDAwMApbICAgODguNzkxNjg2XSBEUjM6IDAwMDAwMDAwMDAwMDAwMDAg
-RFI2OiAwMDAwMDAwMGZmZmUwZmYwIERSNzogCjAwMDAwMDAwMDAwMDA0MDAKWyAgIDg4Ljc5Mjc3
-M10gS2VybmVsIHBhbmljIC0gbm90IHN5bmNpbmc6IEZhdGFsIGV4Y2VwdGlvbgpbICAgODguNzkz
-NTczXSBLZXJuZWwgT2Zmc2V0OiBkaXNhYmxlZApbICAgODguNzk0MDUyXSAtLS1bIGVuZCBLZXJu
-ZWwgcGFuaWMgLSBub3Qgc3luY2luZzogRmF0YWwgZXhjZXB0aW9uIF0tLS0KCnJvb3QgY2F1c2U6
-CnQxIGRtLW1wYXRoICAgICAgIHQyIG1vdW50CgphbGxvY19kZXYKICBtZC0+cXVldWUgPSBibGtf
-YWxsb2NfcXVldWUKICBhZGRfZGlza19ub19xdWV1ZV9yZWcKCmRtX3NldHVwX21kX3F1ZXVlCiAg
-Y2FzZSBETV9UWVBFX1JFUVVFU1RfQkFTRUQgLT4gbXVsdGlwYXRoCiAgIG1kLT5kaXNrLT5mb3Bz
-ID0gJmRtX3JxX2Jsa19kb3BzOwogICAgICAgICAgICAgICAgICAgICAgICAgZXh0NF9maWxsX3N1
-cGVyCiAgICAgICAgICAgICAgICAgICAgICAgICCprl9fZXh0NF9zYl9icmVhZF9nZnAKICAgICAg
-ICAgICAgICAgICAgICAgICAgIKmuIGV4dDRfcmVhZF9iaAogICAgICAgICAgICAgICAgICAgICAg
-ICAgqa4gIHN1Ym1pdF9iaW8gLT4gcXVldWUgaXMgbm90IGluaXRpYWxpemVkIHlldAogICAgICAg
-ICAgICAgICAgICAgICAgICAgqa4gICBfX2Jsa19tcV9zY2hlZF9iaW9fbWVyZ2UKICAgICAgICAg
-ICAgICAgICAgICAgICAgIKmuICAgIGN0eCA9IGJsa19tcV9nZXRfY3R4KHEpOyAtPiBjdHggaXMg
-TlVMTAogICBkbV9tcV9pbml0X3JlcXVlc3RfcXVldWUKCkRvIHlvdSB0aGluayBpdCdzIG9rIHRv
-IGJhY2twb3J0IHRoaXMgcGF0Y2goYW5kIGFsbCByZWFsdGVkIHBhdGNoZXMpIHRvCmx0cywgb3Ig
-aXQncyBiZXR0ZXIgdG8gZml4IHRoYXQgYmlvIGNhbiBiZSBzdWJtaXR0ZWQgd2l0aCBxdWV1ZQp1
-bmluaXRpYWxpemVkIGZyb20gYmxvY2sgbGF5ZXI/CgpUaGFua3MsCkt1YWkKPiAtLS0KPiAgIGRy
-aXZlcnMvbWQvZG0tcnEuYyB8ICAxIC0KPiAgIGRyaXZlcnMvbWQvZG0uYyAgICB8IDIzICsrKysr
-KysrKysrLS0tLS0tLS0tLS0tCj4gICAyIGZpbGVzIGNoYW5nZWQsIDExIGluc2VydGlvbnMoKyks
-IDEzIGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLXJxLmMgYi9k
-cml2ZXJzL21kL2RtLXJxLmMKPiBpbmRleCAwZGJkNDhjYmRmZjkuLjViOTVlZWE1MTdkMSAxMDA2
-NDQKPiAtLS0gYS9kcml2ZXJzL21kL2RtLXJxLmMKPiArKysgYi9kcml2ZXJzL21kL2RtLXJxLmMK
-PiBAQCAtNTU5LDcgKzU1OSw2IEBAIGludCBkbV9tcV9pbml0X3JlcXVlc3RfcXVldWUoc3RydWN0
-IG1hcHBlZF9kZXZpY2UgKm1kLCBzdHJ1Y3QgZG1fdGFibGUgKnQpCj4gICAJZXJyID0gYmxrX21x
-X2luaXRfYWxsb2NhdGVkX3F1ZXVlKG1kLT50YWdfc2V0LCBtZC0+cXVldWUpOwo+ICAgCWlmIChl
-cnIpCj4gICAJCWdvdG8gb3V0X3RhZ19zZXQ7Cj4gLQllbGV2YXRvcl9pbml0X21xKG1kLT5xdWV1
-ZSk7Cj4gICAJcmV0dXJuIDA7Cj4gICAKPiAgIG91dF90YWdfc2V0Ogo+IGRpZmYgLS1naXQgYS9k
-cml2ZXJzL21kL2RtLmMgYi9kcml2ZXJzL21kL2RtLmMKPiBpbmRleCBmMDAzYmQ1YjkzY2UuLjc5
-ODFiNzI4NzYyOCAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL21kL2RtLmMKPiArKysgYi9kcml2ZXJz
-L21kL2RtLmMKPiBAQCAtMTY5Myw3ICsxNjkzLDEwIEBAIHN0YXRpYyB2b2lkIGNsZWFudXBfbWFw
-cGVkX2RldmljZShzdHJ1Y3QgbWFwcGVkX2RldmljZSAqbWQpCj4gICAJCXNwaW5fbG9jaygmX21p
-bm9yX2xvY2spOwo+ICAgCQltZC0+ZGlzay0+cHJpdmF0ZV9kYXRhID0gTlVMTDsKPiAgIAkJc3Bp
-bl91bmxvY2soJl9taW5vcl9sb2NrKTsKPiAtCQlkZWxfZ2VuZGlzayhtZC0+ZGlzayk7Cj4gKwkJ
-aWYgKGRtX2dldF9tZF90eXBlKG1kKSAhPSBETV9UWVBFX05PTkUpIHsKPiArCQkJZG1fc3lzZnNf
-ZXhpdChtZCk7Cj4gKwkJCWRlbF9nZW5kaXNrKG1kLT5kaXNrKTsKPiArCQl9Cj4gICAJCWRtX3F1
-ZXVlX2Rlc3Ryb3lfa2V5c2xvdF9tYW5hZ2VyKG1kLT5xdWV1ZSk7Cj4gICAJCWJsa19jbGVhbnVw
-X2Rpc2sobWQtPmRpc2spOwo+ICAgCX0KPiBAQCAtMTc4OCw3ICsxNzkxLDYgQEAgc3RhdGljIHN0
-cnVjdCBtYXBwZWRfZGV2aWNlICphbGxvY19kZXYoaW50IG1pbm9yKQo+ICAgCQkJZ290byBiYWQ7
-Cj4gICAJfQo+ICAgCj4gLQlhZGRfZGlza19ub19xdWV1ZV9yZWcobWQtPmRpc2spOwo+ICAgCWZv
-cm1hdF9kZXZfdChtZC0+bmFtZSwgTUtERVYoX21ham9yLCBtaW5vcikpOwo+ICAgCj4gICAJbWQt
-PndxID0gYWxsb2Nfd29ya3F1ZXVlKCJrZG1mbHVzaCIsIFdRX01FTV9SRUNMQUlNLCAwKTsKPiBA
-QCAtMTk4OSwxOSArMTk5MSwxMiBAQCBzdGF0aWMgc3RydWN0IGRtX3RhYmxlICpfX3VuYmluZChz
-dHJ1Y3QgbWFwcGVkX2RldmljZSAqbWQpCj4gICAgKi8KPiAgIGludCBkbV9jcmVhdGUoaW50IG1p
-bm9yLCBzdHJ1Y3QgbWFwcGVkX2RldmljZSAqKnJlc3VsdCkKPiAgIHsKPiAtCWludCByOwo+ICAg
-CXN0cnVjdCBtYXBwZWRfZGV2aWNlICptZDsKPiAgIAo+ICAgCW1kID0gYWxsb2NfZGV2KG1pbm9y
-KTsKPiAgIAlpZiAoIW1kKQo+ICAgCQlyZXR1cm4gLUVOWElPOwo+ICAgCj4gLQlyID0gZG1fc3lz
-ZnNfaW5pdChtZCk7Cj4gLQlpZiAocikgewo+IC0JCWZyZWVfZGV2KG1kKTsKPiAtCQlyZXR1cm4g
-cjsKPiAtCX0KPiAtCj4gICAJKnJlc3VsdCA9IG1kOwo+ICAgCXJldHVybiAwOwo+ICAgfQo+IEBA
-IC0yMDgxLDEwICsyMDc2LDE1IEBAIGludCBkbV9zZXR1cF9tZF9xdWV1ZShzdHJ1Y3QgbWFwcGVk
-X2RldmljZSAqbWQsIHN0cnVjdCBkbV90YWJsZSAqdCkKPiAgIAlyID0gZG1fdGFibGVfc2V0X3Jl
-c3RyaWN0aW9ucyh0LCBtZC0+cXVldWUsICZsaW1pdHMpOwo+ICAgCWlmIChyKQo+ICAgCQlyZXR1
-cm4gcjsKPiAtCW1kLT50eXBlID0gdHlwZTsKPiAgIAo+IC0JYmxrX3JlZ2lzdGVyX3F1ZXVlKG1k
-LT5kaXNrKTsKPiArCWFkZF9kaXNrKG1kLT5kaXNrKTsKPiAgIAo+ICsJciA9IGRtX3N5c2ZzX2lu
-aXQobWQpOwo+ICsJaWYgKHIpIHsKPiArCQlkZWxfZ2VuZGlzayhtZC0+ZGlzayk7Cj4gKwkJcmV0
-dXJuIHI7Cj4gKwl9Cj4gKwltZC0+dHlwZSA9IHR5cGU7Cj4gICAJcmV0dXJuIDA7Cj4gICB9Cj4g
-ICAKPiBAQCAtMjE5MCw3ICsyMTkwLDYgQEAgc3RhdGljIHZvaWQgX19kbV9kZXN0cm95KHN0cnVj
-dCBtYXBwZWRfZGV2aWNlICptZCwgYm9vbCB3YWl0KQo+ICAgCQlETVdBUk4oIiVzOiBGb3JjaWJs
-eSByZW1vdmluZyBtYXBwZWRfZGV2aWNlIHN0aWxsIGluIHVzZSEgKCVkIHVzZXJzKSIsCj4gICAJ
-CSAgICAgICBkbV9kZXZpY2VfbmFtZShtZCksIGF0b21pY19yZWFkKCZtZC0+aG9sZGVycykpOwo+
-ICAgCj4gLQlkbV9zeXNmc19leGl0KG1kKTsKPiAgIAlkbV90YWJsZV9kZXN0cm95KF9fdW5iaW5k
-KG1kKSk7Cj4gICAJZnJlZV9kZXYobWQpOwo+ICAgfQo+IAoKLS0KZG0tZGV2ZWwgbWFpbGluZyBs
-aXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1h
-bi9saXN0aW5mby9kbS1kZXZlbAo=
+On Wed, Jul 06, 2022 at 11:11:58AM -0400, Mike Snitzer wrote:
+> On Mon, Jun 27 2022 at 11:35P -0400,
+> Matthias Kaehlcke <mka@chromium.org> wrote:
+> 
+> > As of now LoadPin restricts loading of kernel files to a single pinned
+> > filesystem, typically the rootfs. This works for many systems, however it
+> > can result in a bloated rootfs (and OTA updates) on platforms where
+> > multiple boards with different hardware configurations use the same rootfs
+> > image. Especially when 'optional' files are large it may be preferable to
+> > download/install them only when they are actually needed by a given board.
+> > Chrome OS uses Downloadable Content (DLC) [1] to deploy certain 'packages'
+> > at runtime. As an example a DLC package could contain firmware for a
+> > peripheral that is not present on all boards. DLCs use dm-verity [2] to
+> > verify the integrity of the DLC content.
+> > 
+> > This series extends LoadPin to allow loading of kernel files from trusted
+> > dm-verity devices. LoadPin maintains a list of root digests of verity
+> > devices it considers trusted. Userspace can populate this list through an
+> > ioctl on the new LoadPin securityfs entry 'dm-verity'. The ioctl receives
+> > a file descriptor of a file with verity digests as parameter. Verity reads
+> > the digests from this file after confirming that the file is located on the
+> > pinned root. The digest file must contain one digest per line. The list of
+> > trusted digests can only be set up once, which is typically done at boot
+> > time.
+> > 
+> > When a kernel file is read LoadPin first checks (as usual) whether the file
+> > is located on the pinned root, if so the file can be loaded. Otherwise, if
+> > the verity extension is enabled, LoadPin determines whether the file is
+> > located on a verity backed device and whether the root digest of that
+> > device is in the list of trusted digests. The file can be loaded if the
+> > verity device has a trusted root digest.
+> > 
+> > [1] https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/dlcservice/docs/developer.md
+> > [2] https://www.kernel.org/doc/html/latest/admin-guide/device-mapper/verity.html
+> 
+> Hi Kees,
+> 
+> Please pick this series up, thanks.
+
+Thanks for the Acks! I'll get this into -next shortly.
+
+-- 
+Kees Cook
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
