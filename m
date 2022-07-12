@@ -1,105 +1,67 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id ABBB4C433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 12 Jul 2022 08:15:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 74C22C43334
+	for <dm-devel@archiver.kernel.org>; Tue, 12 Jul 2022 19:08:12 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1657613745;
+	s=mimecast20190719; t=1657652891;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=FegFs/U/QClN0ddGnmRTiOeqTYow4GunXhHBRHoZJ7c=;
-	b=Q0pNIbfvYb+U8IwAh3gZ6uKAAUK1AppQ31WAQ2yTvpouwBoF5PK6dxSUsR0+vgusW1WpJE
-	VuZNr4So/s7SWl2OAou1XAnQM1k4meLUOly7uXsbGtkf9Ui7mTqN4eS67/WojNqycSkgOq
-	wXu5rpxcABmq2ngY24BRZoVrplHnrFg=
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=D+0Fe9BUHn1CZXml3nisnWvjyR04O93xOBCnl/9hetc=;
+	b=OK4oCOnMdjoKcDVX32V+OtKu0gEvjga0J3ZBUUKY4HIMmqxDTdiSL0xeeUKgibH94io55W
+	+mynTpJ8SM9wA0as0f4AjEdbWgDffDRonyIoHWzw0XfpbQcEMZNYcKE9PvhKeecv02uJ9k
+	P1yMZ0M4fsMsF8RmbZewlEtBh38LI3Q=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-161-EwoP55cUNT6rrKx5HrzL6A-1; Tue, 12 Jul 2022 04:15:42 -0400
-X-MC-Unique: EwoP55cUNT6rrKx5HrzL6A-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-660-wgd8EpQ_NGeHWn1KLsM5VQ-1; Tue, 12 Jul 2022 15:08:08 -0400
+X-MC-Unique: wgd8EpQ_NGeHWn1KLsM5VQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 34CBE101AA48;
-	Tue, 12 Jul 2022 08:15:32 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7E2151857F08;
+	Tue, 12 Jul 2022 19:08:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 485ED1121315;
-	Tue, 12 Jul 2022 08:15:31 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8EB1018ECC;
+	Tue, 12 Jul 2022 19:08:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id F1E141947B81;
-	Tue, 12 Jul 2022 08:15:29 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6A7E01947060;
+	Tue, 12 Jul 2022 19:08:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 5AD93194706B
- for <dm-devel@listman.corp.redhat.com>; Fri,  8 Jul 2022 05:47:33 +0000 (UTC)
+ ESMTP id 983B5194705F
+ for <dm-devel@listman.corp.redhat.com>; Tue, 12 Jul 2022 19:08:01 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4EC96401E54; Fri,  8 Jul 2022 05:47:33 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4A3F5492C3B
- for <dm-devel@redhat.com>; Fri,  8 Jul 2022 05:47:33 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2CD6C1C04B48
- for <dm-devel@redhat.com>; Fri,  8 Jul 2022 05:47:33 +0000 (UTC)
-Received: from mail-pf1-f173.google.com (mail-pf1-f173.google.com
- [209.85.210.173]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-324-g25oUBCaN8mopnS_1ck48g-1; Fri, 08 Jul 2022 01:47:29 -0400
-X-MC-Unique: g25oUBCaN8mopnS_1ck48g-1
-Received: by mail-pf1-f173.google.com with SMTP id y141so22666216pfb.7
- for <dm-devel@redhat.com>; Thu, 07 Jul 2022 22:47:29 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:from:to:cc:subject:thread-topic:thread-index
- :date:message-id:accept-language:content-language:mime-version;
- bh=Ymtst1dOB0e5/k2F2LjTNkIh+ikjxyyxHdjJ3OK7R+o=;
- b=T8quK4GzFtx/CrAAPuLa17XOIwDJOijB1rF9iWa4i9G9I8+xQnzMera/lyudfkPBdY
- yqRQbSxIO8EnXBXJ/axc1t6OjktB8iK4RBtXkBJv9MWKk3fz3rI9uubd04YIUghbC12o
- io7ERIruy8ugI3UqxWtBUfQqkVob31zf7DhtOzen4v9ArHYpEeHBZvxYb3hiYWAxHVhc
- Ao0SmBJiWZ4ot/QJADl2pAehCOY37iuB+NeqnXnPsx/JAZVj3x2vJZDILpQYUghYRRCs
- n+lMq1ErNfVLvCexVwGReNIDBmAMRzRq8NLKPV4Pj1T7qDNZBZ3O12xwLdn8r4GkHJ/l
- PSWg==
-X-Gm-Message-State: AJIora/VYcAtPM+uaiIhLRwE1+LRIEk14vBhCz36i0TdhHak4mtn1ReX
- St8bLY5+hXBhaYUCu7itU7kCUsnvpxYP5g==
-X-Google-Smtp-Source: AGRyM1va/6ihLgT/wXIUkxxjezUZ/EXDJfBQ+dR6eBYLmFdQ1wAWUk8hKWeRjSr1BBTKBGNXI9GS3A==
-X-Received: by 2002:a63:5446:0:b0:40d:91e2:e9bf with SMTP id
- e6-20020a635446000000b0040d91e2e9bfmr1788125pgm.235.1657259248168; 
- Thu, 07 Jul 2022 22:47:28 -0700 (PDT)
-Received: from BY5PR13MB3601.namprd13.prod.outlook.com
- ([2603:1036:307:4014::5]) by smtp.gmail.com with ESMTPSA id
- u12-20020a17090341cc00b0016c19417495sm1906358ple.239.2022.07.07.22.47.26
- (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
- Thu, 07 Jul 2022 22:47:27 -0700 (PDT)
-From: Uday Jonnala <uday.jonnala@tessell.com>
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Thread-Topic: Regarding dm-clone
-Thread-Index: AQHYko3nhcEoO0d5wky+aTHTq4IWJw==
-X-MS-Exchange-MessageSentRepresentingType: 1
-Date: Fri, 8 Jul 2022 05:47:25 +0000
-Message-ID: <BY5PR13MB36015939B775B8841309EC62FC829@BY5PR13MB3601.namprd13.prod.outlook.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-Exchange-Organization-SCL: -1
-X-MS-TNEF-Correlator: 
-X-MS-Exchange-Organization-RecordReviewCfmType: 0
+ id 6DDF42026D07; Tue, 12 Jul 2022 19:08:01 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 508D42026D64;
+ Tue, 12 Jul 2022 19:08:01 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 26CJ7x4m005382;
+ Tue, 12 Jul 2022 14:07:59 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 26CJ7wmg005381;
+ Tue, 12 Jul 2022 14:07:58 -0500
+Date: Tue, 12 Jul 2022 14:07:58 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Message-ID: <20220712190758.GP10602@octiron.msp.redhat.com>
+References: <20220706143822.30182-1-mwilck@suse.com>
+ <20220706143822.30182-6-mwilck@suse.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
-X-Mailman-Approved-At: Tue, 12 Jul 2022 08:15:28 +0000
-Subject: [dm-devel] Regarding dm-clone
+In-Reply-To: <20220706143822.30182-6-mwilck@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH 05/14] libmultipath: sanitize error checking
+ in sysfs accessors
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -111,107 +73,189 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "swaminathan.ks@tessell.com" <swaminathan.ks@tessell.com>,
- "uday.jonnala@tessell.com" <Uday.jonnala@tessell.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: multipart/mixed; boundary="===============8109955536152250172=="
-
---===============8109955536152250172==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_BY5PR13MB36015939B775B8841309EC62FC829BY5PR13MB3601namp_"
-
---_000_BY5PR13MB36015939B775B8841309EC62FC829BY5PR13MB3601namp_
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-Hi Team,
-
-Looking to see if dm-clone is supported in
-5.4.17-2136.308.9.el8uek.x86_64 : Kernel Version (OEL RHEL 8 based)
-
-Which RHEL version has dm-clone checkedin
-
-Thanks & Regards,
-Uday Kiran
-
---_000_BY5PR13MB36015939B775B8841309EC62FC829BY5PR13MB3601namp_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" xmlns:w=3D"urn:sc=
-hemas-microsoft-com:office:word" xmlns:m=3D"http://schemas.microsoft.com/of=
-fice/2004/12/omml" xmlns=3D"http://www.w3.org/TR/REC-html40">
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
-<style><!--
-/* Font Definitions */
-@font-face
-=09{font-family:"Cambria Math";
-=09panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-=09{font-family:Calibri;
-=09panose-1:2 15 5 2 2 2 4 3 2 4;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-=09{margin:0in;
-=09font-size:11.0pt;
-=09font-family:"Calibri",sans-serif;}
-span.EmailStyle17
-=09{mso-style-type:personal-compose;
-=09font-family:"Calibri",sans-serif;
-=09color:windowtext;}
-.MsoChpDefault
-=09{mso-style-type:export-only;
-=09font-family:"Calibri",sans-serif;}
-@page WordSection1
-=09{size:8.5in 11.0in;
-=09margin:1.0in 1.0in 1.0in 1.0in;}
-div.WordSection1
-=09{page:WordSection1;}
---></style>
-</head>
-<body lang=3D"EN-US" link=3D"#0563C1" vlink=3D"#954F72" style=3D"word-wrap:=
-break-word">
-<div class=3D"WordSection1">
-<p class=3D"MsoNormal">Hi Team,<o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Looking to see if dm-clone is supported in <o:p></o:=
-p></p>
-<p class=3D"MsoNormal"><span style=3D"font-size:11.5pt;font-family:&quot;Ar=
-ial&quot;,sans-serif;color:#1D1C1D;background:#F8F8F8">5.4.17-2136.308.9.el=
-8uek.x86_64 : Kernel Version (OEL RHEL 8 based)</span><o:p></o:p></p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Which RHEL version has dm-clone checkedin<o:p></o:p>=
-</p>
-<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
-<p class=3D"MsoNormal">Thanks &amp; Regards,<o:p></o:p></p>
-<p class=3D"MsoNormal">Uday Kiran<o:p></o:p></p>
-</div>
-</body>
-</html>
-
---_000_BY5PR13MB36015939B775B8841309EC62FC829BY5PR13MB3601namp_--
-
---===============8109955536152250172==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
+On Wed, Jul 06, 2022 at 04:38:13PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> udev_device_get_syspath() may return NULL; check for it, and check
+> for pathname overflow. Disallow a zero buffer length. The fstat()
+> calls were superfluous, as a read() or write() on the fd would
+> return the respective error codes depending on file type or permissions,
+> the extra system call and code complexity adds no value.
+> 
+> Log levels should be moderate in sysfs.c, because it depends
+> on the caller whether errors getting/setting certain attributes are
+> fatal.
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/sysfs.c | 94 ++++++++++++++++++--------------------------
+>  1 file changed, 39 insertions(+), 55 deletions(-)
+> 
+> diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+> index 4db911c..1f0f207 100644
+> --- a/libmultipath/sysfs.c
+> +++ b/libmultipath/sysfs.c
+> @@ -47,46 +47,38 @@
+>  static ssize_t __sysfs_attr_get_value(struct udev_device *dev, const char *attr_name,
+>  				      char *value, size_t value_len, bool binary)
+>  {
+> +	const char *syspath;
+>  	char devpath[PATH_SIZE];
+> -	struct stat statbuf;
+>  	int fd;
+>  	ssize_t size = -1;
+>  
+> -	if (!dev || !attr_name || !value)
+> -		return 0;
+> +	if (!dev || !attr_name || !value || !value_len) {
+> +		condlog(1, "%s: invalid parameters", __func__);
+> +		return -EINVAL;
+> +	}
+>  
+> -	snprintf(devpath, PATH_SIZE, "%s/%s", udev_device_get_syspath(dev),
+> -		 attr_name);
+> +	syspath = udev_device_get_syspath(dev);
+> +	if (!syspath) {
+> +		condlog(3, "%s: invalid udevice", __func__);
+> +		return -EINVAL;
+> +	}
+> +	if (safe_sprintf(devpath, "%s/%s", syspath, attr_name)) {
+> +		condlog(3, "%s: devpath overflow", __func__);
+> +		return -EOVERFLOW;
+> +	}
+>  	condlog(4, "open '%s'", devpath);
+>  	/* read attribute value */
+>  	fd = open(devpath, O_RDONLY);
+>  	if (fd < 0) {
+> -		condlog(4, "attribute '%s' can not be opened: %s",
+> -			devpath, strerror(errno));
+> +		condlog(3, "%s: attribute '%s' can not be opened: %s",
+> +			__func__, devpath, strerror(errno));
+>  		return -errno;
+>  	}
+> -	if (fstat(fd, &statbuf) < 0) {
+> -		condlog(4, "stat '%s' failed: %s", devpath, strerror(errno));
+> -		close(fd);
+> -		return -ENXIO;
+> -	}
+> -	/* skip directories */
+> -	if (S_ISDIR(statbuf.st_mode)) {
+> -		condlog(4, "%s is a directory", devpath);
+> -		close(fd);
+> -		return -EISDIR;
+> -	}
+> -	/* skip non-writeable files */
+> -	if ((statbuf.st_mode & S_IRUSR) == 0) {
+> -		condlog(4, "%s is not readable", devpath);
+> -		close(fd);
+> -		return -EPERM;
+> -	}
+> -
+>  	size = read(fd, value, value_len);
+>  	if (size < 0) {
+> -		condlog(4, "read from %s failed: %s", devpath, strerror(errno));
+>  		size = -errno;
+> +		condlog(3, "%s: read from %s failed: %s", __func__, devpath,
+> +			strerror(errno));
+>  		if (!binary)
+>  			value[0] = '\0';
+>  	} else if (!binary && size == (ssize_t)value_len) {
+> @@ -119,51 +111,43 @@ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
+>  ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+>  			     const char * value, size_t value_len)
+>  {
+> +	const char *syspath;
+>  	char devpath[PATH_SIZE];
+> -	struct stat statbuf;
+>  	int fd;
+>  	ssize_t size = -1;
+>  
+> -	if (!dev || !attr_name || !value || !value_len)
+> -		return 0;
+> +	if (!dev || !attr_name || !value || !value_len) {
+> +		condlog(1, "%s: invalid parameters", __func__);
+> +		return -EINVAL;
+> +	}
+> +
+> +	syspath = udev_device_get_syspath(dev);
+> +	if (!syspath) {
+> +		condlog(3, "%s: invalid udevice", __func__);
+> +		return -EINVAL;
+> +	}
+> +	if (safe_sprintf(devpath, "%s/%s", syspath, attr_name)) {
+> +		condlog(3, "%s: devpath overflow", __func__);
+> +		return -EOVERFLOW;
+> +	}
+>  
+> -	snprintf(devpath, PATH_SIZE, "%s/%s", udev_device_get_syspath(dev),
+> -		 attr_name);
+>  	condlog(4, "open '%s'", devpath);
+>  	/* write attribute value */
+>  	fd = open(devpath, O_WRONLY);
+>  	if (fd < 0) {
+> -		condlog(4, "attribute '%s' can not be opened: %s",
+> -			devpath, strerror(errno));
+> +		condlog(2, "%s: attribute '%s' can not be opened: %s",
+> +			__func__, devpath, strerror(errno));
+
+You log at loglevel 2 here, but at 3 for an open() failure in
+__sysfs_attr_get_value(). However I notice that this gets resolved in
+PATCH 8/14, so it's no big deal.
+
+-Ben
+
+>  		return -errno;
+>  	}
+> -	if (fstat(fd, &statbuf) != 0) {
+> -		condlog(4, "stat '%s' failed: %s", devpath, strerror(errno));
+> -		close(fd);
+> -		return -errno;
+> -	}
+> -
+> -	/* skip directories */
+> -	if (S_ISDIR(statbuf.st_mode)) {
+> -		condlog(4, "%s is a directory", devpath);
+> -		close(fd);
+> -		return -EISDIR;
+> -	}
+> -
+> -	/* skip non-writeable files */
+> -	if ((statbuf.st_mode & S_IWUSR) == 0) {
+> -		condlog(4, "%s is not writeable", devpath);
+> -		close(fd);
+> -		return -EPERM;
+> -	}
+>  
+>  	size = write(fd, value, value_len);
+>  	if (size < 0) {
+> -		condlog(4, "write to %s failed: %s", devpath, strerror(errno));
+>  		size = -errno;
+> +		condlog(3, "%s: write to %s failed: %s", __func__, 
+> +			devpath, strerror(errno));
+>  	} else if (size < (ssize_t)value_len) {
+> -		condlog(4, "tried to write %ld to %s. Wrote %ld",
+> -			(long)value_len, devpath, (long)size);
+> +		condlog(3, "%s: underflow writing %zu bytes to %s. Wrote %zd bytes",
+> +			__func__, value_len, devpath, size);
+>  		size = 0;
+>  	}
+>  
+> -- 
+> 2.36.1
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-
---===============8109955536152250172==--
 
