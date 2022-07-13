@@ -1,79 +1,83 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6F26FC43334
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Jul 2022 08:21:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5B592C43334
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Jul 2022 08:21:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1657700487;
+	s=mimecast20190719; t=1657700506;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=DqwDA5m9kUKp13XBam3AnHoM2Skpt9PjTVjlCkoCAE0=;
-	b=ch/iyhpbQ4qUKOzGz3zpRRuUIiwwpKfKySVF74AaZqa7P3RV40sFi6UDFXqyvOAvrByRDD
-	EDREo2jwgQr3O9o/AvCLSrENI7tv2jtTe+PVXJJAZ8CbTZBQfR3m2nyENemd2EnrIuu9pi
-	CEo/3q+93J4KCpyB7DDbPa0/KuaUHVs=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=T4J4Jn6qG5cmFt0WCyNIk4jfaFxLDmki0/s4fQb+P1I=;
+	b=LUCzUr4L/pyIL0cTfbugolhX2W4F8Qp/qHbsf7398h1jgS4xd3szkBjz19QIHeCzzcwghH
+	TU1KDy2xddG5A3Ltp9TqkC+BW1yHtOKZ7ptZkUqpwTDu+fw1YWVBf/u651HwHOfEWJaL+b
+	fPOny6zvZrB7en/2TxbuScDNikJiBds=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-451-gxRZ_NtyPl2Pl4zkC67N2A-1; Wed, 13 Jul 2022 04:21:24 -0400
-X-MC-Unique: gxRZ_NtyPl2Pl4zkC67N2A-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-658-PCj8eNUqN5mtRId9UWUa4w-1; Wed, 13 Jul 2022 04:21:37 -0400
+X-MC-Unique: PCj8eNUqN5mtRId9UWUa4w-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 607968037B3;
-	Wed, 13 Jul 2022 08:21:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 546B21C05ABE;
+	Wed, 13 Jul 2022 08:21:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E577F40315B;
-	Wed, 13 Jul 2022 08:21:19 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 405B22166B26;
+	Wed, 13 Jul 2022 08:21:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A6E1E194705F;
-	Wed, 13 Jul 2022 08:21:19 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DC0F61947060;
+	Wed, 13 Jul 2022 08:21:29 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
  [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C85A2194704C
- for <dm-devel@listman.corp.redhat.com>; Wed, 13 Jul 2022 08:21:18 +0000 (UTC)
+ ESMTP id E8656194704C
+ for <dm-devel@listman.corp.redhat.com>; Wed, 13 Jul 2022 08:21:28 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id BD3261121319; Wed, 13 Jul 2022 08:21:18 +0000 (UTC)
+ id DDCD61121315; Wed, 13 Jul 2022 08:21:28 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B8BAC1121314
- for <dm-devel@redhat.com>; Wed, 13 Jul 2022 08:21:18 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C8BB8032F2
- for <dm-devel@redhat.com>; Wed, 13 Jul 2022 08:21:18 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D9E9D1121314
+ for <dm-devel@redhat.com>; Wed, 13 Jul 2022 08:21:28 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BE4B13C02B75
+ for <dm-devel@redhat.com>; Wed, 13 Jul 2022 08:21:28 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-373-EiYfCoG_NdOFl72ccP6I1Q-1; Wed, 13 Jul 2022 04:21:16 -0400
-X-MC-Unique: EiYfCoG_NdOFl72ccP6I1Q-1
+ us-mta-398-foxogxLqOtOhO5Uqvouf3Q-1; Wed, 13 Jul 2022 04:21:25 -0400
+X-MC-Unique: foxogxLqOtOhO5Uqvouf3Q-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 537771FDF2;
- Wed, 13 Jul 2022 08:21:15 +0000 (UTC)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id 22591339D8;
+ Wed, 13 Jul 2022 08:21:18 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 247E713754;
- Wed, 13 Jul 2022 08:21:15 +0000 (UTC)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id D9D5413754;
+ Wed, 13 Jul 2022 08:21:17 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id /cQ4B3uAzmKYNAAAMHmgww
- (envelope-from <mwilck@suse.com>); Wed, 13 Jul 2022 08:21:15 +0000
+ by imap2.suse-dmz.suse.de with ESMTPSA id 4LOXM32AzmKYNAAAMHmgww
+ (envelope-from <mwilck@suse.com>); Wed, 13 Jul 2022 08:21:17 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
  Benjamin Marzinski <bmarzins@redhat.com>
-Date: Wed, 13 Jul 2022 10:20:42 +0200
-Message-Id: <20220713082043.22561-1-mwilck@suse.com>
+Date: Wed, 13 Jul 2022 10:20:43 +0200
+Message-Id: <20220713082043.22561-2-mwilck@suse.com>
+In-Reply-To: <20220713082043.22561-1-mwilck@suse.com>
+References: <20220713082043.22561-1-mwilck@suse.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -83,7 +87,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-Subject: [dm-devel] [PATCH v2 00/14] multipath: fixes for sysfs accessors
+Subject: [dm-devel] [PATCH v2 08/14] libmultipath: sysfs_attr_set_value():
+ don't return 0 on partial write
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -98,7 +103,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -108,71 +113,249 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-This set fixes some strangeness in our sysfs accessors which I
-found while looking at
-https://github.com/opensvc/multipath-tools/issues/35#issuecomment-1175901745.
-(The patches don't fix this issue, which seems to be related to
-Debian's initramfs setup).
+sysfs_attr_set_value() returned 0 if not all requested bytes were written.
+Change this to return the number of bytes written. Error checking is now
+somewhat more involved; provide a helper macro for it.
 
-Most importantly, sysfs_attr_get_value() and sysfs_attr_set_value()
-would return 0 if the number of bytes read/written was different from
-the expected value, which is non-standard and unexpected. This
-series changes the return value semantics of these functions:
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/configure.c | 10 ++++--
+ libmultipath/discovery.c | 74 +++++++++++++++++++++++++---------------
+ libmultipath/sysfs.c     |  6 ++--
+ libmultipath/sysfs.h     | 10 ++++++
+ 4 files changed, 66 insertions(+), 34 deletions(-)
 
- - in sysfs_attr_get_value(), if a read buffer is too small to hold
-   the string read plus a terminating 0 byte, the return value
-   equals the buffer size.
- - in sysfs_bin_attr_get_value(), no 0 bytes are appended. It's not
-   an error if the read buffer is completely filled, and no warning
-   is printed in this case.
- - sysfs_attr_set_value() always returns the number of bytes written
-   unless an error occured in open() or write().
-
-Tests for the new semantics are added. Moreover, the sysfs.c code
-is slightly refactored to avoid code duplication.
-
-Changes v1 -> v2:
-   08/14: fixes suggested by Benjamin Marzinski
-
-I am not resending the entire series; see
-https://github.com/openSUSE/multipath-tools/commits/tip
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 467bbaa..0607dba 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -568,6 +568,7 @@ sysfs_set_max_sectors_kb(struct multipath *mpp, int is_reload)
+ 	struct pathgroup * pgp;
+ 	struct path *pp;
+ 	char buff[11];
++	ssize_t len;
+ 	int i, j, ret, err = 0;
+ 	struct udev_device *udd;
+ 	int max_sectors_kb;
+@@ -600,14 +601,17 @@ sysfs_set_max_sectors_kb(struct multipath *mpp, int is_reload)
+ 		}
+ 	}
+ 	snprintf(buff, 11, "%d", max_sectors_kb);
++	len = strlen(buff);
  
-Martin Wilck (14):
-  libmultipath: alua: remove get_sysfs_pg83()
-  libmultipath: remove sysfs_get_binary()
-  libmultipath: sysfs_bin_attr_get_value(): no error if buffer is filled
-  libmultipath: common code path for sysfs_attr_get_value()
-  libmultipath: sanitize error checking in sysfs accessors
-  libmultipath: get rid of PATH_SIZE
-  libmultipath: sysfs_attr_get_value(): don't return 0 if buffer too
-    small
-  libmultipath: sysfs_attr_set_value(): don't return 0 on partial write
-  libmultipath: sysfs: cleanup file descriptors on pthread_cancel()
-  libmultipath, multipathd: log failure setting sysfs attributes
-  multipath tests: expect_condlog: skip depending on verbosity
-  multipath tests: __wrap_dlog: print log message
-  multipath tests: add sysfs test
-  libmultipath.version: bump version for sysfs accessors
-
- libmultipath/configure.c              |  30 +-
- libmultipath/discovery.c              | 124 +++----
- libmultipath/libmultipath.version     |   8 +-
- libmultipath/prioritizers/alua_rtpg.c |  57 +--
- libmultipath/propsel.c                |   6 +-
- libmultipath/structs.h                |   3 -
- libmultipath/sysfs.c                  | 191 ++++------
- libmultipath/sysfs.h                  |  23 ++
- libmultipath/util.c                   |   8 +-
- multipathd/cli_handlers.c             |   2 +-
- multipathd/fpin_handlers.c            |  11 +-
- multipathd/main.c                     |  40 ++-
- tests/Makefile                        |   5 +-
- tests/sysfs.c                         | 494 ++++++++++++++++++++++++++
- tests/test-lib.c                      |   1 -
- tests/test-log.c                      |   5 +
- 16 files changed, 753 insertions(+), 255 deletions(-)
- create mode 100644 tests/sysfs.c
-
+ 	vector_foreach_slot (mpp->pg, pgp, i) {
+ 		vector_foreach_slot(pgp->paths, pp, j) {
+ 			ret = sysfs_attr_set_value(pp->udev,
+ 						   "queue/max_sectors_kb",
+-						   buff, strlen(buff));
+-			if (ret < 0) {
+-				condlog(1, "failed setting max_sectors_kb on %s : %s", pp->dev, strerror(-ret));
++						   buff, len);
++			if (ret != len) {
++				log_sysfs_attr_set_value(1, ret,
++					"failed setting max_sectors_kb on %s",
++					pp->dev);
+ 				err = 1;
+ 			}
+ 		}
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 54b1caf..ee29009 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -598,13 +598,15 @@ sysfs_set_eh_deadline(struct path *pp)
+ 		len = sprintf(value, "%d", pp->eh_deadline);
+ 
+ 	ret = sysfs_attr_set_value(hostdev, "eh_deadline",
+-				   value, len + 1);
++				   value, len);
+ 	/*
+ 	 * not all scsi drivers support setting eh_deadline, so failing
+ 	 * is totally reasonable
+ 	 */
+-	if (ret <= 0)
+-		condlog(3, "%s: failed to set eh_deadline to %s, error %d", udev_device_get_sysname(hostdev), value, -ret);
++	if (ret != len)
++		log_sysfs_attr_set_value(3, ret,
++			"%s: failed to set eh_deadline to %s",
++			udev_device_get_sysname(hostdev), value);
+ 
+ 	udev_device_unref(hostdev);
+ 	return (ret <= 0);
+@@ -667,19 +669,22 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+ 	    pp->fast_io_fail != MP_FAST_IO_FAIL_OFF) {
+ 		/* Check if we need to temporarily increase dev_loss_tmo */
+ 		if ((unsigned int)pp->fast_io_fail >= tmo) {
++			ssize_t len;
++
+ 			/* Increase dev_loss_tmo temporarily */
+ 			snprintf(value, sizeof(value), "%u",
+ 				 (unsigned int)pp->fast_io_fail + 1);
++			len = strlen(value);
+ 			ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
+-						   value, strlen(value));
+-			if (ret <= 0) {
++						   value, len);
++			if (ret != len) {
+ 				if (ret == -EBUSY)
+ 					condlog(3, "%s: rport blocked",
+ 						rport_id);
+ 				else
+-					condlog(0, "%s: failed to set "
+-						"dev_loss_tmo to %s, error %d",
+-						rport_id, value, -ret);
++					log_sysfs_attr_set_value(0, ret,
++						"%s: failed to set dev_loss_tmo to %s",
++						rport_id, value);
+ 				goto out;
+ 			}
+ 		}
+@@ -691,32 +696,39 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
+ 		pp->dev_loss = DEFAULT_DEV_LOSS_TMO;
+ 	}
+ 	if (pp->fast_io_fail != MP_FAST_IO_FAIL_UNSET) {
++		ssize_t len;
++
+ 		if (pp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
+ 			sprintf(value, "off");
+ 		else if (pp->fast_io_fail == MP_FAST_IO_FAIL_ZERO)
+ 			sprintf(value, "0");
+ 		else
+ 			snprintf(value, 16, "%u", pp->fast_io_fail);
++		len = strlen(value);
+ 		ret = sysfs_attr_set_value(rport_dev, "fast_io_fail_tmo",
+-					   value, strlen(value));
+-		if (ret <= 0) {
++					   value, len);
++		if (ret != len) {
+ 			if (ret == -EBUSY)
+ 				condlog(3, "%s: rport blocked", rport_id);
+ 			else
+-				condlog(0, "%s: failed to set fast_io_fail_tmo to %s, error %d",
+-					rport_id, value, -ret);
++				log_sysfs_attr_set_value(0, ret,
++					"%s: failed to set fast_io_fail_tmo to %s",
++					rport_id, value);
+ 		}
+ 	}
+ 	if (pp->dev_loss != DEV_LOSS_TMO_UNSET) {
++		ssize_t len;
++
+ 		snprintf(value, 16, "%u", pp->dev_loss);
+-		ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
+-					   value, strlen(value));
+-		if (ret <= 0) {
++		len = strlen(value);
++		ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo", value, len);
++		if (ret != len) {
+ 			if (ret == -EBUSY)
+ 				condlog(3, "%s: rport blocked", rport_id);
+ 			else
+-				condlog(0, "%s: failed to set dev_loss_tmo to %s, error %d",
+-					rport_id, value, -ret);
++				log_sysfs_attr_set_value(0, ret,
++					"%s: failed to set dev_loss_tmo to %s",
++					rport_id, value);
+ 		}
+ 	}
+ out:
+@@ -754,12 +766,16 @@ sysfs_set_session_tmo(struct path *pp)
+ 			condlog(3, "%s: can't set fast_io_fail_tmo to '0'"
+ 				"on iSCSI", pp->dev);
+ 		} else {
++			ssize_t len, ret;
++
+ 			snprintf(value, 11, "%u", pp->fast_io_fail);
+-			if (sysfs_attr_set_value(session_dev, "recovery_tmo",
+-						 value, strlen(value)) <= 0) {
+-				condlog(3, "%s: Failed to set recovery_tmo, "
+-					" error %d", pp->dev, errno);
+-			}
++			len = strlen(value);
++			ret = sysfs_attr_set_value(session_dev, "recovery_tmo",
++						   value, len);
++			if (ret != len)
++				log_sysfs_attr_set_value(3, ret,
++					"%s: Failed to set recovery_tmo to %s",
++							 pp->dev, value);
+ 		}
+ 	}
+ 	udev_device_unref(session_dev);
+@@ -802,12 +818,16 @@ sysfs_set_nexus_loss_tmo(struct path *pp)
+ 		pp->sg_id.channel, pp->sg_id.scsi_id, end_dev_id);
+ 
+ 	if (pp->dev_loss != DEV_LOSS_TMO_UNSET) {
++		ssize_t len, ret;
++
+ 		snprintf(value, 11, "%u", pp->dev_loss);
+-		if (sysfs_attr_set_value(sas_dev, "I_T_nexus_loss_timeout",
+-					 value, strlen(value)) <= 0)
+-			condlog(3, "%s: failed to update "
+-				"I_T Nexus loss timeout, error %d",
+-				pp->dev, errno);
++		len = strlen(value);
++		ret = sysfs_attr_set_value(sas_dev, "I_T_nexus_loss_timeout",
++					   value, len);
++		if (ret != len)
++			log_sysfs_attr_set_value(3, ret,
++				"%s: failed to update I_T Nexus loss timeout",
++				pp->dev);
+ 	}
+ 	udev_device_unref(sas_dev);
+ 	return;
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index 125f1c2..9c84af7 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -134,7 +134,7 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+ 	/* write attribute value */
+ 	fd = open(devpath, O_WRONLY);
+ 	if (fd < 0) {
+-		condlog(2, "%s: attribute '%s' can not be opened: %s",
++		condlog(3, "%s: attribute '%s' can not be opened: %s",
+ 			__func__, devpath, strerror(errno));
+ 		return -errno;
+ 	}
+@@ -144,11 +144,9 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+ 		size = -errno;
+ 		condlog(3, "%s: write to %s failed: %s", __func__, 
+ 			devpath, strerror(errno));
+-	} else if (size < (ssize_t)value_len) {
++	} else if (size < (ssize_t)value_len)
+ 		condlog(3, "%s: underflow writing %zu bytes to %s. Wrote %zd bytes",
+ 			__func__, value_len, devpath, size);
+-		size = 0;
+-	}
+ 
+ 	close(fd);
+ 	return size;
+diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
+index cdc84e4..799f68e 100644
+--- a/libmultipath/sysfs.h
++++ b/libmultipath/sysfs.h
+@@ -5,6 +5,7 @@
+ #ifndef _LIBMULTIPATH_SYSFS_H
+ #define _LIBMULTIPATH_SYSFS_H
+ #include <stdbool.h>
++#include "strbuf.h"
+ 
+ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+ 			     const char * value, size_t value_len);
+@@ -25,6 +26,15 @@ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
+ 		sysfs_attr_value_ok(__rc, __l); \
+ 	})
+ 
++#define log_sysfs_attr_set_value(prio, rc, fmt, __args...)		\
++do {									\
++	STRBUF_ON_STACK(__buf);						\
++	if (print_strbuf(&__buf, fmt, ##__args) >= 0 &&			\
++	    print_strbuf(&__buf, ": %s", rc < 0 ? strerror(-rc) :	\
++					"write underflow") >= 0)	\
++		condlog(prio, "%s", get_strbuf_str(&__buf));		\
++} while(0)
++
+ int sysfs_get_size (struct path *pp, unsigned long long * size);
+ int sysfs_check_holders(char * check_devt, char * new_devt);
+ bool sysfs_is_multipathed(struct path *pp, bool set_wwid);
 -- 
 2.36.1
 
