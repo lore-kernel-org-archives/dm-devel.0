@@ -4,81 +4,133 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5B592C43334
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Jul 2022 08:21:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 478B6C433EF
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Jul 2022 09:20:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1657700506;
+	s=mimecast20190719; t=1657704051;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=T4J4Jn6qG5cmFt0WCyNIk4jfaFxLDmki0/s4fQb+P1I=;
-	b=LUCzUr4L/pyIL0cTfbugolhX2W4F8Qp/qHbsf7398h1jgS4xd3szkBjz19QIHeCzzcwghH
-	TU1KDy2xddG5A3Ltp9TqkC+BW1yHtOKZ7ptZkUqpwTDu+fw1YWVBf/u651HwHOfEWJaL+b
-	fPOny6zvZrB7en/2TxbuScDNikJiBds=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Kx4zTC3rDANvA5+CkM8swNWWrE+bHZUG1M7h8Y2Kx3U=;
+	b=YuJS6B7CK31AzamYa21D9fca2uUTMtmECXR9onkIeXKRQ1DCI17g6uWQa2agDyeOqYHQj7
+	8mWLai8oGvwgq3WpTb/HMOzdEl9X6h66vcRlzTCdQQSKoLUiXZC34VYBs8aGSwLw+KpvNz
+	49vA6O1VPQ3Ak3Xbn0zTxbEb/nSBvPY=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-658-PCj8eNUqN5mtRId9UWUa4w-1; Wed, 13 Jul 2022 04:21:37 -0400
-X-MC-Unique: PCj8eNUqN5mtRId9UWUa4w-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-148-1hVqxsa0Nee6PxSRErsoAw-1; Wed, 13 Jul 2022 05:20:43 -0400
+X-MC-Unique: 1hVqxsa0Nee6PxSRErsoAw-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 546B21C05ABE;
-	Wed, 13 Jul 2022 08:21:35 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 405B22166B26;
-	Wed, 13 Jul 2022 08:21:35 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1AE83101A592;
+	Wed, 13 Jul 2022 09:20:42 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B8DED18EBB;
+	Wed, 13 Jul 2022 09:20:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DC0F61947060;
-	Wed, 13 Jul 2022 08:21:29 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 38DFA1947061;
+	Wed, 13 Jul 2022 09:20:41 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E8656194704C
- for <dm-devel@listman.corp.redhat.com>; Wed, 13 Jul 2022 08:21:28 +0000 (UTC)
+ ESMTP id 6CFAA194705F
+ for <dm-devel@listman.corp.redhat.com>; Wed, 13 Jul 2022 09:20:40 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id DDCD61121315; Wed, 13 Jul 2022 08:21:28 +0000 (UTC)
+ id 50A102166B2A; Wed, 13 Jul 2022 09:20:40 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D9E9D1121314
- for <dm-devel@redhat.com>; Wed, 13 Jul 2022 08:21:28 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BE4B13C02B75
- for <dm-devel@redhat.com>; Wed, 13 Jul 2022 08:21:28 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 4BC342166B26
+ for <dm-devel@redhat.com>; Wed, 13 Jul 2022 09:20:40 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 296B6185A7B2
+ for <dm-devel@redhat.com>; Wed, 13 Jul 2022 09:20:40 +0000 (UTC)
+Received: from EUR01-DB5-obe.outbound.protection.outlook.com
+ (mail-eopbgr150050.outbound.protection.outlook.com [40.107.15.50]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-398-foxogxLqOtOhO5Uqvouf3Q-1; Wed, 13 Jul 2022 04:21:25 -0400
-X-MC-Unique: foxogxLqOtOhO5Uqvouf3Q-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out1.suse.de (Postfix) with ESMTPS id 22591339D8;
- Wed, 13 Jul 2022 08:21:18 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id D9D5413754;
- Wed, 13 Jul 2022 08:21:17 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id 4LOXM32AzmKYNAAAMHmgww
- (envelope-from <mwilck@suse.com>); Wed, 13 Jul 2022 08:21:17 +0000
-From: mwilck@suse.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
- Benjamin Marzinski <bmarzins@redhat.com>
-Date: Wed, 13 Jul 2022 10:20:43 +0200
-Message-Id: <20220713082043.22561-2-mwilck@suse.com>
-In-Reply-To: <20220713082043.22561-1-mwilck@suse.com>
-References: <20220713082043.22561-1-mwilck@suse.com>
+ us-mta-439-Sa8Y2ngpONe4HZeRPGsY2A-1; Wed, 13 Jul 2022 05:20:36 -0400
+X-MC-Unique: Sa8Y2ngpONe4HZeRPGsY2A-1
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
+ by VI1PR04MB5808.eurprd04.prod.outlook.com (2603:10a6:803:e4::33)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5417.26; Wed, 13 Jul
+ 2022 09:20:33 +0000
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
+ ([fe80::e9df:371c:4db4:5dc4]) by DB8PR04MB6555.eurprd04.prod.outlook.com
+ ([fe80::e9df:371c:4db4:5dc4%4]) with mapi id 15.20.5438.012; Wed, 13 Jul 2022
+ 09:20:33 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
+ "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Thread-Topic: [PATCH] libmultipath: fix find_multipaths_timeout for unknown
+ hardware
+Thread-Index: AQHYljsniZ5rbo+pNUq0aSnLlmakcK18ByMA
+Date: Wed, 13 Jul 2022 09:20:33 +0000
+Message-ID: <0edbefd22fe627457526f49a9df60b7422f1321f.camel@suse.com>
+References: <1657663371-11080-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1657663371-11080-1-git-send-email-bmarzins@redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Evolution 3.44.2
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: fc1d50f0-90c2-48ac-3234-08da64b0f034
+x-ms-traffictypediagnostic: VI1PR04MB5808:EE_
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: 6ifT43edH2hZaHPeNty4kIfg1RkzpK2Msmaan31p49uwrK/CdThkQoTmEuQ7dvF6M0TClQBn0VqeTaxrshvKQ8jiHbisCDXPRhOG0EIXmIjz1Tr8akSI0EpcXwNLIxnHVLPeb3NHO9Fl8xX9PgKiJjHv+G3TqBq4ae2UQtPyrw4mt2WZ+2GftcT6j/4M6jGj152lt0GMteH5XuQoelA5M/bnhnhkcOT+lp598G0BbB6UYT9ILSLqyNBanikHCGAIDA1KzUZO8Of2fxoFqCpu4jafSUycT0Y1Q36zCB3y7wAEkHLsXyGmJd1pRMZfQCPJAVBS5wloUasbopldf9qpUfzh5EtLOby7XsrBIUUSnOwE4ZRhf5113zv7r7tE4JRhrCxkMzM4+6mMK8T/CMOycz9pjKNcEfknRZEGFek5jCQwh98iTPVCltvsuK2SHh0ZpNggIQ7krFoCk1WUHCMPnoKlXl/yU931m0zj7BVl7VdRLeH6/d8rVC+f6bIUJuijoiSrkhV4OuDRYfwnfdwwAurRIVu2PHWy7n1EvBjj7+nmMXpjXGMQV/+rKOd6Cd/ZXxal2AXm9tmwXV5B0MoPyVcTDhu3ZZOpcjhtHOJmIYsS5qK7+TCiBJCPYmlFsLKkYXqQmgioFwqieu5wWBbX2cIlQZIn3paxCv0Vh9rpDfDxNyGXOdKutebvuYl+ql5ta4x/XdiZ2Us3jCaMNZwJsaSWd0YHJ1Ih2FvfrRAetypm20MvmV1KCuGuoLDsYrL6YOPyvM3dzzKrLxqPIsPG/GBzhPX+cIN6/B6WKuGcVnwL9UB7vhYDtFpvVwPepzte
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230016)(346002)(366004)(396003)(39860400002)(376002)(136003)(86362001)(2616005)(66446008)(66556008)(38100700002)(4326008)(8936002)(66476007)(64756008)(76116006)(41300700001)(5660300002)(26005)(186003)(8676002)(110136005)(91956017)(6506007)(71200400001)(6512007)(316002)(66946007)(6486002)(83380400001)(38070700005)(2906002)(478600001)(44832011)(122000001)(4744005)(36756003);
+ DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?MBxeBrGunauwecH96xZJp6fyzzsEPKpnKs5I47ToifOlrUyClMn8h3a8G?=
+ =?iso-8859-15?Q?q+SzGzBJzn/qtmbefI3e6EAIBwjG2/BDH742cEpTEbo2QMsQ+3+rRYRn/?=
+ =?iso-8859-15?Q?mrG0shO/dnivF29B/q370bsHKbVgdKh6dRPO9Tl+ArvXDazX2TEt3WlMZ?=
+ =?iso-8859-15?Q?KofqevBxNylp9zwxFE9uVqrtLjjK8kznNJ0wLc4QtlzYNNdoITovhvOrH?=
+ =?iso-8859-15?Q?Rbj3iss35/h7nFdjfZWPy1BAKQyUnhDYp981erG1hprL/2lRneME16KjT?=
+ =?iso-8859-15?Q?eIRqkMa16rKC6NxtBlOBNBpny45WnVYy4XPAGTcZ2Hxe+ffTP/Ndxc5HY?=
+ =?iso-8859-15?Q?xegVluwW4KeKIwqcQG9mWh3YkpPTbrpnUfeWQQFreRF059jH/HNQtzi16?=
+ =?iso-8859-15?Q?FU3Ay+SCp6mkgOhhAsY1r7wHzFfxsfFM0Q69u5R4+SheKEN0g9svrPdKf?=
+ =?iso-8859-15?Q?Pan1rCY8BRuTmkgLoydY1K3C0uXxttQBI7v2nKxQKeD5KV3JtCGaFRgFH?=
+ =?iso-8859-15?Q?5EoFBu3dulGfdZlC+eE09G2/L5DQJlyiMgqwK6AjeBBHJvIcGsW8s5UYq?=
+ =?iso-8859-15?Q?hshDwCStVWrRIrQRVnVDgC+f6cbiwA35wlWDOiYpjL7FAq6eJrzc/AWKx?=
+ =?iso-8859-15?Q?OqOTctg3FM4F2WhjwW2QQpZM76nepOK8E5maycHNeCwmr12INH/j7i/GV?=
+ =?iso-8859-15?Q?4qzVGXKZyd9WB/LszdsH/wKb2ENxvnbkxh3wmZpj6fVyNIzK14U7ClAWk?=
+ =?iso-8859-15?Q?1ZOyRiWJEpgEoKN9Sza/Z2x+6/sRA4Svddo/35XVPaH6ivPCS2V5ttVdS?=
+ =?iso-8859-15?Q?8VmOaW7FpViM1aBk8R7/WZc68FOhZ3nSCoi5hKxb5H84Z5zka+qb3ZbRS?=
+ =?iso-8859-15?Q?hOmi83k2RjXvQzepHPDctBeeL4u2M64u8h9oam1NEAf61fbqkaWip26ST?=
+ =?iso-8859-15?Q?NzolkubJpVTK/0vWxsXnWpIq0J2cKlDO++S1UYT7+LVyR+P8tJAUQKIL8?=
+ =?iso-8859-15?Q?LxDQGY1WiIwGvtRaVVm/8mnXFe1TY7yNsBbdmw09EF0r2zLjCppME2JXp?=
+ =?iso-8859-15?Q?r5iYLbCqqopyQmrvfemRYKWi1+oToNZr00FaN8G1ddVimadyK5qftTLq0?=
+ =?iso-8859-15?Q?Rk6RZuFFY/e8QyMZ3XrwvD2ycfze3ptgSO28TNCiElIflbyJSSX+jGkM9?=
+ =?iso-8859-15?Q?O3P9OspzyX+RW0Vf5ftr22v+y9iDRYPRIuLKk7HuRlPmwaOGLZIPqvysh?=
+ =?iso-8859-15?Q?1KwexlMxXXDyKlpn7L5C2pFIyexpUxkX9G/NYw7qTsL4k6/s5dzM636pt?=
+ =?iso-8859-15?Q?OLNPAWpcChi7t70k5MpIHJXjQ0aHDjoTysQtYOP/fwYXLCNzjfmZ9FsIz?=
+ =?iso-8859-15?Q?eEsMzlQb/6SjoZ2vAk3ny5kqn9B7Nzku7WqEfL/T++uOHdq2c8Iny7Dxx?=
+ =?iso-8859-15?Q?s14x2gG1KfcIh/WHuiRLXg38CG7shqYfAyS3OaAC8Z95jE7MIImUtzgbY?=
+ =?iso-8859-15?Q?GuWc5k0uXcrxK7QEN5Kz4D68KNDuVxMKHAA4VMM7XfD6AvzUmKRY4JZLg?=
+ =?iso-8859-15?Q?L61Hc6gPQn8ZvZ2BA4PIzf+V8Poey+bk0tk+z8jKtuagUI7TLK0JIP2m3?=
+ =?iso-8859-15?Q?jZelbnd7pVAxlmnXaMmxH1PdMOXiodtHbr1ijcZb/QSK1alZ+3du8vrle?=
+ =?iso-8859-15?Q?VbMtwoYQ3q/WFSxIhpJzpDLd0w=3D=3D?=
 MIME-Version: 1.0
+X-OriginatorOrg: suse.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: fc1d50f0-90c2-48ac-3234-08da64b0f034
+X-MS-Exchange-CrossTenant-originalarrivaltime: 13 Jul 2022 09:20:33.2695 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: cwxIIhrZL3k+vZwpDQwML37UmbxecgDp3aOLc4j4zhs1Wi0Z4tr0bQGURGgUj53hLDrv4KfGwV721uxLVUGqRw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: VI1PR04MB5808
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -86,9 +138,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-Subject: [dm-devel] [PATCH v2 08/14] libmultipath: sysfs_attr_set_value():
- don't return 0 on partial write
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH] libmultipath: fix find_multipaths_timeout
+ for unknown hardware
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -100,264 +152,50 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-ID: <CD2208ECC6C86444A40DF735BD33BC5F@eurprd04.prod.outlook.com>
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-From: Martin Wilck <mwilck@suse.com>
+On Tue, 2022-07-12 at 17:02 -0500, Benjamin Marzinski wrote:
+> pp->hwe is now a vector that will always be allocated for all path
+> devices. Instead of checking if it is NULL, check if it is empty.
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-sysfs_attr_set_value() returned 0 if not all requested bytes were written.
-Change this to return the number of bytes written. Error checking is now
-somewhat more involved; provide a helper macro for it.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/configure.c | 10 ++++--
- libmultipath/discovery.c | 74 +++++++++++++++++++++++++---------------
- libmultipath/sysfs.c     |  6 ++--
- libmultipath/sysfs.h     | 10 ++++++
- 4 files changed, 66 insertions(+), 34 deletions(-)
-
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 467bbaa..0607dba 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -568,6 +568,7 @@ sysfs_set_max_sectors_kb(struct multipath *mpp, int is_reload)
- 	struct pathgroup * pgp;
- 	struct path *pp;
- 	char buff[11];
-+	ssize_t len;
- 	int i, j, ret, err = 0;
- 	struct udev_device *udd;
- 	int max_sectors_kb;
-@@ -600,14 +601,17 @@ sysfs_set_max_sectors_kb(struct multipath *mpp, int is_reload)
- 		}
- 	}
- 	snprintf(buff, 11, "%d", max_sectors_kb);
-+	len = strlen(buff);
- 
- 	vector_foreach_slot (mpp->pg, pgp, i) {
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			ret = sysfs_attr_set_value(pp->udev,
- 						   "queue/max_sectors_kb",
--						   buff, strlen(buff));
--			if (ret < 0) {
--				condlog(1, "failed setting max_sectors_kb on %s : %s", pp->dev, strerror(-ret));
-+						   buff, len);
-+			if (ret != len) {
-+				log_sysfs_attr_set_value(1, ret,
-+					"failed setting max_sectors_kb on %s",
-+					pp->dev);
- 				err = 1;
- 			}
- 		}
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 54b1caf..ee29009 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -598,13 +598,15 @@ sysfs_set_eh_deadline(struct path *pp)
- 		len = sprintf(value, "%d", pp->eh_deadline);
- 
- 	ret = sysfs_attr_set_value(hostdev, "eh_deadline",
--				   value, len + 1);
-+				   value, len);
- 	/*
- 	 * not all scsi drivers support setting eh_deadline, so failing
- 	 * is totally reasonable
- 	 */
--	if (ret <= 0)
--		condlog(3, "%s: failed to set eh_deadline to %s, error %d", udev_device_get_sysname(hostdev), value, -ret);
-+	if (ret != len)
-+		log_sysfs_attr_set_value(3, ret,
-+			"%s: failed to set eh_deadline to %s",
-+			udev_device_get_sysname(hostdev), value);
- 
- 	udev_device_unref(hostdev);
- 	return (ret <= 0);
-@@ -667,19 +669,22 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 	    pp->fast_io_fail != MP_FAST_IO_FAIL_OFF) {
- 		/* Check if we need to temporarily increase dev_loss_tmo */
- 		if ((unsigned int)pp->fast_io_fail >= tmo) {
-+			ssize_t len;
-+
- 			/* Increase dev_loss_tmo temporarily */
- 			snprintf(value, sizeof(value), "%u",
- 				 (unsigned int)pp->fast_io_fail + 1);
-+			len = strlen(value);
- 			ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
--						   value, strlen(value));
--			if (ret <= 0) {
-+						   value, len);
-+			if (ret != len) {
- 				if (ret == -EBUSY)
- 					condlog(3, "%s: rport blocked",
- 						rport_id);
- 				else
--					condlog(0, "%s: failed to set "
--						"dev_loss_tmo to %s, error %d",
--						rport_id, value, -ret);
-+					log_sysfs_attr_set_value(0, ret,
-+						"%s: failed to set dev_loss_tmo to %s",
-+						rport_id, value);
- 				goto out;
- 			}
- 		}
-@@ -691,32 +696,39 @@ sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- 		pp->dev_loss = DEFAULT_DEV_LOSS_TMO;
- 	}
- 	if (pp->fast_io_fail != MP_FAST_IO_FAIL_UNSET) {
-+		ssize_t len;
-+
- 		if (pp->fast_io_fail == MP_FAST_IO_FAIL_OFF)
- 			sprintf(value, "off");
- 		else if (pp->fast_io_fail == MP_FAST_IO_FAIL_ZERO)
- 			sprintf(value, "0");
- 		else
- 			snprintf(value, 16, "%u", pp->fast_io_fail);
-+		len = strlen(value);
- 		ret = sysfs_attr_set_value(rport_dev, "fast_io_fail_tmo",
--					   value, strlen(value));
--		if (ret <= 0) {
-+					   value, len);
-+		if (ret != len) {
- 			if (ret == -EBUSY)
- 				condlog(3, "%s: rport blocked", rport_id);
- 			else
--				condlog(0, "%s: failed to set fast_io_fail_tmo to %s, error %d",
--					rport_id, value, -ret);
-+				log_sysfs_attr_set_value(0, ret,
-+					"%s: failed to set fast_io_fail_tmo to %s",
-+					rport_id, value);
- 		}
- 	}
- 	if (pp->dev_loss != DEV_LOSS_TMO_UNSET) {
-+		ssize_t len;
-+
- 		snprintf(value, 16, "%u", pp->dev_loss);
--		ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo",
--					   value, strlen(value));
--		if (ret <= 0) {
-+		len = strlen(value);
-+		ret = sysfs_attr_set_value(rport_dev, "dev_loss_tmo", value, len);
-+		if (ret != len) {
- 			if (ret == -EBUSY)
- 				condlog(3, "%s: rport blocked", rport_id);
- 			else
--				condlog(0, "%s: failed to set dev_loss_tmo to %s, error %d",
--					rport_id, value, -ret);
-+				log_sysfs_attr_set_value(0, ret,
-+					"%s: failed to set dev_loss_tmo to %s",
-+					rport_id, value);
- 		}
- 	}
- out:
-@@ -754,12 +766,16 @@ sysfs_set_session_tmo(struct path *pp)
- 			condlog(3, "%s: can't set fast_io_fail_tmo to '0'"
- 				"on iSCSI", pp->dev);
- 		} else {
-+			ssize_t len, ret;
-+
- 			snprintf(value, 11, "%u", pp->fast_io_fail);
--			if (sysfs_attr_set_value(session_dev, "recovery_tmo",
--						 value, strlen(value)) <= 0) {
--				condlog(3, "%s: Failed to set recovery_tmo, "
--					" error %d", pp->dev, errno);
--			}
-+			len = strlen(value);
-+			ret = sysfs_attr_set_value(session_dev, "recovery_tmo",
-+						   value, len);
-+			if (ret != len)
-+				log_sysfs_attr_set_value(3, ret,
-+					"%s: Failed to set recovery_tmo to %s",
-+							 pp->dev, value);
- 		}
- 	}
- 	udev_device_unref(session_dev);
-@@ -802,12 +818,16 @@ sysfs_set_nexus_loss_tmo(struct path *pp)
- 		pp->sg_id.channel, pp->sg_id.scsi_id, end_dev_id);
- 
- 	if (pp->dev_loss != DEV_LOSS_TMO_UNSET) {
-+		ssize_t len, ret;
-+
- 		snprintf(value, 11, "%u", pp->dev_loss);
--		if (sysfs_attr_set_value(sas_dev, "I_T_nexus_loss_timeout",
--					 value, strlen(value)) <= 0)
--			condlog(3, "%s: failed to update "
--				"I_T Nexus loss timeout, error %d",
--				pp->dev, errno);
-+		len = strlen(value);
-+		ret = sysfs_attr_set_value(sas_dev, "I_T_nexus_loss_timeout",
-+					   value, len);
-+		if (ret != len)
-+			log_sysfs_attr_set_value(3, ret,
-+				"%s: failed to update I_T Nexus loss timeout",
-+				pp->dev);
- 	}
- 	udev_device_unref(sas_dev);
- 	return;
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index 125f1c2..9c84af7 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -134,7 +134,7 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- 	/* write attribute value */
- 	fd = open(devpath, O_WRONLY);
- 	if (fd < 0) {
--		condlog(2, "%s: attribute '%s' can not be opened: %s",
-+		condlog(3, "%s: attribute '%s' can not be opened: %s",
- 			__func__, devpath, strerror(errno));
- 		return -errno;
- 	}
-@@ -144,11 +144,9 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- 		size = -errno;
- 		condlog(3, "%s: write to %s failed: %s", __func__, 
- 			devpath, strerror(errno));
--	} else if (size < (ssize_t)value_len) {
-+	} else if (size < (ssize_t)value_len)
- 		condlog(3, "%s: underflow writing %zu bytes to %s. Wrote %zd bytes",
- 			__func__, value_len, devpath, size);
--		size = 0;
--	}
- 
- 	close(fd);
- 	return size;
-diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
-index cdc84e4..799f68e 100644
---- a/libmultipath/sysfs.h
-+++ b/libmultipath/sysfs.h
-@@ -5,6 +5,7 @@
- #ifndef _LIBMULTIPATH_SYSFS_H
- #define _LIBMULTIPATH_SYSFS_H
- #include <stdbool.h>
-+#include "strbuf.h"
- 
- ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- 			     const char * value, size_t value_len);
-@@ -25,6 +26,15 @@ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
- 		sysfs_attr_value_ok(__rc, __l); \
- 	})
- 
-+#define log_sysfs_attr_set_value(prio, rc, fmt, __args...)		\
-+do {									\
-+	STRBUF_ON_STACK(__buf);						\
-+	if (print_strbuf(&__buf, fmt, ##__args) >= 0 &&			\
-+	    print_strbuf(&__buf, ": %s", rc < 0 ? strerror(-rc) :	\
-+					"write underflow") >= 0)	\
-+		condlog(prio, "%s", get_strbuf_str(&__buf));		\
-+} while(0)
-+
- int sysfs_get_size (struct path *pp, unsigned long long * size);
- int sysfs_check_holders(char * check_devt, char * new_devt);
- bool sysfs_is_multipathed(struct path *pp, bool set_wwid);
--- 
-2.36.1
+> ---
+> =A0libmultipath/propsel.c | 2 +-
+> =A01 file changed, 1 insertion(+), 1 deletion(-)
+>=20
+> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+> index 50d0b5c8..f782f251 100644
+> --- a/libmultipath/propsel.c
+> +++ b/libmultipath/propsel.c
+> @@ -1293,7 +1293,7 @@ out:
+> =A0=A0=A0=A0=A0=A0=A0=A0 */
+> =A0=A0=A0=A0=A0=A0=A0=A0if (pp->find_multipaths_timeout < 0) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->find_multipaths_timeo=
+ut =3D -pp-
+> >find_multipaths_timeout;
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (!pp->hwe) {
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (VECTOR_SIZE(pp->hwe) =
+=3D=3D 0) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p=
+p->find_multipaths_timeout =3D
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0DEFAULT_UNKNOWN_FIND_MULTIPATHS_TIMEO
+> UT;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0o=
+rigin =3D "(default for unknown hardware)";
 
 --
 dm-devel mailing list
