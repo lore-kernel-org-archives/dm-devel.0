@@ -4,87 +4,91 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 84F19CCA47B
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Jul 2022 21:15:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 96FA1C433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Jul 2022 23:10:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1657833303;
+	s=mimecast20190719; t=1657840202;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=LRPTK9XkNcr6zsMCnRS8hxV6yyKztDoq1t9NGu4Xsb8=;
-	b=c0StxWUrv5gaS4niz88slSNwRdTIe2crLWSDgrsqz72WSMCN6dL4O5l1gzmupcvMnjNzF6
-	6bxswTOWNlYRzAeXS3huYJR/s2yZBv9AYKr47EBxoG4bRSYzdglBUbuTnpz+etCnRXMlj5
-	j91ZJf9QQxW8VGwJZhiJkQjV/rYdOsw=
+	bh=GRUf6cUBMvFDIYAH+ObFx5nocJvCv8ofFr3CjqYWMi0=;
+	b=cDVzK+VWtVLCNgdabFEJGTAzlztRybZ5pPLkfb9dWFYofGMySC6/jrIYoaipXHDDveFhK9
+	cnLyKoF7Fw2lwkF4kiq9/DDAmRbdND0+hP6ayIcQ3pWSmtI2I28tWKv4XHy1OCVVS4bYgQ
+	pDKIUWbfu1dq4qHw0U+CzJgmto80I6Y=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-122-IfPjgXlPMHynmp-Kb5no3g-1; Thu, 14 Jul 2022 17:14:53 -0400
-X-MC-Unique: IfPjgXlPMHynmp-Kb5no3g-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-504-cz9YNEAJNje7pK-DxTdg-w-1; Thu, 14 Jul 2022 19:09:58 -0400
+X-MC-Unique: cz9YNEAJNje7pK-DxTdg-w-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 396D518A0665;
-	Thu, 14 Jul 2022 21:14:52 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 58E19101A54E;
+	Thu, 14 Jul 2022 23:09:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 42FC2400EAA4;
-	Thu, 14 Jul 2022 21:14:50 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A8BB7140EBE3;
+	Thu, 14 Jul 2022 23:09:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id F0111194706F;
-	Thu, 14 Jul 2022 21:14:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 81030194706F;
+	Thu, 14 Jul 2022 23:09:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E0A6E194706D
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Jul 2022 21:14:48 +0000 (UTC)
+ ESMTP id 71B7A194706D
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Jul 2022 23:09:54 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id CDFCDC27DB3; Thu, 14 Jul 2022 21:14:48 +0000 (UTC)
+ id 3DE2A2166B2A; Thu, 14 Jul 2022 23:09:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C9567C15D67
- for <dm-devel@redhat.com>; Thu, 14 Jul 2022 21:14:48 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 39BC72166B26
+ for <dm-devel@redhat.com>; Thu, 14 Jul 2022 23:09:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B11501C0513B
- for <dm-devel@redhat.com>; Thu, 14 Jul 2022 21:14:48 +0000 (UTC)
-Received: from mail-wm1-f42.google.com (mail-wm1-f42.google.com
- [209.85.128.42]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1E94F85A584
+ for <dm-devel@redhat.com>; Thu, 14 Jul 2022 23:09:54 +0000 (UTC)
+Received: from mail-wr1-f50.google.com (mail-wr1-f50.google.com
+ [209.85.221.50]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-402-8d5VdFERPeWRqnGCGXY2eg-1; Thu, 14 Jul 2022 17:14:46 -0400
-X-MC-Unique: 8d5VdFERPeWRqnGCGXY2eg-1
-Received: by mail-wm1-f42.google.com with SMTP id
- l22-20020a05600c4f1600b003a2e10c8cdeso3948593wmq.1; 
- Thu, 14 Jul 2022 14:14:34 -0700 (PDT)
+ us-mta-532-9yfguRWtNg2gh8wwUBisaw-1; Thu, 14 Jul 2022 19:09:44 -0400
+X-MC-Unique: 9yfguRWtNg2gh8wwUBisaw-1
+Received: by mail-wr1-f50.google.com with SMTP id bu1so4468463wrb.9;
+ Thu, 14 Jul 2022 16:09:44 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+ h=x-gm-message-state:message-id:date:mime-version:subject
+ :content-language:to:cc:references:from:in-reply-to
  :content-transfer-encoding;
- bh=McuweCVJqw09G0IUzSAdqropgpPicrCXZJTR9xEEq5s=;
- b=bImujyaluE3Mr//fjECZalf6gGnpMylJ+LnJiI8qTsw25ZfyjsUV2QdehbidTQEQDF
- XCPtR1gJKfWZNRdHDZQCJxlTTWgXHY21Z6ZTA7XMXVW/K23Y153AM+PSXIJcsQjmizoX
- JddoqEf+TARtJ561LM1ZgUWX/I6i5f5OAi0+bOgI6wwn2hV26eF6L0kuycozK4toCrdH
- 7BlZzJ+wf0KgQui1aldQ88OwxOzdxRo5AbNwm9gjftpjWXM4jTW16yM4XIpTmbIiFLYT
- MY19K6obV1eJ+5el/rP03RzzsZATgi9aUXAOrlm0H/dpzNdln5Y6UMym+gS9fz3Zuv9F
- 1Ekg==
-X-Gm-Message-State: AJIora8+gd4116BzalUOX69/1HwYJdAKQ17kDGtZGfGL9NxwF35fM830
- gOXDw9K+jfoEVytWUXrLPg==
-X-Google-Smtp-Source: AGRyM1sbNn/Uo1Gw4Hkor14T6GL4jP9S7kXq1Wlrw6G3jC9HpdzaeK/Aa49a80tVfLSx1x31nTPMlw==
-X-Received: by 2002:a7b:cb56:0:b0:3a3:27e:e40b with SMTP id
- v22-20020a7bcb56000000b003a3027ee40bmr4605790wmj.186.1657833273003; 
- Thu, 14 Jul 2022 14:14:33 -0700 (PDT)
+ bh=6GXtfrONS4xE+rx+306zWIoG2o7/GPdrSucnMoLW0cc=;
+ b=mEQvuLdjzo7k+61zbNWdM9rhuUCCuEJ43RAoGrdyDD6W2JYbhXQODMueFzJA1swv5P
+ H5+lKIwxdKNAJdV5xXKwcpqr77xy7wXULfeqi9SSIkz0JTu3pngXTD6ktKbsuUc5AO7P
+ pJjfHqVebrlc5r5xShF2ijFuZnbvLpsdoyxaQjDfQC/IdGl/RceC8aqgFVlqfXBnkQyQ
+ rMoNTmtUGmirG6IypJSwoNw7OmWR+ZbGOLrLzVS1S5y3l/orzbx8XaH5c+wJCKiF/7Nc
+ FGEtO/6ps/qKHUwArEQwLfIt4iCjynK/x4YhEiyxVOkHrgRjUu8ZsINrHqNkrzzi+40E
+ uuyw==
+X-Gm-Message-State: AJIora/Wh5RR5EGlVH6D3y0B7oDFwgECKsOU1QeGKzxJdxFGLvC0KMh6
+ 9a+H5N4HP1wMVH/nrbvWWCyM1pnc3w==
+X-Google-Smtp-Source: AGRyM1t15jQZlZgG2bj+Wz1IlKusvfrwWFjbr0ermPpIss1w+XixI1jaF879ZU0ka3WmM7InTaBvaQ==
+X-Received: by 2002:a5d:4447:0:b0:21d:6b84:4678 with SMTP id
+ x7-20020a5d4447000000b0021d6b844678mr9639146wrr.668.1657840182924; 
+ Thu, 14 Jul 2022 16:09:42 -0700 (PDT)
 Received: from localhost (127.red-81-44-149.dynamicip.rima-tde.net.
  [81.44.149.127]) by smtp.gmail.com with ESMTPSA id
- l19-20020a05600c1d1300b003a300452f7esm3437261wms.28.2022.07.14.14.14.32
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 14 Jul 2022 14:14:32 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Date: Thu, 14 Jul 2022 23:14:31 +0200
-Message-Id: <20220714211431.123911-1-xose.vazquez@gmail.com>
+ m185-20020a1c26c2000000b003a302fb9df7sm2928346wmm.21.2022.07.14.16.09.42
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Thu, 14 Jul 2022 16:09:42 -0700 (PDT)
+Message-ID: <3ddb4a30-b478-7d34-9e55-45b0560da2cc@gmail.com>
+Date: Fri, 15 Jul 2022 01:09:41 +0200
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
+To: Martin Wilck <mwilck@suse.com>
+References: <20220714190540.117283-1-xose.vazquez@gmail.com>
+ <5a3b7d5920baa0d4a967f000b3b1ea61b16cbd69.camel@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <5a3b7d5920baa0d4a967f000b3b1ea61b16cbd69.camel@suse.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -92,8 +96,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: [dm-devel] [PATCH] multipath-tools: add ALUA info to README.md
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH 0/2] multipath-tools: update docs
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -106,68 +110,26 @@ List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
- Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>,
  DM-DEVEL ML <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- README.md | 28 ++++++++++++++++++++++++++++
- 1 file changed, 28 insertions(+)
-
-diff --git a/README.md b/README.md
-index dcf51f20..2322082c 100644
---- a/README.md
-+++ b/README.md
-@@ -146,3 +146,31 @@ The multipath-tools source code is covered by several different licences.
- Refer to the individual source files for details.
- Source files which do not specify a licence are shipped under LGPL-2.0
- (see `LICENSES/LGPL-2.0`).
-+
-+
-+ALUA
-+====
-+This is a rough guide, consult your storage device manufacturer documentation.
-+
-+ALUA is supported in some devices, but usually it's disabled by default.
-+To enable ALUA, the following options should be changed:
-+
-+- EMC CLARiiON/VNX:
-+   "Failover Mode" should be changed to "4" or "Active-Active mode(ALUA)-failover mode 4"
-+
-+- HPE 3PAR, Primera, and Alletra 9000:
-+   "Host:" should be changed to "Generic-ALUA Persona 2 (UARepLun, SESLun, ALUA)".
-+
-+- Promise VTrak/Vess:
-+   "LUN Affinity" and "ALUA" should be changed to "Enable", "Redundancy Type"
-+   must be "Active-Active".
-+
-+- LSI/Engenio/NetApp RDAC class, as NetApp SANtricity E/EF Series and OEM arrays:
-+   "Select operating system:" should be changed to "Linux DM-MP (Kernel 3.10 or later)".
-+
-+- NetApp ONTAP:
-+   To check ALUA state: "igroup show -v <igroup_name>", and to enable ALUA:
-+   "igroup set <igroup_name> alua yes".
-+
-+- Huawei OceanStor:
-+   "Host Access Mode" should be changed to "Asymmetric".
--- 
-2.37.1
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gNy8xNC8yMiAyMTozOCwgTWFydGluIFdpbGNrIHdyb3RlOgoKPiBPbiBUaHUsIDIwMjItMDct
+MTQgYXQgMjE6MDUgKzAyMDAsIFhvc2UgVmF6cXVleiBQZXJleiB3cm90ZToKPj4gWG9zZSBWYXpx
+dWV6IFBlcmV6ICgyKToKPj4gIMKgIG11bHRpcGF0aC10b29sczogdXBkYXRlIGRldmVsIHJlcG8g
+aW5mbyBpbiBSRUFETUUubWQKPj4gIMKgIG11bHRpcGF0aC10b29sczogZGVsZXRlIFJFQURNRS5h
+bHVhCj4gCj4gV2h5IGNvbXBsZXRlIGRlbGV0ZSBpdD8KCkl0IHdhcyB3cml0dGVuIGZpdmUgeWVh
+cnMgYWdvLCBhbmQgbm93IG1heWJlIGl0IGlzIG91dGRhdGVkL2lycmVsZXZhbnQuClRocmVlIG9w
+dGlvbnMgd2VyZSBwcm92aWRlZDsgbGV0IGl0IGJlLCBkZWxldGUgaXQsIG9yIG1vdmUgdGhlIGlu
+Zm8gdG8gUkVBRE1FLm1kClRyZWF0IGl0IGxpa2UgcmZjLgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBs
+aXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1h
+bi9saXN0aW5mby9kbS1kZXZlbAo=
 
