@@ -1,69 +1,102 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id F13EBC43334
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Jul 2022 11:47:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B9FFFC43334
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Jul 2022 18:49:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1657712825;
+	s=mimecast20190719; t=1657824571;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=/4eY1xH0asZdNg1/6QpEqWZabcRgveavXH5sivd/TPk=;
-	b=EKeYJMahKo8lDM5uMyqK7SzJwP8cDzn7t5maUcypGfTRw7xnAc7vRPN35EYqG/4dhoV8BG
-	9fCR2A2TCFGw4EIdx+UcpaV0VXuLOf0tjcrtOUC6YT0g7HSA14Dpy5xxLhJzYM6YWbkKXL
-	WmjCTw5EY3n38CYotnHyfRfJCW2pDFQ=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=lUYwRrjVA66N9NYAa5ekNuAXbFWDC1ynacBaBIyUq+g=;
+	b=OKwlq48f644ucp3sMI9geXIHlAclgQVXEoFinDzb/0MXJZDOnhlguqx4ca+843ZWyrK0N4
+	etfCoC0BhkWZuZDCoVBv8skd2a+FdACg+pmJHgZ6nl5KD7XdnCfJiBkiXrjtQfWKt4NrOU
+	Q8+jgUjtOJpgP7lgTAqPrGO/c/XiQ/c=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-301-fa8zrJMlOQShlt8TJciWgA-1; Wed, 13 Jul 2022 07:47:04 -0400
-X-MC-Unique: fa8zrJMlOQShlt8TJciWgA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-600-Lv6UUBBJPran4KPlydny8w-1; Thu, 14 Jul 2022 14:49:28 -0400
+X-MC-Unique: Lv6UUBBJPran4KPlydny8w-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 91FAF101A589;
-	Wed, 13 Jul 2022 11:47:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A4B61C05135;
+	Thu, 14 Jul 2022 18:49:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3DB1A1121314;
-	Wed, 13 Jul 2022 11:47:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 715068287E;
+	Thu, 14 Jul 2022 18:49:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 01AED194705F;
-	Wed, 13 Jul 2022 11:47:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2DF7A194706C;
+	Thu, 14 Jul 2022 18:49:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D9856194705F
- for <dm-devel@listman.corp.redhat.com>; Wed, 13 Jul 2022 11:47:00 +0000 (UTC)
+ ESMTP id 5147B1947042
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Jul 2022 18:49:20 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C6E6D18ECB; Wed, 13 Jul 2022 11:47:00 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
- (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id BC19018EBB;
- Wed, 13 Jul 2022 11:47:00 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 26DBl0Ul013965; Wed, 13 Jul 2022 07:47:00 -0400
-Received: from localhost (mpatocka@localhost)
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 26DBl0Y6013961; Wed, 13 Jul 2022 07:47:00 -0400
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
- owned process doing -bs
-Date: Wed, 13 Jul 2022 07:47:00 -0400 (EDT)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2207130705520.12621@file01.intranet.prod.int.rdu2.redhat.com>
-Message-ID: <alpine.LRH.2.02.2207130746260.13931@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2207130705520.12621@file01.intranet.prod.int.rdu2.redhat.com>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+ id 1F90740E80E1; Thu, 14 Jul 2022 18:49:20 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1B10540E80E0
+ for <dm-devel@redhat.com>; Thu, 14 Jul 2022 18:49:20 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 00965804181
+ for <dm-devel@redhat.com>; Thu, 14 Jul 2022 18:49:20 +0000 (UTC)
+Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
+ [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-279-ky58toojNha5zeA_6vx72w-1; Thu, 14 Jul 2022 14:49:18 -0400
+X-MC-Unique: ky58toojNha5zeA_6vx72w-1
+Received: by mail-qk1-f198.google.com with SMTP id
+ bp14-20020a05620a458e00b006b59195c391so1729221qkb.19
+ for <dm-devel@redhat.com>; Thu, 14 Jul 2022 11:49:18 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+ :mime-version:content-disposition:in-reply-to;
+ bh=7kxj3LdYgbpNnStU9w3Sj9VXDhHdk9Jcchf++JL1N+Y=;
+ b=RvjMDkZQfVyTynhb2/Ab4sJEiqhOpbG7wnhKCPKwXX+O7DZZe6KfahsLgz87/RekLi
+ 8FchihuWn4h0wZd90Wji4NBp8Czjj/V2c/bL4bS2n9KCS3l6iL6Ll1ZpKUyXCtMTGSE7
+ GSpGuaNabGT2H9tnVXTav+XHwhgCX/xf9k6MMiQvGegcnw85+sWn0g4ySNYbiJV7h1/D
+ GRt0EZiHwEkqABltGJ7WNNIK1NKstWakUh0MXEk+ONcjytTzx6qeqxx/1/Fl7+l6dgfj
+ 7D+Q3MpM5ewKYksfkmOXRNK3vaIz/cAnSsOJhTvQmrzTssJxssJyEMrGbai94QeRsD12
+ 0Jxg==
+X-Gm-Message-State: AJIora92H41LRexwT3aW+6inYdAuirvDzj7pckGMlcFRWsMNgcTcnd29
+ 3RgZpMcqA4e9w8MwVLqvmvQtFCkbixvwvrbnGU7/qELNAaiZf8lNjzRJOdKxSMBvwGQIP27/zEo
+ 3XxcO3JhDUzez5g==
+X-Received: by 2002:a05:620a:27cd:b0:6b5:cc9c:5656 with SMTP id
+ i13-20020a05620a27cd00b006b5cc9c5656mr410474qkp.552.1657824558041; 
+ Thu, 14 Jul 2022 11:49:18 -0700 (PDT)
+X-Google-Smtp-Source: AGRyM1up/sjBStld4GW4vXzjMBZxM8lmDyH6rq4IbnlFVHip8GGJh8ELoamRKFuXGwneRCOFrijM+Q==
+X-Received: by 2002:a05:620a:27cd:b0:6b5:cc9c:5656 with SMTP id
+ i13-20020a05620a27cd00b006b5cc9c5656mr410465qkp.552.1657824557830; 
+ Thu, 14 Jul 2022 11:49:17 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+ [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+ fp33-20020a05622a50a100b0031eaea83fc1sm1940851qtb.47.2022.07.14.11.49.17
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Thu, 14 Jul 2022 11:49:17 -0700 (PDT)
+Date: Thu, 14 Jul 2022 14:49:16 -0400
+From: Mike Snitzer <snitzer@redhat.com>
+To: Mike Christie <michael.christie@oracle.com>
+Message-ID: <YtBlLDShzLdW8xDx@redhat.com>
+References: <20220707202711.10836-1-michael.christie@oracle.com>
+ <20220707202711.10836-3-michael.christie@oracle.com>
+ <0c2c37c2-84f0-d6c7-b060-be7c5ba6dede@oracle.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH] dm-writecache: set MAX_WRITEBACK_JOBS
+In-Reply-To: <0c2c37c2-84f0-d6c7-b060-be7c5ba6dede@oracle.com>
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Subject: Re: [dm-devel] [PATCH 2/3] dm: Start pr_reserve from the same
+ starting path
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -75,49 +108,51 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, David Teigland <teigland@redhat.com>
+Cc: hch@infradead.org, dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+On Sat, Jul 09 2022 at 11:06P -0400,
+Mike Christie <michael.christie@oracle.com> wrote:
 
-
-On Wed, 13 Jul 2022, Mikulas Patocka wrote:
-
-> This commit enables writeback limit by default. It is set to 1GiB or 1/16
-
-The limit is really 256MiB, not 1GiB. I think that 1GiB is too much.
-
-Mikulas
-
-> of total system memory, whichever is smaller.
+> On 7/7/22 3:27 PM, Mike Christie wrote:
+> > When an app does a pr_reserve it will go to whatever path we happen to
+> > be using at the time. This can result in errors where the app does a
+> > second pr_reserve call and expects success but gets a failure becuase
+> > the reserve is not done on the holder's path. This patch has us always
+> > start trying to do reserves from the first path in the first group.
+> > 
 > 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Hi,
 > 
-> ---
->  drivers/md/dm-writecache.c |    2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+> Giving myself a review comment. pr_preempt can also establish a reservation.
+> I meant to send a patch for that as well. If the approach in this patchset is
+> ok, I'll send a patch for that as well.
 > 
-> Index: linux-2.6/drivers/md/dm-writecache.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/md/dm-writecache.c	2022-07-13 13:07:52.000000000 +0200
-> +++ linux-2.6/drivers/md/dm-writecache.c	2022-07-13 13:08:19.000000000 +0200
-> @@ -22,7 +22,7 @@
->  
->  #define HIGH_WATERMARK			50
->  #define LOW_WATERMARK			45
-> -#define MAX_WRITEBACK_JOBS		0
-> +#define MAX_WRITEBACK_JOBS		min(0x10000000 / PAGE_SIZE, totalram_pages() / 16)
->  #define ENDIO_LATENCY			16
->  #define WRITEBACK_LATENCY		64
->  #define AUTOCOMMIT_BLOCKS_SSD		65536
-> 
+
+It'd be nice to have Christoph weigh-in on these changes but I'm OK
+with them in general.
+
+But please give details on what you've tested them against.  I assume
+the Windows cluster? How about pacemaker? And all looks good on other
+systems that don't have the requirement to pin the PR to a device?
+
+Once I have this context on testing I can then work through the
+changes more closely and get them staged.  Please do feel free to send
+a v2 that conveys what testing was done and you're welcome to sned the
+patch for pr_preempt too.
+
+Thanks,
+Mike
+
 --
 dm-devel mailing list
 dm-devel@redhat.com
