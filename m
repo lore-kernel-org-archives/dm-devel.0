@@ -1,102 +1,98 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D6C9BC433EF
-	for <dm-devel@archiver.kernel.org>; Fri, 22 Jul 2022 18:33:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E24ECC433EF
+	for <dm-devel@archiver.kernel.org>; Fri, 22 Jul 2022 19:23:11 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1658514835;
+	s=mimecast20190719; t=1658517790;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=/ZvFAZwIjw4DxmEyLxdzEJUP0pojhfvOeQGPpkwwIVQ=;
-	b=e/apb4m56dAH0YXEFyGABgJJEu9I/Chc4yvVGV7werFXATJi34YCjPoE08vH614Dj72OLx
-	YQTV0/ZKmRZuctBxXk2uT64MSGIxo3ihFrNonl0rYfliN6OnOXu4+4s85K5oEpoP8hdKg/
-	0U/Ntwg5hvZEp/ITnzMF0N2fQ0jtvdg=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Yagbyfu7Li9yejU76VbU05nrAiaXllpZjUX3OPWGgyA=;
+	b=SVtoruD1ezis3n4jqhq/ELNVX6IYDbNJMIQBbfMmG/7pCMjbGJ8Ag4Ajq4S/isueyk8cbP
+	B3M4mJDZL2gUleh/nYUBSiLs92aySd+YKB01IZudcGGfuWQHviFmIX5nmdRdhz+m597qzZ
+	ebKv5JN4j7d2JelAkMhrkEWI04iRHF8=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-599-vbn6cEdoOSecls3xKn59XQ-1; Fri, 22 Jul 2022 14:33:51 -0400
-X-MC-Unique: vbn6cEdoOSecls3xKn59XQ-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-220-HJTcrwGhPYStLrFvJpEDLA-1; Fri, 22 Jul 2022 15:23:07 -0400
+X-MC-Unique: HJTcrwGhPYStLrFvJpEDLA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6E2242812C3C;
-	Fri, 22 Jul 2022 18:33:49 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D614618A64EA;
+	Fri, 22 Jul 2022 19:23:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1B5BD492C3B;
-	Fri, 22 Jul 2022 18:33:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A1601403D0CA;
+	Fri, 22 Jul 2022 19:23:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id F4093194704D;
-	Fri, 22 Jul 2022 18:33:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6BA291947053;
+	Fri, 22 Jul 2022 19:23:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E40BD1947049
- for <dm-devel@listman.corp.redhat.com>; Fri, 22 Jul 2022 18:33:47 +0000 (UTC)
+ ESMTP id 7B88B194704D
+ for <dm-devel@listman.corp.redhat.com>; Fri, 22 Jul 2022 19:23:01 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B2E7418EBB; Fri, 22 Jul 2022 18:33:47 +0000 (UTC)
+ id 57D632026985; Fri, 22 Jul 2022 19:23:01 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id AF56418ECB
- for <dm-devel@redhat.com>; Fri, 22 Jul 2022 18:33:47 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 542ED2026D64
+ for <dm-devel@redhat.com>; Fri, 22 Jul 2022 19:23:01 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 928022812C22
- for <dm-devel@redhat.com>; Fri, 22 Jul 2022 18:33:47 +0000 (UTC)
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 394308037B5
+ for <dm-devel@redhat.com>; Fri, 22 Jul 2022 19:23:01 +0000 (UTC)
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-359-Fn-e8cLaPdajjpFpUZAAvA-1; Fri, 22 Jul 2022 14:33:46 -0400
-X-MC-Unique: Fn-e8cLaPdajjpFpUZAAvA-1
-Received: by mail-qk1-f197.google.com with SMTP id
- v13-20020a05620a0f0d00b006b5f0ec742eso4289066qkl.2
- for <dm-devel@redhat.com>; Fri, 22 Jul 2022 11:33:46 -0700 (PDT)
+ us-mta-524-TiKXAXc7MZCvPhk6o7xAcQ-1; Fri, 22 Jul 2022 15:22:52 -0400
+X-MC-Unique: TiKXAXc7MZCvPhk6o7xAcQ-1
+Received: by mail-qv1-f69.google.com with SMTP id
+ l6-20020a0ce846000000b00473fbfc0e87so3564527qvo.19
+ for <dm-devel@redhat.com>; Fri, 22 Jul 2022 12:22:52 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:date:from:to:cc:subject:message-id:references
  :mime-version:content-disposition:in-reply-to;
- bh=cuAxCjPb5JwgxHvfPH5uVtncIHsSNNJ86IoETDkzjWI=;
- b=5WclXATQC2GKzjjoGQySQXvKjn54XuIS9snibfZ/YrdxT9+EQdLRH7xtUhjO+BSQ11
- J40FSmzwoxbE8zDrse+eHNXoELsYpoF/ijQQu1qJ4TImt88Pjk9VYzf81VbbzDW0IPzF
- M6furljSuNnfQu4AipJ7dkNO/Z/1bo9qUIKp7s4GXtNELX0oi5jgLQJUhw6/GVLZcmNB
- ET2E/6SWBPUiH6Mr3R18iX1gjQnzXysJKkhAJiXRhlK8YnmqbbT8hSnlPrV3H7rsTwma
- av6fpA8QC/co2PJ5PF3x+3dn47kHiPRtplSHYOgNqc3h3s92jWMaEfJWkW+jWN84gl6n
- SIiw==
-X-Gm-Message-State: AJIora9W/2GO33FUbHwLWi/ynhN86XpWUfiDf0+wy19JY8NfINIo6Gl/
- 92mwrycXgkS71xMWPkFJ1pFrJSq/qn+cfAlxPDNnP57/6y7vSpm87+PpFobyCrTbMAuy6ZqJFWL
- faBV9/NTSGj7pCA==
-X-Received: by 2002:a05:6214:d66:b0:473:7906:ac4f with SMTP id
- 6-20020a0562140d6600b004737906ac4fmr1312623qvs.126.1658514825961; 
- Fri, 22 Jul 2022 11:33:45 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1uwdMklIfR1RPb6muiHD6u2FhgP1jhA5kPEp8IEKapJ297TmS1h5GutOZjOQ2Ki8tYs42IJtg==
-X-Received: by 2002:a05:6214:d66:b0:473:7906:ac4f with SMTP id
- 6-20020a0562140d6600b004737906ac4fmr1312606qvs.126.1658514825674; 
- Fri, 22 Jul 2022 11:33:45 -0700 (PDT)
+ bh=wsh9gHnFD7MLxVkBk6yNiB+SM7yQbuZrHrswiiBqrkU=;
+ b=NS0Vb6h95j9NbgW5VKcfCiA/C4f5v/SFlrb2uJTLikGtxFElW0aX9G0bAkKfK/iRPJ
+ Z420w39gV3ZO/tbTtALGu1PeKJo+Le5Yt+xn+dQKOb/7iFMgaJ7c6HX0tO5Rbg2EdfH8
+ pCcvZWU+BgYTpFT6vBRx7lrTYvXFJlnDZTz6FFYgHlk+A94LmJVDNk6MdFVq1uGAxxoF
+ mrEFVGXI9aKmAiArcxukSQJ0DEQZauuC0Mvfz9U4TIMCK+Y7s2mFqBXoKpfQzoGf8YK/
+ k1kwbh43p8AG7FAt5QOzuVbed3fPO1KKrs4AYxUXRAORP7E32R309qZDbDvxdhVk9c4A
+ qAPA==
+X-Gm-Message-State: AJIora/nEvGTBamf9Sz2zcykaX0OPULTaI8J4CkkFVlmd9SfiUdSPSUj
+ 2mpKihQa0fSlBcPLqig89JX2n9rqO5l6071pySG1Z6dvxxaNEk/mZcP/HXqUrURhWmVsS8FX8jk
+ H/ow0DZAF/zM5Zw==
+X-Received: by 2002:ac8:7e91:0:b0:31f:869:1720 with SMTP id
+ w17-20020ac87e91000000b0031f08691720mr1472806qtj.37.1658517771788; 
+ Fri, 22 Jul 2022 12:22:51 -0700 (PDT)
+X-Google-Smtp-Source: AGRyM1tPmEve1MzE7ZG3fM6etiP0EO7G1aZ+L4ocn/EQD8L8dTmedato1ewcXwMPGgkDM6Pkqct61g==
+X-Received: by 2002:ac8:7e91:0:b0:31f:869:1720 with SMTP id
+ w17-20020ac87e91000000b0031f08691720mr1472788qtj.37.1658517771550; 
+ Fri, 22 Jul 2022 12:22:51 -0700 (PDT)
 Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
  [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
- v17-20020a05620a0f1100b006b55036fd3fsm3882891qkl.70.2022.07.22.11.33.44
+ i10-20020a05622a08ca00b0031e9fa40c2esm3293707qte.27.2022.07.22.12.22.51
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 22 Jul 2022 11:33:45 -0700 (PDT)
-Date: Fri, 22 Jul 2022 14:33:44 -0400
+ Fri, 22 Jul 2022 12:22:51 -0700 (PDT)
+Date: Fri, 22 Jul 2022 15:22:50 -0400
 From: Mike Snitzer <snitzer@redhat.com>
-To: Bart Van Assche <bvanassche@acm.org>
-Message-ID: <YtrtiP2p8xnRdC3S@redhat.com>
-References: <20220722093823.4158756-1-nhuck@google.com>
- <YtrTI/CJMoLihA/1@infradead.org>
- <cabd732a-9942-3ece-8141-c0bc6378faca@acm.org>
+To: Mike Christie <michael.christie@oracle.com>
+Message-ID: <Ytr5Cg68fZjFhXNs@redhat.com>
+References: <20220717224508.10404-1-michael.christie@oracle.com>
 MIME-Version: 1.0
-In-Reply-To: <cabd732a-9942-3ece-8141-c0bc6378faca@acm.org>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH 0/3] dm-verity: optionally use tasklets in
- dm-verity
+In-Reply-To: <20220717224508.10404-1-michael.christie@oracle.com>
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH v2 0/4] dm pr_ops fixes
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,15 +104,10 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Eric Biggers <ebiggers@kernel.org>,
- Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
- Nathan Huckleberry <nhuck@google.com>, Christoph Hellwig <hch@infradead.org>,
- dm-devel@redhat.com, Sami Tolvanen <samitolvanen@google.com>,
- Thomas Gleixner <tglx@linutronix.de>, Alasdair Kergon <agk@redhat.com>
+Cc: hch@infradead.org, dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -125,20 +116,46 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Jul 22 2022 at  2:12P -0400,
-Bart Van Assche <bvanassche@acm.org> wrote:
+On Sun, Jul 17 2022 at  6:45P -0400,
+Mike Christie <michael.christie@oracle.com> wrote:
 
-> On 7/22/22 09:41, Christoph Hellwig wrote:
-> > We've been tying to kill off task lets for about 15 years.  I don't
-> > think adding new users will make you a whole lot of friends..
+> The following patches were made over Linus's tree and fix a couple bugs
+> in the pr_ops code when a reservation type other than one of the All
+> Registrants types is used. They were tested with the Windows failover
+> cluster verification tests and libiscsi's PGR tests.
 > 
-> +1 for not using tasklets. At least in Android the real-time thread
-> scheduling latency is important. Tasklets are not visible to the scheduler
-> and hence cause latency spikes for real-time threads. These latency spikes
-> can be observed by users, e.g. if the real-time thread is involved in audio
-> playback.
+> The current dm pr_ops code works well for All Registrants because any
+> registered path is the reservation holder. Commands like reserve and
+> release can go down any path and the behavior is the same. The problems
+> these patches fix is when only one path is the holder as is the case
+> for the other reservation types which is used by Window Failover Cluster
+> and Linux Cluster (tools like pacemaker + scsi/multipath_fence agents).
+> For example for Registrants Only the path that got the RESERVE command is
+> the reservation holder. The RELEASE must be sent down that path to release
+> the reservation.
+> 
+> With our current design we send down non-registration PR commands down
+> whatever path we are currenly using, and then later PR commands end
+> up on different paths. To continue the current design where dm's pr_ops
+> are just passing through requests, and to avoid adding PR state to dm
+> these patches modify pr_reserve/release to work similar to pr_register
+> where we loop over all paths or at least loop over all paths until we
+> find the path we are looking for.
+> 
+> v2:
+> - Added info about testing.
+> - Added patch for pr_preempt.
 
-OK, then android wouldn't set the _optional_ "try_verify_in_tasklet"
+I picked this set up for 5.20 and staged in linux-next.
+
+I tweaked the patch headers a bit while proof-reading and
+understanding the scope of the changes.
+
+I noticed that dm_pr_clear is the only remaining dm_pr_* method that
+is using dm_{prepare,unprepare}_ioctl. I assume that'll be fine, but
+the one gap it leaves is handling for the possibility that the DM
+device is suspended.  Shouldn't dm_call_pr() be enhanced to check:
+if (dm_suspended_md(md)) ?
 
 Mike
 
