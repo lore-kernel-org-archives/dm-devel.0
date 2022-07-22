@@ -1,98 +1,99 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E24ECC433EF
-	for <dm-devel@archiver.kernel.org>; Fri, 22 Jul 2022 19:23:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C2303C433EF
+	for <dm-devel@archiver.kernel.org>; Fri, 22 Jul 2022 22:01:36 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1658517790;
+	s=mimecast20190719; t=1658527295;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Yagbyfu7Li9yejU76VbU05nrAiaXllpZjUX3OPWGgyA=;
-	b=SVtoruD1ezis3n4jqhq/ELNVX6IYDbNJMIQBbfMmG/7pCMjbGJ8Ag4Ajq4S/isueyk8cbP
-	B3M4mJDZL2gUleh/nYUBSiLs92aySd+YKB01IZudcGGfuWQHviFmIX5nmdRdhz+m597qzZ
-	ebKv5JN4j7d2JelAkMhrkEWI04iRHF8=
+	bh=mOFFJjfumhlz6rGn6cd5XuvGEuaSEKXHAnHg+bBo+UM=;
+	b=WCkK0/uOCGckgI+tGhxJ/nHpGj4BtnclNbZzgR7hd/zMzMhpWi03YsVwixozmtJs69SPZ1
+	X6LvImb0es633+JsQvPcofkht9OZJwwN8nHcjt/+baQcKSFXJZdCSseqW/EYHa4QeB8fkz
+	iKKigfkwLGWO1iCgfnRVHLwBfjzg8HM=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-220-HJTcrwGhPYStLrFvJpEDLA-1; Fri, 22 Jul 2022 15:23:07 -0400
-X-MC-Unique: HJTcrwGhPYStLrFvJpEDLA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-633-FuYOtT1cMF-H-Ba2l7pouA-1; Fri, 22 Jul 2022 18:01:32 -0400
+X-MC-Unique: FuYOtT1cMF-H-Ba2l7pouA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D614618A64EA;
-	Fri, 22 Jul 2022 19:23:05 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7B73285A58F;
+	Fri, 22 Jul 2022 22:01:30 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A1601403D0CA;
-	Fri, 22 Jul 2022 19:23:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0201F111E3FA;
+	Fri, 22 Jul 2022 22:01:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6BA291947053;
-	Fri, 22 Jul 2022 19:23:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9BCA21947053;
+	Fri, 22 Jul 2022 22:01:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7B88B194704D
- for <dm-devel@listman.corp.redhat.com>; Fri, 22 Jul 2022 19:23:01 +0000 (UTC)
+ ESMTP id 752A21947053
+ for <dm-devel@listman.corp.redhat.com>; Fri, 22 Jul 2022 22:01:24 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 57D632026985; Fri, 22 Jul 2022 19:23:01 +0000 (UTC)
+ id BC50C14152FA; Fri, 22 Jul 2022 22:01:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 542ED2026D64
- for <dm-devel@redhat.com>; Fri, 22 Jul 2022 19:23:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 394308037B5
- for <dm-devel@redhat.com>; Fri, 22 Jul 2022 19:23:01 +0000 (UTC)
-Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
- [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6E3FC1415139
+ for <dm-devel@redhat.com>; Fri, 22 Jul 2022 22:01:23 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DEBE80B91C
+ for <dm-devel@redhat.com>; Fri, 22 Jul 2022 22:01:21 +0000 (UTC)
+Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com
+ [209.85.221.47]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-524-TiKXAXc7MZCvPhk6o7xAcQ-1; Fri, 22 Jul 2022 15:22:52 -0400
-X-MC-Unique: TiKXAXc7MZCvPhk6o7xAcQ-1
-Received: by mail-qv1-f69.google.com with SMTP id
- l6-20020a0ce846000000b00473fbfc0e87so3564527qvo.19
- for <dm-devel@redhat.com>; Fri, 22 Jul 2022 12:22:52 -0700 (PDT)
+ us-mta-553-FCYQZ5VuOX6lgq_MQDqERg-1; Fri, 22 Jul 2022 18:01:17 -0400
+X-MC-Unique: FCYQZ5VuOX6lgq_MQDqERg-1
+Received: by mail-wr1-f47.google.com with SMTP id g2so155011wru.3;
+ Fri, 22 Jul 2022 15:01:17 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=wsh9gHnFD7MLxVkBk6yNiB+SM7yQbuZrHrswiiBqrkU=;
- b=NS0Vb6h95j9NbgW5VKcfCiA/C4f5v/SFlrb2uJTLikGtxFElW0aX9G0bAkKfK/iRPJ
- Z420w39gV3ZO/tbTtALGu1PeKJo+Le5Yt+xn+dQKOb/7iFMgaJ7c6HX0tO5Rbg2EdfH8
- pCcvZWU+BgYTpFT6vBRx7lrTYvXFJlnDZTz6FFYgHlk+A94LmJVDNk6MdFVq1uGAxxoF
- mrEFVGXI9aKmAiArcxukSQJ0DEQZauuC0Mvfz9U4TIMCK+Y7s2mFqBXoKpfQzoGf8YK/
- k1kwbh43p8AG7FAt5QOzuVbed3fPO1KKrs4AYxUXRAORP7E32R309qZDbDvxdhVk9c4A
- qAPA==
-X-Gm-Message-State: AJIora/nEvGTBamf9Sz2zcykaX0OPULTaI8J4CkkFVlmd9SfiUdSPSUj
- 2mpKihQa0fSlBcPLqig89JX2n9rqO5l6071pySG1Z6dvxxaNEk/mZcP/HXqUrURhWmVsS8FX8jk
- H/ow0DZAF/zM5Zw==
-X-Received: by 2002:ac8:7e91:0:b0:31f:869:1720 with SMTP id
- w17-20020ac87e91000000b0031f08691720mr1472806qtj.37.1658517771788; 
- Fri, 22 Jul 2022 12:22:51 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1tPmEve1MzE7ZG3fM6etiP0EO7G1aZ+L4ocn/EQD8L8dTmedato1ewcXwMPGgkDM6Pkqct61g==
-X-Received: by 2002:ac8:7e91:0:b0:31f:869:1720 with SMTP id
- w17-20020ac87e91000000b0031f08691720mr1472788qtj.37.1658517771550; 
- Fri, 22 Jul 2022 12:22:51 -0700 (PDT)
-Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
- [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
- i10-20020a05622a08ca00b0031e9fa40c2esm3293707qte.27.2022.07.22.12.22.51
+ h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+ :content-transfer-encoding;
+ bh=bRZtCuHXZQLxq6DAYd9UB1HiOJN395UR/uoKObgQkvI=;
+ b=kXy1zW9H79Sd3urXf/niBT1XpWmIbnNwfxmriwr6uFCsDW7ZIoyrryLj5vu82i1D6q
+ 2/mKZSjQK2nV4x+D2RM5+dvqC5iv6H6rAsDbqvqAYmNrmzEKU1ObS8KcMnJzE0IvcfRb
+ 5WLeuHaCiqYLk0QZ5ZC01RIPPbiu67x9qu+j63szj2XNgnOvxunoKGJUqSP2wQNpjc8G
+ rsORY5mgUMMzAf9xQ2q1kfNEFKUERbuk3GPWVbyIyKv6i0hKe9UIPjcw5xmjhFA6NV+K
+ P9U5y98vutJoOQ3y63+omubvqR+hKTm5JQ95s2SzPOES3TDZIDIxXf+3n3JeuCWtUH/d
+ o5mg==
+X-Gm-Message-State: AJIora9aJNeSoOQtM+PVN1enk5PWEiVT/EUlNROvjvRafA5dlCOz/G6z
+ GLJTVCKVQ1dwW7cs7BE5OA==
+X-Google-Smtp-Source: AGRyM1sqI4JJ6BY3+qocQdSisUvtjVH3+VKdkkQmUn259Pfed0iE5XsXgutIAC5zSdGJ2kYLMoluyg==
+X-Received: by 2002:adf:de0a:0:b0:21e:45b0:e917 with SMTP id
+ b10-20020adfde0a000000b0021e45b0e917mr1190726wrm.434.1658527276044; 
+ Fri, 22 Jul 2022 15:01:16 -0700 (PDT)
+Received: from localhost (51.red-81-44-172.dynamicip.rima-tde.net.
+ [81.44.172.51]) by smtp.gmail.com with ESMTPSA id
+ n21-20020a05600c4f9500b003a2f2bb72d5sm13564044wmq.45.2022.07.22.15.01.15
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 22 Jul 2022 12:22:51 -0700 (PDT)
-Date: Fri, 22 Jul 2022 15:22:50 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Mike Christie <michael.christie@oracle.com>
-Message-ID: <Ytr5Cg68fZjFhXNs@redhat.com>
-References: <20220717224508.10404-1-michael.christie@oracle.com>
+ Fri, 22 Jul 2022 15:01:15 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Date: Sat, 23 Jul 2022 00:01:13 +0200
+Message-Id: <20220722220114.3848-1-xose.vazquez@gmail.com>
 MIME-Version: 1.0
-In-Reply-To: <20220717224508.10404-1-michael.christie@oracle.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-Subject: Re: [dm-devel] [PATCH v2 0/4] dm pr_ops fixes
+X-Patchwork-Bot: notify
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: [dm-devel] [PATCH] multipath-tools: correct CLARiiON info from
+ multipath.conf man page
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -104,60 +105,61 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: hch@infradead.org, dm-devel@redhat.com
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+ Yanfei Chen <vincent.chen1@dell.com>, DM-DEVEL ML <dm-devel@redhat.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sun, Jul 17 2022 at  6:45P -0400,
-Mike Christie <michael.christie@oracle.com> wrote:
+Remove "Unity" from emc prio and hardware_handler, because
+Unity does not support PNR mode, just ALUA (page 113 and 153):
+https://www.delltechnologies.com/asset/en-us/products/storage/technical-support/docu5128.pdf
+And add PNR info.
 
-> The following patches were made over Linus's tree and fix a couple bugs
-> in the pr_ops code when a reservation type other than one of the All
-> Registrants types is used. They were tested with the Windows failover
-> cluster verification tests and libiscsi's PGR tests.
-> 
-> The current dm pr_ops code works well for All Registrants because any
-> registered path is the reservation holder. Commands like reserve and
-> release can go down any path and the behavior is the same. The problems
-> these patches fix is when only one path is the holder as is the case
-> for the other reservation types which is used by Window Failover Cluster
-> and Linux Cluster (tools like pacemaker + scsi/multipath_fence agents).
-> For example for Registrants Only the path that got the RESERVE command is
-> the reservation holder. The RELEASE must be sent down that path to release
-> the reservation.
-> 
-> With our current design we send down non-registration PR commands down
-> whatever path we are currenly using, and then later PR commands end
-> up on different paths. To continue the current design where dm's pr_ops
-> are just passing through requests, and to avoid adding PR state to dm
-> these patches modify pr_reserve/release to work similar to pr_register
-> where we loop over all paths or at least loop over all paths until we
-> find the path we are looking for.
-> 
-> v2:
-> - Added info about testing.
-> - Added patch for pr_preempt.
+Cc: Yanfei Chen <vincent.chen1@dell.com>
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ multipath/multipath.conf.5 | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-I picked this set up for 5.20 and staged in linux-next.
-
-I tweaked the patch headers a bit while proof-reading and
-understanding the scope of the changes.
-
-I noticed that dm_pr_clear is the only remaining dm_pr_* method that
-is using dm_{prepare,unprepare}_ioctl. I assume that'll be fine, but
-the one gap it leaves is handling for the possibility that the DM
-device is suspended.  Shouldn't dm_call_pr() be enhanced to check:
-if (dm_suspended_md(md)) ?
-
-Mike
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index d5506d99..8cc1be13 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -306,7 +306,7 @@ generate the path priority. This prioritizer accepts the optional prio_arg
+ .I emc
+ (Hardware-dependent)
+ Generate the path priority for DGC class arrays as CLARiiON CX/AX and
+-EMC VNX and Unity families.
++EMC VNX families with Failover Mode 1 (Passive Not Ready(PNR)).
+ .TP
+ .I alua
+ (Hardware-dependent)
+@@ -1562,8 +1562,8 @@ The following hardware handler are implemented:
+ .TP 12
+ .I 1 emc
+ (Hardware-dependent)
+-Hardware handler for DGC class arrays as CLARiiON CX/AX and EMC VNX and Unity
+-families.
++Hardware handler for DGC class arrays as CLARiiON CX/AX and EMC VNX families
++with Failover Mode 1 (Passive Not Ready(PNR)).
+ .TP
+ .I 1 rdac
+ (Hardware-dependent)
+-- 
+2.37.1
 
 --
 dm-devel mailing list
