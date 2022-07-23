@@ -1,87 +1,89 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C2303C433EF
-	for <dm-devel@archiver.kernel.org>; Fri, 22 Jul 2022 22:01:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B190AC433EF
+	for <dm-devel@archiver.kernel.org>; Sat, 23 Jul 2022 13:12:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1658527295;
+	s=mimecast20190719; t=1658581940;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=mOFFJjfumhlz6rGn6cd5XuvGEuaSEKXHAnHg+bBo+UM=;
-	b=WCkK0/uOCGckgI+tGhxJ/nHpGj4BtnclNbZzgR7hd/zMzMhpWi03YsVwixozmtJs69SPZ1
-	X6LvImb0es633+JsQvPcofkht9OZJwwN8nHcjt/+baQcKSFXJZdCSseqW/EYHa4QeB8fkz
-	iKKigfkwLGWO1iCgfnRVHLwBfjzg8HM=
+	bh=yjnYDp30XCWoolRHXYDLIcLmpw9152vnlbZ8pn2brKk=;
+	b=FqY/U2eIcvfnfMKrW2dTqSqBlDUPDjzp3Aj8H2/eqjfHfZTOZQqkxS7AcSfOl3Z4VnK7Un
+	uBcPlSZvCyqDDJ6rEU5mMwY+tleM3jtMRvfz+pVrgiNAr1y9YN7r7KjMiTQ0afCnKY1+Cs
+	1aRqE8ugkEmTdLDU0zYQ6HniU9Guj6k=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-633-FuYOtT1cMF-H-Ba2l7pouA-1; Fri, 22 Jul 2022 18:01:32 -0400
-X-MC-Unique: FuYOtT1cMF-H-Ba2l7pouA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-648-WSPx1QLyN7OjUKhxS8R4Hw-1; Sat, 23 Jul 2022 09:12:17 -0400
+X-MC-Unique: WSPx1QLyN7OjUKhxS8R4Hw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7B73285A58F;
-	Fri, 22 Jul 2022 22:01:30 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A99F0101A586;
+	Sat, 23 Jul 2022 13:12:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0201F111E3FA;
-	Fri, 22 Jul 2022 22:01:25 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4D2462026D64;
+	Sat, 23 Jul 2022 13:12:13 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9BCA21947053;
-	Fri, 22 Jul 2022 22:01:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1749D1945D81;
+	Sat, 23 Jul 2022 13:12:13 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 752A21947053
- for <dm-devel@listman.corp.redhat.com>; Fri, 22 Jul 2022 22:01:24 +0000 (UTC)
+ ESMTP id 2905D1945D80
+ for <dm-devel@listman.corp.redhat.com>; Sat, 23 Jul 2022 13:12:12 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id BC50C14152FA; Fri, 22 Jul 2022 22:01:23 +0000 (UTC)
+ id 07DDB400E894; Sat, 23 Jul 2022 13:12:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 6E3FC1415139
- for <dm-devel@redhat.com>; Fri, 22 Jul 2022 22:01:23 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DEBE80B91C
- for <dm-devel@redhat.com>; Fri, 22 Jul 2022 22:01:21 +0000 (UTC)
-Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com
- [209.85.221.47]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 041AE40CFD0A
+ for <dm-devel@redhat.com>; Sat, 23 Jul 2022 13:12:12 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DF750101A54E
+ for <dm-devel@redhat.com>; Sat, 23 Jul 2022 13:12:11 +0000 (UTC)
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com
+ [209.85.128.54]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-553-FCYQZ5VuOX6lgq_MQDqERg-1; Fri, 22 Jul 2022 18:01:17 -0400
-X-MC-Unique: FCYQZ5VuOX6lgq_MQDqERg-1
-Received: by mail-wr1-f47.google.com with SMTP id g2so155011wru.3;
- Fri, 22 Jul 2022 15:01:17 -0700 (PDT)
+ us-mta-191-BYaUMsKXMHCc95sVucUhIg-1; Sat, 23 Jul 2022 09:12:08 -0400
+X-MC-Unique: BYaUMsKXMHCc95sVucUhIg-1
+Received: by mail-wm1-f54.google.com with SMTP id
+ i205-20020a1c3bd6000000b003a2fa488efdso909439wma.4; 
+ Sat, 23 Jul 2022 06:12:07 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
  :content-transfer-encoding;
- bh=bRZtCuHXZQLxq6DAYd9UB1HiOJN395UR/uoKObgQkvI=;
- b=kXy1zW9H79Sd3urXf/niBT1XpWmIbnNwfxmriwr6uFCsDW7ZIoyrryLj5vu82i1D6q
- 2/mKZSjQK2nV4x+D2RM5+dvqC5iv6H6rAsDbqvqAYmNrmzEKU1ObS8KcMnJzE0IvcfRb
- 5WLeuHaCiqYLk0QZ5ZC01RIPPbiu67x9qu+j63szj2XNgnOvxunoKGJUqSP2wQNpjc8G
- rsORY5mgUMMzAf9xQ2q1kfNEFKUERbuk3GPWVbyIyKv6i0hKe9UIPjcw5xmjhFA6NV+K
- P9U5y98vutJoOQ3y63+omubvqR+hKTm5JQ95s2SzPOES3TDZIDIxXf+3n3JeuCWtUH/d
- o5mg==
-X-Gm-Message-State: AJIora9aJNeSoOQtM+PVN1enk5PWEiVT/EUlNROvjvRafA5dlCOz/G6z
- GLJTVCKVQ1dwW7cs7BE5OA==
-X-Google-Smtp-Source: AGRyM1sqI4JJ6BY3+qocQdSisUvtjVH3+VKdkkQmUn259Pfed0iE5XsXgutIAC5zSdGJ2kYLMoluyg==
-X-Received: by 2002:adf:de0a:0:b0:21e:45b0:e917 with SMTP id
- b10-20020adfde0a000000b0021e45b0e917mr1190726wrm.434.1658527276044; 
- Fri, 22 Jul 2022 15:01:16 -0700 (PDT)
+ bh=DlsUyX12ay67qGK/k6ZeQMJaMpBklE16/HVLdVqpaRw=;
+ b=xhHFX1swrU6chs+W6wijbOTapMebIsJsYrpHT7h8l6S4PPVVmeQIZz3qeXCq6KhR+d
+ +9opXYxmQR3CqKDeCyrTN/wFzANGCN9+LjalmkPiWUIpugjyANZy1bRGkb2wDUH1aA/D
+ /svB8sZB11VX1JxafgU706ZxA1FM0oBh7US+P7KA61q31IJqneBheNHl00tPGcV37oet
+ Y4fw2Au8cngPR42FZ9+QUKTuO9ql4GnxF3x5Bu6M1bqS2+Jbai7CSCRw0hhVdoeP80AA
+ Vh1i+3aweHX9jkNa4OFJQRR32tqp94cvg9JgUjC6m5fGEGjGGs3hrm4hRAFulqtc87jH
+ Xjfg==
+X-Gm-Message-State: AJIora83kZCWNhAuQ5XtefcZMcuwzAqBE0nMT5hfJeF7DswsxhAfWGPu
+ PIJfjuzAZLbzpLIpFlE4Fw==
+X-Google-Smtp-Source: AGRyM1uDw6CG9QDBNMIFqtk3TgDFLQ1rsMF3PcE/nYKRFtFyitHUWql4Z+dfBLzXAB8qYxub0iFhKg==
+X-Received: by 2002:a05:600c:591:b0:3a3:205f:e2ca with SMTP id
+ o17-20020a05600c059100b003a3205fe2camr2849036wmd.147.1658581926341; 
+ Sat, 23 Jul 2022 06:12:06 -0700 (PDT)
 Received: from localhost (51.red-81-44-172.dynamicip.rima-tde.net.
  [81.44.172.51]) by smtp.gmail.com with ESMTPSA id
- n21-20020a05600c4f9500b003a2f2bb72d5sm13564044wmq.45.2022.07.22.15.01.15
+ r5-20020a1c2b05000000b003a03be171b1sm8233693wmr.43.2022.07.23.06.12.05
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 22 Jul 2022 15:01:15 -0700 (PDT)
+ Sat, 23 Jul 2022 06:12:05 -0700 (PDT)
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 To: 
-Date: Sat, 23 Jul 2022 00:01:13 +0200
-Message-Id: <20220722220114.3848-1-xose.vazquez@gmail.com>
+Date: Sat, 23 Jul 2022 15:12:04 +0200
+Message-Id: <20220723131204.75409-1-xose.vazquez@gmail.com>
 MIME-Version: 1.0
 X-Patchwork-Bot: notify
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -91,9 +93,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: [dm-devel] [PATCH] multipath-tools: correct CLARiiON info from
- multipath.conf man page
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+Subject: [dm-devel] [PATCH v2] multipath-tools: add basic info on how to use
+ multipath-tools with NVMe devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -105,13 +107,12 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
- Yanfei Chen <vincent.chen1@dell.com>, DM-DEVEL ML <dm-devel@redhat.com>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>,
- Martin Wilck <mwilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>,
+ DM-DEVEL ML <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -119,45 +120,39 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Remove "Unity" from emc prio and hardware_handler, because
-Unity does not support PNR mode, just ALUA (page 113 and 153):
-https://www.delltechnologies.com/asset/en-us/products/storage/technical-support/docu5128.pdf
-And add PNR info.
-
-Cc: Yanfei Chen <vincent.chen1@dell.com>
 Cc: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM-DEVEL ML <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- multipath/multipath.conf.5 | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ README.md | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index d5506d99..8cc1be13 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -306,7 +306,7 @@ generate the path priority. This prioritizer accepts the optional prio_arg
- .I emc
- (Hardware-dependent)
- Generate the path priority for DGC class arrays as CLARiiON CX/AX and
--EMC VNX and Unity families.
-+EMC VNX families with Failover Mode 1 (Passive Not Ready(PNR)).
- .TP
- .I alua
- (Hardware-dependent)
-@@ -1562,8 +1562,8 @@ The following hardware handler are implemented:
- .TP 12
- .I 1 emc
- (Hardware-dependent)
--Hardware handler for DGC class arrays as CLARiiON CX/AX and EMC VNX and Unity
--families.
-+Hardware handler for DGC class arrays as CLARiiON CX/AX and EMC VNX families
-+with Failover Mode 1 (Passive Not Ready(PNR)).
- .TP
- .I 1 rdac
- (Hardware-dependent)
+diff --git a/README.md b/README.md
+index 2322082c..b05b1332 100644
+--- a/README.md
++++ b/README.md
+@@ -174,3 +174,19 @@ To enable ALUA, the following options should be changed:
+ 
+ - Huawei OceanStor:
+    "Host Access Mode" should be changed to "Asymmetric".
++
++
++NVMe
++====
++To use Device Mapper/multipath-tools with NVMe devices,
++if the Native NVMe Multipath subsystem is enabled
++( "Y" in `/sys/module/nvme_core/parameters/multipath` ),
++it has to be disabled:
++
++`echo "options nvme_core multipath=N" > /etc/modprobe.d/01-nvme_core-mp.conf`,
++regenerate the initramfs (`dracut -f` or `update-initramfs`) and reboot.
++
++Check that it is disabled(N) with:
++`cat /sys/module/nvme_core/parameters/multipath`
++or
++`systool -m nvme_core -A multipath`
 -- 
 2.37.1
 
