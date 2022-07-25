@@ -4,7 +4,7 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6FAB1C433EF
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B3E81C43334
 	for <dm-devel@archiver.kernel.org>; Tue, 26 Jul 2022 08:16:35 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1658823394;
@@ -14,71 +14,67 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=+1jAFI09NP9FbHCabnaAkmLdfiyEEZkSuAOS/bR7Ieo=;
-	b=R5s1zJ6l0i6VByePNhG3n52yUDN58s0q5EydKJuU3LhhLgi1NV2Z4CeAWan6kVEJVYKIQW
-	r3kj1G+h6tOxFkKsBdZeKDf2mRw+Tt25P0U4M8BNMH33oV/56YBx+VQNPqLt02VFJkhMXi
-	mW/KsV10JrrSpCfep/ykkh/AJZAhpm4=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Rx6I7+6reQcQIIgizx4qhNU3Z35MdYgOZQHIuzzI260=;
+	b=TR6Fiqr8mRaP9XVwtLmC/bYDEZYEMuEssAhTRCl6ndsK5pLwbTL3F40jlU/bdMR4pN0frS
+	dVtTeNjSDVrBP1ij1hMxhIAVD+RM9RqydMk+9EOGeM28+k7ZTv2mVKiu7lLMmMrfzjNBSr
+	nJjeGEVnFT/884oEo9Y3SKhSm8S5ffA=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-461-mfIcENFWOhaE60VmjfDvpw-1; Tue, 26 Jul 2022 04:16:31 -0400
-X-MC-Unique: mfIcENFWOhaE60VmjfDvpw-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-83-RU7ObfGiNLuvAe8w-covjA-1; Tue, 26 Jul 2022 04:16:31 -0400
+X-MC-Unique: RU7ObfGiNLuvAe8w-covjA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5652981F46D;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 55A0329AB3EC;
 	Tue, 26 Jul 2022 08:16:29 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id DF98B492C3B;
-	Tue, 26 Jul 2022 08:16:27 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 26168909FF;
+	Tue, 26 Jul 2022 08:16:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9AFC51945D88;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CE6541945D97;
 	Tue, 26 Jul 2022 08:16:27 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 659901945D86
- for <dm-devel@listman.corp.redhat.com>; Tue, 26 Jul 2022 05:30:11 +0000 (UTC)
+ ESMTP id 2CA671945D88
+ for <dm-devel@listman.corp.redhat.com>; Mon, 25 Jul 2022 21:20:33 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 364BC400F8F0; Tue, 26 Jul 2022 05:30:11 +0000 (UTC)
+ id 0C1DF2166B2A; Mon, 25 Jul 2022 21:20:33 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 3224A40C1288
- for <dm-devel@redhat.com>; Tue, 26 Jul 2022 05:30:11 +0000 (UTC)
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 07F842166B26
+ for <dm-devel@redhat.com>; Mon, 25 Jul 2022 21:20:33 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1A625802D1C
- for <dm-devel@redhat.com>; Tue, 26 Jul 2022 05:30:11 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E04268526FA
+ for <dm-devel@redhat.com>; Mon, 25 Jul 2022 21:20:32 +0000 (UTC)
+Received: from forward101o.mail.yandex.net (forward101o.mail.yandex.net
+ [37.140.190.181]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-252-s9aqw97JOrKYZTpmeveKtA-1; Tue, 26 Jul 2022 01:30:07 -0400
-X-MC-Unique: s9aqw97JOrKYZTpmeveKtA-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 9ECE5611F1;
- Tue, 26 Jul 2022 05:21:41 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id ED12BC341C0;
- Tue, 26 Jul 2022 05:21:40 +0000 (UTC)
-Received: by mail-yw1-f179.google.com with SMTP id
- 00721157ae682-31f434f2884so17664187b3.6; 
- Mon, 25 Jul 2022 22:21:40 -0700 (PDT)
-X-Gm-Message-State: AJIora9TRQXzQ2T0QGgTR2KXZEO1lYnDia6BOxtMPRqyYLPMY2vBi3kJ
- bN7nntyht8H7y5hHNj6aIpP527+HDI+M23UeKXc=
-X-Google-Smtp-Source: AGRyM1sQ3hNM89OMbn2MSAnPDMXOA8Kg7+edZOoBlE32tOTa7SZnbBxM5HVNvOz518bHMZm5uwM2iWlEOdvZ+Yu/4zU=
-X-Received: by 2002:a0d:d285:0:b0:31e:1eca:6996 with SMTP id
- u127-20020a0dd285000000b0031e1eca6996mr13754768ywd.211.1658812900009; Mon, 25
- Jul 2022 22:21:40 -0700 (PDT)
+ us-mta-370-Lp_RDwe5M_WTDybarphkRQ-1; Mon, 25 Jul 2022 17:20:28 -0400
+X-MC-Unique: Lp_RDwe5M_WTDybarphkRQ-1
+Received: from iva1-dcde80888020.qloud-c.yandex.net
+ (iva1-dcde80888020.qloud-c.yandex.net
+ [IPv6:2a02:6b8:c0c:7695:0:640:dcde:8088])
+ by forward101o.mail.yandex.net (Yandex) with ESMTP id 2ECB3369B50D;
+ Tue, 26 Jul 2022 00:15:15 +0300 (MSK)
+Received: by iva1-dcde80888020.qloud-c.yandex.net (smtp/Yandex) with ESMTPSA
+ id ZXho2Z3dGu-FCh4KT0f; Tue, 26 Jul 2022 00:15:14 +0300
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
+ (Client certificate not present)
+X-Yandex-Fwd: 1
+To: Stefan Hajnoczi <stefanha@redhat.com>,
+ Kirill Tkhai <kirill.tkhai@openvz.org>
+References: <YoSSkOQaGL0sBNOI@stefanha-x1.localdomain>
+From: Kirill Tkhai <tkhai@ya.ru>
+Message-ID: <d4aafde8-1686-4423-e9b1-c1cc825236e6@ya.ru>
+Date: Tue, 26 Jul 2022 00:15:11 +0300
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+ Thunderbird/78.14.0
 MIME-Version: 1.0
-References: <alpine.LRH.2.02.2207130714180.12929@file01.intranet.prod.int.rdu2.redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2207130714180.12929@file01.intranet.prod.int.rdu2.redhat.com>
-From: Song Liu <song@kernel.org>
-Date: Mon, 25 Jul 2022 22:21:29 -0700
-X-Gmail-Original-Message-ID: <CAPhsuW5gc4AakdGNdF8ubpezAuDLFOYUO_sfMZcec6hQFm8nhg@mail.gmail.com>
-Message-ID: <CAPhsuW5gc4AakdGNdF8ubpezAuDLFOYUO_sfMZcec6hQFm8nhg@mail.gmail.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
+In-Reply-To: <YoSSkOQaGL0sBNOI@stefanha-x1.localdomain>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -86,10 +82,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-Mailman-Approved-At: Tue, 26 Jul 2022 08:16:26 +0000
-Subject: Re: [dm-devel] [PATCH] md-raid: destroy the bitmap after destroying
- the thread
+Subject: Re: [dm-devel] Attaching qcow2 images to containers
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -101,148 +96,94 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Mike Snitzer <msnitzer@redhat.com>, Guoqing Jiang <gqjiang@suse.com>,
- Heinz Mauelshagen <heinzm@redhat.com>, linux-raid <linux-raid@vger.kernel.org>,
- dm-devel@redhat.com, Shaohua Li <shli@fb.com>
+Cc: Kevin Wolf <kwolf@redhat.com>, linux-kernel@vger.kernel.org,
+ dm-devel@redhat.com, qemu-devel@nongnu.org,
+ Xie Yongji <xieyongji@bytedance.com>, hreitz@redhat.com, tkhai@ya.ru,
+ sgarzare@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sun, Jul 24, 2022 at 11:26 AM Mikulas Patocka <mpatocka@redhat.com> wrote:
->
-> When we ran the lvm test "shell/integrity-blocksize-3.sh" on a kernel with
-> kasan, we got failure in write_page.
->
-> The reason for the failure is that md_bitmap_destroy is called before
-> destroying the thread and the thread may be waiting in the function
-> write_page for the bio to complete. When the thread finishes waiting, it
-> executes "if (test_bit(BITMAP_WRITE_ERROR, &bitmap->flags))", which
-> triggers the kasan warning.
->
-> Note that the commit 48df498daf62 that caused this bug claims that it is
-> neede for md-cluster, you should check md-cluster and possibly find
-> another bugfix for it.
->
-> BUG: KASAN: use-after-free in write_page+0x18d/0x680 [md_mod]
-> Read of size 8 at addr ffff889162030c78 by task mdX_raid1/5539
->
-> CPU: 10 PID: 5539 Comm: mdX_raid1 Not tainted 5.19.0-rc2 #1
-> Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.14.0-2 04/01/2014
-> Call Trace:
->  <TASK>
->  dump_stack_lvl+0x34/0x44
->  print_report.cold+0x45/0x57a
->  ? __lock_text_start+0x18/0x18
->  ? write_page+0x18d/0x680 [md_mod]
->  kasan_report+0xa8/0xe0
->  ? write_page+0x18d/0x680 [md_mod]
->  kasan_check_range+0x13f/0x180
->  write_page+0x18d/0x680 [md_mod]
->  ? super_sync+0x4d5/0x560 [dm_raid]
->  ? md_bitmap_file_kick+0xa0/0xa0 [md_mod]
->  ? rs_set_dev_and_array_sectors+0x2e0/0x2e0 [dm_raid]
->  ? mutex_trylock+0x120/0x120
->  ? preempt_count_add+0x6b/0xc0
->  ? preempt_count_sub+0xf/0xc0
->  md_update_sb+0x707/0xe40 [md_mod]
->  md_reap_sync_thread+0x1b2/0x4a0 [md_mod]
->  md_check_recovery+0x533/0x960 [md_mod]
->  raid1d+0xc8/0x2a20 [raid1]
->  ? var_wake_function+0xe0/0xe0
->  ? psi_group_change+0x411/0x500
->  ? preempt_count_sub+0xf/0xc0
->  ? _raw_spin_lock_irqsave+0x78/0xc0
->  ? __lock_text_start+0x18/0x18
->  ? raid1_end_read_request+0x2a0/0x2a0 [raid1]
->  ? preempt_count_sub+0xf/0xc0
->  ? _raw_spin_unlock_irqrestore+0x19/0x40
->  ? del_timer_sync+0xa9/0x100
->  ? try_to_del_timer_sync+0xc0/0xc0
->  ? _raw_spin_lock_irqsave+0x78/0xc0
->  ? __lock_text_start+0x18/0x18
->  ? __list_del_entry_valid+0x68/0xa0
->  ? finish_wait+0xa3/0x100
->  md_thread+0x161/0x260 [md_mod]
->  ? unregister_md_personality+0xa0/0xa0 [md_mod]
->  ? _raw_spin_lock_irqsave+0x78/0xc0
->  ? prepare_to_wait_event+0x2c0/0x2c0
->  ? unregister_md_personality+0xa0/0xa0 [md_mod]
->  kthread+0x148/0x180
->  ? kthread_complete_and_exit+0x20/0x20
->  ret_from_fork+0x1f/0x30
->  </TASK>
->
-> Allocated by task 5522:
->  kasan_save_stack+0x1e/0x40
->  __kasan_kmalloc+0x80/0xa0
->  md_bitmap_create+0xa8/0xe80 [md_mod]
->  md_run+0x777/0x1300 [md_mod]
->  raid_ctr+0x249c/0x4a30 [dm_raid]
->  dm_table_add_target+0x2b0/0x620 [dm_mod]
->  table_load+0x1c8/0x400 [dm_mod]
->  ctl_ioctl+0x29e/0x560 [dm_mod]
->  dm_compat_ctl_ioctl+0x7/0x20 [dm_mod]
->  __do_compat_sys_ioctl+0xfa/0x160
->  do_syscall_64+0x90/0xc0
->  entry_SYSCALL_64_after_hwframe+0x46/0xb0
->
-> Freed by task 5680:
->  kasan_save_stack+0x1e/0x40
->  kasan_set_track+0x21/0x40
->  kasan_set_free_info+0x20/0x40
->  __kasan_slab_free+0xf7/0x140
->  kfree+0x80/0x240
->  md_bitmap_free+0x1c3/0x280 [md_mod]
->  __md_stop+0x21/0x120 [md_mod]
->  md_stop+0x9/0x40 [md_mod]
->  raid_dtr+0x1b/0x40 [dm_raid]
->  dm_table_destroy+0x98/0x1e0 [dm_mod]
->  __dm_destroy+0x199/0x360 [dm_mod]
->  dev_remove+0x10c/0x160 [dm_mod]
->  ctl_ioctl+0x29e/0x560 [dm_mod]
->  dm_compat_ctl_ioctl+0x7/0x20 [dm_mod]
->  __do_compat_sys_ioctl+0xfa/0x160
->  do_syscall_64+0x90/0xc0
->  entry_SYSCALL_64_after_hwframe+0x46/0xb0
->
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@vger.kernel.org
-> Fixes: 48df498daf62 ("md: move bitmap_destroy to the beginning of __md_stop")
+Hi, Stefan,
 
-Applied to md-next.
+sorry for the late reply. I missed your message since I don't use that email address anymore.
+Sent a patch to fix the stale address in .mailmap.
 
-Thanks,
-Song
+On 18.05.2022 09:30, Stefan Hajnoczi wrote:
+> Hi Kirill,
+> I saw your "[PATCH 0/4] dm: Introduce dm-qcow2 driver to attach QCOW2
+> files as block device" patch series:
+> https://lore.kernel.org/linux-kernel/YkME5ZS2CpXuNmN6@infradead.org/T/
+> 
+> There has been recent work in vDPA (VIRTIO Data Path Acceleration) to
+> achieve similar functionality. The qemu-storage-daemon VDUSE export
+> attaches a virtio-blk device to the host kernel and QEMU's qcow2
+> implementation can be used:
+> https://patchew.org/QEMU/20220504074051.90-1-xieyongji@bytedance.com/
+> 
+> A container can then access this virtio-blk device (/dev/vda). Note that
+> the virtio-blk device is implemented in software using vDPA/VDUSE, there
+> is no virtio-pci device.
+> 
+> As a quick comparison with a dm-qcow2 target, this approach keeps the
+> qcow2 code in QEMU userspace and can take advantage of QEMU block layer
+> features (storage migration/mirroring/backup, snapshots, etc). On the
+> other hand, it's likely to be more heavyweight because bounce buffers
+> are required in VDUSE for security reasons, there is a separate
+> userspace process involved, and there's the virtio_blk.ko driver and an
+> emulated virtio-blk device involved.
 
->
-> ---
->  drivers/md/md.c |    2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->
-> Index: linux-2.6/drivers/md/md.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/md/md.c      2022-06-08 15:39:08.000000000 +0200
-> +++ linux-2.6/drivers/md/md.c   2022-06-24 20:22:34.000000000 +0200
-> @@ -6244,11 +6244,11 @@ static void mddev_detach(struct mddev *m
->  static void __md_stop(struct mddev *mddev)
->  {
->         struct md_personality *pers = mddev->pers;
-> -       md_bitmap_destroy(mddev);
->         mddev_detach(mddev);
->         /* Ensure ->event_work is done */
->         if (mddev->event_work.func)
->                 flush_workqueue(md_misc_wq);
-> +       md_bitmap_destroy(mddev);
->         spin_lock(&mddev->lock);
->         mddev->pers = NULL;
->         spin_unlock(&mddev->lock);
->
+The main idea is to reach the best performance and density. This is possible only,
+if driver's hot path is implemented in kernel. Comparing to NBD the driver shows
+much better results in these criteria.
+
+This has a continuation, and I mean DAX here. IO handling with any userspace-based
+implementation will be slower, than DAX in case of kernel-based implementation. So,
+in my driver IO handling is done in kernel, while DAX support is a subject of
+the future development.
+
+And this driver and advantages of QEMU block layer are not mutually exclusive.
+This driver *does not implement* snapshot or backup support, here is only hot-path
+doing IO handling.
+ 
+> Another similar feature that was recently added to QEMU is the
+> qemu-storage-daemon FUSE export:
+> 
+>   $ qemu-storage-daemon \
+>         --blockdev file,filename=test.img,node-name=drive0 \
+> 	--export fuse,node-name=drive0,id=fuse0,mountpoint=/tmp/foo
+>   $ ls -alF /tmp/foo
+>   -r--------. 1 me me 10737418240 May 18 07:22 /tmp/foo
+> 
+> This exports a disk image as a file via FUSE. Programs can access it
+> like a regular file and qemu-storage-daemon will do the qcow2 I/O on the
+> underlying file.
+> 
+> I wanted to mention these options for exposing qcow2 disk images to
+> processes/containers on the host. Depending on your use cases they might
+> be interesting. Performance comparisons against VDUSE and FUSE exports
+> would be interesting since these new approaches seem to be replacing
+> qemu-nbd.
+> 
+> Can you share more about your use cases for the dm-qcow2 target? It
+> could be useful for everyone I've CCed to be aware of various efforts in
+> this area.
+
+The use case is containers, and they are the requestor for high density.
+The userspace-based implementation overhead will be noticeable on nodes
+running a lot of containers (just because of any overhead is noticeable
+there :)). Also, it's very useful to use the same disk image for VMs and
+containers giving people to choose what they want in the moment.
+
+Best wishes,
+Kirill
 
 --
 dm-devel mailing list
