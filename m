@@ -4,92 +4,73 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B8FE8C43334
-	for <dm-devel@archiver.kernel.org>; Tue, 26 Jul 2022 02:40:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 673F3C43334
+	for <dm-devel@archiver.kernel.org>; Tue, 26 Jul 2022 03:06:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1658803233;
+	s=mimecast20190719; t=1658804780;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=QU36v/0ob++DWNX43qW2EUZRbQaHTOM2avxfbNvJ660=;
-	b=dJ9M4S+th6IXmwsfbGqccwKit6GP/j+qvOwepdh+YUsmkIeUGrA7BMf5IgBOHS5JTyHo6h
-	SzhSPbEB0sBCFNp2Ai2a/mAmzGgpjngzHaBo3DFQ8uGWZjqKKKc7xa9/VmE4SrBpvI46+q
-	8hlictBg6r5UgTFgK9XU0qvfVR/iMgI=
+	bh=gcJhxGB0iWhhcaoRZK9TUdD0uY5Fo7cyJmTODGtYUOA=;
+	b=hyvM0W9LU8mXxNPmDu3XnBl7RXURyL175izLz5itI8sIJXnQDyBQ89IqRF0bbb28AsYFVt
+	zobaQrezWdYIL//bVqBJZgsHVNbZztVU4Isxsan74W01+h7E/ZoXZYcPBzxoOoj1AzuxyT
+	D0ZtF9asQwSw/pga5OTbVLjqD/gCCxM=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-633-3Yq2I1JFP9-mX2YXPW1RfA-1; Mon, 25 Jul 2022 22:40:30 -0400
-X-MC-Unique: 3Yq2I1JFP9-mX2YXPW1RfA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-541-83muCvi1MB-7-_yupSHX3w-1; Mon, 25 Jul 2022 23:06:16 -0400
+X-MC-Unique: 83muCvi1MB-7-_yupSHX3w-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 08D091019DE0;
-	Tue, 26 Jul 2022 02:40:28 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B93B7101A586;
+	Tue, 26 Jul 2022 03:06:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 74E0690A04;
-	Tue, 26 Jul 2022 02:40:27 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 030D0403D0E0;
+	Tue, 26 Jul 2022 03:06:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3FADB1945D88;
-	Tue, 26 Jul 2022 02:40:27 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 430D91945D95;
+	Tue, 26 Jul 2022 03:06:09 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id ACF7B1945D8A
- for <dm-devel@listman.corp.redhat.com>; Tue, 26 Jul 2022 02:40:25 +0000 (UTC)
+ ESMTP id 2A0A71945D86
+ for <dm-devel@listman.corp.redhat.com>; Tue, 26 Jul 2022 03:06:08 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 98DCDC27DB3; Tue, 26 Jul 2022 02:40:25 +0000 (UTC)
+ id 0C91F2026D07; Tue, 26 Jul 2022 03:06:08 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 94AC0C04482
- for <dm-devel@redhat.com>; Tue, 26 Jul 2022 02:40:25 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 07A6F2026D64
+ for <dm-devel@redhat.com>; Tue, 26 Jul 2022 03:06:08 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7DD483C0ED48
- for <dm-devel@redhat.com>; Tue, 26 Jul 2022 02:40:25 +0000 (UTC)
-Received: from mail-pf1-f171.google.com (mail-pf1-f171.google.com
- [209.85.210.171]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-228-Gbnqh2BNM-OUUlHNHbS94w-1; Mon, 25 Jul 2022 22:40:23 -0400
-X-MC-Unique: Gbnqh2BNM-OUUlHNHbS94w-1
-Received: by mail-pf1-f171.google.com with SMTP id 70so12098127pfx.1
- for <dm-devel@redhat.com>; Mon, 25 Jul 2022 19:40:23 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:from:date:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=YDCQ69+j6DNEGXcsFGhvww2iHW1abII9YyREo17Wc9M=;
- b=vTE1K+CTe4wsosKWLCxAU8zea+jbyYMDYHIYNWoIXisurGUIxRLTqPujxU65K24lDf
- dJP61bxYFFF95zyS17BY53QIxQZQWAEGyoWSK8WwJPNj2iXSOAfUj8SSCd95CTnvvh1S
- Vzgt1X5bopFwukasT7GUJ9YBIFUuSByyeYHwQJbFUNHc30dDHPh3wLw2Egd7lQZ3wRxg
- 2vA5+IBmFs3F6QqXLnMLNo4xb5Am2RH1MH1QIchlYXFZNTLnpqf+IIjG7l1J2/Lq+3Ic
- svBA8hAuh/K5hfq89il58MPb8BWXDbI+nCm2elAQoEzsheW0Oy8KcVPQYTQ0Ia6lYm2h
- mVew==
-X-Gm-Message-State: AJIora8Jk+ZUuwry1LvgJl4G9hJU1sq7USSdXgU1dNCW3aULNA4QX35w
- 9XcCzuaGHq2XhN8sYdfuSDoc0Q==
-X-Google-Smtp-Source: AGRyM1vx5o3O82d+UwS4QXR3lui4cdf2xPHbdWNIwHc/5apxbNSIwtpsF6MA6NxtaEX1qzpjbghRdw==
-X-Received: by 2002:a63:5fc9:0:b0:419:9871:fc8d with SMTP id
- t192-20020a635fc9000000b004199871fc8dmr13109285pgb.422.1658803222173; 
- Mon, 25 Jul 2022 19:40:22 -0700 (PDT)
-Received: from google.com (n122-107-196-14.sbr2.nsw.optusnet.com.au.
- [122.107.196.14]) by smtp.gmail.com with ESMTPSA id
- a16-20020aa78e90000000b0052b29fd7982sm10250313pfr.85.2022.07.25.19.40.18
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 25 Jul 2022 19:40:21 -0700 (PDT)
-From: Daniil Lunev <dlunev@chromium.org>
-X-Google-Original-From: Daniil Lunev <dlunev@google.com>
-Date: Tue, 26 Jul 2022 12:40:14 +1000
-To: Israel Rukshin <israelr@nvidia.com>, Eric Biggers <ebiggers@kernel.org>
-Message-ID: <Yt9UDoKbidXaTmYd@google.com>
-References: <1658316391-13472-1-git-send-email-israelr@nvidia.com>
- <1658316391-13472-2-git-send-email-israelr@nvidia.com>
- <Ytj249InQTKdFshA@sol.localdomain>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E12FA101A54E
+ for <dm-devel@redhat.com>; Tue, 26 Jul 2022 03:06:07 +0000 (UTC)
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-534-H1HvcHXcO3W2XdwJ0czVuA-1; Mon, 25 Jul 2022 23:06:05 -0400
+X-MC-Unique: H1HvcHXcO3W2XdwJ0czVuA-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by ams.source.kernel.org (Postfix) with ESMTPS id 42FA1B8116D;
+ Tue, 26 Jul 2022 03:06:04 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id BE69AC341C6;
+ Tue, 26 Jul 2022 03:06:02 +0000 (UTC)
+Date: Mon, 25 Jul 2022 20:06:01 -0700
+From: Eric Biggers <ebiggers@kernel.org>
+To: Mike Snitzer <snitzer@redhat.com>
+Message-ID: <Yt9aGRXNNPGZFvld@sol.localdomain>
+References: <20220722093823.4158756-1-nhuck@google.com>
+ <20220722093823.4158756-4-nhuck@google.com>
+ <Yt9KTzXUeA8xAiGv@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <Ytj249InQTKdFshA@sol.localdomain>
+In-Reply-To: <Yt9KTzXUeA8xAiGv@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -97,9 +78,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH 1/1] block: Add support for setting inline
- encryption key per block device
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH 3/3] dm-verity: Add try_verify_in_tasklet
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -111,13 +91,12 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Max Gurtovoy <mgurtovoy@nvidia.com>,
- linux-fscrypt@vger.kernel.org, Linux-block <linux-block@vger.kernel.org>,
- dm-devel@redhat.com, Nitzan Carmi <nitzanc@nvidia.com>,
- Christoph Hellwig <hch@lst.de>
+Cc: Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
+ Nathan Huckleberry <nhuck@google.com>, dm-devel@redhat.com,
+ Sami Tolvanen <samitolvanen@google.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -126,46 +105,46 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Jul 20, 2022 at 11:49:07PM -0700, Eric Biggers wrote:
-> I'm glad to see a proposal in this area -- this is something that is greatly
-> needed.  Chrome OS is looking for something like "dm-crypt with inline crypto
-> support", which this should work for.  Android is also looking for something
-> similar with the additional property that filesystems can override the key used.
-Yes, this is exciting to see proposals in this area. In ChromeOS we were
-contemplating ways to upstream Eric's work for Android. This solution should
-work generally for our use-case, however I would like to add a few extra pieces
-we were considering.
+On Mon, Jul 25, 2022 at 09:58:39PM -0400, Mike Snitzer wrote:
+> 
+> > @@ -1156,7 +1217,7 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+> >  		goto bad;
+> >  	}
+> >  
+> > -	v->tfm = crypto_alloc_ahash(v->alg_name, 0, 0);
+> > +	v->tfm = crypto_alloc_ahash(v->alg_name, 0, CRYPTO_ALG_ASYNC);
+> >  	if (IS_ERR(v->tfm)) {
+> >  		ti->error = "Cannot initialize hash function";
+> >  		r = PTR_ERR(v->tfm);
+> 
+> This hunk that adds the CRYPTO_ALG_ASYNC flag _seems_ unrelated.
 
-One thing we were looking for is having an option to pass inline encryption keys
-via keyrings, similarly to how dm-crypt allows suuplying keys both ways: raw and
-keyring attached. I would assume that is something that should still be possible
-with the IOCTL-based approach, though proposed API can make it a bit obscure. I
-was wondering whether there should be a separate field to allow this kind of
-differentiation?
+I believe it's needed to ensure that only a synchronous algorithm is allocated,
+so that verity_hash_update() doesn't have to sleep during the tasklet.  It
+should be conditional on v->use_tasklet, though.
 
-The other aspect is the key lifetime. Current implementation doesn't allow to
-unset the key once set. This is something that would still work with dm setups,
-presumably, since the key lifetime is tied to the lifetime of the device itself,
-but may render problematic if this is applied to a raw device or partition of a
-raw device, I would assume - allowing no ways to rotate the key without reboot.
-I am not sure if this is a particularly important issue, but something that I
-wanted to raise for the discussion. This also becomes relevant in the context of
-the keyring usages, i.e. whether to revoke the key from the block device when
-the key is removed from the keyring, or assume it is bound at the time of device
-setup. The dm-crypt follows the latter model, AFAIU, and it is fine to keep it
-consistent, but then the question comes back to inability to remove the key in
-the current API in general.
+> @@ -321,14 +320,12 @@ static int verity_verify_level(struct dm_verity *v, struct dm_verity_io *io,
+>  		if (likely(memcmp(verity_io_real_digest(v, io), want_digest,
+>  				  v->digest_size) == 0))
+>  			aux->hash_verified = 1;
+> -		else if (io->in_tasklet) {
+> +		else if (io->in_tasklet)
+>  			/*
+>  			 * FEC code cannot be run in a tasklet since it may
+> -			 * sleep.  We need to resume execution in a work-queue
+> -			 * to handle FEC.
+> +			 * sleep, so fallback to using a work-queue.
+>  			 */
+>  			return -EAGAIN;
+> -		}
 
-And speaking about dm, the other thing we were looking into is compatibility of
-inline encryption key setup with dm stacks. Current kernel implementaiton
-propagates the crypto context through linear and flakey target, we also had
-initial tests enabling it on thin pools by adding DM_TARGET_PASSES_CRYPTO, which
-didn't show any problems at first glance (but more testing is required). We
-believe that an ability to setup multiple different dm targets with different
-keys over the same physical device is an important use case - and as far as I
-can tell proposed approach supports it, but wanted to highlight that as well.
 
---Daniil
+Doesn't this need to be:
+
+			r = -EAGAIN;
+			goto release_ret_r;
+
+- Eric
 
 --
 dm-devel mailing list
