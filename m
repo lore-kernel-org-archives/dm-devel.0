@@ -4,133 +4,86 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C08DAC19F2B
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Jul 2022 17:00:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 16DD1C04A68
+	for <dm-devel@archiver.kernel.org>; Wed, 27 Jul 2022 19:55:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1658941239;
+	s=mimecast20190719; t=1658951707;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=Y5BnqD7V8G8+8tJszAt1Gr9gq75EN0o5AgPCYinMWgc=;
-	b=PuBmUcTTIVjv7fxju/adx8tN1CW94ryXEFn8AeaE40mXuqNgdcnoDQrg5ddfI83zaUTD1K
-	nSJLvJgj+L2dDUDKoXkowbVeKhaf54T1alxTFwO/6mdqL3pl3X++DxlEKxflX5jwNfTFUD
-	EzAtUenxQ5VT9fgltPnUflJX3TwLJFU=
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=JQBbQQCJWddR28+kF1HfIoNVQXcPSQ9XHEpBlZrdtiM=;
+	b=F2NCS4BHXHqKRq9CH57vY77R94TBXjnQtrelafbUqv7NGxCKZ+QyHDTx9vaAR8r8lXnO+x
+	jDf5my4fjd8LRJG5kq9AdwjFd13I3h8GXjw/j8Zc+RiW6IUHv819uKveHvq+0p3vM3exjK
+	+5jNx0586pvI3t6jpX8L2KmMy33k4Vg=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-538-8p6yzBvuMXivOy6g85_hEg-1; Wed, 27 Jul 2022 13:00:36 -0400
-X-MC-Unique: 8p6yzBvuMXivOy6g85_hEg-1
+ us-mta-262-vYxRLXlKP4ywRJg_xj54Bw-1; Wed, 27 Jul 2022 15:55:01 -0400
+X-MC-Unique: vYxRLXlKP4ywRJg_xj54Bw-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AEDFF85A58E;
-	Wed, 27 Jul 2022 17:00:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AF62E108C0DE;
+	Wed, 27 Jul 2022 19:54:53 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9AB2390A04;
-	Wed, 27 Jul 2022 17:00:34 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0166F18EB7;
+	Wed, 27 Jul 2022 19:54:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3BFE81945DAB;
-	Wed, 27 Jul 2022 17:00:34 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B57351945DAB;
+	Wed, 27 Jul 2022 19:54:51 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A18B81945DB5
- for <dm-devel@listman.corp.redhat.com>; Wed, 27 Jul 2022 16:32:38 +0000 (UTC)
+ ESMTP id EFC691945DA7
+ for <dm-devel@listman.corp.redhat.com>; Wed, 27 Jul 2022 19:54:49 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8B09940C128A; Wed, 27 Jul 2022 16:32:38 +0000 (UTC)
+ id B69C7141511F; Wed, 27 Jul 2022 19:54:49 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 86489404E4C3
- for <dm-devel@redhat.com>; Wed, 27 Jul 2022 16:32:38 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B2A471415118
+ for <dm-devel@redhat.com>; Wed, 27 Jul 2022 19:54:49 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 68CFB1019E1D
- for <dm-devel@redhat.com>; Wed, 27 Jul 2022 16:32:38 +0000 (UTC)
-Received: from mailout2.w1.samsung.com (mailout2.w1.samsung.com
- [210.118.77.12]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 602A5960073
+ for <dm-devel@redhat.com>; Wed, 27 Jul 2022 19:54:35 +0000 (UTC)
+Received: from mail-lf1-f47.google.com (mail-lf1-f47.google.com
+ [209.85.167.47]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-623-OgKDtqGGN9ionrFByzwVGg-1; Wed, 27 Jul 2022 12:32:36 -0400
-X-MC-Unique: OgKDtqGGN9ionrFByzwVGg-1
-Received: from eucas1p2.samsung.com (unknown [182.198.249.207])
- by mailout2.w1.samsung.com (KnoxPortal) with ESMTP id
- 20220727162248euoutp02760a475ed5ef32a109616cc883337856~FvDPWhzyT0990709907euoutp02A
- for <dm-devel@redhat.com>; Wed, 27 Jul 2022 16:22:48 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w1.samsung.com
- 20220727162248euoutp02760a475ed5ef32a109616cc883337856~FvDPWhzyT0990709907euoutp02A
-Received: from eusmges1new.samsung.com (unknown [203.254.199.242]) by
- eucas1p2.samsung.com (KnoxPortal) with ESMTP id
- 20220727162247eucas1p2d8c0046b6278b5cc6fe854de49203d62~FvDN7wcZM0838408384eucas1p26;
- Wed, 27 Jul 2022 16:22:47 +0000 (GMT)
-Received: from eucas1p1.samsung.com ( [182.198.249.206]) by
- eusmges1new.samsung.com (EUCPMTA) with SMTP id 7A.B3.09664.65661E26; Wed, 27
- Jul 2022 17:22:46 +0100 (BST)
-Received: from eusmtrp2.samsung.com (unknown [182.198.249.139]) by
- eucas1p1.samsung.com (KnoxPortal) with ESMTPA id
- 20220727162246eucas1p1a758799f13d36ba99d30bf92cc5e2754~FvDNH16bm2538125381eucas1p1U;
- Wed, 27 Jul 2022 16:22:46 +0000 (GMT)
-Received: from eusmgms1.samsung.com (unknown [182.198.249.179]) by
- eusmtrp2.samsung.com (KnoxPortal) with ESMTP id
- 20220727162246eusmtrp27df1ce6a6243f989fb75bf420746b087~FvDNGr_-X0809408094eusmtrp25;
- Wed, 27 Jul 2022 16:22:46 +0000 (GMT)
-X-AuditID: cbfec7f2-d81ff700000025c0-e2-62e166565683
-Received: from eusmtip1.samsung.com ( [203.254.199.221]) by
- eusmgms1.samsung.com (EUCPMTA) with SMTP id 96.1E.09095.65661E26; Wed, 27
- Jul 2022 17:22:46 +0100 (BST)
-Received: from localhost (unknown [106.210.248.8]) by eusmtip1.samsung.com
- (KnoxPortal) with ESMTPA id
- 20220727162245eusmtip172f7144298c1675a23739e45c38e4ecb~FvDMxUYpe0064100641eusmtip1O;
- Wed, 27 Jul 2022 16:22:45 +0000 (GMT)
-From: Pankaj Raghav <p.raghav@samsung.com>
-To: damien.lemoal@opensource.wdc.com, hch@lst.de, axboe@kernel.dk,
- snitzer@kernel.org, Johannes.Thumshirn@wdc.com
-Date: Wed, 27 Jul 2022 18:22:34 +0200
-Message-Id: <20220727162245.209794-1-p.raghav@samsung.com>
+ us-mta-614-6huTwfPzOk2xg3qR45BvUQ-1; Wed, 27 Jul 2022 15:54:30 -0400
+X-MC-Unique: 6huTwfPzOk2xg3qR45BvUQ-1
+Received: by mail-lf1-f47.google.com with SMTP id b16so16057848lfb.7
+ for <dm-devel@redhat.com>; Wed, 27 Jul 2022 12:54:29 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+ :message-id:subject:to:cc;
+ bh=UxYpTdCM2D1y50QjcBg8PEIIgim01Q40P1Y4bK+s4SM=;
+ b=wnk6GkCc4x4jTsN16//iYfV/4rK6o/tZ7DdEyGd0Ztspz5FrwoP/X5xWuyPB7+qJrV
+ yUmfz9LPVgq8ZnomKMmWyPP4xqSRco15hkjDwWkJ8GOr3I+UOM4K7F9HVheJkD038j9u
+ U6uHE/T3R84n7nsSifzdhlV6NwNk3AxemsggpSGenMKvNHCk5wWCmLIUeblA3N2JNSRH
+ HsHJC+Ssbe8xa5rhYxKegsRut5YJPnNRC1ephvKb+2SHVVFYrC8e1yym4+QN0Whlx/lb
+ ue/kozTxnLhPLIvZ0K1nSxfAdpmp9toByhEn9Ox801jJvDcn8tmEK/JV++89PK942Lv7
+ 62KA==
+X-Gm-Message-State: AJIora/iepPR/hoWOkbuKJaOdzRM5d11oaFajdzv5O4wLeLDOM2KqzAU
+ wTznOjF5J7g+ZantHqRSXPM0h6Vda8ozHuh+7kv+wiO4NJg=
+X-Google-Smtp-Source: AGRyM1upBSh9GQaoo3Vhj1AysmQ447YGqeBfXqgvyE6AJJR949xBoYC3Rdt1IjlRRDpJ6rE/ta+H5GPLUJSm1tuXjVQ=
+X-Received: by 2002:ac2:4205:0:b0:48a:95e6:395c with SMTP id
+ y5-20020ac24205000000b0048a95e6395cmr5491254lfh.238.1658951668102; Wed, 27
+ Jul 2022 12:54:28 -0700 (PDT)
 MIME-Version: 1.0
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrBKsWRmVeSWpSXmKPExsWy7djPc7phaQ+TDJbtsLFYfbefzWLah5/M
- Fr/Pnme22PtuNqvFzQM7mSz2LJrEZLFy9VEmiyfrZzFb/O26x2Sx95a2xeVdc9gs5i97ym4x
- oe0rs8XnpS3sFmtuPmWxOHFL2kHA4/IVb4+ds+6ye1w+W+qxaVUnm8fmJfUeu282sHnsbL3P
- 6vF+31U2j74tqxg9Np+u9vi8Sc6j/UA3UwBPFJdNSmpOZllqkb5dAlfGor0XmAquG1dsWcbZ
- wPhKo4uRk0NCwERi5uzHbF2MXBxCAisYJb7Nm8UE4XxhlNi05S07hPOZUeLEg6csXYwcYC3L
- fwhBxJczSiyYsgyq/TmjxMOb91hBitgEtCQaO9lBVogIFEs8fNfKAlLDLDCLSeL0scfMIDXC
- ArYSfSdDQWpYBFQl3v9YwAJi8wpYSaxd/Z4J4jx5iZmXvrNDxAUlTs58AlbDDBRv3jqbGWSm
- hMB8Tokvr08wQzS4SOx9MYkNwhaWeHV8CzuELSPxf+d8qKHVEk9v/IZqbmGU6N+5ng3iM2uJ
- vjM5ICazgKbE+l36EOWOEtu3nIP6nU/ixltBiBP4JCZtm84MEeaV6GgTgqhWktj58wnUUgmJ
- y01zWCBsD4ldbd/BDhASiJWYd3YxywRGhVlIHpuF5LFZCDcsYGRexSieWlqcm55abJiXWq5X
- nJhbXJqXrpecn7uJEZj4Tv87/mkH49xXH/UOMTJxMB5ilOBgVhLhTYi+nyTEm5JYWZValB9f
- VJqTWnyIUZqDRUmcNzlzQ6KQQHpiSWp2ampBahFMlomDU6qBSXJHnZ+l6drXTr94A39PqTwb
- eWnfwqUbYiwuz1/2ujT6e82BpzXfnRfWNPdOcZZ6IrjgzYRvK6eozeKz2PKC7z3n1PRLIdNv
- qEdybE4sF/ZdVnSrLtuFZ3Zy5y+vqPxFNkazl7E84Pm3ReaGd+6xZfNrPdMehR55Or3Y8/tf
- V+VPR4p6dzxbdDRms+ubVXXX76xe+D93yyI9BkXDjqVVh//yqbLp1rKuVXx9ePmyma8XSL4s
- Sg0/c0w/gOPRrTMPz/ltYrw7eVsJm0F417I55RvznsxIm75F3H7Jga1M7N+v/v3fOpfr63ZW
- PyXFS3eiH7m5+nxn6D24XOHAjHfNa/IN5HfuNN39xqHqCHMrR9htJZbijERDLeai4kQAzRaN
- zOsDAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFjrEIsWRmVeSWpSXmKPExsVy+t/xu7phaQ+TDPZ/YbFYfbefzWLah5/M
- Fr/Pnme22PtuNqvFzQM7mSz2LJrEZLFy9VEmiyfrZzFb/O26x2Sx95a2xeVdc9gs5i97ym4x
- oe0rs8XnpS3sFmtuPmWxOHFL2kHA4/IVb4+ds+6ye1w+W+qxaVUnm8fmJfUeu282sHnsbL3P
- 6vF+31U2j74tqxg9Np+u9vi8Sc6j/UA3UwBPlJ5NUX5pSapCRn5xia1StKGFkZ6hpYWekYml
- nqGxeayVkamSvp1NSmpOZllqkb5dgl7Gor0XmAquG1dsWcbZwPhKo4uRg0NCwERi+Q+hLkYu
- DiGBpYwS/w+tYO1i5ASKS0jcXtjECGELS/y51sUGYgsJPGWU2L5eFaSXTUBLorGTHcQUEaiU
- OPtFFqSCWWAZk8SGEzIgYWEBW4m+k6EgYRYBVYn3PxawgNi8AlYSa1e/Z4IYLi8x89J3sCnM
- ApoS63fpQ5QISpyc+YQFYqK8RPPW2cwTGPlnIVTNQlI1C0nVAkbmVYwiqaXFuem5xYZ6xYm5
- xaV56XrJ+bmbGIGRue3Yz807GOe9+qh3iJGJg/EQowQHs5IIb0L0/SQh3pTEyqrUovz4otKc
- 1OJDjKZAV09klhJNzgemhrySeEMzA1NDEzNLA1NLM2MlcV7Pgo5EIYH0xJLU7NTUgtQimD4m
- Dk6pBia36WtT1PIex7xmkbp8YbdHsp2FvcOGgFJlVaZz2rwr1k3Pm316nyH3dJ/SNNEwHaZn
- /jc96/7E/NY5qTehdfOcD42LkvTqziYn8PEsqxL7LfOS/y6j71fns9Ln+gV/bz5vdNhTr6F8
- ScuR6lDWVSxz0tt3vtE74GG752PS5ZTJwhKTJ/29ufGyxZL2k07y3tUHJnJY129QZRI78NYj
- rXqtovSMMuuT1mWZ1j654vfy7/WxhK5z0n3i8v3PXZ3Ksiyv3xUXs/iXfJyc5/xC8m3R1jRV
- NibRhPJTm+9xPNt3Ofb7Oa/7T48tP75Su08w+dCUg4G35d8vapsv+Xndpq22r/z+xe9aGCyz
- NHbRva1KLMUZiYZazEXFiQBbh9aZVQMAAA==
-X-CMS-MailID: 20220727162246eucas1p1a758799f13d36ba99d30bf92cc5e2754
-X-Msg-Generator: CA
-X-RootMTR: 20220727162246eucas1p1a758799f13d36ba99d30bf92cc5e2754
-X-EPHeader: CA
-CMS-TYPE: 201P
-X-CMS-RootMailID: 20220727162246eucas1p1a758799f13d36ba99d30bf92cc5e2754
-References: <CGME20220727162246eucas1p1a758799f13d36ba99d30bf92cc5e2754@eucas1p1.samsung.com>
+References: <20220726160959.89247-1-snitzer@kernel.org>
+ <20220726160959.89247-3-snitzer@kernel.org>
+ <alpine.LRH.2.02.2207271055510.28280@file01.intranet.prod.int.rdu2.redhat.com>
+ <YuFeL6J1gtFV63dW@redhat.com>
+In-Reply-To: <YuFeL6J1gtFV63dW@redhat.com>
+From: Nathan Huckleberry <nhuck@google.com>
+Date: Wed, 27 Jul 2022 12:53:00 -0700
+Message-ID: <CAJkfWY7_W-o68=xvKga7=eTkDa4ygod2CV9MFdZbGw7xwE_U0w@mail.gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -138,8 +91,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: [dm-devel] [PATCH v8 00/11] support non power of 2 zoned device
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: Re: [dm-devel] [PATCH v2 2/6] dm bufio: Add
+ DM_BUFIO_CLIENT_NO_SLEEP flag
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -151,10 +105,9 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Pankaj Raghav <p.raghav@samsung.com>, bvanassche@acm.org,
- pankydev8@gmail.com, gost.dev@samsung.com, linux-kernel@vger.kernel.org,
- linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
- dm-devel@redhat.com, jaegeuk@kernel.org, matias.bjorling@wdc.com
+Cc: Eric Biggers <ebiggers@kernel.org>, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>,
+ Sami Tolvanen <samitolvanen@google.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
@@ -165,155 +118,170 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-- Background and Motivation:
+On Wed, Jul 27, 2022 at 8:48 AM Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> On Wed, Jul 27 2022 at 11:25P -0400,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
+>
+> > Hi
+> >
+> > I'd like to ask - why not use dm_bufio_trylock from an interrupt context?
+> >
+> > I would just add a new function "dm_bufio_get_trylock" that is equivalent
+> > to "dm_bufio_get", except that it uses dm_bufio_trylock - and if it fails,
+> > fallback to process context.
+> >
+> > I think using dm_bufio_trylock would be less hacky than introducing a
+> > new dm_bufio flag that changes mutex to spinlock.
+>
+> OK, I can drop the bufio hacks (patches 1 and 2) and replace with a
+> dm_bufio_get_trylock and see if that resolves the cryptsetup testing
+> issues Milan is reporting.  But on the flip side I feel like trylock
+> is far more prone to fail for at least one of a series of cached
+> buffers needed (via _get). And so it'll punt to workqueue more often
+> and _not_ provide the desired performance improvement.  BUT.. we shall
+> see.
+>
+> All said, I'm now dropping this patchset from the upcoming 5.20 merge.
+> This all clearly needs more development time.
+>
+> Huck: I'll run with Mikulas's suggestion and try to get the cryptsetup
+> tests passing. But I'll leave performance testing to you.
+>
 
-The zone storage implementation in Linux, introduced since v4.10, first
-targetted SMR drives which have a power of 2 (po2) zone size alignment
-requirement. The po2 zone size was further imposed implicitly by the
-block layer's blk_queue_chunk_sectors(), used to prevent IO merging
-across chunks beyond the specified size, since v3.16 through commit
-762380ad9322 ("block: add notion of a chunk size for request merging").
-But this same general block layer po2 requirement for blk_queue_chunk_sectors()
-was removed on v5.10 through commit 07d098e6bbad ("block: allow 'chunk_sectors'
-to be non-power-of-2").
+Sounds like a reasonable fix. I expect that dm_bufio_get_trylock with
+WQ_HIGHPRI will give similar performance gains.
 
-NAND, which is the media used in newer zoned storage devices, does not
-naturally align to po2. In these devices, zone cap is not the same as the
-po2 zone size. When the zone cap != zone size, then unmapped LBAs are
-introduced to cover the space between the zone cap and zone size. po2
-requirement does not make sense for these type of zone storage devices.
-This patch series aims to remove these unmapped LBAs for zoned devices when
-zone cap is npo2. This is done by relaxing the po2 zone size constraint
-in the kernel and allowing zoned device with npo2 zone sizes if zone cap
-== zone size.
+Thanks,
+Huck
 
-Removing the po2 requirement from zone storage should be possible
-now provided that no userspace regression and no performance regressions are
-introduced. Stop-gap patches have been already merged into f2fs-tools to
-proactively not allow npo2 zone sizes until proper support is added [1].
-
-There were two efforts previously to add support to npo2 devices: 1) via
-device level emulation [2] but that was rejected with a final conclusion
-to add support for non po2 zoned device in the complete stack[3] 2)
-adding support to the complete stack by removing the constraint in the
-block layer and NVMe layer with support to btrfs, zonefs, etc which was
-rejected with a conclusion to add a dm target for FS support [0]
-to reduce the regression impact.
-
-This series adds support to npo2 zoned devices in the block and nvme
-layer and a new **dm target** is added: dm-po2z-target. This new
-target will be initially used for filesystems such as btrfs and
-f2fs that does not have native npo2 zone support.
-
-- Patchset description:
-Patches 1-2 deals with removing the po2 constraint from the
-block layer.
-
-Patches 3-4 deals with removing the constraint from nvme zns.
-
-Patch 5 removes the po2 contraint in null blk
-
-Patch 6 adds npo2 support to zonefs
-
-Patches 7-11 adds support for npo2 zoned devices in the DM layer and
-adds a new target dm-po2z-target which converts a npo2 zoned device into
-a po2 zoned target.
-
-The patch series is based on linux-next tag: next-20220727
-
-Testing:
-The new target was tested with blktest and zonefs test suite in qemu and
-on a real ZNS device.
-
-[0] https://lore.kernel.org/lkml/PH0PR04MB74166C87F694B150A5AE0F009BD09@PH0PR04MB7416.namprd04.prod.outlook.com/
-[1] https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git/commit/?h=dev-test&id=6afcf6493578e77528abe65ab8b12f3e1c16749f
-[2] https://lore.kernel.org/all/20220310094725.GA28499@lst.de/T/
-[3] https://lore.kernel.org/all/20220315135245.eqf4tqngxxb7ymqa@unifi/
-
-Changes since v1:
-- Put the function declaration and its usage in the same commit (Bart)
-- Remove bdev_zone_aligned function (Bart)
-- Change the name from blk_queue_zone_aligned to blk_queue_is_zone_start
-  (Damien)
-- q is never null in from bdev_get_queue (Damien)
-- Add condition during bringup and check for zsze == zcap for npo2
-  drives (Damien)
-- Rounddown operation should be made generic to work in 32 bits arch
-  (bart)
-- Add comments where generic calculation is directly used instead having
-  special handling for po2 zone sizes (Hannes)
-- Make the minimum zone size alignment requirement for btrfs to be 1M
-  instead of BTRFS_STRIPE_LEN(David)
-
-Changes since v2:
-- Minor formatting changes
-
-Changes since v3:
-- Make superblock mirror align with the existing superblock log offsets
-  (David)
-- DM change return value and remove extra newline
-- Optimize null blk zone index lookup with shift for po2 zone size
-
-Changes since v4:
-- Remove direct filesystems support for npo2 devices (Johannes, Hannes,
-  Damien)
-
-Changes since v5:
-- Use DIV_ROUND_UP* helper instead of round_up as it breaks 32bit arch
-  build in null blk(kernel-test-robot, Nathan)
-- Use DIV_ROUND_UP_SECTOR_T also in blkdev_nr_zones function instead of
-  open coding it with div64_u64
-- Added extra condition in dm-zoned and in dm to reject non power of 2
-  zone sizes.
-
-Changes since v6:
-- Added a new dm target for non power of 2 devices
-- Added support for non power of 2 devices in the DM layer.
-
-Changes since v7:
-- Improved dm target for non power of 2 zoned devices with some bug
-  fixes and rearrangement
-- Removed some unnecessary comments.
-
-Luis Chamberlain (1):
-  dm-zoned: ensure only power of 2 zone sizes are allowed
-
-Pankaj Raghav (10):
-  block: make bdev_nr_zones and disk_zone_no generic for npo2 zsze
-  block: allow blk-zoned devices to have non-power-of-2 zone size
-  nvme: zns: Allow ZNS drives that have non-power_of_2 zone size
-  nvmet: Allow ZNS target to support non-power_of_2 zone sizes
-  null_blk: allow non power of 2 zoned devices
-  zonefs: allow non power of 2 zoned devices
-  dm-zone: use generic helpers to calculate offset from zone start
-  dm-table: allow non po2 zoned devices
-  dm: call dm_zone_endio after the target endio callback for zoned
-    devices
-  dm: add power-of-2 zoned target for non-power-of-2 zoned devices
-
- block/blk-core.c                  |   2 +-
- block/blk-zoned.c                 |  37 +++--
- drivers/block/null_blk/main.c     |   5 +-
- drivers/block/null_blk/null_blk.h |   6 +
- drivers/block/null_blk/zoned.c    |  18 ++-
- drivers/md/Kconfig                |   9 ++
- drivers/md/Makefile               |   2 +
- drivers/md/dm-po2z-target.c       | 261 ++++++++++++++++++++++++++++++
- drivers/md/dm-table.c             |  21 ++-
- drivers/md/dm-zone.c              |  10 +-
- drivers/md/dm-zoned-target.c      |   8 +
- drivers/md/dm.c                   |   8 +-
- drivers/nvme/host/zns.c           |  16 +-
- drivers/nvme/target/zns.c         |   3 +-
- fs/zonefs/super.c                 |   6 +-
- fs/zonefs/zonefs.h                |   1 -
- include/linux/blkdev.h            |  91 ++++++++---
- include/linux/device-mapper.h     |   9 ++
- 18 files changed, 438 insertions(+), 75 deletions(-)
- create mode 100644 drivers/md/dm-po2z-target.c
-
--- 
-2.25.1
+> Thanks,
+> Mike
+>
+>
+>
+> > On Tue, 26 Jul 2022, Mike Snitzer wrote:
+> >
+> > > From: Nathan Huckleberry <nhuck@google.com>
+> > >
+> > > Add an optional flag that ensures dm_bufio_client does not sleep
+> > > (primary focus is to service dm_bufio_get without sleeping). This
+> > > allows the dm-bufio cache to be queried from interrupt context.
+> > >
+> > > To ensure that dm-bufio does not sleep, dm-bufio must use a spinlock
+> > > instead of a mutex. Additionally, to avoid deadlocks, special care
+> > > must be taken so that dm-bufio does not sleep while holding the
+> > > spinlock.
+> > >
+> > > But again: the scope of this no_sleep is initially confined to
+> > > dm_bufio_get, so __alloc_buffer_wait_no_callback is _not_ changed to
+> > > avoid sleeping because __bufio_new avoids allocation for NF_GET.
+> > >
+> > > Signed-off-by: Nathan Huckleberry <nhuck@google.com>
+> > > Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+> > > ---
+> > >  drivers/md/dm-bufio.c    | 22 +++++++++++++++++++---
+> > >  include/linux/dm-bufio.h |  5 +++++
+> > >  2 files changed, 24 insertions(+), 3 deletions(-)
+> > >
+> > > diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> > > index ad5603eb12e3..486179d1831c 100644
+> > > --- a/drivers/md/dm-bufio.c
+> > > +++ b/drivers/md/dm-bufio.c
+> > > @@ -81,6 +81,8 @@
+> > >   */
+> > >  struct dm_bufio_client {
+> > >     struct mutex lock;
+> > > +   spinlock_t spinlock;
+> > > +   unsigned long spinlock_flags;
+> > >
+> > >     struct list_head lru[LIST_SIZE];
+> > >     unsigned long n_buffers[LIST_SIZE];
+> > > @@ -90,6 +92,7 @@ struct dm_bufio_client {
+> > >     s8 sectors_per_block_bits;
+> > >     void (*alloc_callback)(struct dm_buffer *);
+> > >     void (*write_callback)(struct dm_buffer *);
+> > > +   bool no_sleep;
+> > >
+> > >     struct kmem_cache *slab_buffer;
+> > >     struct kmem_cache *slab_cache;
+> > > @@ -167,17 +170,26 @@ struct dm_buffer {
+> > >
+> > >  static void dm_bufio_lock(struct dm_bufio_client *c)
+> > >  {
+> > > -   mutex_lock_nested(&c->lock, dm_bufio_in_request());
+> > > +   if (c->no_sleep)
+> > > +           spin_lock_irqsave_nested(&c->spinlock, c->spinlock_flags, dm_bufio_in_request());
+> > > +   else
+> > > +           mutex_lock_nested(&c->lock, dm_bufio_in_request());
+> > >  }
+> > >
+> > >  static int dm_bufio_trylock(struct dm_bufio_client *c)
+> > >  {
+> > > -   return mutex_trylock(&c->lock);
+> > > +   if (c->no_sleep)
+> > > +           return spin_trylock_irqsave(&c->spinlock, c->spinlock_flags);
+> > > +   else
+> > > +           return mutex_trylock(&c->lock);
+> > >  }
+> > >
+> > >  static void dm_bufio_unlock(struct dm_bufio_client *c)
+> > >  {
+> > > -   mutex_unlock(&c->lock);
+> > > +   if (c->no_sleep)
+> > > +           spin_unlock_irqrestore(&c->spinlock, c->spinlock_flags);
+> > > +   else
+> > > +           mutex_unlock(&c->lock);
+> > >  }
+> > >
+> > >  /*----------------------------------------------------------------*/
+> > > @@ -1748,12 +1760,16 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
+> > >     c->alloc_callback = alloc_callback;
+> > >     c->write_callback = write_callback;
+> > >
+> > > +   if (flags & DM_BUFIO_CLIENT_NO_SLEEP)
+> > > +           c->no_sleep = true;
+> > > +
+> > >     for (i = 0; i < LIST_SIZE; i++) {
+> > >             INIT_LIST_HEAD(&c->lru[i]);
+> > >             c->n_buffers[i] = 0;
+> > >     }
+> > >
+> > >     mutex_init(&c->lock);
+> > > +   spin_lock_init(&c->spinlock);
+> > >     INIT_LIST_HEAD(&c->reserved_buffers);
+> > >     c->need_reserved_buffers = reserved_buffers;
+> > >
+> > > diff --git a/include/linux/dm-bufio.h b/include/linux/dm-bufio.h
+> > > index e21480715255..15d9e15ca830 100644
+> > > --- a/include/linux/dm-bufio.h
+> > > +++ b/include/linux/dm-bufio.h
+> > > @@ -17,6 +17,11 @@
+> > >  struct dm_bufio_client;
+> > >  struct dm_buffer;
+> > >
+> > > +/*
+> > > + * Flags for dm_bufio_client_create
+> > > + */
+> > > +#define DM_BUFIO_CLIENT_NO_SLEEP 0x1
+> > > +
+> > >  /*
+> > >   * Create a buffered IO cache on a given device
+> > >   */
+> > > --
+> > > 2.32.1 (Apple Git-133)
+> > >
+> > > --
+> > > dm-devel mailing list
+> > > dm-devel@redhat.com
+> > > https://listman.redhat.com/mailman/listinfo/dm-devel
+> > >
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://listman.redhat.com/mailman/listinfo/dm-devel
+> >
+>
 
 --
 dm-devel mailing list
