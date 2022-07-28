@@ -4,91 +4,92 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6CB14C04A68
-	for <dm-devel@archiver.kernel.org>; Thu, 28 Jul 2022 11:58:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0D69EC19F29
+	for <dm-devel@archiver.kernel.org>; Thu, 28 Jul 2022 12:12:05 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1659009496;
+	s=mimecast20190719; t=1659010324;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=n+y9qm7AnnTDfgps9bV0vAy4fp2RMvFygvBpE0fVsZY=;
-	b=EqlAgc/rOlLIR4iOjmM+BtUUUt5Jo4phOS9x5sZp7YfKYJM2AgQiA6EyrnzZ6bzU6vSVbo
-	p7BCk9CGH5hOZh6V00X2yAZdcq0qX0pSZEmxPXM67z8of/dRHUn3uldgps9m8F2bOflJQg
-	/6qV1/FROat/TjiIz77bW2Pe6c1gNO8=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=fAtMoHlOOBGHlYJ4iAfFpG9wjPFPKRSgMLg9HaVmK8Y=;
+	b=WBLv6EX0UME4DVsbM8Bq7cpTEYBgWKHEFY2Zx9rO83rcX8Mx1G0Fui4Xsrl66H8sE4Vbtf
+	zfYAswWrr7Yho6f293igYjgBDEwHwVlBWSGq10ZFLRzAfcRelXd9sS8abzOwirCPPj7bTo
+	eUuRS7lTWiiv9hiHgsbkZn2787vIQ9c=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-184-8vYcuwrOMeKdpZ8Q_0vggg-1; Thu, 28 Jul 2022 07:58:09 -0400
-X-MC-Unique: 8vYcuwrOMeKdpZ8Q_0vggg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-220-3aaIjUYDO6OuR6rJHaQatQ-1; Thu, 28 Jul 2022 08:12:01 -0400
+X-MC-Unique: 3aaIjUYDO6OuR6rJHaQatQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 645D91C0336D;
-	Thu, 28 Jul 2022 11:58:07 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0AF3685A587;
+	Thu, 28 Jul 2022 12:12:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A7BE7400DFD7;
-	Thu, 28 Jul 2022 11:58:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id AC5CA2166B26;
+	Thu, 28 Jul 2022 12:11:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 76DA81945DAC;
-	Thu, 28 Jul 2022 11:58:05 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5C9061945DAB;
+	Thu, 28 Jul 2022 12:11:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4DFC51945DAB
- for <dm-devel@listman.corp.redhat.com>; Thu, 28 Jul 2022 11:58:04 +0000 (UTC)
+ ESMTP id DA81B1945DA7
+ for <dm-devel@listman.corp.redhat.com>; Thu, 28 Jul 2022 12:11:57 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1B6EB2166B26; Thu, 28 Jul 2022 11:58:04 +0000 (UTC)
+ id BF1322026D2D; Thu, 28 Jul 2022 12:11:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 16C702166B2B
- for <dm-devel@redhat.com>; Thu, 28 Jul 2022 11:58:04 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EBCB92811372
- for <dm-devel@redhat.com>; Thu, 28 Jul 2022 11:58:03 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id BA9A52026D64
+ for <dm-devel@redhat.com>; Thu, 28 Jul 2022 12:11:57 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9BF203C11727
+ for <dm-devel@redhat.com>; Thu, 28 Jul 2022 12:11:57 +0000 (UTC)
 Received: from mailout2.w1.samsung.com (mailout2.w1.samsung.com
  [210.118.77.12]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-641-T5oOHSsDMU6B2jnBFzNVqQ-1; Thu, 28 Jul 2022 07:58:02 -0400
-X-MC-Unique: T5oOHSsDMU6B2jnBFzNVqQ-1
+ us-mta-314-gOgiXxwLPcKSrWV2oN5E-Q-1; Thu, 28 Jul 2022 08:11:55 -0400
+X-MC-Unique: gOgiXxwLPcKSrWV2oN5E-Q-1
 Received: from eucas1p2.samsung.com (unknown [182.198.249.207])
  by mailout2.w1.samsung.com (KnoxPortal) with ESMTP id
- 20220728115801euoutp02d98e2a7cac54b4cb55b2900e83c53bbc~F-FVTeKrL0288902889euoutp02f
- for <dm-devel@redhat.com>; Thu, 28 Jul 2022 11:58:01 +0000 (GMT)
+ 20220728121154euoutp02ad346654915e3ab727115bb4cf5c1c0a~F-Rdlcu-L2148921489euoutp02a
+ for <dm-devel@redhat.com>; Thu, 28 Jul 2022 12:11:54 +0000 (GMT)
 DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w1.samsung.com
- 20220728115801euoutp02d98e2a7cac54b4cb55b2900e83c53bbc~F-FVTeKrL0288902889euoutp02f
+ 20220728121154euoutp02ad346654915e3ab727115bb4cf5c1c0a~F-Rdlcu-L2148921489euoutp02a
 Received: from eusmges2new.samsung.com (unknown [203.254.199.244]) by
- eucas1p1.samsung.com (KnoxPortal) with ESMTP id
- 20220728115800eucas1p1cfc0536b8810df81ea18e3f25a846771~F-FU-7W-02681226812eucas1p1O;
- Thu, 28 Jul 2022 11:58:00 +0000 (GMT)
+ eucas1p2.samsung.com (KnoxPortal) with ESMTP id
+ 20220728121154eucas1p2a483eaeef676eb995683b016b0c0a0c2~F-RdCaIaK2051520515eucas1p2s;
+ Thu, 28 Jul 2022 12:11:54 +0000 (GMT)
 Received: from eucas1p1.samsung.com ( [182.198.249.206]) by
- eusmges2new.samsung.com (EUCPMTA) with SMTP id 28.E3.10067.8C972E26; Thu, 28
- Jul 2022 12:58:00 +0100 (BST)
+ eusmges2new.samsung.com (EUCPMTA) with SMTP id EE.96.10067.90D72E26; Thu, 28
+ Jul 2022 13:11:54 +0100 (BST)
 Received: from eusmtrp2.samsung.com (unknown [182.198.249.139]) by
- eucas1p1.samsung.com (KnoxPortal) with ESMTPA id
- 20220728115800eucas1p1ef291627fc0b897e1a8b9eec57c6f561~F-FUlA6Ay1218012180eucas1p15;
- Thu, 28 Jul 2022 11:58:00 +0000 (GMT)
-Received: from eusmgms2.samsung.com (unknown [182.198.249.180]) by
+ eucas1p2.samsung.com (KnoxPortal) with ESMTPA id
+ 20220728121153eucas1p2608d9935422fdb31c3a99a4ea2e765ff~F-RcirRNq2057020570eucas1p2D;
+ Thu, 28 Jul 2022 12:11:53 +0000 (GMT)
+Received: from eusmgms1.samsung.com (unknown [182.198.249.179]) by
  eusmtrp2.samsung.com (KnoxPortal) with ESMTP id
- 20220728115800eusmtrp2a03c0e871dd6ae6be0ac755217f4daa5~F-FUkG1QQ1863418634eusmtrp2T;
- Thu, 28 Jul 2022 11:58:00 +0000 (GMT)
-X-AuditID: cbfec7f4-dc1ff70000002753-b5-62e279c8453c
-Received: from eusmtip2.samsung.com ( [203.254.199.222]) by
- eusmgms2.samsung.com (EUCPMTA) with SMTP id 4A.82.09038.8C972E26; Thu, 28
- Jul 2022 12:58:00 +0100 (BST)
+ 20220728121153eusmtrp2f526d169df0fc66fd0d18be8b5c1a050~F-RcgtnQX2735727357eusmtrp2u;
+ Thu, 28 Jul 2022 12:11:53 +0000 (GMT)
+X-AuditID: cbfec7f4-dd7ff70000002753-ce-62e27d09b17a
+Received: from eusmtip1.samsung.com ( [203.254.199.221]) by
+ eusmgms1.samsung.com (EUCPMTA) with SMTP id 11.F4.09095.90D72E26; Thu, 28
+ Jul 2022 13:11:53 +0100 (BST)
 Received: from CAMSVWEXC01.scsc.local (unknown [106.1.227.71]) by
- eusmtip2.samsung.com (KnoxPortal) with ESMTPA id
- 20220728115800eusmtip2a18e1ce7d66d68ae6bb638c7ef0e7597~F-FUVbZpZ1315713157eusmtip2a;
- Thu, 28 Jul 2022 11:58:00 +0000 (GMT)
+ eusmtip1.samsung.com (KnoxPortal) with ESMTPA id
+ 20220728121153eusmtip125d7a9b3b36b4c1ae55cbba9c4f02230~F-RcWQT1O3030030300eusmtip1X;
+ Thu, 28 Jul 2022 12:11:53 +0000 (GMT)
 Received: from [106.110.32.100] (106.110.32.100) by CAMSVWEXC01.scsc.local
  (2002:6a01:e347::6a01:e347) with Microsoft SMTP Server (TLS) id 15.0.1497.2;
- Thu, 28 Jul 2022 12:57:58 +0100
-Message-ID: <e0606903-c007-43f1-538f-b70ee607be0a@samsung.com>
-Date: Thu, 28 Jul 2022 13:57:58 +0200
+ Thu, 28 Jul 2022 13:11:52 +0100
+Message-ID: <eed7d9ee-fd7f-e57c-598e-909dbb0d2380@samsung.com>
+Date: Thu, 28 Jul 2022 14:11:51 +0200
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
  Thunderbird/91.11.0
@@ -96,53 +97,54 @@ To: Bart Van Assche <bvanassche@acm.org>,
  <damien.lemoal@opensource.wdc.com>, <hch@lst.de>, <axboe@kernel.dk>,
  <snitzer@kernel.org>, <Johannes.Thumshirn@wdc.com>
 From: Pankaj Raghav <p.raghav@samsung.com>
-In-Reply-To: <51255650-ddc2-4f3d-52e5-14007b9ff538@acm.org>
+In-Reply-To: <7984b969-9025-6b31-2645-da08daeefafb@acm.org>
 X-Originating-IP: [106.110.32.100]
 X-ClientProxiedBy: CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347) To
  CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347)
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrFKsWRmVeSWpSXmKPExsWy7djPc7onKh8lGfQf17ZYfbefzWLah5/M
- Fr/Pnme22PtuNqvFnkWTmCxWrj7KZPFk/Sxmi79d95gs9t7Stri8aw6bxfxlT9ktJrR9ZbZY
- c/Mpi8WJW9IOfB6Xr3h77Jx1l93j8tlSj02rOtk8Ni+p99h9s4HNY2frfVaP9/uuAoVOV3t8
- 3iTn0X6gmymAO4rLJiU1J7MstUjfLoEr4/m8FtaCY+wVk/fdYmtg7GLrYuTkkBAwkZi1exU7
- iC0ksIJRYs21+C5GLiD7C6PE7WkfmCCcz4wS+2+cBergAOuYd6kMomE5o8SXD8FwNQtP3oFq
- 2M0osfvTElaQKl4BO4kFO+cwgtgsAqoS07+sYoKIC0qcnPmEBcQWFYiUWLP7LNgZwgKOEh+f
- fQOrZxYQl7j1ZD7YUBGBpYwS/25fZANxmAU+MEpcau9gBTmJTUBLorETrJlTwFpi+owtzBDN
- mhKt23+zQ9jyEs1bZzND/KwkMWHefaj/ayXWHjvDDjJTQuAWp0TPtmNQRS4ST/+/hCoSlnh1
- fAs7hC0j8X/nfCYIu1ri6Y3fzBDNLYwS/TvXQ8PIWqLvTA5EjaPE9i3nWCDCfBI33gpC3MMn
- MWnbdOYJjKqzkMJiFpKfZyF5YRaSFxYwsqxiFE8tLc5NTy02ykst1ytOzC0uzUvXS87P3cQI
- TH6n/x3/soNx+auPeocYmTgYDzFKcDArifAmRN9PEuJNSaysSi3Kjy8qzUktPsQozcGiJM6b
- nLkhUUggPbEkNTs1tSC1CCbLxMEp1cDEJlu6N3etXV2+6POepSv6GMxr1cS9tUymybrrzu3X
- XJDRbHHIRuzVY8MLF1wbdH8Y1EdwnxIUexp0gK/yJ8fBRdt+tp7kmlNcFHSskzljrUbDuZwp
- 6wVn7swNOdGUsU2ymYPrmLyroGXFzv5yrZ82NV1TFPZ/rH7G/3PGse9l+nl7rk9YH2UYuvDf
- uwxWJh27eXar1uzO47uiOuHv71uzDjirqbqFrn1msGseg3DgdbeexV2vPtcIa58uDVcwvF7y
- QmorBx/7p5vf9yzlXW44/06ak7z7TB2tr9cWb8lff05+haGi6JFlywRXzGO6PlPWOOuzcfPl
- b9UfLfdqld/0reM0PZO1flEsV63i+rVKLMUZiYZazEXFiQD0Zw0g7QMAAA==
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFprAKsWRmVeSWpSXmKPExsVy+t/xe7onKh8lGczcxGux+m4/m8W0Dz+Z
- LX6fPc9ssffdbFaLPYsmMVmsXH2UyeLJ+lnMFn+77jFZ7L2lbXF51xw2i/nLnrJbTGj7ymyx
- 5uZTFosTt6Qd+DwuX/H22DnrLrvH5bOlHptWdbJ5bF5S77H7ZgObx87W+6we7/ddBQqdrvb4
- vEnOo/1AN1MAd5SeTVF+aUmqQkZ+cYmtUrShhZGeoaWFnpGJpZ6hsXmslZGpkr6dTUpqTmZZ
- apG+XYJexvN5LawFx9grJu+7xdbA2MXWxcjBISFgIjHvUlkXIxeHkMBSRonem0tYuhg5geIy
- Ep+ufGSHsIUl/lwDqecEKvrIKHFwvz1Ew25GieUX3jKCJHgF7CQW7JwDZrMIqEpM/7KKCSIu
- KHFy5hOwoaICkRIPlzWBxYUFHCU+PvsGVs8sIC5x68l8JpChIiBXzJn5hBHEYRb4wChxqb2D
- FWLdfkaJM+u3M4PczSagJdHYCXYep4C1xPQZW5ghJmlKtG7/zQ5hy0s0b53NDPGCksSEeffZ
- IOxaiVf3dzNOYBSdheTAWUgOmYVk1CwkoxYwsqxiFEktLc5Nzy020itOzC0uzUvXS87P3cQI
- TBrbjv3csoNx5auPeocYmTgYDzFKcDArifAmRN9PEuJNSaysSi3Kjy8qzUktPsRoCgylicxS
- osn5wLSVVxJvaGZgamhiZmlgamlmrCTO61nQkSgkkJ5YkpqdmlqQWgTTx8TBKdXApPM/xdil
- 7GibE+++LP7Aw10fZ2QyLpj1sCf51faKgz+VE8omPNXQqZnLdZdtkqiAQUPa4uocgfdWG81z
- f3F6fnWNnCj+UnPlxkX99ZdOxCRzHnp6OHbJ7y7+9LaFlVfNJsm3np7M9/LfkdVZdvxFitov
- F4a7TFmsNXP5xi2zX6nGM/jyv0p+tFN5mX/AQ9+t3yrF5kftau/SZ/2got5VPb91q3fTgjc7
- X0yIu6Txxoar7uYh8eXfS3peVVQulBA18vbn7pH7djTj9eOELd3HN1fu2e/Xdba6lk8v7V2k
- YepnqcS8s6ev/Jna4MGs3Bxj9TTZ7aFwyrXfSguV2D/cmfglWzzzkvPqk70bAlmuKLEUZyQa
- ajEXFScCAFkXhv6jAwAA
-X-CMS-MailID: 20220728115800eucas1p1ef291627fc0b897e1a8b9eec57c6f561
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrPKsWRmVeSWpSXmKPExsWy7djPc7pctY+SDBZOY7RYfbefzWLah5/M
+ Fr/Pnme22PtuNqvFnkWTmCxWrj7KZPFk/Sxmi79d95gs9t7Stri8aw6bxfxlT9ktJrR9Zba4
+ MeEpo8Wam09ZLE7cknbg97h8xdtj56y77B6Xz5Z6bFrVyeaxeUm9x+6bDWweO1vvs3q833cV
+ KHS62uPzJjmP9gPdTAHcUVw2Kak5mWWpRfp2CVwZe9/fYS2YL14x+e1klgbGycJdjJwcEgIm
+ EhcnvGPpYuTiEBJYwSjx+EULE4TzhVGi6+cPqMxnRonN+xexwLS86/rNCJFYzijx7/cuNriq
+ 3a1roPp3M0r8vzGPvYuRg4NXwE7iU5MmiMkioCpxqSEQZBCvgKDEyZlPwIaKCkRKrNl9lh3E
+ FhaIl/hxfBEbiM0sIC5x68l8sJEiAkuBlt2+CLaMWWAGk8Txy6vYQIayCWhJNHaCreIUsJa4
+ fL0coldTonX7b3YIW16ieetsZogHlCQmzLvPBmHXSqw9doYdZKSEwDNOibWPdkAVuUg82f6V
+ EcIWlnh1fAs7hC0j8X8nyEEgdrXE0xu/mSGaWxgl+neuB7tHAuiIvjM5EDWOEgteP2eECPNJ
+ 3HgrCHEPn8SkbdOZJzCqzkIKillIXp6F5IVZSF5YwMiyilE8tbQ4Nz212CgvtVyvODG3uDQv
+ XS85P3cTIzANnv53/MsOxuWvPuodYmTiYDzEKMHBrCTCmxB9P0mINyWxsiq1KD++qDQntfgQ
+ ozQHi5I4b3LmhkQhgfTEktTs1NSC1CKYLBMHp1QD0+pz82Ku6OckvN0X+9r+5zFldneDnKPe
+ 20oOXHz/M+ei3jp55W3q0ZkJV1/YttQqv3fTd3KdmMKp/oLpYYN7NMf2J79288/MYLDs55tR
+ FWQdGx1m19uiat3xZee+vZp5fy5xnFfYZdt9LalR27Ow8tEr6xdW/Ln+giJ6glnR7Ffb1t6c
+ siW260jGnXAZniLJm8pGwtxRlybmJD6se3z24cNTu7Xmz+h4+P+NzvTH+rOcFm1c4JJ1I/va
+ 16CnDKfPnrGf6vRh97986Uuv/Ztm7ua6xvHWbf5Uh0mWqru2bnx+mW9/SdLRm3+lZ3bmtS8W
+ 2n5NnyNpZ/LXW299bd63mMdP2/RlTouvyZzpDD9vTFBiKc5INNRiLipOBABWBeAm8gMAAA==
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFprMKsWRmVeSWpSXmKPExsVy+t/xu7qctY+SDDZclbZYfbefzWLah5/M
+ Fr/Pnme22PtuNqvFnkWTmCxWrj7KZPFk/Sxmi79d95gs9t7Stri8aw6bxfxlT9ktJrR9Zba4
+ MeEpo8Wam09ZLE7cknbg97h8xdtj56y77B6Xz5Z6bFrVyeaxeUm9x+6bDWweO1vvs3q833cV
+ KHS62uPzJjmP9gPdTAHcUXo2RfmlJakKGfnFJbZK0YYWRnqGlhZ6RiaWeobG5rFWRqZK+nY2
+ Kak5mWWpRfp2CXoZe9/fYS2YL14x+e1klgbGycJdjJwcEgImEu+6fjN2MXJxCAksZZT40vqa
+ DSIhI/Hpykd2CFtY4s+1LjaIoo+MEhse3WKFcHYzSqx6u4y5i5GDg1fATuJTkyaIySKgKnGp
+ IRCkl1dAUOLkzCcsILaoQKTEw2VNTCC2sEC8xI/ji8B2MQuIS9x6Mp8JZKQIyBFzZj4Bu4hZ
+ YAaTxPHLq8CqhAQ+MEp0HpUFWcAmoCXR2MkOYnIKWEtcvl4OMUdTonX7b3YIW16ieetsZoj7
+ lSQmzLsP9VetxKv7uxknMIrOQnLeLCRnzEIyahaSUQsYWVYxiqSWFuem5xYb6hUn5haX5qXr
+ JefnbmIEpo5tx35u3sE479VHvUOMTByMhxglOJiVRHgTou8nCfGmJFZWpRblxxeV5qQWH2I0
+ BQbRRGYp0eR8YPLKK4k3NDMwNTQxszQwtTQzVhLn9SzoSBQSSE8sSc1OTS1ILYLpY+LglGpg
+ Wmh+55llhdbKTSUXPX8utvzYvmL17VfTDW6fccu5vf25Y5yq22TlN3+fOa9JmL04vtR58dek
+ yZO8Z7+7fN6Webfix+XHF0UtL/r1QaVqZbL7PpVXC074qKUdXPJO+9r7K/cbUzKm65+Veljk
+ 1MusF5iXcShm8rJrSz2X9b9fGzpjPuf5xPZJj5qNbx8rter9VCagxpT962BpE7Pm20Pz7v6Z
+ fGARA5fB9ctbt59fcj5O7ISy64a9D6csv72p9avntaf7dDaxHEpRszPebuwxf+O+KtvIiXdP
+ yO3WT5p4btb9rm/1Os3///maxZ7Z+eT66kQn9r3N5akdcwrX+jb9eHNnhTl3yblg3rRFUuqh
+ pWo8SizFGYmGWsxFxYkAoli54aYDAAA=
+X-CMS-MailID: 20220728121153eucas1p2608d9935422fdb31c3a99a4ea2e765ff
 X-Msg-Generator: CA
-X-RootMTR: 20220727162246eucas1p1a758799f13d36ba99d30bf92cc5e2754
+X-RootMTR: 20220727162248eucas1p2ff8c3c2b021bedcae3960024b4e269e9
 X-EPHeader: CA
 CMS-TYPE: 201P
-X-CMS-RootMailID: 20220727162246eucas1p1a758799f13d36ba99d30bf92cc5e2754
-References: <CGME20220727162246eucas1p1a758799f13d36ba99d30bf92cc5e2754@eucas1p1.samsung.com>
- <20220727162245.209794-1-p.raghav@samsung.com>
- <51255650-ddc2-4f3d-52e5-14007b9ff538@acm.org>
+X-CMS-RootMailID: 20220727162248eucas1p2ff8c3c2b021bedcae3960024b4e269e9
+References: <20220727162245.209794-1-p.raghav@samsung.com>
+ <CGME20220727162248eucas1p2ff8c3c2b021bedcae3960024b4e269e9@eucas1p2.samsung.com>
+ <20220727162245.209794-3-p.raghav@samsung.com>
+ <7984b969-9025-6b31-2645-da08daeefafb@acm.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -150,8 +152,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH v8 00/11] support non power of 2 zoned device
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH v8 02/11] block: allow blk-zoned devices to
+ have non-power-of-2 zone size
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -165,10 +168,11 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Cc: pankydev8@gmail.com, gost.dev@samsung.com, linux-kernel@vger.kernel.org,
  linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
- dm-devel@redhat.com, jaegeuk@kernel.org, matias.bjorling@wdc.com
+ dm-devel@redhat.com, jaegeuk@kernel.org, matias.bjorling@wdc.com,
+ Luis Chamberlain <mcgrof@kernel.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -177,23 +181,57 @@ Content-Language: en-US
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 
-SGkgQmFydCwKCk9uIDIwMjItMDctMjggMDE6MTksIEJhcnQgVmFuIEFzc2NoZSB3cm90ZToKPiBP
-biA3LzI3LzIyIDA5OjIyLCBQYW5rYWogUmFnaGF2IHdyb3RlOgo+PiBUaGlzIHNlcmllcyBhZGRz
-IHN1cHBvcnQgdG8gbnBvMiB6b25lZCBkZXZpY2VzIGluIHRoZSBibG9jayBhbmQgbnZtZQo+PiBs
-YXllciBhbmQgYSBuZXcgKipkbSB0YXJnZXQqKiBpcyBhZGRlZDogZG0tcG8yei10YXJnZXQuIFRo
-aXMgbmV3Cj4+IHRhcmdldCB3aWxsIGJlIGluaXRpYWxseSB1c2VkIGZvciBmaWxlc3lzdGVtcyBz
-dWNoIGFzIGJ0cmZzIGFuZAo+PiBmMmZzIHRoYXQgZG9lcyBub3QgaGF2ZSBuYXRpdmUgbnBvMiB6
-b25lIHN1cHBvcnQuCj4gCj4gU2hvdWxkIGFueSBTQ1NJIGNoYW5nZXMgYmUgaW5jbHVkZWQgaW4g
-dGhpcyBwYXRjaCBzZXJpZXM/IEZyb20gc2RfemJjLmM6Cj4gCj4gwqDCoMKgwqBpZiAoIWlzX3Bv
-d2VyX29mXzIoem9uZV9ibG9ja3MpKSB7Cj4gwqDCoMKgwqDCoMKgwqAgc2RfcHJpbnRrKEtFUk5f
-RVJSLCBzZGtwLAo+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgICJab25lIHNpemUgJWxsdSBp
-cyBub3QgYSBwb3dlciBvZiB0d28uXG4iLAo+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIHpv
-bmVfYmxvY2tzKTsKPiDCoMKgwqDCoMKgwqDCoCByZXR1cm4gLUVJTlZBTDsKPiDCoMKgwqDCoH0K
-PiAKSSB3b3VsZCBrZWVwIHRoZXNlIGNoYW5nZXMgb3V0IG9mIHRoZSBjdXJyZW50IHBhdGNoIHNl
-cmllcyBiZWNhdXNlIGl0CndpbGwgYWxzbyBpbmNyZWFzZSB0aGUgdGVzdCBzY29wZS4gSSB0aGlu
-ayBvbmNlIHRoZSBibG9jayBsYXllcgpjb25zdHJhaW50IGlzIHJlbW92ZWQgYXMgYSBwYXJ0IG9m
-IHRoaXMgc2VyaWVzLCB3ZSBjYW4gd29yayBvbiB0aGUgU0NTSQpjaGFuZ2VzIGluIHRoZSBuZXh0
-IGN5Y2xlLgo+IFRoYW5rcywKPiAKPiBCYXJ0LgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
-LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
-aW5mby9kbS1kZXZlbAo=
+T24gMjAyMi0wNy0yOCAwMToxNiwgQmFydCBWYW4gQXNzY2hlIHdyb3RlOgo+IE9uIDcvMjcvMjIg
+MDk6MjIsIFBhbmthaiBSYWdoYXYgd3JvdGU6Cj4+IENoZWNraW5nIGlmIGEgZ2l2ZW4gc2VjdG9y
+IGlzIGFsaWduZWQgdG8gYSB6b25lIGlzIGEgY29tbW9uCj4+IG9wZXJhdGlvbiB0aGF0IGlzIHBl
+cmZvcm1lZCBmb3Igem9uZWQgZGV2aWNlcy4gQWRkCj4+IGJkZXZfaXNfem9uZV9zdGFydCBoZWxw
+ZXIgdG8gY2hlY2sgZm9yIHRoaXMgaW5zdGVhZCBvZiBvcGVuY29kaW5nIGl0Cj4+IGV2ZXJ5d2hl
+cmUuCj4gCj4gSSBjYW4ndCBmaW5kIHRoZSBiZGV2X2lzX3pvbmVfc3RhcnQoKSBmdW5jdGlvbiBp
+biB0aGlzIHBhdGNoPwo+IApJIG1hZGUgdGhlIG5hbWUgY2hhbmdlIGZyb20gYmRldl9pc196b25l
+X3N0YXJ0IHRvIGJkZXZfaXNfem9uZV9hbGlnbmVkCmxhc3QgbW9tZW50IGFuZCBtaXNzZWQgY2hh
+bmdpbmcgaXQgaW4gdGhlIGNvbW1pdCBsb2cuCgo+PiBUbyBtYWtlIHRoaXMgd29yayBiZGV2X2dl
+dF9xdWV1ZSgpLCBiZGV2X3pvbmVfc2VjdG9ycygpIGFuZAo+PiBiZGV2X2lzX3pvbmVkKCkgYXJl
+IG1vdmVkIGVhcmxpZXIgd2l0aG91dCBtb2RpZmljYXRpb25zLgo+IAo+IENhbiB0aGF0IGNoYW5n
+ZSBwZXJoYXBzIGJlIGlzb2xhdGVkIGludG8gYSBzZXBhcmF0ZSBwYXRjaD8KPiAKPj4gZGlmZiAt
+LWdpdCBhL2Jsb2NrL2Jsay1jb3JlLmMgYi9ibG9jay9ibGstY29yZS5jCj4+IGluZGV4IDNkMjg2
+YTI1NmQzZC4uMWY3ZTlhOTBlMTk4IDEwMDY0NAo+PiAtLS0gYS9ibG9jay9ibGstY29yZS5jCj4+
+ICsrKyBiL2Jsb2NrL2Jsay1jb3JlLmMKPj4gQEAgLTU3MCw3ICs1NzAsNyBAQCBzdGF0aWMgaW5s
+aW5lIGJsa19zdGF0dXNfdAo+PiBibGtfY2hlY2tfem9uZV9hcHBlbmQoc3RydWN0IHJlcXVlc3Rf
+cXVldWUgKnEsCj4+IMKgwqDCoMKgwqDCoMKgwqDCoCByZXR1cm4gQkxLX1NUU19OT1RTVVBQOwo+
+PiDCoCDCoMKgwqDCoMKgIC8qIFRoZSBiaW8gc2VjdG9yIG11c3QgcG9pbnQgdG8gdGhlIHN0YXJ0
+IG9mIGEgc2VxdWVudGlhbCB6b25lICovCj4+IC3CoMKgwqAgaWYgKGJpby0+YmlfaXRlci5iaV9z
+ZWN0b3IgJiAoYmRldl96b25lX3NlY3RvcnMoYmlvLT5iaV9iZGV2KSAtCj4+IDEpIHx8Cj4+ICvC
+oMKgwqAgaWYgKCFiZGV2X2lzX3pvbmVfYWxpZ25lZChiaW8tPmJpX2JkZXYsIGJpby0+YmlfaXRl
+ci5iaV9zZWN0b3IpIHx8Cj4+IMKgwqDCoMKgwqDCoMKgwqDCoCAhYmlvX3pvbmVfaXNfc2VxKGJp
+bykpCj4+IMKgwqDCoMKgwqDCoMKgwqDCoCByZXR1cm4gQkxLX1NUU19JT0VSUjsKPiAKPiBUaGUg
+YmRldl9pc196b25lX3N0YXJ0KCkgbmFtZSBzZWVtcyBtb3JlIGNsZWFyIHRvIG1lIHRoYW4KPiBi
+ZGV2X2lzX3pvbmVfYWxpZ25lZCgpLiBIYXMgdGhlcmUgYWxyZWFkeSBiZWVuIGEgZGlzY3Vzc2lv
+biBhYm91dCB3aGljaAo+IG5hbWUgdG8gdXNlIGZvciB0aGlzIGZ1bmN0aW9uPwo+IApUaGUgcmVh
+c29uIEkgZGlkIHMvYmRldl9pc196b25lX3N0YXJ0L2JkZXZfaXNfem9uZV9hbGlnbmVkIGlzIHRo
+YXQgdGhpcwpuYW1lIG1ha2VzIG1vcmUgc2Vuc2UgZm9yIGFsc28gY2hlY2tpbmcgaWYgYSBnaXZl
+biBzaXplIGlzIGEgbXVsdGlwbGUgb2YKem9uZSBzZWN0b3JzIGZvciBlLmcuLCB1c2VkIGluIFBB
+VENIIDk6CgotCQlpZiAobGVuICYgKHpvbmVfc2VjdG9ycyAtIDEpKSB7CisJCWlmICghYmRldl9p
+c196b25lX2FsaWduZWQoYmRldiwgbGVuKSkgewoKSSBmZWx0IGBiZGV2X2lzX3pvbmVfYWxpZ25l
+ZGAgZml0cyB0aGUgdXNlIGNhc2Ugb2YgY2hlY2tpbmcgaWYgdGhlCnNlY3RvciBzdGFydHMgYXQg
+dGhlIHN0YXJ0IG9mIGEgem9uZSBhbmQgYWxzbyBjaGVjayBpZiBhIGdpdmVuIGxlbmd0aCBvZgpz
+ZWN0b3JzIGFsc28gYWxpZ24gd2l0aCB0aGUgem9uZSBzZWN0b3JzLiBiZGV2X2lzX3pvbmVfc3Rh
+cnQgZG9lcyBub3QKbWFrZSB0aGUgaW50ZW50aW9uIGNsZWFyIGZvciB0aGUgbGF0dGVyIHVzZSBj
+YXNlIElNTy4KCkJ1dCBJIGFtIGZpbmUgd2l0aCBnb2luZyBiYWNrIHRvIGJkZXZfaXNfem9uZV9z
+dGFydCBpZiB5b3UgYW5kIERhbWllbgpmZWVsIHN0cm9uZ2x5IG90aGVyd2lzZS4KPj4gK8KgwqDC
+oMKgwqDCoMKgIC8qCj4+ICvCoMKgwqDCoMKgwqDCoMKgICogTm9uIHBvd2VyLW9mLTIgem9uZSBz
+aXplIHN1cHBvcnQgd2FzIGFkZGVkIHRvIHJlbW92ZSB0aGUKPj4gK8KgwqDCoMKgwqDCoMKgwqAg
+KiBnYXAgYmV0d2VlbiB6b25lIGNhcGFjaXR5IGFuZCB6b25lIHNpemUuIFRob3VnaCBpdCBpcwo+
+PiB0ZWNobmljYWxseQo+PiArwqDCoMKgwqDCoMKgwqDCoCAqIHBvc3NpYmxlIHRvIGhhdmUgZ2Fw
+cyBpbiBhIG5vbiBwb3dlci1vZi0yIGRldmljZSwgTGludXgKPj4gcmVxdWlyZXMKPj4gK8KgwqDC
+oMKgwqDCoMKgwqAgKiB0aGUgem9uZSBzaXplIHRvIGJlIGVxdWFsIHRvIHpvbmUgY2FwYWNpdHkg
+Zm9yIG5vbiBwb3dlci1vZi0yCj4+ICvCoMKgwqDCoMKgwqDCoMKgICogem9uZWQgZGV2aWNlcy4K
+Pj4gK8KgwqDCoMKgwqDCoMKgwqAgKi8KPj4gK8KgwqDCoMKgwqDCoMKgIGlmICghaXNfcG93ZXJf
+b2ZfMih6b25lLT5sZW4pICYmIHpvbmUtPmNhcGFjaXR5IDwgem9uZS0+bGVuKSB7Cj4+ICvCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgIHByX3dhcm4oIiVzOiBJbnZhbGlkIHpvbmUgY2FwYWNpdHkgZm9y
+IG5vbiBwb3dlciBvZiAyCj4+IHpvbmUgc2l6ZSIsCj4+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqAgZGlzay0+ZGlza19uYW1lKTsKPiAKPiBHaXZlbiB0aGUgc2V2ZXJpdHkgb2YgdGhp
+cyBlcnJvciwgc2hvdWxkbid0IHRoZSB6b25lIGNhcGFjaXR5IGFuZCBsZW5ndGgKPiBiZSByZXBv
+cnRlZCBpbiB0aGUgZXJyb3IgbWVzc2FnZT8KPiAKT2suCj4gVGhhbmtzLAo+IAo+IEJhcnQuCgot
+LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3Rt
+YW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
 
