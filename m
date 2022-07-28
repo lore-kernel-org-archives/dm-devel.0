@@ -4,92 +4,97 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3E7CEC04A68
-	for <dm-devel@archiver.kernel.org>; Thu, 28 Jul 2022 12:27:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 77537C04A68
+	for <dm-devel@archiver.kernel.org>; Thu, 28 Jul 2022 13:29:29 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1659011274;
-	h=from:from:sender:sender:reply-to:reply-to:subject:subject:date:date:
+	s=mimecast20190719; t=1659014968;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=3Y4lNitQGVDnAVI78P8c2JQM8YPg2eyvb0qe2eLsQbo=;
-	b=LnjAqjD+CrdoLGl+OjOywuV5m4sU98fj+CZJhSgAblQgDviuUF5pHDqXQ1/IrUgltmZfKZ
-	RrsMHB0has/IB6OBmNhjeXxW4jpdMHbKHpdACdVCGCBxqMIXmNWreg2Q1RrjUkIpvYgytw
-	Wpc+1Qtt0RaclVCGkiXlxbYnw8v10rU=
+	bh=YVtSeJal/cLolTys6wQ4gB/uoUeaHGcyJ5lLI3TWggE=;
+	b=YrCjP3PiXY0ev+WpFovwEYJTy77TKOmsSvkyiog5+JAYAY72bpQx3WuFGXnDE9Uj0h7DWC
+	LjkTR7ctzLBJG6xi2nj5V84TQvYtvPOq4/9VtU41D4VGTiEvo7XDrBoOIJIorsCQMt/IMk
+	5KlP6+n3scJv2+QdCYBJESzpj3JQlIY=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-22-B7Chn144N1G59FlZiwZC6w-1; Thu, 28 Jul 2022 08:27:51 -0400
-X-MC-Unique: B7Chn144N1G59FlZiwZC6w-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-346-LIvs_51rMNmXuMi0Ki0f3Q-1; Thu, 28 Jul 2022 09:29:25 -0400
+X-MC-Unique: LIvs_51rMNmXuMi0Ki0f3Q-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 751CC8032F1;
-	Thu, 28 Jul 2022 12:27:49 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 55232801755;
+	Thu, 28 Jul 2022 13:29:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5EFAEC28100;
-	Thu, 28 Jul 2022 12:27:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2A73E2166B26;
+	Thu, 28 Jul 2022 13:29:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 301F21945DA7;
-	Thu, 28 Jul 2022 12:27:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E1A251945DA7;
+	Thu, 28 Jul 2022 13:29:16 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 049741945D85
- for <dm-devel@listman.corp.redhat.com>; Thu, 28 Jul 2022 12:27:47 +0000 (UTC)
+ ESMTP id 694EA1945D85
+ for <dm-devel@listman.corp.redhat.com>; Thu, 28 Jul 2022 13:29:16 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D77132166B2B; Thu, 28 Jul 2022 12:27:47 +0000 (UTC)
+ id 480E8492CA2; Thu, 28 Jul 2022 13:29:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D38542166B26
- for <dm-devel@redhat.com>; Thu, 28 Jul 2022 12:27:47 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 43F08492C3B
+ for <dm-devel@redhat.com>; Thu, 28 Jul 2022 13:29:16 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B74A81C01B38
- for <dm-devel@redhat.com>; Thu, 28 Jul 2022 12:27:47 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-83-KxJieHCdOiKb9SPl5hl09g-1; Thu, 28 Jul 2022 08:27:46 -0400
-X-MC-Unique: KxJieHCdOiKb9SPl5hl09g-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out1.suse.de (Postfix) with ESMTPS id 34E8F372EC;
- Thu, 28 Jul 2022 12:20:47 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id CA18113A7E;
- Thu, 28 Jul 2022 12:20:46 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id 4b3zLx5/4mKbJgAAMHmgww
- (envelope-from <dsterba@suse.cz>); Thu, 28 Jul 2022 12:20:46 +0000
-Date: Thu, 28 Jul 2022 14:15:48 +0200
-From: David Sterba <dsterba@suse.cz>
-To: Pankaj Raghav <p.raghav@samsung.com>
-Message-ID: <20220728121548.GE13489@twin.jikos.cz>
-Mail-Followup-To: dsterba@suse.cz, Pankaj Raghav <p.raghav@samsung.com>,
- damien.lemoal@opensource.wdc.com, hch@lst.de, axboe@kernel.dk,
- snitzer@kernel.org, Johannes.Thumshirn@wdc.com,
- matias.bjorling@wdc.com, gost.dev@samsung.com,
- linux-kernel@vger.kernel.org, hare@suse.de,
- linux-block@vger.kernel.org, pankydev8@gmail.com,
- bvanassche@acm.org, jaegeuk@kernel.org, dm-devel@redhat.com,
- linux-nvme@lists.infradead.org,
- Luis Chamberlain <mcgrof@kernel.org>
-References: <20220727162245.209794-1-p.raghav@samsung.com>
- <CGME20220727162253eucas1p1a5912e0494f6918504cc8ff15ad5d31f@eucas1p1.samsung.com>
- <20220727162245.209794-8-p.raghav@samsung.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2CDA4101A596
+ for <dm-devel@redhat.com>; Thu, 28 Jul 2022 13:29:16 +0000 (UTC)
+Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com
+ [209.85.214.174]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-434-bb2Drj0_O3Gf627Aj-KR1g-1; Thu, 28 Jul 2022 09:29:14 -0400
+X-MC-Unique: bb2Drj0_O3Gf627Aj-KR1g-1
+Received: by mail-pl1-f174.google.com with SMTP id p1so1787389plr.11
+ for <dm-devel@redhat.com>; Thu, 28 Jul 2022 06:29:13 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
+ :content-language:to:cc:references:from:in-reply-to
+ :content-transfer-encoding;
+ bh=KVAZ1OoYcDPkaYDmhjB+rFFypTllysidvXvCw8//pAg=;
+ b=qzmhA5NDuuXuRbSupfM0Jmp4cDqSY85NmyNmCTLrRVYLR0ML7TxlzLhsv7FzvW6FPI
+ c0A7bFLwAZSQd28NAXQZIgSl3E1bCnRXm9NhYOawVdruHYtZBedZPHJzcOae7SHZo0ln
+ kEQPT/JrFv+xfe60XGi74dMuTgUzWGzMWxepr6PdJOOABmP6XUrg0dbV3pxDO9M1URYT
+ lEk3fwfx5ZPkiz31vPqXptij4W2dnE31GhEA5YT3Tx6WzeeYCldnjeCeFEHuJbRMZjF6
+ /1Bi+ANv8WgW+9yqF57yHNcxrUSr8x0MxGqNfrbk0Kpc5zxAP+3kmeTUuLwi2kBxju0I
+ a7CA==
+X-Gm-Message-State: AJIora+XKgAUi27T/H8n61Hx8/G4sB3wHzxUAPHrToZ6YIn14Tjyaz6k
+ bpXXUtmhmN0DjRpc4QHYydk=
+X-Google-Smtp-Source: AGRyM1sVlJ4VxZdri5AJaXpK+abw9sqfSjFByJuWKJUf33Qsr5XtcruBoEo93wrUA8fG42N8cHOiXg==
+X-Received: by 2002:a17:902:70c4:b0:16c:5306:9172 with SMTP id
+ l4-20020a17090270c400b0016c53069172mr26736583plt.171.1659014952312; 
+ Thu, 28 Jul 2022 06:29:12 -0700 (PDT)
+Received: from [192.168.3.217] ([98.51.102.78])
+ by smtp.gmail.com with ESMTPSA id
+ h1-20020aa796c1000000b0052b66304d54sm742466pfq.74.2022.07.28.06.29.10
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Thu, 28 Jul 2022 06:29:11 -0700 (PDT)
+Message-ID: <514f85ce-84fc-1186-7169-a29d7118e8cc@acm.org>
+Date: Thu, 28 Jul 2022 06:29:09 -0700
 MIME-Version: 1.0
-In-Reply-To: <20220727162245.209794-8-p.raghav@samsung.com>
-User-Agent: Mutt/1.5.23.1-rc1 (2014-03-12)
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.11.0
+To: Pankaj Raghav <p.raghav@samsung.com>, damien.lemoal@opensource.wdc.com,
+ hch@lst.de, axboe@kernel.dk, snitzer@kernel.org, Johannes.Thumshirn@wdc.com
+References: <20220727162245.209794-1-p.raghav@samsung.com>
+ <CGME20220727162248eucas1p2ff8c3c2b021bedcae3960024b4e269e9@eucas1p2.samsung.com>
+ <20220727162245.209794-3-p.raghav@samsung.com>
+ <7984b969-9025-6b31-2645-da08daeefafb@acm.org>
+ <eed7d9ee-fd7f-e57c-598e-909dbb0d2380@samsung.com>
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <eed7d9ee-fd7f-e57c-598e-909dbb0d2380@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -97,9 +102,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH v8 07/11] dm-zoned: ensure only power of 2
- zone sizes are allowed
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+Subject: Re: [dm-devel] [PATCH v8 02/11] block: allow blk-zoned devices to
+ have non-power-of-2 zone size
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -111,57 +116,53 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Reply-To: dsterba@suse.cz
-Cc: axboe@kernel.dk, bvanassche@acm.org, pankydev8@gmail.com,
- Johannes.Thumshirn@wdc.com, damien.lemoal@opensource.wdc.com,
- snitzer@kernel.org, linux-kernel@vger.kernel.org,
+Cc: pankydev8@gmail.com, gost.dev@samsung.com, linux-kernel@vger.kernel.org,
  linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
- dm-devel@redhat.com, gost.dev@samsung.com, jaegeuk@kernel.org, hch@lst.de,
- matias.bjorling@wdc.com, Luis Chamberlain <mcgrof@kernel.org>
+ dm-devel@redhat.com, jaegeuk@kernel.org, matias.bjorling@wdc.com,
+ Luis Chamberlain <mcgrof@kernel.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Wed, Jul 27, 2022 at 06:22:41PM +0200, Pankaj Raghav wrote:
-> --- a/drivers/md/dm-zoned-target.c
-> +++ b/drivers/md/dm-zoned-target.c
-> @@ -792,6 +792,10 @@ static int dmz_fixup_devices(struct dm_target *ti)
->  				return -EINVAL;
->  			}
->  			zone_nr_sectors = bdev_zone_sectors(bdev);
-> +			if (!is_power_of_2(zone_nr_sectors)) {
-> +				ti->error = "Zone size is not power of 2";
+On 7/28/22 05:11, Pankaj Raghav wrote:
+> On 2022-07-28 01:16, Bart Van Assche wrote:
+>> The bdev_is_zone_start() name seems more clear to me than
+>> bdev_is_zone_aligned(). Has there already been a discussion about which
+>> name to use for this function?
+>>
+> The reason I did s/bdev_is_zone_start/bdev_is_zone_aligned is that this
+> name makes more sense for also checking if a given size is a multiple of
+> zone sectors for e.g., used in PATCH 9:
+> 
+> -		if (len & (zone_sectors - 1)) {
+> +		if (!bdev_is_zone_aligned(bdev, len)) {
+> 
+> I felt `bdev_is_zone_aligned` fits the use case of checking if the
+> sector starts at the start of a zone and also check if a given length of
+> sectors also align with the zone sectors. bdev_is_zone_start does not
+> make the intention clear for the latter use case IMO.
+> 
+> But I am fine with going back to bdev_is_zone_start if you and Damien
+> feel strongly otherwise.
+The "zone start LBA" terminology occurs in ZBC-1, ZBC-2 and ZNS but 
+"zone aligned" not. I prefer "zone start" because it is clear, 
+unambiguous and because it has the same meaning as in the corresponding 
+standards documents. I propose to proceed as follows for checking 
+whether a number of LBAs is a multiple of the zone length:
+* Either use bdev_is_zone_start() directly.
+* Or introduce a synonym for bdev_is_zone_start() with an appropriate 
+name, e.g. bdev_is_zone_len_multiple().
 
-This could print what's the value of zone_nr_sectors
+Thanks,
 
-> +				return -EINVAL;
-> +			}
->  			zoned_dev->zone_nr_sectors = zone_nr_sectors;
->  			zoned_dev->nr_zones = bdev_nr_zones(bdev);
->  		}
-> @@ -804,6 +808,10 @@ static int dmz_fixup_devices(struct dm_target *ti)
->  			return -EINVAL;
->  		}
->  		zoned_dev->zone_nr_sectors = bdev_zone_sectors(bdev);
-> +		if (!is_power_of_2(zoned_dev->zone_nr_sectors)) {
-> +			ti->error = "Zone size is not power of 2";
-
-Same
-
-> +			return -EINVAL;
-> +		}
->  		zoned_dev->nr_zones = bdev_nr_zones(bdev);
->  	}
->  
-> -- 
-> 2.25.1
+Bart.
 
 --
 dm-devel mailing list
