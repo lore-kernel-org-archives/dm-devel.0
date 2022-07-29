@@ -1,103 +1,102 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2393DC19F2D
-	for <dm-devel@archiver.kernel.org>; Thu, 28 Jul 2022 22:37:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id EC68EC00144
+	for <dm-devel@archiver.kernel.org>; Fri, 29 Jul 2022 04:52:17 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1659047848;
+	s=mimecast20190719; t=1659070336;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=w8wfifEM6P43GCo4Y1veyQiJz6s3BQaOzVEg0M26l2s=;
-	b=YRf9FMEP9SU5X4LqgagcImlQZAu/eI8OEylQ0jG/b3rq9BJ2i8Pl7H5hQ627ANP9XEca7f
-	j7/M9hJuEiI6l94/CEK8tEVkM9Vo3VzFbJ9w87FG9wjI8axkRO/SdwzWjZxf/8W47qwtsz
-	4A5NxEoZMix5s9xiF4o1Yw9pWMn83zU=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=fmK6BKlg63SkXbLDV4F7jWs9OZ4RDf3yJixD4EY/nIQ=;
+	b=i62DPPBY4oRiTVYB3OvcMaNZ821OYs0YpxYfW+tCqFDGQK3pdJ5gkCMrv02emrYyZq1asp
+	MXs3jpXrct4o2nVqv/tK1YI4I6f4D71jlGSZ1Hai2DTWVJJhdvrlqncIxWBHLbNZaypxI5
+	frWOD6n9RZQfZcjzkrk01AeknoLcCNo=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-357-QktSDBdmN7mlhEaND4qfkw-1; Thu, 28 Jul 2022 18:37:24 -0400
-X-MC-Unique: QktSDBdmN7mlhEaND4qfkw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-274-ioPjmr14OAKif4Enb8bB9Q-1; Fri, 29 Jul 2022 00:52:13 -0400
+X-MC-Unique: ioPjmr14OAKif4Enb8bB9Q-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 49CEF811E84;
-	Thu, 28 Jul 2022 22:37:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CF69B2999B2E;
+	Fri, 29 Jul 2022 04:52:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B787290A04;
-	Thu, 28 Jul 2022 22:37:15 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 30709492C3B;
+	Fri, 29 Jul 2022 04:52:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B35AE1945DA7;
-	Thu, 28 Jul 2022 22:37:15 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id F0656193211F;
+	Fri, 29 Jul 2022 04:52:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6AA5B1945DA7
- for <dm-devel@listman.corp.redhat.com>; Thu, 28 Jul 2022 22:37:13 +0000 (UTC)
+ ESMTP id 280031932118
+ for <dm-devel@listman.corp.redhat.com>; Fri, 29 Jul 2022 04:52:07 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5BFA6492CA2; Thu, 28 Jul 2022 22:37:13 +0000 (UTC)
+ id F0B001415118; Fri, 29 Jul 2022 04:52:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 57D9C492C3B
- for <dm-devel@redhat.com>; Thu, 28 Jul 2022 22:37:13 +0000 (UTC)
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id EC016140EBE3
+ for <dm-devel@redhat.com>; Fri, 29 Jul 2022 04:52:06 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4009E28084EE
- for <dm-devel@redhat.com>; Thu, 28 Jul 2022 22:37:13 +0000 (UTC)
-Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
- [209.85.160.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D3A1A80418F
+ for <dm-devel@redhat.com>; Fri, 29 Jul 2022 04:52:06 +0000 (UTC)
+Received: from mail-pj1-f49.google.com (mail-pj1-f49.google.com
+ [209.85.216.49]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-256-_u61eb78P4-GWdhpJOIwjA-1; Thu, 28 Jul 2022 18:37:12 -0400
-X-MC-Unique: _u61eb78P4-GWdhpJOIwjA-1
-Received: by mail-qt1-f197.google.com with SMTP id
- a18-20020a05622a02d200b0031ed7ae9abeso1864014qtx.8
- for <dm-devel@redhat.com>; Thu, 28 Jul 2022 15:37:12 -0700 (PDT)
+ us-mta-18-Qa4jzqhLMzWnuAfA1x4gFQ-1; Fri, 29 Jul 2022 00:52:04 -0400
+X-MC-Unique: Qa4jzqhLMzWnuAfA1x4gFQ-1
+Received: by mail-pj1-f49.google.com with SMTP id y1so3647679pja.4
+ for <dm-devel@redhat.com>; Thu, 28 Jul 2022 21:52:04 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=KiZXluae9bOrzzaCm+A9NCYqephj85Bpfnncyn8a4Cc=;
- b=SidxCGIKjQd8N88s/4u6irrJlVDGoJWf5btcbZ0yiJe3MOWBwKxvNHOhiy6T49e+E6
- X4qL8Zi4nJe8C2cMgOs+13rN4dXgBpt3I6zbYBZ+kqkpM+8mUlyfLRIcMP3+wm/I5MoV
- xMKlMw1PDR3s/b1id7OhodIy0uqX3+CWbBnvaT2/iDOW60oUnsY5M2mueUtoghXRTAle
- k1bLCrrQbgbFbQqvrsJHVhiV2wmspR8AmQJZ43IwzdzDViP/4rF0m0Np4YWf9Ko6CXQ+
- xOx9PYGRqyjAQxGbBKeixWXk4b6vDD0cIr4C+kb7jXAr21hGQCFsh1aW90TcC2wdufAo
- mVig==
-X-Gm-Message-State: AJIora+tBOmg7sRbgTM0KfQ+Z3QHiS6QfA4No+i6pP6bHIb/stDUwf5v
- ld56dFP8dkqPOeSnNkyNJ9hrsp+uWRrZ6UtZzPm0NM4MrWz+vvZX2iy7BrF9FAbmg+aLydX77x0
- mOJKbr2z8vCMndw==
-X-Received: by 2002:a05:622a:164b:b0:31e:fec2:d1d9 with SMTP id
- y11-20020a05622a164b00b0031efec2d1d9mr1049154qtj.631.1659047831365; 
- Thu, 28 Jul 2022 15:37:11 -0700 (PDT)
-X-Google-Smtp-Source: AGRyM1u5LvzRXII3uNLT0f5aOIMo2uxDZ8H3yOaNMsHPO0S72DzHzJKYivcBlbtlYD5Zse63D8da6Q==
-X-Received: by 2002:a05:622a:164b:b0:31e:fec2:d1d9 with SMTP id
- y11-20020a05622a164b00b0031efec2d1d9mr1049145qtj.631.1659047831104; 
- Thu, 28 Jul 2022 15:37:11 -0700 (PDT)
-Received: from localhost (pool-68-160-173-162.bstnma.fios.verizon.net.
- [68.160.173.162]) by smtp.gmail.com with ESMTPSA id
- q9-20020a37f709000000b006b5a9e53105sm418046qkj.91.2022.07.28.15.37.10
+ h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+ :references:mime-version:content-transfer-encoding;
+ bh=Nih3CQ3bvbr3caRHPwLofzDk9DoHwlUp15C4DMS5PBo=;
+ b=iX3uhTY4I4RftJdqBAvPVux62fVwBR2b9wP8v3aG21duu1iVyf35rgqdKJ9PVZh4/g
+ rpIVo0+TPOyWMSYw+7ZhkjqnU+GNHs4b6sXQM/T7gJgVsk90kI3S0NqJiX1QYPwTCsP3
+ VmVWxAzLXKLZMvP0n8EIALYw2Ceuqe0fGDpPz3JXQEf+EuuUiS1sdL7hNT3fp9PQZdxq
+ 9Bif5ciJephiArbiuX5Q6OEICy78ETF7z4qZ6zpigHn5hDp+MgTrwSqFxI6qXrw37Ihx
+ QK/dDJ5Lt7IuQoH8uaL4cZUAvFOyQN6R6zM/q+ldAQdLQAXUon0dduN6PDJ1+DO+ezQO
+ q83Q==
+X-Gm-Message-State: ACgBeo299FlJnIpJxNpNkEizODu1tRhiYlXvrCK85NWi+oneziYksyBo
+ 7eypz5mkSd5FZVTzVOJiPNkntA==
+X-Google-Smtp-Source: AA6agR5FJP+NYrdW/k3FkoK3eSp4f0Ik9rJBgd0bR1FQThkmO9kyKATOXvMgiQu4Mti2542araL9Iw==
+X-Received: by 2002:a17:90b:3c42:b0:1f3:2e03:d9dc with SMTP id
+ pm2-20020a17090b3c4200b001f32e03d9dcmr2228881pjb.8.1659070323606; 
+ Thu, 28 Jul 2022 21:52:03 -0700 (PDT)
+Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
+ by smtp.gmail.com with ESMTPSA id
+ 200-20020a6304d1000000b004126fc7c986sm1808648pge.13.2022.07.28.21.52.03
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 28 Jul 2022 15:37:10 -0700 (PDT)
-Date: Thu, 28 Jul 2022 18:37:09 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Nathan Huckleberry <nhuck@google.com>
-Message-ID: <YuMPlUzCvhEJIQXh@redhat.com>
-References: <20220726160959.89247-1-snitzer@kernel.org>
- <20220726160959.89247-3-snitzer@kernel.org>
- <alpine.LRH.2.02.2207271055510.28280@file01.intranet.prod.int.rdu2.redhat.com>
- <YuFeL6J1gtFV63dW@redhat.com>
- <CAJkfWY7_W-o68=xvKga7=eTkDa4ygod2CV9MFdZbGw7xwE_U0w@mail.gmail.com>
+ Thu, 28 Jul 2022 21:52:03 -0700 (PDT)
+From: Kees Cook <keescook@chromium.org>
+To: mka@chromium.org, jmorris@namei.org, agk@redhat.com, serge@hallyn.com,
+ snitzer@kernel.org
+Date: Thu, 28 Jul 2022 21:51:55 -0700
+Message-Id: <165907031305.2130609.16869003416171682751.b4-ty@chromium.org>
+In-Reply-To: <20220728085412.1.I242d21b378410eb6f9897a3160efb56e5608c59d@changeid>
+References: <20220728085412.1.I242d21b378410eb6f9897a3160efb56e5608c59d@changeid>
 MIME-Version: 1.0
-In-Reply-To: <CAJkfWY7_W-o68=xvKga7=eTkDa4ygod2CV9MFdZbGw7xwE_U0w@mail.gmail.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: Re: [dm-devel] [PATCH v2 2/6] dm bufio: Add
- DM_BUFIO_CLIENT_NO_SLEEP flag
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: Re: [dm-devel] [PATCH] dm: verity-loadpin: Drop use of
+ dm_table_get_num_targets()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -109,89 +108,35 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Eric Biggers <ebiggers@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
- dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
- Sami Tolvanen <samitolvanen@google.com>
+Cc: sfr@canb.auug.org.au, Kees Cook <keescook@chromium.org>,
+ linux-security-module@vger.kernel.org, dianders@chromium.org,
+ linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, song@kernel.org,
+ dm-devel@redhat.com, gmazyland@gmail.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Jul 27 2022 at  3:53P -0400,
-Nathan Huckleberry <nhuck@google.com> wrote:
-
-> On Wed, Jul 27, 2022 at 8:48 AM Mike Snitzer <snitzer@redhat.com> wrote:
-> >
-> > On Wed, Jul 27 2022 at 11:25P -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> >
-> > > Hi
-> > >
-> > > I'd like to ask - why not use dm_bufio_trylock from an interrupt context?
-> > >
-> > > I would just add a new function "dm_bufio_get_trylock" that is equivalent
-> > > to "dm_bufio_get", except that it uses dm_bufio_trylock - and if it fails,
-> > > fallback to process context.
-> > >
-> > > I think using dm_bufio_trylock would be less hacky than introducing a
-> > > new dm_bufio flag that changes mutex to spinlock.
-> >
-> > OK, I can drop the bufio hacks (patches 1 and 2) and replace with a
-> > dm_bufio_get_trylock and see if that resolves the cryptsetup testing
-> > issues Milan is reporting.  But on the flip side I feel like trylock
-> > is far more prone to fail for at least one of a series of cached
-> > buffers needed (via _get). And so it'll punt to workqueue more often
-> > and _not_ provide the desired performance improvement.  BUT.. we shall
-> > see.
-> >
-> > All said, I'm now dropping this patchset from the upcoming 5.20 merge.
-> > This all clearly needs more development time.
-> >
-> > Huck: I'll run with Mikulas's suggestion and try to get the cryptsetup
-> > tests passing. But I'll leave performance testing to you.
-> >
+On Thu, 28 Jul 2022 08:54:41 -0700, Matthias Kaehlcke wrote:
+> Commit 2aec377a2925 ("dm table: remove dm_table_get_num_targets()
+> wrapper") in linux-dm/for-next removed the function
+> dm_table_get_num_targets() which is used by verity-loadpin. Access
+> table->num_targets directly instead of using the defunct wrapper.
 > 
-> Sounds like a reasonable fix. I expect that dm_bufio_get_trylock with
-> WQ_HIGHPRI will give similar performance gains.
+> 
 
-Hi,
+Applied to for-next/hardening, thanks!
 
-Just wanted to share where I am with this line of work:
+[1/1] dm: verity-loadpin: Drop use of dm_table_get_num_targets()
+      https://git.kernel.org/kees/c/27603a606fda
 
-1) I tried to use a semaphore instead of spinlock in bufio along with
-adding a dm_bufio_get_nowait that used dm_bufio_trylock. Turns out
-that wasn't valid because dm_bufio_release used down() and schedule,
-which isn't valid in tasklet. Mikulas and I discussed this situation
-and he proposed one way forward to still use semaphore but it'd
-require new dm-verity code that prepared a cookie (struct) pointer and
-issued a callback then drop the lock (so it'd avoid excessive
-locking).  But I abandoned that due to the uncharted territory it was
-bringing us down.
-
-2) Using Milan's cryptsetup branch and test procedure documented here:
-https://listman.redhat.com/archives/dm-devel/2022-July/051666.html
-I got the first "./verity-compat-test" to work with this branch:
-https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=dm-5.21
-But then when I took the next step to always --use-tasklets I got
-hangs in the verity workqueue.
-
-I'm not sure how you got your code working, I cannot see any material
-difference between my dm-5.21 branch and your original patchset.
-
-If you'd like to have a look at the dm-5.21 branch to see if you can
-make it work that'd be appreciated.
-
-But I cannot put more time to this verity tasklet effort any more this
-week.
-
-Thanks,
-Mike
+-- 
+Kees Cook
 
 --
 dm-devel mailing list
