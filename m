@@ -1,60 +1,108 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A617BC04A68
-	for <dm-devel@archiver.kernel.org>; Sat, 30 Jul 2022 05:14:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 090DBC00140
+	for <dm-devel@archiver.kernel.org>; Mon,  1 Aug 2022 01:05:01 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1659158043;
+	s=mimecast20190719; t=1659315900;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=dMgiLCvi2efwmnXf8J4IRJZmf6yO6mxUuRav58JfCfc=;
-	b=Iz+XHczQFwNB2qx3CNpYjkvUKDfhcRqd5+q1RTmmUhQfx064YM+MiKHyqmIay4lVMxizKb
-	sigBWdxt8Ah5QfHOeeX3vI09jF99rEUhqwcksOIrBzCIEcyVsdj92ODAQsqv1lbEBdfr0j
-	3juZQUKf8tmOmgbthLpEIAMMTHlSICI=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=YgzAyhZdbCh5T2mXeLetNr/BM4d8F/kWTNvvKihjHzE=;
+	b=gYCFBrslj1EQnCd9/84iGYhBqNXdS7Cc99QC2jRRFWIfk0NUERlUYQedb07RwnDigtvcYi
+	UL/6FPaSjaa0YT30xfY7ldUO/cecC1TDODXKs7DzRWa1de0uavp2OaMAmpvyRMPZbccPmX
+	PqUlhk/v0088KNnJEb6SwElkoNeiLKM=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-38-CoGgf4iSOs-Prr_SkXk6DQ-1; Sat, 30 Jul 2022 01:14:00 -0400
-X-MC-Unique: CoGgf4iSOs-Prr_SkXk6DQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-657-nxCY3LBsMJmTIBCDxN7sdQ-1; Sun, 31 Jul 2022 21:04:57 -0400
+X-MC-Unique: nxCY3LBsMJmTIBCDxN7sdQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0F50F185A7B2;
-	Sat, 30 Jul 2022 05:13:59 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A09B31C0BDE2;
+	Mon,  1 Aug 2022 01:04:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EC77F90A11;
-	Sat, 30 Jul 2022 05:13:21 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 86499C27D95;
+	Mon,  1 Aug 2022 01:04:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 06C8B194D6C0;
-	Sat, 30 Jul 2022 05:13:04 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 66E1C1945D88;
+	Mon,  1 Aug 2022 01:04:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3EB37194D063
- for <dm-devel@listman.corp.redhat.com>; Sat, 30 Jul 2022 05:13:03 +0000 (UTC)
+ ESMTP id D3AD51945D83
+ for <dm-devel@listman.corp.redhat.com>; Mon,  1 Aug 2022 01:04:50 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 12CAF2166B2B; Sat, 30 Jul 2022 05:13:03 +0000 (UTC)
-Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DB9B82166B26;
- Sat, 30 Jul 2022 05:13:02 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 26U5D1De024117;
- Sat, 30 Jul 2022 00:13:01 -0500
-Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 26U5D0sp024116;
- Sat, 30 Jul 2022 00:13:00 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Sat, 30 Jul 2022 00:12:54 -0500
-Message-Id: <1659157980-24079-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-Subject: [dm-devel] [RFC PATCH 0/6] allowing path checking to be interrupted.
+ id C5D4D1121315; Mon,  1 Aug 2022 01:04:50 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C1D3C1121314
+ for <dm-devel@redhat.com>; Mon,  1 Aug 2022 01:04:50 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 68DB23C025CB
+ for <dm-devel@redhat.com>; Mon,  1 Aug 2022 01:04:50 +0000 (UTC)
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com
+ [45.249.212.51]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-15-sKnw3CeNOK24FQ2gNPquKg-1; Sun, 31 Jul 2022 21:04:47 -0400
+X-MC-Unique: sKnw3CeNOK24FQ2gNPquKg-1
+Received: from mail02.huawei.com (unknown [172.30.67.153])
+ by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4Lx0HN0WKszKH4k;
+ Mon,  1 Aug 2022 09:03:28 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+ by APP3 (Coremail) with SMTP id _Ch0CgA3tzCoJudi5cI3AA--.46416S3;
+ Mon, 01 Aug 2022 09:04:41 +0800 (CST)
+To: Yu Kuai <yukuai1@huaweicloud.com>, Christoph Hellwig <hch@lst.de>
+References: <20210804094147.459763-1-hch@lst.de>
+ <20210804094147.459763-8-hch@lst.de>
+ <ad2c7878-dabb-cb41-1bba-60ef48fa1a9f@huaweicloud.com>
+ <20220707052425.GA13016@lst.de>
+ <fd5c2e0a-5f68-9f1f-dfc2-49a2cd51de0b@huaweicloud.com>
+ <6ff5c130-b5b1-b611-bb99-6a2275404fcd@huaweicloud.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <a858472c-6899-a42e-d961-e82b7047ac7c@huaweicloud.com>
+Date: Mon, 1 Aug 2022 09:04:40 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
+MIME-Version: 1.0
+In-Reply-To: <6ff5c130-b5b1-b611-bb99-6a2275404fcd@huaweicloud.com>
+X-CM-TRANSID: _Ch0CgA3tzCoJudi5cI3AA--.46416S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7tFy3ZF17tw4fAF1kKF1DGFg_yoW8AFWfpa
+ 48JFs0krZrXrs7W397t34UZr9Yvr4UJw1UJry5GFyxKryDWr9Yqr4xXF4qgFy7Jr4kWr1j
+ qF4Utry5Zr4kA37anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+ 9KBjDU0xBIdaVrnRJUUUkE14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+ rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+ 1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+ JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+ CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+ 2Ix0cI8IcVAFwI0_JrI_JrylYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+ W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lc7I2V7IY0VAS07AlzVAY
+ IcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14
+ v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_Jw0_GFylIxkG
+ c2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI
+ 0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6rWUJVWrZr1UMIIF0xvEx4A2jsIE14v26r1j
+ 6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUZa9
+ -UUUUU=
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+X-CFilter-Loop: Reflected
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH 7/8] dm: delay registering the gendisk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -66,63 +114,50 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Wu Guanghao <wuguanghao3@huawei.com>,
- device-mapper development <dm-devel@redhat.com>,
- Martin Wilck <Martin.Wilck@suse.com>
-MIME-Version: 1.0
+Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>,
+ "zhangyi \(F\)" <yi.zhang@huawei.com>, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, "yukuai \(C\)" <yukuai3@huawei.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-When there are a huge number of paths (> 10000) The about of time that
-the checkerloop can hold the vecs lock for while checking the paths
-can get to be large enough that it starves other vecs lock users.  If
-path checking takes long enough, it's possible that uxlsnr threads will
-never run. To deal with this, this patchset makes it possible to drop
-the vecs lock while checking the paths, and then reacquire it and
-continue with the next path to check.
-
-My choice of only checking if there are waiters every 128 paths checked
-and only interrupting if path checking has taken more than a second are
-arbitrary. I didn't want to slow down path checking in the common case
-where this isn't an issue, and I wanted to avoid path checking getting
-starved by other vecs->lock users. Having the checkerloop wait for 10000
-nsec was based on my own testing with a setup using 4K multipath devies
-with 4 paths each. This was almost always long enough for the uevent or
-uxlsnr client to grab the vecs lock, but I'm not sure how dependent this
-is on details of the system. For instance with my setup in never took
-more than 20 seconds to check the paths. and usually, a looping through
-all the paths took well under 10 seconds, most often under 5. I would
-only occasionally run into situations where a uxlsnr client would time
-out.
-
-Benjamin Marzinski (6):
-  multipathd: Use regular pthread_mutex_t for waiter_lock
-  multipathd: track waiters for mutex_lock
-  multipathd: Occasionally allow waiters to interrupt checking paths
-  multipathd: allow uxlsnr clients to interrupt checking paths
-  multipathd: fix uxlsnr timeout
-  multipathd: Don't check if timespec.tv_sec is zero
-
- libmultipath/lock.h    |  16 +++++
- libmultipath/structs.h |   1 +
- multipathd/main.c      | 144 +++++++++++++++++++++++++----------------
- multipathd/uxlsnr.c    |  23 +++++--
- multipathd/uxlsnr.h    |   1 +
- multipathd/waiter.c    |  14 ++--
- 6 files changed, 132 insertions(+), 67 deletions(-)
-
--- 
-2.17.2
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+SGksIENocmlzdG9waCEKCuWcqCAyMDIyLzA3LzE1IDExOjI0LCBZdSBLdWFpIOWGmemBkzoKPiBI
+aSwgQ2hyaXN0b3BoIQo+IAo+IOWcqCAyMDIyLzA3LzA3IDE1OjIwLCBZdSBLdWFpIOWGmemBkzoK
+Pj4g5ZyoIDIwMjIvMDcvMDcgMTM6MjQsIENocmlzdG9waCBIZWxsd2lnIOWGmemBkzoKPj4+IE9u
+IFRodSwgSnVsIDA3LCAyMDIyIGF0IDExOjI5OjI2QU0gKzA4MDAsIFl1IEt1YWkgd3JvdGU6Cj4+
+Pj4gV2UgZm91bmQgdGhhdCB0aGlzIHBhdGNoIGZpeCBhIG51bGxwdHIgY3Jhc2ggaW4gb3VyIHRl
+c3Q6Cj4+Pgo+Pj4+IERvIHlvdSB0aGluayBpdCdzIG9rIHRvIGJhY2twb3J0IHRoaXMgcGF0Y2go
+YW5kIGFsbCByZWFsdGVkIHBhdGNoZXMpIHRvCj4+Pj4gbHRzLCBvciBpdCdzIGJldHRlciB0byBm
+aXggdGhhdCBiaW8gY2FuIGJlIHN1Ym1pdHRlZCB3aXRoIHF1ZXVlCj4+Pj4gdW5pbml0aWFsaXpl
+ZCBmcm9tIGJsb2NrIGxheWVyPwo+Pj4KPj4+IEdpdmVuIGhvdyBsb25nIGFnbyB0aGlzIHdhcyBJ
+IGRvIG5vdCByZW1lbWJlciBvZmZoYW5kIGhvdyBtdWNoIHByZXAKPj4+IHdvcmsgdGhpcyB3b3Vs
+ZCByZXF1aXJlLsKgIFRoZSBwYXRjaCBpdHNlbGYgaXMgb2YgY291cnNlIHRpbnkgYW5kCj4+PiBi
+YWNrcG9ydGFibGUsIGJ1dCBzb21lb25lIHdpbGwgbmVlZCB0byBkbyB0aGUgd29yayBhbmQgZmln
+dXJlIG91dCBob3cKPj4+IG11Y2ggZWxzZSB3b3VsZCBoYXZlIHRvIGJlIGJhY2twb3J0ZWQuCj4+
+Cj4+IE9rLCBJJ2xsIHRyeSB0byBmaWd1cmUgb3V0IHRoYXQsIGFuZCBiYWNrcG9ydCB0aGVtLihB
+dCBsZWFzdCB0byA1LjEwLnkpCgpJIHBvc3RlZCBhIHN0YWJsZSBwYXRjaHNldCBvbiBzdGFibGUg
+NS4xMCwgY2FuIHlvdSBwbGVhcyB0YWtlIGEgbG9vY2sgPwoKZG06IGZpeCBudWxscHRyIGNyYXNo
+Cmh0dHBzOi8vbG9yZS5rZXJuZWwub3JnL2FsbC8yMDIyMDcyOTA2MjM1Ni4xNjYzNTEzLTEteXVr
+dWFpMUBodWF3ZWljbG91ZC5jb20vCgpUaGFua3MsCkt1YWkKPiAKPiBXaGlsZSByZXZpZXdpbmcg
+dGhlIGNvZGUsIEkgZGlkbid0IGZvdW5kIGFueSBwcm90ZWN0aW9uIHRoYXQKPiBiZF9saW5rX2Rp
+c2tfaG9sZGVyKCkgd29uJ3QgY29uY3VycmVudCB3aXRoCj4gYmRfcmVnaXN0ZXJfcGVuZGluZ19o
+b2xkZXJzKCkuIElmIHRoZXkgZG8gY2FuIGNvbmN1cnJlbnQsCj4gZm9sbG93aW5nIHNjZW5hcmlv
+IGlzIHByb2JsZW1hdGljOgo+IAo+IHQxwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIHQy
+Cj4gZGV2aWNlX2FkZF9kaXNrCj4gIMKgZGlzay0+c2xhdmVfZGlyID0ga29iamVjdF9jcmVhdGVf
+YW5kX2FkZAo+ICDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgYmRfbGlua19kaXNrX2hv
+bGRlcgo+ICDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBfX2xpbmtfZGlza19ob2xk
+ZXIKPiAgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgbGlzdF9hZGQKPiAgwqBiZF9y
+ZWdpc3Rlcl9wZW5kaW5nX2hvbGRlcnMKPiAgwqAgbGlzdF9mb3JfZWFjaF9lbnRyeQo+ICDCoMKg
+IF9fbGlua19kaXNrX2hvbGRlciAtPiAtRUVYSVNUCj4gCj4gSW4gdGhpcyBjYXNlLCBJIHRoaW5r
+IG1heWJlIGlnbm9yZSAnLUVFWElTVCcgaXMgZmluZS4KPiAKPiBJJ20gbm90IGZhbWlsaWFyIHdp
+dGggZG0sIGFuZCBJJ20gbm90IHN1cmUgaWYgSSBtaXNzZWQgc29tZXRoaW5nLAo+IHBsZWFzZSBr
+aW5kbHkgY29ycmVjdCBtZSBpZiBJJ20gd3JvbmcuCj4gCj4gVGhhbmtzLAo+IEt1YWkKPiAKPiAu
+Cj4gCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
+L2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
 
