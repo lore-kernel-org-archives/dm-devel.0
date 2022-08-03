@@ -1,98 +1,103 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1A912C19F28
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Aug 2022 15:15:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7BBC2C19F28
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Aug 2022 16:17:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1659539731;
+	s=mimecast20190719; t=1659543432;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=D8smgrkQ2S1Hbpf2DY2QHpznjxFXmkRQsaarlYCwrmA=;
-	b=LAoUQaIgXSOKKXcHxIXmhSe3v9TSyHL0HSG5b8fk99LniK3Kbu9qWfVtVIYBlcrivum2nB
-	AeC+zuTWLfxZmxe9w6kR6iZuviPNVAQ8UoV9IlOQ6uMCYU+Ywt90g12kdmoGtVQ4dJ6ATG
-	AK1cxKLpCjfupoXc2u4rrFnvC7aJXcY=
+	bh=au4lwD6XVxMqyH6OpGLE0ze/FcBwAdKvvqQfJPxve9s=;
+	b=G2fKmF/SH+YLgD2PO9dXXeMN5dxVHGyvsyV+WkS2cH7NLMtUriacaLCnt/txrHxzv9OLg8
+	Jn6GX7cTe20MuFrZmbKJkm8iKWCSQxsG2Gx5eOYJj5SmLFunBCZ210NQzIZIWtkKdIiQKo
+	pfZKxkNOISEviTHtYU+b2j1ZyIv1+6E=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-359-cJVDKD2cPB-LwjWcmnfw7w-1; Wed, 03 Aug 2022 11:15:28 -0400
-X-MC-Unique: cJVDKD2cPB-LwjWcmnfw7w-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-594-k7DQDsP2Ojy8IwPXX1TsgA-1; Wed, 03 Aug 2022 12:17:10 -0400
+X-MC-Unique: k7DQDsP2Ojy8IwPXX1TsgA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C7C4285A581;
-	Wed,  3 Aug 2022 15:15:25 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5B74D2026D4C;
-	Wed,  3 Aug 2022 15:15:23 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A48A785A58B;
+	Wed,  3 Aug 2022 16:17:08 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6C505141510F;
+	Wed,  3 Aug 2022 16:17:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1A44C1946A52;
-	Wed,  3 Aug 2022 15:15:23 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 30C311946A5C;
+	Wed,  3 Aug 2022 16:17:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B52001946A4E
- for <dm-devel@listman.corp.redhat.com>; Wed,  3 Aug 2022 15:04:26 +0000 (UTC)
+ ESMTP id 6A3771946A4E
+ for <dm-devel@listman.corp.redhat.com>; Wed,  3 Aug 2022 16:17:06 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A66DF40CFD0A; Wed,  3 Aug 2022 15:04:26 +0000 (UTC)
+ id 5C4D6C27D95; Wed,  3 Aug 2022 16:17:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A27FF40CF8F0
- for <dm-devel@redhat.com>; Wed,  3 Aug 2022 15:04:26 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 813E4801231
- for <dm-devel@redhat.com>; Wed,  3 Aug 2022 15:04:26 +0000 (UTC)
-Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com
- [209.85.221.51]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 58DA7C1D3AD
+ for <dm-devel@redhat.com>; Wed,  3 Aug 2022 16:17:06 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 36F283810796
+ for <dm-devel@redhat.com>; Wed,  3 Aug 2022 16:17:06 +0000 (UTC)
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+ [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-625-oIz3cVqnN_-nb-brXuuWbg-1; Wed, 03 Aug 2022 11:04:22 -0400
-X-MC-Unique: oIz3cVqnN_-nb-brXuuWbg-1
-Received: by mail-wr1-f51.google.com with SMTP id q30so17496304wra.11;
- Wed, 03 Aug 2022 08:04:22 -0700 (PDT)
+ us-mta-489-mPVMnMioOyakYngn-eW2Ig-1; Wed, 03 Aug 2022 12:17:05 -0400
+X-MC-Unique: mPVMnMioOyakYngn-eW2Ig-1
+Received: by mail-qk1-f199.google.com with SMTP id
+ bm34-20020a05620a19a200b006b5f1d95ceeso13747889qkb.5
+ for <dm-devel@redhat.com>; Wed, 03 Aug 2022 09:17:04 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
- :content-transfer-encoding;
- bh=1E3hDnZ6TmAG1OWHas2GrrE4griFeEmYFKgwzEfilBQ=;
- b=O6+sRmCjjOegNufBb5Q2POZ8rJj1S7vpZz6+iVO5A0Z9SNycL3Bxvb5mI+CV6qv197
- 16R6OgzNuCYWuE6+bHdpNMEFmZPYRtpUzRVfEN6P0LWg/HbZXbJ50lXExG4eR4TZZaA9
- pADu+YveS8OU6D8MRXc5tnbReZw8+Ql/dwAmoKs7jUxETQIfZRwLIiH5yp+f3ZCfOvF1
- Q9apiXnFZwl7zFRAbDrgfb157Du6yZnPGrpBnE8BxCVJH0PpoBcqfKYtu35BtQOo7hBw
- KaUKecxtBC+Euar6KbOqAiAW65f2+pr3I6v/EWDJ5cxZyF/xGcxhH4rRALfL23bM5XXg
- 4NSA==
-X-Gm-Message-State: ACgBeo3I6SyldhtRE+bcFTdAOi9sWabKjq5vaD2nMy3xXi+MiNSYCKmo
- PisqxJ2scSWX+Ya/v0rO8pECEoeS1Q==
-X-Google-Smtp-Source: AA6agR5nKOlOBuhb5CBhbaqmqyhDHbCqoguirrH59LMN4qTboQBpJWLqyczLfYi8HArvyAWN/DnIeg==
-X-Received: by 2002:a5d:4352:0:b0:21e:4984:e607 with SMTP id
- u18-20020a5d4352000000b0021e4984e607mr16327799wrr.66.1659539060928; 
- Wed, 03 Aug 2022 08:04:20 -0700 (PDT)
-Received: from localhost (51.red-81-44-172.dynamicip.rima-tde.net.
- [81.44.172.51]) by smtp.gmail.com with ESMTPSA id
- w10-20020adfd4ca000000b002205cbc1c74sm12785883wrk.101.2022.08.03.08.04.20
+ h=in-reply-to:content-disposition:mime-version:references:message-id
+ :subject:cc:to:from:date:x-gm-message-state:from:to:cc;
+ bh=KvlEsIXYdL7pYQSca7e8QiPUNObB1JXPZUJDJkqfFfo=;
+ b=CIScYjxUR08rlFhiPZyY+8tKLAUgIuiaGmgjPW9+g6z/IN+Joarfz6BWbufSk/wT6N
+ 1k9INc2aqbUr4HSLOCd9hl25quJjw/8oBDQ475IVtmAQyDP2nKtIFIYojOjMxhsAtiIQ
+ Rs/qQhfMeDrnSGUEChdGmkTLNSMpyXE/9DQPwTuGnqh6MrbH4DM+2+0D5tTH+6Mayxpj
+ yAvkm/mcW4kbpO9B3LCA3GB1TbDN163QQy+z0KhUbY395k+O7a6qRREXQpjpR6OYk1rY
+ cg3ZSZfV6PwZ63YmTgXmIp2Ecu0P6PkfLScCh0yViR41BEmiSRX5+RxvSz74x0JzDKJp
+ M8BQ==
+X-Gm-Message-State: AJIora9WnqcSkXTuPj5x9ILvIkFggrqzHUmwfS9xC6/v/+toLizP76bP
+ WstAiwWM0xfAo8nVXDgRWCLNXyfsMCFtlvJ1UyzkQd3r1kLRieLLpDjikTLR2WXIH7E6T/1NpuK
+ KlgcNu0hhieYPRg==
+X-Received: by 2002:ae9:e901:0:b0:6b6:ad9:c9c1 with SMTP id
+ x1-20020ae9e901000000b006b60ad9c9c1mr18661172qkf.313.1659543424493; 
+ Wed, 03 Aug 2022 09:17:04 -0700 (PDT)
+X-Google-Smtp-Source: AGRyM1vXVE0dujiASybe9IXw4b0lQ3tiw3YPy3RxvBEkSMmPxkaxPE1QNVrCTaBQYtzd96O84IDQKQ==
+X-Received: by 2002:ae9:e901:0:b0:6b6:ad9:c9c1 with SMTP id
+ x1-20020ae9e901000000b006b60ad9c9c1mr18661152qkf.313.1659543424208; 
+ Wed, 03 Aug 2022 09:17:04 -0700 (PDT)
+Received: from localhost (pool-68-160-173-162.bstnma.fios.verizon.net.
+ [68.160.173.162]) by smtp.gmail.com with ESMTPSA id
+ r20-20020a05622a035400b0031eeecd21d6sm12062772qtw.69.2022.08.03.09.17.03
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 03 Aug 2022 08:04:20 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Date: Wed,  3 Aug 2022 17:04:19 +0200
-Message-Id: <20220803150419.139067-1-xose.vazquez@gmail.com>
+ Wed, 03 Aug 2022 09:17:03 -0700 (PDT)
+Date: Wed, 3 Aug 2022 12:17:02 -0400
+From: Mike Snitzer <snitzer@redhat.com>
+To: Nathan Huckleberry <nhuck@google.com>
+Message-ID: <YuqffhXctdt9vM0i@redhat.com>
+References: <20220726160959.89247-1-snitzer@kernel.org>
+ <6a158b48-10d3-6427-bc44-e7f78513380b@gmail.com>
+ <YuBzAIXQXBRwukR7@redhat.com>
+ <28afb65a-f15a-7f75-9a78-acae374f809b@gmail.com>
+ <CAJkfWY5wbGB=2CxGKcSKSUCyE18fg4HHH4KuDw+1zRe5jNGmww@mail.gmail.com>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-Subject: [dm-devel] [PATCH] spelling: cplusplus
+In-Reply-To: <CAJkfWY5wbGB=2CxGKcSKSUCyE18fg4HHH4KuDw+1zRe5jNGmww@mail.gmail.com>
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH v2 0/6] dm verity: optionally use tasklets
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -104,50 +109,103 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
- Josh Soref <2119212+jsoref@users.noreply.github.com>,
- DM-DEVEL ML <dm-devel@redhat.com>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>,
- Martin Wilck <mwilck@suse.com>
+Cc: Eric Biggers <ebiggers@kernel.org>, dm-devel@redhat.com,
+ Mike Snitzer <snitzer@kernel.org>, Milan Broz <gmazyland@gmail.com>,
+ Sami Tolvanen <samitolvanen@google.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Josh Soref <2119212+jsoref@users.noreply.github.com>
+On Tue, Aug 02 2022 at  9:39P -0400,
+Nathan Huckleberry <nhuck@google.com> wrote:
 
-From: Josh Soref <2119212+jsoref@users.noreply.github.com>
+> On Wed, Jul 27, 2022 at 1:23 AM Milan Broz <gmazyland@gmail.com> wrote:
+> >
+> > On 27/07/2022 01:04, Mike Snitzer wrote:
+> > > On Tue, Jul 26 2022 at  5:44P -0400,
+> > > Milan Broz <gmazyland@gmail.com> wrote:
+> > >
+> > >> On 26/07/2022 18:09, Mike Snitzer wrote:
+> > >>> Hi,
+> > >>>
+> > >>> Please see this updated patchset that reflects what I've staged for
+> > >>> the 5.20 merge window, see:
+> > >>> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-5.20
+> > >>>
+> > >>> My only outstanding question, from previous v1 patchset, is: should
+> > >>> the verify_wq be created using WQ_HIGHPRI instead of WQ_CPU_INTENSIVE?
+> > >>> (I doubt it has a significant impact on performance but if you have
+> > >>> insight on why you made that change, and if it meaningful, I'd happily
+> > >>> apply the change).
+> > >>>
+> > >>> I've tested using cryptsetup's testsuite (which has dm-verity tests)
+> > >>> but I haven't tested the "try_verify_in_tasklet" feature.
+> > >
+> > > I wasn't lying above: I haven't tested the "try_verify_in_tasklet"
+> > > feature.  I just figured I didn't break what Huck posted by cleaning
+> > > it up while reviewing closely ;)
+> >
+> > :) What I am trying to avoid is that these patches reach Linux tree
+> > until properly tested even in non-standard configurations (like FEC enabled).
+> >
+> > Currently we have not even enough HW for GitLab runners for upstream cryptsetup
+> > CI testing and regression like these will cause *huge* pain for us later.
+> >
+> > >> I added new veritysetup option --use-tasklets for testing to a new branch
+> > >> https://gitlab.com/cryptsetup/cryptsetup/-/commits/verify-tasklet
+> > >>
+> > >> I tried to run verity-compat-test (on that branch above), not used the flag yet,
+> > >> just in one simple option flag test (see the branch).
+> > >
+> > > OK, thanks for doing this work, really appreciate it.  How is it I
+> > > would initiate this test using your "verify-tasklet" branch?
+> >
+> > Basically, just checkout that branch, compile it
+> > (autogen.sh, configure, make, make check-programs) and then run verity test
+> > cd tests; ./verity-compat-test
+> >
+> > Even without adding the feature, FEC tests are skipped for some reason...
+> > (Check for N/A that should not be there.)
+> >
+> > Then you can easily enable "--use-tasklets" for every open, I would just
+> > comment this line:
+> >
+> > --- a/src/veritysetup.c
+> > +++ b/src/veritysetup.c
+> > @@ -184,7 +184,7 @@ static int _activate(const char *dm_device,
+> >                  activate_flags |= CRYPT_ACTIVATE_IGNORE_ZERO_BLOCKS;
+> >          if (ARG_SET(OPT_CHECK_AT_MOST_ONCE_ID))
+> >                  activate_flags |= CRYPT_ACTIVATE_CHECK_AT_MOST_ONCE;
+> > -       if (ARG_SET(OPT_USE_TASKLETS_ID))
+> > +//     if (ARG_SET(OPT_USE_TASKLETS_ID))
+> >                  activate_flags |= CRYPT_ACTIVATE_TASKLETS;
+> >
+> >
+> > compile it, and run the verity-compat-test again.
+> >
+> 
+> > For me, it stucks on the first in-kernel verify (non-FEC) line.
+> > Some trace below...
+> 
+> I was able to fix this. There was a problem with falling back to a
+> work-queue after FEC fails. This caused an infinite loop. I have
+> dm-verity passing verity-compat-test with --use-tasklets; I'll send a
+> v3 soon.
+> 
+> Thanks,
+> Huck
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
-Reviewed-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Signed-off-by: Josh Soref <2119212+jsoref@users.noreply.github.com>
----
-It was 12/44
----
- libmpathvalid/mpath_valid.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Great news. If your fix is confined to a small incremental fix that
+needs folding into patch 3 of the v2 patchset: please just send the
+incremental patch.
 
-diff --git a/libmpathvalid/mpath_valid.h b/libmpathvalid/mpath_valid.h
-index ed06196e..ec2f9392 100644
---- a/libmpathvalid/mpath_valid.h
-+++ b/libmpathvalid/mpath_valid.h
-@@ -20,7 +20,7 @@
- #ifndef LIB_MPATH_VALID_H
- #define LIB_MPATH_VALID_H
- 
--#ifdef __cpluscplus
-+#ifdef __cplusplus
- extern "C" {
- #endif
- 
--- 
-2.37.1
+Thanks,
+Mike
 
 --
 dm-devel mailing list
