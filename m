@@ -1,109 +1,109 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 10FE4C19F28
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Aug 2022 16:30:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DE0D1C19F28
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Aug 2022 17:11:27 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1659544228;
+	s=mimecast20190719; t=1659546686;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=ix8sm6HktgAUiBbOkJrHqfiqGAhCVwcJ+hsFvljXUk4=;
-	b=BLJALaeUE5/H6CjZw365TKQ6KyWs6ECVVcR8lFntmRX+1JUK6cl92zeeXQfKx7Hay21tsC
-	M/5ZFr+6htslvX3G+0MZydIndLscUVYKBeZWAddilHoyeaCufai/BtTxofk6qc2xRDY5Jm
-	BuU+I3RwgcQX+3ffSJ4KDZA9Lj0bzdo=
+	bh=Nfsm0f7Xcw+Qprh/yYEhI6hnUH1XjtxnraBOhanl6P0=;
+	b=M88ryp3KWWkFZhX1W4/2n6/41X9vs4kGkw2HFLLvmvVsmKGJhjrFMrW4OqTki3VZ3RsFq9
+	HjHuYD4eN2uXk0erkc37/gOe8/IAjldSIqXH8B7R8hbW2DwgmoOJ1NwX6tDuvRyl+Ny0us
+	trCtugGDuz/MTSrxksNQpe6hTc/L0VI=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-619-7s4rae1_M1mNr6IKIoHM2w-1; Wed, 03 Aug 2022 12:30:25 -0400
-X-MC-Unique: 7s4rae1_M1mNr6IKIoHM2w-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-14-9Ob1niA1M26zudxm1ZS7Kw-1; Wed, 03 Aug 2022 13:11:25 -0400
+X-MC-Unique: 9Ob1niA1M26zudxm1ZS7Kw-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C4A7E801585;
-	Wed,  3 Aug 2022 16:30:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0D9EA101A586;
+	Wed,  3 Aug 2022 17:11:24 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A6B432026D4C;
-	Wed,  3 Aug 2022 16:30:22 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 71CC118EB5;
+	Wed,  3 Aug 2022 17:11:20 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 775461946A4E;
-	Wed,  3 Aug 2022 16:30:22 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1EC201946A53;
+	Wed,  3 Aug 2022 17:11:20 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E34F11946A4E
- for <dm-devel@listman.corp.redhat.com>; Wed,  3 Aug 2022 16:30:20 +0000 (UTC)
+ ESMTP id B29AA1946A4E
+ for <dm-devel@listman.corp.redhat.com>; Wed,  3 Aug 2022 17:11:18 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C121A40C1288; Wed,  3 Aug 2022 16:30:20 +0000 (UTC)
+ id 9D434C15D4F; Wed,  3 Aug 2022 17:11:18 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id BCF68403D0D0
- for <dm-devel@redhat.com>; Wed,  3 Aug 2022 16:30:20 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 99524C202C5
+ for <dm-devel@redhat.com>; Wed,  3 Aug 2022 17:11:18 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A01FB18A0165
- for <dm-devel@redhat.com>; Wed,  3 Aug 2022 16:30:20 +0000 (UTC)
-Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
- [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 82887185A7B2
+ for <dm-devel@redhat.com>; Wed,  3 Aug 2022 17:11:18 +0000 (UTC)
+Received: from mail-pl1-f179.google.com (mail-pl1-f179.google.com
+ [209.85.214.179]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-531-wdwip-IHMO-U7OTqmCwwhQ-1; Wed, 03 Aug 2022 12:30:19 -0400
-X-MC-Unique: wdwip-IHMO-U7OTqmCwwhQ-1
-Received: by mail-qk1-f200.google.com with SMTP id
- v13-20020a05620a0f0d00b006b5f0ec742eso13749850qkl.2
- for <dm-devel@redhat.com>; Wed, 03 Aug 2022 09:30:19 -0700 (PDT)
+ us-mta-10-QaDBqUDYNsW8VOqBKzC35g-1; Wed, 03 Aug 2022 13:11:16 -0400
+X-MC-Unique: QaDBqUDYNsW8VOqBKzC35g-1
+Received: by mail-pl1-f179.google.com with SMTP id w14so3924005plp.9;
+ Wed, 03 Aug 2022 10:11:16 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc;
- bh=JEGwHpj/JAt/PomUVgL9JssMeg6/tOcFaY2m43nKSN0=;
- b=bxoxb+H/wPfsPVvoGI48IBo+tUMEbzDKRb4bpouaP1h91hKxvLIZ1Mvkc7zMb9OaAW
- 1Lo+uOK6J0H4oelZovKYZeADtwwferbWEb0ClaQzUT+pf6v4RI6wBGn5IH52n9Us2Axf
- TvljP2uF5eb+nuURFlAo4IIF47oBsuK6Knm2YRIeISgd29BElJT8wwLx5+Dwuilg4NYy
- DJvbph2ZCrMA5pwKYBA1HjoFmCqmTeZSUmMmshhgTD7Pv7CWYwkKXvmHdd+TAXT2qiob
- kXRjRKn8/Gp3+uPAy6t/y87skYaEy252QbMGVtuKq8HNVqV19m+zKievMzCBQ7UGkjNS
- SN9g==
-X-Gm-Message-State: ACgBeo1Z+D9DgrLi9DtVisqzFfl7/yPvrSJ3S+psgBWT0u/2Cx7P4pYH
- EwdO90AXhJx92V3Wfx9YHJm79py7eYNzW/gC8O2PIBQY/4vkfijUCdtbagyXRNSCZhTIyYSPe9c
- 5FRdX+7axbfMrTQ==
-X-Received: by 2002:a05:6214:4110:b0:476:d05d:71b3 with SMTP id
- kc16-20020a056214411000b00476d05d71b3mr9018253qvb.62.1659544218812; 
- Wed, 03 Aug 2022 09:30:18 -0700 (PDT)
-X-Google-Smtp-Source: AA6agR5LbF1YWJL806wlgYMcddrY8rF1HHtfxNxg5ADl1BxWTZTR5HYT7ulzVwzYJpFHKEpcrLpQxA==
-X-Received: by 2002:a05:6214:4110:b0:476:d05d:71b3 with SMTP id
- kc16-20020a056214411000b00476d05d71b3mr9018234qvb.62.1659544218629; 
- Wed, 03 Aug 2022 09:30:18 -0700 (PDT)
-Received: from localhost (pool-68-160-173-162.bstnma.fios.verizon.net.
- [68.160.173.162]) by smtp.gmail.com with ESMTPSA id
- bs11-20020a05620a470b00b006b5ef0aff29sm13015523qkb.87.2022.08.03.09.30.17
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 03 Aug 2022 09:30:17 -0700 (PDT)
-Date: Wed, 3 Aug 2022 12:30:16 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Daniil Lunev <dlunev@chromium.org>
-Message-ID: <YuqimBLSh/4wvoDU@redhat.com>
-References: <20220704000225.345536-1-dlunev@chromium.org>
- <20220704100221.1.I15b3f7a84ba5a97fde9276648e391b54957103ff@changeid>
- <YtB45Lte5UhlEE6y@redhat.com>
- <CAONX=-dEG121RQ6L-4fPMXrLXb3JeYNVNiPzHXNaRLbwRzb3bw@mail.gmail.com>
- <alpine.LRH.2.02.2207150528170.5197@file01.intranet.prod.int.rdu2.redhat.com>
- <cca5b463-a860-de8d-b7e4-a8d30aef2ff2@gmail.com>
- <CAONX=-fJHgfGkwR5A1MT+8FHckueehOsUS_LyHkjrgp4Y+vOgw@mail.gmail.com>
- <CAONX=-ft=ewFDui4jmd2fvcNr2EJc90=ZNOueDdp6HaPZmvObQ@mail.gmail.com>
- <Yun4LH+StcuBXRtO@sol.localdomain>
- <CAONX=-esLr5bGUks_a8wQBky37NnCawh2eOMemYg32HcPA7pmA@mail.gmail.com>
+ h=content-transfer-encoding:in-reply-to:from:references:cc:to
+ :content-language:subject:user-agent:mime-version:date:message-id
+ :x-gm-message-state:from:to:cc;
+ bh=o2afx9aZmzEdoWwdGDbShaY9b54ZclDxz5tctOo//Fo=;
+ b=K4vhQy629XWN+ezI9rtoA4w0aa0/y96soMEvNVFwx1lnXEL5ZuEe4JDq8Hr9/vRHxF
+ Q/Zd2lttqypgJX+7YVEPFxbgvm9xzL94TQ8fHZhJLYnt9ACyxtFYqs66UhY5Tqc/3tKL
+ gfKZh3lBM5GGPrC4YE7dTfDsGhroa9UrLiRGm4PVb2Fiv3Up971AzS2+aGdHluFHA2/A
+ RlcIJZGj2SRZizzFXk7eIqC3UalVUq/AojbdVqRzr4lbk26HBN5MKs7osc71VVbk+D3W
+ vagV143+1gQHxBhg7cgIM5Zh+0E1Jj9kqk+DPUf+doDK5wkAIs9pQqtimbzMpFSWUtRP
+ qgRA==
+X-Gm-Message-State: ACgBeo0TA4iwaYcpOAFTVJV3TpzyFMs4c1XY+Ak6J7rxcokqUEBfxleH
+ 35ss8hXoL5j5AzMl8DwQyxo=
+X-Google-Smtp-Source: AA6agR6EBIzKze1/rFrYedIXXEbWGppFAk1TLH0M11oAyd1FFJw2h6QmbM00Fe9GucsJfuqW4gRWhw==
+X-Received: by 2002:a17:903:245:b0:16b:9c49:6b1c with SMTP id
+ j5-20020a170903024500b0016b9c496b1cmr26089750plh.153.1659546675071; 
+ Wed, 03 Aug 2022 10:11:15 -0700 (PDT)
+Received: from ?IPV6:2620:15c:211:201:db71:edb7:462a:44af?
+ ([2620:15c:211:201:db71:edb7:462a:44af])
+ by smtp.gmail.com with ESMTPSA id
+ w127-20020a623085000000b0052df34124b4sm3552742pfw.84.2022.08.03.10.11.13
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Wed, 03 Aug 2022 10:11:14 -0700 (PDT)
+Message-ID: <d091dcf8-ce01-06cb-bff0-b41a5bb1ee86@acm.org>
+Date: Wed, 3 Aug 2022 10:11:12 -0700
 MIME-Version: 1.0
-In-Reply-To: <CAONX=-esLr5bGUks_a8wQBky37NnCawh2eOMemYg32HcPA7pmA@mail.gmail.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH 1/1] dm: add message command to disallow
- device open
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.11.0
+To: Pankaj Raghav <p.raghav@samsung.com>, Johannes.Thumshirn@wdc.com,
+ snitzer@kernel.org, axboe@kernel.dk, damien.lemoal@opensource.wdc.com,
+ agk@redhat.com, hch@lst.de
+References: <20220803094801.177490-1-p.raghav@samsung.com>
+ <CGME20220803094804eucas1p1feea4b1bdae819f4c8750994ddd94803@eucas1p1.samsung.com>
+ <20220803094801.177490-3-p.raghav@samsung.com>
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20220803094801.177490-3-p.raghav@samsung.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH v9 02/13] block:rearrange bdev_{is_zoned,
+ zone_sectors, get_queue} helpers in blkdev.h
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -115,42 +115,26 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Brian Geffon <bgeffon@google.com>, Mike Snitzer <snitzer@kernel.org>,
- linux-kernel@vger.kernel.org, Zdenek Kabelac <zdenek.kabelac@gmail.com>,
- Eric Biggers <ebiggers@kernel.org>, dm-devel@redhat.com,
- Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Cc: pankydev8@gmail.com, gost.dev@samsung.com, linux-kernel@vger.kernel.org,
+ linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, jaegeuk@kernel.org, matias.bjorling@wdc.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Wed, Aug 03 2022 at 12:29P -0400,
-Daniil Lunev <dlunev@chromium.org> wrote:
+On 8/3/22 02:47, Pankaj Raghav wrote:
+> Define bdev_is_zoned(), bdev_zone_sectors() and bdev_get_queue() earlier
+> in the blkdev.h include file.
+> 
+> This commit has no functional change, and it is a prep patch for allowing
+> zoned devices with non-power-of-2 zone sizes in the block layer.
 
-> > This seems like an access control policy, which the Linux kernel already has a
-> > lot of mechanisms for.  Chrome OS already uses SELinux.  Couldn't this be solved
-> > by giving the device node an SELinux label that no one has permission to open?
-> That would be the ideal solution, but there is a number of challenges
-> that prevent
-> us enabling enforcement on all SELinux domains unfortunately. While in the long
-> run that would be a preferred option, in the short run this doesn't
-> seem feasible. I
-> would assume the problem of enabling full SELInux enforcement would plague
-> any big project that didn't have them enabled from the get going.
-> --Daniil
-
-I'm not going to take this patch. It isn't the proper way to handle
-preventing use of a DM device. In addition, the patch's header doesn't
-speak to a proper review/audit of implications this change would have
-on all aspects of a DM device's capabilities. If Chrome OS needs this
-as a stop-gap then please carry it as needed.
-
-Regards,
-Mike
+Reviewed-by: Bart Van Assche <bvanassche@acm.org>
 
 --
 dm-devel mailing list
