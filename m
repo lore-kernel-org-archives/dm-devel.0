@@ -1,81 +1,79 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 670AEC19F2D
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Aug 2022 20:45:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D4735C19F2D
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Aug 2022 20:49:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1659559511;
+	s=mimecast20190719; t=1659559786;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=8agpBAtjUF9AAoowjKdy98bKJffubiJKxeD6denoEKk=;
-	b=Kkrq5p4tQO1c6lXhz3Gw2j2wW++w0S7GjBRJ0GIYPHzXWhMCDhXfI69jxdxSgqcHuDsJDq
-	oZmDk6f6amu5H0NUKvMBoZ30yaOXS7ACKKvHlMGGNSkHGakfzf07oRi92mpM0S97ziIx0T
-	KGlJ7PU4UyMJz4xV0gvo7uJDwktFhJ4=
+	bh=jlFB4dMp4rMgctGlxmtiBx/v/ywUw7iFLW8QCOhYMBM=;
+	b=DhuB2uLVG8kARmoy0AlkHyAf5j4NV2csFZqBCaaBs3CR40QhFwebknO4Na+uYeAa7t10eU
+	0kiZrNgQKNie3HDIs0MehuFFIGo+jrLt7qt07Amy1YpBTvGSajsQMu0zy2CPJSokmXdUhE
+	V1bMJM0IOirlVuFP0YyLingVeq29EHA=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-586-aOEMgO5ROuuin-MUntKrHA-1; Wed, 03 Aug 2022 16:45:10 -0400
-X-MC-Unique: aOEMgO5ROuuin-MUntKrHA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-245-44mAJP_1OKiaQwyh1pmkrA-1; Wed, 03 Aug 2022 16:49:43 -0400
+X-MC-Unique: 44mAJP_1OKiaQwyh1pmkrA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B7ECB185A79C;
-	Wed,  3 Aug 2022 20:45:08 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 946418115B1;
+	Wed,  3 Aug 2022 20:49:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A4EA140CFD0A;
-	Wed,  3 Aug 2022 20:45:06 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0ADC62166B26;
+	Wed,  3 Aug 2022 20:49:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 807E41946A52;
-	Wed,  3 Aug 2022 20:45:06 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CCD271946A52;
+	Wed,  3 Aug 2022 20:49:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 38BC91946A4E
- for <dm-devel@listman.corp.redhat.com>; Wed,  3 Aug 2022 20:45:06 +0000 (UTC)
+ ESMTP id 49D1F1946A4E
+ for <dm-devel@listman.corp.redhat.com>; Wed,  3 Aug 2022 20:49:40 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 20FF91415122; Wed,  3 Aug 2022 20:45:06 +0000 (UTC)
+ id 2D3D01121315; Wed,  3 Aug 2022 20:49:40 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1D20E1415116
- for <dm-devel@redhat.com>; Wed,  3 Aug 2022 20:45:06 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 29C171121314
+ for <dm-devel@redhat.com>; Wed,  3 Aug 2022 20:49:40 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 06797101A586
- for <dm-devel@redhat.com>; Wed,  3 Aug 2022 20:45:06 +0000 (UTC)
-Received: from mail-yw1-f176.google.com (mail-yw1-f176.google.com
- [209.85.128.176]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0EFD4811E80
+ for <dm-devel@redhat.com>; Wed,  3 Aug 2022 20:49:40 +0000 (UTC)
+Received: from mail-yb1-f172.google.com (mail-yb1-f172.google.com
+ [209.85.219.172]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-548-SYI_ZnisPLSfwxkmoNnt8w-1; Wed, 03 Aug 2022 16:45:04 -0400
-X-MC-Unique: SYI_ZnisPLSfwxkmoNnt8w-1
-Received: by mail-yw1-f176.google.com with SMTP id
- 00721157ae682-32269d60830so182983357b3.2
- for <dm-devel@redhat.com>; Wed, 03 Aug 2022 13:45:04 -0700 (PDT)
+ us-mta-584-9i1UBEBUOAa_59oMUMbfGg-1; Wed, 03 Aug 2022 16:49:38 -0400
+X-MC-Unique: 9i1UBEBUOAa_59oMUMbfGg-1
+Received: by mail-yb1-f172.google.com with SMTP id z5so28354704yba.3
+ for <dm-devel@redhat.com>; Wed, 03 Aug 2022 13:49:38 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:mime-version:references:in-reply-to:from:date
  :message-id:subject:to:cc;
- bh=nbc6TTtXlc6VfBsVBN6Hr/kOw1BsZ/pBPw82z6wXqKA=;
- b=EdaglYnktcX3y5GB7z76BchsiDLtbbxldHOrtNfRYZAYKAdzSEKCC8tuQ5SRYcKUaI
- PUWDkEkHj3kxn9GBucGufBNwwlrYNI4KLDh8LicnmVUygQ+bSUrp6k0AMyV/wnWHcrJl
- 3NOwev/wM/fuRfm/vXghTjOXFgQ9OX57l2cA3a9YoBol0NLMRioM2bNdDbLG5d+dL+5w
- 0lC1Xa3IG4cGxcUvlqqZR7wVDXNjHcTNbFaAwG1JIAhLKLrf3IFM/5TPa8pcCExko0C7
- A2VOjl5O6DwRKRcQDdfIoZ8YWBG7yL9+055lv5URbRG2FfxvLoMCBhcs38refmicZJ5W
- CUKg==
-X-Gm-Message-State: ACgBeo0XRBtz7Y9qor7QQRDg5eVnh6M93a4X6X60Pb1ZwoB/gpnEH+t0
- qUx5e7akucmfGZX33WATCml1gIzUE+ir2Ic5p9PPEA==
-X-Google-Smtp-Source: AA6agR4DWBxQCeBDkeUkSNrGwu0R53bNTNqwoEG4P8nAjMgXO1ikzLAwVFJaxgNYWFjZYGyySNaKuIdRFLzaZE5j1oo=
-X-Received: by 2002:a81:55c2:0:b0:31f:645b:9858 with SMTP id
- j185-20020a8155c2000000b0031f645b9858mr26357883ywb.296.1659559503829; Wed, 03
- Aug 2022 13:45:03 -0700 (PDT)
+ bh=8Gy0vda4fEjaHYG8Mhy2G1yyPlIluCCBrlRGzTB0g14=;
+ b=XkHQGMsDCuMODN7JtE7mEJJlFbURK4ugezp91/vKj00B73veaAZb410ez4tJ+vyUaT
+ pO5lnkxGTZJWD9FjbCLOivqQ/yJeXyIHlWNayU3SZaNsEYCeAiAbiVDs1IHzlHx39ZWo
+ 5Wh47CCMWvv/7zhfp7U4qe/5IW6MnFNT6ceF1gOOU9zm3zGT/KzVvDGODlbk432P1Lsa
+ SDXFqd1V5yzXcRl0UQakSDZ6dG2h3IIB6sDfqfQyFr8niFZVD2zTJSfJaLJlDXZeXasi
+ ogMpVzE4mqqCiW0ozc0EzgkEAlZhUxTCJOB0zx65J8G/hqjjgBwYDV9NC1rvRttC5JEA
+ qj9g==
+X-Gm-Message-State: ACgBeo2mRY2dxuoBr5gcoRJeRT/bvnYSjaHGo6CDN0nWH1Caxf2X4N/2
+ geV3sH4tY1pRtWHshIXdDOFvBJXbHTIyJzI9izaiMg==
+X-Google-Smtp-Source: AA6agR5lM3Raf5s7ohmYeE5wleyqMdPST+gQvxgTBp4oJg1xkl8CCaHr3+GkUA5ZwlYrONoFxLcnLYEfLkzWd7ASa0E=
+X-Received: by 2002:a25:6908:0:b0:67a:6cf9:52e0 with SMTP id
+ e8-20020a256908000000b0067a6cf952e0mr3893457ybc.62.1659559777815; Wed, 03 Aug
+ 2022 13:49:37 -0700 (PDT)
 MIME-Version: 1.0
 References: <20220704000225.345536-1-dlunev@chromium.org>
  <20220704100221.1.I15b3f7a84ba5a97fde9276648e391b54957103ff@changeid>
@@ -87,12 +85,12 @@ References: <20220704000225.345536-1-dlunev@chromium.org>
  <CAONX=-ft=ewFDui4jmd2fvcNr2EJc90=ZNOueDdp6HaPZmvObQ@mail.gmail.com>
  <Yun4LH+StcuBXRtO@sol.localdomain>
  <CAONX=-esLr5bGUks_a8wQBky37NnCawh2eOMemYg32HcPA7pmA@mail.gmail.com>
- <Yuq9jhxb+WgO55KJ@gmail.com>
-In-Reply-To: <Yuq9jhxb+WgO55KJ@gmail.com>
+ <YuqimBLSh/4wvoDU@redhat.com>
+In-Reply-To: <YuqimBLSh/4wvoDU@redhat.com>
 From: Daniil Lunev <dlunev@chromium.org>
-Date: Thu, 4 Aug 2022 06:44:53 +1000
-Message-ID: <CAONX=-dCrJabyvt2S24kEJi38Pbuzj_4kvugoF_75PWV69bNJw@mail.gmail.com>
-To: Eric Biggers <ebiggers@kernel.org>
+Date: Thu, 4 Aug 2022 06:49:27 +1000
+Message-ID: <CAONX=-ctGm1pLYtVTk=vtLVi9v+F+vCcd=aQ1gZH7gDMGkh-3w@mail.gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -100,7 +98,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 Subject: Re: [dm-devel] [PATCH 1/1] dm: add message command to disallow
  device open
 X-BeenThere: dm-devel@redhat.com
@@ -116,19 +114,35 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Cc: Brian Geffon <bgeffon@google.com>, Mike Snitzer <snitzer@kernel.org>,
  linux-kernel@vger.kernel.org, Zdenek Kabelac <zdenek.kabelac@gmail.com>,
- dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>,
- Alasdair Kergon <agk@redhat.com>
+ Eric Biggers <ebiggers@kernel.org>, dm-devel@redhat.com,
+ Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-> Have you also considered unlinking the device node (/dev/dm-$idx) from the
-> filesystem after it has been set up for swap?
-Yes, the node can be re-linked with mknod, thus is not a suitable solution.
+> I'm not going to take this patch. It isn't the proper way to handle
+> preventing use of a DM device.
+Can you suggest a better mechanism that would be acceptable
+from your perspective?
+
+> In addition, the patch's header doesn't speak to a proper
+> review/audit of implications this change would have
+> on all aspects of a DM device's capabilities.
+I would gladly clarify the commit message, and I am sorry
+for making it terse in the beginning. Can you please
+clarify, what capabilities are you concerned about? The
+change shouldn't change any existing semantics if the
+mechanism is never used on a specific system, and only
+alters "open" behaviour in the cases where the specific
+message was issued, but I am happy to cover any
+additional aspects you are concerned about
+
+Thanks,
+Daniil
 
 --
 dm-devel mailing list
