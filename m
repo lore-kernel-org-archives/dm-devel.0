@@ -1,100 +1,93 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id F15A7C19F21
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Aug 2022 20:22:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id ADAC7C00140
+	for <dm-devel@archiver.kernel.org>; Fri,  5 Aug 2022 19:11:27 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1659644554;
+	s=mimecast20190719; t=1659726686;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=OzPhSXRH5rbhvnKZWTv4jnGhTYrO5CE2Jq5vQfYEgKo=;
-	b=GByWOCLTOpZR1yJaPNYkwf35h8KdTa0AGBlOPUNCqEaNJZn32hiaRSWQZmJUt3wuOSlUcs
-	OdBLpHGy/YRLURJAj8JYiL9qInjweebIoKTCcjSuhMmojXysX+qUITd0Mo+qaLkFHwNOzk
-	HyiHGimPLpTlmpabDDGvgViihoiaO0U=
+	bh=CFagGdxa2sDfHAEJAKvv2V9I/pxZsXTYOAmvqWl3P6E=;
+	b=KCnYyISaBrvmiKMGXpDz24bDA3/SNzITtW6Gp+0VRpTZy6eTU8Mj9KnBfH/q3FNBUaQ8Zd
+	957Czb9X3XYT4HsdLRkL4K4G1bCktQQRBBsEPw28wgP9mwfCIZ9gNeSXk3qmvobxKO+pMY
+	43/gW7MJ46OdmtO0oELGLcwAEr52Uhw=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-2-C5hbW1bNOPGOEQlNOoJ6og-1; Thu, 04 Aug 2022 16:22:31 -0400
-X-MC-Unique: C5hbW1bNOPGOEQlNOoJ6og-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-325-GGhU8lxjNwCBuVGNO6W_OQ-1; Fri, 05 Aug 2022 15:11:23 -0400
+X-MC-Unique: GGhU8lxjNwCBuVGNO6W_OQ-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3446A2804002;
-	Thu,  4 Aug 2022 20:22:30 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 93E1B1121315;
-	Thu,  4 Aug 2022 20:22:27 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5847E1C06ED9;
+	Fri,  5 Aug 2022 19:11:08 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 38E0540C1288;
+	Fri,  5 Aug 2022 19:11:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 646891946A62;
-	Thu,  4 Aug 2022 20:22:27 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id ECA4E1932220;
+	Fri,  5 Aug 2022 19:11:03 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
  [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8006C1946A5F
- for <dm-devel@listman.corp.redhat.com>; Thu,  4 Aug 2022 20:22:26 +0000 (UTC)
+ ESMTP id 591BF1932216
+ for <dm-devel@listman.corp.redhat.com>; Fri,  5 Aug 2022 19:11:02 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7271940C1288; Thu,  4 Aug 2022 20:22:26 +0000 (UTC)
+ id 4A63240C1288; Fri,  5 Aug 2022 19:11:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 6E3824010E37
- for <dm-devel@redhat.com>; Thu,  4 Aug 2022 20:22:26 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 53732801585
- for <dm-devel@redhat.com>; Thu,  4 Aug 2022 20:22:26 +0000 (UTC)
-Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
- [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 467BB4010E37
+ for <dm-devel@redhat.com>; Fri,  5 Aug 2022 19:11:02 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3310A1991C58
+ for <dm-devel@redhat.com>; Fri,  5 Aug 2022 19:10:56 +0000 (UTC)
+Received: from mail-qk1-f174.google.com (mail-qk1-f174.google.com
+ [209.85.222.174]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-197-DQkGJFERPl2vBb1avP8XZQ-1; Thu, 04 Aug 2022 16:22:25 -0400
-X-MC-Unique: DQkGJFERPl2vBb1avP8XZQ-1
-Received: by mail-qk1-f200.google.com with SMTP id
- q20-20020a05620a0d9400b006b6540e8d79so415445qkl.14
- for <dm-devel@redhat.com>; Thu, 04 Aug 2022 13:22:25 -0700 (PDT)
+ us-mta-361-ohO482JHNPaphGrzirzO_g-1; Fri, 05 Aug 2022 15:10:54 -0400
+X-MC-Unique: ohO482JHNPaphGrzirzO_g-1
+Received: by mail-qk1-f174.google.com with SMTP id p4so1355258qkm.1
+ for <dm-devel@redhat.com>; Fri, 05 Aug 2022 12:10:52 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=in-reply-to:content-disposition:mime-version:references:message-id
  :subject:cc:to:from:date:x-gm-message-state:from:to:cc;
- bh=s1I8tAb6W2pw17Tsnep/5BDHiAi73WiVLdCb8RbVhWI=;
- b=EHDvPTMTgfgFWDCxTfIuJZDM/37MV566lMeI6gAVwWyLRhxxGvA0Jaa8mtJikdrQO9
- 3FHnCsRL0NHrg5OXxQepDG7xqbKl4l8Z6tpf/PY5Bj+jDfSJvK6zxRbyFFoi8joeZRbK
- YkgI9egUwom/nqDxs1DQAKca5CdsaaMUfhwUkqEi+pDeEoETJd9HvluF6VnfCRUb4LEr
- 1xnrpEOhXxoAobfOuryH2T5PJqoa9WeHW/6l9mqoB4kw1U7Sak+qRlUyF3vXstKXguUD
- ahk5rdw0Zj6qUzmoSwMEaac7thVOsHvDrSvIMuAlvWQVVm/rhgerKAXI1aFrEszpqm/3
- Tfcw==
-X-Gm-Message-State: ACgBeo3Ah7YHSE9aqBpkCM/FtB5KzhO0WkuOSAEjqh1ytkMO/O3MYFDY
- wSY/F3mib7lgQPCYfEC+d5xaqrvTaHGa8tS7RFdVyOYXVfQoehwNv79j92dToV/2wAXWhdD/PYi
- lUOyrpB7OV5xO8w==
-X-Received: by 2002:a05:622a:170c:b0:31e:fd23:fd01 with SMTP id
- h12-20020a05622a170c00b0031efd23fd01mr3002380qtk.40.1659644544641; 
- Thu, 04 Aug 2022 13:22:24 -0700 (PDT)
-X-Google-Smtp-Source: AA6agR7XyVq/X09kN/Lsso8Vg84RzcDmmtjl4wONOpxUl1nCJFdyvy5dsa2yYqmGzCBQxECU6nAq0g==
-X-Received: by 2002:a05:622a:170c:b0:31e:fd23:fd01 with SMTP id
- h12-20020a05622a170c00b0031efd23fd01mr3002366qtk.40.1659644544367; 
- Thu, 04 Aug 2022 13:22:24 -0700 (PDT)
+ bh=M9gX/uf12sWsOSRDHrNVPPG966ZdqGBVh/pkIWrHveQ=;
+ b=SXdLICft4g/45L53kKqAVI1safCYVPJTAGrTCu6mMwN17cxq5gMhpgRpaNwheUW2co
+ VGBwrgsu+0z5EPNseIrn/G7j7gzR4V/0rCzSGOk5t3gTFFdAGXwybye7Saj5qkH07Cfl
+ qLPuxsvnlg4dK5BhkhXjN6G0D9S0C7+1F+5YvVI0bM/moLdveX+3SbxgmfUzuBKVzaRn
+ zyU0Ey/XDU4FmwSvgzvFZybssh7UTk/pxxDB7JCAER964ruSvcWUjVIpDGqJaWvP98pe
+ 580GDGlw0p8H5tCePO6L8x62w60BVcS5Flk3NBRk4zAt8lET9khQWfl+jclmjQQKMcwr
+ M/tA==
+X-Gm-Message-State: ACgBeo3BhkTTlHQ7CY+fijSwd0ZKiwyMbFY4bD+uaARSxAPytRmZTczZ
+ QcQSsLQBIlvF431ob84spM+kfIE=
+X-Google-Smtp-Source: AA6agR4BAS+hM+EUim+IVcRyzqXoa4HKnh/Tj6GF+O0Vtd8DD4LdM/Qa2nW6CnG7PB2XkzY2m+F19A==
+X-Received: by 2002:a05:620a:2545:b0:6b6:6773:f278 with SMTP id
+ s5-20020a05620a254500b006b66773f278mr6337214qko.390.1659726652464; 
+ Fri, 05 Aug 2022 12:10:52 -0700 (PDT)
 Received: from localhost (pool-68-160-173-162.bstnma.fios.verizon.net.
  [68.160.173.162]) by smtp.gmail.com with ESMTPSA id
- p123-20020a37bf81000000b006af3f3b385csm1235482qkf.98.2022.08.04.13.22.23
+ ew7-20020a05622a514700b0031eb65e1cb6sm3124914qtb.5.2022.08.05.12.10.51
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 04 Aug 2022 13:22:23 -0700 (PDT)
-Date: Thu, 4 Aug 2022 16:22:22 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Nathan Huckleberry <nhuck@google.com>
-Message-ID: <Yuwqfmj4p6+pWV0i@redhat.com>
-References: <YuqffhXctdt9vM0i@redhat.com>
- <20220803182905.3279728-1-nhuck@google.com>
+ Fri, 05 Aug 2022 12:10:52 -0700 (PDT)
+Date: Fri, 5 Aug 2022 15:10:50 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <Yu1rOopN++GWylUi@redhat.com>
+References: <YugiaQ1TO+vT1FQ5@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <20220803182905.3279728-1-nhuck@google.com>
+In-Reply-To: <YugiaQ1TO+vT1FQ5@redhat.com>
 X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: Re: [dm-devel] Fixes 6890e9b8c7d0a1062bbf4f854b6be3723836ad9a
+Subject: [dm-devel] [git pull] Additional device mapper changes for 6.0
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -106,65 +99,112 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Eric Biggers <ebiggers@kernel.org>, dm-devel@redhat.com,
- Mike Snitzer <snitzer@kernel.org>, Milan Broz <gmazyland@gmail.com>,
- Sami Tolvanen <samitolvanen@google.com>
+Cc: Eric Biggers <ebiggers@kernel.org>, Nathan Huckleberry <nhuck@google.com>,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Sami Tolvanen <samitolvanen@google.com>, Milan Broz <gmazyland@gmail.com>,
+ Alasdair G Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Aug 03 2022 at  2:29P -0400,
-Nathan Huckleberry <nhuck@google.com> wrote:
+Hi Linus,
 
-> The previous patch had a bug when hash verification failed in the
-> tasklet.  This happened because the tasklet has already advanced the
-> bvec_iter when it falls back to the work-queue implementation.  When the
-> work-queue job begins running, it attempts to restart verifiying at
-> block i, but the bvec_iter is at block i+1.
-> 
-> This causes several failures, the most noticeable is that there are not
-> enough bytes in the bvec_iter to finish verification.  Since there are
-> not enough bytes to finish, the work queue gets stuck in an infinite
-> loop in verity_for_io_block.
-> 
-> To fix this, we can make a local copy of the bvec_iter struct in
-> verity_verify_io.  This requires that we restart verification from the
-> first block when deferring to a work-queue rather than starting from the
-> last block verified in the tasklet.
-> 
-> This patch also fixes what appears to be a memory leak when FEC is
-> enabled.  The call to verity_fec_init_io should only be made if we are
-> in a work-queue since a tasklet does not use FEC and is unable to free
-> the memory.
-> 
-> Signed-off-by: Nathan Huckleberry <nhuck@google.com>
+In my previous 6.0 pull request I should have forecast the potential
+for sending another one.
 
-Thanks for the detailed header, helped me appreciate the details of
-your incremental fixes. I folded your fixes in to the original commit
-that adds the "try_verify_in_tasklet" feature. I also layered on some
-verity_verify_io() optimizations in new commits. Lastly, I added the
-use of WQ_HIGHPRI if "try_verify_in_tasklet" feature is used.
+The changes in this pull request add an optional feature to the DM 
+verity target. These changes were proposed for inclussion on dm-devel
+a couple weeks before the merge window opened. I reviewed and worked
+the changes with Nathan and others for about a week. At that time the
+changes still had some clear issues (exposed with the additional
+testing Milan Broz provided in terms of a revised cryptsetup testsuite
+that introduced veritysetup's --use-tasklets). I had to put it aside
+once this merge window opened but Nathan continued to investigate.
 
-The end result passes Milan's testsuite with and without --use-tasklets.
+Nathan found and fixed the remaining issues on Tuesday/Wednesday:
+https://listman.redhat.com/archives/dm-devel/2022-August/051766.html 
 
-I've staged the changes in linux-next, see:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=for-next
+Yesterday I then folded the fixes in, and refined the code a bit
+further in response. The crytpsetup testsuite passes now (both with
+and without the use of veritysetup's --use-tasklets flag).
 
-There is a chance I'll send another 6.0 pull request to Linus with
-these changes tomorrow. We've done quite a bit of work here (_before_
-the 6.0 merge window opened) so I do think it'd be best to get these
-changes upstream sooner rather than later.
+All said: I think it worthwhile to merge these changes for 6.0, rather
+than hold until 6.1, now that we have confidence this _optional_ DM
+verity feature is working as expected. Please be aware there was a
+small linux-next merge fixup needed:
+https://lore.kernel.org/all/20220805125744.475531-1-broonie@kernel.org/T/
 
-If anyone disagrees with sending these changes upstream now please
-speak-up!
+The following changes since commit 9dd1cd3220eca534f2d47afad7ce85f4c40118d8:
 
-Thanks,
+  dm: fix dm-raid crash if md_handle_request() splits bio (2022-07-28 17:36:30 -0400)
+
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.0/dm-changes-2
+
+for you to fetch changes up to 12907efde6ad984f2d76cc1a7dbaae132384d8a5:
+
+  dm verity: have verify_wq use WQ_HIGHPRI if "try_verify_in_tasklet" (2022-08-04 15:59:52 -0400)
+
+Please pull, thanks!
 Mike
+
+----------------------------------------------------------------
+- Add flags argument to dm_bufio_client_create and introduce
+  DM_BUFIO_CLIENT_NO_SLEEP flag to have dm-bufio use spinlock rather
+  than mutex for its locking.
+
+- Add optional "try_verify_in_tasklet" feature to DM verity target.
+  This feature gives users the option to improve IO latency by using a
+  tasklet to verify, using hashes in bufio's cache, rather than wait
+  to schedule a work item via workqueue. But if there is a bufio cache
+  miss, or an error, then the tasklet will fallback to using workqueue.
+
+- Incremental changes to both dm-bufio and the DM verity target to use
+  jump_label to minimize cost of branching associated with the niche
+  "try_verify_in_tasklet" feature. DM-bufio in particular is used by
+  quite a few other DM targets so it doesn't make sense to incur
+  additional bufio cost in those targets purely for the benefit of
+  this niche verity feature if the feature isn't ever used.
+
+- Optimize verity_verify_io, which is used by both workqueue and
+  tasklet based verification, if FEC is not configured or tasklet
+  based verification isn't used.
+
+- Remove DM verity target's verify_wq's use of the WQ_CPU_INTENSIVE
+  flag since it uses WQ_UNBOUND. Also, use the WQ_HIGHPRI flag if
+  "try_verify_in_tasklet" is specified.
+
+----------------------------------------------------------------
+Mike Snitzer (7):
+      dm verity: allow optional args to alter primary args handling
+      dm bufio: conditionally enable branching for DM_BUFIO_CLIENT_NO_SLEEP
+      dm verity: conditionally enable branching for "try_verify_in_tasklet"
+      dm verity: optimize verity_verify_io if FEC not configured
+      dm verity: only copy bvec_iter in verity_verify_io if in_tasklet
+      dm verity: remove WQ_CPU_INTENSIVE flag since using WQ_UNBOUND
+      dm verity: have verify_wq use WQ_HIGHPRI if "try_verify_in_tasklet"
+
+Nathan Huckleberry (3):
+      dm bufio: Add flags argument to dm_bufio_client_create
+      dm bufio: Add DM_BUFIO_CLIENT_NO_SLEEP flag
+      dm verity: Add optional "try_verify_in_tasklet" feature
+
+ drivers/md/dm-bufio.c                         |  32 +++++-
+ drivers/md/dm-ebs-target.c                    |   3 +-
+ drivers/md/dm-integrity.c                     |   2 +-
+ drivers/md/dm-snap-persistent.c               |   2 +-
+ drivers/md/dm-verity-fec.c                    |   4 +-
+ drivers/md/dm-verity-target.c                 | 160 ++++++++++++++++++++++----
+ drivers/md/dm-verity.h                        |   6 +-
+ drivers/md/persistent-data/dm-block-manager.c |   3 +-
+ include/linux/dm-bufio.h                      |   8 +-
+ 9 files changed, 187 insertions(+), 33 deletions(-)
 
 --
 dm-devel mailing list
