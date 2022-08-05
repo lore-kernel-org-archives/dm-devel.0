@@ -1,93 +1,61 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id ADAC7C00140
-	for <dm-devel@archiver.kernel.org>; Fri,  5 Aug 2022 19:11:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7837EC00140
+	for <dm-devel@archiver.kernel.org>; Fri,  5 Aug 2022 23:16:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1659726686;
+	s=mimecast20190719; t=1659741375;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=CFagGdxa2sDfHAEJAKvv2V9I/pxZsXTYOAmvqWl3P6E=;
-	b=KCnYyISaBrvmiKMGXpDz24bDA3/SNzITtW6Gp+0VRpTZy6eTU8Mj9KnBfH/q3FNBUaQ8Zd
-	957Czb9X3XYT4HsdLRkL4K4G1bCktQQRBBsEPw28wgP9mwfCIZ9gNeSXk3qmvobxKO+pMY
-	43/gW7MJ46OdmtO0oELGLcwAEr52Uhw=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=SNa+1frUJCUQbZkGTqzqZbv6yTfe5tIJCqv3lBk/w98=;
+	b=h8Lj+upyUSUV7Isae8g8d6LwPBOcqRBByTqaW6ke+p1DOgAna7I4vKoi0CwTfqLM03m7UW
+	Yrxhu+blMRMJTpnrRw67Sbmm4G/Du7OcQdab+MsMkGNS5tzg6kUUU/jZOJx23XtMHnCIzA
+	RHtkXS0F9Lh4ICO9peVQWyHIO6aAJEw=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-325-GGhU8lxjNwCBuVGNO6W_OQ-1; Fri, 05 Aug 2022 15:11:23 -0400
-X-MC-Unique: GGhU8lxjNwCBuVGNO6W_OQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-604-TDMHzLh7NtOGZJoxaAm4aw-1; Fri, 05 Aug 2022 19:16:12 -0400
+X-MC-Unique: TDMHzLh7NtOGZJoxaAm4aw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5847E1C06ED9;
-	Fri,  5 Aug 2022 19:11:08 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 38E0540C1288;
-	Fri,  5 Aug 2022 19:11:04 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A0101811E80;
+	Fri,  5 Aug 2022 23:16:10 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 94BA72166B26;
+	Fri,  5 Aug 2022 23:16:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id ECA4E1932220;
-	Fri,  5 Aug 2022 19:11:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 591F3193221F;
+	Fri,  5 Aug 2022 23:16:08 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 591BF1932216
- for <dm-devel@listman.corp.redhat.com>; Fri,  5 Aug 2022 19:11:02 +0000 (UTC)
+ ESMTP id 6E293193221E
+ for <dm-devel@listman.corp.redhat.com>; Fri,  5 Aug 2022 23:16:06 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4A63240C1288; Fri,  5 Aug 2022 19:11:02 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 467BB4010E37
- for <dm-devel@redhat.com>; Fri,  5 Aug 2022 19:11:02 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3310A1991C58
- for <dm-devel@redhat.com>; Fri,  5 Aug 2022 19:10:56 +0000 (UTC)
-Received: from mail-qk1-f174.google.com (mail-qk1-f174.google.com
- [209.85.222.174]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-361-ohO482JHNPaphGrzirzO_g-1; Fri, 05 Aug 2022 15:10:54 -0400
-X-MC-Unique: ohO482JHNPaphGrzirzO_g-1
-Received: by mail-qk1-f174.google.com with SMTP id p4so1355258qkm.1
- for <dm-devel@redhat.com>; Fri, 05 Aug 2022 12:10:52 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc;
- bh=M9gX/uf12sWsOSRDHrNVPPG966ZdqGBVh/pkIWrHveQ=;
- b=SXdLICft4g/45L53kKqAVI1safCYVPJTAGrTCu6mMwN17cxq5gMhpgRpaNwheUW2co
- VGBwrgsu+0z5EPNseIrn/G7j7gzR4V/0rCzSGOk5t3gTFFdAGXwybye7Saj5qkH07Cfl
- qLPuxsvnlg4dK5BhkhXjN6G0D9S0C7+1F+5YvVI0bM/moLdveX+3SbxgmfUzuBKVzaRn
- zyU0Ey/XDU4FmwSvgzvFZybssh7UTk/pxxDB7JCAER964ruSvcWUjVIpDGqJaWvP98pe
- 580GDGlw0p8H5tCePO6L8x62w60BVcS5Flk3NBRk4zAt8lET9khQWfl+jclmjQQKMcwr
- M/tA==
-X-Gm-Message-State: ACgBeo3BhkTTlHQ7CY+fijSwd0ZKiwyMbFY4bD+uaARSxAPytRmZTczZ
- QcQSsLQBIlvF431ob84spM+kfIE=
-X-Google-Smtp-Source: AA6agR4BAS+hM+EUim+IVcRyzqXoa4HKnh/Tj6GF+O0Vtd8DD4LdM/Qa2nW6CnG7PB2XkzY2m+F19A==
-X-Received: by 2002:a05:620a:2545:b0:6b6:6773:f278 with SMTP id
- s5-20020a05620a254500b006b66773f278mr6337214qko.390.1659726652464; 
- Fri, 05 Aug 2022 12:10:52 -0700 (PDT)
-Received: from localhost (pool-68-160-173-162.bstnma.fios.verizon.net.
- [68.160.173.162]) by smtp.gmail.com with ESMTPSA id
- ew7-20020a05622a514700b0031eb65e1cb6sm3124914qtb.5.2022.08.05.12.10.51
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 05 Aug 2022 12:10:52 -0700 (PDT)
-Date: Fri, 5 Aug 2022 15:10:50 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Message-ID: <Yu1rOopN++GWylUi@redhat.com>
-References: <YugiaQ1TO+vT1FQ5@redhat.com>
-MIME-Version: 1.0
-In-Reply-To: <YugiaQ1TO+vT1FQ5@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: [dm-devel] [git pull] Additional device mapper changes for 6.0
+ id 3FA6A400E86C; Fri,  5 Aug 2022 23:16:06 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E47E40149A8;
+ Fri,  5 Aug 2022 23:16:06 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 275NG4Zh031465;
+ Fri, 5 Aug 2022 18:16:04 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 275NG3ul031462;
+ Fri, 5 Aug 2022 18:16:03 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Date: Fri,  5 Aug 2022 18:16:03 -0500
+Message-Id: <1659741363-31425-1-git-send-email-bmarzins@redhat.com>
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+Subject: [dm-devel] [RFC PATCH] multipath: fix systemd timers in the
+ initramfs
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -99,112 +67,60 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Eric Biggers <ebiggers@kernel.org>, Nathan Huckleberry <nhuck@google.com>,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- Sami Tolvanen <samitolvanen@google.com>, Milan Broz <gmazyland@gmail.com>,
- Alasdair G Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>,
+ Martin Wilck <Martin.Wilck@suse.com>
+MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi Linus,
+The systemd timers created for "find_multipaths smart" conflict with
+shutdown.target, but not with initrd-cleanup.service.  This can make
+these timers trigger after the inirtd has started shutting down,
+restarting multipathd (which then stops initrd-cleanup.service, since it
+conflicts).  To avoid this, make sure the timers and the unit they
+trigger conflict with inird-cleanup.service. Also don't make them start
+multipathd.  "multipath -u" will not return "maybe" if multipathd isn't
+running or set to run, and since we no longer wait for udev-settle,
+multipathd starts up pretty quickly, so it shouldn't be a problem to
+not trigger it here.
 
-In my previous 6.0 pull request I should have forecast the potential
-for sending another one.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
 
-The changes in this pull request add an optional feature to the DM 
-verity target. These changes were proposed for inclussion on dm-devel
-a couple weeks before the merge window opened. I reviewed and worked
-the changes with Nathan and others for about a week. At that time the
-changes still had some clear issues (exposed with the additional
-testing Milan Broz provided in terms of a revised cryptsetup testsuite
-that introduced veritysetup's --use-tasklets). I had to put it aside
-once this merge window opened but Nathan continued to investigate.
+Notes:
+    I haven't seen this, but I do worry that path uevents could come in
+    after initrd-cleanup.service has started. In this case the timers
+    themselves could stop initrd-cleanup.service, since they conflict with
+    it. I'm not sure if there is any way to see where we are in the
+    bootup/shutdown process and not start up the timers if we are already
+    cleaning up. Also, I don't know of any way to set a service so that if
+    it conflicts with another service, it is always the one that gets
+    stopped. A safe option would be to simply make the timers not start
+    multipathd, without adding the conflicts.
 
-Nathan found and fixed the remaining issues on Tuesday/Wednesday:
-https://listman.redhat.com/archives/dm-devel/2022-August/051766.html 
+ multipath/multipath.rules | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Yesterday I then folded the fixes in, and refined the code a bit
-further in response. The crytpsetup testsuite passes now (both with
-and without the use of veritysetup's --use-tasklets flag).
-
-All said: I think it worthwhile to merge these changes for 6.0, rather
-than hold until 6.1, now that we have confidence this _optional_ DM
-verity feature is working as expected. Please be aware there was a
-small linux-next merge fixup needed:
-https://lore.kernel.org/all/20220805125744.475531-1-broonie@kernel.org/T/
-
-The following changes since commit 9dd1cd3220eca534f2d47afad7ce85f4c40118d8:
-
-  dm: fix dm-raid crash if md_handle_request() splits bio (2022-07-28 17:36:30 -0400)
-
-are available in the Git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.0/dm-changes-2
-
-for you to fetch changes up to 12907efde6ad984f2d76cc1a7dbaae132384d8a5:
-
-  dm verity: have verify_wq use WQ_HIGHPRI if "try_verify_in_tasklet" (2022-08-04 15:59:52 -0400)
-
-Please pull, thanks!
-Mike
-
-----------------------------------------------------------------
-- Add flags argument to dm_bufio_client_create and introduce
-  DM_BUFIO_CLIENT_NO_SLEEP flag to have dm-bufio use spinlock rather
-  than mutex for its locking.
-
-- Add optional "try_verify_in_tasklet" feature to DM verity target.
-  This feature gives users the option to improve IO latency by using a
-  tasklet to verify, using hashes in bufio's cache, rather than wait
-  to schedule a work item via workqueue. But if there is a bufio cache
-  miss, or an error, then the tasklet will fallback to using workqueue.
-
-- Incremental changes to both dm-bufio and the DM verity target to use
-  jump_label to minimize cost of branching associated with the niche
-  "try_verify_in_tasklet" feature. DM-bufio in particular is used by
-  quite a few other DM targets so it doesn't make sense to incur
-  additional bufio cost in those targets purely for the benefit of
-  this niche verity feature if the feature isn't ever used.
-
-- Optimize verity_verify_io, which is used by both workqueue and
-  tasklet based verification, if FEC is not configured or tasklet
-  based verification isn't used.
-
-- Remove DM verity target's verify_wq's use of the WQ_CPU_INTENSIVE
-  flag since it uses WQ_UNBOUND. Also, use the WQ_HIGHPRI flag if
-  "try_verify_in_tasklet" is specified.
-
-----------------------------------------------------------------
-Mike Snitzer (7):
-      dm verity: allow optional args to alter primary args handling
-      dm bufio: conditionally enable branching for DM_BUFIO_CLIENT_NO_SLEEP
-      dm verity: conditionally enable branching for "try_verify_in_tasklet"
-      dm verity: optimize verity_verify_io if FEC not configured
-      dm verity: only copy bvec_iter in verity_verify_io if in_tasklet
-      dm verity: remove WQ_CPU_INTENSIVE flag since using WQ_UNBOUND
-      dm verity: have verify_wq use WQ_HIGHPRI if "try_verify_in_tasklet"
-
-Nathan Huckleberry (3):
-      dm bufio: Add flags argument to dm_bufio_client_create
-      dm bufio: Add DM_BUFIO_CLIENT_NO_SLEEP flag
-      dm verity: Add optional "try_verify_in_tasklet" feature
-
- drivers/md/dm-bufio.c                         |  32 +++++-
- drivers/md/dm-ebs-target.c                    |   3 +-
- drivers/md/dm-integrity.c                     |   2 +-
- drivers/md/dm-snap-persistent.c               |   2 +-
- drivers/md/dm-verity-fec.c                    |   4 +-
- drivers/md/dm-verity-target.c                 | 160 ++++++++++++++++++++++----
- drivers/md/dm-verity.h                        |   6 +-
- drivers/md/persistent-data/dm-block-manager.c |   3 +-
- include/linux/dm-bufio.h                      |   8 +-
- 9 files changed, 187 insertions(+), 33 deletions(-)
+diff --git a/multipath/multipath.rules b/multipath/multipath.rules
+index 9df11a95..f993d996 100644
+--- a/multipath/multipath.rules
++++ b/multipath/multipath.rules
+@@ -71,7 +71,7 @@ ENV{.SAVED_FM_WAIT_UNTIL}=="?*", GOTO="pretend_mpath"
+ #
+ # We must trigger an "add" event because LVM2 will only act on those.
+ 
+-RUN+="/usr/bin/systemd-run --unit=cancel-multipath-wait-$kernel --description 'cancel waiting for multipath siblings of $kernel' --no-block --timer-property DefaultDependencies=no --timer-property Conflicts=shutdown.target --timer-property Before=shutdown.target --timer-property AccuracySec=500ms --property DefaultDependencies=no --property Conflicts=shutdown.target --property Before=shutdown.target --property Wants=multipathd.service --property After=multipathd.service --on-active=$env{FIND_MULTIPATHS_WAIT_UNTIL} /usr/bin/udevadm trigger --action=add $sys$devpath"
++RUN+="/usr/bin/systemd-run --unit=cancel-multipath-wait-$kernel --description 'cancel waiting for multipath siblings of $kernel' --no-block --timer-property DefaultDependencies=no --timer-property Conflicts=shutdown.target --timer-property Before=shutdown.target --timer-property Conflicts=initrd-cleanup.service --timer-property Before=initrd-cleanup.service --timer-property AccuracySec=500ms --property DefaultDependencies=no --property Conflicts=shutdown.target --property Before=shutdown.target --property Conflicts=initrd-cleanup.service --property Before=initrd-cleanup.service --on-active=$env{FIND_MULTIPATHS_WAIT_UNTIL} /usr/bin/udevadm trigger --action=add $sys$devpath"
+ 
+ LABEL="pretend_mpath"
+ ENV{DM_MULTIPATH_DEVICE_PATH}="1"
+-- 
+2.17.2
 
 --
 dm-devel mailing list
