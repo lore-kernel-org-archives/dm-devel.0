@@ -1,61 +1,107 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7837EC00140
-	for <dm-devel@archiver.kernel.org>; Fri,  5 Aug 2022 23:16:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B4B2EC19F2D
+	for <dm-devel@archiver.kernel.org>; Sat,  6 Aug 2022 18:10:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1659741375;
+	s=mimecast20190719; t=1659809421;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=SNa+1frUJCUQbZkGTqzqZbv6yTfe5tIJCqv3lBk/w98=;
-	b=h8Lj+upyUSUV7Isae8g8d6LwPBOcqRBByTqaW6ke+p1DOgAna7I4vKoi0CwTfqLM03m7UW
-	Yrxhu+blMRMJTpnrRw67Sbmm4G/Du7OcQdab+MsMkGNS5tzg6kUUU/jZOJx23XtMHnCIzA
-	RHtkXS0F9Lh4ICO9peVQWyHIO6aAJEw=
+	bh=WvDhfBhMZFyABjYosa7kEUw1qesTFYv8kM1mHy4r4jY=;
+	b=e/+Ba0AirsIoYvkoT5EQXuyLRBDkNjk3947Xjh+quLkRPmhsXPD36OKxHO1XJXVfQkWlPW
+	SjH39DphZ67jNQhQL+gkRdzoMAc+ymgSWFOJeHcogHdq7J1vmwivyCXbd0vphuNB+fByCn
+	KIrQMHmFXZSYOoXc/6Q8e3sCkOKHSOI=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-604-TDMHzLh7NtOGZJoxaAm4aw-1; Fri, 05 Aug 2022 19:16:12 -0400
-X-MC-Unique: TDMHzLh7NtOGZJoxaAm4aw-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-563-bx5_Wmb_PiqCistdpywvOw-1; Sat, 06 Aug 2022 14:10:17 -0400
+X-MC-Unique: bx5_Wmb_PiqCistdpywvOw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A0101811E80;
-	Fri,  5 Aug 2022 23:16:10 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 90EAF8037AA;
+	Sat,  6 Aug 2022 18:10:13 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 94BA72166B26;
-	Fri,  5 Aug 2022 23:16:08 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CE35D400E88D;
+	Sat,  6 Aug 2022 18:10:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 591F3193221F;
-	Fri,  5 Aug 2022 23:16:08 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 79E161946A49;
+	Sat,  6 Aug 2022 18:10:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6E293193221E
- for <dm-devel@listman.corp.redhat.com>; Fri,  5 Aug 2022 23:16:06 +0000 (UTC)
+ ESMTP id C4C871946A48
+ for <dm-devel@listman.corp.redhat.com>; Sat,  6 Aug 2022 18:10:06 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3FA6A400E86C; Fri,  5 Aug 2022 23:16:06 +0000 (UTC)
-Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E47E40149A8;
- Fri,  5 Aug 2022 23:16:06 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 275NG4Zh031465;
- Fri, 5 Aug 2022 18:16:04 -0500
-Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 275NG3ul031462;
- Fri, 5 Aug 2022 18:16:03 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Fri,  5 Aug 2022 18:16:03 -0500
-Message-Id: <1659741363-31425-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-Subject: [dm-devel] [RFC PATCH] multipath: fix systemd timers in the
- initramfs
+ id B5AF1403166; Sat,  6 Aug 2022 18:10:06 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B1D3D401E5C
+ for <dm-devel@redhat.com>; Sat,  6 Aug 2022 18:10:06 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9B0B2801755
+ for <dm-devel@redhat.com>; Sat,  6 Aug 2022 18:10:06 +0000 (UTC)
+Received: from mail-ej1-f52.google.com (mail-ej1-f52.google.com
+ [209.85.218.52]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-524-8gee-43UP7yLYHN7C8z-8w-1; Sat, 06 Aug 2022 14:10:01 -0400
+X-MC-Unique: 8gee-43UP7yLYHN7C8z-8w-1
+Received: by mail-ej1-f52.google.com with SMTP id gb36so9986958ejc.10
+ for <dm-devel@redhat.com>; Sat, 06 Aug 2022 11:10:01 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=cc:to:subject:message-id:date:from:in-reply-to:references
+ :mime-version:x-gm-message-state:from:to:cc;
+ bh=kjtebnWpuVmRvt/UMpUPrQsoSPrunFHPAFg6ElFU0RU=;
+ b=rrgURfiJK9POYqdbA2jsgzqdZUzFZToa7w7rxrdFTOLt4gczn9hxlhFX+9LLKJpUBP
+ EXK1wO5z0HMJ6J8f81v1ku6RO/yhL7A2dNq6jUHCJtXYn6HoxKgeOPB5gKd1Nyfx979+
+ m4fhXpz23vm82D64iRu2Rb0ujAapiSAiNQT+4JzStjmuhB5WFku//NEXGqTAzCbV4Psu
+ bF8UqfNmnNxK69pQS4aPua76nhfwfJLl/cFK3K3pRJGBQKtHYYCW+yPuwzhvwTrrfNYK
+ uxMkNJV/jk4FkpIhE4mi6OJZo4VrGtFj0RKIKDdxO4Zmc92+8EMNdrki+nBvMjq4iOVI
+ Nbxg==
+X-Gm-Message-State: ACgBeo3wAoiJRj2PpA4l07znDhhD+oytWQxdREOROWPZqGM8pdT4UW2S
+ wDeqgNP87MsBbDJpmBg3HoYFsQj5bObkarnc
+X-Google-Smtp-Source: AA6agR6rLw23Oi2MZNJOoffZhUYkkk7fpMQXgH8cbOva4ufPQIiIvdJcasrFVfJNJ6NumdktCQF78A==
+X-Received: by 2002:a17:907:72c6:b0:72f:b01:2723 with SMTP id
+ du6-20020a17090772c600b0072f0b012723mr8968955ejc.439.1659809399817; 
+ Sat, 06 Aug 2022 11:09:59 -0700 (PDT)
+Received: from mail-wr1-f44.google.com (mail-wr1-f44.google.com.
+ [209.85.221.44]) by smtp.gmail.com with ESMTPSA id
+ d16-20020a50fe90000000b0043b986751a7sm1802976edt.41.2022.08.06.11.09.59
+ for <dm-devel@redhat.com>
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Sat, 06 Aug 2022 11:09:59 -0700 (PDT)
+Received: by mail-wr1-f44.google.com with SMTP id h13so6508627wrf.6
+ for <dm-devel@redhat.com>; Sat, 06 Aug 2022 11:09:59 -0700 (PDT)
+X-Received: by 2002:a05:6000:178d:b0:222:c7ad:2d9a with SMTP id
+ e13-20020a056000178d00b00222c7ad2d9amr112963wrg.274.1659809398767; Sat, 06
+ Aug 2022 11:09:58 -0700 (PDT)
+MIME-Version: 1.0
+References: <YugiaQ1TO+vT1FQ5@redhat.com> <Yu1rOopN++GWylUi@redhat.com>
+In-Reply-To: <Yu1rOopN++GWylUi@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Date: Sat, 6 Aug 2022 11:09:42 -0700
+X-Gmail-Original-Message-ID: <CAHk-=wj5w+Nga81wGmO6aYtcLrn6c_R_-gQrtnKwjzOZczko=A@mail.gmail.com>
+Message-ID: <CAHk-=wj5w+Nga81wGmO6aYtcLrn6c_R_-gQrtnKwjzOZczko=A@mail.gmail.com>
+To: Mike Snitzer <snitzer@kernel.org>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: Re: [dm-devel] [git pull] Additional device mapper changes for 6.0
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -67,60 +113,45 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: device-mapper development <dm-devel@redhat.com>,
- Martin Wilck <Martin.Wilck@suse.com>
-MIME-Version: 1.0
+Cc: Eric Biggers <ebiggers@kernel.org>, Nathan Huckleberry <nhuck@google.com>,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Sami Tolvanen <samitolvanen@google.com>, Milan Broz <gmazyland@gmail.com>,
+ Alasdair G Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The systemd timers created for "find_multipaths smart" conflict with
-shutdown.target, but not with initrd-cleanup.service.  This can make
-these timers trigger after the inirtd has started shutting down,
-restarting multipathd (which then stops initrd-cleanup.service, since it
-conflicts).  To avoid this, make sure the timers and the unit they
-trigger conflict with inird-cleanup.service. Also don't make them start
-multipathd.  "multipath -u" will not return "maybe" if multipathd isn't
-running or set to run, and since we no longer wait for udev-settle,
-multipathd starts up pretty quickly, so it shouldn't be a problem to
-not trigger it here.
+On Fri, Aug 5, 2022 at 12:10 PM Mike Snitzer <snitzer@kernel.org> wrote:
+>
+> All said: I think it worthwhile to merge these changes for 6.0, rather
+> than hold until 6.1, now that we have confidence this _optional_ DM
+> verity feature is working as expected. Please be aware there was a
+> small linux-next merge fixup needed:
+> https://lore.kernel.org/all/20220805125744.475531-1-broonie@kernel.org/T/
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
+Well, more importantly, the verity_target version numbers clash.
 
-Notes:
-    I haven't seen this, but I do worry that path uevents could come in
-    after initrd-cleanup.service has started. In this case the timers
-    themselves could stop initrd-cleanup.service, since they conflict with
-    it. I'm not sure if there is any way to see where we are in the
-    bootup/shutdown process and not start up the timers if we are already
-    cleaning up. Also, I don't know of any way to set a service so that if
-    it conflicts with another service, it is always the one that gets
-    stopped. A safe option would be to simply make the timers not start
-    multipathd, without adding the conflicts.
+I used the newer "{1, 9, 0}" version number, but if you want it to be
+"{1, 9, 1}" to show that it's a superset of the previous one, you
+should do that yourself.
 
- multipath/multipath.rules | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+That said, the best option would be to remove version numbers
+entirely. They are a completely broken concept as an ABI, and *never*
+work.
 
-diff --git a/multipath/multipath.rules b/multipath/multipath.rules
-index 9df11a95..f993d996 100644
---- a/multipath/multipath.rules
-+++ b/multipath/multipath.rules
-@@ -71,7 +71,7 @@ ENV{.SAVED_FM_WAIT_UNTIL}=="?*", GOTO="pretend_mpath"
- #
- # We must trigger an "add" event because LVM2 will only act on those.
- 
--RUN+="/usr/bin/systemd-run --unit=cancel-multipath-wait-$kernel --description 'cancel waiting for multipath siblings of $kernel' --no-block --timer-property DefaultDependencies=no --timer-property Conflicts=shutdown.target --timer-property Before=shutdown.target --timer-property AccuracySec=500ms --property DefaultDependencies=no --property Conflicts=shutdown.target --property Before=shutdown.target --property Wants=multipathd.service --property After=multipathd.service --on-active=$env{FIND_MULTIPATHS_WAIT_UNTIL} /usr/bin/udevadm trigger --action=add $sys$devpath"
-+RUN+="/usr/bin/systemd-run --unit=cancel-multipath-wait-$kernel --description 'cancel waiting for multipath siblings of $kernel' --no-block --timer-property DefaultDependencies=no --timer-property Conflicts=shutdown.target --timer-property Before=shutdown.target --timer-property Conflicts=initrd-cleanup.service --timer-property Before=initrd-cleanup.service --timer-property AccuracySec=500ms --property DefaultDependencies=no --property Conflicts=shutdown.target --property Before=shutdown.target --property Conflicts=initrd-cleanup.service --property Before=initrd-cleanup.service --on-active=$env{FIND_MULTIPATHS_WAIT_UNTIL} /usr/bin/udevadm trigger --action=add $sys$devpath"
- 
- LABEL="pretend_mpath"
- ENV{DM_MULTIPATH_DEVICE_PATH}="1"
--- 
-2.17.2
+Feature bitmasks work. Version numbers don't. Version numbers
+fundamentally break when something is backported or any other
+non-linearity happens.
+
+Please don't use version numbers for ABI issues. Version numbers are
+for human consumption, nothing more, and shouldn't be used for
+anything that has semantics.
+
+               Linus
 
 --
 dm-devel mailing list
