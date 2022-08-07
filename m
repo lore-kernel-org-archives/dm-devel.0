@@ -1,97 +1,107 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 546F9C19F2A
-	for <dm-devel@archiver.kernel.org>; Sun,  7 Aug 2022 18:14:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0D46FC25B0C
+	for <dm-devel@archiver.kernel.org>; Sun,  7 Aug 2022 19:53:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1659896064;
+	s=mimecast20190719; t=1659902029;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=I4SBixuwSPkEZ0Fp5cZ5xNrb3CAmr8q2n84El7vPbkY=;
-	b=FU7aIYM3fH3HZjWR3Ori4NjKEM4N7TXAFDnoOwNAXuu57QEPyW6J3t6SassGdWx28xQ8zI
-	FxYKT0QIoVp5wqDPmgB++w7X+8erRSN6q4+5I5Z9pr3VJ1P4/r5aRucIrWiWFf5rv8Qtnw
-	h3g/iGVwmmO7pZjp5GHC4z6vS4Cc9Zk=
+	bh=dyaJG4pQM15v19iJoRbXRXY5ffikANPOKpiobEni11A=;
+	b=bI9RAJ/SMrZA1ZdBvyKG3ZW2MtcdMvqjGNsVxDVjEkonowWI1pXzjhOog4seE93J2Z73PU
+	+y2fFdZGW9qat3rjxFCfqTTUjMQJkK4NTyrDML2MCMRSOCBYO+73KaK7iswZ7hTdA8iDFy
+	DjTFqNnDwGlwH5e+7teGgZjzwTSASa0=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-407-pYZG0a38NCuWNCkxWSv-PA-1; Sun, 07 Aug 2022 14:14:22 -0400
-X-MC-Unique: pYZG0a38NCuWNCkxWSv-PA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-562-aC0G1KWzPgakXUewTjw8vA-1; Sun, 07 Aug 2022 15:53:46 -0400
+X-MC-Unique: aC0G1KWzPgakXUewTjw8vA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AA66E1857F06;
-	Sun,  7 Aug 2022 18:14:20 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3903780A0BF;
+	Sun,  7 Aug 2022 19:53:45 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0423718EBB;
-	Sun,  7 Aug 2022 18:14:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A91DCC202C5;
+	Sun,  7 Aug 2022 19:53:42 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D98391946A44;
-	Sun,  7 Aug 2022 18:14:16 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7974E1946A44;
+	Sun,  7 Aug 2022 19:53:42 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E8DCE1946A41
- for <dm-devel@listman.corp.redhat.com>; Sun,  7 Aug 2022 18:14:14 +0000 (UTC)
+ ESMTP id 154A11946A41
+ for <dm-devel@listman.corp.redhat.com>; Sun,  7 Aug 2022 19:53:41 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 377381415116; Sun,  7 Aug 2022 18:14:14 +0000 (UTC)
+ id 062A42166B29; Sun,  7 Aug 2022 19:53:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 33B3A1410DDA
- for <dm-devel@redhat.com>; Sun,  7 Aug 2022 18:14:14 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DEE7F38041D8
- for <dm-devel@redhat.com>; Sun,  7 Aug 2022 18:14:13 +0000 (UTC)
-Received: from mail-qt1-f169.google.com (mail-qt1-f169.google.com
- [209.85.160.169]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 026E72166B26
+ for <dm-devel@redhat.com>; Sun,  7 Aug 2022 19:53:40 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D76EF802D1C
+ for <dm-devel@redhat.com>; Sun,  7 Aug 2022 19:53:40 +0000 (UTC)
+Received: from mail-ed1-f54.google.com (mail-ed1-f54.google.com
+ [209.85.208.54]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-339-xdQsj3-iNYukmjAkTAkO_g-1; Sun, 07 Aug 2022 14:14:12 -0400
-X-MC-Unique: xdQsj3-iNYukmjAkTAkO_g-1
-Received: by mail-qt1-f169.google.com with SMTP id a4so428667qto.10
- for <dm-devel@redhat.com>; Sun, 07 Aug 2022 11:14:12 -0700 (PDT)
+ us-mta-213-6Zgs5rSoNX6_3BJnyHCJxw-1; Sun, 07 Aug 2022 15:53:38 -0400
+X-MC-Unique: 6Zgs5rSoNX6_3BJnyHCJxw-1
+Received: by mail-ed1-f54.google.com with SMTP id f22so9075507edc.7;
+ Sun, 07 Aug 2022 12:53:38 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc;
- bh=uszpsfQkA+n/mZQMeMzaHtYhGxV7ZrgTx0FwG51IMxk=;
- b=H0fRtD4z21cElDORrcs3QObvRPSWdLC6SnvhPX1sYEkyrZoQoTe58dtzZIBuQT4PNq
- s7WJsLMCHO9hyXb7sCxz85xlsjIygRAX0UmM8bjUqxBFNXLO0NcVgmDuqytR69JS+f3u
- xSvoUwQHW3mW18XaQSvKZ1yQUG9qL4hrRE8kJXDWfWyccFj8Y+54/VSU+bz3GAMImjVb
- JgmIQL3LAQLKPBFRS41PRvOuhrgkvWk3vn9Ujfo0hwp/SlpO3LzRtcUZexOBhQKskBRx
- A/qGeNThLVxEloPGXB6APY6ihyOuXql8426i3tHdrIVOinX7cua09dqI6VP7eAt1PkNL
- igbw==
-X-Gm-Message-State: ACgBeo0p5o2j7TJfKey1PrKGE0jyHU3+NxKVlKbF/6rCSwO6xT/lvm/A
- JDwK8qSK3WdRntkaA1/ye45APUk=
-X-Google-Smtp-Source: AA6agR6/KgTQI6IHVHe5/he7j5Khvjn4y41cYM25rOSJkcCqUqeqS34j9+6cwADmtwyEyP30dJ4JCw==
-X-Received: by 2002:ac8:5cc7:0:b0:342:f760:5bc0 with SMTP id
- s7-20020ac85cc7000000b00342f7605bc0mr2317560qta.658.1659896051683; 
- Sun, 07 Aug 2022 11:14:11 -0700 (PDT)
-Received: from localhost (pool-68-160-173-162.bstnma.fios.verizon.net.
- [68.160.173.162]) by smtp.gmail.com with ESMTPSA id
- b19-20020ac844d3000000b00342f8143599sm1077098qto.13.2022.08.07.11.14.10
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Sun, 07 Aug 2022 11:14:11 -0700 (PDT)
-Date: Sun, 7 Aug 2022 14:14:09 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Milan Broz <gmazyland@gmail.com>
-Message-ID: <YvAA8fI37owuSe7y@redhat.com>
+ h=content-transfer-encoding:in-reply-to:from:references:cc:to
+ :content-language:subject:user-agent:mime-version:date:message-id
+ :x-gm-message-state:from:to:cc;
+ bh=KSNjU/g/uABeK7DgJdNs6bpwX7SttrPrrtSMzcFQBU4=;
+ b=uVP60YISOf5zPYHIBG2Q/l37UHl6K2BLcfUZJk/4ehJ+marchJP7eU0ZmyXKnsNRUL
+ f6kVw5WFpfsbL7s6ASwdppMmIBixS5hM1YxQEUu1D8+ye8OnANWga2uZDWxSY6aKI8hf
+ XxhGtENe/dYsif3d40VZB53aq8Y7oGWWF2m2RepcmPuvS7yy6tUt1LFwyY8ihF/JPcAD
+ adQ5b9NzxD9qlHRFXYgEHd5/KryTrgxpTZDwwk/HQsg0B0qqW7mdy6Pf8ufI3dKVfvGb
+ 9HHgYDx+xkEUAmyNupiLysSxTeSLW15M8mROmFNZH8qAh5hEImTylRfl1AJwi2mb3n9a
+ dJdw==
+X-Gm-Message-State: ACgBeo1fOOcKjMTCl+l4sacp6Y8aSEI8PBS0NLlFYVc461dwQzqt3O8A
+ bkEDsJ3luFghxXL0afLRgiM=
+X-Google-Smtp-Source: AA6agR7x9Zl9jxGqHa/qimd6JaBS49eiXMcJU+FuL/emsWO/J+uT2G5Y1LOCkzPTsmZv/38KN8YGVQ==
+X-Received: by 2002:a05:6402:1e88:b0:43c:e8d4:bf27 with SMTP id
+ f8-20020a0564021e8800b0043ce8d4bf27mr15616183edf.401.1659902017188; 
+ Sun, 07 Aug 2022 12:53:37 -0700 (PDT)
+Received: from [192.168.2.28] (85-70-151-113.rcd.o2.cz. [85.70.151.113])
+ by smtp.gmail.com with ESMTPSA id
+ bf17-20020a0564021a5100b0043df042bfc6sm3566644edb.47.2022.08.07.12.53.36
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Sun, 07 Aug 2022 12:53:36 -0700 (PDT)
+Message-ID: <731828af-0ef3-ba04-7115-be8f1d41e1c5@gmail.com>
+Date: Sun, 7 Aug 2022 21:53:35 +0200
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.10.0
+To: Mike Snitzer <snitzer@kernel.org>
 References: <YugiaQ1TO+vT1FQ5@redhat.com> <Yu1rOopN++GWylUi@redhat.com>
  <CAHk-=wj5w+Nga81wGmO6aYtcLrn6c_R_-gQrtnKwjzOZczko=A@mail.gmail.com>
  <Yu6zXVPLmwjqGg4V@redhat.com>
  <CAHk-=wj+ywtyBEp7pmEKxgwRE+iJBct6iih=ssGk2EWqaYL_yg@mail.gmail.com>
  <99e17678-8801-ac41-de20-a5f6f60da524@gmail.com>
-MIME-Version: 1.0
-In-Reply-To: <99e17678-8801-ac41-de20-a5f6f60da524@gmail.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+ <YvAA8fI37owuSe7y@redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+In-Reply-To: <YvAA8fI37owuSe7y@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Subject: Re: [dm-devel] [git pull] Additional device mapper changes for 6.0
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -111,157 +121,155 @@ Cc: linux-block@vger.kernel.org, Nathan Huckleberry <nhuck@google.com>,
  Alasdair G Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Sun, Aug 07 2022 at  3:37P -0400,
-Milan Broz <gmazyland@gmail.com> wrote:
+Mike,
 
-> Hi,
+there was nothing personal in my reply - sorry
+if you see it this way.
+
+Anyway, please stop ad-hominem attacks on me!
+
+I just described what I see as a problem that prevents
+us from dropping version parsing.
+
+Technical comments, below, but really, these should go to
+dm-devel only to not waste time of others.
+
+On 07/08/2022 20:14, Mike Snitzer wrote:
+>> TL;DR: it is *only* for hinting to users what is possibly wrong
+>> after activation fails because there is *no* proper error reporting
+>> from the device-mapper.
 > 
-> Just a few notes on why we use target versions in libcryptsetup,
-> as I am perhaps one user of this field there.
+> DM's core and target versions aren't intended to be in service of
+> error reporting. You abusing them like that is a fundamental problem.
+
+Perhaps, but there was nothing better. If I missed something,
+we can definitely make the code better.
+
+TBH, I do even think that it uses the same logic as libdevmapper library
+(and perhaps it dates even before I started to maintain it).
+
+I do not see fundamental problem here, though.
+
+I take is as "The dm-integrity was introduced in kernel/target X",
+then I do not expect it working in X-1...
+
+>> Please don't just replace it with bitmaps.
+>>
+>> It will not bring any better interface while adding more magic with
+>> handling compatibility, as we need to use both... see below.
 > 
-> TL;DR: it is *only* for hinting to users what is possibly wrong
-> after activation fails because there is *no* proper error reporting
-> from the device-mapper.
-
-DM's core and target versions aren't intended to be in service of
-error reporting. You abusing them like that is a fundamental problem.
-
-[[Unfortunate tangent but you've left me no choice:
-
-Your general tone and misinformation-using-broad-strokes makes me both
-sad and angry. I will restrain myself in this reply but your position
-drips with general FUD and loathing. This is way more "Milan being
-Milan" than I've ever experienced. Could be you've been storing it and
-it all just gushed out, no idea. But it's a lot to try to take with
-grace.
-
-As you know I'm a very direct person. I speak my mind too. But I've
-learned to try to avoid alarmist rhetoric that amounts to throwing
-people(s) under the bus (better late than never). But if you're going
-to resort that you better be _very_ certain it's justified. Yet as
-cathartic as it might seem, even then it isn't the correct answer. If
-you want to remain being respected please treat others with respect.
-
-Only you know why you are flailing about with such an attitude, please
-come to terms with that. I wish you well and certainly don't want DM
-to be some constant or reoccurring source of such negativity (for you
-or anyone).]]
-
-> On 06/08/2022 20:36, Linus Torvalds wrote:
-> > On Sat, Aug 6, 2022 at 11:30 AM Mike Snitzer <snitzer@kernel.org> wrote:
-> ...
-> > > Yes, I know you mentioned this before and I said I'd look to switch to
-> > > feature bitmasks. Yet here we are. Sorry about that, but I will take
-> > > a serious look at fixing this over the next development cycle(s).
+> (I saw your "below", it lacked a coherent explanation for why "we need
+> to use both" as a rule moving forward)
 > 
-> Please don't just replace it with bitmaps.
+> When done properly it will _not_ require both. The version number would
+> be incremented one final time and would serve to allow existing
+> userspace to run unmodified. But from that point on the bitmap flags
+> should be used and all userspace converted to use them.
+
+I just meant that if userspace want to support older kernels,
+we need to support both.
+
+If it does not bring fixes for the problem I described, it is just
+more code with no effect (for libcryptsetup).
+
+But if you see other reasons, then of course it makes sense.
+
+>> I cannot speak for the others, but for veritysetup (libcryptsetup),
+>> the worst that can happen is that the user will get a wrong error message
+>> (or just a generic message "something failed, bye").
 > 
-> It will not bring any better interface while adding more magic with
-> handling compatibility, as we need to use both... see below.
+> You know how to send email to report specific problems and/or submit
+> patches. But I really don't recall anything in this category being
+> reported by you, certainly not recently... maybe you've just
+> internalized or I somehow missed it?
 
-(I saw your "below", it lacked a coherent explanation for why "we need
-to use both" as a rule moving forward)
+I am sure I mentioned this, but years ago... what I am talking about
 
-When done properly it will _not_ require both. The version number would
-be incremented one final time and would serve to allow existing
-userspace to run unmodified. But from that point on the bitmap flags
-should be used and all userspace converted to use them.
+1) Some ti->error messages are lost, e.g. in dm-crypt,
+   I think example is IV generators constructors
+   if (ret < 0) {
+      ti->error = "Error creating IV";
+   ...
+   (And yes, I should fix this myself.)
 
-> > Well, right now we're in the situation where there are certain kernels
-> > that say that they implement "version 1.9" of the thing, but they
-> > don't actually implement the "version 1.8.1" extensions.
+
+2) Targets use macros like DMERR, these generate syslog message.
+    Getting these messages into userspace is problematic.
+
+    But perhaps this is more problem for libdevmapper we use.
+
+>> (All the crypto options are tricky, I would like to keep at least basic
+>> usability and better errors like "seems tasklets are not supported,
+>> retrying without tasklets flags.")
 > 
-> I cannot speak for the others, but for veritysetup (libcryptsetup),
-> the worst that can happen is that the user will get a wrong error message
-> (or just a generic message "something failed, bye").
+> dm-verity's optional "try_verify_in_tasklet" is using tasklets as an
+> implementation detail, if they cannot be used (e.g. for FEC) then why
+> would fallback to normal verification using a workqueue be reported?
 
-You know how to send email to report specific problems and/or submit
-patches. But I really don't recall anything in this category being
-reported by you, certainly not recently... maybe you've just
-internalized or I somehow missed it?
+I am talking about situation when user explicitly requests to use tasklets
+on CLI and kernel does not support it. Then there must be an error message.
 
-> (All the crypto options are tricky, I would like to keep at least basic
-> usability and better errors like "seems tasklets are not supported,
-> retrying without tasklets flags.")
+I am not sure if we should automatically fallback to non-tasklets,
+but we do this already in other situations (enable-discards, keyring support, ...)
 
-dm-verity's optional "try_verify_in_tasklet" is using tasklets as an
-implementation detail, if they cannot be used (e.g. for FEC) then why
-would fallback to normal verification using a workqueue be reported?
-
-Or are you referring to something you saw when using dm-crypt's
-no_{read,write}_workqueue options?
-
-Or are you saying that both the new dm-verity try_verify_in_tasklet
-option and the dm-crypt no_{read,write}_workqueue options should
-fallback to removing those flags and try without them?
-
-That is a level of AI I have no interest in adding or supporting.
-The user asked for something, if it isn't possible then it should
-fail.
-
-But please be more specific.
-
-> In principle, we use activation flags/options as Linus describes - try
-> to set it, then deal with the failure.
->
-> And *this* is the real problem that needs to be solved - there is no proper
-> userspace interface that says what went wrong.
 > 
-> The userspace sees only -EINVAL from ioctl() and a generic message.
+> Or are you referring to something you saw when using dm-crypt's
+> no_{read,write}_workqueue options?
+> 
+> Or are you saying that both the new dm-verity try_verify_in_tasklet
+> option and the dm-crypt no_{read,write}_workqueue options should
+> fallback to removing those flags and try without them?
+> 
+> That is a level of AI I have no interest in adding or supporting.
+> The user asked for something, if it isn't possible then it should
+> fail.
 
-"Please extend the DM ioctls to somehow add ti->error to the userspace
-response" is a fine feature request. Should help no matter what.
+And nobody asked for this as we are already doing this in userspace.
 
-(Can look to have a phased approach to the error reporting payload,
-start with errno and error message, add more "structured" payload over
-time. Are you referring to JSON or some other format? Whatever systemd
-uses?).
+It was really just example to demonstrate when we use target version.
 
-> Perhaps in the syslog is more info, but usually only at debug level
-> (that is often not visible), and parsing syslog is not the option for us either.
+> "Please extend the DM ioctls to somehow add ti->error to the userspace
+> response" is a fine feature request. Should help no matter what.
+> 
+> (Can look to have a phased approach to the error reporting payload,
+> start with errno and error message, add more "structured" payload over
+> time. Are you referring to JSON or some other format? Whatever systemd
+> uses?).
 
-All errors should be emitted with pr_err() using DMERR(). I've made a
-conscious effort to convert DMWARN() to DMERR() when appropriate. But
-I'll audit all the DM core code and then work through the various
-targets.
+Great, let's discuss this later.
 
-If there are incorrect log levels being used it is a bug, please
-report and/or fix.
+> 
+>> Perhaps in the syslog is more info, but usually only at debug level
+>> (that is often not visible), and parsing syslog is not the option for us either.
+> 
+> All errors should be emitted with pr_err() using DMERR(). I've made a
+> conscious effort to convert DMWARN() to DMERR() when appropriate. But
+> I'll audit all the DM core code and then work through the various
+> targets.
+> 
+> If there are incorrect log levels being used it is a bug, please
+> report and/or fix.
 
-> What is even more problematic is that the error string in DM target is
-> often set (e.g. ti->error = "Integrity profile tag size mismatch.";) but later
-> discarded, and it never reaches neither log nor userspace calling the failing
-> ioctl().
+Yes, I tried to say that syslog itself as source is problematic
+(if you activate many devices in parallel; in multi-tenant environment
+when you should not see logs from different users etc).
 
-Again, if you see a bug: please report and/or fix it.
+> There is no way to properly use version numbers to derive what
+> actually went wrong. Could you narrow down and isolate the possible
+> failure based on version in specific cases? Sure.. but it is insanely
+> fragile (especially with stable@ and distro kernels).
 
-> If the device-mapper can fix this, we can easily thrash the magic that
-> consults the target version and determines what went wrong.
+It works pretty reliably for years with some minor exceptions that
+can be ignored.
 
-There is no way to properly use version numbers to derive what
-actually went wrong. Could you narrow down and isolate the possible
-failure based on version in specific cases? Sure.. but it is insanely
-fragile (especially with stable@ and distro kernels).
-
-> Then you can forget the version and feature bitmaps and send
-> us a proper (ideally structured) error message in ioctl() reply.
-
-OK, I can just avoid switching to feature bitmaps entirely, stop
-bumping version numbers, and focus on better error reporting. Then all
-of userspace can rely on errors reported to fail and inform user
-actions.
-
-But I'm pretty confident lvm2 will have something to say on
-this... I'll take all input into consideration.
-
-Mike
+Milan
 
 --
 dm-devel mailing list
