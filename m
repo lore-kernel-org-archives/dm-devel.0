@@ -1,71 +1,70 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id F310AC19F2D
-	for <dm-devel@archiver.kernel.org>; Tue,  9 Aug 2022 07:16:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DB1EEC19F2D
+	for <dm-devel@archiver.kernel.org>; Tue,  9 Aug 2022 07:18:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1660029410;
+	s=mimecast20190719; t=1660029497;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=TsXV42UR4cGUGoKSQB2nstOFmY9OvOO0GYDj1nNDTx0=;
-	b=EzNtJ3jck0qUfXZzxFew7wQFiqLWn+sQwXhdtHl9IE5ffWQomMnhVhP4xUYrw5vlcW4mtl
-	ifY4HvtkAclpP/VIs1PVBWaP/22gUsqjxvZZvLQvyAVFlq4ctgvyEpac3MBUiG9fMHNbOA
-	UaVabJDvz71rqZAWZOz+XsrzFUBRJzM=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=rXHy4tMiKHjH8JeKy0/J903qDRZ15l6FXH6Onf2aZh0=;
+	b=Tfdk1MwHUnrZYtrF3c4jPM+JpmbLk0rTcOntO+u1eWIR5/pO9sR4ihPiPnexmqWZTJYfAP
+	aoiPzWCmpum4+1Wzact5w01Q4q+Ka0ps+76C1mQhSdIaX8FmX8r7BrKdZ0aCglINJKrOFJ
+	PP+6VNhbZQBNqTOOrzqeLaVUAKIhRvs=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-508--0AU2UzVOmKVND4wMldjuw-1; Tue, 09 Aug 2022 03:16:47 -0400
-X-MC-Unique: -0AU2UzVOmKVND4wMldjuw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-549-ERZPfGS7MBa63vI4W_76iw-1; Tue, 09 Aug 2022 03:18:14 -0400
+X-MC-Unique: ERZPfGS7MBa63vI4W_76iw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 185AA3C0ED57;
-	Tue,  9 Aug 2022 07:16:46 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B5D6D1824602;
+	Tue,  9 Aug 2022 07:18:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9FD892026D07;
-	Tue,  9 Aug 2022 07:16:40 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A484A40CF8EB;
+	Tue,  9 Aug 2022 07:18:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 77E001946A54;
-	Tue,  9 Aug 2022 07:16:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 613091946A4C;
+	Tue,  9 Aug 2022 07:18:12 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 22B7C1946A41
- for <dm-devel@listman.corp.redhat.com>; Tue,  9 Aug 2022 07:16:39 +0000 (UTC)
+ ESMTP id 687811946A4D
+ for <dm-devel@listman.corp.redhat.com>; Tue,  9 Aug 2022 07:18:11 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 075954010E36; Tue,  9 Aug 2022 07:16:39 +0000 (UTC)
+ id 4941A1415125; Tue,  9 Aug 2022 07:18:11 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 03D4440C1241
- for <dm-devel@redhat.com>; Tue,  9 Aug 2022 07:16:38 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 455AB140EBE3
+ for <dm-devel@redhat.com>; Tue,  9 Aug 2022 07:18:11 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B5F593801FE7
- for <dm-devel@redhat.com>; Tue,  9 Aug 2022 07:16:38 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3218C8117B0
+ for <dm-devel@redhat.com>; Tue,  9 Aug 2022 07:18:11 +0000 (UTC)
 Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-449-tyJsSUiUNbmwbYwoJnTh9A-1; Tue, 09 Aug 2022 03:16:36 -0400
-X-MC-Unique: tyJsSUiUNbmwbYwoJnTh9A-1
+ us-mta-372-c8QjlPBJMjulr7teT-zuVA-1; Tue, 09 Aug 2022 03:18:06 -0400
+X-MC-Unique: c8QjlPBJMjulr7teT-zuVA-1
 Received: by verein.lst.de (Postfix, from userid 2407)
- id A29FD68AA6; Tue,  9 Aug 2022 09:16:32 +0200 (CEST)
-Date: Tue, 9 Aug 2022 09:16:32 +0200
+ id 082B068B05; Tue,  9 Aug 2022 09:18:04 +0200 (CEST)
+Date: Tue, 9 Aug 2022 09:18:03 +0200
 From: Christoph Hellwig <hch@lst.de>
 To: Mike Christie <michael.christie@oracle.com>
-Message-ID: <20220809071632.GA11161@lst.de>
+Message-ID: <20220809071803.GB11161@lst.de>
 References: <20220809000419.10674-1-michael.christie@oracle.com>
- <20220809000419.10674-15-michael.christie@oracle.com>
+ <20220809000419.10674-17-michael.christie@oracle.com>
 MIME-Version: 1.0
-In-Reply-To: <20220809000419.10674-15-michael.christie@oracle.com>
+In-Reply-To: <20220809000419.10674-17-michael.christie@oracle.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -74,9 +73,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH v2 14/20] scsi: Retry pr_ops commands if a UA
- is returned.
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: Re: [dm-devel] [PATCH v2 16/20] scsi: Have sd pr_ops return a
+ blk_status_t
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -94,25 +93,18 @@ Cc: axboe@kernel.dk, james.bottomley@hansenpartnership.com, bvanassche@acm.org,
  hch@lst.de
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Aug 08, 2022 at 07:04:13PM -0500, Mike Christie wrote:
-> It's common to get a UA when doing PR commands. It could be due to a
-> target restarting, transport level relogin or other PR commands like a
-> release causing it. The upper layers don't get the sense and in some cases
-> have no idea if it's a SCSI device, so this has the sd layer retry.
+On Mon, Aug 08, 2022 at 07:04:15PM -0500, Mike Christie wrote:
+> This patch has the sd pr_ops convert from the low level SCSI errors to a
+> blk_status_t.
 
-This seems like another case for the generic in-kernel passthrugh
-command retry discussed in the other thread.
-
-Can you split out two series with just bug fixes for nvme and scsi
-as I think we should probably get those into 6.0, and then we can
-do the actual feature on top of those?
+Can you document the why here?
 
 --
 dm-devel mailing list
