@@ -4,147 +4,103 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CDE4FC00140
-	for <dm-devel@archiver.kernel.org>; Wed, 10 Aug 2022 04:54:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9CC3BC00140
+	for <dm-devel@archiver.kernel.org>; Wed, 10 Aug 2022 16:50:26 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1660107273;
+	s=mimecast20190719; t=1660150225;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=+9Yhv9rqf0cml3rObAmOeRXx6qsd3fRGx7xQKaBNLe4=;
-	b=MyWml8nA4tRHktdPdXKNVtzmPeTMNk2IMJ+UhK53wB/8s7xx3/wYfLBn1H7v/+/sIJcgwa
-	yIbNYcEz2p3WgvGALuL1UJ8WNF5RXjX317x6bHo1R8rUajts8C+Tb1rGrpCsGPTO7xpzHa
-	XaE9F/Q/9SrAWJzlFatRYRD2Fsq8YhM=
+	bh=kJmTgwn8RodV2a+l5lSrSmn6jRt2ndZAWiuGCIJdXq8=;
+	b=OtO+Q8sO57d3zb92yiEsVcyW+aM7eZD1riyCGzB745znMaYgpYnUn7jSJWWqycsAKpdj+c
+	tJsrOptGaFDqbxI0/0V+z16jXvGYHRVgLFHGrcdWVhJQlw4WnkkAR+Sw7qC1sqO1o3GLNY
+	ndNuRy81AKC7WbWs+ESZry1TV1dRVYQ=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-611-aUA2ZG7ZP_2-b_8yEQ3Q9A-1; Wed, 10 Aug 2022 00:54:30 -0400
-X-MC-Unique: aUA2ZG7ZP_2-b_8yEQ3Q9A-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-343-HgGwBbXhPSq_fCugy8CbFg-1; Wed, 10 Aug 2022 12:50:23 -0400
+X-MC-Unique: HgGwBbXhPSq_fCugy8CbFg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 514121019C8D;
-	Wed, 10 Aug 2022 04:54:28 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E168E81F46C;
+	Wed, 10 Aug 2022 16:50:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C6C6C400DFD7;
-	Wed, 10 Aug 2022 04:54:26 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C36D72166B26;
+	Wed, 10 Aug 2022 16:50:19 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 913B01946A5D;
-	Wed, 10 Aug 2022 04:54:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 39AF71946A50;
+	Wed, 10 Aug 2022 16:50:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id DF75F1946A55
- for <dm-devel@listman.corp.redhat.com>; Wed, 10 Aug 2022 04:54:24 +0000 (UTC)
+ ESMTP id E7C9B1946A4F
+ for <dm-devel@listman.corp.redhat.com>; Wed, 10 Aug 2022 16:50:17 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C8F85C15BA8; Wed, 10 Aug 2022 04:54:24 +0000 (UTC)
+ id C5A68492CA4; Wed, 10 Aug 2022 16:50:17 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C4521C15BA1
- for <dm-devel@redhat.com>; Wed, 10 Aug 2022 04:54:24 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ABF4C811E87
- for <dm-devel@redhat.com>; Wed, 10 Aug 2022 04:54:24 +0000 (UTC)
-Received: from NAM02-SN1-obe.outbound.protection.outlook.com
- (mail-sn1anam02on2045.outbound.protection.outlook.com [40.107.96.45]) by
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C1A1F492C3B
+ for <dm-devel@redhat.com>; Wed, 10 Aug 2022 16:50:17 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A8EC2804196
+ for <dm-devel@redhat.com>; Wed, 10 Aug 2022 16:50:17 +0000 (UTC)
+Received: from esa3.hgst.iphmx.com (esa3.hgst.iphmx.com [216.71.153.141]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-331-1XfpvZ6wNuGERd3nIg9gXQ-1; Wed, 10 Aug 2022 00:54:22 -0400
-X-MC-Unique: 1XfpvZ6wNuGERd3nIg9gXQ-1
-Received: from BL0PR12MB4659.namprd12.prod.outlook.com (2603:10b6:207:1d::33)
- by MN2PR12MB3263.namprd12.prod.outlook.com (2603:10b6:208:ab::32)
- with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5504.16; Wed, 10 Aug
- 2022 04:54:20 +0000
-Received: from BL0PR12MB4659.namprd12.prod.outlook.com
- ([fe80::e033:3f08:d8d6:1882]) by BL0PR12MB4659.namprd12.prod.outlook.com
- ([fe80::e033:3f08:d8d6:1882%7]) with mapi id 15.20.5482.016; Wed, 10 Aug 2022
- 04:54:19 +0000
-From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
-To: Keith Busch <kbusch@kernel.org>
-Thread-Topic: [PATCH v2 09/20] nvme: Add helper to execute Reservation Report
-Thread-Index: AQHYq4PmjV2UOnxHHEaZfkf5ZGRZ762mZnKAgABBcwCAABkjAIAAncQAgAAZlICAABsXgA==
-Date: Wed, 10 Aug 2022 04:54:19 +0000
-Message-ID: <bdb23ae6-8b66-fa50-7c51-7381da9d9478@nvidia.com>
-References: <20220809000419.10674-1-michael.christie@oracle.com>
- <20220809000419.10674-10-michael.christie@oracle.com>
- <12b99b10-8353-0f72-f314-c453a4fc5b6a@nvidia.com>
- <YvJ0Xh61npH+M9HP@kbusch-mbp.dhcp.thefacebook.com>
- <5f55a431-31ce-185a-6ab0-db701b878d82@oracle.com>
- <a0184a51-ef30-dc80-412e-6f754c4d9476@nvidia.com>
- <YvMjQSlFKJE8Cp8w@kbusch-mbp.dhcp.thefacebook.com>
-In-Reply-To: <YvMjQSlFKJE8Cp8w@kbusch-mbp.dhcp.thefacebook.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.8.0
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: b5ab6f64-79c0-4027-6e0a-08da7a8c62d7
-x-ms-traffictypediagnostic: MN2PR12MB3263:EE_
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: 1Ztkv77BZ8I2KP9q4kKWEGQFw9fJsf6GaAiKLHFlk16bHvL2faOj5YP17DIuuJAuu9NwbYnmhnNXgDU7Ki3gS1nknoK3W7pBG+SxbU/1Zj6Mi1YQq+9lpAOoQAAJZx81+RxAe3JqX3jBetB07EEJDPLmywP9c0r9xd78os9u3pQ8IeoF3cqZ22lmcEHw3exBEIPauLsrZsBOljRYulgt09K67VlAxLGpWGHr/4tzx7I/Hs0tMBg8a5Jt1C5IDvjHNHceFy3vQUbdGKb04LV+zNaomVcx912ovRcu/CptayS3DJoZGpAfPRh6Qqnx4iuqEF00wF/+7i6EhZp9dHqU6Ya8YP+yBdnaKaSwoPaVGx0EcmI/I8+zBE9ZuP5ymb0BUfgwmSYtr/7A+pNdqZD31FV33O6VEsncUdNci+oDLx0AN150jDyQyCEaDlE1cbAXb+PhpYEY+FYhDYqUsIzhIZqftjXORiBW4nZ/cF/PUab14+BUnF+/BHJb2hdF3+W82B49Wfo4knrX9iDHzhTnLPuB5y/WMm+Hw+hHfNM6gPWALwJ0G1DlF7ASns8jn1B2fpNLSPibnyB8nw42MDovuPTbiBYjShobnKqzgB6qdj1/0Jqk18xK6OLC2dRvqPHDZnwzlW+DkyPbtm147unUHCbMAR4t0sk7bRLYGuUlCAuy6Frz9YrX5RvGGJ3FluLuPIczcBeBQQYMV1DNuYfj34DtvUcaJ6hzrdJS+OcDCotNFSWRn4eVfkDZjvo0It4UgOMH8t5oFr11G8EBzdbsl6iTUJSu8cSJOuj+S0O+fxk8QWwTVzZbdCRpvFt8DCKUi8QYwfQpr7jvIaFyRWwu+WV6Qf25QOLyIrVgXR53dEehWNmBwRO1XgD7PoM2pEnI
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:BL0PR12MB4659.namprd12.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230016)(4636009)(366004)(136003)(376002)(39860400002)(396003)(346002)(66556008)(38100700002)(66446008)(71200400001)(66476007)(6486002)(122000001)(64756008)(7416002)(66946007)(558084003)(38070700005)(8676002)(478600001)(5660300002)(31696002)(54906003)(76116006)(86362001)(4326008)(91956017)(316002)(6512007)(31686004)(186003)(2616005)(36756003)(8936002)(6916009)(6506007)(41300700001)(2906002)(43740500002)(45980500001);
- DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?eUc1dUxiU29rR0V6UjlndTNqcExDSGVTOUZiU1l5bk1Jd1VrTWFORVg1SkxB?=
- =?utf-8?B?WUcxeVJqd0Z0QnNwTlNQUkJ0TStRaEZQbHBkeXJ1ZzRGR0xXcWJYOTVaeWRm?=
- =?utf-8?B?SVFWV1BxUU5RSytHV0hhNHFLRmJVb01vM1RYSVZMclNmUmhrY1JtbkU4bnVr?=
- =?utf-8?B?bkM1OUJqL243OGdTZk4rcVFpemJYWGppRGcvODJsOEdlaFIzVFJYMkxEMXhR?=
- =?utf-8?B?QktHaml4RzRvd0ZjTFI2ZWpwb25xRm51RXZhTk5FVGwySnI2YzlJVDRWdmdj?=
- =?utf-8?B?U3g2N05kVW0zbTdadXZtR2lUUFBTcEtGL2x3MnZjeTJxTjVZbEdpaEE3ckV6?=
- =?utf-8?B?VTN4aWkrOTJ6emwzbzhxN3hUdEZLZzRDMjdCcThHUUFBblo1N2RNVkxaam1i?=
- =?utf-8?B?U3dQcnI4ajhldWlBd0lqVVhNQlFxY3F5QVhrRTNUZVM5RXA2cWc3dEY2b21M?=
- =?utf-8?B?UUpneUtKdkU3WHg5VWJCR1VnYVpqR2oraVVWWHRETXh2cFQ2dVovbXBrK2hX?=
- =?utf-8?B?QXR6RTkxNUREeVZDRnprRWN4emlEUjBFODVzOHlYNGtGNWpKdHY5UUZVakph?=
- =?utf-8?B?cTIxcUdrdFhDeEEvWjQ0WGJlTEk1eUZvUXJwa1lVcU5NVW01ZkJaOFFmengv?=
- =?utf-8?B?UG9SZFNyclJ0Q3FkMDJtNU1tV044SzV4eDV4Z1hCbFdwbmYxQzVKdjFuT3A0?=
- =?utf-8?B?dnR2Q1kxZmJIR0VrdzVoWnFBNkxiVnVTN29yZ1F1bzd2NHdFL0JLMTM5UCtx?=
- =?utf-8?B?ditzR1NNRTZ3U2Q5R0xpdEtNd29CTzVSWi9sR24zTnRDWnU0dUpVN2lMRk00?=
- =?utf-8?B?NXpYR1Ftbi8vREZtQkpndVpaY3dyMXFaY0N0ZUovYnZueGNMU2xhYUJNY3Bx?=
- =?utf-8?B?dkdRY1pBMnVMSUxTNnBqeDBzeU5sK3pWbWtSZ3BQRjlMaXJ2dHEyV0RkanEx?=
- =?utf-8?B?VGZNSXBmZGtlNGNaUnVlaGFzTFlwTVdOSDllUUtGQ1ZJVmtFMGZoeHVuY25K?=
- =?utf-8?B?RFU3bVlLUmJLeXkwTHVHYmk4MmdCajY3bmd4UG9HSjRxSE9oNkZDWm1LRUtE?=
- =?utf-8?B?NGc2SFp2ZWhaZWt5ekFwc0ZZRVV3aitGYzZSOTRrb3ViRndDWkdMWU54TU93?=
- =?utf-8?B?cm1pT2xFNE1za3JwcDgvd3hNSTA4bjE3U2R3WmI3Ky84aWxPTFZ4THFyQVQw?=
- =?utf-8?B?YWM3QzQ5YklxeUhUNmxsazdtZEpKRXBzUHd5SDFSY1dWS2tnWWFYUDFvNXRB?=
- =?utf-8?B?VzhqeTU5ZGxMREFCNU5PTlQ1VFVsalNQU2pvNmMvRHdMWmhWa0lacGVlQ1FV?=
- =?utf-8?B?bncvVVJveHdWNHBIdko2UmVSUG5zdmVYempiSXkrYUNaM24rbXpPRVkxWTBh?=
- =?utf-8?B?THp0dkVGRlkxdGRoZUZqZU9ONnNJZHFjY042UlMyZERVajJvdlJEQ2F1K2E4?=
- =?utf-8?B?OVRnMmhiREJISFpROCtvMlNydllGOVIxM1loamdOQ0FLbmJEdVU2VEhveE9w?=
- =?utf-8?B?cTlLYnRYUnBRSERGcnhENXhvN0Q4RWxpN05HZ2pvQ3Izc0R2VnRZSnVTU3Fz?=
- =?utf-8?B?Y3VndUxRcXBCbE9KcVoraFR1c2Vxc0tjVzFBcWtMVWZlVDdKdms4Qno2bVJq?=
- =?utf-8?B?NjVCZlFFWXordkcrMnJjZkNNWlV1STBZRnNDSUxiYjZpRHRJQTFXQ3ZIRER0?=
- =?utf-8?B?UHVQR1dmeVQ2N0tET3daeERFV25LTVQ4RUFpdjZJWDhTcFNoWDQrdlgrcFQ1?=
- =?utf-8?B?R0xieENmZkV3ZG95MG1sQkNZdE56SmN0dVlxOG5PMnZVWTBpVUJ3bjBsTUlx?=
- =?utf-8?B?TGlzOWs4cHQyMTd4YkJJNTI2NnJuT3BSa0hLSlBOcWU3cnArRUMwM3NsZzVF?=
- =?utf-8?B?NTNoMENraHFRTGl1MnNBME4vVHRUS095MDR2d1lxVXVMYkVzVHliUlZmeGU5?=
- =?utf-8?B?cDNKVTdUcmFmSFBlajBsaEovL0tDVGtlaHFtV2VRbHpyVHZ0d3pBWkFFemha?=
- =?utf-8?B?Qjlia1lYTmJDTU9PMWhoZit0Q1UxRDZxTHlNaGtVM1RZQXMxektyK0xmclBI?=
- =?utf-8?B?ZVNrL0p2NVQyMndHQXl3K0hLYjNQZlBjSFVyNHZqSlRoTWRuVWQzVHlQVTJL?=
- =?utf-8?B?Q044anVMbmlDdllzTXdHM2pkMExCcU9HdXBUUUM0YjZLU2VNZ2ZJZ1FVb1A3?=
- =?utf-8?B?OUE9PQ==?=
+ us-mta-369-dKZrxY5VNUSsIpLlh87zsw-1; Wed, 10 Aug 2022 12:50:15 -0400
+X-MC-Unique: dKZrxY5VNUSsIpLlh87zsw-1
+X-IronPort-AV: E=Sophos;i="5.93,227,1654531200"; d="scan'208";a="213382751"
+Received: from h199-255-45-15.hgst.com (HELO uls-op-cesaep02.wdc.com)
+ ([199.255.45.15])
+ by ob1.hgst.iphmx.com with ESMTP; 11 Aug 2022 00:50:13 +0800
+IronPort-SDR: SOE1ArskomXtLCx2rhmyrkKEfJYReOAaAK5ySF++6jLI0EJLxIDyMHhKsLDjUCxwvjSSEu3p+S
+ pgYyrC2WHaPcxcIOZwGTSrohtuOby3t9NOdFmDR5FS2qwpAWDWEIfYzTiTjg1H8a0m/d+SkVOs
+ tkdG4ixEwJiNAIFCwuXR4YEZDxAC3aqrvYfOG18XKeAqF+mmbBTwc/j019jAF2fcW/pduXXvv2
+ t8D8VQsajADRNBUGaB0wfszaHgGEmLwj+iLGqKyEscZKa+3PA49b1tiRUD8DWsphXx4EYWycgP
+ jsKstnJg8CQGoYuVpYQPnUQZ
+Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
+ by uls-op-cesaep02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 10 Aug 2022 09:05:49 -0700
+IronPort-SDR: F1dk9L3nTyzb2yOwoSKwyfjye5l7HZ00JJtrSwYwWqsmSDBgKvv3Uw/PHMSc4QSO3vorej0+5a
+ nrc5hD7H4K1r0RwVOXgYm+iobAqQkUHFn0QRHiywXdQmxCFv1gds8MeuBLItqGUKeihygOEweU
+ Xf72gXoy7z5xBotTxCjc/Ci0fElVkcA9p+2WZcnFRS+fEaDDB5g38yezOigfzf1XgjhKRJ3ego
+ H1vUVK5xanVztkTUur6huR9jbGw9Ir6tTlMmil972huVvuvRLze72wpLHN06OzNA7GqYnnH6pG
+ S3s=
+WDCIronportException: Internal
+Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
+ by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 10 Aug 2022 09:50:14 -0700
+Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4M2wsd19Z5z1Rwnm
+ for <dm-devel@redhat.com>; Wed, 10 Aug 2022 09:50:13 -0700 (PDT)
+X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
+Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
+ by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
+ port 10026) with ESMTP id gpHS3MnQ9CNl for <dm-devel@redhat.com>;
+ Wed, 10 Aug 2022 09:50:12 -0700 (PDT)
+Received: from [10.111.68.99] (c02drav6md6t.sdcorp.global.sandisk.com
+ [10.111.68.99])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4M2wsb51npz1RtVk;
+ Wed, 10 Aug 2022 09:50:11 -0700 (PDT)
+Message-ID: <700a5080-aea2-1a56-6bac-bebb03be8b47@opensource.wdc.com>
+Date: Wed, 10 Aug 2022 09:50:11 -0700
 MIME-Version: 1.0
-X-OriginatorOrg: Nvidia.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: BL0PR12MB4659.namprd12.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: b5ab6f64-79c0-4027-6e0a-08da7a8c62d7
-X-MS-Exchange-CrossTenant-originalarrivaltime: 10 Aug 2022 04:54:19.8485 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 43083d15-7273-40c1-b7db-39efd9ccc17a
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: 0UPfnaoTcJnkUYj9cLoQFcnE71n5yG70gaXGf25Qeb7BfKOHEgd55/yRiCYeMRWuvutVpqps32E7TOnit54XAw==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: MN2PR12MB3263
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0)
+ Gecko/20100101 Thunderbird/91.12.0
+To: Pankaj Raghav <p.raghav@samsung.com>, Johannes.Thumshirn@wdc.com,
+ snitzer@kernel.org, axboe@kernel.dk, agk@redhat.com, hch@lst.de
+References: <20220803094801.177490-1-p.raghav@samsung.com>
+ <CGME20220803094804eucas1p1feea4b1bdae819f4c8750994ddd94803@eucas1p1.samsung.com>
+ <20220803094801.177490-3-p.raghav@samsung.com>
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Organization: Western Digital Research
+In-Reply-To: <20220803094801.177490-3-p.raghav@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -152,9 +108,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH v2 09/20] nvme: Add helper to execute
- Reservation Report
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+Subject: Re: [dm-devel] [PATCH v9 02/13] block:rearrange bdev_{is_zoned,
+ zone_sectors, get_queue} helpers in blkdev.h
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -166,35 +122,125 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
- "james.bottomley@hansenpartnership.com"
- <james.bottomley@hansenpartnership.com>,
- "bvanassche@acm.org" <bvanassche@acm.org>,
- "martin.petersen@oracle.com" <martin.petersen@oracle.com>,
- "snitzer@kernel.org" <snitzer@kernel.org>,
- "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
- "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>,
- "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
- "hch@lst.de" <hch@lst.de>, Mike Christie <michael.christie@oracle.com>
+Cc: bvanassche@acm.org, pankydev8@gmail.com, gost.dev@samsung.com,
+ linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
+ linux-block@vger.kernel.org, dm-devel@redhat.com, jaegeuk@kernel.org,
+ matias.bjorling@wdc.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <B1329D89C68561428369DFF7078A0DDF@namprd12.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+On 2022/08/03 2:47, Pankaj Raghav wrote:
+> Define bdev_is_zoned(), bdev_zone_sectors() and bdev_get_queue() earlier
+> in the blkdev.h include file.
+> 
+> This commit has no functional change, and it is a prep patch for allowing
+> zoned devices with non-power-of-2 zone sizes in the block layer.
+> 
+> Signed-off-by: Pankaj Raghav <p.raghav@samsung.com>
+> Suggested-by: Bart Van Assche <bvanassche@acm.org>
+> ---
+>  include/linux/blkdev.h | 48 +++++++++++++++++++++---------------------
+>  1 file changed, 24 insertions(+), 24 deletions(-)
+> 
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index ab82d1ff0cce..22f97427b60b 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -635,6 +635,11 @@ static inline bool queue_is_mq(struct request_queue *q)
+>  	return q->mq_ops;
+>  }
+>  
+> +static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
+> +{
+> +	return bdev->bd_queue;	/* this is never NULL */
+> +}
+> +
+>  #ifdef CONFIG_PM
+>  static inline enum rpm_status queue_rpm_status(struct request_queue *q)
+>  {
+> @@ -666,6 +671,25 @@ static inline bool blk_queue_is_zoned(struct request_queue *q)
+>  	}
+>  }
+>  
+> +static inline bool bdev_is_zoned(struct block_device *bdev)
+> +{
+> +	struct request_queue *q = bdev_get_queue(bdev);
+> +
+> +	if (q)
+> +		return blk_queue_is_zoned(q);
 
-> cdw11 is '0' on the 2nd try, and the 'goto' is conditioned on cdw11 being
-> non-zero. There's no infinite retry here.
+As noted with the comment in bdev_get_queue(), q is never null. So this all
+could be simplified to:
 
-Right I have misread the code, thanks for pointing that out.
+	return blk_queue_is_zoned(bdev_get_queue(bdev));
 
--ck
+This could be done in a separate patch, or here as well.
 
+> +
+> +	return false;
+> +}
+> +
+> +static inline sector_t bdev_zone_sectors(struct block_device *bdev)
+> +{
+> +	struct request_queue *q = bdev_get_queue(bdev);
+> +
+> +	if (!blk_queue_is_zoned(q))
+> +		return 0;
+> +	return q->limits.chunk_sectors;
+> +}
+> +
+>  #ifdef CONFIG_BLK_DEV_ZONED
+>  static inline unsigned int disk_nr_zones(struct gendisk *disk)
+>  {
+> @@ -892,11 +916,6 @@ int bio_poll(struct bio *bio, struct io_comp_batch *iob, unsigned int flags);
+>  int iocb_bio_iopoll(struct kiocb *kiocb, struct io_comp_batch *iob,
+>  			unsigned int flags);
+>  
+> -static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
+> -{
+> -	return bdev->bd_queue;	/* this is never NULL */
+> -}
+> -
+>  /* Helper to convert BLK_ZONE_ZONE_XXX to its string format XXX */
+>  const char *blk_zone_cond_str(enum blk_zone_cond zone_cond);
+>  
+> @@ -1296,25 +1315,6 @@ static inline enum blk_zoned_model bdev_zoned_model(struct block_device *bdev)
+>  	return BLK_ZONED_NONE;
+>  }
+>  
+> -static inline bool bdev_is_zoned(struct block_device *bdev)
+> -{
+> -	struct request_queue *q = bdev_get_queue(bdev);
+> -
+> -	if (q)
+> -		return blk_queue_is_zoned(q);
+> -
+> -	return false;
+> -}
+> -
+> -static inline sector_t bdev_zone_sectors(struct block_device *bdev)
+> -{
+> -	struct request_queue *q = bdev_get_queue(bdev);
+> -
+> -	if (!blk_queue_is_zoned(q))
+> -		return 0;
+> -	return q->limits.chunk_sectors;
+> -}
+> -
+>  static inline int queue_dma_alignment(const struct request_queue *q)
+>  {
+>  	return q ? q->dma_alignment : 511;
+
+
+-- 
+Damien Le Moal
+Western Digital Research
 
 --
 dm-devel mailing list
