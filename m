@@ -4,87 +4,87 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3E757C32793
-	for <dm-devel@archiver.kernel.org>; Tue, 23 Aug 2022 23:34:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C5E9DC38142
+	for <dm-devel@archiver.kernel.org>; Wed, 24 Aug 2022 02:47:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1661297651;
+	s=mimecast20190719; t=1661309258;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Tznr1jPYKLRPSrmEWzR2yB9rFYEWNHEo/3LMA/jo58k=;
-	b=JRxevBni4mxUb8RzupIWJyIvoNv51KGScTRlYFtHj1fiSHF/lfJQSwAzSfPtM8dLhYNvv4
-	cRZnq8oIRCI+tPw52eSmDB5La6Ofaj/zw5fbnprMswTIicXfZi/Imi5wnW3OJxUxlUYW+l
-	gZg7B0vCAnSrlMdochCSfpeYIGLVdVU=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=xbiO0YyWtXeeJ5+BZSZ5vNZb4wuV9T913P3o5Lr1mEU=;
+	b=OJPNA1CfgrRdV8e7fPTk5DklALpddYDm+R9w8+SmcUMkmqiCY/ITa2wLCcQoolMLBE+cQg
+	9nhQkLEbrePrE3bPnamuFi0UOZ2vAEMtxFCDu5MeknjxODIvAT8gEwotLlhSkaZPktoTn8
+	SqggUHfH2LO/BuGI1YvMXBkxrytLSWY=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-173-M_D_-uAHPs2sXZJDIgeihg-1; Tue, 23 Aug 2022 19:34:08 -0400
-X-MC-Unique: M_D_-uAHPs2sXZJDIgeihg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-151-XbgQDTu1O1uxYY2Amhejvg-1; Tue, 23 Aug 2022 22:47:35 -0400
+X-MC-Unique: XbgQDTu1O1uxYY2Amhejvg-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0459B85A585;
-	Tue, 23 Aug 2022 23:34:06 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 923403C0D868;
+	Wed, 24 Aug 2022 02:47:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 12B9F2026D4C;
-	Tue, 23 Aug 2022 23:34:04 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 146C0492C3B;
+	Wed, 24 Aug 2022 02:47:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D307D1946A41;
-	Tue, 23 Aug 2022 23:34:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E52781946A41;
+	Wed, 24 Aug 2022 02:47:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2ACDC1946A40
- for <dm-devel@listman.corp.redhat.com>; Tue, 23 Aug 2022 23:34:03 +0000 (UTC)
+ ESMTP id 58AB61946A40
+ for <dm-devel@listman.corp.redhat.com>; Wed, 24 Aug 2022 02:47:31 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id F3CDB2166B29; Tue, 23 Aug 2022 23:34:02 +0000 (UTC)
+ id 4A2DC18EA8; Wed, 24 Aug 2022 02:47:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id EFAE32166B26
- for <dm-devel@redhat.com>; Tue, 23 Aug 2022 23:34:02 +0000 (UTC)
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 469F9945D2
+ for <dm-devel@redhat.com>; Wed, 24 Aug 2022 02:47:31 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D4E3A3C0D1A5
- for <dm-devel@redhat.com>; Tue, 23 Aug 2022 23:34:02 +0000 (UTC)
-Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com
- [209.85.221.52]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-224-zLHoKxXlMI2VxqmP-j-pkw-1; Tue, 23 Aug 2022 19:34:00 -0400
-X-MC-Unique: zLHoKxXlMI2VxqmP-j-pkw-1
-Received: by mail-wr1-f52.google.com with SMTP id a4so18781154wrq.1;
- Tue, 23 Aug 2022 16:33:59 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=content-transfer-encoding:mime-version:message-id:date:subject:cc
- :to:from:x-gm-message-state:from:to:cc;
- bh=yFd3uoPfext8CVFiAfPOjedq7QVGUjqln8leyjDTZdA=;
- b=OFSxoI2Vomy+GTmgX2J77ROY1gqO57ys+rMOzBo2bMZGMpbSSyqZ5gdgeB9yFS9ioc
- L9aynzggZfmnw0Qg25O9wyk2JRQaMlqUldYER2n6R90EOYKSO0A6rQbaXBLFsfW6N6hG
- BKgtfwh/b9bEOElQaQp2dnkokjxVWguy36+VF28sF/3qYBF3erGXZINv3nwNchKyfXdC
- sZdD3W7Kq797qR/XnSG9AiQwH4HEbiwALM10LkxEmtiPTO3gcTLBcx6JY5aEz8FqhroG
- 52wpnjc6FwdDMDoAPibE8zzy0XPK3MrjxmwW4SHuf7kdcV9ze+IX4Uys/VFKD1ks6TTc
- xweg==
-X-Gm-Message-State: ACgBeo24AhKmyPhg4U1VJVKaXsT+/t3aBt0Yw8ZAgj2nkYULa7YdyrRO
- u1kvFeum45QoRS35+ggFWZG4r+iIcA==
-X-Google-Smtp-Source: AA6agR7EgkG8o6rrkINqAZPXRBI0Paz4xKIslyBcwZ5WE8HxWyN3ct8fekeMFitEWRzK2krw+VCE8A==
-X-Received: by 2002:adf:f2cd:0:b0:225:33bb:87ee with SMTP id
- d13-20020adff2cd000000b0022533bb87eemr13603427wrp.696.1661297638856; 
- Tue, 23 Aug 2022 16:33:58 -0700 (PDT)
-Received: from localhost (129.red-81-44-155.dynamicip.rima-tde.net.
- [81.44.155.129]) by smtp.gmail.com with ESMTPSA id
- l26-20020a05600c089a00b003a2cf1ba9e2sm18260107wmp.6.2022.08.23.16.33.53
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 23 Aug 2022 16:33:56 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Date: Wed, 24 Aug 2022 01:33:52 +0200
-Message-Id: <20220823233352.70881-1-xose.vazquez@gmail.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2BA3585A58A
+ for <dm-devel@redhat.com>; Wed, 24 Aug 2022 02:47:31 +0000 (UTC)
+Received: from szxga01-in.huawei.com (szxga01-in.huawei.com
+ [45.249.212.187]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-196-_wGX9GHCOPCFiQ-RiH4Beg-1; Tue, 23 Aug 2022 22:47:27 -0400
+X-MC-Unique: _wGX9GHCOPCFiQ-RiH4Beg-1
+Received: from dggpemm500024.china.huawei.com (unknown [172.30.72.57])
+ by szxga01-in.huawei.com (SkyGuard) with ESMTP id 4MC9Qd5ZGrzkWPV;
+ Wed, 24 Aug 2022 10:43:53 +0800 (CST)
+Received: from dggpemm500014.china.huawei.com (7.185.36.153) by
+ dggpemm500024.china.huawei.com (7.185.36.203) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2375.24; Wed, 24 Aug 2022 10:47:23 +0800
+Received: from [10.174.177.211] (10.174.177.211) by
+ dggpemm500014.china.huawei.com (7.185.36.153) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2375.24; Wed, 24 Aug 2022 10:47:23 +0800
+Message-ID: <69ed6e09-e5d5-5e6a-0326-35adc57ec220@huawei.com>
+Date: Wed, 24 Aug 2022 10:47:23 +0800
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
+ Thunderbird/91.0.3
+To: Martin Wilck <martin.wilck@suse.com>, "bmarzins@redhat.com"
+ <bmarzins@redhat.com>
+References: <1660769316-5302-1-git-send-email-bmarzins@redhat.com>
+ <1660769316-5302-4-git-send-email-bmarzins@redhat.com>
+ <e0f0516a08bf8fe5dddf058e5b9c9fad494340ba.camel@suse.com>
+ <20220822174632.GT10602@octiron.msp.redhat.com>
+ <7eb895de329e17fcf0a788844c8418ea309d62da.camel@suse.com>
+From: Wu Guanghao <wuguanghao3@huawei.com>
+In-Reply-To: <7eb895de329e17fcf0a788844c8418ea309d62da.camel@suse.com>
+X-Originating-IP: [10.174.177.211]
+X-ClientProxiedBy: dggems704-chm.china.huawei.com (10.3.19.181) To
+ dggpemm500014.china.huawei.com (7.185.36.153)
+X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -92,10 +92,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Spam-Signature: yes
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-Subject: [dm-devel] [PATCH] multipath-tools: add more info for NetApp RDAC
- arrays
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+Subject: Re: [dm-devel] [PATCH V2 3/6] multipathd: Occasionally allow
+ waiters to interrupt checking paths
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -107,97 +106,43 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
- NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>,
- DM-DEVEL ML <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-From:
-https://library.netapp.com/ecmdocs/ECMLP2439710/html/GUID-49E94674-947F-4921-A1D1-CE9B42DCBA39.html
-https://library.netapp.com/ecmdocs/ECMLP2439710/html/GUID-CA17AE34-F5B2-4FF4-8FD4-4A7AA4238976.html
-https://library.netapp.com/ecmdocs/ECMLP2439710/html/GUID-3DA657A9-FF4A-4237-90EC-BA8863B7431E.html
-
-To use ALUA mode, "Automatic Load Balancing" should be enabled and
-"Select operating system:" should be changed to "Linux DM-MP (Kernel 3.10 or later)".
-
-To use RDAC mode, "Automatic Load Balancing" should be disabled and
-"Select operating system:" should be changed to "Linux DM-MP (Kernel 3.9 or earlier)".
-
-
-Add it to prio and hardware_handler, and to alua info.
-
-
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- README.md                  | 5 +++--
- multipath/multipath.conf.5 | 8 +++++---
- 2 files changed, 8 insertions(+), 5 deletions(-)
-
-diff --git a/README.md b/README.md
-index b05b1332..4e34c591 100644
---- a/README.md
-+++ b/README.md
-@@ -165,8 +165,9 @@ To enable ALUA, the following options should be changed:
-    "LUN Affinity" and "ALUA" should be changed to "Enable", "Redundancy Type"
-    must be "Active-Active".
- 
--- LSI/Engenio/NetApp RDAC class, as NetApp SANtricity E/EF Series and OEM arrays:
--   "Select operating system:" should be changed to "Linux DM-MP (Kernel 3.10 or later)".
-+- LSI/Engenio/NetApp RDAC class, as NetApp SANtricity E/EF Series and rebranded arrays:
-+  "Automatic Load Balancing" should be enabled and "Select operating system:"
-+  should be changed to "Linux DM-MP (Kernel 3.10 or later)".
- 
- - NetApp ONTAP:
-    To check ALUA state: "igroup show -v <igroup_name>", and to enable ALUA:
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index acdd1ae6..58080990 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -6,7 +6,7 @@
- .\" Update the date below if you make any significant change.
- .\" ----------------------------------------------------------------------------
- .
--.TH MULTIPATH.CONF 5 2021-09-08 Linux
-+.TH MULTIPATH.CONF 5 2022-08-14 Linux
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -320,7 +320,8 @@ Generate the path priority for NetApp ONTAP class, and rebranded arrays.
- .I rdac
- (Hardware-dependent)
- Generate the path priority for LSI/Engenio/NetApp RDAC class as NetApp SANtricity
--E/EF Series, and rebranded arrays.
-+E/EF Series and rebranded arrays, with Automatic Load Balancing disabled and
-+Select operating system: Linux DM-MP (Kernel 3.9 or earlier).
- .TP
- .I hp_sw
- (Hardware-dependent)
-@@ -1568,7 +1569,8 @@ with Failover Mode 1 (Passive Not Ready(PNR)).
- .I 1 rdac
- (Hardware-dependent)
- Hardware handler for LSI/Engenio/NetApp RDAC class as NetApp SANtricity E/EF
--Series, and rebranded arrays.
-+Series and rebranded arrays, with Automatic Load Balancing disabled and
-+Select operating system: Linux DM-MP (Kernel 3.9 or earlier).
- .TP
- .I 1 hp_sw
- (Hardware-dependent)
--- 
-2.37.2
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+CgrlnKggMjAyMi84LzIzIDI6MTEsIE1hcnRpbiBXaWxjayDlhpnpgZM6Cj4gT24gTW9uLCAyMDIy
+LTA4LTIyIGF0IDEyOjQ2IC0wNTAwLCBCZW5qYW1pbiBNYXJ6aW5za2kgd3JvdGU6Cj4+IE9uIE1v
+biwgQXVnIDIyLCAyMDIyIGF0IDA0OjE1OjAxUE0gKzAwMDAsIE1hcnRpbiBXaWxjayB3cm90ZToK
+Pj4+Cj4+Pj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgaWYgKGkgPj0gVkVDVE9SX1NJWkUodmVjcy0KPj4+Pj4gcGF0aHZlYykp
+Cj4+Pj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoGkgPSBWRUNUT1JfU0laRSh2ZWNzLQo+Pj4+PiBw
+YXRodmVjKSAtIDE7Cj4+Pgo+Pj4gV2hhdCBpZiBWRUNUT1JfU0laRSh2ZWNzLT5wYXRodmVjKSA9
+PSAwPyBNYXliZSB5b3Ugc2hvdWxkIGNhdGNoCj4+PiB0aGF0IGluCj4+PiB0aGUgd2hpbGUgKCkg
+Y29uZGl0aW9uIGFib3ZlPwo+Pgo+PiBJIGNvdWxkIGZvciBjbGFyaXR5IGlmIHlvdSB3YW50LCBi
+dXQgdGhlIGNvZGUgaXMgY29ycmVjdCBhcyBpcy4gSWYKPj4gVkVDVE9SX1NJWkUoKSBpcyAwLCB0
+aGVuIGkgd2lsbCBzdGFydCBhdCAtMS4gVGhpcyB3aWxsIGNhdXNlIHRoZQo+PiB3aGlsZSgpCj4+
+IGxvb3AgdG8gaW1tZWRpYXRlbHkgZXhpdCwgc2luY2UgVkVDVE9SX1NMT1QoKSBjaGVja3MgZm9y
+IGkgPCAwLiBSaWdodAo+PiBhZnRlciB0aGUgd2hpbGUgbG9vcCwgaSBnZXRzIGJ1bXBlZCB1cCB0
+byBzdGFydCBjaGVja2luZyBhdCB0aGUgZmlyc3QKPj4gZGV2aWNlICh3aGljaCBvZiBjb3Vyc2Ug
+aXNuJ3QgdGhlcmUpLsKgIEl0J3MgdGhlIHNhbWUgbG9naWMgYXMgd2hhdAo+PiBoYXBwZW5zIGlm
+IHRoZSB3aGlsZSgpIGxvb3Agc2VhcmNoZXMgdGhyb3VnaCB0aGUgZW50aXJlIHBhdGh2ZWMsIGFu
+ZAo+PiBkb2Vzbid0IGZpbmQgYW55IGNoZWNrZWQgcGF0aHMuwqAgT2J2aW91c2x5LCB0aGUgZW1w
+dHkgdmVjdG9yIGNhc2UKPj4gZG9lcyBhCj4+IGJpdCBvZiB1bm5lY2Vzc2FyeSB3b3JrIGFmdGVy
+IGZpbmRpbmcgb3V0IHRoYXQgdGhlIHZlY3RvciBpcyBlbXB0eSwKPj4gYW5kCj4+IEkgY291bGQg
+YWRkIHNvbWV0aGluZyBsaWtlCj4+Cj4+IGlmIChWRUNUT1JfU0laRSh2ZWNzLT5wYXRodmVjKSA9
+PSAwKSB7Cj4+IMKgwqDCoMKgwqDCoMKgwqBjaGVja2VyX3N0YXRlID0gQ0hFQ0tFUl9GSU5JU0hF
+RDsKPj4gwqDCoMKgwqDCoMKgwqDCoGdvdG8gdW5sb2NrOwo+PiB9Cj4+Cj4+IElmIHlvdSdkIHBy
+ZWZlci4KPiAKPiBObywgaXQncyBmaW5lLiBJIHJlYWxpemVkIHRoYXQgeW91ciBjb2RlIHdhcyBj
+b3JyZWN0IGFmdGVyIEknZCBoaXQKPiAiU2VuZCIgOi0vCj4gCj4gV3UgR3VhbmdoYWhvLCBoYXZl
+IHlvdSBhbHJlYWR5IHNvbWUgcmVzdWx0cyB0byByZXBvcnQ/Cj4gClRoZSB0ZXN0IGVudmlyb25t
+ZW50IGlzIG5vdCByZWFkeSwgaXQgbWF5IHRha2UgbmV4dCB3ZWVrIHRvIGhhdmUgcmVzdWx0cy4K
+PiBNYXJ0aW4KPiAKPiAKPiAuCj4gCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
+cmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
+LWRldmVsCg==
 
