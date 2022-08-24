@@ -4,64 +4,63 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DFFFBC00140
-	for <dm-devel@archiver.kernel.org>; Wed, 24 Aug 2022 11:24:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 34C1FC00140
+	for <dm-devel@archiver.kernel.org>; Wed, 24 Aug 2022 11:26:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1661340242;
+	s=mimecast20190719; t=1661340366;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=0tBLUwVlQBg2xutP/Qqso8BGlqUKIlLAvKFSZuKpPSc=;
-	b=briOG77gv0soi5s5PRAbsrv2CYEzSbRUsXK90nk0ZGj/rmBwxvbrDR6Qf5d1QhcW16ODzO
-	mgMe2JjV6A5vkMT4hLXHus2EaXIuD5HGCD7q+FKfaWY99eZfWVZL+EM3eM4i88/qRlBofO
-	27I2Pzskd0/xEX3cSHWDtmQ/I05PGCU=
+	bh=a3NapiKt+rs0yACLqpC4bg/l8C8LwDWuqYAbWrVK9Gs=;
+	b=imS+k9cVX4CCk/sK65rG2k9lBiVlt9RodMTXDY5y3rejXMZp2c7uW7SQtCSIxwKnqKq2QD
+	MwACsn75O1zN3I80CnLXR6spV1qtYDQDEoog8YtBBOyaaD9uwGpTFHCTW+w+SZAM7BbceN
+	TtouzE1kH029wxwAoZWVW7Uhvpn1iY0=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-312-mCwgyDnaO-SH_L3iJf6S4g-1; Wed, 24 Aug 2022 07:24:01 -0400
-X-MC-Unique: mCwgyDnaO-SH_L3iJf6S4g-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-6-82gKPce6Nt6Ck5mHtqRCjQ-1; Wed, 24 Aug 2022 07:26:03 -0400
+X-MC-Unique: 82gKPce6Nt6Ck5mHtqRCjQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EA2A580A0C3;
-	Wed, 24 Aug 2022 11:23:59 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 36A0F18A6532;
+	Wed, 24 Aug 2022 11:26:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 623B92026D4C;
-	Wed, 24 Aug 2022 11:23:58 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E0F972166B26;
+	Wed, 24 Aug 2022 11:25:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2DD561946A43;
-	Wed, 24 Aug 2022 11:23:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A1FDD1946A5E;
+	Wed, 24 Aug 2022 11:25:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 045921946A42
- for <dm-devel@listman.corp.redhat.com>; Wed, 24 Aug 2022 11:23:57 +0000 (UTC)
+ ESMTP id 80CBE1946A42
+ for <dm-devel@listman.corp.redhat.com>; Wed, 24 Aug 2022 11:25:57 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D940E2026D2D; Wed, 24 Aug 2022 11:23:56 +0000 (UTC)
+ id 71B9C40D2832; Wed, 24 Aug 2022 11:25:57 +0000 (UTC)
 Received: from file01.intranet.prod.int.rdu2.redhat.com
  (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id CA3952026D4C;
- Wed, 24 Aug 2022 11:23:56 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6C1D140D2830;
+ Wed, 24 Aug 2022 11:25:57 +0000 (UTC)
 Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
  by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 27OBNuhc031717; Wed, 24 Aug 2022 07:23:56 -0400
+ 27OBPvnh031799; Wed, 24 Aug 2022 07:25:57 -0400
 Received: from localhost (mpatocka@localhost)
  by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 27OBNu2n031713; Wed, 24 Aug 2022 07:23:56 -0400
+ id 27OBPvxu031795; Wed, 24 Aug 2022 07:25:57 -0400
 X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
  owned process doing -bs
-Date: Wed, 24 Aug 2022 07:23:56 -0400 (EDT)
+Date: Wed, 24 Aug 2022 07:25:57 -0400 (EDT)
 From: Mikulas Patocka <mpatocka@redhat.com>
 X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
 To: Mike Snitzer <msnitzer@redhat.com>
-Message-ID: <alpine.LRH.2.02.2208240720520.31584@file01.intranet.prod.int.rdu2.redhat.com>
+Message-ID: <alpine.LRH.2.02.2208240723580.31584@file01.intranet.prod.int.rdu2.redhat.com>
 User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-Subject: [dm-devel] [PATCH] dm-ioctl: make an option to return an error
- string
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Subject: [dm-devel] [PATCH] dm: change DMWARN to DMERR
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -73,20 +72,16 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: David Teigland <teigland@redhat.com>, dm-devel@redhat.com,
- Joe Thornber <thornber@redhat.com>
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Add a possibility to return an error string to userspace. We introduce a
-new flag DM_RETURN_ERROR_FLAG. This flag should be set on table load
-ioctl. When this flag is present and table load fails, we return the error
-string in the "name" field of the ioctl.
+Change DMWARN to DMERR in cases when there is an unrecoverable error.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
@@ -94,280 +89,444 @@ Index: linux-2.6/drivers/md/dm-ioctl.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-ioctl.c
 +++ linux-2.6/drivers/md/dm-ioctl.c
-@@ -1377,7 +1377,8 @@ static int next_target(struct dm_target_
- }
+@@ -434,10 +434,10 @@ static struct mapped_device *dm_hash_ren
+ 		hc = __get_name_cell(new);
  
- static int populate_table(struct dm_table *table,
--			  struct dm_ioctl *param, size_t param_size)
-+			  struct dm_ioctl *param, size_t param_size,
-+			  char **ti_error)
+ 	if (hc) {
+-		DMWARN("Unable to change %s on mapped device %s to one that "
+-		       "already exists: %s",
+-		       change_uuid ? "uuid" : "name",
+-		       param->name, new);
++		DMERR("Unable to change %s on mapped device %s to one that "
++		      "already exists: %s",
++		      change_uuid ? "uuid" : "name",
++		      param->name, new);
+ 		dm_put(hc->md);
+ 		up_write(&_hash_lock);
+ 		kfree(new_data);
+@@ -449,8 +449,8 @@ static struct mapped_device *dm_hash_ren
+ 	 */
+ 	hc = __get_name_cell(param->name);
+ 	if (!hc) {
+-		DMWARN("Unable to rename non-existent device, %s to %s%s",
+-		       param->name, change_uuid ? "uuid " : "", new);
++		DMERR("Unable to rename non-existent device, %s to %s%s",
++		      param->name, change_uuid ? "uuid " : "", new);
+ 		up_write(&_hash_lock);
+ 		kfree(new_data);
+ 		return ERR_PTR(-ENXIO);
+@@ -460,9 +460,9 @@ static struct mapped_device *dm_hash_ren
+ 	 * Does this device already have a uuid?
+ 	 */
+ 	if (change_uuid && hc->uuid) {
+-		DMWARN("Unable to change uuid of mapped device %s to %s "
+-		       "because uuid is already set to %s",
+-		       param->name, new, hc->uuid);
++		DMERR("Unable to change uuid of mapped device %s to %s "
++		      "because uuid is already set to %s",
++		      param->name, new, hc->uuid);
+ 		dm_put(hc->md);
+ 		up_write(&_hash_lock);
+ 		kfree(new_data);
+@@ -750,7 +750,7 @@ static int get_target_version(struct fil
+ static int check_name(const char *name)
  {
- 	int r;
- 	unsigned int i = 0;
-@@ -1388,6 +1389,8 @@ static int populate_table(struct dm_tabl
- 
- 	if (!param->target_count) {
- 		DMWARN("populate_table: no targets specified");
-+		if (ti_error)
-+			*ti_error = "no targets specified";
+ 	if (strchr(name, '/')) {
+-		DMWARN("invalid device name");
++		DMERR("invalid device name");
  		return -EINVAL;
  	}
  
-@@ -1396,13 +1399,15 @@ static int populate_table(struct dm_tabl
+@@ -773,7 +773,7 @@ static struct dm_table *dm_get_inactive_
+ 	down_read(&_hash_lock);
+ 	hc = dm_get_mdptr(md);
+ 	if (!hc || hc->md != md) {
+-		DMWARN("device has been removed from the dev hash table.");
++		DMERR("device has been removed from the dev hash table.");
+ 		goto out;
+ 	}
+ 
+@@ -1026,7 +1026,7 @@ static int dev_rename(struct file *filp,
+ 	if (new_data < param->data ||
+ 	    invalid_str(new_data, (void *) param + param_size) || !*new_data ||
+ 	    strlen(new_data) > (change_uuid ? DM_UUID_LEN - 1 : DM_NAME_LEN - 1)) {
+-		DMWARN("Invalid new mapped device name or uuid string supplied.");
++		DMERR("Invalid new mapped device name or uuid string supplied.");
+ 		return -EINVAL;
+ 	}
+ 
+@@ -1061,7 +1061,7 @@ static int dev_set_geometry(struct file
+ 
+ 	if (geostr < param->data ||
+ 	    invalid_str(geostr, (void *) param + param_size)) {
+-		DMWARN("Invalid geometry supplied.");
++		DMERR("Invalid geometry supplied.");
+ 		goto out;
+ 	}
+ 
+@@ -1069,13 +1069,13 @@ static int dev_set_geometry(struct file
+ 		   indata + 1, indata + 2, indata + 3, &dummy);
+ 
+ 	if (x != 4) {
+-		DMWARN("Unable to interpret geometry settings.");
++		DMERR("Unable to interpret geometry settings.");
+ 		goto out;
+ 	}
+ 
+ 	if (indata[0] > 65535 || indata[1] > 255 ||
+ 	    indata[2] > 255 || indata[3] > ULONG_MAX) {
+-		DMWARN("Geometry exceeds range limits.");
++		DMERR("Geometry exceeds range limits.");
+ 		goto out;
+ 	}
+ 
+@@ -1388,7 +1388,7 @@ static int populate_table(struct dm_tabl
+ 	char *target_params;
+ 
+ 	if (!param->target_count) {
+-		DMWARN("populate_table: no targets specified");
++		DMERR("populate_table: no targets specified");
+ 		if (ti_error)
+ 			*ti_error = "no targets specified";
+ 		return -EINVAL;
+@@ -1398,7 +1398,7 @@ static int populate_table(struct dm_tabl
+ 
  		r = next_target(spec, next, end, &spec, &target_params);
  		if (r) {
- 			DMWARN("unable to find target");
-+			if (ti_error)
-+				*ti_error = "unable to find target";
+-			DMWARN("unable to find target");
++			DMERR("unable to find target");
+ 			if (ti_error)
+ 				*ti_error = "unable to find target";
+ 			return r;
+@@ -1409,7 +1409,7 @@ static int populate_table(struct dm_tabl
+ 					(sector_t) spec->length,
+ 					target_params, ti_error);
+ 		if (r) {
+-			DMWARN("error adding target to table");
++			DMERR("error adding target to table");
  			return r;
  		}
  
- 		r = dm_table_add_target(table, spec->target_type,
- 					(sector_t) spec->sector_start,
- 					(sector_t) spec->length,
--					target_params);
-+					target_params, ti_error);
- 		if (r) {
- 			DMWARN("error adding target to table");
- 			return r;
-@@ -1430,18 +1435,24 @@ static int table_load(struct file *filp,
- 	struct dm_table *t, *old_map = NULL;
- 	struct mapped_device *md;
- 	struct target_type *immutable_target_type;
-+	char *ti_error;
- 
- 	md = find_device(param);
--	if (!md)
--		return -ENXIO;
-+	if (!md) {
-+		r = -ENXIO;
-+		ti_error = "unable to find device";
-+		goto err0;
-+	}
- 
- 	r = dm_table_create(&t, get_mode(param), param->target_count, md);
--	if (r)
-+	if (r) {
-+		ti_error = "unable to create table";
- 		goto err;
-+	}
- 
- 	/* Protect md->type and md->queue against concurrent table loads. */
- 	dm_lock_md_type(md);
--	r = populate_table(t, param, param_size);
-+	r = populate_table(t, param, param_size, &ti_error);
- 	if (r)
- 		goto err_unlock_md_type;
- 
-@@ -1454,6 +1465,7 @@ static int table_load(struct file *filp,
- 		DMWARN("can't replace immutable target type %s",
- 		       immutable_target_type->name);
+@@ -1462,8 +1462,8 @@ static int table_load(struct file *filp,
+ 	if (immutable_target_type &&
+ 	    (immutable_target_type != dm_table_get_immutable_target_type(t)) &&
+ 	    !dm_table_get_wildcard_target(t)) {
+-		DMWARN("can't replace immutable target type %s",
+-		       immutable_target_type->name);
++		DMERR("can't replace immutable target type %s",
++		      immutable_target_type->name);
  		r = -EINVAL;
-+		ti_error = "can't replace immutable target";
+ 		ti_error = "can't replace immutable target";
  		goto err_unlock_md_type;
- 	}
- 
-@@ -1462,12 +1474,14 @@ static int table_load(struct file *filp,
+@@ -1473,13 +1473,13 @@ static int table_load(struct file *filp,
+ 		/* setup md->queue to reflect md's type (may block) */
  		r = dm_setup_md_queue(md, t);
  		if (r) {
- 			DMWARN("unable to set up device queue for new table.");
-+			ti_error = "unable to set up device queue for new table";
+-			DMWARN("unable to set up device queue for new table.");
++			DMERR("unable to set up device queue for new table.");
+ 			ti_error = "unable to set up device queue for new table";
  			goto err_unlock_md_type;
  		}
  	} else if (!is_valid_type(dm_get_md_type(md), dm_table_get_type(t))) {
- 		DMWARN("can't change device type (old=%u vs new=%u) after initial table load.",
- 		       dm_get_md_type(md), dm_table_get_type(t));
+-		DMWARN("can't change device type (old=%u vs new=%u) after initial table load.",
+-		       dm_get_md_type(md), dm_table_get_type(t));
++		DMERR("can't change device type (old=%u vs new=%u) after initial table load.",
++		      dm_get_md_type(md), dm_table_get_type(t));
  		r = -EINVAL;
-+		ti_error = "can't change device type after initial table load";
+ 		ti_error = "can't change device type after initial table load";
  		goto err_unlock_md_type;
- 	}
- 
-@@ -1480,6 +1494,7 @@ static int table_load(struct file *filp,
- 		DMWARN("device has been removed from the dev hash table.");
+@@ -1491,7 +1491,7 @@ static int table_load(struct file *filp,
+ 	down_write(&_hash_lock);
+ 	hc = dm_get_mdptr(md);
+ 	if (!hc || hc->md != md) {
+-		DMWARN("device has been removed from the dev hash table.");
++		DMERR("device has been removed from the dev hash table.");
  		up_write(&_hash_lock);
  		r = -ENXIO;
-+		ti_error = "device has been removed from the dev hash table";
+ 		ti_error = "device has been removed from the dev hash table";
+@@ -1703,19 +1703,19 @@ static int target_message(struct file *f
+ 
+ 	if (tmsg < (struct dm_target_msg *) param->data ||
+ 	    invalid_str(tmsg->message, (void *) param + param_size)) {
+-		DMWARN("Invalid target message parameters.");
++		DMERR("Invalid target message parameters.");
+ 		r = -EINVAL;
+ 		goto out;
+ 	}
+ 
+ 	r = dm_split_args(&argc, &argv, tmsg->message);
+ 	if (r) {
+-		DMWARN("Failed to split target message parameters");
++		DMERR("Failed to split target message parameters");
+ 		goto out;
+ 	}
+ 
+ 	if (!argc) {
+-		DMWARN("Empty message received.");
++		DMERR("Empty message received.");
+ 		r = -EINVAL;
+ 		goto out_argv;
+ 	}
+@@ -1735,12 +1735,12 @@ static int target_message(struct file *f
+ 
+ 	ti = dm_table_find_target(table, tmsg->sector);
+ 	if (!ti) {
+-		DMWARN("Target message sector outside device.");
++		DMERR("Target message sector outside device.");
+ 		r = -EINVAL;
+ 	} else if (ti->type->message)
+ 		r = ti->type->message(ti, argc, argv, result, maxlen);
+ 	else {
+-		DMWARN("Target type does not support messages");
++		DMERR("Target type does not support messages");
+ 		r = -EINVAL;
+ 	}
+ 
+@@ -1831,11 +1831,11 @@ static int check_version(unsigned int cm
+ 
+ 	if ((DM_VERSION_MAJOR != version[0]) ||
+ 	    (DM_VERSION_MINOR < version[1])) {
+-		DMWARN("ioctl interface mismatch: "
+-		       "kernel(%u.%u.%u), user(%u.%u.%u), cmd(%d)",
+-		       DM_VERSION_MAJOR, DM_VERSION_MINOR,
+-		       DM_VERSION_PATCHLEVEL,
+-		       version[0], version[1], version[2], cmd);
++		DMERR("ioctl interface mismatch: "
++		      "kernel(%u.%u.%u), user(%u.%u.%u), cmd(%d)",
++		      DM_VERSION_MAJOR, DM_VERSION_MINOR,
++		      DM_VERSION_PATCHLEVEL,
++		      version[0], version[1], version[2], cmd);
+ 		r = -EINVAL;
+ 	}
+ 
+@@ -1944,11 +1944,11 @@ static int validate_params(uint cmd, str
+ 
+ 	if (cmd == DM_DEV_CREATE_CMD) {
+ 		if (!*param->name) {
+-			DMWARN("name not supplied when creating device");
++			DMERR("name not supplied when creating device");
+ 			return -EINVAL;
+ 		}
+ 	} else if (*param->uuid && *param->name) {
+-		DMWARN("only supply one of name or uuid, cmd(%u)", cmd);
++		DMERR("only supply one of name or uuid, cmd(%u)", cmd);
+ 		return -EINVAL;
+ 	}
+ 
+@@ -1995,7 +1995,7 @@ static int ctl_ioctl(struct file *file,
+ 
+ 	fn = lookup_ioctl(cmd, &ioctl_flags);
+ 	if (!fn) {
+-		DMWARN("dm_ctl_ioctl: unknown command 0x%x", command);
++		DMERR("dm_ctl_ioctl: unknown command 0x%x", command);
+ 		return -ENOTTY;
+ 	}
+ 
+@@ -2220,7 +2220,7 @@ int __init dm_early_create(struct dm_ioc
+ 					(sector_t) spec_array[i]->length,
+ 					target_params_array[i], NULL);
+ 		if (r) {
+-			DMWARN("error adding target to table");
++			DMERR("error adding target to table");
+ 			goto err_destroy_table;
+ 		}
+ 	}
+@@ -2233,7 +2233,7 @@ int __init dm_early_create(struct dm_ioc
+ 	/* setup md->queue to reflect md's type (may block) */
+ 	r = dm_setup_md_queue(md, t);
+ 	if (r) {
+-		DMWARN("unable to set up device queue for new table.");
++		DMERR("unable to set up device queue for new table.");
  		goto err_destroy_table;
  	}
  
-@@ -1506,7 +1521,9 @@ err_destroy_table:
- 	dm_table_destroy(t);
- err:
- 	dm_put(md);
--
-+err0:
-+	if (param->flags & DM_RETURN_ERROR_FLAG)
-+		strlcpy(param->name, ti_error, sizeof param->name);
- 	return r;
- }
- 
-@@ -2201,7 +2218,7 @@ int __init dm_early_create(struct dm_ioc
- 		r = dm_table_add_target(t, spec_array[i]->target_type,
- 					(sector_t) spec_array[i]->sector_start,
- 					(sector_t) spec_array[i]->length,
--					target_params_array[i]);
-+					target_params_array[i], NULL);
- 		if (r) {
- 			DMWARN("error adding target to table");
- 			goto err_destroy_table;
 Index: linux-2.6/drivers/md/dm-table.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-table.c
 +++ linux-2.6/drivers/md/dm-table.c
-@@ -631,56 +631,58 @@ static int validate_hardware_logical_blo
- }
+@@ -234,12 +234,12 @@ static int device_area_is_invalid(struct
+ 		return 0;
  
- int dm_table_add_target(struct dm_table *t, const char *type,
--			sector_t start, sector_t len, char *params)
-+			sector_t start, sector_t len, char *params,
-+			char **ti_error)
+ 	if ((start >= dev_size) || (start + len > dev_size)) {
+-		DMWARN("%s: %pg too small for target: "
+-		       "start=%llu, len=%llu, dev_size=%llu",
+-		       dm_device_name(ti->table->md), bdev,
+-		       (unsigned long long)start,
+-		       (unsigned long long)len,
+-		       (unsigned long long)dev_size);
++		DMERR("%s: %pg too small for target: "
++		      "start=%llu, len=%llu, dev_size=%llu",
++		      dm_device_name(ti->table->md), bdev,
++		      (unsigned long long)start,
++		      (unsigned long long)len,
++		      (unsigned long long)dev_size);
+ 		return 1;
+ 	}
+ 
+@@ -251,10 +251,10 @@ static int device_area_is_invalid(struct
+ 		unsigned int zone_sectors = bdev_zone_sectors(bdev);
+ 
+ 		if (start & (zone_sectors - 1)) {
+-			DMWARN("%s: start=%llu not aligned to h/w zone size %u of %pg",
+-			       dm_device_name(ti->table->md),
+-			       (unsigned long long)start,
+-			       zone_sectors, bdev);
++			DMERR("%s: start=%llu not aligned to h/w zone size %u of %pg",
++			      dm_device_name(ti->table->md),
++			      (unsigned long long)start,
++			      zone_sectors, bdev);
+ 			return 1;
+ 		}
+ 
+@@ -268,10 +268,10 @@ static int device_area_is_invalid(struct
+ 		 * the sector range.
+ 		 */
+ 		if (len & (zone_sectors - 1)) {
+-			DMWARN("%s: len=%llu not aligned to h/w zone size %u of %pg",
+-			       dm_device_name(ti->table->md),
+-			       (unsigned long long)len,
+-			       zone_sectors, bdev);
++			DMERR("%s: len=%llu not aligned to h/w zone size %u of %pg",
++			      dm_device_name(ti->table->md),
++			      (unsigned long long)len,
++			      zone_sectors, bdev);
+ 			return 1;
+ 		}
+ 	}
+@@ -280,20 +280,20 @@ static int device_area_is_invalid(struct
+ 		return 0;
+ 
+ 	if (start & (logical_block_size_sectors - 1)) {
+-		DMWARN("%s: start=%llu not aligned to h/w "
+-		       "logical block size %u of %pg",
+-		       dm_device_name(ti->table->md),
+-		       (unsigned long long)start,
+-		       limits->logical_block_size, bdev);
++		DMERR("%s: start=%llu not aligned to h/w "
++		      "logical block size %u of %pg",
++		      dm_device_name(ti->table->md),
++		      (unsigned long long)start,
++		      limits->logical_block_size, bdev);
+ 		return 1;
+ 	}
+ 
+ 	if (len & (logical_block_size_sectors - 1)) {
+-		DMWARN("%s: len=%llu not aligned to h/w "
+-		       "logical block size %u of %pg",
+-		       dm_device_name(ti->table->md),
+-		       (unsigned long long)len,
+-		       limits->logical_block_size, bdev);
++		DMERR("%s: len=%llu not aligned to h/w "
++		      "logical block size %u of %pg",
++		      dm_device_name(ti->table->md),
++		      (unsigned long long)len,
++		      limits->logical_block_size, bdev);
+ 		return 1;
+ 	}
+ 
+@@ -434,8 +434,8 @@ void dm_put_device(struct dm_target *ti,
+ 		}
+ 	}
+ 	if (!found) {
+-		DMWARN("%s: device %s not in table devices list",
+-		       dm_device_name(ti->table->md), d->name);
++		DMERR("%s: device %s not in table devices list",
++		      dm_device_name(ti->table->md), d->name);
+ 		return;
+ 	}
+ 	if (refcount_dec_and_test(&dd->count)) {
+@@ -618,12 +618,12 @@ static int validate_hardware_logical_blo
+ 	}
+ 
+ 	if (remaining) {
+-		DMWARN("%s: table line %u (start sect %llu len %llu) "
+-		       "not aligned to h/w logical block size %u",
+-		       dm_device_name(t->md), i,
+-		       (unsigned long long) ti->begin,
+-		       (unsigned long long) ti->len,
+-		       limits->logical_block_size);
++		DMERR("%s: table line %u (start sect %llu len %llu) "
++		      "not aligned to h/w logical block size %u",
++		      dm_device_name(t->md), i,
++		      (unsigned long long) ti->begin,
++		      (unsigned long long) ti->len,
++		      limits->logical_block_size);
+ 		return -EINVAL;
+ 	}
+ 
+@@ -1013,7 +1013,7 @@ static int dm_table_alloc_md_mempools(st
+ 	struct dm_md_mempools *pools;
+ 
+ 	if (unlikely(type == DM_TYPE_NONE)) {
+-		DMWARN("no table type is set, can't allocate mempools");
++		DMERR("no table type is set, can't allocate mempools");
+ 		return -EINVAL;
+ 	}
+ 
+@@ -1117,7 +1117,7 @@ static bool integrity_profile_exists(str
+  * Get a disk whose integrity profile reflects the table's profile.
+  * Returns NULL if integrity support was inconsistent or unavailable.
+  */
+-static struct gendisk * dm_table_get_integrity_disk(struct dm_table *t)
++static struct gendisk *dm_table_get_integrity_disk(struct dm_table *t)
  {
- 	int r = -EINVAL, argc;
- 	char **argv;
- 	struct dm_target *ti;
- 
--	if (t->singleton) {
--		DMERR("%s: target type %s must appear alone in table",
--		      dm_device_name(t->md), t->targets->type->name);
--		return -EINVAL;
--	}
--
- 	BUG_ON(t->num_targets >= t->num_allocated);
--
- 	ti = t->targets + t->num_targets;
- 	memset(ti, 0, sizeof(*ti));
- 
-+	if (t->singleton) {
-+		ti->error =  "singleton target must appear alone in table";
-+		r = -EINVAL;
-+		goto bad0;
-+	}
-+
- 	if (!len) {
--		DMERR("%s: zero-length target", dm_device_name(t->md));
--		return -EINVAL;
-+		ti->error =  "zero-length target";
-+		r = -EINVAL;
-+		goto bad0;
- 	}
- 
- 	ti->type = dm_get_target_type(type);
- 	if (!ti->type) {
--		DMERR("%s: %s: unknown target type", dm_device_name(t->md), type);
--		return -EINVAL;
-+		ti->error = "unknown target type";
-+		r = -EINVAL;
-+		goto bad0;
- 	}
- 
- 	if (dm_target_needs_singleton(ti->type)) {
- 		if (t->num_targets) {
- 			ti->error = "singleton target type must appear alone in table";
--			goto bad;
-+			goto bad1;
- 		}
- 		t->singleton = true;
- 	}
- 
- 	if (dm_target_always_writeable(ti->type) && !(t->mode & FMODE_WRITE)) {
- 		ti->error = "target type may not be included in a read-only table";
--		goto bad;
-+		goto bad1;
- 	}
- 
- 	if (t->immutable_target_type) {
- 		if (t->immutable_target_type != ti->type) {
- 			ti->error = "immutable target type cannot be mixed with other target types";
--			goto bad;
-+			goto bad1;
- 		}
- 	} else if (dm_target_is_immutable(ti->type)) {
- 		if (t->num_targets) {
- 			ti->error = "immutable target type cannot be mixed with other target types";
--			goto bad;
-+			goto bad1;
- 		}
- 		t->immutable_target_type = ti->type;
- 	}
-@@ -698,19 +700,19 @@ int dm_table_add_target(struct dm_table
+ 	struct list_head *devices = dm_table_get_devices(t);
+ 	struct dm_dev_internal *dd = NULL;
+@@ -1190,10 +1190,10 @@ static int dm_table_register_integrity(s
+ 	 * profile the new profile should not conflict.
  	 */
- 	if (!adjoin(t, ti)) {
- 		ti->error = "Gap in table";
--		goto bad;
-+		goto bad1;
+ 	if (blk_integrity_compare(dm_disk(md), template_disk) < 0) {
+-		DMWARN("%s: conflict with existing integrity profile: "
+-		       "%s profile mismatch",
+-		       dm_device_name(t->md),
+-		       template_disk->disk_name);
++		DMERR("%s: conflict with existing integrity profile: "
++		      "%s profile mismatch",
++		      dm_device_name(t->md),
++		      template_disk->disk_name);
+ 		return 1;
  	}
  
- 	r = dm_split_args(&argc, &argv, params);
- 	if (r) {
- 		ti->error = "couldn't split parameters";
--		goto bad;
-+		goto bad1;
+@@ -1332,7 +1332,7 @@ static int dm_table_construct_crypto_pro
+ 	if (t->md->queue &&
+ 	    !blk_crypto_has_capabilities(profile,
+ 					 t->md->queue->crypto_profile)) {
+-		DMWARN("Inline encryption capabilities of new DM table were more restrictive than the old table's. This is not supported!");
++		DMERR("Inline encryption capabilities of new DM table were more restrictive than the old table's. This is not supported!");
+ 		dm_destroy_crypto_profile(profile);
+ 		return -EINVAL;
  	}
- 
- 	r = ti->type->ctr(ti, argc, argv);
- 	kfree(argv);
- 	if (r)
--		goto bad;
-+		goto bad1;
- 
- 	t->highs[t->num_targets++] = ti->begin + ti->len - 1;
- 
-@@ -723,9 +725,12 @@ int dm_table_add_target(struct dm_table
- 
- 	return 0;
- 
-- bad:
--	DMERR("%s: %s: %s (%pe)", dm_device_name(t->md), type, ti->error, ERR_PTR(r));
-+bad1:
- 	dm_put_target_type(ti->type);
-+bad0:
-+	DMERR("%s: %s: %s (%pe)", dm_device_name(t->md), type, ti->error, ERR_PTR(r));
-+	if (ti_error)
-+		*ti_error = ti->error;
- 	return r;
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c
++++ linux-2.6/drivers/md/dm.c
+@@ -1149,7 +1149,7 @@ static void clone_endio(struct bio *bio)
+ 			/* The target will handle the io */
+ 			return;
+ 		default:
+-			DMWARN("unimplemented target endio return value: %d", r);
++			DMCRIT("unimplemented target endio return value: %d", r);
+ 			BUG();
+ 		}
+ 	}
+@@ -1455,7 +1455,7 @@ static void __map_bio(struct bio *clone)
+ 			dm_io_dec_pending(io, BLK_STS_DM_REQUEUE);
+ 		break;
+ 	default:
+-		DMWARN("unimplemented target map return value: %d", r);
++		DMCRIT("unimplemented target map return value: %d", r);
+ 		BUG();
+ 	}
  }
+@@ -2005,7 +2005,7 @@ static struct mapped_device *alloc_dev(i
  
-Index: linux-2.6/include/linux/device-mapper.h
-===================================================================
---- linux-2.6.orig/include/linux/device-mapper.h
-+++ linux-2.6/include/linux/device-mapper.h
-@@ -531,7 +531,8 @@ int dm_table_create(struct dm_table **re
-  * Then call this once for each target.
-  */
- int dm_table_add_target(struct dm_table *t, const char *type,
--			sector_t start, sector_t len, char *params);
-+			sector_t start, sector_t len, char *params,
-+			char **ti_error);
+ 	md = kvzalloc_node(sizeof(*md), GFP_KERNEL, numa_node_id);
+ 	if (!md) {
+-		DMWARN("unable to allocate device, out of memory.");
++		DMERR("unable to allocate device, out of memory.");
+ 		return NULL;
+ 	}
  
- /*
-  * Target can use this to set the table's type.
-Index: linux-2.6/include/uapi/linux/dm-ioctl.h
-===================================================================
---- linux-2.6.orig/include/uapi/linux/dm-ioctl.h
-+++ linux-2.6/include/uapi/linux/dm-ioctl.h
-@@ -286,9 +286,9 @@ enum {
- #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
- 
- #define DM_VERSION_MAJOR	4
--#define DM_VERSION_MINOR	47
-+#define DM_VERSION_MINOR	48
- #define DM_VERSION_PATCHLEVEL	0
--#define DM_VERSION_EXTRA	"-ioctl (2022-07-28)"
-+#define DM_VERSION_EXTRA	"-ioctl (2022-08-19)"
- 
- /* Status bits */
- #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
-@@ -382,4 +382,10 @@ enum {
-  */
- #define DM_IMA_MEASUREMENT_FLAG	(1 << 19) /* In */
- 
-+/*
-+ * If this flag is set, the caller wants to receive the error string.
-+ * The error string is returned in the "name" field of the ioctl.
-+ */
-+#define DM_RETURN_ERROR_FLAG	(1 << 20) /* In */
-+
- #endif				/* _LINUX_DM_IOCTL_H */
 --
 dm-devel mailing list
 dm-devel@redhat.com
