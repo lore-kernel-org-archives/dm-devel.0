@@ -1,93 +1,67 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8F5C6C00140
-	for <dm-devel@archiver.kernel.org>; Wed, 24 Aug 2022 08:23:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DFFFBC00140
+	for <dm-devel@archiver.kernel.org>; Wed, 24 Aug 2022 11:24:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1661329427;
+	s=mimecast20190719; t=1661340242;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=CUDL8ggxzUnc/A4zvVI2SrEcUjDil9WAAPk6VohMVzc=;
-	b=DJheS2T6nj3C3S2IbauF5KZq+rfnQqgj3nugH4wO7IFSwumF6u6xsqy+2MUClUIuJEmzAO
-	rE4g1j1OTt9iFaUl7icW/FwJl1bN+hgvSV3UINTuLQH5XlQFZw80hzojErD+qLh83SBY6I
-	C4veAsL2WGOjeoMA3oeQmUDuIlORj58=
+	bh=0tBLUwVlQBg2xutP/Qqso8BGlqUKIlLAvKFSZuKpPSc=;
+	b=briOG77gv0soi5s5PRAbsrv2CYEzSbRUsXK90nk0ZGj/rmBwxvbrDR6Qf5d1QhcW16ODzO
+	mgMe2JjV6A5vkMT4hLXHus2EaXIuD5HGCD7q+FKfaWY99eZfWVZL+EM3eM4i88/qRlBofO
+	27I2Pzskd0/xEX3cSHWDtmQ/I05PGCU=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-225-IHl2FRkJNNmGuky8qlN-Dg-1; Wed, 24 Aug 2022 04:23:44 -0400
-X-MC-Unique: IHl2FRkJNNmGuky8qlN-Dg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-312-mCwgyDnaO-SH_L3iJf6S4g-1; Wed, 24 Aug 2022 07:24:01 -0400
+X-MC-Unique: mCwgyDnaO-SH_L3iJf6S4g-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7BDD618A01BE;
-	Wed, 24 Aug 2022 08:23:42 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EA2A580A0C3;
+	Wed, 24 Aug 2022 11:23:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 264EF18EA8;
-	Wed, 24 Aug 2022 08:23:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 623B92026D4C;
+	Wed, 24 Aug 2022 11:23:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 14F531946A42;
-	Wed, 24 Aug 2022 08:23:42 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2DD561946A43;
+	Wed, 24 Aug 2022 11:23:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id EA4F21946A40
- for <dm-devel@listman.corp.redhat.com>; Wed, 24 Aug 2022 08:23:40 +0000 (UTC)
+ ESMTP id 045921946A42
+ for <dm-devel@listman.corp.redhat.com>; Wed, 24 Aug 2022 11:23:57 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D6E7EC15BC5; Wed, 24 Aug 2022 08:23:40 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D2A5FC15BC3
- for <dm-devel@redhat.com>; Wed, 24 Aug 2022 08:23:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BC254811130
- for <dm-devel@redhat.com>; Wed, 24 Aug 2022 08:23:40 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_128_GCM_SHA256) id us-mta-464-AeC0_41sNSK2o0V5_Z4ZGA-1; Wed,
- 24 Aug 2022 04:23:35 -0400
-X-MC-Unique: AeC0_41sNSK2o0V5_Z4ZGA-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 93EA41F8FF;
- Wed, 24 Aug 2022 08:23:34 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 5771D13780;
- Wed, 24 Aug 2022 08:23:34 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id PCh1EwbgBWOiZAAAMHmgww
- (envelope-from <mwilck@suse.com>); Wed, 24 Aug 2022 08:23:34 +0000
-Message-ID: <29e34267dcf29ec1936a0cec095f483cdec65386.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Date: Wed, 24 Aug 2022 10:23:33 +0200
-In-Reply-To: <20220823233352.70881-1-xose.vazquez@gmail.com>
-References: <20220823233352.70881-1-xose.vazquez@gmail.com>
-User-Agent: Evolution 3.44.4
+ id D940E2026D2D; Wed, 24 Aug 2022 11:23:56 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id CA3952026D4C;
+ Wed, 24 Aug 2022 11:23:56 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 27OBNuhc031717; Wed, 24 Aug 2022 07:23:56 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 27OBNu2n031713; Wed, 24 Aug 2022 07:23:56 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Wed, 24 Aug 2022 07:23:56 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>
+Message-ID: <alpine.LRH.2.02.2208240720520.31584@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH] multipath-tools: add more info for NetApp
- RDAC arrays
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+Subject: [dm-devel] [PATCH] dm-ioctl: make an option to return an error
+ string
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -99,116 +73,301 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>,
- DM-DEVEL ML <dm-devel@redhat.com>
+Cc: David Teigland <teigland@redhat.com>, dm-devel@redhat.com,
+ Joe Thornber <thornber@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Wed, 2022-08-24 at 01:33 +0200, Xose Vazquez Perez wrote:
-> From:
-> https://library.netapp.com/ecmdocs/ECMLP2439710/html/GUID-49E94674-947F-4=
-921-A1D1-CE9B42DCBA39.html
-> https://library.netapp.com/ecmdocs/ECMLP2439710/html/GUID-CA17AE34-F5B2-4=
-FF4-8FD4-4A7AA4238976.html
-> https://library.netapp.com/ecmdocs/ECMLP2439710/html/GUID-3DA657A9-FF4A-4=
-237-90EC-BA8863B7431E.html
->=20
-> To use ALUA mode, "Automatic Load Balancing" should be enabled and
-> "Select operating system:" should be changed to "Linux DM-MP (Kernel
-> 3.10 or later)".
->=20
-> To use RDAC mode, "Automatic Load Balancing" should be disabled and
-> "Select operating system:" should be changed to "Linux DM-MP (Kernel
-> 3.9 or earlier)".
->=20
->=20
-> Add it to prio and hardware_handler, and to alua info.
->=20
->=20
-> Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
-> =A0README.md=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 | 5 +++--
-> =A0multipath/multipath.conf.5 | 8 +++++---
-> =A02 files changed, 8 insertions(+), 5 deletions(-)
->=20
-> diff --git a/README.md b/README.md
-> index b05b1332..4e34c591 100644
-> --- a/README.md
-> +++ b/README.md
-> @@ -165,8 +165,9 @@ To enable ALUA, the following options should be
-> changed:
-> =A0=A0=A0 "LUN Affinity" and "ALUA" should be changed to "Enable",
-> "Redundancy Type"
-> =A0=A0=A0 must be "Active-Active".
-> =A0
-> -- LSI/Engenio/NetApp RDAC class, as NetApp SANtricity E/EF Series
-> and OEM arrays:
-> -=A0=A0 "Select operating system:" should be changed to "Linux DM-MP
-> (Kernel 3.10 or later)".
-> +- LSI/Engenio/NetApp RDAC class, as NetApp SANtricity E/EF Series
-> and rebranded arrays:
-> +=A0 "Automatic Load Balancing" should be enabled and "Select operating
-> system:"
-> +=A0 should be changed to "Linux DM-MP (Kernel 3.10 or later)".
-> =A0
-> =A0- NetApp ONTAP:
-> =A0=A0=A0 To check ALUA state: "igroup show -v <igroup_name>", and to
-> enable ALUA:
-> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index acdd1ae6..58080990 100644
-> --- a/multipath/multipath.conf.5
-> +++ b/multipath/multipath.conf.5
-> @@ -6,7 +6,7 @@
-> =A0.\" Update the date below if you make any significant change.
-> =A0.\" ----------------------------------------------------------------
-> ------------
-> =A0.
-> -.TH MULTIPATH.CONF 5 2021-09-08 Linux
-> +.TH MULTIPATH.CONF 5 2022-08-14 Linux
-> =A0.
-> =A0.
-> =A0.\" ----------------------------------------------------------------
-> ------------
-> @@ -320,7 +320,8 @@ Generate the path priority for NetApp ONTAP
-> class, and rebranded arrays.
-> =A0.I rdac
-> =A0(Hardware-dependent)
-> =A0Generate the path priority for LSI/Engenio/NetApp RDAC class as
-> NetApp SANtricity
-> -E/EF Series, and rebranded arrays.
-> +E/EF Series and rebranded arrays, with Automatic Load Balancing
-> disabled and
-> +Select operating system: Linux DM-MP (Kernel 3.9 or earlier).
-> =A0.TP
-> =A0.I hp_sw
-> =A0(Hardware-dependent)
-> @@ -1568,7 +1569,8 @@ with Failover Mode 1 (Passive Not Ready(PNR)).
-> =A0.I 1 rdac
-> =A0(Hardware-dependent)
-> =A0Hardware handler for LSI/Engenio/NetApp RDAC class as NetApp
-> SANtricity E/EF
-> -Series, and rebranded arrays.
-> +Series and rebranded arrays, with Automatic Load Balancing disabled
-> and
-> +Select operating system: Linux DM-MP (Kernel 3.9 or earlier).
+Add a possibility to return an error string to userspace. We introduce a
+new flag DM_RETURN_ERROR_FLAG. This flag should be set on table load
+ioctl. When this flag is present and table load fails, we return the error
+string in the "name" field of the ioctl.
 
-Don't we handle RDAC just right with detect_prio and detect_checker set
-to 1? I'd like to avoid adding wording here that suggest to the user
-that she needs to tune settings, where it's actually not necessary.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Thanks,
-Martin
-
+Index: linux-2.6/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-ioctl.c
++++ linux-2.6/drivers/md/dm-ioctl.c
+@@ -1377,7 +1377,8 @@ static int next_target(struct dm_target_
+ }
+ 
+ static int populate_table(struct dm_table *table,
+-			  struct dm_ioctl *param, size_t param_size)
++			  struct dm_ioctl *param, size_t param_size,
++			  char **ti_error)
+ {
+ 	int r;
+ 	unsigned int i = 0;
+@@ -1388,6 +1389,8 @@ static int populate_table(struct dm_tabl
+ 
+ 	if (!param->target_count) {
+ 		DMWARN("populate_table: no targets specified");
++		if (ti_error)
++			*ti_error = "no targets specified";
+ 		return -EINVAL;
+ 	}
+ 
+@@ -1396,13 +1399,15 @@ static int populate_table(struct dm_tabl
+ 		r = next_target(spec, next, end, &spec, &target_params);
+ 		if (r) {
+ 			DMWARN("unable to find target");
++			if (ti_error)
++				*ti_error = "unable to find target";
+ 			return r;
+ 		}
+ 
+ 		r = dm_table_add_target(table, spec->target_type,
+ 					(sector_t) spec->sector_start,
+ 					(sector_t) spec->length,
+-					target_params);
++					target_params, ti_error);
+ 		if (r) {
+ 			DMWARN("error adding target to table");
+ 			return r;
+@@ -1430,18 +1435,24 @@ static int table_load(struct file *filp,
+ 	struct dm_table *t, *old_map = NULL;
+ 	struct mapped_device *md;
+ 	struct target_type *immutable_target_type;
++	char *ti_error;
+ 
+ 	md = find_device(param);
+-	if (!md)
+-		return -ENXIO;
++	if (!md) {
++		r = -ENXIO;
++		ti_error = "unable to find device";
++		goto err0;
++	}
+ 
+ 	r = dm_table_create(&t, get_mode(param), param->target_count, md);
+-	if (r)
++	if (r) {
++		ti_error = "unable to create table";
+ 		goto err;
++	}
+ 
+ 	/* Protect md->type and md->queue against concurrent table loads. */
+ 	dm_lock_md_type(md);
+-	r = populate_table(t, param, param_size);
++	r = populate_table(t, param, param_size, &ti_error);
+ 	if (r)
+ 		goto err_unlock_md_type;
+ 
+@@ -1454,6 +1465,7 @@ static int table_load(struct file *filp,
+ 		DMWARN("can't replace immutable target type %s",
+ 		       immutable_target_type->name);
+ 		r = -EINVAL;
++		ti_error = "can't replace immutable target";
+ 		goto err_unlock_md_type;
+ 	}
+ 
+@@ -1462,12 +1474,14 @@ static int table_load(struct file *filp,
+ 		r = dm_setup_md_queue(md, t);
+ 		if (r) {
+ 			DMWARN("unable to set up device queue for new table.");
++			ti_error = "unable to set up device queue for new table";
+ 			goto err_unlock_md_type;
+ 		}
+ 	} else if (!is_valid_type(dm_get_md_type(md), dm_table_get_type(t))) {
+ 		DMWARN("can't change device type (old=%u vs new=%u) after initial table load.",
+ 		       dm_get_md_type(md), dm_table_get_type(t));
+ 		r = -EINVAL;
++		ti_error = "can't change device type after initial table load";
+ 		goto err_unlock_md_type;
+ 	}
+ 
+@@ -1480,6 +1494,7 @@ static int table_load(struct file *filp,
+ 		DMWARN("device has been removed from the dev hash table.");
+ 		up_write(&_hash_lock);
+ 		r = -ENXIO;
++		ti_error = "device has been removed from the dev hash table";
+ 		goto err_destroy_table;
+ 	}
+ 
+@@ -1506,7 +1521,9 @@ err_destroy_table:
+ 	dm_table_destroy(t);
+ err:
+ 	dm_put(md);
+-
++err0:
++	if (param->flags & DM_RETURN_ERROR_FLAG)
++		strlcpy(param->name, ti_error, sizeof param->name);
+ 	return r;
+ }
+ 
+@@ -2201,7 +2218,7 @@ int __init dm_early_create(struct dm_ioc
+ 		r = dm_table_add_target(t, spec_array[i]->target_type,
+ 					(sector_t) spec_array[i]->sector_start,
+ 					(sector_t) spec_array[i]->length,
+-					target_params_array[i]);
++					target_params_array[i], NULL);
+ 		if (r) {
+ 			DMWARN("error adding target to table");
+ 			goto err_destroy_table;
+Index: linux-2.6/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-table.c
++++ linux-2.6/drivers/md/dm-table.c
+@@ -631,56 +631,58 @@ static int validate_hardware_logical_blo
+ }
+ 
+ int dm_table_add_target(struct dm_table *t, const char *type,
+-			sector_t start, sector_t len, char *params)
++			sector_t start, sector_t len, char *params,
++			char **ti_error)
+ {
+ 	int r = -EINVAL, argc;
+ 	char **argv;
+ 	struct dm_target *ti;
+ 
+-	if (t->singleton) {
+-		DMERR("%s: target type %s must appear alone in table",
+-		      dm_device_name(t->md), t->targets->type->name);
+-		return -EINVAL;
+-	}
+-
+ 	BUG_ON(t->num_targets >= t->num_allocated);
+-
+ 	ti = t->targets + t->num_targets;
+ 	memset(ti, 0, sizeof(*ti));
+ 
++	if (t->singleton) {
++		ti->error =  "singleton target must appear alone in table";
++		r = -EINVAL;
++		goto bad0;
++	}
++
+ 	if (!len) {
+-		DMERR("%s: zero-length target", dm_device_name(t->md));
+-		return -EINVAL;
++		ti->error =  "zero-length target";
++		r = -EINVAL;
++		goto bad0;
+ 	}
+ 
+ 	ti->type = dm_get_target_type(type);
+ 	if (!ti->type) {
+-		DMERR("%s: %s: unknown target type", dm_device_name(t->md), type);
+-		return -EINVAL;
++		ti->error = "unknown target type";
++		r = -EINVAL;
++		goto bad0;
+ 	}
+ 
+ 	if (dm_target_needs_singleton(ti->type)) {
+ 		if (t->num_targets) {
+ 			ti->error = "singleton target type must appear alone in table";
+-			goto bad;
++			goto bad1;
+ 		}
+ 		t->singleton = true;
+ 	}
+ 
+ 	if (dm_target_always_writeable(ti->type) && !(t->mode & FMODE_WRITE)) {
+ 		ti->error = "target type may not be included in a read-only table";
+-		goto bad;
++		goto bad1;
+ 	}
+ 
+ 	if (t->immutable_target_type) {
+ 		if (t->immutable_target_type != ti->type) {
+ 			ti->error = "immutable target type cannot be mixed with other target types";
+-			goto bad;
++			goto bad1;
+ 		}
+ 	} else if (dm_target_is_immutable(ti->type)) {
+ 		if (t->num_targets) {
+ 			ti->error = "immutable target type cannot be mixed with other target types";
+-			goto bad;
++			goto bad1;
+ 		}
+ 		t->immutable_target_type = ti->type;
+ 	}
+@@ -698,19 +700,19 @@ int dm_table_add_target(struct dm_table
+ 	 */
+ 	if (!adjoin(t, ti)) {
+ 		ti->error = "Gap in table";
+-		goto bad;
++		goto bad1;
+ 	}
+ 
+ 	r = dm_split_args(&argc, &argv, params);
+ 	if (r) {
+ 		ti->error = "couldn't split parameters";
+-		goto bad;
++		goto bad1;
+ 	}
+ 
+ 	r = ti->type->ctr(ti, argc, argv);
+ 	kfree(argv);
+ 	if (r)
+-		goto bad;
++		goto bad1;
+ 
+ 	t->highs[t->num_targets++] = ti->begin + ti->len - 1;
+ 
+@@ -723,9 +725,12 @@ int dm_table_add_target(struct dm_table
+ 
+ 	return 0;
+ 
+- bad:
+-	DMERR("%s: %s: %s (%pe)", dm_device_name(t->md), type, ti->error, ERR_PTR(r));
++bad1:
+ 	dm_put_target_type(ti->type);
++bad0:
++	DMERR("%s: %s: %s (%pe)", dm_device_name(t->md), type, ti->error, ERR_PTR(r));
++	if (ti_error)
++		*ti_error = ti->error;
+ 	return r;
+ }
+ 
+Index: linux-2.6/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6.orig/include/linux/device-mapper.h
++++ linux-2.6/include/linux/device-mapper.h
+@@ -531,7 +531,8 @@ int dm_table_create(struct dm_table **re
+  * Then call this once for each target.
+  */
+ int dm_table_add_target(struct dm_table *t, const char *type,
+-			sector_t start, sector_t len, char *params);
++			sector_t start, sector_t len, char *params,
++			char **ti_error);
+ 
+ /*
+  * Target can use this to set the table's type.
+Index: linux-2.6/include/uapi/linux/dm-ioctl.h
+===================================================================
+--- linux-2.6.orig/include/uapi/linux/dm-ioctl.h
++++ linux-2.6/include/uapi/linux/dm-ioctl.h
+@@ -286,9 +286,9 @@ enum {
+ #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
+ 
+ #define DM_VERSION_MAJOR	4
+-#define DM_VERSION_MINOR	47
++#define DM_VERSION_MINOR	48
+ #define DM_VERSION_PATCHLEVEL	0
+-#define DM_VERSION_EXTRA	"-ioctl (2022-07-28)"
++#define DM_VERSION_EXTRA	"-ioctl (2022-08-19)"
+ 
+ /* Status bits */
+ #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
+@@ -382,4 +382,10 @@ enum {
+  */
+ #define DM_IMA_MEASUREMENT_FLAG	(1 << 19) /* In */
+ 
++/*
++ * If this flag is set, the caller wants to receive the error string.
++ * The error string is returned in the "name" field of the ioctl.
++ */
++#define DM_RETURN_ERROR_FLAG	(1 << 20) /* In */
++
+ #endif				/* _LINUX_DM_IOCTL_H */
 --
 dm-devel mailing list
 dm-devel@redhat.com
