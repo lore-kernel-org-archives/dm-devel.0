@@ -1,81 +1,81 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A0192C0502A
-	for <dm-devel@archiver.kernel.org>; Tue, 30 Aug 2022 19:28:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3F223ECAAD5
+	for <dm-devel@archiver.kernel.org>; Tue, 30 Aug 2022 19:28:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1661887710;
+	s=mimecast20190719; t=1661887711;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=bEbaDg7Ty9aK2zQR6sK31snsI0kkUMiJkzE/0mrYkJA=;
-	b=e8Vig+LT/2QGqXyQBfKOJz6C76/b2UL0v/OyVEXFJJA9nIbenbiab5Z56nwht7S49D4e3y
-	S8/03uTPPfRj94Hm+GBWIz1b0o7JJXHi0R5lHViBr4qn26y1bHlzUxcjojwjPrIZio0FS6
-	5H8GC05n4f3z1aFjpxMWgib1Qc+ys38=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=LO5EK8vkN9+qXwAjB/nMkTQM/ueyWKyg2Q0BRnxJLhI=;
+	b=Jb0suru8Tj33Xmu1kfucPFQFuVO/F4CFOtJfgRgnz7bfYsLRJZ3chQEbVylb7Xd4zLgxdq
+	F6tBwA7XV3xqO6wKc/phtrXbpd+tW4N4KOY6tm2cufWx/okoXonmTbE/+SeorUJLTdTau1
+	t+1KGxgjEVZ8CcmavF6kVmfIouAEcxI=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-151-oDVd8MChObOsVgt2j9nDGg-1; Tue, 30 Aug 2022 15:28:27 -0400
-X-MC-Unique: oDVd8MChObOsVgt2j9nDGg-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-90-nLYbWINBOjCIJEp-kg7WJw-1; Tue, 30 Aug 2022 15:28:28 -0400
+X-MC-Unique: nLYbWINBOjCIJEp-kg7WJw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 099BD3802BAA;
-	Tue, 30 Aug 2022 19:28:20 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C7FA819705AA;
+	Tue, 30 Aug 2022 19:28:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9A050401473;
-	Tue, 30 Aug 2022 19:28:18 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B7CD44010E3C;
+	Tue, 30 Aug 2022 19:28:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B1A7E1946A5B;
-	Tue, 30 Aug 2022 19:28:17 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A5F921946A42;
+	Tue, 30 Aug 2022 19:28:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2AD9C1946A40
- for <dm-devel@listman.corp.redhat.com>; Tue, 30 Aug 2022 19:28:17 +0000 (UTC)
+ ESMTP id 75B211946A69
+ for <dm-devel@listman.corp.redhat.com>; Tue, 30 Aug 2022 19:28:19 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1DB061410F37; Tue, 30 Aug 2022 19:28:17 +0000 (UTC)
+ id 594722026D64; Tue, 30 Aug 2022 19:28:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 19E8F1410DD5
- for <dm-devel@redhat.com>; Tue, 30 Aug 2022 19:28:17 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 557A62026D4C
+ for <dm-devel@redhat.com>; Tue, 30 Aug 2022 19:28:19 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 03BC9823F11
- for <dm-devel@redhat.com>; Tue, 30 Aug 2022 19:28:17 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 37B933C4CA86
+ for <dm-devel@redhat.com>; Tue, 30 Aug 2022 19:28:19 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_128_GCM_SHA256) id us-mta-284-nR0N_Hl0OQy7g5WDoyI-Kg-1; Tue,
- 30 Aug 2022 15:28:14 -0400
-X-MC-Unique: nR0N_Hl0OQy7g5WDoyI-Kg-1
+ cipher=TLS_AES_128_GCM_SHA256) id us-mta-621-YkfO0MNvOEaTz899fSTa6A-1; Tue,
+ 30 Aug 2022 15:28:15 -0400
+X-MC-Unique: YkfO0MNvOEaTz899fSTa6A-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 916961FB23;
- Tue, 30 Aug 2022 19:28:11 +0000 (UTC)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id AB7AD21E8C;
+ Tue, 30 Aug 2022 19:28:12 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 5426913B22;
- Tue, 30 Aug 2022 19:28:11 +0000 (UTC)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 7852413B0C;
+ Tue, 30 Aug 2022 19:28:12 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id GLfXEstkDmO5GgAAMHmgww
- (envelope-from <mwilck@suse.com>); Tue, 30 Aug 2022 19:28:11 +0000
+ by imap2.suse-dmz.suse.de with ESMTPSA id uEmhG8xkDmO5GgAAMHmgww
+ (envelope-from <mwilck@suse.com>); Tue, 30 Aug 2022 19:28:12 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
  Benjamin Marzinski <bmarzins@redhat.com>
-Date: Tue, 30 Aug 2022 21:27:07 +0200
-Message-Id: <20220830192713.19778-7-mwilck@suse.com>
+Date: Tue, 30 Aug 2022 21:27:11 +0200
+Message-Id: <20220830192713.19778-11-mwilck@suse.com>
 In-Reply-To: <20220830192713.19778-1-mwilck@suse.com>
 References: <20220830192713.19778-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -86,9 +86,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: [dm-devel] [PATCH v4 06/12] libmultipath checkers/prioritizers:
- search for includes in libmultipath
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+Subject: [dm-devel] [PATCH v4 10/12] multipathd: exec multipathc in
+ interactive mode
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,7 +103,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
@@ -111,166 +111,106 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-Set TOPDIR correctly rather than using hard-coded "../".
-Also remove duplicate -lmultipath in checkers makefile.
+A previous patch disabled interactive mode in multipathd, because
+uxclnt() would return immediately without an input command.
+
+With this patch, we reinstate interactive mode for "multipath -k",
+by just exec()ing the multipathc client.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers/Makefile        | 5 +++--
- libmultipath/checkers/directio.c      | 4 ++--
- libmultipath/checkers/emc_clariion.c  | 2 +-
- libmultipath/checkers/hp_sw.c         | 4 ++--
- libmultipath/checkers/rdac.c          | 2 +-
- libmultipath/checkers/tur.c           | 8 ++++----
- libmultipath/foreign/Makefile         | 4 ++--
- libmultipath/prioritizers/Makefile    | 6 ++++--
- libmultipath/prioritizers/alua_rtpg.c | 2 +-
- 9 files changed, 20 insertions(+), 17 deletions(-)
+ multipathd/Makefile     |  3 ++-
+ multipathd/main.c       | 15 +++++++++++++--
+ multipathd/multipathc.c | 25 +++++++++++++++++++++----
+ 3 files changed, 36 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/checkers/Makefile b/libmultipath/checkers/Makefile
-index 8d8e45e..69de1ed 100644
---- a/libmultipath/checkers/Makefile
-+++ b/libmultipath/checkers/Makefile
-@@ -1,11 +1,12 @@
- #
- # Copyright (C) 2003 Christophe Varoqui, <christophe.varoqui@opensvc.com>
- #
-+TOPDIR = ../..
- include ../../Makefile.inc
+diff --git a/multipathd/Makefile b/multipathd/Makefile
+index 19ab2e9..8a56304 100644
+--- a/multipathd/Makefile
++++ b/multipathd/Makefile
+@@ -17,7 +17,8 @@ endif
  
--CPPFLAGS += -I..
-+CPPFLAGS += -I$(multipathdir)
- CFLAGS += $(LIB_CFLAGS)
--LDFLAGS += -L.. -lmultipath
-+LDFLAGS += -L$(multipathdir)
- LIBDEPS = -lmultipath -laio -lpthread -lrt
+ CPPFLAGS += -I$(multipathdir) -I$(mpathutildir) -I$(mpathpersistdir) -I$(mpathcmddir) -I$(thirdpartydir) \
+ 	$(shell $(PKGCONFIG) --modversion liburcu 2>/dev/null | \
+-		awk -F. '{ printf("-DURCU_VERSION=0x%06x", 256 * ( 256 * $$1 + $$2) + $$3); }')
++		awk -F. '{ printf("-DURCU_VERSION=0x%06x", 256 * ( 256 * $$1 + $$2) + $$3); }') \
++	-DBINDIR='"$(bindir)"'
+ CFLAGS += $(BIN_CFLAGS)
+ LDFLAGS += $(BIN_LDFLAGS)
  
- # If you add or remove a checker also update multipath/multipath.conf.5
-diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
-index a326e37..2f3ece0 100644
---- a/libmultipath/checkers/directio.c
-+++ b/libmultipath/checkers/directio.c
-@@ -15,8 +15,8 @@
- #include <libaio.h>
- 
- #include "checkers.h"
--#include "../libmultipath/debug.h"
--#include "../libmultipath/time-util.h"
-+#include "debug.h"
-+#include "time-util.h"
- 
- #define AIO_GROUP_SIZE 1024
- 
-diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
-index aa636e7..04635b5 100644
---- a/libmultipath/checkers/emc_clariion.c
-+++ b/libmultipath/checkers/emc_clariion.c
-@@ -11,7 +11,7 @@
- #include <sys/ioctl.h>
- #include <errno.h>
- 
--#include "../libmultipath/sg_include.h"
-+#include "sg_include.h"
- #include "libsg.h"
- #include "checkers.h"
- #include "debug.h"
-diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
-index 915918c..1ab7909 100644
---- a/libmultipath/checkers/hp_sw.c
-+++ b/libmultipath/checkers/hp_sw.c
-@@ -13,8 +13,8 @@
- 
- #include "checkers.h"
- 
--#include "../libmultipath/sg_include.h"
--#include "../libmultipath/unaligned.h"
-+#include "sg_include.h"
-+#include "unaligned.h"
- 
- #define TUR_CMD_LEN		6
- #define INQUIRY_CMDLEN		6
-diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
-index f7aaa30..9a3860f 100644
---- a/libmultipath/checkers/rdac.c
-+++ b/libmultipath/checkers/rdac.c
-@@ -14,7 +14,7 @@
- #include "checkers.h"
- #include "debug.h"
- 
--#include "../libmultipath/sg_include.h"
-+#include "sg_include.h"
- 
- #define INQUIRY_CMDLEN		6
- #define INQUIRY_CMD		0x12
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 1bcb757..551dc4f 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -19,10 +19,10 @@
- 
- #include "checkers.h"
- 
--#include "../libmultipath/debug.h"
--#include "../libmultipath/sg_include.h"
--#include "../libmultipath/util.h"
--#include "../libmultipath/time-util.h"
-+#include "debug.h"
-+#include "sg_include.h"
-+#include "util.h"
-+#include "time-util.h"
- 
- #define TUR_CMD_LEN 6
- #define HEAVY_CHECK_COUNT       10
-diff --git a/libmultipath/foreign/Makefile b/libmultipath/foreign/Makefile
-index 42cea4d..3d4491a 100644
---- a/libmultipath/foreign/Makefile
-+++ b/libmultipath/foreign/Makefile
-@@ -4,9 +4,9 @@
- TOPDIR=../..
- include ../../Makefile.inc
- 
--CPPFLAGS += -I.. -I$(nvmedir)
-+CPPFLAGS += -I$(multipathdir) -I$(nvmedir)
- CFLAGS += $(LIB_CFLAGS)
--LDFLAGS += -L..
-+LDFLAGS += -L$(multipathdir)
- LIBDEPS = -lmultipath -ludev -lpthread -lrt
- 
- LIBS = libforeign-nvme.so
-diff --git a/libmultipath/prioritizers/Makefile b/libmultipath/prioritizers/Makefile
-index a5ab5e1..eb6f03b 100644
---- a/libmultipath/prioritizers/Makefile
-+++ b/libmultipath/prioritizers/Makefile
-@@ -1,11 +1,13 @@
- #
- # Copyright (C) 2007 Christophe Varoqui, <christophe.varoqui@opensvc.com>
- #
-+TOPDIR=../..
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 5a40894..66177cd 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -3616,7 +3616,7 @@ main (int argc, char *argv[])
+ 	extern char *optarg;
+ 	extern int optind;
+ 	int arg;
+-	int err;
++	int err = 0;
+ 	int foreground = 0;
+ 	struct config *conf;
+ 	char *opt_k_arg = NULL;
+@@ -3710,7 +3710,18 @@ main (int argc, char *argv[])
+ 			}
+ 			c += snprintf(c, s + CMDSIZE - c, "\n");
+ 		}
+-		err = uxclnt(s, uxsock_timeout + 100);
++		if (!s) {
++			char tmo_buf[16];
 +
- include ../../Makefile.inc
++			snprintf(tmo_buf, sizeof(tmo_buf), "%d",
++				 uxsock_timeout + 100);
++			if (execl(BINDIR "/multipathc", "multipathc",
++				  tmo_buf, NULL) == -1) {
++				condlog(0, "ERROR: failed to execute multipathc: %m");
++				err = 1;
++			}
++		} else
++			err = uxclnt(s, uxsock_timeout + 100);
+ 		free_config(conf);
+ 		return err;
+ 	}
+diff --git a/multipathd/multipathc.c b/multipathd/multipathc.c
+index a4f9023..9d49655 100644
+--- a/multipathd/multipathc.c
++++ b/multipathd/multipathc.c
+@@ -246,14 +246,31 @@ static void process(int fd, unsigned int timeout)
+ 	}
+ }
  
--CPPFLAGS += -I..
-+CPPFLAGS += -I$(multipathdir)
- CFLAGS += $(LIB_CFLAGS)
--LDFLAGS += -L..
-+LDFLAGS += -L$(multipathdir)
- LIBDEPS = -lmultipath -lm -lpthread -lrt
+-int main (void)
++int main (int argc, const char * const argv[])
+ {
+-	int fd = mpath_connect();
++	int fd;
++	int tmo = DEFAULT_REPLY_TIMEOUT + 100;
++	char *ep;
  
- # If you add or remove a prioritizer also update multipath/multipath.conf.5
-diff --git a/libmultipath/prioritizers/alua_rtpg.c b/libmultipath/prioritizers/alua_rtpg.c
-index 4db13c2..2db9153 100644
---- a/libmultipath/prioritizers/alua_rtpg.c
-+++ b/libmultipath/prioritizers/alua_rtpg.c
-@@ -27,7 +27,7 @@
- #include "../structs.h"
- #include "../prio.h"
- #include "../discovery.h"
--#include "../debug.h"
-+#include "debug.h"
- #include "alua_rtpg.h"
+-	if (fd == -1)
++	if (argc > 2) {
++		fprintf(stderr, "Usage: %s [timeout]\n", argv[0]);
+ 		return 1;
++	}
++	if (argc == 2) {
++		tmo = strtol(argv[1], &ep, 10);
++		if (*argv[1] == '\0' || *ep != '\0' || tmo < 0) {
++			fprintf(stderr, "ERROR: invalid timeout value\n");
++			return 1;
++		}
++	}
  
- #define SENSE_BUFF_LEN  32
+-	process(fd, DEFAULT_REPLY_TIMEOUT + 100);
++	fd = mpath_connect();
++	if (fd == -1) {
++		fprintf(stderr, "ERROR: failed to connect to multipathd\n");
++		return 1;
++	}
++
++	process(fd, tmo);
+ 	mpath_disconnect(fd);
+ 	return 0;
+ }
 -- 
 2.37.1
 
