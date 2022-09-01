@@ -4,79 +4,76 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AC811ECAAD2
-	for <dm-devel@archiver.kernel.org>; Thu,  1 Sep 2022 22:09:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 553CAECAAD3
+	for <dm-devel@archiver.kernel.org>; Thu,  1 Sep 2022 22:09:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1662070170;
+	s=mimecast20190719; t=1662070172;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=JdQFWdW5AU7xGWc7owBhR+lw9FuDM1ETD60gQlmJfC0=;
-	b=hv1zLmPxWRYIAhbuHlZmoj+avWmw+abwGtq5vcPJt6ihONAFZggJUsSSO434JNJIDtwNK+
-	I1tjK7aV+UGl5xmxZSMNB94t7QhsSk8UsLaT1BzyP43q8s7BmYaxUTxmp7JDNhBW3q0wcp
-	qAajSnr5tWXstVeafykp9dyRZm0YJr0=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=eT3aIptVnFXenVl5tCiOvR5INdbmefVYYcfTeJajGE0=;
+	b=BtskPniZF8i+jY9PhHpfV4nKd6y1zkf2u7FYZN9J+uG8S7Ff4CX6G3C49WfRmWGkuwwC1H
+	wh5g30VMuwTEfHxzCzUBSSi4Q1rODMiTRNl4tlGzoPudjrn+uiM3nXxaS8a/ggZgzHKSLU
+	zm/QsI5HExb6cl/D2nwWiGI6uWl4gGc=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-141-S7P78Iq7PzSLpPZtHNvoQg-1; Thu, 01 Sep 2022 18:09:29 -0400
-X-MC-Unique: S7P78Iq7PzSLpPZtHNvoQg-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-443-UGjdjMVTPOGr8hBafjRYiQ-1; Thu, 01 Sep 2022 18:09:29 -0400
+X-MC-Unique: UGjdjMVTPOGr8hBafjRYiQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 33AA01C051B1;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3170F18188A3;
 	Thu,  1 Sep 2022 22:09:27 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 7A3971121314;
-	Thu,  1 Sep 2022 22:09:25 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5DE19492C3B;
+	Thu,  1 Sep 2022 22:09:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2727F19426AB;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 53988194035B;
 	Thu,  1 Sep 2022 22:09:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C7D251946A5E
- for <dm-devel@listman.corp.redhat.com>; Thu,  1 Sep 2022 22:09:23 +0000 (UTC)
+ ESMTP id A7D931946A5E
+ for <dm-devel@listman.corp.redhat.com>; Thu,  1 Sep 2022 22:09:24 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9920F2166B2A; Thu,  1 Sep 2022 22:09:23 +0000 (UTC)
+ id 8B18E40C1421; Thu,  1 Sep 2022 22:09:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 953F22166B26
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 877EE40C141D
  for <dm-devel@redhat.com>; Thu,  1 Sep 2022 22:09:23 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7311E3C0ED5A
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 786BE1C051AC
  for <dm-devel@redhat.com>; Thu,  1 Sep 2022 22:09:23 +0000 (UTC)
 Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_128_GCM_SHA256) id us-mta-372-kEK9wQmJMj2KGJU6sA8Frg-1; Thu,
+ cipher=TLS_AES_128_GCM_SHA256) id us-mta-70-NTc3IIlEOm2ruMK2JGYIxA-1; Thu,
  01 Sep 2022 18:09:21 -0400
-X-MC-Unique: kEK9wQmJMj2KGJU6sA8Frg-1
+X-MC-Unique: NTc3IIlEOm2ruMK2JGYIxA-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 4F471206C3;
+ by smtp-out2.suse.de (Postfix) with ESMTPS id 025CF206C2;
  Thu,  1 Sep 2022 22:09:20 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 101B413A89;
- Thu,  1 Sep 2022 22:09:20 +0000 (UTC)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id C588213A89;
+ Thu,  1 Sep 2022 22:09:19 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id +M1BApAtEWMuFQAAMHmgww
- (envelope-from <mwilck@suse.com>); Thu, 01 Sep 2022 22:09:20 +0000
+ by imap2.suse-dmz.suse.de with ESMTPSA id /Nl4Lo8tEWMuFQAAMHmgww
+ (envelope-from <mwilck@suse.com>); Thu, 01 Sep 2022 22:09:19 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
  Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri,  2 Sep 2022 00:09:12 +0200
-Message-Id: <20220901220912.4894-2-mwilck@suse.com>
-In-Reply-To: <20220901220912.4894-1-mwilck@suse.com>
-References: <20220901220912.4894-1-mwilck@suse.com>
+Date: Fri,  2 Sep 2022 00:09:11 +0200
+Message-Id: <20220901220912.4894-1-mwilck@suse.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -85,9 +82,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-Subject: [dm-devel] [PATCH v2 16/16] multipathd: Fix command completion in
- interactive mode
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Subject: [dm-devel] [PATCH v2 00/16] multipath-tools: minor fixes and build
+ improvements
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -102,7 +99,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
@@ -110,203 +107,57 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-The command completion never worked, because the handlers
-array wasn't initialized in client mode.
+Hi Ben, hi Christophe,
 
-The handlers array is now also required in multipathc,
-but it doesn't need the actual handler functions. To keep
-multipathc as small as possible, we just add a handler table
-with NULL handler functions.
+here's a set of minor fixes for multipath-tools.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/callbacks.c    | 60 +++++++++++++++++++++++++++++++++++++
- multipathd/cli.c          |  2 ++
- multipathd/cli_handlers.c | 62 ++-------------------------------------
- multipathd/main.c         |  1 -
- multipathd/multipathc.c   |  3 ++
- 5 files changed, 67 insertions(+), 61 deletions(-)
+Regards
+Martin
+
+Changes v1->v2:
+  16/16 caused compilation to fail. Fixed. Only resending this patch,
+
+Martin Wilck (16):
+  multipath-tools: Makefile: remove useless .PHONY targets
+  multipath-tools: Makefile: fix install->all dependency
+  multipath-tools: Makefile: remove dependency test -> test-progs
+  multipath-tools: Makefile: run abidiff with --redundant flag
+  libdmmp: Makefile: create man3dir
+  tests/Makefile: use $(multipathdir)
+  tests/Makefile: add library dependencies
+  tests/Makefile: use symbolic links under tests/lib
+  tests/Makefile: redirect program output into output file
+  GitHub workflows: package shared objects in artifact
+  libmultipath: replace close_fd() with cleanup_fd_ptr()
+  libmultipath: cleanup_free_ptr(): avoid double free
+  multipath: find_multipaths_check_timeout(): no need for pthread
+    cleanup
+  multipathd: fix segfault in cli_list_map_fmt()
+  multipathd: fix broken pthread cleanup in
+    fpin_fabric_notification_receiver()
+  multipathd: Fix command completion in interactive mode
+
+ .github/workflows/foreign.yaml    |  2 +
+ Makefile                          |  8 ++--
+ libdmmp/Makefile                  |  1 +
+ libmpathutil/libmpathutil.version |  6 ++-
+ libmpathutil/util.c               | 19 ++++++---
+ libmpathutil/util.h               |  2 +-
+ libmultipath/alias.c              |  4 +-
+ libmultipath/foreign/nvme.c       |  4 +-
+ libmultipath/sysfs.c              | 12 +++---
+ libmultipath/wwids.c              |  8 ++--
+ multipath/main.c                  |  8 ++--
+ multipathd/callbacks.c            | 60 +++++++++++++++++++++++++++++
+ multipathd/cli.c                  |  2 +
+ multipathd/cli_handlers.c         | 64 ++-----------------------------
+ multipathd/fpin_handlers.c        |  9 +++--
+ multipathd/main.c                 |  1 -
+ multipathd/multipathc.c           |  3 ++
+ tests/Makefile                    | 26 ++++++-------
+ 18 files changed, 129 insertions(+), 110 deletions(-)
  create mode 100644 multipathd/callbacks.c
 
-diff --git a/multipathd/callbacks.c b/multipathd/callbacks.c
-new file mode 100644
-index 0000000..0bd76b7
---- /dev/null
-+++ b/multipathd/callbacks.c
-@@ -0,0 +1,60 @@
-+void init_handler_callbacks(void)
-+{
-+	set_handler_callback(LIST+PATHS, HANDLER(cli_list_paths));
-+	set_handler_callback(LIST+PATHS+FMT, HANDLER(cli_list_paths_fmt));
-+	set_handler_callback(LIST+PATHS+RAW+FMT, HANDLER(cli_list_paths_raw));
-+	set_handler_callback(LIST+PATH, HANDLER(cli_list_path));
-+	set_handler_callback(LIST+MAPS, HANDLER(cli_list_maps));
-+	set_handler_callback(LIST+STATUS, HANDLER(cli_list_status));
-+	set_unlocked_handler_callback(LIST+DAEMON, HANDLER(cli_list_daemon));
-+	set_handler_callback(LIST+MAPS+STATUS, HANDLER(cli_list_maps_status));
-+	set_handler_callback(LIST+MAPS+STATS, HANDLER(cli_list_maps_stats));
-+	set_handler_callback(LIST+MAPS+FMT, HANDLER(cli_list_maps_fmt));
-+	set_handler_callback(LIST+MAPS+RAW+FMT, HANDLER(cli_list_maps_raw));
-+	set_handler_callback(LIST+MAPS+TOPOLOGY, HANDLER(cli_list_maps_topology));
-+	set_handler_callback(LIST+TOPOLOGY, HANDLER(cli_list_maps_topology));
-+	set_handler_callback(LIST+MAPS+JSON, HANDLER(cli_list_maps_json));
-+	set_handler_callback(LIST+MAP+TOPOLOGY, HANDLER(cli_list_map_topology));
-+	set_handler_callback(LIST+MAP+FMT, HANDLER(cli_list_map_fmt));
-+	set_handler_callback(LIST+MAP+RAW+FMT, HANDLER(cli_list_map_fmt));
-+	set_handler_callback(LIST+MAP+JSON, HANDLER(cli_list_map_json));
-+	set_handler_callback(LIST+CONFIG+LOCAL, HANDLER(cli_list_config_local));
-+	set_handler_callback(LIST+CONFIG, HANDLER(cli_list_config));
-+	set_handler_callback(LIST+BLACKLIST, HANDLER(cli_list_blacklist));
-+	set_handler_callback(LIST+DEVICES, HANDLER(cli_list_devices));
-+	set_handler_callback(LIST+WILDCARDS, HANDLER(cli_list_wildcards));
-+	set_handler_callback(RESET+MAPS+STATS, HANDLER(cli_reset_maps_stats));
-+	set_handler_callback(RESET+MAP+STATS, HANDLER(cli_reset_map_stats));
-+	set_handler_callback(ADD+PATH, HANDLER(cli_add_path));
-+	set_handler_callback(DEL+PATH, HANDLER(cli_del_path));
-+	set_handler_callback(ADD+MAP, HANDLER(cli_add_map));
-+	set_handler_callback(DEL+MAP, HANDLER(cli_del_map));
-+	set_handler_callback(DEL+MAPS, HANDLER(cli_del_maps));
-+	set_handler_callback(SWITCH+MAP+GROUP, HANDLER(cli_switch_group));
-+	set_unlocked_handler_callback(RECONFIGURE, HANDLER(cli_reconfigure));
-+	set_unlocked_handler_callback(RECONFIGURE+ALL, HANDLER(cli_reconfigure_all));
-+	set_handler_callback(SUSPEND+MAP, HANDLER(cli_suspend));
-+	set_handler_callback(RESUME+MAP, HANDLER(cli_resume));
-+	set_handler_callback(RESIZE+MAP, HANDLER(cli_resize));
-+	set_handler_callback(RELOAD+MAP, HANDLER(cli_reload));
-+	set_handler_callback(RESET+MAP, HANDLER(cli_reassign));
-+	set_handler_callback(REINSTATE+PATH, HANDLER(cli_reinstate));
-+	set_handler_callback(FAIL+PATH, HANDLER(cli_fail));
-+	set_handler_callback(DISABLEQ+MAP, HANDLER(cli_disable_queueing));
-+	set_handler_callback(RESTOREQ+MAP, HANDLER(cli_restore_queueing));
-+	set_handler_callback(DISABLEQ+MAPS, HANDLER(cli_disable_all_queueing));
-+	set_handler_callback(RESTOREQ+MAPS, HANDLER(cli_restore_all_queueing));
-+	set_unlocked_handler_callback(QUIT, HANDLER(cli_quit));
-+	set_unlocked_handler_callback(SHUTDOWN, HANDLER(cli_shutdown));
-+	set_handler_callback(GETPRSTATUS+MAP, HANDLER(cli_getprstatus));
-+	set_handler_callback(SETPRSTATUS+MAP, HANDLER(cli_setprstatus));
-+	set_handler_callback(UNSETPRSTATUS+MAP, HANDLER(cli_unsetprstatus));
-+	set_handler_callback(FORCEQ+DAEMON, HANDLER(cli_force_no_daemon_q));
-+	set_handler_callback(RESTOREQ+DAEMON, HANDLER(cli_restore_no_daemon_q));
-+	set_handler_callback(GETPRKEY+MAP, HANDLER(cli_getprkey));
-+	set_handler_callback(SETPRKEY+MAP+KEY, HANDLER(cli_setprkey));
-+	set_handler_callback(UNSETPRKEY+MAP, HANDLER(cli_unsetprkey));
-+	set_handler_callback(SETMARGINAL+PATH, HANDLER(cli_set_marginal));
-+	set_handler_callback(UNSETMARGINAL+PATH, HANDLER(cli_unset_marginal));
-+	set_handler_callback(UNSETMARGINAL+MAP, HANDLER(cli_unset_all_marginal));
-+}
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index d1bfeee..5d25ddb 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -14,6 +14,7 @@
- 
- #include "mpath_cmd.h"
- #include "cli.h"
-+#include "cli_handlers.h"
- #include "debug.h"
- #include "strbuf.h"
- 
-@@ -451,6 +452,7 @@ cli_init (void) {
- 	if (alloc_handlers())
- 		return 1;
- 
-+	init_handler_callbacks();
- 	return 0;
- }
- 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 3d39967..5b8f647 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -1519,63 +1519,5 @@ static int cli_unset_all_marginal(void * v, struct strbuf *reply, void * data)
- 	return reload_and_sync_map(mpp, vecs, 0);
- }
- 
--void init_handler_callbacks(void)
--{
--	set_handler_callback(LIST+PATHS, cli_list_paths);
--	set_handler_callback(LIST+PATHS+FMT, cli_list_paths_fmt);
--	set_handler_callback(LIST+PATHS+RAW+FMT, cli_list_paths_raw);
--	set_handler_callback(LIST+PATH, cli_list_path);
--	set_handler_callback(LIST+MAPS, cli_list_maps);
--	set_handler_callback(LIST+STATUS, cli_list_status);
--	set_unlocked_handler_callback(LIST+DAEMON, cli_list_daemon);
--	set_handler_callback(LIST+MAPS+STATUS, cli_list_maps_status);
--	set_handler_callback(LIST+MAPS+STATS, cli_list_maps_stats);
--	set_handler_callback(LIST+MAPS+FMT, cli_list_maps_fmt);
--	set_handler_callback(LIST+MAPS+RAW+FMT, cli_list_maps_raw);
--	set_handler_callback(LIST+MAPS+TOPOLOGY, cli_list_maps_topology);
--	set_handler_callback(LIST+TOPOLOGY, cli_list_maps_topology);
--	set_handler_callback(LIST+MAPS+JSON, cli_list_maps_json);
--	set_handler_callback(LIST+MAP+TOPOLOGY, cli_list_map_topology);
--	set_handler_callback(LIST+MAP+FMT, cli_list_map_fmt);
--	set_handler_callback(LIST+MAP+RAW+FMT, cli_list_map_fmt);
--	set_handler_callback(LIST+MAP+JSON, cli_list_map_json);
--	set_handler_callback(LIST+CONFIG+LOCAL, cli_list_config_local);
--	set_handler_callback(LIST+CONFIG, cli_list_config);
--	set_handler_callback(LIST+BLACKLIST, cli_list_blacklist);
--	set_handler_callback(LIST+DEVICES, cli_list_devices);
--	set_handler_callback(LIST+WILDCARDS, cli_list_wildcards);
--	set_handler_callback(RESET+MAPS+STATS, cli_reset_maps_stats);
--	set_handler_callback(RESET+MAP+STATS, cli_reset_map_stats);
--	set_handler_callback(ADD+PATH, cli_add_path);
--	set_handler_callback(DEL+PATH, cli_del_path);
--	set_handler_callback(ADD+MAP, cli_add_map);
--	set_handler_callback(DEL+MAP, cli_del_map);
--	set_handler_callback(DEL+MAPS, cli_del_maps);
--	set_handler_callback(SWITCH+MAP+GROUP, cli_switch_group);
--	set_unlocked_handler_callback(RECONFIGURE, cli_reconfigure);
--	set_unlocked_handler_callback(RECONFIGURE+ALL, cli_reconfigure_all);
--	set_handler_callback(SUSPEND+MAP, cli_suspend);
--	set_handler_callback(RESUME+MAP, cli_resume);
--	set_handler_callback(RESIZE+MAP, cli_resize);
--	set_handler_callback(RELOAD+MAP, cli_reload);
--	set_handler_callback(RESET+MAP, cli_reassign);
--	set_handler_callback(REINSTATE+PATH, cli_reinstate);
--	set_handler_callback(FAIL+PATH, cli_fail);
--	set_handler_callback(DISABLEQ+MAP, cli_disable_queueing);
--	set_handler_callback(RESTOREQ+MAP, cli_restore_queueing);
--	set_handler_callback(DISABLEQ+MAPS, cli_disable_all_queueing);
--	set_handler_callback(RESTOREQ+MAPS, cli_restore_all_queueing);
--	set_unlocked_handler_callback(QUIT, cli_quit);
--	set_unlocked_handler_callback(SHUTDOWN, cli_shutdown);
--	set_handler_callback(GETPRSTATUS+MAP, cli_getprstatus);
--	set_handler_callback(SETPRSTATUS+MAP, cli_setprstatus);
--	set_handler_callback(UNSETPRSTATUS+MAP, cli_unsetprstatus);
--	set_handler_callback(FORCEQ+DAEMON, cli_force_no_daemon_q);
--	set_handler_callback(RESTOREQ+DAEMON, cli_restore_no_daemon_q);
--	set_handler_callback(GETPRKEY+MAP, cli_getprkey);
--	set_handler_callback(SETPRKEY+MAP+KEY, cli_setprkey);
--	set_handler_callback(UNSETPRKEY+MAP, cli_unsetprkey);
--	set_handler_callback(SETMARGINAL+PATH, cli_set_marginal);
--	set_handler_callback(UNSETMARGINAL+PATH, cli_unset_marginal);
--	set_handler_callback(UNSETMARGINAL+MAP, cli_unset_all_marginal);
--}
-+#define HANDLER(x) x
-+#include "callbacks.c"
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 4a65359..ba52d39 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1797,7 +1797,6 @@ uxlsnrloop (void * ap)
- 	/* Tell main thread that thread has started */
- 	post_config_state(DAEMON_CONFIGURE);
- 
--	init_handler_callbacks();
- 	umask(077);
- 
- 	/*
-diff --git a/multipathd/multipathc.c b/multipathd/multipathc.c
-index 9d49655..b3f7db0 100644
---- a/multipathd/multipathc.c
-+++ b/multipathd/multipathc.c
-@@ -274,3 +274,6 @@ int main (int argc, const char * const argv[])
- 	mpath_disconnect(fd);
- 	return 0;
- }
-+
-+#define HANDLER(x) NULL
-+#include "callbacks.c"
 -- 
 2.37.1
 
