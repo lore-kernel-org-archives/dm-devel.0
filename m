@@ -4,132 +4,134 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6714BECAAA1
-	for <dm-devel@archiver.kernel.org>; Fri,  9 Sep 2022 16:14:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D2C74ECAAA1
+	for <dm-devel@archiver.kernel.org>; Fri,  9 Sep 2022 21:21:19 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1662740052;
+	s=mimecast20190719; t=1662758478;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=niUOmw7eTUUBXgu7T4wor5WIUlMeHTG24yc4TZHEvKk=;
-	b=jLmayQs4p/1V5Vv6okmHdJ0zk1CtVMApZnuSoQKlbifeA9w80+tAqveo4yBUo8kAD1Q8XQ
-	WWIU1ysPYd7LWdaoORKZL3vF8Tch6p9GvfpH2CTQGn5P8FJwhZNq2LJYS496emjOuk0m7v
-	Gf/EriwI6B60DGEoGQnfVv1+pXT5QdQ=
+	bh=klG5kMo41QoBoPEFzqDrPQdnsnbsacnIM7kLcOETFrw=;
+	b=aTaSq0gCOEGryKGb2aOQ+rMRsQkRwsQmKXZ5JyvAS7+AZfNB8nOjtRR5iDd3+T9TjSwlsZ
+	bTGj9iWPZ1wirdMwUD8F1AwAif1hdpwRisEJJAHARJ8S3z3Reh3QvDcP8TWNojnyvp1Usr
+	SFjeXszlryZXB+yLxUug8mTO/3bp+SA=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-630-6B-bGqd6M42Yk5ZRDd0JlQ-1; Fri, 09 Sep 2022 12:14:08 -0400
-X-MC-Unique: 6B-bGqd6M42Yk5ZRDd0JlQ-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-246-Pug99veHPq2RPwtiyhzDRw-1; Fri, 09 Sep 2022 17:21:15 -0400
+X-MC-Unique: Pug99veHPq2RPwtiyhzDRw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4197438005E3;
-	Fri,  9 Sep 2022 16:14:07 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1C1C13C025AD;
+	Fri,  9 Sep 2022 21:21:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B37F0492CA4;
-	Fri,  9 Sep 2022 16:14:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5DD6D14152E0;
+	Fri,  9 Sep 2022 21:21:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 853C71946A42;
-	Fri,  9 Sep 2022 16:14:05 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 297F51946A42;
+	Fri,  9 Sep 2022 21:21:11 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A866A1946A41
- for <dm-devel@listman.corp.redhat.com>; Fri,  9 Sep 2022 16:14:04 +0000 (UTC)
+ ESMTP id 3E2641946A41
+ for <dm-devel@listman.corp.redhat.com>; Fri,  9 Sep 2022 21:21:10 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8C85D4010D42; Fri,  9 Sep 2022 16:14:04 +0000 (UTC)
+ id 1DF6140334F; Fri,  9 Sep 2022 21:21:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 880F4403D0E0
- for <dm-devel@redhat.com>; Fri,  9 Sep 2022 16:14:04 +0000 (UTC)
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1956F492C3B
+ for <dm-devel@redhat.com>; Fri,  9 Sep 2022 21:21:10 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 684861E68187
- for <dm-devel@redhat.com>; Fri,  9 Sep 2022 16:14:04 +0000 (UTC)
-Received: from NAM12-BN8-obe.outbound.protection.outlook.com
- (mail-bn8nam12on2063.outbound.protection.outlook.com [40.107.237.63]) by
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0106F8032F1
+ for <dm-devel@redhat.com>; Fri,  9 Sep 2022 21:21:10 +0000 (UTC)
+Received: from EUR05-AM6-obe.outbound.protection.outlook.com
+ (mail-am6eur05on2049.outbound.protection.outlook.com [40.107.22.49]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-226-6kKeNPptMMGZn3Awy9unQw-1; Fri, 09 Sep 2022 12:14:00 -0400
-X-MC-Unique: 6kKeNPptMMGZn3Awy9unQw-1
-Received: from SN6PR06MB4495.namprd06.prod.outlook.com (2603:10b6:805:92::24)
- by DM8PR06MB7799.namprd06.prod.outlook.com (2603:10b6:8:3c::11) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5612.14; Fri, 9 Sep
- 2022 16:13:58 +0000
-Received: from SN6PR06MB4495.namprd06.prod.outlook.com
- ([fe80::6c7c:6b85:fb03:ed]) by SN6PR06MB4495.namprd06.prod.outlook.com
- ([fe80::6c7c:6b85:fb03:ed%5]) with mapi id 15.20.5588.010; Fri, 9 Sep 2022
- 16:13:58 +0000
-From: "Schremmer, Steven" <Steve.Schremmer@netapp.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Thread-Topic: [PATCH v3] multipath-tools: add more info for NetApp RDAC arrays
-Thread-Index: AQHYxFaFuUKfOeg3vkah/egKB/gTNK3XQulg
-Date: Fri, 9 Sep 2022 16:13:57 +0000
-Message-ID: <SN6PR06MB4495266835943AAE384090A98C439@SN6PR06MB4495.namprd06.prod.outlook.com>
-References: <20220909141420.23188-1-xose.vazquez@gmail.com>
-In-Reply-To: <20220909141420.23188-1-xose.vazquez@gmail.com>
+ us-mta-397-uDGtvb2DNdOAMqZpkmq98g-1; Fri, 09 Sep 2022 17:21:08 -0400
+X-MC-Unique: uDGtvb2DNdOAMqZpkmq98g-1
+Received: from AM8PR04MB8036.eurprd04.prod.outlook.com (2603:10a6:20b:242::13)
+ by DU0PR04MB9636.eurprd04.prod.outlook.com (2603:10a6:10:320::21)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5588.15; Fri, 9 Sep
+ 2022 21:21:04 +0000
+Received: from AM8PR04MB8036.eurprd04.prod.outlook.com
+ ([fe80::13a:6954:3cd5:84e1]) by AM8PR04MB8036.eurprd04.prod.outlook.com
+ ([fe80::13a:6954:3cd5:84e1%4]) with mapi id 15.20.5612.019; Fri, 9 Sep 2022
+ 21:21:04 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
+ "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Thread-Topic: [PATCH] multipathd: fix read past end of of buffer in sending
+ reply
+Thread-Index: AQHYwxpnENbZv+m5FE6XkpapmaKrV63XnegA
+Date: Fri, 9 Sep 2022 21:21:04 +0000
+Message-ID: <7cd87394c8bc07649fc8ac88c766438f053c770a.camel@suse.com>
+References: <1662597110-22321-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1662597110-22321-1-git-send-email-bmarzins@redhat.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
-dlp-product: dlpe-windows
-dlp-version: 11.6.600.2
-dlp-reaction: no-action
+user-agent: Evolution 3.44.4
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 20c20e8d-468c-49bf-3ffe-08da927e4cef
-x-ms-traffictypediagnostic: DM8PR06MB7799:EE_
+x-ms-traffictypediagnostic: AM8PR04MB8036:EE_|DU0PR04MB9636:EE_
+x-ms-office365-filtering-correlation-id: ef71d2ce-a6dd-4445-3a2e-08da92a933c0
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: BmFi0+ER+db0D9dHsBVf0/Z6gaVeZDVsY7l6tykb9FNOeoeNAevcLhII+OA+pY+D6tBiqeHNbIM++3epUzu/OaLXHnRDTRryOn3ReKLLfgAwroVteafG3I3hrVCBq9Tkr2O60qq6lUAbSb9XYtyoj/Qw0LPGeZV8HnS+e3kGX+kmJuUqbnPnV553bNmRt/0zR0UGxQ0Vw600WQgCeZPsoqWYrSScUTSS6OY1dW1qQCdueyvLnOcAxPzZmqsuf7h6OTuMjLs6Qf9OHpX1IFI1Skd6A5zRtHvveQrCCr/pruuajdVqn2NBSWVKZxfS47ObcMq0ig5/HQHopTOPv98L44x83k9BvHKwiX+HJ7bh50xJc5QD4CaqdZFHom2ZkDQGEbcNlo8EJ5vafiWEwVrybsIXaHJY+zM8KaMAau/RaJDy25Hw81YrWNidKe8wBFCoO5LoOBqVIvocU4Rv/RFFo/8pVMdToxftPuCZz9LyRdjqCRY0+d+lJ46Vq1AHZQLPuMbBkSwxzULj719gUZIRTFUOjy0hNq/L2UhKqfsvs05UfqnFbSm9MPzZOgeOzMaPgqoskZIzv1xtS7fTu/0FsUZac1WiAwynoY3He+O0b3oEMGN2+pMZ/AcJSxb1oP8stM218E3bLc/LBECEIIH5SQugeCjkv3tEuNVQcgv9Joeezb7luqEExrBftnx+Z0xxxnAcsYylM6w+4jpt3ff9E8amHl38NuDw962qM475FqnAn0DDnYyFBGPj8ILalWVNYm9UQV1he/g6XRzMtpwvIlUA9gP63nm3QGLwNsjH5HMpPycd3qteT9rpeKMGMMzsgHvUW1vnoG5v19BP0oy/pQ==
+x-microsoft-antispam-message-info: WpkmFWXBpF991ym6hzXXSl9pdXszVnPEy/cQ8q8sJ82wFwsAhCRBAxXEFbs7NohfOLVTkBno/ImVaHc0vIhpwDOfdUoPHrof/ZocHnZ9yEq9b/bZN//lnPj27TGRdqZp4V7KCCcOa78dJoUnouYBCfxnBs8hJD0mw33/KNro4SdDIZRpVZEkRoxlKUv1pr804qX0mgKNLuSIXCmiOLnWi4UvCTHvnLFzMl82nWCS2PSE0s94T3ArGHZv7XvkCCdak4ttWBEuZc6BU74EUbR4wpXiYHLAo8CnupHE8wXmdTsU52Fqfr/AUfK4q2rp9+ZDilyylOfn1oP+/Ax4jnigxbM8ApAUkyyjE5lEW+ImkZU3ulHG8oFfwvj6bFPEjtXwlVcUfuUoL8Gq/tJM4miTAUrm7Q8sJj+fOO6gZWE2exROvrZQ6UD6ZBji0tliTUptOQvnJTY/X92mECEEp1UEdvUWpEouqObWgeUS8HR7YNQSVH8S9KSbAYvMLAN5hpJ9pOapdRZxwtR0+7wkhcW7YN/9oQFlmRkW3V+TDWfIWfFU5FgLYjtcIHvqorxZ060p4M9URHxUQGx9Wx6+maW8QznTcCKKqoIhcDj2zfrhba6JFe/c5xqCtE2bwZ1EbXWwb4W2JlwPSfx3uAYSf0b532wMs9V3UShNt84we1WVln6aAkZLz/hXQNgW51AS0fFdGmP3ZCBkX1jn8o4l6GB6eIgpc//iz0FEMf1b6E2PTfX9zRgH3LSbqkz4W3khI4fSpNOgfv93tLXa6ywX58rvVg==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:SN6PR06MB4495.namprd06.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230016)(4636009)(39860400002)(136003)(376002)(366004)(346002)(396003)(7696005)(316002)(6506007)(71200400001)(8936002)(53546011)(122000001)(38100700002)(55016003)(66476007)(26005)(66946007)(76116006)(9686003)(966005)(64756008)(66556008)(8676002)(66446008)(4326008)(54906003)(6916009)(41300700001)(5660300002)(478600001)(52536014)(2906002)(186003)(33656002)(83380400001)(38070700005)(86362001);
+ IPV:NLI; SFV:NSPM; H:AM8PR04MB8036.eurprd04.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230016)(346002)(376002)(396003)(39860400002)(136003)(366004)(186003)(2616005)(76116006)(44832011)(91956017)(478600001)(66446008)(66946007)(4326008)(8676002)(64756008)(66556008)(66476007)(26005)(41300700001)(6506007)(36756003)(71200400001)(6486002)(83380400001)(6512007)(110136005)(122000001)(38070700005)(86362001)(5660300002)(38100700002)(4744005)(2906002)(8936002)(316002);
  DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?GCKh7vEpgoeWPGccy8S0TR/l7eY/4SOnbXKLxOsZPMWP0j/LeY9X9ZOn9AYo?=
- =?us-ascii?Q?/zTPAyZOhHmDaBv25fAwCWHIRz+CNZtiu/BfC+3DaVBcnTVJIHcrYIqiWAEK?=
- =?us-ascii?Q?Y7DwZmxHT4ZDRRt8SK7GpRZXETZLRwbhN2MCFfeP0MkvsyuYfMoeg3O0DoNI?=
- =?us-ascii?Q?TIAyTJ3YH2tisfQYuGxaEW3eWncqWXLMaGsJz8ceMchkwniTIbXx9DPNkBQs?=
- =?us-ascii?Q?THby0HpwrkH71v3izmYyb1UsrdluM7J1S1/li4Cq2GSdMz6/FRYQI3UB/nol?=
- =?us-ascii?Q?/kkPZAoKTPaHk91ayuFOotIEoUdRH6OjAR3NlSOHDNXmqmueRU8i8X0KOcNF?=
- =?us-ascii?Q?T3lhZNPu/WeObhNnNJY1J2isZtoufrcnpwIoSrfWCCVqNgBcErBVVWjPNHtY?=
- =?us-ascii?Q?3fdHLEyWCIE1l7Z0DsSzee2I0gKZfo4sdcTdehehnZAYH/tWudQmKec3+qMu?=
- =?us-ascii?Q?Muya0FdLhZIKRR/U83WUpuAYOkkvCc6DdHcF+iK+TO5AP940kYdAflE7mx4l?=
- =?us-ascii?Q?8Hl86bmOONsgYETVcmb3DrdLjPmkfYJ6TBmWgKXJizpwjDyvZ3P1l9yzJE4+?=
- =?us-ascii?Q?8quMrbEi3wp1E+LWPR6d2D8MA6SQlo4hc1D81RuuUJdDCfHdKPU/Jzje0IG4?=
- =?us-ascii?Q?Nmuo44bXTCFP/o4d6CotBRachEGoPLIvKF2FO2qjdNFs+dSu0u+kbE/4dAn/?=
- =?us-ascii?Q?5qAF6d7srKXX95OuoUvChY1BnuUaa66sHUMhfJItuFo8JOH3Q3rGNTUnPQmQ?=
- =?us-ascii?Q?uMfT3kTA6zP+rSf5ywDlK9wsD3C0MGX7NzYPiRJwldK8nyuIs6/qLqhJjQX8?=
- =?us-ascii?Q?iBp/IxPC0NZniI4xF8r8O4EUgcsGTsRIfoGpcOhKuJvq9BU+FDEBhlc/xjvL?=
- =?us-ascii?Q?VYVU7ra6o8TOOZ0hcM++G/zbx28UwnBSTlyK3/boJSmN4cHHPuxZlTtftni5?=
- =?us-ascii?Q?wK0mxRy2CUagPy31t/mEno7o5cdjkm3Zw8GGHTDkOt4Mq46tao8GsvY6jytG?=
- =?us-ascii?Q?Dpw6sxXG32H9XH11SMOU7Qe0W/u99rZGDzifForZAr30gIMFXeqIs2HkXx/G?=
- =?us-ascii?Q?nvqH6dD8XtXmAoH0lkQ8FDuQfxmat4QcT4wOJvyUOf378TjyFDgAf3b8ikQn?=
- =?us-ascii?Q?Lv3fthSe+BbpNcsmDaOuPP3sy4MmbTAzKpBRFUpWig5RQxvvfB9d3iKEY/wQ?=
- =?us-ascii?Q?GNIXu9bvCfzwvfo7rN2S5Zs+VETdvHrGsrnGoNtWbK+Fwz0oxfNtQZBe8iZ/?=
- =?us-ascii?Q?S4Syg20SbE14b3FtZqrtuJDHrOP4lGSHY39AvCW2upaQAuppkPbmbHADw4Bq?=
- =?us-ascii?Q?3H2Pj5/VK0uWbPPiyeVuq+X8/u4vUjDvwE0usoqBhhYOqSpIpSMWgy8L+LDs?=
- =?us-ascii?Q?ru2Shw5aTOwMJw48TYEYSRSrghXLmOLWUbmJ54N7wC/HE4tPRa91BHGfORyl?=
- =?us-ascii?Q?ve9YoSdEDd2AmEzYfKHHporsKRhCsk/kQgPu20COMbYnK396nKmVrbSaGXbK?=
- =?us-ascii?Q?nHj1s+VBe329Ym/+PCQ48oTtSNe3EHqND84Mg7AgQCWIM1QAQNy+YNSToUYB?=
- =?us-ascii?Q?mAUyl+BtAKEOT6BRhlo4tRSWMCM6Mimr8F2HClWI?=
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?WWQDIHcCXuR1yf3/MCXlfKbiPrpDBi1ZJeg0+z0LWWZ4mpod+Cydv2+O8?=
+ =?iso-8859-15?Q?tmAs8hopdiDDsFJpvEWoHsvwisVv9eG09faFdH8pH06SHiRy4sr3ZV3j5?=
+ =?iso-8859-15?Q?9Rs/oGCyjMaf6U19BKenXh3aOpAqtyzmV52AZhS+3Q3HHhrFSgMngnI+d?=
+ =?iso-8859-15?Q?RvzLzJRC2UZda9Ebdz18lmTnxrQqU7v3QXzrxwWSQ5NLvc1vtBsnBwZFY?=
+ =?iso-8859-15?Q?Qn9j89rOLXfSMH4DegucChjarxnfXRJIKrPIL1OdTgKxpl9X+RnLyWoV9?=
+ =?iso-8859-15?Q?NHZBcyTI25AIo9f6Mrs9himzxfAI1U4P5qH5T8Vd/dB933rBUiWi47KZO?=
+ =?iso-8859-15?Q?c8Iqr7+V04Wt+ABaAyZlPTodC8iFMEQcrScu8XLWYV8aU5x1yt3m74K/z?=
+ =?iso-8859-15?Q?ZEQV3WjhvVodQH/LR3xFf9+dDq1FRH6JI5pde7hJE58I++BqoNv8mIwwZ?=
+ =?iso-8859-15?Q?DmFpVCF5A6QFdiLXFSIwssN88AGJYjjgye+5Nt/DsIWfbx76bpXah6eH+?=
+ =?iso-8859-15?Q?7P0PHzbslBmgRGpXEdMlwevjk62UMtDTcR8CHU4EV9Ji3BGU7puwrCqaO?=
+ =?iso-8859-15?Q?F1Sy+wdPHD5dGtRWt84hCiRfCvVetxluZfpJjegnNUu/LKx7sAJfbX5Io?=
+ =?iso-8859-15?Q?IjTOmzfU42wNWjmmuOUSRnlft0/VaEudrmy3kTfGym4k4oYDSh90n1cPt?=
+ =?iso-8859-15?Q?k0f4cd7Zo6f7xE/OQ5PnZ4HV8IKhNFVfLcV+LybKkvobPNZ2bbU/GLHdG?=
+ =?iso-8859-15?Q?MowGqznWXXqKlV0sUYzejTwV9KEf54l4+xdOcKyDcumHwEb4xdgUrytf8?=
+ =?iso-8859-15?Q?Q16WnPAgQRG9FkcA9OpzKbkp+g0vOYiUS7eCH7z6ugYUuFSszZM4pN3Rv?=
+ =?iso-8859-15?Q?8eELdav0H1HF83tFY7A89RNgSRNhloqBVngkTFc817aQwg865HjwVUbLh?=
+ =?iso-8859-15?Q?uvVN5RT65qv7YPCU+LTdQ8bnH0XmyglXCoERx3bbzhyHuphdMNMFGEWfy?=
+ =?iso-8859-15?Q?+AnHn5qjp2WzilWslT/O/3+qO2n6/0pLYpzVU2WiXmvuDTBTD5s2sXahi?=
+ =?iso-8859-15?Q?fSNsx2czbukYyGKHGVy9iapO/9KOiWThU73kTeN9cRJBuEXsg9cuELzm8?=
+ =?iso-8859-15?Q?1ZXkfkEZUGX6j5NIYdJPJT8P7O2x3LN2iY+IrHKxaqvTFnSB8QpfL3ZR6?=
+ =?iso-8859-15?Q?KUk7BGBPobNLYgh8ZsHN4+y+Z3FiMVSoGNSZC5qYzpjgwR8iH9lPeahnR?=
+ =?iso-8859-15?Q?Uy9mx2AUsPC+z+Vx/cm5eEK5k9/SKPq/AiCkahFCMuIPAqbOU1lSpLu2z?=
+ =?iso-8859-15?Q?DemYZoVzkOTMDI0Q3nIOwspQ49fa4DFjc+qncZMg1mhkSVl53eh8aAdPQ?=
+ =?iso-8859-15?Q?EyqLU6lM4oVte9tpGKau3dqrmnp3z0Hw6IBFGCUAPu37+UBlK7NUuyps8?=
+ =?iso-8859-15?Q?FXWrGhKyigK4b47QtlzfCqqUl78d8uIbJ9vKTVD57ASYJG6VusXsJns7Q?=
+ =?iso-8859-15?Q?hFU3U0lgsn1Hr80zeG7ZpzURELDqx/O4RUsE+4ABz4pQmAzvQpKq62Mf2?=
+ =?iso-8859-15?Q?XjnV/Pr3LuLqm8WvJnAH2pHnIn8llu9st+jt1K76+4IBJYeB1cTKePJmG?=
+ =?iso-8859-15?Q?Jz99T64e01YkVTa/OqkGyqJCsgMFnhWfwg6YfgcjdacvZt5fjFhNotExf?=
+ =?iso-8859-15?Q?2bJ+na2WDLcmJAILO/F2lS7TJA=3D=3D?=
 MIME-Version: 1.0
-X-OriginatorOrg: netapp.com
+X-OriginatorOrg: suse.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: SN6PR06MB4495.namprd06.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 20c20e8d-468c-49bf-3ffe-08da927e4cef
-X-MS-Exchange-CrossTenant-originalarrivaltime: 09 Sep 2022 16:13:58.0160 (UTC)
+X-MS-Exchange-CrossTenant-AuthSource: AM8PR04MB8036.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: ef71d2ce-a6dd-4445-3a2e-08da92a933c0
+X-MS-Exchange-CrossTenant-originalarrivaltime: 09 Sep 2022 21:21:04.1398 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 4b0911a0-929b-4715-944b-c03745165b3a
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: RpIpnyTicnidrRMzJjKhvoEP05tmMLEEE2XecrdzOASogtoK6BCr8fKDkcvOvKUH/AjwiuVKntYQV3B1UAzbxg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM8PR06MB7799
+X-MS-Exchange-CrossTenant-userprincipalname: OfzfjtYqK86jnaS+iXVn4q308DZKieC+1xyvqDU0zln8N037NpYt7whLMzUZUsdQy8Ybs9cHL3dp4UdItbBLAQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DU0PR04MB9636
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -137,9 +139,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH v3] multipath-tools: add more info for NetApp
- RDAC arrays
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: Re: [dm-devel] [PATCH] multipathd: fix read past end of of buffer
+ in sending reply
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -151,108 +153,53 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: ng-eseries-upstream-maintainers
- <ng-eseries-upstream-maintainers@netapp.com>, Martin Wilck <mwilck@suse.com>,
- DM-DEVEL ML <dm-devel@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-ID: <68FCCC878B6F5A4988C41D67A5771512@eurprd04.prod.outlook.com>
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-> From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> Sent: Friday, September 9, 2022 9:14 AM
-> Subject: [PATCH v3] multipath-tools: add more info for NetApp RDAC arrays
-> 
-> To use ALUA mode:
-> "Select operating system:" should be changed to "Linux DM-MP (Kernel 3.10 or
-> later)".
-> 
-> To use RDAC mode:
-> "Select operating system:" should be changed to "Linux DM-MP (Kernel 3.9 or
-> earlier)".
-> 
-> Info from:
->  https://library.netapp.com/ecmdocs/ECMLP2439710/html/GUID-49E94674-
-> 947F-4921-A1D1-CE9B42DCBA39.html
->  https://library.netapp.com/ecmdocs/ECMLP2439710/html/GUID-CA17AE34-
-> F5B2-4FF4-8FD4-4A7AA4238976.html
->  https://library.netapp.com/ecmdocs/ECMLP2439710/html/GUID-3DA657A9-
-> FF4A-4237-90EC-BA8863B7431E.html
-> 
-> Add it to prio and hardware_handler.
-> 
-> Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+On Wed, 2022-09-07 at 19:31 -0500, Benjamin Marzinski wrote:
+> Reduce the send() length for the uxlsnr reply, by the number of bytes
+> already sent
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+
 > ---
-> v2: delete "Automatic Load Balancing option" obsolete info
-> v3: a part of the body wa trimmed by git
-> ---
->  README.md                  | 2 +-
->  multipath/multipath.conf.5 | 4 ++--
->  2 files changed, 3 insertions(+), 3 deletions(-)
-> 
-> diff --git a/README.md b/README.md
-> index b05b1332..45234dc6 100644
-> --- a/README.md
-> +++ b/README.md
-> @@ -165,7 +165,7 @@ To enable ALUA, the following options should be
-> changed:
->     "LUN Affinity" and "ALUA" should be changed to "Enable", "Redundancy Type"
->     must be "Active-Active".
-> 
-> -- LSI/Engenio/NetApp RDAC class, as NetApp SANtricity E/EF Series and OEM
-> arrays:
-> +- LSI/Engenio/NetApp RDAC class, as NetApp SANtricity E/EF Series and
-> rebranded arrays:
->     "Select operating system:" should be changed to "Linux DM-MP (Kernel 3.10
-> or later)".
-> 
->  - NetApp ONTAP:
-> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index acdd1ae6..6018fa54 100644
-> --- a/multipath/multipath.conf.5
-> +++ b/multipath/multipath.conf.5
-> @@ -320,7 +320,7 @@ Generate the path priority for NetApp ONTAP class, and
-> rebranded arrays.
->  .I rdac
->  (Hardware-dependent)
->  Generate the path priority for LSI/Engenio/NetApp RDAC class as NetApp
-> SANtricity
-> -E/EF Series, and rebranded arrays.
-> +E/EF Series and rebranded arrays, with "Linux DM-MP (Kernel 3.9 or earlier)"
-> option.
->  .TP
->  .I hp_sw
->  (Hardware-dependent)
-> @@ -1568,7 +1568,7 @@ with Failover Mode 1 (Passive Not Ready(PNR)).
->  .I 1 rdac
->  (Hardware-dependent)
->  Hardware handler for LSI/Engenio/NetApp RDAC class as NetApp SANtricity
-> E/EF
-> -Series, and rebranded arrays.
-> +Series and rebranded arrays, with "Linux DM-MP (Kernel 3.9 or earlier)" option.
->  .TP
->  .I 1 hp_sw
->  (Hardware-dependent)
-> --
-> 2.37.3
-
-These changes look okay. Just keep in mind that multipath on the Linux host
-operates in the proper mode (alua v rdac) based on the E/EF Series behaviors,
-without putting any special settings in multipath.conf.
-
-Reviewed-by: Steve Schremmer <steve.schremmer@netapp.com>
-
-Thanks,
-Steve
+> =A0multipathd/uxlsnr.c | 2 +-
+> =A01 file changed, 1 insertion(+), 1 deletion(-)
+>=20
+> diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+> index 23cb123d..238744b7 100644
+> --- a/multipathd/uxlsnr.c
+> +++ b/multipathd/uxlsnr.c
+> @@ -541,7 +541,7 @@ static int client_state_machine(struct client *c,
+> struct vectors *vecs,
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (c->len < c->cmd_len) =
+{
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
+onst char *buf =3D get_strbuf_str(&c->reply);
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0n =
+=3D send(c->fd, buf + c->len, c->cmd_len,
+> MSG_NOSIGNAL);
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0n =
+=3D send(c->fd, buf + c->len, c->cmd_len - c-
+> >len, MSG_NOSIGNAL);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0i=
+f (n =3D=3D -1) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0if (!(errno =3D=3D EAGAIN || errno =3D=3D
+> EINTR))
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c->error =3D -ECONNRESET;
 
 --
 dm-devel mailing list
