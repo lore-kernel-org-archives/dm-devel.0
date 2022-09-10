@@ -1,89 +1,119 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 83981ECAAD3
-	for <dm-devel@archiver.kernel.org>; Fri,  9 Sep 2022 22:25:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0A48CECAAD3
+	for <dm-devel@archiver.kernel.org>; Sat, 10 Sep 2022 18:46:54 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1662762317;
+	s=mimecast20190719; t=1662835613;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=oK+wIAglkkNywo8s6Tm+USfDIhakPFsI1VMzrxlZAzg=;
-	b=VnkBzIMNArEhXMQ+HYqtpTJhWR5c719lhwQ9B7KR5Y1dXL7Dy3CcmInKg8R38CPugYTJLp
-	tbqh5+LU6CdzZjjFG3WY9yG3g69O0OUJvrjZ0r6/ZCNXTWxE2/tPBsU5ruc7jIGjrC2MDR
-	VRArZbcX8hTFOndowP5i8vInZUGx/4E=
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
+	 content-type:content-type:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=mmLCa8hmhPTlcim7SlPahBgHk0Dzpt9iaP49POJ9poc=;
+	b=ZuhNKTuoGpFY71iPQBTS8QQID5uvzCa5QYnrlu2v/8f249CXAGf3DXnO4GfvxmIPnWITSq
+	s0o5GYkQ1B4DSQXUTKS64M87UtfMvBFVg+9I5hlfKT11Q8ZW5cAfjucVMxTJ//m7rENDX7
+	Cz6+Hbjmj/w21BwhAAsKgVszzlJ2WjY=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-92-v1RbV06NP-yHIiLgTK1QAg-1; Fri, 09 Sep 2022 18:25:14 -0400
-X-MC-Unique: v1RbV06NP-yHIiLgTK1QAg-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-201-0aMi91KpNbWDhAKuFXYt_w-1; Sat, 10 Sep 2022 14:46:50 -0400
+X-MC-Unique: 0aMi91KpNbWDhAKuFXYt_w-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 83966101A56C;
-	Fri,  9 Sep 2022 22:25:12 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D6E65492C3B;
-	Fri,  9 Sep 2022 22:25:10 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3903B811E80;
+	Sat, 10 Sep 2022 18:46:48 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 62CAF14152E0;
+	Sat, 10 Sep 2022 18:46:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 76DA31946A42;
-	Fri,  9 Sep 2022 22:25:10 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 247C61946A42;
+	Sat, 10 Sep 2022 18:46:44 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
  [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 17E6A1946A41
- for <dm-devel@listman.corp.redhat.com>; Fri,  9 Sep 2022 22:25:09 +0000 (UTC)
+ ESMTP id 9927A1946A41
+ for <dm-devel@listman.corp.redhat.com>; Sat, 10 Sep 2022 18:46:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id EC19A40B40C9; Fri,  9 Sep 2022 22:25:08 +0000 (UTC)
+ id 6C5864010FCC; Sat, 10 Sep 2022 18:46:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E84DC400EAB6
- for <dm-devel@redhat.com>; Fri,  9 Sep 2022 22:25:08 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 674AB400E88E
+ for <dm-devel@redhat.com>; Sat, 10 Sep 2022 18:46:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C72EE801755
- for <dm-devel@redhat.com>; Fri,  9 Sep 2022 22:25:08 +0000 (UTC)
-Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com
- [209.85.128.45]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-244-3DsM2I7qNOWtaAzT4c7mKw-1; Fri, 09 Sep 2022 18:25:07 -0400
-X-MC-Unique: 3DsM2I7qNOWtaAzT4c7mKw-1
-Received: by mail-wm1-f45.google.com with SMTP id
- i203-20020a1c3bd4000000b003b3df9a5ecbso1001234wma.1; 
- Fri, 09 Sep 2022 15:25:06 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=content-transfer-encoding:mime-version:message-id:date:subject:cc
- :to:from:x-gm-message-state:from:to:cc:subject:date;
- bh=s25tg5iTxgCGGV5DasIMkSxm4v2rmhXU+7rpfnoX8s8=;
- b=3jldaiAc5wClJA9sizxRYItyQm9rNNA9PB78VRFJJCpiLodBzJbxR+IMjuM2L3uy1N
- /zKRxtNISZ2ar2yhSm1O/y4HtcXkTNmhH8pILM0jyRdyQIVh7wbonZc78e70LN2w1rmr
- 3/he+8FinZ0FGYGpYutpK1EONcXpgTSVqr9rk7HlTpoiNHgfUcHtked4SlqhbU455dLY
- 3t6euPg7yGsPyI8nLIhgKguq27X5dDbs9CTct4qd0zObleIRf+pPr7FcYZ3NGDuPRETC
- x5ps94ksrd+lO6zNuAZiUT510TqUWByPK0+QIGsExky0cDtwuNS5Ka0Rn7sUNT6BzT0j
- JMRg==
-X-Gm-Message-State: ACgBeo0DMno2ckJ1dgb566EjcZx8C3UFXhmmkegQ94qKJN5sIRYjjZOA
- uhyRlBj6zfwSoNAaPWGz7Q==
-X-Google-Smtp-Source: AA6agR7DVRIkrX8KIATmD6/mWc0+VLtCdUgc1qkWB192jhi6fOZrjSVGfDKAY7xUA6ak2799ndTPpQ==
-X-Received: by 2002:a05:600c:3c94:b0:3ae:ca8c:acfb with SMTP id
- bg20-20020a05600c3c9400b003aeca8cacfbmr6934041wmb.199.1662762305383; 
- Fri, 09 Sep 2022 15:25:05 -0700 (PDT)
-Received: from localhost ([84.39.183.42]) by smtp.gmail.com with ESMTPSA id
- q15-20020a1ce90f000000b003a2f2bb72d5sm2017695wmc.45.2022.09.09.15.25.04
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 09 Sep 2022 15:25:04 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Date: Sat, 10 Sep 2022 00:25:02 +0200
-Message-Id: <20220909222502.42510-1-xose.vazquez@gmail.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4B1491C05AE8
+ for <dm-devel@redhat.com>; Sat, 10 Sep 2022 18:46:42 +0000 (UTC)
+Received: from NAM11-DM6-obe.outbound.protection.outlook.com
+ (mail-dm6nam11olkn2066.outbound.protection.outlook.com [40.92.19.66]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-88-aiwjhvGiPS6wa5-wZgF-Ow-1; Sat, 10 Sep 2022 14:46:40 -0400
+X-MC-Unique: aiwjhvGiPS6wa5-wZgF-Ow-1
+Received: from BY5PR14MB3893.namprd14.prod.outlook.com (2603:10b6:a03:1dc::15)
+ by DM6PR14MB3385.namprd14.prod.outlook.com (2603:10b6:5:1ed::9) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5612.14; Sat, 10 Sep
+ 2022 18:46:38 +0000
+Received: from BY5PR14MB3893.namprd14.prod.outlook.com
+ ([fe80::2163:6c06:f8a8:1d5d]) by BY5PR14MB3893.namprd14.prod.outlook.com
+ ([fe80::2163:6c06:f8a8:1d5d%9]) with mapi id 15.20.5612.016; Sat, 10 Sep 2022
+ 18:46:38 +0000
+From: "Pra.. Dew.." <linux_learner@outlook.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Thread-Topic: setting up dmverity using device mapper IOCTLs
+Thread-Index: AQHYxUUNjbfApk+Q00iI3gRwF7Bzvw==
+Date: Sat, 10 Sep 2022 18:46:37 +0000
+Message-ID: <BY5PR14MB3893CAD48C0E0661811682A386429@BY5PR14MB3893.namprd14.prod.outlook.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-exchange-messagesentrepresentingtype: 1
+x-tmn: [b7YEXxyEnK2aJab+W7q27ezqp3/0mdlT]
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: BY5PR14MB3893:EE_|DM6PR14MB3385:EE_
+x-ms-office365-filtering-correlation-id: d151c5a2-c760-4b48-c68b-08da935ccb28
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: MhNnLr9xgKpUx3Jqn50lqTSUM1Nzz3WBYfUYF59MNMZ8vH7kcCaDPPhQc+q6Yd+jvjAjwi+FEklEmGiwCF8p1omtJ5RkrKJMgbQ/ssngql9jYVR4tkZJRF+9LGMjKoogzNjASxkqpGoPgDDt0TlGmVvrmRWtdfn4eLGambUsn1Y1I1A3YfJSmv902Qqb7kG3tBjHGGxxs9ksL4xoZVImk1VtIkvhCYSD5D60xSS5pQA6XeCE8XT6qc3FhkEvCYWc4OidkUH8+svMymy0HMWcVWZvLGhb2Kr7ZoGaK2Gw0fWiKPaWXfenDwsZkyxeW2ScN+8yfhN8WcMok+TQPCcW4HwjLiHCv+RjlWF4ziuv29wWp2J0BUUfU0u9eZ/ZnNyoCEgyCecqA046qH3IVBK/aOJbQ0UeyIJb2NNRlP3qPpqrrfkFWg4KuIN81SKNNAZg4E56VcW+t/zpKH7YgHnTMA48xOSWM7AbJUNC7EmKGrLp5GzVp5xOcphLFpsoeC/g5wMHNHDYK7HVJ+mxMRfPok1avUVrb0WH2LDKnK95JwDrEz1gO3bEQBWfJEZLMtEK2H7hM7UZv2YE0y3341+nP4Xv3uCeYa5qj5InyNzBSGZvR7gHV9FMWBwMpXJIvvT7
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?WRCwh664IJYfl904QUgfaVxADsRyEoRJlSdaNASHCF6bK2/3EnSnJKV68qwz?=
+ =?us-ascii?Q?sm96oX9Piy2NgZXuuCygOXXLW5cKimMikxUrNZHK450/biQxGBvXhY//4eL5?=
+ =?us-ascii?Q?GKxobNXNokPm6CiXs360YpD07ZN/X/ljfu95S1uG6AUPfkjXCRpCTHxug/Bv?=
+ =?us-ascii?Q?01d/pC9FD9AJNx+Mk1YoIC5FxTqtzjkKQmpR/0Vf7/zZCYlKrDGW+ubtmMRp?=
+ =?us-ascii?Q?Bvi3RwSvkAyx0Bm4R085tkdITJaivcxihfLrT0vb1M17K6vpZUKIC878Vrt1?=
+ =?us-ascii?Q?aUfWjl5KwcLdhIKL9Dyxq8py9N/NDAdZAFcfXsFxUiXwukt2+6Sy0vVNSBwx?=
+ =?us-ascii?Q?sejQcx9bi1dVYtB1vDZP7ntsnFv49SQMHfG2vsaovJ7GW5ioAu6uPC+l+iM5?=
+ =?us-ascii?Q?RCw+YHpyF8i/X7/jQFwFiTLJBho82viREMPie9X6V14aZD7/mcmKFgUJK8c1?=
+ =?us-ascii?Q?B/gn+Lj7M5QNSUVeCADw3+NxZyenSBJolF7eGAwK7rCnZKLCe0pyX6f3UaQZ?=
+ =?us-ascii?Q?nYDF9kZCy8u578lgxDT9DTUkUi7aNz16+aqMQodGkTVZGPguHoUrCN0Wlr8E?=
+ =?us-ascii?Q?H6NETRUIkcuIjMJmoP95mb0maTW9Sl7v1JcKBQ0XUlFk5Udlo4+LLE+0nCA0?=
+ =?us-ascii?Q?dTJ7sB2pyxc2W3xb4KXhCLeFi8Netcfx82t45YWfNQ7IzgJ07r95H9TcuK16?=
+ =?us-ascii?Q?E6XeK2zvvqwa6Hsm1QEjGOnPSyMkmmtVu1lVzArZfwkEDjQKGG9vIRTJf69L?=
+ =?us-ascii?Q?B06fe+Y93SFBJ0L4F71hCPi/SbVja09WEmUf+955BBHA/r9LUb8yU9XlOmBB?=
+ =?us-ascii?Q?3wF2KuqTOq/n0jLGxMLy9ogtAjcUwLSkvBWKT+5I2G9CzYESTPVBHCeV106H?=
+ =?us-ascii?Q?ziDYNXbowgWKDAzfxU2l0NS3vRchm1PKTwji+D1tIYyeZyUib0WevAle4XLN?=
+ =?us-ascii?Q?bHO9jofmTGbd1f6zvk8VDe0iplm6ArjQgfMzeoWtawCIgSRbHyy8i1gfJSOg?=
+ =?us-ascii?Q?pagiPdj+UxHsvs2/dHROE3PUfoCqnb3WeEHkO5JFlv7Q5LzynQZrVT5izVPE?=
+ =?us-ascii?Q?OdCUpsaj2EC0t/RnjpmcaooVRh/qvXjxSe8gLKfnbQvj3VdeBJVWCRg+EcfY?=
+ =?us-ascii?Q?lnybl12YRKOd2gxVUGKSHhWpATIhQVHl/dmv2fGMQbmrosgo2GCg9aW228+G?=
+ =?us-ascii?Q?PYob6JifXDBwJTSFvONaMDyKaa0Bz/JwjcYBjKuGvj4nKpxPp5F+xU5r4+o/?=
+ =?us-ascii?Q?+dgo7j1RxptMiUv49u8XPZgk3mzYJup3i9uDDZiSjNrSHEFqy74Pc1CuNeOV?=
+ =?us-ascii?Q?AxA=3D?=
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
+X-OriginatorOrg: outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: BY5PR14MB3893.namprd14.prod.outlook.com
+X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-CrossTenant-Network-Message-Id: d151c5a2-c760-4b48-c68b-08da935ccb28
+X-MS-Exchange-CrossTenant-originalarrivaltime: 10 Sep 2022 18:46:37.8568 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
+X-MS-Exchange-CrossTenant-rms-persistedconsumerorg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR14MB3385
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -92,8 +122,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-Subject: [dm-devel] [PATCH] multipath-tools: update man pages with last
- modification date
+Subject: [dm-devel] setting up dmverity using device mapper IOCTLs
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -105,113 +134,110 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>,
- DM-DEVEL ML <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: multipart/mixed; boundary="===============7433451000112654828=="
+
+--===============7433451000112654828==
+Content-Language: en-US
+Content-Type: multipart/alternative;
+	boundary="_000_BY5PR14MB3893CAD48C0E0661811682A386429BY5PR14MB3893namp_"
+
+--_000_BY5PR14MB3893CAD48C0E0661811682A386429BY5PR14MB3893namp_
 Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+Hello,
+
+I need to setup dm-verity from my program-basically mount verity enabled fi=
+lesystems from my code. I have looked at veritysetup and devicemapper (libd=
+m) library. I was wondering if there is some simple C code to use the DM IO=
+CTLs directly to setup verity. Any guidance to directly use the dm IOCTLs o=
+r libdm would also be helpful. Thank you for the guidance.
+
+Thanks
+
+
+Sent from Mail<https://go.microsoft.com/fwlink/?LinkId=3D550986> for Window=
+s
+
+
+--_000_BY5PR14MB3893CAD48C0E0661811682A386429BY5PR14MB3893namp_
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" xmlns:w=3D"urn:sc=
+hemas-microsoft-com:office:word" xmlns:m=3D"http://schemas.microsoft.com/of=
+fice/2004/12/omml" xmlns=3D"http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
+>
+<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
+<style><!--
+/* Font Definitions */
+@font-face
+=09{font-family:"Cambria Math";
+=09panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+=09{font-family:Calibri;
+=09panose-1:2 15 5 2 2 2 4 3 2 4;}
+/* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+=09{margin:0in;
+=09font-size:11.0pt;
+=09font-family:"Calibri",sans-serif;}
+a:link, span.MsoHyperlink
+=09{mso-style-priority:99;
+=09color:blue;
+=09text-decoration:underline;}
+.MsoChpDefault
+=09{mso-style-type:export-only;}
+@page WordSection1
+=09{size:8.5in 11.0in;
+=09margin:1.0in 1.0in 1.0in 1.0in;}
+div.WordSection1
+=09{page:WordSection1;}
+--></style>
+</head>
+<body lang=3D"EN-US" link=3D"blue" vlink=3D"#954F72" style=3D"word-wrap:bre=
+ak-word">
+<div class=3D"WordSection1">
+<p class=3D"MsoNormal">Hello,</p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal">I need to setup dm-verity from my program-basically =
+mount verity enabled filesystems from my code. I have looked at veritysetup=
+ and devicemapper (libdm) library. I was wondering if there is some simple =
+C code to use the DM IOCTLs directly
+ to setup verity. Any guidance to directly use the dm IOCTLs or libdm would=
+ also be helpful. Thank you for the guidance.</p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal">Thanks</p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal">Sent from <a href=3D"https://go.microsoft.com/fwlink=
+/?LinkId=3D550986">
+Mail</a> for Windows</p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+</div>
+</body>
+</html>
+
+--_000_BY5PR14MB3893CAD48C0E0661811682A386429BY5PR14MB3893namp_--
+
+--===============7433451000112654828==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- kpartx/kpartx.8                                | 2 +-
- libmpathpersist/mpath_persistent_reserve_in.3  | 2 +-
- libmpathpersist/mpath_persistent_reserve_out.3 | 2 +-
- mpathpersist/mpathpersist.8                    | 2 +-
- multipath/multipath.8                          | 2 +-
- multipath/multipath.conf.5                     | 2 +-
- 6 files changed, 6 insertions(+), 6 deletions(-)
-
-diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8
-index 08bb349b..2b144a7f 100644
---- a/kpartx/kpartx.8
-+++ b/kpartx/kpartx.8
-@@ -5,7 +5,7 @@
- .\"
- .\" ----------------------------------------------------------------------------
- .
--.TH KPARTX 8 2016-10-28 "Linux"
-+.TH KPARTX 8 2019-04-27 "Linux"
- .
- .
- .\" ----------------------------------------------------------------------------
-diff --git a/libmpathpersist/mpath_persistent_reserve_in.3 b/libmpathpersist/mpath_persistent_reserve_in.3
-index 4691bdea..c168cae8 100644
---- a/libmpathpersist/mpath_persistent_reserve_in.3
-+++ b/libmpathpersist/mpath_persistent_reserve_in.3
-@@ -5,7 +5,7 @@
- .\"
- .\" ----------------------------------------------------------------------------
- .
--.TH MPATH_PERSISTENT_RESERVE_IN 3 2016-11-01 "Linux"
-+.TH MPATH_PERSISTENT_RESERVE_IN 3 2018-06-15 "Linux"
- .
- .
- .\" ----------------------------------------------------------------------------
-diff --git a/libmpathpersist/mpath_persistent_reserve_out.3 b/libmpathpersist/mpath_persistent_reserve_out.3
-index 55b00b00..f20be313 100644
---- a/libmpathpersist/mpath_persistent_reserve_out.3
-+++ b/libmpathpersist/mpath_persistent_reserve_out.3
-@@ -5,7 +5,7 @@
- .\"
- .\" ----------------------------------------------------------------------------
- .
--.TH MPATH_PERSISTENT_RESERVE_OUT 3 2016-11-01 "Linux"
-+.TH MPATH_PERSISTENT_RESERVE_OUT 3 2018-06-15 "Linux"
- .
- .
- .\" ----------------------------------------------------------------------------
-diff --git a/mpathpersist/mpathpersist.8 b/mpathpersist/mpathpersist.8
-index 7b574592..d594422e 100644
---- a/mpathpersist/mpathpersist.8
-+++ b/mpathpersist/mpathpersist.8
-@@ -5,7 +5,7 @@
- .\"
- .\" ----------------------------------------------------------------------------
- .
--.TH MPATHPERSIST 8 2019-05-27 "Linux"
-+.TH MPATHPERSIST 8 2021-11-12 "Linux"
- .
- .
- .\" ----------------------------------------------------------------------------
-diff --git a/multipath/multipath.8 b/multipath/multipath.8
-index 4c7e9885..88149d53 100644
---- a/multipath/multipath.8
-+++ b/multipath/multipath.8
-@@ -5,7 +5,7 @@
- .\"
- .\" ----------------------------------------------------------------------------
- .
--.TH MULTIPATH 8 2018-10-10 "Linux"
-+.TH MULTIPATH 8 2021-11-12 "Linux"
- .
- .
- .\" ----------------------------------------------------------------------------
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 6018fa54..e098d555 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -6,7 +6,7 @@
- .\" Update the date below if you make any significant change.
- .\" ----------------------------------------------------------------------------
- .
--.TH MULTIPATH.CONF 5 2021-09-08 Linux
-+.TH MULTIPATH.CONF 5 2022-09-09 Linux
- .
- .
- .\" ----------------------------------------------------------------------------
--- 
-2.37.3
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+
+--===============7433451000112654828==--
 
