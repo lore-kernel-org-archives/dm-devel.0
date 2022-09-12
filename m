@@ -4,87 +4,118 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 21E80ECAAD3
-	for <dm-devel@archiver.kernel.org>; Sun, 11 Sep 2022 22:36:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D8D98ECAAA1
+	for <dm-devel@archiver.kernel.org>; Mon, 12 Sep 2022 05:55:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1662935791;
+	s=mimecast20190719; t=1662962146;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=uSAd0aBHYFEEel7krgBb8dglxzmmNnD6ZXxhKqf23fU=;
-	b=hOUYWoB0rRdeqxQJTVU/JcblSq/QaO+kv703wRQL63UtR7ImGXCn0z/5Gptzt7g47VrA0E
-	Fi5HYKM5+OwBaF3nfzqtoqp32cI/oXP8I3F89iWZt4meVdF7j+KyW/NGl8aSmAegixWFFv
-	ph1Yv0qvcRD/djM0sLMXcUegDiFbeCM=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=cmAbTwn/3eeXDwiNkMvBU9+UdRtwYN+0yPMjpw04cLU=;
+	b=i10XZqIxW2S/RHXvuIlq587AZTGx8bLCkZyLkGnPMJGL77ihqdaraIHhRuRVMXlU6+aePC
+	uUilTC3F3CVERJNuEpPPS4r4WHB9Tgv6mK8B/BmaeE6OiIG6NF5D7Zo42Gop79TcFznnn7
+	/qmhe2tzaSLxxjPlIXn08a1SWcakoro=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-654-58cv024yNC2otoaOlNTUrg-1; Sun, 11 Sep 2022 18:36:28 -0400
-X-MC-Unique: 58cv024yNC2otoaOlNTUrg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-630-Wqhk8dsFOk63CK8h9t8QBQ-1; Mon, 12 Sep 2022 01:55:43 -0400
+X-MC-Unique: Wqhk8dsFOk63CK8h9t8QBQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6F6FA1C05147;
-	Sun, 11 Sep 2022 22:36:27 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D61871818340;
+	Mon, 12 Sep 2022 05:55:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 971472166B26;
-	Sun, 11 Sep 2022 22:36:23 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 950431415102;
+	Mon, 12 Sep 2022 05:55:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 71FEC1946A42;
-	Sun, 11 Sep 2022 22:36:23 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6ED741946A42;
+	Mon, 12 Sep 2022 05:55:39 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 10C8B1946A41
- for <dm-devel@listman.corp.redhat.com>; Sun, 11 Sep 2022 22:36:23 +0000 (UTC)
+ ESMTP id A30951946A41
+ for <dm-devel@listman.corp.redhat.com>; Mon, 12 Sep 2022 05:55:37 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id DFF0C40C1421; Sun, 11 Sep 2022 22:36:22 +0000 (UTC)
+ id 81997141510B; Mon, 12 Sep 2022 05:55:37 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DBF584010FA1
- for <dm-devel@redhat.com>; Sun, 11 Sep 2022 22:36:22 +0000 (UTC)
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7CC411415102
+ for <dm-devel@redhat.com>; Mon, 12 Sep 2022 05:55:37 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C546785A585
- for <dm-devel@redhat.com>; Sun, 11 Sep 2022 22:36:22 +0000 (UTC)
-Received: from mail-wm1-f48.google.com (mail-wm1-f48.google.com
- [209.85.128.48]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-612-6nP3uXWzMLi7xtZP5H9SnQ-1; Sun, 11 Sep 2022 18:36:20 -0400
-X-MC-Unique: 6nP3uXWzMLi7xtZP5H9SnQ-1
-Received: by mail-wm1-f48.google.com with SMTP id
- n17-20020a05600c501100b003a84bf9b68bso6004023wmr.3; 
- Sun, 11 Sep 2022 15:36:20 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=content-transfer-encoding:mime-version:message-id:date:subject:cc
- :to:from:x-gm-message-state:from:to:cc:subject:date;
- bh=f7xN3/hKDTT/SS2zGMqJTkYGMnzdDuwQAm7/zAuXFF0=;
- b=BBseY2TtRe4knQSu31oEvYCb1X0M21QRwW6jKmqUArUn5q+Y7oy+xItcqHoSTyeSAV
- ExdS9BUAs+jAqu8iRVKr5g0ctHhgoaxYYVreJstMgIt6AWDA2fNWbOPmTTgZkrQCl6XO
- wVnZuBZ07KY7xwIivkveie8DPymdaY0tIwi3y21C+aSSsrAKiC8oTk3EZn2pT5foN3Wk
- RPy/piEVG1NxjOLjDeIkQP69Jw0yk5etNO1egcxstaKvYzbD8nLO/1yZdhdFzr7SZH27
- l32PTZc2UeMS3w3wiWTu/g0BdGvJtsvoqK4OW1+ynImLxwedvMcvm0NtnROihLkDMTDl
- W0VA==
-X-Gm-Message-State: ACgBeo1AL7EYUWmqA+ZbXSrSqHoEh1zD3319N8OE1revgsRBoFZrmYSF
- jz9PCwYGFdAmxhgJiGomLQ==
-X-Google-Smtp-Source: AA6agR7tTcb7banX6TmWvlDLaIq3Jw6gulMMchE0RevJruVINi5PdFzxuaLo3ajoxc9K2MD0pSiPUg==
-X-Received: by 2002:a7b:c44d:0:b0:3a5:ce2b:5558 with SMTP id
- l13-20020a7bc44d000000b003a5ce2b5558mr11975152wmi.123.1662935779275; 
- Sun, 11 Sep 2022 15:36:19 -0700 (PDT)
-Received: from localhost (53.red-81-44-158.dynamicip.rima-tde.net.
- [81.44.158.53]) by smtp.gmail.com with ESMTPSA id
- x19-20020a1c7c13000000b003a6896feef7sm7509078wmc.39.2022.09.11.15.36.18
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Sun, 11 Sep 2022 15:36:18 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Date: Mon, 12 Sep 2022 00:36:17 +0200
-Message-Id: <20220911223617.141304-1-xose.vazquez@gmail.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 65C388041BE
+ for <dm-devel@redhat.com>; Mon, 12 Sep 2022 05:55:37 +0000 (UTC)
+Received: from NAM12-MW2-obe.outbound.protection.outlook.com
+ (mail-mw2nam12olkn2025.outbound.protection.outlook.com [40.92.23.25]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-202-4XLIJhfIPbadc1P_Yp6iMQ-1; Mon, 12 Sep 2022 01:55:29 -0400
+X-MC-Unique: 4XLIJhfIPbadc1P_Yp6iMQ-1
+Received: from BY5PR14MB3893.namprd14.prod.outlook.com (2603:10b6:a03:1dc::15)
+ by DM6PR14MB3680.namprd14.prod.outlook.com (2603:10b6:5:1bb::20) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5612.18; Mon, 12 Sep
+ 2022 05:55:27 +0000
+Received: from BY5PR14MB3893.namprd14.prod.outlook.com
+ ([fe80::2163:6c06:f8a8:1d5d]) by BY5PR14MB3893.namprd14.prod.outlook.com
+ ([fe80::2163:6c06:f8a8:1d5d%9]) with mapi id 15.20.5612.022; Mon, 12 Sep 2022
+ 05:55:27 +0000
+From: "Pra.. Dew.." <linux_learner@outlook.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Thread-Topic: Location for the definition of dm_task
+Thread-Index: AQHYxmxCLNz35ps1e0m17HgOxE6+yA==
+Date: Mon, 12 Sep 2022 05:55:27 +0000
+Message-ID: <BY5PR14MB3893D6625238AD41746A53C786449@BY5PR14MB3893.namprd14.prod.outlook.com>
+References: <BY5PR14MB3893CAD48C0E0661811682A386429@BY5PR14MB3893.namprd14.prod.outlook.com>
+In-Reply-To: <BY5PR14MB3893CAD48C0E0661811682A386429@BY5PR14MB3893.namprd14.prod.outlook.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-exchange-messagesentrepresentingtype: 1
+x-tmn: [Lk+MgT56Zcg97b8Qczj07Nq3WYtczQ/V]
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: BY5PR14MB3893:EE_|DM6PR14MB3680:EE_
+x-ms-office365-filtering-correlation-id: 18cd3cad-006c-4fdd-436a-08da948364c1
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: 3Rkw+fzkWnjLOlufw6A2PbowBKy7ruRH6LQLmbTS7/pqo3WnG7CGs5fVI0F9dBfwVIoYMztR7w8g1rgEK5gKzIb5jjq9P+MNDBdTf3WkuCD1Fz+LlKrOHW8+5qVE0q4+gNJOpQYW6fNlapRnFYKZu1agzY/8x8w5Rm9yC1OUJ+uwqLtIiDlbL7LmtuJWokBf/V0YUWyNLZFpR3sQWwSGh+OVn8Lv7qdDKJ09mHerZ+rWC9vqqzyGm4V/jSib3NJ5i4OUlZy96mjYtDO7aIkTxU6+C0PDTYW9M1QsnAuuWoS9TZX1duNIEnEo8PqAYxkF94NKG/iigkQh5nPnLdz9Kei8rJ03eEjATlDSP4dGt+zDU0UvlM4I58xFw6DOj8rcdBvNFcxitAitcstI9LrvNmlsgpR2ma6nziizCN5MnS8WeWlrto3YA60P1Wpo161ewCjGB5/Tvklf+iWFt8dUyv6erF4ZMSpoVL+/BSov8+QC16Su/ZyiXemLpPcI0u1T4yb34/noel+u290Ihc/fI/IGiebbvIDp3VZDZxFCILj9P7EQvauqYpK7fba9UJnYVtPV4DIeIr1Oc4fV0gjdQQOOV2B2H5YNhI49GT+y7rCg5mdRF0uOIajaloga7v/V
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?sxQ8brK52RSY3fQ7WnLq1ojfiwG5pT+DRD2+/C4cLjh2auXuLBWwMmba9OsE?=
+ =?us-ascii?Q?17myIr+tNrfxTOHoTjoX/IJIgnx0uuQYvTYFRKFe511lewVpP5nB0B03aUeo?=
+ =?us-ascii?Q?YrbbJnaz8vr6zv93h4ldHZzUVy6w6tJZHDgK1qzva3Mv05Wab0K6y+DjKx+w?=
+ =?us-ascii?Q?TNaBLCL48jinWfVdDlfwvXwEWEeI6vDvOQBv+2JlTTfkl/MrYpDKULCsBFTM?=
+ =?us-ascii?Q?g7l5x0QRZ5ByDtX7CYga7N2wuKuP9qEyQ5Rwuk0ZogpWJZKcKcHje+cYFqnj?=
+ =?us-ascii?Q?E/1WGaSUCOyiwy85X6LHVmzBy+Rxkcm+OFjLCFiCrAvRpp6H58LHbV8w6p0S?=
+ =?us-ascii?Q?mSV0DcozsysM6kKzEQn6x8pjkkgcoDtul8ZW+yjrEmtEfpkSBcINEq/0lUqr?=
+ =?us-ascii?Q?xfFxMudz+AiyZFHMqmbgfh2QV0OTCXtLUfW+QpnhN0hKwLWzP67iMSvwWRqF?=
+ =?us-ascii?Q?er26eVdmyGP3Ripl7vJijdwx82zWbpbgmyord0m42M2NgDpqTbtHoTraM+/r?=
+ =?us-ascii?Q?S2ZTLeG9/dIL7rkeVYHBy2xvsJpytfZR+1xDDxhpoX8GbMT3ify9ViEOcMiU?=
+ =?us-ascii?Q?X1BfcbGbVUyzIzTO8tqnkgahJbejLpyMZOwfp2qU0+LqGU6eH1wrmq6IsIGu?=
+ =?us-ascii?Q?oKjmwv8MSsYAvbjihYIHUwuXPkh3dgemRlX5bRWxiZHH/OYAkoE0OvUdawXx?=
+ =?us-ascii?Q?07H7IqjSYUQveh7a143JPYdFn3Lv9+5i+SAh1/WF28Jl3hSGp2ffQBwrL9T5?=
+ =?us-ascii?Q?XCl6FqbVnJK7d2sGJHCN/owpEX+vx07b2E8VHlOT+I5l9keKI7Fr1sBmel+d?=
+ =?us-ascii?Q?nOmu0T49XDcppghl6c4ZWC6AH/H8FMyX9RHm1Z131L0YIcM5evfI8M7Xx5R9?=
+ =?us-ascii?Q?+3cQou7EvX4IUTAb3N9XvEH6CwbzGkp4dM/B90OSiFfqqoeLWFQljz9+BxXm?=
+ =?us-ascii?Q?EqPs6J03uKuwGRohUrhdG4zROo9QULaAarmFE+nWaI3/8UI6+/PZdSsS6/Y7?=
+ =?us-ascii?Q?Vs0QLBCODafFHGE72wtmsNeUJPVxutnRepstItQvvoa7TIRtoRnyLH1ErDrT?=
+ =?us-ascii?Q?nNExVH6syEi2ZZ3kWEe8AdeT8XnCY1Nzghdq0x64KepequChecsyvmFPcGP7?=
+ =?us-ascii?Q?yqXTdRORJ8udsrU4Il4N5m+yLXF220DNJu/XfBwiQJBNiWL47W6x9bbzHWoB?=
+ =?us-ascii?Q?EsSK5Ud+0CKKWB+J9lncDZm283F0izRqMwhmXb47cia1Nfb71lCYxAFyRLBj?=
+ =?us-ascii?Q?ueZYW1NP3rLuEBgDQUhjTLlS/XZIYmSo1A0ed054wEf5pWdLjwhF5y+Apq8w?=
+ =?us-ascii?Q?YBE=3D?=
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
+X-OriginatorOrg: outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: BY5PR14MB3893.namprd14.prod.outlook.com
+X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-CrossTenant-Network-Message-Id: 18cd3cad-006c-4fdd-436a-08da948364c1
+X-MS-Exchange-CrossTenant-originalarrivaltime: 12 Sep 2022 05:55:27.8047 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
+X-MS-Exchange-CrossTenant-rms-persistedconsumerorg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR14MB3680
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -92,9 +123,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: [dm-devel] [PATCH] multipath-tools: update hwtable
- text/info/comments
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: [dm-devel] Location for the definition of dm_task
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -106,252 +136,120 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>,
- DM-DEVEL ML <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: multipart/mixed; boundary="===============8905253274721586404=="
+
+--===============8905253274721586404==
+Content-Language: en-US
+Content-Type: multipart/alternative;
+	boundary="_000_BY5PR14MB3893D6625238AD41746A53C786449BY5PR14MB3893namp_"
+
+--_000_BY5PR14MB3893D6625238AD41746A53C786449BY5PR14MB3893namp_
 Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+I see that in libdevmapper.c<https://gitlab.com/cryptsetup/cryptsetup/-/blo=
+b/master/lib/libdevmapper.c#L266> following line is defined
+
+struct dm_task *dmt;
+
+I cannot seem to find out where is dm_task and associated functions are act=
+ually defined? I do not see them in the libdevmapper library headers and .c=
+ files. Thank you for all the guidance.
+
+Thanks
+
+
+
+--_000_BY5PR14MB3893D6625238AD41746A53C786449BY5PR14MB3893namp_
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" xmlns:w=3D"urn:sc=
+hemas-microsoft-com:office:word" xmlns:m=3D"http://schemas.microsoft.com/of=
+fice/2004/12/omml" xmlns=3D"http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
+>
+<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
+<style><!--
+/* Font Definitions */
+@font-face
+=09{font-family:"Cambria Math";
+=09panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+=09{font-family:Calibri;
+=09panose-1:2 15 5 2 2 2 4 3 2 4;}
+/* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+=09{margin:0in;
+=09font-size:11.0pt;
+=09font-family:"Calibri",sans-serif;}
+a:link, span.MsoHyperlink
+=09{mso-style-priority:99;
+=09color:blue;
+=09text-decoration:underline;}
+code
+=09{mso-style-priority:99;
+=09font-family:"Courier New";}
+span.hljs-keyword
+=09{mso-style-name:hljs-keyword;}
+span.hljs-title
+=09{mso-style-name:hljs-title;}
+.MsoChpDefault
+=09{mso-style-type:export-only;}
+@page WordSection1
+=09{size:8.5in 11.0in;
+=09margin:1.0in 1.0in 1.0in 1.0in;}
+div.WordSection1
+=09{page:WordSection1;}
+--></style>
+</head>
+<body lang=3D"EN-US" link=3D"blue" vlink=3D"#954F72" style=3D"word-wrap:bre=
+ak-word">
+<div class=3D"WordSection1">
+<p class=3D"MsoNormal">I see that in <a href=3D"https://gitlab.com/cryptset=
+up/cryptsetup/-/blob/master/lib/libdevmapper.c#L266">
+libdevmapper.c</a> following line is defined</p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal"><span class=3D"hljs-keyword">struct</span><code><spa=
+n style=3D"font-size:10.0pt">
+</span></code><span class=3D"hljs-title"><span style=3D"font-size:10.0pt;fo=
+nt-family:&quot;Courier New&quot;">dm_task</span></span><code><span style=
+=3D"font-size:10.0pt"> *</span></code><span class=3D"hljs-title"><span styl=
+e=3D"font-size:10.0pt;font-family:&quot;Courier New&quot;">dmt</span></span=
+><code><span style=3D"font-size:10.0pt">;<o:p></o:p></span></code></p>
+<p class=3D"MsoNormal"><code><span style=3D"font-size:10.0pt"><o:p>&nbsp;</=
+o:p></span></code></p>
+<p class=3D"MsoNormal"><code><span style=3D"font-size:10.0pt">I cannot seem=
+ to find out where is dm_task and associated functions are actually defined=
+? I do not see them in the libdevmapper library headers and .c files. Thank=
+ you for all the guidance.</span></code></p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal">Thanks<o:p></o:p></p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+</div>
+</body>
+</html>
+
+--_000_BY5PR14MB3893D6625238AD41746A53C786449BY5PR14MB3893namp_--
+
+--===============8905253274721586404==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-delete attributes from template, outdated and incompleted.
-delete trivial/redundant comments.
-add HPE Alletra 5000 info.
-remove empty lines in comments.
-compact some info.
-
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 66 +++++++-----------------------------------
- 1 file changed, 10 insertions(+), 56 deletions(-)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 2085aba5..d2c92d43 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -33,59 +33,26 @@
- 	 * Copy this TEMPLATE to add new hardware.
- 	 *
- 	 * Keep only mandatory(.vendor and .product) and modified attributes.
--	 * Attributes with default values must be removed.
-+	 * Attributes with default values must be omitted.
- 	 * .vendor, .product, .revision and .bl_product are POSIX Extended regex.
- 	 *
- 	 * COMPANY_NAME
--	 *
- 	 * Maintainer: NAME <email>
- 	 */
- 	{
- 		/* Product Name */
- 		.vendor        = "VENDOR",
- 		.product       = "PRODUCT",
--		.revision      = "REVISION",
--		.bl_product    = "BL_PRODUCT",
--		.pgpolicy      = FAILOVER,
--		.uid_attribute = "ID_SERIAL",
--		.selector      = "service-time 0",
--		.checker_name  = TUR,
--		.alias_prefix  = "mpath",
--		.features      = "0",
--		.hwhandler     = "0",
--		.prio_name     = PRIO_CONST,
--		.prio_args     = "",
--		.pgfailback    = -FAILBACK_MANUAL,
--		.rr_weight     = RR_WEIGHT_NONE,
--		.no_path_retry = NO_PATH_RETRY_UNDEF,
--		.minio         = 1000,
--		.minio_rq      = 1,
--		.flush_on_last_del = FLUSH_DISABLED,
--		.user_friendly_names = USER_FRIENDLY_NAMES_OFF,
--		.fast_io_fail  = 5,
--		.dev_loss      = 600,
--		.retain_hwhandler = RETAIN_HWHANDLER_ON,
--		.detect_prio   = DETECT_PRIO_ON,
--		.detect_checker = DETECT_CHECKER_ON,
--		.deferred_remove = DEFERRED_REMOVE_OFF,
--		.delay_watch_checks = DELAY_CHECKS_OFF,
--		.delay_wait_checks = DELAY_CHECKS_OFF,
--		.skip_kpartx   = SKIP_KPARTX_OFF,
--		.max_sectors_kb = MAX_SECTORS_KB_UNDEF,
--		.ghost_delay   = GHOST_DELAY_OFF,
-+		...
- 	},
- #endif
- 
- static struct hwentry default_hw[] = {
- 	/*
- 	 * Generic NVMe devices
--	 *
--	 * Due to the parsing logic in find_hwe(), generic entries
--	 * have to be put on top of this list, and more specific ones
--	 * below.
- 	 */
- 	{
--		/* Generic NVMe */
-+		/* NVMe */
- 		.vendor        = "NVM[eE]",
- 		.product       = ".*",
- 		.uid_attribute = DEFAULT_NVME_UID_ATTRIBUTE,
-@@ -95,7 +62,6 @@ static struct hwentry default_hw[] = {
- 	},
- 	/*
- 	 * Apple
--	 *
- 	 * Maintainer: Shyam Sundar <g.shyamsundar@yahoo.co.in>
- 	 */
- 	{
-@@ -232,7 +198,7 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_ALUA,
- 	},
- 	{
--		/* Nimble Storage / HPE Alletra 6000 */
-+		/* Nimble Storage / HPE Alletra 5000/6000 */
- 		.vendor        = "Nimble",
- 		.product       = "Server",
- 		.hwhandler     = "1 alua",
-@@ -311,7 +277,6 @@ static struct hwentry default_hw[] = {
- 	{
- 		/*
- 		 * Nexenta COMSTAR
--		 *
- 		 * Maintainer: Yacine Kheddache <yacine@alyseo.com>
- 		 */
- 		.vendor        = "NEXENTA",
-@@ -367,7 +332,7 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 	},
- 	{
--		/* SC Series, formerly Compellent */
-+		/* SC Series (formerly Compellent) */
- 		.vendor        = "COMPELNT",
- 		.product       = "Compellent Vol",
- 		.pgpolicy      = GROUP_BY_PRIO,
-@@ -471,7 +436,6 @@ static struct hwentry default_hw[] = {
- 	},
- 	/*
- 	 * Hitachi Vantara
--	 *
- 	 * Maintainer: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
- 	 */
- 	{
-@@ -672,7 +636,7 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 	},
- 	{
--		// Storwize V5000 and V7000 lines / SAN Volume Controller (SVC) / Flex System V7000 /
-+		// Storwize V5000/V7000 lines / SAN Volume Controller (SVC) / Flex System V7000
- 		// FlashSystem V840/V9000/5000/5100/5200/7200/7300/9100/9200/9200R/9500
- 		.vendor        = "IBM",
- 		.product       = "^2145",
-@@ -757,7 +721,6 @@ static struct hwentry default_hw[] = {
- 	},
- 		/*
- 		 * IBM Power Virtual SCSI Devices
--		 *
- 		 * Maintainer: Brian King <brking@linux.vnet.ibm.com>
- 		 */
- 	{
-@@ -789,7 +752,6 @@ static struct hwentry default_hw[] = {
- 	{
- 		/*
- 		 * DE Series
--		 *
- 		 * Maintainer: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
- 		 */
- 		.vendor        = "LENOVO",
-@@ -809,7 +771,6 @@ static struct hwentry default_hw[] = {
- 	{
- 		/*
- 		 * ONTAP family
--		 *
- 		 * Maintainer: Martin George <marting@netapp.com>
- 		 */
- 		.vendor        = "NETAPP",
-@@ -826,7 +787,6 @@ static struct hwentry default_hw[] = {
- 	{
- 		/*
- 		 * SANtricity(RDAC) family
--		 *
- 		 * Maintainer: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
- 		 */
- 		.vendor        = "(NETAPP|LSI|ENGENIO)",
-@@ -843,7 +803,6 @@ static struct hwentry default_hw[] = {
- 	{
- 		/*
- 		 * SolidFir family
--		 *
- 		 * Maintainer: PJ Waskiewicz <pj.waskiewicz@netapp.com>
- 		 */
- 		.vendor        = "SolidFir",
-@@ -874,7 +833,6 @@ static struct hwentry default_hw[] = {
- 	 */
- 		/*
- 		 * Pillar Data / Oracle FS
--		 *
- 		 * Maintainer: Srinivasan Ramani <srinivas.ramani@oracle.com>
- 		 */
- 	{
-@@ -1015,7 +973,6 @@ static struct hwentry default_hw[] = {
- 	},
- 	/*
- 	 * Pivot3
--	 *
- 	 * Maintainer: Bart Brooks <bartb@pivot3.com>
- 	 */
- 	{
-@@ -1049,12 +1006,12 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_ALUA,
- 	},
- 	/*
--	 * Linux-IO Target
-+	 * Linux
- 	 */
- 	{
--		/* Linux-IO Target */
-+		/* IO Target */
- 		.vendor        = "(LIO-ORG|SUSE)",
--		.product       = ".",
-+		.product       = ".*",
- 		.hwhandler     = "1 alua",
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
-@@ -1107,8 +1064,6 @@ static struct hwentry default_hw[] = {
- 	 */
- 	{
- 		/* OceanStor V3-V6 */
--		// This config works with multibus and ALUA
--		// ALUA is required by HyperMetro
- 		.vendor        = "HUAWEI",
- 		.product       = "XSG1",
- 		.pgpolicy      = GROUP_BY_PRIO,
-@@ -1133,7 +1088,6 @@ static struct hwentry default_hw[] = {
- 	},
- 	/*
- 	 * Infinidat
--	 *
- 	 * Maintainer: Arnon Yaari <arnony@infinidat.com>
- 	 */
- 	{
-@@ -1202,7 +1156,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 30,
- 	},
- 	{
--		/* 3000 / 6000 Series - ALUA mode */
-+		/* 3000 / 6000 Series (ALUA mode) */
- 		.vendor        = "VIOLIN",
- 		.product       = "SAN ARRAY ALUA",
- 		.hwhandler     = "1 alua",
--- 
-2.37.3
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+
+--===============8905253274721586404==--
 
