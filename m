@@ -4,91 +4,91 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0CAA8ECAAD8
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1B8BCC6FA8B
 	for <dm-devel@archiver.kernel.org>; Fri, 16 Sep 2022 08:45:02 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1663317902;
+	s=mimecast20190719; t=1663317901;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=oTscLhiCGbX5/TV0fdqupNv+s879c9BtoJlZKyrHeFc=;
-	b=R3jduqTvKzRx/ZrkztojEDiqJceSKrIQ0vsD5DUQ2Cl+ylS6wDRbt41mDU0j8nAbBeWFBp
-	EHM/IsQ6Eg6QXnDYZ8uH4DzxUr0hGb0a2mOy0O+0U9LPEuW79imptgn5Sn6Mr9abifdQen
-	CCQHyusI5uQkPPzxvApDX/Fvquz+RMI=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=zDb9oFIIL63ihVhKqNsyop306xdQguoboxfcw0aHwyM=;
+	b=IB8A1+ir4GNxLoSNvnvRIG8FXDQHzkmIhQld/SVW4STZYw7GOVYxFW0kNZqdl29v+XWCbd
+	TdliHEGCcfvK5pcjTjg4/t/N0OgNgp6oBYdI8jxC9h7Y2YZRNcJC/DihnUwdyJ2hRqml6+
+	jvXLUrXmEHjNIlvw10d0Cpf3o0T0AXs=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-60-ks6xqm7AO0SYp5pvlvmfrA-1; Fri, 16 Sep 2022 04:45:00 -0400
-X-MC-Unique: ks6xqm7AO0SYp5pvlvmfrA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-60-Wqx1GNuGP7KZuxQOx27Xzg-1; Fri, 16 Sep 2022 04:45:00 -0400
+X-MC-Unique: Wqx1GNuGP7KZuxQOx27Xzg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CF37E29A8AED;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E2762802C16;
 	Fri, 16 Sep 2022 08:44:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BF4F92087440;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D1B0D40C6EC2;
 	Fri, 16 Sep 2022 08:44:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3BB0F1946A6B;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5FB621946A72;
 	Fri, 16 Sep 2022 08:44:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 255B91946586
- for <dm-devel@listman.corp.redhat.com>; Thu, 15 Sep 2022 16:48:51 +0000 (UTC)
+ ESMTP id 81ACF1946586
+ for <dm-devel@listman.corp.redhat.com>; Thu, 15 Sep 2022 16:48:48 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0ABA840C6EC3; Thu, 15 Sep 2022 16:48:51 +0000 (UTC)
+ id 545FC207B34B; Thu, 15 Sep 2022 16:48:48 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 06D2B40C6EC2
- for <dm-devel@redhat.com>; Thu, 15 Sep 2022 16:48:51 +0000 (UTC)
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 50829207B34A
+ for <dm-devel@redhat.com>; Thu, 15 Sep 2022 16:48:48 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E0EDB8027FD
- for <dm-devel@redhat.com>; Thu, 15 Sep 2022 16:48:50 +0000 (UTC)
-Received: from mail-pf1-f175.google.com (mail-pf1-f175.google.com
- [209.85.210.175]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 363FF38041C1
+ for <dm-devel@redhat.com>; Thu, 15 Sep 2022 16:48:48 +0000 (UTC)
+Received: from mail-pg1-f172.google.com (mail-pg1-f172.google.com
+ [209.85.215.172]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-269-N7NX-JztOxuAwPsZuu1zyA-1; Thu, 15 Sep 2022 12:48:49 -0400
-X-MC-Unique: N7NX-JztOxuAwPsZuu1zyA-1
-Received: by mail-pf1-f175.google.com with SMTP id u132so18629346pfc.6
- for <dm-devel@redhat.com>; Thu, 15 Sep 2022 09:48:49 -0700 (PDT)
+ us-mta-614-CBPtrcdBNGSl2iMmqffh-A-1; Thu, 15 Sep 2022 12:48:46 -0400
+X-MC-Unique: CBPtrcdBNGSl2iMmqffh-A-1
+Received: by mail-pg1-f172.google.com with SMTP id g4so17877770pgc.0
+ for <dm-devel@redhat.com>; Thu, 15 Sep 2022 09:48:46 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date;
- bh=8C9PF5fV/n/yVA3OaBrI0F0iBecyk+zvR56xPQZ3IDQ=;
- b=JxvzpA/JXai9d+wV8WqasGU8JdG20lS7OiBxwZ34X9geychP+pnOvlTC328bf9x6B9
- AAOW5wjvBr+WfCLBGG3EXoEVbzdRNVnpkXCVMSuxhJzZ7Qcc9LE3VGazpGNIVjDv0gfV
- uI1YotyIBLhaCHUyENDvApozNZRi7fivf7YcNUk56JYsANmJuen2FUzzgL2Sd0MgTFW5
- Dn5KT9E8R1DKaVF/MVAdsVvk9C2TpL+53WdeV019RSwO9Dm33435q+FflNBbHloiDANo
- YKPuk+1pPy0iLAGuFM6wNftRluUG6IGmWciIxwQIoPh+C+n/D02tpx1DttHT30xfZtlq
- DhGg==
-X-Gm-Message-State: ACrzQf3vyHfp8LdIrgqalxLW6qbRD1BtJSqnH/XBd5co67ZWk+22CmJP
- uHatgPUwDLSN7o48AEohKnpKS7zo64fxdg==
-X-Google-Smtp-Source: AMsMyM74NUJEGoCBWxXp6ovjj8HVrZVtuoYCAa5cO2wk9AivcidhyvEFeO548cRZFdt3fQKWpEtWLA==
-X-Received: by 2002:a05:6a00:1691:b0:53b:3f2c:3257 with SMTP id
- k17-20020a056a00169100b0053b3f2c3257mr882622pfc.21.1663260527748; 
- Thu, 15 Sep 2022 09:48:47 -0700 (PDT)
+ bh=8dGdE7yXwxpNJrtc0jzeOng2rxu8z4FK39IlQ5rLaw4=;
+ b=6CPddsiuqLSqHkmU6M1y3oB0yMfXD4se90ItLKT+9k/JHqvCna9rG0RorJdC8mxuRE
+ 6ImwZH7VZinjQc2w8SFcj2NfpIR2NTKIPXkrz6WbDiimn72dyYGVerBsKc1Em3CY1n9h
+ eoZcsaPqR3S2HgLfMXBO0MGm5FzPtzCMlWHg4MJcKGPJPm9qBp79NcRdM5auEjk+puzK
+ S8Ow4T7G3G7QgFNcLgy3tKCDpxukoXF8F62YRQSbkbsWt/dw2OzRU9+9QGa/cNBNzvit
+ zCZY1+RcUSsU4unSitB7dY++Y0JEfPC9l4QuSV/vauz5Ji+P7fvW0WOrDvKTfTsedMjT
+ UVSg==
+X-Gm-Message-State: ACrzQf2rlbFKC9YALtAPE8AM2ydfcMAwBIvbX0EZSwgLMn9nSkDPZNEo
+ xhZ8OGpehUUJFBXqAX35twvRasncs9pCtQ==
+X-Google-Smtp-Source: AMsMyM4ZjbUOIq/Q41w/OvvKUkmXpRr0bP+C56mI+0JSOF5eLhseKC9OgxfT03jMUgCb5sBQJ9O12g==
+X-Received: by 2002:a63:1d25:0:b0:437:ec38:bd0e with SMTP id
+ d37-20020a631d25000000b00437ec38bd0emr675973pgd.478.1663260525220; 
+ Thu, 15 Sep 2022 09:48:45 -0700 (PDT)
 Received: from sarthakkukreti-glaptop.hsd1.ca.comcast.net
  ([2601:647:4200:b5b0:3af2:34b2:a98a:a652])
  by smtp.gmail.com with ESMTPSA id
- o4-20020a170902bcc400b00177ee563b6dsm13174970pls.33.2022.09.15.09.48.45
+ o4-20020a170902bcc400b00177ee563b6dsm13174970pls.33.2022.09.15.09.48.42
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 15 Sep 2022 09:48:46 -0700 (PDT)
+ Thu, 15 Sep 2022 09:48:44 -0700 (PDT)
 From: Sarthak Kukreti <sarthakkukreti@chromium.org>
 X-Google-Original-From: Sarthak Kukreti <sarthakkukreti@google.com>
 To: dm-devel@redhat.com, linux-block@vger.kernel.org,
  linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org,
  virtualization@lists.linux-foundation.org
-Date: Thu, 15 Sep 2022 09:48:22 -0700
-Message-Id: <20220915164826.1396245-5-sarthakkukreti@google.com>
+Date: Thu, 15 Sep 2022 09:48:21 -0700
+Message-Id: <20220915164826.1396245-4-sarthakkukreti@google.com>
 In-Reply-To: <20220915164826.1396245-1-sarthakkukreti@google.com>
 References: <20220915164826.1396245-1-sarthakkukreti@google.com>
 MIME-Version: 1.0
@@ -99,9 +99,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mailman-Approved-At: Fri, 16 Sep 2022 08:44:55 +0000
-Subject: [dm-devel] [PATCH RFC 4/8] fs: Introduce FALLOC_FL_PROVISION
+Subject: [dm-devel] [PATCH RFC 3/8] virtio_blk: Add support for provision
+ requests
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -122,7 +123,7 @@ Cc: Jens Axboe <axboe@kernel.dk>, Gwendal Grignou <gwendal@google.com>,
  Paolo Bonzini <pbonzini@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
@@ -130,73 +131,136 @@ Content-Transfer-Encoding: 7bit
 
 From: Sarthak Kukreti <sarthakkukreti@chromium.org>
 
-FALLOC_FL_PROVISION is a new fallocate() allocation mode that
-sends a hint to (supported) thinly provisioned block devices to
-allocate space for the given range of sectors via REQ_OP_PROVISION.
+Adds support for provision requests. Provision requests act like
+the inverse of discards.
 
 Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
 ---
- block/fops.c                | 7 ++++++-
- include/linux/falloc.h      | 3 ++-
- include/uapi/linux/falloc.h | 8 ++++++++
- 3 files changed, 16 insertions(+), 2 deletions(-)
+ drivers/block/virtio_blk.c      | 48 +++++++++++++++++++++++++++++++++
+ include/uapi/linux/virtio_blk.h |  9 +++++++
+ 2 files changed, 57 insertions(+)
 
-diff --git a/block/fops.c b/block/fops.c
-index b90742595317..a436a7596508 100644
---- a/block/fops.c
-+++ b/block/fops.c
-@@ -605,7 +605,8 @@ static ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
+diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
+index 30255fcaf181..eacc2bffe1d1 100644
+--- a/drivers/block/virtio_blk.c
++++ b/drivers/block/virtio_blk.c
+@@ -178,6 +178,39 @@ static int virtblk_setup_discard_write_zeroes(struct request *req, bool unmap)
+ 	return 0;
+ }
  
- #define	BLKDEV_FALLOC_FL_SUPPORTED					\
- 		(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |		\
--		 FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE)
-+		 FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE |	\
-+		 FALLOC_FL_PROVISION)
- 
- static long blkdev_fallocate(struct file *file, int mode, loff_t start,
- 			     loff_t len)
-@@ -661,6 +662,10 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
- 		error = blkdev_issue_discard(bdev, start >> SECTOR_SHIFT,
- 					     len >> SECTOR_SHIFT, GFP_KERNEL);
++static int virtblk_setup_provision(struct request *req)
++{
++	unsigned short segments = blk_rq_nr_discard_segments(req);
++	unsigned short n = 0;
++
++	struct virtio_blk_discard_write_zeroes *range;
++	struct bio *bio;
++	u32 flags = 0;
++
++	range = kmalloc_array(segments, sizeof(*range), GFP_ATOMIC);
++	if (!range)
++		return -ENOMEM;
++
++	__rq_for_each_bio(bio, req) {
++		u64 sector = bio->bi_iter.bi_sector;
++		u32 num_sectors = bio->bi_iter.bi_size >> SECTOR_SHIFT;
++
++		range[n].flags = cpu_to_le32(flags);
++		range[n].num_sectors = cpu_to_le32(num_sectors);
++		range[n].sector = cpu_to_le64(sector);
++		n++;
++	}
++
++	WARN_ON_ONCE(n != segments);
++
++	req->special_vec.bv_page = virt_to_page(range);
++	req->special_vec.bv_offset = offset_in_page(range);
++	req->special_vec.bv_len = sizeof(*range) * segments;
++	req->rq_flags |= RQF_SPECIAL_PAYLOAD;
++
++	return 0;
++}
++
+ static void virtblk_unmap_data(struct request *req, struct virtblk_req *vbr)
+ {
+ 	if (blk_rq_nr_phys_segments(req))
+@@ -243,6 +276,9 @@ static blk_status_t virtblk_setup_cmd(struct virtio_device *vdev,
+ 	case REQ_OP_DRV_IN:
+ 		type = VIRTIO_BLK_T_GET_ID;
  		break;
-+	case FALLOC_FL_PROVISION:
-+		error = blkdev_issue_provision(bdev, start >> SECTOR_SHIFT,
-+					       len >> SECTOR_SHIFT, GFP_KERNEL);
++	case REQ_OP_PROVISION:
++		type = VIRTIO_BLK_T_PROVISION;
 +		break;
  	default:
- 		error = -EOPNOTSUPP;
+ 		WARN_ON_ONCE(1);
+ 		return BLK_STS_IOERR;
+@@ -256,6 +292,11 @@ static blk_status_t virtblk_setup_cmd(struct virtio_device *vdev,
+ 			return BLK_STS_RESOURCE;
  	}
-diff --git a/include/linux/falloc.h b/include/linux/falloc.h
-index f3f0b97b1675..a0e506255b20 100644
---- a/include/linux/falloc.h
-+++ b/include/linux/falloc.h
-@@ -30,7 +30,8 @@ struct space_resv {
- 					 FALLOC_FL_COLLAPSE_RANGE |	\
- 					 FALLOC_FL_ZERO_RANGE |		\
- 					 FALLOC_FL_INSERT_RANGE |	\
--					 FALLOC_FL_UNSHARE_RANGE)
-+					 FALLOC_FL_UNSHARE_RANGE |                          \
-+					 FALLOC_FL_PROVISION)
  
- /* on ia32 l_start is on a 32-bit boundary */
- #if defined(CONFIG_X86_64)
-diff --git a/include/uapi/linux/falloc.h b/include/uapi/linux/falloc.h
-index 51398fa57f6c..2d323d113eed 100644
---- a/include/uapi/linux/falloc.h
-+++ b/include/uapi/linux/falloc.h
-@@ -77,4 +77,12 @@
-  */
- #define FALLOC_FL_UNSHARE_RANGE		0x40
- 
-+/*
-+ * FALLOC_FL_PROVISION acts as a hint for thinly provisioned devices to allocate
-+ * blocks for the range/EOF.
-+ *
-+ * FALLOC_FL_PROVISION can only be used with allocate-mode fallocate.
-+ */
-+#define FALLOC_FL_PROVISION		0x80
++	if (type == VIRTIO_BLK_T_PROVISION) {
++		if (virtblk_setup_provision(req))
++			return BLK_STS_RESOURCE;
++	}
 +
- #endif /* _UAPI_FALLOC_H_ */
+ 	return 0;
+ }
+ 
+@@ -1075,6 +1116,12 @@ static int virtblk_probe(struct virtio_device *vdev)
+ 		blk_queue_max_write_zeroes_sectors(q, v ? v : UINT_MAX);
+ 	}
+ 
++	if (virtio_has_feature(vdev, VIRTIO_BLK_F_PROVISION)) {
++		virtio_cread(vdev, struct virtio_blk_config,
++			     max_provision_sectors, &v);
++		q->limits.max_provision_sectors = v ? v : UINT_MAX;
++	}
++
+ 	virtblk_update_capacity(vblk, false);
+ 	virtio_device_ready(vdev);
+ 
+@@ -1177,6 +1224,7 @@ static unsigned int features[] = {
+ 	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE,
+ 	VIRTIO_BLK_F_FLUSH, VIRTIO_BLK_F_TOPOLOGY, VIRTIO_BLK_F_CONFIG_WCE,
+ 	VIRTIO_BLK_F_MQ, VIRTIO_BLK_F_DISCARD, VIRTIO_BLK_F_WRITE_ZEROES,
++	VIRTIO_BLK_F_PROVISION,
+ };
+ 
+ static struct virtio_driver virtio_blk = {
+diff --git a/include/uapi/linux/virtio_blk.h b/include/uapi/linux/virtio_blk.h
+index d888f013d9ff..184f8cf6d185 100644
+--- a/include/uapi/linux/virtio_blk.h
++++ b/include/uapi/linux/virtio_blk.h
+@@ -40,6 +40,7 @@
+ #define VIRTIO_BLK_F_MQ		12	/* support more than one vq */
+ #define VIRTIO_BLK_F_DISCARD	13	/* DISCARD is supported */
+ #define VIRTIO_BLK_F_WRITE_ZEROES	14	/* WRITE ZEROES is supported */
++#define VIRTIO_BLK_F_PROVISION	15	/* provision is supported */
+ 
+ /* Legacy feature bits */
+ #ifndef VIRTIO_BLK_NO_LEGACY
+@@ -120,6 +121,11 @@ struct virtio_blk_config {
+ 	 */
+ 	__u8 write_zeroes_may_unmap;
+ 
++	/*
++	 * The maximum number of sectors in a provision request.
++	 */
++	__virtio32 max_provision_sectors;
++
+ 	__u8 unused1[3];
+ } __attribute__((packed));
+ 
+@@ -155,6 +161,9 @@ struct virtio_blk_config {
+ /* Write zeroes command */
+ #define VIRTIO_BLK_T_WRITE_ZEROES	13
+ 
++/* Provision command */
++#define VIRTIO_BLK_T_PROVISION	14
++
+ #ifndef VIRTIO_BLK_NO_LEGACY
+ /* Barrier before this op. */
+ #define VIRTIO_BLK_T_BARRIER	0x80000000
 -- 
 2.31.0
 
