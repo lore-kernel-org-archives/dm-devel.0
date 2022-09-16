@@ -1,107 +1,58 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B3C80C6FA92
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 62E34C6FA8B
 	for <dm-devel@archiver.kernel.org>; Fri, 16 Sep 2022 08:45:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1663317905;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=nRQ6LNe1WdmpRmqDbLtx3P09Qn7Pbxxnd+GO/zmulDk=;
-	b=B4UNJYjLKlJ1sVU14suCSQDzxJiSXIaj3GNgPq7V5XkSvTW/sLjP8UH0yrKqnBBChZyz3u
-	z1EuWslWLErmYlFQ8v6g9gpZGi6lsxll9ss3wR5BxTcS8GOj8ZxxtrMgvHuHS5EDpAcVIg
-	SxaxmGJ01+ddDbLYBPsCUNTUOD3M2Es=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=3E4KExRIuO+iOb5UxsqYn9YUcmP/QlT21Hz2CgkEPNI=;
+	b=V5MYP3TwKsFzdyvIBbGD+kHOG9ld/ObrvQuTjea6RwK+/5VTr32prTJxsIwXnrZdo5/SX2
+	xa/V6MaIRAY8jGuUoym+zQ6JkDJr/bkZasEi8EWa+rNjCrgWFFdtNuu/HwvA3noUmwlRJz
+	HcWiHejsCeBHcUI85nGGGa9Luj0VvLw=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-313-6mQNpe7CNP263UXtX877Yw-1; Fri, 16 Sep 2022 04:45:02 -0400
-X-MC-Unique: 6mQNpe7CNP263UXtX877Yw-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-292-1F2FwPhXOtSZlrt2oYrzzw-1; Fri, 16 Sep 2022 04:45:01 -0400
+X-MC-Unique: 1F2FwPhXOtSZlrt2oYrzzw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6AFBB3C106A5;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CC655862FE0;
 	Fri, 16 Sep 2022 08:44:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 56272492B05;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id BC23F2087440;
 	Fri, 16 Sep 2022 08:44:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A8B93194704D;
-	Fri, 16 Sep 2022 08:44:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3B9D61947063;
+	Fri, 16 Sep 2022 08:44:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E4DD51946586
- for <dm-devel@listman.corp.redhat.com>; Thu, 15 Sep 2022 16:48:53 +0000 (UTC)
+ ESMTP id 9A5421946586
+ for <dm-devel@listman.corp.redhat.com>; Fri, 16 Sep 2022 06:09:57 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id CC52617595; Thu, 15 Sep 2022 16:48:53 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C8B0E10EB8
- for <dm-devel@redhat.com>; Thu, 15 Sep 2022 16:48:53 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B163E801231
- for <dm-devel@redhat.com>; Thu, 15 Sep 2022 16:48:53 +0000 (UTC)
-Received: from mail-pl1-f177.google.com (mail-pl1-f177.google.com
- [209.85.214.177]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-398-9gRp6AmNOhCIRDHw-s2byg-1; Thu, 15 Sep 2022 12:48:52 -0400
-X-MC-Unique: 9gRp6AmNOhCIRDHw-s2byg-1
-Received: by mail-pl1-f177.google.com with SMTP id s18so12957528plr.4
- for <dm-devel@redhat.com>; Thu, 15 Sep 2022 09:48:52 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date;
- bh=Ez356cXmd+P7nHsJjjr+e0UneH5b2Is7vVwjmIs0dPs=;
- b=kKTrY7OjUqhghnnNviogJgV263RFP5PPcQ7vT7ursP7b6IPkIheF6GgpFWRZY0890P
- vcRkDcqCU4N+aKE7gQUQbNG3KOrI2Hb9i2Qc+kFCqNkKJ6j546LYbMr5DDs9/NOeBxUR
- vV9FVQ65oN9hW8bb4uTmsB6607PBbgAFCPnCPBWmFBrLEza6m/1JM4KHhEL7r2edD134
- oq3UqRmoaz5meNGXc0oKoVuRRJq85o5C+w95TlTJbVeF/CV5d8ut0OKIj8N7JF6XNi4z
- jrAAK83vngdQpmqbT2ABJuGjhyaUr150b761bswwsJ1+at+T/76MiDjnUJl29jNvenZa
- 0OgQ==
-X-Gm-Message-State: ACrzQf22TB12NFB9LNFmf7NYifLOkvYNW911HVf1FxMFJSTJYCk9m1vN
- e3EV1EcI7jTR5KiBZYr553zIYlcl8GqgVA==
-X-Google-Smtp-Source: AMsMyM6TOx0VvMscZBFt6MT5oz7OIxc3H7dIKcJ55IvOLIdBAuHhmlUHl0xBUb5jKhe4p8X37LYvkw==
-X-Received: by 2002:a17:902:c106:b0:178:8cb:2762 with SMTP id
- 6-20020a170902c10600b0017808cb2762mr482863pli.58.1663260530537; 
- Thu, 15 Sep 2022 09:48:50 -0700 (PDT)
-Received: from sarthakkukreti-glaptop.hsd1.ca.comcast.net
- ([2601:647:4200:b5b0:3af2:34b2:a98a:a652])
- by smtp.gmail.com with ESMTPSA id
- o4-20020a170902bcc400b00177ee563b6dsm13174970pls.33.2022.09.15.09.48.47
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 15 Sep 2022 09:48:49 -0700 (PDT)
-From: Sarthak Kukreti <sarthakkukreti@chromium.org>
-X-Google-Original-From: Sarthak Kukreti <sarthakkukreti@google.com>
-To: dm-devel@redhat.com, linux-block@vger.kernel.org,
- linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org,
- virtualization@lists.linux-foundation.org
-Date: Thu, 15 Sep 2022 09:48:23 -0700
-Message-Id: <20220915164826.1396245-6-sarthakkukreti@google.com>
-In-Reply-To: <20220915164826.1396245-1-sarthakkukreti@google.com>
+ id 7BA96C15BB2; Fri, 16 Sep 2022 06:09:57 +0000 (UTC)
+Received: from localhost (unknown [10.39.192.86])
+ by smtp.corp.redhat.com (Postfix) with ESMTP id 46FC3C15BA4;
+ Fri, 16 Sep 2022 06:09:56 +0000 (UTC)
+Date: Fri, 16 Sep 2022 07:09:55 +0100
+From: Stefan Hajnoczi <stefanha@redhat.com>
+To: Sarthak Kukreti <sarthakkukreti@chromium.org>
+Message-ID: <YyQTM5PRT2o/GDwy@fedora>
 References: <20220915164826.1396245-1-sarthakkukreti@google.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+In-Reply-To: <20220915164826.1396245-1-sarthakkukreti@google.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mailman-Approved-At: Fri, 16 Sep 2022 08:44:55 +0000
-Subject: [dm-devel] [PATCH RFC 5/8] loop: Add support for provision requests
+Subject: Re: [dm-devel] [PATCH RFC 0/8] Introduce provisioning primitives
+ for thinly provisioned storage
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -114,126 +65,109 @@ List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Cc: Jens Axboe <axboe@kernel.dk>, Gwendal Grignou <gwendal@google.com>,
- Theodore Ts'o <tytso@mit.edu>, Sarthak Kukreti <sarthakkukreti@chromium.org>,
- "Michael S . Tsirkin" <mst@redhat.com>, Jason Wang <jasowang@redhat.com>,
- Bart Van Assche <bvanassche@google.com>, Mike Snitzer <snitzer@kernel.org>,
- Evan Green <evgreen@google.com>, Andreas Dilger <adilger.kernel@dilger.ca>,
- Daniil Lunev <dlunev@google.com>, Stefan Hajnoczi <stefanha@redhat.com>,
- Paolo Bonzini <pbonzini@redhat.com>, Alasdair Kergon <agk@redhat.com>
+ Theodore Ts'o <tytso@mit.edu>, "Michael S . Tsirkin" <mst@redhat.com>,
+ Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
+ Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
+ virtualization@lists.linux-foundation.org, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, Andreas Dilger <adilger.kernel@dilger.ca>,
+ Daniil Lunev <dlunev@google.com>, Paolo Bonzini <pbonzini@redhat.com>,
+ linux-ext4@vger.kernel.org, Evan Green <evgreen@google.com>,
+ Alasdair Kergon <agk@redhat.com>
+Content-Type: multipart/mixed; boundary="===============2498237334590000574=="
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+
+
+--===============2498237334590000574==
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="w/wnRFkY16cMLsvF"
+Content-Disposition: inline
+
+
+--w/wnRFkY16cMLsvF
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Thu, Sep 15, 2022 at 09:48:18AM -0700, Sarthak Kukreti wrote:
+> From: Sarthak Kukreti <sarthakkukreti@chromium.org>
+>=20
+> Hi,
+>=20
+> This patch series is an RFC of a mechanism to pass through provision requ=
+ests on stacked thinly provisioned storage devices/filesystems.
+>=20
+> The linux kernel provides several mechanisms to set up thinly provisioned=
+ block storage abstractions (eg. dm-thin, loop devices over sparse files), =
+either directly as block devices or backing storage for filesystems. Curren=
+tly, short of writing data to either the device or filesystem, there is no =
+way for users to pre-allocate space for use in such storage setups. Conside=
+r the following use-cases:
+>=20
+> 1) Suspend-to-disk and resume from a dm-thin device: In order to ensure t=
+hat the underlying thinpool metadata is not modified during the suspend mec=
+hanism, the dm-thin device needs to be fully provisioned.
+> 2) If a filesystem uses a loop device over a sparse file, fallocate() on =
+the filesystem will allocate blocks for files but the underlying sparse fil=
+e will remain intact.
+> 3) Another example is virtual machine using a sparse file/dm-thin as a st=
+orage device; by default, allocations within the VM boundaries will not aff=
+ect the host.
+> 4) Several storage standards support mechanisms for thin provisioning on =
+real hardware devices. For example:
+>   a. The NVMe spec 1.0b section 2.1.1 loosely talks about thin provisioni=
+ng: "When the THINP bit in the NSFEAT field of the Identify Namespace data =
+structure is set to =E2=80=981=E2=80=99, the controller ... shall track the=
+ number of allocated blocks in the Namespace Utilization field"
+>   b. The SCSi Block Commands reference - 4 section references "Thin provi=
+sioned logical units",
+>   c. UFS 3.0 spec section 13.3.3 references "Thin provisioning".
+
+When REQ_OP_PROVISION is sent on an already-allocated range of blocks,
+are those blocks zeroed? NVMe Write Zeroes with Deallocate=3D0 works this
+way, for example. That behavior is counterintuitive since the operation
+name suggests it just affects the logical block's provisioning state,
+not the contents of the blocks.
+
+> In all of the above situations, currently the only way for pre-allocating=
+ space is to issue writes (or use WRITE_ZEROES/WRITE_SAME). However, that d=
+oes not scale well with larger pre-allocation sizes.=20
+
+What exactly is the issue with WRITE_ZEROES scalability? Are you
+referring to cases where the device doesn't support an efficient
+WRITE_ZEROES command and actually writes blocks filled with zeroes
+instead of updating internal allocation metadata cheaply?
+
+Stefan
+
+--w/wnRFkY16cMLsvF
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCAAdFiEEhpWov9P5fNqsNXdanKSrs4Grc8gFAmMkEzMACgkQnKSrs4Gr
+c8hn3wgAjJDAhaMbZwpCmdUdohpKtyMia1I6OsTlcURdfUV2iu1afmfcG5c7Q2pV
+ZPZC+DZhgUOEkpD1Aj5gCjpi8/1EXpmCwDGB36AgVnwzCMV9QLdW7B3xoCvJipNa
+b+KGhLFliE0pBX9ZGYqCZ7a8Tuz2OGtNhpAsd/tUOMYCLzc6WTqTIeB6Wv6rYrw4
+kIF+kP7pEK4INQYAav+pYDzZxqd4yrKINa6PEOZUMxzuLnH4eW8l+xrsTDIMbA+e
+ummgls1ZrhgPhUJNqscmevqfJMLqMsZTxN6+B9zH+G6GrxAc1rqeRTdlMAwwYxYg
+DIMeBAXmfutiQDOVF8Tj6W1p7wrNLw==
+=s/zf
+-----END PGP SIGNATURE-----
+
+--w/wnRFkY16cMLsvF--
+
+--===============2498237334590000574==
 Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-From: Sarthak Kukreti <sarthakkukreti@chromium.org>
-
-Add support for provision requests to loopback devices.
-Loop devices will configure provision support based on
-whether the underlying block device/file can support
-the provision request and upon receiving a provision bio,
-will map it to the backing device/storage.
-
-Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
----
- drivers/block/loop.c | 42 ++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 42 insertions(+)
-
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index ad92192c7d61..83f486b9bceb 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -327,6 +327,24 @@ static int lo_fallocate(struct loop_device *lo, struct request *rq, loff_t pos,
- 	return ret;
- }
- 
-+static int lo_req_provision(struct loop_device *lo, struct request *rq, loff_t pos)
-+{
-+	struct file *file = lo->lo_backing_file;
-+	struct request_queue *q = lo->lo_queue;
-+	int ret;
-+
-+	if (!q->limits.max_provision_sectors) {
-+		ret = -EOPNOTSUPP;
-+		goto out;
-+	}
-+
-+	ret = file->f_op->fallocate(file, FALLOC_FL_PROVISION, pos, blk_rq_bytes(rq));
-+	if (unlikely(ret && ret != -EINVAL && ret != -EOPNOTSUPP))
-+		ret = -EIO;
-+ out:
-+	return ret;
-+}
-+
- static int lo_req_flush(struct loop_device *lo, struct request *rq)
- {
- 	int ret = vfs_fsync(lo->lo_backing_file, 0);
-@@ -488,6 +506,8 @@ static int do_req_filebacked(struct loop_device *lo, struct request *rq)
- 				FALLOC_FL_PUNCH_HOLE);
- 	case REQ_OP_DISCARD:
- 		return lo_fallocate(lo, rq, pos, FALLOC_FL_PUNCH_HOLE);
-+	case REQ_OP_PROVISION:
-+		return lo_req_provision(lo, rq, pos);
- 	case REQ_OP_WRITE:
- 		if (cmd->use_aio)
- 			return lo_rw_aio(lo, cmd, pos, WRITE);
-@@ -754,6 +774,25 @@ static void loop_sysfs_exit(struct loop_device *lo)
- 				   &loop_attribute_group);
- }
- 
-+static void loop_config_provision(struct loop_device *lo)
-+{
-+	struct file *file = lo->lo_backing_file;
-+	struct inode *inode = file->f_mapping->host;
-+
-+	/*
-+	 * If the backing device is a block device, mirror its provisioning
-+	 * capability.
-+	 */
-+	if (S_ISBLK(inode->i_mode)) {
-+		blk_queue_max_provision_sectors(lo->lo_queue,
-+			bdev_max_provision_sectors(I_BDEV(inode)));
-+	} else if (file->f_op->fallocate) {
-+		blk_queue_max_provision_sectors(lo->lo_queue, UINT_MAX >> 9);
-+	} else {
-+		blk_queue_max_provision_sectors(lo->lo_queue, 0);
-+	}
-+}
-+
- static void loop_config_discard(struct loop_device *lo)
- {
- 	struct file *file = lo->lo_backing_file;
-@@ -1092,6 +1131,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
- 	blk_queue_io_min(lo->lo_queue, bsize);
- 
- 	loop_config_discard(lo);
-+	loop_config_provision(lo);
- 	loop_update_rotational(lo);
- 	loop_update_dio(lo);
- 	loop_sysfs_init(lo);
-@@ -1304,6 +1344,7 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
- 	}
- 
- 	loop_config_discard(lo);
-+	loop_config_provision(lo);
- 
- 	/* update dio if lo_offset or transfer is changed */
- 	__loop_update_dio(lo, lo->use_dio);
-@@ -1815,6 +1856,7 @@ static blk_status_t loop_queue_rq(struct blk_mq_hw_ctx *hctx,
- 	case REQ_OP_FLUSH:
- 	case REQ_OP_DISCARD:
- 	case REQ_OP_WRITE_ZEROES:
-+	case REQ_OP_PROVISION:
- 		cmd->use_aio = false;
- 		break;
- 	default:
--- 
-2.31.0
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+
+--===============2498237334590000574==--
 
