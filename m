@@ -4,97 +4,154 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1007DECAAD8
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Sep 2022 11:56:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 530E9ECAAA1
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Sep 2022 17:57:42 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1663329417;
+	s=mimecast20190719; t=1663351061;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=jKE6fRfPM8IEVDUJK5b/5g7/2o/EJE2c9z9KzgTFiKY=;
-	b=d29MGDuNn4vQreORRfYjtCho09yk1ZbdalNr71d2X3RYfKa1iXvxe+4BsjQXxKuvFzhmrk
-	KHy/Lh9GHzecZP8yXqKDn8X7FLk4zUPGtdkUN5C1RQF6Blzt7dNmGH8xWu1Aq0fTil2YF4
-	29RB6AatdM4thZ+4JBZJ0INvUw4x4mc=
+	bh=0ndeTBiKQzWEhMr4+SIUSbL0SZkFCRYwPwMu70jskws=;
+	b=bukZbgZsZ/ussGY7oBePooOvtJXXyGQ6EHK/7aQrX9bEMjc1Bs/QZWS9fiZufV5vMuvsxI
+	3maY5Gu5nFJz4jVmM7FlwTY6rbO897twz+qpitlrGL8jeWMXx6MMekLI9ijwKNYdcEgprk
+	WdDQt9XDX7bxAlC5sNtxkICclqId5BE=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-91-hDju_oVsOmyt02o1aR9ZkA-1; Fri, 16 Sep 2022 07:56:54 -0400
-X-MC-Unique: hDju_oVsOmyt02o1aR9ZkA-1
+ us-mta-283-OzJRMhjYMoO6Q3z5eIxhxA-1; Fri, 16 Sep 2022 13:57:37 -0400
+X-MC-Unique: OzJRMhjYMoO6Q3z5eIxhxA-1
 Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A5C69862FDC;
-	Fri, 16 Sep 2022 11:56:52 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C9C7101A528;
+	Fri, 16 Sep 2022 17:57:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 124DE492B04;
-	Fri, 16 Sep 2022 11:56:47 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4EF17492B05;
+	Fri, 16 Sep 2022 17:57:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C76B11946587;
-	Fri, 16 Sep 2022 11:56:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1730C194658F;
+	Fri, 16 Sep 2022 17:57:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6E9351946586
- for <dm-devel@listman.corp.redhat.com>; Fri, 16 Sep 2022 11:56:45 +0000 (UTC)
+ ESMTP id 55EDB1946586
+ for <dm-devel@listman.corp.redhat.com>; Fri, 16 Sep 2022 17:57:31 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id EEB33140EBF5; Fri, 16 Sep 2022 11:56:44 +0000 (UTC)
+ id E92A7C15BA5; Fri, 16 Sep 2022 17:57:30 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id EB0B4140EBF3
- for <dm-devel@redhat.com>; Fri, 16 Sep 2022 11:56:44 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E0805C15BA4
+ for <dm-devel@redhat.com>; Fri, 16 Sep 2022 17:57:30 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D3F762A5955C
- for <dm-devel@redhat.com>; Fri, 16 Sep 2022 11:56:44 +0000 (UTC)
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-640-hCXVgd-oNbakNUr9otb_NQ-1; Fri, 16 Sep 2022 07:56:43 -0400
-X-MC-Unique: hCXVgd-oNbakNUr9otb_NQ-1
-Received: by mail-qk1-f197.google.com with SMTP id
- u6-20020a05620a430600b006ce769b7150so8925962qko.0
- for <dm-devel@redhat.com>; Fri, 16 Sep 2022 04:56:43 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date;
- bh=chTOa9nfsN85Mo0aKyNtpBSHWBBmRSbzW50vElTD5ws=;
- b=MutRuTsUexqJIFK3kfHo42XKNsEy8d2t1xx8MKlTUkfhKQ4YhhxSr6a1a35DCOME+i
- 3wcUeGcZgwbdrvZdFdKTf7zzOjaGSWjxQgG12PC+6HWAoLieRe9qpXjwqn/yvx+9IVOt
- abQHdQl9+TNWFDC9E/gMizGtSThByxcAvQrXadteW+JZ6XkkMP8btzXHQaE3LvBPZOF3
- ZSca5vXywCvh5abQNAf/61WpYpHXNpfiMA/XYbmqSI3t/mgRU2id4mEVqMHXSXLMtmEX
- Rd+M1gHN5cJ+3fuMHwfRPCTwEsFuKdn/cbgDC+AGFL0+MKj0RXT0v2Ewf0BZe6NTkDjp
- V+ag==
-X-Gm-Message-State: ACrzQf3yMLMkPqBGhGLCQcROjawFnzzdhBzJzzocf6BQ8KxZvFq831MX
- q95UOrxBLJAufINQeieFRscpOqyGBt+RMGQI0aURS7A36QoUztyIeC1GygcvWK6U8CER1LG9bUL
- Pej+XNWl28qw94C0=
-X-Received: by 2002:a05:622a:1a96:b0:35b:b868:fb1 with SMTP id
- s22-20020a05622a1a9600b0035bb8680fb1mr3907077qtc.116.1663329403268; 
- Fri, 16 Sep 2022 04:56:43 -0700 (PDT)
-X-Google-Smtp-Source: AMsMyM61rQguxip3VopENuW5BChfGUPbrsDyfGFwkeqvgW8D2mtv8HxW9f+7RmfWCZydcsFZ19h22g==
-X-Received: by 2002:a05:622a:1a96:b0:35b:b868:fb1 with SMTP id
- s22-20020a05622a1a9600b0035bb8680fb1mr3907066qtc.116.1663329403013; 
- Fri, 16 Sep 2022 04:56:43 -0700 (PDT)
-Received: from bfoster (c-24-61-119-116.hsd1.ma.comcast.net. [24.61.119.116])
- by smtp.gmail.com with ESMTPSA id
- f16-20020a05620a20d000b006b95b0a714esm5498036qka.17.2022.09.16.04.56.41
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 16 Sep 2022 04:56:42 -0700 (PDT)
-Date: Fri, 16 Sep 2022 07:56:39 -0400
-From: Brian Foster <bfoster@redhat.com>
-To: Sarthak Kukreti <sarthakkukreti@chromium.org>
-Message-ID: <YyRkd8YAH1lal8/N@bfoster>
-References: <20220915164826.1396245-1-sarthakkukreti@google.com>
- <20220915164826.1396245-5-sarthakkukreti@google.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C6A83862FDC
+ for <dm-devel@redhat.com>; Fri, 16 Sep 2022 17:57:30 +0000 (UTC)
+Received: from mailout2.w1.samsung.com (mailout2.w1.samsung.com
+ [210.118.77.12]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-118-9qZQaQrEPN2oZW3Obp5i7g-1; Fri, 16 Sep 2022 13:57:28 -0400
+X-MC-Unique: 9qZQaQrEPN2oZW3Obp5i7g-1
+Received: from eucas1p2.samsung.com (unknown [182.198.249.207])
+ by mailout2.w1.samsung.com (KnoxPortal) with ESMTP id
+ 20220916175727euoutp0208db90c192212f377dc1c4eed75f491f~VaPcOc9eJ2770927709euoutp02N
+ for <dm-devel@redhat.com>; Fri, 16 Sep 2022 17:57:27 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w1.samsung.com
+ 20220916175727euoutp0208db90c192212f377dc1c4eed75f491f~VaPcOc9eJ2770927709euoutp02N
+Received: from eusmges1new.samsung.com (unknown [203.254.199.242]) by
+ eucas1p2.samsung.com (KnoxPortal) with ESMTP id
+ 20220916175727eucas1p29f8779dd295b1870898730a928a1732e~VaPbzdcPJ0630006300eucas1p2i;
+ Fri, 16 Sep 2022 17:57:27 +0000 (GMT)
+Received: from eucas1p1.samsung.com ( [182.198.249.206]) by
+ eusmges1new.samsung.com (EUCPMTA) with SMTP id B3.EC.29727.709B4236; Fri, 16
+ Sep 2022 18:57:27 +0100 (BST)
+Received: from eusmtrp2.samsung.com (unknown [182.198.249.139]) by
+ eucas1p2.samsung.com (KnoxPortal) with ESMTPA id
+ 20220916175726eucas1p2b96d3dda893b1e3b47e0ae4f22da13d5~VaPa0z9ck0629506295eucas1p2x;
+ Fri, 16 Sep 2022 17:57:26 +0000 (GMT)
+Received: from eusmgms1.samsung.com (unknown [182.198.249.179]) by
+ eusmtrp2.samsung.com (KnoxPortal) with ESMTP id
+ 20220916175726eusmtrp20aec6fd837cb9c97323960623fd98cb1~VaPaz9JkG2811228112eusmtrp2i;
+ Fri, 16 Sep 2022 17:57:26 +0000 (GMT)
+X-AuditID: cbfec7f2-205ff7000001741f-45-6324b9075764
+Received: from eusmtip2.samsung.com ( [203.254.199.222]) by
+ eusmgms1.samsung.com (EUCPMTA) with SMTP id 85.B7.07473.609B4236; Fri, 16
+ Sep 2022 18:57:26 +0100 (BST)
+Received: from CAMSVWEXC01.scsc.local (unknown [106.1.227.71]) by
+ eusmtip2.samsung.com (KnoxPortal) with ESMTPA id
+ 20220916175725eusmtip282c3befede6e547a184672cacca605db~VaPanlpJO0439104391eusmtip2m;
+ Fri, 16 Sep 2022 17:57:25 +0000 (GMT)
+Received: from [192.168.8.130] (106.210.248.192) by CAMSVWEXC01.scsc.local
+ (2002:6a01:e347::6a01:e347) with Microsoft SMTP Server (TLS) id 15.0.1497.2;
+ Fri, 16 Sep 2022 18:57:21 +0100
+Message-ID: <622ae86d-39ad-c45e-ec48-42abf4b257d2@samsung.com>
+Date: Fri, 16 Sep 2022 19:57:19 +0200
 MIME-Version: 1.0
-In-Reply-To: <20220915164826.1396245-5-sarthakkukreti@google.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH RFC 4/8] fs: Introduce FALLOC_FL_PROVISION
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.11.0
+From: Pankaj Raghav <p.raghav@samsung.com>
+To: Mike Snitzer <snitzer@redhat.com>
+In-Reply-To: <e42a0579-61b2-7b77-08cb-6723278490cc@samsung.com>
+X-Originating-IP: [106.210.248.192]
+X-ClientProxiedBy: CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347) To
+ CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347)
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFnrKKsWRmVeSWpSXmKPExsWy7djPc7rsO1WSDQ6f4rBYf+oYs8Xqu/1s
+ FtM+/GS2+H32PLNFa/s3Jou972azWuxZNInJYuXqo0wWT9bPYrb423UPKHFL2+LyrjlsFvOX
+ PWW3mND2ldlizc2nLBYnbklbtG38yugg6HH5irfHzll32T0uny312LSqk81j85J6j903G9g8
+ drbeZ/V4v+8qUOh0tcfnTXIe7Qe6mQK4o7hsUlJzMstSi/TtErgyGrfFF2xgqbg+LaGBcTVz
+ FyMnh4SAicSF31tZuhi5OIQEVjBKXFnyCcr5wiixu20LG4TzmVGi51ATI0xLz4w5jBCJ5YwS
+ +6/8Zoer2tWznBXC2c0o8enwC3aQFl4BO4mbZ98zgdgsAqoSM7/dZoKIC0qcnPmEBcQWFYiU
+ WLP7LFi9sEC2xMFrm8AuZBYQl7j1ZD5QPQcHm4CWRGMnO4gpAjTm1jQXiIr9zBL98yxAbE4B
+ e4l9Gy4wQcQ1JVq3/2aHsOUltr+dA/WzssTMm1Oh7FqJtcfOsEPYjzglNrVZgIyXEHCR2Nkc
+ BxEWlnh1fAtUiYzE/53zmSDsaomnN34zg3wrIdDCKNG/cz0bRK+1RN+ZHIgaR4mGaT+ZIcJ8
+ EjfeCkJcwycxadt05gmMqrOQgmEWkndnIXlgFpIHFjCyrGIUTy0tzk1PLTbMSy3XK07MLS7N
+ S9dLzs/dxAhMiaf/Hf+0g3Huq496hxiZOBgPMUpwMCuJ8Kp6qiQL8aYkVlalFuXHF5XmpBYf
+ YpTmYFES503O3JAoJJCeWJKanZpakFoEk2Xi4JRqYJK1vHtb8uOdE7m/Ledwej2dFbBxUQHT
+ nNOB2/9Pz4pSkSitr5vjIfjox66JDtHSp1WKTL5Vxfoz7eeO6fvxaGJabP/7ILc7Ch+S3D8v
+ /v2Mw1Iy+qOT4GKGq2snfn958eS6MqHm+XnGFWkhU/yYZkU3zVVwXlQu+JnVs/TG3jW6lq/1
+ 7TmmOWTbn5h17EtE/uwKxyz5x1rxOpPWH2tViJaovvVD+di6loC4++v+LPl/ZOFJE4uZvtE7
+ LgX0GNpvdLG62r/j9fzEq028vas1u1dwRrwKElfx3MBTxJIk3LOQ75I0c27P/M+W/iuao5Oi
+ 2zTvcTM9PjX7VFjj/rdf77ZYn9r/2j6kPem58rJWUSWW4oxEQy3mouJEAEG+Xgj4AwAA
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFprDKsWRmVeSWpSXmKPExsVy+t/xe7psO1WSDd69ZLVYf+oYs8Xqu/1s
+ FtM+/GS2+H32PLNFa/s3Jou972azWuxZNInJYuXqo0wWT9bPYrb423UPKHFL2+LyrjlsFvOX
+ PWW3mND2ldlizc2nLBYnbklbtG38yugg6HH5irfHzll32T0uny312LSqk81j85J6j903G9g8
+ drbeZ/V4v+8qUOh0tcfnTXIe7Qe6mQK4o/RsivJLS1IVMvKLS2yVog0tjPQMLS30jEws9QyN
+ zWOtjEyV9O1sUlJzMstSi/TtEvQyGrfFF2xgqbg+LaGBcTVzFyMnh4SAiUTPjDmMXYxcHEIC
+ Sxkl1i1dywqRkJH4dOUjO4QtLPHnWhcbRNFHRomFuxayQzi7GSVOLL3EBlLFK2AncfPseyYQ
+ m0VAVWLmt9tMEHFBiZMzn7CA2KICkRIPlzWBxYUFsiUOXtsEdgazgLjErSfzgeIcHGwCWhKN
+ newgpgjQmFvTXCAq9jNL9M+zgFg7kUni34E7YGs5Bewl9m24wARRpCnRuv03O4QtL7H97Ryo
+ L5UlZt6cCmXXSry6v5txAqPoLCTXzUJyxSwko2YhGbWAkWUVo0hqaXFuem6xoV5xYm5xaV66
+ XnJ+7iZGYDLZduzn5h2M81591DvEyMTBeIhRgoNZSYRX1VMlWYg3JbGyKrUoP76oNCe1+BCj
+ KTCIJjJLiSbnA9NZXkm8oZmBqaGJmaWBqaWZsZI4r2dBR6KQQHpiSWp2ampBahFMHxMHp1QD
+ 0542hevvdr8ydz6+61fYTyfWvYalBXcjfgXLprX/WZmizajYcbPOID2kdeeyp5u9/IJCJZo3
+ iWQWPzpvN8vFX+V8VOKqmFPdLDv5DRJ2pi+e/cQh/sDK96r9v8W0FxwwdZ6ffdwsJln056vV
+ C8JibDeu5pDamlGTlZImHu0gtr3rh9vjumXrozwqj8vE7/C0aGdvOu9YpdkmuefI/Yynju/m
+ mZxI2PVy0d1cnjl1yf3VUv2OK969DokssnuQdizg2N1DE2IPe1meaVR/+DQqfrXz7dPtDkY5
+ uab/f35pbftTfEd3ZpHLmVtuQREnn4jf/b1apaZI+aRw8F3FalcjzetPU64ZTEnzPZytWfxU
+ iaU4I9FQi7moOBEAgMk2La8DAAA=
+X-CMS-MailID: 20220916175726eucas1p2b96d3dda893b1e3b47e0ae4f22da13d5
+X-Msg-Generator: CA
+X-RootMTR: 20220912082220eucas1p24605fdcf22aedc4c40d5303da8f17ad5
+X-EPHeader: CA
+CMS-TYPE: 201P
+X-CMS-RootMailID: 20220912082220eucas1p24605fdcf22aedc4c40d5303da8f17ad5
+References: <20220912082204.51189-1-p.raghav@samsung.com>
+ <CGME20220912082220eucas1p24605fdcf22aedc4c40d5303da8f17ad5@eucas1p2.samsung.com>
+ <20220912082204.51189-14-p.raghav@samsung.com> <YyIG3i++QriS9Gyy@redhat.com>
+ <e42a0579-61b2-7b77-08cb-6723278490cc@samsung.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH v13 13/13] dm: add power-of-2 target for
+ zoned devices with non power-of-2 zone sizes
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -106,121 +163,39 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Gwendal Grignou <gwendal@google.com>,
- Theodore Ts'o <tytso@mit.edu>, "Michael S . Tsirkin" <mst@redhat.com>,
- Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
- Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
- virtualization@lists.linux-foundation.org, linux-block@vger.kernel.org,
- dm-devel@redhat.com, Andreas Dilger <adilger.kernel@dilger.ca>,
- Daniil Lunev <dlunev@google.com>, Stefan Hajnoczi <stefanha@redhat.com>,
- Paolo Bonzini <pbonzini@redhat.com>, linux-ext4@vger.kernel.org,
- Evan Green <evgreen@google.com>, Alasdair Kergon <agk@redhat.com>
+Cc: axboe@kernel.dk, Damien Le Moal <damien.lemoal@wdc.com>, bvanassche@acm.org,
+ pankydev8@gmail.com, Johannes.Thumshirn@wdc.com,
+ damien.lemoal@opensource.wdc.com, snitzer@kernel.org,
+ linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
+ linux-block@vger.kernel.org, dm-devel@redhat.com, matias.bjorling@wdc.com,
+ gost.dev@samsung.com, jaegeuk@kernel.org, hch@lst.de, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Sep 15, 2022 at 09:48:22AM -0700, Sarthak Kukreti wrote:
-> From: Sarthak Kukreti <sarthakkukreti@chromium.org>
+>>
+>> Are you certain you shouldn't at least be exposing a different
+>> logical_block_size to upper layers?
+>>
+> To be honest, I tested my patches in QEMU with 4k Logical block size and on
+> a device with 4k LBA size.
 > 
-> FALLOC_FL_PROVISION is a new fallocate() allocation mode that
-> sends a hint to (supported) thinly provisioned block devices to
-> allocate space for the given range of sectors via REQ_OP_PROVISION.
+> I did a quick test with 512B LBA size in QEMU, and I didn't see any
+> failures when I ran my normal test suite.
 > 
-> Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
-> ---
->  block/fops.c                | 7 ++++++-
->  include/linux/falloc.h      | 3 ++-
->  include/uapi/linux/falloc.h | 8 ++++++++
->  3 files changed, 16 insertions(+), 2 deletions(-)
+> Do you see any problem with exposing the same LBA as the underlying device?
 > 
-> diff --git a/block/fops.c b/block/fops.c
-> index b90742595317..a436a7596508 100644
-> --- a/block/fops.c
-> +++ b/block/fops.c
-...
-> @@ -661,6 +662,10 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
->  		error = blkdev_issue_discard(bdev, start >> SECTOR_SHIFT,
->  					     len >> SECTOR_SHIFT, GFP_KERNEL);
->  		break;
-> +	case FALLOC_FL_PROVISION:
-> +		error = blkdev_issue_provision(bdev, start >> SECTOR_SHIFT,
-> +					       len >> SECTOR_SHIFT, GFP_KERNEL);
-> +		break;
->  	default:
->  		error = -EOPNOTSUPP;
->  	}
 
-Hi Sarthak,
+Do you see any issues here? If not, I can send the next version with the
+other two changes you suggested.
 
-Neat mechanism.. I played with something very similar in the past (that
-was much more crudely hacked up to target dm-thin) to allow filesystems
-to request a thinly provisioned device to allocate blocks and try to do
-a better job of avoiding inactivation when overprovisioned.
-
-One thing I'm a little curious about here.. what's the need for a new
-fallocate mode? On a cursory glance, the provision mode looks fairly
-analogous to normal (mode == 0) allocation mode with the exception of
-sending the request down to the bdev. blkdev_fallocate() already maps
-some of the logical falloc modes (i.e. punch hole, zero range) to
-sending write sames or discards, etc., and it doesn't currently look
-like it supports allocation mode, so could it not map such requests to
-the underlying REQ_OP_PROVISION op?
-
-I guess the difference would be at the filesystem level where we'd
-probably need to rely on a mount option or some such to control whether
-traditional fallocate issues provision ops (like you've implemented for
-ext4) vs. the specific falloc command, but that seems fairly consistent
-with historical punch hole/discard behavior too. Hm? You might want to
-cc linux-fsdevel in future posts in any event to get some more feedback
-on how other filesystems might want to interact with such a thing.
-
-BTW another thing that might be useful wrt to dm-thin is to support
-FALLOC_FL_UNSHARE. I.e., it looks like the previous dm-thin patch only
-checks that blocks are allocated, but not whether those blocks are
-shared (re: lookup_result.shared). It might be useful to do the COW in
-such cases if the caller passes down a REQ_UNSHARE or some such flag.
-
-Brian
-
-> diff --git a/include/linux/falloc.h b/include/linux/falloc.h
-> index f3f0b97b1675..a0e506255b20 100644
-> --- a/include/linux/falloc.h
-> +++ b/include/linux/falloc.h
-> @@ -30,7 +30,8 @@ struct space_resv {
->  					 FALLOC_FL_COLLAPSE_RANGE |	\
->  					 FALLOC_FL_ZERO_RANGE |		\
->  					 FALLOC_FL_INSERT_RANGE |	\
-> -					 FALLOC_FL_UNSHARE_RANGE)
-> +					 FALLOC_FL_UNSHARE_RANGE |                          \
-> +					 FALLOC_FL_PROVISION)
->  
->  /* on ia32 l_start is on a 32-bit boundary */
->  #if defined(CONFIG_X86_64)
-> diff --git a/include/uapi/linux/falloc.h b/include/uapi/linux/falloc.h
-> index 51398fa57f6c..2d323d113eed 100644
-> --- a/include/uapi/linux/falloc.h
-> +++ b/include/uapi/linux/falloc.h
-> @@ -77,4 +77,12 @@
->   */
->  #define FALLOC_FL_UNSHARE_RANGE		0x40
->  
-> +/*
-> + * FALLOC_FL_PROVISION acts as a hint for thinly provisioned devices to allocate
-> + * blocks for the range/EOF.
-> + *
-> + * FALLOC_FL_PROVISION can only be used with allocate-mode fallocate.
-> + */
-> +#define FALLOC_FL_PROVISION		0x80
-> +
->  #endif /* _UAPI_FALLOC_H_ */
-> -- 
-> 2.31.0
-> 
+Thanks,
+Pankaj
 
 --
 dm-devel mailing list
