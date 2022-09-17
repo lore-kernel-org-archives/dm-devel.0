@@ -1,75 +1,119 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5EE2FECAAA1
-	for <dm-devel@archiver.kernel.org>; Sat, 17 Sep 2022 03:10:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E67F9ECAAA1
+	for <dm-devel@archiver.kernel.org>; Sat, 17 Sep 2022 21:54:29 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1663384240;
+	s=mimecast20190719; t=1663451668;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=WtACZzlmYCrhlVcXKR4IRntHXaRfJsF2Ihl+o9WSk88=;
-	b=eaYLrLJ5XIoQSoBqFr/wFgR26MEXawg8L+SUVkbfSCI9lHhxvlKzvicMh8WZ3a2j7fLEW7
-	Gkw4Yx+6EIJwGE46bOGzuWGNAm3+i29aPWv3tytEpL0/IV42nfPLfJcfxl3z068+7rH7Nd
-	JgXDkhEpik3j0H9L3AMcG2ldWVoU9tc=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
+	 content-type:content-type:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=QeeVqj99zwEM3CaBuHNYfPRrq/ivehFI04wNBJnvBmw=;
+	b=bngEN7PRByUlLPuTk6ghwoeOJuDib+up6MbOGUoFB1w21vHMdkwxo2Xz37xvPgYPbFj5QQ
+	/Gsvpxg+3jjjAT3+mqMmjHTFdwfqBm3esu6pogO1dhMve0f8lr0k7rDMSC40+LFhIdTJxh
+	X4QG2O03UPx9+Xf0iK6PM0GGaKwRXRI=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-428-NH1xBZO2OyqgU_s0oGMJcQ-1; Fri, 16 Sep 2022 23:10:37 -0400
-X-MC-Unique: NH1xBZO2OyqgU_s0oGMJcQ-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-543-z_4JkCRXOCi8z_xU9Xcqhg-1; Sat, 17 Sep 2022 17:54:25 -0400
+X-MC-Unique: z_4JkCRXOCi8z_xU9Xcqhg-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 532E6380664E;
-	Sat, 17 Sep 2022 03:10:35 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 904DE1121314;
-	Sat, 17 Sep 2022 03:10:32 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EE95F811728;
+	Sat, 17 Sep 2022 21:54:22 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A04C5492B04;
+	Sat, 17 Sep 2022 21:54:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 401DB194658F;
-	Sat, 17 Sep 2022 03:10:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 80466194658F;
+	Sat, 17 Sep 2022 21:54:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id CB1621946586
- for <dm-devel@listman.corp.redhat.com>; Sat, 17 Sep 2022 03:10:30 +0000 (UTC)
+ ESMTP id 7D3FC1946586
+ for <dm-devel@listman.corp.redhat.com>; Sat, 17 Sep 2022 21:54:16 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id BBC2340C6EC3; Sat, 17 Sep 2022 03:10:30 +0000 (UTC)
+ id 6AD7823176; Sat, 17 Sep 2022 21:54:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B446F40C6EC2
- for <dm-devel@redhat.com>; Sat, 17 Sep 2022 03:10:30 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 62AC517585
+ for <dm-devel@redhat.com>; Sat, 17 Sep 2022 21:54:16 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 973D13C0E218
- for <dm-devel@redhat.com>; Sat, 17 Sep 2022 03:10:30 +0000 (UTC)
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3D5213C025C3
+ for <dm-devel@redhat.com>; Sat, 17 Sep 2022 21:54:16 +0000 (UTC)
+Received: from NAM12-MW2-obe.outbound.protection.outlook.com
+ (mail-mw2nam12olkn2073.outbound.protection.outlook.com [40.92.23.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-262-bi5mXZ6KMty80kQ8-Qf3iQ-1; Fri, 16 Sep 2022 23:10:27 -0400
-X-MC-Unique: bi5mXZ6KMty80kQ8-Qf3iQ-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by ams.source.kernel.org (Postfix) with ESMTPS id 916C6B829E1;
- Sat, 17 Sep 2022 03:03:41 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 272CEC433C1;
- Sat, 17 Sep 2022 03:03:40 +0000 (UTC)
-Date: Fri, 16 Sep 2022 20:03:39 -0700
-From: "Darrick J. Wong" <djwong@kernel.org>
-To: Sarthak Kukreti <sarthakkukreti@chromium.org>
-Message-ID: <YyU5CyQfS+64xmnm@magnolia>
-References: <20220915164826.1396245-1-sarthakkukreti@google.com>
+ us-mta-127-BpJWv6sHNfiLS2_VCM9gxA-1; Sat, 17 Sep 2022 17:54:13 -0400
+X-MC-Unique: BpJWv6sHNfiLS2_VCM9gxA-1
+Received: from BY5PR14MB3893.namprd14.prod.outlook.com (2603:10b6:a03:1dc::15)
+ by MN2PR14MB4142.namprd14.prod.outlook.com (2603:10b6:208:1d5::12)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5632.18; Sat, 17 Sep
+ 2022 21:54:10 +0000
+Received: from BY5PR14MB3893.namprd14.prod.outlook.com
+ ([fe80::2163:6c06:f8a8:1d5d]) by BY5PR14MB3893.namprd14.prod.outlook.com
+ ([fe80::2163:6c06:f8a8:1d5d%8]) with mapi id 15.20.5632.018; Sat, 17 Sep 2022
+ 21:54:10 +0000
+From: "Pra.. Dew.." <linux_learner@outlook.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Thread-Topic: dm-verity with GPT
+Thread-Index: AQHYyt8ji7+F7zo1TEqoOzC6k0hz0w==
+Date: Sat, 17 Sep 2022 21:54:10 +0000
+Message-ID: <BY5PR14MB389354D6BB8D1161E57B3FEA864B9@BY5PR14MB3893.namprd14.prod.outlook.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-exchange-messagesentrepresentingtype: 1
+x-tmn: [sb+B/kuU13aG16hTB5VqddyTj9jEfY+6]
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: BY5PR14MB3893:EE_|MN2PR14MB4142:EE_
+x-ms-office365-filtering-correlation-id: e24e4cdb-fe9c-4683-0ed0-08da98f7272f
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: 0ssCAXvqmz9MwNZoWDxEZBNjgsbAGqggpMgn4yCQsifML3T5q0HTzy5PdEag3K4BpQe+3YR3e+naDA2MrRaXJR46IBpz/o983O9jvKU+nuBUXf+H0Xvx2vWRfO3Id7o6YxM12kh1NaeFp4PSq7PZbWrc/PTltMYue4PkyLzZzG1pta5DcVjNAsTaKtYzYDJ0sIwtMTBy6N2hZyIUuUUDvSSsJJXk6oVfeZjjuxJYySTXvgkWNpF64lMOZWAqdd8v94doSFeYpsbLF6pMVu76Wo7GQuv73AsI3y6tNXANdVGBBMKIIeOv3s2QtBz3srWwgtH6Z9ixfdtsaYcdaqYs9g9SysjnHs07OKla6DHLRO2JzO+TWbWpjV+mzCAlb26mBhr/ngDHg5FZqajR2WQgBDdtkXyEScXuURW5hmZWl3z11zEzoDKFQb0MC6narVfqkNCZ9rmrJHWqdWzQsBnXPRL6rg/Xpt5oEQAmy2c3YXKDbjRy2cbl3W+d5CDnAqewSzKpSp17HJE8k2cIGblELKlqpNvovPbxq8x/6H4l/TQDiP7y3DW2Cx8KaT7RGgaCD2KXOtp257Yoo2U7GoldFahM37W23OPsc2a+3udyZckhxu5trubVi7YZmfcdmpSP
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?AKMYNQ4axYY++RQp8yrTAbwLtEO8K9OzpESt+8ydwSEZljgQxzX2xP3G64KF?=
+ =?us-ascii?Q?yK/sxYcLwjjN/phUIMbMcdV9Spvg7FFG6qadfYO3aUR+vXbpOQu13D1gNC98?=
+ =?us-ascii?Q?SFIF0rtxyHZpLMiVxNtuhhgz8wk5OHuEuCHil7DLmGAPMfxTkoxN+r8wN+z+?=
+ =?us-ascii?Q?kDo2wxo199gP2M3xpDYhUr2zda9V2xgabDTGnN3KKG6L+fa0mU8+qyctw+Pn?=
+ =?us-ascii?Q?8orTMA4eQZdcmqpIuaOM7YiechsAJ7o50uIJDD9ExcDOFg7/qVrf/SGNGahO?=
+ =?us-ascii?Q?490IMwQImyObop6gZwyMyY1ih7az4RIEVJuJyIvvent6dxWU/XdLzwwJQHac?=
+ =?us-ascii?Q?1lJL+J0H9Y+pW1WOkJy0gdoYscMTJTJ/aejmKBHm2xby4qkm4H8DcYNFfjuZ?=
+ =?us-ascii?Q?fhHdWcxKb+H14KPiWK+38k10RjcZMQNKQAk0oN+d7VST9+QupxXb/SMZTxEJ?=
+ =?us-ascii?Q?vT9bsX+jjwd7TBf6E3on3gCatf23wwb0UkJIvRZjj7CxJYrLaUl3wJfMjGqD?=
+ =?us-ascii?Q?tN8w/naGXn/fp6qQptTEhotNGHvAL/Du5QVEkXTzL8aHyeeeftPDRruAWA3n?=
+ =?us-ascii?Q?sXMbHTtOaG36teO43q7ueL3FL7vLwklsMhng+/j3ePx3jvzhfZC1d6tzS06g?=
+ =?us-ascii?Q?nqCWbYel4wdr7httzyA4gK0qX7CCaob3VBE/wGJRrdWEp8EMVW6xqOjeml13?=
+ =?us-ascii?Q?lAJTV3+hymGbzlOswGnhX4EzaBdWElRVVUllSxx9ejVn+mEZrH+VnmuUjOu8?=
+ =?us-ascii?Q?Pb5FaTSlSf+L/YoA+cJGkil39nlfYuL2qYZKbuBLOZ+z3B25lIUXxNNI1WnU?=
+ =?us-ascii?Q?Ju3SQ69G9TxC4I1kiw9cLjl47IABwYwGV/ND3hDPioKybaBVM46a+79mLBmz?=
+ =?us-ascii?Q?Ngxe8I5efQacN3bEIf1xD6yyhsgSbN3gVavz6zo73axVBRrpA0Y35+VufsAN?=
+ =?us-ascii?Q?JEI+iKAsjN4jDJxH/YjWIxhUAXwBLVidGDk9ykFXYtEr55TAf0YQfBqibgP7?=
+ =?us-ascii?Q?LbC8P4jJhDi+egd3rBvL78lawy8umPWzyldCY4eeUY/JBYJhLkr3mzlzI6ST?=
+ =?us-ascii?Q?iqh8Eitjuy1QemrGTfO1tsO349Sb4MaGutbBiKn3UU7kCbsLtRqhYjJI2/vj?=
+ =?us-ascii?Q?ZxuBoZz4R6BzeOxCnbKiHvD3J+ej4WRfewsRTwwXCcRafZdaVTfQHizQIsNh?=
+ =?us-ascii?Q?cCnGgyl02EmZm7jmpZpd138OjHto8kBiv0ZoBF8edPqVSe8QTiU3TF3W3RMR?=
+ =?us-ascii?Q?cIn5TIvrwOKPrpQENRZGDddI44W2n70iSpOOQNpGLvEa3WYqcH2GIyfkAOeS?=
+ =?us-ascii?Q?Lj4=3D?=
 MIME-Version: 1.0
-In-Reply-To: <20220915164826.1396245-1-sarthakkukreti@google.com>
+X-OriginatorOrg: outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: BY5PR14MB3893.namprd14.prod.outlook.com
+X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-CrossTenant-Network-Message-Id: e24e4cdb-fe9c-4683-0ed0-08da98f7272f
+X-MS-Exchange-CrossTenant-originalarrivaltime: 17 Sep 2022 21:54:10.7773 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
+X-MS-Exchange-CrossTenant-rms-persistedconsumerorg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: MN2PR14MB4142
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -77,9 +121,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH RFC 0/8] Introduce provisioning primitives
- for thinly provisioned storage
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: [dm-devel] dm-verity with GPT
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,122 +134,128 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Gwendal Grignou <gwendal@google.com>,
- Theodore Ts'o <tytso@mit.edu>, "Michael S . Tsirkin" <mst@redhat.com>,
- Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
- Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
- virtualization@lists.linux-foundation.org, linux-block@vger.kernel.org,
- dm-devel@redhat.com, Evan Green <evgreen@google.com>,
- Daniil Lunev <dlunev@google.com>, Stefan Hajnoczi <stefanha@redhat.com>,
- Paolo Bonzini <pbonzini@redhat.com>, Andreas Dilger <adilger.kernel@dilger.ca>,
- linux-ext4@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Language: en-US
+Content-Type: multipart/mixed; boundary="===============6223939271314194687=="
 
-T24gVGh1LCBTZXAgMTUsIDIwMjIgYXQgMDk6NDg6MThBTSAtMDcwMCwgU2FydGhhayBLdWtyZXRp
-IHdyb3RlOgo+IEZyb206IFNhcnRoYWsgS3VrcmV0aSA8c2FydGhha2t1a3JldGlAY2hyb21pdW0u
-b3JnPgo+IAo+IEhpLAo+IAo+IFRoaXMgcGF0Y2ggc2VyaWVzIGlzIGFuIFJGQyBvZiBhIG1lY2hh
-bmlzbSB0byBwYXNzIHRocm91Z2ggcHJvdmlzaW9uCj4gcmVxdWVzdHMgb24gc3RhY2tlZCB0aGlu
-bHkgcHJvdmlzaW9uZWQgc3RvcmFnZSBkZXZpY2VzL2ZpbGVzeXN0ZW1zLgoKW1JlZmxvd2VkIHRl
-eHRdCgo+IFRoZSBsaW51eCBrZXJuZWwgcHJvdmlkZXMgc2V2ZXJhbCBtZWNoYW5pc21zIHRvIHNl
-dCB1cCB0aGlubHkKPiBwcm92aXNpb25lZCBibG9jayBzdG9yYWdlIGFic3RyYWN0aW9ucyAoZWcu
-IGRtLXRoaW4sIGxvb3AgZGV2aWNlcyBvdmVyCj4gc3BhcnNlIGZpbGVzKSwgZWl0aGVyIGRpcmVj
-dGx5IGFzIGJsb2NrIGRldmljZXMgb3IgYmFja2luZyBzdG9yYWdlIGZvcgo+IGZpbGVzeXN0ZW1z
-LiBDdXJyZW50bHksIHNob3J0IG9mIHdyaXRpbmcgZGF0YSB0byBlaXRoZXIgdGhlIGRldmljZSBv
-cgo+IGZpbGVzeXN0ZW0sIHRoZXJlIGlzIG5vIHdheSBmb3IgdXNlcnMgdG8gcHJlLWFsbG9jYXRl
-IHNwYWNlIGZvciB1c2UgaW4KPiBzdWNoIHN0b3JhZ2Ugc2V0dXBzLiBDb25zaWRlciB0aGUgZm9s
-bG93aW5nIHVzZS1jYXNlczoKPiAKPiAxKSBTdXNwZW5kLXRvLWRpc2sgYW5kIHJlc3VtZSBmcm9t
-IGEgZG0tdGhpbiBkZXZpY2U6IEluIG9yZGVyIHRvCj4gZW5zdXJlIHRoYXQgdGhlIHVuZGVybHlp
-bmcgdGhpbnBvb2wgbWV0YWRhdGEgaXMgbm90IG1vZGlmaWVkIGR1cmluZwo+IHRoZSBzdXNwZW5k
-IG1lY2hhbmlzbSwgdGhlIGRtLXRoaW4gZGV2aWNlIG5lZWRzIHRvIGJlIGZ1bGx5Cj4gcHJvdmlz
-aW9uZWQuCj4gMikgSWYgYSBmaWxlc3lzdGVtIHVzZXMgYSBsb29wIGRldmljZSBvdmVyIGEgc3Bh
-cnNlIGZpbGUsIGZhbGxvY2F0ZSgpCj4gb24gdGhlIGZpbGVzeXN0ZW0gd2lsbCBhbGxvY2F0ZSBi
-bG9ja3MgZm9yIGZpbGVzIGJ1dCB0aGUgdW5kZXJseWluZwo+IHNwYXJzZSBmaWxlIHdpbGwgcmVt
-YWluIGludGFjdC4KPiAzKSBBbm90aGVyIGV4YW1wbGUgaXMgdmlydHVhbCBtYWNoaW5lIHVzaW5n
-IGEgc3BhcnNlIGZpbGUvZG0tdGhpbiBhcyBhCj4gc3RvcmFnZSBkZXZpY2U7IGJ5IGRlZmF1bHQs
-IGFsbG9jYXRpb25zIHdpdGhpbiB0aGUgVk0gYm91bmRhcmllcyB3aWxsCj4gbm90IGFmZmVjdCB0
-aGUgaG9zdC4KPiA0KSBTZXZlcmFsIHN0b3JhZ2Ugc3RhbmRhcmRzIHN1cHBvcnQgbWVjaGFuaXNt
-cyBmb3IgdGhpbiBwcm92aXNpb25pbmcKPiBvbiByZWFsIGhhcmR3YXJlIGRldmljZXMuIEZvciBl
-eGFtcGxlOgo+ICAgYS4gVGhlIE5WTWUgc3BlYyAxLjBiIHNlY3Rpb24gMi4xLjEgbG9vc2VseSB0
-YWxrcyBhYm91dCB0aGluCj4gICBwcm92aXNpb25pbmc6ICJXaGVuIHRoZSBUSElOUCBiaXQgaW4g
-dGhlIE5TRkVBVCBmaWVsZCBvZiB0aGUKPiAgIElkZW50aWZ5IE5hbWVzcGFjZSBkYXRhIHN0cnVj
-dHVyZSBpcyBzZXQgdG8g4oCYMeKAmSwgdGhlIGNvbnRyb2xsZXIgLi4uCj4gICBzaGFsbCB0cmFj
-ayB0aGUgbnVtYmVyIG9mIGFsbG9jYXRlZCBibG9ja3MgaW4gdGhlIE5hbWVzcGFjZQo+ICAgVXRp
-bGl6YXRpb24gZmllbGQiCj4gICBiLiBUaGUgU0NTaSBCbG9jayBDb21tYW5kcyByZWZlcmVuY2Ug
-LSA0IHNlY3Rpb24gcmVmZXJlbmNlcyAiVGhpbgo+ICAgcHJvdmlzaW9uZWQgbG9naWNhbCB1bml0
-cyIsCj4gICBjLiBVRlMgMy4wIHNwZWMgc2VjdGlvbiAxMy4zLjMgcmVmZXJlbmNlcyAiVGhpbiBw
-cm92aXNpb25pbmciLgo+IAo+IEluIGFsbCBvZiB0aGUgYWJvdmUgc2l0dWF0aW9ucywgY3VycmVu
-dGx5IHRoZSBvbmx5IHdheSBmb3IKPiBwcmUtYWxsb2NhdGluZyBzcGFjZSBpcyB0byBpc3N1ZSB3
-cml0ZXMgKG9yIHVzZQo+IFdSSVRFX1pFUk9FUy9XUklURV9TQU1FKS4gSG93ZXZlciwgdGhhdCBk
-b2VzIG5vdCBzY2FsZSB3ZWxsIHdpdGgKPiBsYXJnZXIgcHJlLWFsbG9jYXRpb24gc2l6ZXMuIAo+
-IAo+IFRoaXMgcGF0Y2hzZXQgaW50cm9kdWNlcyBwcmltaXRpdmVzIHRvIHN1cHBvcnQgYmxvY2st
-bGV2ZWwKPiBwcm92aXNpb25pbmcgKG5vdGU6IHRoZSB0ZXJtICdwcm92aXNpb25pbmcnIGlzIHVz
-ZWQgdG8gcHJldmVudAo+IG92ZXJsb2FkaW5nIHRoZSB0ZXJtICdhbGxvY2F0aW9ucy9wcmUtYWxs
-b2NhdGlvbnMnKSByZXF1ZXN0cyBhY3Jvc3MKPiBmaWxlc3lzdGVtcyBhbmQgYmxvY2sgZGV2aWNl
-cy4gVGhpcyBhbGxvd3MgZmFsbG9jYXRlKCkgYW5kIGZpbGUKPiBjcmVhdGlvbiByZXF1ZXN0cyB0
-byByZXNlcnZlIHNwYWNlIGFjcm9zcyBzdGFja2VkIGxheWVycyBvZiBibG9jawo+IGRldmljZXMg
-YW5kIGZpbGVzeXN0ZW1zLiBDdXJyZW50bHksIHRoZSBwYXRjaHNldCBjb3ZlcnMgYSBwcm90b3R5
-cGUgb24KPiB0aGUgZGV2aWNlLW1hcHBlciB0YXJnZXRzLCBsb29wIGRldmljZSBhbmQgZXh0NCwg
-YnV0IHRoZSBzYW1lCj4gbWVjaGFuaXNtIGNhbiBiZSBleHRlbmRlZCB0byBvdGhlciBmaWxlc3lz
-dGVtcy9ibG9jayBkZXZpY2VzIGFzIHdlbGwKPiBhcyBleHRlbmRlZCBmb3IgdXNlIHdpdGggZGV2
-aWNlcyBpbiA0IGEtYy4KCklmIHlvdSBjYWxsIFJFUV9PUF9QUk9WSVNJT04gb24gYW4gdW5tYXBw
-ZWQgTEJBIHJhbmdlIG9mIGEgYmxvY2sgZGV2aWNlCmFuZCB0aGVuIHRyeSB0byByZWFkIHRoZSBw
-cm92aXNpb25lZCBibG9ja3MsIHdoYXQgZG8geW91IGdldD8gIFplcm9lcz8KUmFuZG9tIHN0YWxl
-IGRpc2sgY29udGVudHM/CgpJIHRoaW5rIEkgc2F3IGVsc2V3aGVyZSBpbiB0aGUgdGhyZWFkIHRo
-YXQgYW55IG1hcHBlZCBMQkFzIHdpdGhpbiB0aGUKcHJvdmlzaW9uaW5nIHJhbmdlIGFyZSBsZWZ0
-IGFsb25lIChpLmUuIG5vdCB6ZXJvZWQpIHNvIEknbGwgcHJvY2VlZCBvbgp0aGF0IGJhc2lzLgoK
-PiBQYXRjaCAxIGludHJvZHVjZXMgUkVRX09QX1BST1ZJU0lPTiBhcyBhIG5ldyByZXF1ZXN0IHR5
-cGUuIFRoZQo+IHByb3Zpc2lvbiByZXF1ZXN0IGFjdHMgbGlrZSB0aGUgaW52ZXJzZSBvZiBhIGRp
-c2NhcmQgcmVxdWVzdDsgaW5zdGVhZAo+IG9mIG5vdGlmeWluZyBsb3dlciBsYXllcnMgdGhhdCB0
-aGUgYmxvY2sgcmFuZ2Ugd2lsbCBubyBsb25nZXIgYmUgdXNlZCwKPiBwcm92aXNpb24gYWN0cyBh
-cyBhIHJlcXVlc3QgdG8gbG93ZXIgbGF5ZXJzIHRvIHByb3Zpc2lvbiBkaXNrIHNwYWNlCj4gZm9y
-IHRoZSBnaXZlbiBibG9jayByYW5nZS4gUmVhbCBoYXJkd2FyZSBzdG9yYWdlIGRldmljZXMgd2ls
-bAo+IGN1cnJlbnRseSBkaXNhYmxlIHRoZSBwcm92aXNpb2luZyBjYXBhYmlsaXR5IGJ1dCBmb3Ig
-dGhlIHN0YW5kYXJkcwo+IGxpc3RlZCBpbiA0YS4tYy4sIFJFUV9PUF9QUk9WSVNJT04gY2FuIGJl
-IG92ZXJsb2FkZWQgZm9yIHVzZSBhcyB0aGUKPiBwcm92aXNpb2luZyBwcmltaXRpdmUgZm9yIGZ1
-dHVyZSBkZXZpY2VzLgo+IAo+IFBhdGNoIDIgaW1wbGVtZW50cyBSRVFfT1BfUFJPVklTSU9OIGhh
-bmRsaW5nIGZvciBzb21lIG9mIHRoZQo+IGRldmljZS1tYXBwZXIgdGFyZ2V0cy4gVGhpcyBhZGRp
-dGlvbmFsbHkgYWRkcyBzdXBwb3J0IGZvcgo+IHByZS1hbGxvY2F0aW5nIHNwYWNlIGZvciB0aGlu
-bHkgcHJvdmlzaW9uZWQgbG9naWNhbCB2b2x1bWVzIHZpYQo+IGZhbGxvY2F0ZSgpCj4gCj4gUGF0
-Y2ggMyBpbXBsZW1lbnRzIHRoZSBoYW5kbGluZyBmb3IgdmlydGlvLWJsay4KPiAKPiBQYXRjaCA0
-IGludHJvZHVjZXMgYW4gZmFsbG9jYXRlKCkgbW9kZSAoRkFMTE9DX0ZMX1BST1ZJU0lPTikgdGhh
-dAo+IHNlbmRzIGEgcHJvdmlzaW9uIHJlcXVlc3QgdG8gdGhlIHVuZGVybHlpbmcgYmxvY2sgZGV2
-aWNlIChhbmQgYmV5b25kKS4KPiBUaGlzIGFjdHMgYXMgdGhlIHByaW1hcnkgbWVjaGFuaXNtIGZv
-ciBmaWxlLWxldmVsIHByb3Zpc2lvaW5nLgoKUGVyc29uYWxseSwgSSB0aGluayBpdCdzIHdlbGwg
-d2l0aGluIHRoZSBkZWZpbml0aW9uIG9mIGZhbGxvY2F0ZSBtb2RlPT0wCihha2EgcHJlYWxsb2Nh
-dGUpIGZvciBYRlMgdG8gY2FsbCBSRVFfT1BfUFJPVklTSU9OIG9uIHRoZSBibG9ja3MgdGhhdCBp
-dApwcmVhbGxvY2F0ZXM/ICBYRlMgYWx3YXlzIHNldHMgdGhlIHVud3JpdHRlbiBmbGFnIG9uIHRo
-ZSBmaWxlIG1hcHBpbmcsCnNvIGl0IGRvZXNuJ3QgbWF0dGVyIGlmIHRoZSBkZXZpY2UgcHJvdmlz
-aW9ucyBzcGFjZSB3aXRob3V0IHplcm9pbmcgdGhlCmNvbnRlbnRzLgoKVGhhdCBzYWlkLCBpZiBk
-ZXZpY2VzIGFyZSByZWFsbHkgYWxsb3dlZCB0byBleHBvc2Ugc3RhbGUgZGlzayBibG9ja3MKdGhl
-biBmb3IgYmxrZGV2IGZhbGxvY2F0ZSBJIHRoaW5rIHlvdSBjb3VsZCBnZXQgYXdheSB3aXRoIHJl
-dXNpbgpGQUxMT0NfRkxfTk9fSElERV9TVEFMRSBpbnN0ZWFkIG9mIGludHJvZHVjaW5nIGEgbmV3
-IGZhbGxvY2F0ZSBmbGFnLgoKPiBQYXRjaCA1IHdpcmVzIHVwIHRoZSBsb29wIGRldmljZSBoYW5k
-bGluZyBvZiBSRVFfT1BfUFJPVklTSU9OLgo+IAo+IFBhdGNoZXMgNi04IGNvdmVyIGEgcHJvdG90
-eXBlIGltcGxlbWVudGF0aW9uIGZvciBleHQ0LCB3aGljaCBpbmNsdWRlcwo+IHdpcmluZyB1cCB0
-aGUgZmFsbG9jYXRlKCkgaW1wbGVtZW50YXRpb24sIGludHJvZHVjaW5nIGEgZmlsZXN5c3RlbQo+
-IGxldmVsIG9wdGlvbiAoY2FsbGVkICdwcm92aXNpb24nKSB0byBjb250cm9sIHRoZSBkZWZhdWx0
-IGFsbG9jYXRpb24KPiBiZWhhdmlvdXIgYW5kIGZpbmFsbHkgYSBmaWxlIGxldmVsIG92ZXJyaWRl
-IHRvIHJldGFpbiBjdXJyZW50Cj4gaGFuZGxpbmcsIGV2ZW4gb24gZmlsZXN5c3RlbXMgbW91bnRl
-ZCB3aXRoICdwcm92aXNpb24nCgpIbW0sIEknbGwgaGF2ZSBhIGxvb2suCgo+IFRlc3Rpbmc6Cj4g
-LS0tLS0tLS0KPiAtIEEgYmFja3BvcnQgb2YgdGhpcyBwYXRjaCBzZXJpZXMgd2FzIHRlc3RlZCBv
-biBDaHJvbWl1bU9TIHVzaW5nIGEKPiA1LjEwIGtlcm5lbC4KPiAtIEZpbGUgb24gZXh0NCBvbiBh
-IHRoaW4gbG9naWNhbCB2b2x1bWU6Cj4gZmFsbG9jYXRlKEZBTExPQ19GTF9QUk9WSVNJT04pIDog
-NC42cywgZGQgaWY9L2Rldi96ZXJvIG9mPS4uLjogNiBtaW5zLgo+IAo+IFRPRE9zOgo+IC0tLS0t
-LQo+IDEpIFRoZSBzdGFja2VkIGJsb2NrIGRldmljZXMgKGRtLSosIGxvb3AgZXRjLikgY3VycmVu
-dGx5Cj4gdW5jb25kaXRpb25hbGx5IHBhc3MgdGhyb3VnaCBwcm92aXNpb24gcmVxdWVzdHMuIEFk
-ZCBzdXBwb3J0IGZvcgo+IHByb3Zpc2lvbiwgc2ltaWxhciB0byBob3cgZGlzY2FyZCBoYW5kbGlu
-ZyBpcyBzZXQgdXAgKHdpdGggb3B0aW9ucyB0bwo+IGRpc2FibGUsIHBhc3Nkb3duIG9yIHBhc3N0
-aHJvdWdoIHJlcXVlc3RzKS4KPiAyKSBCbGt0ZXN0cyBhbmQgWGZzdGVzdHMgZm9yIHZhbGlkYXRp
-bmcgcHJvdmlzaW9uaW5nLgoKWWVzLi4uLgoKLS1ECgo+IC0tCj4gZG0tZGV2ZWwgbWFpbGluZyBs
-aXN0Cj4gZG0tZGV2ZWxAcmVkaGF0LmNvbQo+IGh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
-bEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8v
-ZG0tZGV2ZWwK
+--===============6223939271314194687==
+Content-Language: en-US
+Content-Type: multipart/alternative;
+	boundary="_000_BY5PR14MB389354D6BB8D1161E57B3FEA864B9BY5PR14MB3893namp_"
+
+--_000_BY5PR14MB389354D6BB8D1161E57B3FEA864B9BY5PR14MB3893namp_
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+We have a scenario for a VM where a VM is running in the host Linux using K=
+VM. We want to expose verity protected rootfs to the VM. This rootfs clearl=
+y needs to be RO. However, we also want to expose it as a GPT partition. In=
+ order to do this we are attaching two small files before and after the roo=
+tfs. The files use linear mapping and get mapped to the same /dev/mapper/XX=
+ device that has a verity partition. These two files contain the partition =
+mappings (primary and backup) for GPT. From the VMs perspective, it sees on=
+e device (/dev/mapper/xx) as a GPT device with rootfs.
+
+The challenge we are getting into is that dm-verity kernel implementation e=
+xplicitly prohibits mixing linear and verity mapping and forces the /dev/ma=
+pper/xx device to be RO and our needs are exactly the opposite.
+
+Has anyone seen this scenario before? Any suggestions?
+
+Thanks
+
+
+Sent from Mail<https://go.microsoft.com/fwlink/?LinkId=3D550986> for Window=
+s
+
+
+--_000_BY5PR14MB389354D6BB8D1161E57B3FEA864B9BY5PR14MB3893namp_
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" xmlns:w=3D"urn:sc=
+hemas-microsoft-com:office:word" xmlns:m=3D"http://schemas.microsoft.com/of=
+fice/2004/12/omml" xmlns=3D"http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
+>
+<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
+<style><!--
+/* Font Definitions */
+@font-face
+=09{font-family:"Cambria Math";
+=09panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+=09{font-family:Calibri;
+=09panose-1:2 15 5 2 2 2 4 3 2 4;}
+/* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+=09{margin:0in;
+=09font-size:11.0pt;
+=09font-family:"Calibri",sans-serif;}
+a:link, span.MsoHyperlink
+=09{mso-style-priority:99;
+=09color:blue;
+=09text-decoration:underline;}
+.MsoChpDefault
+=09{mso-style-type:export-only;}
+@page WordSection1
+=09{size:8.5in 11.0in;
+=09margin:1.0in 1.0in 1.0in 1.0in;}
+div.WordSection1
+=09{page:WordSection1;}
+--></style>
+</head>
+<body lang=3D"EN-US" link=3D"blue" vlink=3D"#954F72" style=3D"word-wrap:bre=
+ak-word">
+<div class=3D"WordSection1">
+<p class=3D"MsoNormal">We have a scenario for a VM where a VM is running in=
+ the host Linux using KVM. We want to expose verity protected rootfs to the=
+ VM. This rootfs clearly needs to be RO. However, we also want to expose it=
+ as a GPT partition. In order to do
+ this we are attaching two small files before and after the rootfs. The fil=
+es use linear mapping and get mapped to the same /dev/mapper/XX device that=
+ has a verity partition. These two files contain the partition mappings (pr=
+imary and backup) for GPT. From
+ the VMs perspective, it sees one device (/dev/mapper/xx) as a GPT device w=
+ith rootfs.</p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal">The challenge we are getting into is that dm-verity =
+kernel implementation explicitly prohibits mixing linear and verity mapping=
+ and forces the /dev/mapper/xx device to be RO and our needs are exactly th=
+e opposite.
+</p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal">Has anyone seen this scenario before? Any suggestion=
+s?</p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal">Thanks</p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal">Sent from <a href=3D"https://go.microsoft.com/fwlink=
+/?LinkId=3D550986">
+Mail</a> for Windows</p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+</div>
+</body>
+</html>
+
+--_000_BY5PR14MB389354D6BB8D1161E57B3FEA864B9BY5PR14MB3893namp_--
+
+--===============6223939271314194687==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
+
+--===============6223939271314194687==--
 
