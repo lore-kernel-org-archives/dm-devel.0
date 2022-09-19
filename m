@@ -4,85 +4,119 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B790FC54EE9
-	for <dm-devel@archiver.kernel.org>; Mon, 19 Sep 2022 05:31:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D85C2C54EE9
+	for <dm-devel@archiver.kernel.org>; Mon, 19 Sep 2022 06:11:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1663565470;
+	s=mimecast20190719; t=1663567866;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=xyWkypaFBgm2xFguDPB+undv0oV4XmhlN8hdq9PQttQ=;
-	b=FvkMA+hG5bS1jyOPmkFd5Eka6cIOa60gdp3kWGHWqsgZX6lDojhaxakKX7WzogiC2AQgEl
-	2FMKbyeTvqtOhXV9S56M+u6lFQrmzvwTY6rAn4QiVK3v7qOvCnXjLxs7/nR2xuYOp36vbA
-	jH7rctF1lE3Q8OaPCvf4dS2PTgzNde8=
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=rSr8r+wtLYcwb0trKHCKMdnPReVTM4Qz7LTN8H06/zk=;
+	b=Xt9/fWM1GhIF2UO9lbrPyIhn3sMYzBybRaMttuSHzTen2cobD2BU2+u4VXL26Cj53UN6Gl
+	7LR97ba20InKKUxWAq/KvVQS80+/BSOc3BpHkSDwW/8sC24o8ddlGzvPS5D+Alt4si22V3
+	qoxiHoZuh22UvcmzODjh27r07lHS3Jw=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-140-pjZxUbeBNSy8iFegYZLEWw-1; Mon, 19 Sep 2022 01:31:07 -0400
-X-MC-Unique: pjZxUbeBNSy8iFegYZLEWw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-638-DzKG8_RlP6uIW5lo4GJuGw-1; Mon, 19 Sep 2022 02:11:02 -0400
+X-MC-Unique: DzKG8_RlP6uIW5lo4GJuGw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 575F929AB44B;
-	Mon, 19 Sep 2022 05:31:04 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7D82E3C02191;
+	Mon, 19 Sep 2022 06:11:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C523240C2065;
-	Mon, 19 Sep 2022 05:31:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2058840C6EC2;
+	Mon, 19 Sep 2022 06:11:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 408671946A5E;
-	Mon, 19 Sep 2022 05:31:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C81421946594;
+	Mon, 19 Sep 2022 06:11:00 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3E7D41946586
- for <dm-devel@listman.corp.redhat.com>; Sat, 17 Sep 2022 19:46:49 +0000 (UTC)
+ ESMTP id CD2491946586
+ for <dm-devel@listman.corp.redhat.com>; Mon, 19 Sep 2022 06:10:59 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 17DFD492CA4; Sat, 17 Sep 2022 19:46:49 +0000 (UTC)
+ id 632AE40C6EC3; Mon, 19 Sep 2022 06:10:59 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 10463492CA2
- for <dm-devel@redhat.com>; Sat, 17 Sep 2022 19:46:48 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2DCD7185A79C
- for <dm-devel@redhat.com>; Sat, 17 Sep 2022 19:46:48 +0000 (UTC)
-Received: from mail-ed1-f49.google.com (mail-ed1-f49.google.com
- [209.85.208.49]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-37-U_E0ChdnPROAQNn5ykF_oQ-1; Sat, 17 Sep 2022 15:46:46 -0400
-X-MC-Unique: U_E0ChdnPROAQNn5ykF_oQ-1
-Received: by mail-ed1-f49.google.com with SMTP id z21so35992956edi.1
- for <dm-devel@redhat.com>; Sat, 17 Sep 2022 12:46:46 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=content-transfer-encoding:cc:to:subject:message-id:date:from
- :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
- :subject:date;
- bh=YyeNIHUzNbtSHe6o09PMb3YQ7MMyCYWkOVqFjUHdZoU=;
- b=Pchgsi8mU+qGsGDvRc8IbhFIU+D2QSe9Q7TPv2I30jbjJimO4HdVw4k3rWT9+Ti/Gj
- UJCyc/HeYYJzufnRm2uUEQkXmbsm/oK27PQ1J0LtWb92oS12owRDQmh1KjeuTjr38AnO
- OXCajuQnNWwQeDfMtmvKmbXBXJWna2EULPgf46jHs6peoTCh1Sqy4sWlCBfYoLmmeHHr
- ZLyYK0fEl6ZadQjgRYrIy8WBBFDniCyf5yyn6mMcq3F/Va3dU/Bwai6L8tA/hG9aICxh
- hNR35sXwDPEaGECufh/lOsadmHVvu9FeeE5g88tdI1jR0ESL8QrbJ6aBQQOGg/YMGJd5
- bqXQ==
-X-Gm-Message-State: ACrzQf2ZqfjdvuwTaxALotQbypZJpD+pSIT4/daJ34At4yu85jKmDmR3
- 2Jsi0iUndQrMjFIyMR483DVdsEyM1ShrOUjkK9bsxg==
-X-Google-Smtp-Source: AMsMyM4QrS6tI4fQMcBRrUQlm6Q+5pMuSSoJX62Z5PpIwpQM2juv8YcKUn5ARK9Xc2oVnRKOJlkUreM93NBIQ6zDl0w=
-X-Received: by 2002:a05:6402:90a:b0:443:8b10:bcad with SMTP id
- g10-20020a056402090a00b004438b10bcadmr8770066edz.416.1663444005137; Sat, 17
- Sep 2022 12:46:45 -0700 (PDT)
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 5A58E40C6EC2
+ for <dm-devel@redhat.com>; Mon, 19 Sep 2022 06:10:59 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3A56985A583
+ for <dm-devel@redhat.com>; Mon, 19 Sep 2022 06:10:59 +0000 (UTC)
+Received: from NAM12-DM6-obe.outbound.protection.outlook.com
+ (mail-dm6nam12olkn2045.outbound.protection.outlook.com [40.92.22.45]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-488-SFu57KRyMHe2mOZnSkOtkg-1; Mon, 19 Sep 2022 02:10:53 -0400
+X-MC-Unique: SFu57KRyMHe2mOZnSkOtkg-1
+Received: from BY5PR14MB3893.namprd14.prod.outlook.com (2603:10b6:a03:1dc::15)
+ by PH8PR14MB5990.namprd14.prod.outlook.com (2603:10b6:510:22a::9)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5632.17; Mon, 19 Sep
+ 2022 06:10:51 +0000
+Received: from BY5PR14MB3893.namprd14.prod.outlook.com
+ ([fe80::2163:6c06:f8a8:1d5d]) by BY5PR14MB3893.namprd14.prod.outlook.com
+ ([fe80::2163:6c06:f8a8:1d5d%8]) with mapi id 15.20.5632.019; Mon, 19 Sep 2022
+ 06:10:51 +0000
+From: "Pra.. Dew.." <linux_learner@outlook.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Thread-Topic: [dm-devel] dm-verity with GPT
+Thread-Index: AQHYyt8ji7+F7zo1TEqoOzC6k0hz063k+BoAgAFOhio=
+Date: Mon, 19 Sep 2022 06:10:51 +0000
+Message-ID: <BY5PR14MB3893F484853A8B896555EE03864D9@BY5PR14MB3893.namprd14.prod.outlook.com>
+References: <BY5PR14MB389354D6BB8D1161E57B3FEA864B9@BY5PR14MB3893.namprd14.prod.outlook.com>
+ <alpine.LRH.2.02.2209180604190.19406@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2209180604190.19406@file01.intranet.prod.int.rdu2.redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-exchange-messagesentrepresentingtype: 1
+x-tmn: [Xp3j3JFKmfChSefLZOqGacLWyXBWbWQI]
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: BY5PR14MB3893:EE_|PH8PR14MB5990:EE_
+x-ms-office365-filtering-correlation-id: 3b604451-5a30-4047-b69a-08da9a05b454
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: 5ciSZU3EKGW0Xci8tFn8OFKN/4Y4B7WQYEuxq4J54VejRAxkn5wmlx0EcxUYLPa8Gd8lQO/zb0aGeaCKmCF6t5ZmJeL3DJDkwcpO7oOIcDTxdH45XmnVhv8o8kz7DSYPqYXNtLsNV3PMvQ8RQ+C1tSZRlB/OlgTEK6m9hh9JH2OfaKJGuVdfILMoZmr4K8u9SLg9ByraR7b4hivRr1cU9COvGwa36MdiQGlDIm8cPJYSxSk/xQHoCxa1oCqjGZqwoqqHHigVCbI+qKw7nS7NCzm1neOrLaGMDPteAfa3aRhMLgeEw6fkF+PtnOQ5trNc9VdVNAYdcKlu1pwA+tzV5vL+RPbD0xP5W96OiEnaXKDC+Mjb0SbxtmdNUggL7wfCygZpnBO4s7IzVEHW7jrDduzgcesb/WmfqIAaFHgEzJ4ubQqaRdH1sbRwq8YjPVBd61j8ON8LzX+Cb4KD4UNrfcxSTrJ2AcSRMaQBcJC8H0YIvxNzNbu8+2YjKqpUyE+bTytXA+yIUFAi6P3NxcvDgsuoBH8sm+ZWmT3DHqSceQqU9KyaVzVUNduQkrDvpA1NGvmtk7I4hGk8yhD3k2pz2CxaA0vbtvtBgRpAFvawEI/rmgu1NKY674ClPTUy9M/gtqgYffHSmjdv9Ca4riHcItutW2O0KVTrksvSY2AfJW+/NgtXBEalQMPFkUUFu2qk
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?FtOCArufom9/YQjSvvJdkeoKOYK+GY2riqOrs76xGGSQjH+EbH2EK5Cbtgol?=
+ =?us-ascii?Q?g7IarieAUp0cKqwMJK7wJvq2YEgwuHs7ywbngfcsuPnkjbAnV8lxzCD7VD1Q?=
+ =?us-ascii?Q?SQHQD2tzJkZoud0xhiJCNYUzO+umZACJ0/pksvK5xcKn1q0n2p9BHTtWHqbK?=
+ =?us-ascii?Q?G+nSg8ekUYTSPvpf/mToyCwXz8L7Qms7Fuf75fc6Vyw5Y0/YeeN2X+CPttr1?=
+ =?us-ascii?Q?utmaD93aCznXXMtI+rtxIS8mrKIzm9HQO3igmgnlK/F9MgfLY883m1OjqyKI?=
+ =?us-ascii?Q?etPEtxyYl9GSm/1Mtro+LI1BIcCoX9R68NXoLxnzZBa5t76J6ShZUtKZKvRZ?=
+ =?us-ascii?Q?gir9KytQrvwrHsFoX8xmmBe0Wsysyg/CDEizElFkeue8fs5ASThWnCY2jmKR?=
+ =?us-ascii?Q?/AOS795dCCh8YDKd9XDFh7Rf4RwlW49j9Y+IcBGhXtFZH9bX4T3L2GCoI8ev?=
+ =?us-ascii?Q?ZRG5PIH0YFsXO0ptzVfPVVUrz6lx1pUgXIfrtJ919jlLqlHc/JShHA4lcihb?=
+ =?us-ascii?Q?/R4u2Wwl/hpSItsRJDErkXlW1ultXoQ5suEFPfsXFQBBxmfU3eVTtRVQapfZ?=
+ =?us-ascii?Q?NJayTaW3AtgHXAMuhwOnh6EhNwlD9cFlZ1IJ1b6shrPYDHcZo6N+aig+vfH1?=
+ =?us-ascii?Q?G9T9uGfiqP27Xal2OcsdL/t/JdZDxKVgmC9Gl8TbKuBWCBt1iA/Cx5aIwxIU?=
+ =?us-ascii?Q?BfJXM0so8u8LUBT8ZntZPhJvAkHizpQ6xUg5FG8EWqzYFHoIF7oEfnqFVHrI?=
+ =?us-ascii?Q?EjTUMklVPm9QJqnAKV1Waf9zvNomTj4iJ3auSZSvyNk331WSll+oUcfzBmsq?=
+ =?us-ascii?Q?Z3X2uBFBassyINQYdE6RlEOvuF9OelrcCZCn2Dn6gcCb17u/ybNtcqjpFVzS?=
+ =?us-ascii?Q?DzVNzDiBVcjiiHQf6+LYk+w1uma87BPHBeQ6hfg3LpSGn+8Yzx6yzEWuW2gi?=
+ =?us-ascii?Q?8JCyabcXsU7EqFNTeXfGfa9geBGr2o6WTbp0xPd1qqELALigM0JVWx55WC8u?=
+ =?us-ascii?Q?rjtjH5ArGMbjFMu0pCETC8q75uGBmajOrXg5eNbbvhQ26tkZrzrVytCXhRj2?=
+ =?us-ascii?Q?KmvnPf86PwtkfE08owJa4G/j1sKadX52oTluuRvqFZtr1jDRLcyV0r/7wVXS?=
+ =?us-ascii?Q?v58NMSkNQjG9s7wG3L7/sHNPhahroXGWSLsB7B6+FiREJi4YAImhh/XlVc2q?=
+ =?us-ascii?Q?B9WgshShQyPCpNToQ5x4x61arClQ72MG8tWpWxl2Lsfr5QUkhlqNagqm+YCr?=
+ =?us-ascii?Q?3gzyg/bC4XBjhC0UZHVPgKRrMi2hs5MciACVYuk/rVMxA/50geeKoKfC6czp?=
+ =?us-ascii?Q?Y6U=3D?=
 MIME-Version: 1.0
-References: <20220915164826.1396245-1-sarthakkukreti@google.com>
- <YyU5CyQfS+64xmnm@magnolia>
-In-Reply-To: <YyU5CyQfS+64xmnm@magnolia>
-From: Sarthak Kukreti <sarthakkukreti@chromium.org>
-Date: Sat, 17 Sep 2022 12:46:33 -0700
-Message-ID: <CAG9=OMNPnsjaUw2EUG0XFjV94-V1eD63V+1anoGM=EWKyzXEfg@mail.gmail.com>
-To: "Darrick J. Wong" <djwong@kernel.org>
+X-OriginatorOrg: outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: BY5PR14MB3893.namprd14.prod.outlook.com
+X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-CrossTenant-Network-Message-Id: 3b604451-5a30-4047-b69a-08da9a05b454
+X-MS-Exchange-CrossTenant-originalarrivaltime: 19 Sep 2022 06:10:51.7154 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
+X-MS-Exchange-CrossTenant-rms-persistedconsumerorg: 00000000-0000-0000-0000-000000000000
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH8PR14MB5990
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -90,10 +124,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-X-Mailman-Approved-At: Mon, 19 Sep 2022 05:30:58 +0000
-Subject: Re: [dm-devel] [PATCH RFC 0/8] Introduce provisioning primitives
- for thinly provisioned storage
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] dm-verity with GPT
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -105,152 +137,193 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Gwendal Grignou <gwendal@google.com>,
- Theodore Ts'o <tytso@mit.edu>, "Michael S . Tsirkin" <mst@redhat.com>,
- Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
- Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
- virtualization@lists.linux-foundation.org, linux-block@vger.kernel.org,
- dm-devel@redhat.com, Evan Green <evgreen@google.com>,
- Daniil Lunev <dlunev@google.com>, Stefan Hajnoczi <stefanha@redhat.com>,
- Paolo Bonzini <pbonzini@redhat.com>, Andreas Dilger <adilger.kernel@dilger.ca>,
- linux-ext4@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Language: en-US
+Content-Type: multipart/mixed; boundary="===============8215459739249327326=="
 
-T24gRnJpLCBTZXAgMTYsIDIwMjIgYXQgODowMyBQTSBEYXJyaWNrIEouIFdvbmcgPGRqd29uZ0Br
-ZXJuZWwub3JnPiB3cm90ZToKPgo+IE9uIFRodSwgU2VwIDE1LCAyMDIyIGF0IDA5OjQ4OjE4QU0g
-LTA3MDAsIFNhcnRoYWsgS3VrcmV0aSB3cm90ZToKPiA+IEZyb206IFNhcnRoYWsgS3VrcmV0aSA8
-c2FydGhha2t1a3JldGlAY2hyb21pdW0ub3JnPgo+ID4KPiA+IEhpLAo+ID4KPiA+IFRoaXMgcGF0
-Y2ggc2VyaWVzIGlzIGFuIFJGQyBvZiBhIG1lY2hhbmlzbSB0byBwYXNzIHRocm91Z2ggcHJvdmlz
-aW9uCj4gPiByZXF1ZXN0cyBvbiBzdGFja2VkIHRoaW5seSBwcm92aXNpb25lZCBzdG9yYWdlIGRl
-dmljZXMvZmlsZXN5c3RlbXMuCj4KPiBbUmVmbG93ZWQgdGV4dF0KPgo+ID4gVGhlIGxpbnV4IGtl
-cm5lbCBwcm92aWRlcyBzZXZlcmFsIG1lY2hhbmlzbXMgdG8gc2V0IHVwIHRoaW5seQo+ID4gcHJv
-dmlzaW9uZWQgYmxvY2sgc3RvcmFnZSBhYnN0cmFjdGlvbnMgKGVnLiBkbS10aGluLCBsb29wIGRl
-dmljZXMgb3Zlcgo+ID4gc3BhcnNlIGZpbGVzKSwgZWl0aGVyIGRpcmVjdGx5IGFzIGJsb2NrIGRl
-dmljZXMgb3IgYmFja2luZyBzdG9yYWdlIGZvcgo+ID4gZmlsZXN5c3RlbXMuIEN1cnJlbnRseSwg
-c2hvcnQgb2Ygd3JpdGluZyBkYXRhIHRvIGVpdGhlciB0aGUgZGV2aWNlIG9yCj4gPiBmaWxlc3lz
-dGVtLCB0aGVyZSBpcyBubyB3YXkgZm9yIHVzZXJzIHRvIHByZS1hbGxvY2F0ZSBzcGFjZSBmb3Ig
-dXNlIGluCj4gPiBzdWNoIHN0b3JhZ2Ugc2V0dXBzLiBDb25zaWRlciB0aGUgZm9sbG93aW5nIHVz
-ZS1jYXNlczoKPiA+Cj4gPiAxKSBTdXNwZW5kLXRvLWRpc2sgYW5kIHJlc3VtZSBmcm9tIGEgZG0t
-dGhpbiBkZXZpY2U6IEluIG9yZGVyIHRvCj4gPiBlbnN1cmUgdGhhdCB0aGUgdW5kZXJseWluZyB0
-aGlucG9vbCBtZXRhZGF0YSBpcyBub3QgbW9kaWZpZWQgZHVyaW5nCj4gPiB0aGUgc3VzcGVuZCBt
-ZWNoYW5pc20sIHRoZSBkbS10aGluIGRldmljZSBuZWVkcyB0byBiZSBmdWxseQo+ID4gcHJvdmlz
-aW9uZWQuCj4gPiAyKSBJZiBhIGZpbGVzeXN0ZW0gdXNlcyBhIGxvb3AgZGV2aWNlIG92ZXIgYSBz
-cGFyc2UgZmlsZSwgZmFsbG9jYXRlKCkKPiA+IG9uIHRoZSBmaWxlc3lzdGVtIHdpbGwgYWxsb2Nh
-dGUgYmxvY2tzIGZvciBmaWxlcyBidXQgdGhlIHVuZGVybHlpbmcKPiA+IHNwYXJzZSBmaWxlIHdp
-bGwgcmVtYWluIGludGFjdC4KPiA+IDMpIEFub3RoZXIgZXhhbXBsZSBpcyB2aXJ0dWFsIG1hY2hp
-bmUgdXNpbmcgYSBzcGFyc2UgZmlsZS9kbS10aGluIGFzIGEKPiA+IHN0b3JhZ2UgZGV2aWNlOyBi
-eSBkZWZhdWx0LCBhbGxvY2F0aW9ucyB3aXRoaW4gdGhlIFZNIGJvdW5kYXJpZXMgd2lsbAo+ID4g
-bm90IGFmZmVjdCB0aGUgaG9zdC4KPiA+IDQpIFNldmVyYWwgc3RvcmFnZSBzdGFuZGFyZHMgc3Vw
-cG9ydCBtZWNoYW5pc21zIGZvciB0aGluIHByb3Zpc2lvbmluZwo+ID4gb24gcmVhbCBoYXJkd2Fy
-ZSBkZXZpY2VzLiBGb3IgZXhhbXBsZToKPiA+ICAgYS4gVGhlIE5WTWUgc3BlYyAxLjBiIHNlY3Rp
-b24gMi4xLjEgbG9vc2VseSB0YWxrcyBhYm91dCB0aGluCj4gPiAgIHByb3Zpc2lvbmluZzogIldo
-ZW4gdGhlIFRISU5QIGJpdCBpbiB0aGUgTlNGRUFUIGZpZWxkIG9mIHRoZQo+ID4gICBJZGVudGlm
-eSBOYW1lc3BhY2UgZGF0YSBzdHJ1Y3R1cmUgaXMgc2V0IHRvIOKAmDHigJksIHRoZSBjb250cm9s
-bGVyIC4uLgo+ID4gICBzaGFsbCB0cmFjayB0aGUgbnVtYmVyIG9mIGFsbG9jYXRlZCBibG9ja3Mg
-aW4gdGhlIE5hbWVzcGFjZQo+ID4gICBVdGlsaXphdGlvbiBmaWVsZCIKPiA+ICAgYi4gVGhlIFND
-U2kgQmxvY2sgQ29tbWFuZHMgcmVmZXJlbmNlIC0gNCBzZWN0aW9uIHJlZmVyZW5jZXMgIlRoaW4K
-PiA+ICAgcHJvdmlzaW9uZWQgbG9naWNhbCB1bml0cyIsCj4gPiAgIGMuIFVGUyAzLjAgc3BlYyBz
-ZWN0aW9uIDEzLjMuMyByZWZlcmVuY2VzICJUaGluIHByb3Zpc2lvbmluZyIuCj4gPgo+ID4gSW4g
-YWxsIG9mIHRoZSBhYm92ZSBzaXR1YXRpb25zLCBjdXJyZW50bHkgdGhlIG9ubHkgd2F5IGZvcgo+
-ID4gcHJlLWFsbG9jYXRpbmcgc3BhY2UgaXMgdG8gaXNzdWUgd3JpdGVzIChvciB1c2UKPiA+IFdS
-SVRFX1pFUk9FUy9XUklURV9TQU1FKS4gSG93ZXZlciwgdGhhdCBkb2VzIG5vdCBzY2FsZSB3ZWxs
-IHdpdGgKPiA+IGxhcmdlciBwcmUtYWxsb2NhdGlvbiBzaXplcy4KPiA+Cj4gPiBUaGlzIHBhdGNo
-c2V0IGludHJvZHVjZXMgcHJpbWl0aXZlcyB0byBzdXBwb3J0IGJsb2NrLWxldmVsCj4gPiBwcm92
-aXNpb25pbmcgKG5vdGU6IHRoZSB0ZXJtICdwcm92aXNpb25pbmcnIGlzIHVzZWQgdG8gcHJldmVu
-dAo+ID4gb3ZlcmxvYWRpbmcgdGhlIHRlcm0gJ2FsbG9jYXRpb25zL3ByZS1hbGxvY2F0aW9ucycp
-IHJlcXVlc3RzIGFjcm9zcwo+ID4gZmlsZXN5c3RlbXMgYW5kIGJsb2NrIGRldmljZXMuIFRoaXMg
-YWxsb3dzIGZhbGxvY2F0ZSgpIGFuZCBmaWxlCj4gPiBjcmVhdGlvbiByZXF1ZXN0cyB0byByZXNl
-cnZlIHNwYWNlIGFjcm9zcyBzdGFja2VkIGxheWVycyBvZiBibG9jawo+ID4gZGV2aWNlcyBhbmQg
-ZmlsZXN5c3RlbXMuIEN1cnJlbnRseSwgdGhlIHBhdGNoc2V0IGNvdmVycyBhIHByb3RvdHlwZSBv
-bgo+ID4gdGhlIGRldmljZS1tYXBwZXIgdGFyZ2V0cywgbG9vcCBkZXZpY2UgYW5kIGV4dDQsIGJ1
-dCB0aGUgc2FtZQo+ID4gbWVjaGFuaXNtIGNhbiBiZSBleHRlbmRlZCB0byBvdGhlciBmaWxlc3lz
-dGVtcy9ibG9jayBkZXZpY2VzIGFzIHdlbGwKPiA+IGFzIGV4dGVuZGVkIGZvciB1c2Ugd2l0aCBk
-ZXZpY2VzIGluIDQgYS1jLgo+Cj4gSWYgeW91IGNhbGwgUkVRX09QX1BST1ZJU0lPTiBvbiBhbiB1
-bm1hcHBlZCBMQkEgcmFuZ2Ugb2YgYSBibG9jayBkZXZpY2UKPiBhbmQgdGhlbiB0cnkgdG8gcmVh
-ZCB0aGUgcHJvdmlzaW9uZWQgYmxvY2tzLCB3aGF0IGRvIHlvdSBnZXQ/ICBaZXJvZXM/Cj4gUmFu
-ZG9tIHN0YWxlIGRpc2sgY29udGVudHM/Cj4KPiBJIHRoaW5rIEkgc2F3IGVsc2V3aGVyZSBpbiB0
-aGUgdGhyZWFkIHRoYXQgYW55IG1hcHBlZCBMQkFzIHdpdGhpbiB0aGUKPiBwcm92aXNpb25pbmcg
-cmFuZ2UgYXJlIGxlZnQgYWxvbmUgKGkuZS4gbm90IHplcm9lZCkgc28gSSdsbCBwcm9jZWVkIG9u
-Cj4gdGhhdCBiYXNpcy4KPgpGb3IgYmxvY2sgZGV2aWNlcywgSSdkIHNheSBpdCdzIGRlZmluaXRl
-bHkgcG9zc2libGUgdG8gZ2V0IHN0YWxlIGRhdGEsIGRlcGVuZGluZwpvbiB0aGUgaW1wbGVtZW50
-YXRpb24gb2YgdGhlIGFsbG9jYXRpb24gbGF5ZXI7IGZvciBleGFtcGxlLCB3aXRoIGRtLXRoaW5w
-b29sLAp0aGUgZGVmYXVsdCBzZXR0aW5nIHZpYSB1c2luZyBMVk0yIHRvb2xzIGlzIHRvIHplcm8g
-b3V0IGJsb2NrcyBvbiBhbGxvY2F0aW9uLgpCdXQgdGhhdCdzIGNvbmZpZ3VyYWJsZSBhbmQgY2Fu
-IGJlIHR1cm5lZCBvZmYgdG8gaW1wcm92ZSBwZXJmb3JtYW5jZS4KClNpbWlsYXJseSwgZm9yIGFj
-dHVhbCBkZXZpY2VzIHRoYXQgZW5kIHVwIHN1cHBvcnRpbmcgdGhpbiBwcm92aXNpb25pbmcsIHVu
-bGVzcwp0aGUgc3BlY2lmaWNhdGlvbiBhYnNvbHV0ZWx5IG1hbmRhdGVzIHRoYXQgYW4gTEJBIGNv
-bnRhaW5zIHplcm9lcyBwb3N0CmFsbG9jYXRpb24sIHNvbWUgaW1wbGVtZW50YXRpb25zIHdpbGwg
-ZGVmaW5pdGVseSBtaXNzIG91dCBvbiB0aGF0IChwcm9iYWJseQpzaW1pbGFyIHRvIHRoZSBzZW1h
-bnRpY3Mgb2YgZGlzY2FyZF96ZXJvZXNfZGF0YSB0b2RheSkuIEknbSBvcGVyYXRpbmcgdW5kZXIK
-dGhlIGFzc3VtcHRpb24gdGhhdCBpdCdzIHBvc3NpYmxlIHRvIGdldCBzdGFsZSBkYXRhIGZyb20g
-TEJBcyBhbGxvY2F0ZWQgdXNpbmcKcHJvdmlzaW9uIHJlcXVlc3RzIGF0IHRoZSBibG9jayBsYXll
-ciBhbmQgdHJ5aW5nIHRvIHNlZSBpZiB3ZSBjYW4gY3JlYXRlIGEKc2FmZSBkZWZhdWx0IG9wZXJh
-dGluZyBtb2RlbCBmcm9tIHRoYXQuCgo+ID4gUGF0Y2ggMSBpbnRyb2R1Y2VzIFJFUV9PUF9QUk9W
-SVNJT04gYXMgYSBuZXcgcmVxdWVzdCB0eXBlLiBUaGUKPiA+IHByb3Zpc2lvbiByZXF1ZXN0IGFj
-dHMgbGlrZSB0aGUgaW52ZXJzZSBvZiBhIGRpc2NhcmQgcmVxdWVzdDsgaW5zdGVhZAo+ID4gb2Yg
-bm90aWZ5aW5nIGxvd2VyIGxheWVycyB0aGF0IHRoZSBibG9jayByYW5nZSB3aWxsIG5vIGxvbmdl
-ciBiZSB1c2VkLAo+ID4gcHJvdmlzaW9uIGFjdHMgYXMgYSByZXF1ZXN0IHRvIGxvd2VyIGxheWVy
-cyB0byBwcm92aXNpb24gZGlzayBzcGFjZQo+ID4gZm9yIHRoZSBnaXZlbiBibG9jayByYW5nZS4g
-UmVhbCBoYXJkd2FyZSBzdG9yYWdlIGRldmljZXMgd2lsbAo+ID4gY3VycmVudGx5IGRpc2FibGUg
-dGhlIHByb3Zpc2lvaW5nIGNhcGFiaWxpdHkgYnV0IGZvciB0aGUgc3RhbmRhcmRzCj4gPiBsaXN0
-ZWQgaW4gNGEuLWMuLCBSRVFfT1BfUFJPVklTSU9OIGNhbiBiZSBvdmVybG9hZGVkIGZvciB1c2Ug
-YXMgdGhlCj4gPiBwcm92aXNpb2luZyBwcmltaXRpdmUgZm9yIGZ1dHVyZSBkZXZpY2VzLgo+ID4K
-PiA+IFBhdGNoIDIgaW1wbGVtZW50cyBSRVFfT1BfUFJPVklTSU9OIGhhbmRsaW5nIGZvciBzb21l
-IG9mIHRoZQo+ID4gZGV2aWNlLW1hcHBlciB0YXJnZXRzLiBUaGlzIGFkZGl0aW9uYWxseSBhZGRz
-IHN1cHBvcnQgZm9yCj4gPiBwcmUtYWxsb2NhdGluZyBzcGFjZSBmb3IgdGhpbmx5IHByb3Zpc2lv
-bmVkIGxvZ2ljYWwgdm9sdW1lcyB2aWEKPiA+IGZhbGxvY2F0ZSgpCj4gPgo+ID4gUGF0Y2ggMyBp
-bXBsZW1lbnRzIHRoZSBoYW5kbGluZyBmb3IgdmlydGlvLWJsay4KPiA+Cj4gPiBQYXRjaCA0IGlu
-dHJvZHVjZXMgYW4gZmFsbG9jYXRlKCkgbW9kZSAoRkFMTE9DX0ZMX1BST1ZJU0lPTikgdGhhdAo+
-ID4gc2VuZHMgYSBwcm92aXNpb24gcmVxdWVzdCB0byB0aGUgdW5kZXJseWluZyBibG9jayBkZXZp
-Y2UgKGFuZCBiZXlvbmQpLgo+ID4gVGhpcyBhY3RzIGFzIHRoZSBwcmltYXJ5IG1lY2hhbmlzbSBm
-b3IgZmlsZS1sZXZlbCBwcm92aXNpb2luZy4KPgo+IFBlcnNvbmFsbHksIEkgdGhpbmsgaXQncyB3
-ZWxsIHdpdGhpbiB0aGUgZGVmaW5pdGlvbiBvZiBmYWxsb2NhdGUgbW9kZT09MAo+IChha2EgcHJl
-YWxsb2NhdGUpIGZvciBYRlMgdG8gY2FsbCBSRVFfT1BfUFJPVklTSU9OIG9uIHRoZSBibG9ja3Mg
-dGhhdCBpdAo+IHByZWFsbG9jYXRlcz8gIFhGUyBhbHdheXMgc2V0cyB0aGUgdW53cml0dGVuIGZs
-YWcgb24gdGhlIGZpbGUgbWFwcGluZywKPiBzbyBpdCBkb2Vzbid0IG1hdHRlciBpZiB0aGUgZGV2
-aWNlIHByb3Zpc2lvbnMgc3BhY2Ugd2l0aG91dCB6ZXJvaW5nIHRoZQo+IGNvbnRlbnRzLgo+Cj4g
-VGhhdCBzYWlkLCBpZiBkZXZpY2VzIGFyZSByZWFsbHkgYWxsb3dlZCB0byBleHBvc2Ugc3RhbGUg
-ZGlzayBibG9ja3MKPiB0aGVuIGZvciBibGtkZXYgZmFsbG9jYXRlIEkgdGhpbmsgeW91IGNvdWxk
-IGdldCBhd2F5IHdpdGggcmV1c2luCj4gRkFMTE9DX0ZMX05PX0hJREVfU1RBTEUgaW5zdGVhZCBv
-ZiBpbnRyb2R1Y2luZyBhIG5ldyBmYWxsb2NhdGUgZmxhZy4KPgpGb3IgZmlsZXN5c3RlbXMsIEkg
-dGhpbmsgaXQncyByZWFzb25hYmxlIHRvIHN1cHBvcnQgdGhlIG1vZGUgaWYgYW5kIG9ubHkgaWYK
-dGhlIGZpbGVzeXN0ZW0gY2FuIGd1YXJhbnRlZSB0aGF0IHVud3JpdHRlbiBleHRlbnRzIHJldHVy
-biB6ZXJvLiBGb3IgaW5zdGFuY2UsCmluIHRoZSBjdXJyZW50IGV4dDQgaW1wbGVtZW50YXRpb24s
-IHRoZSBwcm92aXNpb25lZCBleHRlbnRzIGFyZSBzdGlsbCBtYXJrZWQgYXMKdW53cml0dGVuLCB3
-aGljaCBtZWFucyBhIHJlYWQgZnJvbSB0aGUgZmlsZSB3b3VsZCBzdGlsbCBzaG93IGFsbCB6ZXJv
-ZXMgKHdoaWNoCkkgdGhpbmsgZGlmZmVycyBmcm9tIHRoZSBvcmlnaW5hbCBGQUxMT0NfRkxfTk9f
-SElERSBpbXBsZW1lbnRhdGlvbikuCgpUaGF0IG1pZ2h0IGJlIG9uZSBtb3JlIHJlYXNvbiB0byBr
-ZWVwIHRoZSBtb2RlIHNlcGFyYXRlIGZyb20gdGhlIHJlZ3VsYXIKbW9kZXMgdGhvdWdoOyB0byBk
-cml2ZSBob21lIHRoZSBwb2ludCB0aGF0IGl0IGlzIG9ubHkgYWNjZXB0YWJsZSB1bmRlcgp0aGUg
-YWJvdmUgY29uZGl0aW9ucyBhbmQgdGhhdCB0aGVyZSdzIG1vcmUgdG8gaXQgdGhhbiBqdXN0IGFk
-ZGluZwpibGtkZXZfaXNzdWVfcHJvdmlzaW9uKC4uKSBhdCB0aGUgZW5kIG9mIGZzX2ZhbGxvY2F0
-ZSgpLgoKQmVzdApTYXJ0aGFrCgo+ID4gUGF0Y2ggNSB3aXJlcyB1cCB0aGUgbG9vcCBkZXZpY2Ug
-aGFuZGxpbmcgb2YgUkVRX09QX1BST1ZJU0lPTi4KPiA+Cj4gPiBQYXRjaGVzIDYtOCBjb3ZlciBh
-IHByb3RvdHlwZSBpbXBsZW1lbnRhdGlvbiBmb3IgZXh0NCwgd2hpY2ggaW5jbHVkZXMKPiA+IHdp
-cmluZyB1cCB0aGUgZmFsbG9jYXRlKCkgaW1wbGVtZW50YXRpb24sIGludHJvZHVjaW5nIGEgZmls
-ZXN5c3RlbQo+ID4gbGV2ZWwgb3B0aW9uIChjYWxsZWQgJ3Byb3Zpc2lvbicpIHRvIGNvbnRyb2wg
-dGhlIGRlZmF1bHQgYWxsb2NhdGlvbgo+ID4gYmVoYXZpb3VyIGFuZCBmaW5hbGx5IGEgZmlsZSBs
-ZXZlbCBvdmVycmlkZSB0byByZXRhaW4gY3VycmVudAo+ID4gaGFuZGxpbmcsIGV2ZW4gb24gZmls
-ZXN5c3RlbXMgbW91bnRlZCB3aXRoICdwcm92aXNpb24nCj4KPiBIbW0sIEknbGwgaGF2ZSBhIGxv
-b2suCj4KPiA+IFRlc3Rpbmc6Cj4gPiAtLS0tLS0tLQo+ID4gLSBBIGJhY2twb3J0IG9mIHRoaXMg
-cGF0Y2ggc2VyaWVzIHdhcyB0ZXN0ZWQgb24gQ2hyb21pdW1PUyB1c2luZyBhCj4gPiA1LjEwIGtl
-cm5lbC4KPiA+IC0gRmlsZSBvbiBleHQ0IG9uIGEgdGhpbiBsb2dpY2FsIHZvbHVtZToKPiA+IGZh
-bGxvY2F0ZShGQUxMT0NfRkxfUFJPVklTSU9OKSA6IDQuNnMsIGRkIGlmPS9kZXYvemVybyBvZj0u
-Li46IDYgbWlucy4KPiA+Cj4gPiBUT0RPczoKPiA+IC0tLS0tLQo+ID4gMSkgVGhlIHN0YWNrZWQg
-YmxvY2sgZGV2aWNlcyAoZG0tKiwgbG9vcCBldGMuKSBjdXJyZW50bHkKPiA+IHVuY29uZGl0aW9u
-YWxseSBwYXNzIHRocm91Z2ggcHJvdmlzaW9uIHJlcXVlc3RzLiBBZGQgc3VwcG9ydCBmb3IKPiA+
-IHByb3Zpc2lvbiwgc2ltaWxhciB0byBob3cgZGlzY2FyZCBoYW5kbGluZyBpcyBzZXQgdXAgKHdp
-dGggb3B0aW9ucyB0bwo+ID4gZGlzYWJsZSwgcGFzc2Rvd24gb3IgcGFzc3Rocm91Z2ggcmVxdWVz
-dHMpLgo+ID4gMikgQmxrdGVzdHMgYW5kIFhmc3Rlc3RzIGZvciB2YWxpZGF0aW5nIHByb3Zpc2lv
-bmluZy4KPgo+IFllcy4uLi4KPgo+IC0tRAo+Cj4gPiAtLQo+ID4gZG0tZGV2ZWwgbWFpbGluZyBs
-aXN0Cj4gPiBkbS1kZXZlbEByZWRoYXQuY29tCj4gPiBodHRwczovL2xpc3RtYW4ucmVkaGF0LmNv
-bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVsCg==
+--===============8215459739249327326==
+Content-Language: en-US
+Content-Type: multipart/alternative;
+	boundary="_000_BY5PR14MB3893F484853A8B896555EE03864D9BY5PR14MB3893namp_"
+
+--_000_BY5PR14MB3893F484853A8B896555EE03864D9BY5PR14MB3893namp_
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+Thank you Mikulas. I just want to make sure I understand what you are sayin=
+g. Currently we making a dm-linear, dm-verity, dm-linear target; if I under=
+stand you right you are suggesting to make it a dm-veriy, dm-linear, dm-lin=
+ear target? Of course the 2nd dm-linear target will have LBAs before dm-ver=
+ity target. Did I get this right?
+
+
+From: Mikulas Patocka<mailto:mpatocka@redhat.com>
+Sent: Sunday, September 18, 2022 3:10 AM
+To: Pra.. Dew..<mailto:linux_learner@outlook.com>
+Cc: dm-devel@redhat.com<mailto:dm-devel@redhat.com>
+Subject: Re: [dm-devel] dm-verity with GPT
+
+
+
+On Sat, 17 Sep 2022, Pra.. Dew.. wrote:
+
+>
+> We have a scenario for a VM where a VM is running in the host Linux
+> using KVM. We want to expose verity protected rootfs to the VM. This
+> rootfs clearly needs to be RO. However, we also want to expose it as a
+> GPT partition. In order to do this we are attaching two small files
+> before and after the rootfs. The files use linear mapping and get mapped
+> to the same /dev/mapper/XX device that has a verity partition. These two
+> files contain the partition mappings (primary and backup) for GPT. From
+> the VMs perspective, it sees one device (/dev/mapper/xx) as a GPT device
+> with rootfs.
+>
+> The challenge we are getting into is that dm-verity kernel
+> implementation explicitly prohibits mixing linear and verity mapping and
+> forces the /dev/mapper/xx device to be RO and our needs are exactly the
+> opposite.
+>
+> Has anyone seen this scenario before? Any suggestions?
+>
+> Thanks
+
+Hi
+
+I think that you can create dm-verity target, put dm-linear on the top of
+it and insert that dm-linear into the table with the other two dm-linear
+targets.
+
+Would it work this way?
+
+Mikulas
+
+
+--_000_BY5PR14MB3893F484853A8B896555EE03864D9BY5PR14MB3893namp_
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" xmlns:w=3D"urn:sc=
+hemas-microsoft-com:office:word" xmlns:m=3D"http://schemas.microsoft.com/of=
+fice/2004/12/omml" xmlns=3D"http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
+>
+<meta name=3D"Generator" content=3D"Microsoft Word 15 (filtered medium)">
+<style><!--
+/* Font Definitions */
+@font-face
+=09{font-family:"Cambria Math";
+=09panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+=09{font-family:Calibri;
+=09panose-1:2 15 5 2 2 2 4 3 2 4;}
+/* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+=09{margin:0in;
+=09font-size:11.0pt;
+=09font-family:"Calibri",sans-serif;}
+a:link, span.MsoHyperlink
+=09{mso-style-priority:99;
+=09color:blue;
+=09text-decoration:underline;}
+.MsoChpDefault
+=09{mso-style-type:export-only;}
+@page WordSection1
+=09{size:8.5in 11.0in;
+=09margin:1.0in 1.0in 1.0in 1.0in;}
+div.WordSection1
+=09{page:WordSection1;}
+--></style>
+</head>
+<body lang=3D"EN-US" link=3D"blue" vlink=3D"#954F72" style=3D"word-wrap:bre=
+ak-word">
+<div class=3D"WordSection1">
+<p class=3D"MsoNormal">Thank you Mikulas. I just want to make sure I unders=
+tand what you are saying. Currently we making a dm-linear, dm-verity, dm-li=
+near target; if I understand you right you are suggesting to make it a dm-v=
+eriy, dm-linear, dm-linear target?
+ Of course the 2<sup>nd</sup> dm-linear target will have LBAs before dm-ver=
+ity target. Did I get this right?</p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<div style=3D"mso-element:para-border-div;border:none;border-top:solid #E1E=
+1E1 1.0pt;padding:3.0pt 0in 0in 0in">
+<p class=3D"MsoNormal" style=3D"border:none;padding:0in"><b>From: </b><a hr=
+ef=3D"mailto:mpatocka@redhat.com">Mikulas Patocka</a><br>
+<b>Sent: </b>Sunday, September 18, 2022 3:10 AM<br>
+<b>To: </b><a href=3D"mailto:linux_learner@outlook.com">Pra.. Dew..</a><br>
+<b>Cc: </b><a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><b=
+r>
+<b>Subject: </b>Re: [dm-devel] dm-verity with GPT</p>
+</div>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+<p class=3D"MsoNormal" style=3D"margin-bottom:12.0pt"><br>
+<br>
+On Sat, 17 Sep 2022, Pra.. Dew.. wrote:<br>
+<br>
+&gt; <br>
+&gt; We have a scenario for a VM where a VM is running in the host Linux <b=
+r>
+&gt; using KVM. We want to expose verity protected rootfs to the VM. This <=
+br>
+&gt; rootfs clearly needs to be RO. However, we also want to expose it as a=
+ <br>
+&gt; GPT partition. In order to do this we are attaching two small files <b=
+r>
+&gt; before and after the rootfs. The files use linear mapping and get mapp=
+ed <br>
+&gt; to the same /dev/mapper/XX device that has a verity partition. These t=
+wo <br>
+&gt; files contain the partition mappings (primary and backup) for GPT. Fro=
+m <br>
+&gt; the VMs perspective, it sees one device (/dev/mapper/xx) as a GPT devi=
+ce <br>
+&gt; with rootfs.<br>
+&gt; <br>
+&gt; The challenge we are getting into is that dm-verity kernel <br>
+&gt; implementation explicitly prohibits mixing linear and verity mapping a=
+nd <br>
+&gt; forces the /dev/mapper/xx device to be RO and our needs are exactly th=
+e <br>
+&gt; opposite.<br>
+&gt; <br>
+&gt; Has anyone seen this scenario before? Any suggestions?<br>
+&gt; <br>
+&gt; Thanks<br>
+<br>
+Hi<br>
+<br>
+I think that you can create dm-verity target, put dm-linear on the top of <=
+br>
+it and insert that dm-linear into the table with the other two dm-linear <b=
+r>
+targets.<br>
+<br>
+Would it work this way?<br>
+<br>
+Mikulas<o:p></o:p></p>
+<p class=3D"MsoNormal"><o:p>&nbsp;</o:p></p>
+</div>
+</body>
+</html>
+
+--_000_BY5PR14MB3893F484853A8B896555EE03864D9BY5PR14MB3893namp_--
+
+--===============8215459739249327326==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
+
+--===============8215459739249327326==--
 
