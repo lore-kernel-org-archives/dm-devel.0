@@ -4,97 +4,155 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 792DEC6FA82
-	for <dm-devel@archiver.kernel.org>; Wed, 21 Sep 2022 17:28:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1AF99C6FA90
+	for <dm-devel@archiver.kernel.org>; Wed, 21 Sep 2022 17:35:59 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1663781292;
+	s=mimecast20190719; t=1663781759;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=DuIw6nS0b8vdv0ArcFxVFfOnbGmwqLzxSD1tdIngqMA=;
-	b=R1IQJXTRxLIZ9xum4ywbcNygWNOhuYKOGnSpXJ2FMrMk1rHjtG4CSe4xoiXrlmUIrYVixl
-	bl9LUUEGoFTqTB9ZvXI0EPk5Jy++S+s3L6bGxpuSPfBqIb1ILXjbJqlHFXIXBJncgZ5JqN
-	XskDug3XiWXookuPzH/vXvRFaDn99EY=
+	bh=+g0Bcm59Q2POB3ONkCohsAuZY1k8layHtg5Q4whioGY=;
+	b=c0uXDzfUhlcGa3r2Mgeb77STFm5wjRoXE7u5gWX8War4W878icLsYB7j8ViX39CETmdmxs
+	s5PXLLN0JaSPdeRYabXLkZ0cx6Fz0ieVhnkWNLScSPa0m+T0IETI9SSmBNDqnBKvqExGaP
+	MZpkIWWvwBq2k+pd02O3RWh1ld4eGek=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-227-7fNnBfDpNsemesWTuAgU0Q-1; Wed, 21 Sep 2022 13:28:09 -0400
-X-MC-Unique: 7fNnBfDpNsemesWTuAgU0Q-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-259-6wI0hTXLNPqDxxxLKsZ5-Q-1; Wed, 21 Sep 2022 13:35:57 -0400
+X-MC-Unique: 6wI0hTXLNPqDxxxLKsZ5-Q-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0E045882825;
-	Wed, 21 Sep 2022 17:28:07 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 41F9E803520;
+	Wed, 21 Sep 2022 17:35:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 96C3A49BB60;
-	Wed, 21 Sep 2022 17:28:06 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E279AC15BA4;
+	Wed, 21 Sep 2022 17:35:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 78E2F19465B1;
-	Wed, 21 Sep 2022 17:28:06 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8046019465B9;
+	Wed, 21 Sep 2022 17:35:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id AB2B919465A4
- for <dm-devel@listman.corp.redhat.com>; Wed, 21 Sep 2022 17:27:36 +0000 (UTC)
+ ESMTP id 9137B19465A4
+ for <dm-devel@listman.corp.redhat.com>; Wed, 21 Sep 2022 17:32:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8D7DB1121315; Wed, 21 Sep 2022 17:27:36 +0000 (UTC)
+ id 81F99492B07; Wed, 21 Sep 2022 17:32:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 86AC51121314
- for <dm-devel@redhat.com>; Wed, 21 Sep 2022 17:27:36 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7A4BF492B04
+ for <dm-devel@redhat.com>; Wed, 21 Sep 2022 17:32:56 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 61663384C6C1
- for <dm-devel@redhat.com>; Wed, 21 Sep 2022 17:27:36 +0000 (UTC)
-Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
- [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-590-sE5fi8XxPvyOr1kyL-gOHg-1; Wed, 21 Sep 2022 13:27:35 -0400
-X-MC-Unique: sE5fi8XxPvyOr1kyL-gOHg-1
-Received: by mail-qv1-f69.google.com with SMTP id
- nm17-20020a0562143b1100b004a5a3002d87so4729774qvb.8
- for <dm-devel@redhat.com>; Wed, 21 Sep 2022 10:27:35 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date;
- bh=jf1FYXrDVaqqC4NbZ8fFAHL8bcgUOrwJH0z7ee3/534=;
- b=mNAvfxF5AIyCZvAptTxNASREiUJk77e1Do4Zn/FfgaMHsJ2hw45ioaSo/V82sbMY4c
- S4ZUFXCwfu5jjRp+aRcwj7HhfDNLQouIIN9wFuDALogsaMwQrAdLK4liQ6I2B4dqXZ4D
- V8H7bY5LqBmV17C97yXIoM2BFCbRbR69tZ2e/X8S1G9+QMTD2a+cSzTHhe8wtDN0jyX3
- VP61/4y/GMBpNTFRO/tIDKB/Vrkx7ZokegdXD+j4u2woJFB1hoI5V3d84U44LOPlTKSC
- ogj0Q+R/dgo1Lv8Qc1Q0nzn72qD7RFIiUEc7wOYm63frfUUxo7Os2IvTCj+wMmYTfZa1
- yzOA==
-X-Gm-Message-State: ACrzQf1FAkxBxjk4puZYPa85uC+RxD9SuJUkHzdgLws8cWxUKw2AQr7G
- D0yyRQPSQFzQHRsLzcO4DYU7mH5QlPE5aV5HlA7uEA0gKex7quLeIFUPEP4+OwFuiK2Pe2Tx/jk
- J1On8S0hUzKlzkw==
-X-Received: by 2002:a05:622a:414:b0:35c:f297:ebfc with SMTP id
- n20-20020a05622a041400b0035cf297ebfcmr10981930qtx.420.1663781254252; 
- Wed, 21 Sep 2022 10:27:34 -0700 (PDT)
-X-Google-Smtp-Source: AMsMyM6z1zbB3AmadTPASo43OhmHFT6jpU/kArRwI7nXi7rFyLGyH8LCRodE1M4MYgySQ0l8v7sRqg==
-X-Received: by 2002:a05:622a:414:b0:35c:f297:ebfc with SMTP id
- n20-20020a05622a041400b0035cf297ebfcmr10981905qtx.420.1663781253957; 
- Wed, 21 Sep 2022 10:27:33 -0700 (PDT)
-Received: from localhost ([217.138.198.196]) by smtp.gmail.com with ESMTPSA id
- w23-20020a05620a0e9700b006cbdc9f178esm2196842qkm.25.2022.09.21.10.27.33
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 21 Sep 2022 10:27:33 -0700 (PDT)
-Date: Wed, 21 Sep 2022 13:27:32 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: damien.lemoal@opensource.wdc.com, Pankaj Raghav <p.raghav@samsung.com>
-Message-ID: <YytJhEywBhqcr7MX@redhat.com>
-References: <CGME20220920091120eucas1p2c82c18f552d6298d24547cba2f70b7fc@eucas1p2.samsung.com>
- <20220920091119.115879-1-p.raghav@samsung.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 55E341C05EB9
+ for <dm-devel@redhat.com>; Wed, 21 Sep 2022 17:32:56 +0000 (UTC)
+Received: from mailout2.w1.samsung.com (mailout2.w1.samsung.com
+ [210.118.77.12]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-86-mojkpyWxOdq9RcBtjggDxA-1; Wed, 21 Sep 2022 13:32:51 -0400
+X-MC-Unique: mojkpyWxOdq9RcBtjggDxA-1
+Received: from eucas1p2.samsung.com (unknown [182.198.249.207])
+ by mailout2.w1.samsung.com (KnoxPortal) with ESMTP id
+ 20220921173250euoutp021f35d889e9061be931faadb96d9075d3~W8IXgwxUo0542505425euoutp02X
+ for <dm-devel@redhat.com>; Wed, 21 Sep 2022 17:32:50 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w1.samsung.com
+ 20220921173250euoutp021f35d889e9061be931faadb96d9075d3~W8IXgwxUo0542505425euoutp02X
+Received: from eusmges3new.samsung.com (unknown [203.254.199.245]) by
+ eucas1p2.samsung.com (KnoxPortal) with ESMTP id
+ 20220921173249eucas1p205c67c6120e3314a1324332e3c725528~W8IWuikMW0485404854eucas1p2f;
+ Wed, 21 Sep 2022 17:32:49 +0000 (GMT)
+Received: from eucas1p2.samsung.com ( [182.198.249.207]) by
+ eusmges3new.samsung.com (EUCPMTA) with SMTP id 52.87.19378.1CA4B236; Wed, 21
+ Sep 2022 18:32:49 +0100 (BST)
+Received: from eusmtrp1.samsung.com (unknown [182.198.249.138]) by
+ eucas1p2.samsung.com (KnoxPortal) with ESMTPA id
+ 20220921173248eucas1p23403baa578aa335747fb8a62145a577f~W8IWL9LNd0562805628eucas1p2p;
+ Wed, 21 Sep 2022 17:32:48 +0000 (GMT)
+Received: from eusmgms2.samsung.com (unknown [182.198.249.180]) by
+ eusmtrp1.samsung.com (KnoxPortal) with ESMTP id
+ 20220921173248eusmtrp1119dd3978522ddbd060337edcc92edd2~W8IWLHoqA1591515915eusmtrp1V;
+ Wed, 21 Sep 2022 17:32:48 +0000 (GMT)
+X-AuditID: cbfec7f5-a4dff70000014bb2-1a-632b4ac1bb46
+Received: from eusmtip2.samsung.com ( [203.254.199.222]) by
+ eusmgms2.samsung.com (EUCPMTA) with SMTP id 0A.7B.10862.0CA4B236; Wed, 21
+ Sep 2022 18:32:48 +0100 (BST)
+Received: from CAMSVWEXC01.scsc.local (unknown [106.1.227.71]) by
+ eusmtip2.samsung.com (KnoxPortal) with ESMTPA id
+ 20220921173248eusmtip2825416e5fdc058383a65eb9819720136~W8IWAmJkC2186421864eusmtip20;
+ Wed, 21 Sep 2022 17:32:48 +0000 (GMT)
+Received: from [192.168.8.130] (106.210.248.192) by CAMSVWEXC01.scsc.local
+ (2002:6a01:e347::6a01:e347) with Microsoft SMTP Server (TLS) id 15.0.1497.2;
+ Wed, 21 Sep 2022 18:32:46 +0100
+Message-ID: <fc7d88a5-f65b-3962-22e5-cc393535d66d@samsung.com>
+Date: Wed, 21 Sep 2022 19:32:45 +0200
 MIME-Version: 1.0
-In-Reply-To: <20220920091119.115879-1-p.raghav@samsung.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: [dm-devel] Please further explain Linux's "zoned storage" roadmap
- [was: Re: [PATCH v14 00/13] support zoned block devices with non-power-of-2
- zone sizes]
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.11.0
+To: Mike Snitzer <snitzer@redhat.com>
+From: Pankaj Raghav <p.raghav@samsung.com>
+In-Reply-To: <Yys9sTqCIzxVFwyX@redhat.com>
+X-Originating-IP: [106.210.248.192]
+X-ClientProxiedBy: CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347) To
+ CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347)
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrPKsWRmVeSWpSXmKPExsWy7djP87oHvbSTDT4c4rNYf+oYs8Xqu/1s
+ FtM+/GS2+H32PLNFa/s3Jou972azWqxcfZTJ4sn6WcwWf7vuAcVuaVtc3jWHzWL+sqfsFhPa
+ vjJbrLn5lMXixC1pi7aNXxkdBDwuX/H22DnrLrvH5bOlHptWdbJ5bF5S77H7ZgObx87W+6we
+ 7/ddZfP4vEnOo/1AN1MAVxSXTUpqTmZZapG+XQJXRsuJSSwFLcIVt+9MYGxgbOHvYuTkkBAw
+ kTh3bgtbFyMXh5DACkaJXSv3s0I4XxglGpdeYoJwPjNK9De/ZINpWTHnMSOILSSwnFHiw2E/
+ uKKPPxrYIZzdjBJ91zYAdXBw8ArYSbSvkAVpYBFQlXi29BgTiM0rIChxcuYTFhBbVCBSYs3u
+ s+wgtrBAtsSrC9PAFjALiEvcejKfCWSMCFDvrWkuIOOZBQ4xS6xrew0WZxPQkmjsBGvlBDIP
+ vvzKAtGqKdG6/Tc7hC0vsf3tHGaI+5UlZt6cCmXXSqw9dgbsZAmBR5wSv873QD3pInG28yQj
+ hC0s8er4FnYIW0bi9OQeFgi7WuLpjd/MEM0twBDauR7sXwkBa4m+MzkQNY4S565uYocI80nc
+ eCsIcQ+fxKRt05knMKrOQgqJWUg+noXkhVlIXljAyLKKUTy1tDg3PbXYOC+1XK84Mbe4NC9d
+ Lzk/dxMjMA2e/nf86w7GFa8+6h1iZOJgPMQowcGsJMI7+45mshBvSmJlVWpRfnxRaU5q8SFG
+ aQ4WJXFethlayUIC6YklqdmpqQWpRTBZJg5OqQamlun7tzMdF9oxaYZZlnzYkncdod/m51V4
+ btu54+2p8HLrC/f1+m8cyV7kUf/64ErVmdM4PlbOWHdi7buJX/JCe5s/zrTh+c+qsE/0PMec
+ FbLrivoPG/rPlYpk/PvX9ON79eveJ+ICjqpMcWt71qJ8qO+Wg4OT5ocSle2rWt4VXA1bV6nE
+ 7To/6L7O7KDo+6bikmaGVzeZTIrN5j8vs+Bj+7PuWWKiJR/C/H7PeHr/QHDXVLEwhnWMXR9F
+ hPr0Io9c+3Rm3Y5Hro4zb2e/0WZyPz+L52T43CDr3t5rr5X4BBYtFb9kMvGfnfyzb0oBx53F
+ T002eWetZXX6i/La3zLe1xand6/zYL2v13Odq+THCSWW4oxEQy3mouJEAGmuP8jyAwAA
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFprKKsWRmVeSWpSXmKPExsVy+t/xe7oHvLSTDX62aFisP3WM2WL13X42
+ i2kffjJb/D57ntmitf0bk8Xed7NZLVauPspk8WT9LGaLv133gGK3tC0u75rDZjF/2VN2iwlt
+ X5kt1tx8ymJx4pa0RdvGr4wOAh6Xr3h77Jx1l93j8tlSj02rOtk8Ni+p99h9s4HNY2frfVaP
+ 9/uusnl83iTn0X6gmymAK0rPpii/tCRVISO/uMRWKdrQwkjP0NJCz8jEUs/Q2DzWyshUSd/O
+ JiU1J7MstUjfLkEvo+XEJJaCFuGK23cmMDYwtvB3MXJySAiYSKyY85ixi5GLQ0hgKaPE3et/
+ WSESMhKfrnxkh7CFJf5c62KDKPrIKPH+6FVmCGc3o8S2B/OAqjg4eAXsJNpXyII0sAioSjxb
+ eowJxOYVEJQ4OfMJC4gtKhAp8XBZE1hcWCBb4tWFaYwgNrOAuMStJ/OZQMaIAPXemuYCMp5Z
+ 4BCzxLq210wQu+4xSmzufc0GUsQmoCXR2Al2HCeQefDlVxaIOZoSrdt/s0PY8hLb385hhnhA
+ WWLmzalQdq3Eq/u7GScwis5Cct4sJGfMQjJqFpJRCxhZVjGKpJYW56bnFhvpFSfmFpfmpesl
+ 5+duYgSmj23Hfm7Zwbjy1Ue9Q4xMHIyHGCU4mJVEeGff0UwW4k1JrKxKLcqPLyrNSS0+xGgK
+ DKOJzFKiyfnABJZXEm9oZmBqaGJmaWBqaWasJM7rWdCRKCSQnliSmp2aWpBaBNPHxMEp1cDk
+ K6PW+rD/4XSJvANHuOwzNaXkbr7S3JDJtf/hrVPCPDPYJ+bsMw1WvSDQeC5+CY8MG+NbVXmH
+ 61PmGh2YlWG83Id5c5/T/IgPBeHzrVifWz9ZbClnPPdAmInT4XD7yLTfoQoszSsjNlUcWp3t
+ dC5Yys8yo1bwBsOPJZ/LuA6GZbcVuf9+9+yJX6ZlTrEDm9TWD5rNLT2fTzqdZF66bkPY8o65
+ qaFs5mm55REn4s7UND6c2pY+a+fKtUxGoTKpEV1K/35nvRA+89IzWdv5tGP1P5fpXq4z9FO4
+ nt1/rjybeUKB+PHXLkd9tPkj395alNSYwGN6O2PJ9OWvNl7fPuVxR1eq1R33f3tu8xlmPVBi
+ Kc5INNRiLipOBAATeEQ9qAMAAA==
+X-CMS-MailID: 20220921173248eucas1p23403baa578aa335747fb8a62145a577f
+X-Msg-Generator: CA
+X-RootMTR: 20220920091134eucas1p275585b70fab48ba1f19eb5d2cc515b6d
+X-EPHeader: CA
+CMS-TYPE: 201P
+X-CMS-RootMailID: 20220920091134eucas1p275585b70fab48ba1f19eb5d2cc515b6d
+References: <20220920091119.115879-1-p.raghav@samsung.com>
+ <CGME20220920091134eucas1p275585b70fab48ba1f19eb5d2cc515b6d@eucas1p2.samsung.com>
+ <20220920091119.115879-14-p.raghav@samsung.com>
+ <Yys9sTqCIzxVFwyX@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: Re: [dm-devel] [PATCH v14 13/13] dm: add power-of-2 target for
+ zoned devices with non power-of-2 zone sizes
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -106,102 +164,97 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, bvanassche@acm.org, pankydev8@gmail.com,
- gost.dev@samsung.com, snitzer@kernel.org, linux-kernel@vger.kernel.org,
+Cc: axboe@kernel.dk, Damien Le Moal <damien.lemoal@wdc.com>, bvanassche@acm.org,
+ pankydev8@gmail.com, gost.dev@samsung.com, damien.lemoal@opensource.wdc.com,
+ snitzer@kernel.org, linux-kernel@vger.kernel.org,
  linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
- dm-devel@redhat.com, matias.bjorling@wdc.com, Johannes.Thumshirn@wdc.com,
- jaegeuk@kernel.org, hch@lst.de, agk@redhat.com
+ dm-devel@redhat.com, matias.bjorling@wdc.com,
+ Johannes Thumshirn <johannes.thumshirn@wdc.com>, jaegeuk@kernel.org,
+ hch@lst.de, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Sep 20 2022 at  5:11P -0400,
-Pankaj Raghav <p.raghav@samsung.com> wrote:
-
-> - Background and Motivation:
+>> +/*
+>> + * This target works on the complete zoned device. Partial mapping is not
+>> + * supported.
+>> + * Construct a zoned po2 logical device: <dev-path>
+>> + */
+>> +static int dm_po2z_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>> +{
+>> +	struct dm_po2z_target *dmh = NULL;
+>> +	int ret;
+>> +	sector_t zone_size;
+>> +	sector_t dev_capacity;
+>> +
+>> +	if (argc != 1)
+>> +		return -EINVAL;
+>> +
+>> +	dmh = kmalloc(sizeof(*dmh), GFP_KERNEL);
+>> +	if (!dmh)
+>> +		return -ENOMEM;
+>> +
+>> +	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
+>> +			    &dmh->dev);
+>> +	if (ret) {
+>> +		ti->error = "Device lookup failed";
+>> +		goto bad;
+>> +	}
+>> +
+>> +	if (!bdev_is_zoned(dmh->dev->bdev)) {
+>> +		DMERR("%pg is not a zoned device", dmh->dev->bdev);
+>> +		ret = -EINVAL;
+>> +		goto bad;
+>> +	}
+>> +
+>> +	zone_size = bdev_zone_sectors(dmh->dev->bdev);
+>> +	dev_capacity = get_capacity(dmh->dev->bdev->bd_disk);
+>> +	if (ti->len != dev_capacity) {
+>> +		DMERR("%pg Partial mapping of the target is not supported",
+>> +		      dmh->dev->bdev);
+>> +		ret = -EINVAL;
+>> +		goto bad;
+>> +	}
+>> +
+>> +	if (is_power_of_2(zone_size))
+>> +		DMWARN("%pg: underlying device has a power-of-2 number of sectors per zone",
+>> +		       dmh->dev->bdev);
+>> +
+>> +	dmh->zone_size = zone_size;
+>> +	dmh->zone_size_po2 = 1 << get_count_order_long(zone_size);
+>> +	dmh->zone_size_po2_shift = ilog2(dmh->zone_size_po2);
+>> +	dmh->zone_size_diff = dmh->zone_size_po2 - dmh->zone_size;
+>> +	ti->private = dmh;
+>> +	ti->max_io_len = dmh->zone_size_po2;
+>> +	dmh->nr_zones = npo2_zone_no(dmh, ti->len);
+>> +	ti->len = dmh->zone_size_po2 * dmh->nr_zones;
+>> +	return 0;
+>> +
+>> +bad:
+>> +	kfree(dmh);
+>> +	return ret;
+>> +}
 > 
-> The zone storage implementation in Linux, introduced since v4.10, first
-> targetted SMR drives which have a power of 2 (po2) zone size alignment
-> requirement. The po2 zone size was further imposed implicitly by the
-> block layer's blk_queue_chunk_sectors(), used to prevent IO merging
-> across chunks beyond the specified size, since v3.16 through commit
-> 762380ad9322 ("block: add notion of a chunk size for request merging").
-> But this same general block layer po2 requirement for blk_queue_chunk_sectors()
-> was removed on v5.10 through commit 07d098e6bbad ("block: allow 'chunk_sectors'
-> to be non-power-of-2").
+> This error handling still isn't correct.  You're using
+> dm_get_device().  If you return early due to error, _after_
+> dm_get_device(), you need to dm_put_device().
 > 
-> NAND, which is the media used in newer zoned storage devices, does not
-> naturally align to po2. In these devices, zone capacity(cap) is not the
-> same as the po2 zone size. When the zone cap != zone size, then unmapped
-> LBAs are introduced to cover the space between the zone cap and zone size.
-> po2 requirement does not make sense for these type of zone storage devices.
-> This patch series aims to remove these unmapped LBAs for zoned devices when
-> zone cap is npo2. This is done by relaxing the po2 zone size constraint
-> in the kernel and allowing zoned device with npo2 zone sizes if zone cap
-> == zone size.
+> Basically you need a new label above "bad:" that calls dm_put_device()
+> then falls through to "bad:".  Or you need to explcitly call
+> dm_put_device() before "goto bad;" in the if (ti->len != dev_capacity)
+> error branch.
 > 
-> Removing the po2 requirement from zone storage should be possible
-> now provided that no userspace regression and no performance regressions are
-> introduced. Stop-gap patches have been already merged into f2fs-tools to
-> proactively not allow npo2 zone sizes until proper support is added [1].
-> 
-> There were two efforts previously to add support to npo2 devices: 1) via
-> device level emulation [2] but that was rejected with a final conclusion
-> to add support for non po2 zoned device in the complete stack[3] 2)
-> adding support to the complete stack by removing the constraint in the
-> block layer and NVMe layer with support to btrfs, zonefs, etc which was
-> rejected with a conclusion to add a dm target for FS support [0]
-> to reduce the regression impact.
-> 
-> This series adds support to npo2 zoned devices in the block and nvme
-> layer and a new **dm target** is added: dm-po2zoned-target. This new
-> target will be initially used for filesystems such as btrfs and
-> f2fs until native npo2 zone support is added.
 
-As this patchset nears the point of being "ready for merge" and DM's
-"zoned" oriented targets are multiplying, I need to understand: where
-are we collectively going?  How long are we expecting to support the
-"stop-gap zoned storage" layers we've constructed?
+Ah. I naively assumed dtr will be called to cleanup but not in this case as
+the ctr itself fails.
 
-I know https://zonedstorage.io/docs/introduction exists... but it
-_seems_ stale given the emergence of ZNS and new permutations of zoned
-hardware. Maybe that isn't quite fair (it does cover A LOT!) but I'm
-still left wanting (e.g. "bring it all home for me!")...
-
-Damien, as the most "zoned storage" oriented engineer I know, can you
-please kick things off by shedding light on where Linux is now, and
-where it's going, for "zoned storage"?
-
-To give some additional context to help me when you answer: I'm left
-wondering what, if any, role dm-zoned has to play moving forward given
-ZNS is "the future" (and yeah "the future" is now but...)?  E.g.: Does
-it make sense to stack dm-zoned ontop of dm-po2zoned!?
-
-Yet more context: When I'm asked to add full-blown support for
-dm-zoned to RHEL my gut is "please no, why!?".  And if we really
-should add dm-zoned is dm-po2zoned now also a requirement (to support
-non-power-of-2 ZNS devices in our never-ending engineering of "zoned
-storage" compatibility stop-gaps)?
-
-In addition, it was my understanding that WDC had yet another zoned DM
-target called "dm-zap" that is for ZNS based devices... It's all a bit
-messy in my head (that's on me for not keeping up, but I think we need
-a recap!)
-
-So please help me, and others, become more informed as quickly as
-possible! ;)
-
-Thanks,
-Mike
-
-ps. I'm asking all this in the open on various Linux mailing lists
-because it doesn't seem right to request a concall to inform only
-me... I think others may need similar "zoned storage" help.
+I will add an extra label on top of `bad` and use it for errors that
+happens after `dm_get_device`. Thanks for pointing it out Mike.
 
 --
 dm-devel mailing list
