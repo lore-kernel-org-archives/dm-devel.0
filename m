@@ -1,159 +1,104 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2B4D6C54EE9
-	for <dm-devel@archiver.kernel.org>; Thu, 22 Sep 2022 11:53:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D35C1C54EE9
+	for <dm-devel@archiver.kernel.org>; Thu, 22 Sep 2022 18:29:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1663847598;
+	s=mimecast20190719; t=1663871391;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=urlemyTqdcDV1Zdi4b+cY4kD2D5JtWUFd9GYdTRkp9w=;
-	b=iGVxuQAEGtv+YMAJAi7qfUjDGswSA0alPW9AhAIE+JCGtzBuctD0CGxGGdy3G5NPexUWCT
-	8M9VsyqKBomLbd9EXpIixuciIBVDBdBK/O6litePZKhFyZv7QjV9Z59fF1e1ptVs2yJHQv
-	qy2ZFFdMIiN/DOQssFK2mq2fQBYWYPE=
+	bh=9CiGtmCyci5rX9MspWo3wLYZPLnVZ64Os0U0OKta/eA=;
+	b=TVcyT5nIs/pr/epNIk1Cim1Znx8KeMQfXQJbndU3xRLdq9O6gbO67CAN9rvaMrvjBa99fZ
+	LvMaaIIsRGB25YxhdQVEjkv+UvAFGPAUs7jLj9KCbO8aRdnZZ7zNh2YWnsRl07jw/GG4R3
+	m8yESMm8RRLWY8YVlDVxsZATRevC5YU=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-324-StfLniyfP2y7raxdr8J39A-1; Thu, 22 Sep 2022 07:53:15 -0400
-X-MC-Unique: StfLniyfP2y7raxdr8J39A-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-641-txaBZ6WYN9ukszlMVAXVnw-1; Thu, 22 Sep 2022 14:29:50 -0400
+X-MC-Unique: txaBZ6WYN9ukszlMVAXVnw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7016C1C07555;
-	Thu, 22 Sep 2022 11:53:13 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F137F29AA384;
+	Thu, 22 Sep 2022 18:29:47 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 53148140EBF4;
-	Thu, 22 Sep 2022 11:53:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E000A492B05;
+	Thu, 22 Sep 2022 18:29:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 134B019465B5;
-	Thu, 22 Sep 2022 11:53:10 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B787719465B6;
+	Thu, 22 Sep 2022 18:29:44 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A5FBE19465A4
- for <dm-devel@listman.corp.redhat.com>; Thu, 22 Sep 2022 11:53:09 +0000 (UTC)
+ ESMTP id 503BD19465A4
+ for <dm-devel@listman.corp.redhat.com>; Thu, 22 Sep 2022 18:29:43 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 90BF8140EBF5; Thu, 22 Sep 2022 11:53:09 +0000 (UTC)
+ id 0337F1121315; Thu, 22 Sep 2022 18:29:43 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 892D8140EBF4
- for <dm-devel@redhat.com>; Thu, 22 Sep 2022 11:53:09 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id EF8211121314
+ for <dm-devel@redhat.com>; Thu, 22 Sep 2022 18:29:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6E755811E87
- for <dm-devel@redhat.com>; Thu, 22 Sep 2022 11:53:09 +0000 (UTC)
-Received: from mailout1.w1.samsung.com (mailout1.w1.samsung.com
- [210.118.77.11]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-298-tpUxAWucOC-crtmaS-VUiA-1; Thu, 22 Sep 2022 07:53:07 -0400
-X-MC-Unique: tpUxAWucOC-crtmaS-VUiA-1
-Received: from eucas1p2.samsung.com (unknown [182.198.249.207])
- by mailout1.w1.samsung.com (KnoxPortal) with ESMTP id
- 20220922115306euoutp0163d8f01a924cbe2353836840df5994a3~XLJCNtyx71214712147euoutp01n
- for <dm-devel@redhat.com>; Thu, 22 Sep 2022 11:53:06 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.w1.samsung.com
- 20220922115306euoutp0163d8f01a924cbe2353836840df5994a3~XLJCNtyx71214712147euoutp01n
-Received: from eusmges2new.samsung.com (unknown [203.254.199.244]) by
- eucas1p1.samsung.com (KnoxPortal) with ESMTP id
- 20220922115306eucas1p12b7db3f20df086bdff2ff3400cd52ca1~XLJB7_SLs2018120181eucas1p1Y;
- Thu, 22 Sep 2022 11:53:06 +0000 (GMT)
-Received: from eucas1p2.samsung.com ( [182.198.249.207]) by
- eusmges2new.samsung.com (EUCPMTA) with SMTP id DF.89.07817.2AC4C236; Thu, 22
- Sep 2022 12:53:06 +0100 (BST)
-Received: from eusmtrp1.samsung.com (unknown [182.198.249.138]) by
- eucas1p1.samsung.com (KnoxPortal) with ESMTPA id
- 20220922115305eucas1p1b862ce6603248112d2b0836f37f922f2~XLJBZmEFt3156431564eucas1p1O;
- Thu, 22 Sep 2022 11:53:05 +0000 (GMT)
-Received: from eusmgms1.samsung.com (unknown [182.198.249.179]) by
- eusmtrp1.samsung.com (KnoxPortal) with ESMTP id
- 20220922115305eusmtrp15dccd4d9687bb0f6a554d7a41d80da06~XLJBYjnIZ2733027330eusmtrp1l;
- Thu, 22 Sep 2022 11:53:05 +0000 (GMT)
-X-AuditID: cbfec7f4-8abff70000011e89-3b-632c4ca25f3a
-Received: from eusmtip2.samsung.com ( [203.254.199.222]) by
- eusmgms1.samsung.com (EUCPMTA) with SMTP id 6F.97.07473.1AC4C236; Thu, 22
- Sep 2022 12:53:05 +0100 (BST)
-Received: from CAMSVWEXC01.scsc.local (unknown [106.1.227.71]) by
- eusmtip2.samsung.com (KnoxPortal) with ESMTPA id
- 20220922115305eusmtip2f92eefce3c8f8d5f30b16cc3aebb9e87~XLJBOExt23183331833eusmtip2e;
- Thu, 22 Sep 2022 11:53:05 +0000 (GMT)
-Received: from [192.168.8.130] (106.210.248.168) by CAMSVWEXC01.scsc.local
- (2002:6a01:e347::6a01:e347) with Microsoft SMTP Server (TLS) id 15.0.1497.2;
- Thu, 22 Sep 2022 12:53:03 +0100
-Message-ID: <b393c127-b773-8296-a559-83606077aa1c@samsung.com>
-Date: Thu, 22 Sep 2022 13:53:02 +0200
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CC3DE833941
+ for <dm-devel@redhat.com>; Thu, 22 Sep 2022 18:29:42 +0000 (UTC)
+Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
+ [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-484-b2gwPX9oOZKNlEXtVRpcwA-1; Thu, 22 Sep 2022 14:29:41 -0400
+X-MC-Unique: b2gwPX9oOZKNlEXtVRpcwA-1
+Received: by mail-qk1-f198.google.com with SMTP id
+ l15-20020a05620a28cf00b006b46997c070so7311862qkp.20
+ for <dm-devel@redhat.com>; Thu, 22 Sep 2022 11:29:41 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=in-reply-to:content-disposition:mime-version:references:message-id
+ :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date;
+ bh=S6tJUCgYaZdA91WGecG3Omdxk6C0Sput3VYlk3b1RhA=;
+ b=e//TNedIoGIAetI+P7jCVFjSqcjATYMaIECqDz61Y1vMbRIvQ9q/ErZP8lFPEw7+xZ
+ 8i7kzJqNqfDc4ybTRqGrCAi7hZCHR4fE2h0PsNg7vwZcTzbAJzX4mJrvT26GLfr9gYlL
+ nBUKcZzsggSmXasclzKDTQ/Y+ge6UdiNIDWVwkDHbaUUf3D56u1DG/F9b0coTfPbG6ED
+ 4I7D3aRmVnTLZ81aLtitaobWlxHbaHo5o3IGZOY+iAfMQbzTRgHTUBNSPGV9y9/MYZj/
+ vBQcfgyOEmO5fAg3IhwOpXjMEDXERpjPlJbDwOA/2PZMlg60Cd8NUDWXnbibJ0F/9Vcy
+ temg==
+X-Gm-Message-State: ACrzQf3jQoXaNsHKCzlwQcQ06XLswosQZGQDrEp+xLlPZTWDpjSlmr9t
+ jMkUJffx3yfxY2RsxF1PQLJdR0yMqy6pt3/jdYSSa2ljQYqhtXH4Mc+IMBICTma1xogEg3c51AW
+ EYltF7b+6++5o6pA=
+X-Received: by 2002:a05:6214:29e4:b0:4ad:8c96:178b with SMTP id
+ jv4-20020a05621429e400b004ad8c96178bmr1931445qvb.29.1663871380575; 
+ Thu, 22 Sep 2022 11:29:40 -0700 (PDT)
+X-Google-Smtp-Source: AMsMyM5RkWlQl2NY4VBbaFM/3H818tEmhHbxLx0HPIsYfjbny4kxcAOERW2vdVGtdqk3/xGNqUrABA==
+X-Received: by 2002:a05:6214:29e4:b0:4ad:8c96:178b with SMTP id
+ jv4-20020a05621429e400b004ad8c96178bmr1931418qvb.29.1663871380242; 
+ Thu, 22 Sep 2022 11:29:40 -0700 (PDT)
+Received: from bfoster (c-24-61-119-116.hsd1.ma.comcast.net. [24.61.119.116])
+ by smtp.gmail.com with ESMTPSA id
+ n12-20020a05620a294c00b006ce63901d27sm4470061qkp.4.2022.09.22.11.29.38
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Thu, 22 Sep 2022 11:29:39 -0700 (PDT)
+Date: Thu, 22 Sep 2022 14:29:36 -0400
+From: Brian Foster <bfoster@redhat.com>
+To: Sarthak Kukreti <sarthakkukreti@chromium.org>
+Message-ID: <YyypkOr3l2lx4Odi@bfoster>
+References: <20220915164826.1396245-1-sarthakkukreti@google.com>
+ <20220915164826.1396245-5-sarthakkukreti@google.com>
+ <YyRkd8YAH1lal8/N@bfoster>
+ <CAG9=OMNL1Z3DiO-usdH0k90NDsDkDQ7A7CHc4Nu6MCXKNKjWdw@mail.gmail.com>
+ <YyswI57JH7gcs9+S@bfoster>
+ <CAG9=OMPEoShYMx6A+p97-tw4MuLpgOEpy7aFs5CH6wTedptALQ@mail.gmail.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.11.0
-To: Damien Le Moal <damien.lemoal@opensource.wdc.com>, Mike Snitzer
- <snitzer@redhat.com>, <axboe@kernel.dk>, <hch@lst.de>, Keith Busch
- <kbusch@kernel.org>
-From: Pankaj Raghav <p.raghav@samsung.com>
-In-Reply-To: <7dd9dbc0-b08b-fa47-5452-d448d86ca56b@opensource.wdc.com>
-X-Originating-IP: [106.210.248.168]
-X-ClientProxiedBy: CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347) To
- CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347)
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFnrMKsWRmVeSWpSXmKPExsWy7djP87qLfHSSDfY2CVusP3WM2WL13X42
- i2kffjJb/D57ntli77vZrBYrVx9lsniyfhazxd+ue0wWkw5dY7TYe0vb4vKuOWwW85c9ZbeY
- 0PaV2WLNzacsFiduSVu0bfzK6CDgcfmKt8fOWXfZPS6fLfXYtKqTzWPzknqP3Tcb2Dx2tt5n
- 9Xi/7yqbx+dNch7tB7qZAriiuGxSUnMyy1KL9O0SuDJuf/nHUtDCV/Fk2wuWBsap3F2MnBwS
- AiYSf1Z/Z+li5OIQEljBKNHZcYoRwvnCKHHz1Cc2COczo8SSJZ1sMC0XmrcyQySWM0pM/NTB
- Dle1c8ZvJghnN6PEgwO/WUBaeAXsJP7vmc0KYrMIqEo8mnGTGSIuKHFy5hOwGlGBSIk1u8+C
- TRIWmM8oca39IFiCWUBc4taT+WBTRQTmMUrMuneQFSJxgEli3iu/LkYODjYBLYnGTnaQMKeA
- m8S8Z/vYIEo0JVq3/2aHsOUltr+dwwzxg7LE8tMzoexaibXHzoAtlhB4xilx6+caqISLxLmT
- 75kgbGGJV8e3sEPYMhKnJ/ewQNjVEk9v/GaGaG5hlOjfuZ4N5CAJAWuJvjM5EDWOEg/fLmGG
- CPNJ3HgrCHEPn8SkbdOZJzCqzkIKi1lIXp6F5IVZSF5YwMiyilE8tbQ4Nz212CgvtVyvODG3
- uDQvXS85P3cTIzAdnv53/MsOxuWvPuodYmTiYDzEKMHBrCTCO/uOZrIQb0piZVVqUX58UWlO
- avEhRmkOFiVxXrYZWslCAumJJanZqakFqUUwWSYOTqkGpt2TX++Q91p1WeVcXLx4krnXYlOx
- 5SJe0zbWN2krM4ebNekwmq8RzFtzWOTOom/uPUc/yirLfE2/avolekKf9roW7cc2EQtbJ/NG
- MKtOEtr0Y3vI/+TlYXUT/3r/smQTaXvMtYerf83xadWPlEo2J2Z1ZSpanLbZ8kumdIcCC2Nj
- jYWD6vvol2lSk67OuHXsfeyN8K/GEx9fmeliw2Iau2jiHaO7N56Gzt+1+eeDc/+iVQ97rHYI
- qXKtSp3wbIW1/dZN9+sW/RKzrrJdOemgTOD5Cu9VfYFT3My9fol8WNQrIHpD02HXIrkwxbup
- i0M+cO7N5So19Tnu2HhgwUKve01/JMN0Djo1up1k+ak+VYmlOCPRUIu5qDgRAPO4N0/2AwAA
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFprJKsWRmVeSWpSXmKPExsVy+t/xe7oLfXSSDXbv0rVYf+oYs8Xqu/1s
- FtM+/GS2+H32PLPF3nezWS1Wrj7KZPFk/Sxmi79d95gsJh26xmix95a2xeVdc9gs5i97ym4x
- oe0rs8Wam09ZLE7ckrZo2/iV0UHA4/IVb4+ds+6ye1w+W+qxaVUnm8fmJfUeu282sHnsbL3P
- 6vF+31U2j8+b5DzaD3QzBXBF6dkU5ZeWpCpk5BeX2CpFG1oY6RlaWugZmVjqGRqbx1oZmSrp
- 29mkpOZklqUW6dsl6GXc/vKPpaCFr+LJthcsDYxTubsYOTkkBEwkLjRvZe5i5OIQEljKKLGw
- 6yELREJG4tOVj+wQtrDEn2tdbBBFHxklHny+zwLh7GaUWHPxHytIFa+AncT/PbPBbBYBVYlH
- M24yQ8QFJU7OfAI2VVQgUuLhsiYmkGZhgbmMEoe+LAJLMAuIS9x6Mh8sISIwj1Fi1r2DrCAO
- s8A+JokrX89CXfiCUeLJ20+MXYwcHGwCWhKNnWAHcgq4Scx7to8NYpKmROv23+wQtrzE9rdz
- mCGeUJZYfnomlF0r8er+bsYJjKKzkFw4C8khs5CMmoVk1AJGllWMIqmlxbnpucWGesWJucWl
- eel6yfm5mxiBaWTbsZ+bdzDOe/VR7xAjEwfjIUYJDmYlEd7ZdzSThXhTEiurUovy44tKc1KL
- DzGaAoNpIrOUaHI+MJHllcQbmhmYGpqYWRqYWpoZK4nzehZ0JAoJpCeWpGanphakFsH0MXFw
- SjUwGe5TfJyhXjxpTY3dJHXF2NJIw/Ds8uNrnXhF/PjmLDTNyK0rNXl5lS3k5sopU193fDAo
- dJ7VJyCc66K6YjaD/Pktd56ESaq9nZmt+fDZEslH6V+iO2QnfzGf7jpB5cZ7U9GMW5Unfk7d
- vZpxt8Eu1XUrD/331Mmr83Bl6JMouDt30aHymbfFs0r/Pos4r6xyxU0/ZVP+ojPMZ51PcmsU
- Xt7ddzh1VsPFrIdReusPP1qkqPFE9uHMNQJmh+xlWwPc53Nczpm5urtfIzJr4WH3Y5GhBxfU
- spd0rct/3jDHi1kgtZ1t9hY/Rb8b73MFpXb9aipNWeYh53thU5bqVDPDFYpqJgee7Z7iJqj6
- 5IasEktxRqKhFnNRcSIAtXBZ3qwDAAA=
-X-CMS-MailID: 20220922115305eucas1p1b862ce6603248112d2b0836f37f922f2
-X-Msg-Generator: CA
-X-RootMTR: 20220920091120eucas1p2c82c18f552d6298d24547cba2f70b7fc
-X-EPHeader: CA
-CMS-TYPE: 201P
-X-CMS-RootMailID: 20220920091120eucas1p2c82c18f552d6298d24547cba2f70b7fc
-References: <CGME20220920091120eucas1p2c82c18f552d6298d24547cba2f70b7fc@eucas1p2.samsung.com>
- <20220920091119.115879-1-p.raghav@samsung.com> <YytJhEywBhqcr7MX@redhat.com>
- <7dd9dbc0-b08b-fa47-5452-d448d86ca56b@opensource.wdc.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: Re: [dm-devel] Please further explain Linux's "zoned storage"
- roadmap [was: Re: [PATCH v14 00/13] support zoned block devices with
- non-power-of-2 zone sizes]
+In-Reply-To: <CAG9=OMPEoShYMx6A+p97-tw4MuLpgOEpy7aFs5CH6wTedptALQ@mail.gmail.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH RFC 4/8] fs: Introduce FALLOC_FL_PROVISION
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -165,55 +110,221 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: bvanassche@acm.org, pankydev8@gmail.com, gost.dev@samsung.com,
- snitzer@kernel.org, linux-kernel@vger.kernel.org,
- linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
- dm-devel@redhat.com, matias.bjorling@wdc.com, Johannes.Thumshirn@wdc.com,
- jaegeuk@kernel.org, agk@redhat.com
+Cc: Jens Axboe <axboe@kernel.dk>, Gwendal Grignou <gwendal@google.com>,
+ Theodore Ts'o <tytso@mit.edu>, "Michael S . Tsirkin" <mst@redhat.com>,
+ Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
+ Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
+ virtualization@lists.linux-foundation.org, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, Andreas Dilger <adilger.kernel@dilger.ca>,
+ Daniil Lunev <dlunev@google.com>, Stefan Hajnoczi <stefanha@redhat.com>,
+ Paolo Bonzini <pbonzini@redhat.com>, linux-ext4@vger.kernel.org,
+ Evan Green <evgreen@google.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Thanks a lot Damien for the summary. Your feedback has made this series
-much better.
-
-> Pankaj patch series is all about supporting ZNS devices that have a zone
-> size that is not a power of 2 number of LBAs as some vendors want to
-> produce such drives. There is no such move happening in the SMR world as
-> all users are happy with the current zone sizes which match the kernel
-> support (which currently requires power-of-2 number of LBAs for the zone
-> size).
+On Thu, Sep 22, 2022 at 01:04:33AM -0700, Sarthak Kukreti wrote:
+> On Wed, Sep 21, 2022 at 8:39 AM Brian Foster <bfoster@redhat.com> wrote:
+> >
+> > On Fri, Sep 16, 2022 at 02:02:31PM -0700, Sarthak Kukreti wrote:
+> > > On Fri, Sep 16, 2022 at 4:56 AM Brian Foster <bfoster@redhat.com> wrote:
+> > > >
+> > > > On Thu, Sep 15, 2022 at 09:48:22AM -0700, Sarthak Kukreti wrote:
+> > > > > From: Sarthak Kukreti <sarthakkukreti@chromium.org>
+> > > > >
+> > > > > FALLOC_FL_PROVISION is a new fallocate() allocation mode that
+> > > > > sends a hint to (supported) thinly provisioned block devices to
+> > > > > allocate space for the given range of sectors via REQ_OP_PROVISION.
+> > > > >
+> > > > > Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
+> > > > > ---
+> > > > >  block/fops.c                | 7 ++++++-
+> > > > >  include/linux/falloc.h      | 3 ++-
+> > > > >  include/uapi/linux/falloc.h | 8 ++++++++
+> > > > >  3 files changed, 16 insertions(+), 2 deletions(-)
+> > > > >
+> > > > > diff --git a/block/fops.c b/block/fops.c
+> > > > > index b90742595317..a436a7596508 100644
+> > > > > --- a/block/fops.c
+> > > > > +++ b/block/fops.c
+> > > > ...
+> > > > > @@ -661,6 +662,10 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
+> > > > >               error = blkdev_issue_discard(bdev, start >> SECTOR_SHIFT,
+> > > > >                                            len >> SECTOR_SHIFT, GFP_KERNEL);
+> > > > >               break;
+> > > > > +     case FALLOC_FL_PROVISION:
+> > > > > +             error = blkdev_issue_provision(bdev, start >> SECTOR_SHIFT,
+> > > > > +                                            len >> SECTOR_SHIFT, GFP_KERNEL);
+> > > > > +             break;
+> > > > >       default:
+> > > > >               error = -EOPNOTSUPP;
+> > > > >       }
+> > > >
+> > > > Hi Sarthak,
+> > > >
+> > > > Neat mechanism.. I played with something very similar in the past (that
+> > > > was much more crudely hacked up to target dm-thin) to allow filesystems
+> > > > to request a thinly provisioned device to allocate blocks and try to do
+> > > > a better job of avoiding inactivation when overprovisioned.
+> > > >
+> > > > One thing I'm a little curious about here.. what's the need for a new
+> > > > fallocate mode? On a cursory glance, the provision mode looks fairly
+> > > > analogous to normal (mode == 0) allocation mode with the exception of
+> > > > sending the request down to the bdev. blkdev_fallocate() already maps
+> > > > some of the logical falloc modes (i.e. punch hole, zero range) to
+> > > > sending write sames or discards, etc., and it doesn't currently look
+> > > > like it supports allocation mode, so could it not map such requests to
+> > > > the underlying REQ_OP_PROVISION op?
+> > > >
+> > > > I guess the difference would be at the filesystem level where we'd
+> > > > probably need to rely on a mount option or some such to control whether
+> > > > traditional fallocate issues provision ops (like you've implemented for
+> > > > ext4) vs. the specific falloc command, but that seems fairly consistent
+> > > > with historical punch hole/discard behavior too. Hm? You might want to
+> > > > cc linux-fsdevel in future posts in any event to get some more feedback
+> > > > on how other filesystems might want to interact with such a thing.
+> > > >
+> > > Thanks for the feedback!
+> > > Argh, I completely forgot that I should add linux-fsdevel. Let me
+> > > re-send this with linux-fsdevel cc'd
+> > >
+> > > There's a slight distinction is that the current filesystem-level
+> > > controls are usually for default handling, but userspace can still
+> > > call the relevant functions manually if they need to. For example, for
+> > > ext4, the 'discard' mount option dictates whether free blocks are
+> > > discarded, but it doesn't set the policy to allow/disallow userspace
+> > > from manually punching holes into files even if the mount opt is
+> > > 'nodiscard'. FALLOC_FL_PROVISION is similar in that regard; it adds a
+> > > manual mechanism for users to provision the files' extents, that is
+> > > separate from the filesystems' default handling of provisioning files.
+> > >
+> >
+> > What I'm trying to understand is why not let blkdev_fallocate() issue a
+> > provision based on the default mode (i.e. mode == 0) of fallocate(),
+> > which is already defined to mean "perform allocation?" It currently
+> > issues discards or write zeroes based on variants of
+> > FALLOC_FL_PUNCH_HOLE without the need for a separate FALLOC_FL_DISCARD
+> > mode, for example.
+> >
+> It's mostly to keep the block device fallocate() semantics in-line and
+> consistent with the file-specific modes: I added the separate
+> filesystem fallocate() mode under the assumption that we'd want to
+> keep the traditional handling for filesystems intact with (mode == 0).
+> And for block devices, I didn't map the requests to mode == 0 so that
+> it's less confusing to describe (eg. mode == 0 on block devices will
+> issue provision; mode == 0 on files will not). It would complicate
+> loopback devices, for instance; if the loop device is backed by a
+> file, it would need to use (mode == FALLOC_FL_PROVISION) but if the
+> loop device is backed by another block device, then the fallocate()
+> call would need to switch to (mode == 0).
 > 
-> I do not think we have yet reached a consensus on if we really want to
-> accept any zone size for zoned storage. I personally am not a big fan of
-> removing the existing constraint as that makes the code somewhat heavier
-> (multiplication & divisions instead of bit shifts) without introducing any
-> benefit to the user that I can see (or agree with). And there is also a
-> risk of forcing onto the users to redesign/change their code to support
-> different devices in the same system. That is never nice to fragment
-> support like this for the same device class. This is why several people,
-> including me, requested something like dm-po2zoned, to avoid breaking user
-> applications if non-power-of-2 zone size drives support is merged. Better
-> than nothing for sure, but not ideal either. That is only my opinion.
-> There are different opinions out there.
 
-I appreciate that you have explained the different perspectives. We have
-covered this written and orally, and it seems to me that we have a good
-coverage of the arguments in the list.
+I would expect the loopback scenario for provision to behave similar to
+how discards are handled. I.e., loopback receives a provision request
+and translates that to fallocate(mode = 0). If the backing device is
+block, blkdev_fallocate(mode = 0) translates that to another provision
+request.  If the backing device is a file, the associated fallocate
+handler allocs/maps, if necessary, and then issues a provision on
+allocation, if enabled by the fs.
 
-At this point, I would like to ask the opinion of Jens, Christoph and
-Keith. Do you think we are missing anything in the series? Can this be
-queued up for 6.1 (after I send the next version with a minor fix suggested
-by Mike)?
+AFAICT there's no need for FL_PROVISION at all in that scenario. Is
+there a functional purpose to FL_PROVISION? Is the intent to try and
+guarantee that a provision request propagates down the I/O stack? If so,
+what happens if blocks were already preallocated in the backing file (in
+the loopback file example)?
 
---
-Regards,
-Pankaj
+BTW, an unrelated thing I noticed is that blkdev_fallocate()
+unconditionally calls truncate_bdev_range(), which probably doesn't make
+sense for any sort of alloc mode.
+
+> With the separate mode, we can describe the semantics of falllcate()
+> modes a bit more cleanly, and it is common for both files and block
+> devices:
+> 
+> 1. mode == 0: allocation at the same layer, will not provision on the
+> underlying device/filesystem (unsupported for block devices).
+> 2. mode == FALLOC_FL_PROVISION, allocation at the layer, will
+> provision on the underlying device/filesystem.
+> 
+
+I think I see why you make the distinction, since the block layer
+doesn't have a "this layer only" mode, but IMO it's also quite confusing
+to say that mode == FL_PROVISION can allocate at the current and
+underlying layer(s) but mode == 0 to that underlying layer cannot.
+
+Either way, if you want to propose a new falloc mode/modifier, it
+probably warrants a more detailed commit log with more explanation of
+the purpose, examples of behavior, perhaps some details on how the mode
+might be documented in man pages, etc.
+
+Brian
+
+> Block devices don't technically need to use a separate mode, but it
+> makes it much less confusing if filesystems are already using a
+> separate mode for provision.
+> 
+> Best
+> Sarthak
+> 
+> > Brian
+> >
+> > > > BTW another thing that might be useful wrt to dm-thin is to support
+> > > > FALLOC_FL_UNSHARE. I.e., it looks like the previous dm-thin patch only
+> > > > checks that blocks are allocated, but not whether those blocks are
+> > > > shared (re: lookup_result.shared). It might be useful to do the COW in
+> > > > such cases if the caller passes down a REQ_UNSHARE or some such flag.
+> > > >
+> > > That's an interesting idea! There's a few more things on the TODO list
+> > > for this patch series but I think we can follow up with a patch to
+> > > handle that as well.
+> > >
+> > > Sarthak
+> > >
+> > > > Brian
+> > > >
+> > > > > diff --git a/include/linux/falloc.h b/include/linux/falloc.h
+> > > > > index f3f0b97b1675..a0e506255b20 100644
+> > > > > --- a/include/linux/falloc.h
+> > > > > +++ b/include/linux/falloc.h
+> > > > > @@ -30,7 +30,8 @@ struct space_resv {
+> > > > >                                        FALLOC_FL_COLLAPSE_RANGE |     \
+> > > > >                                        FALLOC_FL_ZERO_RANGE |         \
+> > > > >                                        FALLOC_FL_INSERT_RANGE |       \
+> > > > > -                                      FALLOC_FL_UNSHARE_RANGE)
+> > > > > +                                      FALLOC_FL_UNSHARE_RANGE |                          \
+> > > > > +                                      FALLOC_FL_PROVISION)
+> > > > >
+> > > > >  /* on ia32 l_start is on a 32-bit boundary */
+> > > > >  #if defined(CONFIG_X86_64)
+> > > > > diff --git a/include/uapi/linux/falloc.h b/include/uapi/linux/falloc.h
+> > > > > index 51398fa57f6c..2d323d113eed 100644
+> > > > > --- a/include/uapi/linux/falloc.h
+> > > > > +++ b/include/uapi/linux/falloc.h
+> > > > > @@ -77,4 +77,12 @@
+> > > > >   */
+> > > > >  #define FALLOC_FL_UNSHARE_RANGE              0x40
+> > > > >
+> > > > > +/*
+> > > > > + * FALLOC_FL_PROVISION acts as a hint for thinly provisioned devices to allocate
+> > > > > + * blocks for the range/EOF.
+> > > > > + *
+> > > > > + * FALLOC_FL_PROVISION can only be used with allocate-mode fallocate.
+> > > > > + */
+> > > > > +#define FALLOC_FL_PROVISION          0x80
+> > > > > +
+> > > > >  #endif /* _UAPI_FALLOC_H_ */
+> > > > > --
+> > > > > 2.31.0
+> > > > >
+> > > >
+> > >
+> >
+> 
 
 --
 dm-devel mailing list
