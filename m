@@ -1,69 +1,65 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 40CE1C6FA82
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Sep 2022 14:12:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5A248C6FA8E
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Sep 2022 14:34:54 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1664287953;
+	s=mimecast20190719; t=1664289293;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=mN7qhKPP9bUi4gfRj49NujoPWrlyXboYFiTE6jX1uWA=;
-	b=JSHQsZ3DkunA8+93seDIXqImOLWJKV7MmS0VcYsCMelsqTLxHsnbWgTwK7/EbwZ7GyYBes
-	V2Ue6j8YEda2vfJiV6G8rTneehOoY8BWs0MlrCqltdZpnRNdfOMnKN5NOwUhl9QCYmRV/x
-	dC77Zts7EnXKXmxGkF3zjBdlz/oIpkM=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=41clk40hd07JDxI6kMtALGAxnSGTkgnln8xdf3r8oAg=;
+	b=AT4JbHZMIyHwdmdOavDD4OjFIBg37ONl2FpvximP4e5t2i1czX517oWqaHiPhEa+8Zb35B
+	0D2zH66xiv3vNX40SeegNWDIb2SdCwbS1dg3985D2v26n2lTVjtySWK5DwLGD8OxetDEkS
+	9M7cSBhZBOpaSGeBaIWDX/lFG0B5w10=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-221-uNyNBQUQP8K9wb-or2O3nA-1; Tue, 27 Sep 2022 10:12:31 -0400
-X-MC-Unique: uNyNBQUQP8K9wb-or2O3nA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-376-7hwNzweSMxG1GuwwoxE9mQ-1; Tue, 27 Sep 2022 10:34:50 -0400
+X-MC-Unique: 7hwNzweSMxG1GuwwoxE9mQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A2656101E14E;
-	Tue, 27 Sep 2022 14:12:28 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 917061415113;
-	Tue, 27 Sep 2022 14:12:28 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 209E1380673E;
+	Tue, 27 Sep 2022 14:34:48 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id BF48D492B05;
+	Tue, 27 Sep 2022 14:34:47 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5A18819465B5;
-	Tue, 27 Sep 2022 14:12:28 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8663D19465B1;
+	Tue, 27 Sep 2022 14:34:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C327B19465B1
- for <dm-devel@listman.corp.redhat.com>; Tue, 27 Sep 2022 14:12:26 +0000 (UTC)
+ ESMTP id 477301946586
+ for <dm-devel@listman.corp.redhat.com>; Tue, 27 Sep 2022 14:34:46 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 97C7D1121315; Tue, 27 Sep 2022 14:12:26 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
- (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 36C701121314;
- Tue, 27 Sep 2022 14:12:26 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 28RECQDi029906; Tue, 27 Sep 2022 10:12:26 -0400
-Received: from localhost (mpatocka@localhost)
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 28RECQCu029902; Tue, 27 Sep 2022 10:12:26 -0400
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
- owned process doing -bs
-Date: Tue, 27 Sep 2022 10:12:26 -0400 (EDT)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: "Pra.. Dew.." <linux_learner@outlook.com>
-In-Reply-To: <BY5PR14MB3893F484853A8B896555EE03864D9@BY5PR14MB3893.namprd14.prod.outlook.com>
-Message-ID: <alpine.LRH.2.02.2209271009270.28431@file01.intranet.prod.int.rdu2.redhat.com>
-References: <BY5PR14MB389354D6BB8D1161E57B3FEA864B9@BY5PR14MB3893.namprd14.prod.outlook.com>
- <alpine.LRH.2.02.2209180604190.19406@file01.intranet.prod.int.rdu2.redhat.com>
- <BY5PR14MB3893F484853A8B896555EE03864D9@BY5PR14MB3893.namprd14.prod.outlook.com>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+ id 330DC400E88E; Tue, 27 Sep 2022 14:34:46 +0000 (UTC)
+Received: from segfault.boston.devel.redhat.com
+ (segfault.boston.devel.redhat.com [10.19.60.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C92F64048CD4;
+ Tue, 27 Sep 2022 14:34:45 +0000 (UTC)
+From: Jeff Moyer <jmoyer@redhat.com>
+To: =?utf-8?Q?Yang=2C_Xiao=2F=E6=9D=A8_=E6=99=93?= <yangx.jy@fujitsu.com>
+References: <e0cce6af-fd55-a582-194e-7f8a3aced6b0@fujitsu.com>
+ <x49y1u5lxpt.fsf@segfault.boston.devel.redhat.com>
+ <a04a8253-44af-11d6-f2ab-6421fe5110a8@fujitsu.com>
+X-PGP-KeyID: 1F78E1B4
+X-PGP-CertKey: F6FE 280D 8293 F72C 65FD  5A58 1FF8 A7CA 1F78 E1B4
+Date: Tue, 27 Sep 2022 10:38:34 -0400
+In-Reply-To: <a04a8253-44af-11d6-f2ab-6421fe5110a8@fujitsu.com> (Xiao Yang's
+ message of "Tue, 27 Sep 2022 20:42:38 +0800")
+Message-ID: <x49tu4sc26t.fsf@segfault.boston.devel.redhat.com>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/26.1 (gnu/linux)
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: Re: [dm-devel] dm-verity with GPT
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: Re: [dm-devel] Question about which types of dm need to support DAX
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -75,67 +71,37 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: toshi.kani@hpe.com, snitzer@redhat.com,
+ Shiyang Ruan <ruansy.fnst@fujitsu.com>,
+ "y-goto@fujitsu.com" <y-goto@fujitsu.com>, dm-devel@redhat.com,
+ =?utf-8?B?R3UsIEppbnhpYW5nL+mhviDph5Hpppk=?= <gujx@fujitsu.com>,
+ zwisler@kernel.org, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: MULTIPART/MIXED; BOUNDARY="185206533-143823404-1664287946=:28431"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
---185206533-143823404-1664287946=:28431
-Content-Type: TEXT/PLAIN; charset=ISO-8859-15
-Content-Transfer-Encoding: 8BIT
-
-
-
-On Mon, 19 Sep 2022, Pra.. Dew.. wrote:
-
-> 
-> Thank you Mikulas. I just want to make sure I understand what you are 
-> saying. Currently we making a dm-linear, dm-verity, dm-linear target; if 
-> I understand you right you are suggesting to make it a dm-veriy, 
-> dm-linear, dm-linear target? Of course the 2nd dm-linear target will 
-> have LBAs before dm-verity target. Did I get this right?
-
-I mean this: create a first dm device with only the dm-verity target in 
-the table.
-
-Then, create a second dm device that has only the dm-linear target that 
-points to the first device in the table.
-
-Then, create a third device that has three linear devices in the table - a 
-GPT beginning, a second dm device, and a GPT end.
-
-Mikulas
-
-
-> Hi
-> 
-> I think that you can create dm-verity target, put dm-linear on the top of
-> it and insert that dm-linear into the table with the other two dm-linear
-> targets.
-> 
-> Would it work this way?
-> 
-> Mikulas
-> 
->  
-> 
-> 
-> 
---185206533-143823404-1664287946=:28431
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
-
---185206533-143823404-1664287946=:28431--
+IllhbmcsIFhpYW8v5p2oIOaZkyIgPHlhbmd4Lmp5QGZ1aml0c3UuY29tPiB3cml0ZXM6Cgo+IEhp
+IEplZmYsCj4KPiBUaGFua3MgYSBsb3QgZm9yIHlvdXIgcmVwbHkuCj4KPiBPbiAyMDIyLzkvMjcg
+Mzo1MiwgSmVmZiBNb3llciB3cm90ZToKPj4gIllhbmcsIFhpYW8v5p2oIOaZkyIgPHlhbmd4Lmp5
+QGZ1aml0c3UuY29tPiB3cml0ZXM6Cj4+Cj4+PiBIaSBSb3NzLCBUb3NoaSwgSmVmZiBhbmQgb3Ro
+ZXJzCj4+Pgo+Pj4gQWZ0ZXIgcmVhZGluZyB0aGUga2VybmVsIHBhdGNoZXNbMV1bMl1bM10gYWJv
+dXQgZG0sIEkgdGhpbmsgb25seSB0aHJlZQo+Pj4gdHlwZXMobGluZWFyLCBzdHJpcGUgYW5kIGxv
+Zy13cml0ZXMpIG9mIGRtIGNhbiBzdXBwb3J0IERBWCBub3csIHJpZ2h0Pwo+Pgo+PiBSaWdodC4K
+Pj4KPj4+IEkgd29uZGVyIHdoeSBvbmx5IHRocmVlIHR5cGVzIG9mIGRtIG5lZWQgdG8gc3VwcG9y
+dCBEQVg/IElzIHRoZXJlIGFueQo+Pj4gcmVhc29uL2hpc3RvcnkgYW5kIHVzZSBjYXNlPwo+Pgo+
+PiBJdCB3YXMgZWFzeSB0byBhZGQgREFYIHN1cHBvcnQgdG8gdGhvc2UgdGFyZ2V0cy4gIE5vdGUg
+dGhhdCBpZiBhIHRhcmdldAo+PiBuZWVkcyB0byBpbnRlcmNlcHQgSS9PLCB0aGVuIGl0IGlzIGZ1
+bmRhbWVudGFsbHkgaW5jb21wYXRpYmxlIHdpdGggREFYLgo+Cj4gSG93IGNhbiBJIGtub3cgd2hp
+Y2ggdGFyZ2V0IG5lZWRzIHRvIGludGVyY2VwdCBJL08/CgpUaGVyZSdzIG5vIGJldHRlciB3YXkg
+dGhhbiByZWFkaW5nIGFuZCB1bmRlcnN0YW5kaW5nIHdoYXQgZWFjaCB0YXJnZXQKZG9lcy4KCj4g
+Q291bGQgeW91IHRlbGwgbWUgd2h5IGl0IGlzIGZ1bmRhbWVudGFsbHkgaW5jb21wYXRpYmxlIHdp
+dGggREFYPwoKREFYIHN0YW5kcyBmb3IgZGlyZWN0IGFjY2VzcywgYW5kIGl0IGlzIGEgbWVjaGFu
+aXNtIGJ5IHdoaWNoIGEKdXNlci1zcGFjZSBwcm9jZXNzIGNhbiBwZXJmb3JtIEkvTyB3aXRob3V0
+IGdvaW5nIHRocm91Z2ggdGhlIGtlcm5lbC4KCi1KZWZmCi0tCmRtLWRldmVsIG1haWxpbmcgbGlz
+dApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxtYW4v
+bGlzdGluZm8vZG0tZGV2ZWwK
 
