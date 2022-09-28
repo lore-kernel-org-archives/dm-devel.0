@@ -1,101 +1,175 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DACC6C6FA82
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1D402C6FA90
 	for <dm-devel@archiver.kernel.org>; Thu, 29 Sep 2022 07:07:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1664435223;
+	s=mimecast20190719; t=1664435224;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=x17rGzlRqXoMu/ZO9R2/KSWE7GekLdX8cXaS7kHkXNc=;
-	b=atqNsYHo+J6BvfaXMQda09RJLrq+g2qqmfwL6xrmCZw5R+RkGh2miFH5dn/XjQVL//cOAX
-	rfgRTgbpajjpsNnZHP1b+aJVA2XZH98qTc8SgisHGw7uLI+N8FSm6K2Z+VB2q2jSqz0elp
-	1JTPa4MhyjfGP7+0soZ/oI+s291Kb7Y=
+	bh=iHcYXkVkg3H0PuedEdWw+zbO3tkjGQkZDtkKM+Z+2qc=;
+	b=NT0tZBUnrfovD5x+0S3qVAzhD8TJuaOJt3rtx8E42v93OwuuN+Xj94Hr02WeDShptA2yJY
+	48q9Wnyv1R/xk/2K1qMSP4AtHFCOdtcZKqFyXrcxyPTMn4BR0/TEInBb58WvdA9JgGuGtJ
+	OkXnVOSyrzihsipXf1Z3JAVssYBRiuc=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-621-rsGCMIEpNSqmv5llzGhzRQ-1; Thu, 29 Sep 2022 03:07:00 -0400
-X-MC-Unique: rsGCMIEpNSqmv5llzGhzRQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-496-4QqeH-FZMQ6-VjPnacsxWg-1; Thu, 29 Sep 2022 03:07:00 -0400
+X-MC-Unique: 4QqeH-FZMQ6-VjPnacsxWg-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 10BF6855421;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7553D800B30;
 	Thu, 29 Sep 2022 07:06:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B99DA1402BDC;
-	Thu, 29 Sep 2022 07:06:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 638844A9257;
+	Thu, 29 Sep 2022 07:06:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 84E4B1946A45;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C6C9A1946A5A;
 	Thu, 29 Sep 2022 07:06:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 687E91946586
- for <dm-devel@listman.corp.redhat.com>; Tue, 27 Sep 2022 21:38:01 +0000 (UTC)
+ ESMTP id D988F1946586
+ for <dm-devel@listman.corp.redhat.com>; Wed, 28 Sep 2022 07:34:50 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 23359492B05; Tue, 27 Sep 2022 21:38:01 +0000 (UTC)
+ id BD7A54A9265; Wed, 28 Sep 2022 07:34:50 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1B3F7492B04
- for <dm-devel@redhat.com>; Tue, 27 Sep 2022 21:38:01 +0000 (UTC)
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B574B4A9254
+ for <dm-devel@redhat.com>; Wed, 28 Sep 2022 07:34:50 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F3AB4811E67
- for <dm-devel@redhat.com>; Tue, 27 Sep 2022 21:38:00 +0000 (UTC)
-Received: from mail-wr1-f72.google.com (mail-wr1-f72.google.com
- [209.85.221.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-218-nALOMiyJOHycYQBWVexCYg-1; Tue, 27 Sep 2022 17:37:59 -0400
-X-MC-Unique: nALOMiyJOHycYQBWVexCYg-1
-Received: by mail-wr1-f72.google.com with SMTP id
- q2-20020adfab02000000b0022cc38d5a8fso526377wrc.6
- for <dm-devel@redhat.com>; Tue, 27 Sep 2022 14:37:59 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date;
- bh=D5ZIksmGurvYC/iOAqtPVWbeUblsOdJ5xwGtu/IzOWI=;
- b=acRoWKKHdEb6SpJghovU9vCTdJnFyNZBvG1bFGfZqglVlJRqUUxM5V5QgA3rVJbOgB
- vn5q9B58gWE4xhPTNdJdq6hDS/+Fz4mRB+nppF/6VQVRVZzCzn0eTrAMZY3DM2Ai8sgY
- Y3WAOtOInLWpAsQhwzBCmjyj4SQDmfUUDAoF+XMRJXXfEbPgnY6xoyVvx0HluKDJ9rDK
- 5DH+x/CnwGcCSzV7BlLaHgvWWvVwhmnkumrWFbUiz4Fvb2SKFDpSxJwbkjPuc+/x90dA
- l3WhT8Q4ERsTpcmyZeDi1yKZhdxGOWmtkXh0msJvpyiML8B6r4kbY4JssncAgFfi5Rbk
- glxg==
-X-Gm-Message-State: ACrzQf0Ohz9AO5CDGOne4UjLhWlCDplbUtp8e1k2yd9JJSpfsCz0T24C
- +/h/lpDxpgjm+gzzeDDxcRfCejmv4GtwhUGxsEfi4ZN/q7snBXh4RTdl/4IqOAC7EMjUuDcNgWO
- aTf18fM1CKBEXl9A=
-X-Received: by 2002:a05:6000:2ce:b0:22a:f2dc:1531 with SMTP id
- o14-20020a05600002ce00b0022af2dc1531mr18614987wry.370.1664314677225; 
- Tue, 27 Sep 2022 14:37:57 -0700 (PDT)
-X-Google-Smtp-Source: AMsMyM75GZrpOIjx3Y8daQH5gD30RRG235Fd/YqvwBOi/XGXrLC5i+WLs9D44hdtjOnyVVgkm68Sog==
-X-Received: by 2002:a05:6000:2ce:b0:22a:f2dc:1531 with SMTP id
- o14-20020a05600002ce00b0022af2dc1531mr18614976wry.370.1664314677008; 
- Tue, 27 Sep 2022 14:37:57 -0700 (PDT)
-Received: from redhat.com ([2.55.47.213]) by smtp.gmail.com with ESMTPSA id
- n3-20020a5d4203000000b0022acb7195aesm2708029wrq.33.2022.09.27.14.37.52
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 27 Sep 2022 14:37:56 -0700 (PDT)
-Date: Tue, 27 Sep 2022 17:37:50 -0400
-From: "Michael S. Tsirkin" <mst@redhat.com>
-To: Sarthak Kukreti <sarthakkukreti@chromium.org>
-Message-ID: <20220927173658-mutt-send-email-mst@kernel.org>
-References: <20220915164826.1396245-1-sarthakkukreti@google.com>
- <20220915164826.1396245-4-sarthakkukreti@google.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 94B0980A0AE
+ for <dm-devel@redhat.com>; Wed, 28 Sep 2022 07:34:50 +0000 (UTC)
+Received: from esa10.fujitsucc.c3s2.iphmx.com
+ (esa10.fujitsucc.c3s2.iphmx.com [68.232.159.247]) by relay.mimecast.com
+ with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-509-H5MxCtV8MWiyqNn1WW63yw-1; Wed, 28 Sep 2022 03:34:48 -0400
+X-MC-Unique: H5MxCtV8MWiyqNn1WW63yw-1
+X-IronPort-AV: E=McAfee;i="6500,9779,10483"; a="66319839"
+X-IronPort-AV: E=Sophos;i="5.93,351,1654527600"; d="scan'208";a="66319839"
+Received: from mail-os0jpn01lp2110.outbound.protection.outlook.com (HELO
+ JPN01-OS0-obe.outbound.protection.outlook.com) ([104.47.23.110])
+ by ob1.fujitsucc.c3s2.iphmx.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 28 Sep 2022 16:33:40 +0900
+Received: from TYWPR01MB10082.jpnprd01.prod.outlook.com (2603:1096:400:1e3::8)
+ by TYCPR01MB10527.jpnprd01.prod.outlook.com (2603:1096:400:302::8)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5676.17; Wed, 28 Sep
+ 2022 07:33:38 +0000
+Received: from TYWPR01MB10082.jpnprd01.prod.outlook.com
+ ([fe80::9286:7cff:c119:cbce]) by TYWPR01MB10082.jpnprd01.prod.outlook.com
+ ([fe80::9286:7cff:c119:cbce%7]) with mapi id 15.20.5676.017; Wed, 28 Sep 2022
+ 07:33:38 +0000
+From: "y-goto@fujitsu.com" <y-goto@fujitsu.com>
+To: 'Jeff Moyer' <jmoyer@redhat.com>
+Thread-Topic: Question about which types of dm need to support DAX
+Thread-Index: AQHYyZmSEdOf4g6tS0+IDu58NikMFq3yLttUgAEbMQCAAB9gf4AA9KuQ
+Date: Wed, 28 Sep 2022 07:33:38 +0000
+Message-ID: <TYWPR01MB1008258F474CA2295B4CD3D9B90549@TYWPR01MB10082.jpnprd01.prod.outlook.com>
+References: <e0cce6af-fd55-a582-194e-7f8a3aced6b0@fujitsu.com>
+ <x49y1u5lxpt.fsf@segfault.boston.devel.redhat.com>
+ <a04a8253-44af-11d6-f2ab-6421fe5110a8@fujitsu.com>
+ <x49tu4sc26t.fsf@segfault.boston.devel.redhat.com>
+In-Reply-To: <x49tu4sc26t.fsf@segfault.boston.devel.redhat.com>
+Accept-Language: ja-JP, en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-shieldmailcheckerpolicyversion: FJ-ISEC-20181130-VDI-enc
+x-shieldmailcheckermailid: dc83b8b342664f7d9cc51c5486a42f05
+x-securitypolicycheck: OK by SHieldMailChecker v2.6.2
+msip_labels: =?utf-8?B?TVNJUF9MYWJlbF9hNzI5NWNjMS1kMjc5LTQyYWMtYWI0ZC0zYjBmNGZlY2Uw?=
+ =?utf-8?B?NTBfQWN0aW9uSWQ9NjE4NzQ1YzAtZWU5ZC00NDVkLTllMWQtNzgyNTY1MTgx?=
+ =?utf-8?B?YjBlO01TSVBfTGFiZWxfYTcyOTVjYzEtZDI3OS00MmFjLWFiNGQtM2IwZjRm?=
+ =?utf-8?B?ZWNlMDUwX0NvbnRlbnRCaXRzPTA7TVNJUF9MYWJlbF9hNzI5NWNjMS1kMjc5?=
+ =?utf-8?B?LTQyYWMtYWI0ZC0zYjBmNGZlY2UwNTBfRW5hYmxlZD10cnVlO01TSVBfTGFi?=
+ =?utf-8?B?ZWxfYTcyOTVjYzEtZDI3OS00MmFjLWFiNGQtM2IwZjRmZWNlMDUwX01ldGhv?=
+ =?utf-8?B?ZD1TdGFuZGFyZDtNU0lQX0xhYmVsX2E3Mjk1Y2MxLWQyNzktNDJhYy1hYjRk?=
+ =?utf-8?B?LTNiMGY0ZmVjZTA1MF9OYW1lPUZVSklUU1UtUkVTVFJJQ1RFRO+/ou++gA==?=
+ =?utf-8?B?776LO01TSVBfTGFiZWxfYTcyOTVjYzEtZDI3OS00MmFjLWFiNGQtM2IwZjRm?=
+ =?utf-8?B?ZWNlMDUwX1NldERhdGU9MjAyMi0wOS0yOFQwNToxMDozN1o7TVNJUF9MYWJl?=
+ =?utf-8?B?bF9hNzI5NWNjMS1kMjc5LTQyYWMtYWI0ZC0zYjBmNGZlY2UwNTBfU2l0ZUlk?=
+ =?utf-8?Q?=3Da19f121d-81e1-4858-a9d8-736e267fd4c7;?=
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: TYWPR01MB10082:EE_|TYCPR01MB10527:EE_
+x-ms-office365-filtering-correlation-id: b1ee90eb-49b0-43d5-863b-08daa123c279
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: O2P/nRskXD6+C9T4+RGMjTP34wwAAwJP8YBhTebtlUUgsVQ8zHPC6e/hjm4URx7biSJpWfSVpVIrFrtzRIgNs6ZSn+ohCKVyTRxQVcXqGnV2A1IE1cs5JMCjUVPNWtKSb5Xu6RDgtvMOJWS8R2ij0Xff9oHysneE70DHnAHnpJVzEC76diCLYtU0MJbkfYFIqqy83ZjCo7yeRtpVksSHtHcr9Q5P1UL4KJxazEYvuFXdCcbmkBZ/fneMRapjNrdJ37DcTHYnP1Qc04kUIaGynEsyBxtIkGBxIK13ze/dumSS9AUdU6mjfg3T0DlegB90DK+GUZIexM1bpzC6LbKp7eoq82FCZVTNqvgstM35hOEEfevya1vvmpO/iGj71rlJVydnqS472VLm71p1Wb1DYe5IVsSPeqnz5DLg7C+MCMh1RqcVH2ewY9oPOQpwXp5Eip/ngDezBgOszFQv7aPyC+M3ON/9YGrfVSF37aCJ04uAu44I8bgRqbEX4gdqRPmJAOSrjWXJqDQHN1isW4HF1E3wULwRPyvP7/kIy9UYGn4JfMl9ux7+ZO/5bZ4bshlJsDbo8g7tZZAdJxt2qp3vTtrWtDmEBo5YbPJ33rEJUma30XZcyCcRmkHqznxlql3LMFOwMu2bbp7huy9KCgjr42FIPD65cU7eCdgVnEPOQWwmwdF0/jIXX3aYPVxC79+pTbjlFS1LqK4loZKg2pGy+6IY304/jdpWCHiFIE9jPNw9S0d1jyUETe5aQB5eXIEDHh/r2hUJW6mwP9rDERY5Sz06b1I4D5nXVx4ucwyzFQw=
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:TYWPR01MB10082.jpnprd01.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230022)(4636009)(396003)(136003)(346002)(376002)(366004)(39860400002)(1590799012)(451199015)(2906002)(122000001)(38070700005)(66446008)(66556008)(41300700001)(66946007)(4326008)(66476007)(8676002)(8936002)(85182001)(5660300002)(76116006)(33656002)(52536014)(64756008)(38100700002)(54906003)(1580799009)(86362001)(82960400001)(316002)(478600001)(6916009)(71200400001)(26005)(55016003)(53546011)(9686003)(7696005)(6506007)(107886003)(186003);
+ DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?NnJxVUJKbkJwd3d6WWQwWGNuS094OEFGN0RuTGptNnVMY2hUK0hSR1RLMFdv?=
+ =?utf-8?B?N3F4VjR2bVc2ZTNrUXBOeXZZcWpOM1hRQnJ3N3RLc1BSMXlyRkFhYVNWNU1j?=
+ =?utf-8?B?NDN2Y3VVcHRYNmU5Mnllb0svb1FNU1pKWjI1MzBSQitZZzFKa2ovWnZUemZY?=
+ =?utf-8?B?Rlkwa0VNQVd1MWw4NFE3NVM1QWdsWHU0M1U5Sk5uYnpxTWVsZDRuOUFpaktk?=
+ =?utf-8?B?TDdjck9DYjdua2tyeEszZGtIUFVSVVNEMHVEQ29tUXhBY3g3cm82OTFDVm4w?=
+ =?utf-8?B?QVJyNWN2bjJDODVxRm4xVmhDVU8vc3N0UTZRSFFRY0JsWlBpSTlJUDRQVU9W?=
+ =?utf-8?B?Mm84ODYvRDI5ZXhXMm13UFliUDNjMS82dE1IS0ZNZ3NiV1Y5V1VPVUUzY2U4?=
+ =?utf-8?B?cGRRVmFHcmxycjNHRThkcnRPQTk0cFhJWm01Z2w0MVcyVm5INlFmdHFCblRw?=
+ =?utf-8?B?WWxhOHU4YUdISGd1d2l3N3VYZ3NiRHZsajZTaFYydTNBWHBqTFJXK0FPN3BZ?=
+ =?utf-8?B?cWt4VE1FbGd1R2JXc3VHU0hTNXhYMnRZRHY0ZEEzRHVoUUVYdys1WFJpVmxk?=
+ =?utf-8?B?S2NiUi9hc0FhWG1RVVNycGdKRnl4cG51dlJFMm9rcWlWaDJDYmJaT2gyaUd1?=
+ =?utf-8?B?T21DbFBpQ0xBanp4d0tvb2xyM3J6RCt3NW9OSSszeSs5c3ZCSmlTeFhKR2tM?=
+ =?utf-8?B?ckNaajFaNm16L0JLYWpMd3hySFNJQkFnYXNFMnBHQ21iVm9XK3lnVzROMkNs?=
+ =?utf-8?B?eWkrSms3enNKNlNJMHlVR3M5SllWMCtuQ0c0a1JOa0I5eVErSnliTENhV21i?=
+ =?utf-8?B?Tm16R2diVkZDNUluUStZclFEeVZWSTNFd1RWWHZqS25GY0N6bExHTHZWUTR6?=
+ =?utf-8?B?UHpHN3lncmU0dXlTaUp6clNlczhqMlJNNFF0RFBpbFIyNllJN2MzTDFib3Rj?=
+ =?utf-8?B?VlpxbUNtM05wZTNuTG1QRzk0c21hV3l4NkRUc0xUbmx5UlMwRVFYOVNvTWxo?=
+ =?utf-8?B?b24wMnRmWlFWNktQVHRCWUZ6TW1iSElLOHFKc0VWTzZkTDN2M3d3YlJNVkxr?=
+ =?utf-8?B?b1gyb3p4M3lRWFoxNHZ4WjFrcjFDRE4ySWVlOWt4M00xLzVnc3NselVNcHFq?=
+ =?utf-8?B?bXlBa2pFaENPK3FrbWhHZGVieUx0VHB4WDNWSDkvZWdITmgzd1NHdUp3SUhz?=
+ =?utf-8?B?dDYySUUzcTV3RVpOVjdWU2JjcXBJbUdxbmRkTWg3RnIzdlJVNitHSk1yZ0pE?=
+ =?utf-8?B?K3dZQnJnRVJsZHF2WDg4WFVGSmF3UTJsSjdGTjJnNmQveXp3TndSdTUraThZ?=
+ =?utf-8?B?RGUyRWwxdmpPb3J1enpTYlRlNXBXbnJvVWcrUjB1RGN4Zm9admxkaG9ka0xV?=
+ =?utf-8?B?aXNKVFRoWHJLZEVGU1ZZdUljT3NqUGJDOGtacFE3YUE1d2hIczFlTUtIOVIx?=
+ =?utf-8?B?Z2V2ajhzSjVYOFVBOXpMbDYxcW1UYjZsUkFOTDA0Mmd2dGV6NjVwK0hsc2kw?=
+ =?utf-8?B?OGV4VHJOWEdPRnZmanlJei9oUnBpQjFaSFcvOEdKMUgxanhjODZjc0J1MFRz?=
+ =?utf-8?B?T05ZNjVUUDFHYjZNZjJCL1lxOHRXWHVKeFRqcGgza0RjcUh6aS9GbGw2bzIz?=
+ =?utf-8?B?NUFtMnlpci9BaGdtTzJmaFhBc29HanBxak5TQktGS3NwemhPTksyNFhwcXZE?=
+ =?utf-8?B?azMvRzltQjdkSGFDcEZpS3dmWGoyREJjM2x3cDc4YlZEb1IzWUx2L2VSMWU5?=
+ =?utf-8?B?T3BjVDMyMWhGeHBGNS8zbWZNV0diLzZoTlBvR1Ixcy9JWUF1YVFOYWJTZC83?=
+ =?utf-8?B?ODY4QnQ5YXlUTEpTOEcwMjQ3M0p0a010aHZaRzY5dXl0ZUpRZU9SRFF2SkRC?=
+ =?utf-8?B?TkROQkZLMUNHVEZySm1FTURwWVZUREU3amkwMFZBK0FuVURUY2xPbnNSTExx?=
+ =?utf-8?B?S1ZMQ0dGWVR0anJnSmtEak1iR05XaGh2VlBXc016b2w4WjMzQXFpcEh1aDlh?=
+ =?utf-8?B?Z2UwN1ZBa2dNYTNJRkhhZWE0V01JV2JnTlllTG5QOHJYSDlzYTJaTXNFK3Bs?=
+ =?utf-8?B?elcza0w3OXBhczgxcTZKbVJyVERLd0c0ZmlidmZZQU4vMnlkOWZlaTAwby84?=
+ =?utf-8?Q?IWgZEFNM/vZq6gSYcO380y/1E?=
 MIME-Version: 1.0
-In-Reply-To: <20220915164826.1396245-4-sarthakkukreti@google.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-OriginatorOrg: fujitsu.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: TYWPR01MB10082.jpnprd01.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: b1ee90eb-49b0-43d5-863b-08daa123c279
+X-MS-Exchange-CrossTenant-originalarrivaltime: 28 Sep 2022 07:33:38.4705 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: a19f121d-81e1-4858-a9d8-736e267fd4c7
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: DwsbASfAXIMplVo0vn840GU7bnca9zj/zqbYwo0/wTJNFP8C/WVRkyF9+HTqfnUBGKkYh4OBQkonLr3cTmT7zg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: TYCPR01MB10527
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mailman-Approved-At: Thu, 29 Sep 2022 07:06:56 +0000
-Subject: Re: [dm-devel] [PATCH RFC 3/8] virtio_blk: Add support for
- provision requests
+Subject: Re: [dm-devel] Question about which types of dm need to support DAX
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -107,167 +181,48 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Gwendal Grignou <gwendal@google.com>,
- Theodore Ts'o <tytso@mit.edu>, Jason Wang <jasowang@redhat.com>,
- Bart Van Assche <bvanassche@google.com>, Mike Snitzer <snitzer@kernel.org>,
- linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- Andreas Dilger <adilger.kernel@dilger.ca>, Daniil Lunev <dlunev@google.com>,
- Stefan Hajnoczi <stefanha@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>,
- linux-ext4@vger.kernel.org, Evan Green <evgreen@google.com>,
- Alasdair Kergon <agk@redhat.com>
+Cc: "toshi.kani@hpe.com" <toshi.kani@hpe.com>,
+ "snitzer@redhat.com" <snitzer@redhat.com>,
+ "yangx.jy@fujitsu.com" <yangx.jy@fujitsu.com>,
+ "ruansy.fnst@fujitsu.com" <ruansy.fnst@fujitsu.com>,
+ "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ "gujx@fujitsu.com" <gujx@fujitsu.com>,
+ "zwisler@kernel.org" <zwisler@kernel.org>, "agk@redhat.com" <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: ja-JP
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On Thu, Sep 15, 2022 at 09:48:21AM -0700, Sarthak Kukreti wrote:
-> From: Sarthak Kukreti <sarthakkukreti@chromium.org>
-> 
-> Adds support for provision requests. Provision requests act like
-> the inverse of discards.
-> 
-> Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
-> ---
->  drivers/block/virtio_blk.c      | 48 +++++++++++++++++++++++++++++++++
->  include/uapi/linux/virtio_blk.h |  9 +++++++
->  2 files changed, 57 insertions(+)
-> 
-> diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-> index 30255fcaf181..eacc2bffe1d1 100644
-> --- a/drivers/block/virtio_blk.c
-> +++ b/drivers/block/virtio_blk.c
-> @@ -178,6 +178,39 @@ static int virtblk_setup_discard_write_zeroes(struct request *req, bool unmap)
->  	return 0;
->  }
->  
-> +static int virtblk_setup_provision(struct request *req)
-> +{
-> +	unsigned short segments = blk_rq_nr_discard_segments(req);
-> +	unsigned short n = 0;
-> +
-> +	struct virtio_blk_discard_write_zeroes *range;
-> +	struct bio *bio;
-> +	u32 flags = 0;
-> +
-> +	range = kmalloc_array(segments, sizeof(*range), GFP_ATOMIC);
-> +	if (!range)
-> +		return -ENOMEM;
-> +
-> +	__rq_for_each_bio(bio, req) {
-> +		u64 sector = bio->bi_iter.bi_sector;
-> +		u32 num_sectors = bio->bi_iter.bi_size >> SECTOR_SHIFT;
-> +
-> +		range[n].flags = cpu_to_le32(flags);
-> +		range[n].num_sectors = cpu_to_le32(num_sectors);
-> +		range[n].sector = cpu_to_le64(sector);
-> +		n++;
-> +	}
-> +
-> +	WARN_ON_ONCE(n != segments);
-> +
-> +	req->special_vec.bv_page = virt_to_page(range);
-> +	req->special_vec.bv_offset = offset_in_page(range);
-> +	req->special_vec.bv_len = sizeof(*range) * segments;
-> +	req->rq_flags |= RQF_SPECIAL_PAYLOAD;
-> +
-> +	return 0;
-> +}
-> +
->  static void virtblk_unmap_data(struct request *req, struct virtblk_req *vbr)
->  {
->  	if (blk_rq_nr_phys_segments(req))
-> @@ -243,6 +276,9 @@ static blk_status_t virtblk_setup_cmd(struct virtio_device *vdev,
->  	case REQ_OP_DRV_IN:
->  		type = VIRTIO_BLK_T_GET_ID;
->  		break;
-> +	case REQ_OP_PROVISION:
-> +		type = VIRTIO_BLK_T_PROVISION;
-> +		break;
->  	default:
->  		WARN_ON_ONCE(1);
->  		return BLK_STS_IOERR;
-> @@ -256,6 +292,11 @@ static blk_status_t virtblk_setup_cmd(struct virtio_device *vdev,
->  			return BLK_STS_RESOURCE;
->  	}
->  
-> +	if (type == VIRTIO_BLK_T_PROVISION) {
-> +		if (virtblk_setup_provision(req))
-> +			return BLK_STS_RESOURCE;
-> +	}
-> +
->  	return 0;
->  }
->  
-> @@ -1075,6 +1116,12 @@ static int virtblk_probe(struct virtio_device *vdev)
->  		blk_queue_max_write_zeroes_sectors(q, v ? v : UINT_MAX);
->  	}
->  
-> +	if (virtio_has_feature(vdev, VIRTIO_BLK_F_PROVISION)) {
-> +		virtio_cread(vdev, struct virtio_blk_config,
-> +			     max_provision_sectors, &v);
-> +		q->limits.max_provision_sectors = v ? v : UINT_MAX;
-> +	}
-> +
->  	virtblk_update_capacity(vblk, false);
->  	virtio_device_ready(vdev);
->  
-> @@ -1177,6 +1224,7 @@ static unsigned int features[] = {
->  	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE,
->  	VIRTIO_BLK_F_FLUSH, VIRTIO_BLK_F_TOPOLOGY, VIRTIO_BLK_F_CONFIG_WCE,
->  	VIRTIO_BLK_F_MQ, VIRTIO_BLK_F_DISCARD, VIRTIO_BLK_F_WRITE_ZEROES,
-> +	VIRTIO_BLK_F_PROVISION,
->  };
->  
->  static struct virtio_driver virtio_blk = {
-> diff --git a/include/uapi/linux/virtio_blk.h b/include/uapi/linux/virtio_blk.h
-> index d888f013d9ff..184f8cf6d185 100644
-> --- a/include/uapi/linux/virtio_blk.h
-> +++ b/include/uapi/linux/virtio_blk.h
-> @@ -40,6 +40,7 @@
->  #define VIRTIO_BLK_F_MQ		12	/* support more than one vq */
->  #define VIRTIO_BLK_F_DISCARD	13	/* DISCARD is supported */
->  #define VIRTIO_BLK_F_WRITE_ZEROES	14	/* WRITE ZEROES is supported */
-> +#define VIRTIO_BLK_F_PROVISION	15	/* provision is supported */
->  
->  /* Legacy feature bits */
->  #ifndef VIRTIO_BLK_NO_LEGACY
-> @@ -120,6 +121,11 @@ struct virtio_blk_config {
->  	 */
->  	__u8 write_zeroes_may_unmap;
->  
-> +	/*
-> +	 * The maximum number of sectors in a provision request.
-> +	 */
-> +	__virtio32 max_provision_sectors;
-> +
->  	__u8 unused1[3];
->  } __attribute__((packed));
->  
-> @@ -155,6 +161,9 @@ struct virtio_blk_config {
->  /* Write zeroes command */
->  #define VIRTIO_BLK_T_WRITE_ZEROES	13
->  
-> +/* Provision command */
-> +#define VIRTIO_BLK_T_PROVISION	14
-> +
->  #ifndef VIRTIO_BLK_NO_LEGACY
->  /* Barrier before this op. */
->  #define VIRTIO_BLK_T_BARRIER	0x80000000
-
-
-Feature bit has to be reserved in the virtio spec.
-Pls do this through the virtio TC mailing list.
-
-> -- 
-> 2.31.0
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+SGVsbG8gSmVmZi1zYW4sDQoNCj4gIllhbmcsIFhpYW8v5p2oIOaZkyIgPHlhbmd4Lmp5QGZ1aml0
+c3UuY29tPiB3cml0ZXM6DQo+IA0KPiA+IEhpIEplZmYsDQo+ID4NCj4gPiBUaGFua3MgYSBsb3Qg
+Zm9yIHlvdXIgcmVwbHkuDQo+ID4NCj4gPiBPbiAyMDIyLzkvMjcgMzo1MiwgSmVmZiBNb3llciB3
+cm90ZToNCj4gPj4gIllhbmcsIFhpYW8v5p2oIOaZkyIgPHlhbmd4Lmp5QGZ1aml0c3UuY29tPiB3
+cml0ZXM6DQo+ID4+DQo+ID4+PiBIaSBSb3NzLCBUb3NoaSwgSmVmZiBhbmQgb3RoZXJzDQo+ID4+
+Pg0KPiA+Pj4gQWZ0ZXIgcmVhZGluZyB0aGUga2VybmVsIHBhdGNoZXNbMV1bMl1bM10gYWJvdXQg
+ZG0sIEkgdGhpbmsgb25seQ0KPiA+Pj4gdGhyZWUgdHlwZXMobGluZWFyLCBzdHJpcGUgYW5kIGxv
+Zy13cml0ZXMpIG9mIGRtIGNhbiBzdXBwb3J0IERBWCBub3csDQo+IHJpZ2h0Pw0KPiA+Pg0KPiA+
+PiBSaWdodC4NCj4gPj4NCj4gPj4+IEkgd29uZGVyIHdoeSBvbmx5IHRocmVlIHR5cGVzIG9mIGRt
+IG5lZWQgdG8gc3VwcG9ydCBEQVg/IElzIHRoZXJlDQo+ID4+PiBhbnkgcmVhc29uL2hpc3Rvcnkg
+YW5kIHVzZSBjYXNlPw0KPiA+Pg0KPiA+PiBJdCB3YXMgZWFzeSB0byBhZGQgREFYIHN1cHBvcnQg
+dG8gdGhvc2UgdGFyZ2V0cy4gIE5vdGUgdGhhdCBpZiBhDQo+ID4+IHRhcmdldCBuZWVkcyB0byBp
+bnRlcmNlcHQgSS9PLCB0aGVuIGl0IGlzIGZ1bmRhbWVudGFsbHkgaW5jb21wYXRpYmxlIHdpdGgN
+Cj4gREFYLg0KDQpJIHdvdWxkIGxpa2UgdG8ga25vdyBpdHMgdXNlIGNhc2UuDQpUaG91Z2ggbXkg
+dGVhbSBoYXMgYmVlbiBtYWRlIGVmZm9ydCBmb3IgYSBsb25nIHRpbWUgdG8gcmVtb3ZlIGV4cGVy
+aW1lbnRhbCBvZiBGUy1EQVgsDQp3ZSBzdGlsbCBuZWVkIG9uZSBtb3JlIHRpbWUgdG8gc29sdmUg
+dGhpbi1wb29sIChvciBvdGhlciBETSBmZWF0dXJlKSB2LnMuIERBWCBwcm9ibGVtIGV2ZW4gaWYg
+aXQgaXMgZWFzeS4NCg0KVG8gYmUgaG9uZXN0LCBJJ20gdW5kZXIgY3JpdGljaXNtIGZvciB0YWtp
+bmcgc3VjaCBhIGxvbmcgdGltZSBhbmQgc3RpbGwgbm90IGJlIGFibGUgdG8gcmVtb3ZlIGV4cGVy
+aW1lbnRhbC4NCkluIGFkZGl0aW9uLCB0aGVyZSBhcmUgYSBmZXcgcGVyc29ucyB3aG8gaW5zaXN0
+IEZ1aml0c3Ugc2hvdWxkIHN0b3AgZGV2ZWxvcG1lbnQgb2YgRlMtREFYIGR1ZSB0bw0KdG9vIG11
+Y2ggdGltZSBmb3IgZGV2ZWxvcG1lbnQNCg0KSSBob3BlIHRoYXQgbXkgdGVhbSBjYW4gY29udGlu
+dWUgdG8gbWFrZSBlZmZvcnQgZm9yIEZTLURBWC4NCklmIHRoZXJlIGlzIGEgdXNlLWNhc2Ugb2Yg
+dGhpbi1wb29sLCB0aGVuIEknbGwgYmUgYWJsZSB0byBwZXJzdWFkZSBzdWNoIHBlcnNvbnMgYnkg
+aXQuIA0KU28gSSB3b3VsZCBhcHByZWNpYXRlIGl0IGlmIHlvdSBjb3VsZCB0ZWxsIG1lIGFib3V0
+IHRoZSB1c2UgY2FzZS4NCg0KVGhhbmtzLA0KLS0tDQpZYXN1bm9yaSBHb3RvDQoNCg0KLS0KZG0t
+ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJl
+ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
 
