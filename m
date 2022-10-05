@@ -4,7 +4,7 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 82542C43217
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 84CB9C4321E
 	for <dm-devel@archiver.kernel.org>; Thu,  6 Oct 2022 07:13:40 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1665040419;
@@ -14,78 +14,78 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=uEmWoTBHSPYOCsGIXQbu21Ug9Jp/77ckH0VjtCdfuDo=;
-	b=flCdXLfQaY520c+/UVHIgF8IAloP0ySh4zPz4nSk2W6tvHyN+m96HcXYG84YJyhh9hQBCH
-	fOkUnpGuHay+U29h7aTIEMNZqNILuxzC5QbOItNhIr+xhPFf5KuWvHwHA0DM8HceE/koII
-	Z7wQ0eMPBTwD8j6WLN7Zh+MVXH0HWB8=
+	bh=sGS+38gzpmKpS5Vdi+DKJCyG/ONH1XIp22WYssAB2Qs=;
+	b=GK5+r8Eo8X8BIAnL5gne7ZCHUo8RfEUrx6mdhmCf96li7oJe+S4nY4AjaqPXipNJST1BR8
+	Jejlq5ymL1FGOEiyQJKS5X1uZxcWO3sb0yG5NvO6N/OVIEteJwymahhNTPH0u47BdPOKSM
+	vHNvYZi0ihRWOvKP1rzsy+5+x1C/n/8=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-611-U405OknyM-6DDUv10lohig-1; Thu, 06 Oct 2022 03:13:36 -0400
-X-MC-Unique: U405OknyM-6DDUv10lohig-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-567-ZeDLd-IaMjqC6z05knJ_4w-1; Thu, 06 Oct 2022 03:13:36 -0400
+X-MC-Unique: ZeDLd-IaMjqC6z05knJ_4w-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E2C8487B2B1;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E2CBE811738;
 	Thu,  6 Oct 2022 07:13:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 42E822024CC0;
-	Thu,  6 Oct 2022 07:13:33 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A9691440F1;
+	Thu,  6 Oct 2022 07:13:31 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 416271947059;
-	Thu,  6 Oct 2022 07:13:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 978431946A68;
+	Thu,  6 Oct 2022 07:13:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 66BA51946A4E
- for <dm-devel@listman.corp.redhat.com>; Wed,  5 Oct 2022 18:04:08 +0000 (UTC)
+ ESMTP id D06B61946A4E
+ for <dm-devel@listman.corp.redhat.com>; Wed,  5 Oct 2022 18:04:05 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5C37A4B3FE6; Wed,  5 Oct 2022 18:04:08 +0000 (UTC)
+ id 7BB992166B4A; Wed,  5 Oct 2022 18:04:05 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 54ECA4B3FE0
- for <dm-devel@redhat.com>; Wed,  5 Oct 2022 18:04:08 +0000 (UTC)
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 748A82166B26
+ for <dm-devel@redhat.com>; Wed,  5 Oct 2022 18:04:05 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
  bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 34C8838012EF
- for <dm-devel@redhat.com>; Wed,  5 Oct 2022 18:04:08 +0000 (UTC)
-Received: from mail-pj1-f45.google.com (mail-pj1-f45.google.com
- [209.85.216.45]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8D502185A794
+ for <dm-devel@redhat.com>; Wed,  5 Oct 2022 18:03:59 +0000 (UTC)
+Received: from mail-pj1-f48.google.com (mail-pj1-f48.google.com
+ [209.85.216.48]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-499-8VxwhE2qPPiyFJtXcD8VfA-1; Wed, 05 Oct 2022 14:04:00 -0400
-X-MC-Unique: 8VxwhE2qPPiyFJtXcD8VfA-1
-Received: by mail-pj1-f45.google.com with SMTP id
- o9-20020a17090a0a0900b0020ad4e758b3so2497462pjo.4; 
- Wed, 05 Oct 2022 11:04:00 -0700 (PDT)
+ us-mta-103-pVynSZ4sP3OkSxYE6Wm80Q-1; Wed, 05 Oct 2022 14:03:57 -0400
+X-MC-Unique: pVynSZ4sP3OkSxYE6Wm80Q-1
+Received: by mail-pj1-f48.google.com with SMTP id
+ x32-20020a17090a38a300b00209dced49cfso2524740pjb.0; 
+ Wed, 05 Oct 2022 11:03:56 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=z8tNeWv+0nv7FXmMat9FJ50mQ7l5yun8pgPApcsh1yw=;
- b=hhvxsPOo+/rVUrw2yMFGfWNRvP/yK6BP15jBuUo4JDaidiXbnIj87+0SJexhbueNXD
- vwTzEEXzMkGSa7MUrZSPjCvfFXt83ZDtPwLz5tg0ig1qhy9of6uOK5JxoL4wTU41wrDh
- 0KpklihWBGVL4VurnuDOKyijSFbZ5tcBI8xHDGK2mBeRZrP6VEML/wbVe+LBjGgOwUfM
- JLP4elybUfAdCnAz/T+l5jilqnY7jYhQ/xb0pocHEOtR8ubMvsXTGdo/HS5EgnAnvLJ+
- 10xfgPrZy3RNtsxmBmi1OdugiXcjN9oim3pchtEggdTclsIUFnUdMoZuyt7O8t2d4AiW
- dk8w==
-X-Gm-Message-State: ACrzQf2yan98K3CwENclxG65L5lbNA03JECAb2vgFcCXAI0YUcCdHRUd
- f3a5B0//qS3cI9b1SognWV+xouIdL1U=
-X-Google-Smtp-Source: AMsMyM6dffG6twubdAg50b0ZfzNL/4dO6jBfiQTtKARmAZ1J5Sjn4eFIdDTcXNZxz+o/OJWGLmOG5g==
-X-Received: by 2002:a17:902:d2d2:b0:177:4940:cc0f with SMTP id
- n18-20020a170902d2d200b001774940cc0fmr907820plc.4.1664993039312; 
- Wed, 05 Oct 2022 11:03:59 -0700 (PDT)
+ bh=XVCvABAzZpcB1Yd0f9owRm5bhoDgwilteM8uMFdB0/0=;
+ b=VmzD6egu0dZW0KIrSwaIjmEds/aejq+hn6eTBQsEGOn5X+mQq46pSuZcMjmobpWWuB
+ IkdPiOX4IpSxlK3yRMSjA8YPj3L+ySgg0wQePtjF6wt8BiWFFTUpaYcQM0JjRW2M0zDk
+ QkrQvcQo71hmJ4IF7FF18Nqq+sAazxpeRBXJDC8Xhh/NV0lldN0n9/yqqgzEpj1/Gd93
+ z1GE/zAa6yogrrtQHWHPgOEh4oLYDdW0lVym2Rw0PkxxjeMI8C5koL9ZBVZZ90hpZ3XW
+ gMD8z8Uzm1d81orATSVZUM9rXKRixgcGBaMlxi14YzAvFdgyo410EEjhNa6NZ2pJe3Qy
+ WKbQ==
+X-Gm-Message-State: ACrzQf1R1GGZbozTVDXy4fc7HPwLKdxA4nSavJjMkNqUacMjG17Zp+SK
+ H96AFKspA5aapGUj8hELtac=
+X-Google-Smtp-Source: AMsMyM76elMyGdYLqmYEzlb0EvZzQrrcq16s35J/Z6liGP+p+uL1N0ov5WsEO+IIPHGlxZIw64UlmQ==
+X-Received: by 2002:a17:902:e952:b0:17c:2eee:c0ce with SMTP id
+ b18-20020a170902e95200b0017c2eeec0cemr676521pll.145.1664993035919; 
+ Wed, 05 Oct 2022 11:03:55 -0700 (PDT)
 Received: from localhost.localdomain (c-67-174-241-145.hsd1.ca.comcast.net.
  [67.174.241.145]) by smtp.gmail.com with ESMTPSA id
- y17-20020a170903011100b001788494b764sm10674639plc.231.2022.10.05.11.03.57
+ y17-20020a170903011100b001788494b764sm10674639plc.231.2022.10.05.11.03.54
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 05 Oct 2022 11:03:58 -0700 (PDT)
+ Wed, 05 Oct 2022 11:03:55 -0700 (PDT)
 From: Yang Shi <shy828301@gmail.com>
 To: mgorman@techsingularity.net, agk@redhat.com, snitzer@kernel.org,
  dm-devel@redhat.com, akpm@linux-foundation.org
-Date: Wed,  5 Oct 2022 11:03:41 -0700
-Message-Id: <20221005180341.1738796-5-shy828301@gmail.com>
+Date: Wed,  5 Oct 2022 11:03:39 -0700
+Message-Id: <20221005180341.1738796-3-shy828301@gmail.com>
 In-Reply-To: <20221005180341.1738796-1-shy828301@gmail.com>
 References: <20221005180341.1738796-1-shy828301@gmail.com>
 MIME-Version: 1.0
@@ -96,9 +96,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mailman-Approved-At: Thu, 06 Oct 2022 07:13:31 +0000
-Subject: [dm-devel] [PATCH 4/4] md: dm-crypt: use mempool page bulk allocator
+Subject: [dm-devel] [PATCH 2/4] mm: mempool: introduce page bulk allocator
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -114,174 +114,379 @@ Cc: linux-block@vger.kernel.org, linux-mm@kvack.org,
  linux-kernel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-V2hlbiB1c2luZyBkbS1jcnlwdCBmb3IgZnVsbCBkaXNrIGVuY3J5cHRpb24sIGRtLWNyeXB0IHdv
-dWxkIGFsbG9jYXRlCmFuIG91dCBiaW8gYW5kIGFsbG9jYXRlIHRoZSBzYW1lIGFtb3VudCBvZiBw
-YWdlcyBhcyBpbiBiaW8gZm9yCmVuY3J5cHRpb24uICBJdCBjdXJyZW50bHkgYWxsb2NhdGVzIG9u
-ZSBwYWdlIGF0IGEgdGltZSBpbiBhIGxvb3AuICBUaGlzCmlzIG5vdCBlZmZpY2llbnQuICBTbyB1
-c2luZyBtZW1wb29sIHBhZ2UgYnVsayBhbGxvY2F0b3IgaW5zdGVhZCBvZgphbGxvY2F0aW5nIG9u
-ZSBwYWdlIGF0IGEgdGltZS4KClRoZSBtZW1wb29sIHBhZ2UgYnVsayBhbGxvY2F0b3Igd291bGQg
-aW1wcm92ZSB0aGUgSU9QUyB3aXRoIDFNIEkvTwpieSBhcHByb3hpYW1hdGVseSA2JS4gIFRoZSB0
-ZXN0IGlzIGRvbmUgb24gYSBWTSB3aXRoIDgwIHZDUFUgYW5kCjY0R0IgbWVtb3J5IHdpdGggYW4g
-ZW5jcnlwdGVkIHJhbSBkZXZpY2UgKHRoZSBpbXBhY3QgZnJvbSBzdG9yYWdlCmhhcmR3YXJlIGNv
-dWxkIGJlIG1pbmltaXplZCBzbyB0aGF0IHdlIGNvdWxkIGJlbmNobWFyayB0aGUgZG0tY3J5cHQK
-bGF5ZXIgbW9yZSBhY2N1cmF0ZWx5KS4KCkJlZm9yZSB0aGUgcGF0Y2g6CkpvYnM6IDEgKGY9MSk6
-IFt3KDEpXVsxMDAuMCVdW3I9MEtpQi9zLHc9NDAyTWlCL3NdW3I9MCx3PTQwMiBJT1BTXVtldGEg
-MDBtOjAwc10KY3J5cHQ6IChncm91cGlkPTAsIGpvYnM9MSk6IGVycj0gMDogcGlkPTIzMzk1MDog
-VGh1IFNlcCAxNSAxNjoyMzoxMCAyMDIyCiAgd3JpdGU6IElPUFM9NDAyLCBCVz00MDNNaUIvcyAo
-NDIzTUIvcykoMjMuNkdpQi82MDAwMm1zZWMpCiAgICBzbGF0ICh1c2VjKTogbWluPTI0MjUsIG1h
-eD0zODE5LCBhdmc9MjQ4MC44NCwgc3RkZXY9MzQuMDAKICAgIGNsYXQgKHVzZWMpOiBtaW49Nywg
-bWF4PTE2NTc1MSwgYXZnPTE1NjM5OC43Miwgc3RkZXY9NDY5MS4wMwogICAgIGxhdCAobXNlYyk6
-IG1pbj0yLCBtYXg9MTY4LCBhdmc9MTU4Ljg4LCBzdGRldj0gNC42OQogICAgY2xhdCBwZXJjZW50
-aWxlcyAobXNlYyk6CiAgICAgfCAgMS4wMHRoPVsgIDE1N10sICA1LjAwdGg9WyAgMTU3XSwgMTAu
-MDB0aD1bICAxNTddLCAyMC4wMHRoPVsgIDE1N10sCiAgICAgfCAzMC4wMHRoPVsgIDE1N10sIDQw
-LjAwdGg9WyAgMTU3XSwgNTAuMDB0aD1bICAxNTddLCA2MC4wMHRoPVsgIDE1N10sCiAgICAgfCA3
-MC4wMHRoPVsgIDE1N10sIDgwLjAwdGg9WyAgMTU3XSwgOTAuMDB0aD1bICAxNTddLCA5NS4wMHRo
-PVsgIDE1N10sCiAgICAgfCA5OS4wMHRoPVsgIDE1OV0sIDk5LjUwdGg9WyAgMTU5XSwgOTkuOTB0
-aD1bICAxNjVdLCA5OS45NXRoPVsgIDE2NV0sCiAgICAgfCA5OS45OXRoPVsgIDE2N10KICAgYncg
-KCAgS2lCL3MpOiBtaW49NDA1NTA0LCBtYXg9NDEzNjk2LCBwZXI9OTkuNzElLCBhdmc9NDExODQ1
-LjUzLCBzdGRldj0xMTU1LjA0LCBzYW1wbGVzPTEyMAogICBpb3BzICAgICAgICA6IG1pbj0gIDM5
-NiwgbWF4PSAgNDA0LCBhdmc9NDAyLjE3LCBzdGRldj0gMS4xNSwgc2FtcGxlcz0xMjAKICBsYXQg
-KHVzZWMpICAgOiAxMD0wLjAxJQogIGxhdCAobXNlYykgICA6IDQ9MC4wMSUsIDEwPTAuMDElLCAy
-MD0wLjAyJSwgNTA9MC4wNSUsIDEwMD0wLjA4JQogIGxhdCAobXNlYykgICA6IDI1MD0xMDAuMDkl
-CiAgY3B1ICAgICAgICAgIDogdXNyPTMuNzQlLCBzeXM9OTUuNjYlLCBjdHg9MjcsIG1hamY9MCwg
-bWluZj00CiAgSU8gZGVwdGhzICAgIDogMT0wLjElLCAyPTAuMSUsIDQ9MC4xJSwgOD0wLjElLCAx
-Nj0wLjElLCAzMj0wLjElLCA+PTY0PTEwMy4xJQogICAgIHN1Ym1pdCAgICA6IDA9MC4wJSwgND0x
-MDAuMCUsIDg9MC4wJSwgMTY9MC4wJSwgMzI9MC4wJSwgNjQ9MC4wJSwgPj02ND0wLjAlCiAgICAg
-Y29tcGxldGUgIDogMD0wLjAlLCA0PTEwMC4wJSwgOD0wLjAlLCAxNj0wLjAlLCAzMj0wLjAlLCA2
-ND0wLjElLCA+PTY0PTAuMCUKICAgICBpc3N1ZWQgcnd0czogdG90YWw9MCwyNDEzOCwwLDAgc2hv
-cnQ9MCwwLDAsMCBkcm9wcGVkPTAsMCwwLDAKICAgICBsYXRlbmN5ICAgOiB0YXJnZXQ9MCwgd2lu
-ZG93PTAsIHBlcmNlbnRpbGU9MTAwLjAwJSwgZGVwdGg9NjQKClJ1biBzdGF0dXMgZ3JvdXAgMCAo
-YWxsIGpvYnMpOgogIFdSSVRFOiBidz00MDNNaUIvcyAoNDIzTUIvcyksIDQwM01pQi9zLTQwM01p
-Qi9zICg0MjNNQi9zLTQyM01CL3MpLCBpbz0yMy42R2lCICgyNS40R0IpLCBydW49NjAwMDItNjAw
-MDJtc2VjCgpBZnRlciB0aGUgcGF0Y2g6CkpvYnM6IDEgKGY9MSk6IFt3KDEpXVsxMDAuMCVdW3I9
-MEtpQi9zLHc9NDMwTWlCL3NdW3I9MCx3PTQzMCBJT1BTXVtldGEgMDBtOjAwc10KY3J5cHQ6IChn
-cm91cGlkPTAsIGpvYnM9MSk6IGVycj0gMDogcGlkPTI4ODczMDogVGh1IFNlcCAxNSAxNjoyNToz
-OSAyMDIyCiAgd3JpdGU6IElPUFM9NDMwLCBCVz00MzFNaUIvcyAoNDUyTUIvcykoMjUuM0dpQi82
-MDAwMm1zZWMpCiAgICBzbGF0ICh1c2VjKTogbWluPTIyNTMsIG1heD0zMjEzLCBhdmc9MjMxOS40
-OSwgc3RkZXY9MzQuMjkKICAgIGNsYXQgKHVzZWMpOiBtaW49NiwgbWF4PTE0OTMzNywgYXZnPTE0
-NjI1Ny42OCwgc3RkZXY9NDIzOS41MgogICAgIGxhdCAobXNlYyk6IG1pbj0yLCBtYXg9MTUxLCBh
-dmc9MTQ4LjU4LCBzdGRldj0gNC4yNAogICAgY2xhdCBwZXJjZW50aWxlcyAobXNlYyk6CiAgICAg
-fCAgMS4wMHRoPVsgIDE0Nl0sICA1LjAwdGg9WyAgMTQ2XSwgMTAuMDB0aD1bICAxNDZdLCAyMC4w
-MHRoPVsgIDE0Nl0sCiAgICAgfCAzMC4wMHRoPVsgIDE0Nl0sIDQwLjAwdGg9WyAgMTQ2XSwgNTAu
-MDB0aD1bICAxNDZdLCA2MC4wMHRoPVsgIDE0Nl0sCiAgICAgfCA3MC4wMHRoPVsgIDE0Nl0sIDgw
-LjAwdGg9WyAgMTQ2XSwgOTAuMDB0aD1bICAxNDhdLCA5NS4wMHRoPVsgIDE0OF0sCiAgICAgfCA5
-OS4wMHRoPVsgIDE0OF0sIDk5LjUwdGg9WyAgMTQ4XSwgOTkuOTB0aD1bICAxNTBdLCA5OS45NXRo
-PVsgIDE1MF0sCiAgICAgfCA5OS45OXRoPVsgIDE1MF0KICAgYncgKCAgS2lCL3MpOiBtaW49NDM4
-MjcyLCBtYXg9NDQyMzY4LCBwZXI9OTkuNzMlLCBhdmc9NDQwNDYzLjU3LCBzdGRldj0xMzA1LjYw
-LCBzYW1wbGVzPTEyMAogICBpb3BzICAgICAgICA6IG1pbj0gIDQyOCwgbWF4PSAgNDMyLCBhdmc9
-NDMwLjEyLCBzdGRldj0gMS4yOCwgc2FtcGxlcz0xMjAKICBsYXQgKHVzZWMpICAgOiAxMD0wLjAx
-JQogIGxhdCAobXNlYykgICA6IDQ9MC4wMSUsIDEwPTAuMDElLCAyMD0wLjAyJSwgNTA9MC4wNSUs
-IDEwMD0wLjA5JQogIGxhdCAobXNlYykgICA6IDI1MD0xMDAuMDclCiAgY3B1ICAgICAgICAgIDog
-dXNyPTMuNzglLCBzeXM9OTUuMzclLCBjdHg9MTI3NzgsIG1hamY9MCwgbWluZj00CiAgSU8gZGVw
-dGhzICAgIDogMT0wLjElLCAyPTAuMSUsIDQ9MC4xJSwgOD0wLjElLCAxNj0wLjElLCAzMj0wLjEl
-LCA+PTY0PTEwMy4xJQogICAgIHN1Ym1pdCAgICA6IDA9MC4wJSwgND0xMDAuMCUsIDg9MC4wJSwg
-MTY9MC4wJSwgMzI9MC4wJSwgNjQ9MC4wJSwgPj02ND0wLjAlCiAgICAgY29tcGxldGUgIDogMD0w
-LjAlLCA0PTEwMC4wJSwgOD0wLjAlLCAxNj0wLjAlLCAzMj0wLjAlLCA2ND0wLjElLCA+PTY0PTAu
-MCUKICAgICBpc3N1ZWQgcnd0czogdG90YWw9MCwyNTgxNCwwLDAgc2hvcnQ9MCwwLDAsMCBkcm9w
-cGVkPTAsMCwwLDAKICAgICBsYXRlbmN5ICAgOiB0YXJnZXQ9MCwgd2luZG93PTAsIHBlcmNlbnRp
-bGU9MTAwLjAwJSwgZGVwdGg9NjQKClJ1biBzdGF0dXMgZ3JvdXAgMCAoYWxsIGpvYnMpOgogIFdS
-SVRFOiBidz00MzFNaUIvcyAoNDUyTUIvcyksIDQzMU1pQi9zLTQzMU1pQi9zICg0NTJNQi9zLTQ1
-Mk1CL3MpLCBpbz0yNS4zR2lCICgyNy4xR0IpLCBydW49NjAwMDItNjAwMDJtc2VjCgpUaGUgZnVu
-Y3Rpb24gdHJhY2luZyBhbHNvIHNob3dzIHRoZSB0aW1lIGNvbnN1bWVkIGJ5IHBhZ2UgYWxsb2Nh
-dGlvbnMgaXMKcmVkdWNlZCBzaWduaWZpY2FudGx5LiAgVGhlIHRlc3QgYWxsb2NhdGVkIDFNICgy
-NTYgcGFnZXMpIGJpbyBpbiB0aGUgc2FtZQplbnZpcm9ubWVudC4KCkJlZm9yZSB0aGUgcGF0Y2g6
-Ckl0IHRvb2sgYXBwcm94aW1hdGVseSA2MDB1cyBieSBleGNsdWRpbmcgdGhlIGJpb19hZGRfcGFn
-ZSgpIGNhbGxzLgoyNzIwLjYzMDc1NCB8ICAgNTYpICB4ZnNfaW8tMzg4NTkgIHwgICAyLjU3MSB1
-cyAgICB8ICAgIG1lbXBvb2xfYWxsb2MoKTsKMjcyMC42MzA3NTcgfCAgIDU2KSAgeGZzX2lvLTM4
-ODU5ICB8ICAgMC45MzcgdXMgICAgfCAgICBiaW9fYWRkX3BhZ2UoKTsKIDI3MjAuNjMwNzU4IHwg
-ICA1NikgIHhmc19pby0zODg1OSAgfCAgIDEuNzcyIHVzICAgIHwgICAgbWVtcG9vbF9hbGxvYygp
-OwogMjcyMC42MzA3NjAgfCAgIDU2KSAgeGZzX2lvLTM4ODU5ICB8ICAgMC44NTIgdXMgICAgfCAg
-ICBiaW9fYWRkX3BhZ2UoKTsK4oCmLgoyNzIwLjYzMTU1OSB8ICAgNTYpICB4ZnNfaW8tMzg4NTkg
-IHwgICAyLjA1OCB1cyAgICB8ICAgIG1lbXBvb2xfYWxsb2MoKTsKIDI3MjAuNjMxNTYxIHwgICA1
-NikgIHhmc19pby0zODg1OSAgfCAgIDAuNzE3IHVzICAgIHwgICAgYmlvX2FkZF9wYWdlKCk7CiAy
-NzIwLjYzMTU2MiB8ICAgNTYpICB4ZnNfaW8tMzg4NTkgIHwgICAyLjAxNCB1cyAgICB8ICAgIG1l
-bXBvb2xfYWxsb2MoKTsKIDI3MjAuNjMxNTY0IHwgICA1NikgIHhmc19pby0zODg1OSAgfCAgIDAu
-NjIwIHVzICAgIHwgICAgYmlvX2FkZF9wYWdlKCk7CgpBZnRlciB0aGUgcGF0Y2g6Ckl0IHRvb2sg
-YXBwcm94aWFtYXRlbHkgMzB1cy4KMTE1NjQuMjY2Mzg1IHwgICAyMikgeGZzX2lvLTEzNjE4MyAg
-fCArIDMwLjU1MSB1cyAgIHwgICAgX19hbGxvY19wYWdlc19idWxrKCk7CgpQYWdlIGFsbG9jYXRp
-b25zIG92ZXJoZWFkIGlzIGFyb3VuZCA2JSAoNjAwdXMvOTg1M3VzKSBpbiBkbS1jcnlwdCBsYXll
-ciBzaG93biBieQpmdW5jdGlvbiB0cmFjZS4gIFRoZSBkYXRhIGFsc28gbWF0Y2hlcyB0aGUgSU9Q
-UyBkYXRhIHNob3duIGJ5IGZpby4KCkFuZCB0aGUgYmVuY2htYXJrIHdpdGggNEsgc2l6ZSBJL08g
-ZG9lc24ndCBzaG93IG1lYXN1cmFibGUgcmVncmVzc2lvbi4KClNpZ25lZC1vZmYtYnk6IFlhbmcg
-U2hpIDxzaHk4MjgzMDFAZ21haWwuY29tPgotLS0KIGRyaXZlcnMvbWQvZG0tY3J5cHQuYyB8IDcw
-ICsrKysrKysrKysrKysrKysrKysrKysrKystLS0tLS0tLS0tLS0tLS0tLS0KIDEgZmlsZSBjaGFu
-Z2VkLCA0MSBpbnNlcnRpb25zKCspLCAyOSBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9kcml2
-ZXJzL21kL2RtLWNyeXB0LmMgYi9kcml2ZXJzL21kL2RtLWNyeXB0LmMKaW5kZXggODVhYzFmOWIz
-N2FlLi5jODZiZDRhZjRkNzUgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvbWQvZG0tY3J5cHQuYworKysg
-Yi9kcml2ZXJzL21kL2RtLWNyeXB0LmMKQEAgLTE2NzMsMzQgKzE2NzMsMzcgQEAgc3RhdGljIHN0
-cnVjdCBiaW8gKmNyeXB0X2FsbG9jX2J1ZmZlcihzdHJ1Y3QgZG1fY3J5cHRfaW8gKmlvLCB1bnNp
-Z25lZCBzaXplKQogCXN0cnVjdCBiaW8gKmNsb25lOwogCXVuc2lnbmVkIGludCBucl9pb3ZlY3Mg
-PSAoc2l6ZSArIFBBR0VfU0laRSAtIDEpID4+IFBBR0VfU0hJRlQ7CiAJZ2ZwX3QgZ2ZwX21hc2sg
-PSBHRlBfTk9XQUlUIHwgX19HRlBfSElHSE1FTTsKLQl1bnNpZ25lZCBpLCBsZW4sIHJlbWFpbmlu
-Z19zaXplOworCXVuc2lnbmVkIGxlbjsKIAlzdHJ1Y3QgcGFnZSAqcGFnZTsKLQotcmV0cnk6Ci0J
-aWYgKHVubGlrZWx5KGdmcF9tYXNrICYgX19HRlBfRElSRUNUX1JFQ0xBSU0pKQotCQltdXRleF9s
-b2NrKCZjYy0+YmlvX2FsbG9jX2xvY2spOworCUxJU1RfSEVBRChwYWdlX2xpc3QpOwogCiAJY2xv
-bmUgPSBiaW9fYWxsb2NfYmlvc2V0KGNjLT5kZXYtPmJkZXYsIG5yX2lvdmVjcywgaW8tPmJhc2Vf
-YmlvLT5iaV9vcGYsCiAJCQkJIEdGUF9OT0lPLCAmY2MtPmJzKTsKIAljbG9uZS0+YmlfcHJpdmF0
-ZSA9IGlvOwogCWNsb25lLT5iaV9lbmRfaW8gPSBjcnlwdF9lbmRpbzsKIAotCXJlbWFpbmluZ19z
-aXplID0gc2l6ZTsKK3JldHJ5OgorCWlmICh1bmxpa2VseShnZnBfbWFzayAmIF9fR0ZQX0RJUkVD
-VF9SRUNMQUlNKSkKKwkJbXV0ZXhfbG9jaygmY2MtPmJpb19hbGxvY19sb2NrKTsKIAotCWZvciAo
-aSA9IDA7IGkgPCBucl9pb3ZlY3M7IGkrKykgewotCQlwYWdlID0gbWVtcG9vbF9hbGxvYygmY2Mt
-PnBhZ2VfcG9vbCwgZ2ZwX21hc2spOwotCQlpZiAoIXBhZ2UpIHsKLQkJCWNyeXB0X2ZyZWVfYnVm
-ZmVyX3BhZ2VzKGNjLCBjbG9uZSk7Ci0JCQliaW9fcHV0KGNsb25lKTsKLQkJCWdmcF9tYXNrIHw9
-IF9fR0ZQX0RJUkVDVF9SRUNMQUlNOwotCQkJZ290byByZXRyeTsKKwlpZiAobWVtcG9vbF9hbGxv
-Y19wYWdlc19idWxrX2xpc3QoJmNjLT5wYWdlX3Bvb2wsIGdmcF9tYXNrLCBucl9pb3ZlY3MsCisJ
-CQkJCSAgJnBhZ2VfbGlzdCkpIHsKKwkJd2hpbGUgKCFsaXN0X2VtcHR5KCZwYWdlX2xpc3QpKSB7
-CisJCQlwYWdlID0gbHJ1X3RvX3BhZ2UoJnBhZ2VfbGlzdCk7CisJCQlsaXN0X2RlbF9pbml0KCZw
-YWdlLT5scnUpOworCQkJbGVuID0gKHNpemUgPiBQQUdFX1NJWkUpID8gUEFHRV9TSVpFIDogc2l6
-ZTsKKwkJCWJpb19hZGRfcGFnZShjbG9uZSwgcGFnZSwgbGVuLCAwKTsKKwkJCXNpemUgLT0gbGVu
-OworCQl9CisJfSBlbHNlIHsKKwkJd2hpbGUgKCFsaXN0X2VtcHR5KCZwYWdlX2xpc3QpKSB7CisJ
-CQlwYWdlID0gbHJ1X3RvX3BhZ2UoJnBhZ2VfbGlzdCk7CisJCQlsaXN0X2RlbF9pbml0KCZwYWdl
-LT5scnUpOworCQkJbWVtcG9vbF9mcmVlKHBhZ2UsICZjYy0+cGFnZV9wb29sKTsKIAkJfQogCi0J
-CWxlbiA9IChyZW1haW5pbmdfc2l6ZSA+IFBBR0VfU0laRSkgPyBQQUdFX1NJWkUgOiByZW1haW5p
-bmdfc2l6ZTsKLQotCQliaW9fYWRkX3BhZ2UoY2xvbmUsIHBhZ2UsIGxlbiwgMCk7Ci0KLQkJcmVt
-YWluaW5nX3NpemUgLT0gbGVuOworCQlnZnBfbWFzayB8PSBfX0dGUF9ESVJFQ1RfUkVDTEFJTTsK
-KwkJZ290byByZXRyeTsKIAl9CiAKIAkvKiBBbGxvY2F0ZSBzcGFjZSBmb3IgaW50ZWdyaXR5IHRh
-Z3MgKi8KQEAgLTI2NTQsMTAgKzI2NTcsMTMgQEAgc3RhdGljIHZvaWQgY3J5cHRfY2FsY3VsYXRl
-X3BhZ2VzX3Blcl9jbGllbnQodm9pZCkKIAlkbV9jcnlwdF9wYWdlc19wZXJfY2xpZW50ID0gcGFn
-ZXM7CiB9CiAKLXN0YXRpYyB2b2lkICpjcnlwdF9wYWdlX2FsbG9jKGdmcF90IGdmcF9tYXNrLCB2
-b2lkICpwb29sX2RhdGEpCitzdGF0aWMgdW5zaWduZWQgaW50IGNyeXB0X2FsbG9jX3BhZ2VzX2J1
-bGsoZ2ZwX3QgZ2ZwX21hc2ssIHVuc2lnbmVkIGludCBuciwKKwkJCQkJICAgdm9pZCAqcG9vbF9k
-YXRhLAorCQkJCQkgICBzdHJ1Y3QgbGlzdF9oZWFkICpwYWdlX2xpc3QsCisJCQkJCSAgIHN0cnVj
-dCBwYWdlICoqcGFnZV9hcnJheSkKIHsKIAlzdHJ1Y3QgY3J5cHRfY29uZmlnICpjYyA9IHBvb2xf
-ZGF0YTsKLQlzdHJ1Y3QgcGFnZSAqcGFnZTsKKwl1bnNpZ25lZCBpbnQgcmV0OwogCiAJLyoKIAkg
-KiBOb3RlLCBwZXJjcHVfY291bnRlcl9yZWFkX3Bvc2l0aXZlKCkgbWF5IG92ZXIgKGFuZCB1bmRl
-cikgZXN0aW1hdGUKQEAgLTI2NjYsMTMgKzI2NzIsMTMgQEAgc3RhdGljIHZvaWQgKmNyeXB0X3Bh
-Z2VfYWxsb2MoZ2ZwX3QgZ2ZwX21hc2ssIHZvaWQgKnBvb2xfZGF0YSkKIAkgKi8KIAlpZiAodW5s
-aWtlbHkocGVyY3B1X2NvdW50ZXJfcmVhZF9wb3NpdGl2ZSgmY2MtPm5fYWxsb2NhdGVkX3BhZ2Vz
-KSA+PSBkbV9jcnlwdF9wYWdlc19wZXJfY2xpZW50KSAmJgogCSAgICBsaWtlbHkoZ2ZwX21hc2sg
-JiBfX0dGUF9OT1JFVFJZKSkKLQkJcmV0dXJuIE5VTEw7CisJCXJldHVybiAwOworCisJcmV0ID0g
-YWxsb2NfcGFnZXNfYnVsa19saXN0KGdmcF9tYXNrLCBuciwgcGFnZV9saXN0KTsKIAotCXBhZ2Ug
-PSBhbGxvY19wYWdlKGdmcF9tYXNrKTsKLQlpZiAobGlrZWx5KHBhZ2UgIT0gTlVMTCkpCi0JCXBl
-cmNwdV9jb3VudGVyX2FkZCgmY2MtPm5fYWxsb2NhdGVkX3BhZ2VzLCAxKTsKKwlwZXJjcHVfY291
-bnRlcl9hZGQoJmNjLT5uX2FsbG9jYXRlZF9wYWdlcywgcmV0KTsKIAotCXJldHVybiBwYWdlOwor
-CXJldHVybiByZXQ7CiB9CiAKIHN0YXRpYyB2b2lkIGNyeXB0X3BhZ2VfZnJlZSh2b2lkICpwYWdl
-LCB2b2lkICpwb29sX2RhdGEpCkBAIC0yNzA0LDEzICsyNzEwLDE3IEBAIHN0YXRpYyB2b2lkIGNy
-eXB0X2R0cihzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSkKIAogCWJpb3NldF9leGl0KCZjYy0+YnMpOwog
-CisJLyoKKwkgKiBXaXRoIG1lbXBvb2wgYnVsayBhbGxvY2F0b3IgdGhlIHBhZ2VzIGluIHRoZSBw
-b29sIGFyZSBub3QKKwkgKiBjb3VudGVkIGluIG5fYWxsb2NhdGVkX3BhZ2VzLgorCSAqLworCVdB
-Uk5fT04ocGVyY3B1X2NvdW50ZXJfc3VtKCZjYy0+bl9hbGxvY2F0ZWRfcGFnZXMpICE9IDApOwor
-CXBlcmNwdV9jb3VudGVyX2Rlc3Ryb3koJmNjLT5uX2FsbG9jYXRlZF9wYWdlcyk7CisKIAltZW1w
-b29sX2V4aXQoJmNjLT5wYWdlX3Bvb2wpOwogCW1lbXBvb2xfZXhpdCgmY2MtPnJlcV9wb29sKTsK
-IAltZW1wb29sX2V4aXQoJmNjLT50YWdfcG9vbCk7CiAKLQlXQVJOX09OKHBlcmNwdV9jb3VudGVy
-X3N1bSgmY2MtPm5fYWxsb2NhdGVkX3BhZ2VzKSAhPSAwKTsKLQlwZXJjcHVfY291bnRlcl9kZXN0
-cm95KCZjYy0+bl9hbGxvY2F0ZWRfcGFnZXMpOwotCiAJaWYgKGNjLT5pdl9nZW5fb3BzICYmIGNj
-LT5pdl9nZW5fb3BzLT5kdHIpCiAJCWNjLT5pdl9nZW5fb3BzLT5kdHIoY2MpOwogCkBAIC0zMjUw
-LDcgKzMyNjAsOSBAQCBzdGF0aWMgaW50IGNyeXB0X2N0cihzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwg
-dW5zaWduZWQgaW50IGFyZ2MsIGNoYXIgKiphcmd2KQogCQlBTElHTihzaXplb2Yoc3RydWN0IGRt
-X2NyeXB0X2lvKSArIGNjLT5kbXJlcV9zdGFydCArIGFkZGl0aW9uYWxfcmVxX3NpemUsCiAJCSAg
-ICAgIEFSQ0hfS01BTExPQ19NSU5BTElHTik7CiAKLQlyZXQgPSBtZW1wb29sX2luaXQoJmNjLT5w
-YWdlX3Bvb2wsIEJJT19NQVhfVkVDUywgY3J5cHRfcGFnZV9hbGxvYywgY3J5cHRfcGFnZV9mcmVl
-LCBjYyk7CisJcmV0ID0gbWVtcG9vbF9pbml0X3BhZ2VzX2J1bGsoJmNjLT5wYWdlX3Bvb2wsIEJJ
-T19NQVhfVkVDUywKKwkJCQkgICAgICBjcnlwdF9hbGxvY19wYWdlc19idWxrLCBjcnlwdF9wYWdl
-X2ZyZWUsCisJCQkJICAgICAgY2MpOwogCWlmIChyZXQpIHsKIAkJdGktPmVycm9yID0gIkNhbm5v
-dCBhbGxvY2F0ZSBwYWdlIG1lbXBvb2wiOwogCQlnb3RvIGJhZDsKLS0gCjIuMjYuMwoKLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJl
-ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
+Since v5.13 the page bulk allocator was introduced to allocate order-0
+pages in bulk.  There are a few mempool allocator callers which does
+order-0 page allocation in a loop, for example, dm-crypt, f2fs compress,
+etc.  A mempool page bulk allocator seems useful.  So introduce the
+mempool page bulk allocator.
+
+It introduces the below APIs:
+  - mempool_init_pages_bulk()
+  - mempool_create_pages_bulk()
+They initialize the mempool for page bulk allocator.  The pool is filled
+by alloc_page() in a loop.
+
+  - mempool_alloc_pages_bulk_list()
+  - mempool_alloc_pages_bulk_array()
+They do bulk allocation from mempool.
+They do the below conceptually:
+  1. Call bulk page allocator
+  2. If the allocation is fulfilled then return otherwise try to
+     allocate the remaining pages from the mempool
+  3. If it is fulfilled then return otherwise retry from #1 with sleepable
+     gfp
+  4. If it is still failed, sleep for a while to wait for the mempool is
+     refilled, then retry from #1
+The populated pages will stay on the list or array until the callers
+consume them or free them.
+Since mempool allocator is guaranteed to success in the sleepable context,
+so the two APIs return true for success or false for fail.  It is the
+caller's responsibility to handle failure case (partial allocation), just
+like the page bulk allocator.
+
+The mempool typically is an object agnostic allocator, but bulk allocation
+is only supported by pages, so the mempool bulk allocator is for page
+allocation only as well.
+
+Signed-off-by: Yang Shi <shy828301@gmail.com>
+---
+ include/linux/mempool.h |  19 ++++
+ mm/mempool.c            | 188 +++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 197 insertions(+), 10 deletions(-)
+
+diff --git a/include/linux/mempool.h b/include/linux/mempool.h
+index 0c964ac107c2..8bad28bceaa8 100644
+--- a/include/linux/mempool.h
++++ b/include/linux/mempool.h
+@@ -13,6 +13,11 @@ struct kmem_cache;
+ typedef void * (mempool_alloc_t)(gfp_t gfp_mask, void *pool_data);
+ typedef void (mempool_free_t)(void *element, void *pool_data);
+ 
++typedef unsigned int (mempool_alloc_pages_bulk_t)(gfp_t gfp_mask,
++					unsigned int nr, void *pool_data,
++					struct list_head *page_list,
++					struct page **page_array);
++
+ typedef struct mempool_s {
+ 	spinlock_t lock;
+ 	int min_nr;		/* nr of elements at *elements */
+@@ -22,6 +27,7 @@ typedef struct mempool_s {
+ 	void *pool_data;
+ 	mempool_alloc_t *alloc;
+ 	mempool_free_t *free;
++	mempool_alloc_pages_bulk_t *alloc_pages_bulk;
+ 	wait_queue_head_t wait;
+ } mempool_t;
+ 
+@@ -36,18 +42,31 @@ int mempool_init_node(mempool_t *pool, int min_nr, mempool_alloc_t *alloc_fn,
+ 		      gfp_t gfp_mask, int node_id);
+ int mempool_init(mempool_t *pool, int min_nr, mempool_alloc_t *alloc_fn,
+ 		 mempool_free_t *free_fn, void *pool_data);
++int mempool_init_pages_bulk(mempool_t *pool, int min_nr,
++			    mempool_alloc_pages_bulk_t *alloc_pages_bulk_fn,
++			    mempool_free_t *free_fn, void *pool_data);
+ 
+ extern mempool_t *mempool_create(int min_nr, mempool_alloc_t *alloc_fn,
+ 			mempool_free_t *free_fn, void *pool_data);
+ extern mempool_t *mempool_create_node(int min_nr, mempool_alloc_t *alloc_fn,
+ 			mempool_free_t *free_fn, void *pool_data,
+ 			gfp_t gfp_mask, int nid);
++extern mempool_t *mempool_create_pages_bulk(int min_nr,
++			mempool_alloc_pages_bulk_t *alloc_pages_bulk_fn,
++			mempool_free_t *free_fn, void *pool_data);
+ 
+ extern int mempool_resize(mempool_t *pool, int new_min_nr);
+ extern void mempool_destroy(mempool_t *pool);
+ extern void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask) __malloc;
+ extern void mempool_free(void *element, mempool_t *pool);
+ 
++extern bool mempool_alloc_pages_bulk_list(mempool_t *pool, gfp_t gfp_mask,
++					  unsigned int nr,
++					  struct list_head *page_list);
++extern bool mempool_alloc_pages_bulk_array(mempool_t *pool, gfp_t gfp_mask,
++					   unsigned int nr,
++					   struct page **page_array);
++
+ /*
+  * A mempool_alloc_t and mempool_free_t that get the memory from
+  * a slab cache that is passed in through pool_data.
+diff --git a/mm/mempool.c b/mm/mempool.c
+index ba32151f3843..7711ca2e6d66 100644
+--- a/mm/mempool.c
++++ b/mm/mempool.c
+@@ -177,6 +177,7 @@ void mempool_destroy(mempool_t *pool)
+ EXPORT_SYMBOL(mempool_destroy);
+ 
+ static inline int __mempool_init(mempool_t *pool, int min_nr,
++				 mempool_alloc_pages_bulk_t *alloc_pages_bulk_fn,
+ 				 mempool_alloc_t *alloc_fn,
+ 				 mempool_free_t *free_fn, void *pool_data,
+ 				 gfp_t gfp_mask, int node_id)
+@@ -186,8 +187,11 @@ static inline int __mempool_init(mempool_t *pool, int min_nr,
+ 	pool->pool_data = pool_data;
+ 	pool->alloc	= alloc_fn;
+ 	pool->free	= free_fn;
++	pool->alloc_pages_bulk = alloc_pages_bulk_fn;
+ 	init_waitqueue_head(&pool->wait);
+ 
++	WARN_ON_ONCE(alloc_pages_bulk_fn && alloc_fn);
++
+ 	pool->elements = kmalloc_array_node(min_nr, sizeof(void *),
+ 					    gfp_mask, node_id);
+ 	if (!pool->elements)
+@@ -199,7 +203,10 @@ static inline int __mempool_init(mempool_t *pool, int min_nr,
+ 	while (pool->curr_nr < pool->min_nr) {
+ 		void *element;
+ 
+-		element = pool->alloc(gfp_mask, pool->pool_data);
++		if (pool->alloc_pages_bulk)
++			element = alloc_page(gfp_mask);
++		else
++			element = pool->alloc(gfp_mask, pool->pool_data);
+ 		if (unlikely(!element)) {
+ 			mempool_exit(pool);
+ 			return -ENOMEM;
+@@ -214,7 +221,7 @@ int mempool_init_node(mempool_t *pool, int min_nr, mempool_alloc_t *alloc_fn,
+ 		      mempool_free_t *free_fn, void *pool_data,
+ 		      gfp_t gfp_mask, int node_id)
+ {
+-	return __mempool_init(pool, min_nr, alloc_fn, free_fn, pool_data,
++	return __mempool_init(pool, min_nr, NULL, alloc_fn, free_fn, pool_data,
+ 			      gfp_mask, node_id);
+ }
+ EXPORT_SYMBOL(mempool_init_node);
+@@ -236,15 +243,40 @@ EXPORT_SYMBOL(mempool_init_node);
+ int mempool_init(mempool_t *pool, int min_nr, mempool_alloc_t *alloc_fn,
+ 		 mempool_free_t *free_fn, void *pool_data)
+ {
+-	return __mempool_init(pool, min_nr, alloc_fn, free_fn,
++	return __mempool_init(pool, min_nr, NULL, alloc_fn, free_fn,
+ 			      pool_data, GFP_KERNEL, NUMA_NO_NODE);
+ 
+ }
+ EXPORT_SYMBOL(mempool_init);
+ 
+-static mempool_t *__mempool_create(int min_nr, mempool_alloc_t *alloc_fn,
+-				   mempool_free_t *free_fn, void *pool_data,
+-				   gfp_t gfp_mask, int node_id)
++/**
++ * mempool_init_pages_bulk - initialize a pages pool for bulk allocator
++ * @pool: pointer to the memory pool that should be initialized
++ * @min_nr: the minimum number of elements guaranteed to be
++ *          allocated for this pool.
++ * @alloc_pages_bulk_fn: user-defined pages bulk allocation function.
++ * @free_fn: user-defined element-freeing function.
++ * @pool_data: optional private data available to the user-defined functions.
++ *
++ * Like mempool_create(), but initializes the pool in (i.e. embedded in another
++ * structure).
++ *
++ * Return: %0 on success, negative error code otherwise.
++ */
++int mempool_init_pages_bulk(mempool_t *pool, int min_nr,
++			    mempool_alloc_pages_bulk_t *alloc_pages_bulk_fn,
++			    mempool_free_t *free_fn, void *pool_data)
++{
++	return __mempool_init(pool, min_nr, alloc_pages_bulk_fn, NULL,
++			      free_fn, pool_data, GFP_KERNEL, NUMA_NO_NODE);
++}
++EXPORT_SYMBOL(mempool_init_pages_bulk);
++
++static mempool_t *__mempool_create(int min_nr,
++			mempool_alloc_pages_bulk_t *alloc_pages_bulk_fn,
++			mempool_alloc_t *alloc_fn,
++			mempool_free_t *free_fn, void *pool_data,
++			gfp_t gfp_mask, int node_id)
+ {
+ 	mempool_t *pool;
+ 
+@@ -252,8 +284,8 @@ static mempool_t *__mempool_create(int min_nr, mempool_alloc_t *alloc_fn,
+ 	if (!pool)
+ 		return NULL;
+ 
+-	if (__mempool_init(pool, min_nr, alloc_fn, free_fn, pool_data,
+-			   gfp_mask, node_id)) {
++	if (__mempool_init(pool, min_nr, alloc_pages_bulk_fn, alloc_fn,
++			   free_fn, pool_data, gfp_mask, node_id)) {
+ 		kfree(pool);
+ 		return NULL;
+ 	}
+@@ -280,7 +312,7 @@ static mempool_t *__mempool_create(int min_nr, mempool_alloc_t *alloc_fn,
+ mempool_t *mempool_create(int min_nr, mempool_alloc_t *alloc_fn,
+ 				mempool_free_t *free_fn, void *pool_data)
+ {
+-	return __mempool_create(min_nr, alloc_fn, free_fn, pool_data,
++	return __mempool_create(min_nr, NULL, alloc_fn, free_fn, pool_data,
+ 				GFP_KERNEL, NUMA_NO_NODE);
+ }
+ EXPORT_SYMBOL(mempool_create);
+@@ -289,11 +321,21 @@ mempool_t *mempool_create_node(int min_nr, mempool_alloc_t *alloc_fn,
+ 			       mempool_free_t *free_fn, void *pool_data,
+ 			       gfp_t gfp_mask, int node_id)
+ {
+-	return __mempool_create(min_nr, alloc_fn, free_fn, pool_data,
++	return __mempool_create(min_nr, NULL, alloc_fn, free_fn, pool_data,
+ 				gfp_mask, node_id);
+ }
+ EXPORT_SYMBOL(mempool_create_node);
+ 
++mempool_t* mempool_create_pages_bulk(int min_nr,
++			mempool_alloc_pages_bulk_t *alloc_pages_bulk_fn,
++			mempool_free_t *free_fn, void *pool_data)
++{
++	return __mempool_create(min_nr, alloc_pages_bulk_fn, NULL,
++				free_fn, pool_data, GFP_KERNEL,
++				NUMA_NO_NODE);
++}
++EXPORT_SYMBOL(mempool_create_pages_bulk);
++
+ /**
+  * mempool_resize - resize an existing memory pool
+  * @pool:       pointer to the memory pool which was allocated via
+@@ -457,6 +499,132 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
+ }
+ EXPORT_SYMBOL(mempool_alloc);
+ 
++/**
++ * mempool_alloc_pages_bulk - allocate a bulk of pagesfrom a specific
++ *                           memory pool
++ * @pool:       pointer to the memory pool which was allocated via
++ *              mempool_create().
++ * @gfp_mask:   the usual allocation bitmask.
++ * @nr:         the number of requested pages.
++ * @page_list:  the list the pages will be added to.
++ * @page_array: the array the pages will be added to.
++ *
++ * this function only sleeps if the alloc_pages_bulk_fn() function sleeps
++ * or the allocation can not be satisfied even though the mempool is depleted.
++ * Note that due to preallocation, this function *never* fails when called
++ * from process contexts. (it might fail if called from an IRQ context.)
++ * Note: using __GFP_ZERO is not supported.  And the caller should not pass
++ * in both valid page_list and page_array.
++ *
++ * Return: true when nr pages are allocated or false if not.  It is the
++ *         caller's responsibility to free the partial allocated pages.
++ */
++static bool mempool_alloc_pages_bulk(mempool_t *pool, gfp_t gfp_mask,
++				     unsigned int nr,
++				     struct list_head *page_list,
++				     struct page **page_array)
++{
++	unsigned long flags;
++	wait_queue_entry_t wait;
++	gfp_t gfp_temp;
++	int i;
++	unsigned int ret, nr_remaining;
++	struct page *page;
++
++	VM_WARN_ON_ONCE(gfp_mask & __GFP_ZERO);
++	might_alloc(gfp_mask);
++
++	gfp_mask |= __GFP_NOMEMALLOC;   /* don't allocate emergency reserves */
++	gfp_mask |= __GFP_NORETRY;      /* don't loop in __alloc_pages */
++	gfp_mask |= __GFP_NOWARN;       /* failures are OK */
++
++	gfp_temp = gfp_mask & ~(__GFP_DIRECT_RECLAIM|__GFP_IO);
++
++repeat_alloc:
++	i = 0;
++	ret = pool->alloc_pages_bulk(gfp_temp, nr, pool->pool_data, page_list,
++				     page_array);
++
++	if (ret == nr)
++		return true;
++
++	nr_remaining = nr - ret;
++
++	spin_lock_irqsave(&pool->lock, flags);
++	/* Allocate page from the pool and add to the list or array */
++	while (pool->curr_nr && (nr_remaining > 0)) {
++		page = remove_element(pool);
++		spin_unlock_irqrestore(&pool->lock, flags);
++		smp_wmb();
++
++		kmemleak_update_trace((void *)page);
++
++		if (page_list)
++			list_add(&page->lru, page_list);
++		else
++			page_array[ret + i] = page;
++
++		i++;
++		nr_remaining--;
++
++		spin_lock_irqsave(&pool->lock, flags);
++	}
++
++	spin_unlock_irqrestore(&pool->lock, flags);
++
++	if (!nr_remaining)
++		return true;
++
++	/*
++	 * The bulk allocator counts in the populated pages for array,
++	 * but don't do it for list.
++	 */
++	if (page_list)
++		nr = nr_remaining;
++
++	/*
++	 * We use gfp mask w/o direct reclaim or IO for the first round.  If
++	 * alloc failed with that and @pool was empty, retry immediately.
++	 */
++	if (gfp_temp != gfp_mask) {
++		gfp_temp = gfp_mask;
++		goto repeat_alloc;
++	}
++
++	/* We must not sleep if !__GFP_DIRECT_RECLAIM */
++	if (!(gfp_mask & __GFP_DIRECT_RECLAIM))
++		return false;
++
++	/* Let's wait for someone else to return an element to @pool */
++	init_wait(&wait);
++	prepare_to_wait(&pool->wait, &wait, TASK_UNINTERRUPTIBLE);
++
++	/*
++	 * FIXME: this should be io_schedule().  The timeout is there as a
++	 * workaround for some DM problems in 2.6.18.
++	 */
++	io_schedule_timeout(5*HZ);
++
++	finish_wait(&pool->wait, &wait);
++	goto repeat_alloc;
++}
++
++bool mempool_alloc_pages_bulk_list(mempool_t *pool, gfp_t gfp_mask,
++				   unsigned int nr,
++				   struct list_head *page_list)
++{
++	return mempool_alloc_pages_bulk(pool, gfp_mask, nr, page_list, NULL);
++}
++EXPORT_SYMBOL(mempool_alloc_pages_bulk_list);
++
++bool mempool_alloc_pages_bulk_array(mempool_t *pool, gfp_t gfp_mask,
++				    unsigned int nr,
++				    struct page **page_array)
++{
++	return mempool_alloc_pages_bulk(pool, gfp_mask, nr, NULL, page_array);
++}
++EXPORT_SYMBOL(mempool_alloc_pages_bulk_array);
++
+ /**
+  * mempool_free - return an element to the pool.
+  * @element:   pool element pointer.
+-- 
+2.26.3
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
