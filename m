@@ -1,64 +1,64 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3AE5FC43219
-	for <dm-devel@archiver.kernel.org>; Fri,  7 Oct 2022 17:35:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 33725C433FE
+	for <dm-devel@archiver.kernel.org>; Fri,  7 Oct 2022 17:35:59 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1665164157;
+	s=mimecast20190719; t=1665164158;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=/3LZB8nEX308KJ9mVztKt+32oKUcigI0n25tu07Xwfg=;
-	b=AeQoDCm4+7yoZYsLDqXrjAITXKYA1RdHHh+McvENXrnzE9/KlN6U0wXbllBFQdkVRxtsl0
-	CvH+myj43WI1lasBdFddzZpjo+bdwYQdhJjq1rklY8N0TkOa/b9mCxXCLDrUvmwmRnnO1y
-	YUUYCkgvVCAr7sNF4SgYESHxUTSVQDw=
+	bh=y+5tRMhIgrKHKuxqRkZeG/bXNCs14j4Pqf+Xma5fKos=;
+	b=PShuOmYwt7j2ViRyWZtiA7EorX1DXFNyKQtXs+zRIxwmSF2dMXR7CufiXZnJYsyx3Ww8aC
+	ML3XXmumGlCOUnVwMXVq4Nh+U8A9Obbjfz+hlZvGyX4ib0vFNPCxbnnuYQwQlozf34msxO
+	PJvOe1SUeFFgmW6r52HDux3aDuiUxDk=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-659-IdDPax2rOGiTCRZv2xUGLQ-1; Fri, 07 Oct 2022 13:35:56 -0400
-X-MC-Unique: IdDPax2rOGiTCRZv2xUGLQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-426-MepI2OvTNLa8_O2huNcUlw-1; Fri, 07 Oct 2022 13:35:57 -0400
+X-MC-Unique: MepI2OvTNLa8_O2huNcUlw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BDC7986EB21;
-	Fri,  7 Oct 2022 17:35:53 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2C23A855306;
+	Fri,  7 Oct 2022 17:35:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id AC3272166B4D;
-	Fri,  7 Oct 2022 17:35:53 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1A143145BEE3;
+	Fri,  7 Oct 2022 17:35:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9BC741946A49;
-	Fri,  7 Oct 2022 17:35:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0BC981946A49;
+	Fri,  7 Oct 2022 17:35:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 411451946595
- for <dm-devel@listman.corp.redhat.com>; Fri,  7 Oct 2022 17:35:52 +0000 (UTC)
+ ESMTP id 1E53D1946A66
+ for <dm-devel@listman.corp.redhat.com>; Fri,  7 Oct 2022 17:35:54 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2868440F9D40; Fri,  7 Oct 2022 17:35:52 +0000 (UTC)
+ id 11C90145BEE9; Fri,  7 Oct 2022 17:35:54 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 07B3640EFB3F;
- Fri,  7 Oct 2022 17:35:51 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E5A5E145BEE6;
+ Fri,  7 Oct 2022 17:35:53 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 297HZolT006776;
- Fri, 7 Oct 2022 12:35:51 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 297HZq5Y006786;
+ Fri, 7 Oct 2022 12:35:52 -0500
 Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 297HZoGq006775;
- Fri, 7 Oct 2022 12:35:50 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 297HZqDf006783;
+ Fri, 7 Oct 2022 12:35:52 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Fri,  7 Oct 2022 12:35:41 -0500
-Message-Id: <1665164144-6716-6-git-send-email-bmarzins@redhat.com>
+Date: Fri,  7 Oct 2022 12:35:43 -0500
+Message-Id: <1665164144-6716-8-git-send-email-bmarzins@redhat.com>
 In-Reply-To: <1665164144-6716-1-git-send-email-bmarzins@redhat.com>
 References: <1665164144-6716-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [PATCH 5/8] multipath tests: tests for
- reconcile_features_with_queue_mode
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Subject: [dm-devel] [PATCH 7/8] libmultipath: get nvme path transport
+ protocol
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -75,297 +75,198 @@ Cc: device-mapper development <dm-devel@redhat.com>,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+Read the transport protocol from /sys/block/nvmeXnY/device/transport.
+Update protocol_name[] and bus_protocol_id() to store the nvme protocol
+names after the scsi protocol names.
+
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- tests/Makefile   |   2 +
- tests/features.c | 232 ++++++++++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 233 insertions(+), 1 deletion(-)
+ libmultipath/discovery.c   | 18 ++++++++++++++++--
+ libmultipath/structs.c     | 22 +++++++++++++++++-----
+ libmultipath/structs.h     | 33 +++++++++++++++++++++------------
+ multipath/multipath.conf.5 |  8 ++++++--
+ 4 files changed, 60 insertions(+), 21 deletions(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index ccdfbd15..bc9380f8 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -36,6 +36,7 @@ ifneq ($(DIO_TEST_DEV),)
- directio-test_FLAGS := -DDIO_TEST_DEV=\"$(DIO_TEST_DEV)\"
- endif
- mpathvalid-test_FLAGS := -I$(mpathvaliddir)
-+features-test_FLAGS := -I$(multipathdir)/nvme
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index e937f090..f3fccedd 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1539,6 +1539,7 @@ nvme_sysfs_pathinfo (struct path *pp, const struct _vector *hwtable)
+ 	struct udev_device *parent;
+ 	const char *attr_path = NULL;
+ 	const char *attr;
++	int i;
  
- # test-specific linker flags
- # XYZ-test_TESTDEPS: test libraries containing __wrap_xyz functions
-@@ -73,6 +74,7 @@ strbuf-test_OBJDEPS := $(mpathutildir)/strbuf.o
- sysfs-test_TESTDEPS := test-log.o
- sysfs-test_OBJDEPS := $(multipathdir)/sysfs.o $(mpathutildir)/util.o
- sysfs-test_LIBDEPS := -ludev -lpthread -ldl
-+features-test_LIBDEPS := -ludev -lpthread
+ 	if (pp->udev)
+ 		attr_path = udev_device_get_sysname(pp->udev);
+@@ -1561,6 +1562,18 @@ nvme_sysfs_pathinfo (struct path *pp, const struct _vector *hwtable)
+ 	attr = udev_device_get_sysattr_value(parent, "cntlid");
+ 	pp->sg_id.channel = attr ? atoi(attr) : 0;
  
- %.o: %.c
- 	$(CC) $(CPPFLAGS) $(CFLAGS) $($*-test_FLAGS) -c -o $@ $<
-diff --git a/tests/features.c b/tests/features.c
-index 4d8f0860..31f978fd 100644
---- a/tests/features.c
-+++ b/tests/features.c
-@@ -1,9 +1,10 @@
-+#define _GNU_SOURCE
- #include <stddef.h>
- #include <stdarg.h>
- #include <setjmp.h>
- #include <cmocka.h>
++	attr = udev_device_get_sysattr_value(parent, "transport");
++	if (attr) {
++		for (i = 0; i < NVME_PROTOCOL_UNSPEC; i++){
++			if (protocol_name[SYSFS_BUS_NVME + i] &&
++			    !strcmp(attr,
++				    protocol_name[SYSFS_BUS_NVME + i] + 5)) {
++				pp->sg_id.proto_id = i;
++				break;
++			}
++		}
++	}
++
+ 	snprintf(pp->vendor_id, SCSI_VENDOR_SIZE, "NVME");
+ 	snprintf(pp->product_id, PATH_PRODUCT_SIZE, "%s",
+ 		 udev_device_get_sysattr_value(parent, "model"));
+@@ -1815,9 +1828,10 @@ sysfs_pathinfo(struct path *pp, const struct _vector *hwtable)
+ 		pp->bus = SYSFS_BUS_SCSI;
+ 		pp->sg_id.proto_id = SCSI_PROTOCOL_UNSPEC;
+ 	}
+-	if (!strncmp(pp->dev,"nvme", 4))
++	if (!strncmp(pp->dev,"nvme", 4)) {
+ 		pp->bus = SYSFS_BUS_NVME;
+-
++		pp->sg_id.proto_id = NVME_PROTOCOL_UNSPEC;
++	}
+ 	switch (pp->bus) {
+ 	case SYSFS_BUS_SCSI:
+ 		return scsi_sysfs_pathinfo(pp, hwtable);
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index fb44cd64..7a2ff589 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -25,7 +25,6 @@ const char * const protocol_name[LAST_BUS_PROTOCOL_ID + 1] = {
+ 	[SYSFS_BUS_UNDEF] = "undef",
+ 	[SYSFS_BUS_CCW] = "ccw",
+ 	[SYSFS_BUS_CCISS] = "cciss",
+-	[SYSFS_BUS_NVME] = "nvme",
+ 	[SYSFS_BUS_SCSI + SCSI_PROTOCOL_FCP] = "scsi:fcp",
+ 	[SYSFS_BUS_SCSI + SCSI_PROTOCOL_SPI] = "scsi:spi",
+ 	[SYSFS_BUS_SCSI + SCSI_PROTOCOL_SSA] = "scsi:ssa",
+@@ -37,6 +36,13 @@ const char * const protocol_name[LAST_BUS_PROTOCOL_ID + 1] = {
+ 	[SYSFS_BUS_SCSI + SCSI_PROTOCOL_ATA] = "scsi:ata",
+ 	[SYSFS_BUS_SCSI + SCSI_PROTOCOL_USB] = "scsi:usb",
+ 	[SYSFS_BUS_SCSI + SCSI_PROTOCOL_UNSPEC] = "scsi:unspec",
++	[SYSFS_BUS_NVME + NVME_PROTOCOL_PCIE] = "nvme:pcie",
++	[SYSFS_BUS_NVME + NVME_PROTOCOL_RDMA] = "nvme:rdma",
++	[SYSFS_BUS_NVME + NVME_PROTOCOL_FC] = "nvme:fc",
++	[SYSFS_BUS_NVME + NVME_PROTOCOL_TCP] = "nvme:tcp",
++	[SYSFS_BUS_NVME + NVME_PROTOCOL_LOOP] = "nvme:loop",
++	[SYSFS_BUS_NVME + NVME_PROTOCOL_APPLE_NVME] = "nvme:apple-nvme",
++	[SYSFS_BUS_NVME + NVME_PROTOCOL_UNSPEC] = "nvme:unspec",
+ };
  
--#include "structs.h"
-+#include "../libmultipath/propsel.c"
- #include "globals.c"
- 
- static void test_af_null_features_ptr(void **state)
-@@ -307,6 +308,234 @@ static int test_remove_features(void)
- 	return cmocka_run_group_tests(tests, NULL, NULL);
+ struct adapter_group *
+@@ -746,11 +752,17 @@ out:
  }
  
-+static void test_cf_null_features(void **state)
-+{
-+	struct multipath mp = {
-+			.alias = "test",
-+	};
-+	reconcile_features_with_queue_mode(&mp);
-+	assert_null(mp.features);
-+}
-+
-+static void cf_helper(const char *features_start, const char *features_end,
-+		      int queue_mode_start, int queue_mode_end)
-+{
-+	struct multipath mp = {
-+			.alias = "test",
-+			.features = strdup(features_start),
-+			.queue_mode = queue_mode_start,
-+	};
-+	char *orig = mp.features;
-+
-+	assert_non_null(orig);
-+	reconcile_features_with_queue_mode(&mp);
-+	if (!features_end)
-+		assert_ptr_equal(orig, mp.features);
-+	else
-+		assert_string_equal(mp.features, features_end);
-+	free(mp.features);
-+	assert_int_equal(mp.queue_mode, queue_mode_end);
-+}
-+
-+static void test_cf_unset_unset1(void **state)
-+{
-+	cf_helper("0", NULL, QUEUE_MODE_UNDEF, QUEUE_MODE_UNDEF);
-+}
-+
-+static void test_cf_unset_unset2(void **state)
-+{
-+	cf_helper("1 queue_mode", NULL, QUEUE_MODE_UNDEF, QUEUE_MODE_UNDEF);
-+}
-+
-+static void test_cf_unset_unset3(void **state)
-+{
-+	cf_helper("queue_mode", NULL, QUEUE_MODE_UNDEF, QUEUE_MODE_UNDEF);
-+}
-+
-+static void test_cf_unset_unset4(void **state)
-+{
-+	cf_helper("2 queue_model bio", NULL, QUEUE_MODE_UNDEF,
-+		  QUEUE_MODE_UNDEF);
-+}
-+
-+static void test_cf_unset_unset5(void **state)
-+{
-+	cf_helper("1 queue_if_no_path", NULL, QUEUE_MODE_UNDEF,
-+		  QUEUE_MODE_UNDEF);
-+}
-+
-+static void test_cf_invalid_unset1(void **state)
-+{
-+	cf_helper("2 queue_mode biop", "0", QUEUE_MODE_UNDEF, QUEUE_MODE_UNDEF);
-+}
-+
-+static void test_cf_invalid_unset2(void **state)
-+{
-+	cf_helper("3 queue_mode rqs queue_if_no_path", "1 queue_if_no_path",
-+		  QUEUE_MODE_UNDEF, QUEUE_MODE_UNDEF);
-+}
-+
-+static void test_cf_rq_unset1(void **state)
-+{
-+	cf_helper("2 queue_mode rq", NULL, QUEUE_MODE_UNDEF, QUEUE_MODE_RQ);
-+}
-+
-+static void test_cf_rq_unset2(void **state)
-+{
-+	cf_helper("2 queue_mode mq", NULL, QUEUE_MODE_UNDEF, QUEUE_MODE_RQ);
-+}
-+
-+static void test_cf_bio_unset(void **state)
-+{
-+	cf_helper("2 queue_mode bio", NULL, QUEUE_MODE_UNDEF, QUEUE_MODE_BIO);
-+}
-+
-+static void test_cf_unset_bio1(void **state)
-+{
-+	cf_helper("1 queue_if_no_path", "3 queue_if_no_path queue_mode bio",
-+		  QUEUE_MODE_BIO, QUEUE_MODE_BIO);
-+}
-+
-+static void test_cf_unset_bio2(void **state)
-+{
-+	cf_helper("0", "2 queue_mode bio", QUEUE_MODE_BIO, QUEUE_MODE_BIO);
-+}
-+
-+static void test_cf_unset_bio3(void **state)
-+{
-+	cf_helper("2 pg_init_retries 50", "4 pg_init_retries 50 queue_mode bio",
-+		  QUEUE_MODE_BIO, QUEUE_MODE_BIO);
-+}
-+
-+static void test_cf_invalid_bio1(void **state)
-+{
-+	cf_helper("2 queue_mode bad", "2 queue_mode bio",
-+		  QUEUE_MODE_BIO, QUEUE_MODE_BIO);
-+}
-+
-+static void test_cf_invalid_bio2(void **state)
-+{
-+	cf_helper("3 queue_if_no_path queue_mode\tbad", "3 queue_if_no_path queue_mode bio",
-+		  QUEUE_MODE_BIO, QUEUE_MODE_BIO);
-+}
-+
-+static void test_cf_bio_bio1(void **state)
-+{
-+	cf_helper("2 queue_mode bio", NULL, QUEUE_MODE_BIO, QUEUE_MODE_BIO);
-+}
-+
-+static void test_cf_bio_bio2(void **state)
-+{
-+	cf_helper("3 queue_if_no_path queue_mode bio", NULL, QUEUE_MODE_BIO, QUEUE_MODE_BIO);
-+}
-+
-+static void test_cf_bio_bio3(void **state)
-+{
-+	cf_helper("3 queue_mode\nbio queue_if_no_path", NULL, QUEUE_MODE_BIO, QUEUE_MODE_BIO);
-+}
-+
-+static void test_cf_bio_rq1(void **state)
-+{
-+	cf_helper("2\nqueue_mode\tbio", "0", QUEUE_MODE_RQ, QUEUE_MODE_RQ);
-+}
-+
-+static void test_cf_bio_rq2(void **state)
-+{
-+	cf_helper("3 queue_if_no_path\nqueue_mode bio", "1 queue_if_no_path",
-+		  QUEUE_MODE_RQ, QUEUE_MODE_RQ);
-+}
-+
-+static void test_cf_bio_rq3(void **state)
-+{
-+	cf_helper("4 queue_mode bio pg_init_retries 20", "2 pg_init_retries 20",
-+		  QUEUE_MODE_RQ, QUEUE_MODE_RQ);
-+}
-+
-+static void test_cf_unset_rq1(void **state)
-+{
-+	cf_helper("0", NULL, QUEUE_MODE_RQ, QUEUE_MODE_RQ);
-+}
-+
-+static void test_cf_unset_rq2(void **state)
-+{
-+	cf_helper("2 pg_init_retries 15", NULL, QUEUE_MODE_RQ, QUEUE_MODE_RQ);
-+}
-+
-+static void test_cf_invalid_rq1(void **state)
-+{
-+	cf_helper("2 queue_mode bionic", "0", QUEUE_MODE_RQ, QUEUE_MODE_RQ);
-+}
-+
-+static void test_cf_invalid_rq2(void **state)
-+{
-+	cf_helper("3 queue_mode b\nqueue_if_no_path", "1 queue_if_no_path",
-+		  QUEUE_MODE_RQ, QUEUE_MODE_RQ);
-+}
-+
-+static void test_cf_rq_rq1(void **state)
-+{
-+	cf_helper("2 queue_mode rq", NULL, QUEUE_MODE_RQ, QUEUE_MODE_RQ);
-+}
-+
-+static void test_cf_rq_rq2(void **state)
-+{
-+	cf_helper("3 queue_mode\t \trq\nqueue_if_no_path", NULL, QUEUE_MODE_RQ, QUEUE_MODE_RQ);
-+}
-+
-+static void test_cf_rq_bio1(void **state)
-+{
-+	cf_helper("2 queue_mode rq", "2 queue_mode bio", QUEUE_MODE_BIO,
-+		  QUEUE_MODE_BIO);
-+}
-+
-+static void test_cf_rq_bio2(void **state)
-+{
-+	cf_helper("3 queue_if_no_path\nqueue_mode rq", "3 queue_if_no_path queue_mode bio", QUEUE_MODE_BIO, QUEUE_MODE_BIO);
-+}
-+
-+static void test_cf_rq_bio3(void **state)
-+{
-+	cf_helper("3 queue_mode rq\nqueue_if_no_path", "3 queue_if_no_path queue_mode bio", QUEUE_MODE_BIO, QUEUE_MODE_BIO);
-+}
-+
-+static int test_reconcile_features(void)
-+{
-+	const struct CMUnitTest tests[] = {
-+		cmocka_unit_test(test_cf_null_features),
-+		cmocka_unit_test(test_cf_unset_unset1),
-+		cmocka_unit_test(test_cf_unset_unset2),
-+		cmocka_unit_test(test_cf_unset_unset3),
-+		cmocka_unit_test(test_cf_unset_unset4),
-+		cmocka_unit_test(test_cf_unset_unset5),
-+		cmocka_unit_test(test_cf_invalid_unset1),
-+		cmocka_unit_test(test_cf_invalid_unset2),
-+		cmocka_unit_test(test_cf_rq_unset1),
-+		cmocka_unit_test(test_cf_rq_unset2),
-+		cmocka_unit_test(test_cf_bio_unset),
-+		cmocka_unit_test(test_cf_unset_bio1),
-+		cmocka_unit_test(test_cf_unset_bio2),
-+		cmocka_unit_test(test_cf_unset_bio3),
-+		cmocka_unit_test(test_cf_invalid_bio1),
-+		cmocka_unit_test(test_cf_invalid_bio2),
-+		cmocka_unit_test(test_cf_bio_bio1),
-+		cmocka_unit_test(test_cf_bio_bio2),
-+		cmocka_unit_test(test_cf_bio_bio3),
-+		cmocka_unit_test(test_cf_bio_rq1),
-+		cmocka_unit_test(test_cf_bio_rq2),
-+		cmocka_unit_test(test_cf_bio_rq3),
-+		cmocka_unit_test(test_cf_unset_rq1),
-+		cmocka_unit_test(test_cf_unset_rq2),
-+		cmocka_unit_test(test_cf_invalid_rq1),
-+		cmocka_unit_test(test_cf_invalid_rq2),
-+		cmocka_unit_test(test_cf_rq_rq1),
-+		cmocka_unit_test(test_cf_rq_rq2),
-+		cmocka_unit_test(test_cf_rq_bio1),
-+		cmocka_unit_test(test_cf_rq_bio2),
-+		cmocka_unit_test(test_cf_rq_bio3),
-+	};
-+	return cmocka_run_group_tests(tests, NULL, NULL);
-+}
-+
- int main(void)
- {
- 	int ret = 0;
-@@ -314,6 +543,7 @@ int main(void)
- 	init_test_verbosity(-1);
- 	ret += test_add_features();
- 	ret += test_remove_features();
-+	ret += test_reconcile_features();
- 
- 	return ret;
+ unsigned int bus_protocol_id(const struct path *pp) {
+-	if (!pp || pp->bus < 0 || pp->bus > SYSFS_BUS_SCSI)
++	if (!pp || pp->bus < 0 || pp->bus > SYSFS_BUS_NVME)
+ 		return SYSFS_BUS_UNDEF;
+-	if (pp->bus != SYSFS_BUS_SCSI)
++	if (pp->bus != SYSFS_BUS_SCSI && pp->bus != SYSFS_BUS_NVME)
+ 		return pp->bus;
+-	if ((int)pp->sg_id.proto_id < 0 || pp->sg_id.proto_id > SCSI_PROTOCOL_UNSPEC)
++	if (pp->sg_id.proto_id < 0)
+ 		return SYSFS_BUS_UNDEF;
+-	return SYSFS_BUS_SCSI + pp->sg_id.proto_id;
++	if (pp->bus == SYSFS_BUS_SCSI &&
++	    pp->sg_id.proto_id > SCSI_PROTOCOL_UNSPEC)
++		return SYSFS_BUS_UNDEF;
++	if (pp->bus == SYSFS_BUS_NVME &&
++	    pp->sg_id.proto_id > NVME_PROTOCOL_UNSPEC)
++		return SYSFS_BUS_UNDEF;
++	return pp->bus + pp->sg_id.proto_id;
  }
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index d3054662..9e2c1ab0 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -56,15 +56,6 @@ enum failback_mode {
+ 	FAILBACK_FOLLOWOVER
+ };
+ 
+-/* SYSFS_BUS_SCSI should be last, see bus_protocol_id() */
+-enum sysfs_buses {
+-	SYSFS_BUS_UNDEF,
+-	SYSFS_BUS_CCW,
+-	SYSFS_BUS_CCISS,
+-	SYSFS_BUS_NVME,
+-	SYSFS_BUS_SCSI,
+-};
+-
+ enum pathstates {
+ 	PSTATE_UNDEF,
+ 	PSTATE_FAILED,
+@@ -190,14 +181,32 @@ enum scsi_protocol {
+ 	SCSI_PROTOCOL_ATA = 8,
+ 	SCSI_PROTOCOL_USB = 9,  /* USB Attached SCSI (UAS), and others */
+ 	SCSI_PROTOCOL_UNSPEC = 0xa, /* No specific protocol */
++	SCSI_PROTOCOL_END = 0xb, /* offset of the next sysfs_buses entry */
++};
++
++/* values from /sys/class/nvme/nvmeX */
++enum nvme_protocol {
++	NVME_PROTOCOL_PCIE = 0,
++	NVME_PROTOCOL_RDMA = 1,
++	NVME_PROTOCOL_FC = 2,
++	NVME_PROTOCOL_TCP = 3,
++	NVME_PROTOCOL_LOOP = 4,
++	NVME_PROTOCOL_APPLE_NVME = 5,
++	NVME_PROTOCOL_UNSPEC = 6, /* unknown protocol */
++};
++
++enum sysfs_buses {
++	SYSFS_BUS_UNDEF,
++	SYSFS_BUS_CCW,
++	SYSFS_BUS_CCISS,
++	SYSFS_BUS_SCSI,
++	SYSFS_BUS_NVME = SYSFS_BUS_SCSI + SCSI_PROTOCOL_END,
+ };
+ 
+ /*
+  * Linear ordering of bus/protocol
+- * This assumes that SYSFS_BUS_SCSI is last in enum sysfs_buses
+- * SCSI is the only bus type for which we distinguish protocols.
+  */
+-#define LAST_BUS_PROTOCOL_ID (SYSFS_BUS_SCSI + SCSI_PROTOCOL_UNSPEC)
++#define LAST_BUS_PROTOCOL_ID (SYSFS_BUS_NVME + NVME_PROTOCOL_UNSPEC)
+ unsigned int bus_protocol_id(const struct path *pp);
+ extern const char * const protocol_name[];
+ 
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 46a4126c..07476497 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -1377,7 +1377,9 @@ Regular expression for the protocol of a device to be excluded/included.
+ The protocol strings that multipath recognizes are \fIscsi:fcp\fR,
+ \fIscsi:spi\fR, \fIscsi:ssa\fR, \fIscsi:sbp\fR, \fIscsi:srp\fR,
+ \fIscsi:iscsi\fR, \fIscsi:sas\fR, \fIscsi:adt\fR, \fIscsi:ata\fR,
+-\fIscsi:unspec\fR, \fIccw\fR, \fIcciss\fR, \fInvme\fR, and \fIundef\fR.
++\fIscsi:unspec\fR, \fInvme:pcie\fR, \fInvme:rdma\fR, \fInvme:fc\fR,
++\fInvme:tcp\fR, \fInvme:loop\fR, \fInvme:apple-nvme\fR, \fInvme:unspec\fR,
++\fIccw\fR, \fIcciss\fR, and \fIundef\fR.
+ The protocol that a path is using can be viewed by running
+ \fBmultipathd show paths format "%d %P"\fR
+ .RE
+@@ -1773,7 +1775,9 @@ The protocol subsection recognizes the following mandatory attribute:
+ The protocol string of the path device. The possible values are \fIscsi:fcp\fR,
+ \fIscsi:spi\fR, \fIscsi:ssa\fR, \fIscsi:sbp\fR, \fIscsi:srp\fR,
+ \fIscsi:iscsi\fR, \fIscsi:sas\fR, \fIscsi:adt\fR, \fIscsi:ata\fR,
+-\fIscsi:unspec\fR, \fIccw\fR, \fIcciss\fR, \fInvme\fR, and \fIundef\fR. This is
++\fIscsi:unspec\fR, \fInvme:pcie\fR, \fInvme:rdma\fR, \fInvme:fc\fR,
++\fInvme:tcp\fR, \fInvme:loop\fR, \fInvme:apple-nvme\fR, \fInvme:unspec\fR,
++\fIccw\fR, \fIcciss\fR, and \fIundef\fR. This is
+ \fBnot\fR a regular expression. the path device protocol string must match
+ exactly. The protocol that a path is using can be viewed by running
+ \fBmultipathd show paths format "%d %P"\fR
 -- 
 2.17.2
 
