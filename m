@@ -1,98 +1,68 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9D813C433FE
-	for <dm-devel@archiver.kernel.org>; Tue, 11 Oct 2022 07:22:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2ACF4C433FE
+	for <dm-devel@archiver.kernel.org>; Tue, 11 Oct 2022 19:10:29 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1665472934;
+	s=mimecast20190719; t=1665515429;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=xUySnuJQBf1iAGfN2165YAvIbf9fms0PVtw5ADksUaw=;
-	b=ONhOj/fNkskcXCDC7HYyhfYxFMSU8TLJpCzX5YEbD//dgC0P5IKN7/PbXh2FNAVsSy3qAE
-	ycX1cWPrV2nXL8gXo4bCsRzVm96nv6fMUWWIxsfE+k3fIyA9zXUKWo4ACIcIS7Ou9E9cDM
-	aNEWPzKIGBViZ6RPkSk54JV1zjveWMo=
+	bh=DW0+ibgsKYwZqJpuje6XQBqs4YMt/ubpvllFSchnVr4=;
+	b=Bas1WHC+jw02UWmox5HkU+boGXSb5QDGsgDGgcxI/KUzymv86X2NzbhwV78RhOGnoK447T
+	TyPPRNvju0lK0+MGHGu90uEb9lwnHCTEu+CpR8vzO6q5Fe42/PrpfSrmguVi/i0AZXOth8
+	gMlRMQtSn/U77eOcAS3gSoU+UnLGWCc=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-587-PE7g31lpOBi24TKRAOpWWA-1; Tue, 11 Oct 2022 03:22:11 -0400
-X-MC-Unique: PE7g31lpOBi24TKRAOpWWA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-626-C1XTIwIhMBSJD-ZvLHn9hg-1; Tue, 11 Oct 2022 15:10:25 -0400
+X-MC-Unique: C1XTIwIhMBSJD-ZvLHn9hg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DC9771C07552;
-	Tue, 11 Oct 2022 07:22:08 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 368511C05AAD;
+	Tue, 11 Oct 2022 19:10:24 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 966BD145D82C;
-	Tue, 11 Oct 2022 07:22:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 98C61207B36F;
+	Tue, 11 Oct 2022 19:10:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E29531946A51;
-	Tue, 11 Oct 2022 07:22:05 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3DEA01946594;
+	Tue, 11 Oct 2022 19:10:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 52E4E1946597
- for <dm-devel@listman.corp.redhat.com>; Mon, 10 Oct 2022 14:42:27 +0000 (UTC)
+ ESMTP id 8FB7C194658F
+ for <dm-devel@listman.corp.redhat.com>; Tue, 11 Oct 2022 19:10:20 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2723F2027061; Mon, 10 Oct 2022 14:42:27 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F7252083A6D
- for <dm-devel@redhat.com>; Mon, 10 Oct 2022 14:42:27 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4337B185A7A3
- for <dm-devel@redhat.com>; Mon, 10 Oct 2022 14:33:34 +0000 (UTC)
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com
- [45.249.212.51]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-520-TcpBwQ4lPdiCawDBYKXQDg-1; Mon, 10 Oct 2022 10:33:29 -0400
-X-MC-Unique: TcpBwQ4lPdiCawDBYKXQDg-1
-Received: from mail02.huawei.com (unknown [172.30.67.153])
- by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4MmLXK4yk9zlB0w;
- Mon, 10 Oct 2022 22:14:57 +0800 (CST)
-Received: from huaweicloud.com (unknown [10.175.127.227])
- by APP4 (Coremail) with SMTP id gCh0CgA3N8lSKURjZQ07AA--.26864S4;
- Mon, 10 Oct 2022 22:16:52 +0800 (CST)
-From: Luo Meng <luomeng@huaweicloud.com>
-To: agk@redhat.com, snitzer@kernel.org, dm-devel@redhat.com, ejt@redhat.com
-Date: Mon, 10 Oct 2022 22:39:05 +0800
-Message-Id: <20221010143905.240306-1-luomeng@huaweicloud.com>
+ id 205E14B4019; Tue, 11 Oct 2022 19:10:20 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 12F954B4018;
+ Tue, 11 Oct 2022 19:10:20 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 29BJAJ4j018470; Tue, 11 Oct 2022 15:10:19 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 29BJAJ5U018466; Tue, 11 Oct 2022 15:10:19 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Tue, 11 Oct 2022 15:10:19 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Joe Thornber <thornber@redhat.com>, Mike Snitzer <msnitzer@redhat.com>,
+ Heinz Mauelshagen <heinzm@redhat.com>
+Message-ID: <alpine.LRH.2.02.2210111505160.18298@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-X-CM-TRANSID: gCh0CgA3N8lSKURjZQ07AA--.26864S4
-X-Coremail-Antispam: 1UD129KBjvJXoWxGryDWFyrCF15GFy8tw17GFg_yoW5WF4Upw
- 4Fg39ay3s5WF1jvw4kJw4UAa4jyF4Fyay5GrW3Cryxu34fX345uFWxXF93XFyDJFyUJrsx
- XFy3t3yruF1UtF7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
- 9KBjDU0xBIdaVrnRJUUUgGb4IE77IF4wAFF20E14v26r4j6ryUM7CY07I20VC2zVCF04k2
- 6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
- vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7Cj
- xVAFwI0_Gr0_Cr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxV
- AFwI0_GcCE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2
- j2WlYx0E2Ix0cI8IcVAFwI0_JrI_JrylYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7x
- kEbVWUJVW8JwACjcxG0xvY0x0EwIxGrwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkE
- bVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67
- AF67kF1VAFwI0_JF0_Jw1lIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI
- 42IY6xIIjxv20xvEc7CjxVAFwI0_Jr0_Gr1lIxAIcVCF04k26cxKx2IYs7xG6rW3Jr0E3s
- 1lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVWUJVW8JbIYCTnI
- WIevJa73UjIFyTuYvjxUOyCJDUUUU
-X-CM-SenderInfo: 5oxrzvtqj6x35dzhxuhorxvhhfrp/
-X-CFilter-Loop: Reflected
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-X-Mailman-Approved-At: Tue, 11 Oct 2022 07:22:04 +0000
-Subject: [dm-devel] dm: Fix UAF in run_timer_softirq()
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+Subject: [dm-devel] [PATCH 4/4 v2] persistent-data: reduce lock contention
+ while walking the btree
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -104,112 +74,275 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: luomeng12@huawei.com, yukuai3@huawei.com
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Luo Meng <luomeng12@huawei.com>
+Hi
 
-When dm_resume() and dm_destroy() are concurrent, it will
-lead to UAF.
+Here I'm sending updated patch 4 that fixes hang on discard. We must not 
+do the optimization in dm_btree_lookup_next.
 
-One of the concurrency UAF can be shown as below:
+Mikulas
 
-        use                                  free
-do_resume                           |
-  __find_device_hash_cell           |
-    dm_get                          |
-      atomic_inc(&md->holders)      |
-                                    | dm_destroy
-				    |   __dm_destroy
-				    |     if (!dm_suspended_md(md))
-                                    |     atomic_read(&md->holders)
-				    |     msleep(1)
-  dm_resume                         |
-    __dm_resume                     |
-      dm_table_resume_targets       |
-	pool_resume                 |
-	  do_waker  #add delay work |
-				    |     dm_table_destroy
-				    |       pool_dtr
-				    |         __pool_dec
-                                    |           __pool_destroy
-                                    |             destroy_workqueue
-                                    |             kfree(pool) # free pool
-	time out
-__do_softirq
-  run_timer_softirq # pool has already been freed
 
-This can be easily reproduced using:
-  1. create thin-pool
-  2. dmsetup suspend pool
-  3. dmsetup resume pool
-  4. dmsetup remove_all # Concurrent with 3
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-The root cause of UAF bugs is that dm_resume() adds timer after
-dm_destroy() skips cancel timer beause of suspend status. After
-timeout, it will call run_timer_softirq(), however pool has already
-been freed. The concurrency UAF bug will happen.
+This patch reduces lock contention in btree walks. We modify the
+functions init_ro_wpin, exit_ro_spine and ro_step so that they use
+dm_bufio_lock_read/dm_bufio_get_unlocked/dm_bufio_unlock_read. If
+dm_bm_fast_get_block fails, we fallback to normal locking.
 
-Therefore, canceling timer is moved after md->holders is zero.
+When doing tests on pmem and fully provisioned thin volume, it improves
+thoughput from 286MiB/s to 442MiB/s.
 
-Signed-off-by: Luo Meng <luomeng12@huawei.com>
+fio --ioengine=psync --iodepth=1 --rw=randrw --bs=4k --direct=1 --numjobs=12 --time_based --runtime=10 --group_reporting --name=/dev/vg/thin
+before:
+READ: bw=286MiB/s
+WRITE: bw=286MiB/s
+after:
+READ: bw=442MiB/s
+WRITE: bw=442MiB/s
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
 ---
- drivers/md/dm.c | 26 +++++++++++++-------------
- 1 file changed, 13 insertions(+), 13 deletions(-)
+ drivers/md/persistent-data/dm-block-manager.c       |   32 +++++++++++++++
+ drivers/md/persistent-data/dm-block-manager.h       |    6 ++
+ drivers/md/persistent-data/dm-btree-internal.h      |    4 +
+ drivers/md/persistent-data/dm-btree-spine.c         |   41 ++++++++++++++++++--
+ drivers/md/persistent-data/dm-btree.c               |    6 +-
+ drivers/md/persistent-data/dm-transaction-manager.c |   17 ++++++++
+ drivers/md/persistent-data/dm-transaction-manager.h |    6 ++
+ 7 files changed, 104 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 60549b65c799..379525313628 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2420,6 +2420,19 @@ static void __dm_destroy(struct mapped_device *md, bool wait)
- 
- 	blk_mark_disk_dead(md->disk);
- 
-+	/*
-+	 * Rare, but there may be I/O requests still going to complete,
-+	 * for example.  Wait for all references to disappear.
-+	 * No one should increment the reference count of the mapped_device,
-+	 * after the mapped_device state becomes DMF_FREEING.
-+	 */
-+	if (wait)
-+		while (atomic_read(&md->holders))
-+			msleep(1);
-+	else if (atomic_read(&md->holders))
-+		DMWARN("%s: Forcibly removing mapped_device still in use! (%d users)",
-+		       dm_device_name(md), atomic_read(&md->holders));
-+
- 	/*
- 	 * Take suspend_lock so that presuspend and postsuspend methods
- 	 * do not race with internal suspend.
-@@ -2436,19 +2449,6 @@ static void __dm_destroy(struct mapped_device *md, bool wait)
- 	dm_put_live_table(md, srcu_idx);
- 	mutex_unlock(&md->suspend_lock);
- 
--	/*
--	 * Rare, but there may be I/O requests still going to complete,
--	 * for example.  Wait for all references to disappear.
--	 * No one should increment the reference count of the mapped_device,
--	 * after the mapped_device state becomes DMF_FREEING.
--	 */
--	if (wait)
--		while (atomic_read(&md->holders))
--			msleep(1);
--	else if (atomic_read(&md->holders))
--		DMWARN("%s: Forcibly removing mapped_device still in use! (%d users)",
--		       dm_device_name(md), atomic_read(&md->holders));
--
- 	dm_table_destroy(__unbind(md));
- 	free_dev(md);
+Index: linux-2.6/drivers/md/persistent-data/dm-block-manager.c
+===================================================================
+--- linux-2.6.orig/drivers/md/persistent-data/dm-block-manager.c
++++ linux-2.6/drivers/md/persistent-data/dm-block-manager.c
+@@ -601,6 +601,38 @@ void dm_bm_unlock(struct dm_block *b)
  }
--- 
-2.31.1
-
+ EXPORT_SYMBOL_GPL(dm_bm_unlock);
+ 
++void dm_bm_fast_lock(struct dm_block_manager *bm)
++{
++	dm_bufio_lock_read(bm->bufio);
++}
++
++void dm_bm_fast_unlock(struct dm_block_manager *bm)
++{
++	dm_bufio_unlock_read(bm->bufio);
++}
++
++int dm_bm_fast_get_block(struct dm_block_manager *bm,
++			 dm_block_t b, struct dm_block_validator *v,
++			 struct dm_block **result)
++{
++	int r;
++	struct buffer_aux *aux;
++	void *p;
++
++	p = dm_bufio_get_unlocked(bm->bufio, b, (struct dm_buffer **) result);
++	if (IS_ERR(p))
++		return PTR_ERR(p);
++	if (unlikely(!p))
++		return -EWOULDBLOCK;
++
++	aux = dm_bufio_get_aux_data(to_buffer(*result));
++	r = dm_bm_validate_buffer(bm, to_buffer(*result), aux, v);
++	if (unlikely(r))
++		return r;
++
++	return 0;
++}
++
+ int dm_bm_flush(struct dm_block_manager *bm)
+ {
+ 	if (dm_bm_is_read_only(bm))
+Index: linux-2.6/drivers/md/persistent-data/dm-block-manager.h
+===================================================================
+--- linux-2.6.orig/drivers/md/persistent-data/dm-block-manager.h
++++ linux-2.6/drivers/md/persistent-data/dm-block-manager.h
+@@ -96,6 +96,12 @@ int dm_bm_write_lock_zero(struct dm_bloc
+ 
+ void dm_bm_unlock(struct dm_block *b);
+ 
++void dm_bm_fast_lock(struct dm_block_manager *bm);
++void dm_bm_fast_unlock(struct dm_block_manager *bm);
++int dm_bm_fast_get_block(struct dm_block_manager *bm,
++			 dm_block_t b, struct dm_block_validator *v,
++			 struct dm_block **result);
++
+ /*
+  * It's a common idiom to have a superblock that should be committed last.
+  *
+Index: linux-2.6/drivers/md/persistent-data/dm-btree-internal.h
+===================================================================
+--- linux-2.6.orig/drivers/md/persistent-data/dm-btree-internal.h
++++ linux-2.6/drivers/md/persistent-data/dm-btree-internal.h
+@@ -64,9 +64,11 @@ struct ro_spine {
+ 	struct dm_btree_info *info;
+ 
+ 	struct dm_block *node;
++	bool fast_locked;
++	bool fast_lock_failed;
+ };
+ 
+-void init_ro_spine(struct ro_spine *s, struct dm_btree_info *info);
++void init_ro_spine(struct ro_spine *s, struct dm_btree_info *info, bool disable_fast_access);
+ void exit_ro_spine(struct ro_spine *s);
+ int ro_step(struct ro_spine *s, dm_block_t new_child);
+ struct btree_node *ro_node(struct ro_spine *s);
+Index: linux-2.6/drivers/md/persistent-data/dm-btree-spine.c
+===================================================================
+--- linux-2.6.orig/drivers/md/persistent-data/dm-btree-spine.c
++++ linux-2.6/drivers/md/persistent-data/dm-btree-spine.c
+@@ -118,27 +118,60 @@ void unlock_block(struct dm_btree_info *
+ 	dm_tm_unlock(info->tm, b);
+ }
+ 
++static void bn_fast_lock(struct dm_btree_info *info)
++{
++	dm_tm_fast_lock(info->tm);
++}
++
++static void bn_fast_unlock(struct dm_btree_info *info)
++{
++	dm_tm_fast_unlock(info->tm);
++}
++
++static int bn_fast_get_block(struct dm_btree_info *info, dm_block_t b,
++		      struct dm_block **result)
++{
++	return dm_tm_fast_get_block(info->tm, b, &btree_node_validator, result);
++}
++
+ /*----------------------------------------------------------------*/
+ 
+-void init_ro_spine(struct ro_spine *s, struct dm_btree_info *info)
++void init_ro_spine(struct ro_spine *s, struct dm_btree_info *info, bool disable_fast_access)
+ {
+ 	s->info = info;
+ 	s->node = NULL;
++	s->fast_locked = false;
++	s->fast_lock_failed = disable_fast_access;
+ }
+ 
+ void exit_ro_spine(struct ro_spine *s)
+ {
+-	if (s->node)
++	if (s->fast_locked)
++		bn_fast_unlock(s->info);
++	else if (s->node)
+ 		unlock_block(s->info, s->node);
+ }
+ 
+ int ro_step(struct ro_spine *s, dm_block_t new_child)
+ {
+ 	if (s->node) {
+-		unlock_block(s->info, s->node);
++		if (unlikely(!s->fast_locked))
++			unlock_block(s->info, s->node);
+ 		s->node = NULL;
+ 	}
+-
++	if (likely(!s->fast_lock_failed)) {
++		int r;
++		if (!s->fast_locked) {
++			bn_fast_lock(s->info);
++			s->fast_locked = true;
++		}
++		r = bn_fast_get_block(s->info, new_child, &s->node);
++		if (likely(!r))
++			return 0;
++		s->fast_lock_failed = true;
++		s->fast_locked = false;
++		bn_fast_unlock(s->info);
++	}
+ 	return bn_read_lock(s->info, new_child, &s->node);
+ }
+ 
+Index: linux-2.6/drivers/md/persistent-data/dm-transaction-manager.c
+===================================================================
+--- linux-2.6.orig/drivers/md/persistent-data/dm-transaction-manager.c
++++ linux-2.6/drivers/md/persistent-data/dm-transaction-manager.c
+@@ -348,6 +348,23 @@ void dm_tm_unlock(struct dm_transaction_
+ }
+ EXPORT_SYMBOL_GPL(dm_tm_unlock);
+ 
++void dm_tm_fast_lock(struct dm_transaction_manager *tm)
++{
++	dm_bm_fast_lock(tm->is_clone ? tm->real->bm : tm->bm);
++}
++
++void dm_tm_fast_unlock(struct dm_transaction_manager *tm)
++{
++	dm_bm_fast_unlock(tm->is_clone ? tm->real->bm : tm->bm);
++}
++
++int dm_tm_fast_get_block(struct dm_transaction_manager *tm, dm_block_t b,
++			 struct dm_block_validator *v,
++			 struct dm_block **blk)
++{
++	return dm_bm_fast_get_block(tm->is_clone ? tm->real->bm : tm->bm, b, v, blk);
++}
++
+ void dm_tm_inc(struct dm_transaction_manager *tm, dm_block_t b)
+ {
+ 	/*
+Index: linux-2.6/drivers/md/persistent-data/dm-transaction-manager.h
+===================================================================
+--- linux-2.6.orig/drivers/md/persistent-data/dm-transaction-manager.h
++++ linux-2.6/drivers/md/persistent-data/dm-transaction-manager.h
+@@ -96,6 +96,12 @@ int dm_tm_read_lock(struct dm_transactio
+ 
+ void dm_tm_unlock(struct dm_transaction_manager *tm, struct dm_block *b);
+ 
++void dm_tm_fast_lock(struct dm_transaction_manager *tm);
++void dm_tm_fast_unlock(struct dm_transaction_manager *tm);
++int dm_tm_fast_get_block(struct dm_transaction_manager *tm, dm_block_t b,
++			 struct dm_block_validator *v,
++			 struct dm_block **blk);
++
+ /*
+  * Functions for altering the reference count of a block directly.
+  */
+Index: linux-2.6/drivers/md/persistent-data/dm-btree.c
+===================================================================
+--- linux-2.6.orig/drivers/md/persistent-data/dm-btree.c
++++ linux-2.6/drivers/md/persistent-data/dm-btree.c
+@@ -377,7 +377,7 @@ int dm_btree_lookup(struct dm_btree_info
+ 	__le64 internal_value_le;
+ 	struct ro_spine spine;
+ 
+-	init_ro_spine(&spine, info);
++	init_ro_spine(&spine, info, false);
+ 	for (level = 0; level < info->levels; level++) {
+ 		size_t size;
+ 		void *value_p;
+@@ -472,7 +472,7 @@ int dm_btree_lookup_next(struct dm_btree
+ 	__le64 internal_value_le;
+ 	struct ro_spine spine;
+ 
+-	init_ro_spine(&spine, info);
++	init_ro_spine(&spine, info, true);
+ 	for (level = 0; level < info->levels - 1u; level++) {
+ 		r = btree_lookup_raw(&spine, root, keys[level],
+ 				     lower_bound, rkey,
+@@ -1369,7 +1369,7 @@ static int dm_btree_find_key(struct dm_b
+ 	int r = 0, count = 0, level;
+ 	struct ro_spine spine;
+ 
+-	init_ro_spine(&spine, info);
++	init_ro_spine(&spine, info, false);
+ 	for (level = 0; level < info->levels; level++) {
+ 		r = find_key(&spine, root, find_highest, result_keys + level,
+ 			     level == info->levels - 1 ? NULL : &root);
 --
 dm-devel mailing list
 dm-devel@redhat.com
