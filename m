@@ -1,104 +1,125 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 25DEFC4332F
-	for <dm-devel@archiver.kernel.org>; Fri, 14 Oct 2022 12:04:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 480C7C4332F
+	for <dm-devel@archiver.kernel.org>; Sat, 15 Oct 2022 08:28:41 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1665749042;
+	s=mimecast20190719; t=1665822519;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=PXoCSICI6VYKAZM5XOhtRdkeK9y7M3NhkiNaKBsW9iA=;
-	b=YQXJpOMP/ixeyGXtaSDi6RhWvBf8099MXzJkNGUkZIg8RFmfqWgOdtB7qyLs7ojNyguTn7
-	fF/pMITwbZLM1qEevP4fL+09tPyZYJl+6YCFg6/ZLDIgzAh8tP1/lkvA6eU8AoUkKpQUKH
-	M2nvO+PlYkvxTvCSJFmLNCrB2TR6LTE=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=gEI6oDrhMn8bKhw31dbj3NdpEIbX871mvKz3ox7fY1U=;
+	b=aWGEUq/dInMl6LWDw+XyEaZyNezchhwJoEVyX13SDSun8idmHf0v6Xt4yfdlFXWMyGA5vk
+	/7hgpcqUnRKNw/noiKAmTbOr5vJYEUI4huBUBQamRrckCObUXeC3SdEJ0H4EvtbCGA8ckG
+	bGIli1eVCpdBHlenc68A87bdqt5Z7Co=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-208-gqB1xhK6MhOTIJEAhoJ1qA-1; Fri, 14 Oct 2022 08:04:00 -0400
-X-MC-Unique: gqB1xhK6MhOTIJEAhoJ1qA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-265-kXKVdBwkPLiOmOXNe1WUOw-1; Sat, 15 Oct 2022 04:28:38 -0400
+X-MC-Unique: kXKVdBwkPLiOmOXNe1WUOw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2AD31882820;
-	Fri, 14 Oct 2022 12:03:59 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7FBF338145B0;
+	Sat, 15 Oct 2022 08:28:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id DCA2D42238;
-	Fri, 14 Oct 2022 12:03:55 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1D774536BB8;
+	Sat, 15 Oct 2022 08:28:31 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9BBD21946589;
-	Fri, 14 Oct 2022 12:03:55 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BCBCB1946589;
+	Sat, 15 Oct 2022 08:28:30 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 532671946588
- for <dm-devel@listman.corp.redhat.com>; Fri, 14 Oct 2022 12:03:54 +0000 (UTC)
+ ESMTP id 63BA51946586
+ for <dm-devel@listman.corp.redhat.com>; Sat, 15 Oct 2022 08:28:22 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 359B440C9561; Fri, 14 Oct 2022 12:03:54 +0000 (UTC)
+ id 585D5200C0D5; Sat, 15 Oct 2022 08:28:22 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E7F440C94CE
- for <dm-devel@redhat.com>; Fri, 14 Oct 2022 12:03:53 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 4D583200C0CD
+ for <dm-devel@redhat.com>; Sat, 15 Oct 2022 08:28:22 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 534A61C06ECB
- for <dm-devel@redhat.com>; Fri, 14 Oct 2022 12:03:53 +0000 (UTC)
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-570-4uPxmgN5PzW7D9yT2BWo8g-1; Fri, 14 Oct 2022 08:03:52 -0400
-X-MC-Unique: 4uPxmgN5PzW7D9yT2BWo8g-1
-Received: by mail-qk1-f198.google.com with SMTP id
- u9-20020a05620a454900b006eeafac8ea4so3236472qkp.19
- for <dm-devel@redhat.com>; Fri, 14 Oct 2022 05:03:51 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
- :message-id:reply-to;
- bh=ibDoFg7wU4vGtFkl/Oon+2kEWXyN9IOMe6Xtfs2gFak=;
- b=EuDJYH2btn4tVPKWWGtsumxnmJnLptb1Gi/NIYx/Zm5PreudUi7FDyFQ6A9yeiavtO
- 50W3ELt7W6SXrNsbb11Msejw/ZyjcqyechiAep0iFS48TTK/4bmKiLYAigITJ1VSiFPZ
- uPa5Taqb6kxpAZ6EDCUtDfOQZNPywmTRdqZDLm6tuLbQWjLqgrrFKVA/EIeRnKH+00Jw
- a36iIorKBdKAG7RrTtPWamx2NmM0RkPfBIs8y6jxVvIR1oK7hDv10M5GcjI4ZVAiVxpr
- 8VWkDy+wWQtl+6HmVSNL2wcNsczxHaeYIVFixjs9p+YwoqLbj+77RJnGWNP7cveqXWsd
- eeTQ==
-X-Gm-Message-State: ACrzQf14gu9CCyign+8wR6SJzHSkQjmGteqDEI0H2vGn25VYXJMYGV6t
- TR0MQYS3NZmcyV+W8yjO3OiOtImpkV6nz+Nx5xLSaZcIKloV80NpXWZj8lDk/BNfCfNarlyh/j8
- G4f55o3ZAkpsm4vA=
-X-Received: by 2002:ac8:7dc4:0:b0:35c:c9b1:9f7e with SMTP id
- c4-20020ac87dc4000000b0035cc9b19f7emr3726840qte.661.1665749031300; 
- Fri, 14 Oct 2022 05:03:51 -0700 (PDT)
-X-Google-Smtp-Source: AMsMyM46eXh+M3o4vlm0Leo+15OsyddU8ZO8Z6L2EPTZtH65HfQ+fYlKyZapMfj97AiMTRiakWL5Wg==
-X-Received: by 2002:ac8:7dc4:0:b0:35c:c9b1:9f7e with SMTP id
- c4-20020ac87dc4000000b0035cc9b19f7emr3726798qte.661.1665749030893; 
- Fri, 14 Oct 2022 05:03:50 -0700 (PDT)
-Received: from bfoster (c-24-61-119-116.hsd1.ma.comcast.net. [24.61.119.116])
- by smtp.gmail.com with ESMTPSA id
- f14-20020a05620a280e00b006cf3592cc20sm2192659qkp.55.2022.10.14.05.03.50
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 14 Oct 2022 05:03:50 -0700 (PDT)
-Date: Fri, 14 Oct 2022 08:03:49 -0400
-From: Brian Foster <bfoster@redhat.com>
-To: Yang Shi <shy828301@gmail.com>
-Message-ID: <Y0lQJUSSjqyXTt5G@bfoster>
-References: <20221005180341.1738796-1-shy828301@gmail.com>
- <20221005180341.1738796-3-shy828301@gmail.com>
- <Yz7qeI0s6TjSEIFe@bfoster>
- <CAHbLzkprAJFApT8hK5z8MB8Xc4Kq6ZDTXJRByujQNEgcvo5TgQ@mail.gmail.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E89E23C11ECA
+ for <dm-devel@redhat.com>; Sat, 15 Oct 2022 08:28:21 +0000 (UTC)
+Received: from mail1.bemta34.messagelabs.com (mail1.bemta34.messagelabs.com
+ [195.245.231.3]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-563-dIQBAKj3MpelVq2WOGoIXw-1; Sat, 15 Oct 2022 04:28:14 -0400
+X-MC-Unique: dIQBAKj3MpelVq2WOGoIXw-1
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFupjleJIrShJLcpLzFFi42Kxs+FI0pXO90o
+ 2uLdb3mL9qWPMFnvfzWa1OPvrKotF28avjBYPF2xmt1jbn+7A5rFrVyO7x6ZVnWwe7/ddZQtg
+ jmLNzEvKr0hgzdg4+RNjQSN3xeF785gaGH9zdDFycQgJbGSUeL6hmQnCWcIksXVrGyuEs41RY
+ v3P6YxdjJwcvAJ2Eue3fWEDsVkEVCWmXlrIAhEXlDg58wmYLSqQJHF1w12gZg4OYQFHic2fVU
+ HCIgJKEm8mTWUGmcksMIlJYsLsbjaIBbcYJXYenQrWzAbUMG/WRrAFnAL2EsfaPoDZzAIWEov
+ fHGSHsOUlmrfOZgaxJQQUJdqW/GOHsCskZs1qY4Kw1SSuntvEPIFRaBaS+2YhGTULyagFjMyr
+ GM2KU4vKUot0DU30kooy0zNKchMzc/QSq3QT9VJLdctTi0t0jfQSy4v1UouL9Yorc5NzUvTyU
+ ks2MQKjJqVYpX0H46dlf/QOMUpyMCmJ8mZs8UwW4kvKT6nMSCzOiC8qzUktPsQow8GhJMF7Md
+ srWUiwKDU9tSItMwcYwTBpCQ4eJRFezjSgNG9xQWJucWY6ROoUoy7H+Z379zILseTl56VKifN
+ W5wAVCYAUZZTmwY2AJZNLjLJSwryMDAwMQjwFqUW5mSWo8q8YxTkYlYR5Z2UBTeHJzCuB2/QK
+ 6AgmoCOWnnIDOaIkESEl1cAk6zPLz7b7QM62I2WL/qvYxaaZnOys35N6c4u14oWqXz+Tf5hPk
+ xC8uaD9rBP3HUkTrSWXotZ82efi91/w3LlnCXrJhxo/HqhJiBHMybmxPvTd8W1zLMxqbwZnZy
+ 1MXJN26fvVb4v3LLqUYCf/ZUfvFA6P34p/4q/qVZ3d8KBt6ln3E18tJnlMePTKvfPx00mzRH8
+ GRhuxustEhZyPFgqqyHI4oXZFPMg5Z4L2spMO3budBR1MH23befHidnX2o7v0n0iws4jqHXbu
+ mBdxgqtzr072wvqZS8TCgvZF3LOe9fx2VdrpZ66HPD+33jH7K2eyRPe/yKGzO5QWpJ/Zura7x
+ zTfwWiFXodwxvctbnwhSizFGYmGWsxFxYkAFdD3/6EDAAA=
+X-Env-Sender: yangx.jy@fujitsu.com
+X-Msg-Ref: server-17.tower-571.messagelabs.com!1665822491!92368!1
+X-Originating-IP: [62.60.8.98]
+X-SYMC-ESS-Client-Auth: outbound-route-from=pass
+X-StarScan-Received: 
+X-StarScan-Version: 9.87.3; banners=-,-,-
+X-VirusChecked: Checked
+Received: (qmail 16510 invoked from network); 15 Oct 2022 08:28:11 -0000
+Received: from unknown (HELO n03ukasimr03.n03.fujitsu.local) (62.60.8.98)
+ by server-17.tower-571.messagelabs.com with ECDHE-RSA-AES256-GCM-SHA384
+ encrypted SMTP; 15 Oct 2022 08:28:11 -0000
+Received: from n03ukasimr03.n03.fujitsu.local (localhost [127.0.0.1])
+ by n03ukasimr03.n03.fujitsu.local (Postfix) with ESMTP id 37B951AC;
+ Sat, 15 Oct 2022 09:28:11 +0100 (BST)
+Received: from R01UKEXCASM126.r01.fujitsu.local (R01UKEXCASM126
+ [10.183.43.178])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by n03ukasimr03.n03.fujitsu.local (Postfix) with ESMTPS id 2A7621B0;
+ Sat, 15 Oct 2022 09:28:11 +0100 (BST)
+Received: from [10.167.215.54] (10.167.215.54) by
+ R01UKEXCASM126.r01.fujitsu.local (10.183.43.178) with Microsoft SMTP Server
+ (TLS) id 15.0.1497.32; Sat, 15 Oct 2022 09:28:07 +0100
+Message-ID: <37bb1a88-550d-e8b8-0f57-37df8d8fa8d8@fujitsu.com>
+Date: Sat, 15 Oct 2022 16:27:59 +0800
 MIME-Version: 1.0
-In-Reply-To: <CAHbLzkprAJFApT8hK5z8MB8Xc4Kq6ZDTXJRByujQNEgcvo5TgQ@mail.gmail.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH 2/4] mm: mempool: introduce page bulk
- allocator
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
+ Thunderbird/91.11.0
+To: Jeff Moyer <jmoyer@redhat.com>
+References: <e0cce6af-fd55-a582-194e-7f8a3aced6b0@fujitsu.com>
+ <x49y1u5lxpt.fsf@segfault.boston.devel.redhat.com>
+ <a04a8253-44af-11d6-f2ab-6421fe5110a8@fujitsu.com>
+ <x49tu4sc26t.fsf@segfault.boston.devel.redhat.com>
+From: =?UTF-8?B?WWFuZywgWGlhby/mnagg5pmT?= <yangx.jy@fujitsu.com>
+In-Reply-To: <x49tu4sc26t.fsf@segfault.boston.devel.redhat.com>
+X-Originating-IP: [10.167.215.54]
+X-ClientProxiedBy: G08CNEXCHPEKD07.g08.fujitsu.local (10.167.33.80) To
+ R01UKEXCASM126.r01.fujitsu.local (10.183.43.178)
+X-Virus-Scanned: ClamAV using ClamSMTP
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: Re: [dm-devel] Question about which types of dm need to support DAX
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -110,316 +131,44 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: snitzer@kernel.org, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com,
- akpm@linux-foundation.org, mgorman@techsingularity.net, agk@redhat.com
+Cc: toshi.kani@hpe.com, snitzer@redhat.com,
+ Shiyang Ruan <ruansy.fnst@fujitsu.com>,
+ "y-goto@fujitsu.com" <y-goto@fujitsu.com>, dm-devel@redhat.com,
+ =?UTF-8?B?R3UsIEppbnhpYW5nL+mhviA=?= =?UTF-8?B?6YeR6aaZ?= <gujx@fujitsu.com>,
+ zwisler@kernel.org, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-On Thu, Oct 06, 2022 at 11:43:21AM -0700, Yang Shi wrote:
-> On Thu, Oct 6, 2022 at 7:47 AM Brian Foster <bfoster@redhat.com> wrote:
-> >
-> > On Wed, Oct 05, 2022 at 11:03:39AM -0700, Yang Shi wrote:
-> > > Since v5.13 the page bulk allocator was introduced to allocate order-0
-> > > pages in bulk.  There are a few mempool allocator callers which does
-> > > order-0 page allocation in a loop, for example, dm-crypt, f2fs compress,
-> > > etc.  A mempool page bulk allocator seems useful.  So introduce the
-> > > mempool page bulk allocator.
-> > >
-> > > It introduces the below APIs:
-> > >   - mempool_init_pages_bulk()
-> > >   - mempool_create_pages_bulk()
-> > > They initialize the mempool for page bulk allocator.  The pool is filled
-> > > by alloc_page() in a loop.
-> > >
-> > >   - mempool_alloc_pages_bulk_list()
-> > >   - mempool_alloc_pages_bulk_array()
-> > > They do bulk allocation from mempool.
-> > > They do the below conceptually:
-> > >   1. Call bulk page allocator
-> > >   2. If the allocation is fulfilled then return otherwise try to
-> > >      allocate the remaining pages from the mempool
-> > >   3. If it is fulfilled then return otherwise retry from #1 with sleepable
-> > >      gfp
-> > >   4. If it is still failed, sleep for a while to wait for the mempool is
-> > >      refilled, then retry from #1
-> > > The populated pages will stay on the list or array until the callers
-> > > consume them or free them.
-> > > Since mempool allocator is guaranteed to success in the sleepable context,
-> > > so the two APIs return true for success or false for fail.  It is the
-> > > caller's responsibility to handle failure case (partial allocation), just
-> > > like the page bulk allocator.
-> > >
-> > > The mempool typically is an object agnostic allocator, but bulk allocation
-> > > is only supported by pages, so the mempool bulk allocator is for page
-> > > allocation only as well.
-> > >
-> > > Signed-off-by: Yang Shi <shy828301@gmail.com>
-> > > ---
-> >
-> > Hi Yang,
-> >
-> > I'm not terribly familiar with either component so I'm probably missing
-> > context/details, but just a couple high level thoughts when reading your
-> > patches...
-> >
-> > >  include/linux/mempool.h |  19 ++++
-> > >  mm/mempool.c            | 188 +++++++++++++++++++++++++++++++++++++---
-> > >  2 files changed, 197 insertions(+), 10 deletions(-)
-> > >
-> > ...
-> > > diff --git a/mm/mempool.c b/mm/mempool.c
-> > > index ba32151f3843..7711ca2e6d66 100644
-> > > --- a/mm/mempool.c
-> > > +++ b/mm/mempool.c
-> > > @@ -177,6 +177,7 @@ void mempool_destroy(mempool_t *pool)
-> > >  EXPORT_SYMBOL(mempool_destroy);
-> > >
-> > >  static inline int __mempool_init(mempool_t *pool, int min_nr,
-> > > +                              mempool_alloc_pages_bulk_t *alloc_pages_bulk_fn,
-> > >                                mempool_alloc_t *alloc_fn,
-> > >                                mempool_free_t *free_fn, void *pool_data,
-> > >                                gfp_t gfp_mask, int node_id)
-> > > @@ -186,8 +187,11 @@ static inline int __mempool_init(mempool_t *pool, int min_nr,
-> > >       pool->pool_data = pool_data;
-> > >       pool->alloc     = alloc_fn;
-> > >       pool->free      = free_fn;
-> > > +     pool->alloc_pages_bulk = alloc_pages_bulk_fn;
-> > >       init_waitqueue_head(&pool->wait);
-> > >
-> > > +     WARN_ON_ONCE(alloc_pages_bulk_fn && alloc_fn);
-> > > +
-> > >       pool->elements = kmalloc_array_node(min_nr, sizeof(void *),
-> > >                                           gfp_mask, node_id);
-> > >       if (!pool->elements)
-> > > @@ -199,7 +203,10 @@ static inline int __mempool_init(mempool_t *pool, int min_nr,
-> > >       while (pool->curr_nr < pool->min_nr) {
-> > >               void *element;
-> > >
-> > > -             element = pool->alloc(gfp_mask, pool->pool_data);
-> > > +             if (pool->alloc_pages_bulk)
-> > > +                     element = alloc_page(gfp_mask);
-> >
-> > Any reason to not use the callback from the caller for the bulk variant
-> > here? It looks like some users might expect consistency between the
-> > alloc / free callbacks for the pool. I.e., I'm not familiar with
-> > dm-crypt, but the code modified in the subsequent patches looks like it
-> > keeps an allocated page count. Will that still work with this, assuming
-> > these pages are freed through free_fn?
-> 
-> No special reason, this implementation just end up with fewer code
-> otherwise we should need to define a list, and manipulate the list,
-> seems like a little bit overkilling for initialization code.
-> 
-> Yes, that allocated page count works, just the pages in the pool are
-> not counted in the count anymore, 256 pages should be not a big deal
-> IMHO.
-> 
-
-Ok. I defer to dm-crypt folks on whether/how much it might care about
-pages being hidden from the accounting. My concern was partly that, but
-also partly whether it was possible to break consistency between the
-number of alloc and free callbacks to be expected. For example, wouldn't
-these counters underflow if the mempool is torn down or shrunk (via
-mempool_resize()), and thus the caller gets ->free() callbacks for pages
-it never accounted for in the first place?
-
-Brian
-
-> >
-> > > +             else
-> > > +                     element = pool->alloc(gfp_mask, pool->pool_data);
-> > >               if (unlikely(!element)) {
-> > >                       mempool_exit(pool);
-> > >                       return -ENOMEM;
-> > ...
-> > > @@ -457,6 +499,132 @@ void *mempool_alloc(mempool_t *pool, gfp_t gfp_mask)
-> > >  }
-> > >  EXPORT_SYMBOL(mempool_alloc);
-> > >
-> > > +/**
-> > > + * mempool_alloc_pages_bulk - allocate a bulk of pagesfrom a specific
-> > > + *                           memory pool
-> > > + * @pool:       pointer to the memory pool which was allocated via
-> > > + *              mempool_create().
-> > > + * @gfp_mask:   the usual allocation bitmask.
-> > > + * @nr:         the number of requested pages.
-> > > + * @page_list:  the list the pages will be added to.
-> > > + * @page_array: the array the pages will be added to.
-> > > + *
-> > > + * this function only sleeps if the alloc_pages_bulk_fn() function sleeps
-> > > + * or the allocation can not be satisfied even though the mempool is depleted.
-> > > + * Note that due to preallocation, this function *never* fails when called
-> > > + * from process contexts. (it might fail if called from an IRQ context.)
-> > > + * Note: using __GFP_ZERO is not supported.  And the caller should not pass
-> > > + * in both valid page_list and page_array.
-> > > + *
-> > > + * Return: true when nr pages are allocated or false if not.  It is the
-> > > + *         caller's responsibility to free the partial allocated pages.
-> > > + */
-> > > +static bool mempool_alloc_pages_bulk(mempool_t *pool, gfp_t gfp_mask,
-> > > +                                  unsigned int nr,
-> > > +                                  struct list_head *page_list,
-> > > +                                  struct page **page_array)
-> > > +{
-> > > +     unsigned long flags;
-> > > +     wait_queue_entry_t wait;
-> > > +     gfp_t gfp_temp;
-> > > +     int i;
-> > > +     unsigned int ret, nr_remaining;
-> > > +     struct page *page;
-> > > +
-> >
-> > This looks like a lot of duplicate boilerplate from mempool_alloc().
-> > Could this instead do something like: rename the former to
-> > __mempool_alloc() and add a count parameter, implement bulk alloc
-> > support in there for count > 1, then let traditional (i.e., non-bulk)
-> > mempool_alloc() callers pass a count of 1?
-> 
-> Thanks for the suggestion. Yeah, the duplicate code is not perfect. I
-> thought about this way too, but it may need to have a lot of "if
-> (count > 0)" of "if (is_bulk_alloc) " if a flag is used in the code to
-> handle the bulk allocation, for example, calculate remaining nr, loop
-> to remove element from the pool, manipulate list or array, etc. Seems
-> not that readable IMHO.
-> 
-> We may be able to extract some common code into shared helpers, for
-> example, the gfp sanitization and wait logic.
-> 
-> >
-> > Along the same lines, I also wonder if there's any value in generic bulk
-> > alloc support for mempool. For example, I suppose technically this could
-> > be implemented via one change to support a pool->alloc_bulk() callback
-> > that any user could implement via a loop if they wanted
-> > mempool_alloc_bulk() support backed by a preallocated pool. The page
-> > based user could then just use that to call alloc_pages_bulk_*() as an
-> > optimization without the mempool layer needing to know or care about
-> > whether the underlying elements are pages or not. Hm?
-> 
-> Thanks for the suggestion. Actually I thought about this too. But the
-> memory space overhead, particularly stack space seems like a
-> showstopper to me. We just can put the pointers into an array, but
-> this may consume a significant amount of stack memory. One pointer is
-> 8 bytes, 256 objects imply 2K stack space. Of course the users could
-> move the array into a dynamic allocated data structure, but this may
-> need the users modify their driver. Bulk kmalloc via kmalloc_array()
-> may be fine, this is the only usercase other than pages I could think
-> of.
-> 
-> >
-> > Brian
-> >
-> > > +     VM_WARN_ON_ONCE(gfp_mask & __GFP_ZERO);
-> > > +     might_alloc(gfp_mask);
-> > > +
-> > > +     gfp_mask |= __GFP_NOMEMALLOC;   /* don't allocate emergency reserves */
-> > > +     gfp_mask |= __GFP_NORETRY;      /* don't loop in __alloc_pages */
-> > > +     gfp_mask |= __GFP_NOWARN;       /* failures are OK */
-> > > +
-> > > +     gfp_temp = gfp_mask & ~(__GFP_DIRECT_RECLAIM|__GFP_IO);
-> > > +
-> > > +repeat_alloc:
-> > > +     i = 0;
-> > > +     ret = pool->alloc_pages_bulk(gfp_temp, nr, pool->pool_data, page_list,
-> > > +                                  page_array);
-> > > +
-> > > +     if (ret == nr)
-> > > +             return true;
-> > > +
-> > > +     nr_remaining = nr - ret;
-> > > +
-> > > +     spin_lock_irqsave(&pool->lock, flags);
-> > > +     /* Allocate page from the pool and add to the list or array */
-> > > +     while (pool->curr_nr && (nr_remaining > 0)) {
-> > > +             page = remove_element(pool);
-> > > +             spin_unlock_irqrestore(&pool->lock, flags);
-> > > +             smp_wmb();
-> > > +
-> > > +             kmemleak_update_trace((void *)page);
-> > > +
-> > > +             if (page_list)
-> > > +                     list_add(&page->lru, page_list);
-> > > +             else
-> > > +                     page_array[ret + i] = page;
-> > > +
-> > > +             i++;
-> > > +             nr_remaining--;
-> > > +
-> > > +             spin_lock_irqsave(&pool->lock, flags);
-> > > +     }
-> > > +
-> > > +     spin_unlock_irqrestore(&pool->lock, flags);
-> > > +
-> > > +     if (!nr_remaining)
-> > > +             return true;
-> > > +
-> > > +     /*
-> > > +      * The bulk allocator counts in the populated pages for array,
-> > > +      * but don't do it for list.
-> > > +      */
-> > > +     if (page_list)
-> > > +             nr = nr_remaining;
-> > > +
-> > > +     /*
-> > > +      * We use gfp mask w/o direct reclaim or IO for the first round.  If
-> > > +      * alloc failed with that and @pool was empty, retry immediately.
-> > > +      */
-> > > +     if (gfp_temp != gfp_mask) {
-> > > +             gfp_temp = gfp_mask;
-> > > +             goto repeat_alloc;
-> > > +     }
-> > > +
-> > > +     /* We must not sleep if !__GFP_DIRECT_RECLAIM */
-> > > +     if (!(gfp_mask & __GFP_DIRECT_RECLAIM))
-> > > +             return false;
-> > > +
-> > > +     /* Let's wait for someone else to return an element to @pool */
-> > > +     init_wait(&wait);
-> > > +     prepare_to_wait(&pool->wait, &wait, TASK_UNINTERRUPTIBLE);
-> > > +
-> > > +     /*
-> > > +      * FIXME: this should be io_schedule().  The timeout is there as a
-> > > +      * workaround for some DM problems in 2.6.18.
-> > > +      */
-> > > +     io_schedule_timeout(5*HZ);
-> > > +
-> > > +     finish_wait(&pool->wait, &wait);
-> > > +     goto repeat_alloc;
-> > > +}
-> > > +
-> > > +bool mempool_alloc_pages_bulk_list(mempool_t *pool, gfp_t gfp_mask,
-> > > +                                unsigned int nr,
-> > > +                                struct list_head *page_list)
-> > > +{
-> > > +     return mempool_alloc_pages_bulk(pool, gfp_mask, nr, page_list, NULL);
-> > > +}
-> > > +EXPORT_SYMBOL(mempool_alloc_pages_bulk_list);
-> > > +
-> > > +bool mempool_alloc_pages_bulk_array(mempool_t *pool, gfp_t gfp_mask,
-> > > +                                 unsigned int nr,
-> > > +                                 struct page **page_array)
-> > > +{
-> > > +     return mempool_alloc_pages_bulk(pool, gfp_mask, nr, NULL, page_array);
-> > > +}
-> > > +EXPORT_SYMBOL(mempool_alloc_pages_bulk_array);
-> > > +
-> > >  /**
-> > >   * mempool_free - return an element to the pool.
-> > >   * @element:   pool element pointer.
-> > > --
-> > > 2.26.3
-> > >
-> >
-> 
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gMjAyMi85LzI3IDIyOjM4LCBKZWZmIE1veWVyIHdyb3RlOgo+ICJZYW5nLCBYaWFvL+adqCDm
+mZMiIDx5YW5neC5qeUBmdWppdHN1LmNvbT4gd3JpdGVzOgo+IAo+PiBIaSBKZWZmLAo+Pgo+PiBU
+aGFua3MgYSBsb3QgZm9yIHlvdXIgcmVwbHkuCj4+Cj4+IE9uIDIwMjIvOS8yNyAzOjUyLCBKZWZm
+IE1veWVyIHdyb3RlOgo+Pj4gIllhbmcsIFhpYW8v5p2oIOaZkyIgPHlhbmd4Lmp5QGZ1aml0c3Uu
+Y29tPiB3cml0ZXM6Cj4+Pgo+Pj4+IEhpIFJvc3MsIFRvc2hpLCBKZWZmIGFuZCBvdGhlcnMKPj4+
+Pgo+Pj4+IEFmdGVyIHJlYWRpbmcgdGhlIGtlcm5lbCBwYXRjaGVzWzFdWzJdWzNdIGFib3V0IGRt
+LCBJIHRoaW5rIG9ubHkgdGhyZWUKPj4+PiB0eXBlcyhsaW5lYXIsIHN0cmlwZSBhbmQgbG9nLXdy
+aXRlcykgb2YgZG0gY2FuIHN1cHBvcnQgREFYIG5vdywgcmlnaHQ/Cj4+Pgo+Pj4gUmlnaHQuCj4+
+Pgo+Pj4+IEkgd29uZGVyIHdoeSBvbmx5IHRocmVlIHR5cGVzIG9mIGRtIG5lZWQgdG8gc3VwcG9y
+dCBEQVg/IElzIHRoZXJlIGFueQo+Pj4+IHJlYXNvbi9oaXN0b3J5IGFuZCB1c2UgY2FzZT8KPj4+
+Cj4+PiBJdCB3YXMgZWFzeSB0byBhZGQgREFYIHN1cHBvcnQgdG8gdGhvc2UgdGFyZ2V0cy4gIE5v
+dGUgdGhhdCBpZiBhIHRhcmdldAo+Pj4gbmVlZHMgdG8gaW50ZXJjZXB0IEkvTywgdGhlbiBpdCBp
+cyBmdW5kYW1lbnRhbGx5IGluY29tcGF0aWJsZSB3aXRoIERBWC4KPj4KPj4gSG93IGNhbiBJIGtu
+b3cgd2hpY2ggdGFyZ2V0IG5lZWRzIHRvIGludGVyY2VwdCBJL08/Cj4gCj4gVGhlcmUncyBubyBi
+ZXR0ZXIgd2F5IHRoYW4gcmVhZGluZyBhbmQgdW5kZXJzdGFuZGluZyB3aGF0IGVhY2ggdGFyZ2V0
+Cj4gZG9lcy4KCkhpIEplZmYsCgpBZnRlciByZWFkaW5nIHRoZSBjb2RlIGFib3V0IHRoaW4gcHJv
+dmlzaW9uaW5nIHRhcmdldCwgdGhpbiBwcm92aXNpb25pbmcgCnRhcmdldCBkZXBlbmRzIG9uIERN
+X0JVRklPIGtjb25maWcgd2hpY2ggaXMgZGVzaWduZWQgdG8gY2FjaGUgSS9PLiBJcyBpdCAKd2hh
+dCB5b3Ugc2FpZCBhYm91dCAiaW50ZXJjZXB0IEkvTyI/IFBlcmhhcHMsIHdlIGhhdmUgdG8gZHJv
+cCBETV9CVUZJTyAKZm9yIHRoaW4gcHJvdmlzaW9uaW5nIHRhcmdldCBpZiB3ZSB3YW50IHRvIG1h
+a2UgaXQgc3VwcG9ydCBEQVguCgpCZXN0IFJlZ2FyZHMsClhpYW8gWWFuZwoKPiAKPj4gQ291bGQg
+eW91IHRlbGwgbWUgd2h5IGl0IGlzIGZ1bmRhbWVudGFsbHkgaW5jb21wYXRpYmxlIHdpdGggREFY
+Pwo+IAo+IERBWCBzdGFuZHMgZm9yIGRpcmVjdCBhY2Nlc3MsIGFuZCBpdCBpcyBhIG1lY2hhbmlz
+bSBieSB3aGljaCBhCj4gdXNlci1zcGFjZSBwcm9jZXNzIGNhbiBwZXJmb3JtIEkvTyB3aXRob3V0
+IGdvaW5nIHRocm91Z2ggdGhlIGtlcm5lbC4KPiAKPiAtSmVmZgo+IAoKLS0KZG0tZGV2ZWwgbWFp
+bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20v
+bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
 
