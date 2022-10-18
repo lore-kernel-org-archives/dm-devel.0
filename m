@@ -1,80 +1,80 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 95B3DC433FE
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DDC66C4332F
 	for <dm-devel@archiver.kernel.org>; Tue, 18 Oct 2022 07:10:44 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1666077043;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
+	 content-type:content-type:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=HcM9pJ1TZKNBykU6EBJB6MegoXJZO8qSCNqZBWxpERU=;
-	b=LihNuzYDG2zC8At859dZ86fEQXuIIWFGlsAI3x/PUlA/FC4KvTXR8CmwP+JKPu/RgAMbe0
-	r9WDphe+flQ1XLa/LE2JyM6MAx50DI+m6AMWV4Vni9AZzXm/S0PIF9yIDvygcUAFPnNqA8
-	21XXZDYaGVTbfwoFpBV/fMC1d2ypkdM=
+	bh=uthyBLsJ2lCqkMpLUQGCDEqhrG4ryd0laodQry2LHck=;
+	b=c55XhLE+Cmi+P/MmFmSobsFJF45sM3KGINHkcPR86PkH12s/yu09vdZUh/x0FqFlLV87F1
+	kcGBICcweA+YT3q5DONcHdUKKwqeKNaQCWS20T0Y9rqvagNA6iJZeG7Hpe5aReU/QZmco8
+	ADrsY/wr8qcuK8zZaeD/H+iFOpN0+lQ=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-364-ctUcSB7QNh686R_BKPsRdw-1; Tue, 18 Oct 2022 03:10:40 -0400
-X-MC-Unique: ctUcSB7QNh686R_BKPsRdw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-517-6VG5b1gZNw-nv0pPmowfbA-1; Tue, 18 Oct 2022 03:10:40 -0400
+X-MC-Unique: 6VG5b1gZNw-nv0pPmowfbA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AD69F185A792;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ACECE833AF1;
 	Tue, 18 Oct 2022 07:10:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3A6BC111DCE8;
-	Tue, 18 Oct 2022 07:10:36 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 01C65E56A7;
+	Tue, 18 Oct 2022 07:10:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0CAFB1946594;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 36AC719465B2;
 	Tue, 18 Oct 2022 07:10:36 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 202BE194658F
- for <dm-devel@listman.corp.redhat.com>; Mon, 17 Oct 2022 09:49:52 +0000 (UTC)
+ ESMTP id 995D8194658F
+ for <dm-devel@listman.corp.redhat.com>; Tue, 18 Oct 2022 07:02:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id EA0DA200A384; Mon, 17 Oct 2022 09:49:51 +0000 (UTC)
+ id 89328492B0A; Tue, 18 Oct 2022 07:02:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E2ADD2028E8F
- for <dm-devel@redhat.com>; Mon, 17 Oct 2022 09:49:51 +0000 (UTC)
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8243856D17E
+ for <dm-devel@redhat.com>; Tue, 18 Oct 2022 07:02:56 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C4A3A3C025BB
- for <dm-devel@redhat.com>; Mon, 17 Oct 2022 09:49:51 +0000 (UTC)
-Received: from outbound-smtp51.blacknight.com
- (outbound-smtp51.blacknight.com [46.22.136.235]) by relay.mimecast.com with
- ESMTP with STARTTLS (version=TLSv1.2,
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6776D86F12C
+ for <dm-devel@redhat.com>; Tue, 18 Oct 2022 07:02:56 +0000 (UTC)
+Received: from cu-ua11p00im-quki08153402.ua.silu.net
+ (cu-ua11p00im-quki08153402.ua.silu.net [123.126.78.67]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-526-eOa1Bu_QORyW6rKPNHglAA-1; Mon, 17 Oct 2022 05:49:50 -0400
-X-MC-Unique: eOa1Bu_QORyW6rKPNHglAA-1
-Received: from mail.blacknight.com (pemlinmail01.blacknight.ie [81.17.254.10])
- by outbound-smtp51.blacknight.com (Postfix) with ESMTPS id 5F124FAF36
- for <dm-devel@redhat.com>; Mon, 17 Oct 2022 10:41:34 +0100 (IST)
-Received: (qmail 4063 invoked from network); 17 Oct 2022 09:41:34 -0000
-Received: from unknown (HELO techsingularity.net)
- (mgorman@techsingularity.net@[84.203.198.246])
- by 81.17.254.9 with ESMTPSA (AES256-SHA encrypted, authenticated);
- 17 Oct 2022 09:41:34 -0000
-Date: Mon, 17 Oct 2022 10:41:32 +0100
-From: Mel Gorman <mgorman@techsingularity.net>
-To: Yang Shi <shy828301@gmail.com>
-Message-ID: <20221017094132.vnanndrwa2yn7qcw@techsingularity.net>
-References: <20221005180341.1738796-1-shy828301@gmail.com>
- <20221005180341.1738796-3-shy828301@gmail.com>
- <20221013123830.opbulq4qad56kuev@techsingularity.net>
- <CAHbLzkpc+CAfsYe6gXjh=-3MxMH_aWhPMYhic7ddFZgWttOhng@mail.gmail.com>
-MIME-Version: 1.0
-In-Reply-To: <CAHbLzkpc+CAfsYe6gXjh=-3MxMH_aWhPMYhic7ddFZgWttOhng@mail.gmail.com>
+ us-mta-595-PYDHxut4OUW56cdsc0IIhQ-1; Tue, 18 Oct 2022 03:02:54 -0400
+X-MC-Unique: PYDHxut4OUW56cdsc0IIhQ-1
+Received: from smtpclient.apple (unknown [116.2.60.88])
+ by ua11p00im-quki08153402.ua.silu.net (Postfix) with ESMTPS id DFCE02FC00E6
+ for <dm-devel@redhat.com>; Tue, 18 Oct 2022 06:54:30 +0000 (UTC)
+From: xingyongji@icloud.com
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3696.120.41.1.1\))
+Message-Id: <7BA86099-9397-45E4-A543-3BBF59106005@icloud.com>
+References: <BE7F9CD3-8E2B-4273-8B29-A2811956EACA@icloud.com>
+To: dm-devel@redhat.com
+Date: Tue, 18 Oct 2022 14:54:04 +0800
+X-Proofpoint-GUID: EAcejwEg8dMLKYxa77X7I9AYzqioFG7e
+X-Proofpoint-ORIG-GUID: EAcejwEg8dMLKYxa77X7I9AYzqioFG7e
+X-Proofpoint-Virus-Version: =?UTF-8?Q?vendor=3Dfsecure_engine=3D1.1.170-22c6f66c430a71ce266a39bfe25bc?=
+ =?UTF-8?Q?2903e8d5c8f:6.0.528,18.0.895,17.0.605.474.0000000_definitions?=
+ =?UTF-8?Q?=3D2022-09-21=5F12:2022-09-20=5F02,2022-09-21=5F12,2020-01-23?=
+ =?UTF-8?Q?=5F02_signatures=3D0?=
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 adultscore=0
+ mlxscore=0 spamscore=0
+ phishscore=0 malwarescore=0 bulkscore=0 suspectscore=0 mlxlogscore=816
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2209130000
+ definitions=main-2210180039
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -82,10 +82,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mailman-Approved-At: Tue, 18 Oct 2022 07:10:34 +0000
-Subject: Re: [dm-devel] [PATCH 2/4] mm: mempool: introduce page bulk
- allocator
+Subject: [dm-devel] Problem about multipath failover
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -97,101 +96,100 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: snitzer@kernel.org, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com,
- akpm@linux-foundation.org, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Type: multipart/mixed; boundary="===============0296190633685078902=="
+
+--===============0296190633685078902==
+Content-Type: multipart/alternative;
+	boundary="Apple-Mail=_18EBC36A-E908-4D03-8376-CEDCFC5D956B"
+
+--Apple-Mail=_18EBC36A-E908-4D03-8376-CEDCFC5D956B
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+	charset=utf-8
+
+Hello:
+
+=09My environment like this:
+
+Host
+                     Multipath
+          Iscsi dev 1.          Iscsi dev. 2
+         (A/ optimized)      (A/ optimized)       (ALUA)
+
+Server
+         Target 1                Target 2
+        =EF=BC=88ser 1)                 (ser 2)
+
+    When dev 1 failed, the IO on dev 1 forward to dev2 without any operatio=
+n,
+So I have no chance to do something for the dev 1=E2=80=99s error.
+    Before I finish the error on dev1, I do not want any IO on dev1 forward=
+ to dev2.
+Is there any Mechanism or method can be used? =20
+    Best Wishes.
+--Apple-Mail=_18EBC36A-E908-4D03-8376-CEDCFC5D956B
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/html;
+	charset=utf-8
+
+<html><head><meta http-equiv=3D"Content-Type" content=3D"text/html; charset=
+=3Dutf-8"></head><body style=3D"word-wrap: break-word; -webkit-nbsp-mode: s=
+pace; line-break: after-white-space;" class=3D"">Hello:<div class=3D""><br =
+class=3D""><div class=3D"" style=3D"caret-color: rgb(0, 0, 0); color: rgb(0=
+, 0, 0);"><span class=3D"Apple-tab-span" style=3D"white-space:pre">=09</spa=
+n>My environment like this:</div><div class=3D"" style=3D"caret-color: rgb(=
+0, 0, 0); color: rgb(0, 0, 0);"><br class=3D""></div><div class=3D"" style=
+=3D"caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0);">Host</div><div class=
+=3D"" style=3D"caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0);">&nbsp; &nbs=
+p; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Multipath<=
+/div><div class=3D"" style=3D"caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0=
+);">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Iscsi dev 1. &nbsp; &nbsp; &nbsp; &n=
+bsp; &nbsp;Iscsi dev. 2</div><div class=3D"" style=3D"caret-color: rgb(0, 0=
+, 0); color: rgb(0, 0, 0);">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;(A/ optimized=
+) &nbsp; &nbsp; &nbsp;<span class=3D"">(A/ optimized) &nbsp; &nbsp; &nbsp; =
+(ALUA)</span></div><div class=3D"" style=3D"caret-color: rgb(0, 0, 0); colo=
+r: rgb(0, 0, 0);"><span class=3D""><br class=3D""></span></div><div class=
+=3D"" style=3D"caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0);"><font color=
+=3D"#000000" class=3D"">Server</font></div><div class=3D"" style=3D"caret-c=
+olor: rgb(0, 0, 0); color: rgb(0, 0, 0);"><font color=3D"#000000" class=3D"=
+">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Target 1 &nbsp; &nbsp; &nbsp; &nbsp; &n=
+bsp; &nbsp; &nbsp; &nbsp;Target 2</font></div><div class=3D"" style=3D"care=
+t-color: rgb(0, 0, 0); color: rgb(0, 0, 0);"><font color=3D"#000000" class=
+=3D"">&nbsp; &nbsp; &nbsp; &nbsp; =EF=BC=88ser 1) &nbsp; &nbsp; &nbsp; &nbs=
+p; &nbsp; &nbsp; &nbsp; &nbsp; (ser 2)</font></div><div class=3D"" style=3D=
+"caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0);"><font color=3D"#000000" c=
+lass=3D""><br class=3D""></font></div><div class=3D"" style=3D"caret-color:=
+ rgb(0, 0, 0); color: rgb(0, 0, 0);"><font color=3D"#000000" class=3D"">&nb=
+sp; &nbsp;&nbsp;When dev 1 failed, the IO on dev 1 forward to dev2 without =
+any operation,</font></div><div class=3D"" style=3D"caret-color: rgb(0, 0, =
+0); color: rgb(0, 0, 0);"><font color=3D"#000000" class=3D"">So I&nbsp;have=
+ no chance to do something for the dev 1=E2=80=99s error.</font></div><div =
+class=3D"" style=3D"caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0);"><font =
+color=3D"#000000" class=3D"">&nbsp; &nbsp;&nbsp;<span class=3D"">Before I f=
+inish the error on&nbsp;</span></font><span class=3D"">dev1, I do not want =
+any IO on dev1 forward to dev2.</span></div><div class=3D"" style=3D"caret-=
+color: rgb(0, 0, 0); color: rgb(0, 0, 0);"><span class=3D"">Is there any&nb=
+sp;</span><span class=3D"">Mechanism or method can be used? &nbsp;</span></=
+div><div class=3D"" style=3D"caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0)=
+;"><span class=3D"">&nbsp; &nbsp;&nbsp;</span><font color=3D"#000000" class=
+=3D"">Best Wishes.</font></div></div></body></html>
+--Apple-Mail=_18EBC36A-E908-4D03-8376-CEDCFC5D956B--
+
+--===============0296190633685078902==
 Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-On Thu, Oct 13, 2022 at 01:16:31PM -0700, Yang Shi wrote:
-> On Thu, Oct 13, 2022 at 5:38 AM Mel Gorman <mgorman@techsingularity.net> wrote:
-> >
-> > On Wed, Oct 05, 2022 at 11:03:39AM -0700, Yang Shi wrote:
-> > > Since v5.13 the page bulk allocator was introduced to allocate order-0
-> > > pages in bulk.  There are a few mempool allocator callers which does
-> > > order-0 page allocation in a loop, for example, dm-crypt, f2fs compress,
-> > > etc.  A mempool page bulk allocator seems useful.  So introduce the
-> > > mempool page bulk allocator.
-> > >
-> > > It introduces the below APIs:
-> > >   - mempool_init_pages_bulk()
-> > >   - mempool_create_pages_bulk()
-> > > They initialize the mempool for page bulk allocator.  The pool is filled
-> > > by alloc_page() in a loop.
-> > >
-> > >   - mempool_alloc_pages_bulk_list()
-> > >   - mempool_alloc_pages_bulk_array()
-> > > They do bulk allocation from mempool.
-> > > They do the below conceptually:
-> > >   1. Call bulk page allocator
-> > >   2. If the allocation is fulfilled then return otherwise try to
-> > >      allocate the remaining pages from the mempool
-> > >   3. If it is fulfilled then return otherwise retry from #1 with sleepable
-> > >      gfp
-> > >   4. If it is still failed, sleep for a while to wait for the mempool is
-> > >      refilled, then retry from #1
-> > > The populated pages will stay on the list or array until the callers
-> > > consume them or free them.
-> > > Since mempool allocator is guaranteed to success in the sleepable context,
-> > > so the two APIs return true for success or false for fail.  It is the
-> > > caller's responsibility to handle failure case (partial allocation), just
-> > > like the page bulk allocator.
-> > >
-> > > The mempool typically is an object agnostic allocator, but bulk allocation
-> > > is only supported by pages, so the mempool bulk allocator is for page
-> > > allocation only as well.
-> > >
-> > > Signed-off-by: Yang Shi <shy828301@gmail.com>
-> >
-> > Overall, I think it's an ok approach and certainly a good use case for
-> > the bulk allocator.
-> >
-> > The main concern that I have is that the dm-crypt use case doesn't really
-> > want to use lists as such and it's just a means for collecting pages to pass
-> > to bio_add_page(). bio_add_page() is working with arrays but you cannot
-> > use that array directly as any change to how that array is populated will
-> > then explode. Unfortunately, what you have is adding pages to a list to
-> > take them off the list and put them in an array and that is inefficient.
-> 
-> Yeah, I didn't think of a better way to pass the pages to dm-crypt.
-> 
-> >
-> > How about this
-> >
-> > 1. Add a callback to __alloc_pages_bulk() that takes a page as a
-> >    parameter like bulk_add_page() or whatever.
-> >
-> > 2. For page_list == NULL && page_array == NULL, the callback is used
-> >
-> > 3. Add alloc_pages_bulk_cb() that passes in the name of a callback
-> >    function
-> >
-> > 4. In the dm-crypt case, use the callback to pass the page to bio_add_page
-> >    for the new page allocated.
-> 
-> Thank you so much for the suggestion. But I have a hard time
-> understanding how these work together. Do you mean call bio_add_page()
-> in the callback? But bio_add_page() needs other parameters. Or I
-> misunderstood you?
-> 
-
-I expected dm-crypt to define the callback. Using bio_add_page
-directly would not work as the bulk allocator has no idea what to pass
-bio_add_page. dm-crypt would likely need to create both a callback and an
-opaque data structure passed as (void *) to track "clone" and "len"
-
--- 
-Mel Gorman
-SUSE Labs
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+
+--===============0296190633685078902==--
 
