@@ -1,90 +1,108 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C2C03C433FE
-	for <dm-devel@archiver.kernel.org>; Tue, 18 Oct 2022 21:37:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 189F4C4332F
+	for <dm-devel@archiver.kernel.org>; Tue, 18 Oct 2022 22:12:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1666129078;
+	s=mimecast20190719; t=1666131123;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=XzZN1HUBHlRcUZb7rI71/8bLv/PT2/fIjL4fqU2CV0Q=;
-	b=WcLODboamCI+9E0+hE7DQ+Yg229U5Hei63kYjpqNBTrgcCdJlcOt8o5WPBU9d5T6z8XPN4
-	1KglLdnQKWvdFyEA7ChoXN2IZdgnprDqxFiONAzYujR5zhJhe2074zPqBQNR4ef43i1FAw
-	bPdqgKRk1/iXpkhs8AJE3Mw/eKp2fJE=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=HX8s1JN/29WZ+LyCmJmOFXWGDhvFLKizY51ErstCax8=;
+	b=bsLH5uL/4cuNa+bM9nHaCy62R8r7noH/zOt7EU5VQfRKaXOwx6oBUeZOfcci/4CkgAkm9C
+	iVynh6zIdDzg9ISNnBQ4Y3bFXUHFbvumS973GF+b0V078z1P8kPjnGP8FaCwYOf9iWpbD2
+	45h8NKxLDBmHJsJx6uSKuk/nVcRRlT0=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-246-GH0pjeHdNfqIIRH_b8fl8Q-1; Tue, 18 Oct 2022 17:37:55 -0400
-X-MC-Unique: GH0pjeHdNfqIIRH_b8fl8Q-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-271-ZRDUoYPLOZeN58Rr00tTFA-1; Tue, 18 Oct 2022 18:11:59 -0400
+X-MC-Unique: ZRDUoYPLOZeN58Rr00tTFA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5263638012CB;
-	Tue, 18 Oct 2022 21:37:53 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 561F6857D17;
+	Tue, 18 Oct 2022 22:11:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4DD2A14588B5;
-	Tue, 18 Oct 2022 21:37:34 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id F3F6E111DCE0;
+	Tue, 18 Oct 2022 22:11:56 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0EC011946594;
-	Tue, 18 Oct 2022 21:37:28 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BDF4B1946594;
+	Tue, 18 Oct 2022 22:11:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 868F4194658F
- for <dm-devel@listman.corp.redhat.com>; Tue, 18 Oct 2022 21:37:26 +0000 (UTC)
+ ESMTP id C92B5194658F
+ for <dm-devel@listman.corp.redhat.com>; Tue, 18 Oct 2022 22:11:55 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7A49A53AA; Tue, 18 Oct 2022 21:37:26 +0000 (UTC)
+ id D59D9111DCE1; Tue, 18 Oct 2022 22:11:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 72D19FD48
- for <dm-devel@redhat.com>; Tue, 18 Oct 2022 21:37:26 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id CE099111DCE0
+ for <dm-devel@redhat.com>; Tue, 18 Oct 2022 22:11:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 519C685A583
- for <dm-devel@redhat.com>; Tue, 18 Oct 2022 21:37:26 +0000 (UTC)
-Received: from mail-qk1-f178.google.com (mail-qk1-f178.google.com
- [209.85.222.178]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 78172811732
+ for <dm-devel@redhat.com>; Tue, 18 Oct 2022 22:11:53 +0000 (UTC)
+Received: from mail-wr1-f42.google.com (mail-wr1-f42.google.com
+ [209.85.221.42]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-152-YEcOVLteMUmh-wzdtKScrQ-1; Tue, 18 Oct 2022 17:37:24 -0400
-X-MC-Unique: YEcOVLteMUmh-wzdtKScrQ-1
-Received: by mail-qk1-f178.google.com with SMTP id z30so9550607qkz.13
- for <dm-devel@redhat.com>; Tue, 18 Oct 2022 14:37:24 -0700 (PDT)
+ us-mta-362-qJfIMDwlM9adsKAPo_Hq-g-1; Tue, 18 Oct 2022 18:11:43 -0400
+X-MC-Unique: qJfIMDwlM9adsKAPo_Hq-g-1
+Received: by mail-wr1-f42.google.com with SMTP id f11so26079068wrm.6;
+ Tue, 18 Oct 2022 15:11:42 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+ h=content-transfer-encoding:in-reply-to:from:references:cc:to
+ :content-language:subject:user-agent:mime-version:date:message-id
  :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=qucTfioTfkNWPiEspTo39qx+nKJrutlIOcYMZym3P+I=;
- b=h/GZ4f2iliI+PmIDnjd+4LY3wxSSMrq/J/TbQrjxvJSoCuW6Z3+280qr87Y+8z2ke3
- ctHTr1yrlLOLr5n7ITu7PEomUyKFhYnre5bCVa437FuDBC6tVmp7o4akwlYaOCqnQi/o
- J/PXDD1WRtNQHitwhqg2KwTaet75xWourkqyfbfiAH3NJXq+MoAAw5xD04oA2y19LtXU
- wDwpzw55Eh8PoBELq9Dy4k74d4mG4unlBuaBoPt2bXmTjRuY46CAmKMCyFaH83ygMo/7
- kHEi8wsbLFcu3Q6tpcO5Hqi/kq+WsClzEG0T35HCZAekhiSlFIn57qBhoxTI0Ykm094t
- bmGw==
-X-Gm-Message-State: ACrzQf17C8dgqVsKMDRq8KsHnV92H4EKSXg3RLZrbnn8f6U73SCUKQeq
- fmkhJVioWXrUy1NZHRkSORk7QME=
-X-Google-Smtp-Source: AMsMyM4At/fG60tC2mMfxvZET8ME+iGLCQzyZE1N0TiB9lYPVFAtWa9SVDXQrmEBtekB1mkTzcgOOA==
-X-Received: by 2002:a37:ae87:0:b0:6d1:debe:4cf4 with SMTP id
- x129-20020a37ae87000000b006d1debe4cf4mr3458565qke.655.1666129044312; 
- Tue, 18 Oct 2022 14:37:24 -0700 (PDT)
-Received: from localhost (pool-68-160-173-162.bstnma.fios.verizon.net.
- [68.160.173.162]) by smtp.gmail.com with ESMTPSA id
- bm30-20020a05620a199e00b006e42a8e9f9bsm3285240qkb.121.2022.10.18.14.37.23
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 18 Oct 2022 14:37:23 -0700 (PDT)
-Date: Tue, 18 Oct 2022 17:37:22 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Message-ID: <Y08ckqIVOmGVVX5e@redhat.com>
+ bh=0Q1Bo1NOfImcyyTBS4cIDNC7uZFtunDU2SA9Z06ciYg=;
+ b=cnuoEII6b53l3v5sGKR1a+Y3z3v0e7qgihog/jwrIMwZojsVCU0OkADNmSScoar28T
+ khbzE8GxXokQNr7Oc8uRfUPNy2Dy0o/1GyPH3q95gfmXrDT9kiJkmoikl+GDzF94V5u+
+ B3KdargHIS/zLN06h38Xv8KCFuM16x7gQVEZBAYYaU9CGh4n+ONLv4Di2q5t3sa1H5tt
+ 2qbu3yrMfciX7TkNAmI+BubSnkRLgh1taM2lNsJVqcf8UldfUQCFeLD0MwfDJI9sXphA
+ MTYRJbR9AZgLhXapyUCJK6/Pmvz+MFyME8JwzrMsz/oSwFlXVoM6CHRFnHlDZbavPMye
+ GOjA==
+X-Gm-Message-State: ACrzQf1rcIxQJXKFPmAAPCPmpwyWtg56bbsDhAiq7AdftCIpOmeKOhIj
+ fmNpD5ZBvwf817Yl/sPSsNNDQ8K1zJM=
+X-Google-Smtp-Source: AMsMyM6zlPhfj9UPXGe2hQ73kVErzhC0ypl8flD0nntIbW8asoQpRbn4rPIbfkqnfdOor8C6R+RSfA==
+X-Received: by 2002:a17:907:2701:b0:78d:cb12:6d94 with SMTP id
+ w1-20020a170907270100b0078dcb126d94mr4321132ejk.344.1666131091468; 
+ Tue, 18 Oct 2022 15:11:31 -0700 (PDT)
+Received: from [192.168.2.30] (85-70-151-113.rcd.o2.cz. [85.70.151.113])
+ by smtp.gmail.com with ESMTPSA id
+ r1-20020a1709061ba100b0072a881b21d8sm8060745ejg.119.2022.10.18.15.11.08
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Tue, 18 Oct 2022 15:11:15 -0700 (PDT)
+Message-ID: <b9608b92-fab8-93a0-2821-80a49c3328eb@gmail.com>
+Date: Wed, 19 Oct 2022 00:11:07 +0200
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: [dm-devel] [git pull v2] device mapper changes for 6.1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.13.0
+To: Mike Snitzer <snitzer@redhat.com>,
+ Linus Torvalds <torvalds@linux-foundation.org>
+References: <Y07SYs98z5VNxdZq@redhat.com> <Y07twbDIVgEnPsFn@infradead.org>
+ <CAHk-=wg3cpPyoO8u+8Fu1uk86bgTUYanfKhmxMsZzvY_mV=Cxw@mail.gmail.com>
+ <CAHk-=wiE_p66JtpfsM2GMk0ctuLcP+HBuNOEnpZRY0Ees8oFXw@mail.gmail.com>
+ <Y08W5Tj1YC8/BZDM@redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+In-Reply-To: <Y08W5Tj1YC8/BZDM@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [git pull] device mapper changes for 6.1
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -96,93 +114,58 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jilin Yuan <yuanjilin@cdjrlc.com>, Nikos Tsironis <ntsironis@arrikto.com>,
- Shaomin Deng <dengshaomin@cdjrlc.com>, Nathan Huckleberry <nhuck@google.com>,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- Mikulas Patocka <mpatocka@redhat.com>, Genjian Zhang <zhanggenjian@kylinos.cn>,
- Milan Broz <gmazyland@gmail.com>, Alasdair G Kergon <agk@redhat.com>,
- Jiangshan Yi <yijiangshan@kylinos.cn>
+Cc: linux-block@vger.kernel.org, Shaomin Deng <dengshaomin@cdjrlc.com>,
+ Nikos Tsironis <ntsironis@arrikto.com>, Mike Snitzer <snitzer@kernel.org>,
+ Nathan Huckleberry <nhuck@google.com>, Christoph Hellwig <hch@infradead.org>,
+ dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>,
+ Genjian Zhang <zhanggenjian@kylinos.cn>, Jilin Yuan <yuanjilin@cdjrlc.com>,
+ Alasdair G Kergon <agk@redhat.com>, Jiangshan Yi <yijiangshan@kylinos.cn>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Hi Linus,
+On 10/18/22 23:13, Mike Snitzer wrote:
+...
+>> In the absence of that kind of unification, just use 'errno'.
+> 
+> Mikulas touches on why why using errno isn't useful for DM. And for
+> DM's device stacking it is hard to know which error spewed to dmesg
+> (via DMERR, DMCRIT, DMINFO, etc) is relevant to a particular admin
+> interface issuing the DM ioctl.
+> 
+> So the idea to send the (hopefully useful) error string back up to the
+> relevant userspace consumer was one task that seemed needed (based on
+> Milan Broz's various complaints against DM.. which sprang from your
+> regular remainder that DM's version numbers are broken and need to be
+> removed/replaced).
 
-I dropped the DM ioctl changes to allow returning an error string to
-userspace.  I rebased the unrelated earlier DM changes (from tag
-for-6.1/dm-changes) ontop of the 'for-6.1/dm-fix' tag... and arrived
-this single new tag (for-6.1/dm-changes-v2) for you to pull.
+Well, when you mention my complaints, I think we are moving from one extreme
+to another.
 
-The following changes since commit bb1a1146467ad812bb65440696df0782e2bc63c8:
+For the error reporting - we use errno values in libcryptsetup everywhere,
+so if DM ioctls (through libdevmapper we use) returns proper errno, this is
+the minimal solution that helps here.
+The problem is that ioctl() are often just translated to -EINVAL.
+(Or lost in libdevmapper compatibility layers.)
 
-  Merge tag 'cgroup-for-6.1-rc1-fixes' of git://git.kernel.org/pub/scm/linux/kernel/git/tj/cgroup (2022-10-17 18:52:43 -0700)
+ From the dm-crypt/verity/integrity perspective, ENOMEM, ENODEV (bad block device),
+ENOTSUP/ENOENT (for crypto algs not available), EIO for IO error,
+EILSEQ for data integrity failure is the basic what we need.
+(I perhaps forgot some, I can go through the code if you need it.)
 
-are available in the Git repository at:
+As a bonus, if DM ioctl() returns fixed string that describes user-friendly error
+(like: "keysize not compatible" or so) that's all we need
+(ti->error strings are already in DM targets).
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.1/dm-changes-v2
+I have never asked for dynamically allocated error strings in kernel
+and I do not know Mikulas' motivation to implement it.
 
-for you to fetch changes up to 5434ee8d28575b2e784bd5b4dbfc912e5da90759:
-
-  dm clone: Fix typo in block_device format specifier (2022-10-18 17:17:48 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-- Fix dm-bufio to use test_bit_acquire to properly test_bit on arches
-  with weaker memory ordering.
-
-- DM core replace DMWARN with DMERR or DMCRIT for fatal errors.
-
-- Enable WQ_HIGHPRI on DM verity target's verify_wq.
-
-- Add documentation for DM verity's try_verify_in_tasklet option.
-
-- Various typo and redundant word fixes in code and/or comments.
-
-----------------------------------------------------------------
-Genjian Zhang (1):
-      dm: remove unnecessary assignment statement in alloc_dev()
-
-Jiangshan Yi (1):
-      dm raid: fix typo in analyse_superblocks code comment
-
-Jilin Yuan (1):
-      dm raid: delete the redundant word 'that' in comment
-
-Mikulas Patocka (2):
-      dm bufio: use the acquire memory barrier when testing for B_READING
-      dm: change from DMWARN to DMERR or DMCRIT for fatal errors
-
-Milan Broz (1):
-      dm verity: Add documentation for try_verify_in_tasklet option
-
-Nathan Huckleberry (1):
-      dm verity: enable WQ_HIGHPRI on verify_wq
-
-Nikos Tsironis (1):
-      dm clone: Fix typo in block_device format specifier
-
-Shaomin Deng (1):
-      dm cache: delete the redundant word 'each' in comment
-
- Documentation/admin-guide/device-mapper/verity.rst |  4 ++
- drivers/md/dm-bufio.c                              | 13 ++--
- drivers/md/dm-cache-policy.h                       |  2 +-
- drivers/md/dm-clone-target.c                       |  2 +-
- drivers/md/dm-ioctl.c                              | 78 +++++++++++-----------
- drivers/md/dm-raid.c                               |  4 +-
- drivers/md/dm-rq.c                                 |  4 +-
- drivers/md/dm-stats.c                              |  2 +-
- drivers/md/dm-table.c                              | 78 +++++++++++-----------
- drivers/md/dm-verity-target.c                      | 18 ++---
- drivers/md/dm.c                                    |  9 ++-
- 11 files changed, 110 insertions(+), 104 deletions(-)
+Milan
 
 --
 dm-devel mailing list
