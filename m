@@ -1,135 +1,136 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C1AF9C4332F
-	for <dm-devel@archiver.kernel.org>; Thu, 20 Oct 2022 14:58:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 522B7C433FE
+	for <dm-devel@archiver.kernel.org>; Thu, 20 Oct 2022 14:59:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1666277934;
+	s=mimecast20190719; t=1666277949;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=GAlHXjOpo/zxZE9vbNeftQyEO7OkyaSJ72KgwWKPT6E=;
-	b=JP7l1dvlRZr+Jb+DJfBgoWfqGpYUihHhxgjdFIz27Sr10XBS0yRY4SKibx8z0ZZ6lbPP4Y
-	mWy8tUBxm+g6cOd6OuDEHZUSThx0kmITr2umtZyfnAvSyL/D2ihVbKZc+xuz7st52VmWSN
-	UBlQokHnPclrAx3ze2Px21Ic27y+9OY=
+	bh=p2A8XuFYZXLXd5wV9moureWEm05CIA0l488ZIC3NaAY=;
+	b=cXY8/Lk+lC77ewz7lr7yDSG82IKiIjoFl0cF594OHt6YXfxbPE18lZ+1PQUjASm/PrD8RU
+	YoRNRR4Gyz2csuuR2pIUg/AjL6ord5IIzMgeyABL1obHQxgEpQZKHI9LSUeuSXA/prPPIu
+	RrnkwQHoBoUrfOVkalljGnDqnftHUE4=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-588-R8Rmx1KpMtK9JnMQV3lYwg-1; Thu, 20 Oct 2022 10:58:51 -0400
-X-MC-Unique: R8Rmx1KpMtK9JnMQV3lYwg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-549-uhBmJ_hAPVS6wVrLvFKINQ-1; Thu, 20 Oct 2022 10:59:04 -0400
+X-MC-Unique: uhBmJ_hAPVS6wVrLvFKINQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DE621382F1A8;
-	Thu, 20 Oct 2022 14:58:49 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9E31A29ABA07;
+	Thu, 20 Oct 2022 14:59:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C92F239D7C;
-	Thu, 20 Oct 2022 14:58:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4291B40CA423;
+	Thu, 20 Oct 2022 14:59:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 977041946595;
-	Thu, 20 Oct 2022 14:58:49 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 244A519465A0;
+	Thu, 20 Oct 2022 14:59:01 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
  [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 10D071946587
- for <dm-devel@listman.corp.redhat.com>; Thu, 20 Oct 2022 14:58:48 +0000 (UTC)
+ ESMTP id 7EFBC1946587
+ for <dm-devel@listman.corp.redhat.com>; Thu, 20 Oct 2022 14:58:59 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id F17C22024CBB; Thu, 20 Oct 2022 14:58:47 +0000 (UTC)
+ id 643F2202323C; Thu, 20 Oct 2022 14:58:59 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E83D72024CB7
- for <dm-devel@redhat.com>; Thu, 20 Oct 2022 14:58:47 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C2B363C025B5
- for <dm-devel@redhat.com>; Thu, 20 Oct 2022 14:58:47 +0000 (UTC)
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 5C273202322E
+ for <dm-devel@redhat.com>; Thu, 20 Oct 2022 14:58:59 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3EAE01C08975
+ for <dm-devel@redhat.com>; Thu, 20 Oct 2022 14:58:59 +0000 (UTC)
 Received: from EUR05-VI1-obe.outbound.protection.outlook.com
- (mail-vi1eur05on2081.outbound.protection.outlook.com [40.107.21.81]) by
+ (mail-vi1eur05on2055.outbound.protection.outlook.com [40.107.21.55]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-441-FnaWXzKkOfCOjD-vNP2GdQ-1; Thu, 20 Oct 2022 10:58:46 -0400
-X-MC-Unique: FnaWXzKkOfCOjD-vNP2GdQ-1
+ us-mta-296-EIRkUnJOMZqfHRkvTddBvg-1; Thu, 20 Oct 2022 10:58:56 -0400
+X-MC-Unique: EIRkUnJOMZqfHRkvTddBvg-1
 Received: from AS8PR04MB8040.eurprd04.prod.outlook.com (2603:10a6:20b:2a9::22)
  by AM7PR04MB6981.eurprd04.prod.outlook.com (2603:10a6:20b:103::18)
  with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5723.26; Thu, 20 Oct
- 2022 14:58:43 +0000
+ 2022 14:58:53 +0000
 Received: from AS8PR04MB8040.eurprd04.prod.outlook.com
  ([fe80::eec2:cac0:7732:8da]) by AS8PR04MB8040.eurprd04.prod.outlook.com
  ([fe80::eec2:cac0:7732:8da%4]) with mapi id 15.20.5723.035; Thu, 20 Oct 2022
- 14:58:43 +0000
+ 14:58:53 +0000
 From: Martin Wilck <martin.wilck@suse.com>
 To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
  "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH 4/8] libmultipath: fix queue_mode feature handling
-Thread-Index: AQHY2nNFPB4Ke3zSoUWI/5T0xIfo864Xc/uA
-Date: Thu, 20 Oct 2022 14:58:42 +0000
-Message-ID: <72e32000e148f9abc792b24afd15aebb5262ad7d.camel@suse.com>
+Thread-Topic: [PATCH 7/8] libmultipath: get nvme path transport protocol
+Thread-Index: AQHY2nND3iqIxfWN1k+c3HgyyItNS64XdAgA
+Date: Thu, 20 Oct 2022 14:58:53 +0000
+Message-ID: <0cf08d684ffeaccf1b15f91c738a510531d2c443.camel@suse.com>
 References: <1665164144-6716-1-git-send-email-bmarzins@redhat.com>
- <1665164144-6716-5-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1665164144-6716-5-git-send-email-bmarzins@redhat.com>
+ <1665164144-6716-8-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1665164144-6716-8-git-send-email-bmarzins@redhat.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 user-agent: Evolution 3.46.0
 x-ms-publictraffictype: Email
 x-ms-traffictypediagnostic: AS8PR04MB8040:EE_|AM7PR04MB6981:EE_
-x-ms-office365-filtering-correlation-id: 8789521f-86ab-4a35-9c5e-08dab2ab94b1
+x-ms-office365-filtering-correlation-id: 500042b1-2178-4bc2-1a03-08dab2ab9ace
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: b+B/cJvEd0Gdf+KDQsr0yo+7qvEpJX+xPPc1m/bDjeeWLh4L+vj7Sx8vkwgU9ItZbZIJhfrKouMPgdfKfXd+T/Xm3hPn7hAG3m9ZQIT6cco9sSIJoQTgiCcSHWrrCtOBwKMovKesB4+8i3dGjofEKo9ZmpK3ah7SARKB2Nend414ohfoVQdh9sp8EzbEJlche8IVYMpb2VR6USyaYUJYm0gdnLkMrx6RN2TKLGAFkTT6wGwYrlNm1oPhGbakcIZFq0oHFBOwhvQiNBtS9SMTxUN8BWB9EGgYrNUOXNN2a4q8jABjjde/Eqcv/bhD2zIO5nScMIBkDY8lrwI5fKkjU42VORle/DQnvSyg8/rRjZLk206j+EJD2Y1jgSGZVgvpbu8rakAznHwckxNBv4sQeshgIVZ0sLN5lNwZSjs22IPGYQnFusN+7kScU0rlluX3B9U/Q9NzPgw3RWrI8OTxFTUjO+g5uI4f7qkDRhPHv4s//01iRa0hn4xbYDE2az1LHYKBo+JtQsMRMzFccnF5Qv/aKUKvRU47Vdp0KHrtssNaFla0+Ol38hsUU9BdFsWfbCR1qA/Blc235lM6b5/To10ge9wssYib1DbqUBJKp7Th0V2UFWNyy/VVNXYb+tK4Aq8MxkNGveVsESXsQ/onl6skbXrqucDCfkIJDO/DMt09HlK9bRVurXV/ji5u8iT4aU+JTTjWuh9KbgNwsCnqocYdZXlRtm1F5aj8Mfzhfi7Q5GqeuI7P7ntbOGVkYvZJhZo0+jHEep4TH/B20FZzPA==
+x-microsoft-antispam-message-info: fo12zcTX/YzH1elbclXeafI6vpx9S3UKkhN6UM6M0JPHHt45eTThqLMSMeRrvQSgpYnqG2tu4OsKIURb0e0Y8dQ1dCblgwf59S5L7Jgfi6QZMo0iTsq5vmHiesyr269j8C1ov2Kz44y8yLe2414AbgG1YwZvj4eTprBsDXXW7tdPzdb7V7sdcGXh6/rSC675nsvX8fzHtnuWoEDdqtTUXOreiBAlpWQeOA6B7OC/xT3Y/UPWxyabRFG5Y9f5iAcK+UIjgJ9k9n39vExPx6M2yxoWWriIHf4dZABGDCbLLk8oR1VyLCKxfhwY4uh9WaT8TeRe8iAPT7BXFTCLUc/nI3ytpJL99+0jOzEf+w9rD1zAe4J3gMmUA2u2vfDzeoVSw3mDGDRnxb+KM+5GCD4j0LISduXJoUIgpW9JeUgkT8pbDpSxYm6ntutn70/YYTYSml6xzvNFNN9VI0hBKh7P/YuOi5nvUxC9K1yDAxi0LYMlorVhCEo/uo7efkqBmKRV9XHp9H73q7eupDo7We0e/9TzdD/GpYyPKMwdLWyIC/6SUgf+rTG9CVwr/EKPqDafCewxYEbu1XLGSdAU51u4FsSTd0kArIsVEHt5HNMlHDhs2gQQFr31MYEtYRJ7LSkzv7Y3i9iUO74/Rc47MIRwMvMVa1KJgscBhc2jcMYQynHdnR8RxsX2h4w3GSdcEuCPqaipF2aMW5Y4v35HOFPxb7tyyMZPAUcNoRgSlEYBQdPVAPUeGqWq00cz3XyPFREjohoeNgQhICD0AdRmfB8yAw==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
  IPV:NLI; SFV:NSPM; H:AS8PR04MB8040.eurprd04.prod.outlook.com; PTR:; CAT:NONE;
  SFS:(13230022)(39860400002)(376002)(136003)(396003)(346002)(366004)(451199015)(6512007)(71200400001)(478600001)(83380400001)(86362001)(6486002)(66946007)(66476007)(66556008)(36756003)(66446008)(316002)(110136005)(41300700001)(26005)(76116006)(44832011)(8936002)(4326008)(5660300002)(8676002)(6506007)(2616005)(2906002)(186003)(64756008)(38070700005)(122000001)(38100700002);
  DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?MWgn3fzuf3d7TDW01eQljpYOfDr2xVXp3QSctQl5w5ongnj4H08HrWI1N?=
- =?iso-8859-15?Q?XoxLTjf7nQFx52C/ntp0QbyC+HXAuvKBotreY+sdRejIzojX222y6Vv4k?=
- =?iso-8859-15?Q?25oqhrexpVQ5VVHgyhC2MWnl8sCVu8O0jwLiA/dAAgbVTHdICzUxHdMeH?=
- =?iso-8859-15?Q?+KGWgy9Ii3A6Acum6WIoR8I9kYCjQOYGJcQXTRKP2OAwKgVuQhS58+gWt?=
- =?iso-8859-15?Q?951BjUCCenHYTU452OaJGhN4fwz/tHtLLj16ct2a+Nbxm+C2iM7m1Q4nk?=
- =?iso-8859-15?Q?t5siDs7ICQKH/5DM0HVxS4EseDjTf8JzbiS4B2NeSduQp1v5+8VgM77ck?=
- =?iso-8859-15?Q?jr10Z/15G0f7aYe7hNbtbifAfsvdzXpxWBEZ7hD8OPbZyNtqqQI9mUSCR?=
- =?iso-8859-15?Q?syEO3zRghqDpIPFHH+paE9no1+sIr+sjwtxw+gPe8ZqUC/iCKneViyk6Z?=
- =?iso-8859-15?Q?v2HwD1o+ZEKA9J65elsN3H8Ulji6eYdxuN45vhRkpPImpFX8ZGmn6vmnc?=
- =?iso-8859-15?Q?rBhpkDTebuz50CjmMey7F+yIU386RezBDNf2dejuDX/5NZXWeztkvNFdf?=
- =?iso-8859-15?Q?TPwmuAhJzRgtMgyXr92ki4OTC3QBkOuBqA4PLLp7vMp/Pc1KPdwIz0G8s?=
- =?iso-8859-15?Q?snf9+ThPI/Kf9bTmOqk0Z0jYOWqUOU6+1j/rxXNeCh3TD8lefIjJh8nBb?=
- =?iso-8859-15?Q?N83v/WLNnxLuaLNMyxoSKSREFSrbXDHrGJUnyqInaXDNMBtmuRpPQmmhI?=
- =?iso-8859-15?Q?TsnW3GglKuo1WlJx/mg5iziNMt2k9QOAbiJuP4wpkE59RXqvHTWLqaSNk?=
- =?iso-8859-15?Q?tR5ZBceixRTHMwH/eRw10/eOuKGeXsc7UVsf8qgSmXGYRsOevwKlopsys?=
- =?iso-8859-15?Q?RuD5m4up73ra5JoZOLYVOaFuFuugbkW50aD1jDLAieIZIN6xk+BzyhPfk?=
- =?iso-8859-15?Q?8hgU4AwmmEkhntRyco6PFY2/6ifA/Izehk/f1tyV4NIkoPdoGAxddtBVg?=
- =?iso-8859-15?Q?2jsATsDRMNQNftTYwwocKlBPuyKGRgUwdTFO3AwQEhBTwAVmD8O2i/SrG?=
- =?iso-8859-15?Q?UQSSZUzR/7KUNPdjcOXds6kc/q1z6wESDBUnn8UkMB/jAqgq+YGDIpDfr?=
- =?iso-8859-15?Q?W7T4l8oSnH5/lrp54zbdjKTe4bgMTAgM2HbEhXQFcdFM6rSrTrsAlT1YB?=
- =?iso-8859-15?Q?Jj5SCpcTcPsDRWb6afs3CHqFkb9RsCA16LKmaruZ+cAMAtjrE9p+RAlE6?=
- =?iso-8859-15?Q?PLSzZIfzy0WeuJJS2eNOORNHO9d4JPGf4LFOwJ4X6d8wNR0XxP5pJ61q2?=
- =?iso-8859-15?Q?zRhk7Y2bdCoeYX5AnOrmP99odz4uwJpmOlho9Rg1lKfrfYTExGpvaZSM0?=
- =?iso-8859-15?Q?j8tb674vmhpY0AKBuSq/jJ9E0fntU0IJSEnasGdnlyfqdVQma15qHRBmn?=
- =?iso-8859-15?Q?DXxmVaUjJqfccoQEHI1geiz3aibnIq49aFRT9HN4CKn9YRP+Pl4kuxzj7?=
- =?iso-8859-15?Q?iQJYiIW2eV8/2ANvkBJAL1lphnC00bSyTMM+T9FM8lQBLf33HHSEUG3Mp?=
- =?iso-8859-15?Q?HillPL4cP/IMeeQLp0XbgrWh7EzvZiI7i7ZlYu6oBoks/ClVjT/Cldfsb?=
- =?iso-8859-15?Q?50nO2eEolHD4ZcBELIuAJ3NXtvlE7x+BHjPmxmvB/uzAWrt5to+uxeXtW?=
- =?iso-8859-15?Q?mpWKLdXyohNXidO+2crFNnqMPQ=3D=3D?=
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?HV9Jh1lB+HMPWJFCYeeRrFwRszgZqADShT3SpoiUi/6p/ldImAC9ZKbYl?=
+ =?iso-8859-15?Q?Ckh5AN2MK0/qEFEsP+Z4MplN7qYGfU15SAzoTfV0hdIO6husKYKHYRZmu?=
+ =?iso-8859-15?Q?tMUMT/ELfen6AHEgGEepbNtQmitBHNOCi5eZOAeRQWoW0k9zUprN+6LbM?=
+ =?iso-8859-15?Q?xH0GfOuI0U1UcZgETbSsY6irMr52ccbj5qejGBTxGFc3oeDtKPtWUc1Th?=
+ =?iso-8859-15?Q?DzexQU5W54MdygWnppRA1PupSM8ZdxEtrzJEiPGziuS2Dcu8IE1u0grZd?=
+ =?iso-8859-15?Q?9XrI/dL5OXkvPsBiUAYj6Xchb8idza31NKJwbLpY7Tq6XNcF0zsMUD6sj?=
+ =?iso-8859-15?Q?gxk2Jvp0pTTLZjh9iHuf9Bx40+id8HYqKaSh2DV6Wwy47C5Aul4NePWO+?=
+ =?iso-8859-15?Q?wGUvdBVh3Rlnft4YV8t9hQEmUVNyOjxp3OVy544/b21jqW5NvkhPiCHMf?=
+ =?iso-8859-15?Q?PzYbYFC9wCmN8NX4lHlodXz0cbJxT4NTFGaydzxa4o2SGmulpu4ulfp4i?=
+ =?iso-8859-15?Q?aYSnU7hhcxUHL/Zktjs3nW/NTZxXfi5QX5dX7cxBEIAgjtvL49Lpyt9j6?=
+ =?iso-8859-15?Q?+ZTpo07aJFYT6cnzV2uXRl3raAGNvHf0yQEOhLMhzPmKosD+4YqaxmaeN?=
+ =?iso-8859-15?Q?nZk9QVUEvzknTgPLLm+ToHIjLeaa4RsmcdtOUWTFtn8aTH88kLOBdkDNK?=
+ =?iso-8859-15?Q?HTFhlOEiiirpMAt5m10ab00w0+mqV7zwEgHyeB7P31viKtS6pULdeJQQT?=
+ =?iso-8859-15?Q?lmmA+m/5l5VuP/SHDw3rXpjN4WfdIPkBV1DM8uRc4I5NhoNl23y4/Jjwy?=
+ =?iso-8859-15?Q?q45vaArJZSNGu7P/BR6r0281q7KLom7/mva7wmqpzRwiFv37k7nkKuEDJ?=
+ =?iso-8859-15?Q?X6lCWm6NNz8kMDjcYS+6+uc6aDvsLDxuXE3qppG2jL0I/OW+2gFSMtqAC?=
+ =?iso-8859-15?Q?lm4bU9s4ajUFbWUKxmp7Oycd/LmlS8dTnSmCXwgd5PmMomIj6N/Ehs84X?=
+ =?iso-8859-15?Q?r5X9EPVK6QWpFmx8IFVq9S9JhDtU42Zi+0kaCaIL8QPvg4OZf2jP5ZWqf?=
+ =?iso-8859-15?Q?Tz4AjWLIgkWGCNG/H+ECWj6W+uCePbn63cxT2bxPRjZUYj9NIpnS9tgg3?=
+ =?iso-8859-15?Q?akqVQ3UcxKlibNQJGxMe5ELq12DNPCLhVqvFVmevw50VMsWkmoRkZjXvX?=
+ =?iso-8859-15?Q?Zmh8YY1jG1oDcVCaamuEMeUUwvaeeMg9CHiZ501KcGF26aVf+gRPLH4o/?=
+ =?iso-8859-15?Q?hdK38eDw52IUXvbIzF8GeYjPplHVOnObnl8FYZcs0NDZkA/FGlM0fZkv9?=
+ =?iso-8859-15?Q?/Pv7ui/+OlaMXccx6aRwM5G5h4M+ECwzkLE3lU3UN3OqGMMGCDeyUbyLY?=
+ =?iso-8859-15?Q?tf8r15mwXuXrDoPzP/powu6a/eNJRMPPr3xj2sGGZsyg7yjF2T7cyFH/W?=
+ =?iso-8859-15?Q?arBmxnFm8jGsk2EojVQFm+HMC/ytUh0/fYg/e0naF/4xAnVYdIDRlU3Wk?=
+ =?iso-8859-15?Q?hZS4UXoRS/7sunZUXQ+tpwZFbuN2K5pnPse7QfSW52Ba/CAJQeWjSShKh?=
+ =?iso-8859-15?Q?EK8VEcByRmdLpF/Cm96YsQviTy1IW+8mE/9tOoHbQs2R8KtSsmd9G1QTP?=
+ =?iso-8859-15?Q?+TC+IGBCXxkHuWDEhG3NhWA8UR4DC6p8pK/MnKDHA9QMOn1tnU0bBtwdH?=
+ =?iso-8859-15?Q?GPjdFXC94dLfoMa9BUw/e8Ao4Q=3D=3D?=
 MIME-Version: 1.0
 X-OriginatorOrg: suse.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: AS8PR04MB8040.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 8789521f-86ab-4a35-9c5e-08dab2ab94b1
-X-MS-Exchange-CrossTenant-originalarrivaltime: 20 Oct 2022 14:58:43.0009 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 500042b1-2178-4bc2-1a03-08dab2ab9ace
+X-MS-Exchange-CrossTenant-originalarrivaltime: 20 Oct 2022 14:58:53.2071 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: 8K9P5DC1TwLO+VDX5rpPgW9TY9uDKHb+iO1zIFJfiF/tGkOsGGw7LCQcp+T2sC01UhhJeeGC2ircc++sQr7nwg==
+X-MS-Exchange-CrossTenant-userprincipalname: l8cFewu2fVi1AjtjgUXYsRWhNHAJCcTaF229oOWekOV7jJuWBB9wQuGucxJUGSz62gtayBEp0a0KQVjVt7HkBg==
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM7PR04MB6981
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -139,8 +140,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: Re: [dm-devel] [PATCH 4/8] libmultipath: fix queue_mode feature
- handling
+Subject: Re: [dm-devel] [PATCH 7/8] libmultipath: get nvme path transport
+ protocol
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -155,258 +156,280 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <9095673A1A082F47993F86E5644A0342@eurprd04.prod.outlook.com>
+Content-ID: <F9E9FBA6E5FFF0489C7748F5D81C321C@eurprd04.prod.outlook.com>
 Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
 
 On Fri, 2022-10-07 at 12:35 -0500, Benjamin Marzinski wrote:
-> device-mapper is not able to change the queue_mode on a table reload.
-> Make sure that when multipath sets up the map, both on regular
-> reloads
-> and reconfigures, it keeps the queue_mode the same.
+> Read the transport protocol from /sys/block/nvmeXnY/device/transport.
+> Update protocol_name[] and bus_protocol_id() to store the nvme
+> protocol
+> names after the scsi protocol names.
 >=20
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-Some remarks below.
+One remark below.
+
+Regards
+Martin
+
 
 > ---
-> =A0libmultipath/configure.c=A0=A0 |=A0 4 +++
-> =A0libmultipath/dmparser.c=A0=A0=A0 |=A0 2 ++
-> =A0libmultipath/propsel.c=A0=A0=A0=A0 | 55
-> ++++++++++++++++++++++++++++++++++++++
-> =A0libmultipath/structs.h=A0=A0=A0=A0 |=A0 7 +++++
-> =A0multipath/multipath.conf.5 |=A0 7 +++--
-> =A05 files changed, 73 insertions(+), 2 deletions(-)
+> =A0libmultipath/discovery.c=A0=A0 | 18 ++++++++++++++++--
+> =A0libmultipath/structs.c=A0=A0=A0=A0 | 22 +++++++++++++++++-----
+> =A0libmultipath/structs.h=A0=A0=A0=A0 | 33 +++++++++++++++++++++---------=
+---
+> =A0multipath/multipath.conf.5 |=A0 8 ++++++--
+> =A04 files changed, 60 insertions(+), 21 deletions(-)
 >=20
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index 8af7cd79..41641e30 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -1075,6 +1075,7 @@ int coalesce_paths (struct vectors *vecs,
-> vector mpvec, char *refwwid,
-> =A0=A0=A0=A0=A0=A0=A0=A0struct config *conf =3D NULL;
-> =A0=A0=A0=A0=A0=A0=A0=A0int allow_queueing;
-> =A0=A0=A0=A0=A0=A0=A0=A0struct bitfield *size_mismatch_seen;
-> +=A0=A0=A0=A0=A0=A0=A0struct multipath * cmpp;
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index e937f090..f3fccedd 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -1539,6 +1539,7 @@ nvme_sysfs_pathinfo (struct path *pp, const
+> struct _vector *hwtable)
+> =A0=A0=A0=A0=A0=A0=A0=A0struct udev_device *parent;
+> =A0=A0=A0=A0=A0=A0=A0=A0const char *attr_path =3D NULL;
+> =A0=A0=A0=A0=A0=A0=A0=A0const char *attr;
+> +=A0=A0=A0=A0=A0=A0=A0int i;
 > =A0
-> =A0=A0=A0=A0=A0=A0=A0=A0/* ignore refwwid if it's empty */
-> =A0=A0=A0=A0=A0=A0=A0=A0if (refwwid && !strlen(refwwid))
-> @@ -1184,6 +1185,9 @@ int coalesce_paths (struct vectors *vecs,
-> vector mpvec, char *refwwid,
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0verify_paths(mpp);
+> =A0=A0=A0=A0=A0=A0=A0=A0if (pp->udev)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0attr_path =3D udev_device=
+_get_sysname(pp->udev);
+> @@ -1561,6 +1562,18 @@ nvme_sysfs_pathinfo (struct path *pp, const
+> struct _vector *hwtable)
+> =A0=A0=A0=A0=A0=A0=A0=A0attr =3D udev_device_get_sysattr_value(parent, "c=
+ntlid");
+> =A0=A0=A0=A0=A0=A0=A0=A0pp->sg_id.channel =3D attr ? atoi(attr) : 0;
 > =A0
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0cmpp =3D find_mp_by_wwid(cu=
-rmp, mpp->wwid);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (cmpp)
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0mpp=
-->queue_mode =3D cmpp->queue_mode;
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (setup_map(mpp, &param=
-s, vecs)) {
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0r=
-emove_map(mpp, vecs->pathvec, NULL);
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
-ontinue;
-> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-> index 50d13c08..3b37a926 100644
-> --- a/libmultipath/dmparser.c
-> +++ b/libmultipath/dmparser.c
-> @@ -151,6 +151,8 @@ int disassemble_map(const struct _vector
-> *pathvec,
-> =A0
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0free(word);
-> =A0=A0=A0=A0=A0=A0=A0=A0}
-> +=A0=A0=A0=A0=A0=A0=A0mpp->queue_mode =3D strstr(mpp->features, "queue_mo=
-de bio") ?
+> +=A0=A0=A0=A0=A0=A0=A0attr =3D udev_device_get_sysattr_value(parent, "tra=
+nsport");
+> +=A0=A0=A0=A0=A0=A0=A0if (attr) {
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0for (i =3D 0; i < NVME_PROT=
+OCOL_UNSPEC; i++){
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if =
+(protocol_name[SYSFS_BUS_NVME + i] &&
 > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
- QUEUE_MODE_BIO : QUEUE_MODE_RQ;
-
-Nitpick: You have spent effort to make multipath-tools support any
-whitepace characters in the previous patches, but here you don't. I can
-see that disassemble_map() generally assumes space characters as word
-delimiters, but at least I see some inconsistency here.
-
-Do you intend to generalize the whitespace handling in
-disassemble_map(), too? Or am I overlooking something?
-
-> =A0
-> =A0=A0=A0=A0=A0=A0=A0=A0/*
-> =A0=A0=A0=A0=A0=A0=A0=A0 * hwhandler
-> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-> index 98e3aad1..d4f19897 100644
-> --- a/libmultipath/propsel.c
-> +++ b/libmultipath/propsel.c
-> @@ -26,6 +26,7 @@
-> =A0#include "strbuf.h"
-> =A0#include <inttypes.h>
-> =A0#include <libudev.h>
-> +#include <ctype.h>
-> =A0
-> =A0pgpolicyfn *pgpolicies[] =3D {
-> =A0=A0=A0=A0=A0=A0=A0=A0NULL,
-> @@ -413,6 +414,59 @@ void reconcile_features_with_options(const char
-> *id, char **features, int* no_pa
+=A0=A0 !strcmp(attr,
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 protocol_name[SYSFS_BUS_NVME + i]
+> + 5)) {
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0pp->sg_id.proto_id =3D i;
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0break;
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> +=A0=A0=A0=A0=A0=A0=A0}
+> +
+> =A0=A0=A0=A0=A0=A0=A0=A0snprintf(pp->vendor_id, SCSI_VENDOR_SIZE, "NVME")=
+;
+> =A0=A0=A0=A0=A0=A0=A0=A0snprintf(pp->product_id, PATH_PRODUCT_SIZE, "%s",
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 udev_device_get_sysattr_=
+value(parent, "model"));
+> @@ -1815,9 +1828,10 @@ sysfs_pathinfo(struct path *pp, const struct
+> _vector *hwtable)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->bus =3D SYSFS_BUS_SCS=
+I;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->sg_id.proto_id =3D SC=
+SI_PROTOCOL_UNSPEC;
 > =A0=A0=A0=A0=A0=A0=A0=A0}
+> -=A0=A0=A0=A0=A0=A0=A0if (!strncmp(pp->dev,"nvme", 4))
+> +=A0=A0=A0=A0=A0=A0=A0if (!strncmp(pp->dev,"nvme", 4)) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->bus =3D SYSFS_BUS_NVM=
+E;
+> -
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->sg_id.proto_id =3D NVME=
+_PROTOCOL_UNSPEC;
+> +=A0=A0=A0=A0=A0=A0=A0}
+> =A0=A0=A0=A0=A0=A0=A0=A0switch (pp->bus) {
+> =A0=A0=A0=A0=A0=A0=A0=A0case SYSFS_BUS_SCSI:
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return scsi_sysfs_pathinf=
+o(pp, hwtable);
+> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+> index fb44cd64..7a2ff589 100644
+> --- a/libmultipath/structs.c
+> +++ b/libmultipath/structs.c
+> @@ -25,7 +25,6 @@ const char * const
+> protocol_name[LAST_BUS_PROTOCOL_ID + 1] =3D {
+> =A0=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_UNDEF] =3D "undef",
+> =A0=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_CCW] =3D "ccw",
+> =A0=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_CCISS] =3D "cciss",
+> -=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_NVME] =3D "nvme",
+> =A0=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_SCSI + SCSI_PROTOCOL_FCP] =3D "scsi:fc=
+p",
+> =A0=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_SCSI + SCSI_PROTOCOL_SPI] =3D "scsi:sp=
+i",
+> =A0=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_SCSI + SCSI_PROTOCOL_SSA] =3D "scsi:ss=
+a",
+> @@ -37,6 +36,13 @@ const char * const
+> protocol_name[LAST_BUS_PROTOCOL_ID + 1] =3D {
+> =A0=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_SCSI + SCSI_PROTOCOL_ATA] =3D "scsi:at=
+a",
+> =A0=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_SCSI + SCSI_PROTOCOL_USB] =3D "scsi:us=
+b",
+> =A0=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_SCSI + SCSI_PROTOCOL_UNSPEC] =3D "scsi=
+:unspec",
+> +=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_NVME + NVME_PROTOCOL_PCIE] =3D "nvme:pci=
+e",
+> +=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_NVME + NVME_PROTOCOL_RDMA] =3D "nvme:rdm=
+a",
+> +=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_NVME + NVME_PROTOCOL_FC] =3D "nvme:fc",
+> +=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_NVME + NVME_PROTOCOL_TCP] =3D "nvme:tcp"=
+,
+> +=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_NVME + NVME_PROTOCOL_LOOP] =3D "nvme:loo=
+p",
+> +=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_NVME + NVME_PROTOCOL_APPLE_NVME] =3D "nv=
+me:apple-
+> nvme",
+> +=A0=A0=A0=A0=A0=A0=A0[SYSFS_BUS_NVME + NVME_PROTOCOL_UNSPEC] =3D "nvme:u=
+nspec",
+> =A0};
+>=20
+
+With NVMe subprotocols being added, I wish we could separate
+bus and protocol more cleanly. The addition (SYSFS_BUS_SCSI +
+SCSI_PROTOCOL_FCP) was ok as long as only SCSI had transport protocols,
+but with NVMe transports being added, I'd prefer something cleaner.
+
+I guess it's ok for the time being, but we should look into improving
+it.
+
+Martin=20
+
+
+
+> =A0
+> =A0struct adapter_group *
+> @@ -746,11 +752,17 @@ out:
 > =A0}
 > =A0
-> +static void reconcile_features_with_queue_mode(struct multipath *mp)
-> +{
-> +=A0=A0=A0=A0=A0=A0=A0char *space =3D NULL, *val =3D NULL, *mode_str =3D =
-NULL, *feat;
-> +=A0=A0=A0=A0=A0=A0=A0int features_mode =3D QUEUE_MODE_UNDEF;
-> +
-> +=A0=A0=A0=A0=A0=A0=A0if (!mp->features)
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return;
-> +
-> +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_push(cleanup_free_ptr, &space);
-> +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_push(cleanup_free_ptr, &val);
-> +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_push(cleanup_free_ptr, &mode_str);
-
-I was wondering why we need pthread_cleanup() complexity here, seeing
-no cancellation points in this function. I eventually realized that
-condlog()->dlog()->log_safe()->pthread_mutex_lock() is a cancellation
-point. I suppose we need to clean that up some time.
-
-
-> +
-> +=A0=A0=A0=A0=A0=A0=A0if (!(feat =3D strstr(mp->features, "queue_mode")) =
-||
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 feat =3D=3D mp->features || !isspace(*(fe=
-at - 1)) ||
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 sscanf(feat, "queue_mode%m[ \f\n\r\t\v]%m=
-s", &space,
-> &val) !=3D 2)
-
-Nit: Given that mp->features comes from the multipath.conf, I'm pretty
-sure that it can't contain \n or \r as whitespace characters
-(read_line() would remove them()). Not sure about \f and \v; guess they
-are allowed but I wouldn't swear that they can be used in
-multipath.conf without causing trouble elsewhere.
-
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0goto sync_mode;
-> +=A0=A0=A0=A0=A0=A0=A0if (asprintf(&mode_str, "queue_mode%s%s", space, va=
-l) < 0) {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "failed to alloc=
-ate space for queue_mode
-> feature string");
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0mode_str =3D NULL; /* value=
- undefined on failure */
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0goto exit;
-> +=A0=A0=A0=A0=A0=A0=A0}
-> +
-> +=A0=A0=A0=A0=A0=A0=A0if (!strcmp(val, "rq") || !strcmp(val, "mq"))
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0features_mode =3D QUEUE_MOD=
-E_RQ;
-> +=A0=A0=A0=A0=A0=A0=A0else if (!strcmp(val, "bio"))
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0features_mode =3D QUEUE_MOD=
-E_BIO;
-> +=A0=A0=A0=A0=A0=A0=A0if (features_mode =3D=3D QUEUE_MODE_UNDEF) {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(2, "%s: ignoring in=
-valid feature '%s'",
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0mp-=
->alias, mode_str);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0goto sync_mode;
-> +=A0=A0=A0=A0=A0=A0=A0}
-> +
-> +=A0=A0=A0=A0=A0=A0=A0if (mp->queue_mode =3D=3D QUEUE_MODE_UNDEF)
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0mp->queue_mode =3D features=
-_mode;
-> +=A0=A0=A0=A0=A0=A0=A0if (mp->queue_mode =3D=3D features_mode)
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0goto exit;
-> +
-> +=A0=A0=A0=A0=A0=A0=A0condlog(2,
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0"%s: ignoring feature '%s' =
-because queue_mode is set
-> to '%s'",
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0mp->alias, mode_str,
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0(mp->queue_mode =3D=3D QUEU=
-E_MODE_RQ)? "rq" : "bio");
-> +
-> +sync_mode:
-> +=A0=A0=A0=A0=A0=A0=A0if (mode_str)
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0remove_feature(&mp->feature=
-s, mode_str);
-> +=A0=A0=A0=A0=A0=A0=A0if (mp->queue_mode =3D=3D QUEUE_MODE_BIO)
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0add_feature(&mp->features, =
-"queue_mode bio");
-> +exit:
-> +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_pop(1);
-> +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_pop(1);
-> +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_pop(1);
-> +}
-> +
-> =A0int select_features(struct config *conf, struct multipath *mp)
-> =A0{
-> =A0=A0=A0=A0=A0=A0=A0=A0const char *origin;
-> @@ -428,6 +482,7 @@ out:
-> =A0=A0=A0=A0=A0=A0=A0=A0reconcile_features_with_options(mp->alias, &mp->f=
-eatures,
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0&mp->no_path_retry,
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0&mp->retain_hwhandler);
-> +=A0=A0=A0=A0=A0=A0=A0reconcile_features_with_queue_mode(mp);
-> =A0=A0=A0=A0=A0=A0=A0=A0condlog(3, "%s: features =3D \"%s\" %s", mp->alia=
-s, mp-
-> >features, origin);
-> =A0=A0=A0=A0=A0=A0=A0=A0return 0;
+> =A0unsigned int bus_protocol_id(const struct path *pp) {
+> -=A0=A0=A0=A0=A0=A0=A0if (!pp || pp->bus < 0 || pp->bus > SYSFS_BUS_SCSI)
+> +=A0=A0=A0=A0=A0=A0=A0if (!pp || pp->bus < 0 || pp->bus > SYSFS_BUS_NVME)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return SYSFS_BUS_UNDEF;
+> -=A0=A0=A0=A0=A0=A0=A0if (pp->bus !=3D SYSFS_BUS_SCSI)
+> +=A0=A0=A0=A0=A0=A0=A0if (pp->bus !=3D SYSFS_BUS_SCSI && pp->bus !=3D SYS=
+FS_BUS_NVME)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return pp->bus;
+> -=A0=A0=A0=A0=A0=A0=A0if ((int)pp->sg_id.proto_id < 0 || pp->sg_id.proto_=
+id >
+> SCSI_PROTOCOL_UNSPEC)
+> +=A0=A0=A0=A0=A0=A0=A0if (pp->sg_id.proto_id < 0)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return SYSFS_BUS_UNDEF;
+> -=A0=A0=A0=A0=A0=A0=A0return SYSFS_BUS_SCSI + pp->sg_id.proto_id;
+> +=A0=A0=A0=A0=A0=A0=A0if (pp->bus =3D=3D SYSFS_BUS_SCSI &&
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->sg_id.proto_id > SCSI_PROTOCOL_UNSPEC=
+)
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return SYSFS_BUS_UNDEF;
+> +=A0=A0=A0=A0=A0=A0=A0if (pp->bus =3D=3D SYSFS_BUS_NVME &&
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->sg_id.proto_id > NVME_PROTOCOL_UNSPEC=
+)
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return SYSFS_BUS_UNDEF;
+> +=A0=A0=A0=A0=A0=A0=A0return pp->bus + pp->sg_id.proto_id;
 > =A0}
 > diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index 5a713d46..129bdf0e 100644
+> index d3054662..9e2c1ab0 100644
 > --- a/libmultipath/structs.h
 > +++ b/libmultipath/structs.h
-> @@ -170,6 +170,12 @@ enum max_sectors_kb_states {
-> =A0=A0=A0=A0=A0=A0=A0=A0MAX_SECTORS_KB_MIN =3D 4,=A0 /* can't be smaller =
-than page size
-> */
+> @@ -56,15 +56,6 @@ enum failback_mode {
+> =A0=A0=A0=A0=A0=A0=A0=A0FAILBACK_FOLLOWOVER
 > =A0};
 > =A0
-> +enum queue_mode_states {
-> +=A0=A0=A0=A0=A0=A0=A0QUEUE_MODE_UNDEF =3D 0,
-> +=A0=A0=A0=A0=A0=A0=A0QUEUE_MODE_BIO,
-> +=A0=A0=A0=A0=A0=A0=A0QUEUE_MODE_RQ,
+> -/* SYSFS_BUS_SCSI should be last, see bus_protocol_id() */
+> -enum sysfs_buses {
+> -=A0=A0=A0=A0=A0=A0=A0SYSFS_BUS_UNDEF,
+> -=A0=A0=A0=A0=A0=A0=A0SYSFS_BUS_CCW,
+> -=A0=A0=A0=A0=A0=A0=A0SYSFS_BUS_CCISS,
+> -=A0=A0=A0=A0=A0=A0=A0SYSFS_BUS_NVME,
+> -=A0=A0=A0=A0=A0=A0=A0SYSFS_BUS_SCSI,
+> -};
+> -
+> =A0enum pathstates {
+> =A0=A0=A0=A0=A0=A0=A0=A0PSTATE_UNDEF,
+> =A0=A0=A0=A0=A0=A0=A0=A0PSTATE_FAILED,
+> @@ -190,14 +181,32 @@ enum scsi_protocol {
+> =A0=A0=A0=A0=A0=A0=A0=A0SCSI_PROTOCOL_ATA =3D 8,
+> =A0=A0=A0=A0=A0=A0=A0=A0SCSI_PROTOCOL_USB =3D 9,=A0 /* USB Attached SCSI =
+(UAS), and
+> others */
+> =A0=A0=A0=A0=A0=A0=A0=A0SCSI_PROTOCOL_UNSPEC =3D 0xa, /* No specific prot=
+ocol */
+> +=A0=A0=A0=A0=A0=A0=A0SCSI_PROTOCOL_END =3D 0xb, /* offset of the next sy=
+sfs_buses
+> entry */
 > +};
 > +
-> =A0enum scsi_protocol {
-> =A0=A0=A0=A0=A0=A0=A0=A0SCSI_PROTOCOL_FCP =3D 0,=A0=A0/* Fibre Channel */
-> =A0=A0=A0=A0=A0=A0=A0=A0SCSI_PROTOCOL_SPI =3D 1,=A0=A0/* parallel SCSI */
-> @@ -396,6 +402,7 @@ struct multipath {
-> =A0=A0=A0=A0=A0=A0=A0=A0int needs_paths_uevent;
-> =A0=A0=A0=A0=A0=A0=A0=A0int ghost_delay;
-> =A0=A0=A0=A0=A0=A0=A0=A0int ghost_delay_tick;
-> +=A0=A0=A0=A0=A0=A0=A0int queue_mode;
-> =A0=A0=A0=A0=A0=A0=A0=A0uid_t uid;
-> =A0=A0=A0=A0=A0=A0=A0=A0gid_t gid;
-> =A0=A0=A0=A0=A0=A0=A0=A0mode_t mode;
+> +/* values from /sys/class/nvme/nvmeX */
+> +enum nvme_protocol {
+> +=A0=A0=A0=A0=A0=A0=A0NVME_PROTOCOL_PCIE =3D 0,
+> +=A0=A0=A0=A0=A0=A0=A0NVME_PROTOCOL_RDMA =3D 1,
+> +=A0=A0=A0=A0=A0=A0=A0NVME_PROTOCOL_FC =3D 2,
+> +=A0=A0=A0=A0=A0=A0=A0NVME_PROTOCOL_TCP =3D 3,
+> +=A0=A0=A0=A0=A0=A0=A0NVME_PROTOCOL_LOOP =3D 4,
+> +=A0=A0=A0=A0=A0=A0=A0NVME_PROTOCOL_APPLE_NVME =3D 5,
+> +=A0=A0=A0=A0=A0=A0=A0NVME_PROTOCOL_UNSPEC =3D 6, /* unknown protocol */
+> +};
+> +
+> +enum sysfs_buses {
+> +=A0=A0=A0=A0=A0=A0=A0SYSFS_BUS_UNDEF,
+> +=A0=A0=A0=A0=A0=A0=A0SYSFS_BUS_CCW,
+> +=A0=A0=A0=A0=A0=A0=A0SYSFS_BUS_CCISS,
+> +=A0=A0=A0=A0=A0=A0=A0SYSFS_BUS_SCSI,
+> +=A0=A0=A0=A0=A0=A0=A0SYSFS_BUS_NVME =3D SYSFS_BUS_SCSI + SCSI_PROTOCOL_E=
+ND,
+> =A0};
+> =A0
+> =A0/*
+> =A0 * Linear ordering of bus/protocol
+> - * This assumes that SYSFS_BUS_SCSI is last in enum sysfs_buses
+> - * SCSI is the only bus type for which we distinguish protocols.
+> =A0 */
+> -#define LAST_BUS_PROTOCOL_ID (SYSFS_BUS_SCSI + SCSI_PROTOCOL_UNSPEC)
+> +#define LAST_BUS_PROTOCOL_ID (SYSFS_BUS_NVME + NVME_PROTOCOL_UNSPEC)
+> =A0unsigned int bus_protocol_id(const struct path *pp);
+> =A0extern const char * const protocol_name[];
+> =A0
 > diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index e098d555..46a4126c 100644
+> index 46a4126c..07476497 100644
 > --- a/multipath/multipath.conf.5
 > +++ b/multipath/multipath.conf.5
-> @@ -459,8 +459,11 @@ precedence. See KNOWN ISSUES.
-> =A0<mode> can be \fIbio\fR, \fIrq\fR or \fImq\fR, which corresponds to
-> =A0bio-based, request-based, and block-multiqueue (blk-mq) request-
-> based,
-> =A0respectively.
-> -The default depends on the kernel parameter \fBdm_mod.use_blk_mq\fR.
-> It is
-> -\fImq\fR if the latter is set, and \fIrq\fR otherwise.
-> +Before kernel 4.20 The default depends on the kernel parameter
-> +\fBdm_mod.use_blk_mq\fR. It is \fImq\fR if the latter is set, and
-> \fIrq\fR
-> +otherwise. Since kernel 4.20, \fIrq\fR and \fImq\fR both correspond
-> to
-> +block-multiqueue. Once a multipath device has been created, its
-> queue_mode
-> +cannot be changed.
-> =A0.TP
-> =A0The default is: \fB<unset>\fR
+> @@ -1377,7 +1377,9 @@ Regular expression for the protocol of a device
+> to be excluded/included.
+> =A0The protocol strings that multipath recognizes are \fIscsi:fcp\fR,
+> =A0\fIscsi:spi\fR, \fIscsi:ssa\fR, \fIscsi:sbp\fR, \fIscsi:srp\fR,
+> =A0\fIscsi:iscsi\fR, \fIscsi:sas\fR, \fIscsi:adt\fR, \fIscsi:ata\fR,
+> -\fIscsi:unspec\fR, \fIccw\fR, \fIcciss\fR, \fInvme\fR, and
+> \fIundef\fR.
+> +\fIscsi:unspec\fR, \fInvme:pcie\fR, \fInvme:rdma\fR, \fInvme:fc\fR,
+> +\fInvme:tcp\fR, \fInvme:loop\fR, \fInvme:apple-nvme\fR,
+> \fInvme:unspec\fR,
+> +\fIccw\fR, \fIcciss\fR, and \fIundef\fR.
+> =A0The protocol that a path is using can be viewed by running
+> =A0\fBmultipathd show paths format "%d %P"\fR
 > =A0.RE
+> @@ -1773,7 +1775,9 @@ The protocol subsection recognizes the
+> following mandatory attribute:
+> =A0The protocol string of the path device. The possible values are
+> \fIscsi:fcp\fR,
+> =A0\fIscsi:spi\fR, \fIscsi:ssa\fR, \fIscsi:sbp\fR, \fIscsi:srp\fR,
+> =A0\fIscsi:iscsi\fR, \fIscsi:sas\fR, \fIscsi:adt\fR, \fIscsi:ata\fR,
+> -\fIscsi:unspec\fR, \fIccw\fR, \fIcciss\fR, \fInvme\fR, and
+> \fIundef\fR. This is
+> +\fIscsi:unspec\fR, \fInvme:pcie\fR, \fInvme:rdma\fR, \fInvme:fc\fR,
+> +\fInvme:tcp\fR, \fInvme:loop\fR, \fInvme:apple-nvme\fR,
+> \fInvme:unspec\fR,
+> +\fIccw\fR, \fIcciss\fR, and \fIundef\fR. This is
+> =A0\fBnot\fR a regular expression. the path device protocol string must
+> match
+> =A0exactly. The protocol that a path is using can be viewed by running
+> =A0\fBmultipathd show paths format "%d %P"\fR
 
 --
 dm-devel mailing list
