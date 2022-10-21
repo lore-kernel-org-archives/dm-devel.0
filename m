@@ -1,99 +1,137 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 21B9DC433FE
-	for <dm-devel@archiver.kernel.org>; Fri, 21 Oct 2022 06:25:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3F508C4332F
+	for <dm-devel@archiver.kernel.org>; Fri, 21 Oct 2022 07:05:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1666333506;
+	s=mimecast20190719; t=1666335906;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=rYJYjGgOopzu/1C7E861Z/3h8KdUjaDvrWq3Ih+IPT8=;
-	b=Hd1vBNGflGpsuLu1bv2NvbdM93ujGlST2LHLZcmdnQbWAQPfxxZBwKdn1k/vSEUkxeM2Fe
-	RYF58T+aO13zkxGIInAK9+DwTExMwn3lfOXcmthoCfIfQlt9uaLFbZ9iaDxsoZyr3lUPyL
-	OQ3FtVw1I8yZ5GaIlgfFCG9zlYaof08=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=NNvTptmISxSgiLZNyI4/E4oO4EMxMsaPiPInDuPdJZo=;
+	b=FSqkd93HsXc02k8eJ9eNFN+Lkcr+3fKcJXJmIXjQq/jRJRGp25TjgIjejs3YhLEpNkWeuR
+	T3cvU0K0AmqWAIm8/7uKUvzijHmV2FdF4B9m/WiHbsJ4ine4SC3fbbnEPWSj2OkC9gUymu
+	8FiN3mAzUKWK8b0XT/BL7WmZ1MeCSnM=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-263-1ecKgBkiNnWLtoh-mgiMVw-1; Fri, 21 Oct 2022 02:25:02 -0400
-X-MC-Unique: 1ecKgBkiNnWLtoh-mgiMVw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-244-sdSb_tR_OTKuc5xUT3AYBw-1; Fri, 21 Oct 2022 03:05:04 -0400
+X-MC-Unique: sdSb_tR_OTKuc5xUT3AYBw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 548B83801144;
-	Fri, 21 Oct 2022 06:25:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5AC2E8027F5;
+	Fri, 21 Oct 2022 07:05:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id AF7A6C1912A;
-	Fri, 21 Oct 2022 06:24:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E4AE3140EBF3;
+	Fri, 21 Oct 2022 07:05:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 94BE11946595;
-	Fri, 21 Oct 2022 06:24:57 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B48931946595;
+	Fri, 21 Oct 2022 07:05:02 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
  [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B4FE91946587
- for <dm-devel@listman.corp.redhat.com>; Fri, 21 Oct 2022 03:22:13 +0000 (UTC)
+ ESMTP id DCA0E1946587
+ for <dm-devel@listman.corp.redhat.com>; Fri, 21 Oct 2022 07:05:01 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6ACDF1415307; Fri, 21 Oct 2022 03:22:13 +0000 (UTC)
+ id C8EB61401CC9; Fri, 21 Oct 2022 07:05:01 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 62FAC14152E8
- for <dm-devel@redhat.com>; Fri, 21 Oct 2022 03:22:13 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id BFE7B140EBF3
+ for <dm-devel@redhat.com>; Fri, 21 Oct 2022 07:05:01 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 657508041B5
- for <dm-devel@redhat.com>; Fri, 21 Oct 2022 03:22:12 +0000 (UTC)
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com
- [45.249.212.51]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-179-DMNEg-uSMjuASk9GUoP5nA-1; Thu, 20 Oct 2022 23:22:09 -0400
-X-MC-Unique: DMNEg-uSMjuASk9GUoP5nA-1
-Received: from mail02.huawei.com (unknown [172.30.67.153])
- by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4MtqTb2GZkzl8Z8;
- Fri, 21 Oct 2022 11:20:03 +0800 (CST)
-Received: from [10.174.176.73] (unknown [10.174.176.73])
- by APP4 (Coremail) with SMTP id gCh0CgD3PS5dEFJje7O4AA--.29991S3;
- Fri, 21 Oct 2022 11:22:05 +0800 (CST)
-To: Yu Kuai <yukuai1@huaweicloud.com>, Christoph Hellwig <hch@lst.de>,
- Jens Axboe <axboe@kernel.dk>, Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>
-References: <20221020164605.1764830-1-hch@lst.de>
- <20221020164605.1764830-2-hch@lst.de>
- <cc7d4e79-a14d-1183-09a2-337052321e3e@huaweicloud.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <868b6d4f-9306-0469-149a-47e5d282d141@huaweicloud.com>
-Date: Fri, 21 Oct 2022 11:22:05 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9DF80811E81
+ for <dm-devel@redhat.com>; Fri, 21 Oct 2022 07:05:01 +0000 (UTC)
+Received: from EUR04-DB3-obe.outbound.protection.outlook.com
+ (mail-eopbgr60070.outbound.protection.outlook.com [40.107.6.70]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-133-FS77OBNOPDuUhmGCmifsqw-1; Fri, 21 Oct 2022 03:04:59 -0400
+X-MC-Unique: FS77OBNOPDuUhmGCmifsqw-1
+Received: from AS8PR04MB8040.eurprd04.prod.outlook.com (2603:10a6:20b:2a9::22)
+ by DU2PR04MB8693.eurprd04.prod.outlook.com (2603:10a6:10:2dc::22)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5723.26; Fri, 21 Oct
+ 2022 07:04:56 +0000
+Received: from AS8PR04MB8040.eurprd04.prod.outlook.com
+ ([fe80::eec2:cac0:7732:8da]) by AS8PR04MB8040.eurprd04.prod.outlook.com
+ ([fe80::eec2:cac0:7732:8da%4]) with mapi id 15.20.5723.035; Fri, 21 Oct 2022
+ 07:04:56 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
+ "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Thread-Topic: [PATCH 3/4] libmultipath: use regular array for field widths
+Thread-Index: AQHY3bvdNudt1Ixlw0ahWnEoffd7oq4Ye18A
+Date: Fri, 21 Oct 2022 07:04:55 +0000
+Message-ID: <306b876895770fc11229ea43418e3766282ee4e5.camel@suse.com>
+References: <1665525183-27377-1-git-send-email-bmarzins@redhat.com>
+ <1665525183-27377-4-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1665525183-27377-4-git-send-email-bmarzins@redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Evolution 3.46.0
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: AS8PR04MB8040:EE_|DU2PR04MB8693:EE_
+x-ms-office365-filtering-correlation-id: 852fffa7-7bf1-4ee5-958e-08dab3328f70
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: eeu18xJ7Ewp36BXut5kWpKHqW6f7F89qycyJr0/qSrm9UFcpitR3eDStN8uInb4fif8UDesKkHUoxFXmL7e8gM4XOaKiHNuYEYQVGD4lnAkincfqIs8P2QabG4h14jl3iPb/88y9wvmCHgvlRmBi6ucgpJJN4epz84cFO4+6f+hWpy3x/CRLZTRP4i5gYsyzFlVoXyIYLnoVOSXt5k+19qAXg5mImMFPLrvggn859YFejjS+t/3fCQXRyiR+x2Y6r0l14HDgRsGogtv2D0c+C+GeB2xsEBz0R/vsylbysQ/BFGlHh3Y0H8og+Sc+P2dl4t2ZMM9bi58/2suEaDz+9yo9VCPDrGgApB/jWoSe2gtjQL7WizPWVCbMPupSLjzMByVB2ptdSUIBvPsj8BzeoDAUkVdLtemtai+9C9iWw2K+2QxZ49Z2ojUjSDk/p8eqn5VIsMKHccTs6Q0svf4fHeEnE82p4WitUQ3owZuvvCRMnveDBpfeVQpCtJbqhKWQTlg1CfSz2FVLXXLfKKt80dCDfBmEe3mpcrOFGLaMNDDOM943+Y1Zsms3RfoxTjB69feo/GRyRqcJGSb+nXUdEGowLigutzcJtLGGa9gGlrXIMJfYikFFSYzTpwtrwcsCS+SmTg2W6w8U3YFPoRmQwv5Oi8a8ns8j+Lm5ADuFppRRumiaNKulnFul0tu1M9ualruDmFh2GIXZDDgwLELkbS4iLCtIy/UMqshSqm/rEEp+kY5vrUD3GVtP5+6eYCVaXfjgj2oTS1qkzugaLv8RdQ==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:AS8PR04MB8040.eurprd04.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230022)(376002)(136003)(346002)(396003)(39860400002)(366004)(451199015)(478600001)(6486002)(38070700005)(122000001)(71200400001)(110136005)(316002)(26005)(91956017)(66556008)(64756008)(76116006)(66946007)(66476007)(4326008)(8676002)(66446008)(6506007)(36756003)(41300700001)(6512007)(5660300002)(8936002)(2906002)(4001150100001)(38100700002)(186003)(86362001)(83380400001)(2616005)(44832011)(30864003);
+ DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?x3n/dZx9wLowwAiPIczd0v13Pl/9VQBVDGslLxa5rpxKk1AuQ3DE8iGv7?=
+ =?iso-8859-15?Q?sF08G2Rj843bN5d+PxjOZ8q6HeJ/R2m8P6Gp6Odu/KZpmLGwcCYyy/lSG?=
+ =?iso-8859-15?Q?NGXPLXwwo2sAsURa3ImCG2yWlH5D8WkgSIwGHqxt2ZM9FXyvUnBkRGwu5?=
+ =?iso-8859-15?Q?sIrXKL4QNAjaKngczke9IhQQgR6gbt4v7SURvlsSHtTHgZqy+PRFVBuK+?=
+ =?iso-8859-15?Q?ljrigDM8Eyd0H/IIgZITkrW3gdysEWCn/xYOIIe7r21k4qrK93N3OWT3f?=
+ =?iso-8859-15?Q?w8xPkR3IrdKyWCojmYRL4LDaNtdR6LHsvJbvulsb6jLUWnC/7XvHGT8J4?=
+ =?iso-8859-15?Q?dyg4a48b/kGzHmj5HOg5SlBhx/R5s5tAvhyMEa/wHYco6M/3bYeVSxfVa?=
+ =?iso-8859-15?Q?siN0gefklVhymYkbselBoFtFrjvWfP13y+zuKX0EG1Xr/Z1y355t6NzIX?=
+ =?iso-8859-15?Q?CiZpEtL2g4YzmS6tDUHacJ9uN1fyc251+1VLWG/ASX7+Iq994MpzV0wi6?=
+ =?iso-8859-15?Q?8AfH8ZGRlbyW69ROidVFqedaNSPM7ZnSrJ+9VWsrbhsTve9uZCiu0qAIE?=
+ =?iso-8859-15?Q?WuasueDWb1b3jB2yKSXJ3i66vIYyFzPIlkXLIdv8RmxSp34n/Oio4MoaC?=
+ =?iso-8859-15?Q?k9jJvCLTP3VY0nr1Du+f1kFb5mhz6y7G+JT3LjivwuzAwKoZmDCpJzVFM?=
+ =?iso-8859-15?Q?HJGVp/WtufFG/TTKFyKR7WduagXjhgayapBAS7ITx0XiDJVyDLlM8BhrV?=
+ =?iso-8859-15?Q?YYjjhpLQ4AlQFUzQmV+LcMiMIAeZuiGuuDIyYGcLzVK635YJMiMpLR2uZ?=
+ =?iso-8859-15?Q?qnEqTTEbiMOvNL02vxj7czsBGYsXRHEmozFvwIaLydpTKogvw9F/nN21E?=
+ =?iso-8859-15?Q?1Bdn8pmGOqIA7Ij+WC9eTWDV+P0aCMFxZZl3AmqzT2cMZPAv9y3hovUiR?=
+ =?iso-8859-15?Q?DEunPuDWazNVTqDyhpD1HAX9O/EbV4bIlSw+DuyOWPCzdBsEE/1qkB+Wt?=
+ =?iso-8859-15?Q?axlzM7XrRabDfX6O2Qpt7eRv8bgRQLJaw98zdXF9b6X2VkL7TgBsbylwo?=
+ =?iso-8859-15?Q?giFcvkdJoe1kQeI3ycFBpE/gtuPFHxJcRuv6ulJugH1xTXw3p3hhEDr1Z?=
+ =?iso-8859-15?Q?5WvWHrzh9Pb911IFBk5aZMQHmBDHA97fbaCWHx/9qOyUadzyJbGNcW0mg?=
+ =?iso-8859-15?Q?vDxupHLqafIE4eresBJRYRiWXzAE9ZYS+KDItMngkSJNy0T0tiGjOWr2F?=
+ =?iso-8859-15?Q?q992Mr/5V9oQmfxb86qoAWaQ0qp9DCjdmtt8h4bt3ZZ3yDbQfg1R7EWjZ?=
+ =?iso-8859-15?Q?q+TxaAZO6CwH7tGBBIWW3NdKZGb6R1AJzje/H7voWymzBTeXXCGW96kp+?=
+ =?iso-8859-15?Q?k9Dg8Zpzt5xZjagG7hnbLKjAaPiGr8bAcboxPyHDDNnUzgC6Y5H6VykdZ?=
+ =?iso-8859-15?Q?atuwOlhxEM1bPNZWksbXMBsGDY5EPqBaUQhESamL5NKhP3ABwp/WmRzE9?=
+ =?iso-8859-15?Q?WJH0krmm5jMLPiPrUum40JC5I1494abqXpeDAmCTmhVar8t2mGVVgpV4G?=
+ =?iso-8859-15?Q?WAVYXJeKsGWlBYbeGJJpbxLcdDLmj2GBXeD0Pfh6Y5USfowQaEBXXkhLw?=
+ =?iso-8859-15?Q?f+31tW03GNjWFCV0iB2GE/+ES/Oi5lZtJFlsamicw2OYE6ExDJVtEC+y0?=
+ =?iso-8859-15?Q?U+nO40JkSHXSeJa+v9y7anj0cQ=3D=3D?=
 MIME-Version: 1.0
-In-Reply-To: <cc7d4e79-a14d-1183-09a2-337052321e3e@huaweicloud.com>
-X-CM-TRANSID: gCh0CgD3PS5dEFJje7O4AA--.29991S3
-X-Coremail-Antispam: 1UD129KBjvJXoW3Ww13Ww1DAFy8AFy3ZF1kZrb_yoW3JFyxpF
- 95JFyxJrWj9ry8Xr4aya15CFy7Ja1DJa1kKr1SkFn2vrsrJrnFvFy7Xr4jgF45GrW8CF4U
- JF10qrs0yr48Kr7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
- 9KBjDU0xBIdaVrnRJUUUkC14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
- rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
- 1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
- JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
- CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
- 2Ix0cI8IcVAFwI0_Jrv_JF1lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
- W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lc7I2V7IY0VAS07AlzVAY
- IcxG8wCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14
- v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_Jw0_GFylIxkG
- c2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI
- 0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6Fyj6rWUJwCI42IY6I8E87Iv67AKxVWUJVW8
- JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjfUouWlDU
- UUU
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
-X-CFilter-Loop: Reflected
+X-OriginatorOrg: suse.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: AS8PR04MB8040.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 852fffa7-7bf1-4ee5-958e-08dab3328f70
+X-MS-Exchange-CrossTenant-originalarrivaltime: 21 Oct 2022 07:04:56.2290 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: 0ZRh74DPm8CoWvqgM8p2eVEZ8a8wY0yXijPm9dS81l/marF9y9IoeRHl/lg0JjSQD3PQc8TtYTWAUrwzFpfJog==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DU2PR04MB8693
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -102,9 +140,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-X-Mailman-Approved-At: Fri, 21 Oct 2022 06:24:56 +0000
-Subject: Re: [dm-devel] [PATCH 1/6] block: clear the holder releated fields
- when deleting the kobjects
+Subject: Re: [dm-devel] [PATCH 3/4] libmultipath: use regular array for
+ field widths
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -116,141 +153,440 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-block@vger.kernel.org, "yukuai \(C\)" <yukuai3@huawei.com>,
- dm-devel@redhat.com
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Language: en-US
+Content-ID: <7EEF0EB148E9D44CB90B2AA5C3D58139@eurprd04.prod.outlook.com>
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-5ZyoIDIwMjIvMTAvMjEgMTE6MTIsIFl1IEt1YWkg5YaZ6YGTOgo+IEhpLCBDaHJpc3RvcGgKPiAK
-PiDlnKggMjAyMi8xMC8yMSAwOjQ2LCBDaHJpc3RvcGggSGVsbHdpZyDlhpnpgZM6Cj4+IFplcm8g
-b3V0IHRoZSBwb2ludGVycyB0byB0aGUgaG9sZGVyIHJlbGF0ZWQga29iamVjdHMgc28gdGhhdCB0
-aGUgaG9sZGVyCj4+IGNvZGUgZG9lc24ndCBpbmNvcnJlY3RseSB3aGVuIGNhbGxlZCBieSBkbSBm
-b3IgdGhlIGRlbGF5ZWQgaG9sZGVyCj4+IHJlZ2lzdHJhdGlvbi4KPj4KPj4gRml4ZXM6IDg5Zjg3
-MWFmMWIyNiAoImRtOiBkZWxheSByZWdpc3RlcmluZyB0aGUgZ2VuZGlzayIpCj4+IFJlcG9ydGVk
-LWJ5OiBZdSBLdWFpIDx5dWt1YWkxQGh1YXdlaWNsb3VkLmNvbT4KPj4gU2lnbmVkLW9mZi1ieTog
-Q2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBsc3QuZGU+Cj4+IC0tLQo+PiDCoCBibG9jay9nZW5oZC5j
-IHwgNCArKysrCj4+IMKgIDEgZmlsZSBjaGFuZ2VkLCA0IGluc2VydGlvbnMoKykKPj4KPj4gZGlm
-ZiAtLWdpdCBhL2Jsb2NrL2dlbmhkLmMgYi9ibG9jay9nZW5oZC5jCj4+IGluZGV4IDE3YjMzYzYy
-NDIzZGYuLmNkOTBkZjZjNzc1YzIgMTAwNjQ0Cj4+IC0tLSBhL2Jsb2NrL2dlbmhkLmMKPj4gKysr
-IGIvYmxvY2svZ2VuaGQuYwo+PiBAQCAtNTI4LDggKzUyOCwxMCBAQCBpbnQgX19tdXN0X2NoZWNr
-IGRldmljZV9hZGRfZGlzayhzdHJ1Y3QgZGV2aWNlIAo+PiAqcGFyZW50LCBzdHJ1Y3QgZ2VuZGlz
-ayAqZGlzaywKPj4gwqDCoMKgwqDCoCBibGtfdW5yZWdpc3Rlcl9xdWV1ZShkaXNrKTsKPj4gwqAg
-b3V0X3B1dF9zbGF2ZV9kaXI6Cj4+IMKgwqDCoMKgwqAga29iamVjdF9wdXQoZGlzay0+c2xhdmVf
-ZGlyKTsKPj4gK8KgwqDCoCBkaXNrLT5zbGF2ZV9kaXIgPSBOVUxMOwo+PiDCoCBvdXRfcHV0X2hv
-bGRlcl9kaXI6Cj4+IMKgwqDCoMKgwqAga29iamVjdF9wdXQoZGlzay0+cGFydDAtPmJkX2hvbGRl
-cl9kaXIpOwo+PiArwqDCoMKgIGRpc2stPnBhcnQwLT5iZF9ob2xkZXJfZGlyID0gTlVMTDsKPj4g
-wqAgb3V0X2RlbF9pbnRlZ3JpdHk6Cj4+IMKgwqDCoMKgwqAgYmxrX2ludGVncml0eV9kZWwoZGlz
-ayk7Cj4+IMKgIG91dF9kZWxfYmxvY2tfbGluazoKPj4gQEAgLTYyMyw3ICs2MjUsOSBAQCB2b2lk
-IGRlbF9nZW5kaXNrKHN0cnVjdCBnZW5kaXNrICpkaXNrKQo+PiDCoMKgwqDCoMKgIGJsa191bnJl
-Z2lzdGVyX3F1ZXVlKGRpc2spOwo+PiDCoMKgwqDCoMKgIGtvYmplY3RfcHV0KGRpc2stPnBhcnQw
-LT5iZF9ob2xkZXJfZGlyKTsKPj4gK8KgwqDCoCBkaXNrLT5wYXJ0MC0+YmRfaG9sZGVyX2RpciA9
-IE5VTEw7Cj4gCj4gSSBkb24ndCB0aGluayB0aGlzIGlzIGVub3VnaC4gVGhlcmUgaXMgc3RpbGwg
-bm8gZ3VhcmFudGVlIHRoYXQKPiBiZF9saW5rX2Rpc2tfaG9sZGVyKCkgd29uJ3QgYWNjZXNzIGZy
-ZWVkIGJkX2hvbGRlcl9kaXIuIEl0J3Mgc3RpbGwKPiBwb3NzaWJsZSB0aGF0IGJkX2xpbmtfZGlz
-a19ob2xlcigpIHJlYWQgYmRfaG9sZGVyX2RpciBmaXJzdCwgYW5kIHRoZW4KPiBkZWxfZ2VuZGlz
-aygpIGZyZWUgYW5kIHJlc2V0IGl0LgoKSSBqdXN0IHZlcmlmeSB0aGF0IHdpdGggdGhpcyBwYXRj
-aHNldCBhcHBsaWVkLCBhbmQgdG9nZXRoZXIgd2l0aCB0aGUKZm9sbG93aW5nIHBhdGNoIHRvIGFk
-ZCBzb21lIGRlbGF5OgoKZGlmZiAtLWdpdCBhL2Jsb2NrL2hvbGRlci5jIGIvYmxvY2svaG9sZGVy
-LmMKaW5kZXggYjA1OGJkYTc1N2MxLi5iN2Q4N2Q0N2FmZWUgMTAwNjQ0Ci0tLSBhL2Jsb2NrL2hv
-bGRlci5jCisrKyBiL2Jsb2NrL2hvbGRlci5jCkBAIC0xLDYgKzEsNyBAQAogIC8vIFNQRFgtTGlj
-ZW5zZS1JZGVudGlmaWVyOiBHUEwtMi4wLW9ubHkKICAjaW5jbHVkZSA8bGludXgvYmxrZGV2Lmg+
-CiAgI2luY2x1ZGUgPGxpbnV4L3NsYWIuaD4KKyNpbmNsdWRlIDxsaW51eC9kZWxheS5oPgoKICBz
-dHJ1Y3QgYmRfaG9sZGVyX2Rpc2sgewogICAgICAgICBzdHJ1Y3QgbGlzdF9oZWFkICAgICAgICBs
-aXN0OwpAQCAtMzIsMTEgKzMzLDE2IEBAIHN0YXRpYyB2b2lkIGRlbF9zeW1saW5rKHN0cnVjdCBr
-b2JqZWN0ICpmcm9tLCBzdHJ1Y3QgCmtvYmplY3QgKnRvKQogIHN0YXRpYyBpbnQgX19saW5rX2Rp
-c2tfaG9sZGVyKHN0cnVjdCBibG9ja19kZXZpY2UgKmJkZXYsIHN0cnVjdCAKZ2VuZGlzayAqZGlz
-aykKICB7CiAgICAgICAgIGludCByZXQ7CisgICAgICAgc3RydWN0IGtvYmplY3QgKmhvbGRlciA9
-IGJkZXYtPmJkX2hvbGRlcl9kaXI7CgogICAgICAgICByZXQgPSBhZGRfc3ltbGluayhkaXNrLT5z
-bGF2ZV9kaXIsIGJkZXZfa29iaihiZGV2KSk7CiAgICAgICAgIGlmIChyZXQpCiAgICAgICAgICAg
-ICAgICAgcmV0dXJuIHJldDsKLSAgICAgICByZXQgPSBhZGRfc3ltbGluayhiZGV2LT5iZF9ob2xk
-ZXJfZGlyLCAmZGlza190b19kZXYoZGlzayktPmtvYmopOworCisgICAgICAgcHJpbnRrKCIlczog
-ZGVsYXkgNXNcbiIsIF9fZnVuY19fKTsKKyAgICAgICBtc2xlZXAoNTAwMCk7CisKKyAgICAgICBy
-ZXQgPSBhZGRfc3ltbGluayhob2xkZXIsICZkaXNrX3RvX2RldihkaXNrKS0+a29iaik7CiAgICAg
-ICAgIGlmIChyZXQpCiAgICAgICAgICAgICAgICAgZGVsX3N5bWxpbmsoZGlzay0+c2xhdmVfZGly
-LCBiZGV2X2tvYmooYmRldikpOwogICAgICAgICByZXR1cm4gcmV0OwoKRm93bGxpbmcgdWFmIGNh
-biBiZSB0cmlnZ2VyZWQgMTAwJToKClsgIDExNS42NzU5NzRdIG1kOiBwZXJzb25hbGl0eSBmb3Ig
-bGV2ZWwgMTAgaXMgbm90IGxvYWRlZCEKWyAgMTIxLjM2NTM5OF0gbWQ6IHBlcnNvbmFsaXR5IGZv
-ciBsZXZlbCAxMCBpcyBub3QgbG9hZGVkIQpbICAxMjMuMDExNTAzXSBfX2xpbmtfZGlza19ob2xk
-ZXI6IGRlbGF5IDVzClsgIDEyOC4wODY4ODRdIAo9PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KWyAgMTI4LjA5Mjc4Nl0gQlVH
-OiBLQVNBTjogdXNlLWFmdGVyLWZyZWUgaW4gc3lzZnNfY3JlYXRlX2xpbmsrMHgyOC8weDgwClsg
-IDEyOC4wOTQ0ODldIFJlYWQgb2Ygc2l6ZSA4IGF0IGFkZHIgZmZmZjg4ODEwMTQzNWUzMCBieSB0
-YXNrIGRtc2V0dXAvOTM1ClsgIDEyOC4wOTU2MjldClsgIDEyOC4wOTU5NTVdIENQVTogNyBQSUQ6
-IDkzNSBDb21tOiBkbXNldHVwIE5vdCB0YWludGVkIAo2LjAuMC1uZXh0LTIwMjIxMDE3LTAwMDE4
-LWdlYzk5YzY0MWJmMQpbICAxMjguMDk3NTUwXSBIYXJkd2FyZSBuYW1lOiBRRU1VIFN0YW5kYXJk
-IFBDIChpNDQwRlggKyBQSUlYLCAxOTk2KSwgCkJJT1MgPy0yMDE5MDcyN18wNzM4MzYtYjQKWyAg
-MTI4LjA5ODkzOV0gQ2FsbCBUcmFjZToKWyAgMTI4LjA5OTI5M10gIDxUQVNLPgpbICAxMjguMDk5
-NjAyXSAgPyBkdW1wX3N0YWNrX2x2bCsweDczLzB4OWYKWyAgMTI4LjEwMDYzOF0gID8gcHJpbnRf
-cmVwb3J0KzB4MjQ5LzB4NzQ2ClsgIDEyOC4xMDExMTVdICA/IF9fdmlydF9hZGRyX3ZhbGlkKzB4
-ZDQvMHgyMDAKWyAgMTI4LjEwMTY2OV0gID8gc3lzZnNfY3JlYXRlX2xpbmsrMHgyOC8weDgwClsg
-IDEyOC4xMDIyMDZdICA/IGthc2FuX3JlcG9ydCsweGMwLzB4MTIwClsgIDEyOC4xMDI2ODddICA/
-IHN5c2ZzX2NyZWF0ZV9saW5rKzB4MjgvMHg4MApbICAxMjguMTAzMjU0XSAgPyBfX2FzYW5fbG9h
-ZDgrMHg3NC8weDExMApbICAxMjguMTAzNzI5XSAgPyBzeXNmc19jcmVhdGVfbGluaysweDI4LzB4
-ODAKWyAgMTI4LjEwNDI3Ml0gID8gYmRfbGlua19kaXNrX2hvbGRlci5jb2xkKzB4N2QvMHgxYjMK
-WyAgMTI4LjEwNDkwNV0gID8gZG1fc2V0dXBfbWRfcXVldWUrMHgxZDUvMHgzNDAKWyAgMTI4LjEw
-NTQ2MV0gID8gZG1fdGFibGVfY29tcGxldGUrMHg1OTAvMHhkZDAKWyAgMTI4LjEwNjAxMF0gID8g
-ZG1fZ2V0X2ltbXV0YWJsZV90YXJnZXRfdHlwZSsweDMwLzB4MzAKWyAgMTI4LjEwNjcwMl0gID8g
-bWVtc2V0KzB4NGEvMHg3MApbICAxMjguMTA3MTM2XSAgPyBrdmZyZWUrMHg0NC8weDUwClsgIDEy
-OC4xMDc2MzJdICA/IGRtX3RhYmxlX2NyZWF0ZSsweDFhMy8weDI0MApbICAxMjguMTA4MzQxXSAg
-PyB0YWJsZV9sb2FkKzB4NDY5LzB4NzEwClsgIDEyOC4xMDg5NzFdICA/IGxpc3RfZGV2aWNlcysw
-eDRjMC8weDRjMApbICAxMjguMTA5NjI5XSAgPyBrdm1hbGxvY19ub2RlKzB4N2QvMHgxNjAKWyAg
-MTI4LjExMDI2OV0gID8gX19rbWFsbG9jX25vZGUrMHgxODUvMHgyYjAKWyAgMTI4LjExMDkyOF0g
-ID8gY3RsX2lvY3RsKzB4Mzg4LzB4N2IwClsgIDEyOC4xMTE1MzldICA/IGxpc3RfZGV2aWNlcysw
-eDRjMC8weDRjMApbICAxMjguMTEyMjE2XSAgPyBmcmVlX3BhcmFtcysweDUwLzB4NTAKWyAgMTI4
-LjExMjgyNV0gID8gZG9fdmZzX2lvY3RsKzB4OTMxLzB4MTBkMApbICAxMjguMTEzNjkwXSAgPyBo
-YW5kbGVfbW1fZmF1bHQrMHgzYWEvMHg2MTAKWyAgMTI4LjExNDM5Ml0gID8gX19rYXNhbl9jaGVj
-a19yZWFkKzB4MWQvMHgzMApbICAxMjguMTE1MDg5XSAgPyBfX2ZnZXRfbGlnaHQrMHhjMi8weDM3
-MApbICAxMjguMTE1NzQxXSAgPyBkbV9jdGxfaW9jdGwrMHgxMi8weDIwClsgIDEyOC4xMTYzNzZd
-ICA/IF9feDY0X3N5c19pb2N0bCsweGQ1LzB4MTUwClsgIDEyOC4xMTcxMDBdICA/IGRvX3N5c2Nh
-bGxfNjQrMHgzNS8weDgwClsgIDEyOC4xMTc3NDZdICA/IGVudHJ5X1NZU0NBTExfNjRfYWZ0ZXJf
-aHdmcmFtZSsweDYzLzB4Y2QKWyAgMTI4LjExODU0Nl0gIDwvVEFTSz4KWyAgMTI4LjExODk0MF0K
-WyAgMTI4LjExOTI0Nl0gQWxsb2NhdGVkIGJ5IHRhc2sgMTc5OgpbICAxMjguMTE5Nzk5XSAga2Fz
-YW5fc2F2ZV9zdGFjaysweDI2LzB4NjAKWyAgMTI4LjEyMDQxOV0gIGthc2FuX3NldF90cmFjaysw
-eDI5LzB4NDAKWyAgMTI4LjEyMDkxNV0gIGthc2FuX3NhdmVfYWxsb2NfaW5mbysweDFmLzB4NDAK
-WyAgMTI4LjEyMTUwOF0gIF9fa2FzYW5fa21hbGxvYysweGNiLzB4ZTAKWyAgMTI4LjEyMjEyN10g
-IGttYWxsb2NfdHJhY2UrMHg3ZS8weDE1MApbICAxMjguMTIyNzU1XSAga29iamVjdF9jcmVhdGVf
-YW5kX2FkZCsweDNkLzB4YzAKWyAgMTI4LjEyMzQ3NV0gIGRldmljZV9hZGRfZGlzaysweDNkMS8w
-eDgzMApbICAxMjguMTI0MTU0XSAgc2RfcHJvYmUrMHg2MDMvMHg4ZTAKWyAgMTI4LjEyNDcyN10g
-IHJlYWxseV9wcm9iZSsweDRmMi8weDczMApbICAxMjguMTI1MzUxXSAgX19kcml2ZXJfcHJvYmVf
-ZGV2aWNlKzB4MjIzLzB4MzIwClsgIDEyOC4xMjYwODBdICBkcml2ZXJfcHJvYmVfZGV2aWNlKzB4
-NjkvMHgxNDAKWyAgMTI4LjEyNjc2NV0gIF9fZGV2aWNlX2F0dGFjaF9kcml2ZXIrMHgxMGEvMHgy
-MDAKWyAgMTI4LjEyNzQ3NV0gIGJ1c19mb3JfZWFjaF9kcnYrMHgxMGUvMHgxYjAKWyAgMTI4LjEy
-ODE0NV0gIF9fZGV2aWNlX2F0dGFjaF9hc3luY19oZWxwZXIrMHgxNzUvMHgyMzAKWyAgMTI4LjEy
-ODk0NF0gIGFzeW5jX3J1bl9lbnRyeV9mbisweDczLzB4MzAwClsgIDEyOC4xMjk2MDhdICBwcm9j
-ZXNzX29uZV93b3JrKzB4NDdiLzB4OWEwClsgIDEyOC4xMzAyNzVdICB3b3JrZXJfdGhyZWFkKzB4
-MzBjLzB4OGIwClsgIDEyOC4xMzA5MDVdICBrdGhyZWFkKzB4MWU1LzB4MjUwClsgIDEyOC4xMzE0
-NzZdICByZXRfZnJvbV9mb3JrKzB4MWYvMHgzMApbICAxMjguMTMyMDgwXQpbICAxMjguMTMyMzc5
-XSBGcmVlZCBieSB0YXNrIDgyMzoKWyAgMTI4LjEzMjg4N10gIGthc2FuX3NhdmVfc3RhY2srMHgy
-Ni8weDYwClsgIDEyOC4xMzM1NDddICBrYXNhbl9zZXRfdHJhY2srMHgyOS8weDQwClsgIDEyOC4x
-MzQxODddICBrYXNhbl9zYXZlX2ZyZWVfaW5mbysweDMyLzB4NjAKWyAgMTI4LjEzNDg1M10gIF9f
-a2FzYW5fc2xhYl9mcmVlKzB4MTcyLzB4MmMwClsgIDEyOC4xMzU1MjhdICBfX2ttZW1fY2FjaGVf
-ZnJlZSsweDExYy8weDU2MApbICAxMjguMTM2MjA4XSAga2ZyZWUrMHhkMy8weDI0MApbICAxMjgu
-MTM2NzI0XSAgZHluYW1pY19rb2JqX3JlbGVhc2UrMHgxZS8weDYwClsgIDEyOC4xMzc0MTddICBr
-b2JqZWN0X3B1dCsweDE5Mi8weDQxMApbICAxMjguMTM4MDI3XSAgZGVsX2dlbmRpc2srMHgyMjcv
-MHg2NzAKWyAgMTI4LjEzODYxMV0gIHNkX3JlbW92ZSsweDY1LzB4YTAKWyAgMTI4LjEzOTE2OF0g
-IGRldmljZV9yZW1vdmUrMHhiZS8weGUwClsgIDEyOC4xMzk3NTVdICBkZXZpY2VfcmVsZWFzZV9k
-cml2ZXJfaW50ZXJuYWwrMHgxNjEvMHgyZTAKWyAgMTI4LjE0MDU3M10gIGRldmljZV9yZWxlYXNl
-X2RyaXZlcisweDE2LzB4MjAKWyAgMTI4LjE0MTI4NV0gIGJ1c19yZW1vdmVfZGV2aWNlKzB4MWQz
-LzB4MzEwClsgIDEyOC4xNDE5NThdICBkZXZpY2VfZGVsKzB4MzEwLzB4N2UwClsgIDEyOC4xNDI1
-NTVdICBfX3Njc2lfcmVtb3ZlX2RldmljZSsweDI2Yy8weDM2MApbICAxMjguMTQzMjgwXSAgc2Nz
-aV9yZW1vdmVfZGV2aWNlKzB4MzgvMHg2MApbICAxMjguMTQzOTU5XSAgc2Rldl9zdG9yZV9kZWxl
-dGUrMHg3My8weGYwClsgIDEyOC4xNDQ2MzFdICBkZXZfYXR0cl9zdG9yZSsweDQwLzB4NzAKWyAg
-MTI4LjE0NTI3MV0gIHN5c2ZzX2tmX3dyaXRlKzB4ODkvMHhjMApbICAxMjguMTQ1OTEwXSAga2Vy
-bmZzX2ZvcF93cml0ZV9pdGVyKzB4MjFkLzB4MzMwClsgIDEyOC4xNDY2NTNdICB2ZnNfd3JpdGUr
-MHg2MGUvMHg4NDAKWyAgMTI4LjE0NzI0NF0gIGtzeXNfd3JpdGUrMHhjZC8weDFlMApbICAxMjgu
-MTQ3ODQwXSAgX194NjRfc3lzX3dyaXRlKzB4NDYvMHg2MApbICAxMjguMTQ4NDgzXSAgZG9fc3lz
-Y2FsbF82NCsweDM1LzB4ODAKWyAgMTI4LjE0OTEzNF0gIGVudHJ5X1NZU0NBTExfNjRfYWZ0ZXJf
-aHdmcmFtZSsweDYzLzB4Y2QKCj4gCj4gQnkgdGhlIHdheSwgSSBzdGlsbCB0aGluayB0aGF0IHRo
-ZSBwcm9ibGVtIGZvciB0aGUgYmRfaG9sZGVyX2RpciB1YWYgaXMKPiBub3QganVzdCByZWxhdGVk
-IHRvIGRtLgo+IAo+IFRoYW5rcywKPiBLdWFpCj4gCj4+IMKgwqDCoMKgwqAga29iamVjdF9wdXQo
-ZGlzay0+c2xhdmVfZGlyKTsKPj4gK8KgwqDCoCBkaXNrLT5zbGF2ZV9kaXIgPSBOVUxMOwo+PiDC
-oMKgwqDCoMKgIHBhcnRfc3RhdF9zZXRfYWxsKGRpc2stPnBhcnQwLCAwKTsKPj4gwqDCoMKgwqDC
-oCBkaXNrLT5wYXJ0MC0+YmRfc3RhbXAgPSAwOwo+Pgo+IAo+IC4KPiAKCi0tCmRtLWRldmVsIG1h
-aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29t
-L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
+On Tue, 2022-10-11 at 16:53 -0500, Benjamin Marzinski wrote:
+> We know the size of these arrays, so we can just allocate them on the
+> stack. Also, show_path() doesn't use the width, so don't initialize
+> it
+> in the first place.
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+This isn't wrong, but I'm not sure what it actually achieves except a
+few less NULL checks (I'm sure you're aware that this doesn't mean
+better protection against out-of-memory situations). It comes at the
+cost of an ABI change.=A0I understand that the intention is to eliminate
+__attribute__((cleanup())). But if we agree we don't want to do that
+everywhere, I see no particular reason to do it in this code path.
+
+I'm not totally against it, but I'm not enthusiastic, either.
+
+Regards,
+Martin
+
+
+
+> ---
+> =A0libmultipath/foreign.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 5 ++--
+> =A0libmultipath/libmultipath.version |=A0 4 +--
+> =A0libmultipath/print.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 | 32 +++++=
+++++++-------------
+> =A0libmultipath/print.h=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 4 +--
+> =A0multipath/main.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=
+=A0 5 ++--
+> =A0multipathd/cli_handlers.c=A0=A0=A0=A0=A0=A0=A0=A0 | 41 ++++++++++++---=
+--------------
+> --
+> =A06 files changed, 38 insertions(+), 53 deletions(-)
+>=20
+> diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
+> index 8981ff58..4cc2a8e3 100644
+> --- a/libmultipath/foreign.c
+> +++ b/libmultipath/foreign.c
+> @@ -550,10 +550,9 @@ void print_foreign_topology(int verbosity)
+> =A0=A0=A0=A0=A0=A0=A0=A0struct strbuf buf =3D STRBUF_INIT;
+> =A0=A0=A0=A0=A0=A0=A0=A0struct foreign *fgn;
+> =A0=A0=A0=A0=A0=A0=A0=A0int i;
+> -=A0=A0=A0=A0=A0=A0=A0fieldwidth_t *width __attribute__((cleanup(cleanup_=
+ucharp)))
+> =3D NULL;
+> +=A0=A0=A0=A0=A0=A0=A0fieldwidth_t width[path_layout_size()];
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0if ((width =3D alloc_path_layout()) =3D=3D NULL)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return;
+> +=A0=A0=A0=A0=A0=A0=A0memset(width, 0, sizeof(width));
+> =A0=A0=A0=A0=A0=A0=A0=A0rdlock_foreigns();
+> =A0=A0=A0=A0=A0=A0=A0=A0if (foreigns =3D=3D NULL) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0unlock_foreigns(NULL);
+> diff --git a/libmultipath/libmultipath.version
+> b/libmultipath/libmultipath.version
+> index 8a447f7f..af7c5ed2 100644
+> --- a/libmultipath/libmultipath.version
+> +++ b/libmultipath/libmultipath.version
+> @@ -38,9 +38,7 @@ global:
+> =A0=A0=A0=A0=A0=A0=A0=A0add_map_with_path;
+> =A0=A0=A0=A0=A0=A0=A0=A0adopt_paths;
+> =A0=A0=A0=A0=A0=A0=A0=A0alloc_multipath;
+> -=A0=A0=A0=A0=A0=A0=A0alloc_multipath_layout;
+> =A0=A0=A0=A0=A0=A0=A0=A0alloc_path;
+> -=A0=A0=A0=A0=A0=A0=A0alloc_path_layout;
+> =A0=A0=A0=A0=A0=A0=A0=A0alloc_path_with_pathinfo;
+> =A0=A0=A0=A0=A0=A0=A0=A0change_foreign;
+> =A0=A0=A0=A0=A0=A0=A0=A0check_alias_settings;
+> @@ -126,6 +124,7 @@ global:
+> =A0=A0=A0=A0=A0=A0=A0=A0libmultipath_exit;
+> =A0=A0=A0=A0=A0=A0=A0=A0libmultipath_init;
+> =A0=A0=A0=A0=A0=A0=A0=A0load_config;
+> +=A0=A0=A0=A0=A0=A0=A0multipath_layout_size;
+> =A0=A0=A0=A0=A0=A0=A0=A0need_io_err_check;
+> =A0=A0=A0=A0=A0=A0=A0=A0orphan_path;
+> =A0=A0=A0=A0=A0=A0=A0=A0parse_prkey_flags;
+> @@ -133,6 +132,7 @@ global:
+> =A0=A0=A0=A0=A0=A0=A0=A0path_discovery;
+> =A0=A0=A0=A0=A0=A0=A0=A0path_get_tpgs;
+> =A0=A0=A0=A0=A0=A0=A0=A0pathinfo;
+> +=A0=A0=A0=A0=A0=A0=A0path_layout_size;
+> =A0=A0=A0=A0=A0=A0=A0=A0path_offline;
+> =A0=A0=A0=A0=A0=A0=A0=A0print_all_paths;
+> =A0=A0=A0=A0=A0=A0=A0=A0print_foreign_topology;
+> diff --git a/libmultipath/print.c b/libmultipath/print.c
+> index 97f9a177..87d6a329 100644
+> --- a/libmultipath/print.c
+> +++ b/libmultipath/print.c
+> @@ -805,6 +805,12 @@ static const struct multipath_data mpd[] =3D {
+> =A0=A0=A0=A0=A0=A0=A0=A0{'g', "vpd page data", snprint_multipath_vpd_data=
+},
+> =A0};
+> =A0
+> +
+> +int multipath_layout_size(void)
+> +{
+> +=A0=A0=A0=A0=A0=A0=A0return ARRAY_SIZE(mpd);
+> +}
+> +
+> =A0static const struct path_data pd[] =3D {
+> =A0=A0=A0=A0=A0=A0=A0=A0{'w', "uuid",=A0=A0=A0=A0=A0=A0=A0=A0=A0 snprint_=
+path_uuid},
+> =A0=A0=A0=A0=A0=A0=A0=A0{'i', "hcil",=A0=A0=A0=A0=A0=A0=A0=A0=A0 snprint_=
+hcil},
+> @@ -834,6 +840,11 @@ static const struct path_data pd[] =3D {
+> =A0=A0=A0=A0=A0=A0=A0=A0{'L', "LUN hex",=A0=A0=A0=A0=A0=A0 snprint_path_l=
+unhex},
+> =A0};
+> =A0
+> +int path_layout_size(void)
+> +{
+> +=A0=A0=A0=A0=A0=A0=A0return ARRAY_SIZE(pd);
+> +}
+> +
+> =A0static const struct pathgroup_data pgd[] =3D {
+> =A0=A0=A0=A0=A0=A0=A0=A0{'s', "selector",=A0=A0=A0=A0=A0 snprint_pg_selec=
+tor},
+> =A0=A0=A0=A0=A0=A0=A0=A0{'p', "pri",=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 snprin=
+t_pg_pri},
+> @@ -871,10 +882,6 @@ int snprint_wildcards(struct strbuf *buff)
+> =A0=A0=A0=A0=A0=A0=A0=A0return get_strbuf_len(buff) - initial_len;
+> =A0}
+> =A0
+> -fieldwidth_t *alloc_path_layout(void) {
+> -=A0=A0=A0=A0=A0=A0=A0return calloc(ARRAY_SIZE(pd), sizeof(fieldwidth_t))=
+;
+> -}
+> -
+> =A0void get_path_layout(vector pathvec, int header, fieldwidth_t
+> *width)
+> =A0{
+> =A0=A0=A0=A0=A0=A0=A0=A0vector gpvec =3D vector_convert(NULL, pathvec, st=
+ruct path,
+> @@ -929,11 +936,6 @@ void _get_path_layout (const struct _vector
+> *gpvec, enum layout_reset reset,
+> =A0=A0=A0=A0=A0=A0=A0=A0}
+> =A0}
+> =A0
+> -fieldwidth_t *alloc_multipath_layout(void) {
+> -
+> -=A0=A0=A0=A0=A0=A0=A0return calloc(ARRAY_SIZE(mpd), sizeof(fieldwidth_t)=
+);
+> -}
+> -
+> =A0void get_multipath_layout (vector mpvec, int header, fieldwidth_t
+> *width) {
+> =A0=A0=A0=A0=A0=A0=A0=A0vector gmvec =3D vector_convert(NULL, mpvec, stru=
+ct multipath,
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 dm_multipath_to_gen);
+> @@ -1187,12 +1189,11 @@ int _snprint_pathgroup(const struct
+> gen_pathgroup *ggp, struct strbuf *line,
+> =A0void _print_multipath_topology(const struct gen_multipath *gmp, int
+> verbosity)
+> =A0{
+> =A0=A0=A0=A0=A0=A0=A0=A0struct strbuf buff =3D STRBUF_INIT;
+> -=A0=A0=A0=A0=A0=A0=A0fieldwidth_t *p_width
+> __attribute__((cleanup(cleanup_ucharp))) =3D NULL;
+> +=A0=A0=A0=A0=A0=A0=A0fieldwidth_t p_width[ARRAY_SIZE(pd)] =3D {0};
+> =A0=A0=A0=A0=A0=A0=A0=A0const struct gen_pathgroup *gpg;
+> =A0=A0=A0=A0=A0=A0=A0=A0const struct _vector *pgvec, *pathvec;
+> =A0=A0=A0=A0=A0=A0=A0=A0int j;
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0p_width =3D alloc_path_layout();
+> =A0=A0=A0=A0=A0=A0=A0=A0pgvec =3D gmp->ops->get_pathgroups(gmp);
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0if (pgvec !=3D NULL) {
+> @@ -1236,14 +1237,11 @@ int _snprint_multipath_topology(const struct
+> gen_multipath *gmp,
+> =A0=A0=A0=A0=A0=A0=A0=A0const struct gen_pathgroup *gpg;
+> =A0=A0=A0=A0=A0=A0=A0=A0struct strbuf style =3D STRBUF_INIT;
+> =A0=A0=A0=A0=A0=A0=A0=A0size_t initial_len =3D get_strbuf_len(buff);
+> -=A0=A0=A0=A0=A0=A0=A0fieldwidth_t *width __attribute__((cleanup(cleanup_=
+ucharp)))
+> =3D NULL;
+> +=A0=A0=A0=A0=A0=A0=A0fieldwidth_t width[ARRAY_SIZE(mpd)] =3D {0};
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0if (verbosity <=3D 0)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0if ((width =3D alloc_multipath_layout()) =3D=3D NUL=
+L)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return -ENOMEM;
+> -
+> =A0=A0=A0=A0=A0=A0=A0=A0if (verbosity =3D=3D 1)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return _snprint_multipath=
+(gmp, buff, "%n", width);
+> =A0
+> @@ -2027,7 +2025,7 @@ static void print_all_paths_custo(vector
+> pathvec, int banner, const char *fmt)
+> =A0=A0=A0=A0=A0=A0=A0=A0int i;
+> =A0=A0=A0=A0=A0=A0=A0=A0struct path * pp;
+> =A0=A0=A0=A0=A0=A0=A0=A0struct strbuf line =3D STRBUF_INIT;
+> -=A0=A0=A0=A0=A0=A0=A0fieldwidth_t *width __attribute__((cleanup(cleanup_=
+ucharp)))
+> =3D NULL;
+> +=A0=A0=A0=A0=A0=A0=A0fieldwidth_t width[ARRAY_SIZE(pd)] =3D {0};
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0if (!VECTOR_SIZE(pathvec)) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (banner)
+> @@ -2035,8 +2033,6 @@ static void print_all_paths_custo(vector
+> pathvec, int banner, const char *fmt)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return;
+> =A0=A0=A0=A0=A0=A0=A0=A0}
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0if ((width =3D alloc_path_layout()) =3D=3D NULL)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return;
+> =A0=A0=A0=A0=A0=A0=A0=A0get_path_layout(pathvec, 1, width);
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_push_cast(reset_strbuf, &line);
+> diff --git a/libmultipath/print.h b/libmultipath/print.h
+> index 52f5b256..4e50827d 100644
+> --- a/libmultipath/print.h
+> +++ b/libmultipath/print.h
+> @@ -16,11 +16,11 @@ enum layout_reset {
+> =A0};
+> =A0
+> =A0/* fieldwidth_t is defined in generic.h */
+> -fieldwidth_t *alloc_path_layout(void);
+> +int multipath_layout_size(void);
+> +int path_layout_size(void);
+> =A0void _get_path_layout (const struct _vector *gpvec, enum
+> layout_reset,
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 fieldw=
+idth_t *width);
+> =A0void get_path_layout (vector pathvec, int header, fieldwidth_t
+> *width);
+> -fieldwidth_t *alloc_multipath_layout(void);
+> =A0void _get_multipath_layout (const struct _vector *gmvec, enum
+> layout_reset,
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0 fieldwidth_t *width);
+> =A0void get_multipath_layout (vector mpvec, int header, fieldwidth_t
+> *width);
+> diff --git a/multipath/main.c b/multipath/main.c
+> index 7b69a3ce..f4c85409 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -457,7 +457,7 @@ configure (struct config *conf, enum mpath_cmds
+> cmd,
+> =A0=A0=A0=A0=A0=A0=A0=A0int di_flag =3D 0;
+> =A0=A0=A0=A0=A0=A0=A0=A0char * refwwid =3D NULL;
+> =A0=A0=A0=A0=A0=A0=A0=A0char * dev =3D NULL;
+> -=A0=A0=A0=A0=A0=A0=A0fieldwidth_t *width __attribute__((cleanup(cleanup_=
+ucharp)))
+> =3D NULL;
+> +=A0=A0=A0=A0=A0=A0=A0fieldwidth_t width[path_layout_size()];
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0/*
+> =A0=A0=A0=A0=A0=A0=A0=A0 * allocate core vectors to store paths and multi=
+paths
+> @@ -544,8 +544,7 @@ configure (struct config *conf, enum mpath_cmds
+> cmd,
+> =A0=A0=A0=A0=A0=A0=A0=A0if (libmp_verbosity > 2)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0print_all_paths(pathvec, =
+1);
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0if ((width =3D alloc_path_layout()) =3D=3D NULL)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0goto out;
+> +=A0=A0=A0=A0=A0=A0=A0memset(width, 0, sizeof(width));
+> =A0=A0=A0=A0=A0=A0=A0=A0get_path_layout(pathvec, 0, width);
+> =A0=A0=A0=A0=A0=A0=A0=A0foreign_path_layout(width);
+> =A0
+> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+> index 5b8f647b..ddc807a1 100644
+> --- a/multipathd/cli_handlers.c
+> +++ b/multipathd/cli_handlers.c
+> @@ -38,11 +38,10 @@ show_paths (struct strbuf *reply, struct vectors
+> *vecs, char *style, int pretty)
+> =A0=A0=A0=A0=A0=A0=A0=A0int i;
+> =A0=A0=A0=A0=A0=A0=A0=A0struct path * pp;
+> =A0=A0=A0=A0=A0=A0=A0=A0int hdr_len =3D 0;
+> -=A0=A0=A0=A0=A0=A0=A0fieldwidth_t *width __attribute__((cleanup(cleanup_=
+ucharp)))
+> =3D NULL;
+> +=A0=A0=A0=A0=A0=A0=A0fieldwidth_t width[path_layout_size()];
+> =A0
+> +=A0=A0=A0=A0=A0=A0=A0memset(width, 0, sizeof(width));
+> =A0=A0=A0=A0=A0=A0=A0=A0if (pretty) {
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if ((width =3D alloc_path_l=
+ayout()) =3D=3D NULL)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0ret=
+urn 1;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0get_path_layout(vecs->pat=
+hvec, 1, width);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0foreign_path_layout(width=
+);
+> =A0=A0=A0=A0=A0=A0=A0=A0}
+> @@ -50,10 +49,10 @@ show_paths (struct strbuf *reply, struct vectors
+> *vecs, char *style, int pretty)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot(vecs->pathvec, pp, i) {
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (snprint_path(reply, sty=
+le, pp, width) < 0)
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (snprint_path(reply, sty=
+le, pp, pretty? width :
+> NULL) < 0)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0r=
+eturn 1;
+> =A0=A0=A0=A0=A0=A0=A0=A0}
+> -=A0=A0=A0=A0=A0=A0=A0if (snprint_foreign_paths(reply, style, width) < 0)
+> +=A0=A0=A0=A0=A0=A0=A0if (snprint_foreign_paths(reply, style, pretty? wid=
+th : NULL)
+> < 0)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0if (pretty && get_strbuf_len(reply) =3D=3D (size_=
+t)hdr_len)
+> @@ -67,12 +66,7 @@ static int
+> =A0show_path (struct strbuf *reply, struct vectors *vecs, struct path
+> *pp,
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 char *style)
+> =A0{
+> -=A0=A0=A0=A0=A0=A0=A0fieldwidth_t *width __attribute__((cleanup(cleanup_=
+ucharp)))
+> =3D NULL;
+> -
+> -=A0=A0=A0=A0=A0=A0=A0if ((width =3D alloc_path_layout()) =3D=3D NULL)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> -=A0=A0=A0=A0=A0=A0=A0get_path_layout(vecs->pathvec, 1, width);
+> -=A0=A0=A0=A0=A0=A0=A0if (snprint_path(reply, style, pp, 0) < 0)
+> +=A0=A0=A0=A0=A0=A0=A0if (snprint_path(reply, style, pp, NULL) < 0)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> =A0=A0=A0=A0=A0=A0=A0=A0return 0;
+> =A0}
+> @@ -95,10 +89,9 @@ show_maps_topology (struct strbuf *reply, struct
+> vectors * vecs)
+> =A0{
+> =A0=A0=A0=A0=A0=A0=A0=A0int i;
+> =A0=A0=A0=A0=A0=A0=A0=A0struct multipath * mpp;
+> -=A0=A0=A0=A0=A0=A0=A0fieldwidth_t *p_width
+> __attribute__((cleanup(cleanup_ucharp))) =3D NULL;
+> +=A0=A0=A0=A0=A0=A0=A0fieldwidth_t p_width[path_layout_size()];
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0if ((p_width =3D alloc_path_layout()) =3D=3D NULL)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> +=A0=A0=A0=A0=A0=A0=A0memset(p_width, 0, sizeof(p_width));
+> =A0=A0=A0=A0=A0=A0=A0=A0get_path_layout(vecs->pathvec, 0, p_width);
+> =A0=A0=A0=A0=A0=A0=A0=A0foreign_path_layout(p_width);
+> =A0
+> @@ -258,10 +251,9 @@ cli_list_map_topology (void *v, struct strbuf
+> *reply, void *data)
+> =A0=A0=A0=A0=A0=A0=A0=A0struct multipath * mpp;
+> =A0=A0=A0=A0=A0=A0=A0=A0struct vectors * vecs =3D (struct vectors *)data;
+> =A0=A0=A0=A0=A0=A0=A0=A0char * param =3D get_keyparam(v, MAP);
+> -=A0=A0=A0=A0=A0=A0=A0fieldwidth_t *p_width
+> __attribute__((cleanup(cleanup_ucharp))) =3D NULL;
+> +=A0=A0=A0=A0=A0=A0=A0fieldwidth_t p_width[path_layout_size()];
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0if ((p_width =3D alloc_path_layout()) =3D=3D NULL)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> +=A0=A0=A0=A0=A0=A0=A0memset(p_width, 0, sizeof(p_width));
+> =A0=A0=A0=A0=A0=A0=A0=A0get_path_layout(vecs->pathvec, 0, p_width);
+> =A0=A0=A0=A0=A0=A0=A0=A0param =3D convert_dev(param, 0);
+> =A0=A0=A0=A0=A0=A0=A0=A0mpp =3D find_mp_by_str(vecs->mpvec, param);
+> @@ -357,11 +349,10 @@ show_maps (struct strbuf *reply, struct vectors
+> *vecs, char *style,
+> =A0=A0=A0=A0=A0=A0=A0=A0int i;
+> =A0=A0=A0=A0=A0=A0=A0=A0struct multipath * mpp;
+> =A0=A0=A0=A0=A0=A0=A0=A0int hdr_len =3D 0;
+> -=A0=A0=A0=A0=A0=A0=A0fieldwidth_t *width __attribute__((cleanup(cleanup_=
+ucharp)))
+> =3D NULL;
+> +=A0=A0=A0=A0=A0=A0=A0fieldwidth_t width[multipath_layout_size()];
+> =A0
+> +=A0=A0=A0=A0=A0=A0=A0memset(width, 0, sizeof(width));
+> =A0=A0=A0=A0=A0=A0=A0=A0if (pretty) {
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if ((width =3D alloc_multip=
+ath_layout()) =3D=3D NULL)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0ret=
+urn 1;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0get_multipath_layout(vecs=
+->mpvec, 1, width);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0foreign_multipath_layout(=
+width);
+> =A0=A0=A0=A0=A0=A0=A0=A0}
+> @@ -374,10 +365,11 @@ show_maps (struct strbuf *reply, struct vectors
+> *vecs, char *style,
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0i=
+--;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
+ontinue;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (snprint_multipath(reply=
+, style, mpp, width) < 0)
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (snprint_multipath(reply=
+, style, mpp,
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pretty? width : NULL) < 0)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0r=
+eturn 1;
+> =A0=A0=A0=A0=A0=A0=A0=A0}
+> -=A0=A0=A0=A0=A0=A0=A0if (snprint_foreign_multipaths(reply, style, width)=
+ < 0)
+> +=A0=A0=A0=A0=A0=A0=A0if (snprint_foreign_multipaths(reply, style, pretty=
+? width :
+> NULL) < 0)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0if (pretty && get_strbuf_len(reply) =3D=3D (size_=
+t)hdr_len)
+> @@ -416,10 +408,9 @@ cli_list_map_fmt (void *v, struct strbuf *reply,
+> void *data)
+> =A0=A0=A0=A0=A0=A0=A0=A0struct vectors * vecs =3D (struct vectors *)data;
+> =A0=A0=A0=A0=A0=A0=A0=A0char * param =3D get_keyparam(v, MAP);
+> =A0=A0=A0=A0=A0=A0=A0=A0char * fmt =3D get_keyparam(v, FMT);
+> -=A0=A0=A0=A0=A0=A0=A0fieldwidth_t *width __attribute__((cleanup(cleanup_=
+ucharp)))
+> =3D NULL;
+> +=A0=A0=A0=A0=A0=A0=A0fieldwidth_t width[multipath_layout_size()];
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0if ((width =3D alloc_multipath_layout()) =3D=3D NUL=
+L)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> +=A0=A0=A0=A0=A0=A0=A0memset(width, 0, sizeof(width));
+> =A0=A0=A0=A0=A0=A0=A0=A0get_multipath_layout(vecs->mpvec, 1, width);
+> =A0=A0=A0=A0=A0=A0=A0=A0param =3D convert_dev(param, 0);
+> =A0=A0=A0=A0=A0=A0=A0=A0mpp =3D find_mp_by_str(vecs->mpvec, param);
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
