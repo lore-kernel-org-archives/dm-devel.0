@@ -1,67 +1,68 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7B5F0FA373D
-	for <dm-devel@archiver.kernel.org>; Fri, 21 Oct 2022 17:14:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8BB56C433FE
+	for <dm-devel@archiver.kernel.org>; Fri, 21 Oct 2022 17:49:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1666372491;
+	s=mimecast20190719; t=1666374561;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=p+VnZsQCjrmChlMuz1jcwSXRI0n+2NpNqoNEUgq8D34=;
-	b=TPDbYwUFBSsAJyHL7VUvI0p1g1anWk79LjAK4OX1pdGrR88AWtLO4EJdfyLAOIctyhaSe4
-	YCFofu/gtGPcU5piae5FEP7+9XFS+YNQTvI9Xrbo+UPi2KGBmb+nCStqNPEWp+GHC4FdtQ
-	DO8FlbDLojYV3g8Y9sDdvgloh8vGEJc=
+	bh=o6Rd8eZ2TyvsxT9lAo5YwncO+IFziZDdNxIPlpGV0BI=;
+	b=GNuwlxku8DDjU7UdkgCURhF7RU2YOOLHImN+GkNxJhL1ldmg9A4UF1tr46vlV75/c7nbVY
+	z8cdmYf3y45amvPyma0/OVVcBqn8vLfEhd+OjJj1d/oOgVyd6OhaoyH+NFz0+JzoM4nkn+
+	SkhMt1CGyqmKgwfAQWHOIe3GsBZKt90=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-12-4n4iKXelMMqIvS89-BiKyw-1; Fri, 21 Oct 2022 13:14:47 -0400
-X-MC-Unique: 4n4iKXelMMqIvS89-BiKyw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-551-VKYh8wFOM_WI0Dmv0fCWBw-1; Fri, 21 Oct 2022 13:49:18 -0400
+X-MC-Unique: VKYh8wFOM_WI0Dmv0fCWBw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 34CEE185A794;
-	Fri, 21 Oct 2022 17:14:46 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 30128101E14D;
+	Fri, 21 Oct 2022 17:49:16 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 83CDA40C2064;
-	Fri, 21 Oct 2022 17:14:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CE2AE2166B2C;
+	Fri, 21 Oct 2022 17:49:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5DA601946587;
-	Fri, 21 Oct 2022 17:14:42 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A21071946587;
+	Fri, 21 Oct 2022 17:49:15 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6A3511946586
- for <dm-devel@listman.corp.redhat.com>; Fri, 21 Oct 2022 17:14:41 +0000 (UTC)
+ ESMTP id 5513C1946586
+ for <dm-devel@listman.corp.redhat.com>; Fri, 21 Oct 2022 17:49:14 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3ECA62024CBF; Fri, 21 Oct 2022 17:14:41 +0000 (UTC)
+ id B53261759E; Fri, 21 Oct 2022 17:49:14 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1C5852024CBB;
- Fri, 21 Oct 2022 17:14:41 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 938B917585;
+ Fri, 21 Oct 2022 17:49:14 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 29LHEdFQ025581;
- Fri, 21 Oct 2022 12:14:39 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 29LHnDob025931;
+ Fri, 21 Oct 2022 12:49:13 -0500
 Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 29LHEcKp025580;
- Fri, 21 Oct 2022 12:14:38 -0500
-Date: Fri, 21 Oct 2022 12:14:38 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 29LHn3pa025929;
+ Fri, 21 Oct 2022 12:49:03 -0500
+Date: Fri, 21 Oct 2022 12:48:37 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Martin Wilck <martin.wilck@suse.com>
-Message-ID: <20221021171438.GB19568@octiron.msp.redhat.com>
+Message-ID: <20221021174837.GC19568@octiron.msp.redhat.com>
 References: <1665164144-6716-1-git-send-email-bmarzins@redhat.com>
- <1665164144-6716-2-git-send-email-bmarzins@redhat.com>
- <9435d8ddc23ddc74bc5e39072ad80b9263963c53.camel@suse.com>
+ <1665164144-6716-5-git-send-email-bmarzins@redhat.com>
+ <72e32000e148f9abc792b24afd15aebb5262ad7d.camel@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <9435d8ddc23ddc74bc5e39072ad80b9263963c53.camel@suse.com>
+In-Reply-To: <72e32000e148f9abc792b24afd15aebb5262ad7d.camel@suse.com>
 User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: Re: [dm-devel] [PATCH 1/8] libmultipath: cleanup remove_feature
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: Re: [dm-devel] [PATCH 4/8] libmultipath: fix queue_mode feature
+ handling
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -76,216 +77,279 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
 Content-Type: text/plain; charset=WINDOWS-1252
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Oct 20, 2022 at 02:58:23PM +0000, Martin Wilck wrote:
+On Thu, Oct 20, 2022 at 02:58:42PM +0000, Martin Wilck wrote:
 > On Fri, 2022-10-07 at 12:35 -0500, Benjamin Marzinski wrote:
-> > remove_feature() didn't correctly handle feature strings that used
-> > whitespace other than spaces, which the kernel allows. It also didn't
-> > check if the feature string to be removed was part of a larger
-> > feature
-> > token. Finally, it did a lot of unnecessary work. By failing if the
-> > feature string to be removed contains leading or trailing whitespace,
-> > the function can be significanly simplified.
+> > device-mapper is not able to change the queue_mode on a table reload.
+> > Make sure that when multipath sets up the map, both on regular
+> > reloads
+> > and reconfigures, it keeps the queue_mode the same.
 > >=20
 > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 >=20
 > Reviewed-by: Martin Wilck <mwilck@suse.com>
 >=20
-> This is part of the code that always makes me think  we should clean it
-> up more thoroughly. Therefore I've added some remarks below.
->=20
-> As you've started working on this, perhaps you want to follow up?
-> If not, fine with me for now.
->=20
-> Martin
+> Some remarks below.
 >=20
 > > ---
-> > =A0libmultipath/structs.c | 82 +++++++++++++++-------------------------
-> > --
-> > =A01 file changed, 29 insertions(+), 53 deletions(-)
+> > =A0libmultipath/configure.c=A0=A0 |=A0 4 +++
+> > =A0libmultipath/dmparser.c=A0=A0=A0 |=A0 2 ++
+> > =A0libmultipath/propsel.c=A0=A0=A0=A0 | 55
+> > ++++++++++++++++++++++++++++++++++++++
+> > =A0libmultipath/structs.h=A0=A0=A0=A0 |=A0 7 +++++
+> > =A0multipath/multipath.conf.5 |=A0 7 +++--
+> > =A05 files changed, 73 insertions(+), 2 deletions(-)
 > >=20
-> > diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-> > index 49621cb3..1f9945e0 100644
-> > --- a/libmultipath/structs.c
-> > +++ b/libmultipath/structs.c
-> > @@ -6,6 +6,7 @@
-> > =A0#include <unistd.h>
-> > =A0#include <libdevmapper.h>
+> > diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> > index 8af7cd79..41641e30 100644
+> > --- a/libmultipath/configure.c
+> > +++ b/libmultipath/configure.c
+> > @@ -1075,6 +1075,7 @@ int coalesce_paths (struct vectors *vecs,
+> > vector mpvec, char *refwwid,
+> > =A0=A0=A0=A0=A0=A0=A0=A0struct config *conf =3D NULL;
+> > =A0=A0=A0=A0=A0=A0=A0=A0int allow_queueing;
+> > =A0=A0=A0=A0=A0=A0=A0=A0struct bitfield *size_mismatch_seen;
+> > +=A0=A0=A0=A0=A0=A0=A0struct multipath * cmpp;
+> > =A0
+> > =A0=A0=A0=A0=A0=A0=A0=A0/* ignore refwwid if it's empty */
+> > =A0=A0=A0=A0=A0=A0=A0=A0if (refwwid && !strlen(refwwid))
+> > @@ -1184,6 +1185,9 @@ int coalesce_paths (struct vectors *vecs,
+> > vector mpvec, char *refwwid,
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0verify_paths(mpp);
+> > =A0
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0cmpp =3D find_mp_by_wwid(=
+curmp, mpp->wwid);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (cmpp)
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0m=
+pp->queue_mode =3D cmpp->queue_mode;
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (setup_map(mpp, &par=
+ams, vecs)) {
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0remove_map(mpp, vecs->pathvec, NULL);
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0continue;
+> > diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+> > index 50d13c08..3b37a926 100644
+> > --- a/libmultipath/dmparser.c
+> > +++ b/libmultipath/dmparser.c
+> > @@ -151,6 +151,8 @@ int disassemble_map(const struct _vector
+> > *pathvec,
+> > =A0
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0free(word);
+> > =A0=A0=A0=A0=A0=A0=A0=A0}
+> > +=A0=A0=A0=A0=A0=A0=A0mpp->queue_mode =3D strstr(mpp->features, "queue_=
+mode bio") ?
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0 QUEUE_MODE_BIO : QUEUE_MODE_RQ;
+>=20
+> Nitpick: You have spent effort to make multipath-tools support any
+> whitepace characters in the previous patches, but here you don't. I can
+> see that disassemble_map() generally assumes space characters as word
+> delimiters, but at least I see some inconsistency here.
+>=20
+> Do you intend to generalize the whitespace handling in
+> disassemble_map(), too? Or am I overlooking something?
+
+The kernel will never output any whitespace characters other than space,
+so that seems like unnecessary complexity.  We also know that the kernel
+will never output a feature named something like "enqueue_mode" so we
+don't need to check for the space before "queue_mode". But I suppose the
+the kernel could add feature named "<something>queue_mode" in the
+future. If you think it's important, I send a patch to add a space
+before "queue_mode", in the check to deal with that possibility, but I'm
+not particularly worried about this.
+=20
+> > =A0
+> > =A0=A0=A0=A0=A0=A0=A0=A0/*
+> > =A0=A0=A0=A0=A0=A0=A0=A0 * hwhandler
+> > diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+> > index 98e3aad1..d4f19897 100644
+> > --- a/libmultipath/propsel.c
+> > +++ b/libmultipath/propsel.c
+> > @@ -26,6 +26,7 @@
+> > =A0#include "strbuf.h"
+> > =A0#include <inttypes.h>
 > > =A0#include <libudev.h>
 > > +#include <ctype.h>
 > > =A0
-> > =A0#include "checkers.h"
-> > =A0#include "vector.h"
-> > @@ -663,7 +664,7 @@ int add_feature(char **f, const char *n)
+> > =A0pgpolicyfn *pgpolicies[] =3D {
+> > =A0=A0=A0=A0=A0=A0=A0=A0NULL,
+> > @@ -413,6 +414,59 @@ void reconcile_features_with_options(const char
+> > *id, char **features, int* no_pa
+> > =A0=A0=A0=A0=A0=A0=A0=A0}
+> > =A0}
 > > =A0
-> > =A0int remove_feature(char **f, const char *o)
-> > =A0{
-> > -=A0=A0=A0=A0=A0=A0=A0int c =3D 0, d, l;
-> > +=A0=A0=A0=A0=A0=A0=A0int c =3D 0, d;
-> > =A0=A0=A0=A0=A0=A0=A0=A0char *e, *p, *n;
-> > =A0=A0=A0=A0=A0=A0=A0=A0const char *q;
->=20
-> I see you sticked to the conventions ;-) but the variable naming
-> in this function could be improved.
-
-Yeah. I didn't want to while I was chaning things, and then got lazy and
-didn't do it in a separate patch, but these names certainly make harder
-to follow the logic of the function. I send a patch that cleans this up.
-=20
-> > =A0
-> > @@ -674,33 +675,35 @@ int remove_feature(char **f, const char *o)
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (!o || *o =3D=3D '\0')
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > =A0
-> > -=A0=A0=A0=A0=A0=A0=A0/* Check if not present */
-> > -=A0=A0=A0=A0=A0=A0=A0if (!strstr(*f, o))
-> > +=A0=A0=A0=A0=A0=A0=A0d =3D strlen(o);
-> > +=A0=A0=A0=A0=A0=A0=A0if (isspace(*o) || isspace(*(o + d - 1))) {
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(0, "internal erro=
-r: feature \"%s\" has
-> > leading or trailing spaces", o);
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
-> > +=A0=A0=A0=A0=A0=A0=A0}
+> > +static void reconcile_features_with_queue_mode(struct multipath *mp)
+> > +{
+> > +=A0=A0=A0=A0=A0=A0=A0char *space =3D NULL, *val =3D NULL, *mode_str =
+=3D NULL, *feat;
+> > +=A0=A0=A0=A0=A0=A0=A0int features_mode =3D QUEUE_MODE_UNDEF;
 > > +
-> > +=A0=A0=A0=A0=A0=A0=A0/* Check if present and not part of a larger feat=
-ure token*/
-> > +=A0=A0=A0=A0=A0=A0=A0p =3D *f + 1; /* the size must be at the start of=
- the features
-> > string */
-> > +=A0=A0=A0=A0=A0=A0=A0while ((p =3D strstr(p, o)) !=3D NULL) {
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (isspace(*(p - 1)) &&
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 (isspace(*(p + =
-d)) || *(p + d) =3D=3D '\0'))
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0b=
-reak;
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p +=3D d;
-> > +=A0=A0=A0=A0=A0=A0=A0}
-> > +=A0=A0=A0=A0=A0=A0=A0if (!p)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0/* Get feature count */
-> > =A0=A0=A0=A0=A0=A0=A0=A0c =3D strtoul(*f, &e, 10);
-> > -=A0=A0=A0=A0=A0=A0=A0if (*f =3D=3D e)
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* parse error */
-> > +=A0=A0=A0=A0=A0=A0=A0if (*f =3D=3D e || !isspace(*e)) {
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(0, "parse error i=
-n feature string \"%s\"",
-> > *f);
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
-> > -
-> > -=A0=A0=A0=A0=A0=A0=A0/* Normalize features */
-> > -=A0=A0=A0=A0=A0=A0=A0while (*o =3D=3D ' ') {
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0o++;
-> > =A0=A0=A0=A0=A0=A0=A0=A0}
-> > -=A0=A0=A0=A0=A0=A0=A0/* Just spaces, return */
-> > -=A0=A0=A0=A0=A0=A0=A0if (*o =3D=3D '\0')
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > -=A0=A0=A0=A0=A0=A0=A0q =3D o + strlen(o);
-> > -=A0=A0=A0=A0=A0=A0=A0while (*q =3D=3D ' ')
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0q--;
-> > -=A0=A0=A0=A0=A0=A0=A0d =3D (int)(q - o);
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0/* Update feature count */
-> > =A0=A0=A0=A0=A0=A0=A0=A0c--;
-> > =A0=A0=A0=A0=A0=A0=A0=A0q =3D o;
-> > -=A0=A0=A0=A0=A0=A0=A0while (q[0] !=3D '\0') {
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (q[0] =3D=3D ' ' && q[=
-1] !=3D ' ' && q[1] !=3D '\0')
-> > +=A0=A0=A0=A0=A0=A0=A0while (*q !=3D '\0') {
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (isspace(*q) && !isspa=
-ce(*(q + 1)) && *(q + 1) !=3D
-> > '\0')
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0c--;
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0q++;
-> > =A0=A0=A0=A0=A0=A0=A0=A0}
-> > @@ -714,15 +717,8 @@ int remove_feature(char **f, const char *o)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0goto out;
-> > =A0=A0=A0=A0=A0=A0=A0=A0}
-> > =A0
-> > -=A0=A0=A0=A0=A0=A0=A0/* Search feature to be removed */
-> > -=A0=A0=A0=A0=A0=A0=A0e =3D strstr(*f, o);
-> > -=A0=A0=A0=A0=A0=A0=A0if (!e)
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* Not found, return */
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > -
-> > =A0=A0=A0=A0=A0=A0=A0=A0/* Update feature count space */
-> > -=A0=A0=A0=A0=A0=A0=A0l =3D strlen(*f) - d;
-> > -=A0=A0=A0=A0=A0=A0=A0n =3D=A0 malloc(l + 1);
-> > +=A0=A0=A0=A0=A0=A0=A0n =3D=A0 malloc(strlen(*f) - d + 1);
+> > +=A0=A0=A0=A0=A0=A0=A0if (!mp->features)
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return;
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_push(cleanup_free_ptr, &space);
+> > +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_push(cleanup_free_ptr, &val);
+> > +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_push(cleanup_free_ptr, &mode_str)=
+;
 >=20
-> Given that this function never increases the length of the feature
-> string, we might as well implement it without the allocating a new
-> string.=20
+> I was wondering why we need pthread_cleanup() complexity here, seeing
+> no cancellation points in this function. I eventually realized that
+> condlog()->dlog()->log_safe()->pthread_mutex_lock() is a cancellation
+> point. I suppose we need to clean that up some time.
+>=20
 
-A reason to do the malloc is so that we could free the larger chunk of
-memory afterwards. But it's not like we're talking a significant
-difference, so I'm fine will removing it for simplicity's sake.
+So is fprintf(), so even as a systemd style daemon, condlog() is a
+cancellation point.
+=20
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0if (!(feat =3D strstr(mp->features, "queue_mode")=
+) ||
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 feat =3D=3D mp->features || !isspace(*(=
+feat - 1)) ||
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 sscanf(feat, "queue_mode%m[ \f\n\r\t\v]=
+%ms", &space,
+> > &val) !=3D 2)
+>=20
+> Nit: Given that mp->features comes from the multipath.conf, I'm pretty
+> sure that it can't contain \n or \r as whitespace characters
+> (read_line() would remove them()). Not sure about \f and \v; guess they
+> are allowed but I wouldn't swear that they can be used in
+> multipath.conf without causing trouble elsewhere.
+
+I was matching the characters that isspace() checks for, for
+consistency, since we used isspace() to check that there was a space
+before "queue_mode".
 
 -Ben
-
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (!n)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
+=20
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0goto sync_mode;
+> > +=A0=A0=A0=A0=A0=A0=A0if (asprintf(&mode_str, "queue_mode%s%s", space, =
+val) < 0) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "failed to all=
+ocate space for queue_mode
+> > feature string");
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0mode_str =3D NULL; /* val=
+ue undefined on failure */
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0goto exit;
+> > +=A0=A0=A0=A0=A0=A0=A0}
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0if (!strcmp(val, "rq") || !strcmp(val, "mq"))
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0features_mode =3D QUEUE_M=
+ODE_RQ;
+> > +=A0=A0=A0=A0=A0=A0=A0else if (!strcmp(val, "bio"))
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0features_mode =3D QUEUE_M=
+ODE_BIO;
+> > +=A0=A0=A0=A0=A0=A0=A0if (features_mode =3D=3D QUEUE_MODE_UNDEF) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(2, "%s: ignoring =
+invalid feature '%s'",
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0m=
+p->alias, mode_str);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0goto sync_mode;
+> > +=A0=A0=A0=A0=A0=A0=A0}
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0if (mp->queue_mode =3D=3D QUEUE_MODE_UNDEF)
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0mp->queue_mode =3D featur=
+es_mode;
+> > +=A0=A0=A0=A0=A0=A0=A0if (mp->queue_mode =3D=3D features_mode)
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0goto exit;
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0condlog(2,
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0"%s: ignoring feature '%s=
+' because queue_mode is set
+> > to '%s'",
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0mp->alias, mode_str,
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0(mp->queue_mode =3D=3D QU=
+EUE_MODE_RQ)? "rq" : "bio");
+> > +
+> > +sync_mode:
+> > +=A0=A0=A0=A0=A0=A0=A0if (mode_str)
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0remove_feature(&mp->featu=
+res, mode_str);
+> > +=A0=A0=A0=A0=A0=A0=A0if (mp->queue_mode =3D=3D QUEUE_MODE_BIO)
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0add_feature(&mp->features=
+, "queue_mode bio");
+> > +exit:
+> > +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_pop(1);
+> > +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_pop(1);
+> > +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_pop(1);
+> > +}
+> > +
+> > =A0int select_features(struct config *conf, struct multipath *mp)
+> > =A0{
+> > =A0=A0=A0=A0=A0=A0=A0=A0const char *origin;
+> > @@ -428,6 +482,7 @@ out:
+> > =A0=A0=A0=A0=A0=A0=A0=A0reconcile_features_with_options(mp->alias, &mp-=
+>features,
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0&mp->no_path_retry,
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0&mp->retain_hwhandler);
+> > +=A0=A0=A0=A0=A0=A0=A0reconcile_features_with_queue_mode(mp);
+> > =A0=A0=A0=A0=A0=A0=A0=A0condlog(3, "%s: features =3D \"%s\" %s", mp->al=
+ias, mp-
+> > >features, origin);
+> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
+> > =A0}
+> > diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+> > index 5a713d46..129bdf0e 100644
+> > --- a/libmultipath/structs.h
+> > +++ b/libmultipath/structs.h
+> > @@ -170,6 +170,12 @@ enum max_sectors_kb_states {
+> > =A0=A0=A0=A0=A0=A0=A0=A0MAX_SECTORS_KB_MIN =3D 4,=A0 /* can't be smalle=
+r than page size
+> > */
+> > =A0};
 > > =A0
-> > @@ -732,36 +728,16 @@ int remove_feature(char **f, const char *o)
-> > =A0=A0=A0=A0=A0=A0=A0=A0 * Copy existing features up to the feature
-> > =A0=A0=A0=A0=A0=A0=A0=A0 * about to be removed
-> > =A0=A0=A0=A0=A0=A0=A0=A0 */
-> > -=A0=A0=A0=A0=A0=A0=A0p =3D strchr(*f, ' ');
-> > -=A0=A0=A0=A0=A0=A0=A0if (!p) {
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* Internal error, featur=
-e string inconsistent */
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0free(n);
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
-> > -=A0=A0=A0=A0=A0=A0=A0}
-> > -=A0=A0=A0=A0=A0=A0=A0while (*p =3D=3D ' ')
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p++;
-> > -=A0=A0=A0=A0=A0=A0=A0p--;
-> > -=A0=A0=A0=A0=A0=A0=A0if (e !=3D p) {
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0do {
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0e=
---;
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0d=
-++;
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0} while (*e =3D=3D ' ');
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0e++; d--;
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0strncat(n, p, (size_t)(e =
-- p));
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p +=3D (size_t)(e - p);
-> > -=A0=A0=A0=A0=A0=A0=A0}
-> > +=A0=A0=A0=A0=A0=A0=A0strncat(n, e, (size_t)(p - e));
-> > =A0=A0=A0=A0=A0=A0=A0=A0/* Skip feature to be removed */
-> > =A0=A0=A0=A0=A0=A0=A0=A0p +=3D d;
-> > -
-> > =A0=A0=A0=A0=A0=A0=A0=A0/* Copy remaining features */
-> > -=A0=A0=A0=A0=A0=A0=A0if (strlen(p)) {
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0while (*p =3D=3D ' ')
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p=
-++;
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (strlen(p)) {
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p=
---;
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0s=
-trcat(n, p);
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> > -=A0=A0=A0=A0=A0=A0=A0}
-> > +=A0=A0=A0=A0=A0=A0=A0while (isspace(*p))
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p++;
-> > +=A0=A0=A0=A0=A0=A0=A0if (*p !=3D '\0')
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0strcat(n, p);
-> > +=A0=A0=A0=A0=A0=A0=A0else
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0strchop(n);
-> > =A0
-> > =A0out:
-> > =A0=A0=A0=A0=A0=A0=A0=A0free(*f);
->=20
->=20
+> > +enum queue_mode_states {
+> > +=A0=A0=A0=A0=A0=A0=A0QUEUE_MODE_UNDEF =3D 0,
+> > +=A0=A0=A0=A0=A0=A0=A0QUEUE_MODE_BIO,
+> > +=A0=A0=A0=A0=A0=A0=A0QUEUE_MODE_RQ,
+> > +};
+> > +
+> > =A0enum scsi_protocol {
+> > =A0=A0=A0=A0=A0=A0=A0=A0SCSI_PROTOCOL_FCP =3D 0,=A0=A0/* Fibre Channel =
+*/
+> > =A0=A0=A0=A0=A0=A0=A0=A0SCSI_PROTOCOL_SPI =3D 1,=A0=A0/* parallel SCSI =
+*/
+> > @@ -396,6 +402,7 @@ struct multipath {
+> > =A0=A0=A0=A0=A0=A0=A0=A0int needs_paths_uevent;
+> > =A0=A0=A0=A0=A0=A0=A0=A0int ghost_delay;
+> > =A0=A0=A0=A0=A0=A0=A0=A0int ghost_delay_tick;
+> > +=A0=A0=A0=A0=A0=A0=A0int queue_mode;
+> > =A0=A0=A0=A0=A0=A0=A0=A0uid_t uid;
+> > =A0=A0=A0=A0=A0=A0=A0=A0gid_t gid;
+> > =A0=A0=A0=A0=A0=A0=A0=A0mode_t mode;
+> > diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+> > index e098d555..46a4126c 100644
+> > --- a/multipath/multipath.conf.5
+> > +++ b/multipath/multipath.conf.5
+> > @@ -459,8 +459,11 @@ precedence. See KNOWN ISSUES.
+> > =A0<mode> can be \fIbio\fR, \fIrq\fR or \fImq\fR, which corresponds to
+> > =A0bio-based, request-based, and block-multiqueue (blk-mq) request-
+> > based,
+> > =A0respectively.
+> > -The default depends on the kernel parameter \fBdm_mod.use_blk_mq\fR.
+> > It is
+> > -\fImq\fR if the latter is set, and \fIrq\fR otherwise.
+> > +Before kernel 4.20 The default depends on the kernel parameter
+> > +\fBdm_mod.use_blk_mq\fR. It is \fImq\fR if the latter is set, and
+> > \fIrq\fR
+> > +otherwise. Since kernel 4.20, \fIrq\fR and \fImq\fR both correspond
+> > to
+> > +block-multiqueue. Once a multipath device has been created, its
+> > queue_mode
+> > +cannot be changed.
+> > =A0.TP
+> > =A0The default is: \fB<unset>\fR
+> > =A0.RE
 --
 dm-devel mailing list
 dm-devel@redhat.com
