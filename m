@@ -1,84 +1,93 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8A520ECAAA1
-	for <dm-devel@archiver.kernel.org>; Sun, 23 Oct 2022 07:06:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A9324FA373F
+	for <dm-devel@archiver.kernel.org>; Sun, 23 Oct 2022 22:00:37 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1666508800;
+	s=mimecast20190719; t=1666562436;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=/P2vCS69FEZGxCvaJQmq5Mor5tRLe6Cg95jMDDNO/Ac=;
-	b=IKOfQ0BZtr6le55kStXV20zw9QgF3RCfV+TR1O0DuA4xCSD4moEadokwdmVt5qIoSTUiqF
-	VL0hwokZ+KnhvY1xEMySMWqo9S5AGQ0gW7HBcPJbKpUxvqcbWAe467wItVRf/kslY0txvj
-	0r/lecal6rkIM4JfgkygS0Ryh2qHRvE=
+	bh=MW4cawvDapv8NsD7RwaVbU7B4bvKMLv/PID0hAGQkw4=;
+	b=a4uEaRnctBgd6+PWg1QUSwElHmXnCQpgvaXSTWJSXQT5G97UszB5RNawq6L05WL9qClwEg
+	onjrldr/Y0FiJTzjM3iQCPPBiv4IOd/ZZU1YvTdeFVvc8sB63osufNqEgzCz0t92BAv48n
+	tVLbgEiHWwK/zDeF2TKRFmq8TkxNcc8=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-615-yhh_cYSTOoul_wyF6d8o8w-1; Sun, 23 Oct 2022 03:06:37 -0400
-X-MC-Unique: yhh_cYSTOoul_wyF6d8o8w-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-572-8Arrmj20P3Sq1Nz2hv5o3Q-1; Sun, 23 Oct 2022 18:00:33 -0400
+X-MC-Unique: 8Arrmj20P3Sq1Nz2hv5o3Q-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1BCEE185A7A8;
-	Sun, 23 Oct 2022 07:06:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D562185A583;
+	Sun, 23 Oct 2022 22:00:30 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 29748140EBF3;
-	Sun, 23 Oct 2022 07:06:18 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6DC5D40C6F9F;
+	Sun, 23 Oct 2022 22:00:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AC83C1946587;
-	Sun, 23 Oct 2022 07:06:16 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5C7341946589;
+	Sun, 23 Oct 2022 22:00:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 9C8241946586
- for <dm-devel@listman.corp.redhat.com>; Sun, 23 Oct 2022 07:06:15 +0000 (UTC)
+ ESMTP id 522DB1946587
+ for <dm-devel@listman.corp.redhat.com>; Sun, 23 Oct 2022 22:00:25 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 376F1492B0A; Sun, 23 Oct 2022 07:06:14 +0000 (UTC)
+ id 31DA442222; Sun, 23 Oct 2022 22:00:25 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E7F3492B04
- for <dm-devel@redhat.com>; Sun, 23 Oct 2022 07:06:13 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 29C3E17585
+ for <dm-devel@redhat.com>; Sun, 23 Oct 2022 22:00:25 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2DC56804185
- for <dm-devel@redhat.com>; Sun, 23 Oct 2022 07:06:12 +0000 (UTC)
-Received: from esa13.fujitsucc.c3s2.iphmx.com
- (esa13.fujitsucc.c3s2.iphmx.com [68.232.156.96]) by relay.mimecast.com with
- ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-656-dicElejhPKK9A1-a8JnHhA-1; Sun, 23 Oct 2022 03:06:05 -0400
-X-MC-Unique: dicElejhPKK9A1-a8JnHhA-1
-X-IronPort-AV: E=McAfee;i="6500,9779,10508"; a="67935686"
-X-IronPort-AV: E=Sophos;i="5.95,206,1661785200"; d="scan'208";a="67935686"
-Received: from mail-tycjpn01lp2172.outbound.protection.outlook.com (HELO
- JPN01-TYC-obe.outbound.protection.outlook.com) ([104.47.23.172])
- by ob1.fujitsucc.c3s2.iphmx.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
- 23 Oct 2022 16:04:57 +0900
-Received: from OS3PR01MB9499.jpnprd01.prod.outlook.com (2603:1096:604:1c8::5)
- by OSZPR01MB6309.jpnprd01.prod.outlook.com (2603:1096:604:ef::13)
- with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5746.23; Sun, 23 Oct
- 2022 07:04:54 +0000
-Received: from OS3PR01MB9499.jpnprd01.prod.outlook.com
- ([fe80::339e:88a3:a24c:5f68]) by OS3PR01MB9499.jpnprd01.prod.outlook.com
- ([fe80::339e:88a3:a24c:5f68%9]) with mapi id 15.20.5746.021; Sun, 23 Oct 2022
- 07:04:54 +0000
-From: "yangx.jy@fujitsu.com" <yangx.jy@fujitsu.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0AE54811E67
+ for <dm-devel@redhat.com>; Sun, 23 Oct 2022 22:00:25 +0000 (UTC)
+Received: from mail-pf1-f173.google.com (mail-pf1-f173.google.com
+ [209.85.210.173]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-196-R9lYL8OGOy6gx4qCm8YPkw-1; Sun, 23 Oct 2022 18:00:23 -0400
+X-MC-Unique: R9lYL8OGOy6gx4qCm8YPkw-1
+Received: by mail-pf1-f173.google.com with SMTP id g28so7528455pfk.8
+ for <dm-devel@redhat.com>; Sun, 23 Oct 2022 15:00:22 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=in-reply-to:content-transfer-encoding:content-disposition
+ :mime-version:references:message-id:subject:cc:to:from:date
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=hvIFbRsnY/vDy+taGpGboiBar50BevLz1lBfrbHmmSw=;
+ b=1hi5GQlBNmbH1VVkOpsbClp15laogpxwzNjqyYXRScpnTaOyjEuyG64qyWj5BUC7Di
+ cSVsrfFZ+lfdpcJrWwsGlQIeZXjcGTobW3w+7ReoKPRKm62z0z5OtVfwVAsx/D1BnXBO
+ bRjqEO5VVszHrIo8GR8EKb3ELp97xyZrxGyItn1GkKPBvu5U7tYQqn8w6lbKU/05G3zZ
+ yRqFSo7cq5YyQ7pFHdyOou1onwpJ6TGXzmjLkRjSn56dvjMHPak+PhFclqqk5/MSjJr7
+ 1SuELa7xOGSfu8mM7GBnmFAVlXIPikp4bXkHfN9a9d2Rmy1ci7+UXdv7tFszr5p7IjXY
+ sUEg==
+X-Gm-Message-State: ACrzQf1FqA4cMyI6UDH66fV8GspEgJf0TOU0Mf0DVeWnaaY25baiA0Mg
+ l3JFK1DH2NlUvOkIPWg9CvbarF3rxXcjWg==
+X-Google-Smtp-Source: AMsMyM5VwZrmUlSzb+1EZVG+tpjTbe3LySen3wNOfYDBTBo98hzEeyHHH/8b9UZAgnJ5FzV86+CCWw==
+X-Received: by 2002:aa7:8011:0:b0:567:70cc:5b78 with SMTP id
+ j17-20020aa78011000000b0056770cc5b78mr26373798pfi.29.1666562422001; 
+ Sun, 23 Oct 2022 15:00:22 -0700 (PDT)
+Received: from dread.disaster.area (pa49-181-106-210.pa.nsw.optusnet.com.au.
+ [49.181.106.210]) by smtp.gmail.com with ESMTPSA id
+ a3-20020aa78e83000000b0056beae3dee2sm14606pfr.145.2022.10.23.15.00.21
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Sun, 23 Oct 2022 15:00:21 -0700 (PDT)
+Received: from dave by dread.disaster.area with local (Exim 4.92.3)
+ (envelope-from <david@fromorbit.com>)
+ id 1omj10-005abc-AD; Mon, 24 Oct 2022 09:00:18 +1100
+Date: Mon, 24 Oct 2022 09:00:18 +1100
+From: Dave Chinner <david@fromorbit.com>
 To: "Darrick J. Wong" <djwong@kernel.org>
-Thread-Topic: [PATCH] xfs: fail dax mount if reflink is enabled on a partition
-Thread-Index: AQHYfA4forHNHCyS0U+LGZ2U8ockZa1oy6eAgG1PENKAAYW1gIAHcj8AgAAwlgCAADFJAIAAQWgAgAEpzwCAAQljgIAGUv0AgA+aw4CABj0IgIAAQxUAgADul4CAGN++gIACWZ4AgAB3MICAAWvlEA==
-Date: Sun, 23 Oct 2022 07:04:53 +0000
-Message-ID: <OS3PR01MB9499BE1E2B3E1823B6F8F1C4832F9@OS3PR01MB9499.jpnprd01.prod.outlook.com>
-References: <YyHKUhOgHdTKPQXL@bfoster> <YyIBMJzmbZsUBHpy@magnolia>
+Message-ID: <20221023220018.GX3600936@dread.disaster.area>
+References: <YyIBMJzmbZsUBHpy@magnolia>
  <a6e7f4eb-0664-bbe8-98d2-f8386b226113@fujitsu.com>
  <e3d51a6b-12e9-2a19-1280-5fd9dd64117c@fujitsu.com>
  <deb54a77-90d3-df44-1880-61cce6e3f670@fujitsu.com>
@@ -88,82 +97,8 @@ References: <YyHKUhOgHdTKPQXL@bfoster> <YyIBMJzmbZsUBHpy@magnolia>
  <Yzx64zGt2kTiDYaP@magnolia>
  <6a83a56e-addc-f3c4-2357-9589a49bf582@fujitsu.com>
  <Y1NRNtToQTjs0Dbd@magnolia>
- <09f522cd-e846-12ee-d662-14f34a2977c4@fujitsu.com>
-In-Reply-To: <09f522cd-e846-12ee-d662-14f34a2977c4@fujitsu.com>
-Accept-Language: zh-CN, en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-msip_labels: =?utf-8?B?TVNJUF9MYWJlbF9hNzI5NWNjMS1kMjc5LTQyYWMtYWI0ZC0zYjBmNGZlY2Uw?=
- =?utf-8?B?NTBfQWN0aW9uSWQ9ZTdkN2I3ZWMtZDU5Mi00ODExLTg3MmItNmVlZTAyOGNk?=
- =?utf-8?B?ZTZiO01TSVBfTGFiZWxfYTcyOTVjYzEtZDI3OS00MmFjLWFiNGQtM2IwZjRm?=
- =?utf-8?B?ZWNlMDUwX0NvbnRlbnRCaXRzPTA7TVNJUF9MYWJlbF9hNzI5NWNjMS1kMjc5?=
- =?utf-8?B?LTQyYWMtYWI0ZC0zYjBmNGZlY2UwNTBfRW5hYmxlZD10cnVlO01TSVBfTGFi?=
- =?utf-8?B?ZWxfYTcyOTVjYzEtZDI3OS00MmFjLWFiNGQtM2IwZjRmZWNlMDUwX01ldGhv?=
- =?utf-8?B?ZD1TdGFuZGFyZDtNU0lQX0xhYmVsX2E3Mjk1Y2MxLWQyNzktNDJhYy1hYjRk?=
- =?utf-8?B?LTNiMGY0ZmVjZTA1MF9OYW1lPUZVSklUU1UtUkVTVFJJQ1RFRO+/ou++gA==?=
- =?utf-8?B?776LO01TSVBfTGFiZWxfYTcyOTVjYzEtZDI3OS00MmFjLWFiNGQtM2IwZjRm?=
- =?utf-8?B?ZWNlMDUwX1NldERhdGU9MjAyMi0xMC0yM1QwNzowMDowMlo7TVNJUF9MYWJl?=
- =?utf-8?B?bF9hNzI5NWNjMS1kMjc5LTQyYWMtYWI0ZC0zYjBmNGZlY2UwNTBfU2l0ZUlk?=
- =?utf-8?Q?=3Da19f121d-81e1-4858-a9d8-736e267fd4c7;?=
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: OS3PR01MB9499:EE_|OSZPR01MB6309:EE_
-x-ms-office365-filtering-correlation-id: 5822ad2d-ce5e-4506-5ef3-08dab4c4e2bc
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: shAC7Sb0qDnf7msp/29n39n7X6dFdGv1eWRiv/Ca8jlDQn6fcO869pScEau/qvz8/RoTd8Nw73kyPvFM20eC14exljvdgStW70+rZaT9WRCNtxZIpjv65L0XGQm+TEEhx0CGk2zXDwaz+WzhsqcV2plWNddL5P//FDXcyt9F/PohQ1SAkAivxUAMZfKr4CtCAuSy4TR51z/ltfx/9/SWuYFQdVEmqFjnE2uR1Osb4Kn4D7qNBraVSgL9WfKc1SNNZPvTREXQ8V6wQ3Yoha5RN/OvU7/6mqzJp8Kt6sZlIg/RT7Sfplffji7lFvpoOx/2XSS/IMcgHlZ91J7CJa+/yYgEuTC4j92EFXLvJE6du7V6/Sn0oUuAHVRnSUPbonCBuBiwLCMZ1NIiE1MmlvQmW3A+JVA7x60H+n143tlYO+wOev0VfRAqQWnxQP3DF/zV8tBMBkumkX+eszq3PdcagW9y2I7/X3s0iz2x7OeLRH0bePcgq7WGLj4E+L00a/NeLj6MQ1EH/7Kit38sU4DyMKEpK5YltzWrLrPDVmTVQQpEnDBYjdxNQRarVGSK6WYEeaKO/xsvJIV86TqE+s1dOGb/NOcgRQ4cJ9gefYbY9IqS9djH3qaobb5RfqaWg4l1y4ovSJjc6qYWc0winyAUpqPgv21clmwKiaQXlhcb4VQ0pvxmoZ0C8vMbzJEDBGW97z/nyuf123r4cWhHitcxaUJGJoVPFsjkvz/qnNx/dXPTr/sEJ8ZOYNwx0AZL2Y/zBGqsQ/3bwX76KoQYhAC0pm97yfyQfQVJUU2ieUTk3LATrprpGynm4uM66i7FlFVd50L1QhWCXq6WfMUhcPGzQw==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:OS3PR01MB9499.jpnprd01.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230022)(4636009)(136003)(376002)(346002)(39860400002)(396003)(366004)(451199015)(1590799012)(1580799009)(2906002)(5660300002)(7416002)(85182001)(52536014)(55016003)(33656002)(41300700001)(83380400001)(122000001)(38100700002)(38070700005)(82960400001)(71200400001)(6916009)(54906003)(966005)(478600001)(8936002)(86362001)(316002)(66946007)(66476007)(66556008)(64756008)(66446008)(8676002)(4326008)(76116006)(186003)(26005)(9686003)(7696005)(53546011)(6506007);
- DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?WFRSQno3eHUxVVpneEZwZ3lVQVI1SGRmK1k4cnVlaTlLNjNVRnJwdlNNMCs5?=
- =?utf-8?B?YWkvb201OG9oQkhNekdROENUUkJLY3hTSlBsQ3lpeFB1amQySHRWRlQxUTNL?=
- =?utf-8?B?aGRJVk9jT1UrVGlkRnJSeTdhWGJ5WnlNVDF4ZlYxd1V6aUxnY0ZLRCtidVVT?=
- =?utf-8?B?ajF0WldUWDZWc0g4VllhQ0JSQVlGcEE1K3MzenkzN1hiYllnVm1XRjRtVXhC?=
- =?utf-8?B?NjMxd0prS1BJZW5DNldtN0ZXZk1SeHptNWF4OUtYNTdlaVVNNDlic3F0OEZD?=
- =?utf-8?B?VVQ4Qm9nSlh3WTFUWGtqSFBSQlh1RXFUbGVhU1NEMU1xKzlPT3ZVSk5EUUpM?=
- =?utf-8?B?SWczakV6NHlxemp0VTFqRGxIT29SNVJKRHJtOFhYenhFNW9iNkVVem9XQldR?=
- =?utf-8?B?NWE1VU9pMXU1dG9ONzlvODlUNGE2dEFveWFVNzBtUTkrbjNUVHV4QzVqUHdT?=
- =?utf-8?B?QXcvTDNUQjRrVGJHWG4vS2svelFIMy9OT0lYMS84VStSOE1xMG1FNE1OaTRx?=
- =?utf-8?B?VDFyb0ZKWldzRk00VW9abVVlYXQ1blJXZ0IxZEZCc3lUaGlscGpJVVZ6RFBR?=
- =?utf-8?B?MzVaek04TVdneVRBb2NaRFZhMHUrRlNBYVNCWVhUOTlIY0hiYVdSdE9nd1RR?=
- =?utf-8?B?QldybHdtR0lNeUdLZkc0Y29Hd05xN2J1dk4ySTlaZFAxWnJHUUhTdFdZSERV?=
- =?utf-8?B?eDN5aTZQUkxEQU5OelAwTFdTbDhRRWU2WE4vQlVhRzJUMjFraURJZEVTOStE?=
- =?utf-8?B?VUdpUUR3L0E3YkZHa0VjV3pXcnJtZmxuVWlLb3d5T2FiMEVTYVVPVVVPMmhi?=
- =?utf-8?B?TE1XdEpnVG1tdmFSL3QvbUtqWVVvallIbnRwNFZaSTVXU2NsdkJ0R2l3d2k0?=
- =?utf-8?B?MDk4ME53RUJuWnJQYnVsWFJWTHcvd2RHMTZSSkhTM3hVN3VTTFh2S0I3SDFN?=
- =?utf-8?B?MHMvU0RDb2JOQldmbEtlTWYzbHBidUt1NDhrYkcxVjE0TWFhUHdsZmgrYXZJ?=
- =?utf-8?B?N1oyZ2tvbndOLzZIakhNK1JYbDhmL0Z2bGREekRBSWtzMmQxL3Y2cEhaQjcw?=
- =?utf-8?B?b2xjNzFaaE56NFBWcGowSW96aFlNdG95azk5aTlPSkxSMWJKRzJvVHNXYmkw?=
- =?utf-8?B?WGo1SGJmaDR5bmVtZDJEK1RYb05LUFZUTXVZWjgyamFSMXdMQUZmZ2tXVGhE?=
- =?utf-8?B?bTZBMWVRcmVxeXJMN282MUIxUmNKSHh6Y0hKY2JlTHc2Z3YrNlp3VnloZ21I?=
- =?utf-8?B?QnJYTlJrNVJpRVlQQWxjV2RnTkVneTd4TSswWk9PeW5MeG9pZ3Q4SVJoNWFa?=
- =?utf-8?B?Y0ExQjYydDZDR1FKeXhUUVdWNDZPTXc2Y0hEdVd2K2Zid3ZXSi92dTg1L1Ey?=
- =?utf-8?B?R2lNY3Jzb09WVzNzeDF1NHk4TEFRMzArUWU2dkZCNVRQUkkrN3IrT0gyNUZm?=
- =?utf-8?B?amZzR05EaldZdzVBc0k1Um05OVhWUFdScTh1SHBDRzNJVEVkNEdubWxIM2FG?=
- =?utf-8?B?b2RZR0ozd3lTck9VQlZqSS90SlNtVTRtWWx5Njl6RHRoQ1V5enJNS2hVelRB?=
- =?utf-8?B?dDlFcHY5akdEY29MUURZRnVRaWg2UXRFRFhsSGFpUGd2WUgvQkF3UmlTenZh?=
- =?utf-8?B?T1FxNWR5bXdJUEJuYzVSYWVabTRpNEY5R2ZiWDlTbnFYU2NlblRKWGJNcmtw?=
- =?utf-8?B?UDJ2T3FGS3VMQ2JIV0toRWV3alJQM2w3QVdiT3VVNWxURXRZdzYrUmJCOGhN?=
- =?utf-8?B?RkNxRnhiT0YyS3orNkVIUDBhUEorNjFndG05Ni9kN29UTXNUUHgyVE5XMUVs?=
- =?utf-8?B?clJzSmJNbDM4d0JOMzRCVUpVUXo2a01MQ3RnSXgrbnVYMmF6UW9GaE1kYzFZ?=
- =?utf-8?B?ZFpCL3NacGpnc290dHVDK3A0M3NLT3FxMWw1MXgxYnFXa0lqSUhkL1VpeW1F?=
- =?utf-8?B?WkFMS3QzNkI5NjVBT211Mm5zSkZDZnJHR0xBclBmSnpkV1lyNnRyZnZlWXN6?=
- =?utf-8?B?S1NwZUI5VEYyV3lXRFQxUnZEU2ppaDdqVlkrdTc3MG1YbGhYaW8vVTIwVFow?=
- =?utf-8?B?Q0laNkpRSkVKRU9iMUhWSWlLTHF5VGdBTDYrNkhhMmdCTlhIRTV0aHZ0Q0Zh?=
- =?utf-8?Q?m/zsZx5ya4Ystw8cc+kOyfuDc?=
 MIME-Version: 1.0
-X-OriginatorOrg: fujitsu.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: OS3PR01MB9499.jpnprd01.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 5822ad2d-ce5e-4506-5ef3-08dab4c4e2bc
-X-MS-Exchange-CrossTenant-originalarrivaltime: 23 Oct 2022 07:04:53.6775 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: a19f121d-81e1-4858-a9d8-736e267fd4c7
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: k9Gsx5rO1/hDr1ZL1tHYrm7W7JirKzZyLnK8FlXJ1EodrNalNl3UDCR4dJ9czFIjAi8gcYEW7Be2SBID86KgFQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: OSZPR01MB6309
+In-Reply-To: <Y1NRNtToQTjs0Dbd@magnolia>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -171,7 +106,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 Subject: Re: [dm-devel] [PATCH] xfs: fail dax mount if reflink is enabled on
  a partition
 X-BeenThere: dm-devel@redhat.com
@@ -185,156 +120,117 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
- "toshi.kani@hpe.com" <toshi.kani@hpe.com>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>,
- "nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
- Brian Foster <bfoster@redhat.com>, "david@fromorbit.com" <david@fromorbit.com>,
+Cc: "hch@infradead.org" <hch@infradead.org>, toshi.kani@hpe.com,
+ dm-devel@redhat.com, "nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
+ Brian Foster <bfoster@redhat.com>,
+ =?utf-8?B?WWFuZywgWGlhby/mnagg5pmT?= <yangx.jy@fujitsu.com>,
  "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "hch@infradead.org" <hch@infradead.org>, Jeff Moyer <jmoyer@redhat.com>,
- "zwisler@kernel.org" <zwisler@kernel.org>,
- "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+ =?utf-8?B?UnVhbiwgU2hpeWFuZy/pmK4g5LiW6Ziz?= <ruansy.fnst@fujitsu.com>,
+ =?utf-8?B?R290b3UsIFlhc3Vub3JpL+S6lOWztiDlurfmloc=?= <y-goto@fujitsu.com>,
+ Jeff Moyer <jmoyer@redhat.com>, zwisler@kernel.org,
+ "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+ "linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On 2022/10/22 10:11, Darrick J. Wong wrote:
->> We need to fix the issue by discarding XFS log on the block device.
->> mkfs.xfs will try to discard the blocks including XFS log by calling
->> ioctl(BLKDISCARD)  but it will ignore error silently when the block 
->> device doesn't support ioctl(BLKDISCARD).
-> ...but I think here's where I think your understanding isn't correct.
-> It might help to show how the nested logging creates its own problems.
-> 
-> First, let's say there's a block B that contains some stale garbage 
-> AAAA.
-> 
-> XFS writes a block into the XFS log (call the block L) with the 
-> instructions "allocate block B and write CCCC to block B".  
-> dm-logwrites doesn't know or care about the contents of the blocks 
-> that it is told to write; it only knows that XFS told it to write some 
-> data (the
-> instructions) to block L.  So it remembers the fact that some data got 
-> written to L, but it doesn't know about B at all.
-> 
-> At the point where we create the dm-logwrites preunmap mark, it's only
-> tracking L.  It is not tracking B.   After the mark is taken, the XFS
-> AIL writes CCCC to B, and only then does dm-logwrites begin tracking B.
-> Hence B is not included in the preunmap mark.  The pre-unmount process 
-> in XFS writes to the XFS log "write DDDD to block B" and the unmount 
-> process checkpoints the log contents, so now block B contains contains 
-> DDDD.
-> 
-> Now the test wants to roll to the preunmap mark.  Unfortunately, 
-> dm-logwrites doesn't record former block contents, which means that 
-> the log replay tools cannot roll backwards from "umount" to "preunmap" 
-> -- they can only roll forward from the beginning.  So there's no way 
-> to undo writing DDDD or CCCC to B.  IOWs, there's no way to revert B's 
-> state back to AAAA when doing dm-logwrites recovery.
-> 
-> Now XFS log recovery starts.  It sees "allocate block B and write CCCC 
-> to block B".  However, it reads block B, sees that it contains DDDD, 
-> and it skips writing CCCC.  Incorrectly.  The only way to avoid this 
-> is to zero B before replaying the dm-logwrites.
-> 
-> So you could solve the problem via BLKDISCARD, or writing zeroes to 
-> the entire block device, or scanning the metadata and writing zeroes 
-> to just those blocks, or by adding undo buffer records to dm-logwrites 
-> and teaching it to do a proper rollback.
-
-Hi Darrick,
-
-Thanks for your patient explanation.
-
-Do you know if XFS log records still use buffer write? In other words, they cannot be written into the block device in DAX mode, right?
-
-In fact, I can reproduce the inconsistent filesystem issue on
-generic/482 but cannot reproduce the issue on generic/470.
-
-> 
->> Discarding XFS log is what you said "reinitialize the entire block 
->> device", right?
-> No, I really meant the/entire/  block device.
-> 
->>> I think the only way to fix this test is (a) revert all of 
->>> Christoph's changes so far and scuttle the divorce; or (b) change this test like so:
->> Sorry, I didn't know which Christoph's patches need to be reverted?
->> Could you tell me the URL about Christoph's patches?
-> Eh, it's a whole long series of patches scuttling various parts where 
-> pmem could talk to the block layer.  I doubt he'll accept you 
-> reverting his removal code.
-
-Where can I find the Christoph's patch set you mentioned.
-I just want to know the content of Christoph's patch set.
-
-> 
->>>    1. Create a large sparse file on $TEST_DIR and losetup that sparse
->>>       file.  The resulting loop device will not have dax capability.
->>>
->>>    2. Set up the dmthin/dmlogwrites stack on top of this loop device.
->>>
->>>    3. Call mkfs.xfs with the SCRATCH_DEV (which hopefully is a pmem
->>>       device) as the realtime device, and set the daxinherit and rtinherit
->>>       flags on the root directory.  The result is a filesystem with a data
->>>       section that the kernel will treat as a regular block device, a
->>>       realtime section backed by pmem, and the necessary flags to make
->>>       sure that the test file will actually get fsdax mode.
->>>
->>>    4. Acknowledge that we no longer have any way to test MAP_SYNC
->>>       functionality on ext4, which means that generic/470 has to move to
->>>       tests/xfs/.
->> Sorry, I didn't understand why the above test change can fix the issue.
-> XFS supports two-device filesystems -- the "realtime" section, and the 
-> "data" section.  FS metadata and log all live in the "data" section.
-> 
-> So we change the test to set up some regular files, loop-mount the 
-> files, set up the requisite dm-logwrites stuff atop the loop devices, 
-> and format the XFS with the data section backed by the dm-logwrites 
-> device, and make the realtime section backed by the pmem.
-> 
-> This way the log replay program can actually discard the data device 
-> (because it's a regular file) and replay the log forward to the 
-> preunmap mark.  The pmem device is not involved in the replay at all, 
-> since changes to file data are never logged.  It now becomes 
-> irrelevant that pmem no longer supports device mapper.
-> 
->> Could you tell me which step can discard XFS log?
-> (None of the steps do that.)
-> 
->> In addition, I don't like your idea about the test change because it 
->> will make generic/470 become the special test for XFS. Do you know if 
->> we can fix the issue by changing the test in another way? blkdiscard 
->> -z can fix the issue because it does zero-fill rather than discard on the block device.
->> However, blkdiscard -z will take a lot of time when the block device 
->> is large.
-> Well we/could/  just do that too, but that will suck if you have 2TB 
-> of
-> pmem.;)
-> 
-> Maybe as an alternative path we could just create a very small 
-> filesystem on the pmem and then blkdiscard -z it?
-
-Good idea, I have sent a patch set to do it.
-https://lore.kernel.org/fstests/20221023064810.847110-1-yangx.jy@fujitsu.com/T/#t
-
-> 
-> That said -- does persistent memory actually have a future?  Intel 
-> scuttled the entire Optane product, cxl.mem sounds like expansion 
-> chassis full of DRAM, and fsdax is horribly broken in 6.0 (weird 
-> kernel asserts everywhere) and 6.1 (every time I run fstests now I see 
-> massive data corruption).
-
-As far as I know, cxl.mem will take use of nvdimm driver and can be used by many existing applications.
-
-Best Regards,
-Xiao Yang
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gRnJpLCBPY3QgMjEsIDIwMjIgYXQgMDc6MTE6MDJQTSAtMDcwMCwgRGFycmljayBKLiBXb25n
+IHdyb3RlOgo+IE9uIFRodSwgT2N0IDIwLCAyMDIyIGF0IDEwOjE3OjQ1UE0gKzA4MDAsIFlhbmcs
+IFhpYW8v5p2oIOaZkyB3cm90ZToKPiA+IEluIGFkZGl0aW9uLCBJIGRvbid0IGxpa2UgeW91ciBp
+ZGVhIGFib3V0IHRoZSB0ZXN0IGNoYW5nZSBiZWNhdXNlIGl0IHdpbGwKPiA+IG1ha2UgZ2VuZXJp
+Yy80NzAgYmVjb21lIHRoZSBzcGVjaWFsIHRlc3QgZm9yIFhGUy4gRG8geW91IGtub3cgaWYgd2Ug
+Y2FuIGZpeAo+ID4gdGhlIGlzc3VlIGJ5IGNoYW5naW5nIHRoZSB0ZXN0IGluIGFub3RoZXIgd2F5
+PyBibGtkaXNjYXJkIC16IGNhbiBmaXggdGhlCj4gPiBpc3N1ZSBiZWNhdXNlIGl0IGRvZXMgemVy
+by1maWxsIHJhdGhlciB0aGFuIGRpc2NhcmQgb24gdGhlIGJsb2NrIGRldmljZS4KPiA+IEhvd2V2
+ZXIsIGJsa2Rpc2NhcmQgLXogd2lsbCB0YWtlIGEgbG90IG9mIHRpbWUgd2hlbiB0aGUgYmxvY2sg
+ZGV2aWNlIGlzCj4gPiBsYXJnZS4KPiAKPiBXZWxsIHdlIC9jb3VsZC8ganVzdCBkbyB0aGF0IHRv
+bywgYnV0IHRoYXQgd2lsbCBzdWNrIGlmIHlvdSBoYXZlIDJUQiBvZgo+IHBtZW0uIDspCj4gCj4g
+TWF5YmUgYXMgYW4gYWx0ZXJuYXRpdmUgcGF0aCB3ZSBjb3VsZCBqdXN0IGNyZWF0ZSBhIHZlcnkg
+c21hbGwKPiBmaWxlc3lzdGVtIG9uIHRoZSBwbWVtIGFuZCB0aGVuIGJsa2Rpc2NhcmQgLXogaXQ/
+Cj4gCj4gVGhhdCBzYWlkIC0tIGRvZXMgcGVyc2lzdGVudCBtZW1vcnkgYWN0dWFsbHkgaGF2ZSBh
+IGZ1dHVyZT8gIEludGVsCj4gc2N1dHRsZWQgdGhlIGVudGlyZSBPcHRhbmUgcHJvZHVjdCwgY3hs
+Lm1lbSBzb3VuZHMgbGlrZSBleHBhbnNpb24KPiBjaGFzc2lzIGZ1bGwgb2YgRFJBTSwgYW5kIGZz
+ZGF4IGlzIGhvcnJpYmx5IGJyb2tlbiBpbiA2LjAgKHdlaXJkIGtlcm5lbAo+IGFzc2VydHMgZXZl
+cnl3aGVyZSkgYW5kIDYuMSAoZXZlcnkgdGltZSBJIHJ1biBmc3Rlc3RzIG5vdyBJIHNlZSBtYXNz
+aXZlCj4gZGF0YSBjb3JydXB0aW9uKS4KCll1cCwgSSBzZWUgdGhlIHNhbWUgdGhpbmcuIGZzZGF4
+IHdhcyBhIHRyYWluIHdyZWNrIGluIDYuMCAtIGJyb2tlbgpvbiBib3RoIGV4dDQgYW5kIFhGUy4g
+Tm93IHRoYXQgSSBydW4gYSBxdWljayBjaGVjayBvbiA2LjEtcmMxLCBJCmRvbid0IHRoaW5rIHRo
+YXQgaGFzIGNoYW5nZWQgYXQgYWxsIC0gSSBzdGlsbCBzZWUgbG90cyBvZiBrZXJuZWwKd2Fybmlu
+Z3MsIGRhdGEgY29ycnVwdGlvbiBhbmQgIlhGU19JT0NfQ0xPTkVfUkFOR0U6IEludmFsaWQKYXJn
+dW1lbnQiIGVycm9ycy4KCklmIEkgdHVybiBvZmYgcmVmbGluaywgdGhlbiBpbnN0ZWFkIG9mIGRh
+dGEgY29ycnVwdGlvbiBJIGdldCBrZXJuZWwKd2FybmluZ3MgbGlrZSB0aGlzIGZyb20gZnN4IGFu
+ZCBmc3N0cmVzcyB3b3JrbG9hZHM6CgpbNDE1NDc4LjU1ODQyNl0gLS0tLS0tLS0tLS0tWyBjdXQg
+aGVyZSBdLS0tLS0tLS0tLS0tCls0MTU0NzguNTYwNTQ4XSBXQVJOSU5HOiBDUFU6IDEyIFBJRDog
+MTUxNTI2MCBhdCBmcy9kYXguYzozODAgZGF4X2luc2VydF9lbnRyeSsweDJhNS8weDMyMApbNDE1
+NDc4LjU2NDAyOF0gTW9kdWxlcyBsaW5rZWQgaW46Cls0MTU0NzguNTY1NDg4XSBDUFU6IDEyIFBJ
+RDogMTUxNTI2MCBDb21tOiBmc3ggVGFpbnRlZDogRyAgICAgICAgVyA2LjEuMC1yYzEtZGdjKyAj
+MTYxNQpbNDE1NDc4LjU2OTIyMV0gSGFyZHdhcmUgbmFtZTogUUVNVSBTdGFuZGFyZCBQQyAoaTQ0
+MEZYICsgUElJWCwgMTk5NiksIEJJT1MgMS4xNS4wLTEgMDQvMDEvMjAxNApbNDE1NDc4LjU3Mjg3
+Nl0gUklQOiAwMDEwOmRheF9pbnNlcnRfZW50cnkrMHgyYTUvMHgzMjAKWzQxNTQ3OC41NzQ5ODBd
+IENvZGU6IDA4IDQ4IDgzIGM0IDMwIDViIDVkIDQxIDVjIDQxIDVkIDQxIDVlIDQxIDVmIGMzIDQ4
+IDhiIDU4IDIwIDQ4IDhkIDUzIDAxIGU5IDY1IGZmIGZmIGZmIDQ4IDhiIDU4IDIwIDQ4IDhkIDUz
+IDAxIGU5IDUwIGZmIGZmIGZmIDwwZj4gMGIgZTkgNzAgZmYgZmYgZmYgMzEgZjYgNGMgODkgZTcg
+ZTggZGEgZWUgYTcgMDAgZWIgYTQgNDggODEgZTYKWzQxNTQ3OC41ODI3NDBdIFJTUDogMDAwMDpm
+ZmZmYzkwMDAyODY3YjcwIEVGTEFHUzogMDAwMTAwMDIKWzQxNTQ3OC41ODQ3MzBdIFJBWDogZmZm
+ZmVhMDAwZjBkMDgwMCBSQlg6IDAwMDAwMDAwMDAwMDAwMDEgUkNYOiAwMDAwMDAwMDAwMDAwMDAx
+Cls0MTU0NzguNTg3NDg3XSBSRFg6IGZmZmZlYTAwMDAwMDAwMDAgUlNJOiAwMDAwMDAwMDAwMDAw
+MDNhIFJESTogZmZmZmVhMDAwZjBkMDg0MApbNDE1NDc4LjU5MDEyMl0gUkJQOiAwMDAwMDAwMDAw
+MDAwMDExIFIwODogMDAwMDAwMDAwMDAwMDAwMCBSMDk6IDAwMDAwMDAwMDAwMDAwMDAKWzQxNTQ3
+OC41OTIzODBdIFIxMDogZmZmZjg4ODgwMGRjOWMxOCBSMTE6IDAwMDAwMDAwMDAwMDAwMDEgUjEy
+OiBmZmZmYzkwMDAyODY3YzU4Cls0MTU0NzguNTk0ODY1XSBSMTM6IGZmZmY4ODg4MDBkYzljMTgg
+UjE0OiBmZmZmYzkwMDAyODY3ZTE4IFIxNTogMDAwMDAwMDAwMDAwMDAwMApbNDE1NDc4LjU5Njk4
+M10gRlM6ICAwMDAwN2ZkNzE5ZmEyYjgwKDAwMDApIEdTOmZmZmY4ODg4M2VjMDAwMDAoMDAwMCkg
+a25sR1M6MDAwMDAwMDAwMDAwMDAwMApbNDE1NDc4LjU5OTM2NF0gQ1M6ICAwMDEwIERTOiAwMDAw
+IEVTOiAwMDAwIENSMDogMDAwMDAwMDA4MDA1MDAzMwpbNDE1NDc4LjYwMDkwNV0gQ1IyOiAwMDAw
+N2ZkNzFhMWFkNjQwIENSMzogMDAwMDAwMDVjZjI0MTAwNiBDUjQ6IDAwMDAwMDAwMDAwNjBlZTAK
+WzQxNTQ3OC42MDI4ODNdIENhbGwgVHJhY2U6Cls0MTU0NzguNjAzNTk4XSAgPFRBU0s+Cls0MTU0
+NzguNjA0MjI5XSAgZGF4X2ZhdWx0X2l0ZXIrMHgyNDAvMHg2MDAKWzQxNTQ3OC42MDU0MTBdICBk
+YXhfaW9tYXBfcHRlX2ZhdWx0KzB4MTljLzB4M2QwCls0MTU0NzguNjA2NzA2XSAgX194ZnNfZmls
+ZW1hcF9mYXVsdCsweDFkZC8weDJiMApbNDE1NDc4LjYwNzc0NF0gIF9fZG9fZmF1bHQrMHgyZS8w
+eDFkMApbNDE1NDc4LjYwODU4N10gIF9faGFuZGxlX21tX2ZhdWx0KzB4Y2VjLzB4MTdiMApbNDE1
+NDc4LjYwOTU5M10gIGhhbmRsZV9tbV9mYXVsdCsweGQwLzB4MmEwCls0MTU0NzguNjEwNTE3XSAg
+ZXhjX3BhZ2VfZmF1bHQrMHgxZDkvMHg4MTAKWzQxNTQ3OC42MTEzOThdICBhc21fZXhjX3BhZ2Vf
+ZmF1bHQrMHgyMi8weDMwCls0MTU0NzguNjEyMzExXSBSSVA6IDAwMzM6MHg3ZmQ3MWEwNGI5YmEK
+WzQxNTQ3OC42MTMxNjhdIENvZGU6IDRkIDI5IGMxIDRjIDI5IGMyIDQ4IDNiIDE1IGRiIDk1IDEx
+IDAwIDBmIDg3IGFmIDAwIDAwIDAwIDBmIDEwIDAxIDBmIDEwIDQ5IGYwIDBmIDEwIDUxIGUwIDBm
+IDEwIDU5IGQwIDQ4IDgzIGU5IDQwIDQ4IDgzIGVhIDQwIDw0MT4gMGYgMjkgMDEgNDEgMGYgMjkg
+NDkgZjAgNDEgMGYgMjkgNTEgZTAgNDEgMGYgMjkgNTkgZDAgNDkgODMgZTkKWzQxNTQ3OC42MTcw
+ODNdIFJTUDogMDAyYjowMDAwN2ZmY2YyNzdiZTE4IEVGTEFHUzogMDAwMTAyMDYKWzQxNTQ3OC42
+MTgyMTNdIFJBWDogMDAwMDdmZDcxYTFhM2ZjNSBSQlg6IDAwMDAwMDAwMDAwMDBmYzUgUkNYOiAw
+MDAwN2ZkNzE5ZjVhNjEwCls0MTU0NzguNjE5ODU0XSBSRFg6IDAwMDAwMDAwMDAwMDk2NGIgUlNJ
+OiAwMDAwN2ZkNzE5ZjUwZmQ1IFJESTogMDAwMDdmZDcxYTFhM2ZjNQpbNDE1NDc4LjYyMTI4Nl0g
+UkJQOiAwMDAwMDAwMDAwMDMwZmM1IFIwODogMDAwMDAwMDAwMDAwMDAwZSBSMDk6IDAwMDA3ZmQ3
+MWExYWQ2NDAKWzQxNTQ3OC42MjI3MzBdIFIxMDogMDAwMDAwMDAwMDAwMDAwMSBSMTE6IDAwMDA3
+ZmQ3MWExYWQ2NGUgUjEyOiAwMDAwMDAwMDAwMDA5Njk5Cls0MTU0NzguNjI0MTY0XSBSMTM6IDAw
+MDAwMDAwMDAwMGE2NWUgUjE0OiAwMDAwN2ZkNzFhMWEzMDAwIFIxNTogMDAwMDAwMDAwMDAwMDAw
+MQpbNDE1NDc4LjYyNTYwMF0gIDwvVEFTSz4KWzQxNTQ3OC42MjYwODddIC0tLVsgZW5kIHRyYWNl
+IDAwMDAwMDAwMDAwMDAwMDAgXS0tLQoKRXZlbiBnZW5lcmljLzI0NyBpcyBnZW5lcmF0aW5nIGEg
+d2FybmluZyBsaWtlIHRoaXMgZnJvbSB4ZnNfaW8sCndoaWNoIGlzIGEgbW1hcCB2cyBESU8gcmFj
+ZXIuIEdpdmVuIHRoYXQgRElPIGRvZXNuJ3QgZXhpc3QgZm9yCmZzZGF4LCB0aGlzIHRlc3QgdHVy
+bnMgaW50byBqdXN0IGEgbm9ybWFsIHdyaXRlKCkgdnMgbW1hcCgpIHJhY2VyLgoKR2l2ZW4gdGhl
+c2UgYXJlIHRoZSBzYW1lIGZzZGF4IGluZnJhc3RydWN0dXJlIGZhaWx1cmVzIHRoYXQgSQpyZXBv
+cnRlZCBmb3IgNi4wLCBpdCBpcyBhbHNvIGxpa2VseSB0aGF0IGV4dDQgaXMgc3RpbGwgdGhyb3dp
+bmcKdGhlbS4gSU9Xcywgd2hhdGV2ZXIgZ290IGJyb2tlIGluIHRoZSA2LjAgY3ljbGUgd2Fzbid0
+IGZpeGVkIGluIHRoZQo2LjEgY3ljbGUuCgo+IEZyYW5rbHkgYXQgdGhpcyBwb2ludCBJJ20gdGVt
+cHRlZCBqdXN0IHRvIHR1cm4gb2YgZnNkYXggc3VwcG9ydCBmb3IgWEZTCj4gZm9yIHRoZSA2LjEg
+TFRTIGJlY2F1c2UgSSBkb24ndCBoYXZlIHRpbWUgdG8gZml4IGl0LgoKL21lIHNocnVncwoKQmFj
+a3BvcnRpbmcgZml4ZXMgKHdoZW5ldmVyIHRoZXkgY29tZSBhbG9uZykgaXMgYSBwcm9ibGVtIGZv
+ciB0aGUKTFRTIGtlcm5lbCBtYWludGFpbmVyIHRvIGRlYWwgd2l0aCwgbm90IHRoZSB1cHN0cmVh
+bSBtYWludGFpbmVyLgoKSU1PLCB0aGUgaXNzdWUgcmlnaHQgbm93IGlzIHRoYXQgdGhlIERBWCBt
+YWludGFpbmVycyBzZWVtIHRvIGhhdmUKbGl0dGxlIGludGVyZXN0IGluIGVuc3VyaW5nIHRoYXQg
+dGhlIEZTREFYIGluZnJhc3RydWN0dXJlIGFjdHVhbGx5CndvcmtzIGNvcnJlY3RseS4gSWYgYW55
+dGhpbmcsIHRoZXkgc2VlbSB0byB3YW50IHRvIG1ha2UgdGhpbmdzCmhhcmRlciBmb3IgYmxvY2sg
+YmFzZWQgZmlsZXN5c3RlbXMgdG8gdXNlIHBtZW0gZGV2aWNlcyBhbmQgaGVuY2UKRlNEQVguIGUu
+Zy4gdGhlIGRpcmVjdGlvbiBvZiB0aGUgREFYIGNvcmUgYXdheSBmcm9tIGJsb2NrIGludGVyZmFj
+ZXMKdGhhdCBmaWxlc3lzdGVtcyBuZWVkIGZvciB0aGVpciB1c2Vyc3BhY2UgdG9vbHMgdG8gbWFu
+YWdlIHRoZQpzdG9yYWdlLgoKQXQgd2hhdCBwb2ludCBkbyB3ZSBzaW1wbHkgc2F5ICJ0aGUgZXhw
+ZXJpbWVudCBmYWlsZWQsIEZTREFYIGlzCmRlYWQiIGFuZCByZW1vdmUgaXQgZnJvbSBYRlMgYWx0
+b2dldGhlcj8KCkNoZWVycywKCkRhdmUuCi0tIApEYXZlIENoaW5uZXIKZGF2aWRAZnJvbW9yYml0
+LmNvbQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
+Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
 
