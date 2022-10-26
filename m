@@ -1,76 +1,161 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B082AFA3741
-	for <dm-devel@archiver.kernel.org>; Mon, 31 Oct 2022 06:39:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3D6E9FA3740
+	for <dm-devel@archiver.kernel.org>; Mon, 31 Oct 2022 06:39:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667198343;
+	s=mimecast20190719; t=1667198342;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=rOoUSbpg/2OWFFiLoyw48OYbVs9tY+0tFXxIXEzU9jM=;
-	b=av4X1xuPtrtkmeD9Yeb9Q1I8Q1NuhWDi/xng7aQpRhp2qHd/EvLpsRC4gsV/ciAyaOyDMW
-	w2YsV1keWggLGhfZ2tigH2RZa3+0l6c28H+z+GWgGaVr5U0NDm4fCJEV7+EjArcSYyNf3q
-	W4nkbyjZAzZc6BfC0SaP3ENNMpIVCWE=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=6A7ZHkxgL3LppxFATPY87aj7k2p8qNuN5S6LcBvgcdU=;
+	b=WGi3Ba8gEYz3rm/mkQruvDFePm0nsUXfdfSEsD4h673lkkABr3uKVCcoMbheUGLTytYOE5
+	0feCnxAVuaO37B0SlVuqMV0vSZ2Rgxrz/tQyABaSa4I+zryrIU5s4uQgbT9vEC/sSknRYW
+	jx5aoHRbi9IMo/yylWO8mft7qwN/kiQ=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-654-ww0tqsAWMT-6xchCXDZhnw-1; Mon, 31 Oct 2022 02:39:00 -0400
-X-MC-Unique: ww0tqsAWMT-6xchCXDZhnw-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-131-0vvx1VB4NH-tL-alk5tfHg-1; Mon, 31 Oct 2022 02:39:00 -0400
+X-MC-Unique: 0vvx1VB4NH-tL-alk5tfHg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CE8293C1024B;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9740E1010430;
 	Mon, 31 Oct 2022 06:38:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BD5D72166B2A;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 82C05207B344;
 	Mon, 31 Oct 2022 06:38:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B45001946594;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 78CF3194658D;
 	Mon, 31 Oct 2022 06:38:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 577711946597
- for <dm-devel@listman.corp.redhat.com>; Thu, 27 Oct 2022 15:27:58 +0000 (UTC)
+ ESMTP id 9257C1946597
+ for <dm-devel@listman.corp.redhat.com>; Wed, 26 Oct 2022 23:22:34 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2E325492B16; Thu, 27 Oct 2022 15:27:57 +0000 (UTC)
+ id 767F340C83BA; Wed, 26 Oct 2022 23:22:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 269C4492B09
- for <dm-devel@redhat.com>; Thu, 27 Oct 2022 15:27:57 +0000 (UTC)
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6DEDD40C83AD
+ for <dm-devel@redhat.com>; Wed, 26 Oct 2022 23:22:34 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D039B29DD9B9
- for <dm-devel@redhat.com>; Thu, 27 Oct 2022 15:27:55 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 464081C07541
+ for <dm-devel@redhat.com>; Wed, 26 Oct 2022 23:22:34 +0000 (UTC)
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
+ [205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-609-DQboGFftNHSlvNHtGginBA-1; Thu, 27 Oct 2022 11:27:54 -0400
-X-MC-Unique: DQboGFftNHSlvNHtGginBA-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 1143B62377;
- Thu, 27 Oct 2022 15:19:01 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 775E0C433D6;
- Thu, 27 Oct 2022 15:18:59 +0000 (UTC)
-Date: Thu, 27 Oct 2022 09:18:53 -0600
-From: Keith Busch <kbusch@kernel.org>
-To: Mike Christie <michael.christie@oracle.com>
-Message-ID: <Y1qhXQYOpEUk2uqF@kbusch-mbp.dhcp.thefacebook.com>
+ us-mta-616-qm529sS4OUyKGPQUo7DdZQ-1; Wed, 26 Oct 2022 19:22:28 -0400
+X-MC-Unique: qm529sS4OUyKGPQUo7DdZQ-1
+Received: from pps.filterd (m0246629.ppops.net [127.0.0.1])
+ by mx0b-00069f02.pphosted.com (8.17.1.5/8.17.1.5) with ESMTP id 29QMKDZf015054;
+ Wed, 26 Oct 2022 23:20:10 GMT
+Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com
+ (iadpaimrmta02.appoci.oracle.com [147.154.18.20])
+ by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3kfb0aghxw-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Wed, 26 Oct 2022 23:20:10 +0000
+Received: from pps.filterd
+ (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
+ by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (8.17.1.5/8.17.1.5)
+ with ESMTP id 29QM1s5U026539; Wed, 26 Oct 2022 23:20:09 GMT
+Received: from nam04-mw2-obe.outbound.protection.outlook.com
+ (mail-mw2nam04lp2177.outbound.protection.outlook.com [104.47.73.177])
+ by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id
+ 3kfagpdx95-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Wed, 26 Oct 2022 23:20:08 +0000
+Received: from DM5PR10MB1466.namprd10.prod.outlook.com (2603:10b6:3:b::7) by
+ DS7PR10MB5117.namprd10.prod.outlook.com (2603:10b6:5:3a6::17) with Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.5746.28; Wed, 26 Oct 2022 23:20:06 +0000
+Received: from DM5PR10MB1466.namprd10.prod.outlook.com
+ ([fe80::19f7:e081:85b4:c5df]) by DM5PR10MB1466.namprd10.prod.outlook.com
+ ([fe80::19f7:e081:85b4:c5df%7]) with mapi id 15.20.5746.028; Wed, 26 Oct 2022
+ 23:20:06 +0000
+From: Mike Christie <michael.christie@oracle.com>
+To: bvanassche@acm.org, hch@lst.de, martin.petersen@oracle.com,
+ linux-scsi@vger.kernel.org, james.bottomley@hansenpartnership.com,
+ linux-block@vger.kernel.org, dm-devel@redhat.com, snitzer@kernel.org,
+ axboe@kernel.dk, linux-nvme@lists.infradead.org, chaitanyak@nvidia.com,
+ kbusch@kernel.org, target-devel@vger.kernel.org
+Date: Wed, 26 Oct 2022 18:19:38 -0500
+Message-Id: <20221026231945.6609-13-michael.christie@oracle.com>
+In-Reply-To: <20221026231945.6609-1-michael.christie@oracle.com>
 References: <20221026231945.6609-1-michael.christie@oracle.com>
- <20221026231945.6609-11-michael.christie@oracle.com>
+X-ClientProxiedBy: CH2PR19CA0026.namprd19.prod.outlook.com
+ (2603:10b6:610:4d::36) To DM5PR10MB1466.namprd10.prod.outlook.com
+ (2603:10b6:3:b::7)
 MIME-Version: 1.0
-In-Reply-To: <20221026231945.6609-11-michael.christie@oracle.com>
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: DM5PR10MB1466:EE_|DS7PR10MB5117:EE_
+X-MS-Office365-Filtering-Correlation-Id: b7b371d4-0b17-40ec-46f8-08dab7a89e22
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0
+X-Microsoft-Antispam-Message-Info: Iu3gqvnbLEwRdGTEY6RB8BdQCKdmn9xZsl6um+dPMdc6bfGvy8WZzV3ViZ+WyO3snEhvitAG6APJRaBAcyNLnYWDDM2H4dcoZdYq1VuX7V4OXGpuP01urankl0fRtJNkpwD6XtZBhCCYQ2EmGRMMduik/T5aPbdfbqveD+n5zleqXjmWdcG3VIptVM4Cq4vPR58Yk/641tdWoRLMH312OdpLSSYhPRNjM39uC523EuIFuo9tTjCZ+lIBHESj88BfE/3VN/UdfVfSZSSFdwERIgEiGRupwrDYxb90xOjDKXkge9I9hzCN9t0CEfj460NantRakGreZQUbubr/RpWDnWiwHu834pEs5r0/cj2qoBashgBpWLN56niwz/N5jEi1YQt5aybVtbdx44rod0F9eIJczcvs0QP1Oqs9RJUq00Y97qRiiRYKaE3LWG2g7OTaR1ASlhfpDefOxCtShah248DKLFBH2tCR/E7qBRQMZXL5jvs2BOgxVj3GZXcoN26euxw9x3fULubwFzDVOc16yGSVeIBwE0UQSJcTb9jAMd/npL5uF/jzEqByANLfUJqrYKYP5NiE00saq37kcKkDIjzCAGhOI0mjs+zsm7g34nKeCLSSRroW68mnXk7rZlko+uFgugG9qrA3zg1R8zdbbJELbyAYDOSn+yJQ+h9mk8fxolpaW48vkS5EiJ1oPHqBekEbCKq4n1zPcx5ioAqyAu4GtYpYQfJFxNWoVTir+KoWBYJ6I7nPNDZOBHU+34ea
+X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:DM5PR10MB1466.namprd10.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230022)(39860400002)(366004)(136003)(346002)(396003)(376002)(451199015)(7416002)(8936002)(2616005)(30864003)(1076003)(186003)(5660300002)(6512007)(41300700001)(26005)(86362001)(921005)(38100700002)(2906002)(36756003)(83380400001)(316002)(107886003)(6666004)(4326008)(66556008)(66946007)(66476007)(8676002)(6506007)(478600001)(6486002);
+ DIR:OUT; SFP:1101
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?oUID72DVmc1CD56vWSlRIVy49n9r7oj6oQ4Q8d8OQNk/IyZ072w5ZFiR+2aO?=
+ =?us-ascii?Q?f0Qgv6og3RTwnzg5+Vw0hqZj6Nv/4oLhiZPPPVZ5CcPYwCJvOp+gll8eQv6j?=
+ =?us-ascii?Q?TRIgIO4GqaYtAnqrieXBnngKP3ZaDmV3Hh/CD75+yq5l1GiQqu8poPn7On5d?=
+ =?us-ascii?Q?86nADMOYWh3Y7dzJLf556f5YPqflPFajn0Twjj4UMJ5TJYOJS32woDpcZEeK?=
+ =?us-ascii?Q?9ZfirgpKpQeFEmd1u0AAd30Z+nKWzaUZmx3PUtFKgch9GvcTFMdaNp13fh0M?=
+ =?us-ascii?Q?kp/Yn9BM2mDvflpaQFVYe9hz5bVVvEFR2k35lwq5GMJ8scx/8iVkbSN6mADi?=
+ =?us-ascii?Q?+XgOSSgp5r/rHSZzGgieEr9bJ9cCKCa6tXiiIVPLzn2o1IWIrFu/493D7cZs?=
+ =?us-ascii?Q?N2CuGtARxYi6qlETX2F8u/Be6MEsu0YJd+TtAUj9y9xsEqnnEoZ/LOSKECX+?=
+ =?us-ascii?Q?J85UesszMRLgiJcxsSi/+Sso5Gk/mNSzf4QiCmgczTA1VkWrQyM8nq+bmhu9?=
+ =?us-ascii?Q?RG+7k3AGQ+wsEK7Ip931FYbCqh6mlbQ32ZbRxmPQLVZs5YaWv5ejoiP08Ob6?=
+ =?us-ascii?Q?QrbpfuxIFsw0sNdRNUXP1rBOUPnOfztUv7jKFbX4GFgVkOoUYgq9lCh4bFmN?=
+ =?us-ascii?Q?pGXRdOklz7IH6DeOoQ9en4U1nn4DB90wpqRS9TTU9AIoDjgP3nrQ0a5goonV?=
+ =?us-ascii?Q?9tiDJnYHhsJ7avZmZHMC23eiIHpjzwzfMuYwC6gwXNfAi4nZ4eqc6aJnLNNS?=
+ =?us-ascii?Q?utQm+PNtZOW9Ypmqawc9/v0KIiBA7ppO8pcUpWjJlcsmQfdG4QJPqMg4y42X?=
+ =?us-ascii?Q?vIXhC4BQlE78yV1DIpjewA5BPUONG5B1rHlH21NxFSLg5ozNCF4fryGV4W0a?=
+ =?us-ascii?Q?YP+ho0cZG43KUQnJoRpkwnk7P+I6VmI0D6y+YaKYEGh8kHfqGa7BkZdXNe99?=
+ =?us-ascii?Q?KFxjJdI2y+eplPxdmXZMLX3Jhbo9+oPRGdmhT/+tbPWup1MPTUAFQ2awPcvg?=
+ =?us-ascii?Q?wvkPqGTq3i84Hpe/c+wTRqWupj52l0RBRTGf423wswy2PBDLU2Yk80/z/idC?=
+ =?us-ascii?Q?oyv/E0qV4maCSQAzYeyeDCRppYTJljt1ghUsgdBnbBG8VNSFv1doB64SoDbz?=
+ =?us-ascii?Q?hiIq4xMOOkkN3iZTnIKELlK4FCmya9fQejfjPVyMUOp66GGhbwN/sIm/eRyT?=
+ =?us-ascii?Q?ZJqYV/0FYPmUr9ZCWXOkBrRQEiwpiGVxbUjKgWJjFS5g1EpP4QazdMgTgMLh?=
+ =?us-ascii?Q?WfFvAO5fddLX5t52/O1jiHc3kQ1I+GEPf0jWrrey6vGgow/K3ZdtiR1PGmFp?=
+ =?us-ascii?Q?ce7nT1eY/gE/W0qd/X2sVrZEAgEJr2pL0MnHvUzUMe2TSIHbMvCnMaWV20pR?=
+ =?us-ascii?Q?DFQSmpPVbK5aSEeUsfNQunvFVway5j1RS+UTbWIxY2uV+QJsR0FLvw+muHP8?=
+ =?us-ascii?Q?4EZPcSD74NkhOZy4v46l+TO4+KK9pSEYxAuikew3LeB9N8TE6EZRnThokTmL?=
+ =?us-ascii?Q?kvJW85B93nM+Wy5N7Q+PWiSi1C37izcgZyaiN25xIY2i5K0Ilp4KkM2woKUi?=
+ =?us-ascii?Q?3oTEOgObv7zsWGz7ngfNNDEbIyjXIGBmsf+0Nhftev/LZ0FL0aNUy78aL9TP?=
+ =?us-ascii?Q?mQ=3D=3D?=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: b7b371d4-0b17-40ec-46f8-08dab7a89e22
+X-MS-Exchange-CrossTenant-AuthSource: DM5PR10MB1466.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 26 Oct 2022 23:20:06.3344 (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: 3j8XZSFuwIApxp9tqxGCbBvpLIREzxUGjgpNTAHiZLrD9NFvdSRBTccr3Ko/oDhrF4eG1KWiHX78gedsMfPs8q88EFeBSACOZ4qLAvc4k48=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DS7PR10MB5117
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.205,Aquarius:18.0.895,Hydra:6.0.545,FMLib:17.11.122.1
+ definitions=2022-10-26_08,2022-10-26_01,2022-06-22_01
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 adultscore=0
+ mlxscore=0 mlxlogscore=999
+ spamscore=0 phishscore=0 bulkscore=0 malwarescore=0 suspectscore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2210170000
+ definitions=main-2210260128
+X-Proofpoint-GUID: 3NAig-d6zaQuHtzmppgHK4h3AGK9U7W5
+X-Proofpoint-ORIG-GUID: 3NAig-d6zaQuHtzmppgHK4h3AGK9U7W5
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,10 +163,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Mimecast-Bulk-Signature: yes
+X-Mimecast-Spam-Signature: bulk
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mailman-Approved-At: Mon, 31 Oct 2022 06:38:42 +0000
-Subject: Re: [dm-devel] [PATCH v3 10/19] nvme: Move NVMe and Block PR types
- to an array
+Subject: [dm-devel] [PATCH v3 12/19] block, nvme, scsi,
+ dm: Add blk_status to pr_ops callouts
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -93,63 +180,515 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, chaitanyak@nvidia.com,
- bvanassche@acm.org, linux-scsi@vger.kernel.org, snitzer@kernel.org,
- linux-nvme@lists.infradead.org, james.bottomley@hansenpartnership.com,
- dm-devel@redhat.com, target-devel@vger.kernel.org, martin.petersen@oracle.com,
- hch@lst.de
+Cc: Mike Christie <michael.christie@oracle.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Oct 26, 2022 at 06:19:36PM -0500, Mike Christie wrote:
-> For Reservation Report support we need to also convert from the NVMe spec
-> PR type back to the block PR definition. This moves us to an array, so in
-> the next patch we can add another helper to do the conversion without
-> having to manage 2 switches.
-> 
-> Signed-off-by: Mike Christie <michael.christie@oracle.com>
-> ---
->  drivers/nvme/host/pr.c | 42 +++++++++++++++++++++++-------------------
->  include/linux/nvme.h   |  9 +++++++++
->  2 files changed, 32 insertions(+), 19 deletions(-)
-> 
-> diff --git a/drivers/nvme/host/pr.c b/drivers/nvme/host/pr.c
-> index df7eb2440c67..5c4611d15d9c 100644
-> --- a/drivers/nvme/host/pr.c
-> +++ b/drivers/nvme/host/pr.c
-> @@ -6,24 +6,28 @@
->  
->  #include "nvme.h"
->  
-> -static char nvme_pr_type(enum pr_type type)
-> +static const struct {
-> +	enum nvme_pr_type	nvme_type;
-> +	enum pr_type		blk_type;
-> +} nvme_pr_types[] = {
-> +	{ NVME_PR_WRITE_EXCLUSIVE, PR_WRITE_EXCLUSIVE },
-> +	{ NVME_PR_EXCLUSIVE_ACCESS, PR_EXCLUSIVE_ACCESS },
-> +	{ NVME_PR_WRITE_EXCLUSIVE_REG_ONLY, PR_WRITE_EXCLUSIVE_REG_ONLY },
-> +	{ NVME_PR_EXCLUSIVE_ACCESS_REG_ONLY, PR_EXCLUSIVE_ACCESS_REG_ONLY },
-> +	{ NVME_PR_WRITE_EXCLUSIVE_ALL_REGS, PR_WRITE_EXCLUSIVE_ALL_REGS },
-> +	{ NVME_PR_EXCLUSIVE_ACCESS_ALL_REGS, PR_EXCLUSIVE_ACCESS_ALL_REGS },
-> +};
+LIO needs to be able to know if a failure was the result of a reservation
+conflict and then be able to convert from the lower level's definition of
+that error to SCSI so it can be returned to the initiator. Windows
+clustering and test tools like libiscsi require this.
 
-Wouldn't it be easier to use the block type as the array index to avoid
-the whole looped lookup?
+dm-multipath would also like to be able to distiguish between path
+failures and reservation conflict so they can optimize their error
+handlers for their pr_ops.
 
-  enum nvme_pr_type types[] = {
-	.PR_WRITE_EXCLUSIVE = NVME_PR_WRITE_EXCLUSIVE,
-	.PR_EXCLUSIVE_ACCESS  = NVME_PR_EXCLUSIVE_ACCESS,
-        ...
-  };
+To do this they currently have to know the lower level device type and how
+to convert between that driver's error code and SCSI. Just knowing the
+device type is difficult because we can have layers like dm-multipath
+between us and dm-multipath only knows the layer below it is a block
+device.
 
-?
+To handle both cases and keep userspace compatibility, this patch adds a
+blk_status_t arg to the pr_ops callouts. The lower levels will convert
+their device specific error to the blk_status_t then the upper levels
+can easily check that code without knowing the device type. Adding the
+extra return value will then allow us to not break userspace which expects
+a negative -Exyz error code if the command fails before it's sent to the
+device or a device/driver specific value if the error is > 0.
+
+This patch just wires in the blk_status_t to the pr_ops callouts. The
+next patches will then have the drivers pass up a blk_status_t.
+
+Signed-off-by: Mike Christie <michael.christie@oracle.com>
+---
+ block/ioctl.c            | 11 ++++++-----
+ drivers/md/dm.c          | 41 +++++++++++++++++++++++++---------------
+ drivers/nvme/host/pr.c   | 16 +++++++++-------
+ drivers/scsi/sd.c        | 21 +++++++++++---------
+ fs/nfs/blocklayout/dev.c |  4 ++--
+ fs/nfsd/blocklayout.c    |  6 +++---
+ include/linux/pr.h       | 17 ++++++++++-------
+ 7 files changed, 68 insertions(+), 48 deletions(-)
+
+diff --git a/block/ioctl.c b/block/ioctl.c
+index 60121e89052b..72338c56e235 100644
+--- a/block/ioctl.c
++++ b/block/ioctl.c
+@@ -269,7 +269,8 @@ static int blkdev_pr_register(struct block_device *bdev,
+ 
+ 	if (reg.flags & ~PR_FL_IGNORE_KEY)
+ 		return -EOPNOTSUPP;
+-	return ops->pr_register(bdev, reg.old_key, reg.new_key, reg.flags);
++	return ops->pr_register(bdev, reg.old_key, reg.new_key, reg.flags,
++				NULL);
+ }
+ 
+ static int blkdev_pr_reserve(struct block_device *bdev,
+@@ -287,7 +288,7 @@ static int blkdev_pr_reserve(struct block_device *bdev,
+ 
+ 	if (rsv.flags & ~PR_FL_IGNORE_KEY)
+ 		return -EOPNOTSUPP;
+-	return ops->pr_reserve(bdev, rsv.key, rsv.type, rsv.flags);
++	return ops->pr_reserve(bdev, rsv.key, rsv.type, rsv.flags, NULL);
+ }
+ 
+ static int blkdev_pr_release(struct block_device *bdev,
+@@ -305,7 +306,7 @@ static int blkdev_pr_release(struct block_device *bdev,
+ 
+ 	if (rsv.flags)
+ 		return -EOPNOTSUPP;
+-	return ops->pr_release(bdev, rsv.key, rsv.type);
++	return ops->pr_release(bdev, rsv.key, rsv.type, NULL);
+ }
+ 
+ static int blkdev_pr_preempt(struct block_device *bdev,
+@@ -323,7 +324,7 @@ static int blkdev_pr_preempt(struct block_device *bdev,
+ 
+ 	if (p.flags)
+ 		return -EOPNOTSUPP;
+-	return ops->pr_preempt(bdev, p.old_key, p.new_key, p.type, abort);
++	return ops->pr_preempt(bdev, p.old_key, p.new_key, p.type, abort, NULL);
+ }
+ 
+ static int blkdev_pr_clear(struct block_device *bdev,
+@@ -341,7 +342,7 @@ static int blkdev_pr_clear(struct block_device *bdev,
+ 
+ 	if (c.flags)
+ 		return -EOPNOTSUPP;
+-	return ops->pr_clear(bdev, c.key);
++	return ops->pr_clear(bdev, c.key, NULL);
+ }
+ 
+ static int blkdev_flushbuf(struct block_device *bdev, fmode_t mode,
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index f7f806890c92..7e77c836a61a 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -3079,7 +3079,8 @@ struct dm_pr {
+ 	bool	abort;
+ 	bool	fail_early;
+ 	int	ret;
+-	enum pr_type type;
++	enum pr_type	type;
++	blk_status_t	*blk_stat;
+ };
+ 
+ static int dm_call_pr(struct block_device *bdev, iterate_devices_callout_fn fn,
+@@ -3130,7 +3131,8 @@ static int __dm_pr_register(struct dm_target *ti, struct dm_dev *dev,
+ 		return -1;
+ 	}
+ 
+-	ret = ops->pr_register(dev->bdev, pr->old_key, pr->new_key, pr->flags);
++	ret = ops->pr_register(dev->bdev, pr->old_key, pr->new_key, pr->flags,
++			       pr->blk_stat);
+ 	if (!ret)
+ 		return 0;
+ 
+@@ -3144,7 +3146,7 @@ static int __dm_pr_register(struct dm_target *ti, struct dm_dev *dev,
+ }
+ 
+ static int dm_pr_register(struct block_device *bdev, u64 old_key, u64 new_key,
+-			  u32 flags)
++			  u32 flags, blk_status_t *blk_stat)
+ {
+ 	struct dm_pr pr = {
+ 		.old_key	= old_key,
+@@ -3152,6 +3154,7 @@ static int dm_pr_register(struct block_device *bdev, u64 old_key, u64 new_key,
+ 		.flags		= flags,
+ 		.fail_early	= true,
+ 		.ret		= 0,
++		.blk_stat	= blk_stat,
+ 	};
+ 	int ret;
+ 
+@@ -3189,7 +3192,8 @@ static int __dm_pr_reserve(struct dm_target *ti, struct dm_dev *dev,
+ 		return -1;
+ 	}
+ 
+-	pr->ret = ops->pr_reserve(dev->bdev, pr->old_key, pr->type, pr->flags);
++	pr->ret = ops->pr_reserve(dev->bdev, pr->old_key, pr->type, pr->flags,
++				  pr->blk_stat);
+ 	if (!pr->ret)
+ 		return -1;
+ 
+@@ -3197,7 +3201,7 @@ static int __dm_pr_reserve(struct dm_target *ti, struct dm_dev *dev,
+ }
+ 
+ static int dm_pr_reserve(struct block_device *bdev, u64 key, enum pr_type type,
+-			 u32 flags)
++			 u32 flags, blk_status_t *blk_stat)
+ {
+ 	struct dm_pr pr = {
+ 		.old_key	= key,
+@@ -3205,6 +3209,7 @@ static int dm_pr_reserve(struct block_device *bdev, u64 key, enum pr_type type,
+ 		.type		= type,
+ 		.fail_early	= false,
+ 		.ret		= 0,
++		.blk_stat	= blk_stat,
+ 	};
+ 	int ret;
+ 
+@@ -3232,19 +3237,22 @@ static int __dm_pr_release(struct dm_target *ti, struct dm_dev *dev,
+ 		return -1;
+ 	}
+ 
+-	pr->ret = ops->pr_release(dev->bdev, pr->old_key, pr->type);
++	pr->ret = ops->pr_release(dev->bdev, pr->old_key, pr->type,
++				  pr->blk_stat);
+ 	if (pr->ret)
+ 		return -1;
+ 
+ 	return 0;
+ }
+ 
+-static int dm_pr_release(struct block_device *bdev, u64 key, enum pr_type type)
++static int dm_pr_release(struct block_device *bdev, u64 key, enum pr_type type,
++			 blk_status_t *blk_stat)
+ {
+ 	struct dm_pr pr = {
+ 		.old_key	= key,
+ 		.type		= type,
+ 		.fail_early	= false,
++		.blk_stat	= blk_stat,
+ 	};
+ 	int ret;
+ 
+@@ -3267,7 +3275,7 @@ static int __dm_pr_preempt(struct dm_target *ti, struct dm_dev *dev,
+ 	}
+ 
+ 	pr->ret = ops->pr_preempt(dev->bdev, pr->old_key, pr->new_key, pr->type,
+-				  pr->abort);
++				  pr->abort, pr->blk_stat);
+ 	if (!pr->ret)
+ 		return -1;
+ 
+@@ -3275,13 +3283,14 @@ static int __dm_pr_preempt(struct dm_target *ti, struct dm_dev *dev,
+ }
+ 
+ static int dm_pr_preempt(struct block_device *bdev, u64 old_key, u64 new_key,
+-			 enum pr_type type, bool abort)
++			 enum pr_type type, bool abort, blk_status_t *blk_stat)
+ {
+ 	struct dm_pr pr = {
+ 		.new_key	= new_key,
+ 		.old_key	= old_key,
+ 		.type		= type,
+ 		.fail_early	= false,
++		.blk_stat	= blk_stat,
+ 	};
+ 	int ret;
+ 
+@@ -3292,7 +3301,8 @@ static int dm_pr_preempt(struct block_device *bdev, u64 old_key, u64 new_key,
+ 	return pr.ret;
+ }
+ 
+-static int dm_pr_clear(struct block_device *bdev, u64 key)
++static int dm_pr_clear(struct block_device *bdev, u64 key,
++		       blk_status_t *blk_stat)
+ {
+ 	struct mapped_device *md = bdev->bd_disk->private_data;
+ 	const struct pr_ops *ops;
+@@ -3304,7 +3314,7 @@ static int dm_pr_clear(struct block_device *bdev, u64 key)
+ 
+ 	ops = bdev->bd_disk->fops->pr_ops;
+ 	if (ops && ops->pr_clear)
+-		r = ops->pr_clear(bdev, key);
++		r = ops->pr_clear(bdev, key, blk_stat);
+ 	else
+ 		r = -EOPNOTSUPP;
+ out:
+@@ -3313,7 +3323,7 @@ static int dm_pr_clear(struct block_device *bdev, u64 key)
+ }
+ 
+ static int dm_pr_read_keys(struct block_device *bdev, struct pr_keys *keys,
+-			   u32 keys_len)
++			   u32 keys_len, blk_status_t *blk_stat)
+ {
+ 	struct mapped_device *md = bdev->bd_disk->private_data;
+ 	const struct pr_ops *ops;
+@@ -3325,7 +3335,7 @@ static int dm_pr_read_keys(struct block_device *bdev, struct pr_keys *keys,
+ 
+ 	ops = bdev->bd_disk->fops->pr_ops;
+ 	if (ops && ops->pr_read_keys)
+-		r = ops->pr_read_keys(bdev, keys, keys_len);
++		r = ops->pr_read_keys(bdev, keys, keys_len, blk_stat);
+ 	else
+ 		r = -EOPNOTSUPP;
+ out:
+@@ -3334,7 +3344,8 @@ static int dm_pr_read_keys(struct block_device *bdev, struct pr_keys *keys,
+ }
+ 
+ static int dm_pr_read_reservation(struct block_device *bdev,
+-				  struct pr_held_reservation *rsv)
++				  struct pr_held_reservation *rsv,
++				  blk_status_t *blk_stat)
+ {
+ 	struct mapped_device *md = bdev->bd_disk->private_data;
+ 	const struct pr_ops *ops;
+@@ -3346,7 +3357,7 @@ static int dm_pr_read_reservation(struct block_device *bdev,
+ 
+ 	ops = bdev->bd_disk->fops->pr_ops;
+ 	if (ops && ops->pr_read_reservation)
+-		r = ops->pr_read_reservation(bdev, rsv);
++		r = ops->pr_read_reservation(bdev, rsv, blk_stat);
+ 	else
+ 		r = -EOPNOTSUPP;
+ out:
+diff --git a/drivers/nvme/host/pr.c b/drivers/nvme/host/pr.c
+index 87a0aaf811f4..854a26ce55fe 100644
+--- a/drivers/nvme/host/pr.c
++++ b/drivers/nvme/host/pr.c
+@@ -86,7 +86,7 @@ static int nvme_pr_command(struct block_device *bdev, u32 cdw10,
+ }
+ 
+ static int nvme_pr_register(struct block_device *bdev, u64 old,
+-		u64 new, unsigned flags)
++		u64 new, unsigned flags, blk_status_t *blk_stat)
+ {
+ 	u32 cdw10;
+ 
+@@ -100,7 +100,7 @@ static int nvme_pr_register(struct block_device *bdev, u64 old,
+ }
+ 
+ static int nvme_pr_reserve(struct block_device *bdev, u64 key,
+-		enum pr_type type, unsigned flags)
++		enum pr_type type, unsigned flags, blk_status_t *blk_stat)
+ {
+ 	u32 cdw10;
+ 
+@@ -113,21 +113,23 @@ static int nvme_pr_reserve(struct block_device *bdev, u64 key,
+ }
+ 
+ static int nvme_pr_preempt(struct block_device *bdev, u64 old, u64 new,
+-		enum pr_type type, bool abort)
++		enum pr_type type, bool abort, blk_status_t *blk_stat)
+ {
+ 	u32 cdw10 = nvme_pr_type_from_blk(type) << 8 | (abort ? 2 : 1);
+ 
+ 	return nvme_pr_command(bdev, cdw10, old, new, nvme_cmd_resv_acquire);
+ }
+ 
+-static int nvme_pr_clear(struct block_device *bdev, u64 key)
++static int nvme_pr_clear(struct block_device *bdev, u64 key,
++		blk_status_t *blk_stat)
+ {
+ 	u32 cdw10 = 1 | (key ? 0 : 1 << 3);
+ 
+ 	return nvme_pr_command(bdev, cdw10, key, 0, nvme_cmd_resv_release);
+ }
+ 
+-static int nvme_pr_release(struct block_device *bdev, u64 key, enum pr_type type)
++static int nvme_pr_release(struct block_device *bdev, u64 key, enum pr_type type,
++		blk_status_t *blk_stat)
+ {
+ 	u32 cdw10 = nvme_pr_type_from_blk(type) << 8 | (key ? 0 : 1 << 3);
+ 
+@@ -163,7 +165,7 @@ static int nvme_pr_resv_report(struct block_device *bdev, u8 *data,
+ }
+ 
+ static int nvme_pr_read_keys(struct block_device *bdev,
+-		struct pr_keys *keys_info, u32 keys_len)
++		struct pr_keys *keys_info, u32 keys_len, blk_status_t *blk_stat)
+ {
+ 	struct nvme_reservation_status *status;
+ 	u32 data_len, num_ret_keys;
+@@ -207,7 +209,7 @@ static int nvme_pr_read_keys(struct block_device *bdev,
+ }
+ 
+ static int nvme_pr_read_reservation(struct block_device *bdev,
+-		struct pr_held_reservation *resv)
++		struct pr_held_reservation *resv, blk_status_t *blk_stat)
+ {
+ 	struct nvme_reservation_status tmp_status, *status;
+ 	int ret, i, num_regs;
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index 86b602399000..8a39f25e4470 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -1736,7 +1736,7 @@ static int sd_pr_in_command(struct block_device *bdev, u8 sa,
+ }
+ 
+ static int sd_pr_read_keys(struct block_device *bdev, struct pr_keys *keys_info,
+-			   u32 keys_len)
++			   u32 keys_len, blk_status_t *blk_stat)
+ {
+ 	int result, i, data_offset, num_copy_keys;
+ 	int data_len = keys_len + 8;
+@@ -1767,7 +1767,8 @@ static int sd_pr_read_keys(struct block_device *bdev, struct pr_keys *keys_info,
+ }
+ 
+ static int sd_pr_read_reservation(struct block_device *bdev,
+-				  struct pr_held_reservation *rsv)
++				  struct pr_held_reservation *rsv,
++				  blk_status_t *blk_stat)
+ {
+ 	struct scsi_disk *sdkp = scsi_disk(bdev->bd_disk);
+ 	struct scsi_device *sdev = sdkp->device;
+@@ -1797,8 +1798,8 @@ static int sd_pr_read_reservation(struct block_device *bdev,
+ 	return 0;
+ }
+ 
+-static int sd_pr_out_command(struct block_device *bdev, u8 sa,
+-		u64 key, u64 sa_key, enum scsi_pr_type type, u8 flags)
++static int sd_pr_out_command(struct block_device *bdev, u8 sa, u64 key,
++		u64 sa_key, enum scsi_pr_type type, u8 flags)
+ {
+ 	struct scsi_disk *sdkp = scsi_disk(bdev->bd_disk);
+ 	struct scsi_device *sdev = sdkp->device;
+@@ -1847,7 +1848,7 @@ static int sd_pr_out_command(struct block_device *bdev, u8 sa,
+ }
+ 
+ static int sd_pr_register(struct block_device *bdev, u64 old_key, u64 new_key,
+-		u32 flags)
++		u32 flags, blk_status_t *blk_stat)
+ {
+ 	if (flags & ~PR_FL_IGNORE_KEY)
+ 		return -EOPNOTSUPP;
+@@ -1857,7 +1858,7 @@ static int sd_pr_register(struct block_device *bdev, u64 old_key, u64 new_key,
+ }
+ 
+ static int sd_pr_reserve(struct block_device *bdev, u64 key, enum pr_type type,
+-		u32 flags)
++		u32 flags, blk_status_t *blk_stat)
+ {
+ 	if (flags)
+ 		return -EOPNOTSUPP;
+@@ -1865,20 +1866,22 @@ static int sd_pr_reserve(struct block_device *bdev, u64 key, enum pr_type type,
+ 				 block_pr_type_to_scsi(type), 0);
+ }
+ 
+-static int sd_pr_release(struct block_device *bdev, u64 key, enum pr_type type)
++static int sd_pr_release(struct block_device *bdev, u64 key, enum pr_type type,
++		blk_status_t *blk_stat)
+ {
+ 	return sd_pr_out_command(bdev, 0x02, key, 0,
+ 				 block_pr_type_to_scsi(type), 0);
+ }
+ 
+ static int sd_pr_preempt(struct block_device *bdev, u64 old_key, u64 new_key,
+-		enum pr_type type, bool abort)
++		enum pr_type type, bool abort, blk_status_t *blk_stat)
+ {
+ 	return sd_pr_out_command(bdev, abort ? 0x05 : 0x04, old_key, new_key,
+ 				 block_pr_type_to_scsi(type), 0);
+ }
+ 
+-static int sd_pr_clear(struct block_device *bdev, u64 key)
++static int sd_pr_clear(struct block_device *bdev, u64 key,
++		blk_status_t *blk_stat)
+ {
+ 	return sd_pr_out_command(bdev, 0x03, key, 0, 0, 0);
+ }
+diff --git a/fs/nfs/blocklayout/dev.c b/fs/nfs/blocklayout/dev.c
+index fea5f8821da5..516436446f5d 100644
+--- a/fs/nfs/blocklayout/dev.c
++++ b/fs/nfs/blocklayout/dev.c
+@@ -29,7 +29,7 @@ bl_free_device(struct pnfs_block_dev *dev)
+ 			int error;
+ 
+ 			error = ops->pr_register(dev->bdev, dev->pr_key, 0,
+-				false);
++				false, NULL);
+ 			if (error)
+ 				pr_err("failed to unregister PR key.\n");
+ 		}
+@@ -362,7 +362,7 @@ bl_parse_scsi(struct nfs_server *server, struct pnfs_block_dev *d,
+ 		goto out_blkdev_put;
+ 	}
+ 
+-	error = ops->pr_register(d->bdev, 0, d->pr_key, true);
++	error = ops->pr_register(d->bdev, 0, d->pr_key, true, NULL);
+ 	if (error) {
+ 		pr_err("pNFS: failed to register key for block device %s.",
+ 				d->bdev->bd_disk->disk_name);
+diff --git a/fs/nfsd/blocklayout.c b/fs/nfsd/blocklayout.c
+index b6d01d51a746..a302ea026f72 100644
+--- a/fs/nfsd/blocklayout.c
++++ b/fs/nfsd/blocklayout.c
+@@ -277,7 +277,7 @@ nfsd4_block_get_device_info_scsi(struct super_block *sb,
+ 		goto out_free_dev;
+ 	}
+ 
+-	ret = ops->pr_register(sb->s_bdev, 0, NFSD_MDS_PR_KEY, true);
++	ret = ops->pr_register(sb->s_bdev, 0, NFSD_MDS_PR_KEY, true, NULL);
+ 	if (ret) {
+ 		pr_err("pNFS: failed to register key for device %s.\n",
+ 			sb->s_id);
+@@ -285,7 +285,7 @@ nfsd4_block_get_device_info_scsi(struct super_block *sb,
+ 	}
+ 
+ 	ret = ops->pr_reserve(sb->s_bdev, NFSD_MDS_PR_KEY,
+-			PR_EXCLUSIVE_ACCESS_REG_ONLY, 0);
++			PR_EXCLUSIVE_ACCESS_REG_ONLY, 0, NULL);
+ 	if (ret) {
+ 		pr_err("pNFS: failed to reserve device %s.\n",
+ 			sb->s_id);
+@@ -331,7 +331,7 @@ nfsd4_scsi_fence_client(struct nfs4_layout_stateid *ls)
+ 	struct block_device *bdev = ls->ls_file->nf_file->f_path.mnt->mnt_sb->s_bdev;
+ 
+ 	bdev->bd_disk->fops->pr_ops->pr_preempt(bdev, NFSD_MDS_PR_KEY,
+-			nfsd4_scsi_pr_key(clp), 0, true);
++			nfsd4_scsi_pr_key(clp), 0, true, NULL);
+ }
+ 
+ const struct nfsd4_layout_ops scsi_layout_ops = {
+diff --git a/include/linux/pr.h b/include/linux/pr.h
+index 55c9ab7a202b..954544200a57 100644
+--- a/include/linux/pr.h
++++ b/include/linux/pr.h
+@@ -18,14 +18,15 @@ struct pr_held_reservation {
+ 
+ struct pr_ops {
+ 	int (*pr_register)(struct block_device *bdev, u64 old_key, u64 new_key,
+-			u32 flags);
++			u32 flags, blk_status_t *blk_stat);
+ 	int (*pr_reserve)(struct block_device *bdev, u64 key,
+-			enum pr_type type, u32 flags);
++			enum pr_type type, u32 flags, blk_status_t *blk_stat);
+ 	int (*pr_release)(struct block_device *bdev, u64 key,
+-			enum pr_type type);
++			enum pr_type type, blk_status_t *blk_stat);
+ 	int (*pr_preempt)(struct block_device *bdev, u64 old_key, u64 new_key,
+-			enum pr_type type, bool abort);
+-	int (*pr_clear)(struct block_device *bdev, u64 key);
++			enum pr_type type, bool abort, blk_status_t *blk_stat);
++	int (*pr_clear)(struct block_device *bdev, u64 key,
++			blk_status_t *blk_stat);
+ 	/*
+ 	 * pr_read_keys - Read the registered keys and return them in the
+ 	 * pr_keys->keys array. The keys array will have been allocated at the
+@@ -35,9 +36,11 @@ struct pr_ops {
+ 	 * contains, so the caller can retry with a larger array.
+ 	 */
+ 	int (*pr_read_keys)(struct block_device *bdev,
+-			struct pr_keys *keys_info, u32 keys_len);
++			struct pr_keys *keys_info, u32 keys_len,
++			blk_status_t *blk_stat);
+ 	int (*pr_read_reservation)(struct block_device *bdev,
+-			struct pr_held_reservation *rsv);
++			struct pr_held_reservation *rsv,
++			blk_status_t *blk_stat);
+ };
+ 
+ #endif /* LINUX_PR_H */
+-- 
+2.25.1
 
 --
 dm-devel mailing list
