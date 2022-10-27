@@ -1,84 +1,56 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7FEC5C38A2D
-	for <dm-devel@archiver.kernel.org>; Thu, 27 Oct 2022 01:51:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0ACDFC38A2D
+	for <dm-devel@archiver.kernel.org>; Thu, 27 Oct 2022 08:57:38 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1666835488;
+	s=mimecast20190719; t=1666861057;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=WC6JASGw/wngLmhkKx3kd55tprGK1y2Fbt6xLOjIMCY=;
-	b=DIgenuHt2yMxOzHA3EjNSB3cIkZ+3wSnUU9ZcATkXDE9MS259xXnSzGXJSNpGh7TvDrwpt
-	lSFItlfhCqK3KJvnI+138lC167K1gtStQjywmxVow1HzMoAwXIvrZ/TtAk1j1I4wMOawpQ
-	OsSTn7eJvJAYzpg6hRkAwXlXr15Etnw=
+	bh=OAJxWUK9WU2zTmfpnnkX0lb7c+xjaZ99hbltXzeJmDo=;
+	b=I5D6pG+64IV3qwDFTFEDt6MWCsbptQWWBFR3n+Nc1ZKdpPMyl4gkeWL21+1xIO8YA/8xLI
+	KseLq4ekGL9+E4jlqv7Vcw1htG7+wV+L8SE8f2yIrViJhKZPF7XSG/dpt637505Ft44SLh
+	MArOwLqML7yXpcvtDIGodI+KrEn7a1w=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-636-9XHyBQ0MPaOVqm9i3M366g-1; Wed, 26 Oct 2022 21:51:24 -0400
-X-MC-Unique: 9XHyBQ0MPaOVqm9i3M366g-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-615-j9SUVDXQMTOTpezmCtxtHQ-1; Thu, 27 Oct 2022 04:57:34 -0400
+X-MC-Unique: j9SUVDXQMTOTpezmCtxtHQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 84075101A52A;
-	Thu, 27 Oct 2022 01:51:23 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6F8F9858F13;
+	Thu, 27 Oct 2022 08:57:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 726B1111E3E6;
-	Thu, 27 Oct 2022 01:51:23 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5D57E1415137;
+	Thu, 27 Oct 2022 08:57:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5C1CD19465A4;
-	Thu, 27 Oct 2022 01:51:23 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id F31AF19465A4;
+	Thu, 27 Oct 2022 08:57:25 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
  [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3302A19465A4
- for <dm-devel@listman.corp.redhat.com>; Thu, 27 Oct 2022 01:51:22 +0000 (UTC)
+ ESMTP id 58A401946597
+ for <dm-devel@listman.corp.redhat.com>; Thu, 27 Oct 2022 08:57:24 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 151F32024CC5; Thu, 27 Oct 2022 01:51:22 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0E1662024CB7
- for <dm-devel@redhat.com>; Thu, 27 Oct 2022 01:51:21 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DE56F381494D
- for <dm-devel@redhat.com>; Thu, 27 Oct 2022 01:51:21 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-624-wnVQWqAROgyhAwY1tddLog-1; Wed, 26 Oct 2022 21:51:20 -0400
-X-MC-Unique: wnVQWqAROgyhAwY1tddLog-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 34FF56205B;
- Thu, 27 Oct 2022 01:51:19 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 211A1C433D6;
- Thu, 27 Oct 2022 01:51:18 +0000 (UTC)
-From: Sasha Levin <sashal@kernel.org>
-To: stable-commits@vger.kernel.org,
-	zhanggenjian@kylinos.cn
-Date: Wed, 26 Oct 2022 21:51:16 -0400
-Message-Id: <20221027015116.383438-1-sashal@kernel.org>
+ id 0AA842022EBA; Thu, 27 Oct 2022 08:57:24 +0000 (UTC)
+Received: from localhost (ovpn-8-17.pek2.redhat.com [10.72.8.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTP id 98C6820290A6;
+ Thu, 27 Oct 2022 08:57:22 +0000 (UTC)
+From: Ming Lei <ming.lei@redhat.com>
+To: Jens Axboe <axboe@kernel.dk>
+Date: Thu, 27 Oct 2022 16:57:09 +0800
+Message-Id: <20221027085709.513175-1-ming.lei@redhat.com>
 MIME-Version: 1.0
-X-Patchwork-Hint: ignore
-X-stable: review
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: [dm-devel] Patch "dm: remove unnecessary assignment statement in
- alloc_dev()" has been added to the 5.15-stable tree
+Subject: [dm-devel] [PATCH] blk-mq: don't add non-pt request with ->end_io
+ to batch
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -90,57 +62,57 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
- Alasdair Kergon <agk@redhat.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Changhui Zhong <czhong@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Ming Lei <ming.lei@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-This is a note to let you know that I've just added the patch titled
+dm-rq implements ->end_io callback for request issued to underlying queue,
+and it isn't passthrough request.
 
-    dm: remove unnecessary assignment statement in alloc_dev()
+Commit ab3e1d3bbab9 ("block: allow end_io based requests in the completion
+batch handling") doesn't clear rq->bio and rq->__data_len for request
+with ->end_io in blk_mq_end_request_batch(), and this way is actually
+dangerous, but so far it is only for nvme passthrough request.
 
-to the 5.15-stable tree which can be found at:
-    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
+dm-rq needs to clean up remained bios in case of partial completion,
+and req->bio is required, then use-after-free is triggered, so the
+underlying clone request can't be completed in blk_mq_end_request_batch.
 
-The filename of the patch is:
-     dm-remove-unnecessary-assignment-statement-in-alloc_.patch
-and it can be found in the queue-5.15 subdirectory.
+Fix panic by not adding such request into batch list, and the issue
+can be triggered simply by exposing nvme pci to dm-mpath simply.
 
-If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
+Fixes: ab3e1d3bbab9 ("block: allow end_io based requests in the completion batch handling")
+Cc: dm-devel@redhat.com
+Cc: Mike Snitzer <snitzer@kernel.org>
+Reported-by: Changhui Zhong <czhong@redhat.com>
+Signed-off-by: Ming Lei <ming.lei@redhat.com>
+---
+ include/linux/blk-mq.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-
-
-commit e4142b2345f60860028b94e8930df3656f8e6acf
-Author: Genjian Zhang <zhanggenjian@kylinos.cn>
-Date:   Thu Sep 29 16:20:36 2022 +0800
-
-    dm: remove unnecessary assignment statement in alloc_dev()
-    
-    [ Upstream commit 99f4f5bcb975527508eb7a5e3e34bdb91d576746 ]
-    
-    Fixes: 74fe6ba923949 ("dm: convert to blk_alloc_disk/blk_cleanup_disk")
-    Signed-off-by: Genjian Zhang <zhanggenjian@kylinos.cn>
-    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-    Signed-off-by: Sasha Levin <sashal@kernel.org>
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 41d2e1285c07..9dd2c2da075d 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1797,7 +1797,6 @@ static struct mapped_device *alloc_dev(int minor)
- 	md->disk->first_minor = minor;
- 	md->disk->minors = 1;
- 	md->disk->fops = &dm_blk_dops;
--	md->disk->queue = md->queue;
- 	md->disk->private_data = md;
- 	sprintf(md->disk->disk_name, "dm-%d", minor);
+diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
+index ba18e9bdb799..d6119c5d1069 100644
+--- a/include/linux/blk-mq.h
++++ b/include/linux/blk-mq.h
+@@ -853,7 +853,8 @@ static inline bool blk_mq_add_to_batch(struct request *req,
+ 				       struct io_comp_batch *iob, int ioerror,
+ 				       void (*complete)(struct io_comp_batch *))
+ {
+-	if (!iob || (req->rq_flags & RQF_ELV) || ioerror)
++	if (!iob || (req->rq_flags & RQF_ELV) || ioerror ||
++			(req->end_io && !blk_rq_is_passthrough(req)))
+ 		return false;
  
+ 	if (!iob->complete)
+-- 
+2.31.1
 
 --
 dm-devel mailing list
