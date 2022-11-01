@@ -4,84 +4,64 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C7744ECAAA1
-	for <dm-devel@archiver.kernel.org>; Tue,  1 Nov 2022 13:19:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B4227C43219
+	for <dm-devel@archiver.kernel.org>; Tue,  1 Nov 2022 20:53:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667308780;
+	s=mimecast20190719; t=1667336029;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=zqIc/36b7jEEQ8vu+R4K/ijt89TdYCQuOKiw3lkkSes=;
-	b=Z/cGFtkBWImtU8bv95QzrvCRJfNb2H/NsigE8lWQdswPgxe84PJzQ2P2PoQ852X6CG31+W
-	Vt1HyeslR7A25v5g0tTZhDoDexkJp3utYK2ecv9tgiIlvHG+qC00XcQcLLXPXUb60og9qI
-	ZsIhLsbB0Ie51i04oOtn5zvWyfE6gNw=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=ix+Cuw5Wbn4STDfSR8NBM+Uq4QpDj7sQwgUP8r3oQcc=;
+	b=PfZkzgpPklPqt9Seso2UtqrpkC3nnBbWb44N2H6joDkE8+Rik38S0V1kg8RY/a9SeCvwRH
+	fFTZqm6EpdsIYSR9wHzplyg0QPnuQaN8VVjQKwpdJJzMoE57DHazDuIlsIFwCJVsUM1ZiE
+	6DoJvzVmnf6T6ESDVR+ZFXXqnCMYxXk=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-263-XQpGMjIqM_WPmhxZ4r06ww-1; Tue, 01 Nov 2022 09:19:29 -0400
-X-MC-Unique: XQpGMjIqM_WPmhxZ4r06ww-1
+ us-mta-245-khkN77SiN6OVa9yOmvnnpg-1; Tue, 01 Nov 2022 16:53:45 -0400
+X-MC-Unique: khkN77SiN6OVa9yOmvnnpg-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 25ECD3C0D851;
-	Tue,  1 Nov 2022 13:18:41 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 05DCF40C2140;
-	Tue,  1 Nov 2022 13:18:39 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 909E785A59D;
+	Tue,  1 Nov 2022 20:53:43 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6861940C2140;
+	Tue,  1 Nov 2022 20:53:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D7E5719465B3;
-	Tue,  1 Nov 2022 13:18:38 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1B9E019465B3;
+	Tue,  1 Nov 2022 20:53:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7700D1946594
- for <dm-devel@listman.corp.redhat.com>; Tue,  1 Nov 2022 13:18:37 +0000 (UTC)
+ ESMTP id E3DE61946594
+ for <dm-devel@listman.corp.redhat.com>; Tue,  1 Nov 2022 20:53:35 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 18F4F1415121; Tue,  1 Nov 2022 13:18:37 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 11660141511F
- for <dm-devel@redhat.com>; Tue,  1 Nov 2022 13:18:37 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EF6B3800B23
- for <dm-devel@redhat.com>; Tue,  1 Nov 2022 13:18:36 +0000 (UTC)
-Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-663-6C2b3z-7MO6B25ed3kR0mA-1; Tue, 01 Nov 2022 09:18:35 -0400
-X-MC-Unique: 6C2b3z-7MO6B25ed3kR0mA-1
-Received: by verein.lst.de (Postfix, from userid 2407)
- id 1501D6732D; Tue,  1 Nov 2022 14:18:31 +0100 (CET)
-Date: Tue, 1 Nov 2022 14:18:30 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <20221101131830.GA16341@lst.de>
-References: <20221030153120.1045101-1-hch@lst.de>
- <20221030153120.1045101-8-hch@lst.de>
- <fd409996-e5e1-d7af-b31d-87db943eaa25@huaweicloud.com>
- <20221101104927.GA13823@lst.de>
- <d3f6ec1d-8141-19d1-ce4c-d42710f4a636@huaweicloud.com>
- <20221101112131.GA14379@lst.de>
- <57465370-99fe-d8a5-e150-a1057640e972@huaweicloud.com>
+ id A1007468A47; Tue,  1 Nov 2022 20:53:35 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 89DE0468A41;
+ Tue,  1 Nov 2022 20:53:35 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 2A1KrZDa007815; Tue, 1 Nov 2022 16:53:35 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 2A1KrZ6B007811; Tue, 1 Nov 2022 16:53:35 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Tue, 1 Nov 2022 16:53:35 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>
+Message-ID: <alpine.LRH.2.21.2211011652360.7766@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
 MIME-Version: 1.0
-In-Reply-To: <57465370-99fe-d8a5-e150-a1057640e972@huaweicloud.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH 7/7] block: store the holder kobject in
- bd_holder_disk
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+Subject: [dm-devel] [PATCH 1/4] dm-ioctl: fix misbehavior if list_versions
+ races with module loading
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -93,34 +73,77 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@kernel.org>,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- "yukuai \(C\)" <yukuai3@huawei.com>, Christoph Hellwig <hch@lst.de>,
- Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Nov 01, 2022 at 07:28:17PM +0800, Yu Kuai wrote:
-> What if bd_holder_dir is already freed here, then uaf can be triggered.
-> Thus bd_holder_dir need to be resed in del_gendisk() if it's reference
-> is dropped to 0, however, kobject apis can't do that...
+__list_versions will first estimate the required space using the
+"dm_target_iterate(list_version_get_needed, &needed)" call and then will
+fill the space using the "dm_target_iterate(list_version_get_info,
+&iter_info)" call. Each of these calls locks the targets using the
+"down_read(&_lock)" and "up_read(&_lock)" calls, however between the first
+and second "dm_target_iterate" there is no lock held and the target
+modules can be loaded at this point, so the second "dm_target_iterate"
+call may need more space than what was the first "dm_target_iterate"
+returned.
 
-Indeed.  I don't think we can simply move the dropping of the reference
-as you suggested as that also implies taking it earlier, and the
-device in the disk is only initialized in add_disk.
+The code tries to handle this overflow (see the beginning of
+list_version_get_info), however this handling is incorrect.
 
-Now what I think we could do is:
+The code sets "param->data_size = param->data_start + needed" and
+"iter_info.end = (char *)vers+len" - "needed" is the size returned by the
+first dm_target_iterate call; "len" is the size of the buffer allocated by
+userspace.
 
- - hold open_mutex in bd_link_disk_holder as you suggested
- - check that the bdev inode is hashed inside open_mutex before doing
-   the kobject_get
+"len" may be greater than "needed"; in this case, the code will write up
+to "len" bytes into the buffer, however param->data_size is set to
+"needed", so it may write data past the param->data_size value. The ioctl
+interface copies only up to param->data_size into userspace, thus part of
+the result will be truncated.
 
+We fix this bug by setting "iter_info.end = (char *)vers + needed;" - this
+guarantees that the second "dm_target_iterate" call will write only up to
+the "needed" buffer and it will exit with "DM_BUFFER_FULL_FLAG" if it
+overflows the "needed" space - in this case, userspace will allocate a
+larger buffer and retry.
+
+Note that there is also a bug in list_version_get_needed - we need to add
+"strlen(tt->name) + 1" to the needed size, not "strlen(tt->name)".
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+
+---
+ drivers/md/dm-ioctl.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+Index: linux-2.6/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-ioctl.c	2022-11-01 16:17:26.000000000 +0100
++++ linux-2.6/drivers/md/dm-ioctl.c	2022-11-01 16:17:26.000000000 +0100
+@@ -655,7 +655,7 @@ static void list_version_get_needed(stru
+     size_t *needed = needed_param;
+ 
+     *needed += sizeof(struct dm_target_versions);
+-    *needed += strlen(tt->name);
++    *needed += strlen(tt->name) + 1;
+     *needed += ALIGN_MASK;
+ }
+ 
+@@ -720,7 +720,7 @@ static int __list_versions(struct dm_ioc
+ 	iter_info.old_vers = NULL;
+ 	iter_info.vers = vers;
+ 	iter_info.flags = 0;
+-	iter_info.end = (char *)vers+len;
++	iter_info.end = (char *)vers + needed;
+ 
+ 	/*
+ 	 * Now loop through filling out the names & versions.
 --
 dm-devel mailing list
 dm-devel@redhat.com
