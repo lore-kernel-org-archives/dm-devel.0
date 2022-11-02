@@ -1,89 +1,89 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3576BC4332F
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Nov 2022 22:51:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 98ACAC433FE
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Nov 2022 22:54:12 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667429459;
+	s=mimecast20190719; t=1667429651;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=XDV7p/YHBZQIxG7rL9L+BQM8WWTGAuqW2KnYWMUqebc=;
-	b=Zq00KPJV1GZUNLP3aYM4pxiNDBJocDyH1iu13ueYtrwajSXqUaCE/vpL3PuW+TgbDCj85o
-	zfcVShq+ASaR/F+V7MYhUgwunpcLc7zLC/NwWlHjPR7GWb9JM6nFdyIqwuIE/8m+DrBDKZ
-	D9II+aQQw0jlImBMbpNjV4ECJIzJ8fc=
+	bh=U/zJ0l2f6ZMUM4oyudWXvm9SdnBhqcR0g5Jk2gLpzUw=;
+	b=EcjcKlAjNmlKsfSyPAqKcqinBgp4qgNg5qOQepY/Ez8WD7fXQ9UBqL/eVAwcDvRTPIQ5qv
+	Wve6R/WODsqDHMbE5D/Ak/gyVhDz7DO3VRhRm8EfvXMpkjcLed466FN1HzdTs1b4H9HfEk
+	vCsrb5lkgO9QfqFCH4e6bWXGkYR/THU=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-643-_izvk5APMKanWo_dIivU9g-1; Wed, 02 Nov 2022 18:50:55 -0400
-X-MC-Unique: _izvk5APMKanWo_dIivU9g-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-232-ii7f6iiJPL6fyyPDXZGl7A-1; Wed, 02 Nov 2022 18:54:08 -0400
+X-MC-Unique: ii7f6iiJPL6fyyPDXZGl7A-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0FB1C1C05AB6;
-	Wed,  2 Nov 2022 22:50:54 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9E18B1C0759E;
+	Wed,  2 Nov 2022 22:54:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F309C49BB60;
-	Wed,  2 Nov 2022 22:50:53 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4D8EA39D6A;
+	Wed,  2 Nov 2022 22:54:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C5FA719465A4;
-	Wed,  2 Nov 2022 22:50:53 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3831419465A4;
+	Wed,  2 Nov 2022 22:54:05 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
  [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 757DB1946594
- for <dm-devel@listman.corp.redhat.com>; Wed,  2 Nov 2022 22:50:52 +0000 (UTC)
+ ESMTP id 6EEFE1946594
+ for <dm-devel@listman.corp.redhat.com>; Wed,  2 Nov 2022 22:54:03 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 555F440C6E14; Wed,  2 Nov 2022 22:50:52 +0000 (UTC)
+ id EE7D540C6E14; Wed,  2 Nov 2022 22:54:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4D7F240C6EE9
- for <dm-devel@redhat.com>; Wed,  2 Nov 2022 22:50:52 +0000 (UTC)
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E6DFD40C6E17
+ for <dm-devel@redhat.com>; Wed,  2 Nov 2022 22:54:02 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 328F7811E67
- for <dm-devel@redhat.com>; Wed,  2 Nov 2022 22:50:52 +0000 (UTC)
-Received: from mail-pf1-f182.google.com (mail-pf1-f182.google.com
- [209.85.210.182]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CB9D229AB3E4
+ for <dm-devel@redhat.com>; Wed,  2 Nov 2022 22:54:02 +0000 (UTC)
+Received: from mail-pj1-f51.google.com (mail-pj1-f51.google.com
+ [209.85.216.51]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-106-IBwihPdsNg6FmOwJAZT-DA-1; Wed, 02 Nov 2022 18:50:50 -0400
-X-MC-Unique: IBwihPdsNg6FmOwJAZT-DA-1
-Received: by mail-pf1-f182.google.com with SMTP id k22so42002pfd.3
- for <dm-devel@redhat.com>; Wed, 02 Nov 2022 15:50:50 -0700 (PDT)
+ us-mta-643-U2TylyENMFWzemVLRgtRDw-1; Wed, 02 Nov 2022 18:54:01 -0400
+X-MC-Unique: U2TylyENMFWzemVLRgtRDw-1
+Received: by mail-pj1-f51.google.com with SMTP id k5so10044863pjo.5
+ for <dm-devel@redhat.com>; Wed, 02 Nov 2022 15:54:01 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=content-transfer-encoding:in-reply-to:from:references:to
  :content-language:subject:user-agent:mime-version:date:message-id
  :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=oi/++AM86hQyi+QYKhOHsLnIasDTZEsqZxanEFqTzjY=;
- b=SMmAez6tbGOZ2/D2jadua4bqYQSPChxC/GePhTkfWpHsIMumW54itIgJnPug1XeWQC
- 6cthSqeXpcWGyE+JMeeC5s6RBqo+ikGTAOcJmLPaxCpXwj2IiMnAUmv2Pit6ndV3mJHl
- 2DOSKyhzltm3ybLo30ffe6yZkk2WOJNfuTmbYlluuPMMxuBqqhVC6OGkzrRuLCfIUTjp
- g+Te265vlw+yD89uoNNmnRWc6SC9hUHuFtH6BKsojFy8LZX7UX7mIGPSCH5NKbaJbvRF
- suZoNWdA/zT0EYbscNOS0M05vGPkGMfGKzhgjB5cdmusNg0FPWB8kb8h6gz2Z4AR9Mrc
- yDHg==
-X-Gm-Message-State: ACrzQf3pjpYPf15rk+B7KO2vSPMkHwgNEd3bKVLN4ThTWdmprsNx8+Oy
- CIF88r1Sw7XoUgH2CfBU7Vc=
-X-Google-Smtp-Source: AMsMyM6bPaD6vkm2t6htya5qjFAYxNj4UjVLLKBnOw0YiQYnA2cdZTgepQevyScmNi+GFrRNkBEHRA==
-X-Received: by 2002:a63:5909:0:b0:46e:c98d:e07c with SMTP id
- n9-20020a635909000000b0046ec98de07cmr23719156pgb.530.1667429449450; 
- Wed, 02 Nov 2022 15:50:49 -0700 (PDT)
+ bh=6sCkwj9YSprxNmaofEdMTvLEH5B6xW9TB9afqYojreE=;
+ b=LDBkIaJbEJwxzdkxkNcuWa3wxb+PfPM2JcH8GysO1ydmcz0LYdWG1Evx7jGRo/IF9d
+ GddBMwF5Iov9iafN31ETWa6HjiJdqwxcCFYAa6bNaISU8qQljKOZMn5dzC6DlZvZ/Dgd
+ Mj+JrsthGb4L5QinSPCscuntIC4vXSoTEUHV94sQPxydrGDje0oOiOi+M3hau/xJJn95
+ sMf1YoDqkqGs4CE5/STEgZBGhccStRiXXwEctEX3zl/9MduB/7j6n40sSKmXvPsYaFnp
+ Ua1POxJRC8pSwRbySUCqcGnBp6nnhBcy/5oJy8OWvvHmCjK8vkoUutqNbiZgA7xouuj2
+ +jCg==
+X-Gm-Message-State: ACrzQf3TW5PNJzhhk5buvNx8fU4e1CpqRSj6jwL2Eys0GcpRuxEp9zkr
+ XSjSkkmhagbiKGCZGvDQAnY=
+X-Google-Smtp-Source: AMsMyM711K/XUrQHKPUtbBSxzz99QtzdPWA4ooVlF037LAOY+yPo/0v1VhBhBLoucp5Sp0Kf7/u28Q==
+X-Received: by 2002:a17:902:ec86:b0:187:2430:d377 with SMTP id
+ x6-20020a170902ec8600b001872430d377mr16640073plg.33.1667429640140; 
+ Wed, 02 Nov 2022 15:54:00 -0700 (PDT)
 Received: from ?IPV6:2620:15c:211:201:22d3:f380:fa84:4b89?
  ([2620:15c:211:201:22d3:f380:fa84:4b89])
  by smtp.gmail.com with ESMTPSA id
- f26-20020aa7969a000000b0056bfd4a2702sm8928050pfk.45.2022.11.02.15.50.47
+ t4-20020a63f344000000b0046f8e444edfsm7630960pgj.60.2022.11.02.15.53.57
  (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Wed, 02 Nov 2022 15:50:48 -0700 (PDT)
-Message-ID: <6faaba2b-5fb3-7121-5796-af2b2f73b6e7@acm.org>
-Date: Wed, 2 Nov 2022 15:50:46 -0700
+ Wed, 02 Nov 2022 15:53:59 -0700 (PDT)
+Message-ID: <569dfa4d-0f0e-a596-1f38-2f4ccc555fe5@acm.org>
+Date: Wed, 2 Nov 2022 15:53:56 -0700
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
  Thunderbird/102.3.0
@@ -120,7 +120,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
@@ -133,38 +133,10 @@ On 10/26/22 16:19, Mike Christie wrote:
 > +	u32	num_keys;
 > +	u64	keys[];
 > +};
-> +
-> +struct pr_held_reservation {
-> +	u64		key;
-> +	u32		generation;
-> +	enum pr_type	type;
-> +};
-> +
->   struct pr_ops {
->   	int (*pr_register)(struct block_device *bdev, u64 old_key, u64 new_key,
->   			u32 flags);
-> @@ -14,6 +26,18 @@ struct pr_ops {
->   	int (*pr_preempt)(struct block_device *bdev, u64 old_key, u64 new_key,
->   			enum pr_type type, bool abort);
->   	int (*pr_clear)(struct block_device *bdev, u64 key);
-> +	/*
-> +	 * pr_read_keys - Read the registered keys and return them in the
-> +	 * pr_keys->keys array. The keys array will have been allocated at the
-> +	 * end of the pr_keys struct and is keys_len bytes. If there are more
-> +	 * keys than can fit in the array, success will still be returned and
-> +	 * pr_keys->num_keys will reflect the total number of keys the device
-> +	 * contains, so the caller can retry with a larger array.
-> +	 */
-> +	int (*pr_read_keys)(struct block_device *bdev,
-> +			struct pr_keys *keys_info, u32 keys_len);
-> +	int (*pr_read_reservation)(struct block_device *bdev,
-> +			struct pr_held_reservation *rsv);
->   };
-
-Is there any pr_read_keys() implementation that won't have to divide 
-@keys_len by 8? How about leaving out that argument and making callers 
-store the number of elements in the keys[] array in the num_keys member 
-before calling pr_read_keys()?
+Is my understanding correct that keys[] is treated as opaque data by the 
+kernel? If so, is it necessary to convert the persistent reservation 
+keys from big endian to CPU endianness? Some SCSI stacks keep 
+reservation keys as __be64 format.
 
 Thanks,
 
