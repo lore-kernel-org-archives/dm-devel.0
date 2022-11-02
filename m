@@ -1,69 +1,113 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 863BCC43217
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Nov 2022 18:45:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D768AC433FE
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Nov 2022 22:47:58 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667414717;
+	s=mimecast20190719; t=1667429277;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=5XujFScuLz/UuOPcms3tIZAJrdZy2wMvPiWIFmR5I5U=;
-	b=LlC47NoM2QSCVqUi17ICPx3DbPgNQGn0Ct5ZUjYNUlMCHwxBbnvOdRoJOfAHtjgUzkfKN6
-	gXRI5yA+seyk7enGsIZ4PeCyDxZugDMolpHn2ohBrhvmwyOTFDQ9fJnavVa9G17qjMkTXZ
-	dKjz1WzE6HBEtR+vNcYdbx05xxsxM9M=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=5k2AonnvIdeVU/SYPwIkCA5z+A7nyvE4uwdzB0Y7N+8=;
+	b=FmGytWXuOIaobWcN+I5hNOJ3b2lWK4zFlEMuRzvc4pSwFXxwUpTwDec478u2t5DhoiSBZl
+	Dx5mweG94w2mNr29EC9jlrQZEBRIpwUnybqwNSRkWQTR2qCkJzwL5Pw7Un/OZfxACaVl6C
+	ZZ9dPoq7LEhsurc1qcFzyEAqhqjWGgk=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-542-5_z6TxvlNq6lHQJEFHNmMQ-1; Wed, 02 Nov 2022 14:45:16 -0400
-X-MC-Unique: 5_z6TxvlNq6lHQJEFHNmMQ-1
+ us-mta-503-dwersnL7Py2wiRkXhId_4A-1; Wed, 02 Nov 2022 18:47:54 -0400
+X-MC-Unique: dwersnL7Py2wiRkXhId_4A-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3DA8E857F8F;
-	Wed,  2 Nov 2022 18:45:14 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 603052A2AD77;
+	Wed,  2 Nov 2022 22:47:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4A41640C6F9F;
-	Wed,  2 Nov 2022 18:45:12 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0E73840C6EE9;
+	Wed,  2 Nov 2022 22:47:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1A2C31946597;
-	Wed,  2 Nov 2022 18:45:12 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9198219465A4;
+	Wed,  2 Nov 2022 22:47:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 21ED71946594
- for <dm-devel@listman.corp.redhat.com>; Wed,  2 Nov 2022 18:45:11 +0000 (UTC)
+ ESMTP id 825941946594
+ for <dm-devel@listman.corp.redhat.com>; Wed,  2 Nov 2022 22:47:48 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D71351121339; Wed,  2 Nov 2022 18:45:10 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
- (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id BCC101121320;
- Wed,  2 Nov 2022 18:45:10 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 2A2IjAgP003018; Wed, 2 Nov 2022 14:45:10 -0400
-Received: from localhost (mpatocka@localhost)
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 2A2IjATr003014; Wed, 2 Nov 2022 14:45:10 -0400
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
- owned process doing -bs
-Date: Wed, 2 Nov 2022 14:45:10 -0400 (EDT)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Eric Biggers <ebiggers@kernel.org>
-In-Reply-To: <Y2Hf08vIKBkl5tu0@sol.localdomain>
-Message-ID: <alpine.LRH.2.21.2211021434180.2087@file01.intranet.prod.int.rdu2.redhat.com>
-References: <Y2Hf08vIKBkl5tu0@sol.localdomain>
-User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
+ id 63F842024CBB; Wed,  2 Nov 2022 22:47:48 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 5C8142028DC1
+ for <dm-devel@redhat.com>; Wed,  2 Nov 2022 22:47:48 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3D55085A59D
+ for <dm-devel@redhat.com>; Wed,  2 Nov 2022 22:47:48 +0000 (UTC)
+Received: from mail-pj1-f53.google.com (mail-pj1-f53.google.com
+ [209.85.216.53]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-228-JvxaTpzZPH2jsUPa4MVGOw-1; Wed, 02 Nov 2022 18:47:46 -0400
+X-MC-Unique: JvxaTpzZPH2jsUPa4MVGOw-1
+Received: by mail-pj1-f53.google.com with SMTP id
+ d59-20020a17090a6f4100b00213202d77e1so3516625pjk.2
+ for <dm-devel@redhat.com>; Wed, 02 Nov 2022 15:47:46 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=content-transfer-encoding:in-reply-to:from:references:to
+ :content-language:subject:user-agent:mime-version:date:message-id
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=o4wIJC4qmLD8sZv7FELeKq1bWLCLMI4X8kEQubd/l6g=;
+ b=YSUJrV84ffj6JeizJuBpNfGfVovxaXNAxObvN90szTEpuD0Mgz3xANMkuacst+hQRW
+ 0q7Hio8+xkmHohSxZ5oYabqb56Sx6BApAznW3mcYoBj2YYwJUOFPyh8UqSE/7/Nl4fJe
+ FizpTziKtG/HH9UIktNYgWvjo2sUhnzoQ50NPuRwwiPN3rlGaiKy0CIc+GofDWI7Mfia
+ KvspwwJZH1I0BC6qEMz3aImKZZL4of3yYLkjN19WVPQLj03ggZGfH0SJFN55VczYGu6l
+ VbLR407goKTBwmN4R0a3JR32iwGw/6GSKcwNJ/mfRsmQCcON6Wt5gr4QkG8vdy48bQFF
+ C0yw==
+X-Gm-Message-State: ACrzQf3MBYm+rqRrv3h/09g644u8UapLiEiRe4TazAVJ07jtE9UBWn19
+ J+VQC5/djiFexbwfa4eemT8=
+X-Google-Smtp-Source: AMsMyM7oTR2d5lchMffcmjpS1vJGXh4SAt69GYPXVjFJ2dUHdIGIroDKm3Sonab/kAsDMsRgrqXqvA==
+X-Received: by 2002:a17:902:bf08:b0:178:90fb:8cda with SMTP id
+ bi8-20020a170902bf0800b0017890fb8cdamr26566977plb.9.1667429265258; 
+ Wed, 02 Nov 2022 15:47:45 -0700 (PDT)
+Received: from ?IPV6:2620:15c:211:201:22d3:f380:fa84:4b89?
+ ([2620:15c:211:201:22d3:f380:fa84:4b89])
+ by smtp.gmail.com with ESMTPSA id
+ w22-20020a1709027b9600b0017f7628cbddsm8842988pll.30.2022.11.02.15.47.42
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Wed, 02 Nov 2022 15:47:44 -0700 (PDT)
+Message-ID: <0123db70-6217-135a-4101-0609512e723b@acm.org>
+Date: Wed, 2 Nov 2022 15:47:41 -0700
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: Re: [dm-devel] Regression: wrong DIO alignment check with dm-crypt
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.3.0
+To: Mike Christie <michael.christie@oracle.com>, hch@lst.de,
+ martin.petersen@oracle.com, linux-scsi@vger.kernel.org,
+ james.bottomley@hansenpartnership.com, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, snitzer@kernel.org, axboe@kernel.dk,
+ linux-nvme@lists.infradead.org, chaitanyak@nvidia.com, kbusch@kernel.org,
+ target-devel@vger.kernel.org
+References: <20221026231945.6609-1-michael.christie@oracle.com>
+ <20221026231945.6609-4-michael.christie@oracle.com>
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20221026231945.6609-4-michael.christie@oracle.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH v3 03/19] scsi: Move sd_pr_type to header to
+ share
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -75,71 +119,44 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-block@vger.kernel.org, Keith Busch <kbusch@kernel.org>,
- dm-devel@redhat.com, Stefan Hajnoczi <stefanha@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Hi
+On 10/26/22 16:19, Mike Christie wrote:
+> +static inline enum scsi_pr_type block_pr_type_to_scsi(enum pr_type type)
+> +{
+> +	switch (type) {
+> +	case PR_WRITE_EXCLUSIVE:
+> +		return SCSI_PR_WRITE_EXCLUSIVE;
+> +	case PR_EXCLUSIVE_ACCESS:
+> +		return SCSI_PR_EXCLUSIVE_ACCESS;
+> +	case PR_WRITE_EXCLUSIVE_REG_ONLY:
+> +		return SCSI_PR_WRITE_EXCLUSIVE_REG_ONLY;
+> +	case PR_EXCLUSIVE_ACCESS_REG_ONLY:
+> +		return SCSI_PR_EXCLUSIVE_ACCESS_REG_ONLY;
+> +	case PR_WRITE_EXCLUSIVE_ALL_REGS:
+> +		return SCSI_PR_WRITE_EXCLUSIVE_ALL_REGS;
+> +	case PR_EXCLUSIVE_ACCESS_ALL_REGS:
+> +		return SCSI_PR_EXCLUSIVE_ACCESS_ALL_REGS;
+> +	default:
+> +		return 0;
+> +	}
+> +};
 
+Please leave out "default: return 0;" from the switch statement and add 
+"return 0;" after the switch statement. That will make the compiler emit 
+a warning if a value is added in enum pr_type but not in the above function.
 
-On Tue, 1 Nov 2022, Eric Biggers wrote:
+Thanks,
 
-> Hi,
-> 
-> I happened to notice the following QEMU bug report:
-> 
-> https://gitlab.com/qemu-project/qemu/-/issues/1290
-> 
-> I believe it's a regression from the following kernel commit:
-> 
->     commit b1a000d3b8ec582da64bb644be633e5a0beffcbf
->     Author: Keith Busch <kbusch@kernel.org>
->     Date:   Fri Jun 10 12:58:29 2022 -0700
-> 
->         block: relax direct io memory alignment
+Bart.
 
-I suggest to revert this patch.
-
-> The bug is that if a dm-crypt device is set up with a crypto sector size (and
-> thus also a logical_block_size) of 4096, then the block layer now lets through
-> direct I/O requests to dm-crypt when the user buffer has only 512-byte
-> alignment, instead of the 4096-bytes expected by dm-crypt in that case.  This is
-> because the dma_alignment of the device-mapper device is only 511 bytes.
-
-Propagating dma_alignment through the device mapper stack would be hard 
-(because it is not in struct queue_limits). Perhaps we could set 
-dma_alignment to be the equivalent to logical_block_size, if the above 
-patch could not be reverted - but the we would hit the issue again when 
-someone stacks md or other devices over dm.
-
-> This has two effects in this case:
-> 
->     - The error code for DIO with a misaligned buffer is now EIO, instead of
->       EINVAL as expected and documented.  This is because the I/O reaches
->       dm-crypt instead of being rejected by the block layer.
-> 
->     - STATX_DIOALIGN reports 512 bytes for stx_dio_mem_align, instead of the
->       correct value of 4096.  (Technically not a regression since STATX_DIOALIGN
->       is new in v6.1, but still a bug.)
-> 
-> Any thoughts on what the correct fix is here?  Maybe the device-mapper layer
-> needs to set dma_alignment correctly?  Or maybe the block layer needs to set it
-> to 'logical_block_size - 1' by default?
-> 
-> - Eric
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://listman.redhat.com/mailman/listinfo/dm-devel
-
-Mikulas
 --
 dm-devel mailing list
 dm-devel@redhat.com
