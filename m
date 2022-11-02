@@ -1,82 +1,67 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A2501C433FE
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Nov 2022 14:17:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9092AC4332F
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Nov 2022 16:27:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667398655;
+	s=mimecast20190719; t=1667406469;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=VYyRyiqMJnZToH5mwqEDz3pjYUjqKlo7qm+N4cEKt0o=;
-	b=W2mRZrtZb6EAHPO9Gr8qlv2mmpP6XZFjU/t2lqqUujAdv2E5wEFarNYHrqDdhhTIavwcBL
-	AQFh7jgUh1BIwkAA8QAbTqSEv4NR9YEvUUkAyNCbOD+XQh6fNzlHXnR8DrPgtIX5b9EbZE
-	AVVgRhwfOMbXeMfFs48wBWMgJTLGXOc=
-Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-288-QzP7vtIFPNivzh6oHSaqQQ-1; Wed, 02 Nov 2022 10:17:17 -0400
-X-MC-Unique: QzP7vtIFPNivzh6oHSaqQQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+	bh=YlG0lZTZencty/uPzsP582ndvJJYk04Y4MbE2YfAVXA=;
+	b=b2CdT0ruVHwe8JdxPR9R0wjTnE1CAttlCqc+ShXIrUfibL/ILTV9b6NKNU0cREZhxu0rLf
+	/opUq22nE/3nXPxoKyWsNN42PSsaQw8eL3UaxiEyxRpDk5M6c0mXFuQmOFhiKmh0RzKZEf
+	oR7GFumJXE9GRgbxKLz8U/Q+xd7LyiY=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-113-V_riLoNONZGTwo_4emIicw-1; Wed, 02 Nov 2022 12:27:45 -0400
+X-MC-Unique: V_riLoNONZGTwo_4emIicw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 246C91C09B8F;
-	Wed,  2 Nov 2022 14:17:10 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 14DD31C006B4;
+	Wed,  2 Nov 2022 16:27:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A0675C2E6B7;
-	Wed,  2 Nov 2022 14:17:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CB6542166B2B;
+	Wed,  2 Nov 2022 16:27:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8B3751946597;
-	Wed,  2 Nov 2022 14:17:07 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8247E19465A4;
+	Wed,  2 Nov 2022 16:27:41 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1BBA31946594
- for <dm-devel@listman.corp.redhat.com>; Wed,  2 Nov 2022 14:17:07 +0000 (UTC)
+ ESMTP id 5A44A1946594
+ for <dm-devel@listman.corp.redhat.com>; Wed,  2 Nov 2022 16:27:40 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 01B64112C063; Wed,  2 Nov 2022 14:17:07 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id EECC4112C062
- for <dm-devel@redhat.com>; Wed,  2 Nov 2022 14:17:06 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CC60186F133
- for <dm-devel@redhat.com>; Wed,  2 Nov 2022 14:17:06 +0000 (UTC)
-Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-139-iE-hyYlsMJWhhrJanrD61A-1; Wed, 02 Nov 2022 10:17:05 -0400
-X-MC-Unique: iE-hyYlsMJWhhrJanrD61A-1
-Received: by verein.lst.de (Postfix, from userid 2407)
- id E1C7A68AA6; Wed,  2 Nov 2022 15:17:00 +0100 (CET)
-Date: Wed, 2 Nov 2022 15:17:00 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <20221102141700.GA4442@lst.de>
-References: <20221102064854.GA8950@lst.de>
- <1dc5c1d0-72b6-5455-0b05-5c755ad69045@huaweicloud.com>
+ id 4BA14401D4A; Wed,  2 Nov 2022 16:27:40 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 33650492CA5;
+ Wed,  2 Nov 2022 16:27:40 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 2A2GRev2026132; Wed, 2 Nov 2022 12:27:40 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 2A2GRexq026128; Wed, 2 Nov 2022 12:27:40 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Wed, 2 Nov 2022 12:27:40 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Guoqing Jiang <guoqing.jiang@linux.dev>, Song Liu <song@kernel.org>
+Message-ID: <alpine.LRH.2.21.2211021214390.25745@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
 MIME-Version: 1.0
-In-Reply-To: <1dc5c1d0-72b6-5455-0b05-5c755ad69045@huaweicloud.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: Re: [dm-devel] [PATCH 8/7] block: don't claim devices that are not
- live in bd_link_disk_holder
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+Subject: [dm-devel] A crash caused by the commit
+ 0dd84b319352bb8ba64752d4e45396d8b13e6018
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -88,35 +73,84 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@kernel.org>,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- "yukuai \(C\)" <yukuai3@huawei.com>, Christoph Hellwig <hch@lst.de>,
- Alasdair Kergon <agk@redhat.com>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com,
+ Zdenek Kabelac <zkabelac@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gV2VkLCBOb3YgMDIsIDIwMjIgYXQgMDg6MTc6MzdQTSArMDgwMCwgWXUgS3VhaSB3cm90ZToK
-PiBJIHRoaW5rIHRoaXMgaXMgc3RpbGwgbm90IHNhZmUg8J+klAoKSW5kZWVkIC0gd3Jvbmcgb3Bl
-bl9tdXRleC4KCj4gKyAgICAgICAvKgo+ICsgICAgICAgICogZGVsX2dlbmRpc2sgZHJvcHMgdGhl
-IGluaXRpYWwgcmVmZXJlbmNlIHRvIGJkX2hvbGRlcl9kaXIsIHNvIHdlIAo+IG5lZWQKPiArICAg
-ICAgICAqIHRvIGtlZXAgb3VyIG93biBoZXJlIHRvIGFsbG93IGZvciBjbGVhbnVwIHBhc3QgdGhh
-dCBwb2ludC4KPiArICAgICAgICAqLwo+ICsgICAgICAgbXV0ZXhfbG9jaygmYmRldi0+YmRfZGlz
-ay0+b3Blbl9tdXRleCk7Cj4gKyAgICAgICBpZiAoIWRpc2tfbGl2ZShiZGV2LT5iZF9kaXNrKSkg
-ewo+ICsgICAgICAgICAgICAgICByZXQgPSAtRU5PREVWOwo+ICsgICAgICAgICAgICAgICBtdXRl
-eF91bmxvY2soJmJkZXYtPmJkX2Rpc2stPm9wZW5fbXV0ZXgpOwo+ICsgICAgICAgICAgICAgICBn
-b3RvIG91dF91bmxvY2s7Cj4gKyAgICAgICB9CgpJIHRoaW5rIHRoaXMgbmVlZHMgdG8gYmUgZG9u
-ZSBiZWZvcmUgdGFraW5nIGRpc2stPm9wZW5fbXV0ZXgsIG90aGVyd2lzZQp3ZSBjcmVhdGUgYSBs
-b2NrIG9yZGVyIGRlcGVuZGVuY3kuICBBbHNvIHRoZSBjb21tZW50IHNlZW1zIHRvIG92ZXJmbG93
-CnRoZSB1c3VhbCA4MCBjaGFyYWN0ZXIgbGltaXQsIGFuZCBhcyB5b3Ugbm90ZWQgaW4gdGhlIG5l
-eHQgbWFpbCB0aGlzCm5lZWRzIG1vcmUgdW53aW5kaW5nLiAgQnV0IHllcywgb3RoZXJ3aXNlIHRo
-aXMgaXMgdGhlIHJpZ2h0IHRoaW5nIHRvCmRvLiAgRG8geW91IHdhbnQgdG8gc2VuZCBhIHJlcGxh
-Y2VtZW50IGZvciB0aGlzIHBhdGNoPwoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
-QHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
-bS1kZXZlbAo=
+Hi
+
+There's a crash in the test shell/lvchange-rebuild-raid.sh when running 
+the lvm testsuite. It can be reproduced by running "make check_local 
+T=shell/lvchange-rebuild-raid.sh" in a loop.
+
+The crash happens in the kernel 6.0 and 6.1-rc3, but not in 5.19.
+
+I bisected the crash and it is caused by the commit 
+0dd84b319352bb8ba64752d4e45396d8b13e6018.
+
+I uploaded my .config here (it's 12-core virtual machine): 
+https://people.redhat.com/~mpatocka/testcases/md-crash-config/config.txt
+
+Mikulas
+
+[   78.478417] BUG: kernel NULL pointer dereference, address: 0000000000000000
+[   78.479166] #PF: supervisor write access in kernel mode
+[   78.479671] #PF: error_code(0x0002) - not-present page
+[   78.480171] PGD 11557f0067 P4D 11557f0067 PUD 0
+[   78.480626] Oops: 0002 [#1] PREEMPT SMP
+[   78.481001] CPU: 0 PID: 73 Comm: kworker/0:1 Not tainted 6.1.0-rc3 #5
+[   78.481661] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.14.0-2 04/01/2014
+[   78.482471] Workqueue: kdelayd flush_expired_bios [dm_delay]
+[   78.483021] RIP: 0010:mempool_free+0x47/0x80
+[   78.483455] Code: 48 89 ef 5b 5d ff e0 f3 c3 48 89 f7 e8 32 45 3f 00 48 63 53 08 48 89 c6 3b 53 04 7d 2d 48 8b 43 10 8d 4a 01 48 89 df 89 4b 08 <48> 89 2c d0 e8 b0 45 3f 00 48 8d 7b 30 5b 5d 31 c9 ba 01 00 00 00
+[   78.485220] RSP: 0018:ffff88910036bda8 EFLAGS: 00010093
+[   78.485719] RAX: 0000000000000000 RBX: ffff8891037b65d8 RCX: 0000000000000001
+[   78.486404] RDX: 0000000000000000 RSI: 0000000000000202 RDI: ffff8891037b65d8
+[   78.487080] RBP: ffff8891447ba240 R08: 0000000000012908 R09: 00000000003d0900
+[   78.487764] R10: 0000000000000000 R11: 0000000000173544 R12: ffff889101a14000
+[   78.488451] R13: ffff8891562ac300 R14: ffff889102b41440 R15: ffffe8ffffa00d05
+[   78.489146] FS:  0000000000000000(0000) GS:ffff88942fa00000(0000) knlGS:0000000000000000
+[   78.489913] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[   78.490474] CR2: 0000000000000000 CR3: 0000001102e99000 CR4: 00000000000006b0
+[   78.491165] Call Trace:
+[   78.491429]  <TASK>
+[   78.491640]  clone_endio+0xf4/0x1c0 [dm_mod]
+[   78.492072]  clone_endio+0xf4/0x1c0 [dm_mod]
+[   78.492505]  __submit_bio+0x76/0x120
+[   78.492859]  submit_bio_noacct_nocheck+0xb6/0x2a0
+[   78.493325]  flush_expired_bios+0x28/0x2f [dm_delay]
+[   78.493808]  process_one_work+0x1b4/0x300
+[   78.494211]  worker_thread+0x45/0x3e0
+[   78.494570]  ? rescuer_thread+0x380/0x380
+[   78.494957]  kthread+0xc2/0x100
+[   78.495279]  ? kthread_complete_and_exit+0x20/0x20
+[   78.495743]  ret_from_fork+0x1f/0x30
+[   78.496096]  </TASK>
+[   78.496326] Modules linked in: brd dm_delay dm_raid dm_mod af_packet uvesafb cfbfillrect cfbimgblt cn cfbcopyarea fb font fbdev tun autofs4 binfmt_misc configfs ipv6 virtio_rng virtio_balloon rng_core virtio_net pcspkr net_failover failover qemu_fw_cfg button mousedev raid10 raid456 libcrc32c async_raid6_recov async_memcpy async_pq raid6_pq async_xor xor async_tx raid1 raid0 md_mod sd_mod t10_pi crc64_rocksoft crc64 virtio_scsi scsi_mod evdev psmouse bsg scsi_common [last unloaded: brd]
+[   78.500425] CR2: 0000000000000000
+[   78.500752] ---[ end trace 0000000000000000 ]---
+[   78.501214] RIP: 0010:mempool_free+0x47/0x80
+[   78.501633] Code: 48 89 ef 5b 5d ff e0 f3 c3 48 89 f7 e8 32 45 3f 00 48 63 53 08 48 89 c6 3b 53 04 7d 2d 48 8b 43 10 8d 4a 01 48 89 df 89 4b 08 <48> 89 2c d0 e8 b0 45 3f 00 48 8d 7b 30 5b 5d 31 c9 ba 01 00 00 00
+[   78.503420] RSP: 0018:ffff88910036bda8 EFLAGS: 00010093
+[   78.503921] RAX: 0000000000000000 RBX: ffff8891037b65d8 RCX: 0000000000000001
+[   78.504611] RDX: 0000000000000000 RSI: 0000000000000202 RDI: ffff8891037b65d8
+[   78.505374] RBP: ffff8891447ba240 R08: 0000000000012908 R09: 00000000003d0900
+[   78.506075] R10: 0000000000000000 R11: 0000000000173544 R12: ffff889101a14000
+[   78.506766] R13: ffff8891562ac300 R14: ffff889102b41440 R15: ffffe8ffffa00d05
+[   78.507481] FS:  0000000000000000(0000) GS:ffff88942fa00000(0000) knlGS:0000000000000000
+[   78.508273] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[   78.508837] CR2: 0000000000000000 CR3: 0000001102e99000 CR4: 00000000000006b0
+[   78.509542] note: kworker/0:1[73] exited with preempt_count 1
+[   78.510427] md/raid10:mdX: active with 4 out of 8 devices
+[   96.902910] sysrq: Resetting
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
