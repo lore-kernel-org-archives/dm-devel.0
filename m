@@ -4,72 +4,88 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 33E6FC4332F
-	for <dm-devel@archiver.kernel.org>; Fri,  4 Nov 2022 06:50:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 273C4C4321E
+	for <dm-devel@archiver.kernel.org>; Fri,  4 Nov 2022 06:50:14 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667544612;
+	s=mimecast20190719; t=1667544613;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=2EbQp2drCXeT48ebocBCwzAdy9covQN69e1c3fn0M48=;
-	b=OBL2QG+Pydnz3oTecnCgRQszCwJh63xi8jS8vs/ofATs/scoV1ffy+8XuPln9KW+QKdlZb
-	N5Cl+QV+thfLDmkSDiw/iaQB5LwM4AwwkKG4QLaIjJo7zJhjRSBC0eU/FLk0nFQw38k9Fo
-	5KbRsS+U4B4I7SbQyqwmbD+IflV5tMo=
+	bh=APofu6KFRLMbTJPuR60Qa4wl11bbgJubgk0EYpSJZx4=;
+	b=Nr+QKsGMAERU31hr18uF8AVpyEzne2/v6ybhcp9KVC9tSZmUZTDZs80Dh6HaxYxCdAPtyH
+	5M77ZO9dUMGBqYpB9UVi31Ijzv/lgz6bf1+YQaCNi3vSwHSbOZ7vzjWKNl0wnyosaH9ydL
+	9yKAlxhwfEfiTTLfZneAme9wsq/4nfs=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-624--dEoY_DfNAehU-n2ZE25qw-1; Fri, 04 Nov 2022 02:50:10 -0400
-X-MC-Unique: -dEoY_DfNAehU-n2ZE25qw-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-328-gKENCJddMAinRibIL7wQWg-1; Fri, 04 Nov 2022 02:50:09 -0400
+X-MC-Unique: gKENCJddMAinRibIL7wQWg-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AEE7C185A7B0;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 359E280254B;
 	Fri,  4 Nov 2022 06:50:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9BC56403161;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 206894EA61;
 	Fri,  4 Nov 2022 06:50:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 895FB194705A;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3FCD21946A7A;
 	Fri,  4 Nov 2022 06:50:07 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 28D9E1946594
- for <dm-devel@listman.corp.redhat.com>; Thu,  3 Nov 2022 20:39:38 +0000 (UTC)
+ ESMTP id 02F8D19465A4
+ for <dm-devel@listman.corp.redhat.com>; Thu,  3 Nov 2022 15:26:16 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id EC3B81400C3A; Thu,  3 Nov 2022 20:39:37 +0000 (UTC)
+ id EABC12166B2E; Thu,  3 Nov 2022 15:26:15 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E58C01401C23
- for <dm-devel@redhat.com>; Thu,  3 Nov 2022 20:39:37 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CBA5985A5B6
- for <dm-devel@redhat.com>; Thu,  3 Nov 2022 20:39:37 +0000 (UTC)
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-483-pS0iFP10NUGC16vTnm9vqQ-1; Thu, 03 Nov 2022 16:39:36 -0400
-X-MC-Unique: pS0iFP10NUGC16vTnm9vqQ-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E40732166B26
+ for <dm-devel@redhat.com>; Thu,  3 Nov 2022 15:26:15 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by ams.source.kernel.org (Postfix) with ESMTPS id 83C46B8277B;
- Thu,  3 Nov 2022 20:39:32 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 85618C433C1;
- Thu,  3 Nov 2022 20:39:30 +0000 (UTC)
-Date: Thu, 3 Nov 2022 14:39:27 -0600
-From: Keith Busch <kbusch@kernel.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Message-ID: <Y2Qm/yGlVbDRskkr@kbusch-mbp.dhcp.thefacebook.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BFF75101E152
+ for <dm-devel@redhat.com>; Thu,  3 Nov 2022 15:26:15 +0000 (UTC)
+Received: from mx0b-00082601.pphosted.com (mx0b-00082601.pphosted.com
+ [67.231.153.30]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-26-XAv1ufVZMbqHY9q-P6ySfA-1; Thu, 03 Nov 2022 11:26:14 -0400
+X-MC-Unique: XAv1ufVZMbqHY9q-P6ySfA-1
+Received: from pps.filterd (m0148460.ppops.net [127.0.0.1])
+ by mx0a-00082601.pphosted.com (8.17.1.5/8.17.1.5) with ESMTP id 2A3CAIaO010064
+ for <dm-devel@redhat.com>; Thu, 3 Nov 2022 08:26:13 -0700
+Received: from mail.thefacebook.com ([163.114.132.120])
+ by mx0a-00082601.pphosted.com (PPS) with ESMTPS id 3kmddh1kr0-3
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
+ for <dm-devel@redhat.com>; Thu, 03 Nov 2022 08:26:13 -0700
+Received: from snc-exhub201.TheFacebook.com (2620:10d:c085:21d::7) by
+ snc-exhub101.TheFacebook.com (2620:10d:c085:11d::5) with Microsoft SMTP
+ Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2375.31; Thu, 3 Nov 2022 08:26:11 -0700
+Received: from twshared25017.14.frc2.facebook.com (2620:10d:c085:108::4) by
+ mail.thefacebook.com (2620:10d:c085:21d::7) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2375.31; Thu, 3 Nov 2022 08:26:11 -0700
+Received: by devbig007.nao1.facebook.com (Postfix, from userid 544533)
+ id 6AAF0AA9A07C; Thu,  3 Nov 2022 08:26:00 -0700 (PDT)
+From: Keith Busch <kbusch@meta.com>
+To: <linux-block@vger.kernel.org>, <dm-devel@redhat.com>, <axboe@kernel.dk>
+Date: Thu, 3 Nov 2022 08:25:58 -0700
+Message-ID: <20221103152559.1909328-3-kbusch@meta.com>
+In-Reply-To: <20221103152559.1909328-1-kbusch@meta.com>
 References: <20221103152559.1909328-1-kbusch@meta.com>
- <alpine.LRH.2.21.2211031224060.10758@file01.intranet.prod.int.rdu2.redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <alpine.LRH.2.21.2211031224060.10758@file01.intranet.prod.int.rdu2.redhat.com>
+X-FB-Internal: Safe
+X-Proofpoint-ORIG-GUID: JnUOgPTqxzf75w6-L3as-OdFPN25gmSp
+X-Proofpoint-GUID: JnUOgPTqxzf75w6-L3as-OdFPN25gmSp
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.205,Aquarius:18.0.895,Hydra:6.0.545,FMLib:17.11.122.1
+ definitions=2022-11-03_04,2022-11-03_01,2022-06-22_01
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -77,9 +93,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mailman-Approved-At: Fri, 04 Nov 2022 06:50:05 +0000
-Subject: Re: [dm-devel] [PATCH 0/3] fix direct io errors on dm-crypt
+Subject: [dm-devel] [PATCH 2/3] dm-crypt: provide dma_alignment limit in
+ io_hints
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,41 +108,44 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, ebiggers@kernel.org, Keith Busch <kbusch@meta.com>,
- linux-block@vger.kernel.org, dm-devel@redhat.com, stefanha@redhat.com,
- me@demsh.org
+Cc: ebiggers@kernel.org, Keith Busch <kbusch@kernel.org>, mpatocka@redhat.com,
+ me@demsh.org, stefanha@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Nov 03, 2022 at 12:33:19PM -0400, Mikulas Patocka wrote:
-> Hi
-> 
-> The patchset seems OK - but dm-integrity also has a limitation that the 
-> bio vectors must be aligned on logical block size.
-> 
-> dm-writecache and dm-verity seem to handle unaligned bioset, but you 
-> should check them anyway.
-> 
-> I'm not sure about dm-log-writes.
+From: Keith Busch <kbusch@kernel.org>
 
-Yeah, dm-integrity definitly needs it too. This is easy enough to use
-the same io_hint that I added for dm-crypt.
+This device mapper needs bio vectors to be sized and memory aligned to
+the logical block size. Set the minimum required queue limit
+accordingly.
 
-dm-log-writes is doing some weird things with writes that I don't think
-would work with some low level drivers without the same alignment
-constraint.
+Fixes: b1a000d3b8ec5 ("block: relax direct io memory alignment")
+Reportred-by: Eric Biggers <ebiggers@kernel.org>
+Reported-by: Dmitrii Tcvetkov <me@demsh.org>
+Signed-off-by: Keith Busch <kbusch@kernel.org>
+---
+ drivers/md/dm-crypt.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-The other two appear to handle this fine, but I'll run everything
-through some focused test cases to be sure.
-
-In the meantime, do you want to see the remaining mappers fixed in a v2,
-or are you okay if they follow after this series?
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 159c6806c19b..2653516bcdef 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -3630,6 +3630,7 @@ static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 	limits->physical_block_size =
+ 		max_t(unsigned, limits->physical_block_size, cc->sector_size);
+ 	limits->io_min = max_t(unsigned, limits->io_min, cc->sector_size);
++	limits->dma_alignment = limits->logical_block_size - 1;
+ }
+ 
+ static struct target_type crypt_target = {
+-- 
+2.30.2
 
 --
 dm-devel mailing list
