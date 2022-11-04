@@ -1,85 +1,98 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 24C0AC4332F
-	for <dm-devel@archiver.kernel.org>; Mon,  7 Nov 2022 01:53:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 22DFFC433FE
+	for <dm-devel@archiver.kernel.org>; Mon,  7 Nov 2022 08:40:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667785987;
+	s=mimecast20190719; t=1667810412;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=X9rKuEmfUmevHEddNmvrYVUp6TtggNViWDpQB7EYg2Y=;
-	b=BSeb19JcsXmXwP5RIzIFDu7MQXPLHVaPkt1rXj+U3+YZPZ0VyXodUEbn4wTbFQq2gTb8oR
-	f0g27SqCySOPaRz/5fd6oasbSKJHG96WhfGgpEz5d/tZRVlacWjiPTYPu7GT8+eVwcHeCW
-	0Qf2Gn8TNa2TJSlC8dMzW62KDxAw6ZA=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=79rLiB0Cues7XZruW8eNQMZGK/U1uxwjABfssy4+VY8=;
+	b=bvu5oCjN59aDm5HTeUIOWeejb0j1pj1XV7S+ZybppX0+1MhatHbPwho6j4QvResTZvdc0N
+	qMff/G4fWEVs/lK+xg8ynCO7aIGuyl1CsFAQvX9QABKvFCNTuYhK8ziCefffWeoYfUbVPp
+	mNvkTcblSM5lscabidvsJSDI91MGbxM=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-13-t6gpY53ePZucKmxwDYj4Fg-1; Sun, 06 Nov 2022 20:53:03 -0500
-X-MC-Unique: t6gpY53ePZucKmxwDYj4Fg-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-492-FM3gu-IGMD6d4NM4LfopQg-1; Mon, 07 Nov 2022 03:40:11 -0500
+X-MC-Unique: FM3gu-IGMD6d4NM4LfopQg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C9989185A78F;
-	Mon,  7 Nov 2022 01:53:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C5B7F3817A6E;
+	Mon,  7 Nov 2022 08:40:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B0A6047505F;
-	Mon,  7 Nov 2022 01:52:56 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id AFC4B2166B29;
+	Mon,  7 Nov 2022 08:40:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 971121946588;
-	Mon,  7 Nov 2022 01:52:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 132D719465B7;
+	Mon,  7 Nov 2022 08:40:09 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A4E641946587
- for <dm-devel@listman.corp.redhat.com>; Mon,  7 Nov 2022 01:52:52 +0000 (UTC)
+ ESMTP id 7DCD11946587
+ for <dm-devel@listman.corp.redhat.com>; Fri,  4 Nov 2022 11:30:12 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C2661C15BB3; Mon,  7 Nov 2022 01:52:52 +0000 (UTC)
+ id 775EF112132C; Fri,  4 Nov 2022 11:30:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id BB2D7C15BA4
- for <dm-devel@redhat.com>; Mon,  7 Nov 2022 01:52:52 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6FD4D1121325
+ for <dm-devel@redhat.com>; Fri,  4 Nov 2022 11:30:12 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A1040101A56C
- for <dm-devel@redhat.com>; Mon,  7 Nov 2022 01:52:52 +0000 (UTC)
-Received: from out2.migadu.com (out2.migadu.com [188.165.223.204]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_128_GCM_SHA256) id us-mta-210-oU3QDI2-M0-dt0slpn5PTw-1; Sun,
- 06 Nov 2022 20:52:50 -0500
-X-MC-Unique: oU3QDI2-M0-dt0slpn5PTw-1
-To: Zdenek Kabelac <zkabelac@redhat.com>, Heming Zhao <heming.zhao@suse.com>, 
- Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>
-References: <alpine.LRH.2.21.2211021214390.25745@file01.intranet.prod.int.rdu2.redhat.com>
- <78646e88-2457-81e1-e3e7-cf66b67ba923@linux.dev>
- <11a466f0-ecfe-c1e2-d967-2d648ce65bcb@suse.com>
- <c31fdd20-c736-5d65-e82e-338e7ed1571c@linux.dev>
- <2f0551c6-44f9-0969-cb8f-c12c4fb44eff@redhat.com>
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and
- include these headers.
-From: Guoqing Jiang <guoqing.jiang@linux.dev>
-Message-ID: <57672478-63f3-d214-a2fc-ef06c4200e90@linux.dev>
-Date: Mon, 7 Nov 2022 09:52:45 +0800
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 50BFB101A52A
+ for <dm-devel@redhat.com>; Fri,  4 Nov 2022 11:30:12 +0000 (UTC)
+Received: from mail-pl1-f197.google.com (mail-pl1-f197.google.com
+ [209.85.214.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-368-jLlnPZ74N16mnSJsR9M0cg-1; Fri, 04 Nov 2022 07:30:11 -0400
+X-MC-Unique: jLlnPZ74N16mnSJsR9M0cg-1
+Received: by mail-pl1-f197.google.com with SMTP id
+ i8-20020a170902c94800b0018712ccd6bbso3391800pla.1
+ for <dm-devel@redhat.com>; Fri, 04 Nov 2022 04:30:11 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+ :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=X2vF9wu9D9A9HBRSXFDC1P9Ez4nhQcXyZNLm0dcpRMo=;
+ b=pml4A9x1JvoFTd9LU2D6HcLRHZ1pzrppPFc41eZLX0BF33PNcLfgHBGCNecpJR9ndD
+ 5tjYM6+4M0PtIvLsKs+RC4TkszAIbVoZIzvP4jBGryfGZ/OojAkeLD9NsXrWGvwv69wb
+ w9fWWtsTwrRF9p3NEyqpay9mzprX/dKyRIXNVplimC2fVms3maK353VGPy9y6j23sP7I
+ NQqy6EAzk4sMjBejLzO2sjud7oo4UKD6d6VYbYM24se67LLi9e8Z14wQstPUMMu+PSu/
+ vYyHiVJ9c3JHdnP2+lauH5r5mnKyKK0FVExQxDWJ9uMBBJ1MthpYTWfhS9iSmubFcU6d
+ 08Mw==
+X-Gm-Message-State: ACrzQf0ySH4YoFx0KTsu6cKv7dFW+BX41Tfxj6SYtWh/PJlYnzrajOIW
+ ENyq3PM47xVG6qYtZrpB9D03JeKY8qqKDtPB7nJuEH4jDfjf1TKF7uOuKS3mknm7G0lPty2qEaz
+ v3NmK5Nfk9ze41Mo=
+X-Received: by 2002:a05:6a00:84b:b0:56d:3cf5:1031 with SMTP id
+ q11-20020a056a00084b00b0056d3cf51031mr30151532pfk.75.1667561410122; 
+ Fri, 04 Nov 2022 04:30:10 -0700 (PDT)
+X-Google-Smtp-Source: AMsMyM6ZmqK77wd2hCvap39otYWhRGk7HSG6DR3nAEU2Jv3tyaB6tseG9Ymp8fTHcgu2gG1DjEWLsQ==
+X-Received: by 2002:a05:6a00:84b:b0:56d:3cf5:1031 with SMTP id
+ q11-20020a056a00084b00b0056d3cf51031mr30151497pfk.75.1667561409825; 
+ Fri, 04 Nov 2022 04:30:09 -0700 (PDT)
+Received: from localhost ([209.132.188.80]) by smtp.gmail.com with ESMTPSA id
+ p189-20020a625bc6000000b0056abff42a8bsm2503420pfb.69.2022.11.04.04.30.06
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Fri, 04 Nov 2022 04:30:08 -0700 (PDT)
+From: Coiby Xu <coxu@redhat.com>
+To: kexec@lists.infradead.org
+Date: Fri,  4 Nov 2022 19:29:55 +0800
+Message-Id: <20221104113000.487098-1-coxu@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <2f0551c6-44f9-0969-cb8f-c12c4fb44eff@redhat.com>
-X-Migadu-Flow: FLOW_OUT
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: Re: [dm-devel] A crash caused by the commit
- 0dd84b319352bb8ba64752d4e45396d8b13e6018
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Mailman-Approved-At: Mon, 07 Nov 2022 08:40:06 +0000
+Subject: [dm-devel] [RFC v2 0/5] Support kdump with LUKS encryption by
+ reusing LUKS volume key
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,73 +104,136 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
+Cc: Baoquan He <bhe@redhat.com>, dm-devel@redhat.com,
+ Pingfan Liu <kernelfans@gmail.com>, linux-kernel@vger.kernel.org,
+ Kairui Song <ryncsn@gmail.com>, Jan Pazdziora <jpazdziora@redhat.com>,
+ Thomas Staudt <tstaudt@de.ibm.com>, Dave Young <dyoung@redhat.com>,
+ Milan Broz <gmazyland@gmail.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-CgpPbiAxMS80LzIyIDc6MTAgUE0sIFpkZW5layBLYWJlbGFjIHdyb3RlOgo+IERuZSAwNC4gMTEu
-IDIyIHYgMjoyMyBHdW9xaW5nIEppYW5nIG5hcHNhbChhKToKPj4KPj4KPj4gT24gMTEvMy8yMiAx
-MDo0NiBQTSwgSGVtaW5nIFpoYW8gd3JvdGU6Cj4+PiBPbiAxMS8zLzIyIDExOjQ3IEFNLCBHdW9x
-aW5nIEppYW5nIHdyb3RlOgo+Pj4+IEhpLAo+Pj4+Cj4+Pj4gT24gMTEvMy8yMiAxMjoyNyBBTSwg
-TWlrdWxhcyBQYXRvY2thIHdyb3RlOgo+Pj4+PiBIaQo+Pj4+Pgo+Pj4+PiBUaGVyZSdzIGEgY3Jh
-c2ggaW4gdGhlIHRlc3Qgc2hlbGwvbHZjaGFuZ2UtcmVidWlsZC1yYWlkLnNoIHdoZW4gCj4+Pj4+
-IHJ1bm5pbmcKPj4+Pj4gdGhlIGx2bSB0ZXN0c3VpdGUuIEl0IGNhbiBiZSByZXByb2R1Y2VkIGJ5
-IHJ1bm5pbmcgIm1ha2UgY2hlY2tfbG9jYWwKPj4+Pj4gVD1zaGVsbC9sdmNoYW5nZS1yZWJ1aWxk
-LXJhaWQuc2giIGluIGEgbG9vcC4KPj4+Pgo+Pj4+IEkgaGF2ZSBwcm9ibGVtIHRvIHJ1biB0aGUg
-Y21kIChub3Qgc3VyZSB3aGF0IEkgbWlzc2VkKSwgaXQgd291bGQgYmUgCj4+Pj4gYmV0dGVyIGlm
-Cj4+Pj4gdGhlIHJlbGV2YW50IGNtZHMgYXJlIGV4dHJhY3RlZCBmcm9tIHRoZSBzY3JpcHQgdGhl
-biBJIGNhbiAKPj4+PiByZXByb2R1Y2UgaXQgd2l0aAo+Pj4+IHRob3NlIGNtZHMgZGlyZWN0bHku
-Cj4+Pj4KPj4+PiBbcm9vdEBsb2NhbGhvc3QgbHZtMl0jIGdpdCBsb2cgfCBoZWFkIC0xCj4+Pj4g
-Y29tbWl0IDM2YTkyMzkyNmMyYzI3YzFhOGE1YWMyNjIzODdkMmE0ZDNlNjIwZjgKPj4+PiBbcm9v
-dEBsb2NhbGhvc3QgbHZtMl0jIG1ha2UgY2hlY2tfbG9jYWwgCj4+Pj4gVD1zaGVsbC9sdmNoYW5n
-ZS1yZWJ1aWxkLXJhaWQuc2gKPj4+PiBtYWtlIC1DIGxpYmRtIGRldmljZS1tYXBwZXIKPj4+PiBb
-Li4uXQo+Pj4+IG1ha2UgLUMgZGFlbW9ucwo+Pj4+IG1ha2VbMV06IE5vdGhpbmcgdG8gYmUgZG9u
-ZSBmb3IgJ2FsbCcuCj4+Pj4gbWFrZSAtQyB0ZXN0IGNoZWNrX2xvY2FsCj4+Pj4gVkVSQk9TRT0w
-IC4vbGliL3J1bm5lciBcCj4+Pj4gwqDCoMKgwqDCoMKgwqDCoCAtLXRlc3RkaXIgLiAtLW91dGRp
-ciByZXN1bHRzIFwKPj4+PiDCoMKgwqDCoMKgwqDCoMKgIC0tZmxhdm91cnMgbmRldi12YW5pbGxh
-IC0tb25seSAKPj4+PiBzaGVsbC9sdmNoYW5nZS1yZWJ1aWxkLXJhaWQuc2ggLS1za2lwIEAKPj4+
-PiBydW5uaW5nIDEgdGVzdHMKPj4+PiAjIyPCoMKgwqDCoMKgIHJ1bm5pbmc6IFtuZGV2LXZhbmls
-bGFdIHNoZWxsL2x2Y2hhbmdlLXJlYnVpbGQtcmFpZC5zaCAwCj4+Pj4gfCBbIDA6MDBdIGxpYi9p
-bml0dGVzdDogbGluZSAxMzM6IAo+Pj4+IC90bXAvTFZNVEVTVDMxNzk0OC5pQ29Md21EaFpXL2Rl
-di90ZXN0bnVsbDogUGVybWlzc2lvbiBkZW5pZWQKPj4+PiB8IFsgMDowMF0gRmlsZXN5c3RlbSBk
-b2VzIHN1cHBvcnQgZGV2aWNlcyBpbiAKPj4+PiAvdG1wL0xWTVRFU1QzMTc5NDguaUNvTHdtRGha
-Vy9kZXYgKG1vdW50ZWQgd2l0aCBub2Rldj8pCj4+Pgo+Pj4gSSBkaWRuJ3QgcmVhZCBvdGhlciBt
-YWlscyBpbiB0aGlzIHRocmVhZCwgb25seSBmb3IgYWJvdmUgaXNzdWUuCj4+PiBJZiB5b3UgdXNl
-IG9wZW5zdXNlLCBzeXN0ZW1kIHNlcnZpY2UgdG1wLm1vdW50IHVzZXMgbm9kZXYgb3B0aW9uIHRv
-IAo+Pj4gbW91bnQgdG1wZnMgb24gL3RtcC4KPj4+IEZyb20gbXkgZXhwZXJpZW5jZSwgdGhlcmUg
-YXJlIHR3byBtZXRob2RzIHRvIGZpeCh3b3JrIGFyb3VuZCk6Cj4+PiAxLiBzeXN0ZW1jdGwgZGlz
-YWJsZSB0bXAubW91bnQgJiYgc3lzdGVtY3RsIG1hc2sgdG1wLm1vdW50ICYmIHJlYm9vdAo+Pj4g
-Mi4gbXYgL3Vzci9saWIvc3lzdGVtZC9zeXN0ZW0vdG1wLm1vdW50IC9yb290LyAmJiByZWJvb3QK
-Pj4KPj4gSSBhbSB1c2luZyBjZW50b3Mgc2ltaWxhciBzeXN0ZW0sIEkgY2FuIHRyeSBsZWFwIGxh
-dGVyLiBBcHByZWNpYXRlIAo+PiBmb3IgdGhlIHRpcHMsIEhlbWluZy4KPgo+Cj4gWW91IGNhbiBh
-bHdheXMgcmVkaXJlY3QgZGVmYXVsdCAvdG1wIGRpciB0byBzb21lIG90aGVyIAo+IHBsYWNlL2Zp
-bGVzeXN0ZW0gdGhhdCBhbGxvd3MgeW91IHRvIGNyZWF0ZSAvZGV2IG5vZGVzLiBFdmVudHVhbGx5
-IGZvciAKPiAnYnJhdmUgbWVuJ8KgIHlvdSBjYW4gbGV0IGx2bTIgdGVzdCBzdWl0ZSB0byBwbGF5
-IGRpcmVjdGx5IHdpdGggeW91ciAKPiAvZGV2IGRpci7CoCBOb3JtYWxseSBub3RoaW5nIGJhZCBz
-aG91bGQgaGFwcGVuLCBidXQgd2UgdGVuZCB0byBwcmVmZXIgCj4gbW9yZSBjb250cm9sZWQgJy9k
-ZXYnIG1hbmFnZWQgZm9yIGEgdGVzdC4KPgo+IEhlcmUgYXJlIHR3byBlbnZ2YXJzIHRvIHBsYXkg
-d2l0aDoKPgo+Cj4gbWFrZSBjaGVja19sb2NhbCBUPXNoZWxsL2x2Y2hhbmdlLXJlYnVpbGQtcmFp
-ZC5zaCAKPiBMVk1fVEVTVF9ESVI9L215aG9tZWZzZGlywqAgTFZNX1RFU1RfREVWRElSPS9kZXYK
-Pgo+IExWTV9URVNUX0RJUiBmb3Igc2V0dGluZyBvZiBkaXIgd2hlcmUgdGVzdCBjcmVhdGVzIGFs
-bCBpdHMgZmlsZXMKPgo+IExWTV9URVNUX0RFVkRJUsKgIHlvdSBjYW4gZXhwbGljaXRseSB0ZWxs
-IHRvIGtlZXAgdXNpbmcgc3lzdGVtJ3MgL2RldsKgwqAgCj4gKGluc3RlYWQgb2YgZGlyIGNyZWF0
-ZWQgd2l0aGluIHRtcGRpcikKClRoYW5rIHlvdSEgVGhpcyB3b3JrcyBmb3IgbWUuCgpbcm9vdEBs
-b2NhbGhvc3QgbHZtMl0jIG1ha2UgY2hlY2tfbG9jYWwgVD1zaGVsbC9sdmNoYW5nZS1yZWJ1aWxk
-LXJhaWQuc2ggCkxWTV9URVNUX0RJUj0vcm9vdC90ZXN0IExWTV9URVNUX0RFVkRJUj0vZGV2Cm1h
-a2UgLUMgbGliZG0gZGV2aWNlLW1hcHBlcgptYWtlWzFdOiBOb3RoaW5nIHRvIGJlIGRvbmUgZm9y
-ICdkZXZpY2UtbWFwcGVyJy4KClsuLi4gXQoKbWFrZSAtQyB0ZXN0IGNoZWNrX2xvY2FsClZFUkJP
-U0U9MCAuL2xpYi9ydW5uZXIgXAogwqDCoMKgwqDCoMKgwqAgLS10ZXN0ZGlyIC4gLS1vdXRkaXIg
-cmVzdWx0cyBcCiDCoMKgwqDCoMKgwqDCoCAtLWZsYXZvdXJzIG5kZXYtdmFuaWxsYSAtLW9ubHkg
-c2hlbGwvbHZjaGFuZ2UtcmVidWlsZC1yYWlkLnNoIAotLXNraXAgQApydW5uaW5nIDEgdGVzdHMK
-IyMjwqDCoMKgwqDCoMKgIHBhc3NlZDogW25kZXYtdmFuaWxsYV0gc2hlbGwvbHZjaGFuZ2UtcmVi
-dWlsZC1yYWlkLnNoIDIwCgojIyMgMSB0ZXN0czogMSBwYXNzZWQsIDAgc2tpcHBlZCwgMCB0aW1l
-ZCBvdXQsIDAgd2FybmVkLCAwIGZhaWxlZAoKVGhhbmtzLApHdW9xaW5nCgotLQpkbS1kZXZlbCBt
-YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNv
-bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
+RFC v2
+ - libcryptsetup interacts with the kernel via sysfs instead of "hacking"
+   dm-crypt 
+   - to save a kdump copy of the LUKS volume key in 1st kernel
+   - to add a logon key using the copy for libcryptsetup in kdump kernel [Milan]
+   - to avoid the incorrect usage of LUKS master key in dm-crypt [Milan]
+ - save the kdump copy of LUKS volume key randomly [Jan]
+ - mark the kdump copy inaccessible [Pingfan]
+ - Miscellaneous
+   - explain when operations related to the LUKS volume key happen [Jan]
+   - s/master key/volume key/g
+   - use crash_ instead of kexec_ as function prefix
+   - fix commit subject prefixes e.g. "x86, kdump" to x86/crash
+
+With kdump enabled, when the 1st kernel crashes, the system could boot
+into the kdump/crash kernel and dump the memory image i.e. /proc/vmcore
+to a specified target. Currently, when dumping vmcore to a LUKS
+encrypted device, there are two problems,
+
+ - for some machines, a system administrator may not have a chance to
+   enter the password to decrypt the device in kdump initramfs after the
+   1st kernel crashes 
+
+ - LUKS2 by default use the memory-hard Argon2 key derivation function
+   which is quite memory-consuming compared to the limited memory reserved
+   for kdump. Take Fedora example, by default, only 256M is reserved for
+   systems having memory between 4G-64G. With LUKS enabled, ~1300M needs
+   to be reserved for kdump. Note if the memory reserved for kdump can't
+   be used by 1st kernel i.e. an user sees ~1300M memory missing in the
+   1st kernel. 
+ 
+Besides users (at least for Fedora) usually expect kdump to work out of
+the box i.e. no manual password input is needed. And it doesn't make
+sense to derivate the key again in kdump kernel which seems to be
+redundant work.
+
+Based on Milan's feedback [1] on Kairui's ideas to support kdump with
+LUKS encryption, this patch set addresses the above issues by reusing
+the LUKS volume key in kdump kernel and here is the life cycle of this
+kdump copy of LUKS volume key,
+
+ 1. After the 1st kernel loads the initramfs during boot, systemd
+    asks for a passphrase from the user and uses it to de-crypt the LUKS
+    volume key
+
+ 2. After the 1st kernel saving the volume key as a logon key,
+    libcrytpsetup notifies the kernel to read this logon key and store a
+    temporary copy by writing the key description to
+    /sys/kernel/crash_luks_volume_key
+
+ 3. After switching to the real root fs, kdump.serivce is started and it 
+    loads the kdump kernel using the kexec_file_load syscall
+
+ 4. The kexec_file_load syscall saves the temporary copy of the volume
+    key to kdump reserved memory and wipe the copy.
+
+ 5. When the 1st kernel crashes and kdump kernel is booted,
+    libcryptsetup asks the kdump kernel to add a logon key using
+    the volume key stored in kdump reserved memory by writing the key
+    description to /sys/kernel/crash_luks_volume_key
+
+ 6. The system gets rebooted to the 1st kernel after dumping vmcore to
+    the LUKS encrypted device is finished
+
+Note the kdump copy of LUKS volume key never leaves the kernel space and
+is saved in the memory area exclusively reserved for kdump where even
+the 1st kernel has no direct access. 
+
+Milan's major concern [2] on previous version is "storing the encryption
+key to yet another place are creating another attack vector". To further
+secure this copy, two additional protections are added,
+ - save the copy randomly in kdump reserved memory as suggested by Jan
+ - clear the _PAGE_PRESENT flag of the page that stores the copy as
+   suggested by Pingfan
+
+If there is no further security concern with this approach or any other
+concern, I will drop the following assumptions,
+  - only x86 is supported
+  - there is only one LUKS device for the system
+
+to extend the support to other architectures including POWER, ARM and
+s390x and address the case of multiple LUKS devices. Any feedback will be 
+appreciated, thanks!
+
+For a proof of concept, I've patched cryptsetup [3] in a quick-and-dirty
+way to support a new option "--kdump-kernel-master-key"
+and hacked systemd [4]. It works for Fedora 35.
+
+[1] https://yhbt.net/lore/all/e5abd089-3398-fdb4-7991-0019be434b79@gmail.com/
+[2] https://lwn.net/ml/linux-kernel/c857dcf8-024e-ab8a-fd26-295ce2e0ae41@gmail.com/
+[3] https://gitlab.com/coxu/cryptsetup/-/commit/750a46d933fac82e0c994b5c41de40a0b8cac647
+[4] https://github.com/coiby/systemd/tree/reuse_kdump_master_key
+
+Coiby Xu (5):
+  kexec_file: allow to place kexec_buf randomly
+  crash_dump: save the LUKS volume key temporarily
+  x86/crash: pass the LUKS volume key to kdump kernel
+  x86/crash: make the page that stores the LUKS volume key inaccessible
+  crash_dump: retrieve LUKS volume key in kdump kernel
+
+ arch/x86/include/asm/crash.h       |   1 +
+ arch/x86/kernel/crash.c            |  47 ++++++-
+ arch/x86/kernel/kexec-bzimage64.c  |   7 +
+ arch/x86/kernel/machine_kexec_64.c |  16 +++
+ include/linux/crash_core.h         |   2 +
+ include/linux/crash_dump.h         |   2 +
+ include/linux/kexec.h              |   6 +
+ kernel/crash_dump.c                | 200 +++++++++++++++++++++++++++++
+ kernel/kexec_file.c                |  15 +++
+ kernel/ksysfs.c                    |  19 +++
+ 10 files changed, 314 insertions(+), 1 deletion(-)
+
+-- 
+2.37.3
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
