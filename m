@@ -1,100 +1,95 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B34A5C43219
-	for <dm-devel@archiver.kernel.org>; Mon,  7 Nov 2022 08:40:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8243CC4167B
+	for <dm-devel@archiver.kernel.org>; Mon,  7 Nov 2022 08:40:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667810413;
+	s=mimecast20190719; t=1667810415;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=+ziVCiOeRctKEvGFfAvbtrFskAyxTsmn0FWOeYsOV18=;
-	b=OUUREX4WQBpZ4ovG1xdS7CsgDEA5bODUCtWutjN2pLZ7aZFge4tJCkMfhpxB8OjDZebMcB
-	YWRYdrNeWYrdgue8RyP+Qzq2Aph5W9SgkrodQl/bf+fBv+OUWjZs4aRd1WZ/kk+Pye7tL2
-	mlhhUQ+0giexA9kTVIcrYTaA1pEPU1Q=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Gms/s3jAACt03/y4/mIwejRMEZaMBEBVzef/ZaqSy3s=;
+	b=EhKjxWBq3mmSB6VThkeaIyZWbxkM3dKZBmTkrkCxxpMimjnihA9/BO911HvkFGFlR7VZyb
+	tIzpig3idgzy5/HNekaKWCGmOKE30WaCeFMI2B6/R0piOyj/2mI7DDzRDLGgR0uv3fnZFe
+	cITxHwbRBVPHPEal7Ge8+Kr3RD2bDi4=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-617-sP6_NPLMOyyRL3Sih6c2dg-1; Mon, 07 Nov 2022 03:40:12 -0500
-X-MC-Unique: sP6_NPLMOyyRL3Sih6c2dg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-512-RVFU9GPZNxOhfCkURFGaxA-1; Mon, 07 Nov 2022 03:40:12 -0500
+X-MC-Unique: RVFU9GPZNxOhfCkURFGaxA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 186072804BAE;
-	Mon,  7 Nov 2022 08:40:10 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 077162166B29;
-	Mon,  7 Nov 2022 08:40:10 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 46D0A1946A44;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C4B53101A592;
 	Mon,  7 Nov 2022 08:40:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 03C95492B11;
+	Mon,  7 Nov 2022 08:40:08 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 47B0619465B3;
+	Mon,  7 Nov 2022 08:40:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 206C61946586
- for <dm-devel@listman.corp.redhat.com>; Fri,  4 Nov 2022 11:30:48 +0000 (UTC)
+ ESMTP id 0052A1946587
+ for <dm-devel@listman.corp.redhat.com>; Sun,  6 Nov 2022 11:06:32 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 02A52206400B; Fri,  4 Nov 2022 11:30:48 +0000 (UTC)
+ id C869C40C6EE9; Sun,  6 Nov 2022 11:06:32 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id EFADB2064009
- for <dm-devel@redhat.com>; Fri,  4 Nov 2022 11:30:47 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D0CE685A59D
- for <dm-devel@redhat.com>; Fri,  4 Nov 2022 11:30:47 +0000 (UTC)
-Received: from mail-pj1-f70.google.com (mail-pj1-f70.google.com
- [209.85.216.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-284-3bFGrqJAMc-V3AMx5r_j3w-1; Fri, 04 Nov 2022 07:30:46 -0400
-X-MC-Unique: 3bFGrqJAMc-V3AMx5r_j3w-1
-Received: by mail-pj1-f70.google.com with SMTP id
- pa16-20020a17090b265000b0020a71040b4cso2233893pjb.6
- for <dm-devel@redhat.com>; Fri, 04 Nov 2022 04:30:46 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=RevsFdiPw/fb8SaWA4i0OScuHjqawmx3PhXyedjj5ck=;
- b=q47yhu8mkuKEU722O4KSemm5KT2QehCVU+ap409/YNE4lkgTgiFzAjb2the0xeekET
- ZJ4d4nVJSbndlqHrKRQQ8tpLhJ3777ohyS5gvcEGor5dcoIZdvbPXvCgwZygeuTSYk34
- IzGwNcNeXomNpYOeZzcvP2RcaB5q7ZCMMtpiK8/Zpv0gOowF0h+SkynfKoKX99bmVTok
- Fy2a+f3LuWyLvHJmz1QsHhkudEKhty+m4pNk/MadZyWe/ZchgVTxCkMjLwc5UVEmEg1N
- zsuIDSIJSr7bf7SauHIQWsHj4bFfyFjwT9pO1BgxJrWY4oV2qeSdVdAnE/3klsspV62T
- 9VNg==
-X-Gm-Message-State: ACrzQf3Hjunodsvq+D0VJeI3idDBmQdHP6NEssSHtBygSgff8oQW2BR5
- zo+IbF8wGoafVy4kemTxZf57ZE5aT0XTqRih5jpbFoy1DGDkH/4lAeP+A4hjsldzfoUFbqEpocY
- lzqIhQAKaSrG7rCU=
-X-Received: by 2002:a17:90a:6d22:b0:213:7e1e:9be0 with SMTP id
- z31-20020a17090a6d2200b002137e1e9be0mr35804892pjj.17.1667561445707; 
- Fri, 04 Nov 2022 04:30:45 -0700 (PDT)
-X-Google-Smtp-Source: AMsMyM51CDYLEqWginckV/rN0elEiAXD4s8pR8U6DdMP+NZPO37JWjN6xDUyvoO9upVjiEVTkeoywQ==
-X-Received: by 2002:a17:90a:6d22:b0:213:7e1e:9be0 with SMTP id
- z31-20020a17090a6d2200b002137e1e9be0mr35804871pjj.17.1667561445499; 
- Fri, 04 Nov 2022 04:30:45 -0700 (PDT)
-Received: from localhost ([209.132.188.80]) by smtp.gmail.com with ESMTPSA id
- c5-20020a056a00008500b005629b6a8b53sm2609597pfj.15.2022.11.04.04.30.43
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 04 Nov 2022 04:30:45 -0700 (PDT)
-From: Coiby Xu <coxu@redhat.com>
-To: kexec@lists.infradead.org
-Date: Fri,  4 Nov 2022 19:29:59 +0800
-Message-Id: <20221104113000.487098-5-coxu@redhat.com>
-In-Reply-To: <20221104113000.487098-1-coxu@redhat.com>
-References: <20221104113000.487098-1-coxu@redhat.com>
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C04C740C6EC5
+ for <dm-devel@redhat.com>; Sun,  6 Nov 2022 11:06:32 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A9C2E85A583
+ for <dm-devel@redhat.com>; Sun,  6 Nov 2022 11:06:32 +0000 (UTC)
+Received: from www262.sakura.ne.jp (www262.sakura.ne.jp [202.181.97.72]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-461-zc8cyl55Ncqz9EwWs9GtQQ-1; Sun, 06 Nov 2022 06:06:30 -0500
+X-MC-Unique: zc8cyl55Ncqz9EwWs9GtQQ-1
+Received: from fsav312.sakura.ne.jp (fsav312.sakura.ne.jp [153.120.85.143])
+ by www262.sakura.ne.jp (8.15.2/8.15.2) with ESMTP id 2A6AU5oj049054;
+ Sun, 6 Nov 2022 19:30:05 +0900 (JST)
+ (envelope-from penguin-kernel@I-love.SAKURA.ne.jp)
+Received: from www262.sakura.ne.jp (202.181.97.72)
+ by fsav312.sakura.ne.jp (F-Secure/fsigk_smtp/550/fsav312.sakura.ne.jp);
+ Sun, 06 Nov 2022 19:30:05 +0900 (JST)
+X-Virus-Status: clean(F-Secure/fsigk_smtp/550/fsav312.sakura.ne.jp)
+Received: from [192.168.1.9] (M106072142033.v4.enabler.ne.jp [106.72.142.33])
+ (authenticated bits=0)
+ by www262.sakura.ne.jp (8.15.2/8.15.2) with ESMTPSA id 2A6ASnfQ048798
+ (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=NO);
+ Sun, 6 Nov 2022 19:28:50 +0900 (JST)
+ (envelope-from penguin-kernel@I-love.SAKURA.ne.jp)
+Message-ID: <e170edc2-e5b9-4c8b-4ed3-7e2d7a2850dc@I-love.SAKURA.ne.jp>
+Date: Sun, 6 Nov 2022 19:28:50 +0900
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+User-Agent: Mozilla/5.0 (Windows NT 6.3; Win64; x64; rv:102.0) Gecko/20100101
+ Thunderbird/102.4.1
+To: MPT-FusionLinux.pdl@broadcom.com, dm-devel@redhat.com,
+ DRI <dri-devel@lists.freedesktop.org>,
+ Intel Graphics Development <intel-gfx@lists.freedesktop.org>,
+ linux-scsi@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
+From: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Mimecast-Spam-Signature: yes
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mailman-Approved-At: Mon, 07 Nov 2022 08:40:06 +0000
-Subject: [dm-devel] [RFC v2 4/5] x86/crash: make the page that stores the
- LUKS volume key inaccessible
+Subject: [dm-devel] How is the progress for removing flush_scheduled_work()
+ callers?
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -106,63 +101,26 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "maintainer:X86 ARCHITECTURE 32-BIT AND 64-BIT" <x86@kernel.org>,
- "H. Peter Anvin" <hpa@zytor.com>, Baoquan He <bhe@redhat.com>,
- Dave Hansen <dave.hansen@linux.intel.com>, dm-devel@redhat.com,
- Pingfan Liu <kernelfans@gmail.com>, linux-kernel@vger.kernel.org,
- Kairui Song <ryncsn@gmail.com>, Ingo Molnar <mingo@redhat.com>,
- Borislav Petkov <bp@alien8.de>, Jan Pazdziora <jpazdziora@redhat.com>,
- Thomas Staudt <tstaudt@de.ibm.com>, Thomas Gleixner <tglx@linutronix.de>,
- Dave Young <dyoung@redhat.com>, Milan Broz <gmazyland@gmail.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-This adds an addition layer of protection for the saved copy of LUKS
-volume key. Trying to access the saved copy will cause page fault.
+Like commit c4f135d643823a86 ("workqueue: Wrap flush_workqueue() using a
+macro") says, flush_scheduled_work() is dangerous and will be forbidden.
+We are on the way for removing all flush_scheduled_work() callers from
+the kernel, and there are only 4 callers remaining as of linux-20221104.
 
-Suggested-by: Pingfan Liu <kernelfans@gmail.com>
-Signed-off-by: Coiby Xu <coxu@redhat.com>
----
- arch/x86/kernel/machine_kexec_64.c | 16 ++++++++++++++++
- 1 file changed, 16 insertions(+)
+  drivers/gpu/drm/i915/display/intel_display.c:8997:      flush_scheduled_work();
+  drivers/gpu/drm/i915/gt/selftest_execlists.c:88:        flush_scheduled_work();
+  drivers/md/dm.c:234:    flush_scheduled_work();
+  drivers/message/fusion/mptscsih.c:1234: flush_scheduled_work();
 
-diff --git a/arch/x86/kernel/machine_kexec_64.c b/arch/x86/kernel/machine_kexec_64.c
-index 0611fd83858e..f3d51c38a1c9 100644
---- a/arch/x86/kernel/machine_kexec_64.c
-+++ b/arch/x86/kernel/machine_kexec_64.c
-@@ -557,9 +557,25 @@ static void kexec_mark_crashkres(bool protect)
- 	kexec_mark_range(control, crashk_res.end, protect);
- }
- 
-+static void kexec_mark_luks_volume_key_inaccessible(void)
-+{
-+	unsigned long start, end;
-+	struct page *page;
-+	unsigned int nr_pages;
-+
-+	if (kexec_crash_image->luks_volume_key_addr) {
-+		start = kexec_crash_image->luks_volume_key_addr;
-+		end = start + kexec_crash_image->luks_volume_key_sz - 1;
-+		page = pfn_to_page(start >> PAGE_SHIFT);
-+		nr_pages = (end >> PAGE_SHIFT) - (start >> PAGE_SHIFT) + 1;
-+		set_memory_np((unsigned long)page_address(page), nr_pages);
-+	}
-+}
-+
- void arch_kexec_protect_crashkres(void)
- {
- 	kexec_mark_crashkres(true);
-+	kexec_mark_luks_volume_key_inaccessible();
- }
- 
- void arch_kexec_unprotect_crashkres(void)
--- 
-2.37.3
+I'm planning to start emitting runtime messages in linux-next.git tree.
 
 --
 dm-devel mailing list
