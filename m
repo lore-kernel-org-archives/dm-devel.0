@@ -1,101 +1,85 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AEE98C4167D
-	for <dm-devel@archiver.kernel.org>; Mon,  7 Nov 2022 08:40:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 77E96C4167B
+	for <dm-devel@archiver.kernel.org>; Mon,  7 Nov 2022 09:16:45 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667810416;
+	s=mimecast20190719; t=1667812604;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=TbUcssmFtrJsI2ftrR0QuGTY91njWp8EekhZOnzvk4k=;
-	b=Yib/1ZCSYMMnT7mLbhb8rOYAQojRj2jP1Y5L7DOF5Nj1mLadXSi6m/JjT1pN/CAtPudXbX
-	I0s4HX70cjjcbKtkXEznFobYFX7bVf0cj6sf3rpsiIXos1g10OL9AyV8StNTuwMWyiK1lG
-	A544XX1QbKyj76FPjwiKj/pARfAYsAk=
+	bh=wOos676sERGzYUjLfjbIuiDk3YwvbTdtFuTGZKN9M9k=;
+	b=bIDE0159MSoxyLbRTo4NVJpCbiVYPAIYrX1Q4edBSXTH9dKnUhOgO4DTupnYKuOdLdVIro
+	WYJsfQDNAgg3tMbPvOdz4lt6dzP4z8gFsVe7y23WPwultDG/e3p9QM1Rg78gzkxeJTg6I6
+	aMeD/I3vwPosBfc2O2DiaQ7oHIbSER8=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-665-VBJpUHHhMe2S2tk8JKy05A-1; Mon, 07 Nov 2022 03:40:13 -0500
-X-MC-Unique: VBJpUHHhMe2S2tk8JKy05A-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-646-wWt_HMZSN9iMGZMlvzU_Ew-1; Mon, 07 Nov 2022 04:16:41 -0500
+X-MC-Unique: wWt_HMZSN9iMGZMlvzU_Ew-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B568518ABF83;
-	Mon,  7 Nov 2022 08:40:10 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7EC0F185A79C;
+	Mon,  7 Nov 2022 09:16:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9F6042166B34;
-	Mon,  7 Nov 2022 08:40:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0CD92492B05;
+	Mon,  7 Nov 2022 09:16:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AA27A1946A67;
-	Mon,  7 Nov 2022 08:40:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DFC381946588;
+	Mon,  7 Nov 2022 09:16:38 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 90E5C1946586
- for <dm-devel@listman.corp.redhat.com>; Fri,  4 Nov 2022 11:30:58 +0000 (UTC)
+ ESMTP id 3C1181946587
+ for <dm-devel@listman.corp.redhat.com>; Mon,  7 Nov 2022 09:16:38 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 85DBF49BB9A; Fri,  4 Nov 2022 11:30:58 +0000 (UTC)
+ id 1D9D82027064; Mon,  7 Nov 2022 09:16:38 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7E85D403161
- for <dm-devel@redhat.com>; Fri,  4 Nov 2022 11:30:58 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 167AB2027063
+ for <dm-devel@redhat.com>; Mon,  7 Nov 2022 09:16:38 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 62C07380406B
- for <dm-devel@redhat.com>; Fri,  4 Nov 2022 11:30:58 +0000 (UTC)
-Received: from mail-pj1-f70.google.com (mail-pj1-f70.google.com
- [209.85.216.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-605-ko_ZFL4-Os-tBMcpfe42cw-1; Fri, 04 Nov 2022 07:30:55 -0400
-X-MC-Unique: ko_ZFL4-Os-tBMcpfe42cw-1
-Received: by mail-pj1-f70.google.com with SMTP id
- my9-20020a17090b4c8900b002130d29fd7cso5411664pjb.7
- for <dm-devel@redhat.com>; Fri, 04 Nov 2022 04:30:54 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=tChygk51qSEpKRajoEIhCZC1g4gkmcKbQyIR3WZ7WJ0=;
- b=C8dHXR8/Y6lVUs2TtAekyi6QxHEJliCtZkNejtbVUUY4WcWeT8TQ5+zlbukuJBLLeG
- uFBIYqZkiIgvq3l22agfjggzdM0vZWTWj9gCBIrfsU9grp5CNzv7pflQX+MrTmWVOFZ8
- TCsrdMrf1xy7edI47nRDohTee+WIyoSOhWb1mukQsXe0cPln1K1hxh+EO0i5sYCyAp1M
- 7bXri0Ywv4VbfYG9UjzlWmESgZkZpEIsT/mUJBranyJ+M1wlRqOrC0qCZfoI4d9mtPQw
- yL2ojyYSRI2dqdN0e0a6B88h3XdFblngxQ2eR4VPt6aCtpXjtAFjVDd20VI5Rk4c4yzl
- +idg==
-X-Gm-Message-State: ACrzQf24Pd5d5gACmh0OccBBDwtW4rdO9XWChUwUw+xUjLOdxyhBcJA7
- rrwPlDJd6CXqf89z1fpc7r3LZ5Ooe470dTHeHr8HAWU829a4ROFNbgCtR6AE6zeZzUVV4TuD0S3
- Zi3vR8tNFa5EmvTE=
-X-Received: by 2002:a05:6a00:3698:b0:56d:3180:e88f with SMTP id
- dw24-20020a056a00369800b0056d3180e88fmr32007699pfb.66.1667561454069; 
- Fri, 04 Nov 2022 04:30:54 -0700 (PDT)
-X-Google-Smtp-Source: AMsMyM6/YFb404UDQuedNToGLAqLTqEInClQiUntzz+pWfWaKxI00OswIw7b6D7Q0zuVJH1Lqg4s3g==
-X-Received: by 2002:a05:6a00:3698:b0:56d:3180:e88f with SMTP id
- dw24-20020a056a00369800b0056d3180e88fmr32007679pfb.66.1667561453799; 
- Fri, 04 Nov 2022 04:30:53 -0700 (PDT)
-Received: from localhost ([209.132.188.80]) by smtp.gmail.com with ESMTPSA id
- ca8-20020a17090af30800b0020669c8bd87sm1483003pjb.36.2022.11.04.04.30.52
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 04 Nov 2022 04:30:53 -0700 (PDT)
-From: Coiby Xu <coxu@redhat.com>
-To: kexec@lists.infradead.org
-Date: Fri,  4 Nov 2022 19:30:00 +0800
-Message-Id: <20221104113000.487098-6-coxu@redhat.com>
-In-Reply-To: <20221104113000.487098-1-coxu@redhat.com>
-References: <20221104113000.487098-1-coxu@redhat.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ED9BF101A54E
+ for <dm-devel@redhat.com>; Mon,  7 Nov 2022 09:16:37 +0000 (UTC)
+Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-98-T9y4X60fOR2486gfCmu_hQ-1; Mon, 07 Nov 2022 04:16:35 -0500
+X-MC-Unique: T9y4X60fOR2486gfCmu_hQ-1
+Received: by verein.lst.de (Postfix, from userid 2407)
+ id 50E4B67373; Mon,  7 Nov 2022 10:16:31 +0100 (CET)
+Date: Mon, 7 Nov 2022 10:16:31 +0100
+From: Christoph Hellwig <hch@lst.de>
+To: Mike Christie <michael.christie@oracle.com>
+Message-ID: <20221107091631.GA3663@lst.de>
+References: <20221026231945.6609-1-michael.christie@oracle.com>
+ <20221026231945.6609-13-michael.christie@oracle.com>
+ <20221030082020.GC4774@lst.de>
+ <a7e447b5-b26e-7aa0-ab6a-3463b8497d26@oracle.com>
+ <20221101101511.GA13304@lst.de>
+ <7762a877-9a5f-4dee-6dfc-c2e1fcb8a66a@oracle.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-X-Mailman-Approved-At: Mon, 07 Nov 2022 08:40:06 +0000
-Subject: [dm-devel] [RFC v2 5/5] crash_dump: retrieve LUKS volume key in
- kdump kernel
+In-Reply-To: <7762a877-9a5f-4dee-6dfc-c2e1fcb8a66a@oracle.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH v3 12/19] block, nvme, scsi,
+ dm: Add blk_status to pr_ops callouts
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -107,206 +91,29 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Baoquan He <bhe@redhat.com>, dm-devel@redhat.com,
- Pingfan Liu <kernelfans@gmail.com>, linux-kernel@vger.kernel.org,
- Kairui Song <ryncsn@gmail.com>, Jan Pazdziora <jpazdziora@redhat.com>,
- Thomas Staudt <tstaudt@de.ibm.com>, Dave Young <dyoung@redhat.com>,
- Milan Broz <gmazyland@gmail.com>, Vivek Goyal <vgoyal@redhat.com>
+Cc: axboe@kernel.dk, linux-block@vger.kernel.org, chaitanyak@nvidia.com,
+ martin.petersen@oracle.com, linux-scsi@vger.kernel.org, snitzer@kernel.org,
+ linux-nvme@lists.infradead.org, james.bottomley@hansenpartnership.com,
+ dm-devel@redhat.com, target-devel@vger.kernel.org, kbusch@kernel.org,
+ Christoph Hellwig <hch@lst.de>, bvanassche@acm.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Crash kernel will retrieve the LUKS volume key based on the
-luksvolumekey command line parameter. When libcryptsetup writes the key
-description to /sys/kernel/crash_luks_volume_key, crash kernel will
-create a thread keyring and add a logon key.
+On Sat, Nov 05, 2022 at 01:36:18PM -0500, Mike Christie wrote:
+> Do you mean just doing this:
 
-Signed-off-by: Coiby Xu <coxu@redhat.com>
----
- include/linux/crash_dump.h |   2 +
- kernel/crash_dump.c        | 116 ++++++++++++++++++++++++++++++++++++-
- 2 files changed, 116 insertions(+), 2 deletions(-)
+That would be the minimal fix.  We'd then still need to enumerate
+the allowed positive return values and check noting else is returned.
 
-diff --git a/include/linux/crash_dump.h b/include/linux/crash_dump.h
-index 0f3a656293b0..bc848e058c64 100644
---- a/include/linux/crash_dump.h
-+++ b/include/linux/crash_dump.h
-@@ -15,6 +15,8 @@
- extern unsigned long long elfcorehdr_addr;
- extern unsigned long long elfcorehdr_size;
- 
-+extern unsigned long long luks_volume_key_addr;
-+
- #ifdef CONFIG_CRASH_DUMP
- extern int elfcorehdr_alloc(unsigned long long *addr, unsigned long long *size);
- extern void elfcorehdr_free(unsigned long long addr);
-diff --git a/kernel/crash_dump.c b/kernel/crash_dump.c
-index 9c202bffbb8d..77a6b84415e8 100644
---- a/kernel/crash_dump.c
-+++ b/kernel/crash_dump.c
-@@ -5,7 +5,10 @@
- #include <linux/errno.h>
- #include <linux/export.h>
- 
-+#include <linux/key.h>
-+#include <linux/keyctl.h>
- #include <keys/user-type.h>
-+
- /*
-  * stores the physical address of elf header of crash image
-  *
-@@ -16,6 +19,8 @@
- unsigned long long elfcorehdr_addr = ELFCORE_ADDR_MAX;
- EXPORT_SYMBOL_GPL(elfcorehdr_addr);
- 
-+unsigned long long luks_volume_key_addr;
-+EXPORT_SYMBOL_GPL(luks_volume_key_addr);
- /*
-  * stores the size of elf header of crash image
-  */
-@@ -41,6 +46,76 @@ static int __init setup_elfcorehdr(char *arg)
- }
- early_param("elfcorehdr", setup_elfcorehdr);
- 
-+static int __init setup_luksvolumekey(char *arg)
-+{
-+	char *end;
-+
-+	if (!arg)
-+		return -EINVAL;
-+	luks_volume_key_addr = memparse(arg, &end);
-+	if (end > arg)
-+		return 0;
-+
-+	luks_volume_key_addr = 0;
-+	return -EINVAL;
-+}
-+
-+early_param("luksvolumekey", setup_luksvolumekey);
-+
-+/*
-+ * Architectures may override this function to read LUKS master key
-+ */
-+ssize_t __weak luks_key_read(char *buf, size_t count, u64 *ppos)
-+{
-+	struct kvec kvec = { .iov_base = buf, .iov_len = count };
-+	struct iov_iter iter;
-+
-+	iov_iter_kvec(&iter, READ, &kvec, 1, count);
-+	return read_from_oldmem(&iter, count, ppos, false);
-+}
-+
-+static int retrive_kdump_luks_volume_key(u8 *buffer, unsigned int *sz)
-+{
-+	unsigned int key_size;
-+	size_t lukskeybuf_sz;
-+	unsigned int *size_ptr;
-+	char *lukskeybuf;
-+	u64 addr;
-+	int r;
-+
-+	if (luks_volume_key_addr == 0) {
-+		pr_debug("LUKS master key memory address inaccessible");
-+		return -EINVAL;
-+	}
-+
-+	addr = luks_volume_key_addr;
-+
-+	/* Read LUKS master key size */
-+	r = luks_key_read((char *)&key_size, sizeof(unsigned int), &addr);
-+
-+	if (r < 0)
-+		return r;
-+
-+	pr_debug("Retrieve LUKS master key: size=%u\n", key_size);
-+	/* Read in LUKS maste rkey */
-+	lukskeybuf_sz = sizeof(unsigned int) + key_size * sizeof(u8);
-+	lukskeybuf = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
-+					      get_order(lukskeybuf_sz));
-+	if (!lukskeybuf)
-+		return -ENOMEM;
-+
-+	addr = luks_volume_key_addr;
-+	r = luks_key_read((char *)lukskeybuf, lukskeybuf_sz, &addr);
-+
-+	if (r < 0)
-+		return r;
-+	size_ptr = (unsigned int *)lukskeybuf;
-+	memcpy(buffer, size_ptr + 1, key_size * sizeof(u8));
-+	pr_debug("Retrieve LUKS master key (size=%u): %48ph...\n", key_size, buffer);
-+	*sz = key_size;
-+	return 0;
-+}
-+
- static u8 *luks_volume_key;
- static unsigned int luks_volume_key_size;
- 
-@@ -62,12 +137,48 @@ static DECLARE_DELAYED_WORK(wipe_luks_volume_key_work, _wipe_luks_volume_key);
- 
- static unsigned __read_mostly wipe_key_delay = 3600; /* 1 hour */
- 
-+static int retore_luks_volume_key_to_thread_keyring(const char *key_desc)
-+{
-+	key_ref_t keyring_ref, key_ref;
-+	int ret;
-+
-+	/* find the target keyring (which must be writable) */
-+	keyring_ref = lookup_user_key(KEY_SPEC_THREAD_KEYRING, 0x01, KEY_NEED_WRITE);
-+	if (IS_ERR(keyring_ref)) {
-+		pr_alert("Failed to get keyring");
-+		return PTR_ERR(keyring_ref);
-+	}
-+
-+	luks_volume_key = kmalloc(128, GFP_KERNEL);
-+	ret = retrive_kdump_luks_volume_key(luks_volume_key, &luks_volume_key_size);
-+	if (ret) {
-+		kfree(luks_volume_key);
-+		return ret;
-+	}
-+
-+	/* create or update the requested key and add it to the target keyring */
-+	key_ref = key_create_or_update(keyring_ref, "logon", key_desc,
-+				       luks_volume_key, luks_volume_key_size,
-+				       KEY_PERM_UNDEF, KEY_ALLOC_IN_QUOTA);
-+
-+	if (!IS_ERR(key_ref)) {
-+		ret = key_ref_to_ptr(key_ref)->serial;
-+		key_ref_put(key_ref);
-+		pr_alert("Success adding key %s", key_desc);
-+	} else {
-+		ret = PTR_ERR(key_ref);
-+		pr_alert("Error when adding key");
-+	}
-+
-+	key_ref_put(keyring_ref);
-+	return ret;
-+}
-+
- static int crash_save_temp_luks_volume_key(const char *key_desc, size_t count)
- {
- 	const struct user_key_payload *ukp;
- 	struct key *key;
- 
--
- 	if (luks_volume_key) {
- 		memset(luks_volume_key, 0, luks_volume_key_size * sizeof(u8));
- 		kfree(luks_volume_key);
-@@ -100,7 +211,8 @@ int crash_sysfs_luks_volume_key_write(const char *key_desc, size_t count)
- {
- 	if (!is_kdump_kernel())
- 		return crash_save_temp_luks_volume_key(key_desc, count);
--	return -EINVAL;
-+	else
-+		return retore_luks_volume_key_to_thread_keyring(key_desc);
- }
- EXPORT_SYMBOL(crash_sysfs_luks_volume_key_write);
- 
--- 
-2.37.3
+I don't like the opt in in the other version.  The SCSI return values are
+the defactor API, and we need to switch NVMe to align with it ASAP
+instead of keeping the broken old version around.
 
 --
 dm-devel mailing list
