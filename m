@@ -4,68 +4,68 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1AC9AC433FE
-	for <dm-devel@archiver.kernel.org>; Wed,  9 Nov 2022 08:26:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3ED7FC4332F
+	for <dm-devel@archiver.kernel.org>; Wed,  9 Nov 2022 13:16:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1667982418;
+	s=mimecast20190719; t=1667999797;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Tkw+antgZspoiXHzG9U3LnUPJWGLP2/jBQBJXJiA1jY=;
-	b=GKmt77Dv3AePR+Y+LvUFOSfKjcF7bD0Xjrt+y4W5cjTZNxcHTuYnlrq7mZjKoEuNpw3ztm
-	BwqvssCcosexKv2oTD00uAkwFLEm+Pks8x7p1wuIFQRW8MD+Di2lHl98ksTZke4YKYgM5u
-	wLkDHfAmwYnPzBYLshUwGCxRvK/F+0A=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=JtRsMkq+ZupQHqXKxZaG9XN/WKKCGcdSfE/8v2zZMWg=;
+	b=UNOI0KEmULHGYrJXAJ6EiJ3Y6tSvWRB28bRqTSAzGMLt1SFupFK6vjGWbTv5pH+QzXmrCY
+	+chAKmRopAEBHbGRpeKimxS8CmVzvWlfsV+vhN0UE3xxxjA+jHNqxYefm4d2JAoqEsJmN1
+	B37qvMvltSYH4JUgg+BshpZety5Lluk=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-312-8HIOuDEgOLubvCPXq9OHzA-1; Wed, 09 Nov 2022 03:26:55 -0500
-X-MC-Unique: 8HIOuDEgOLubvCPXq9OHzA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-590-Pph23SeWOj6eM5MWy8nyaA-1; Wed, 09 Nov 2022 08:16:35 -0500
+X-MC-Unique: Pph23SeWOj6eM5MWy8nyaA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B95AD1C09043;
-	Wed,  9 Nov 2022 08:26:53 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 68A8C802804;
+	Wed,  9 Nov 2022 13:16:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BCF68C1912A;
-	Wed,  9 Nov 2022 08:26:52 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 86CBA1121320;
+	Wed,  9 Nov 2022 13:16:31 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8F4E2194658F;
-	Wed,  9 Nov 2022 08:26:52 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 64C8F19465B8;
+	Wed,  9 Nov 2022 13:16:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E8DE21946588
- for <dm-devel@listman.corp.redhat.com>; Wed,  9 Nov 2022 08:26:51 +0000 (UTC)
+ ESMTP id 451CA1946588
+ for <dm-devel@listman.corp.redhat.com>; Wed,  9 Nov 2022 13:14:17 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C96B12166B2E; Wed,  9 Nov 2022 08:26:51 +0000 (UTC)
+ id 22A644B4010; Wed,  9 Nov 2022 13:14:17 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C1DC52166B29
- for <dm-devel@redhat.com>; Wed,  9 Nov 2022 08:26:51 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A860B1C09048
- for <dm-devel@redhat.com>; Wed,  9 Nov 2022 08:26:51 +0000 (UTC)
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1B5E34B400F
+ for <dm-devel@redhat.com>; Wed,  9 Nov 2022 13:14:17 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0366B2823814
+ for <dm-devel@redhat.com>; Wed,  9 Nov 2022 13:14:17 +0000 (UTC)
 Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-283-yYjshkc4MWChqkrLHK6l0w-1; Wed, 09 Nov 2022 03:26:49 -0500
-X-MC-Unique: yYjshkc4MWChqkrLHK6l0w-1
+ us-mta-201-JBUgrYZUM3GBe_EDHQTOjw-1; Wed, 09 Nov 2022 08:14:15 -0500
+X-MC-Unique: JBUgrYZUM3GBe_EDHQTOjw-1
 Received: by verein.lst.de (Postfix, from userid 2407)
- id 5473D68AFE; Wed,  9 Nov 2022 09:26:45 +0100 (CET)
-Date: Wed, 9 Nov 2022 09:26:45 +0100
+ id 2991D68AA6; Wed,  9 Nov 2022 14:14:10 +0100 (CET)
+Date: Wed, 9 Nov 2022 14:14:09 +0100
 From: Christoph Hellwig <hch@lst.de>
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <20221109082645.GA14093@lst.de>
-References: <20221030153120.1045101-1-hch@lst.de>
- <20221030153120.1045101-6-hch@lst.de>
- <9b5b4c2a-6566-2fb4-d3ae-4904f0889ea0@huaweicloud.com>
+To: Eric Biggers <ebiggers@kernel.org>
+Message-ID: <20221109131409.GD32628@lst.de>
+References: <20221107144229.1547370-1-hch@lst.de>
+ <20221107144229.1547370-2-hch@lst.de> <Y2lnloNN5wovDBMF@sol.localdomain>
 MIME-Version: 1.0
-In-Reply-To: <9b5b4c2a-6566-2fb4-d3ae-4904f0889ea0@huaweicloud.com>
+In-Reply-To: <Y2lnloNN5wovDBMF@sol.localdomain>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -74,9 +74,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH 5/7] dm: track per-add_disk holder relations
- in DM
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+Subject: Re: [dm-devel] [PATCH 1/3] blk-crypto: don't use struct
+ request_queue for public interfaces
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -88,49 +88,59 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@kernel.org>,
+Cc: Jens Axboe <axboe@kernel.dk>, "Theodore Y. Ts'o" <tytso@mit.edu>,
+ Mike Snitzer <snitzer@kernel.org>, linux-fscrypt@vger.kernel.org,
  linux-block@vger.kernel.org, dm-devel@redhat.com,
- "yukuai \(C\)" <yukuai3@huawei.com>, Christoph Hellwig <hch@lst.de>,
- Alasdair Kergon <agk@redhat.com>
+ Jaegeuk Kim <jaegeuk@kernel.org>, Christoph Hellwig <hch@lst.de>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Nov 09, 2022 at 10:08:14AM +0800, Yu Kuai wrote:
->> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
->> index 2917700b1e15c..7b0d6dc957549 100644
->> --- a/drivers/md/dm.c
->> +++ b/drivers/md/dm.c
->> @@ -751,9 +751,16 @@ static struct table_device *open_table_device(struct mapped_device *md,
->>   		goto out_free_td;
->>   	}
->>   -	r = bd_link_disk_holder(bdev, dm_disk(md));
->> -	if (r)
->> -		goto out_blkdev_put;
->> +	/*
->> +	 * We can be called before the dm disk is added.  In that case we can't
->> +	 * register the holder relation here.  It will be done once add_disk was
->> +	 * called.
->> +	 */
->> +	if (md->disk->slave_dir) {
-> If device_add_disk() or del_gendisk() can concurrent with this, It seems
-> to me that using 'slave_dir' is not safe.
->
-> I'm not quite familiar with dm, can we guarantee that they can't
-> concurrent?
+On Mon, Nov 07, 2022 at 12:16:22PM -0800, Eric Biggers wrote:
+> On Mon, Nov 07, 2022 at 03:42:27PM +0100, Christoph Hellwig wrote:
+> > diff --git a/block/blk-crypto.c b/block/blk-crypto.c
+> > index a496aaef85ba4..0e0c2fc56c428 100644
+> > --- a/block/blk-crypto.c
+> > +++ b/block/blk-crypto.c
+> > @@ -357,17 +357,18 @@ int blk_crypto_init_key(struct blk_crypto_key *blk_key, const u8 *raw_key,
+> >   * request queue it's submitted to supports inline crypto, or the
+> >   * blk-crypto-fallback is enabled and supports the cfg).
+> >   */
+> 
+> Replace "request queue" with block_device in the above comment?
 
-I assumed dm would not get itself into territory were creating /
-deleting the device could race with adding component devices, but
-digging deeper I can't find anything.  This could be done
-by holding table_devices_lock around add_disk/del_gendisk, but
-I'm not that familar with the dm code.
+Done.
 
-Mike, can you help out on this?
+> > -	       __blk_crypto_cfg_supported(q->crypto_profile, cfg);
+> > +	       __blk_crypto_cfg_supported(bdev_get_queue(bdev)->crypto_profile,
+> > +	       				  cfg);
+> >  }
+> 
+> There's a whitespace error here:
+
+Fixed.
+
+> >	/*
+> >        * If the request_queue didn't support the key, then blk-crypto-fallback
+> >        * may have been used, so try to evict the key from blk-crypto-fallback.
+> >        */
+> >	return blk_crypto_fallback_evict_key(key);
+> 
+> Likewise, s/request_queue/block_device/ in the above comment.
+
+Done.
+
+> > struct request;
+> > struct request_queue;
+> 
+> These forward declarations are no longer needed and can be removed.
+
+Done.
 
 --
 dm-devel mailing list
