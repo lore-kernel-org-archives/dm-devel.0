@@ -4,73 +4,78 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DFDF2C4167D
-	for <dm-devel@archiver.kernel.org>; Fri, 11 Nov 2022 07:39:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 26D6CC4332F
+	for <dm-devel@archiver.kernel.org>; Fri, 11 Nov 2022 12:05:34 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1668152369;
+	s=mimecast20190719; t=1668168334;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=U6YnL8nhAbNpbcZ44GpVeuSAMeUQKTUdjyg/zoEGgng=;
-	b=Vv/adZdA0U6IH4JLr947XlefezShpU3qb/TXGtejUUCFW6ZxyEHBNo6CKC3ESPhlgRWdvR
-	F3eWTnTWx5ydZsBdoM7MpzRs12NUewrZrDwAYKTvUzsrne+T8WrbgbM+gOaZvjDWiCegxz
-	+OCa0by0s/uOZmavBjUknjF6Zd0aMyk=
+	bh=IRsQ6R5A/o+ii4koCmesdjfVeFv6YO5eVvd7tsne4l0=;
+	b=BGmprdxaFy+eafI6W4avsyzdJRrYbOkhPMiLzurF1GEIN7a246QBwG2uer1QAtqF9XlDYZ
+	uEkCmvdYIwKJK4iPsu4YSjOS3u0QqdIwOF1hwwJ3XT3twBTCLNx1la6b5XS0ODHrHKzAkl
+	EQBGBUUzewb1IoMfZDXwwN6WnjJ1KyI=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-597-odUVYg6ROUiK6PcctW_uzA-1; Fri, 11 Nov 2022 02:39:26 -0500
-X-MC-Unique: odUVYg6ROUiK6PcctW_uzA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-339-To9h46YLOYG1vkFjr19kmQ-1; Fri, 11 Nov 2022 07:05:32 -0500
+X-MC-Unique: To9h46YLOYG1vkFjr19kmQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 230AC101AA6A;
-	Fri, 11 Nov 2022 07:39:24 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 75964185A7A9;
+	Fri, 11 Nov 2022 12:05:30 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1287F2023A1D;
-	Fri, 11 Nov 2022 07:39:24 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C54EA4A9256;
+	Fri, 11 Nov 2022 12:05:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7EBF51946A4C;
-	Fri, 11 Nov 2022 07:39:23 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AAD171946589;
+	Fri, 11 Nov 2022 12:05:28 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
  [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7B0751946587
- for <dm-devel@listman.corp.redhat.com>; Thu, 10 Nov 2022 18:45:30 +0000 (UTC)
+ ESMTP id 357161946586
+ for <dm-devel@listman.corp.redhat.com>; Fri, 11 Nov 2022 12:05:27 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 608591415122; Thu, 10 Nov 2022 18:45:30 +0000 (UTC)
+ id 16CF21415127; Fri, 11 Nov 2022 12:05:27 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 59B73141511F
- for <dm-devel@redhat.com>; Thu, 10 Nov 2022 18:45:30 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3CAD03C0218D
- for <dm-devel@redhat.com>; Thu, 10 Nov 2022 18:45:30 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0EAD9140EBF5
+ for <dm-devel@redhat.com>; Fri, 11 Nov 2022 12:05:27 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E9DE7882820
+ for <dm-devel@redhat.com>; Fri, 11 Nov 2022 12:05:26 +0000 (UTC)
+Received: from szxga01-in.huawei.com (szxga01-in.huawei.com
+ [45.249.212.187]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-284-fHgvhU-OMMmVvlvafk3mRQ-1; Thu, 10 Nov 2022 13:45:26 -0500
-X-MC-Unique: fHgvhU-OMMmVvlvafk3mRQ-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 9086461D70;
- Thu, 10 Nov 2022 18:45:25 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5647BC433D6;
- Thu, 10 Nov 2022 18:45:24 +0000 (UTC)
-Date: Thu, 10 Nov 2022 11:45:21 -0700
-From: Keith Busch <kbusch@kernel.org>
-To: Eric Biggers <ebiggers@kernel.org>
-Message-ID: <Y21GwRUeJVwN17rR@kbusch-mbp.dhcp.thefacebook.com>
-References: <20221103152559.1909328-1-kbusch@meta.com>
- <Y21BwxCkeaONcYK5@gmail.com>
+ us-mta-615-KSRIz3niO-aeLInIxlsHhw-1; Fri, 11 Nov 2022 07:05:23 -0500
+X-MC-Unique: KSRIz3niO-aeLInIxlsHhw-1
+Received: from dggemv711-chm.china.huawei.com (unknown [172.30.72.53])
+ by szxga01-in.huawei.com (SkyGuard) with ESMTP id 4N7xmv4nKQzmV6p;
+ Fri, 11 Nov 2022 19:48:47 +0800 (CST)
+Received: from kwepemm600013.china.huawei.com (7.193.23.68) by
+ dggemv711-chm.china.huawei.com (10.1.198.66) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2375.31; Fri, 11 Nov 2022 19:49:03 +0800
+Received: from huawei.com (10.175.127.227) by kwepemm600013.china.huawei.com
+ (7.193.23.68) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id 15.1.2375.31; Fri, 11 Nov
+ 2022 19:49:02 +0800
+From: Zhihao Cheng <chengzhihao1@huawei.com>
+To: <snitzer@kernel.org>, <Martin.Wilck@suse.com>, <ejt@redhat.com>,
+ <jack@suse.cz>, <tytso@mit.edu>, <yi.zhang@huawei.com>,
+ <chengzhihao1@huawei.com>
+Date: Fri, 11 Nov 2022 20:10:26 +0800
+Message-ID: <20221111121029.3985561-1-chengzhihao1@huawei.com>
 MIME-Version: 1.0
-In-Reply-To: <Y21BwxCkeaONcYK5@gmail.com>
+X-Originating-IP: [10.175.127.227]
+X-ClientProxiedBy: dggems703-chm.china.huawei.com (10.3.19.180) To
+ kwepemm600013.china.huawei.com (7.193.23.68)
+X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -79,8 +84,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-X-Mailman-Approved-At: Fri, 11 Nov 2022 07:39:20 +0000
-Subject: Re: [dm-devel] [PATCH 0/3] fix direct io errors on dm-crypt
+Subject: [dm-devel] [PATCH 0/3] dm thin: Fix ABBA deadlock between
+ shrink_slab and dm_pool_abort_metadata
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -92,50 +97,31 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, Keith Busch <kbusch@meta.com>, linux-block@vger.kernel.org,
- dm-devel@redhat.com, mpatocka@redhat.com, stefanha@redhat.com, me@demsh.org
+Cc: dm-devel@redhat.com, linux-ext4@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Nov 10, 2022 at 06:24:03PM +0000, Eric Biggers wrote:
-> On Thu, Nov 03, 2022 at 08:25:56AM -0700, Keith Busch wrote:
-> > From: Keith Busch <kbusch@kernel.org>
-> > 
-> > The 6.0 kernel made some changes to the direct io interface to allow
-> > offsets in user addresses. This based on the hardware's capabilities
-> > reported in the request_queue's dma_alignment attribute.
-> > 
-> > dm-crypt requires direct io be aligned to the block size. Since it was
-> > only ever using the default 511 dma mask, this requirement may fail if
-> > formatted to something larger, like 4k, which will result in unexpected
-> > behavior with direct-io.
-> > 
-> > There are two parts to fixing this:
-> > 
-> >   First, the attribute needs to be moved to the queue_limit so that it
-> >   can properly stack with device mappers.
-> > 
-> >   Second, dm-crypt provides its minimum required limit to match the
-> >   logical block size.
-> > 
-> > Keith Busch (3):
-> >   block: make dma_alignment a stacking queue_limit
-> >   dm-crypt: provide dma_alignment limit in io_hints
-> >   block: make blk_set_default_limits() private
-> 
-> Hi Keith, can you send out an updated version of this patch series that
-> addresses the feedback?
-> 
-> I'd really like for this bug to be fixed before 6.1 is released, so that there
-> isn't a known bug in STATX_DIOALIGN already upon release.
+Zhihao Cheng (3):
+  dm bufio: Fix missing decrement of no_sleep_enabled if
+    dm_bufio_client_create failed
+  dm bufio: Split main logic out of dm_bufio_client creation/destroy
+  dm thin: Fix ABBA deadlock between shrink_slab and
+    dm_pool_abort_metadata
 
-Sorry for the delay, v2 sent.
+ drivers/md/dm-bufio.c                         | 189 +++++++++++++-----
+ drivers/md/dm-thin-metadata.c                 |  36 +++-
+ drivers/md/persistent-data/dm-block-manager.c |  21 ++
+ drivers/md/persistent-data/dm-block-manager.h |   4 +
+ include/linux/dm-bufio.h                      |  14 +-
+ 5 files changed, 214 insertions(+), 50 deletions(-)
+
+-- 
+2.31.1
 
 --
 dm-devel mailing list
