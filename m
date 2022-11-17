@@ -1,102 +1,66 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C1136C4332F
-	for <dm-devel@archiver.kernel.org>; Wed, 16 Nov 2022 23:19:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 50A17C4332F
+	for <dm-devel@archiver.kernel.org>; Thu, 17 Nov 2022 18:53:49 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1668640790;
+	s=mimecast20190719; t=1668711228;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=oOimOmHe8e76nL6VhCZ8veCXc1RWbqOhAExyKcop+xk=;
-	b=aw4y59O4MVCkxwOzc/i+01K4kfJnU8rCaZtPLDrEtddCVeURHVwQ3CkVBAzR/TK+3jFKHj
-	LZu579ruBJSJ+Ww+MlwXvwlDgIIheNY/vMqbTFyXbfaZDR829gWLI+xpG1Z7g9vqgxYlkd
-	d+i16N3P1yltfznUX2eDZDrKq6n2y2I=
+	bh=D0We0zLGD0Rlf7XLJs1xy0K9bJvOECfwZr9mMVflbdU=;
+	b=GltkoMJKNoXV19NsaExJA201IVz6uu7AgnCR/Lu6NPBtMlpiAgvyAy/GnwcopZ8ABFNHP2
+	TK5vQzJ1hiWTtDnRiXaTOc8avkzaIKSRAX5Us3i/GIAP2n1Ea0QUY4uhc42bZ5MI/BgUw+
+	YcPulN35IJJQesqHBwcONz6VqU6riEw=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-653-cZ2x2EUWNcq-3Bx54jfWlA-1; Wed, 16 Nov 2022 18:19:49 -0500
-X-MC-Unique: cZ2x2EUWNcq-3Bx54jfWlA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-48-RtugLdr9OqW0c3CYbjnxXg-1; Thu, 17 Nov 2022 13:53:44 -0500
+X-MC-Unique: RtugLdr9OqW0c3CYbjnxXg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 69DA1811E75;
-	Wed, 16 Nov 2022 23:19:47 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CB7D4801755;
+	Thu, 17 Nov 2022 18:53:42 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0ACB62166B30;
-	Wed, 16 Nov 2022 23:19:47 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 306A1C2C8C7;
+	Thu, 17 Nov 2022 18:53:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A0ECF19465A4;
-	Wed, 16 Nov 2022 23:19:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D991519465A2;
+	Thu, 17 Nov 2022 18:53:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3272719465A2
- for <dm-devel@listman.corp.redhat.com>; Wed, 16 Nov 2022 22:58:28 +0000 (UTC)
+ ESMTP id 01C341946595
+ for <dm-devel@listman.corp.redhat.com>; Thu, 17 Nov 2022 18:53:36 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0DC3F1415114; Wed, 16 Nov 2022 22:58:28 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 05AFB140EBF3
- for <dm-devel@redhat.com>; Wed, 16 Nov 2022 22:58:28 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DFABB185A792
- for <dm-devel@redhat.com>; Wed, 16 Nov 2022 22:58:27 +0000 (UTC)
-Received: from mail-pg1-f171.google.com (mail-pg1-f171.google.com
- [209.85.215.171]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-351-qX4pOYfDN9CT8Yu5BHPGvQ-1; Wed, 16 Nov 2022 17:58:26 -0500
-X-MC-Unique: qX4pOYfDN9CT8Yu5BHPGvQ-1
-Received: by mail-pg1-f171.google.com with SMTP id h193so303858pgc.10
- for <dm-devel@redhat.com>; Wed, 16 Nov 2022 14:58:25 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=content-transfer-encoding:mime-version:date:message-id:subject
- :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=JenFovSTQN9+wzGd6rk1pX/UQFf/Esi4jnYBpJTyW6k=;
- b=do5QJJMJzSwsqbVni6eft+FZNB281VaKBOh44906ZiYmodqKOBiDWf2DLM0LmK6+7F
- n2T2pReJeizbYMZXTE0gYrGoTlT3W+6rj2r+VvcfH6VgAvG4HH2rWatTZajZbEpGViDa
- gU4CxjKVTodx2nAropm+Gxpd3rUyBZmjRjQBHiyNhr7yD29KYOLdYj6DoRPrjRbLjII8
- IovB+S3w0BEHRwHchyxToLj7NPwVBonztap6h2lRw5i14YUxFHmRfjogE5qoEaH0taIC
- PNVmW+TLQkKefoF9j1apn9ZFsVW/5lnPmg/UNY2i1qjgZXsv++hIJZRpBGmx6Fh4moif
- QDEA==
-X-Gm-Message-State: ANoB5plV6nU92RMRD8ZSVpVuaJSkXIQpnYDKvLOkutdJFJHmCSVyCckh
- IcXo3TNwZGnfRVLyo5HkTb4UCQ==
-X-Google-Smtp-Source: AA0mqf4tuHJxwwqe1b7MIqPh5fOVIaMq+WItB05J/gZuYEoZcL8yGsMlVDLBnsm67KcdNeRNlET/sg==
-X-Received: by 2002:a05:6a00:440b:b0:56b:b53f:e887 with SMTP id
- br11-20020a056a00440b00b0056bb53fe887mr290248pfb.3.1668639504962; 
- Wed, 16 Nov 2022 14:58:24 -0800 (PST)
-Received: from [127.0.0.1] ([198.8.77.157]) by smtp.gmail.com with ESMTPSA id
- q8-20020a170902dac800b0018725c2fc46sm12891214plx.303.2022.11.16.14.58.23
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 16 Nov 2022 14:58:24 -0800 (PST)
-From: Jens Axboe <axboe@kernel.dk>
-To: linux-block@vger.kernel.org, dm-devel@redhat.com,
- Keith Busch <kbusch@meta.com>
-In-Reply-To: <20221110184501.2451620-1-kbusch@meta.com>
-References: <20221110184501.2451620-1-kbusch@meta.com>
-Message-Id: <166863950373.9526.11859127241881103074.b4-ty@kernel.dk>
-Date: Wed, 16 Nov 2022 15:58:23 -0700
+ id AE6DE2166B46; Thu, 17 Nov 2022 18:53:36 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 658732166B44;
+ Thu, 17 Nov 2022 18:53:36 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 2AHIrY0j001271;
+ Thu, 17 Nov 2022 12:53:34 -0600
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 2AHIrXnr001270;
+ Thu, 17 Nov 2022 12:53:33 -0600
+Date: Thu, 17 Nov 2022 12:53:33 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Message-ID: <20221117185333.GT19568@octiron.msp.redhat.com>
+References: <20221109211007.389-1-mwilck@suse.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCHv2 0/5] fix direct io device mapper errors
+In-Reply-To: <20221109211007.389-1-mwilck@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] [RFC PATCH] libmultipath: is_path_valid(): check if
+ device is in use
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,48 +72,592 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Keith Busch <kbusch@kernel.org>, ebiggers@kernel.org, mpatocka@redhat.com,
- me@demsh.org, stefanha@redhat.com
+Cc: fbui@suse.com, dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, 10 Nov 2022 10:44:56 -0800, Keith Busch wrote:
-> From: Keith Busch <kbusch@kernel.org>
+On Wed, Nov 09, 2022 at 10:10:07PM +0100, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
 > 
-> The 6.0 kernel made some changes to the direct io interface to allow
-> offsets in user addresses. This based on the hardware's capabilities
-> reported in the request_queue's dma_alignment attribute.
+> To check whether we will be able to add a given device can be part
+> of a multipath map, we have two tests in check_path_valid():
+> released_to_systemd() and the O_EXCL test. The former isn't helpful
+> if "multipath -u" is called for the first time for a given device,
+> and the latter is only used in the "find_multipaths smart" case, because
+> actively opening the device with O_EXCL, even for a very short time, is prone
+> to races with other processes.
 > 
-> dm-crypt, -log-writes and -integrity require direct io be aligned to the
-> block size. Since it was only ever using the default 511 dma mask, this
-> requirement may fail if formatted to something larger, like 4k, which
-> will result in unexpected behavior with direct-io.
+> It turns out that this may cause issues in some scenarios. We saw problems in
+> once case where "find_multipaths greedy" was used with a single
+> non-multipahted root disk and a very large number of multipath LUNs.
+> The root disk would first be classified as multipath device. multipathd
+> would try to create a map, fail (because the disk was mounted) and
+> trigger another uevent. But because of the very large number of multipath
+> devices, this event was queued up behind thousands of other events, and
+> the root device timed out eventually.
 > 
-> [...]
+> While a simple workaround for the given problem would be proper blacklisting
+> or using a different find_multipaths mode, I am proposing a different
+> solution here. An additional test is added in is_path_valid() which
+> checks whether the given device is currently in use by 1. sysfs holders,
+> 2. mounts (from /proc/self/mountinfo) or 3. swaps (from /proc/swaps). 2.
+> and 3. are similar to systemd's device detection after switching root.
+> This must not only be done for the device itself, but also for all its
+> partitions. For mountinfo and swaps, libmount is utilized.
+> 
+> With this patch, "multipath -u" will make devices with mounted or otherwise
+> used partitions available to systemd early, without waiting for multipathd
+> to fail setting up the map and re-triggering an uevent. This should avoid
+> the issue described above even without blacklisting. The downside of it
+> is a longer runtime of "multipath -u" for almost all devices, in particular
+> for real multipath devices. The runtime required for the new checks was in the
+> order of 0.1ms-1ms in my tests. Moreover, there is a certain risk that devices may
+> wrongly classified as non-multipath because of transient mounts or holders
+> created by other processes.
+> 
 
-Applied, thanks!
+With greedy, we expect that the blacklists must be correctly set up, so
+we're just slowing things down to deal with people not configuring
+multipath correctly. But since I rarely see greedy configurations, I
+don't really have strong feelings about this trade-off.
 
-[1/5] block: make dma_alignment a stacking queue_limit
-      commit: c964d62f5cab7b43dd0534f22a96eab386c6ec5d
-[2/5] dm-crypt: provide dma_alignment limit in io_hints
-      commit: 86e4d3e8d1838ca88fb9267e669c36f6c8f7c6cd
-[3/5] block: make blk_set_default_limits() private
-      commit: b3228254bb6e91e57f920227f72a1a7d81925d81
-[4/5] dm-integrity: set dma_alignment limit in io_hints
-      commit: 29aa778bb66795e6a78b1c99beadc83887827868
-[5/5] dm-log-writes: set dma_alignment limit in io_hints
-      commit: 50a893359cd2643ee1afc96eedc9e7084cab49fa
+More suggestions below.
 
-Best regards,
--- 
-Jens Axboe
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmpathutil/libmpathutil.version |   6 +
+>  libmpathutil/util.c               |  12 ++
+>  libmpathutil/util.h               |   2 +
+>  libmultipath/Makefile             |   2 +-
+>  libmultipath/alias.c              |  11 --
+>  libmultipath/valid.c              | 253 ++++++++++++++++++++++++++++++
+>  tests/Makefile                    |   2 +-
+>  tests/valid.c                     |  46 ++++++
+>  8 files changed, 321 insertions(+), 13 deletions(-)
+> 
+> diff --git a/libmpathutil/libmpathutil.version b/libmpathutil/libmpathutil.version
+> index 95b169d..139b9ed 100644
+> --- a/libmpathutil/libmpathutil.version
+> +++ b/libmpathutil/libmpathutil.version
+> @@ -125,3 +125,9 @@ LIBMPATHUTIL_1.1 {
+>  global:
+>  	cleanup_fd_ptr;
+>  } LIBMPATHUTIL_1.0;
+> +
+> +LIBMPATHUTIL_1.2 {
+> +global:
+> +	cleanup_vector_free;
+> +	cleanup_fclose;
+> +} LIBMPATHUTIL_1.0;
+> diff --git a/libmpathutil/util.c b/libmpathutil/util.c
+> index 6692ac2..55261a6 100644
+> --- a/libmpathutil/util.c
+> +++ b/libmpathutil/util.c
+> @@ -412,6 +412,18 @@ void cleanup_mutex(void *arg)
+>  	pthread_mutex_unlock(arg);
+>  }
+>  
+> +void cleanup_vector_free(void *arg)
+> +{
+> +	if  (arg)
+> +		vector_free((vector)arg);
+> +}
+> +
+> +void cleanup_fclose(void *p)
+> +{
+> +	if (p)
+> +		fclose(p);
+> +}
+> +
+>  struct bitfield *alloc_bitfield(unsigned int maxbit)
+>  {
+>  	unsigned int n;
+> diff --git a/libmpathutil/util.h b/libmpathutil/util.h
+> index 7e34c56..80baaa8 100644
+> --- a/libmpathutil/util.h
+> +++ b/libmpathutil/util.h
+> @@ -49,6 +49,8 @@ int should_exit(void);
+>  void cleanup_fd_ptr(void *arg);
+>  void cleanup_free_ptr(void *arg);
+>  void cleanup_mutex(void *arg);
+> +void cleanup_vector_free(void *arg);
+> +void cleanup_fclose(void *p);
+>  
+>  struct scandir_result {
+>  	struct dirent **di;
+> diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+> index 3b60a52..e2c8da9 100644
+> --- a/libmultipath/Makefile
+> +++ b/libmultipath/Makefile
+> @@ -11,7 +11,7 @@ VERSION_SCRIPT := libmultipath.version
+>  CPPFLAGS += -I$(mpathutildir) -I$(mpathcmddir) -I$(nvmedir) -D_GNU_SOURCE
+>  CFLAGS += $(LIB_CFLAGS)
+>  
+> -LIBDEPS += -lpthread -ldl -ldevmapper -ludev -L$(mpathutildir) -lmpathutil -L$(mpathcmddir) -lmpathcmd -lurcu -laio
+> +LIBDEPS += -lpthread -ldl -ldevmapper -ludev -L$(mpathutildir) -lmpathutil -L$(mpathcmddir) -lmpathcmd -lmount -lurcu -laio
+>  
+>  ifdef SYSTEMD
+>  	CPPFLAGS += -DUSE_SYSTEMD=$(SYSTEMD)
+> diff --git a/libmultipath/alias.c b/libmultipath/alias.c
+> index 0520122..c0139a2 100644
+> --- a/libmultipath/alias.c
+> +++ b/libmultipath/alias.c
+> @@ -667,11 +667,6 @@ static int _check_bindings_file(const struct config *conf, FILE *file,
+>  	return rc;
+>  }
+>  
+> -static void cleanup_fclose(void *p)
+> -{
+> -	fclose(p);
+> -}
+> -
+>  static int alias_compar(const void *p1, const void *p2)
+>  {
+>  	const char *alias1 = (*(struct mpentry * const *)p1)->alias;
+> @@ -684,12 +679,6 @@ static int alias_compar(const void *p1, const void *p2)
+>  		return alias1 ? -1 : alias2 ? 1 : 0;
+>  }
+>  
+> -static void cleanup_vector_free(void *arg)
+> -{
+> -	if  (arg)
+> -		vector_free((vector)arg);
+> -}
+> -
+>  /*
+>   * check_alias_settings(): test for inconsistent alias configuration
+>   *
+> diff --git a/libmultipath/valid.c b/libmultipath/valid.c
+> index a6aa921..f8d81b0 100644
+> --- a/libmultipath/valid.c
+> +++ b/libmultipath/valid.c
+> @@ -17,6 +17,8 @@
+>  #include <stddef.h>
+>  #include <errno.h>
+>  #include <libudev.h>
+> +#include <dirent.h>
+> +#include <libmount/libmount.h>
+>  
+>  #include "vector.h"
+>  #include "config.h"
+> @@ -30,12 +32,256 @@
+>  #include "mpath_cmd.h"
+>  #include "valid.h"
+>  
+> +static int subdir_filter(const struct dirent *ent)
+> +{
+> +	unsigned int j;
+> +	static char const *const skip[] = {
+> +		".",
+> +		"..",
+> +		"holders",
+> +		"integrity",
+> +		"mq",
+> +		"power",
+> +		"queue",
+> +		"slaves",
+> +		"trace",
+> +	};
+> +
+> +	if (ent->d_type != DT_DIR)
+> +		return 0;
+> +
+> +	for (j = 0; j < ARRAY_SIZE(skip); j++)
+> +		if (!strcmp(skip[j], ent->d_name))
+> +			return 0;
+> +	return 1;
+> +}
+> +
+> +static int read_partitions(const char *syspath, vector parts)
+> +{
+> +	struct scandir_result sr = { .n = 0 };
+> +	char path[PATH_MAX], *last;
+> +	char *prop;
+> +	int i;
+> +
+> +	strlcpy(path, syspath, sizeof(path));
+> +	sr.n = scandir(path, &sr.di, subdir_filter, NULL);
+> +	if (sr.n == -1)
+> +		return -errno;
+> +
+> +	pthread_cleanup_push_cast(free_scandir_result, &sr);
+> +
+> +	/* parts[0] is the whole disk */
+> +	if (vector_alloc_slot(parts) &&
+> +	    (prop = strdup(strrchr(path, '/') + 1)) != NULL)
+
+Since we always add 1, prop can never be NULL.
+
+> +		vector_set_slot(parts, prop);
+> +
+> +	last = path + strlen(path);
+> +	for (i = 0; i < sr.n; i++) {
+> +		struct stat st;
+> +
+> +		/* only add dirs that have the "partition" attribute */
+> +		snprintf(last, sizeof(path) - (last - path), "/%s/partition",
+> +			 sr.di[i]->d_name);
+> +
+> +		if (stat(path, &st) == 0) {
+> +			prop = strdup(sr.di[i]->d_name);
+> +
+> +			if (vector_alloc_slot(parts) && prop != NULL)
+
+We should probably check "prop != NULL" first, so that we don't allocate
+a slot if we aren't going to use it.
+
+> +				vector_set_slot(parts, prop);
+> +		}
+> +	}
+> +
+> +	pthread_cleanup_pop(1);
+> +	return 0;
+> +}
+> +
+> +static int no_dots(const struct dirent *ent)
+> +{
+> +	const char *name = ent->d_name;
+> +
+> +	if (name[0] == '.' &&
+> +	    (name[1] == '\0' || (name[1] == '.' && name[2] == '\0')))
+> +		return 0;
+> +	return 1;
+> +}
+> +
+> +static int check_holders(const char *syspath)
+> +{
+> +	struct scandir_result __attribute__((cleanup(free_scandir_result)))
+> +		sr = { .n = 0 };
+> +
+> +	sr.n = scandir(syspath, &sr.di, no_dots, NULL);
+> +	if (sr.n > 0)
+> +		condlog(4, "%s: found holders under %s", __func__, syspath);
+> +	return sr.n;
+> +}
+> +
+> +static int check_all_holders(const struct _vector *parts)
+> +{
+> +	char syspath[PATH_MAX];
+> +	const char *sysname;
+> +	unsigned int j;
+> +
+> +	if (VECTOR_SIZE(parts) == 0)
+> +		return 0;
+> +
+> +	if (safe_sprintf(syspath, "/sys/class/block/%s/holders",
+> +			 (const char *)VECTOR_SLOT(parts, 0)))
+> +		return -EOVERFLOW;
+> +
+> +	if (check_holders(syspath) > 0)
+> +		return 1;
+> +
+> +	j = 1;
+> +	vector_foreach_slot_after(parts, sysname, j) {
+> +		if (safe_sprintf(syspath, "/sys/class/block/%s/%s/holders",
+> +				 (const char *)VECTOR_SLOT(parts, 0), sysname))
+> +			return -EOVERFLOW;
+> +		if (check_holders(syspath) > 0)
+> +			return 1;
+> +	}
+> +	return 0;
+> +}
+> +
+> +static void cleanup_table(void *arg)
+> +{
+> +	if (arg)
+> +		mnt_free_table((struct libmnt_table *)arg);
+> +}
+> +
+> +static void cleanup_cache(void *arg)
+> +{
+> +	if (arg)
+> +		mnt_unref_cache((struct libmnt_cache *)arg);
+> +}
+> +
+> +/*
+> + * Passed a vector of partitions and a libmount table,
+> + * check if any of the partitions in the vector is referenced in the table.
+> + * Note that mnt_table_find_srcpath() also resolves mounts by symlinks.
+> + */
+> +static int check_mnt_table(const struct _vector *parts,
+> +			   struct libmnt_table *tbl,
+> +			   const char *table_name)
+> +{
+> +	unsigned int i;
+> +	const char *sysname;
+> +	char devpath[PATH_MAX];
+> +
+> +	vector_foreach_slot(parts, sysname, i) {
+> +		if (!safe_sprintf(devpath, "/dev/%s", sysname) &&
+> +		    mnt_table_find_srcpath(tbl, devpath,
+> +					   MNT_ITER_FORWARD) != NULL) {
+> +			condlog(4, "%s: found %s in %s", __func__,
+> +				sysname, table_name);
+> +			return 1;
+> +		}
+> +	}
+> +	return 0;
+> +}
+> +
+> +static int check_mountinfo(const struct _vector *parts)
+> +{
+> +	static const char mountinfo[] = "/proc/self/mountinfo";
+> +	struct libmnt_table *tbl;
+> +	struct libmnt_cache *cache;
+> +	FILE *stream;
+> +	int used = 0, ret;
+> +
+> +	tbl = mnt_new_table();
+> +	if (!tbl )
+> +		return -errno;
+> +
+> +	pthread_cleanup_push(cleanup_table, tbl);
+> +	cache = mnt_new_cache();
+> +	if (cache) {
+> +		pthread_cleanup_push(cleanup_cache, cache);
+> +		if (mnt_table_set_cache(tbl, cache) == 0) {
+> +			stream = fopen(mountinfo, "r");
+> +			if (stream != NULL) {
+> +				pthread_cleanup_push(cleanup_fclose, stream);
+> +				ret = mnt_table_parse_stream(tbl, stream, mountinfo);
+> +				pthread_cleanup_pop(1);
+> +
+> +				if (ret == 0 &&
+> +				    (used = check_mnt_table(parts, tbl, "mountinfo")))
+> +					break;
+
+instead of having a break here, shouldn't be just check ret and call
+check_mkt_table if it's 0?
+
+> +			}
+> +		}
+> +		pthread_cleanup_pop(1);
+> +	}
+> +	pthread_cleanup_pop(1);
+> +	return used;
+> +}
+> +
+> +static int check_swaps(const struct _vector *parts)
+> +{
+> +	struct libmnt_table *tbl;
+> +	struct libmnt_cache *cache;
+> +	int used = 0, ret;
+> +
+> +	tbl = mnt_new_table();
+> +	if (!tbl )
+> +		return -errno;
+> +
+> +	pthread_cleanup_push(cleanup_table, tbl);
+> +	cache = mnt_new_cache();
+> +	if (cache) {
+> +		pthread_cleanup_push(cleanup_cache, cache);
+> +		if (mnt_table_set_cache(tbl, cache) == 0) {
+> +			ret = mnt_table_parse_swaps(tbl, NULL);
+> +			if (ret == 0 &&
+> +			    (used = check_mnt_table(parts, tbl, "swaps")))
+> +				break;
+
+Same break issue.
 
 
+-Ben
+
+> +		}
+> +		pthread_cleanup_pop(1);
+> +	}
+> +	pthread_cleanup_pop(1);
+> +	return used;
+> +}
+> +
+> +/*
+> + * Given a block device, check if the device itself or any of its
+> + * partitions is in use
+> + * - by sysfs holders (e.g. LVM)
+> + * - mounted according to /proc/self/mountinfo
+> + * - used as swap
+> + */
+> +static int is_device_in_use(struct udev_device *udevice)
+> +{
+> +	const char *syspath;
+> +	vector parts;
+> +	int used = 0, ret;
+> +
+> +	syspath = udev_device_get_syspath(udevice);
+> +	if (!syspath)
+> +		return -ENOMEM;
+> +
+> +	parts = vector_alloc();
+> +	if (!parts)
+> +		return -ENOMEM;
+> +
+> +	pthread_cleanup_push_cast(free_strvec, parts);
+> +	if ((ret = read_partitions(syspath, parts)) == 0)
+> +		used =  check_all_holders(parts) > 0 ||
+> +			check_mountinfo(parts) > 0 ||
+> +			check_swaps(parts) > 0;
+> +	pthread_cleanup_pop(1);
+> +
+> +	if (ret < 0)
+> +		return ret;
+> +
+> +	condlog(3, "%s: %s is %sin use", __func__, syspath, used ? "" : "not ");
+> +	return used;
+> +}
+> +
+>  int
+>  is_path_valid(const char *name, struct config *conf, struct path *pp,
+>  	      bool check_multipathd)
+>  {
+>  	int r;
+>  	int fd;
+> +	const char *prop;
+>  
+>  	if (!pp || !name || !conf)
+>  		return PATH_IS_ERROR;
+> @@ -80,6 +326,10 @@ is_path_valid(const char *name, struct config *conf, struct path *pp,
+>  	if (!pp->udev)
+>  		return PATH_IS_ERROR;
+>  
+> +	prop = udev_device_get_property_value(pp->udev, "DEVTYPE");
+> +	if (prop == NULL || strcmp(prop, "disk"))
+> +		return PATH_IS_NOT_VALID;
+> +
+>  	r = pathinfo(pp, conf, DI_SYSFS | DI_WWID | DI_BLACKLIST);
+>  	if (r == PATHINFO_SKIPPED)
+>  		return PATH_IS_NOT_VALID;
+> @@ -96,6 +346,9 @@ is_path_valid(const char *name, struct config *conf, struct path *pp,
+>  		return PATH_IS_ERROR;
+>  	}
+>  
+> +	if (is_device_in_use(pp->udev) > 0)
+> +		return PATH_IS_NOT_VALID;
+> +
+
+Can we make this only apply to "greedy"? For "strict", "no" and "yes"
+this makes the common case slower (you are running multipath on a
+machine with multipath devices that you've seen before) with no real
+benefit.
+
+It might also be useful to run this check before we return "maybe" for
+find_multipaths "smart", perhaps as an alternative to the O_EXCL test we
+currently use.
+
+>  	if (conf->find_multipaths == FIND_MULTIPATHS_GREEDY)
+>  		return PATH_IS_VALID;
+>  
+> diff --git a/tests/Makefile b/tests/Makefile
+> index 3a5b161..a0d3e1b 100644
+> --- a/tests/Makefile
+> +++ b/tests/Makefile
+> @@ -64,7 +64,7 @@ vpd-test_LIBDEPS := -ludev -lpthread -ldl
+>  alias-test_TESTDEPS := test-log.o
+>  alias-test_LIBDEPS := -lpthread -ldl
+>  valid-test_OBJDEPS := $(multipathdir)/valid.o $(multipathdir)/discovery.o
+> -valid-test_LIBDEPS := -ludev -lpthread -ldl
+> +valid-test_LIBDEPS := -lmount -ludev -lpthread -ldl
+>  devt-test_LIBDEPS := -ludev
+>  mpathvalid-test_LIBDEPS := -ludev -lpthread -ldl
+>  mpathvalid-test_OBJDEPS := $(mpathvaliddir)/mpath_valid.o
+> diff --git a/tests/valid.c b/tests/valid.c
+> index 398b771..9e7f719 100644
+> --- a/tests/valid.c
+> +++ b/tests/valid.c
+> @@ -83,6 +83,13 @@ struct udev_device *__wrap_udev_device_new_from_subsystem_sysname(struct udev *u
+>  	return NULL;
+>  }
+>  
+> +/* For devtype check */
+> +const char *__wrap_udev_device_get_property_value(struct udev_device *udev_device, const char *property)
+> +{
+> +	check_expected(property);
+> +	return mock_ptr_type(char *);
+> +}
+> +
+>  /* For the "hidden" check in pathinfo() */
+>  const char *__wrap_udev_device_get_sysattr_value(struct udev_device *udev_device,
+>  					 const char *sysattr)
+> @@ -97,6 +104,12 @@ int __wrap_add_foreign(struct udev_device *udev_device)
+>  	return mock_type(int);
+>  }
+>  
+> +/* For is_device_used() */
+> +const char *__wrap_udev_device_get_sysname(struct udev_device *udev_device)
+> +{
+> +	return mock_ptr_type(char *);
+> +}
+> +
+>  /* called from pathinfo() */
+>  int __wrap_filter_devnode(struct config *conf, const struct _vector *elist,
+>  			  const char *vendor, const char * product, const char *dev)
+> @@ -165,6 +178,11 @@ int __wrap_is_failed_wwid(const char *wwid)
+>  	return ret;
+>  }
+>  
+> +const char *__wrap_udev_device_get_syspath(struct udev_device *udevice)
+> +{
+> +	return mock_ptr_type(char *);
+> +}
+> +
+>  int __wrap_check_wwids_file(char *wwid, int write_wwid)
+>  {
+>  	bool passed = mock_type(bool);
+> @@ -225,6 +243,8 @@ static void setup_passing(char *name, char *wwid, unsigned int check_multipathd,
+>  	will_return(__wrap_udev_device_new_from_subsystem_sysname, true);
+>  	will_return(__wrap_udev_device_new_from_subsystem_sysname,
+>  		    name);
+> +	expect_string(__wrap_udev_device_get_property_value, property, "DEVTYPE");
+> +	will_return(__wrap_udev_device_get_property_value, "disk");
+>  	if (stage == STAGE_GET_UDEV_DEVICE)
+>  		return;
+>  	if  (stage == STAGE_PATHINFO_REAL) {
+> @@ -250,6 +270,8 @@ static void setup_passing(char *name, char *wwid, unsigned int check_multipathd,
+>  		return;
+>  	will_return(__wrap_is_failed_wwid, WWID_IS_NOT_FAILED);
+>  	will_return(__wrap_is_failed_wwid, wwid);
+> +	/* avoid real is_device_in_use() check */
+> +	will_return(__wrap_udev_device_get_syspath, NULL);
+>  	if (stage == STAGE_IS_FAILED)
+>  		return;
+>  	will_return(__wrap_check_wwids_file, false);
+> @@ -347,6 +369,30 @@ static void test_check_multipathd(void **state)
+>  	assert_int_equal(is_path_valid(name, &conf, &pp, true),
+>  			 PATH_IS_ERROR);
+>  	assert_string_equal(pp.dev, name);
+> +
+> +	/* test pass because connect succeeded. succeed getting udev. Wrong DEVTYPE  */
+> +	memset(&pp, 0, sizeof(pp));
+> +	setup_passing(name, NULL, CHECK_MPATHD_RUNNING, STAGE_CHECK_MULTIPATHD);
+> +	will_return(__wrap_udev_device_new_from_subsystem_sysname, true);
+> +	will_return(__wrap_udev_device_new_from_subsystem_sysname,
+> +		    name);
+> +	expect_string(__wrap_udev_device_get_property_value, property, "DEVTYPE");
+> +	will_return(__wrap_udev_device_get_property_value, "partition");
+> +	assert_int_equal(is_path_valid(name, &conf, &pp, true),
+> +			 PATH_IS_NOT_VALID);
+> +	assert_string_equal(pp.dev, name);
+> +
+> +	/* test pass because connect succeeded. succeed getting udev. Bad DEVTYPE  */
+> +	memset(&pp, 0, sizeof(pp));
+> +	setup_passing(name, NULL, CHECK_MPATHD_RUNNING, STAGE_CHECK_MULTIPATHD);
+> +	will_return(__wrap_udev_device_new_from_subsystem_sysname, true);
+> +	will_return(__wrap_udev_device_new_from_subsystem_sysname,
+> +		    name);
+> +	expect_string(__wrap_udev_device_get_property_value, property, "DEVTYPE");
+> +	will_return(__wrap_udev_device_get_property_value, NULL);
+> +	assert_int_equal(is_path_valid(name, &conf, &pp, true),
+> +			 PATH_IS_NOT_VALID);
+> +	assert_string_equal(pp.dev, name);
+>  }
+>  
+>  static void test_pathinfo(void **state)
+> -- 
+> 2.38.0
 --
 dm-devel mailing list
 dm-devel@redhat.com
