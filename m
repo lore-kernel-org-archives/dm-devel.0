@@ -4,65 +4,85 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1F6C5C433FE
-	for <dm-devel@archiver.kernel.org>; Thu, 17 Nov 2022 21:59:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 06F70C433FE
+	for <dm-devel@archiver.kernel.org>; Fri, 18 Nov 2022 08:19:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1668722376;
+	s=mimecast20190719; t=1668759592;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=g4qZFP3Tb4lg6X5U3YC24uif6LAA5qwCHDG6YjWksTI=;
-	b=eW6I5zwVeQGesMCITsvcI1oE11rJxV+vdhg7dS71RQJdTzdEqXhvETTTFzbOtRQVn/Q+va
-	WZMnsSFcpOzKtNPCEdSrZ5J4BMV/tjHHLU3EVHtSs89Eo5p44eWXMluUZE5Vjx+W3IgF0H
-	BKH2kSmQnKNYBWr+yi8mKX2ZY2i5QGE=
+	bh=iDZgt9jZhtTYar6kkXTC8laIirigpXv/HOt/ExKaZro=;
+	b=g/5TXUCMtAjlvET7WpgUaeptuwEsOuAz9hezX3jnBgRRkGQNIA6USQ2+BuLvUWAZMcTs14
+	R5Yu15Q3RpnH/gbCVrGFP8iFzG76PLYS+4EcT+lTBOrJ1YXwuYlCP9sEAcpyZHsTUx3iMx
+	6yERuDc+w8VThstG0GLwtT/0nxyFJzw=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-583-0iXJ7dx9Nn-xLiBAByrksw-1; Thu, 17 Nov 2022 16:59:32 -0500
-X-MC-Unique: 0iXJ7dx9Nn-xLiBAByrksw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-333-tC8ysXlBPdCQY5KWV72cmQ-1; Fri, 18 Nov 2022 03:19:48 -0500
+X-MC-Unique: tC8ysXlBPdCQY5KWV72cmQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7CE14101A592;
-	Thu, 17 Nov 2022 21:59:30 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 721D0101A52A;
+	Fri, 18 Nov 2022 08:19:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F013E40C6EC3;
-	Thu, 17 Nov 2022 21:59:28 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8F5CD492B04;
+	Fri, 18 Nov 2022 08:19:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C6E0719465A2;
-	Thu, 17 Nov 2022 21:59:28 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4CA0619465B1;
+	Fri, 18 Nov 2022 08:19:43 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E74791946595
- for <dm-devel@listman.corp.redhat.com>; Thu, 17 Nov 2022 21:59:27 +0000 (UTC)
+ ESMTP id E344C1946595
+ for <dm-devel@listman.corp.redhat.com>; Thu, 17 Nov 2022 14:30:03 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id AC3F439D7C; Thu, 17 Nov 2022 21:59:27 +0000 (UTC)
-Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8EDF335429;
- Thu, 17 Nov 2022 21:59:27 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 2AHLxQLm002128;
- Thu, 17 Nov 2022 15:59:26 -0600
-Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 2AHLxPUp002127;
- Thu, 17 Nov 2022 15:59:25 -0600
-Date: Thu, 17 Nov 2022 15:59:25 -0600
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <mwilck@suse.com>
-Message-ID: <20221117215925.GV19568@octiron.msp.redhat.com>
-References: <20221109211007.389-1-mwilck@suse.com>
- <20221117185333.GT19568@octiron.msp.redhat.com>
- <32a8240e11ad76fa6d2f4547916a81d594200b1a.camel@suse.com>
+ id 9C9E72166B3F; Thu, 17 Nov 2022 14:30:03 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 9554B2166B29
+ for <dm-devel@redhat.com>; Thu, 17 Nov 2022 14:30:03 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 76FBE29DD996
+ for <dm-devel@redhat.com>; Thu, 17 Nov 2022 14:30:03 +0000 (UTC)
+Received: from mga17.intel.com (mga17.intel.com [192.55.52.151]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-608-BFxg0bfuNPGIinZ7Gyqz2Q-1; Thu, 17 Nov 2022 09:29:58 -0500
+X-MC-Unique: BFxg0bfuNPGIinZ7Gyqz2Q-1
+X-IronPort-AV: E=McAfee;i="6500,9779,10534"; a="293257201"
+X-IronPort-AV: E=Sophos;i="5.96,171,1665471600"; d="scan'208";a="293257201"
+Received: from fmsmga006.fm.intel.com ([10.253.24.20])
+ by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 17 Nov 2022 06:28:53 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10534"; a="884886569"
+X-IronPort-AV: E=Sophos;i="5.96,171,1665471600"; d="scan'208";a="884886569"
+Received: from mtkaczyk-mobl.ger.corp.intel.com (HELO localhost)
+ ([10.213.28.141])
+ by fmsmga006-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 17 Nov 2022 06:28:48 -0800
+Date: Thu, 17 Nov 2022 15:28:43 +0100
+From: Mariusz Tkaczyk <mariusz.tkaczyk@linux.intel.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Message-ID: <20221117152843.00002f30@linux.intel.com>
+In-Reply-To: <alpine.LRH.2.21.2211040957470.19553@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.21.2211040957470.19553@file01.intranet.prod.int.rdu2.redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <32a8240e11ad76fa6d2f4547916a81d594200b1a.camel@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: Re: [dm-devel] [RFC PATCH] libmultipath: is_path_valid(): check if
- device is in use
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Mailman-Approved-At: Fri, 18 Nov 2022 08:19:43 +0000
+Subject: Re: [dm-devel] [PATCH] mdadm: fix compilation failure on the x32 ABI
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -74,81 +94,67 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: fbui@suse.com, dm-devel@redhat.com
+Cc: Jes Sorensen <jsorensen@fb.com>, linux-raid@vger.kernel.org,
+ Song Liu <song@kernel.org>, dm-devel@redhat.com,
+ Guoqing Jiang <guoqing.jiang@linux.dev>, Zdenek Kabelac <zkabelac@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Thu, Nov 17, 2022 at 09:40:26PM +0100, Martin Wilck wrote:
-> On Thu, 2022-11-17 at 12:53 -0600, Benjamin Marzinski wrote:
-> > On Wed, Nov 09, 2022 at 10:10:07PM +0100, mwilck@suse.com=A0wrote:
-> > > From: Martin Wilck <mwilck@suse.com>
-> > >=20
-> > With greedy, we expect that the blacklists must be correctly set up,
-> > so
-> > we're just slowing things down to deal with people not configuring
-> > multipath correctly.=A0
->=20
-> Only in theory. Because of the failed-wwids logic, "greedy" works quite
-> well actually, even if the blacklist is not correctly set up.
-> With this as a special exception.
->=20
-> > But since I rarely see greedy configurations, I
-> > don't really have strong feelings about this trade-off.
->=20
-> I've been wondering whether we could make this depend on a config
-> option (yes I know, I've said often that we have too many of them).
-> We could also have it depend on "greedy". But it might also be useful
-> with "smart" if we have a lot of LUNs.
->=20
-> >=20
-> > More suggestions below.
-> >=20
-> > [...]
+On Fri, 4 Nov 2022 10:01:22 -0400 (EDT)
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-<snip>
+> Hi
+> 
+> Here I'm sending a patch for the mdadm utility. It fixes compile failure 
+> on the x32 ABI.
+> 
+> Mikulas
+> 
+> 
+> From: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> The x32 ABI has 32-bit long and 64-bit time_t. Consequently, it reports 
+> printf arguments mismatch when attempting to print time using the "%ld" 
+> format specifier.
+> 
+> Fix this by converting times to long long and using %lld when printing
+> them.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> ---
+>  monitor.c |    4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> Index: mdadm/monitor.c
+> ===================================================================
+> --- mdadm.orig/monitor.c	2022-11-04 14:25:52.000000000 +0100
+> +++ mdadm/monitor.c	2022-11-04 14:28:05.000000000 +0100
+> @@ -449,9 +449,9 @@ static int read_and_act(struct active_ar
+>  	}
+>  
+>  	gettimeofday(&tv, NULL);
+> -	dprintf("(%d): %ld.%06ld state:%s prev:%s action:%s prev: %s
+> start:%llu\n",
+> +	dprintf("(%d): %lld.%06lld state:%s prev:%s action:%s prev: %s
+> start:%llu\n", a->info.container_member,
+> -		tv.tv_sec, tv.tv_usec,
+> +		(long long)tv.tv_sec, (long long)tv.tv_usec,
+>  		array_states[a->curr_state],
+>  		array_states[a->prev_state],
+>  		sync_actions[a->curr_action],
+> 
+Hi Mikulas,
+This is just a debug log in mdmon, feel free to remove the time totally.
 
-Ooops. I signed my name a bit too high. I had one more suggestion, but
-it's basically the same as what you suggest above.
-> >=20
-> > -Ben
-> >=20
+Thanks,
+Mariusz
 
-<snip>
-
-> > > @@ -96,6 +346,9 @@ is_path_valid(const char *name, struct config
-> > > *conf, struct path *pp,
-> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return PATH_IS_ERROR;
-> > > =A0=A0=A0=A0=A0=A0=A0=A0}
-> > > =A0
-> > > +=A0=A0=A0=A0=A0=A0=A0if (is_device_in_use(pp->udev) > 0)
-> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return PATH_IS_NOT_VALI=
-D;
-> > > +
-
-Here.
-
-> >=20
-> > Can we make this only apply to "greedy"? For "strict", "no" and "yes"
-> > this makes the common case slower (you are running multipath on a
-> > machine with multipath devices that you've seen before) with no real
-> > benefit.
-> >=20
-> > It might also be useful to run this check before we return "maybe"
-> > for
-> > find_multipaths "smart", perhaps as an alternative to the O_EXCL test
-> > we
-> > currently use.
-> >=20
-> > > =A0=A0=A0=A0=A0=A0=A0=A0if (conf->find_multipaths =3D=3D FIND_MULTIPA=
-THS_GREEDY)
-> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return PATH_IS_VALID;
-> > > =A0
 --
 dm-devel mailing list
 dm-devel@redhat.com
