@@ -4,141 +4,143 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DA459C4332F
-	for <dm-devel@archiver.kernel.org>; Wed, 23 Nov 2022 13:32:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E5B60C4332F
+	for <dm-devel@archiver.kernel.org>; Wed, 23 Nov 2022 13:43:42 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1669210347;
+	s=mimecast20190719; t=1669211021;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:in-reply-to:in-reply-to:
 	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=rDA8csn5AtfU9M2q33grPZu2g7L32dNzGAmmmSV3ZGY=;
-	b=RI81Yrrb0vLXKz0K8Dqy9gAncvBz/LgIy68vPlXjhm8IiUu1xEPee5FdUDWAxtmtGHta3m
-	IULGECFUiPbdnNXneAwZFehIw1+RuXLtaG/vRlBl+kFY/BUP8VZ6rQ+O0zh6Muekztw1dU
-	/tbNCmsr7CRwBGXB77EFHOp5QlBNTX8=
+	 list-subscribe:list-post; bh=9swZEzIl6q2cpSYMlK+unVAL0TAAQu3uFRxAxJQp8kA=;
+	b=A5zwY4AwUyAAMUKfo7pTBbjeO7kCM9AaS1ydzyNNegf6sd+UDEQAtce7Nv8iWQP2LVruU6
+	aRE2aySb+VfYqdcIXgde57N7ehOUMReBzwnYPLNhzz2DFOJeYkrjl75au43hVPIzzy3eiG
+	45EKhVyVbgEyXrXDHHJFCCnLFl43yeE=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-601-nOaOXeuvPByfUICAxV7EUg-1; Wed, 23 Nov 2022 08:32:24 -0500
-X-MC-Unique: nOaOXeuvPByfUICAxV7EUg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-421-cRUHipe4NTqkmCHF3aNYjw-1; Wed, 23 Nov 2022 08:43:38 -0500
+X-MC-Unique: cRUHipe4NTqkmCHF3aNYjw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 59702811E75;
-	Wed, 23 Nov 2022 13:32:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 87069806001;
+	Wed, 23 Nov 2022 13:43:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 38FEF2024CBE;
-	Wed, 23 Nov 2022 13:32:22 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2CBB0492B07;
+	Wed, 23 Nov 2022 13:43:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 01DEF1946589;
-	Wed, 23 Nov 2022 13:32:22 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CC6A11946589;
+	Wed, 23 Nov 2022 13:43:34 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id BF2981946587
- for <dm-devel@listman.corp.redhat.com>; Wed, 23 Nov 2022 12:13:56 +0000 (UTC)
+ ESMTP id B7B0D1946587
+ for <dm-devel@listman.corp.redhat.com>; Wed, 23 Nov 2022 12:14:05 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A27D940C83BB; Wed, 23 Nov 2022 12:13:56 +0000 (UTC)
+ id 9673C200B40B; Wed, 23 Nov 2022 12:14:05 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 9905340C2086
- for <dm-devel@redhat.com>; Wed, 23 Nov 2022 12:13:56 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7D3562A59573
- for <dm-devel@redhat.com>; Wed, 23 Nov 2022 12:13:56 +0000 (UTC)
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8ED942024CBE
+ for <dm-devel@redhat.com>; Wed, 23 Nov 2022 12:14:05 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6B42A85A588
+ for <dm-devel@redhat.com>; Wed, 23 Nov 2022 12:14:05 +0000 (UTC)
 Received: from mailout4.samsung.com (mailout4.samsung.com [203.254.224.34])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-29-a49-R5onPB6dOVqs2IeiAA-1; Wed, 23 Nov 2022 07:13:54 -0500
-X-MC-Unique: a49-R5onPB6dOVqs2IeiAA-1
-Received: from epcas5p4.samsung.com (unknown [182.195.41.42])
+ us-mta-629-OqBCWG_-OMSJ2JLF84a4Hg-1; Wed, 23 Nov 2022 07:13:58 -0500
+X-MC-Unique: OqBCWG_-OMSJ2JLF84a4Hg-1
+Received: from epcas5p3.samsung.com (unknown [182.195.41.41])
  by mailout4.samsung.com (KnoxPortal) with ESMTP id
- 20221123121351epoutp0477ad441aa5ee47e177afc2fe2410ab1d~qNa2pCsu61743217432epoutp04D
- for <dm-devel@redhat.com>; Wed, 23 Nov 2022 12:13:51 +0000 (GMT)
+ 20221123121355epoutp045c44c4448b3634ef30d4b02082ab8cb4~qNa6BcRB11743217432epoutp04F
+ for <dm-devel@redhat.com>; Wed, 23 Nov 2022 12:13:55 +0000 (GMT)
 DKIM-Filter: OpenDKIM Filter v2.11.0 mailout4.samsung.com
- 20221123121351epoutp0477ad441aa5ee47e177afc2fe2410ab1d~qNa2pCsu61743217432epoutp04D
+ 20221123121355epoutp045c44c4448b3634ef30d4b02082ab8cb4~qNa6BcRB11743217432epoutp04F
 Received: from epsnrtp2.localdomain (unknown [182.195.42.163]) by
- epcas5p2.samsung.com (KnoxPortal) with ESMTP id
- 20221123121351epcas5p2b1c4ec4c767ca49c4e4c22515d4b6365~qNa19qxrx0517605176epcas5p2E;
- Wed, 23 Nov 2022 12:13:51 +0000 (GMT)
-Received: from epsmges5p1new.samsung.com (unknown [182.195.38.175]) by
- epsnrtp2.localdomain (Postfix) with ESMTP id 4NHKmF2gWwz4x9Py; Wed, 23 Nov
- 2022 12:13:49 +0000 (GMT)
-Received: from epcas5p1.samsung.com ( [182.195.41.39]) by
- epsmges5p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
- F3.06.01710.D7E0E736; Wed, 23 Nov 2022 21:13:49 +0900 (KST)
+ epcas5p3.samsung.com (KnoxPortal) with ESMTP id
+ 20221123121354epcas5p3c4a880738c02eec4d1b85ab65c092ebe~qNa5VKSZR0081800818epcas5p3c;
+ Wed, 23 Nov 2022 12:13:54 +0000 (GMT)
+Received: from epsmges5p3new.samsung.com (unknown [182.195.38.180]) by
+ epsnrtp2.localdomain (Postfix) with ESMTP id 4NHKmJ22P4z4x9Pv; Wed, 23 Nov
+ 2022 12:13:52 +0000 (GMT)
+Received: from epcas5p3.samsung.com ( [182.195.41.41]) by
+ epsmges5p3new.samsung.com (Symantec Messaging Gateway) with SMTP id
+ DF.3C.56352.08E0E736; Wed, 23 Nov 2022 21:13:52 +0900 (KST)
 Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
  epcas5p4.samsung.com (KnoxPortal) with ESMTPA id
- 20221123101836epcas5p4667a420daae5e33c26477d62249e75ce~qL2OFxVYW2457124571epcas5p4F;
- Wed, 23 Nov 2022 10:18:36 +0000 (GMT)
+ 20221123102436epcas5p45ed06bc94371fec331b80092a08f9400~qL7dLMNGh2898328983epcas5p4e;
+ Wed, 23 Nov 2022 10:24:36 +0000 (GMT)
 Received: from epsmgms1p2.samsung.com (unknown [182.195.42.42]) by
  epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
- 20221123101836epsmtrp241b68ada4fc9176c1bb90e275bba4cf5~qL2OEsCR32111421114epsmtrp2B;
- Wed, 23 Nov 2022 10:18:36 +0000 (GMT)
-X-AuditID: b6c32a49-c9ffa700000006ae-6d-637e0e7dfd17
-Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
+ 20221123102436epsmtrp2062cf8c710f11bf976af04339696e547~qL7dI2e__2330723307epsmtrp2d;
+ Wed, 23 Nov 2022 10:24:36 +0000 (GMT)
+X-AuditID: b6c32a4b-5f7fe7000001dc20-e1-637e0e80291b
+Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
  epsmgms1p2.samsung.com (Symantec Messaging Gateway) with SMTP id
- 49.2F.18644.C73FD736; Wed, 23 Nov 2022 19:18:36 +0900 (KST)
-Received: from test-zns (unknown [107.110.206.5]) by epsmtip1.samsung.com
+ 79.8F.18644.4E4FD736; Wed, 23 Nov 2022 19:24:36 +0900 (KST)
+Received: from test-zns (unknown [107.110.206.5]) by epsmtip2.samsung.com
  (KnoxPortal) with ESMTPA id
- 20221123101832epsmtip1f15b1bdd3ebf147c9a3fe238fea17ca1~qL2Kkjd961036210362epsmtip1D;
- Wed, 23 Nov 2022 10:18:32 +0000 (GMT)
-Date: Wed, 23 Nov 2022 15:37:12 +0530
+ 20221123102432epsmtip25b864b9a404b9e21b1160635842d1ca1~qL7aGUOYX2006520065epsmtip2f;
+ Wed, 23 Nov 2022 10:24:32 +0000 (GMT)
+Date: Wed, 23 Nov 2022 15:43:13 +0530
 From: Nitesh Shetty <nj.shetty@samsung.com>
-To: Ming Lei <ming.lei@redhat.com>
-Message-ID: <20221123100712.GA26377@test-zns>
+To: Amir Goldstein <amir73il@gmail.com>
+Message-ID: <20221123101313.GB26377@test-zns>
 MIME-Version: 1.0
-In-Reply-To: <Y33UAp6ncSPO84XI@T590>
+In-Reply-To: <CAOQ4uxhMX9MF0+6DD7NO5QzqDRwESkhiY5f9CB7DXFVa22Za+w@mail.gmail.com>
 User-Agent: Mutt/1.9.4 (2018-02-28)
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Te0xbVRzHc+4tt4UIu+O1A3OIZWYCUqgWPDw1uGwXhYRsmjl0YV17eYTS
- Nm3ZYHM8BmUIYbznqIOxwEAeAQTGgA7DMLOAIipQBOkeCpgNB4PqkDDAwi1m/33O9/f95ffK
- 4eC2ZWxnTrxURSukQgmXsGJ1fut+wOu8TarIR/3jLtQy9B2OLhSu46jRUECgteERHPUufGmB
- Jvu6MVTfeBdD2utLGLq7+YRAD/+eYqHifj1As+MaDPVOeaLbvYMsNNpzlUDXamfZqL8kE0NF
- unYL1DWTAZDxRhYbNc8vstDA1F40sq6zeHcPpbk/TFDdGgObGrn3NYsaHU6i2ho+J6j2mjRK
- O5lOUPmZCyaD+r4FtfjNOEFd6mgAlLHNhbrYl4dRbTNPsEibqISgOFoophWutFQkE8dLY4O5
- HxyNfi/a18+H78X3R29zXaXCRDqYezA80utQvMQ0P9f1tFCSZJIihUol1zskSCFLUtGucTKl
- KphLy8USuUDOUwoTlUnSWJ6UVgXwfXze9DUZTybE3axpIuR3HJILnrHSwdjuXGDJgaQAZtyZ
- xXOBFceW1AL4eDUHYx7LANYasswRI4C/3qzEdlJKs/PZTKAHwL/Gi80pcwDqfqlgb7lY5GtQ
- v1TBygUcDkF6wu83OVuyPcmFBkPjtgUn01lwdpLcYjsyHOZudBBbbE16wbJ7MzjDu+Fg+Qxr
- iy3J/fCnkb5t3YF0g32duu26kGyxhJU9ayymu4NQe40pAEk7+FjXYWZnaFzoJRg+A+tLvyKY
- 5CwANRMawATegeqhApzpLg6uzI/gjL4Plg01Y4xuA/PXZsyrsIZdlTvsBptaqswFnKB+JcPM
- FBx7egMwG5oAMHOlmV0IXtG8MJ3mhXoMvwGrtMuExrQ8nNwL6zY4DLrDlh7vKmDRAJxouTIx
- llb6yvlS+sz/FxfJEtvA9v/wCOsChgdPef0A44B+ADk41946Lewzka21WJhyllbIohVJElrZ
- D3xNxyrCnR1EMtMHk6qi+QJ/H4Gfn5/A/y0/PnePdfUVD5EtGStU0Qk0LacVO3kYx9I5HQPO
- r+9b6/4TOUasjhWJn0msHJrPhVxX/FxSVnpoXn2Ul2XZGX4iwLH3w2PdMSrtXHb1+uUjp1bc
- NdLyXco40qmAF/E8LPSll/l56o8uHiuvjnEk/j0J5V98eitXnb1/OjLTsazv1Uv6wB4x+/Bo
- gmXUOO+534OG6ZALscbDUxPKf06Xp+WMaaMeppyvsFsMsk9Lq/5t+ZxL7NgjgYtbiK75qliw
- WV9TyQ8sSR202fQo/OPARl2AZyK/deK494DIdyAoRnJFYBWYk6q/pQ5e9bk8GrpUfOST6YrF
- 39/v6DQGtN7uSSn/uLCpbmOlfT00YiJJ35p39tGp2jn/5NATPyRbTbsf57KUcUK+B65QCv8D
- 8SoGrKgEAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Ra0hTcRjG+Z9zdnZcacdL+N+staZFWVqTPvyjiIqIY/ShIguVLtNOLryt
- TctspebsslBXZtjsZqiha4naRLOpnfJW6bqQpaJlrSJKy7YiEWdtFvXt4f09z/u88FK4zwtC
- RO1LSmFVSfIEKSkg6u5JxSEa+5HYpaZib1T1oA1Hx/QTODIO5JNovMuKI8tIMQ/1tjRgqMLY
- iqHGklEMtU4Ok2jI0Uegs1wPQO+eGzBk6VuE7lg6CfTs9kUSXSl/x0dcQTaGzrTX8lC9LQsg
- e5mWj25++kKgjr4AZJ1o5632ZwyvukimwTDAZ6yD1QTzrCuVqak8RTK1pRlMY28myeRmj/w2
- 5LziMV+anpNM3q1KwNhrxMyJltMYU2MbxjZ5RQlW7mET9h1gVUtW7RYoKgaLcGWWb5r55zie
- CUwzdMCDgvQyeO54Ll8HBJQPXQ+g+UIJNgWEsHziPj6lfWGF88Mfkw3A0tFcngsQ9DzYM3qJ
- 0AGKIulF8OEk5Rr70VI4MGB0+3H6GAEv9/STLuBLb4Q65y239qRDYOGgDZ9a2gugsaSZPwW8
- YecFG+HSOB0MXzo/Yq4CnA6A153uAg86CD62triPm0kHwpa6dkwPvA3/pQ3/pQ3/0lcBXgmE
- rFKdGJeolinDktiDoWp5ojo1KS40NjmxBrh/HxxcD+5Ufg3lAEYBDkAKl/p5ZoRrYn0898gP
- pbOq5F2q1ARWzYEAipD6ez7Wde7yoePkKWw8yypZ1V+KUR6iTCyow286qzGuJvvfzj85NmYb
- E7RaHHPoB5FvSjxSMC/JtB9Naw4X98REU++dh00LCpLNe7eIyzfKOsz+EdSyLO0N7ujd78K+
- Rnt3f65jrfzuCok5bX9Z9I7WzvzNVJS2tDuuwCQMbOSWpre9XpHTUBQpfCqqyjuor/bv1k/u
- MB3f1r7YYpSErTU2CR0OzcLyGIOsYH1M+NmhrSJOlNC/7nPzt+3WS7UrH3HZ+JMD7M5NP0fm
- 1p55KonxEhdeE8V/025Qvwj8rpF+zalKYyrC9Ao0K6I642Jzs3bwFBzOz85QDCnOh0fX1eeN
- y5a3zS6yCgNnYJFVEgGuFD+xF6VLCbVCLgvGVWr5L4XDK6BqAwAA
-X-CMS-MailID: 20221123101836epcas5p4667a420daae5e33c26477d62249e75ce
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Ta0xbZRjH8562p4UIHG7yUtyGBZ0wLkVa9uIAl0DcUZiy+MFEo6yhJ0Ao
+ 7VlbYOCylUGdsiBDWIKVcRlsc5SLlroVsIxUoYAiCw1MQIZggchVxsQwgrNwwOzb7/0//yfP
+ LS+P5VHB5fMy5GpKKZfIBLgz+84PQUGhGtfzqcLmhxzUOtDLQvdb9ABdvLLNQvrJUhxtDQ6x
+ kHnlKw4a627H0G19D4Y669Yw1PN0GUfTj8fZ6AvLKECzIzoMmcePoO/N/Wxk66jCUc3NWS4q
+ s7ZxkMleAND6jSIuallcZaO+cT80tG3lHPchdVODONmum+SSQw+/ZZO2wWzS0PgZTrY1XCA7
+ xzQ4WVK44jBopzjkatcITn5ubATkuuEgean7MkYa7MtYsuv7mTHplERKKf0peapCmiFPixUk
+ vpsSnyKOEkaERkSjowJ/uSSLihUkJCWHvpEhc8wv8M+RyLIdUrJEpRKEx8UoFdlqyj9doVLH
+ CihaKqNFdJhKkqXKlqeFySn1axFC4atih/F0Znrh3UUuXZB8drB5jKUBT8TFwIkHCRGsX/4Z
+ 22EPohPAuw1EMXB28CMAzdo1DvNYB/DP9mbWfoa2t4TNZHQAqNF9wJjmAOwr39wNsImX4PDa
+ b6AY8Hg4cQT+9JS3I3sRh2HT1Y1dC4vQsOHsGLHDnkQitF3Uc3fYhQiFul+2AcPusP9L+67f
+ iTgFS4uKd3vwJgJg9x0rtlMXEm1O0HJtBGeaS4DTddMchj3hgtXIZZgP11fMe55ceLvia5xJ
+ LgJQ90AHmMDrUDtQymK6S4eL+mGM0Q/AqwMtGKO7wpIt+57uAk3V+xwAm1pr9wr4wtF/CvaY
+ hFMTJsBs6BIGNzbq2VfAId0z0+meqcdwCKztfITrHMtjEX7w1r88BoNga0d4LeA0Al+KVmWl
+ USoxHSmncv8/eKoiywB2v0dwognM/P5XmAVgPGABkMcSeLlcePNcqoeLVJKXTykVKcpsGaWy
+ ALHjWGUsvneqwvG/5OqUCFG0UBQVFSWKjoyKEPi41FcGp3oQaRI1lUlRNKXcz8N4TnwNdmLu
+ Xl5gTv6S4bncUz7O2Stpfm1uM+c+zTLKTpbP3xB3tfWJLz/f+46bR1PZhEJotL/YYKrsd81T
+ rlgCb52Jp78zeX+y9OT0R53THQveVeXzo9PW9BfWAg4HYhsJjyXjtPuxum/ca1KSNiuNLXY3
+ bWiX4Z7F52blieT8Xtr41pnrngPSAzptwPGY+8oe23tb/t3hOO2bN2PwzDlPlWnn37YX/4E2
+ h7dk/id/NNMVW4Uh286Dk8d+5dWEG7xWzat1KnV1ysGQ0uAp8lDG32edq8NenrMh+3rrRtXM
+ 5kQxf2YiTgSOzizZPly47iON579SEKbPF8Q55WU+sEZ+fC02iRawVemSiGCWUiX5D4bzlVan
+ BAAA
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrOIsWRmVeSWpSXmKPExsWy7bCSvO6TL7XJBhOWsFisP3WM2eLCutWM
+ Fk0T/jJbrL7bz2bx++x5Zou972azWtw8sJPJYuXqo0wWuxd+ZLI4+v8tm8XDL7dYLCYdusZo
+ 8fTqLCaLvbe0LfbsPclicXnXHDaL+cuesltMPL6Z1WLHk0ZGi89LW9gt1r1+z2Jx4pa0xfm/
+ x1kdxD1m3T/L5rFz1l12j/P3NrJ4XD5b6rFpVSebx+Yl9R67bzawefQ2vwMqaL3P6vF+31U2
+ j74tqxg9Pm+S82g/0M3ksenJW6YAvigum5TUnMyy1CJ9uwSujG2zmpkLDvpWTJ/3gaWB8bJx
+ FyMnh4SAiUTrsV6WLkYuDiGBHYwSb69sZIJISEos+3uEGcIWllj57zk7RNETRol73bdYQRIs
+ AqoSlz7eYexi5OBgE9CWOP2fAyQsIqAusWbqN7ChzAJNLBLzrt1mA0kIC3hLXG5azQ5i8wro
+ Ssw695cRYmg7k8Si9StYIRKCEidnPmEBsZkFtCRu/HvJBLKAWUBaYvk/sAWcAoES/S1dYMeJ
+ CihLHNh2nGkCo+AsJN2zkHTPQuhewMi8ilEytaA4Nz232LDAKC+1XK84Mbe4NC9dLzk/dxMj
+ OO61tHYw7ln1Qe8QIxMH4yFGCQ5mJRHees+aZCHelMTKqtSi/Pii0pzU4kOM0hwsSuK8F7pO
+ xgsJpCeWpGanphakFsFkmTg4pRqYpM7l/3Z+sEWYv3Zn1/8Tb0Lqsw7cn/f6wQ9z7n+xN+YE
+ ShvMSHecIZT2c/aJwLv3a4ptbFjear86UM8SnrovZG/eqeD1Kx8+2uFW3TLpuNTZ00xTtP5F
+ SWpINz9l+b1lZdyh0Nub9m1o5uubZ5D1u4A7fanuJJuNLyeZ3DItLnXt/aIe2s+p+s+7/pag
+ 5SyrS2y1mi/CZv5cPW3nVvY1/etUvdr97/HPy1793jgpNi0t4Prh2Veb1Ze913iclF46o31u
+ kPWltlcb2BYZFF26Gxt8vYWvJrKMb8feCK2EeWs7jwUVzkxYlJ4pnDD/wxWdP9s3MWXwXot7
+ sk2XU/nW8TwVtTv3XXyCW3cl/GufoMRSnJFoqMVcVJwIAH3sjhpqAwAA
+X-CMS-MailID: 20221123102436epcas5p45ed06bc94371fec331b80092a08f9400
 X-Msg-Generator: CA
 X-Sendblock-Type: REQ_APPROVE
 CMS-TYPE: 105P
 DLP-Filter: Pass
 X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20221123061017epcas5p246a589e20eac655ac340cfda6028ff35
-References: <20221123055827.26996-1-nj.shetty@samsung.com>
- <CGME20221123061017epcas5p246a589e20eac655ac340cfda6028ff35@epcas5p2.samsung.com>
- <20221123055827.26996-3-nj.shetty@samsung.com> <Y33UAp6ncSPO84XI@T590>
+X-CMS-RootMailID: 20221123061044epcas5p2ac082a91fc8197821f29e84278b6203c
+References: <CGME20221123061044epcas5p2ac082a91fc8197821f29e84278b6203c@epcas5p2.samsung.com>
+ <20221123055827.26996-1-nj.shetty@samsung.com>
+ <20221123055827.26996-11-nj.shetty@samsung.com>
+ <CAOQ4uxhMX9MF0+6DD7NO5QzqDRwESkhiY5f9CB7DXFVa22Za+w@mail.gmail.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -146,10 +148,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mailman-Approved-At: Wed, 23 Nov 2022 13:14:48 +0000
-Subject: Re: [dm-devel] [PATCH v5 02/10] block: Add copy offload support
- infrastructure
+Subject: Re: [dm-devel] [PATCH v5 10/10] fs: add support for copy file range
+ in zonefs
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -170,75 +172,266 @@ Cc: linux-nvme@lists.infradead.org, dm-devel@redhat.com, hch@lst.de,
  linux-fsdevel@vger.kernel.org, jth@kernel.org, nitheshshetty@gmail.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: multipart/mixed;
- boundary="----G62UEJgdyo2JOumF_Do4Y7B7G39M5PuLVzFwfXKQiOy3iUJg=_667d6_"
+ boundary="----GsYAgckb8ZPIB7TqR4NYyp-jgnPv5c.LE-kW9H5hDU_d1TDU=_664b6_"
 
-------G62UEJgdyo2JOumF_Do4Y7B7G39M5PuLVzFwfXKQiOy3iUJg=_667d6_
+------GsYAgckb8ZPIB7TqR4NYyp-jgnPv5c.LE-kW9H5hDU_d1TDU=_664b6_
 Content-Type: text/plain; charset="us-ascii"
 Content-Disposition: inline
 
-On Wed, Nov 23, 2022 at 04:04:18PM +0800, Ming Lei wrote:
-> On Wed, Nov 23, 2022 at 11:28:19AM +0530, Nitesh Shetty wrote:
-> > Introduce blkdev_issue_copy which supports source and destination bdevs,
-> > and an array of (source, destination and copy length) tuples.
-> > Introduce REQ_COPY copy offload operation flag. Create a read-write
-> > bio pair with a token as payload and submitted to the device in order.
-> > Read request populates token with source specific information which
-> > is then passed with write request.
-> > This design is courtesy Mikulas Patocka's token based copy
+On Wed, Nov 23, 2022 at 08:53:14AM +0200, Amir Goldstein wrote:
+> On Wed, Nov 23, 2022 at 8:26 AM Nitesh Shetty <nj.shetty@samsung.com> wrote:
+> >
+> > copy_file_range is implemented using copy offload,
+> > copy offloading to device is always enabled.
+> > To disable copy offloading mount with "no_copy_offload" mount option.
+> > At present copy offload is only used, if the source and destination files
+> > are on same block device, otherwise copy file range is completed by
+> > generic copy file range.
+> >
+> > copy file range implemented as following:
+> >         - write pending writes on the src and dest files
+> >         - drop page cache for dest file if its conv zone
+> >         - copy the range using offload
+> >         - update dest file info
+> >
+> > For all failure cases we fallback to generic file copy range
+> > At present this implementation does not support conv aggregation
+> >
+> > Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
+> > Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
+> > ---
+> >  fs/zonefs/super.c | 179 ++++++++++++++++++++++++++++++++++++++++++++++
+> >  1 file changed, 179 insertions(+)
+> >
+> > diff --git a/fs/zonefs/super.c b/fs/zonefs/super.c
+> > index abc9a85106f2..15613433d4ae 100644
+> > --- a/fs/zonefs/super.c
+> > +++ b/fs/zonefs/super.c
+> > @@ -1223,6 +1223,183 @@ static int zonefs_file_release(struct inode *inode, struct file *file)
+> >         return 0;
+> >  }
+> >
+> > +static int zonefs_is_file_copy_offset_ok(struct inode *src_inode,
+> > +               struct inode *dst_inode, loff_t src_off, loff_t dst_off,
+> > +               size_t *len)
+> > +{
+> > +       loff_t size, endoff;
+> > +       struct zonefs_inode_info *dst_zi = ZONEFS_I(dst_inode);
+> > +
+> > +       inode_lock(src_inode);
+> > +       size = i_size_read(src_inode);
+> > +       inode_unlock(src_inode);
+> > +       /* Don't copy beyond source file EOF. */
+> > +       if (src_off < size) {
+> > +               if (src_off + *len > size)
+> > +                       *len = (size - (src_off + *len));
+> > +       } else
+> > +               *len = 0;
+> > +
+> > +       mutex_lock(&dst_zi->i_truncate_mutex);
+> > +       if (dst_zi->i_ztype == ZONEFS_ZTYPE_SEQ) {
+> > +               if (*len > dst_zi->i_max_size - dst_zi->i_wpoffset)
+> > +                       *len -= dst_zi->i_max_size - dst_zi->i_wpoffset;
+> > +
+> > +               if (dst_off != dst_zi->i_wpoffset)
+> > +                       goto err;
+> > +       }
+> > +       mutex_unlock(&dst_zi->i_truncate_mutex);
+> > +
+> > +       endoff = dst_off + *len;
+> > +       inode_lock(dst_inode);
+> > +       if (endoff > dst_zi->i_max_size ||
+> > +                       inode_newsize_ok(dst_inode, endoff)) {
+> > +               inode_unlock(dst_inode);
+> > +               goto err;
+> > +       }
+> > +       inode_unlock(dst_inode);
+> > +
+> > +       return 0;
+> > +err:
+> > +       mutex_unlock(&dst_zi->i_truncate_mutex);
+> > +       return -EINVAL;
+> > +}
+> > +
+> > +static ssize_t zonefs_issue_copy(struct zonefs_inode_info *src_zi,
+> > +               loff_t src_off, struct zonefs_inode_info *dst_zi,
+> > +               loff_t dst_off, size_t len)
+> > +{
+> > +       struct block_device *src_bdev = src_zi->i_vnode.i_sb->s_bdev;
+> > +       struct block_device *dst_bdev = dst_zi->i_vnode.i_sb->s_bdev;
+> > +       struct range_entry *rlist = NULL;
+> > +       int ret = len;
+> > +
+> > +       rlist = kmalloc(sizeof(*rlist), GFP_KERNEL);
+> > +       if (!rlist)
+> > +               return -ENOMEM;
+> > +
+> > +       rlist[0].dst = (dst_zi->i_zsector << SECTOR_SHIFT) + dst_off;
+> > +       rlist[0].src = (src_zi->i_zsector << SECTOR_SHIFT) + src_off;
+> > +       rlist[0].len = len;
+> > +       rlist[0].comp_len = 0;
+> > +       ret = blkdev_issue_copy(src_bdev, dst_bdev, rlist, 1, NULL, NULL,
+> > +                       GFP_KERNEL);
+> > +       if (rlist[0].comp_len > 0)
+> > +               ret = rlist[0].comp_len;
+> > +       kfree(rlist);
+> > +
+> > +       return ret;
+> > +}
+> > +
+> > +/* Returns length of possible copy, else returns error */
+> > +static ssize_t zonefs_copy_file_checks(struct file *src_file, loff_t src_off,
+> > +                                       struct file *dst_file, loff_t dst_off,
+> > +                                       size_t *len, unsigned int flags)
+> > +{
+> > +       struct inode *src_inode = file_inode(src_file);
+> > +       struct inode *dst_inode = file_inode(dst_file);
+> > +       struct zonefs_inode_info *src_zi = ZONEFS_I(src_inode);
+> > +       struct zonefs_inode_info *dst_zi = ZONEFS_I(dst_inode);
+> > +       ssize_t ret;
+> > +
+> > +       if (src_inode->i_sb != dst_inode->i_sb)
+> > +               return -EXDEV;
+> > +
+> > +       /* Start by sync'ing the source and destination files for conv zones */
+> > +       if (src_zi->i_ztype == ZONEFS_ZTYPE_CNV) {
+> > +               ret = file_write_and_wait_range(src_file, src_off,
+> > +                               (src_off + *len));
+> > +               if (ret < 0)
+> > +                       goto io_error;
+> > +       }
+> > +       inode_dio_wait(src_inode);
+> > +
+> > +       /* Start by sync'ing the source and destination files ifor conv zones */
+> > +       if (dst_zi->i_ztype == ZONEFS_ZTYPE_CNV) {
+> > +               ret = file_write_and_wait_range(dst_file, dst_off,
+> > +                               (dst_off + *len));
+> > +               if (ret < 0)
+> > +                       goto io_error;
+> > +       }
+> > +       inode_dio_wait(dst_inode);
+> > +
+> > +       /* Drop dst file cached pages for a conv zone*/
+> > +       if (dst_zi->i_ztype == ZONEFS_ZTYPE_CNV) {
+> > +               ret = invalidate_inode_pages2_range(dst_inode->i_mapping,
+> > +                               dst_off >> PAGE_SHIFT,
+> > +                               (dst_off + *len) >> PAGE_SHIFT);
+> > +               if (ret < 0)
+> > +                       goto io_error;
+> > +       }
+> > +
+> > +       ret = zonefs_is_file_copy_offset_ok(src_inode, dst_inode, src_off,
+> > +                       dst_off, len);
+> > +       if (ret < 0)
+> > +               return ret;
+> > +
+> > +       return *len;
+> > +
+> > +io_error:
+> > +       zonefs_io_error(dst_inode, true);
+> > +       return ret;
+> > +}
+> > +
+> > +static ssize_t zonefs_copy_file(struct file *src_file, loff_t src_off,
+> > +               struct file *dst_file, loff_t dst_off,
+> > +               size_t len, unsigned int flags)
+> > +{
+> > +       struct inode *src_inode = file_inode(src_file);
+> > +       struct inode *dst_inode = file_inode(dst_file);
+> > +       struct zonefs_inode_info *src_zi = ZONEFS_I(src_inode);
+> > +       struct zonefs_inode_info *dst_zi = ZONEFS_I(dst_inode);
+> > +       ssize_t ret = 0, bytes;
+> > +
+> > +       inode_lock(src_inode);
+> > +       inode_lock(dst_inode);
+> > +       bytes = zonefs_issue_copy(src_zi, src_off, dst_zi, dst_off, len);
+> > +       if (bytes < 0)
+> > +               goto unlock_exit;
+> > +
+> > +       ret += bytes;
+> > +
+> > +       file_update_time(dst_file);
+> > +       mutex_lock(&dst_zi->i_truncate_mutex);
+> > +       zonefs_update_stats(dst_inode, dst_off + bytes);
+> > +       zonefs_i_size_write(dst_inode, dst_off + bytes);
+> > +       dst_zi->i_wpoffset += bytes;
+> > +       mutex_unlock(&dst_zi->i_truncate_mutex);
+> > +       /* if we still have some bytes left, do splice copy */
+> > +       if (bytes && (bytes < len)) {
+> > +               bytes = do_splice_direct(src_file, &src_off, dst_file,
+> > +                                        &dst_off, len, flags);
+> > +               if (bytes > 0)
+> > +                       ret += bytes;
+> > +       }
+> > +unlock_exit:
+> > +       if (ret < 0)
+> > +               zonefs_io_error(dst_inode, true);
+> > +       inode_unlock(src_inode);
+> > +       inode_unlock(dst_inode);
+> > +       return ret;
+> > +}
+> > +
+> > +static ssize_t zonefs_copy_file_range(struct file *src_file, loff_t src_off,
+> > +                                     struct file *dst_file, loff_t dst_off,
+> > +                                     size_t len, unsigned int flags)
+> > +{
+> > +       ssize_t ret = -EIO;
+> > +
+> > +       ret = zonefs_copy_file_checks(src_file, src_off, dst_file, dst_off,
+> > +                                    &len, flags);
+> > +       if (ret > 0)
+> > +               ret = zonefs_copy_file(src_file, src_off, dst_file, dst_off,
+> > +                                    len, flags);
+> > +       else if (ret < 0 && ret == -EXDEV)
 > 
-> I thought this patchset is just for enabling copy command which is
-> supported by hardware. But turns out it isn't, because blk_copy_offload()
-> still submits read/write bios for doing the copy.
-> 
-> I am just wondering why not let copy_file_range() cover this kind of copy,
-> and the framework has been there.
+> First of all, ret < 0 is redundant.
 > 
 
-Main goal was to enable copy command, but community suggested to add
-copy emulation as well.
+acked
 
-blk_copy_offload - actually issues copy command in driver layer.
-The way read/write BIOs are percieved is different for copy offload.
-In copy offload we check REQ_COPY flag in NVMe driver layer to issue
-copy command. But we did missed it to add in other driver's, where they
-might be treated as normal READ/WRITE.
-
-blk_copy_emulate - is used if we fail or if device doesn't support native
-copy offload command. Here we do READ/WRITE. Using copy_file_range for
-emulation might be possible, but we see 2 issues here.
-1. We explored possibility of pulling dm-kcopyd to block layer so that we 
-can readily use it. But we found it had many dependecies from dm-layer.
-So later dropped that idea.
-2. copy_file_range, for block device atleast we saw few check's which fail
-it for raw block device. At this point I dont know much about the history of
-why such check is present.
-
-> When I was researching pipe/splice code for supporting ublk zero copy[1], I
-> have got idea for async copy_file_range(), such as: io uring based
-> direct splice, user backed intermediate buffer, still zero copy, if these
-> ideas are finally implemented, we could get super-fast generic offload copy,
-> and bdev copy is really covered too.
+> > +               ret = generic_copy_file_range(src_file, src_off, dst_file,
+> > +                                             dst_off, len, flags);
 > 
-> [1] https://lore.kernel.org/linux-block/20221103085004.1029763-1-ming.lei@redhat.com/
+> But more importantly, why do you want to fall back to
+> do_splice_direct() in zonefs copy_file_range?
+> How does it serve your patch set or the prospect consumers
+> of zonefs copy_file_range?
 > 
-
-Seems interesting, We will take a look into this.
-
+> The reason I am asking is because commit 5dae222a5ff0
+> ("vfs: allow copy_file_range to copy across devices")
+> turned out to be an API mistake that was later reverted by
+> 868f9f2f8e00 ("vfs: fix copy_file_range() regression in cross-fs copies")
 > 
+> It is always better to return EXDEV to userspace which can
+> always fallback to splice itself, but maybe it has something
+> smarter to do.
+> 
+> The places where it made sense for kernel to fallback to
+> direct splice was for network servers server-side-copy, but that
+> is independent of any specific filesystem copy_file_range()
+> implementation.
+> 
+> Thanks,
+> Amir.
 > 
 
-Thanks,
-Nitesh
+At present we don't handle few case's such as IO getting split incase of
+copy offload, so we wanted to fallback to existing mechanism. So went with
+default operation, do_splice_direct.
 
-------G62UEJgdyo2JOumF_Do4Y7B7G39M5PuLVzFwfXKQiOy3iUJg=_667d6_
+Regards,
+Nitesh Shetty
+
+
+------GsYAgckb8ZPIB7TqR4NYyp-jgnPv5c.LE-kW9H5hDU_d1TDU=_664b6_
 Content-Type: text/plain; charset="utf-8"
 
 
-------G62UEJgdyo2JOumF_Do4Y7B7G39M5PuLVzFwfXKQiOy3iUJg=_667d6_
+------GsYAgckb8ZPIB7TqR4NYyp-jgnPv5c.LE-kW9H5hDU_d1TDU=_664b6_
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -249,5 +442,5 @@ dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
 
-------G62UEJgdyo2JOumF_Do4Y7B7G39M5PuLVzFwfXKQiOy3iUJg=_667d6_--
+------GsYAgckb8ZPIB7TqR4NYyp-jgnPv5c.LE-kW9H5hDU_d1TDU=_664b6_--
 
