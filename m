@@ -4,80 +4,107 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CC192C433FE
-	for <dm-devel@archiver.kernel.org>; Wed, 30 Nov 2022 09:13:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7DB52C352A1
+	for <dm-devel@archiver.kernel.org>; Wed, 30 Nov 2022 09:55:24 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1669799631;
+	s=mimecast20190719; t=1669802123;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=D+AFt7XM6HrO214PsAbl9ZbArRVe/IWVPVwmkL7pwFY=;
-	b=Rb1VZxK30W0hbN7/tv01hYiLXR1nUBRM2Gv/shpm4Ls1qJeQ1nuwFsoBn3G2SdIHF+86Ao
-	NsFvo1/tqSEsXzAjoXllQVWU9DTEGdvlDiKdoHmt7+zsQ6RYxRIR3p3QSPXVwyYuo8gZSB
-	4IRgr2h3vyqvtrGFQbDfuLgRHfUuN9M=
+	bh=y9tJU3wO/VQ2eq61LyXAw5TqlT/sCETHNCPXJ/7E0Fc=;
+	b=KHZkdw/TSgb+5Q4intEu8vA2fjgeI7MpNypcsNcNqnSz25+SNjZOXscw/LDmy2LzRjoR76
+	/zEbvVYPFFUngAI/5M0oYVezs+Y2idB/CkaqWp3QVSSQem+I7jCjmEFfzq/A9oo7Q+hezr
+	SSMiLgn46lv7n6LETBsEeIvPdTCa08s=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-252-njBVuFgQMiuC3IL1T4ZPuQ-1; Wed, 30 Nov 2022 04:13:48 -0500
-X-MC-Unique: njBVuFgQMiuC3IL1T4ZPuQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-370-GGjkCHaEM2uc-MWUYsk_Vg-1; Wed, 30 Nov 2022 04:55:20 -0500
+X-MC-Unique: GGjkCHaEM2uc-MWUYsk_Vg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5A246299E76B;
-	Wed, 30 Nov 2022 09:13:47 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9D3F2382C96E;
+	Wed, 30 Nov 2022 09:55:18 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E8C75492B04;
-	Wed, 30 Nov 2022 09:13:40 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 977FA40C6EC4;
+	Wed, 30 Nov 2022 09:55:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 93BA919465A2;
-	Wed, 30 Nov 2022 09:13:39 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 68CE719465A2;
+	Wed, 30 Nov 2022 09:55:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3E8EA19465A2
- for <dm-devel@listman.corp.redhat.com>; Wed, 30 Nov 2022 09:13:38 +0000 (UTC)
+ ESMTP id 592F619465A0
+ for <dm-devel@listman.corp.redhat.com>; Wed, 30 Nov 2022 09:55:13 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2FAF01121320; Wed, 30 Nov 2022 09:13:38 +0000 (UTC)
+ id 28C0C40C6EC4; Wed, 30 Nov 2022 09:55:13 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2793C1121314
- for <dm-devel@redhat.com>; Wed, 30 Nov 2022 09:13:38 +0000 (UTC)
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 20A3D40E9785
+ for <dm-devel@redhat.com>; Wed, 30 Nov 2022 09:55:13 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 08ABB85A588
- for <dm-devel@redhat.com>; Wed, 30 Nov 2022 09:13:38 +0000 (UTC)
-Received: from szxga01-in.huawei.com (szxga01-in.huawei.com
- [45.249.212.187]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-241-R1N7C5oPO3mLXPbupu7bfA-1; Wed, 30 Nov 2022 04:13:33 -0500
-X-MC-Unique: R1N7C5oPO3mLXPbupu7bfA-1
-Received: from kwepemi500002.china.huawei.com (unknown [172.30.72.57])
- by szxga01-in.huawei.com (SkyGuard) with ESMTP id 4NMYQ86ptSzmWMm;
- Wed, 30 Nov 2022 17:12:48 +0800 (CST)
-Received: from [10.174.179.167] (10.174.179.167) by
- kwepemi500002.china.huawei.com (7.221.188.171) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2375.31; Wed, 30 Nov 2022 17:13:28 +0800
-Message-ID: <ea94d029-a5a8-7498-2254-a980fb764935@huawei.com>
-Date: Wed, 30 Nov 2022 17:13:28 +0800
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E5240382C96D
+ for <dm-devel@redhat.com>; Wed, 30 Nov 2022 09:55:12 +0000 (UTC)
+Received: from esa5.hgst.iphmx.com (esa5.hgst.iphmx.com [216.71.153.144]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-45-9lkXuk4xPd-OmP87prJSmw-1; Wed, 30 Nov 2022 04:55:10 -0500
+X-MC-Unique: 9lkXuk4xPd-OmP87prJSmw-1
+X-IronPort-AV: E=Sophos;i="5.96,206,1665417600"; d="scan'208";a="217538405"
+Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com)
+ ([199.255.45.14])
+ by ob1.hgst.iphmx.com with ESMTP; 30 Nov 2022 17:55:09 +0800
+IronPort-SDR: 8wDz9LoqHaqNTUtw2YkQAs0g5S46eqSu01AmapJQWJTPRTV4JailaY3DsVbpITvxIuK+TFe+7f
+ 0su2sF4NiP9zI3nsuiY/KffB3bS4A4iJbMx7+8GlPJRsIpWCDYA5dx9dHzKPm7w8EZlcULb4xi
+ qPhuYHBRioHPwczCxQOT0kCjqXAVxFVw6gOV6yI2DeaY3//pcSsrGMQi9dMUPWgabVyI5nuuad
+ kZ9X/zlkspOUru/K6oOSYNh30bA4p8xmL2qZVv47vmSB5uJhgapMZNBEl3gz1QGCuhcwlnDJuU
+ XPM=
+Received: from uls-op-cesaip01.wdc.com ([10.248.3.36])
+ by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 30 Nov 2022 01:13:48 -0800
+IronPort-SDR: v22YblL8CWi1CbyNdJkjFqCWTQPf/FzPF1JJ5HkIF3YeRkPVtxQQDnPBxAk7Haftc5JFE5y7vF
+ P8uxT+LRd2lJqZo41SjAgXEDoOxJF3EED0ENr5pj4aj8zwFL/piUZ1dXHVTYwOCPI0nRAAlSi+
+ a/A/F4nEcbLFNOG302Urs8a5RzKYRpVcthddmUzCEkxTgzr/O2GYUwq+PKcqJH63su6cFtU5Mc
+ wYDJs5DkheLUFYhGXweKr9IcfrodIhRzjOwVgr0kHkrTgxm4o8JpA+mjd0IsQPbN1IpfMm/4Cc
+ EVU=
+WDCIronportException: Internal
+Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
+ by uls-op-cesaip01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 30 Nov 2022 01:55:10 -0800
+Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4NMZM10FPyz1Rwt8
+ for <dm-devel@redhat.com>; Wed, 30 Nov 2022 01:55:08 -0800 (PST)
+X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
+Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
+ by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
+ port 10026) with ESMTP id xjWDQrfFhrhQ for <dm-devel@redhat.com>;
+ Wed, 30 Nov 2022 01:55:08 -0800 (PST)
+Received: from [10.225.163.66] (unknown [10.225.163.66])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4NMZLx09szz1RvLy;
+ Wed, 30 Nov 2022 01:55:04 -0800 (PST)
+Message-ID: <1ef5747a-9469-4365-ffc9-05daa6f69288@opensource.wdc.com>
+Date: Wed, 30 Nov 2022 18:55:03 +0900
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
- Thunderbird/91.0.3
-From: miaoguanqin <miaoguanqin@huawei.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski
- <bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>, dm-devel mailing list
- <dm-devel@redhat.com>
-References: <feab383d-f3fa-fb8d-caf2-10830757522b@huawei.com>
-In-Reply-To: <feab383d-f3fa-fb8d-caf2-10830757522b@huawei.com>
-X-Originating-IP: [10.174.179.167]
-X-ClientProxiedBy: dggems703-chm.china.huawei.com (10.3.19.180) To
- kwepemi500002.china.huawei.com (7.221.188.171)
-X-CFilter-Loop: Reflected
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.5.0
+To: Nitesh Shetty <nj.shetty@samsung.com>
+References: <20221123055827.26996-1-nj.shetty@samsung.com>
+ <CGME20221123061044epcas5p2ac082a91fc8197821f29e84278b6203c@epcas5p2.samsung.com>
+ <20221123055827.26996-11-nj.shetty@samsung.com>
+ <729254f8-2468-e694-715e-72bcbef80ff3@opensource.wdc.com>
+ <349a4d66-3a9f-a095-005c-1f180c5f3aac@opensource.wdc.com>
+ <20221129122232.GC16802@test-zns>
+ <b22652ee-9cca-a5b1-e9f1-862ed8f0354d@opensource.wdc.com>
+ <20221130041728.GB17533@test-zns>
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Organization: Western Digital Research
+In-Reply-To: <20221130041728.GB17533@test-zns>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -85,9 +112,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: Re: [dm-devel] [PATCH] multipathd: Fixed multipathd parameter
- invoking
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] [PATCH v5 10/10] fs: add support for copy file range
+ in zonefs
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -99,95 +126,41 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linfeilong <linfeilong@huawei.com>, lixiaokeng@huawei.com,
- "liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>
+Cc: axboe@kernel.dk, naohiro.aota@wdc.com, kch@nvidia.com, sagi@grimberg.me,
+ joshi.k@samsung.com, gost.dev@samsung.com, anuj20.g@samsung.com,
+ snitzer@kernel.org, james.smart@broadcom.com, linux-nvme@lists.infradead.org,
+ linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, viro@zeniv.linux.org.uk,
+ nitheshshetty@gmail.com, kbusch@kernel.org, jth@kernel.org, hch@lst.de,
+ agk@redhat.com, p.raghav@samsung.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-cGluZwoKT24gMjAyMi8xMS8yNSA5OjI2LCBtaWFvZ3VhbnFpbiB3cm90ZToKPiBVc2VycyBtYXkg
-ZmFpbCB0byBleGVjdXRlIGNvbW1hbmQ6IG11bHRpcGF0aGQgYW5kIG1wYXRocGVyc2lzdC4KPiAK
-PiBXaGVuIHdlIGV4ZWN1dGUgdGhlIGNvbW1hbmQgbXBhdGhwZXJzaXN077yaCj4gbXBhdGhwZXJz
-aXN0IC0tb3V0IC0tcmVnaXN0ZXIgLS1wYXJhbS1zYXJrPTEyMyAtLXByb3V0LXR5cGU9NSAKPiAv
-ZGV2L21hcHBlci9tcGF0aGIKPiBJdCByZXR1cm4gYW4gZXJyb3IgOiBNaXNzaW5nIGFyZ3VlbWVu
-dC4gVGhlIHByZWNlZGluZyBjb21tYW5kIGNhbGxzIHRoZSAKPiBmdW5jdGlvbgo+IGNsaV9zZXRw
-cmtleSwgd2hpY2ggaXMgY2FsbGVkIGJ5IGNoZWNraW5nIHdoZXRoZXIgdGhlIGhhbmRsZSB2YWx1
-ZXMgYXJlIAo+IGNvbnNpc3RlbnQKPiB3aXRoIHRoZSBjb21tYW5kIGlucHV0LiBDVkUtMjAyMi00
-MTk3NCBjaGFuZ2VkIHRoZSBoYW5kbGVyIHZhbHVlIG9mIAo+IGZ1bmN0aW9uIGFuZAo+IGNoYW5n
-ZWQgdGhlIG1vZGUgb2YgY2FsY3VsYXRpbmcgaGFuZGxlLsKgIFRoZSBoYW5kbGVyIHZhbHVlIGlz
-IG5vdCBlcXVhbCAKPiB0byB0aGUKPiBjb21tYW5kIGlucHV0LCBjYXVzaW5nIG11bHRpcGF0aGQg
-Y2FuIG5vdCBleGVjdXRlIHRoZSB0cnVlIGZ1bmNpb24uIEl0IAo+IGNvdWxkIGJlCj4gYW4gc2Ft
-ZSBlcnJvciBmb3IgZXhlY3V0aW5nIG11bHRpcGF0aGQgYnkgdGhlIG9sZCBtb2RlLgo+IAo+IG11
-bHRpcGF0aGQgaW52b2tlcyB0aGUgY29ycmVzcG9uZGluZyBmdW5jdGlvbiBiYXNlZCBvbiB0aGUg
-aGFuZGxlIHZhbHVlLgo+IENWRS0yMDIyLTQxOTY0IGNoYW5nZWQgdGhlIG1ldGhvZCBvZiBjYWxj
-dWxhdGluZyBoYW5kbGVyIHZhbHVlLiBNb2RpZnkgCj4gdGhlIGhhbmRsZQo+IHZhbHVlIHNvIHRo
-YXQgdGhlIGNvcnJlc3BvbmRpbmcgZnVuY3Rpb24gY2FuIGJlIGNvcnJlY3RseSBleGVjdXRlLgo+
-IAo+IFNpZ25lZC1vZmYtYnk6IG1pYW9ndWFucWluIDxtaWFvZ3VhbnFpbkBodWF3ZWkuY29tPgo+
-IFNpZ25lZC1vZmYtYnk6IGxpeGlhb2tlbmcgPGxpeGlhb2tlbmdAaHVhd2VpLmNvbT4KPiAtLS0K
-PiAgwqBtdWx0aXBhdGhkL2NhbGxiYWNrcy5jIHwgMTggKysrKysrKysrLS0tLS0tLS0tCj4gIMKg
-bXVsdGlwYXRoZC9jbGkuaMKgwqDCoMKgwqDCoCB8wqAgOSArKysrKysrKy0KPiAgwqAyIGZpbGVz
-IGNoYW5nZWQsIDE3IGluc2VydGlvbnMoKyksIDEwIGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1n
-aXQgYS9tdWx0aXBhdGhkL2NhbGxiYWNrcy5jIGIvbXVsdGlwYXRoZC9jYWxsYmFja3MuYwo+IGlu
-ZGV4IGZiODdiMjgwLi5mMzI2NjZiZSAxMDA2NDQKPiAtLS0gYS9tdWx0aXBhdGhkL2NhbGxiYWNr
-cy5jCj4gKysrIGIvbXVsdGlwYXRoZC9jYWxsYmFja3MuYwo+IEBAIC01NywxNiArNTcsMTYgQEAg
-dm9pZCBpbml0X2hhbmRsZXJfY2FsbGJhY2tzKHZvaWQpCj4gIMKgwqDCoMKgIHNldF9oYW5kbGVy
-X2NhbGxiYWNrKFZSQl9SRVNUT1JFUSB8IFExX01BUFMsIAo+IEhBTkRMRVIoY2xpX3Jlc3RvcmVf
-YWxsX3F1ZXVlaW5nKSk7Cj4gIMKgwqDCoMKgIHNldF91bmxvY2tlZF9oYW5kbGVyX2NhbGxiYWNr
-KFZSQl9RVUlULCBIQU5ETEVSKGNsaV9xdWl0KSk7Cj4gIMKgwqDCoMKgIHNldF91bmxvY2tlZF9o
-YW5kbGVyX2NhbGxiYWNrKFZSQl9TSFVURE9XTiwgSEFORExFUihjbGlfc2h1dGRvd24pKTsKPiAt
-wqDCoMKgIHNldF9oYW5kbGVyX2NhbGxiYWNrKFZSQl9HRVRQUlNUQVRVUyB8IFExX01BUCwgCj4g
-SEFORExFUihjbGlfZ2V0cHJzdGF0dXMpKTsKPiAtwqDCoMKgIHNldF9oYW5kbGVyX2NhbGxiYWNr
-KFZSQl9TRVRQUlNUQVRVUyB8IFExX01BUCwgCj4gSEFORExFUihjbGlfc2V0cHJzdGF0dXMpKTsK
-PiAtwqDCoMKgIHNldF9oYW5kbGVyX2NhbGxiYWNrKFZSQl9VTlNFVFBSU1RBVFVTIHwgUTFfTUFQ
-LCAKPiBIQU5ETEVSKGNsaV91bnNldHByc3RhdHVzKSk7Cj4gK8KgwqDCoCBzZXRfaGFuZGxlcl9j
-YWxsYmFjayhLRVlfTUFQIHwgUTFfR0VUUFJTVEFUVVMsIAo+IEhBTkRMRVIoY2xpX2dldHByc3Rh
-dHVzKSk7Cj4gK8KgwqDCoCBzZXRfaGFuZGxlcl9jYWxsYmFjayhLRVlfTUFQIHwgUTFfU0VUU1RB
-VFVTLCAKPiBIQU5ETEVSKGNsaV9zZXRwcnN0YXR1cykpOwo+ICvCoMKgwqAgc2V0X2hhbmRsZXJf
-Y2FsbGJhY2soS0VZX01BUCB8IFExX1VOU0VUU1RBVFVTLCAKPiBIQU5ETEVSKGNsaV91bnNldHBy
-c3RhdHVzKSk7Cj4gIMKgwqDCoMKgIHNldF9oYW5kbGVyX2NhbGxiYWNrKFZSQl9GT1JDRVEgfCBR
-MV9EQUVNT04sIAo+IEhBTkRMRVIoY2xpX2ZvcmNlX25vX2RhZW1vbl9xKSk7Cj4gIMKgwqDCoMKg
-IHNldF9oYW5kbGVyX2NhbGxiYWNrKFZSQl9SRVNUT1JFUSB8IFExX0RBRU1PTiwgCj4gSEFORExF
-UihjbGlfcmVzdG9yZV9ub19kYWVtb25fcSkpOwo+IC3CoMKgwqAgc2V0X2hhbmRsZXJfY2FsbGJh
-Y2soVlJCX0dFVFBSS0VZIHwgUTFfTUFQLCBIQU5ETEVSKGNsaV9nZXRwcmtleSkpOwo+IC3CoMKg
-wqAgc2V0X2hhbmRsZXJfY2FsbGJhY2soVlJCX1NFVFBSS0VZIHwgUTFfTUFQIHwgUTJfS0VZLCAK
-PiBIQU5ETEVSKGNsaV9zZXRwcmtleSkpOwo+IC3CoMKgwqAgc2V0X2hhbmRsZXJfY2FsbGJhY2so
-VlJCX1VOU0VUUFJLRVkgfCBRMV9NQVAsIAo+IEhBTkRMRVIoY2xpX3Vuc2V0cHJrZXkpKTsKPiAt
-wqDCoMKgIHNldF9oYW5kbGVyX2NhbGxiYWNrKFZSQl9TRVRNQVJHSU5BTCB8IFExX1BBVEgsIAo+
-IEhBTkRMRVIoY2xpX3NldF9tYXJnaW5hbCkpOwo+IC3CoMKgwqAgc2V0X2hhbmRsZXJfY2FsbGJh
-Y2soVlJCX1VOU0VUTUFSR0lOQUwgfCBRMV9QQVRILCAKPiBIQU5ETEVSKGNsaV91bnNldF9tYXJn
-aW5hbCkpOwo+IC3CoMKgwqAgc2V0X2hhbmRsZXJfY2FsbGJhY2soVlJCX1VOU0VUTUFSR0lOQUwg
-fCBRMV9NQVAsCj4gK8KgwqDCoCBzZXRfaGFuZGxlcl9jYWxsYmFjayhLRVlfTUFQIHwgUTFfR0VU
-UFJLRVksIEhBTkRMRVIoY2xpX2dldHBya2V5KSk7Cj4gK8KgwqDCoCBzZXRfaGFuZGxlcl9jYWxs
-YmFjayhLRVlfTUFQIHwgUTFfU0VUS0VZIHwgUTJfS0VZLCAKPiBIQU5ETEVSKGNsaV9zZXRwcmtl
-eSkpOwo+ICvCoMKgwqAgc2V0X2hhbmRsZXJfY2FsbGJhY2soS0VZX01BUCB8IFExX1VOU0VUS0VZ
-LCBIQU5ETEVSKGNsaV91bnNldHBya2V5KSk7Cj4gK8KgwqDCoCBzZXRfaGFuZGxlcl9jYWxsYmFj
-ayhLRVlfUEFUSCB8IFExX1NFVE1BUkdJTkFMLCAKPiBIQU5ETEVSKGNsaV9zZXRfbWFyZ2luYWwp
-KTsKPiArwqDCoMKgIHNldF9oYW5kbGVyX2NhbGxiYWNrKEtFWV9QQVRIIHwgUTFfVU5TRVRNQVJH
-SU5BTCwgCj4gSEFORExFUihjbGlfdW5zZXRfbWFyZ2luYWwpKTsKPiArwqDCoMKgIHNldF9oYW5k
-bGVyX2NhbGxiYWNrKEtFWV9NQVAgfCBRMV9VTlNFVE1BUkdJTkFMLAo+ICDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgIEhBTkRMRVIoY2xpX3Vuc2V0X2FsbF9tYXJnaW5hbCkpOwo+
-ICDCoH0KPiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9jbGkuaCBiL211bHRpcGF0aGQvY2xpLmgK
-PiBpbmRleCBjNmI3OWM5ZC4uMDhlZTVjOGQgMTAwNjQ0Cj4gLS0tIGEvbXVsdGlwYXRoZC9jbGku
-aAo+ICsrKyBiL211bHRpcGF0aGQvY2xpLmgKPiBAQCAtODAsNyArODAsMTQgQEAgZW51bSB7Cj4g
-IMKgwqDCoMKgIFExX0FMTMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgPSBLRVlfQUxMIDw8IDgsCj4g
-IMKgwqDCoMKgIFExX0RBRU1PTsKgwqDCoMKgwqDCoMKgID0gS0VZX0RBRU1PTiA8PCA4LAo+ICDC
-oMKgwqDCoCBRMV9TVEFUVVPCoMKgwqDCoMKgwqDCoCA9IEtFWV9TVEFUVVMgPDwgOCwKPiAtCj4g
-K8KgwqDCoCBRMV9TRVRLRVnCoMKgwqDCoMKgwqDCoCA9IFZSQl9TRVRQUktFWSA8PCA4LAo+ICvC
-oMKgwqAgUTFfVU5TRVRLRVnCoMKgwqDCoMKgwqDCoCA9IFZSQl9VTlNFVFBSS0VZIDw8IDgsCj4g
-K8KgwqDCoCBRMV9TRVRTVEFUVVPCoMKgwqDCoMKgwqDCoCA9IFZSQl9TRVRQUlNUQVRVUyA8PCA4
-LAo+ICvCoMKgwqAgUTFfVU5TRVRTVEFUVVPCoMKgwqDCoMKgwqDCoCA9IFZSQl9VTlNFVFBSU1RB
-VFVTIDw8IDgsCj4gK8KgwqDCoCBRMV9HRVRQUlNUQVRVU8KgwqDCoMKgwqDCoMKgID0gVlJCX0dF
-VFBSU1RBVFVTIDw8IDgsCj4gK8KgwqDCoCBRMV9HRVRQUktFWcKgwqDCoMKgwqDCoMKgID0gVlJC
-X0dFVFBSS0VZIDw8IDgsCj4gK8KgwqDCoCBRMV9TRVRNQVJHSU5BTMKgwqDCoMKgwqDCoMKgID0g
-VlJCX1NFVE1BUkdJTkFMIDw8IDgsCj4gK8KgwqDCoCBRMV9VTlNFVE1BUkdJTkFMwqDCoMKgID0g
-VlJCX1VOU0VUTUFSR0lOQUwgPDwgOCwKPiAgwqDCoMKgwqAgLyogYnl0ZSAyOiBxdWFsaWZpZXIg
-MiAqLwo+ICDCoMKgwqDCoCBRMl9GTVTCoMKgwqDCoMKgwqDCoMKgwqDCoMKgID0gS0VZX0ZNVCA8
-PCAxNiwKPiAgwqDCoMKgwqAgUTJfUkFXwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCA9IEtFWV9SQVcg
-PDwgMTYsCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
-czovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
+On 11/30/22 13:17, Nitesh Shetty wrote:
+> On Wed, Nov 30, 2022 at 08:45:55AM +0900, Damien Le Moal wrote:
+>> On 11/29/22 21:22, Nitesh Shetty wrote:
+>>> Acked. I do see a gap in current zonefs cfr implementation. I will drop this
+>>
+>> cfr ?
+>>
+> 
+> yes, will drop zonefs cfr for next version.
+
+I meant: I do not understand "cfr". I now realize that it probably means
+copy-file-range ? Please be clear and do not use abbreviations.
+
+-- 
+Damien Le Moal
+Western Digital Research
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
