@@ -1,75 +1,81 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CF54EC46467
-	for <dm-devel@archiver.kernel.org>; Wed, 30 Nov 2022 14:04:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 73275C4332F
+	for <dm-devel@archiver.kernel.org>; Wed, 30 Nov 2022 14:05:27 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1669817094;
+	s=mimecast20190719; t=1669817126;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=NdJ/dVcXcjjMkoZUxoSeviHVhzuEHO/bIjgiNM41fZg=;
-	b=MpJPwywpg8cABdQGzAkM81Zp3pr2oijsy2swXCQezCRfL14OdKt4cqkcsI7VL/jJ2e7vb+
-	ObOgrp8z/aN/z/+ALcHhggd1euN08VJoKFtwXR0B4GGNlZ7vxIEfzAaedBM8Wl5BGMPEHm
-	Bai/uo+CD+kNaLxMBhyBnvgrs40zl74=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Y+a2lF03ZA1dooZOqd6SELusJjg0bepaNlz+4q/HZYY=;
+	b=iegWI99DwPqzqCrHqH0EVUBwE5yctVkmAUqOeMFb2TTjRTF3iacZjtzAUHYBbDDcGWQ9jI
+	M2P2CpXx6DV6smK59HtQZ9iz1m+9u+/my7yWoEVGC+5M25oM/ah9ic4DUkgA/HIla2ymqC
+	oOhOsghTrErb4Lfnu9qgUDN2WqOONA4=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-663-bmXo_QAVP8y-lGBh_ztgkw-1; Wed, 30 Nov 2022 09:04:50 -0500
-X-MC-Unique: bmXo_QAVP8y-lGBh_ztgkw-1
+ us-mta-114-2PH6pVSRN5Kf8Cvkp8LLJg-1; Wed, 30 Nov 2022 09:05:23 -0500
+X-MC-Unique: 2PH6pVSRN5Kf8Cvkp8LLJg-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3CA681C07556;
-	Wed, 30 Nov 2022 14:04:48 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8DC2E811E75;
+	Wed, 30 Nov 2022 14:05:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2AEDD2027064;
-	Wed, 30 Nov 2022 14:04:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7A01A2028DC1;
+	Wed, 30 Nov 2022 14:05:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1989119465A4;
-	Wed, 30 Nov 2022 14:04:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CF8EA19465A4;
+	Wed, 30 Nov 2022 14:05:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 754D519465A0
- for <dm-devel@listman.corp.redhat.com>; Wed, 30 Nov 2022 13:00:57 +0000 (UTC)
+ ESMTP id 0DC2E1946586
+ for <dm-devel@listman.corp.redhat.com>; Wed, 30 Nov 2022 13:10:40 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6945AC15BA4; Wed, 30 Nov 2022 13:00:57 +0000 (UTC)
+ id EF6292028CE4; Wed, 30 Nov 2022 13:10:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 627E5C15BA8
- for <dm-devel@redhat.com>; Wed, 30 Nov 2022 13:00:57 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E76D02027064
+ for <dm-devel@redhat.com>; Wed, 30 Nov 2022 13:10:39 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4793B185A78B
- for <dm-devel@redhat.com>; Wed, 30 Nov 2022 13:00:57 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BF0CD3C0D863
+ for <dm-devel@redhat.com>; Wed, 30 Nov 2022 13:10:39 +0000 (UTC)
+Received: from szxga01-in.huawei.com (szxga01-in.huawei.com
+ [45.249.212.187]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-44-ADXVebInMgKomyJU_-d1Lg-1; Wed, 30 Nov 2022 08:00:53 -0500
-X-MC-Unique: ADXVebInMgKomyJU_-d1Lg-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 1B5ED61BAA;
- Wed, 30 Nov 2022 13:00:52 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id EC54DC433D6;
- Wed, 30 Nov 2022 13:00:50 +0000 (UTC)
-From: Sasha Levin <sashal@kernel.org>
-To: stable-commits@vger.kernel.org,
-	mpatocka@redhat.com
-Date: Wed, 30 Nov 2022 08:00:49 -0500
-Message-Id: <20221130130049.30928-1-sashal@kernel.org>
+ us-mta-202-Nuy3eI-ZPK2-kegSBpPDGA-1; Wed, 30 Nov 2022 08:10:37 -0500
+X-MC-Unique: Nuy3eI-ZPK2-kegSBpPDGA-1
+Received: from dggemv704-chm.china.huawei.com (unknown [172.30.72.55])
+ by szxga01-in.huawei.com (SkyGuard) with ESMTP id 4NMfbp2Gz3zqSmw;
+ Wed, 30 Nov 2022 21:06:30 +0800 (CST)
+Received: from kwepemm600013.china.huawei.com (7.193.23.68) by
+ dggemv704-chm.china.huawei.com (10.3.19.47) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2375.31; Wed, 30 Nov 2022 21:10:33 +0800
+Received: from huawei.com (10.175.127.227) by kwepemm600013.china.huawei.com
+ (7.193.23.68) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id 15.1.2375.31; Wed, 30 Nov
+ 2022 21:10:32 +0800
+From: Zhihao Cheng <chengzhihao1@huawei.com>
+To: <Martin.Wilck@suse.com>, <snitzer@kernel.org>, <jack@suse.cz>,
+ <ejt@redhat.com>
+Date: Wed, 30 Nov 2022 21:31:34 +0800
+Message-ID: <20221130133134.2870646-1-chengzhihao1@huawei.com>
 MIME-Version: 1.0
-X-Patchwork-Hint: ignore
-X-stable: review
+X-Originating-IP: [10.175.127.227]
+X-ClientProxiedBy: dggems703-chm.china.huawei.com (10.3.19.180) To
+ kwepemm600013.china.huawei.com (7.193.23.68)
+X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -77,9 +83,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: [dm-devel] Patch "dm integrity: flush the journal on suspend" has
- been added to the 4.19-stable tree
+X-Mimecast-Bulk-Signature: yes
+X-Mimecast-Spam-Signature: bulk
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: [dm-devel] [PATCH v3] dm thin: Fix ABBA deadlock between
+ shrink_slab and dm_pool_abort_metadata
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,80 +99,136 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
- Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, chengzhihao1@huawei.com, linux-kernel@vger.kernel.org,
+ yi.zhang@huawei.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-This is a note to let you know that I've just added the patch titled
-
-    dm integrity: flush the journal on suspend
-
-to the 4.19-stable tree which can be found at:
-    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
-
-The filename of the patch is:
-     dm-integrity-flush-the-journal-on-suspend.patch
-and it can be found in the queue-4.19 subdirectory.
-
-If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
-
-
-
-commit 0b5f9c1813de8378d6134dc3ca19670907a473fc
-Author: Mikulas Patocka <mpatocka@redhat.com>
-Date:   Tue Nov 15 12:48:26 2022 -0500
-
-    dm integrity: flush the journal on suspend
-    
-    [ Upstream commit 5e5dab5ec763d600fe0a67837dd9155bdc42f961 ]
-    
-    This commit flushes the journal on suspend. It is prerequisite for the
-    next commit that enables activating dm integrity devices in read-only mode.
-    
-    Note that we deliberately didn't flush the journal on suspend, so that the
-    journal replay code would be tested. However, the dm-integrity code is 5
-    years old now, so that journal replay is well-tested, and we can make this
-    change now.
-    
-    Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-    Signed-off-by: Sasha Levin <sashal@kernel.org>
-
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 8456e82409e2..b054271066ac 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -2116,10 +2116,6 @@ static void integrity_writer(struct work_struct *w)
- 
- 	unsigned prev_free_sectors;
- 
--	/* the following test is not needed, but it tests the replay code */
--	if (unlikely(dm_post_suspending(ic->ti)) && !ic->meta_dev)
--		return;
--
- 	spin_lock_irq(&ic->endio_wait.lock);
- 	write_start = ic->committed_section;
- 	write_sections = ic->n_committed_sections;
-@@ -2455,8 +2451,7 @@ static void dm_integrity_postsuspend(struct dm_target *ti)
- 	drain_workqueue(ic->commit_wq);
- 
- 	if (ic->mode == 'J') {
--		if (ic->meta_dev)
--			queue_work(ic->writer_wq, &ic->writer_work);
-+		queue_work(ic->writer_wq, &ic->writer_work);
- 		drain_workqueue(ic->writer_wq);
- 		dm_integrity_flush_buffers(ic, true);
- 	}
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+Rm9sbG93aW5nIGNvbmN1cnJlbnQgcHJvY2Vzc2VzOgoKICAgICAgICAgIFAxKGRyb3AgY2FjaGUp
+ICAgICAgICAgICAgICAgIFAyKGt3b3JrZXIpCmRyb3BfY2FjaGVzX3N5c2N0bF9oYW5kbGVyCiBk
+cm9wX3NsYWIKICBzaHJpbmtfc2xhYgogICBkb3duX3JlYWQoJnNocmlua2VyX3J3c2VtKSAgLSBM
+T0NLIEEKICAgZG9fc2hyaW5rX3NsYWIKICAgIHN1cGVyX2NhY2hlX3NjYW4KICAgICBwcnVuZV9p
+Y2FjaGVfc2IKICAgICAgZGlzcG9zZV9saXN0CiAgICAgICBldmljdAogICAgICAgIGV4dDRfZXZp
+Y3RfaW5vZGUKCSBleHQ0X2NsZWFyX2lub2RlCgkgIGV4dDRfZGlzY2FyZF9wcmVhbGxvY2F0aW9u
+cwoJICAgZXh0NF9tYl9sb2FkX2J1ZGR5X2dmcAoJICAgIGV4dDRfbWJfaW5pdF9jYWNoZQoJICAg
+ICBleHQ0X3JlYWRfYmxvY2tfYml0bWFwX25vd2FpdAoJICAgICAgZXh0NF9yZWFkX2JoX25vd2Fp
+dAoJICAgICAgIHN1Ym1pdF9iaAoJICAgICAgICBkbV9zdWJtaXRfYmlvCgkJICAgICAgICAgICAg
+ICAgICBkb193b3JrZXIKCQkJCSAgcHJvY2Vzc19kZWZlcnJlZF9iaW9zCgkJCQkgICBjb21taXQK
+CQkJCSAgICBtZXRhZGF0YV9vcGVyYXRpb25fZmFpbGVkCgkJCQkgICAgIGRtX3Bvb2xfYWJvcnRf
+bWV0YWRhdGEKCQkJCSAgICAgIGRvd25fd3JpdGUoJnBtZC0+cm9vdF9sb2NrKSAtIExPQ0sgQgoJ
+CSAgICAgICAgICAgICAgICAgICAgICBfX2Rlc3Ryb3lfcGVyc2lzdGVudF9kYXRhX29iamVjdHMK
+CQkJCSAgICAgICBkbV9ibG9ja19tYW5hZ2VyX2Rlc3Ryb3kKCQkJCSAgICAgICAgZG1fYnVmaW9f
+Y2xpZW50X2Rlc3Ryb3kKCQkJCSAgICAgICAgIHVucmVnaXN0ZXJfc2hyaW5rZXIKCQkJCQkgIGRv
+d25fd3JpdGUoJnNocmlua2VyX3J3c2VtKQoJCSB0aGluX21hcCAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICB8CgkJICBkbV90aGluX2ZpbmRfYmxvY2sgICAgICAgICAgICAgICAgIOKGkwoJCSAg
+IGRvd25fcmVhZCgmcG1kLT5yb290X2xvY2spIC0tPiBBQkJBIGRlYWRsb2NrCgosIHdoaWNoIHRy
+aWdnZXJzIGh1bmcgdGFzazoKClsgICA3Ni45NzQ4MjBdIElORk86IHRhc2sga3dvcmtlci91NDoz
+OjYzIGJsb2NrZWQgZm9yIG1vcmUgdGhhbiAxNSBzZWNvbmRzLgpbICAgNzYuOTc2MDE5XSAgICAg
+ICBOb3QgdGFpbnRlZCA2LjEuMC1yYzQtMDAwMTEtZzhmMTdkZDM1MDM2NC1kaXJ0eSAjOTEwClsg
+ICA3Ni45Nzg1MjFdIHRhc2s6a3dvcmtlci91NDozICAgIHN0YXRlOkQgc3RhY2s6MCAgICAgcGlk
+OjYzICAgIHBwaWQ6MgpbICAgNzYuOTc4NTM0XSBXb3JrcXVldWU6IGRtLXRoaW4gZG9fd29ya2Vy
+ClsgICA3Ni45Nzg1NTJdIENhbGwgVHJhY2U6ClsgICA3Ni45Nzg1NjRdICBfX3NjaGVkdWxlKzB4
+NmJhLzB4MTBmMApbICAgNzYuOTc4NTgyXSAgc2NoZWR1bGUrMHg5ZC8weDFlMApbICAgNzYuOTc4
+NTg4XSAgcndzZW1fZG93bl93cml0ZV9zbG93cGF0aCsweDU4Ny8weGRmMApbICAgNzYuOTc4NjAw
+XSAgZG93bl93cml0ZSsweGVjLzB4MTEwClsgICA3Ni45Nzg2MDddICB1bnJlZ2lzdGVyX3Nocmlu
+a2VyKzB4MmMvMHhmMApbICAgNzYuOTc4NjE2XSAgZG1fYnVmaW9fY2xpZW50X2Rlc3Ryb3krMHgx
+MTYvMHgzZDAKWyAgIDc2Ljk3ODYyNV0gIGRtX2Jsb2NrX21hbmFnZXJfZGVzdHJveSsweDE5LzB4
+NDAKWyAgIDc2Ljk3ODYyOV0gIF9fZGVzdHJveV9wZXJzaXN0ZW50X2RhdGFfb2JqZWN0cysweDVl
+LzB4NzAKWyAgIDc2Ljk3ODYzNl0gIGRtX3Bvb2xfYWJvcnRfbWV0YWRhdGErMHg4ZS8weDEwMApb
+ICAgNzYuOTc4NjQzXSAgbWV0YWRhdGFfb3BlcmF0aW9uX2ZhaWxlZCsweDg2LzB4MTEwClsgICA3
+Ni45Nzg2NDldICBjb21taXQrMHg2YS8weDIzMApbICAgNzYuOTc4NjU1XSAgZG9fd29ya2VyKzB4
+YzZlLzB4ZDkwClsgICA3Ni45Nzg3MDJdICBwcm9jZXNzX29uZV93b3JrKzB4MjY5LzB4NjMwClsg
+ICA3Ni45Nzg3MTRdICB3b3JrZXJfdGhyZWFkKzB4MjY2LzB4NjMwClsgICA3Ni45Nzg3MzBdICBr
+dGhyZWFkKzB4MTUxLzB4MWIwClsgICA3Ni45Nzg3NzJdIElORk86IHRhc2sgdGVzdC5zaDoyNjQ2
+IGJsb2NrZWQgZm9yIG1vcmUgdGhhbiAxNSBzZWNvbmRzLgpbICAgNzYuOTc5NzU2XSAgICAgICBO
+b3QgdGFpbnRlZCA2LjEuMC1yYzQtMDAwMTEtZzhmMTdkZDM1MDM2NC1kaXJ0eSAjOTEwClsgICA3
+Ni45ODIxMTFdIHRhc2s6dGVzdC5zaCAgICAgICAgIHN0YXRlOkQgc3RhY2s6MCAgICAgcGlkOjI2
+NDYgIHBwaWQ6MjQ1OQpbICAgNzYuOTgyMTI4XSBDYWxsIFRyYWNlOgpbICAgNzYuOTgyMTM5XSAg
+X19zY2hlZHVsZSsweDZiYS8weDEwZjAKWyAgIDc2Ljk4MjE1NV0gIHNjaGVkdWxlKzB4OWQvMHgx
+ZTAKWyAgIDc2Ljk4MjE1OV0gIHJ3c2VtX2Rvd25fcmVhZF9zbG93cGF0aCsweDRmNC8weDkxMApb
+ICAgNzYuOTgyMTczXSAgZG93bl9yZWFkKzB4ODQvMHgxNzAKWyAgIDc2Ljk4MjE3N10gIGRtX3Ro
+aW5fZmluZF9ibG9jaysweDRjLzB4ZDAKWyAgIDc2Ljk4MjE4M10gIHRoaW5fbWFwKzB4MjAxLzB4
+M2QwClsgICA3Ni45ODIxODhdICBfX21hcF9iaW8rMHg1Yi8weDM1MApbICAgNzYuOTgyMTk1XSAg
+ZG1fc3VibWl0X2JpbysweDJiNi8weDkzMApbICAgNzYuOTgyMjAyXSAgX19zdWJtaXRfYmlvKzB4
+MTIzLzB4MmQwClsgICA3Ni45ODIyMDldICBzdWJtaXRfYmlvX25vYWNjdF9ub2NoZWNrKzB4MTAx
+LzB4M2UwClsgICA3Ni45ODIyMjJdICBzdWJtaXRfYmlvX25vYWNjdCsweDM4OS8weDc3MApbICAg
+NzYuOTgyMjI3XSAgc3VibWl0X2JpbysweDUwLzB4YzAKWyAgIDc2Ljk4MjIzMl0gIHN1Ym1pdF9i
+aF93YmMrMHgxNWUvMHgyMzAKWyAgIDc2Ljk4MjIzOF0gIHN1Ym1pdF9iaCsweDE0LzB4MjAKWyAg
+IDc2Ljk4MjI0MV0gIGV4dDRfcmVhZF9iaF9ub3dhaXQrMHhjNS8weDEzMApbICAgNzYuOTgyMjQ3
+XSAgZXh0NF9yZWFkX2Jsb2NrX2JpdG1hcF9ub3dhaXQrMHgzNDAvMHhjNjAKWyAgIDc2Ljk4MjI1
+NF0gIGV4dDRfbWJfaW5pdF9jYWNoZSsweDFjZS8weGRjMApbICAgNzYuOTgyMjU5XSAgZXh0NF9t
+Yl9sb2FkX2J1ZGR5X2dmcCsweDk4Ny8weGZhMApbICAgNzYuOTgyMjYzXSAgZXh0NF9kaXNjYXJk
+X3ByZWFsbG9jYXRpb25zKzB4NDVkLzB4ODMwClsgICA3Ni45ODIyNzRdICBleHQ0X2NsZWFyX2lu
+b2RlKzB4NDgvMHhmMApbICAgNzYuOTgyMjgwXSAgZXh0NF9ldmljdF9pbm9kZSsweGNmLzB4Yzcw
+ClsgICA3Ni45ODIyODVdICBldmljdCsweDExOS8weDJiMApbICAgNzYuOTgyMjkwXSAgZGlzcG9z
+ZV9saXN0KzB4NDMvMHhhMApbICAgNzYuOTgyMjk0XSAgcHJ1bmVfaWNhY2hlX3NiKzB4NjQvMHg5
+MApbICAgNzYuOTgyMjk4XSAgc3VwZXJfY2FjaGVfc2NhbisweDE1NS8weDIxMApbICAgNzYuOTgy
+MzAzXSAgZG9fc2hyaW5rX3NsYWIrMHgxOWUvMHg0ZTAKWyAgIDc2Ljk4MjMxMF0gIHNocmlua19z
+bGFiKzB4MmJkLzB4NDUwClsgICA3Ni45ODIzMTddICBkcm9wX3NsYWIrMHhjYy8weDFhMApbICAg
+NzYuOTgyMzIzXSAgZHJvcF9jYWNoZXNfc3lzY3RsX2hhbmRsZXIrMHhiNy8weGUwClsgICA3Ni45
+ODIzMjddICBwcm9jX3N5c19jYWxsX2hhbmRsZXIrMHgxYmMvMHgzMDAKWyAgIDc2Ljk4MjMzMV0g
+IHByb2Nfc3lzX3dyaXRlKzB4MTcvMHgyMApbICAgNzYuOTgyMzM0XSAgdmZzX3dyaXRlKzB4M2Qz
+LzB4NTcwClsgICA3Ni45ODIzNDJdICBrc3lzX3dyaXRlKzB4NzMvMHgxNjAKWyAgIDc2Ljk4MjM0
+N10gIF9feDY0X3N5c193cml0ZSsweDFlLzB4MzAKWyAgIDc2Ljk4MjM1Ml0gIGRvX3N5c2NhbGxf
+NjQrMHgzNS8weDgwClsgICA3Ni45ODIzNTddICBlbnRyeV9TWVNDQUxMXzY0X2FmdGVyX2h3ZnJh
+bWUrMHg2My8weGNkCgpGdW5jdGlvbiBtZXRhZGF0YV9vcGVyYXRpb25fZmFpbGVkKCkgaXMgY2Fs
+bGVkIHdoZW4gb3BlcmF0aW9ucyBmYWlsZWQKb24gZG0gcG9vbCBtZXRhZGF0YSwgZG0gcG9vbCB3
+aWxsIGRlc3Ryb3kgYW5kIHJlY3JlYXRlIG1ldGFkYXRhLiBTbywKc2hyaW5rZXIgd2lsbCBiZSB1
+bnJlZ2lzdGVyZWQgYW5kIHJlZ2lzdGVyZWQsIHdoaWNoIGNvdWxkIGRvd24gd3JpdGUKc2hyaW5r
+ZXJfcndzZW0gdW5kZXIgcG1kX3dyaXRlX2xvY2suCgpGaXggaXQgYnkgYWxsb2NhdGluZyBkbV9i
+bG9ja19tYW5hZ2VyIGJlZm9yZSBsb2NraW5nIHBtZC0+cm9vdF9sb2NrCmFuZCBkZXN0cm95aW5n
+IG9sZCBkbV9ibG9ja19tYW5hZ2VyIGFmdGVyIHVubG9ja2luZyBwbWQtPnJvb3RfbG9jaywKdGhl
+biBvbGQgZG1fYmxvY2tfbWFuYWdlciBpcyByZXBsYWNlZCB3aXRoIG5ldyBkbV9ibG9ja19tYW5h
+Z2VyIHVuZGVyCnBtZC0+cm9vdF9sb2NrLiBTbywgc2hyaW5rZXIgcmVnaXN0ZXIvdW5yZWdpc3Rl
+ciBjb3VsZCBiZSBkb25lIHdpdGhvdXQKaG9sZGluZyBwbWQtPnJvb3RfbG9jay4KCkZldGNoIGEg
+cmVwcm9kdWNlciBpbiBbTGlua10uCgpMaW5rOiBodHRwczovL2J1Z3ppbGxhLmtlcm5lbC5vcmcv
+c2hvd19idWcuY2dpP2lkPTIxNjY3NgpGaXhlczogZTQ5ZTU4Mjk2NWIzICgiZG0gdGhpbjogYWRk
+IHJlYWQgb25seSBhbmQgZmFpbCBpbyBtb2RlcyIpClNpZ25lZC1vZmYtYnk6IFpoaWhhbyBDaGVu
+ZyA8Y2hlbmd6aGloYW8xQGh1YXdlaS5jb20+Ci0tLQogdjEtPnYyOiBVcGRhdGUgZml4IHN0cmF0
+ZWd5LiBBbGxvY2F0aW5nL0Rlc3Ryb3lpbmcgZG1fYmxvY2tfbWFuYWdlcgoJIG91dHNpZGUgb2Yg
+bG9jayBwbWQtPnJvb3QuCiB2Mi0+djM6IE1vdmUgZmFpbF9pbyBzZXR0aW5nIGluc2lkZSBwbWQt
+PnJvb3QgbG9jay4KIGRyaXZlcnMvbWQvZG0tdGhpbi1tZXRhZGF0YS5jIHwgNDAgKysrKysrKysr
+KysrKysrKysrKysrKysrKysrKystLS0tLS0KIDEgZmlsZSBjaGFuZ2VkLCAzNCBpbnNlcnRpb25z
+KCspLCA2IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tdGhpbi1tZXRh
+ZGF0YS5jIGIvZHJpdmVycy9tZC9kbS10aGluLW1ldGFkYXRhLmMKaW5kZXggYTI3Mzk1Yzg2MjFm
+Li43NzI5MzcyNTE5YjggMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvbWQvZG0tdGhpbi1tZXRhZGF0YS5j
+CisrKyBiL2RyaXZlcnMvbWQvZG0tdGhpbi1tZXRhZGF0YS5jCkBAIC03ODIsNyArNzgyLDYgQEAg
+c3RhdGljIHZvaWQgX19kZXN0cm95X3BlcnNpc3RlbnRfZGF0YV9vYmplY3RzKHN0cnVjdCBkbV9w
+b29sX21ldGFkYXRhICpwbWQpCiAJZG1fc21fZGVzdHJveShwbWQtPm1ldGFkYXRhX3NtKTsKIAlk
+bV90bV9kZXN0cm95KHBtZC0+bmJfdG0pOwogCWRtX3RtX2Rlc3Ryb3kocG1kLT50bSk7Ci0JZG1f
+YmxvY2tfbWFuYWdlcl9kZXN0cm95KHBtZC0+Ym0pOwogfQogCiBzdGF0aWMgaW50IF9fYmVnaW5f
+dHJhbnNhY3Rpb24oc3RydWN0IGRtX3Bvb2xfbWV0YWRhdGEgKnBtZCkKQEAgLTk4OCw4ICs5ODcs
+MTAgQEAgaW50IGRtX3Bvb2xfbWV0YWRhdGFfY2xvc2Uoc3RydWN0IGRtX3Bvb2xfbWV0YWRhdGEg
+KnBtZCkKIAkJCSAgICAgICBfX2Z1bmNfXywgcik7CiAJfQogCXBtZF93cml0ZV91bmxvY2socG1k
+KTsKLQlpZiAoIXBtZC0+ZmFpbF9pbykKKwlpZiAoIXBtZC0+ZmFpbF9pbykgewogCQlfX2Rlc3Ry
+b3lfcGVyc2lzdGVudF9kYXRhX29iamVjdHMocG1kKTsKKwkJZG1fYmxvY2tfbWFuYWdlcl9kZXN0
+cm95KHBtZC0+Ym0pOworCX0KIAogCWtmcmVlKHBtZCk7CiAJcmV0dXJuIDA7CkBAIC0xODYwLDE5
+ICsxODYxLDQ2IEBAIHN0YXRpYyB2b2lkIF9fc2V0X2Fib3J0X3dpdGhfY2hhbmdlc19mbGFncyhz
+dHJ1Y3QgZG1fcG9vbF9tZXRhZGF0YSAqcG1kKQogaW50IGRtX3Bvb2xfYWJvcnRfbWV0YWRhdGEo
+c3RydWN0IGRtX3Bvb2xfbWV0YWRhdGEgKnBtZCkKIHsKIAlpbnQgciA9IC1FSU5WQUw7CisJc3Ry
+dWN0IGRtX2Jsb2NrX21hbmFnZXIgKm9sZF9ibSA9IE5VTEwsICpuZXdfYm0gPSBOVUxMOwogCi0J
+cG1kX3dyaXRlX2xvY2socG1kKTsKIAlpZiAocG1kLT5mYWlsX2lvKQorCQlyZXR1cm4gLUVJTlZB
+TDsKKworCW5ld19ibSA9IGRtX2Jsb2NrX21hbmFnZXJfY3JlYXRlKHBtZC0+YmRldiwgVEhJTl9N
+RVRBREFUQV9CTE9DS19TSVpFIDw8IFNFQ1RPUl9TSElGVCwKKwkJCQkJIFRISU5fTUFYX0NPTkNV
+UlJFTlRfTE9DS1MpOworCisJcG1kX3dyaXRlX2xvY2socG1kKTsKKwlpZiAocG1kLT5mYWlsX2lv
+KSB7CisJCXBtZF93cml0ZV91bmxvY2socG1kKTsKIAkJZ290byBvdXQ7CisJfQogCiAJX19zZXRf
+YWJvcnRfd2l0aF9jaGFuZ2VzX2ZsYWdzKHBtZCk7CiAJX19kZXN0cm95X3BlcnNpc3RlbnRfZGF0
+YV9vYmplY3RzKHBtZCk7Ci0JciA9IF9fY3JlYXRlX3BlcnNpc3RlbnRfZGF0YV9vYmplY3RzKHBt
+ZCwgZmFsc2UpOworCW9sZF9ibSA9IHBtZC0+Ym07CisJaWYgKElTX0VSUihuZXdfYm0pKSB7CisJ
+CS8qIFJldHVybiBiYWNrIGlmIGNyZWF0aW5nIGRtX2Jsb2NrX21hbmFnZXIgZmFpbGVkLiAqLwor
+CQlETUVSUigiY291bGQgbm90IGNyZWF0ZSBibG9jayBtYW5hZ2VyIik7CisJCXBtZC0+Ym0gPSBO
+VUxMOworCQlyID0gUFRSX0VSUihuZXdfYm0pOworCQlnb3RvIG91dF91bmxvY2s7CisJfQorCisJ
+cG1kLT5ibSA9IG5ld19ibTsKKwlyID0gX19vcGVuX29yX2Zvcm1hdF9tZXRhZGF0YShwbWQsIGZh
+bHNlKTsKKwlpZiAocikgeworCQlwbWQtPmJtID0gTlVMTDsKKwkJZ290byBvdXRfdW5sb2NrOwor
+CX0KKwluZXdfYm0gPSBOVUxMOworb3V0X3VubG9jazoKIAlpZiAocikKIAkJcG1kLT5mYWlsX2lv
+ID0gdHJ1ZTsKLQotb3V0OgogCXBtZF93cml0ZV91bmxvY2socG1kKTsKKwlkbV9ibG9ja19tYW5h
+Z2VyX2Rlc3Ryb3kob2xkX2JtKTsKK291dDoKKwlpZiAobmV3X2JtICYmICFJU19FUlIobmV3X2Jt
+KSkKKwkJZG1fYmxvY2tfbWFuYWdlcl9kZXN0cm95KG5ld19ibSk7CiAKIAlyZXR1cm4gcjsKIH0K
+LS0gCjIuMzEuMQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
+aHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
 
