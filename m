@@ -4,82 +4,73 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 67160C4321E
-	for <dm-devel@archiver.kernel.org>; Thu,  1 Dec 2022 02:11:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2A9F0C43217
+	for <dm-devel@archiver.kernel.org>; Thu,  1 Dec 2022 07:28:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1669860677;
+	s=mimecast20190719; t=1669879701;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=5hz9fzEcSa05ui0lzVuZi5VrtcgtIFre7lMyFJJ2G+o=;
-	b=IL1AtCU9ywE34csuHKMpd+GQfOIHSXrQWCnKKZB8D8fIjygzSbWZWBh9p/4//QQ9mDI10k
-	2H+CCZfw2tM9aHvBigDzBVhs760SYcYrwima+2foy3Lii6gryhP7cvpw0jLOh7UceoskyO
-	Gg5OLxHhwj1njvcj2ZprEL+2cKwvZd4=
+	bh=ZQ1z9NlvyLI391QmDqVoBK3bFwK6PF/GLYHhIspe48c=;
+	b=RNnQhlwb74W8RvXG69EVivzk7S7Rgk0Pi4YgnU0jmlueYBkd4Vd9ByRoNA6zCOZ96zNaR3
+	lvlu4mQPDmdiXesKXJPHbLzsWe0iBsaKc5Kkj250hKDj+uFcMlUgKkKv1HnOVfWKF3MxAu
+	7ZSqy18DTQSlqAFwwpRwgKNCmTjYZSo=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-616-1MkAMDVgN3yb5jb2InVc0Q-1; Wed, 30 Nov 2022 21:11:14 -0500
-X-MC-Unique: 1MkAMDVgN3yb5jb2InVc0Q-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-330-U5-WZETuODWIWenKhu2rBA-1; Thu, 01 Dec 2022 02:28:17 -0500
+X-MC-Unique: U5-WZETuODWIWenKhu2rBA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 947C2802804;
-	Thu,  1 Dec 2022 02:11:12 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6DFC8800186;
+	Thu,  1 Dec 2022 07:28:16 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8492D4EA4E;
-	Thu,  1 Dec 2022 02:11:11 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1771A2166B47;
+	Thu,  1 Dec 2022 07:28:13 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3CBD219465A0;
-	Thu,  1 Dec 2022 02:11:11 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AF7D919465A8;
+	Thu,  1 Dec 2022 07:28:13 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id DF4461946586
- for <dm-devel@listman.corp.redhat.com>; Thu,  1 Dec 2022 02:11:09 +0000 (UTC)
+ ESMTP id 90D9D19465A0
+ for <dm-devel@listman.corp.redhat.com>; Thu,  1 Dec 2022 07:28:12 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C0B5B2024CBE; Thu,  1 Dec 2022 02:11:09 +0000 (UTC)
+ id 75DEA111F3B6; Thu,  1 Dec 2022 07:28:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B9B712024CC0
- for <dm-devel@redhat.com>; Thu,  1 Dec 2022 02:11:09 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A801185A792
- for <dm-devel@redhat.com>; Thu,  1 Dec 2022 02:11:09 +0000 (UTC)
-Received: from szxga01-in.huawei.com (szxga01-in.huawei.com
- [45.249.212.187]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6F45C1121314
+ for <dm-devel@redhat.com>; Thu,  1 Dec 2022 07:28:12 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3B4AD1C05157
+ for <dm-devel@redhat.com>; Thu,  1 Dec 2022 07:28:12 +0000 (UTC)
+Received: from relay11.mail.gandi.net (relay11.mail.gandi.net
+ [217.70.178.231]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-351-8icVInLjPjOI9zuTC-xiGQ-1; Wed, 30 Nov 2022 21:11:05 -0500
-X-MC-Unique: 8icVInLjPjOI9zuTC-xiGQ-1
-Received: from dggemv704-chm.china.huawei.com (unknown [172.30.72.53])
- by szxga01-in.huawei.com (SkyGuard) with ESMTP id 4NN00C2S1xzmVtn;
- Thu,  1 Dec 2022 10:10:19 +0800 (CST)
-Received: from kwepemm600013.china.huawei.com (7.193.23.68) by
- dggemv704-chm.china.huawei.com (10.3.19.47) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2375.31; Thu, 1 Dec 2022 10:11:00 +0800
-Received: from [10.174.178.46] (10.174.178.46) by
- kwepemm600013.china.huawei.com (7.193.23.68) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2375.31; Thu, 1 Dec 2022 10:10:59 +0800
+ us-mta-562-2pZxXgSKOk6YYk8fEc0eZw-1; Thu, 01 Dec 2022 02:28:10 -0500
+X-MC-Unique: 2pZxXgSKOk6YYk8fEc0eZw-1
+Received: (Authenticated sender: peter@korsgaard.com)
+ by mail.gandi.net (Postfix) with ESMTPSA id BBC14100004;
+ Thu,  1 Dec 2022 07:28:06 +0000 (UTC)
+Received: from peko by dell.be.48ers.dk with local (Exim 4.94.2)
+ (envelope-from <peter@korsgaard.com>)
+ id 1p0dzJ-006Ism-Jn; Thu, 01 Dec 2022 08:28:05 +0100
+From: Peter Korsgaard <peter@korsgaard.com>
 To: Mike Snitzer <snitzer@redhat.com>
-References: <20221130133134.2870646-1-chengzhihao1@huawei.com>
- <Y4eE4HVuXQZY4AMv@redhat.com>
-From: Zhihao Cheng <chengzhihao1@huawei.com>
-Message-ID: <dc77578e-3fbc-d3f7-d38b-bd4ad34c09ee@huawei.com>
-Date: Thu, 1 Dec 2022 10:10:59 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:68.0) Gecko/20100101
- Thunderbird/68.5.0
+References: <20221116061656.2345538-1-peter@korsgaard.com>
+ <877czkhc7u.fsf@dell.be.48ers.dk> <Y4fiQvg9OOATD5Cv@redhat.com>
+Date: Thu, 01 Dec 2022 08:28:05 +0100
+In-Reply-To: <Y4fiQvg9OOATD5Cv@redhat.com> (Mike Snitzer's message of "Wed, 30
+ Nov 2022 18:07:46 -0500")
+Message-ID: <87bkond1mi.fsf@dell.be.48ers.dk>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.1 (gnu/linux)
 MIME-Version: 1.0
-In-Reply-To: <Y4eE4HVuXQZY4AMv@redhat.com>
-X-Originating-IP: [10.174.178.46]
-X-ClientProxiedBy: dggems706-chm.china.huawei.com (10.3.19.183) To
- kwepemm600013.china.huawei.com (7.193.23.68)
-X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -87,9 +78,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: Re: [dm-devel] [PATCH v3] dm thin: Fix ABBA deadlock between
- shrink_slab and dm_pool_abort_metadata
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH v2] dm init: add dm-mod.waitfor to wait for
+ asynchronously probed block devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -101,99 +92,50 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: jack@suse.cz, dm-devel@redhat.com, yi.zhang@huawei.com, snitzer@kernel.org,
- linux-kernel@vger.kernel.org, ejt@redhat.com, Martin.Wilck@suse.com
+Cc: Jonathan Corbet <corbet@lwn.net>, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@redhat.com, fabio.aiuto@amarulasolutions.com,
+ Helen Koike <helen.koike@collabora.com>, michael@amarulasolutions.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-> On Wed, Nov 30 2022 at  8:31P -0500
-> Zhihao Cheng <chengzhihao1@huawei.com> wrote:
-> 
->> Following concurrent processes:
->>
->>            P1(drop cache)                P2(kworker)
-[...]
->> 2.31.1
->>
-> 
-> I've picked your patch up and folded into these following changes:
-> 
-> diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-> index 7729372519b8..1a62226ac34e 100644
-> --- a/drivers/md/dm-thin-metadata.c
-> +++ b/drivers/md/dm-thin-metadata.c
-> @@ -776,12 +776,15 @@ static int __create_persistent_data_objects(struct dm_pool_metadata *pmd, bool f
->   	return r;
->   }
->   
-> -static void __destroy_persistent_data_objects(struct dm_pool_metadata *pmd)
-> +static void __destroy_persistent_data_objects(struct dm_pool_metadata *pmd,
-> +					      bool destroy_bm)
->   {
->   	dm_sm_destroy(pmd->data_sm);
->   	dm_sm_destroy(pmd->metadata_sm);
->   	dm_tm_destroy(pmd->nb_tm);
->   	dm_tm_destroy(pmd->tm);
-> +	if (destroy_bm)
-> +		dm_block_manager_destroy(pmd->bm);
->   }
->   
->   static int __begin_transaction(struct dm_pool_metadata *pmd)
-> @@ -987,10 +990,8 @@ int dm_pool_metadata_close(struct dm_pool_metadata *pmd)
->   			       __func__, r);
->   	}
->   	pmd_write_unlock(pmd);
-> -	if (!pmd->fail_io) {
-> -		__destroy_persistent_data_objects(pmd);
-> -		dm_block_manager_destroy(pmd->bm);
-> -	}
-> +	if (!pmd->fail_io)
-> +		__destroy_persistent_data_objects(pmd, true);
->   
->   	kfree(pmd);
->   	return 0;
-> @@ -1863,9 +1864,16 @@ int dm_pool_abort_metadata(struct dm_pool_metadata *pmd)
->   	int r = -EINVAL;
->   	struct dm_block_manager *old_bm = NULL, *new_bm = NULL;
->   
-> -	if (pmd->fail_io)
-> -		return -EINVAL;
-> +	/* fail_io is double-checked with pmd->root_lock held below */
-> +	if (unlikely(pmd->fail_io))
-> +		return r;
->   
-> +	/*
-> +	 * Replacement block manager (new_bm) is created and old_bm destroyed outside of
-> +	 * pmd root_lock to avoid ABBA deadlock that would result (due to life-cycle of
-> +	 * shrinker associated with the block manager's bufio client vs pmd root_lock).
-> +	 * - must take shrinker_rwsem without holding pmd->root_lock
-> +	 */
->   	new_bm = dm_block_manager_create(pmd->bdev, THIN_METADATA_BLOCK_SIZE << SECTOR_SHIFT,
->   					 THIN_MAX_CONCURRENT_LOCKS);
->   
-> @@ -1876,11 +1884,10 @@ int dm_pool_abort_metadata(struct dm_pool_metadata *pmd)
->   	}
->   
->   	__set_abort_with_changes_flags(pmd);
-> -	__destroy_persistent_data_objects(pmd);
-> +	__destroy_persistent_data_objects(pmd, false);
->   	old_bm = pmd->bm;
->   	if (IS_ERR(new_bm)) {
-> -		/* Return back if creating dm_block_manager failed. */
-> -		DMERR("could not create block manager");
-> +		DMERR("could not create block manager during abort");
->   		pmd->bm = NULL;
->   		r = PTR_ERR(new_bm);
->   		goto out_unlock;
-> 
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-Hi,Mike
-This version is great, thanks for reviewing and modifying.
+Hi,
+
+ > On Thu, Nov 24 2022 at  5:35P -0500,
+ > Peter Korsgaard <peter@korsgaard.com> wrote:
+
+ >> > +	if (waitfor[0])
+ >> > +		DMINFO("all devices available");
+ >> > +
+
+ > Why 20?  Also, why is waiting indefinitely OK?  Would really like to
+ > hear from other consumers of dm-init that this module param is useful
+ > and needed.
+
+Mainly because of checkpatch.pl ;) prepare_namespace() uses msleep(5)
+but checkpatch complains about it, so I made it 20 instead. It doesn't
+really matter much, as long as it is small enough to not delay boots too
+much (E.G. this is typically used for embedded system where boot time is
+critical).
+
+I would say that it DOES make sense to wait forever, similar to how it
+is done in prepare_namespace() when rootwait is passed. This waitfor
+bootargs is used for root-on-dm, so we cannot continue until the
+underlying devices are available.
+
+As mentioned,
+https://lore.kernel.org/all/20220406154631.277107-1-fabio.aiuto@amarulasolutions.com/
+is an alternatively (less nice) approach to solve the same issue, so yes
+- It is useful and needed.
+
+-- 
+Bye, Peter Korsgaard
 
 --
 dm-devel mailing list
