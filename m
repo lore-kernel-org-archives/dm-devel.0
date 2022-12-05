@@ -1,92 +1,84 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7F463C352A1
-	for <dm-devel@archiver.kernel.org>; Sat,  3 Dec 2022 15:11:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id BC33CC4321E
+	for <dm-devel@archiver.kernel.org>; Mon,  5 Dec 2022 10:58:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1670080267;
+	s=mimecast20190719; t=1670237886;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Sm2RN7yhwWZwaSi8moFD3SM93oLGlOLAXPDycuLGjjs=;
-	b=NPViA9TQ9k4zTM9Qkc9VS7eliH2Pm0WaDEjnhjNgmcJtJUkKvAPsEmBIu7QtsXrRovqDtc
-	G5B9PaNFbwSJx1ZNN0wb6TchpT9Ae9N5roOg88J37rwCKuNzK2/ETf6m7XO0uc8dLPojQY
-	jg1GBG0EO6HeCMKxPE1Pg4vQtUTFnqk=
+	bh=wfnshNh1pz2jaY7Wscw7C02s07ed5uZxSHRSCj+nu8g=;
+	b=FTB/7BXQ5/Ch6K7w2VIzxo0OheZN7Ea5wfkfuLhOjM9hmTw3YhrTP0SxhJCSso2WEFZ9iW
+	gXAp6h3tHE8spgN7aWlwLULFMf5M5YXcZGNiJVIzz+3yewn+t02vjcqwDc+eqwC2c5HdzY
+	AoArUlvgevWgq6ixX1pH5pMQe3xVPL4=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-479-Okimg6aJNV2ojYX3LObFPw-1; Sat, 03 Dec 2022 10:11:04 -0500
-X-MC-Unique: Okimg6aJNV2ojYX3LObFPw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-30-xwIbH8P7NOmQVtUJjteahQ-1; Mon, 05 Dec 2022 05:58:03 -0500
+X-MC-Unique: xwIbH8P7NOmQVtUJjteahQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 491281C0515A;
-	Sat,  3 Dec 2022 15:11:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 60C7A29AA3B4;
+	Mon,  5 Dec 2022 10:58:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EFC521121330;
-	Sat,  3 Dec 2022 15:11:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4715D40C2089;
+	Mon,  5 Dec 2022 10:57:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A24181946588;
-	Sat,  3 Dec 2022 15:11:01 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2367E1946589;
+	Mon,  5 Dec 2022 10:57:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 63D8B1946587
- for <dm-devel@listman.corp.redhat.com>; Sat,  3 Dec 2022 15:11:00 +0000 (UTC)
+ ESMTP id 38D6B1946588
+ for <dm-devel@listman.corp.redhat.com>; Mon,  5 Dec 2022 10:57:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4555540C83EC; Sat,  3 Dec 2022 15:11:00 +0000 (UTC)
+ id 27AB52024CBF; Mon,  5 Dec 2022 10:57:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 3DC8240C2088
- for <dm-devel@redhat.com>; Sat,  3 Dec 2022 15:11:00 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F8F52024CBB
+ for <dm-devel@redhat.com>; Mon,  5 Dec 2022 10:57:56 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0127485A59D
+ for <dm-devel@redhat.com>; Mon,  5 Dec 2022 10:57:56 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_128_GCM_SHA256) id us-mta-489-I1m2OyUnMEKUx7c3b0yB9Q-1; Mon,
+ 05 Dec 2022 05:57:54 -0500
+X-MC-Unique: I1m2OyUnMEKUx7c3b0yB9Q-1
+Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 214C13C01E1A
- for <dm-devel@redhat.com>; Sat,  3 Dec 2022 15:11:00 +0000 (UTC)
-Received: from mail-wr1-f44.google.com (mail-wr1-f44.google.com
- [209.85.221.44]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-558-atFOnwXfNpqjp4Y8d-Unug-1; Sat, 03 Dec 2022 10:10:58 -0500
-X-MC-Unique: atFOnwXfNpqjp4Y8d-Unug-1
-Received: by mail-wr1-f44.google.com with SMTP id o5so12233825wrm.1;
- Sat, 03 Dec 2022 07:10:58 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=content-transfer-encoding:in-reply-to:from:cc:content-language
- :references:to:subject:mime-version:date:message-id
- :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=wcx+BfCSph6GYIzhZR+seg9egTxGX17jfZ4NjS1lpec=;
- b=UV8uY3u/yvFMJ3FebVgqhlYaNAKYVXDbhk1b1pl0fpdhuiVhkwqGDUeJ3fOVkJEIPo
- 1xlXrEEfqI/fxG1Q97SLH9k3pgojX310dy7PvpXYw8Pa+lLk9mQA1Vtc1yoWSk3ahzBj
- /Pcqk4XzDMn3sDOG6Aw8kjJxZUAoirCcut2sZZgo+7iMjQLFnHEJwDJiXykvDoNMA21H
- ZsdKq+JCgm3ws+y1wyH2EMsvK86hPXWX+PUu9jVkIxdUEwDchk9k6vUitxwE4Vkz7vZ9
- sFydcp/wzK5Li8t9Y92qwlcKH5zjiEfxSfd/wiotk0gYRjg8ly5++BdaQh9MYBZljyMc
- si3w==
-X-Gm-Message-State: ANoB5pkKARJXYHoIuE7hNC6WMWMMruBR5fAm/avXW64D+UVMpVojqqNj
- eAu9/lIFM6WR8rUKbsN1SpUEdd7LgQ==
-X-Google-Smtp-Source: AA0mqf6Wn9rU+/iEhc3gtYhAQuIv+PJXh+eeB+RFEhq2uBuRN3jMggiAfyIcR4AtNozmSiIvu3xBLw==
-X-Received: by 2002:a5d:4b4c:0:b0:242:1d2f:8fd1 with SMTP id
- w12-20020a5d4b4c000000b002421d2f8fd1mr16366571wrs.518.1670080257146; 
- Sat, 03 Dec 2022 07:10:57 -0800 (PST)
-Received: from localhost (230.red-81-44-152.dynamicip.rima-tde.net.
- [81.44.152.230]) by smtp.gmail.com with ESMTPSA id
- n36-20020a05600c502400b003cf6c2f9513sm12115172wmr.2.2022.12.03.07.10.56
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Sat, 03 Dec 2022 07:10:56 -0800 (PST)
-Message-ID: <41d2ff77-05c8-dd18-b24f-e3ec6884dfb2@gmail.com>
-Date: Sat, 3 Dec 2022 16:10:56 +0100
+ by smtp-out1.suse.de (Postfix) with ESMTPS id 8E84022809;
+ Mon,  5 Dec 2022 10:57:52 +0000 (UTC)
+Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap1.suse-dmz.suse.de (Postfix) with ESMTPS id 672B11348F;
+ Mon,  5 Dec 2022 10:57:52 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap1.suse-dmz.suse.de with ESMTPSA id VMOPF7DOjWNcFwAAGKfGzw
+ (envelope-from <mwilck@suse.com>); Mon, 05 Dec 2022 10:57:52 +0000
+Message-ID: <6c3816eb0aab6c027399cc9e6080a36f438a8ca1.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski
+ <bmarzins@redhat.com>
+Date: Mon, 05 Dec 2022 11:57:51 +0100
+In-Reply-To: <20221202234338.2960-1-mwilck@suse.com>
+References: <20221202234338.2960-1-mwilck@suse.com>
+User-Agent: Evolution 3.46.1
 MIME-Version: 1.0
-To: Benjamin Marzinski <bmarzins@redhat.com>
-References: <1669784208-9754-1-git-send-email-bmarzins@redhat.com>
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-In-Reply-To: <1669784208-9754-1-git-send-email-bmarzins@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -94,9 +86,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH 1/2] multipath.conf(5): remove io-affinity
- information
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH v2] libmultipath: is_path_valid(): check if
+ device is in use
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,50 +100,90 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: DM-DEVEL ML <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>,
- Mike Christie <michael.christie@oracle.com>
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 11/30/22 05:56, bmarzins at redhat.com (Benjamin Marzinski) wrote:
-
-> The multpath-tools do not support the io-affinity path selector.  We
-> always add a repeat count as the path argument. The io-affinity selector
-> doesn't take one. Instead it takes a bitmap of CPUs that a path can run
-> on. This isn't something that lends itself to the kind of
-> auto-assembling that multipathd does. But even if we did want to try to
-> support this path-selector, until we do, we shouldn't be listing it in
-> the multipath.conf documentation.
+On Sat, 2022-12-03 at 00:43 +0100, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
 > 
-> Signed-off-by: Benjamin Marzinski <bmarzins at redhat.com>
-
-> ---
->   multipath/multipath.conf.5 | 4 ----
->   1 file changed, 4 deletions(-)
+> To check whether we will be able to add a given device can be part
+> of a multipath map, we have two tests in check_path_valid():
+> released_to_systemd() and the O_EXCL test. The former isn't helpful
+> if "multipath -u" is called for the first time for a given device,
+> and the latter is only used in the "find_multipaths smart" case,
+> because
+> actively opening the device with O_EXCL, even for a very short time,
+> is prone
+> to races with other processes.
 > 
-> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index 1fea9d5a..3a45ac89 100644
-> --- a/multipath/multipath.conf.5
-> +++ b/multipath/multipath.conf.5
-> @@ -205,10 +205,6 @@ of outstanding I/O to the path and its relative throughput.
->   estimation of future service time based on the history of previous I/O submitted
->   to each path.
->   .TP
-> -.I "io-affinity 0"
-> -(Since 5.11 kernel) Choose the path for the next bunch of I/O based on a CPU to
-> -path mapping the user passes in and what CPU we are executing on.
-> -.TP
->   The default is: \fBservice-time 0\fR
->   .RE
->   .
+> It turns out that this may cause issues in some scenarios. We saw
+> problems in
+> once case where "find_multipaths greedy" was used with a single
+> non-multipahted root disk and a very large number of multipath LUNs.
+> The root disk would first be classified as multipath device.
+> multipathd
+> would try to create a map, fail (because the disk was mounted) and
+> trigger another uevent. But because of the very large number of
+> multipath
+> devices, this event was queued up behind thousands of other events,
+> and
+> the root device timed out eventually.
+> 
+> While a simple workaround for the given problem would be proper
+> blacklisting
+> or using a different find_multipaths mode, I am proposing a different
+> solution here. An additional test is added in is_path_valid() which
+> checks whether the given device is currently in use by 1. sysfs
+> holders,
+> 2. mounts (from /proc/self/mountinfo) or 3. swaps (from /proc/swaps).
+> 2.
+> and 3. are similar to systemd's device detection after switching
+> root.
+> This must not only be done for the device itself, but also for all
+> its
+> partitions. For mountinfo and swaps, libmount is utilized.
+> 
+> With this patch, "multipath -u" will make devices with mounted or
+> otherwise
+> used partitions available to systemd early, without waiting for
+> multipathd
+> to fail setting up the map and re-triggering an uevent. This should
+> avoid
+> the issue described above even without blacklisting. The downside of
+> it
+> is a longer runtime of "multipath -u" for almost all devices, in
+> particular
+> for real multipath devices. The runtime required for the new checks
+> was in the
+> order of 0.1ms-1ms in my tests. Moreover, there is a certain risk
+> that devices may
+> wrongly classified as non-multipath because of transient mounts or
+> holders
+> created by other processes.
+> 
+> To make this code compile on older distributions, we need some
+> additional
+> checks in create-config.mk.
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
 
-I think the main, and only?, consumer for this path selector is Exadata.
+Sorry, I forgot:
+
+Changes RFC -> v2:
+
+ - only make the in-use check for "smart" and "greedy" setups (Ben
+Marzinski)
+ - remove wrong "break" statements (Ben)
+ - add another malloc NULL check (Ben)
+ - Add compatibility checks for older versions of libmount (me)
+
+Martin  
 
 --
 dm-devel mailing list
