@@ -4,80 +4,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5BB45C47090
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Dec 2022 14:56:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CE8DAC352A1
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Dec 2022 15:10:43 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1670338580;
+	s=mimecast20190719; t=1670339442;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=yOHuQHGfVijgVEr3IUy1PSkHWxTbIzOgSLqkkf5Yn+g=;
-	b=F9MRP1RaFCEHe3I5nRo1JYwn9m+XBPYRnKeys35cK5+expv5wHEkE8zDTI82lAuLnJRFME
-	WEyl4BkYcvxoopUCRyt7yJISwuumfy+AYsxUYxtjI5kMLYKFY9nkrl+wEWhDDuv7+akAPe
-	67YJxNS52I8MV5aXrPIPaGEh5D4B7Ow=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=NPaBvOF132UrrXy7vVoDtIxYLt09fDa2nkqa606doQ8=;
+	b=OqO5VOJTauh7HwVQ7kjxkvTT4ISbXASMJBLoM1js6CspnXCUxGE6+oC5qhVQDqOlSr+FQ9
+	unhNfLRxYV80ScLHWWC4ZM1HiuojBGg+0Mw6Kgcdw1BFjn6nZNbIUasq59zTqb7zP7Kpvn
+	8fRjbUoHoG20Lb16ss5g+J+BomSKVRg=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-582-QcWodFF2OvW1U-HSxoSfrA-1; Tue, 06 Dec 2022 09:56:17 -0500
-X-MC-Unique: QcWodFF2OvW1U-HSxoSfrA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-608-bsSarFHHNGqdn_Q4JvCmbQ-1; Tue, 06 Dec 2022 10:10:41 -0500
+X-MC-Unique: bsSarFHHNGqdn_Q4JvCmbQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 12FB71C05EBC;
-	Tue,  6 Dec 2022 14:56:13 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 08C7E86EB66;
+	Tue,  6 Dec 2022 15:10:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B3622C15BA4;
-	Tue,  6 Dec 2022 14:56:12 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A886D4A9256;
+	Tue,  6 Dec 2022 15:10:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8B4AC1946589;
-	Tue,  6 Dec 2022 14:56:12 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7983B1946589;
+	Tue,  6 Dec 2022 15:10:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2491F194658C
- for <dm-devel@listman.corp.redhat.com>; Tue,  6 Dec 2022 14:56:11 +0000 (UTC)
+ ESMTP id E5F6E1946586
+ for <dm-devel@listman.corp.redhat.com>; Tue,  6 Dec 2022 15:10:36 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 10DABC15BA5; Tue,  6 Dec 2022 14:56:11 +0000 (UTC)
+ id B6869492B07; Tue,  6 Dec 2022 15:10:36 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 09A91C15BA4
- for <dm-devel@redhat.com>; Tue,  6 Dec 2022 14:56:10 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id AF1B4492B04
+ for <dm-devel@redhat.com>; Tue,  6 Dec 2022 15:10:36 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D8B0885A5B6
- for <dm-devel@redhat.com>; Tue,  6 Dec 2022 14:56:10 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_128_GCM_SHA256) id us-mta-375-tkDs_bQ6MyCNZv2HfTtNKA-1; Tue,
- 06 Dec 2022 09:56:09 -0500
-X-MC-Unique: tkDs_bQ6MyCNZv2HfTtNKA-1
-Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out1.suse.de (Postfix) with ESMTPS id E59CA21C3F;
- Tue,  6 Dec 2022 14:46:46 +0000 (UTC)
-Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap1.suse-dmz.suse.de (Postfix) with ESMTPS id 9AA95132F3;
- Tue,  6 Dec 2022 14:46:44 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap1.suse-dmz.suse.de with ESMTPSA id FRuBGNRVj2MKLwAAGKfGzw
- (envelope-from <colyli@suse.de>); Tue, 06 Dec 2022 14:46:44 +0000
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3731.200.110.1.12\))
-From: Coly Li <colyli@suse.de>
-In-Reply-To: <20221206144057.720846-1-hch@lst.de>
-Date: Tue, 6 Dec 2022 22:46:31 +0800
-Message-Id: <434E4CE3-EA46-4CD9-9EAF-5C1B99B8A603@suse.de>
-References: <20221206144057.720846-1-hch@lst.de>
-To: Christoph Hellwig <hch@lst.de>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 90532185A78F
+ for <dm-devel@redhat.com>; Tue,  6 Dec 2022 15:10:36 +0000 (UTC)
+Received: from bombadil.infradead.org (bombadil.infradead.org
+ [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-546--NwTjfwCM-6ctUDvvBls0A-1; Tue, 06 Dec 2022 10:10:34 -0500
+X-MC-Unique: -NwTjfwCM-6ctUDvvBls0A-1
+Received: from [2001:4bb8:19a:6deb:96e2:518:dd92:8fb1] (helo=localhost)
+ by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+ id 1p2Z7z-00BJhE-SS; Tue, 06 Dec 2022 14:41:00 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: axboe@kernel.dk,
+	snitzer@kernel.org
+Date: Tue,  6 Dec 2022 15:40:57 +0100
+Message-Id: <20221206144057.720846-1-hch@lst.de>
+MIME-Version: 1.0
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+ bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -85,8 +72,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH] block: remove bio_set_op_attrs
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: [dm-devel] [PATCH] block: remove bio_set_op_attrs
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -98,183 +85,257 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-raid <linux-raid@vger.kernel.org>,
- snitzer@kernel.org, dm-devel@redhat.com, linux-block@vger.kernel.org,
- Song Liu <song@kernel.org>, linux-bcache@vger.kernel.org
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, colyli@suse.de,
+ linux-block@vger.kernel.org, song@kernel.org, linux-bcache@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-Cgo+IDIwMjLlubQxMuaciDbml6UgMjI6NDDvvIxDaHJpc3RvcGggSGVsbHdpZyA8aGNoQGxzdC5k
-ZT4g5YaZ6YGT77yaCj4gCj4gVGhpcyBtYWNybyBpcyBvYnNvbGV0ZSwgc28gcmVwbGFjZSB0aGUg
-bGFzdCBmZXcgdXNlcyB3aXRoIG9wZW4gY29kZWQKPiBiaV9vcGYgYXNzaWdubWVudHMuCj4gCj4g
-U2lnbmVkLW9mZi1ieTogQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBsc3QuZGU+CgpBY2tlZC1ieTog
-Q29seSBMaSA8Y29seWxpQHN1c2UuZGUgPG1haWx0bzpjb2x5bGlAc3VzZS5kZT4+CgoKQlRXLCBt
-YXkgSSBhc2sgd2h5IGJpb19zZXRfb3BfYXR0cnMoKSBpcyByZW1vdmVkLiBRdWl0ZSBsb25nIHRp
-bWUgYWdvIGl0IHdhcyBhZGRlZCB0byBhdm9pZCBvcGVuIGNvZGUsIGFuZCBub3cgd2UgcmVtb3Zl
-IGl0IHRvIHVzZSBvcGVuIGNvZGVkIGFzc2lnbm1lbnRzLiBXaGF0IGlzIHRoZSBtb3RpdmF0aW9u
-IGZvciBub3c/CgpUaGFua3MuCgpDb2x5IExpCgoKPiAtLS0KPiBkcml2ZXJzL21kL2JjYWNoZS9t
-b3ZpbmdnYy5jICB8ICAyICstCj4gZHJpdmVycy9tZC9iY2FjaGUvcmVxdWVzdC5jICAgfCAgMiAr
-LQo+IGRyaXZlcnMvbWQvYmNhY2hlL3dyaXRlYmFjay5jIHwgIDQgKystLQo+IGRyaXZlcnMvbWQv
-ZG0tdGhpbi5jICAgICAgICAgIHwgIDIgKy0KPiBkcml2ZXJzL21kL3JhaWQxLmMgICAgICAgICAg
-ICB8IDEyICsrKysrKy0tLS0tLQo+IGRyaXZlcnMvbWQvcmFpZDEwLmMgICAgICAgICAgIHwgMTgg
-KysrKysrKysrLS0tLS0tLS0tCj4gaW5jbHVkZS9saW51eC9ibGtfdHlwZXMuaCAgICAgfCAgNyAt
-LS0tLS0tCj4gNyBmaWxlcyBjaGFuZ2VkLCAyMCBpbnNlcnRpb25zKCspLCAyNyBkZWxldGlvbnMo
-LSkKPiAKPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9iY2FjaGUvbW92aW5nZ2MuYyBiL2RyaXZl
-cnMvbWQvYmNhY2hlL21vdmluZ2djLmMKPiBpbmRleCA5OTQ5OWQxZjZlNjY2Ni4uOWYzMjkwMWZk
-YWQxMDIgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9tZC9iY2FjaGUvbW92aW5nZ2MuYwo+ICsrKyBi
-L2RyaXZlcnMvbWQvYmNhY2hlL21vdmluZ2djLmMKPiBAQCAtMTYwLDcgKzE2MCw3IEBAIHN0YXRp
-YyB2b2lkIHJlYWRfbW92aW5nKHN0cnVjdCBjYWNoZV9zZXQgKmMpCj4gbW92aW5nX2luaXQoaW8p
-Owo+IGJpbyA9ICZpby0+YmlvLmJpbzsKPiAKPiAtIGJpb19zZXRfb3BfYXR0cnMoYmlvLCBSRVFf
-T1BfUkVBRCwgMCk7Cj4gKyBiaW8tPmJpX29wZiA9IFJFUV9PUF9SRUFEOwo+IGJpby0+YmlfZW5k
-X2lvID0gcmVhZF9tb3ZpbmdfZW5kaW87Cj4gCj4gaWYgKGJjaF9iaW9fYWxsb2NfcGFnZXMoYmlv
-LCBHRlBfS0VSTkVMKSkKPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9iY2FjaGUvcmVxdWVzdC5j
-IGIvZHJpdmVycy9tZC9iY2FjaGUvcmVxdWVzdC5jCj4gaW5kZXggMzQyNzU1NWIwY2NhZTQuLjM5
-YzdiNjA3ZjhhYWQ4IDEwMDY0NAo+IC0tLSBhL2RyaXZlcnMvbWQvYmNhY2hlL3JlcXVlc3QuYwo+
-ICsrKyBiL2RyaXZlcnMvbWQvYmNhY2hlL3JlcXVlc3QuYwo+IEBAIC0yNDQsNyArMjQ0LDcgQEAg
-c3RhdGljIHZvaWQgYmNoX2RhdGFfaW5zZXJ0X3N0YXJ0KHN0cnVjdCBjbG9zdXJlICpjbCkKPiB0
-cmFjZV9iY2FjaGVfY2FjaGVfaW5zZXJ0KGspOwo+IGJjaF9rZXlsaXN0X3B1c2goJm9wLT5pbnNl
-cnRfa2V5cyk7Cj4gCj4gLSBiaW9fc2V0X29wX2F0dHJzKG4sIFJFUV9PUF9XUklURSwgMCk7Cj4g
-KyBuLT5iaV9vcGYgPSBSRVFfT1BfV1JJVEU7Cj4gYmNoX3N1Ym1pdF9iYmlvKG4sIG9wLT5jLCBr
-LCAwKTsKPiB9IHdoaWxlIChuICE9IGJpbyk7Cj4gCj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQv
-YmNhY2hlL3dyaXRlYmFjay5jIGIvZHJpdmVycy9tZC9iY2FjaGUvd3JpdGViYWNrLmMKPiBpbmRl
-eCAwMjg1YjY3NmU5ODM0YS4uZDRhNWZjMDY1MGJiMjkgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9t
-ZC9iY2FjaGUvd3JpdGViYWNrLmMKPiArKysgYi9kcml2ZXJzL21kL2JjYWNoZS93cml0ZWJhY2su
-Ywo+IEBAIC00MzQsNyArNDM0LDcgQEAgc3RhdGljIHZvaWQgd3JpdGVfZGlydHkoc3RydWN0IGNs
-b3N1cmUgKmNsKQo+ICovCj4gaWYgKEtFWV9ESVJUWSgmdy0+a2V5KSkgewo+IGRpcnR5X2luaXQo
-dyk7Cj4gLSBiaW9fc2V0X29wX2F0dHJzKCZpby0+YmlvLCBSRVFfT1BfV1JJVEUsIDApOwo+ICsg
-aW8tPmJpby5iaV9vcGYgPSBSRVFfT1BfV1JJVEU7Cj4gaW8tPmJpby5iaV9pdGVyLmJpX3NlY3Rv
-ciA9IEtFWV9TVEFSVCgmdy0+a2V5KTsKPiBiaW9fc2V0X2RldigmaW8tPmJpbywgaW8tPmRjLT5i
-ZGV2KTsKPiBpby0+YmlvLmJpX2VuZF9pbyA9IGRpcnR5X2VuZGlvOwo+IEBAIC01NDcsNyArNTQ3
-LDcgQEAgc3RhdGljIHZvaWQgcmVhZF9kaXJ0eShzdHJ1Y3QgY2FjaGVkX2RldiAqZGMpCj4gaW8t
-PnNlcXVlbmNlICAgID0gc2VxdWVuY2UrKzsKPiAKPiBkaXJ0eV9pbml0KHcpOwo+IC0gYmlvX3Nl
-dF9vcF9hdHRycygmaW8tPmJpbywgUkVRX09QX1JFQUQsIDApOwo+ICsgaW8tPmJpby5iaV9vcGYg
-PSBSRVFfT1BfUkVBRDsKPiBpby0+YmlvLmJpX2l0ZXIuYmlfc2VjdG9yID0gUFRSX09GRlNFVCgm
-dy0+a2V5LCAwKTsKPiBiaW9fc2V0X2RldigmaW8tPmJpbywgZGMtPmRpc2suYy0+Y2FjaGUtPmJk
-ZXYpOwo+IGlvLT5iaW8uYmlfZW5kX2lvID0gcmVhZF9kaXJ0eV9lbmRpbzsKPiBkaWZmIC0tZ2l0
-IGEvZHJpdmVycy9tZC9kbS10aGluLmMgYi9kcml2ZXJzL21kL2RtLXRoaW4uYwo+IGluZGV4IGU3
-NmM5NmM3NjBhOWI1Li5jMmI1YTUzN2Y1YjhhZCAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL21kL2Rt
-LXRoaW4uYwo+ICsrKyBiL2RyaXZlcnMvbWQvZG0tdGhpbi5jCj4gQEAgLTQxMCw3ICs0MTAsNyBA
-QCBzdGF0aWMgdm9pZCBlbmRfZGlzY2FyZChzdHJ1Y3QgZGlzY2FyZF9vcCAqb3AsIGludCByKQo+
-ICogbmVlZCB0byB3YWl0IGZvciB0aGUgY2hhaW4gdG8gY29tcGxldGUuCj4gKi8KPiBiaW9fY2hh
-aW4ob3AtPmJpbywgb3AtPnBhcmVudF9iaW8pOwo+IC0gYmlvX3NldF9vcF9hdHRycyhvcC0+Ymlv
-LCBSRVFfT1BfRElTQ0FSRCwgMCk7Cj4gKyBvcC0+YmlvLT5iaV9vcGYgPSBSRVFfT1BfRElTQ0FS
-RDsKPiBzdWJtaXRfYmlvKG9wLT5iaW8pOwo+IH0KPiAKPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9t
-ZC9yYWlkMS5jIGIvZHJpdmVycy9tZC9yYWlkMS5jCj4gaW5kZXggNThmNzA1ZjQyOTQ4MDEuLjY4
-YTllMmQ5OTg1YjJmIDEwMDY0NAo+IC0tLSBhL2RyaXZlcnMvbWQvcmFpZDEuYwo+ICsrKyBiL2Ry
-aXZlcnMvbWQvcmFpZDEuYwo+IEBAIC0xMzIxLDcgKzEzMjEsNyBAQCBzdGF0aWMgdm9pZCByYWlk
-MV9yZWFkX3JlcXVlc3Qoc3RydWN0IG1kZGV2ICptZGRldiwgc3RydWN0IGJpbyAqYmlvLAo+IHJl
-YWRfYmlvLT5iaV9pdGVyLmJpX3NlY3RvciA9IHIxX2Jpby0+c2VjdG9yICsKPiBtaXJyb3ItPnJk
-ZXYtPmRhdGFfb2Zmc2V0Owo+IHJlYWRfYmlvLT5iaV9lbmRfaW8gPSByYWlkMV9lbmRfcmVhZF9y
-ZXF1ZXN0Owo+IC0gYmlvX3NldF9vcF9hdHRycyhyZWFkX2Jpbywgb3AsIGRvX3N5bmMpOwo+ICsg
-cmVhZF9iaW8tPmJpX29wZiA9IG9wIHwgZG9fc3luYzsKPiBpZiAodGVzdF9iaXQoRmFpbEZhc3Qs
-ICZtaXJyb3ItPnJkZXYtPmZsYWdzKSAmJgo+ICAgIHRlc3RfYml0KFIxQklPX0ZhaWxGYXN0LCAm
-cjFfYmlvLT5zdGF0ZSkpCj4gICAgICAgIHJlYWRfYmlvLT5iaV9vcGYgfD0gTURfRkFJTEZBU1Q7
-Cj4gQEAgLTIyNTQsNyArMjI1NCw3IEBAIHN0YXRpYyB2b2lkIHN5bmNfcmVxdWVzdF93cml0ZShz
-dHJ1Y3QgbWRkZXYgKm1kZGV2LCBzdHJ1Y3QgcjFiaW8gKnIxX2JpbykKPiBjb250aW51ZTsKPiB9
-Cj4gCj4gLSBiaW9fc2V0X29wX2F0dHJzKHdiaW8sIFJFUV9PUF9XUklURSwgMCk7Cj4gKyB3Ymlv
-LT5iaV9vcGYgPSBSRVFfT1BfV1JJVEU7Cj4gaWYgKHRlc3RfYml0KEZhaWxGYXN0LCAmY29uZi0+
-bWlycm9yc1tpXS5yZGV2LT5mbGFncykpCj4gd2Jpby0+Ymlfb3BmIHw9IE1EX0ZBSUxGQVNUOwo+
-IAo+IEBAIC0yNDE5LDcgKzI0MTksNyBAQCBzdGF0aWMgaW50IG5hcnJvd193cml0ZV9lcnJvcihz
-dHJ1Y3QgcjFiaW8gKnIxX2JpbywgaW50IGkpCj4gICAgICAgR0ZQX05PSU8sICZtZGRldi0+Ymlv
-X3NldCk7Cj4gfQo+IAo+IC0gYmlvX3NldF9vcF9hdHRycyh3YmlvLCBSRVFfT1BfV1JJVEUsIDAp
-Owo+ICsgd2Jpby0+Ymlfb3BmID0gUkVRX09QX1dSSVRFOwo+IHdiaW8tPmJpX2l0ZXIuYmlfc2Vj
-dG9yID0gcjFfYmlvLT5zZWN0b3I7Cj4gd2Jpby0+YmlfaXRlci5iaV9zaXplID0gcjFfYmlvLT5z
-ZWN0b3JzIDw8IDk7Cj4gCj4gQEAgLTI3NzAsNyArMjc3MCw3IEBAIHN0YXRpYyBzZWN0b3JfdCBy
-YWlkMV9zeW5jX3JlcXVlc3Qoc3RydWN0IG1kZGV2ICptZGRldiwgc2VjdG9yX3Qgc2VjdG9yX25y
-LAo+IGlmIChpIDwgY29uZi0+cmFpZF9kaXNrcykKPiBzdGlsbF9kZWdyYWRlZCA9IDE7Cj4gfSBl
-bHNlIGlmICghdGVzdF9iaXQoSW5fc3luYywgJnJkZXYtPmZsYWdzKSkgewo+IC0gYmlvX3NldF9v
-cF9hdHRycyhiaW8sIFJFUV9PUF9XUklURSwgMCk7Cj4gKyBiaW8tPmJpX29wZiA9IFJFUV9PUF9X
-UklURTsKPiBiaW8tPmJpX2VuZF9pbyA9IGVuZF9zeW5jX3dyaXRlOwo+IHdyaXRlX3RhcmdldHMg
-Kys7Cj4gfSBlbHNlIHsKPiBAQCAtMjc5Nyw3ICsyNzk3LDcgQEAgc3RhdGljIHNlY3Rvcl90IHJh
-aWQxX3N5bmNfcmVxdWVzdChzdHJ1Y3QgbWRkZXYgKm1kZGV2LCBzZWN0b3JfdCBzZWN0b3JfbnIs
-Cj4gaWYgKGRpc2sgPCAwKQo+IGRpc2sgPSBpOwo+IH0KPiAtIGJpb19zZXRfb3BfYXR0cnMoYmlv
-LCBSRVFfT1BfUkVBRCwgMCk7Cj4gKyBiaW8tPmJpX29wZiA9IFJFUV9PUF9SRUFEOwo+IGJpby0+
-YmlfZW5kX2lvID0gZW5kX3N5bmNfcmVhZDsKPiByZWFkX3RhcmdldHMrKzsKPiB9IGVsc2UgaWYg
-KCF0ZXN0X2JpdChXcml0ZUVycm9yU2VlbiwgJnJkZXYtPmZsYWdzKSAmJgo+IEBAIC0yODA5LDcg
-KzI4MDksNyBAQCBzdGF0aWMgc2VjdG9yX3QgcmFpZDFfc3luY19yZXF1ZXN0KHN0cnVjdCBtZGRl
-diAqbWRkZXYsIHNlY3Rvcl90IHNlY3Rvcl9uciwKPiAqIGlmIHdlIGFyZSBkb2luZyByZXN5bmMg
-b3IgcmVwYWlyLiBPdGhlcndpc2UsIGxlYXZlCj4gKiB0aGlzIGRldmljZSBhbG9uZSBmb3IgdGhp
-cyBzeW5jIHJlcXVlc3QuCj4gKi8KPiAtIGJpb19zZXRfb3BfYXR0cnMoYmlvLCBSRVFfT1BfV1JJ
-VEUsIDApOwo+ICsgYmlvLT5iaV9vcGYgPSBSRVFfT1BfV1JJVEU7Cj4gYmlvLT5iaV9lbmRfaW8g
-PSBlbmRfc3luY193cml0ZTsKPiB3cml0ZV90YXJnZXRzKys7Cj4gfQo+IGRpZmYgLS1naXQgYS9k
-cml2ZXJzL21kL3JhaWQxMC5jIGIvZHJpdmVycy9tZC9yYWlkMTAuYwo+IGluZGV4IDlhNjUwM2Y1
-Y2I5ODJlLi42YzY2MzU3ZjkyZjU1OSAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL21kL3JhaWQxMC5j
-Cj4gKysrIGIvZHJpdmVycy9tZC9yYWlkMTAuYwo+IEBAIC0xMjU0LDcgKzEyNTQsNyBAQCBzdGF0
-aWMgdm9pZCByYWlkMTBfcmVhZF9yZXF1ZXN0KHN0cnVjdCBtZGRldiAqbWRkZXYsIHN0cnVjdCBi
-aW8gKmJpbywKPiByZWFkX2Jpby0+YmlfaXRlci5iaV9zZWN0b3IgPSByMTBfYmlvLT5kZXZzW3Ns
-b3RdLmFkZHIgKwo+IGNob29zZV9kYXRhX29mZnNldChyMTBfYmlvLCByZGV2KTsKPiByZWFkX2Jp
-by0+YmlfZW5kX2lvID0gcmFpZDEwX2VuZF9yZWFkX3JlcXVlc3Q7Cj4gLSBiaW9fc2V0X29wX2F0
-dHJzKHJlYWRfYmlvLCBvcCwgZG9fc3luYyk7Cj4gKyByZWFkX2Jpby0+Ymlfb3BmID0gb3AgfCBk
-b19zeW5jOwo+IGlmICh0ZXN0X2JpdChGYWlsRmFzdCwgJnJkZXYtPmZsYWdzKSAmJgo+ICAgIHRl
-c3RfYml0KFIxMEJJT19GYWlsRmFzdCwgJnIxMF9iaW8tPnN0YXRlKSkKPiAgICAgICAgcmVhZF9i
-aW8tPmJpX29wZiB8PSBNRF9GQUlMRkFTVDsKPiBAQCAtMTMwMSw3ICsxMzAxLDcgQEAgc3RhdGlj
-IHZvaWQgcmFpZDEwX3dyaXRlX29uZV9kaXNrKHN0cnVjdCBtZGRldiAqbWRkZXYsIHN0cnVjdCBy
-MTBiaW8gKnIxMF9iaW8sCj4gbWJpby0+YmlfaXRlci5iaV9zZWN0b3IgPSAocjEwX2Jpby0+ZGV2
-c1tuX2NvcHldLmFkZHIgKwo+ICAgY2hvb3NlX2RhdGFfb2Zmc2V0KHIxMF9iaW8sIHJkZXYpKTsK
-PiBtYmlvLT5iaV9lbmRfaW8gPSByYWlkMTBfZW5kX3dyaXRlX3JlcXVlc3Q7Cj4gLSBiaW9fc2V0
-X29wX2F0dHJzKG1iaW8sIG9wLCBkb19zeW5jIHwgZG9fZnVhKTsKPiArIG1iaW8tPmJpX29wZiA9
-IG9wIHwgZG9fc3luYyB8IGRvX2Z1YTsKPiBpZiAoIXJlcGxhY2VtZW50ICYmIHRlc3RfYml0KEZh
-aWxGYXN0LAo+ICAgICAmY29uZi0+bWlycm9yc1tkZXZudW1dLnJkZXYtPmZsYWdzKQo+ICYmIGVu
-b3VnaChjb25mLCBkZXZudW0pKQo+IEBAIC0yOTMzLDcgKzI5MzMsNyBAQCBzdGF0aWMgaW50IG5h
-cnJvd193cml0ZV9lcnJvcihzdHJ1Y3QgcjEwYmlvICpyMTBfYmlvLCBpbnQgaSkKPiB3c2VjdG9y
-ID0gcjEwX2Jpby0+ZGV2c1tpXS5hZGRyICsgKHNlY3RvciAtIHIxMF9iaW8tPnNlY3Rvcik7Cj4g
-d2Jpby0+YmlfaXRlci5iaV9zZWN0b3IgPSB3c2VjdG9yICsKPiAgIGNob29zZV9kYXRhX29mZnNl
-dChyMTBfYmlvLCByZGV2KTsKPiAtIGJpb19zZXRfb3BfYXR0cnMod2JpbywgUkVRX09QX1dSSVRF
-LCAwKTsKPiArIHdiaW8tPmJpX29wZiA9IFJFUV9PUF9XUklURTsKPiAKPiBpZiAoc3VibWl0X2Jp
-b193YWl0KHdiaW8pIDwgMCkKPiAvKiBGYWlsdXJlISAqLwo+IEBAIC0zNTQyLDcgKzM1NDIsNyBA
-QCBzdGF0aWMgc2VjdG9yX3QgcmFpZDEwX3N5bmNfcmVxdWVzdChzdHJ1Y3QgbWRkZXYgKm1kZGV2
-LCBzZWN0b3JfdCBzZWN0b3JfbnIsCj4gYmlvLT5iaV9uZXh0ID0gYmlvbGlzdDsKPiBiaW9saXN0
-ID0gYmlvOwo+IGJpby0+YmlfZW5kX2lvID0gZW5kX3N5bmNfcmVhZDsKPiAtIGJpb19zZXRfb3Bf
-YXR0cnMoYmlvLCBSRVFfT1BfUkVBRCwgMCk7Cj4gKyBiaW8tPmJpX29wZiA9IFJFUV9PUF9SRUFE
-Owo+IGlmICh0ZXN0X2JpdChGYWlsRmFzdCwgJnJkZXYtPmZsYWdzKSkKPiBiaW8tPmJpX29wZiB8
-PSBNRF9GQUlMRkFTVDsKPiBmcm9tX2FkZHIgPSByMTBfYmlvLT5kZXZzW2pdLmFkZHI7Cj4gQEAg
-LTM1NjcsNyArMzU2Nyw3IEBAIHN0YXRpYyBzZWN0b3JfdCByYWlkMTBfc3luY19yZXF1ZXN0KHN0
-cnVjdCBtZGRldiAqbWRkZXYsIHNlY3Rvcl90IHNlY3Rvcl9uciwKPiBiaW8tPmJpX25leHQgPSBi
-aW9saXN0Owo+IGJpb2xpc3QgPSBiaW87Cj4gYmlvLT5iaV9lbmRfaW8gPSBlbmRfc3luY193cml0
-ZTsKPiAtIGJpb19zZXRfb3BfYXR0cnMoYmlvLCBSRVFfT1BfV1JJVEUsIDApOwo+ICsgYmlvLT5i
-aV9vcGYgPSBSRVFfT1BfV1JJVEU7Cj4gYmlvLT5iaV9pdGVyLmJpX3NlY3RvciA9IHRvX2FkZHIK
-PiArIG1yZGV2LT5kYXRhX29mZnNldDsKPiBiaW9fc2V0X2RldihiaW8sIG1yZGV2LT5iZGV2KTsK
-PiBAQCAtMzU4OCw3ICszNTg4LDcgQEAgc3RhdGljIHNlY3Rvcl90IHJhaWQxMF9zeW5jX3JlcXVl
-c3Qoc3RydWN0IG1kZGV2ICptZGRldiwgc2VjdG9yX3Qgc2VjdG9yX25yLAo+IGJpby0+YmlfbmV4
-dCA9IGJpb2xpc3Q7Cj4gYmlvbGlzdCA9IGJpbzsKPiBiaW8tPmJpX2VuZF9pbyA9IGVuZF9zeW5j
-X3dyaXRlOwo+IC0gYmlvX3NldF9vcF9hdHRycyhiaW8sIFJFUV9PUF9XUklURSwgMCk7Cj4gKyBi
-aW8tPmJpX29wZiA9IFJFUV9PUF9XUklURTsKPiBiaW8tPmJpX2l0ZXIuYmlfc2VjdG9yID0gdG9f
-YWRkciArCj4gbXJlcGxhY2UtPmRhdGFfb2Zmc2V0Owo+IGJpb19zZXRfZGV2KGJpbywgbXJlcGxh
-Y2UtPmJkZXYpOwo+IEBAIC0zNzQyLDcgKzM3NDIsNyBAQCBzdGF0aWMgc2VjdG9yX3QgcmFpZDEw
-X3N5bmNfcmVxdWVzdChzdHJ1Y3QgbWRkZXYgKm1kZGV2LCBzZWN0b3JfdCBzZWN0b3JfbnIsCj4g
-YmlvLT5iaV9uZXh0ID0gYmlvbGlzdDsKPiBiaW9saXN0ID0gYmlvOwo+IGJpby0+YmlfZW5kX2lv
-ID0gZW5kX3N5bmNfcmVhZDsKPiAtIGJpb19zZXRfb3BfYXR0cnMoYmlvLCBSRVFfT1BfUkVBRCwg
-MCk7Cj4gKyBiaW8tPmJpX29wZiA9IFJFUV9PUF9SRUFEOwo+IGlmICh0ZXN0X2JpdChGYWlsRmFz
-dCwgJnJkZXYtPmZsYWdzKSkKPiBiaW8tPmJpX29wZiB8PSBNRF9GQUlMRkFTVDsKPiBiaW8tPmJp
-X2l0ZXIuYmlfc2VjdG9yID0gc2VjdG9yICsgcmRldi0+ZGF0YV9vZmZzZXQ7Cj4gQEAgLTM3NjQs
-NyArMzc2NCw3IEBAIHN0YXRpYyBzZWN0b3JfdCByYWlkMTBfc3luY19yZXF1ZXN0KHN0cnVjdCBt
-ZGRldiAqbWRkZXYsIHNlY3Rvcl90IHNlY3Rvcl9uciwKPiBiaW8tPmJpX25leHQgPSBiaW9saXN0
-Owo+IGJpb2xpc3QgPSBiaW87Cj4gYmlvLT5iaV9lbmRfaW8gPSBlbmRfc3luY193cml0ZTsKPiAt
-IGJpb19zZXRfb3BfYXR0cnMoYmlvLCBSRVFfT1BfV1JJVEUsIDApOwo+ICsgYmlvLT5iaV9vcGYg
-PSBSRVFfT1BfV1JJVEU7Cj4gaWYgKHRlc3RfYml0KEZhaWxGYXN0LCAmcmRldi0+ZmxhZ3MpKQo+
-IGJpby0+Ymlfb3BmIHw9IE1EX0ZBSUxGQVNUOwo+IGJpby0+YmlfaXRlci5iaV9zZWN0b3IgPSBz
-ZWN0b3IgKyByZGV2LT5kYXRhX29mZnNldDsKPiBAQCAtNDk3MCw3ICs0OTcwLDcgQEAgc3RhdGlj
-IHNlY3Rvcl90IHJlc2hhcGVfcmVxdWVzdChzdHJ1Y3QgbWRkZXYgKm1kZGV2LCBzZWN0b3JfdCBz
-ZWN0b3JfbnIsCj4gYi0+YmlfaXRlci5iaV9zZWN0b3IgPSByMTBfYmlvLT5kZXZzW3MvMl0uYWRk
-ciArCj4gcmRldjItPm5ld19kYXRhX29mZnNldDsKPiBiLT5iaV9lbmRfaW8gPSBlbmRfcmVzaGFw
-ZV93cml0ZTsKPiAtIGJpb19zZXRfb3BfYXR0cnMoYiwgUkVRX09QX1dSSVRFLCAwKTsKPiArIGIt
-PmJpX29wZiA9IFJFUV9PUF9XUklURTsKPiBiLT5iaV9uZXh0ID0gYmxpc3Q7Cj4gYmxpc3QgPSBi
-Owo+IH0KPiBkaWZmIC0tZ2l0IGEvaW5jbHVkZS9saW51eC9ibGtfdHlwZXMuaCBiL2luY2x1ZGUv
-bGludXgvYmxrX3R5cGVzLmgKPiBpbmRleCBlMGIwOTgwODllZjJiNy4uOTliZTU5MGY5NTJmNmUg
-MTAwNjQ0Cj4gLS0tIGEvaW5jbHVkZS9saW51eC9ibGtfdHlwZXMuaAo+ICsrKyBiL2luY2x1ZGUv
-bGludXgvYmxrX3R5cGVzLmgKPiBAQCAtNDcyLDEzICs0NzIsNiBAQCBzdGF0aWMgaW5saW5lIGVu
-dW0gcmVxX29wIGJpb19vcChjb25zdCBzdHJ1Y3QgYmlvICpiaW8pCj4gcmV0dXJuIGJpby0+Ymlf
-b3BmICYgUkVRX09QX01BU0s7Cj4gfQo+IAo+IC0vKiBvYnNvbGV0ZSwgZG9uJ3QgdXNlIGluIG5l
-dyBjb2RlICovCj4gLXN0YXRpYyBpbmxpbmUgdm9pZCBiaW9fc2V0X29wX2F0dHJzKHN0cnVjdCBi
-aW8gKmJpbywgZW51bSByZXFfb3Agb3AsCj4gLSAgICBibGtfb3BmX3Qgb3BfZmxhZ3MpCj4gLXsK
-PiAtIGJpby0+Ymlfb3BmID0gb3AgfCBvcF9mbGFnczsKPiAtfQo+IC0KPiBzdGF0aWMgaW5saW5l
-IGJvb2wgb3BfaXNfd3JpdGUoYmxrX29wZl90IG9wKQo+IHsKPiByZXR1cm4gISEob3AgJiAoX19m
-b3JjZSBibGtfb3BmX3QpMSk7Cj4gLS0gCj4gMi4zNS4xCj4gCgotLQpkbS1kZXZlbCBtYWlsaW5n
-IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWls
-bWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
+This macro is obsolete, so replace the last few uses with open coded
+bi_opf assignments.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ drivers/md/bcache/movinggc.c  |  2 +-
+ drivers/md/bcache/request.c   |  2 +-
+ drivers/md/bcache/writeback.c |  4 ++--
+ drivers/md/dm-thin.c          |  2 +-
+ drivers/md/raid1.c            | 12 ++++++------
+ drivers/md/raid10.c           | 18 +++++++++---------
+ include/linux/blk_types.h     |  7 -------
+ 7 files changed, 20 insertions(+), 27 deletions(-)
+
+diff --git a/drivers/md/bcache/movinggc.c b/drivers/md/bcache/movinggc.c
+index 99499d1f6e6666..9f32901fdad102 100644
+--- a/drivers/md/bcache/movinggc.c
++++ b/drivers/md/bcache/movinggc.c
+@@ -160,7 +160,7 @@ static void read_moving(struct cache_set *c)
+ 		moving_init(io);
+ 		bio = &io->bio.bio;
+ 
+-		bio_set_op_attrs(bio, REQ_OP_READ, 0);
++		bio->bi_opf = REQ_OP_READ;
+ 		bio->bi_end_io	= read_moving_endio;
+ 
+ 		if (bch_bio_alloc_pages(bio, GFP_KERNEL))
+diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
+index 3427555b0ccae4..39c7b607f8aad8 100644
+--- a/drivers/md/bcache/request.c
++++ b/drivers/md/bcache/request.c
+@@ -244,7 +244,7 @@ static void bch_data_insert_start(struct closure *cl)
+ 		trace_bcache_cache_insert(k);
+ 		bch_keylist_push(&op->insert_keys);
+ 
+-		bio_set_op_attrs(n, REQ_OP_WRITE, 0);
++		n->bi_opf = REQ_OP_WRITE;
+ 		bch_submit_bbio(n, op->c, k, 0);
+ 	} while (n != bio);
+ 
+diff --git a/drivers/md/bcache/writeback.c b/drivers/md/bcache/writeback.c
+index 0285b676e9834a..d4a5fc0650bb29 100644
+--- a/drivers/md/bcache/writeback.c
++++ b/drivers/md/bcache/writeback.c
+@@ -434,7 +434,7 @@ static void write_dirty(struct closure *cl)
+ 	 */
+ 	if (KEY_DIRTY(&w->key)) {
+ 		dirty_init(w);
+-		bio_set_op_attrs(&io->bio, REQ_OP_WRITE, 0);
++		io->bio.bi_opf = REQ_OP_WRITE;
+ 		io->bio.bi_iter.bi_sector = KEY_START(&w->key);
+ 		bio_set_dev(&io->bio, io->dc->bdev);
+ 		io->bio.bi_end_io	= dirty_endio;
+@@ -547,7 +547,7 @@ static void read_dirty(struct cached_dev *dc)
+ 			io->sequence    = sequence++;
+ 
+ 			dirty_init(w);
+-			bio_set_op_attrs(&io->bio, REQ_OP_READ, 0);
++			io->bio.bi_opf = REQ_OP_READ;
+ 			io->bio.bi_iter.bi_sector = PTR_OFFSET(&w->key, 0);
+ 			bio_set_dev(&io->bio, dc->disk.c->cache->bdev);
+ 			io->bio.bi_end_io	= read_dirty_endio;
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index e76c96c760a9b5..c2b5a537f5b8ad 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -410,7 +410,7 @@ static void end_discard(struct discard_op *op, int r)
+ 		 * need to wait for the chain to complete.
+ 		 */
+ 		bio_chain(op->bio, op->parent_bio);
+-		bio_set_op_attrs(op->bio, REQ_OP_DISCARD, 0);
++		op->bio->bi_opf = REQ_OP_DISCARD;
+ 		submit_bio(op->bio);
+ 	}
+ 
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index 58f705f4294801..68a9e2d9985b2f 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -1321,7 +1321,7 @@ static void raid1_read_request(struct mddev *mddev, struct bio *bio,
+ 	read_bio->bi_iter.bi_sector = r1_bio->sector +
+ 		mirror->rdev->data_offset;
+ 	read_bio->bi_end_io = raid1_end_read_request;
+-	bio_set_op_attrs(read_bio, op, do_sync);
++	read_bio->bi_opf = op | do_sync;
+ 	if (test_bit(FailFast, &mirror->rdev->flags) &&
+ 	    test_bit(R1BIO_FailFast, &r1_bio->state))
+ 	        read_bio->bi_opf |= MD_FAILFAST;
+@@ -2254,7 +2254,7 @@ static void sync_request_write(struct mddev *mddev, struct r1bio *r1_bio)
+ 			continue;
+ 		}
+ 
+-		bio_set_op_attrs(wbio, REQ_OP_WRITE, 0);
++		wbio->bi_opf = REQ_OP_WRITE;
+ 		if (test_bit(FailFast, &conf->mirrors[i].rdev->flags))
+ 			wbio->bi_opf |= MD_FAILFAST;
+ 
+@@ -2419,7 +2419,7 @@ static int narrow_write_error(struct r1bio *r1_bio, int i)
+ 					       GFP_NOIO, &mddev->bio_set);
+ 		}
+ 
+-		bio_set_op_attrs(wbio, REQ_OP_WRITE, 0);
++		wbio->bi_opf = REQ_OP_WRITE;
+ 		wbio->bi_iter.bi_sector = r1_bio->sector;
+ 		wbio->bi_iter.bi_size = r1_bio->sectors << 9;
+ 
+@@ -2770,7 +2770,7 @@ static sector_t raid1_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 			if (i < conf->raid_disks)
+ 				still_degraded = 1;
+ 		} else if (!test_bit(In_sync, &rdev->flags)) {
+-			bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
++			bio->bi_opf = REQ_OP_WRITE;
+ 			bio->bi_end_io = end_sync_write;
+ 			write_targets ++;
+ 		} else {
+@@ -2797,7 +2797,7 @@ static sector_t raid1_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 					if (disk < 0)
+ 						disk = i;
+ 				}
+-				bio_set_op_attrs(bio, REQ_OP_READ, 0);
++				bio->bi_opf = REQ_OP_READ;
+ 				bio->bi_end_io = end_sync_read;
+ 				read_targets++;
+ 			} else if (!test_bit(WriteErrorSeen, &rdev->flags) &&
+@@ -2809,7 +2809,7 @@ static sector_t raid1_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 				 * if we are doing resync or repair. Otherwise, leave
+ 				 * this device alone for this sync request.
+ 				 */
+-				bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
++				bio->bi_opf = REQ_OP_WRITE;
+ 				bio->bi_end_io = end_sync_write;
+ 				write_targets++;
+ 			}
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index 9a6503f5cb982e..6c66357f92f559 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -1254,7 +1254,7 @@ static void raid10_read_request(struct mddev *mddev, struct bio *bio,
+ 	read_bio->bi_iter.bi_sector = r10_bio->devs[slot].addr +
+ 		choose_data_offset(r10_bio, rdev);
+ 	read_bio->bi_end_io = raid10_end_read_request;
+-	bio_set_op_attrs(read_bio, op, do_sync);
++	read_bio->bi_opf = op | do_sync;
+ 	if (test_bit(FailFast, &rdev->flags) &&
+ 	    test_bit(R10BIO_FailFast, &r10_bio->state))
+ 	        read_bio->bi_opf |= MD_FAILFAST;
+@@ -1301,7 +1301,7 @@ static void raid10_write_one_disk(struct mddev *mddev, struct r10bio *r10_bio,
+ 	mbio->bi_iter.bi_sector	= (r10_bio->devs[n_copy].addr +
+ 				   choose_data_offset(r10_bio, rdev));
+ 	mbio->bi_end_io	= raid10_end_write_request;
+-	bio_set_op_attrs(mbio, op, do_sync | do_fua);
++	mbio->bi_opf = op | do_sync | do_fua;
+ 	if (!replacement && test_bit(FailFast,
+ 				     &conf->mirrors[devnum].rdev->flags)
+ 			 && enough(conf, devnum))
+@@ -2933,7 +2933,7 @@ static int narrow_write_error(struct r10bio *r10_bio, int i)
+ 		wsector = r10_bio->devs[i].addr + (sector - r10_bio->sector);
+ 		wbio->bi_iter.bi_sector = wsector +
+ 				   choose_data_offset(r10_bio, rdev);
+-		bio_set_op_attrs(wbio, REQ_OP_WRITE, 0);
++		wbio->bi_opf = REQ_OP_WRITE;
+ 
+ 		if (submit_bio_wait(wbio) < 0)
+ 			/* Failure! */
+@@ -3542,7 +3542,7 @@ static sector_t raid10_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 				bio->bi_next = biolist;
+ 				biolist = bio;
+ 				bio->bi_end_io = end_sync_read;
+-				bio_set_op_attrs(bio, REQ_OP_READ, 0);
++				bio->bi_opf = REQ_OP_READ;
+ 				if (test_bit(FailFast, &rdev->flags))
+ 					bio->bi_opf |= MD_FAILFAST;
+ 				from_addr = r10_bio->devs[j].addr;
+@@ -3567,7 +3567,7 @@ static sector_t raid10_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 					bio->bi_next = biolist;
+ 					biolist = bio;
+ 					bio->bi_end_io = end_sync_write;
+-					bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
++					bio->bi_opf = REQ_OP_WRITE;
+ 					bio->bi_iter.bi_sector = to_addr
+ 						+ mrdev->data_offset;
+ 					bio_set_dev(bio, mrdev->bdev);
+@@ -3588,7 +3588,7 @@ static sector_t raid10_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 				bio->bi_next = biolist;
+ 				biolist = bio;
+ 				bio->bi_end_io = end_sync_write;
+-				bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
++				bio->bi_opf = REQ_OP_WRITE;
+ 				bio->bi_iter.bi_sector = to_addr +
+ 					mreplace->data_offset;
+ 				bio_set_dev(bio, mreplace->bdev);
+@@ -3742,7 +3742,7 @@ static sector_t raid10_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 			bio->bi_next = biolist;
+ 			biolist = bio;
+ 			bio->bi_end_io = end_sync_read;
+-			bio_set_op_attrs(bio, REQ_OP_READ, 0);
++			bio->bi_opf = REQ_OP_READ;
+ 			if (test_bit(FailFast, &rdev->flags))
+ 				bio->bi_opf |= MD_FAILFAST;
+ 			bio->bi_iter.bi_sector = sector + rdev->data_offset;
+@@ -3764,7 +3764,7 @@ static sector_t raid10_sync_request(struct mddev *mddev, sector_t sector_nr,
+ 			bio->bi_next = biolist;
+ 			biolist = bio;
+ 			bio->bi_end_io = end_sync_write;
+-			bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
++			bio->bi_opf = REQ_OP_WRITE;
+ 			if (test_bit(FailFast, &rdev->flags))
+ 				bio->bi_opf |= MD_FAILFAST;
+ 			bio->bi_iter.bi_sector = sector + rdev->data_offset;
+@@ -4970,7 +4970,7 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr,
+ 		b->bi_iter.bi_sector = r10_bio->devs[s/2].addr +
+ 			rdev2->new_data_offset;
+ 		b->bi_end_io = end_reshape_write;
+-		bio_set_op_attrs(b, REQ_OP_WRITE, 0);
++		b->bi_opf = REQ_OP_WRITE;
+ 		b->bi_next = blist;
+ 		blist = b;
+ 	}
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index e0b098089ef2b7..99be590f952f6e 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -472,13 +472,6 @@ static inline enum req_op bio_op(const struct bio *bio)
+ 	return bio->bi_opf & REQ_OP_MASK;
+ }
+ 
+-/* obsolete, don't use in new code */
+-static inline void bio_set_op_attrs(struct bio *bio, enum req_op op,
+-				    blk_opf_t op_flags)
+-{
+-	bio->bi_opf = op | op_flags;
+-}
+-
+ static inline bool op_is_write(blk_opf_t op)
+ {
+ 	return !!(op & (__force blk_opf_t)1);
+-- 
+2.35.1
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
