@@ -4,84 +4,101 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C37F4C3A5A7
-	for <dm-devel@archiver.kernel.org>; Thu,  8 Dec 2022 14:07:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 85CD5C4167B
+	for <dm-devel@archiver.kernel.org>; Thu,  8 Dec 2022 17:14:55 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1670508451;
+	s=mimecast20190719; t=1670519694;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=sFIT1zz06wrr+Y311F/B78ocaYsQsvQTa+QD/XbTfl8=;
-	b=SE/9Qv1h5fztSp1tKP8MwmE6hllcgcx1wfBjydtvDF99GeS/ec11//vA0v9g4yta0C1nGC
-	V6RXKaTnTko9UxpCDNpMUC2C8fDBULbzub2krpK7D9zdtFL4+f5fhStxedtJwDxIqnaKpE
-	GZ+L+bWY/k355SmHKImyc0eYaAUfU/k=
+	bh=8/Ky+f6vl9DbIsrYfNeOmrRYVtJ6lSYbmqTAH15bLaA=;
+	b=Ar4r+X97Q3vhBJszxubcDse9WR3BcRHWANG5YYJS0n67KVCuisldrlWldwSAXWVpCVgu3M
+	a9R7RS8wqeIdI6SjqgjxBBr826JVQy8JKFjK/LgZa8BbEg5jkkVsspYo92cbQCb02eSOmd
+	y6M89elfM4mgqgn8bCUE+SRN+8BWFLc=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-623-i-IheJ3WN52eJ1jwajszUw-1; Thu, 08 Dec 2022 09:07:30 -0500
-X-MC-Unique: i-IheJ3WN52eJ1jwajszUw-1
+ us-mta-189-iXr3bH6dOzKN9lML0hL7qA-1; Thu, 08 Dec 2022 12:14:50 -0500
+X-MC-Unique: iXr3bH6dOzKN9lML0hL7qA-1
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 004E9801231;
-	Thu,  8 Dec 2022 14:07:28 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8C4CB101A54E;
+	Thu,  8 Dec 2022 17:14:48 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2324B1121331;
-	Thu,  8 Dec 2022 14:07:24 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D16B51121333;
+	Thu,  8 Dec 2022 17:14:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DE5141946A44;
-	Thu,  8 Dec 2022 14:07:23 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4D2B91947048;
+	Thu,  8 Dec 2022 17:14:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8F68F1946A41
- for <dm-devel@listman.corp.redhat.com>; Thu,  8 Dec 2022 14:07:22 +0000 (UTC)
+ ESMTP id CD33919465B1
+ for <dm-devel@listman.corp.redhat.com>; Wed,  7 Dec 2022 20:28:19 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4BECB40C2064; Thu,  8 Dec 2022 14:07:22 +0000 (UTC)
+ id A9F1342222; Wed,  7 Dec 2022 20:28:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 43D3640C2065
- for <dm-devel@redhat.com>; Thu,  8 Dec 2022 14:07:22 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A269342220
+ for <dm-devel@redhat.com>; Wed,  7 Dec 2022 20:28:19 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 292BE803533
- for <dm-devel@redhat.com>; Thu,  8 Dec 2022 14:07:22 +0000 (UTC)
-Received: from szxga03-in.huawei.com (szxga03-in.huawei.com
- [45.249.212.189]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-135-kJRhH2j8O9mNTTOJz-nvBQ-1; Thu, 08 Dec 2022 09:07:17 -0500
-X-MC-Unique: kJRhH2j8O9mNTTOJz-nvBQ-1
-Received: from kwepemm600013.china.huawei.com (unknown [172.30.72.54])
- by szxga03-in.huawei.com (SkyGuard) with ESMTP id 4NSbV36Xm6zJpCN;
- Thu,  8 Dec 2022 22:03:39 +0800 (CST)
-Received: from huawei.com (10.175.127.227) by kwepemm600013.china.huawei.com
- (7.193.23.68) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id 15.1.2375.31; Thu, 8 Dec
- 2022 22:07:11 +0800
-From: Zhihao Cheng <chengzhihao1@huawei.com>
-To: <snitzer@redhat.com>, <agk@redhat.com>, <snitzer@kernel.org>,
- <Martin.Wilck@suse.com>, <thornber@redhat.com>
-Date: Thu, 8 Dec 2022 22:28:02 +0800
-Message-ID: <20221208142802.1479048-1-chengzhihao1@huawei.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 829D32A59559
+ for <dm-devel@redhat.com>; Wed,  7 Dec 2022 20:28:19 +0000 (UTC)
+Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
+ [209.85.128.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-178-l_dOGxngPFSZisSSNp5ehQ-1; Wed, 07 Dec 2022 15:28:18 -0500
+X-MC-Unique: l_dOGxngPFSZisSSNp5ehQ-1
+Received: by mail-wm1-f69.google.com with SMTP id
+ ay19-20020a05600c1e1300b003cf758f1617so1273323wmb.5
+ for <dm-devel@redhat.com>; Wed, 07 Dec 2022 12:28:17 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=in-reply-to:content-disposition:mime-version:references:message-id
+ :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+ :message-id:reply-to;
+ bh=ERzjyp7zk5Z5+YVLaxlhiooylxoMa/YnIAQSVI50Phc=;
+ b=wsB0gcsA3cFNF6vD0/meX0pOT/hrX7xKg43GN7qjydytxaXEDDn8kngrpq5J/M24zR
+ Xkyse1DtAPLZAYHmCUnBJs4A84NT4OH4o96Qg9ZTCjYAjLBe0ZN/FfoBTugttWjJAsR6
+ G0jDTwRPVD3SYFzPaCRHfpZGQelTqfd7qOpGbLA4FRA23TaMxVv6H12gFS9TlbFkjYV7
+ 9w2SfpfZMICk/RJTEHQ11z7wBXZmSrIbHnK1j+Q/oobY5QtkZFPzbij6VdPJLy9SK/Xs
+ 7uJLPyc1JcPb20kvEjOa0aysv2G9af6hL5M7A3x6Zo0nCJ76POEYJ6AGUDsZC3heI7Yx
+ 3whg==
+X-Gm-Message-State: ANoB5plZcZmvZA0p5r/LTzFaMzpVEC9+4Drke6Io8nDnKFAyn+OGfApo
+ 0WHctGeCMU7cEHl1SfPYHD/Q7hHWDO2Ki2bwhqcUITUDQQb1DMRK72p9i6N7e1GVHZ+AtZIzkdT
+ xfCrZ90rBH5OafZc=
+X-Received: by 2002:adf:f98e:0:b0:242:324:ff88 with SMTP id
+ f14-20020adff98e000000b002420324ff88mr35473847wrr.81.1670444897080; 
+ Wed, 07 Dec 2022 12:28:17 -0800 (PST)
+X-Google-Smtp-Source: AA0mqf4QOq0RAPymVdkyXnh7/V2ZIzFLtZtJ+dwe3UW02/93b8NTVphp6L78PZAaWRCEXF7iho9Mtw==
+X-Received: by 2002:adf:f98e:0:b0:242:324:ff88 with SMTP id
+ f14-20020adff98e000000b002420324ff88mr35473829wrr.81.1670444896831; 
+ Wed, 07 Dec 2022 12:28:16 -0800 (PST)
+Received: from redhat.com ([2a02:14f:17a:1a4f:ce60:357c:370b:cc7e])
+ by smtp.gmail.com with ESMTPSA id
+ b12-20020a5d634c000000b00241e8d00b79sm25007953wrw.54.2022.12.07.12.28.12
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 07 Dec 2022 12:28:16 -0800 (PST)
+Date: Wed, 7 Dec 2022 15:28:10 -0500
+From: "Michael S. Tsirkin" <mst@redhat.com>
+To: Christoph Hellwig <hch@infradead.org>
+Message-ID: <20221207152116-mutt-send-email-mst@kernel.org>
+References: <20221205162035.2261037-1-alvaro.karsz@solid-run.com>
+ <Y5BCQ/9/uhXdu35W@infradead.org>
+ <20221207052001-mutt-send-email-mst@kernel.org>
+ <Y5C/4H7Ettg/DcRz@infradead.org>
 MIME-Version: 1.0
-X-Originating-IP: [10.175.127.227]
-X-ClientProxiedBy: dggems702-chm.china.huawei.com (10.3.19.179) To
- kwepemm600013.china.huawei.com (7.193.23.68)
-X-CFilter-Loop: Reflected
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [PATCH -next] dm thin: Use last transaction's pmd->root
- when commit failed
+In-Reply-To: <Y5C/4H7Ettg/DcRz@infradead.org>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Mailman-Approved-At: Thu, 08 Dec 2022 17:14:29 +0000
+Subject: Re: [dm-devel] [PATCH v3] virtio_blk: add VIRTIO_BLK_F_LIFETIME
+ feature support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -93,90 +110,45 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, chengzhihao1@huawei.com, linux-kernel@vger.kernel.org,
- yi.zhang@huawei.com
+Cc: Jens Axboe <axboe@kernel.dk>, linux-scsi@vger.kernel.org,
+ Alvaro Karsz <alvaro.karsz@solid-run.com>, Jason Wang <jasowang@redhat.com>,
+ linux-nvme@lists.infradead.org, virtualization@lists.linux-foundation.org,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Stefan Hajnoczi <stefanha@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Recently we found a softlock up problem in dm thin pool looking up btree
-caused by corrupted metadata:
- Kernel panic - not syncing: softlockup: hung tasks
- CPU: 7 PID: 2669225 Comm: kworker/u16:3
- Hardware name: QEMU Standard PC (i440FX + PIIX, 1996)
- Workqueue: dm-thin do_worker [dm_thin_pool]
- Call Trace:
-   <IRQ>
-   dump_stack+0x9c/0xd3
-   panic+0x35d/0x6b9
-   watchdog_timer_fn.cold+0x16/0x25
-   __run_hrtimer+0xa2/0x2d0
-   </IRQ>
-   RIP: 0010:__relink_lru+0x102/0x220 [dm_bufio]
-   __bufio_new+0x11f/0x4f0 [dm_bufio]
-   new_read+0xa3/0x1e0 [dm_bufio]
-   dm_bm_read_lock+0x33/0xd0 [dm_persistent_data]
-   ro_step+0x63/0x100 [dm_persistent_data]
-   btree_lookup_raw.constprop.0+0x44/0x220 [dm_persistent_data]
-   dm_btree_lookup+0x16f/0x210 [dm_persistent_data]
-   dm_thin_find_block+0x12c/0x210 [dm_thin_pool]
-   __process_bio_read_only+0xc5/0x400 [dm_thin_pool]
-   process_thin_deferred_bios+0x1a4/0x4a0 [dm_thin_pool]
-   process_one_work+0x3c5/0x730
+On Wed, Dec 07, 2022 at 08:31:28AM -0800, Christoph Hellwig wrote:
+> On Wed, Dec 07, 2022 at 05:21:48AM -0500, Michael S. Tsirkin wrote:
+> > Christoph you acked the spec patch adding this to virtio blk:
+> > 
+> > 	Still not a fan of the encoding, but at least it is properly documented
+> > 	now:
+> > 
+> > 	Acked-by: Christoph Hellwig <hch@lst.de>
+> > 
+> > Did you change your mind then? Or do you prefer a different encoding for
+> > the ioctl then? could you help sugesting what kind?
+> 
+> Well, it is good enough documented for a spec.  I don't think it is
+> a useful feature for Linux where virtio-blk is our minimum viable
+> paravirtualized block driver.
 
-Following process may generate a broken btree mixed with fresh and stale
-nodes, which could let dm thin trapped into an infinite loop while looking
-up data block:
- Transaction 1: pmd->root = A, A->B->C   // One path in btree
-                pmd->root = X, X->Y->Z   // Copy-up
- Transaction 2: X,Z is updated on disk, Y is written failed.
-                // Commit failed, dm thin becomes read-only.
-                process_bio_read_only
-		 dm_thin_find_block
-		  __find_block
-		   dm_btree_lookup(pmd->root)
-The pmd->root points to a broken btree, Y may contain stale node pointing
-to any block, for example X, which lets dm thin trapped into a dead loop
-while looking up Z.
+No idea what this means, sorry.  Now that's in the spec I expect (some)
+devices to implement it and if they do I see no reason not to expose the
+data to userspace.
 
-Fix it by setting pmd->root in __open_metadata(), so that dm thin will use
-last transaction's pmd->root if commit failed.
+Alvaro could you pls explain the use-case? Christoph has doubts that
+it's useful. Do you have a device implementing this?
 
-Fetch a reproducer in [Link].
-
-Linke: https://bugzilla.kernel.org/show_bug.cgi?id=216790
-Fixes: 991d9fa02da0 ("dm: add thin provisioning target")
-Signed-off-by: Zhihao Cheng <chengzhihao1@huawei.com>
----
- drivers/md/dm-thin-metadata.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
-
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index 1a62226ac34e..26c42ee183ed 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -724,6 +724,15 @@ static int __open_metadata(struct dm_pool_metadata *pmd)
- 		goto bad_cleanup_data_sm;
- 	}
- 
-+	/*
-+	 * For pool metadata opening process, root setting is redundant
-+	 * because it will be set again in __begin_transaction(). But dm
-+	 * pool aborting process really needs to get last transaction's
-+	 * root in case accessing broken btree.
-+	 */
-+	pmd->root = le64_to_cpu(disk_super->data_mapping_root);
-+	pmd->details_root = le64_to_cpu(disk_super->device_details_root);
-+
- 	__setup_btree_details(pmd);
- 	dm_bm_unlock(sblock);
- 
 -- 
-2.31.1
+MST
 
 --
 dm-devel mailing list
