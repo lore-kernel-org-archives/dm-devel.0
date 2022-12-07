@@ -1,94 +1,97 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2BE7DC47089
-	for <dm-devel@archiver.kernel.org>; Wed,  7 Dec 2022 17:09:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 71D62C63705
+	for <dm-devel@archiver.kernel.org>; Wed,  7 Dec 2022 17:22:23 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1670432943;
+	s=mimecast20190719; t=1670433742;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Fywwj2NwYt99gK+R39vlN5GJToQSafOAt91TbtcBgSY=;
-	b=XsGm/lIjAnUWzAFGTQSR8UcDxHK434IE4uxHrdA8keB1jbQvekyjOf3Xzf3uVNVDw+UNHb
-	+JGqQgvYFQUMddy2tg+8AnwlFQsx7HHlSNIXYQbpCtG23rbZrBfgTtUccIbKsexeVd/qLF
-	edq25HVLUfXheC0FKJzC9gA4oYcN70E=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=FmMuoSNuM2bsOMYjF7IPYQN9kOfxyQ/IZlkVulEx1E8=;
+	b=UgdSJHcYF2zR4BIfr7oxhDxesP+5l0nzQCMoyz6d2c5mTfKrFUvWJ+bbdkQLqrKVJcdlVu
+	uI0E6RUgHYDCx1UPzzvYIyctimZF6Rd7o0JAOBEDjDK+kxIaxpUmxKF9rHGe4MWjLmbmKA
+	2k+7RlCYKJnZU8FvvgfJ42YMjdbxXKQ=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-150-DV9jAgCUMwqCuCFxh_aueg-1; Wed, 07 Dec 2022 12:08:59 -0500
-X-MC-Unique: DV9jAgCUMwqCuCFxh_aueg-1
+ us-mta-453-hO54pdjdPMmQbnGbJ0UReg-1; Wed, 07 Dec 2022 12:22:18 -0500
+X-MC-Unique: hO54pdjdPMmQbnGbJ0UReg-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BDA76185A7A3;
-	Wed,  7 Dec 2022 17:08:56 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F10512999B35;
+	Wed,  7 Dec 2022 17:22:16 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6A05839D7C;
-	Wed,  7 Dec 2022 17:08:56 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9FBA839D7C;
+	Wed,  7 Dec 2022 17:22:16 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4B66D19465B9;
-	Wed,  7 Dec 2022 17:08:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B0EDB19465B9;
+	Wed,  7 Dec 2022 17:22:15 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id ADACB19465B1
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Dec 2022 17:08:55 +0000 (UTC)
+ ESMTP id 0A7D919465B1
+ for <dm-devel@listman.corp.redhat.com>; Wed,  7 Dec 2022 17:22:14 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9EE95492B05; Wed,  7 Dec 2022 17:08:55 +0000 (UTC)
+ id BCA9F1415102; Wed,  7 Dec 2022 17:22:14 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 962E0492B04
- for <dm-devel@redhat.com>; Wed,  7 Dec 2022 17:08:55 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7A5A485A588
- for <dm-devel@redhat.com>; Wed,  7 Dec 2022 17:08:55 +0000 (UTC)
-Received: from mail-io1-f49.google.com (mail-io1-f49.google.com
- [209.85.166.49]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B52481415100
+ for <dm-devel@redhat.com>; Wed,  7 Dec 2022 17:22:14 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 99FD486C14E
+ for <dm-devel@redhat.com>; Wed,  7 Dec 2022 17:22:14 +0000 (UTC)
+Received: from mail-io1-f52.google.com (mail-io1-f52.google.com
+ [209.85.166.52]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-240-EmtZJ4KtPWiP5O0VAaIsGQ-1; Wed, 07 Dec 2022 12:08:53 -0500
-X-MC-Unique: EmtZJ4KtPWiP5O0VAaIsGQ-1
-Received: by mail-io1-f49.google.com with SMTP id e189so12178806iof.1
- for <dm-devel@redhat.com>; Wed, 07 Dec 2022 09:08:53 -0800 (PST)
+ us-mta-629-S4ExOQj3Mv2oFat-8HtxeQ-2; Wed, 07 Dec 2022 12:22:13 -0500
+X-MC-Unique: S4ExOQj3Mv2oFat-8HtxeQ-2
+Received: by mail-io1-f52.google.com with SMTP id q190so7077384iod.10
+ for <dm-devel@redhat.com>; Wed, 07 Dec 2022 09:22:12 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=content-transfer-encoding:in-reply-to:from:content-language
- :references:cc:to:subject:user-agent:mime-version:date:message-id
+ h=content-transfer-encoding:in-reply-to:from:references:cc:to
+ :content-language:subject:user-agent:mime-version:date:message-id
  :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=+r3z2TzChBc0Vs/D1sJ6f4Z6Cq8sqK5Sifftb2ph/uA=;
- b=e7ipYMNqPH4zF6+uIps8Edw7oYZVdGGXg15/RwGdySV1TJnUFaHP6dE9Msp3Mf9nbz
- /citvbPFz4PFWbakK3TUielga0chCvA+Kv5MgdBEPb3M+lOzB16bUwdEewt36oHKSuL6
- i3yzReAjWQf8nFfG7oXC+qhdECTqIzVTza0kPaWmw8k2iYzGHBqrkkaUs6MfgH0evANK
- gE96TLAF2IdCdQMmPeqwhaaBLyY2uwM2VXuj2CfZHdtAgjMKYHC8fxOvvk8YyYhM+C15
- +Cv/zj4KPuJEmpgMnynN/18ER/cva+aCjZvuQHctZd5Sk6mKr2NQEhCEASdN6nQPm85x
- TfNA==
-X-Gm-Message-State: ANoB5pll3hXSkytVHNBBuWY26T1JS5AGHOkyvpKnhEadlegAep1mNtMp
- eVKuRNuRQ8WuHvufopZJm/bkFQ==
-X-Google-Smtp-Source: AA0mqf7yLejbRNfqMUu3ilEvsYdDj7YhVkPipELjA6VqWKNVXZJlTdAqiTcfQmriCKmlYB7qULxDWg==
-X-Received: by 2002:a05:6638:1124:b0:38a:171a:dee with SMTP id
- f4-20020a056638112400b0038a171a0deemr12454949jar.292.1670432932906; 
- Wed, 07 Dec 2022 09:08:52 -0800 (PST)
+ bh=EpTDLOhW0V3+1aR8vlaV9Hai3rR7JGPJvFehDEM1z0k=;
+ b=X5VbyxiYTAlsV+cn05RmP1Ksuz6LkoZIWsoUzf32kaAG/oJm+O0tS+T9BhAKX64Vbi
+ A6K9e/aqHfyGFTxAcEc3c/8ARzVG/f14gDFzIJHVgA2ugSRCNlyjcFCvbuRIk7A7YXLT
+ dTYzckXSCzFVCzbeVkbwXk4ON7F2PUcRCLB9wSIjQhr3+XMbJOUiO3cDiD+2oXmHptBR
+ /7S/s1Lxfq6IlxSz7Vpce7QezmiwcVEpOwTj7k9yfxCzPDiHjJImw4gGckGfbkjTxypq
+ e3/EyMAtq0tK6wDOSGeoQYxYGU28o2xgR2vwma2O2Et2Gxm+w2ss1NEf95nGG8Y7FUD6
+ BqQw==
+X-Gm-Message-State: ANoB5plrswtoNYnV634V1Dg3MmqVmjPeVe/pIkpRvgK26iyUEZShCGDk
+ 1/HyRYLh8ooMC6Vw1Xr/k4kRjw==
+X-Google-Smtp-Source: AA0mqf7/gBf7/XEEClF7Gq7hMc0QmhQHunFYc2f4SCWfcKxA9tFoQkk2RXV+JEDjVFWOG2u7WxQZig==
+X-Received: by 2002:a05:6602:4296:b0:6e0:1464:a7d7 with SMTP id
+ cd22-20020a056602429600b006e01464a7d7mr5843517iob.60.1670433732410; 
+ Wed, 07 Dec 2022 09:22:12 -0800 (PST)
 Received: from [192.168.1.94] ([207.135.234.126])
  by smtp.gmail.com with ESMTPSA id
- o27-20020a02a1db000000b0038a0c2ae99bsm7327723jah.18.2022.12.07.09.08.51
+ q34-20020a056638346200b0038a44dbbd8fsm3597816jav.123.2022.12.07.09.22.10
  (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Wed, 07 Dec 2022 09:08:52 -0800 (PST)
-Message-ID: <eaf4f9a8-dfc6-402e-4a1a-732034d1512d@kernel.dk>
-Date: Wed, 7 Dec 2022 10:08:50 -0700
+ Wed, 07 Dec 2022 09:22:11 -0800 (PST)
+Message-ID: <b8deb6fa-8a09-c1af-278f-24e66afe367d@kernel.dk>
+Date: Wed, 7 Dec 2022 10:22:09 -0700
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux aarch64; rv:102.0) Gecko/20100101
  Thunderbird/102.5.1
-To: Gulam Mohamed <gulam.mohamed@oracle.com>, linux-block@vger.kernel.org
+To: Yu Kuai <yukuai1@huaweicloud.com>, Ming Lei <ming.lei@redhat.com>
 References: <20221206181536.13333-1-gulam.mohamed@oracle.com>
+ <936a498b-19fe-36d5-ff32-817f153e57e3@huaweicloud.com>
+ <Y5AFX4sxLRLV4uSt@T590>
+ <aadfc6d2-ad04-279c-a1d6-7f634d0b2c99@huaweicloud.com>
 From: Jens Axboe <axboe@kernel.dk>
-In-Reply-To: <20221206181536.13333-1-gulam.mohamed@oracle.com>
+In-Reply-To: <aadfc6d2-ad04-279c-a1d6-7f634d0b2c99@huaweicloud.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -96,7 +99,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 Subject: Re: [dm-devel] [RFC] block: Change the granularity of io ticks from
  ms to ns
 X-BeenThere: dm-devel@redhat.com
@@ -110,51 +113,57 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: nvdimm@lists.linux.dev, philipp.reisner@linbit.com, song@kernel.org,
+Cc: nvdimm@lists.linux.dev, linux-kernel@vger.kernel.org, song@kernel.org,
  dm-devel@redhat.com, ira.weiny@intel.com, agk@redhat.com,
- drbd-dev@lists.linbit.com, dave.jiang@intel.com, minchan@kernel.org,
- vishal.l.verma@intel.com, kent.overstreet@gmail.com, ngupta@vflare.org,
- kch@nvidia.com, konrad.wilk@oracle.com, snitzer@kernel.org, colyli@suse.de,
- linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org,
- christoph.boehmwalder@linbit.com, dan.j.williams@intel.com,
- martin.petersen@oracle.com, linux-kernel@vger.kernel.org,
- junxiao.bi@oracle.com, senozhatsky@chromium.org, lars.ellenberg@linbit.com
+ drbd-dev@lists.linbit.com, dave.jiang@intel.com,
+ christoph.boehmwalder@linbit.com, vishal.l.verma@intel.com,
+ konrad.wilk@oracle.com, "yukuai \(C\)" <yukuai3@huawei.com>,
+ kent.overstreet@gmail.com, ngupta@vflare.org, kch@nvidia.com,
+ senozhatsky@chromium.org, Gulam Mohamed <gulam.mohamed@oracle.com>,
+ snitzer@kernel.org, colyli@suse.de, linux-block@vger.kernel.org,
+ linux-bcache@vger.kernel.org, dan.j.williams@intel.com,
+ linux-raid@vger.kernel.org, martin.petersen@oracle.com,
+ philipp.reisner@linbit.com, junxiao.bi@oracle.com, minchan@kernel.org,
+ lars.ellenberg@linbit.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On 12/6/22 11:15?AM, Gulam Mohamed wrote:
-> Use ktime to change the granularity of IO accounting in block layer from
-> milli-seconds to nano-seconds to get the proper latency values for the
-> devices whose latency is in micro-seconds. After changing the granularity
-> to nano-seconds the iostat command, which was showing incorrect values for
-> %util, is now showing correct values.
-> 
-> We did not work on the patch to drop the logic for
-> STAT_PRECISE_TIMESTAMPS yet. Will do it if this patch is ok.
-> 
-> The iostat command was run after starting the fio with following command
-> on an NVME disk. For the same fio command, the iostat %util was showing
-> ~100% for the disks whose latencies are in the range of microseconds.
-> With the kernel changes (granularity to nano-seconds), the %util was
-> showing correct values. Following are the details of the test and their
-> output:
-
-As mentioned, this will most likely have a substantial performance
-impact. I'd test it, but your patch is nowhere near applying to the
-current block tree. Please resend it against for-6.2/block so it can
-get tested.
-
--- 
-Jens Axboe
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gMTIvNy8yMiA2OjA54oCvQU0sIFl1IEt1YWkgd3JvdGU6Cj4gSGksCj4gCj4g5ZyoIDIwMjIv
+MTIvMDcgMTE6MTUsIE1pbmcgTGVpIOWGmemBkzoKPj4gT24gV2VkLCBEZWMgMDcsIDIwMjIgYXQg
+MTA6MTk6MDhBTSArMDgwMCwgWXUgS3VhaSB3cm90ZToKPj4+IEhpLAo+Pj4KPj4+IOWcqCAyMDIy
+LzEyLzA3IDI6MTUsIEd1bGFtIE1vaGFtZWQg5YaZ6YGTOgo+Pj4+IFVzZSBrdGltZSB0byBjaGFu
+Z2UgdGhlIGdyYW51bGFyaXR5IG9mIElPIGFjY291bnRpbmcgaW4gYmxvY2sgbGF5ZXIgZnJvbQo+
+Pj4+IG1pbGxpLXNlY29uZHMgdG8gbmFuby1zZWNvbmRzIHRvIGdldCB0aGUgcHJvcGVyIGxhdGVu
+Y3kgdmFsdWVzIGZvciB0aGUKPj4+PiBkZXZpY2VzIHdob3NlIGxhdGVuY3kgaXMgaW4gbWljcm8t
+c2Vjb25kcy4gQWZ0ZXIgY2hhbmdpbmcgdGhlIGdyYW51bGFyaXR5Cj4+Pj4gdG8gbmFuby1zZWNv
+bmRzIHRoZSBpb3N0YXQgY29tbWFuZCwgd2hpY2ggd2FzIHNob3dpbmcgaW5jb3JyZWN0IHZhbHVl
+cyBmb3IKPj4+PiAldXRpbCwgaXMgbm93IHNob3dpbmcgY29ycmVjdCB2YWx1ZXMuCj4+Pgo+Pj4g
+VGhpcyBwYXRjaCBkaWRuJ3QgY29ycmVjdCB0aGUgY291bnRpbmcgb2YgaW9fdGlja3MsIGp1c3Qg
+bWFrZSB0aGUKPj4+IGVycm9yIGFjY291bnRpbmcgZnJvbSBqaWZmaWVzKG1zKSB0byBucy4gVGhl
+IHByb2JsZW0gdGhhdCB1dGlsIGNhbiBiZQo+Pj4gc21hbGxlciBvciBsYXJnZXIgc3RpbGwgZXhp
+c3QuCj4+Cj4+IEFncmVlLgo+Pgo+Pj4KPj4+IEhvd2V2ZXIsIEkgdGhpbmsgdGhpcyBjaGFuZ2Ug
+bWFrZSBzZW5zZSBjb25zaWRlciB0aGF0IGVycm9yIG1hcmdpbiBpcwo+Pj4gbXVjaCBzbWFsbGVy
+LCBhbmQgcGVyZm9ybWFuY2Ugb3ZlcmhlYWQgc2hvdWxkIGJlIG1pbmltdW0uCj4+Pgo+Pj4gSGks
+IE1pbmcsIGhvdyBkbyB5b3UgdGhpbms/Cj4+Cj4+IEkgcmVtZW1iZXJlZCB0aGF0IGt0aW1lX2dl
+dCgpIGhhcyBub24tbmVnbGlnaWJsZSBvdmVyaGVhZCwgaXMgdGhlcmUgYW55Cj4+IHRlc3QgZGF0
+YShpb3BzL2NwdSB1dGlsaXphdGlvbikgd2hlbiBydW5uaW5nIGZpbyBvciB0L2lvX3VyaW5nIG9u
+Cj4+IG51bGxfYmxrIHdpdGggdGhpcyBwYXRjaD8KPiAKPiBZZXMsIHRlc3Rpbmcgd2l0aCBudWxs
+X2JsayBpcyBuZWNlc3NhcnksIHdlIGRvbid0IHdhbnQgYW55IHBlcmZvcm1hbmNlCj4gcmVncmVz
+c2lvbi4KCm51bGxfYmxrIGlzIGZpbmUgYXMgYSBzdWJzdGl0dXRlLCBidXQgSSdkIG11Y2ggcmF0
+aGVyIHJ1biB0aGlzIG9uIG15CnRlc3QgYmVuY2ggd2l0aCBhY3R1YWwgSU8gYW5kIGRldmljZXMu
+Cgo+IEJUVywgSSB0aG91Z2h0IGl0J3MgZmluZSBiZWNhdXNlIGl0J3MgYWxyZWFkeSB1c2VkIGZv
+ciB0cmFja2luZyBpbwo+IGxhdGVuY3kuCgpSZWFkaW5nIGEgbnNlYyB0aW1lc3RhbXAgaXMgYSBM
+T1QgbW9yZSBleHBlbnNpdmUgdGhhbiByZWFkaW5nIGppZmZpZXMsCndoaWNoIGlzIGVzc2VudGlh
+bGx5IGZyZWUuIElmIHlvdSBsb29rIGF0IHRoZSBhbW91bnQgb2Ygd29yayB0aGF0J3MKZ29uZSBp
+bnRvIG1pbmltaXppbmcga3RpbWVfZ2V0KCkgZm9yIHRoZSBmYXN0IHBhdGggaW4gdGhlIElPIHN0
+YWNrLAp0aGVuIHRoYXQncyBhIHRlc3RhbWVudCB0byB0aGF0LgoKU28gdGhhdCdzIGEgdmVyeSBi
+YWQgYXNzdW1wdGlvbiwgYW5kIGRlZmluaXRlbHkgd3JvbmcuCgotLSAKSmVucyBBeGJvZQoKCi0t
+CmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1h
+bi5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
 
