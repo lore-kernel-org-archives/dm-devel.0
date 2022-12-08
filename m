@@ -1,111 +1,94 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 81A8AC4332F
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E3E4CC04FDE
 	for <dm-devel@archiver.kernel.org>; Thu,  8 Dec 2022 17:14:55 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1670519694;
+	s=mimecast20190719; t=1670519695;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=fIsXl1KqOYNJN2v+okpNSgY4CKMaI6al0i1HlSjsI+Y=;
-	b=L2A6+CxXr6NKwfwTJxMkAH5bhWyKm8AmwEHtsEKdnbc1hT5GPpvb3NNlMrBCia1ehjizEE
-	uSTJ72JcEqrSbD3lpWWAPIqbqABq9632WsIw2KUEv9eS0kyl9AM288Ym8+69TfK6Ha8Orc
-	+egujrJCFScjsWjJNIrbkZz3pOqugsM=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=0DS4q0VnRfvhAn/W8CgLtaepcE/oxT1w0X9BY6fk+9Q=;
+	b=W3cG8gfsss2Cxrg/yq/qVH3kvs6iXkrVeyLXnbvWGuAua2crQXWgDXGijOCUEJgXnn+S3d
+	aQY6/gzNNgc8Q+izhoTtBgceuXJOqUwzmdqTVoHek5F1OBK6jU70WJ4g65LPGH71s3klnW
+	LcGeErPGUrVlnpOrq1ze5V9r8LPNQS4=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-395-n0YNEJCHOMaBy8D23BoIKA-1; Thu, 08 Dec 2022 12:14:51 -0500
-X-MC-Unique: n0YNEJCHOMaBy8D23BoIKA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-252-Ird6GJMmNT-4yiwU38zOjA-1; Thu, 08 Dec 2022 12:14:50 -0500
+X-MC-Unique: Ird6GJMmNT-4yiwU38zOjA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8E410803B38;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8CB593810D2D;
 	Thu,  8 Dec 2022 17:14:48 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1AA7217582;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E550C40C6EC2;
 	Thu,  8 Dec 2022 17:14:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1DF151946A44;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 52548194704B;
 	Thu,  8 Dec 2022 17:14:31 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1C7AB19465B1
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Dec 2022 22:32:32 +0000 (UTC)
+ ESMTP id 3E5DF1946A41
+ for <dm-devel@listman.corp.redhat.com>; Thu,  8 Dec 2022 16:53:23 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0858A422A9; Wed,  7 Dec 2022 22:32:32 +0000 (UTC)
+ id 1B7A01401C35; Thu,  8 Dec 2022 16:53:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F34B342220
- for <dm-devel@redhat.com>; Wed,  7 Dec 2022 22:32:31 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 13E94140EBF5
+ for <dm-devel@redhat.com>; Thu,  8 Dec 2022 16:53:23 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CE8E286C044
- for <dm-devel@redhat.com>; Wed,  7 Dec 2022 22:32:31 +0000 (UTC)
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
- [205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-152-AqnLPhQcMhySxG90xm-h7A-1; Wed, 07 Dec 2022 17:32:26 -0500
-X-MC-Unique: AqnLPhQcMhySxG90xm-h7A-1
-Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id
- 2B7LwlWc000925; Wed, 7 Dec 2022 22:32:10 GMT
-Received: from phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com
- (phxpaimrmta03.appoci.oracle.com [138.1.37.129])
- by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3maudusj21-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Wed, 07 Dec 2022 22:32:09 +0000
-Received: from pps.filterd
- (phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
- by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (8.17.1.5/8.17.1.5)
- with ESMTP id 2B7L2sc7021655; Wed, 7 Dec 2022 22:32:08 GMT
-Received: from pps.reinject (localhost [127.0.0.1])
- by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id
- 3maa8gk19s-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Wed, 07 Dec 2022 22:32:08 +0000
-Received: from phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com
- (phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
- by pps.reinject (8.17.1.5/8.17.1.5) with ESMTP id 2B7MW751026134;
- Wed, 7 Dec 2022 22:32:07 GMT
-Received: from bm-iostat-test-2.osdevelopmeniad.oraclevcn.com
- (bm-iostat-test-2.allregionaliads.osdevelopmeniad.oraclevcn.com
- [100.100.255.177])
- by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTP id
- 3maa8gk18a-1; Wed, 07 Dec 2022 22:32:07 +0000
-From: Gulam Mohamed <gulam.mohamed@oracle.com>
-To: linux-block@vger.kernel.org
-Date: Wed,  7 Dec 2022 22:32:04 +0000
-Message-Id: <20221207223204.22459-1-gulam.mohamed@oracle.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EBC961C087AA
+ for <dm-devel@redhat.com>; Thu,  8 Dec 2022 16:53:22 +0000 (UTC)
+Received: from mail-pj1-f71.google.com (mail-pj1-f71.google.com
+ [209.85.216.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-346-4HDAUWsOMqmpSh2U25XNZQ-1; Thu, 08 Dec 2022 11:53:21 -0500
+X-MC-Unique: 4HDAUWsOMqmpSh2U25XNZQ-1
+Received: by mail-pj1-f71.google.com with SMTP id
+ z4-20020a17090ab10400b002195a146546so4349273pjq.9
+ for <dm-devel@redhat.com>; Thu, 08 Dec 2022 08:53:21 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=cc:to:subject:message-id:date:from:in-reply-to:references
+ :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=qJB360zHyUcy87sHi/i61uIsDvL5rAG8yxTJu83Q5tc=;
+ b=c0Mzg/D8ttKZZ27lL0UvRil6lbYL5ySZuwLXOpKV6TyApAb4PHtPmVIcyQ/SbreiRi
+ 61TVvis5u5YaLkasFc5EWg7JuEZWacrZXWBt8RQ/icsMl48u47Q2mFfG+OPZibK5Gp1X
+ EI6kuvXr4rkWzL7iZNyeZXPFAHkpaDlTyBlF4t/mT/lPFhOLwBvSa0aVpxC31AC6uZ1r
+ zlJQSc/bytNnMCNTajp4Rx/gkm49JXeNKnwZGcMhNA/w0wYxzX2VtnZ/TNx890b/jtkT
+ hMytuJf6yzF1slDfo5xPFHZJw/D0Png5zGoKzHBJEfySmwAS3bjwe8Pf0yowpUeZv0CU
+ FZ2Q==
+X-Gm-Message-State: ANoB5pkYyD5oTsncyU1yMEpkUWX0A/0/XtMV8wvKPDkirt+JPjmGy8fG
+ mE27f2APMLgFW1H5yfL5hNTqGPpuzEd/C+yC9PZf8XiH3AjsEKOSgkQM6quaNWE9RgOnVVdHBR5
+ RX+hNVcg8TxD7LEDHMH4i+kTLlR4JB8U=
+X-Received: by 2002:a63:4742:0:b0:478:cd7d:3f55 with SMTP id
+ w2-20020a634742000000b00478cd7d3f55mr12615304pgk.624.1670518400379; 
+ Thu, 08 Dec 2022 08:53:20 -0800 (PST)
+X-Google-Smtp-Source: AA0mqf4bBKmuHohmEgR5LRdXgjAiKfTnGo3qgiULF3VSF1cfH43kup8tB0AkKaVJsdh4rg1MbUACHuaLzN1HSMzqAKQ=
+X-Received: by 2002:a63:4742:0:b0:478:cd7d:3f55 with SMTP id
+ w2-20020a634742000000b00478cd7d3f55mr12615297pgk.624.1670518400123; Thu, 08
+ Dec 2022 08:53:20 -0800 (PST)
 MIME-Version: 1.0
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.205,Aquarius:18.0.923,Hydra:6.0.545,FMLib:17.11.122.1
- definitions=2022-12-07_11,2022-12-07_01,2022-06-22_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 mlxlogscore=999
- bulkscore=0
- suspectscore=0 phishscore=0 malwarescore=0 mlxscore=0 spamscore=0
- adultscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.12.0-2210170000 definitions=main-2212070190
-X-Proofpoint-ORIG-GUID: C6f5vW5EqGc79MVYXDqnxbthtxPCKO1U
-X-Proofpoint-GUID: C6f5vW5EqGc79MVYXDqnxbthtxPCKO1U
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+References: <20221208142802.1479048-1-chengzhihao1@huawei.com>
+In-Reply-To: <20221208142802.1479048-1-chengzhihao1@huawei.com>
+From: Joe Thornber <thornber@redhat.com>
+Date: Thu, 8 Dec 2022 16:53:09 +0000
+Message-ID: <CAJ0trDYX1vaY81JYuwxL417o1pzk_qo0X52h=LF-k=P=YUp19Q@mail.gmail.com>
+To: Zhihao Cheng <chengzhihao1@huawei.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mailman-Approved-At: Thu, 08 Dec 2022 17:14:29 +0000
-Subject: [dm-devel] [RFC for-6.2/block V2] block: Change the granularity of
- io ticks from ms to ns
+Subject: Re: [dm-devel] [PATCH -next] dm thin: Use last transaction's
+ pmd->root when commit failed
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -117,580 +100,227 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: nvdimm@lists.linux.dev, linux-kernel@vger.kernel.org, song@kernel.org,
- dm-devel@redhat.com, ira.weiny@intel.com, agk@redhat.com,
- drbd-dev@lists.linbit.com, dave.jiang@intel.com,
- christoph.boehmwalder@linbit.com, vishal.l.verma@intel.com,
- konrad.wilk@oracle.com, joe.jin@oracle.com, kent.overstreet@gmail.com,
- ngupta@vflare.org, kch@nvidia.com, senozhatsky@chromium.org,
- gulam.mohamed@oracle.com, snitzer@kernel.org, colyli@suse.de,
- linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org,
- dan.j.williams@intel.com, axboe@kernel.dk, martin.petersen@oracle.com,
- philipp.reisner@linbit.com, junxiao.bi@oracle.com, minchan@kernel.org,
- lars.ellenberg@linbit.com
+Cc: snitzer@redhat.com, yi.zhang@huawei.com, snitzer@kernel.org,
+ linux-kernel@vger.kernel.org, dm-devel@redhat.com, Martin.Wilck@suse.com,
+ agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; boundary="===============2625619848175312110=="
+
+--===============2625619848175312110==
+Content-Type: multipart/alternative; boundary="000000000000d4a37905ef53dfa0"
+
+--000000000000d4a37905ef53dfa0
+Content-Type: text/plain; charset="UTF-8"
+
+Acked-by: Joe Thornber <ejt@redhat.com>
+
+On Thu, Dec 8, 2022 at 2:07 PM Zhihao Cheng <chengzhihao1@huawei.com> wrote:
+
+> Recently we found a softlock up problem in dm thin pool looking up btree
+> caused by corrupted metadata:
+>  Kernel panic - not syncing: softlockup: hung tasks
+>  CPU: 7 PID: 2669225 Comm: kworker/u16:3
+>  Hardware name: QEMU Standard PC (i440FX + PIIX, 1996)
+>  Workqueue: dm-thin do_worker [dm_thin_pool]
+>  Call Trace:
+>    <IRQ>
+>    dump_stack+0x9c/0xd3
+>    panic+0x35d/0x6b9
+>    watchdog_timer_fn.cold+0x16/0x25
+>    __run_hrtimer+0xa2/0x2d0
+>    </IRQ>
+>    RIP: 0010:__relink_lru+0x102/0x220 [dm_bufio]
+>    __bufio_new+0x11f/0x4f0 [dm_bufio]
+>    new_read+0xa3/0x1e0 [dm_bufio]
+>    dm_bm_read_lock+0x33/0xd0 [dm_persistent_data]
+>    ro_step+0x63/0x100 [dm_persistent_data]
+>    btree_lookup_raw.constprop.0+0x44/0x220 [dm_persistent_data]
+>    dm_btree_lookup+0x16f/0x210 [dm_persistent_data]
+>    dm_thin_find_block+0x12c/0x210 [dm_thin_pool]
+>    __process_bio_read_only+0xc5/0x400 [dm_thin_pool]
+>    process_thin_deferred_bios+0x1a4/0x4a0 [dm_thin_pool]
+>    process_one_work+0x3c5/0x730
+>
+> Following process may generate a broken btree mixed with fresh and stale
+> nodes, which could let dm thin trapped into an infinite loop while looking
+> up data block:
+>  Transaction 1: pmd->root = A, A->B->C   // One path in btree
+>                 pmd->root = X, X->Y->Z   // Copy-up
+>  Transaction 2: X,Z is updated on disk, Y is written failed.
+>                 // Commit failed, dm thin becomes read-only.
+>                 process_bio_read_only
+>                  dm_thin_find_block
+>                   __find_block
+>                    dm_btree_lookup(pmd->root)
+> The pmd->root points to a broken btree, Y may contain stale node pointing
+> to any block, for example X, which lets dm thin trapped into a dead loop
+> while looking up Z.
+>
+> Fix it by setting pmd->root in __open_metadata(), so that dm thin will use
+> last transaction's pmd->root if commit failed.
+>
+> Fetch a reproducer in [Link].
+>
+> Linke: https://bugzilla.kernel.org/show_bug.cgi?id=216790
+> Fixes: 991d9fa02da0 ("dm: add thin provisioning target")
+> Signed-off-by: Zhihao Cheng <chengzhihao1@huawei.com>
+> ---
+>  drivers/md/dm-thin-metadata.c | 9 +++++++++
+>  1 file changed, 9 insertions(+)
+>
+> diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+> index 1a62226ac34e..26c42ee183ed 100644
+> --- a/drivers/md/dm-thin-metadata.c
+> +++ b/drivers/md/dm-thin-metadata.c
+> @@ -724,6 +724,15 @@ static int __open_metadata(struct dm_pool_metadata
+> *pmd)
+>                 goto bad_cleanup_data_sm;
+>         }
+>
+> +       /*
+> +        * For pool metadata opening process, root setting is redundant
+> +        * because it will be set again in __begin_transaction(). But dm
+> +        * pool aborting process really needs to get last transaction's
+> +        * root in case accessing broken btree.
+> +        */
+> +       pmd->root = le64_to_cpu(disk_super->data_mapping_root);
+> +       pmd->details_root = le64_to_cpu(disk_super->device_details_root);
+> +
+>         __setup_btree_details(pmd);
+>         dm_bm_unlock(sblock);
+>
+> --
+> 2.31.1
+>
+>
+
+--000000000000d4a37905ef53dfa0
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Acked-by: Joe Thornber &lt;<a href=3D"mailto:ejt@redhat.co=
+m">ejt@redhat.com</a>&gt;</div><br><div class=3D"gmail_quote"><div dir=3D"l=
+tr" class=3D"gmail_attr">On Thu, Dec 8, 2022 at 2:07 PM Zhihao Cheng &lt;<a=
+ href=3D"mailto:chengzhihao1@huawei.com">chengzhihao1@huawei.com</a>&gt; wr=
+ote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px=
+ 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">Recently we=
+ found a softlock up problem in dm thin pool looking up btree<br>
+caused by corrupted metadata:<br>
+=C2=A0Kernel panic - not syncing: softlockup: hung tasks<br>
+=C2=A0CPU: 7 PID: 2669225 Comm: kworker/u16:3<br>
+=C2=A0Hardware name: QEMU Standard PC (i440FX + PIIX, 1996)<br>
+=C2=A0Workqueue: dm-thin do_worker [dm_thin_pool]<br>
+=C2=A0Call Trace:<br>
+=C2=A0 =C2=A0&lt;IRQ&gt;<br>
+=C2=A0 =C2=A0dump_stack+0x9c/0xd3<br>
+=C2=A0 =C2=A0panic+0x35d/0x6b9<br>
+=C2=A0 =C2=A0watchdog_timer_fn.cold+0x16/0x25<br>
+=C2=A0 =C2=A0__run_hrtimer+0xa2/0x2d0<br>
+=C2=A0 =C2=A0&lt;/IRQ&gt;<br>
+=C2=A0 =C2=A0RIP: 0010:__relink_lru+0x102/0x220 [dm_bufio]<br>
+=C2=A0 =C2=A0__bufio_new+0x11f/0x4f0 [dm_bufio]<br>
+=C2=A0 =C2=A0new_read+0xa3/0x1e0 [dm_bufio]<br>
+=C2=A0 =C2=A0dm_bm_read_lock+0x33/0xd0 [dm_persistent_data]<br>
+=C2=A0 =C2=A0ro_step+0x63/0x100 [dm_persistent_data]<br>
+=C2=A0 =C2=A0btree_lookup_raw.constprop.0+0x44/0x220 [dm_persistent_data]<b=
+r>
+=C2=A0 =C2=A0dm_btree_lookup+0x16f/0x210 [dm_persistent_data]<br>
+=C2=A0 =C2=A0dm_thin_find_block+0x12c/0x210 [dm_thin_pool]<br>
+=C2=A0 =C2=A0__process_bio_read_only+0xc5/0x400 [dm_thin_pool]<br>
+=C2=A0 =C2=A0process_thin_deferred_bios+0x1a4/0x4a0 [dm_thin_pool]<br>
+=C2=A0 =C2=A0process_one_work+0x3c5/0x730<br>
+<br>
+Following process may generate a broken btree mixed with fresh and stale<br=
+>
+nodes, which could let dm thin trapped into an infinite loop while looking<=
+br>
+up data block:<br>
+=C2=A0Transaction 1: pmd-&gt;root =3D A, A-&gt;B-&gt;C=C2=A0 =C2=A0// One p=
+ath in btree<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pmd-&gt;root =3D X,=
+ X-&gt;Y-&gt;Z=C2=A0 =C2=A0// Copy-up<br>
+=C2=A0Transaction 2: X,Z is updated on disk, Y is written failed.<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 // Commit failed, d=
+m thin becomes read-only.<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 process_bio_read_on=
+ly<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0dm_thin_find_=
+block<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 __find_block=
+<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0dm_btr=
+ee_lookup(pmd-&gt;root)<br>
+The pmd-&gt;root points to a broken btree, Y may contain stale node pointin=
+g<br>
+to any block, for example X, which lets dm thin trapped into a dead loop<br=
+>
+while looking up Z.<br>
+<br>
+Fix it by setting pmd-&gt;root in __open_metadata(), so that dm thin will u=
+se<br>
+last transaction&#39;s pmd-&gt;root if commit failed.<br>
+<br>
+Fetch a reproducer in [Link].<br>
+<br>
+Linke: <a href=3D"https://bugzilla.kernel.org/show_bug.cgi?id=3D216790" rel=
+=3D"noreferrer" target=3D"_blank">https://bugzilla.kernel.org/show_bug.cgi?=
+id=3D216790</a><br>
+Fixes: 991d9fa02da0 (&quot;dm: add thin provisioning target&quot;)<br>
+Signed-off-by: Zhihao Cheng &lt;<a href=3D"mailto:chengzhihao1@huawei.com" =
+target=3D"_blank">chengzhihao1@huawei.com</a>&gt;<br>
+---<br>
+=C2=A0drivers/md/dm-thin-metadata.c | 9 +++++++++<br>
+=C2=A01 file changed, 9 insertions(+)<br>
+<br>
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c<=
+br>
+index 1a62226ac34e..26c42ee183ed 100644<br>
+--- a/drivers/md/dm-thin-metadata.c<br>
++++ b/drivers/md/dm-thin-metadata.c<br>
+@@ -724,6 +724,15 @@ static int __open_metadata(struct dm_pool_metadata *pm=
+d)<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 goto bad_cleanup_da=
+ta_sm;<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
+<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0/*<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 * For pool metadata opening process, root sett=
+ing is redundant<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 * because it will be set again in __begin_tran=
+saction(). But dm<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 * pool aborting process really needs to get la=
+st transaction&#39;s<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 * root in case accessing broken btree.<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 */<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0pmd-&gt;root =3D le64_to_cpu(disk_super-&gt;dat=
+a_mapping_root);<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0pmd-&gt;details_root =3D le64_to_cpu(disk_super=
+-&gt;device_details_root);<br>
++<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 __setup_btree_details(pmd);<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 dm_bm_unlock(sblock);<br>
+<br>
+-- <br>
+2.31.1<br>
+<br>
+</blockquote></div>
+
+--000000000000d4a37905ef53dfa0--
+
+--===============2625619848175312110==
 Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-As per the review comment from Jens Axboe, I am re-sending this patch
-against "for-6.2/block".
-
-
-Use ktime to change the granularity of IO accounting in block layer from
-milli-seconds to nano-seconds to get the proper latency values for the
-devices whose latency is in micro-seconds. After changing the granularity
-to nano-seconds the iostat command, which was showing incorrect values for
-%util, is now showing correct values.
-
-We did not work on the patch to drop the logic for
-STAT_PRECISE_TIMESTAMPS yet. Will do it if this patch is ok.
-
-The iostat command was run after starting the fio with following command
-on an NVME disk. For the same fio command, the iostat %util was showing
-~100% for the disks whose latencies are in the range of microseconds.
-With the kernel changes (granularity to nano-seconds), the %util was
-showing correct values. Following are the details of the test and their
-output:
-
-fio command
------------
-[global]
-bs=128K
-iodepth=1
-direct=1
-ioengine=libaio
-group_reporting
-time_based
-runtime=90
-thinktime=1ms
-numjobs=1
-name=raw-write
-rw=randrw
-ignore_error=EIO:EIO
-[job1]
-filename=/dev/nvme0n1
-
-Correct values after kernel changes:
-====================================
-iostat output
--------------
-iostat -d /dev/nvme0n1 -x 1
-
-Device            r_await w_await aqu-sz rareq-sz wareq-sz  svctm  %util
-nvme0n1              0.08    0.05   0.06   128.00   128.00   0.07   6.50
-
-Device            r_await w_await aqu-sz rareq-sz wareq-sz  svctm  %util
-nvme0n1              0.08    0.06   0.06   128.00   128.00   0.07   6.30
-
-Device            r_await w_await aqu-sz rareq-sz wareq-sz  svctm  %util
-nvme0n1              0.06    0.05   0.06   128.00   128.00   0.06   5.70
-
-From fio
---------
-Read Latency: clat (usec): min=32, max=2335, avg=79.54, stdev=29.95
-Write Latency: clat (usec): min=38, max=130, avg=57.76, stdev= 3.25
-
-Values before kernel changes
-============================
-iostat output
--------------
-
-iostat -d /dev/nvme0n1 -x 1
-
-Device            r_await w_await aqu-sz rareq-sz wareq-sz  svctm  %util
-nvme0n1              0.08    0.06   0.06   128.00   128.00   1.07  97.70
-
-Device            r_await w_await aqu-sz rareq-sz wareq-sz  svctm  %util
-nvme0n1              0.08    0.06   0.06   128.00   128.00   1.08  98.80
-
-Device            r_await w_await aqu-sz rareq-sz wareq-sz  svctm  %util
-nvme0n1              0.08    0.05   0.06   128.00   128.00   1.06  97.20
-
-From fio
---------
-Read Latency: clat (usec): min=33, max=468, avg=79.56, stdev=28.04
-Write Latency: clat (usec): min=9, max=139, avg=57.10, stdev= 3.79
-
-Changes in V2:
-1. Changed the try_cmpxchg() to try_cmpxchg64() in function
-   update_io_ticks()as the values being compared are u64 which was giving
-   a build error on i386 and microblaze
-
-Signed-off-by: Gulam Mohamed <gulam.mohamed@oracle.com>
----
- block/blk-core.c                  | 28 ++++++++++++++--------------
- block/blk-mq.c                    |  4 ++--
- block/blk.h                       |  2 +-
- block/genhd.c                     |  8 ++++----
- drivers/block/drbd/drbd_debugfs.c |  4 ++--
- drivers/block/drbd/drbd_int.h     |  2 +-
- drivers/block/zram/zram_drv.c     |  4 ++--
- drivers/md/bcache/request.c       | 10 +++++-----
- drivers/md/dm-core.h              |  2 +-
- drivers/md/dm.c                   |  8 ++++----
- drivers/md/md.h                   |  2 +-
- drivers/md/raid1.h                |  2 +-
- drivers/md/raid10.h               |  2 +-
- drivers/md/raid5.c                |  2 +-
- drivers/nvdimm/btt.c              |  2 +-
- drivers/nvdimm/pmem.c             |  2 +-
- include/linux/blk_types.h         |  2 +-
- include/linux/blkdev.h            | 12 ++++++------
- include/linux/part_stat.h         |  2 +-
- 19 files changed, 50 insertions(+), 50 deletions(-)
-
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 8ab21dd01cd1..d500d08a3d7b 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -927,13 +927,13 @@ int iocb_bio_iopoll(struct kiocb *kiocb, struct io_comp_batch *iob,
- }
- EXPORT_SYMBOL_GPL(iocb_bio_iopoll);
- 
--void update_io_ticks(struct block_device *part, unsigned long now, bool end)
-+void update_io_ticks(struct block_device *part, u64 now, bool end)
- {
--	unsigned long stamp;
-+	u64 stamp;
- again:
- 	stamp = READ_ONCE(part->bd_stamp);
--	if (unlikely(time_after(now, stamp))) {
--		if (likely(try_cmpxchg(&part->bd_stamp, &stamp, now)))
-+	if (unlikely(time_after64(now, stamp))) {
-+		if (likely(try_cmpxchg64(&part->bd_stamp, &stamp, now)))
- 			__part_stat_add(part, io_ticks, end ? now - stamp : 1);
- 	}
- 	if (part->bd_partno) {
-@@ -942,9 +942,9 @@ void update_io_ticks(struct block_device *part, unsigned long now, bool end)
- 	}
- }
- 
--unsigned long bdev_start_io_acct(struct block_device *bdev,
--				 unsigned int sectors, enum req_op op,
--				 unsigned long start_time)
-+u64 bdev_start_io_acct(struct block_device *bdev,
-+		       unsigned int sectors, enum req_op op,
-+		       u64 start_time)
- {
- 	const int sgrp = op_stat_group(op);
- 
-@@ -965,29 +965,29 @@ EXPORT_SYMBOL(bdev_start_io_acct);
-  *
-  * Returns the start time that should be passed back to bio_end_io_acct().
-  */
--unsigned long bio_start_io_acct(struct bio *bio)
-+u64 bio_start_io_acct(struct bio *bio)
- {
- 	return bdev_start_io_acct(bio->bi_bdev, bio_sectors(bio),
--				  bio_op(bio), jiffies);
-+				  bio_op(bio), ktime_get_ns());
- }
- EXPORT_SYMBOL_GPL(bio_start_io_acct);
- 
- void bdev_end_io_acct(struct block_device *bdev, enum req_op op,
--		      unsigned long start_time)
-+		      u64 start_time)
- {
- 	const int sgrp = op_stat_group(op);
--	unsigned long now = READ_ONCE(jiffies);
--	unsigned long duration = now - start_time;
-+	u64  now = ktime_get_ns();
-+	u64  duration = now - start_time;
- 
- 	part_stat_lock();
- 	update_io_ticks(bdev, now, true);
--	part_stat_add(bdev, nsecs[sgrp], jiffies_to_nsecs(duration));
-+	part_stat_add(bdev, nsecs[sgrp], duration);
- 	part_stat_local_dec(bdev, in_flight[op_is_write(op)]);
- 	part_stat_unlock();
- }
- EXPORT_SYMBOL(bdev_end_io_acct);
- 
--void bio_end_io_acct_remapped(struct bio *bio, unsigned long start_time,
-+void bio_end_io_acct_remapped(struct bio *bio, u64 start_time,
- 			      struct block_device *orig_bdev)
- {
- 	bdev_end_io_acct(orig_bdev, bio_op(bio), start_time);
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 4e6b3ccd4989..e544fffd397e 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -975,7 +975,7 @@ static void __blk_account_io_done(struct request *req, u64 now)
- 	const int sgrp = op_stat_group(req_op(req));
- 
- 	part_stat_lock();
--	update_io_ticks(req->part, jiffies, true);
-+	update_io_ticks(req->part, ktime_get_ns(), true);
- 	part_stat_inc(req->part, ios[sgrp]);
- 	part_stat_add(req->part, nsecs[sgrp], now - req->start_time_ns);
- 	part_stat_unlock();
-@@ -1007,7 +1007,7 @@ static void __blk_account_io_start(struct request *rq)
- 		rq->part = rq->q->disk->part0;
- 
- 	part_stat_lock();
--	update_io_ticks(rq->part, jiffies, false);
-+	update_io_ticks(rq->part, ktime_get_ns(), false);
- 	part_stat_unlock();
- }
- 
-diff --git a/block/blk.h b/block/blk.h
-index 8900001946c7..8997435ad4a0 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -341,7 +341,7 @@ static inline bool blk_do_io_stat(struct request *rq)
- 	return (rq->rq_flags & RQF_IO_STAT) && !blk_rq_is_passthrough(rq);
- }
- 
--void update_io_ticks(struct block_device *part, unsigned long now, bool end);
-+void update_io_ticks(struct block_device *part, u64 now, bool end);
- 
- static inline void req_set_nomerge(struct request_queue *q, struct request *req)
- {
-diff --git a/block/genhd.c b/block/genhd.c
-index 03a96d6473e1..616565de8d03 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -959,7 +959,7 @@ ssize_t part_stat_show(struct device *dev,
- 
- 	if (inflight) {
- 		part_stat_lock();
--		update_io_ticks(bdev, jiffies, true);
-+		update_io_ticks(bdev, ktime_get_ns(), true);
- 		part_stat_unlock();
- 	}
- 	part_stat_read_all(bdev, &stat);
-@@ -979,7 +979,7 @@ ssize_t part_stat_show(struct device *dev,
- 		(unsigned long long)stat.sectors[STAT_WRITE],
- 		(unsigned int)div_u64(stat.nsecs[STAT_WRITE], NSEC_PER_MSEC),
- 		inflight,
--		jiffies_to_msecs(stat.io_ticks),
-+		(unsigned int)div_u64(stat.io_ticks, NSEC_PER_MSEC),
- 		(unsigned int)div_u64(stat.nsecs[STAT_READ] +
- 				      stat.nsecs[STAT_WRITE] +
- 				      stat.nsecs[STAT_DISCARD] +
-@@ -1237,7 +1237,7 @@ static int diskstats_show(struct seq_file *seqf, void *v)
- 
- 		if (inflight) {
- 			part_stat_lock();
--			update_io_ticks(hd, jiffies, true);
-+			update_io_ticks(hd, ktime_get_ns(), true);
- 			part_stat_unlock();
- 		}
- 		part_stat_read_all(hd, &stat);
-@@ -1260,7 +1260,7 @@ static int diskstats_show(struct seq_file *seqf, void *v)
- 			   (unsigned int)div_u64(stat.nsecs[STAT_WRITE],
- 							NSEC_PER_MSEC),
- 			   inflight,
--			   jiffies_to_msecs(stat.io_ticks),
-+			   (unsigned int)div_u64(stat.io_ticks, NSEC_PER_MSEC),
- 			   (unsigned int)div_u64(stat.nsecs[STAT_READ] +
- 						 stat.nsecs[STAT_WRITE] +
- 						 stat.nsecs[STAT_DISCARD] +
-diff --git a/drivers/block/drbd/drbd_debugfs.c b/drivers/block/drbd/drbd_debugfs.c
-index a72c096aa5b1..49d39d607175 100644
---- a/drivers/block/drbd/drbd_debugfs.c
-+++ b/drivers/block/drbd/drbd_debugfs.c
-@@ -105,7 +105,7 @@ static void seq_print_one_request(struct seq_file *m, struct drbd_request *req,
- 		(s & RQ_WRITE) ? "W" : "R");
- 
- #define RQ_HDR_2 "\tstart\tin AL\tsubmit"
--	seq_printf(m, "\t%d", jiffies_to_msecs(now - req->start_jif));
-+	seq_printf(m, "\t%d", jiffies_to_msecs(now - nsecs_to_jiffies(req->start_jif)));
- 	seq_print_age_or_dash(m, s & RQ_IN_ACT_LOG, now - req->in_actlog_jif);
- 	seq_print_age_or_dash(m, s & RQ_LOCAL_PENDING, now - req->pre_submit_jif);
- 
-@@ -171,7 +171,7 @@ static void seq_print_waiting_for_AL(struct seq_file *m, struct drbd_resource *r
- 			/* if the oldest request does not wait for the activity log
- 			 * it is not interesting for us here */
- 			if (req && !(req->rq_state & RQ_IN_ACT_LOG))
--				jif = req->start_jif;
-+				jif = nsecs_to_jiffies(req->start_jif);
- 			else
- 				req = NULL;
- 			spin_unlock_irq(&device->resource->req_lock);
-diff --git a/drivers/block/drbd/drbd_int.h b/drivers/block/drbd/drbd_int.h
-index ae713338aa46..8e4d3b2eb99d 100644
---- a/drivers/block/drbd/drbd_int.h
-+++ b/drivers/block/drbd/drbd_int.h
-@@ -236,7 +236,7 @@ struct drbd_request {
- 	struct list_head req_pending_local;
- 
- 	/* for generic IO accounting */
--	unsigned long start_jif;
-+	u64 start_jif;
- 
- 	/* for DRBD internal statistics */
- 
-diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
-index 966aab902d19..5376b67b88c6 100644
---- a/drivers/block/zram/zram_drv.c
-+++ b/drivers/block/zram/zram_drv.c
-@@ -1662,7 +1662,7 @@ static int zram_rw_page(struct block_device *bdev, sector_t sector,
- 	u32 index;
- 	struct zram *zram;
- 	struct bio_vec bv;
--	unsigned long start_time;
-+	u64 start_time;
- 
- 	if (PageTransHuge(page))
- 		return -ENOTSUPP;
-@@ -1682,7 +1682,7 @@ static int zram_rw_page(struct block_device *bdev, sector_t sector,
- 	bv.bv_offset = 0;
- 
- 	start_time = bdev_start_io_acct(bdev->bd_disk->part0,
--			SECTORS_PER_PAGE, op, jiffies);
-+			SECTORS_PER_PAGE, op, ktime_get_ns());
- 	ret = zram_bvec_rw(zram, &bv, index, offset, op, NULL);
- 	bdev_end_io_acct(bdev->bd_disk->part0, op, start_time);
- out:
-diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
-index 3427555b0cca..8798b1eb6d2d 100644
---- a/drivers/md/bcache/request.c
-+++ b/drivers/md/bcache/request.c
-@@ -476,7 +476,7 @@ struct search {
- 	unsigned int		cache_missed:1;
- 
- 	struct block_device	*orig_bdev;
--	unsigned long		start_time;
-+	u64			start_time;
- 
- 	struct btree_op		op;
- 	struct data_insert_op	iop;
-@@ -714,7 +714,7 @@ static void search_free(struct closure *cl)
- 
- static inline struct search *search_alloc(struct bio *bio,
- 		struct bcache_device *d, struct block_device *orig_bdev,
--		unsigned long start_time)
-+		u64 start_time)
- {
- 	struct search *s;
- 
-@@ -1065,7 +1065,7 @@ static void cached_dev_nodata(struct closure *cl)
- 
- struct detached_dev_io_private {
- 	struct bcache_device	*d;
--	unsigned long		start_time;
-+	u64			start_time;
- 	bio_end_io_t		*bi_end_io;
- 	void			*bi_private;
- 	struct block_device	*orig_bdev;
-@@ -1094,7 +1094,7 @@ static void detached_dev_end_io(struct bio *bio)
- }
- 
- static void detached_dev_do_request(struct bcache_device *d, struct bio *bio,
--		struct block_device *orig_bdev, unsigned long start_time)
-+		struct block_device *orig_bdev, u64 start_time)
- {
- 	struct detached_dev_io_private *ddip;
- 	struct cached_dev *dc = container_of(d, struct cached_dev, disk);
-@@ -1173,7 +1173,7 @@ void cached_dev_submit_bio(struct bio *bio)
- 	struct block_device *orig_bdev = bio->bi_bdev;
- 	struct bcache_device *d = orig_bdev->bd_disk->private_data;
- 	struct cached_dev *dc = container_of(d, struct cached_dev, disk);
--	unsigned long start_time;
-+	u64 start_time;
- 	int rw = bio_data_dir(bio);
- 
- 	if (unlikely((d->c && test_bit(CACHE_SET_IO_DISABLE, &d->c->flags)) ||
-diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
-index 6c6bd24774f2..e620fd878b08 100644
---- a/drivers/md/dm-core.h
-+++ b/drivers/md/dm-core.h
-@@ -284,7 +284,7 @@ struct dm_io {
- 	unsigned short magic;
- 	blk_short_t flags;
- 	spinlock_t lock;
--	unsigned long start_time;
-+	u64 start_time;
- 	void *data;
- 	struct dm_io *next;
- 	struct dm_stats_aux stats_aux;
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index e1ea3a7bd9d9..53ea18ac28f7 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -482,7 +482,7 @@ static int dm_blk_ioctl(struct block_device *bdev, fmode_t mode,
- 
- u64 dm_start_time_ns_from_clone(struct bio *bio)
- {
--	return jiffies_to_nsecs(clone_to_tio(bio)->io->start_time);
-+	return clone_to_tio(bio)->io->start_time;
- }
- EXPORT_SYMBOL_GPL(dm_start_time_ns_from_clone);
- 
-@@ -494,7 +494,7 @@ static bool bio_is_flush_with_data(struct bio *bio)
- static void dm_io_acct(struct dm_io *io, bool end)
- {
- 	struct dm_stats_aux *stats_aux = &io->stats_aux;
--	unsigned long start_time = io->start_time;
-+	u64 start_time = io->start_time;
- 	struct mapped_device *md = io->md;
- 	struct bio *bio = io->orig_bio;
- 	unsigned int sectors;
-@@ -527,7 +527,7 @@ static void dm_io_acct(struct dm_io *io, bool end)
- 
- 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
- 				    sector, sectors,
--				    end, start_time, stats_aux);
-+				    end, nsecs_to_jiffies(start_time), stats_aux);
- 	}
- }
- 
-@@ -589,7 +589,7 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
- 	io->orig_bio = bio;
- 	io->md = md;
- 	spin_lock_init(&io->lock);
--	io->start_time = jiffies;
-+	io->start_time = ktime_get_ns();
- 	io->flags = 0;
- 
- 	if (static_branch_unlikely(&stats_enabled))
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 554a9026669a..df73c1d1d960 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -711,7 +711,7 @@ struct md_thread {
- 
- struct md_io_acct {
- 	struct bio *orig_bio;
--	unsigned long start_time;
-+	u64 start_time;
- 	struct bio bio_clone;
- };
- 
-diff --git a/drivers/md/raid1.h b/drivers/md/raid1.h
-index ebb6788820e7..0fb5a1148745 100644
---- a/drivers/md/raid1.h
-+++ b/drivers/md/raid1.h
-@@ -157,7 +157,7 @@ struct r1bio {
- 	sector_t		sector;
- 	int			sectors;
- 	unsigned long		state;
--	unsigned long		start_time;
-+	u64			start_time;
- 	struct mddev		*mddev;
- 	/*
- 	 * original bio going to /dev/mdx
-diff --git a/drivers/md/raid10.h b/drivers/md/raid10.h
-index 8c072ce0bc54..4cf3eec89bf3 100644
---- a/drivers/md/raid10.h
-+++ b/drivers/md/raid10.h
-@@ -123,7 +123,7 @@ struct r10bio {
- 	sector_t		sector;	/* virtual sector number */
- 	int			sectors;
- 	unsigned long		state;
--	unsigned long		start_time;
-+	u64			start_time;
- 	struct mddev		*mddev;
- 	/*
- 	 * original bio going to /dev/mdx
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 7b820b81d8c2..8f4364f4bda0 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -5474,7 +5474,7 @@ static void raid5_align_endio(struct bio *bi)
- 	struct r5conf *conf;
- 	struct md_rdev *rdev;
- 	blk_status_t error = bi->bi_status;
--	unsigned long start_time = md_io_acct->start_time;
-+	u64 start_time = md_io_acct->start_time;
- 
- 	bio_put(bi);
- 
-diff --git a/drivers/nvdimm/btt.c b/drivers/nvdimm/btt.c
-index 0297b7882e33..8fc1d5da747c 100644
---- a/drivers/nvdimm/btt.c
-+++ b/drivers/nvdimm/btt.c
-@@ -1442,7 +1442,7 @@ static void btt_submit_bio(struct bio *bio)
- 	struct bio_integrity_payload *bip = bio_integrity(bio);
- 	struct btt *btt = bio->bi_bdev->bd_disk->private_data;
- 	struct bvec_iter iter;
--	unsigned long start;
-+	u64 start;
- 	struct bio_vec bvec;
- 	int err = 0;
- 	bool do_acct;
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 96e6e9a5f235..b5b7a709e1ab 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -202,7 +202,7 @@ static void pmem_submit_bio(struct bio *bio)
- 	int ret = 0;
- 	blk_status_t rc = 0;
- 	bool do_acct;
--	unsigned long start;
-+	u64 start;
- 	struct bio_vec bvec;
- 	struct bvec_iter iter;
- 	struct pmem_device *pmem = bio->bi_bdev->bd_disk->private_data;
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index e0b098089ef2..6ffa0ca80217 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -41,7 +41,7 @@ struct block_device {
- 	sector_t		bd_start_sect;
- 	sector_t		bd_nr_sectors;
- 	struct disk_stats __percpu *bd_stats;
--	unsigned long		bd_stamp;
-+	u64			bd_stamp;
- 	bool			bd_read_only;	/* read-only policy */
- 	dev_t			bd_dev;
- 	atomic_t		bd_openers;
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 2db2ad72af0f..cdb8954bd73c 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1433,14 +1433,14 @@ static inline void blk_wake_io_task(struct task_struct *waiter)
- 		wake_up_process(waiter);
- }
- 
--unsigned long bdev_start_io_acct(struct block_device *bdev,
-+u64 bdev_start_io_acct(struct block_device *bdev,
- 				 unsigned int sectors, enum req_op op,
--				 unsigned long start_time);
-+				 u64  start_time);
- void bdev_end_io_acct(struct block_device *bdev, enum req_op op,
--		unsigned long start_time);
-+		u64 start_time);
- 
--unsigned long bio_start_io_acct(struct bio *bio);
--void bio_end_io_acct_remapped(struct bio *bio, unsigned long start_time,
-+u64 bio_start_io_acct(struct bio *bio);
-+void bio_end_io_acct_remapped(struct bio *bio, u64 start_time,
- 		struct block_device *orig_bdev);
- 
- /**
-@@ -1448,7 +1448,7 @@ void bio_end_io_acct_remapped(struct bio *bio, unsigned long start_time,
-  * @bio:	bio to end account for
-  * @start_time:	start time returned by bio_start_io_acct()
-  */
--static inline void bio_end_io_acct(struct bio *bio, unsigned long start_time)
-+static inline void bio_end_io_acct(struct bio *bio, u64 start_time)
- {
- 	return bio_end_io_acct_remapped(bio, start_time, bio->bi_bdev);
- }
-diff --git a/include/linux/part_stat.h b/include/linux/part_stat.h
-index abeba356bc3f..85c50235693c 100644
---- a/include/linux/part_stat.h
-+++ b/include/linux/part_stat.h
-@@ -10,7 +10,7 @@ struct disk_stats {
- 	unsigned long sectors[NR_STAT_GROUPS];
- 	unsigned long ios[NR_STAT_GROUPS];
- 	unsigned long merges[NR_STAT_GROUPS];
--	unsigned long io_ticks;
-+	u64 io_ticks;
- 	local_t in_flight[2];
- };
- 
--- 
-2.31.1
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+
+--===============2625619848175312110==--
 
