@@ -1,89 +1,91 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9E932C4332F
-	for <dm-devel@archiver.kernel.org>; Mon, 12 Dec 2022 14:57:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E550DC4332F
+	for <dm-devel@archiver.kernel.org>; Mon, 12 Dec 2022 22:36:29 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1670857058;
+	s=mimecast20190719; t=1670884588;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:mime-version:mime-version:
-	 content-type:content-type:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=Xbc+b9PMOUi47ZvQv0CVhIiM1WcOb80dohTwrghdvHU=;
-	b=YlKoJPKkDmhOV1IsX6Z2GUkANy8wMoBGxlIZftsOwFvQAruWd5pgX6omjfkomHBof77fBg
-	r3QKlM0KXMa4yP+RFAH5m+bU3lxHW2/iG5qU6/ouT5yy+92LfKlKrmz42s7PKQPBr7+JEM
-	tbhZ2x1IzJrKtUo86pjqFzDyU4QSBfM=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=O157tpRt8mD3MPNgjI23HE22y7SnNFiWz0a/sXMIGbI=;
+	b=bwr9UsM3x/CR4nAzkZP4Hvau5tqh8Z0Il26UNIMo9mTTBOGW5eT4QM++xf9VU7m90gnULh
+	h6GZ9WF+JhyD8Z5vWAKXkgA3Dmx59EXSzCOtukJ1XmiET/qOmQhyTi2q58TGp2YJkfKABH
+	+0aSr4gltQkko5AK/z/ZQZ/9qlNzjls=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-284-d-Aq225SMzqcUjS3i7a7zw-1; Mon, 12 Dec 2022 09:57:35 -0500
-X-MC-Unique: d-Aq225SMzqcUjS3i7a7zw-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-621-AX0hAXE7OGS7jYjKtWpyLg-1; Mon, 12 Dec 2022 17:36:27 -0500
+X-MC-Unique: AX0hAXE7OGS7jYjKtWpyLg-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C59F7101AA47;
-	Mon, 12 Dec 2022 14:57:33 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9D0C13C1014B;
+	Mon, 12 Dec 2022 22:36:24 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1124C492C14;
-	Mon, 12 Dec 2022 14:57:31 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 77124175A2;
+	Mon, 12 Dec 2022 22:36:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BDE4F1946588;
-	Mon, 12 Dec 2022 14:57:25 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 570341946588;
+	Mon, 12 Dec 2022 22:36:20 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
  [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0D55F1946586
- for <dm-devel@listman.corp.redhat.com>; Mon, 12 Dec 2022 14:57:24 +0000 (UTC)
+ ESMTP id AF9E21946586
+ for <dm-devel@listman.corp.redhat.com>; Mon, 12 Dec 2022 22:36:19 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id DC6EE2026D68; Mon, 12 Dec 2022 14:57:18 +0000 (UTC)
+ id 9DE172026D68; Mon, 12 Dec 2022 22:36:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D51172026D4B
- for <dm-devel@redhat.com>; Mon, 12 Dec 2022 14:57:18 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 966C72026D4B
+ for <dm-devel@redhat.com>; Mon, 12 Dec 2022 22:36:19 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B68AA858F13
- for <dm-devel@redhat.com>; Mon, 12 Dec 2022 14:57:18 +0000 (UTC)
-Received: from mail-vs1-f71.google.com (mail-vs1-f71.google.com
- [209.85.217.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 781103C025C8
+ for <dm-devel@redhat.com>; Mon, 12 Dec 2022 22:36:19 +0000 (UTC)
+Received: from mail-vs1-f48.google.com (mail-vs1-f48.google.com
+ [209.85.217.48]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-46-JqA-EVr6MzK3QjqX3C5Gaw-1; Mon, 12 Dec 2022 09:57:16 -0500
-X-MC-Unique: JqA-EVr6MzK3QjqX3C5Gaw-1
-Received: by mail-vs1-f71.google.com with SMTP id
- 190-20020a6719c7000000b003aa14ac75f5so3031042vsz.1
- for <dm-devel@redhat.com>; Mon, 12 Dec 2022 06:57:16 -0800 (PST)
+ us-mta-180-Zxs8HSXzMqqlSmW5UbHa2A-1; Mon, 12 Dec 2022 17:36:15 -0500
+X-MC-Unique: Zxs8HSXzMqqlSmW5UbHa2A-1
+Received: by mail-vs1-f48.google.com with SMTP id h26so12878118vsr.5
+ for <dm-devel@redhat.com>; Mon, 12 Dec 2022 14:36:15 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=to:subject:message-id:date:from:mime-version:x-gm-message-state
- :from:to:cc:subject:date:message-id:reply-to;
- bh=19pHUKKxvn4JQ7oedP68csdOCv4Yg5h/g0L1lI2Dqro=;
- b=QAhYLpdummdxBIMqS4eRno6eJ+72GP8pRWbn3Ya60DEC6XNcLk/oZo2yxGLQFrdWCf
- inkRLCpyYXf9cvDo8JRc1GoVk5rKOPVFU7f0Q93D5WUodOIEiZjIZipOrbQN1oDc7YF8
- wifQ9WKcztchF/QjKQqfarAmTcVNMoEeCCOxOdyI+i7Noa/xsBcDoHH3WDw8vsIHxqsL
- kLT8PBUz2AoXL/r700NEc0+PSWKTxfuSMc3exBGp43maoLqfHI5NL1HYYqPjHt/fiR0A
- RYePCJUqzRHpIrXEM6N/WRzIf/+VFGOOdPQIyfP3XGW5mw1bz3vYtntgFE7LZ7OyFyKb
- QzTA==
-X-Gm-Message-State: ANoB5pna+JlSsyZN5rExPniOVDmK2pK8VXvz24USYKkGveYbJco5su4X
- 0u9zTGpj6QfP17ddeS2P145a4812tErewm2jGGH5K9dvCUkYr9BZiunEhWtJLhRsLYPoqA5P0dI
- kN1bu+KWVoozG0fOLpx2t14g6Rx/D85w=
-X-Received: by 2002:ab0:59ae:0:b0:419:c3a3:9d0 with SMTP id
- g43-20020ab059ae000000b00419c3a309d0mr10795116uad.98.1670857036289; 
- Mon, 12 Dec 2022 06:57:16 -0800 (PST)
-X-Google-Smtp-Source: AA0mqf53zXjGDxnt5QkyVYwRD6wxdbpbZmy5vm+6Zvc8TRW/2GWgw6g9lWizASJfPx1Mtik2A5gWL7+MgjtcGrfyqoU=
-X-Received: by 2002:ab0:59ae:0:b0:419:c3a3:9d0 with SMTP id
- g43-20020ab059ae000000b00419c3a309d0mr10795114uad.98.1670857035922; Mon, 12
- Dec 2022 06:57:15 -0800 (PST)
+ h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=nWhMF1CTesM4BHybNTgKV7lM/70y3OMyFAmvejIEjS4=;
+ b=HzlL6TOOujOIMH2cfUirVQZONRi26vhTk9GGf378gOoJukl1Sx8Lp4r0F4AoWGEZym
+ OrQiaVCA16zcv07Tl0MGgEwpODSxeltk/bbFvGfjWmtDn6aCNqJnGvSUBuotsgHbiwBG
+ Y0flTf1WGl1hqFKlVPRYc6Kn8pQIKEVjaMHlxYBrVw1g7XQ8LR2VT6CAM/+34PzVsvEI
+ PZy6bxA8fnTFqCktVmUs1fJdmAGteSNQHpjIjPQP4bPh6J0e/LT6/76vgZOileKvj89m
+ yzFUDs4mCvCQ/mZdoyC03xv81iwQCC2bIx3WK0q5obNAFW4K5iut0IBZaQHUnMYS4bLH
+ m7PQ==
+X-Gm-Message-State: ANoB5pnvLrGyQu+VvTNYPZXWR6ba68fHI9JEP4Pxi/eZWb+pMiA5AXSx
+ fJgn08HKYD1yi8gW4qGd+BTKsYg=
+X-Google-Smtp-Source: AA0mqf7m4mzBWV2azX1Bll5cjClij3B+qoQDpbNtARWC+17pZx8HuSAsuUyrhipDelLAGzJyv19RVw==
+X-Received: by 2002:a05:6102:22cf:b0:3b0:f33b:38a5 with SMTP id
+ a15-20020a05610222cf00b003b0f33b38a5mr6450670vsh.13.1670884575404; 
+ Mon, 12 Dec 2022 14:36:15 -0800 (PST)
+Received: from localhost (pool-68-160-173-162.bstnma.fios.verizon.net.
+ [68.160.173.162]) by smtp.gmail.com with ESMTPSA id
+ bn39-20020a05620a2ae700b006ce76811a07sm6504540qkb.75.2022.12.12.14.36.14
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Mon, 12 Dec 2022 14:36:14 -0800 (PST)
+Date: Mon, 12 Dec 2022 17:36:13 -0500
+From: Mike Snitzer <snitzer@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <Y5es3Sf0DU0QEHPP@redhat.com>
 MIME-Version: 1.0
-From: Joe Thornber <thornber@redhat.com>
-Date: Mon, 12 Dec 2022 14:57:05 +0000
-Message-ID: <CAJ0trDZW8FRFuuonKrgSMp7i7m0sLdPGyFHd2ap0Gw8iadrA-A@mail.gmail.com>
-To: "development, device-mapper" <dm-devel@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: [dm-devel] [announce] thin-provisioning-tools v1.0.0-rc1
+Subject: [dm-devel] [git pull] device mapper changes for 6.2
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -95,182 +97,100 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
+Cc: Peter Korsgaard <peter@korsgaard.com>, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>,
+ Luo Meng <luomeng12@huawei.com>, Zhihao Cheng <chengzhihao1@huawei.com>,
+ Alasdair G Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============8116299188923323723=="
-
---===============8116299188923323723==
-Content-Type: multipart/alternative; boundary="00000000000018db1d05efa2b83e"
-
---00000000000018db1d05efa2b83e
-Content-Type: text/plain; charset="UTF-8"
-
-We're pleased to announce the first release candidate of v1.0.0 of the
-thin-provisioning-tools (which also contains tools for dm-cache and
-dm-era).
-
-Please try it out on your test systems and give us feedback.  In
-particular regarding documentation, build and install process.
-
-    https://github.com/jthornber/thin-provisioning-tools
-
-
-# Rust
-
-This is a complete rewrite of the tools in the Rust language.  This switch
-was made for three primary reasons:
-
-- Memory safety.
-- The type system makes it easier to reason about multithreaded code and we
-need
-  to use multiple threads to boost performance.
-- Rust is a more expressive language than C++ (eg, proper algebraic data
-types).
-
-# IO engines
-
-The old C++ tools used libaio for all IO.  The Rust version by default
-uses traditional synchronous IO.  This sounds like a step backwards,
-but the use of multiple threads and IO scheduling means there's a big
-leap in performance.
-
-In addition there's a compile time option to include asynchronous
-IO support via io_uring.  This engine is slightly faster, but not all
-distributions support io_uring at the moment.  In addition we've seen
-recent (summer 2022) kernel versions that lose io notifications, causing
-us to feel that io_uring itself isn't quite ready.
-
-# Performance
-
-We've focussed on thin_check and cache_check performance most of all
-since these regularly get run on system startup.  But all tools should
-have made significant performance improvements.
-
-Over the years we've collected some gnarly dm-thin metadata examples from
-users, eg, using hundreds of thousands of snapshots, and completely
-filling the maximum metadata size of 16G.  These are great for
-benchmarking, for example running thin_check on my system with one of these
-files:
-
-    thin_check (v0.9):                  6m
-    thin_check (v1.0, sync engine):     28s  (12.9 times faster)
-    thin_check (v1.0, io_uring engine): 23s  (15.6 times faster)
-
-# thin_dump/restore retains snapshot sharing
-
-Another issue with previous versions of the tools is dumping and restoring
-thin metadata would have the effect of losing sharing of the metadata
-btrees for snapshots.  Meaning restored metadata often took up more space,
-and
-in some cases would exceed the 16G metadata limit.  This is no longer the
-case.
-
-[note: _data_ sharing was always maintained, this is purely about metadata
-space usage]
-
-# thin_metadata_pack/unpack
-
-These are a couple of new tools that are used for support.  They compress
-thin metadata, typically to a tenth of the size (much better than you'd
-get with generic compressors).  This makes it easier to pass damaged
-metadata around for inspection.
-
-# blk-archive
-
-The blk-archive tools were initially part of this thin-provisioning-tools
-package.  But have now been split off to their own project:
-
-    https://github.com/jthornber/blk-archive
-
-They allow efficient archiving of thin devices (data deduplication
-and compression).  Which will be of interest to those of you who are
-holding large numbers of snapshots in thin pools as a poor man's backup.
-
-In particular:
-
-    - Thin snapshots can be used to archive live data.
-    - it avoids reading unprovisioned areas of thin devices.
-    - it can calculate deltas between thin devices to minimise
-      how much data is read and deduped (incremental backups).
-    - restoring to a thin device tries to maximise data sharing
-      within the thin pool (a big win if you're restoring snapshots).
-
---00000000000018db1d05efa2b83e
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">We&#39;re pleased to announce the first release candidate =
-of v1.0.0 of the<br>thin-provisioning-tools (which also contains tools for =
-dm-cache and<br>dm-era).<br><br>Please try it out on your test systems and =
-give us feedback.=C2=A0 In<br>particular regarding documentation, build and=
- install process.<br><br>=C2=A0 =C2=A0 <a href=3D"https://github.com/jthorn=
-ber/thin-provisioning-tools">https://github.com/jthornber/thin-provisioning=
--tools</a><br><br><br># Rust<br><br>This is a complete rewrite of the tools=
- in the Rust language.=C2=A0 This switch<br>was made for three primary reas=
-ons:<br><br>- Memory safety.<br>- The type system makes it easier to reason=
- about multithreaded code and we need<br>=C2=A0 to use multiple threads to =
-boost performance.<br>- Rust is a more expressive language than C++ (eg, pr=
-oper algebraic data types).<br><br># IO engines<br><br>The old C++ tools us=
-ed libaio for all IO.=C2=A0 The Rust version by default<br>uses traditional=
- synchronous IO.=C2=A0 This sounds like a step backwards,<br>but the use of=
- multiple threads and IO scheduling means there&#39;s a big<br>leap in perf=
-ormance.<br><br>In addition there&#39;s a compile time option to include as=
-ynchronous<br>IO support via io_uring.=C2=A0 This engine is slightly faster=
-, but not all<br>distributions support io_uring at the moment.=C2=A0 In add=
-ition we&#39;ve seen<br>recent (summer 2022) kernel versions that lose io n=
-otifications, causing<br>us to feel that io_uring itself isn&#39;t quite re=
-ady.<br><div><br></div><div># Performance<br><br>We&#39;ve focussed on thin=
-_check and cache_check performance most of all<br>since these regularly get=
- run on system startup.=C2=A0 But all tools should<br>have made significant=
- performance improvements.<br><br>Over the years we&#39;ve collected some g=
-narly dm-thin metadata examples from<br>users, eg, using hundreds of thousa=
-nds of snapshots, and completely<br>filling the maximum metadata size of 16=
-G.=C2=A0 These are great for<br>benchmarking, for example running thin_chec=
-k on my system with one of these files:<br><br>=C2=A0 =C2=A0 thin_check (v0=
-.9): =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A06m<br>=
-=C2=A0 =C2=A0 thin_check (v1.0, sync engine): =C2=A0 =C2=A0 28s =C2=A0(12.9=
- times faster)<br>=C2=A0 =C2=A0 thin_check (v1.0, io_uring engine): 23s =C2=
-=A0(15.6 times faster)<br><br># thin_dump/restore retains snapshot sharing =
-<br><br>Another issue with previous versions of the tools is dumping and re=
-storing<br>thin metadata would have the effect of losing sharing of the met=
-adata<br>btrees for snapshots.=C2=A0 Meaning restored metadata often took u=
-p more space, and<br>in some cases would exceed the 16G metadata limit.=C2=
-=A0 This is no longer the case.<br><br>[note: _data_ sharing was always mai=
-ntained, this is purely about metadata space usage]<br><br># thin_metadata_=
-pack/unpack<br><br>These are a couple of new tools that are used for suppor=
-t.=C2=A0 They compress<br>thin metadata, typically to a tenth of the size (=
-much better than you&#39;d<br>get with generic compressors).=C2=A0 This mak=
-es it easier to pass damaged<br>metadata around for inspection.<br></div><d=
-iv><br></div><div># blk-archive<br><br>The blk-archive tools were initially=
- part of this thin-provisioning-tools<br>package.=C2=A0 But have now been s=
-plit off to their own project:<br><br>=C2=A0 =C2=A0 <a href=3D"https://gith=
-ub.com/jthornber/blk-archive">https://github.com/jthornber/blk-archive</a><=
-br><br>They allow efficient archiving of thin devices (data deduplication<b=
-r>and compression).=C2=A0 Which will be of interest to those of you who are=
-<br>holding large numbers of snapshots in thin pools as a poor man&#39;s ba=
-ckup.<br><br>In particular:<br><br>=C2=A0 =C2=A0 - Thin snapshots can be us=
-ed to archive live data.<br>=C2=A0 =C2=A0 - it avoids reading unprovisioned=
- areas of thin devices.<br>=C2=A0 =C2=A0 - it can calculate deltas between =
-thin devices to minimise<br>=C2=A0 =C2=A0 =C2=A0 how much data is read and =
-deduped (incremental backups).<br>=C2=A0 =C2=A0 - restoring to a thin devic=
-e tries to maximise data sharing<br>=C2=A0 =C2=A0 =C2=A0 within the thin po=
-ol (a big win if you&#39;re restoring snapshots).<br></div></div>
-
---00000000000018db1d05efa2b83e--
-
---===============8116299188923323723==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+Hi Linus,
+
+The following changes since commit b7b275e60bcd5f89771e865a8239325f86d9927d:
+
+  Linux 6.1-rc7 (2022-11-27 13:31:48 -0800)
+
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.2/dm-changes
+
+for you to fetch changes up to 7991dbff6849f67e823b7cc0c15e5a90b0549b9f:
+
+  dm thin: Use last transaction's pmd->root when commit failed (2022-12-08 12:17:09 -0500)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+- Fix use-after-free races due to missing resource cleanup during DM
+  target destruction in DM targets: thin-pool, cache, integrity and
+  clone.
+
+- Fix ABBA deadlocks in DM thin-pool and cache targets due to their
+  use of a bufio client (that has a shrinker whose locking can cause
+  the incorrect locking order).
+
+- Fix DM cache target to set its needs_check flag after first aborting
+  the metadata (whereby using reset persistent-data objects to update
+  the superblock with, otherwise the superblock update could be
+  dropped due to aborting metadata).  This was found with
+  code-inspection when comparing with the equivalent in DM thinp
+  code.
+
+- Fix DM thin-pool's presume to continue resuming the device even if
+  the pool in is fail mode -- otherwise bios may never be failed up
+  the IO stack (which will prevent resetting the thin-pool target via
+  table reload)
+
+- Fix DM thin-pool's metadata to use proper btree root (from previous
+  transaction) if metadata commit failed.
+
+- Add 'waitfor' module param to DM module (dm_mod) to allow dm-init to
+  wait for the specified device before continuing with its DM target
+  initialization.
+
+----------------------------------------------------------------
+Luo Meng (5):
+      dm thin: Fix UAF in run_timer_softirq()
+      dm clone: Fix UAF in clone_dtr()
+      dm cache: Fix UAF in destroy()
+      dm integrity: Fix UAF in dm_integrity_dtr()
+      dm thin: resume even if in FAIL mode
+
+Mike Snitzer (2):
+      dm cache: Fix ABBA deadlock between shrink_slab and dm_cache_metadata_abort
+      dm cache: set needs_check flag after aborting metadata
+
+Mikulas Patocka (2):
+      dm ioctl: a small code cleanup in list_version_get_info
+      dm ioctl: fix a couple ioctl codes
+
+Peter Korsgaard (1):
+      dm init: add dm-mod.waitfor to wait for asynchronously probed block devices
+
+Zhihao Cheng (2):
+      dm thin: Fix ABBA deadlock between shrink_slab and dm_pool_abort_metadata
+      dm thin: Use last transaction's pmd->root when commit failed
+
+ .../admin-guide/device-mapper/dm-init.rst          |  8 +++
+ drivers/md/dm-cache-metadata.c                     | 54 ++++++++++++++++---
+ drivers/md/dm-cache-target.c                       | 11 ++--
+ drivers/md/dm-clone-target.c                       |  1 +
+ drivers/md/dm-init.c                               | 22 +++++++-
+ drivers/md/dm-integrity.c                          |  2 +
+ drivers/md/dm-ioctl.c                              |  6 +--
+ drivers/md/dm-thin-metadata.c                      | 60 +++++++++++++++++++---
+ drivers/md/dm-thin.c                               | 18 +++++--
+ 9 files changed, 154 insertions(+), 28 deletions(-)
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-
---===============8116299188923323723==--
 
