@@ -4,91 +4,86 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E3E4CC04FDE
-	for <dm-devel@archiver.kernel.org>; Thu,  8 Dec 2022 17:14:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9E932C4332F
+	for <dm-devel@archiver.kernel.org>; Mon, 12 Dec 2022 14:57:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1670519695;
+	s=mimecast20190719; t=1670857058;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=0DS4q0VnRfvhAn/W8CgLtaepcE/oxT1w0X9BY6fk+9Q=;
-	b=W3cG8gfsss2Cxrg/yq/qVH3kvs6iXkrVeyLXnbvWGuAua2crQXWgDXGijOCUEJgXnn+S3d
-	aQY6/gzNNgc8Q+izhoTtBgceuXJOqUwzmdqTVoHek5F1OBK6jU70WJ4g65LPGH71s3klnW
-	LcGeErPGUrVlnpOrq1ze5V9r8LPNQS4=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
+	 content-type:content-type:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=Xbc+b9PMOUi47ZvQv0CVhIiM1WcOb80dohTwrghdvHU=;
+	b=YlKoJPKkDmhOV1IsX6Z2GUkANy8wMoBGxlIZftsOwFvQAruWd5pgX6omjfkomHBof77fBg
+	r3QKlM0KXMa4yP+RFAH5m+bU3lxHW2/iG5qU6/ouT5yy+92LfKlKrmz42s7PKQPBr7+JEM
+	tbhZ2x1IzJrKtUo86pjqFzDyU4QSBfM=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-252-Ird6GJMmNT-4yiwU38zOjA-1; Thu, 08 Dec 2022 12:14:50 -0500
-X-MC-Unique: Ird6GJMmNT-4yiwU38zOjA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-284-d-Aq225SMzqcUjS3i7a7zw-1; Mon, 12 Dec 2022 09:57:35 -0500
+X-MC-Unique: d-Aq225SMzqcUjS3i7a7zw-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8CB593810D2D;
-	Thu,  8 Dec 2022 17:14:48 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C59F7101AA47;
+	Mon, 12 Dec 2022 14:57:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E550C40C6EC2;
-	Thu,  8 Dec 2022 17:14:44 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1124C492C14;
+	Mon, 12 Dec 2022 14:57:31 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 52548194704B;
-	Thu,  8 Dec 2022 17:14:31 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BDE4F1946588;
+	Mon, 12 Dec 2022 14:57:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3E5DF1946A41
- for <dm-devel@listman.corp.redhat.com>; Thu,  8 Dec 2022 16:53:23 +0000 (UTC)
+ ESMTP id 0D55F1946586
+ for <dm-devel@listman.corp.redhat.com>; Mon, 12 Dec 2022 14:57:24 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1B7A01401C35; Thu,  8 Dec 2022 16:53:23 +0000 (UTC)
+ id DC6EE2026D68; Mon, 12 Dec 2022 14:57:18 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 13E94140EBF5
- for <dm-devel@redhat.com>; Thu,  8 Dec 2022 16:53:23 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D51172026D4B
+ for <dm-devel@redhat.com>; Mon, 12 Dec 2022 14:57:18 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EBC961C087AA
- for <dm-devel@redhat.com>; Thu,  8 Dec 2022 16:53:22 +0000 (UTC)
-Received: from mail-pj1-f71.google.com (mail-pj1-f71.google.com
- [209.85.216.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B68AA858F13
+ for <dm-devel@redhat.com>; Mon, 12 Dec 2022 14:57:18 +0000 (UTC)
+Received: from mail-vs1-f71.google.com (mail-vs1-f71.google.com
+ [209.85.217.71]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-346-4HDAUWsOMqmpSh2U25XNZQ-1; Thu, 08 Dec 2022 11:53:21 -0500
-X-MC-Unique: 4HDAUWsOMqmpSh2U25XNZQ-1
-Received: by mail-pj1-f71.google.com with SMTP id
- z4-20020a17090ab10400b002195a146546so4349273pjq.9
- for <dm-devel@redhat.com>; Thu, 08 Dec 2022 08:53:21 -0800 (PST)
+ us-mta-46-JqA-EVr6MzK3QjqX3C5Gaw-1; Mon, 12 Dec 2022 09:57:16 -0500
+X-MC-Unique: JqA-EVr6MzK3QjqX3C5Gaw-1
+Received: by mail-vs1-f71.google.com with SMTP id
+ 190-20020a6719c7000000b003aa14ac75f5so3031042vsz.1
+ for <dm-devel@redhat.com>; Mon, 12 Dec 2022 06:57:16 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=cc:to:subject:message-id:date:from:in-reply-to:references
- :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
- :reply-to;
- bh=qJB360zHyUcy87sHi/i61uIsDvL5rAG8yxTJu83Q5tc=;
- b=c0Mzg/D8ttKZZ27lL0UvRil6lbYL5ySZuwLXOpKV6TyApAb4PHtPmVIcyQ/SbreiRi
- 61TVvis5u5YaLkasFc5EWg7JuEZWacrZXWBt8RQ/icsMl48u47Q2mFfG+OPZibK5Gp1X
- EI6kuvXr4rkWzL7iZNyeZXPFAHkpaDlTyBlF4t/mT/lPFhOLwBvSa0aVpxC31AC6uZ1r
- zlJQSc/bytNnMCNTajp4Rx/gkm49JXeNKnwZGcMhNA/w0wYxzX2VtnZ/TNx890b/jtkT
- hMytuJf6yzF1slDfo5xPFHZJw/D0Png5zGoKzHBJEfySmwAS3bjwe8Pf0yowpUeZv0CU
- FZ2Q==
-X-Gm-Message-State: ANoB5pkYyD5oTsncyU1yMEpkUWX0A/0/XtMV8wvKPDkirt+JPjmGy8fG
- mE27f2APMLgFW1H5yfL5hNTqGPpuzEd/C+yC9PZf8XiH3AjsEKOSgkQM6quaNWE9RgOnVVdHBR5
- RX+hNVcg8TxD7LEDHMH4i+kTLlR4JB8U=
-X-Received: by 2002:a63:4742:0:b0:478:cd7d:3f55 with SMTP id
- w2-20020a634742000000b00478cd7d3f55mr12615304pgk.624.1670518400379; 
- Thu, 08 Dec 2022 08:53:20 -0800 (PST)
-X-Google-Smtp-Source: AA0mqf4bBKmuHohmEgR5LRdXgjAiKfTnGo3qgiULF3VSF1cfH43kup8tB0AkKaVJsdh4rg1MbUACHuaLzN1HSMzqAKQ=
-X-Received: by 2002:a63:4742:0:b0:478:cd7d:3f55 with SMTP id
- w2-20020a634742000000b00478cd7d3f55mr12615297pgk.624.1670518400123; Thu, 08
- Dec 2022 08:53:20 -0800 (PST)
+ h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+ :from:to:cc:subject:date:message-id:reply-to;
+ bh=19pHUKKxvn4JQ7oedP68csdOCv4Yg5h/g0L1lI2Dqro=;
+ b=QAhYLpdummdxBIMqS4eRno6eJ+72GP8pRWbn3Ya60DEC6XNcLk/oZo2yxGLQFrdWCf
+ inkRLCpyYXf9cvDo8JRc1GoVk5rKOPVFU7f0Q93D5WUodOIEiZjIZipOrbQN1oDc7YF8
+ wifQ9WKcztchF/QjKQqfarAmTcVNMoEeCCOxOdyI+i7Noa/xsBcDoHH3WDw8vsIHxqsL
+ kLT8PBUz2AoXL/r700NEc0+PSWKTxfuSMc3exBGp43maoLqfHI5NL1HYYqPjHt/fiR0A
+ RYePCJUqzRHpIrXEM6N/WRzIf/+VFGOOdPQIyfP3XGW5mw1bz3vYtntgFE7LZ7OyFyKb
+ QzTA==
+X-Gm-Message-State: ANoB5pna+JlSsyZN5rExPniOVDmK2pK8VXvz24USYKkGveYbJco5su4X
+ 0u9zTGpj6QfP17ddeS2P145a4812tErewm2jGGH5K9dvCUkYr9BZiunEhWtJLhRsLYPoqA5P0dI
+ kN1bu+KWVoozG0fOLpx2t14g6Rx/D85w=
+X-Received: by 2002:ab0:59ae:0:b0:419:c3a3:9d0 with SMTP id
+ g43-20020ab059ae000000b00419c3a309d0mr10795116uad.98.1670857036289; 
+ Mon, 12 Dec 2022 06:57:16 -0800 (PST)
+X-Google-Smtp-Source: AA0mqf53zXjGDxnt5QkyVYwRD6wxdbpbZmy5vm+6Zvc8TRW/2GWgw6g9lWizASJfPx1Mtik2A5gWL7+MgjtcGrfyqoU=
+X-Received: by 2002:ab0:59ae:0:b0:419:c3a3:9d0 with SMTP id
+ g43-20020ab059ae000000b00419c3a309d0mr10795114uad.98.1670857035922; Mon, 12
+ Dec 2022 06:57:15 -0800 (PST)
 MIME-Version: 1.0
-References: <20221208142802.1479048-1-chengzhihao1@huawei.com>
-In-Reply-To: <20221208142802.1479048-1-chengzhihao1@huawei.com>
 From: Joe Thornber <thornber@redhat.com>
-Date: Thu, 8 Dec 2022 16:53:09 +0000
-Message-ID: <CAJ0trDYX1vaY81JYuwxL417o1pzk_qo0X52h=LF-k=P=YUp19Q@mail.gmail.com>
-To: Zhihao Cheng <chengzhihao1@huawei.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-X-Mailman-Approved-At: Thu, 08 Dec 2022 17:14:29 +0000
-Subject: Re: [dm-devel] [PATCH -next] dm thin: Use last transaction's
- pmd->root when commit failed
+Date: Mon, 12 Dec 2022 14:57:05 +0000
+Message-ID: <CAJ0trDZW8FRFuuonKrgSMp7i7m0sLdPGyFHd2ap0Gw8iadrA-A@mail.gmail.com>
+To: "development, device-mapper" <dm-devel@redhat.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: [dm-devel] [announce] thin-provisioning-tools v1.0.0-rc1
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -100,218 +95,173 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: snitzer@redhat.com, yi.zhang@huawei.com, snitzer@kernel.org,
- linux-kernel@vger.kernel.org, dm-devel@redhat.com, Martin.Wilck@suse.com,
- agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============2625619848175312110=="
+Content-Type: multipart/mixed; boundary="===============8116299188923323723=="
 
---===============2625619848175312110==
-Content-Type: multipart/alternative; boundary="000000000000d4a37905ef53dfa0"
+--===============8116299188923323723==
+Content-Type: multipart/alternative; boundary="00000000000018db1d05efa2b83e"
 
---000000000000d4a37905ef53dfa0
+--00000000000018db1d05efa2b83e
 Content-Type: text/plain; charset="UTF-8"
 
-Acked-by: Joe Thornber <ejt@redhat.com>
+We're pleased to announce the first release candidate of v1.0.0 of the
+thin-provisioning-tools (which also contains tools for dm-cache and
+dm-era).
 
-On Thu, Dec 8, 2022 at 2:07 PM Zhihao Cheng <chengzhihao1@huawei.com> wrote:
+Please try it out on your test systems and give us feedback.  In
+particular regarding documentation, build and install process.
 
-> Recently we found a softlock up problem in dm thin pool looking up btree
-> caused by corrupted metadata:
->  Kernel panic - not syncing: softlockup: hung tasks
->  CPU: 7 PID: 2669225 Comm: kworker/u16:3
->  Hardware name: QEMU Standard PC (i440FX + PIIX, 1996)
->  Workqueue: dm-thin do_worker [dm_thin_pool]
->  Call Trace:
->    <IRQ>
->    dump_stack+0x9c/0xd3
->    panic+0x35d/0x6b9
->    watchdog_timer_fn.cold+0x16/0x25
->    __run_hrtimer+0xa2/0x2d0
->    </IRQ>
->    RIP: 0010:__relink_lru+0x102/0x220 [dm_bufio]
->    __bufio_new+0x11f/0x4f0 [dm_bufio]
->    new_read+0xa3/0x1e0 [dm_bufio]
->    dm_bm_read_lock+0x33/0xd0 [dm_persistent_data]
->    ro_step+0x63/0x100 [dm_persistent_data]
->    btree_lookup_raw.constprop.0+0x44/0x220 [dm_persistent_data]
->    dm_btree_lookup+0x16f/0x210 [dm_persistent_data]
->    dm_thin_find_block+0x12c/0x210 [dm_thin_pool]
->    __process_bio_read_only+0xc5/0x400 [dm_thin_pool]
->    process_thin_deferred_bios+0x1a4/0x4a0 [dm_thin_pool]
->    process_one_work+0x3c5/0x730
->
-> Following process may generate a broken btree mixed with fresh and stale
-> nodes, which could let dm thin trapped into an infinite loop while looking
-> up data block:
->  Transaction 1: pmd->root = A, A->B->C   // One path in btree
->                 pmd->root = X, X->Y->Z   // Copy-up
->  Transaction 2: X,Z is updated on disk, Y is written failed.
->                 // Commit failed, dm thin becomes read-only.
->                 process_bio_read_only
->                  dm_thin_find_block
->                   __find_block
->                    dm_btree_lookup(pmd->root)
-> The pmd->root points to a broken btree, Y may contain stale node pointing
-> to any block, for example X, which lets dm thin trapped into a dead loop
-> while looking up Z.
->
-> Fix it by setting pmd->root in __open_metadata(), so that dm thin will use
-> last transaction's pmd->root if commit failed.
->
-> Fetch a reproducer in [Link].
->
-> Linke: https://bugzilla.kernel.org/show_bug.cgi?id=216790
-> Fixes: 991d9fa02da0 ("dm: add thin provisioning target")
-> Signed-off-by: Zhihao Cheng <chengzhihao1@huawei.com>
-> ---
->  drivers/md/dm-thin-metadata.c | 9 +++++++++
->  1 file changed, 9 insertions(+)
->
-> diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-> index 1a62226ac34e..26c42ee183ed 100644
-> --- a/drivers/md/dm-thin-metadata.c
-> +++ b/drivers/md/dm-thin-metadata.c
-> @@ -724,6 +724,15 @@ static int __open_metadata(struct dm_pool_metadata
-> *pmd)
->                 goto bad_cleanup_data_sm;
->         }
->
-> +       /*
-> +        * For pool metadata opening process, root setting is redundant
-> +        * because it will be set again in __begin_transaction(). But dm
-> +        * pool aborting process really needs to get last transaction's
-> +        * root in case accessing broken btree.
-> +        */
-> +       pmd->root = le64_to_cpu(disk_super->data_mapping_root);
-> +       pmd->details_root = le64_to_cpu(disk_super->device_details_root);
-> +
->         __setup_btree_details(pmd);
->         dm_bm_unlock(sblock);
->
-> --
-> 2.31.1
->
->
+    https://github.com/jthornber/thin-provisioning-tools
 
---000000000000d4a37905ef53dfa0
+
+# Rust
+
+This is a complete rewrite of the tools in the Rust language.  This switch
+was made for three primary reasons:
+
+- Memory safety.
+- The type system makes it easier to reason about multithreaded code and we
+need
+  to use multiple threads to boost performance.
+- Rust is a more expressive language than C++ (eg, proper algebraic data
+types).
+
+# IO engines
+
+The old C++ tools used libaio for all IO.  The Rust version by default
+uses traditional synchronous IO.  This sounds like a step backwards,
+but the use of multiple threads and IO scheduling means there's a big
+leap in performance.
+
+In addition there's a compile time option to include asynchronous
+IO support via io_uring.  This engine is slightly faster, but not all
+distributions support io_uring at the moment.  In addition we've seen
+recent (summer 2022) kernel versions that lose io notifications, causing
+us to feel that io_uring itself isn't quite ready.
+
+# Performance
+
+We've focussed on thin_check and cache_check performance most of all
+since these regularly get run on system startup.  But all tools should
+have made significant performance improvements.
+
+Over the years we've collected some gnarly dm-thin metadata examples from
+users, eg, using hundreds of thousands of snapshots, and completely
+filling the maximum metadata size of 16G.  These are great for
+benchmarking, for example running thin_check on my system with one of these
+files:
+
+    thin_check (v0.9):                  6m
+    thin_check (v1.0, sync engine):     28s  (12.9 times faster)
+    thin_check (v1.0, io_uring engine): 23s  (15.6 times faster)
+
+# thin_dump/restore retains snapshot sharing
+
+Another issue with previous versions of the tools is dumping and restoring
+thin metadata would have the effect of losing sharing of the metadata
+btrees for snapshots.  Meaning restored metadata often took up more space,
+and
+in some cases would exceed the 16G metadata limit.  This is no longer the
+case.
+
+[note: _data_ sharing was always maintained, this is purely about metadata
+space usage]
+
+# thin_metadata_pack/unpack
+
+These are a couple of new tools that are used for support.  They compress
+thin metadata, typically to a tenth of the size (much better than you'd
+get with generic compressors).  This makes it easier to pass damaged
+metadata around for inspection.
+
+# blk-archive
+
+The blk-archive tools were initially part of this thin-provisioning-tools
+package.  But have now been split off to their own project:
+
+    https://github.com/jthornber/blk-archive
+
+They allow efficient archiving of thin devices (data deduplication
+and compression).  Which will be of interest to those of you who are
+holding large numbers of snapshots in thin pools as a poor man's backup.
+
+In particular:
+
+    - Thin snapshots can be used to archive live data.
+    - it avoids reading unprovisioned areas of thin devices.
+    - it can calculate deltas between thin devices to minimise
+      how much data is read and deduped (incremental backups).
+    - restoring to a thin device tries to maximise data sharing
+      within the thin pool (a big win if you're restoring snapshots).
+
+--00000000000018db1d05efa2b83e
 Content-Type: text/html; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr">Acked-by: Joe Thornber &lt;<a href=3D"mailto:ejt@redhat.co=
-m">ejt@redhat.com</a>&gt;</div><br><div class=3D"gmail_quote"><div dir=3D"l=
-tr" class=3D"gmail_attr">On Thu, Dec 8, 2022 at 2:07 PM Zhihao Cheng &lt;<a=
- href=3D"mailto:chengzhihao1@huawei.com">chengzhihao1@huawei.com</a>&gt; wr=
-ote:<br></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px=
- 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">Recently we=
- found a softlock up problem in dm thin pool looking up btree<br>
-caused by corrupted metadata:<br>
-=C2=A0Kernel panic - not syncing: softlockup: hung tasks<br>
-=C2=A0CPU: 7 PID: 2669225 Comm: kworker/u16:3<br>
-=C2=A0Hardware name: QEMU Standard PC (i440FX + PIIX, 1996)<br>
-=C2=A0Workqueue: dm-thin do_worker [dm_thin_pool]<br>
-=C2=A0Call Trace:<br>
-=C2=A0 =C2=A0&lt;IRQ&gt;<br>
-=C2=A0 =C2=A0dump_stack+0x9c/0xd3<br>
-=C2=A0 =C2=A0panic+0x35d/0x6b9<br>
-=C2=A0 =C2=A0watchdog_timer_fn.cold+0x16/0x25<br>
-=C2=A0 =C2=A0__run_hrtimer+0xa2/0x2d0<br>
-=C2=A0 =C2=A0&lt;/IRQ&gt;<br>
-=C2=A0 =C2=A0RIP: 0010:__relink_lru+0x102/0x220 [dm_bufio]<br>
-=C2=A0 =C2=A0__bufio_new+0x11f/0x4f0 [dm_bufio]<br>
-=C2=A0 =C2=A0new_read+0xa3/0x1e0 [dm_bufio]<br>
-=C2=A0 =C2=A0dm_bm_read_lock+0x33/0xd0 [dm_persistent_data]<br>
-=C2=A0 =C2=A0ro_step+0x63/0x100 [dm_persistent_data]<br>
-=C2=A0 =C2=A0btree_lookup_raw.constprop.0+0x44/0x220 [dm_persistent_data]<b=
-r>
-=C2=A0 =C2=A0dm_btree_lookup+0x16f/0x210 [dm_persistent_data]<br>
-=C2=A0 =C2=A0dm_thin_find_block+0x12c/0x210 [dm_thin_pool]<br>
-=C2=A0 =C2=A0__process_bio_read_only+0xc5/0x400 [dm_thin_pool]<br>
-=C2=A0 =C2=A0process_thin_deferred_bios+0x1a4/0x4a0 [dm_thin_pool]<br>
-=C2=A0 =C2=A0process_one_work+0x3c5/0x730<br>
-<br>
-Following process may generate a broken btree mixed with fresh and stale<br=
->
-nodes, which could let dm thin trapped into an infinite loop while looking<=
-br>
-up data block:<br>
-=C2=A0Transaction 1: pmd-&gt;root =3D A, A-&gt;B-&gt;C=C2=A0 =C2=A0// One p=
-ath in btree<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pmd-&gt;root =3D X,=
- X-&gt;Y-&gt;Z=C2=A0 =C2=A0// Copy-up<br>
-=C2=A0Transaction 2: X,Z is updated on disk, Y is written failed.<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 // Commit failed, d=
-m thin becomes read-only.<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 process_bio_read_on=
-ly<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0dm_thin_find_=
-block<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 __find_block=
-<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0dm_btr=
-ee_lookup(pmd-&gt;root)<br>
-The pmd-&gt;root points to a broken btree, Y may contain stale node pointin=
-g<br>
-to any block, for example X, which lets dm thin trapped into a dead loop<br=
->
-while looking up Z.<br>
-<br>
-Fix it by setting pmd-&gt;root in __open_metadata(), so that dm thin will u=
-se<br>
-last transaction&#39;s pmd-&gt;root if commit failed.<br>
-<br>
-Fetch a reproducer in [Link].<br>
-<br>
-Linke: <a href=3D"https://bugzilla.kernel.org/show_bug.cgi?id=3D216790" rel=
-=3D"noreferrer" target=3D"_blank">https://bugzilla.kernel.org/show_bug.cgi?=
-id=3D216790</a><br>
-Fixes: 991d9fa02da0 (&quot;dm: add thin provisioning target&quot;)<br>
-Signed-off-by: Zhihao Cheng &lt;<a href=3D"mailto:chengzhihao1@huawei.com" =
-target=3D"_blank">chengzhihao1@huawei.com</a>&gt;<br>
----<br>
-=C2=A0drivers/md/dm-thin-metadata.c | 9 +++++++++<br>
-=C2=A01 file changed, 9 insertions(+)<br>
-<br>
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c<=
-br>
-index 1a62226ac34e..26c42ee183ed 100644<br>
---- a/drivers/md/dm-thin-metadata.c<br>
-+++ b/drivers/md/dm-thin-metadata.c<br>
-@@ -724,6 +724,15 @@ static int __open_metadata(struct dm_pool_metadata *pm=
-d)<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 goto bad_cleanup_da=
-ta_sm;<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 }<br>
-<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0/*<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 * For pool metadata opening process, root sett=
-ing is redundant<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 * because it will be set again in __begin_tran=
-saction(). But dm<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 * pool aborting process really needs to get la=
-st transaction&#39;s<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 * root in case accessing broken btree.<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0 */<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0pmd-&gt;root =3D le64_to_cpu(disk_super-&gt;dat=
-a_mapping_root);<br>
-+=C2=A0 =C2=A0 =C2=A0 =C2=A0pmd-&gt;details_root =3D le64_to_cpu(disk_super=
--&gt;device_details_root);<br>
-+<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 __setup_btree_details(pmd);<br>
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 dm_bm_unlock(sblock);<br>
-<br>
--- <br>
-2.31.1<br>
-<br>
-</blockquote></div>
+<div dir=3D"ltr">We&#39;re pleased to announce the first release candidate =
+of v1.0.0 of the<br>thin-provisioning-tools (which also contains tools for =
+dm-cache and<br>dm-era).<br><br>Please try it out on your test systems and =
+give us feedback.=C2=A0 In<br>particular regarding documentation, build and=
+ install process.<br><br>=C2=A0 =C2=A0 <a href=3D"https://github.com/jthorn=
+ber/thin-provisioning-tools">https://github.com/jthornber/thin-provisioning=
+-tools</a><br><br><br># Rust<br><br>This is a complete rewrite of the tools=
+ in the Rust language.=C2=A0 This switch<br>was made for three primary reas=
+ons:<br><br>- Memory safety.<br>- The type system makes it easier to reason=
+ about multithreaded code and we need<br>=C2=A0 to use multiple threads to =
+boost performance.<br>- Rust is a more expressive language than C++ (eg, pr=
+oper algebraic data types).<br><br># IO engines<br><br>The old C++ tools us=
+ed libaio for all IO.=C2=A0 The Rust version by default<br>uses traditional=
+ synchronous IO.=C2=A0 This sounds like a step backwards,<br>but the use of=
+ multiple threads and IO scheduling means there&#39;s a big<br>leap in perf=
+ormance.<br><br>In addition there&#39;s a compile time option to include as=
+ynchronous<br>IO support via io_uring.=C2=A0 This engine is slightly faster=
+, but not all<br>distributions support io_uring at the moment.=C2=A0 In add=
+ition we&#39;ve seen<br>recent (summer 2022) kernel versions that lose io n=
+otifications, causing<br>us to feel that io_uring itself isn&#39;t quite re=
+ady.<br><div><br></div><div># Performance<br><br>We&#39;ve focussed on thin=
+_check and cache_check performance most of all<br>since these regularly get=
+ run on system startup.=C2=A0 But all tools should<br>have made significant=
+ performance improvements.<br><br>Over the years we&#39;ve collected some g=
+narly dm-thin metadata examples from<br>users, eg, using hundreds of thousa=
+nds of snapshots, and completely<br>filling the maximum metadata size of 16=
+G.=C2=A0 These are great for<br>benchmarking, for example running thin_chec=
+k on my system with one of these files:<br><br>=C2=A0 =C2=A0 thin_check (v0=
+.9): =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A06m<br>=
+=C2=A0 =C2=A0 thin_check (v1.0, sync engine): =C2=A0 =C2=A0 28s =C2=A0(12.9=
+ times faster)<br>=C2=A0 =C2=A0 thin_check (v1.0, io_uring engine): 23s =C2=
+=A0(15.6 times faster)<br><br># thin_dump/restore retains snapshot sharing =
+<br><br>Another issue with previous versions of the tools is dumping and re=
+storing<br>thin metadata would have the effect of losing sharing of the met=
+adata<br>btrees for snapshots.=C2=A0 Meaning restored metadata often took u=
+p more space, and<br>in some cases would exceed the 16G metadata limit.=C2=
+=A0 This is no longer the case.<br><br>[note: _data_ sharing was always mai=
+ntained, this is purely about metadata space usage]<br><br># thin_metadata_=
+pack/unpack<br><br>These are a couple of new tools that are used for suppor=
+t.=C2=A0 They compress<br>thin metadata, typically to a tenth of the size (=
+much better than you&#39;d<br>get with generic compressors).=C2=A0 This mak=
+es it easier to pass damaged<br>metadata around for inspection.<br></div><d=
+iv><br></div><div># blk-archive<br><br>The blk-archive tools were initially=
+ part of this thin-provisioning-tools<br>package.=C2=A0 But have now been s=
+plit off to their own project:<br><br>=C2=A0 =C2=A0 <a href=3D"https://gith=
+ub.com/jthornber/blk-archive">https://github.com/jthornber/blk-archive</a><=
+br><br>They allow efficient archiving of thin devices (data deduplication<b=
+r>and compression).=C2=A0 Which will be of interest to those of you who are=
+<br>holding large numbers of snapshots in thin pools as a poor man&#39;s ba=
+ckup.<br><br>In particular:<br><br>=C2=A0 =C2=A0 - Thin snapshots can be us=
+ed to archive live data.<br>=C2=A0 =C2=A0 - it avoids reading unprovisioned=
+ areas of thin devices.<br>=C2=A0 =C2=A0 - it can calculate deltas between =
+thin devices to minimise<br>=C2=A0 =C2=A0 =C2=A0 how much data is read and =
+deduped (incremental backups).<br>=C2=A0 =C2=A0 - restoring to a thin devic=
+e tries to maximise data sharing<br>=C2=A0 =C2=A0 =C2=A0 within the thin po=
+ol (a big win if you&#39;re restoring snapshots).<br></div></div>
 
---000000000000d4a37905ef53dfa0--
+--00000000000018db1d05efa2b83e--
 
---===============2625619848175312110==
+--===============8116299188923323723==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -322,5 +272,5 @@ dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
 
---===============2625619848175312110==--
+--===============8116299188923323723==--
 
