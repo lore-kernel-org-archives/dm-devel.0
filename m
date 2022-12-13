@@ -4,61 +4,61 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A211EC4332F
-	for <dm-devel@archiver.kernel.org>; Tue, 13 Dec 2022 23:36:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E6E3FC10F1E
+	for <dm-devel@archiver.kernel.org>; Tue, 13 Dec 2022 23:36:29 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1670974586;
+	s=mimecast20190719; t=1670974588;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=YBBsydTQsElHmqOulJBLLiFEubpnJsvhm/Tib+stcpg=;
-	b=ZaMzTxmRTHB6nlhDM51ABYQV5cPOPRXwrF0yQluWF8/aTWvon3PiQsw/CVPTonyIkv7LWc
-	p41+iGaWxXG+kOyB6UtYD8KKL4uKH8i3L23bwnQ65R2i6LMMf//xmi08elMVsO9VX8RdN6
-	Md5ezQgbh2lCxTkcWSGM2Y7fqOcVNeE=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=1pb4XUOvGcJEQZJtD8r27eonamHwE5o5zAVYvs1g0Es=;
+	b=adv8esX6T/OA/sbpd71U8KAhMctMWpvHUHSAzdYL4kAbqM8DL+dVAr88chwP3f3bxCixIQ
+	/bekpl1XWF+jfHeU4oopX5uj3qlEeMcWDt5b8wEu1hxb2D34Ri4o2vvjSg4N267nuz6fYu
+	DE8PWc+atTZAFaBSgeZQt/84KVZwvTw=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-459-hSRfcdmXM2Kq33iSSFEmzg-1; Tue, 13 Dec 2022 18:36:25 -0500
-X-MC-Unique: hSRfcdmXM2Kq33iSSFEmzg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-457-sC30yvMVPxKiPlRWl-5rbw-1; Tue, 13 Dec 2022 18:36:24 -0500
+X-MC-Unique: sC30yvMVPxKiPlRWl-5rbw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F0A15381494A;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B03A4185A7AD;
 	Tue, 13 Dec 2022 23:36:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id DFAE82026D76;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9F5D0140006F;
 	Tue, 13 Dec 2022 23:36:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1DBAC1946A6C;
-	Tue, 13 Dec 2022 23:36:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E99DB1946A54;
+	Tue, 13 Dec 2022 23:36:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8F4131946A46
- for <dm-devel@listman.corp.redhat.com>; Tue, 13 Dec 2022 23:36:14 +0000 (UTC)
+ ESMTP id 8D0291946A42
+ for <dm-devel@listman.corp.redhat.com>; Tue, 13 Dec 2022 23:36:13 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6622F4085720; Tue, 13 Dec 2022 23:36:14 +0000 (UTC)
+ id 1A867492B03; Tue, 13 Dec 2022 23:36:13 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4817B4085722;
- Tue, 13 Dec 2022 23:36:14 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 03C72492B02;
+ Tue, 13 Dec 2022 23:36:12 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 2BDNaCVx008056;
- Tue, 13 Dec 2022 17:36:13 -0600
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 2BDNaBiw008052;
+ Tue, 13 Dec 2022 17:36:11 -0600
 Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 2BDNaC2O008055;
- Tue, 13 Dec 2022 17:36:12 -0600
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 2BDNaBng008051;
+ Tue, 13 Dec 2022 17:36:11 -0600
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Tue, 13 Dec 2022 17:36:07 -0600
-Message-Id: <1670974567-8005-4-git-send-email-bmarzins@redhat.com>
+Date: Tue, 13 Dec 2022 17:36:06 -0600
+Message-Id: <1670974567-8005-3-git-send-email-bmarzins@redhat.com>
 In-Reply-To: <1670974567-8005-1-git-send-email-bmarzins@redhat.com>
 References: <1670974567-8005-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: [dm-devel] [PATCH 3/3] libmutipath: validate the argument count of
- config strings
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: [dm-devel] [PATCH 2/3] libmultipath: don't leak memory on invalid
+ strings
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -75,201 +75,41 @@ Cc: device-mapper development <dm-devel@redhat.com>,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The features, path_selector, and hardware_handler config options pass
-their strings directly into the kernel.  If users omit the argument
-counts from these strings, or use the wrong value, the kernel's table
-parsing gets completely messed up, and the error messages it prints
-don't reflect what actully went wrong. To avoid messing up the
-kernel table parsing, verify that these strings correctly set the
-argument count to the number of arguments they have.
+If set_path() or set_str_noslash() are called with a bad value, they
+ignore it and continue to use the old value. But they weren't freeing
+the bad value, causing a memory leak.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/dict.c | 110 ++++++++++++++++++++++++++++++++++++++++----
- 1 file changed, 101 insertions(+), 9 deletions(-)
+ libmultipath/dict.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
 diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index f4233882..6645de49 100644
+index 97f43387..f4233882 100644
 --- a/libmultipath/dict.c
 +++ b/libmultipath/dict.c
-@@ -116,6 +116,58 @@ set_str(vector strvec, void *ptr, const char *file, int line_nr)
- 	return 0;
- }
- 
-+static int
-+set_arg_str(vector strvec, void *ptr, int count_idx, const char *file,
-+	    int line_nr)
-+{
-+	char **str_ptr = (char **)ptr;
-+	char *old_str = *str_ptr;
-+	const char *spaces = " \f\n\r\t\v";
-+	char *p, *end;
-+	int idx = -1;
-+	long int count = -1;
-+
-+	*str_ptr = set_value(strvec);
-+	if (!*str_ptr) {
-+		free(old_str);
-+		return 1;
-+	}
-+	p = *str_ptr;
-+	while (*p != '\0') {
-+		p += strspn(p, spaces);
-+		if (*p == '\0')
-+			break;
-+		idx += 1;
-+		if (idx == count_idx) {
-+			errno = 0;
-+			count = strtol(p, &end, 10);
-+			if (errno == ERANGE || end == p ||
-+			    !(isspace(*end) || *end == '\0')) {
-+				count = -1;
-+				break;
-+			}
-+		}
-+		p += strcspn(p, spaces);
-+	}
-+	if (count < 0) {
-+		condlog(1, "%s line %d, missing argument count for %s",
-+			file, line_nr, (char*)VECTOR_SLOT(strvec, 0));
-+		goto fail;
-+	}
-+	if (count != idx - count_idx) {
-+		condlog(1, "%s line %d, invalid argument count for %s:, got '%ld' expected '%d'",
-+			file, line_nr, (char*)VECTOR_SLOT(strvec, 0), count,
-+			idx - count_idx);
-+		goto fail;
-+	}
-+	free(old_str);
-+	return 0;
-+fail:
-+	free(*str_ptr);
-+	*str_ptr = old_str;
-+	return 0;
-+}
-+
- static int
- set_path(vector strvec, void *ptr, const char *file, int line_nr)
- {
-@@ -288,6 +340,14 @@ def_ ## option ## _handler (struct config *conf, vector strvec,         \
- 	return set_int(strvec, &conf->option, minval, maxval, file, line_nr); \
- }
- 
-+#define declare_def_arg_str_handler(option, count_idx)			\
-+static int								\
-+def_ ## option ## _handler (struct config *conf, vector strvec,		\
-+			    const char *file, int line_nr)		\
-+{									\
-+	return set_arg_str(strvec, &conf->option, count_idx, file, line_nr); \
-+}
-+
- #define declare_def_snprint(option, function)				\
- static int								\
- snprint_def_ ## option (struct config *conf, struct strbuf *buff,	\
-@@ -340,6 +400,17 @@ hw_ ## option ## _handler (struct config *conf, vector strvec,		\
- 	return set_int(strvec, &hwe->option, minval, maxval, file, line_nr); \
- }
- 
-+#define declare_hw_arg_str_handler(option, count_idx)			\
-+static int								\
-+hw_ ## option ## _handler (struct config *conf, vector strvec,		\
-+			    const char *file, int line_nr)		\
-+{									\
-+	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);		\
-+	if (!hwe)							\
-+		return 1;						\
-+	return set_arg_str(strvec, &hwe->option, count_idx, file, line_nr); \
-+}
-+
- 
- #define declare_hw_snprint(option, function)				\
- static int								\
-@@ -371,6 +442,16 @@ ovr_ ## option ## _handler (struct config *conf, vector strvec,		\
- 		       file, line_nr); \
- }
- 
-+#define declare_ovr_arg_str_handler(option, count_idx)			\
-+static int								\
-+ovr_ ## option ## _handler (struct config *conf, vector strvec,		\
-+			    const char *file, int line_nr)		\
-+{									\
-+	if (!conf->overrides)						\
-+		return 1;						\
-+	return set_arg_str(strvec, &conf->overrides->option, count_idx, file, line_nr); \
-+}
-+
- #define declare_ovr_snprint(option, function)				\
- static int								\
- snprint_ovr_ ## option (struct config *conf, struct strbuf *buff,	\
-@@ -401,6 +482,17 @@ mp_ ## option ## _handler (struct config *conf, vector strvec,		\
- 	return set_int(strvec, &mpe->option, minval, maxval, file, line_nr); \
- }
- 
-+#define declare_mp_arg_str_handler(option, count_idx)			\
-+static int								\
-+mp_ ## option ## _handler (struct config *conf, vector strvec,		\
-+			    const char *file, int line_nr)		\
-+{									\
-+	struct mpentry * mpe = VECTOR_LAST_SLOT(conf->mptable);		\
-+	if (!mpe)							\
-+		return 1;						\
-+	return set_arg_str(strvec, &mpe->option, count_idx, file, line_nr); \
-+}
-+
- #define declare_mp_snprint(option, function)				\
- static int								\
- snprint_mp_ ## option (struct config *conf, struct strbuf *buff,	\
-@@ -584,13 +676,13 @@ snprint_def_marginal_pathgroups(struct config *conf, struct strbuf *buff,
- }
- 
- 
--declare_def_handler(selector, set_str)
-+declare_def_arg_str_handler(selector, 1)
- declare_def_snprint_defstr(selector, print_str, DEFAULT_SELECTOR)
--declare_hw_handler(selector, set_str)
-+declare_hw_arg_str_handler(selector, 1)
- declare_hw_snprint(selector, print_str)
--declare_ovr_handler(selector, set_str)
-+declare_ovr_arg_str_handler(selector, 1)
- declare_ovr_snprint(selector, print_str)
--declare_mp_handler(selector, set_str)
-+declare_mp_arg_str_handler(selector, 1)
- declare_mp_snprint(selector, print_str)
- 
- static int snprint_uid_attrs(struct config *conf, struct strbuf *buff,
-@@ -663,13 +755,13 @@ declare_hw_snprint(prio_args, print_str)
- declare_mp_handler(prio_args, set_str)
- declare_mp_snprint(prio_args, print_str)
- 
--declare_def_handler(features, set_str)
-+declare_def_arg_str_handler(features, 0)
- declare_def_snprint_defstr(features, print_str, DEFAULT_FEATURES)
--declare_ovr_handler(features, set_str)
-+declare_ovr_arg_str_handler(features, 0)
- declare_ovr_snprint(features, print_str)
--declare_hw_handler(features, set_str)
-+declare_hw_arg_str_handler(features, 0)
- declare_hw_snprint(features, print_str)
--declare_mp_handler(features, set_str)
-+declare_mp_arg_str_handler(features, 0)
- declare_mp_snprint(features, print_str)
- 
- declare_def_handler(checker_name, set_str)
-@@ -1821,7 +1913,7 @@ declare_hw_snprint(revision, print_str)
- declare_hw_handler(bl_product, set_str)
- declare_hw_snprint(bl_product, print_str)
- 
--declare_hw_handler(hwhandler, set_str)
-+declare_hw_arg_str_handler(hwhandler, 0)
- declare_hw_snprint(hwhandler, print_str)
- 
- /*
+@@ -130,6 +130,7 @@ set_path(vector strvec, void *ptr, const char *file, int line_nr)
+ 	if ((*str_ptr)[0] != '/'){
+ 		condlog(1, "%s line %d, %s is not an absolute path. Ignoring",
+ 			file, line_nr, *str_ptr);
++		free(*str_ptr);
+ 		*str_ptr = old_str;
+ 	} else
+ 		free(old_str);
+@@ -150,6 +151,7 @@ set_str_noslash(vector strvec, void *ptr, const char *file, int line_nr)
+ 	if (strchr(*str_ptr, '/')) {
+ 		condlog(1, "%s line %d, %s cannot contain a slash. Ignoring",
+ 			file, line_nr, *str_ptr);
++		free(*str_ptr);
+ 		*str_ptr = old_str;
+ 	} else
+ 		free(old_str);
 -- 
 2.17.2
 
