@@ -4,88 +4,154 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E550DC4332F
-	for <dm-devel@archiver.kernel.org>; Mon, 12 Dec 2022 22:36:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 303CCC4332F
+	for <dm-devel@archiver.kernel.org>; Tue, 13 Dec 2022 04:59:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1670884588;
+	s=mimecast20190719; t=1670907545;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=O157tpRt8mD3MPNgjI23HE22y7SnNFiWz0a/sXMIGbI=;
-	b=bwr9UsM3x/CR4nAzkZP4Hvau5tqh8Z0Il26UNIMo9mTTBOGW5eT4QM++xf9VU7m90gnULh
-	h6GZ9WF+JhyD8Z5vWAKXkgA3Dmx59EXSzCOtukJ1XmiET/qOmQhyTi2q58TGp2YJkfKABH
-	+0aSr4gltQkko5AK/z/ZQZ/9qlNzjls=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=GZ0I+9ZJSEjgIc5Doiltl3pF4FiqG8kj10DuRwP6xOE=;
+	b=LhXRiQDiKA8YPfzLpgEZeekgvRnFN8BBfaUx5sU6OYhfCQl2hogSMXaHiJ2w6SiaYGzoiE
+	NF4Q4YuElC2tSbljJciBefT8EprL0PoMLopBqslxH/V8Vhh9gh6FQiuN+N2ZKiImobHKMu
+	/aGxaAhGkZPErwJlc+TNP06Q8Ycvz9A=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-621-AX0hAXE7OGS7jYjKtWpyLg-1; Mon, 12 Dec 2022 17:36:27 -0500
-X-MC-Unique: AX0hAXE7OGS7jYjKtWpyLg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-205-7uwedkPTMKSKpImn9PmlHQ-1; Mon, 12 Dec 2022 23:59:01 -0500
+X-MC-Unique: 7uwedkPTMKSKpImn9PmlHQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9D0C13C1014B;
-	Mon, 12 Dec 2022 22:36:24 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7CCBD85A5A6;
+	Tue, 13 Dec 2022 04:58:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 77124175A2;
-	Mon, 12 Dec 2022 22:36:22 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 74893140E949;
+	Tue, 13 Dec 2022 04:58:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 570341946588;
-	Mon, 12 Dec 2022 22:36:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4ADC01946588;
+	Tue, 13 Dec 2022 04:58:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id AF9E21946586
- for <dm-devel@listman.corp.redhat.com>; Mon, 12 Dec 2022 22:36:19 +0000 (UTC)
+ ESMTP id 00AEA1946586
+ for <dm-devel@listman.corp.redhat.com>; Tue, 13 Dec 2022 04:58:55 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9DE172026D68; Mon, 12 Dec 2022 22:36:19 +0000 (UTC)
+ id E2AC5C15BAD; Tue, 13 Dec 2022 04:58:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 966C72026D4B
- for <dm-devel@redhat.com>; Mon, 12 Dec 2022 22:36:19 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 781103C025C8
- for <dm-devel@redhat.com>; Mon, 12 Dec 2022 22:36:19 +0000 (UTC)
-Received: from mail-vs1-f48.google.com (mail-vs1-f48.google.com
- [209.85.217.48]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-180-Zxs8HSXzMqqlSmW5UbHa2A-1; Mon, 12 Dec 2022 17:36:15 -0500
-X-MC-Unique: Zxs8HSXzMqqlSmW5UbHa2A-1
-Received: by mail-vs1-f48.google.com with SMTP id h26so12878118vsr.5
- for <dm-devel@redhat.com>; Mon, 12 Dec 2022 14:36:15 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=content-disposition:mime-version:message-id:subject:cc:to:from:date
- :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=nWhMF1CTesM4BHybNTgKV7lM/70y3OMyFAmvejIEjS4=;
- b=HzlL6TOOujOIMH2cfUirVQZONRi26vhTk9GGf378gOoJukl1Sx8Lp4r0F4AoWGEZym
- OrQiaVCA16zcv07Tl0MGgEwpODSxeltk/bbFvGfjWmtDn6aCNqJnGvSUBuotsgHbiwBG
- Y0flTf1WGl1hqFKlVPRYc6Kn8pQIKEVjaMHlxYBrVw1g7XQ8LR2VT6CAM/+34PzVsvEI
- PZy6bxA8fnTFqCktVmUs1fJdmAGteSNQHpjIjPQP4bPh6J0e/LT6/76vgZOileKvj89m
- yzFUDs4mCvCQ/mZdoyC03xv81iwQCC2bIx3WK0q5obNAFW4K5iut0IBZaQHUnMYS4bLH
- m7PQ==
-X-Gm-Message-State: ANoB5pnvLrGyQu+VvTNYPZXWR6ba68fHI9JEP4Pxi/eZWb+pMiA5AXSx
- fJgn08HKYD1yi8gW4qGd+BTKsYg=
-X-Google-Smtp-Source: AA0mqf7m4mzBWV2azX1Bll5cjClij3B+qoQDpbNtARWC+17pZx8HuSAsuUyrhipDelLAGzJyv19RVw==
-X-Received: by 2002:a05:6102:22cf:b0:3b0:f33b:38a5 with SMTP id
- a15-20020a05610222cf00b003b0f33b38a5mr6450670vsh.13.1670884575404; 
- Mon, 12 Dec 2022 14:36:15 -0800 (PST)
-Received: from localhost (pool-68-160-173-162.bstnma.fios.verizon.net.
- [68.160.173.162]) by smtp.gmail.com with ESMTPSA id
- bn39-20020a05620a2ae700b006ce76811a07sm6504540qkb.75.2022.12.12.14.36.14
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 12 Dec 2022 14:36:14 -0800 (PST)
-Date: Mon, 12 Dec 2022 17:36:13 -0500
-From: Mike Snitzer <snitzer@kernel.org>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Message-ID: <Y5es3Sf0DU0QEHPP@redhat.com>
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id DA127C15BA0
+ for <dm-devel@redhat.com>; Tue, 13 Dec 2022 04:58:55 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B506886C042
+ for <dm-devel@redhat.com>; Tue, 13 Dec 2022 04:58:55 +0000 (UTC)
+Received: from NAM11-CO1-obe.outbound.protection.outlook.com
+ (mail-co1nam11on2080.outbound.protection.outlook.com [40.107.220.80]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-403-uwV1BkN6OoWZN70JCafAfQ-1; Mon, 12 Dec 2022 23:58:51 -0500
+X-MC-Unique: uwV1BkN6OoWZN70JCafAfQ-1
+Received: from MW2PR12MB4667.namprd12.prod.outlook.com (2603:10b6:302:12::28)
+ by BY5PR12MB4084.namprd12.prod.outlook.com (2603:10b6:a03:205::14)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5880.19; Tue, 13 Dec
+ 2022 04:58:48 +0000
+Received: from MW2PR12MB4667.namprd12.prod.outlook.com
+ ([fe80::b84c:b6e:dc0:8d7]) by MW2PR12MB4667.namprd12.prod.outlook.com
+ ([fe80::b84c:b6e:dc0:8d7%2]) with mapi id 15.20.5880.018; Tue, 13 Dec 2022
+ 04:58:48 +0000
+From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Thread-Topic: [PATCH v3] virtio_blk: add VIRTIO_BLK_F_LIFETIME feature support
+Thread-Index: AQHZCMWIE493Nhwph0Wuxc84G3ju4K5iC2yAgAAudgCAAGdJAIAAQiIAgAhqUoA=
+Date: Tue, 13 Dec 2022 04:58:47 +0000
+Message-ID: <ccb5388d-4976-31a3-0559-e94c14c90573@nvidia.com>
+References: <20221205162035.2261037-1-alvaro.karsz@solid-run.com>
+ <Y5BCQ/9/uhXdu35W@infradead.org>
+ <20221207052001-mutt-send-email-mst@kernel.org>
+ <Y5C/4H7Ettg/DcRz@infradead.org>
+ <20221207152116-mutt-send-email-mst@kernel.org>
+In-Reply-To: <20221207152116-mutt-send-email-mst@kernel.org>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.9.0
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: MW2PR12MB4667:EE_|BY5PR12MB4084:EE_
+x-ms-office365-filtering-correlation-id: fc9f4e0e-b726-449e-ae91-08dadcc6b854
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: 5c2C/jj3PCk/VcBCMbSxJ8aId34uqDeTKsd7c3aNtC00z6wN+SUl6Un6GCqo5pngq7aYcOtD2ofE9Z2f9pbyMVVH/dirpIso66eupOtK56JU4zGvTO2VOnrnhjCeUFWEmXE6TzVzIW+h/jQ+plhWvp0ntcNHrvca4E18Wi1pM8uCkQkZQuJiMaJxJihWb+bxBsF09fBWVGbPJOAGcfYdLtXXPNwoxmmwJ1u+tTRkUw3fpAuAf4dpQaky83gCZQRBd+PeR/9+WJc/Q0nYxYLWMJhNDiCevO8ZGWcjohNa2PPzzmEHn7RkDjXNeePk+DSbjMXm8mvPmN7+ceGHeWXbWBWeQ7IW0ZEgIoBmGHCwi7We4No1o9LBvWlvoZdddgM0HBjPVMB17V35hLP9a0g5TM8nAl3seHeFyG4n+P0Kg+E10ArqNr2vztVRgd1ITDdjyaJ/FuD0DRxg+MprMtvEeJfHZaEoAjnztlFh73fnqJ5NwOtndv86QopcRtGvQTwMwbei/vcx1OyV7X3hUyEtWRQjauSHs95glsaU+i/8OTZsWfW7VAQTGcpkk6uzbkSZTqqZWh6iuP3Bx4Hyc/M4Etevd9Pc2f2OZRm0HVgXMMVHRHM4eu3/aYx+6VIbJzqSjU3JPewJG1VkmamlFsoijgvDdwzlCCQrpjOqmWd6tLoyj+sTPjZqZr21grv271s0VzzFn/EwgnHG73XwObMY+alkG59wc6FfeBY9J4QE1gCHRcnqVMyUXxTXpkR3cgCZ8KxdSf5gW7mRj35zFcLK5w==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:MW2PR12MB4667.namprd12.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230022)(4636009)(366004)(136003)(346002)(39860400002)(396003)(376002)(451199015)(478600001)(2616005)(186003)(6506007)(38100700002)(6486002)(53546011)(6512007)(122000001)(71200400001)(91956017)(66446008)(4326008)(64756008)(66556008)(316002)(76116006)(54906003)(41300700001)(66946007)(8676002)(2906002)(5660300002)(66476007)(83380400001)(6916009)(8936002)(7416002)(31686004)(31696002)(38070700005)(86362001)(36756003)(43740500002)(45980500001);
+ DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?M25TcmVWcXZtbFE2OWFBTXhZM2JydXFMSXQ3V0k5cHJ4dGpudjV0MVpITEdG?=
+ =?utf-8?B?emxBZFVOQ3YyRGZQREplNFpVL2RtOVhDTVVEZUI5WUNqaFZCLyt2eHlRM2JX?=
+ =?utf-8?B?M2R3cGF2MXc3Z0ZLUG5tMUNnZ2lXdlkvYUJkZk1LK2FsMjY2NEh3UVRaRHI1?=
+ =?utf-8?B?cnpiSU5tVlFLeFp0RzZGMVFMSGcreFlVWWc5bTZKdnBtajRRMGVuZFpmVVE1?=
+ =?utf-8?B?SllBbEYxS2VxOWxXZmZPSjNmWWlUcGFGcVZMR1BkMXhFT1dBankzbDA0R0hk?=
+ =?utf-8?B?V2MxS2hjYmtYT2ZLSHM0YlJUbDJvYjdaMUo4Um9Tcmk2c3F4Y3J5V21qazZ1?=
+ =?utf-8?B?dStQTzlxYVo0Skdhdks4RUZvQ0lwb05VRTJzMitIRWYxdXpKb0xwSjF3V1RU?=
+ =?utf-8?B?SHJONmRmazJtVWRDcXlRQ20vZWlPVUU4QzZLQVM3WHlNWG4vMlpkRGdVRGtB?=
+ =?utf-8?B?NHhoSE84Z1ZMVy82M0E4OWNHMTZJMSt1cjFQRUl3WG1CSUQrWGY3ZXdsd2Rh?=
+ =?utf-8?B?T0c2K0JMb1FCSGlCK0VYR1lGalRiaHZUd1ZnMGFzY0pEREVYT0p3MXBlZHhR?=
+ =?utf-8?B?MDBsK3gzWkxiWTJGeU1xZ1hlb1NRNncxUjUya1FkS2JPd21yYlVDektrQXkx?=
+ =?utf-8?B?UzJYYkplSW5kQzEycVN5NUVveE5xcE81YjVyNW1CSVRWbWhpNzlKZW9pdVli?=
+ =?utf-8?B?R0xNVVFXVVNBMUdxdFFPZXQ0V1dZa3o1dWtuT1pGMmpiazMvKzJYK1c4djBX?=
+ =?utf-8?B?aHk0RXFhQVpYaVVkQXJsQThVMjJhL3Z0MnppMllNWHhvRnRTRG5pcjJJMmtq?=
+ =?utf-8?B?TVp4M25OV1JsQ3grMkR5M1NHWlJZY3ZIMTZld3RKZFNwNnl3bnZ6TW51aTBp?=
+ =?utf-8?B?QXZCa1AxSVQ1d1U1Mm5lQ0RyU29QTTBvcUpkdXVmdlpZOGQ2TDJxWFNTVVNj?=
+ =?utf-8?B?UVZnNmROeG5obm5ERSt4WW5RYnc5bGo4UzBqVDQyVEsyVGFVRnhzZkJidEtM?=
+ =?utf-8?B?bkNvQnUweGFmSE1yK1FQSXJYWGNXZjJJZENtNTAvcjdyUTFPS3V2R0p4OHgx?=
+ =?utf-8?B?bVpFUHRFZXBFZ0MwenoxaXZmbmdyS1dRUzlySHdJZmw3Q1hRTURLRXlQVksz?=
+ =?utf-8?B?dXpmUkVpak1wYzVGanQwN1V4dU5GSlYvUVFjVmhpbzJTRHl3MEtGZ2JDMUJD?=
+ =?utf-8?B?M1hSL29jQnlOMk1BSXd5M3hLeE42azRkcGtKcmkrRVRCbzkyeWxMTVNZOHlW?=
+ =?utf-8?B?WHRoaVNqRDN2TU9yZHdLOUU5NUY5Y2I0NWx6djR0c1plVE5LTU80a0h4VzdR?=
+ =?utf-8?B?bTNoTElPN1NWYTQrRHZ2ZkZWMTY4VUgxMGVMTk9tSUxqdVdlTEtkUmFzNTA5?=
+ =?utf-8?B?OVJ2cTgvb2k0T3JLWWx2dW9jc0FBOEhCOGZaNFd5L1F3N3RmemxWc3NKU3lT?=
+ =?utf-8?B?V0FMZ1RnMncwZWRvcEJnV2RQaFI5b1NyUmxXZ3NoS0hudW9XU2RPWjJ4QS9k?=
+ =?utf-8?B?VWo0L3owQU5FNzhyM25qYzJJRll1eGo4b09jSHpTdmlkdjIzWWpvLy9xaTNP?=
+ =?utf-8?B?RDB6bUM3OFNPMDcwaGdHa0Z1bGJLMVcyNThFSkNCcDhxOXF6VWZoVWJ3SGRh?=
+ =?utf-8?B?V3FsRCtaWStwNE84ZjJHY0lzMi9YUjhrem1qM21vdEV6MEMzdEt1em9hU0hF?=
+ =?utf-8?B?YzNDZVBXN3IvbWZBTy9EZkNJNGlJVldsbXJtZGhwNysrZDhXeVdIRTdyTk1o?=
+ =?utf-8?B?MDhvVjhQQ3UvVDJQeHIrUlRDV1RReW8yYU51S3NRNDg5cG5URTZxeksrZUJT?=
+ =?utf-8?B?RmltUW5sWXFQakJ6L3V3NExFN2pwQUxsZzRXNEgvemM1aTFleG9rWkNMZU1K?=
+ =?utf-8?B?NUtoLzA0YkczZkpZTXYrenczWThndDVHeGtyTE5wSVZLZFZvTVZ1a2Y3OVhi?=
+ =?utf-8?B?RTVJUVlrQWdJYy9zVEFwZWw4WU44OFE2d3ZTZ2pESzNyV052MzlpODVraXVI?=
+ =?utf-8?B?YzRpTFYrc2llQU5CTkxtV0toMkduanFEQ3FCb0htaWhYUGdTZ0NPR0FqMW5z?=
+ =?utf-8?B?Q2Q5SUNJWGhoVHY0ZDRqVzhHa2pjVXFtaVlpaUxpRjRIYnQ5Ri9BUHFaUlNn?=
+ =?utf-8?B?RzM3YktuVWZGOGp3VEpsRlF1cEJaR2JTcUVJRmhXVFpIQXZxdEY5YlNaUzQw?=
+ =?utf-8?B?MEE9PQ==?=
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: [dm-devel] [git pull] device mapper changes for 6.2
+X-OriginatorOrg: Nvidia.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: MW2PR12MB4667.namprd12.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: fc9f4e0e-b726-449e-ae91-08dadcc6b854
+X-MS-Exchange-CrossTenant-originalarrivaltime: 13 Dec 2022 04:58:48.0070 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 43083d15-7273-40c1-b7db-39efd9ccc17a
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: 95YJvDqpkp620B7eP6xywRSfAjobBGVyVpAsDeq9uoWGFoK4SeVVyWFrw7f9xy5q0HfGALEIj5eRsnKq5Zs4hw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BY5PR12MB4084
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH v3] virtio_blk: add VIRTIO_BLK_F_LIFETIME
+ feature support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -97,97 +163,72 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Peter Korsgaard <peter@korsgaard.com>, linux-block@vger.kernel.org,
- dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>,
- Luo Meng <luomeng12@huawei.com>, Zhihao Cheng <chengzhihao1@huawei.com>,
- Alasdair G Kergon <agk@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>,
+ "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+ "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+ "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
+ "virtualization@lists.linux-foundation.org"
+ <virtualization@lists.linux-foundation.org>,
+ Christoph Hellwig <hch@infradead.org>,
+ "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ Stefan Hajnoczi <stefanha@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
+Content-ID: <70AC3461D2143E43AFA0EDC75B1C868F@namprd12.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi Linus,
+Michael,
 
-The following changes since commit b7b275e60bcd5f89771e865a8239325f86d9927d:
+On 12/7/22 12:28, Michael S. Tsirkin wrote:
+> On Wed, Dec 07, 2022 at 08:31:28AM -0800, Christoph Hellwig wrote:
+>> On Wed, Dec 07, 2022 at 05:21:48AM -0500, Michael S. Tsirkin wrote:
+>>> Christoph you acked the spec patch adding this to virtio blk:
+>>>
+>>> 	Still not a fan of the encoding, but at least it is properly documented
+>>> 	now:
+>>>
+>>> 	Acked-by: Christoph Hellwig <hch@lst.de>
+>>>
+>>> Did you change your mind then? Or do you prefer a different encoding for
+>>> the ioctl then? could you help sugesting what kind?
+>>
+>> Well, it is good enough documented for a spec.  I don't think it is
+>> a useful feature for Linux where virtio-blk is our minimum viable
+>> paravirtualized block driver.
+> 
+> No idea what this means, sorry.  Now that's in the spec I expect (some)
+> devices to implement it and if they do I see no reason not to expose the
+> data to userspace.
+> 
 
-  Linux 6.1-rc7 (2022-11-27 13:31:48 -0800)
+Even if any device implements is it can always use passthru commands.
+See below for more info...
 
-are available in the Git repository at:
+> Alvaro could you pls explain the use-case? Christoph has doubts that
+> it's useful. Do you have a device implementing this?
+> 
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.2/dm-changes
+ From what I know, virtio-blk should be kept minimal and should not
+add any storage specific IOCTLs or features that will end up loosing
+its generic nature.
 
-for you to fetch changes up to 7991dbff6849f67e823b7cc0c15e5a90b0549b9f:
+The IOCTL we are trying to add is Flash storage specific which
+goes against the nature of generic storage and makes it non-generic.
+In case we approve this it will open the door for non-generic
+code/IOCTL in the virtio-blk and that needs to be avoided.
 
-  dm thin: Use last transaction's pmd->root when commit failed (2022-12-08 12:17:09 -0500)
+For any storage specific features or IOCTL (flash/HDD) it should
+be using it's own frontend such as virtio-scsi or e.g. nvme and
+not virtio-blk.
 
-Please pull, thanks.
-Mike
+Hope this helps.
 
-----------------------------------------------------------------
-- Fix use-after-free races due to missing resource cleanup during DM
-  target destruction in DM targets: thin-pool, cache, integrity and
-  clone.
-
-- Fix ABBA deadlocks in DM thin-pool and cache targets due to their
-  use of a bufio client (that has a shrinker whose locking can cause
-  the incorrect locking order).
-
-- Fix DM cache target to set its needs_check flag after first aborting
-  the metadata (whereby using reset persistent-data objects to update
-  the superblock with, otherwise the superblock update could be
-  dropped due to aborting metadata).  This was found with
-  code-inspection when comparing with the equivalent in DM thinp
-  code.
-
-- Fix DM thin-pool's presume to continue resuming the device even if
-  the pool in is fail mode -- otherwise bios may never be failed up
-  the IO stack (which will prevent resetting the thin-pool target via
-  table reload)
-
-- Fix DM thin-pool's metadata to use proper btree root (from previous
-  transaction) if metadata commit failed.
-
-- Add 'waitfor' module param to DM module (dm_mod) to allow dm-init to
-  wait for the specified device before continuing with its DM target
-  initialization.
-
-----------------------------------------------------------------
-Luo Meng (5):
-      dm thin: Fix UAF in run_timer_softirq()
-      dm clone: Fix UAF in clone_dtr()
-      dm cache: Fix UAF in destroy()
-      dm integrity: Fix UAF in dm_integrity_dtr()
-      dm thin: resume even if in FAIL mode
-
-Mike Snitzer (2):
-      dm cache: Fix ABBA deadlock between shrink_slab and dm_cache_metadata_abort
-      dm cache: set needs_check flag after aborting metadata
-
-Mikulas Patocka (2):
-      dm ioctl: a small code cleanup in list_version_get_info
-      dm ioctl: fix a couple ioctl codes
-
-Peter Korsgaard (1):
-      dm init: add dm-mod.waitfor to wait for asynchronously probed block devices
-
-Zhihao Cheng (2):
-      dm thin: Fix ABBA deadlock between shrink_slab and dm_pool_abort_metadata
-      dm thin: Use last transaction's pmd->root when commit failed
-
- .../admin-guide/device-mapper/dm-init.rst          |  8 +++
- drivers/md/dm-cache-metadata.c                     | 54 ++++++++++++++++---
- drivers/md/dm-cache-target.c                       | 11 ++--
- drivers/md/dm-clone-target.c                       |  1 +
- drivers/md/dm-init.c                               | 22 +++++++-
- drivers/md/dm-integrity.c                          |  2 +
- drivers/md/dm-ioctl.c                              |  6 +--
- drivers/md/dm-thin-metadata.c                      | 60 +++++++++++++++++++---
- drivers/md/dm-thin.c                               | 18 +++++--
- 9 files changed, 154 insertions(+), 28 deletions(-)
+-ck
 
 --
 dm-devel mailing list
