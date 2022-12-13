@@ -4,65 +4,91 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1155DC4332F
-	for <dm-devel@archiver.kernel.org>; Tue, 13 Dec 2022 17:51:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7B85FC10F1B
+	for <dm-devel@archiver.kernel.org>; Tue, 13 Dec 2022 19:02:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1670953860;
+	s=mimecast20190719; t=1670958171;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=kES15EeNLN7ORSV3D6B8ELWWzfQPekw9gWXVFRbijY4=;
-	b=aRyZo0Prz1yoxzTUHlX8PLSYvxj8W85WhZtd87lZt4f0eUTFcvHRosiGZ6lFpODFeuGr++
-	7m8kSKZJaWbzUBir8fYd+/WeeRncZqt25lafNLMiZj22kMKJWhVGNaQyE/tExS4Fm3GTlC
-	Tbb1U/L4Fw+lZ57EgL0XYqGFgaCQfTI=
+	bh=ohc65EbZs3xFDvb5OGq8WRTl3Nle9i7/SiFhF6EWK4E=;
+	b=YBPLYccu8pw7TZWcCUMLdvYnhlfu2lA5Kv6s6YU4S+y7QCnx56WaELNvSD1PS2cm04QEGJ
+	uanwO6u/A3LQwocuBghkAcik+KzhVv+FfG6BBNplFmyIptALF+w4Vwzf6QL8fHX5AoY9mO
+	l4EFbseAJXLGcM5FwMn88RfX67vI3ro=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-103-aVhAB8TtN3CYuGf2SQ7tcA-1; Tue, 13 Dec 2022 12:50:57 -0500
-X-MC-Unique: aVhAB8TtN3CYuGf2SQ7tcA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-91--91UJdXNNvWnLarPtTgQ8A-1; Tue, 13 Dec 2022 14:02:47 -0500
+X-MC-Unique: -91UJdXNNvWnLarPtTgQ8A-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 67AA7185A7AD;
-	Tue, 13 Dec 2022 17:50:55 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1F54A8039A2;
+	Tue, 13 Dec 2022 19:02:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BA90B2026D68;
-	Tue, 13 Dec 2022 17:50:52 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0F9F814152F4;
+	Tue, 13 Dec 2022 19:02:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9F05E194658D;
-	Tue, 13 Dec 2022 17:50:52 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DE9D9194658D;
+	Tue, 13 Dec 2022 19:02:42 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 740DC1946586
- for <dm-devel@listman.corp.redhat.com>; Tue, 13 Dec 2022 17:50:51 +0000 (UTC)
+ ESMTP id 71D2E1946586
+ for <dm-devel@listman.corp.redhat.com>; Tue, 13 Dec 2022 19:02:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6574F4039F60; Tue, 13 Dec 2022 17:50:51 +0000 (UTC)
-Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 429CC4039F64;
- Tue, 13 Dec 2022 17:50:51 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 2BDHonsj006239;
- Tue, 13 Dec 2022 11:50:50 -0600
-Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 2BDHonrw006238;
- Tue, 13 Dec 2022 11:50:49 -0600
-Date: Tue, 13 Dec 2022 11:50:49 -0600
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <mwilck@suse.com>
-Message-ID: <20221213175048.GG19568@octiron.msp.redhat.com>
-References: <20221202234338.2960-1-mwilck@suse.com>
- <20221207003730.GC19568@octiron.msp.redhat.com>
- <3cddb507361a3c582a11a2c752bfbae43c92aa37.camel@suse.com>
-MIME-Version: 1.0
-In-Reply-To: <3cddb507361a3c582a11a2c752bfbae43c92aa37.camel@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH v2] libmultipath: is_path_valid(): check if
- device is in use
+ id 4F5BD4085721; Tue, 13 Dec 2022 19:02:42 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 479BB4085720
+ for <dm-devel@redhat.com>; Tue, 13 Dec 2022 19:02:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2C90C85A5A6
+ for <dm-devel@redhat.com>; Tue, 13 Dec 2022 19:02:42 +0000 (UTC)
+Received: from dfw.source.kernel.org (dfw.source.kernel.org
+ [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-2-DL3HbVKOPGmusEd8sNc5ZQ-1; Tue, 13 Dec 2022 14:02:38 -0500
+X-MC-Unique: DL3HbVKOPGmusEd8sNc5ZQ-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by dfw.source.kernel.org (Postfix) with ESMTPS id 88347616F2;
+ Tue, 13 Dec 2022 19:02:37 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPS id CCFC8C433EF;
+ Tue, 13 Dec 2022 19:02:36 +0000 (UTC)
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org
+ (localhost.localdomain [127.0.0.1])
+ by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id
+ B9828C00445; Tue, 13 Dec 2022 19:02:36 +0000 (UTC)
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <Y5es3Sf0DU0QEHPP@redhat.com>
+References: <Y5es3Sf0DU0QEHPP@redhat.com>
+X-PR-Tracked-List-Id: device-mapper development <dm-devel.redhat.com>
+X-PR-Tracked-Message-Id: <Y5es3Sf0DU0QEHPP@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git
+ tags/for-6.2/dm-changes
+X-PR-Tracked-Commit-Id: 7991dbff6849f67e823b7cc0c15e5a90b0549b9f
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: 8715c6d3100fc7c6edddf29af4a399a1c12d028c
+Message-Id: <167095815675.20557.4629416317881565086.pr-tracker-bot@kernel.org>
+Date: Tue, 13 Dec 2022 19:02:36 +0000
+To: Mike Snitzer <snitzer@kernel.org>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] [git pull] device mapper changes for 6.2
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -74,212 +100,34 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com
+Cc: Peter Korsgaard <peter@korsgaard.com>,
+ Zhihao Cheng <chengzhihao1@huawei.com>, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>,
+ Luo Meng <luomeng12@huawei.com>,
+ Linus Torvalds <torvalds@linux-foundation.org>,
+ Alasdair G Kergon <agk@redhat.com>
+MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Tue, Dec 13, 2022 at 08:46:28AM +0100, Martin Wilck wrote:
-> On Tue, 2022-12-06 at 18:37 -0600, Benjamin Marzinski wrote:
-> > On Sat, Dec 03, 2022 at 12:43:38AM +0100, mwilck@suse.com=A0wrote:
-> > > From: Martin Wilck <mwilck@suse.com>
-> > >=20
-> > > To check whether we will be able to add a given device can be part
-> > > of a multipath map, we have two tests in check_path_valid():
-> > > released_to_systemd() and the O_EXCL test. The former isn't helpful
-> > > if "multipath -u" is called for the first time for a given device,
-> > > and the latter is only used in the "find_multipaths smart" case,
-> > > because
-> > > actively opening the device with O_EXCL, even for a very short
-> > > time, is prone
-> > > to races with other processes.
-> > >=20
-> > > It turns out that this may cause issues in some scenarios. We saw
-> > > problems in
-> > > once case where "find_multipaths greedy" was used with a single
-> > > non-multipahted root disk and a very large number of multipath
-> > > LUNs.
-> > > The root disk would first be classified as multipath device.
-> > > multipathd
-> > > would try to create a map, fail (because the disk was mounted) and
-> > > trigger another uevent. But because of the very large number of
-> > > multipath
-> > > devices, this event was queued up behind thousands of other events,
-> > > and
-> > > the root device timed out eventually.
-> > >=20
-> > > While a simple workaround for the given problem would be proper
-> > > blacklisting
-> > > or using a different find_multipaths mode, I am proposing a
-> > > different
-> > > solution here. An additional test is added in is_path_valid() which
-> > > checks whether the given device is currently in use by 1. sysfs
-> > > holders,
-> > > 2. mounts (from /proc/self/mountinfo) or 3. swaps (from
-> > > /proc/swaps). 2.
-> > > and 3. are similar to systemd's device detection after switching
-> > > root.
-> > > This must not only be done for the device itself, but also for all
-> > > its
-> > > partitions. For mountinfo and swaps, libmount is utilized.
-> > >=20
-> > > With this patch, "multipath -u" will make devices with mounted or
-> > > otherwise
-> > > used partitions available to systemd early, without waiting for
-> > > multipathd
-> > > to fail setting up the map and re-triggering an uevent. This should
-> > > avoid
-> > > the issue described above even without blacklisting. The downside
-> > > of it
-> > > is a longer runtime of "multipath -u" for almost all devices, in
-> > > particular
-> > > for real multipath devices. The runtime required for the new checks
-> > > was in the
-> > > order of 0.1ms-1ms in my tests. Moreover, there is a certain risk
-> > > that devices may
-> > > wrongly classified as non-multipath because of transient mounts or
-> > > holders
-> > > created by other processes.
-> > >=20
-> > > To make this code compile on older distributions, we need some
-> > > additional
-> > > checks in create-config.mk.
-> > >=20
-> > Two small issues below.
-> >=20
-> > > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > > ---
-> > > =A0.github/workflows/build-and-unittest.yaml |=A0=A0 2 +-
-> > > =A0create-config.mk=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 11 +-
-> > > =A0libmpathutil/libmpathutil.version=A0=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 =
-6 +
-> > > =A0libmpathutil/util.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0 |=A0 12 +
-> > > =A0libmpathutil/util.h=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 2 +
-> > > =A0libmultipath/Makefile=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0 |=A0=A0 2 +-
-> > > =A0libmultipath/alias.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0 |=A0 11 -
-> > > =A0libmultipath/valid.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0 | 267
-> > > ++++++++++++++++++++++
-> > > =A0tests/Makefile=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 2 +-
-> > > =A0tests/valid.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 48 ++++
-> > > =A010 files changed, 348 insertions(+), 15 deletions(-)
-> > >=20
-> > >=20
-> > > +static int read_partitions(const char *syspath, vector parts)
-> > > +{
-> > > +=A0=A0=A0=A0=A0=A0=A0struct scandir_result sr =3D { .n =3D 0 };
-> > > +=A0=A0=A0=A0=A0=A0=A0char path[PATH_MAX], *last;
-> > > +=A0=A0=A0=A0=A0=A0=A0char *prop;
-> > > +=A0=A0=A0=A0=A0=A0=A0int i;
-> > > +
-> > > +=A0=A0=A0=A0=A0=A0=A0strlcpy(path, syspath, sizeof(path));
-> > > +=A0=A0=A0=A0=A0=A0=A0sr.n =3D scandir(path, &sr.di, subdir_filter, N=
-ULL);
-> > > +=A0=A0=A0=A0=A0=A0=A0if (sr.n =3D=3D -1)
-> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return -errno;
-> > > +
-> > > +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_push_cast(free_scandir_result, =
-&sr);
-> > > +
-> > > +=A0=A0=A0=A0=A0=A0=A0/* parts[0] is the whole disk */
-> > > +=A0=A0=A0=A0=A0=A0=A0if (vector_alloc_slot(parts) &&
-> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 (prop =3D strdup(strrchr(path, '/') +=
- 1)) !=3D NULL)
-> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0vector_set_slot(parts, =
-prop);
-> >=20
-> > We should add the whole disk like we do for the partitions below,
-> > where
-> > we strdup() the name first, and free it if we can't allocate a slot.
-> > Otherwise, if the strdup failed, we could leave an empty slot in the
-> > vector, which would cause vector_foreach_slot() to stop early
->=20
-> Sure.
->=20
->=20
-> > > =A0int
-> > > =A0is_path_valid(const char *name, struct config *conf, struct path
-> > > *pp,
-> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 bool check_multipathd)
-> > > =A0{
-> > > =A0=A0=A0=A0=A0=A0=A0=A0int r;
-> > > =A0=A0=A0=A0=A0=A0=A0=A0int fd;
-> > > +=A0=A0=A0=A0=A0=A0=A0const char *prop;
-> > > =A0
-> > > =A0=A0=A0=A0=A0=A0=A0=A0if (!pp || !name || !conf)
-> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return PATH_IS_ERROR;
-> > > @@ -80,6 +338,10 @@ is_path_valid(const char *name, struct config
-> > > *conf, struct path *pp,
-> > > =A0=A0=A0=A0=A0=A0=A0=A0if (!pp->udev)
-> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return PATH_IS_ERROR;
-> > > =A0
-> > > +=A0=A0=A0=A0=A0=A0=A0prop =3D udev_device_get_property_value(pp->ude=
-v, "DEVTYPE");
-> > > +=A0=A0=A0=A0=A0=A0=A0if (prop =3D=3D NULL || strcmp(prop, "disk"))
-> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return PATH_IS_NOT_VALI=
-D;
-> > > +
-> > > =A0=A0=A0=A0=A0=A0=A0=A0r =3D pathinfo(pp, conf, DI_SYSFS | DI_WWID |=
- DI_BLACKLIST);
-> > > =A0=A0=A0=A0=A0=A0=A0=A0if (r =3D=3D PATHINFO_SKIPPED)
-> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return PATH_IS_NOT_VA=
-LID;
-> > > @@ -96,6 +358,11 @@ is_path_valid(const char *name, struct config
-> > > *conf, struct path *pp,
-> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return PATH_IS_ERROR;
-> > > =A0=A0=A0=A0=A0=A0=A0=A0}
-> > > =A0
-> > > +=A0=A0=A0=A0=A0=A0=A0if ((conf->find_multipaths =3D=3D FIND_MULTIPAT=
-HS_GREEDY ||
-> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 conf->find_multipaths =3D=3D FIND_=
-MULTIPATHS_SMART) &&
-> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 is_device_in_use(pp->udev) > 0)
-> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return PATH_IS_NOT_VALI=
-D;
-> > > +
-> >=20
-> > Even if multipath is set to "smart", the common case will still be
-> > that
-> > the device is in the wwids file, so we know that it's valid. I don't
-> > see
-> > a reason to do this check in that case.=A0 I was thinking that for the
-> > "smart" case, this check should go at the end of the function, before
-> > we
-> > return PATH_IS_MAYBE_VALID. Or do you have a reason why we should do
-> > it
-> > here that I'm missing?
->=20
-> I'd argue the other way around: if the device is in use, it doesn't
-> matter any more whether or not it's listed in the WWIDs file. This
-> situation can only occur if something went wrong beforehand (most
-> probably, an inconsistent WWIDs file in the initrd, or some other
-> component misbehaving). If we tag such a device VALID although it's
-> mounted, we'll almost certainly fall into emergency mode, regardless of
-> the find_multipaths mode we're in. The reason is that multipathd will
-> fail to map the mounted device, and systemd will consider the path
-> device unusable, leading to the device being inaccessible either way.
+The pull request you sent on Mon, 12 Dec 2022 17:36:13 -0500:
 
-Sure. We can leave it like this. I don't have strong opinions one way or
-the other.
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.2/dm-changes
 
--Ben
-=20
-> I agree that the device being in use while listed in the WWIDs file is
-> an error and should probably be logged more prominently.
->=20
-> Martin
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/8715c6d3100fc7c6edddf29af4a399a1c12d028c
+
+Thank you!
+
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
+
 --
 dm-devel mailing list
 dm-devel@redhat.com
