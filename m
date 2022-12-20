@@ -1,60 +1,64 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 112A8C4332F
-	for <dm-devel@archiver.kernel.org>; Tue, 20 Dec 2022 23:41:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A72A3C3DA6E
+	for <dm-devel@archiver.kernel.org>; Tue, 20 Dec 2022 23:41:38 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1671579695;
+	s=mimecast20190719; t=1671579697;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=0GzJxMIelF5WKnf1ALhLtnSlMQZxqhiaRrhGS1BE2gM=;
-	b=HOVu9beycfzZHaNJRgB4ELLfmOrcyeCO2rnEA0wzQVDuGsv3pGILRgZqzcMdS139PBc3WB
-	zwlp0wvW8i2GG9PsYw9lceE9b9L9ioh966mrLgjQ4sfor+lupARkgqpSXmYJwg7ghV5JVV
-	b0q7CPM21nE+XU+to8Z6ePerWHBZ1qM=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Qq/47iRTHaPIESwRL8+7tRWdRfMWFIcK2CRXqJyra7I=;
+	b=STk9rNeGnE8x2k4nk5yBwQbQmypLeHwOMLk5vImhfIF9Z+315RJf9xARu2VwakSFe9aXMs
+	pIqaHTwtbkDPpgHLbe2gQkr8dJOrdZisexpIzjgWGc4avxvlXfOTxjDHIdOAC6triWahYs
+	xL9ZZuc9LQtNTke0rDIzGs3wrteWuI0=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-556-mJFHMFMrO2qXd1CP9clpNA-1; Tue, 20 Dec 2022 18:41:34 -0500
-X-MC-Unique: mJFHMFMrO2qXd1CP9clpNA-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-557-Jft2sAijM4KbUZiiHCYIpw-1; Tue, 20 Dec 2022 18:41:34 -0500
+X-MC-Unique: Jft2sAijM4KbUZiiHCYIpw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5ACC5811E9C;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5AA441C068E0;
 	Tue, 20 Dec 2022 23:41:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CEAA8492B00;
-	Tue, 20 Dec 2022 23:41:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 067E514152F4;
+	Tue, 20 Dec 2022 23:41:31 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2510719465B8;
-	Tue, 20 Dec 2022 23:41:22 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9F26F1947041;
+	Tue, 20 Dec 2022 23:41:23 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E6BB019465A4
- for <dm-devel@listman.corp.redhat.com>; Tue, 20 Dec 2022 23:41:17 +0000 (UTC)
+ ESMTP id 186A71946A6D
+ for <dm-devel@listman.corp.redhat.com>; Tue, 20 Dec 2022 23:41:23 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id AF0A140C2004; Tue, 20 Dec 2022 23:41:17 +0000 (UTC)
+ id E31A6112132D; Tue, 20 Dec 2022 23:41:22 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 9648940C2064;
- Tue, 20 Dec 2022 23:41:17 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C2D44112132C;
+ Tue, 20 Dec 2022 23:41:22 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 2BKNfG4m023696;
- Tue, 20 Dec 2022 17:41:16 -0600
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 2BKNfLsx023712;
+ Tue, 20 Dec 2022 17:41:21 -0600
 Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 2BKNfFk2023695;
- Tue, 20 Dec 2022 17:41:15 -0600
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 2BKNfLkG023711;
+ Tue, 20 Dec 2022 17:41:21 -0600
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Tue, 20 Dec 2022 17:41:09 -0600
-Message-Id: <1671579675-23658-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [PATCH 0/6] multipath: persistent reservation fixes
+Date: Tue, 20 Dec 2022 17:41:13 -0600
+Message-Id: <1671579675-23658-5-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1671579675-23658-1-git-send-email-bmarzins@redhat.com>
+References: <1671579675-23658-1-git-send-email-bmarzins@redhat.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: [dm-devel] [PATCH 4/6] multipathd: add missing newline to
+ cli_del_map reply
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -71,43 +75,30 @@ Cc: device-mapper development <dm-devel@redhat.com>,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The first three patches fix issues with multipathd's persistent
-reservation handling. As long as mpathpersist is run on a multipath
-device while multipathd is montioring it, everything works fine. But if
-new paths to that device appear or first become active while multipathd
-isn't running or the multipath device doesn't exist, multipathd might
-not register keys to those paths when it starts up or adds the multipath
-device.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipathd/cli_handlers.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-These patches also fix an issue where, if there are no active paths for
-multipathd to use for checking registered keys on device creation, it
-will treat the device as if there are no registered keys.
-
-The other three patches fix issues I found while looking into the
-persistent reservation problems.
-
-Benjamin Marzinski (6):
-  multipathd: make pr registration consistent
-  libmultipath: make prflag an enum
-  multipathd: handle no active paths in update_map_pr
-  multipathd: add missing newline to cli_del_map reply
-  libmultipath: skip extra vector work in remove_maps
-  libmultipath: orphan paths if coalesce_paths frees newmp
-
- libmpathpersist/mpath_persist_int.c | 10 ++++-
- libmultipath/configure.c            |  7 +++-
- libmultipath/structs.h              |  9 ++++-
- libmultipath/structs_vec.c          |  6 +--
- multipathd/cli_handlers.c           | 20 +++++-----
- multipathd/main.c                   | 60 ++++++++++++++++++++---------
- 6 files changed, 77 insertions(+), 35 deletions(-)
-
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index ec5db1b8..44bf43df 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -760,7 +760,7 @@ cli_del_map (void * v, struct strbuf *reply, void * data)
+ 	}
+ 	rc = ev_remove_map(param, alias, minor, vecs);
+ 	if (rc == 2)
+-		append_strbuf_str(reply, "delayed");
++		append_strbuf_str(reply, "delayed\n");
+ 
+ 	free(alias);
+ 	return rc;
 -- 
 2.17.2
 
