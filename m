@@ -1,92 +1,95 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0AADEC54EBF
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id F0C76C54EBE
 	for <dm-devel@archiver.kernel.org>; Mon,  2 Jan 2023 07:43:11 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1672645391;
+	s=mimecast20190719; t=1672645390;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=DYQzCGNsJXeI4SFZRlV6kn9ta/QWmLoKtbzBoC/2Xrk=;
-	b=AZmH2firutpsK9NX0dotYMiCwvrib1M5oOFErCuBtDZ92fkCvlxD+fgeuQSNllpK1y5Smo
-	1YSOsXJyU/XWzRxWn74lazYljZgHYs/9mJ5PgUGNJBOCWcaOsdU/En3Ni0Ha6jY52BiGdE
-	I9V2xWwcjeIA/5ffKrrMmxhH0VdTJgc=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=e7utoMc1El8bnGJviSv1+u1ZM7UfGodhptFAGTWkS4Y=;
+	b=FhUzgozsH/zCMTzWQaU6m0ZB49UNIPOk4KAU87SsgluhawB/E7cY3Sj1K8W3RWxKorTMu5
+	dTigZYaNb0WHhM2tt70CjIT+lQRpBiVa0Ard5b3Q4rca2xFqCU7BfEaA/XjRlO3xIhJvB0
+	9/7LuFBWce6RIo4GCg6s0+NDGNgJPbk=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-191-3tYHK_wtMR-YWLgfbQYYpg-1; Mon, 02 Jan 2023 02:43:07 -0500
-X-MC-Unique: 3tYHK_wtMR-YWLgfbQYYpg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-152-8Yan887EPXut0obUcp2Org-1; Mon, 02 Jan 2023 02:43:07 -0500
+X-MC-Unique: 8Yan887EPXut0obUcp2Org-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 20B1B80D0ED;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 215C32A5957A;
 	Mon,  2 Jan 2023 07:43:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F12464015306;
-	Mon,  2 Jan 2023 07:43:03 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D8170C1602A;
+	Mon,  2 Jan 2023 07:43:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0CA8D194704A;
-	Mon,  2 Jan 2023 07:43:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9577719465B7;
+	Mon,  2 Jan 2023 07:43:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 241CD1946586
- for <dm-devel@listman.corp.redhat.com>; Thu, 29 Dec 2022 08:14:39 +0000 (UTC)
+ ESMTP id A9EB51946586
+ for <dm-devel@listman.corp.redhat.com>; Thu, 29 Dec 2022 08:13:13 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1568DC16026; Thu, 29 Dec 2022 08:14:39 +0000 (UTC)
+ id 9114D112132D; Thu, 29 Dec 2022 08:13:13 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0DC6FC16025
- for <dm-devel@redhat.com>; Thu, 29 Dec 2022 08:14:39 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E6AC485A588
- for <dm-devel@redhat.com>; Thu, 29 Dec 2022 08:14:38 +0000 (UTC)
-Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com
- [209.85.218.41]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 89CCF112132C
+ for <dm-devel@redhat.com>; Thu, 29 Dec 2022 08:13:13 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 650941C06911
+ for <dm-devel@redhat.com>; Thu, 29 Dec 2022 08:13:13 +0000 (UTC)
+Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com
+ [209.85.214.174]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-501-Fpn6ymnmNa2Yj0-LFWEX-Q-1; Thu, 29 Dec 2022 03:14:37 -0500
-X-MC-Unique: Fpn6ymnmNa2Yj0-LFWEX-Q-1
-Received: by mail-ej1-f41.google.com with SMTP id m18so43378906eji.5
- for <dm-devel@redhat.com>; Thu, 29 Dec 2022 00:14:36 -0800 (PST)
+ us-mta-65-uEzai3L9P0iaU-DvR_jIEw-4; Thu, 29 Dec 2022 03:13:11 -0500
+X-MC-Unique: uEzai3L9P0iaU-DvR_jIEw-4
+Received: by mail-pl1-f174.google.com with SMTP id n4so18307670plp.1
+ for <dm-devel@redhat.com>; Thu, 29 Dec 2022 00:13:11 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=cc:to:subject:message-id:date:from:in-reply-to:references
- :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
- :reply-to;
- bh=Wf4Oclx/s2DatfZfaRbzTJQI1IZBAeRXW5JK4LTSla4=;
- b=6lopwJlY7m4r1TyzYyP031t2FGlUvrrIHJzckeLUPvw4Kaq+YCVNxJlXOUNhPcbz7Y
- 3nQJFH8sbHp12vJtTKn7p4OmK5Z1yyRCPI1iqEjJNKgKmmokkqHs1sZUJKKRdSYtE7FF
- UPp71F7vm3dbxB1WcPOYrF+UYEbqqVBYaiFJzxTQr1tdVJYhy953WtuZoCS6vvA1OtDU
- nH/KBP9RGWwKvBjit3QKmrvO4EXcOw4k800zK6TWvV+avuNhuFIdZPqA8JEVZc9bakxa
- uAg79YoF8wkdH9bwP6k0+o8mV9N8QNQn6/Qp6NmkpcDmMXSuczC/qUpYfIGQP2C92spe
- eNyQ==
-X-Gm-Message-State: AFqh2kqBSuEnKuUB5JJtMmoW4pSNJGqNY4f2PghA4r/pMJnFDTSX/JZD
- /h8fCw7fyVtKBOxYEeXEDyXBB0YPKxjp72f+POX6+g==
-X-Google-Smtp-Source: AMrXdXs300Z+BXOJPxEJlPkjyVUzSJVOjoySN3yowIHivu+kDMNajS+vq938RArP6B2ta87auqxQOwl3KblSmt1bED8=
-X-Received: by 2002:a17:907:c013:b0:7c0:eb3c:1037 with SMTP id
- ss19-20020a170907c01300b007c0eb3c1037mr2068068ejc.663.1672301676050; Thu, 29
- Dec 2022 00:14:36 -0800 (PST)
-MIME-Version: 1.0
-References: <20220915164826.1396245-1-sarthakkukreti@google.com>
- <20220915164826.1396245-5-sarthakkukreti@google.com>
- <YylweQAZkIdb5ixo@infradead.org>
- <CAG9=OMNoG01UUStNs_Zhsv6mXZw0M0q2v54ZriJvHZ4aspvjEQ@mail.gmail.com>
- <Yy1yOGy7yF4AShDB@infradead.org>
-In-Reply-To: <Yy1yOGy7yF4AShDB@infradead.org>
+ h=content-transfer-encoding:mime-version:references:in-reply-to
+ :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=tknTAYGKiWbOelfCTGAIM4O7q8g3LJuucBsJtaWsm7Y=;
+ b=2n330jkQVMgTFcQ2UdFNICvE/JN1CfcM8y9m0D0ulkP5Lo/RlVBXxFjryc2jkIzy9h
+ nNtT7wTqxI0Xdg1PTl9I/bcd5ZBDyZVRGGh3xswcF0OBZwVvOfmpPkWJ4SLHrrLIggcY
+ /SQWcoqDUdMIJMuVSniWQ49gymw/azBInNnQk08SHoZj3JE/v12d//hozYfTf0rZxzwz
+ VTocJ/I9f0F4jezZ1yACBiO62URhO5Y7nlX+SbtJIzuUrGf2aXIGnRBILIER0eawCtWF
+ 7KS81PY7320FV33xSmyA1tRZA7q2GWQ9uyw+YtZGBwzk1XySINpwXjTZ2y7BoVv4KmYA
+ utuQ==
+X-Gm-Message-State: AFqh2krP7w0xIF01KLy2WrKqIIebaxLSRiJPRN7aRyaR8zgsHZbpyifY
+ 6nsqUtUTnyOKbPF8mSaqVG60VA==
+X-Google-Smtp-Source: AMrXdXtym0rxjHIaY1zQhiKiElSe51N0oXHJB0JFxm27wv3KTRxbF3edYhG2fNv1/xvRbhTy3gkDbA==
+X-Received: by 2002:a17:902:c94f:b0:189:9e91:762e with SMTP id
+ i15-20020a170902c94f00b001899e91762emr45014676pla.57.1672301590739; 
+ Thu, 29 Dec 2022 00:13:10 -0800 (PST)
+Received: from sarthakkukreti-glaptop.hsd1.ca.comcast.net
+ ([2601:647:4200:b5b0:75ff:1277:3d7b:d67a])
+ by smtp.gmail.com with ESMTPSA id
+ 12-20020a170902e9cc00b00192820d00d0sm6496325plk.120.2022.12.29.00.13.08
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Thu, 29 Dec 2022 00:13:10 -0800 (PST)
 From: Sarthak Kukreti <sarthakkukreti@chromium.org>
-Date: Thu, 29 Dec 2022 00:14:25 -0800
-Message-ID: <CAG9=OMOLLjVJHTPmDSPM3t+Ko90CcN5C01UhEadZReECUE5umw@mail.gmail.com>
-To: Christoph Hellwig <hch@infradead.org>
+To: sarthakkukreti@google.com, dm-devel@redhat.com,
+ linux-block@vger.kernel.org, linux-ext4@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Date: Thu, 29 Dec 2022 00:12:50 -0800
+Message-Id: <20221229081252.452240-6-sarthakkukreti@chromium.org>
+In-Reply-To: <20221229081252.452240-1-sarthakkukreti@chromium.org>
+References: <20221229081252.452240-1-sarthakkukreti@chromium.org>
+MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -94,9 +97,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mailman-Approved-At: Mon, 02 Jan 2023 07:42:59 +0000
-Subject: Re: [dm-devel] [PATCH RFC 4/8] fs: Introduce FALLOC_FL_PROVISION
+Subject: [dm-devel] [PATCH v2 5/7] ext4: Add support for FALLOC_FL_PROVISION
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,57 +111,135 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Gwendal Grignou <gwendal@google.com>,
- Theodore Ts'o <tytso@mit.edu>, "Michael S . Tsirkin" <mst@redhat.com>,
+Cc: Jens Axboe <axboe@kernel.dk>, Theodore Ts'o <tytso@mit.edu>,
+ "Michael S. Tsirkin" <mst@redhat.com>, "Darrick J. Wong" <djwong@kernel.org>,
  Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
- Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
- virtualization@lists.linux-foundation.org, linux-block@vger.kernel.org,
- dm-devel@redhat.com, Andreas Dilger <adilger.kernel@dilger.ca>,
- Daniil Lunev <dlunev@google.com>, Stefan Hajnoczi <stefanha@redhat.com>,
- Paolo Bonzini <pbonzini@redhat.com>, linux-ext4@vger.kernel.org,
- Evan Green <evgreen@google.com>, Alasdair Kergon <agk@redhat.com>
+ Mike Snitzer <snitzer@kernel.org>, Christoph Hellwig <hch@infradead.org>,
+ Andreas Dilger <adilger.kernel@dilger.ca>, Daniil Lunev <dlunev@google.com>,
+ Stefan Hajnoczi <stefanha@redhat.com>, Brian Foster <bfoster@redhat.com>,
+ Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Sep 23, 2022 at 1:45 AM Christoph Hellwig <hch@infradead.org> wrote:
->
-> On Tue, Sep 20, 2022 at 10:54:32PM -0700, Sarthak Kukreti wrote:
-> > [ mmc0blkp1 | ext4(1) | sparse file | loop | dm-thinp | dm-thin | ext4(2) ]
-> >
-> > would be predicated on the guarantees of fallocate() per allocation
-> > layer; if ext4(1) was replaced by a filesystem that did not support
-> > fallocate(), then there would be no guarantee that a write to a file
-> > on ext4(2) succeeds.
->
-> a write or any unlimited number of writes?
+Once ext4 is done mapping blocks for an fallocate() request, send
+out an FALLOC_FL_PROVISION request to the underlying layer to
+ensure that the space is provisioned for the newly allocated extent
+or indirect blocks.
 
-(Apologies for the super late reply!) In this case, even a write won't
-be guaranteed if we run out of space on the lower filesystem. Looking
-at the fallocate() man page, I think the key part lies in the
-following phrase (emphasis mine):
+There is an expected performance degradation with fallocate() calls made
+with this flag due to the extra REQ_OP_PROVISIONs sent to the underlying
+storage.
 
-```
-After a successful call, subsequent writes into the range
-specified by offset and len are guaranteed not to fail _because of
-lack of disk space_
-```
+Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
+---
+ fs/ext4/ext4.h         |  2 ++
+ fs/ext4/extents.c      | 15 ++++++++++++++-
+ fs/ext4/indirect.c     |  9 +++++++++
+ include/linux/blkdev.h | 11 +++++++++++
+ 4 files changed, 36 insertions(+), 1 deletion(-)
 
-So, it's not a blanket guarantee that all writes will always succeed,
-but that any writes into that range will not fail due to lack of disk
-space. As you mentioned, writes may happen out-of-place in one or more
-layer. But the fallocate(FALLOC_FL_PROVISION) ensures that each layer
-will preserve space for writes into that range to not fail with ENOSPC
-(so eg. ext4 and dm-thinp will set aside enough extents to fulfil that
-promise later on for all writes).
-
-Best
-
-Sarthak
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index 140e1eb300d1..49832e90b62f 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -673,6 +673,8 @@ enum {
+ #define EXT4_GET_BLOCKS_IO_SUBMIT		0x0400
+ 	/* Caller is in the atomic contex, find extent if it has been cached */
+ #define EXT4_GET_BLOCKS_CACHED_NOWAIT		0x0800
++	/* Provision blocks on underlying storage */
++#define EXT4_GET_BLOCKS_PROVISION		0x1000
+ 
+ /*
+  * The bit position of these flags must not overlap with any of the
+diff --git a/fs/ext4/extents.c b/fs/ext4/extents.c
+index 9de1c9d1a13d..2e64a9211792 100644
+--- a/fs/ext4/extents.c
++++ b/fs/ext4/extents.c
+@@ -4361,6 +4361,13 @@ int ext4_ext_map_blocks(handle_t *handle, struct inode *inode,
+ 		}
+ 	}
+ 
++	/* Attempt to provision blocks on underlying storage */
++	if (flags & EXT4_GET_BLOCKS_PROVISION) {
++		err = sb_issue_provision(inode->i_sb, pblk, ar.len, GFP_NOFS);
++		if (err)
++			goto out;
++	}
++
+ 	/*
+ 	 * Cache the extent and update transaction to commit on fdatasync only
+ 	 * when it is _not_ an unwritten extent.
+@@ -4694,7 +4701,7 @@ long ext4_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
+ 	/* Return error if mode is not supported */
+ 	if (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |
+ 		     FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_ZERO_RANGE |
+-		     FALLOC_FL_INSERT_RANGE))
++		     FALLOC_FL_INSERT_RANGE | FALLOC_FL_PROVISION))
+ 		return -EOPNOTSUPP;
+ 
+ 	inode_lock(inode);
+@@ -4754,6 +4761,12 @@ long ext4_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
+ 	if (ret)
+ 		goto out;
+ 
++	/* Ensure that preallocation provisions the blocks on the underlying
++	 * storage device.
++	 */
++	if (mode & FALLOC_FL_PROVISION)
++		flags |= EXT4_GET_BLOCKS_PROVISION;
++
+ 	ret = ext4_alloc_file_blocks(file, lblk, max_blocks, new_size, flags);
+ 	if (ret)
+ 		goto out;
+diff --git a/fs/ext4/indirect.c b/fs/ext4/indirect.c
+index c68bebe7ff4b..a8065aae7563 100644
+--- a/fs/ext4/indirect.c
++++ b/fs/ext4/indirect.c
+@@ -647,6 +647,15 @@ int ext4_ind_map_blocks(handle_t *handle, struct inode *inode,
+ 	if (err)
+ 		goto cleanup;
+ 
++	/* Attempt to provision blocks on underlying storage */
++	if (flags & EXT4_GET_BLOCKS_PROVISION) {
++		err = sb_issue_provision(inode->i_sb,
++					 le32_to_cpu(chain[depth-1].key),
++					 ar.len, GFP_NOFS);
++		if (err)
++			goto out;
++	}
++
+ 	map->m_flags |= EXT4_MAP_NEW;
+ 
+ 	ext4_update_inode_fsync_trans(handle, inode, 1);
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index f1abc7b43e25..b2e3244e9f3d 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1093,6 +1093,17 @@ static inline int sb_issue_zeroout(struct super_block *sb, sector_t block,
+ 				    gfp_mask, 0);
+ }
+ 
++static inline int sb_issue_provision(struct super_block *sb, sector_t block,
++		sector_t nr_blocks, gfp_t gfp_mask)
++{
++	return blkdev_issue_provision(sb->s_bdev,
++				      block << (sb->s_blocksize_bits -
++					      SECTOR_SHIFT),
++				      nr_blocks << (sb->s_blocksize_bits -
++						    SECTOR_SHIFT),
++				      gfp_mask);
++}
++
+ static inline bool bdev_is_partition(struct block_device *bdev)
+ {
+ 	return bdev->bd_partno;
+-- 
+2.37.3
 
 --
 dm-devel mailing list
