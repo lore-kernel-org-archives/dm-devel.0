@@ -4,92 +4,86 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id F0C76C54EBE
-	for <dm-devel@archiver.kernel.org>; Mon,  2 Jan 2023 07:43:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 395F9C54EF1
+	for <dm-devel@archiver.kernel.org>; Mon,  2 Jan 2023 07:43:12 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1672645390;
+	s=mimecast20190719; t=1672645391;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=e7utoMc1El8bnGJviSv1+u1ZM7UfGodhptFAGTWkS4Y=;
-	b=FhUzgozsH/zCMTzWQaU6m0ZB49UNIPOk4KAU87SsgluhawB/E7cY3Sj1K8W3RWxKorTMu5
-	dTigZYaNb0WHhM2tt70CjIT+lQRpBiVa0Ard5b3Q4rca2xFqCU7BfEaA/XjRlO3xIhJvB0
-	9/7LuFBWce6RIo4GCg6s0+NDGNgJPbk=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=g0JU63xJD3KVhzalZw1ZEM/QQ8h34qNvuRaDAjSobjQ=;
+	b=S//yOOytrw0PT4BhbGLXLuQEP8opnhFA79ECiSDAGoTqOvkw6hBPuUroXZKaNtmw5f3kDd
+	gppbdGEXrepkH8J/FQc65CnWfz17gYytnU8I3sajsmk2DhVuNRtQpKBLFwAWXv94AknXQ7
+	7sLKAZtLr5qUS42FxkpErmY7IL1uY1I=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-152-8Yan887EPXut0obUcp2Org-1; Mon, 02 Jan 2023 02:43:07 -0500
-X-MC-Unique: 8Yan887EPXut0obUcp2Org-1
+ us-mta-186-Uyu3TzYhPLyNcywisf6vZA-1; Mon, 02 Jan 2023 02:43:08 -0500
+X-MC-Unique: Uyu3TzYhPLyNcywisf6vZA-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 215C32A5957A;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 213B380D0F0;
 	Mon,  2 Jan 2023 07:43:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D8170C1602A;
-	Mon,  2 Jan 2023 07:43:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id DC39BC1602E;
+	Mon,  2 Jan 2023 07:43:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9577719465B7;
-	Mon,  2 Jan 2023 07:43:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0C27E1946A40;
+	Mon,  2 Jan 2023 07:43:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A9EB51946586
- for <dm-devel@listman.corp.redhat.com>; Thu, 29 Dec 2022 08:13:13 +0000 (UTC)
+ ESMTP id 935081946586
+ for <dm-devel@listman.corp.redhat.com>; Thu, 29 Dec 2022 08:22:46 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9114D112132D; Thu, 29 Dec 2022 08:13:13 +0000 (UTC)
+ id 68934C15E7F; Thu, 29 Dec 2022 08:22:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 89CCF112132C
- for <dm-devel@redhat.com>; Thu, 29 Dec 2022 08:13:13 +0000 (UTC)
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6158DC159BB
+ for <dm-devel@redhat.com>; Thu, 29 Dec 2022 08:22:46 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
  bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 650941C06911
- for <dm-devel@redhat.com>; Thu, 29 Dec 2022 08:13:13 +0000 (UTC)
-Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com
- [209.85.214.174]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 451832A5954B
+ for <dm-devel@redhat.com>; Thu, 29 Dec 2022 08:22:46 +0000 (UTC)
+Received: from mail-ed1-f51.google.com (mail-ed1-f51.google.com
+ [209.85.208.51]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-65-uEzai3L9P0iaU-DvR_jIEw-4; Thu, 29 Dec 2022 03:13:11 -0500
-X-MC-Unique: uEzai3L9P0iaU-DvR_jIEw-4
-Received: by mail-pl1-f174.google.com with SMTP id n4so18307670plp.1
- for <dm-devel@redhat.com>; Thu, 29 Dec 2022 00:13:11 -0800 (PST)
+ us-mta-625-zs-RIQvvN6OZg2XvNprd8A-1; Thu, 29 Dec 2022 03:22:44 -0500
+X-MC-Unique: zs-RIQvvN6OZg2XvNprd8A-1
+Received: by mail-ed1-f51.google.com with SMTP id g1so11585456edj.8
+ for <dm-devel@redhat.com>; Thu, 29 Dec 2022 00:22:44 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=tknTAYGKiWbOelfCTGAIM4O7q8g3LJuucBsJtaWsm7Y=;
- b=2n330jkQVMgTFcQ2UdFNICvE/JN1CfcM8y9m0D0ulkP5Lo/RlVBXxFjryc2jkIzy9h
- nNtT7wTqxI0Xdg1PTl9I/bcd5ZBDyZVRGGh3xswcF0OBZwVvOfmpPkWJ4SLHrrLIggcY
- /SQWcoqDUdMIJMuVSniWQ49gymw/azBInNnQk08SHoZj3JE/v12d//hozYfTf0rZxzwz
- VTocJ/I9f0F4jezZ1yACBiO62URhO5Y7nlX+SbtJIzuUrGf2aXIGnRBILIER0eawCtWF
- 7KS81PY7320FV33xSmyA1tRZA7q2GWQ9uyw+YtZGBwzk1XySINpwXjTZ2y7BoVv4KmYA
- utuQ==
-X-Gm-Message-State: AFqh2krP7w0xIF01KLy2WrKqIIebaxLSRiJPRN7aRyaR8zgsHZbpyifY
- 6nsqUtUTnyOKbPF8mSaqVG60VA==
-X-Google-Smtp-Source: AMrXdXtym0rxjHIaY1zQhiKiElSe51N0oXHJB0JFxm27wv3KTRxbF3edYhG2fNv1/xvRbhTy3gkDbA==
-X-Received: by 2002:a17:902:c94f:b0:189:9e91:762e with SMTP id
- i15-20020a170902c94f00b001899e91762emr45014676pla.57.1672301590739; 
- Thu, 29 Dec 2022 00:13:10 -0800 (PST)
-Received: from sarthakkukreti-glaptop.hsd1.ca.comcast.net
- ([2601:647:4200:b5b0:75ff:1277:3d7b:d67a])
- by smtp.gmail.com with ESMTPSA id
- 12-20020a170902e9cc00b00192820d00d0sm6496325plk.120.2022.12.29.00.13.08
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 29 Dec 2022 00:13:10 -0800 (PST)
-From: Sarthak Kukreti <sarthakkukreti@chromium.org>
-To: sarthakkukreti@google.com, dm-devel@redhat.com,
- linux-block@vger.kernel.org, linux-ext4@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Date: Thu, 29 Dec 2022 00:12:50 -0800
-Message-Id: <20221229081252.452240-6-sarthakkukreti@chromium.org>
-In-Reply-To: <20221229081252.452240-1-sarthakkukreti@chromium.org>
-References: <20221229081252.452240-1-sarthakkukreti@chromium.org>
+ h=cc:to:subject:message-id:date:from:in-reply-to:references
+ :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=cdbk6YKET6QEGq9IebYDQMQPZF6j/6rc109njHhKlvI=;
+ b=QpNyKT/PpoCfmIyRPQ5GhW9ezxIVTRchG6mi/7kQ8fDkWeWwC4Wp5gPkyx4/uF4qAW
+ NsWjApiDn684/h5VyPp/zbc73LiJSjME/1u+Elq7COK0dt7nHo4ib82b/BoX/5m19FHy
+ 94pMxowEA1NYpWsWwfkG7rv3DrHJYx5D/J5WhU7ygeym9e8ZxFZErzZeqpJTV4nq8kx+
+ saSUjnd0hU3Fw7Bb9HRA3ilGC0sIGDID9i1yNUXXlB+6m5PJbxDv0VoTEUU7GyAOnXrE
+ XszRvk5SekBcmw0AqFkLFI82PjtZNGdNJCfs+92mVHT9IBYs5p4RwGquX5bpx+Z916+e
+ HKDw==
+X-Gm-Message-State: AFqh2kq5E0mT8riE2Gp+k1Yh0jrw+z4QTaa37cAaiPhLlCn7xNrjH7ta
+ zU/2apqK2qbYUtx1SmoT8C+gq5VHyw9g2oRYOUVoCw==
+X-Google-Smtp-Source: AMrXdXsQ7w+8O+47UlcrH/eyB1AcY+iw3zi67xHAp19yIp7KZoxSU3hceHOEF+dEFVjlYfKxx8GN7IxiiG1wtM0JlDA=
+X-Received: by 2002:a05:6402:1654:b0:47f:e663:1d78 with SMTP id
+ s20-20020a056402165400b0047fe6631d78mr1566473edx.237.1672302162986; Thu, 29
+ Dec 2022 00:22:42 -0800 (PST)
 MIME-Version: 1.0
+References: <20220915164826.1396245-1-sarthakkukreti@google.com>
+ <20220915164826.1396245-3-sarthakkukreti@google.com>
+ <Yy3BXc9wf4PH6Rby@redhat.com>
+In-Reply-To: <Yy3BXc9wf4PH6Rby@redhat.com>
+From: Sarthak Kukreti <sarthakkukreti@chromium.org>
+Date: Thu, 29 Dec 2022 00:22:32 -0800
+Message-ID: <CAG9=OMMgtscWZyZYHsY0pp-9we+yxs=88sr_yMb6pfz7e75nyA@mail.gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -97,9 +91,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mailman-Approved-At: Mon, 02 Jan 2023 07:42:59 +0000
-Subject: [dm-devel] [PATCH v2 5/7] ext4: Add support for FALLOC_FL_PROVISION
+Subject: Re: [dm-devel] [PATCH RFC 2/8] dm: Add support for block
+ provisioning
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -111,13 +106,15 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Theodore Ts'o <tytso@mit.edu>,
- "Michael S. Tsirkin" <mst@redhat.com>, "Darrick J. Wong" <djwong@kernel.org>,
+Cc: Jens Axboe <axboe@kernel.dk>, Gwendal Grignou <gwendal@google.com>,
+ Theodore Ts'o <tytso@mit.edu>, "Michael S . Tsirkin" <mst@redhat.com>,
  Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
- Mike Snitzer <snitzer@kernel.org>, Christoph Hellwig <hch@infradead.org>,
- Andreas Dilger <adilger.kernel@dilger.ca>, Daniil Lunev <dlunev@google.com>,
- Stefan Hajnoczi <stefanha@redhat.com>, Brian Foster <bfoster@redhat.com>,
- Alasdair Kergon <agk@redhat.com>
+ Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
+ virtualization@lists.linux-foundation.org, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, Andreas Dilger <adilger.kernel@dilger.ca>,
+ Daniil Lunev <dlunev@google.com>, Stefan Hajnoczi <stefanha@redhat.com>,
+ Paolo Bonzini <pbonzini@redhat.com>, linux-ext4@vger.kernel.org,
+ Evan Green <evgreen@google.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
@@ -126,120 +123,108 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Once ext4 is done mapping blocks for an fallocate() request, send
-out an FALLOC_FL_PROVISION request to the underlying layer to
-ensure that the space is provisioned for the newly allocated extent
-or indirect blocks.
+On Fri, Sep 23, 2022 at 7:23 AM Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> On Thu, Sep 15 2022 at 12:48P -0400,
+> Sarthak Kukreti <sarthakkukreti@chromium.org> wrote:
+>
+> > From: Sarthak Kukreti <sarthakkukreti@chromium.org>
+> >
+> > Add support to dm devices for REQ_OP_PROVISION. The default mode
+> > is to pass through the request and dm-thin will utilize it to provision
+> > blocks.
+> >
+> > Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
+> > ---
+> >  drivers/md/dm-crypt.c         |  4 +-
+> >  drivers/md/dm-linear.c        |  1 +
+> >  drivers/md/dm-table.c         | 17 +++++++
+> >  drivers/md/dm-thin.c          | 86 +++++++++++++++++++++++++++++++++--
+> >  drivers/md/dm.c               |  4 ++
+> >  include/linux/device-mapper.h |  6 +++
+> >  6 files changed, 113 insertions(+), 5 deletions(-)
+> >
+> > diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> > index 159c6806c19b..357f0899cfb6 100644
+> > --- a/drivers/md/dm-crypt.c
+> > +++ b/drivers/md/dm-crypt.c
+> > @@ -3081,6 +3081,8 @@ static int crypt_ctr_optional(struct dm_target *ti, unsigned int argc, char **ar
+> >       if (ret)
+> >               return ret;
+> >
+> > +     ti->num_provision_bios = 1;
+> > +
+> >       while (opt_params--) {
+> >               opt_string = dm_shift_arg(&as);
+> >               if (!opt_string) {
+> > @@ -3384,7 +3386,7 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
+> >        * - for REQ_OP_DISCARD caller must use flush if IO ordering matters
+> >        */
+> >       if (unlikely(bio->bi_opf & REQ_PREFLUSH ||
+> > -         bio_op(bio) == REQ_OP_DISCARD)) {
+> > +         bio_op(bio) == REQ_OP_DISCARD || bio_op(bio) == REQ_OP_PROVISION)) {
+> >               bio_set_dev(bio, cc->dev->bdev);
+> >               if (bio_sectors(bio))
+> >                       bio->bi_iter.bi_sector = cc->start +
+> > diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+> > index 3212ef6aa81b..1aa782149428 100644
+> > --- a/drivers/md/dm-linear.c
+> > +++ b/drivers/md/dm-linear.c
+> > @@ -61,6 +61,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+> >       ti->num_discard_bios = 1;
+> >       ti->num_secure_erase_bios = 1;
+> >       ti->num_write_zeroes_bios = 1;
+> > +     ti->num_provision_bios = 1;
+> >       ti->private = lc;
+> >       return 0;
+> >
+> > diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> > index 332f96b58252..b7f9cb66b7ba 100644
+> > --- a/drivers/md/dm-table.c
+> > +++ b/drivers/md/dm-table.c
+> > @@ -1853,6 +1853,18 @@ static bool dm_table_supports_write_zeroes(struct dm_table *t)
+> >       return true;
+> >  }
+> >
+> > +static bool dm_table_supports_provision(struct dm_table *t)
+> > +{
+> > +     for (unsigned int i = 0; i < t->num_targets; i++) {
+> > +             struct dm_target *ti = dm_table_get_target(t, i);
+> > +
+> > +             if (ti->num_provision_bios)
+> > +                     return true;
+> > +     }
+> > +
+> > +     return false;
+> > +}
+> > +
+>
+> This needs to go a step further and verify a device in the stack
+> actually services REQ_OP_PROVISION.
+>
+> Please see dm_table_supports_discards(): it iterates all devices in
+> the table and checks that support is advertised.
+>
+> For discard, DM requires that _all_ devices in a table advertise
+> support (that is pretty strict and likely could be relaxed to _any_).
+>
+> You'll need ti->provision_supported (like ->discards_supported) to
+> advertise actual support is provided by dm-thinp (even if underlying
+> devices don't support it).
+>
+> And yeah, dm-thinp passdown support for REQ_OP_PROVISION can follow
+> later as needed (if there actual HW that would benefit from
+> REQ_OP_PROVISION).
+>
+Done, thanks (the provision support, not the passdown)! I think the
+one case where passdown might help is to build images with dm-thinp
+already set up on one of the partitions (I have something in the works
+for ChromiumOS images to do VM tests with preset state :)). That would
+allow us to preallocate space for thin logical volumes inside the
+image file.
 
-There is an expected performance degradation with fallocate() calls made
-with this flag due to the extra REQ_OP_PROVISIONs sent to the underlying
-storage.
-
-Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
----
- fs/ext4/ext4.h         |  2 ++
- fs/ext4/extents.c      | 15 ++++++++++++++-
- fs/ext4/indirect.c     |  9 +++++++++
- include/linux/blkdev.h | 11 +++++++++++
- 4 files changed, 36 insertions(+), 1 deletion(-)
-
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index 140e1eb300d1..49832e90b62f 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -673,6 +673,8 @@ enum {
- #define EXT4_GET_BLOCKS_IO_SUBMIT		0x0400
- 	/* Caller is in the atomic contex, find extent if it has been cached */
- #define EXT4_GET_BLOCKS_CACHED_NOWAIT		0x0800
-+	/* Provision blocks on underlying storage */
-+#define EXT4_GET_BLOCKS_PROVISION		0x1000
- 
- /*
-  * The bit position of these flags must not overlap with any of the
-diff --git a/fs/ext4/extents.c b/fs/ext4/extents.c
-index 9de1c9d1a13d..2e64a9211792 100644
---- a/fs/ext4/extents.c
-+++ b/fs/ext4/extents.c
-@@ -4361,6 +4361,13 @@ int ext4_ext_map_blocks(handle_t *handle, struct inode *inode,
- 		}
- 	}
- 
-+	/* Attempt to provision blocks on underlying storage */
-+	if (flags & EXT4_GET_BLOCKS_PROVISION) {
-+		err = sb_issue_provision(inode->i_sb, pblk, ar.len, GFP_NOFS);
-+		if (err)
-+			goto out;
-+	}
-+
- 	/*
- 	 * Cache the extent and update transaction to commit on fdatasync only
- 	 * when it is _not_ an unwritten extent.
-@@ -4694,7 +4701,7 @@ long ext4_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
- 	/* Return error if mode is not supported */
- 	if (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |
- 		     FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_ZERO_RANGE |
--		     FALLOC_FL_INSERT_RANGE))
-+		     FALLOC_FL_INSERT_RANGE | FALLOC_FL_PROVISION))
- 		return -EOPNOTSUPP;
- 
- 	inode_lock(inode);
-@@ -4754,6 +4761,12 @@ long ext4_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
- 	if (ret)
- 		goto out;
- 
-+	/* Ensure that preallocation provisions the blocks on the underlying
-+	 * storage device.
-+	 */
-+	if (mode & FALLOC_FL_PROVISION)
-+		flags |= EXT4_GET_BLOCKS_PROVISION;
-+
- 	ret = ext4_alloc_file_blocks(file, lblk, max_blocks, new_size, flags);
- 	if (ret)
- 		goto out;
-diff --git a/fs/ext4/indirect.c b/fs/ext4/indirect.c
-index c68bebe7ff4b..a8065aae7563 100644
---- a/fs/ext4/indirect.c
-+++ b/fs/ext4/indirect.c
-@@ -647,6 +647,15 @@ int ext4_ind_map_blocks(handle_t *handle, struct inode *inode,
- 	if (err)
- 		goto cleanup;
- 
-+	/* Attempt to provision blocks on underlying storage */
-+	if (flags & EXT4_GET_BLOCKS_PROVISION) {
-+		err = sb_issue_provision(inode->i_sb,
-+					 le32_to_cpu(chain[depth-1].key),
-+					 ar.len, GFP_NOFS);
-+		if (err)
-+			goto out;
-+	}
-+
- 	map->m_flags |= EXT4_MAP_NEW;
- 
- 	ext4_update_inode_fsync_trans(handle, inode, 1);
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index f1abc7b43e25..b2e3244e9f3d 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1093,6 +1093,17 @@ static inline int sb_issue_zeroout(struct super_block *sb, sector_t block,
- 				    gfp_mask, 0);
- }
- 
-+static inline int sb_issue_provision(struct super_block *sb, sector_t block,
-+		sector_t nr_blocks, gfp_t gfp_mask)
-+{
-+	return blkdev_issue_provision(sb->s_bdev,
-+				      block << (sb->s_blocksize_bits -
-+					      SECTOR_SHIFT),
-+				      nr_blocks << (sb->s_blocksize_bits -
-+						    SECTOR_SHIFT),
-+				      gfp_mask);
-+}
-+
- static inline bool bdev_is_partition(struct block_device *bdev)
- {
- 	return bdev->bd_partno;
--- 
-2.37.3
+> Mike
+>
 
 --
 dm-devel mailing list
