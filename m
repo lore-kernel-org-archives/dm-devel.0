@@ -4,88 +4,93 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 27B48C4167B
-	for <dm-devel@archiver.kernel.org>; Mon,  2 Jan 2023 07:43:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5E76EC61DB3
+	for <dm-devel@archiver.kernel.org>; Mon,  2 Jan 2023 07:43:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1672645391;
+	s=mimecast20190719; t=1672645392;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=ZU4iohztJmssPnzIUbOSwRaj0mX2VYaqfGzy8kLxXas=;
-	b=JtzCz3PBtmf/mfG3y1Xc4iBhRBJXnG5jILhIpCEF1eHjusBBDQpFXCWpkkKhKsvHdtHf71
-	rzOG/z5XyX+69Vu5Zd3Zssg4ORVyDAzy544mQDkr3vuF9k7Iw0ufiQYmvymHwgScandxlj
-	wdl8EHRI2i2WRbau6tui/EGC0u1nr8k=
+	bh=0W4ZA01lSiHUumr+W3oII7IWYDYu75Ie0d2/PtQUs9s=;
+	b=Ofwml4NizIEJo0QSrARzPMaw6gcj9QbYwMfYbsYb02z1V9Jww/8vz0YW163haabwZv8Zb0
+	QeThl8F3rXqvCZVBE7GjxkjaWroMG+0NmTvmuLUOmni9aDHxeowmZdB4Qq+dj3tmD0jcX2
+	BD0AGsUzw4WMpOF0EL0E/z2IQkUzA04=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-264-e5k1mQXCML-1ItYgjmpoAw-1; Mon, 02 Jan 2023 02:43:07 -0500
-X-MC-Unique: e5k1mQXCML-1ItYgjmpoAw-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-662-JtfzXpnGNCqthqLihl6kug-1; Mon, 02 Jan 2023 02:43:09 -0500
+X-MC-Unique: JtfzXpnGNCqthqLihl6kug-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4640485C6EF;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3893F857A8A;
 	Mon,  2 Jan 2023 07:43:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 346A22166B2B;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 26FB9140EBF5;
 	Mon,  2 Jan 2023 07:43:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BBC7E194707E;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B6EEC194707B;
 	Mon,  2 Jan 2023 07:43:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4F5521946586
- for <dm-devel@listman.corp.redhat.com>; Thu, 29 Dec 2022 08:13:02 +0000 (UTC)
+ ESMTP id 0FB711946586
+ for <dm-devel@listman.corp.redhat.com>; Thu, 29 Dec 2022 08:13:07 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 224EC492B07; Thu, 29 Dec 2022 08:13:02 +0000 (UTC)
+ id DB94C40C1073; Thu, 29 Dec 2022 08:13:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1A49E492B06
- for <dm-devel@redhat.com>; Thu, 29 Dec 2022 08:13:02 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D391C40C1141
+ for <dm-devel@redhat.com>; Thu, 29 Dec 2022 08:13:06 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EB45787B2A1
- for <dm-devel@redhat.com>; Thu, 29 Dec 2022 08:13:01 +0000 (UTC)
-Received: from mail-pl1-f176.google.com (mail-pl1-f176.google.com
- [209.85.214.176]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B451418E0A61
+ for <dm-devel@redhat.com>; Thu, 29 Dec 2022 08:13:06 +0000 (UTC)
+Received: from mail-pj1-f46.google.com (mail-pj1-f46.google.com
+ [209.85.216.46]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-300---C1IhqbNGqt1VrDFfGTrw-1; Thu, 29 Dec 2022 03:13:00 -0500
-X-MC-Unique: --C1IhqbNGqt1VrDFfGTrw-1
-Received: by mail-pl1-f176.google.com with SMTP id jl4so12014298plb.8
- for <dm-devel@redhat.com>; Thu, 29 Dec 2022 00:12:59 -0800 (PST)
+ us-mta-574-TX6zCYRkPgqDgPBPp2Pyeg-1; Thu, 29 Dec 2022 03:13:05 -0500
+X-MC-Unique: TX6zCYRkPgqDgPBPp2Pyeg-1
+Received: by mail-pj1-f46.google.com with SMTP id
+ m7-20020a17090a730700b00225ebb9cd01so10354776pjk.3
+ for <dm-devel@redhat.com>; Thu, 29 Dec 2022 00:13:04 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=content-transfer-encoding:mime-version:message-id:date:subject:cc
- :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
- :reply-to;
- bh=THv6prYzDq2eXsCiqs3MdATdHNqWI4kkKeIbH/Zad64=;
- b=cpHajtDPq5pZSbUXZC50hWA/qvyn849Tlwm6Vv1jRNbs/eGBFfbjgxuR96R6CGy2b+
- qTVEIw5olsFYdsXRE6SoOcxtu8RLtzksH5xCF99OMeQgwX4oFoRlLtCJvkeGq4dfjeTH
- qIEVZOG+DAgtznEPN+oVDcqcegSeMde+/ckUu0zq4XlhmdqeouD3ppP7PWilNGwESRQL
- nx+BeXxHfP2nrwit/IXYQdpcVgsGRAH8z5s3FaJNHBwpRdDHBuWwUjCfgnaziI6HPOgA
- QFuEWRbFk1gjt258Y8Vma+0OO84hN4JKLpt0rb/vceI52K5CxzpzpoTCyvHXVFuB78Wi
- P/Ng==
-X-Gm-Message-State: AFqh2koM9lpVjEqlXZZ9tBvKkhf1GmQgABI9g/zddm/cPSd61auhHQMm
- fjxGi8h0u6K9evvsIvG8w4BFQ+owmO4a9G32
-X-Google-Smtp-Source: AMrXdXu9lcGIP5E+xv/lfVaOI7oGNaTa8ZYVW9/FVtdg5eoc6mZA7pS4ycv7ew5XN0iSQz9w8aYiWA==
-X-Received: by 2002:a05:6a21:3a46:b0:9f:3197:bfa1 with SMTP id
- zu6-20020a056a213a4600b0009f3197bfa1mr40455755pzb.7.1672301579046; 
- Thu, 29 Dec 2022 00:12:59 -0800 (PST)
+ h=content-transfer-encoding:mime-version:references:in-reply-to
+ :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=ZGTS43jY2w8jm4acf0IFMpzxibmXYw0wZeBsvWcE3NI=;
+ b=BgYpn98xgTJO9vbJTC9Lr/Km5PvZJOmHKjhcBxHsxdhbG7QScTvSettdzx6U6ixBb+
+ buTV+I54N9kSekwut8E1lasw3qNF1mUaEt9mIr2VJAYJd71LZ1H7obAYCukGWLkJryCC
+ iB2JnG/KgZmYJfGrL2crKKONLBS4ogIuGB5Wg3/113EUlHMGN3PH360PhHh0phnjDFgb
+ FO3sRNZ7QO23RRlCqdlGgsRGhZs6bpEAlU0bxJJnhe1bRgu5CudlFlL0EBoQ9Sf5wmVj
+ h0kJ4/yYwGjSiMMhDEMNLjvBcvAgLqlwrklC873qQRlHTkKQgeH5fbP2+lVlJOu36pjk
+ svog==
+X-Gm-Message-State: AFqh2krMIYSsFTaO2S95fPDuLqFY3N9bcI+0wWNKuc5PDVFEKvNAAgph
+ hNwwcgajt+lK77UkzyWKYZmYfw==
+X-Google-Smtp-Source: AMrXdXtCqORihZF9SwuWUqetXWe9iVm3jlR8L/IVs3risC7ggBVbqn40CWo00UuzV3AXBqtcxJtPjg==
+X-Received: by 2002:a17:902:f08a:b0:189:c19a:2cd9 with SMTP id
+ p10-20020a170902f08a00b00189c19a2cd9mr27993581pla.25.1672301583922; 
+ Thu, 29 Dec 2022 00:13:03 -0800 (PST)
 Received: from sarthakkukreti-glaptop.hsd1.ca.comcast.net
  ([2601:647:4200:b5b0:75ff:1277:3d7b:d67a])
  by smtp.gmail.com with ESMTPSA id
- 12-20020a170902e9cc00b00192820d00d0sm6496325plk.120.2022.12.29.00.12.56
+ 12-20020a170902e9cc00b00192820d00d0sm6496325plk.120.2022.12.29.00.13.01
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 29 Dec 2022 00:12:58 -0800 (PST)
+ Thu, 29 Dec 2022 00:13:03 -0800 (PST)
 From: Sarthak Kukreti <sarthakkukreti@chromium.org>
 To: sarthakkukreti@google.com, dm-devel@redhat.com,
  linux-block@vger.kernel.org, linux-ext4@vger.kernel.org,
  linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Date: Thu, 29 Dec 2022 00:12:45 -0800
-Message-Id: <20221229081252.452240-1-sarthakkukreti@chromium.org>
+Date: Thu, 29 Dec 2022 00:12:47 -0800
+Message-Id: <20221229081252.452240-3-sarthakkukreti@chromium.org>
+In-Reply-To: <20221229081252.452240-1-sarthakkukreti@chromium.org>
+References: <20221229081252.452240-1-sarthakkukreti@chromium.org>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -94,10 +99,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mailman-Approved-At: Mon, 02 Jan 2023 07:42:59 +0000
-Subject: [dm-devel] [PATCH v2 0/8] Introduce provisioning primitives for
- thinly provisioned storage
+Subject: [dm-devel] [PATCH v2 2/7] dm: Add support for block provisioning
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -118,133 +122,356 @@ Cc: Jens Axboe <axboe@kernel.dk>, Theodore Ts'o <tytso@mit.edu>,
  Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-SGksCgpUaGlzIHBhdGNoIHNlcmllcyBhZGRzIGEgbWVjaGFuaXNtIHRvIHBhc3MgdGhyb3VnaCBw
-cm92aXNpb24gcmVxdWVzdHMgb24Kc3RhY2tlZCB0aGlubHkgcHJvdmlzaW9uZWQgc3RvcmFnZSBk
-ZXZpY2VzL2ZpbGVzeXN0ZW1zLgoKVGhlIGxpbnV4IGtlcm5lbCBwcm92aWRlcyBzZXZlcmFsIG1l
-Y2hhbmlzbXMgdG8gc2V0IHVwIHRoaW5seSBwcm92aXNpb25lZApibG9jayBzdG9yYWdlIGFic3Ry
-YWN0aW9ucyAoZWcuIGRtLXRoaW4sIGxvb3AgZGV2aWNlcyBvdmVyIHNwYXJzZSBmaWxlcyksCmVp
-dGhlciBkaXJlY3RseSBhcyBibG9jayBkZXZpY2VzIG9yIGJhY2tpbmcgc3RvcmFnZSBmb3IgZmls
-ZXN5c3RlbXMuIEN1cnJlbnRseSwKc2hvcnQgb2Ygd3JpdGluZyBkYXRhIHRvIGVpdGhlciB0aGUg
-ZGV2aWNlIG9yIGZpbGVzeXN0ZW0sIHRoZXJlIGlzIG5vIHdheSBmb3IKdXNlcnMgdG8gcHJlLWFs
-bG9jYXRlIHNwYWNlIGZvciB1c2UgaW4gc3VjaCBzdG9yYWdlIHNldHVwcy4gQ29uc2lkZXIgdGhl
-CmZvbGxvd2luZyB1c2UtY2FzZXM6CgoxKSBTdXNwZW5kLXRvLWRpc2sgYW5kIHJlc3VtZSBmcm9t
-IGEgZG0tdGhpbiBkZXZpY2U6IEluIG9yZGVyIHRvIGVuc3VyZSB0aGF0CiAgIHRoZSB1bmRlcmx5
-aW5nIHRoaW5wb29sIG1ldGFkYXRhIGlzIG5vdCBtb2RpZmllZCBkdXJpbmcgdGhlIHN1c3BlbmQK
-ICAgbWVjaGFuaXNtLCB0aGUgZG0tdGhpbiBkZXZpY2UgbmVlZHMgdG8gYmUgZnVsbHkgcHJvdmlz
-aW9uZWQuCjIpIElmIGEgZmlsZXN5c3RlbSB1c2VzIGEgbG9vcCBkZXZpY2Ugb3ZlciBhIHNwYXJz
-ZSBmaWxlLCBmYWxsb2NhdGUoKSBvbiB0aGUKICAgZmlsZXN5c3RlbSB3aWxsIGFsbG9jYXRlIGJs
-b2NrcyBmb3IgZmlsZXMgYnV0IHRoZSB1bmRlcmx5aW5nIHNwYXJzZSBmaWxlCiAgIHdpbGwgcmVt
-YWluIGludGFjdC4KMykgQW5vdGhlciBleGFtcGxlIGlzIHZpcnR1YWwgbWFjaGluZSB1c2luZyBh
-IHNwYXJzZSBmaWxlL2RtLXRoaW4gYXMgYSBzdG9yYWdlCiAgIGRldmljZTsgYnkgZGVmYXVsdCwg
-YWxsb2NhdGlvbnMgd2l0aGluIHRoZSBWTSBib3VuZGFyaWVzIHdpbGwgbm90IGFmZmVjdAogICB0
-aGUgaG9zdC4KNCkgU2V2ZXJhbCBzdG9yYWdlIHN0YW5kYXJkcyBzdXBwb3J0IG1lY2hhbmlzbXMg
-Zm9yIHRoaW4gcHJvdmlzaW9uaW5nIG9uCiAgIHJlYWwgaGFyZHdhcmUgZGV2aWNlcy4gRm9yIGV4
-YW1wbGU6CiAgIGEuIFRoZSBOVk1lIHNwZWMgMS4wYiBzZWN0aW9uIDIuMS4xIGxvb3NlbHkgdGFs
-a3MgYWJvdXQgdGhpbiBwcm92aXNpb25pbmc6CiAgICAgICJXaGVuIHRoZSBUSElOUCBiaXQgaW4g
-dGhlIE5TRkVBVCBmaWVsZCBvZiB0aGUgSWRlbnRpZnkgTmFtZXNwYWNlIGRhdGEKICAgICAgIHN0
-cnVjdHVyZSBpcyBzZXQgdG8g4oCYMeKAmSwgdGhlIGNvbnRyb2xsZXIgLi4uIHNoYWxsIHRyYWNr
-IHRoZSBudW1iZXIgb2YKICAgICAgIGFsbG9jYXRlZCBibG9ja3MgaW4gdGhlIE5hbWVzcGFjZSBV
-dGlsaXphdGlvbiBmaWVsZCIKICAgYi4gVGhlIFNDU2kgQmxvY2sgQ29tbWFuZHMgcmVmZXJlbmNl
-IC0gNCBzZWN0aW9uIHJlZmVyZW5jZXMgIlRoaW4KICAgICAgcHJvdmlzaW9uZWQgbG9naWNhbCB1
-bml0cyIsCiAgIGMuIFVGUyAzLjAgc3BlYyBzZWN0aW9uIDEzLjMuMyByZWZlcmVuY2VzICJUaGlu
-IHByb3Zpc2lvbmluZyIuCgpJbiBhbGwgdGhlIGFib3ZlIHNpdHVhdGlvbnMsIGN1cnJlbnRseSwg
-dGhlIG9ubHkgd2F5IGZvciBwcmUtYWxsb2NhdGluZyBzcGFjZQppcyB0byBpc3N1ZSB3cml0ZXMg
-KG9yIHVzZSBXUklURV9aRVJPRVMvV1JJVEVfU0FNRSkuIEhvd2V2ZXIsIHRoYXQgZG9lcyBub3QK
-c2NhbGUgd2VsbCB3aXRoIGxhcmdlciBwcmUtYWxsb2NhdGlvbiBzaXplcy4KClRoaXMgcGF0Y2hz
-ZXQgaW50cm9kdWNlcyBwcmltaXRpdmVzIHRvIHN1cHBvcnQgYmxvY2stbGV2ZWwgcHJvdmlzaW9u
-aW5nIChub3RlOgp0aGUgdGVybSAncHJvdmlzaW9uaW5nJyBpcyB1c2VkIHRvIHByZXZlbnQgb3Zl
-cmxvYWRpbmcgdGhlIHRlcm0KJ2FsbG9jYXRpb25zL3ByZS1hbGxvY2F0aW9ucycpIHJlcXVlc3Rz
-IGFjcm9zcyBmaWxlc3lzdGVtcyBhbmQgYmxvY2sgZGV2aWNlcy4KVGhpcyBhbGxvd3MgZmFsbG9j
-YXRlKCkgYW5kIGZpbGUgY3JlYXRpb24gcmVxdWVzdHMgdG8gcmVzZXJ2ZSBzcGFjZSBhY3Jvc3MK
-c3RhY2tlZCBsYXllcnMgb2YgYmxvY2sgZGV2aWNlcyBhbmQgZmlsZXN5c3RlbXMuIEN1cnJlbnRs
-eSwgdGhlIHBhdGNoc2V0IGNvdmVycwphIHByb3RvdHlwZSBvbiB0aGUgZGV2aWNlLW1hcHBlciB0
-YXJnZXRzLCBsb29wIGRldmljZSBhbmQgZXh0NCwgYnV0IHRoZSBzYW1lCm1lY2hhbmlzbSBjYW4g
-YmUgZXh0ZW5kZWQgdG8gb3RoZXIgZmlsZXN5c3RlbXMvYmxvY2sgZGV2aWNlcyBhcyB3ZWxsIGFz
-IGV4dGVuZGVkCmZvciB1c2Ugd2l0aCBkZXZpY2VzIGluIDQgYS1jLgoKUGF0Y2ggMSBpbnRyb2R1
-Y2VzIFJFUV9PUF9QUk9WSVNJT04gYXMgYSBuZXcgcmVxdWVzdCB0eXBlLgpUaGUgcHJvdmlzaW9u
-IHJlcXVlc3QgYWN0cyBsaWtlIHRoZSBpbnZlcnNlIG9mIGEgZGlzY2FyZCByZXF1ZXN0OyBpbnN0
-ZWFkCm9mIG5vdGlmeWluZyBsb3dlciBsYXllcnMgdGhhdCB0aGUgYmxvY2sgcmFuZ2Ugd2lsbCBu
-byBsb25nZXIgYmUgdXNlZCwgcHJvdmlzaW9uCmFjdHMgYXMgYSByZXF1ZXN0IHRvIGxvd2VyIGxh
-eWVycyB0byBwcm92aXNpb24gZGlzayBzcGFjZSBmb3IgdGhlIGdpdmVuIGJsb2NrCnJhbmdlLiBS
-ZWFsIGhhcmR3YXJlIHN0b3JhZ2UgZGV2aWNlcyB3aWxsIGN1cnJlbnRseSBkaXNhYmxlIHRoZSBw
-cm92aXNpb2luZwpjYXBhYmlsaXR5IGJ1dCBmb3IgdGhlIHN0YW5kYXJkcyBsaXN0ZWQgaW4gNGEu
-LWMuLCBSRVFfT1BfUFJPVklTSU9OIGNhbiBiZQpvdmVybG9hZGVkIGZvciB1c2UgYXMgdGhlIHBy
-b3Zpc2lvaW5nIHByaW1pdGl2ZSBmb3IgZnV0dXJlIGRldmljZXMuCgpQYXRjaCAyIGltcGxlbWVu
-dHMgUkVRX09QX1BST1ZJU0lPTiBoYW5kbGluZyBmb3Igc29tZSBvZiB0aGUgZGV2aWNlLW1hcHBl
-cgp0YXJnZXRzLiBUaGlzIGFkZGl0aW9uYWxseSBhZGRzIHN1cHBvcnQgZm9yIHByZS1hbGxvY2F0
-aW5nIHNwYWNlIGZvciB0aGlubHkKcHJvdmlzaW9uZWQgbG9naWNhbCB2b2x1bWVzIHZpYSBmYWxs
-b2NhdGUoKQoKUGF0Y2ggMyBpbnRyb2R1Y2VzIGFuIGZhbGxvY2F0ZSgpIG1vZGUgKEZBTExPQ19G
-TF9QUk9WSVNJT04pIHRoYXQgc2VuZHMgYQpwcm92aXNpb24gcmVxdWVzdCB0byB0aGUgdW5kZXJs
-eWluZyBibG9jayBkZXZpY2UgKGFuZCBiZXlvbmQpLiBUaGlzIGFjdHMgYXMgdGhlCnByaW1hcnkg
-bWVjaGFuaXNtIGZvciBmaWxlIHByb3Zpc2lvbmluZyBhcyB3ZWxsIGFzIGRpc2FtYmlndWF0ZXMg
-dGhlIG5vdGlvbiBvZgp2aXJ0dWFsIGFuZCB0cnVlIGRpc2sgc3BhY2UgYWxsb2NhdGlvbnMgZm9y
-IHRoaW5seSBwcm92aXNpb25lZCBzdG9yYWdlIGRldmljZXMvCmZpbGVzeXN0ZW1zLiBXaXRoIHBh
-dGNoIDMsIHRoZSAnZGVmYXVsdCcgZmFsbG9jYXRlKCkgbW9kZSBpcyBwcmVzZXJ2ZWQgdG8KcGVy
-Zm9ybSBwcmVhbGxvY2F0aW9uIGF0IHRoZSBjdXJyZW50IGFsbG9jYXRpb24gbGF5ZXIgYW5kICdw
-cm92aXNpb24nIG1vZGUKYWRkcyB0aGUgY2FwYWJpbGl0eSB0byBwdW5jaCB0aHJvdWdoIHRoZSBh
-bGxvY2F0aW9ucyB0byB0aGUgdW5kZXJseWluZyB0aGlubHkKcHJvdmlzaW9uZWQgc3RvcmFnZSBs
-YXllcnMuIEZvciByZWd1bGFyIGZpbGVzeXN0ZW1zLCBib3RoIGFsbG9jYXRpb24gbW9kZXMKYXJl
-IGVxdWl2YWxlbnQuCgpQYXRjaCA0IHdpcmVzIHVwIHRoZSBsb29wIGRldmljZSBoYW5kbGluZyBv
-ZiBSRVFfT1BfUFJPVklTSU9OLgoKUGF0Y2hlcyA1LTcgY292ZXIgYSBwcm90b3R5cGUgaW1wbGVt
-ZW50YXRpb24gZm9yIGV4dDQsIHdoaWNoIGluY2x1ZGVzIHdpcmluZyB1cAp0aGUgZmFsbG9jYXRl
-KCkgaW1wbGVtZW50YXRpb24sIGludHJvZHVjaW5nIGEgZmlsZXN5c3RlbSBsZXZlbCBvcHRpb24g
-KGNhbGxlZAoncHJvdmlzaW9uJykgdG8gY29udHJvbCB0aGUgZGVmYXVsdCBhbGxvY2F0aW9uIGJl
-aGF2aW91ciBhbmQsIGZpbmFsbHksIGEKZmlsZS1sZXZlbCBvdmVycmlkZSB0byByZXRhaW4gY3Vy
-cmVudCBoYW5kbGluZywgZXZlbiBvbiBmaWxlc3lzdGVtcyBtb3VudGVkIHdpdGgKJ3Byb3Zpc2lv
-bicuIFRoZXNlIG9wdGlvbnMgYWxsb3cgdXNlcnMgb2Ygc3RhY2tlZCBmaWxlc3lzdGVtcyB0byBm
-bGV4aWJseSB0YWtlCmFkdmFudGFnZSBvZiBwcm92aXNpb25pbmcuCgpUZXN0aW5nOgotLS0tLS0t
-LQotIFRlc3RlZCBvbiBhIFZNIHJ1bm5pbmcgYSA2LjIga2VybmVsLgotIFRoZSBmb2xsb3dpbmcg
-cGVyZm9tcm1hbmNlIG1lYXN1cmVtZW50cyB3ZXJlIGNvbGxlY3RlZCB3aXRoIGZhbGxvY2F0ZSgy
-KQpwYXRjaGVkIHRvIGFkZCBzdXBwb3J0IGZvciBGQUxMT0NfRkxfUFJPVklTSU9OIHZpYSBhIGNv
-bW1hbmQgbGluZSBvcHRpb24gCmAtcC8tLXByb3Zpc2lvbmAuCgotIFByZWFsbG9jYXRpb24gb2Yg
-ZG0tdGhpbiBkZXZpY2VzOgpBcyBleHBlY3RlZCwgYXZvaWRpbmcgdGhlIG5lZWQgdG8gemVybyBv
-dXQgdGhpbmx5LXByb3Zpc2lvbmVkIGJsb2NrIGRldmljZXMgdG8KcHJlYWxsb2NhdGUgc3BhY2Ug
-c3BlZWRzIHVwIHRoZSBwcm92aXNpb25pbmcgb3BlcmF0aW9uIHNpZ25pZmljYW50bHk6CgpUaGUg
-Zm9sbG93aW5nIHdhcyB0ZXN0ZWQgb24gYSBkbS10aGluIGRldmljZSBzZXQgdXAgb24gdG9wIG9m
-IGEgZG0tdGhpbnAgd2l0aApza2lwX2Jsb2NrX3plcm9pbmc9dHJ1ZS4KQSkgWmVyb291dCB3YXMg
-bWVhc3VyZWQgdXNpbmcgYGZhbGxvY2F0ZSAteiAuLi5gCkIpIFByb3Zpc2lvbiB3YXMgbWVhc3Vy
-ZWQgdXNpbmcgYGZhbGxvY2F0ZSAtcCAuLi5gLgoKU2l6ZSAgICBUaW1lICAgICBBCUIKNTEyTSAg
-ICByZWFsICAgICAxLjA5MyAgMC4wMzQKICAgICAgICB1c2VyICAgICAwICAgICAgMAogICAgICAg
-IHN5cyAgICAgIDAuMDIyICAwLjAxCjFHICAgICAgcmVhbCAgICAgMi4xODIgIDAuMDQ4CiAgICAg
-ICAgdXNlciAgICAgMCAgICAgIDAuMDEKICAgICAgICBzeXMgICAgICAwLjAyMiAgMAoyRyAgICAg
-IHJlYWwgICAgIDQuMzQ0ICAwLjA4MgogICAgICAgIHVzZXIgICAgIDAgICAgICAwLjAxCiAgICAg
-ICAgc3lzICAgICAgMC4wMzYgIDAKNEcgICAgICByZWFsICAgICA4LjY3OSAgMC4xNTMKICAgICAg
-ICB1c2VyICAgICAwICAgICAgMC4wMQogICAgICAgIHN5cyAgICAgIDAuMDczICAwCjhHICAgICAg
-cmVhbCAgICAxNy43NzcgIDAuMzE4CiAgICAgICAgdXNlciAgICAgMCAgICAgIDAuMDEKICAgICAg
-ICBzeXMgICAgICAwLjE0NCAgMAoKLSBQcmVhbGxvY2F0aW9uIG9mIGZpbGVzIG9uIGZpbGVzeXN0
-ZW1zClNpbmNlIGZhbGxvY2F0ZSgpIHdpdGggRkFMTE9DX0ZMX1BST1ZJU0lPTiBjYW4gbm93IHBh
-c3MgZG93biB0aHJvdWdoCmZpbGVzeXN0ZW1zL2Jsb2NrIGRldmljZXMsIHRoaXMgcmVzdWx0cyBp
-biBhbiBleHBlY3RlZCBzbG93ZG93biBpbiBmYWxsb2NhdGUoKQpjYWxscyBpZiB0aGUgcHJvdmlz
-aW9uIHJlcXVlc3QgaXMgc2VudCB0byB0aGUgdW5kZXJseWluZyBsYXllcnMuCgpUaGUgbWVhc3Vy
-ZW1lbnRzIHdlcmUgdGFrZW4gdXNpbmcgZmFsbG9jYXRlKCkgb24gZXh0NCBmaWxlc3lzdGVtcyBz
-ZXQgdXAgd2l0aAp0aGUgZm9sbG93aW5nIG9wdHMvYmxvY2sgZGV2aWNlczoKQSkgZXh0NCBmaWxl
-c3lzdGVtIG1vdW50ZWQgd2l0aCAnbm9wcm92aXNpb24nCkIpIGV4dDQgZmlsZXN5c3RlbSBtb3Vu
-dGVkIHdpdGggJ3Byb3Zpc2lvbicgb24gYSBkbS10aGluIGRldmljZS4KQykgZXh0NCBmaWxlc3lz
-dGVtIG1vdW50ZWQgd2l0aCAncHJvdmlzaW9uJyBvbiBhIGxvb3AgZGV2aWNlIHdpdGggYSBzcGFy
-c2UKICAgYmFja2luZyBmaWxlIG9uIHRoZSBmaWxlc3lzdGVtIGluIChCKS4KClNpemUJVGltZQlB
-CUIJQwo1MTJNCXJlYWwJMC4wMTEJMC4wMzYJMC4wNDEKCXVzZXIJMC4wMgkwLjAzCTAuMDAyCglz
-eXMJMAkwCTAKMUcJcmVhbAkwLjAxMQkwLjA1NQkwLjA2NAoJdXNlcgkwCTAJMC4wMwoJc3lzCTAu
-MDAzCTAuMDA0CTAKMkcJcmVhbAkwLjAxMQkwLjEwOQkwLjExNwoJdXNlcgkwCTAJMC4wMDQKCXN5
-cwkwLjAwMwkwLjAwNgkwCjRHCXJlYWwJMC4wMTEJMC4yMjQJMC4yMzEKCXVzZXIJMAkwCTAuMDA2
-CglzeXMJMC4wMDQJMC4wMTIJMAo4RwlyZWFsCTAuMDE3CTAuNDI2CTAuNTI3Cgl1c2VyCTAJMAkw
-LjAxMwoJc3lzCTAuMDA5CTAuMDI0CTAKCkFzIGV4cGVjdGVkLCB0aGUgYWRkaXRpb25hbCBwcm92
-aXNpb24gcmVxdWVzdHMgd2lsbCBzbG93IGRvd24gZmFsbG9jYXRlKCkgY2FsbHMKYW5kIHRoZSBk
-ZWdyZWUgb2Ygc2xvd2Rvd24gZGVwZW5kcyBvbiB0aGUgbnVtYmVyIG9mIGxheWVycyB0aGF0IHRo
-ZSBwcm92aXNpb24KcmVxdWVzdCBpcyBwYXNzZWQgdGhyb3VnaCB0byBhcyB3ZWxsIGFzIHRoZSBj
-b21wbGV4aXR5IG9mIGFsbG9jYXRpb24gb24gdGhvc2UKbGF5ZXJzLgoKVE9ET3M6Ci0tLS0tLQot
-IFhmc3Rlc3RzIGZvciB2YWxpZGF0aW5nIHByb3Zpc2lvbmluZyByZXN1bHRzIGluIGFsbG9jYXRp
-b24uCgpDaGFuZ2Vsb2c6CgpWMjoKLSBGaXggc3RhY2tlZCBsaW1pdCBoYW5kbGluZy4KLSBFbmFi
-bGUgcHJvdmlzaW9uIHJlcXVlc3QgaGFuZGxpbmcgaW4gZG0tc25hcHNob3QKLSBEb24ndCBjYWxs
-IHRydW5jYXRlX2JkZXZfcmFuZ2UgaWYgYmxrZGV2X2ZhbGxvY2F0ZSgpIGlzIGNhbGxlZCB3aXRo
-CiAgRkFMTE9DX0ZMX1BST1ZJU0lPTi4KLSBDbGFyaWZ5IHNlbWFudGljcyBvZiBGQUxMT0NfRkxf
-UFJPVklTSU9OIGFuZCB3aHkgaXQgbmVlZHMgdG8gYmUgYSBzZXBhcmF0ZSBmbGFnCiAgKGFzIG9w
-cG9zZWQgdG8gb3ZlcmxvYWRpbmcgbW9kZSA9PSAwKS4KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlz
-dApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWwK
+Add support to dm devices for REQ_OP_PROVISION. The default mode
+is to pass through the request and dm-thin will utilize it to provision
+blocks.
+
+Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
+---
+ drivers/md/dm-crypt.c         |  4 +-
+ drivers/md/dm-linear.c        |  1 +
+ drivers/md/dm-snap.c          |  7 +++
+ drivers/md/dm-table.c         | 25 ++++++++++
+ drivers/md/dm-thin.c          | 90 ++++++++++++++++++++++++++++++++++-
+ drivers/md/dm.c               |  4 ++
+ include/linux/device-mapper.h | 11 +++++
+ 7 files changed, 139 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 2653516bcdef..7089a414c3d1 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -3081,6 +3081,8 @@ static int crypt_ctr_optional(struct dm_target *ti, unsigned int argc, char **ar
+ 	if (ret)
+ 		return ret;
+ 
++	ti->num_provision_bios = 1;
++
+ 	while (opt_params--) {
+ 		opt_string = dm_shift_arg(&as);
+ 		if (!opt_string) {
+@@ -3384,7 +3386,7 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
+ 	 * - for REQ_OP_DISCARD caller must use flush if IO ordering matters
+ 	 */
+ 	if (unlikely(bio->bi_opf & REQ_PREFLUSH ||
+-	    bio_op(bio) == REQ_OP_DISCARD)) {
++	    bio_op(bio) == REQ_OP_DISCARD || bio_op(bio) == REQ_OP_PROVISION)) {
+ 		bio_set_dev(bio, cc->dev->bdev);
+ 		if (bio_sectors(bio))
+ 			bio->bi_iter.bi_sector = cc->start +
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 3212ef6aa81b..1aa782149428 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -61,6 +61,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	ti->num_discard_bios = 1;
+ 	ti->num_secure_erase_bios = 1;
+ 	ti->num_write_zeroes_bios = 1;
++	ti->num_provision_bios = 1;
+ 	ti->private = lc;
+ 	return 0;
+ 
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index d1c2f84d27e3..d4d2599e3620 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -1357,6 +1357,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	if (s->discard_zeroes_cow)
+ 		ti->num_discard_bios = (s->discard_passdown_origin ? 2 : 1);
+ 	ti->per_io_data_size = sizeof(struct dm_snap_tracked_chunk);
++	ti->num_provision_bios = 1;
+ 
+ 	/* Add snapshot to the list of snapshots for this origin */
+ 	/* Exceptions aren't triggered till snapshot_resume() is called */
+@@ -2001,6 +2002,11 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
+ 	/* If the block is already remapped - use that, else remap it */
+ 	e = dm_lookup_exception(&s->complete, chunk);
+ 	if (e) {
++		if (unlikely(bio_op(bio) == REQ_OP_PROVISION)) {
++			bio_endio(bio);
++			r = DM_MAPIO_SUBMITTED;
++			goto out_unlock;
++		}
+ 		remap_exception(s, e, bio, chunk);
+ 		if (unlikely(bio_op(bio) == REQ_OP_DISCARD) &&
+ 		    io_overlaps_chunk(s, bio)) {
+@@ -2414,6 +2420,7 @@ static void snapshot_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 		/* All discards are split on chunk_size boundary */
+ 		limits->discard_granularity = snap->store->chunk_size;
+ 		limits->max_discard_sectors = snap->store->chunk_size;
++		limits->max_provision_sectors = snap->store->chunk_size;
+ 
+ 		up_read(&_origins_lock);
+ 	}
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 8541d5688f3a..35f8d670935e 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1853,6 +1853,26 @@ static bool dm_table_supports_write_zeroes(struct dm_table *t)
+ 	return true;
+ }
+ 
++static int device_provision_capable(struct dm_target *ti, struct dm_dev *dev,
++				    sector_t start, sector_t len, void *data)
++{
++	return !bdev_max_provision_sectors(dev->bdev);
++}
++
++static bool dm_table_supports_provision(struct dm_table *t)
++{
++	for (unsigned int i = 0; i < t->num_targets; i++) {
++		struct dm_target *ti = dm_table_get_target(t, i);
++
++		if (ti->provision_supported ||
++		    (ti->type->iterate_devices &&
++		    ti->type->iterate_devices(ti, device_provision_capable, NULL)))
++			return true;
++	}
++
++	return false;
++}
++
+ static int device_not_nowait_capable(struct dm_target *ti, struct dm_dev *dev,
+ 				     sector_t start, sector_t len, void *data)
+ {
+@@ -1987,6 +2007,11 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	if (!dm_table_supports_write_zeroes(t))
+ 		q->limits.max_write_zeroes_sectors = 0;
+ 
++	if (dm_table_supports_provision(t))
++		blk_queue_max_provision_sectors(q, UINT_MAX >> 9);
++	else
++		q->limits.max_provision_sectors = 0;
++
+ 	dm_table_verify_integrity(t);
+ 
+ 	/*
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 64cfcf46881d..ab3f1abfabaf 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -1012,6 +1012,14 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
+ 		goto out;
+ 	}
+ 
++	/* For provision requests, return once the prepared block has been inserted
++	 * into the mapping btree.
++	 */
++	if (bio && bio_op(bio) == REQ_OP_PROVISION) {
++		bio_endio(bio);
++		goto out;
++	}
++
+ 	/*
+ 	 * Release any bios held while the block was being provisioned.
+ 	 * If we are processing a write bio that completely covers the block,
+@@ -1239,7 +1247,7 @@ static int io_overlaps_block(struct pool *pool, struct bio *bio)
+ 
+ static int io_overwrites_block(struct pool *pool, struct bio *bio)
+ {
+-	return (bio_data_dir(bio) == WRITE) &&
++	return (bio_data_dir(bio) == WRITE) && bio_op(bio) != REQ_OP_PROVISION &&
+ 		io_overlaps_block(pool, bio);
+ }
+ 
+@@ -1388,6 +1396,10 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
+ 	m->data_block = data_block;
+ 	m->cell = cell;
+ 
++	/* Provision requests are chained on the original bio. */
++	if (bio && bio_op(bio) == REQ_OP_PROVISION)
++		m->bio = bio;
++
+ 	/*
+ 	 * If the whole block of data is being overwritten or we are not
+ 	 * zeroing pre-existing data, we can issue the bio immediately.
+@@ -1980,6 +1992,70 @@ static void process_cell(struct thin_c *tc, struct dm_bio_prison_cell *cell)
+ 	}
+ }
+ 
++static void process_provision_cell(struct thin_c *tc, struct dm_bio_prison_cell *cell)
++{
++	int r;
++	struct pool *pool = tc->pool;
++	struct bio *bio = cell->holder;
++	dm_block_t begin, end;
++	struct dm_thin_lookup_result lookup_result;
++
++	if (tc->requeue_mode) {
++		cell_requeue(pool, cell);
++		return;
++	}
++
++	get_bio_block_range(tc, bio, &begin, &end);
++
++	while (begin != end) {
++		r = ensure_next_mapping(pool);
++		if (r)
++			/* we did our best */
++			return;
++
++		r = dm_thin_find_block(tc->td, begin, 1, &lookup_result);
++		switch (r) {
++		case 0:
++			begin++;
++			break;
++		case -ENODATA:
++			bio_inc_remaining(bio);
++			provision_block(tc, bio, begin, cell);
++			begin++;
++			break;
++		default:
++			DMERR_LIMIT(
++				"%s: dm_thin_find_block() failed: error = %d",
++				__func__, r);
++			cell_defer_no_holder(tc, cell);
++			bio_io_error(bio);
++			begin++;
++			break;
++		}
++	}
++	bio_endio(bio);
++	cell_defer_no_holder(tc, cell);
++}
++
++static void process_provision_bio(struct thin_c *tc, struct bio *bio)
++{
++	dm_block_t begin, end;
++	struct dm_cell_key virt_key;
++	struct dm_bio_prison_cell *virt_cell;
++
++	get_bio_block_range(tc, bio, &begin, &end);
++	if (begin == end) {
++		bio_endio(bio);
++		return;
++	}
++
++	build_key(tc->td, VIRTUAL, begin, end, &virt_key);
++	if (bio_detain(tc->pool, &virt_key, bio, &virt_cell))
++		return;
++
++	process_provision_cell(tc, virt_cell);
++}
++
+ static void process_bio(struct thin_c *tc, struct bio *bio)
+ {
+ 	struct pool *pool = tc->pool;
+@@ -2200,6 +2276,8 @@ static void process_thin_deferred_bios(struct thin_c *tc)
+ 
+ 		if (bio_op(bio) == REQ_OP_DISCARD)
+ 			pool->process_discard(tc, bio);
++		else if (bio_op(bio) == REQ_OP_PROVISION)
++			process_provision_bio(tc, bio);
+ 		else
+ 			pool->process_bio(tc, bio);
+ 
+@@ -2716,7 +2794,8 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
+ 		return DM_MAPIO_SUBMITTED;
+ 	}
+ 
+-	if (op_is_flush(bio->bi_opf) || bio_op(bio) == REQ_OP_DISCARD) {
++	if (op_is_flush(bio->bi_opf) || bio_op(bio) == REQ_OP_DISCARD ||
++	    bio_op(bio) == REQ_OP_PROVISION) {
+ 		thin_defer_bio_with_throttle(tc, bio);
+ 		return DM_MAPIO_SUBMITTED;
+ 	}
+@@ -3355,6 +3434,8 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	pt->low_water_blocks = low_water_blocks;
+ 	pt->adjusted_pf = pt->requested_pf = pf;
+ 	ti->num_flush_bios = 1;
++	ti->num_provision_bios = 1;
++	ti->provision_supported = true;
+ 
+ 	/*
+ 	 * Only need to enable discards if the pool should pass
+@@ -4053,6 +4134,7 @@ static void pool_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 		blk_limits_io_opt(limits, pool->sectors_per_block << SECTOR_SHIFT);
+ 	}
+ 
++
+ 	/*
+ 	 * pt->adjusted_pf is a staging area for the actual features to use.
+ 	 * They get transferred to the live pool in bind_control_target()
+@@ -4243,6 +4325,9 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		ti->num_discard_bios = 1;
+ 	}
+ 
++	ti->num_provision_bios = 1;
++	ti->provision_supported = true;
++
+ 	mutex_unlock(&dm_thin_pool_table.mutex);
+ 
+ 	spin_lock_irq(&tc->pool->lock);
+@@ -4457,6 +4542,7 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 
+ 	limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
+ 	limits->max_discard_sectors = 2048 * 1024 * 16; /* 16G */
++	limits->max_provision_sectors = 2048 * 1024 * 16; /* 16G */
+ }
+ 
+ static struct target_type thin_target = {
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index e1ea3a7bd9d9..4d19bae9da4a 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1587,6 +1587,7 @@ static bool is_abnormal_io(struct bio *bio)
+ 		case REQ_OP_DISCARD:
+ 		case REQ_OP_SECURE_ERASE:
+ 		case REQ_OP_WRITE_ZEROES:
++		case REQ_OP_PROVISION:
+ 			return true;
+ 		default:
+ 			break;
+@@ -1611,6 +1612,9 @@ static blk_status_t __process_abnormal_io(struct clone_info *ci,
+ 	case REQ_OP_WRITE_ZEROES:
+ 		num_bios = ti->num_write_zeroes_bios;
+ 		break;
++	case REQ_OP_PROVISION:
++		num_bios = ti->num_provision_bios;
++		break;
+ 	default:
+ 		break;
+ 	}
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 04c6acf7faaa..b4d97d5d75b8 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -333,6 +333,12 @@ struct dm_target {
+ 	 */
+ 	unsigned num_write_zeroes_bios;
+ 
++	/*
++	 * The number of PROVISION bios that will be submitted to the target.
++	 * The bio number can be accessed with dm_bio_get_target_bio_nr.
++	 */
++	unsigned num_provision_bios;
++
+ 	/*
+ 	 * The minimum number of extra bytes allocated in each io for the
+ 	 * target to use.
+@@ -357,6 +363,11 @@ struct dm_target {
+ 	 */
+ 	bool discards_supported:1;
+ 
++	/* Set if this target needs to receive provision requests regardless of
++	 * whether or not its underlying devices have support.
++	 */
++	bool provision_supported:1;
++
+ 	/*
+ 	 * Set if we need to limit the number of in-flight bios when swapping.
+ 	 */
+-- 
+2.37.3
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
