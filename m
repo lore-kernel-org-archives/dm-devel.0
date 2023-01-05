@@ -1,101 +1,103 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A1137C3DA7A
-	for <dm-devel@archiver.kernel.org>; Thu,  5 Jan 2023 14:42:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 00543C3DA7A
+	for <dm-devel@archiver.kernel.org>; Thu,  5 Jan 2023 14:45:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1672929748;
+	s=mimecast20190719; t=1672929917;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=ZkUjq61qBjYS9QOIPkOG+eB2wN2DSyxBqaKFHEsjd1I=;
-	b=LVsHEieyX2nCLmO/Q8z1k6sIxp5qboolo3AHh0rL1h9eg8cPNtp+cyeug1CSccrKRFeepX
-	MzsG2tRnZjkb+RYly+hIjq/aGzbit2GHfyWopjK68tRMFI+sWyVmF5ChCFNQS2qFeK5KvT
-	iDdGkEG+iG5+andKlHb26Qqy7JdA5+g=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=sXNqhbwGo1OOL54Qy7L7Fco2iXNDtUCo/RFELEJWd58=;
+	b=cdzm3MnK6RydwEGp2BZGmPJXz3/z2UejQSi4dh9S381Ri+qA5rr6vuTpEXx/HKohQ/zhtI
+	gMLnP+QMOj5ifX538+7GeE4CjN/x7sDactnRCSBE6Hu62SUEgwS0FPF1SaG9NRXxk1ZOZf
+	INh2Tt+y0qfOCtPBQ8sVFydqN8vkf6Y=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-628-OahfKumGPPqoKiYaRgZsoA-1; Thu, 05 Jan 2023 09:42:25 -0500
-X-MC-Unique: OahfKumGPPqoKiYaRgZsoA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-571-vOi8B2eVNrKUa8oZcn6Zww-1; Thu, 05 Jan 2023 09:45:14 -0500
+X-MC-Unique: vOi8B2eVNrKUa8oZcn6Zww-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8938A3811F3F;
-	Thu,  5 Jan 2023 14:42:23 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5671E86C14C;
+	Thu,  5 Jan 2023 14:45:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id DF12D140EBF6;
-	Thu,  5 Jan 2023 14:42:20 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4323D53A0;
+	Thu,  5 Jan 2023 14:45:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 87FA81946589;
-	Thu,  5 Jan 2023 14:42:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EC2C41946589;
+	Thu,  5 Jan 2023 14:45:11 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6D7091946586
- for <dm-devel@listman.corp.redhat.com>; Thu,  5 Jan 2023 14:42:19 +0000 (UTC)
+ ESMTP id 0E8F91946586
+ for <dm-devel@listman.corp.redhat.com>; Thu,  5 Jan 2023 14:45:11 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4F838400E40A; Thu,  5 Jan 2023 14:42:19 +0000 (UTC)
+ id E360149BB6A; Thu,  5 Jan 2023 14:45:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4886640C115E
- for <dm-devel@redhat.com>; Thu,  5 Jan 2023 14:42:19 +0000 (UTC)
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id DC5FB492D8B
+ for <dm-devel@redhat.com>; Thu,  5 Jan 2023 14:45:10 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 27ACF1C0759A
- for <dm-devel@redhat.com>; Thu,  5 Jan 2023 14:42:19 +0000 (UTC)
-Received: from mail-yw1-f200.google.com (mail-yw1-f200.google.com
- [209.85.128.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C0EE9280604A
+ for <dm-devel@redhat.com>; Thu,  5 Jan 2023 14:45:10 +0000 (UTC)
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-150-xqGPwHdHOQqL_9gp8bXG1A-1; Thu, 05 Jan 2023 09:42:16 -0500
-X-MC-Unique: xqGPwHdHOQqL_9gp8bXG1A-1
-Received: by mail-yw1-f200.google.com with SMTP id
- 00721157ae682-473b193ada5so297254697b3.2
- for <dm-devel@redhat.com>; Thu, 05 Jan 2023 06:42:16 -0800 (PST)
+ us-mta-203-TVrT8wwSPtOO1wKuM_6uBw-1; Thu, 05 Jan 2023 09:45:09 -0500
+X-MC-Unique: TVrT8wwSPtOO1wKuM_6uBw-1
+Received: by mail-qk1-f200.google.com with SMTP id
+ l16-20020a05620a28d000b00704af700820so24856842qkp.5
+ for <dm-devel@redhat.com>; Thu, 05 Jan 2023 06:45:09 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=in-reply-to:content-disposition:mime-version:references:message-id
  :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
  :message-id:reply-to;
- bh=wjyslnCj3ZEltR7C79+zwgm2T1VJBZSXYdTg0fe8CHE=;
- b=xZskLxnBxV3AQ9lpkvja3qretGC88YwztTHl2B6FevqvTotJ0HMtqFMWASu/JR1ggG
- HiOVaoab9grIAPxe8FYpab2tYsUXPqgKV3f6Bd2rP96Q2vXo01d9hpVTLQp5D36ujo3X
- TATmxo0rk3/6qWCoe8JZkA4m8uxaEoe7IOAb8ox2pS+zSML3V7pQzmjufnikj6RX1j7d
- yFqQuMtoLcmS+B/TKbo+xVxSoi5oDjsgr+0O9dB4HQFeMlWLUguL/VBzm+m3cF74eFng
- k0qj42tzgRZDnfi7OXG7e9V5vrbJSjX++43Gdoy9R9E/+f7Wd9STLgIEzV0BJbE61L3d
- tTIg==
-X-Gm-Message-State: AFqh2kqbFIeW2HWTwybOY5HzooOzarIRF3t1JLuShif3uEAPrqqxeEJA
- 7MIgZg4i3QH82YG0FkzZ42RI0XydmrUrzDER5NlAOhqQOcDl3YGB2smFD/jnCMH3RVFhkB//ky1
- /V7rbZwSbEZAANyU=
-X-Received: by 2002:a05:690c:d84:b0:4b5:c61:1c02 with SMTP id
- da4-20020a05690c0d8400b004b50c611c02mr9863320ywb.22.1672929736358; 
- Thu, 05 Jan 2023 06:42:16 -0800 (PST)
-X-Google-Smtp-Source: AMrXdXtgZGayMfn5T2A3YgNPQf9Hcxwo0jOEuaE/UPyg5j2hL0RrzHck6nvnDV5RBSK1tNEA18Dwmw==
-X-Received: by 2002:a05:690c:d84:b0:4b5:c61:1c02 with SMTP id
- da4-20020a05690c0d8400b004b50c611c02mr9863296ywb.22.1672929736089; 
- Thu, 05 Jan 2023 06:42:16 -0800 (PST)
+ bh=YbA/NofU1+dEdHrQaFOTbBPTzEi67CbxBxBaGMPpQMk=;
+ b=egilzWSzmTsBLx7l+n3Dxx7+9P3fZd2fXVT11PkqjNxiSXNAzoB0PFAhnJeNnkf6VB
+ 6ep2mVcG6tEK+95dZZd7L+DifOm4kZG8AtwZE3E+aTjF3jbN+ch+e4na8SfhEggm/Ynw
+ 4fAHxOqmNxCjly2/b6UNkbSusVXF1Byy93UjnJ3wEmHHvsBUZlo61NO3NL7lq78KRBub
+ w09eXBF6o/AhKlR8Mo5DbHKxPuh0QrZscKPr8uUPweYw7zMFjRF/7W8hMSuqpiSZFfbP
+ jc1w3jy/zZRvgT4mr0d7YxfTNG5cT8w6eveQzyXt37Virw7ritNHexZk9op0mDM2bl1Q
+ 1mmA==
+X-Gm-Message-State: AFqh2kr7L0D+AHQaYBrhT+K6fFRTfkhX26gVqtSQ91/09RPp/Rlhok+a
+ FImarXNIVekvLbmLFL8SRA8QKQfOQOMKgIbDBqj7fiLvNIVVy0/UkONx8wbTdyeIOq/AWoUEsgL
+ PJK9hHoM7CIlhVqM=
+X-Received: by 2002:ac8:4657:0:b0:3a9:2478:2d70 with SMTP id
+ f23-20020ac84657000000b003a924782d70mr80230738qto.24.1672929908921; 
+ Thu, 05 Jan 2023 06:45:08 -0800 (PST)
+X-Google-Smtp-Source: AMrXdXtrJZcTSAudn8RghxSlOjyqJjB/K2q37f4w3Kj2j8R9LDk3t7bkbLzT5O2ELO+kdO6jtMF8tw==
+X-Received: by 2002:ac8:4657:0:b0:3a9:2478:2d70 with SMTP id
+ f23-20020ac84657000000b003a924782d70mr80230699qto.24.1672929908616; 
+ Thu, 05 Jan 2023 06:45:08 -0800 (PST)
 Received: from bfoster (c-24-61-119-116.hsd1.ma.comcast.net. [24.61.119.116])
  by smtp.gmail.com with ESMTPSA id
- ay34-20020a05620a17a200b006b929a56a2bsm25634809qkb.3.2023.01.05.06.42.14
+ ga27-20020a05622a591b00b0039cd4d87aacsm21718694qtb.15.2023.01.05.06.45.07
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 05 Jan 2023 06:42:15 -0800 (PST)
-Date: Thu, 5 Jan 2023 09:43:13 -0500
+ Thu, 05 Jan 2023 06:45:07 -0800 (PST)
+Date: Thu, 5 Jan 2023 09:46:06 -0500
 From: Brian Foster <bfoster@redhat.com>
 To: Sarthak Kukreti <sarthakkukreti@chromium.org>
-Message-ID: <Y7biAQyLKJDjsAlz@bfoster>
+Message-ID: <Y7biricgMfXxcQBU@bfoster>
 References: <20221229081252.452240-1-sarthakkukreti@chromium.org>
- <20221229081252.452240-3-sarthakkukreti@chromium.org>
+ <20221229081252.452240-4-sarthakkukreti@chromium.org>
+ <Y7Wr2uadI+82BB6a@magnolia>
+ <CAG9=OMNbeU=Xg5bWvHUSfzRf8vsk6csvcw5BGZeMD5Lo7dfKFQ@mail.gmail.com>
 MIME-Version: 1.0
-In-Reply-To: <20221229081252.452240-3-sarthakkukreti@chromium.org>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH v2 2/7] dm: Add support for block provisioning
+In-Reply-To: <CAG9=OMNbeU=Xg5bWvHUSfzRf8vsk6csvcw5BGZeMD5Lo7dfKFQ@mail.gmail.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: Re: [dm-devel] [PATCH v2 3/7] fs: Introduce FALLOC_FL_PROVISION
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -118,223 +120,207 @@ Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
  linux-ext4@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Dec 29, 2022 at 12:12:47AM -0800, Sarthak Kukreti wrote:
-> Add support to dm devices for REQ_OP_PROVISION. The default mode
-> is to pass through the request and dm-thin will utilize it to provision
-> blocks.
+On Wed, Jan 04, 2023 at 01:22:06PM -0800, Sarthak Kukreti wrote:
+> (Resend; the text flow made the last reply unreadable)
 > 
-> Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
-> ---
->  drivers/md/dm-crypt.c         |  4 +-
->  drivers/md/dm-linear.c        |  1 +
->  drivers/md/dm-snap.c          |  7 +++
->  drivers/md/dm-table.c         | 25 ++++++++++
->  drivers/md/dm-thin.c          | 90 ++++++++++++++++++++++++++++++++++-
->  drivers/md/dm.c               |  4 ++
->  include/linux/device-mapper.h | 11 +++++
->  7 files changed, 139 insertions(+), 3 deletions(-)
+> On Wed, Jan 4, 2023 at 8:39 AM Darrick J. Wong <djwong@kernel.org> wrote:
+> >
+> > On Thu, Dec 29, 2022 at 12:12:48AM -0800, Sarthak Kukreti wrote:
+> > > FALLOC_FL_PROVISION is a new fallocate() allocation mode that
+> > > sends a hint to (supported) thinly provisioned block devices to
+> > > allocate space for the given range of sectors via REQ_OP_PROVISION.
+> > >
+> > > The man pages for both fallocate(2) and posix_fallocate(3) describe
+> > > the default allocation mode as:
+> > >
+> > > ```
+> > > The default operation (i.e., mode is zero) of fallocate()
+> > > allocates the disk space within the range specified by offset and len.
+> > > ...
+> > > subsequent writes to bytes in the specified range are guaranteed
+> > > not to fail because of lack of disk space.
+> > > ```
+> > >
+> > > For thinly provisioned storage constructs (dm-thin, filesystems on sparse
+> > > files), the term 'disk space' is overloaded and can either mean the apparent
+> > > disk space in the filesystem/thin logical volume or the true disk
+> > > space that will be utilized on the underlying non-sparse allocation layer.
+> > >
+> > > The use of a separate mode allows us to cleanly disambiguate whether fallocate()
+> > > causes allocation only at the current layer (default mode) or whether it propagates
+> > > allocations to underlying layers (provision mode)
+> >
+> > Why is it important to make this distinction?  The outcome of fallocate
+> > is supposed to be that subsequent writes do not fail with ENOSPC.  In my
+> > (fs developer) mind, REQ_OP_PROVISION simply an extra step to be taken
+> > after allocating file blocks.
+> >
+> Some use cases still benefit from keeping the default mode - eg.
+> virtual machines running on massive storage pools that don't expect to
+> hit the storage limit anytime soon (like most cloud storage
+> providers). Essentially, if the 'no ENOSPC' guarantee is maintained
+> via other means, then REQ_OP_PROVISION adds latency that isn't needed
+> (and cloud storage providers don't need to set aside that extra space
+> that may or may not be used).
 > 
-...
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index 64cfcf46881d..ab3f1abfabaf 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-...
-> @@ -1980,6 +1992,70 @@ static void process_cell(struct thin_c *tc, struct dm_bio_prison_cell *cell)
->  	}
->  }
->  
-> +static void process_provision_cell(struct thin_c *tc, struct dm_bio_prison_cell *cell)
-> +{
-> +	int r;
-> +	struct pool *pool = tc->pool;
-> +	struct bio *bio = cell->holder;
-> +	dm_block_t begin, end;
-> +	struct dm_thin_lookup_result lookup_result;
-> +
-> +	if (tc->requeue_mode) {
-> +		cell_requeue(pool, cell);
-> +		return;
-> +	}
-> +
-> +	get_bio_block_range(tc, bio, &begin, &end);
-> +
-> +	while (begin != end) {
-> +		r = ensure_next_mapping(pool);
-> +		if (r)
-> +			/* we did our best */
-> +			return;
-> +
-> +		r = dm_thin_find_block(tc->td, begin, 1, &lookup_result);
 
-Hi Sarthak,
+What's the granularity that needs to be managed at? Do you really need
+an fallocate command for this, or would one of the filesystem level
+features you've already implemented for ext4 suffice?
 
-I think we discussed this before.. but remind me if/how we wanted to
-handle the case if the thin blocks are shared..? Would a provision op
-carry enough information to distinguish an FALLOC_FL_UNSHARE_RANGE
-request from upper layers to conditionally provision in that case?
+I mostly agree with Darrick in that FALLOC_FL_PROVISION stills feels a
+bit wonky to me. I can see that there might be some legitimate use cases
+for it, but I'm not convinced that it won't just end up being confusing
+to many users. At the same time, I think the approach of unconditional
+provision on falloc could eventually lead to complaints associated with
+the performance impact or similar sorts of confusion. For example,
+should an falloc of an already allocated range in the fs send a
+provision or not? Should filesystems that don't otherwise support
+UNSHARE_RANGE need to support it in order to support an unshare request
+to COW'd blocks on an underlying block device?
+
+I wonder if the smart thing to do here is separate out the question of a
+new fallocate interface from the mechanism entirely. For example,
+implement REQ_OP_PROVISION as you've already done, enable block layer
+mode = 0 fallocate support (i.e. without FL_PROVISION, so whether a
+request propagates from a loop device will be up to the backing fs),
+implement the various fs features to support REQ_OP_PROVISION (i.e.,
+mount option, file attr, etc.), then tack on FL_FALLOC + ext4 support at
+the end as an RFC/prototype.
+
+Even if we ultimately ended up with FL_PROVISION support, it might
+actually make some sense to kick that can down the road a bit regardless
+to give fs' a chance to implement basic REQ_OP_PROVISION support, get a
+better understanding of how it works in practice, and then perhaps make
+more informed decisions on things like sane defaults and/or how best to
+expose it via fallocate. Thoughts?
 
 Brian
 
-> +		switch (r) {
-> +		case 0:
-> +			begin++;
-> +			break;
-> +		case -ENODATA:
-> +			bio_inc_remaining(bio);
-> +			provision_block(tc, bio, begin, cell);
-> +			begin++;
-> +			break;
-> +		default:
-> +			DMERR_LIMIT(
-> +				"%s: dm_thin_find_block() failed: error = %d",
-> +				__func__, r);
-> +			cell_defer_no_holder(tc, cell);
-> +			bio_io_error(bio);
-> +			begin++;
-> +			break;
-> +		}
-> +	}
-> +	bio_endio(bio);
-> +	cell_defer_no_holder(tc, cell);
-> +}
-> +
-> +static void process_provision_bio(struct thin_c *tc, struct bio *bio)
-> +{
-> +	dm_block_t begin, end;
-> +	struct dm_cell_key virt_key;
-> +	struct dm_bio_prison_cell *virt_cell;
-> +
-> +	get_bio_block_range(tc, bio, &begin, &end);
-> +	if (begin == end) {
-> +		bio_endio(bio);
-> +		return;
-> +	}
-> +
-> +	build_key(tc->td, VIRTUAL, begin, end, &virt_key);
-> +	if (bio_detain(tc->pool, &virt_key, bio, &virt_cell))
-> +		return;
-> +
-> +	process_provision_cell(tc, virt_cell);
-> +}
-> +
->  static void process_bio(struct thin_c *tc, struct bio *bio)
->  {
->  	struct pool *pool = tc->pool;
-> @@ -2200,6 +2276,8 @@ static void process_thin_deferred_bios(struct thin_c *tc)
->  
->  		if (bio_op(bio) == REQ_OP_DISCARD)
->  			pool->process_discard(tc, bio);
-> +		else if (bio_op(bio) == REQ_OP_PROVISION)
-> +			process_provision_bio(tc, bio);
->  		else
->  			pool->process_bio(tc, bio);
->  
-> @@ -2716,7 +2794,8 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
->  		return DM_MAPIO_SUBMITTED;
->  	}
->  
-> -	if (op_is_flush(bio->bi_opf) || bio_op(bio) == REQ_OP_DISCARD) {
-> +	if (op_is_flush(bio->bi_opf) || bio_op(bio) == REQ_OP_DISCARD ||
-> +	    bio_op(bio) == REQ_OP_PROVISION) {
->  		thin_defer_bio_with_throttle(tc, bio);
->  		return DM_MAPIO_SUBMITTED;
->  	}
-> @@ -3355,6 +3434,8 @@ static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  	pt->low_water_blocks = low_water_blocks;
->  	pt->adjusted_pf = pt->requested_pf = pf;
->  	ti->num_flush_bios = 1;
-> +	ti->num_provision_bios = 1;
-> +	ti->provision_supported = true;
->  
->  	/*
->  	 * Only need to enable discards if the pool should pass
-> @@ -4053,6 +4134,7 @@ static void pool_io_hints(struct dm_target *ti, struct queue_limits *limits)
->  		blk_limits_io_opt(limits, pool->sectors_per_block << SECTOR_SHIFT);
->  	}
->  
-> +
->  	/*
->  	 * pt->adjusted_pf is a staging area for the actual features to use.
->  	 * They get transferred to the live pool in bind_control_target()
-> @@ -4243,6 +4325,9 @@ static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  		ti->num_discard_bios = 1;
->  	}
->  
-> +	ti->num_provision_bios = 1;
-> +	ti->provision_supported = true;
-> +
->  	mutex_unlock(&dm_thin_pool_table.mutex);
->  
->  	spin_lock_irq(&tc->pool->lock);
-> @@ -4457,6 +4542,7 @@ static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
->  
->  	limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
->  	limits->max_discard_sectors = 2048 * 1024 * 16; /* 16G */
-> +	limits->max_provision_sectors = 2048 * 1024 * 16; /* 16G */
->  }
->  
->  static struct target_type thin_target = {
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index e1ea3a7bd9d9..4d19bae9da4a 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1587,6 +1587,7 @@ static bool is_abnormal_io(struct bio *bio)
->  		case REQ_OP_DISCARD:
->  		case REQ_OP_SECURE_ERASE:
->  		case REQ_OP_WRITE_ZEROES:
-> +		case REQ_OP_PROVISION:
->  			return true;
->  		default:
->  			break;
-> @@ -1611,6 +1612,9 @@ static blk_status_t __process_abnormal_io(struct clone_info *ci,
->  	case REQ_OP_WRITE_ZEROES:
->  		num_bios = ti->num_write_zeroes_bios;
->  		break;
-> +	case REQ_OP_PROVISION:
-> +		num_bios = ti->num_provision_bios;
-> +		break;
->  	default:
->  		break;
->  	}
-> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-> index 04c6acf7faaa..b4d97d5d75b8 100644
-> --- a/include/linux/device-mapper.h
-> +++ b/include/linux/device-mapper.h
-> @@ -333,6 +333,12 @@ struct dm_target {
->  	 */
->  	unsigned num_write_zeroes_bios;
->  
-> +	/*
-> +	 * The number of PROVISION bios that will be submitted to the target.
-> +	 * The bio number can be accessed with dm_bio_get_target_bio_nr.
-> +	 */
-> +	unsigned num_provision_bios;
-> +
->  	/*
->  	 * The minimum number of extra bytes allocated in each io for the
->  	 * target to use.
-> @@ -357,6 +363,11 @@ struct dm_target {
->  	 */
->  	bool discards_supported:1;
->  
-> +	/* Set if this target needs to receive provision requests regardless of
-> +	 * whether or not its underlying devices have support.
-> +	 */
-> +	bool provision_supported:1;
-> +
->  	/*
->  	 * Set if we need to limit the number of in-flight bios when swapping.
->  	 */
-> -- 
-> 2.37.3
+> > If you *don't* add this API flag and simply bake the REQ_OP_PROVISION
+> > call into mode 0 fallocate, then the new functionality can be added (or
+> > even backported) to existing kernels and customers can use it
+> > immediately.  If you *do*, then you get to wait a few years for
+> > developers to add it to their codebases only after enough enterprise
+> > distros pick up a new kernel to make it worth their while.
+> >
+> > > for thinly provisioned filesystems/
+> > > block devices. For devices that do not support REQ_OP_PROVISION, both these
+> > > allocation modes will be equivalent. Given the performance cost of sending provision
+> > > requests to the underlying layers, keeping the default mode as-is allows users to
+> > > preserve existing behavior.
+> >
+> > How expensive is this expected to be?  Is this why you wanted a separate
+> > mode flag?
+> >
+> Yes, the exact latency will depend on the stacked block devices and
+> the fragmentation at the allocation layers.
+> 
+> I did a quick test for benchmarking fallocate() with an:
+> A) ext4 filesystem mounted with 'noprovision'
+> B) ext4 filesystem mounted with 'provision' on a dm-thin device.
+> C) ext4 filesystem mounted with 'provision' on a loop device with a
+> sparse backing file on the filesystem in (B).
+> 
+> I tested file sizes from 512M to 8G, time taken for fallocate() in (A)
+> remains expectedly flat at ~0.01-0.02s, but for (B), it scales from
+> 0.03-0.4s and for (C) it scales from 0.04s-0.52s (I captured the exact
+> time distribution in the cover letter
+> https://marc.info/?l=linux-ext4&m=167230113520636&w=2)
+> 
+> +0.5s for a 8G fallocate doesn't sound a lot but I think fragmentation
+> and how the block device is layered can make this worse...
+> 
+> > --D
+> >
+> > > Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
+> > > ---
+> > >  block/fops.c                | 15 +++++++++++----
+> > >  include/linux/falloc.h      |  3 ++-
+> > >  include/uapi/linux/falloc.h |  8 ++++++++
+> > >  3 files changed, 21 insertions(+), 5 deletions(-)
+> > >
+> > > diff --git a/block/fops.c b/block/fops.c
+> > > index 50d245e8c913..01bde561e1e2 100644
+> > > --- a/block/fops.c
+> > > +++ b/block/fops.c
+> > > @@ -598,7 +598,8 @@ static ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
+> > >
+> > >  #define      BLKDEV_FALLOC_FL_SUPPORTED                                      \
+> > >               (FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |           \
+> > > -              FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE)
+> > > +              FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE |       \
+> > > +              FALLOC_FL_PROVISION)
+> > >
+> > >  static long blkdev_fallocate(struct file *file, int mode, loff_t start,
+> > >                            loff_t len)
+> > > @@ -634,9 +635,11 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
+> > >       filemap_invalidate_lock(inode->i_mapping);
+> > >
+> > >       /* Invalidate the page cache, including dirty pages. */
+> > > -     error = truncate_bdev_range(bdev, file->f_mode, start, end);
+> > > -     if (error)
+> > > -             goto fail;
+> > > +     if (mode != FALLOC_FL_PROVISION) {
+> > > +             error = truncate_bdev_range(bdev, file->f_mode, start, end);
+> > > +             if (error)
+> > > +                     goto fail;
+> > > +     }
+> > >
+> > >       switch (mode) {
+> > >       case FALLOC_FL_ZERO_RANGE:
+> > > @@ -654,6 +657,10 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
+> > >               error = blkdev_issue_discard(bdev, start >> SECTOR_SHIFT,
+> > >                                            len >> SECTOR_SHIFT, GFP_KERNEL);
+> > >               break;
+> > > +     case FALLOC_FL_PROVISION:
+> > > +             error = blkdev_issue_provision(bdev, start >> SECTOR_SHIFT,
+> > > +                                            len >> SECTOR_SHIFT, GFP_KERNEL);
+> > > +             break;
+> > >       default:
+> > >               error = -EOPNOTSUPP;
+> > >       }
+> > > diff --git a/include/linux/falloc.h b/include/linux/falloc.h
+> > > index f3f0b97b1675..b9a40a61a59b 100644
+> > > --- a/include/linux/falloc.h
+> > > +++ b/include/linux/falloc.h
+> > > @@ -30,7 +30,8 @@ struct space_resv {
+> > >                                        FALLOC_FL_COLLAPSE_RANGE |     \
+> > >                                        FALLOC_FL_ZERO_RANGE |         \
+> > >                                        FALLOC_FL_INSERT_RANGE |       \
+> > > -                                      FALLOC_FL_UNSHARE_RANGE)
+> > > +                                      FALLOC_FL_UNSHARE_RANGE |      \
+> > > +                                      FALLOC_FL_PROVISION)
+> > >
+> > >  /* on ia32 l_start is on a 32-bit boundary */
+> > >  #if defined(CONFIG_X86_64)
+> > > diff --git a/include/uapi/linux/falloc.h b/include/uapi/linux/falloc.h
+> > > index 51398fa57f6c..2d323d113eed 100644
+> > > --- a/include/uapi/linux/falloc.h
+> > > +++ b/include/uapi/linux/falloc.h
+> > > @@ -77,4 +77,12 @@
+> > >   */
+> > >  #define FALLOC_FL_UNSHARE_RANGE              0x40
+> > >
+> > > +/*
+> > > + * FALLOC_FL_PROVISION acts as a hint for thinly provisioned devices to allocate
+> > > + * blocks for the range/EOF.
+> > > + *
+> > > + * FALLOC_FL_PROVISION can only be used with allocate-mode fallocate.
+> > > + */
+> > > +#define FALLOC_FL_PROVISION          0x80
+> > > +
+> > >  #endif /* _UAPI_FALLOC_H_ */
+> > > --
+> > > 2.37.3
+> > >
 > 
 
 --
