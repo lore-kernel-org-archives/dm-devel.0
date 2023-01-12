@@ -1,101 +1,66 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 46366C61DB3
-	for <dm-devel@archiver.kernel.org>; Thu, 12 Jan 2023 17:04:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 54A45C61DB3
+	for <dm-devel@archiver.kernel.org>; Thu, 12 Jan 2023 18:36:20 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1673543074;
+	s=mimecast20190719; t=1673548579;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=H6Ti/oXYXUk1bDH0dC8TBDBWnwjiu2KCgBBsqD5qs/4=;
-	b=Cy8h2OsLp9BpnlUR1lOWXn8j2p53p2uVWbRIhw7e7XYYTefR55HzMfZ5xK6p8Zr2SDOJm8
-	bqIPpgQAdZJcfpj7b/K5WXQejsGwB/TQ5ibaiIt0LsKfuTIL1h5h4UEYWNKXggGP61jTZv
-	BnAHVyiK79ApnsOnT//G02WQqKBNsRs=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Tgk5uX7yw73FlD2dIRwxwcs8rQWFvmeNKH9APL7nxHI=;
+	b=T3asxrAMUEgqn/kXVcoG/whiBMN6m8P4NDEvrgGtr0AWAplLTNnpSeNKNYxjNokuGCzxPx
+	6I7KnYZO8+eYndQ7WbjApIclPZcpn4fc2oVyRaDRzZnHraBYrvUOM0yhNOvH3EyxCLXlGE
+	kymKwGCHB0VY2Ujo12Ki69w28SO7pJI=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-619-roawTL4aNbSQWOH2JhElBQ-1; Thu, 12 Jan 2023 12:04:32 -0500
-X-MC-Unique: roawTL4aNbSQWOH2JhElBQ-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-510-XMJ0M6wQOBOIPjxQMz7QIg-1; Thu, 12 Jan 2023 13:36:15 -0500
+X-MC-Unique: XMJ0M6wQOBOIPjxQMz7QIg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BB82B1C087AE;
-	Thu, 12 Jan 2023 17:04:30 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F027C805A2B;
+	Thu, 12 Jan 2023 18:36:13 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8BC7E1121314;
-	Thu, 12 Jan 2023 17:04:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7CA1CC15BA0;
+	Thu, 12 Jan 2023 18:36:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6C182194704C;
-	Thu, 12 Jan 2023 17:04:29 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4318E194704F;
+	Thu, 12 Jan 2023 18:36:12 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 5E6AE1946A78
- for <dm-devel@listman.corp.redhat.com>; Thu, 12 Jan 2023 17:04:28 +0000 (UTC)
+ ESMTP id 398621946A78
+ for <dm-devel@listman.corp.redhat.com>; Thu, 12 Jan 2023 18:36:11 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3D0BC1121318; Thu, 12 Jan 2023 17:04:28 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 346B41121314
- for <dm-devel@redhat.com>; Thu, 12 Jan 2023 17:04:28 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0EDD02817230
- for <dm-devel@redhat.com>; Thu, 12 Jan 2023 17:04:28 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_128_GCM_SHA256) id us-mta-445-7pmrztByPqaMmQsfYGAePA-1; Thu,
- 12 Jan 2023 12:04:24 -0500
-X-MC-Unique: 7pmrztByPqaMmQsfYGAePA-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out1.suse.de (Postfix) with ESMTPS id 86D913FE62;
- Thu, 12 Jan 2023 14:43:07 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 58AFC13776;
- Thu, 12 Jan 2023 14:43:07 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id xrtQFXscwGN9DgAAMHmgww
- (envelope-from <hare@suse.de>); Thu, 12 Jan 2023 14:43:07 +0000
-Message-ID: <5ee0baea-9c4b-c792-011d-f4bae777257c@suse.de>
-Date: Thu, 12 Jan 2023 15:43:07 +0100
+ id E677F40C2007; Thu, 12 Jan 2023 18:36:10 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A4F1340C2064;
+ Thu, 12 Jan 2023 18:36:10 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 30CIa9Xv009127;
+ Thu, 12 Jan 2023 12:36:09 -0600
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 30CIa8jr009126;
+ Thu, 12 Jan 2023 12:36:08 -0600
+Date: Thu, 12 Jan 2023 12:36:08 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Message-ID: <20230112183608.GA17327@octiron.msp.redhat.com>
+References: <20221222142721.18410-1-mwilck@suse.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.6.1
-To: Nitesh Shetty <nj.shetty@samsung.com>, Jens Axboe <axboe@kernel.dk>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- dm-devel@redhat.com, Keith Busch <kbusch@kernel.org>,
- Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
- James Smart <james.smart@broadcom.com>, Chaitanya Kulkarni <kch@nvidia.com>,
- Alexander Viro <viro@zeniv.linux.org.uk>
-References: <20230112115908.23662-1-nj.shetty@samsung.com>
- <CGME20230112120039epcas5p49ccf70d806c530c8228130cc25737b51@epcas5p4.samsung.com>
- <20230112115908.23662-3-nj.shetty@samsung.com>
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <20230112115908.23662-3-nj.shetty@samsung.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: Re: [dm-devel] [PATCH v6 2/9] block: Add copy offload support
- infrastructure
+In-Reply-To: <20221222142721.18410-1-mwilck@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: Re: [dm-devel] [PATCH v3] libmultipath: is_path_valid(): check if
+ device is in use
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -107,557 +72,626 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: p.raghav@samsung.com, joshi.k@samsung.com, gost.dev@samsung.com,
- anuj20.g@samsung.com, linux-kernel@vger.kernel.org,
- linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
- linux-fsdevel@vger.kernel.org, nitheshshetty@gmail.com
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 1/12/23 12:58, Nitesh Shetty wrote:
-> Introduce blkdev_issue_copy which supports source and destination bdevs,
-> and an array of (source, destination and copy length) tuples.
-> Introduce REQ_COPY copy offload operation flag. Create a read-write
-> bio pair with a token as payload and submitted to the device in order.
-> Read request populates token with source specific information which
-> is then passed with write request.
-> This design is courtesy Mikulas Patocka's token based copy
+On Thu, Dec 22, 2022 at 03:27:21PM +0100, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
 > 
-> Larger copy will be divided, based on max_copy_sectors limit.
+> To check whether we will be able to add a given device can be part
+> of a multipath map, we have two tests in check_path_valid():
+> released_to_systemd() and the O_EXCL test. The former isn't helpful
+> if "multipath -u" is called for the first time for a given device,
+> and the latter is only used in the "find_multipaths smart" case, because
+> actively opening the device with O_EXCL, even for a very short time, is prone
+> to races with other processes.
 > 
-> Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
-> Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
+> It turns out that this may cause issues in some scenarios. We saw problems in
+> once case where "find_multipaths greedy" was used with a single
+> non-multipahted root disk and a very large number of multipath LUNs.
+> The root disk would first be classified as multipath device. multipathd
+> would try to create a map, fail (because the disk was mounted) and
+> trigger another uevent. But because of the very large number of multipath
+> devices, this event was queued up behind thousands of other events, and
+> the root device timed out eventually.
+> 
+> While a simple workaround for the given problem would be proper blacklisting
+> or using a different find_multipaths mode, I am proposing a different
+> solution here. An additional test is added in is_path_valid() which
+> checks whether the given device is currently in use by 1. sysfs holders,
+> 2. mounts (from /proc/self/mountinfo) or 3. swaps (from /proc/swaps). 2.
+> and 3. are similar to systemd's device detection after switching root.
+> This must not only be done for the device itself, but also for all its
+> partitions. For mountinfo and swaps, libmount is utilized.
+> 
+> With this patch, "multipath -u" will make devices with mounted or otherwise
+> used partitions available to systemd early, without waiting for multipathd
+> to fail setting up the map and re-triggering an uevent. This should avoid
+> the issue described above even without blacklisting. The downside of it
+> is a longer runtime of "multipath -u" for almost all devices, in particular
+> for real multipath devices. The runtime required for the new checks was in the
+> order of 0.1ms-1ms in my tests. Moreover, there is a certain risk that devices may
+> wrongly classified as non-multipath because of transient mounts or holders
+> created by other processes.
+> 
+> To make this code compile on older distributions, we need some additional
+> checks in create-config.mk.
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
 > ---
->   block/blk-lib.c           | 358 ++++++++++++++++++++++++++++++++++++++
->   block/blk.h               |   2 +
->   include/linux/blk_types.h |  44 +++++
->   include/linux/blkdev.h    |   3 +
->   include/uapi/linux/fs.h   |  15 ++
->   5 files changed, 422 insertions(+)
+>  .github/workflows/build-and-unittest.yaml |   2 +-
+>  create-config.mk                          |  11 +-
+>  libmpathutil/libmpathutil.version         |   6 +
+>  libmpathutil/util.c                       |  12 +
+>  libmpathutil/util.h                       |   2 +
+>  libmultipath/Makefile                     |   2 +-
+>  libmultipath/alias.c                      |  11 -
+>  libmultipath/valid.c                      | 270 ++++++++++++++++++++++
+>  tests/Makefile                            |   2 +-
+>  tests/valid.c                             |  48 ++++
+>  10 files changed, 351 insertions(+), 15 deletions(-)
 > 
-> diff --git a/block/blk-lib.c b/block/blk-lib.c
-> index e59c3069e835..2ce3c872ca49 100644
-> --- a/block/blk-lib.c
-> +++ b/block/blk-lib.c
-> @@ -115,6 +115,364 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
->   }
->   EXPORT_SYMBOL(blkdev_issue_discard);
->   
-> +/*
-> + * For synchronous copy offload/emulation, wait and process all in-flight BIOs.
-> + * This must only be called once all bios have been issued so that the refcount
-> + * can only decrease. This just waits for all bios to make it through
-> + * bio_copy_*_write_end_io. IO errors are propagated through cio->io_error.
-> + */
-> +static int cio_await_completion(struct cio *cio)
+> diff --git a/.github/workflows/build-and-unittest.yaml b/.github/workflows/build-and-unittest.yaml
+> index abf17bf..9e6c0e8 100644
+> --- a/.github/workflows/build-and-unittest.yaml
+> +++ b/.github/workflows/build-and-unittest.yaml
+> @@ -31,7 +31,7 @@ jobs:
+>            sudo apt-get install --yes gcc
+>            make perl-base pkg-config valgrind
+>            libdevmapper-dev libreadline-dev libaio-dev libsystemd-dev
+> -          libudev-dev libjson-c-dev liburcu-dev libcmocka-dev libedit-dev
+> +          libudev-dev libjson-c-dev liburcu-dev libcmocka-dev libedit-dev libmount-dev
+>        - name: build
+>          run: make -Orecurse -j$(grep -c ^processor /proc/cpuinfo) READLINE=${{ matrix.rl }}
+>        - name: test
+> diff --git a/create-config.mk b/create-config.mk
+> index 2a95ec5..f128375 100644
+> --- a/create-config.mk
+> +++ b/create-config.mk
+> @@ -23,7 +23,7 @@ check_cmd = $(shell \
+>  
+>  # Check whether a function with name $1 has been declared in header file $2.
+>  check_func = $(shell \
+> -	if grep -Eq "^[^[:blank:]]+[[:blank:]]+$1[[:blank:]]*(.*)*" "$2"; then \
+> +	if grep -Eq "^(extern[[:blank:]]+)?[^[:blank:]]+[[:blank:]]+$1[[:blank:]]*(.*)*" "$2"; then \
+>  		found=1; \
+>  		status="yes"; \
+>  	else \
+> @@ -104,6 +104,15 @@ ifneq ($(call check_var,ELS_DTAG_LNK_INTEGRITY,$(kernel_incdir)/scsi/fc/fc_els.h
+>  	FPIN_SUPPORT = 1
+>  endif
+>  
+> +libmount_h := $(shell $(PKGCONFIG) --variable=includedir mount)/libmount/libmount.h
+> +ifneq ($(call check_func,mnt_unref_cache,$(libmount_h)),0)
+> +	DEFINES += LIBMOUNT_HAS_MNT_UNREF_CACHE
+> +endif
+> +
+> +ifneq ($(call check_func,mnt_table_parse_swaps,$(libmount_h)),0)
+> +	DEFINES += LIBMOUNT_SUPPORTS_SWAP
+> +endif
+> +
+>  ifneq ($(call check_file,$(kernel_incdir)/linux/nvme_ioctl.h),0)
+>  	ANA_SUPPORT := 1
+>  endif
+> diff --git a/libmpathutil/libmpathutil.version b/libmpathutil/libmpathutil.version
+> index 1238fc9..dd007be 100644
+> --- a/libmpathutil/libmpathutil.version
+> +++ b/libmpathutil/libmpathutil.version
+> @@ -133,3 +133,9 @@ LIBMPATHUTIL_1.1 {
+>  global:
+>  	cleanup_fd_ptr;
+>  } LIBMPATHUTIL_1.0;
+> +
+> +LIBMPATHUTIL_1.2 {
+> +global:
+> +	cleanup_vector_free;
+> +	cleanup_fclose;
+> +} LIBMPATHUTIL_1.0;
+> diff --git a/libmpathutil/util.c b/libmpathutil/util.c
+> index 9662e1e..92f25a5 100644
+> --- a/libmpathutil/util.c
+> +++ b/libmpathutil/util.c
+> @@ -386,6 +386,18 @@ void cleanup_mutex(void *arg)
+>  	pthread_mutex_unlock(arg);
+>  }
+>  
+> +void cleanup_vector_free(void *arg)
 > +{
-> +	int ret = 0;
+> +	if  (arg)
+> +		vector_free((vector)arg);
+> +}
 > +
-> +	atomic_dec(&cio->refcount);
+> +void cleanup_fclose(void *p)
+> +{
+> +	if (p)
+> +		fclose(p);
+> +}
 > +
-> +	if (cio->endio)
+>  struct bitfield *alloc_bitfield(unsigned int maxbit)
+>  {
+>  	unsigned int n;
+> diff --git a/libmpathutil/util.h b/libmpathutil/util.h
+> index 75e20fd..99a471d 100644
+> --- a/libmpathutil/util.h
+> +++ b/libmpathutil/util.h
+> @@ -48,6 +48,8 @@ int should_exit(void);
+>  void cleanup_fd_ptr(void *arg);
+>  void cleanup_free_ptr(void *arg);
+>  void cleanup_mutex(void *arg);
+> +void cleanup_vector_free(void *arg);
+> +void cleanup_fclose(void *p);
+>  
+>  struct scandir_result {
+>  	struct dirent **di;
+> diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+> index 3df851e..61aa611 100644
+> --- a/libmultipath/Makefile
+> +++ b/libmultipath/Makefile
+> @@ -7,7 +7,7 @@ DEVLIB := libmultipath.so
+>  CPPFLAGS += -I$(mpathutildir) -I$(mpathcmddir) -I$(nvmedir) -D_GNU_SOURCE $(SYSTEMD_CPPFLAGS)
+>  CFLAGS += $(LIB_CFLAGS)
+>  LIBDEPS += -lpthread -ldl -ldevmapper -ludev -L$(mpathutildir) -lmpathutil -L$(mpathcmddir) -lmpathcmd \
+> -	-lurcu -laio $(SYSTEMD_LIBDEPS)
+> +	-lmount -lurcu -laio $(SYSTEMD_LIBDEPS)
+>  
+>  # object files referencing MULTIPATH_DIR or CONFIG_DIR
+>  # they need to be recompiled for unit tests
+> diff --git a/libmultipath/alias.c b/libmultipath/alias.c
+> index 0520122..c0139a2 100644
+> --- a/libmultipath/alias.c
+> +++ b/libmultipath/alias.c
+> @@ -667,11 +667,6 @@ static int _check_bindings_file(const struct config *conf, FILE *file,
+>  	return rc;
+>  }
+>  
+> -static void cleanup_fclose(void *p)
+> -{
+> -	fclose(p);
+> -}
+> -
+>  static int alias_compar(const void *p1, const void *p2)
+>  {
+>  	const char *alias1 = (*(struct mpentry * const *)p1)->alias;
+> @@ -684,12 +679,6 @@ static int alias_compar(const void *p1, const void *p2)
+>  		return alias1 ? -1 : alias2 ? 1 : 0;
+>  }
+>  
+> -static void cleanup_vector_free(void *arg)
+> -{
+> -	if  (arg)
+> -		vector_free((vector)arg);
+> -}
+> -
+>  /*
+>   * check_alias_settings(): test for inconsistent alias configuration
+>   *
+> diff --git a/libmultipath/valid.c b/libmultipath/valid.c
+> index a6aa921..d4dae3e 100644
+> --- a/libmultipath/valid.c
+> +++ b/libmultipath/valid.c
+> @@ -17,6 +17,8 @@
+>  #include <stddef.h>
+>  #include <errno.h>
+>  #include <libudev.h>
+> +#include <dirent.h>
+> +#include <libmount/libmount.h>
+>  
+>  #include "vector.h"
+>  #include "config.h"
+> @@ -30,12 +32,271 @@
+>  #include "mpath_cmd.h"
+>  #include "valid.h"
+>  
+> +static int subdir_filter(const struct dirent *ent)
+> +{
+> +	unsigned int j;
+> +	static char const *const skip[] = {
+> +		".",
+> +		"..",
+> +		"holders",
+> +		"integrity",
+> +		"mq",
+> +		"power",
+> +		"queue",
+> +		"slaves",
+> +		"trace",
+> +	};
+> +
+> +	if (ent->d_type != DT_DIR)
 > +		return 0;
 > +
-> +	if (atomic_read(&cio->refcount)) {
-> +		__set_current_state(TASK_UNINTERRUPTIBLE);
-> +		blk_io_schedule();
-> +	}
-> +
-Wouldn't it be better to use 'atomic_dec_return()' to avoid a potential 
-race condition between atomic_dec() and atomic_read()?
-
-> +	ret = cio->io_err;
-> +	kfree(cio);
-> +
-> +	return ret;
+> +	for (j = 0; j < ARRAY_SIZE(skip); j++)
+> +		if (!strcmp(skip[j], ent->d_name))
+> +			return 0;
+> +	return 1;
 > +}
 > +
-> +static void blk_copy_offload_write_end_io(struct bio *bio)
+> +static int read_partitions(const char *syspath, vector parts)
 > +{
-> +	struct copy_ctx *ctx = bio->bi_private;
-> +	struct cio *cio = ctx->cio;
-> +	sector_t clen;
-> +	int ri = ctx->range_idx;
-> +
-> +	if (bio->bi_status) {
-> +		cio->io_err = blk_status_to_errno(bio->bi_status);
-> +		clen = (bio->bi_iter.bi_sector << SECTOR_SHIFT) -
-> +			cio->ranges[ri].dst;
-> +		cio->ranges[ri].comp_len = min_t(sector_t, clen,
-> +				cio->ranges[ri].comp_len);
-> +	}
-> +	__free_page(bio->bi_io_vec[0].bv_page);
-> +	bio_put(bio);
-> +
-> +	if (atomic_dec_and_test(&ctx->refcount))
-> +		kfree(ctx);
-> +	if (atomic_dec_and_test(&cio->refcount)) {
-
-_Two_ atomic_dec() in a row?
-Why?
-
-And if that really is required please add a comment.
-
-> +		if (cio->endio) {
-> +			cio->endio(cio->private, cio->io_err);
-> +			kfree(cio);
-> +		} else
-> +			blk_wake_io_task(cio->waiter);
-> +	}
-> +}
-> +
-> +static void blk_copy_offload_read_end_io(struct bio *read_bio)
-> +{
-> +	struct copy_ctx *ctx = read_bio->bi_private;
-> +	struct cio *cio = ctx->cio;
-> +	sector_t clen;
-> +	int ri = ctx->range_idx;
-> +	unsigned long flags;
-> +
-> +	if (read_bio->bi_status) {
-> +		cio->io_err = blk_status_to_errno(read_bio->bi_status);
-> +		goto err_rw_bio;
-> +	}
-> +
-> +	/* For zoned device, we check if completed bio is first entry in linked
-> +	 * list,
-> +	 * if yes, we start the worker to submit write bios.
-> +	 * if not, then we just update status of bio in ctx,
-> +	 * once the worker gets scheduled, it will submit writes for all
-> +	 * the consecutive REQ_COPY_READ_COMPLETE bios.
-> +	 */
-> +	if (bdev_is_zoned(ctx->write_bio->bi_bdev)) {
-> +		spin_lock_irqsave(&cio->list_lock, flags);
-> +		ctx->status = REQ_COPY_READ_COMPLETE;
-> +		if (ctx == list_first_entry(&cio->list,
-> +					struct copy_ctx, list)) {
-> +			spin_unlock_irqrestore(&cio->list_lock, flags);
-> +			schedule_work(&ctx->dispatch_work);
-> +			goto free_read_bio;
-> +		}
-> +		spin_unlock_irqrestore(&cio->list_lock, flags);
-> +	} else
-> +		schedule_work(&ctx->dispatch_work);
-> +
-> +free_read_bio:
-> +	bio_put(read_bio);
-> +
-> +	return;
-> +
-> +err_rw_bio:
-> +	clen = (read_bio->bi_iter.bi_sector << SECTOR_SHIFT) -
-> +					cio->ranges[ri].src;
-> +	cio->ranges[ri].comp_len = min_t(sector_t, clen,
-> +					cio->ranges[ri].comp_len);
-> +	__free_page(read_bio->bi_io_vec[0].bv_page);
-> +	bio_put(ctx->write_bio);
-> +	bio_put(read_bio);
-> +	if (atomic_dec_and_test(&ctx->refcount))
-> +		kfree(ctx);
-> +	if (atomic_dec_and_test(&cio->refcount)) {
-
-Same here.
-
-> +		if (cio->endio) {
-> +			cio->endio(cio->private, cio->io_err);
-> +			kfree(cio);
-> +		} else
-> +			blk_wake_io_task(cio->waiter);
-> +	}
-> +}
-> +
-> +static void blk_copy_dispatch_work_fn(struct work_struct *work)
-> +{
-> +	struct copy_ctx *ctx = container_of(work, struct copy_ctx,
-> +			dispatch_work);
-> +
-> +	submit_bio(ctx->write_bio);
-> +}
-> +
-> +static void blk_zoned_copy_dispatch_work_fn(struct work_struct *work)
-> +{
-> +	struct copy_ctx *ctx = container_of(work, struct copy_ctx,
-> +			dispatch_work);
-> +	struct cio *cio = ctx->cio;
-> +	unsigned long flags = 0;
-> +
-> +	atomic_inc(&cio->refcount);
-> +	spin_lock_irqsave(&cio->list_lock, flags);
-> +
-> +	while (!list_empty(&cio->list)) {
-> +		ctx = list_first_entry(&cio->list, struct copy_ctx, list);
-> +
-That is ever so odd; it'll block 'cio->list' for the time of processing.
-Wouldn't it be better to move 'cio->list' to a private list, and do away 
-with the list_lock during processing?
-
-> +		if (ctx->status == REQ_COPY_READ_PROGRESS)
-> +			break;
-> +
-> +		atomic_inc(&ctx->refcount);
-> +		ctx->status = REQ_COPY_WRITE_PROGRESS;
-> +		spin_unlock_irqrestore(&cio->list_lock, flags);
-> +		submit_bio(ctx->write_bio);
-> +		spin_lock_irqsave(&cio->list_lock, flags);
-> +
-> +		list_del(&ctx->list);
-> +		if (atomic_dec_and_test(&ctx->refcount))
-> +			kfree(ctx);
-> +	}
-> +
-> +	spin_unlock_irqrestore(&cio->list_lock, flags);
-> +	if (atomic_dec_and_test(&cio->refcount))
-> +		blk_wake_io_task(cio->waiter);
-> +}
-> +
-> +/*
-> + * blk_copy_offload	- Use device's native copy offload feature.
-> + * we perform copy operation by sending 2 bio.
-> + * 1. First we send a read bio with REQ_COPY flag along with a token and source
-> + * and length. Once read bio reaches driver layer, device driver adds all the
-> + * source info to token and does a fake completion.
-> + * 2. Once read opration completes, we issue write with REQ_COPY flag with same
-> + * token. In driver layer, token info is used to form a copy offload command.
-> + *
-> + * For conventional devices we submit write bio independentenly once read
-> + * completes. For zoned devices , reads can complete out of order, so we
-> + * maintain a linked list and submit writes in the order, reads are submitted.
-> + */
-> +static int blk_copy_offload(struct block_device *src_bdev,
-> +		struct block_device *dst_bdev, struct range_entry *ranges,
-> +		int nr, cio_iodone_t end_io, void *private, gfp_t gfp_mask)
-> +{
-> +	struct cio *cio;
-> +	struct copy_ctx *ctx;
-> +	struct bio *read_bio, *write_bio;
-> +	struct page *token;
-> +	sector_t src_blk, copy_len, dst_blk;
-> +	sector_t rem, max_copy_len;
-> +	int ri = 0, ret = 0;
-> +	unsigned long flags;
-> +
-> +	cio = kzalloc(sizeof(struct cio), GFP_KERNEL);
-> +	if (!cio)
-> +		return -ENOMEM;
-> +	cio->ranges = ranges;
-> +	atomic_set(&cio->refcount, 1);
-> +	cio->waiter = current;
-> +	cio->endio = end_io;
-> +	cio->private = private;
-> +	if (bdev_is_zoned(dst_bdev)) {
-> +		INIT_LIST_HEAD(&cio->list);
-> +		spin_lock_init(&cio->list_lock);
-> +	}
-> +
-> +	max_copy_len = min(bdev_max_copy_sectors(src_bdev),
-> +			bdev_max_copy_sectors(dst_bdev)) << SECTOR_SHIFT;
-> +
-> +	for (ri = 0; ri < nr; ri++) {
-> +		cio->ranges[ri].comp_len = ranges[ri].len;
-> +		src_blk = ranges[ri].src;
-> +		dst_blk = ranges[ri].dst;
-> +		for (rem = ranges[ri].len; rem > 0; rem -= copy_len) {
-> +			copy_len = min(rem, max_copy_len);
-> +
-> +			token = alloc_page(gfp_mask);
-> +			if (unlikely(!token)) {
-> +				ret = -ENOMEM;
-> +				goto err_token;
-> +			}
-> +
-> +			ctx = kzalloc(sizeof(struct copy_ctx), gfp_mask);
-> +			if (!ctx) {
-> +				ret = -ENOMEM;
-> +				goto err_ctx;
-> +			}
-> +			read_bio = bio_alloc(src_bdev, 1, REQ_OP_READ | REQ_COPY
-> +					| REQ_SYNC | REQ_NOMERGE, gfp_mask);
-> +			if (!read_bio) {
-> +				ret = -ENOMEM;
-> +				goto err_read_bio;
-> +			}
-> +			write_bio = bio_alloc(dst_bdev, 1, REQ_OP_WRITE
-> +					| REQ_COPY | REQ_SYNC | REQ_NOMERGE,
-> +					gfp_mask);
-> +			if (!write_bio) {
-> +				cio->io_err = -ENOMEM;
-> +				goto err_write_bio;
-> +			}
-> +
-> +			ctx->cio = cio;
-> +			ctx->range_idx = ri;
-> +			ctx->write_bio = write_bio;
-> +			atomic_set(&ctx->refcount, 1);
-> +
-> +			if (bdev_is_zoned(dst_bdev)) {
-> +				INIT_WORK(&ctx->dispatch_work,
-> +					blk_zoned_copy_dispatch_work_fn);
-> +				INIT_LIST_HEAD(&ctx->list);
-> +				spin_lock_irqsave(&cio->list_lock, flags);
-> +				ctx->status = REQ_COPY_READ_PROGRESS;
-> +				list_add_tail(&ctx->list, &cio->list);
-> +				spin_unlock_irqrestore(&cio->list_lock, flags);
-> +			} else
-> +				INIT_WORK(&ctx->dispatch_work,
-> +					blk_copy_dispatch_work_fn);
-> +
-> +			__bio_add_page(read_bio, token, PAGE_SIZE, 0);
-> +			read_bio->bi_iter.bi_size = copy_len;
-> +			read_bio->bi_iter.bi_sector = src_blk >> SECTOR_SHIFT;
-> +			read_bio->bi_end_io = blk_copy_offload_read_end_io;
-> +			read_bio->bi_private = ctx;
-> +
-> +			__bio_add_page(write_bio, token, PAGE_SIZE, 0);
-> +			write_bio->bi_iter.bi_size = copy_len;
-> +			write_bio->bi_end_io = blk_copy_offload_write_end_io;
-> +			write_bio->bi_iter.bi_sector = dst_blk >> SECTOR_SHIFT;
-> +			write_bio->bi_private = ctx;
-> +
-> +			atomic_inc(&cio->refcount);
-> +			submit_bio(read_bio);
-> +			src_blk += copy_len;
-> +			dst_blk += copy_len;
-> +		}
-> +	}
-> +
-> +	/* Wait for completion of all IO's*/
-> +	return cio_await_completion(cio);
-> +
-> +err_write_bio:
-> +	bio_put(read_bio);
-> +err_read_bio:
-> +	kfree(ctx);
-> +err_ctx:
-> +	__free_page(token);
-> +err_token:
-> +	ranges[ri].comp_len = min_t(sector_t,
-> +			ranges[ri].comp_len, (ranges[ri].len - rem));
-> +
-> +	cio->io_err = ret;
-> +	return cio_await_completion(cio);
-> +}
-> +
-> +static inline int blk_copy_sanity_check(struct block_device *src_bdev,
-> +	struct block_device *dst_bdev, struct range_entry *ranges, int nr)
-> +{
-> +	unsigned int align_mask = max(bdev_logical_block_size(dst_bdev),
-> +					bdev_logical_block_size(src_bdev)) - 1;
-> +	sector_t len = 0;
+> +	struct scandir_result sr = { .n = 0 };
+> +	char path[PATH_MAX], *last;
+> +	char *prop;
 > +	int i;
 > +
-> +	if (!nr)
-> +		return -EINVAL;
+> +	strlcpy(path, syspath, sizeof(path));
+> +	sr.n = scandir(path, &sr.di, subdir_filter, NULL);
+> +	if (sr.n == -1)
+> +		return -errno;
 > +
-> +	if (nr >= MAX_COPY_NR_RANGE)
-> +		return -EINVAL;
+> +	pthread_cleanup_push_cast(free_scandir_result, &sr);
 > +
-> +	if (bdev_read_only(dst_bdev))
-> +		return -EPERM;
-> +
-> +	for (i = 0; i < nr; i++) {
-> +		if (!ranges[i].len)
-> +			return -EINVAL;
-> +
-> +		len += ranges[i].len;
-> +		if ((ranges[i].dst & align_mask) ||
-> +				(ranges[i].src & align_mask) ||
-> +				(ranges[i].len & align_mask))
-> +			return -EINVAL;
-> +		ranges[i].comp_len = 0;
+> +	/* parts[0] is the whole disk */
+> +	if ((prop = strdup(strrchr(path, '/') + 1)) != NULL) {
+> +		if (vector_alloc_slot(parts))
+> +			vector_set_slot(parts, prop);
+> +		else
+> +			free(prop);
 > +	}
 > +
-> +	if (len && len >= MAX_COPY_TOTAL_LENGTH)
-> +		return -EINVAL;
+> +	last = path + strlen(path);
+> +	for (i = 0; i < sr.n; i++) {
+> +		struct stat st;
 > +
+> +		/* only add dirs that have the "partition" attribute */
+> +		snprintf(last, sizeof(path) - (last - path), "/%s/partition",
+> +			 sr.di[i]->d_name);
+> +
+> +		if (stat(path, &st) == 0 &&
+> +		    (prop = strdup(sr.di[i]->d_name)) != NULL) {
+> +			if (vector_alloc_slot(parts))
+> +				vector_set_slot(parts, prop);
+> +			else
+> +				free(prop);
+> +		}
+> +	}
+> +
+> +	pthread_cleanup_pop(1);
 > +	return 0;
 > +}
 > +
-> +static inline bool blk_check_copy_offload(struct request_queue *src_q,
-> +		struct request_queue *dst_q)
+> +static int no_dots(const struct dirent *ent)
 > +{
-> +	return blk_queue_copy(dst_q) && blk_queue_copy(src_q);
+> +	const char *name = ent->d_name;
+> +
+> +	if (name[0] == '.' &&
+> +	    (name[1] == '\0' || (name[1] == '.' && name[2] == '\0')))
+> +		return 0;
+> +	return 1;
+> +}
+> +
+> +static int check_holders(const char *syspath)
+> +{
+> +	struct scandir_result __attribute__((cleanup(free_scandir_result)))
+> +		sr = { .n = 0 };
+> +
+> +	sr.n = scandir(syspath, &sr.di, no_dots, NULL);
+> +	if (sr.n > 0)
+> +		condlog(4, "%s: found holders under %s", __func__, syspath);
+> +	return sr.n;
+> +}
+> +
+> +static int check_all_holders(const struct _vector *parts)
+> +{
+> +	char syspath[PATH_MAX];
+> +	const char *sysname;
+> +	unsigned int j;
+> +
+> +	if (VECTOR_SIZE(parts) == 0)
+> +		return 0;
+> +
+> +	if (safe_sprintf(syspath, "/sys/class/block/%s/holders",
+> +			 (const char *)VECTOR_SLOT(parts, 0)))
+> +		return -EOVERFLOW;
+> +
+> +	if (check_holders(syspath) > 0)
+> +		return 1;
+> +
+> +	j = 1;
+> +	vector_foreach_slot_after(parts, sysname, j) {
+> +		if (safe_sprintf(syspath, "/sys/class/block/%s/%s/holders",
+> +				 (const char *)VECTOR_SLOT(parts, 0), sysname))
+> +			return -EOVERFLOW;
+> +		if (check_holders(syspath) > 0)
+> +			return 1;
+> +	}
+> +	return 0;
+> +}
+> +
+> +static void cleanup_table(void *arg)
+> +{
+> +	if (arg)
+> +		mnt_free_table((struct libmnt_table *)arg);
+> +}
+> +
+> +static void cleanup_cache(void *arg)
+> +{
+> +	if (arg)
+> +#ifdef LIBMOUNT_HAS_MNT_UNREF_CACHE
+> +		mnt_unref_cache((struct libmnt_cache *)arg);
+> +#else
+> +		mnt_free_cache((struct libmnt_cache *)arg);
+> +#endif
 > +}
 > +
 > +/*
-> + * blkdev_issue_copy - queue a copy
-> + * @src_bdev:	source block device
-> + * @dst_bdev:	destination block device
-> + * @ranges:	array of source/dest/len,
-> + *		ranges are expected to be allocated/freed by caller
-> + * @nr:		number of source ranges to copy
-> + * @end_io:	end_io function to be called on completion of copy operation,
-> + *		for synchronous operation this should be NULL
-> + * @private:	end_io function will be called with this private data, should be
-> + *		NULL, if operation is synchronous in nature
-> + * @gfp_mask:   memory allocation flags (for bio_alloc)
-> + *
-> + * Description:
-> + *	Copy source ranges from source block device to destination block
-> + *	device. length of a source range cannot be zero. Max total length of
-> + *	copy is limited to MAX_COPY_TOTAL_LENGTH and also maximum number of
-> + *	entries is limited to MAX_COPY_NR_RANGE
+> + * Passed a vector of partitions and a libmount table,
+> + * check if any of the partitions in the vector is referenced in the table.
+> + * Note that mnt_table_find_srcpath() also resolves mounts by symlinks.
 > + */
-> +int blkdev_issue_copy(struct block_device *src_bdev,
-> +	struct block_device *dst_bdev, struct range_entry *ranges, int nr,
-> +	cio_iodone_t end_io, void *private, gfp_t gfp_mask)
+> +static int check_mnt_table(const struct _vector *parts,
+> +			   struct libmnt_table *tbl,
+> +			   const char *table_name)
 > +{
-> +	struct request_queue *src_q = bdev_get_queue(src_bdev);
-> +	struct request_queue *dst_q = bdev_get_queue(dst_bdev);
-> +	int ret = -EINVAL;
+> +	unsigned int i;
+> +	const char *sysname;
+> +	char devpath[PATH_MAX];
 > +
-> +	ret = blk_copy_sanity_check(src_bdev, dst_bdev, ranges, nr);
-> +	if (ret)
+> +	vector_foreach_slot(parts, sysname, i) {
+> +		if (!safe_sprintf(devpath, "/dev/%s", sysname) &&
+> +		    mnt_table_find_srcpath(tbl, devpath,
+> +					   MNT_ITER_FORWARD) != NULL) {
+> +			condlog(4, "%s: found %s in %s", __func__,
+> +				sysname, table_name);
+> +			return 1;
+> +		}
+> +	}
+> +	return 0;
+> +}
+> +
+> +static int check_mountinfo(const struct _vector *parts)
+> +{
+> +	static const char mountinfo[] = "/proc/self/mountinfo";
+> +	struct libmnt_table *tbl;
+> +	struct libmnt_cache *cache;
+> +	FILE *stream;
+> +	int used = 0, ret;
+> +
+> +	tbl = mnt_new_table();
+> +	if (!tbl )
+> +		return -errno;
+> +
+> +	pthread_cleanup_push(cleanup_table, tbl);
+> +	cache = mnt_new_cache();
+> +	if (cache) {
+> +		pthread_cleanup_push(cleanup_cache, cache);
+> +		if (mnt_table_set_cache(tbl, cache) == 0) {
+> +			stream = fopen(mountinfo, "r");
+> +			if (stream != NULL) {
+> +				pthread_cleanup_push(cleanup_fclose, stream);
+> +				ret = mnt_table_parse_stream(tbl, stream, mountinfo);
+> +				pthread_cleanup_pop(1);
+> +
+> +				if (ret == 0)
+> +					used = check_mnt_table(parts, tbl,
+> +							       "mountinfo");
+> +			}
+> +		}
+> +		pthread_cleanup_pop(1);
+> +	}
+> +	pthread_cleanup_pop(1);
+> +	return used;
+> +}
+> +
+> +#ifdef LIBMOUNT_SUPPORTS_SWAP
+> +static int check_swaps(const struct _vector *parts)
+> +{
+> +	struct libmnt_table *tbl;
+> +	struct libmnt_cache *cache;
+> +	int used = 0, ret;
+> +
+> +	tbl = mnt_new_table();
+> +	if (!tbl )
+> +		return -errno;
+> +
+> +	pthread_cleanup_push(cleanup_table, tbl);
+> +	cache = mnt_new_cache();
+> +	if (cache) {
+> +		pthread_cleanup_push(cleanup_cache, cache);
+> +		if (mnt_table_set_cache(tbl, cache) == 0) {
+> +			ret = mnt_table_parse_swaps(tbl, NULL);
+> +			if (ret == 0)
+> +				used = check_mnt_table(parts, tbl, "swaps");
+> +		}
+> +		pthread_cleanup_pop(1);
+> +	}
+> +	pthread_cleanup_pop(1);
+> +	return used;
+> +}
+> +#else
+> +static int check_swaps(const struct _vector *parts __attribute__((unused)))
+> +{
+> +	return 0;
+> +}
+> +#endif
+> +
+> +
+> +/*
+> + * Given a block device, check if the device itself or any of its
+> + * partitions is in use
+> + * - by sysfs holders (e.g. LVM)
+> + * - mounted according to /proc/self/mountinfo
+> + * - used as swap
+> + */
+> +static int is_device_in_use(struct udev_device *udevice)
+> +{
+> +	const char *syspath;
+> +	vector parts;
+> +	int used = 0, ret;
+> +
+> +	syspath = udev_device_get_syspath(udevice);
+> +	if (!syspath)
+> +		return -ENOMEM;
+> +
+> +	parts = vector_alloc();
+> +	if (!parts)
+> +		return -ENOMEM;
+> +
+> +	pthread_cleanup_push_cast(free_strvec, parts);
+> +	if ((ret = read_partitions(syspath, parts)) == 0)
+> +		used =  check_all_holders(parts) > 0 ||
+> +			check_mountinfo(parts) > 0 ||
+> +			check_swaps(parts) > 0;
+> +	pthread_cleanup_pop(1);
+> +
+> +	if (ret < 0)
 > +		return ret;
 > +
-> +	if (blk_check_copy_offload(src_q, dst_q))
-> +		ret = blk_copy_offload(src_bdev, dst_bdev, ranges, nr,
-> +				end_io, private, gfp_mask);
-> +
-> +	return ret;
+> +	condlog(3, "%s: %s is %sin use", __func__, syspath, used ? "" : "not ");
+> +	return used;
 > +}
-> +EXPORT_SYMBOL_GPL(blkdev_issue_copy);
 > +
->   static int __blkdev_issue_write_zeroes(struct block_device *bdev,
->   		sector_t sector, sector_t nr_sects, gfp_t gfp_mask,
->   		struct bio **biop, unsigned flags)
-> diff --git a/block/blk.h b/block/blk.h
-> index 4c3b3325219a..6d9924a7d559 100644
-> --- a/block/blk.h
-> +++ b/block/blk.h
-> @@ -304,6 +304,8 @@ static inline bool bio_may_exceed_limits(struct bio *bio,
->   		break;
->   	}
->   
-> +	if (unlikely(op_is_copy(bio->bi_opf)))
-> +		return false;
->   	/*
->   	 * All drivers must accept single-segments bios that are <= PAGE_SIZE.
->   	 * This is a quick and dirty check that relies on the fact that
-> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-> index 99be590f952f..de1638c87ecf 100644
-> --- a/include/linux/blk_types.h
-> +++ b/include/linux/blk_types.h
-> @@ -422,6 +422,7 @@ enum req_flag_bits {
->   	 */
->   	/* for REQ_OP_WRITE_ZEROES: */
->   	__REQ_NOUNMAP,		/* do not free blocks when zeroing */
-> +	__REQ_COPY,		/* copy request */
->   
->   	__REQ_NR_BITS,		/* stops here */
->   };
-> @@ -451,6 +452,7 @@ enum req_flag_bits {
->   
->   #define REQ_DRV		(__force blk_opf_t)(1ULL << __REQ_DRV)
->   #define REQ_SWAP	(__force blk_opf_t)(1ULL << __REQ_SWAP)
-> +#define REQ_COPY	((__force blk_opf_t)(1ULL << __REQ_COPY))
->   
->   #define REQ_FAILFAST_MASK \
->   	(REQ_FAILFAST_DEV | REQ_FAILFAST_TRANSPORT | REQ_FAILFAST_DRIVER)
-> @@ -477,6 +479,11 @@ static inline bool op_is_write(blk_opf_t op)
->   	return !!(op & (__force blk_opf_t)1);
->   }
->   
-> +static inline bool op_is_copy(blk_opf_t op)
+>  int
+>  is_path_valid(const char *name, struct config *conf, struct path *pp,
+>  	      bool check_multipathd)
+>  {
+>  	int r;
+>  	int fd;
+> +	const char *prop;
+>  
+>  	if (!pp || !name || !conf)
+>  		return PATH_IS_ERROR;
+> @@ -80,6 +341,10 @@ is_path_valid(const char *name, struct config *conf, struct path *pp,
+>  	if (!pp->udev)
+>  		return PATH_IS_ERROR;
+>  
+> +	prop = udev_device_get_property_value(pp->udev, "DEVTYPE");
+> +	if (prop == NULL || strcmp(prop, "disk"))
+> +		return PATH_IS_NOT_VALID;
+> +
+>  	r = pathinfo(pp, conf, DI_SYSFS | DI_WWID | DI_BLACKLIST);
+>  	if (r == PATHINFO_SKIPPED)
+>  		return PATH_IS_NOT_VALID;
+> @@ -96,6 +361,11 @@ is_path_valid(const char *name, struct config *conf, struct path *pp,
+>  		return PATH_IS_ERROR;
+>  	}
+>  
+> +	if ((conf->find_multipaths == FIND_MULTIPATHS_GREEDY ||
+> +	     conf->find_multipaths == FIND_MULTIPATHS_SMART) &&
+> +	    is_device_in_use(pp->udev) > 0)
+> +		return PATH_IS_NOT_VALID;
+> +
+>  	if (conf->find_multipaths == FIND_MULTIPATHS_GREEDY)
+>  		return PATH_IS_VALID;
+>  
+> diff --git a/tests/Makefile b/tests/Makefile
+> index 860338b..1648ab9 100644
+> --- a/tests/Makefile
+> +++ b/tests/Makefile
+> @@ -55,7 +55,7 @@ vpd-test_LIBDEPS := -ludev -lpthread -ldl
+>  alias-test_TESTDEPS := test-log.o
+>  alias-test_LIBDEPS := -lpthread -ldl
+>  valid-test_OBJDEPS := $(multipathdir)/valid.o $(multipathdir)/discovery.o
+> -valid-test_LIBDEPS := -ludev -lpthread -ldl
+> +valid-test_LIBDEPS := -lmount -ludev -lpthread -ldl
+>  devt-test_LIBDEPS := -ludev
+>  mpathvalid-test_LIBDEPS := -ludev -lpthread -ldl
+>  mpathvalid-test_OBJDEPS := $(mpathvaliddir)/mpath_valid.o
+> diff --git a/tests/valid.c b/tests/valid.c
+> index 398b771..7032932 100644
+> --- a/tests/valid.c
+> +++ b/tests/valid.c
+> @@ -83,6 +83,13 @@ struct udev_device *__wrap_udev_device_new_from_subsystem_sysname(struct udev *u
+>  	return NULL;
+>  }
+>  
+> +/* For devtype check */
+> +const char *__wrap_udev_device_get_property_value(struct udev_device *udev_device, const char *property)
 > +{
-> +	return (op & REQ_COPY);
+> +	check_expected(property);
+> +	return mock_ptr_type(char *);
 > +}
 > +
->   /*
->    * Check if the bio or request is one that needs special treatment in the
->    * flush state machine.
-> @@ -536,4 +543,41 @@ struct blk_rq_stat {
->   	u64 batch;
->   };
->   
-> +typedef void (cio_iodone_t)(void *private, int status);
+>  /* For the "hidden" check in pathinfo() */
+>  const char *__wrap_udev_device_get_sysattr_value(struct udev_device *udev_device,
+>  					 const char *sysattr)
+> @@ -97,6 +104,12 @@ int __wrap_add_foreign(struct udev_device *udev_device)
+>  	return mock_type(int);
+>  }
+>  
+> +/* For is_device_used() */
+> +const char *__wrap_udev_device_get_sysname(struct udev_device *udev_device)
+> +{
+> +	return mock_ptr_type(char *);
+> +}
 > +
-> +struct cio {
-> +	struct range_entry *ranges;
-> +	struct task_struct *waiter;     /* waiting task (NULL if none) */
-> +	atomic_t refcount;
-> +	int io_err;
-> +	cio_iodone_t *endio;		/* applicable for async operation */
-> +	void *private;			/* applicable for async operation */
+>  /* called from pathinfo() */
+>  int __wrap_filter_devnode(struct config *conf, const struct _vector *elist,
+>  			  const char *vendor, const char * product, const char *dev)
+> @@ -165,6 +178,11 @@ int __wrap_is_failed_wwid(const char *wwid)
+>  	return ret;
+>  }
+>  
+> +const char *__wrap_udev_device_get_syspath(struct udev_device *udevice)
+> +{
+> +	return mock_ptr_type(char *);
+> +}
 > +
-> +	/* For zoned device we maintain a linked list of IO submissions.
-> +	 * This is to make sure we maintain the order of submissions.
-> +	 * Otherwise some reads completing out of order, will submit writes not
-> +	 * aligned with zone write pointer.
-> +	 */
-> +	struct list_head list;
-> +	spinlock_t list_lock;
-> +};
+>  int __wrap_check_wwids_file(char *wwid, int write_wwid)
+>  {
+>  	bool passed = mock_type(bool);
+> @@ -225,6 +243,8 @@ static void setup_passing(char *name, char *wwid, unsigned int check_multipathd,
+>  	will_return(__wrap_udev_device_new_from_subsystem_sysname, true);
+>  	will_return(__wrap_udev_device_new_from_subsystem_sysname,
+>  		    name);
+> +	expect_string(__wrap_udev_device_get_property_value, property, "DEVTYPE");
+> +	will_return(__wrap_udev_device_get_property_value, "disk");
+>  	if (stage == STAGE_GET_UDEV_DEVICE)
+>  		return;
+>  	if  (stage == STAGE_PATHINFO_REAL) {
+> @@ -250,6 +270,10 @@ static void setup_passing(char *name, char *wwid, unsigned int check_multipathd,
+>  		return;
+>  	will_return(__wrap_is_failed_wwid, WWID_IS_NOT_FAILED);
+>  	will_return(__wrap_is_failed_wwid, wwid);
+> +	/* avoid real is_device_in_use() check */
+> +	if (conf.find_multipaths == FIND_MULTIPATHS_GREEDY ||
+> +	    conf.find_multipaths == FIND_MULTIPATHS_SMART)
+> +		will_return(__wrap_udev_device_get_syspath, NULL);
+>  	if (stage == STAGE_IS_FAILED)
+>  		return;
+>  	will_return(__wrap_check_wwids_file, false);
+> @@ -347,6 +371,30 @@ static void test_check_multipathd(void **state)
+>  	assert_int_equal(is_path_valid(name, &conf, &pp, true),
+>  			 PATH_IS_ERROR);
+>  	assert_string_equal(pp.dev, name);
 > +
-> +enum copy_io_status {
-> +	REQ_COPY_READ_PROGRESS,
-> +	REQ_COPY_READ_COMPLETE,
-> +	REQ_COPY_WRITE_PROGRESS,
-> +};
+> +	/* test pass because connect succeeded. succeed getting udev. Wrong DEVTYPE  */
+> +	memset(&pp, 0, sizeof(pp));
+> +	setup_passing(name, NULL, CHECK_MPATHD_RUNNING, STAGE_CHECK_MULTIPATHD);
+> +	will_return(__wrap_udev_device_new_from_subsystem_sysname, true);
+> +	will_return(__wrap_udev_device_new_from_subsystem_sysname,
+> +		    name);
+> +	expect_string(__wrap_udev_device_get_property_value, property, "DEVTYPE");
+> +	will_return(__wrap_udev_device_get_property_value, "partition");
+> +	assert_int_equal(is_path_valid(name, &conf, &pp, true),
+> +			 PATH_IS_NOT_VALID);
+> +	assert_string_equal(pp.dev, name);
 > +
-> +struct copy_ctx {
-> +	struct cio *cio;
-> +	struct work_struct dispatch_work;
-> +	struct bio *write_bio;
-> +	atomic_t refcount;
-> +	int range_idx;			/* used in error/partial completion */
-> +
-> +	/* For zoned device linked list is maintained. Along with state of IO */
-> +	struct list_head list;
-> +	enum copy_io_status status;
-> +};
-> +
->   #endif /* __LINUX_BLK_TYPES_H */
-> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> index 807ffb5f715d..48e9160b7195 100644
-> --- a/include/linux/blkdev.h
-> +++ b/include/linux/blkdev.h
-> @@ -1063,6 +1063,9 @@ int __blkdev_issue_discard(struct block_device *bdev, sector_t sector,
->   		sector_t nr_sects, gfp_t gfp_mask, struct bio **biop);
->   int blkdev_issue_secure_erase(struct block_device *bdev, sector_t sector,
->   		sector_t nr_sects, gfp_t gfp);
-> +int blkdev_issue_copy(struct block_device *src_bdev,
-> +		struct block_device *dst_bdev, struct range_entry *ranges,
-> +		int nr, cio_iodone_t end_io, void *private, gfp_t gfp_mask);
->   
->   #define BLKDEV_ZERO_NOUNMAP	(1 << 0)  /* do not free blocks */
->   #define BLKDEV_ZERO_NOFALLBACK	(1 << 1)  /* don't write explicit zeroes */
-> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-> index b3ad173f619c..9248b6d259de 100644
-> --- a/include/uapi/linux/fs.h
-> +++ b/include/uapi/linux/fs.h
-> @@ -67,6 +67,21 @@ struct fstrim_range {
->   /* maximum total copy length */
->   #define MAX_COPY_TOTAL_LENGTH	(1 << 27)
->   
-> +/* Maximum no of entries supported */
-> +#define MAX_COPY_NR_RANGE	(1 << 12)
-> +
-> +/* range entry for copy offload, all fields should be byte addressed */
-> +struct range_entry {
-> +	__u64 src;		/* source to be copied */
-> +	__u64 dst;		/* destination */
-> +	__u64 len;		/* length in bytes to be copied */
-> +
-> +	/* length of data copy actually completed. This will be filled by
-> +	 * kernel, once copy completes
-> +	 */
-> +	__u64 comp_len;
-> +};
-> +
->   /* extent-same (dedupe) ioctls; these MUST match the btrfs ioctl definitions */
->   #define FILE_DEDUPE_RANGE_SAME		0
->   #define FILE_DEDUPE_RANGE_DIFFERS	1
-
-Cheers,
-
-Hannes
-
+> +	/* test pass because connect succeeded. succeed getting udev. Bad DEVTYPE  */
+> +	memset(&pp, 0, sizeof(pp));
+> +	setup_passing(name, NULL, CHECK_MPATHD_RUNNING, STAGE_CHECK_MULTIPATHD);
+> +	will_return(__wrap_udev_device_new_from_subsystem_sysname, true);
+> +	will_return(__wrap_udev_device_new_from_subsystem_sysname,
+> +		    name);
+> +	expect_string(__wrap_udev_device_get_property_value, property, "DEVTYPE");
+> +	will_return(__wrap_udev_device_get_property_value, NULL);
+> +	assert_int_equal(is_path_valid(name, &conf, &pp, true),
+> +			 PATH_IS_NOT_VALID);
+> +	assert_string_equal(pp.dev, name);
+>  }
+>  
+>  static void test_pathinfo(void **state)
+> -- 
+> 2.39.0
 --
 dm-devel mailing list
 dm-devel@redhat.com
