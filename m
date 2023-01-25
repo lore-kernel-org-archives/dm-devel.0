@@ -1,67 +1,145 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5E374C38142
-	for <dm-devel@archiver.kernel.org>; Tue, 24 Jan 2023 14:06:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1DE63C54E94
+	for <dm-devel@archiver.kernel.org>; Wed, 25 Jan 2023 10:40:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1674569216;
+	s=mimecast20190719; t=1674643252;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=UGVjMAO80O7slnofPy/UOpA4ZTtzK0yyOJO7+AYLfEU=;
-	b=Z37uVFx41jvHj9eS5amWJHHWLOOEEXGO/PAvhtsyiS5v7OlIeiIo/KfCiVsntibPVrZheM
-	EE92tEZj0g3UEACZXowQsQtI/yhdNMO9oLrBdnMJF/jn5tHrMzy2TkXKbA1kUdnGGlxVKg
-	avpZ4PQa06DfCJGcA57A5o5ufCTWNVI=
+	bh=0y/S64TZ26Ic+Lc9gYBJpbjQybZR+HrAYMnq3DC8Z/s=;
+	b=DerlpfoGS5RCYZ00ljCTP8/V7CjzGKOODDiaQDam+KRpde59hfGtdaBz6PX3LhdHCvmqr+
+	4NCS7RCVOSuD9gbbI1G0STbEQmX6IfvfbAMjfediSQJx4uSWHjJtjpJ/myMN6LPpodsR7j
+	h2mOpLoQvKFQj0y8stvhbuLc1swckjM=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-186-8Lh6PN6SN-uDUyz5lPRREA-1; Tue, 24 Jan 2023 09:06:52 -0500
-X-MC-Unique: 8Lh6PN6SN-uDUyz5lPRREA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-65--_j5KayjNa2TCG7gR2y3Hw-1; Wed, 25 Jan 2023 05:40:48 -0500
+X-MC-Unique: -_j5KayjNa2TCG7gR2y3Hw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E5941857A88;
-	Tue, 24 Jan 2023 14:06:50 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D3227101A55E;
+	Wed, 25 Jan 2023 10:40:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 48C13140EBF6;
-	Tue, 24 Jan 2023 14:06:47 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 3E2162166B26;
+	Wed, 25 Jan 2023 10:40:42 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1090A194658D;
-	Tue, 24 Jan 2023 14:06:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0CCD2194658D;
+	Wed, 25 Jan 2023 10:40:42 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C360D1946589
- for <dm-devel@listman.corp.redhat.com>; Tue, 24 Jan 2023 14:06:45 +0000 (UTC)
+ ESMTP id E9D0C194658C
+ for <dm-devel@listman.corp.redhat.com>; Wed, 25 Jan 2023 10:40:40 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B49C240C2005; Tue, 24 Jan 2023 14:06:45 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
- (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A40F340C2004;
- Tue, 24 Jan 2023 14:06:45 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 30OE6jhd010122; Tue, 24 Jan 2023 09:06:45 -0500
-Received: from localhost (mpatocka@localhost)
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 30OE6jqW010118; Tue, 24 Jan 2023 09:06:45 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
- owned process doing -bs
-Date: Tue, 24 Jan 2023 09:06:45 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Song Liu <song@kernel.org>
-Message-ID: <alpine.LRH.2.21.2301240858250.9655@file01.intranet.prod.int.rdu2.redhat.com>
-User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
+ id DE0822166B29; Wed, 25 Jan 2023 10:40:40 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D6BA92166B26
+ for <dm-devel@redhat.com>; Wed, 25 Jan 2023 10:40:40 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B3B52101A52E
+ for <dm-devel@redhat.com>; Wed, 25 Jan 2023 10:40:40 +0000 (UTC)
+Received: from EUR03-DBA-obe.outbound.protection.outlook.com
+ (mail-dbaeur03on2087.outbound.protection.outlook.com [40.107.104.87]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-564-xvmuqYXZP8CeFB_oAiiUkg-1; Wed, 25 Jan 2023 05:40:36 -0500
+X-MC-Unique: xvmuqYXZP8CeFB_oAiiUkg-1
+Received: from AS8PR04MB8040.eurprd04.prod.outlook.com (2603:10a6:20b:2a9::22)
+ by DU2PR04MB8950.eurprd04.prod.outlook.com (2603:10a6:10:2e1::19)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6002.33; Wed, 25 Jan
+ 2023 10:40:33 +0000
+Received: from AS8PR04MB8040.eurprd04.prod.outlook.com
+ ([fe80::e1b6:3ede:547d:eb2f]) by AS8PR04MB8040.eurprd04.prod.outlook.com
+ ([fe80::e1b6:3ede:547d:eb2f%9]) with mapi id 15.20.6002.033; Wed, 25 Jan 2023
+ 10:40:33 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
+ "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Thread-Topic: [PATCH 2/6] libmultipath: make prflag an enum
+Thread-Index: AQHZFMyS6bhrbWemp0+Ei98aIVt0h66vKUwA
+Date: Wed, 25 Jan 2023 10:40:33 +0000
+Message-ID: <786f375415ee12a0f12c93cbd817a19a1501881e.camel@suse.com>
+References: <1671579675-23658-1-git-send-email-bmarzins@redhat.com>
+ <1671579675-23658-3-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1671579675-23658-3-git-send-email-bmarzins@redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Evolution 3.46.3
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: AS8PR04MB8040:EE_|DU2PR04MB8950:EE_
+x-ms-office365-filtering-correlation-id: ab52b175-e49a-492b-42d7-08dafec0965a
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: fvMNE1hL5OwfSF41o2Ffw0QETBip96yASL9DYupMmlEEz0I+I+l+2tgQ6frvVjPDcjs3qB/v1Zjwwj865Tr8EEaAVQJCR+ymf4aAquNKPZJkvTfUjRXi40worOX5NMmvSuhF+vGzXxqQl8Gk40WYrAy2hhEVvoU6oohhSwrDsh0UzUur/cDwmqpCX+wVAHEZaOeus91aGebylAd8p9jvEPeITGG1U4x/fSNAcZ0fBI6BQ0WKxYMyAAtWFdnjSEzGcrLa67E7HctjrUp6M5nTrMFjFzRxYGZFRCLRZ+fahAqFRM0/qEa2Da6AJaksLAZhaaw7x/IE22cbinK6lXy4uOVIAnZjap15K4NFpKCkc3Apnf9VzpQu4G5lsylYxE+2omYhsYr7DsxvW4ejMfLD7E3ddEOKHE+jSoLRNKbpA203+lQ8ZFmzFTAVQ2AQhJnQuodWFnQ2JcAsmRlf/N7UY1wLa2Kf+IfEyJ/kY83L8oBo6IWaabeHDekX+q2OF80jD3MVr0gDUL9a1RkjhK2Kij1rUdiVtyAnyuRka/2xoVJDdI92cvc4F77U/MolkAueqGhBMgCcYWGBiY/bCUMJWC05SivtmAyfaYFP3HnO0/vq6D+wZGN/4TvFfRYgGAsHz28unpy2brRFkS/pgwAgmqGsaKIrJxKdUIuHedW8BTYWKFFgBwFcfV7pzvSkrNuUWsDc3pt440rdwMUCGOIXa/K2oCC1vevOEyuRCv9lczutZ1A46K1A92ZVX+Mwg8Jx6xYasJIAdBXKY58ai7pbQg==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:AS8PR04MB8040.eurprd04.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230025)(376002)(346002)(396003)(136003)(366004)(39860400002)(451199018)(122000001)(38100700002)(41300700001)(2616005)(66946007)(64756008)(66556008)(86362001)(76116006)(110136005)(91956017)(71200400001)(966005)(478600001)(66476007)(6486002)(36756003)(6506007)(66446008)(44832011)(4001150100001)(5660300002)(38070700005)(2906002)(316002)(6512007)(26005)(186003)(8676002)(4326008)(4744005)(8936002);
+ DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?5On1uqZnTgUsZASS/TIYD69azvRWcBexBC3SiG8pV2YmKthra1uepcmoV?=
+ =?iso-8859-15?Q?HdwC0dT4qR9NBmMn69wJdd7OueByoEfGy4byo+SdKaH46vY2nEQQBdNfX?=
+ =?iso-8859-15?Q?QUNcRkv0XVLXBGNgkPNI15H8lPPpVAJDgrKDQy3mxDZOTYmDNB/i9vCHS?=
+ =?iso-8859-15?Q?DYRwNI/l4PsUCTWvkedaihyGKDIv3xaAd6msASrSLAZZF5y1IoCSCXd5p?=
+ =?iso-8859-15?Q?PD4L4uXV+rDRPzGDGt0+H0Lqp4qNNPLZZoCG9RQLybOeZzvNUWft6eZPq?=
+ =?iso-8859-15?Q?ZfSiJLq2R4W3rdy1RJlRXN9mhM1O6w2sOqV6wN96hhPqMQ1zknx5OQfHP?=
+ =?iso-8859-15?Q?REYFh3rm8Ahhvuh5f2gwOc8/XiYqzm1x9OsneIOOvb+Ftdy3Dj+e5d6AI?=
+ =?iso-8859-15?Q?5Jp/YtBk3/x1s4lciHjGkbPW78eQPYAN1RKCAXbKIq2JlpdkiT6NBvQ1T?=
+ =?iso-8859-15?Q?2rZyOcgpc/vhKuLsjWEPqp8c40MIZ7JmkVXBpBvAZfclF3zrf+Ph8e15b?=
+ =?iso-8859-15?Q?GrqilJaV3natDzZKCPAE0L5Ek1uxutReJN+PRbXFqwhbzfMBRsVkfNKp6?=
+ =?iso-8859-15?Q?RpPuRYHBe9xq98wdOdjj1vWl3EJFkI7svH5TljdDXc3uKEX8o4Jzeq8xT?=
+ =?iso-8859-15?Q?3PW7GH3Q+lnZpIhAT7VOfGDz1uPKn3fOqL8sED9C0zj65ln1wQlxlEpIP?=
+ =?iso-8859-15?Q?KNv+c5Jel597Njhv9101cJdrBDG7skoC+k8fwCJa/K5hMw0NlwjxosvPu?=
+ =?iso-8859-15?Q?KjaURwxxahr/x8tuS7800KTFEgznVp3tItmv1+sLzx4fl0a6v2HBQXKpt?=
+ =?iso-8859-15?Q?/xwc1/rNAcEWfiAZPDMYga5QPhPg3CUx8FglZXICr4r/Oks7uwCyJ/eel?=
+ =?iso-8859-15?Q?A5eCYSpx2++1WWsYewOhj74hpt+vd+QIYU1Ea4bjs7v6yJvSqKr3lDdHk?=
+ =?iso-8859-15?Q?e4/fx/IcDtK0Yj5XRsiKSdaajVj8mJF6XtoCOYvncJoazomNoXjziN7Qm?=
+ =?iso-8859-15?Q?9rXXGO9D0iALeukO90TEoRxm30qWdp0Z4Fc2ho/IKCnS5SJSRYcN9hQvy?=
+ =?iso-8859-15?Q?dgwgnwUBSOIIheG3RWln6yyY70RlsguZcu+1gjeE3WPwUY7Dgo7gd3czL?=
+ =?iso-8859-15?Q?m/Txl/3q7UQYyX/R014/90Lwg3RhF3lpSRt40xoHJOctWiybadZBxtXdE?=
+ =?iso-8859-15?Q?BQ1TH8pLgJ5HL5XAJ6ZZJdDJyTth8P/RYc7Q3iTK1OsoWClthnS4sVPx4?=
+ =?iso-8859-15?Q?ndo1XPk7hpxWX8WQ3IDtJ74nsd4zAbZscoyqnaPN1yVxCedne6MrSV+R9?=
+ =?iso-8859-15?Q?svFr050mcPjFmsyUOxxelnHo3F7LTV3Ou7RzKPGmphPjE+JrlY/XLUSdq?=
+ =?iso-8859-15?Q?IJLjeql5WpyAdz+KXSbRCt+Z4+1jeAQOA44toM4jhsQYqVJK4F0u1Kuft?=
+ =?iso-8859-15?Q?TjhcmjOsiZ5oHu4nleFk+vp+QnEbMblXGFvSinYm8dJQEqmrXKBhPmx34?=
+ =?iso-8859-15?Q?GjKajE9DfXnLQruKaz8+ra6Jfjau0MfGepdRX+62xXq5an05vjYChcfYk?=
+ =?iso-8859-15?Q?ZWstWr3Jv82bBejNMMFFDlmQ0eet43H6hseOp0UJ2Ofy7I0gPjAfXlg13?=
+ =?iso-8859-15?Q?UTjRtkSi4LpHNibquGkCi23IVyZ1kzcp8zn7zfB3lyaeFb4gWQSIZ7yDs?=
+ =?iso-8859-15?Q?sTBnBreGkGJV1LVjrJ7eAs3x3w=3D=3D?=
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [PATCH] md: use preallocated hashed wait queues instead
- of mddev->sb_wait
+X-OriginatorOrg: suse.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: AS8PR04MB8040.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: ab52b175-e49a-492b-42d7-08dafec0965a
+X-MS-Exchange-CrossTenant-originalarrivaltime: 25 Jan 2023 10:40:33.5551 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: XnptbqNld6Xz5aql/lh/LJ1uB9noRuqNN+9UWdndOVQb+Sua/ESIezytDRF6OuuvYRM61g0DFmfcSwUwVYvltg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DU2PR04MB8950
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH 2/6] libmultipath: make prflag an enum
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -73,395 +151,35 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-ID: <42AC77AB1542154E85F597422FE132B5@eurprd04.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-There's a theoretical race condition in md.
+Hi Ben,
 
-super_written calls:
-	if (atomic_dec_and_test(&mddev->pending_writes))
-		wake_up(&mddev->sb_wait);
+On Tue, 2022-12-20 at 17:41 -0600, Benjamin Marzinski wrote:
+> In preparation for a future patch, make prflag an enum, and change
+> the
+> reply of cli_getprstatus() to a string.
+> 
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-If the process is rescheduled just after atomic_dec_and_test and before 
-wake_up, it may happen that the mddev structure is freed (because 
-mddev->pending_writes is zero) and on scheduling back, 
-wake_up(&mddev->sb_wait) would access freed memory.
+this patch changes ABI. Thus I pushed 730629d [1] to the "queue" branch
+[2].
 
-Fix this bug by using an array of preallocated wait_queues, so that the
-wait queue exist even after mddev was freed.
+Martin
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+[1] https://github.com/openSUSE/multipath-tools/commit/730629d604e4ea30f7902fa347d815cd05a60002
+[2] https://github.com/openSUSE/multipath-tools/tree/queue
 
----
- drivers/md/md.c          |   56 ++++++++++++++++++++++++++---------------------
- drivers/md/md.h          |   10 +++++++-
- drivers/md/raid10.c      |    4 +--
- drivers/md/raid5-cache.c |    6 ++---
- drivers/md/raid5.c       |    8 +++---
- 5 files changed, 49 insertions(+), 35 deletions(-)
 
-Index: linux-2.6/drivers/md/md.c
-===================================================================
---- linux-2.6.orig/drivers/md/md.c
-+++ linux-2.6/drivers/md/md.c
-@@ -89,6 +89,9 @@ static struct workqueue_struct *md_wq;
- static struct workqueue_struct *md_misc_wq;
- static struct workqueue_struct *md_rdev_misc_wq;
- 
-+wait_queue_head_t md_sb_wait_table[MD_SB_WAIT_TABLE_SIZE];
-+EXPORT_SYMBOL(md_sb_wait_table);
-+
- static int remove_and_add_spares(struct mddev *mddev,
- 				 struct md_rdev *this);
- static void mddev_detach(struct mddev *mddev);
-@@ -415,7 +418,7 @@ check_suspended:
- 			return;
- 		}
- 		for (;;) {
--			prepare_to_wait(&mddev->sb_wait, &__wait,
-+			prepare_to_wait(md_sb_wait(mddev), &__wait,
- 					TASK_UNINTERRUPTIBLE);
- 			if (!is_suspended(mddev, bio))
- 				break;
-@@ -423,19 +426,19 @@ check_suspended:
- 			schedule();
- 			rcu_read_lock();
- 		}
--		finish_wait(&mddev->sb_wait, &__wait);
-+		finish_wait(md_sb_wait(mddev), &__wait);
- 	}
- 	atomic_inc(&mddev->active_io);
- 	rcu_read_unlock();
- 
- 	if (!mddev->pers->make_request(mddev, bio)) {
- 		atomic_dec(&mddev->active_io);
--		wake_up(&mddev->sb_wait);
-+		wake_up_all(md_sb_wait(mddev));
- 		goto check_suspended;
- 	}
- 
- 	if (atomic_dec_and_test(&mddev->active_io) && mddev->suspended)
--		wake_up(&mddev->sb_wait);
-+		wake_up_all(md_sb_wait(mddev));
- }
- EXPORT_SYMBOL(md_handle_request);
- 
-@@ -484,13 +487,13 @@ void mddev_suspend(struct mddev *mddev)
- 	if (mddev->suspended++)
- 		return;
- 	synchronize_rcu();
--	wake_up(&mddev->sb_wait);
-+	wake_up_all(md_sb_wait(mddev));
- 	set_bit(MD_ALLOW_SB_UPDATE, &mddev->flags);
- 	smp_mb__after_atomic();
--	wait_event(mddev->sb_wait, atomic_read(&mddev->active_io) == 0);
-+	wait_event(*md_sb_wait(mddev), atomic_read(&mddev->active_io) == 0);
- 	mddev->pers->quiesce(mddev, 1);
- 	clear_bit_unlock(MD_ALLOW_SB_UPDATE, &mddev->flags);
--	wait_event(mddev->sb_wait, !test_bit(MD_UPDATING_SB, &mddev->flags));
-+	wait_event(*md_sb_wait(mddev), !test_bit(MD_UPDATING_SB, &mddev->flags));
- 
- 	del_timer_sync(&mddev->safemode_timer);
- 	/* restrict memory reclaim I/O during raid array is suspend */
-@@ -505,7 +508,7 @@ void mddev_resume(struct mddev *mddev)
- 	lockdep_assert_held(&mddev->reconfig_mutex);
- 	if (--mddev->suspended)
- 		return;
--	wake_up(&mddev->sb_wait);
-+	wake_up_all(md_sb_wait(mddev));
- 	mddev->pers->quiesce(mddev, 0);
- 
- 	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-@@ -585,7 +588,7 @@ static void md_submit_flush_data(struct
- 	mddev->prev_flush_start = mddev->start_flush;
- 	mddev->flush_bio = NULL;
- 	spin_unlock_irq(&mddev->lock);
--	wake_up(&mddev->sb_wait);
-+	wake_up_all(md_sb_wait(mddev));
- 
- 	if (bio->bi_iter.bi_size == 0) {
- 		/* an empty barrier - all done */
-@@ -609,7 +612,7 @@ bool md_flush_request(struct mddev *mdde
- 	/* flush requests wait until ongoing flush completes,
- 	 * hence coalescing all the pending requests.
- 	 */
--	wait_event_lock_irq(mddev->sb_wait,
-+	wait_event_lock_irq(*md_sb_wait(mddev),
- 			    !mddev->flush_bio ||
- 			    ktime_before(req_start, mddev->prev_flush_start),
- 			    mddev->lock);
-@@ -686,7 +689,6 @@ void mddev_init(struct mddev *mddev)
- 	atomic_set(&mddev->active_io, 0);
- 	spin_lock_init(&mddev->lock);
- 	atomic_set(&mddev->flush_pending, 0);
--	init_waitqueue_head(&mddev->sb_wait);
- 	init_waitqueue_head(&mddev->recovery_wait);
- 	mddev->reshape_position = MaxSector;
- 	mddev->reshape_backwards = 0;
-@@ -828,7 +830,7 @@ void mddev_unlock(struct mddev *mddev)
- 	 */
- 	spin_lock(&pers_lock);
- 	md_wakeup_thread(mddev->thread);
--	wake_up(&mddev->sb_wait);
-+	wake_up_all(md_sb_wait(mddev));
- 	spin_unlock(&pers_lock);
- }
- EXPORT_SYMBOL_GPL(mddev_unlock);
-@@ -933,7 +935,7 @@ static void super_written(struct bio *bi
- 	rdev_dec_pending(rdev, mddev);
- 
- 	if (atomic_dec_and_test(&mddev->pending_writes))
--		wake_up(&mddev->sb_wait);
-+		wake_up_all(md_sb_wait(mddev));
- }
- 
- void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
-@@ -977,7 +979,7 @@ void md_super_write(struct mddev *mddev,
- int md_super_wait(struct mddev *mddev)
- {
- 	/* wait for all superblock writes that were scheduled to complete */
--	wait_event(mddev->sb_wait, atomic_read(&mddev->pending_writes)==0);
-+	wait_event(*md_sb_wait(mddev), atomic_read(&mddev->pending_writes)==0);
- 	if (test_and_clear_bit(MD_SB_NEED_REWRITE, &mddev->sb_flags))
- 		return -EAGAIN;
- 	return 0;
-@@ -2681,7 +2683,7 @@ repeat:
- 				wake_up(&rdev->blocked_wait);
- 			}
- 		}
--		wake_up(&mddev->sb_wait);
-+		wake_up_all(md_sb_wait(mddev));
- 		return;
- 	}
- 
-@@ -2791,7 +2793,7 @@ rewrite:
- 			       BIT(MD_SB_CHANGE_DEVS) | BIT(MD_SB_CHANGE_CLEAN)))
- 		/* have to write it out again */
- 		goto repeat;
--	wake_up(&mddev->sb_wait);
-+	wake_up_all(md_sb_wait(mddev));
- 	if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
- 		sysfs_notify_dirent_safe(mddev->sysfs_completed);
- 
-@@ -4383,7 +4385,7 @@ array_state_store(struct mddev *mddev, c
- 			restart_array(mddev);
- 			clear_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
- 			md_wakeup_thread(mddev->thread);
--			wake_up(&mddev->sb_wait);
-+			wake_up_all(md_sb_wait(mddev));
- 		} else /* st == clean */ {
- 			restart_array(mddev);
- 			if (!set_in_sync(mddev))
-@@ -4456,7 +4458,7 @@ array_state_store(struct mddev *mddev, c
- 			if (err)
- 				break;
- 			clear_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
--			wake_up(&mddev->sb_wait);
-+			wake_up_all(md_sb_wait(mddev));
- 			err = 0;
- 		} else {
- 			mddev->ro = MD_RDWR;
-@@ -6283,7 +6285,7 @@ static int md_set_readonly(struct mddev
- 	mddev_unlock(mddev);
- 	wait_event(resync_wait, !test_bit(MD_RECOVERY_RUNNING,
- 					  &mddev->recovery));
--	wait_event(mddev->sb_wait,
-+	wait_event(*md_sb_wait(mddev),
- 		   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags));
- 	mddev_lock_nointr(mddev);
- 
-@@ -7564,7 +7566,7 @@ static int md_ioctl(struct block_device
- 
- 	if (cmd == HOT_REMOVE_DISK)
- 		/* need to ensure recovery thread has run */
--		wait_event_interruptible_timeout(mddev->sb_wait,
-+		wait_event_interruptible_timeout(*md_sb_wait(mddev),
- 						 !test_bit(MD_RECOVERY_NEEDED,
- 							   &mddev->recovery),
- 						 msecs_to_jiffies(5000));
-@@ -7669,7 +7671,7 @@ static int md_ioctl(struct block_device
- 		 */
- 		if (test_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags)) {
- 			mddev_unlock(mddev);
--			wait_event(mddev->sb_wait,
-+			wait_event(*md_sb_wait(mddev),
- 				   !test_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags) &&
- 				   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags));
- 			mddev_lock_nointr(mddev);
-@@ -8529,7 +8531,7 @@ bool md_write_start(struct mddev *mddev,
- 		sysfs_notify_dirent_safe(mddev->sysfs_state);
- 	if (!mddev->has_superblocks)
- 		return true;
--	wait_event(mddev->sb_wait,
-+	wait_event(*md_sb_wait(mddev),
- 		   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags) ||
- 		   mddev->suspended);
- 	if (test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags)) {
-@@ -8674,7 +8676,7 @@ void md_allow_write(struct mddev *mddev)
- 		md_update_sb(mddev, 0);
- 		sysfs_notify_dirent_safe(mddev->sysfs_state);
- 		/* wait for the dirty state to be recorded in the metadata */
--		wait_event(mddev->sb_wait,
-+		wait_event(*md_sb_wait(mddev),
- 			   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags));
- 	} else
- 		spin_unlock(&mddev->lock);
-@@ -9256,7 +9258,7 @@ void md_check_recovery(struct mddev *mdd
- 		if (test_bit(MD_ALLOW_SB_UPDATE, &mddev->flags))
- 			md_update_sb(mddev, 0);
- 		clear_bit_unlock(MD_UPDATING_SB, &mddev->flags);
--		wake_up(&mddev->sb_wait);
-+		wake_up_all(md_sb_wait(mddev));
- 	}
- 
- 	if (mddev->suspended)
-@@ -9420,7 +9422,7 @@ void md_check_recovery(struct mddev *mdd
- 					sysfs_notify_dirent_safe(mddev->sysfs_action);
- 		}
- 	unlock:
--		wake_up(&mddev->sb_wait);
-+		wake_up_all(md_sb_wait(mddev));
- 		mddev_unlock(mddev);
- 	}
- }
-@@ -9608,6 +9610,10 @@ static void md_geninit(void)
- static int __init md_init(void)
- {
- 	int ret = -ENOMEM;
-+	int i;
-+
-+	for (i = 0; i < MD_SB_WAIT_TABLE_SIZE; i++)
-+		init_waitqueue_head(md_sb_wait_table + i);
- 
- 	md_wq = alloc_workqueue("md", WQ_MEM_RECLAIM, 0);
- 	if (!md_wq)
-Index: linux-2.6/drivers/md/md.h
-===================================================================
---- linux-2.6.orig/drivers/md/md.h
-+++ linux-2.6/drivers/md/md.h
-@@ -466,7 +466,6 @@ struct mddev {
- 	 *   setting MD_RECOVERY_RUNNING (which interacts with resync_{min,max})
- 	 */
- 	spinlock_t			lock;
--	wait_queue_head_t		sb_wait;	/* for waiting on superblock updates */
- 	atomic_t			pending_writes;	/* number of active superblock writes */
- 
- 	unsigned int			safemode;	/* if set, update "clean" superblock
-@@ -584,6 +583,15 @@ static inline void md_sync_acct_bio(stru
- 	md_sync_acct(bio->bi_bdev, nr_sectors);
- }
- 
-+#define MD_SB_WAIT_TABLE_BITS	8
-+#define MD_SB_WAIT_TABLE_SIZE	(1U << MD_SB_WAIT_TABLE_BITS)
-+extern wait_queue_head_t md_sb_wait_table[MD_SB_WAIT_TABLE_SIZE];
-+
-+static inline wait_queue_head_t *md_sb_wait(struct mddev *md)
-+{
-+	return md_sb_wait_table + hash_long((unsigned long)md, MD_SB_WAIT_TABLE_BITS);
-+}
-+
- struct md_personality
- {
- 	char *name;
-Index: linux-2.6/drivers/md/raid10.c
-===================================================================
---- linux-2.6.orig/drivers/md/raid10.c
-+++ linux-2.6/drivers/md/raid10.c
-@@ -1446,7 +1446,7 @@ static void raid10_write_request(struct
- 			return;
- 		}
- 		raid10_log(conf->mddev, "wait reshape metadata");
--		wait_event(mddev->sb_wait,
-+		wait_event(*md_sb_wait(mddev),
- 			   !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags));
- 
- 		conf->reshape_safe = mddev->reshape_position;
-@@ -4876,7 +4876,7 @@ static sector_t reshape_request(struct m
- 		conf->reshape_checkpoint = jiffies;
- 		set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
- 		md_wakeup_thread(mddev->thread);
--		wait_event(mddev->sb_wait, mddev->sb_flags == 0 ||
-+		wait_event(*md_sb_wait(mddev), mddev->sb_flags == 0 ||
- 			   test_bit(MD_RECOVERY_INTR, &mddev->recovery));
- 		if (test_bit(MD_RECOVERY_INTR, &mddev->recovery)) {
- 			allow_barrier(conf);
-Index: linux-2.6/drivers/md/raid5-cache.c
-===================================================================
---- linux-2.6.orig/drivers/md/raid5-cache.c
-+++ linux-2.6/drivers/md/raid5-cache.c
-@@ -691,7 +691,7 @@ static void r5c_disable_writeback_async(
- 		mdname(mddev));
- 
- 	/* wait superblock change before suspend */
--	wait_event(mddev->sb_wait,
-+	wait_event(*md_sb_wait(mddev),
- 		   conf->log == NULL ||
- 		   (!test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags) &&
- 		    (locked = mddev_trylock(mddev))));
-@@ -1581,7 +1581,7 @@ void r5l_quiesce(struct r5l_log *log, in
- 	if (quiesce) {
- 		/* make sure r5l_write_super_and_discard_space exits */
- 		mddev = log->rdev->mddev;
--		wake_up(&mddev->sb_wait);
-+		wake_up_all(md_sb_wait(mddev));
- 		kthread_park(log->reclaim_thread->tsk);
- 		r5l_wake_reclaim(log, MaxSector);
- 		r5l_do_reclaim(log);
-@@ -3165,7 +3165,7 @@ void r5l_exit_log(struct r5conf *conf)
- 	struct r5l_log *log = conf->log;
- 
- 	/* Ensure disable_writeback_work wakes up and exits */
--	wake_up(&conf->mddev->sb_wait);
-+	wake_up_all(md_sb_wait(conf->mddev));
- 	flush_work(&log->disable_writeback_work);
- 	md_unregister_thread(&log->reclaim_thread);
- 
-Index: linux-2.6/drivers/md/raid5.c
-===================================================================
---- linux-2.6.orig/drivers/md/raid5.c
-+++ linux-2.6/drivers/md/raid5.c
-@@ -6346,7 +6346,7 @@ static sector_t reshape_request(struct m
- 		conf->reshape_checkpoint = jiffies;
- 		set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
- 		md_wakeup_thread(mddev->thread);
--		wait_event(mddev->sb_wait, mddev->sb_flags == 0 ||
-+		wait_event(*md_sb_wait(mddev), mddev->sb_flags == 0 ||
- 			   test_bit(MD_RECOVERY_INTR, &mddev->recovery));
- 		if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
- 			return 0;
-@@ -6454,7 +6454,7 @@ finish:
- 		conf->reshape_checkpoint = jiffies;
- 		set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
- 		md_wakeup_thread(mddev->thread);
--		wait_event(mddev->sb_wait,
-+		wait_event(*md_sb_wait(mddev),
- 			   !test_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags)
- 			   || test_bit(MD_RECOVERY_INTR, &mddev->recovery));
- 		if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
-@@ -6703,7 +6703,7 @@ static void raid5_do_work(struct work_st
- 		if (!batch_size && !released)
- 			break;
- 		handled += batch_size;
--		wait_event_lock_irq(mddev->sb_wait,
-+		wait_event_lock_irq(*md_sb_wait(mddev),
- 			!test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags),
- 			conf->device_lock);
- 	}
-@@ -6792,7 +6792,7 @@ static void raid5d(struct md_thread *thr
- 			continue;
- 		}
- 
--		wait_event_lock_irq(mddev->sb_wait,
-+		wait_event_lock_irq(*md_sb_wait(mddev),
- 			!test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags),
- 			conf->device_lock);
- 	}
 --
 dm-devel mailing list
 dm-devel@redhat.com
