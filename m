@@ -4,133 +4,94 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1DE63C54E94
-	for <dm-devel@archiver.kernel.org>; Wed, 25 Jan 2023 10:40:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E008FC54E94
+	for <dm-devel@archiver.kernel.org>; Wed, 25 Jan 2023 12:43:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1674643252;
+	s=mimecast20190719; t=1674650612;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=0y/S64TZ26Ic+Lc9gYBJpbjQybZR+HrAYMnq3DC8Z/s=;
-	b=DerlpfoGS5RCYZ00ljCTP8/V7CjzGKOODDiaQDam+KRpde59hfGtdaBz6PX3LhdHCvmqr+
-	4NCS7RCVOSuD9gbbI1G0STbEQmX6IfvfbAMjfediSQJx4uSWHjJtjpJ/myMN6LPpodsR7j
-	h2mOpLoQvKFQj0y8stvhbuLc1swckjM=
+	bh=Y5DwZZIYxsKgNawzyPRu8sThLRe8PxDE06Cm5LmwDP4=;
+	b=HQaayXfeNEUya7DyiT39gCm/jOpzLWoyQmyRs89xqgPKftKaQcaNwyCCuNC9SwodPRF3rZ
+	3q0ZobCz8aFqGkfJwp/TR+wymA4/Aw2YpE9IWRjN7oDB+aPff0ItlPfQ7nTG6wsl0vdGPB
+	BMwNJJeLFevHMgy6egR2aB0STZECTtQ=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-65--_j5KayjNa2TCG7gR2y3Hw-1; Wed, 25 Jan 2023 05:40:48 -0500
-X-MC-Unique: -_j5KayjNa2TCG7gR2y3Hw-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-599-gw2Bk1sYMuuSFgIPATHmNA-1; Wed, 25 Jan 2023 07:43:29 -0500
+X-MC-Unique: gw2Bk1sYMuuSFgIPATHmNA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D3227101A55E;
-	Wed, 25 Jan 2023 10:40:46 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 706EC183B3D6;
+	Wed, 25 Jan 2023 12:43:27 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3E2162166B26;
-	Wed, 25 Jan 2023 10:40:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1333C14171BB;
+	Wed, 25 Jan 2023 12:43:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0CCD2194658D;
-	Wed, 25 Jan 2023 10:40:42 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4DC4519465BD;
+	Wed, 25 Jan 2023 12:43:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E9D0C194658C
- for <dm-devel@listman.corp.redhat.com>; Wed, 25 Jan 2023 10:40:40 +0000 (UTC)
+ ESMTP id AE429194658C
+ for <dm-devel@listman.corp.redhat.com>; Wed, 25 Jan 2023 12:37:36 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id DE0822166B29; Wed, 25 Jan 2023 10:40:40 +0000 (UTC)
+ id 9A8D91121333; Wed, 25 Jan 2023 12:37:36 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D6BA92166B26
- for <dm-devel@redhat.com>; Wed, 25 Jan 2023 10:40:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B3B52101A52E
- for <dm-devel@redhat.com>; Wed, 25 Jan 2023 10:40:40 +0000 (UTC)
-Received: from EUR03-DBA-obe.outbound.protection.outlook.com
- (mail-dbaeur03on2087.outbound.protection.outlook.com [40.107.104.87]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-564-xvmuqYXZP8CeFB_oAiiUkg-1; Wed, 25 Jan 2023 05:40:36 -0500
-X-MC-Unique: xvmuqYXZP8CeFB_oAiiUkg-1
-Received: from AS8PR04MB8040.eurprd04.prod.outlook.com (2603:10a6:20b:2a9::22)
- by DU2PR04MB8950.eurprd04.prod.outlook.com (2603:10a6:10:2e1::19)
- with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6002.33; Wed, 25 Jan
- 2023 10:40:33 +0000
-Received: from AS8PR04MB8040.eurprd04.prod.outlook.com
- ([fe80::e1b6:3ede:547d:eb2f]) by AS8PR04MB8040.eurprd04.prod.outlook.com
- ([fe80::e1b6:3ede:547d:eb2f%9]) with mapi id 15.20.6002.033; Wed, 25 Jan 2023
- 10:40:33 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
- "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH 2/6] libmultipath: make prflag an enum
-Thread-Index: AQHZFMyS6bhrbWemp0+Ei98aIVt0h66vKUwA
-Date: Wed, 25 Jan 2023 10:40:33 +0000
-Message-ID: <786f375415ee12a0f12c93cbd817a19a1501881e.camel@suse.com>
-References: <1671579675-23658-1-git-send-email-bmarzins@redhat.com>
- <1671579675-23658-3-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1671579675-23658-3-git-send-email-bmarzins@redhat.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.46.3
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: AS8PR04MB8040:EE_|DU2PR04MB8950:EE_
-x-ms-office365-filtering-correlation-id: ab52b175-e49a-492b-42d7-08dafec0965a
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: fvMNE1hL5OwfSF41o2Ffw0QETBip96yASL9DYupMmlEEz0I+I+l+2tgQ6frvVjPDcjs3qB/v1Zjwwj865Tr8EEaAVQJCR+ymf4aAquNKPZJkvTfUjRXi40worOX5NMmvSuhF+vGzXxqQl8Gk40WYrAy2hhEVvoU6oohhSwrDsh0UzUur/cDwmqpCX+wVAHEZaOeus91aGebylAd8p9jvEPeITGG1U4x/fSNAcZ0fBI6BQ0WKxYMyAAtWFdnjSEzGcrLa67E7HctjrUp6M5nTrMFjFzRxYGZFRCLRZ+fahAqFRM0/qEa2Da6AJaksLAZhaaw7x/IE22cbinK6lXy4uOVIAnZjap15K4NFpKCkc3Apnf9VzpQu4G5lsylYxE+2omYhsYr7DsxvW4ejMfLD7E3ddEOKHE+jSoLRNKbpA203+lQ8ZFmzFTAVQ2AQhJnQuodWFnQ2JcAsmRlf/N7UY1wLa2Kf+IfEyJ/kY83L8oBo6IWaabeHDekX+q2OF80jD3MVr0gDUL9a1RkjhK2Kij1rUdiVtyAnyuRka/2xoVJDdI92cvc4F77U/MolkAueqGhBMgCcYWGBiY/bCUMJWC05SivtmAyfaYFP3HnO0/vq6D+wZGN/4TvFfRYgGAsHz28unpy2brRFkS/pgwAgmqGsaKIrJxKdUIuHedW8BTYWKFFgBwFcfV7pzvSkrNuUWsDc3pt440rdwMUCGOIXa/K2oCC1vevOEyuRCv9lczutZ1A46K1A92ZVX+Mwg8Jx6xYasJIAdBXKY58ai7pbQg==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:AS8PR04MB8040.eurprd04.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230025)(376002)(346002)(396003)(136003)(366004)(39860400002)(451199018)(122000001)(38100700002)(41300700001)(2616005)(66946007)(64756008)(66556008)(86362001)(76116006)(110136005)(91956017)(71200400001)(966005)(478600001)(66476007)(6486002)(36756003)(6506007)(66446008)(44832011)(4001150100001)(5660300002)(38070700005)(2906002)(316002)(6512007)(26005)(186003)(8676002)(4326008)(4744005)(8936002);
- DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?5On1uqZnTgUsZASS/TIYD69azvRWcBexBC3SiG8pV2YmKthra1uepcmoV?=
- =?iso-8859-15?Q?HdwC0dT4qR9NBmMn69wJdd7OueByoEfGy4byo+SdKaH46vY2nEQQBdNfX?=
- =?iso-8859-15?Q?QUNcRkv0XVLXBGNgkPNI15H8lPPpVAJDgrKDQy3mxDZOTYmDNB/i9vCHS?=
- =?iso-8859-15?Q?DYRwNI/l4PsUCTWvkedaihyGKDIv3xaAd6msASrSLAZZF5y1IoCSCXd5p?=
- =?iso-8859-15?Q?PD4L4uXV+rDRPzGDGt0+H0Lqp4qNNPLZZoCG9RQLybOeZzvNUWft6eZPq?=
- =?iso-8859-15?Q?ZfSiJLq2R4W3rdy1RJlRXN9mhM1O6w2sOqV6wN96hhPqMQ1zknx5OQfHP?=
- =?iso-8859-15?Q?REYFh3rm8Ahhvuh5f2gwOc8/XiYqzm1x9OsneIOOvb+Ftdy3Dj+e5d6AI?=
- =?iso-8859-15?Q?5Jp/YtBk3/x1s4lciHjGkbPW78eQPYAN1RKCAXbKIq2JlpdkiT6NBvQ1T?=
- =?iso-8859-15?Q?2rZyOcgpc/vhKuLsjWEPqp8c40MIZ7JmkVXBpBvAZfclF3zrf+Ph8e15b?=
- =?iso-8859-15?Q?GrqilJaV3natDzZKCPAE0L5Ek1uxutReJN+PRbXFqwhbzfMBRsVkfNKp6?=
- =?iso-8859-15?Q?RpPuRYHBe9xq98wdOdjj1vWl3EJFkI7svH5TljdDXc3uKEX8o4Jzeq8xT?=
- =?iso-8859-15?Q?3PW7GH3Q+lnZpIhAT7VOfGDz1uPKn3fOqL8sED9C0zj65ln1wQlxlEpIP?=
- =?iso-8859-15?Q?KNv+c5Jel597Njhv9101cJdrBDG7skoC+k8fwCJa/K5hMw0NlwjxosvPu?=
- =?iso-8859-15?Q?KjaURwxxahr/x8tuS7800KTFEgznVp3tItmv1+sLzx4fl0a6v2HBQXKpt?=
- =?iso-8859-15?Q?/xwc1/rNAcEWfiAZPDMYga5QPhPg3CUx8FglZXICr4r/Oks7uwCyJ/eel?=
- =?iso-8859-15?Q?A5eCYSpx2++1WWsYewOhj74hpt+vd+QIYU1Ea4bjs7v6yJvSqKr3lDdHk?=
- =?iso-8859-15?Q?e4/fx/IcDtK0Yj5XRsiKSdaajVj8mJF6XtoCOYvncJoazomNoXjziN7Qm?=
- =?iso-8859-15?Q?9rXXGO9D0iALeukO90TEoRxm30qWdp0Z4Fc2ho/IKCnS5SJSRYcN9hQvy?=
- =?iso-8859-15?Q?dgwgnwUBSOIIheG3RWln6yyY70RlsguZcu+1gjeE3WPwUY7Dgo7gd3czL?=
- =?iso-8859-15?Q?m/Txl/3q7UQYyX/R014/90Lwg3RhF3lpSRt40xoHJOctWiybadZBxtXdE?=
- =?iso-8859-15?Q?BQ1TH8pLgJ5HL5XAJ6ZZJdDJyTth8P/RYc7Q3iTK1OsoWClthnS4sVPx4?=
- =?iso-8859-15?Q?ndo1XPk7hpxWX8WQ3IDtJ74nsd4zAbZscoyqnaPN1yVxCedne6MrSV+R9?=
- =?iso-8859-15?Q?svFr050mcPjFmsyUOxxelnHo3F7LTV3Ou7RzKPGmphPjE+JrlY/XLUSdq?=
- =?iso-8859-15?Q?IJLjeql5WpyAdz+KXSbRCt+Z4+1jeAQOA44toM4jhsQYqVJK4F0u1Kuft?=
- =?iso-8859-15?Q?TjhcmjOsiZ5oHu4nleFk+vp+QnEbMblXGFvSinYm8dJQEqmrXKBhPmx34?=
- =?iso-8859-15?Q?GjKajE9DfXnLQruKaz8+ra6Jfjau0MfGepdRX+62xXq5an05vjYChcfYk?=
- =?iso-8859-15?Q?ZWstWr3Jv82bBejNMMFFDlmQ0eet43H6hseOp0UJ2Ofy7I0gPjAfXlg13?=
- =?iso-8859-15?Q?UTjRtkSi4LpHNibquGkCi23IVyZ1kzcp8zn7zfB3lyaeFb4gWQSIZ7yDs?=
- =?iso-8859-15?Q?sTBnBreGkGJV1LVjrJ7eAs3x3w=3D=3D?=
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 931221121330
+ for <dm-devel@redhat.com>; Wed, 25 Jan 2023 12:37:36 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6C803280482C
+ for <dm-devel@redhat.com>; Wed, 25 Jan 2023 12:37:36 +0000 (UTC)
+Received: from mail-ed1-f48.google.com (mail-ed1-f48.google.com
+ [209.85.208.48]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-443-otOIMFiNM2KvLm9Yw9Jkxg-1; Wed, 25 Jan 2023 07:37:34 -0500
+X-MC-Unique: otOIMFiNM2KvLm9Yw9Jkxg-1
+Received: by mail-ed1-f48.google.com with SMTP id w11so6320796edv.0
+ for <dm-devel@redhat.com>; Wed, 25 Jan 2023 04:37:34 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=content-transfer-encoding:in-reply-to:from:references:cc:to
+ :content-language:subject:user-agent:mime-version:date:message-id
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=rX1Q8Kt1RGuejmbFEpfQkMa7en73Y69GcmcaBxoXLk4=;
+ b=LmOjtOCh0KwJoYu/ArZK33P2VeRh17f0ncHBdoMvqmoq2wFc9xf7WQyx//KVf4YVWw
+ O8O2uA/Ul6UNOKubvxcyY3wBLJhhXOsnyVPsJ8ERMA4+jlf/TKiXkeJTWBdY7CNU0f4A
+ z7uoy8ArYP11cq+IHw12O4hd+4beoiMZoX09xoA4RGGOA76IGPwIH7DwdwpmtdJzQUP0
+ PtdJ96hiuN1xG/1Rshng9I1WWJAXk9eXj7pKvZk7DPMip7Lfwt6q4aEXZygSF+/tfyOx
+ 4smBnlEzPZh4385aBVG20wdOacao5f9gPY1PNZ34Jk2HJ3MJMDNTSbzz1CsUxsSUoix5
+ awXA==
+X-Gm-Message-State: AO0yUKXjC+odVFPwPpSjIH6b5uJk7myKPqecGnqjOQt1Qc5gAMHLruSQ
+ UPM5wwbU11Y8iLQ9y3Mr3Xpihw==
+X-Google-Smtp-Source: AK7set9IdPf3OrPDtZ278KRDWeQ8ojy4B9CcwxHzQdXHfD5UVm3egAUutWYGGEs0wIA/0T9FarxE1A==
+X-Received: by 2002:a05:6402:1f05:b0:4a0:af87:b3ab with SMTP id
+ b5-20020a0564021f0500b004a0af87b3abmr1333313edb.36.1674650253119; 
+ Wed, 25 Jan 2023 04:37:33 -0800 (PST)
+Received: from [172.16.10.51] (193.92.101.37.dsl.dyn.forthnet.gr.
+ [193.92.101.37]) by smtp.gmail.com with ESMTPSA id
+ c41-20020a509fac000000b004a091244a8asm1278320edf.44.2023.01.25.04.37.31
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Wed, 25 Jan 2023 04:37:32 -0800 (PST)
+Message-ID: <c0075cc7-7b34-0f96-6718-b8f1622a7c59@arrikto.com>
+Date: Wed, 25 Jan 2023 14:37:31 +0200
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: AS8PR04MB8040.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: ab52b175-e49a-492b-42d7-08dafec0965a
-X-MS-Exchange-CrossTenant-originalarrivaltime: 25 Jan 2023 10:40:33.5551 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: XnptbqNld6Xz5aql/lh/LJ1uB9noRuqNN+9UWdndOVQb+Sua/ESIezytDRF6OuuvYRM61g0DFmfcSwUwVYvltg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DU2PR04MB8950
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.6.0
+To: Mike Snitzer <snitzer@redhat.com>
+References: <20230118122946.20435-1-ntsironis@arrikto.com>
+ <Y8geIzYJ4dCeXpEI@redhat.com>
+ <2f53c4ee-5bdf-e4e4-2dca-46ae4e22c312@arrikto.com>
+ <Y87FHstzOQcHd5f9@redhat.com>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+In-Reply-To: <Y87FHstzOQcHd5f9@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -138,8 +99,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH 2/6] libmultipath: make prflag an enum
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH 0/2] dm era: avoid deadlock when swapping
+ table with dm-era target
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -151,34 +113,441 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: dm-devel@redhat.com, snitzer@kernel.org, ejt@redhat.com, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <42AC77AB1542154E85F597422FE132B5@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Hi Ben,
-
-On Tue, 2022-12-20 at 17:41 -0600, Benjamin Marzinski wrote:
-> In preparation for a future patch, make prflag an enum, and change
-> the
-> reply of cli_getprstatus() to a string.
+On 1/23/23 19:34, Mike Snitzer wrote:
+> On Thu, Jan 19 2023 at  4:36P -0500,
+> Nikos Tsironis <ntsironis@arrikto.com> wrote:
 > 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+>> On 1/18/23 18:28, Mike Snitzer wrote:
+>>> On Wed, Jan 18 2023 at  7:29P -0500,
+>>> Nikos Tsironis <ntsironis@arrikto.com> wrote:
+>>>
+>>>> Under certain conditions, swapping a table, that includes a dm-era
+>>>> target, with a new table, causes a deadlock.
+>>>>
+>>>> This happens when a status (STATUSTYPE_INFO) or message IOCTL is blocked
+>>>> in the suspended dm-era target.
+>>>>
+>>>> dm-era executes all metadata operations in a worker thread, which stops
+>>>> processing requests when the target is suspended, and resumes again when
+>>>> the target is resumed.
+>>>>
+>>>> So, running 'dmsetup status' or 'dmsetup message' for a suspended dm-era
+>>>> device blocks, until the device is resumed.
+>>>>
+>>>> If we then load a new table to the device, while the aforementioned
+>>>> dmsetup command is blocked in dm-era, and resume the device, we
+>>>> deadlock.
+>>>>
+>>>> The problem is that the 'dmsetup status' and 'dmsetup message' commands
+>>>> hold a reference to the live table, i.e., they hold an SRCU read lock on
+>>>> md->io_barrier, while they are blocked.
+>>>>
+>>>> When the device is resumed, the old table is replaced with the new one
+>>>> by dm_swap_table(), which ends up calling synchronize_srcu() on
+>>>> md->io_barrier.
+>>>>
+>>>> Since the blocked dmsetup command is holding the SRCU read lock, and the
+>>>> old table is never resumed, 'dmsetup resume' blocks too, and we have a
+>>>> deadlock.
+>>>>
+>>>> The only way to recover is by rebooting.
+>>>>
+>>>> Steps to reproduce:
+>>>>
+>>>> 1. Create device with dm-era target
+>>>>
+>>>>       # dmsetup create eradev --table "0 1048576 era /dev/datavg/erameta /dev/datavg/eradata 8192"
+>>>>
+>>>> 2. Suspend the device
+>>>>
+>>>>       # dmsetup suspend eradev
+>>>>
+>>>> 3. Load new table to device, e.g., to resize the device. Note, that, we
+>>>>      must load the new table _after_ suspending the device to ensure the
+>>>>      constructor of the new target instance reads up-to-date metadata, as
+>>>>      committed by the post-suspend hook of dm-era.
+>>>>
+>>>>       # dmsetup load eradev --table "0 2097152 era /dev/datavg/erameta /dev/datavg/eradata 8192"
+>>>>
+>>>> 4. Device now has LIVE and INACTIVE tables
+>>>>
+>>>>       # dmsetup info eradev
+>>>>       Name:              eradev
+>>>>       State:             SUSPENDED
+>>>>       Read Ahead:        16384
+>>>>       Tables present:    LIVE & INACTIVE
+>>>>       Open count:        0
+>>>>       Event number:      0
+>>>>       Major, minor:      252, 2
+>>>>       Number of targets: 1
+>>>>
+>>>> 5. Retrieve the status of the device. This blocks because the device is
+>>>>      suspended. Equivalently, any 'dmsetup message' operation would block
+>>>>      too. This command holds the SRCU read lock on md->io_barrier.
+>>>>
+>>>>       # dmsetup status eradev
+>>>
+>>> I'll have a look at this flow, it seems to me we shouldn't stack up
+>>> 'dmsetup status' and 'dmsetup message' commands if the table is
+>>> suspended.
+>>>
+>>> I think it is unique to dm-era that you don't allow to _read_ metadata
+>>> operations while a device is suspended.  But messages really shouldn't
+>>> be sent when the device is suspended.  As-is DM is pretty silently
+>>> cutthroat about that constraint.
+>>>
+>>> Resulting in deadlock is obviously cutthroat...
+>>>
+>>
+>> Hi Mike,
+>>
+>> Thanks for the quick reply.
+>>
+>> I couldn't find this constraint documented anywhere and since the
+>> various DM targets seem to allow message operations while the device is
+>> suspended I drew the wrong conclusion.
+>>
+>> Thanks for clarifying this.
+>>
+>>>> 6. Resume the device. The resume operation tries to swap the old table
+>>>>      with the new one and deadlocks, because it synchronizes SRCU for the
+>>>>      old table, while the blocked 'dmsetup status' holds the SRCU read
+>>>>      lock. And the old table is never resumed again at this point.
+>>>>
+>>>>       # dmsetup resume eradev
+>>>>
+>>>> 7. The relevant dmesg logs are:
+>>>>
+>>>> [ 7093.345486] dm-2: detected capacity change from 1048576 to 2097152
+>>>> [ 7250.875665] INFO: task dmsetup:1986 blocked for more than 120 seconds.
+>>>> [ 7250.875722]       Not tainted 5.16.0-rc2-release+ #16
+>>>> [ 7250.875756] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+>>>> [ 7250.875803] task:dmsetup         state:D stack:    0 pid: 1986 ppid:  1313 flags:0x00000000
+>>>> [ 7250.875809] Call Trace:
+>>>> [ 7250.875812]  <TASK>
+>>>> [ 7250.875816]  __schedule+0x330/0x8b0
+>>>> [ 7250.875827]  schedule+0x4e/0xc0
+>>>> [ 7250.875831]  schedule_timeout+0x20f/0x2e0
+>>>> [ 7250.875836]  ? do_set_pte+0xb8/0x120
+>>>> [ 7250.875843]  ? prep_new_page+0x91/0xa0
+>>>> [ 7250.875847]  wait_for_completion+0x8c/0xf0
+>>>> [ 7250.875854]  perform_rpc+0x95/0xb0 [dm_era]
+>>>> [ 7250.875862]  in_worker1.constprop.20+0x48/0x70 [dm_era]
+>>>> [ 7250.875867]  ? era_iterate_devices+0x30/0x30 [dm_era]
+>>>> [ 7250.875872]  ? era_status+0x64/0x1e0 [dm_era]
+>>>> [ 7250.875877]  era_status+0x64/0x1e0 [dm_era]
+>>>> [ 7250.875882]  ? dm_get_live_or_inactive_table.isra.11+0x20/0x20 [dm_mod]
+>>>> [ 7250.875900]  ? __mod_node_page_state+0x82/0xc0
+>>>> [ 7250.875909]  retrieve_status+0xbc/0x1e0 [dm_mod]
+>>>> [ 7250.875921]  ? dm_get_live_or_inactive_table.isra.11+0x20/0x20 [dm_mod]
+>>>> [ 7250.875932]  table_status+0x61/0xa0 [dm_mod]
+>>>> [ 7250.875942]  ctl_ioctl+0x1b5/0x4f0 [dm_mod]
+>>>> [ 7250.875956]  dm_ctl_ioctl+0xa/0x10 [dm_mod]
+>>>> [ 7250.875966]  __x64_sys_ioctl+0x8e/0xd0
+>>>> [ 7250.875970]  do_syscall_64+0x3a/0xd0
+>>>> [ 7250.875974]  entry_SYSCALL_64_after_hwframe+0x44/0xae
+>>>> [ 7250.875980] RIP: 0033:0x7f20b7cd4017
+>>>> [ 7250.875984] RSP: 002b:00007ffd443874b8 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
+>>>> [ 7250.875988] RAX: ffffffffffffffda RBX: 000055d69d6bd0e0 RCX: 00007f20b7cd4017
+>>>> [ 7250.875991] RDX: 000055d69d6bd0e0 RSI: 00000000c138fd0c RDI: 0000000000000003
+>>>> [ 7250.875993] RBP: 000000000000001e R08: 00007f20b81df648 R09: 00007ffd44387320
+>>>> [ 7250.875996] R10: 00007f20b81deb53 R11: 0000000000000246 R12: 000055d69d6bd110
+>>>> [ 7250.875998] R13: 00007f20b81deb53 R14: 000055d69d6bd000 R15: 0000000000000000
+>>>> [ 7250.876002]  </TASK>
+>>>> [ 7250.876004] INFO: task dmsetup:1987 blocked for more than 120 seconds.
+>>>> [ 7250.876046]       Not tainted 5.16.0-rc2-release+ #16
+>>>> [ 7250.876083] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+>>>> [ 7250.876129] task:dmsetup         state:D stack:    0 pid: 1987 ppid:  1385 flags:0x00000000
+>>>> [ 7250.876134] Call Trace:
+>>>> [ 7250.876136]  <TASK>
+>>>> [ 7250.876138]  __schedule+0x330/0x8b0
+>>>> [ 7250.876142]  schedule+0x4e/0xc0
+>>>> [ 7250.876145]  schedule_timeout+0x20f/0x2e0
+>>>> [ 7250.876149]  ? __queue_work+0x226/0x420
+>>>> [ 7250.876156]  wait_for_completion+0x8c/0xf0
+>>>> [ 7250.876160]  __synchronize_srcu.part.19+0x92/0xc0
+>>>> [ 7250.876167]  ? __bpf_trace_rcu_stall_warning+0x10/0x10
+>>>> [ 7250.876173]  ? dm_swap_table+0x2f4/0x310 [dm_mod]
+>>>> [ 7250.876185]  dm_swap_table+0x2f4/0x310 [dm_mod]
+>>>> [ 7250.876198]  ? table_load+0x360/0x360 [dm_mod]
+>>>> [ 7250.876207]  dev_suspend+0x95/0x250 [dm_mod]
+>>>> [ 7250.876217]  ctl_ioctl+0x1b5/0x4f0 [dm_mod]
+>>>> [ 7250.876231]  dm_ctl_ioctl+0xa/0x10 [dm_mod]
+>>>> [ 7250.876240]  __x64_sys_ioctl+0x8e/0xd0
+>>>> [ 7250.876244]  do_syscall_64+0x3a/0xd0
+>>>> [ 7250.876247]  entry_SYSCALL_64_after_hwframe+0x44/0xae
+>>>> [ 7250.876252] RIP: 0033:0x7f15e9254017
+>>>> [ 7250.876254] RSP: 002b:00007ffffdc59458 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
+>>>> [ 7250.876257] RAX: ffffffffffffffda RBX: 000055d4d99560e0 RCX: 00007f15e9254017
+>>>> [ 7250.876260] RDX: 000055d4d99560e0 RSI: 00000000c138fd06 RDI: 0000000000000003
+>>>> [ 7250.876261] RBP: 000000000000000f R08: 00007f15e975f648 R09: 00007ffffdc592c0
+>>>> [ 7250.876263] R10: 00007f15e975eb53 R11: 0000000000000246 R12: 000055d4d9956110
+>>>> [ 7250.876265] R13: 00007f15e975eb53 R14: 000055d4d9956000 R15: 0000000000000001
+>>>> [ 7250.876269]  </TASK>
+>>>>
+>>>> Fix this by allowing metadata operations triggered by user space to run
+>>>> in the corresponding user space thread, instead of queueing them for
+>>>> execution by the dm-era worker thread.
+>>>
+>>> Allowing them to run while the device is suspended is _not_ the
+>>> correct way to work-around this deadlock situation.  I think it'd be
+>>> useful to understand why your userspace is tools are allowing these
+>>> messages and status to a device that is suspended.
+>>>
+>>
+>> Ack.
+>>
+>> The sequence of operations I provided is just a way to easily reproduce
+>> the deadlock. The exact issue I am facing is the following:
+>>
+>> 1. Create device with dm-era target
+>>
+>>      # dmsetup create eradev --table "0 1048576 era /dev/datavg/erameta /dev/datavg/eradata 8192"
+>>
+>> 2. Load new table to device, e.g., to resize the device or snapshot it.
+>>
+>>      # dmsetup load eradev --table "0 2097152 era /dev/datavg/erameta /dev/datavg/eradata 8192"
+>>
+>> 3. Suspend the device
+>>
+>>      # dmsetup suspend eradev
+>>
+>> 4. Someone else, e.g., a user or a monitoring daemon, runs an LVM
+>>     command at this point, e.g. 'vgs'.
+>>
+>> 5. 'vgs' tries to retrieve the status of the dm-era device using the
+>>     DM_TABLE_STATUS ioctl, and blocks, because the command is queued for
+>>     execution by the worker thread, which is suspended while the device
+>>     is suspended.
+>>
+>>     Note, that, LVM uses the DM_NOFLUSH_FLAG, but this doesn't make a
+>>     difference for dm-era, since the "problem" is not that it writes to
+>>     the metadata, but that it queues the metadata read operation to the
+>>     worker thread.
+>>
+>> 6. Resume the device: This deadlocks.
+>>
+>>      # dmsetup resume eradev
+>>
+>> So, I am not the one retrieving the status of the suspended device. LVM
+>> is. LVM, when running commands like 'lvs' and 'vgs', retrieves the
+>> status of the devices on the system using the DM_TABLE_STATUS ioctl.
+>>
+>> The deadlock is a race that happens when someone runs an LVM command at
+>> the "wrong" time.
+> 
+> I think dm-era shouldn't be disallowing work items while suspended,
+> e.g.:
+> 
+> diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
+> index e92c1afc3677..33ea2c2374c7 100644
+> --- a/drivers/md/dm-era-target.c
+> +++ b/drivers/md/dm-era-target.c
+> @@ -1175,7 +1175,6 @@ struct era {
+>   	struct list_head rpc_calls;
+>   
+>   	struct digest digest;
+> -	atomic_t suspended;
+>   };
+>   
+>   struct rpc {
+> @@ -1219,8 +1218,7 @@ static void remap_to_origin(struct era *era, struct bio *bio)
+>    *--------------------------------------------------------------*/
+>   static void wake_worker(struct era *era)
+>   {
+> -	if (!atomic_read(&era->suspended))
+> -		queue_work(era->wq, &era->worker);
+> +	queue_work(era->wq, &era->worker);
+>   }
+>   
+>   static void process_old_eras(struct era *era)
+> @@ -1392,17 +1390,6 @@ static int in_worker1(struct era *era,
+>   	return perform_rpc(era, &rpc);
+>   }
+>   
+> -static void start_worker(struct era *era)
+> -{
+> -	atomic_set(&era->suspended, 0);
+> -}
+> -
+> -static void stop_worker(struct era *era)
+> -{
+> -	atomic_set(&era->suspended, 1);
+> -	drain_workqueue(era->wq);
+> -}
+> -
+>   /*----------------------------------------------------------------
+>    * Target methods
+>    *--------------------------------------------------------------*/
+> @@ -1569,7 +1556,7 @@ static void era_postsuspend(struct dm_target *ti)
+>   		/* FIXME: fail mode */
+>   	}
+>   
+> -	stop_worker(era);
+> +	drain_workqueue(era->wq);
+>   
+>   	r = metadata_commit(era->md);
+>   	if (r) {
+> @@ -1600,8 +1587,6 @@ static int era_preresume(struct dm_target *ti)
+>   		era->nr_blocks = new_size;
+>   	}
+>   
+> -	start_worker(era);
+> -
+>   	r = in_worker0(era, metadata_era_rollover);
+>   	if (r) {
+>   		DMERR("%s: metadata_era_rollover failed", __func__);
+> 
+> During suspend it should certainly flush all works; but I fail to see
+> the value in disallowing the targets main way to do work (even while
+> suspended). Maybe Joe has insight on why dm-era was written this way.
+> 
+> But as an example dm-cache and dm-thin don't have such a strong
+> restriction.
+> 
 
-this patch changes ABI. Thus I pushed 730629d [1] to the "queue" branch
-[2].
+The worker thread does the following:
+1. Process old eras, i.e., digest the archived writesets in to the main
+    era array.
 
-Martin
+    This doesn't involve a metadata commit, but writes to the metadata
 
-[1] https://github.com/openSUSE/multipath-tools/commit/730629d604e4ea30f7902fa347d815cd05a60002
-[2] https://github.com/openSUSE/multipath-tools/tree/queue
+2. Process deferred bios. This might trigger a metadata commit in
+    general, but when the device is suspended no bios should be reaching
+    the target, so it should be a no op.
 
+3. Process RPC calls. This involves 'status' and 'message' operations.
+    process_rpc_calls() does commit the metadata, after running all RPC
+    calls. Checking if the device is suspended here is a way to prevent
+    the metadata commit.
+
+    But, some of the 'message' operations also commit the metadata, e.g.,
+    the metadata_take_snap message. I understand that no one should be
+    sending messages to a suspended device, but it's not enforced so it
+    could happen.
+
+I believe the value of suspending the worker when the device is
+suspended is to prevent anyone from writing to the metadata.
+
+Writing to the metadata, while the device is suspended, could cause
+problems. More on that in the following comments.
+
+>> Using an appropriate LVM 'global_filter' is a way to prevent this, but:
+>>
+>> 1. This is just a workaround, not a proper solution.
+>> 2. This is not always an option. Imagine someone running an LVM command
+>>     in a container, for example. Or, we may not be allowed to change the
+>>     LVM configuration of the host at all.
+>>
+>>> FYI, status shouldn't trigger write IOs if the device is suspended.
+>>> Both dm-cache and dm-thin have this in status as a guard around its
+>>> work to ensure updated accounting (as a side-effect of committing
+>>> metadata), e.g.:
+>>>
+>>>                   /* Commit to ensure statistics aren't out-of-date */
+>>>                   if (!(status_flags & DM_STATUS_NOFLUSH_FLAG) && !dm_suspended(ti))
+>>>                           (void) commit(cache, false);
+>>
+>> Ack. The current behavior of dm-era wrt 'status' command is:
+>>
+>> 1. Queue the 'metadata_get_stats()' function for execution by the worker
+>>     thread.
+>> 2. The worker runs the function and retrieves the statistics
+>> 3. The worker commits the metadata _after_ retrieving the statistics
+>>
+>> Shall I just change 'era_status()' to read the metadata directly and
+>> skip the metadata commit, instead of queuing the operation to the worker
+>> thread, when the device is suspended?
+> 
+> dm-era should still respect that the device is suspended (disallow
+> metadata commits, etc).
+> 
+> Probably should just do like the dm-cache code I quoted above (dm-thin
+> does the same): do not commit if suspended.
+> 
+> Seems to me that if simply retrieving stats in era_status() results in
+> metadata commit as a side-effect of its work that is pretty bogus --
+> process_rpc_calls() must be what does it just due to generic code?
+> 
+> If so, yes absolutely avoid that metadata commit (might we just update
+> process_rpc_calls() to check dm_suspended()?)
+> 
+
+Yes, the metadata commit is due to the generic code in
+process_rpc_calls(), and could be avoided if we check the device
+suspended state here.
+
+But, avoiding the metadata commit when the device is suspended is not
+enough. No one should be writing to the metadata at all.
+
+Else, we risk hitting the bug fixed by commit 9ae6e8b1c9bbf6 ("dm era:
+commit metadata in postsuspend after worker stops").
+
+In short, writing to the metadata of a suspended dm-era device results
+in the committed metadata getting out-of-sync with the in-core metadata.
+
+This could result in the corruption of the on-disk metadata if we load a
+new dm-era table to the device, and destroy the old one (the destructor
+flushes any cached writes to the disk).
+
+For an exact sequence of events that can lead to this issue, please see
+the commit mentioned above (9ae6e8b1c9bbf6).
+
+> Sorry for such fundamental concerns, I really should've caught this
+> stuff back when dm-era was introduced!
+> 
+> Really does feel like a read-write lock for metadata might be
+> warranted.
+> 
+>> I think we would still need a lock to synchronize access to the
+>> metadata, since, if I am not mistaken, the pre-resume hook that starts
+>> the worker runs before clearing the DMF_SUSPENDED flag, and can run
+>> concurrently with the 'status' IOCTL. So, the worker might run
+>> concurrently with a 'status' operation that sees the device as
+>> suspended.
+> 
+> I was initially thinking removing dm-era's suspended state (like above
+> patch) should take care of the pitfalls of disallowing works due to
+> that state.
+> 
+> But the dm-era could should be audited to make sure the big hammer of
+> disallowing works while suspended wasn't important for its
+> implementation (and the need to disallow device changes while
+> suspended).
+> 
+
+I think a simple solution, without modifying dm-era too much, is:
+1. Have status run in the user space thread, instead of queueing it to
+    the worker.
+2. Add a mutex to avoid status running concurrently with the worker
+    thread.
+3. Have status check if the device is suspended. If it is not, commit
+    the metadata before retrieving the status. If it is, skip the
+    metadata commit. This is in line with what the thin and cache targets
+    do.
+
+Doing this avoids the deadlock in case someone, e.g., an LVM command,
+runs a status operation against a suspended dm-era device.
+
+User space could trigger the deadlock if it sends a message to a
+suspended dm-era device, but, since this should never happen, it
+shouldn't affect existing workflows.
+
+Still, it might be a good idea to enforce this restriction, i.e.,
+disallow running message operations on suspended devices, but, I guess
+this requires more discussion.
+
+Nikos.
 
 --
 dm-devel mailing list
