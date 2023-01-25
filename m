@@ -4,10 +4,10 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E008FC54E94
-	for <dm-devel@archiver.kernel.org>; Wed, 25 Jan 2023 12:43:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C1303C54E94
+	for <dm-devel@archiver.kernel.org>; Wed, 25 Jan 2023 12:46:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1674650612;
+	s=mimecast20190719; t=1674650777;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
@@ -15,82 +15,82 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
 	bh=Y5DwZZIYxsKgNawzyPRu8sThLRe8PxDE06Cm5LmwDP4=;
-	b=HQaayXfeNEUya7DyiT39gCm/jOpzLWoyQmyRs89xqgPKftKaQcaNwyCCuNC9SwodPRF3rZ
-	3q0ZobCz8aFqGkfJwp/TR+wymA4/Aw2YpE9IWRjN7oDB+aPff0ItlPfQ7nTG6wsl0vdGPB
-	BMwNJJeLFevHMgy6egR2aB0STZECTtQ=
+	b=hyJb63F3Vwoat7UsZiXSQRM9mhXkgTf8zrICNvDnGQcdZ3lqSthGI9QCCvddHWr0Xe7gR+
+	ieN96xg6L4Is35xSq/BGCmyZhhCz8Hh57FKD0Nr3AglFwx7rA3XH7XsjkNqjIyPBlxIPQ+
+	FasMLqGh6T+4GN4PphBp0RbTpuCO9vU=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-599-gw2Bk1sYMuuSFgIPATHmNA-1; Wed, 25 Jan 2023 07:43:29 -0500
-X-MC-Unique: gw2Bk1sYMuuSFgIPATHmNA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-411-16-p8mtqPm2dm8D_cZRZUw-1; Wed, 25 Jan 2023 07:46:14 -0500
+X-MC-Unique: 16-p8mtqPm2dm8D_cZRZUw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 706EC183B3D6;
-	Wed, 25 Jan 2023 12:43:27 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AA074185A794;
+	Wed, 25 Jan 2023 12:46:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1333C14171BB;
-	Wed, 25 Jan 2023 12:43:26 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 94FC040C200C;
+	Wed, 25 Jan 2023 12:46:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4DC4519465BD;
-	Wed, 25 Jan 2023 12:43:21 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D5A4E194658D;
+	Wed, 25 Jan 2023 12:46:05 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id AE429194658C
- for <dm-devel@listman.corp.redhat.com>; Wed, 25 Jan 2023 12:37:36 +0000 (UTC)
+ ESMTP id 89B37194658C
+ for <dm-devel@listman.corp.redhat.com>; Wed, 25 Jan 2023 12:45:49 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9A8D91121333; Wed, 25 Jan 2023 12:37:36 +0000 (UTC)
+ id 3F17A40C945A; Wed, 25 Jan 2023 12:45:49 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 931221121330
- for <dm-devel@redhat.com>; Wed, 25 Jan 2023 12:37:36 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6C803280482C
- for <dm-devel@redhat.com>; Wed, 25 Jan 2023 12:37:36 +0000 (UTC)
-Received: from mail-ed1-f48.google.com (mail-ed1-f48.google.com
- [209.85.208.48]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 36CC240C1141
+ for <dm-devel@redhat.com>; Wed, 25 Jan 2023 12:45:49 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0D57785A588
+ for <dm-devel@redhat.com>; Wed, 25 Jan 2023 12:45:49 +0000 (UTC)
+Received: from mail-ej1-f47.google.com (mail-ej1-f47.google.com
+ [209.85.218.47]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-443-otOIMFiNM2KvLm9Yw9Jkxg-1; Wed, 25 Jan 2023 07:37:34 -0500
-X-MC-Unique: otOIMFiNM2KvLm9Yw9Jkxg-1
-Received: by mail-ed1-f48.google.com with SMTP id w11so6320796edv.0
- for <dm-devel@redhat.com>; Wed, 25 Jan 2023 04:37:34 -0800 (PST)
+ us-mta-306-n0OUOygKMIeRp6Uht__nQQ-1; Wed, 25 Jan 2023 07:45:47 -0500
+X-MC-Unique: n0OUOygKMIeRp6Uht__nQQ-1
+Received: by mail-ej1-f47.google.com with SMTP id rl14so43988365ejb.2
+ for <dm-devel@redhat.com>; Wed, 25 Jan 2023 04:45:47 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=content-transfer-encoding:in-reply-to:from:references:cc:to
- :content-language:subject:user-agent:mime-version:date:message-id
+ h=content-transfer-encoding:in-reply-to:content-language:references
+ :cc:to:subject:from:user-agent:mime-version:date:message-id
  :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
  bh=rX1Q8Kt1RGuejmbFEpfQkMa7en73Y69GcmcaBxoXLk4=;
- b=LmOjtOCh0KwJoYu/ArZK33P2VeRh17f0ncHBdoMvqmoq2wFc9xf7WQyx//KVf4YVWw
- O8O2uA/Ul6UNOKubvxcyY3wBLJhhXOsnyVPsJ8ERMA4+jlf/TKiXkeJTWBdY7CNU0f4A
- z7uoy8ArYP11cq+IHw12O4hd+4beoiMZoX09xoA4RGGOA76IGPwIH7DwdwpmtdJzQUP0
- PtdJ96hiuN1xG/1Rshng9I1WWJAXk9eXj7pKvZk7DPMip7Lfwt6q4aEXZygSF+/tfyOx
- 4smBnlEzPZh4385aBVG20wdOacao5f9gPY1PNZ34Jk2HJ3MJMDNTSbzz1CsUxsSUoix5
- awXA==
-X-Gm-Message-State: AO0yUKXjC+odVFPwPpSjIH6b5uJk7myKPqecGnqjOQt1Qc5gAMHLruSQ
- UPM5wwbU11Y8iLQ9y3Mr3Xpihw==
-X-Google-Smtp-Source: AK7set9IdPf3OrPDtZ278KRDWeQ8ojy4B9CcwxHzQdXHfD5UVm3egAUutWYGGEs0wIA/0T9FarxE1A==
-X-Received: by 2002:a05:6402:1f05:b0:4a0:af87:b3ab with SMTP id
- b5-20020a0564021f0500b004a0af87b3abmr1333313edb.36.1674650253119; 
- Wed, 25 Jan 2023 04:37:33 -0800 (PST)
+ b=7iO3bcpO9r/s8VfXbkGFv+hAq/cpzBcfWUaEOOz9lDO7qy3VpISrJjEWEqf6LtxHS9
+ ptqZASOHcOUIGiCtjqKHo7nBkLQqmuAqkXdN4/s6Sr408XcPrLZp9Ij9smtiXuUg/chx
+ +SRWVzlHSdyJk1HNj2nfPC4cHsVXiZ2NBHyYx/6AtlmEhvJ2+GSuMpaGsqegA9alGe2V
+ WeR++hwW6nbqAjSLWVnrHPNzXiUcjUcZ8tXg50xp2uqCSe3lPc6id02VOrgqSpkohZlc
+ GQuU296tCH0QKtFh3Z4KZ/IAEsdQf9zaeAvjS2575k8nKcaoJNEjH1LLfTCPxT3OCzzu
+ NZpg==
+X-Gm-Message-State: AFqh2kpkzk35rjB9qu/Atydsma4KX891aWys/mrixOfv10D2hWaCzuT3
+ COy7KLZXc3BYglLFHGFTkS4QB4XqJZ00bA04
+X-Google-Smtp-Source: AMrXdXs7mBjfgUSW/l+8ej3fAW/ZFfN+dLLS2k6J87mrs9q5y+GrcoIiUo2N7/MjkY+H12IQK1NPZQ==
+X-Received: by 2002:a17:907:84ca:b0:82b:61db:92b8 with SMTP id
+ oh10-20020a17090784ca00b0082b61db92b8mr28772838ejc.57.1674650745778; 
+ Wed, 25 Jan 2023 04:45:45 -0800 (PST)
 Received: from [172.16.10.51] (193.92.101.37.dsl.dyn.forthnet.gr.
  [193.92.101.37]) by smtp.gmail.com with ESMTPSA id
- c41-20020a509fac000000b004a091244a8asm1278320edf.44.2023.01.25.04.37.31
+ o25-20020a170906359900b0086a2e31d1c1sm2300716ejb.28.2023.01.25.04.45.44
  (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Wed, 25 Jan 2023 04:37:32 -0800 (PST)
-Message-ID: <c0075cc7-7b34-0f96-6718-b8f1622a7c59@arrikto.com>
-Date: Wed, 25 Jan 2023 14:37:31 +0200
+ Wed, 25 Jan 2023 04:45:45 -0800 (PST)
+Message-ID: <b444b7e1-23e4-d54f-a8ea-8921cb271e30@arrikto.com>
+Date: Wed, 25 Jan 2023 14:45:43 +0200
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
  Thunderbird/102.6.0
+From: Nikos Tsironis <ntsironis@arrikto.com>
 To: Mike Snitzer <snitzer@redhat.com>
 References: <20230118122946.20435-1-ntsironis@arrikto.com>
  <Y8geIzYJ4dCeXpEI@redhat.com>
  <2f53c4ee-5bdf-e4e4-2dca-46ae4e22c312@arrikto.com>
  <Y87FHstzOQcHd5f9@redhat.com>
-From: Nikos Tsironis <ntsironis@arrikto.com>
 In-Reply-To: <Y87FHstzOQcHd5f9@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -99,7 +99,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 Subject: Re: [dm-devel] [PATCH 0/2] dm era: avoid deadlock when swapping
  table with dm-era target
 X-BeenThere: dm-devel@redhat.com
@@ -116,7 +116,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, snitzer@kernel.org, ejt@redhat.com, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
