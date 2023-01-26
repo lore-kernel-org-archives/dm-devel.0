@@ -4,87 +4,90 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E023CC54E94
-	for <dm-devel@archiver.kernel.org>; Thu, 26 Jan 2023 08:15:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 83C6DC54EED
+	for <dm-devel@archiver.kernel.org>; Thu, 26 Jan 2023 08:15:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1674720944;
+	s=mimecast20190719; t=1674720946;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=vEEZAMJGpeYQcwWutAMZ6FxjZxY+icpXMVS+GNiITMw=;
-	b=PZx567N/VsDUvl2Shzql5OoJvZ3uRc+7pl2IwG09V2v3EeDuft5jmmE8lABXdSsbpCWYA5
-	fwL2KJqH12BqNw/TGC6o55LRi/46z60nzYCmN1JLYaPhca6nJNFJ8dyVNeY9+jUxcOpweU
-	zdZgzMUtq0XoAfTzb9vK12YeX1Bv7hw=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=FqEbwpSSpGhQJISWXLON1ahQHgvG+0cS6yxnZfA6nbs=;
+	b=IEhtlQK3k2KeEe8JX9HUhao5Mv0jatl1NimTxPU7ev+Y5gp+Rlync0nkDGbolRpOMg/2mZ
+	5hZadepukLGnfcXXx1wJZnsQHY/eufq0INjc3+Qg+E19hyYlONTwVPXkJlZtCmf2QIho9l
+	GKRyUvHKq0CAyXAhKYVKgAwlNTqEke4=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-190-ru5a1rL2OGibr4i_HyKs9w-1; Thu, 26 Jan 2023 03:15:43 -0500
-X-MC-Unique: ru5a1rL2OGibr4i_HyKs9w-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-190-0q_B7rQCN8-5dL4tSNlRGQ-1; Thu, 26 Jan 2023 03:15:43 -0500
+X-MC-Unique: 0q_B7rQCN8-5dL4tSNlRGQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A93352801E40;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A9C1886C14B;
 	Thu, 26 Jan 2023 08:15:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4F71C2166B29;
-	Thu, 26 Jan 2023 08:15:39 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1B0EA40C200C;
+	Thu, 26 Jan 2023 08:15:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0646E194658D;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3121619465B5;
 	Thu, 26 Jan 2023 08:15:39 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4FB27194658C
- for <dm-devel@listman.corp.redhat.com>; Thu, 26 Jan 2023 03:40:59 +0000 (UTC)
+ ESMTP id 13140194658C
+ for <dm-devel@listman.corp.redhat.com>; Thu, 26 Jan 2023 03:41:03 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id EF007C15BAD; Thu, 26 Jan 2023 03:40:58 +0000 (UTC)
+ id E840B492C18; Thu, 26 Jan 2023 03:41:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E7667C15BA0
- for <dm-devel@redhat.com>; Thu, 26 Jan 2023 03:40:58 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C85783806101
- for <dm-devel@redhat.com>; Thu, 26 Jan 2023 03:40:58 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E04EA492C14
+ for <dm-devel@redhat.com>; Thu, 26 Jan 2023 03:41:02 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C570B101A52E
+ for <dm-devel@redhat.com>; Thu, 26 Jan 2023 03:41:02 +0000 (UTC)
 Received: from out3-smtp.messagingengine.com (out3-smtp.messagingengine.com
  [66.111.4.27]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-661-TdyVpsuYNAC1V_Maz19QjA-1; Wed, 25 Jan 2023 22:40:57 -0500
-X-MC-Unique: TdyVpsuYNAC1V_Maz19QjA-1
-Received: from compute6.internal (compute6.nyi.internal [10.202.2.47])
- by mailout.nyi.internal (Postfix) with ESMTP id D81D35C05B2;
- Wed, 25 Jan 2023 22:34:05 -0500 (EST)
+ us-mta-350-Fqnk6yJeOBKiwTmmMR6bWw-1; Wed, 25 Jan 2023 22:40:57 -0500
+X-MC-Unique: Fqnk6yJeOBKiwTmmMR6bWw-1
+Received: from compute5.internal (compute5.nyi.internal [10.202.2.45])
+ by mailout.nyi.internal (Postfix) with ESMTP id 443E25C05B6;
+ Wed, 25 Jan 2023 22:34:12 -0500 (EST)
 Received: from mailfrontend2 ([10.202.2.163])
- by compute6.internal (MEProxy); Wed, 25 Jan 2023 22:34:05 -0500
-X-ME-Sender: <xms:rfTRY6725xmw3M9_wy6VAcPGHbcrIDAAXALC_ezzqGgu8_uRhoPv0w>
- <xme:rfTRYz54wgPmc9J-m65mihdjNty8KrpH3dOxqxrzqbIl5I_4wleBtSzykLUzL999H
- yEK2Y9VkVevVew>
-X-ME-Received: <xmr:rfTRY5c-XeYocmJVDOF_vnw6pNbx_lwfvTcuwuxZ1xAZTtge5V4IEydC9RVAweE53XptqUbyW9xj>
+ by compute5.internal (MEProxy); Wed, 25 Jan 2023 22:34:12 -0500
+X-ME-Sender: <xms:tPTRYzwH5BuEHmVC0eMdTGBBHZMvxt9uWC_rqOGS_ycgsaVj53vQiQ>
+ <xme:tPTRY7QY3bnvHhI3rshGztUECyV2lnxUGYKP3bTTB1P8CT0b0uLuAcpcxQKuARE_B
+ AJKSl9rZB4DZCM>
+X-ME-Received: <xmr:tPTRY9WUpZzy3Z8Ck8htOkPkbtAbgBnETUbKfLGw8gZ6vwGJ1SKYiq7n2texQZKLlDNbwtPj-NZx>
 X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvhedruddvfedgheelucetufdoteggodetrfdotf
  fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
  uceurghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmne
- cujfgurhephffvvefufffkofggtgfgsehtkeertdertdejnecuhfhrohhmpeffvghmihcu
- ofgrrhhivgcuqfgsvghnohhurhcuoeguvghmihesihhnvhhishhisghlvghthhhinhhgsh
- hlrggsrdgtohhmqeenucggtffrrghtthgvrhhnpefhgefgieeitdeijeeguddtkefgteeg
- heehgeetkeevhfefgfduhedtveelgeeugeenucevlhhushhtvghrufhiiigvpedtnecurf
- grrhgrmhepmhgrihhlfhhrohhmpeguvghmihesihhnvhhishhisghlvghthhhinhhgshhl
- rggsrdgtohhm
-X-ME-Proxy: <xmx:rfTRY3K8BsaR6SikC5jT7-f3d9e22OHeqXhkgePMrLn0y58UnAVNCw>
- <xmx:rfTRY-JsiC-CmyH3JqmtndM5ovAjIocOp_H5Vnz5xbocvmIcvUB5Vw>
- <xmx:rfTRY4wEKKzvSMjPN6rg_jb98hKZEXW7biJaskmWaZ9ourLFDq6IKQ>
- <xmx:rfTRY9_6RGw9FBSqSFdBrKQEovNBIAL-_eHatj1IbfsXY2Q7MP1mdQ>
+ cujfgurhephffvvefufffkofgjfhgggfestdekredtredttdenucfhrhhomhepffgvmhhi
+ ucforghrihgvucfqsggvnhhouhhruceouggvmhhisehinhhvihhsihgslhgvthhhihhngh
+ hslhgrsgdrtghomheqnecuggftrfgrthhtvghrnhepjeffjefggfeugeduvedvjeekgfeh
+ gffhhfffjeetkeelueefffetfffhtdduheetnecuvehluhhsthgvrhfuihiivgeptdenuc
+ frrghrrghmpehmrghilhhfrhhomhepuggvmhhisehinhhvihhsihgslhgvthhhihhnghhs
+ lhgrsgdrtghomh
+X-ME-Proxy: <xmx:tPTRY9god6WZldkNb6zQxaW-zL3SwrJWz_pk8nteivz3n9Mg372ewQ>
+ <xmx:tPTRY1A40rWLm24WxN8wSZLeSpKTRKkmbS2avRGDKXaJ1MessXz1jw>
+ <xmx:tPTRY2J2wBOPbzFSk35mgosVTMij5PfJyCoi7AEB9vGO0sW2kh1BBQ>
+ <xmx:tPTRY0OGKPUER8o2RS25jDcq9Ina-GirRmaBNRGjT7lspzBd9a80CA>
 Feedback-ID: iac594737:Fastmail
 Received: by mail.messagingengine.com (Postfix) with ESMTPA; Wed,
- 25 Jan 2023 22:34:04 -0500 (EST)
+ 25 Jan 2023 22:34:11 -0500 (EST)
 From: Demi Marie Obenour <demi@invisiblethingslab.com>
-To: Jens Axboe <axboe@kernel.dk>,
- =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>
-Date: Wed, 25 Jan 2023 22:33:52 -0500
-Message-Id: <20230126033358.1880-1-demi@invisiblethingslab.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@redhat.com
+Date: Wed, 25 Jan 2023 22:33:54 -0500
+Message-Id: <20230126033358.1880-3-demi@invisiblethingslab.com>
+In-Reply-To: <20230126033358.1880-1-demi@invisiblethingslab.com>
+References: <20230126033358.1880-1-demi@invisiblethingslab.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -93,9 +96,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mailman-Approved-At: Thu, 26 Jan 2023 08:15:37 +0000
-Subject: [dm-devel] [RFC PATCH 0/7] Allow race-free block device handling
+Subject: [dm-devel] [RFC PATCH 2/7] Allow userspace to get an FD to a
+ newly-created DM device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -107,46 +111,157 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Juergen Gross <jgross@suse.com>,
+Cc: Demi Marie Obenour <demi@invisiblethingslab.com>,
  =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
- <marmarek@invisiblethingslab.com>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- Demi Marie Obenour <demi@invisiblethingslab.com>,
- xen-devel@lists.xenproject.org
+ <marmarek@invisiblethingslab.com>, linux-kernel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-VGhpcyB3b3JrIGFpbXMgdG8gYWxsb3cgdXNlcnNwYWNlIHRvIGNyZWF0ZSBhbmQgZGVzdHJveSBi
-bG9jayBkZXZpY2VzCmluIGEgcmFjZS1mcmVlIGFuZCBsZWFrLWZyZWUgd2F5LCBhbmQgdG8gYWxs
-b3cgdGhlbSB0byBiZSBleHBvc2VkIHRvCm90aGVyIFhlbiBWTXMgdmlhIGJsa2JhY2sgd2l0aG91
-dCBsZWFrcyBvciByYWNlcy4gIEl04oCZcyBtYXJrZWQgYXMgUkZDCmZvciBhIGZldyByZWFzb25z
-OgoKLSBUaGUgY29kZSBoYXMgYmVlbiBvbmx5IGxpZ2h0bHkgdGVzdGVkLiAgSXQgbWlnaHQgYmUg
-dW5zdGFibGUgb3IKICBpbnNlY3VyZS4KCi0gVGhlIERNX0RFVl9DUkVBVEUgaW9jdGwgZ2FpbnMg
-YSBuZXcgZmxhZy4gIFVua25vd24gZmxhZ3Mgd2VyZQogIHByZXZpb3VzbHkgaWdub3JlZCwgc28g
-dGhpcyBjb3VsZCB0aGVvcmV0aWNhbGx5IGJyZWFrIGJ1Z2d5IHVzZXJzcGFjZQogIHRvb2xzLgoK
-LSBJIGhhdmUgbm8gaWRlYSBpZiBJIGdvdCB0aGUgYmxvY2sgZGV2aWNlIHJlZmVyZW5jZSBjb3Vu
-dGluZyBhbmQKICBsb2NraW5nIGNvcnJlY3QuCgpEZW1pIE1hcmllIE9iZW5vdXIgKDcpOgogIGJs
-b2NrOiBTdXBwb3J0IGNyZWF0aW5nIGEgc3RydWN0IGZpbGUgZnJvbSBhIGJsb2NrIGRldmljZQog
-IEFsbG93IHVzZXJzcGFjZSB0byBnZXQgYW4gRkQgdG8gYSBuZXdseS1jcmVhdGVkIERNIGRldmlj
-ZQogIEltcGxlbWVudCBkaXNrc2VxIGNoZWNrcyBpbiBibGtiYWNrCiAgSW5jcmVtZW50IGRpc2tz
-ZXEgd2hlbiByZWxlYXNpbmcgYSBsb29wIGRldmljZQogIElmIGF1dG9jbGVhciBpcyBzZXQsIGRl
-bGV0ZSBhIG5vLWxvbmdlci11c2VkIGxvb3AgZGV2aWNlCiAgTWlub3IgYmxrYmFjayBjbGVhbnVw
-cwogIHhlbi9ibGtiYWNrOiBJbmZvcm0gdXNlcnNwYWNlIHRoYXQgZGV2aWNlIGhhcyBiZWVuIG9w
-ZW5lZAoKIGJsb2NrL2JkZXYuYyAgICAgICAgICAgICAgICAgICAgICAgIHwgIDc3ICsrKysrKysr
-KysrLS0KIGJsb2NrL2dlbmhkLmMgICAgICAgICAgICAgICAgICAgICAgIHwgICAxICsKIGRyaXZl
-cnMvYmxvY2svbG9vcC5jICAgICAgICAgICAgICAgIHwgIDE3ICsrLQogZHJpdmVycy9ibG9jay94
-ZW4tYmxrYmFjay9ibGtiYWNrLmMgfCAgIDggKy0KIGRyaXZlcnMvYmxvY2sveGVuLWJsa2JhY2sv
-eGVuYnVzLmMgIHwgMTcxICsrKysrKysrKysrKysrKysrKysrKystLS0tLS0KIGRyaXZlcnMvbWQv
-ZG0taW9jdGwuYyAgICAgICAgICAgICAgIHwgIDY3ICsrKysrKysrKy0tCiBpbmNsdWRlL2xpbnV4
-L2Jsa2Rldi5oICAgICAgICAgICAgICB8ICAgNSArCiBpbmNsdWRlL3VhcGkvbGludXgvZG0taW9j
-dGwuaCAgICAgICB8ICAxNiArKy0KIDggZmlsZXMgY2hhbmdlZCwgMjk4IGluc2VydGlvbnMoKyks
-IDY0IGRlbGV0aW9ucygtKQoKLS0gClNpbmNlcmVseSwKRGVtaSBNYXJpZSBPYmVub3VyIChzaGUv
-aGVyL2hlcnMpCkludmlzaWJsZSBUaGluZ3MgTGFiCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QK
-ZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xp
-c3RpbmZvL2RtLWRldmVsCg==
+This allows creating a device-mapper device, opening it, and setting it
+to be deleted when unused in a single atomic operation.
+
+Signed-off-by: Demi Marie Obenour <demi@invisiblethingslab.com>
+---
+ drivers/md/dm-ioctl.c         | 67 +++++++++++++++++++++++++++++------
+ include/uapi/linux/dm-ioctl.h | 16 ++++++++-
+ 2 files changed, 72 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index 36fc6ae4737a05ab53ab67a8ccee525cb5fda082..05438dedcd17b7cac470fcc5a9721d67daad4bfb 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -853,9 +853,21 @@ static void __dev_status(struct mapped_device *md, struct dm_ioctl *param)
+ 
+ static int dev_create(struct file *filp, struct dm_ioctl *param, size_t param_size)
+ {
+-	int r, m = DM_ANY_MINOR;
++	int r, m = DM_ANY_MINOR, fd;
+ 	struct mapped_device *md;
+ 
++	/* Do not allow unknown flags */
++	if (param->flags > (2 * DM_FILE_DESCRIPTOR_FLAG - 1))
++		return -EINVAL;
++
++	/*
++	 * Do not allow creating a device that would just be destroyed
++	 * before the ioctl returns.
++	 */
++	if ((param->flags & DM_DEFERRED_REMOVE) &&
++	    !(param->flags & DM_FILE_DESCRIPTOR_FLAG))
++		return -EINVAL;
++
+ 	r = check_name(param->name);
+ 	if (r)
+ 		return r;
+@@ -867,20 +879,55 @@ static int dev_create(struct file *filp, struct dm_ioctl *param, size_t param_si
+ 	if (r)
+ 		return r;
+ 
+-	r = dm_hash_insert(param->name, *param->uuid ? param->uuid : NULL, md);
+-	if (r) {
+-		dm_put(md);
+-		dm_destroy(md);
+-		return r;
+-	}
+-
+ 	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
+ 
++	r = dm_hash_insert(param->name, *param->uuid ? param->uuid : NULL, md);
++	if (r)
++		goto out_put;
++
++	if (param->flags & DM_FILE_DESCRIPTOR_FLAG) {
++		struct block_device *bdev = dm_disk(md)->part0;
++		struct file *file;
++
++		fd = get_unused_fd_flags(O_RDWR | O_CLOEXEC);
++		if (fd < 0) {
++			r = fd;
++			goto out_put;
++		}
++
++		file = blkdev_get_file(bdev, O_RDWR|O_CLOEXEC, NULL);
++		if (IS_ERR(file)) {
++			r = PTR_ERR(file);
++			goto out_put_fd;
++		}
++
++		/*
++		 * Simulate opening the device.  The other checks in
++		 * dm_blk_open() are not necessary becuase we have a reference
++		 * to the `struct md`.
++		 */
++		atomic_inc(&md->open_count);
++		fd_install(fd, file);
++		param->file_descriptor = fd;
++	}
++
++	/*
++	 * If userspace requests it, automatically delete the device
++	 * when it is no longer used
++	 */
++	if (param->flags & DM_DEFERRED_REMOVE)
++		set_bit(DMF_DEFERRED_REMOVE, &md->flags);
++
+ 	__dev_status(md, param);
+-
+ 	dm_put(md);
+-
+ 	return 0;
++
++out_put_fd:
++	put_unused_fd(fd);
++out_put:
++	dm_put(md);
++	dm_destroy(md);
++	return r;
+ }
+ 
+ /*
+diff --git a/include/uapi/linux/dm-ioctl.h b/include/uapi/linux/dm-ioctl.h
+index 7edf335778bae1cb206f6dd4d44e9cf7fb9da35c..30a6260ed7e06ff71fad1675dd4e7f9325d752a6 100644
+--- a/include/uapi/linux/dm-ioctl.h
++++ b/include/uapi/linux/dm-ioctl.h
+@@ -136,7 +136,13 @@ struct dm_ioctl {
+ 	 * For output, the ioctls return the event number, not the cookie.
+ 	 */
+ 	__u32 event_nr;      	/* in/out */
+-	__u32 padding;
++
++	union {
++		/* Padding for named devices */
++		__u32 padding;
++		/* For anonymous devices, this is a file descriptor. */
++		__u32 file_descriptor;
++	};
+ 
+ 	__u64 dev;		/* in/out */
+ 
+@@ -382,4 +388,12 @@ enum {
+  */
+ #define DM_IMA_MEASUREMENT_FLAG	(1 << 19) /* In */
+ 
++/*
++ * If set in a DM_DEV_CREATE ioctl(), sets the file_descriptor field
++ * to a valid file descriptor.  This can be combined with DM_DEFERRED_REMOVE
++ * to cause the device to be destroyed when the file descriptor is closed
++ * and is otherwise unused.
++ */
++#define DM_FILE_DESCRIPTOR_FLAG		(1 << 20) /* In */
++
+ #endif				/* _LINUX_DM_IOCTL_H */
+-- 
+Sincerely,
+Demi Marie Obenour (she/her/hers)
+Invisible Things Lab
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
