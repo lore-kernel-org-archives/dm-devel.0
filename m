@@ -4,7 +4,7 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8AFAFC636CC
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 90299C636CD
 	for <dm-devel@archiver.kernel.org>; Tue, 31 Jan 2023 07:53:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1675151585;
@@ -14,55 +14,55 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Vp2Ml6RClQSLRJ/vEb7UdsQZLfjS+vPudC/7AFsS92Y=;
-	b=eXoBCOOSGZlL1adv1p3IsZeqylLbobDbZOyQAsVxJEGQmswkehKrToKfRR8+tmWe7mu5su
-	XDicJwuM3lSVDFr2izVW0rFitd9pfU0phul9KZc36S4EdlelBN6XUOx7un9uZ7N5iyG3G9
-	u8+c0GgjR4HTfSJrqM8A2WrmRaW2aUc=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=gXtEbLwuCSbzD2Yy5mWQJB4Wwm1Lbytk/PTN8hsqXdI=;
+	b=GwyVquZAYf58PogwxqKKRSzG4oLZd5D+HE++Z1G9LhEOOpoAryYNA6MFfR0Kyndidtgvds
+	Ilw7CAg7EC4Pmx6V60aknZjglWVuXaMVL5U1D8kmGGXnXuhCYss/Y4eTFIrchXplvizBJS
+	SagmLHTmjmJar2XQfXCOZN0ayO2AUt0=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-513-v9Ho-pPYP42HtvRy8-Kmqg-1; Tue, 31 Jan 2023 02:53:02 -0500
-X-MC-Unique: v9Ho-pPYP42HtvRy8-Kmqg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-169-f3CwaeRYNaS0ugE-2xTeqg-1; Tue, 31 Jan 2023 02:53:02 -0500
+X-MC-Unique: f3CwaeRYNaS0ugE-2xTeqg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E31763C0D1B3;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C6DA8027ED;
 	Tue, 31 Jan 2023 07:52:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CE0772166B41;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 48B2B2026D4B;
 	Tue, 31 Jan 2023 07:52:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9C3A819465B1;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6E2BD1946589;
 	Tue, 31 Jan 2023 07:52:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7A4CC1946587
- for <dm-devel@listman.corp.redhat.com>; Mon, 30 Jan 2023 23:06:42 +0000 (UTC)
+ ESMTP id E388D19465B2
+ for <dm-devel@listman.corp.redhat.com>; Mon, 30 Jan 2023 23:06:41 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 70E36492B05; Mon, 30 Jan 2023 23:06:42 +0000 (UTC)
+ id CA9F4422AE; Mon, 30 Jan 2023 23:06:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 69DEA492B06
- for <dm-devel@redhat.com>; Mon, 30 Jan 2023 23:06:42 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C30F0175AD
+ for <dm-devel@redhat.com>; Mon, 30 Jan 2023 23:06:41 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
  bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4E3FB85A588
- for <dm-devel@redhat.com>; Mon, 30 Jan 2023 23:06:42 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A30F6101A521
+ for <dm-devel@redhat.com>; Mon, 30 Jan 2023 23:06:41 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-547-6K5gYtbTM662hjhIj0o5Ug-1; Mon,
- 30 Jan 2023 18:06:36 -0500
-X-MC-Unique: 6K5gYtbTM662hjhIj0o5Ug-1
+ relay.mimecast.com with ESMTP id us-mta-361-1ipI1XseMbqehrmPbpOW2A-1; Mon,
+ 30 Jan 2023 18:06:38 -0500
+X-MC-Unique: 1ipI1XseMbqehrmPbpOW2A-1
 Received: by linux.microsoft.com (Postfix, from userid 1052)
- id 91C1820EA209; Mon, 30 Jan 2023 14:58:42 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 91C1820EA209
+ id 5ADFD20EA1F6; Mon, 30 Jan 2023 14:58:42 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 5ADFD20EA1F6
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
  tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
  snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
-Date: Mon, 30 Jan 2023 14:57:27 -0800
-Message-Id: <1675119451-23180-13-git-send-email-wufan@linux.microsoft.com>
+Date: Mon, 30 Jan 2023 14:57:23 -0800
+Message-Id: <1675119451-23180-9-git-send-email-wufan@linux.microsoft.com>
 In-Reply-To: <1675119451-23180-1-git-send-email-wufan@linux.microsoft.com>
 References: <1675119451-23180-1-git-send-email-wufan@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -72,10 +72,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-X-Mailman-Approved-At: Tue, 31 Jan 2023 07:47:17 +0000
-Subject: [dm-devel] [RFC PATCH v9 12/16] fsverity: consume builtin signature
- via LSM hook
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Mailman-Approved-At: Tue, 31 Jan 2023 07:47:16 +0000
+Subject: [dm-devel] [RFC PATCH v9 08/16] ipe: add permissive toggle
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -96,137 +95,343 @@ Cc: Fan Wu <wufan@linux.microsoft.com>, dm-devel@redhat.com,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-fsverity represents a mechanism to support both integrity and
-authenticity protection of a file, supporting both signed and unsigned
-digests.
+From: Deven Bowers <deven.desai@linux.microsoft.com>
 
-An LSM which controls access to a resource based on authenticity and
-integrity of said resource, can then use this data to make an informed
-decision on the authorization (provided by the LSM's policy) of said
-claim.
+IPE, like SELinux, supports a permissive mode. This mode allows policy
+authors to test and evaluate IPE policy without it effecting their
+programs. When the mode is changed, a 1404 AUDIT_MAC_STATUS
+be reported.
 
-This effectively allows the extension of a policy enforcement layer in
-LSM for fsverity, allowing for more granular control of how a
-particular authenticity claim can be used. For example, "all (built-in)
-signed fsverity files should be allowed to execute, but only these
-hashes are allowed to be loaded as kernel modules".
+This patch adds the following audit records:
 
-This enforcement must be done in kernel space, as a userspace only
-solution would fail a simple litmus test: Download a self-contained
-malicious binary that never touches the userspace stack. This
-binary would still be able to execute.
+  audit: MAC_STATUS permissive=1 auid=4294967295 ses=4294967295 lsm=ipe
+    res=1
+  audit: MAC_STATUS permissive=0 auid=4294967295 ses=4294967295 lsm=ipe
+    res=1
 
-Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+These records are emitted within the following events:
+
+  audit: MAC_STATUS permissive=1 auid=4294967295 ses=4294967295 lsm=ipe
+    res=1
+  audit[185]: SYSCALL arch=c000003e syscall=1 success=yes exit=2 a0=1
+    a1=56308bb3ecc0 a2=2 a3=7f290fdc53e0 items=0 ppid=183 pid=185
+    auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0
+    tty=pts0 ses=4294967295 comm="bash" exe="/usr/bin/bash" key=(null)
+  audit: PROCTITLE proctitle="-bash"
+  audit: MAC_STATUS permissive=0 auid=4294967295 ses=4294967295 lsm=ipe
+    res=1
+  audit[185]: SYSCALL arch=c000003e syscall=1 success=yes exit=2 a0=1
+    a1=56308bb3ecc0 a2=2 a3=7f290fdc53e0 items=0 ppid=183 pid=185
+    auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0
+    tty=pts0 ses=4294967295 comm="bash" exe="/usr/bin/bash" key=(null)
+  audit: PROCTITLE proctitle="-bash"
+
+  Implying user used bash to toggle the switch.
+
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+
 ---
-v1-v6:
-  + Not present
+v2:
+  + Split evaluation loop, access control hooks,
+    and evaluation loop from policy parser and userspace
+    interface to pass mailing list character limit
+
+v3:
+  + Move ipe_load_properties to patch 04.
+  + Remove useless 0-initializations
+  + Prefix extern variables with ipe_
+  + Remove kernel module parameters, as these are
+    exposed through sysctls.
+  + Add more prose to the IPE base config option
+    help text.
+  + Use GFP_KERNEL for audit_log_start.
+  + Remove unnecessary caching system.
+  + Remove comments from headers
+  + Use rcu_access_pointer for rcu-pointer null check
+  + Remove usage of reqprot; use prot only.
+  + Move policy load and activation audit event to 03/12
+
+v4:
+  + Remove sysctls in favor of securityfs nodes
+  + Re-add kernel module parameters, as these are now
+    exposed through securityfs.
+  + Refactor property audit loop to a separate function.
+
+v5:
+  + fix minor grammatical errors
+  + do not group rule by curly-brace in audit record,
+    reconstruct the exact rule.
+
+v6:
+  + No changes
 
 v7:
-  Introduced
+  + Further split lsm creation into a separate commit from the
+    evaluation loop and audit system, for easier review.
+  + Propogating changes to support the new ipe_context structure in the
+    evaluation loop.
+  + Split out permissive functionality into a separate patch for easier
+    review.
+  + Remove permissive switch compile-time configuration option - this
+    is trivial to add later.
 
 v8:
-  + Split fs/verity/ changes and security/ changes into separate patches
-  + Change signature of fsverity_create_info to accept non-const inode
-  + Change signature of fsverity_verify_signature to accept non-const inode
-  + Don't cast-away const from inode.
-  + Digest functionality dropped in favor of:
-    ("fs-verity: define a function to return the integrity protected
-      file digest")
-  + Reworded commit description and title to match changes.
-  + Fix a bug wherein no LSM implements the particular fsverity @name
-    (or LSM is disabled), and returns -EOPNOTSUPP, causing errors.
+  + Remove "IPE" prefix from permissive audit record
+  + align fields to the linux-audit field dictionary. This causes the
+    following fields to change:
+      enforce -> permissive
+
+  + Remove duplicated information correlated with syscall record, that
+    will always be present in the audit event.
+  + Change audit types:
+    + AUDIT_TRUST_STATUS -> AUDIT_MAC_STATUS
+      + There is no significant difference in meaning between
+        these types.
 
 v9:
-  + No changes
+  + Clean up ipe_context related code
 ---
- fs/verity/fsverity_private.h |  2 +-
- fs/verity/open.c             | 13 ++++++++++++-
- fs/verity/signature.c        |  1 +
- include/linux/fsverity.h     |  2 ++
- 4 files changed, 16 insertions(+), 2 deletions(-)
+ security/ipe/audit.c | 36 +++++++++++++++++++++++
+ security/ipe/audit.h |  1 +
+ security/ipe/eval.c  |  9 ++++++
+ security/ipe/eval.h  |  1 +
+ security/ipe/fs.c    | 69 ++++++++++++++++++++++++++++++++++++++++++--
+ 5 files changed, 114 insertions(+), 2 deletions(-)
 
-diff --git a/fs/verity/fsverity_private.h b/fs/verity/fsverity_private.h
-index c7fcb855e068..3194a1f4a705 100644
---- a/fs/verity/fsverity_private.h
-+++ b/fs/verity/fsverity_private.h
-@@ -117,7 +117,7 @@ int fsverity_init_merkle_tree_params(struct merkle_tree_params *params,
- 				     unsigned int log_blocksize,
- 				     const u8 *salt, size_t salt_size);
+diff --git a/security/ipe/audit.c b/security/ipe/audit.c
+index 295e9f9f5146..ff74026a595f 100644
+--- a/security/ipe/audit.c
++++ b/security/ipe/audit.c
+@@ -194,3 +194,39 @@ void ipe_audit_policy_load(const struct ipe_policy *const p)
  
--struct fsverity_info *fsverity_create_info(const struct inode *inode,
-+struct fsverity_info *fsverity_create_info(struct inode *inode,
- 					   struct fsverity_descriptor *desc);
- 
- void fsverity_set_info(struct inode *inode, struct fsverity_info *vi);
-diff --git a/fs/verity/open.c b/fs/verity/open.c
-index 81ff94442f7b..7e6fa52c0e9c 100644
---- a/fs/verity/open.c
-+++ b/fs/verity/open.c
-@@ -7,7 +7,9 @@
- 
- #include "fsverity_private.h"
- 
-+#include <linux/security.h>
- #include <linux/slab.h>
-+#include <crypto/public_key.h>
- 
- static struct kmem_cache *fsverity_info_cachep;
- 
-@@ -146,7 +148,7 @@ static int compute_file_digest(struct fsverity_hash_alg *hash_alg,
-  * appended signature), and check the signature if present.  The
-  * fsverity_descriptor must have already undergone basic validation.
-  */
--struct fsverity_info *fsverity_create_info(const struct inode *inode,
-+struct fsverity_info *fsverity_create_info(struct inode *inode,
- 					   struct fsverity_descriptor *desc)
- {
- 	struct fsverity_info *vi;
-@@ -182,6 +184,15 @@ struct fsverity_info *fsverity_create_info(const struct inode *inode,
- 
- 	err = fsverity_verify_signature(vi, desc->signature,
- 					le32_to_cpu(desc->sig_size));
-+	if (err) {
-+		fsverity_err(inode, "Error %d verifying signature", err);
-+		goto out;
-+	}
+ 	audit_log_end(ab);
+ }
 +
-+	err = security_inode_setsecurity(inode, FS_VERITY_INODE_SEC_NAME, desc->signature,
-+					 le32_to_cpu(desc->sig_size), 0);
-+	if (err == -EOPNOTSUPP)
-+		err = 0;
++/**
++ * ipe_audit_enforce - Audit a change in IPE's enforcement state.
++ */
++void ipe_audit_enforce(void)
++{
++	struct audit_buffer *ab;
++
++	ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_MAC_STATUS);
++	if (!ab)
++		return;
++
++	audit_log_format(ab, "permissive=%d", !READ_ONCE(enforce));
++	audit_log_format(ab, " auid=%u ses=%u lsm=ipe res=1",
++			 from_kuid(&init_user_ns, audit_get_loginuid(current)),
++			 audit_get_sessionid(current));
++
++	audit_log_end(ab);
++}
++
++/**
++ * emit_enforcement - Emit the enforcement state of IPE started with.
++ *
++ * Return:
++ * 0 - Always
++ */
++static int emit_enforcement(void)
++{
++	if (!ipe_enabled)
++		return -EOPNOTSUPP;
++
++	ipe_audit_enforce();
++	return 0;
++}
++
++late_initcall(emit_enforcement);
+diff --git a/security/ipe/audit.h b/security/ipe/audit.h
+index 2e9b99737f97..4c676ed32846 100644
+--- a/security/ipe/audit.h
++++ b/security/ipe/audit.h
+@@ -14,5 +14,6 @@ void ipe_audit_match(const struct ipe_eval_ctx *const ctx,
+ void ipe_audit_policy_load(const struct ipe_policy *const p);
+ void ipe_audit_policy_activation(const struct ipe_policy *const op,
+ 				 const struct ipe_policy *const np);
++void ipe_audit_enforce(void);
+ 
+ #endif /* IPE_AUDIT_H */
+diff --git a/security/ipe/eval.c b/security/ipe/eval.c
+index d713808cad9c..499314554b1d 100644
+--- a/security/ipe/eval.c
++++ b/security/ipe/eval.c
+@@ -20,6 +20,7 @@
+ 
+ struct ipe_policy __rcu *ipe_active_policy;
+ bool success_audit;
++bool enforce = true;
+ 
+ static struct super_block *pinned_sb;
+ static DEFINE_SPINLOCK(pin_lock);
+@@ -119,6 +120,7 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
+ {
+ 	int rc = 0;
+ 	bool match = false;
++	bool enforcing = true;
+ 	enum ipe_action_type action;
+ 	enum ipe_match match_type;
+ 	struct ipe_policy *pol = NULL;
+@@ -133,6 +135,8 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
+ 	if (!pol)
+ 		goto out;
+ 
++	enforcing = READ_ONCE(enforce);
++
+ 	if (ctx->op == ipe_op_max) {
+ 		action = pol->parsed->global_default_action;
+ 		match_type = ipe_match_global;
+@@ -168,6 +172,9 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
+ 	if (action == ipe_action_deny)
+ 		rc = -EACCES;
+ 
++	if (!enforcing)
++		rc = 0;
++
  out:
- 	if (err) {
- 		fsverity_free_info(vi);
-diff --git a/fs/verity/signature.c b/fs/verity/signature.c
-index 143a530a8008..5d7b9496f9c4 100644
---- a/fs/verity/signature.c
-+++ b/fs/verity/signature.c
-@@ -9,6 +9,7 @@
+ 	return rc;
+ }
+@@ -198,3 +205,5 @@ void ipe_invalidate_pinned_sb(const struct super_block *mnt_sb)
  
- #include <linux/cred.h>
- #include <linux/key.h>
-+#include <linux/security.h>
- #include <linux/slab.h>
- #include <linux/verification.h>
+ module_param(success_audit, bool, 0400);
+ MODULE_PARM_DESC(success_audit, "Start IPE with success auditing enabled");
++module_param(enforce, bool, 0400);
++MODULE_PARM_DESC(enforce, "Start IPE in enforce or permissive mode");
+diff --git a/security/ipe/eval.h b/security/ipe/eval.h
+index b83730d0b5ae..64369c3b8cf9 100644
+--- a/security/ipe/eval.h
++++ b/security/ipe/eval.h
+@@ -14,6 +14,7 @@
  
-diff --git a/include/linux/fsverity.h b/include/linux/fsverity.h
-index 40f14e5fed9d..29e9888287ba 100644
---- a/include/linux/fsverity.h
-+++ b/include/linux/fsverity.h
-@@ -254,4 +254,6 @@ static inline bool fsverity_active(const struct inode *inode)
- 	return fsverity_get_info(inode) != NULL;
+ extern struct ipe_policy __rcu *ipe_active_policy;
+ extern bool success_audit;
++extern bool enforce;
+ 
+ struct ipe_eval_ctx {
+ 	enum ipe_op_type op;
+diff --git a/security/ipe/fs.c b/security/ipe/fs.c
+index c99616f36f32..bbee17b59b1b 100644
+--- a/security/ipe/fs.c
++++ b/security/ipe/fs.c
+@@ -15,6 +15,7 @@ static struct dentry *np __ro_after_init;
+ static struct dentry *root __ro_after_init;
+ struct dentry *policy_root __ro_after_init;
+ static struct dentry *audit_node __ro_after_init;
++static struct dentry *enforce_node __ro_after_init;
+ 
+ /**
+  * setaudit - Write handler for the securityfs node, "ipe/success_audit"
+@@ -48,8 +49,8 @@ static ssize_t setaudit(struct file *f, const char __user *data,
+ /**
+  * getaudit - Read handler for the securityfs node, "ipe/success_audit"
+  * @f: Supplies a file structure representing the securityfs node.
+- * @data: Supplies a buffer passed to the read syscall
+- * @len: Supplies the length of @data
++ * @data: Supplies a buffer passed to the read syscall.
++ * @len: Supplies the length of @data.
+  * @offset: unused.
+  *
+  * Return:
+@@ -66,6 +67,57 @@ static ssize_t getaudit(struct file *f, char __user *data,
+ 	return simple_read_from_buffer(data, len, offset, result, 1);
  }
  
-+#define FS_VERITY_INODE_SEC_NAME "fsverity.inode-info"
++/**
++ * setenforce - Write handler for the securityfs node, "ipe/enforce"
++ * @f: Supplies a file structure representing the securityfs node.
++ * @data: Supplies a buffer passed to the write syscall.
++ * @len: Supplies the length of @data.
++ * @offset: unused.
++ *
++ * Return:
++ * * >0	- Success, Length of buffer written
++ * * <0	- Error
++ */
++static ssize_t setenforce(struct file *f, const char __user *data,
++			  size_t len, loff_t *offset)
++{
++	int rc = 0;
++	bool value;
 +
- #endif	/* _LINUX_FSVERITY_H */
++	if (!file_ns_capable(f, &init_user_ns, CAP_MAC_ADMIN))
++		return -EPERM;
++
++	rc = kstrtobool_from_user(data, len, &value);
++	if (rc)
++		return rc;
++
++	WRITE_ONCE(enforce, value);
++	ipe_audit_enforce();
++
++	return len;
++}
++
++/**
++ * getenforce - Read handler for the securityfs node, "ipe/enforce"
++ * @f: Supplies a file structure representing the securityfs node.
++ * @data: Supplies a buffer passed to the read syscall.
++ * @len: Supplies the length of @data.
++ * @offset: unused.
++ *
++ * Return:
++ * * >0	- Success, Length of buffer written
++ * * <0	- Error
++ */
++static ssize_t getenforce(struct file *f, char __user *data,
++			  size_t len, loff_t *offset)
++{
++	const char *result;
++
++	result = ((READ_ONCE(enforce)) ? "1" : "0");
++
++	return simple_read_from_buffer(data, len, offset, result, 1);
++}
++
+ /**
+  * new_policy - Write handler for the securityfs node, "ipe/new_policy".
+  * @f: Supplies a file structure representing the securityfs node.
+@@ -118,6 +170,11 @@ static const struct file_operations audit_fops = {
+ 	.read = getaudit,
+ };
+ 
++static const struct file_operations enforce_fops = {
++	.write = setenforce,
++	.read = getenforce,
++};
++
+ /**
+  * ipe_init_securityfs - Initialize IPE's securityfs tree at fsinit.
+  *
+@@ -151,6 +208,13 @@ static int __init ipe_init_securityfs(void)
+ 		goto err;
+ 	}
+ 
++	enforce_node = securityfs_create_file("enforce", 0600, root, NULL,
++					      &enforce_fops);
++	if (IS_ERR(enforce_node)) {
++		rc = PTR_ERR(enforce_node);
++		goto err;
++	}
++
+ 	policy_root = securityfs_create_dir("policies", root);
+ 	if (IS_ERR(policy_root)) {
+ 		rc = PTR_ERR(policy_root);
+@@ -162,6 +226,7 @@ static int __init ipe_init_securityfs(void)
+ 	securityfs_remove(np);
+ 	securityfs_remove(root);
+ 	securityfs_remove(audit_node);
++	securityfs_remove(enforce_node);
+ 	securityfs_remove(policy_root);
+ 	return rc;
+ }
 -- 
 2.39.0
 
