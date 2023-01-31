@@ -1,10 +1,10 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AE9BBC6379F
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6E9CAC05027
 	for <dm-devel@archiver.kernel.org>; Wed,  1 Feb 2023 08:04:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1675238642;
@@ -14,95 +14,52 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=5HH7yMomEJjaTXmECw0LkxaOh5kWd9YZe9suvjMkKBY=;
-	b=RnY/h/vWCHAl8ABQ+iw9rd6Ia2+vIAYXtzWWVBoCmxCIqtS1gVlPsHoLLGYTZ4c6fyIcZN
-	Kjs2JuuSTIhyr70a+Z3vt9Y3djHB1VeRg1MdlHVFG7MIYX1yfwsIPDJXr9TzYzGdFYnIr0
-	gmuggiPaBd3hVb8UlUQ0GOtGt1MxfhA=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=97WEl/v9TEQS21nqkQ5F98dGRyofgNt/SnIv+GL+hUE=;
+	b=HtAzl4D7PvsLVJjYUsbnMzMaLsTYclsutKAN6zmZVzng52WICqTrWr7HvRO/0ONLz4VdNf
+	v6z9ncMtURJMmlY+9Ln6kwyT1Eikg4/kzDu/QmYaBCwM5ZZU1z6ROPVnfzVoz1ioabgyPh
+	iND9mRoJVu6OGGALCmzmCy8f16iQQvw=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-92-J0DEFalFMtuFwVCKXI-jHA-1; Wed, 01 Feb 2023 03:03:59 -0500
-X-MC-Unique: J0DEFalFMtuFwVCKXI-jHA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-659-hx_daVMAMoOP4K_Es8qQXg-1; Wed, 01 Feb 2023 03:03:59 -0500
+X-MC-Unique: hx_daVMAMoOP4K_Es8qQXg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 34195100DEDC;
-	Wed,  1 Feb 2023 08:03:54 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 66C503C10695;
+	Wed,  1 Feb 2023 08:03:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1C279140EBF6;
-	Wed,  1 Feb 2023 08:03:54 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 51BD2C15BAE;
+	Wed,  1 Feb 2023 08:03:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5CC231946A4C;
-	Wed,  1 Feb 2023 08:03:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 35C3D1946595;
+	Wed,  1 Feb 2023 08:03:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 273AF1946587
- for <dm-devel@listman.corp.redhat.com>; Tue, 31 Jan 2023 13:22:51 +0000 (UTC)
+ ESMTP id 2696F1946587
+ for <dm-devel@listman.corp.redhat.com>; Tue, 31 Jan 2023 17:10:59 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 16BC1C15BAD; Tue, 31 Jan 2023 13:22:51 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0F035C15BAE
- for <dm-devel@redhat.com>; Tue, 31 Jan 2023 13:22:51 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E0A0085CBE5
- for <dm-devel@redhat.com>; Tue, 31 Jan 2023 13:22:50 +0000 (UTC)
-Received: from frasgout11.his.huawei.com (frasgout11.his.huawei.com
- [14.137.139.23]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-518-OF8vcuGgN5GozNlHFQnNpQ-1; Tue, 31 Jan 2023 08:22:47 -0500
-X-MC-Unique: OF8vcuGgN5GozNlHFQnNpQ-1
-Received: from mail02.huawei.com (unknown [172.18.147.228])
- by frasgout11.his.huawei.com (SkyGuard) with ESMTP id 4P5lrY4sTvz9v7gS;
- Tue, 31 Jan 2023 21:14:37 +0800 (CST)
-Received: from roberto-ThinkStation-P620 (unknown [10.204.63.22])
- by APP1 (Coremail) with SMTP id LxC2BwAnqQQDFtlj3RPhAA--.10866S2;
- Tue, 31 Jan 2023 14:22:23 +0100 (CET)
-Message-ID: <4f029a41d80d883d9b4729cbc85211955c9efe8e.camel@huaweicloud.com>
-From: Roberto Sassu <roberto.sassu@huaweicloud.com>
-To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
- jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, 
- axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com, 
- paul@paul-moore.com
-Date: Tue, 31 Jan 2023 14:22:01 +0100
-In-Reply-To: <1675119451-23180-11-git-send-email-wufan@linux.microsoft.com>
+ id 092A8112132E; Tue, 31 Jan 2023 17:10:59 +0000 (UTC)
+Received: from x2.localnet (unknown [10.22.17.134])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 27CAD112132C;
+ Tue, 31 Jan 2023 17:10:57 +0000 (UTC)
+From: Steve Grubb <sgrubb@redhat.com>
+To: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com, 
+ tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
+ snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com,
+ linux-audit@redhat.com
+Date: Tue, 31 Jan 2023 12:10:56 -0500
+Message-ID: <3723852.kQq0lBPeGt@x2>
+Organization: Red Hat
+In-Reply-To: <1675119451-23180-8-git-send-email-wufan@linux.microsoft.com>
 References: <1675119451-23180-1-git-send-email-wufan@linux.microsoft.com>
- <1675119451-23180-11-git-send-email-wufan@linux.microsoft.com>
-User-Agent: Evolution 3.36.5-0ubuntu1
+ <1675119451-23180-8-git-send-email-wufan@linux.microsoft.com>
 MIME-Version: 1.0
-X-CM-TRANSID: LxC2BwAnqQQDFtlj3RPhAA--.10866S2
-X-Coremail-Antispam: 1UD129KBjvJXoW3WrW5KF1xuw43XrWUCF1Utrb_yoWfGw4UpF
- Wq9Fy5KrW5JF47G3WxAF129F4Yy340kry7Kry29w18uF1ktw10q3yvyrW7ZrWxAr97JFyI
- gFs7Gr45ur1qy3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
- 9KBjDU0xBIdaVrnRJUUUkFb4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
- 6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
- vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Jr0_JF4l84ACjcxK6xIIjxv20xvEc7Cj
- xVAFwI0_Gr0_Cr1l84ACjcxK6I8E87Iv67AKxVW8JVWxJwA2z4x0Y4vEx4A2jsIEc7CjxV
- AFwI0_Gr1j6F4UJwAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
- 6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
- Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxAIw28IcxkI
- 7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxV
- Cjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY
- 6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6x
- AIw20EY4v20xvaj40_Wr1j6rW3Jr1lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280
- aVCY1x0267AKxVW8Jr0_Cr1UYxBIdaVFxhVjvjDU0xZFpf9x07UZ18PUUUUU=
-X-CM-SenderInfo: purev21wro2thvvxqx5xdzvxpfor3voofrz/1tbiAgAOBF1jj4RYzQAAso
-X-CFilter-Loop: Reflected
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mailman-Approved-At: Wed, 01 Feb 2023 08:03:52 +0000
-Subject: Re: [dm-devel] [RFC PATCH v9 10/16] dm-verity: consume root hash
- digest and signature data via LSM hook
+Subject: Re: [dm-devel] [RFC PATCH v9 07/16] uapi|audit|ipe: add ipe
+ auditing support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -114,271 +71,782 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
+Cc: linux-fscrypt@vger.kernel.org, linux-doc@vger.kernel.org,
  Deven Bowers <deven.desai@linux.microsoft.com>, roberto.sassu@huawei.com,
- linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, linux-fscrypt@vger.kernel.org,
+ dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
+ linux-security-module@vger.kernel.org, Fan Wu <wufan@linux.microsoft.com>,
  linux-audit@redhat.com, linux-integrity@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, 2023-01-30 at 14:57 -0800, Fan Wu wrote:
+Hello,
+
+On Monday, January 30, 2023 5:57:22 PM EST Fan Wu wrote:
 > From: Deven Bowers <deven.desai@linux.microsoft.com>
 > 
-> dm-verity provides a strong guarantee of a block device's integrity. As
-> a generic way to check the integrity of a block device, it provides
-> those integrity guarantees to its higher layers, including the filesystem
-> level.
-
-I think you could reuse most of is_trusted_verity_target(), in
-particular dm_verity_get_root_digest().
-
-And probably, the previous patch is not necessary.
-
-Roberto
-
-> An LSM that control access to a resource on the system based on the
-> available integrity claims can use this transitive property of
-> dm-verity, by querying the underlying block_device of a particular
-> file.
+> Users of IPE require a way to identify when and why an operation fails,
+> allowing them to both respond to violations of policy and be notified
+> of potentially malicious actions on their systens with respect to IPE
+> itself.
 > 
-> The digest and signature information need to be stored in the block
-> device to fulfill the next requirement of authorization via LSM policy.
-> This will enable the LSM  to perform revocation of devices that are still
-> mounted, prohibiting execution of files that are no longer authorized
-> by the LSM in question.
+> The new 1420 audit, AUDIT_IPE_ACCESS indicates the result of a policy
+> evaulation of a resource. The other two events, AUDIT_MAC_POLICY_LOAD,
+> and AUDIT_MAC_CONFIG_CHANGE represent a new policy was loaded into the
+> kernel and the currently active policy changed, respectively.
+
+Typically when you reuse an existing record type, it is expected to maintain 
+the same fields in the same order. Also, it is expect that fields that are 
+common across diferent records have the same meaning. To aid in this, we have 
+a field dictionary here:
+
+https://github.com/linux-audit/audit-documentation/blob/main/specs/fields/
+field-dictionary.csv
+
+For example, dev is expected to be 2 hex numbers separated by a colon which 
+are the device major and minor numbers. But down a couple lines from here, we 
+find dev="tmpfs". But isn't that a filesystem type?
+
+> This patch also adds support for success auditing, allowing users to
+> identify how a resource passed policy. It is recommended to use this
+> option with caution, as it is quite noisy.
+> 
+> This patch adds the following audit records:
+> 
+>   audit: AUDIT1420 path="/tmp/tmpwxmam366/deny/bin/hello" dev="tmpfs"
+>     ino=72 rule="DEFAULT op=EXECUTE action=DENY"
+
+Do we really need to log the whole rule?
+
+>   The above audit record shows IPE blocked a file
+>     /tmp/tmpwxmam366/deny/bin/hello in the temp file system.
+> 
+>   audit: AUDIT1420 path="/tmp/tmpxkvb3d9x/deny/bin/hello" dev="tmpfs"
+>     ino=157 rule="DEFAULT action=DENY"
+> 
+>   The above audit record shows IPE blocked a file
+>     /tmp/tmpxkvb3d9x/deny/bin/hello in the temp file system via another
+>     rule.
+> 
+>   audit: MAC_POLICY_LOAD policy_name="dmverity_roothash"
+>     policy_version=0.0.0 sha256=DC67AC19E05894EFB3170A8E55DE529794E248C2
+>     auid=4294967295 ses=4294967295 lsm=ipe res=1
+
+The MAC_POLICY_LOAD record type simply states the lsm that had it's policy 
+loaded. There isn't name, version, and hash information. I'd prefer to see 
+all users of this record type decide if it should be extended because they 
+also have that information available to record.
+
+>   The above audit record shows IPE loaded a new policy named
+>     "dmverity_roothash" with the sha256 hash of the policy.
+> 
+>   audit: MAC_CONFIG_CHANGE old_active_pol_name="Allow_All"
+>     old_active_pol_version=0.0.0
+>     old_sha256=DA39A3EE5E6B4B0D3255BFEF95601890AFD80709
+>     new_active_pol_name="dmverity_roothash" new_active_pol_version=0.0.0
+>     new_sha256=DC67AC19E05894EFB3170A8E55DE529794E248C2
+>     auid=4294967295 ses=4294967295 lsm=ipe res=1
+> 
+>   The above audit record shows IPE's active policy switched from
+>     "Allow_All" to "dmverity_roothash".
+
+Shouldn't this just be another MAC_POLICY_LOAD? That would match other LSM's. 
+The MAC_CONFIG_CHANGE is to denote that a changeable option was modified from 
+one value to another. But it is still operating under the same policy.
+
+-Steve
+
+> These result in the following events (the audit records are always
+> prior to a SYSCALL record):
+> 
+>   audit: AUDIT1420 path="/tmp/tmpwxmam366/deny/bin/hello" dev="tmpfs"
+>     ino=72 rule="DEFAULT op=EXECUTE action=DENY"
+>   audit[476]: SYSCALL arch=c000003e syscall=59 success=no exit=-13
+>     a0=7f7d01b5e890 a1=7f7d01f80e80 a2=7ffde535f230 a3=0 items=0 ppid=229
+>     pid=476 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0
+> fsgid=0 tty=pts0 ses=4294967295 comm="python3" exe="/usr/bin/python3.10"
+> key=(null)
+>   audit: PROCTITLE
+>     proctitle=707974686F6E3300746573742F6D61696E2E7079002D66002E2E
+> 
+>   The above events shows IPE blocked the hello file which python was
+>     trying to execute.
+> 
+>   audit: AUDIT1420 path="/tmp/tmpxkvb3d9x/deny/bin/hello" dev="tmpfs"
+>     ino=157 rule="DEFAULT action=DENY"
+>   audit[1195]: SYSCALL arch=c000003e syscall=9 success=no
+>     exit=-13 a0=0 a1=18020 a2=6 a3=2 items=0 ppid=997 pid=1195
+>     auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0
+> tty=pts0 ses=4294967295 comm="mmap_test"
+>     exe="/tmp/ipe-test/bin/mmap_test" key=(null)
+>   audit: PROCTITLE
+>     proctitle=2F746D702F6970652D746573742F62696E2F6D6D61705F746573
+> 
+>   The above events shows IPE blocked the hello file which
+>     /tmp/ipe-test/bin/mmap_test was trying to mmap.
+> 
+>   audit: MAC_POLICY_LOAD policy_name="dmverity_roothash"
+>     policy_version=0.0.0 sha256=DC67AC19E05894EFB3170A8E55DE529794E248C2
+>     auid=4294967295 ses=4294967295 lsm=ipe res=1
+>   audit[229]: SYSCALL arch=c000003e syscall=1 success=yes exit=2567 a0=3
+>     a1=5596fcae1fb0 a2=a07 a3=2 items=0 ppid=184 pid=229 auid=4294967295
+>     uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sg
+>     id=0 fsgid=0 tty=pts0 ses=4294967295 comm="python3"
+>     exe="/usr/bin/python3.10" key=(null)
+>   audit: PROCTITLE
+>     proctitle=707974686F6E3300746573742F6D61696E2E7079002D66002E2E
+> 
+>   The above events shows IPE loaded a new policy "dmverity_roothash"
+>     because python used write system call.
+> 
+>   audit: MAC_CONFIG_CHANGE old_active_pol_name="Allow_All"
+>     old_active_pol_version=0.0.0
+>     old_sha256=DA39A3EE5E6B4B0D3255BFEF95601890AFD80709
+>     new_active_pol_name="dmverity_roothash" new_active_pol_version=0.0.0
+>     new_sha256=DC67AC19E05894EFB3170A8E55DE529794E248C2
+>     auid=4294967295 ses=4294967295 lsm=ipe res=1
+>   audit[229]: SYSCALL arch=c000003e syscall=1 success=yes exit=2 a0=3
+>     a1=5596fcae1fb0 a2=2 a3=2 items=0 ppid=184 pid=229 auid=4294967295
+> uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0
+>     fsgid=0 tty=pts0 ses=4294967295 comm="python3"
+> exe="/usr/bin/python3.10" key=(null)
+>   audit: PROCTITLE
+>     proctitle=707974686F6E3300746573742F6D61696E2E7079002D66002E2
+>   The above events shows IPE switched to a new active policy
+>     "dmverity_roothash" because python used write system call.
 > 
 > Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 > ---
+> 
 > v2:
->   + No Changes
+>   + Split evaluation loop, access control hooks,
+>     and evaluation loop from policy parser and userspace
+>     interface to pass mailing list character limit
 > 
 > v3:
->   + No changes
+>   + Move ipe_load_properties to patch 04.
+>   + Remove useless 0-initializations
+>   + Prefix extern variables with ipe_
+>   + Remove kernel module parameters, as these are
+>     exposed through sysctls.
+>   + Add more prose to the IPE base config option
+>     help text.
+>   + Use GFP_KERNEL for audit_log_start.
+>   + Remove unnecessary caching system.
+>   + Remove comments from headers
+>   + Use rcu_access_pointer for rcu-pointer null check
+>   + Remove usage of reqprot; use prot only.
+>   + Move policy load and activation audit event to 03/12
 > 
 > v4:
->   + No changes
+>   + Remove sysctls in favor of securityfs nodes
+>   + Re-add kernel module parameters, as these are now
+>     exposed through securityfs.
+>   + Refactor property audit loop to a separate function.
 > 
 > v5:
->   + No changes
+>   + fix minor grammatical errors
+>   + do not group rule by curly-brace in audit record,
+>     reconstruct the exact rule.
 > 
 > v6:
->   + Fix an improper cleanup that can result in
->     a leak
+>   + No changes
 > 
 > v7:
->   + Squash patch 08/12, 10/12 to [11/16]
->   + Use part0 for block_device, to retrieve the block_device, when
->     calling security_bdev_setsecurity
+>   + Further split lsm creation, the audit system, the evaluation loop,
+>     and access control hooks into separate patches.
+>   + Further split audit system patch into two separate patches; one
+>     for include/uapi, and the usage of the new defines.
+>   + Split out the permissive functionality into another separate patch,
+>     for easier review.
+>   + Correct misuse of audit_log_n_untrusted string to audit_log_format
+>   + Use get_task_comm instead of comm directly.
+>   + Quote certain audit values
+>   + Remove unnecessary help text on choice options - these were
+>     previously
+>     idented at the wrong level
+>   + Correct a stale string constant (ctx_ns_enforce to ctx_enforce)
 > 
 > v8:
->   + Undo squash of 08/12, 10/12 - separating drivers/md/ from
->     security/ & block/
->   + Use common-audit function for dmverity_signature.
->   + Change implementation for storing the dm-verity digest to use the
->     newly introduced dm_verity_digest structure introduced in patch
->     14/20.
->   + Create new structure, dm_verity_digest, containing digest algorithm,
->     size, and digest itself to pass to the LSM layer. V7 was missing the
->     algorithm.
->   + Create an associated public header containing this new structure and
->     the key values for the LSM hook, specific to dm-verity.
->   + Additional information added to commit, discussing the layering of
->     the changes and how the information passed will be used.
+> 
+>   + Change dependency for CONFIG_AUDIT to CONFIG_AUDITSYSCALL
+>   + Drop ctx_* prefix
+>   + Reuse, where appropriate, the audit fields from the field
+>     dictionary. This transforms:
+>       ctx_pathname  -> path
+>       ctx_ino       -> ino
+>       ctx_dev       -> dev
+> 
+>   + Add audit records and event examples to commit description.
+>   + Remove new_audit_ctx, replace with audit_log_start. All data that
+>     would provided by new_audit_ctx is already present in the syscall
+>     audit record, that is always emitted on these actions. The audit
+>     records should be correlated as such.
+>   + Change audit types:
+>     + AUDIT_TRUST_RESULT                -> AUDIT_IPE_ACCESS
+>       +  This prevents overloading of the AVC type.
+>     + AUDIT_TRUST_POLICY_ACTIVATE       -> AUDIT_MAC_CONFIG_CHANGE
+>     + AUDIT_TRUST_POLICY_LOAD           -> AUDIT_MAC_POLICY_LOAD
+>       + There were no significant difference in meaning between
+>         these types.
+> 
+>   + Remove enforcing parameter passed from the context structure
+>     for AUDIT_IPE_ACCESS.
+>     +  This field can be inferred from the SYSCALL audit event,
+>        based on the success field.
+> 
+>   + Remove all fields already captured in the syscall record. "hook",
+>     an IPE specific field, can be determined via the syscall field in
+>     the syscall record itself, so it has been removed.
+>       + ino, path, and dev in IPE's record refer to the subject of the
+>         syscall, while the syscall record refers to the calling process.
+> 
+>   + remove IPE prefix from policy load/policy activation events
+>   + fix a bug wherein a policy change audit record was not fired when
+>     updating a policy
 > 
 > v9:
->   + No changes
+>   + Merge the AUDIT_IPE_ACCESS definition with the audit support commit
+>   + Change the audit format of policy load and siwtch
+>   + Remove the ipe audit kernel switch
 > ---
->  drivers/md/dm-verity-target.c     | 25 +++++++++++++++++++++++--
->  drivers/md/dm-verity-verify-sig.c | 16 +++++++++++++---
->  drivers/md/dm-verity-verify-sig.h | 10 ++++++----
->  include/linux/dm-verity.h         | 19 +++++++++++++++++++
->  4 files changed, 61 insertions(+), 9 deletions(-)
->  create mode 100644 include/linux/dm-verity.h
+>  include/uapi/linux/audit.h |   1 +
+>  security/ipe/Kconfig       |   2 +-
+>  security/ipe/Makefile      |   1 +
+>  security/ipe/audit.c       | 196 +++++++++++++++++++++++++++++++++++++
+>  security/ipe/audit.h       |  18 ++++
+>  security/ipe/eval.c        |  26 ++++-
+>  security/ipe/eval.h        |   8 ++
+>  security/ipe/fs.c          |  68 +++++++++++++
+>  security/ipe/policy.c      |   5 +
+>  9 files changed, 321 insertions(+), 4 deletions(-)
+>  create mode 100644 security/ipe/audit.c
+>  create mode 100644 security/ipe/audit.h
 > 
-> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> index ccf5b852fbf7..afea61eed4ec 100644
-> --- a/drivers/md/dm-verity-target.c
-> +++ b/drivers/md/dm-verity-target.c
-> @@ -13,6 +13,7 @@
->   * access behavior.
->   */
->  
-> +#include "dm-core.h"
->  #include "dm-verity.h"
->  #include "dm-verity-fec.h"
->  #include "dm-verity-verify-sig.h"
-> @@ -21,6 +22,9 @@
->  #include <linux/scatterlist.h>
->  #include <linux/string.h>
->  #include <linux/jump_label.h>
-> +#include <linux/security.h>
-> +#include <linux/dm-verity.h>
-> +#include <crypto/hash_info.h>
->  
->  #define DM_MSG_PREFIX			"verity"
->  
-> @@ -1169,6 +1173,8 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  	sector_t hash_position;
->  	char dummy;
->  	char *root_hash_digest_to_validate;
-> +	struct block_device *bdev;
-> +	struct dm_verity_digest root_digest;
->  
->  	v = kzalloc(sizeof(struct dm_verity), GFP_KERNEL);
->  	if (!v) {
-> @@ -1211,6 +1217,13 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  	}
->  	v->version = num;
->  
-> +	bdev = dm_table_get_md(ti->table)->disk->part0;
-> +	if (!bdev) {
-> +		ti->error = "Mapped device lookup failed";
-> +		r = -ENOMEM;
-> +		goto bad;
-> +	}
-> +
->  	r = dm_get_device(ti, argv[1], FMODE_READ, &v->data_dev);
->  	if (r) {
->  		ti->error = "Data device lookup failed";
-> @@ -1343,7 +1356,7 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  	}
->  
->  	/* Root hash signature is  a optional parameter*/
-> -	r = verity_verify_root_hash(root_hash_digest_to_validate,
-> +	r = verity_verify_root_hash(bdev, root_hash_digest_to_validate,
->  				    strlen(root_hash_digest_to_validate),
->  				    verify_args.sig,
->  				    verify_args.sig_size);
-> @@ -1428,12 +1441,20 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  	ti->per_io_data_size = roundup(ti->per_io_data_size,
->  				       __alignof__(struct dm_verity_io));
->  
-> +	root_digest.digest = v->root_digest;
-> +	root_digest.digest_len = v->digest_size;
-> +	root_digest.algo = v->alg_name;
-> +
-> +	r = security_bdev_setsecurity(bdev, DM_VERITY_ROOTHASH_SEC_NAME, &root_digest,
-> +				      sizeof(root_digest));
-> +	if (r)
-> +		goto bad;
-> +
->  	verity_verify_sig_opts_cleanup(&verify_args);
->  
->  	return 0;
->  
->  bad:
-> -
->  	verity_verify_sig_opts_cleanup(&verify_args);
->  	verity_dtr(ti);
->  
-> diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
-> index db61a1f43ae9..5a73b91157d5 100644
-> --- a/drivers/md/dm-verity-verify-sig.c
-> +++ b/drivers/md/dm-verity-verify-sig.c
-> @@ -9,6 +9,9 @@
->  #include <linux/verification.h>
->  #include <keys/user-type.h>
->  #include <linux/module.h>
-> +#include <linux/security.h>
-> +#include <linux/dm-verity.h>
-> +#include "dm-core.h"
->  #include "dm-verity.h"
->  #include "dm-verity-verify-sig.h"
->  
-> @@ -97,14 +100,17 @@ int verity_verify_sig_parse_opt_args(struct dm_arg_set *as,
->   * verify_verify_roothash - Verify the root hash of the verity hash device
->   *			     using builtin trusted keys.
->   *
-> + * @bdev: block_device representing the device-mapper created block device.
-> + *	  Used by the security hook, to set information about the block_device.
->   * @root_hash: For verity, the roothash/data to be verified.
->   * @root_hash_len: Size of the roothash/data to be verified.
->   * @sig_data: The trusted signature that verifies the roothash/data.
->   * @sig_len: Size of the signature.
->   *
->   */
-> -int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
-> -			    const void *sig_data, size_t sig_len)
-> +int verity_verify_root_hash(struct block_device *bdev, const void *root_hash,
-> +			    size_t root_hash_len, const void *sig_data,
-> +			    size_t sig_len)
->  {
->  	int ret;
->  
-> @@ -126,8 +132,12 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
->  				NULL,
->  #endif
->  				VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
-> +	if (ret)
-> +		return ret;
->  
-> -	return ret;
-> +	return security_bdev_setsecurity(bdev,
-> +					 DM_VERITY_SIGNATURE_SEC_NAME,
-> +					 sig_data, sig_len);
->  }
->  
->  void verity_verify_sig_opts_cleanup(struct dm_verity_sig_opts *sig_opts)
-> diff --git a/drivers/md/dm-verity-verify-sig.h b/drivers/md/dm-verity-verify-sig.h
-> index 3987c7141f79..31692fff92e4 100644
-> --- a/drivers/md/dm-verity-verify-sig.h
-> +++ b/drivers/md/dm-verity-verify-sig.h
-> @@ -20,8 +20,9 @@ struct dm_verity_sig_opts {
->  
->  #define DM_VERITY_ROOT_HASH_VERIFICATION_OPTS 2
->  
-> -int verity_verify_root_hash(const void *data, size_t data_len,
-> -			    const void *sig_data, size_t sig_len);
-> +int verity_verify_root_hash(struct block_device *bdev, const void *data,
-> +			    size_t data_len, const void *sig_data,
-> +			    size_t sig_len);
->  bool verity_verify_is_sig_opt_arg(const char *arg_name);
->  
->  int verity_verify_sig_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
-> @@ -34,8 +35,9 @@ void verity_verify_sig_opts_cleanup(struct dm_verity_sig_opts *sig_opts);
->  
->  #define DM_VERITY_ROOT_HASH_VERIFICATION_OPTS 0
->  
-> -static inline int verity_verify_root_hash(const void *data, size_t data_len,
-> -					  const void *sig_data, size_t sig_len)
-> +int verity_verify_root_hash(struct block_device *bdev, const void *data,
-> +			    size_t data_len, const void *sig_data,
-> +			    size_t sig_len)
->  {
->  	return 0;
->  }
-> diff --git a/include/linux/dm-verity.h b/include/linux/dm-verity.h
+> diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+> index d676ed2b246e..ee3b3db95076 100644
+> --- a/include/uapi/linux/audit.h
+> +++ b/include/uapi/linux/audit.h
+> @@ -143,6 +143,7 @@
+>  #define AUDIT_MAC_UNLBL_STCDEL	1417	/* NetLabel: del a static label 
+*/
+>  #define AUDIT_MAC_CALIPSO_ADD	1418	/* NetLabel: add CALIPSO DOI entry 
+*/
+>  #define AUDIT_MAC_CALIPSO_DEL	1419	/* NetLabel: del CALIPSO DOI 
+entry */
+> +#define AUDIT_IPE_ACCESS	1420	/* IPE Denial or Grant */
+> 
+>  #define AUDIT_FIRST_KERN_ANOM_MSG   1700
+>  #define AUDIT_LAST_KERN_ANOM_MSG    1799
+> diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
+> index e4875fb04883..ac4d558e69d5 100644
+> --- a/security/ipe/Kconfig
+> +++ b/security/ipe/Kconfig
+> @@ -5,7 +5,7 @@
+> 
+>  menuconfig SECURITY_IPE
+>  	bool "Integrity Policy Enforcement (IPE)"
+> -	depends on SECURITY && SECURITYFS
+> +	depends on SECURITY && SECURITYFS && AUDIT && AUDITSYSCALL
+>  	select PKCS7_MESSAGE_PARSER
+>  	select SYSTEM_DATA_VERIFICATION
+>  	help
+> diff --git a/security/ipe/Makefile b/security/ipe/Makefile
+> index 8602d71250b4..89a76ad72301 100644
+> --- a/security/ipe/Makefile
+> +++ b/security/ipe/Makefile
+> @@ -13,3 +13,4 @@ obj-$(CONFIG_SECURITY_IPE) += \
+>  	policy.o \
+>  	policy_fs.o \
+>  	policy_parser.o \
+> +	audit.o \
+> diff --git a/security/ipe/audit.c b/security/ipe/audit.c
 > new file mode 100644
-> index 000000000000..bb0413d55d72
+> index 000000000000..295e9f9f5146
 > --- /dev/null
-> +++ b/include/linux/dm-verity.h
-> @@ -0,0 +1,19 @@
-> +/* SPDX-License-Identifier: GPL-2.0 */
+> +++ b/security/ipe/audit.c
+> @@ -0,0 +1,196 @@
+> +// SPDX-License-Identifier: GPL-2.0
+> +/*
+> + * Copyright (C) Microsoft Corporation. All rights reserved.
+> + */
 > +
-> +#ifndef _LINUX_DM_VERITY_H
-> +#define _LINUX_DM_VERITY_H
+> +#include "ipe.h"
+> +#include "eval.h"
+> +#include "hooks.h"
+> +#include "policy.h"
+> +#include "audit.h"
+> +#include "digest.h"
 > +
+> +#include <linux/slab.h>
+> +#include <linux/audit.h>
 > +#include <linux/types.h>
-> +#include <crypto/hash_info.h>
-> +#include <linux/device-mapper.h>
+> +#include <crypto/hash.h>
 > +
-> +struct dm_verity_digest {
-> +	const char *algo;
-> +	const u8 *digest;
-> +	size_t digest_len;
+> +#define ACTSTR(x) ((x) == ipe_action_allow ? "ALLOW" : "DENY")
+> +
+> +#define IPE_AUDIT_HASH_ALG "sha256"
+> +
+> +#define AUDIT_POLICY_LOAD_FMT "policy_name=\"%s\"
+> policy_version=%hu.%hu.%hu "\ +			      IPE_AUDIT_HASH_ALG 
+"="
+> +#define AUDIT_OLD_ACTIVE_POLICY_FMT "old_active_pol_name=\"%s\" "\
+> +				    "old_active_pol_version=%hu.%hu.%hu "\
+> +				    "old_" IPE_AUDIT_HASH_ALG "="
+> +#define AUDIT_NEW_ACTIVE_POLICY_FMT "new_active_pol_name=\"%s\" "\
+> +				    "new_active_pol_version=%hu.%hu.%hu "\
+> +				    "new_" IPE_AUDIT_HASH_ALG "="
+> +
+> +static const char *const audit_op_names[ipe_op_max] = {
+> +	"EXECUTE",
+> +	"FIRMWARE",
+> +	"KMODULE",
+> +	"KEXEC_IMAGE",
+> +	"KEXEC_INITRAMFS",
+> +	"IMA_POLICY",
+> +	"IMA_X509_CERT",
 > +};
 > +
-> +#define DM_VERITY_SIGNATURE_SEC_NAME DM_NAME	".verity-signature"
-> +#define DM_VERITY_ROOTHASH_SEC_NAME  DM_NAME	".verity-roothash"
+> +static const char *const audit_prop_names[ipe_prop_max] = {
+> +	"boot_verified=FALSE",
+> +	"boot_verified=TRUE",
+> +};
 > +
-> +#endif /* _LINUX_DM_VERITY_H */
+> +/**
+> + * audit_rule - audit an IPE policy rule approximation.
+> + * @ab: Supplies a poniter to the audit_buffer to append to.
+> + * @r: Supplies a pointer to the ipe_rule to approximate a string form
+> for. + */
+> +static void audit_rule(struct audit_buffer *ab, const struct ipe_rule *r)
+> +{
+> +	const struct ipe_prop *ptr;
+> +
+> +	audit_log_format(ab, "rule=\"op=%s ", audit_op_names[r->op]);
+> +
+> +	list_for_each_entry(ptr, &r->props, next) {
+> +		audit_log_format(ab, "%s", audit_prop_names[ptr->type]);
+> +		audit_log_format(ab, " ");
+> +	}
+> +
+> +	audit_log_format(ab, "action=%s\"", ACTSTR(r->action));
+> +}
+> +
+> +/**
+> + * ipe_audit_match - audit a match for IPE policy.
+> + * @ctx: Supplies a poniter to the evaluation context that was used in the
+> + *	 evaluation.
+> + * @match_type: Supplies the scope of the match: rule, operation default,
+> + *		global default.
+> + * @act: Supplies the IPE's evaluation decision, deny or allow.
+> + * @r: Supplies a pointer to the rule that was matched, if possible.
+> + * @enforce: Supplies the enforcement/permissive state at the point
+> + *	     the enforcement decision was made.
+> + */
+> +void ipe_audit_match(const struct ipe_eval_ctx *const ctx,
+> +		     enum ipe_match match_type,
+> +		     enum ipe_action_type act, const struct ipe_rule *const r)
+> +{
+> +	struct inode *inode;
+> +	struct audit_buffer *ab;
+> +	const char *op = audit_op_names[ctx->op];
+> +
+> +	if (act != ipe_action_deny && !READ_ONCE(success_audit))
+> +		return;
+> +
+> +	ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_IPE_ACCESS);
+> +	if (!ab)
+> +		return;
+> +
+> +	if (ctx->file) {
+> +		audit_log_d_path(ab, "path=", &ctx->file->f_path);
+> +		inode = file_inode(ctx->file);
+> +		if (inode) {
+> +			audit_log_format(ab, " dev=");
+> +			audit_log_untrustedstring(ab, inode->i_sb->s_id);
+> +			audit_log_format(ab, " ino=%lu ", inode->i_ino);
+> +		}
+> +	}
+> +
+> +	if (match_type == ipe_match_rule)
+> +		audit_rule(ab, r);
+> +	else if (match_type == ipe_match_table)
+> +		audit_log_format(ab, "rule=\"DEFAULT op=%s action=%s\"", op,
+> +				 ACTSTR(act));
+> +	else
+> +		audit_log_format(ab, "rule=\"DEFAULT action=%s\"",
+> +				 ACTSTR(act));
+> +
+> +	audit_log_end(ab);
+> +}
+> +
+> +/**
+> + * audit_policy - Audit a policy's name, version and thumbprint to @ab.
+> + * @ab: Supplies a pointer to the audit buffer to append to.
+> + * @p: Supplies a pointer to the policy to audit.
+> + */
+> +static void audit_policy(struct audit_buffer *ab,
+> +			 const char *audit_format,
+> +			 const struct ipe_policy *const p)
+> +{
+> +	u8 *digest = NULL;
+> +	struct crypto_shash *tfm;
+> +	SHASH_DESC_ON_STACK(desc, tfm);
+> +
+> +	tfm = crypto_alloc_shash(IPE_AUDIT_HASH_ALG, 0, 0);
+> +	if (IS_ERR(tfm))
+> +		return;
+> +
+> +	desc->tfm = tfm;
+> +
+> +	digest = kzalloc(crypto_shash_digestsize(tfm), GFP_KERNEL);
+> +	if (!digest)
+> +		goto out;
+> +
+> +	if (crypto_shash_init(desc))
+> +		goto out;
+> +
+> +	if (crypto_shash_update(desc, p->pkcs7, p->pkcs7len))
+> +		goto out;
+> +
+> +	if (crypto_shash_final(desc, digest))
+> +		goto out;
+> +
+> +	audit_log_format(ab, audit_format, p->parsed->name,
+> +			 p->parsed->version.major, p->parsed->version.minor,
+> +			 p->parsed->version.rev);
+> +	audit_log_n_hex(ab, digest, crypto_shash_digestsize(tfm));
+> +
+> +out:
+> +	kfree(digest);
+> +	crypto_free_shash(tfm);
+> +}
+> +
+> +/**
+> + * ipe_audit_policy_activation - Audit a policy being made the active
+> policy. + * @p: Supplies a pointer to the policy to audit.
+> + */
+> +void ipe_audit_policy_activation(const struct ipe_policy *const op,
+> +				 const struct ipe_policy *const np)
+> +{
+> +	struct audit_buffer *ab;
+> +
+> +	ab = audit_log_start(audit_context(), GFP_KERNEL,
+> AUDIT_MAC_CONFIG_CHANGE); +	if (!ab)
+> +		return;
+> +
+> +	audit_policy(ab, AUDIT_OLD_ACTIVE_POLICY_FMT, op);
+> +	audit_log_format(ab, " ");
+> +	audit_policy(ab, AUDIT_NEW_ACTIVE_POLICY_FMT, np);
+> +	audit_log_format(ab, " auid=%u ses=%u lsm=ipe res=1",
+> +			 from_kuid(&init_user_ns, audit_get_loginuid(current)),
+> +			 audit_get_sessionid(current));
+> +
+> +	audit_log_end(ab);
+> +}
+> +
+> +/**
+> + * ipe_audit_policy_load - Audit a policy being loaded into the kernel.
+> + * @p: Supplies a pointer to the policy to audit.
+> + */
+> +void ipe_audit_policy_load(const struct ipe_policy *const p)
+> +{
+> +	struct audit_buffer *ab;
+> +
+> +	ab = audit_log_start(audit_context(), GFP_KERNEL, 
+AUDIT_MAC_POLICY_LOAD);
+> +	if (!ab)
+> +		return;
+> +
+> +	audit_policy(ab, AUDIT_POLICY_LOAD_FMT, p);
+> +	audit_log_format(ab, " auid=%u ses=%u lsm=ipe res=1",
+> +			 from_kuid(&init_user_ns, audit_get_loginuid(current)),
+> +			 audit_get_sessionid(current));
+> +
+> +	audit_log_end(ab);
+> +}
+> diff --git a/security/ipe/audit.h b/security/ipe/audit.h
+> new file mode 100644
+> index 000000000000..2e9b99737f97
+> --- /dev/null
+> +++ b/security/ipe/audit.h
+> @@ -0,0 +1,18 @@
+> +/* SPDX-License-Identifier: GPL-2.0 */
+> +/*
+> + * Copyright (C) Microsoft Corporation. All rights reserved.
+> + */
+> +
+> +#ifndef IPE_AUDIT_H
+> +#define IPE_AUDIT_H
+> +
+> +#include "policy.h"
+> +
+> +void ipe_audit_match(const struct ipe_eval_ctx *const ctx,
+> +		     enum ipe_match match_type,
+> +		     enum ipe_action_type act, const struct ipe_rule *const 
+r);
+> +void ipe_audit_policy_load(const struct ipe_policy *const p);
+> +void ipe_audit_policy_activation(const struct ipe_policy *const op,
+> +				 const struct ipe_policy *const np);
+> +
+> +#endif /* IPE_AUDIT_H */
+> diff --git a/security/ipe/eval.c b/security/ipe/eval.c
+> index 48b5104a3463..d713808cad9c 100644
+> --- a/security/ipe/eval.c
+> +++ b/security/ipe/eval.c
+> @@ -7,6 +7,7 @@
+>  #include "eval.h"
+>  #include "hooks.h"
+>  #include "policy.h"
+> +#include "audit.h"
+> 
+>  #include <linux/fs.h>
+>  #include <linux/types.h>
+> @@ -15,8 +16,10 @@
+>  #include <linux/sched.h>
+>  #include <linux/rcupdate.h>
+>  #include <linux/spinlock.h>
+> +#include <linux/moduleparam.h>
+> 
+>  struct ipe_policy __rcu *ipe_active_policy;
+> +bool success_audit;
+> 
+>  static struct super_block *pinned_sb;
+>  static DEFINE_SPINLOCK(pin_lock);
+> @@ -117,6 +120,7 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const
+> ctx) int rc = 0;
+>  	bool match = false;
+>  	enum ipe_action_type action;
+> +	enum ipe_match match_type;
+>  	struct ipe_policy *pol = NULL;
+>  	const struct ipe_rule *rule = NULL;
+>  	const struct ipe_op_table *rules = NULL;
+> @@ -131,6 +135,7 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const
+> ctx)
+> 
+>  	if (ctx->op == ipe_op_max) {
+>  		action = pol->parsed->global_default_action;
+> +		match_type = ipe_match_global;
+>  		goto eval;
+>  	}
+> 
+> @@ -146,14 +151,20 @@ int ipe_evaluate_event(const struct ipe_eval_ctx
+> *const ctx) break;
+>  	}
+> 
+> -	if (match)
+> +	if (match) {
+>  		action = rule->action;
+> -	else if (rules->default_action != ipe_action_max)
+> +		match_type = ipe_match_rule;
+> +	} else if (rules->default_action != ipe_action_max) {
+>  		action = rules->default_action;
+> -	else
+> +		match_type = ipe_match_table;
+> +	} else {
+>  		action = pol->parsed->global_default_action;
+> +		match_type = ipe_match_global;
+> +	}
+> 
+>  eval:
+> +	ipe_audit_match(ctx, match_type, action, rule);
+> +
+>  	if (action == ipe_action_deny)
+>  		rc = -EACCES;
+> 
+> @@ -178,3 +189,12 @@ void ipe_invalidate_pinned_sb(const struct super_block
+> *mnt_sb)
+> 
+>  	spin_unlock(&pin_lock);
+>  }
+> +
+> +/* Set the right module name */
+> +#ifdef KBUILD_MODNAME
+> +#undef KBUILD_MODNAME
+> +#define KBUILD_MODNAME "ipe"
+> +#endif
+> +
+> +module_param(success_audit, bool, 0400);
+> +MODULE_PARM_DESC(success_audit, "Start IPE with success auditing
+> enabled"); diff --git a/security/ipe/eval.h b/security/ipe/eval.h
+> index 887797438b9b..b83730d0b5ae 100644
+> --- a/security/ipe/eval.h
+> +++ b/security/ipe/eval.h
+> @@ -13,6 +13,7 @@
+>  #include "policy.h"
+> 
+>  extern struct ipe_policy __rcu *ipe_active_policy;
+> +extern bool success_audit;
+> 
+>  struct ipe_eval_ctx {
+>  	enum ipe_op_type op;
+> @@ -21,6 +22,13 @@ struct ipe_eval_ctx {
+>  	bool from_init_sb;
+>  };
+> 
+> +enum ipe_match {
+> +	ipe_match_rule = 0,
+> +	ipe_match_table,
+> +	ipe_match_global,
+> +	ipe_match_max
+> +};
+> +
+>  void build_eval_ctx(struct ipe_eval_ctx *ctx, const struct file *file,
+> enum ipe_op_type op); int ipe_evaluate_event(const struct ipe_eval_ctx
+> *const ctx);
+>  void ipe_invalidate_pinned_sb(const struct super_block *mnt_sb);
+> diff --git a/security/ipe/fs.c b/security/ipe/fs.c
+> index 9f6a4867bec2..c99616f36f32 100644
+> --- a/security/ipe/fs.c
+> +++ b/security/ipe/fs.c
+> @@ -4,7 +4,9 @@
+>   */
+>  #include "ipe.h"
+>  #include "fs.h"
+> +#include "eval.h"
+>  #include "policy.h"
+> +#include "audit.h"
+> 
+>  #include <linux/dcache.h>
+>  #include <linux/security.h>
+> @@ -12,6 +14,57 @@
+>  static struct dentry *np __ro_after_init;
+>  static struct dentry *root __ro_after_init;
+>  struct dentry *policy_root __ro_after_init;
+> +static struct dentry *audit_node __ro_after_init;
+> +
+> +/**
+> + * setaudit - Write handler for the securityfs node, "ipe/success_audit"
+> + * @f: Supplies a file structure representing the securityfs node.
+> + * @data: Supplies a buffer passed to the write syscall.
+> + * @len: Supplies the length of @data.
+> + * @offset: unused.
+> + *
+> + * Return:
+> + * * >0	- Success, Length of buffer written
+> + * * <0	- Error
+> + */
+> +static ssize_t setaudit(struct file *f, const char __user *data,
+> +			size_t len, loff_t *offset)
+> +{
+> +	int rc = 0;
+> +	bool value;
+> +
+> +	if (!file_ns_capable(f, &init_user_ns, CAP_MAC_ADMIN))
+> +		return -EPERM;
+> +
+> +	rc = kstrtobool_from_user(data, len, &value);
+> +	if (rc)
+> +		return rc;
+> +
+> +	WRITE_ONCE(success_audit, value);
+> +
+> +	return len;
+> +}
+> +
+> +/**
+> + * getaudit - Read handler for the securityfs node, "ipe/success_audit"
+> + * @f: Supplies a file structure representing the securityfs node.
+> + * @data: Supplies a buffer passed to the read syscall
+> + * @len: Supplies the length of @data
+> + * @offset: unused.
+> + *
+> + * Return:
+> + * * >0	- Success, Length of buffer written
+> + * * <0	- Error
+> + */
+> +static ssize_t getaudit(struct file *f, char __user *data,
+> +			size_t len, loff_t *offset)
+> +{
+> +	const char *result;
+> +
+> +	result = ((READ_ONCE(success_audit)) ? "1" : "0");
+> +
+> +	return simple_read_from_buffer(data, len, offset, result, 1);
+> +}
+> 
+>  /**
+>   * new_policy - Write handler for the securityfs node, "ipe/new_policy".
+> @@ -50,6 +103,8 @@ static ssize_t new_policy(struct file *f, const char
+> __user *data, if (rc)
+>  		goto err;
+> 
+> +	ipe_audit_policy_load(p);
+> +
+>  err:
+>  	return (rc < 0) ? rc : len;
+>  }
+> @@ -58,6 +113,11 @@ static const struct file_operations np_fops = {
+>  	.write = new_policy,
+>  };
+> 
+> +static const struct file_operations audit_fops = {
+> +	.write = setaudit,
+> +	.read = getaudit,
+> +};
+> +
+>  /**
+>   * ipe_init_securityfs - Initialize IPE's securityfs tree at fsinit.
+>   *
+> @@ -84,6 +144,13 @@ static int __init ipe_init_securityfs(void)
+>  		goto err;
+>  	}
+> 
+> +	audit_node = securityfs_create_file("success_audit", 0600, root,
+> +					    NULL, &audit_fops);
+> +	if (IS_ERR(audit_node)) {
+> +		rc = PTR_ERR(audit_node);
+> +		goto err;
+> +	}
+> +
+>  	policy_root = securityfs_create_dir("policies", root);
+>  	if (IS_ERR(policy_root)) {
+>  		rc = PTR_ERR(policy_root);
+> @@ -94,6 +161,7 @@ static int __init ipe_init_securityfs(void)
+>  err:
+>  	securityfs_remove(np);
+>  	securityfs_remove(root);
+> +	securityfs_remove(audit_node);
+>  	securityfs_remove(policy_root);
+>  	return rc;
+>  }
+> diff --git a/security/ipe/policy.c b/security/ipe/policy.c
+> index a5e9c6e5691b..703b3fd9cf4c 100644
+> --- a/security/ipe/policy.c
+> +++ b/security/ipe/policy.c
+> @@ -9,6 +9,7 @@
+>  #include "policy.h"
+>  #include "policy_parser.h"
+>  #include "digest.h"
+> +#include "audit.h"
+> 
+>  #include <linux/verification.h>
+> 
+> @@ -124,6 +125,9 @@ struct ipe_policy *ipe_update_policy(struct ipe_policy
+> __rcu **addr, swap(new->policyfs, old->policyfs);
+>  	ipe_free_policy(old);
+> 
+> +	if (!rc)
+> +		ipe_audit_policy_load(new);
+> +
+>  	goto out;
+>  err:
+>  	ipe_free_policy(new);
+> @@ -230,6 +234,7 @@ int ipe_set_active_pol(const struct ipe_policy *p)
+>  	spin_unlock(&ipe_policy_lock);
+>  	synchronize_rcu();
+> 
+> +	ipe_audit_policy_activation(ap, p);
+>  out:
+>  	return rc;
+>  }
+
+
+
 
 --
 dm-devel mailing list
