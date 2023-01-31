@@ -1,94 +1,94 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 56F03C61DA4
-	for <dm-devel@archiver.kernel.org>; Tue, 31 Jan 2023 03:20:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 859A0C38142
+	for <dm-devel@archiver.kernel.org>; Tue, 31 Jan 2023 03:44:57 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675135245;
+	s=mimecast20190719; t=1675136696;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=9hw/zDM/oPe4BPiW+tDfs73nSch0ND4KfzLmkCGqNgs=;
-	b=SoVb/jT1xWPVlr0wnjBmM/GNfSESOF3auwDJfZx3J58sA6q7ZXtx8tEqb0aO3oKdZtCBgc
-	4WQDNHJbe63W/lAUzDU/vHo+ucrsQbTEJgWrPyZ4ltvreU2ksfZ6vvnEwEnVHgHhO8PZsU
-	GlDgtevBWOd9DX6LST7HA9wlHNX8o+Q=
+	bh=csRx/NzrTAWe6W0dxgEFalAXwMUweYWgWQ9n2G80Euo=;
+	b=Cubijf9q5widcJSTdIofv8H5AjVYlJswhlcHYX0+41oqHXq4NuVFWOZq9xdhj4cl9MsPb/
+	zuFxQrmiEdTOKaRyD8AlwoxksO9oEjLS9weTEWso1oFaN7fuN3QZte86/YHq23X26fkytI
+	NS95DSz9dKrj/UX2JYETO/QN/87SneE=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-668-nfL2i93UPc-wLr1JiL2gug-1; Mon, 30 Jan 2023 22:20:42 -0500
-X-MC-Unique: nfL2i93UPc-wLr1JiL2gug-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-57-8gcRL_0HO6a_kijmy20IOw-1; Mon, 30 Jan 2023 22:44:52 -0500
+X-MC-Unique: 8gcRL_0HO6a_kijmy20IOw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 90F863803913;
-	Tue, 31 Jan 2023 03:20:40 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6F6C43806102;
+	Tue, 31 Jan 2023 03:44:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 590751121314;
-	Tue, 31 Jan 2023 03:20:37 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1A5D340C2064;
+	Tue, 31 Jan 2023 03:44:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 171891946589;
-	Tue, 31 Jan 2023 03:20:37 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EE6411946589;
+	Tue, 31 Jan 2023 03:44:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B333A1946587
- for <dm-devel@listman.corp.redhat.com>; Tue, 31 Jan 2023 03:17:54 +0000 (UTC)
+ ESMTP id AB70B1946587
+ for <dm-devel@listman.corp.redhat.com>; Tue, 31 Jan 2023 03:13:23 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8349B422F2; Tue, 31 Jan 2023 03:17:54 +0000 (UTC)
+ id 943E5492B06; Tue, 31 Jan 2023 03:13:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7B8D9422AE
- for <dm-devel@redhat.com>; Tue, 31 Jan 2023 03:17:54 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8C238492B05
+ for <dm-devel@redhat.com>; Tue, 31 Jan 2023 03:13:23 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 57F4C800B30
- for <dm-devel@redhat.com>; Tue, 31 Jan 2023 03:17:54 +0000 (UTC)
-Received: from mail-pf1-f199.google.com (mail-pf1-f199.google.com
- [209.85.210.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6C8B13C01DE7
+ for <dm-devel@redhat.com>; Tue, 31 Jan 2023 03:13:23 +0000 (UTC)
+Received: from mail-pl1-f198.google.com (mail-pl1-f198.google.com
+ [209.85.214.198]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-26-nAM5q_eYNcSOJcc5SyH7hw-1; Mon, 30 Jan 2023 22:17:51 -0500
-X-MC-Unique: nAM5q_eYNcSOJcc5SyH7hw-1
-Received: by mail-pf1-f199.google.com with SMTP id
- z14-20020a056a00240e00b0059395f5a701so3463627pfh.13
- for <dm-devel@redhat.com>; Mon, 30 Jan 2023 19:17:51 -0800 (PST)
+ us-mta-322-UkZM9kYqNsOwzW-DqHv98A-1; Mon, 30 Jan 2023 22:13:19 -0500
+X-MC-Unique: UkZM9kYqNsOwzW-DqHv98A-1
+Received: by mail-pl1-f198.google.com with SMTP id
+ q5-20020a170902788500b0019656571b67so5745614pll.12
+ for <dm-devel@redhat.com>; Mon, 30 Jan 2023 19:13:19 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=cc:to:subject:message-id:date:from:in-reply-to:references
  :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
  :reply-to;
- bh=ofkMXoQbnzo0LmXDJYtau1EBxkN0Axt3uwhU1ClYTcA=;
- b=NMtjVt9Ngw/bCzcHMt1mSuQSws22mCD0YJYvc4cfZRVYd25TogBVuWIVkWvyBRmAzS
- 16LS64qYoBSs4DiNZyH4B7sZzuMei4YNKifwL1Ww0DQUq1HjOmpcwnSLnUUi2qT1snN1
- L1evpPrHV53HZy9VAERxUDSJtYEYZrDNZETSvL9TLRuIQtjno0qdAF8sPyVIlylDzrJD
- xImbwDehp6lrxwH4EH47hWYIMjqVB0dNZfuxtwuvtwnIQT70Wr76TGAigx7x3IIfTI4O
- mGyy7FGDl6+qAbckw+sv8Uqi+h1+1isVdy8AScTKIyKvtG0k7Lt2FO0dUyOBvhiFrAeZ
- bV2w==
-X-Gm-Message-State: AO0yUKW1nAm9XXdq5+CfPwElt/BXayWlkfafn0Bu+t4eeq6tj0r0s/FT
- Dp05rjANr1NTqpTDJXIE5HcqhewWfg7j/uYOX4fq6drpY6j8aQiuSj/Kpbb/1ylMIwQyaaSekVg
- +CW6/g7FWhPVWzNXQk52kSBaDpOj775k=
-X-Received: by 2002:a17:90a:bd8c:b0:22c:9f9:8ecb with SMTP id
- z12-20020a17090abd8c00b0022c09f98ecbmr3070334pjr.77.1675135070600; 
- Mon, 30 Jan 2023 19:17:50 -0800 (PST)
-X-Google-Smtp-Source: AK7set9lQTdMoGqa3B4EBp9GbL57iMCjy3dpiO35qGjetEUa48mZPBCpa+BWIj27dnOMI3+Ym2f+5PUkqRWRBnACpXE=
-X-Received: by 2002:a17:90a:bd8c:b0:22c:9f9:8ecb with SMTP id
- z12-20020a17090abd8c00b0022c09f98ecbmr3070328pjr.77.1675135070169; Mon, 30
- Jan 2023 19:17:50 -0800 (PST)
+ bh=mOCanwJBT5m5ofwbdgziDuDgquiPRTHSacBMicyLkZE=;
+ b=VWGpjC/tCXLF+iz2renNRZ88Rpz433dMP8y2vc5GlUK8Bs0Xwb8mbpXQi9n2krCWtH
+ E06cdcEuZFCtfrdbBDNrxV40UuO3Ljx3iH5gqHQapcAMJr6LLtiU6C6xqmFVVAFUcSLj
+ uhed+7MvikMSDglluy8yKcYjye7hNv/5kr93U/EoJ83lQ9nRmp5l5sbjBzjrDCtvfnao
+ M7wkRQDXtHETLL9591sY8YEzOUt5A0/gMrKSWEciB5aOcVUVX24cUEhh/lqAqxvL1UG4
+ 9D1nAwp0HrKcAdCy7b8Myi/tlApsmEF2K/FVtmRy0Pgmi2GCY9xq9lyTa1p46qitLg62
+ vdTg==
+X-Gm-Message-State: AO0yUKXvMhZt7X1qzy3JynItzpGkCImPiSz05BXOMrOLZLOPh23MTOjQ
+ NJlJ0V05T+lDNVOVDG02o2KIcINl5S7ZXDfMpLHZ3Ncg9mbuJcxqObsqos/v4xqRcz49ff8V4s7
+ bATbQ3bGkF0ewkr8+GzGkFyfXdxSdTbI=
+X-Received: by 2002:a17:902:e9c4:b0:196:6b0d:752b with SMTP id
+ 4-20020a170902e9c400b001966b0d752bmr1385649plk.19.1675134798508; 
+ Mon, 30 Jan 2023 19:13:18 -0800 (PST)
+X-Google-Smtp-Source: AK7set8EwH0bWF+QgCx5fzqph3ftumSZOYoaI+K3umE4wm9XYHjxHXz0PlZmqED4hPDq1ImMR8gZJgKcWlBfwXTF/bU=
+X-Received: by 2002:a17:902:e9c4:b0:196:6b0d:752b with SMTP id
+ 4-20020a170902e9c400b001966b0d752bmr1385644plk.19.1675134797965; Mon, 30 Jan
+ 2023 19:13:17 -0800 (PST)
 MIME-Version: 1.0
 References: <alpine.LRH.2.21.2301240858250.9655@file01.intranet.prod.int.rdu2.redhat.com>
 In-Reply-To: <alpine.LRH.2.21.2301240858250.9655@file01.intranet.prod.int.rdu2.redhat.com>
 From: Xiao Ni <xni@redhat.com>
-Date: Tue, 31 Jan 2023 11:17:38 +0800
-Message-ID: <CALTww2-nWYcDPHTLCcsijQ=pGH0-AmAHD9eCPqZfeVFaAgd9ig@mail.gmail.com>
+Date: Tue, 31 Jan 2023 11:13:05 +0800
+Message-ID: <CALTww29HCK0ujvQAJrp8ouQ8pr33f1e78pX9QW3oarO4j_Voyg@mail.gmail.com>
 To: Mikulas Patocka <mpatocka@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 Subject: Re: [dm-devel] [PATCH] md: use preallocated hashed wait queues
  instead of mddev->sb_wait
 X-BeenThere: dm-devel@redhat.com
@@ -105,11 +105,33 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: linux-raid@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+
+Hi Mikulas
+
+Can we fix this by this:
+
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -929,10 +929,10 @@ static void super_written(struct bio *bio)
+
+        bio_put(bio);
+
+-       rdev_dec_pending(rdev, mddev);
+-
+        if (atomic_dec_and_test(&mddev->pending_writes))
+                wake_up(&mddev->sb_wait);
++
++       rdev_dec_pending(rdev, mddev);
+ }
+
+Regards
+Xiao
+
 
 On Tue, Jan 24, 2023 at 10:06 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
 >
@@ -123,12 +145,6 @@ On Tue, Jan 24, 2023 at 10:06 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
 > wake_up, it may happen that the mddev structure is freed (because
 > mddev->pending_writes is zero) and on scheduling back,
 > wake_up(&mddev->sb_wait) would access freed memory.
-
-And super_written is in soft irq context, can it be rescheduled out?
-
-Regards
-Xiao
-
 >
 > Fix this bug by using an array of preallocated wait_queues, so that the
 > wait queue exist even after mddev was freed.
