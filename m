@@ -1,10 +1,10 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6E9CAC05027
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5066AC636D4
 	for <dm-devel@archiver.kernel.org>; Wed,  1 Feb 2023 08:04:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1675238642;
@@ -14,49 +14,91 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=97WEl/v9TEQS21nqkQ5F98dGRyofgNt/SnIv+GL+hUE=;
-	b=HtAzl4D7PvsLVJjYUsbnMzMaLsTYclsutKAN6zmZVzng52WICqTrWr7HvRO/0ONLz4VdNf
-	v6z9ncMtURJMmlY+9Ln6kwyT1Eikg4/kzDu/QmYaBCwM5ZZU1z6ROPVnfzVoz1ioabgyPh
-	iND9mRoJVu6OGGALCmzmCy8f16iQQvw=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Y/OuVsgh+/GZGpDHKzO8Qg/Ev7pqJWMFWwk3XJe/ip4=;
+	b=XSK5l9NmbhVepR8IB8djU1csnlMkzhHOUc1d+Gx8YUtp7wET/qm/h0wxZu24n8gZ8awPiV
+	tty2wGrrkLgjDG4Liv4fUtB8rPcE12EVVtLmIhiOEApcCcnJHpT/0s8tff9zXCNvnrmPjE
+	nYyc5/dDgiTM255/tzbTMXwf5Agtk/E=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-659-hx_daVMAMoOP4K_Es8qQXg-1; Wed, 01 Feb 2023 03:03:59 -0500
-X-MC-Unique: hx_daVMAMoOP4K_Es8qQXg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-610-KhnRiClAPYamPiWDZFEqsA-1; Wed, 01 Feb 2023 03:04:00 -0500
+X-MC-Unique: KhnRiClAPYamPiWDZFEqsA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 66C503C10695;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 542BE802D19;
 	Wed,  1 Feb 2023 08:03:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 51BD2C15BAE;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 3E49B492B01;
 	Wed,  1 Feb 2023 08:03:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 35C3D1946595;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 091D819465B2;
 	Wed,  1 Feb 2023 08:03:55 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2696F1946587
- for <dm-devel@listman.corp.redhat.com>; Tue, 31 Jan 2023 17:10:59 +0000 (UTC)
+ ESMTP id EADC91946587
+ for <dm-devel@listman.corp.redhat.com>; Tue, 31 Jan 2023 12:58:27 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 092A8112132E; Tue, 31 Jan 2023 17:10:59 +0000 (UTC)
-Received: from x2.localnet (unknown [10.22.17.134])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 27CAD112132C;
- Tue, 31 Jan 2023 17:10:57 +0000 (UTC)
-From: Steve Grubb <sgrubb@redhat.com>
-To: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com, 
- tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
- snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com,
- linux-audit@redhat.com
-Date: Tue, 31 Jan 2023 12:10:56 -0500
-Message-ID: <3723852.kQq0lBPeGt@x2>
-Organization: Red Hat
+ id DE2FA492B08; Tue, 31 Jan 2023 12:58:27 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D5DD3492B06
+ for <dm-devel@redhat.com>; Tue, 31 Jan 2023 12:58:27 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A8FF785CBE4
+ for <dm-devel@redhat.com>; Tue, 31 Jan 2023 12:58:27 +0000 (UTC)
+Received: from frasgout11.his.huawei.com (frasgout11.his.huawei.com
+ [14.137.139.23]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-563-6PKYNLaPNkyIN4OO2QrApQ-1; Tue, 31 Jan 2023 07:58:24 -0500
+X-MC-Unique: 6PKYNLaPNkyIN4OO2QrApQ-1
+Received: from mail02.huawei.com (unknown [172.18.147.229])
+ by frasgout11.his.huawei.com (SkyGuard) with ESMTP id 4P5lJQ4N67z9v7gf;
+ Tue, 31 Jan 2023 20:50:14 +0800 (CST)
+Received: from roberto-ThinkStation-P620 (unknown [10.204.63.22])
+ by APP1 (Coremail) with SMTP id LxC2BwCHDQlNENljE_3gAA--.28461S2;
+ Tue, 31 Jan 2023 13:58:00 +0100 (CET)
+Message-ID: <e052f907c01d12e62b10c524be52a10ff0332f98.camel@huaweicloud.com>
+From: Roberto Sassu <roberto.sassu@huaweicloud.com>
+To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
+ jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, 
+ axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com, 
+ paul@paul-moore.com
+Date: Tue, 31 Jan 2023 13:57:39 +0100
 In-Reply-To: <1675119451-23180-8-git-send-email-wufan@linux.microsoft.com>
 References: <1675119451-23180-1-git-send-email-wufan@linux.microsoft.com>
  <1675119451-23180-8-git-send-email-wufan@linux.microsoft.com>
+User-Agent: Evolution 3.36.5-0ubuntu1
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-CM-TRANSID: LxC2BwCHDQlNENljE_3gAA--.28461S2
+X-Coremail-Antispam: 1UD129KBjvAXoWfCF48XFy7KrW3JF13WF1rZwb_yoW5Jr4xuo
+ WftayfuF4Sqry7ArWYkF47JrWfW39Yqr4xArWYqrWDAF4aq3yUKrZ7Ga1xXFWUWr1jqrn5
+ G3s7X3yrZr4Ut3Z5n29KB7ZKAUJUUUUU529EdanIXcx71UUUUU7v73VFW2AGmfu7bjvjm3
+ AaLaJ3UjIYCTnIWjp_UUUY17kC6x804xWl14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK
+ 8VAvwI8IcIk0rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4
+ AK67xGY2AK021l84ACjcxK6xIIjxv20xvE14v26r1j6r1xM28EF7xvwVC0I7IYx2IY6xkF
+ 7I0E14v26r4j6F4UM28EF7xvwVC2z280aVAFwI0_Gr0_Cr1l84ACjcxK6I8E87Iv6xkF7I
+ 0E14v26r4UJVWxJr1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8C
+ rVC2j2WlYx0E2Ix0cI8IcVAFwI0_JrI_JrylYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4
+ IE7xkEbVWUJVW8JwACjcxG0xvEwIxGrwACI402YVCY1x02628vn2kIc2xKxwCF04k20xvY
+ 0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I
+ 0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAI
+ cVC0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcV
+ CF04k26cxKx2IYs7xG6rWUJVWrZr1UMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2
+ jsIEc7CjxVAFwI0_Gr1j6F4UJbIYCTnIWIevJa73UjIFyTuYvjxUo0eHDUUUU
+X-CM-SenderInfo: purev21wro2thvvxqx5xdzvxpfor3voofrz/1tbiAQAOBF1jj4hR4wABsB
+X-CFilter-Loop: Reflected
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mailman-Approved-At: Wed, 01 Feb 2023 08:03:52 +0000
 Subject: Re: [dm-devel] [RFC PATCH v9 07/16] uapi|audit|ipe: add ipe
  auditing support
@@ -71,22 +113,20 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-fscrypt@vger.kernel.org, linux-doc@vger.kernel.org,
+Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
  Deven Bowers <deven.desai@linux.microsoft.com>, roberto.sassu@huawei.com,
- dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
- linux-security-module@vger.kernel.org, Fan Wu <wufan@linux.microsoft.com>,
+ linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-block@vger.kernel.org, linux-fscrypt@vger.kernel.org,
  linux-audit@redhat.com, linux-integrity@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hello,
-
-On Monday, January 30, 2023 5:57:22 PM EST Fan Wu wrote:
+On Mon, 2023-01-30 at 14:57 -0800, Fan Wu wrote:
 > From: Deven Bowers <deven.desai@linux.microsoft.com>
 > 
 > Users of IPE require a way to identify when and why an operation fails,
@@ -98,30 +138,25 @@ On Monday, January 30, 2023 5:57:22 PM EST Fan Wu wrote:
 > evaulation of a resource. The other two events, AUDIT_MAC_POLICY_LOAD,
 > and AUDIT_MAC_CONFIG_CHANGE represent a new policy was loaded into the
 > kernel and the currently active policy changed, respectively.
-
-Typically when you reuse an existing record type, it is expected to maintain 
-the same fields in the same order. Also, it is expect that fields that are 
-common across diferent records have the same meaning. To aid in this, we have 
-a field dictionary here:
-
-https://github.com/linux-audit/audit-documentation/blob/main/specs/fields/
-field-dictionary.csv
-
-For example, dev is expected to be 2 hex numbers separated by a colon which 
-are the device major and minor numbers. But down a couple lines from here, we 
-find dev="tmpfs". But isn't that a filesystem type?
-
+> 
 > This patch also adds support for success auditing, allowing users to
 > identify how a resource passed policy. It is recommended to use this
 > option with caution, as it is quite noisy.
-> 
+
+Not sure if this comment makes sense. When a new function is
+introduced, like ipe_update_policy(), I like to see it in only one
+patch, not with subsequent changes, unless it is really necessary.
+
+If it is possible, I would always introduce the dependencies before and
+then the new function.
+
+Roberto
+
 > This patch adds the following audit records:
 > 
 >   audit: AUDIT1420 path="/tmp/tmpwxmam366/deny/bin/hello" dev="tmpfs"
 >     ino=72 rule="DEFAULT op=EXECUTE action=DENY"
-
-Do we really need to log the whole rule?
-
+> 
 >   The above audit record shows IPE blocked a file
 >     /tmp/tmpwxmam366/deny/bin/hello in the temp file system.
 > 
@@ -135,12 +170,7 @@ Do we really need to log the whole rule?
 >   audit: MAC_POLICY_LOAD policy_name="dmverity_roothash"
 >     policy_version=0.0.0 sha256=DC67AC19E05894EFB3170A8E55DE529794E248C2
 >     auid=4294967295 ses=4294967295 lsm=ipe res=1
-
-The MAC_POLICY_LOAD record type simply states the lsm that had it's policy 
-loaded. There isn't name, version, and hash information. I'd prefer to see 
-all users of this record type decide if it should be extended because they 
-also have that information available to record.
-
+> 
 >   The above audit record shows IPE loaded a new policy named
 >     "dmverity_roothash" with the sha256 hash of the policy.
 > 
@@ -153,13 +183,7 @@ also have that information available to record.
 > 
 >   The above audit record shows IPE's active policy switched from
 >     "Allow_All" to "dmverity_roothash".
-
-Shouldn't this just be another MAC_POLICY_LOAD? That would match other LSM's. 
-The MAC_CONFIG_CHANGE is to denote that a changeable option was modified from 
-one value to another. But it is still operating under the same policy.
-
--Steve
-
+> 
 > These result in the following events (the audit records are always
 > prior to a SYSCALL record):
 > 
@@ -168,8 +192,8 @@ one value to another. But it is still operating under the same policy.
 >   audit[476]: SYSCALL arch=c000003e syscall=59 success=no exit=-13
 >     a0=7f7d01b5e890 a1=7f7d01f80e80 a2=7ffde535f230 a3=0 items=0 ppid=229
 >     pid=476 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0
-> fsgid=0 tty=pts0 ses=4294967295 comm="python3" exe="/usr/bin/python3.10"
-> key=(null)
+>     fsgid=0 tty=pts0 ses=4294967295 comm="python3" exe="/usr/bin/python3.10"
+>     key=(null)
 >   audit: PROCTITLE
 >     proctitle=707974686F6E3300746573742F6D61696E2E7079002D66002E2E
 > 
@@ -181,7 +205,7 @@ one value to another. But it is still operating under the same policy.
 >   audit[1195]: SYSCALL arch=c000003e syscall=9 success=no
 >     exit=-13 a0=0 a1=18020 a2=6 a3=2 items=0 ppid=997 pid=1195
 >     auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0
-> tty=pts0 ses=4294967295 comm="mmap_test"
+>     tty=pts0 ses=4294967295 comm="mmap_test"
 >     exe="/tmp/ipe-test/bin/mmap_test" key=(null)
 >   audit: PROCTITLE
 >     proctitle=2F746D702F6970652D746573742F62696E2F6D6D61705F746573
@@ -210,10 +234,10 @@ one value to another. But it is still operating under the same policy.
 >     new_sha256=DC67AC19E05894EFB3170A8E55DE529794E248C2
 >     auid=4294967295 ses=4294967295 lsm=ipe res=1
 >   audit[229]: SYSCALL arch=c000003e syscall=1 success=yes exit=2 a0=3
->     a1=5596fcae1fb0 a2=2 a3=2 items=0 ppid=184 pid=229 auid=4294967295
-> uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0
->     fsgid=0 tty=pts0 ses=4294967295 comm="python3"
-> exe="/usr/bin/python3.10" key=(null)
+>     a1=5596fcae1fb0 a2=2 a3=2 items=0 ppid=184 pid=229 auid=4294967295 uid=0
+>     gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0
+>     fsgid=0 tty=pts0 ses=4294967295 comm="python3" exe="/usr/bin/python3.10"
+>     key=(null)
 >   audit: PROCTITLE
 >     proctitle=707974686F6E3300746573742F6D61696E2E7079002D66002E2
 >   The above events shows IPE switched to a new active policy
@@ -333,14 +357,11 @@ one value to another. But it is still operating under the same policy.
 > --- a/include/uapi/linux/audit.h
 > +++ b/include/uapi/linux/audit.h
 > @@ -143,6 +143,7 @@
->  #define AUDIT_MAC_UNLBL_STCDEL	1417	/* NetLabel: del a static label 
-*/
->  #define AUDIT_MAC_CALIPSO_ADD	1418	/* NetLabel: add CALIPSO DOI entry 
-*/
->  #define AUDIT_MAC_CALIPSO_DEL	1419	/* NetLabel: del CALIPSO DOI 
-entry */
+>  #define AUDIT_MAC_UNLBL_STCDEL	1417	/* NetLabel: del a static label */
+>  #define AUDIT_MAC_CALIPSO_ADD	1418	/* NetLabel: add CALIPSO DOI entry */
+>  #define AUDIT_MAC_CALIPSO_DEL	1419	/* NetLabel: del CALIPSO DOI entry */
 > +#define AUDIT_IPE_ACCESS	1420	/* IPE Denial or Grant */
-> 
+>  
 >  #define AUDIT_FIRST_KERN_ANOM_MSG   1700
 >  #define AUDIT_LAST_KERN_ANOM_MSG    1799
 > diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
@@ -348,7 +369,7 @@ entry */
 > --- a/security/ipe/Kconfig
 > +++ b/security/ipe/Kconfig
 > @@ -5,7 +5,7 @@
-> 
+>  
 >  menuconfig SECURITY_IPE
 >  	bool "Integrity Policy Enforcement (IPE)"
 > -	depends on SECURITY && SECURITYFS
@@ -392,9 +413,8 @@ entry */
 > +
 > +#define IPE_AUDIT_HASH_ALG "sha256"
 > +
-> +#define AUDIT_POLICY_LOAD_FMT "policy_name=\"%s\"
-> policy_version=%hu.%hu.%hu "\ +			      IPE_AUDIT_HASH_ALG 
-"="
+> +#define AUDIT_POLICY_LOAD_FMT "policy_name=\"%s\" policy_version=%hu.%hu.%hu "\
+> +			      IPE_AUDIT_HASH_ALG "="
 > +#define AUDIT_OLD_ACTIVE_POLICY_FMT "old_active_pol_name=\"%s\" "\
 > +				    "old_active_pol_version=%hu.%hu.%hu "\
 > +				    "old_" IPE_AUDIT_HASH_ALG "="
@@ -420,8 +440,8 @@ entry */
 > +/**
 > + * audit_rule - audit an IPE policy rule approximation.
 > + * @ab: Supplies a poniter to the audit_buffer to append to.
-> + * @r: Supplies a pointer to the ipe_rule to approximate a string form
-> for. + */
+> + * @r: Supplies a pointer to the ipe_rule to approximate a string form for.
+> + */
 > +static void audit_rule(struct audit_buffer *ab, const struct ipe_rule *r)
 > +{
 > +	const struct ipe_prop *ptr;
@@ -527,16 +547,16 @@ entry */
 > +}
 > +
 > +/**
-> + * ipe_audit_policy_activation - Audit a policy being made the active
-> policy. + * @p: Supplies a pointer to the policy to audit.
+> + * ipe_audit_policy_activation - Audit a policy being made the active policy.
+> + * @p: Supplies a pointer to the policy to audit.
 > + */
 > +void ipe_audit_policy_activation(const struct ipe_policy *const op,
 > +				 const struct ipe_policy *const np)
 > +{
 > +	struct audit_buffer *ab;
 > +
-> +	ab = audit_log_start(audit_context(), GFP_KERNEL,
-> AUDIT_MAC_CONFIG_CHANGE); +	if (!ab)
+> +	ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_MAC_CONFIG_CHANGE);
+> +	if (!ab)
 > +		return;
 > +
 > +	audit_policy(ab, AUDIT_OLD_ACTIVE_POLICY_FMT, op);
@@ -557,8 +577,7 @@ entry */
 > +{
 > +	struct audit_buffer *ab;
 > +
-> +	ab = audit_log_start(audit_context(), GFP_KERNEL, 
-AUDIT_MAC_POLICY_LOAD);
+> +	ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_MAC_POLICY_LOAD);
 > +	if (!ab)
 > +		return;
 > +
@@ -587,8 +606,7 @@ AUDIT_MAC_POLICY_LOAD);
 > +
 > +void ipe_audit_match(const struct ipe_eval_ctx *const ctx,
 > +		     enum ipe_match match_type,
-> +		     enum ipe_action_type act, const struct ipe_rule *const 
-r);
+> +		     enum ipe_action_type act, const struct ipe_rule *const r);
 > +void ipe_audit_policy_load(const struct ipe_policy *const p);
 > +void ipe_audit_policy_activation(const struct ipe_policy *const op,
 > +				 const struct ipe_policy *const np);
@@ -603,7 +621,7 @@ r);
 >  #include "hooks.h"
 >  #include "policy.h"
 > +#include "audit.h"
-> 
+>  
 >  #include <linux/fs.h>
 >  #include <linux/types.h>
 > @@ -15,8 +16,10 @@
@@ -611,33 +629,32 @@ r);
 >  #include <linux/rcupdate.h>
 >  #include <linux/spinlock.h>
 > +#include <linux/moduleparam.h>
-> 
+>  
 >  struct ipe_policy __rcu *ipe_active_policy;
 > +bool success_audit;
-> 
+>  
 >  static struct super_block *pinned_sb;
 >  static DEFINE_SPINLOCK(pin_lock);
-> @@ -117,6 +120,7 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const
-> ctx) int rc = 0;
+> @@ -117,6 +120,7 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
+>  	int rc = 0;
 >  	bool match = false;
 >  	enum ipe_action_type action;
 > +	enum ipe_match match_type;
 >  	struct ipe_policy *pol = NULL;
 >  	const struct ipe_rule *rule = NULL;
 >  	const struct ipe_op_table *rules = NULL;
-> @@ -131,6 +135,7 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const
-> ctx)
-> 
+> @@ -131,6 +135,7 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
+>  
 >  	if (ctx->op == ipe_op_max) {
 >  		action = pol->parsed->global_default_action;
 > +		match_type = ipe_match_global;
 >  		goto eval;
 >  	}
-> 
-> @@ -146,14 +151,20 @@ int ipe_evaluate_event(const struct ipe_eval_ctx
-> *const ctx) break;
+>  
+> @@ -146,14 +151,20 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
+>  			break;
 >  	}
-> 
+>  
 > -	if (match)
 > +	if (match) {
 >  		action = rule->action;
@@ -651,16 +668,15 @@ r);
 >  		action = pol->parsed->global_default_action;
 > +		match_type = ipe_match_global;
 > +	}
-> 
+>  
 >  eval:
 > +	ipe_audit_match(ctx, match_type, action, rule);
 > +
 >  	if (action == ipe_action_deny)
 >  		rc = -EACCES;
-> 
-> @@ -178,3 +189,12 @@ void ipe_invalidate_pinned_sb(const struct super_block
-> *mnt_sb)
-> 
+>  
+> @@ -178,3 +189,12 @@ void ipe_invalidate_pinned_sb(const struct super_block *mnt_sb)
+>  
 >  	spin_unlock(&pin_lock);
 >  }
 > +
@@ -671,23 +687,23 @@ r);
 > +#endif
 > +
 > +module_param(success_audit, bool, 0400);
-> +MODULE_PARM_DESC(success_audit, "Start IPE with success auditing
-> enabled"); diff --git a/security/ipe/eval.h b/security/ipe/eval.h
+> +MODULE_PARM_DESC(success_audit, "Start IPE with success auditing enabled");
+> diff --git a/security/ipe/eval.h b/security/ipe/eval.h
 > index 887797438b9b..b83730d0b5ae 100644
 > --- a/security/ipe/eval.h
 > +++ b/security/ipe/eval.h
 > @@ -13,6 +13,7 @@
 >  #include "policy.h"
-> 
+>  
 >  extern struct ipe_policy __rcu *ipe_active_policy;
 > +extern bool success_audit;
-> 
+>  
 >  struct ipe_eval_ctx {
 >  	enum ipe_op_type op;
 > @@ -21,6 +22,13 @@ struct ipe_eval_ctx {
 >  	bool from_init_sb;
 >  };
-> 
+>  
 > +enum ipe_match {
 > +	ipe_match_rule = 0,
 > +	ipe_match_table,
@@ -695,9 +711,8 @@ r);
 > +	ipe_match_max
 > +};
 > +
->  void build_eval_ctx(struct ipe_eval_ctx *ctx, const struct file *file,
-> enum ipe_op_type op); int ipe_evaluate_event(const struct ipe_eval_ctx
-> *const ctx);
+>  void build_eval_ctx(struct ipe_eval_ctx *ctx, const struct file *file, enum ipe_op_type op);
+>  int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx);
 >  void ipe_invalidate_pinned_sb(const struct super_block *mnt_sb);
 > diff --git a/security/ipe/fs.c b/security/ipe/fs.c
 > index 9f6a4867bec2..c99616f36f32 100644
@@ -710,7 +725,7 @@ r);
 > +#include "eval.h"
 >  #include "policy.h"
 > +#include "audit.h"
-> 
+>  
 >  #include <linux/dcache.h>
 >  #include <linux/security.h>
 > @@ -12,6 +14,57 @@
@@ -768,13 +783,13 @@ r);
 > +
 > +	return simple_read_from_buffer(data, len, offset, result, 1);
 > +}
-> 
+>  
 >  /**
 >   * new_policy - Write handler for the securityfs node, "ipe/new_policy".
-> @@ -50,6 +103,8 @@ static ssize_t new_policy(struct file *f, const char
-> __user *data, if (rc)
+> @@ -50,6 +103,8 @@ static ssize_t new_policy(struct file *f, const char __user *data,
+>  	if (rc)
 >  		goto err;
-> 
+>  
 > +	ipe_audit_policy_load(p);
 > +
 >  err:
@@ -783,7 +798,7 @@ r);
 > @@ -58,6 +113,11 @@ static const struct file_operations np_fops = {
 >  	.write = new_policy,
 >  };
-> 
+>  
 > +static const struct file_operations audit_fops = {
 > +	.write = setaudit,
 > +	.read = getaudit,
@@ -795,7 +810,7 @@ r);
 > @@ -84,6 +144,13 @@ static int __init ipe_init_securityfs(void)
 >  		goto err;
 >  	}
-> 
+>  
 > +	audit_node = securityfs_create_file("success_audit", 0600, root,
 > +					    NULL, &audit_fops);
 > +	if (IS_ERR(audit_node)) {
@@ -823,13 +838,13 @@ r);
 >  #include "policy_parser.h"
 >  #include "digest.h"
 > +#include "audit.h"
-> 
+>  
 >  #include <linux/verification.h>
-> 
-> @@ -124,6 +125,9 @@ struct ipe_policy *ipe_update_policy(struct ipe_policy
-> __rcu **addr, swap(new->policyfs, old->policyfs);
+>  
+> @@ -124,6 +125,9 @@ struct ipe_policy *ipe_update_policy(struct ipe_policy __rcu **addr,
+>  	swap(new->policyfs, old->policyfs);
 >  	ipe_free_policy(old);
-> 
+>  
 > +	if (!rc)
 > +		ipe_audit_policy_load(new);
 > +
@@ -839,14 +854,11 @@ r);
 > @@ -230,6 +234,7 @@ int ipe_set_active_pol(const struct ipe_policy *p)
 >  	spin_unlock(&ipe_policy_lock);
 >  	synchronize_rcu();
-> 
+>  
 > +	ipe_audit_policy_activation(ap, p);
 >  out:
 >  	return rc;
 >  }
-
-
-
 
 --
 dm-devel mailing list
