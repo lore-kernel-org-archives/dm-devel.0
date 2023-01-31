@@ -4,140 +4,93 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0747DC63797
-	for <dm-devel@archiver.kernel.org>; Wed,  1 Feb 2023 08:04:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4940CC38142
+	for <dm-devel@archiver.kernel.org>; Wed,  1 Feb 2023 08:04:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675238646;
+	s=mimecast20190719; t=1675238643;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=2HSXSFAfn4Cuqq4fse8L7wSmIz1mKLYionhJ0Ir3Ocs=;
-	b=ijle6fJeVnMGQkYUdoyKJhB34SyFJ9qraXnmn5yhzWP/oNp0/cKbGvra7jXjUR9ktD41iQ
-	CZH446aDkRd2nUsASkOMwL1mCNGoBvxG6szGHljdXcZJJ6C/Ih6EF3BrVZrnwTWqIi/j8g
-	RvgTlW7j9q1ICNuYJvHVTKv+DLapQj8=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=IffMJ7WPXP9xCCGUYY583HRE1l18FeVApEF/EcqFYRc=;
+	b=BYM4ClODVZymj5AwN+1ncAnjaOI/SttqONQXHYc2oqSYlmyrMb/4/ioQWTfRAJqr7AUIGV
+	PP21MWaK/xxuuNtxNLxRhWPOYo28B3exxFp4rFOfFEr9tx1d8Nn/zYaX/rfrt6kkEp1wgS
+	vxxO0zJU9YnHSVM1eGlei94fIcKAA1c=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-647-MJgvwv2pNGqc2yULb0LZzQ-1; Wed, 01 Feb 2023 03:04:01 -0500
-X-MC-Unique: MJgvwv2pNGqc2yULb0LZzQ-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-593-3rlDqpZWMJGEyWV62cMyhA-1; Wed, 01 Feb 2023 03:03:59 -0500
+X-MC-Unique: 3rlDqpZWMJGEyWV62cMyhA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 701D728055AC;
-	Wed,  1 Feb 2023 08:03:54 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 584AC492B0F;
-	Wed,  1 Feb 2023 08:03:54 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 95F811947354;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E1184800DB8;
 	Wed,  1 Feb 2023 08:03:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C8C0BC15BAE;
+	Wed,  1 Feb 2023 08:03:53 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 268811947340;
+	Wed,  1 Feb 2023 08:03:53 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 5CDE71946587
- for <dm-devel@listman.corp.redhat.com>; Wed,  1 Feb 2023 02:32:40 +0000 (UTC)
+ ESMTP id 22AD81946587
+ for <dm-devel@listman.corp.redhat.com>; Tue, 31 Jan 2023 12:52:32 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 41DBBC16020; Wed,  1 Feb 2023 02:32:40 +0000 (UTC)
+ id 079632026D76; Tue, 31 Jan 2023 12:52:32 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 38F07C15BAE
- for <dm-devel@redhat.com>; Wed,  1 Feb 2023 02:32:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0D0981C05191
- for <dm-devel@redhat.com>; Wed,  1 Feb 2023 02:32:40 +0000 (UTC)
-Received: from APC01-TYZ-obe.outbound.protection.outlook.com
- (mail-tyzapc01on2091.outbound.protection.outlook.com [40.107.117.91]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-171-_ZI4IjEMNg2Uz1FgdEuaqQ-1; Tue, 31 Jan 2023 21:32:34 -0500
-X-MC-Unique: _ZI4IjEMNg2Uz1FgdEuaqQ-1
-Received: from SYYP282MB1901.AUSP282.PROD.OUTLOOK.COM (2603:10c6:10:d9::10) by
- SYYP282MB0845.AUSP282.PROD.OUTLOOK.COM (2603:10c6:10:74::10) with
- Microsoft
- SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.6043.36; Wed, 1 Feb 2023 02:32:29 +0000
-Received: from SYYP282MB1901.AUSP282.PROD.OUTLOOK.COM
- ([fe80::4935:6a21:2ed0:716a]) by SYYP282MB1901.AUSP282.PROD.OUTLOOK.COM
- ([fe80::4935:6a21:2ed0:716a%4]) with mapi id 15.20.6043.036; Wed, 1 Feb 2023
- 02:32:29 +0000
-From: Mason Giles <mason@cometbackup.com>
-To: Mike Snitzer <snitzer@kernel.org>, Sergei Shtepa <sergei.shtepa@veeam.com>
-Thread-Topic: [PATCH v2 00/21] blksnap - block devices snapshots module
-Thread-Index: AQG4JUIXsWG37qEUjV9h3UlvtAsaCgHoG6k8Ads7F64B27Knd67OgVsA
-Date: Wed, 1 Feb 2023 02:32:29 +0000
-Message-ID: <SYYP282MB1901AE0C3A06480BF8FA8A38B5D19@SYYP282MB1901.AUSP282.PROD.OUTLOOK.COM>
-References: <20221209142331.26395-1-sergei.shtepa@veeam.com>
- <Y8cNVv4O+vjL+aAy@redhat.com>
- <15ffd4bb-cb87-4bc9-53fc-4e0b941db0b7@veeam.com>
- <Y9l+WIDSrVhRhPME@redhat.com>
-In-Reply-To: <Y9l+WIDSrVhRhPME@redhat.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: SYYP282MB1901:EE_|SYYP282MB0845:EE_
-x-ms-office365-filtering-correlation-id: 35af37f5-ca8d-48d9-a67f-08db03fc905f
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: K8Ekbv/F839LGT7Lbns7/QQGB/6yTUP0yatoh/TYJ0MNrovOnnobNFTSUZtrVAEE1k5A8J2HlxTOyu5kUhpLn5pFIyAgn1Pd0TMAfrufS35AzJ6dK+iSK7izUMPOW5SVeJ7BU2jHCuiKzJND+LB+qsxhi18Q0FmCDAYtqCvEOTHpdOgeRHyS8IsnoGjrHiJ3U02EHpPq8zZjwyHmqEMqz2+Md7SiUwsZidi38WtBU9Y8tHSHT516bNOonndLhLysW/BOMcKEmjkK050J7JhNWB5U1HynG6eoZOhNnwkUpO7mKv6zNc6l4LWK8LJXs1WLNS+d1Im/j93RAFZgGjJSEJ8shvdaubWSakMCWUH6aSc07btXKTuOMkkO/clCrDkw+VPNN5Okz18QOmQVqvpE2ywLTf9HUpde0OVMeuW9QJhFx6Pu3yCth02E0dOi19SwF6+AcY4m+/sP4fyydtgLmWxsBbZzVUBwyW9ODXNUEA1PSn9zmtS4j+anzAPaA3aHsnKQATdtxRyUQgco+ysZk/WO8iUHyaDVzrmuusyHdVJ/M44+7wulWdlcW772iGVmyuv1dM6PioPM50I19f6jS9k4MRyNk6P0e3koefeNCYKWodLYyHw0d3fRr1qZqxqoHjwC+ufjz/G0LnLj+5J0qGZTmDYjrzuEF+1DQkiaY68hldEOWVjjsEKiPNcEmMeAwWi2wMAYjWYHYaxkvdayHuQmwyUhyZM+JYMKj32iYHM=
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:SYYP282MB1901.AUSP282.PROD.OUTLOOK.COM; PTR:; CAT:NONE;
- SFS:(13230025)(396003)(39830400003)(136003)(346002)(42606007)(366004)(376002)(451199018)(52536014)(5660300002)(8936002)(38100700002)(122000001)(38070700005)(55016003)(33656002)(86362001)(2906002)(41300700001)(110136005)(54906003)(966005)(7696005)(186003)(478600001)(26005)(9686003)(71200400001)(316002)(66446008)(64756008)(8676002)(66556008)(66946007)(66476007)(4326008)(76116006)(83380400001)(6506007);
- DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?eHp4OFp0VThHajQrRUUrMGVuamtybG45VkQ5V0VmNGkvWUVzUk9pdTJLeUN1?=
- =?utf-8?B?dTc0NzZZdFV0R04wc1ZGVEdCaEtpYXZDVHpCbmhVanpRYmNwSzFwMy9aam81?=
- =?utf-8?B?dk9EWnRyeFpvZXRjQzhrR3FhQzhqZjFNR3BnZVk1a3Zrd2tpMmo5S1hmZkxS?=
- =?utf-8?B?MjRzYnRPZ1VVbXFnYUhtcHhQM1ZzbDZXQWxPM2M2cWRpMStCY08zRWdNbCtz?=
- =?utf-8?B?bHJ3Y0tnYjFWU0N2eFk5Q2Ivb2NpL2hBRVFySEY1eS9iRXVzczhIUEtKMlZY?=
- =?utf-8?B?NHl3SzMwcC9YakFlemRLY2JVeEVrV1dCWWdETlpjMEJmTkdORFVjblR1S3o3?=
- =?utf-8?B?RnF5TExrcm1WV2h1U05jalU4YnB2dGtpckNUTDdoU2RQcWNIbXRpSXJrYzFP?=
- =?utf-8?B?STZDcTJudFF2c3orWTliREI3S3VUQm9ueGFIQktEUkU4YUt5UmIvT1gvaER2?=
- =?utf-8?B?REI0NnV1NXNraEFQUHVvOHBkU2tJR1RBZVFKVEEyOUJIdDNBM1lIdVl4NElR?=
- =?utf-8?B?U0duQWhDODhvV3EyTDB2bm13WDBTYjRwaDJ0UjQrZDBXRFE0SHkwenBhMUYx?=
- =?utf-8?B?V3FCdkoraERFS05vRE9BczNabU9xVVY0Zi9peG9YSmZuY0FYcFROSS9wRVdO?=
- =?utf-8?B?TmtHT1RhcjlXN3g3eDRDOENnRk9ETWRiZTA1SWYvRU54WmhQVDFwZmphVEcz?=
- =?utf-8?B?MnMzZzVTTkw5ZzN3blJTRExxa0U5L3FuU0h4UENsUmhkMlFPU0FxSVBsd1Za?=
- =?utf-8?B?c0pCTHlFTWRPWkVHRXpyalFyYzVoUjVGY01tdllHeGtmVU9QMEpYczUvWkZU?=
- =?utf-8?B?UitYUmtHOEdHdG9qL2NwT3UzMWNXenhKT0lCMXdJU0JTR0JVOHN2a0xWazVZ?=
- =?utf-8?B?cjdOdzVkdnlOYWJoT2NySEtBMXhEM3YxR1YxVVFpcm9FaUFvU3RHb2o2SFYr?=
- =?utf-8?B?UnFnajR2K0hza3M5SUJtYmlYbjFmcVRQL1FrU2QxTFYvREVyWXJoUjcvamlq?=
- =?utf-8?B?cXh5YUhRcE9nWHQ1Mmlnd1poaHJNUEpHOW9PTHBPMkVJU2pxNXF1WXhUVjkw?=
- =?utf-8?B?SFlXL0krMVZCeVkvbWV6OUMwWU9wRW1LT0s2UEdrd0wwYXRvOFlTWXBHcDdu?=
- =?utf-8?B?bG9sTUx6Um5yNEtwZGVrQ1l5dEMvbFF1YldPVE5udHVYV2hDRXc1Q3NrSlYy?=
- =?utf-8?B?Zzc1V0J4djlOL2xTSzZVSG9Nc2RmR2tWc3pXcmh1dzEwYVVWWnM5TmJFWVpX?=
- =?utf-8?B?ZXhYVzkzSFpQemREdUhLM1ZJZUxTZzhXSlFKT00vend6dnN4YmFEYmM0Z1pt?=
- =?utf-8?B?aGNJUzVWMmdoMjJjSUZHNzdBdTlrS3cycnorTFVmUlVFcGx1RFFYQzdncTV5?=
- =?utf-8?B?Rm9HUDdNRm5KbUFJMTRnZXo4eG94azJ1MGdrRlNYYlZqVzhIZGgyeEVRWkZ4?=
- =?utf-8?B?bXVUNlNBZ0h6K1VSSmxnY1FSb3RzaEtNUzBmeHQyUElsUHlWWjlrSStGL01Q?=
- =?utf-8?B?Q1NIN000MFY0V1VWck9KN1h1ekt1aFNKTXJpTlY1dGlhV0UxcmtHV2NsR0Fs?=
- =?utf-8?B?L3AvQ3oyVG42WUdSck9aM0VpZDkrWmVBN0xBdWtieldESmtQTkhiTGJQRHp5?=
- =?utf-8?B?a2dBekVtUlpWNjlhdkFiTjVlOFVjTVliYnRmcVpqR1hkc0hsOWdTVVM4ZEVp?=
- =?utf-8?B?Z0pGRHhEM0YzVE0vYmx0Q3NmZnNhY2ViUjdNUTRzeXF0K0pORVBUbTlxRzR1?=
- =?utf-8?B?aXl1ZzA5ZUttZFRvSnV3TU1vK3NORmtsK0xSZkZQVkRoVnpCcFNKUmgxZnFZ?=
- =?utf-8?B?bko2MHpFRDRidEZMdjJZY2k1Y1dUaWNUdUZrdllPYmY5aG1iLzYzbTRzOUQv?=
- =?utf-8?B?eXlLK25iV1R5YUFQOFBKelhJR0d4ZzdQZHY3Y3pBRnlBZUo4emtOUEYrb1JO?=
- =?utf-8?B?TU55eno5bjJYNzdhL1M3cW9lSTFENVBacFFxYWZNTEZIbVBreGZ2T1NsUlhi?=
- =?utf-8?B?UHRSOGxLenFXWFFqaXhycDlhRkVNazFqa2JvbkFWd1VPQUpxUnNIM3ZTTDdy?=
- =?utf-8?B?KzlNWXZYd3lqN1RKb0ZsdDNjM3d4SHFrQ3dzeDNXcnZ2QkIyV1ZYeGFzTFRW?=
- =?utf-8?Q?NuaTxvVBAuy06qse3BuWWD+hV?=
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id EBA2E2026D4B
+ for <dm-devel@redhat.com>; Tue, 31 Jan 2023 12:52:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C68CF2823814
+ for <dm-devel@redhat.com>; Tue, 31 Jan 2023 12:52:31 +0000 (UTC)
+Received: from frasgout13.his.huawei.com (frasgout13.his.huawei.com
+ [14.137.139.46]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-654-EVi4e6h3MHatMyqGTMTpvw-1; Tue, 31 Jan 2023 07:52:27 -0500
+X-MC-Unique: EVi4e6h3MHatMyqGTMTpvw-1
+Received: from mail02.huawei.com (unknown [172.18.147.229])
+ by frasgout13.his.huawei.com (SkyGuard) with ESMTP id 4P5l9Z5l7Cz9xGmr;
+ Tue, 31 Jan 2023 20:44:18 +0800 (CST)
+Received: from roberto-ThinkStation-P620 (unknown [10.204.63.22])
+ by APP1 (Coremail) with SMTP id LxC2BwCXHwvlDtljpffgAA--.10854S2;
+ Tue, 31 Jan 2023 13:52:02 +0100 (CET)
+Message-ID: <412da9a9da2e75e896911f01bfd735dd4b5789f4.camel@huaweicloud.com>
+From: Roberto Sassu <roberto.sassu@huaweicloud.com>
+To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
+ jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, 
+ axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com, 
+ paul@paul-moore.com
+Date: Tue, 31 Jan 2023 13:51:39 +0100
+In-Reply-To: <1675119451-23180-7-git-send-email-wufan@linux.microsoft.com>
+References: <1675119451-23180-1-git-send-email-wufan@linux.microsoft.com>
+ <1675119451-23180-7-git-send-email-wufan@linux.microsoft.com>
+User-Agent: Evolution 3.36.5-0ubuntu1
 MIME-Version: 1.0
-X-OriginatorOrg: cometbackup.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: SYYP282MB1901.AUSP282.PROD.OUTLOOK.COM
-X-MS-Exchange-CrossTenant-Network-Message-Id: 35af37f5-ca8d-48d9-a67f-08db03fc905f
-X-MS-Exchange-CrossTenant-originalarrivaltime: 01 Feb 2023 02:32:29.1418 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 9096f9ac-9e1d-4258-b91f-cf57c563c0b1
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: LU2TFdmSPNkO4jJtXn2pBQ410Cw0lSblgSkfCnHRPXkESOC290lQTSBqUqfcl80LSazyjr99e8r6mx/Uy0HYUQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SYYP282MB0845
+X-CM-TRANSID: LxC2BwCXHwvlDtljpffgAA--.10854S2
+X-Coremail-Antispam: 1UD129KBjvJXoW3WrW8XF13Jry8Aw4DGF4xCrg_yoWfXw18pF
+ 9xJ3ZxGrWDXF9a9r1xJa1UuanxK395Kr4UW3sxWFy8AanFqr10kr1aqF17ZFW5Grn5t3ZY
+ v3W2vr42g34qyrDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+ 9KBjDU0xBIdaVrnRJUUUkFb4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
+ 6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
+ vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Jr0_JF4l84ACjcxK6xIIjxv20xvEc7Cj
+ xVAFwI0_Gr0_Cr1l84ACjcxK6I8E87Iv67AKxVW8JVWxJwA2z4x0Y4vEx4A2jsIEc7CjxV
+ AFwI0_Gr1j6F4UJwAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
+ 6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
+ Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxAIw28IcxkI
+ 7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxV
+ Cjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY
+ 6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6x
+ AIw20EY4v20xvaj40_Wr1j6rW3Jr1lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280
+ aVCY1x0267AKxVW8Jr0_Cr1UYxBIdaVFxhVjvjDU0xZFpf9x07UZ18PUUUUU=
+X-CM-SenderInfo: purev21wro2thvvxqx5xdzvxpfor3voofrz/1tbiAQAOBF1jj4hR2wAAs4
+X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -145,10 +98,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mailman-Approved-At: Wed, 01 Feb 2023 08:03:52 +0000
-Subject: Re: [dm-devel] [PATCH v2 00/21] blksnap - block devices snapshots
- module
+Subject: Re: [dm-devel] [RFC PATCH v9 06/16] ipe: add LSM hooks on execution
+ and kernel read
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -160,55 +113,324 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
- "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
- "corbet@lwn.net" <corbet@lwn.net>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>,
- "drwilliams@datto.com" <drwilliams@datto.com>
+Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
+ Deven Bowers <deven.desai@linux.microsoft.com>, roberto.sassu@huawei.com,
+ linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-block@vger.kernel.org, linux-fscrypt@vger.kernel.org,
+ linux-audit@redhat.com, linux-integrity@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-SGkgTWlrZSBhbmQgU2VyZ2VpLA0KDQo+ID4gSXTigJlzIG5vdCBhYm91dCBWZWVhbSBhdCBhbGwu
-IEkgYW0gc3VyZSB0aGF0IG15IHdvcmsgd2lsbCBoZWxwIG1hbnkgDQo+ID4gYmFja3VwIHZlbmRv
-cnMgYW5kIGF2ZXJhZ2UgdXNlcnMgdG8gYnVpbGQgbW9yZSByb2J1c3QgYW5kIGVmZmljaWVudCBi
-YWNrdXAgdG9vbHMuDQo+ID4gU28sIHRoZSBhcmd1bWVudCB0aGF0IEkgZG8gaXQganVzdCBiZWNh
-dXNlIFZlZWFtIG5lZWRzIGl0IGRvZXMgbm90IA0KPiA+IGhvbGQgYW55IHdhdGVyIOKAkyBJIGtu
-b3cgdGhhdCBtYW55IHBlb3BsZSBuZWVkIHRoZSBmZWF0dXJlLCBub3QganVzdCBWZWVhbS4NCj4g
-DQo+IE5vIG90aGVyIHNuYXBzaG90IGNvbnN1bWVycyBoYXZlIHNob3duIHRoZW1zZWx2ZXMuIFVz
-aW5nIHRoZW0gYXMgc29tZSBzb3J0IG9mIGltcGxpZWQgY29uc2Vuc3VzIG9uIHdoYXQgaXMgbmVl
-ZGVkIGZvciBnZW5lcmljIExpbnV4IHNuYXBzaG90IGlzIGEgYml0IG9mIGEgbGVhcC4gQWxsIHlv
-dSByZWFsbHkgaGF2ZSBhcmUgeW91ciByZXF1aXJlbWVudHMuIERvZXNuJ3QgcmVhbGx5IGhlbHAg
-dG8gc2F5IHlvdSByZXByZXNlbnQgdGhlIGludGVyZXN0cyBvZiBhbGwgaW50ZXJlc3RlZCBwYXJ0
-aWVzIGlmIHRoZXkgcmVtYWluIG5hbWVsZXNzIGFuZCBpbiB0aGUgYmFja2dyb3VuZC4NCg0KSSdt
-IHNwZWFraW5nIG9uIGJlaGFsZiBvZiBDb21ldCBCYWNrdXAsIGFub3RoZXIgY29tbWVyY2lhbCB2
-ZW5kb3IgaW4gdGhpcyBzcGFjZS4gSSBqdXN0IHdhbnQgdG8gY2hpbWUgaW4gYW5kIHNheSB3ZSdy
-ZSB2ZXJ5IGNsb3NlbHkgZm9sbG93aW5nIHRoZSBkZXZlbG9wbWVudCBvZiB0aGlzIHBhdGNoIHNl
-dC4gDQoNCk91ciBlbmQtdXNlciBjdXN0b21lcnMgaGF2ZSBhbiAiYXJiaXRyYXJ5IiBMaW51eCBz
-eXN0ZW0gd2hlcmUgd2UgZG9uJ3QgY29udHJvbCB0aGUgZmlsZXN5c3RlbSBvciBibG9jayBkZXZp
-Y2UgbGF5ZXIuIEhhdmluZyBhIHBvaW50LWluLXRpbWUgY29uc2lzdGVudCBzbmFwc2hvdCBpcyBl
-c3NlbnRpYWwgZm9yIGEgaGlnaCBxdWFsaXR5IGJhY2t1cCwgYW5kIGl0J3MgdGFibGUtc3Rha2Vz
-IG9uIFdpbmRvd3Mgd2l0aCB0aGUgVlNTIHN1YnN5c3RlbS4gQnV0IGEgdmVyeSBsYXJnZSBudW1i
-ZXIgb2YgaW5zdGFsbHMgaW4tdGhlLXdpbGQgYXJlIHVzaW5nIHBsYWluIGV4dDQgd2l0aG91dCBs
-dm0sIGFuZCB3ZSBoYXZlIG5vIHJlbWFpbmluZyB2aWFibGUgbWVjaGFuaXNtcyBmb3IgZWl0aGVy
-IGZpbGVzeXN0ZW0tbGV2ZWwgb3IgYmxvY2sgZGV2aWNlLWxldmVsIGJhY2t1cC4NCg0KRm9yIHRo
-aXMgdXNlIGNhc2UsIHRoZSBzbmFwc2hvdHMgYXJlIGdlbmVyYWxseSBzaG9ydC1saXZlZC4gVGhl
-IHVuZGVybHlpbmcgbWVjaGFuaXNtIGRvZXNuJ3QgYWZmZWN0IHVzIG11Y2ggLSB3aGV0aGVyIGl0
-J3MgbGl2ZS1zd2FwcGluZyBETSBkZXZpY2VzLCBvciBleHBsaWNpdGx5IHRyYWNraW5nIGJpbydz
-IChvciBpZiBzb21laG93IGV4dDQgYW5kIHhmcyBtYWdpY2FsbHkgZ290IGZzLWxldmVsIHNuYXBz
-aG90dGluZyBzdXBwb3J0KS4gQnV0IG1vc3Qgb2YgYWxsLCB3ZSdkIGxvdmUgdG8gc2VlIHNvbWV0
-aGluZyB1cHN0cmVhbS4NCg0KSSdkIGFsc28gcG9pbnQgeW91IHRvd2FyZHMgRGF0dG8ncyBvdXQt
-b2YtdHJlZSAnZGF0dG9iZCcgYmxvY2sgZGV2aWNlIGRyaXZlciB3aXRoIHRoZSBzYW1lIG9iamVj
-dGl2ZTogaHR0cHM6Ly9naXRodWIuY29tL2RhdHRvL2RhdHRvYmQgKExHUEx2MispLiBJdCB3YXMg
-d29ya2luZyBpbiBhIHNsaWdodGx5IGRpZmZlcmVudCB3YXkgYnkgdXNpbmcgZnRyYWNlIHRvIGhv
-b2sgc3VibWl0X2Jpb19ub2FjY3QuIA0KDQpSZWdhcmRzLA0KTWFzb24gR2lsZXMNCg0KLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJl
-ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
+On Mon, 2023-01-30 at 14:57 -0800, Fan Wu wrote:
+> From: Deven Bowers <deven.desai@linux.microsoft.com>
+> 
+> IPE's initial goal is to control both execution and the loading of
+> kernel modules based on the system's definition of trust. It
+> accomplishes this by plugging into the security hooks for
+> bprm_check_security, file_mprotect, mmap_file, kernel_load_data,
+> and kernel_read_data.
+> 
+> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+> ---
+> v2:
+>   + Split evaluation loop, access control hooks,
+>     and evaluation loop from policy parser and userspace
+>     interface to pass mailing list character limit
+> 
+> v3:
+>   + Move ipe_load_properties to patch 04.
+>   + Remove useless 0-initializations
+>   + Prefix extern variables with ipe_
+>   + Remove kernel module parameters, as these are
+>     exposed through sysctls.
+>   + Add more prose to the IPE base config option
+>     help text.
+>   + Use GFP_KERNEL for audit_log_start.
+>   + Remove unnecessary caching system.
+>   + Remove comments from headers
+>   + Use rcu_access_pointer for rcu-pointer null check
+>   + Remove usage of reqprot; use prot only.
+>   + Move policy load and activation audit event to 03/12
+> 
+> v4:
+>   + Remove sysctls in favor of securityfs nodes
+>   + Re-add kernel module parameters, as these are now
+>     exposed through securityfs.
+>   + Refactor property audit loop to a separate function.
+> 
+> v5:
+>   + fix minor grammatical errors
+>   + do not group rule by curly-brace in audit record,
+>     reconstruct the exact rule.
+> 
+> v6:
+>   + No changes
+> 
+> v7:
+>   + Further split lsm creation, the audit system, the evaluation loop
+>     and access control hooks into separate commits.
+> 
+> v8:
+>   + Rename hook functions to follow the lsmname_hook_name convention
+>   + Remove ipe_hook enumeration, can be derived from correlation with
+>     syscall audit record.
+> 
+> v9:
+>   + Minor changes for adapting to the new parser
+> ---
+>  security/ipe/hooks.c | 169 +++++++++++++++++++++++++++++++++++++++++++
+>  security/ipe/hooks.h |  13 ++++
+>  security/ipe/ipe.c   |   6 ++
+>  3 files changed, 188 insertions(+)
+> 
+> diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
+> index 335b773c7ae1..fd5109e29c76 100644
+> --- a/security/ipe/hooks.c
+> +++ b/security/ipe/hooks.c
+> @@ -23,3 +23,172 @@ void ipe_sb_free_security(struct super_block *mnt_sb)
+>  {
+>  	ipe_invalidate_pinned_sb(mnt_sb);
+>  }
+> +
+> +/**
+> + * ipe_bprm_check_security - ipe security hook function for bprm check.
+> + * @bprm: Supplies a pointer to a linux_binprm structure to source the file
+> + *	  being evaluated.
+> + *
+> + * This LSM hook is called when a binary is loaded through the exec
+> + * family of system calls.
+> + * Return:
+> + * *0	- OK
+> + * *!0	- Error
+> + */
+> +int ipe_bprm_check_security(struct linux_binprm *bprm)
+> +{
+> +	struct ipe_eval_ctx ctx = { 0 };
+> +
+> +	build_eval_ctx(&ctx, bprm->file, ipe_op_exec);
+> +	return ipe_evaluate_event(&ctx);
+> +}
+> +
+> +/**
+> + * ipe_mmap_file - ipe security hook function for mmap check.
+> + * @f: File being mmap'd. Can be NULL in the case of anonymous memory.
+> + * @reqprot: The requested protection on the mmap, passed from usermode.
+> + * @prot: The effective protection on the mmap, resolved from reqprot and
+> + *	  system configuration.
+> + * @flags: Unused.
+> + *
+> + * This hook is called when a file is loaded through the mmap
+> + * family of system calls.
+> + *
+> + * Return:
+> + * * 0	- OK
+> + * * !0	- Error
+> + */
+> +int ipe_mmap_file(struct file *f, unsigned long reqprot, unsigned long prot,
+> +		  unsigned long flags)
+> +{
+> +	struct ipe_eval_ctx ctx = { 0 };
+> +
+> +	if (prot & PROT_EXEC || reqprot & PROT_EXEC) {
+
+Since the kernel only adds flags and doesn't clear them, isn't safe to
+just consider prot? Oh, you mentioned it in the changelog, maybe just
+for ipe_file_mprotect().
+
+> +		build_eval_ctx(&ctx, f, ipe_op_exec);
+> +		return ipe_evaluate_event(&ctx);
+> +	}
+
+Uhm, I think some considerations that IMA does for mmap() are relevant
+also for IPE.
+
+For example, look at mmap_violation_check(). It checks if there are
+writable mappings, and if yes, it denies the access.
+
+Similarly for mprotect(), is adding PROT_EXEC safe?
+
+> +
+> +	return 0;
+> +}
+> +
+> +/**
+> + * ipe_file_mprotect - ipe security hook function for mprotect check.
+> + * @vma: Existing virtual memory area created by mmap or similar.
+> + * @reqprot: The requested protection on the mmap, passed from usermode.
+> + * @prot: The effective protection on the mmap, resolved from reqprot and
+> + *	  system configuration.
+> + *
+> + * This LSM hook is called when a mmap'd region of memory is changing
+> + * its protections via mprotect.
+> + *
+> + * Return:
+> + * * 0	- OK
+> + * * !0	- Error
+> + */
+> +int ipe_file_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
+> +		      unsigned long prot)
+> +{
+> +	struct ipe_eval_ctx ctx = { 0 };
+> +
+> +	/* Already Executable */
+> +	if (vma->vm_flags & VM_EXEC)
+> +		return 0;
+> +
+> +	if (prot & PROT_EXEC) {
+> +		build_eval_ctx(&ctx, vma->vm_file, ipe_op_exec);
+> +		return ipe_evaluate_event(&ctx);
+> +	}
+> +
+> +	return 0;
+> +}
+> +
+> +/**
+> + * ipe_kernel_read_file - ipe security hook function for kernel read.
+> + * @file: Supplies a pointer to the file structure being read in from disk.
+> + * @id: Supplies the enumeration identifying the purpose of the read.
+> + * @contents: Unused.
+> + *
+> + * This LSM hook is called when a file is being read in from disk from
+> + * the kernel.
+> + *
+> + * Return:
+> + * 0 - OK
+> + * !0 - Error
+> + */
+> +int ipe_kernel_read_file(struct file *file, enum kernel_read_file_id id,
+> +			 bool contents)
+> +{
+> +	enum ipe_op_type op;
+> +	struct ipe_eval_ctx ctx;
+> +
+> +	switch (id) {
+> +	case READING_FIRMWARE:
+> +		op = ipe_op_firmware;
+> +		break;
+> +	case READING_MODULE:
+> +		op = ipe_op_kernel_module;
+> +		break;
+> +	case READING_KEXEC_INITRAMFS:
+> +		op = ipe_op_kexec_initramfs;
+> +		break;
+> +	case READING_KEXEC_IMAGE:
+> +		op = ipe_op_kexec_image;
+> +		break;
+> +	case READING_POLICY:
+> +		op = ipe_op_ima_policy;
+> +		break;
+> +	case READING_X509_CERTIFICATE:
+> +		op = ipe_op_ima_x509;
+> +		break;
+> +	default:
+> +		op = ipe_op_max;
+> +		WARN(op == ipe_op_max, "no rule setup for enum %d", id);
+> +	}
+> +
+> +	build_eval_ctx(&ctx, file, op);
+> +	return ipe_evaluate_event(&ctx);
+> +}
+> +
+> +/**
+> + * ipe_kernel_load_data - ipe security hook function for kernel load data.
+> + * @id: Supplies the enumeration identifying the purpose of the read.
+> + * @contents: Unused.
+> + *
+> + * This LSM hook is called when a buffer is being read in from disk.
+> + *
+> + * Return:
+> + * * 0	- OK
+> + * * !0	- Error
+> + */
+> +int ipe_kernel_load_data(enum kernel_load_data_id id, bool contents)
+> +{
+> +	enum ipe_op_type op;
+> +	struct ipe_eval_ctx ctx = { 0 };
+> +
+> +	switch (id) {
+> +	case LOADING_FIRMWARE:
+> +		op = ipe_op_firmware;
+> +		break;
+> +	case LOADING_MODULE:
+> +		op = ipe_op_kernel_module;
+> +		break;
+> +	case LOADING_KEXEC_INITRAMFS:
+> +		op = ipe_op_kexec_initramfs;
+> +		break;
+> +	case LOADING_KEXEC_IMAGE:
+> +		op = ipe_op_kexec_image;
+> +		break;
+> +	case LOADING_POLICY:
+> +		op = ipe_op_ima_policy;
+> +		break;
+> +	case LOADING_X509_CERTIFICATE:
+> +		op = ipe_op_ima_x509;
+> +		break;
+> +	default:
+> +		op = ipe_op_max;
+> +		WARN(op == ipe_op_max, "no rule setup for enum %d", id);
+> +	}
+> +
+> +	build_eval_ctx(&ctx, NULL, op);
+> +	return ipe_evaluate_event(&ctx);
+> +}
+> diff --git a/security/ipe/hooks.h b/security/ipe/hooks.h
+> index 30fe455389bf..857cae69678c 100644
+> --- a/security/ipe/hooks.h
+> +++ b/security/ipe/hooks.h
+> @@ -11,4 +11,17 @@
+>  
+>  void ipe_sb_free_security(struct super_block *mnt_sb);
+>  
+> +int ipe_bprm_check_security(struct linux_binprm *bprm);
+> +
+> +int ipe_mmap_file(struct file *f, unsigned long reqprot, unsigned long prot,
+> +		  unsigned long flags);
+> +
+> +int ipe_file_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
+> +		      unsigned long prot);
+> +
+> +int ipe_kernel_read_file(struct file *file, enum kernel_read_file_id id,
+> +			 bool contents);
+> +
+> +int ipe_kernel_load_data(enum kernel_load_data_id id, bool contents);
+> +
+>  #endif /* IPE_HOOKS_H */
+> diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
+> index bef923026b50..7af2f942decd 100644
+> --- a/security/ipe/ipe.c
+> +++ b/security/ipe/ipe.c
+> @@ -4,6 +4,7 @@
+>   */
+>  
+>  #include "ipe.h"
+> +#include "hooks.h"
+>  
+>  bool ipe_enabled;
+>  
+> @@ -12,6 +13,11 @@ static struct lsm_blob_sizes ipe_blobs __lsm_ro_after_init = {
+>  
+>  static struct security_hook_list ipe_hooks[] __lsm_ro_after_init = {
+>  	LSM_HOOK_INIT(sb_free_security, ipe_sb_free_security),
+> +	LSM_HOOK_INIT(bprm_check_security, ipe_bprm_check_security),
+> +	LSM_HOOK_INIT(mmap_file, ipe_mmap_file),
+> +	LSM_HOOK_INIT(file_mprotect, ipe_file_mprotect),
+> +	LSM_HOOK_INIT(kernel_read_file, ipe_kernel_read_file),
+> +	LSM_HOOK_INIT(kernel_load_data, ipe_kernel_load_data),
+>  };
+
+Uhm, maybe I would incorporate patch 1 with this.
+
+Roberto
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
