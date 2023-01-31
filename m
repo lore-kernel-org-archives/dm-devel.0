@@ -1,82 +1,96 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9D38AC54EAA
-	for <dm-devel@archiver.kernel.org>; Mon, 30 Jan 2023 07:03:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 56F03C61DA4
+	for <dm-devel@archiver.kernel.org>; Tue, 31 Jan 2023 03:20:46 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675062180;
+	s=mimecast20190719; t=1675135245;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=6y2f7qVnmjfGPp9hLkMqNOwcmyFNzs5nK6JltpIvMlU=;
-	b=clpm8Ba5Pv3aQmnTiePmf1DX4e8qWcLw8lzeP4j5pqHdmqR7YqXPethKnLbCWOFoONGauJ
-	ptgyAcBgi9knE210lCmaQ37qINgb+DPen1p5DyEH5l9tpfiXHSMCfbcwCxU0N8hs6pok7I
-	UCzRUf1oPhzNOW3Z1xYXgpIeSBNXWLM=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=9hw/zDM/oPe4BPiW+tDfs73nSch0ND4KfzLmkCGqNgs=;
+	b=SoVb/jT1xWPVlr0wnjBmM/GNfSESOF3auwDJfZx3J58sA6q7ZXtx8tEqb0aO3oKdZtCBgc
+	4WQDNHJbe63W/lAUzDU/vHo+ucrsQbTEJgWrPyZ4ltvreU2ksfZ6vvnEwEnVHgHhO8PZsU
+	GlDgtevBWOd9DX6LST7HA9wlHNX8o+Q=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-381-YWJCqHX0NzC2h7SI7nvw1A-1; Mon, 30 Jan 2023 02:02:56 -0500
-X-MC-Unique: YWJCqHX0NzC2h7SI7nvw1A-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-668-nfL2i93UPc-wLr1JiL2gug-1; Mon, 30 Jan 2023 22:20:42 -0500
+X-MC-Unique: nfL2i93UPc-wLr1JiL2gug-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 841C485A5B1;
-	Mon, 30 Jan 2023 07:02:54 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 90F863803913;
+	Tue, 31 Jan 2023 03:20:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F3344C15BAD;
-	Mon, 30 Jan 2023 07:02:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 590751121314;
+	Tue, 31 Jan 2023 03:20:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3F9631946588;
-	Mon, 30 Jan 2023 07:02:38 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 171891946589;
+	Tue, 31 Jan 2023 03:20:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 742D51946587
- for <dm-devel@listman.corp.redhat.com>; Sat, 28 Jan 2023 15:50:40 +0000 (UTC)
+ ESMTP id B333A1946587
+ for <dm-devel@listman.corp.redhat.com>; Tue, 31 Jan 2023 03:17:54 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 64BB91121315; Sat, 28 Jan 2023 15:50:40 +0000 (UTC)
+ id 8349B422F2; Tue, 31 Jan 2023 03:17:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 5D5871121314
- for <dm-devel@redhat.com>; Sat, 28 Jan 2023 15:50:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 422F7800B30
- for <dm-devel@redhat.com>; Sat, 28 Jan 2023 15:50:40 +0000 (UTC)
-Received: from smtp.smtpout.orange.fr (smtp-14.smtpout.orange.fr
- [80.12.242.14]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- us-mta-207-XKMGJiSeMZq4EGUnhKnSbQ-1; Sat, 28 Jan 2023 10:50:38 -0500
-X-MC-Unique: XKMGJiSeMZq4EGUnhKnSbQ-1
-Received: from pop-os.home ([86.243.2.178]) by smtp.orange.fr with ESMTPA
- id LnM9phWDqeUnHLnM9p9nzv; Sat, 28 Jan 2023 16:43:06 +0100
-X-ME-Helo: pop-os.home
-X-ME-Auth: Y2hyaXN0b3BoZS5qYWlsbGV0QHdhbmFkb28uZnI=
-X-ME-Date: Sat, 28 Jan 2023 16:43:06 +0100
-X-ME-IP: 86.243.2.178
-From: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- dm-devel@redhat.com
-Date: Sat, 28 Jan 2023 16:43:00 +0100
-Message-Id: <c3d25e24503d9e625cf46e9fb4ee55f10bfdd398.1674920529.git.christophe.jaillet@wanadoo.fr>
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7B8D9422AE
+ for <dm-devel@redhat.com>; Tue, 31 Jan 2023 03:17:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 57F4C800B30
+ for <dm-devel@redhat.com>; Tue, 31 Jan 2023 03:17:54 +0000 (UTC)
+Received: from mail-pf1-f199.google.com (mail-pf1-f199.google.com
+ [209.85.210.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-26-nAM5q_eYNcSOJcc5SyH7hw-1; Mon, 30 Jan 2023 22:17:51 -0500
+X-MC-Unique: nAM5q_eYNcSOJcc5SyH7hw-1
+Received: by mail-pf1-f199.google.com with SMTP id
+ z14-20020a056a00240e00b0059395f5a701so3463627pfh.13
+ for <dm-devel@redhat.com>; Mon, 30 Jan 2023 19:17:51 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=cc:to:subject:message-id:date:from:in-reply-to:references
+ :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=ofkMXoQbnzo0LmXDJYtau1EBxkN0Axt3uwhU1ClYTcA=;
+ b=NMtjVt9Ngw/bCzcHMt1mSuQSws22mCD0YJYvc4cfZRVYd25TogBVuWIVkWvyBRmAzS
+ 16LS64qYoBSs4DiNZyH4B7sZzuMei4YNKifwL1Ww0DQUq1HjOmpcwnSLnUUi2qT1snN1
+ L1evpPrHV53HZy9VAERxUDSJtYEYZrDNZETSvL9TLRuIQtjno0qdAF8sPyVIlylDzrJD
+ xImbwDehp6lrxwH4EH47hWYIMjqVB0dNZfuxtwuvtwnIQT70Wr76TGAigx7x3IIfTI4O
+ mGyy7FGDl6+qAbckw+sv8Uqi+h1+1isVdy8AScTKIyKvtG0k7Lt2FO0dUyOBvhiFrAeZ
+ bV2w==
+X-Gm-Message-State: AO0yUKW1nAm9XXdq5+CfPwElt/BXayWlkfafn0Bu+t4eeq6tj0r0s/FT
+ Dp05rjANr1NTqpTDJXIE5HcqhewWfg7j/uYOX4fq6drpY6j8aQiuSj/Kpbb/1ylMIwQyaaSekVg
+ +CW6/g7FWhPVWzNXQk52kSBaDpOj775k=
+X-Received: by 2002:a17:90a:bd8c:b0:22c:9f9:8ecb with SMTP id
+ z12-20020a17090abd8c00b0022c09f98ecbmr3070334pjr.77.1675135070600; 
+ Mon, 30 Jan 2023 19:17:50 -0800 (PST)
+X-Google-Smtp-Source: AK7set9lQTdMoGqa3B4EBp9GbL57iMCjy3dpiO35qGjetEUa48mZPBCpa+BWIj27dnOMI3+Ym2f+5PUkqRWRBnACpXE=
+X-Received: by 2002:a17:90a:bd8c:b0:22c:9f9:8ecb with SMTP id
+ z12-20020a17090abd8c00b0022c09f98ecbmr3070328pjr.77.1675135070169; Mon, 30
+ Jan 2023 19:17:50 -0800 (PST)
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-X-Mailman-Approved-At: Mon, 30 Jan 2023 07:02:37 +0000
-Subject: [dm-devel] [PATCH] dm-crypt: Slightly simplify
- crypt_set_keyring_key()
+References: <alpine.LRH.2.21.2301240858250.9655@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.21.2301240858250.9655@file01.intranet.prod.int.rdu2.redhat.com>
+From: Xiao Ni <xni@redhat.com>
+Date: Tue, 31 Jan 2023 11:17:38 +0800
+Message-ID: <CALTww2-nWYcDPHTLCcsijQ=pGH0-AmAHD9eCPqZfeVFaAgd9ig@mail.gmail.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: Re: [dm-devel] [PATCH] md: use preallocated hashed wait queues
+ instead of mddev->sb_wait
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -88,59 +102,408 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Christophe JAILLET <christophe.jaillet@wanadoo.fr>,
- kernel-janitors@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-raid@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use strchr() instead of strpbrk() when there is only 1 element in the set
-of characters to look for.
-This potentially saves a few cycles.
+On Tue, Jan 24, 2023 at 10:06 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
+>
+> There's a theoretical race condition in md.
+>
+> super_written calls:
+>         if (atomic_dec_and_test(&mddev->pending_writes))
+>                 wake_up(&mddev->sb_wait);
+>
+> If the process is rescheduled just after atomic_dec_and_test and before
+> wake_up, it may happen that the mddev structure is freed (because
+> mddev->pending_writes is zero) and on scheduling back,
+> wake_up(&mddev->sb_wait) would access freed memory.
 
-Signed-off-by: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
----
-On my machine, the diff of the .s file shows that the generated code is
-the same:
+And super_written is in soft irq context, can it be rescheduled out?
 
--- drivers/md/dm-crypt.old.s	2023-01-28 16:28:08.968026902 +0100
-++ drivers/md/dm-crypt.s	2023-01-28 16:28:32.056027335 +0100
-@@ -17950,7 +17950,7 @@
- 	call	__sanitizer_cov_trace_const_cmp1	#
- 	testb	%bl, %bl	# _56
- 	jne	.L928	#,
--# drivers/md/dm-crypt.c:2490: 	key_desc = strpbrk(key_string, ":");
-+# drivers/md/dm-crypt.c:2490: 	key_desc = strchr(key_string, ':');
- 	call	__sanitizer_cov_trace_pc	#
- 	movl	$58, %esi	#,
- 	movq	%r12, %rdi	# key_string,
+Regards
+Xiao
 
-This is done thanks to fold_builtin_strpbrk() in gcc which already
-transforms such patterns.
-(https://github.com/gcc-mirror/gcc/blob/master/gcc/builtins.cc#L10238)
----
- drivers/md/dm-crypt.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 2653516bcdef..b9c41fd42e8a 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -2487,7 +2487,7 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
- 	}
- 
- 	/* look for next ':' separating key_type from key_description */
--	key_desc = strpbrk(key_string, ":");
-+	key_desc = strchr(key_string, ':');
- 	if (!key_desc || key_desc == key_string || !strlen(key_desc + 1))
- 		return -EINVAL;
- 
--- 
-2.34.1
+>
+> Fix this bug by using an array of preallocated wait_queues, so that the
+> wait queue exist even after mddev was freed.
+>
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+>
+> ---
+>  drivers/md/md.c          |   56 ++++++++++++++++++++++++++---------------------
+>  drivers/md/md.h          |   10 +++++++-
+>  drivers/md/raid10.c      |    4 +--
+>  drivers/md/raid5-cache.c |    6 ++---
+>  drivers/md/raid5.c       |    8 +++---
+>  5 files changed, 49 insertions(+), 35 deletions(-)
+>
+> Index: linux-2.6/drivers/md/md.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/md.c
+> +++ linux-2.6/drivers/md/md.c
+> @@ -89,6 +89,9 @@ static struct workqueue_struct *md_wq;
+>  static struct workqueue_struct *md_misc_wq;
+>  static struct workqueue_struct *md_rdev_misc_wq;
+>
+> +wait_queue_head_t md_sb_wait_table[MD_SB_WAIT_TABLE_SIZE];
+> +EXPORT_SYMBOL(md_sb_wait_table);
+> +
+>  static int remove_and_add_spares(struct mddev *mddev,
+>                                  struct md_rdev *this);
+>  static void mddev_detach(struct mddev *mddev);
+> @@ -415,7 +418,7 @@ check_suspended:
+>                         return;
+>                 }
+>                 for (;;) {
+> -                       prepare_to_wait(&mddev->sb_wait, &__wait,
+> +                       prepare_to_wait(md_sb_wait(mddev), &__wait,
+>                                         TASK_UNINTERRUPTIBLE);
+>                         if (!is_suspended(mddev, bio))
+>                                 break;
+> @@ -423,19 +426,19 @@ check_suspended:
+>                         schedule();
+>                         rcu_read_lock();
+>                 }
+> -               finish_wait(&mddev->sb_wait, &__wait);
+> +               finish_wait(md_sb_wait(mddev), &__wait);
+>         }
+>         atomic_inc(&mddev->active_io);
+>         rcu_read_unlock();
+>
+>         if (!mddev->pers->make_request(mddev, bio)) {
+>                 atomic_dec(&mddev->active_io);
+> -               wake_up(&mddev->sb_wait);
+> +               wake_up_all(md_sb_wait(mddev));
+>                 goto check_suspended;
+>         }
+>
+>         if (atomic_dec_and_test(&mddev->active_io) && mddev->suspended)
+> -               wake_up(&mddev->sb_wait);
+> +               wake_up_all(md_sb_wait(mddev));
+>  }
+>  EXPORT_SYMBOL(md_handle_request);
+>
+> @@ -484,13 +487,13 @@ void mddev_suspend(struct mddev *mddev)
+>         if (mddev->suspended++)
+>                 return;
+>         synchronize_rcu();
+> -       wake_up(&mddev->sb_wait);
+> +       wake_up_all(md_sb_wait(mddev));
+>         set_bit(MD_ALLOW_SB_UPDATE, &mddev->flags);
+>         smp_mb__after_atomic();
+> -       wait_event(mddev->sb_wait, atomic_read(&mddev->active_io) == 0);
+> +       wait_event(*md_sb_wait(mddev), atomic_read(&mddev->active_io) == 0);
+>         mddev->pers->quiesce(mddev, 1);
+>         clear_bit_unlock(MD_ALLOW_SB_UPDATE, &mddev->flags);
+> -       wait_event(mddev->sb_wait, !test_bit(MD_UPDATING_SB, &mddev->flags));
+> +       wait_event(*md_sb_wait(mddev), !test_bit(MD_UPDATING_SB, &mddev->flags));
+>
+>         del_timer_sync(&mddev->safemode_timer);
+>         /* restrict memory reclaim I/O during raid array is suspend */
+> @@ -505,7 +508,7 @@ void mddev_resume(struct mddev *mddev)
+>         lockdep_assert_held(&mddev->reconfig_mutex);
+>         if (--mddev->suspended)
+>                 return;
+> -       wake_up(&mddev->sb_wait);
+> +       wake_up_all(md_sb_wait(mddev));
+>         mddev->pers->quiesce(mddev, 0);
+>
+>         set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
+> @@ -585,7 +588,7 @@ static void md_submit_flush_data(struct
+>         mddev->prev_flush_start = mddev->start_flush;
+>         mddev->flush_bio = NULL;
+>         spin_unlock_irq(&mddev->lock);
+> -       wake_up(&mddev->sb_wait);
+> +       wake_up_all(md_sb_wait(mddev));
+>
+>         if (bio->bi_iter.bi_size == 0) {
+>                 /* an empty barrier - all done */
+> @@ -609,7 +612,7 @@ bool md_flush_request(struct mddev *mdde
+>         /* flush requests wait until ongoing flush completes,
+>          * hence coalescing all the pending requests.
+>          */
+> -       wait_event_lock_irq(mddev->sb_wait,
+> +       wait_event_lock_irq(*md_sb_wait(mddev),
+>                             !mddev->flush_bio ||
+>                             ktime_before(req_start, mddev->prev_flush_start),
+>                             mddev->lock);
+> @@ -686,7 +689,6 @@ void mddev_init(struct mddev *mddev)
+>         atomic_set(&mddev->active_io, 0);
+>         spin_lock_init(&mddev->lock);
+>         atomic_set(&mddev->flush_pending, 0);
+> -       init_waitqueue_head(&mddev->sb_wait);
+>         init_waitqueue_head(&mddev->recovery_wait);
+>         mddev->reshape_position = MaxSector;
+>         mddev->reshape_backwards = 0;
+> @@ -828,7 +830,7 @@ void mddev_unlock(struct mddev *mddev)
+>          */
+>         spin_lock(&pers_lock);
+>         md_wakeup_thread(mddev->thread);
+> -       wake_up(&mddev->sb_wait);
+> +       wake_up_all(md_sb_wait(mddev));
+>         spin_unlock(&pers_lock);
+>  }
+>  EXPORT_SYMBOL_GPL(mddev_unlock);
+> @@ -933,7 +935,7 @@ static void super_written(struct bio *bi
+>         rdev_dec_pending(rdev, mddev);
+>
+>         if (atomic_dec_and_test(&mddev->pending_writes))
+> -               wake_up(&mddev->sb_wait);
+> +               wake_up_all(md_sb_wait(mddev));
+>  }
+>
+>  void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
+> @@ -977,7 +979,7 @@ void md_super_write(struct mddev *mddev,
+>  int md_super_wait(struct mddev *mddev)
+>  {
+>         /* wait for all superblock writes that were scheduled to complete */
+> -       wait_event(mddev->sb_wait, atomic_read(&mddev->pending_writes)==0);
+> +       wait_event(*md_sb_wait(mddev), atomic_read(&mddev->pending_writes)==0);
+>         if (test_and_clear_bit(MD_SB_NEED_REWRITE, &mddev->sb_flags))
+>                 return -EAGAIN;
+>         return 0;
+> @@ -2681,7 +2683,7 @@ repeat:
+>                                 wake_up(&rdev->blocked_wait);
+>                         }
+>                 }
+> -               wake_up(&mddev->sb_wait);
+> +               wake_up_all(md_sb_wait(mddev));
+>                 return;
+>         }
+>
+> @@ -2791,7 +2793,7 @@ rewrite:
+>                                BIT(MD_SB_CHANGE_DEVS) | BIT(MD_SB_CHANGE_CLEAN)))
+>                 /* have to write it out again */
+>                 goto repeat;
+> -       wake_up(&mddev->sb_wait);
+> +       wake_up_all(md_sb_wait(mddev));
+>         if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery))
+>                 sysfs_notify_dirent_safe(mddev->sysfs_completed);
+>
+> @@ -4383,7 +4385,7 @@ array_state_store(struct mddev *mddev, c
+>                         restart_array(mddev);
+>                         clear_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
+>                         md_wakeup_thread(mddev->thread);
+> -                       wake_up(&mddev->sb_wait);
+> +                       wake_up_all(md_sb_wait(mddev));
+>                 } else /* st == clean */ {
+>                         restart_array(mddev);
+>                         if (!set_in_sync(mddev))
+> @@ -4456,7 +4458,7 @@ array_state_store(struct mddev *mddev, c
+>                         if (err)
+>                                 break;
+>                         clear_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
+> -                       wake_up(&mddev->sb_wait);
+> +                       wake_up_all(md_sb_wait(mddev));
+>                         err = 0;
+>                 } else {
+>                         mddev->ro = MD_RDWR;
+> @@ -6283,7 +6285,7 @@ static int md_set_readonly(struct mddev
+>         mddev_unlock(mddev);
+>         wait_event(resync_wait, !test_bit(MD_RECOVERY_RUNNING,
+>                                           &mddev->recovery));
+> -       wait_event(mddev->sb_wait,
+> +       wait_event(*md_sb_wait(mddev),
+>                    !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags));
+>         mddev_lock_nointr(mddev);
+>
+> @@ -7564,7 +7566,7 @@ static int md_ioctl(struct block_device
+>
+>         if (cmd == HOT_REMOVE_DISK)
+>                 /* need to ensure recovery thread has run */
+> -               wait_event_interruptible_timeout(mddev->sb_wait,
+> +               wait_event_interruptible_timeout(*md_sb_wait(mddev),
+>                                                  !test_bit(MD_RECOVERY_NEEDED,
+>                                                            &mddev->recovery),
+>                                                  msecs_to_jiffies(5000));
+> @@ -7669,7 +7671,7 @@ static int md_ioctl(struct block_device
+>                  */
+>                 if (test_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags)) {
+>                         mddev_unlock(mddev);
+> -                       wait_event(mddev->sb_wait,
+> +                       wait_event(*md_sb_wait(mddev),
+>                                    !test_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags) &&
+>                                    !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags));
+>                         mddev_lock_nointr(mddev);
+> @@ -8529,7 +8531,7 @@ bool md_write_start(struct mddev *mddev,
+>                 sysfs_notify_dirent_safe(mddev->sysfs_state);
+>         if (!mddev->has_superblocks)
+>                 return true;
+> -       wait_event(mddev->sb_wait,
+> +       wait_event(*md_sb_wait(mddev),
+>                    !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags) ||
+>                    mddev->suspended);
+>         if (test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags)) {
+> @@ -8674,7 +8676,7 @@ void md_allow_write(struct mddev *mddev)
+>                 md_update_sb(mddev, 0);
+>                 sysfs_notify_dirent_safe(mddev->sysfs_state);
+>                 /* wait for the dirty state to be recorded in the metadata */
+> -               wait_event(mddev->sb_wait,
+> +               wait_event(*md_sb_wait(mddev),
+>                            !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags));
+>         } else
+>                 spin_unlock(&mddev->lock);
+> @@ -9256,7 +9258,7 @@ void md_check_recovery(struct mddev *mdd
+>                 if (test_bit(MD_ALLOW_SB_UPDATE, &mddev->flags))
+>                         md_update_sb(mddev, 0);
+>                 clear_bit_unlock(MD_UPDATING_SB, &mddev->flags);
+> -               wake_up(&mddev->sb_wait);
+> +               wake_up_all(md_sb_wait(mddev));
+>         }
+>
+>         if (mddev->suspended)
+> @@ -9420,7 +9422,7 @@ void md_check_recovery(struct mddev *mdd
+>                                         sysfs_notify_dirent_safe(mddev->sysfs_action);
+>                 }
+>         unlock:
+> -               wake_up(&mddev->sb_wait);
+> +               wake_up_all(md_sb_wait(mddev));
+>                 mddev_unlock(mddev);
+>         }
+>  }
+> @@ -9608,6 +9610,10 @@ static void md_geninit(void)
+>  static int __init md_init(void)
+>  {
+>         int ret = -ENOMEM;
+> +       int i;
+> +
+> +       for (i = 0; i < MD_SB_WAIT_TABLE_SIZE; i++)
+> +               init_waitqueue_head(md_sb_wait_table + i);
+>
+>         md_wq = alloc_workqueue("md", WQ_MEM_RECLAIM, 0);
+>         if (!md_wq)
+> Index: linux-2.6/drivers/md/md.h
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/md.h
+> +++ linux-2.6/drivers/md/md.h
+> @@ -466,7 +466,6 @@ struct mddev {
+>          *   setting MD_RECOVERY_RUNNING (which interacts with resync_{min,max})
+>          */
+>         spinlock_t                      lock;
+> -       wait_queue_head_t               sb_wait;        /* for waiting on superblock updates */
+>         atomic_t                        pending_writes; /* number of active superblock writes */
+>
+>         unsigned int                    safemode;       /* if set, update "clean" superblock
+> @@ -584,6 +583,15 @@ static inline void md_sync_acct_bio(stru
+>         md_sync_acct(bio->bi_bdev, nr_sectors);
+>  }
+>
+> +#define MD_SB_WAIT_TABLE_BITS  8
+> +#define MD_SB_WAIT_TABLE_SIZE  (1U << MD_SB_WAIT_TABLE_BITS)
+> +extern wait_queue_head_t md_sb_wait_table[MD_SB_WAIT_TABLE_SIZE];
+> +
+> +static inline wait_queue_head_t *md_sb_wait(struct mddev *md)
+> +{
+> +       return md_sb_wait_table + hash_long((unsigned long)md, MD_SB_WAIT_TABLE_BITS);
+> +}
+> +
+>  struct md_personality
+>  {
+>         char *name;
+> Index: linux-2.6/drivers/md/raid10.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/raid10.c
+> +++ linux-2.6/drivers/md/raid10.c
+> @@ -1446,7 +1446,7 @@ static void raid10_write_request(struct
+>                         return;
+>                 }
+>                 raid10_log(conf->mddev, "wait reshape metadata");
+> -               wait_event(mddev->sb_wait,
+> +               wait_event(*md_sb_wait(mddev),
+>                            !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags));
+>
+>                 conf->reshape_safe = mddev->reshape_position;
+> @@ -4876,7 +4876,7 @@ static sector_t reshape_request(struct m
+>                 conf->reshape_checkpoint = jiffies;
+>                 set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
+>                 md_wakeup_thread(mddev->thread);
+> -               wait_event(mddev->sb_wait, mddev->sb_flags == 0 ||
+> +               wait_event(*md_sb_wait(mddev), mddev->sb_flags == 0 ||
+>                            test_bit(MD_RECOVERY_INTR, &mddev->recovery));
+>                 if (test_bit(MD_RECOVERY_INTR, &mddev->recovery)) {
+>                         allow_barrier(conf);
+> Index: linux-2.6/drivers/md/raid5-cache.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/raid5-cache.c
+> +++ linux-2.6/drivers/md/raid5-cache.c
+> @@ -691,7 +691,7 @@ static void r5c_disable_writeback_async(
+>                 mdname(mddev));
+>
+>         /* wait superblock change before suspend */
+> -       wait_event(mddev->sb_wait,
+> +       wait_event(*md_sb_wait(mddev),
+>                    conf->log == NULL ||
+>                    (!test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags) &&
+>                     (locked = mddev_trylock(mddev))));
+> @@ -1581,7 +1581,7 @@ void r5l_quiesce(struct r5l_log *log, in
+>         if (quiesce) {
+>                 /* make sure r5l_write_super_and_discard_space exits */
+>                 mddev = log->rdev->mddev;
+> -               wake_up(&mddev->sb_wait);
+> +               wake_up_all(md_sb_wait(mddev));
+>                 kthread_park(log->reclaim_thread->tsk);
+>                 r5l_wake_reclaim(log, MaxSector);
+>                 r5l_do_reclaim(log);
+> @@ -3165,7 +3165,7 @@ void r5l_exit_log(struct r5conf *conf)
+>         struct r5l_log *log = conf->log;
+>
+>         /* Ensure disable_writeback_work wakes up and exits */
+> -       wake_up(&conf->mddev->sb_wait);
+> +       wake_up_all(md_sb_wait(conf->mddev));
+>         flush_work(&log->disable_writeback_work);
+>         md_unregister_thread(&log->reclaim_thread);
+>
+> Index: linux-2.6/drivers/md/raid5.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/raid5.c
+> +++ linux-2.6/drivers/md/raid5.c
+> @@ -6346,7 +6346,7 @@ static sector_t reshape_request(struct m
+>                 conf->reshape_checkpoint = jiffies;
+>                 set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
+>                 md_wakeup_thread(mddev->thread);
+> -               wait_event(mddev->sb_wait, mddev->sb_flags == 0 ||
+> +               wait_event(*md_sb_wait(mddev), mddev->sb_flags == 0 ||
+>                            test_bit(MD_RECOVERY_INTR, &mddev->recovery));
+>                 if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
+>                         return 0;
+> @@ -6454,7 +6454,7 @@ finish:
+>                 conf->reshape_checkpoint = jiffies;
+>                 set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
+>                 md_wakeup_thread(mddev->thread);
+> -               wait_event(mddev->sb_wait,
+> +               wait_event(*md_sb_wait(mddev),
+>                            !test_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags)
+>                            || test_bit(MD_RECOVERY_INTR, &mddev->recovery));
+>                 if (test_bit(MD_RECOVERY_INTR, &mddev->recovery))
+> @@ -6703,7 +6703,7 @@ static void raid5_do_work(struct work_st
+>                 if (!batch_size && !released)
+>                         break;
+>                 handled += batch_size;
+> -               wait_event_lock_irq(mddev->sb_wait,
+> +               wait_event_lock_irq(*md_sb_wait(mddev),
+>                         !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags),
+>                         conf->device_lock);
+>         }
+> @@ -6792,7 +6792,7 @@ static void raid5d(struct md_thread *thr
+>                         continue;
+>                 }
+>
+> -               wait_event_lock_irq(mddev->sb_wait,
+> +               wait_event_lock_irq(*md_sb_wait(mddev),
+>                         !test_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags),
+>                         conf->device_lock);
+>         }
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://listman.redhat.com/mailman/listinfo/dm-devel
+>
 
 --
 dm-devel mailing list
