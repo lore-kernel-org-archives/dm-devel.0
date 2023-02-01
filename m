@@ -1,97 +1,155 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8AFBEC38142
-	for <dm-devel@archiver.kernel.org>; Wed,  1 Feb 2023 08:04:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E14BDC05027
+	for <dm-devel@archiver.kernel.org>; Wed,  1 Feb 2023 13:22:51 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675238668;
+	s=mimecast20190719; t=1675257770;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=l8puyDs4dc/+WZrjEpOOuCmZFNHDX8ZsQESZef5fnWE=;
-	b=jDttuiabokkx3k4aqetHsppk30KI80/2yHAfjdnDUwN/9wN6/oDSFl/wzWb4Pc1nvFHxmX
-	FhYyrkJcO4SMKGykeT12uAL6JXhOgWXAndqC3uYnEkM80fLjLZfAB5uL4uaz3LSjahygkx
-	TWAKOUx8hlGpSskbio+sY0mGhfpszgI=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=N23ZqxLonDyfgsZBZJTRH7jSpj/Ay+sKE7yUJYo4Y28=;
+	b=Ej5eyGI5mQy/rUvZ1d/5WEpteoPjRqzFrHKKe0203J8zbA4Qk4yJXg8GriF572ddGuBWfJ
+	fTg1k1WM6Z46eiSbzCVO7mpAm8jJ4WRtTYTx8Vz0Z7za9pMn+Bz6/+3D1VpUQ5evpAkft1
+	cVv0gD7rAx3aYATpnIDEVrpNGtkBhh8=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-670-9ToTeP0JOditG8S6vxXtQw-1; Wed, 01 Feb 2023 03:04:14 -0500
-X-MC-Unique: 9ToTeP0JOditG8S6vxXtQw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-193-lU4NQVeRPiOxfvhljPF3_A-1; Wed, 01 Feb 2023 08:22:47 -0500
+X-MC-Unique: lU4NQVeRPiOxfvhljPF3_A-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 51B4F1C08987;
-	Wed,  1 Feb 2023 08:03:54 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1B29985530C;
+	Wed,  1 Feb 2023 13:22:45 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3F70D40C2064;
-	Wed,  1 Feb 2023 08:03:54 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4DDDB492B05;
+	Wed,  1 Feb 2023 13:22:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6F278194734C;
-	Wed,  1 Feb 2023 08:03:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1312E19465A2;
+	Wed,  1 Feb 2023 13:22:41 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A88631946587
- for <dm-devel@listman.corp.redhat.com>; Tue, 31 Jan 2023 15:50:33 +0000 (UTC)
+ ESMTP id 122B9194658F
+ for <dm-devel@listman.corp.redhat.com>; Wed,  1 Feb 2023 13:22:40 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 97C222026D68; Tue, 31 Jan 2023 15:50:33 +0000 (UTC)
+ id E7D53422F2; Wed,  1 Feb 2023 13:22:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8F3E12026D4B
- for <dm-devel@redhat.com>; Tue, 31 Jan 2023 15:50:33 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id DEAC9422AE
+ for <dm-devel@redhat.com>; Wed,  1 Feb 2023 13:22:39 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6AEE41875046
- for <dm-devel@redhat.com>; Tue, 31 Jan 2023 15:50:33 +0000 (UTC)
-Received: from frasgout11.his.huawei.com (frasgout11.his.huawei.com
- [14.137.139.23]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-256-T-Q_I5DaPs-iq7aKXPo8OA-1; Tue, 31 Jan 2023 10:50:30 -0500
-X-MC-Unique: T-Q_I5DaPs-iq7aKXPo8OA-1
-Received: from mail02.huawei.com (unknown [172.18.147.229])
- by frasgout11.his.huawei.com (SkyGuard) with ESMTP id 4P5q710dhwz9xGZ3;
- Tue, 31 Jan 2023 23:42:21 +0800 (CST)
-Received: from roberto-ThinkStation-P620 (unknown [10.204.63.22])
- by APP2 (Coremail) with SMTP id GxC2BwDnvGOiONljTIjfAA--.49040S2;
- Tue, 31 Jan 2023 16:50:07 +0100 (CET)
-Message-ID: <061df661004a06ef1e8790d48157c7ba4ecfc009.camel@huaweicloud.com>
-From: Roberto Sassu <roberto.sassu@huaweicloud.com>
-To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
- jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org, 
- axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com, 
- paul@paul-moore.com
-Date: Tue, 31 Jan 2023 16:49:44 +0100
-In-Reply-To: <1675119451-23180-4-git-send-email-wufan@linux.microsoft.com>
-References: <1675119451-23180-1-git-send-email-wufan@linux.microsoft.com>
- <1675119451-23180-4-git-send-email-wufan@linux.microsoft.com>
-User-Agent: Evolution 3.36.5-0ubuntu1
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B8B1B101A521
+ for <dm-devel@redhat.com>; Wed,  1 Feb 2023 13:22:39 +0000 (UTC)
+Received: from mx1.veeam.com (mx1.veeam.com [216.253.77.21]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-479-uyCUM4b5OYyQkJEcW504Zg-1; Wed, 01 Feb 2023 08:22:38 -0500
+X-MC-Unique: uyCUM4b5OYyQkJEcW504Zg-1
+Received: from NAM12-DM6-obe.outbound.protection.outlook.com
+ (mail-dm6nam12lp2168.outbound.protection.outlook.com [104.47.59.168])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mx1.veeam.com (Postfix) with ESMTPS id C033941C37;
+ Wed,  1 Feb 2023 08:16:30 -0500 (EST)
+Received: from DM8PR14MB5221.namprd14.prod.outlook.com (2603:10b6:8:28::14) by
+ DM6PR14MB3388.namprd14.prod.outlook.com (2603:10b6:5:1ee::9) with
+ Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.6043.38; Wed, 1 Feb 2023 13:16:29 +0000
+Received: from DM8PR14MB5221.namprd14.prod.outlook.com
+ ([fe80::4af6:fd64:925:e3b4]) by DM8PR14MB5221.namprd14.prod.outlook.com
+ ([fe80::4af6:fd64:925:e3b4%8]) with mapi id 15.20.6002.026; Wed, 1 Feb 2023
+ 13:16:29 +0000
+From: Sergei Shtepa <sergei.shtepa@veeam.com>
+To: Mike Snitzer <snitzer@kernel.org>
+Thread-Topic: [PATCH v2 02/21] block, blkfilter: Block Device Filtering
+ Mechanism
+Thread-Index: AQHZC9njQhPExPGzik6+OOTOrKe/8665iB8AgAENSwA=
+Date: Wed, 1 Feb 2023 13:16:29 +0000
+Message-ID: <DM8PR14MB52210D6056B32061C629E5CEF5D19@DM8PR14MB5221.namprd14.prod.outlook.com>
+References: <20221209142331.26395-1-sergei.shtepa@veeam.com>
+ <20221209142331.26395-3-sergei.shtepa@veeam.com>
+ <Y9mrJJDFnMNWR7Vn@redhat.com>
+In-Reply-To: <Y9mrJJDFnMNWR7Vn@redhat.com>
+Accept-Language: ru-RU, en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-exchange-imapappendstamp: DS7PR14MB6905.namprd14.prod.outlook.com
+ (15.20.6064.010)
+user-agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.6.1
+x-ms-exchange-messagesentrepresentingtype: 1
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: DM8PR14MB5221:EE_|DM6PR14MB3388:EE_
+x-ms-office365-filtering-correlation-id: 65c7ef75-65ce-4aa5-f8ab-08db0456878b
+x-veeam-mmex: True
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: GhXP8N/EGVLplhpNq8mlkjfrnqpi2BasG/+ikoC6EO/jWr2OlPYW+luypFUTvc3qPTWC8AWywCMPKdTrISp1LskQsExWlZWOrMmaSbd5uD7HGYJxjbEbytQ/S0fM8S3FEvQfN2HjsKpna0isgYQzyM9R2cT1/mRjLLRz1bCXXMtY0YksVWJvzAX1XmFsRiWxKwNt65N1T2VF30hJl9Pj+EmhgptkuEpdCRnYbh5PffngfpzSe+7wL15xLSH9LM0yZHaUrARdYUjgj7xv90dmMWeXL1jA+pF7awESfCaF3KkFT5dUq9EXM1xmuscAxX0hhAYVal2pP5DpAXvloI3hI5tfbpXkpt1qlcLMh2Lj5B5dEMYT6QwCXFmQRFp6g/icPvUNI6P1X5A6HsLOS63YZGmUVqHNWOlTS+Q0gZn5KnKzF6OjSqxoeoL8/5pi+lXRRZsNGM1GqmWyBVfp/WhYdygRrFB7V+U3OcX6SLKk31PPmVjFn+m5/xHCBFzw38d+c9S6sPpVGz3Cr+i3DIK5owaPCXys8y5Fs3fZCaNj69ju1ybziqDFYEVaas1TZ9N+Hrrb2Y3fpJw69Gtkc4iQT+Dwsome+ikZ8o4Z5nkFn1ttL096Le5axaAJB6wmgMOv8BnGApaofskSTXGXu6rAlmUI2U9n912M8T3ll/4XCktwxR3IjubTHhsvnkoBGrKHvH334gcaw46iWTLPYpaCLY7QpdvH40yJ/aJ2kvQaVWxm8GLK6RhdVXQESHBB82UwJujLuR05jz/sG+qy9BozdTeVVM4Rg6IBosTx9nYnm/s=
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:DM8PR14MB5221.namprd14.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230025)(4636009)(376002)(396003)(39860400002)(346002)(136003)(366004)(451199018)(41300700001)(122000001)(64756008)(6916009)(66946007)(54906003)(316002)(8676002)(4326008)(66476007)(8936002)(66446008)(66556008)(76116006)(5660300002)(52536014)(38100700002)(86362001)(33656002)(38070700005)(6506007)(66899018)(186003)(9686003)(966005)(26005)(53546011)(71200400001)(2906002)(55016003)(44832011)(7696005)(83380400001)(478600001)(65966003)(43740500002);
+ DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?U2xWVjVnMmtUdElWOVFDV1ZTM1pjUWRCOC8yNCtIREMvZFBLR2t0VG5abFBD?=
+ =?utf-8?B?MVdyUzVvQVJoZlpHNzNZdjN1bWFXK0xCcm5tTzNmVTByNVc1aUI3TXp4SGhr?=
+ =?utf-8?B?YTZZSDFUaStwZkdMOVlGZVZrdlRZeDVXdDNva1NVa3N0V2xsWTdvMlRTSFQz?=
+ =?utf-8?B?Q2FPTk5PcWJENytDL1N3ZVRvYk1ITmp3QktoY1d5TERobXJqNHFyQnJCdjlM?=
+ =?utf-8?B?RW1VVms1VW9sQTUwMlcwYTRacWtzRFBNSlhXaDJzUW9hOWVxdXVNdjZjdGN0?=
+ =?utf-8?B?S0J5Zkk4T3pVdEIzUzFqRDVjK0ZUUitjMWtVbU8vVm1ITWxsc3JxdW56ZjhI?=
+ =?utf-8?B?Y0did1RCZCtWVzJwTUtDNm1FWDZVRGxvN3I5UFVhTkVDL3laUXlZOW1zcGJm?=
+ =?utf-8?B?Snp5dUZCZm1Ncm91aTlrR1gzL2xldHJxYkxxaG9jQmIyeHZYakVGeUQ3Yy9R?=
+ =?utf-8?B?QlNNZ1I5LzFNK0lrOTFHSk1vYzcvSnFzZ2NzWGg3cHYweFRVNy9vOWhKQnNx?=
+ =?utf-8?B?NDJVTzMrM1MrTVByVlNKb081K2k5cHdNSkVkYVlxUWhHdjBCRDM3SmlTYkNv?=
+ =?utf-8?B?NGVUUnJQanZkSS8zbjBMekt1RkptQUFUMHQzc1g1d1U0NkdFZDYxRmxjZ3lK?=
+ =?utf-8?B?WGhPWkJKZDNScUxYY0ZEbzUrdXZoWnVCNmdDNzVqeHZFN1NSMTBERDhoNDRt?=
+ =?utf-8?B?L0Z2d1c3QWh1a0RzREFCL1l3ZW5UbWN4Q1lyWnVpU0dtK1Q2ZCtyZllvN2pM?=
+ =?utf-8?B?M1N4eXhlNjFoc1FXQkl1YXh1UnlmbEM5WW9MYU1NL1huQnUzYlVIYkNCakVV?=
+ =?utf-8?B?a1BKK3huUWFrWVV2cDRRa2ZyRS9sVlBPV1V4MmhycVk2amxVaC94dHYrWUJD?=
+ =?utf-8?B?b3p6ZHpQSVAxUnJ4eWhKYmUwT3VLOSttT0krN3RCMUFPbEdqWUFmL2FrU2Ja?=
+ =?utf-8?B?djhBWkR5L01QYWNsSUlMbkp4R1gxNGxFM29Gc0Q3WGdseDVPblBoSWhMODNI?=
+ =?utf-8?B?M0RLcEgyNFE2TjlYNTFuWUNZL1FnTHllYXlocE40Y2JGTno3MzdhOFEzVDFY?=
+ =?utf-8?B?d2xpMXdHVDZ6K2k2cmtDSXlQT0dXM2VuQWlpM2dJMFV6blYzbEM3RkR1RGVF?=
+ =?utf-8?B?QlZjKzZUcWtKUzk1L015NWZ1Q0xkRkVZV2granhkY3I0TlZPbDlCUGVGMi9y?=
+ =?utf-8?B?NDlwWitwZ2s3M1RWVU9NWHp3bkhLMzBacWlHZ2Ryd2pJNDBkOW14UFdnZUNK?=
+ =?utf-8?B?WW5scTZEUElYUGsvUDQ5c1dUeXRvQkd2VDdFdHFwSTgvcCtLb0cweXpiMUUy?=
+ =?utf-8?B?UFFEbDFidmRzcjE0M1BUaDRHOUc1NERXWHU5Z0hwa0t2cWp6dmFMZk8zVjZU?=
+ =?utf-8?B?TEZsQnZWQm5jOHBHaUJiUnBGUWk4WWxYSXJXTkxmWU9iM0lPTDRNd1ROZjY1?=
+ =?utf-8?B?UU9WcVVJWFdvV3FsNHNxYmlCSUhTb0NsTDhvYWpQdjNHY3d5M0xYMCtGakNW?=
+ =?utf-8?B?a21hRWxCU0RVMTZrVTZTT0RxcUtUNnB3ZlkyZkZwNE1iOElmQzNGWjhPR2ky?=
+ =?utf-8?B?K0ZPY0QzZ0NIRlJLa2tVQWVQY3FRMGFSMWRJelV6WDRseHg1ZENFbHVGcHRD?=
+ =?utf-8?B?Y083YkJvUjViNWFhS2s5Z3ZWdGg1Wm9BRjhRQllhQkRsYVVOUkJKdDZIMWhv?=
+ =?utf-8?B?Mlk0N2xKOERIbys4QnhGWitRQjJWNVdVNFhRY0p3ZDVwYVRhS0V6R21ITkZu?=
+ =?utf-8?B?blNORHQ2VlZwMW9TRTY5R3E3UVpweUplNWVsMEM5S3ArZ2t4ditwSHBDQnNq?=
+ =?utf-8?B?dzBQc2Vpem4wR1B6N0xYZkhselZLKzMwU2ZLNHQ5VGlJRWFxVjFVUW5kVk5W?=
+ =?utf-8?B?eWFhSFEzb1gwNzhxVXJhZjFyTDM1TSswNnk3RjF0cVhDSUx1YjllbC83V2E4?=
+ =?utf-8?B?N25UdEtaUmZyV3hraUNkSWVYTWhpay9kRm9kNlFzeWl2S1ZvOEVibnNNaEdB?=
+ =?utf-8?B?Uk5mb1V2QktkVlN3NmoySUwvSUFjRm5XbGkrNFFOMkR3bGV2WXd6TFZQWFlL?=
+ =?utf-8?B?Ri9vd0ZWdjgxYktHS0xMU0FrUmNxRU5PalBpdk1FZ242aGVPK3R2QTFmK1hy?=
+ =?utf-8?Q?1IlQ=3D?=
 MIME-Version: 1.0
-X-CM-TRANSID: GxC2BwDnvGOiONljTIjfAA--.49040S2
-X-Coremail-Antispam: 1UD129KBjvAXoW3CFy7WrWkKr1UCF1UJF4xJFb_yoW8GFykto
- WfXa13uF4xtry3CrWj9a17AFW7Wa9Ygw4kJFZ0qrZrJFn2v34UKw1kAa1UXF45uF1rJr15
- K3s7ZayrZF45t3Z5n29KB7ZKAUJUUUUU529EdanIXcx71UUUUU7v73VFW2AGmfu7bjvjm3
- AaLaJ3UjIYCTnIWjp_UUUY17kC6x804xWl14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK
- 8VAvwI8IcIk0rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4
- AK67xGY2AK021l84ACjcxK6xIIjxv20xvE14v26r1j6r1xM28EF7xvwVC0I7IYx2IY6xkF
- 7I0E14v26r4j6F4UM28EF7xvwVC2z280aVAFwI0_Gr0_Cr1l84ACjcxK6I8E87Iv6xkF7I
- 0E14v26r4UJVWxJr1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8C
- rVC2j2WlYx0E2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r4j6F4UMcvjeVCFs4
- IE7xkEbVWUJVW8JwACjcxG0xvEwIxGrwACI402YVCY1x02628vn2kIc2xKxwCF04k20xvY
- 0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I
- 0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAI
- cVC0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcV
- CF04k26cxKx2IYs7xG6rWUJVWrZr1UMIIF0xvEx4A2jsIE14v26r4j6F4UMIIF0xvEx4A2
- jsIEc7CjxVAFwI0_Gr1j6F4UJbIYCTnIWIevJa73UjIFyTuYvjxU7OJ5UUUUU
-X-CM-SenderInfo: purev21wro2thvvxqx5xdzvxpfor3voofrz/1tbiAQAOBF1jj4hYgAABsr
-X-CFilter-Loop: Reflected
+X-OriginatorOrg: veeam.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DM8PR14MB5221.namprd14.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 65c7ef75-65ce-4aa5-f8ab-08db0456878b
+X-MS-Exchange-CrossTenant-originalarrivaltime: 01 Feb 2023 13:16:29.0540 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: ba07baab-431b-49ed-add7-cbc3542f5140
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: AL1q6t6IKWhR4V3t955s4D7VDrrzUJ9+76ixpnXDZjcaTflVbzmBePGbxdzViFHh9jQkW5/Ctzj0Rx9TJXT4+w==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR14MB3388
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -99,10 +157,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-X-Mailman-Approved-At: Wed, 01 Feb 2023 08:03:52 +0000
-Subject: Re: [dm-devel] [RFC PATCH v9 03/16] ipe: add evaluation loop and
- introduce 'boot_verified' as a trust provider
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: Re: [dm-devel] [PATCH v2 02/21] block,
+ blkfilter: Block Device Filtering Mechanism
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -114,500 +171,229 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
- Deven Bowers <deven.desai@linux.microsoft.com>, roberto.sassu@huawei.com,
- linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, linux-fscrypt@vger.kernel.org,
- linux-audit@redhat.com, linux-integrity@vger.kernel.org
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
+ "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
+ "corbet@lwn.net" <corbet@lwn.net>,
+ "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+ "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+ "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-ID: <90B6F7CCB8C1614F8B050CC51FA58D3B@VeeamSoftwareCorp.onmicrosoft.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, 2023-01-30 at 14:57 -0800, Fan Wu wrote:
-> From: Deven Bowers <deven.desai@linux.microsoft.com>
-> 
-> IPE must have a centralized function to evaluate incoming callers
-> against IPE's policy. This iteration of the policy against the rules
-> for that specific caller is known as the evaluation loop.
 
-Not sure if you check the properties at every access.
+On 2/1/23 00:58, Mike Snitzer wrote:
+> Subject:
+> Re: [PATCH v2 02/21] block, blkfilter: Block Device Filtering Mechanism
+> From:
+> Mike Snitzer <snitzer@kernel.org>
+> Date:
+> 2/1/23, 00:58
+> 
+> To:
+> Sergei Shtepa <sergei.shtepa@veeam.com>
+> CC:
+> axboe@kernel.dk, corbet@lwn.net, linux-block@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+> 
+> 
+> On Fri, Dec 09 2022 at  9:23P -0500,
+> Sergei Shtepa <sergei.shtepa@veeam.com> wrote:
+> 
+>> Allows to attach block device filters to the block devices. Kernel
+>> modules can use this functionality to extend the capabilities of the
+>> block layer.
+>>
+>> Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
+>> ---
+>>  block/bdev.c              | 70 ++++++++++++++++++++++++++++++++++++++
+>>  block/blk-core.c          | 19 +++++++++--
+>>  include/linux/blk_types.h |  2 ++
+>>  include/linux/blkdev.h    | 71 +++++++++++++++++++++++++++++++++++++++
+>>  4 files changed, 160 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/block/bdev.c b/block/bdev.c
+>> index d699ecdb3260..b820178824b2 100644
+>> --- a/block/bdev.c
+>> +++ b/block/bdev.c
+>> @@ -427,6 +427,7 @@ static void init_once(void *data)
+>>  
+>>  static void bdev_evict_inode(struct inode *inode)
+>>  {
+>> +	bdev_filter_detach(I_BDEV(inode));
+>>  	truncate_inode_pages_final(&inode->i_data);
+>>  	invalidate_inode_buffers(inode); /* is it needed here? */
+>>  	clear_inode(inode);
+>> @@ -502,6 +503,7 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
+>>  		return NULL;
+>>  	}
+>>  	bdev->bd_disk = disk;
+>> +	bdev->bd_filter = NULL;
+>>  	return bdev;
+>>  }
+>>  
+>> @@ -1092,3 +1094,71 @@ void bdev_statx_dioalign(struct inode *inode, struct kstat *stat)
+>>  
+>>  	blkdev_put_no_open(bdev);
+>>  }
+>> +
+>> +/**
+>> + * bdev_filter_attach - Attach the filter to the original block device.
+>> + * @bdev:
+>> + *	Block device.
+>> + * @flt:
+>> + *	Filter that needs to be attached to the block device.
+>> + *
+>> + * Before adding a filter, it is necessary to initialize &struct bdev_filter
+>> + * using a bdev_filter_init() function.
+>> + *
+>> + * The bdev_filter_detach() function allows to detach the filter from the block
+>> + * device.
+>> + *
+>> + * Return: 0 if succeeded, or -EALREADY if the filter already exists.
+>> + */
+>> +int bdev_filter_attach(struct block_device *bdev,
+>> +				     struct bdev_filter *flt)
+>> +{
+>> +	int ret = 0;
+>> +
+>> +	blk_mq_freeze_queue(bdev->bd_queue);
+>> +	blk_mq_quiesce_queue(bdev->bd_queue);
+>> +
+>> +	if (bdev->bd_filter)
+>> +		ret = -EALREADY;
+>> +	else
+>> +		bdev->bd_filter = flt;
+>> +
+>> +	blk_mq_unquiesce_queue(bdev->bd_queue);
+>> +	blk_mq_unfreeze_queue(bdev->bd_queue);
+>> +
+>> +	return ret;
+>> +}
+>> +EXPORT_SYMBOL(bdev_filter_attach);
+>> +
+>> +/**
+>> + * bdev_filter_detach - Detach the filter from the block device.
+>> + * @bdev:
+>> + *	Block device.
+>> + *
+>> + * The filter should be added using the bdev_filter_attach() function.
+>> + *
+>> + * Return: 0 if succeeded, or -ENOENT if the filter was not found.
+>> + */
+>> +int bdev_filter_detach(struct block_device *bdev)
+>> +{
+>> +	int ret = 0;
+>> +	struct bdev_filter *flt = NULL;
+>> +
+>> +	blk_mq_freeze_queue(bdev->bd_queue);
+>> +	blk_mq_quiesce_queue(bdev->bd_queue);
+>> +
+>> +	flt = bdev->bd_filter;
+>> +	if (flt)
+>> +		bdev->bd_filter = NULL;
+>> +	else
+>> +		ret = -ENOENT;
+>> +
+>> +	blk_mq_unquiesce_queue(bdev->bd_queue);
+>> +	blk_mq_unfreeze_queue(bdev->bd_queue);
+>> +
+>> +	if (flt)
+>> +		bdev_filter_put(flt);
+>> +
+>> +	return ret;
+>> +}
+>> +EXPORT_SYMBOL(bdev_filter_detach);
+> What about bio-based devices? (DM, MD, etc)
+> 
+> DM uses freeze_bdev() and thaw_bdev(), seems like you're missing some
+> work here.
 
-From my previous comments (also for previous versions of the patches)
-you could evaluate the property once, by calling the respective
-functions in the other subsystems.
+Thanks, Mike.
 
-Then, you reserve space in the security blob for inodes and superblocks
-to cache the decision. The format could be a policy sequence number, to
-ensure that the cache is valid only for the current policy, and a bit
-for every hook you enforce.
+We are planning to add a freeze_bdev() function call in bdev_filter_attach().
+But for the bdev_filter_detach() function, it doesn't seem to make sense.
+I think enough to call blk_mq_freeze_queue().
 
-Also, currently you rely on the fact that the properties you defined
-are immutable and the immutability is guaranteed by the other
-subsystems, so no write can occur.
+As Fabio already wrote, I use a public repository on github to work with
+the patch: https://github.com/SergeiShtepa/linux/commits/blksnap-master
+The current state can be viewed there. Feedback is welcome as usual.
 
-But if you remove this limitation, the immutability is not guaranteed
-anymore by the other subsystems (for example if a file is in an ext4
-filesystem), the LSM needs to take extra care to ensure that the
-properties are still verified. This would be required for example if
-IPE is used in conjuction with DIGLIM.
+> 
+>> diff --git a/block/blk-core.c b/block/blk-core.c
+>> index 5487912befe8..284b295a7b23 100644
+>> --- a/block/blk-core.c
+>> +++ b/block/blk-core.c
+>> @@ -678,9 +678,24 @@ void submit_bio_noacct_nocheck(struct bio *bio)
+>>  	 * to collect a list of requests submited by a ->submit_bio method while
+>>  	 * it is active, and then process them after it returned.
+>>  	 */
+>> -	if (current->bio_list)
+>> +	if (current->bio_list) {
+>>  		bio_list_add(&current->bio_list[0], bio);
+>> -	else if (!bio->bi_bdev->bd_disk->fops->submit_bio)
+>> +		return;
+>> +	}
+>> +
+>> +	if (bio->bi_bdev->bd_filter && !bio_flagged(bio, BIO_FILTERED)) {
+> Shouldn't this be: if (unlikely(...))?
+> 
+> But that obviously assumes a fair amount about the only consumer
+> (temporary filter that lasts as long as it takes to do a backup).
 
-In my opinion, IPE value would increase if the generic enforcement
-mechanism is property-agnostic.
+Yes, at the moment the code is being created so that only one filter
+is possible. In the summer, I offered a more complex solution, in which
+there were altitudes. See:
+https://lore.kernel.org/linux-block/1655135593-1900-2-git-send-email-sergei.shtepa@veeam.com/
+But this is redundant code for this task at the moment, since only
+one filter is offered now. I think it will be possible to implement
+something similar later.
 
-Roberto
-
-> In addition, IPE is designed to provide system level trust guarantees,
-> this usually implies that trust starts from bootup with a hardware root
-> of trust, which validates the bootloader. After this, the bootloader
-> verifies the kernel and the initramfs.
 > 
-> As there's no currently supported integrity method for initramfs, and
-> it's typically already verified by the bootloader, introduce a property
-> that causes the first superblock to have an execution to be "pinned",
-> which is typically initramfs.
+>> +		bool pass;
+>> +
+>> +		pass = bio->bi_bdev->bd_filter->fops->submit_bio_cb(bio);
+>> +		bio_set_flag(bio, BIO_FILTERED);
+>> +		if (!pass) {
+>> +			bio->bi_status = BLK_STS_OK;
+>> +			bio_endio(bio);
+>> +			return;
+>> +		}
+>> +	}
+>> +
+>> +	if (!bio->bi_bdev->bd_disk->fops->submit_bio)
+>>  		__submit_bio_noacct_mq(bio);
+>>  	else
+>>  		__submit_bio_noacct(bio);
+> And you currently don't allow for blkfilter to be involved if a bio
+> recurses (which is how bio splitting works now).  Not sure it
+> matters, just mentioning it...
 > 
-> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
-> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+> But taking a step back, in the hopes of stepping out of your way:
 > 
-> ---
-> v2:
->   + Split evaluation loop, access control hooks,
->     and evaluation loop from policy parser and userspace
->     interface to pass mailing list character limit
+> Myself and others on the DM team (past and present) have always hoped
+> all block devices could have the flexibility of DM. It was that hope
+> that caused my frustration when I first saw your blkfilter approach.
 > 
-> v3:
->   + Move ipe_load_properties to patch 04.
->   + Remove useless 0-initializations
->   + Prefix extern variables with ipe_
->   + Remove kernel module parameters, as these are
->     exposed through sysctls.
->   + Add more prose to the IPE base config option
->     help text.
->   + Use GFP_KERNEL for audit_log_start.
->   + Remove unnecessary caching system.
->   + Remove comments from headers
->   + Use rcu_access_pointer for rcu-pointer null check
->   + Remove usage of reqprot; use prot only.
->   + Move policy load and activation audit event to 03/12
+> But I was too idealistic that a byproduct of your efforts
+> (blk-interposer before and blkfilter now) would usher in _all_ block
+> devices being able to comprehensively change their identity (and IO
+> processing) like DM enjoys.
 > 
-> v4:
->   + Remove sysctls in favor of securityfs nodes
->   + Re-add kernel module parameters, as these are now
->     exposed through securityfs.
->   + Refactor property audit loop to a separate function.
+> DM showcases all the extra code needed to achieve its extreme IO
+> remapping and stacking flexibilty -- I don't yet see a way to distill
+> the essence of what DM achieves without imposing too much on all block
+> core.
 > 
-> v5:
->   + fix minor grammatical errors
->   + do not group rule by curly-brace in audit record,
->     reconstruct the exact rule.
+> So I do think blkfilter is a pragmatic way to achieve your goals.
 > 
-> v6:
->   + No changes
+> Mike
 > 
-> v7:
->   + Further split lsm creation into a separate commit from the
->     evaluation loop and audit system, for easier review.
-> 
->   + Propogating changes to support the new ipe_context structure in the
->     evaluation loop.
-> 
-> v8:
->   + Remove ipe_hook enumeration; hooks can be correlated via syscall
->     record.
-> 
-> v9:
->   + Remove ipe_context related code and simplify the evaluation loop.
->   + Merge the evaluation loop commit with the boot_verified commit.
-> ---
->  security/ipe/Makefile        |   1 +
->  security/ipe/eval.c          | 180 +++++++++++++++++++++++++++++++++++
->  security/ipe/eval.h          |  28 ++++++
->  security/ipe/hooks.c         |  25 +++++
->  security/ipe/hooks.h         |  14 +++
->  security/ipe/ipe.c           |   1 +
->  security/ipe/policy.c        |  20 ++++
->  security/ipe/policy.h        |   3 +
->  security/ipe/policy_parser.c |   8 +-
->  9 files changed, 279 insertions(+), 1 deletion(-)
->  create mode 100644 security/ipe/eval.c
->  create mode 100644 security/ipe/eval.h
->  create mode 100644 security/ipe/hooks.c
->  create mode 100644 security/ipe/hooks.h
-> 
-> diff --git a/security/ipe/Makefile b/security/ipe/Makefile
-> index 16bbe80991f1..d7f2870d7c09 100644
-> --- a/security/ipe/Makefile
-> +++ b/security/ipe/Makefile
-> @@ -6,6 +6,7 @@
->  #
->  
->  obj-$(CONFIG_SECURITY_IPE) += \
-> +	eval.o \
->  	hooks.o \
->  	ipe.o \
->  	policy.o \
-> diff --git a/security/ipe/eval.c b/security/ipe/eval.c
-> new file mode 100644
-> index 000000000000..48b5104a3463
-> --- /dev/null
-> +++ b/security/ipe/eval.c
-> @@ -0,0 +1,180 @@
-> +// SPDX-License-Identifier: GPL-2.0
-> +/*
-> + * Copyright (C) Microsoft Corporation. All rights reserved.
-> + */
-> +
-> +#include "ipe.h"
-> +#include "eval.h"
-> +#include "hooks.h"
-> +#include "policy.h"
-> +
-> +#include <linux/fs.h>
-> +#include <linux/types.h>
-> +#include <linux/slab.h>
-> +#include <linux/file.h>
-> +#include <linux/sched.h>
-> +#include <linux/rcupdate.h>
-> +#include <linux/spinlock.h>
-> +
-> +struct ipe_policy __rcu *ipe_active_policy;
-> +
-> +static struct super_block *pinned_sb;
-> +static DEFINE_SPINLOCK(pin_lock);
-> +#define FILE_SUPERBLOCK(f) ((f)->f_path.mnt->mnt_sb)
-> +
-> +/**
-> + * pin_sb - Pin the underlying superblock of @f, marking it as trusted.
-> + * @f: Supplies a file structure to source the super_block from.
-> + */
-> +static void pin_sb(const struct file *f)
-> +{
-> +	if (!f)
-> +		return;
-> +	spin_lock(&pin_lock);
-> +	if (pinned_sb)
-> +		goto out;
-> +	pinned_sb = FILE_SUPERBLOCK(f);
-> +out:
-> +	spin_unlock(&pin_lock);
-> +}
-> +
-> +/**
-> + * from_pinned - Determine whether @f is source from the pinned super_block.
-> + * @f: Supplies a file structure to check against the pinned super_block.
-> + *
-> + * Return:
-> + * * true	- @f is sourced from the pinned super_block
-> + * * false	- @f is not sourced from the pinned super_block
-> + */
-> +static bool from_pinned(const struct file *f)
-> +{
-> +	bool rv;
-> +
-> +	if (!f)
-> +		return false;
-> +	spin_lock(&pin_lock);
-> +	rv = !IS_ERR_OR_NULL(pinned_sb) && pinned_sb == FILE_SUPERBLOCK(f);
-> +	spin_unlock(&pin_lock);
-> +	return rv;
-> +}
-> +
-> +/**
-> + * build_eval_ctx - Build an evaluation context.
-> + * @ctx: Supplies a pointer to the context to be populdated.
-> + * @file: Supplies a pointer to the file to associated with the evaluation.
-> + * @op: Supplies the IPE policy operation associated with the evaluation.
-> + */
-> +void build_eval_ctx(struct ipe_eval_ctx *ctx,
-> +		    const struct file *file,
-> +		    enum ipe_op_type op)
-> +{
-> +	ctx->file = file;
-> +	ctx->op = op;
-> +	ctx->from_init_sb = from_pinned(file);
-> +}
-> +
-> +/**
-> + * evaluate_property - Analyze @ctx against a property.
-> + * @ctx: Supplies a pointer to the context to be evaluated.
-> + * @p: Supplies a pointer to the property to be evaluated.
-> + *
-> + * Return:
-> + * * true	- The current @ctx match the @p
-> + * * false	- The current @ctx doesn't match the @p
-> + */
-> +static bool evaluate_property(const struct ipe_eval_ctx *const ctx,
-> +			      struct ipe_prop *p)
-> +{
-> +	bool eval = false;
-> +
-> +	switch (p->type) {
-> +	case ipe_prop_boot_verified_false:
-> +		eval = !ctx->from_init_sb;
-> +		break;
-> +	case ipe_prop_boot_verified_true:
-> +		eval = ctx->from_init_sb;
-> +		break;
-> +	default:
-> +		eval = false;
-> +	}
-> +
-> +	return eval;
-> +}
-> +
-> +/**
-> + * ipe_evaluate_event - Analyze @ctx against the current active policy.
-> + * @ctx: Supplies a pointer to the context to be evaluated.
-> + *
-> + * This is the loop where all policy evaluation happens against IPE policy.
-> + *
-> + * Return:
-> + * * 0		- OK
-> + * * -EACCES	- @ctx did not pass evaluation.
-> + * * !0		- Error
-> + */
-> +int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
-> +{
-> +	int rc = 0;
-> +	bool match = false;
-> +	enum ipe_action_type action;
-> +	struct ipe_policy *pol = NULL;
-> +	const struct ipe_rule *rule = NULL;
-> +	const struct ipe_op_table *rules = NULL;
-> +	struct ipe_prop *prop = NULL;
-> +
-> +	if (ctx->op == ipe_op_exec)
-> +		pin_sb(ctx->file);
-> +
-> +	pol = ipe_get_policy_rcu(ipe_active_policy);
-> +	if (!pol)
-> +		goto out;
-> +
-> +	if (ctx->op == ipe_op_max) {
-> +		action = pol->parsed->global_default_action;
-> +		goto eval;
-> +	}
-> +
-> +	rules = &pol->parsed->rules[ctx->op];
-> +
-> +	list_for_each_entry(rule, &rules->rules, next) {
-> +		match = true;
-> +
-> +		list_for_each_entry(prop, &rule->props, next)
-> +			match = match && evaluate_property(ctx, prop);
-> +
-> +		if (match)
-> +			break;
-> +	}
-> +
-> +	if (match)
-> +		action = rule->action;
-> +	else if (rules->default_action != ipe_action_max)
-> +		action = rules->default_action;
-> +	else
-> +		action = pol->parsed->global_default_action;
-> +
-> +eval:
-> +	if (action == ipe_action_deny)
-> +		rc = -EACCES;
-> +
-> +out:
-> +	return rc;
-> +}
-> +
-> +/**
-> + * ipe_invalidate_pinned_sb - invalidte the ipe pinned super_block.
-> + * @mnt_sb: super_block to check against the pinned super_block.
-> + *
-> + * This function is called a super_block like the initramfs's is freed,
-> + * if the super_block is currently pinned by ipe it will be invalided,
-> + * so ipe won't consider the block device is boot verified afterward.
-> + */
-> +void ipe_invalidate_pinned_sb(const struct super_block *mnt_sb)
-> +{
-> +	spin_lock(&pin_lock);
-> +
-> +	if (!IS_ERR_OR_NULL(pinned_sb) && mnt_sb == pinned_sb)
-> +		pinned_sb = ERR_PTR(-EIO);
-> +
-> +	spin_unlock(&pin_lock);
-> +}
-> diff --git a/security/ipe/eval.h b/security/ipe/eval.h
-> new file mode 100644
-> index 000000000000..887797438b9b
-> --- /dev/null
-> +++ b/security/ipe/eval.h
-> @@ -0,0 +1,28 @@
-> +/* SPDX-License-Identifier: GPL-2.0 */
-> +/*
-> + * Copyright (C) Microsoft Corporation. All rights reserved.
-> + */
-> +
-> +#ifndef IPE_EVAL_H
-> +#define IPE_EVAL_H
-> +
-> +#include <linux/file.h>
-> +#include <linux/types.h>
-> +
-> +#include "hooks.h"
-> +#include "policy.h"
-> +
-> +extern struct ipe_policy __rcu *ipe_active_policy;
-> +
-> +struct ipe_eval_ctx {
-> +	enum ipe_op_type op;
-> +
-> +	const struct file *file;
-> +	bool from_init_sb;
-> +};
-> +
-> +void build_eval_ctx(struct ipe_eval_ctx *ctx, const struct file *file, enum ipe_op_type op);
-> +int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx);
-> +void ipe_invalidate_pinned_sb(const struct super_block *mnt_sb);
-> +
-> +#endif /* IPE_EVAL_H */
-> diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
-> new file mode 100644
-> index 000000000000..335b773c7ae1
-> --- /dev/null
-> +++ b/security/ipe/hooks.c
-> @@ -0,0 +1,25 @@
-> +// SPDX-License-Identifier: GPL-2.0
-> +/*
-> + * Copyright (C) Microsoft Corporation. All rights reserved.
-> + */
-> +
-> +#include "ipe.h"
-> +#include "hooks.h"
-> +#include "eval.h"
-> +
-> +#include <linux/fs.h>
-> +#include <linux/types.h>
-> +#include <linux/binfmts.h>
-> +#include <linux/mman.h>
-> +
-> +/**
-> + * ipe_sb_free_security - ipe security hook function for super_block.
-> + * @mnt_sb: Supplies a pointer to a super_block is about to be freed.
-> + *
-> + * IPE does not have any structures with mnt_sb, but uses this hook to
-> + * invalidate a pinned super_block.
-> + */
-> +void ipe_sb_free_security(struct super_block *mnt_sb)
-> +{
-> +	ipe_invalidate_pinned_sb(mnt_sb);
-> +}
-> diff --git a/security/ipe/hooks.h b/security/ipe/hooks.h
-> new file mode 100644
-> index 000000000000..30fe455389bf
-> --- /dev/null
-> +++ b/security/ipe/hooks.h
-> @@ -0,0 +1,14 @@
-> +/* SPDX-License-Identifier: GPL-2.0 */
-> +/*
-> + * Copyright (C) Microsoft Corporation. All rights reserved.
-> + */
-> +#ifndef IPE_HOOKS_H
-> +#define IPE_HOOKS_H
-> +
-> +#include <linux/fs.h>
-> +#include <linux/binfmts.h>
-> +#include <linux/security.h>
-> +
-> +void ipe_sb_free_security(struct super_block *mnt_sb);
-> +
-> +#endif /* IPE_HOOKS_H */
-> diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
-> index 9ed3bf4dcc04..551c6d90ac11 100644
-> --- a/security/ipe/ipe.c
-> +++ b/security/ipe/ipe.c
-> @@ -9,6 +9,7 @@ static struct lsm_blob_sizes ipe_blobs __lsm_ro_after_init = {
->  };
->  
->  static struct security_hook_list ipe_hooks[] __lsm_ro_after_init = {
-> +	LSM_HOOK_INIT(sb_free_security, ipe_sb_free_security),
->  };
->  
->  /**
-> diff --git a/security/ipe/policy.c b/security/ipe/policy.c
-> index e446f4b84152..772d876b1087 100644
-> --- a/security/ipe/policy.c
-> +++ b/security/ipe/policy.c
-> @@ -97,3 +97,23 @@ struct ipe_policy *ipe_new_policy(const char *text, size_t textlen,
->  err:
->  	return ERR_PTR(rc);
->  }
-> +
-> +/**
-> + * ipe_get_policy_rcu - Dereference a rcu-protected policy pointer.
-> + *
-> + * @p: rcu-protected pointer to a policy.
-> + *
-> + * Not safe to call on IS_ERR.
-> + *
-> + * Return: the value of @p
-> + */
-> +struct ipe_policy *ipe_get_policy_rcu(struct ipe_policy __rcu *p)
-> +{
-> +	struct ipe_policy *rv = NULL;
-> +
-> +	rcu_read_lock();
-> +	rv = rcu_dereference(p);
-> +	rcu_read_unlock();
-> +
-> +	return rv;
-> +}
-> diff --git a/security/ipe/policy.h b/security/ipe/policy.h
-> index 6af2d9a811ec..967d816cd5cd 100644
-> --- a/security/ipe/policy.h
-> +++ b/security/ipe/policy.h
-> @@ -26,6 +26,8 @@ enum ipe_action_type {
->  };
->  
->  enum ipe_prop_type {
-> +	ipe_prop_boot_verified_false,
-> +	ipe_prop_boot_verified_true,
->  	ipe_prop_max
->  };
->  
-> @@ -73,5 +75,6 @@ struct ipe_policy {
->  struct ipe_policy *ipe_new_policy(const char *text, size_t textlen,
->  				  const char *pkcs7, size_t pkcs7len);
->  void ipe_free_policy(struct ipe_policy *pol);
-> +struct ipe_policy *ipe_get_policy_rcu(struct ipe_policy __rcu *p);
->  
->  #endif /* IPE_POLICY_H */
-> diff --git a/security/ipe/policy_parser.c b/security/ipe/policy_parser.c
-> index c7ba0e865366..7efafc482e46 100644
-> --- a/security/ipe/policy_parser.c
-> +++ b/security/ipe/policy_parser.c
-> @@ -265,7 +265,9 @@ static enum ipe_action_type parse_action(char *t)
->  }
->  
->  static const match_table_t property_tokens = {
-> -	{ipe_prop_max,					NULL}
-> +	{ipe_prop_boot_verified_false,	"boot_verified=FALSE"},
-> +	{ipe_prop_boot_verified_true,	"boot_verified=TRUE"},
-> +	{ipe_prop_max,			NULL}
->  };
->  
->  /**
-> @@ -295,6 +297,10 @@ int parse_property(char *t, struct ipe_rule *r)
->  	token = match_token(t, property_tokens, args);
->  
->  	switch (token) {
-> +	case ipe_prop_boot_verified_false:
-> +	case ipe_prop_boot_verified_true:
-> +		p->type = token;
-> +		break;
->  	case ipe_prop_max:
->  	default:
->  		rc = -EBADMSG;
-
 --
 dm-devel mailing list
 dm-devel@redhat.com
