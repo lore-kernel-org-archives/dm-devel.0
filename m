@@ -4,68 +4,69 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 54C95C636D4
-	for <dm-devel@archiver.kernel.org>; Wed,  1 Feb 2023 23:50:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id ECD21C05027
+	for <dm-devel@archiver.kernel.org>; Thu,  2 Feb 2023 00:19:35 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675295445;
+	s=mimecast20190719; t=1675297174;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=j2veBdmhAx6Ua7PQgL0qxAnjQyPd5rTanwv4ZffB+Cg=;
-	b=KsHLHrO3gG5Py65LcnCTiMd7SOuYv6PfjwZxHPSLbIfOjpdgQIw5B5XHWR7mQ/FP8GqrZ6
-	QUuuZQfiQna1O9t7/lrMMojjCsfZGHrOzt1DMc06pniVI+iz0ceaq/4xEHfteQU6BOIv8Y
-	vZlTk7Ob39T2FmdZEhkdBWEIivuwMCg=
+	bh=/H87haD1BzN7Y83fBjna4uiTInsoNZROSGGKKFvmoQU=;
+	b=BKG/L3W7Ud7P6YSdBleg1qKEpaO/4gAQe9JKy2Rtgw/SiT2etrB4tLnZzAgzpcEc1FJxJ3
+	D0/48Ed31RHrpfLJg3kfEjVI9yXUAYPERshybKnyp++ryyUc24WnFzx8M+H00RPMsGwSUD
+	gKtiojoNtzPBkHIQ0ha1sYKzyrqtvv8=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-460-dKwVlKOXPJW8XSg-exoR0Q-1; Wed, 01 Feb 2023 18:50:44 -0500
-X-MC-Unique: dKwVlKOXPJW8XSg-exoR0Q-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-348-wQ_0Mgs4Nky7CbS6UIgB1A-1; Wed, 01 Feb 2023 19:19:33 -0500
+X-MC-Unique: wQ_0Mgs4Nky7CbS6UIgB1A-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 751FC3823A0C;
-	Wed,  1 Feb 2023 23:50:42 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B27663C0DDA2;
+	Thu,  2 Feb 2023 00:19:31 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1D1E5C15BA0;
-	Wed,  1 Feb 2023 23:50:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5C929112132C;
+	Thu,  2 Feb 2023 00:19:31 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C82A619465B1;
-	Wed,  1 Feb 2023 23:50:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 27D1019465A3;
+	Thu,  2 Feb 2023 00:19:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 428F7194658F
- for <dm-devel@listman.corp.redhat.com>; Wed,  1 Feb 2023 23:50:40 +0000 (UTC)
+ ESMTP id DF1E8194658F
+ for <dm-devel@listman.corp.redhat.com>; Thu,  2 Feb 2023 00:19:29 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 226F04047024; Wed,  1 Feb 2023 23:50:40 +0000 (UTC)
+ id BFCD753A0; Thu,  2 Feb 2023 00:19:29 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1A2364047022
- for <dm-devel@redhat.com>; Wed,  1 Feb 2023 23:50:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B7619422AE
+ for <dm-devel@redhat.com>; Thu,  2 Feb 2023 00:19:29 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F31D33C025CD
- for <dm-devel@redhat.com>; Wed,  1 Feb 2023 23:50:39 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7A9C129AA3B6
+ for <dm-devel@redhat.com>; Thu,  2 Feb 2023 00:19:29 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-80-Bz3GMnGCPnGJDTxjMBDWQQ-1; Wed,
- 01 Feb 2023 18:50:33 -0500
-X-MC-Unique: Bz3GMnGCPnGJDTxjMBDWQQ-1
+ relay.mimecast.com with ESMTP id us-mta-317-fmpXM9m9OJ2ARDAMNm7jmg-1; Wed,
+ 01 Feb 2023 19:19:26 -0500
+X-MC-Unique: fmpXM9m9OJ2ARDAMNm7jmg-1
 Received: by linux.microsoft.com (Postfix, from userid 1052)
- id BDF7320B74F7; Wed,  1 Feb 2023 15:50:31 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com BDF7320B74F7
-Date: Wed, 1 Feb 2023 15:50:31 -0800
+ id 6706120B7102; Wed,  1 Feb 2023 16:19:24 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 6706120B7102
+Date: Wed, 1 Feb 2023 16:19:24 -0800
 From: Fan Wu <wufan@linux.microsoft.com>
-To: Roberto Sassu <roberto.sassu@huaweicloud.com>
-Message-ID: <20230201235031.GC9075@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
+To: Bagas Sanjaya <bagasdotme@gmail.com>
+Message-ID: <20230202001924.GD9075@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
 References: <1675119451-23180-1-git-send-email-wufan@linux.microsoft.com>
- <1675119451-23180-14-git-send-email-wufan@linux.microsoft.com>
- <d62907da62b5e0b25c9d7bd4b3119a3d1827bd29.camel@huaweicloud.com>
+ <1675119451-23180-17-git-send-email-wufan@linux.microsoft.com>
+ <Y9iSP+RxY+1/o7PQ@debian.me>
 MIME-Version: 1.0
-In-Reply-To: <d62907da62b5e0b25c9d7bd4b3119a3d1827bd29.camel@huaweicloud.com>
+In-Reply-To: <Y9iSP+RxY+1/o7PQ@debian.me>
 User-Agent: Mutt/1.5.21 (2010-09-15)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -74,9 +75,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [RFC PATCH v9 13/16] ipe: enable support for
- fs-verity as a trust provider
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: Re: [dm-devel] [RFC PATCH v9 16/16] documentation: add ipe
+ documentation
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -98,76 +99,40 @@ Cc: axboe@kernel.dk, linux-block@vger.kernel.org, tytso@mit.edu,
  linux-integrity@vger.kernel.org, agk@redhat.com, serge@hallyn.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Jan 31, 2023 at 03:00:08PM +0100, Roberto Sassu wrote:
-> On Mon, 2023-01-30 at 14:57 -0800, Fan Wu wrote:
-> > +/**
-> > + * evaluate_fsv_sig_false - Analyze @ctx against a fsv sig false property.
-> > + * @ctx: Supplies a pointer to the context being evaluated.
-> > + * @p: Supplies a pointer to the property being evaluated.
-> > + *
-> > + * Return:
-> > + * * true	- The current @ctx match the @p
-> > + * * false	- The current @ctx doesn't match the @p
-> > + */
-> > +static bool evaluate_fsv_sig_false(const struct ipe_eval_ctx *const ctx,
-> > +				   struct ipe_prop *p)
-> > +{
-> > +	return !ctx->ino ||
-> > +	       !IS_VERITY(ctx->ino) ||
-> > +	       !ctx->ipe_inode ||
-> > +	       !ctx->ipe_inode->fs_verity_signed;
-> > +}
-> > +
-> > +/**
-> > + * evaluate_fsv_sig_true - Analyze @ctx against a fsv sig true property.
-> > + * @ctx: Supplies a pointer to the context being evaluated.
-> > + * @p: Supplies a pointer to the property being evaluated.
-> > + *
-> > + * Return:
-> > + * * true - The current @ctx match the @p
-> > + * * false - The current @ctx doesn't match the @p
-> > + */
-> > +static bool evaluate_fsv_sig_true(const struct ipe_eval_ctx *const ctx,
-> > +				  struct ipe_prop *p)
-> > +{
-> > +	return ctx->ino &&
-> > +	       IS_VERITY(ctx->ino) &&
-> > +	       ctx->ipe_inode &&
-> > +	       ctx->ipe_inode->fs_verity_signed;
-> > +}
+On Tue, Jan 31, 2023 at 10:59:59AM +0700, Bagas Sanjaya wrote:
+> On Mon, Jan 30, 2023 at 02:57:31PM -0800, Fan Wu wrote:
 > 
-> Isn't better to just define one function and prepend a ! in
-> evaluate_property()?
-Yes that's a better way to do it, I will take this idea.
+> What about wordings below instead?
 
-> 
-> Not sure about the usefulness of the fsverity_signature= property as it
-> is. I would at minimum allow to specify which keyring signatures are
-> verified against, and ensure that the keyring has a restriction.
-> 
-> And maybe I would call fsverity_verify_signature() directly, after
-> extending it to pass the desired keyring.
-> 
-Thanks for the suggestion.
-For the initial version we only have the fsverity_signature property
-to enable the policy can make decision based on the existence of the
-signature. In the future we plan to add more properties to leverage
-the remaining signature information so we can have the restrictions
-you mentioned.
+Thanks for the review!
+>  
+> -IPE policy supports comments. The character '#' will function as a
+> -comment, ignoring all characters to the right of '#' until the newline.
+> +IPE policy supports comments. Any line which is prefixed with ``#`` will
+> +be ignored.
+This one is actually incorrect. The '#' can also appear at the end of a rule.
+So it is not only prefixed to a line.
+
+Other than this part, everything looks great, I will take them in the next
+version.
 
 -Fan
 
-> I would also split this patch in two, one for fsverity_digest= and one
-> for fsverity_signature=.
+>  
+>  -----------
 > 
-> Roberto
+> Thanks.
+> 
+> -- 
+> An old man doll... just what I always wanted! - Clara
+
 
 --
 dm-devel mailing list
