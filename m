@@ -4,74 +4,87 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 80557C05027
-	for <dm-devel@archiver.kernel.org>; Thu,  2 Feb 2023 18:48:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DE077C61DA4
+	for <dm-devel@archiver.kernel.org>; Thu,  2 Feb 2023 19:11:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675363679;
+	s=mimecast20190719; t=1675365098;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=fh2EoAeXL6ZPyPGdlBT1ZFTxV6smumBlgw+/djSzmZU=;
-	b=hK5El6GNZGl7cKIAJlwooCi2TZ/qKG18GVuAws0syC9EdQRBLm4lrE6H6//s1itlCkGYXY
-	Yp6RCCrK2edebjzxTDtOCPsdBUEJSXnuXlKDHf1VqFF3XC6zgNUwWCrGgrOc6DhPvXzXcg
-	VEvAanzLpiwAEcjOuGXQHHY16MMn13k=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=VSbEGgm9K6gD6GG3cWIGLXiFcxufD0mggP/dVuZdUrE=;
+	b=IqvoNEIj238dSv/u3CVXjbPBtKVfix3rEjaZfuWsfTD5v03cUJkhYFRbWqsPP7xvKd3CSt
+	vsL1/rkHYXEZX5jkduq1iv/xqlq+e5xhQc90REgm/dXHqHk5FYkRuKlApgFk2G2+/UvRAP
+	uftqmYov3+JJA/jWJHnTWGCcjoKL6t4=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-308-38_WJK6vOwG_jVd5d9pbtw-1; Thu, 02 Feb 2023 13:47:56 -0500
-X-MC-Unique: 38_WJK6vOwG_jVd5d9pbtw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-266-ehh4SxraN9uBXsOQSl0Mkw-1; Thu, 02 Feb 2023 14:11:35 -0500
+X-MC-Unique: ehh4SxraN9uBXsOQSl0Mkw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A95F938123D4;
-	Thu,  2 Feb 2023 18:47:26 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AEA0488B77F;
+	Thu,  2 Feb 2023 19:11:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5651CC15BA0;
-	Thu,  2 Feb 2023 18:47:26 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id F3747140EBF6;
+	Thu,  2 Feb 2023 19:11:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 40EA3194658C;
-	Thu,  2 Feb 2023 18:47:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CC132194658C;
+	Thu,  2 Feb 2023 19:11:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id CEBBD1946586
- for <dm-devel@listman.corp.redhat.com>; Thu,  2 Feb 2023 18:47:25 +0000 (UTC)
+ ESMTP id F0D801946586
+ for <dm-devel@listman.corp.redhat.com>; Thu,  2 Feb 2023 19:11:30 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 977772026D76; Thu,  2 Feb 2023 18:47:25 +0000 (UTC)
+ id D71D52166B35; Thu,  2 Feb 2023 19:11:30 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 905772026D68
- for <dm-devel@redhat.com>; Thu,  2 Feb 2023 18:47:25 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D04BF2166B33
+ for <dm-devel@redhat.com>; Thu,  2 Feb 2023 19:11:30 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 13525281DE91
- for <dm-devel@redhat.com>; Thu,  2 Feb 2023 18:47:14 +0000 (UTC)
-Received: from ms.lwn.net (ms.lwn.net [45.79.88.28]) by relay.mimecast.com
- with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-78-5kYoV1cuMIaaKMVybjvwuQ-1; Thu, 02 Feb 2023 13:47:03 -0500
-X-MC-Unique: 5kYoV1cuMIaaKMVybjvwuQ-1
-Received: from localhost (unknown [IPv6:2601:281:8300:73::5f6])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by ms.lwn.net (Postfix) with ESMTPSA id A8666739;
- Thu,  2 Feb 2023 18:46:55 +0000 (UTC)
-DKIM-Filter: OpenDKIM Filter v2.11.0 ms.lwn.net A8666739
-From: Jonathan Corbet <corbet@lwn.net>
-To: Bart Van Assche <bvanassche@acm.org>, Randy Dunlap
- <rdunlap@infradead.org>, linux-kernel@vger.kernel.org
-In-Reply-To: <8540c721-6bb9-3542-d9bd-940b59d3a7a4@acm.org>
-References: <20230129231053.20863-1-rdunlap@infradead.org>
- <875yckvt1b.fsf@meer.lwn.net>
- <a2c560bb-3b5c-ca56-c5c2-93081999281d@infradead.org>
- <8540c721-6bb9-3542-d9bd-940b59d3a7a4@acm.org>
-Date: Thu, 02 Feb 2023 11:46:54 -0700
-Message-ID: <87o7qbvra9.fsf@meer.lwn.net>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B12A088B77D
+ for <dm-devel@redhat.com>; Thu,  2 Feb 2023 19:11:30 +0000 (UTC)
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com
+ [209.85.128.51]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-652-iquNVdVfOICwJecIEeXl_g-1; Thu, 02 Feb 2023 14:11:29 -0500
+X-MC-Unique: iquNVdVfOICwJecIEeXl_g-1
+Received: by mail-wm1-f51.google.com with SMTP id
+ j29-20020a05600c1c1d00b003dc52fed235so2227485wms.1
+ for <dm-devel@redhat.com>; Thu, 02 Feb 2023 11:11:28 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=cc:to:subject:message-id:date:from:in-reply-to:references
+ :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=cmqPx/Zy279diCwL80ZzQVZT2Mcv1030GfDHO64ZwaM=;
+ b=3cr/igKlJX5hyDOH9JOvr3bGvJIYP9bmrkDxUF2BQ5mm1w3RNAOVGensxMH4mabMaW
+ zrfR4JPHYkihb4O2hdwA9NQW8TDS+bkoxOYjqnpwt54WTzyhxZxOnu58NtoIA1InRbCd
+ fFnj4LMq63ZtQs7/foKO8jTAIt5BnrYGSmUyz2nWSFUsLcmLduOYG+le1gNnuTjr1u74
+ 6e0dv7fz+WOcg2RUeiZgtG0o0MVwSO009IZzBWbS/iey+GLQetgFKepSrwomOPyeCwku
+ ucwlrVktauTwkf8JoebU/xFoYnENkcrBkmSEkecBSXsAqju2ilVBoEdvQKtnHBctKUT/
+ 9KFg==
+X-Gm-Message-State: AO0yUKWNNx9NYu9n1O8NGcam3KESjf4OqsAfcb8arUrBv2eTbWDBfXVG
+ Aw/9j2E4inF9snx+DjcxnJJp1U+zYEhVJpF3mMX5qw==
+X-Google-Smtp-Source: AK7set96hCXSN8RisUiNR5YsJkh6ScE8+8SR4F6BqhH6feHgPVQmnMOF+Dd5nQ7x6loD3WWBhySd5AaVOyA9RgQ/D6o=
+X-Received: by 2002:a05:600c:1da3:b0:3da:b40f:c734 with SMTP id
+ p35-20020a05600c1da300b003dab40fc734mr372362wms.115.1675365087907; Thu, 02
+ Feb 2023 11:11:27 -0800 (PST)
 MIME-Version: 1.0
+References: <20230202012348.885402-1-nhuck@google.com>
+ <Y9vnte1xP5T+nZ6j@redhat.com>
+In-Reply-To: <Y9vnte1xP5T+nZ6j@redhat.com>
+From: Nathan Huckleberry <nhuck@google.com>
+Date: Thu, 2 Feb 2023 11:11:16 -0800
+Message-ID: <CAJkfWY5sYxPe1ArxSe3fkwqkOFSxxz9HDdF6XoL_Wc9g070hRg@mail.gmail.com>
+To: Mike Snitzer <snitzer@kernel.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -79,9 +92,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: Re: [dm-devel] [PATCH 0/9] Documentation: correct lots of spelling
- errors (series 2)
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] dm-verity: Remove WQ_UNBOUND.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -93,55 +105,79 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: nvdimm@lists.linux.dev, linux-doc@vger.kernel.org,
- Song Liu <song@kernel.org>, dm-devel@redhat.com,
- Zefan Li <lizefan.x@bytedance.com>, sparclinux@vger.kernel.org,
- Neeraj Upadhyay <quic_neeraju@quicinc.com>, Alasdair Kergon <agk@redhat.com>,
- Dave Jiang <dave.jiang@intel.com>, linux-scsi@vger.kernel.org,
- Vishal Verma <vishal.l.verma@intel.com>, Jakub Kicinski <kuba@kernel.org>,
- Paolo Abeni <pabeni@redhat.com>, Frederic Weisbecker <frederic@kernel.org>,
- Guenter Roeck <linux@roeck-us.net>, linux-media@vger.kernel.org,
- Jean Delvare <jdelvare@suse.com>, "Paul E. McKenney" <paulmck@kernel.org>,
- "James E.J. Bottomley" <jejb@linux.ibm.com>,
- Johannes Weiner <hannes@cmpxchg.org>, Mike Snitzer <snitzer@kernel.org>,
- Josh Triplett <josh@joshtriplett.org>, linux-raid@vger.kernel.org,
- dmaengine@vger.kernel.org, Jiri Pirko <jiri@nvidia.com>,
- cgroups@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>,
- Mauro Carvalho Chehab <mchehab@kernel.org>, linux-hwmon@vger.kernel.org,
- rcu@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>,
- linux-mm@kvack.org, netdev@vger.kernel.org, linux-usb@vger.kernel.org,
- Eric Dumazet <edumazet@google.com>, Vinod Koul <vkoul@kernel.org>,
- Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Tejun Heo <tj@kernel.org>,
- "David S. Miller" <davem@davemloft.net>
+Cc: linux-kernel@vger.kernel.org, Eric Biggers <ebiggers@kernel.org>,
+ dm-devel@redhat.com, mpatocka@redhat.com,
+ Sami Tolvanen <samitolvanen@google.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Bart Van Assche <bvanassche@acm.org> writes:
+Looks good. Thanks.
 
-> On 2/2/23 10:33, Randy Dunlap wrote:
->> On 2/2/23 10:09, Jonathan Corbet wrote:
->>> Randy Dunlap <rdunlap@infradead.org> writes:
->>>>   [PATCH 6/9] Documentation: scsi/ChangeLog*: correct spelling
->>>>   [PATCH 7/9] Documentation: scsi: correct spelling
->>>
->>> I've left these for the SCSI folks for now.  Do we *really* want to be
->>> fixing spelling in ChangeLog files from almost 20 years ago?
->> 
->> That's why I made it a separate patch -- so the SCSI folks can decide that...
+On Thu, Feb 2, 2023 at 8:41 AM Mike Snitzer <snitzer@kernel.org> wrote:
 >
-> How about removing the Documentation/scsi/ChangeLog.* files? I'm not 
-> sure these changelogs are still useful since these duplicate information 
-> that is already available in the output of git log ${driver_directory}.
-
-Actually, the information in those files mostly predates the git era, so
-you won't find it that way.  I *still* question their value, though...
-
-jon
+> On Wed, Feb 01 2023 at  8:23P -0500,
+> Nathan Huckleberry <nhuck@google.com> wrote:
+>
+> > Setting WQ_UNBOUND increases scheduler latency on ARM64.  This is likely
+> > due to the asymmetric architecture of ARM64 processors.
+> >
+> > I've been unable to reproduce the results that claim WQ_UNBOUND gives a
+> > performance boost on x86-64.
+> >
+> > This flag is causing performance issues for multiple subsystems within
+> > Android.  Notably, the same slowdown exists for decompression with
+> > EROFS.
+> >
+> > | open-prebuilt-camera  | WQ_UNBOUND | ~WQ_UNBOUND   |
+> > |-----------------------|------------|---------------|
+> > | verity wait time (us) | 11746      | 119 (-98%)    |
+> > | erofs wait time (us)  | 357805     | 174205 (-51%) |
+> >
+> > | sha256 ramdisk random read | WQ_UNBOUND    | ~WQ_UNBOUND |
+> > |----------------------------|-----------=---|-------------|
+> > | arm64 (accelerated)        | bw=42.4MiB/s  | bw=212MiB/s |
+> > | arm64 (generic)            | bw=16.5MiB/s  | bw=48MiB/s  |
+> > | x86_64 (generic)           | bw=233MiB/s   | bw=230MiB/s |
+> >
+> > Cc: Sami Tolvanen <samitolvanen@google.com>
+> > Cc: Eric Biggers <ebiggers@kernel.org>
+> > Signed-off-by: Nathan Huckleberry <nhuck@google.com>
+> > ---
+> >  drivers/md/dm-verity-target.c | 4 ++--
+> >  1 file changed, 2 insertions(+), 2 deletions(-)
+> >
+> > diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+> > index ccf5b852fbf7..020fd2341025 100644
+> > --- a/drivers/md/dm-verity-target.c
+> > +++ b/drivers/md/dm-verity-target.c
+> > @@ -1399,8 +1399,8 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+> >               goto bad;
+> >       }
+> >
+> > -     /* WQ_UNBOUND greatly improves performance when running on ramdisk */
+> > -     wq_flags = WQ_MEM_RECLAIM | WQ_UNBOUND;
+> > +     wq_flags = WQ_MEM_RECLAIM;
+> > +
+> >       /*
+> >        * Using WQ_HIGHPRI improves throughput and completion latency by
+> >        * reducing wait times when reading from a dm-verity device.
+> > --
+> > 2.39.1.456.gfc5497dd1b-goog
+>
+> Hi,
+>
+> I've discussed with Mikulas, tweaked your patch slightly but accepted
+> your change, please see:
+>
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.3&id=6f30cc248507ee96c22ff4c3cbc86099ff12b7a9
+>
+> Thanks,
+> Mike
 
 --
 dm-devel mailing list
