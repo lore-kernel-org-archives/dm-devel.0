@@ -1,94 +1,84 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id EFAFDC636D4
-	for <dm-devel@archiver.kernel.org>; Thu,  2 Feb 2023 16:50:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 75899C61DA4
+	for <dm-devel@archiver.kernel.org>; Thu,  2 Feb 2023 18:16:57 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675356648;
+	s=mimecast20190719; t=1675361816;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=xSBVDvzpmg3Nfzc+wbV/iX0gvakx5Fz1a4YQWJosTIk=;
-	b=imy+3WD4hxjdaYDTBYwspLCEpNw1F2ByVqxEUVfxqu8M3hhKeWenSQ4FUtEvEUEmh0gyP9
-	HWHmick7w601zaT0TpB1iuaDoO/hCYi4+YXBTC4xpI41p6elihytZRIIuITe0pFXvW03bu
-	DxJzS74hkM68Ho++RD5uaeh1m3uFxhQ=
+	bh=tYeZGUy5nYdul1c3gD07hKyJ+UT71a+eRDd0eF/BKHQ=;
+	b=gZi+KugGg9wF5si5ozuRlZ2Lrrz73h8L7NTyZ9ENMf4e0OVAn3mgz/4AeN3d681LcAF0pj
+	OLJO0BZnWfDHotq0ncV2HRE4997HGwYjpNK7T4pyyFeEblSS11VqKQCOBvCZ7gpC+3hOlg
+	6/KId6vomY9cJJ8MtplaIleYEEUsbrE=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-634-gOnHkng3NsW2Y_fiyPsq7w-1; Thu, 02 Feb 2023 11:50:45 -0500
-X-MC-Unique: gOnHkng3NsW2Y_fiyPsq7w-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-627-adt30SHnOFC3qdurzSvw_w-1; Thu, 02 Feb 2023 13:16:41 -0500
+X-MC-Unique: adt30SHnOFC3qdurzSvw_w-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0FC19101B450;
-	Thu,  2 Feb 2023 16:50:43 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 63EF380391B;
+	Thu,  2 Feb 2023 18:16:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B426F492C3E;
-	Thu,  2 Feb 2023 16:50:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1C5C4140EBF6;
+	Thu,  2 Feb 2023 18:16:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8296E194658C;
-	Thu,  2 Feb 2023 16:50:42 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BEE94194658F;
+	Thu,  2 Feb 2023 18:16:07 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
  [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6B1DA1946586
- for <dm-devel@listman.corp.redhat.com>; Thu,  2 Feb 2023 16:50:41 +0000 (UTC)
+ ESMTP id 87BDF1946586
+ for <dm-devel@listman.corp.redhat.com>; Thu,  2 Feb 2023 18:15:35 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4D6B62026D76; Thu,  2 Feb 2023 16:50:41 +0000 (UTC)
+ id A23112026D76; Thu,  2 Feb 2023 18:15:35 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 45D0F2026D68
- for <dm-devel@redhat.com>; Thu,  2 Feb 2023 16:50:41 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2526C29AA387
- for <dm-devel@redhat.com>; Thu,  2 Feb 2023 16:50:41 +0000 (UTC)
-Received: from mail-qt1-f169.google.com (mail-qt1-f169.google.com
- [209.85.160.169]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-151-N32QzFHlPQqKY_UmfcwKzQ-1; Thu, 02 Feb 2023 11:50:39 -0500
-X-MC-Unique: N32QzFHlPQqKY_UmfcwKzQ-1
-Received: by mail-qt1-f169.google.com with SMTP id h24so2585551qtr.0
- for <dm-devel@redhat.com>; Thu, 02 Feb 2023 08:50:39 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=in-reply-to:content-transfer-encoding:content-disposition
- :mime-version:references:message-id:subject:cc:to:from:date
- :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=1tztcBchRZ+ahQ+Rv8slGEZ3rlEReGoboay+wBElNpk=;
- b=Eb/D4GrYB8MJmHqNIE/vpCwVfJPSkGOEH8U3KAYgOZ2+rRfuPrmPYqmmkMGtPQiTb3
- 4fgi1IRo7OccnjSvnKG937VIfKsDpz1c/+QKvCLfEuAJhwGQ5LUhfHSje8oilHkHe908
- 0ryrZfgBfY+8U065oJKJly/qgJ+RuHxoAcAP3Hqo1oQLLnfA+T+hAbjqBhRKRfApbKBL
- TM9I9a81By4Uj3R0PLbez/TLZgK9+mGiHJLhqF1hC6ys/5fuCEX8l4u7dVQI2Rrpm7y8
- Lh/l6oua/gyWe9UcqGMBVoR0X0rEtJMxNg4adx/WPd3YCqeiDLJVXwU2ySaGRMNQ7thE
- m6Qg==
-X-Gm-Message-State: AO0yUKUGrULQF+i60fmIJ//KjwNhDL51mblcsfvhe8FXf9ihR+Lx9XiU
- bNllwEPNHulXRXoFRA4VSqd3Z/o=
-X-Google-Smtp-Source: AK7set+4Pyeb5ompgmUg0JYUv54bCb2ceknHgU0XW/UAy594tQAOCFstY5279x2+bA/W3Ae7xhvLGQ==
-X-Received: by 2002:a05:622a:1788:b0:3b8:2ea9:a093 with SMTP id
- s8-20020a05622a178800b003b82ea9a093mr13141578qtk.1.1675356639078; 
- Thu, 02 Feb 2023 08:50:39 -0800 (PST)
-Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
- [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- t9-20020a05620a034900b0071eddd3bebbsm31687qkm.81.2023.02.02.08.50.38
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 02 Feb 2023 08:50:38 -0800 (PST)
-Date: Thu, 2 Feb 2023 11:50:37 -0500
-From: Mike Snitzer <snitzer@kernel.org>
-To: Demi Marie Obenour <demi@invisiblethingslab.com>
-Message-ID: <Y9vp3XDEQAl7TLND@redhat.com>
-References: <20230126033358.1880-1-demi@invisiblethingslab.com>
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 9972B2026D68
+ for <dm-devel@redhat.com>; Thu,  2 Feb 2023 18:15:35 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7A4DE80D0F5
+ for <dm-devel@redhat.com>; Thu,  2 Feb 2023 18:15:35 +0000 (UTC)
+Received: from ms.lwn.net (ms.lwn.net [45.79.88.28]) by relay.mimecast.com
+ with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-26-CFtomfGuOUihcjt71uEdvA-1; Thu, 02 Feb 2023 13:15:31 -0500
+X-MC-Unique: CFtomfGuOUihcjt71uEdvA-1
+Received: from localhost (unknown [IPv6:2601:281:8300:73::5f6])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by ms.lwn.net (Postfix) with ESMTPSA id 48D347DE;
+ Thu,  2 Feb 2023 18:09:05 +0000 (UTC)
+DKIM-Filter: OpenDKIM Filter v2.11.0 ms.lwn.net 48D347DE
+From: Jonathan Corbet <corbet@lwn.net>
+To: Randy Dunlap <rdunlap@infradead.org>, linux-kernel@vger.kernel.org
+In-Reply-To: <20230129231053.20863-1-rdunlap@infradead.org>
+References: <20230129231053.20863-1-rdunlap@infradead.org>
+Date: Thu, 02 Feb 2023 11:09:04 -0700
+Message-ID: <875yckvt1b.fsf@meer.lwn.net>
 MIME-Version: 1.0
-In-Reply-To: <20230126033358.1880-1-demi@invisiblethingslab.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: Re: [dm-devel] [RFC PATCH 0/7] Allow race-free block device handling
+Subject: Re: [dm-devel] [PATCH 0/9] Documentation: correct lots of spelling
+ errors (series 2)
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -100,42 +90,72 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Juergen Gross <jgross@suse.com>,
- Marek =?iso-8859-1?Q?Marczykowski-G=F3recki?=
- <marmarek@invisiblethingslab.com>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- xen-devel@lists.xenproject.org, Alasdair Kergon <agk@redhat.com>,
- Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.com>
+Cc: nvdimm@lists.linux.dev, Randy Dunlap <rdunlap@infradead.org>,
+ linux-doc@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com,
+ netdev@vger.kernel.org, Zefan Li <lizefan.x@bytedance.com>,
+ sparclinux@vger.kernel.org, Neeraj Upadhyay <quic_neeraju@quicinc.com>,
+ Alasdair Kergon <agk@redhat.com>, Dave Jiang <dave.jiang@intel.com>,
+ linux-scsi@vger.kernel.org, Vishal Verma <vishal.l.verma@intel.com>,
+ Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>,
+ "James E.J. Bottomley" <jejb@linux.ibm.com>,
+ Guenter Roeck <linux@roeck-us.net>, linux-media@vger.kernel.org,
+ Jean Delvare <jdelvare@suse.com>, "Paul E. McKenney" <paulmck@kernel.org>,
+ Frederic Weisbecker <frederic@kernel.org>, Mike Snitzer <snitzer@kernel.org>,
+ Josh Triplett <josh@joshtriplett.org>, linux-raid@vger.kernel.org,
+ Tejun Heo <tj@kernel.org>, Jiri Pirko <jiri@nvidia.com>,
+ cgroups@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>,
+ Mauro Carvalho Chehab <mchehab@kernel.org>, linux-hwmon@vger.kernel.org,
+ rcu@vger.kernel.org, "Martin
+ K. Petersen" <martin.petersen@oracle.com>, linux-mm@kvack.org,
+ Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-usb@vger.kernel.org,
+ Eric Dumazet <edumazet@google.com>, Vinod Koul <vkoul@kernel.org>,
+ Johannes Weiner <hannes@cmpxchg.org>, dmaengine@vger.kernel.org, "David S.
+ Miller" <davem@davemloft.net>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gV2VkLCBKYW4gMjUgMjAyMyBhdCAxMDozM1AgLTA1MDAsCkRlbWkgTWFyaWUgT2Jlbm91ciA8
-ZGVtaUBpbnZpc2libGV0aGluZ3NsYWIuY29tPiB3cm90ZToKCj4gVGhpcyB3b3JrIGFpbXMgdG8g
-YWxsb3cgdXNlcnNwYWNlIHRvIGNyZWF0ZSBhbmQgZGVzdHJveSBibG9jayBkZXZpY2VzCj4gaW4g
-YSByYWNlLWZyZWUgYW5kIGxlYWstZnJlZSB3YXksCgoicmFjZS1mcmVlIGFuZCBsZWFrLWZyZWUg
-d2F5IiBpbXBsaWVzIHRoZXJlIGJvdGggcmFjZXMgYW5kIGxlYWtzIGluCmV4aXN0aW5nIGNvZGUu
-IFlvdSdyZSBtYWtpbmcgY2xhaW1zIHRoYXQgYXJlIGxpa2VseSB2ZXJ5IHNwZWNpZmljIHRvCnlv
-dXIgWGVuIHVzZS1jYXNlLiAgUGxlYXNlIGV4cGxhaW4gbW9yZSBjYXJlZnVsbHkuCgo+IGFuZCB0
-byBhbGxvdyB0aGVtIHRvIGJlIGV4cG9zZWQgdG8KPiBvdGhlciBYZW4gVk1zIHZpYSBibGtiYWNr
-IHdpdGhvdXQgbGVha3Mgb3IgcmFjZXMuICBJdOKAmXMgbWFya2VkIGFzIFJGQwo+IGZvciBhIGZl
-dyByZWFzb25zOgo+IAo+IC0gVGhlIGNvZGUgaGFzIGJlZW4gb25seSBsaWdodGx5IHRlc3RlZC4g
-IEl0IG1pZ2h0IGJlIHVuc3RhYmxlIG9yCj4gICBpbnNlY3VyZS4KPiAKPiAtIFRoZSBETV9ERVZf
-Q1JFQVRFIGlvY3RsIGdhaW5zIGEgbmV3IGZsYWcuICBVbmtub3duIGZsYWdzIHdlcmUKPiAgIHBy
-ZXZpb3VzbHkgaWdub3JlZCwgc28gdGhpcyBjb3VsZCB0aGVvcmV0aWNhbGx5IGJyZWFrIGJ1Z2d5
-IHVzZXJzcGFjZQo+ICAgdG9vbHMuCgpOb3Qgc2VlaW5nIGEgcmVhc29uIHRoYXQgdHlwZSBvZiBE
-TSBjaGFuZ2UgaXMgbmVlZGVkLiBJZiB5b3UgZmVlbApzdHJvbmdseSBhYm91dCBpdCBzZW5kIGEg
-c2VwYXJhdGUgcGF0Y2ggYW5kIHdlIGNhbiBkaXNjdXNzIGl0LgoKPiAtIEkgaGF2ZSBubyBpZGVh
-IGlmIEkgZ290IHRoZSBibG9jayBkZXZpY2UgcmVmZXJlbmNlIGNvdW50aW5nIGFuZAo+ICAgbG9j
-a2luZyBjb3JyZWN0LgoKWW91ciBoZWFkZXJzIGFuZCBqdXN0aWZjYXRpb24gZm9yIHRoaXMgbGlu
-ZSBvZiB3b3JrIGFyZSByZWFsbHkgd2F5IHRvbwp0ZXJzZS4gUGxlYXNlIHRha2UgdGhlIHRpbWUg
-dG8gY2xlYXJseSBtYWtlIHRoZSBjYXNlIGZvciB5b3VyIGNoYW5nZXMKaW4gYm90aCB0aGUgcGF0
-Y2ggaGVhZGVycyBhbmQgY29kZS4KCk1pa2UKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1k
-ZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxtYW4vbGlzdGlu
-Zm8vZG0tZGV2ZWwK
+Randy Dunlap <rdunlap@infradead.org> writes:
+
+> Maintainers of specific kernel subsystems are only Cc-ed on their
+> respective patches, not the entire series. [if all goes well]
+>
+> These patches are based on linux-next-20230127.
+
+So I've applied a bunch of these
+
+>  [PATCH 1/9] Documentation: admin-guide: correct spelling
+>  [PATCH 2/9] Documentation: driver-api: correct spelling
+
+applied
+
+>  [PATCH 3/9] Documentation: hwmon: correct spelling
+>  [PATCH 4/9] Documentation: networking: correct spelling
+>  [PATCH 5/9] Documentation: RCU: correct spelling
+
+These have been taken up elsewhere
+
+>  [PATCH 6/9] Documentation: scsi/ChangeLog*: correct spelling
+>  [PATCH 7/9] Documentation: scsi: correct spelling
+
+I've left these for the SCSI folks for now.  Do we *really* want to be
+fixing spelling in ChangeLog files from almost 20 years ago?
+
+>  [PATCH 8/9] Documentation: sparc: correct spelling
+>  [PATCH 9/9] Documentation: userspace-api: correct spelling
+
+Applied.
+
+Thanks,
+
+jon
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
