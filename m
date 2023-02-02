@@ -4,95 +4,95 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0E1C5C05027
-	for <dm-devel@archiver.kernel.org>; Sat,  4 Feb 2023 00:20:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E4584C636D3
+	for <dm-devel@archiver.kernel.org>; Mon,  6 Feb 2023 07:38:42 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675470019;
+	s=mimecast20190719; t=1675669121;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=rqeyr/D/YGGGK9GjleJAp9kBsMDaNint8yJJNFvSsGU=;
-	b=fpDTEgLRbyieHlazo5EQ/f4P3EH0fxY+WFHsz4njjZuX5yn9zgtAEqlmwODNjTz8tmrMAX
-	Hy2N6xIJKQ84UP7vWzL/rmcAtuCHWawPEmlz8MY7vHY3mJpArZSG7QKwfKhZpDDZh48n+A
-	obVh1Eh1cAH9HpxzQ3RMeuAtDKqhHhU=
+	bh=Qu5K4KSDOew4vBHiG9q5TuS2ol/ACos4na0Ieh9L1WE=;
+	b=Xqw6FLe309mU8mNIVfKBVPHc03baMJmNP5H8oM31VT5k/IwKMPf66KLodH6ahnmrCF2fpa
+	H7QmZBRiOmNBYAtHsMorSGfbV585LdCzLM40b6Gbhj4+HfCJFAfF4tmnhRBjV5ieoqjVqb
+	11hNCbWWBP+Iep/2I9gxk+33XsO9HvA=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-136-h5rxgtcWMBCpvxjn6MXOyA-1; Fri, 03 Feb 2023 19:20:15 -0500
-X-MC-Unique: h5rxgtcWMBCpvxjn6MXOyA-1
+ us-mta-58-vNLvmNWrMmaULoojiGBXlQ-1; Mon, 06 Feb 2023 02:38:38 -0500
+X-MC-Unique: vNLvmNWrMmaULoojiGBXlQ-1
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3FCC91C05AAC;
-	Sat,  4 Feb 2023 00:20:14 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id DAA9B112132C;
-	Sat,  4 Feb 2023 00:20:13 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 77BA82A59570;
+	Mon,  6 Feb 2023 07:38:36 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 63417112131B;
+	Mon,  6 Feb 2023 07:38:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 839A8194658C;
-	Sat,  4 Feb 2023 00:20:13 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C6BCF19465A8;
+	Mon,  6 Feb 2023 07:38:34 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
  [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7E5DC1946586
- for <dm-devel@listman.corp.redhat.com>; Sat,  4 Feb 2023 00:20:12 +0000 (UTC)
+ ESMTP id 6970B1946586
+ for <dm-devel@listman.corp.redhat.com>; Thu,  2 Feb 2023 19:00:54 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5DC77410B1B8; Sat,  4 Feb 2023 00:20:12 +0000 (UTC)
+ id 5878C404CD81; Thu,  2 Feb 2023 19:00:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 569C8410B1AD
- for <dm-devel@redhat.com>; Sat,  4 Feb 2023 00:20:12 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 5139C404CD80
+ for <dm-devel@redhat.com>; Thu,  2 Feb 2023 19:00:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3B30818483B3
- for <dm-devel@redhat.com>; Sat,  4 Feb 2023 00:20:12 +0000 (UTC)
-Received: from mail-qt1-f174.google.com (mail-qt1-f174.google.com
- [209.85.160.174]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 352AD857A94
+ for <dm-devel@redhat.com>; Thu,  2 Feb 2023 19:00:54 +0000 (UTC)
+Received: from mail-pg1-f180.google.com (mail-pg1-f180.google.com
+ [209.85.215.180]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-42-2P_W1DOjP52QSQgJ4zF2lQ-1; Fri, 03 Feb 2023 19:20:10 -0500
-X-MC-Unique: 2P_W1DOjP52QSQgJ4zF2lQ-1
-Received: by mail-qt1-f174.google.com with SMTP id h24so7440555qta.12
- for <dm-devel@redhat.com>; Fri, 03 Feb 2023 16:20:10 -0800 (PST)
+ us-mta-498-RF94skA7MVSR9z8RiqdVhQ-1; Thu, 02 Feb 2023 14:00:50 -0500
+X-MC-Unique: RF94skA7MVSR9z8RiqdVhQ-1
+Received: by mail-pg1-f180.google.com with SMTP id 143so2024792pgg.6
+ for <dm-devel@redhat.com>; Thu, 02 Feb 2023 11:00:50 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
- :message-id:reply-to;
- bh=KkoMTSq4l3G1c49HimqfC19O87IH6JspHAce298n11w=;
- b=f4QeMFRQiD/qbqmw3ghQeKhMeom9+J8Hlr5jRhmoT4rA7ce5HzuY5j3y2ozsm9XvQy
- xPWQRQwnBkBre9thXJcOV1J0Lmcuw/SxQW654hi03e5KPRxPgm5L85v/CmzW6lel6IFD
- iXEzk/qMCa+viMRuCrTxeZNBIK61H71eGkF58uY88P4/+508jE1b/GNmoFpGUK1PicNS
- UIjFVvp+LcHfWMk7jo5OLhtVV9ZcqMEqs/DcJBnNtvlWsfw4cF7BKZy4jQmVcJTVcBbO
- gaFzOrS3VhqHHs1OA7E6lPtDwaHiQB7VUfoxwiXqemOSNXVfOI72D1VLnf8VXBXevPtU
- 4ugg==
-X-Gm-Message-State: AO0yUKWJC11SlO1dm3b1D2UJ2xE3TKq44g/lN96ZIrXKkRZ+u4xfv6fx
- gmoFzagZAi0C7vJtcVuQ9jYHiFI=
-X-Google-Smtp-Source: AK7set8kb03l51pPPK2sD000T3nG6rEGMEgSpN3Th8LXVdJ9cJkEm26hx9e4hZWuukXmwkgbfjBXSQ==
-X-Received: by 2002:ac8:7f50:0:b0:3a5:1ea1:bae2 with SMTP id
- g16-20020ac87f50000000b003a51ea1bae2mr19566958qtk.34.1675470010067; 
- Fri, 03 Feb 2023 16:20:10 -0800 (PST)
-Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
- [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- g17-20020ae9e111000000b006ce580c2663sm2801394qkm.35.2023.02.03.16.20.09
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 03 Feb 2023 16:20:09 -0800 (PST)
-Date: Fri, 3 Feb 2023 19:20:08 -0500
-From: Mike Snitzer <snitzer@kernel.org>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Message-ID: <Y92kuOeVIaVimXbf@redhat.com>
-References: <20230202181423.2910619-1-hch@lst.de> <Y9xqvF6nTptzHwpv@redhat.com>
- <Y9x8pagVnO7Xtnbn@redhat.com> <20230203150053.GA28516@lst.de>
- <Y904yA+mS9go9XKP@redhat.com>
- <20230203235028.GC17327@octiron.msp.redhat.com>
+ h=cc:to:subject:message-id:date:from:in-reply-to:references
+ :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=p3ZYbtaIavkAf5aV8P1noUyCGHCi0NGSeVESNHvFnYY=;
+ b=nMSydHRgDetKS/xR5ftSCt6f5zJmhFuRTbjWnDhqJbzWdK88BsIIXY7w7c91NuVOGV
+ FBaJwiGs8ZTMfurZcZn6NRDxl9QxxMC4VMVPMr0KgCis11MRcVOiUTgwDqJXYkOYz2Uf
+ lEsLc2z5pPvrWuyuBhiTBzUGz0W/CXIqkLht7OLUWboxHtxIexsBTa+rpT0UL7JKRbVC
+ xQe/zvZKQN0dJEZLufvW1ClF11OnPQfQM/aNyJz/2osFIVdh776w2uRPKU/ZV7HVyN7h
+ SOWZ0bZWZm8D+1WUYZt0cXwNYzPQFNzM1bYTGpYp8VHXZMn/gYIGpW2v17dD2B7qhrVm
+ rMXQ==
+X-Gm-Message-State: AO0yUKVSxQ/X8XpaCWKxE9qJihlooz45326F4bTho+riULqLqgzDQHr6
+ sX0cYEUChZckU0/tiNm61aBqvr2v7Js+lFghhJkIFg==
+X-Google-Smtp-Source: AK7set8NvDoA9gf4AicHigBtu9UpVuZVLhwEfuP2Vzy2j1FjpsC9TsZ1y3DDjZctSawx3/ctiEaprHJ0rsQLVFXvU3g=
+X-Received: by 2002:a63:dd43:0:b0:4da:af6:ed with SMTP id
+ g3-20020a63dd43000000b004da0af600edmr1187478pgj.30.1675364449073; 
+ Thu, 02 Feb 2023 11:00:49 -0800 (PST)
 MIME-Version: 1.0
-In-Reply-To: <20230203235028.GC17327@octiron.msp.redhat.com>
+References: <20230202-dm-parenthesis-warning-v1-1-ebdee213eeb9@kernel.org>
+In-Reply-To: <20230202-dm-parenthesis-warning-v1-1-ebdee213eeb9@kernel.org>
+From: Nick Desaulniers <ndesaulniers@google.com>
+Date: Thu, 2 Feb 2023 11:00:37 -0800
+Message-ID: <CAKwvOdnffHbU4ObT2jDr_iASEC==CUsX2FfqdA-+iLU4y5Ma=g@mail.gmail.com>
+To: Nathan Chancellor <nathan@kernel.org>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] block: remove submit_bio_noacct
+X-Mailman-Approved-At: Mon, 06 Feb 2023 07:38:31 +0000
+Subject: Re: [dm-devel] [PATCH] dm flakey: Fix clang -Wparentheses-equality
+ in flakey_map()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -104,79 +104,81 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, dm-devel@redhat.com,
- linux-raid@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+Cc: trix@redhat.com, llvm@lists.linux.dev, snitzer@kernel.org,
+ linux-kernel@vger.kernel.org, patches@lists.linux.dev, dm-devel@redhat.com,
+ mpatocka@redhat.com, sweettea-kernel@dorminy.me, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Feb 03 2023 at  6:50P -0500,
-Benjamin Marzinski <bmarzins@redhat.com> wrote:
+On Thu, Feb 2, 2023 at 9:00 AM Nathan Chancellor <nathan@kernel.org> wrote:
+>
+> Clang warns:
+>
+>   ../drivers/md/dm-flakey.c:369:28: error: equality comparison with extraneous parentheses [-Werror,-Wparentheses-equality]
+>                           if ((fc->corrupt_bio_rw == WRITE)) {
+>                                ~~~~~~~~~~~~~~~~~~~^~~~~~~~
+>   ../drivers/md/dm-flakey.c:369:28: note: remove extraneous parentheses around the comparison to silence this warning
+>                           if ((fc->corrupt_bio_rw == WRITE)) {
+>                               ~                   ^       ~
+>   ../drivers/md/dm-flakey.c:369:28: note: use '=' to turn this equality comparison into an assignment
+>                           if ((fc->corrupt_bio_rw == WRITE)) {
+>                                                   ^~
+>                                                   =
+>   1 error generated.
+>
+> GCC only warns when one set of parentheses are used for assignment
+> expressions, whereas clang additionally warns when two sets of
+> parentheses are used for equality comparisons. Remove the extra set of
+> parentheses to silence the warning as it suggests, as this is obviously
+> supposed to be an equality comparison.
+>
+> Fixes: 0e766389cedc ("dm flakey: fix logic when corrupting a bio")
+> Link: https://github.com/ClangBuiltLinux/linux/issues/1798
+> Signed-off-by: Nathan Chancellor <nathan@kernel.org>
 
-> On Fri, Feb 03, 2023 at 11:39:36AM -0500, Mike Snitzer wrote:
-> > On Fri, Feb 03 2023 at 10:00P -0500,
-> > Christoph Hellwig <hch@lst.de> wrote:
-> > 
-> > > On Thu, Feb 02, 2023 at 10:16:53PM -0500, Mike Snitzer wrote:
-> > > > > > The current usage of submit_bio vs submit_bio_noacct which skips the
-> > > > > > VM events and task account is a bit unclear.  It seems to be mostly
-> > > > > > intended for sending on bios received by stacking drivers, but also
-> > > > > > seems to be used for stacking drivers newly generated metadata
-> > > > > > sometimes.
-> > > > > 
-> > > > > Your lack of confidence conveyed in the above shook me a little bit
-> > > > > considering so much of this code is attributed to you -- I mostly got
-> > > > > past that, but I am a bit concerned about one aspect of the
-> > > > > submit_bio() change (2nd to last comment inlined below).
-> > > 
-> > > The confidence is about how it is used.  And that's up to the driver
-> > > authors, not helped by them not having any guidelines.  And while
-> > > I've touched this code a lot, the split between the two levels of API
-> > > long predates me.
-> > > 
-> > > > > > Remove the separate API and just skip the accounting if submit_bio
-> > > > > > is called recursively.  This gets us an accounting behavior that
-> > > > > > is very similar (but not quite identical) to the current one, while
-> > > > > > simplifying the API and code base.
-> > > > > 
-> > > > > Can you elaborate on the "but not quite identical"? This patch is
-> > > > > pretty mechanical, just folding code and renaming.. but you obviously
-> > > > > saw subtle differences.  Likely worth callign those out precisely.
-> > > 
-> > > The explanation was supposed to be in the Lines above.  Now accounting
-> > > is skipped if in a ->submit_bio recursion.  Before that it dependent
-> > > on drivers calling either submit_bio or submit_bio_noacct, for which
-> > > there was no clear guideline and drivers have been a bit sloppy about.
-> > 
-> > OK, but afaict the code is identical after your refactoring.
-> > Side-effect is drivers that were double accounting will now be fixed.
-> 
-> Doesn't this open dm up to double accounting? Take dm-delay for
-> instance. If the delay is 0, then submit_bio() for the underlying device
-> will be called recursively and will skip the accounting.  If the delay
-> isn't 0, then submit_bio() for the underlying device will be called
-> later from a workqueue and the accounting will happen again, even though
-> the same amount of IO happens in either case. Or am I missing something
-> here?
-> 
-> -Ben 
+Thanks for the patch!
+Reviewed-by: Nick Desaulniers <ndesaulniers@google.com>
 
-Nope, you aren't missing anything, good catch!
+> ---
+> I do not mind this change being squashed with the offending commit, as I
+> noticed it was Cc'd for stable, which would minimize the chance for
+> breakage.
+> ---
+>  drivers/md/dm-flakey.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+> index 08f9aa476d97..335684a1aeaa 100644
+> --- a/drivers/md/dm-flakey.c
+> +++ b/drivers/md/dm-flakey.c
+> @@ -366,7 +366,7 @@ static int flakey_map(struct dm_target *ti, struct bio *bio)
+>                  * Corrupt matching writes.
+>                  */
+>                 if (fc->corrupt_bio_byte) {
+> -                       if ((fc->corrupt_bio_rw == WRITE)) {
+> +                       if (fc->corrupt_bio_rw == WRITE) {
+>                                 if (all_corrupt_bio_flags_match(bio, fc))
+>                                         corrupt_bio_data(bio, fc);
+>                         }
+>
+> ---
+> base-commit: 6f30cc248507ee96c22ff4c3cbc86099ff12b7a9
+> change-id: 20230202-dm-parenthesis-warning-6139f4b5020b
+>
+> Best regards,
+> --
+> Nathan Chancellor <nathan@kernel.org>
+>
 
-Callers of dm_submit_bio_remap() are the poster-child for submitting
-bios from a different task.
 
-So yeah...
-
-Nacked-by: Mike Snitzer <snitzer@kernel.org>
-
-(Could be that many submit_bio_noacct callers can be converted but we
-really do need to keep the submit_bio_noacct interface)
+-- 
+Thanks,
+~Nick Desaulniers
 
 --
 dm-devel mailing list
