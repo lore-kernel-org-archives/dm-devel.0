@@ -1,55 +1,55 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 06FCEC63797
-	for <dm-devel@archiver.kernel.org>; Mon,  6 Feb 2023 10:23:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DC507C05027
+	for <dm-devel@archiver.kernel.org>; Mon,  6 Feb 2023 10:23:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675678985;
+	s=mimecast20190719; t=1675678989;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=EmzPAdG/qmxOms7AYwg0y1CG4/Z8YDSBoB9D/BOAu5s=;
-	b=GPieEO8ccC9rn8+wRTUGgcu+an3IQUIL56zotxgzr5hLg2+Yxt2aRxpwMxfkhCZ27loLi/
-	vprH+tn+baYBodmSXfLHQsxG8f2an3/4F8mksJH313YHkVB+ncMYaRA5o1GTde06CW5XS4
-	9RrDeuMceiZA4P6jmWFF97nhZsyMj40=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	 list-subscribe:list-post; bh=cSDZlq+Ah4Pa6REkNqLFKST3F786YNPTCa7dDNzXK9E=;
+	b=D6OvCjPmexm6R66zlfAwhzxxvpBPNqSHxqtZWkjsMGxkIFWaUhRfpC4ZgGCopQh59/9Ndy
+	SnslHoDqHOQQ5mvP1HaUt6BVgvZub8gQIHe33lzn9gTe+hc2ewB/uSaJli+wISyRqQmbpk
+	AEQCuo1h3XplWQtHRxb0+87hFQf+ctA=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-325-BsEQ5fSSPeWe7pwReilsxw-1; Mon, 06 Feb 2023 05:23:03 -0500
-X-MC-Unique: BsEQ5fSSPeWe7pwReilsxw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-628-KucIGXPPNYu8v1TSLiVvuQ-1; Mon, 06 Feb 2023 05:23:06 -0500
+X-MC-Unique: KucIGXPPNYu8v1TSLiVvuQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7441E183B3C0;
-	Mon,  6 Feb 2023 10:23:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C7F9E3810B03;
+	Mon,  6 Feb 2023 10:23:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6439E2026D37;
-	Mon,  6 Feb 2023 10:23:00 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 804D1C15BAD;
+	Mon,  6 Feb 2023 10:23:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3A8AA194658C;
-	Mon,  6 Feb 2023 10:23:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 60CAE194658C;
+	Mon,  6 Feb 2023 10:23:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D2A86194658C
- for <dm-devel@listman.corp.redhat.com>; Mon,  6 Feb 2023 10:22:58 +0000 (UTC)
+ ESMTP id 96D0C194658C
+ for <dm-devel@listman.corp.redhat.com>; Mon,  6 Feb 2023 10:23:03 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B70EA1415127; Mon,  6 Feb 2023 10:22:58 +0000 (UTC)
+ id 7B490492B27; Mon,  6 Feb 2023 10:23:03 +0000 (UTC)
 Received: from formenos.hmeau.com (unknown [10.67.24.12])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 599E51415113;
- Mon,  6 Feb 2023 10:22:58 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C2749492B23;
+ Mon,  6 Feb 2023 10:23:02 +0000 (UTC)
 Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
  by formenos.hmeau.com with smtp (Exim 4.94.2 #2 (Debian))
- id 1pOydf-007zgz-7o; Mon, 06 Feb 2023 18:22:20 +0800
+ id 1pOydn-007zi3-LG; Mon, 06 Feb 2023 18:22:28 +0800
 Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation);
- Mon, 06 Feb 2023 18:22:19 +0800
+ Mon, 06 Feb 2023 18:22:27 +0800
 From: "Herbert Xu" <herbert@gondor.apana.org.au>
-Date: Mon, 06 Feb 2023 18:22:19 +0800
+Date: Mon, 06 Feb 2023 18:22:27 +0800
 References: <Y+DUkqe1sagWaErA@gondor.apana.org.au>
 To: Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
  Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
@@ -63,9 +63,10 @@ To: Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
  Ying Xue <ying.xue@windriver.com>, Boris Pismenny <borisp@nvidia.com>,
  John Fastabend <john.fastabend@gmail.com>, David Howells <dhowells@redhat.com>,
  Jarkko Sakkinen <jarkko@kernel.org>, keyrings@vger.kernel.org
-Message-Id: <E1pOydf-007zgz-7o@formenos.hmeau.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: [dm-devel] [PATCH 4/17] Bluetooth: Use crypto_wait_req
+Message-Id: <E1pOydn-007zi3-LG@formenos.hmeau.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: [dm-devel] [PATCH 8/17] tls: Only use data field in crypto
+ completion function
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -80,114 +81,163 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-This patch replaces the custom crypto completion function with
-crypto_req_done.
+The crypto_async_request passed to the completion is not guaranteed
+to be the original request object.  Only the data field can be relied
+upon.
+
+Fix this by storing the socket pointer with the AEAD request.
 
 Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
 ---
 
- net/bluetooth/ecdh_helper.c |   37 ++++++-------------------------------
- 1 file changed, 6 insertions(+), 31 deletions(-)
+ net/tls/tls.h    |    2 ++
+ net/tls/tls_sw.c |   40 +++++++++++++++++++++++++++++-----------
+ 2 files changed, 31 insertions(+), 11 deletions(-)
 
-diff --git a/net/bluetooth/ecdh_helper.c b/net/bluetooth/ecdh_helper.c
-index 989401f116e9..0efc93fdae8a 100644
---- a/net/bluetooth/ecdh_helper.c
-+++ b/net/bluetooth/ecdh_helper.c
-@@ -25,22 +25,6 @@
- #include <linux/scatterlist.h>
- #include <crypto/ecdh.h>
+diff --git a/net/tls/tls.h b/net/tls/tls.h
+index 0e840a0c3437..804c3880d028 100644
+--- a/net/tls/tls.h
++++ b/net/tls/tls.h
+@@ -70,6 +70,8 @@ struct tls_rec {
+ 	char content_type;
+ 	struct scatterlist sg_content_type;
  
--struct ecdh_completion {
--	struct completion completion;
--	int err;
--};
--
--static void ecdh_complete(struct crypto_async_request *req, int err)
--{
--	struct ecdh_completion *res = req->data;
--
--	if (err == -EINPROGRESS)
--		return;
--
--	res->err = err;
--	complete(&res->completion);
--}
--
- static inline void swap_digits(u64 *in, u64 *out, unsigned int ndigits)
++	struct sock *sk;
++
+ 	char aad_space[TLS_AAD_SPACE_SIZE];
+ 	u8 iv_data[MAX_IV_SIZE];
+ 	struct aead_request aead_req;
+diff --git a/net/tls/tls_sw.c b/net/tls/tls_sw.c
+index 9ed978634125..5b7f67a7d394 100644
+--- a/net/tls/tls_sw.c
++++ b/net/tls/tls_sw.c
+@@ -38,6 +38,7 @@
+ #include <linux/bug.h>
+ #include <linux/sched/signal.h>
+ #include <linux/module.h>
++#include <linux/kernel.h>
+ #include <linux/splice.h>
+ #include <crypto/aead.h>
+ 
+@@ -57,6 +58,7 @@ struct tls_decrypt_arg {
+ };
+ 
+ struct tls_decrypt_ctx {
++	struct sock *sk;
+ 	u8 iv[MAX_IV_SIZE];
+ 	u8 aad[TLS_MAX_AAD_SIZE];
+ 	u8 tail;
+@@ -177,18 +179,25 @@ static int tls_padding_length(struct tls_prot_info *prot, struct sk_buff *skb,
+ 	return sub;
+ }
+ 
+-static void tls_decrypt_done(struct crypto_async_request *req, int err)
++static void tls_decrypt_done(crypto_completion_data_t *data, int err)
  {
- 	int i;
-@@ -60,9 +44,9 @@ static inline void swap_digits(u64 *in, u64 *out, unsigned int ndigits)
- int compute_ecdh_secret(struct crypto_kpp *tfm, const u8 public_key[64],
- 			u8 secret[32])
+-	struct aead_request *aead_req = (struct aead_request *)req;
++	struct aead_request *aead_req = crypto_get_completion_data(data);
++	struct crypto_aead *aead = crypto_aead_reqtfm(aead_req);
+ 	struct scatterlist *sgout = aead_req->dst;
+ 	struct scatterlist *sgin = aead_req->src;
+ 	struct tls_sw_context_rx *ctx;
++	struct tls_decrypt_ctx *dctx;
+ 	struct tls_context *tls_ctx;
+ 	struct scatterlist *sg;
+ 	unsigned int pages;
+ 	struct sock *sk;
++	int aead_size;
+ 
+-	sk = (struct sock *)req->data;
++	aead_size = sizeof(*aead_req) + crypto_aead_reqsize(aead);
++	aead_size = ALIGN(aead_size, __alignof__(*dctx));
++	dctx = (void *)((u8 *)aead_req + aead_size);
++
++	sk = dctx->sk;
+ 	tls_ctx = tls_get_ctx(sk);
+ 	ctx = tls_sw_ctx_rx(tls_ctx);
+ 
+@@ -240,7 +249,7 @@ static int tls_do_decryption(struct sock *sk,
+ 	if (darg->async) {
+ 		aead_request_set_callback(aead_req,
+ 					  CRYPTO_TFM_REQ_MAY_BACKLOG,
+-					  tls_decrypt_done, sk);
++					  tls_decrypt_done, aead_req);
+ 		atomic_inc(&ctx->decrypt_pending);
+ 	} else {
+ 		aead_request_set_callback(aead_req,
+@@ -336,6 +345,8 @@ static struct tls_rec *tls_get_rec(struct sock *sk)
+ 	sg_set_buf(&rec->sg_aead_out[0], rec->aad_space, prot->aad_size);
+ 	sg_unmark_end(&rec->sg_aead_out[1]);
+ 
++	rec->sk = sk;
++
+ 	return rec;
+ }
+ 
+@@ -417,22 +428,27 @@ int tls_tx_records(struct sock *sk, int flags)
+ 	return rc;
+ }
+ 
+-static void tls_encrypt_done(struct crypto_async_request *req, int err)
++static void tls_encrypt_done(crypto_completion_data_t *data, int err)
  {
-+	DECLARE_CRYPTO_WAIT(result);
- 	struct kpp_request *req;
- 	u8 *tmp;
--	struct ecdh_completion result;
- 	struct scatterlist src, dst;
- 	int err;
+-	struct aead_request *aead_req = (struct aead_request *)req;
+-	struct sock *sk = req->data;
+-	struct tls_context *tls_ctx = tls_get_ctx(sk);
+-	struct tls_prot_info *prot = &tls_ctx->prot_info;
+-	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
++	struct aead_request *aead_req = crypto_get_completion_data(data);
++	struct tls_sw_context_tx *ctx;
++	struct tls_context *tls_ctx;
++	struct tls_prot_info *prot;
+ 	struct scatterlist *sge;
+ 	struct sk_msg *msg_en;
+ 	struct tls_rec *rec;
+ 	bool ready = false;
++	struct sock *sk;
+ 	int pending;
  
-@@ -76,8 +60,6 @@ int compute_ecdh_secret(struct crypto_kpp *tfm, const u8 public_key[64],
- 		goto free_tmp;
- 	}
+ 	rec = container_of(aead_req, struct tls_rec, aead_req);
+ 	msg_en = &rec->msg_encrypted;
  
--	init_completion(&result.completion);
--
- 	swap_digits((u64 *)public_key, (u64 *)tmp, 4); /* x */
- 	swap_digits((u64 *)&public_key[32], (u64 *)&tmp[32], 4); /* y */
++	sk = rec->sk;
++	tls_ctx = tls_get_ctx(sk);
++	prot = &tls_ctx->prot_info;
++	ctx = tls_sw_ctx_tx(tls_ctx);
++
+ 	sge = sk_msg_elem(msg_en, msg_en->sg.curr);
+ 	sge->offset -= prot->prepend_size;
+ 	sge->length += prot->prepend_size;
+@@ -520,7 +536,7 @@ static int tls_do_encryption(struct sock *sk,
+ 			       data_len, rec->iv_data);
  
-@@ -86,12 +68,9 @@ int compute_ecdh_secret(struct crypto_kpp *tfm, const u8 public_key[64],
- 	kpp_request_set_input(req, &src, 64);
- 	kpp_request_set_output(req, &dst, 32);
- 	kpp_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
--				 ecdh_complete, &result);
-+				 crypto_req_done, &result);
- 	err = crypto_kpp_compute_shared_secret(req);
--	if (err == -EINPROGRESS) {
--		wait_for_completion(&result.completion);
--		err = result.err;
--	}
-+	err = crypto_wait_req(err, &result);
- 	if (err < 0) {
- 		pr_err("alg: ecdh: compute shared secret failed. err %d\n",
- 		       err);
-@@ -165,9 +144,9 @@ int set_ecdh_privkey(struct crypto_kpp *tfm, const u8 private_key[32])
-  */
- int generate_ecdh_public_key(struct crypto_kpp *tfm, u8 public_key[64])
- {
-+	DECLARE_CRYPTO_WAIT(result);
- 	struct kpp_request *req;
- 	u8 *tmp;
--	struct ecdh_completion result;
- 	struct scatterlist dst;
- 	int err;
+ 	aead_request_set_callback(aead_req, CRYPTO_TFM_REQ_MAY_BACKLOG,
+-				  tls_encrypt_done, sk);
++				  tls_encrypt_done, aead_req);
  
-@@ -181,18 +160,14 @@ int generate_ecdh_public_key(struct crypto_kpp *tfm, u8 public_key[64])
- 		goto free_tmp;
- 	}
- 
--	init_completion(&result.completion);
- 	sg_init_one(&dst, tmp, 64);
- 	kpp_request_set_input(req, NULL, 0);
- 	kpp_request_set_output(req, &dst, 64);
- 	kpp_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
--				 ecdh_complete, &result);
-+				 crypto_req_done, &result);
- 
- 	err = crypto_kpp_generate_public_key(req);
--	if (err == -EINPROGRESS) {
--		wait_for_completion(&result.completion);
--		err = result.err;
--	}
-+	err = crypto_wait_req(err, &result);
- 	if (err < 0)
- 		goto free_all;
+ 	/* Add the record in tx_list */
+ 	list_add_tail((struct list_head *)&rec->list, &ctx->tx_list);
+@@ -1485,6 +1501,7 @@ static int tls_decrypt_sg(struct sock *sk, struct iov_iter *out_iov,
+ 	 * Both structs are variable length.
+ 	 */
+ 	aead_size = sizeof(*aead_req) + crypto_aead_reqsize(ctx->aead_recv);
++	aead_size = ALIGN(aead_size, __alignof__(*dctx));
+ 	mem = kmalloc(aead_size + struct_size(dctx, sg, n_sgin + n_sgout),
+ 		      sk->sk_allocation);
+ 	if (!mem) {
+@@ -1495,6 +1512,7 @@ static int tls_decrypt_sg(struct sock *sk, struct iov_iter *out_iov,
+ 	/* Segment the allocated memory */
+ 	aead_req = (struct aead_request *)mem;
+ 	dctx = (struct tls_decrypt_ctx *)(mem + aead_size);
++	dctx->sk = sk;
+ 	sgin = &dctx->sg[0];
+ 	sgout = &dctx->sg[n_sgin];
  
 --
 dm-devel mailing list
