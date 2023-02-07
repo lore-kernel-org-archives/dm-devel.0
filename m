@@ -1,66 +1,68 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 13A6DC636CC
-	for <dm-devel@archiver.kernel.org>; Tue,  7 Feb 2023 08:19:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3D5A5C636CD
+	for <dm-devel@archiver.kernel.org>; Tue,  7 Feb 2023 13:33:17 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675757949;
+	s=mimecast20190719; t=1675776796;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=HBaqnnuS3jFrJ8JYn1TCZ9SH4g/e/cTHzGdvDsrSOa8=;
-	b=D/syHWBMBpVPw/qwL2SV3ceKZpC3kHoez6Ge/6fWgdDXnam5CpfebCpZv9Z5zyGBbImaH+
-	D2CSugPHb/AMyl+3Tr8OnVQPEenBKj7MFTtr+jgGrzjNwbPemBopVEroOkYXhdm0U6hvId
-	oCf0Y0f7P1tYgWJ1GXg34XP5oOhlWp8=
+	bh=uYbCTbjKNfE3VDP6Foq6veCmeO4X8x7oeHMdLbUCGyU=;
+	b=fY4+t60qMcd2q3ksrmqqBbojGyFBQ5lxmVWaOxCPgPMXM2AjbU9ZDgvGacNsppmvESLYdB
+	lYUOyUlgWONuFyfalZRkraT4u6j5vkL1APZ2K1NfZbc9is6ixVQCrRM50SyYVsiEEf8SM6
+	eXxs/h3R0IACM+uoQNnuffcT1QTTv5Y=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-674-mxPad9k6PLiZEhsmqw56bQ-1; Tue, 07 Feb 2023 03:19:06 -0500
-X-MC-Unique: mxPad9k6PLiZEhsmqw56bQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-209-Aeq9KK9FOUiwysrM9dHAJw-1; Tue, 07 Feb 2023 08:33:13 -0500
+X-MC-Unique: Aeq9KK9FOUiwysrM9dHAJw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1E86E85A5A3;
-	Tue,  7 Feb 2023 08:19:05 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CC234801779;
+	Tue,  7 Feb 2023 13:33:10 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0C122C15BA0;
-	Tue,  7 Feb 2023 08:19:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B328E492B23;
+	Tue,  7 Feb 2023 13:33:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B9F64194658C;
-	Tue,  7 Feb 2023 08:19:04 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8108C194658C;
+	Tue,  7 Feb 2023 13:33:08 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1760A1946589
- for <dm-devel@listman.corp.redhat.com>; Tue,  7 Feb 2023 08:19:03 +0000 (UTC)
+ ESMTP id C3CCD1946589
+ for <dm-devel@listman.corp.redhat.com>; Tue,  7 Feb 2023 13:33:07 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B2EDF2026D38; Tue,  7 Feb 2023 08:19:02 +0000 (UTC)
-Received: from formenos.hmeau.com (unknown [10.67.24.12])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4F1C62026D37;
- Tue,  7 Feb 2023 08:19:02 +0000 (UTC)
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
- by formenos.hmeau.com with smtp (Exim 4.94.2 #2 (Debian))
- id 1pPJBU-008OYZ-Tl; Tue, 07 Feb 2023 16:18:38 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation);
- Tue, 07 Feb 2023 16:18:36 +0800
-Date: Tue, 7 Feb 2023 16:18:36 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Jakub Kicinski <kuba@kernel.org>
-Message-ID: <Y+IJXEYPuaQWjfR5@gondor.apana.org.au>
-References: <Y+DUkqe1sagWaErA@gondor.apana.org.au>
- <E1pOydn-007zi3-LG@formenos.hmeau.com>
- <20230206231521.712f53e5@kernel.org>
+ id A7CF9C15E7F; Tue,  7 Feb 2023 13:33:07 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 95E99C15BA0;
+ Tue,  7 Feb 2023 13:33:07 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 317DX7Lt011812; Tue, 7 Feb 2023 08:33:07 -0500
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 317DX61k011808; Tue, 7 Feb 2023 08:33:06 -0500
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Tue, 7 Feb 2023 08:33:06 -0500 (EST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, 
+ Steve Baker <sbaker@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>
+Message-ID: <alpine.LRH.2.21.2302070816420.10733@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
 MIME-Version: 1.0
-In-Reply-To: <20230206231521.712f53e5@kernel.org>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: [dm-devel] [PATCH] tls: Pass rec instead of aead_req into
- tls_encrypt_done
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: [dm-devel] [PATCH] dm: don't send uevents while the device is
+ suspended
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -72,87 +74,188 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: David Howells <dhowells@redhat.com>, dm-devel@redhat.com,
- keyrings@vger.kernel.org, Alasdair Kergon <agk@redhat.com>,
- Steffen Klassert <steffen.klassert@secunet.com>,
- Boris Pismenny <borisp@nvidia.com>, John Fastabend <john.fastabend@gmail.com>,
- Tyler Hicks <code@tyhicks.com>, Paolo Abeni <pabeni@redhat.com>,
- Johan Hedberg <johan.hedberg@gmail.com>, Marcel Holtmann <marcel@holtmann.org>,
- ecryptfs@vger.kernel.org, Mike Snitzer <snitzer@kernel.org>,
- Luiz Augusto von Dentz <luiz.dentz@gmail.com>, netdev@vger.kernel.org,
- Eric Dumazet <edumazet@google.com>, Jon Maloy <jmaloy@redhat.com>,
- linux-bluetooth@vger.kernel.org, Jarkko Sakkinen <jarkko@kernel.org>,
- Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
- Ying Xue <ying.xue@windriver.com>, "David S. Miller" <davem@davemloft.net>
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Feb 06, 2023 at 11:15:21PM -0800, Jakub Kicinski wrote:
->
-> >  	aead_request_set_callback(aead_req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-> > -				  tls_encrypt_done, sk);
-> > +				  tls_encrypt_done, aead_req);
-> 
-> ... let's just pass rec instead of aead_req here, then?
+Device mapper sends an uevent when the device is suspended, using the
+function set_capacity_and_notify. However, this causes a race condition
+with udev.
 
-Good point.  Could we do this as a follow-up patch? Reposting
-the whole series would disturb a lot of people.  Of course if
-other major issues crop up I can fold this into the existing
-patch.
+Udev skips scanning dm devices that are suspended. If we send an uevent
+while we are suspended, udev will be racing with device mapper resume
+code. If the device mapper resume code wins the race, udev will process
+the uevent after the device is resumed and it will properly scan the
+device.
 
-Thanks!
+However, if udev wins the race, it will receive the uevent, find out that
+the dm device is suspended and skip scanning the device. This causes bugs
+such as systemd unmounting the device - see
+https://bugzilla.redhat.com/show_bug.cgi?id=2158628
 
----8<---
-The function tls_encrypt_done only uses aead_req to get ahold of
-the tls_rec object.  So we could pass that in instead of aead_req
-to simplify the code.
+This commit fixes this race.
 
-Suggested-by: Jakub Kicinski <kuba@kernel.org>
-Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+We move the code that sends the uevents from __bind to dm_resume, so that
+they are sent just before the dm-device is resumed. We hold
+md->suspend_lock while sending the uevent. We change __dev_status so that
+it grabs md->suspend_lock while querying the suspend state.
 
-diff --git a/net/tls/tls_sw.c b/net/tls/tls_sw.c
-index 0515cda32fe2..6dfec2e8fdfa 100644
---- a/net/tls/tls_sw.c
-+++ b/net/tls/tls_sw.c
-@@ -430,18 +430,16 @@ int tls_tx_records(struct sock *sk, int flags)
- 
- static void tls_encrypt_done(void *data, int err)
+If udev responds too quickly after the uevent is generated, it will go to
+__dev_status, call dm_suspended_md_locked and that function will block
+until md->suspend_lock is released by the resume code - so, udev won't see
+the device in the suspended state.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+
+---
+ drivers/md/dm-ioctl.c         |    6 ++---
+ drivers/md/dm.c               |   44 +++++++++++++++++++++++++-----------------
+ drivers/md/dm.h               |    1 
+ include/linux/device-mapper.h |    2 -
+ 4 files changed, 32 insertions(+), 21 deletions(-)
+
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c	2023-01-20 13:22:38.000000000 +0100
++++ linux-2.6/drivers/md/dm.c	2023-02-06 19:54:32.000000000 +0100
+@@ -2159,26 +2159,10 @@ static struct dm_table *__bind(struct ma
+ 			       struct queue_limits *limits)
  {
--	struct aead_request *aead_req = data;
- 	struct tls_sw_context_tx *ctx;
- 	struct tls_context *tls_ctx;
- 	struct tls_prot_info *prot;
-+	struct tls_rec *rec = data;
- 	struct scatterlist *sge;
- 	struct sk_msg *msg_en;
--	struct tls_rec *rec;
- 	bool ready = false;
- 	struct sock *sk;
- 	int pending;
+ 	struct dm_table *old_map;
+-	sector_t size;
+ 	int ret;
  
--	rec = container_of(aead_req, struct tls_rec, aead_req);
- 	msg_en = &rec->msg_encrypted;
+ 	lockdep_assert_held(&md->suspend_lock);
  
- 	sk = rec->sk;
-@@ -536,7 +534,7 @@ static int tls_do_encryption(struct sock *sk,
- 			       data_len, rec->iv_data);
+-	size = dm_table_get_size(t);
+-
+-	/*
+-	 * Wipe any geometry if the size of the table changed.
+-	 */
+-	if (size != dm_get_size(md))
+-		memset(&md->geometry, 0, sizeof(md->geometry));
+-
+-	if (!get_capacity(md->disk))
+-		set_capacity(md->disk, size);
+-	else
+-		set_capacity_and_notify(md->disk, size);
+-
+-	dm_table_event_callback(t, event_callback, md);
+-
+ 	if (dm_table_request_based(t)) {
+ 		/*
+ 		 * Leverage the fact that request-based DM targets are
+@@ -2824,7 +2808,7 @@ static int __dm_resume(struct mapped_dev
+ 	return 0;
+ }
  
- 	aead_request_set_callback(aead_req, CRYPTO_TFM_REQ_MAY_BACKLOG,
--				  tls_encrypt_done, aead_req);
-+				  tls_encrypt_done, rec);
+-int dm_resume(struct mapped_device *md)
++int dm_resume(struct mapped_device *md, bool table_swapped)
+ {
+ 	int r;
+ 	struct dm_table *map = NULL;
+@@ -2849,6 +2833,23 @@ retry:
+ 	if (!map || !dm_table_get_size(map))
+ 		goto out;
  
- 	/* Add the record in tx_list */
- 	list_add_tail((struct list_head *)&rec->list, &ctx->tx_list);
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
++	if (table_swapped) {
++		sector_t size = dm_table_get_size(map);
++
++		/*
++		 * Wipe any geometry if the size of the table changed.
++		 */
++		if (size != dm_get_size(md))
++			memset(&md->geometry, 0, sizeof(md->geometry));
++
++		if (!get_capacity(md->disk))
++			set_capacity(md->disk, size);
++		else
++			set_capacity_and_notify(md->disk, size);
++
++		dm_table_event_callback(map, event_callback, md);
++	}
++
+ 	r = __dm_resume(md, map);
+ 	if (r)
+ 		goto out;
+@@ -3054,6 +3055,15 @@ int dm_suspended_md(struct mapped_device
+ 	return test_bit(DMF_SUSPENDED, &md->flags);
+ }
+ 
++int dm_suspended_md_locked(struct mapped_device *md)
++{
++	int ret;
++	mutex_lock(&md->suspend_lock);
++	ret = test_bit(DMF_SUSPENDED, &md->flags);
++	mutex_unlock(&md->suspend_lock);
++	return ret;
++}
++
+ static int dm_post_suspending_md(struct mapped_device *md)
+ {
+ 	return test_bit(DMF_POST_SUSPENDING, &md->flags);
+Index: linux-2.6/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-ioctl.c	2023-02-06 19:36:42.000000000 +0100
++++ linux-2.6/drivers/md/dm-ioctl.c	2023-02-06 19:56:13.000000000 +0100
+@@ -806,7 +806,7 @@ static void __dev_status(struct mapped_d
+ 	param->flags &= ~(DM_SUSPEND_FLAG | DM_READONLY_FLAG |
+ 			  DM_ACTIVE_PRESENT_FLAG | DM_INTERNAL_SUSPEND_FLAG);
+ 
+-	if (dm_suspended_md(md))
++	if (dm_suspended_md_locked(md))
+ 		param->flags |= DM_SUSPEND_FLAG;
+ 
+ 	if (dm_suspended_internally_md(md))
+@@ -1172,7 +1172,7 @@ static int do_resume(struct dm_ioctl *pa
+ 	}
+ 
+ 	if (dm_suspended_md(md)) {
+-		r = dm_resume(md);
++		r = dm_resume(md, new_map != NULL);
+ 		if (!r) {
+ 			dm_ima_measure_on_device_resume(md, new_map ? true : false);
+ 
+@@ -2230,7 +2230,7 @@ int __init dm_early_create(struct dm_ioc
+ 	set_disk_ro(dm_disk(md), !!(dmi->flags & DM_READONLY_FLAG));
+ 
+ 	/* resume device */
+-	r = dm_resume(md);
++	r = dm_resume(md, true);
+ 	if (r)
+ 		goto err_destroy_table;
+ 
+Index: linux-2.6/drivers/md/dm.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.h	2022-10-03 14:36:40.000000000 +0200
++++ linux-2.6/drivers/md/dm.h	2023-02-06 19:51:12.000000000 +0100
+@@ -140,6 +140,7 @@ int dm_deleting_md(struct mapped_device
+  * Is this mapped_device suspended?
+  */
+ int dm_suspended_md(struct mapped_device *md);
++int dm_suspended_md_locked(struct mapped_device *md);
+ 
+ /*
+  * Internal suspend and resume methods.
+Index: linux-2.6/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6.orig/include/linux/device-mapper.h	2023-02-06 19:36:42.000000000 +0100
++++ linux-2.6/include/linux/device-mapper.h	2023-02-06 19:54:59.000000000 +0100
+@@ -462,7 +462,7 @@ void *dm_get_mdptr(struct mapped_device
+  * A device can still be used while suspended, but I/O is deferred.
+  */
+ int dm_suspend(struct mapped_device *md, unsigned suspend_flags);
+-int dm_resume(struct mapped_device *md);
++int dm_resume(struct mapped_device *md, bool table_swapped);
+ 
+ /*
+  * Event functions.
 --
 dm-devel mailing list
 dm-devel@redhat.com
