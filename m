@@ -4,65 +4,90 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3D5A5C636CD
-	for <dm-devel@archiver.kernel.org>; Tue,  7 Feb 2023 13:33:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 36D95C636CC
+	for <dm-devel@archiver.kernel.org>; Tue,  7 Feb 2023 15:04:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675776796;
+	s=mimecast20190719; t=1675782242;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=uYbCTbjKNfE3VDP6Foq6veCmeO4X8x7oeHMdLbUCGyU=;
-	b=fY4+t60qMcd2q3ksrmqqBbojGyFBQ5lxmVWaOxCPgPMXM2AjbU9ZDgvGacNsppmvESLYdB
-	lYUOyUlgWONuFyfalZRkraT4u6j5vkL1APZ2K1NfZbc9is6ixVQCrRM50SyYVsiEEf8SM6
-	eXxs/h3R0IACM+uoQNnuffcT1QTTv5Y=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=1Fqp/btISvGOwdYGAwmdLyh2oKsQrcYRWmjVeMwffMg=;
+	b=Zypuwq9Pm0I0pU8N/yd4NRz7DoMoDm/PIve5b9lkFoyrocVpxahRUWnzEwwoNRCmLdKCYa
+	15uTWMVi/aB6Kpu12mESlVL1JwExsCWzOrGCozwA+72UQlxD+q8xuG1eWJXfNeBj+UCx1D
+	gz4i0cUAew7QKlDpEg+MyKau0JyilPU=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-209-Aeq9KK9FOUiwysrM9dHAJw-1; Tue, 07 Feb 2023 08:33:13 -0500
-X-MC-Unique: Aeq9KK9FOUiwysrM9dHAJw-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-663-BeLczd2nNaCMc6gAqohWUA-1; Tue, 07 Feb 2023 10:03:45 -0500
+X-MC-Unique: BeLczd2nNaCMc6gAqohWUA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CC234801779;
-	Tue,  7 Feb 2023 13:33:10 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4B18629AB3EC;
+	Tue,  7 Feb 2023 15:03:42 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B328E492B23;
-	Tue,  7 Feb 2023 13:33:08 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id F0640112131B;
+	Tue,  7 Feb 2023 15:03:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8108C194658C;
-	Tue,  7 Feb 2023 13:33:08 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AD8EC194658D;
+	Tue,  7 Feb 2023 15:03:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C3CCD1946589
- for <dm-devel@listman.corp.redhat.com>; Tue,  7 Feb 2023 13:33:07 +0000 (UTC)
+ ESMTP id D796D19465A3
+ for <dm-devel@listman.corp.redhat.com>; Tue,  7 Feb 2023 15:03:32 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A7CF9C15E7F; Tue,  7 Feb 2023 13:33:07 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
- (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 95E99C15BA0;
- Tue,  7 Feb 2023 13:33:07 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 317DX7Lt011812; Tue, 7 Feb 2023 08:33:07 -0500
-Received: from localhost (mpatocka@localhost)
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 317DX61k011808; Tue, 7 Feb 2023 08:33:06 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
- owned process doing -bs
-Date: Tue, 7 Feb 2023 08:33:06 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, 
- Steve Baker <sbaker@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>
-Message-ID: <alpine.LRH.2.21.2302070816420.10733@file01.intranet.prod.int.rdu2.redhat.com>
-User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
+ id 83AE2492B22; Tue,  7 Feb 2023 15:03:32 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7B27C492B21
+ for <dm-devel@redhat.com>; Tue,  7 Feb 2023 15:03:32 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5E9633804505
+ for <dm-devel@redhat.com>; Tue,  7 Feb 2023 15:03:32 +0000 (UTC)
+Received: from mail-yb1-f200.google.com (mail-yb1-f200.google.com
+ [209.85.219.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-358-UI6fZuDXPoiKV7FLB0lTfw-1; Tue, 07 Feb 2023 10:03:30 -0500
+X-MC-Unique: UI6fZuDXPoiKV7FLB0lTfw-1
+Received: by mail-yb1-f200.google.com with SMTP id
+ o131-20020a25d789000000b00859dddecf8eso14749219ybg.17
+ for <dm-devel@redhat.com>; Tue, 07 Feb 2023 07:03:30 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=cc:to:subject:message-id:date:from:in-reply-to:references
+ :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=QDKEcd1YYgGQz5LuaoQZ3t/DFCUAHpMTHeUkko/yUVY=;
+ b=ZS2Lky8SXHyPJXSb1o4J34JNMrY4kQSbaIRsj+LJGKtVRl5Q90DhJLmWhvGwIUsNLF
+ gVvNWsjnRvY7zR3pOFwy3f3ydM5cpgoG7QVhkelgIZYaa1UEaTiMZm7bBI/moMXekucH
+ Mv5bF4XdDApp074/8andedcgOLGGMD5k+SMs+4sW7xtosjlPBQl/ywec+P+FTgIDTfcU
+ kdgZt+14n76G03ba5o8M/PQlz3SXN1pkgVdZzb8E+uL+xfwzuVp1ltsMmXpzxL+zfrIC
+ CXYEfWZ+jopAOH0Y/f4zdLBrqLjTM+gVDex8SO0ui7VQvWUQ4sX7manPYrDYZ+2MYsL0
+ CeMg==
+X-Gm-Message-State: AO0yUKXv2Eeeh92w3xv1GUekpr6GUWA/bgBNNI/UZ1F4Jlfowj4HCi85
+ J9LHcC349T3Uloj0cijZG4UtA+TrJID95R5DpTSBoJsG6grsCJ1Rs7dMhfw4kE7+L5+X7fY7wcu
+ 0JDvTz4KtSwy3D/uJyK2YA+H0hqcg4PM=
+X-Received: by 2002:a81:4e0f:0:b0:526:44ea:af6c with SMTP id
+ c15-20020a814e0f000000b0052644eaaf6cmr362045ywb.241.1675782183048; 
+ Tue, 07 Feb 2023 07:03:03 -0800 (PST)
+X-Google-Smtp-Source: AK7set/mzrLI9uOURI11lXt18z6ok+O4spHfRhTEChNYX973ZMQV2I2p5UN0Fx0UWBIMF6LS7fwJRRa8JwL4/ZLKT/A=
+X-Received: by 2002:a81:4e0f:0:b0:526:44ea:af6c with SMTP id
+ c15-20020a814e0f000000b0052644eaaf6cmr362035ywb.241.1675782182559; Tue, 07
+ Feb 2023 07:03:02 -0800 (PST)
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: [dm-devel] [PATCH] dm: don't send uevents while the device is
- suspended
+References: <20230207011849.1343-1-demi@invisiblethingslab.com>
+In-Reply-To: <20230207011849.1343-1-demi@invisiblethingslab.com>
+From: Joe Thornber <thornber@redhat.com>
+Date: Tue, 7 Feb 2023 15:02:51 +0000
+Message-ID: <CAJ0trDZsTcD43s3GQ7aKR_3eABWv0rREMrajw8xBQiu96X+B8w@mail.gmail.com>
+To: Demi Marie Obenour <demi@invisiblethingslab.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: Re: [dm-devel] [PATCH 1/2] Fail I/O to thin pool devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -74,190 +99,191 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
+ =?UTF-8?Q?Marek_Marczykowski=2DG=C3=B3recki?=
+ <marmarek@invisiblethingslab.com>, Alasdair Kergon <agk@redhat.com>,
+ linux-kernel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; boundary="===============8558341122848341735=="
+
+--===============8558341122848341735==
+Content-Type: multipart/alternative; boundary="000000000000b6759305f41d7178"
+
+--000000000000b6759305f41d7178
+Content-Type: text/plain; charset="UTF-8"
+
+Nack.
+
+I don't see the security issue; how is this any different from running the
+thin tools on any incorrect device?  Or even the data device that the pool
+is mirroring.  In general the thin tools don't modify the metadata they're
+running on.  If you know of a security issue with the thin tools please let
+me know.
+
+
+On Tue, Feb 7, 2023 at 7:56 AM Demi Marie Obenour <
+demi@invisiblethingslab.com> wrote:
+
+> A thin pool device currently just passes all I/O to its origin device,
+> but this is a footgun: the user might not realize that tools that
+> operate on thin pool metadata must operate on the metadata volume.  This
+> could have security implications.
+>
+> Fix this by failing all I/O to thin pool devices.
+>
+> Signed-off-by: Demi Marie Obenour <demi@invisiblethingslab.com>
+> ---
+>  drivers/md/dm-thin.c | 17 ++++++-----------
+>  1 file changed, 6 insertions(+), 11 deletions(-)
+>
+> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> index
+> 64cfcf46881dc5d87d5dfdb5650ba9babd32cd31..d85fdbd782ae5426003c99a4b4bf53818cc85efa
+> 100644
+> --- a/drivers/md/dm-thin.c
+> +++ b/drivers/md/dm-thin.c
+> @@ -3405,19 +3405,14 @@ static int pool_ctr(struct dm_target *ti, unsigned
+> argc, char **argv)
+>
+>  static int pool_map(struct dm_target *ti, struct bio *bio)
+>  {
+> -       int r;
+> -       struct pool_c *pt = ti->private;
+> -       struct pool *pool = pt->pool;
+> -
+>         /*
+> -        * As this is a singleton target, ti->begin is always zero.
+> +        * Previously, access to the pool was passed down to the origin
+> device.
+> +        * However, this turns out to be error-prone: if the user runs any
+> of
+> +        * the thin tools on the pool device, the tools could wind up
+> parsing
+> +        * potentially attacker-controlled data.  This mistake has actually
+> +        * happened in practice.  Therefore, fail all I/O on the pool
+> device.
+>          */
+> -       spin_lock_irq(&pool->lock);
+> -       bio_set_dev(bio, pt->data_dev->bdev);
+> -       r = DM_MAPIO_REMAPPED;
+> -       spin_unlock_irq(&pool->lock);
+> -
+> -       return r;
+> +       return -EIO;
+>  }
+>
+>  static int maybe_resize_data_dev(struct dm_target *ti, bool *need_commit)
+> --
+> Sincerely,
+> Demi Marie Obenour (she/her/hers)
+> Invisible Things Lab
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://listman.redhat.com/mailman/listinfo/dm-devel
+>
+>
+
+--000000000000b6759305f41d7178
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Nack.<div><br></div><div>I don&#39;t see the security issu=
+e; how is this any different from running the thin tools on any incorrect d=
+evice?=C2=A0 Or even the data device that the pool is mirroring.=C2=A0 In g=
+eneral the thin tools don&#39;t modify the metadata they&#39;re running on.=
+=C2=A0 If you know of a security issue with the thin tools please let me kn=
+ow.</div><div><br></div></div><br><div class=3D"gmail_quote"><div dir=3D"lt=
+r" class=3D"gmail_attr">On Tue, Feb 7, 2023 at 7:56 AM Demi Marie Obenour &=
+lt;<a href=3D"mailto:demi@invisiblethingslab.com">demi@invisiblethingslab.c=
+om</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=3D"margi=
+n:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex=
+">A thin pool device currently just passes all I/O to its origin device,<br=
+>
+but this is a footgun: the user might not realize that tools that<br>
+operate on thin pool metadata must operate on the metadata volume.=C2=A0 Th=
+is<br>
+could have security implications.<br>
+<br>
+Fix this by failing all I/O to thin pool devices.<br>
+<br>
+Signed-off-by: Demi Marie Obenour &lt;<a href=3D"mailto:demi@invisiblething=
+slab.com" target=3D"_blank">demi@invisiblethingslab.com</a>&gt;<br>
+---<br>
+=C2=A0drivers/md/dm-thin.c | 17 ++++++-----------<br>
+=C2=A01 file changed, 6 insertions(+), 11 deletions(-)<br>
+<br>
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c<br>
+index 64cfcf46881dc5d87d5dfdb5650ba9babd32cd31..d85fdbd782ae5426003c99a4b4b=
+f53818cc85efa 100644<br>
+--- a/drivers/md/dm-thin.c<br>
++++ b/drivers/md/dm-thin.c<br>
+@@ -3405,19 +3405,14 @@ static int pool_ctr(struct dm_target *ti, unsigned =
+argc, char **argv)<br>
+<br>
+=C2=A0static int pool_map(struct dm_target *ti, struct bio *bio)<br>
+=C2=A0{<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0int r;<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0struct pool_c *pt =3D ti-&gt;private;<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0struct pool *pool =3D pt-&gt;pool;<br>
+-<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 /*<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0 * As this is a singleton target, ti-&gt;begin =
+is always zero.<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 * Previously, access to the pool was passed do=
+wn to the origin device.<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 * However, this turns out to be error-prone: i=
+f the user runs any of<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 * the thin tools on the pool device, the tools=
+ could wind up parsing<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 * potentially attacker-controlled data.=C2=A0 =
+This mistake has actually<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0 * happened in practice.=C2=A0 Therefore, fail =
+all I/O on the pool device.<br>
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0spin_lock_irq(&amp;pool-&gt;lock);<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0bio_set_dev(bio, pt-&gt;data_dev-&gt;bdev);<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0r =3D DM_MAPIO_REMAPPED;<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0spin_unlock_irq(&amp;pool-&gt;lock);<br>
+-<br>
+-=C2=A0 =C2=A0 =C2=A0 =C2=A0return r;<br>
++=C2=A0 =C2=A0 =C2=A0 =C2=A0return -EIO;<br>
+=C2=A0}<br>
+<br>
+=C2=A0static int maybe_resize_data_dev(struct dm_target *ti, bool *need_com=
+mit)<br>
+-- <br>
+Sincerely,<br>
+Demi Marie Obenour (she/her/hers)<br>
+Invisible Things Lab<br>
+<br>
+--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
+m</a><br>
+<a href=3D"https://listman.redhat.com/mailman/listinfo/dm-devel" rel=3D"nor=
+eferrer" target=3D"_blank">https://listman.redhat.com/mailman/listinfo/dm-d=
+evel</a><br>
+<br>
+</blockquote></div>
+
+--000000000000b6759305f41d7178--
+
+--===============8558341122848341735==
 Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Device mapper sends an uevent when the device is suspended, using the
-function set_capacity_and_notify. However, this causes a race condition
-with udev.
-
-Udev skips scanning dm devices that are suspended. If we send an uevent
-while we are suspended, udev will be racing with device mapper resume
-code. If the device mapper resume code wins the race, udev will process
-the uevent after the device is resumed and it will properly scan the
-device.
-
-However, if udev wins the race, it will receive the uevent, find out that
-the dm device is suspended and skip scanning the device. This causes bugs
-such as systemd unmounting the device - see
-https://bugzilla.redhat.com/show_bug.cgi?id=2158628
-
-This commit fixes this race.
-
-We move the code that sends the uevents from __bind to dm_resume, so that
-they are sent just before the dm-device is resumed. We hold
-md->suspend_lock while sending the uevent. We change __dev_status so that
-it grabs md->suspend_lock while querying the suspend state.
-
-If udev responds too quickly after the uevent is generated, it will go to
-__dev_status, call dm_suspended_md_locked and that function will block
-until md->suspend_lock is released by the resume code - so, udev won't see
-the device in the suspended state.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-
----
- drivers/md/dm-ioctl.c         |    6 ++---
- drivers/md/dm.c               |   44 +++++++++++++++++++++++++-----------------
- drivers/md/dm.h               |    1 
- include/linux/device-mapper.h |    2 -
- 4 files changed, 32 insertions(+), 21 deletions(-)
-
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c	2023-01-20 13:22:38.000000000 +0100
-+++ linux-2.6/drivers/md/dm.c	2023-02-06 19:54:32.000000000 +0100
-@@ -2159,26 +2159,10 @@ static struct dm_table *__bind(struct ma
- 			       struct queue_limits *limits)
- {
- 	struct dm_table *old_map;
--	sector_t size;
- 	int ret;
- 
- 	lockdep_assert_held(&md->suspend_lock);
- 
--	size = dm_table_get_size(t);
--
--	/*
--	 * Wipe any geometry if the size of the table changed.
--	 */
--	if (size != dm_get_size(md))
--		memset(&md->geometry, 0, sizeof(md->geometry));
--
--	if (!get_capacity(md->disk))
--		set_capacity(md->disk, size);
--	else
--		set_capacity_and_notify(md->disk, size);
--
--	dm_table_event_callback(t, event_callback, md);
--
- 	if (dm_table_request_based(t)) {
- 		/*
- 		 * Leverage the fact that request-based DM targets are
-@@ -2824,7 +2808,7 @@ static int __dm_resume(struct mapped_dev
- 	return 0;
- }
- 
--int dm_resume(struct mapped_device *md)
-+int dm_resume(struct mapped_device *md, bool table_swapped)
- {
- 	int r;
- 	struct dm_table *map = NULL;
-@@ -2849,6 +2833,23 @@ retry:
- 	if (!map || !dm_table_get_size(map))
- 		goto out;
- 
-+	if (table_swapped) {
-+		sector_t size = dm_table_get_size(map);
-+
-+		/*
-+		 * Wipe any geometry if the size of the table changed.
-+		 */
-+		if (size != dm_get_size(md))
-+			memset(&md->geometry, 0, sizeof(md->geometry));
-+
-+		if (!get_capacity(md->disk))
-+			set_capacity(md->disk, size);
-+		else
-+			set_capacity_and_notify(md->disk, size);
-+
-+		dm_table_event_callback(map, event_callback, md);
-+	}
-+
- 	r = __dm_resume(md, map);
- 	if (r)
- 		goto out;
-@@ -3054,6 +3055,15 @@ int dm_suspended_md(struct mapped_device
- 	return test_bit(DMF_SUSPENDED, &md->flags);
- }
- 
-+int dm_suspended_md_locked(struct mapped_device *md)
-+{
-+	int ret;
-+	mutex_lock(&md->suspend_lock);
-+	ret = test_bit(DMF_SUSPENDED, &md->flags);
-+	mutex_unlock(&md->suspend_lock);
-+	return ret;
-+}
-+
- static int dm_post_suspending_md(struct mapped_device *md)
- {
- 	return test_bit(DMF_POST_SUSPENDING, &md->flags);
-Index: linux-2.6/drivers/md/dm-ioctl.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-ioctl.c	2023-02-06 19:36:42.000000000 +0100
-+++ linux-2.6/drivers/md/dm-ioctl.c	2023-02-06 19:56:13.000000000 +0100
-@@ -806,7 +806,7 @@ static void __dev_status(struct mapped_d
- 	param->flags &= ~(DM_SUSPEND_FLAG | DM_READONLY_FLAG |
- 			  DM_ACTIVE_PRESENT_FLAG | DM_INTERNAL_SUSPEND_FLAG);
- 
--	if (dm_suspended_md(md))
-+	if (dm_suspended_md_locked(md))
- 		param->flags |= DM_SUSPEND_FLAG;
- 
- 	if (dm_suspended_internally_md(md))
-@@ -1172,7 +1172,7 @@ static int do_resume(struct dm_ioctl *pa
- 	}
- 
- 	if (dm_suspended_md(md)) {
--		r = dm_resume(md);
-+		r = dm_resume(md, new_map != NULL);
- 		if (!r) {
- 			dm_ima_measure_on_device_resume(md, new_map ? true : false);
- 
-@@ -2230,7 +2230,7 @@ int __init dm_early_create(struct dm_ioc
- 	set_disk_ro(dm_disk(md), !!(dmi->flags & DM_READONLY_FLAG));
- 
- 	/* resume device */
--	r = dm_resume(md);
-+	r = dm_resume(md, true);
- 	if (r)
- 		goto err_destroy_table;
- 
-Index: linux-2.6/drivers/md/dm.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm.h	2022-10-03 14:36:40.000000000 +0200
-+++ linux-2.6/drivers/md/dm.h	2023-02-06 19:51:12.000000000 +0100
-@@ -140,6 +140,7 @@ int dm_deleting_md(struct mapped_device
-  * Is this mapped_device suspended?
-  */
- int dm_suspended_md(struct mapped_device *md);
-+int dm_suspended_md_locked(struct mapped_device *md);
- 
- /*
-  * Internal suspend and resume methods.
-Index: linux-2.6/include/linux/device-mapper.h
-===================================================================
---- linux-2.6.orig/include/linux/device-mapper.h	2023-02-06 19:36:42.000000000 +0100
-+++ linux-2.6/include/linux/device-mapper.h	2023-02-06 19:54:59.000000000 +0100
-@@ -462,7 +462,7 @@ void *dm_get_mdptr(struct mapped_device
-  * A device can still be used while suspended, but I/O is deferred.
-  */
- int dm_suspend(struct mapped_device *md, unsigned suspend_flags);
--int dm_resume(struct mapped_device *md);
-+int dm_resume(struct mapped_device *md, bool table_swapped);
- 
- /*
-  * Event functions.
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+
+--===============8558341122848341735==--
 
