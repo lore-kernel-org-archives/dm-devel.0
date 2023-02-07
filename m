@@ -1,69 +1,66 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5B627C636CC
-	for <dm-devel@archiver.kernel.org>; Tue,  7 Feb 2023 08:17:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 13A6DC636CC
+	for <dm-devel@archiver.kernel.org>; Tue,  7 Feb 2023 08:19:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675757820;
+	s=mimecast20190719; t=1675757949;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=C1+b/kVbbrDsZElo7dwnzd/1qdymAPDMF7dnI79zF5I=;
-	b=SnJk3ZfgotpCoLpWKcFyLW5pw6dcv20IpzuZEBTxu3j+WBAPUg+03DJPss3F7YzsOqFdZe
-	AhMutV9VsYxMRsLV28Xi9d+TCdNiB3XwhyFaYUho2d5Y481TXZbfPnCCIp/59HNAs6FABH
-	jyN8eoyVWTJP3SZ0O022wuSwWM5/LCQ=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=HBaqnnuS3jFrJ8JYn1TCZ9SH4g/e/cTHzGdvDsrSOa8=;
+	b=D/syHWBMBpVPw/qwL2SV3ceKZpC3kHoez6Ge/6fWgdDXnam5CpfebCpZv9Z5zyGBbImaH+
+	D2CSugPHb/AMyl+3Tr8OnVQPEenBKj7MFTtr+jgGrzjNwbPemBopVEroOkYXhdm0U6hvId
+	oCf0Y0f7P1tYgWJ1GXg34XP5oOhlWp8=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-659-jL8Tl7x4Os2qLyg8DkqmZw-1; Tue, 07 Feb 2023 03:16:57 -0500
-X-MC-Unique: jL8Tl7x4Os2qLyg8DkqmZw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-674-mxPad9k6PLiZEhsmqw56bQ-1; Tue, 07 Feb 2023 03:19:06 -0500
+X-MC-Unique: mxPad9k6PLiZEhsmqw56bQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D5FD71C05AE7;
-	Tue,  7 Feb 2023 08:16:54 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1E86E85A5A3;
+	Tue,  7 Feb 2023 08:19:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B959A40398A0;
-	Tue,  7 Feb 2023 08:16:54 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0C122C15BA0;
+	Tue,  7 Feb 2023 08:19:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8B4B8194658C;
-	Tue,  7 Feb 2023 08:16:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B9F64194658C;
+	Tue,  7 Feb 2023 08:19:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id AFCDF1946589
- for <dm-devel@listman.corp.redhat.com>; Tue,  7 Feb 2023 08:16:52 +0000 (UTC)
+ ESMTP id 1760A1946589
+ for <dm-devel@listman.corp.redhat.com>; Tue,  7 Feb 2023 08:19:03 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 93A1418EC5; Tue,  7 Feb 2023 08:16:52 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
- (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7B7B8440D9;
- Tue,  7 Feb 2023 08:16:52 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 3177GgcH004677; Tue, 7 Feb 2023 02:17:05 -0500
-Received: from localhost (mpatocka@localhost)
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 312G4Pap021968; Thu, 2 Feb 2023 11:04:25 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
- owned process doing -bs
-Date: Thu, 2 Feb 2023 11:04:24 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Nathan Huckleberry <nhuck@google.com>
-In-Reply-To: <20230202012348.885402-1-nhuck@google.com>
-Message-ID: <alpine.LRH.2.21.2302021052580.21238@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20230202012348.885402-1-nhuck@google.com>
-User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
+ id B2EDF2026D38; Tue,  7 Feb 2023 08:19:02 +0000 (UTC)
+Received: from formenos.hmeau.com (unknown [10.67.24.12])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 4F1C62026D37;
+ Tue,  7 Feb 2023 08:19:02 +0000 (UTC)
+Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
+ by formenos.hmeau.com with smtp (Exim 4.94.2 #2 (Debian))
+ id 1pPJBU-008OYZ-Tl; Tue, 07 Feb 2023 16:18:38 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation);
+ Tue, 07 Feb 2023 16:18:36 +0800
+Date: Tue, 7 Feb 2023 16:18:36 +0800
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Jakub Kicinski <kuba@kernel.org>
+Message-ID: <Y+IJXEYPuaQWjfR5@gondor.apana.org.au>
+References: <Y+DUkqe1sagWaErA@gondor.apana.org.au>
+ <E1pOydn-007zi3-LG@formenos.hmeau.com>
+ <20230206231521.712f53e5@kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH] dm-verity: Remove WQ_UNBOUND.
+In-Reply-To: <20230206231521.712f53e5@kernel.org>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: [dm-devel] [PATCH] tls: Pass rec instead of aead_req into
+ tls_encrypt_done
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -75,72 +72,87 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
- Eric Biggers <ebiggers@kernel.org>, dm-devel@redhat.com,
- Sami Tolvanen <samitolvanen@google.com>, Alasdair Kergon <agk@redhat.com>
+Cc: David Howells <dhowells@redhat.com>, dm-devel@redhat.com,
+ keyrings@vger.kernel.org, Alasdair Kergon <agk@redhat.com>,
+ Steffen Klassert <steffen.klassert@secunet.com>,
+ Boris Pismenny <borisp@nvidia.com>, John Fastabend <john.fastabend@gmail.com>,
+ Tyler Hicks <code@tyhicks.com>, Paolo Abeni <pabeni@redhat.com>,
+ Johan Hedberg <johan.hedberg@gmail.com>, Marcel Holtmann <marcel@holtmann.org>,
+ ecryptfs@vger.kernel.org, Mike Snitzer <snitzer@kernel.org>,
+ Luiz Augusto von Dentz <luiz.dentz@gmail.com>, netdev@vger.kernel.org,
+ Eric Dumazet <edumazet@google.com>, Jon Maloy <jmaloy@redhat.com>,
+ linux-bluetooth@vger.kernel.org, Jarkko Sakkinen <jarkko@kernel.org>,
+ Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
+ Ying Xue <ying.xue@windriver.com>, "David S. Miller" <davem@davemloft.net>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-
-
-On Wed, 1 Feb 2023, Nathan Huckleberry wrote:
-
-> Setting WQ_UNBOUND increases scheduler latency on ARM64.  This is likely
-> due to the asymmetric architecture of ARM64 processors.
+On Mon, Feb 06, 2023 at 11:15:21PM -0800, Jakub Kicinski wrote:
+>
+> >  	aead_request_set_callback(aead_req, CRYPTO_TFM_REQ_MAY_BACKLOG,
+> > -				  tls_encrypt_done, sk);
+> > +				  tls_encrypt_done, aead_req);
 > 
-> I've been unable to reproduce the results that claim WQ_UNBOUND gives a
-> performance boost on x86-64.
-> 
-> This flag is causing performance issues for multiple subsystems within
-> Android.  Notably, the same slowdown exists for decompression with
-> EROFS.
-> 
-> | open-prebuilt-camera  | WQ_UNBOUND | ~WQ_UNBOUND   |
-> |-----------------------|------------|---------------|
-> | verity wait time (us) | 11746      | 119 (-98%)    |
-> | erofs wait time (us)  | 357805     | 174205 (-51%) |
-> 
-> | sha256 ramdisk random read | WQ_UNBOUND    | ~WQ_UNBOUND |
-> |----------------------------|-----------=---|-------------|
-> | arm64 (accelerated)        | bw=42.4MiB/s  | bw=212MiB/s |
-> | arm64 (generic)            | bw=16.5MiB/s  | bw=48MiB/s  |
-> | x86_64 (generic)           | bw=233MiB/s   | bw=230MiB/s |
-> 
-> Cc: Sami Tolvanen <samitolvanen@google.com>
-> Cc: Eric Biggers <ebiggers@kernel.org>
-> Signed-off-by: Nathan Huckleberry <nhuck@google.com>
-> ---
->  drivers/md/dm-verity-target.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> index ccf5b852fbf7..020fd2341025 100644
-> --- a/drivers/md/dm-verity-target.c
-> +++ b/drivers/md/dm-verity-target.c
-> @@ -1399,8 +1399,8 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  		goto bad;
->  	}
->  
-> -	/* WQ_UNBOUND greatly improves performance when running on ramdisk */
-> -	wq_flags = WQ_MEM_RECLAIM | WQ_UNBOUND;
-> +	wq_flags = WQ_MEM_RECLAIM;
-> +
->  	/*
->  	 * Using WQ_HIGHPRI improves throughput and completion latency by
->  	 * reducing wait times when reading from a dm-verity device.
+> ... let's just pass rec instead of aead_req here, then?
 
-Hi
+Good point.  Could we do this as a follow-up patch? Reposting
+the whole series would disturb a lot of people.  Of course if
+other major issues crop up I can fold this into the existing
+patch.
 
-If you remove WQ_UNBOUND, you should also change the last argument of 
-alloc_workqueue from num_online_cpus() to either 0 or 1. Try both 0 and 1 
-and tell us which performs better.
+Thanks!
 
-Mikulas
+---8<---
+The function tls_encrypt_done only uses aead_req to get ahold of
+the tls_rec object.  So we could pass that in instead of aead_req
+to simplify the code.
+
+Suggested-by: Jakub Kicinski <kuba@kernel.org>
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+
+diff --git a/net/tls/tls_sw.c b/net/tls/tls_sw.c
+index 0515cda32fe2..6dfec2e8fdfa 100644
+--- a/net/tls/tls_sw.c
++++ b/net/tls/tls_sw.c
+@@ -430,18 +430,16 @@ int tls_tx_records(struct sock *sk, int flags)
+ 
+ static void tls_encrypt_done(void *data, int err)
+ {
+-	struct aead_request *aead_req = data;
+ 	struct tls_sw_context_tx *ctx;
+ 	struct tls_context *tls_ctx;
+ 	struct tls_prot_info *prot;
++	struct tls_rec *rec = data;
+ 	struct scatterlist *sge;
+ 	struct sk_msg *msg_en;
+-	struct tls_rec *rec;
+ 	bool ready = false;
+ 	struct sock *sk;
+ 	int pending;
+ 
+-	rec = container_of(aead_req, struct tls_rec, aead_req);
+ 	msg_en = &rec->msg_encrypted;
+ 
+ 	sk = rec->sk;
+@@ -536,7 +534,7 @@ static int tls_do_encryption(struct sock *sk,
+ 			       data_len, rec->iv_data);
+ 
+ 	aead_request_set_callback(aead_req, CRYPTO_TFM_REQ_MAY_BACKLOG,
+-				  tls_encrypt_done, aead_req);
++				  tls_encrypt_done, rec);
+ 
+ 	/* Add the record in tx_list */
+ 	list_add_tail((struct list_head *)&rec->list, &ctx->tx_list);
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
 --
 dm-devel mailing list
 dm-devel@redhat.com
