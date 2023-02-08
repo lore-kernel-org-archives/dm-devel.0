@@ -1,84 +1,61 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 46C13C636CC
-	for <dm-devel@archiver.kernel.org>; Wed,  8 Feb 2023 00:31:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B3BACC636CD
+	for <dm-devel@archiver.kernel.org>; Wed,  8 Feb 2023 00:32:26 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675816276;
+	s=mimecast20190719; t=1675816345;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=5ii966dY69QGh6DdKiPli/zPgBjOac3u+HAqZNPjYCc=;
-	b=BOZ8tHXtENR/xhEwMOaHVFdZ1/LzwEUOAw9rEFM7jiK8KW80w6VLPwTO1rNUWsEe3A49j7
-	0JPkjRCPXwFzTNES8Iybug5Pq0ajTrbDO+knEyuL6Aog86mIQdwrx7G2WvzWeXpbRh78AL
-	03HLEl0sOUmsejH5lEHV9ZG46O2O71M=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=K6jFdnIlGwvmMF3TUqaoXJv3JbV715gnOdX1daz2wfM=;
+	b=IF+gHEytCuQAJJCGdEkQCUaJydqT2jV1z4dpwtcY9HrMsSguZHO4PQS36SNsDKGto0IfJ8
+	DqSNRzJLQaHIzDpznGAJZuNZoSUOgI76+DWOrGdfAujQxKlFa2rj49huAXgwlVxmjpcQJ8
+	rd/U4r5Uu5stuqyTjyGT0OwcmDwOjEU=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-389-R1h7JEk2M2eNaaKOjJ4_VQ-1; Tue, 07 Feb 2023 19:31:13 -0500
-X-MC-Unique: R1h7JEk2M2eNaaKOjJ4_VQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-186-Mb6_dQt-MFKwTkumNcpL-g-1; Tue, 07 Feb 2023 19:32:22 -0500
+X-MC-Unique: Mb6_dQt-MFKwTkumNcpL-g-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A64685CCE0;
-	Wed,  8 Feb 2023 00:31:10 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7D59D2999B36;
+	Wed,  8 Feb 2023 00:32:19 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4BD4B35453;
-	Wed,  8 Feb 2023 00:31:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6B4D0492C3C;
+	Wed,  8 Feb 2023 00:32:19 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id F299A194658D;
-	Wed,  8 Feb 2023 00:31:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5B552194658D;
+	Wed,  8 Feb 2023 00:32:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 852511946589
- for <dm-devel@listman.corp.redhat.com>; Wed,  8 Feb 2023 00:31:08 +0000 (UTC)
+ ESMTP id 826E81946589
+ for <dm-devel@listman.corp.redhat.com>; Wed,  8 Feb 2023 00:32:18 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 74448492B22; Wed,  8 Feb 2023 00:31:08 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 6B629492B21
- for <dm-devel@redhat.com>; Wed,  8 Feb 2023 00:31:08 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4E1F985CCE1
- for <dm-devel@redhat.com>; Wed,  8 Feb 2023 00:31:08 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-159-ltToBvASOAC6L0hyr-QZpQ-1; Tue,
- 07 Feb 2023 19:31:04 -0500
-X-MC-Unique: ltToBvASOAC6L0hyr-QZpQ-1
-Received: by linux.microsoft.com (Postfix, from userid 1052)
- id 91E3120C7E38; Tue,  7 Feb 2023 16:31:03 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 91E3120C7E38
-Date: Tue, 7 Feb 2023 16:31:03 -0800
-From: Fan Wu <wufan@linux.microsoft.com>
-To: Roberto Sassu <roberto.sassu@huaweicloud.com>
-Message-ID: <20230208003103.GC5107@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
-References: <1675119451-23180-1-git-send-email-wufan@linux.microsoft.com>
- <033335b26f6becdc3dc0325ef926efd94fcc4dda.camel@huaweicloud.com>
- <20230201004852.GB30104@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
- <7dc9963c563d0b55bb35109be012e355eef13882.camel@huaweicloud.com>
-MIME-Version: 1.0
-In-Reply-To: <7dc9963c563d0b55bb35109be012e355eef13882.camel@huaweicloud.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-Subject: Re: [dm-devel] [RFC PATCH v9 00/16] Integrity Policy Enforcement
- LSM (IPE)
+ id 4766A2166B2A; Wed,  8 Feb 2023 00:32:18 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E4B72166B29;
+ Wed,  8 Feb 2023 00:32:18 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 3180WGPt024409;
+ Tue, 7 Feb 2023 18:32:16 -0600
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 3180WGgd024408;
+ Tue, 7 Feb 2023 18:32:16 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Date: Tue,  7 Feb 2023 18:32:16 -0600
+Message-Id: <1675816336-24371-1-git-send-email-bmarzins@redhat.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: [dm-devel] [PATCH] multipath.rules: fix "smart" bug with failed
+ valid path check
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -90,85 +67,84 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, tytso@mit.edu,
- paul@paul-moore.com, dm-devel@redhat.com, corbet@lwn.net,
- roberto.sassu@huawei.com, linux-doc@vger.kernel.org, snitzer@kernel.org,
- jmorris@namei.org, zohar@linux.ibm.com, linux-kernel@vger.kernel.org,
- ebiggers@kernel.org, linux-security-module@vger.kernel.org,
- linux-audit@redhat.com, eparis@redhat.com, linux-fscrypt@vger.kernel.org,
- linux-integrity@vger.kernel.org, agk@redhat.com, serge@hallyn.com
+Cc: device-mapper development <dm-devel@redhat.com>,
+ Martin Wilck <Martin.Wilck@suse.com>
+MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Feb 02, 2023 at 11:48:18AM +0100, Roberto Sassu wrote:
-> On Tue, 2023-01-31 at 16:48 -0800, Fan Wu wrote:
-> > On Tue, Jan 31, 2023 at 03:22:05PM +0100, Roberto Sassu wrote:
-> > > On Mon, 2023-01-30 at 14:57 -0800, Fan Wu wrote:
-> > > > IPE has two known gaps:
-> > > > 
-> > > > 1. IPE cannot verify the integrity of anonymous executable memory, such as
-> > > >   the trampolines created by gcc closures and libffi (<3.4.2), or JIT'd code.
-> > > >   Unfortunately, as this is dynamically generated code, there is no way
-> > > >   for IPE to ensure the integrity of this code to form a trust basis. In all
-> > > >   cases, the return result for these operations will be whatever the admin
-> > > >   configures the DEFAULT action for "EXECUTE".
-> > > 
-> > > I think it would be useful to handle special cases, for example you
-> > > could allow a process that created a file with memfd to use it, at the
-> > > condition that nobody else writes it.
-> > > 
-> > > This would be required during the boot, otherwise services could fail
-> > > to start (depending on the policy).
-> > > 
-> > Thanks for the suggestion. I agree with your opinion and I think supporting
-> > memfd is possible but restricting read/write needs more hooks. We would like
-> > to avoid adding more complexity to this initial posting as necessary. 
-> > We will consider this as a future work and will post follow-on patches
-> > in the future.
-> 
-> Ok, maybe it is necessary to specify better the scope of IPE, why the
-> current implementation can be considered as complete.
-> 
-> If we say, IPE can only allow/deny operations on system components with
-> immutable security properties, clearly memfd as a component cannot
-> fullfill this goal due to the non-immutability. This would apply to any
-> component allowing modifications.
-> 
-> How to address this? What is the immutable property then?
-> 
-> In the case of memfd, intuitively, a useful property for integrity
-> could be for example that the content can be accessed/modified by only
-> one process. No other (possibly malicious) processes can tamper with
-> that file.
-> 
-> So, it is true, to make this property immutable more hooks are needed.
-> But should it be something that IPE does? Or it should be done by an
-> external component (another LSM) that does the enforcement and reports
-> to IPE that the property is true? Theoretically (with a proper policy),
-> existing LSMs could be used for that purpose too.
-> 
-> I would say more the second, it should not be IPE job, so that IPE can
-> exclusively focus on evaluating properties, not making sure that the
-> properties are immutable.
-> 
-> Roberto
-> 
-I think the issue here is not about the scope of IPE but the use cases
-of IPE. 
+If "multipath -u" fails, udev doesn't import any values from the
+program. This means that multipath.rules will continue to use the values
+for DM_MULTIPATH_DEVICE_PATH and FIND_MULTIPATHS_WAIT_UNTIL that it has
+already imported from the database. This is the correct thing to do for
+every case except the MAYBE case for "find_multipaths smart". In that
+case, DM_MULTIPATH_DEVICE_PATH will be set to 1, and the rules will
+assume that the device has been definitively claimed.
 
-We use IPE on fixed-function devices, which are completely locked down.
-In our system, IPE denies all anonymous memory execution so memfd will
-not work on our system.
+In this case, we know that the device shouldn't have been claimed
+before, but we don't know if it should be claimed now, or if we have hit
+the timeout and it should be released, since we didn't get any
+information from multipath. The safest thing to do is assume that this
+was the timeout, and the device shouldn't be claimed. The only time when
+this could be the wrong answer is when we first see a new multipath
+device, and it could only cause problems if there is metadata on the
+device that will cause it to get autoassembled by something else, before
+multipathd can autoassemble it. If we assume that it is a multipath
+device, or we assume that this wasn't actually the timeout uevent, we
+can keep a necessary device from getting released to the reset of the
+system.
 
-Therefore, to make memfd useable with IPE we must add more properties.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipath/multipath.rules.in | 22 ++++++++++++++++------
+ 1 file changed, 16 insertions(+), 6 deletions(-)
 
--Fan
+diff --git a/multipath/multipath.rules.in b/multipath/multipath.rules.in
+index 8d3cf33a..6f123760 100644
+--- a/multipath/multipath.rules.in
++++ b/multipath/multipath.rules.in
+@@ -31,7 +31,8 @@ IMPORT{db}="DM_MULTIPATH_DEVICE_PATH"
+ 
+ # multipath -u sets DM_MULTIPATH_DEVICE_PATH and,
+ # if "find_multipaths smart", also FIND_MULTIPATHS_WAIT_UNTIL.
+-IMPORT{program}="$env{MPATH_SBIN_PATH}/multipath -u %k"
++IMPORT{program}=="$env{MPATH_SBIN_PATH}/multipath -u %k", \
++	ENV{.MPATH_CHECK_PASSED}="1"
+ 
+ # case 1: this is definitely multipath
+ ENV{DM_MULTIPATH_DEVICE_PATH}=="1", \
+@@ -82,10 +83,19 @@ LABEL="stop_wait"
+ # If timeout hasn't expired but we're not in "maybe" state any more, stop timer
+ # Do this only once, and only if the timer has been started before
+ IMPORT{db}="FIND_MULTIPATHS_WAIT_CANCELLED"
+-ENV{FIND_MULTIPATHS_WAIT_CANCELLED}!="?*", \
+-	ENV{FIND_MULTIPATHS_WAIT_UNTIL}=="?*", \
+-	ENV{FIND_MULTIPATHS_WAIT_UNTIL}!="0", \
+-	ENV{FIND_MULTIPATHS_WAIT_CANCELLED}="1", \
+-	RUN+="/usr/bin/systemctl stop cancel-multipath-wait-$kernel.timer"
++ENV{FIND_MULTIPATHS_WAIT_CANCELLED}=="?*", GOTO="end_mpath"
++ENV{FIND_MULTIPATHS_WAIT_UNTIL}!="?*", GOTO="end_mpath"
++ENV{FIND_MULTIPATHS_WAIT_UNTIL}=="0", GOTO="end_mpath"
++
++ENV{FIND_MULTIPATHS_WAIT_CANCELLED}="1"
++RUN+="/usr/bin/systemctl stop cancel-multipath-wait-$kernel.timer"
++
++# If "multipath -u" failed, no values are imported from the program,
++# and we are still using the values for DM_MULTIPATH_DEVICE_PATH and
++# FIND_MULTIPATHS_WAIT_UNTIL that were imported from the database.
++# If we are in "smart" mode, we need to give up on the path now,
++# since this may have been the timeout event. Without the imports
++# from "multipath -u", we can't tell.
++ENV{.MPATH_CHECK_PASSED}!="?*", ENV{DM_MULTIPATH_DEVICE_PATH}="0"
+ 
+ LABEL="end_mpath"
+-- 
+2.17.2
 
 --
 dm-devel mailing list
