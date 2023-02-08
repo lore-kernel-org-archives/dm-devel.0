@@ -4,115 +4,94 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B5B07C636D4
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DADB4C64EC5
 	for <dm-devel@archiver.kernel.org>; Wed,  8 Feb 2023 07:45:28 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1675842327;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=+Of4Ulsk9cuiRke6nKAP75oBe9bpO36DrNPu/dwcD6U=;
-	b=eEZRO4zGneWplcf7xOcevcomiU6rT2zYYqlF4YJvuFAC8ZUx/iOzLpUjGgfXutmHJnoeU5
-	e1teLyKF/nkZolZ0a7U67WVXSEPXLvF73vZOoJEidWq1qWXEz+qBzFPQwQwc+hU25kszHe
-	imJIa5kWsdUPorIsTR5YvvcyiTK2FME=
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=p7IvCtW/zgC+1+PSObhQxmpxkRJPVAlUzUl53iAkR9k=;
+	b=N+1bY2JvrF4CNZBV+1euuxNs4HZgnXKqVKpnVYRN3CbQT+AQVREA5bvW35mxMHLHBb+4aG
+	3LFEbRfVStSemAJX4wMc4340eZQZgFEvEp0/fv4jbwn0xpRaXM4CdQvaeZq58t+vHrHtUs
+	UC2ID7pMii2s6kO8aSlC+hX7lG069hk=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-223-WdKGFaf0OPGapsh6rZHPJA-1; Wed, 08 Feb 2023 02:45:24 -0500
-X-MC-Unique: WdKGFaf0OPGapsh6rZHPJA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-249--vxelEfiMF6nAC3nNZbnZg-1; Wed, 08 Feb 2023 02:45:24 -0500
+X-MC-Unique: -vxelEfiMF6nAC3nNZbnZg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 37F1D3C02543;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 97DEC3811F3D;
 	Wed,  8 Feb 2023 07:45:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2352018EC5;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 845A940CF8E7;
 	Wed,  8 Feb 2023 07:45:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5217319465A4;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 84A851946588;
 	Wed,  8 Feb 2023 07:45:21 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 472821946589
- for <dm-devel@listman.corp.redhat.com>; Tue,  7 Feb 2023 16:19:30 +0000 (UTC)
+ ESMTP id D423B1946588
+ for <dm-devel@listman.corp.redhat.com>; Wed,  8 Feb 2023 04:33:30 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1EE98401014C; Tue,  7 Feb 2023 16:19:30 +0000 (UTC)
+ id 9F1E32166B2A; Wed,  8 Feb 2023 04:33:30 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 16F1F4024CA2
- for <dm-devel@redhat.com>; Tue,  7 Feb 2023 16:19:30 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ECC6429DD989
- for <dm-devel@redhat.com>; Tue,  7 Feb 2023 16:19:29 +0000 (UTC)
-Received: from wout1-smtp.messagingengine.com
- (wout1-smtp.messagingengine.com [64.147.123.24]) by relay.mimecast.com with
- ESMTP with STARTTLS (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-107-36Tw4rVwO-Wk5ieAJOYcVQ-1; Tue, 07 Feb 2023 11:19:27 -0500
-X-MC-Unique: 36Tw4rVwO-Wk5ieAJOYcVQ-1
-Received: from compute1.internal (compute1.nyi.internal [10.202.2.41])
- by mailout.west.internal (Postfix) with ESMTP id A9E78320016F;
- Tue,  7 Feb 2023 11:19:25 -0500 (EST)
-Received: from mailfrontend2 ([10.202.2.163])
- by compute1.internal (MEProxy); Tue, 07 Feb 2023 11:19:26 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
- invisiblethingslab.com; h=cc:cc:content-type:date:date:from:from
- :in-reply-to:in-reply-to:message-id:mime-version:references
- :reply-to:sender:subject:subject:to:to; s=fm3; t=1675786765; x=
- 1675873165; bh=KrfmSrDkm//BSwsEycuDONuPAOVzLiga9Uqg5PG0Wpo=; b=d
- OtoLEwCndNUNNfu+mAZmuiJh5dhk7wK2Ax1nY9hBBMnjzFjZxrrEUmWD7j//RexS
- dhl0LnKhuMd9m8z5d+DkpveJ45g4IImZaz6rkocvVigCBuwmoAVPPDl78lw+7q3b
- VHYWS6HF6KhgIgBGSCi7xQ8R8Qfgl4XZWtL8AyXXFKjfxo6pkLAUXOedR/sJ3w5P
- oBz1WVyEl6vsyb79UOd94kMnrAZJMHvBVoD1/2Q03dM1CIzmz53J7PDIdgxtb36m
- kyaiDLR3LUWG3vSkKVMZXTOJCcybnqhErD76guRN1GhXi6+MBO2kQMOVWJFfN87j
- 6yW4UWMq1nYWegBR6gVuQ==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
- messagingengine.com; h=cc:cc:content-type:date:date:feedback-id
- :feedback-id:from:from:in-reply-to:in-reply-to:message-id
- :mime-version:references:reply-to:sender:subject:subject:to:to
- :x-me-proxy:x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=
- fm3; t=1675786765; x=1675873165; bh=KrfmSrDkm//BSwsEycuDONuPAOVz
- Liga9Uqg5PG0Wpo=; b=DQlyYVXQamLdndjZR1/V7bBTpBiXNyW2+w+zIJHrYCv1
- rsRrgRvznCNE/vI4B7+4U0QMbVwv/3oPoLWB2pqfvahKfjQO5Q67NjvA6n+2nRVH
- TyX4nDgcuOCZjzVnnB/e6sJKF3Rnjbd998UM3NP+egulN+Oxil+Yd5W38zw6U/LQ
- pKRjiVp1gR0KeabFmDFQcv/xjN5uRPHv5PdFZrdITMn70CfDbOlotsoUpg5dtjkK
- fs4/Tv3KaUohoVjmzB8MgKp3eln8I5C/x6IYpRmR7QuEk6TakVS+lZl2YiL4aQLs
- iHKiivvJuxFPzj71obM11B/ESj9o7pXk6U/e5szU0A==
-X-ME-Sender: <xms:DXriYyBDbgqpat3Jk2biqZ9Nb_SKRZWbw7EoereqxAuREpA9dd0Zng>
- <xme:DXriY8hwt2ojVITKISaVzYIWgQVBdXOMeIgWeJMaYH_wzTeYG7gxmHe5CR4Blzp9X
- wioFQBoIVNuChY>
-X-ME-Received: <xmr:DXriY1kNL581gjeick9_HKeKE3vQU66urjZODwvZE8N--pG57Px8MtdeJY8>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvhedrudegkedgkeegucetufdoteggodetrfdotf
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 9817D2166B29
+ for <dm-devel@redhat.com>; Wed,  8 Feb 2023 04:33:30 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 76FCD29DD981
+ for <dm-devel@redhat.com>; Wed,  8 Feb 2023 04:33:30 +0000 (UTC)
+Received: from out1-smtp.messagingengine.com (out1-smtp.messagingengine.com
+ [66.111.4.25]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-633-B4vdbys2Ml6nyHKkbZTHNA-1; Tue, 07 Feb 2023 23:33:29 -0500
+X-MC-Unique: B4vdbys2Ml6nyHKkbZTHNA-1
+Received: from compute2.internal (compute2.nyi.internal [10.202.2.46])
+ by mailout.nyi.internal (Postfix) with ESMTP id D14395C00A4;
+ Tue,  7 Feb 2023 23:33:28 -0500 (EST)
+Received: from mailfrontend1 ([10.202.2.162])
+ by compute2.internal (MEProxy); Tue, 07 Feb 2023 23:33:28 -0500
+X-ME-Sender: <xms:GCbjY2PxoeHrqxRCyAV3lNH2FtcrQnfOU7EP76S3xiq9wTu9zFxLBw>
+ <xme:GCbjY0_VDDpCN7L-aoU-hwJB-Hk8hy3LKK1DOSZvoi183UCPXx6wa5v0qJQX4-dkK
+ bubmoWELeD2cGQ>
+X-ME-Received: <xmr:GCbjY9QkUF2W0NDl8JvpcHKis53a4K5rBj_n_a6P0p6TyTxPYNox5o8_wN4>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvhedrudegledgjedtucetufdoteggodetrfdotf
  fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
  uceurghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmne
- cujfgurhepfffhvfevuffkfhggtggujgesghdtreertddtvdenucfhrhhomhepffgvmhhi
- ucforghrihgvucfqsggvnhhouhhruceouggvmhhisehinhhvihhsihgslhgvthhhihhngh
- hslhgrsgdrtghomheqnecuggftrfgrthhtvghrnhepudeileefueetvdelheeuteffjeeg
- jeegffekleevueelueekjeejudffteejkeetnecuvehluhhsthgvrhfuihiivgeptdenuc
- frrghrrghmpehmrghilhhfrhhomhepuggvmhhisehinhhvihhsihgslhgvthhhihhnghhs
- lhgrsgdrtghomh
-X-ME-Proxy: <xmx:DXriYwwR9s30cJkCtOSnUSn3VcHm2PJYlh2y2FrZPvZp76RpyAgc0Q>
- <xmx:DXriY3TOaSBztWGuKHSrZXhC4Yp5zkoxaUvVGp-I_ow1XIK0QFrwPQ>
- <xmx:DXriY7a7X0hRXZCx8JLKlFkHz28Sgx10X_Qgwk9SIb0Kc9bsOsfugw>
- <xmx:DXriYxei49rKiCKNiIwI0RqNqwCtMnm-pK7LsMYBgVnYfOhiFdfRCg>
+ cujfgurhepfffhvffukfhfgggtjgesthdtredttddtvdenucfhrhhomhepffgvmhhiucfo
+ rghrihgvucfqsggvnhhouhhruceouggvmhhisehinhhvihhsihgslhgvthhhihhnghhslh
+ grsgdrtghomheqnecuggftrfgrthhtvghrnhepieefgedujeelvdfhgeefueeggeeggeej
+ hefhveevleffueetgfevtddvheefvdffnecuvehluhhsthgvrhfuihiivgeptdenucfrrg
+ hrrghmpehmrghilhhfrhhomhepuggvmhhisehinhhvihhsihgslhgvthhhihhnghhslhgr
+ sgdrtghomh
+X-ME-Proxy: <xmx:GCbjY2uSicwxTpnNog9a4PYqmd0J9sBWGbuxemiSXmWc8soRA33XWA>
+ <xmx:GCbjY-c9B7FfBBgRnprfw8F693bcSScgR3AKYTDoL409AYHEUQsHJg>
+ <xmx:GCbjY62BjcVmyy2W-Uw8aruGXupH2R9uH2wcoGfu9PXjNo3pF7ax6w>
+ <xmx:GCbjY2mIJfUCRetrfNwDl-xJURZXNvu7UyRi9gmFBmjRZ7eERplraw>
 Feedback-ID: iac594737:Fastmail
 Received: by mail.messagingengine.com (Postfix) with ESMTPA; Tue,
- 7 Feb 2023 11:19:24 -0500 (EST)
-Date: Tue, 7 Feb 2023 11:19:19 -0500
+ 7 Feb 2023 23:33:28 -0500 (EST)
+Date: Tue, 7 Feb 2023 23:33:26 -0500
 From: Demi Marie Obenour <demi@invisiblethingslab.com>
-To: Joe Thornber <thornber@redhat.com>
-Message-ID: <Y+J6CgDVnBlW3pO+@itl-email>
-References: <20230207011849.1343-1-demi@invisiblethingslab.com>
- <CAJ0trDZsTcD43s3GQ7aKR_3eABWv0rREMrajw8xBQiu96X+B8w@mail.gmail.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, dm-devel@redhat.com
+Message-ID: <Y+MmFmzOqG7BEJZO@itl-email>
+References: <1675830100-25726-1-git-send-email-bmarzins@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <CAJ0trDZsTcD43s3GQ7aKR_3eABWv0rREMrajw8xBQiu96X+B8w@mail.gmail.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+In-Reply-To: <1675830100-25726-1-git-send-email-bmarzins@redhat.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mailman-Approved-At: Wed, 08 Feb 2023 07:45:20 +0000
-Subject: Re: [dm-devel] [PATCH 1/2] Fail I/O to thin pool devices
+Subject: Re: [dm-devel] [PATCH] dm-table: Check that a dm device doesn't
+ reference itself
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -124,103 +103,69 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
- Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?=
- <marmarek@invisiblethingslab.com>, Alasdair Kergon <agk@redhat.com>,
- linux-kernel@vger.kernel.org
-Content-Type: multipart/mixed; boundary="===============5880247397720233845=="
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
 
---===============5880247397720233845==
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="m1OVs7FAMuWaSnHQ"
-Content-Disposition: inline
+On Tue, Feb 07, 2023 at 10:21:40PM -0600, Benjamin Marzinski wrote:
+> If a dm device table references itself, it will crash the kernel with an
+> infinite recursion.  Check for a self-reference in dm_get_device(). This
+> is a quick check, but it won't catch more complicated circular
+> references.
+> 
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  drivers/md/dm-table.c | 2 ++
+>  1 file changed, 2 insertions(+)
+> 
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 8541d5688f3a..24ad42b385c1 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -364,6 +364,8 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+>  		if (!dev)
+>  			return -ENODEV;
+>  	}
+> +	if (dev == disk_devt(t->md->disk))
+> +		return -EINVAL;
+>  
+>  	dd = find_device(&t->devices, dev);
+>  	if (!dd) {
+> -- 
+> 2.30.2
 
-
---m1OVs7FAMuWaSnHQ
-Content-Type: text/plain; protected-headers=v1; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-Date: Tue, 7 Feb 2023 11:19:19 -0500
-From: Demi Marie Obenour <demi@invisiblethingslab.com>
-To: Joe Thornber <thornber@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	dm-devel@redhat.com,
-	Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?= <marmarek@invisiblethingslab.com>,
-	linux-kernel@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH 1/2] Fail I/O to thin pool devices
-
-On Tue, Feb 07, 2023 at 03:02:51PM +0000, Joe Thornber wrote:
-> Nack.
->=20
-> I don't see the security issue; how is this any different from running the
-> thin tools on any incorrect device?  Or even the data device that the pool
-> is mirroring.
-
-I special-cased the pool device for two reasons:
-
-1. I have run the thin tools on the pool device myself before realising
-   that they needed to be run on the metadata device.  It took me a
-   while to realize that I was using the wrong device.  I have not made
-   that mistake with other devices, which is why I special-cased the
-   pool device in this patch.
-
-2. Doing I/O to the pool device is pointless.  The pool device is
-   strictly slower than the data device and exposes the exact same
-   contents, so accessing the pool device directly is never what one
-   wants.
-
-If there are backwards compatibility concerns, I could make this be
-controlled by a Kconfig option, module parameter, or both.
-
-> In general the thin tools don't modify the metadata they're
-> running on.  If you know of a security issue with the thin tools please l=
-et
-> me know.
-
-I am not aware of a concrete security problem, but in general I prefer
-not to expose unnecessary attack surface.
---=20
+I like this!  More generally, should the kernel fail with -ELOOP if
+devices are stacked too deeply?
+- -- 
 Sincerely,
 Demi Marie Obenour (she/her/hers)
 Invisible Things Lab
-
---m1OVs7FAMuWaSnHQ
-Content-Type: application/pgp-signature; name="signature.asc"
-
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCgAdFiEEdodNnxM2uiJZBxxxsoi1X/+cIsEFAmPiegoACgkQsoi1X/+c
-IsHkYw/+LTzTC8ug1ruR4e+mUmoP2RCdrC8KFvx7cij6HJHKKUYi4KpCz/OKbYVH
-QADgI2McT/0jHWIamXJ+J6gH7HjRS9MJv5HBSjmnG2AHJaFJh+gnv16OYwLhCVTE
-wuGUrvLwSzwJj+Nlkn3q699tDob12x3p54tLDcM08EuKB+jqOzxYXQieOwvEADWM
-qdLksdx5dG7eSJjo5GMqotJUBFxoBnkIIRmDqhTAyXOHsdMqceGGvkhfubrifz8v
-oWn9Gat90HVS6i7qwkwOu02mNwCPGqD3oCz8lk/eUrSFjeAkOvyeXV6FjYXjY9f3
-t55cByzDHmaRn6CzkIRdkkg7GeMBcxpPSzyodc8Fkr9eR28beEkGJ0dpFMFt2TTL
-XqulnLVae4ZZ0OobiUGnwK0dgmQY03sKgGwp0/BoAGjIjgueLC/5BlcHUDTZmsTv
-3aSihwfvvyY8POBrv46nsf8ONTBETu6u39YGk8Q7zagTxP2SBlns0IBbVIll+CZY
-3egP7e/CTZVlCbeI/5zmakwB5R0hNqUMyW5SLX/rvoz+w9W2AbR1jxUmCOye8wNE
-kJ3Cuv9u2UcN78pR4DZDnh9Np0nlWHxAq+jQSeovYzbTiUVe0+K0c40Zo0J2tCrl
-E+UT4FGfeBAbY/AB2S19OgxRTNLMN0TO5HHUdlMV7+C9h+aubd4=
-=OCkT
+iQIzBAEBCgAdFiEEdodNnxM2uiJZBxxxsoi1X/+cIsEFAmPjJhYACgkQsoi1X/+c
+IsHwnRAAsJgax1pLhHw0jvXgbwb+XGM+j2bHwg/9DsmTakxAlJgDYAUGhC4wIu3n
+bWzs0TY0ON0h6BAVm4+xUFBCpQpSZTf2Z95YCHHvhj2ImEdSYrbk+ccnZaXhaP5f
+mUFEG7PmBA6Zl/xJvAwZgG4V/Szp73UdlSe+Ph3qcjNf/+n2EznZBFjXpO45PGaL
+xvd7D7QcqEbhiH5kDVvZibX4Np2xWecbIYNoGuiCf+tnUVM+QyFIMiLZhWS+nZ4y
+QOzcn7gG5543dSlwnKJJXKmW/LBXqNAzyLvhqxWX/5ExwENQxEQ5fQ/w1EcuIgLq
+EaNCm7yCabgG11d6En4er2etUB9Q2mowugSvdzryblF01x0GMz2aqFQ12Ogbag9t
+8t1sHx+ohk03H4vjbT3NJZnqDsTmAYVV7v/nxCKYot3EcylB0R9b3BIeRoKYiFK0
+f/1ap8MfvHE/Nc4hyVapD6DOQ3Gn9ZK5Y6eNrpzlG6C5JVjWJjB8tCoON8upgj3t
+5P77sFVVczj2/Uu8T+1uhYQ9XSnFREsQGSEULZoA60MAwRktyhQVGTMwTLnX/BVg
+kHpCeaFnEN1IZ1R5PFZXoPPztPcnZG1ZjMjrpqjKqd1Udokqti+i9vf3sAI7mfo3
+mvB4XyxH6PdLz2UD1GvTvF2DKKyJeE2W4ezCxSBSNHhrMIwaPvE=
+=Kzsf
 -----END PGP SIGNATURE-----
-
---m1OVs7FAMuWaSnHQ--
-
-
---===============5880247397720233845==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-
---===============5880247397720233845==--
 
