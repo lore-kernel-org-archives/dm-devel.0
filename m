@@ -4,77 +4,144 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1A5E6C05027
-	for <dm-devel@archiver.kernel.org>; Wed,  8 Feb 2023 05:59:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8C306C05027
+	for <dm-devel@archiver.kernel.org>; Wed,  8 Feb 2023 07:35:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1675835971;
+	s=mimecast20190719; t=1675841751;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:mime-version:mime-version:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=wcN84zSk3L4lv5CyOjclhLfV2a8utDX5dbQuWfn8zrQ=;
-	b=S5XFr56lYkAsDy2ae71cnS+tWTBI9AbdgXM4D1+TJ7p4G+Dnvm40oWik1VDxA4lB6Lhqe8
-	RbIYDsPFUB5sCbD8Kck0/59BHixhcCfN9dUewDnElE3gsAP+zGeBnbFfWznWswz8XZJi2C
-	cRTmt/Df9mB60+FrBhkaEYmeYl9PYzc=
+	bh=lTg0MqMH/QGB3gA79/Abz3d+MFF37Z4DZkA3eqzOKCU=;
+	b=ZEhgLCHUWW1u/t4M5PF0Jv8iq9ucNaURINcGwoTPC/GhNUK9DCZJzBgwWvg67VHqhQ0B7s
+	S9pdqcp6h0s74d87mcYze10AfY9MbP0Nv7S7soytJfH6trgG9Z9GzTvLrtEYW4YmrQ/S4z
+	Is7Dtfavhz9ZZtjJX9xVwNcG/ijJuJA=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-602--7qIn0WxMDSohUJgKBDUfQ-1; Wed, 08 Feb 2023 00:59:30 -0500
-X-MC-Unique: -7qIn0WxMDSohUJgKBDUfQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-212-hy4DgxwTMVCcg_X9VjO6lg-1; Wed, 08 Feb 2023 02:35:47 -0500
+X-MC-Unique: hy4DgxwTMVCcg_X9VjO6lg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2902518483B6;
-	Wed,  8 Feb 2023 05:59:29 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2C4C6C15BAD;
-	Wed,  8 Feb 2023 05:59:26 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5EBF1100F939;
+	Wed,  8 Feb 2023 07:35:46 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id AA803404CD84;
+	Wed,  8 Feb 2023 07:35:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CBFC71946589;
-	Wed,  8 Feb 2023 05:59:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1B24C1946588;
+	Wed,  8 Feb 2023 07:35:44 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7EBB01946588
- for <dm-devel@listman.corp.redhat.com>; Wed,  8 Feb 2023 05:59:24 +0000 (UTC)
+ ESMTP id 1A2321946588
+ for <dm-devel@listman.corp.redhat.com>; Wed,  8 Feb 2023 07:35:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0E5FB492B02; Wed,  8 Feb 2023 05:59:24 +0000 (UTC)
-Received: from formenos.hmeau.com (unknown [10.67.24.12])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E84CD492B00;
- Wed,  8 Feb 2023 05:59:12 +0000 (UTC)
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
- by formenos.hmeau.com with smtp (Exim 4.94.2 #2 (Debian))
- id 1pPdTg-008l4u-Fv; Wed, 08 Feb 2023 13:58:45 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation);
- Wed, 08 Feb 2023 13:58:44 +0800
-Date: Wed, 8 Feb 2023 13:58:44 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- dm-devel@redhat.com, "David S. Miller" <davem@davemloft.net>,
- Eric Dumazet <edumazet@google.com>,
- Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>,
- netdev@vger.kernel.org, Tyler Hicks <code@tyhicks.com>,
- ecryptfs@vger.kernel.org, Marcel Holtmann <marcel@holtmann.org>,
- Johan Hedberg <johan.hedberg@gmail.com>,
- Luiz Augusto von Dentz <luiz.dentz@gmail.com>,
- linux-bluetooth@vger.kernel.org,
- Steffen Klassert <steffen.klassert@secunet.com>,
- Jon Maloy <jmaloy@redhat.com>, Ying Xue <ying.xue@windriver.com>,
- Boris Pismenny <borisp@nvidia.com>,
- John Fastabend <john.fastabend@gmail.com>,
- David Howells <dhowells@redhat.com>,
- Jarkko Sakkinen <jarkko@kernel.org>, keyrings@vger.kernel.org
-Message-ID: <Y+M6FDVFcXRNQtwi@gondor.apana.org.au>
-References: <Y+DUkqe1sagWaErA@gondor.apana.org.au>
- <E1pOydr-007ziX-T2@formenos.hmeau.com>
+ id DC539404CD85; Wed,  8 Feb 2023 07:35:42 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D31A2404CD84
+ for <dm-devel@redhat.com>; Wed,  8 Feb 2023 07:35:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B41FF28004B6
+ for <dm-devel@redhat.com>; Wed,  8 Feb 2023 07:35:42 +0000 (UTC)
+Received: from EUR02-AM0-obe.outbound.protection.outlook.com
+ (mail-am0eur02on2082.outbound.protection.outlook.com [40.107.247.82]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-474-hRJHpsYDNWmW93f9bE1PYA-2; Wed, 08 Feb 2023 02:35:39 -0500
+X-MC-Unique: hRJHpsYDNWmW93f9bE1PYA-2
+Received: from AS8PR04MB8040.eurprd04.prod.outlook.com (2603:10a6:20b:2a9::22)
+ by AS4PR04MB9386.eurprd04.prod.outlook.com (2603:10a6:20b:4e9::8)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6064.31; Wed, 8 Feb
+ 2023 07:35:37 +0000
+Received: from AS8PR04MB8040.eurprd04.prod.outlook.com
+ ([fe80::264c:9f82:e937:9408]) by AS8PR04MB8040.eurprd04.prod.outlook.com
+ ([fe80::264c:9f82:e937:9408%3]) with mapi id 15.20.6064.029; Wed, 8 Feb 2023
+ 07:35:36 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
+ "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Thread-Topic: [PATCH] multipath.rules: fix "smart" bug with failed valid path
+ check
+Thread-Index: AQHZO1TRbKDOpnqkN0i94lq6egfSTq7EqTOA
+Date: Wed, 8 Feb 2023 07:35:36 +0000
+Message-ID: <c9bb45183e47591f9a6fe1bca9f695a697e7fd62.camel@suse.com>
+References: <1675816336-24371-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1675816336-24371-1-git-send-email-bmarzins@redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Evolution 3.46.3
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: AS8PR04MB8040:EE_|AS4PR04MB9386:EE_
+x-ms-office365-filtering-correlation-id: e686a37d-3883-4e29-1969-08db09a711e5
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: GukIQaeDUjxemoTgq3hcNfp5cz4aENlx8WR7xvIYpESEn9OB3zVVNK7BBYgwUZ69CPEeGjDtobFf5l9dwFZKl77URsMXCQPaeWGMnshdZCLJdFdnb0Bq+PDe27TpcoHQG72hvqRH2TycuU5KMexjQExcBTaULd3cI2mSwDVciYGwDLcat+fXyEATEvJSpwD/DlSXr+uFHdN4ldzOQrCCp8DYZNx4Wsd5gmYOMTcexgNx0n5vmGAl3q9gFM2E9dQnDzMrHHGVE5LHbmSeOJr6FEM6pGO78wpe1YwrXUWwieZR1ZDWqfDbENNWWc+eFmFvkBGURipvWWS0yUZWBNcKz5URuOVaWYDbYk9iS32UZWGCQdKIsXo5VsQDqbTmDZS1RRGqnAvvz9+02t/Jt4J8C3KlpP677MW58jE4ShPlnxr3VaOKAClAhzryaXw+ohieG/9g7fAFAxBi6jNfZLIww6B76LbD1oEmlyWnoskqh1Zp1V7YW39pPRWdkMxBR+oHQghO7+6QT6aBCzw5+u0Rp6SyGPmLZfCXFMwld1Eb7GZPEQf3BE0MZ8Xjch3pbgNCMXd1qmDH6Izhmgt1cvEaB+g/tjJeuIQNLrLbcL3jNGj/32e5x0gAOPjmtlza6YQwd6GWzpjCmJgpW1zeSQu64r5UqmoLppIBuqWQXyAmkEQZUe7/OFvakjpeL+67GfcZZRsh7dcPjLG1pY4/NohSMg==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:AS8PR04MB8040.eurprd04.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230025)(396003)(39860400002)(366004)(136003)(376002)(346002)(451199018)(2616005)(86362001)(6506007)(36756003)(71200400001)(6486002)(478600001)(4326008)(41300700001)(8936002)(316002)(110136005)(83380400001)(6512007)(186003)(26005)(66946007)(8676002)(91956017)(76116006)(66476007)(66556008)(64756008)(66446008)(44832011)(5660300002)(2906002)(38070700005)(122000001)(38100700002);
+ DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?mMm7s8217dMrSkwG2i144gcglqfoPCHgYDgNZ2tkJBLcuniecJUobe1vB?=
+ =?iso-8859-15?Q?Reb8E4Yr9Mq9YtAcFN5HrSK6AGBXOtHD7+Qy7/z34MCGYpKMuelC4d7kV?=
+ =?iso-8859-15?Q?0D+tzDpiU4sWllsvZnF3ScrxQ43Lpl8T99CnqSAFnRNhl/zrGK3Yp1pSk?=
+ =?iso-8859-15?Q?QxH0mAmjuy6H+bwt1d6Prfz7+le/aPLUJJ7rxCdG8PrgmkAsAIV9oHJVF?=
+ =?iso-8859-15?Q?9XRWLwT0l9cO2KFk8vBHtnCUlRAU4WRiDMqqnOgbXtDKCjKXWll0vM3Vv?=
+ =?iso-8859-15?Q?SWzHVsQdUqPL9Zc/JOGjX8UQ1D45nybaJhlPTtO6ZVFUE385BtNDGtfIP?=
+ =?iso-8859-15?Q?AZKb2lfmx82clt+cnTGoDIbyC67e0tNGGT1PBuxz1cSq6mbc3FzDWP5ng?=
+ =?iso-8859-15?Q?vHTdHTlMv73UXghKFTrJGaf4nxr1Ylz54wwtXLDEzt1DxVlq1lCxn8Vy2?=
+ =?iso-8859-15?Q?BP8Sde+iI7TAMOrxcdUU1d9+4VtUIe/A+zIqBBTAUSwONIVMwcCMvmY93?=
+ =?iso-8859-15?Q?SBOLVSK5rRaubu0nPKPG8uHs7+KAj+CympOS0c5jld++8ktJcEWr8yF/r?=
+ =?iso-8859-15?Q?jbFUyEP/GvVu3i6RVVmy4rI4RVHJHtJA7xSL/UPt8B6xU0UvVM9UulvGF?=
+ =?iso-8859-15?Q?MuP1gnbi0kmJpistBsNSgIq9tnJ65cdFqIEuazDf4+pl38OQp43j9+agm?=
+ =?iso-8859-15?Q?bd3TPzQ2wFUuTElDvLBpV3uYdiYuocQsRDG5iyWhlZRsJY7KzgLBOtOD+?=
+ =?iso-8859-15?Q?CAL/48CedzelNkpLrcHREZihyWy62Q7WqLcCXRY3aOMulqLUjJIq4SXCW?=
+ =?iso-8859-15?Q?8XE8JWvNaGIc0dFKQ6kdwN6p362h+vLCur5tYCeSF2YL4T8ULZrYJn/D7?=
+ =?iso-8859-15?Q?SzpbnqHjSrKO5DEb123U0farAncibZuLOKnksbHBM6uWFqVjVvXRSU2q1?=
+ =?iso-8859-15?Q?cYAvRA3NE4xPTLFDeZWCB23z9yFT3ASh8Tz8clwz/19rVzbSlnVS2jCoy?=
+ =?iso-8859-15?Q?M78mhRjtyVAA8C7Zq+NpVwtPZe9N4P4asXjPaU6KTw8uNz3Fv7BkvRfSM?=
+ =?iso-8859-15?Q?ThAe1hnb4mq4+WvjuF3lzNNdhoIoyGX1uArG/QyBuu/T8Cu304/Xjfei+?=
+ =?iso-8859-15?Q?GbIMSOuZQLFljzWLACFdvwE2SIuPdc2JGboIF1SxratJUtq9K7TKvX5YF?=
+ =?iso-8859-15?Q?KAle2a2Ciwd+VCXuF+kANS/u58N7rPwQRldHWlcIXsJtlKCWrOOrH6e1V?=
+ =?iso-8859-15?Q?JuGN63uQr0+sGGF3saWi9uP28Q0oGocOrmDJn5KOPA3GE0e1q0vgVL3xD?=
+ =?iso-8859-15?Q?9a4F619+LIiGBVar88MlNw1eeJFgMH2QDSpGlNq4JGT6MmAyepaEbQjZb?=
+ =?iso-8859-15?Q?He77oMY0uJcp2LCYe61ccNlGxjDQo9Zm0Fl2Fkr0ikwK+/r8R6Nr9ssqr?=
+ =?iso-8859-15?Q?AkZmf76uxz6GmR3Xfdbfe40P57O5AEYkcfBZuuPPvPXEEJ3GDwOdkafQK?=
+ =?iso-8859-15?Q?dMgh9Sh4jMHeeMIBZlYA2nnH0f8xIZu4D1+1aolLkeKft/J9iXymXSlep?=
+ =?iso-8859-15?Q?XS4xXwKUwxL94F7wEOiZozEDougkE265ScN7dmz3LceVvefDQXvWt90aW?=
+ =?iso-8859-15?Q?6F3Q2n2EqIRQD+0K+64HQ81rsXcIs68Dm7orTL132PPBocnK7h54EV5wb?=
+ =?iso-8859-15?Q?LY0l01Sg78xFvCT4dxpDq4V4RA=3D=3D?=
 MIME-Version: 1.0
-In-Reply-To: <E1pOydr-007ziX-T2@formenos.hmeau.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-Subject: [dm-devel] [v2 PATCH 10/17] crypto: api - Use data directly in
- completion function
+X-OriginatorOrg: suse.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: AS8PR04MB8040.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: e686a37d-3883-4e29-1969-08db09a711e5
+X-MS-Exchange-CrossTenant-originalarrivaltime: 08 Feb 2023 07:35:36.7004 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: Q87Rx/5oeEVGIVmqPgDQA07JYwsCaf/Cs80NsbckmCRFZLhNzaK7qa6kYpK0mBZgncGteoY5bHQvYPrLTR5cQA==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AS4PR04MB9386
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] [PATCH] multipath.rules: fix "smart" bug with failed
+ valid path check
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -86,945 +153,70 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
+Content-ID: <A5D354C824DBAA45891244F9404BBEAF@eurprd04.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-v2 adds the actual algapi conversion which went missing.
+Hello Ben,
 
----8<---
-This patch does the final flag day conversion of all completion
-functions which are now all contained in the Crypto API.
+On Tue, 2023-02-07 at 18:32 -0600, Benjamin Marzinski wrote:
+> If "multipath -u" fails, udev doesn't import any values from the
+> program. This means that multipath.rules will continue to use the
+> values
+> for DM_MULTIPATH_DEVICE_PATH and FIND_MULTIPATHS_WAIT_UNTIL that it
+> has
+> already imported from the database. This is the correct thing to do
+> for
+> every case except the MAYBE case for "find_multipaths smart". In that
+> case, DM_MULTIPATH_DEVICE_PATH will be set to 1, and the rules will
+> assume that the device has been definitively claimed.
+> 
+> In this case, we know that the device shouldn't have been claimed
+> before, but we don't know if it should be claimed now, or if we have
+> hit
+> the timeout and it should be released, since we didn't get any
+> information from multipath. The safest thing to do is assume that
+> this
+> was the timeout, and the device shouldn't be claimed. The only time
+> when
+> this could be the wrong answer is when we first see a new multipath
+> device, and it could only cause problems if there is metadata on the
+> device that will cause it to get autoassembled by something else,
+> before
+> multipathd can autoassemble it. If we assume that it is a multipath
+> device, or we assume that this wasn't actually the timeout uevent, we
+> can keep a necessary device from getting released to the reset of the
+> system.
+> 
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
----
+We have this code in check_path_valid():
 
- crypto/adiantum.c          |    5 +---
- crypto/af_alg.c            |    6 ++---
- crypto/ahash.c             |   12 +++++-----
- crypto/api.c               |    4 +--
- crypto/authenc.c           |   14 +++++-------
- crypto/authencesn.c        |   15 +++++-------
- crypto/ccm.c               |    9 +++----
- crypto/chacha20poly1305.c  |   40 +++++++++++++++++-----------------
- crypto/cryptd.c            |   52 ++++++++++++++++++++++-----------------------
- crypto/cts.c               |   12 +++++-----
- crypto/dh.c                |    5 +---
- crypto/essiv.c             |    8 +++---
- crypto/gcm.c               |   36 ++++++++++++++-----------------
- crypto/hctr2.c             |    5 +---
- crypto/lrw.c               |    4 +--
- crypto/pcrypt.c            |    4 +--
- crypto/rsa-pkcs1pad.c      |   15 +++++-------
- crypto/seqiv.c             |    5 +---
- crypto/xts.c               |   12 +++++-----
- drivers/crypto/atmel-sha.c |    5 +---
- include/crypto/algapi.h    |    3 --
- include/crypto/if_alg.h    |    4 ---
- include/linux/crypto.h     |   10 ++++----
- 23 files changed, 133 insertions(+), 152 deletions(-)
+	/*
+	 * multipath -u must exit with status 0, otherwise udev won't
+	 * import its output.
+	 */
+	if (!is_uevent && r == PATH_IS_NOT_VALID)
+		r = RTVL_FAIL;
+	else
+		r = RTVL_OK;
 
-diff --git a/crypto/adiantum.c b/crypto/adiantum.c
-index 84450130cb6b..c33ba22a6638 100644
---- a/crypto/adiantum.c
-+++ b/crypto/adiantum.c
-@@ -308,10 +308,9 @@ static int adiantum_finish(struct skcipher_request *req)
- 	return 0;
- }
- 
--static void adiantum_streamcipher_done(struct crypto_async_request *areq,
--				       int err)
-+static void adiantum_streamcipher_done(void *data, int err)
- {
--	struct skcipher_request *req = areq->data;
-+	struct skcipher_request *req = data;
- 
- 	if (!err)
- 		err = adiantum_finish(req);
-diff --git a/crypto/af_alg.c b/crypto/af_alg.c
-index 0a4fa2a429e2..5f7252a5b7b4 100644
---- a/crypto/af_alg.c
-+++ b/crypto/af_alg.c
-@@ -1186,7 +1186,7 @@ EXPORT_SYMBOL_GPL(af_alg_free_resources);
- 
- /**
-  * af_alg_async_cb - AIO callback handler
-- * @_req: async request info
-+ * @data: async request completion data
-  * @err: if non-zero, error result to be returned via ki_complete();
-  *       otherwise return the AIO output length via ki_complete().
-  *
-@@ -1196,9 +1196,9 @@ EXPORT_SYMBOL_GPL(af_alg_free_resources);
-  * The number of bytes to be generated with the AIO operation must be set
-  * in areq->outlen before the AIO callback handler is invoked.
-  */
--void af_alg_async_cb(struct crypto_async_request *_req, int err)
-+void af_alg_async_cb(void *data, int err)
- {
--	struct af_alg_async_req *areq = _req->data;
-+	struct af_alg_async_req *areq = data;
- 	struct sock *sk = areq->sk;
- 	struct kiocb *iocb = areq->iocb;
- 	unsigned int resultlen;
-diff --git a/crypto/ahash.c b/crypto/ahash.c
-index 369447e483cd..5a0f21cb2059 100644
---- a/crypto/ahash.c
-+++ b/crypto/ahash.c
-@@ -240,9 +240,9 @@ static void ahash_restore_req(struct ahash_request *req, int err)
- 	kfree_sensitive(subreq);
- }
- 
--static void ahash_op_unaligned_done(struct crypto_async_request *req, int err)
-+static void ahash_op_unaligned_done(void *data, int err)
- {
--	struct ahash_request *areq = req->data;
-+	struct ahash_request *areq = data;
- 
- 	if (err == -EINPROGRESS)
- 		goto out;
-@@ -330,9 +330,9 @@ int crypto_ahash_digest(struct ahash_request *req)
- }
- EXPORT_SYMBOL_GPL(crypto_ahash_digest);
- 
--static void ahash_def_finup_done2(struct crypto_async_request *req, int err)
-+static void ahash_def_finup_done2(void *data, int err)
- {
--	struct ahash_request *areq = req->data;
-+	struct ahash_request *areq = data;
- 
- 	if (err == -EINPROGRESS)
- 		return;
-@@ -360,9 +360,9 @@ static int ahash_def_finup_finish1(struct ahash_request *req, int err)
- 	return err;
- }
- 
--static void ahash_def_finup_done1(struct crypto_async_request *req, int err)
-+static void ahash_def_finup_done1(void *data, int err)
- {
--	struct ahash_request *areq = req->data;
-+	struct ahash_request *areq = data;
- 	struct ahash_request *subreq;
- 
- 	if (err == -EINPROGRESS)
-diff --git a/crypto/api.c b/crypto/api.c
-index b022702f6436..e67cc63368ed 100644
---- a/crypto/api.c
-+++ b/crypto/api.c
-@@ -643,9 +643,9 @@ int crypto_has_alg(const char *name, u32 type, u32 mask)
- }
- EXPORT_SYMBOL_GPL(crypto_has_alg);
- 
--void crypto_req_done(struct crypto_async_request *req, int err)
-+void crypto_req_done(void *data, int err)
- {
--	struct crypto_wait *wait = req->data;
-+	struct crypto_wait *wait = data;
- 
- 	if (err == -EINPROGRESS)
- 		return;
-diff --git a/crypto/authenc.c b/crypto/authenc.c
-index 17f674a7cdff..3326c7343e86 100644
---- a/crypto/authenc.c
-+++ b/crypto/authenc.c
-@@ -109,9 +109,9 @@ static int crypto_authenc_setkey(struct crypto_aead *authenc, const u8 *key,
- 	return err;
- }
- 
--static void authenc_geniv_ahash_done(struct crypto_async_request *areq, int err)
-+static void authenc_geniv_ahash_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 	struct crypto_aead *authenc = crypto_aead_reqtfm(req);
- 	struct aead_instance *inst = aead_alg_instance(authenc);
- 	struct authenc_instance_ctx *ictx = aead_instance_ctx(inst);
-@@ -160,10 +160,9 @@ static int crypto_authenc_genicv(struct aead_request *req, unsigned int flags)
- 	return 0;
- }
- 
--static void crypto_authenc_encrypt_done(struct crypto_async_request *req,
--					int err)
-+static void crypto_authenc_encrypt_done(void *data, int err)
- {
--	struct aead_request *areq = req->data;
-+	struct aead_request *areq = data;
- 
- 	if (err)
- 		goto out;
-@@ -261,10 +260,9 @@ static int crypto_authenc_decrypt_tail(struct aead_request *req,
- 	return crypto_skcipher_decrypt(skreq);
- }
- 
--static void authenc_verify_ahash_done(struct crypto_async_request *areq,
--				      int err)
-+static void authenc_verify_ahash_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 
- 	if (err)
- 		goto out;
-diff --git a/crypto/authencesn.c b/crypto/authencesn.c
-index b60e61b1904c..91424e791d5c 100644
---- a/crypto/authencesn.c
-+++ b/crypto/authencesn.c
-@@ -107,10 +107,9 @@ static int crypto_authenc_esn_genicv_tail(struct aead_request *req,
- 	return 0;
- }
- 
--static void authenc_esn_geniv_ahash_done(struct crypto_async_request *areq,
--					 int err)
-+static void authenc_esn_geniv_ahash_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 
- 	err = err ?: crypto_authenc_esn_genicv_tail(req, 0);
- 	aead_request_complete(req, err);
-@@ -153,10 +152,9 @@ static int crypto_authenc_esn_genicv(struct aead_request *req,
- }
- 
- 
--static void crypto_authenc_esn_encrypt_done(struct crypto_async_request *req,
--					    int err)
-+static void crypto_authenc_esn_encrypt_done(void *data, int err)
- {
--	struct aead_request *areq = req->data;
-+	struct aead_request *areq = data;
- 
- 	if (!err)
- 		err = crypto_authenc_esn_genicv(areq, 0);
-@@ -258,10 +256,9 @@ static int crypto_authenc_esn_decrypt_tail(struct aead_request *req,
- 	return crypto_skcipher_decrypt(skreq);
- }
- 
--static void authenc_esn_verify_ahash_done(struct crypto_async_request *areq,
--					  int err)
-+static void authenc_esn_verify_ahash_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 
- 	err = err ?: crypto_authenc_esn_decrypt_tail(req, 0);
- 	authenc_esn_request_complete(req, err);
-diff --git a/crypto/ccm.c b/crypto/ccm.c
-index 30dbae72728f..a9453129c51c 100644
---- a/crypto/ccm.c
-+++ b/crypto/ccm.c
-@@ -224,9 +224,9 @@ static int crypto_ccm_auth(struct aead_request *req, struct scatterlist *plain,
- 	return err;
- }
- 
--static void crypto_ccm_encrypt_done(struct crypto_async_request *areq, int err)
-+static void crypto_ccm_encrypt_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 	struct crypto_aead *aead = crypto_aead_reqtfm(req);
- 	struct crypto_ccm_req_priv_ctx *pctx = crypto_ccm_reqctx(req);
- 	u8 *odata = pctx->odata;
-@@ -320,10 +320,9 @@ static int crypto_ccm_encrypt(struct aead_request *req)
- 	return err;
- }
- 
--static void crypto_ccm_decrypt_done(struct crypto_async_request *areq,
--				   int err)
-+static void crypto_ccm_decrypt_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 	struct crypto_ccm_req_priv_ctx *pctx = crypto_ccm_reqctx(req);
- 	struct crypto_aead *aead = crypto_aead_reqtfm(req);
- 	unsigned int authsize = crypto_aead_authsize(aead);
-diff --git a/crypto/chacha20poly1305.c b/crypto/chacha20poly1305.c
-index 97bbb135e9a6..3a905c5d8f53 100644
---- a/crypto/chacha20poly1305.c
-+++ b/crypto/chacha20poly1305.c
-@@ -115,9 +115,9 @@ static int poly_copy_tag(struct aead_request *req)
- 	return 0;
- }
- 
--static void chacha_decrypt_done(struct crypto_async_request *areq, int err)
-+static void chacha_decrypt_done(void *data, int err)
- {
--	async_done_continue(areq->data, err, poly_verify_tag);
-+	async_done_continue(data, err, poly_verify_tag);
- }
- 
- static int chacha_decrypt(struct aead_request *req)
-@@ -161,9 +161,9 @@ static int poly_tail_continue(struct aead_request *req)
- 	return chacha_decrypt(req);
- }
- 
--static void poly_tail_done(struct crypto_async_request *areq, int err)
-+static void poly_tail_done(void *data, int err)
- {
--	async_done_continue(areq->data, err, poly_tail_continue);
-+	async_done_continue(data, err, poly_tail_continue);
- }
- 
- static int poly_tail(struct aead_request *req)
-@@ -191,9 +191,9 @@ static int poly_tail(struct aead_request *req)
- 	return poly_tail_continue(req);
- }
- 
--static void poly_cipherpad_done(struct crypto_async_request *areq, int err)
-+static void poly_cipherpad_done(void *data, int err)
- {
--	async_done_continue(areq->data, err, poly_tail);
-+	async_done_continue(data, err, poly_tail);
- }
- 
- static int poly_cipherpad(struct aead_request *req)
-@@ -220,9 +220,9 @@ static int poly_cipherpad(struct aead_request *req)
- 	return poly_tail(req);
- }
- 
--static void poly_cipher_done(struct crypto_async_request *areq, int err)
-+static void poly_cipher_done(void *data, int err)
- {
--	async_done_continue(areq->data, err, poly_cipherpad);
-+	async_done_continue(data, err, poly_cipherpad);
- }
- 
- static int poly_cipher(struct aead_request *req)
-@@ -250,9 +250,9 @@ static int poly_cipher(struct aead_request *req)
- 	return poly_cipherpad(req);
- }
- 
--static void poly_adpad_done(struct crypto_async_request *areq, int err)
-+static void poly_adpad_done(void *data, int err)
- {
--	async_done_continue(areq->data, err, poly_cipher);
-+	async_done_continue(data, err, poly_cipher);
- }
- 
- static int poly_adpad(struct aead_request *req)
-@@ -279,9 +279,9 @@ static int poly_adpad(struct aead_request *req)
- 	return poly_cipher(req);
- }
- 
--static void poly_ad_done(struct crypto_async_request *areq, int err)
-+static void poly_ad_done(void *data, int err)
- {
--	async_done_continue(areq->data, err, poly_adpad);
-+	async_done_continue(data, err, poly_adpad);
- }
- 
- static int poly_ad(struct aead_request *req)
-@@ -303,9 +303,9 @@ static int poly_ad(struct aead_request *req)
- 	return poly_adpad(req);
- }
- 
--static void poly_setkey_done(struct crypto_async_request *areq, int err)
-+static void poly_setkey_done(void *data, int err)
- {
--	async_done_continue(areq->data, err, poly_ad);
-+	async_done_continue(data, err, poly_ad);
- }
- 
- static int poly_setkey(struct aead_request *req)
-@@ -329,9 +329,9 @@ static int poly_setkey(struct aead_request *req)
- 	return poly_ad(req);
- }
- 
--static void poly_init_done(struct crypto_async_request *areq, int err)
-+static void poly_init_done(void *data, int err)
- {
--	async_done_continue(areq->data, err, poly_setkey);
-+	async_done_continue(data, err, poly_setkey);
- }
- 
- static int poly_init(struct aead_request *req)
-@@ -352,9 +352,9 @@ static int poly_init(struct aead_request *req)
- 	return poly_setkey(req);
- }
- 
--static void poly_genkey_done(struct crypto_async_request *areq, int err)
-+static void poly_genkey_done(void *data, int err)
- {
--	async_done_continue(areq->data, err, poly_init);
-+	async_done_continue(data, err, poly_init);
- }
- 
- static int poly_genkey(struct aead_request *req)
-@@ -391,9 +391,9 @@ static int poly_genkey(struct aead_request *req)
- 	return poly_init(req);
- }
- 
--static void chacha_encrypt_done(struct crypto_async_request *areq, int err)
-+static void chacha_encrypt_done(void *data, int err)
- {
--	async_done_continue(areq->data, err, poly_genkey);
-+	async_done_continue(data, err, poly_genkey);
- }
- 
- static int chacha_encrypt(struct aead_request *req)
-diff --git a/crypto/cryptd.c b/crypto/cryptd.c
-index 29890fc0eab7..37365ed30b38 100644
---- a/crypto/cryptd.c
-+++ b/crypto/cryptd.c
-@@ -285,10 +285,9 @@ static void cryptd_skcipher_complete(struct skcipher_request *req, int err,
- 		crypto_free_skcipher(tfm);
- }
- 
--static void cryptd_skcipher_encrypt(struct crypto_async_request *base,
--				    int err)
-+static void cryptd_skcipher_encrypt(void *data, int err)
- {
--	struct skcipher_request *req = skcipher_request_cast(base);
-+	struct skcipher_request *req = data;
- 	struct skcipher_request *subreq;
- 
- 	subreq = cryptd_skcipher_prepare(req, err);
-@@ -298,10 +297,9 @@ static void cryptd_skcipher_encrypt(struct crypto_async_request *base,
- 	cryptd_skcipher_complete(req, err, cryptd_skcipher_encrypt);
- }
- 
--static void cryptd_skcipher_decrypt(struct crypto_async_request *base,
--				    int err)
-+static void cryptd_skcipher_decrypt(void *data, int err)
- {
--	struct skcipher_request *req = skcipher_request_cast(base);
-+	struct skcipher_request *req = data;
- 	struct skcipher_request *subreq;
- 
- 	subreq = cryptd_skcipher_prepare(req, err);
-@@ -515,9 +513,9 @@ static void cryptd_hash_complete(struct ahash_request *req, int err,
- 		crypto_free_ahash(tfm);
- }
- 
--static void cryptd_hash_init(struct crypto_async_request *req_async, int err)
-+static void cryptd_hash_init(void *data, int err)
- {
--	struct ahash_request *req = ahash_request_cast(req_async);
-+	struct ahash_request *req = data;
- 	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
- 	struct cryptd_hash_ctx *ctx = crypto_ahash_ctx(tfm);
- 	struct crypto_shash *child = ctx->child;
-@@ -540,9 +538,9 @@ static int cryptd_hash_init_enqueue(struct ahash_request *req)
- 	return cryptd_hash_enqueue(req, cryptd_hash_init);
- }
- 
--static void cryptd_hash_update(struct crypto_async_request *req_async, int err)
-+static void cryptd_hash_update(void *data, int err)
- {
--	struct ahash_request *req = ahash_request_cast(req_async);
-+	struct ahash_request *req = data;
- 	struct shash_desc *desc;
- 
- 	desc = cryptd_hash_prepare(req, err);
-@@ -557,9 +555,9 @@ static int cryptd_hash_update_enqueue(struct ahash_request *req)
- 	return cryptd_hash_enqueue(req, cryptd_hash_update);
- }
- 
--static void cryptd_hash_final(struct crypto_async_request *req_async, int err)
-+static void cryptd_hash_final(void *data, int err)
- {
--	struct ahash_request *req = ahash_request_cast(req_async);
-+	struct ahash_request *req = data;
- 	struct shash_desc *desc;
- 
- 	desc = cryptd_hash_prepare(req, err);
-@@ -574,9 +572,9 @@ static int cryptd_hash_final_enqueue(struct ahash_request *req)
- 	return cryptd_hash_enqueue(req, cryptd_hash_final);
- }
- 
--static void cryptd_hash_finup(struct crypto_async_request *req_async, int err)
-+static void cryptd_hash_finup(void *data, int err)
- {
--	struct ahash_request *req = ahash_request_cast(req_async);
-+	struct ahash_request *req = data;
- 	struct shash_desc *desc;
- 
- 	desc = cryptd_hash_prepare(req, err);
-@@ -591,9 +589,9 @@ static int cryptd_hash_finup_enqueue(struct ahash_request *req)
- 	return cryptd_hash_enqueue(req, cryptd_hash_finup);
- }
- 
--static void cryptd_hash_digest(struct crypto_async_request *req_async, int err)
-+static void cryptd_hash_digest(void *data, int err)
- {
--	struct ahash_request *req = ahash_request_cast(req_async);
-+	struct ahash_request *req = data;
- 	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
- 	struct cryptd_hash_ctx *ctx = crypto_ahash_ctx(tfm);
- 	struct crypto_shash *child = ctx->child;
-@@ -767,24 +765,26 @@ static void cryptd_aead_crypt(struct aead_request *req,
- 		crypto_free_aead(tfm);
- }
- 
--static void cryptd_aead_encrypt(struct crypto_async_request *areq, int err)
-+static void cryptd_aead_encrypt(void *data, int err)
- {
--	struct cryptd_aead_ctx *ctx = crypto_tfm_ctx(areq->tfm);
--	struct crypto_aead *child = ctx->child;
--	struct aead_request *req;
-+	struct aead_request *req = data;
-+	struct cryptd_aead_ctx *ctx;
-+	struct crypto_aead *child;
- 
--	req = container_of(areq, struct aead_request, base);
-+	ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-+	child = ctx->child;
- 	cryptd_aead_crypt(req, child, err, crypto_aead_alg(child)->encrypt,
- 			  cryptd_aead_encrypt);
- }
- 
--static void cryptd_aead_decrypt(struct crypto_async_request *areq, int err)
-+static void cryptd_aead_decrypt(void *data, int err)
- {
--	struct cryptd_aead_ctx *ctx = crypto_tfm_ctx(areq->tfm);
--	struct crypto_aead *child = ctx->child;
--	struct aead_request *req;
-+	struct aead_request *req = data;
-+	struct cryptd_aead_ctx *ctx;
-+	struct crypto_aead *child;
- 
--	req = container_of(areq, struct aead_request, base);
-+	ctx = crypto_aead_ctx(crypto_aead_reqtfm(req));
-+	child = ctx->child;
- 	cryptd_aead_crypt(req, child, err, crypto_aead_alg(child)->decrypt,
- 			  cryptd_aead_decrypt);
- }
-diff --git a/crypto/cts.c b/crypto/cts.c
-index 3766d47ebcc0..8f604f6554b1 100644
---- a/crypto/cts.c
-+++ b/crypto/cts.c
-@@ -85,9 +85,9 @@ static int crypto_cts_setkey(struct crypto_skcipher *parent, const u8 *key,
- 	return crypto_skcipher_setkey(child, key, keylen);
- }
- 
--static void cts_cbc_crypt_done(struct crypto_async_request *areq, int err)
-+static void cts_cbc_crypt_done(void *data, int err)
- {
--	struct skcipher_request *req = areq->data;
-+	struct skcipher_request *req = data;
- 
- 	if (err == -EINPROGRESS)
- 		return;
-@@ -125,9 +125,9 @@ static int cts_cbc_encrypt(struct skcipher_request *req)
- 	return crypto_skcipher_encrypt(subreq);
- }
- 
--static void crypto_cts_encrypt_done(struct crypto_async_request *areq, int err)
-+static void crypto_cts_encrypt_done(void *data, int err)
- {
--	struct skcipher_request *req = areq->data;
-+	struct skcipher_request *req = data;
- 
- 	if (err)
- 		goto out;
-@@ -219,9 +219,9 @@ static int cts_cbc_decrypt(struct skcipher_request *req)
- 	return crypto_skcipher_decrypt(subreq);
- }
- 
--static void crypto_cts_decrypt_done(struct crypto_async_request *areq, int err)
-+static void crypto_cts_decrypt_done(void *data, int err)
- {
--	struct skcipher_request *req = areq->data;
-+	struct skcipher_request *req = data;
- 
- 	if (err)
- 		goto out;
-diff --git a/crypto/dh.c b/crypto/dh.c
-index e39c1bde1ac0..0fcad279e6fe 100644
---- a/crypto/dh.c
-+++ b/crypto/dh.c
-@@ -503,10 +503,9 @@ static int dh_safe_prime_set_secret(struct crypto_kpp *tfm, const void *buffer,
- 	return err;
- }
- 
--static void dh_safe_prime_complete_req(struct crypto_async_request *dh_req,
--				       int err)
-+static void dh_safe_prime_complete_req(void *data, int err)
- {
--	struct kpp_request *req = dh_req->data;
-+	struct kpp_request *req = data;
- 
- 	kpp_request_complete(req, err);
- }
-diff --git a/crypto/essiv.c b/crypto/essiv.c
-index 307eba74b901..f7d4ef4837e5 100644
---- a/crypto/essiv.c
-+++ b/crypto/essiv.c
-@@ -131,9 +131,9 @@ static int essiv_aead_setauthsize(struct crypto_aead *tfm,
- 	return crypto_aead_setauthsize(tctx->u.aead, authsize);
- }
- 
--static void essiv_skcipher_done(struct crypto_async_request *areq, int err)
-+static void essiv_skcipher_done(void *data, int err)
- {
--	struct skcipher_request *req = areq->data;
-+	struct skcipher_request *req = data;
- 
- 	skcipher_request_complete(req, err);
- }
-@@ -166,9 +166,9 @@ static int essiv_skcipher_decrypt(struct skcipher_request *req)
- 	return essiv_skcipher_crypt(req, false);
- }
- 
--static void essiv_aead_done(struct crypto_async_request *areq, int err)
-+static void essiv_aead_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 	struct essiv_aead_request_ctx *rctx = aead_request_ctx(req);
- 
- 	if (err == -EINPROGRESS)
-diff --git a/crypto/gcm.c b/crypto/gcm.c
-index 338ee0769747..4ba624450c3f 100644
---- a/crypto/gcm.c
-+++ b/crypto/gcm.c
-@@ -197,7 +197,7 @@ static inline unsigned int gcm_remain(unsigned int len)
- 	return len ? 16 - len : 0;
- }
- 
--static void gcm_hash_len_done(struct crypto_async_request *areq, int err);
-+static void gcm_hash_len_done(void *data, int err);
- 
- static int gcm_hash_update(struct aead_request *req,
- 			   crypto_completion_t compl,
-@@ -246,9 +246,9 @@ static int gcm_hash_len_continue(struct aead_request *req, u32 flags)
- 	return gctx->complete(req, flags);
- }
- 
--static void gcm_hash_len_done(struct crypto_async_request *areq, int err)
-+static void gcm_hash_len_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 
- 	if (err)
- 		goto out;
-@@ -267,10 +267,9 @@ static int gcm_hash_crypt_remain_continue(struct aead_request *req, u32 flags)
- 	       gcm_hash_len_continue(req, flags);
- }
- 
--static void gcm_hash_crypt_remain_done(struct crypto_async_request *areq,
--				       int err)
-+static void gcm_hash_crypt_remain_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 
- 	if (err)
- 		goto out;
-@@ -298,9 +297,9 @@ static int gcm_hash_crypt_continue(struct aead_request *req, u32 flags)
- 	return gcm_hash_crypt_remain_continue(req, flags);
- }
- 
--static void gcm_hash_crypt_done(struct crypto_async_request *areq, int err)
-+static void gcm_hash_crypt_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 
- 	if (err)
- 		goto out;
-@@ -326,10 +325,9 @@ static int gcm_hash_assoc_remain_continue(struct aead_request *req, u32 flags)
- 	return gcm_hash_crypt_remain_continue(req, flags);
- }
- 
--static void gcm_hash_assoc_remain_done(struct crypto_async_request *areq,
--				       int err)
-+static void gcm_hash_assoc_remain_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 
- 	if (err)
- 		goto out;
-@@ -355,9 +353,9 @@ static int gcm_hash_assoc_continue(struct aead_request *req, u32 flags)
- 	return gcm_hash_assoc_remain_continue(req, flags);
- }
- 
--static void gcm_hash_assoc_done(struct crypto_async_request *areq, int err)
-+static void gcm_hash_assoc_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 
- 	if (err)
- 		goto out;
-@@ -380,9 +378,9 @@ static int gcm_hash_init_continue(struct aead_request *req, u32 flags)
- 	return gcm_hash_assoc_remain_continue(req, flags);
- }
- 
--static void gcm_hash_init_done(struct crypto_async_request *areq, int err)
-+static void gcm_hash_init_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 
- 	if (err)
- 		goto out;
-@@ -433,9 +431,9 @@ static int gcm_encrypt_continue(struct aead_request *req, u32 flags)
- 	return gcm_hash(req, flags);
- }
- 
--static void gcm_encrypt_done(struct crypto_async_request *areq, int err)
-+static void gcm_encrypt_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 
- 	if (err)
- 		goto out;
-@@ -477,9 +475,9 @@ static int crypto_gcm_verify(struct aead_request *req)
- 	return crypto_memneq(iauth_tag, auth_tag, authsize) ? -EBADMSG : 0;
- }
- 
--static void gcm_decrypt_done(struct crypto_async_request *areq, int err)
-+static void gcm_decrypt_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 
- 	if (!err)
- 		err = crypto_gcm_verify(req);
-diff --git a/crypto/hctr2.c b/crypto/hctr2.c
-index 7d00a3bcb667..6f4c1884d0e9 100644
---- a/crypto/hctr2.c
-+++ b/crypto/hctr2.c
-@@ -252,10 +252,9 @@ static int hctr2_finish(struct skcipher_request *req)
- 	return 0;
- }
- 
--static void hctr2_xctr_done(struct crypto_async_request *areq,
--				    int err)
-+static void hctr2_xctr_done(void *data, int err)
- {
--	struct skcipher_request *req = areq->data;
-+	struct skcipher_request *req = data;
- 
- 	if (!err)
- 		err = hctr2_finish(req);
-diff --git a/crypto/lrw.c b/crypto/lrw.c
-index 8d59a66b6525..1b0f76ba3eb5 100644
---- a/crypto/lrw.c
-+++ b/crypto/lrw.c
-@@ -205,9 +205,9 @@ static int lrw_xor_tweak_post(struct skcipher_request *req)
- 	return lrw_xor_tweak(req, true);
- }
- 
--static void lrw_crypt_done(struct crypto_async_request *areq, int err)
-+static void lrw_crypt_done(void *data, int err)
- {
--	struct skcipher_request *req = areq->data;
-+	struct skcipher_request *req = data;
- 
- 	if (!err) {
- 		struct lrw_request_ctx *rctx = skcipher_request_ctx(req);
-diff --git a/crypto/pcrypt.c b/crypto/pcrypt.c
-index 9d10b846ccf7..8c1d0ca41213 100644
---- a/crypto/pcrypt.c
-+++ b/crypto/pcrypt.c
-@@ -63,9 +63,9 @@ static void pcrypt_aead_serial(struct padata_priv *padata)
- 	aead_request_complete(req->base.data, padata->info);
- }
- 
--static void pcrypt_aead_done(struct crypto_async_request *areq, int err)
-+static void pcrypt_aead_done(void *data, int err)
- {
--	struct aead_request *req = areq->data;
-+	struct aead_request *req = data;
- 	struct pcrypt_request *preq = aead_request_ctx(req);
- 	struct padata_priv *padata = pcrypt_request_padata(preq);
- 
-diff --git a/crypto/rsa-pkcs1pad.c b/crypto/rsa-pkcs1pad.c
-index 02028670331d..d2e5e104f8cf 100644
---- a/crypto/rsa-pkcs1pad.c
-+++ b/crypto/rsa-pkcs1pad.c
-@@ -210,10 +210,9 @@ static int pkcs1pad_encrypt_sign_complete(struct akcipher_request *req, int err)
- 	return err;
- }
- 
--static void pkcs1pad_encrypt_sign_complete_cb(
--		struct crypto_async_request *child_async_req, int err)
-+static void pkcs1pad_encrypt_sign_complete_cb(void *data, int err)
- {
--	struct akcipher_request *req = child_async_req->data;
-+	struct akcipher_request *req = data;
- 
- 	if (err == -EINPROGRESS)
- 		goto out;
-@@ -326,10 +325,9 @@ static int pkcs1pad_decrypt_complete(struct akcipher_request *req, int err)
- 	return err;
- }
- 
--static void pkcs1pad_decrypt_complete_cb(
--		struct crypto_async_request *child_async_req, int err)
-+static void pkcs1pad_decrypt_complete_cb(void *data, int err)
- {
--	struct akcipher_request *req = child_async_req->data;
-+	struct akcipher_request *req = data;
- 
- 	if (err == -EINPROGRESS)
- 		goto out;
-@@ -506,10 +504,9 @@ static int pkcs1pad_verify_complete(struct akcipher_request *req, int err)
- 	return err;
- }
- 
--static void pkcs1pad_verify_complete_cb(
--		struct crypto_async_request *child_async_req, int err)
-+static void pkcs1pad_verify_complete_cb(void *data, int err)
- {
--	struct akcipher_request *req = child_async_req->data;
-+	struct akcipher_request *req = data;
- 
- 	if (err == -EINPROGRESS)
- 		goto out;
-diff --git a/crypto/seqiv.c b/crypto/seqiv.c
-index b1bcfe537daf..17e11d51ddc3 100644
---- a/crypto/seqiv.c
-+++ b/crypto/seqiv.c
-@@ -36,10 +36,9 @@ static void seqiv_aead_encrypt_complete2(struct aead_request *req, int err)
- 	kfree_sensitive(subreq->iv);
- }
- 
--static void seqiv_aead_encrypt_complete(struct crypto_async_request *base,
--					int err)
-+static void seqiv_aead_encrypt_complete(void *data, int err)
- {
--	struct aead_request *req = base->data;
-+	struct aead_request *req = data;
- 
- 	seqiv_aead_encrypt_complete2(req, err);
- 	aead_request_complete(req, err);
-diff --git a/crypto/xts.c b/crypto/xts.c
-index de6cbcf69bbd..09be909a6a1a 100644
---- a/crypto/xts.c
-+++ b/crypto/xts.c
-@@ -140,9 +140,9 @@ static int xts_xor_tweak_post(struct skcipher_request *req, bool enc)
- 	return xts_xor_tweak(req, true, enc);
- }
- 
--static void xts_cts_done(struct crypto_async_request *areq, int err)
-+static void xts_cts_done(void *data, int err)
- {
--	struct skcipher_request *req = areq->data;
-+	struct skcipher_request *req = data;
- 	le128 b;
- 
- 	if (!err) {
-@@ -196,9 +196,9 @@ static int xts_cts_final(struct skcipher_request *req,
- 	return 0;
- }
- 
--static void xts_encrypt_done(struct crypto_async_request *areq, int err)
-+static void xts_encrypt_done(void *data, int err)
- {
--	struct skcipher_request *req = areq->data;
-+	struct skcipher_request *req = data;
- 
- 	if (!err) {
- 		struct xts_request_ctx *rctx = skcipher_request_ctx(req);
-@@ -216,9 +216,9 @@ static void xts_encrypt_done(struct crypto_async_request *areq, int err)
- 	skcipher_request_complete(req, err);
- }
- 
--static void xts_decrypt_done(struct crypto_async_request *areq, int err)
-+static void xts_decrypt_done(void *data, int err)
- {
--	struct skcipher_request *req = areq->data;
-+	struct skcipher_request *req = data;
- 
- 	if (!err) {
- 		struct xts_request_ctx *rctx = skcipher_request_ctx(req);
-diff --git a/drivers/crypto/atmel-sha.c b/drivers/crypto/atmel-sha.c
-index a77cf0da0816..e7c1db2739ec 100644
---- a/drivers/crypto/atmel-sha.c
-+++ b/drivers/crypto/atmel-sha.c
-@@ -2099,10 +2099,9 @@ struct atmel_sha_authenc_reqctx {
- 	unsigned int		digestlen;
- };
- 
--static void atmel_sha_authenc_complete(struct crypto_async_request *areq,
--				       int err)
-+static void atmel_sha_authenc_complete(void *data, int err)
- {
--	struct ahash_request *req = areq->data;
-+	struct ahash_request *req = data;
- 	struct atmel_sha_authenc_reqctx *authctx  = ahash_request_ctx(req);
- 
- 	authctx->cb(authctx->aes_dev, err, authctx->base.dd->is_async);
-diff --git a/include/crypto/algapi.h b/include/crypto/algapi.h
-index 1fd81e74a174..fede394ae2ab 100644
---- a/include/crypto/algapi.h
-+++ b/include/crypto/algapi.h
-@@ -305,8 +305,7 @@ enum {
- static inline void crypto_request_complete(struct crypto_async_request *req,
- 					   int err)
- {
--	crypto_completion_t complete = req->complete;
--	complete(req, err);
-+	req->complete(req->data, err);
- }
- 
- #endif	/* _CRYPTO_ALGAPI_H */
-diff --git a/include/crypto/if_alg.h b/include/crypto/if_alg.h
-index a5db86670bdf..7e76623f9ec3 100644
---- a/include/crypto/if_alg.h
-+++ b/include/crypto/if_alg.h
-@@ -21,8 +21,6 @@
- 
- #define ALG_MAX_PAGES			16
- 
--struct crypto_async_request;
--
- struct alg_sock {
- 	/* struct sock must be the first member of struct alg_sock */
- 	struct sock sk;
-@@ -235,7 +233,7 @@ int af_alg_sendmsg(struct socket *sock, struct msghdr *msg, size_t size,
- ssize_t af_alg_sendpage(struct socket *sock, struct page *page,
- 			int offset, size_t size, int flags);
- void af_alg_free_resources(struct af_alg_async_req *areq);
--void af_alg_async_cb(struct crypto_async_request *_req, int err);
-+void af_alg_async_cb(void *data, int err);
- __poll_t af_alg_poll(struct file *file, struct socket *sock,
- 			 poll_table *wait);
- struct af_alg_async_req *af_alg_alloc_areq(struct sock *sk,
-diff --git a/include/linux/crypto.h b/include/linux/crypto.h
-index b18f6e669fb1..80f6350fb588 100644
---- a/include/linux/crypto.h
-+++ b/include/linux/crypto.h
-@@ -176,8 +176,8 @@ struct crypto_async_request;
- struct crypto_tfm;
- struct crypto_type;
- 
--typedef struct crypto_async_request crypto_completion_data_t;
--typedef void (*crypto_completion_t)(struct crypto_async_request *req, int err);
-+typedef void crypto_completion_data_t;
-+typedef void (*crypto_completion_t)(void *req, int err);
- 
- /**
-  * DOC: Block Cipher Context Data Structures
-@@ -596,12 +596,12 @@ struct crypto_wait {
- /*
-  * Async ops completion helper functioons
-  */
--static inline void *crypto_get_completion_data(crypto_completion_data_t *req)
-+static inline void *crypto_get_completion_data(void *data)
- {
--	return req->data;
-+	return data;
- }
- 
--void crypto_req_done(struct crypto_async_request *req, int err);
-+void crypto_req_done(void *req, int err);
- 
- static inline int crypto_wait_req(int err, struct crypto_wait *wait)
- {
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+
+AFAICS about the only condition I can imagine in which "multipath -u"
+would return an exit status other than 0 would be failure of
+init_config(). If that's the case you're concerned about, the issue
+might be easier to fix in main.c directly. 
+
+Regards,
+Martin
+
 --
 dm-devel mailing list
 dm-devel@redhat.com
