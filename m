@@ -1,73 +1,80 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2465DC05027
-	for <dm-devel@archiver.kernel.org>; Fri, 10 Feb 2023 23:22:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 55C7CC636CC
+	for <dm-devel@archiver.kernel.org>; Mon, 13 Feb 2023 08:34:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1676071327;
+	s=mimecast20190719; t=1676277248;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=NfXXFlCmEwyTdusmDlRabm2qIFOmhIfZdSTtYA8bihk=;
-	b=Mez2XCw0NVHOTJ4DYkLkU+c79GWLDdkjto063ho7z+6KmPVDCvBJ3gNblAvEc8i5enOkP+
-	CouIECa8eRiKaNSStaHK3CJ7PFUZsD0vJTZZA2Qjhzd/NLwcez6oZcKa3vVaTtbNtB8J7e
-	spi1tGT3FjWqe16gMUsRDkHihenrD7A=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=U/B9QTo8GBTOgOkJxkv8BgVEIsptJbMLviXhvQM1QMs=;
+	b=Vup9vviKd5oV3NbWWNj61alobWxdS4ZhhdG/YviCKu6FCDUffy9/EWCS7H92Y8T+7ap2/f
+	pFztacFohPDSFu96avGcPRi8bJMvA5hdr7hxOg/MHGSNF2MSojxaIZ0AInhAKsRt6KWI04
+	20gTkOWMWhNcH80juq/lycQiIZk68lI=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-489-gNvZV42bNcW9tRpUPVkWPg-1; Fri, 10 Feb 2023 18:22:05 -0500
-X-MC-Unique: gNvZV42bNcW9tRpUPVkWPg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-610-xmaYb9hTMVa1tVyJb2XBAQ-1; Mon, 13 Feb 2023 03:34:04 -0500
+X-MC-Unique: xmaYb9hTMVa1tVyJb2XBAQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4B98A3C10691;
-	Fri, 10 Feb 2023 23:22:03 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2143785A5A3;
+	Mon, 13 Feb 2023 08:34:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 282D02166B29;
-	Fri, 10 Feb 2023 23:22:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2C24318EC7;
+	Mon, 13 Feb 2023 08:33:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DB9CC1946594;
-	Fri, 10 Feb 2023 23:22:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 011A7194658F;
+	Mon, 13 Feb 2023 08:33:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 59CA71946595
- for <dm-devel@listman.corp.redhat.com>; Fri, 10 Feb 2023 23:21:59 +0000 (UTC)
+ ESMTP id 1A170194658F
+ for <dm-devel@listman.corp.redhat.com>; Sat, 11 Feb 2023 07:06:57 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3C1A21410F36; Fri, 10 Feb 2023 23:21:59 +0000 (UTC)
+ id C6655492B00; Sat, 11 Feb 2023 07:06:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 345E3140EBF4
- for <dm-devel@redhat.com>; Fri, 10 Feb 2023 23:21:59 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id BE013492C3F
+ for <dm-devel@redhat.com>; Sat, 11 Feb 2023 07:06:57 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 173873C1068B
- for <dm-devel@redhat.com>; Fri, 10 Feb 2023 23:21:59 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-661-z6XYjHh_OxiRTy1sVTNaNg-1; Fri,
- 10 Feb 2023 18:21:55 -0500
-X-MC-Unique: z6XYjHh_OxiRTy1sVTNaNg-1
-Received: by linux.microsoft.com (Postfix, from userid 1052)
- id 0D21520C8B19; Fri, 10 Feb 2023 15:21:54 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 0D21520C8B19
-Date: Fri, 10 Feb 2023 15:21:54 -0800
-From: Fan Wu <wufan@linux.microsoft.com>
-To: Roberto Sassu <roberto.sassu@huaweicloud.com>
-Message-ID: <20230210232154.GA17962@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
-References: <1675119451-23180-1-git-send-email-wufan@linux.microsoft.com>
- <1675119451-23180-4-git-send-email-wufan@linux.microsoft.com>
- <061df661004a06ef1e8790d48157c7ba4ecfc009.camel@huaweicloud.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A69D185A588
+ for <dm-devel@redhat.com>; Sat, 11 Feb 2023 07:06:57 +0000 (UTC)
+Received: from www262.sakura.ne.jp (www262.sakura.ne.jp [202.181.97.72]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-448-DTrxXuLdNsqdg6KAW-NiWg-1; Sat, 11 Feb 2023 02:06:55 -0500
+X-MC-Unique: DTrxXuLdNsqdg6KAW-NiWg-1
+Received: from fsav119.sakura.ne.jp (fsav119.sakura.ne.jp [27.133.134.246])
+ by www262.sakura.ne.jp (8.15.2/8.15.2) with ESMTP id 31B6JLrJ082951;
+ Sat, 11 Feb 2023 15:19:21 +0900 (JST)
+ (envelope-from penguin-kernel@I-love.SAKURA.ne.jp)
+Received: from www262.sakura.ne.jp (202.181.97.72)
+ by fsav119.sakura.ne.jp (F-Secure/fsigk_smtp/550/fsav119.sakura.ne.jp);
+ Sat, 11 Feb 2023 15:19:21 +0900 (JST)
+X-Virus-Status: clean(F-Secure/fsigk_smtp/550/fsav119.sakura.ne.jp)
+Received: from [192.168.1.6] (M106072142033.v4.enabler.ne.jp [106.72.142.33])
+ (authenticated bits=0)
+ by www262.sakura.ne.jp (8.15.2/8.15.2) with ESMTPSA id 31B6JLt2082947
+ (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=NO);
+ Sat, 11 Feb 2023 15:19:21 +0900 (JST)
+ (envelope-from penguin-kernel@I-love.SAKURA.ne.jp)
+Message-ID: <53e65050-5be2-0037-b01f-60db5aea24b6@I-love.SAKURA.ne.jp>
+Date: Sat, 11 Feb 2023 15:19:20 +0900
 MIME-Version: 1.0
-In-Reply-To: <061df661004a06ef1e8790d48157c7ba4ecfc009.camel@huaweicloud.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101
+ Thunderbird/102.7.2
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>
+From: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -75,9 +82,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: Re: [dm-devel] [RFC PATCH v9 03/16] ipe: add evaluation loop and
- introduce 'boot_verified' as a trust provider
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Mailman-Approved-At: Mon, 13 Feb 2023 08:33:57 +0000
+Subject: [dm-devel] [dm] Planning to WARN_ON() when flush_scheduled_work()
+ is used.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -89,68 +97,28 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, tytso@mit.edu,
- paul@paul-moore.com, dm-devel@redhat.com, corbet@lwn.net,
- roberto.sassu@huawei.com, Deven Bowers <deven.desai@linux.microsoft.com>,
- linux-doc@vger.kernel.org, snitzer@kernel.org, jmorris@namei.org,
- zohar@linux.ibm.com, linux-kernel@vger.kernel.org, ebiggers@kernel.org,
- linux-security-module@vger.kernel.org, linux-audit@redhat.com,
- eparis@redhat.com, linux-fscrypt@vger.kernel.org,
- linux-integrity@vger.kernel.org, agk@redhat.com, serge@hallyn.com
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Jan 31, 2023 at 04:49:44PM +0100, Roberto Sassu wrote:
-> On Mon, 2023-01-30 at 14:57 -0800, Fan Wu wrote:
-> > From: Deven Bowers <deven.desai@linux.microsoft.com>
-> > 
-> > IPE must have a centralized function to evaluate incoming callers
-> > against IPE's policy. This iteration of the policy against the rules
-> > for that specific caller is known as the evaluation loop.
-> 
-> Not sure if you check the properties at every access.
-> 
-> >From my previous comments (also for previous versions of the patches)
-> you could evaluate the property once, by calling the respective
-> functions in the other subsystems.
-> 
-> Then, you reserve space in the security blob for inodes and superblocks
-> to cache the decision. The format could be a policy sequence number, to
-> ensure that the cache is valid only for the current policy, and a bit
-> for every hook you enforce.
+Hello.
 
-Thanks for raising this idea. I agree that if the property evaluation
-leads to a performance issue, it will be better to cache the evaluation
-result. But for this version, all the property evaluations are simple,
-so it is just as fast as accessing a cache. Also, for the initial
-version we prefer to keep the patch as minimal as possible. 
+Like commit c4f135d64382 ("workqueue: Wrap flush_workqueue() using a macro")
+says, flush_scheduled_work() is dangerous and will be forbidden. But I haven't
+heard from you after https://lkml.kernel.org/r/YtF45oMcHMKXjIyy@redhat.com .
 
-If the policy evolved to be super complex and the evaluation becomes
-a bottleneck, cache support will absolutely be the right way we will go.
--Fan
+  https://lkml.kernel.org/r/49925af7-78a8-a3dd-bce6-cfc02e1a9236@I-love.SAKURA.ne.jp
+  https://lkml.kernel.org/r/e170edc2-e5b9-4c8b-4ed3-7e2d7a2850dc@I-love.SAKURA.ne.jp
 
-> 
-> Also, currently you rely on the fact that the properties you defined
-> are immutable and the immutability is guaranteed by the other
-> subsystems, so no write can occur.
-> 
-> But if you remove this limitation, the immutability is not guaranteed
-> anymore by the other subsystems (for example if a file is in an ext4
-> filesystem), the LSM needs to take extra care to ensure that the
-> properties are still verified. This would be required for example if
-> IPE is used in conjuction with DIGLIM.
-> 
-> In my opinion, IPE value would increase if the generic enforcement
-> mechanism is property-agnostic.
-> 
-> Roberto
-> 
+Please do clarify which work items does this flush_scheduled_work() need to wait.
+
+Regards.
 
 --
 dm-devel mailing list
