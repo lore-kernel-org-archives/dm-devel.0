@@ -1,96 +1,96 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CC135C64ED6
-	for <dm-devel@archiver.kernel.org>; Mon, 13 Feb 2023 20:15:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id AF847C678D4
+	for <dm-devel@archiver.kernel.org>; Mon, 13 Feb 2023 20:15:35 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1676319332;
+	s=mimecast20190719; t=1676319334;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=bPVseQPHFOMCvwNGTnQBktU9SZBccIcwKK4UaInM4js=;
-	b=EROLOKXOZoMyUl2pKCNJxJZtfSHEYwE6PEadQVYmRs4Rv4nssG0S22TrCnE24joGBE+vUq
-	x2DzA3PhLhH4Q2AGjbqshPo69FsgQzVjv3B/v3T/FNETPenxBFzeCjnobZkN0qU3beoe1W
-	dxsgXIDQxd70fACPbSaY/CGAeC4GWxA=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=C6e6exifQ/TYIfddDtzgQ9/jVYKfTFFXaEGjYQg7VLc=;
+	b=BXHvvkreEFuP7AaF9aXEZ/HNa4JWFPH2wKpunl2KFT5HnLiqC46Omy3H0bSp2UhBZb7+nL
+	/H/JubEye6EyjuT4CwnNO0NkHCDptZtnxNOh28UCEUeIsDv4idacfg3IVO+Dtlw/iFDr/y
+	jTZjz/6LU7QgzcP8vV9CVfLWp00ZxhY=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-286-Pl_aEM6JMIW2AB6HC9GD9w-1; Mon, 13 Feb 2023 15:15:29 -0500
-X-MC-Unique: Pl_aEM6JMIW2AB6HC9GD9w-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-139-ArrC3396ObGHpEb-K7EYeg-1; Mon, 13 Feb 2023 15:15:30 -0500
+X-MC-Unique: ArrC3396ObGHpEb-K7EYeg-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DD7931C02D4E;
-	Mon, 13 Feb 2023 20:15:17 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9E1C5800DAA;
+	Mon, 13 Feb 2023 20:15:18 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C80D3403D0CF;
-	Mon, 13 Feb 2023 20:15:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8A9A918EC7;
+	Mon, 13 Feb 2023 20:15:18 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 99CCE19465A4;
-	Mon, 13 Feb 2023 20:15:17 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7B9D71946588;
+	Mon, 13 Feb 2023 20:15:18 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
  [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8375B1946588
- for <dm-devel@listman.corp.redhat.com>; Mon, 13 Feb 2023 20:15:16 +0000 (UTC)
+ ESMTP id 973C81946586
+ for <dm-devel@listman.corp.redhat.com>; Mon, 13 Feb 2023 20:15:15 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 59CAE40C83B6; Mon, 13 Feb 2023 20:15:16 +0000 (UTC)
+ id 8964C400D927; Mon, 13 Feb 2023 20:15:15 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 524C240CF8ED
- for <dm-devel@redhat.com>; Mon, 13 Feb 2023 20:15:16 +0000 (UTC)
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 824B140C83B6
+ for <dm-devel@redhat.com>; Mon, 13 Feb 2023 20:15:15 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CBCD218E528D
- for <dm-devel@redhat.com>; Mon, 13 Feb 2023 20:15:14 +0000 (UTC)
-Received: from mail-qt1-f170.google.com (mail-qt1-f170.google.com
- [209.85.160.170]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D980629AB45E
+ for <dm-devel@redhat.com>; Mon, 13 Feb 2023 20:15:11 +0000 (UTC)
+Received: from mail-qt1-f172.google.com (mail-qt1-f172.google.com
+ [209.85.160.172]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-450-1QNh8ZxpM_GJpEcYJwhbXA-2; Mon, 13 Feb 2023 15:15:09 -0500
-X-MC-Unique: 1QNh8ZxpM_GJpEcYJwhbXA-2
-Received: by mail-qt1-f170.google.com with SMTP id cr22so15169317qtb.10
- for <dm-devel@redhat.com>; Mon, 13 Feb 2023 12:15:03 -0800 (PST)
+ us-mta-370-N2XI3eDoNMypEDUhZD_qQQ-1; Mon, 13 Feb 2023 15:15:05 -0500
+X-MC-Unique: N2XI3eDoNMypEDUhZD_qQQ-1
+Received: by mail-qt1-f172.google.com with SMTP id g18so15181013qtb.6
+ for <dm-devel@redhat.com>; Mon, 13 Feb 2023 12:15:05 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=iE2AES2rt4SzC2HmCkYIjbxs6qvhGIB9lMuSOB7BQpc=;
- b=C5UO72J1HabesMfbs/MPSUc4xCxGItHe5QGE+sqezSdBmCat+L2uefn9opx/lAXt+k
- jvL39gJI/vvAFTZU+Eio/S0KDsBlZjxIWoXGpxDSNSSjHrmpGcg34jVcJUHawAPfqC6I
- l+5LpeUCvTj4rWuF4SwXFK6Nv8l2+yAx0ZehWQEhY6azTAfuA9zcAIkQsPr+lWg55Lqo
- c7NtF4qW+pj6OlElIUy/ajUzkZ7HM4l+U/dtXTY7g0Ri58I2K/oo8Q9AtImxEwveMmYw
- UkiYLNRbI4mrqd+a8ER9huy+CnydZn1HD/J0PsJ0Eu4egIGiU9Ud3oFwkJPuH5L9HjLr
- PA5w==
-X-Gm-Message-State: AO0yUKWyEuLBBNJU5e7+WHfoLtBg639jbL5S+2TfnaAASjkHw6i44hq4
- mr+lkkmCoYRGR160cr1is7tK3WA1Hvg0m+md2HB0NK+hrtJmDkxnkaNHHKrJhar6lmmBY/JwG2r
- ObVl3DIX9WnUxyYAk2ry28wY/R0+0FbFkh15E3FB5GknoLCIIdsme5hmOU635P1mNUjXINw==
-X-Google-Smtp-Source: AK7set8InHpPZnwILFAwWxTVAx6jRf52rLKXbkgNqj8hiPa6Dt6F4UoKztyASsBdoFd3aKC9+JN11g==
-X-Received: by 2002:a05:622a:588:b0:3b9:b7c9:f0d3 with SMTP id
- c8-20020a05622a058800b003b9b7c9f0d3mr37273695qtb.43.1676319302778; 
- Mon, 13 Feb 2023 12:15:02 -0800 (PST)
+ bh=P1MQ3uMUmAtxBpc8seThRyZ7Rqd2CNx0PV9T2FA5cYs=;
+ b=ePiXx8CI65reFkvAXKX+bTyW6fgUNeSg8xZR6hvLFCiZdG4AD9vbRkOnQfjwt03UsQ
+ sMo2D/xhkdENtRWF+TpRxxrRsOUGV9chfedDSbSQBsrbb4TmdF4P5h4RZ6vJinwpjm7s
+ tEGy2fp9KxoLCtalG8F8li7NbxjTYIAwvhP3JVsUVK2AO+UCur115aARQCzwhWp8tCeI
+ QTVrTJe3qgPUbNXoQAgAkGEPXPQwKVMctPrmGvNbw1cvI//rjCjN9ZUkz4W6Zki13fM5
+ Kj7eJh0/DgT1E5/ufPomQAfH6jxEdyQFI/T5cgFpLfXCmEkYQtDxLcp3QUGpO2Kdh0TQ
+ NozQ==
+X-Gm-Message-State: AO0yUKWII3varn8L48zRwa+jqW+NVnzPaNPuEr+VnkCaBCdpiN8wvn9L
+ wTyoJ/35h8YQJl+npGnyhXlXET3bHBQFx/3AxSbBw1hno3i2NPq0bNkGbWyjxpnV7j90Ph3aroO
+ WVpPxYXEIKYdGWb9dKOpQ5iyYik50sCDC54JDcZVoRe+qZbNG4DnKIIeagOSyF8D361KdqA==
+X-Google-Smtp-Source: AK7set/PmPrHkVjKk1CsW2BlXL2Q3WbTjYPa0ZNTYhaBOmUbjbHz2NFnYRA3ECcB+IBlQz1iHI0Mhg==
+X-Received: by 2002:ac8:5dcf:0:b0:3b9:b1eb:ad38 with SMTP id
+ e15-20020ac85dcf000000b003b9b1ebad38mr41598541qtx.50.1676319304703; 
+ Mon, 13 Feb 2023 12:15:04 -0800 (PST)
 Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
  [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- m127-20020a37bc85000000b00720750365b9sm10433373qkf.129.2023.02.13.12.15.02
+ b20-20020ac86794000000b003b2957fb45bsm9937019qtp.8.2023.02.13.12.15.03
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 13 Feb 2023 12:15:02 -0800 (PST)
+ Mon, 13 Feb 2023 12:15:04 -0800 (PST)
 From: Mike Snitzer <snitzer@kernel.org>
 To: dm-devel@redhat.com
-Date: Mon, 13 Feb 2023 15:13:43 -0500
-Message-Id: <20230213201401.45973-22-snitzer@kernel.org>
+Date: Mon, 13 Feb 2023 15:13:44 -0500
+Message-Id: <20230213201401.45973-23-snitzer@kernel.org>
 In-Reply-To: <20230213201401.45973-1-snitzer@kernel.org>
 References: <20230213201401.45973-1-snitzer@kernel.org>
 MIME-Version: 1.0
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [PATCH 21/39] dm: prefer '"%s...", __func__'
+Subject: [dm-devel] [PATCH 22/39] dm: avoid using symbolic permissions
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -106,7 +106,7 @@ Cc: ebiggers@kernel.org, Heinz Mauelshagen <heinzm@redhat.com>,
  Mike Snitzer <snitzer@kernel.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
@@ -117,325 +117,190 @@ From: Heinz Mauelshagen <heinzm@redhat.com>
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-cache-metadata.c                   | 12 ++++++------
- drivers/md/dm-era-target.c                       | 12 ++++++------
- drivers/md/dm-integrity.c                        |  4 ++--
- drivers/md/dm-ioctl.c                            |  2 +-
- drivers/md/dm-mpath.c                            | 14 +++++++-------
- drivers/md/dm-thin-metadata.c                    | 12 ++++++------
- drivers/md/dm-verity-target.c                    |  4 ++--
- drivers/md/persistent-data/dm-array.c            |  4 ++--
- drivers/md/persistent-data/dm-btree-spine.c      | 10 +++++-----
- drivers/md/persistent-data/dm-space-map-common.c |  4 ++--
- 10 files changed, 39 insertions(+), 39 deletions(-)
+ drivers/md/dm-bufio.c         | 16 ++++++++--------
+ drivers/md/dm-kcopyd.c        |  2 +-
+ drivers/md/dm-mpath.c         |  3 +--
+ drivers/md/dm-rq.c            |  8 ++++----
+ drivers/md/dm-stats.c         |  2 +-
+ drivers/md/dm-sysfs.c         |  4 ++--
+ drivers/md/dm-thin.c          |  2 +-
+ drivers/md/dm-verity-target.c |  2 +-
+ drivers/md/dm.c               |  6 +++---
+ 9 files changed, 22 insertions(+), 23 deletions(-)
 
-diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
-index 8161943fe360..30b95f6bf499 100644
---- a/drivers/md/dm-cache-metadata.c
-+++ b/drivers/md/dm-cache-metadata.c
-@@ -203,15 +203,15 @@ static int sb_check(struct dm_block_validator *v,
- 	__le32 csum_le;
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index af310bed6ba9..a5d7f8555aa0 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -2165,28 +2165,28 @@ static void __exit dm_bufio_exit(void)
+ module_init(dm_bufio_init)
+ module_exit(dm_bufio_exit)
  
- 	if (dm_block_location(b) != le64_to_cpu(disk_super->blocknr)) {
--		DMERR("sb_check failed: blocknr %llu: wanted %llu",
--		      le64_to_cpu(disk_super->blocknr),
-+		DMERR("%s failed: blocknr %llu: wanted %llu",
-+		      __func__, le64_to_cpu(disk_super->blocknr),
- 		      (unsigned long long)dm_block_location(b));
- 		return -ENOTBLK;
- 	}
+-module_param_named(max_cache_size_bytes, dm_bufio_cache_size, ulong, S_IRUGO | S_IWUSR);
++module_param_named(max_cache_size_bytes, dm_bufio_cache_size, ulong, 0644);
+ MODULE_PARM_DESC(max_cache_size_bytes, "Size of metadata cache");
  
- 	if (le64_to_cpu(disk_super->magic) != CACHE_SUPERBLOCK_MAGIC) {
--		DMERR("sb_check failed: magic %llu: wanted %llu",
--		      le64_to_cpu(disk_super->magic),
-+		DMERR("%s failed: magic %llu: wanted %llu",
-+		      __func__, le64_to_cpu(disk_super->magic),
- 		      (unsigned long long)CACHE_SUPERBLOCK_MAGIC);
- 		return -EILSEQ;
- 	}
-@@ -220,8 +220,8 @@ static int sb_check(struct dm_block_validator *v,
- 					     sb_block_size - sizeof(__le32),
- 					     SUPERBLOCK_CSUM_XOR));
- 	if (csum_le != disk_super->csum) {
--		DMERR("sb_check failed: csum %u: wanted %u",
--		      le32_to_cpu(csum_le), le32_to_cpu(disk_super->csum));
-+		DMERR("%s failed: csum %u: wanted %u",
-+		      __func__, le32_to_cpu(csum_le), le32_to_cpu(disk_super->csum));
- 		return -EILSEQ;
- 	}
+-module_param_named(max_age_seconds, dm_bufio_max_age, uint, S_IRUGO | S_IWUSR);
++module_param_named(max_age_seconds, dm_bufio_max_age, uint, 0644);
+ MODULE_PARM_DESC(max_age_seconds, "Max age of a buffer in seconds");
  
-diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
-index f8f7994f4f27..c2e7780cdd2d 100644
---- a/drivers/md/dm-era-target.c
-+++ b/drivers/md/dm-era-target.c
-@@ -229,15 +229,15 @@ static int sb_check(struct dm_block_validator *v,
- 	__le32 csum_le;
+-module_param_named(retain_bytes, dm_bufio_retain_bytes, ulong, S_IRUGO | S_IWUSR);
++module_param_named(retain_bytes, dm_bufio_retain_bytes, ulong, 0644);
+ MODULE_PARM_DESC(retain_bytes, "Try to keep at least this many bytes cached in memory");
  
- 	if (dm_block_location(b) != le64_to_cpu(disk->blocknr)) {
--		DMERR("sb_check failed: blocknr %llu: wanted %llu",
--		      le64_to_cpu(disk->blocknr),
-+		DMERR("%s failed: blocknr %llu: wanted %llu",
-+		      __func__, le64_to_cpu(disk->blocknr),
- 		      (unsigned long long)dm_block_location(b));
- 		return -ENOTBLK;
- 	}
+-module_param_named(peak_allocated_bytes, dm_bufio_peak_allocated, ulong, S_IRUGO | S_IWUSR);
++module_param_named(peak_allocated_bytes, dm_bufio_peak_allocated, ulong, 0644);
+ MODULE_PARM_DESC(peak_allocated_bytes, "Tracks the maximum allocated memory");
  
- 	if (le64_to_cpu(disk->magic) != SUPERBLOCK_MAGIC) {
--		DMERR("sb_check failed: magic %llu: wanted %llu",
--		      le64_to_cpu(disk->magic),
-+		DMERR("%s failed: magic %llu: wanted %llu",
-+		      __func__, le64_to_cpu(disk->magic),
- 		      (unsigned long long) SUPERBLOCK_MAGIC);
- 		return -EILSEQ;
- 	}
-@@ -246,8 +246,8 @@ static int sb_check(struct dm_block_validator *v,
- 					     sb_block_size - sizeof(__le32),
- 					     SUPERBLOCK_CSUM_XOR));
- 	if (csum_le != disk->csum) {
--		DMERR("sb_check failed: csum %u: wanted %u",
--		      le32_to_cpu(csum_le), le32_to_cpu(disk->csum));
-+		DMERR("%s failed: csum %u: wanted %u",
-+		      __func__, le32_to_cpu(csum_le), le32_to_cpu(disk->csum));
- 		return -EILSEQ;
- 	}
+-module_param_named(allocated_kmem_cache_bytes, dm_bufio_allocated_kmem_cache, ulong, S_IRUGO);
++module_param_named(allocated_kmem_cache_bytes, dm_bufio_allocated_kmem_cache, ulong, 0444);
+ MODULE_PARM_DESC(allocated_kmem_cache_bytes, "Memory allocated with kmem_cache_alloc");
  
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 76a518f54bd2..4729e641bf8b 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -3093,7 +3093,7 @@ static void replay_journal(struct dm_integrity_c *ic)
+-module_param_named(allocated_get_free_pages_bytes, dm_bufio_allocated_get_free_pages, ulong, S_IRUGO);
++module_param_named(allocated_get_free_pages_bytes, dm_bufio_allocated_get_free_pages, ulong, 0444);
+ MODULE_PARM_DESC(allocated_get_free_pages_bytes, "Memory allocated with get_free_pages");
  
- static void dm_integrity_enter_synchronous_mode(struct dm_integrity_c *ic)
- {
--	DEBUG_print("dm_integrity_enter_synchronous_mode\n");
-+	DEBUG_print("%s\n", __func__);
+-module_param_named(allocated_vmalloc_bytes, dm_bufio_allocated_vmalloc, ulong, S_IRUGO);
++module_param_named(allocated_vmalloc_bytes, dm_bufio_allocated_vmalloc, ulong, 0444);
+ MODULE_PARM_DESC(allocated_vmalloc_bytes, "Memory allocated with vmalloc");
  
- 	if (ic->mode == 'B') {
- 		ic->bitmap_flush_interval = msecs_to_jiffies(10) + 1;
-@@ -3109,7 +3109,7 @@ static int dm_integrity_reboot(struct notifier_block *n, unsigned long code, voi
- {
- 	struct dm_integrity_c *ic = container_of(n, struct dm_integrity_c, reboot_notifier);
+-module_param_named(current_allocated_bytes, dm_bufio_current_allocated, ulong, S_IRUGO);
++module_param_named(current_allocated_bytes, dm_bufio_current_allocated, ulong, 0444);
+ MODULE_PARM_DESC(current_allocated_bytes, "Memory currently used by the cache");
  
--	DEBUG_print("dm_integrity_reboot\n");
-+	DEBUG_print("%s\n", __func__);
+ MODULE_AUTHOR("Mikulas Patocka <dm-devel@redhat.com>");
+diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
+index 0027349aa6be..81bc33a3581d 100644
+--- a/drivers/md/dm-kcopyd.c
++++ b/drivers/md/dm-kcopyd.c
+@@ -37,7 +37,7 @@
  
- 	dm_integrity_enter_synchronous_mode(ic);
+ static unsigned int kcopyd_subjob_size_kb = DEFAULT_SUB_JOB_SIZE_KB;
  
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index eac73b0d3bfa..ec278675a8ca 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1402,7 +1402,7 @@ static int populate_table(struct dm_table *table,
- 	char *target_params;
+-module_param(kcopyd_subjob_size_kb, uint, S_IRUGO | S_IWUSR);
++module_param(kcopyd_subjob_size_kb, uint, 0644);
+ MODULE_PARM_DESC(kcopyd_subjob_size_kb, "Sub-job size for dm-kcopyd clients");
  
- 	if (!param->target_count) {
--		DMERR("populate_table: no targets specified");
-+		DMERR("%s: no targets specified", __func__);
- 		return -EINVAL;
- 	}
- 
+ static unsigned int dm_get_kcopyd_subjob_size(void)
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 9669162a38ae..c15cc7f54bd2 100644
+index c15cc7f54bd2..2524ac702145 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -739,15 +739,15 @@ static void process_queued_bios(struct work_struct *work)
- /*
-  * If we run out of usable paths, should we queue I/O or error it?
-  */
--static int queue_if_no_path(struct multipath *m, bool queue_if_no_path,
-+static int queue_if_no_path(struct multipath *m, bool f_queue_if_no_path,
- 			    bool save_old_value, const char *caller)
- {
- 	unsigned long flags;
- 	bool queue_if_no_path_bit, saved_queue_if_no_path_bit;
- 	const char *dm_dev_name = dm_table_device_name(m->ti->table);
+@@ -2258,8 +2258,7 @@ static void __exit dm_multipath_exit(void)
+ module_init(dm_multipath_init);
+ module_exit(dm_multipath_exit);
  
--	DMDEBUG("%s: %s caller=%s queue_if_no_path=%d save_old_value=%d",
--		dm_dev_name, __func__, caller, queue_if_no_path, save_old_value);
-+	DMDEBUG("%s: %s caller=%s f_queue_if_no_path=%d save_old_value=%d",
-+		dm_dev_name, __func__, caller, f_queue_if_no_path, save_old_value);
+-module_param_named(queue_if_no_path_timeout_secs,
+-		   queue_if_no_path_timeout_secs, ulong, S_IRUGO | S_IWUSR);
++module_param_named(queue_if_no_path_timeout_secs, queue_if_no_path_timeout_secs, ulong, 0644);
+ MODULE_PARM_DESC(queue_if_no_path_timeout_secs, "No available paths queue IO timeout in seconds");
  
- 	spin_lock_irqsave(&m->lock, flags);
- 
-@@ -760,11 +760,11 @@ static int queue_if_no_path(struct multipath *m, bool queue_if_no_path,
- 			      dm_dev_name);
- 		} else
- 			assign_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags, queue_if_no_path_bit);
--	} else if (!queue_if_no_path && saved_queue_if_no_path_bit) {
-+	} else if (!f_queue_if_no_path && saved_queue_if_no_path_bit) {
- 		/* due to "fail_if_no_path" message, need to honor it. */
- 		clear_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
+ MODULE_DESCRIPTION(DM_NAME " multipath target");
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index d5f368965d3b..fec63b2a907d 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -584,16 +584,16 @@ void dm_mq_cleanup_mapped_device(struct mapped_device *md)
  	}
--	assign_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags, queue_if_no_path);
-+	assign_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags, f_queue_if_no_path);
+ }
  
- 	DMDEBUG("%s: after %s changes; QIFNP = %d; SQIFNP = %d; DNFS = %d",
- 		dm_dev_name, __func__,
-@@ -774,7 +774,7 @@ static int queue_if_no_path(struct multipath *m, bool queue_if_no_path,
+-module_param(reserved_rq_based_ios, uint, S_IRUGO | S_IWUSR);
++module_param(reserved_rq_based_ios, uint, 0644);
+ MODULE_PARM_DESC(reserved_rq_based_ios, "Reserved IOs in request-based mempools");
  
- 	spin_unlock_irqrestore(&m->lock, flags);
+ /* Unused, but preserved for userspace compatibility */
+ static bool use_blk_mq = true;
+-module_param(use_blk_mq, bool, S_IRUGO | S_IWUSR);
++module_param(use_blk_mq, bool, 0644);
+ MODULE_PARM_DESC(use_blk_mq, "Use block multiqueue for request-based DM devices");
  
--	if (!queue_if_no_path) {
-+	if (!f_queue_if_no_path) {
- 		dm_table_run_md_queue_async(m->ti->table);
- 		process_queued_io_list(m);
- 	}
-@@ -1468,7 +1468,7 @@ static int switch_pg_num(struct multipath *m, const char *pgstr)
+-module_param(dm_mq_nr_hw_queues, uint, S_IRUGO | S_IWUSR);
++module_param(dm_mq_nr_hw_queues, uint, 0644);
+ MODULE_PARM_DESC(dm_mq_nr_hw_queues, "Number of hardware queues for request-based dm-mq devices");
  
- 	if (!pgstr || (sscanf(pgstr, "%u%c", &pgnum, &dummy) != 1) || !pgnum ||
- 	    !m->nr_priority_groups || (pgnum > m->nr_priority_groups)) {
--		DMWARN("invalid PG number supplied to switch_pg_num");
-+		DMWARN("invalid PG number supplied to %s", __func__);
- 		return -EINVAL;
- 	}
+-module_param(dm_mq_queue_depth, uint, S_IRUGO | S_IWUSR);
++module_param(dm_mq_queue_depth, uint, 0644);
+ MODULE_PARM_DESC(dm_mq_queue_depth, "Queue depth for request-based dm-mq devices");
+diff --git a/drivers/md/dm-stats.c b/drivers/md/dm-stats.c
+index 12d17b1a83a9..5e49e02ee174 100644
+--- a/drivers/md/dm-stats.c
++++ b/drivers/md/dm-stats.c
+@@ -1247,5 +1247,5 @@ void dm_statistics_exit(void)
+ 		DMCRIT("shared_memory_amount leaked: %lu", shared_memory_amount);
+ }
  
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index afa574799461..ddd0718fcf81 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -269,15 +269,15 @@ static int sb_check(struct dm_block_validator *v,
- 	__le32 csum_le;
+-module_param_named(stats_current_allocated_bytes, shared_memory_amount, ulong, S_IRUGO);
++module_param_named(stats_current_allocated_bytes, shared_memory_amount, ulong, 0444);
+ MODULE_PARM_DESC(stats_current_allocated_bytes, "Memory currently used by statistics");
+diff --git a/drivers/md/dm-sysfs.c b/drivers/md/dm-sysfs.c
+index c090cb184093..914c0e767a3c 100644
+--- a/drivers/md/dm-sysfs.c
++++ b/drivers/md/dm-sysfs.c
+@@ -18,7 +18,7 @@ struct dm_sysfs_attr {
  
- 	if (dm_block_location(b) != le64_to_cpu(disk_super->blocknr)) {
--		DMERR("sb_check failed: blocknr %llu: wanted %llu",
--		      le64_to_cpu(disk_super->blocknr),
-+		DMERR("%s failed: blocknr %llu: wanted %llu",
-+		      __func__, le64_to_cpu(disk_super->blocknr),
- 		      (unsigned long long)dm_block_location(b));
- 		return -ENOTBLK;
- 	}
+ #define DM_ATTR_RO(_name) \
+ struct dm_sysfs_attr dm_attr_##_name = \
+-	__ATTR(_name, S_IRUGO, dm_attr_##_name##_show, NULL)
++	__ATTR(_name, 0444, dm_attr_##_name##_show, NULL)
  
- 	if (le64_to_cpu(disk_super->magic) != THIN_SUPERBLOCK_MAGIC) {
--		DMERR("sb_check failed: magic %llu: wanted %llu",
--		      le64_to_cpu(disk_super->magic),
-+		DMERR("%s failed: magic %llu: wanted %llu",
-+		      __func__, le64_to_cpu(disk_super->magic),
- 		      (unsigned long long)THIN_SUPERBLOCK_MAGIC);
- 		return -EILSEQ;
- 	}
-@@ -286,8 +286,8 @@ static int sb_check(struct dm_block_validator *v,
- 					     block_size - sizeof(__le32),
- 					     SUPERBLOCK_CSUM_XOR));
- 	if (csum_le != disk_super->csum) {
--		DMERR("sb_check failed: csum %u: wanted %u",
--		      le32_to_cpu(csum_le), le32_to_cpu(disk_super->csum));
-+		DMERR("%s failed: csum %u: wanted %u",
-+		      __func__, le32_to_cpu(csum_le), le32_to_cpu(disk_super->csum));
- 		return -EILSEQ;
- 	}
+ static ssize_t dm_attr_show(struct kobject *kobj, struct attribute *attr,
+ 			    char *page)
+@@ -43,7 +43,7 @@ static ssize_t dm_attr_show(struct kobject *kobj, struct attribute *attr,
  
+ #define DM_ATTR_RW(_name) \
+ struct dm_sysfs_attr dm_attr_##_name = \
+-	__ATTR(_name, S_IRUGO | S_IWUSR, dm_attr_##_name##_show, dm_attr_##_name##_store)
++	__ATTR(_name, 0644, dm_attr_##_name##_show, dm_attr_##_name##_store)
+ 
+ static ssize_t dm_attr_store(struct kobject *kobj, struct attribute *attr,
+ 			     const char *page, size_t count)
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index e2ff22e79367..c8d3b20401f4 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -4532,7 +4532,7 @@ static void dm_thin_exit(void)
+ module_init(dm_thin_init);
+ module_exit(dm_thin_exit);
+ 
+-module_param_named(no_space_timeout, no_space_timeout_secs, uint, S_IRUGO | S_IWUSR);
++module_param_named(no_space_timeout, no_space_timeout_secs, uint, 0644);
+ MODULE_PARM_DESC(no_space_timeout, "Out of data space queue IO timeout in seconds");
+ 
+ MODULE_DESCRIPTION(DM_NAME " thin provisioning target");
 diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index f4955c4dbe47..1db64a24623d 100644
+index 1db64a24623d..0f9814099d1b 100644
 --- a/drivers/md/dm-verity-target.c
 +++ b/drivers/md/dm-verity-target.c
-@@ -165,7 +165,7 @@ static int verity_hash_final(struct dm_verity *v, struct ahash_request *req,
- 		r = verity_hash_update(v, req, v->salt, v->salt_size, wait);
+@@ -43,7 +43,7 @@
  
- 		if (r < 0) {
--			DMERR("verity_hash_final failed updating salt: %d", r);
-+			DMERR("%s failed updating salt: %d", __func__, r);
- 			goto out;
- 		}
- 	}
-@@ -423,7 +423,7 @@ static int verity_for_io_block(struct dm_verity *v, struct dm_verity_io *io,
- 		r = crypto_wait_req(crypto_ahash_update(req), wait);
+ static unsigned int dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE;
  
- 		if (unlikely(r < 0)) {
--			DMERR("verity_for_io_block crypto op failed: %d", r);
-+			DMERR("%s crypto op failed: %d", __func__, r);
- 			return r;
- 		}
+-module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, S_IRUGO | S_IWUSR);
++module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, 0644);
  
-diff --git a/drivers/md/persistent-data/dm-array.c b/drivers/md/persistent-data/dm-array.c
-index 30d77f0f7b83..7821bf106fa7 100644
---- a/drivers/md/persistent-data/dm-array.c
-+++ b/drivers/md/persistent-data/dm-array.c
-@@ -58,7 +58,7 @@ static int array_block_check(struct dm_block_validator *v,
- 	__le32 csum_disk;
+ static DEFINE_STATIC_KEY_FALSE(use_tasklet_enabled);
  
- 	if (dm_block_location(b) != le64_to_cpu(bh_le->blocknr)) {
--		DMERR_LIMIT("array_block_check failed: blocknr %llu != wanted %llu",
-+		DMERR_LIMIT("%s failed: blocknr %llu != wanted %llu", __func__,
- 			    (unsigned long long) le64_to_cpu(bh_le->blocknr),
- 			    (unsigned long long) dm_block_location(b));
- 		return -ENOTBLK;
-@@ -68,7 +68,7 @@ static int array_block_check(struct dm_block_validator *v,
- 					       size_of_block - sizeof(__le32),
- 					       CSUM_XOR));
- 	if (csum_disk != bh_le->csum) {
--		DMERR_LIMIT("array_block_check failed: csum %u != wanted %u",
-+		DMERR_LIMIT("%s failed: csum %u != wanted %u", __func__,
- 			    (unsigned int) le32_to_cpu(csum_disk),
- 			    (unsigned int) le32_to_cpu(bh_le->csum));
- 		return -EILSEQ;
-diff --git a/drivers/md/persistent-data/dm-btree-spine.c b/drivers/md/persistent-data/dm-btree-spine.c
-index f44bf974f5a5..1de913c59f58 100644
---- a/drivers/md/persistent-data/dm-btree-spine.c
-+++ b/drivers/md/persistent-data/dm-btree-spine.c
-@@ -40,7 +40,7 @@ static int node_check(struct dm_block_validator *v,
- 	uint32_t flags, nr_entries, max_entries;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 16f29a60a64f..a54700b6c9eb 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -3394,13 +3394,13 @@ module_exit(dm_exit);
+ module_param(major, uint, 0);
+ MODULE_PARM_DESC(major, "The major number of the device mapper");
  
- 	if (dm_block_location(b) != le64_to_cpu(h->blocknr)) {
--		DMERR_LIMIT("node_check failed: blocknr %llu != wanted %llu",
-+		DMERR_LIMIT("%s failed: blocknr %llu != wanted %llu", __func__,
- 			    le64_to_cpu(h->blocknr), dm_block_location(b));
- 		return -ENOTBLK;
- 	}
-@@ -49,7 +49,7 @@ static int node_check(struct dm_block_validator *v,
- 					       block_size - sizeof(__le32),
- 					       BTREE_CSUM_XOR));
- 	if (csum_disk != h->csum) {
--		DMERR_LIMIT("node_check failed: csum %u != wanted %u",
-+		DMERR_LIMIT("%s failed: csum %u != wanted %u", __func__,
- 			    le32_to_cpu(csum_disk), le32_to_cpu(h->csum));
- 		return -EILSEQ;
- 	}
-@@ -60,12 +60,12 @@ static int node_check(struct dm_block_validator *v,
+-module_param(reserved_bio_based_ios, uint, S_IRUGO | S_IWUSR);
++module_param(reserved_bio_based_ios, uint, 0644);
+ MODULE_PARM_DESC(reserved_bio_based_ios, "Reserved IOs in bio-based mempools");
  
- 	if (sizeof(struct node_header) +
- 	    (sizeof(__le64) + value_size) * max_entries > block_size) {
--		DMERR_LIMIT("node_check failed: max_entries too large");
-+		DMERR_LIMIT("%s failed: max_entries too large", __func__);
- 		return -EILSEQ;
- 	}
+-module_param(dm_numa_node, int, S_IRUGO | S_IWUSR);
++module_param(dm_numa_node, int, 0644);
+ MODULE_PARM_DESC(dm_numa_node, "NUMA node for DM device memory allocations");
  
- 	if (nr_entries > max_entries) {
--		DMERR_LIMIT("node_check failed: too many entries");
-+		DMERR_LIMIT("%s failed: too many entries", __func__);
- 		return -EILSEQ;
- 	}
+-module_param(swap_bios, int, S_IRUGO | S_IWUSR);
++module_param(swap_bios, int, 0644);
+ MODULE_PARM_DESC(swap_bios, "Maximum allowed inflight swap IOs");
  
-@@ -74,7 +74,7 @@ static int node_check(struct dm_block_validator *v,
- 	 */
- 	flags = le32_to_cpu(h->flags);
- 	if (!(flags & INTERNAL_NODE) && !(flags & LEAF_NODE)) {
--		DMERR_LIMIT("node_check failed: node is neither INTERNAL or LEAF");
-+		DMERR_LIMIT("%s failed: node is neither INTERNAL or LEAF", __func__);
- 		return -EILSEQ;
- 	}
- 
-diff --git a/drivers/md/persistent-data/dm-space-map-common.c b/drivers/md/persistent-data/dm-space-map-common.c
-index 01a82b17c07c..cc7e06a026ae 100644
---- a/drivers/md/persistent-data/dm-space-map-common.c
-+++ b/drivers/md/persistent-data/dm-space-map-common.c
-@@ -42,7 +42,7 @@ static int index_check(struct dm_block_validator *v,
- 	__le32 csum_disk;
- 
- 	if (dm_block_location(b) != le64_to_cpu(mi_le->blocknr)) {
--		DMERR_LIMIT("index_check failed: blocknr %llu != wanted %llu",
-+		DMERR_LIMIT("%s failed: blocknr %llu != wanted %llu", __func__,
- 			    le64_to_cpu(mi_le->blocknr), dm_block_location(b));
- 		return -ENOTBLK;
- 	}
-@@ -51,7 +51,7 @@ static int index_check(struct dm_block_validator *v,
- 					       block_size - sizeof(__le32),
- 					       INDEX_CSUM_XOR));
- 	if (csum_disk != mi_le->csum) {
--		DMERR_LIMIT("index_check failed: csum %u != wanted %u",
-+		DMERR_LIMIT("i%s failed: csum %u != wanted %u", __func__,
- 			    le32_to_cpu(csum_disk), le32_to_cpu(mi_le->csum));
- 		return -EILSEQ;
- 	}
+ MODULE_DESCRIPTION(DM_NAME " driver");
 -- 
 2.37.0 (Apple Git-136)
 
