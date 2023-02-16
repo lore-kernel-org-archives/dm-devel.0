@@ -4,59 +4,89 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 658A9C636CC
-	for <dm-devel@archiver.kernel.org>; Thu, 16 Feb 2023 12:40:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2E166C636CC
+	for <dm-devel@archiver.kernel.org>; Thu, 16 Feb 2023 13:09:43 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1676551228;
+	s=mimecast20190719; t=1676552982;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=SpkqpkSe5q/lRfNVV9fUNwa0V5FgwS6rNiKe6z2sf80=;
-	b=Q6vQIPQQoApZOYV3GFM1eqtMfEwQxZZck46XLMSG9ruGNlOvtiNwXcMas5gvjNnHgDgCLY
-	2BYT+CnDX5CRYAVNsrs5ERRfyEaR9eziZCpCUMpEQG5Se3cNgaUxKOm547Pp5DETjvof44
-	3CnHBxQFRE7Ogp3kfGHDPmjqIo3BuAA=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=e+3+mhlPGPCRustUbv1Id/caO5s4eoE7pylqjV6FuJc=;
+	b=J2eoDhMHsCHhjofT+GCRUqoe62DKqHcftnX2aDGldOPN8S8BfV6q4nwFrHLBy+dJtAMzKl
+	KR2/uldne+LrW5dzg9aOMpbxJuocMWRk5LCusL2MW0/h6gq4JiMac+WkNcu6pcddK/lXjn
+	rukH34DquqnAR7MQJ/b0ltJmLP10biU=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-150-eq15if1rOt-mpGpHMPtvYg-1; Thu, 16 Feb 2023 07:40:24 -0500
-X-MC-Unique: eq15if1rOt-mpGpHMPtvYg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-574-6pCa7Wt_MVGJVUoKmq-hDA-1; Thu, 16 Feb 2023 08:09:40 -0500
+X-MC-Unique: 6pCa7Wt_MVGJVUoKmq-hDA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E7A703C1014A;
-	Thu, 16 Feb 2023 12:40:15 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5BB47857A88;
+	Thu, 16 Feb 2023 13:09:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8F7A040B40C9;
-	Thu, 16 Feb 2023 12:40:15 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id DFC441121314;
+	Thu, 16 Feb 2023 13:09:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 66C491946589;
-	Thu, 16 Feb 2023 12:40:15 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0E57C1946589;
+	Thu, 16 Feb 2023 13:09:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6F4FF194658D
- for <dm-devel@listman.corp.redhat.com>; Thu, 16 Feb 2023 12:40:10 +0000 (UTC)
+ ESMTP id C70C71946588
+ for <dm-devel@listman.corp.redhat.com>; Thu, 16 Feb 2023 13:08:41 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7E72140B3FE1; Thu, 16 Feb 2023 12:40:10 +0000 (UTC)
-Received: from [10.40.194.185] (ovpn-194-185.brq.redhat.com [10.40.194.185])
- by smtp.corp.redhat.com (Postfix) with ESMTP id D0BD240CF8E4;
- Thu, 16 Feb 2023 12:39:53 +0000 (UTC)
-Message-ID: <2bb4b267-b981-9ca4-f091-eb2d362711f5@redhat.com>
-Date: Thu, 16 Feb 2023 13:39:52 +0100
+ id 7BE532166B31; Thu, 16 Feb 2023 13:08:41 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7553D2166B30
+ for <dm-devel@redhat.com>; Thu, 16 Feb 2023 13:08:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5791085CBE7
+ for <dm-devel@redhat.com>; Thu, 16 Feb 2023 13:08:41 +0000 (UTC)
+Received: from mga03.intel.com (mga03.intel.com [134.134.136.65]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-218-hewEJ25jPkawo-y0d1luBA-1; Thu, 16 Feb 2023 08:08:39 -0500
+X-MC-Unique: hewEJ25jPkawo-y0d1luBA-1
+X-IronPort-AV: E=McAfee;i="6500,9779,10623"; a="333881459"
+X-IronPort-AV: E=Sophos;i="5.97,302,1669104000"; d="scan'208";a="333881459"
+Received: from orsmga006.jf.intel.com ([10.7.209.51])
+ by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 16 Feb 2023 05:07:34 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6500,9779,10623"; a="647672293"
+X-IronPort-AV: E=Sophos;i="5.97,302,1669104000"; d="scan'208";a="647672293"
+Received: from lkp-server01.sh.intel.com (HELO 4455601a8d94) ([10.239.97.150])
+ by orsmga006.jf.intel.com with ESMTP; 16 Feb 2023 05:07:32 -0800
+Received: from kbuild by 4455601a8d94 with local (Exim 4.96)
+ (envelope-from <lkp@intel.com>) id 1pSdyw-000AGZ-2R;
+ Thu, 16 Feb 2023 13:07:26 +0000
+Date: Thu, 16 Feb 2023 21:06:49 +0800
+From: kernel test robot <lkp@intel.com>
+To: Uday Shankar <ushankar@purestorage.com>, Jens Axboe <axboe@kernel.dk>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>
+Message-ID: <202302162040.FaI25ul2-lkp@intel.com>
+References: <20230215201507.494152-1-ushankar@purestorage.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Firefox/102.0 Thunderbird/102.7.2
-To: Pingfan Liu <piliu@redhat.com>, Ming Lei <ming.lei@redhat.com>
-References: <CAF+s44TZw40c_hNDi78VkMq6Xhp23h5j_cadHWirOnYW-wR=NQ@mail.gmail.com>
- <Y+10AxZ8tcd6SemJ@T590>
- <CAF+s44Qqvvhywg4_8Sx3QZ0=_+jz3kPzvmr539uS8Y6LEGY2sg@mail.gmail.com>
-From: Zdenek Kabelac <zkabelac@redhat.com>
-In-Reply-To: <CAF+s44Qqvvhywg4_8Sx3QZ0=_+jz3kPzvmr539uS8Y6LEGY2sg@mail.gmail.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] A hang bug of dm on s390x
+In-Reply-To: <20230215201507.494152-1-ushankar@purestorage.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH] blk-mq: enforce op-specific segment limits
+ in blk_insert_cloned_request
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -68,90 +98,132 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Mike Snitzer <snitzer@kernel.org>, dm-devel@redhat.com,
- Ming Lei <minlei@redhat.com>, Tao Liu <ltao@redhat.com>,
- Alasdair Kergon <agk@redhat.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, llvm@lists.linux.dev,
+ Uday Shankar <ushankar@purestorage.com>, oe-kbuild-all@lists.linux.dev
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-RG5lIDE2LiAwMi4gMjMgdiA5OjMwIFBpbmdmYW4gTGl1IG5hcHNhbChhKToKPiBIaSBNaW5nLAo+
-Cj4gVGhhbmsgeW91IGZvciBsb29raW5nIGludG8gdGhpcy4KPgo+IGxldCBtZSBsb29wIGluIEFs
-YXNkYWlyLCBNaWtlIGFuZCBaZGVuZWsgZm9yIGZ1cnRoZXIgY29tbWVudCBvbiBMVk0gc3R1ZmYK
-Pgo+Cj4gVGhhbmtzLAo+Cj4gUGluZ2ZhbgoKCkhpCgoKIEZyb20gbHZtMiBQT1YgLSBjb3VwbGUg
-Y2xhcmlmaWNhdGlvbnMgLSB0byBsZXQgdGhpbi1wb29sIGF1dG8tZXh0ZW5kIC0gdXNlciAKaGFz
-IHRvIGNvbmZpZ3VyZToKCgp0aGluX3Bvb2xfYXV0b2V4dGVuZF90aHJlc2hvbGQgPSA3MAoKdGhp
-bl9wb29sX2F1dG9leHRlbmRfcGVyY2VudCA9IDIwCgoKSWYgdGhlIHRoaW5fcG9vbF9hdXRvZXh0
-ZW5kX3RocmVzaG9sZCBpcyBsZWZ0IHdpdGggdGhlIGRlZmF1bHQgdmFsdWUgMTAwLCAKdGhlcmUg
-aXMgbm8gZXh0ZW5zaW9uIG1hZGUgdG8gdGhlIHRoaW4tcG9vbC4KCkRlZmF1bHQgYmVoYXZpb3Ig
-b2YgdGhpbi1wb29sIGtlcm5lbCB0YXJnZXQgd2hlbiBpdCBydW5zIG91dC1vZi1zcGFjZSBpcyB0
-byAKcHV0IGFsbCBpbi1mbGlnaHQgSU8gb3BlcmF0aW9uIG9uLWhvbGQgZm9yIDYwcyAoY29uZmln
-dXJhYmxlIGJ5IGtlcm5lbCAKcGFyYW1ldGVyKSB0aGVuIGFsbCBzdWNoIG9wZXJhdGlvbiBzdGFy
-dHMgdG8gYmUgZXJyb3JlZCBhbmQgdGhpbi1wb29sIGdvZXMgdG8gCm91dC1vZi1zcGFjZSBlcnJv
-ciBzdGF0ZS4KClRvIGltbWVkaWF0ZWx5IGdldCB0aGlzIHN0YXRlIHVzZcKgICctLWVycm9yd2hl
-bmZ1bGw9eSfCoCB3aXRoIHRoaW5wb29sIAoobHZjcmVhdGUsIGx2Y29udmVydCwgbHZjaGFuZ2Up
-IC0gdGhpcyB3aWxsIGF2b2lkIGFueSBkZWxheSBpZiB1c2VyIGRvZXNuJ3QgCndhbnQgZXhwYW5z
-aW9uIG9mIHRoaW4tcG9vbCBhbmQgd2FudHMgdG8gZ2V0IGVycm9yIEFTQVAuCgpCdXQgdGhpcyBh
-bGwgbWlnaHQgYmUgdW5yZWxhdGVkIHRvIHRoZSBpc3N1ZSB5b3UgYXJlIGdldHRpbmcgb24geW91
-ciBody4KCgpSZWdhcmRzCgpaZGVuZWsKCgo+IE9uIFRodSwgRmViIDE2LCAyMDIzIGF0IDg6MDgg
-QU0gTWluZyBMZWkgPG1pbmcubGVpQHJlZGhhdC5jb20+IHdyb3RlOgo+PiBPbiBXZWQsIEZlYiAx
-NSwgMjAyMyBhdCAwNzoyMzo0MFBNICswODAwLCBQaW5nZmFuIExpdSB3cm90ZToKPj4+IEhpIGd1
-eXMsCj4+Pgo+Pj4gSSBlbmNvdW50ZXJlZCAgYSBoYW5nIGlzc3VlIG9uIGEgczM5MHggc3lzdGVt
-LiAgVGhlIHRlc3RlZCBrZXJuZWwgaXMKPj4+IG5vdCBwcmVlbXB0aWJsZSBhbmQgYm9vdGluZyB3
-aXRoICJucl9jcHVzPTEiCj4+Pgo+Pj4gVGhlIHRlc3Qgc3RlcHM6Cj4+PiAgICAgICAgdW1vdW50
-IC9ob21lCj4+PiAgICAgICAgbHZyZW1vdmUgL2Rldi9yaGVsX3MzOTB4LWt2bS0wMTEvaG9tZQo+
-Pj4gICAgICAgICMjIHVuY29tbWVudCAic25hcHNob3RfYXV0b2V4dGVuZF90aHJlc2hvbGQgPSA3
-MCIgYW5kCj4+PiAgICAgICAgInNuYXBzaG90X2F1dG9leHRlbmRfcGVyY2VudCA9IDIwIiBpbiAv
-ZXRjL2x2bS9sdm0uY29uZgo+Pj4KPj4+ICAgICAgICBzeXN0ZW1jdGwgZW5hYmxlIGx2bTItbW9u
-aXRvci5zZXJ2aWNlCj4+PiAgICAgICAgc3lzdGVtY3RsIHN0YXJ0IGx2bTItbW9uaXRvci5zZXJ2
-aWNlCj4+Pgo+Pj4gICAgICAgIGx2cmVtb3ZlIC15IHJoZWxfczM5MHgta3ZtLTAxMS90aGlucAo+
-Pj4gICAgICAgIGx2Y3JlYXRlIC1MIDEwTSAtVCByaGVsX3MzOTB4LWt2bS0wMTEvdGhpbnAKPj4+
-ICAgICAgICBsdmNyZWF0ZSAtViA0MDBNIC1UIHJoZWxfczM5MHgta3ZtLTAxMS90aGlucCAtbiBz
-cmMKPj4+ICAgICAgICBta2ZzLmV4dDQgL2Rldi9yaGVsX3MzOTB4LWt2bS0wMTEvc3JjCj4+PiAg
-ICAgICAgbW91bnQgL2Rldi9yaGVsX3MzOTB4LWt2bS0wMTEvc3JjIC9tbnQKPj4+ICAgICAgICBm
-b3IoKGk9MDtpPDQ7aSsrKSk7IGRvIGRkIGlmPS9kZXYvemVybyBvZj0vbW50L3Rlc3QkaS5pbWcK
-Pj4+IGJzPTEwME0gY291bnQ9MTsgZG9uZQo+Pj4KPj4+IEFuZCB0aGUgc3lzdGVtIGhhbmdzIHdp
-dGggdGhlIGNvbnNvbGUgbG9nIFsxXQo+Pj4KPj4+IFRoZSByZWxhdGVkIGtlcm5lbCBjb25maWcK
-Pj4+Cj4+PiAgICAgIENPTkZJR19QUkVFTVBUX05PTkVfQlVJTEQ9eQo+Pj4gICAgICBDT05GSUdf
-UFJFRU1QVF9OT05FPXkKPj4+ICAgICAgQ09ORklHX1BSRUVNUFRfQ09VTlQ9eQo+Pj4gICAgICBD
-T05GSUdfU0NIRURfQ09SRT15Cj4+Pgo+Pj4gSXQgdHVybnMgb3V0IHRoYXQgd2hlbiBoYW5naW5n
-LCB0aGUga2VybmVsIGlzIHN0dWNrIGluIHRoZSBkZWFkLWxvb3AKPj4+IGluIHRoZSBmdW5jdGlv
-biBkbV93cV93b3JrKCkKPj4+ICAgICAgICAgIHdoaWxlICghdGVzdF9iaXQoRE1GX0JMT0NLX0lP
-X0ZPUl9TVVNQRU5ELCAmbWQtPmZsYWdzKSkgewo+Pj4gICAgICAgICAgICAgICAgICBzcGluX2xv
-Y2tfaXJxKCZtZC0+ZGVmZXJyZWRfbG9jayk7Cj4+PiAgICAgICAgICAgICAgICAgIGJpbyA9IGJp
-b19saXN0X3BvcCgmbWQtPmRlZmVycmVkKTsKPj4+ICAgICAgICAgICAgICAgICAgc3Bpbl91bmxv
-Y2tfaXJxKCZtZC0+ZGVmZXJyZWRfbG9jayk7Cj4+Pgo+Pj4gICAgICAgICAgICAgICAgICBpZiAo
-IWJpbykKPj4+ICAgICAgICAgICAgICAgICAgICAgICAgICBicmVhazsKPj4+ICAgICAgICAgICAg
-ICAgICAgdGhyZWFkX2NwdSA9IHNtcF9wcm9jZXNzb3JfaWQoKTsKPj4+ICAgICAgICAgICAgICAg
-ICAgc3VibWl0X2Jpb19ub2FjY3QoYmlvKTsKPj4+ICAgICAgICAgIH0KPj4+IHdoZXJlIGRtX3dx
-X3dvcmsoKS0+X19zdWJtaXRfYmlvX25vYWNjdCgpLT4uLi4tPmRtX2hhbmRsZV9yZXF1ZXVlKCkK
-Pj4+IGtlZXBzIGdlbmVyYXRpbmcgbmV3IGJpbywgYW5kIHRoZSBjb25kaXRpb24gImlmICghYmlv
-KSIgY2FuIG5vdCBiZQo+Pj4gbWVldC4KPj4+Cj4+Pgo+Pj4gQWZ0ZXIgYXBwbHlpbmcgdGhlIGZv
-bGxvd2luZyBwYXRjaCwgdGhlIGlzc3VlIGlzIGdvbmUuCj4+Pgo+Pj4gZGlmZiAtLWdpdCBhL2Ry
-aXZlcnMvbWQvZG0uYyBiL2RyaXZlcnMvbWQvZG0uYwo+Pj4gaW5kZXggZTFlYTNhN2JkOWQ5Li45
-NWM5Y2IwN2E0MmYgMTAwNjQ0Cj4+PiAtLS0gYS9kcml2ZXJzL21kL2RtLmMKPj4+ICsrKyBiL2Ry
-aXZlcnMvbWQvZG0uYwo+Pj4gQEAgLTI1NjcsNiArMjU2Nyw3IEBAIHN0YXRpYyB2b2lkIGRtX3dx
-X3dvcmsoc3RydWN0IHdvcmtfc3RydWN0ICp3b3JrKQo+Pj4gICAgICAgICAgICAgICAgICAgICAg
-ICAgIGJyZWFrOwo+Pj4KPj4+ICAgICAgICAgICAgICAgICAgc3VibWl0X2Jpb19ub2FjY3QoYmlv
-KTsKPj4+ICsgICAgICAgICAgICAgICBjb25kX3Jlc2NoZWQoKTsKPj4+ICAgICAgICAgIH0KPj4+
-ICAgfQo+Pj4KPj4+IEJ1dCBJIHRoaW5rIGl0IGlzIG5vdCBhIHByb3BlciBzb2x1dGlvbi4gQW5k
-IHdpdGhvdXQgdGhpcyBwYXRjaCwgaWYKPj4+IHJlbW92aW5nIG5yX2NwdXM9MSAodGhlIHN5c3Rl
-bSBoYXMgdHdvIGNwdXMpLCB0aGUgaXNzdWUgY2FuIG5vdCBiZQo+Pj4gdHJpZ2dlcmVkLiBUaGF0
-IHNheXMgd2hlbiBtb3JlIHRoYW4gb25lIGNwdSwgdGhlIGFib3ZlIGxvb3AgY2FuIGV4aXQKPj4+
-IGJ5IHRoZSBjb25kaXRpb24gImlmICghYmlvKSIKPj4+Cj4+PiBBbnkgaWRlYXM/Cj4+IEkgdGhp
-bmsgdGhlIHBhdGNoIGlzIGNvcnJlY3QuCj4+Cj4+IEZvciBrZXJuZWwgYnVpbHQgd2l0aG91dCBD
-T05GSUdfUFJFRU1QVCwgaW4gY2FzZSBvZiBzaW5nbGUgY3B1IGNvcmUsCj4+IGlmIHRoZSBkbSB0
-YXJnZXQoc3VjaCBhcyBkbS10aGluKSBuZWVkcyBhbm90aGVyIHdxIG9yIGt0aHJlYWQgZm9yCj4+
-IGhhbmRsaW5nIElPLCB0aGVuIGRtIHRhcmdldCBzaWRlIGlzIGJsb2NrZWQgYmVjYXVzZSBkbV93
-cV93b3JrKCkKPj4gaG9sZHMgdGhlIHNpbmdsZSBjcHUsIHNvb25lciBvciBsYXRlciwgZG0gdGFy
-Z2V0IG1heSBoYXZlIG5vdAo+PiByZXNvdXJjZSB0byBoYW5kbGUgbmV3IGlvIGZyb20gZG0gY29y
-ZSBhbmQgcmV0dXJucyBSRVFVRVVFLgo+Pgo+PiBUaGVuIGRtX3dxX3dvcmsgYmVjb21lcyBvbmUg
-ZGVhZCBsb29wLgo+Pgo+Pgo+PiBUaGFua3MsCj4+IE1pbmcKPj4KCi0tCmRtLWRldmVsIG1haWxp
-bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
+Hi Uday,
+
+Thank you for the patch! Perhaps something to improve:
+
+[auto build test WARNING on 6bea9ac7c6481c09eb2b61d7cd844fc64a526e3e]
+
+url:    https://github.com/intel-lab-lkp/linux/commits/Uday-Shankar/blk-mq-enforce-op-specific-segment-limits-in-blk_insert_cloned_request/20230216-041718
+base:   6bea9ac7c6481c09eb2b61d7cd844fc64a526e3e
+patch link:    https://lore.kernel.org/r/20230215201507.494152-1-ushankar%40purestorage.com
+patch subject: [PATCH] blk-mq: enforce op-specific segment limits in blk_insert_cloned_request
+config: i386-randconfig-a004-20230213 (https://download.01.org/0day-ci/archive/20230216/202302162040.FaI25ul2-lkp@intel.com/config)
+compiler: clang version 14.0.6 (https://github.com/llvm/llvm-project f28c006a5895fc0e329fe15fead81e37457cb1d1)
+reproduce (this is a W=1 build):
+        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # https://github.com/intel-lab-lkp/linux/commit/2cd958b09698bedea1a5a5f6298f0d25ec522bf9
+        git remote add linux-review https://github.com/intel-lab-lkp/linux
+        git fetch --no-tags linux-review Uday-Shankar/blk-mq-enforce-op-specific-segment-limits-in-blk_insert_cloned_request/20230216-041718
+        git checkout 2cd958b09698bedea1a5a5f6298f0d25ec522bf9
+        # save the config file
+        mkdir build_dir && cp config build_dir/.config
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=clang make.cross W=1 O=build_dir ARCH=i386 olddefconfig
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=clang make.cross W=1 O=build_dir ARCH=i386 SHELL=/bin/bash
+
+If you fix the issue, kindly add following tag where applicable
+| Reported-by: kernel test robot <lkp@intel.com>
+| Link: https://lore.kernel.org/oe-kbuild-all/202302162040.FaI25ul2-lkp@intel.com/
+
+All warnings (new ones prefixed by >>):
+
+>> block/blk-mq.c:3032:36: warning: format specifies type 'unsigned short' but the argument has type 'unsigned int' [-Wformat]
+                           __func__, rq->nr_phys_segments, max_segments);
+                                                           ^~~~~~~~~~~~
+   include/linux/printk.h:457:60: note: expanded from macro 'printk'
+   #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
+                                                       ~~~    ^~~~~~~~~~~
+   include/linux/printk.h:429:19: note: expanded from macro 'printk_index_wrap'
+                   _p_func(_fmt, ##__VA_ARGS__);                           \
+                           ~~~~    ^~~~~~~~~~~
+   1 warning generated.
+
+
+vim +3032 block/blk-mq.c
+
+  2993	
+  2994	#ifdef CONFIG_BLK_MQ_STACKING
+  2995	/**
+  2996	 * blk_insert_cloned_request - Helper for stacking drivers to submit a request
+  2997	 * @rq: the request being queued
+  2998	 */
+  2999	blk_status_t blk_insert_cloned_request(struct request *rq)
+  3000	{
+  3001		struct request_queue *q = rq->q;
+  3002		unsigned int max_sectors = blk_queue_get_max_sectors(q, req_op(rq));
+  3003		unsigned int max_segments = blk_queue_get_max_segments(q, req_op(rq));
+  3004		blk_status_t ret;
+  3005	
+  3006		if (blk_rq_sectors(rq) > max_sectors) {
+  3007			/*
+  3008			 * SCSI device does not have a good way to return if
+  3009			 * Write Same/Zero is actually supported. If a device rejects
+  3010			 * a non-read/write command (discard, write same,etc.) the
+  3011			 * low-level device driver will set the relevant queue limit to
+  3012			 * 0 to prevent blk-lib from issuing more of the offending
+  3013			 * operations. Commands queued prior to the queue limit being
+  3014			 * reset need to be completed with BLK_STS_NOTSUPP to avoid I/O
+  3015			 * errors being propagated to upper layers.
+  3016			 */
+  3017			if (max_sectors == 0)
+  3018				return BLK_STS_NOTSUPP;
+  3019	
+  3020			printk(KERN_ERR "%s: over max size limit. (%u > %u)\n",
+  3021				__func__, blk_rq_sectors(rq), max_sectors);
+  3022			return BLK_STS_IOERR;
+  3023		}
+  3024	
+  3025		/*
+  3026		 * The queue settings related to segment counting may differ from the
+  3027		 * original queue.
+  3028		 */
+  3029		rq->nr_phys_segments = blk_recalc_rq_segments(rq);
+  3030		if (rq->nr_phys_segments > max_segments) {
+  3031			printk(KERN_ERR "%s: over max segments limit. (%hu > %hu)\n",
+> 3032				__func__, rq->nr_phys_segments, max_segments);
+  3033			return BLK_STS_IOERR;
+  3034		}
+  3035	
+  3036		if (q->disk && should_fail_request(q->disk->part0, blk_rq_bytes(rq)))
+  3037			return BLK_STS_IOERR;
+  3038	
+  3039		if (blk_crypto_insert_cloned_request(rq))
+  3040			return BLK_STS_IOERR;
+  3041	
+  3042		blk_account_io_start(rq);
+  3043	
+  3044		/*
+  3045		 * Since we have a scheduler attached on the top device,
+  3046		 * bypass a potential scheduler on the bottom device for
+  3047		 * insert.
+  3048		 */
+  3049		blk_mq_run_dispatch_ops(q,
+  3050				ret = blk_mq_request_issue_directly(rq, true));
+  3051		if (ret)
+  3052			blk_account_io_done(rq, ktime_get_ns());
+  3053		return ret;
+  3054	}
+  3055	EXPORT_SYMBOL_GPL(blk_insert_cloned_request);
+  3056	
+
+-- 
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
