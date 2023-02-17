@@ -1,96 +1,89 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 56230C05027
-	for <dm-devel@archiver.kernel.org>; Mon, 20 Feb 2023 07:22:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4E233C636CC
+	for <dm-devel@archiver.kernel.org>; Mon, 20 Feb 2023 07:22:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1676877749;
+	s=mimecast20190719; t=1676877751;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=KxAs6Rw4ClhruueYJJAtAaJcW8JrA2rdQNfu0kHIAXk=;
-	b=aQNyv6HfNIb8sRYvJ4xdtr+gONdbyv8PZ36hKSuL1cM/PeLQsRikyau0uHlBwnsrPbmjzV
-	+QwgBqc8DUY09sDoFXJCWfmQ8O/yi8MtFsLSyfc+VfvWNUXSj9Nun++wb/jYlPgGKc1xBU
-	Ue2m6d90pX63QE3h1cvap2vT/5fFCmY=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=UZArytk88BOm22TbRpWfVWEUOqj6o4LRl12CgNaMDvg=;
+	b=Lzwb45fh1uIMw13MPXnlpEFQSCOJ+k/3okOwzS2PHj4kBsY4EaQTYk/YMnA92A4oFrC6JR
+	q/pTd5aS33IBXSlC9FpcQzFA+qrQ2Ftwy3bzr8TTT0LA0qPa7RuxFYCdrHAdd6lKrQQbUk
+	t+DQuL1UYYcu6jAdXZV+W7STQRO+Lqg=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-634-wclFylR6OwquD1WH8MPeUg-1; Mon, 20 Feb 2023 02:22:26 -0500
-X-MC-Unique: wclFylR6OwquD1WH8MPeUg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-335-IcvXKfJKMzqj6mlp3jJbCw-1; Mon, 20 Feb 2023 02:22:27 -0500
+X-MC-Unique: IcvXKfJKMzqj6mlp3jJbCw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1E053101A521;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 200A01C0432D;
 	Mon, 20 Feb 2023 07:22:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 63965404BEC1;
-	Mon, 20 Feb 2023 07:22:23 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 163FD1121314;
+	Mon, 20 Feb 2023 07:22:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 453531946589;
-	Mon, 20 Feb 2023 07:22:23 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E54181946588;
+	Mon, 20 Feb 2023 07:22:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C6C991946588
- for <dm-devel@listman.corp.redhat.com>; Fri, 17 Feb 2023 11:50:00 +0000 (UTC)
+ ESMTP id 703361946588
+ for <dm-devel@listman.corp.redhat.com>; Fri, 17 Feb 2023 21:50:33 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B9BEC2166B31; Fri, 17 Feb 2023 11:50:00 +0000 (UTC)
+ id 5F484C15BAD; Fri, 17 Feb 2023 21:50:33 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B2D172166B30
- for <dm-devel@redhat.com>; Fri, 17 Feb 2023 11:50:00 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 57FF3C15BA0
+ for <dm-devel@redhat.com>; Fri, 17 Feb 2023 21:50:33 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 95F15185A78B
- for <dm-devel@redhat.com>; Fri, 17 Feb 2023 11:50:00 +0000 (UTC)
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com
- [45.249.212.51]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3D7E82806043
+ for <dm-devel@redhat.com>; Fri, 17 Feb 2023 21:50:33 +0000 (UTC)
+Received: from mail-vk1-f175.google.com (mail-vk1-f175.google.com
+ [209.85.221.175]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-454-lAp_VRGEMli_L7w6crfmvQ-1; Fri, 17 Feb 2023 06:49:57 -0500
-X-MC-Unique: lAp_VRGEMli_L7w6crfmvQ-1
-Received: from mail02.huawei.com (unknown [172.30.67.153])
- by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4PJ98p5nKsz4f3lD1;
- Fri, 17 Feb 2023 19:49:46 +0800 (CST)
-Received: from [10.174.176.117] (unknown [10.174.176.117])
- by APP4 (Coremail) with SMTP id gCh0CgDHeq7Zae9j2+YrDw--.64647S2;
- Fri, 17 Feb 2023 19:49:48 +0800 (CST)
-To: dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>
-References: <20221216042353.3132139-1-houtao@huaweicloud.com>
- <e7fcd9fd-a882-2a97-a072-faf09441efbe@huawei.com>
- <5d93f5fc-05fa-906e-b2e9-0e9abcdf16f6@huaweicloud.com>
-From: Hou Tao <houtao@huaweicloud.com>
-Message-ID: <fff0529b-435c-ebea-9e18-c9df74591b55@huaweicloud.com>
-Date: Fri, 17 Feb 2023 19:49:45 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
- Thunderbird/78.6.0
+ us-mta-250-N2g-skdSObWfYvEMmKbJkQ-1; Fri, 17 Feb 2023 16:50:31 -0500
+X-MC-Unique: N2g-skdSObWfYvEMmKbJkQ-1
+Received: by mail-vk1-f175.google.com with SMTP id by12so1270048vkb.3
+ for <dm-devel@redhat.com>; Fri, 17 Feb 2023 13:50:31 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=cc:to:subject:message-id:date:from:in-reply-to:references
+ :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=Jc7+X1cqzOxQsAFytQZ25BlL34wPn1vkCpcwaRRD9oc=;
+ b=yknKm412J7jEra7lYJ28hCbMJTgyUBX8ldFXtHm1PTrkpO4AVs3HKlJVXHMaO/7o5r
+ mHSdO0kLbOKpO5b+DvNegw8KySDphdGlVbQskOIvuqIE4tw628taPogFIjyoEMxOfcBZ
+ Zfy3LKncq2N/Y+2a8m1rlifWP5ShPS1p+ZbOao1JU6Cl3EbLx5XoInbvBmVIA1Sh4KDC
+ zqk5CV0BNorYI2uNOtPvaQP06i9E7503544k6T/TYdG/2ILXb4bPwPJ2+yBalPNwPGpn
+ wKVKnuSinZ8DiIzMcUo4o7jW6HJz9B9tQvergTj3Rq0BBx961UKSu/QegZfEBBJNqxnQ
+ 500Q==
+X-Gm-Message-State: AO0yUKV+yTgZAuBF0sKwiFIL9c+6TRhiiAguPQVBkTf8LttcQuFLpuKN
+ 3h7pWey2JWjUMfOB7n3K6ElEUX2EbAnnqB2QdMqfkQ==
+X-Google-Smtp-Source: AK7set9XHUeLlPkt1gJ12stZFbCMRTkQQ9HrB3LYSIhi3/ZaG+e0VMAG8RtOJDpNATWJTqwo2mfMUsx0Pw5ZKygJeZ8=
+X-Received: by 2002:a1f:2693:0:b0:401:6440:787e with SMTP id
+ m141-20020a1f2693000000b004016440787emr122162vkm.32.1676670630833; Fri, 17
+ Feb 2023 13:50:30 -0800 (PST)
 MIME-Version: 1.0
-In-Reply-To: <5d93f5fc-05fa-906e-b2e9-0e9abcdf16f6@huaweicloud.com>
-X-CM-TRANSID: gCh0CgDHeq7Zae9j2+YrDw--.64647S2
-X-Coremail-Antispam: 1UD129KBjvJXoWxJr13CF1DAF15JF4xJw13Jwb_yoW8uFWDpr
- 1FgFWa9r4kJFsF9r42vanI9Fyjkw1YkrWUGr1xKayj93Wq9w18GayUGFWxWFyrAFyxAF4Y
- gr1Ig3y5CFWDA37anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
- 9KBjDU0xBIdaVrnRJUUUkjb4IE77IF4wAFF20E14v26r1j6r4UM7CY07I20VC2zVCF04k2
- 6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
- vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7Cj
- xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
- 0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
- 6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
- Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JMxk0xIA0c2IEe2xFo4CEbIxvr21l42xK82IYc2Ij
- 64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x
- 8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r126r1DMIIYrxkI7VAKI48JMIIF0xvE
- 2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r1j6r4UMIIF0xvE42
- xK8VAvwI8IcIk0rVWrZr1j6s0DMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIE
- c7CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x07UE-erUUUUU=
-X-CM-SenderInfo: xkrx3t3r6k3tpzhluzxrxghudrp/
-X-CFilter-Loop: Reflected
+References: <CAJs=3_C+K0iumqYyKhphYLp=Qd7i6-Y6aDUgmYyY_rdnN1NAag@mail.gmail.com>
+ <CAPR809uYp6vGvCk4ugWOjbmd13WTm8fRg0f2Mdq3pxj6=d1McQ@mail.gmail.com>
+ <a9cbed84-330f-472e-0cd7-90c6623bb5b5@nvidia.com>
+In-Reply-To: <a9cbed84-330f-472e-0cd7-90c6623bb5b5@nvidia.com>
+From: Enrico Granata <egranata@google.com>
+Date: Fri, 17 Feb 2023 14:50:19 -0700
+Message-ID: <CAPR809u0DLwHgV5w5QhWj_a53OcreZP1Qxxcom_Vbwzg0jgsog@mail.gmail.com>
+To: Chaitanya Kulkarni <chaitanyak@nvidia.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -98,10 +91,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mailman-Approved-At: Mon, 20 Feb 2023 07:22:21 +0000
-Subject: Re: [dm-devel] [PATCH] dm: remove unnecessary check when using
- dm_get_mdptr()
+Subject: Re: [dm-devel] Virtio-blk extended lifetime feature
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -113,77 +105,94 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>,
- "houtao1@huawei.com" <houtao1@huawei.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
+ Bart Van Assche <bvanassche@acm.org>,
+ "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+ Jahdiel Alvarez <jahdiel@google.com>,
+ Alvaro Karsz <alvaro.karsz@solid-run.com>,
+ "Michael S. Tsirkin" <mst@redhat.com>,
+ "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
+ virtualization <virtualization@lists.linux-foundation.org>,
+ "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+ "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ Stefan Hajnoczi <stefanha@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-ping ? Any comments on this clean up patch ?
-
-On 1/31/2023 9:44 AM, Hou Tao wrote:
-> ping ? Any comments on this clean up patch ?
+On Wed, Jan 18, 2023 at 12:46 PM Chaitanya Kulkarni
+<chaitanyak@nvidia.com> wrote:
 >
-> On 1/18/2023 9:16 PM, Hou Tao wrote:
->> ping ?
->>
->> On 12/16/2022 12:23 PM, Hou Tao wrote:
->>> From: Hou Tao <houtao1@huawei.com>
->>>
->>> __hash_remove() removes hash_cell with _hash_lock locked, so acquiring
->>> _hash_lock can guarantee no-NULL hc returned from dm_get_mdptr() must
->>> have not been removed and hc->md must still be md.
->>>
->>> __hash_remove() also acquires dm_hash_cells_mutex before setting mdptr
->>> as NULL, so in dm_copy_name_and_uuid() after acquiring
->>> dm_hash_cells_mutex and ensuring returned hc is not NULL, the returned
->>> hc must still be alive and hc->md must still be md.
->>>
->>> So removing these unnecessary hc->md != md checks when using
->>> dm_get_mdptr() with _hash_lock or dm_hash_cells_mutex acquired.
->>>
->>> Signed-off-by: Hou Tao <houtao1@huawei.com>
->>> ---
->>>  drivers/md/dm-ioctl.c | 6 +++---
->>>  1 file changed, 3 insertions(+), 3 deletions(-)
->>>
->>> diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
->>> index 3bfc1583c20a..2a86524661d1 100644
->>> --- a/drivers/md/dm-ioctl.c
->>> +++ b/drivers/md/dm-ioctl.c
->>> @@ -772,7 +772,7 @@ static struct dm_table *dm_get_inactive_table(struct mapped_device *md, int *src
->>>  
->>>  	down_read(&_hash_lock);
->>>  	hc = dm_get_mdptr(md);
->>> -	if (!hc || hc->md != md) {
->>> +	if (!hc) {
->>>  		DMERR("device has been removed from the dev hash table.");
->>>  		goto out;
->>>  	}
->>> @@ -1476,7 +1476,7 @@ static int table_load(struct file *filp, struct dm_ioctl *param, size_t param_si
->>>  	/* stage inactive table */
->>>  	down_write(&_hash_lock);
->>>  	hc = dm_get_mdptr(md);
->>> -	if (!hc || hc->md != md) {
->>> +	if (!hc) {
->>>  		DMERR("device has been removed from the dev hash table.");
->>>  		up_write(&_hash_lock);
->>>  		r = -ENXIO;
->>> @@ -2128,7 +2128,7 @@ int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid)
->>>  
->>>  	mutex_lock(&dm_hash_cells_mutex);
->>>  	hc = dm_get_mdptr(md);
->>> -	if (!hc || hc->md != md) {
->>> +	if (!hc) {
->>>  		r = -ENXIO;
->>>  		goto out;
->>>  	}
-> .
+> On 1/17/23 14:30, Enrico Granata wrote:
+> > Hi,
+> > I am going to add +Jahdiel Alvarez who is also looking into a similar
+> > issue, and also I would like to hear thoughts of people who may have
+> > worked with (embedded or otherwise) storage more recently than I have
+> >
+> > One thought that Jahdiel and myself were pondering is whether we need
+> > "type_a" and "type_b" fields at all, or if there should simply be a
+> > "wear estimate" field, which for eMMC, it could be max(typ_a, typ_b)
+> > but it could generalize to any number of cell or other algorithm, as
+> > long as it produces one unique estimate of wear
+> >
+> > Thanks,
+> > - Enrico
+> >
+> > Thanks,
+> > - Enrico
+> >
+> >
+> > On Sun, Jan 15, 2023 at 12:56 AM Alvaro Karsz
+> > <alvaro.karsz@solid-run.com> wrote:
+> >>
+> >> Hi guys,
+> >>
+> >> While trying to upstream the implementation of VIRTIO_BLK_F_LIFETIME
+> >> feature, many developers suggested that this feature should be
+> >> extended to include more cell types, since its current implementation
+> >> in virtio spec is relevant for MMC and UFS devices only.
+> >>
+> >> The VIRTIO_BLK_F_LIFETIME defines the following fields:
+> >>
+> >> - pre_eol_info:  the percentage of reserved blocks that are consumed.
+> >> - device_lifetime_est_typ_a: wear of SLC cells.
+> >> - device_lifetime_est_typ_b: wear of MLC cells.
+>
+> For immediate comments :-
+>
+> It needs to cover all the flash cell types.
+>
+> Using names like type_a/type_b in the spec and in the implementation
+> adds unnecessary confusion and requires extra documentation in the
+> code that needs to be changed.
+
+What do you think about my proposal to have a single "wear estimate"
+field and allow each flash type to calculate it as required by its own
+internal logic?
+The migration for eMMC and existing drivers would be to expose the
+maximum of type_A, type_B wear, but other cell types would be able to
+provide whatever logic they need as long as it meaningfully exposes
+the "wear"
+
+>
+> >>
+> >> (https://docs.oasis-open.org/virtio/virtio/v1.2/virtio-v1.2.html)
+> >>
+> >> Following Michael's suggestion, I'd like to add to the virtio spec
+> >> with a new, extended lifetime command.
+> >> Since I'm more familiar with embedded type storage devices, I'd like
+> >> to ask you guys what fields you think should be included in the
+> >> extended command.
+> >>
+> >> Thanks,
+> >>
+> >> Alvaro
+>
+> -ck
 
 --
 dm-devel mailing list
