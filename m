@@ -1,96 +1,113 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 02B5AC05027
-	for <dm-devel@archiver.kernel.org>; Fri, 17 Feb 2023 20:08:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id BAA02C636D6
+	for <dm-devel@archiver.kernel.org>; Fri, 17 Feb 2023 21:42:05 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1676664509;
+	s=mimecast20190719; t=1676670124;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=oIQ4JJg3bheGX2mSyAlZpY5ELu3hdjSVFDXoQ+fGqV8=;
-	b=EXf32YYGe6Xt24MqpECu4KPKnh4hiHo1EbuC79XNH8/ZOYxaciue2ppqNvsQmYQFkyzoHS
-	JcShvBL2GMh3KwkcBc/vRQjhAsmquQHbIsflYE5UZpHTf2D5fylU0ljn5LYF6VZkfz+KUb
-	WLX/26l2NcO26SU0YOqPj3vQbWW/Vfg=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=bPFuDxpQ8prgpw6V22J6xx3McrZaG7v1f6OxhjBzeNw=;
+	b=KjZf+er/9lRCNGZn4mlUs4LXx2iMEGsr9xC4dmTFNpxnf6zx5L2lXVn0Qg8HygVfrsao49
+	ApqxQTO5774lOqpcIAd5PhW4vbvaP570blhE72VP8ZrjXG+RT/3RBkFZBKBQr72nWoqKTN
+	FkjDHx/YGB3DYuCFJEcnSIH5ptRW5Ks=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-504-RbQR2Om3OFqHwdVUs1Xejw-1; Fri, 17 Feb 2023 15:08:26 -0500
-X-MC-Unique: RbQR2Om3OFqHwdVUs1Xejw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-41-TB9GyWxWOFaH9wXEoRarVA-1; Fri, 17 Feb 2023 16:42:03 -0500
+X-MC-Unique: TB9GyWxWOFaH9wXEoRarVA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7B6061C04B7E;
-	Fri, 17 Feb 2023 20:08:24 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A851D1019CBC;
+	Fri, 17 Feb 2023 21:41:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6AEF4175AD;
-	Fri, 17 Feb 2023 20:08:24 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 95686C15BA0;
+	Fri, 17 Feb 2023 21:41:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 393961946589;
-	Fri, 17 Feb 2023 20:08:24 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5DBD61946589;
+	Fri, 17 Feb 2023 21:41:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id CCAF71946588
- for <dm-devel@listman.corp.redhat.com>; Fri, 17 Feb 2023 20:08:23 +0000 (UTC)
+ ESMTP id EC0D61946588
+ for <dm-devel@listman.corp.redhat.com>; Fri, 17 Feb 2023 21:41:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B890E40B40E4; Fri, 17 Feb 2023 20:08:23 +0000 (UTC)
+ id B7675404CD85; Fri, 17 Feb 2023 21:41:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B0C4C40B40C9
- for <dm-devel@redhat.com>; Fri, 17 Feb 2023 20:08:23 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7DEAF83B9DD
- for <dm-devel@redhat.com>; Fri, 17 Feb 2023 20:08:23 +0000 (UTC)
-Received: from mail-qv1-f44.google.com (mail-qv1-f44.google.com
- [209.85.219.44]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B0646404CD84
+ for <dm-devel@redhat.com>; Fri, 17 Feb 2023 21:41:56 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 949D3101A5B4
+ for <dm-devel@redhat.com>; Fri, 17 Feb 2023 21:41:56 +0000 (UTC)
+Received: from mail-il1-f227.google.com (mail-il1-f227.google.com
+ [209.85.166.227]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-575-0EyIDXvCN0WMLGU9kDuIDA-1; Fri, 17 Feb 2023 15:07:48 -0500
-X-MC-Unique: 0EyIDXvCN0WMLGU9kDuIDA-1
-Received: by mail-qv1-f44.google.com with SMTP id e17so2219430qvw.8
- for <dm-devel@redhat.com>; Fri, 17 Feb 2023 12:07:43 -0800 (PST)
+ us-mta-491-hseYPg46P_6XV0Ih-x5w_Q-1; Fri, 17 Feb 2023 16:41:54 -0500
+X-MC-Unique: hseYPg46P_6XV0Ih-x5w_Q-1
+Received: by mail-il1-f227.google.com with SMTP id d5so859839ilu.13
+ for <dm-devel@redhat.com>; Fri, 17 Feb 2023 13:41:54 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=EnC0ho3TMfOzHT8SCGdIGjy9L/3TOsau5F7yz4GT7rM=;
- b=iyi3JviC5oig9gG47qDwbybBjuMNMx7hsB26+gNQ4F7Ojs2LWbzg6nO1NIeZWkTMjB
- N5tn1tXRTOeWQehd+h383ebG3AUw/S/JgcEAJU1KCCzLaJHlSPYeASBy07YybqBgPcFK
- SRp8SVCXL7OAO4rYkhZEui/AF0fmwDK4qzpxwQB+jbdWh/y1hrnIyWzTxEqM44ZYy1Hp
- i56w1udb+wQoGcl1Q18+O2Yz0UYt5e5Px7dE/TpDVkZWg38yjKxPli94KIGEweZYiUXR
- 8LgydXO1eu+Wn04QXPVFHUqcEjZCWLGK3j8vITj2L05wVf/l3Mawnvb0lkTbLc69+l60
- CUgg==
-X-Gm-Message-State: AO0yUKWz3jAFPi8VtavBWkFSr/E1Sh3vVTbfdBQu3f+xOsepEwZJWaAk
- +rjZuFp7hAB5jX5+Ty7cjAY4Q03Sux1l2M2INckgw9h7rs4ZG/zeQ9PHXgCZmB/ipLnHl5E76DD
- H3q0KrpDPrsMiFqCYhpQipYQGQssD9QA626IXF2lkHeKrTKp5dokiTQKDwxGoGJPRlmcw2Q==
-X-Google-Smtp-Source: AK7set826ypbmlbh1FQKcwTFbqxnLVxLukx7QPHWYyXldNdEc0kSdq2/kqC25VBvhMej89n+5Ktg9A==
-X-Received: by 2002:ad4:5d67:0:b0:56f:87f:d92c with SMTP id
- fn7-20020ad45d67000000b0056f087fd92cmr8382472qvb.0.1676664462247; 
- Fri, 17 Feb 2023 12:07:42 -0800 (PST)
-Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
- [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- a138-20020ae9e890000000b0072396cb73cdsm3938226qkg.13.2023.02.17.12.07.41
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 17 Feb 2023 12:07:41 -0800 (PST)
-From: Mike Snitzer <snitzer@kernel.org>
-To: dm-devel@redhat.com
-Date: Fri, 17 Feb 2023 15:07:33 -0500
-Message-Id: <20230217200737.12481-3-snitzer@kernel.org>
-In-Reply-To: <20230217200737.12481-1-snitzer@kernel.org>
-References: <20230217200737.12481-1-snitzer@kernel.org>
+ h=in-reply-to:content-disposition:mime-version:references:message-id
+ :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+ :message-id:reply-to;
+ bh=dNanTuJiFaffs6p61iPp8uSQmlAn6aQ4qdubO70a2yY=;
+ b=D5T1PRrN9Cgtg9cRnQr6mQBRvP0Dxn8+eU8V0EQN9zCjcAhcGbbl/EnLN9Yxa8CxJ0
+ ppLyCbOnTrLh5b2A1UP5QKFgVfsYL4qzu+OLyIbdIeqBQubluE0y+aI9ylJwC1Fept9/
+ Mj5WaVrK/L8in++LWIFx4kxi7DCo8M4P3hEqfsva/aR3/QPmM1lajKVHpAdAyFVR642t
+ ZQSEdtgDTa1Qjk0dG08ptTBMEXeM+9NvvOg8ltWTwlbD3E/0JddkM8aFQH+Oeg31zFa1
+ 11zo2IIeFkGd2nNRutScBqb71buWpAVmKn+xJWdt3s4oOCcykBG2/4tAQXrbgcbsnrBo
+ pE0w==
+X-Gm-Message-State: AO0yUKViAx5NMAKY0tsf5cVAmK4Xo0dAeoprBa3u/2Ecfpqk9weLfLEx
+ rOp06F4lCXIEJFHnO5kZYdo/TwAIegx/4cqOd3Vp/wK3HvKO2GVRDHK04xjmSoOnJQ==
+X-Google-Smtp-Source: AK7set9qv24vhhnsz2IGKkRz0ahqJKiqry6wPHLLBeGPi5dTQbar9+H/VBUJGVP+dGIm1Dn7A4MHCxt/dNON
+X-Received: by 2002:a05:6e02:164d:b0:315:7290:428a with SMTP id
+ v13-20020a056e02164d00b003157290428amr1355252ilu.11.1676670113929; 
+ Fri, 17 Feb 2023 13:41:53 -0800 (PST)
+Received: from c7-smtp.dev.purestorage.com ([2620:125:9007:320:7:32:106:0])
+ by smtp-relay.gmail.com with ESMTPS id
+ m9-20020a056e021c2900b003152992255asm230795ilh.17.2023.02.17.13.41.53
+ (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
+ Fri, 17 Feb 2023 13:41:53 -0800 (PST)
+X-Relaying-Domain: purestorage.com
+Received: from dev-ushankar.dev.purestorage.com (dev5.dev.purestorage.com
+ [IPv6:2620:125:9007:640:7:70:36:0])
+ by c7-smtp.dev.purestorage.com (Postfix) with ESMTP id CDADC220E9;
+ Fri, 17 Feb 2023 14:41:52 -0700 (MST)
+Received: by dev-ushankar.dev.purestorage.com (Postfix, from userid 1557716368)
+ id C7B96E40376; Fri, 17 Feb 2023 14:41:52 -0700 (MST)
+Date: Fri, 17 Feb 2023 14:41:52 -0700
+From: Uday Shankar <ushankar@purestorage.com>
+To: Mike Snitzer <snitzer@kernel.org>
+Message-ID: <20230217214152.GA1124853@dev-ushankar.dev.purestorage.com>
+References: <20230215201507.494152-1-ushankar@purestorage.com>
+ <Y+3IoOd02iFGNLnC@infradead.org>
+ <20230216192702.GA801590@dev-ushankar.dev.purestorage.com>
+ <Y++oTz0ck9OGE4Se@infradead.org> <Y++utrkJXuUsD0K4@redhat.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [PATCH 2/6] dm: add cond_resched() to
- dm_wq_requeue_work()
+In-Reply-To: <Y++utrkJXuUsD0K4@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] blk-mq: enforce op-specific segment limits in
+ blk_insert_cloned_request
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -102,40 +119,25 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Mike Snitzer <snitzer@kernel.org>
+Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>,
+ dm-devel@redhat.com, linux-block@vger.kernel.org,
+ Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Otherwise the while() loop in dm_wq_requeue_work() can result in a
-"dead loop" on systems that have preemption disabled. This is
-particularly problematic on single cpu systems.
+> Much easier to address a bug in a driver when seeing this message than
+> figuring it out after more elaborate hunting. Not seeing the downside
+> of preserving/fixing given it is a quick limit check. *shrug*
 
-Fixes: 8b211aaccb915 ("dm: add two stage requeue mechanism")
-Cc: stable@vger.kernel.org
-Signed-off-by: Mike Snitzer <snitzer@kernel.org>
----
- drivers/md/dm.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 15b91959e433..adb002b8648d 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1009,6 +1009,7 @@ static void dm_wq_requeue_work(struct work_struct *work)
- 		io->next = NULL;
- 		__dm_io_complete(io, false);
- 		io = next;
-+		cond_resched();
- 	}
- }
- 
--- 
-2.37.0 (Apple Git-136)
+I tend to agree - considering the check has been here for a while, I
+don't know if lower levels will have particularly enlightening logging
+(if any at all) for these errors.
 
 --
 dm-devel mailing list
