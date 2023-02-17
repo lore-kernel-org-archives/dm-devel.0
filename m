@@ -4,95 +4,81 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AB635C636D6
-	for <dm-devel@archiver.kernel.org>; Fri, 17 Feb 2023 16:43:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 933EAC05027
+	for <dm-devel@archiver.kernel.org>; Fri, 17 Feb 2023 17:04:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1676652228;
+	s=mimecast20190719; t=1676653452;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=vtSfFjvziuTiCIA5enpCe+4eLKvdN3KBFm0c/h5vwhc=;
-	b=DjkBvDU4hmxqmhutT6fVShk1TcGnDp21Lz9L9XRW1XvgQGNqJMRUMpzKsU/yZyJNI7uJ6W
-	jmM4ivcbvsloqg04t1YiG/8uGqz61bUDR7qJ3pCmVmFdHmr/MDZBBd5aUEb6722F1ZtGSM
-	jQum8U/G7YHbQ2pjqCoD5B1VQFBk+tI=
+	bh=xEhB90NWENFAayAeOjsgeFk3c0q5XPgFcjD4ZodjEDg=;
+	b=Un98maNrYyg9iaP7GtR28evEtrROsqUXDx08hvzBKanJauHKQfbo1/x1t4e3XQGv640N6w
+	gu8qiMWGu0F3yvy9IXA41ywCeHtrQqR8kqkI66RbAbCKycHLe7lgQ1Z2jLzyl0eM0DLax2
+	4hmjCJ8ZmQ55SWL6/taCatLt7C4kVvY=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-134--X8k51zhOOGECiQGwZ3oIg-1; Fri, 17 Feb 2023 11:43:45 -0500
-X-MC-Unique: -X8k51zhOOGECiQGwZ3oIg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-20-CHIHDTDzOza1AeYJaqNA7A-1; Fri, 17 Feb 2023 12:04:09 -0500
+X-MC-Unique: CHIHDTDzOza1AeYJaqNA7A-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B1FFB811E9C;
-	Fri, 17 Feb 2023 16:43:43 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 282131019CBC;
+	Fri, 17 Feb 2023 17:04:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9B4BD140EBF4;
-	Fri, 17 Feb 2023 16:43:40 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C43E5492C3E;
+	Fri, 17 Feb 2023 17:04:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6379F1946589;
-	Fri, 17 Feb 2023 16:43:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8BE051946589;
+	Fri, 17 Feb 2023 17:04:06 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 375831946588
- for <dm-devel@listman.corp.redhat.com>; Fri, 17 Feb 2023 16:43:39 +0000 (UTC)
+ ESMTP id A65E71946588
+ for <dm-devel@listman.corp.redhat.com>; Fri, 17 Feb 2023 17:04:05 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1615D4010E83; Fri, 17 Feb 2023 16:43:39 +0000 (UTC)
+ id 4CBBA2166B31; Fri, 17 Feb 2023 17:04:05 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0E6F340B40C9
- for <dm-devel@redhat.com>; Fri, 17 Feb 2023 16:43:39 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E691585A5A3
- for <dm-devel@redhat.com>; Fri, 17 Feb 2023 16:43:38 +0000 (UTC)
-Received: from mail-qt1-f177.google.com (mail-qt1-f177.google.com
- [209.85.160.177]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 460912166B30
+ for <dm-devel@redhat.com>; Fri, 17 Feb 2023 17:04:05 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2523A85CBCB
+ for <dm-devel@redhat.com>; Fri, 17 Feb 2023 17:04:05 +0000 (UTC)
+Received: from bombadil.infradead.org (bombadil.infradead.org
+ [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-569-X-t7Srb8N02NvEs00Dabfw-1; Fri, 17 Feb 2023 11:43:37 -0500
-X-MC-Unique: X-t7Srb8N02NvEs00Dabfw-1
-Received: by mail-qt1-f177.google.com with SMTP id c11so213013qth.3
- for <dm-devel@redhat.com>; Fri, 17 Feb 2023 08:43:37 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
- :message-id:reply-to;
- bh=h3uS6l7R4NN6xpTILsvB1VqvWC13/kbkjpwhQ4oxzsc=;
- b=6S4wS4EGIpM4p8jAPASVOjmJKsCKRyt75RXMX6a9VUSObv0P/gAJCSx884TsUsS5gG
- upe5AgrGsycK8lyrH+a6Jp8kwvbesHCSa11xxT6O5aCZhBfYKAPDGabWNFVd5AQ0p3FG
- Hx2T4CRJcH/ucg+RBeHNLNoVgd9gKcYjLHPGTc8AwKJ43hJEH4STLsf9ydWi5gyjGSQ7
- 9N6feqWDrUDLvZIj6w4r6xdAAOHcY/AhB9Q7MoSpqootlGQevUogl9bFMPfQyQSUT1W4
- c4IHA0r6hUa2leRfsDj1tOGaqCU8nhZkF1FFIKsr3kgvqNyzY2r2lq+c1gHUCj3W9Fod
- 7OuA==
-X-Gm-Message-State: AO0yUKXxJ7RhgNBD22rpTu+qXosduNgxYEMm0Z2AUxU2wOF7TSj1YJRS
- +xt+bwFD4m9+Q+Ady9ttKzLUkOlO+T1sT1i2GA==
-X-Google-Smtp-Source: AK7set9gWGn6W9xaTLmOYlMZhybnyp39F0bJY6EI6xONfoBZQJ+IZm4+inBu0UdqBkTMUHpdf4x7bw==
-X-Received: by 2002:a05:622a:81:b0:3b9:bc8c:c20c with SMTP id
- o1-20020a05622a008100b003b9bc8cc20cmr9573603qtw.23.1676652216569; 
- Fri, 17 Feb 2023 08:43:36 -0800 (PST)
-Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
- [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- i129-20020a37b887000000b007068b49b8absm3482600qkf.62.2023.02.17.08.43.35
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 17 Feb 2023 08:43:36 -0800 (PST)
-Date: Fri, 17 Feb 2023 11:43:34 -0500
-From: Mike Snitzer <snitzer@kernel.org>
-To: Christoph Hellwig <hch@infradead.org>
-Message-ID: <Y++utrkJXuUsD0K4@redhat.com>
+ us-mta-50-rX4paOTfOgCC74LsQfDGwA-1; Fri, 17 Feb 2023 12:04:03 -0500
+X-MC-Unique: rX4paOTfOgCC74LsQfDGwA-1
+Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red
+ Hat Linux)) id 1pT3PD-00F0il-Ve; Fri, 17 Feb 2023 16:16:15 +0000
+Date: Fri, 17 Feb 2023 08:16:15 -0800
+From: Christoph Hellwig <hch@infradead.org>
+To: Uday Shankar <ushankar@purestorage.com>
+Message-ID: <Y++oTz0ck9OGE4Se@infradead.org>
 References: <20230215201507.494152-1-ushankar@purestorage.com>
  <Y+3IoOd02iFGNLnC@infradead.org>
  <20230216192702.GA801590@dev-ushankar.dev.purestorage.com>
- <Y++oTz0ck9OGE4Se@infradead.org>
 MIME-Version: 1.0
-In-Reply-To: <Y++oTz0ck9OGE4Se@infradead.org>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] blk-mq: enforce op-specific segment limits in
- blk_insert_cloned_request
+In-Reply-To: <20230216192702.GA801590@dev-ushankar.dev.purestorage.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+ bombadil.infradead.org. See http://www.infradead.org/rpr.html
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH] blk-mq: enforce op-specific segment limits
+ in blk_insert_cloned_request
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -105,45 +91,36 @@ List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
- dm-devel@redhat.com, Uday Shankar <ushankar@purestorage.com>,
- Alasdair Kergon <agk@redhat.com>
+ Mike Snitzer <snitzer@kernel.org>, Christoph Hellwig <hch@infradead.org>,
+ dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Feb 17 2023 at 11:16P -0500,
-Christoph Hellwig <hch@infradead.org> wrote:
-
-> On Thu, Feb 16, 2023 at 12:27:02PM -0700, Uday Shankar wrote:
-> >  * Description:
-> >  *    @rq may have been made based on weaker limitations of upper-level queues
-> >  *    in request stacking drivers, and it may violate the limitation of @q.
-> >  *    Since the block layer and the underlying device driver trust @rq
-> >  *    after it is inserted to @q, it should be checked against @q before
-> >  *    the insertion using this generic function.
-> >  *
-> >  *    Request stacking drivers like request-based dm may change the queue
-> >  *    limits when retrying requests on other queues. Those requests need
-> >  *    to be checked against the new queue limits again during dispatch.
-> >  */.
-> > 
-> > Is this concern no longer relevant?
+On Thu, Feb 16, 2023 at 12:27:02PM -0700, Uday Shankar wrote:
+>  * Description:
+>  *    @rq may have been made based on weaker limitations of upper-level queues
+>  *    in request stacking drivers, and it may violate the limitation of @q.
+>  *    Since the block layer and the underlying device driver trust @rq
+>  *    after it is inserted to @q, it should be checked against @q before
+>  *    the insertion using this generic function.
+>  *
+>  *    Request stacking drivers like request-based dm may change the queue
+>  *    limits when retrying requests on other queues. Those requests need
+>  *    to be checked against the new queue limits again during dispatch.
+>  */.
 > 
-> The concern is still valid, but it does not refer to the debug check.
-> It refers to recalculating nr_phys_segments using
-> blk_recalc_rq_segments, and the fact that any driver using this
-> interface needs to stack its limits properly.
+> Is this concern no longer relevant?
 
-It is a negative check that you're calling a debug check.
-
-Much easier to address a bug in a driver when seeing this message than
-figuring it out after more elaborate hunting. Not seeing the downside
-of preserving/fixing given it is a quick limit check. *shrug*
+The concern is still valid, but it does not refer to the debug check.
+It refers to recalculating nr_phys_segments using
+blk_recalc_rq_segments, and the fact that any driver using this
+interface needs to stack its limits properly.
 
 --
 dm-devel mailing list
