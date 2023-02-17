@@ -1,66 +1,97 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 18B0EC61DA4
-	for <dm-devel@archiver.kernel.org>; Thu, 16 Feb 2023 21:22:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 82C7FC636CC
+	for <dm-devel@archiver.kernel.org>; Fri, 17 Feb 2023 00:14:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1676582573;
+	s=mimecast20190719; t=1676592849;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=9SPp3TK1o14GlUKXrk5AVZcROVxvJrekzMdT37ZGPec=;
-	b=d4qfxwaU3vEIBeVBjY09PT4+WZu/M8xduCDULzyDcFYc1mYuTZ4PWqxS1p5/ccyezGZLdL
-	AIm5IY4owFEXGk/gelLx0tGys4HsEDpNK6k/oAzuUOpQn6zhfkB/1l38GiS6huwvD0Jpe6
-	UofpsC7/+BsO8uNMKt/LDZGTPqgvJWU=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=M/WHUR7vrWuLrfIQtBX1dxk6nPlQM6i8X4bUfXzO5dM=;
+	b=QSKBlB+KjqIDm1dy7AvJmv7ZSxXfLV2IU/ZS00wneGJfggn5eaqgIeo9btoduPqypl38Xw
+	F/3XBUUK0odwKM0NvEWkqlPGI+nYtmwq/0l6YAO7Z6YvyHrMQ20h9Hnq5EY4nxH9ECTTBX
+	D93Eft/r1HT3b6Iu9kGZKKAJXlO6zu0=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-442-upAUDVRYMa6DsIWJUEARhw-1; Thu, 16 Feb 2023 16:22:50 -0500
-X-MC-Unique: upAUDVRYMa6DsIWJUEARhw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-217-PwBD1vh2PtuuWRxLB8Y1Zw-1; Thu, 16 Feb 2023 19:14:06 -0500
+X-MC-Unique: PwBD1vh2PtuuWRxLB8Y1Zw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E48133C0DDCF;
-	Thu, 16 Feb 2023 21:22:48 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 179C21869B6C;
+	Fri, 17 Feb 2023 00:14:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D1E2E40B40C9;
-	Thu, 16 Feb 2023 21:22:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8E033140EBF6;
+	Fri, 17 Feb 2023 00:14:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 97E941946589;
-	Thu, 16 Feb 2023 21:22:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 527CA1946589;
+	Fri, 17 Feb 2023 00:14:01 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id F16281946588
- for <dm-devel@listman.corp.redhat.com>; Thu, 16 Feb 2023 21:22:46 +0000 (UTC)
+ ESMTP id 318F01946588
+ for <dm-devel@listman.corp.redhat.com>; Fri, 17 Feb 2023 00:13:55 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 988FC40B3FE1; Thu, 16 Feb 2023 21:22:46 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
- (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 86A0440CF8E4;
- Thu, 16 Feb 2023 21:22:46 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 31GLMkxg007334; Thu, 16 Feb 2023 16:22:46 -0500
-Received: from localhost (mpatocka@localhost)
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 31GLMksq007330; Thu, 16 Feb 2023 16:22:46 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
- owned process doing -bs
-Date: Thu, 16 Feb 2023 16:22:46 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Matthew Wilcox <willy@infradead.org>
-Message-ID: <alpine.LRH.2.21.2302161619430.5436@file01.intranet.prod.int.rdu2.redhat.com>
-User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
+ id 5EF44C15BAD; Fri, 17 Feb 2023 00:13:55 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 5785EC15BA0
+ for <dm-devel@redhat.com>; Fri, 17 Feb 2023 00:13:55 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3DD2D101A521
+ for <dm-devel@redhat.com>; Fri, 17 Feb 2023 00:13:55 +0000 (UTC)
+Received: from mail-qt1-f171.google.com (mail-qt1-f171.google.com
+ [209.85.160.171]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-168-KA6n5rcJPayzUCxzoPbvDQ-1; Thu, 16 Feb 2023 19:13:53 -0500
+X-MC-Unique: KA6n5rcJPayzUCxzoPbvDQ-1
+Received: by mail-qt1-f171.google.com with SMTP id cr22so3990379qtb.10
+ for <dm-devel@redhat.com>; Thu, 16 Feb 2023 16:13:53 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=in-reply-to:content-disposition:mime-version:references:message-id
+ :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+ :message-id:reply-to;
+ bh=6kImKyTnUFlrsbZ3cxw052u3lsceBXaXeoQEmfLR09Q=;
+ b=SXmu1+/r84B/EOlE+FQqcd0oer8jVWeoapE2TuFHZa7PbvBNN5lUEtKW0ENYdtnTmb
+ X0gj2+/V7NKiJB7lLbjcVXxee2zdZVP4PbEMH+rnA3bvwJW3ILNWrtaw1aSJ9OkecGo2
+ asoo6vUAWIQmQNygHpG6V4XYqqPxBmwGpnnid1f7vxz3BiAToS/cN+yVFnAsLbtWmuRw
+ zcJ+maSF9S3ean3GYUQSx7H4Lu1sDiqAki2QUjDxcbg4O/8z+0AHGKTDLly5L3I0Tksk
+ Mh5e9q2Y/1m85MKsbHpRW7T/XqR6iFxr3B5tDl7I/v0/ddrckncyy0W9R76U2kFrJ7yx
+ fCoA==
+X-Gm-Message-State: AO0yUKVmOk68ipxjD8xmwkAp4lLdForUi8jx1DYx7M0b4jCFS4d1pPoP
+ xD6huLrPv7rg6C6pC6xlXtLikjk=
+X-Google-Smtp-Source: AK7set8j9cfHfcZl/vzGU/yVM8ih72maPo/h2Vl1C+ebpdpF9rGGVgryO/199T+35W3ZyOZr6LNmWA==
+X-Received: by 2002:ac8:5f4a:0:b0:3b9:bc8c:c1f8 with SMTP id
+ y10-20020ac85f4a000000b003b9bc8cc1f8mr8029510qta.3.1676592833020; 
+ Thu, 16 Feb 2023 16:13:53 -0800 (PST)
+Received: from localhost ([87.249.138.162]) by smtp.gmail.com with ESMTPSA id
+ 18-20020a370312000000b0071b1fe18746sm2260140qkd.63.2023.02.16.16.13.52
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Thu, 16 Feb 2023 16:13:52 -0800 (PST)
+Date: Thu, 16 Feb 2023 19:13:51 -0500
+From: Mike Snitzer <snitzer@kernel.org>
+To: Uday Shankar <ushankar@purestorage.com>
+Message-ID: <Y+7Gv84lxIR0OsWc@redhat.com>
+References: <20230215201507.494152-1-ushankar@purestorage.com>
+ <Y+3IoOd02iFGNLnC@infradead.org>
+ <20230216192702.GA801590@dev-ushankar.dev.purestorage.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [PATCH v2] dm-crypt: allocate compound pages if possible
+In-Reply-To: <20230216192702.GA801590@dev-ushankar.dev.purestorage.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: Re: [dm-devel] blk-mq: enforce op-specific segment limits in
+ blk_insert_cloned_request
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -72,119 +103,48 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Yang Shi <shy828301@gmail.com>, snitzer@kernel.org,
- linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, linux-mm@kvack.org,
- dm-devel@redhat.com, akpm@linux-foundation.org, mgorman@techsingularity.net,
- agk@redhat.com
+Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>,
+ dm-devel@redhat.com, linux-block@vger.kernel.org,
+ Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-It was reported that allocating pages for the write buffer in dm-crypt
-causes measurable overhead [1].
+On Thu, Feb 16 2023 at  2:27P -0500,
+Uday Shankar <ushankar@purestorage.com> wrote:
 
-This patch changes dm-crypt to allocate compound pages if they are
-available. If not, we fall back to the mempool.
+> On Wed, Feb 15, 2023 at 10:09:36PM -0800, Christoph Hellwig wrote:
+> > I'd just remove the debug check entirely
+> 
+> Older kernels have these checks in a separate function called
+> blk_cloned_rq_check_limits, which carries the following comment:
+> 
+> /**
+>  * blk_cloned_rq_check_limits - Helper function to check a cloned request
+>  *                              for the new queue limits
+>  * @q:  the queue
+>  * @rq: the request being checked
+>  *
+>  * Description:
+>  *    @rq may have been made based on weaker limitations of upper-level queues
+>  *    in request stacking drivers, and it may violate the limitation of @q.
+>  *    Since the block layer and the underlying device driver trust @rq
+>  *    after it is inserted to @q, it should be checked against @q before
+>  *    the insertion using this generic function.
+>  *
+>  *    Request stacking drivers like request-based dm may change the queue
+>  *    limits when retrying requests on other queues. Those requests need
+>  *    to be checked against the new queue limits again during dispatch.
+>  */.
+> 
+> Is this concern no longer relevant?
 
-[1] https://listman.redhat.com/archives/dm-devel/2023-February/053284.html
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-crypt.c |   48 +++++++++++++++++++++++++++++++++---------------
- 1 file changed, 33 insertions(+), 15 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-crypt.c	2023-02-16 20:40:15.000000000 +0100
-+++ linux-2.6/drivers/md/dm-crypt.c	2023-02-16 21:56:34.000000000 +0100
-@@ -1657,6 +1657,9 @@ static void crypt_free_buffer_pages(stru
-  * In order to not degrade performance with excessive locking, we try
-  * non-blocking allocations without a mutex first but on failure we fallback
-  * to blocking allocations with a mutex.
-+ *
-+ * In order to reduce allocation overhead, we try to allocate compound pages in
-+ * the first pass. If they are not available, we fall back to the mempool.
-  */
- static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
- {
-@@ -1664,8 +1667,8 @@ static struct bio *crypt_alloc_buffer(st
- 	struct bio *clone;
- 	unsigned int nr_iovecs = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
- 	gfp_t gfp_mask = GFP_NOWAIT | __GFP_HIGHMEM;
--	unsigned i, len, remaining_size;
--	struct page *page;
-+	unsigned remaining_size;
-+	unsigned order = MAX_ORDER - 1;
- 
- retry:
- 	if (unlikely(gfp_mask & __GFP_DIRECT_RECLAIM))
-@@ -1678,20 +1681,34 @@ retry:
- 
- 	remaining_size = size;
- 
--	for (i = 0; i < nr_iovecs; i++) {
--		page = mempool_alloc(&cc->page_pool, gfp_mask);
--		if (!page) {
-+	while (remaining_size) {
-+		struct page *pages;
-+		unsigned size_to_add;
-+		unsigned remaining_order = __fls((remaining_size + PAGE_SIZE - 1) >> PAGE_SHIFT);
-+		order = min(order, remaining_order);
-+
-+		while (order > 0) {
-+			pages = alloc_pages(gfp_mask
-+				| __GFP_NOMEMALLOC | __GFP_NORETRY | __GFP_NOWARN | __GFP_COMP,
-+				order);
-+			if (likely(pages != NULL))
-+				goto have_pages;
-+			order--;
-+		}
-+
-+		pages = mempool_alloc(&cc->page_pool, gfp_mask);
-+		if (!pages) {
- 			crypt_free_buffer_pages(cc, clone);
- 			bio_put(clone);
- 			gfp_mask |= __GFP_DIRECT_RECLAIM;
-+			order = 0;
- 			goto retry;
- 		}
- 
--		len = (remaining_size > PAGE_SIZE) ? PAGE_SIZE : remaining_size;
--
--		bio_add_page(clone, page, len, 0);
--
--		remaining_size -= len;
-+have_pages:
-+		size_to_add = min((unsigned)PAGE_SIZE << order, remaining_size);
-+		bio_add_page(clone, pages, size_to_add, 0);
-+		remaining_size -= size_to_add;
- 	}
- 
- 	/* Allocate space for integrity tags */
-@@ -1709,12 +1726,13 @@ retry:
- 
- static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone)
- {
--	struct bio_vec *bv;
--	struct bvec_iter_all iter_all;
-+	struct folio_iter fi;
- 
--	bio_for_each_segment_all(bv, clone, iter_all) {
--		BUG_ON(!bv->bv_page);
--		mempool_free(bv->bv_page, &cc->page_pool);
-+	bio_for_each_folio_all(fi, clone) {
-+		if (folio_test_large(fi.folio))
-+			folio_put(fi.folio);
-+		else
-+			mempool_free(&fi.folio->page, &cc->page_pool);
- 	}
- }
- 
+Still relevant.
 
 --
 dm-devel mailing list
