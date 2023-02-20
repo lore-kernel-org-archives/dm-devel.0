@@ -1,131 +1,87 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9EC8BC636CC
-	for <dm-devel@archiver.kernel.org>; Mon, 20 Feb 2023 13:07:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C87EFC05027
+	for <dm-devel@archiver.kernel.org>; Mon, 20 Feb 2023 15:18:43 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1676898468;
+	s=mimecast20190719; t=1676906322;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=SXxQ6oaFixjSNMDbmYc7bfybtP/dAz5OFz1W9gQHNuU=;
-	b=PTy/YlVU6JLU1S06jOleRqbKm88Z5i3jF9Dc7+TeMnSFvaJt67EX5IVl871TOD6cUUaxx2
-	Ql3pdnmiccD5ymJ23+esTIUTLdg1YewrDRZ+hIqhJ8iHkLZHZHdhn/Q9Q8X7VOQi5mkS8P
-	qS169EZLGVeUwn4kRCZOWM2yw7KJuS0=
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=LIztUwVtUlaayuylDn5I2RYplrHIoZuCcCOSTZQWrGg=;
+	b=K5R7kA0/QhvJf4ktov003zdlTM2Wek8z621XB1kUj8CCabnPMjn+/asS7Y9UTbv18gl5qm
+	C607+ZP/el3XlhoONHZr+pLq1My5G0RDmoPTvgPSsNdYtAh2ZzjMbcYxOkrkTz9+jbJsmV
+	QPX+1cNwUqw2VqB8oEPhC8bWFzgzgjk=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-522-dZC8eCF1O1C1SOEC4ysJwg-1; Mon, 20 Feb 2023 08:07:47 -0500
-X-MC-Unique: dZC8eCF1O1C1SOEC4ysJwg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-583-OSciWY32PvGYcj1C15ewJg-1; Mon, 20 Feb 2023 10:18:39 -0500
+X-MC-Unique: OSciWY32PvGYcj1C15ewJg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 68D79100F907;
-	Mon, 20 Feb 2023 13:07:44 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D80D9140EBF6;
-	Mon, 20 Feb 2023 13:07:40 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AABC8100F827;
+	Mon, 20 Feb 2023 15:18:37 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 501341121314;
+	Mon, 20 Feb 2023 15:18:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A02B21946588;
-	Mon, 20 Feb 2023 13:07:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2C7381946588;
+	Mon, 20 Feb 2023 15:18:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6B1541946587
- for <dm-devel@listman.corp.redhat.com>; Mon, 20 Feb 2023 13:07:39 +0000 (UTC)
+ ESMTP id B88111946587
+ for <dm-devel@listman.corp.redhat.com>; Mon, 20 Feb 2023 15:18:35 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4C4D6C15BAD; Mon, 20 Feb 2023 13:07:39 +0000 (UTC)
+ id 95BF32026D68; Mon, 20 Feb 2023 15:18:30 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 44A77C15BA0
- for <dm-devel@redhat.com>; Mon, 20 Feb 2023 13:07:39 +0000 (UTC)
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8EBFD2026D4B
+ for <dm-devel@redhat.com>; Mon, 20 Feb 2023 15:18:30 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 235E338149A3
- for <dm-devel@redhat.com>; Mon, 20 Feb 2023 13:07:39 +0000 (UTC)
-Received: from mailout2.w1.samsung.com (mailout2.w1.samsung.com
- [210.118.77.12]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-627-eIPO2su3NnWihylK6sSwPA-1; Mon, 20 Feb 2023 08:07:36 -0500
-X-MC-Unique: eIPO2su3NnWihylK6sSwPA-1
-Received: from eucas1p1.samsung.com (unknown [182.198.249.206])
- by mailout2.w1.samsung.com (KnoxPortal) with ESMTP id
- 20230220130034euoutp020bd8a8f55a7c9a727c5b630e8507c4bd~FieCZ4qcB2583925839euoutp02J
- for <dm-devel@redhat.com>; Mon, 20 Feb 2023 13:00:34 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w1.samsung.com
- 20230220130034euoutp020bd8a8f55a7c9a727c5b630e8507c4bd~FieCZ4qcB2583925839euoutp02J
-Received: from eusmges1new.samsung.com (unknown [203.254.199.242]) by
- eucas1p2.samsung.com (KnoxPortal) with ESMTP id
- 20230220130033eucas1p200fe8d50e0df282135c6f739eb6331dc~FieBeYtai2069120691eucas1p2m;
- Mon, 20 Feb 2023 13:00:33 +0000 (GMT)
-Received: from eucas1p2.samsung.com ( [182.198.249.207]) by
- eusmges1new.samsung.com (EUCPMTA) with SMTP id 62.10.01471.0FE63F36; Mon, 20
- Feb 2023 13:00:32 +0000 (GMT)
-Received: from eusmtrp1.samsung.com (unknown [182.198.249.138]) by
- eucas1p2.samsung.com (KnoxPortal) with ESMTPA id
- 20230220130032eucas1p2b5b7bee68b20c1daee92226691dd8302~FieBFIumS1864018640eucas1p2v;
- Mon, 20 Feb 2023 13:00:32 +0000 (GMT)
-Received: from eusmgms1.samsung.com (unknown [182.198.249.179]) by
- eusmtrp1.samsung.com (KnoxPortal) with ESMTP id
- 20230220130032eusmtrp162f742012f42af0335ba3829e9d53e48~FieBEXprN1316113161eusmtrp1q;
- Mon, 20 Feb 2023 13:00:32 +0000 (GMT)
-X-AuditID: cbfec7f2-2b1ff700000105bf-45-63f36ef07493
-Received: from eusmtip2.samsung.com ( [203.254.199.222]) by
- eusmgms1.samsung.com (EUCPMTA) with SMTP id F9.20.02722.0FE63F36; Mon, 20
- Feb 2023 13:00:32 +0000 (GMT)
-Received: from localhost (unknown [106.210.248.118]) by eusmtip2.samsung.com
- (KnoxPortal) with ESMTPA id
- 20230220130032eusmtip2024976c02e4977c023d88146c3a822de~FieAvaU3E0206502065eusmtip2j;
- Mon, 20 Feb 2023 13:00:32 +0000 (GMT)
-From: Pankaj Raghav <p.raghav@samsung.com>
-To: snitzer@kernel.org
-Date: Mon, 20 Feb 2023 18:28:41 +0530
-Message-Id: <20230220125839.64459-1-p.raghav@samsung.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6F6BA185A794
+ for <dm-devel@redhat.com>; Mon, 20 Feb 2023 15:18:30 +0000 (UTC)
+Received: from mga04.intel.com (mga04.intel.com [192.55.52.120]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-661-GJKjl3GFMpeodCfWYbTNlQ-1; Mon, 20 Feb 2023 10:18:28 -0500
+X-MC-Unique: GJKjl3GFMpeodCfWYbTNlQ-1
+X-IronPort-AV: E=McAfee;i="6500,9779,10627"; a="331087858"
+X-IronPort-AV: E=Sophos;i="5.97,312,1669104000"; d="scan'208";a="331087858"
+Received: from fmsmga001.fm.intel.com ([10.253.24.23])
+ by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 20 Feb 2023 07:18:26 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6500,9779,10627"; a="814167593"
+X-IronPort-AV: E=Sophos;i="5.97,312,1669104000"; d="scan'208";a="814167593"
+Received: from lkp-server01.sh.intel.com (HELO 4455601a8d94) ([10.239.97.150])
+ by fmsmga001.fm.intel.com with ESMTP; 20 Feb 2023 07:18:21 -0800
+Received: from kbuild by 4455601a8d94 with local (Exim 4.96)
+ (envelope-from <lkp@intel.com>) id 1pU7vo-000E13-1K;
+ Mon, 20 Feb 2023 15:18:20 +0000
+Date: Mon, 20 Feb 2023 23:18:00 +0800
+From: kernel test robot <lkp@intel.com>
+To: Nitesh Shetty <nj.shetty@samsung.com>, Jens Axboe <axboe@kernel.dk>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@redhat.com, Keith Busch <kbusch@kernel.org>,
+ Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
+ James Smart <james.smart@broadcom.com>,
+ Chaitanya Kulkarni <kch@nvidia.com>,
+ Alexander Viro <viro@zeniv.linux.org.uk>
+Message-ID: <202302202321.zfUe705N-lkp@intel.com>
+References: <20230220105336.3810-5-nj.shetty@samsung.com>
 MIME-Version: 1.0
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFmplleLIzCtJLcpLzFFi42LZduzned0PeZ+TDT4ds7JYf+oYs8W0Dz+Z
- Lfa+m81qcfPATiaLz0tb2C1O3JJ2YPO4fMXbY9OqTjaP9/uusnn0bVnFGMASxWWTkpqTWZZa
- pG+XwJVxfsVl1oKvfBWf3ts3ME7n6WLk5JAQMJE41rmdvYuRi0NIYAWjxISlD1ggnC+MEodm
- r4ByPjNK9Jy+zwTT0nb5PytEYjmjRNOyA1DOS0aJZxuPALVwcLAJaEk0drKDNIgIiEk0XL8I
- toNZoJtRYsqS1WwgCWGBaInPnfNYQGwWAVWJ9q3NYHFeAUuJv0ufsUJsk5eYeek7O0RcUOLk
- zCdg9cxA8eats5lBhkoI9HJIPPnxhRmiwUWi6fJ0FghbWOLV8S3sELaMxOnJPVDxaomnN35D
- NbcwSvTvXM8GcrWEgLVE35kcEJNZQFNi/S59iHJHiQdrtrJCVPBJ3HgrCHECn8SkbdOZIcK8
- Eh1tQhDVShI7fz6BWiohcblpDtRSD4nVcyBhKCQQK3F/aSfjBEaFWUgem4XksVkINyxgZF7F
- KJ5aWpybnlpsmJdarlecmFtcmpeul5yfu4kRmFJO/zv+aQfj3Fcf9Q4xMnEwHmKU4GBWEuH9
- z/s5WYg3JbGyKrUoP76oNCe1+BCjNAeLkjivtu3JZCGB9MSS1OzU1ILUIpgsEwenVANTqoJ3
- S3pvqdDvrto876ivP9+ys13c2Kd5eEbtPEuXkufeS3VvbFU0u9dsNS8yssxl8XyTNfNdU7+Y
- 7l50UvONm84ek/exu0zVs53b5Yvsvss+jVFYbuYa8uhT4jPlyZcT04zO3wixZOjfsYFn70XX
- 9oyjhfn+93ydpLWfTNosrzVjU+tcScZvuyVZa+fvZRQxm7ixrXrXYYsffW4BXlormv40Ri1I
- v1e741FKc/XpHc63nmbdnW+yMeaY7tSFBusNGqNvNMglqL457S+39+6vZxM9DQv/Mvqsqnh8
- dmuJVo2517Yt27x2FK1VqDnAIMa87AHPaa79+f9uec99m/9Oaont1u/nd1w6027zcP0NJZbi
- jERDLeai4kQA0NdxiJgDAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrDLMWRmVeSWpSXmKPExsVy+t/xe7of8j4nGzRPUrRYf+oYs8W0Dz+Z
- Lfa+m81qcfPATiaLz0tb2C1O3JJ2YPO4fMXbY9OqTjaP9/uusnn0bVnFGMASpWdTlF9akqqQ
- kV9cYqsUbWhhpGdoaaFnZGKpZ2hsHmtlZKqkb2eTkpqTWZZapG+XoJdxfsVl1oKvfBWf3ts3
- ME7n6WLk5JAQMJFou/yftYuRi0NIYCmjxOFP55ghEhIStxc2MULYwhJ/rnWxQRQ9Z5RouzgT
- qIODg01AS6Kxkx2kRkRATKLh+kV2kBpmgYlAg85fAGsWFoiUmNZxgwnEZhFQlWjf2swGYvMK
- WEr8XfqMFWKBvMTMS9/ZIeKCEidnPmEBsZmB4s1bZzNPYOSbhSQ1C0lqASPTKkaR1NLi3PTc
- YkO94sTc4tK8dL3k/NxNjMBg3nbs5+YdjPNefdQ7xMjEwXiIUYKDWUmE9z/v52Qh3pTEyqrU
- ovz4otKc1OJDjKZA901klhJNzgfGU15JvKGZgamhiZmlgamlmbGSOK9nQUeikEB6Yklqdmpq
- QWoRTB8TB6dUAxPvv5UHIq/P2SFeLSvS73xneZYYx8tH4Qebrx0zSFGYPuvygrgtXCdz8yI4
- gyxVymXWy8qtP+PySc9B3n2vfLL/OZaKB2t31uvorfA8UMF34v7J+/3hRytD3s7QjXlTGqUc
- fopvipu5QetprhqLarMr//R7/31pejm/sH+JT53pHg4Lprvxr1Kj19iyWHdaPbTXemJ06XH4
- 6uB9c/VnWS0oT/t6z+D6qyXB3M6/nHXXCt4OL9+uGfdjQlPi0QTGtHlp8T8XOxtaWaZNvhI7
- y6SZ9Qbvukcbqy1WPl6/wVHAxb5d9dbqljnHtswvtPjf9dg2vFH0V+cPDWvGb7LnMozkfnyz
- dDnUUyG0ambyHCWW4oxEQy3mouJEAGtDL+TvAgAA
-X-CMS-MailID: 20230220130032eucas1p2b5b7bee68b20c1daee92226691dd8302
-X-Msg-Generator: CA
-X-RootMTR: 20230220130032eucas1p2b5b7bee68b20c1daee92226691dd8302
-X-EPHeader: CA
-CMS-TYPE: 201P
-X-CMS-RootMailID: 20230220130032eucas1p2b5b7bee68b20c1daee92226691dd8302
-References: <CGME20230220130032eucas1p2b5b7bee68b20c1daee92226691dd8302@eucas1p2.samsung.com>
+In-Reply-To: <20230220105336.3810-5-nj.shetty@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -133,9 +89,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: [dm-devel] [PATCH] dm: call dm_zone_endio after the target endio
- callback for zoned devices
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH v7 4/8] fs,
+ block: copy_file_range for def_blk_ops for direct block device.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -147,70 +103,86 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Pankaj Raghav <p.raghav@samsung.com>, gost.dev@samsung.com,
- dm-devel@redhat.com, Bart Van Assche <bvanassche@acm.org>, agk@redhat.com
+Cc: bvanassche@acm.org, joshi.k@samsung.com,
+ Nitesh Shetty <nj.shetty@samsung.com>, gost.dev@samsung.com,
+ anuj20.g@samsung.com, linux-kernel@vger.kernel.org,
+ linux-nvme@lists.infradead.org, ming.lei@redhat.com,
+ linux-block@vger.kernel.org, oe-kbuild-all@lists.linux.dev,
+ linux-fsdevel@vger.kernel.org, damien.lemoal@opensource.wdc.com,
+ nitheshshetty@gmail.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-dm_zone_endio() updates the bi_sector of orig bio for zoned devices that
-uses either native append or append emulation, and it is called before the
-endio of the target. But target endio can still update the clone bio
-after dm_zone_endio is called, thereby, the orig bio does not contain
-the updated information anymore.
+Hi Nitesh,
 
-Currently, this is not a problem as the targets that support zoned devices
-such as dm-zoned, dm-linear, and dm-crypt do not have an endio function,
-and even if they do (such as dm-flakey), they don't modify the
-bio->bi_iter.bi_sector of the cloned bio that is used to update the
-orig_bio's bi_sector in dm_zone_endio function.
+Thank you for the patch! Perhaps something to improve:
 
-Call dm_zone_endio for zoned devices after calling the target's endio
-function.
+[auto build test WARNING on device-mapper-dm/for-next]
+[also build test WARNING on linus/master v6.2 next-20230220]
+[cannot apply to axboe-block/for-next]
+[If your patch is applied to the wrong git tree, kindly drop us a note.
+And when submitting patch, we suggest to use '--base' as documented in
+https://git-scm.com/docs/git-format-patch#_base_tree_information]
 
-Reviewed-by: Mike Snitzer <snitzer@kernel.org>
-Reviewed-by: Bart Van Assche <bvanassche@acm.org>
-Signed-off-by: Pankaj Raghav <p.raghav@samsung.com>
----
-Hi Mike,
-  This is one of the patch that was part of my po2 series that did not
-  get merged but this individual patch can be applied independently.
+url:    https://github.com/intel-lab-lkp/linux/commits/Nitesh-Shetty/block-Add-copy-offload-support-infrastructure/20230220-205057
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
+patch link:    https://lore.kernel.org/r/20230220105336.3810-5-nj.shetty%40samsung.com
+patch subject: [PATCH v7 4/8] fs, block: copy_file_range for def_blk_ops for direct block device.
+config: powerpc-allnoconfig (https://download.01.org/0day-ci/archive/20230220/202302202321.zfUe705N-lkp@intel.com/config)
+compiler: powerpc-linux-gcc (GCC) 12.1.0
+reproduce (this is a W=1 build):
+        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # https://github.com/intel-lab-lkp/linux/commit/0f95ad2cb727ac6ac8406a01ff216d9237b403b7
+        git remote add linux-review https://github.com/intel-lab-lkp/linux
+        git fetch --no-tags linux-review Nitesh-Shetty/block-Add-copy-offload-support-infrastructure/20230220-205057
+        git checkout 0f95ad2cb727ac6ac8406a01ff216d9237b403b7
+        # save the config file
+        mkdir build_dir && cp config build_dir/.config
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross W=1 O=build_dir ARCH=powerpc olddefconfig
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross W=1 O=build_dir ARCH=powerpc SHELL=/bin/bash
 
- drivers/md/dm.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+If you fix the issue, kindly add following tag where applicable
+| Reported-by: kernel test robot <lkp@intel.com>
+| Link: https://lore.kernel.org/oe-kbuild-all/202302202321.zfUe705N-lkp@intel.com/
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index adb002b8648d..fe4bfbb18af0 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1111,10 +1111,6 @@ static void clone_endio(struct bio *bio)
- 			disable_write_zeroes(md);
- 	}
- 
--	if (static_branch_unlikely(&zoned_enabled) &&
--	    unlikely(bdev_is_zoned(bio->bi_bdev)))
--		dm_zone_endio(io, bio);
--
- 	if (endio) {
- 		int r = endio(ti, bio, &error);
- 
-@@ -1144,6 +1140,10 @@ static void clone_endio(struct bio *bio)
- 		}
- 	}
- 
-+	if (static_branch_unlikely(&zoned_enabled) &&
-+	    unlikely(bdev_is_zoned(bio->bi_bdev)))
-+		dm_zone_endio(io, bio);
-+
- 	if (static_branch_unlikely(&swap_bios_enabled) &&
- 	    unlikely(swap_bios_limit(ti, bio)))
- 		up(&md->swap_bios_semaphore);
+All warnings (new ones prefixed by >>):
+
+>> block/fops.c:614:9: warning: no previous prototype for 'blkdev_copy_file_range' [-Wmissing-prototypes]
+     614 | ssize_t blkdev_copy_file_range(struct file *file_in, loff_t pos_in,
+         |         ^~~~~~~~~~~~~~~~~~~~~~
+
+
+vim +/blkdev_copy_file_range +614 block/fops.c
+
+   613	
+ > 614	ssize_t blkdev_copy_file_range(struct file *file_in, loff_t pos_in,
+   615					struct file *file_out, loff_t pos_out,
+   616					size_t len, unsigned int flags)
+   617	{
+   618		struct block_device *in_bdev = I_BDEV(bdev_file_inode(file_in));
+   619		struct block_device *out_bdev = I_BDEV(bdev_file_inode(file_out));
+   620		int comp_len;
+   621	
+   622		comp_len = blkdev_copy_offload(in_bdev, pos_in, out_bdev, pos_out, len,
+   623				    NULL, NULL, GFP_KERNEL);
+   624		if (comp_len != len)
+   625			comp_len = generic_copy_file_range(file_in, pos_in + comp_len,
+   626				file_out, pos_out + comp_len, len - comp_len, flags);
+   627	
+   628		return comp_len;
+   629	}
+   630	
+
 -- 
-2.25.1
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests
 
 --
 dm-devel mailing list
