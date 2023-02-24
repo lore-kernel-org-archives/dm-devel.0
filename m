@@ -4,178 +4,84 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3B927C7EE39
-	for <dm-devel@archiver.kernel.org>; Mon, 27 Feb 2023 07:03:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 80AF5C7EE30
+	for <dm-devel@archiver.kernel.org>; Mon, 27 Feb 2023 07:03:41 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1677481423;
+	s=mimecast20190719; t=1677481420;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=GaUDAyhCyEDX0r/e0jteQPSajGPSW1M4PJAKkxMUvoo=;
-	b=Z7nHzBWdYTkho8XmmV+kvIUqQ8MRMIxT0dSvGADtAZZ7Mj+JHt2gjHGRAhWi1XdrzHiLlq
-	Q7U0f3wT47kP+BdmtoMUkRayDtKTE2gVLnoyQqY3tbHQqlQOf0QzBj5VhT0OffMwWh895v
-	fpxKFSY3PK+F7ZNcgDNRXvx+uHgHzhE=
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=8u2kKaCmeh2f+f9Lulo91lphrIpJKFBj6KoI/KIfJvc=;
+	b=GsJ8iUMponoSQFtPTXVAo0Lx4Qyf7YD2Qv2P3G3Qi1yM+Gyz32HYDhl29g+9PFI4iMDOeI
+	z5RKnbQogNK6X8zmmmC+AK8MngeDE8x3n+44MQM+Jl69Bfj0mBGwspv3vzDgTCKgpUV1Q3
+	hFZu1/xetPhQZtw7mQ1ymE7fkupcUOI=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-493-Uo_SaYx7MPGYoK9hJOkHJw-1; Mon, 27 Feb 2023 02:03:41 -0500
-X-MC-Unique: Uo_SaYx7MPGYoK9hJOkHJw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-629-AlDVFQVjOlaHJDMAVSpmYg-1; Mon, 27 Feb 2023 02:03:37 -0500
+X-MC-Unique: AlDVFQVjOlaHJDMAVSpmYg-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 566322A5955D;
-	Mon, 27 Feb 2023 07:03:37 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4B3883C025C9;
+	Mon, 27 Feb 2023 07:03:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 420641400E71;
-	Mon, 27 Feb 2023 07:03:37 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 386D41731B;
+	Mon, 27 Feb 2023 07:03:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B3B0A1946A47;
-	Mon, 27 Feb 2023 07:03:36 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B61541946A71;
+	Mon, 27 Feb 2023 07:03:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 953FF19465B2
- for <dm-devel@listman.corp.redhat.com>; Fri, 24 Feb 2023 17:47:50 +0000 (UTC)
+ ESMTP id 2F3E719465A0
+ for <dm-devel@listman.corp.redhat.com>; Fri, 24 Feb 2023 21:37:59 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6B7662026D38; Fri, 24 Feb 2023 17:47:50 +0000 (UTC)
+ id 1FEC3C15BAE; Fri, 24 Feb 2023 21:37:59 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 62D702026D4B
- for <dm-devel@redhat.com>; Fri, 24 Feb 2023 17:47:50 +0000 (UTC)
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 17D26C15BAD
+ for <dm-devel@redhat.com>; Fri, 24 Feb 2023 21:37:59 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3F60A18E0044
- for <dm-devel@redhat.com>; Fri, 24 Feb 2023 17:47:50 +0000 (UTC)
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
- [205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-375-wrvyjLwSNHG_YKbHGLsGzA-1; Fri, 24 Feb 2023 12:47:48 -0500
-X-MC-Unique: wrvyjLwSNHG_YKbHGLsGzA-1
-Received: from pps.filterd (m0333520.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id
- 31OHhqCE003290; Fri, 24 Feb 2023 17:45:30 GMT
-Received: from iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com
- (iadpaimrmta01.appoci.oracle.com [130.35.100.223])
- by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3ntpqcntjp-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 24 Feb 2023 17:45:30 +0000
-Received: from pps.filterd
- (iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
- by iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (8.17.1.5/8.17.1.5)
- with ESMTP id 31OGY1aV000677; Fri, 24 Feb 2023 17:45:30 GMT
-Received: from nam10-dm6-obe.outbound.protection.outlook.com
- (mail-dm6nam10lp2104.outbound.protection.outlook.com [104.47.58.104])
- by iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id
- 3nxsb4kud4-2
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 24 Feb 2023 17:45:30 +0000
-Received: from DM5PR10MB1466.namprd10.prod.outlook.com (2603:10b6:3:b::7) by
- CH0PR10MB7535.namprd10.prod.outlook.com (2603:10b6:610:187::21) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6156.7; Fri, 24 Feb
- 2023 17:45:28 +0000
-Received: from DM5PR10MB1466.namprd10.prod.outlook.com
- ([fe80::7dd7:8d22:104:8d64]) by DM5PR10MB1466.namprd10.prod.outlook.com
- ([fe80::7dd7:8d22:104:8d64%7]) with mapi id 15.20.6156.007; Fri, 24 Feb 2023
- 17:45:28 +0000
-From: Mike Christie <michael.christie@oracle.com>
-To: bvanassche@acm.org, hch@lst.de, martin.petersen@oracle.com,
- linux-scsi@vger.kernel.org, james.bottomley@hansenpartnership.com,
- linux-block@vger.kernel.org, dm-devel@redhat.com, snitzer@kernel.org,
- axboe@kernel.dk, linux-nvme@lists.infradead.org, chaitanyak@nvidia.com,
- kbusch@kernel.org, target-devel@vger.kernel.org
-Date: Fri, 24 Feb 2023 11:45:00 -0600
-Message-Id: <20230224174502.321490-17-michael.christie@oracle.com>
-In-Reply-To: <20230224174502.321490-1-michael.christie@oracle.com>
-References: <20230224174502.321490-1-michael.christie@oracle.com>
-X-ClientProxiedBy: DS7PR05CA0040.namprd05.prod.outlook.com
- (2603:10b6:8:2f::33) To DM5PR10MB1466.namprd10.prod.outlook.com
- (2603:10b6:3:b::7)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F0A431C05AEA
+ for <dm-devel@redhat.com>; Fri, 24 Feb 2023 21:37:58 +0000 (UTC)
+Received: from mail-lf1-f48.google.com (mail-lf1-f48.google.com
+ [209.85.167.48]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-314-wMunGYAhPDOuBmNQdGj50Q-1; Fri, 24 Feb 2023 16:37:54 -0500
+X-MC-Unique: wMunGYAhPDOuBmNQdGj50Q-1
+Received: by mail-lf1-f48.google.com with SMTP id bp25so962936lfb.0;
+ Fri, 24 Feb 2023 13:37:54 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=cc:to:subject:message-id:date:from:in-reply-to:references
+ :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=KLpSlG9jM0kD34jhPsY3nK7CFEAB85urXMqrQxSXZ3Q=;
+ b=yP9pcYX+6lLw9cM0wv0ghcuygLWj55UwWxXLYgJHKtOxVp4/O4dh/vcGaJzxNnk+ja
+ uwwIfnjjJzfcuGuijvko/AtcINDgx2mcGvKQEm7LymngBY0Ma6tXsqkHvTYUc18zfIxj
+ ylLu4Yy8zoJl//2YgE7SKL5lhQRx5cLBfzCFDIFeIWFpsbgGZqj5AtyxbTug6h2Vn/q5
+ yrolqohH+ujyfnLQon8H55eyymjmsH3ZkbgRUF1CcQZQ+ZKj8URFHZA5fIhieEAaGY43
+ 0rj8+UcBIkPONZx2/lame6XrFI77qrw+zSAbHdl5fsWyTisraEoJwTGFBK8lKi7K/Nrt
+ OgUA==
+X-Gm-Message-State: AO0yUKXUSi1ff2ern/m25OYknxdsRy/0+owWRW2QPhlq6OQGjYJarIP4
+ V4BO1/m5j6Hdb8iH6VNGzJE5FZGa0jbrWx0Z9bg=
+X-Google-Smtp-Source: AK7set9dH27W+wQyRNAbPV4p34ResvzqbI5RTlB3NtX/A2q3Dxytkr8v+zP90eDEw7l5p8Iomu1U2hRPpM330FGYsgw=
+X-Received: by 2002:ac2:5989:0:b0:4d5:ca42:e43b with SMTP id
+ w9-20020ac25989000000b004d5ca42e43bmr5432369lfn.4.1677274672622; Fri, 24 Feb
+ 2023 13:37:52 -0800 (PST)
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: DM5PR10MB1466:EE_|CH0PR10MB7535:EE_
-X-MS-Office365-Filtering-Correlation-Id: 6fa3cbf2-958b-463c-fcb8-08db168eeacd
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: Pk/NDOHRjYZqTF4sSDKTer5XX1ohrfqLySLT9kIqGChyRl4gAYaew0BEyWW9ttfk6xOgkUyHWO+mXGPFoIimxXZMkQ0q/uQ+SfC0werZY4B5Zyfv+mpK5Noi/7RjwwVTR9Z2j06Jl69ayF3Ho9rle+jzvMdvDnRVRBVHAlYSP2PDTwERqcBJHIyNkeL0WrNjzBFdWIOOs6QgH4FihkarAIDb4lm16biOFhe4vVj5pnSBS8ukrLQQIcD5Sq8sTH4C1KsHZMKtvNrw/v4OxIm3a3TpeU4VMfhUFiJDMGePQWsoCHHCxrwpuYb1X9JpmSUZC/tlPLV34X++rCZExR8LVlt4v1JW9CsgFuGQ7jfRJMZToFMgeCQz6z+4RiA/eq+oFoZRoUOuKXJtZdt9hlZwMGGXcukG6aD1vpQ7c0e31kW8SDG4kyelOwsrzD/TITUDJBgIiqCRvK/rNOjr1Jo/AoQfpNLQo+Yv/UZQ2YWpMdlIMFWfKOH9IjnEg56N5xhO6VJ7MFio13lhcVb+lzreiv+nKSpHcUIfWQj0izqgAGd83ToEjwaDUYx4+6Eo1yuyDQhmB93s9PChIoZtMoTmzYHHHNTNZSboqw04RSYK3SImv3POP5pTUQ+RwLYllcGGwGxY55tLCURU953h2pUWo0FlnC970rhrgaYwsdP+DMIWxjDlxZtbjGf7mm02nPsw
-X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:DM5PR10MB1466.namprd10.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230025)(346002)(366004)(376002)(39860400002)(136003)(396003)(451199018)(4326008)(66476007)(66556008)(66946007)(8676002)(83380400001)(41300700001)(316002)(36756003)(186003)(8936002)(26005)(5660300002)(2616005)(38100700002)(7416002)(6512007)(921005)(86362001)(478600001)(2906002)(6486002)(6506007)(107886003)(1076003)(6666004);
- DIR:OUT; SFP:1101
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?mFVs4YQ/U29EYkcHCMf2gHwraxMhL+50oA8zTlB6v/soQC/4MbWIbSq8g26S?=
- =?us-ascii?Q?fSld6yxoGXBP4hvmUT+cl3nmhgQZ33iSRID0SOoURs1z1Q0NsuQdOl16qoNU?=
- =?us-ascii?Q?KC71esud5S5H2FTxnCfakW0wX3g/T+B1G8JMEov0JvEApoOv71h1UoSJElq7?=
- =?us-ascii?Q?gG0Ax8i5sZ7FwTQ2Tq4dmRzgaDkfTT1JuNKwcoAKd2uQQlq6vICVAlhmW2Qu?=
- =?us-ascii?Q?6D2F8ACBljyvuVyVYb+B/fuiLuxu37qTzszYNBKI9HxXEsRiIqxhhcBH6WgV?=
- =?us-ascii?Q?oD81A/hCTZ6xPSOCLxGgzZw70+1lFBKS163d+Ec2VpBg6wsD+OZTevZTZ8rS?=
- =?us-ascii?Q?PXBFJ/LXOBMfCVp3BOn2NJuCAAppw05D5iBntcaprkS0uKfVZQsN9Dp/G1B6?=
- =?us-ascii?Q?2Py/afSHza30+tIhfi9yvvNb23eQSNMRlaD56SZDq6UflSltaFfk7Pccc5Wq?=
- =?us-ascii?Q?cVfvOxrLJodKOouxTGBhYQxiilKKQdzmL15J9KzsJBVYPAqWbgZQuXuU3+Xj?=
- =?us-ascii?Q?cxdoTuvkdeQFfNRBUHfbVP04xoHLV4piTOlkUhEhkUldq7tin64x54UEBwOm?=
- =?us-ascii?Q?HpZ18qBASF7YZy4MvxTnkzYifa5idYtNILsaY1zccUt8gHVWtmgmcp8fAZUe?=
- =?us-ascii?Q?E01Dt8UfwNyk7J2O2uWcFKT5JN+c5RzxVa+/Um1r55ph100GnypY083XJglf?=
- =?us-ascii?Q?XcqLwpuG6/9gB0XaZZyj1YgJElNXBpz8mMGp8FRPOpYu30SdwuIlk2RMJ8L/?=
- =?us-ascii?Q?qb9v4gjKqClpbDT8v8NfVppoNX4j8Q5qsa5WjgwklANyyIsXch/QOVZCcYuC?=
- =?us-ascii?Q?xR7DZtoXHG165XtoWqE93IaYFqDtJsHpER1TGLFT6FoB+fra8DG7BF7w+gwM?=
- =?us-ascii?Q?plyqodkFNelS8QZEcXwjWc6DgVChIcfbTFn7FjZCnujuOgC2hkLHAYrfm32Q?=
- =?us-ascii?Q?iSmo4qWerNCNRUQOn3nbci93A0zo37r/3wF1ZmfKti37oWFpX5fGcxvD0tTG?=
- =?us-ascii?Q?OrxiCZxtgkJG014s0tu3RqY55ZKkXGkqfZVB7GNq5lfBMqdmFct1+VHP+o8I?=
- =?us-ascii?Q?e97wibi5lEwpuawMrctU2vv6tD3RfNTH0KUGbJvIcxsCK/EcxIG62re5Su57?=
- =?us-ascii?Q?4LQ+HuZasqf6/y+AEd7esO4euJx5CqztemZvOU9OTisjCabxRQwGP6Ck/qPt?=
- =?us-ascii?Q?SGNIOVd5MvEkQNqKCp36V+cg2tQ8IrR8lRjzXivXGZTUYNwyX3/JVfRQW+nH?=
- =?us-ascii?Q?QHzrWHKj73eYKVjMVdyeTEYJSh8ePv9VffkewiEQvIytCu1m8Plkf/bCOOOt?=
- =?us-ascii?Q?E1o9KDpYOG1OZftqhIfKmJdGLOxZLLCuE91W2x/RUf8hUkOtOijxvU1N2FZ7?=
- =?us-ascii?Q?QCRdi6oecVaVbgqbGoyLsV2inPp4kxfdE9sfqcLEkEue++FrBoAt+ngXAXML?=
- =?us-ascii?Q?vHYLA6psCuXd0/mk82aoRX7W0JNCMCgB3lwBShPXQUlksTRKBOU54/3Jokjp?=
- =?us-ascii?Q?p5QZEnJ6FTlWzbI8V1Ou/9ZGtBq6WNDH2K+DQ1fTAysEn9WT4sfJT5mFAToM?=
- =?us-ascii?Q?Y5njldBTd/F+Cd9Ym6MHGHq2CFG34O3j2Ph6k1WE2mN5wETa+2ZWm0NxxPEp?=
- =?us-ascii?Q?pg=3D=3D?=
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0: =?us-ascii?Q?43918OYwmOfK93Vf+MnmOf+Y6Vt23KAqD4yIONMEj53sgamZML2/2zxg75sB?=
- =?us-ascii?Q?KR40XERnF5q+bzxaBHv3FJJDfLXSnfU/JhqPcPPLDd6yy2ROK/fGVThNzGVM?=
- =?us-ascii?Q?pkhpFODveJVkWoxpe5FHVuxrRxqEdLtzI0PQIbIYPFKhMxW5wkPuMljukn/n?=
- =?us-ascii?Q?7NntQnixwB2Uf2sSaJOElihTf0XP6jugzZhZ53Yv9GboBGG80vYdI9nbDW45?=
- =?us-ascii?Q?Ld75KYGCmt1uxReQGVWiXf5cq3IMQkARDfpzKc/9K8XdSF5QAL96bF1mBg1v?=
- =?us-ascii?Q?paRkQ8llVJnLjLMncZrapl+VGWF71xo5TWYKQTBMPh9SQ2Z+IWVQaRCnAM7d?=
- =?us-ascii?Q?m9ih7bhkJWxezUVsFCCpX0HKqYO2voR2afc+i9kfApu+OOsUmqlmmNOWcnku?=
- =?us-ascii?Q?W3x3mCj37s3lbDv67OyJ2bgjaWlILoIsJ9wgX0yPYv3x8GVvaMX8N+Y1y1K+?=
- =?us-ascii?Q?IlGRgxemj3v5JwrZZ458L403MXLDvlyK1CPGyXu5/j4mFRZxgObzUGhJFbs0?=
- =?us-ascii?Q?GRrNclksT0+HsXPCJfgs0XRx0XCxd3b9blrWiScbrbQ7G9L9RDTK3rTeNqWL?=
- =?us-ascii?Q?YSYi9Rsp2xJd2qUGNyMQ3px1C2z0lwOGvXmVM+i5P3aYXyGhisBN33SP7eta?=
- =?us-ascii?Q?dRXsN7v8MbOaY/zafU5/5vaim5wC5ZEca9hNzCAFBrRWrBApb7Gy1B9DgGdE?=
- =?us-ascii?Q?egqcu2IuPQ/5CjOggg8EVBuyV7JPTu+Z9fye8PS/h6u5Q0tSacw90iixMn5l?=
- =?us-ascii?Q?YKSuVEcIR+QMF3SO+jqR4Ywgowl/4nkShv3jEdkyS9N7NYVJcij6Yuvr8UuB?=
- =?us-ascii?Q?Be4Bq04bMSV/fQ70ez9g+mvzlqvnQYUcZXSx6/nZ80CtagJwOSaDeudZ3PVD?=
- =?us-ascii?Q?iTrIE/o7y7iyREOUkt0ARpM/mMUZOkhVFN6C9FpIVe8pMfNqtohysj988Ylo?=
- =?us-ascii?Q?+yU5GJqoczIE8pocIGBhUTTK5AhGMv1/ILlxHjLbW3TB6wJLcqjrjtpXwbPZ?=
- =?us-ascii?Q?nh+4XKsSzcnr5DnA8//qOZ6VQg=3D=3D?=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 6fa3cbf2-958b-463c-fcb8-08db168eeacd
-X-MS-Exchange-CrossTenant-AuthSource: DM5PR10MB1466.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 24 Feb 2023 17:45:28.4998 (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: 5PDvWvvlP7YVw+utwWb3LYwjJUVG2cDcJIt23EOUtzA38b3G96HCpxiV1PDBcSvf2GU4vDqm95MLNZgf/mf9+ENvE0kxDJjsswZr5hv4X/0=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: CH0PR10MB7535
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.219,Aquarius:18.0.930,Hydra:6.0.562,FMLib:17.11.170.22
- definitions=2023-02-24_12,2023-02-24_01,2023-02-09_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 bulkscore=0
- mlxscore=0 spamscore=0
- malwarescore=0 adultscore=0 suspectscore=0 mlxlogscore=999 phishscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2212070000
- definitions=main-2302240139
-X-Proofpoint-GUID: 6tXktHyy9pcXOS_GsOHb333fvSjtwej-
-X-Proofpoint-ORIG-GUID: 6tXktHyy9pcXOS_GsOHb333fvSjtwej-
+References: <2896937.1676998541@warthog.procyon.org.uk>
+ <96463a32a97dc40bc30c47ddcdf19a5803de32d8.camel@HansenPartnership.com>
+In-Reply-To: <96463a32a97dc40bc30c47ddcdf19a5803de32d8.camel@HansenPartnership.com>
+From: Steve French <smfrench@gmail.com>
+Date: Fri, 24 Feb 2023 16:37:39 -0500
+Message-ID: <CAH2r5mtLFW3x46rTACqk0XsjdHq_UMG-bLgQJx0LtyF9DF9cwg@mail.gmail.com>
+To: James Bottomley <James.Bottomley@hansenpartnership.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -183,10 +89,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mailman-Approved-At: Mon, 27 Feb 2023 07:03:30 +0000
-Subject: [dm-devel] [PATCH v4 16/18] scsi: target: Pass struct
- target_opcode_descriptor to enabled
+Subject: Re: [dm-devel] [LSF/MM/BPF TOPIC] Linux Security Summit cross-over?
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -198,189 +103,161 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Mike Christie <michael.christie@oracle.com>
+Cc: linux-block@vger.kernel.org, David Howells <dhowells@redhat.com>,
+ dm-devel@redhat.com, Chuck Lever <chuck.lever@oracle.com>,
+ linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+ lsf-pc <lsf-pc@lists.linux-foundation.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; boundary="===============3141455894571117156=="
+
+--===============3141455894571117156==
+Content-Type: multipart/alternative; boundary="0000000000000d72bd05f578f17c"
+
+--0000000000000d72bd05f578f17c
+Content-Type: text/plain; charset="UTF-8"
+
+I did one on network fs security at a security summit before that would
+still be relevant to both
+
+On Tue, Feb 21, 2023, 16:16 James Bottomley <
+James.Bottomley@hansenpartnership.com> wrote:
+
+> On Tue, 2023-02-21 at 16:55 +0000, David Howells wrote:
+> >
+> > Since the first day of the LSS is the same as the final day of LSF
+> > and in the same venue, are there any filesystem + security subjects
+> > that would merit a common session?
+>
+>
+> I've got one:  Cryptographic material handling.
+>
+> Subtitle could be: making keyrings more usable.
+>
+> The broad problem is that the use of encryption within the kernel is
+> growing (from the old dm-crypt to the newer fscrypt and beyond) yet
+> pretty much all of our cryptographic key material handling violates the
+> principle of least privilege.  The latest one (which I happened to
+> notice being interested in TPMs) is the systemd tpm2 cryptenroll.  The
+> specific violation is that key unwrapping should occur as close as
+> possible to use: when the kernel uses a key, it should be the kernel
+> unwrapping it not unwrapping in user space and handing the unwrapped
+> key down to the kernel because that gives a way.  We got here because
+> in most of the old uses, the key is derived from a passphrase and the
+> kernel can't prompt the user, so pieces of user space have to gather
+> the precursor cryptographic material anyway.  However, we're moving
+> towards using cryptographic devices (like the TPM, key fobs and the
+> like) to store keys we really should be passing the wrapped key into
+> the kernel and letting it do the unwrap to preserve least privilege.
+> dm-crypt has some support for using kernel based TPM keys (the trusted
+> key subsystem), but this isn't propagated into systemd-cryptenroll and
+> pretty much none of the other encryption systems make any attempt to
+> use keyrings for unwrap handling, even if they use keyrings to store
+> cryptographic material.
+>
+> Part of the reason seems to be that the keyrings subsystem itself is
+> hard to use as a generic "unwrapper" since the consumer of the keys has
+> to know exactly the key type to consume the protected payload.  We
+> could possibly fix this by adding a payload accessor function so the
+> keyring consumer could access a payload from any key type and thus
+> benefit from in-kernel unwrapping, but there are likely a host of other
+> issues that need to be solved.  So what I'd really like to discuss is:
+>
+> Given the security need for a generic in-kernel unwrapper, should we
+> make keyrings do this and if so, how?
+>
+> Regards,
+>
+> James
+>
+>
+>
+>
+
+--0000000000000d72bd05f578f17c
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"auto">I did one on network fs security at a security summit bef=
+ore that would still be relevant to both</div><br><div class=3D"gmail_quote=
+"><div dir=3D"ltr" class=3D"gmail_attr">On Tue, Feb 21, 2023, 16:16 James B=
+ottomley &lt;<a href=3D"mailto:James.Bottomley@hansenpartnership.com">James=
+.Bottomley@hansenpartnership.com</a>&gt; wrote:<br></div><blockquote class=
+=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padd=
+ing-left:1ex">On Tue, 2023-02-21 at 16:55 +0000, David Howells wrote:<br>
+&gt; <br>
+&gt; Since the first day of the LSS is the same as the final day of LSF<br>
+&gt; and in the same venue, are there any filesystem + security subjects<br=
+>
+&gt; that would merit a common session?<br>
+<br>
+<br>
+I&#39;ve got one:=C2=A0 Cryptographic material handling.<br>
+<br>
+Subtitle could be: making keyrings more usable.<br>
+<br>
+The broad problem is that the use of encryption within the kernel is<br>
+growing (from the old dm-crypt to the newer fscrypt and beyond) yet<br>
+pretty much all of our cryptographic key material handling violates the<br>
+principle of least privilege.=C2=A0 The latest one (which I happened to<br>
+notice being interested in TPMs) is the systemd tpm2 cryptenroll.=C2=A0 The=
+<br>
+specific violation is that key unwrapping should occur as close as<br>
+possible to use: when the kernel uses a key, it should be the kernel<br>
+unwrapping it not unwrapping in user space and handing the unwrapped<br>
+key down to the kernel because that gives a way.=C2=A0 We got here because<=
+br>
+in most of the old uses, the key is derived from a passphrase and the<br>
+kernel can&#39;t prompt the user, so pieces of user space have to gather<br=
+>
+the precursor cryptographic material anyway.=C2=A0 However, we&#39;re movin=
+g<br>
+towards using cryptographic devices (like the TPM, key fobs and the<br>
+like) to store keys we really should be passing the wrapped key into<br>
+the kernel and letting it do the unwrap to preserve least privilege. <br>
+dm-crypt has some support for using kernel based TPM keys (the trusted<br>
+key subsystem), but this isn&#39;t propagated into systemd-cryptenroll and<=
+br>
+pretty much none of the other encryption systems make any attempt to<br>
+use keyrings for unwrap handling, even if they use keyrings to store<br>
+cryptographic material.<br>
+<br>
+Part of the reason seems to be that the keyrings subsystem itself is<br>
+hard to use as a generic &quot;unwrapper&quot; since the consumer of the ke=
+ys has<br>
+to know exactly the key type to consume the protected payload.=C2=A0 We<br>
+could possibly fix this by adding a payload accessor function so the<br>
+keyring consumer could access a payload from any key type and thus<br>
+benefit from in-kernel unwrapping, but there are likely a host of other<br>
+issues that need to be solved.=C2=A0 So what I&#39;d really like to discuss=
+ is:<br>
+<br>
+Given the security need for a generic in-kernel unwrapper, should we<br>
+make keyrings do this and if so, how?<br>
+<br>
+Regards,<br>
+<br>
+James<br>
+<br>
+<br>
+<br>
+</blockquote></div>
+
+--0000000000000d72bd05f578f17c--
+
+--===============3141455894571117156==
 Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-The iblock pr_ops support does not support commands that require port or
-I_T Nexus info. This adds a struct target_opcode_descriptor as an argument
-to the enabled callout so we can still have the common tcm_is_pr_enabled
-and tcm_is_scsi2_reservations_enabled functions and also determine if the
-command is supported based on the command and service action and device
-settings.
-
-Signed-off-by: Mike Christie <michael.christie@oracle.com>
----
- drivers/target/target_core_spc.c  | 40 +++++++++++++++++++------------
- include/target/target_core_base.h |  3 ++-
- 2 files changed, 27 insertions(+), 16 deletions(-)
-
-diff --git a/drivers/target/target_core_spc.c b/drivers/target/target_core_spc.c
-index 00d34616df5d..caf8d1325007 100644
---- a/drivers/target/target_core_spc.c
-+++ b/drivers/target/target_core_spc.c
-@@ -1429,7 +1429,8 @@ static struct target_opcode_descriptor tcm_opcode_write_verify16 = {
- 	.update_usage_bits = set_dpofua_usage_bits,
- };
- 
--static bool tcm_is_ws_enabled(struct se_cmd *cmd)
-+static bool tcm_is_ws_enabled(struct target_opcode_descriptor *descr,
-+			      struct se_cmd *cmd)
- {
- 	struct exec_cmd_ops *ops = cmd->protocol_data;
- 	struct se_device *dev = cmd->se_dev;
-@@ -1456,7 +1457,8 @@ static struct target_opcode_descriptor tcm_opcode_write_same32 = {
- 	.update_usage_bits = set_dpofua_usage_bits32,
- };
- 
--static bool tcm_is_caw_enabled(struct se_cmd *cmd)
-+static bool tcm_is_caw_enabled(struct target_opcode_descriptor *descr,
-+			       struct se_cmd *cmd)
- {
- 	struct se_device *dev = cmd->se_dev;
- 
-@@ -1496,7 +1498,8 @@ static struct target_opcode_descriptor tcm_opcode_read_capacity16 = {
- 		       0xff, 0xff, 0x00, SCSI_CONTROL_MASK},
- };
- 
--static bool tcm_is_rep_ref_enabled(struct se_cmd *cmd)
-+static bool tcm_is_rep_ref_enabled(struct target_opcode_descriptor *descr,
-+				   struct se_cmd *cmd)
- {
- 	struct se_device *dev = cmd->se_dev;
- 
-@@ -1507,7 +1510,6 @@ static bool tcm_is_rep_ref_enabled(struct se_cmd *cmd)
- 	}
- 	spin_unlock(&dev->t10_alua.lba_map_lock);
- 	return true;
--
- }
- 
- static struct target_opcode_descriptor tcm_opcode_read_report_refferals = {
-@@ -1542,7 +1544,8 @@ static struct target_opcode_descriptor tcm_opcode_sync_cache16 = {
- 		       0xff, 0xff, SCSI_GROUP_NUMBER_MASK, SCSI_CONTROL_MASK},
- };
- 
--static bool tcm_is_unmap_enabled(struct se_cmd *cmd)
-+static bool tcm_is_unmap_enabled(struct target_opcode_descriptor *descr,
-+				 struct se_cmd *cmd)
- {
- 	struct exec_cmd_ops *ops = cmd->protocol_data;
- 	struct se_device *dev = cmd->se_dev;
-@@ -1664,7 +1667,8 @@ static struct target_opcode_descriptor tcm_opcode_pri_read_resrv = {
- 		       0xff, SCSI_CONTROL_MASK},
- };
- 
--static bool tcm_is_pr_enabled(struct se_cmd *cmd)
-+static bool tcm_is_pr_enabled(struct target_opcode_descriptor *descr,
-+			      struct se_cmd *cmd)
- {
- 	struct se_device *dev = cmd->se_dev;
- 
-@@ -1793,7 +1797,9 @@ static struct target_opcode_descriptor tcm_opcode_pro_register_move = {
- 	.enabled = tcm_is_pr_enabled,
- };
- 
--static bool tcm_is_scsi2_reservations_enabled(struct se_cmd *cmd)
-+static bool
-+tcm_is_scsi2_reservations_enabled(struct target_opcode_descriptor *descr,
-+				  struct se_cmd *cmd)
- {
- 	struct se_device *dev = cmd->se_dev;
- 
-@@ -1854,7 +1860,8 @@ static struct target_opcode_descriptor tcm_opcode_inquiry = {
- 		       0xff, SCSI_CONTROL_MASK},
- };
- 
--static bool tcm_is_3pc_enabled(struct se_cmd *cmd)
-+static bool tcm_is_3pc_enabled(struct target_opcode_descriptor *descr,
-+			       struct se_cmd *cmd)
- {
- 	struct se_device *dev = cmd->se_dev;
- 
-@@ -1915,8 +1922,8 @@ static struct target_opcode_descriptor tcm_opcode_report_target_pgs = {
- 		       0xff, 0xff, 0x00, SCSI_CONTROL_MASK},
- };
- 
--
--static bool spc_rsoc_enabled(struct se_cmd *cmd)
-+static bool spc_rsoc_enabled(struct target_opcode_descriptor *descr,
-+			     struct se_cmd *cmd)
- {
- 	struct se_device *dev = cmd->se_dev;
- 
-@@ -1936,7 +1943,8 @@ static struct target_opcode_descriptor tcm_opcode_report_supp_opcodes = {
- 	.enabled = spc_rsoc_enabled,
- };
- 
--static bool tcm_is_set_tpg_enabled(struct se_cmd *cmd)
-+static bool tcm_is_set_tpg_enabled(struct target_opcode_descriptor *descr,
-+				   struct se_cmd *cmd)
- {
- 	struct t10_alua_tg_pt_gp *l_tg_pt_gp;
- 	struct se_lun *l_lun = cmd->se_lun;
-@@ -2123,7 +2131,7 @@ spc_rsoc_get_descr(struct se_cmd *cmd, struct target_opcode_descriptor **opcode)
- 			if (descr->serv_action_valid)
- 				return TCM_INVALID_CDB_FIELD;
- 
--			if (!descr->enabled || descr->enabled(cmd))
-+			if (!descr->enabled || descr->enabled(descr, cmd))
- 				*opcode = descr;
- 			break;
- 		case 0x2:
-@@ -2137,7 +2145,8 @@ spc_rsoc_get_descr(struct se_cmd *cmd, struct target_opcode_descriptor **opcode)
- 			 */
- 			if (descr->serv_action_valid &&
- 			    descr->service_action == requested_sa) {
--				if (!descr->enabled || descr->enabled(cmd))
-+				if (!descr->enabled || descr->enabled(descr,
-+								      cmd))
- 					*opcode = descr;
- 			} else if (!descr->serv_action_valid)
- 				return TCM_INVALID_CDB_FIELD;
-@@ -2150,7 +2159,8 @@ spc_rsoc_get_descr(struct se_cmd *cmd, struct target_opcode_descriptor **opcode)
- 			 * be returned in the one_command parameter data format.
- 			 */
- 			if (descr->service_action == requested_sa)
--				if (!descr->enabled || descr->enabled(cmd))
-+				if (!descr->enabled || descr->enabled(descr,
-+								      cmd))
- 					*opcode = descr;
- 			break;
- 		}
-@@ -2207,7 +2217,7 @@ spc_emulate_report_supp_op_codes(struct se_cmd *cmd)
- 
- 		for (i = 0; i < ARRAY_SIZE(tcm_supported_opcodes); i++) {
- 			descr = tcm_supported_opcodes[i];
--			if (descr->enabled && !descr->enabled(cmd))
-+			if (descr->enabled && !descr->enabled(descr, cmd))
- 				continue;
- 
- 			response_length += spc_rsoc_encode_command_descriptor(
-diff --git a/include/target/target_core_base.h b/include/target/target_core_base.h
-index 12c9ba16217e..04646b3dbf75 100644
---- a/include/target/target_core_base.h
-+++ b/include/target/target_core_base.h
-@@ -878,7 +878,8 @@ struct target_opcode_descriptor {
- 	u8			specific_timeout;
- 	u16			nominal_timeout;
- 	u16			recommended_timeout;
--	bool			(*enabled)(struct se_cmd *cmd);
-+	bool			(*enabled)(struct target_opcode_descriptor *descr,
-+					   struct se_cmd *cmd);
- 	void			(*update_usage_bits)(u8 *usage_bits,
- 						     struct se_device *dev);
- 	u8			usage_bits[];
--- 
-2.25.1
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+
+--===============3141455894571117156==--
 
