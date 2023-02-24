@@ -4,174 +4,178 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5844FC64ED6
-	for <dm-devel@archiver.kernel.org>; Mon, 27 Feb 2023 07:03:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B82EFC64ED8
+	for <dm-devel@archiver.kernel.org>; Mon, 27 Feb 2023 07:04:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1677481431;
+	s=mimecast20190719; t=1677481442;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:mime-version:mime-version:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=wB8aZoLePunBf9QOGID1W+mGoBjI+C7VhthNFRWAJl4=;
-	b=VikQvNe8Y69b5zFSmTjiJBt/VjTLNpvctPxkvJDBL99d5goCP3uFKzEQnUDd0s1jIy9bTI
-	BB2zlQuUMriysg7D7LEppVGD3z8zrBWrOoWRuo3D/Hla2Bjg5JIDltE2SQJcoWpkCJLYNq
-	6k/py0KJ0KaqhIpUkkcHBIhK6ixDDMw=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=KYv0kh7J9KkJ2B7B6F1/cxNlefqrn/wuw3iSqVwg3LI=;
+	b=XkbhgKYXpzl+Z6Eyw6s47zpIHsZ6VP7gjLXCwGzl68NCPa91Lj033yyOIW3Edht5+upthp
+	fVKA+lRGYd34REQjTm0f4LPYBPJAX9SApR6XDytDKxAEYLh5z1fLveDIhPgLqBu+gfjoEJ
+	ib00SQHX6X1IwgKF4gn99zAtDYbIsWQ=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-329-mq8e1N6YN8Smau4MJtlY8g-1; Mon, 27 Feb 2023 02:03:48 -0500
-X-MC-Unique: mq8e1N6YN8Smau4MJtlY8g-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-484-cwZtw-IWNxmC-5rVGLg9yw-1; Mon, 27 Feb 2023 02:03:41 -0500
+X-MC-Unique: cwZtw-IWNxmC-5rVGLg9yw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 472AA88B7A7;
-	Mon, 27 Feb 2023 07:03:39 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B986F1C0434F;
+	Mon, 27 Feb 2023 07:03:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EC2A6C16022;
-	Mon, 27 Feb 2023 07:03:38 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A674A492B12;
+	Mon, 27 Feb 2023 07:03:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E0BEA19465B1;
-	Mon, 27 Feb 2023 07:03:38 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6E60B1946594;
+	Mon, 27 Feb 2023 07:03:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A0D3E19465A0
- for <dm-devel@listman.corp.redhat.com>; Sat, 25 Feb 2023 01:07:58 +0000 (UTC)
+ ESMTP id DA45919465B3
+ for <dm-devel@listman.corp.redhat.com>; Fri, 24 Feb 2023 17:47:31 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 84CA51415113; Sat, 25 Feb 2023 01:07:58 +0000 (UTC)
+ id 979D52026D3E; Fri, 24 Feb 2023 17:47:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7B7EA140EBF6
- for <dm-devel@redhat.com>; Sat, 25 Feb 2023 01:07:58 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8E5AF2026D4B
+ for <dm-devel@redhat.com>; Fri, 24 Feb 2023 17:47:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 52E1485A588
- for <dm-devel@redhat.com>; Sat, 25 Feb 2023 01:07:58 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6B491800B23
+ for <dm-devel@redhat.com>; Fri, 24 Feb 2023 17:47:31 +0000 (UTC)
 Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
  [205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-588-C_5wKmTqPgauXXjLQfahcg-1; Fri, 24 Feb 2023 20:07:56 -0500
-X-MC-Unique: C_5wKmTqPgauXXjLQfahcg-1
-Received: from pps.filterd (m0246632.ppops.net [127.0.0.1])
+ us-mta-397-e2i8a4Q5Nq2x1kjPBvyt6Q-1; Fri, 24 Feb 2023 12:47:29 -0500
+X-MC-Unique: e2i8a4Q5Nq2x1kjPBvyt6Q-1
+Received: from pps.filterd (m0333520.ppops.net [127.0.0.1])
  by mx0b-00069f02.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id
- 31OHhwtP019983; Fri, 24 Feb 2023 17:45:09 GMT
-Received: from phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com
- (phxpaimrmta03.appoci.oracle.com [138.1.37.129])
- by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3ntp9twu3x-1
+ 31OHhqUA003285; Fri, 24 Feb 2023 17:45:16 GMT
+Received: from phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com
+ (phxpaimrmta01.appoci.oracle.com [138.1.114.2])
+ by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3ntpqcntj6-1
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 24 Feb 2023 17:45:09 +0000
+ Fri, 24 Feb 2023 17:45:15 +0000
 Received: from pps.filterd
- (phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
- by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (8.17.1.5/8.17.1.5)
- with ESMTP id 31OG0ikw030220; Fri, 24 Feb 2023 17:45:08 GMT
+ (phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+ by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (8.17.1.5/8.17.1.5)
+ with ESMTP id 31OH1Ks5026136; Fri, 24 Feb 2023 17:45:14 GMT
 Received: from nam10-dm6-obe.outbound.protection.outlook.com
- (mail-dm6nam10lp2109.outbound.protection.outlook.com [104.47.58.109])
- by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id
- 3ntn49ssch-1
+ (mail-dm6nam10lp2100.outbound.protection.outlook.com [104.47.58.100])
+ by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id
+ 3ntn49sdsv-2
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 24 Feb 2023 17:45:07 +0000
+ Fri, 24 Feb 2023 17:45:14 +0000
 Received: from DM5PR10MB1466.namprd10.prod.outlook.com (2603:10b6:3:b::7) by
  CH0PR10MB7535.namprd10.prod.outlook.com (2603:10b6:610:187::21) with
  Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6156.7; Fri, 24 Feb
- 2023 17:45:05 +0000
+ 2023 17:45:12 +0000
 Received: from DM5PR10MB1466.namprd10.prod.outlook.com
  ([fe80::7dd7:8d22:104:8d64]) by DM5PR10MB1466.namprd10.prod.outlook.com
  ([fe80::7dd7:8d22:104:8d64%7]) with mapi id 15.20.6156.007; Fri, 24 Feb 2023
- 17:45:05 +0000
+ 17:45:12 +0000
 From: Mike Christie <michael.christie@oracle.com>
 To: bvanassche@acm.org, hch@lst.de, martin.petersen@oracle.com,
  linux-scsi@vger.kernel.org, james.bottomley@hansenpartnership.com,
  linux-block@vger.kernel.org, dm-devel@redhat.com, snitzer@kernel.org,
  axboe@kernel.dk, linux-nvme@lists.infradead.org, chaitanyak@nvidia.com,
  kbusch@kernel.org, target-devel@vger.kernel.org
-Date: Fri, 24 Feb 2023 11:44:44 -0600
-Message-Id: <20230224174502.321490-1-michael.christie@oracle.com>
-X-ClientProxiedBy: DM5PR07CA0077.namprd07.prod.outlook.com
- (2603:10b6:4:ad::42) To DM5PR10MB1466.namprd10.prod.outlook.com
+Date: Fri, 24 Feb 2023 11:44:49 -0600
+Message-Id: <20230224174502.321490-6-michael.christie@oracle.com>
+In-Reply-To: <20230224174502.321490-1-michael.christie@oracle.com>
+References: <20230224174502.321490-1-michael.christie@oracle.com>
+X-ClientProxiedBy: DM5PR07CA0054.namprd07.prod.outlook.com
+ (2603:10b6:4:ad::19) To DM5PR10MB1466.namprd10.prod.outlook.com
  (2603:10b6:3:b::7)
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
 X-MS-TrafficTypeDiagnostic: DM5PR10MB1466:EE_|CH0PR10MB7535:EE_
-X-MS-Office365-Filtering-Correlation-Id: 89aff5fd-382e-4625-ec53-08db168edce1
+X-MS-Office365-Filtering-Correlation-Id: 48dc6dce-adf0-4f56-8abc-08db168ee168
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: iFFgWg8m62M1Q0ZTI/kw8UTzI6/HvQKeM44buNdlYXQ7nH7xwfxA3R/7YbqYeGAvCvdlOr9XdKpPlpdjqzgW6GQFAj3SUuNlYgdFWUg+ReOCvmKUxbUc/S2/pVLmtQ5I65oMb3L0UFP4upxLAyCOZDVpy9Puj2UxEwsa9cBhd6eGYqhJi5yO4h4oxXW6p+rqsb6Wd/9fwsdN0V+B3wASZoLvaenYahmUviWwm8ZH1WmcwavnIMSn3EEoPFQO/YW+bCjg7BHvhUtEGnzzZ55ned5w+5M9B7H+f1dl3pIiAgZTk+/xktf7ZjXJycYYAmEQkpXXb4Sk5RvWIamf9XTH1ZSbQ6g71XrG9YYXValbOhs79jpWBnUInSyBYMjKQiOzPQnvM3GPFxyqyfizgv9c0i+yUA7ehUSJrm/idVuZuZYKBMtbJ/b4tRrf32JXgWWIi8Ufj8penP08aMpeLndx0HVo/JE1p9pDBNvPd6ew+09p0QtlhFa1CfEfFVh8s6kPKxdfLfOQJ2v4aqhYBuOmwL1daWBrh/F6akkUhSXGUK3VohM1AtBnelfjIDPlxb8hFIB/REbtSa+9rxjsH9NKbeDgaatzz/Q9uB/Qk7M0kNCWz4QECVbNQjJRIicTRhxF13DQ/glBCuieuFLJKtKyKgQ3DFrQSYUxue/mWTTE+xytq28uDxa6IFgP5F0JCdxe
+X-Microsoft-Antispam-Message-Info: /QJBAY3ca3Wb/gMYgG91v3+8DhEwR3MpVtLP+Jvzz4dIEWVoEY9QSIZtJwHXE008FAFQnSUe0ztkj3Hsb2yY+yYwRVIkubZOMqd4tRM1P135k2JbfsTOue9hVzo2TtEtjtRMN344Rk6KW+k0YTOit9uDQjl81odPOA/zuTfs9Iwjpx8kWHbCWPW06ktLgCRqIfSwBriLNMH1dApgukQFC0aRU1XLIk+pYi/wTqrPb58mGV+/lb67vhlEN+LxjGn9WRqCE/30HjTRTyUoD3WwZkjdLu3bGyBK7YZ1su7MS/s6TfQKJi+C0XNdNLiYDMHdDJKxx9CGmxv86T4Cdv74O5ajm0rfCp+lOJHqCiOWANHpTjni27MIDezrvRR1B4RwbmQc2bE4HsBmohZXF7iVLmp6k9UCkbAmTeU1CfAXrCL5gyOjcAAy8c75tIeplJOeyk/GUoUlsfihdwKr7OPS+ue+KJwS2aVgnI0H3MHQ80IgLEeV0koJMiAl3sGB9W6mOQoPIW+B44XVPBlxdk5/XXUthdLGDiSaifNDbsi3WOnioyR4FFKLRav7DHvEIuy0wFp0oKn0Bzy5rnYLPDpJ4tT2poPraLUKY9RXDvZFPQuWD57yYDFwYf4KH1iKoDYk3725EtoGkiN7P8iCz35u8c6dNaResSf8mvLE+oH2/7bB5aKZ7yQcH09lqxwTv3LD
 X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
  IPV:NLI; SFV:NSPM; H:DM5PR10MB1466.namprd10.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230025)(346002)(366004)(376002)(39860400002)(136003)(396003)(451199018)(66476007)(66556008)(66946007)(8676002)(83380400001)(41300700001)(316002)(36756003)(186003)(8936002)(26005)(5660300002)(2616005)(38100700002)(7416002)(6512007)(921005)(966005)(86362001)(478600001)(2906002)(6486002)(6506007)(1076003)(6666004);
+ SFS:(13230025)(346002)(366004)(376002)(39860400002)(136003)(396003)(451199018)(4326008)(66476007)(66556008)(66946007)(8676002)(83380400001)(41300700001)(316002)(36756003)(186003)(8936002)(26005)(5660300002)(2616005)(38100700002)(7416002)(6512007)(921005)(86362001)(478600001)(2906002)(6486002)(6506007)(107886003)(1076003)(6666004);
  DIR:OUT; SFP:1101
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?MyLGzuJLw6qxfLd38DN/tIpM+X+hhoOy2RbabO9Xsm8IH+BSNYbQjwuYDrDP?=
- =?us-ascii?Q?LtrIn5VM3hn1YV0snEsQiccDtkGsk0lF93kxOHWLBY75fB6qpI4KAJ6U/q2Z?=
- =?us-ascii?Q?sOsihb5jvUv9a+Cayn5c/uxUQuc7+sG6yaUMAJv5gs78hmmHOV40mnXh+nEx?=
- =?us-ascii?Q?qG+nfHUjXLUzm4DJHjECW7JyF0xvPccMPXNltFWN2r7bwJqcxLoyKRHFUPTk?=
- =?us-ascii?Q?fyBNT+iZJxxhwhf3aOu32GLsxvou4daxo5bWpsy7s2MJMg7lIht/etpciLDW?=
- =?us-ascii?Q?uBPj6cfuxC+XKxntFbTWk2dJU6lNViCROCYTXcs3McRzIfDxJxGX4D2qYNSP?=
- =?us-ascii?Q?MJOUITYI7pu1ftil5nntsN9QAnYxsR2MXY+Lk/nYPvH/VJ3/gJgITxaZEL59?=
- =?us-ascii?Q?gOge1s7sPUzqlqFhGwk6UrLYUCyACulvDSIcOAELq1vd+zHQTgnzncQUrK6g?=
- =?us-ascii?Q?fju2Au0to3LUiGqgd1h88q0v1rHlU0YGvbS6RDzgY6GD7BXRtCiAGZ9t5QQB?=
- =?us-ascii?Q?vI/XpLQjrqgc/HYwH300Mh8/uRxLenxKlZ/TcexINmgq3nokQBoVioxoXHrt?=
- =?us-ascii?Q?kybq5FpEX2QSIzr0IAfIt3VZ77I+7pu5Ww515sZTNcoQZFKM1kLQ7HpB6t4P?=
- =?us-ascii?Q?LG1THmhMMmzQs1R4wSPxAla3rstbLKKO+gyIxkNnfQ0Ffo1ZHXRpSGIZRgSQ?=
- =?us-ascii?Q?Zkme40SEyecjXco0JiLy4oKqJVH5aHKUWzKlZjTMrXO4UIcY2Ch74B1HwPxR?=
- =?us-ascii?Q?qUuHwpzhTnQ3X/eUr8xTFcg4PM7dNvKWOqzRJkjZeMfqF9Cvukp/Wi6dvcOy?=
- =?us-ascii?Q?X6St6PA9gdH+ivq6rInNOhuxs8jrUZgdo8HFe6e98WIM04cqOG8zUkUWMoYH?=
- =?us-ascii?Q?RSoXSYNSUOeO6JrqKj2OnpnL1ltl/zIFxS06rcLYoVt8y7/Pwsm4cTkXKA+4?=
- =?us-ascii?Q?c3NRPthsoHgKMsMIID+e7LMm9CTaWAYmr8GBOGjLa7G+p01ewwhQbj/fHMdq?=
- =?us-ascii?Q?cBWSmWPSpCO4Y0KG+Yac9uQly0mPvxI92n3i0mvNoXOCXv7ZRT/Yg05DT3dq?=
- =?us-ascii?Q?ormZVE20Kkqk9KntXNe/fpaCqJ8KB/2ltsuAjvE3d4UBV/Y7rYOhkWhd1KJH?=
- =?us-ascii?Q?oAQ+f73A5hvwLvGqXxa4Pc71W1oHp7gLjfib8R+ncGzwvwXsJzfkLicDxE8Y?=
- =?us-ascii?Q?EeXChe0SvLzfN5ICBzXe97NnlEkQNVRq9RwGFUk3lvZ2gcr0PEY8gXb1/Vie?=
- =?us-ascii?Q?4HwND1nEx0RaLG/JfIww3PxYYLhymaE398EW/WC0GejycD8JJa1xo3gf4CpE?=
- =?us-ascii?Q?PD+b4j9Req8ictbBxX8Jm4hFqK1B0PB3qysmKRxC6pZTqttB2tis4RJtG1z9?=
- =?us-ascii?Q?uq7xD2tFGzFmJbFo2yGgLF3nDFKeoRhTetCHDPSFeyvCe5BUOU4mw4xrDLd1?=
- =?us-ascii?Q?cojdC9dBmGRNdbQfv5KTZJ3m/9iqSNs1cul5TOrNDMwUXX8h1H6nFZ/OLy/H?=
- =?us-ascii?Q?UIXIw/iriwY9IcKhK/JzW8WSN1w0heET0/Th4OGih0D4l8pXNpA22QuyfzbU?=
- =?us-ascii?Q?V1fwQKPAWTcK39RZn4f+q1Ce2UH67KFnxeXc9K/OHcyi+IGsVCR23nWgFI+0?=
- =?us-ascii?Q?jg=3D=3D?=
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?xBhjmged5d/y0k2gjyrsRQES9Ks0ij51FI74O6kyJPSu9LA25t+UJOE4/H/L?=
+ =?us-ascii?Q?qyziIPJgLU2AmDPee43smMOybqfoS5RBKmwuJiTUc3/Yi+UllBW2brWcfWCf?=
+ =?us-ascii?Q?LNr+Mdc8n6JeEr8RrP0WxvjZnSFLPIosp3zVQjRpxWxcTWtAxBtMgnW3yD9O?=
+ =?us-ascii?Q?YhznkwPNHZxQm0lmAo56oRFs8joJH7Uh9s3wiCa4S5Whh7EhRuNZbjZ9k6qc?=
+ =?us-ascii?Q?LTShpNd7jxXEvSt8zWS1tD8jQlJz0s5Vt2zdqSTdKMwoDoP2x2NzPac9fWTP?=
+ =?us-ascii?Q?9VZW5r/v9l2/1WugdkDZqjroQalSFIZbZK5tFmzCELPW5v070IDLSvHnzMnj?=
+ =?us-ascii?Q?+ovD5DfqsGZXZgx4yJbcQSxa0ZKoUOMV227Hrk5Kn6Q3yv4CQ5M+lQYSVok3?=
+ =?us-ascii?Q?ZBJYjp2sGbq/TT12AQOJlIWWfjXCVhM9DQ5mfxSf+YaDkFtXxIX1qUvMQEbT?=
+ =?us-ascii?Q?T5tDdm5oaFIDdl4WM9XRAs7y11SUEFaNuB0lMqxdcMHtAspXcbF0T+YeOy77?=
+ =?us-ascii?Q?skIBedDBW2XRXk2NtVqRNZudsS4Qy1crqyGnIInJz1ntl4rXIawP8okEH8UC?=
+ =?us-ascii?Q?D264MjUzEoXBmDNhBeCRe5wHXP3vE+NlOR1AXx+0jSYdRdNojp6sZngejic/?=
+ =?us-ascii?Q?rSsvlW8mVdOHRccbg4fR9elrrWa0ET9AmKHfginiH8gxWLf6g6Tc+D1q/Ay5?=
+ =?us-ascii?Q?pF/GqcYnt60agQRilC/FUmyr5S5s125iE20aJm5UeaNTtHM7YuEIGOF5lMV8?=
+ =?us-ascii?Q?cr5lpimexyAUh5rajEiRW2dQWUKGvOh/2XtRYeXTrwyT7P4TNjXY6hejgNHZ?=
+ =?us-ascii?Q?KDeVFQGOefehKQKyIKlCtJVg/ts3ibF4y/UNkwzmoYMOvTBh8UF+MtWFugAT?=
+ =?us-ascii?Q?VchKsqedH9MO9nqgvIqvOId7I8mlR3twDiKpsL0v0+grba2aVWldF8MtOpXl?=
+ =?us-ascii?Q?swGMc/5UQfXwZm14aV5IROqaj7c988WJ1Tu4A0zKh42ZEaLxAjk8Ma7Nzk5C?=
+ =?us-ascii?Q?MVhWYiBWRmdDNE8Z3sWXhknB2g+aIAi4sr626OPj+k74Mwd+9IIRBqJeLmE8?=
+ =?us-ascii?Q?zvinLovWoZnfrZ63sX6nTGaa85sSYvNzE83DoEsWl/p2mg5rSrLDnMRjBSHs?=
+ =?us-ascii?Q?nVBMckqoN3wbn1U8h5U1rEj4KkHDDbV+dm/Ht4g+Lyij36CHcns7wVKrUgdZ?=
+ =?us-ascii?Q?YRqNsu8LtfRP8zj12fqSCmnpug4JeZL1+5amxWBBe5GsfjdwwHf+wGrrpGKa?=
+ =?us-ascii?Q?n3wp/e8ZmG86yGpjqLN+qiMmGt2T0lqPXYvXhqTDaOaR1BzFHfe5aJ8gavqx?=
+ =?us-ascii?Q?GhKk+39LYkkD4RDea0N1vBYKuKrAL2ObehBqserjlOImEIw8s2TadiNCKTud?=
+ =?us-ascii?Q?SZ1AGYFAPum3d8Wh68ZKKDqeqtT+QW891JfZkrzZEVg07H/7NhzbpKmh6vEF?=
+ =?us-ascii?Q?ADJxFTSfAGZ3HT/VYFb+kKVNKm3+On7hsmUcteqsG+Bxi6C5V/pngyS6DW+c?=
+ =?us-ascii?Q?6xL6/A6ZWWvllHsnxEojjmepDBV/vrd0jNS9bCJT0uhdPPUo0ZA3MJloGAOE?=
+ =?us-ascii?Q?G4ISrPclr8l6Xsl5jeHYN8xkvgQdCO7RJTD4UwhSw1oarooT6ohQtZqnNL+a?=
+ =?us-ascii?Q?aA=3D=3D?=
 X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0: =?us-ascii?Q?EQEvJ8MKzPTGe/p3e3S/RzqeB+lTSrXessVtEsDZxWhlvoiQ8p6lw72jVuDn?=
- =?us-ascii?Q?DInPdYsqSZrP/kWF2mwIXn4pnOPG/U867dVFTGXXWG1CCHRsFVtCCAvsCV0u?=
- =?us-ascii?Q?qUzLF397gZJ8ce+jmt+sGcdfNdy+YRGVxWav4g0MZjo9gne/rayEXrluUGwZ?=
- =?us-ascii?Q?n3E6ny7GM6qEMCkrkqrx0kjrvRLusQ7fEW2C/60vWWIi0E79W4t54ul03tQ8?=
- =?us-ascii?Q?+XKkBbdOfnSdZVeKMNKhWCzslHOY9Sqg+rw43K9FMxVwtWXD4OpW15h7fCld?=
- =?us-ascii?Q?jB1sHpwdM3Gno6MQxNcUHyy+j191Zvf5OKc3kFu0m9etzwLrnY7mraDK5DpU?=
- =?us-ascii?Q?SCGDHn4xNqFmjHkX3vl25Rxaim+fZak2Y8R7KPwSy14fIjGqCyyDA/ADKms4?=
- =?us-ascii?Q?WEa55jtXJPcdC6enBVYAcBkU4Ei+KvImmH/4MtzMk4j4Q84ZFD6+ZwLlRQ9q?=
- =?us-ascii?Q?FLYC6gYB8NAfTydbHhknNE6877mgCiHRsurn0p0JRohK7mP4yeMEYOFwZEt7?=
- =?us-ascii?Q?yQwvGSoAKBrFLMwwRsy5gm52/0b3H5QPTvbR6oC22vBQsD7yzssCz9YXVXwS?=
- =?us-ascii?Q?XDAsQHf0eRl3I8LsaiCBnSElrvoo06xIi3y/+/65KkrhXYGmNKPDSNbbGBF2?=
- =?us-ascii?Q?oD59gw230TtQBDMzMz7DtPBLqv+h+Q7foEtq6b0wHB/iaSlhYhYGle6q4HTx?=
- =?us-ascii?Q?ZgdlpwA9AZ6k/VXG739BhdeV7KQ0/BNmfZOrXCzH1QkoPCA7B+w0RXvt8ExW?=
- =?us-ascii?Q?wNzOjBmPnqrMJD9U2ovVp1z3gqOqiBS+dhZDqKUIQs2cZzMlD7ldqxYu/JoT?=
- =?us-ascii?Q?O4sBz3EZ5dp+0/ENEPUVouu6rub3xD20GrDULbAj8EqRncVkmXHoTkmyheBS?=
- =?us-ascii?Q?Z/Vz/WCY+EnCCqsnsrBfXuVtzRRPUqfp+BSNiSJ2z1LWABd+9yCqCswcKIOR?=
- =?us-ascii?Q?GSH/B2n+jEpVZIywX+rQNEPJER2+JV70Q0HhIsABAdTiBPnpZmX8FdKXbFoj?=
- =?us-ascii?Q?vYDsyLOWAhj3GZRc2dyP8AFC/g=3D=3D?=
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0: =?us-ascii?Q?RLWMwTIrO5e9K8MyipkV60DTMw68sO7VxegmeDjIn6ZlMuizM6EADKN+dRxc?=
+ =?us-ascii?Q?j15/RMsjIKkj1QapRvM5/2k9Im+LsbcMtu7De1jGtg/4HI9xxBB3VuMhurky?=
+ =?us-ascii?Q?X8laB+EOzDl83cbBpEwNpX2vjF1+nqqXYsGhs3BcyWvdCLZFy0+gp2DbHkiT?=
+ =?us-ascii?Q?CIXd6c26LTene7YwdRbBJXFbiJOUn7ilFawdKO5+vE92mCW3LChS2+y/2A2S?=
+ =?us-ascii?Q?fUbwQjtSRTmlKw4zF9LaNlWHM/pGttJsKltKJnRlfHaJsHiUt/OseHhHRvF/?=
+ =?us-ascii?Q?2coZOoe0PHHXPCNZ93HwJLaJb6wSJq9J4u7YHGyoAM+pv98ZVD1+Qf4eFX/+?=
+ =?us-ascii?Q?RGHk+5rp8vajYM2WguF1pNCsWqFicg8rUd3mRVI2jz+2LAOs+LVw5ibntfzQ?=
+ =?us-ascii?Q?UZx1ehOHXIEpcaaRU90JeXgQdZ/2o6vB53vPH9V0GIQcIPtI+0/WAJBBkvsC?=
+ =?us-ascii?Q?GLckuq4M4cPYluJef0bi8irDC7Y02AaFPrAecFXSSMJ7RUsrj8ge/D7S4PIr?=
+ =?us-ascii?Q?s+7fy2MtDJyYcVZEWRh1/AhAKeFXHGqWAU8LBBJzKO7QNeyyH1BFXmCPgPk7?=
+ =?us-ascii?Q?m8kuKv7tV20Q3tcijRB7CVgX82oYTiYWLudG+mvdflzBf7fJrQ86PvKwPokk?=
+ =?us-ascii?Q?jUcO4dG99Rv3tz3lFoKG8daTsj5V/MEU8XPV3IcreKWXjpPBghUMDbawoI2e?=
+ =?us-ascii?Q?NRl1cjAiu8yucf4aj1RbkXLskeJca3pRsaamrrTYziD4vnPogxJjEd/BW3m0?=
+ =?us-ascii?Q?vR8RGW/oG8OzHOLN6fcog6oA6DbF6x9/iV7mJo4gHB+bumdKVBEpWhkTHL/W?=
+ =?us-ascii?Q?KMLKSVrvZ/lT/Dl4ej9Xm7KAtOyBLe3X4fOT0pIpNoTJ44hmpQA83xNiSHjT?=
+ =?us-ascii?Q?NJAayU475j3OQsXtZnThv/X7xzxaNdYy/675gjBHO+5ArIIZ4FWhc43GcENt?=
+ =?us-ascii?Q?vV31U9DNsUylCEzqM2Lhog248/IPrjDRB3BYeyIBuj+X3DGd6tWAId68uaRQ?=
+ =?us-ascii?Q?RWYQubK9VXa45U7SeBOYink9Ng=3D=3D?=
 X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 89aff5fd-382e-4625-ec53-08db168edce1
+X-MS-Exchange-CrossTenant-Network-Message-Id: 48dc6dce-adf0-4f56-8abc-08db168ee168
 X-MS-Exchange-CrossTenant-AuthSource: DM5PR10MB1466.namprd10.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 24 Feb 2023 17:45:05.1892 (UTC)
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 24 Feb 2023 17:45:12.7511 (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: pFHdQ51imIb5SMC5a4wiKjXkViIOAOVdMfynTk3bMR0tBCAaF+ELR/aJ4lUcXulja5XpDWcTf3PWl8E4S4Q/3pPULNCTd5ZEzWZVe5t/UgU=
+X-MS-Exchange-CrossTenant-UserPrincipalName: bfNHVr9W7qXCfMTjTdbcYFqjONEHGBNgGCVDYl+PZwiERJ9J41B6ySI+V1oNCxzO7BU9CTEHWZnBO2+hBSIILQ2XgsaPxOWeuaHRAyEWYa8=
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: CH0PR10MB7535
 X-Proofpoint-Virus-Version: vendor=baseguard
  engine=ICAP:2.0.219,Aquarius:18.0.930,Hydra:6.0.562,FMLib:17.11.170.22
  definitions=2023-02-24_12,2023-02-24_01,2023-02-09_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 spamscore=0
- bulkscore=0 phishscore=0
- suspectscore=0 malwarescore=0 mlxscore=0 mlxlogscore=999 adultscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2212070000
- definitions=main-2302240139
-X-Proofpoint-GUID: OuvwkHYKZFwztoJSmsJoJfYsOTTfscjG
-X-Proofpoint-ORIG-GUID: OuvwkHYKZFwztoJSmsJoJfYsOTTfscjG
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 malwarescore=0
+ spamscore=0
+ mlxlogscore=999 bulkscore=0 mlxscore=0 adultscore=0 suspectscore=0
+ phishscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2212070000 definitions=main-2302240139
+X-Proofpoint-GUID: lHT8WFdqIYSvC_OHP0m0jy4Y9zmzVweq
+X-Proofpoint-ORIG-GUID: lHT8WFdqIYSvC_OHP0m0jy4Y9zmzVweq
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -179,9 +183,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-X-Mailman-Approved-At: Mon, 27 Feb 2023 07:03:31 +0000
-Subject: [dm-devel] [PATCH v4 01/18] Use block pr_ops in LIO
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Mailman-Approved-At: Mon, 27 Feb 2023 07:03:30 +0000
+Subject: [dm-devel] [PATCH v4 05/18] scsi: Add support for block PR read
+ keys/reservation
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -193,93 +198,182 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
+Cc: Mike Christie <michael.christie@oracle.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The patches in this thread allow us to use the block pr_ops with LIO's
-target_core_iblock module to support cluster applications in VMs. They
-were built over Linus's tree. They also apply over linux-next and
-Martin's tree. They could also apply over Jens's tree but it needs the
-scsi_execute_cmd changes that just got merged into Linus's tree.
+This adds support in sd.c for the block PR read keys and read reservation
+callouts, so upper layers like LIO can get the PR info that's been setup
+using the existing pr callouts and return it to initiators.
 
-Currently, to use windows clustering or linux clustering (pacemaker +
-cluster labs scsi fence agents) in VMs with LIO and vhost-scsi, you have
-to use tcmu or pscsi or use a cluster aware FS/framework for the LIO pr
-file. Setting up a cluster FS/framework is pain and waste when your real
-backend device is already a distributed device, and pscsi and tcmu are
-nice for specific use cases, but iblock gives you the best performance and
-allows you to use stacked devices like dm-multipath. So these patches
-allow iblock to work like pscsi/tcmu where they can pass a PR command to
-the backend module. And then iblock will use the pr_ops to pass the PR
-command to the real devices similar to what we do for unmap today.
+Signed-off-by: Mike Christie <michael.christie@oracle.com>
+---
+ drivers/scsi/sd.c            | 91 ++++++++++++++++++++++++++++++++++++
+ include/scsi/scsi_block_pr.h | 20 ++++++++
+ include/scsi/scsi_proto.h    |  5 ++
+ 3 files changed, 116 insertions(+)
 
-The patches are separated in the following groups:
-Patch 1 - 2:
-- Add block layer callouts for reading reservations and rename reservation
-  error code.
-Patch 3 - 5:
-- SCSI support for new callouts.
-Patch 6:
-- DM support for new callouts.
-Patch 7 - 13:
-- NVMe support for new callouts.
-Patch 14 - 18:
-- LIO support for new callouts.
-
-This patchset has been tested with the libiscsi PGR ops and with window's
-failover cluster verification test. Note that for scsi backend devices we
-need this patchset:
-
-https://lore.kernel.org/linux-scsi/20230123221046.125483-1-michael.christie@oracle.com/T/#m4834a643ffb5bac2529d65d40906d3cfbdd9b1b7
-
-to handle UAs. To reduce the size of this patchset that's being done
-separately to make reviewing easier. And to make merging easier this
-patchset and the one above do not have any conflicts so can be merged
-in different trees.
-
-v4:
-- Pass read_keys number of keys instead of array len
-- Keep the switch use when converting between block and scsi/nvme PR
-types. Drop default case so compiler spits out warning if in the future
-a new value is added.
-- Add helper for handling
-nvme_send_ns_head_pr_command/nvme_send_ns_pr_command
-- Use void * instead of u8* for passing data buffer.
-- Rename status variable to rs.
-- Have caller init buffer/structs instead of nvme/scsi callouts.
-- Drop blk_status to err code.
-
-v3:
-- Fix patch subject formatting.
-- Fix coding style.
-- Rearrange patches so helpers are added with users to avoid compilation
-errors.
-- Move pr type conversion to array and add nvme_pr_type.
-- Add Extended Data Structure control flag enum and use in code for checks.
-- Move nvme pr code to new file.
-- Add more info to patch subjects about why we need to add blk_status
-to pr_ops.
-- Use generic SCSI passthrough error handling interface.
-- Fix checkpatch --strict errors. Note that I kept the existing coding
-style that it complained about because it looked like it was the preferred
-style for the code and I didn't want a mix and match.
-
-v2:
-- Drop BLK_STS_NEXUS rename changes. Will do separately.
-- Add NVMe support.
-- Fixed bug in target_core_iblock where a variable was not initialized
-mentioned by Christoph.
-- Fixed sd pr_ops UA handling issue found when running libiscsi PGR tests.
-- Added patches to allow pr_ops to pass up a BLK_STS so we could return
-a RESERVATION_CONFLICT status when a pr_ops callout fails.
-
-
-
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index a801ef393c38..dc5a058cc686 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -1724,6 +1724,95 @@ static int sd_scsi_to_pr_err(struct scsi_sense_hdr *sshdr, int result)
+ 	}
+ }
+ 
++static int sd_pr_in_command(struct block_device *bdev, u8 sa,
++			    unsigned char *data, int data_len)
++{
++	struct scsi_disk *sdkp = scsi_disk(bdev->bd_disk);
++	struct scsi_device *sdev = sdkp->device;
++	struct scsi_sense_hdr sshdr;
++	u8 cmd[10] = { PERSISTENT_RESERVE_IN, sa };
++	const struct scsi_exec_args exec_args = {
++		.sshdr = &sshdr,
++	};
++	int result;
++
++	put_unaligned_be16(data_len, &cmd[7]);
++
++	result = scsi_execute_cmd(sdev, cmd, REQ_OP_DRV_IN, data, data_len,
++				   SD_TIMEOUT, sdkp->max_retries, &exec_args);
++	if (scsi_status_is_check_condition(result) &&
++	    scsi_sense_valid(&sshdr)) {
++		sdev_printk(KERN_INFO, sdev, "PR command failed: %d\n", result);
++		scsi_print_sense_hdr(sdev, NULL, &sshdr);
++	}
++
++	if (result <= 0)
++		return result;
++
++	return sd_scsi_to_pr_err(&sshdr, result);
++}
++
++static int sd_pr_read_keys(struct block_device *bdev, struct pr_keys *keys_info)
++{
++	int result, i, data_offset, num_copy_keys;
++	u32 num_keys = keys_info->num_keys;
++	int data_len = num_keys * 8 + 8;
++	u8 *data;
++
++	data = kzalloc(data_len, GFP_KERNEL);
++	if (!data)
++		return -ENOMEM;
++
++	result = sd_pr_in_command(bdev, READ_KEYS, data, data_len);
++	if (result)
++		goto free_data;
++
++	keys_info->generation = get_unaligned_be32(&data[0]);
++	keys_info->num_keys = get_unaligned_be32(&data[4]) / 8;
++
++	data_offset = 8;
++	num_copy_keys = min(num_keys, keys_info->num_keys);
++
++	for (i = 0; i < num_copy_keys; i++) {
++		keys_info->keys[i] = get_unaligned_be64(&data[data_offset]);
++		data_offset += 8;
++	}
++
++free_data:
++	kfree(data);
++	return result;
++}
++
++static int sd_pr_read_reservation(struct block_device *bdev,
++				  struct pr_held_reservation *rsv)
++{
++	struct scsi_disk *sdkp = scsi_disk(bdev->bd_disk);
++	struct scsi_device *sdev = sdkp->device;
++	u8 data[24] = { };
++	int result, len;
++
++	result = sd_pr_in_command(bdev, READ_RESERVATION, data, sizeof(data));
++	if (result)
++		return result;
++
++	len = get_unaligned_be32(&data[4]);
++	if (!len)
++		return 0;
++
++	/* Make sure we have at least the key and type */
++	if (len < 14) {
++		sdev_printk(KERN_INFO, sdev,
++			    "READ RESERVATION failed due to short return buffer of %d bytes\n",
++			    len);
++		return -EINVAL;
++	}
++
++	rsv->generation = get_unaligned_be32(&data[0]);
++	rsv->key = get_unaligned_be64(&data[8]);
++	rsv->type = scsi_pr_type_to_block(data[21] & 0x0f);
++	return 0;
++}
++
+ static int sd_pr_out_command(struct block_device *bdev, u8 sa, u64 key,
+ 			     u64 sa_key, enum scsi_pr_type type, u8 flags)
+ {
+@@ -1805,6 +1894,8 @@ static const struct pr_ops sd_pr_ops = {
+ 	.pr_release	= sd_pr_release,
+ 	.pr_preempt	= sd_pr_preempt,
+ 	.pr_clear	= sd_pr_clear,
++	.pr_read_keys	= sd_pr_read_keys,
++	.pr_read_reservation = sd_pr_read_reservation,
+ };
+ 
+ static void scsi_disk_free_disk(struct gendisk *disk)
+diff --git a/include/scsi/scsi_block_pr.h b/include/scsi/scsi_block_pr.h
+index 44766d7a81d8..9695cda4e9ce 100644
+--- a/include/scsi/scsi_block_pr.h
++++ b/include/scsi/scsi_block_pr.h
+@@ -33,4 +33,24 @@ static inline enum scsi_pr_type block_pr_type_to_scsi(enum pr_type type)
+ 	return 0;
+ }
+ 
++static inline enum pr_type scsi_pr_type_to_block(enum scsi_pr_type type)
++{
++	switch (type) {
++	case SCSI_PR_WRITE_EXCLUSIVE:
++		return PR_WRITE_EXCLUSIVE;
++	case SCSI_PR_EXCLUSIVE_ACCESS:
++		return PR_EXCLUSIVE_ACCESS;
++	case SCSI_PR_WRITE_EXCLUSIVE_REG_ONLY:
++		return PR_WRITE_EXCLUSIVE_REG_ONLY;
++	case SCSI_PR_EXCLUSIVE_ACCESS_REG_ONLY:
++		return PR_EXCLUSIVE_ACCESS_REG_ONLY;
++	case SCSI_PR_WRITE_EXCLUSIVE_ALL_REGS:
++		return PR_WRITE_EXCLUSIVE_ALL_REGS;
++	case SCSI_PR_EXCLUSIVE_ACCESS_ALL_REGS:
++		return PR_EXCLUSIVE_ACCESS_ALL_REGS;
++	}
++
++	return 0;
++}
++
+ #endif
+diff --git a/include/scsi/scsi_proto.h b/include/scsi/scsi_proto.h
+index fbe5bdfe4d6e..07d65c1f59db 100644
+--- a/include/scsi/scsi_proto.h
++++ b/include/scsi/scsi_proto.h
+@@ -151,6 +151,11 @@
+ #define ZO_FINISH_ZONE	      0x02
+ #define ZO_OPEN_ZONE	      0x03
+ #define ZO_RESET_WRITE_POINTER 0x04
++/* values for PR in service action */
++#define READ_KEYS             0x00
++#define READ_RESERVATION      0x01
++#define REPORT_CAPABILITES    0x02
++#define READ_FULL_STATUS      0x03
+ /* values for variable length command */
+ #define XDREAD_32	      0x03
+ #define XDWRITE_32	      0x04
+-- 
+2.25.1
 
 --
 dm-devel mailing list
