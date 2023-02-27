@@ -1,81 +1,97 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5C0CAC7EE23
-	for <dm-devel@archiver.kernel.org>; Mon, 27 Feb 2023 15:23:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 44417C64ED8
+	for <dm-devel@archiver.kernel.org>; Mon, 27 Feb 2023 17:55:19 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1677511422;
+	s=mimecast20190719; t=1677520518;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=iYJGcZv418Hy3KaMJT7jQ5IGa7N+9iRmU7vzWmEV+Rk=;
-	b=MSewbq1U+Z9ue0I7dT5tHGOKUL47OjzjWEaPEmm/IluBh/A9QCGI8rxjM0YF7RRvXGIkeA
-	9HtlnZfR8gsMBu+J+gm+TwkJQb0GPURZLP08rHIpUBWVLb7D86uLeRXLCO5l7UsFbShVih
-	lHJLQ4/g/RrpXHME8xU5z0lBgPShPVY=
+	bh=j7TXo041HU83SsjECEhzJMPMHnv6TIaUXQAZw4H/tY8=;
+	b=H20+uCY90tNMqzdU2ZqVH3N3xn69fZFuYWb6smtE9PHCTAQSkvrfL50oV39TzvRN6mefgL
+	JPz+4cGsjZJ5rciKCQm3KcH8aph5ByYlkEwINnEkvFI8qNFcvQLL6faDd2J84DB4gxTXuM
+	XHipDhYXMkyghN3xbK98zf86z+BONX8=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-282-z7akV4mCPSWmPBwHN06qOw-1; Mon, 27 Feb 2023 10:23:39 -0500
-X-MC-Unique: z7akV4mCPSWmPBwHN06qOw-1
+ us-mta-501-wWf-oC2VP2-FAS0eO28lRQ-1; Mon, 27 Feb 2023 12:55:14 -0500
+X-MC-Unique: wWf-oC2VP2-FAS0eO28lRQ-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 10EBF3C21C29;
-	Mon, 27 Feb 2023 15:23:36 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B11821C17427;
+	Mon, 27 Feb 2023 17:55:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 7D5CDC16020;
-	Mon, 27 Feb 2023 15:23:35 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A49CAC15BAD;
+	Mon, 27 Feb 2023 17:55:10 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6ABF01946589;
-	Mon, 27 Feb 2023 15:23:35 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7D2141946587;
+	Mon, 27 Feb 2023 17:55:10 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
  [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 086E21946589
- for <dm-devel@listman.corp.redhat.com>; Mon, 27 Feb 2023 15:23:30 +0000 (UTC)
+ ESMTP id BEF031946586
+ for <dm-devel@listman.corp.redhat.com>; Mon, 27 Feb 2023 17:55:09 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E5139C15BAE; Mon, 27 Feb 2023 15:23:29 +0000 (UTC)
+ id A1E18C15BAE; Mon, 27 Feb 2023 17:55:09 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DD111C15BAD
- for <dm-devel@redhat.com>; Mon, 27 Feb 2023 15:23:29 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 9A823C15BAD
+ for <dm-devel@redhat.com>; Mon, 27 Feb 2023 17:55:09 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C23A7100F90B
- for <dm-devel@redhat.com>; Mon, 27 Feb 2023 15:23:29 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_128_GCM_SHA256) id us-mta-64-PX3nyaYKMV-z-mvdPkI6ag-1; Mon,
- 27 Feb 2023 10:23:26 -0500
-X-MC-Unique: PX3nyaYKMV-z-mvdPkI6ag-1
-Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
- by smtp-out2.suse.de (Postfix) with ESMTP id 822D41FD65;
- Mon, 27 Feb 2023 15:23:24 +0000 (UTC)
-Received: from localhost.localdomain (colyli.tcp.ovpn1.nue.suse.de
- [10.163.16.22]) by relay2.suse.de (Postfix) with ESMTP id A8B162C141;
- Mon, 27 Feb 2023 15:23:22 +0000 (UTC)
-From: Coly Li <colyli@suse.de>
-To: snitzer@kernel.org
-Date: Mon, 27 Feb 2023 23:23:17 +0800
-Message-Id: <20230227152317.32684-1-colyli@suse.de>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 66383101A52E
+ for <dm-devel@redhat.com>; Mon, 27 Feb 2023 17:55:09 +0000 (UTC)
+Received: from mail-qv1-f51.google.com (mail-qv1-f51.google.com
+ [209.85.219.51]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-618-ROxExgKDPvK1UyZ5hav60g-1; Mon, 27 Feb 2023 12:55:07 -0500
+X-MC-Unique: ROxExgKDPvK1UyZ5hav60g-1
+Received: by mail-qv1-f51.google.com with SMTP id y12so5002024qvt.8
+ for <dm-devel@redhat.com>; Mon, 27 Feb 2023 09:55:07 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=in-reply-to:content-transfer-encoding:content-disposition
+ :mime-version:references:message-id:subject:cc:to:from:date
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=KkRehYoW83mAFQ78q5iHuBd2MqfTKkzCAoZwFhkQlGo=;
+ b=HmmME+4wkusOfIQixeJfFh+pWVr98jcsapD2p9f1uL6qEPt+HmHFMMzRD1K5xVf6Nj
+ o1p6N15xBuQL02VuJz9BKg82rDLI9R8Kt0qyGXLD3uJhjr9qL38rl3C8YPjnorolw6kT
+ /sUXouhwl5wmXnUF63H+8dgoWui6nIW1pIGOAvdYRs0gUoHeO+Afc2Q4t3VsrQ2b+aMM
+ E8lUhRkcMBpIvTTd5I2LpLXTEGKZCtc4DT3Oz/WQMh7acwXE27Lrdb82KO4JpQ/pKelL
+ fQGb/hcOgPrU5lSYlCLTcEmfYq+4MM8MeIQmYJUrnzg4kPzqWR0zKtXs0+qUTuBJQFr/
+ kd5g==
+X-Gm-Message-State: AO0yUKXkg6Om0f8LBH4u2Zaaaq+yRUV6ApHubT6OHCcS7noOyi6iJENt
+ YLedr3IDvKD8Ca0XkICsNVCmq9c=
+X-Google-Smtp-Source: AK7set/QvjjCWk25qfjPVdFPPBtXzeIgQbBqUCmzOnZU1uoA9Yjc7HGrYU5bI1FvAlB1p6JOya2k5Q==
+X-Received: by 2002:a05:6214:509d:b0:56c:659d:435c with SMTP id
+ kk29-20020a056214509d00b0056c659d435cmr566586qvb.24.1677520506875; 
+ Mon, 27 Feb 2023 09:55:06 -0800 (PST)
+Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
+ [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
+ t136-20020a37aa8e000000b0073b967b9b35sm5276845qke.106.2023.02.27.09.55.06
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Mon, 27 Feb 2023 09:55:06 -0800 (PST)
+Date: Mon, 27 Feb 2023 12:55:05 -0500
+From: Mike Snitzer <snitzer@kernel.org>
+To: yangerkun <yangerkun@huaweicloud.com>
+Message-ID: <Y/zueUWERryoIGA8@redhat.com>
+References: <20230223031947.3717433-1-yangerkun@huaweicloud.com>
+ <b7020147-2382-71f6-5237-8501562f8011@acm.org>
+ <e69ec125-3636-ab20-ce63-f4b89ac55ffb@huaweicloud.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+In-Reply-To: <e69ec125-3636-ab20-ce63-f4b89ac55ffb@huaweicloud.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: [dm-devel] [PATCH v2] Avoid deadlock for recursive I/O on dm-thin
- when used as swap
+Subject: Re: [dm-devel] dm-crypt: fix softlockup in dmcrypt_write
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -87,86 +103,33 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>,
- stable@vger.kernel.org, Coly Li <colyli@suse.de>
+Cc: yangerkun@huawei.com, dm-devel@redhat.com,
+ Bart Van Assche <bvanassche@acm.org>, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-This is an alrady known issue that dm-thin volume cannot be used as
-swap, otherwise a deadlock may happen when dm-thin internal memory
-demond triggers swap I/O on the dm-thin volume itself.
-
-Thanks to Mikulas Patocka for commit a666e5c05e7c ("dm: fix deadlock
-when swapping to encrypted device"), this method can also be used for
-dm-thin to avoid the recursive I/O when it is used as swap.
-
-This patch just simply sets ti->limit_swap_bios by tree in pool_ctr()
-and thin_ctr(), other important stuffs are already done by Patocka in
-the above mentioned commit.
-
-In my test, I create a dm-thin volume /dev/vg/swap and use it as swap
-device. Then I run fio on another dm-thin volume /dev/vg/main and use
-large --blocksize to trigger swap I/O onto /dev/vg/swap.
-
-The following fio command line is used in my test,
-  fio --name recursive-swap-io --lockmem 1 --iodepth 128 \
-     --ioengine libaio --filename /dev/vg/main --rw randrw \
-    --blocksize 1M --numjobs 32 --time_based --runtime=12h
-
-Without the patch, the whole system can be locked up within 15 seconds.
-
-With this patch, there is no any deadlock or hang task observed after
-2 hours fio running.
-
-Further more, I change --blocksize from 1M to 128M, around 30 seconds
-after fio running, no I/O rate displayed by fio, and the out-of-memory
-killer message shows up in kernel message. After around 20 minutes all
-fio processes are killed and the whole system backs to be alive.
-
-This is exactly what is expected when recursive I/O happens on dm-thin
-volume when it is used as swap.
-
-Note: this change depends on commit a666e5c05e7c ("dm: fix deadlock when
-swapping to encrypted device")
-
-Signed-off-by: Coly Li <colyli@suse.de>
-Cc: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <snitzer@kernel.org>
-Cc: stable@vger.kernel.org
----
-Changelog,
-v2: fix typo in commit log.
-v1: initial version.
-
- drivers/md/dm-thin.c |    2 ++
- 1 file changed, 2 insertions(+)
-
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -3355,6 +3355,7 @@ static int pool_ctr(struct dm_target *ti
- 	pt->low_water_blocks = low_water_blocks;
- 	pt->adjusted_pf = pt->requested_pf = pf;
- 	ti->num_flush_bios = 1;
-+	ti->limit_swap_bios = true;
- 
- 	/*
- 	 * Only need to enable discards if the pool should pass
-@@ -4233,6 +4234,7 @@ static int thin_ctr(struct dm_target *ti
- 		goto bad;
- 
- 	ti->num_flush_bios = 1;
-+	ti->limit_swap_bios = true;
- 	ti->flush_supported = true;
- 	ti->accounts_remapped_io = true;
- 	ti->per_io_data_size = sizeof(struct dm_thin_endio_hook);
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gU3VuLCBGZWIgMjYgMjAyMyBhdCAgODozMVAgLTA1MDAsCnlhbmdlcmt1biA8eWFuZ2Vya3Vu
+QGh1YXdlaWNsb3VkLmNvbT4gd3JvdGU6Cgo+IAo+IAo+IOWcqCAyMDIzLzIvMjYgMTA6MDEsIEJh
+cnQgVmFuIEFzc2NoZSDlhpnpgZM6Cj4gPiBPbiAyLzIyLzIzIDE5OjE5LCB5YW5nZXJrdW4gd3Jv
+dGU6Cj4gPiA+IEBAIC0xOTI0LDYgKzE5MjYsMTAgQEAgc3RhdGljIGludCBkbWNyeXB0X3dyaXRl
+KHZvaWQgKmRhdGEpCj4gPiA+IMKgwqDCoMKgwqDCoMKgwqDCoCBCVUdfT04ocmJfcGFyZW50KHdy
+aXRlX3RyZWUucmJfbm9kZSkpOwo+ID4gPiArwqDCoMKgwqDCoMKgwqAgaWYgKHRpbWVfaXNfYmVm
+b3JlX2ppZmZpZXMoc3RhcnRfdGltZSArIEhaKSkgewo+ID4gPiArwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoCBzY2hlZHVsZSgpOwo+ID4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBzdGFydF90aW1l
+ID0gamlmZmllczsKPiA+ID4gK8KgwqDCoMKgwqDCoMKgIH0KPiA+IAo+ID4gV2h5IHNjaGVkdWxl
+KCkgaW5zdGVhZCBvZiBjb25kX3Jlc2NoZWQoKT8KPiAKPiBjb25kX3Jlc2NoZWQgbWF5IG5vdCBy
+ZWFsbHkgc2NoZWR1bGUsIHdoaWNoIG1heSB0cmlnZ2VyIHRoZSBwcm9ibGVtIHRvbywgYnV0Cj4g
+aXQgc2VlbXMgYWZ0ZXIgMSBzZWNvbmQsIGl0IG1heSBuZXZlciBoYXBwZW5kPwoKSSBoYWQgdGhl
+IHNhbWUgcXVlc3Rpb24gYXMgQmFydCB3aGVuIHJldmlld2luZyB5b3VyIGhvbWVncm93bgpjb25k
+aXRpb25hbCBzY2hlZHVsZSgpLiAgSG9wZWZ1bGx5IHlvdSBjYW4gcmVwcm9kdWNlIHRoaXMgaXNz
+dWU/ICBJZgpzbywgcGxlYXNlIHNlZSBpZiBzaW1wbHkgdXNpbmcgY29uZF9yZXNjaGVkKCkgZml4
+ZXMgdGhlIGlzc3VlLgoKVGhhbmtzLApNaWtlCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
+ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
+bmZvL2RtLWRldmVsCg==
 
