@@ -4,68 +4,71 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AB0F5C64ED6
-	for <dm-devel@archiver.kernel.org>; Mon, 27 Feb 2023 14:38:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 43E88C64ED6
+	for <dm-devel@archiver.kernel.org>; Mon, 27 Feb 2023 15:05:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1677508723;
+	s=mimecast20190719; t=1677510338;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=jP2XiciXjhDcnTpd9s+WxX9yTtgMJzIgq0zbImkNtJg=;
-	b=KirGK1rXtWU0f8booK+xKUBinvOM1/lIy1wRaZjkCBP35r291xAiOm4cqY2JAZYpZckwWq
-	woviDw7aPjfakuKNCipPljnDVwTQzMQb/7PjEuGPLpxu63p80RP06uBk5qFfKew/S22Yqk
-	FhtMX5ZNbmKb33XVDFwkf7gZZ+5GpBE=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Y3jbJaGj/34JpcFq5TYP3AAW4ol/fgwwfXhCtKqpEW4=;
+	b=ftDAeuWy899jvBy0fluHQKaoUWXc4BvoJH59SzbD3R70985XGosv3nMU1uJWGh8Q0E5/co
+	lbVwMdFhxmGPR1lNb2cAzdmEv/++zhUcsuXAH7aOWtYdNQDqN/i5buPLEZaXvx4k+fA0jn
+	1qVJx8DisLc/ENOIK6msby3rJsvAh/U=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-63-8NS1PbBsMI-UFdKnkZ0bgg-1; Mon, 27 Feb 2023 09:38:40 -0500
-X-MC-Unique: 8NS1PbBsMI-UFdKnkZ0bgg-1
+ us-mta-611-6DCQNRiaNy-_uLcII2dxVQ-1; Mon, 27 Feb 2023 10:05:34 -0500
+X-MC-Unique: 6DCQNRiaNy-_uLcII2dxVQ-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4E7BF2A59571;
-	Mon, 27 Feb 2023 14:38:38 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A0FAA81D9EB;
+	Mon, 27 Feb 2023 15:05:10 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 22BFE2026D4B;
-	Mon, 27 Feb 2023 14:38:36 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4387A2026D76;
+	Mon, 27 Feb 2023 15:05:10 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E7C541946589;
-	Mon, 27 Feb 2023 14:38:35 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E21E9194658D;
+	Mon, 27 Feb 2023 15:05:09 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
  [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 10CBB1946586
- for <dm-devel@listman.corp.redhat.com>; Mon, 27 Feb 2023 14:38:35 +0000 (UTC)
+ ESMTP id 3B0DC1946586
+ for <dm-devel@listman.corp.redhat.com>; Mon, 27 Feb 2023 15:05:08 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E49B71121319; Mon, 27 Feb 2023 14:38:34 +0000 (UTC)
+ id 13DBA1121314; Mon, 27 Feb 2023 15:05:08 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DC9D81121314
- for <dm-devel@redhat.com>; Mon, 27 Feb 2023 14:38:34 +0000 (UTC)
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0C64F1121315
+ for <dm-devel@redhat.com>; Mon, 27 Feb 2023 15:05:08 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BD3EC101A55E
- for <dm-devel@redhat.com>; Mon, 27 Feb 2023 14:38:34 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_128_GCM_SHA256) id us-mta-523-0PhLa-jeOLSz8J5W6jLVsw-1; Mon,
- 27 Feb 2023 09:38:31 -0500
-X-MC-Unique: 0PhLa-jeOLSz8J5W6jLVsw-1
-Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
- by smtp-out1.suse.de (Postfix) with ESMTP id 8DAD4219F7;
- Mon, 27 Feb 2023 14:31:15 +0000 (UTC)
-Received: from localhost.localdomain (colyli.tcp.ovpn1.nue.suse.de
- [10.163.16.22]) by relay2.suse.de (Postfix) with ESMTP id 8B0B02C141;
- Mon, 27 Feb 2023 14:31:12 +0000 (UTC)
-From: Coly Li <colyli@suse.de>
-To: snitzer@kernel.org
-Date: Mon, 27 Feb 2023 22:31:04 +0800
-Message-Id: <20230227143104.4333-1-colyli@suse.de>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 43B051991C6D
+ for <dm-devel@redhat.com>; Mon, 27 Feb 2023 15:04:36 +0000 (UTC)
+Received: from bombadil.infradead.org (bombadil.infradead.org
+ [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
+ us-mta-418-WcWQb6bHMcOwbCUr-Rb_FA-1; Mon, 27 Feb 2023 10:04:24 -0500
+X-MC-Unique: WcWQb6bHMcOwbCUr-Rb_FA-1
+Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red
+ Hat Linux)) id 1pWegM-00A1Fj-Kn; Mon, 27 Feb 2023 14:40:50 +0000
+Date: Mon, 27 Feb 2023 06:40:50 -0800
+From: Christoph Hellwig <hch@infradead.org>
+To: Uday Shankar <ushankar@purestorage.com>
+Message-ID: <Y/zA8v/xUYtC6Iu0@infradead.org>
+References: <20230222185224.2484590-1-ushankar@purestorage.com>
+ <Y/Zp8lb3yUiPUNBv@kbusch-mbp.dhcp.thefacebook.com>
+ <20230223193446.GA2719882@dev-ushankar.dev.purestorage.com>
 MIME-Version: 1.0
+In-Reply-To: <20230223193446.GA2719882@dev-ushankar.dev.purestorage.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+ bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -74,8 +77,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: [dm-devel] [PATCH] Avoid deadlock for recursive I/O on dm-thin when
- used as swap
+Subject: Re: [dm-devel] [PATCH v2] blk-mq: enforce op-specific segment
+ limits in blk_insert_cloned_request
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -87,84 +90,27 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com,
- "Signed-off-by : Mikulas Patocka" <mpatocka@redhat.com>,
- stable@vger.kernel.org, Coly Li <colyli@suse.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
+ kernel test robot <lkp@intel.com>, Mike Snitzer <snitzer@kernel.org>,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Keith Busch <kbusch@kernel.org>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-This is an alrady known issue that dm-thin volume cannot be used as
-swap, otherwise a deadlock may happen when dm-thin internal memory
-demond triggers swap I/O on the dm-thin volume itself.
+On Thu, Feb 23, 2023 at 12:34:46PM -0700, Uday Shankar wrote:
+> I chose to add blk_queue_get_max_segments as a public function because
+> it parallels blk_queue_get_max_sectors. If you don't want two functions,
+> I could manually inline the (2) uses of blk_rq_get_max_segments(rq),
+> converting them to blk_queue_get_max_segments(rq->q, req_op(rq)).
 
-Thanks to Mikulas Patocka for commit a666e5c05e7c ("dm: fix deadlock
-when swapping to encrypted device"), this method can also be used for
-dm-thin to avoid the recursive I/O when it is used as swap.
-
-This patch just simply sets ti->limit_swap_bios by tree in pool_ctr()
-and thin_ctr(), other important stuffs are already done by Patocka in
-the above mentioned commit.
-
-In my test, I create a dm-thin volume /dev/vg/swap and use it as swap
-device. Then I run fio on another dm-thin volume /dev/vg/main and use
-large --blocksize to trigger swap I/O onto /dev/vg/swap.
-
-The following fio command line is used in my test,
-  fio --name recursive-swap-io --lockmem 1 --iodepth 128 \
-     --ioengine libaio --filename /dev/vg/main --rw randrw \
-    --blocksize 1M --numjobs 32 --time_based --runtime=12h
-
-Without the patch, the whole system can be locked up within 15 seconds.
-
-With this patch, there is no any deadlock or hang task observed after
-2 hours fio running.
-
-Further more, I change --blocksize from 1M to 128M, around 30 seconds
-after fio running, no I/O rate displayed by fio, and the out-of-memory
-killer message shows up in kernel message. After around 20 minutes all
-fio processes are killed and the whole system backs to be alive.
-
-This is exactly what is expected when recursive I/O happens on dm-thin
-volume when it is used as swap.
-
-NOTE: this change depends on commit a666e5c05e7c ("dm: fix deadlock when
-swapping to encrypted device") 
-
-Signed-off-by: Coly Li <colyli@suse.de>
-Cc: Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <snitzer@kernel.org>
-Cc: stable@vger.kernel.org
----
- drivers/md/dm-thin.c | 2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 6cd105c1cef3..13d4677baafd 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -3369,6 +3369,7 @@ static int pool_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	pt->low_water_blocks = low_water_blocks;
- 	pt->adjusted_pf = pt->requested_pf = pf;
- 	ti->num_flush_bios = 1;
-+	ti->limit_swap_bios = true;
- 
- 	/*
- 	 * Only need to enable discards if the pool should pass
-@@ -4249,6 +4250,7 @@ static int thin_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto bad;
- 
- 	ti->num_flush_bios = 1;
-+	ti->limit_swap_bios = true;
- 	ti->flush_supported = true;
- 	ti->accounts_remapped_io = true;
- 	ti->per_io_data_size = sizeof(struct dm_thin_endio_hook);
--- 
-2.39.2
+I'd be much happier with a single function that takes a request instead
+of two decoded arguments.  This should not be a public API in any form.
 
 --
 dm-devel mailing list
