@@ -1,90 +1,77 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4595AC64EC7
-	for <dm-devel@archiver.kernel.org>; Wed,  1 Mar 2023 07:42:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5C1DEC678D4
+	for <dm-devel@archiver.kernel.org>; Wed,  1 Mar 2023 21:52:54 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1677656538;
+	s=mimecast20190719; t=1677707573;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=gNL2bMdXl1oy1oD6y6580R64t39QyVYC3E8S2vdRav4=;
-	b=OXJIQ2IDmtCFzH2a6r0xaWKeeByndBpWi33OqQZFT+mfgZoaCp8ZraVll3JYmQzUTWCcSX
-	tdc/S2rnLx/ekaqbye8xW7hKrBrxw35sHEzLbzbaVJ4zAg4VqMnLnBXvwX9kQW3BDYDO/u
-	xywoLYQ1wrMz2ZOr5MaA63UiaKj2JTw=
+	bh=UhhybF4kZv3FLyFJjqRY5pSzHRprkHjOJ39YnO9z9N8=;
+	b=jWycYi5xXa5dBtSeIButK6pvEANa0gMEQ6GgtyTi09RPpEr3EaJUz2hE3oF9s9DOKW4c15
+	USjJauZGi6TyWde22uXNtk0Zi9+3jMl+Bsalta2XEHtal4mZeakcrMuOK1teK3ncV+jeQB
+	2fH/erCy6QHOQSDCOTZ0YeG/xbnUAAc=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-511-4fQGdrsbM_mCpSGcNROk0w-1; Wed, 01 Mar 2023 02:42:14 -0500
-X-MC-Unique: 4fQGdrsbM_mCpSGcNROk0w-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-32-YOsa4pgHOACtqw4-4n6YQQ-1; Wed, 01 Mar 2023 16:52:51 -0500
+X-MC-Unique: YOsa4pgHOACtqw4-4n6YQQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A1C851C0878C;
-	Wed,  1 Mar 2023 07:42:12 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CB9C83C0ED57;
+	Wed,  1 Mar 2023 21:52:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 06FF3140EBF4;
-	Wed,  1 Mar 2023 07:42:09 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 393FB18EC1;
+	Wed,  1 Mar 2023 21:52:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3EA8019465B9;
-	Wed,  1 Mar 2023 07:41:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2AE1819452CD;
+	Wed,  1 Mar 2023 21:52:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 46C21194658C
- for <dm-devel@listman.corp.redhat.com>; Wed,  1 Mar 2023 03:05:57 +0000 (UTC)
+ ESMTP id 4E3F519472FC
+ for <dm-devel@listman.corp.redhat.com>; Wed,  1 Mar 2023 21:52:45 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 37EFC1121315; Wed,  1 Mar 2023 03:05:57 +0000 (UTC)
+ id 31D1D4014CF3; Wed,  1 Mar 2023 21:52:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 308C91121314
- for <dm-devel@redhat.com>; Wed,  1 Mar 2023 03:05:57 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 29E1F40C6EC4
+ for <dm-devel@redhat.com>; Wed,  1 Mar 2023 21:52:45 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 125BC864766
- for <dm-devel@redhat.com>; Wed,  1 Mar 2023 03:05:57 +0000 (UTC)
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com
- [45.249.212.51]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-345-whhk1HctP1KA_Tl-OXgSjw-1; Tue, 28 Feb 2023 22:05:54 -0500
-X-MC-Unique: whhk1HctP1KA_Tl-OXgSjw-1
-Received: from mail02.huawei.com (unknown [172.30.67.169])
- by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4PRJyh0r59z4f3jqh;
- Wed,  1 Mar 2023 11:05:48 +0800 (CST)
-Received: from huaweicloud.com (unknown [10.175.127.227])
- by APP3 (Coremail) with SMTP id _Ch0CgCnUiAHwf5jtvWGEA--.46636S4;
- Wed, 01 Mar 2023 11:05:49 +0800 (CST)
-From: yangerkun <yangerkun@huaweicloud.com>
-To: snitzer@kernel.org, agk@redhat.com, jefflexu@linux.alibaba.com,
- dm-devel@redhat.com
-Date: Wed,  1 Mar 2023 11:29:04 +0800
-Message-Id: <20230301032904.3561641-1-yangerkun@huaweicloud.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EF85D85D184
+ for <dm-devel@redhat.com>; Wed,  1 Mar 2023 21:52:44 +0000 (UTC)
+Received: from mx.ewheeler.net (mx.ewheeler.net [173.205.220.69]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-404-cTdClVtpMnGEBCswAOsl_g-1; Wed, 01 Mar 2023 16:52:40 -0500
+X-MC-Unique: cTdClVtpMnGEBCswAOsl_g-1
+Received: from localhost (localhost [127.0.0.1])
+ by mx.ewheeler.net (Postfix) with ESMTP id A577685;
+ Wed,  1 Mar 2023 13:46:11 -0800 (PST)
+X-Virus-Scanned: amavisd-new at ewheeler.net
+Received: from mx.ewheeler.net ([127.0.0.1])
+ by localhost (mx.ewheeler.net [127.0.0.1]) (amavisd-new, port 10024)
+ with LMTP id 8a16r7X22FRJ; Wed,  1 Mar 2023 13:46:10 -0800 (PST)
+Received: from localhost (localhost [127.0.0.1])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mx.ewheeler.net (Postfix) with ESMTPSA id 6C1AB45;
+ Wed,  1 Mar 2023 13:46:10 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mx.ewheeler.net 6C1AB45
+Date: Wed, 1 Mar 2023 13:46:08 -0800 (PST)
+From: Eric Wheeler <dm-devel@lists.ewheeler.net>
+To: dm-devel@redhat.com
+Message-ID: <fad2265d-bfd0-68c5-e04d-8687cbf2aa59@ewheeler.net>
 MIME-Version: 1.0
-X-CM-TRANSID: _Ch0CgCnUiAHwf5jtvWGEA--.46636S4
-X-Coremail-Antispam: 1UD129KBjvJXoWxCrW5trykuF1fKF4xAw13urg_yoW5XFyUpF
- W5Jr13G395Kr47Kr90yr1kGasxGr18Gr9xCr4xZ343Cw15WryFqF12yr48XrW8AF95Ga15
- ZFWkta1qkFyIy3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
- 9KBjDU0xBIdaVrnRJUUUyG14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
- rVWUWVWUuwAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
- 1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
- JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
- CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
- 2Ix0cI8IcVAFwI0_JrI_JrylYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
- W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1l42xK82IYc2Ij64vI
- r41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8Gjc
- xK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r126r1DMIIYrxkI7VAKI48JMIIF0xvE2Ix0
- cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r1j6r4UMIIF0xvE42xK8V
- AvwI8IcIk0rVWrZr1j6s0DMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7Cj
- xVAFwI0_Jr0_GrUvcSsGvfC2KfnxnUUI43ZEXa7VU1a9aPUUUUU==
-X-CM-SenderInfo: 51dqwvhunx0q5kxd4v5lfo033gof0z/
-X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -92,9 +79,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-X-Mailman-Approved-At: Wed, 01 Mar 2023 07:41:52 +0000
-Subject: [dm-devel] [PATCH v2] dm-crypt: reexport sysfs of kcryptd workqueue
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: [dm-devel] dm-thin: deadlock between dm_pool_issue_prefetches and
+ dm_pool_get_metadata_transaction_id
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -106,103 +93,167 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: yukuai3@huawei.com, yangerkun@huawei.com, yangerkun@huaweicloud.com
+Cc: Joe Thornber <ejt@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
+ Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: yangerkun <yangerkun@huawei.com>
+Hello Mike, Joe, Alasdair, list:
 
-Once there is a heavy IO load, so many encrypt/decrypt work will occupy
-all of the cpu, which may lead the poor performance for other service.
-So the idea like 'a2b8b2d97567 ("dm crypt: export sysfs of kcryptd
-workqueue")' said seems necessary. We can export "kcryptd" workqueue
-sysfs, the entry like cpumask/max_active and so on can help us to limit
-the usage for encrypt/decrypt work.
+I think we hit an edge case in dm-thin that is triggering a deadlock. 
 
-However, that commit does not consider the reload table will call .ctr
-before .dtr, so the reload for dm-crypt will fail since the same sysfs
-problem, and then we revert that commit('48b0777cd93d ("Revert "dm
-crypt: export sysfs of kcryptd workqueue"")').
+Every night right we do thin metadata dumps (for "reasons"), and this
+has worked for years. Recently there was a crash while a thin metadata
+snapshot was reserved (metadata snapshot, not a volume snapshot).
 
-Actually, what we should do is give a unique name once we try reload
-table, we can use ida to fix the problem.
+When the system came up we tried to release the metadata reserve, but when 
+we did, it resulted in a deadlock. We have been using 4.19.y, so we 
+switched to 6.2 to find out if the problem still exists.  It does, and 
+the stack traces for 6.2 are below.
 
-Signed-off-by: yangerkun <yangerkun@huawei.com>
----
- drivers/md/dm-crypt.c | 28 +++++++++++++++++++++++-----
- 1 file changed, 23 insertions(+), 5 deletions(-)
+	]# dmsetup message /dev/mapper/data-pool0-tpool 0 release_metadata_snap
+	<hangs forever, 
+	 `dmsetup` spins 100% CPU, 
+	 lots of noise in dmesg>
 
-v1->v2:
-rewritten the commit msg
+I thought it was strange that `cat /proc/<pid>/stack` for `dmsetup`
+above was empty, perhaps that is irrelevant.
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 40cb1719ae4d..948d1e11d064 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -47,6 +47,8 @@
- 
- #define DM_MSG_PREFIX "crypt"
- 
-+static DEFINE_IDA(crypt_queue_ida);
-+
- /*
-  * context holding the current state of a multi-part conversion
-  */
-@@ -180,6 +182,7 @@ struct crypt_config {
- 		struct crypto_aead **tfms_aead;
- 	} cipher_tfm;
- 	unsigned int tfms_count;
-+	int crypt_queue_id;
- 	unsigned long cipher_flags;
- 
- 	/*
-@@ -2704,6 +2707,9 @@ static void crypt_dtr(struct dm_target *ti)
- 	if (cc->crypt_queue)
- 		destroy_workqueue(cc->crypt_queue);
- 
-+	if (cc->crypt_queue_id)
-+		ida_free(&crypt_queue_ida, cc->crypt_queue_id);
-+
- 	crypt_free_tfms(cc);
- 
- 	bioset_exit(&cc->bs);
-@@ -3340,12 +3346,24 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	}
- 
- 	if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
--		cc->crypt_queue = alloc_workqueue("kcryptd/%s", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
-+		cc->crypt_queue = alloc_workqueue("kcryptd-%s", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
- 						  1, devname);
--	else
--		cc->crypt_queue = alloc_workqueue("kcryptd/%s",
--						  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND,
--						  num_online_cpus(), devname);
-+	else {
-+		int id = ida_alloc_min(&crypt_queue_ida, 1, GFP_KERNEL);
-+
-+		if (id < 0) {
-+			ti->error = "Couldn't get kcryptd queue id";
-+			ret = id;
-+			goto bad;
-+		}
-+
-+		cc->crypt_queue_id = id;
-+		cc->crypt_queue = alloc_workqueue("kcryptd-%s-%d",
-+						  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM |
-+						  WQ_UNBOUND | WQ_SYSFS,
-+						  num_online_cpus(), devname, id);
-+	}
-+
- 	if (!cc->crypt_queue) {
- 		ti->error = "Couldn't create kcryptd queue";
- 		goto bad;
--- 
-2.31.1
+We had to delete the pool and restore from backup to get the customer 
+online quickly, but I do have a `dd` image of the metadata volume if you 
+need it. It is 16 gigabytes and I can upload it somewhere with an off-list 
+email link if you would like.
+
+Apologies in advance, but my stack traces do not have line numbers, so
+hopefully this is enough to start with.
+
+Thanks for your help!
+
+-Eric
+
+======== From Linux v6.2.1 ========
+
+[  616.926063] INFO: task kworker/u96:1:857 blocked for more than 368 seconds.
+[  616.927007]       Tainted: G            E      6.2.1-1.el7.elrepo.x86_64 #1
+[  616.927793] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+[  616.928604] task:kworker/u96:1   state:D stack:0     pid:857   ppid:2      flags:0x00004000
+[  616.929442] Workqueue: dm-thin do_worker [dm_thin_pool]
+[  616.930281] Call Trace:
+[  616.931104]  <TASK>
+[  616.931880]  __schedule+0x2d8/0x8f0
+[  616.932716]  schedule+0x68/0xf0
+[  616.933546]  rwsem_down_read_slowpath+0x286/0x500
+[  616.934368]  down_read+0x43/0xa0
+[  616.935188]  dm_pool_issue_prefetches+0x1e/0x52 [dm_thin_pool]
+[  616.936015]  do_worker+0x33/0xe0 [dm_thin_pool]
+[  616.936826]  process_one_work+0x1bb/0x390
+[  616.937655]  worker_thread+0x4d/0x390
+[  616.938456]  ? __pfx_worker_thread+0x10/0x10
+[  616.939250]  kthread+0xf0/0x120
+[  616.940030]  ? __pfx_kthread+0x10/0x10
+[  616.940785]  ret_from_fork+0x2c/0x50
+[  616.941571]  </TASK>
+
+
+[  494.063707] INFO: task lvs:4782 blocked for more than 245 seconds.
+[  494.064005]       Tainted: G            E      6.2.1-1.el7.elrepo.x86_64 #1
+[  494.064297] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+[  494.064588] task:lvs             state:D stack:0     pid:4782  ppid:4780   flags:0x00000000
+[  494.064884] Call Trace:
+[  494.065178]  <TASK>
+[  494.065467]  __schedule+0x2d8/0x8f0
+[  494.065761]  schedule+0x68/0xf0
+[  494.066057]  rwsem_down_read_slowpath+0x286/0x500
+[  494.066351]  ? __wake_up_common+0x85/0x180
+[  494.066662]  down_read+0x43/0xa0
+[  494.066958]  dm_pool_get_metadata_transaction_id+0x23/0x60 [dm_thin_pool]
+[  494.067258]  pool_status+0xfc/0x730 [dm_thin_pool]
+[  494.067558]  ? __alloc_pages+0x187/0x350
+[  494.067854]  retrieve_status+0xc7/0x210 [dm_mod]
+[  494.068178]  ? __pfx_table_status+0x10/0x10 [dm_mod]
+[  494.068485]  table_status+0x66/0xb0 [dm_mod]
+[  494.068793]  ctl_ioctl+0x200/0x4b0 [dm_mod]
+[  494.069109]  dm_ctl_ioctl+0xe/0x20 [dm_mod]
+[  494.069415]  __x64_sys_ioctl+0x95/0xd0
+[  494.069721]  do_syscall_64+0x3b/0x90
+[  494.070020]  entry_SYSCALL_64_after_hwframe+0x72/0xdc
+[  494.070310] RIP: 0033:0x7ff5a2ef54a7
+[  494.070591] RSP: 002b:00007ffd67e004f8 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
+[  494.070874] RAX: ffffffffffffffda RBX: 000055e8b10bd470 RCX: 00007ff5a2ef54a7
+[  494.071170] RDX: 000055e8b34eb010 RSI: 00000000c138fd0c RDI: 0000000000000004
+[  494.071463] RBP: 00007ff5a3a47d83 R08: 00007ff5a3a488d0 R09: 00007ffd67e00420
+[  494.071760] R10: 000000000000001e R11: 0000000000000246 R12: 000055e8b34eb010
+[  494.072066] R13: 00007ff5a3a47d83 R14: 000055e8b2b07df0 R15: 00007ff5a3a47d83
+[  494.072369]  </TASK>
+
+
+======== From Linux v4.19.93 ========
+kernel: INFO: task dmeventd:3549 blocked for more than 120 seconds.
+kernel:      Not tainted 4.19.93 #1
+kernel: "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+kernel: dmeventd        D    0  3549      1 0x00000080
+kernel: Call Trace:
+kernel: ? __schedule+0x1f6/0x7a0
+kernel: schedule+0x32/0x80
+kernel: rwsem_down_read_failed+0x139/0x1c0
+kernel: call_rwsem_down_read_failed+0x14/0x30
+kernel: down_read+0x1c/0x30
+kernel: dm_pool_get_metadata_transaction_id+0x1e/0x50 [dm_thin_pool]
+kernel: pool_status+0x20c/0x750 [dm_thin_pool]
+kernel: ? dm_get_live_or_inactive_table.isra.5+0x20/0x20 [dm_mod]
+kernel: ? __alloc_pages_nodemask+0x12a/0x2e0
+kernel: retrieve_status+0xad/0x1c0 [dm_mod]
+kernel: ? dm_get_live_or_inactive_table.isra.5+0x20/0x20 [dm_mod]
+kernel: table_status+0x61/0xa0 [dm_mod]
+kernel: ctl_ioctl+0x1d3/0x500 [dm_mod]
+kernel: ? kmem_cache_free+0x10f/0x130
+kernel: dm_ctl_ioctl+0xa/0x10 [dm_mod]
+kernel: do_vfs_ioctl+0xa9/0x620
+kernel: ksys_ioctl+0x60/0x90
+kernel: __x64_sys_ioctl+0x16/0x20
+kernel: do_syscall_64+0x5b/0x1b0
+kernel: entry_SYSCALL_64_after_hwframe+0x44/0xa9
+kernel: RIP: 0033:0x7fde7f796307
+kernel: Code: Bad RIP value.
+kernel: RSP: 002b:00007fde77d49948 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
+kernel: RAX: ffffffffffffffda RBX: 0000559539267550 RCX: 00007fde7f796307
+kernel: RDX: 00007fde68001a10 RSI: 00000000c138fd0c RDI: 0000000000000007
+kernel: RBP: 00007fde7fee8d83 R08: 0000000000000004 R09: 00007fde7fee98c0
+kernel: R10: 000000000000001e R11: 0000000000000246 R12: 00007fde68001a10
+kernel: R13: 00007fde7fee8d83 R14: 00007fde680018d0 R15: 00007fde7fee8d83
+kernel:      Not tainted 4.19.93 #1
+
+
+kernel: "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+kernel: Call Trace:
+kernel: ? __schedule+0x1f6/0x7a0
+kernel: schedule+0x32/0x80
+kernel: rwsem_down_read_failed+0x139/0x1c0
+kernel: call_rwsem_down_read_failed+0x14/0x30
+kernel: down_read+0x1c/0x30
+kernel: dm_thin_find_block+0x2e/0x70 [dm_thin_pool]
+kernel: thin_map+0x167/0x260 [dm_thin_pool]
+kernel: ? nf_ip_reroute+0x60/0x60
+kernel: __map_bio+0x42/0x180 [dm_mod]
+kernel: __split_and_process_non_flush+0xf8/0x1e0 [dm_mod]
+kernel: ? __send_empty_flush.constprop.40+0x60/0x60 [dm_mod]
+kernel: __split_and_process_bio+0xa9/0x1b0 [dm_mod]
+kernel: __dm_make_request.isra.36+0x3f/0x90 [dm_mod]
+kernel: generic_make_request+0x19a/0x3d0
+kernel: kthread+0xf8/0x130
+kernel: ? kthread_bind+0x10/0x10
+kernel: ret_from_fork+0x35/0x40
+kernel:      Not tainted 4.19.93 #1
+
+
+
+--
+Eric Wheeler
 
 --
 dm-devel mailing list
