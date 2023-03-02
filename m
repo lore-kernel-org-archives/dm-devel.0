@@ -4,89 +4,91 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5BFE6C6FA8E
-	for <dm-devel@archiver.kernel.org>; Thu,  2 Mar 2023 07:43:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2153AC678D4
+	for <dm-devel@archiver.kernel.org>; Thu,  2 Mar 2023 08:53:48 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1677743009;
+	s=mimecast20190719; t=1677747227;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=PHBDPgCcO/O7YKoJcfKNrnyrdg13UoHVfoEXmu/HF2g=;
-	b=PLcR4WPAnwoDVqxX4Y1gSiCG3Tnavb9RMn4dHPtOQq5zHTo0p12y9EXeYYBkiicVcxLPhO
-	UuUnZZONxT0R8pxLg1CEAh6BJM/Ol78slI29UjXRLgJwcx18rUSlbvc4/uCvGudG0zXOhQ
-	z6oUuloUT/EkThLAyDxJ5tMAQYoDLCQ=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=1ExOkZrucoCo0ftNUSYprww6AjEt/wYPihxE1Nl5HWQ=;
+	b=PGOK9PeISjBYbNJK7/ohULMwIdCICRyFbSPdliREK7t2wAZpdrZkqyxsPy90VUGBythQbK
+	iXQiyut3MJovYt3wD22J2S+Mj+rj5tA13fCue0NvNm6YsLLYdb+nT/Q3E7XIQc1rch52s4
+	IUoRh6qD9vb4Rgvg51/uC73OtEUtyKw=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-584-o-t3cgOiO4KS-wpNizPRpw-1; Thu, 02 Mar 2023 02:43:25 -0500
-X-MC-Unique: o-t3cgOiO4KS-wpNizPRpw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-554-Jv0V1HaXOO2xglKj6Laidw-1; Thu, 02 Mar 2023 03:53:46 -0500
+X-MC-Unique: Jv0V1HaXOO2xglKj6Laidw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D04B6811E9C;
-	Thu,  2 Mar 2023 07:43:23 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BBEBF3811F22;
+	Thu,  2 Mar 2023 08:53:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4312C40C83B6;
-	Thu,  2 Mar 2023 07:43:21 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 456C42166B26;
+	Thu,  2 Mar 2023 08:53:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0626919452CD;
-	Thu,  2 Mar 2023 07:43:21 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1AD4919452CE;
+	Thu,  2 Mar 2023 08:53:43 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 82FAC19465BC
- for <dm-devel@listman.corp.redhat.com>; Wed,  1 Mar 2023 11:40:48 +0000 (UTC)
+ ESMTP id 4AE0819452CD
+ for <dm-devel@listman.corp.redhat.com>; Thu,  2 Mar 2023 08:53:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6867840C6EC4; Wed,  1 Mar 2023 11:40:43 +0000 (UTC)
+ id 3D06140CF8E2; Thu,  2 Mar 2023 08:53:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 60B514014D10
- for <dm-devel@redhat.com>; Wed,  1 Mar 2023 11:40:43 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 41AF13C0E451
- for <dm-devel@redhat.com>; Wed,  1 Mar 2023 11:40:43 +0000 (UTC)
-Received: from mout.kundenserver.de (mout.kundenserver.de [212.227.17.10])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-49-e5l5HF7XOC-5d8oFgeWo_g-1; Wed,
- 01 Mar 2023 06:40:11 -0500
-X-MC-Unique: e5l5HF7XOC-5d8oFgeWo_g-1
-Received: from weisslap.aisec.fraunhofer.de ([31.19.218.61]) by
- mrelayeu.kundenserver.de (mreue109 [212.227.15.183]) with ESMTPSA (Nemesis)
- id 1MLA6m-1pFFuO0kpm-00IEk1; Wed, 01 Mar 2023 12:34:22 +0100
-From: =?UTF-8?q?Michael=20Wei=C3=9F?= <michael.weiss@aisec.fraunhofer.de>
-To: Paul Moore <paul@paul-moore.com>
-Date: Wed,  1 Mar 2023 12:34:15 +0100
-Message-Id: <20230301113415.47664-1-michael.weiss@aisec.fraunhofer.de>
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 35591400EA93
+ for <dm-devel@redhat.com>; Thu,  2 Mar 2023 08:53:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 151C9882825
+ for <dm-devel@redhat.com>; Thu,  2 Mar 2023 08:53:42 +0000 (UTC)
+Received: from mail-yb1-f200.google.com (mail-yb1-f200.google.com
+ [209.85.219.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-2-iaFdDNguPIiXWKPjNQwc0A-1; Thu, 02 Mar 2023 03:53:40 -0500
+X-MC-Unique: iaFdDNguPIiXWKPjNQwc0A-1
+Received: by mail-yb1-f200.google.com with SMTP id
+ l85-20020a252558000000b0095d2ada3d26so3350835ybl.5
+ for <dm-devel@redhat.com>; Thu, 02 Mar 2023 00:53:40 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=cc:to:subject:message-id:date:from:in-reply-to:references
+ :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=+H8IhfJeBfs7eR0MM92P0PlE/7BM3A6fmV/sc4VZJII=;
+ b=nnqgaqm/wmFCtsjoXZgmnORvJbsjNGEqaBc4vRunZJB2MHmosStiIq/n9meZY6zNjy
+ wicKrem44cs54y9LFBWWw8YZIRGK8B3FkWJRlfAU31Ha4NewB0C4cOXQshW6S6y1cKFN
+ CF3dbAsgsrgeN9F7wVorctH65ZVIU6ufSvQADDU4w8b1sKl9mLyTE9Odg7VirQTenJwt
+ 6VN+duzTKdIBV6Be/YjYgEvFyCCId4NFG8dtMmP/6wOWEhNyghaZwfhGj5J0lmXgcYHb
+ XS0sNKoJh0xUHegX48XFd7g6tGgwqT8/mZ46dhtSpAx3QLxn2iRefUp4usYyzj6Uoeem
+ fEtA==
+X-Gm-Message-State: AO0yUKXnrVgdMEbzMTQP0EjqrmuE0wwR+Vk5uboox4D9NiPHyOZY0wM2
+ w+SNbjz3bJLuQu0zZcCe20aOA/aQYYszs5cjs9o7y6cHKNyGp0DhTD5sESjn3qiTblx7M7pEQaZ
+ wAe72hgolXgT2BM7rCAsC9TBhiLtHNrCdqVYO+T8=
+X-Received: by 2002:a5b:b03:0:b0:ace:1ae4:9dd2 with SMTP id
+ z3-20020a5b0b03000000b00ace1ae49dd2mr1765778ybp.8.1677747219982; 
+ Thu, 02 Mar 2023 00:53:39 -0800 (PST)
+X-Google-Smtp-Source: AK7set9cMjzRd5LAG/fF+iFOJBBoUjGcKmemP7iPWtIoTJ4ZeWn9Elv9Xt27QTPgD+HukPnbeGCXfBdJjoser7buOXc=
+X-Received: by 2002:a5b:b03:0:b0:ace:1ae4:9dd2 with SMTP id
+ z3-20020a5b0b03000000b00ace1ae49dd2mr1765773ybp.8.1677747219674; Thu, 02 Mar
+ 2023 00:53:39 -0800 (PST)
 MIME-Version: 1.0
-X-Provags-ID: V03:K1:tGtzLe56BXPRA/UJkQiHxLFGUNAsPjaOFYy/tcw9+uPqPJpJz3Z
- zj5Ye3Z3imqH6MRW+/HoKV3+n0oBXdPXSOf0LxvF2DeTb2JppDQpq7sQyQ37j1FL5FEwSRD
- cv3elYOu1ZkvMmjJsZvSAqFRI9ce18cvY2ehQZsiCCxNdrHNO5WPznAhvTmRUB4YFtQP8kr
- 1ubAow1SvYeIt6QIB/L/w==
-UI-OutboundReport: notjunk:1;M01:P0:yKp8ysBrTsg=;/UKr2hRr2fQIjkUNzUpURtPtG3h
- M8YZ8Fq0QuPqSxNS7bK72oG0Gtxrs4lels0ygybMwx1dzs40YqxjLELi3K+ncOfrItDJHFz2F
- 0nxjNaJG6/sx1ZbDwLVJZ2Y/soUTW6Tpvp8i65psBmyhcYNWqr4hQhUgneSYeg2fJZnFMDQHN
- 3rEUV18OMk/SkFAUz7p56tau3EDFZTjjTHs/jbdKFaJPqoT3T26at3QmZ4zDJMkfXEKAKeWvc
- zHEG/U0Sv5/zrOGoaLQCKl+KGdaMrqsxfOl951saeV9zbhIWr4palCTNeAORJ7EGK4ozA+Ewj
- HNjE28GNo4/p9uWCF8iSQJX08OxqOSsE1wsRbITOPXjHnHUgBC/ItiwAc7TrpHeHL/V9mTAmj
- NsKt8xFTrMPNoC0eswIZqUNupVHi9dokQyC0Lgs2ERpyRXjpFp9EQkZmmeUapIt7CEGuC7ory
- 3PSXKa/AnLF7uyi11uDVFmjCtRFVggYoMczSlcAxhx+GgWtqotXEXzjcqfMdtu6Z61+iJqqTI
- pnqER3WqWH4SaYo5xv/8AuedhifhsrrU7ZCb+MCXgYtiyuL6wOTtt1ZgZu1b7JZcLAR2c0pDL
- rAv13NANM0831Xg77VzM/yTy74Sibhr4DjLi4oTglAjRq/Wy6MOkkY999+BEc5tCeSEeF3TWz
- oN1odDRD8oa7zbFojvXjlqnIVamOSoszwS3FytrTDA==
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-X-Mailman-Approved-At: Thu, 02 Mar 2023 07:43:19 +0000
-Subject: [dm-devel] [PATCH] dm verity: log audit events for dm-verity target
+References: <CAJ0trDZW8FRFuuonKrgSMp7i7m0sLdPGyFHd2ap0Gw8iadrA-A@mail.gmail.com>
+ <74a2b8c1-71cf-10b5-a837-c1af60773e98@ewheeler.net>
+In-Reply-To: <74a2b8c1-71cf-10b5-a837-c1af60773e98@ewheeler.net>
+From: Joe Thornber <thornber@redhat.com>
+Date: Thu, 2 Mar 2023 08:53:28 +0000
+Message-ID: <CAJ0trDYAyHHh2crMAQuQPMt3FzFmii0nmLnsL5N-cdhfvWZnMg@mail.gmail.com>
+To: Eric Wheeler <dm-devel@lists.ewheeler.net>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: Re: [dm-devel] [announce] thin-provisioning-tools v1.0.0-rc1
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -98,95 +100,284 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: =?UTF-8?q?Michael=20Wei=C3=9F?= <michael.weiss@aisec.fraunhofer.de>,
- gyroidos@aisec.fraunhofer.de, Richard Guy Briggs <rgb@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>, open list <linux-kernel@vger.kernel.org>,
- Eric Paris <eparis@redhat.com>,
- "open list:AUDIT SUBSYSTEM" <audit@vger.kernel.org>,
- "maintainer:DEVICE-MAPPER  LVM" <dm-devel@redhat.com>,
- Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Cc: "development, device-mapper" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="===============3098560482626858134=="
 
-ZG0tdmVyaXR5IHNpZ25hbHMgaW50ZWdyaXR5IHZpb2xhdGlvbnMgYnkgcmV0dXJuaW5nIEkvTyBl
-cnJvcnMKdG8gdXNlciBzcGFjZS4gVG8gaWRlbnRpZnkgaW50ZWdyaXR5IHZpb2xhdGlvbnMgYnkg
-YSBjb250cm9sbGluZwppbnN0YW5jZSwgdGhlIGtlcm5lbCBhdWRpdCBzdWJzeXN0ZW0gY2FuIGJl
-IHVzZWQgdG8gZW1pdCBhdWRpdApldmVudHMgdG8gdXNlciBzcGFjZS4gQW5hbG9nb3VzIHRvIGRt
-LWludGVncml0eSwgd2UgYWxzbyB1c2UgdGhlCmRtLWF1ZGl0IHN1Ym1vZHVsZSBhbGxvd2luZyB0
-byBlbWl0IGF1ZGl0IGV2ZW50cyBvbiB2ZXJpZmljYXRpb24KZmFpbHVyZXMgb2YgbWV0YWRhdGEg
-YW5kIGRhdGEgYmxvY2tzIGFzIHdlbGwgYXMgaWYgbWF4IGNvcnJ1cHRlZAplcnJvcnMgYXJlIHJl
-YWNoZWQuCgpUaGUgY29uc3RydWN0aW9uIGFuZCBkZXN0cnVjdGlvbiBvZiB2ZXJpdHkgZGV2aWNl
-IG1hcHBpbmdzIGFyZQphbHNvIHJlbGV2YW50IGZvciBhdWRpdGluZyBhIHN5c3RlbS4gVGh1cywg
-dGhvc2UgZXZlbnRzIGFyZSBhbHNvCmxvZ2dlZCBhcyBhdWRpdCBldmVudHMuCgpXZSB0ZXN0ZWQg
-dGhpcyBieSBzdGFydGluZyBhIGNvbnRhaW5lciB3aXRoIHRoZSBjb250YWluZXIgbWFuYWdlcgoo
-Y21sZCkgb2YgR3lyb2lkT1Mgd2hpY2ggdXNlcyBhIGRtLXZlcml0eSBwcm90ZWN0ZWQgcm9vdGZz
-IGltYWdlCnJvb3QuaW1nIG1hcHBlZCB0byAvZGV2L21hcHBlci88dXVpZD4tcm9vdC4gV2UgdGhh
-biBtYW5pcHVsYXRlZApvbmUgYmxvY2sgaW4gdGhlIHVuZGVybHlpbmcgaW1hZ2UgZmlsZSBhbmQg
-cmVhZGluZyBpdCBmcm9tIHRoZQpwcm90ZWN0ZWQgbWFwcGVyIGRldmljZSBhZ2FpbiBhbmQgYWdh
-aW4gdW50aWwgd2UgcmVhY2ggdGhlIG1heApjb3JydXB0ZWQgZXJyb3JzIGxpa2UgdGhpczoKCiAg
-ZGQgaWY9L2Rldi91cmFuZG9tIG9mPXJvb3QuaW1nIGJzPTUxMiBjb3VudD0xIHNlZWs9MTAwMAog
-IGZvciBpIGluIHJhbmdlIHsxLi4xMDF9OyBkbyBcCiAgICBkZCBpZj0vZGV2L21hcHBlci88dXVp
-ZD4tcm9vdCBvZj0vZGV2L251bGwgYnM9NDA5NiBcCiAgICAgICBjb3VudD0xIHNraXA9MTAwMCBc
-CiAgZG9uZQoKVGhlIHJlc3VsdGluZyBhdWRpdCBsb2cgbG9va3MgYXMgZm9sbG93czoKCiAgdHlw
-ZT1ETV9DVFJMIG1zZz1hdWRpdCgxNjc3NjE4NzkxLjg3Njo5NjIpOgogICAgbW9kdWxlPXZlcml0
-eSBvcD1jdHIgcHBpZD00ODc2IHBpZD0yOTEwMiBhdWlkPTAgdWlkPTAgZ2lkPTAKICAgIGV1aWQ9
-MCBzdWlkPTAgZnN1aWQ9MCBlZ2lkPTAgc2dpZD0wIGZzZ2lkPTAgdHR5PShub25lKSBzZXM9NDQK
-ICAgIGNvbW09ImNtbGQiIGV4ZT0iL3Vzci9zYmluL2NtbC9jbWxkIiBzdWJqPXVuY29uZmluZWQK
-ICAgIGRldj0yNTQ6MyBlcnJvcl9tc2c9J3N1Y2Nlc3MnIHJlcz0xCgogIHR5cGU9RE1fRVZFTlQg
-bXNnPWF1ZGl0KDE2Nzc2MTk0NjMuNzg2OjEwNzQpOiBtb2R1bGU9dmVyaXR5CiAgICBvcD12ZXJp
-ZnktZGF0YSBkZXY9NzowIHNlY3Rvcj0xMDAwIHJlcz0wCiAgLi4uCiAgdHlwZT1ETV9FVkVOVCBt
-c2c9YXVkaXQoMTY3NzYxOTU5Ni43Mjc6MTE2Mik6IG1vZHVsZT12ZXJpdHkKICAgIG9wPXZlcmlm
-eS1kYXRhIGRldj03OjAgc2VjdG9yPTEwMDAgcmVzPTAKCiAgdHlwZT1ETV9FVkVOVCBtc2c9YXVk
-aXQoMTY3NzYxOTU5Ni43MzE6MTE2Myk6IG1vZHVsZT12ZXJpdHkKICAgIG9wPW1heC1jb3JydXB0
-ZWQtZXJyb3JzIGRldj0yNTQ6MyBzZWN0b3I9PyByZXM9MAoKU2lnbmVkLW9mZi1ieTogTWljaGFl
-bCBXZWnDnyA8bWljaGFlbC53ZWlzc0BhaXNlYy5mcmF1bmhvZmVyLmRlPgotLS0KIGRyaXZlcnMv
-bWQvZG0tdmVyaXR5LXRhcmdldC5jIHwgMjAgKysrKysrKysrKysrKysrKysrLS0KIDEgZmlsZSBj
-aGFuZ2VkLCAxOCBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2Ry
-aXZlcnMvbWQvZG0tdmVyaXR5LXRhcmdldC5jIGIvZHJpdmVycy9tZC9kbS12ZXJpdHktdGFyZ2V0
-LmMKaW5kZXggYWRlODNlZjNiNDM5Li44YmVlYjRlYTY2ZDEgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMv
-bWQvZG0tdmVyaXR5LXRhcmdldC5jCisrKyBiL2RyaXZlcnMvbWQvZG0tdmVyaXR5LXRhcmdldC5j
-CkBAIC0xNiw2ICsxNiw3IEBACiAjaW5jbHVkZSAiZG0tdmVyaXR5LmgiCiAjaW5jbHVkZSAiZG0t
-dmVyaXR5LWZlYy5oIgogI2luY2x1ZGUgImRtLXZlcml0eS12ZXJpZnktc2lnLmgiCisjaW5jbHVk
-ZSAiZG0tYXVkaXQuaCIKICNpbmNsdWRlIDxsaW51eC9tb2R1bGUuaD4KICNpbmNsdWRlIDxsaW51
-eC9yZWJvb3QuaD4KICNpbmNsdWRlIDxsaW51eC9zY2F0dGVybGlzdC5oPgpAQCAtMjQ4LDggKzI0
-OSwxMCBAQCBzdGF0aWMgaW50IHZlcml0eV9oYW5kbGVfZXJyKHN0cnVjdCBkbV92ZXJpdHkgKnYs
-IGVudW0gdmVyaXR5X2Jsb2NrX3R5cGUgdHlwZSwKIAlETUVSUl9MSU1JVCgiJXM6ICVzIGJsb2Nr
-ICVsbHUgaXMgY29ycnVwdGVkIiwgdi0+ZGF0YV9kZXYtPm5hbWUsCiAJCSAgICB0eXBlX3N0ciwg
-YmxvY2spOwogCi0JaWYgKHYtPmNvcnJ1cHRlZF9lcnJzID09IERNX1ZFUklUWV9NQVhfQ09SUlVQ
-VEVEX0VSUlMpCisJaWYgKHYtPmNvcnJ1cHRlZF9lcnJzID09IERNX1ZFUklUWV9NQVhfQ09SUlVQ
-VEVEX0VSUlMpIHsKIAkJRE1FUlIoIiVzOiByZWFjaGVkIG1heGltdW0gZXJyb3JzIiwgdi0+ZGF0
-YV9kZXYtPm5hbWUpOworCQlkbV9hdWRpdF9sb2dfdGFyZ2V0KERNX01TR19QUkVGSVgsICJtYXgt
-Y29ycnVwdGVkLWVycm9ycyIsIHYtPnRpLCAwKTsKKwl9CiAKIAlzbnByaW50Zih2ZXJpdHlfZW52
-LCBETV9WRVJJVFlfRU5WX0xFTkdUSCwgIiVzPSVkLCVsbHUiLAogCQlETV9WRVJJVFlfRU5WX1ZB
-Ul9OQU1FLCB0eXBlLCBibG9jayk7CkBAIC0zNDAsNiArMzQzLDExIEBAIHN0YXRpYyBpbnQgdmVy
-aXR5X3ZlcmlmeV9sZXZlbChzdHJ1Y3QgZG1fdmVyaXR5ICp2LCBzdHJ1Y3QgZG1fdmVyaXR5X2lv
-ICppbywKIAkJZWxzZSBpZiAodmVyaXR5X2hhbmRsZV9lcnIodiwKIAkJCQkJICAgRE1fVkVSSVRZ
-X0JMT0NLX1RZUEVfTUVUQURBVEEsCiAJCQkJCSAgIGhhc2hfYmxvY2spKSB7CisJCQlzdHJ1Y3Qg
-YmlvICpiaW8gPQorCQkJCWRtX2Jpb19mcm9tX3Blcl9iaW9fZGF0YShpbywKKwkJCQkJCQkgdi0+
-dGktPnBlcl9pb19kYXRhX3NpemUpOworCQkJZG1fYXVkaXRfbG9nX2JpbyhETV9NU0dfUFJFRklY
-LCAidmVyaWZ5LW1ldGFkYXRhIiwgYmlvLAorCQkJCQkgYmxvY2ssIDApOwogCQkJciA9IC1FSU87
-CiAJCQlnb3RvIHJlbGVhc2VfcmV0X3I7CiAJCX0KQEAgLTU5MCw4ICs1OTgsMTEgQEAgc3RhdGlj
-IGludCB2ZXJpdHlfdmVyaWZ5X2lvKHN0cnVjdCBkbV92ZXJpdHlfaW8gKmlvKQogCQkJCXJldHVy
-biAtRUlPOwogCQkJfQogCQkJaWYgKHZlcml0eV9oYW5kbGVfZXJyKHYsIERNX1ZFUklUWV9CTE9D
-S19UWVBFX0RBVEEsCi0JCQkJCSAgICAgIGN1cl9ibG9jaykpCisJCQkJCSAgICAgIGN1cl9ibG9j
-aykpIHsKKwkJCQlkbV9hdWRpdF9sb2dfYmlvKERNX01TR19QUkVGSVgsICJ2ZXJpZnktZGF0YSIs
-CisJCQkJCQkgYmlvLCBjdXJfYmxvY2ssIDApOwogCQkJCXJldHVybiAtRUlPOworCQkJfQogCQl9
-CiAJfQogCkBAIC05NzUsNiArOTg2LDggQEAgc3RhdGljIHZvaWQgdmVyaXR5X2R0cihzdHJ1Y3Qg
-ZG1fdGFyZ2V0ICp0aSkKIAkJc3RhdGljX2JyYW5jaF9kZWMoJnVzZV90YXNrbGV0X2VuYWJsZWQp
-OwogCiAJa2ZyZWUodik7CisKKwlkbV9hdWRpdF9sb2dfZHRyKERNX01TR19QUkVGSVgsIHRpLCAx
-KTsKIH0KIAogc3RhdGljIGludCB2ZXJpdHlfYWxsb2NfbW9zdF9vbmNlKHN0cnVjdCBkbV92ZXJp
-dHkgKnYpCkBAIC0xNDI5LDExICsxNDQyLDE0IEBAIHN0YXRpYyBpbnQgdmVyaXR5X2N0cihzdHJ1
-Y3QgZG1fdGFyZ2V0ICp0aSwgdW5zaWduZWQgaW50IGFyZ2MsIGNoYXIgKiphcmd2KQogCiAJdmVy
-aXR5X3ZlcmlmeV9zaWdfb3B0c19jbGVhbnVwKCZ2ZXJpZnlfYXJncyk7CiAKKwlkbV9hdWRpdF9s
-b2dfY3RyKERNX01TR19QUkVGSVgsIHRpLCAxKTsKKwogCXJldHVybiAwOwogCiBiYWQ6CiAKIAl2
-ZXJpdHlfdmVyaWZ5X3NpZ19vcHRzX2NsZWFudXAoJnZlcmlmeV9hcmdzKTsKKwlkbV9hdWRpdF9s
-b2dfY3RyKERNX01TR19QUkVGSVgsIHRpLCAwKTsKIAl2ZXJpdHlfZHRyKHRpKTsKIAogCXJldHVy
-biByOwotLSAKMi4zMC4yCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
-LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
-Cg==
+--===============3098560482626858134==
+Content-Type: multipart/alternative; boundary="0000000000000d47ef05f5e6f7ab"
+
+--0000000000000d47ef05f5e6f7ab
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hi Eric,
+
+On Wed, Mar 1, 2023 at 10:26=E2=80=AFPM Eric Wheeler <dm-devel@lists.ewheel=
+er.net>
+wrote:
+
+>
+> Hurrah! I've been looking forward to this for a long time...
+>
+>
+> ...So if you have any commentary on the future of dm-thin with respect
+> to metadata range support, or dm-thin performance in general, that I woul=
+d
+> be very curious about your roadmap and your plans.
+>
+
+The plan over the next few months is roughly:
+
+- Get people using the new Rust tools.  They are _so_ much faster than the
+old C++ ones. [available now]
+- Push upstream a set of patches I've been working on to boost thin
+concurrency performance.  These are
+  nearing completion and are available here for those who are interested:
+https://github.com/jthornber/linux/tree/2023-02-28-thin-concurrency-7.
+  These are making a huge difference to performance in my testing, eg, fio
+with 16 jobs running concurrently gets several times the throughput.
+  [Upstream in the next month hopefully]
+- Change thinp metadata to store ranges rather than individual mappings.
+This will reduce the amount of space the metadata consumes, and
+  have the knock on effect of boosting performance slightly (less metadata
+means faster lookups).  However I consider this a half-way house, in
+  that I'm only going to change the metadata and not start using ranges
+within the core target (I'm not moving away from fixed block sizes).  [Next
+3 months]
+
+I don't envisage significant changes to dm-thin or dm-cache after this.
+
+
+Longer term I think we're nearing a crunch point where we drastically
+change how we do things.  Since I wrote device-mapper in 2001 the speed of
+devices has increased so much that I think dm is no longer doing a good job=
+:
+
+- The layering approach introduces inefficiencies with each layer.  Sure it
+may only be a 5% hit to add another linear mapping into the stack.
+  But those 5%'s add up.
+- dm targets only see individual bios rather than the whole request queue.
+This prevents a lot of really useful optimisations.
+  Think how much smarter dm-cache and dm-thin could be if they could look
+at the whole queue.
+- The targets are getting too complicated.  I think dm-thin is around 8k
+lines of code, though it shares most of that with dm-cache.
+   I understand the dedup target from the vdo guys weighs in at 64k lines.
+Kernel development is fantastically expensive (or slow depending
+   how you want to look at it).  I did a lot of development work on thinp
+v2, and it was looking a lot like a filesystem shoe-horned into the block
+layer.
+   I can see why bcache turned into bcache-fs.
+- Code within the block layer is memory constrained.  We can't allocate
+arbitrary sized allocations within targets, instead we have to use mempools
+  of fixed size objects (frowned upon these days), or declare up front how
+much memory we need to service a bio (forcing us to assume the worst case).
+  This stuff isn't hard, just tedious and makes coding sophisticated
+targets pretty joyless.
+
+So my plan going forwards is to keep the fast path of these targets in
+kernel (eg, a write to a provisioned, unsnapshotted region).  But take
+the slow paths out to userland.  I think io_uring, and ublk have shown us
+that this is viable.  That way a snapshot copy-on-write, or dm-cache data
+migration, which are very slow operations can be done with ordinary
+userland code.  For the fast paths, layering will be removed by having
+userland give the kernel
+instruction to execute for specific regions of the virtual device (ie.
+remap to here).  The kernel driver will have nothing specific to thin/cache
+etc.
+I'm not sure how many of the current dm-targets would fit into this model,
+but I'm sure thin provisioning, caching, linear, and stripe can.
+
+- Joe
+
+
+
+
+
+
+
+
+> Thanks again for all your great work on this.
+>
+> -Eric
+>
+> > [note: _data_ sharing was always maintained, this is purely about
+> metadata space usage]
+> >
+> > # thin_metadata_pack/unpack
+> >
+> > These are a couple of new tools that are used for support.  They compre=
+ss
+> > thin metadata, typically to a tenth of the size (much better than you'd
+> > get with generic compressors).  This makes it easier to pass damaged
+> > metadata around for inspection.
+> >
+> > # blk-archive
+> >
+> > The blk-archive tools were initially part of this thin-provisioning-too=
+ls
+> > package.  But have now been split off to their own project:
+> >
+> >     https://github.com/jthornber/blk-archive
+> >
+> > They allow efficient archiving of thin devices (data deduplication
+> > and compression).  Which will be of interest to those of you who are
+> > holding large numbers of snapshots in thin pools as a poor man's backup=
+.
+> >
+> > In particular:
+> >
+> >     - Thin snapshots can be used to archive live data.
+> >     - it avoids reading unprovisioned areas of thin devices.
+> >     - it can calculate deltas between thin devices to minimise
+> >       how much data is read and deduped (incremental backups).
+> >     - restoring to a thin device tries to maximise data sharing
+> >       within the thin pool (a big win if you're restoring snapshots).
+> >
+> >
+
+--0000000000000d47ef05f5e6f7ab
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hi Eric,</div><br><div class=3D"gmail_quote"><div dir=
+=3D"ltr" class=3D"gmail_attr">On Wed, Mar 1, 2023 at 10:26=E2=80=AFPM Eric =
+Wheeler &lt;<a href=3D"mailto:dm-devel@lists.ewheeler.net">dm-devel@lists.e=
+wheeler.net</a>&gt; wrote:<br></div><blockquote class=3D"gmail_quote" style=
+=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding=
+-left:1ex"><br>
+Hurrah! I&#39;ve been looking forward to this for a long time...<br>
+<br>
+<br></blockquote><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px =
+0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left:1ex">
+...So if you have any commentary on the future of dm-thin with respect <br>
+to metadata range support, or dm-thin performance in general, that I would =
+<br>
+be very curious about your roadmap and your plans.<br></blockquote><div><br=
+></div><div>The plan over the next few months is roughly:</div><div><br></d=
+iv><div>- Get people using the new Rust tools.=C2=A0 They are _so_ much fas=
+ter than the old C++ ones. [available now]</div><div>- Push upstream a set =
+of patches I&#39;ve been working on to boost thin concurrency performance.=
+=C2=A0 These are=C2=A0</div><div>=C2=A0 nearing completion and are availabl=
+e here for those who are interested:=C2=A0<a href=3D"https://github.com/jth=
+ornber/linux/tree/2023-02-28-thin-concurrency-7">https://github.com/jthornb=
+er/linux/tree/2023-02-28-thin-concurrency-7</a>.</div><div>=C2=A0 These are=
+ making a huge difference to performance in my testing, eg, fio with 16 job=
+s running concurrently gets several times the throughput.</div><div>=C2=A0 =
+[Upstream in the next month hopefully]</div><div>- Change thinp metadata to=
+ store ranges rather than individual mappings.=C2=A0 This will reduce the a=
+mount of space the metadata consumes, and=C2=A0</div><div>=C2=A0 have the k=
+nock on effect of boosting performance slightly (less metadata means faster=
+ lookups).=C2=A0 However I consider this a half-way house, in</div><div>=C2=
+=A0 that I&#39;m only going to change the metadata and not start using rang=
+es within=C2=A0the core target (I&#39;m=C2=A0not moving away from fixed blo=
+ck sizes).=C2=A0 [Next 3 months]</div><div><br></div><div>I don&#39;t envis=
+age significant changes to dm-thin or dm-cache after this.</div><div><br></=
+div><div><br></div><div>Longer term I think we&#39;re nearing a crunch poin=
+t where we drastically change how we do things.=C2=A0 Since I wrote device-=
+mapper in 2001 the speed of</div><div>devices has increased so much that I =
+think dm is no longer doing a good job:</div><div><br></div><div>- The laye=
+ring approach introduces inefficiencies with each layer.=C2=A0 Sure it may =
+only be a 5% hit to add another linear mapping into the stack.</div><div>=
+=C2=A0 But those 5%&#39;s add up.</div><div>- dm targets only see individua=
+l bios rather than the whole request queue.=C2=A0 This prevents a lot of re=
+ally useful optimisations.</div><div>=C2=A0 Think how much smarter dm-cache=
+ and dm-thin could be if they could look at the whole queue.</div><div>- Th=
+e targets are getting too complicated.=C2=A0 I think dm-thin is around 8k l=
+ines of code, though it shares most of that with dm-cache.</div><div>=C2=A0=
+ =C2=A0I understand the dedup target from the vdo guys weighs in at 64k lin=
+es.=C2=A0 Kernel development is fantastically expensive (or slow depending<=
+/div><div>=C2=A0 =C2=A0how you want to look at it).=C2=A0 I did a lot of de=
+velopment work on thinp v2, and it was looking a lot like a filesystem shoe=
+-horned into the block layer.</div><div>=C2=A0 =C2=A0I can see why bcache t=
+urned into bcache-fs.</div><div>- Code within the block layer is memory con=
+strained.=C2=A0 We can&#39;t allocate arbitrary sized allocations within ta=
+rgets, instead we have to use mempools</div><div>=C2=A0 of fixed size objec=
+ts (frowned upon these days), or declare up front how much memory we need t=
+o service a bio (forcing us to assume the worst case).</div><div>=C2=A0 Thi=
+s stuff isn&#39;t hard, just tedious and makes coding sophisticated targets=
+ pretty joyless.</div><div><br></div><div>So my plan going forwards is to k=
+eep the fast path of these targets in kernel (eg, a write to a provisioned,=
+ unsnapshotted=C2=A0region).=C2=A0 But take</div><div>the slow paths out to=
+ userland.=C2=A0 I think io_uring, and ublk have shown us that this is viab=
+le.=C2=A0 That way a snapshot copy-on-write, or dm-cache data</div><div>mig=
+ration, which are very slow operations can be done with ordinary userland c=
+ode.=C2=A0 For the fast paths, layering will be removed by having userland =
+give the kernel</div><div>instruction to execute for specific regions of th=
+e virtual device (ie. remap to here).=C2=A0 The kernel driver will have not=
+hing specific to thin/cache etc.</div><div>I&#39;m not sure how many of the=
+ current dm-targets would fit into this model, but I&#39;m sure thin=C2=A0p=
+rovisioning, caching, linear, and stripe can.</div><div><br></div><div>- Jo=
+e</div><div><br></div><div><br></div><div><br></div><div><br></div><div><br=
+></div><div><br></div><div>=C2=A0</div><blockquote class=3D"gmail_quote" st=
+yle=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padd=
+ing-left:1ex">
+Thanks again for all your great work on this.<br>
+<br>
+-Eric<br>
+<br>
+&gt; [note: _data_ sharing was always maintained, this is purely about meta=
+data space usage]<br>
+&gt; <br>
+&gt; # thin_metadata_pack/unpack<br>
+&gt; <br>
+&gt; These are a couple of new tools that are used for support.=C2=A0 They =
+compress<br>
+&gt; thin metadata, typically to a tenth of the size (much better than you&=
+#39;d<br>
+&gt; get with generic compressors).=C2=A0 This makes it easier to pass dama=
+ged<br>
+&gt; metadata around for inspection.<br>
+&gt; <br>
+&gt; # blk-archive<br>
+&gt; <br>
+&gt; The blk-archive tools were initially part of this thin-provisioning-to=
+ols<br>
+&gt; package.=C2=A0 But have now been split off to their own project:<br>
+&gt; <br>
+&gt; =C2=A0 =C2=A0 <a href=3D"https://github.com/jthornber/blk-archive" rel=
+=3D"noreferrer" target=3D"_blank">https://github.com/jthornber/blk-archive<=
+/a><br>
+&gt; <br>
+&gt; They allow efficient archiving of thin devices (data deduplication<br>
+&gt; and compression).=C2=A0 Which will be of interest to those of you who =
+are<br>
+&gt; holding large numbers of snapshots in thin pools as a poor man&#39;s b=
+ackup.<br>
+&gt; <br>
+&gt; In particular:<br>
+&gt; <br>
+&gt; =C2=A0 =C2=A0 - Thin snapshots can be used to archive live data.<br>
+&gt; =C2=A0 =C2=A0 - it avoids reading unprovisioned areas of thin devices.=
+<br>
+&gt; =C2=A0 =C2=A0 - it can calculate deltas between thin devices to minimi=
+se<br>
+&gt; =C2=A0 =C2=A0 =C2=A0 how much data is read and deduped (incremental ba=
+ckups).<br>
+&gt; =C2=A0 =C2=A0 - restoring to a thin device tries to maximise data shar=
+ing<br>
+&gt; =C2=A0 =C2=A0 =C2=A0 within the thin pool (a big win if you&#39;re res=
+toring snapshots).<br>
+&gt; <br>
+&gt; </blockquote></div></div>
+
+--0000000000000d47ef05f5e6f7ab--
+
+--===============3098560482626858134==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
+
+--===============3098560482626858134==--
 
