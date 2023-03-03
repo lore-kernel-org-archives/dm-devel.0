@@ -1,93 +1,71 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0CE33C64EC4
-	for <dm-devel@archiver.kernel.org>; Fri,  3 Mar 2023 04:01:00 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1677816059;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=+ma9fj8qumbiFOB2hCdqo1UTRyxUYMd2Z5auT90unho=;
-	b=ScOfcY5pFBNBeOt+/fOribwHk6Js7u5ng/HV5oDLDNt1h/UW6SGZQadkOFZi9buye+noUM
-	5MBEmjACoUBSGU+EsWtd24NoUjO2THpxnDtAZg+tqlTli0kFiBPASUJriYaX/ib8ByZawG
-	12ofhpeSS84UqDKk56vKC+Eqdrz9dT8=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D13F8C64EC4
+	for <dm-devel@archiver.kernel.org>; Fri,  3 Mar 2023 07:46:39 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-589-xjJCAP0dNqqIZc7GBQTF_g-1; Thu, 02 Mar 2023 23:00:56 -0500
-X-MC-Unique: xjJCAP0dNqqIZc7GBQTF_g-1
+ us-mta-344-k6-LR7uhPt-57eZWeeHUlQ-1; Fri, 03 Mar 2023 02:46:35 -0500
+X-MC-Unique: k6-LR7uhPt-57eZWeeHUlQ-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C840E185A78B;
-	Fri,  3 Mar 2023 04:00:54 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0FFE33C0DDCF;
+	Fri,  3 Mar 2023 07:46:34 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9A04C440D9;
-	Fri,  3 Mar 2023 04:00:52 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id AF7B1440D8;
+	Fri,  3 Mar 2023 07:46:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 631BE19452CD;
-	Fri,  3 Mar 2023 04:00:52 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9DA8C19452CD;
+	Fri,  3 Mar 2023 07:46:32 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
  [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 63E4119465A0
- for <dm-devel@listman.corp.redhat.com>; Fri,  3 Mar 2023 04:00:51 +0000 (UTC)
+ ESMTP id 4434419465A0
+ for <dm-devel@listman.corp.redhat.com>; Fri,  3 Mar 2023 07:46:31 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D7C91440DC; Fri,  3 Mar 2023 04:00:50 +0000 (UTC)
+ id 1B042440DC; Fri,  3 Mar 2023 07:46:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D0099440D9
- for <dm-devel@redhat.com>; Fri,  3 Mar 2023 04:00:50 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B100A1C05142
- for <dm-devel@redhat.com>; Fri,  3 Mar 2023 04:00:50 +0000 (UTC)
-Received: from mail-pj1-f54.google.com (mail-pj1-f54.google.com
- [209.85.216.54]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_128_GCM_SHA256) id
- us-mta-353-gaerpoO_PCe-OfLfxtxFlA-1; Thu, 02 Mar 2023 23:00:48 -0500
-X-MC-Unique: gaerpoO_PCe-OfLfxtxFlA-1
-Received: by mail-pj1-f54.google.com with SMTP id
- m8-20020a17090a4d8800b002377bced051so4955779pjh.0
- for <dm-devel@redhat.com>; Thu, 02 Mar 2023 20:00:47 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112; t=1677816047;
- h=content-transfer-encoding:mime-version:date:message-id:subject
- :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=VO74g2mNwHzYzU/yV1CgDrAplD3wm5JXJvrOGFj1g+g=;
- b=sLPtNKPJd8UxbSmUWUzAhBjybK1NxeGtH+EruayspDPZ5ImGQ+84RLkr60RpxfXWrk
- FKFAsx6Fw9IxT15/xh5laKtSDiJ3oF8GBn1Q6rmpMPQeMbM/1Bnh4Q2lEyOsqzspwyZi
- FGHr6r3GoDvY03PY+0dMiyILWwnE+yjBI/HC1iUeqTlbwpqfKGLL4nSDUXWzS0Kx4KY2
- LQy4DpOT8wtakvAPViRHz8amap8+qkJrbc0WvInw4t/8vsRGub/ZooJd3v3vLRKUKwhi
- 0ZDTz7QJ04OF6pCBNfsnsmG4uUzL8guL49B6RzG/A1T+JXd9sU/SH3R/CBqFCQ0FwqAI
- bqMA==
-X-Gm-Message-State: AO0yUKXvXOyAoz3gbNc60knUyfekNYXCGTFpKXOmTT8FEnraz9cqltfp
- vx0AfYO72u9tDDTiXma/JPIzVA==
-X-Google-Smtp-Source: AK7set/uNWyGtRPehTwL47DKKom5XL9HpMg9zcRF+pvE9PUmTVBtVsOF2bq8/Jsgp1lT4Xv1v2+SPA==
-X-Received: by 2002:a17:902:d4d0:b0:19a:8202:2dad with SMTP id
- o16-20020a170902d4d000b0019a82022dadmr776157plg.2.1677816046820; 
- Thu, 02 Mar 2023 20:00:46 -0800 (PST)
-Received: from [127.0.0.1] ([198.8.77.157]) by smtp.gmail.com with ESMTPSA id
- b20-20020a170902d31400b0019a7363e752sm396753plc.276.2023.03.02.20.00.45
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 02 Mar 2023 20:00:46 -0800 (PST)
-From: Jens Axboe <axboe@kernel.dk>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
- Christoph Hellwig <hch@infradead.org>, Keith Busch <kbusch@kernel.org>, 
- Uday Shankar <ushankar@purestorage.com>
-In-Reply-To: <20230301000655.48112-1-ushankar@purestorage.com>
-References: <20230301000655.48112-1-ushankar@purestorage.com>
-Message-Id: <167781604577.209443.3783406495581654903.b4-ty@kernel.dk>
-Date: Thu, 02 Mar 2023 21:00:45 -0700
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 120F5440D8
+ for <dm-devel@redhat.com>; Fri,  3 Mar 2023 07:46:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E5F66183B3C0
+ for <dm-devel@redhat.com>; Fri,  3 Mar 2023 07:46:30 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_128_GCM_SHA256) id us-mta-614-DkaZhBZlMbOlHeYFWebOcA-1; Fri,
+ 03 Mar 2023 02:46:27 -0500
+X-MC-Unique: DkaZhBZlMbOlHeYFWebOcA-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id CC95F21C85;
+ Fri,  3 Mar 2023 07:46:25 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id A2718139D3;
+ Fri,  3 Mar 2023 07:46:25 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap2.suse-dmz.suse.de with ESMTPSA id Ng4LJtGlAWTHNQAAMHmgww
+ (envelope-from <mwilck@suse.com>); Fri, 03 Mar 2023 07:46:25 +0000
+Message-ID: <4bc4be79c2d00cc959932ec935179a46be4b2fbc.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+To: dm-devel@redhat.com, Brian Bunker <brian@purestorage.com>
+Date: Fri, 03 Mar 2023 08:46:24 +0100
+In-Reply-To: <CAHZQxyJH1etLR5gHuWk4c6-ieioqA4GrJ173B60bnTppke58dw@mail.gmail.com>
+References: <CAHZQxyJH1etLR5gHuWk4c6-ieioqA4GrJ173B60bnTppke58dw@mail.gmail.com>
+User-Agent: Evolution 3.46.4
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -97,8 +75,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH v3] blk-mq: enforce op-specific segment
- limits in blk_insert_cloned_request
+Subject: Re: [dm-devel] [PATCH] [PATCH] libmultipath: return 'ghost' state
+ when port is in transition
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -110,37 +88,85 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
- kernel test robot <lkp@intel.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
+On Tue, 2023-02-21 at 12:56 -0800, Brian Bunker wrote:
+> A test unit ready command sent on a path in standby state will not
+> result
+> in a failed path. The same should be true for a path in the
+> transitioning state.
+>=20
+> Signed-off-by: Brian Bunker brian@purestorage.com
 
-On Tue, 28 Feb 2023 17:06:55 -0700, Uday Shankar wrote:
-> The block layer might merge together discard requests up until the
-> max_discard_segments limit is hit, but blk_insert_cloned_request checks
-> the segment count against max_segments regardless of the req op. This
-> can result in errors like the following when discards are issued through
-> a DM device and max_discard_segments exceeds max_segments for the queue
-> of the chosen underlying device.
-> 
-> [...]
+In general, I'm somewhat reluctant to change things in this area.
+GHOST state is not clearly defined, unfortunately; it has evolved=A0
+from the original "inq succeeds but tur fails" to a somewhat hand-
+waving "something in between failed and up" semantics.=A0
 
-Applied, thanks!
+Internally, multipathd treats GHOST paths almost exactly like UP paths,
+except that they get a different priority assigned. If for whatever
+reason multipathd switches to a PG in this state, the path state is
+highly likely to switch to FAILED soon after, as regular IO will fail
+on these paths; at least without explicit ALUA. Is that what we want to
+see for TRANSITIONING state?
 
-[1/1] blk-mq: enforce op-specific segment limits in blk_insert_cloned_request
-      commit: 49d24398327e32265eccdeec4baeb5a6a609c0bd
+But yes, this change is in the spirit of 5da642f ("Return 'ghost' state
+when port is in standby").
 
-Best regards,
--- 
-Jens Axboe
+CC'ing Ben for confirmation.
 
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
+> ---
+> =A0libmultipath/checkers/tur.c | 5 +++--
+> =A01 file changed, 3 insertions(+), 2 deletions(-)
+>=20
+> diff --git a/libmultipath/checkers/tur.c
+> b/libmultipath/checkers/tur.c
+> index 551dc4f0..fff7987b 100644
+> --- a/libmultipath/checkers/tur.c
+> +++ b/libmultipath/checkers/tur.c
+> @@ -179,10 +179,11 @@ retry:
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 else if (key =3D=3D 0x2) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 /* =
+Not Ready */
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 /* =
+Note: Other ALUA states are either UP or
+> DOWN */
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if( a=
+sc =3D=3D 0x04 && ascq =3D=3D 0x0b){
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (a=
+sc =3D=3D 0x04 &&
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0 (ascq =3D=3D 0x0b || ascq =3D=3D 0x0a)) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0 /*
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0 * LOGICAL UNIT NOT ACCESSIBLE,
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0 * TARGET PORT IN STANDBY STATE
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0 * TARGET PORT IN STANDBY OR
+> TRANSITION STATE
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0 */
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0 *msgid =3D CHECKER_MSGID_GHOST;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0 return PATH_GHOST;
+> --
+>=20
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://listman.redhat.com/mailman/listinfo/dm-devel
+>=20
 
 --
 dm-devel mailing list
