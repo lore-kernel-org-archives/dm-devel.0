@@ -1,71 +1,71 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E299DC678DB
-	for <dm-devel@archiver.kernel.org>; Sun,  5 Mar 2023 03:49:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 475FEC61DA4
+	for <dm-devel@archiver.kernel.org>; Sun,  5 Mar 2023 03:53:26 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1677988169;
+	s=mimecast20190719; t=1677988404;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=mqqOS7k06Xe83ZHn9QqCzZVWH+q/2gRNkdjZ2LHg5bU=;
-	b=LrgUTQypJDOLebrMmfamA0wGIiXQTyM8eTFICcbow3S6GwwtyrPTHQUemJ1/HdJCIayjvO
-	ZcUEZFi313d8b2/wmqJqKUELBL+fFz4pnU0+oBhpbHYwYphynYCDFel+MU+Q21EVDQc4DR
-	3QfgSx7ZBudHOqLwUa2k2vmfkNhHxj4=
+	bh=G/wr+bDaeBQVfFR43mfBwlXUSPQFf43p93p4P6PGeQw=;
+	b=VnOGlZFv9nFIvmQyJYlnSF8oSTTcuVXMcPLR5s4cLD+PzbReeMilIu41WmRROYnQItuzWZ
+	BOGQotRPccmz537BaeINrbYZFlon46FQt/CYBYrejImBJF478JQrJIyhponPbb12M1Q+1V
+	9O/fu4e65nltOV/ygH800OV+MnTJm54=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-247-UF9-llQjMRqiYGvHukt0Wg-1; Sat, 04 Mar 2023 22:49:26 -0500
-X-MC-Unique: UF9-llQjMRqiYGvHukt0Wg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-550-TcUMaxfNOw6bi-WyZn23pQ-1; Sat, 04 Mar 2023 22:53:23 -0500
+X-MC-Unique: TcUMaxfNOw6bi-WyZn23pQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 313CD1C05AB5;
-	Sun,  5 Mar 2023 03:49:24 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5962C1C05AB4;
+	Sun,  5 Mar 2023 03:53:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id DB68A2026D4B;
-	Sun,  5 Mar 2023 03:49:23 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 45E64492C14;
+	Sun,  5 Mar 2023 03:53:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8FA901946594;
-	Sun,  5 Mar 2023 03:49:23 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 12DE91946594;
+	Sun,  5 Mar 2023 03:53:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E6C641946586
- for <dm-devel@listman.corp.redhat.com>; Sun,  5 Mar 2023 03:49:22 +0000 (UTC)
+ ESMTP id 87BD01946586
+ for <dm-devel@listman.corp.redhat.com>; Sun,  5 Mar 2023 03:53:19 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B29C51121315; Sun,  5 Mar 2023 03:49:22 +0000 (UTC)
+ id 6B1BE492C18; Sun,  5 Mar 2023 03:53:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id AB88A1121318
- for <dm-devel@redhat.com>; Sun,  5 Mar 2023 03:49:22 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8E5A28027FD
- for <dm-devel@redhat.com>; Sun,  5 Mar 2023 03:49:22 +0000 (UTC)
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 64109492C14
+ for <dm-devel@redhat.com>; Sun,  5 Mar 2023 03:53:19 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 48C50882820
+ for <dm-devel@redhat.com>; Sun,  5 Mar 2023 03:53:19 +0000 (UTC)
 Received: from dfw.source.kernel.org (dfw.source.kernel.org
  [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-173-XlytXGbyPKKTssi_dqhLjA-1; Sat, 04 Mar 2023 22:49:21 -0500
-X-MC-Unique: XlytXGbyPKKTssi_dqhLjA-1
+ us-mta-620-3oirGLcwP9WwUvylbEXWyg-1; Sat, 04 Mar 2023 22:53:15 -0500
+X-MC-Unique: 3oirGLcwP9WwUvylbEXWyg-1
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 1C73D60A54;
- Sun,  5 Mar 2023 03:49:20 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0D040C433EF;
- Sun,  5 Mar 2023 03:49:18 +0000 (UTC)
+ by dfw.source.kernel.org (Postfix) with ESMTPS id 9B3FB60ACA;
+ Sun,  5 Mar 2023 03:53:14 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8702FC433D2;
+ Sun,  5 Mar 2023 03:53:13 +0000 (UTC)
 From: Sasha Levin <sashal@kernel.org>
 To: stable-commits@vger.kernel.org,
 	snitzer@kernel.org
-Date: Sat,  4 Mar 2023 22:49:17 -0500
-Message-Id: <20230305034917.1776258-1-sashal@kernel.org>
+Date: Sat,  4 Mar 2023 22:53:11 -0500
+Message-Id: <20230305035311.1779448-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-Patchwork-Hint: ignore
 X-stable: review
@@ -76,9 +76,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: [dm-devel] Patch "dm: remove flush_scheduled_work() during
- local_exit()" has been added to the 5.4-stable tree
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+Subject: [dm-devel] Patch "dm thin: add cond_resched() to various workqueue
+ loops" has been added to the 5.4-stable tree
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -93,7 +93,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
@@ -101,13 +101,13 @@ Content-Transfer-Encoding: 7bit
 
 This is a note to let you know that I've just added the patch titled
 
-    dm: remove flush_scheduled_work() during local_exit()
+    dm thin: add cond_resched() to various workqueue loops
 
 to the 5.4-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
-     dm-remove-flush_scheduled_work-during-local_exit.patch
+     dm-thin-add-cond_resched-to-various-workqueue-loops.patch
 and it can be found in the queue-5.4 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
@@ -115,42 +115,40 @@ please let <stable@vger.kernel.org> know about it.
 
 
 
-commit 95dc6055f8abcf48472cb59bbb50a277f5345fa9
+commit 1b3dbf62fcc037c1fc113025e46da228db0390ca
 Author: Mike Snitzer <snitzer@kernel.org>
-Date:   Tue Feb 14 13:06:05 2023 -0500
+Date:   Thu Feb 16 15:29:44 2023 -0500
 
-    dm: remove flush_scheduled_work() during local_exit()
+    dm thin: add cond_resched() to various workqueue loops
     
-    [ Upstream commit 0b22ff5360f5c4e11050b89206370fdf7dc0a226 ]
+    [ Upstream commit e4f80303c2353952e6e980b23914e4214487f2a6 ]
     
-    Commit acfe0ad74d2e1 ("dm: allocate a special workqueue for deferred
-    device removal") switched from using system workqueue to a single
-    workqueue local to DM.  But it didn't eliminate the call to
-    flush_scheduled_work() that was introduced purely for the benefit of
-    deferred device removal with commit 2c140a246dc ("dm: allow remove to
-    be deferred").
+    Otherwise on resource constrained systems these workqueues may be too
+    greedy.
     
-    Since DM core uses its own workqueue (and queue_work) there is no need
-    to call flush_scheduled_work() from local_exit().  local_exit()'s
-    destroy_workqueue(deferred_remove_workqueue) handles flushing work
-    started with queue_work().
-    
-    Fixes: acfe0ad74d2e1 ("dm: allocate a special workqueue for deferred device removal")
     Signed-off-by: Mike Snitzer <snitzer@kernel.org>
     Signed-off-by: Sasha Levin <sashal@kernel.org>
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index d4cebb38709bd..b58ff1a0fda7d 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -263,7 +263,6 @@ static int __init local_init(void)
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 4f161725dda0a..999447bde8203 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -2224,6 +2224,7 @@ static void process_thin_deferred_bios(struct thin_c *tc)
+ 			throttle_work_update(&pool->throttle);
+ 			dm_pool_issue_prefetches(pool->pmd);
+ 		}
++		cond_resched();
+ 	}
+ 	blk_finish_plug(&plug);
+ }
+@@ -2307,6 +2308,7 @@ static void process_thin_deferred_cells(struct thin_c *tc)
+ 			else
+ 				pool->process_cell(tc, cell);
+ 		}
++		cond_resched();
+ 	} while (!list_empty(&cells));
+ }
  
- static void local_exit(void)
- {
--	flush_scheduled_work();
- 	destroy_workqueue(deferred_remove_workqueue);
- 
- 	unregister_blkdev(_major, _name);
 
 --
 dm-devel mailing list
