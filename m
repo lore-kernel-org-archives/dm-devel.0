@@ -1,96 +1,93 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3D4A9C61DA4
-	for <dm-devel@archiver.kernel.org>; Mon,  6 Mar 2023 09:24:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A7263C678D4
+	for <dm-devel@archiver.kernel.org>; Mon,  6 Mar 2023 09:33:58 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1678094660;
+	s=mimecast20190719; t=1678095237;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:in-reply-to:in-reply-to:
 	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=X6Sc33v01OWP8EAEjvlp3hNsAZUpjX/u1hu6B293nQk=;
-	b=EKc7+Ur/g9TNAwcQ/8yP0DrWb/8ROa1cpNCVstuMh7DGdwbc1NMG0BVpuzdSW0GjLXy0oa
-	+l5RBZv+va3hWZ0IL9MZ+AQzslgxuYUCj9LU5Q+Hv+zQmpz91+8edYfCDG7i8hdwQD0ln0
-	wx94MFwvho6U88G/q3qqX/By3e7h9a0=
+	 list-subscribe:list-post; bh=bnyyv12ga+OOe3iIp+mt4kqceQBinPJahDPCdIZujt4=;
+	b=AGmIPIlBnT3091uzvuaKzBE8dmuHdx1mV7zsrpmCnmVbzTqoj0pY3OqaWJMKHEmGO6EAko
+	IcPqVNJoq3L4awYjarZ4kgxG+XFWjzEzlGml9zW9JvsxiYofoKj8mVU8dLUgrddW6u9c/2
+	9AkZAKiL9gNwJz9VLEDzqbqovKgy/KE=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-179--p8eNUVwOweKid-NytDtXg-1; Mon, 06 Mar 2023 04:24:16 -0500
-X-MC-Unique: -p8eNUVwOweKid-NytDtXg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-652-OXgTexXANHmPsp71b3x4PQ-1; Mon, 06 Mar 2023 04:33:56 -0500
+X-MC-Unique: OXgTexXANHmPsp71b3x4PQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D471C3C20EE2;
-	Mon,  6 Mar 2023 09:24:14 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9FBB83C0F180;
+	Mon,  6 Mar 2023 09:33:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4A0E22166B26;
-	Mon,  6 Mar 2023 09:24:13 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5085B2026D4B;
+	Mon,  6 Mar 2023 09:33:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E0448194658C;
-	Mon,  6 Mar 2023 09:24:12 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 07A97194658C;
+	Mon,  6 Mar 2023 09:33:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6CB281946586
- for <dm-devel@listman.corp.redhat.com>; Mon,  6 Mar 2023 09:24:12 +0000 (UTC)
+ ESMTP id B60231946586
+ for <dm-devel@listman.corp.redhat.com>; Mon,  6 Mar 2023 09:33:52 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5E86D2026D4B; Mon,  6 Mar 2023 09:24:12 +0000 (UTC)
+ id A740940BC781; Mon,  6 Mar 2023 09:33:52 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 572142026D76
- for <dm-devel@redhat.com>; Mon,  6 Mar 2023 09:24:12 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 9FC3040C10FA
+ for <dm-devel@redhat.com>; Mon,  6 Mar 2023 09:33:52 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 388C82A59571
- for <dm-devel@redhat.com>; Mon,  6 Mar 2023 09:24:12 +0000 (UTC)
-Received: from mail-yw1-f197.google.com (mail-yw1-f197.google.com
- [209.85.128.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7C49080D0EE
+ for <dm-devel@redhat.com>; Mon,  6 Mar 2023 09:33:52 +0000 (UTC)
+Received: from mail-yw1-f200.google.com (mail-yw1-f200.google.com
+ [209.85.128.200]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-249-MBwZR2QpPdaZ6ngeY9c_Sw-1; Mon, 06 Mar 2023 04:24:09 -0500
-X-MC-Unique: MBwZR2QpPdaZ6ngeY9c_Sw-1
-Received: by mail-yw1-f197.google.com with SMTP id
- 00721157ae682-536af109f9aso97559337b3.13
- for <dm-devel@redhat.com>; Mon, 06 Mar 2023 01:24:09 -0800 (PST)
+ us-mta-498-wALJxtAnN5S5j8dKXF68yg-1; Mon, 06 Mar 2023 04:33:48 -0500
+X-MC-Unique: wALJxtAnN5S5j8dKXF68yg-1
+Received: by mail-yw1-f200.google.com with SMTP id
+ 00721157ae682-53700262a47so95460017b3.4
+ for <dm-devel@redhat.com>; Mon, 06 Mar 2023 01:33:48 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112; t=1678094649;
+ d=1e100.net; s=20210112; t=1678095228;
  h=cc:to:subject:message-id:date:from:in-reply-to:references
  :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
  :reply-to;
- bh=p+gTzx3XSldioQeWTuPxhG0FkPuBiTadn4Ln1JCuilg=;
- b=lGUOoqWu52VPZY29PelWWjhrr/QcH80qMB5Rp2TilW0xc4cbSkKl2umVZXxrKmm3RU
- 9Br+uYYmsHB8+N0yl4itVzN1fqN+hGiYZx/vcCSCIL+SuRWgvNOJTJmm2vxl+gKHpqvN
- JEuUlTsWf9Ckh3oxU8WY0dWg8qs/bgNpWWrUczeU34u2cXMxgLc4gxOrr0jA4ZEH6lhr
- FEcziNI3WSYSEC9o3dkhCVMQ7kuBx0dmFenabpkcFqUrq+ZiWn6VihuAWQ2WqFpXP5aJ
- ge5+55nl4w45h6xsKZRjbFk8jGEL82v0axzl5pdtNc0uWyrrCuNr70NxvCuXmF6sjUFi
- kdQg==
-X-Gm-Message-State: AO0yUKXnVNt4xTiUH3wCFI/5lPSkEpoiGvj5sGWWrElqUF1vS0J1CXvA
- VH0go7fag1BEDgC3F5u/sTWnJFZgUOuXtDojsjX0rxiwYYy8OtvFPGe1QOTdeOYUqUezmHH915G
- 3ZWb+vR7HmgrE53rtawn/BerRmZf9hbg+NFRyT+8=
-X-Received: by 2002:a25:9112:0:b0:a4a:4324:2b1f with SMTP id
- v18-20020a259112000000b00a4a43242b1fmr6110902ybl.8.1678094649043; 
- Mon, 06 Mar 2023 01:24:09 -0800 (PST)
-X-Google-Smtp-Source: AK7set+94VCnzOrdhhhWOyAxfVHXi9wTnggFL3WpP5kRtaWOf9Ui1vXcKqoBPP4TFF17exUhbL3MbK6dzff8T20ZXCc=
-X-Received: by 2002:a25:9112:0:b0:a4a:4324:2b1f with SMTP id
- v18-20020a259112000000b00a4a43242b1fmr6110889ybl.8.1678094648756; Mon, 06 Mar
- 2023 01:24:08 -0800 (PST)
+ bh=W7IaPp1TEn2W0wA8sLueViNO8jdryMCKVVODKyAD1BE=;
+ b=4rbDylBVU6gtdSArE1wvTmV+Cqzl3b59DbPwJ7o8J+Kgx8M0cs2KmIEfU8dfM+xan7
+ rSQYhp2wsW9shoT8XRJgQ7qoZItSJPIV6xSPVdwb7TSNDzEWteIUpZwZw6t3+sDk9i/q
+ 2TwDCErxEhiuUnSXQg/1qz8KUMK1z2yJrF7YZ6/2xNaxQBhOKXZGLTAfyUiMtnicoWO3
+ z4SJrGZwwYPfTGb7XS/Sm4AHm2ZdWV38ZPOwPgJU2Sa1nHfvNzS/YohncdzMplYwaQlJ
+ TmKAbGOSK8UIMYfTLDv7b6L+VdB8zafCSE96gM+kgD3KaNb7UQP27+m5vZY4my97leeB
+ 9r2g==
+X-Gm-Message-State: AO0yUKU+mhfAOOzeZSKVk6cqUYdOLNttE2FCLfI4iHaiprmzeBcg8JDO
+ 7YPlDYrXbewwREag9QiKjZ0P+KfyEU0RgiBk/QkqN5K70YkH1/zYz3XLkqcpy/KeK1sGEHQBRnC
+ Fj3LY6fjDBDnjKcOvsm59dDMe0HFk8VAffJDJmE8=
+X-Received: by 2002:a25:9082:0:b0:855:fa17:4f66 with SMTP id
+ t2-20020a259082000000b00855fa174f66mr6050378ybl.8.1678095228098; 
+ Mon, 06 Mar 2023 01:33:48 -0800 (PST)
+X-Google-Smtp-Source: AK7set9hCpgkvJ/saly1PB+bDU7GzPc9V6KDb1/6T1542Dua4ExRxVzhdlM3uZfmg9OOcNV/WUeheehQK/Y4FdW4K7c=
+X-Received: by 2002:a25:9082:0:b0:855:fa17:4f66 with SMTP id
+ t2-20020a259082000000b00855fa174f66mr6050373ybl.8.1678095227899; Mon, 06 Mar
+ 2023 01:33:47 -0800 (PST)
 MIME-Version: 1.0
-References: <CAJ0trDZW8FRFuuonKrgSMp7i7m0sLdPGyFHd2ap0Gw8iadrA-A@mail.gmail.com>
- <74a2b8c1-71cf-10b5-a837-c1af60773e98@ewheeler.net>
- <CAJ0trDYAyHHh2crMAQuQPMt3FzFmii0nmLnsL5N-cdhfvWZnMg@mail.gmail.com>
- <b4874d2f-12ec-bd7a-889d-e4f59dcfc6bc@ewheeler.net>
-In-Reply-To: <b4874d2f-12ec-bd7a-889d-e4f59dcfc6bc@ewheeler.net>
+References: <ZAT+IoCfuZtRnnhm@itl-email>
+In-Reply-To: <ZAT+IoCfuZtRnnhm@itl-email>
 From: Joe Thornber <thornber@redhat.com>
-Date: Mon, 6 Mar 2023 09:23:57 +0000
-Message-ID: <CAJ0trDaWtZ0XeV8kE8g6K-Ay3yM01ZZZ6cBx6hZvj12U_qty_g@mail.gmail.com>
-To: Eric Wheeler <dm-devel@lists.ewheeler.net>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: Re: [dm-devel] [announce] thin-provisioning-tools v1.0.0-rc1
+Date: Mon, 6 Mar 2023 09:33:37 +0000
+Message-ID: <CAJ0trDZJW6uXkeCUCBRyJ_wg70wGmqSs+r+5HKACrKETN-Kdmg@mail.gmail.com>
+To: CAJ0trDYAyHHh2crMAQuQPMt3FzFmii0nmLnsL5N-cdhfvWZnMg@mail.gmail.com
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] Thin pool CoW latency
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -102,145 +99,84 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "development, device-mapper" <dm-devel@redhat.com>
+Cc: dm-devel@lists.ewheeler.net, "development,
+ device-mapper" <dm-devel@redhat.com>,
+ Qubes OS Development Mailing List <qubes-devel@googlegroups.com>,
+ Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+ =?UTF-8?Q?Marek_Marczykowski=2DG=C3=B3recki?=
+ <marmarek@invisiblethingslab.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============2393654682600340001=="
+Content-Type: multipart/mixed; boundary="===============1034702905300956322=="
 
---===============2393654682600340001==
-Content-Type: multipart/alternative; boundary="00000000000070630b05f637dbad"
+--===============1034702905300956322==
+Content-Type: multipart/alternative; boundary="000000000000f56af505f637fdf2"
 
---00000000000070630b05f637dbad
+--000000000000f56af505f637fdf2
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-Hi Eric,
+On Sun, Mar 5, 2023 at 8:40=E2=80=AFPM Demi Marie Obenour <
+demi@invisiblethingslab.com> wrote:
 
-On Fri, Mar 3, 2023 at 9:21=E2=80=AFPM Eric Wheeler <dm-devel@lists.ewheele=
-r.net>
-wrote:
-
+> -----BEGIN PGP SIGNED MESSAGE-----
+> Hash: SHA512
 >
-> It would be nice to get people testing the new improvements:
->
-> Do you think it can make it for the 6.3 merge window that is open?
->
-
-Doubtful.  The bulk of the changes are in dm-bufio, which is used by a lot
-of targets.  So
-I want to do a lot more testing before pushing upstream.
-
-
-
-> Did thinp v2 get dropped, or just turn into the patchset above?
+> Like Eric, I am very concerned about CoW latency and throughput.  I
+> am almost certain that allocating new blocks and snapshot copy-on-write
+> are _the_ hot paths in Qubes OS.  In particular, I suspect that
+> workloads such as building an image in a throwaway VM or installing
+> packages onto a root volume that had just been shapshotted are dominated
+> by metadata operations, rather than by in-place updates.  I suspect that
+> frequently-snapshotted volumes will observe similar behavior in general.
 >
 >
-I've shelved thinp v2 in favour of userland approach I outlined.
+Yes, provisioning and breaking sharing are relatively slow operations.  As
+discussed with Eric
+I'm not intending to change how either of these operations is implemented.
+If the performance
+profile is not suitable for your application your company can either do
+some work to improve it yourselves, or
+select a different solution.
 
- > I think io_uring, and ublk have shown us that this is viable.  That way
+- Joe
 
-> > a snapshot copy-on-write, or dm-cache data migration, which are very
-> > slow operations can be done with ordinary userland code.
->
-> Would be nice to minimize CoW latency somehow if going to userspace
-> increases that a notable amount.  CoW for spinning disks is definitely
-> slow, but NVMe's are pretty quick to copy a 64k chunk.
->
-
-Yes, minimising latency would be good.  I don't mind performing the CoW
-within kernel, but I don't want to
-handle the metadata updates in kernel.
-
-
-> > For the fast paths, layering will be removed by having userland give
-> > the kernel instruction to execute for specific regions of the virtual
-> > device (ie. remap to here).
->
-> Maybe you just answered my question of latency?
->
-
-Yep.
-
-
->
-> > The kernel driver will have nothing specific to thin/cache etc. I'm not
-> > sure how many of the current dm-targets would fit into this model, but
-> > I'm sure thin provisioning, caching, linear, and stripe can.
->
-> To be clear, linear and stripe would stay in the kernel?
-
-
-Linear and stripe would not need a call out to userland to service.  And
-very little of thin/cache io would either.
-
- - Joe
-
---00000000000070630b05f637dbad
+--000000000000f56af505f637fdf2
 Content-Type: text/html; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr"><div>Hi Eric,</div><br><div class=3D"gmail_quote"><div dir=
-=3D"ltr" class=3D"gmail_attr">On Fri, Mar 3, 2023 at 9:21=E2=80=AFPM Eric W=
-heeler &lt;<a href=3D"mailto:dm-devel@lists.ewheeler.net">dm-devel@lists.ew=
-heeler.net</a>&gt; wrote:</div><blockquote class=3D"gmail_quote" style=3D"m=
-argin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-left=
-:1ex">
+<div dir=3D"ltr"><div dir=3D"ltr"><br></div><br><div class=3D"gmail_quote">=
+<div dir=3D"ltr" class=3D"gmail_attr">On Sun, Mar 5, 2023 at 8:40=E2=80=AFP=
+M Demi Marie Obenour &lt;<a href=3D"mailto:demi@invisiblethingslab.com">dem=
+i@invisiblethingslab.com</a>&gt; wrote:<br></div><blockquote class=3D"gmail=
+_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204=
+,204);padding-left:1ex">-----BEGIN PGP SIGNED MESSAGE-----<br>
+Hash: SHA512<br>
 <br>
-It would be nice to get people testing the new improvements:<br>
-<br>
-Do you think it can make it for the 6.3 merge window that is open?<br></blo=
-ckquote><div><br></div><div>Doubtful.=C2=A0 The bulk of the changes are in =
-dm-bufio, which is used by a lot of targets.=C2=A0 So</div><div>I want to d=
-o a lot more testing before pushing upstream.</div><div><br></div><div>=C2=
-=A0</div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8e=
-x;border-left:1px solid rgb(204,204,204);padding-left:1ex">
-Did thinp v2 get dropped, or just turn into the patchset above?<br>
-<br></blockquote><div><br></div><div>I&#39;ve shelved thinp v2 in favour of=
- userland approach I outlined.</div><div><br></div><div>=C2=A0&gt; I think =
-io_uring, and ublk have shown us that this is viable.=C2=A0 That way</div><=
-blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-l=
-eft:1px solid rgb(204,204,204);padding-left:1ex">
-&gt; a snapshot copy-on-write, or dm-cache data migration, which are very <=
-br>
-&gt; slow operations can be done with ordinary userland code.<br>
-<br>
-Would be nice to minimize CoW latency somehow if going to userspace <br>
-increases that a notable amount.=C2=A0 CoW for spinning disks is definitely=
- <br>
-slow, but NVMe&#39;s are pretty quick to copy a 64k chunk.<br></blockquote>=
-<div><br></div><div>Yes, minimising latency would be good.=C2=A0 I don&#39;=
-t mind performing the CoW within kernel, but I don&#39;t want to</div><div>=
-handle the metadata updates in kernel.</div><div>=C2=A0</div><blockquote cl=
-ass=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid=
- rgb(204,204,204);padding-left:1ex">
-&gt;=C2=A0For the fast paths, layering will be removed by having userland g=
-ive<br>
-&gt; the kernel instruction to execute for specific regions of the virtual =
-<br>
-&gt; device (ie. remap to here).<br>
-<br>
-Maybe you just answered my question of latency?<br></blockquote><div><br></=
-div><div>Yep.</div><div>=C2=A0</div><blockquote class=3D"gmail_quote" style=
-=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding=
--left:1ex">
-<br>
-&gt; The kernel driver will have nothing specific to thin/cache etc. I&#39;=
-m not <br>
-&gt; sure how many of the current dm-targets would fit into this model, but=
- <br>
-&gt; I&#39;m sure thin provisioning, caching, linear, and stripe can.<br>
-<br>
-To be clear, linear and stripe would stay in the kernel?</blockquote><div><=
-br></div><div>Linear and stripe would not need a call out to userland to se=
-rvice.=C2=A0 And very little of thin/cache io would either.</div><div><br><=
-/div><div>=C2=A0- Joe<br></div></div></div>
+Like Eric, I am very concerned about CoW latency and throughput.=C2=A0 I<br=
+>
+am almost certain that allocating new blocks and snapshot copy-on-write<br>
+are _the_ hot paths in Qubes OS.=C2=A0 In particular, I suspect that<br>
+workloads such as building an image in a throwaway VM or installing<br>
+packages onto a root volume that had just been shapshotted are dominated<br=
+>
+by metadata operations, rather than by in-place updates.=C2=A0 I suspect th=
+at<br>
+frequently-snapshotted volumes will observe similar behavior in general.<br=
+><br></blockquote><div><br></div><div>Yes, provisioning and breaking sharin=
+g are relatively slow operations.=C2=A0 As discussed with Eric</div><div>I&=
+#39;m not intending to change how either of these operations is implemented=
+. If the performance=C2=A0</div><div>profile is not suitable for your appli=
+cation your company can either do some work to improve it yourselves, or</d=
+iv><div>select a different solution.</div><div><br></div><div>- Joe</div><d=
+iv><br></div><div>=C2=A0</div></div></div>
 
---00000000000070630b05f637dbad--
+--000000000000f56af505f637fdf2--
 
---===============2393654682600340001==
+--===============1034702905300956322==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -251,5 +187,5 @@ dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
 
---===============2393654682600340001==--
+--===============1034702905300956322==--
 
