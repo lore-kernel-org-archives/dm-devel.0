@@ -1,66 +1,98 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 426DDC678D4
-	for <dm-devel@archiver.kernel.org>; Mon,  6 Mar 2023 16:18:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 90A66C61DA4
+	for <dm-devel@archiver.kernel.org>; Mon,  6 Mar 2023 16:29:36 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1678119486;
+	s=mimecast20190719; t=1678120175;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=AAFBG7bZFt7vVXxQSUWk8Ey3gBvL7cVJ6uWwqluiLgY=;
-	b=JckqDe5h5goX0b/hUtKaF8GJ7cV0tfWXX8UesEAlRxm8RXS1BfXEXMtyu+UTWOQW9yuH5k
-	GAaGyTm/rocjYpJRVTUoi+ZOIJRc9DipPbQY0Ar8YRsCX0q8G2Mq37rlkZwVke30mMDDDH
-	HYDkbDqbxTMuL9TLM7hwlGafgd2wyD4=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=ZakoyvIJJbhAmIlaa8fMbeJxbD4Wd4/VLV0pJU6O7wI=;
+	b=AFWTyTmmJkksdijMB2+2MARhbiRSHzEa8c7fgj4lzT5JFoPdauOnQILWE7+jQ7hwA6aUfR
+	16g8RRC7GHlmJ7BlQND/2dAFnhRIpYuiNL1M76ZW/yL9gxBDgMJOhJo9pxO66/f0g7iZTL
+	ZIM4Ug21ENPOYdchNlCRE4ZhEPtV5C4=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-76-YLo8xxAAP2qT58GrpJh4Vg-1; Mon, 06 Mar 2023 11:18:03 -0500
-X-MC-Unique: YLo8xxAAP2qT58GrpJh4Vg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-625-5tx7KQi8O0mHZ8UCX8SrLA-1; Mon, 06 Mar 2023 11:29:34 -0500
+X-MC-Unique: 5tx7KQi8O0mHZ8UCX8SrLA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D03D3800050;
-	Mon,  6 Mar 2023 16:18:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E95A41C05B0B;
+	Mon,  6 Mar 2023 16:29:31 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C057E2166B26;
-	Mon,  6 Mar 2023 16:18:00 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CDF55492C14;
+	Mon,  6 Mar 2023 16:29:31 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7C673194658D;
-	Mon,  6 Mar 2023 16:18:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A9F3A194658D;
+	Mon,  6 Mar 2023 16:29:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 65AF1194658C
- for <dm-devel@listman.corp.redhat.com>; Mon,  6 Mar 2023 16:17:59 +0000 (UTC)
+ ESMTP id D7F4F1946586
+ for <dm-devel@listman.corp.redhat.com>; Mon,  6 Mar 2023 13:21:21 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id EA6742026D2A; Mon,  6 Mar 2023 16:17:58 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
- (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D80572026D4B;
- Mon,  6 Mar 2023 16:17:58 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 326GHwMj027187; Mon, 6 Mar 2023 11:17:58 -0500
-Received: from localhost (mpatocka@localhost)
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 326GHw4u027183; Mon, 6 Mar 2023 11:17:58 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
- owned process doing -bs
-Date: Mon, 6 Mar 2023 11:17:58 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: snitzer@kernel.org
-Message-ID: <alpine.LRH.2.21.2303061115140.24847@file01.intranet.prod.int.rdu2.redhat.com>
-User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
+ id AB3D2112132D; Mon,  6 Mar 2023 13:21:21 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A3E731121314
+ for <dm-devel@redhat.com>; Mon,  6 Mar 2023 13:21:21 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6D6E52810C01
+ for <dm-devel@redhat.com>; Mon,  6 Mar 2023 13:21:21 +0000 (UTC)
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com
+ [45.249.212.51]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-404-KOY3RH3DOUyXHaAI-7kT2A-1; Mon, 06 Mar 2023 08:21:18 -0500
+X-MC-Unique: KOY3RH3DOUyXHaAI-7kT2A-1
+Received: from mail02.huawei.com (unknown [172.30.67.143])
+ by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4PVfNR1jffz4f3jJF;
+ Mon,  6 Mar 2023 21:21:11 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.124.27])
+ by APP4 (Coremail) with SMTP id gCh0CgD3rLDH6AVkOFVrEw--.46662S4;
+ Mon, 06 Mar 2023 21:21:13 +0800 (CST)
+From: Hou Tao <houtao@huaweicloud.com>
+To: dm-devel@redhat.com
+Date: Mon,  6 Mar 2023 21:49:30 +0800
+Message-Id: <20230306134930.2878660-1-houtao@huaweicloud.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: [dm-devel] [PATCH] dm-crypt: add cond_resched() to dmcrypt_write()
+X-CM-TRANSID: gCh0CgD3rLDH6AVkOFVrEw--.46662S4
+X-Coremail-Antispam: 1UD129KBjvJXoW7tw45ZrW7Zry8Zr4kJrWDurg_yoW8Aw1fpF
+ W3G3yFyrWrJF47K34Ut3W8CryY9rn7KrW3Cr43C34j9F129F9YgFy2v3y0vF45AFZ5X3W3
+ ZFWkta45CF1DArDanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+ 9KBjDU0xBIdaVrnRJUUUgKb4IE77IF4wAFF20E14v26r4j6ryUM7CY07I20VC2zVCF04k2
+ 6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
+ vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
+ xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
+ 0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
+ 6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
+ Cjc4AY6r1j6r4UM4x0Y48IcxkI7VAKI48JMxAIw28IcxkI7VAKI48JMxC20s026xCaFVCj
+ c4AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4
+ CE17CEb7AF67AKxVWUAVWUtwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1x
+ MIIF0xvE2Ix0cI8IcVCY1x0267AKxVWUJVW8JwCI42IY6xAIw20EY4v20xvaj40_WFyUJV
+ Cq3wCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r1j6r4UYxBI
+ daVFxhVjvjDU0xZFpf9x07UWE__UUUUU=
+X-CM-SenderInfo: xkrx3t3r6k3tpzhluzxrxghudrp/
+X-CFilter-Loop: Reflected
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Mailman-Approved-At: Mon, 06 Mar 2023 16:29:31 +0000
+Subject: [dm-devel] [PATCH] dm crypt: initialize tasklet in crypt_io_init()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -72,74 +104,62 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: yangerkun@huawei.com, dm-devel@redhat.com,
- yangerkun <yangerkun@huaweicloud.com>, agk@redhat.com
+Cc: houtao1@huawei.com, Mike Snitzer <snitzer@kernel.org>,
+ linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>,
+ Ignat Korchagin <ignat@cloudflare.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The loop in dmcrypt_write may be running for unbounded amount of time, 
-thus we need cond_resched() in it.
+From: Hou Tao <houtao1@huawei.com>
 
-This commit fixes the following warning:
+When neither no_read_workqueue nor no_write_workqueue are enabled,
+tasklet_trylock() in crypt_dec_pending() may still return false due to
+an uninitialized state, and dm-crypt will do io completion in io_queue
+instead of current context unnecessarily.
 
-[ 3391.153255][   C12] watchdog: BUG: soft lockup - CPU#12 stuck for 23s! [dmcrypt_write/2:2897]
-...
-[ 3391.258372][   C12] CPU: 12 PID: 2897 Comm: dmcrypt_write/2 Tainted: G             L    5.10.0+ #8
-[ 3391.267288][   C12] Hardware name: Huawei TaiShan 2280 V2/BC82AMDDA, BIOS 1.75 04/26/2021
-[ 3391.275428][   C12] pstate: 80400009 (Nzcv daif +PAN -UAO -TCO BTYPE=--)
-[ 3391.282102][   C12] pc : blk_attempt_bio_merge.part.6+0x38/0x158
-[ 3391.288080][   C12] lr : blk_attempt_plug_merge+0xc0/0x1b0
-[ 3391.293540][   C12] sp : ffff8000718abc30
-[ 3391.297530][   C12] x29: ffff8000718abc30 x28: 0000000000000000
-[ 3391.303509][   C12] x27: ffff2020361d9ac0 x26: 0000000000000001
-[ 3391.309488][   C12] x25: 0000000000000001 x24: ffff8000718abd08
-[ 3391.315467][   C12] x23: ffff0020a10dbb00 x22: 0000000000000001
-[ 3391.321445][   C12] x21: ffff8000718abe20 x20: ffff0020a10dbb00
-[ 3391.327424][   C12] x19: ffff0020aed7b040 x18: 0000000000000000
-[ 3391.333402][   C12] x17: 0000000000000000 x16: fffffdffffe00000
-[ 3391.339381][   C12] x15: 0000000000001000 x14: 0000000000000000
-[ 3391.345359][   C12] x13: 0000000000002000 x12: ffff2060011f9070
-[ 3391.351338][   C12] x11: 0000000000000001 x10: 0000000000000002
-[ 3391.357316][   C12] x9 : ffff800010586c38 x8 : ffff202009a7f200
-[ 3391.363294][   C12] x7 : ffff8000718abd00 x6 : ffff20200df33750
-[ 3391.369274][   C12] x5 : 0000000000000001 x4 : 0000000000000000
-[ 3391.375252][   C12] x3 : 0000000000000001 x2 : ffff0020a10dbb00
-[ 3391.381230][   C12] x1 : ffff0020aed7b040 x0 : 0000000000001000
-[ 3391.387210][   C12] Call trace:
-[ 3391.390338][   C12]  blk_attempt_bio_merge.part.6+0x38/0x158
-[ 3391.395970][   C12]  blk_attempt_plug_merge+0xc0/0x1b0
-[ 3391.401085][   C12]  blk_mq_submit_bio+0x398/0x550
-[ 3391.405856][   C12]  submit_bio_noacct+0x308/0x380
-[ 3391.410630][   C12]  dmcrypt_write+0x1e4/0x208 [dm_crypt]
-[ 3391.416005][   C12]  kthread+0x130/0x138
-[ 3391.419911][   C12]  ret_from_fork+0x10/0x18
+Fix it by initializing io->tasklet in crypt_io_init().
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Reported-by: yangerkun <yangerkun@huawei.com>
-Fixes: dc2676210c42 ("dm crypt: offload writes to thread")
-Cc: stable@vger.kernel.org
-
+Fixes: 8e14f610159d ("dm crypt: do not call bio_endio() from the dm-crypt tasklet")
+Signed-off-by: Hou Tao <houtao1@huawei.com>
 ---
- drivers/md/dm-crypt.c |    1 +
- 1 file changed, 1 insertion(+)
+ drivers/md/dm-crypt.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Index: linux-2.6/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-crypt.c
-+++ linux-2.6/drivers/md/dm-crypt.c
-@@ -1954,6 +1954,7 @@ pop_from_list:
- 			io = crypt_io_from_node(rb_first(&write_tree));
- 			rb_erase(&io->rb_node, &write_tree);
- 			kcryptd_io_write(io);
-+			cond_resched();
- 		} while (!RB_EMPTY_ROOT(&write_tree));
- 		blk_finish_plug(&plug);
- 	}
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 3aeeb8f2802f..caee6ce3b79f 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -238,6 +238,7 @@ static void crypt_endio(struct bio *clone);
+ static void kcryptd_queue_crypt(struct dm_crypt_io *io);
+ static struct scatterlist *crypt_get_sg_data(struct crypt_config *cc,
+ 					     struct scatterlist *sg);
++static void kcryptd_crypt_tasklet(unsigned long work);
+ 
+ static bool crypt_integrity_aead(struct crypt_config *cc);
+ 
+@@ -1725,6 +1726,7 @@ static void crypt_io_init(struct dm_crypt_io *io, struct crypt_config *cc,
+ 	io->sector = sector;
+ 	io->error = 0;
+ 	io->ctx.r.req = NULL;
++	tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
+ 	io->integrity_metadata = NULL;
+ 	io->integrity_metadata_from_pool = false;
+ 	atomic_set(&io->io_pending, 0);
+@@ -2226,7 +2228,6 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
+ 		 * it is being executed with irqs disabled.
+ 		 */
+ 		if (in_hardirq() || irqs_disabled()) {
+-			tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
+ 			tasklet_schedule(&io->tasklet);
+ 			return;
+ 		}
+-- 
+2.29.2
 
 --
 dm-devel mailing list
