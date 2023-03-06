@@ -1,71 +1,110 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D8640C64EC4
-	for <dm-devel@archiver.kernel.org>; Mon,  6 Mar 2023 18:02:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id EFC7EC6FA99
+	for <dm-devel@archiver.kernel.org>; Mon,  6 Mar 2023 18:16:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1678125768;
+	s=mimecast20190719; t=1678126606;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=24WIKLPuRdsvhPA5Fgzg65iP0RHdBx4WTTsqKsiNhVU=;
-	b=GuwPAP7qlAz4SsE6WWTmXj2J18/e89bCSHsxt+XyJbbDBFJQtqFOFnzgunrvL8ELFJphbS
-	R6ooTPPLTKeT4fcZ0gYh3TP005dlTKIS9hib2ArUjP/aAwPRkzcrtfB0FumancAyETOMSw
-	26P250Fq/AegCAEN5nqvaCGY3CMyAuk=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=VkVBVyrZUNDfqtzs5sqB5HbcaIuaqq3esWHW/TWWjsY=;
+	b=dD1vzTrV3soEedBx8aMGO371z041FvtAYfVuZltqLdrReDolLnieLmHOHh+XGGduZ+Z6iD
+	2RnBC5WfLI1NRKOkPQir8rV0TUvI3J0+etrp2UO8A2bqmkiBwfNDK01HXkctZIJF75Ienm
+	VziM1YtBXC+cTDTCXDROdgFGj1Z84Es=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-102-ndqr2m08Mdq3DDRj5DxvRg-1; Mon, 06 Mar 2023 13:02:45 -0500
-X-MC-Unique: ndqr2m08Mdq3DDRj5DxvRg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-423-9Yr8cVoBPyOmTVJnvlphng-1; Mon, 06 Mar 2023 13:16:43 -0500
+X-MC-Unique: 9Yr8cVoBPyOmTVJnvlphng-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BFE301802D43;
-	Mon,  6 Mar 2023 18:02:42 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 83385C16029;
-	Mon,  6 Mar 2023 18:02:41 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1C9C71C05149;
+	Mon,  6 Mar 2023 18:16:41 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id BF5DC40C945A;
+	Mon,  6 Mar 2023 18:16:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 31FE0194658D;
-	Mon,  6 Mar 2023 18:02:41 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AA8F1194658D;
+	Mon,  6 Mar 2023 18:16:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E2ED3194658C
- for <dm-devel@listman.corp.redhat.com>; Mon,  6 Mar 2023 18:02:39 +0000 (UTC)
+ ESMTP id B10D7194658C
+ for <dm-devel@listman.corp.redhat.com>; Mon,  6 Mar 2023 18:16:38 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 94C5714171C4; Mon,  6 Mar 2023 18:02:39 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
- (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7388114171C3;
- Mon,  6 Mar 2023 18:02:33 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 326I2Xb1001525; Mon, 6 Mar 2023 13:02:33 -0500
-Received: from localhost (mpatocka@localhost)
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 326I2XbK001521; Mon, 6 Mar 2023 13:02:33 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
- owned process doing -bs
-Date: Mon, 6 Mar 2023 13:02:33 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: yangerkun <yangerkun@huaweicloud.com>
-In-Reply-To: <3e31584c-b0f3-fc9a-3657-935fc51db74e@huaweicloud.com>
-Message-ID: <alpine.LRH.2.21.2303061240200.31427@file01.intranet.prod.int.rdu2.redhat.com>
+ id 93B5E2166B2E; Mon,  6 Mar 2023 18:16:38 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8C3DD2166B2B
+ for <dm-devel@redhat.com>; Mon,  6 Mar 2023 18:16:38 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5C5A43C0DDA6
+ for <dm-devel@redhat.com>; Mon,  6 Mar 2023 18:16:38 +0000 (UTC)
+Received: from mail-pl1-f177.google.com (mail-pl1-f177.google.com
+ [209.85.214.177]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-54-hModT95cO0SNXTsghOGNRQ-1; Mon, 06 Mar 2023 13:16:35 -0500
+X-MC-Unique: hModT95cO0SNXTsghOGNRQ-1
+Received: by mail-pl1-f177.google.com with SMTP id a9so11350923plh.11;
+ Mon, 06 Mar 2023 10:16:35 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112; t=1678126593;
+ h=content-transfer-encoding:in-reply-to:from:references:cc:to
+ :content-language:subject:user-agent:mime-version:date:message-id
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=qWRMEw69/6QGtgvJh0SpxzYGgeA4jgzxjtj9+O7Jw24=;
+ b=3oASVAak4RZ2uH73Iw3qcEzLxkVyJc0Kdz6CG9YFMyTwArNW3x6eRVDfLCjFtARlKI
+ AWHULzgYC0BycnRWrVZch9vaLs/5grZ8TmK9KcHmEmvW5QVJHkEVGw7ci75l6/JRdYz/
+ NhtdepjqIjTZta1IyLX4MG5Cax5bJdmy8fZXcVrjNeW01hx/mvsk9nHNgKpI5dUJKyCD
+ gMFRVc/IEe5QMbU1SeqlNyk5tmutv+FlJtviP2QHNNr8/QW2ox1UGx6CCkM1HWpFYwPY
+ BAIce9MGg2Iy5QM/RHIqNSki6m4pUMHaEPx9/tnjOm7RcebZFni3QUt3v96d0OX+zkGI
+ pncA==
+X-Gm-Message-State: AO0yUKUB4j1rYj5k15vSQtWcoEGjwl+2QDMtMgs87CQo8tNwIsdBszd3
+ 2JaHhQTH6yv/TtsEXSG5JzaZS/uRslY=
+X-Google-Smtp-Source: AK7set9OPUddwxuPnnjsNcugCUHz5P/JhmtGQmTcEpQpC9GNK0m1Wd+xhMQ7g21mN6cJRBSb4jzUPg==
+X-Received: by 2002:a17:903:1d2:b0:19c:be07:4af2 with SMTP id
+ e18-20020a17090301d200b0019cbe074af2mr15489410plh.45.1678126593590; 
+ Mon, 06 Mar 2023 10:16:33 -0800 (PST)
+Received: from [192.168.132.235] ([63.145.95.70])
+ by smtp.gmail.com with ESMTPSA id
+ d6-20020a170902c18600b00199025284b3sm7028470pld.151.2023.03.06.10.16.32
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Mon, 06 Mar 2023 10:16:33 -0800 (PST)
+Message-ID: <ee7a7a6a-ef46-f487-e78d-a828a4042393@acm.org>
+Date: Mon, 6 Mar 2023 10:16:32 -0800
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.6.0
+To: Mikulas Patocka <mpatocka@redhat.com>,
+ yangerkun <yangerkun@huaweicloud.com>
 References: <20230223031947.3717433-1-yangerkun@huaweicloud.com>
  <b7020147-2382-71f6-5237-8501562f8011@acm.org>
  <e69ec125-3636-ab20-ce63-f4b89ac55ffb@huaweicloud.com>
  <Y/zueUWERryoIGA8@redhat.com> <Y/zwVCNDrdAbzC7a@redhat.com>
  <Y/zxI4wK8trtuJgV@redhat.com>
  <3e31584c-b0f3-fc9a-3657-935fc51db74e@huaweicloud.com>
-User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
-MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+ <alpine.LRH.2.21.2303061240200.31427@file01.intranet.prod.int.rdu2.redhat.com>
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <alpine.LRH.2.21.2303061240200.31427@file01.intranet.prod.int.rdu2.redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 Subject: Re: [dm-devel] dm-crypt: fix softlockup in dmcrypt_write
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -79,139 +118,51 @@ List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Cc: yangerkun@huawei.com, Mike Snitzer <snitzer@kernel.org>,
- dm-devel@redhat.com, agk@redhat.com, Bart Van Assche <bvanassche@acm.org>
+ dm-devel@redhat.com, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed;
- BOUNDARY="185206533-1323629815-1678124569=:31427"
-Content-ID: <alpine.LRH.2.21.2303061243150.31427@file01.intranet.prod.int.rdu2.redhat.com>
-
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
---185206533-1323629815-1678124569=:31427
-Content-Type: text/plain; CHARSET=UTF-8
-Content-Transfer-Encoding: 8BIT
-Content-ID: <alpine.LRH.2.21.2303061243151.31427@file01.intranet.prod.int.rdu2.redhat.com>
-
-
-
-On Tue, 28 Feb 2023, yangerkun wrote:
-
-> 
-> 
-> 在 2023/2/28 2:06, Mike Snitzer 写道:
-> > On Mon, Feb 27 2023 at  1:03P -0500,
-> > Mike Snitzer <snitzer@kernel.org> wrote:
-> > 
-> >> On Mon, Feb 27 2023 at 12:55P -0500,
-> >> Mike Snitzer <snitzer@kernel.org> wrote:
-> >>
-> >>> On Sun, Feb 26 2023 at  8:31P -0500,
-> >>> yangerkun <yangerkun@huaweicloud.com> wrote:
-> >>>
-> >>>>
-> >>>>
-> >>>> 在 2023/2/26 10:01, Bart Van Assche 写道:
-> >>>>> On 2/22/23 19:19, yangerkun wrote:
-> >>>>>> @@ -1924,6 +1926,10 @@ static int dmcrypt_write(void *data)
-> >>>>>>            BUG_ON(rb_parent(write_tree.rb_node));
-> >>>>>> +        if (time_is_before_jiffies(start_time + HZ)) {
-> >>>>>> +            schedule();
-> >>>>>> +            start_time = jiffies;
-> >>>>>> +        }
-> >>>>>
-> >>>>> Why schedule() instead of cond_resched()?
-> >>>>
-> >>>> cond_resched may not really schedule, which may trigger the problem too,
-> but
-> >>>> it seems after 1 second, it may never happend?
-> >>>
-> >>> I had the same question as Bart when reviewing your homegrown
-> >>> conditional schedule().  Hopefully you can reproduce this issue?  If
-> >>> so, please see if simply using cond_resched() fixes the issue.
-> >>
-> >> This seems like a more appropriate patch:
-> >>
-> >> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> >> index 87c5706131f2..faba1be572f9 100644
-> >> --- a/drivers/md/dm-crypt.c
-> >> +++ b/drivers/md/dm-crypt.c
-> >> @@ -1937,6 +1937,7 @@ static int dmcrypt_write(void *data)
-> >>   			io = crypt_io_from_node(rb_first(&write_tree));
-> >>   			rb_erase(&io->rb_node, &write_tree);
-> >>   			kcryptd_io_write(io);
-> >> +			cond_resched();
-> >>   		} while (!RB_EMPTY_ROOT(&write_tree));
-> >>   		blk_finish_plug(&plug);
-> >>   	}
-> > 
-> > 
-> > or:
-> > 
-> > diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> > index 87c5706131f2..3ba2fd3e4358 100644
-> > --- a/drivers/md/dm-crypt.c
-> > +++ b/drivers/md/dm-crypt.c
-> > @@ -1934,6 +1934,7 @@ static int dmcrypt_write(void *data)
-> >   		 */
-> >   		blk_start_plug(&plug);
-> >   		do {
-> > +			cond_resched();
-> >   			io = crypt_io_from_node(rb_first(&write_tree));
-> >   			rb_erase(&io->rb_node, &write_tree);
-> >   			kcryptd_io_write(io);
-> 
-> Hi,
-> 
-> Thanks a lot for your review!
-> 
-> It's ok to fix the softlockup, but for async write encrypt, 
-> kcryptd_crypt_write_io_submit will add bio to write_tree, and once we 
-> call cond_resched before every kcryptd_io_write, the write performance 
-> may be poor while we meet a high cpu usage scene.
-
-Hi
-
-To fix this problem, find the PID of the process "dmcrypt_write" and 
-change its priority to -20, for example "renice -n -20 -p 34748".
-
-This is the proper way how to fix it; locking up the process for one 
-second is not.
-
-We used to have high-priority workqueues by default, but it caused audio 
-playback skipping, so we had to revert it - see 
-f612b2132db529feac4f965f28a1b9258ea7c22b.
-
-Perhaps we should add an option to have high-priority kernel threads?
-
-Mikulas
-
-> kcryptd_crypt_write_io_submit will wakeup write_thread once there is a 
-> empty write_tree, and dmcrypt_write will peel the old write_tree to 
-> submit bio, so there can not exist too many bio in write_tree. Then I 
-> choose yield cpu before the 'while' that submit bio...
-> 
-> Thanks,
-> Kun.
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://listman.redhat.com/mailman/listinfo/dm-devel
-> 
---185206533-1323629815-1678124569=:31427
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+
+On 3/6/23 10:02, Mikulas Patocka wrote:
+> On Tue, 28 Feb 2023, yangerkun wrote:
+>> It's ok to fix the softlockup, but for async write encrypt,
+>> kcryptd_crypt_write_io_submit will add bio to write_tree, and once we
+>> call cond_resched before every kcryptd_io_write, the write performance
+>> may be poor while we meet a high cpu usage scene.
+> 
+> Hi
+> 
+> To fix this problem, find the PID of the process "dmcrypt_write" and
+> change its priority to -20, for example "renice -n -20 -p 34748".
+> 
+> This is the proper way how to fix it; locking up the process for one
+> second is not.
+> 
+> We used to have high-priority workqueues by default, but it caused audio
+> playback skipping, so we had to revert it - see
+> f612b2132db529feac4f965f28a1b9258ea7c22b.
+> 
+> Perhaps we should add an option to have high-priority kernel threads?
+
+Would calling cond_resched() every n iterations instead of every 
+iteration help? From mm/swapfile.c:
+
+			if (unlikely(--latency_ration < 0)) {
+				cond_resched();
+				latency_ration = LATENCY_LIMIT;
+			}
+
+Thanks,
+
+Bart.
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-
---185206533-1323629815-1678124569=:31427--
 
