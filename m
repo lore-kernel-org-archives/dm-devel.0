@@ -4,95 +4,66 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 605B1C61DA4
-	for <dm-devel@archiver.kernel.org>; Mon,  6 Mar 2023 11:47:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 856B2C64EC4
+	for <dm-devel@archiver.kernel.org>; Mon,  6 Mar 2023 16:15:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1678103223;
+	s=mimecast20190719; t=1678119321;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=jcNKwwWpkKEik820gDcDPR6jMBqzTmM6vw8lYxUbRWA=;
-	b=RYF5UjAvpwiuVZzTRMFdRhltC3qq0t+mjgCW6GdCBAT9Vg0jUwglM5sV/u1/odUYc+G679
-	WuSqaLDjg8J8isNlRtTPZwgGYpU3YNz5HYtpeGvPHl+vjLbE+0KJ5aadoI0WFCFsw345m/
-	rDqdi9DOrco8+p0tyNnHYZYiIwLxD08=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=88Z7hJIDHs0DtW5dTUbhUBwFAnEEUVdJXtBTveDj8no=;
+	b=ACXvb4ZMwW15GdKW8VoMnJqEKZbC7mYtIkwNLuPz/4hZbtvD/tmMjx6em4ZEnkYVhDznCR
+	iOFqYnSAjLuTJ39vUHYerce6noF3StkrmAB/8znUKfDy7n/iNfDvwu+e8LZaPQFLOojiWP
+	0/V7KQB8ZX9S6+ChGP0QRCOUnfk/uZQ=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-556-sr9iEZq5NcqIO0SiAiiYZA-1; Mon, 06 Mar 2023 06:47:00 -0500
-X-MC-Unique: sr9iEZq5NcqIO0SiAiiYZA-1
+ us-mta-100-7cy8GHTqOEKjvw-zGb6Veg-1; Mon, 06 Mar 2023 11:15:19 -0500
+X-MC-Unique: 7cy8GHTqOEKjvw-zGb6Veg-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DDB0811E9C;
-	Mon,  6 Mar 2023 11:46:59 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8CDBC2166B26;
-	Mon,  6 Mar 2023 11:46:57 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B1D0F1C05EC3;
+	Mon,  6 Mar 2023 16:15:14 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2B0432166B26;
+	Mon,  6 Mar 2023 16:15:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 00BA0194658C;
-	Mon,  6 Mar 2023 11:46:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EEDC1194658D;
+	Mon,  6 Mar 2023 16:15:10 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7F92D1946586
- for <dm-devel@listman.corp.redhat.com>; Mon,  6 Mar 2023 11:46:54 +0000 (UTC)
+ ESMTP id 6BC03194658C
+ for <dm-devel@listman.corp.redhat.com>; Mon,  6 Mar 2023 16:15:10 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4300A492B00; Mon,  6 Mar 2023 11:46:54 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 3BC96492C3E
- for <dm-devel@redhat.com>; Mon,  6 Mar 2023 11:46:54 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1D5F0382C969
- for <dm-devel@redhat.com>; Mon,  6 Mar 2023 11:46:54 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-638-o6-Bg7GDP66sMXRQ5t118Q-1; Mon,
- 06 Mar 2023 06:46:52 -0500
-X-MC-Unique: o6-Bg7GDP66sMXRQ5t118Q-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out1.suse.de (Postfix) with ESMTPS id 3FE1C22358;
- Mon,  6 Mar 2023 11:46:51 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 17D7E13513;
- Mon,  6 Mar 2023 11:46:51 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id AnE4BKvSBWTVJQAAMHmgww
- (envelope-from <mwilck@suse.com>); Mon, 06 Mar 2023 11:46:51 +0000
-Message-ID: <82cf76fe2b1949337064127eac3ca17c1082d0a7.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Brian Bunker <brian@purestorage.com>
-Date: Mon, 06 Mar 2023 12:46:50 +0100
-In-Reply-To: <C9BF0F84-BA7F-432C-A9A7-DC77DFE856CA@purestorage.com>
-References: <CAHZQxyJH1etLR5gHuWk4c6-ieioqA4GrJ173B60bnTppke58dw@mail.gmail.com>
- <4bc4be79c2d00cc959932ec935179a46be4b2fbc.camel@suse.com>
- <5A7BD289-0205-42FF-84CD-7C218511A280@purestorage.com>
- <fb99dac64dd41a6a44b3c7ce065608b45ff467c4.camel@suse.com>
- <C9BF0F84-BA7F-432C-A9A7-DC77DFE856CA@purestorage.com>
-User-Agent: Evolution 3.46.4
+ id 49EEA112132D; Mon,  6 Mar 2023 16:15:10 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id EEC761121314;
+ Mon,  6 Mar 2023 16:15:09 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 326GF96u027112; Mon, 6 Mar 2023 11:15:09 -0500
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 326GF9CC027108; Mon, 6 Mar 2023 11:15:09 -0500
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Mon, 6 Mar 2023 11:15:09 -0500 (EST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: yangerkun <yangerkun@huaweicloud.com>
+In-Reply-To: <20230306115648.3154696-1-yangerkun@huaweicloud.com>
+Message-ID: <alpine.LRH.2.21.2303061108570.24847@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20230306115648.3154696-1-yangerkun@huaweicloud.com>
+User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-Subject: Re: [dm-devel] [PATCH] [PATCH] libmultipath: return 'ghost' state
- when port is in transition
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH v2] dm-crypt: fix softlockup in dmcrypt_write
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -104,37 +75,84 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com
+Cc: dm-devel@redhat.com, snitzer@kernel.org, yangerkun@huawei.com,
+ agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-SGkgQnJpYW4sCgpPbiBTYXQsIDIwMjMtMDMtMDQgYXQgMTI6NDkgLTA4MDAsIEJyaWFuIEJ1bmtl
-ciB3cm90ZToKPiA+IAo+IFRoZSBjaGVja2luZyBmb3Igc3RhbmRieSBpcyAxNCB5ZWFycyBvbGQs
-IGFuZCBzYXlzIHRoYXQgVFVSIHJldHVybnMKPiBhIHVuaXQgYXR0ZW50aW9uIHdoZW4gdGhlIHBh
-dGggaXMgaW4gc3RhbmRieS4gSSBhbSBub3Qgc3VyZSB3aHkgdGhhdAo+IHdvdWxkbuKAmXQgYmUg
-aGFuZGxlZCBieSB0aGlzIGNvZGUgYWJvdmU6IEkgd291bGQgdGhpbmsgdGhlcmUgc2hvdWxkIGJl
-Cj4ganVzdCBvbmUgdW5pdCBhdHRlbnRpb24gZm9yIGVhY2ggSV9UX0wgd2hlbiBhbiBBTFVBIHN0
-YXRlIGNoYW5nZQo+IGhhcHBlbnMuTm90IHN1cmUgaG93IGl0IGV4Y2VlZHMgdGhlIHJldHJ5IGNv
-dW50Lgo+IAo+IGlmIChrZXkgPT0gMHg2KSB7Cj4gwqDCoMKgIC8qIFVuaXQgQXR0ZW50aW9uLCBy
-ZXRyeSAqLwo+IMKgwqDCoCBpZiAo4oCUcmV0cnlfdHVyKQo+IMKgwqDCoMKgwqDCoMKgIGdvdG8g
-cmV0cnk7Cj4gfQo+IAo+IEZyb20gbXkgcGVyc3BlY3RpdmUgZmFpbGluZyBhIHBhdGggZm9yIEFM
-VUEgc3RhdGUgc3RhbmRieSBpcwo+IHJlYXNvbmFibGUKPiBzaW5jZSBpdCBpcyBub3QgYW4gYWN0
-aXZlIHN0YXRlLgoKSSB0aGluayB0aGUgaGlzdG9yaWMgcmF0aW9uYWxlIGZvciB1c2luZyBHSE9T
-VCBpcyB0aGF0IHNvbWUgc3RvcmFnZQphcnJheXMsIGluIHBhcnRpY3VsYXIgYWN0aXZlLXBhc3Np
-dmUgY29uZmlndXJhdGlvbnMsIG1heSBrZWVwIGNlcnRhaW4KcG9ydCBncm91cHMgaW4gU1RBTkRC
-WSBzdGF0ZS4gSWYgU1RBTkRCWSB3YXMgY2xhc3NpZmllZCBhcyBGQUlMRUQsCiJtdWx0aXBhdGgg
-LWxsIiB3b3VsZCBzaG93IGFsbCBwYXRocyBvZiBzdWNoIHBvcnQgZ3JvdXBzIGFzIEZBSUxFRCwK
-d2hpY2ggd291bGQgY29uZnVzZSB1c2Vycy4KClRoYXQncyB3aGF0IEkgbWVhbnQgYmVmb3JlLCBt
-dWx0aXBhdGgncyBHSE9TVCBjYW4gbWVhbiBtdWx0aXBsZSB0aGluZ3MKZGVwZW5kaW5nIG9uIHRo
-ZSBhY3R1YWwgaGFyZHdhcmUgaW4gdXNlLCBleHBsaWNpdC9pbXBsaWNpdCBBTFVBLCBldGMuCkdp
-dmVuIHRoYXQgdG9kYXkgYmFzaWNhbGx5IGV2ZXJ5IGhhcmR3YXJlIHN1cHBvcnRzIEFMVUEsIHdl
-IGNvdWxkCnByb2JhYmx5IGRvIGJldHRlci4gQnV0IGNoYW5naW5nIHRoZSBzZW1hbnRpY3MgaW4g
-dGhlIGN1cnJlbnQgc2l0dWF0aW9uCmlzIHJpc2t5IGFuZCBlcnJvciBwcm9uZS4KClJlZ2FyZHMK
-TWFydGluCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
-czovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
+
+
+On Mon, 6 Mar 2023, yangerkun wrote:
+
+> From: yangerkun <yangerkun@huawei.com>
+> 
+> We meet a softlockup:
+> 
+> localhost login: [ 3391.153255][   C12] watchdog: BUG: soft lockup - CPU#12 stuck for 23s! [dmcrypt_write/2:2897]
+> ...
+> [ 3391.258372][   C12] CPU: 12 PID: 2897 Comm: dmcrypt_write/2 Tainted: G             L    5.10.0+ #8
+> [ 3391.267288][   C12] Hardware name: Huawei TaiShan 2280 V2/BC82AMDDA, BIOS 1.75 04/26/2021
+> [ 3391.275428][   C12] pstate: 80400009 (Nzcv daif +PAN -UAO -TCO BTYPE=--)
+> [ 3391.282102][   C12] pc : blk_attempt_bio_merge.part.6+0x38/0x158
+> [ 3391.288080][   C12] lr : blk_attempt_plug_merge+0xc0/0x1b0
+> [ 3391.293540][   C12] sp : ffff8000718abc30
+> [ 3391.297530][   C12] x29: ffff8000718abc30 x28: 0000000000000000
+> [ 3391.303509][   C12] x27: ffff2020361d9ac0 x26: 0000000000000001
+> [ 3391.309488][   C12] x25: 0000000000000001 x24: ffff8000718abd08
+> [ 3391.315467][   C12] x23: ffff0020a10dbb00 x22: 0000000000000001
+> [ 3391.321445][   C12] x21: ffff8000718abe20 x20: ffff0020a10dbb00
+> [ 3391.327424][   C12] x19: ffff0020aed7b040 x18: 0000000000000000
+> [ 3391.333402][   C12] x17: 0000000000000000 x16: fffffdffffe00000
+> [ 3391.339381][   C12] x15: 0000000000001000 x14: 0000000000000000
+> [ 3391.345359][   C12] x13: 0000000000002000 x12: ffff2060011f9070
+> [ 3391.351338][   C12] x11: 0000000000000001 x10: 0000000000000002
+> [ 3391.357316][   C12] x9 : ffff800010586c38 x8 : ffff202009a7f200
+> [ 3391.363294][   C12] x7 : ffff8000718abd00 x6 : ffff20200df33750
+> [ 3391.369274][   C12] x5 : 0000000000000001 x4 : 0000000000000000
+> [ 3391.375252][   C12] x3 : 0000000000000001 x2 : ffff0020a10dbb00
+> [ 3391.381230][   C12] x1 : ffff0020aed7b040 x0 : 0000000000001000
+> [ 3391.387210][   C12] Call trace:
+> [ 3391.390338][   C12]  blk_attempt_bio_merge.part.6+0x38/0x158
+> [ 3391.395970][   C12]  blk_attempt_plug_merge+0xc0/0x1b0
+> [ 3391.401085][   C12]  blk_mq_submit_bio+0x398/0x550
+> [ 3391.405856][   C12]  submit_bio_noacct+0x308/0x380
+> [ 3391.410630][   C12]  dmcrypt_write+0x1e4/0x208 [dm_crypt]
+> [ 3391.416005][   C12]  kthread+0x130/0x138
+> [ 3391.419911][   C12]  ret_from_fork+0x10/0x18
+> 
+> dmcrypt_write will be wakeup once there is a not empty write_tree, and
+> before really submit_bio, the old write_tree will be peeled, so there
+> may not so much bio, but every time we check RB_EMPTY_ROOT, it may be
+> false since the heavy load write, so the softlockup can trigger.
+> 
+> We can add cond_resched every time before or after kcryptd_io_write, but
+> dmcrypt_write seems performance sensitive since it will submit all
+> pending write, so we choose cond_resched after 1s before the 'while'
+> submit bio.
+> 
+> Fixes: dc2676210c42 ("dm crypt: offload writes to thread")
+> Signed-off-by: yangerkun <yangerkun@huawei.com>
+
+Hi
+
+Thanks for the bug report.
+
+I think that we don't have to count time and call cond_resched() only 
+after being stuck for one second, we should call it always. There is no 
+performance problem when calling cond_resched() - it does nothing if the 
+scheduler hasn't decided that scheduling is needed.
+
+cond_resched() should be called in the do-while loop because this loop can 
+run for unbounded amount of time too.
+
+Mikulas
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
