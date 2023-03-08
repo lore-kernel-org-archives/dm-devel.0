@@ -1,96 +1,91 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A588DC6FA99
-	for <dm-devel@archiver.kernel.org>; Wed,  8 Mar 2023 02:56:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1548FC678D5
+	for <dm-devel@archiver.kernel.org>; Wed,  8 Mar 2023 13:56:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1678244200;
+	s=mimecast20190719; t=1678283790;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=dwbTQ9lTkVK8KhjLaMdwMi6p7V/I4zHbG+ZCsBXOtT4=;
-	b=Wzl8rZelS0BVgfl7wmCuNKcqnWnUOw2UbtXEB5I7USmOviAhNE3QzvdI0/d2wlxUYFLvLG
-	VYeoD0m6/AEdn6IRDSIuSxjgMzPBsO/gaVhUuP8yGGyu8G94cYp1sBOyezlavsDdYK6B9S
-	hI+PxBuc17X0OPKYPR3qMXGf4QAUH+Q=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=KhnRB5nOeRgusChKXWMHSr7e1azvj2iLk2qOld/9CdQ=;
+	b=cNEoF6bxCkNs8/bFYkhFzPSj0St9MA3rFCmtmxkWIZGDyLbkq/P51AbEVJD+rep/bH8jCd
+	+7x+i/+czAWCAYmyjiVZ2nBhswxbDb4sINHhCWLd+JLZBSXm0xqfpTyttOEwrGLsfjfUq0
+	J2mEfgZtIeBrs+kFNWXcyFeidLP0Bdg=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-542-B43W4V2vPhuz8EzzItUw7g-1; Tue, 07 Mar 2023 21:56:37 -0500
-X-MC-Unique: B43W4V2vPhuz8EzzItUw7g-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-5-76UlKulMN6ypliOjlBibow-1; Wed, 08 Mar 2023 08:56:26 -0500
+X-MC-Unique: 76UlKulMN6ypliOjlBibow-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7B465101A52E;
-	Wed,  8 Mar 2023 02:56:35 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 147794014D1D;
-	Wed,  8 Mar 2023 02:56:33 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 944522817230;
+	Wed,  8 Mar 2023 13:56:24 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id DB8C8440E1;
+	Wed,  8 Mar 2023 13:56:19 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C259919465B1;
-	Wed,  8 Mar 2023 02:56:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B076D19465B2;
+	Wed,  8 Mar 2023 13:56:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0E07C19465A8
- for <dm-devel@listman.corp.redhat.com>; Wed,  8 Mar 2023 02:56:24 +0000 (UTC)
+ ESMTP id BB80019465B1
+ for <dm-devel@listman.corp.redhat.com>; Wed,  8 Mar 2023 13:55:48 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0463314171B6; Wed,  8 Mar 2023 02:56:24 +0000 (UTC)
+ id A72D440B40E4; Wed,  8 Mar 2023 13:55:48 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F06AE140EBF4
- for <dm-devel@redhat.com>; Wed,  8 Mar 2023 02:56:23 +0000 (UTC)
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A01EC401B290
+ for <dm-devel@redhat.com>; Wed,  8 Mar 2023 13:55:48 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D4D13101A521
- for <dm-devel@redhat.com>; Wed,  8 Mar 2023 02:56:23 +0000 (UTC)
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com
- [45.249.212.51]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7F46685A588
+ for <dm-devel@redhat.com>; Wed,  8 Mar 2023 13:55:48 +0000 (UTC)
+Received: from mail-pj1-f54.google.com (mail-pj1-f54.google.com
+ [209.85.216.54]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-380-Uywc0I8SMaWkCvwEErPS5Q-1; Tue, 07 Mar 2023 21:56:21 -0500
-X-MC-Unique: Uywc0I8SMaWkCvwEErPS5Q-1
-Received: from mail02.huawei.com (unknown [172.30.67.143])
- by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4PWcQP2F2Nz4f3jYp;
- Wed,  8 Mar 2023 10:56:13 +0800 (CST)
-Received: from [10.174.176.117] (unknown [10.174.176.117])
- by APP4 (Coremail) with SMTP id gCh0CgAn16pI+Qdk9qjPEw--.56532S2;
- Wed, 08 Mar 2023 10:56:12 +0800 (CST)
-To: Mike Snitzer <snitzer@kernel.org>
+ us-mta-66-HXkW-wTiP7a3M85yq_DUcg-1; Wed, 08 Mar 2023 08:55:47 -0500
+X-MC-Unique: HXkW-wTiP7a3M85yq_DUcg-1
+Received: by mail-pj1-f54.google.com with SMTP id l1so16576156pjt.2
+ for <dm-devel@redhat.com>; Wed, 08 Mar 2023 05:55:46 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112; t=1678283746;
+ h=content-transfer-encoding:cc:to:subject:message-id:date:from
+ :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=TXj6+ad4f3EaLBdb3iPpIYhKK3dGk1SM49tjUGgn240=;
+ b=cNWigPrkfa5HRrTdJxBA4znmSgmFM04c3+NDTIakshDIxgTKvM8BHvMuXtpVhSxFAM
+ XC+mHxwbs1pYEEWts/pQ1nSC01JSNB8gDFaxA/jeFphcDEGHvAsqJf7JhWMY+u2cIsMh
+ OyaRTxZM0QRZ08xLxn0XezYsVPt0C7RzUr0M0wNMfGw+Jqaz2P1WlQVkp4FirRJ5uehN
+ eILIZLLJHIv9S7USDXxIaK1Q9ZteOSJutEbpEoRmi0+slNtTbe9sg9EWJXc31yvt6X6j
+ 4z5LCNUaxOUWE30Ewtv8yiPWPPdvI+qkJDtQXSmHzF0qMz+H1Og0cr4EWZtI9638vZ9J
+ FeKw==
+X-Gm-Message-State: AO0yUKU9OTNMbXxvI01t12vpfVNO5yOsnepngAuoQFU4D/TZKAL/QNRa
+ 3hj/MYNeyyHMWLHakSNgHKOsDwBQIEsRWOvfbYtlBw==
+X-Google-Smtp-Source: AK7set8mUUyHczOx9K8OTiOb+VEJOgVjuhnEyS3UlTKS0ud7SE3aP7MsgqjnquIbNt3RzZ3wWjJPz1D66u7NxKWiwNg=
+X-Received: by 2002:a17:902:9a03:b0:19a:afc4:2300 with SMTP id
+ v3-20020a1709029a0300b0019aafc42300mr7321289plp.6.1678283745660; Wed, 08 Mar
+ 2023 05:55:45 -0800 (PST)
+MIME-Version: 1.0
 References: <20230306134930.2878660-1-houtao@huaweicloud.com>
  <ZAY/o9ew9AtrCLE5@redhat.com>
  <e9b61952-98a8-6e3b-2d85-6aaf07208a7b@huaweicloud.com>
  <ZAdOgUdqwLpUyPlc@redhat.com>
-From: Hou Tao <houtao@huaweicloud.com>
-Message-ID: <6c2d07bf-828e-3aeb-3c02-6cdfd6e36ff3@huaweicloud.com>
-Date: Wed, 8 Mar 2023 10:56:08 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
- Thunderbird/78.6.0
-MIME-Version: 1.0
-In-Reply-To: <ZAdOgUdqwLpUyPlc@redhat.com>
-X-CM-TRANSID: gCh0CgAn16pI+Qdk9qjPEw--.56532S2
-X-Coremail-Antispam: 1UD129KBjvJXoWxtw4kXrW8GF1UtF18ArWrZrb_yoWxZF4rpa
- 93KayFkrZ5JFW7KwnFyr18ZFyY9rn7Gr9xCwsxGw1UZw1Y9ryvgr1I9rWFvF4qyFZ8uF13
- XFWIyFy5Cws8ArJanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
- 9KBjDU0xBIdaVrnRJUUUyEb4IE77IF4wAFF20E14v26r4j6ryUM7CY07I20VC2zVCF04k2
- 6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
- vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
- xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
- 0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
- 6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
- Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JMxk0xIA0c2IEe2xFo4CEbIxvr21l42xK82IYc2Ij
- 64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x
- 8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r126r1DMIIYrxkI7VAKI48JMIIF0xvE
- 2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r1j6r4UMIIF0xvE42
- xK8VAvwI8IcIk0rVWrZr1j6s0DMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIE
- c7CjxVAFwI0_Jr0_GrUvcSsGvfC2KfnxnUUI43ZEXa7IU1zuWJUUUUU==
-X-CM-SenderInfo: xkrx3t3r6k3tpzhluzxrxghudrp/
-X-CFilter-Loop: Reflected
+ <6c2d07bf-828e-3aeb-3c02-6cdfd6e36ff3@huaweicloud.com>
+In-Reply-To: <6c2d07bf-828e-3aeb-3c02-6cdfd6e36ff3@huaweicloud.com>
+From: Ignat Korchagin <ignat@cloudflare.com>
+Date: Wed, 8 Mar 2023 13:55:34 +0000
+Message-ID: <CALrw=nFrbWF2ZhQtK9gx5ZFHK4Cd9outwEQqByJgmb7ryOoCgA@mail.gmail.com>
+To: Hou Tao <houtao@huaweicloud.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -98,7 +93,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 Subject: Re: [dm-devel] dm crypt: initialize tasklet in crypt_io_init()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -111,178 +106,154 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: houtao1@huawei.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com,
- mpatocka@redhat.com, Ignat Korchagin <ignat@cloudflare.com>,
+Cc: Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
+ dm-devel@redhat.com, mpatocka@redhat.com, houtao1@huawei.com,
  Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-Hi,
-
-On 3/7/2023 10:47 PM, Mike Snitzer wrote:
-> On Mon, Mar 06 2023 at  9:12P -0500,
-> Hou Tao <houtao@huaweicloud.com> wrote:
->
->> Hi,
->>
->> On 3/7/2023 3:31 AM, Mike Snitzer wrote:
->>> On Mon, Mar 06 2023 at  8:49P -0500,
->>> Hou Tao <houtao@huaweicloud.com> wrote:
->>>
->>>> From: Hou Tao <houtao1@huawei.com>
->>>>
->>>> When neither no_read_workqueue nor no_write_workqueue are enabled,
->>>> tasklet_trylock() in crypt_dec_pending() may still return false due to
->>>> an uninitialized state, and dm-crypt will do io completion in io_queue
->>>> instead of current context unnecessarily.
->>> Have you actually experienced this?
->> Yes. I had written a bpftrace script to check the completion context of
->> blkdev_bio_end_io_simple() when doing direct io read on dm-crypt device. The
->> expected context should be unbound workers of crypt_queue, but sometimes the
->> context is the bound worker of io_queue.
-> OK, thanks for clarifying.  Curious to know the circumstance (I
-> thought per-bio-data is zero'd -- but it may be I'm mistaken).
-The circumstance is just a normal qemu VM running the vanilla kernel for test
-purpose. According to the implementation of bio_alloc_bioset(), the front pad of
-bio is not initialized and only bio itself is initialized. AFAIK if
-CONFIG_INIT_ON_ALLOC_DEFAULT_ON is enabled, per-bio-data may be zeroed.
->
-> I won't be marking this commit for stable@ but if others feel
-> differently please let me know and I'll do so. (We can always propose
-> it to stable@, after the fact, even if the commit header doesn't Cc
-> stable@)
->
->>>> Fix it by initializing io->tasklet in crypt_io_init().
->>> Really would rather avoid always calling tasklet_init(). But I can
->>> optimize it away with a later patch.
->> My first though was "io->tasklet.state = 0", but it may be fragile because it
->> operated on the internal status of tasklet, so I switch to tasklet_init().
-> Yes, I looked into it and came up with the same hack.. and I too felt
-> it was too fragile due to open-coding direct access to the tasklet's
-> members.
->
-> I have a patch I just staged that staged that uses jump_labels to
-> optimize this code.  If you might review/test/verify it works well for
-> you that'd be appreciated:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.3&id=ae75a25bd83f7c541240449d2fff3a44433e506b
->
-> It builds on your patch, which I added a comment to:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.3&id=d9fe0a98a2e0a1cf585e8a6555afb33be968bd13
-Thanks for the comments. It is fine to me.
->
-> From: Mike Snitzer <snitzer@kernel.org>
-> Date: Mon, 6 Mar 2023 15:58:33 -0500
-> Subject: [PATCH] dm crypt: conditionally enable code needed for tasklet usecases
->
-> Use jump_label to limit the need for branching, and tasklet_init(),
-> unless either of the optional "no_read_workqueue" and/or
-> "no_write_workqueue" features are used.
->
-> Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-> ---
->  drivers/md/dm-crypt.c | 35 +++++++++++++++++++++++++++--------
->  1 file changed, 27 insertions(+), 8 deletions(-)
->
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index 641457e72603..2d0309ca07f5 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -40,6 +40,7 @@
->  #include <keys/user-type.h>
->  #include <keys/encrypted-type.h>
->  #include <keys/trusted-type.h>
-> +#include <linux/jump_label.h>
->  
->  #include <linux/device-mapper.h>
->  
-> @@ -85,6 +86,8 @@ struct dm_crypt_io {
->  	struct rb_node rb_node;
->  } CRYPTO_MINALIGN_ATTR;
->  
-> +static DEFINE_STATIC_KEY_FALSE(use_tasklet_enabled);
-> +
->  struct dm_crypt_request {
->  	struct convert_context *ctx;
->  	struct scatterlist sg_in[4];
-> @@ -1730,12 +1733,15 @@ static void crypt_io_init(struct dm_crypt_io *io, struct crypt_config *cc,
->  	io->sector = sector;
->  	io->error = 0;
->  	io->ctx.r.req = NULL;
-> -	/*
-> -	 * tasklet_init() here to ensure crypt_dec_pending()'s
-> -	 * tasklet_trylock() doesn't incorrectly return false
-> -	 * even when tasklet isn't in use.
-> -	 */
-> -	tasklet_init(&io->tasklet, kcryptd_crypt_tasklet, (unsigned long)&io->work);
-> +	if (static_branch_unlikely(&use_tasklet_enabled)) {
-> +		/*
-> +		 * tasklet_init() here to ensure crypt_dec_pending()'s
-> +		 * tasklet_trylock() doesn't incorrectly return false
-> +		 * even when tasklet isn't in use.
-> +		 */
-> +		tasklet_init(&io->tasklet, kcryptd_crypt_tasklet,
-> +			     (unsigned long)&io->work);
-> +	}
->  	io->integrity_metadata = NULL;
->  	io->integrity_metadata_from_pool = false;
->  	atomic_set(&io->io_pending, 0);
-> @@ -1775,6 +1781,10 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
->  		kfree(io->integrity_metadata);
->  
->  	base_bio->bi_status = error;
-> +	if (!static_branch_unlikely(&use_tasklet_enabled)) {
-> +		bio_endio(base_bio);
-> +		return;
-> +	}
-Because use_tasklet_enabled can be enabled concurrently, so I think it is still
-possible that crypt_dec_pending will try-lock an unitialized tasklet if
-use_tasklet_enabled is enabled when invoking crypt_dec_pending().
->  
->  	/*
->  	 * If we are running this function from our tasklet,
-> @@ -2232,8 +2242,9 @@ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
->  {
->  	struct crypt_config *cc = io->cc;
->  
-> -	if ((bio_data_dir(io->base_bio) == READ && test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags)) ||
-> -	    (bio_data_dir(io->base_bio) == WRITE && test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags))) {
-> +	if (static_branch_unlikely(&use_tasklet_enabled) &&
-> +	    ((bio_data_dir(io->base_bio) == READ && test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags)) ||
-> +	     (bio_data_dir(io->base_bio) == WRITE && test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags)))) {
->  		/*
->  		 * in_hardirq(): Crypto API's skcipher_walk_first() refuses to work in hard IRQ context.
->  		 * irqs_disabled(): the kernel may run some IO completion from the idle thread, but
-> @@ -2746,6 +2757,10 @@ static void crypt_dtr(struct dm_target *ti)
->  	crypt_calculate_pages_per_client();
->  	spin_unlock(&dm_crypt_clients_lock);
->  
-> +	if (test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags) ||
-> +	    test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags))
-> +		static_branch_dec(&use_tasklet_enabled);
-> +
->  	dm_audit_log_dtr(DM_MSG_PREFIX, ti, 1);
->  }
->  
-> @@ -3375,6 +3390,10 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  	ti->limit_swap_bios = true;
->  	ti->accounts_remapped_io = true;
->  
-> +	if (test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags) ||
-> +	    test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags))
-> +		static_branch_inc(&use_tasklet_enabled);
-> +
->  	dm_audit_log_ctr(DM_MSG_PREFIX, ti, 1);
->  	return 0;
->  
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gV2VkLCBNYXIgOCwgMjAyMyBhdCAyOjU24oCvQU0gSG91IFRhbyA8aG91dGFvQGh1YXdlaWNs
+b3VkLmNvbT4gd3JvdGU6Cj4KPiBIaSwKPgo+IE9uIDMvNy8yMDIzIDEwOjQ3IFBNLCBNaWtlIFNu
+aXR6ZXIgd3JvdGU6Cj4gPiBPbiBNb24sIE1hciAwNiAyMDIzIGF0ICA5OjEyUCAtMDUwMCwKPiA+
+IEhvdSBUYW8gPGhvdXRhb0BodWF3ZWljbG91ZC5jb20+IHdyb3RlOgo+ID4KPiA+PiBIaSwKPiA+
+Pgo+ID4+IE9uIDMvNy8yMDIzIDM6MzEgQU0sIE1pa2UgU25pdHplciB3cm90ZToKPiA+Pj4gT24g
+TW9uLCBNYXIgMDYgMjAyMyBhdCAgODo0OVAgLTA1MDAsCj4gPj4+IEhvdSBUYW8gPGhvdXRhb0Bo
+dWF3ZWljbG91ZC5jb20+IHdyb3RlOgo+ID4+Pgo+ID4+Pj4gRnJvbTogSG91IFRhbyA8aG91dGFv
+MUBodWF3ZWkuY29tPgo+ID4+Pj4KPiA+Pj4+IFdoZW4gbmVpdGhlciBub19yZWFkX3dvcmtxdWV1
+ZSBub3Igbm9fd3JpdGVfd29ya3F1ZXVlIGFyZSBlbmFibGVkLAo+ID4+Pj4gdGFza2xldF90cnls
+b2NrKCkgaW4gY3J5cHRfZGVjX3BlbmRpbmcoKSBtYXkgc3RpbGwgcmV0dXJuIGZhbHNlIGR1ZSB0
+bwo+ID4+Pj4gYW4gdW5pbml0aWFsaXplZCBzdGF0ZSwgYW5kIGRtLWNyeXB0IHdpbGwgZG8gaW8g
+Y29tcGxldGlvbiBpbiBpb19xdWV1ZQo+ID4+Pj4gaW5zdGVhZCBvZiBjdXJyZW50IGNvbnRleHQg
+dW5uZWNlc3NhcmlseS4KPiA+Pj4gSGF2ZSB5b3UgYWN0dWFsbHkgZXhwZXJpZW5jZWQgdGhpcz8K
+PiA+PiBZZXMuIEkgaGFkIHdyaXR0ZW4gYSBicGZ0cmFjZSBzY3JpcHQgdG8gY2hlY2sgdGhlIGNv
+bXBsZXRpb24gY29udGV4dCBvZgo+ID4+IGJsa2Rldl9iaW9fZW5kX2lvX3NpbXBsZSgpIHdoZW4g
+ZG9pbmcgZGlyZWN0IGlvIHJlYWQgb24gZG0tY3J5cHQgZGV2aWNlLiBUaGUKPiA+PiBleHBlY3Rl
+ZCBjb250ZXh0IHNob3VsZCBiZSB1bmJvdW5kIHdvcmtlcnMgb2YgY3J5cHRfcXVldWUsIGJ1dCBz
+b21ldGltZXMgdGhlCj4gPj4gY29udGV4dCBpcyB0aGUgYm91bmQgd29ya2VyIG9mIGlvX3F1ZXVl
+Lgo+ID4gT0ssIHRoYW5rcyBmb3IgY2xhcmlmeWluZy4gIEN1cmlvdXMgdG8ga25vdyB0aGUgY2ly
+Y3Vtc3RhbmNlIChJCj4gPiB0aG91Z2h0IHBlci1iaW8tZGF0YSBpcyB6ZXJvJ2QgLS0gYnV0IGl0
+IG1heSBiZSBJJ20gbWlzdGFrZW4pLgo+IFRoZSBjaXJjdW1zdGFuY2UgaXMganVzdCBhIG5vcm1h
+bCBxZW11IFZNIHJ1bm5pbmcgdGhlIHZhbmlsbGEga2VybmVsIGZvciB0ZXN0Cj4gcHVycG9zZS4g
+QWNjb3JkaW5nIHRvIHRoZSBpbXBsZW1lbnRhdGlvbiBvZiBiaW9fYWxsb2NfYmlvc2V0KCksIHRo
+ZSBmcm9udCBwYWQgb2YKPiBiaW8gaXMgbm90IGluaXRpYWxpemVkIGFuZCBvbmx5IGJpbyBpdHNl
+bGYgaXMgaW5pdGlhbGl6ZWQuIEFGQUlLIGlmCj4gQ09ORklHX0lOSVRfT05fQUxMT0NfREVGQVVM
+VF9PTiBpcyBlbmFibGVkLCBwZXItYmlvLWRhdGEgbWF5IGJlIHplcm9lZC4KPiA+Cj4gPiBJIHdv
+bid0IGJlIG1hcmtpbmcgdGhpcyBjb21taXQgZm9yIHN0YWJsZUAgYnV0IGlmIG90aGVycyBmZWVs
+Cj4gPiBkaWZmZXJlbnRseSBwbGVhc2UgbGV0IG1lIGtub3cgYW5kIEknbGwgZG8gc28uIChXZSBj
+YW4gYWx3YXlzIHByb3Bvc2UKPiA+IGl0IHRvIHN0YWJsZUAsIGFmdGVyIHRoZSBmYWN0LCBldmVu
+IGlmIHRoZSBjb21taXQgaGVhZGVyIGRvZXNuJ3QgQ2MKPiA+IHN0YWJsZUApCj4gPgo+ID4+Pj4g
+Rml4IGl0IGJ5IGluaXRpYWxpemluZyBpby0+dGFza2xldCBpbiBjcnlwdF9pb19pbml0KCkuCj4g
+Pj4+IFJlYWxseSB3b3VsZCByYXRoZXIgYXZvaWQgYWx3YXlzIGNhbGxpbmcgdGFza2xldF9pbml0
+KCkuIEJ1dCBJIGNhbgo+ID4+PiBvcHRpbWl6ZSBpdCBhd2F5IHdpdGggYSBsYXRlciBwYXRjaC4K
+PiA+PiBNeSBmaXJzdCB0aG91Z2ggd2FzICJpby0+dGFza2xldC5zdGF0ZSA9IDAiLCBidXQgaXQg
+bWF5IGJlIGZyYWdpbGUgYmVjYXVzZSBpdAo+ID4+IG9wZXJhdGVkIG9uIHRoZSBpbnRlcm5hbCBz
+dGF0dXMgb2YgdGFza2xldCwgc28gSSBzd2l0Y2ggdG8gdGFza2xldF9pbml0KCkuCj4gPiBZZXMs
+IEkgbG9va2VkIGludG8gaXQgYW5kIGNhbWUgdXAgd2l0aCB0aGUgc2FtZSBoYWNrLi4gYW5kIEkg
+dG9vIGZlbHQKPiA+IGl0IHdhcyB0b28gZnJhZ2lsZSBkdWUgdG8gb3Blbi1jb2RpbmcgZGlyZWN0
+IGFjY2VzcyB0byB0aGUgdGFza2xldCdzCj4gPiBtZW1iZXJzLgo+ID4KPiA+IEkgaGF2ZSBhIHBh
+dGNoIEkganVzdCBzdGFnZWQgdGhhdCBzdGFnZWQgdGhhdCB1c2VzIGp1bXBfbGFiZWxzIHRvCj4g
+PiBvcHRpbWl6ZSB0aGlzIGNvZGUuICBJZiB5b3UgbWlnaHQgcmV2aWV3L3Rlc3QvdmVyaWZ5IGl0
+IHdvcmtzIHdlbGwgZm9yCj4gPiB5b3UgdGhhdCdkIGJlIGFwcHJlY2lhdGVkOgo+ID4gaHR0cHM6
+Ly9naXQua2VybmVsLm9yZy9wdWIvc2NtL2xpbnV4L2tlcm5lbC9naXQvZGV2aWNlLW1hcHBlci9s
+aW51eC1kbS5naXQvY29tbWl0Lz9oPWRtLTYuMyZpZD1hZTc1YTI1YmQ4M2Y3YzU0MTI0MDQ0OWQy
+ZmZmM2E0NDQzM2U1MDZiCj4gPgo+ID4gSXQgYnVpbGRzIG9uIHlvdXIgcGF0Y2gsIHdoaWNoIEkg
+YWRkZWQgYSBjb21tZW50IHRvOgo+ID4gaHR0cHM6Ly9naXQua2VybmVsLm9yZy9wdWIvc2NtL2xp
+bnV4L2tlcm5lbC9naXQvZGV2aWNlLW1hcHBlci9saW51eC1kbS5naXQvY29tbWl0Lz9oPWRtLTYu
+MyZpZD1kOWZlMGE5OGEyZTBhMWNmNTg1ZThhNjU1NWFmYjMzYmU5NjhiZDEzCj4gVGhhbmtzIGZv
+ciB0aGUgY29tbWVudHMuIEl0IGlzIGZpbmUgdG8gbWUuCj4gPgo+ID4gRnJvbTogTWlrZSBTbml0
+emVyIDxzbml0emVyQGtlcm5lbC5vcmc+Cj4gPiBEYXRlOiBNb24sIDYgTWFyIDIwMjMgMTU6NTg6
+MzMgLTA1MDAKPiA+IFN1YmplY3Q6IFtQQVRDSF0gZG0gY3J5cHQ6IGNvbmRpdGlvbmFsbHkgZW5h
+YmxlIGNvZGUgbmVlZGVkIGZvciB0YXNrbGV0IHVzZWNhc2VzCj4gPgo+ID4gVXNlIGp1bXBfbGFi
+ZWwgdG8gbGltaXQgdGhlIG5lZWQgZm9yIGJyYW5jaGluZywgYW5kIHRhc2tsZXRfaW5pdCgpLAo+
+ID4gdW5sZXNzIGVpdGhlciBvZiB0aGUgb3B0aW9uYWwgIm5vX3JlYWRfd29ya3F1ZXVlIiBhbmQv
+b3IKPiA+ICJub193cml0ZV93b3JrcXVldWUiIGZlYXR1cmVzIGFyZSB1c2VkLgo+ID4KPiA+IFNp
+Z25lZC1vZmYtYnk6IE1pa2UgU25pdHplciA8c25pdHplckBrZXJuZWwub3JnPgo+ID4gLS0tCj4g
+PiAgZHJpdmVycy9tZC9kbS1jcnlwdC5jIHwgMzUgKysrKysrKysrKysrKysrKysrKysrKysrKysr
+LS0tLS0tLS0KPiA+ICAxIGZpbGUgY2hhbmdlZCwgMjcgaW5zZXJ0aW9ucygrKSwgOCBkZWxldGlv
+bnMoLSkKPiA+Cj4gPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS1jcnlwdC5jIGIvZHJpdmVy
+cy9tZC9kbS1jcnlwdC5jCj4gPiBpbmRleCA2NDE0NTdlNzI2MDMuLjJkMDMwOWNhMDdmNSAxMDA2
+NDQKPiA+IC0tLSBhL2RyaXZlcnMvbWQvZG0tY3J5cHQuYwo+ID4gKysrIGIvZHJpdmVycy9tZC9k
+bS1jcnlwdC5jCj4gPiBAQCAtNDAsNiArNDAsNyBAQAo+ID4gICNpbmNsdWRlIDxrZXlzL3VzZXIt
+dHlwZS5oPgo+ID4gICNpbmNsdWRlIDxrZXlzL2VuY3J5cHRlZC10eXBlLmg+Cj4gPiAgI2luY2x1
+ZGUgPGtleXMvdHJ1c3RlZC10eXBlLmg+Cj4gPiArI2luY2x1ZGUgPGxpbnV4L2p1bXBfbGFiZWwu
+aD4KPiA+Cj4gPiAgI2luY2x1ZGUgPGxpbnV4L2RldmljZS1tYXBwZXIuaD4KPiA+Cj4gPiBAQCAt
+ODUsNiArODYsOCBAQCBzdHJ1Y3QgZG1fY3J5cHRfaW8gewo+ID4gICAgICAgc3RydWN0IHJiX25v
+ZGUgcmJfbm9kZTsKPiA+ICB9IENSWVBUT19NSU5BTElHTl9BVFRSOwo+ID4KPiA+ICtzdGF0aWMg
+REVGSU5FX1NUQVRJQ19LRVlfRkFMU0UodXNlX3Rhc2tsZXRfZW5hYmxlZCk7Cj4gPiArCj4gPiAg
+c3RydWN0IGRtX2NyeXB0X3JlcXVlc3Qgewo+ID4gICAgICAgc3RydWN0IGNvbnZlcnRfY29udGV4
+dCAqY3R4Owo+ID4gICAgICAgc3RydWN0IHNjYXR0ZXJsaXN0IHNnX2luWzRdOwo+ID4gQEAgLTE3
+MzAsMTIgKzE3MzMsMTUgQEAgc3RhdGljIHZvaWQgY3J5cHRfaW9faW5pdChzdHJ1Y3QgZG1fY3J5
+cHRfaW8gKmlvLCBzdHJ1Y3QgY3J5cHRfY29uZmlnICpjYywKPiA+ICAgICAgIGlvLT5zZWN0b3Ig
+PSBzZWN0b3I7Cj4gPiAgICAgICBpby0+ZXJyb3IgPSAwOwo+ID4gICAgICAgaW8tPmN0eC5yLnJl
+cSA9IE5VTEw7Cj4gPiAtICAgICAvKgo+ID4gLSAgICAgICogdGFza2xldF9pbml0KCkgaGVyZSB0
+byBlbnN1cmUgY3J5cHRfZGVjX3BlbmRpbmcoKSdzCj4gPiAtICAgICAgKiB0YXNrbGV0X3RyeWxv
+Y2soKSBkb2Vzbid0IGluY29ycmVjdGx5IHJldHVybiBmYWxzZQo+ID4gLSAgICAgICogZXZlbiB3
+aGVuIHRhc2tsZXQgaXNuJ3QgaW4gdXNlLgo+ID4gLSAgICAgICovCj4gPiAtICAgICB0YXNrbGV0
+X2luaXQoJmlvLT50YXNrbGV0LCBrY3J5cHRkX2NyeXB0X3Rhc2tsZXQsICh1bnNpZ25lZCBsb25n
+KSZpby0+d29yayk7Cj4gPiArICAgICBpZiAoc3RhdGljX2JyYW5jaF91bmxpa2VseSgmdXNlX3Rh
+c2tsZXRfZW5hYmxlZCkpIHsKPiA+ICsgICAgICAgICAgICAgLyoKPiA+ICsgICAgICAgICAgICAg
+ICogdGFza2xldF9pbml0KCkgaGVyZSB0byBlbnN1cmUgY3J5cHRfZGVjX3BlbmRpbmcoKSdzCj4g
+PiArICAgICAgICAgICAgICAqIHRhc2tsZXRfdHJ5bG9jaygpIGRvZXNuJ3QgaW5jb3JyZWN0bHkg
+cmV0dXJuIGZhbHNlCj4gPiArICAgICAgICAgICAgICAqIGV2ZW4gd2hlbiB0YXNrbGV0IGlzbid0
+IGluIHVzZS4KPiA+ICsgICAgICAgICAgICAgICovCj4gPiArICAgICAgICAgICAgIHRhc2tsZXRf
+aW5pdCgmaW8tPnRhc2tsZXQsIGtjcnlwdGRfY3J5cHRfdGFza2xldCwKPiA+ICsgICAgICAgICAg
+ICAgICAgICAgICAgICAgICh1bnNpZ25lZCBsb25nKSZpby0+d29yayk7Cj4gPiArICAgICB9Cj4g
+PiAgICAgICBpby0+aW50ZWdyaXR5X21ldGFkYXRhID0gTlVMTDsKPiA+ICAgICAgIGlvLT5pbnRl
+Z3JpdHlfbWV0YWRhdGFfZnJvbV9wb29sID0gZmFsc2U7Cj4gPiAgICAgICBhdG9taWNfc2V0KCZp
+by0+aW9fcGVuZGluZywgMCk7Cj4gPiBAQCAtMTc3NSw2ICsxNzgxLDEwIEBAIHN0YXRpYyB2b2lk
+IGNyeXB0X2RlY19wZW5kaW5nKHN0cnVjdCBkbV9jcnlwdF9pbyAqaW8pCj4gPiAgICAgICAgICAg
+ICAgIGtmcmVlKGlvLT5pbnRlZ3JpdHlfbWV0YWRhdGEpOwo+ID4KPiA+ICAgICAgIGJhc2VfYmlv
+LT5iaV9zdGF0dXMgPSBlcnJvcjsKPiA+ICsgICAgIGlmICghc3RhdGljX2JyYW5jaF91bmxpa2Vs
+eSgmdXNlX3Rhc2tsZXRfZW5hYmxlZCkpIHsKPiA+ICsgICAgICAgICAgICAgYmlvX2VuZGlvKGJh
+c2VfYmlvKTsKPiA+ICsgICAgICAgICAgICAgcmV0dXJuOwo+ID4gKyAgICAgfQo+IEJlY2F1c2Ug
+dXNlX3Rhc2tsZXRfZW5hYmxlZCBjYW4gYmUgZW5hYmxlZCBjb25jdXJyZW50bHksIHNvIEkgdGhp
+bmsgaXQgaXMgc3RpbGwKPiBwb3NzaWJsZSB0aGF0IGNyeXB0X2RlY19wZW5kaW5nIHdpbGwgdHJ5
+LWxvY2sgYW4gdW5pdGlhbGl6ZWQgdGFza2xldCBpZgo+IHVzZV90YXNrbGV0X2VuYWJsZWQgaXMg
+ZW5hYmxlZCB3aGVuIGludm9raW5nIGNyeXB0X2RlY19wZW5kaW5nKCkuCgpQZXJoYXBzIGluc3Rl
+YWQgd2UgY2FuIGp1c3QgcGFzcyBhbiBhZGRpdGlvbmFsIGZsYWcgZnJvbQp0YXNrbGV0X3NjaGVk
+dWxlIHRvIGluZGljYXRlIHRvIHRoZSBmdW5jdGlvbiB0aGF0IHdlJ3JlIHJ1bm5pbmcgaW4gYQp0
+YXNrbGV0LiBJIG9yaWdpbmFsbHkgaGF2ZSBjaG9zZW4gdGhlIHRhc2tsZXRfdHJ5bG9jay91bmxv
+Y2sgaGFjayB0bwphdm9pZCBwYXNzaW5nIGFuIGV4dHJhIGZsYWcuIEJ1dCB1bml0aWFsaXplZCBt
+ZW1vcnkgbWFrZXMgc2Vuc2UgYXMKd2VsbCBhcyB0aGUgZGVzaXJlIHRvIGF2b2lkIGNhbGxpbmcg
+dGFza2xldF9pbml0IHVuY29uZGl0aW9uYWxseS4gU28KYW4gZXh0cmEgbWVtYmVyIGluIGRtX2Ny
+eXB0X2lvIG1pZ2h0IGJlIHRoZSBtb3N0IHN0cmFpZ2h0Zm9yd2FyZCBoZXJlLgoKSWduYXQKCj4g
+PiAgICAgICAvKgo+ID4gICAgICAgICogSWYgd2UgYXJlIHJ1bm5pbmcgdGhpcyBmdW5jdGlvbiBm
+cm9tIG91ciB0YXNrbGV0LAo+ID4gQEAgLTIyMzIsOCArMjI0Miw5IEBAIHN0YXRpYyB2b2lkIGtj
+cnlwdGRfcXVldWVfY3J5cHQoc3RydWN0IGRtX2NyeXB0X2lvICppbykKPiA+ICB7Cj4gPiAgICAg
+ICBzdHJ1Y3QgY3J5cHRfY29uZmlnICpjYyA9IGlvLT5jYzsKPiA+Cj4gPiAtICAgICBpZiAoKGJp
+b19kYXRhX2Rpcihpby0+YmFzZV9iaW8pID09IFJFQUQgJiYgdGVzdF9iaXQoRE1fQ1JZUFRfTk9f
+UkVBRF9XT1JLUVVFVUUsICZjYy0+ZmxhZ3MpKSB8fAo+ID4gLSAgICAgICAgIChiaW9fZGF0YV9k
+aXIoaW8tPmJhc2VfYmlvKSA9PSBXUklURSAmJiB0ZXN0X2JpdChETV9DUllQVF9OT19XUklURV9X
+T1JLUVVFVUUsICZjYy0+ZmxhZ3MpKSkgewo+ID4gKyAgICAgaWYgKHN0YXRpY19icmFuY2hfdW5s
+aWtlbHkoJnVzZV90YXNrbGV0X2VuYWJsZWQpICYmCj4gPiArICAgICAgICAgKChiaW9fZGF0YV9k
+aXIoaW8tPmJhc2VfYmlvKSA9PSBSRUFEICYmIHRlc3RfYml0KERNX0NSWVBUX05PX1JFQURfV09S
+S1FVRVVFLCAmY2MtPmZsYWdzKSkgfHwKPiA+ICsgICAgICAgICAgKGJpb19kYXRhX2Rpcihpby0+
+YmFzZV9iaW8pID09IFdSSVRFICYmIHRlc3RfYml0KERNX0NSWVBUX05PX1dSSVRFX1dPUktRVUVV
+RSwgJmNjLT5mbGFncykpKSkgewo+ID4gICAgICAgICAgICAgICAvKgo+ID4gICAgICAgICAgICAg
+ICAgKiBpbl9oYXJkaXJxKCk6IENyeXB0byBBUEkncyBza2NpcGhlcl93YWxrX2ZpcnN0KCkgcmVm
+dXNlcyB0byB3b3JrIGluIGhhcmQgSVJRIGNvbnRleHQuCj4gPiAgICAgICAgICAgICAgICAqIGly
+cXNfZGlzYWJsZWQoKTogdGhlIGtlcm5lbCBtYXkgcnVuIHNvbWUgSU8gY29tcGxldGlvbiBmcm9t
+IHRoZSBpZGxlIHRocmVhZCwgYnV0Cj4gPiBAQCAtMjc0Niw2ICsyNzU3LDEwIEBAIHN0YXRpYyB2
+b2lkIGNyeXB0X2R0cihzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSkKPiA+ICAgICAgIGNyeXB0X2NhbGN1
+bGF0ZV9wYWdlc19wZXJfY2xpZW50KCk7Cj4gPiAgICAgICBzcGluX3VubG9jaygmZG1fY3J5cHRf
+Y2xpZW50c19sb2NrKTsKPiA+Cj4gPiArICAgICBpZiAodGVzdF9iaXQoRE1fQ1JZUFRfTk9fUkVB
+RF9XT1JLUVVFVUUsICZjYy0+ZmxhZ3MpIHx8Cj4gPiArICAgICAgICAgdGVzdF9iaXQoRE1fQ1JZ
+UFRfTk9fV1JJVEVfV09SS1FVRVVFLCAmY2MtPmZsYWdzKSkKPiA+ICsgICAgICAgICAgICAgc3Rh
+dGljX2JyYW5jaF9kZWMoJnVzZV90YXNrbGV0X2VuYWJsZWQpOwo+ID4gKwo+ID4gICAgICAgZG1f
+YXVkaXRfbG9nX2R0cihETV9NU0dfUFJFRklYLCB0aSwgMSk7Cj4gPiAgfQo+ID4KPiA+IEBAIC0z
+Mzc1LDYgKzMzOTAsMTAgQEAgc3RhdGljIGludCBjcnlwdF9jdHIoc3RydWN0IGRtX3RhcmdldCAq
+dGksIHVuc2lnbmVkIGludCBhcmdjLCBjaGFyICoqYXJndikKPiA+ICAgICAgIHRpLT5saW1pdF9z
+d2FwX2Jpb3MgPSB0cnVlOwo+ID4gICAgICAgdGktPmFjY291bnRzX3JlbWFwcGVkX2lvID0gdHJ1
+ZTsKPiA+Cj4gPiArICAgICBpZiAodGVzdF9iaXQoRE1fQ1JZUFRfTk9fUkVBRF9XT1JLUVVFVUUs
+ICZjYy0+ZmxhZ3MpIHx8Cj4gPiArICAgICAgICAgdGVzdF9iaXQoRE1fQ1JZUFRfTk9fV1JJVEVf
+V09SS1FVRVVFLCAmY2MtPmZsYWdzKSkKPiA+ICsgICAgICAgICAgICAgc3RhdGljX2JyYW5jaF9p
+bmMoJnVzZV90YXNrbGV0X2VuYWJsZWQpOwo+ID4gKwo+ID4gICAgICAgZG1fYXVkaXRfbG9nX2N0
+cihETV9NU0dfUFJFRklYLCB0aSwgMSk7Cj4gPiAgICAgICByZXR1cm4gMDsKPiA+Cj4KCi0tCmRt
+LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
 
