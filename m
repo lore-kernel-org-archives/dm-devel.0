@@ -4,68 +4,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id ABD92C6FD1F
-	for <dm-devel@archiver.kernel.org>; Tue, 14 Mar 2023 17:14:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3195EC05027
+	for <dm-devel@archiver.kernel.org>; Tue, 14 Mar 2023 17:15:57 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1678814064;
+	s=mimecast20190719; t=1678814156;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=MM6zewzuBVhZKJlWAC4iOYiF1HVm+oqy9yacc9bg0PY=;
-	b=MQmgmL2HK3aq7XPOeGr7lhJ+vw+OxhqVWWviulwNTL8YbbSEorx9zPNZEZqok2AHuCQV+O
-	+I0tugoCIupdA7PX1vLO8Xby2G7txxqN/QvwDIkL9+wHRKY0Fif3peMySUgE3wF9EnUjUE
-	vrwYP4xEkTedfaEqGI/ZYr30n61aJUw=
+	bh=o8fks+7TvLb0ghTgpzg23S60N4uWEsPOOG3eZEeoWpE=;
+	b=hVqNrEEYqKxYMMErnZesSPqQan3sBbK88gScwGQLH1B3oipYcVaDyUNYla+hHMsMWIzEu1
+	8rOstlngeIIGtFfVIJcJQeDgLc5/Flnk5/E9TkhTmP2Mq7EqpAfaGIlSHiQFAS+/fMc0UW
+	jhvdPqyu2/7Z2CSEVaRGcftFMX4RD94=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-562-uoIFcBI3MnmXgx9R0FsUSA-1; Tue, 14 Mar 2023 13:14:23 -0400
-X-MC-Unique: uoIFcBI3MnmXgx9R0FsUSA-1
+ us-mta-338-PLMhzdzGMMevTau4hS9WxA-1; Tue, 14 Mar 2023 13:15:54 -0400
+X-MC-Unique: PLMhzdzGMMevTau4hS9WxA-1
 Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 769BB857A93;
-	Tue, 14 Mar 2023 17:14:21 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C1F58889047;
+	Tue, 14 Mar 2023 17:15:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 65165492B02;
-	Tue, 14 Mar 2023 17:14:21 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B1135492B00;
+	Tue, 14 Mar 2023 17:15:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4F75319465A2;
-	Tue, 14 Mar 2023 17:14:21 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 97D6A19465A2;
+	Tue, 14 Mar 2023 17:15:45 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
  [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 9B84C19465A0
- for <dm-devel@listman.corp.redhat.com>; Tue, 14 Mar 2023 17:14:05 +0000 (UTC)
+ ESMTP id BC01019465A0
+ for <dm-devel@listman.corp.redhat.com>; Tue, 14 Mar 2023 17:15:44 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 62FA81121315; Tue, 14 Mar 2023 17:14:05 +0000 (UTC)
+ id 57B1B1121318; Tue, 14 Mar 2023 17:15:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 5B3BA1121318
- for <dm-devel@redhat.com>; Tue, 14 Mar 2023 17:14:05 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 5024A1121315
+ for <dm-devel@redhat.com>; Tue, 14 Mar 2023 17:15:44 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 417E9101A52E
- for <dm-devel@redhat.com>; Tue, 14 Mar 2023 17:14:05 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3534985A5A3
+ for <dm-devel@redhat.com>; Tue, 14 Mar 2023 17:15:44 +0000 (UTC)
 Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-572-AwS42pEWOrCwXWjqyhgDpQ-1; Tue, 14 Mar 2023 13:14:03 -0400
-X-MC-Unique: AwS42pEWOrCwXWjqyhgDpQ-1
+ us-mta-638-MoTsxoe2PVqrdWnNxpV0Gw-1; Tue, 14 Mar 2023 13:15:41 -0400
+X-MC-Unique: MoTsxoe2PVqrdWnNxpV0Gw-1
 Received: by verein.lst.de (Postfix, from userid 2407)
- id 3172868B05; Tue, 14 Mar 2023 18:14:00 +0100 (CET)
-Date: Tue, 14 Mar 2023 18:13:59 +0100
+ id D95EE68B05; Tue, 14 Mar 2023 18:15:38 +0100 (CET)
+Date: Tue, 14 Mar 2023 18:15:38 +0100
 From: Christoph Hellwig <hch@lst.de>
 To: Mike Christie <michael.christie@oracle.com>
-Message-ID: <20230314171359.GF6780@lst.de>
+Message-ID: <20230314171538.GG6780@lst.de>
 References: <20230224174502.321490-1-michael.christie@oracle.com>
- <20230224174502.321490-11-michael.christie@oracle.com>
+ <20230224174502.321490-8-michael.christie@oracle.com>
 MIME-Version: 1.0
-In-Reply-To: <20230224174502.321490-11-michael.christie@oracle.com>
+In-Reply-To: <20230224174502.321490-8-michael.christie@oracle.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -75,7 +74,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: Re: [dm-devel] [PATCH v4 10/18] nvme: Add helper to send pr command
+Subject: Re: [dm-devel] [PATCH v4 07/18] nvme: Fix reservation status
+ related structs
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -101,11 +101,18 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Looks good,
+On Fri, Feb 24, 2023 at 11:44:51AM -0600, Mike Christie wrote:
+> +	__u8	resv10[14];
+> +	union {
+> +		struct {
+> +			__u8	rsvd24[40];
+> +			struct nvme_registered_ctrl_ext regctl_eds[0];
+> +		};
+> +		struct nvme_registered_ctrl regctl_ds[0];
+> +	};
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-
-althought I'd also prefer to drop the redundant else.
+... actually - I think both these zero sized arrays should
+be the modern [] notation.
 
 --
 dm-devel mailing list
