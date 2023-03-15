@@ -1,73 +1,70 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 450EFC7618B
-	for <dm-devel@archiver.kernel.org>; Wed, 15 Mar 2023 13:36:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9BFFAC61DA4
+	for <dm-devel@archiver.kernel.org>; Wed, 15 Mar 2023 15:11:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1678887377;
+	s=mimecast20190719; t=1678893071;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=zVajKjHJH4T8MtlUPgf6h5p6E44FRaAwLhhN3J7nrpY=;
-	b=cBYLEwJ2xp9fV3xh7rTsJC1uxhO8em5vzYm9bZVXF7wUlNRV5oka1EhdxyO+OWOMoOPJFb
-	Nk3PnTIbPJwl7vof/gjb1dBRHoDWoSfqRwgoNaKR/9G9T9JfYQHNrKcK2WpUdqQoJWHa2R
-	lqnE9j/D5yshAAEChH5dW1Txin/DfVA=
+	bh=Pm1z+kVqWbjaxGlwDeQFznjeaTJVp/p72ZnOnwk1vd4=;
+	b=L5znJeLf5RoX/H1ye9WDHE42jU4tPkDL19DoufwYBJCtkCGI8g1ZRPKfAVEMlNcUHAAlDx
+	vNrer2FBSePq8oistXivCzN4GSpGI17geh4jzHvXAe2yuw868GgHMiO4ab2wnDjHpOULQV
+	ty4LjB4LSxImnEpUrghjbKANWLxEZ5k=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-610--6jgw6vMMIG5EklO56FUVQ-1; Wed, 15 Mar 2023 09:36:16 -0400
-X-MC-Unique: -6jgw6vMMIG5EklO56FUVQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-173-HrPeyFqtORSTUXdKWW_oLA-1; Wed, 15 Mar 2023 11:11:07 -0400
+X-MC-Unique: HrPeyFqtORSTUXdKWW_oLA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6A92C85A5A3;
-	Wed, 15 Mar 2023 13:36:13 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A6365140E960;
-	Wed, 15 Mar 2023 13:36:09 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DC95187A9E4;
+	Wed, 15 Mar 2023 15:11:04 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 709411121315;
+	Wed, 15 Mar 2023 15:11:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7D78B19465BC;
-	Wed, 15 Mar 2023 13:36:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4BE4E1946A40;
+	Wed, 15 Mar 2023 15:11:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6098119465B6
- for <dm-devel@listman.corp.redhat.com>; Wed, 15 Mar 2023 13:30:50 +0000 (UTC)
+ ESMTP id 235FA1946597
+ for <dm-devel@listman.corp.redhat.com>; Wed, 15 Mar 2023 15:11:02 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 93669140E991; Wed, 15 Mar 2023 13:30:50 +0000 (UTC)
+ id 044B82166B29; Wed, 15 Mar 2023 15:11:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8B75D1410F1B
- for <dm-devel@redhat.com>; Wed, 15 Mar 2023 13:30:50 +0000 (UTC)
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id F1BDB2166B26
+ for <dm-devel@redhat.com>; Wed, 15 Mar 2023 15:11:01 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 47CDE38601A4
- for <dm-devel@redhat.com>; Wed, 15 Mar 2023 13:30:50 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D0476185A7A5
+ for <dm-devel@redhat.com>; Wed, 15 Mar 2023 15:11:01 +0000 (UTC)
 Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-593-49iHHxR2Pe-SqbNA7Ck6sQ-1; Wed, 15 Mar 2023 09:30:48 -0400
-X-MC-Unique: 49iHHxR2Pe-SqbNA7Ck6sQ-1
+ us-mta-416-sMMs6OSaP5yFK4EkL0Q9Xg-1; Wed, 15 Mar 2023 11:10:59 -0400
+X-MC-Unique: sMMs6OSaP5yFK4EkL0Q9Xg-1
 Received: by verein.lst.de (Postfix, from userid 2407)
- id 65B0768B05; Wed, 15 Mar 2023 14:30:40 +0100 (CET)
-Date: Wed, 15 Mar 2023 14:30:39 +0100
+ id CB9C468B05; Wed, 15 Mar 2023 16:10:53 +0100 (CET)
+Date: Wed, 15 Mar 2023 16:10:53 +0100
 From: Christoph Hellwig <hch@lst.de>
-To: Stefan Haberland <sth@linux.ibm.com>
-Message-ID: <20230315133039.GA24533@lst.de>
-References: <20230224174502.321490-1-michael.christie@oracle.com>
- <20230224174502.321490-3-michael.christie@oracle.com>
- <20230314171119.GB6780@lst.de>
- <33ed9615-b570-03c7-9a7a-d07f020d3222@linux.ibm.com>
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <20230315151053.GA32066@lst.de>
+References: <20230223091226.1135678-1-yukuai1@huaweicloud.com>
 MIME-Version: 1.0
-In-Reply-To: <33ed9615-b570-03c7-9a7a-d07f020d3222@linux.ibm.com>
+In-Reply-To: <20230223091226.1135678-1-yukuai1@huaweicloud.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -76,9 +73,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH v4 02/18] block: Rename BLK_STS_NEXUS to
- BLK_STS_RESV_CONFLICT
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH -next RFC] block: count 'ios' and 'sectors'
+ when io is done for bio-based device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -90,32 +87,23 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, chaitanyak@nvidia.com,
- martin.petersen@oracle.com, linux-scsi@vger.kernel.org, snitzer@kernel.org,
- Jan Hoeppner <hoeppner@linux.ibm.com>, linux-nvme@lists.infradead.org,
- james.bottomley@hansenpartnership.com, dm-devel@redhat.com,
- target-devel@vger.kernel.org, kbusch@kernel.org,
- Christoph Hellwig <hch@lst.de>, Mike Christie <michael.christie@oracle.com>,
- bvanassche@acm.org
+Cc: axboe@kernel.dk, sagi@grimberg.me, yi.zhang@huawei.com,
+ yangerkun@huawei.com, snitzer@kernel.org, linux-kernel@vger.kernel.org,
+ linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
+ guz.fnst@cn.fujitsu.com, dm-devel@redhat.com, kbusch@kernel.org,
+ yukuai3@huawei.com, hch@lst.de, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Mar 15, 2023 at 11:04:22AM +0100, Stefan Haberland wrote:
-> This also fits for the DASD case. We use this error code for a
-> reservation/locking conflict of the DASD device when the lock we
-> previously held was stolen.
+Looks good:
 
-But that's not really a reservation conflict in the sense
-of the reservation API.  Given that DASD doesn't support it it
-might not matter.  Do you have applications that checks for
-the translated errno value?  We'll probably at least want
-a comment documenting this status code.
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 
 --
 dm-devel mailing list
