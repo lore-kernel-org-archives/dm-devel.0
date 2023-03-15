@@ -4,134 +4,118 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CB6E6C74A5B
-	for <dm-devel@archiver.kernel.org>; Fri, 17 Mar 2023 14:46:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6EFEDC6FD1D
+	for <dm-devel@archiver.kernel.org>; Fri, 17 Mar 2023 14:46:57 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1679064410;
+	s=mimecast20190719; t=1679064416;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=BCDI7zzDdBAWafLD8kpN6QE9xprSqT8EreXeEmLMZBw=;
-	b=AzWftO+O2FrardBOnWf/LtGW+Z2vSzF4Jcq4Wbv9etWAr3sb0+qDgp3nECk1I1XbBVWTAE
-	kTgdmknPIsstZeGYM7bzXdTSs2bsoOsTIT23WDwvDPBZLDX3kZHfcWrqgVzdEfwhFXIMaM
-	f/lLTmhYTww6kd6Wmj7iP93oClKo6cc=
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=mudzSpnSNBqMDwnNDVC57Oq3ky2ETAAqxwm46QUbPFQ=;
+	b=ZCVG0bcFvAvuYxO8tp8jIyyl5mpAeMxu3LdRehlG42KEzYOBGNx7vYfh4fqtMlyX7FtSWl
+	eyU6TZy9DPbhmvxn5qZtcUxsj0Jsdzqp0ecdtkoBXnbKO+BkaSeuynhOilRovk5AbePW39
+	xCpJMuWuTxzLuWk/bf9QuxYWVgcPLcs=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-640-pQGlGTNXNle5hbyQ-7u-xA-1; Fri, 17 Mar 2023 10:46:49 -0400
-X-MC-Unique: pQGlGTNXNle5hbyQ-7u-xA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-394-PZw7JR9ZN8iQ0LpZbZl8gg-1; Fri, 17 Mar 2023 10:46:52 -0400
+X-MC-Unique: PZw7JR9ZN8iQ0LpZbZl8gg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 49661101A552;
-	Fri, 17 Mar 2023 14:46:47 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2AE8F800B23;
+	Fri, 17 Mar 2023 14:46:51 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0CE9E1121315;
-	Fri, 17 Mar 2023 14:46:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 180812027046;
+	Fri, 17 Mar 2023 14:46:51 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B5D661946597;
-	Fri, 17 Mar 2023 14:46:42 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EB1681946587;
+	Fri, 17 Mar 2023 14:46:50 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0E3DE1946597
- for <dm-devel@listman.corp.redhat.com>; Thu, 16 Mar 2023 03:26:18 +0000 (UTC)
+ ESMTP id 28C9619465A3
+ for <dm-devel@listman.corp.redhat.com>; Wed, 15 Mar 2023 10:04:33 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9709DC158C2; Thu, 16 Mar 2023 03:26:18 +0000 (UTC)
+ id 003DB1121315; Wed, 15 Mar 2023 10:04:33 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8E5FAC15A0B
- for <dm-devel@redhat.com>; Thu, 16 Mar 2023 03:26:18 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 730B02814240
- for <dm-devel@redhat.com>; Thu, 16 Mar 2023 03:26:18 +0000 (UTC)
-Received: from mailout4.samsung.com (mailout4.samsung.com [203.254.224.34])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-124-BOmZnSwhM4WIkeeo_d4tIg-1; Wed, 15 Mar 2023 23:26:16 -0400
-X-MC-Unique: BOmZnSwhM4WIkeeo_d4tIg-1
-Received: from epcas1p4.samsung.com (unknown [182.195.41.48])
- by mailout4.samsung.com (KnoxPortal) with ESMTP id
- 20230316031940epoutp049823acfae54616829e789364e32e0fc9~MyBs73Psi3165031650epoutp04-
- for <dm-devel@redhat.com>; Thu, 16 Mar 2023 03:19:40 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout4.samsung.com
- 20230316031940epoutp049823acfae54616829e789364e32e0fc9~MyBs73Psi3165031650epoutp04-
-Received: from epsnrtp1.localdomain (unknown [182.195.42.162]) by
- epcas1p4.samsung.com (KnoxPortal) with ESMTP id
- 20230316031940epcas1p4caa8b32f085acd38d3d98e6baa0de599~MyBsl-9vU2301623016epcas1p47;
- Thu, 16 Mar 2023 03:19:40 +0000 (GMT)
-Received: from epsmges1p5.samsung.com (unknown [182.195.38.241]) by
- epsnrtp1.localdomain (Postfix) with ESMTP id 4PcXYl4G4Qz4x9Q5; Thu, 16 Mar
- 2023 03:19:39 +0000 (GMT)
-Received: from epcas1p4.samsung.com ( [182.195.41.48]) by
- epsmges1p5.samsung.com (Symantec Messaging Gateway) with SMTP id
- 97.98.54823.8CA82146; Thu, 16 Mar 2023 12:19:36 +0900 (KST)
-Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
- epcas1p1.samsung.com (KnoxPortal) with ESMTPA id
- 20230316031936epcas1p1ebd93477dcf3bf9ab1640306dd1da8ff~MyBpa58kf2332323323epcas1p1c;
- Thu, 16 Mar 2023 03:19:36 +0000 (GMT)
-Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
- epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
- 20230316031936epsmtrp1a883352cb7166f657325f6a3b10bbcaf~MyBpaMa_20887908879epsmtrp1z;
- Thu, 16 Mar 2023 03:19:36 +0000 (GMT)
-X-AuditID: b6c32a39-a97ff7000000d627-52-64128ac87ef3
-Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
- epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
- AC.71.18071.8CA82146; Thu, 16 Mar 2023 12:19:36 +0900 (KST)
-Received: from localhost.localdomain (unknown [10.253.99.41]) by
- epsmtip2.samsung.com (KnoxPortal) with ESMTPA id
- 20230316031936epsmtip29bbf332b78a1d49bb5febf990943fc99~MyBpQ25921011610116epsmtip2L;
- Thu, 16 Mar 2023 03:19:36 +0000 (GMT)
-From: Yeongjin Gil <youngjin.gil@samsung.com>
-To: agk@redhat.com, snitzer@kernel.org, dm-devel@redhat.com
-Date: Thu, 16 Mar 2023 12:18:42 +0900
-Message-Id: <20230316031842.17295-1-youngjin.gil@samsung.com>
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id ECED11121314
+ for <dm-devel@redhat.com>; Wed, 15 Mar 2023 10:04:32 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CD38185A5A3
+ for <dm-devel@redhat.com>; Wed, 15 Mar 2023 10:04:32 +0000 (UTC)
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com
+ [148.163.156.1]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-207-v5MeulscOLCxPnh_5kejmQ-1; Wed, 15 Mar 2023 06:04:30 -0400
+X-MC-Unique: v5MeulscOLCxPnh_5kejmQ-1
+Received: from pps.filterd (m0098399.ppops.net [127.0.0.1])
+ by mx0a-001b2d01.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id
+ 32F9CaTM029657
+ for <dm-devel@redhat.com>; Wed, 15 Mar 2023 10:04:29 GMT
+Received: from pps.reinject (localhost [127.0.0.1])
+ by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 3pbb67hbx7-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT)
+ for <dm-devel@redhat.com>; Wed, 15 Mar 2023 10:04:29 +0000
+Received: from m0098399.ppops.net (m0098399.ppops.net [127.0.0.1])
+ by pps.reinject (8.17.1.5/8.17.1.5) with ESMTP id 32F9VHqW017522
+ for <dm-devel@redhat.com>; Wed, 15 Mar 2023 10:04:28 GMT
+Received: from ppma04fra.de.ibm.com (6a.4a.5195.ip4.static.sl-reverse.com
+ [149.81.74.106])
+ by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 3pbb67hbw0-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+ Wed, 15 Mar 2023 10:04:28 +0000
+Received: from pps.filterd (ppma04fra.de.ibm.com [127.0.0.1])
+ by ppma04fra.de.ibm.com (8.17.1.19/8.17.1.19) with ESMTP id 32F3UQXO008910;
+ Wed, 15 Mar 2023 10:04:26 GMT
+Received: from smtprelay06.fra02v.mail.ibm.com ([9.218.2.230])
+ by ppma04fra.de.ibm.com (PPS) with ESMTPS id 3pb29t0gh0-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+ Wed, 15 Mar 2023 10:04:25 +0000
+Received: from smtpav02.fra02v.mail.ibm.com (smtpav02.fra02v.mail.ibm.com
+ [10.20.54.101])
+ by smtprelay06.fra02v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id
+ 32FA4Nsf46596788
+ (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Wed, 15 Mar 2023 10:04:23 GMT
+Received: from smtpav02.fra02v.mail.ibm.com (unknown [127.0.0.1])
+ by IMSVA (Postfix) with ESMTP id 845BF2006B;
+ Wed, 15 Mar 2023 10:04:23 +0000 (GMT)
+Received: from smtpav02.fra02v.mail.ibm.com (unknown [127.0.0.1])
+ by IMSVA (Postfix) with ESMTP id 24C1220063;
+ Wed, 15 Mar 2023 10:04:23 +0000 (GMT)
+Received: from [9.152.212.230] (unknown [9.152.212.230])
+ by smtpav02.fra02v.mail.ibm.com (Postfix) with ESMTP;
+ Wed, 15 Mar 2023 10:04:23 +0000 (GMT)
+Message-ID: <33ed9615-b570-03c7-9a7a-d07f020d3222@linux.ibm.com>
+Date: Wed, 15 Mar 2023 11:04:22 +0100
 MIME-Version: 1.0
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFjrHJsWRmVeSWpSXmKPExsWy7bCmge6JLqEUg31HjS3WnzrGbLH33WxW
- i8u75rBZbPl3hNXixC1pi43PGC1m7H/K7sDusWBTqcemVZ1sHu/3XWXz6NuyitHj8ya5ANao
- BkabxKLkjMyyVIXUvOT8lMy8dFul0BA3XQslhYz84hJbpWhDQyM9QwNzPSMjIz1To1grI1Ml
- hbzE3FRbpQpdqF4lhaLkAqDa3MpioAE5qXpQcb3i1LwUh6z8UpDD9YoTc4tL89L1kvNzlRTK
- EnNKgUYo6Sd8Y8w4uv4iY8FS7op12z6zNDDu4Oxi5OSQEDCR+LnyA3MXIxeHkMAORonDy06z
- QzifGCWmPHvJCOF8Y5TYuvAsC0zLx+fvWCASexklVu+ZzQiSAGuZuc4TxGYT0JWY+vIpK4gt
- ImAt8aJpJlgDs0ALo8TaR2+YQRLCAq4Sn2edYAexWQRUJW7d7wEaxMHBK2Ar8eWwMogpISAv
- sfiBBEgFr4CgxMmZT8BuYAYKN2+dDXa2hMAldonH05uhjnOR2HJ4LTOELSzx6vgWdghbSuJl
- fxs7REM7o8SKh3MYIZwZjBJ/399nhaiyl2hubWYD2cwsoCmxfpc+RFhRYufvuYwQtqDE6Wvd
- zBBX8Em8+9rDCnEor0RHmxBEiZrElUm/oCbKSPQ9mAV1g4fExE8dTJCwipW4NH870wRGhVlI
- fpuF5LdZCEcsYGRexSiWWlCcm55abFhgihzJmxjBSVXLcgfj9Lcf9A4xMnEwHmKU4GBWEuEN
- ZxFIEeJNSaysSi3Kjy8qzUktPsSYDAzricxSosn5wLSeVxJvaGZmaWFpZGJobGZoSFjYxNLA
- xMzIxMLY0thMSZxX3PZkspBAemJJanZqakFqEcwWJg5OqQamRlunZ/4SV28yRnoyJBhfX7dS
- YJEc4/5CptCGRxyh799tEXsaE2d+wNrqtl/mzxLPR0F21qULlj+dnmtY/83N6cTKnOmG79+t
- vc3spu7J9q5o35wjF9b5aj0oZl5Yy9+uJje9/eTky7dmJ31Ub1IwMbxmqHnc6F14k+6SQyuL
- n+/+9lbjgkMi79Lfx6tvsYqUZMl7rfrkFOjz8VoDM+N87o1fbfznvTkX/PeujyIjz8tvC0/x
- O034+UH79faVr2Jdv//l+CJcp6AVVd30v/orp/Ak7SKrLd/WNMzYp2SSHOqXXM/uzu/zrXPd
- 5u+9nbbLpn/r6vleLbuU+dj7QpY9SZtfuK7cZL95eu/MAtcyJZbijERDLeai4kQApGvIz2EE
- AAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFlrFLMWRmVeSWpSXmKPExsWy7bCSvO6JLqEUg3PtShbrTx1jttj7bjar
- xeVdc9gstvw7wmpx4pa0xcZnjBYz9j9ld2D3WLCp1GPTqk42j/f7rrJ59G1ZxejxeZNcAGsU
- l01Kak5mWWqRvl0CV8bR9RcZC5ZyV6zb9pmlgXEHZxcjJ4eEgInEx+fvWLoYuTiEBHYzSuzq
- WsIOkZCR+DPxPVsXIweQLSxx+HAxRM0HRokNh28ygdSwCehKTH35lBXEFhGwl3h6bSsbSBGz
- QAejRPeSlWwgCWEBV4nPs06ADWURUJW4db+HEWQor4CtxJfDyhDz5SUWP5AAqeAVEJQ4OfMJ
- C4jNDBRu3jqbeQIj3ywkqVlIUgsYmVYxSqYWFOem5xYbFhjmpZbrFSfmFpfmpesl5+duYgQH
- p5bmDsbtqz7oHWJk4mA8xCjBwawkwhvOIpAixJuSWFmVWpQfX1Sak1p8iFGag0VJnPdC18l4
- IYH0xJLU7NTUgtQimCwTB6dUA1Ne5PplWhLRh9iF/Rb+6bXuje6e+sH236sPVa98yi9fiVlQ
- uzfn/omutCkRvYFtztqXH3xeVnp3jWz4ris8CyIOarr4ia9V+W6+VEfpzoW4onaro+4CClOl
- u9kuFvx4FSYUIhD462WRsL1EZfeBtDkno1y+bP/lzHTVz0T/4oIDD0TTuY/FtM8o7TU+s/v7
- 6hfPWBxchCrW+eutYo2YLcqy43zvO+4Ul1uuH99k8SmyTQ9iUa1h4zh1NXvJ5wneH+Qatv1j
- mjC79ftO3edOoe59Lff2z81QuaCQMH/1YrkXN689Znuu+iy+3++Rv+uHmx9X7+s7Vh6jXrnk
- YYzF/JYHrZxFn7ZuC29KU3o556sSS3FGoqEWc1FxIgCC9DHavQIAAA==
-X-CMS-MailID: 20230316031936epcas1p1ebd93477dcf3bf9ab1640306dd1da8ff
-X-Msg-Generator: CA
-X-Sendblock-Type: SVC_REQ_APPROVE
-X-ArchiveUser: EV
-CMS-TYPE: 101P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20230316031936epcas1p1ebd93477dcf3bf9ab1640306dd1da8ff
-References: <CGME20230316031936epcas1p1ebd93477dcf3bf9ab1640306dd1da8ff@epcas1p1.samsung.com>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.8.0
+To: Christoph Hellwig <hch@lst.de>, Mike Christie <michael.christie@oracle.com>
+References: <20230224174502.321490-1-michael.christie@oracle.com>
+ <20230224174502.321490-3-michael.christie@oracle.com>
+ <20230314171119.GB6780@lst.de>
+From: Stefan Haberland <sth@linux.ibm.com>
+In-Reply-To: <20230314171119.GB6780@lst.de>
+X-TM-AS-GCONF: 00
+X-Proofpoint-ORIG-GUID: Gm8knda4ABLDpRDHcHrrp25yIqxkZsPd
+X-Proofpoint-GUID: tD-Hba-uZXxaHa5TOgqYS7XtmBNP81hc
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.254,Aquarius:18.0.942,Hydra:6.0.573,FMLib:17.11.170.22
+ definitions=2023-03-15_04,2023-03-15_01,2023-02-09_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ clxscore=1011 bulkscore=0
+ priorityscore=1501 mlxscore=0 adultscore=0 spamscore=0 impostorscore=0
+ mlxlogscore=999 phishscore=0 lowpriorityscore=0 suspectscore=0
+ malwarescore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2302240000 definitions=main-2303150086
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -139,10 +123,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mailman-Approved-At: Thu, 16 Mar 2023 07:16:13 +0000
-Subject: [dm-devel] [PATCH] dm verity: fix error handling for
- check_at_most_once
+Subject: Re: [dm-devel] [PATCH v4 02/18] block: Rename BLK_STS_NEXUS to
+ BLK_STS_RESV_CONFLICT
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -154,50 +138,47 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Yeongjin Gil <youngjin.gil@samsung.com>,
- Sungjong Seo <sj1557.seo@samsung.com>, totte@google.com,
- linux-kernel@vger.kernel.org
+Cc: axboe@kernel.dk, linux-block@vger.kernel.org, chaitanyak@nvidia.com,
+ bvanassche@acm.org, martin.petersen@oracle.com, snitzer@kernel.org,
+ Jan Hoeppner <hoeppner@linux.ibm.com>, linux-nvme@lists.infradead.org,
+ james.bottomley@hansenpartnership.com, dm-devel@redhat.com,
+ target-devel@vger.kernel.org, linux-scsi@vger.kernel.org, kbusch@kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-In verity_work(), the return value of verity_verify_io() is converted to
-blk_status and passed to verity_finish_io(). BTW, when a bit is set in
-v->validated_blocks, verity_verify_io() skips verification regardless of
-I/O error for the corresponding bio. In this case, the I/O error could
-not be returned properly, and as a result, there is a problem that
-abnormal data could be read for the corresponding block.
+Am 14.03.23 um 18:11 schrieb Christoph Hellwig:
+> On Fri, Feb 24, 2023 at 11:44:46AM -0600, Mike Christie wrote:
+>> BLK_STS_NEXUS is used for NVMe/SCSI reservation conflicts or in dasd's
+>> case something similar. This renames BLK_STS_NEXUS so it better reflects
+>> this.
+> I like this rename a lot.
+>
+>> diff --git a/drivers/s390/block/dasd.c b/drivers/s390/block/dasd.c
+>> index a9c2a8d76c45..a2899d9690d4 100644
+>> --- a/drivers/s390/block/dasd.c
+>> +++ b/drivers/s390/block/dasd.c
+>> @@ -2723,7 +2723,7 @@ static void __dasd_cleanup_cqr(struct dasd_ccw_req *cqr)
+>>   	else if (status == 0) {
+>>   		switch (cqr->intrc) {
+>>   		case -EPERM:
+>> -			error = BLK_STS_NEXUS;
+>> +			error = BLK_STS_RESV_CONFLICT;
+>>   			break;
+> But is this really a reservation conflict?  Or should the DASD code
+> maybe use a different error code here?
+>
 
-To fix this problem, when an I/O error occurs, do not skip verification
-even if the bit related is set in v->validated_blocks.
+This also fits for the DASD case. We use this error code for a
+reservation/locking conflict of the DASD device when the lock we
+previously held was stolen.
 
-Fixes: 843f38d382b1 ("dm verity: add 'check_at_most_once' option to only validate hashes once")
-
-Signed-off-by: Sungjong Seo <sj1557.seo@samsung.com>
-Signed-off-by: Yeongjin Gil <youngjin.gil@samsung.com>
----
- drivers/md/dm-verity-target.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index ade83ef3b439..9316399b920e 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -523,7 +523,7 @@ static int verity_verify_io(struct dm_verity_io *io)
- 		sector_t cur_block = io->block + b;
- 		struct ahash_request *req = verity_io_hash_req(v, io);
- 
--		if (v->validated_blocks &&
-+		if (v->validated_blocks && bio->bi_status == BLK_STS_OK &&
- 		    likely(test_bit(cur_block, v->validated_blocks))) {
- 			verity_bv_skip_block(v, io, iter);
- 			continue;
--- 
-2.39.2
+Acked-by: Stefan Haberland <sth@linux.ibm.com>
 
 --
 dm-devel mailing list
