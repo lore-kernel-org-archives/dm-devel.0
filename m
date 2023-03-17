@@ -1,75 +1,144 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 17D6DC77B61
-	for <dm-devel@archiver.kernel.org>; Mon, 20 Mar 2023 05:17:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5D430C77B60
+	for <dm-devel@archiver.kernel.org>; Mon, 20 Mar 2023 05:17:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1679289433;
+	s=mimecast20190719; t=1679289432;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=++STI+apkLDItwY57vVAT8IiOeyXsKYMBjORTwpwzas=;
-	b=F03qIL5yTZhIDJ74C6Btigd1eNISRzmRi529uacu7cOVvaJuXhRx0uTJNmZHoBzvN3vD87
-	aySx00+tY+qFAa1XqUiGs2CIy2Tu5LGeGV7QjCcqPStZa57cp1ihBzcc/hYdoWLfJvS3db
-	pb6afb2cg7FH66wURRb8TrUbrAcwBRM=
+	bh=neQApRUAC/ftwUg7TqhwtCDRgnanwTvXEx471VoE2vs=;
+	b=fgzUXO8XGcoW9QiYZz4+3iFEM6JvrLpvJp+mGDAI1rkKtB3wkZUWIi4r60/GmP41yKM2of
+	p5uO4hltYbDXKEziudiB/YnzsCYTzgS0GDPEuWjU9FB7bU2aP6ZXWy0yWbOHbowC8ETC2R
+	xM84jes70wba8zR8QNFYsk9h0c8/R1w=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-264-aMu3rbCOP3C0FHMyy5_nUw-1; Mon, 20 Mar 2023 01:17:08 -0400
-X-MC-Unique: aMu3rbCOP3C0FHMyy5_nUw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-153--l6ywcBZNy6QVqRrt46g6Q-1; Mon, 20 Mar 2023 01:17:09 -0400
+X-MC-Unique: -l6ywcBZNy6QVqRrt46g6Q-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5F5BD185A794;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6042A85530C;
 	Mon, 20 Mar 2023 05:17:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C0E3740C83AC;
-	Mon, 20 Mar 2023 05:17:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 60037492C13;
+	Mon, 20 Mar 2023 05:17:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 25AEF19472DD;
-	Mon, 20 Mar 2023 05:17:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 700611946A77;
+	Mon, 20 Mar 2023 05:16:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id DDA721946587
- for <dm-devel@listman.corp.redhat.com>; Fri, 17 Mar 2023 01:42:12 +0000 (UTC)
+ ESMTP id 759DC1946587
+ for <dm-devel@listman.corp.redhat.com>; Fri, 17 Mar 2023 06:18:27 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 72DDF40CF8E7; Fri, 17 Mar 2023 01:42:12 +0000 (UTC)
+ id 14A1140C6E68; Fri, 17 Mar 2023 06:18:27 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 6BE64400D796
- for <dm-devel@redhat.com>; Fri, 17 Mar 2023 01:42:12 +0000 (UTC)
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0D49D40C6E67
+ for <dm-devel@redhat.com>; Fri, 17 Mar 2023 06:18:27 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 45BC829AA3B4
- for <dm-devel@redhat.com>; Fri, 17 Mar 2023 01:42:12 +0000 (UTC)
-Received: from mail.nfschina.com (42.101.60.237 [42.101.60.237]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-448-1OidjL5yMWiuW3BscOD07A-1; Thu,
- 16 Mar 2023 21:42:02 -0400
-X-MC-Unique: 1OidjL5yMWiuW3BscOD07A-1
-Received: from localhost (unknown [127.0.0.1])
- by mail.nfschina.com (Postfix) with ESMTP id 65E681A0087F;
- Fri, 17 Mar 2023 09:36:44 +0800 (CST)
-X-Virus-Scanned: amavisd-new at nfschina.com
-Received: from mail.nfschina.com ([127.0.0.1])
- by localhost (localhost.localdomain [127.0.0.1]) (amavisd-new, port 10024)
- with ESMTP id TMYbAjDf1u6j; Fri, 17 Mar 2023 09:36:43 +0800 (CST)
-Received: from localhost.localdomain (unknown [180.167.10.98])
- (Authenticated sender: yuzhe@nfschina.com)
- by mail.nfschina.com (Postfix) with ESMTPA id 51FE01A00ADF;
- Fri, 17 Mar 2023 09:36:42 +0800 (CST)
-From: Yu Zhe <yuzhe@nfschina.com>
-To: agk@redhat.com, snitzer@kernel.org, dm-devel@redhat.com,
- keescook@chromium.org, tony.luck@intel.com, gpiccoli@igalia.com
-Date: Fri, 17 Mar 2023 09:35:54 +0800
-Message-Id: <20230317013554.20479-1-yuzhe@nfschina.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E641D85A5B1
+ for <dm-devel@redhat.com>; Fri, 17 Mar 2023 06:18:26 +0000 (UTC)
+Received: from mailout1.samsung.com (mailout1.samsung.com [203.254.224.24])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-498-GJVAAnhuOsiPVgW2w0MY9g-1; Fri, 17 Mar 2023 02:18:24 -0400
+X-MC-Unique: GJVAAnhuOsiPVgW2w0MY9g-1
+Received: from epcas1p4.samsung.com (unknown [182.195.41.48])
+ by mailout1.samsung.com (KnoxPortal) with ESMTP id
+ 20230317061822epoutp01a51e557a2faee2a99ab0f74bd5c10c17~NIHAkk5OC0108401084epoutp01R
+ for <dm-devel@redhat.com>; Fri, 17 Mar 2023 06:18:22 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.samsung.com
+ 20230317061822epoutp01a51e557a2faee2a99ab0f74bd5c10c17~NIHAkk5OC0108401084epoutp01R
+Received: from epsnrtp1.localdomain (unknown [182.195.42.162]) by
+ epcas1p4.samsung.com (KnoxPortal) with ESMTP id
+ 20230317061821epcas1p42ea8c5f50cc665f7f9ce987b81d7f336~NIHAClPJz1242612426epcas1p4U;
+ Fri, 17 Mar 2023 06:18:21 +0000 (GMT)
+Received: from epsmges1p3.samsung.com (unknown [182.195.38.250]) by
+ epsnrtp1.localdomain (Postfix) with ESMTP id 4PdDTT17plz4x9Pp; Fri, 17 Mar
+ 2023 06:18:21 +0000 (GMT)
+Received: from epcas1p4.samsung.com ( [182.195.41.48]) by
+ epsmges1p3.samsung.com (Symantec Messaging Gateway) with SMTP id
+ 74.17.52037.D2604146; Fri, 17 Mar 2023 15:18:21 +0900 (KST)
+Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
+ epcas1p2.samsung.com (KnoxPortal) with ESMTPA id
+ 20230317061820epcas1p2721102e23224fcccbc2c69c2f14fd1c3~NIG-Zc9H42012920129epcas1p2H;
+ Fri, 17 Mar 2023 06:18:20 +0000 (GMT)
+Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
+ epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
+ 20230317061820epsmtrp13c9bc2e184633ebb9d50f28287c0169a~NIG-YrXQ50057100571epsmtrp1h;
+ Fri, 17 Mar 2023 06:18:20 +0000 (GMT)
+X-AuditID: b6c32a37-7cbfd7000001cb45-9c-6414062dcdd1
+Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
+ epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+ 9C.71.18071.C2604146; Fri, 17 Mar 2023 15:18:20 +0900 (KST)
+Received: from youngjingil02 (unknown [10.253.98.199]) by
+ epsmtip2.samsung.com (KnoxPortal) with ESMTPA id
+ 20230317061820epsmtip2ae9439847795bd4e88e282b6a952c9d7~NIG-Lo0SC0912909129epsmtip29;
+ Fri, 17 Mar 2023 06:18:20 +0000 (GMT)
+From: =?ks_c_5601-1987?B?sea/tcH4L1N5c3RlbSBDb3JlIExhYi4oTVgpL7vvvLrA/MDa?=
+ <youngjin.gil@samsung.com>
+To: "'Eric Biggers'" <ebiggers@kernel.org>
+In-Reply-To: <ZBNjcA1feNWUxvaW@gmail.com>
+Date: Fri, 17 Mar 2023 15:18:20 +0900
+Message-ID: <000001d95898$456301d0$d0290570$@samsung.com>
+MIME-Version: 1.0
+Thread-Index: AQGQOF3WKzL6/erBkz5jz0bMtah/BQHnLikgA3pH1sOvZa6BUA==
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFnrEJsWRmVeSWpSXmKPExsWy7bCmga4um0iKwZVLbBbrTx1jttj7bjar
+ xdo9f5gtLu+aw2ax+fAnFoulK96yWmz5d4TV4sQtaQcOjwWbSj02repk83i/7yqbR9+WVYwe
+ nzfJBbBGNTDaJBYlZ2SWpSqk5iXnp2TmpdsqhYa46VooKWTkF5fYKkUbGhrpGRqY6xkZGemZ
+ GsVaGZkqKeQl5qbaKlXoQvUqKRQlFwDV5lYWAw3ISdWDiusVp+alOGTll4Kcr1ecmFtcmpeu
+ l5yfq6RQlphTCjRCST/hG2PGlYt32Qs6FCp2zsxrYNwn2cXIySEhYCKx5GUDYxcjF4eQwA5G
+ iTtX57NDOJ8YJTqetDFDON8YJT4cmsUG0zLv3h2olr2MEqsvHIWqes0o8WvDOiaQKjaBDInO
+ +btYQGwRAS2J3jlPWUGKmAVeMUq8ed4HNopTQFPi5PRuRhBbWMBTovHlRLA4i4CqxLYJ84Bs
+ Dg5eAUuJK0v8QMK8AoISJ2c+AZvJLGAksWT1fCYIW15i+9s5zBDXKUjs/nSUFaRVRMBJ4vr7
+ IogSEYnZnRDfSAjM5ZBo6Z/FCFHvIjHlz2ImCFtY4tXxLewQtpTEy/42doiGdkaJFQ/nMEI4
+ Mxgl/r6/zwpRZS/R3NoMDRdFiZ2/50JNFZQ4fa2bGWI1n8S7rz1gF0kI8Ep0tAlBlKhJXJn0
+ i3UCo/IsJL/NQvLbLCS/zULyxAJGllWMYqkFxbnpqcWGBcbIUb6JEZx8tcx3ME57+0HvECMT
+ B+MhRgkOZiURXt6fwilCvCmJlVWpRfnxRaU5qcWHGJOBoT2RWUo0OR+Y/vNK4g3NzCwtLI1M
+ DI3NDA0JC5tYGpiYGZlYGFsamymJ84rbnkwWEkhPLEnNTk0tSC2C2cLEwSnVwDTNQna1V6Co
+ +N4JW7rvNGRwT19w9LJPzQoGyfcNZlNYXG9nL9VyfKF++eDhBdp5KyTLVc7ZTBdxXe9f2LE/
+ a8OVr35Xl2exOMuXSd1i1+Rd/DTjZdNF5esd/KkPdRPLbqfc5dMuObhCdZe/7YyeUp2TDyfP
+ XKrdc3HdrtInTa/kMwVN73/06RBdPM3flsXXJ26t6P69Ocp91360SF8y/dFxoSXygKrn2oSq
+ aOslkTs5jimJ3fiWsib4+LuarOMHtrTKMU/vL0iT81rTy3eEx9PL6k7SvDdfjLaHfqqdVr7w
+ gJnYda4iRpXMZsYqx0tnrL6rpv9yXH7b+p6iOluRcr5/5xfXhlJLHv/K7ltKSizFGYmGWsxF
+ xYkARgRQwnUEAAA=
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFmpikeLIzCtJLcpLzFFi42LZdlhJXleHTSTFoPmXtsX6U8eYLfa+m81q
+ sXbPH2aLy7vmsFlsPvyJxWLpiresFlv+HWG1OHFL2oHDY8GmUo9NqzrZPN7vu8rm0bdlFaPH
+ 501yAaxRXDYpqTmZZalF+nYJXBlXLt5lL+hQqNg5M6+BcZ9kFyMnh4SAicS8e3cYuxi5OIQE
+ djNKbGzZyw6RkJH4M/E9WxcjB5AtLHH4cDFIWEjgJaPE08taIDabQJrEn2NPGEFsEQEtid45
+ T1lB5jALfGCUWPlwExtEwxpGiR+fkkBsTgFNiZPTu8EahAU8JRpfTgSrYRFQldg2YR7YLl4B
+ S4krS/xAwrwCghInZz5hAbGZge5sPNwNZctLbH87hxniTAWJ3Z+OsoK0igg4SVx/XwRRIiIx
+ u7ONeQKj8Cwkk2YhmTQLyaRZSFoWMLKsYpRMLSjOTc8tNiwwzEst1ytOzC0uzUvXS87P3cQI
+ jiYtzR2M21d90DvEyMTBeIhRgoNZSYSX96dwihBvSmJlVWpRfnxRaU5q8SFGaQ4WJXHeC10n
+ 44UE0hNLUrNTUwtSi2CyTBycUg1M5xVu33V6srvolvqh5//WT6mUr1ur4LNPSc2GZTtnQs1a
+ rSm5wdckGO/MYH6WZ3T3UfOy3mQ7M+OkQFV3mw5LMTaNHYI7t2eFXE3pOelnxlDhan/+4F/G
+ JXNXZpRc3M9x7M0/Te6pKvuXdrRJ1AbUMS8TMerb5buIzSDMcfKGpbYr//naF5QulG5cnnm/
+ bEFMdvXUDUf3vFko7WlXe73gzELrdfqvI3QFcv79mJfuPcdF2kv13v//Dh5NlSeDJKY833m8
+ fM/GCzxSk7bx6i7qDKkUfOfZL1Kesv14HztL3eOTPzimvZ4ullnybHXjJ19R2R8HrTw/PBZ7
+ qVDBom7ilJMqF9t6+1WmZoaTn7USS3FGoqEWc1FxIgAZ4Xk4FQMAAA==
+X-CMS-MailID: 20230317061820epcas1p2721102e23224fcccbc2c69c2f14fd1c3
+X-Msg-Generator: CA
+X-Sendblock-Type: SVC_REQ_APPROVE
+X-ArchiveUser: EV
+CMS-TYPE: 101P
+DLP-Filter: Pass
+X-CFilter-Loop: Reflected
+X-CMS-RootMailID: 20230316031936epcas1p1ebd93477dcf3bf9ab1640306dd1da8ff
+References: <CGME20230316031936epcas1p1ebd93477dcf3bf9ab1640306dd1da8ff@epcas1p1.samsung.com>
+ <20230316031842.17295-1-youngjin.gil@samsung.com>
+ <ZBNjcA1feNWUxvaW@gmail.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -77,9 +146,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mailman-Approved-At: Mon, 20 Mar 2023 05:16:58 +0000
-Subject: [dm-devel] [PATCH] dm: remove unnecessary (void*) conversions
+Subject: Re: [dm-devel] [PATCH] dm verity: fix error handling for
+ check_at_most_once
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,401 +161,121 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: liqiong@nfschina.com, Yu Zhe <yuzhe@nfschina.com>,
- kernel-janitors@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-hardening@vger.kernel.org
-MIME-Version: 1.0
+Cc: snitzer@kernel.org, linux-kernel@vger.kernel.org,
+ 'Nathan Huckleberry' <nhuck@google.com>, dm-devel@redhat.com,
+ 'Sami	Tolvanen' <samitolvanen@google.com>,
+ 'Sungjong Seo' <sj1557.seo@samsung.com>, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: ko
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Pointer variables of void * type do not require type cast.
-
-Signed-off-by: Yu Zhe <yuzhe@nfschina.com>
----
- drivers/md/dm-integrity.c       |  6 +++---
- drivers/md/dm-io.c              |  4 ++--
- drivers/md/dm-kcopyd.c          |  4 ++--
- drivers/md/dm-linear.c          |  6 +++---
- drivers/md/dm-log-writes.c      |  2 +-
- drivers/md/dm-log.c             | 24 ++++++++++++------------
- drivers/md/dm-raid1.c           | 10 +++++-----
- drivers/md/dm-snap-persistent.c |  2 +-
- drivers/md/dm-stripe.c          |  4 ++--
- drivers/md/dm-verity-fec.c      |  4 ++--
- drivers/md/dm-zoned-metadata.c  |  6 +++---
- 11 files changed, 36 insertions(+), 36 deletions(-)
-
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index b0d5057fbdd9..2a388b5f3a95 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -3118,7 +3118,7 @@ static int dm_integrity_reboot(struct notifier_block *n, unsigned long code, voi
- 
- static void dm_integrity_postsuspend(struct dm_target *ti)
- {
--	struct dm_integrity_c *ic = (struct dm_integrity_c *)ti->private;
-+	struct dm_integrity_c *ic = ti->private;
- 	int r;
- 
- 	WARN_ON(unregister_reboot_notifier(&ic->reboot_notifier));
-@@ -3167,7 +3167,7 @@ static void dm_integrity_postsuspend(struct dm_target *ti)
- 
- static void dm_integrity_resume(struct dm_target *ti)
- {
--	struct dm_integrity_c *ic = (struct dm_integrity_c *)ti->private;
-+	struct dm_integrity_c *ic = ti->private;
- 	__u64 old_provided_data_sectors = le64_to_cpu(ic->sb->provided_data_sectors);
- 	int r;
- 
-@@ -3290,7 +3290,7 @@ static void dm_integrity_resume(struct dm_target *ti)
- static void dm_integrity_status(struct dm_target *ti, status_type_t type,
- 				unsigned int status_flags, char *result, unsigned int maxlen)
- {
--	struct dm_integrity_c *ic = (struct dm_integrity_c *)ti->private;
-+	struct dm_integrity_c *ic = ti->private;
- 	unsigned int arg_count;
- 	size_t sz = 0;
- 
-diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-index dc2df76999b0..f053ce245814 100644
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -187,7 +187,7 @@ static void list_get_page(struct dpages *dp,
- 		  struct page **p, unsigned long *len, unsigned int *offset)
- {
- 	unsigned int o = dp->context_u;
--	struct page_list *pl = (struct page_list *) dp->context_ptr;
-+	struct page_list *pl = dp->context_ptr;
- 
- 	*p = pl->page;
- 	*len = PAGE_SIZE - o;
-@@ -196,7 +196,7 @@ static void list_get_page(struct dpages *dp,
- 
- static void list_next_page(struct dpages *dp)
- {
--	struct page_list *pl = (struct page_list *) dp->context_ptr;
-+	struct page_list *pl = dp->context_ptr;
- 
- 	dp->context_ptr = pl->next;
- 	dp->context_u = 0;
-diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
-index a158c6e5fbd7..d01807c50f20 100644
---- a/drivers/md/dm-kcopyd.c
-+++ b/drivers/md/dm-kcopyd.c
-@@ -519,7 +519,7 @@ static int run_complete_job(struct kcopyd_job *job)
- 
- static void complete_io(unsigned long error, void *context)
- {
--	struct kcopyd_job *job = (struct kcopyd_job *) context;
-+	struct kcopyd_job *job = context;
- 	struct dm_kcopyd_client *kc = job->kc;
- 
- 	io_job_finish(kc->throttle);
-@@ -696,7 +696,7 @@ static void segment_complete(int read_err, unsigned long write_err,
- 	/* FIXME: tidy this function */
- 	sector_t progress = 0;
- 	sector_t count = 0;
--	struct kcopyd_job *sub_job = (struct kcopyd_job *) context;
-+	struct kcopyd_job *sub_job = context;
- 	struct kcopyd_job *job = sub_job->master_job;
- 	struct dm_kcopyd_client *kc = job->kc;
- 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 3e622dcc9dbd..f4448d520ee9 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -72,7 +72,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 
- static void linear_dtr(struct dm_target *ti)
- {
--	struct linear_c *lc = (struct linear_c *) ti->private;
-+	struct linear_c *lc = ti->private;
- 
- 	dm_put_device(ti, lc->dev);
- 	kfree(lc);
-@@ -98,7 +98,7 @@ static int linear_map(struct dm_target *ti, struct bio *bio)
- static void linear_status(struct dm_target *ti, status_type_t type,
- 			  unsigned int status_flags, char *result, unsigned int maxlen)
- {
--	struct linear_c *lc = (struct linear_c *) ti->private;
-+	struct linear_c *lc = ti->private;
- 	size_t sz = 0;
- 
- 	switch (type) {
-@@ -120,7 +120,7 @@ static void linear_status(struct dm_target *ti, status_type_t type,
- 
- static int linear_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
- {
--	struct linear_c *lc = (struct linear_c *) ti->private;
-+	struct linear_c *lc = ti->private;
- 	struct dm_dev *dev = lc->dev;
- 
- 	*bdev = dev->bdev;
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index cbd0f81f4a35..eba9c5c869aa 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -429,7 +429,7 @@ static inline sector_t logdev_last_sector(struct log_writes_c *lc)
- 
- static int log_writes_kthread(void *arg)
- {
--	struct log_writes_c *lc = (struct log_writes_c *)arg;
-+	struct log_writes_c *lc = arg;
- 	sector_t sector = 0;
- 
- 	while (!kthread_should_stop()) {
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index afd94d2e7295..f9f84236dfcd 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -530,7 +530,7 @@ static void destroy_log_context(struct log_c *lc)
- 
- static void core_dtr(struct dm_dirty_log *log)
- {
--	struct log_c *lc = (struct log_c *) log->context;
-+	struct log_c *lc = log->context;
- 
- 	vfree(lc->clean_bits);
- 	destroy_log_context(lc);
-@@ -569,7 +569,7 @@ static int disk_ctr(struct dm_dirty_log *log, struct dm_target *ti,
- 
- static void disk_dtr(struct dm_dirty_log *log)
- {
--	struct log_c *lc = (struct log_c *) log->context;
-+	struct log_c *lc = log->context;
- 
- 	dm_put_device(lc->ti, lc->log_dev);
- 	vfree(lc->disk_header);
-@@ -590,7 +590,7 @@ static int disk_resume(struct dm_dirty_log *log)
- {
- 	int r;
- 	unsigned int i;
--	struct log_c *lc = (struct log_c *) log->context;
-+	struct log_c *lc = log->context;
- 	size_t size = lc->bitset_uint32_count * sizeof(uint32_t);
- 
- 	/* read the disk header */
-@@ -652,14 +652,14 @@ static int disk_resume(struct dm_dirty_log *log)
- 
- static uint32_t core_get_region_size(struct dm_dirty_log *log)
- {
--	struct log_c *lc = (struct log_c *) log->context;
-+	struct log_c *lc = log->context;
- 
- 	return lc->region_size;
- }
- 
- static int core_resume(struct dm_dirty_log *log)
- {
--	struct log_c *lc = (struct log_c *) log->context;
-+	struct log_c *lc = log->context;
- 
- 	lc->sync_search = 0;
- 	return 0;
-@@ -667,14 +667,14 @@ static int core_resume(struct dm_dirty_log *log)
- 
- static int core_is_clean(struct dm_dirty_log *log, region_t region)
- {
--	struct log_c *lc = (struct log_c *) log->context;
-+	struct log_c *lc = log->context;
- 
- 	return log_test_bit(lc->clean_bits, region);
- }
- 
- static int core_in_sync(struct dm_dirty_log *log, region_t region, int block)
- {
--	struct log_c *lc = (struct log_c *) log->context;
-+	struct log_c *lc = log->context;
- 
- 	return log_test_bit(lc->sync_bits, region);
- }
-@@ -727,14 +727,14 @@ static int disk_flush(struct dm_dirty_log *log)
- 
- static void core_mark_region(struct dm_dirty_log *log, region_t region)
- {
--	struct log_c *lc = (struct log_c *) log->context;
-+	struct log_c *lc = log->context;
- 
- 	log_clear_bit(lc, lc->clean_bits, region);
- }
- 
- static void core_clear_region(struct dm_dirty_log *log, region_t region)
- {
--	struct log_c *lc = (struct log_c *) log->context;
-+	struct log_c *lc = log->context;
- 
- 	if (likely(!lc->flush_failed))
- 		log_set_bit(lc, lc->clean_bits, region);
-@@ -742,7 +742,7 @@ static void core_clear_region(struct dm_dirty_log *log, region_t region)
- 
- static int core_get_resync_work(struct dm_dirty_log *log, region_t *region)
- {
--	struct log_c *lc = (struct log_c *) log->context;
-+	struct log_c *lc = log->context;
- 
- 	if (lc->sync_search >= lc->region_count)
- 		return 0;
-@@ -765,7 +765,7 @@ static int core_get_resync_work(struct dm_dirty_log *log, region_t *region)
- static void core_set_region_sync(struct dm_dirty_log *log, region_t region,
- 				 int in_sync)
- {
--	struct log_c *lc = (struct log_c *) log->context;
-+	struct log_c *lc = log->context;
- 
- 	log_clear_bit(lc, lc->recovering_bits, region);
- 	if (in_sync) {
-@@ -779,7 +779,7 @@ static void core_set_region_sync(struct dm_dirty_log *log, region_t region,
- 
- static region_t core_get_sync_count(struct dm_dirty_log *log)
- {
--	struct log_c *lc = (struct log_c *) log->context;
-+	struct log_c *lc = log->context;
- 
- 	return lc->sync_count;
- }
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index bc417a5e5b89..83c7cbb1107b 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -604,7 +604,7 @@ static void do_reads(struct mirror_set *ms, struct bio_list *reads)
- static void write_callback(unsigned long error, void *context)
- {
- 	unsigned int i;
--	struct bio *bio = (struct bio *) context;
-+	struct bio *bio = context;
- 	struct mirror_set *ms;
- 	int should_wake = 0;
- 	unsigned long flags;
-@@ -1180,7 +1180,7 @@ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 
- static void mirror_dtr(struct dm_target *ti)
- {
--	struct mirror_set *ms = (struct mirror_set *) ti->private;
-+	struct mirror_set *ms = ti->private;
- 
- 	del_timer_sync(&ms->timer);
- 	flush_workqueue(ms->kmirrord_wq);
-@@ -1246,7 +1246,7 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio,
- 		blk_status_t *error)
- {
- 	int rw = bio_data_dir(bio);
--	struct mirror_set *ms = (struct mirror_set *) ti->private;
-+	struct mirror_set *ms = ti->private;
- 	struct mirror *m = NULL;
- 	struct dm_bio_details *bd = NULL;
- 	struct dm_raid1_bio_record *bio_record =
-@@ -1311,7 +1311,7 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio,
- 
- static void mirror_presuspend(struct dm_target *ti)
- {
--	struct mirror_set *ms = (struct mirror_set *) ti->private;
-+	struct mirror_set *ms = ti->private;
- 	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
- 
- 	struct bio_list holds;
-@@ -1407,7 +1407,7 @@ static void mirror_status(struct dm_target *ti, status_type_t type,
- {
- 	unsigned int m, sz = 0;
- 	int num_feature_args = 0;
--	struct mirror_set *ms = (struct mirror_set *) ti->private;
-+	struct mirror_set *ms = ti->private;
- 	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
- 	char buffer[MAX_NR_MIRRORS + 1];
- 
-diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
-index f14e5df27874..15649921f2a9 100644
---- a/drivers/md/dm-snap-persistent.c
-+++ b/drivers/md/dm-snap-persistent.c
-@@ -567,7 +567,7 @@ static int read_exceptions(struct pstore *ps,
- 
- static struct pstore *get_info(struct dm_exception_store *store)
- {
--	return (struct pstore *) store->context;
-+	return store->context;
- }
- 
- static void persistent_usage(struct dm_exception_store *store,
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index 8d6951157106..e2854a3cbd28 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -189,7 +189,7 @@ static int stripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- static void stripe_dtr(struct dm_target *ti)
- {
- 	unsigned int i;
--	struct stripe_c *sc = (struct stripe_c *) ti->private;
-+	struct stripe_c *sc = ti->private;
- 
- 	for (i = 0; i < sc->stripes; i++)
- 		dm_put_device(ti, sc->stripe[i].dev);
-@@ -360,7 +360,7 @@ static size_t stripe_dax_recovery_write(struct dm_target *ti, pgoff_t pgoff,
- static void stripe_status(struct dm_target *ti, status_type_t type,
- 			  unsigned int status_flags, char *result, unsigned int maxlen)
- {
--	struct stripe_c *sc = (struct stripe_c *) ti->private;
-+	struct stripe_c *sc = ti->private;
- 	unsigned int sz = 0;
- 	unsigned int i;
- 
-diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index 962fc32c947c..a9ee2faa75a2 100644
---- a/drivers/md/dm-verity-fec.c
-+++ b/drivers/md/dm-verity-fec.c
-@@ -567,14 +567,14 @@ void verity_fec_dtr(struct dm_verity *v)
- 
- static void *fec_rs_alloc(gfp_t gfp_mask, void *pool_data)
- {
--	struct dm_verity *v = (struct dm_verity *)pool_data;
-+	struct dm_verity *v = pool_data;
- 
- 	return init_rs_gfp(8, 0x11d, 0, 1, v->fec->roots, gfp_mask);
- }
- 
- static void fec_rs_free(void *element, void *pool_data)
- {
--	struct rs_control *rs = (struct rs_control *)element;
-+	struct rs_control *rs = element;
- 
- 	if (rs)
- 		free_rs(rs);
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index cf9402064aba..8f0896a6990b 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -1701,7 +1701,7 @@ static int dmz_load_mapping(struct dmz_metadata *zmd)
- 			if (IS_ERR(dmap_mblk))
- 				return PTR_ERR(dmap_mblk);
- 			zmd->map_mblk[i] = dmap_mblk;
--			dmap = (struct dmz_map *) dmap_mblk->data;
-+			dmap = dmap_mblk->data;
- 			i++;
- 			e = 0;
- 		}
-@@ -1832,7 +1832,7 @@ static void dmz_set_chunk_mapping(struct dmz_metadata *zmd, unsigned int chunk,
- 				  unsigned int dzone_id, unsigned int bzone_id)
- {
- 	struct dmz_mblock *dmap_mblk = zmd->map_mblk[chunk >> DMZ_MAP_ENTRIES_SHIFT];
--	struct dmz_map *dmap = (struct dmz_map *) dmap_mblk->data;
-+	struct dmz_map *dmap = dmap_mblk->data;
- 	int map_idx = chunk & DMZ_MAP_ENTRIES_MASK;
- 
- 	dmap[map_idx].dzone_id = cpu_to_le32(dzone_id);
-@@ -2045,7 +2045,7 @@ struct dm_zone *dmz_get_chunk_mapping(struct dmz_metadata *zmd,
- 				      unsigned int chunk, enum req_op op)
- {
- 	struct dmz_mblock *dmap_mblk = zmd->map_mblk[chunk >> DMZ_MAP_ENTRIES_SHIFT];
--	struct dmz_map *dmap = (struct dmz_map *) dmap_mblk->data;
-+	struct dmz_map *dmap = dmap_mblk->data;
- 	int dmap_idx = chunk & DMZ_MAP_ENTRIES_MASK;
- 	unsigned int dzone_id;
- 	struct dm_zone *dzone = NULL;
--- 
-2.11.0
+Hi Eric,
+Thank you for your detailed feedback.
+> Hi Yeongjin,
+> 
+> On Thu, Mar 16, 2023 at 12:18:42PM +0900, Yeongjin Gil wrote:
+> > In verity_work(), the return value of verity_verify_io() is converted
+> > to blk_status and passed to verity_finish_io(). BTW, when a bit is set
+> > in
+> > v->validated_blocks, verity_verify_io() skips verification regardless
+> > v->of
+> > I/O error for the corresponding bio. In this case, the I/O error could
+> > not be returned properly, and as a result, there is a problem that
+> > abnormal data could be read for the corresponding block.
+> >
+> > To fix this problem, when an I/O error occurs, do not skip
+> > verification even if the bit related is set in v->validated_blocks.
+> >
+> > Fixes: 843f38d382b1 ("dm verity: add 'check_at_most_once' option to
+> > only validate hashes once")
+> >
+> > Signed-off-by: Sungjong Seo <sj1557.seo@samsung.com>
+> > Signed-off-by: Yeongjin Gil <youngjin.gil@samsung.com>
+> > ---
+> >  drivers/md/dm-verity-target.c | 2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
+> >
+> > diff --git a/drivers/md/dm-verity-target.c
+> > b/drivers/md/dm-verity-target.c index ade83ef3b439..9316399b920e
+> > 100644
+> > --- a/drivers/md/dm-verity-target.c
+> > +++ b/drivers/md/dm-verity-target.c
+> > @@ -523,7 +523,7 @@ static int verity_verify_io(struct dm_verity_io *io)
+> >  		sector_t cur_block = io->block + b;
+> >  		struct ahash_request *req = verity_io_hash_req(v, io);
+> >
+> > -		if (v->validated_blocks &&
+> > +		if (v->validated_blocks && bio->bi_status == BLK_STS_OK &&
+> >  		    likely(test_bit(cur_block, v->validated_blocks))) {
+> >  			verity_bv_skip_block(v, io, iter);
+> >  			continue;
+> 
+> Thanks for sending this patch!  This looks like a correct fix, but I have
+> some
+> comments:
+> 
+> * Using "check_at_most_once" is strongly discouraged, as it reduces
+> security.
+>   If you are using check_at_most_once to improve performance at the cost
+> of
+>   reduced security, please consider that very recently, dm-verity
+> performance
+>   has significantly improved due to the removal of the WQ_UNBOUND
+> workqueue flag
+>   which was causing significant I/O latency.  See commit c25da5b7baf1
+>   ("dm verity: stop using WQ_UNBOUND for verify_wq").
+> 
+> * I think your commit message does not explain a key aspect of the problem
+> which
+>   is why is verity even attempted when the underlying I/O has failed?
+> This
+>   appears to be because of the Forward Error Correction (FEC) feature.
+So,
+> this
+>   issue is specific to the case where both FEC and check_at_most_once is
+> used.
+>   Can you make your commit message explain this?
+Okay. I will update commit message.
+> 
+> * This patch does not appear to have been received by the dm-devel mailing
+> list,
+>   which is the list where dm-verity patches should be reviewed on.  It
+> doesn't
+>   show up in the archive at https://lore.kernel.org/dm-devel.  Also, I'm
+>   subscribed to dm-devel and I didn't receive this patch in my inbox.  (I
+> had to
+>   download it from https://lore.kernel.org/lkml instead.)  Did you receive
+> a
+>   bounce message when you sent this patch?
+I am not sure but I received message from googlemail.com as follow
+"totte@google.com because the address couldn't be found".
+I will try to send v2 patch exclude totte@google.com and check the mailing.
+> 
+> * Please add 'Cc: stable@vger.kernel.org' to the commit message, just
+> below the
+>   Fixes line, as per Documentation/process/stable-kernel-rules.rst.  This
+> will
+>   ensure that the fix will be backported to the stable kernels.
+Okay.
+> 
+> * "Signed-off-by: Sungjong Seo <sj1557.seo@samsung.com>" does not have a
+>   corresponding Author or Co-developed-line, which is not allowed.  Did
+> you mean
+>   to list Sungjong as the Author or as a co-author?
+I created a patch through an internal review with Sungjong.
+I will change the tag to "Reviewed-by"
+> 
+> * No blank line between Fixes and the Signed-off-by line(s), please.
+Okay. Thanks. I will send v2 patch soon.
+> 
+> Thanks!
+> 
+> - Eric
 
 --
 dm-devel mailing list
