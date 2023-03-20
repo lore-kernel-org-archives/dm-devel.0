@@ -4,64 +4,102 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DD0D7C7619A
-	for <dm-devel@archiver.kernel.org>; Mon, 20 Mar 2023 20:38:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2941DC6FD1D
+	for <dm-devel@archiver.kernel.org>; Mon, 20 Mar 2023 20:50:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1679344706;
+	s=mimecast20190719; t=1679345439;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=FGdoDbs+HW1ZkqmwISPKP2YI1qxIWsY9GDcXBS1BdnA=;
-	b=KOGs2et1QbS9Zr134txGzR/sDKeASSPYTqx/1cJ7jLzXMcvazhNAQzTKGpgXvjAV7uY+F7
-	rbqpz9P163Dh3IWPuJk1VFUE1GhauQk8jD+SxENIooYIArnwR7Jm3i5akIIbvArtOw/Plj
-	z//rTsCNynafjcusOg0t2708D/iIQoc=
+	bh=ABhpA7JpZbQxeA8rJOBU4sd3LlJJGvG/IgXigPk1YIU=;
+	b=DZl/FPURlXELsXeTYShP3NTIvp9jQ64Qwt5Jc7/8lchFtdSWmDl7VCn9715bJSzGN8bKK4
+	5y9Exf3MW7YNGlKJ4GO38ZUCeCHm8ahKhaZJvAZYSoRWBrwtmm3oiPR883os7efrq8lGv6
+	msthWEG9fEUWelXR4eqMQUPQHRU0pUQ=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-671-6mTU_wKyMZujXPOCrNuUfA-1; Mon, 20 Mar 2023 16:38:22 -0400
-X-MC-Unique: 6mTU_wKyMZujXPOCrNuUfA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-227-ZXbXVQclMzieic01VDmCAg-1; Mon, 20 Mar 2023 16:50:35 -0400
+X-MC-Unique: ZXbXVQclMzieic01VDmCAg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 48DEA85C069;
-	Mon, 20 Mar 2023 20:38:20 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1D152855313;
+	Mon, 20 Mar 2023 20:50:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CACFA40C20FA;
-	Mon, 20 Mar 2023 20:38:18 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C05AB40C6E21;
+	Mon, 20 Mar 2023 20:50:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9B6AB19465A2;
-	Mon, 20 Mar 2023 20:38:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7A43219465A2;
+	Mon, 20 Mar 2023 20:50:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 530E319465A2
- for <dm-devel@listman.corp.redhat.com>; Mon, 20 Mar 2023 20:37:54 +0000 (UTC)
+ ESMTP id 8D1A61946594
+ for <dm-devel@listman.corp.redhat.com>; Mon, 20 Mar 2023 20:50:31 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 92B5E40C6E68; Mon, 20 Mar 2023 20:37:54 +0000 (UTC)
-Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7374340C6E67;
- Mon, 20 Mar 2023 20:37:54 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 32KKbr4q021650;
- Mon, 20 Mar 2023 15:37:53 -0500
-Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 32KKbqlY021649;
- Mon, 20 Mar 2023 15:37:52 -0500
-Date: Mon, 20 Mar 2023 15:37:52 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Message-ID: <20230320203752.GI19878@octiron.msp.redhat.com>
-References: <1675963711-22722-1-git-send-email-bmarzins@redhat.com>
- <5be1cfaef0f67e4992169b92a9c44cdcb623affc.camel@suse.com>
-MIME-Version: 1.0
-In-Reply-To: <5be1cfaef0f67e4992169b92a9c44cdcb623affc.camel@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH] libmultipath: limit paths that can get wwid
- from environment
+ id 6C213400D927; Mon, 20 Mar 2023 20:50:31 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6403B40224EF
+ for <dm-devel@redhat.com>; Mon, 20 Mar 2023 20:50:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 43BE33C11788
+ for <dm-devel@redhat.com>; Mon, 20 Mar 2023 20:50:31 +0000 (UTC)
+Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com
+ [209.85.214.174]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-374-1_oWUI-TOB-zKArk-rDRQg-1; Mon, 20 Mar 2023 16:50:29 -0400
+X-MC-Unique: 1_oWUI-TOB-zKArk-rDRQg-1
+Received: by mail-pl1-f174.google.com with SMTP id bc12so13267267plb.0
+ for <dm-devel@redhat.com>; Mon, 20 Mar 2023 13:50:29 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112; t=1679345428;
+ h=to:references:message-id:content-transfer-encoding:cc:date
+ :in-reply-to:from:subject:mime-version:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=WxllmilUxM/Gi+0kdMqEpmEpGk2qdzk2AoRMfFIyk1Q=;
+ b=t0ZxKO6PEatnI+gox5MojNiiKeKkb/KTHlXDSRF6YNTZKNs14tdM6b7g/6eNk3U7EV
+ 2P1y4y+AOH+pk23KoBGTG7ABJTZrF4GU4DwYbdoIwzjPsmk0imN4x3JYLY/S0rYlgAi3
+ 6aucAExE/1SioJqmWuBSdi/l2sW+OL8aksKkE62n+cj0rnwZuj5BRhYoZaXMo/5Pmvej
+ cgLNXS7eiNaF2RuqWsw+koIVb+FHaWT9el2F7HYU82uAZ3SGXzPn1PnS6DN9wKrMLSdL
+ Pba3igMX3kTYmb7Fm6ObCYW6pbFlSdeDGUSnKnUai6wKZx31u5sB/xf8M4SiF1qZNcZP
+ GEDw==
+X-Gm-Message-State: AO0yUKW5RYiphZxhKh/D/q4hxy4cvXbvz0NM7ANukfQ5qmgtL5HDm4D6
+ oVXhjQH0miSW5ptx3Dbrv2dbXYk6LT8ePKF89O8=
+X-Google-Smtp-Source: AK7set8McwK8b9PsPT32mE3kdW5rRKBDp58wfd4XvwaU5Wz4pe9YMKYgPShlSkilnyhc5c3W96H/Zg==
+X-Received: by 2002:a17:902:e74d:b0:19e:6bc5:8769 with SMTP id
+ p13-20020a170902e74d00b0019e6bc58769mr22216411plf.69.1679345428233; 
+ Mon, 20 Mar 2023 13:50:28 -0700 (PDT)
+Received: from smtpclient.apple ([165.225.243.3])
+ by smtp.gmail.com with ESMTPSA id
+ f9-20020a17090274c900b001a1b245f8b4sm5550291plt.236.2023.03.20.13.50.27
+ (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
+ Mon, 20 Mar 2023 13:50:27 -0700 (PDT)
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3731.400.51.1.1\))
+From: Brian Bunker <brian@purestorage.com>
+In-Reply-To: <20230320194146.GH19878@octiron.msp.redhat.com>
+Date: Mon, 20 Mar 2023 13:50:16 -0700
+Message-Id: <8AA6ECD8-859C-4BCB-ABA6-D95911C64560@purestorage.com>
+References: <CD5EC3B3-9A64-416A-A04C-C68EDB82F4C6@purestorage.com>
+ <a85c4b5a6603be979ddb9aa0909808519a03fa3e.camel@suse.com>
+ <20230320194146.GH19878@octiron.msp.redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: Re: [dm-devel] [PATCH] multipath-tools Consider making 'smart' the
+ default
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -73,129 +111,142 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>,
+ Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On Mon, Mar 20, 2023 at 02:53:20PM +0000, Martin Wilck wrote:
-> On Thu, 2023-02-09 at 11:28 -0600, Benjamin Marzinski wrote:
-> > Currently, whenever getting the uid_attribute from the udev database
-> > fails, multipath will try to get it from the environment variables.
-> > This
-> > normally isn't a problem, since either multipath -u is getting called
-> > from a uevent and the environment will have the correct value in that
-> > variable, or something else is being run and that variable won't be
-> > set.
-> > However, when find_multipaths is configured to "smart", this causes
-> > problems. For maybe devices, multipath needs to get the WWIDs of all
-> > the
-> > other block devices, to see if they match the maybe device wwid.=A0 If
-> > one
-> > of those devices doesn't have uid_attribute set in its udev database,
-> > multipath will fall back to checking the environment for it, and it
-> > will
-> > find that variable set to the WWID of the maybe device that this
-> > uevent
-> > is for.=A0 This means that all devices with no WWID will end up
-> > appearing
-> > to have the same WWID as the maybe device, causing multipath to
-> > incorrectly claim it.
-> >=20
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
->=20
-> I have to say I don't quite understand why we read from the environment
-> at all if the libudev call fails. This was coded before I joined the
-> project, so perhaps you can clarify it. Why do we expect the
-> environment to provide the correct value if libudev cannot?
-
-I'm pretty sure that the udev database for a device isn't set up yet
-when we are in the middle of processing the ADD event for it. When udev
-calls "multipath -u" on the add event, we can't look up the value in the
-database because the database entry for the device doesn't exist yet. We
-have to use the value it passed in via the enviroment.
-=20
-> If we need to keep this fallback, I wonder if we need another field in
-> "struct path" for it. For example, we could read MAJOR and MINOR from
-> the environment and use uid_attribute only if the result matches the
-> path's devt.
-
-This is basically what my patch does.  It sets the can_use_env_uid flag
-only on the device that the uevent is for, so the only device that can
-get its WWID from the environment is the device whose uevent we are
-processing. The other paths we find in path_discovery() must be
-intialized, which means that they will have a udev database entry, and
-we can find their WWID there.
-
--Ben
-
-> Regards
-> Martin
->=20
->=20
->=20
->=20
->=20
->=20
-> > ---
-> > =A0libmultipath/discovery.c | 2 +-
-> > =A0libmultipath/structs.h=A0=A0 | 1 +
-> > =A0multipath/main.c=A0=A0=A0=A0=A0=A0=A0=A0 | 2 ++
-> > =A03 files changed, 4 insertions(+), 1 deletion(-)
-> >=20
-> > diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-> > index 67ac0e6d..3a5ba173 100644
-> > --- a/libmultipath/discovery.c
-> > +++ b/libmultipath/discovery.c
-> > @@ -2093,7 +2093,7 @@ get_udev_uid(struct path * pp, const char
-> > *uid_attribute, struct udev_device *ud
-> > =A0=A0=A0=A0=A0=A0=A0=A0const char *value;
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0value =3D udev_device_get_property_value(udev, =
-uid_attribute);
-> > -=A0=A0=A0=A0=A0=A0=A0if (!value || strlen(value) =3D=3D 0)
-> > +=A0=A0=A0=A0=A0=A0=A0if ((!value || strlen(value) =3D=3D 0) && pp->can=
-_use_env_uid)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0value =3D getenv(uid_at=
-tribute);
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (value && strlen(value)) {
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0len =3D strlcpy(pp->wwi=
-d, value, WWID_SIZE);
-> > diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> > index e2294323..a1208751 100644
-> > --- a/libmultipath/structs.h
-> > +++ b/libmultipath/structs.h
-> > @@ -368,6 +368,7 @@ struct path {
-> > =A0=A0=A0=A0=A0=A0=A0=A0unsigned int dev_loss;
-> > =A0=A0=A0=A0=A0=A0=A0=A0int eh_deadline;
-> > =A0=A0=A0=A0=A0=A0=A0=A0bool is_checked;
-> > +=A0=A0=A0=A0=A0=A0=A0bool can_use_env_uid;
-> > =A0=A0=A0=A0=A0=A0=A0=A0/* configlet pointers */
-> > =A0=A0=A0=A0=A0=A0=A0=A0vector hwe;
-> > =A0=A0=A0=A0=A0=A0=A0=A0struct gen_path generic_path;
-> > diff --git a/multipath/main.c b/multipath/main.c
-> > index b9f360b4..90f940f1 100644
-> > --- a/multipath/main.c
-> > +++ b/multipath/main.c
-> > @@ -607,6 +607,8 @@ check_path_valid(const char *name, struct config
-> > *conf, bool is_uevent)
-> > =A0=A0=A0=A0=A0=A0=A0=A0pp =3D alloc_path();
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (!pp)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return RTVL_FAIL;
-> > +=A0=A0=A0=A0=A0=A0=A0if (is_uevent)
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->can_use_env_uid =3D t=
-rue;
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0r =3D is_path_valid(name, conf, pp, is_uevent);
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (r <=3D PATH_IS_ERROR || r >=3D PATH_MAX_VAL=
-ID_RESULT)
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+Cj4gT24gTWFyIDIwLCAyMDIzLCBhdCAxMjo0MSBQTSwgQmVuamFtaW4gTWFyemluc2tpIDxibWFy
+emluc0ByZWRoYXQuY29tPiB3cm90ZToKPiAKPiBPbiBNb24sIE1hciAyMCwgMjAyMyBhdCAwMzox
+ODozN1BNICswMTAwLCBNYXJ0aW4gV2lsY2sgd3JvdGU6Cj4+IE9uIFRodSwgMjAyMy0wMy0xNiBh
+dCAxNDo0NyAtMDcwMCwgQnJpYW4gQnVua2VyIHdyb3RlOgo+Pj4gQXMgYSB0YXJnZXQgdmVuZG9y
+LCBpdCBpcyBuaWNlIHRvIGJlIGFibGUgY29udHJvbCBpbml0aWF0b3IKPj4+IGJlaGF2aW9yIGZy
+b20gdGhlIHRhcmdldCB3aXRob3V0IHJlbHlpbmcgb24gdXNlciBpbnRlcnZlbnRpb24KPj4+IG9u
+IHRoZSBpbml0aWF0b3IuIFRoZXJlIGNvdWxkIGJlIGEgdmVyeSBsYXJnZSBudW1iZXIgb2YgaW5p
+dGlhdG9ycwo+Pj4gYXQgYSBzaXRlLgo+Pj4gCj4+PiBXaGVuIEFDTHMgYXJlIGZpcnN0IGFkZGVk
+IGZvciBhIHZvbHVtZSBvbiBvdXIgYXJyYXksIHdlIHVzZSB0aGUKPj4+IHRyYW5zcG9ydCBsYXll
+ciwgc28gdGhhdCB0aGUgaW5pdGlhdG9yIHdpbGwgZGlzY292ZXIgdGhlIHZvbHVtZXMKPj4+IHdp
+dGhvdXQgYW55IG1hbnVhbCBpbnRlcnZlbnRpb24uCj4+PiAKPj4+IGtlcm5lbDogc2NzaSA4OjA6
+MDoxOiBEaXJlY3QtQWNjZXNzIFBVUkUgRmxhc2ggQXJyYXkKPj4+IDg4ODggUFE6IDAgQU5TSTog
+Ngo+Pj4ga2VybmVsOiBzY3NpIDk6MDowOjE6IERpcmVjdC1BY2Nlc3MgUFVSRSBGbGFzaCBBcnJh
+eQo+Pj4gODg4OCBQUTogMCBBTlNJOiA2Cj4+PiBrZXJuZWw6IHNjc2kgNjowOjA6MTogRGlyZWN0
+LUFjY2VzcyBQVVJFIEZsYXNoIEFycmF5Cj4+PiA4ODg4IFBROiAwIEFOU0k6IDYKPj4+IGtlcm5l
+bDogc2NzaSA3OjA6MDoxOiBEaXJlY3QtQWNjZXNzIFBVUkUgRmxhc2ggQXJyYXkKPj4+IDg4ODgg
+UFE6IDAgQU5TSTogNgo+Pj4gLi4uCj4+PiBrZXJuZWw6IHNkIDY6MDowOjE6IFtzZGRdIEF0dGFj
+aGVkIFNDU0kgZGlzawo+Pj4ga2VybmVsOiBzZCA4OjA6MDoxOiBbc2RiXSBBdHRhY2hlZCBTQ1NJ
+IGRpc2sKPj4+IGtlcm5lbDogc2QgOTowOjA6MTogW3NkY10gQXR0YWNoZWQgU0NTSSBkaXNrCj4+
+PiBrZXJuZWw6IHNkIDc6MDowOjE6IFtzZGVdIEF0dGFjaGVkIFNDU0kgZGlzawo+Pj4gCj4+PiBT
+dWJzZXF1ZW50IHZvbHVtZXMgYWZ0ZXIgdGhlIGZpcnN0IG9uZSBhcmUgZGlzY292ZXJlZCB2aWEg
+dW5pdAo+Pj4gYXR0ZW50aW9ucyB0cmlnZ2VyaW5nIHRoZSB1ZGV2IHJ1bGUgd2hpY2ggY2FsbHMg
+c2Nhbi1zY3NpLXRhcmdldC4KPj4+IFRoZSBTQ1NJIGRldmljZXMgYmVpbmcgZGlzY292ZXJlZCB3
+aXRob3V0IGNyZWF0aW5nIHRoZSBjb3JyZXNwb25kaW5nCj4+PiBtdWx0aXBhdGggZGV2aWNlcyBz
+ZWVtcyB0byBiZSBhIGJhZCBkZWZhdWx0LiBXZSB3b3VsZCBsaWtlIHRvCj4+PiBjb250cm9sIGFz
+IG11Y2ggYXMgcG9zc2libGUgZnJvbSB0aGUgdGFyZ2V0IHNpZGUgdG8gZGljdGF0ZSBpbml0aWF0
+b3IKPj4+IGJlaGF2aW9yLiBUaGlzIGNvbWVzIGFzIGEgcmVncmVzc2lvbiB0byBob3cgaXQgcHJl
+dmlvdXNseSB3b3JrZWQuCj4+PiAKPj4+IFNpZ25lZC1vZmYtYnk6IEJyaWFuIEJ1bmtlciA8YnJp
+YW5AcHVyZXN0b3JhZ2UuY29tPgo+PiAKPj4gSSdtIGZpbmUgd2l0aCB0aGlzLCBidXQga2VlcCBp
+biBtaW5kIHRoYXQgZGlzdHJpYnV0aW9ucyB3aWxsIHByb2JhYmx5Cj4+IG92ZXJyaWRlIHRoaXMg
+YW55d2F5LiBSZWQgSGF0IGFuZCBTVVNFIGhhdmUgaGFkIGRpZmZlcmVudCBkZWZhdWx0cyBmb3IK
+Pj4gdGhpcyBiYXNpY2FsbHkgZm9yZXZlci4gQXQgbGVhc3QgZW50ZXJwcmlzZSBkaXN0cm9zIHdv
+bid0IHJpc2sKPj4gcmVncmVzc2lvbnMgYmVjYXVzZSBvZiBjaGFuZ2luZyBkZWZhdWx0cy4KPj4g
+Cj4+IEJlbiwgd2hhdCdzIHlvdXIgb3BpbmlvbiB3cnQgdGhlIHBhdGNoPwo+IAo+IHRsO2RyOiBJ
+IHRoaW5rICJ5ZXMiIG1ha2VzIG1vcmUgc2Vuc2UgdGhhbiAic21hcnQiLgo+IAo+IEkgZG9uJ3Qg
+a25vdyBpZiB0aGlzIGlzIGEgZ29vZCBpZGVhLiBUaGUgZGVmYXVsdCBiZWhhdmlvciB3ZSBzZXQg
+aXMKPiBnb2luZyB0byBiZSB3aGF0IGhhcHBlbnMgd2hlbiBwZW9wbGUgZG9uJ3Qgc2V0IHVwIGEg
+Y29uZmlndXJhdGlvbiBmaWxlLgo+IEkgZ2V0IHRoYXQgInN0cmljdCIgbWVhbnMgeW91IGhhdmUg
+dG8gbWFudWFsbHkgc2V0IHVwIG1hcHMuIEJ1dCB0aGF0Cj4gYWN0dWFsbHkgc2VlbXMgbGlrZSBh
+IHJlYXNvbmFibGUgZGVmYXVsdCBpZiB5b3UgZG9uJ3QgaGF2ZSBhCj4gY29uZmlndXJhdGlvbiBz
+ZXQgdXAuIFVzaW5nICJubyIgb3IgImdyZWVkeSIgbWVhbnMgdGhhdCB5b3UgaGF2ZSB0byBzZXQK
+PiB1cCBhIGNvbmZpZ3VyYXRpb24sIG9yIG11bHRpcGF0aCB3aWxsIGp1c3QgdXNlIGFsbCB5b3Vy
+IGRldmljZXMsIGFuZAo+IHRoYXQgc2VlbXMgbXVjaCB3b3JzZS4gQnV0IGlmIHdlIHdhbnQgdG8g
+bWFrZSBtdWx0aXBhdGggImp1c3QgZG8gdGhlCj4gcmlnaHQgdGhpbmcgd2l0aG91dCBnZXR0aW5n
+IGluIG15IHdheSIsIHRoZW4gSSB3b3VsZCBhcmd1ZSAieWVzIiBpcyBhCj4gYmV0dGVyIGFsdGVy
+bmF0aXZlLgpJIGFtIGdvb2Qgd2l0aCDigJh5ZXPigJkgdG9vLiBJIHRoaW5rIGl0IGlzIGltcG9y
+dGFudCB0byBjb25zaWRlciBpbnN0YWxsYXRpb25zCndoZXJlIGEgY29uZmlndXJhdGlvbiBmaWxl
+IGlzIGFkZGVkIGFmdGVyIGFuIGluaXRpYWwgaW5zdGFsbGF0aW9uLiBJdCBpcyBsaWtlbHksCmF0
+IGxlYXN0IGZvciB1cywgdGhhdCB0aGUgZGVmYXVsdCB2YWx1ZSBvZiBmaW5kX211bHRpcGF0aHMg
+aXMgbm90IG92ZXIKd3JpdHRlbiBidXQgaW5oZXJpdGVkIGZyb20gZGVmYXVsdC4gV2hhdCB0aGlz
+IG1lYW5zIGlzIHRoYXQgZGlzdHJpYnV0aW9ucwp3aGljaCB0YWtlIHRoaXMg4oCZc3RyaWN04oCZ
+IGRlZmF1bHQgd2lsbCBub3QgZ2V0IG11bHRpcGF0aCBkZXZpY2VzIGNyZWF0ZWQKCi1Ccmlhbgo+
+IAo+IFRoZSBiZW5lZml0IG9mIHVzaW5nICJ5ZXMiIGlzIHRoYXQgbXVsdGlwYXRoIHdpbGwgYWxt
+b3N0IGFsd2F5cwo+IGNvcnJlY3RseSBmaW5kIHlvdXIgbXVsdGlwYXRoIGRldmljZXMsIGFuZCB3
+aWxsIG5ldmVyIGZhaWwgaW4gYSB3YXkKPiB3aGVyZSBpdCBncmFicyBkZXZpY2VzIGl0IHNob3Vs
+ZG4ndC4gIFRoZSBvbmx5IHRpbWUgaXQgd2lsbCBmYWlsIGlzIG9uIGEKPiBtdWx0aXBhdGhhYmxl
+IGRldmljZSB0aGF0IGhhcyBuZXZlciBiZWVuIG11bHRpcGF0aGVkIGJlZm9yZSwgYW5kIGl0IHdp
+bGwKPiBvbmx5IG5vdCB3b3JrIGlmIHNvbWV0aGluZyBlbHNlIHN0YXJ0cyB1c2luZyB0aGUgZmly
+c3QgcGF0aCBvZiB0aGUKPiBkZXZpY2UgYmVmb3JlIHRoZSBzZWNvbmQgcGF0aCBhcHBlYXJzIGFu
+ZCBtdWx0aXBhdGhkIGNyZWF0ZXMgYSBtdWx0aXBhdGgKPiBkZXZpY2Ugb24gaXQuICBUaGlzIHJl
+YWxseSBvbmx5IGhhcHBlbnMgd2hlbiB0aGlzIG5ldyBkZXZpY2UgaGFzIHNvbWUKPiBtZXRhZGF0
+YSBvbiBpdCB0aGF0IGNhdXNlcyBzb21ldGhpbmcgdG8gYXV0b21hdGljYWxseSBncmFiIGl0IChm
+b3IKPiBpbnN0YW5jZSBhIExBQkVMIGZvciBhIGZpbGVzeXN0ZW0gdGhhdCBnZXRzIGF1dG9tb3Vu
+dGVkLCBvciBMVk0gbWV0YWRhdGEKPiBmb3IgYSBkZXZpY2UgdGhhdCBnZXRzIGF1dG9hY3RpdmF0
+ZWQpLiAgSSBkb24ndCBhY3R1YWxseSBrbm93IG9mIGFueQo+IHJlYWwgZG93bnNpZGVzIHRvIHVz
+aW5nICJ5ZXMiLCBhbmQgaWYgdGhlcmUgd2VyZSBzb21lLCB0aGV5IHdvdWxkIGFsc28KPiBiZSBk
+b3duc2lkZXMgdG8gdXNpbmcgInNtYXJ0Igo+IAo+IFRoZXJlIGFyZSByZWFsIGRvd25zaWRlcyB0
+byB1c2luZyAic21hcnQiIHdpdGhvdXQgc2V0dGluZyB1cCBhCj4gY29uZmlndXJhdGlvbiBmaWxl
+LiBFdmVyeSBzaW5nbGUgdGltZSB5b3UgYm9vdCwgdGhlIHJlc3Qgb2YgdGhlIHN5c3RlbSdzCj4g
+YWNjZXNzIHRvIHlvdXIgcG9zc2libHkgbXVsdGlwYXRoYWJsZSBkZXZpY2VzIGlzIGRlbGF5ZWQg
+d2hpbGUgbXVsdGlwYXRoCj4gd2FpdHMgc2Vjb25kcyBmb3IgYSBzaWJsaW5nIHRvIGFwcGVhci4g
+SW4gcmV0dXJuIGZvciB0aGlzIGlzc3VlIHRoYXQKPiBoYXBwZW5zIG9uIGV2ZXJ5IGJvb3QgZm9y
+IGV2ZXJ5IHBvc3NpYmx5IG11bHRpcGF0aGFibGUgZGV2aWNlLCB0aGUgb25seQo+IGJlbmZpdCB5
+b3UgZ2V0IG92ZXIgInllcyIsIGlzIHRoYXQgd2hlbiB5b3UgYWRkIGEgbmV3IGRldmljZSB0byB5
+b3VyCj4gc3lzdGVtLCBpZiB0aGVyZSBpcyBkYXRhIG9uIHRoZSBkZXZpY2UgdGhhdCB3b3VsZCBj
+YXVzZSBpdCB0byBiZQo+IGF1dG9hc3NlbWJsZWQgYW5kIHRoZSBzZWNvbmQgcGF0aCBhcHBlYXJz
+IHdpdGhpbiBzZWNvbmRzIG9mIHRoZSBmaXJzdAo+IHBhdGggKGVpdGhlciAxIG9yIDEwLCBkZXBl
+bmRpbmcgb24gd2hldGhlciBvciBub3QgdGhlcmUgaXMgYSBidWlsdC1pbgo+IGNvbmZpZyBmb3Ig
+dGhlIHN0b3JhZ2UgYXJyYXkpLCBtdWx0aXBhdGggd2lsbCBjb3JyZWN0bHkgZ3JhYiB0aGUgZGV2
+aWNlLAo+IGluc3RlYWQgb2Ygd2hhdGV2ZXIgd2FzIGdvaW5nIHRvIGF1dG9hc3NlbWJsZSBvbiBp
+dC4gIFRoaXMgaXMgYSB2ZXJ5Cj4gcmFyZSBvY2N1cmFuY2UsIHN0aWxsIGxlYXZlcyB5b3Ugd2l0
+aCBhIHJ1bm5pbmcgc3lzdGVtLCBhbmQgY2FuIGVhc2lseQo+IGJlIGZpeGVkIGFmdGVyIHRoZSBm
+YWN0Lgo+IAo+IFRoZXJlJ3Mgb25seSBvbmUgdGltZSB3aGVuIFJIRUwgbWFrZXMgdXNlIG9mICJz
+bWFydCIsIGFuZCB0aGF0J3MgZHVyaW5nCj4gaW5zdGFsbGF0aW9uLiAgRm9yIHJlYXNvbnMgd2hp
+Y2ggSSBkb24ndCB1bmRlcnN0YW5kLCB0aGUgUkhFTCBpbnN0YWxsZXIKPiB3aWxsIGF1dG9hc3Nl
+bWJsZSBMVk0vTUQgZGV2aWNlcyBpZiB0aGVyZSBpcyBleGlzdGluZyBtZXRhZGF0YSBvbiBkaXNr
+cwo+IHdoZW4gaXQgYm9vdHMuIEluIHRoaXMgY2FzZSB0aGUgc3lzdGVtIGlzIHVuYXZvaWRhYmx5
+IHNlZWluZyBhbGwgb2YgdGhlCj4gc3RvcmFnZSBkZXZpY2VzIGZvciB0aGUgdmVyeSBmaXJzdCB0
+aW1lLCB3aXRob3V0IG11bHRpcGF0aCBiZWluZwo+IGNvbmZpZ3VyZWQgZm9yIHRoZXNlIGRldmlj
+ZXMsIGFuZCBpdCBub3QgdW5saWtlbHkgdGhhdCB3ZSB3aWxsIHNlZQo+IGRldmljZXMgd2l0aCBM
+Vk0vTUQgbWV0YWRhdGEgb24gdGhlbS4gVGhpcyBtZWFucyB0aGF0IExWTS9NRCB3aWxsIGxpa2Vs
+eQo+IGF1dG9hc3NlbWJsZSBiZWZvcmUgdGhlIHNlY29uZCBwYXRoIGFwcGVhcnMsIGFuZCB0aGUg
+ZGV2aWNlIGdldHMKPiBtdWx0aXBhdGhlZC4gVGhpcyBjb25mdXNlcyB0aGUgaW5zdGFsbGVyLiBT
+aW5jZSB3ZSBvbmx5IGRvIHRoaXMgaW4gdGhlCj4gaW5zdGFsbGVyLCB3ZSBvbmx5IHNlZSB0aGUg
+InNtYXJ0IiBkZWxheSBvbiByZWxlYXNpbmcgdGhlIGRldmljZXMgdG8gdGhlCj4gc3lzdG1lIG9u
+ZSB0aW1lLiBJbiB0aGlzIHNpdHVhdGlvbiwgdXNpbmcgInNtYXJ0IiBtYWtlcyBzZW5zZSAoYWx0
+aG91Z2gKPiBub3QgYXMgbXVjaCBzZW5zZSBhcyBzaW1wbHkgbm90IGF1dG9hc3NlbWJsaW5nIExW
+TSBkZXZpY2VzIHdoZW4gdGhlCj4gaW5zdGFsbGVyIGJvb3RzLCBJTUhPKS4KPiAKPiBUaGUgb25s
+eSBvdGhlciBzaXR1YXRpb24gd2hlcmUgInNtYXJ0IiB3b3VsZCBiZSBnZW5lcmFsbHkgaGVscGZ1
+bCBpcyBpZgo+IHlvdSBoYXZlIHlvdXIgc3lzdGVtIGNvbmZpZ3VyZWQgc28gdGhhdCBhbGwgZGV2
+aWNlcyBhcmUgYmxhY2tsaXN0ZWQKPiBleGNlcHQgdGhlIHR5cGVzIHRoYXQgYXJlIHN1cHBvc2Vk
+IHRvIGJlIG11bHRpcGF0aGVkLiBJbiB0aGlzIHNpdHVhdGlvbgo+IHlvdSB3b3VsZG4ndCBoYXZl
+IHRvIHdvcnJ5IGFib3V0IHRoZSBkZWxheSBvbiBldmVyeSBib290IGJlY2F1c2UgYWxsIHRoZQo+
+IG5vbi1tdWx0aXBhdGhhYmxlIGRldmljZXMgd291bGQgYmUgYmxhY2tsaXN0ZWQuIElmIGEgbmV3
+IG11bHRpcGF0aGFibGUKPiBkZXZpY2UgYXBwZWFyZWQsIHRoZW4gInNtYXJ0IiB3b3VsZCBndWFy
+YW50ZWUgdGhhdCBub3RoaW5nIGVsc2Ugd291bGQKPiBncmFiIGl0IGJlZm9yZSB0aGUgc2Vjb25k
+IHBhdGggYXBwZWFyZWQgKGFzc3VtaW5nIHRoYXQgdGhlIHNlY29uZCBwYXRoCj4gYXBwZWFyZWQg
+d2l0aGluIHRoZSB0aW1lb3V0KS4gSG93ZXZlciwgeW91IHF1aXRlIGxpa2VseSBzdGlsbCBzaG91
+bGRuJ3QKPiB1c2UgInNtYXJ0IiBpbiB0aGlzIGNhc2UuICBJZiB5b3UgYWxyZWFkeSBoYXZlIHlv
+dXIgY29uZmlndXJhdGlvbiBzZXQgdXAKPiBsaWtlIHRoaXMsIHRoZW4geW91IGNhbiBqdXN0IHVz
+ZSAiZ3JlZWR5IiBhbmQgZ2V0IHRoZSBzYW1lIGJlbmVmaXQsCj4gd2l0aG91dCBoYXZpbmcgdG8g
+d29ycnkgYWJvdXQgdGhlIHNlY29uZCBwYXRoIHNob3dpbmcgdXAgb24gdGltZS5cCj4gCj4gSXQg
+aXMgcG9zc2libGUgdGhhdCB5b3UgY2FuJ3Qgc2V0IHVwIHlvdSBjb25maWd1cmF0aW9uIHRvIGNv
+cnJlY3RseSBzb3J0Cj4gYWxsIHRoZSBkZXZpY2VzIHRoYXQgbWF5IGFwcGVhciBpbiB0aGUgZnV0
+dXJlIGludG8gbXVsdGlwYXRoYWJsZSBhbmQKPiBub24tbXVsdGlwYXRoYWJsZS4gSW4gdGhpcyBj
+YXNlLCBpZiBpdCdzIGltcG9ydGFudCB0aGF0IHRoZXNlIG5ldwo+IGRldmljZXMgYXJlIGNvcnJl
+Y3RseSBtdWx0aXBhdGhlZCB0aGUgZmlyc3QgdGltZSB0aGV5IHNob3cgdXAsIHRoZW4KPiAic21h
+cnQiIGFsc28gbWFrZXMgc2Vuc2UuIEJ1dCBJIGRvbid0IHRoaW5rIHRoYXQgdGhpcyBjYXNlIHdh
+cyBzbwo+IGNvbW1vbiB0aGF0IHdlIHNob3VsZCBhc3N1bWUgdGhhdCBpdCdzIHRoZSBkZWZhdWx0
+IGZvciBwZW9wbGUgd2hvCj4gaW5zdGFsbCB0aGUgbXVsdGlwYXRoIHRvb2xzLiBJdCB0YWtlcyB2
+ZXJ5IGxpdHRsZSBlZmZvcnQgdG8gY2hhbmdlIHRoZQo+IGZpbmRfbXVsdGlwYXRocyBzZXR0aW5n
+LiBUaGUgcGVvcGxlIHdobyBhcmVuJ3QgaW50ZXJlc3RlZCBlbm91Z2ggaW4KPiB0aGVpciBtdWx0
+aXBhdGggc2V0dXAgdG8gZG8gdGhhdCBwcm9iYWJseSBhcmVuJ3QgdGhlIHBlb3BsZSB0aGF0IHdh
+bnQKPiBtdWx0aXBhdGggY2xhaW1pbmcgdGhlaXIgZGV2aWNlcyBmb3IgYSBjb3VwbGUgc2Vjb25k
+cyBldmVyeSBib290LCBqdXN0Cj4gaW4gY2FzZSB3ZSdyZSBpbiB0aGF0IHJhcmUgc2l0dWF0aW9u
+IHdoZXJlIGl0IGNvdWxkIG1ha2UgYSBkaWZmZXJlbmNlLgo+IAo+IC1CZW4KPiAKPj4gUmVnYXJk
+cwo+PiBNYXJ0aW4KCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
+bQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
 
