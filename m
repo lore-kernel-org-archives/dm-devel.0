@@ -4,7 +4,7 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DF6D4C76195
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C770FC6FD1C
 	for <dm-devel@archiver.kernel.org>; Wed, 22 Mar 2023 18:20:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1679509203;
@@ -14,84 +14,85 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=ZTJQ4VAqqvrU5NBQeSod8F3IzzsnS4+YVA+KMRJk+oA=;
-	b=ZAWlMuqva5P93gBuG72GrbYtwfYJEfD1pWJ/hse8vDxfXcr3WpUrA97adJFBjQ1r9zqRLR
-	EktZZil2K+k3plk0RTnawn5vKNX7asB1AM04jxW4v5Vh6lgg55HFLuYjHwC5OgOd0wlNUz
-	ull8nkZ8gtTIjdOqTzTqcueGnePHRhw=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=NJL8EajJDtcOLzxnG3mWS9BJwA2ThNRIK12ZV/Cx1Co=;
+	b=ZdeoJsY5IJrjjXfV94vSxovZE8CYenjSW1ykURqOxds+/OtUaCamqW4RUBASQJ5Z9FU7A2
+	CPAHhZm4jY0EMgYGUqvbBLqMJsDY1mL3w0aUngnA7aiIp63ZgNiWfDGPe4QTzQnLTyE/FE
+	6k7uU4Q/iCesKgtX9K9ozTo8UdzRlHw=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-447-clOkByc9MX6xsh2qhIYtvw-1; Wed, 22 Mar 2023 14:19:45 -0400
-X-MC-Unique: clOkByc9MX6xsh2qhIYtvw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-623-yLGfa9ieNiGM7xwiUM5t-g-1; Wed, 22 Mar 2023 14:20:00 -0400
+X-MC-Unique: yLGfa9ieNiGM7xwiUM5t-g-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2043D2999B3B;
-	Wed, 22 Mar 2023 18:19:41 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 24A36801206;
+	Wed, 22 Mar 2023 18:19:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0FA451121314;
-	Wed, 22 Mar 2023 18:19:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 10E6D492C13;
+	Wed, 22 Mar 2023 18:19:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 27E881946A75;
-	Wed, 22 Mar 2023 18:19:35 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 501FC1946A47;
+	Wed, 22 Mar 2023 18:19:36 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
  [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3A5741946A45
- for <dm-devel@listman.corp.redhat.com>; Wed, 22 Mar 2023 18:19:31 +0000 (UTC)
+ ESMTP id B79701946A6A
+ for <dm-devel@listman.corp.redhat.com>; Wed, 22 Mar 2023 18:19:34 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1771B40C6E68; Wed, 22 Mar 2023 18:19:26 +0000 (UTC)
+ id 9D3C540C6E68; Wed, 22 Mar 2023 18:19:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1002640C6E67
- for <dm-devel@redhat.com>; Wed, 22 Mar 2023 18:19:26 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 958D240C6E67
+ for <dm-devel@redhat.com>; Wed, 22 Mar 2023 18:19:34 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E9D79101A531
- for <dm-devel@redhat.com>; Wed, 22 Mar 2023 18:19:25 +0000 (UTC)
-Received: from mail-qv1-f48.google.com (mail-qv1-f48.google.com
- [209.85.219.48]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7A63A38123D2
+ for <dm-devel@redhat.com>; Wed, 22 Mar 2023 18:19:34 +0000 (UTC)
+Received: from mail-qt1-f171.google.com (mail-qt1-f171.google.com
+ [209.85.160.171]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-178-pzFgcTRxNoSCFEfdMXg1Ww-1; Wed, 22 Mar 2023 14:19:24 -0400
-X-MC-Unique: pzFgcTRxNoSCFEfdMXg1Ww-1
-Received: by mail-qv1-f48.google.com with SMTP id qh28so12738771qvb.7
- for <dm-devel@redhat.com>; Wed, 22 Mar 2023 11:19:24 -0700 (PDT)
+ us-mta-131-yA8hkPxLNhqq_n7eMpY17A-4; Wed, 22 Mar 2023 14:19:33 -0400
+X-MC-Unique: yA8hkPxLNhqq_n7eMpY17A-4
+Received: by mail-qt1-f171.google.com with SMTP id c10so12598896qtj.10
+ for <dm-devel@redhat.com>; Wed, 22 Mar 2023 11:19:32 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112; t=1679509163;
+ d=1e100.net; s=20210112; t=1679509172;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=fhQNXEgbZRlvEDVe4dOSLEHmcdFKzX1JvHBuPQFromA=;
- b=zus0ytLI2+rMSGizPA21RBqpBdv7SYJBf7NkfCEkscJcclT01e9NQ3VvZ8n4pvhWSp
- oViCK21wn992UjA+A6gc4IrMZM/Nd4nA7uhwAibGSSzuUNr5Ul9bQnnlrX9ckA53lGup
- st371UsGmr4lwbLzdnCpaLiJD0VJMBqHHcuDqWorLni1a8XiC3FHKq2gyzOCW/gGeTg9
- Bg7X8urqpdwno+4K8G+RjfnwX7aYVjON5eLJhad4817usfqPOgTsYLQbiX8K0jOm0VIa
- hu7p9ibAR4PlV0vfG2o5innb6aewRDHkI4lsiBS/F4jRRLa8QPsS+Jlcqxx/NMEO60sB
- kvPw==
-X-Gm-Message-State: AO0yUKUc4UK1wvoytkBEmntXhV4pxC7wu6wbHErpRCpL8dqY7me9EfgW
- Rxz36jHyG9ITkWlKJx+bp12QisAq5J69LuiIgcrbvSxUTMK1E7TQSMKedwI8GPPrxG8caWYFp8O
- vk7SkUTxm5sbnd1suBdYxKa4X5FlnQLjQ9DitWn6wYqJNQC8EG6T6konfuQ0CUaJ2NjIQHClmGQ
- g=
-X-Google-Smtp-Source: AK7set/ltULtpwmQlv9orHhAzdUiRVUTXNEZa/Yzq+Vw04Oy+7liu0HoiPqY/MkvZ7XYrMSBCtAbEw==
-X-Received: by 2002:a05:6214:1c0c:b0:56f:1b7e:d87f with SMTP id
- u12-20020a0562141c0c00b0056f1b7ed87fmr8423752qvc.34.1679509163266; 
- Wed, 22 Mar 2023 11:19:23 -0700 (PDT)
+ bh=atD89yr5/OSdVgb0JbDcT1cuwNr6C42XiKnbfRVm5g8=;
+ b=krR+Ool4jCbHKR5cAgm54RNwuEidoBlhk/dEKDNMVe0fgYZpbweMsfI9zxSsUy+09E
+ EsZSITuEXVkw+MValuQYHxSmUaEVVbKYiKlDMYsmhD1AZ/tZxjuoAz8TKFFV4bP9guvz
+ 2V0c7+iZc6n+2KRbAroz1ggdHkPJEGEHfPYjmFWAJpY5fsC2bzfVyPZ/s1CojpdWRuQP
+ 6DCZ9Bk6QKyEtq+CoeUyA5+rEzUfmghp3u2s+ZKOITbe+FOrFN8W4IEYSO+YwefujsYs
+ 3MhV88b8uAEXYfkmxPYwcKIqtlMJa4DLEsmf3ZL5F3FYhN3YHtEyB/CqYfLJ/iLgLAs+
+ XKvQ==
+X-Gm-Message-State: AO0yUKVEO+L6OvJlkRwEo4DskXCpHA4xIDND8XOtCmzsB/osOXFNBZF2
+ AFzDfJGnk8kHA6gGEM2J7+DH1+M2SJnH4KrcLU5LRK9+Hv8Dc1IKcqSbdj7xtJqcYOCX5yToyme
+ cq1OAwQhH7bnsOdQ5wDLILACTbdTSl4FSOl5F6JZQTV3CvTlhYjxfJWuM6if+PaWjO4rDVG2Z57
+ s=
+X-Google-Smtp-Source: AK7set9v7Lk6e/dy2TUa1U68x0X1ogOn82gP26n8T4ljrBbMOJ15B3AYMGgy04AubZSY2I/8eRfu0g==
+X-Received: by 2002:ac8:580d:0:b0:3b9:bc8c:c216 with SMTP id
+ g13-20020ac8580d000000b003b9bc8cc216mr5356869qtg.33.1679509172133; 
+ Wed, 22 Mar 2023 11:19:32 -0700 (PDT)
 Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
  [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- l6-20020ac848c6000000b003bfb0ea8094sm4012052qtr.83.2023.03.22.11.19.22
+ v6-20020ac87486000000b003bffe7fdc38sm6661799qtq.9.2023.03.22.11.19.31
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 22 Mar 2023 11:19:22 -0700 (PDT)
+ Wed, 22 Mar 2023 11:19:31 -0700 (PDT)
 From: Mike Snitzer <snitzer@kernel.org>
 To: dm-devel@redhat.com
-Date: Wed, 22 Mar 2023 14:18:38 -0400
-Message-Id: <20230322181845.29848-2-snitzer@kernel.org>
+Date: Wed, 22 Mar 2023 14:18:44 -0400
+Message-Id: <20230322181845.29848-8-snitzer@kernel.org>
 In-Reply-To: <20230322181845.29848-1-snitzer@kernel.org>
 References: <20230322181845.29848-1-snitzer@kernel.org>
 MIME-Version: 1.0
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: [dm-devel] [dm-6.4 PATCH 1/8] dm: split discards further if target
- sets max_discard_granularity
+Subject: [dm-devel] [dm-6.4 PATCH 7/8] dm bufio: rename buffer_cache struct
+ to dm_buffer_cache
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,163 +109,243 @@ Cc: keescook@chromium.org, heinzm@redhat.com, Mike Snitzer <snitzer@kernel.org>,
  luomeng12@huawei.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The block core (bio_split_discard) will already split discards based
-on the 'discard_granularity' and 'max_discard_sectors' queue_limits.
-But the DM thin target also needs to ensure that it doesn't receive a
-discard that spans a 'max_discard_sectors' boundary.
-
-Introduce a dm_target 'max_discard_granularity' flag that if set will
-cause DM core to split discard bios relative to 'max_discard_sectors'.
-This treats 'discard_granularity' as a "min_discard_granularity" and
-'max_discard_sectors' as a "max_discard_granularity".
-
-Requested-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm.c               | 54 +++++++++++++++++++----------------
- include/linux/device-mapper.h |  6 ++++
- include/uapi/linux/dm-ioctl.h |  4 +--
- 3 files changed, 37 insertions(+), 27 deletions(-)
+ drivers/md/dm-bufio.c | 52 +++++++++++++++++++++----------------------
+ 1 file changed, 26 insertions(+), 26 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index b6ace995b9ca..eeb58f89369e 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1162,7 +1162,8 @@ static inline sector_t max_io_len_target_boundary(struct dm_target *ti,
- 	return ti->len - target_offset;
- }
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index b418ee8e3853..e7b901baa878 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -327,7 +327,7 @@ enum data_mode {
+ };
  
--static sector_t max_io_len(struct dm_target *ti, sector_t sector)
-+static sector_t __max_io_len(struct dm_target *ti, sector_t sector,
-+			     unsigned int max_granularity)
- {
- 	sector_t target_offset = dm_target_offset(ti, sector);
- 	sector_t len = max_io_len_target_boundary(ti, target_offset);
-@@ -1173,11 +1174,16 @@ static sector_t max_io_len(struct dm_target *ti, sector_t sector)
- 	 *   explains why stacked chunk_sectors based splitting via
- 	 *   bio_split_to_limits() isn't possible here.
- 	 */
--	if (!ti->max_io_len)
-+	if (!max_granularity)
- 		return len;
- 	return min_t(sector_t, len,
- 		min(queue_max_sectors(ti->table->md->queue),
--		    blk_chunk_sectors_left(target_offset, ti->max_io_len)));
-+		    blk_chunk_sectors_left(target_offset, max_granularity)));
-+}
-+
-+static inline sector_t max_io_len(struct dm_target *ti, sector_t sector)
-+{
-+	return __max_io_len(ti, sector, ti->max_io_len);
- }
+ struct dm_buffer {
+-	/* protected by the locks in buffer_cache */
++	/* protected by the locks in dm_buffer_cache */
+ 	struct rb_node node;
  
- int dm_set_target_max_io_len(struct dm_target *ti, sector_t len)
-@@ -1561,26 +1567,6 @@ static void __send_empty_flush(struct clone_info *ci)
- 	bio_uninit(ci->bio);
- }
+ 	/* immutable, so don't need protecting */
+@@ -393,7 +393,7 @@ struct tree_lock {
+ 	struct rw_semaphore lock;
+ } ____cacheline_aligned_in_smp;
  
--static void __send_changing_extent_only(struct clone_info *ci, struct dm_target *ti,
--					unsigned int num_bios)
--{
--	unsigned int len, bios;
--
--	len = min_t(sector_t, ci->sector_count,
--		    max_io_len_target_boundary(ti, dm_target_offset(ti, ci->sector)));
--
--	atomic_add(num_bios, &ci->io->io_count);
--	bios = __send_duplicate_bios(ci, ti, num_bios, &len);
--	/*
--	 * alloc_io() takes one extra reference for submission, so the
--	 * reference won't reach 0 without the following (+1) subtraction
--	 */
--	atomic_sub(num_bios - bios + 1, &ci->io->io_count);
--
--	ci->sector += len;
--	ci->sector_count -= len;
--}
--
- static bool is_abnormal_io(struct bio *bio)
- {
- 	enum req_op op = bio_op(bio);
-@@ -1602,11 +1588,16 @@ static bool is_abnormal_io(struct bio *bio)
- static blk_status_t __process_abnormal_io(struct clone_info *ci,
- 					  struct dm_target *ti)
- {
--	unsigned int num_bios = 0;
-+	unsigned int bios, num_bios = 0;
-+	unsigned int len, max_granularity = 0;
- 
- 	switch (bio_op(ci->bio)) {
- 	case REQ_OP_DISCARD:
- 		num_bios = ti->num_discard_bios;
-+		if (ti->max_discard_granularity) {
-+			struct queue_limits *limits = dm_get_queue_limits(ti->table->md);
-+			max_granularity = limits->max_discard_sectors;
-+		}
- 		break;
- 	case REQ_OP_SECURE_ERASE:
- 		num_bios = ti->num_secure_erase_bios;
-@@ -1627,7 +1618,20 @@ static blk_status_t __process_abnormal_io(struct clone_info *ci,
- 	if (unlikely(!num_bios))
- 		return BLK_STS_NOTSUPP;
- 
--	__send_changing_extent_only(ci, ti, num_bios);
-+	len = min_t(sector_t, ci->sector_count,
-+		    __max_io_len(ti, ci->sector, max_granularity));
-+
-+	atomic_add(num_bios, &ci->io->io_count);
-+	bios = __send_duplicate_bios(ci, ti, num_bios, &len);
-+	/*
-+	 * alloc_io() takes one extra reference for submission, so the
-+	 * reference won't reach 0 without the following (+1) subtraction
-+	 */
-+	atomic_sub(num_bios - bios + 1, &ci->io->io_count);
-+
-+	ci->sector += len;
-+	ci->sector_count -= len;
-+
- 	return BLK_STS_OK;
- }
- 
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 7975483816e4..8aa6b3ea91fa 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -358,6 +358,12 @@ struct dm_target {
- 	 */
- 	bool discards_supported:1;
- 
-+	/*
-+	 * Set if this target requires that discards be split on both
-+	 * 'discard_granularity' and 'max_discard_sectors' boundaries.
-+	 */
-+	bool max_discard_granularity:1;
-+
+-struct buffer_cache {
++struct dm_buffer_cache {
  	/*
- 	 * Set if we need to limit the number of in-flight bios when swapping.
+ 	 * We spread entries across multiple trees to reduce contention
+ 	 * on the locks.
+@@ -414,22 +414,22 @@ static inline unsigned int cache_index(sector_t block)
+ 	return block & LOCKS_MASK;
+ }
+ 
+-static inline void cache_read_lock(struct buffer_cache *bc, sector_t block)
++static inline void cache_read_lock(struct dm_buffer_cache *bc, sector_t block)
+ {
+ 	down_read(&bc->locks[cache_index(block)].lock);
+ }
+ 
+-static inline void cache_read_unlock(struct buffer_cache *bc, sector_t block)
++static inline void cache_read_unlock(struct dm_buffer_cache *bc, sector_t block)
+ {
+ 	up_read(&bc->locks[cache_index(block)].lock);
+ }
+ 
+-static inline void cache_write_lock(struct buffer_cache *bc, sector_t block)
++static inline void cache_write_lock(struct dm_buffer_cache *bc, sector_t block)
+ {
+ 	down_write(&bc->locks[cache_index(block)].lock);
+ }
+ 
+-static inline void cache_write_unlock(struct buffer_cache *bc, sector_t block)
++static inline void cache_write_unlock(struct dm_buffer_cache *bc, sector_t block)
+ {
+ 	up_write(&bc->locks[cache_index(block)].lock);
+ }
+@@ -439,12 +439,12 @@ static inline void cache_write_unlock(struct buffer_cache *bc, sector_t block)
+  * This struct helps avoid redundant drop and gets of the same lock.
+  */
+ struct lock_history {
+-	struct buffer_cache *cache;
++	struct dm_buffer_cache *cache;
+ 	bool write;
+ 	unsigned int previous;
+ };
+ 
+-static void lh_init(struct lock_history *lh, struct buffer_cache *cache, bool write)
++static void lh_init(struct lock_history *lh, struct dm_buffer_cache *cache, bool write)
+ {
+ 	lh->cache = cache;
+ 	lh->write = write;
+@@ -513,7 +513,7 @@ static struct dm_buffer *list_to_buffer(struct list_head *l)
+ 	return le_to_buffer(le);
+ }
+ 
+-static void cache_init(struct buffer_cache *bc)
++static void cache_init(struct dm_buffer_cache *bc)
+ {
+ 	unsigned int i;
+ 
+@@ -526,7 +526,7 @@ static void cache_init(struct buffer_cache *bc)
+ 	lru_init(&bc->lru[LIST_DIRTY]);
+ }
+ 
+-static void cache_destroy(struct buffer_cache *bc)
++static void cache_destroy(struct dm_buffer_cache *bc)
+ {
+ 	unsigned int i;
+ 
+@@ -540,7 +540,7 @@ static void cache_destroy(struct buffer_cache *bc)
+ /*
+  * not threadsafe, or racey depending how you look at it
+  */
+-static unsigned long cache_count(struct buffer_cache *bc, int list_mode)
++static unsigned long cache_count(struct dm_buffer_cache *bc, int list_mode)
+ {
+ 	return lru_count(&bc->lru[list_mode]);
+ }
+@@ -550,7 +550,7 @@ static unsigned long cache_count(struct buffer_cache *bc, int list_mode)
+ /*
+  * not threadsafe
+  */
+-static unsigned long cache_total(struct buffer_cache *bc)
++static unsigned long cache_total(struct dm_buffer_cache *bc)
+ {
+ 	return lru_count(&bc->lru[LIST_CLEAN]) +
+ 		lru_count(&bc->lru[LIST_DIRTY]);
+@@ -588,7 +588,7 @@ static void __cache_inc_buffer(struct dm_buffer *b)
+ 	WRITE_ONCE(b->last_accessed, jiffies);
+ }
+ 
+-static struct dm_buffer *cache_get(struct buffer_cache *bc, sector_t block)
++static struct dm_buffer *cache_get(struct dm_buffer_cache *bc, sector_t block)
+ {
+ 	struct dm_buffer *b;
+ 
+@@ -609,7 +609,7 @@ static struct dm_buffer *cache_get(struct buffer_cache *bc, sector_t block)
+  * Returns true if the hold count hits zero.
+  * threadsafe
+  */
+-static bool cache_put(struct buffer_cache *bc, struct dm_buffer *b)
++static bool cache_put(struct dm_buffer_cache *bc, struct dm_buffer *b)
+ {
+ 	bool r;
+ 
+@@ -653,7 +653,7 @@ static enum evict_result __evict_pred(struct lru_entry *le, void *context)
+ 	return w->pred(b, w->context);
+ }
+ 
+-static struct dm_buffer *__cache_evict(struct buffer_cache *bc, int list_mode,
++static struct dm_buffer *__cache_evict(struct dm_buffer_cache *bc, int list_mode,
+ 				       b_predicate pred, void *context,
+ 				       struct lock_history *lh)
+ {
+@@ -672,7 +672,7 @@ static struct dm_buffer *__cache_evict(struct buffer_cache *bc, int list_mode,
+ 	return b;
+ }
+ 
+-static struct dm_buffer *cache_evict(struct buffer_cache *bc, int list_mode,
++static struct dm_buffer *cache_evict(struct dm_buffer_cache *bc, int list_mode,
+ 				     b_predicate pred, void *context)
+ {
+ 	struct dm_buffer *b;
+@@ -690,7 +690,7 @@ static struct dm_buffer *cache_evict(struct buffer_cache *bc, int list_mode,
+ /*
+  * Mark a buffer as clean or dirty. Not threadsafe.
+  */
+-static void cache_mark(struct buffer_cache *bc, struct dm_buffer *b, int list_mode)
++static void cache_mark(struct dm_buffer_cache *bc, struct dm_buffer *b, int list_mode)
+ {
+ 	cache_write_lock(bc, b->block);
+ 	if (list_mode != b->list_mode) {
+@@ -707,7 +707,7 @@ static void cache_mark(struct buffer_cache *bc, struct dm_buffer *b, int list_mo
+  * Runs through the lru associated with 'old_mode', if the predicate matches then
+  * it moves them to 'new_mode'.  Not threadsafe.
+  */
+-static void __cache_mark_many(struct buffer_cache *bc, int old_mode, int new_mode,
++static void __cache_mark_many(struct dm_buffer_cache *bc, int old_mode, int new_mode,
+ 			      b_predicate pred, void *context, struct lock_history *lh)
+ {
+ 	struct lru_entry *le;
+@@ -725,7 +725,7 @@ static void __cache_mark_many(struct buffer_cache *bc, int old_mode, int new_mod
+ 	}
+ }
+ 
+-static void cache_mark_many(struct buffer_cache *bc, int old_mode, int new_mode,
++static void cache_mark_many(struct dm_buffer_cache *bc, int old_mode, int new_mode,
+ 			    b_predicate pred, void *context)
+ {
+ 	struct lock_history lh;
+@@ -753,7 +753,7 @@ enum it_action {
+ 
+ typedef enum it_action (*iter_fn)(struct dm_buffer *b, void *context);
+ 
+-static void __cache_iterate(struct buffer_cache *bc, int list_mode,
++static void __cache_iterate(struct dm_buffer_cache *bc, int list_mode,
+ 			    iter_fn fn, void *context, struct lock_history *lh)
+ {
+ 	struct lru *lru = &bc->lru[list_mode];
+@@ -781,7 +781,7 @@ static void __cache_iterate(struct buffer_cache *bc, int list_mode,
+ 	} while (le != first);
+ }
+ 
+-static void cache_iterate(struct buffer_cache *bc, int list_mode,
++static void cache_iterate(struct dm_buffer_cache *bc, int list_mode,
+ 			  iter_fn fn, void *context)
+ {
+ 	struct lock_history lh;
+@@ -824,7 +824,7 @@ static bool __cache_insert(struct rb_root *root, struct dm_buffer *b)
+ 	return true;
+ }
+ 
+-static bool cache_insert(struct buffer_cache *bc, struct dm_buffer *b)
++static bool cache_insert(struct dm_buffer_cache *bc, struct dm_buffer *b)
+ {
+ 	bool r;
+ 
+@@ -848,7 +848,7 @@ static bool cache_insert(struct buffer_cache *bc, struct dm_buffer *b)
+  *
+  * Not threadsafe.
+  */
+-static bool cache_remove(struct buffer_cache *bc, struct dm_buffer *b)
++static bool cache_remove(struct dm_buffer_cache *bc, struct dm_buffer *b)
+ {
+ 	bool r;
+ 
+@@ -894,7 +894,7 @@ static struct dm_buffer *__find_next(struct rb_root *root, sector_t block)
+ 	return best;
+ }
+ 
+-static void __remove_range(struct buffer_cache *bc,
++static void __remove_range(struct dm_buffer_cache *bc,
+ 			   struct rb_root *root,
+ 			   sector_t begin, sector_t end,
+ 			   b_predicate pred, b_release release)
+@@ -921,7 +921,7 @@ static void __remove_range(struct buffer_cache *bc,
+ 	}
+ }
+ 
+-static void cache_remove_range(struct buffer_cache *bc,
++static void cache_remove_range(struct dm_buffer_cache *bc,
+ 			       sector_t begin, sector_t end,
+ 			       b_predicate pred, b_release release)
+ {
+@@ -988,7 +988,7 @@ struct dm_bufio_client {
  	 */
-diff --git a/include/uapi/linux/dm-ioctl.h b/include/uapi/linux/dm-ioctl.h
-index 7edf335778ba..1990b5700f69 100644
---- a/include/uapi/linux/dm-ioctl.h
-+++ b/include/uapi/linux/dm-ioctl.h
-@@ -286,9 +286,9 @@ enum {
- #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
+ 	unsigned long oldest_buffer;
  
- #define DM_VERSION_MAJOR	4
--#define DM_VERSION_MINOR	47
-+#define DM_VERSION_MINOR	48
- #define DM_VERSION_PATCHLEVEL	0
--#define DM_VERSION_EXTRA	"-ioctl (2022-07-28)"
-+#define DM_VERSION_EXTRA	"-ioctl (2023-03-01)"
+-	struct buffer_cache cache;
++	struct dm_buffer_cache cache;
+ };
  
- /* Status bits */
- #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
+ static DEFINE_STATIC_KEY_FALSE(no_sleep_enabled);
 -- 
 2.40.0
 
