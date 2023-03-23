@@ -4,94 +4,92 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4C7F6C6FD1C
-	for <dm-devel@archiver.kernel.org>; Thu, 23 Mar 2023 09:51:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 09439C6FD1D
+	for <dm-devel@archiver.kernel.org>; Thu, 23 Mar 2023 11:53:26 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1679565107;
+	s=mimecast20190719; t=1679572405;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=AfgTw7xlkQ1UMJoXimVLZh9eqZn3P1GpFgz75g6FLZ8=;
-	b=RK0aLMYCm7LYJr7aRli1aUKnMVURZJAfQWCNj5cC9JJ0nUjOZSYjqjh5ZjGZe/e5gGLDoG
-	PX/6nCEk319swXExbCeh8ooRs6Eup9q1NatEr+XYgLNrVL6BCOuAIXjfP8boUbRIOOjFkz
-	ULF63VO7Mdm9G1OnwB3l3hGUoR809I4=
+	bh=+QvBOId0VwRLKUDNYAYDnPT31gT5QGqCcS2HZpkoc/I=;
+	b=S6d32P42o8GK2PWjiPLj8nj859SJVXupPsaQ+haVj30pQShoIVDNwkLb6TfoAwOOrSEEFf
+	9bAzp6CCGWcy6pzmjPeNXEyj/GECdKYQsfczr2H/2aoybUXDkaeQSWInXpHxXlqsYmm5lk
+	6BBFpHW5JNaYmsIziRb2DOtaWsI8QQU=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-557-IKN9vAuEPTqYEykiBCzeyQ-1; Thu, 23 Mar 2023 05:51:43 -0400
-X-MC-Unique: IKN9vAuEPTqYEykiBCzeyQ-1
+ us-mta-1-GrC53bvxN1-Ll-q25vG1jA-1; Thu, 23 Mar 2023 07:53:22 -0400
+X-MC-Unique: GrC53bvxN1-Ll-q25vG1jA-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9ACFB3815EF3;
-	Thu, 23 Mar 2023 09:51:41 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 425391C09508;
+	Thu, 23 Mar 2023 11:53:20 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5B3A2440D7;
-	Thu, 23 Mar 2023 09:51:40 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 986B818EC7;
+	Thu, 23 Mar 2023 11:53:18 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 267091946589;
-	Thu, 23 Mar 2023 09:51:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6FBA41946589;
+	Thu, 23 Mar 2023 11:53:18 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 869D81946587
- for <dm-devel@listman.corp.redhat.com>; Thu, 23 Mar 2023 09:51:39 +0000 (UTC)
+ ESMTP id EB3601946587
+ for <dm-devel@listman.corp.redhat.com>; Thu, 23 Mar 2023 11:53:16 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 74F692027041; Thu, 23 Mar 2023 09:51:39 +0000 (UTC)
+ id DAB1F40CF916; Thu, 23 Mar 2023 11:53:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 6D5A32027040
- for <dm-devel@redhat.com>; Thu, 23 Mar 2023 09:51:39 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 11CF887B2A1
- for <dm-devel@redhat.com>; Thu, 23 Mar 2023 09:51:39 +0000 (UTC)
-Received: from mail-qt1-f177.google.com (mail-qt1-f177.google.com
- [209.85.160.177]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-519-7NEZthUjMKODLd5JkNnVYA-1; Thu, 23 Mar 2023 05:51:37 -0400
-X-MC-Unique: 7NEZthUjMKODLd5JkNnVYA-1
-Received: by mail-qt1-f177.google.com with SMTP id r5so25855607qtp.4
- for <dm-devel@redhat.com>; Thu, 23 Mar 2023 02:51:37 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112; t=1679565097;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
- :message-id:reply-to;
- bh=UVQ7hU8Br7Tu2Xt0SbRBGd3dDM668bx3RDEdIY6km44=;
- b=pnCQ5IvRp6vX7KPCdZG8TERYAuvv0pg1leHaB5fpWyTorOghpXbo/o0WmVS4+iCjhm
- RPcB8UekS3xdF7rqewbutoOfYkLRVyYN4oSgfEU93Uvz6qNuLgSX+v+dl9PDsgPHtnLo
- 3pC6saOMVfM3XBj+JI+EnUfeCqhzwbHZCIPQ88wN86tgMdzCMC7D/YfcF2JvLP8gpps9
- aAMCfibdBRMZssiC6MwYxI0CG9qZgp40ikN9C+/s8AS/bwPZg0Cy3x2knhWgThXWwYd1
- 331eDF4KkIyRxUCkLQxqqCWwQQLn/sSQ0N8R5KG/N65fjGQ3574eokVi2vM6KbefJT9D
- 4PgA==
-X-Gm-Message-State: AO0yUKXfO46CHgM84nq1JikpXjUetNE25mQbAacWe1hCuYUZrxXXlSjZ
- KUJVXaGIvAIfbfiNrRPQ3/MVDco=
-X-Google-Smtp-Source: AK7set9tR8LMemJ5hgwR6gF5syLw5Hw31f9FphLEj9jHVkTXH9ZdND3KVQ/kL4BZGbbRAwh79OHJmQ==
-X-Received: by 2002:ac8:5813:0:b0:3d6:dca:f0df with SMTP id
- g19-20020ac85813000000b003d60dcaf0dfmr11043048qtg.66.1679565096373; 
- Thu, 23 Mar 2023 02:51:36 -0700 (PDT)
-Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
- [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- q21-20020a05620a0c9500b007422fa6376bsm12849785qki.77.2023.03.23.02.51.35
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 23 Mar 2023 02:51:35 -0700 (PDT)
-Date: Thu, 23 Mar 2023 05:51:34 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Joe Thornber <thornber@redhat.com>
-Message-ID: <ZBwhJmxVVupuou4h@redhat.com>
-References: <20230322181845.29848-1-snitzer@kernel.org>
- <20230322181845.29848-6-snitzer@kernel.org>
- <CAJ0trDbFi0U+nJMkqi8Z9WDwWoAUO0qFMRyY5d7qxUU4mwpgzQ@mail.gmail.com>
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D3B7C40CF8F2
+ for <dm-devel@redhat.com>; Thu, 23 Mar 2023 11:53:16 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B79E83C0ED67
+ for <dm-devel@redhat.com>; Thu, 23 Mar 2023 11:53:16 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-246-H_qUYUtKO026jr5aw9KvaQ-1; Thu,
+ 23 Mar 2023 07:53:15 -0400
+X-MC-Unique: H_qUYUtKO026jr5aw9KvaQ-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id 8791722653;
+ Thu, 23 Mar 2023 11:53:13 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 59312132C2;
+ Thu, 23 Mar 2023 11:53:13 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap2.suse-dmz.suse.de with ESMTPSA id BYjLE6k9HGTLIAAAMHmgww
+ (envelope-from <mwilck@suse.com>); Thu, 23 Mar 2023 11:53:13 +0000
+Message-ID: <66ea3909c6446445a64d70eee0c68a6e1f15b33d.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski
+ <bmarzins@redhat.com>, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Date: Thu, 23 Mar 2023 12:53:12 +0100
+In-Reply-To: <20230320155550.7326-1-mwilck@suse.com>
+References: <20230320155550.7326-1-mwilck@suse.com>
+User-Agent: Evolution 3.46.4
 MIME-Version: 1.0
-In-Reply-To: <CAJ0trDbFi0U+nJMkqi8Z9WDwWoAUO0qFMRyY5d7qxUU4mwpgzQ@mail.gmail.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: Re: [dm-devel] [dm-6.4 PATCH 5/8] dm bufio: improve concurrent IO
- performance
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: Re: [dm-devel] [PATCH] multipath-tools Makefiles: handle dependency
+ files correctly
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,94 +101,65 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: keescook@chromium.org, heinzm@redhat.com, ejt@redhat.com, nhuck@google.com,
- ebiggers@kernel.org, dm-devel@redhat.com, mpatocka@redhat.com,
- luomeng12@huawei.com
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: suse.com
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-On Thu, Mar 23 2023 at  3:51P -0400,
-Joe Thornber <thornber@redhat.com> wrote:
+Xose, Ben,
 
-> Mike,
-> 
-> I'm Nacking this patch here.  You've taken the comment from my latest
-> patch, and attached it to something else.  I don't know if you've taken an
-> older patch and updated it, or taken the latest patch and downgraded it.
+when this gets a Reviewed-by, I'd prepare a new submission to
+Christophe (unless someone objects).
 
-I lean on git to tell me if code is identical.
+Martin
 
-Since we're now clearly keeping score here. I used git to compare what
-I had here (with various small whitespace tweaks and other nits):
-https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=2023-03-01-thin-concurrency-8
-
-with your -8 code:
-https://github.com/jthornber/linux/tree/2023-03-21-thin-concurrency-8
-
-I had to deal with the problem that you didn't use my tree you rebased
-so I had to reconcile not losing my handful of fluff.
-
-I leaned on the fact that your -7 and -8 were identical in code:
-git diff ejt/2023-02-28-thin-concurrency-7 ejt/2023-03-21-thin-concurrency-8 -- drivers/md/dm-bufio.c
-
-I could've just generated my fluff and folded it into your new clean
--8.  But I went the other way around, instead I picked up your other
-incremental changes from -7 and folded them into what I had. No real
-reason, that's just how I did it.
-
-> For instance the latest patch uses the name 'struct dm_buffer_cache', but
-> it looks like you've renamed to 'struct buffer_cache' and then posted
-> another patch in the series that renames back to dm_buffer_cache.
-
-Right, I was cherry-picking your incremantal changes your staged in -7
-before your clean patch rollup in your -8. How the struct rename
-occurred to the code didn't much matter to me, so long as the change
-was made.  But yeah I should've just folded it.  Not a big deal.
-
-> I also see the comment change:
-> 
-> original "A refcount_t for hold_count does not work." which has changed to
-> "NOTE: attempting to use refcount_t instead of atomic_t caused crashes!".
-> Talk about over dramatisation (If the hold_count is incorrect we detect and
-> BUG).
-
-Yes, but I was aiming to leave breadcrumbs if/when someone might think
-to retry using refcount_t to see why it "does not work". I was trying
-to save future me or you or someone else some time. By making it
-clear: there will be dragons.
-
-But in doing so I unwittingly already unleashed different dragons ;)
-
-> I can't stand by my code if I don't know what's being sent up in my name.
->
-> Please use the patchset from this branch:
-> https://github.com/jthornber/linux/tree/2023-03-21-thin-concurrency-8
-
-We've resolved this now interactively in chat, but I had to reply on
-dm-devel to let others know.  Again, on a code level what I posted to
-dm-devel reflects what was staged in 2023-03-21-thin-concurrency-8:
-
-For me this yields my fluff I was referring to above:
-git diff ejt/2023-03-21-thin-concurrency-8 dm/dm-6.4 -- drivers/md/dm-bufio.c
-
-Biggest difference being dm_buffer struct member reordering (which I
-had discussed with you).
-
-For the benefit of others, I since dropped patch 1 and patch 2
-(max_discard_granularity and bio-prison-v1 patch) but pulled them to
-the HEAD of this new development branch (that has extra debugging):
-https://git.kernel.org/pub/scm/linux/kernel/git/snitzer/linux.git/log/?h=dm-6.4
-
-I'll go back to bed now, hopefully you'll have this discard issue
-fixed in a couple hours when I return (as we discussed). ;)
-
-Mike
+On Mon, 2023-03-20 at 16:55 +0100, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+>=20
+> Some generated .d files were not correctly included, and not
+> removed with "make dep_clean". Fix it.
+>=20
+> Reported-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+> =A0libmultipath/Makefile | 4 ++--
+> =A0multipathd/Makefile=A0=A0 | 4 ++--
+> =A02 files changed, 4 insertions(+), 4 deletions(-)
+>=20
+> diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+> index 61aa611..85767ab 100644
+> --- a/libmultipath/Makefile
+> +++ b/libmultipath/Makefile
+> @@ -71,7 +71,7 @@ uninstall:
+> =A0clean: dep_clean
+> =A0=A0=A0=A0=A0=A0=A0=A0$(Q)$(RM) core *.a *.o *.so *.so.* *.abi nvme-ioc=
+tl.c nvme-
+> ioctl.h autoconfig.h $(NV_VERSION_SCRIPT)
+> =A0
+> -include $(wildcard $(OBJS:.o=3D.d))
+> +include $(wildcard $(OBJS:.o=3D.d) $(OBJS-T:.o=3D.d))
+> =A0
+> =A0dep_clean:
+> -=A0=A0=A0=A0=A0=A0=A0$(Q)$(RM) $(OBJS:.o=3D.d)
+> +=A0=A0=A0=A0=A0=A0=A0$(Q)$(RM) $(OBJS:.o=3D.d) $(OBJS-T:.o=3D.d)
+> diff --git a/multipathd/Makefile b/multipathd/Makefile
+> index 9d53132..dca8e10 100644
+> --- a/multipathd/Makefile
+> +++ b/multipathd/Makefile
+> @@ -81,7 +81,7 @@ uninstall:
+> =A0clean: dep_clean
+> =A0=A0=A0=A0=A0=A0=A0=A0$(Q)$(RM) core *.o $(EXEC) $(CLI)
+> =A0
+> -include $(wildcard $(OBJS:.o=3D.d))
+> +include $(wildcard $(OBJS:.o=3D.d) $(CLI_OBJS:.o=3D.d))
+> =A0
+> =A0dep_clean:
+> -=A0=A0=A0=A0=A0=A0=A0$(Q)$(RM) $(OBJS:.o=3D.d)
+> +=A0=A0=A0=A0=A0=A0=A0$(Q)$(RM) $(OBJS:.o=3D.d) $(CLI_OBJS:.o=3D.d)
 
 --
 dm-devel mailing list
