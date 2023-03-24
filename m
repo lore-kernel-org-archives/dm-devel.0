@@ -1,91 +1,67 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D9CB1C74A5B
-	for <dm-devel@archiver.kernel.org>; Thu, 23 Mar 2023 20:54:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id AA8E4C6FD1C
+	for <dm-devel@archiver.kernel.org>; Fri, 24 Mar 2023 14:25:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1679604859;
+	s=mimecast20190719; t=1679667917;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=i+LElZA7qFD3rWd7T0zddYEXMLeILkoYMEOUirAPKZ0=;
-	b=UcY7wKixoe5rgHijAdR9byeCKwCl3q8zF8KeP8bAfmPseOCEmZA2+FwkY+QVQBjYVpqzU8
-	L1yupm2Pzf2f99XACcldfhj1ssUm2OezOaZO4Eo/ysmCpAefi1ELNYxbelbhUxZCghRB2F
-	/AsTy/qNkW2Tnin9zZqRIBDBsKffK4I=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=4Yvbn98JtOseoaj1LjCvH+1cu+tpWEItbB8AsZnSBNw=;
+	b=IT7RnHnfQMgyIGyV+Xxilsxqzwb/pGNE7cwA2KJrADLcP62zaPufaLOh26qQDcPgLRWMZD
+	fqeYaVYDeKdTXOyr7EhAtvjfrPQ8pni9TEvjBPYtn0Qzb0p+yIrnyyvegeeuw7R2AJnMue
+	LZ3kbx+Kt7zVip1UGFnyK09+IZT6Juw=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-21-v-t_9VdKMUawdGIw2Syjqw-1; Thu, 23 Mar 2023 16:54:17 -0400
-X-MC-Unique: v-t_9VdKMUawdGIw2Syjqw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-510-VYcknqGFOxOqQV1eCsIoEw-1; Fri, 24 Mar 2023 10:25:13 -0400
+X-MC-Unique: VYcknqGFOxOqQV1eCsIoEw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D9C181C05AF7;
-	Thu, 23 Mar 2023 20:54:13 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 79FEF85A5A3;
+	Fri, 24 Mar 2023 14:25:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 7EF03140E94F;
-	Thu, 23 Mar 2023 20:54:13 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5B3E540CE2D4;
+	Fri, 24 Mar 2023 14:25:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 38F9019465B7;
-	Thu, 23 Mar 2023 20:54:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2969F1946A5E;
+	Fri, 24 Mar 2023 14:25:09 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2FDE119465B7
- for <dm-devel@listman.corp.redhat.com>; Thu, 23 Mar 2023 20:54:12 +0000 (UTC)
+ ESMTP id 5D3E61946A5A
+ for <dm-devel@listman.corp.redhat.com>; Fri, 24 Mar 2023 14:25:07 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0E4EB492B0A; Thu, 23 Mar 2023 20:54:12 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 06FB6492B0B
- for <dm-devel@redhat.com>; Thu, 23 Mar 2023 20:54:12 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DE5A1380611A
- for <dm-devel@redhat.com>; Thu, 23 Mar 2023 20:54:11 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-505-JW62BYq-N1udiKsfPojtfg-1; Thu,
- 23 Mar 2023 16:54:08 -0400
-X-MC-Unique: JW62BYq-N1udiKsfPojtfg-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id BC4251FE14;
- Thu, 23 Mar 2023 20:54:06 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 5C72B13596;
- Thu, 23 Mar 2023 20:54:06 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id SWayE268HGT8UwAAMHmgww
- (envelope-from <mwilck@suse.com>); Thu, 23 Mar 2023 20:54:06 +0000
-From: mwilck@suse.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
- Benjamin Marzinski <bmarzins@redhat.com>, lixiaokeng@huawei.com
-Date: Thu, 23 Mar 2023 21:53:58 +0100
-Message-Id: <20230323205358.29724-1-mwilck@suse.com>
+ id 3CD7E2166B2A; Fri, 24 Mar 2023 14:25:07 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1DBD02166B29;
+ Fri, 24 Mar 2023 14:25:07 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 32OEP3QT003665;
+ Fri, 24 Mar 2023 09:25:04 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 32OEP3HP003664;
+ Fri, 24 Mar 2023 09:25:03 -0500
+Date: Fri, 24 Mar 2023 09:25:03 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Message-ID: <20230324142503.GM19878@octiron.msp.redhat.com>
+References: <DB68C384-BA3A-40E8-9223-4868EE30B68A@purestorage.com>
+ <e52c66c71e3a3f25412c86763af8de9fadbfd3c8.camel@suse.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-Subject: [dm-devel] [PATCH] libmultipath: use directio checker for LIO
- targets
+In-Reply-To: <e52c66c71e3a3f25412c86763af8de9fadbfd3c8.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH] libmultipathd Avoid parsing errors due to
+ unsupported designators
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -97,41 +73,93 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ "brian@purestorage.com" <brian@purestorage.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: suse.com
+X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Martin Wilck <mwilck@suse.com>
+On Thu, Mar 23, 2023 at 08:23:24PM +0000, Martin Wilck wrote:
+> On Mon, 2023-03-20 at 12:22 -0700, Brian Bunker wrote:
+> > Unsupported designators, even if they are correct, will result
+> > in parsing errors. Add support for these two:
+> > 
+> > Logical Unit Group (0x6)
+> > Vendor Specific (0x0)
+> > 
+> > Mar 20 13:37:35 init107-18 multipath[45016]: parse_vpd_pg83:
+> > invalid device designator at offset 87: 01060004
+> > Mar 20 13:37:35 init107-18 multipath[45016]: parse_vpd_pg83:
+> > invalid device designator at offset 131: 02000005
+> > 
+> > Thanks,
+> > Brian
+> 
+> Thanks. I've modified your patch as attached.
+> 
+> Martin
+> 
 
-LIO always responds with GOOD status to TUR. Thus TUR is
-not useful as path checker for LIO targets.
+> From 9edbc2b6154786a9e7bb38890d023301c65c8a6a Mon Sep 17 00:00:00 2001
+> From: Brian Bunker <brian@purestorage.com>
+> Date: Mon, 20 Mar 2023 12:22:02 -0700
+> Subject: [PATCH] libmultipathd Avoid parsing errors due to unsupported
+>  designators
+> 
+> Unsupported designators, even if they are correct, will result
+> in parsing errors. Add support for these two:
+> 
+> Logical Unit Group (0x6)
+> Vendor Specific (0x0)
+> 
+> Mar 20 13:37:35 init107-18 multipath[45016]: parse_vpd_pg83:
+> invalid device designator at offset 87: 01060004
+> Mar 20 13:37:35 init107-18 multipath[45016]: parse_vpd_pg83:
+> invalid device designator at offset 131: 02000005
+> 
+> Thanks,
+> Brian
+> 
+> mwilck: added descriptor type 7 (MD5) for completeness.
+> 
+> Signed-off-by: Brian Bunker <brian@purestorage.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Fixes https://github.com/opensvc/multipath-tools/issues/54
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/hwtable.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 3c4f866..c2a024c 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1067,6 +1067,7 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = 12,
- 		.prio_name     = PRIO_ALUA,
-+		.checker_name  = DIRECTIO,
- 	},
- 	/*
- 	 * DataCore
--- 
-2.39.2
+> ---
+>  libmultipath/discovery.c | 11 +++++++++++
+>  1 file changed, 11 insertions(+)
+> 
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index 3a5ba17..6865cd9 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -1211,6 +1211,17 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+>  			invalid = (d[3] < 8);
+>  			new_prio = 2;
+>  			break;
+> +		case 0x6:
+> +			/* Logical Unit Group */
+> +			invalid = (d[3] != 4);
+> +			break;
+> +		case 0x7:
+> +			/* MD5 logical unit designator */
+> +			invalid = (d[3] != 16);
+> +			break;
+> +		case 0x0:
+> +			/* Vendor Specific */
+> +			break;
+>  		case 0xa:
+>  			condlog(2, "%s: UUID identifiers not yet supported",
+>  				__func__);
+> -- 
+> 2.39.2
+> 
 
 --
 dm-devel mailing list
