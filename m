@@ -4,94 +4,100 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id EE4FAC76195
-	for <dm-devel@archiver.kernel.org>; Mon, 27 Mar 2023 20:14:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C591AC76195
+	for <dm-devel@archiver.kernel.org>; Tue, 28 Mar 2023 06:28:00 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1679948063;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	s=mimecast20190719; t=1679984879;
+	h=from:from:sender:sender:reply-to:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=RnW4yMGw8sW4/Lp8VW6SGPGhyjX8Ev3H+VB0V7MwpV0=;
-	b=HdJHfHl0hsvPp16ppPSuKr6k9bTNBDR048XhMxANnBRM3dgU+OQa2rcrIqX/hFD+ZmO2RG
-	sdlhA5ushyeoP8g4Z1MDXGc7iEjJABWN7JuAtkG36jVynRcsueuK2Vwo7c0Iqv2YXNApM7
-	kTAmbteSKC/BOsjoR2Yyjr6uFVGFgJw=
+	bh=kAWRBDSrCBY2M6Ha0XyobtpA9/prcFtIHDwvvNp4wKg=;
+	b=O1ZSpMS79n2fAvizIxkpEvZwhlpqbcqgE4rPdrTCKFN97pTg0Fzpn3JNdcxgcKyVb3N1OQ
+	U/hEzCSVhVGo21DR/kliUOjzl1mK78dXy+b56y/dObp3muuekHUx5HX7UwDFuVYgAdD7ao
+	OEYgrJv/5IeDaW6lUmfhjo9pgmMaHYA=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-235-duaa1k-sPzSJSlgDwJfboA-1; Mon, 27 Mar 2023 16:14:19 -0400
-X-MC-Unique: duaa1k-sPzSJSlgDwJfboA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-605-Dwfaogi1PH6AWSEV2PK6kw-1; Tue, 28 Mar 2023 02:27:56 -0400
+X-MC-Unique: Dwfaogi1PH6AWSEV2PK6kw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D195B802D32;
-	Mon, 27 Mar 2023 20:14:17 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6FBF1185A792;
+	Tue, 28 Mar 2023 06:27:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C05A94020C82;
-	Mon, 27 Mar 2023 20:14:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 69EB614171BE;
+	Tue, 28 Mar 2023 06:27:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 34C6419472D9;
-	Mon, 27 Mar 2023 20:13:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1143619465B6;
+	Tue, 28 Mar 2023 06:27:51 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 343AC19465A2
- for <dm-devel@listman.corp.redhat.com>; Mon, 27 Mar 2023 20:13:39 +0000 (UTC)
+ ESMTP id 6C310194658F
+ for <dm-devel@listman.corp.redhat.com>; Tue, 28 Mar 2023 00:07:45 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1AF32492B0B; Mon, 27 Mar 2023 20:13:39 +0000 (UTC)
+ id ED27C14171BC; Tue, 28 Mar 2023 00:07:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1322B492B0A
- for <dm-devel@redhat.com>; Mon, 27 Mar 2023 20:13:39 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E50FF14171BB
+ for <dm-devel@redhat.com>; Tue, 28 Mar 2023 00:07:44 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EA187801779
- for <dm-devel@redhat.com>; Mon, 27 Mar 2023 20:13:38 +0000 (UTC)
-Received: from mail-qt1-f179.google.com (mail-qt1-f179.google.com
- [209.85.160.179]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C9D5085A5A3
+ for <dm-devel@redhat.com>; Tue, 28 Mar 2023 00:07:44 +0000 (UTC)
+Received: from mp-relay-02.fibernetics.ca (mp-relay-02.fibernetics.ca
+ [208.85.217.137]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-304-Y1vkodrEM3udqoCnSA8-Ug-6; Mon, 27 Mar 2023 16:13:37 -0400
-X-MC-Unique: Y1vkodrEM3udqoCnSA8-Ug-6
-Received: by mail-qt1-f179.google.com with SMTP id hf2so9812071qtb.3
- for <dm-devel@redhat.com>; Mon, 27 Mar 2023 13:13:37 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112; t=1679948017;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=PwFipSc82OIEFDU8Id4luDtLttcFOJWrHTnvxSKayKA=;
- b=lfPjobkaeanbc+RQlePNusm+q44f0e3qZhvcW1NkZawvAzJ1taE/1oC/nuL2vxhBhx
- SiU4VkrFOo+P9I68VjvyQX2FnJc0QRI/Rm831gSXbfWIV6a7I5U2n9rQHfjwEkgWIOEM
- dbk2SR6bU7dKdn5sz2gdwJ8pDAt3uye2Unrn559/+sibMUFyBBTmLBlSEAuDnMGrsHVn
- Yp2mgk8X5S2gpP8W78Ke/nlqIICPz7tH4fK2UjQ9thvgNgN7pPc+Xgxg4wBZFkxtAg1j
- 5Jyrcwr17M7xEkQ5Teccn3nX4Oe6gTX9cNRM2l0+yG6xtMDcQumVpyRsmAgoDWbW3atS
- mVzA==
-X-Gm-Message-State: AO0yUKWWWTOCEXE11o6SetIONEEkeb7iLXlAU6bgsbjyxYDzeWg2/7Dj
- GW16hnF0Z7ravp3jJ7T2lKMRyvS+TRvOkQhg9PFb1FrEMUBuqBJ8Wljh2G+bjfDPGjlBVE6r4c6
- P10BVV7tlFJA2qkuOSsrhicojVH1r/bmkiUR/UddBJaVY5JQTvfKQGRH7pLaGNrl/A2FglmzTfG
- I=
-X-Google-Smtp-Source: AK7set/FmDxDs4w1j0e5PA+jX3MwJRj6+AOGAADIBIksQBRZljk9BW4Q1CQMIOVrgNxvcG4up41zZQ==
-X-Received: by 2002:a05:622a:c6:b0:3b6:2c3b:8c00 with SMTP id
- p6-20020a05622a00c600b003b62c3b8c00mr23270455qtw.66.1679948016921; 
- Mon, 27 Mar 2023 13:13:36 -0700 (PDT)
-Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
- [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- f8-20020a05620a280800b0074269db4699sm10226828qkp.46.2023.03.27.13.13.36
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 27 Mar 2023 13:13:36 -0700 (PDT)
-From: Mike Snitzer <snitzer@kernel.org>
-To: dm-devel@redhat.com
-Date: Mon, 27 Mar 2023 16:11:41 -0400
-Message-Id: <20230327201143.51026-19-snitzer@kernel.org>
-In-Reply-To: <20230327201143.51026-1-snitzer@kernel.org>
-References: <20230327201143.51026-1-snitzer@kernel.org>
+ us-mta-606-r091MH04NYO9JKzeU3s_pQ-1; Mon, 27 Mar 2023 20:07:41 -0400
+X-MC-Unique: r091MH04NYO9JKzeU3s_pQ-1
+Received: from mailpool-fe-02.fibernetics.ca (mailpool-fe-02.fibernetics.ca
+ [208.85.217.145])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+ (No client certificate requested)
+ by mp-relay-02.fibernetics.ca (Postfix) with ESMTPS id 73AAF7595C;
+ Mon, 27 Mar 2023 23:58:37 +0000 (UTC)
+Received: from localhost (mailpool-mx-02.fibernetics.ca [208.85.217.141])
+ by mailpool-fe-02.fibernetics.ca (Postfix) with ESMTP id 5A0EF60AA4;
+ Mon, 27 Mar 2023 23:58:37 +0000 (UTC)
+X-Virus-Scanned: Debian amavisd-new at
+Received: from mailpool-fe-02.fibernetics.ca ([208.85.217.145])
+ by localhost (mail-mx-02.fibernetics.ca [208.85.217.141]) (amavisd-new,
+ port 10024)
+ with ESMTP id iXSEOSz7t8G1; Mon, 27 Mar 2023 23:58:36 +0000 (UTC)
+Received: from [192.168.48.17] (host-184-164-23-94.dyn.295.ca [184.164.23.94])
+ (using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+ key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+ (No client certificate requested)
+ (Authenticated sender: dgilbert@interlog.com)
+ by mail.ca.inter.net (Postfix) with ESMTPSA id E861260256;
+ Mon, 27 Mar 2023 23:58:35 +0000 (UTC)
+Message-ID: <3f02a075-cc30-5584-704b-da88be1d6b31@interlog.com>
+Date: Mon, 27 Mar 2023 19:58:34 -0400
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-Subject: [dm-devel] [dm-6.4 PATCH v3 18/20] dm bufio: intelligently size
- dm_buffer_cache's buffer_trees
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.9.0
+To: mwilck@suse.com, Hannes Reinecke <hare@suse.de>
+References: <20230327132459.29531-1-mwilck@suse.com>
+From: Douglas Gilbert <dgilbert@interlog.com>
+In-Reply-To: <20230327132459.29531-1-mwilck@suse.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Mailman-Approved-At: Tue, 28 Mar 2023 06:27:49 +0000
+Subject: Re: [dm-devel] [RFC PATCH 0/3] sg3_utils: udev rules: restrict use
+ of ambiguous device IDs
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,92 +109,77 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, ebiggers@kernel.org, keescook@chromium.org,
- heinzm@redhat.com, Mike Snitzer <snitzer@kernel.org>, nhuck@google.com,
- linux-block@vger.kernel.org, ejt@redhat.com, mpatocka@redhat.com,
- luomeng12@huawei.com
+Reply-To: dgilbert@interlog.com
+Cc: James Bottomley <jejb@linux.vnet.ibm.com>, linux-scsi@vger.kernel.org,
+ "Martin K. Petersen" <martin.petersen@oracle.com>, Franck Bui <fbui@suse.de>,
+ dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
-Content-Type: text/plain; charset="us-ascii"
+X-Mimecast-Originator: interlog.com
+Content-Language: en-CA
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Size the dm_buffer_cache's number of buffer_tree structs using
-dm_num_sharded_locks().
+On 2023-03-27 09:24, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> Most modern SCSI devices provide VPD page 83 with at least one highly
+> reliable device identifier, like NAA Registered Extended or EUI-64, or
+> the ata-id identifier. Other device identifier types have shown to be less
+> reliable and possibly ambiguous. Ambiguity in particular is a problem with
+> multipath-tools, which may group unrelated devices together in a multipath
+> map, causing possible data corruption.
+> 
+> The device identifiers are used in two independent ways by the udev rules:
+> a) to set ID_SERIAL for subsystems like multipath, and b) to create
+> /dev/disk/by-id/scsi-... symlinks. Our udev rules have traditionally created
+> symlinks for every device identifier obtained from either VPD 83 or 80. This
+> may cause issues, especially on large installments with storage devices that
+> exhibit the same identifier for many logical units. At the same time, these
+> symlinks are rarely used.
+> 
+> Avoid using unreliable identifiers for setting ID_SERIAL, and don't create
+> symlinks for these identifiers. Add a configuration method that allows
+> users to easily re-enable these methods and symlinks if they need to
+> (this might be the case on systems with legacy devices that are referenced
+> in /etc/crypttab, lvm.conf, or the like). This is done by introducing
+> environment variables .SCSI_ID_SERIAL_SRC and .SCSI_ID_SYMLINK_SRC, to
+> control use of device identifiers for determining ID_SERIAL and for creating
+> symlinks, respectively. Both variables can contain the letters "T", "L", "V",
+> and "S" to enable T10-vendor ID, NAA local ID, vendor-specific ID, and VPD 80
+> based ID, respectively.
+> 
+> Distributions can change the defaults for these environment variables
+> to provide backward compatibility for their users, while offering users
+> an easy way to change the settings.
+> 
+> I'm sending this as RFC, because I expect that not everyone will agree
+> which identifiers should be enabled by default.
 
-Signed-off-by: Mike Snitzer <snitzer@kernel.org>
----
- drivers/md/dm-bufio.c | 14 ++++++++------
- 1 file changed, 8 insertions(+), 6 deletions(-)
+Lets see if anything happens. Applied as sg3_utils revision 1019 and
+pushed to https://github.com/doug-gilbert/sg3_utils .
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index 2250799a70e4..7dc53f3d0739 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -21,6 +21,8 @@
- #include <linux/stacktrace.h>
- #include <linux/jump_label.h>
- 
-+#include "dm.h"
-+
- #define DM_MSG_PREFIX "bufio"
- 
- /*
-@@ -379,8 +381,6 @@ struct dm_buffer {
-  * only enough to ensure get/put are threadsafe.
-  */
- 
--#define NR_LOCKS 64
--
- struct buffer_tree {
- 	struct rw_semaphore lock;
- 	struct rb_root root;
-@@ -393,7 +393,7 @@ struct dm_buffer_cache {
- 	 * on the locks.
- 	 */
- 	unsigned int num_locks;
--	struct buffer_tree trees[NR_LOCKS];
-+	struct buffer_tree trees[];
- };
- 
- static inline unsigned int cache_index(sector_t block, unsigned int num_locks)
-@@ -976,7 +976,7 @@ struct dm_bufio_client {
- 	 */
- 	unsigned long oldest_buffer;
- 
--	struct dm_buffer_cache cache;
-+	struct dm_buffer_cache cache; /* must be last member */
- };
- 
- static DEFINE_STATIC_KEY_FALSE(no_sleep_enabled);
-@@ -2422,6 +2422,7 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
- 					       unsigned int flags)
- {
- 	int r;
-+	unsigned int num_locks;
- 	struct dm_bufio_client *c;
- 	char slab_name[27];
- 
-@@ -2431,12 +2432,13 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
- 		goto bad_client;
- 	}
- 
--	c = kzalloc(sizeof(*c), GFP_KERNEL);
-+	num_locks = dm_num_sharded_locks();
-+	c = kzalloc(sizeof(*c) + (num_locks * sizeof(struct buffer_tree)), GFP_KERNEL);
- 	if (!c) {
- 		r = -ENOMEM;
- 		goto bad_client;
- 	}
--	cache_init(&c->cache, NR_LOCKS);
-+	cache_init(&c->cache, num_locks);
- 
- 	c->bdev = bdev;
- 	c->block_size = block_size;
--- 
-2.40.0
+Didn't see any effect on an Ubuntu 22.10 when sg3_utils deb package
+built and installed. No sign of 00-scsi-sg3_config.rules being placed
+anywhere by Ubuntu. Does Suse install those rules?
+
+Doug Gilbert
+
+> Martin Wilck (3):
+>    55-scsi-sg3_id.rules: don't set unreliable device ID by default
+>    58-scsi-sg3_symlink.rules: don't create extra by-id symlinks by
+>      default
+>    udev: add 00-scsi-sg3_config.rules for user configuration
+> 
+>   Makefile.am                       |  1 +
+>   scripts/00-scsi-sg3_config.rules  | 23 ++++++++++++++
+>   scripts/55-scsi-sg3_id.rules      | 53 ++++++++++++++++++++++++++++---
+>   scripts/58-scsi-sg3_symlink.rules | 46 +++++++++++++++++++++------
+>   4 files changed, 109 insertions(+), 14 deletions(-)
+>   create mode 100644 scripts/00-scsi-sg3_config.rules
+> 
 
 --
 dm-devel mailing list
