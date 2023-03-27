@@ -4,93 +4,95 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B3065C77B61
-	for <dm-devel@archiver.kernel.org>; Mon, 27 Mar 2023 20:14:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A06C3C76195
+	for <dm-devel@archiver.kernel.org>; Mon, 27 Mar 2023 20:14:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1679948043;
+	s=mimecast20190719; t=1679948048;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=5W6XgTush3zH1bJRdFcTgXdEm3aJJqjQUMrAbQwYXcU=;
-	b=HQCqruStaOkN76lHgoNEOXQvCHYJjKfjgFhIdC23sGHacNVLwgFz5PfgudFckvXMaeV+RP
-	BsQjw+5690BU3H2MK4X8tsXgNwVQqfNzobYqPlFFE4K86RmjBrSwlPQjnef3/OWCHBSi3n
-	2KpMrgC5RnwZB4l7K5QKXRhioBJnnz8=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=oXvtm1dG6O+nFjZGE46hHa880ZJ1dRJ/rbBvqQDk0Jw=;
+	b=T9+vSAhsOUAoE77ENt4aeu2WXuySS4IhqqmO641+r8UGnyoVJOy2kZlcWf4UaqNyu5GVVJ
+	mYFq4nwH3zTIDLukIub4eK5dYnWpJH3vYo+ZPRTo1/Vi9fTzHoAFg7fL45Yiyv/4h1HISh
+	50EYQeNcraGI9Uu0NpEgVqIld5eIot4=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-665-vXNVD7p9Pi2yM_ad0l8WGQ-1; Mon, 27 Mar 2023 16:14:02 -0400
-X-MC-Unique: vXNVD7p9Pi2yM_ad0l8WGQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-509-kvQ64tKTOp2mjOccezuFpw-1; Mon, 27 Mar 2023 16:14:07 -0400
+X-MC-Unique: kvQ64tKTOp2mjOccezuFpw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3C96B1C068CF;
-	Mon, 27 Mar 2023 20:13:59 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3BFBA858297;
+	Mon, 27 Mar 2023 20:14:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2A2DC40B3ED9;
-	Mon, 27 Mar 2023 20:13:59 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2A86CC15BA0;
+	Mon, 27 Mar 2023 20:14:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 89DE01946A7E;
-	Mon, 27 Mar 2023 20:13:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1FBF719472E8;
+	Mon, 27 Mar 2023 20:13:53 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 192711946A61
- for <dm-devel@listman.corp.redhat.com>; Mon, 27 Mar 2023 20:13:36 +0000 (UTC)
+ ESMTP id 6CAF619465B5
+ for <dm-devel@listman.corp.redhat.com>; Mon, 27 Mar 2023 20:13:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0D0C03542A; Mon, 27 Mar 2023 20:13:36 +0000 (UTC)
+ id 510994020C82; Mon, 27 Mar 2023 20:13:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 03DB943FBE
- for <dm-devel@redhat.com>; Mon, 27 Mar 2023 20:13:35 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D69803C0ED4F
- for <dm-devel@redhat.com>; Mon, 27 Mar 2023 20:13:35 +0000 (UTC)
-Received: from mail-qt1-f175.google.com (mail-qt1-f175.google.com
- [209.85.160.175]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 49F804020C84
+ for <dm-devel@redhat.com>; Mon, 27 Mar 2023 20:13:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2C723185A7B3
+ for <dm-devel@redhat.com>; Mon, 27 Mar 2023 20:13:42 +0000 (UTC)
+Received: from mail-qv1-f54.google.com (mail-qv1-f54.google.com
+ [209.85.219.54]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-17-bgXo-6lAOp2nqTaboMKKMQ-4; Mon, 27 Mar 2023 16:13:34 -0400
-X-MC-Unique: bgXo-6lAOp2nqTaboMKKMQ-4
-Received: by mail-qt1-f175.google.com with SMTP id h16so3007921qtn.7
- for <dm-devel@redhat.com>; Mon, 27 Mar 2023 13:13:34 -0700 (PDT)
+ us-mta-259-p56DykNbP_aNb8eScZGr6w-3; Mon, 27 Mar 2023 16:13:40 -0400
+X-MC-Unique: p56DykNbP_aNb8eScZGr6w-3
+Received: by mail-qv1-f54.google.com with SMTP id jl13so7609672qvb.10
+ for <dm-devel@redhat.com>; Mon, 27 Mar 2023 13:13:40 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112; t=1679948013;
+ d=1e100.net; s=20210112; t=1679948020;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=P0nH8y5nrVQVdjQ+7MWEvssVfY/cEbcGbEWp6ylrqyQ=;
- b=QLS2gGn1qL2IHgMM3IFnwFhSTm7EGtExBqL081b8BsVlwcGXTq+HGZGf2NNQO8ZoDG
- thk2j8vJkXDT82xd9QJYaMD06TX6RDZjbom6Q3kM5J1RMYAuFGOu2ceFzwxovoIm/lQC
- Do6ysB6NP5E/pk5IGiEo3X3cXPktjXHCiYSyrkqj7LPSELW/Vc1JiDLA52iK9pbsipAl
- +nag+sTIbTvwltrbHfxq9ax+DPNthxB6uErsmzhqW5B5J1trmg4FnM4TGx3JvL+4Mv9d
- D+Df4Aipc8SrXlP0t4M+5nbIuwGCrcC6KHFe2YlT9gxQ7EVSOSJPRifEHVMClSN168hx
- BjJQ==
-X-Gm-Message-State: AAQBX9fFKtghJFrWBFzPenl0/oaWkF/n/FAD4UxnlAXdyXZVThIz+3/a
- biElC1gjgfcuH5vefYqVUn5nYMoStxu9V7PVBPxNv+CXd76Gy+VZyCy89x/zyrDUtUEhNKoZHRU
- LvqWSx4a80zrY3OsF+EkFqJoCRgKnZAvnoZzW4AXu6IMtnwiFgBFRo3uCz0nBdZwXhBEKi3zcbX
- 0=
-X-Google-Smtp-Source: AKy350Y96gqJ8gm1eUDkWBdhHVPSIF25C9Z/7pTPicBHvic+yBssV8gx7JTYQ5NQ4P/SYw+5vk3tRA==
-X-Received: by 2002:ac8:5c46:0:b0:3e4:e8a8:f235 with SMTP id
- j6-20020ac85c46000000b003e4e8a8f235mr8388241qtj.36.1679948013682; 
- Mon, 27 Mar 2023 13:13:33 -0700 (PDT)
+ bh=mQyYjWMmcas91qVtcY8jvp2wBSEYoGBjkcnNGzLUcAg=;
+ b=j44ccb8/XYEZrMqO0nZGUbN/Ta2sAveMC45WS5keOFwdWLagh4Ht/hZp8+RJUKwt+o
+ eudAgTexbU5HuDxivIDL4JPJ07zYUWPjAAUhFMV439AwV2GFaHL3P8rGsPv5JG1TgIPn
+ i89J+4M+/6Qvo+JyUdZey0WZkJFhCYe7oPG8FF2H9t6+oH0+UrV4EnvWq9V+BzwqGK7k
+ AM+ihoAfFSTVPZvfsp85KyY6wWkCuGlw2NwIuLkijV25F3Ly04ctJxKsfZE/LuJ8yD/m
+ cKL+gvmsYzSmquyAnLUzygLTuyr2rDFHyvg6/dl1Z/diOTBI2cZDmyXAQgXkzjVEXDfk
+ rfRw==
+X-Gm-Message-State: AAQBX9dOuVguOnPowkMEmRrgXDbXqRSutlXk+nFTN4hG28SifnrLzz/w
+ zpTZGfNMf8pcxqgFkV4N8yRcdohjP13TW7aRs3/LXyKlxiw2GZRvseCtObKxP0njdb+mSsQbw4w
+ 8sjGYrEXdxJu2jeH/DRNa5PKfim3wFbBRd0uiYbqhZC3JTZJ97OOwYFUCjlBxyBfqgSWanxvHBW
+ U=
+X-Google-Smtp-Source: AKy350aUOhS5a7pfiFoOC/vCDrOmXamVaEKNC4KXqyNQGje3o8Ci+KX+zebywjT0o5kNzZBKf3poOw==
+X-Received: by 2002:a05:6214:2aa6:b0:56c:376:3191 with SMTP id
+ js6-20020a0562142aa600b0056c03763191mr21114410qvb.44.1679948019857; 
+ Mon, 27 Mar 2023 13:13:39 -0700 (PDT)
 Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
  [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- 6-20020ac85646000000b003e3897d8505sm6400099qtt.54.2023.03.27.13.13.33
+ a8-20020a0ce908000000b005dd8b9345a3sm3224293qvo.59.2023.03.27.13.13.39
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 27 Mar 2023 13:13:33 -0700 (PDT)
+ Mon, 27 Mar 2023 13:13:39 -0700 (PDT)
 From: Mike Snitzer <snitzer@kernel.org>
 To: dm-devel@redhat.com
-Date: Mon, 27 Mar 2023 16:11:39 -0400
-Message-Id: <20230327201143.51026-17-snitzer@kernel.org>
+Date: Mon, 27 Mar 2023 16:11:43 -0400
+Message-Id: <20230327201143.51026-21-snitzer@kernel.org>
 In-Reply-To: <20230327201143.51026-1-snitzer@kernel.org>
 References: <20230327201143.51026-1-snitzer@kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: [dm-devel] [dm-6.4 PATCH v3 16/20] dm: add dm_num_sharded_locks()
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: [dm-devel] [dm-6.4 PATCH v3 20/20] dm bio prison v1: intelligently
+ size dm_bio_prison's prison_regions
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,54 +110,59 @@ Cc: axboe@kernel.dk, ebiggers@kernel.org, keescook@chromium.org,
  luomeng12@huawei.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Simple helper to use when DM core code needs to appropriately size,
-based on num_online_cpus(), its data structures that split locks.
-
-dm_num_sharded_locks() rounds up num_online_cpus() to next power of 2
-but caps return at DM_MAX_SHARDED_LOCKS (64).
-
-This heuristic may evolve as warranted, but as-is it will serve as a
-more informed basis for sizing the sharded lock structs in dm-bufio's
-dm_buffer_cache (buffer_trees) and dm-bio-prison-v1's dm_bio_prison
-(prison_regions).
+Size the dm_bio_prison's number of prison_region structs using
+dm_num_sharded_locks().
 
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm.h | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ drivers/md/dm-bio-prison-v1.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 22eaed188907..18450282d0d9 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -20,6 +20,7 @@
- #include <linux/completion.h>
- #include <linux/kobject.h>
- #include <linux/refcount.h>
-+#include <linux/log2.h>
+diff --git a/drivers/md/dm-bio-prison-v1.c b/drivers/md/dm-bio-prison-v1.c
+index a7930ad1878b..1d560a83b144 100644
+--- a/drivers/md/dm-bio-prison-v1.c
++++ b/drivers/md/dm-bio-prison-v1.c
+@@ -16,7 +16,6 @@
  
- #include "dm-stats.h"
+ /*----------------------------------------------------------------*/
  
-@@ -228,4 +229,13 @@ void dm_free_md_mempools(struct dm_md_mempools *pools);
-  */
- unsigned int dm_get_reserved_bio_based_ios(void);
+-#define NR_LOCKS 64
+ #define MIN_CELLS 1024
  
-+#define DM_MAX_SHARDED_LOCKS 64
-+
-+static inline unsigned int dm_num_sharded_locks(void)
-+{
-+	unsigned int num_locks = roundup_pow_of_two(num_online_cpus());
-+
-+	return min_t(unsigned int, num_locks, DM_MAX_SHARDED_LOCKS);
-+}
-+
- #endif
+ struct prison_region {
+@@ -27,7 +26,7 @@ struct prison_region {
+ struct dm_bio_prison {
+ 	mempool_t cell_pool;
+ 	unsigned int num_locks;
+-	struct prison_region regions[NR_LOCKS];
++	struct prison_region regions[];
+ };
+ 
+ static struct kmem_cache *_cell_cache;
+@@ -41,12 +40,14 @@ static struct kmem_cache *_cell_cache;
+ struct dm_bio_prison *dm_bio_prison_create(void)
+ {
+ 	int ret;
+-	unsigned i;
+-	struct dm_bio_prison *prison = kzalloc(sizeof(*prison), GFP_KERNEL);
++	unsigned int i, num_locks;
++	struct dm_bio_prison *prison;
+ 
++	num_locks = dm_num_sharded_locks();
++	prison = kzalloc(struct_size(prison, regions, num_locks), GFP_KERNEL);
+ 	if (!prison)
+ 		return NULL;
+-	prison->num_locks = NR_LOCKS;
++	prison->num_locks = num_locks;
+ 
+ 	for (i = 0; i < prison->num_locks; i++) {
+ 		spin_lock_init(&prison->regions[i].lock);
 -- 
 2.40.0
 
