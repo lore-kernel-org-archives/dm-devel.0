@@ -4,76 +4,80 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id F1494C76195
-	for <dm-devel@archiver.kernel.org>; Mon, 27 Mar 2023 13:25:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 09C67C77B6D
+	for <dm-devel@archiver.kernel.org>; Mon, 27 Mar 2023 13:25:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1679923530;
+	s=mimecast20190719; t=1679923532;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=NXZpejfk9m2x166xoljOAmUwb5fJHbwRVXKNf9PXtG8=;
-	b=GHAw24TlRU1JpjAjf2xfvx7dlYyqxxDtIfu6jcJtgJVvcZGDqqWC2rtyH2GPYpKV1TIsk2
-	/Z5O/BzArvXXHKbWO+DCCJKhZaR95khVm2IgeEX3dlO9nni8QhqUqwqUHcu222Blmb+JzT
-	Oc4A8KLcrlsHjRKbyB9x7dRSEw1BANk=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=yg/vMSuaw5sv67eUgRpCAakITTLheqO3HQuXsqLREHE=;
+	b=DMkItdGnq1Mpm5FwGopW1Ef1kdMO5jcuuRxFfM7LeVy4tYEk73tHxqX4ya7QWVGXE9e2/B
+	C9iFYc6cSLHhmJ8YjlY50QWPWuLFdltzJnJh/C3lP1OBdVSILKPBetfZS1DI1Z8rODiBzc
+	RUGSei33ChTgQWWjt4erS4baNxEh/cc=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-591-whhFfpLBPyyiDNPslXl7Qg-1; Mon, 27 Mar 2023 09:25:28 -0400
-X-MC-Unique: whhFfpLBPyyiDNPslXl7Qg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-533-iyhBJRF7N0igSqfDixqt_Q-1; Mon, 27 Mar 2023 09:25:28 -0400
+X-MC-Unique: iyhBJRF7N0igSqfDixqt_Q-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C5C4D28082A8;
-	Mon, 27 Mar 2023 13:25:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A465857FB5;
+	Mon, 27 Mar 2023 13:25:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B4E492166B29;
-	Mon, 27 Mar 2023 13:25:22 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 41630492C3E;
+	Mon, 27 Mar 2023 13:25:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 772D81946594;
-	Mon, 27 Mar 2023 13:25:22 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 25BEE1946594;
+	Mon, 27 Mar 2023 13:25:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7967A194658F
- for <dm-devel@listman.corp.redhat.com>; Mon, 27 Mar 2023 13:25:18 +0000 (UTC)
+ ESMTP id 09886194658F
+ for <dm-devel@listman.corp.redhat.com>; Mon, 27 Mar 2023 13:25:19 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 55F9EC15BBA; Mon, 27 Mar 2023 13:25:18 +0000 (UTC)
+ id F200B492C3E; Mon, 27 Mar 2023 13:25:18 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4E678C15BB8
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id EAEEF492B01
  for <dm-devel@redhat.com>; Mon, 27 Mar 2023 13:25:18 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3253B801779
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D0E3310119EB
  for <dm-devel@redhat.com>; Mon, 27 Mar 2023 13:25:18 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-515-Gp_dhOClMuuzeJvv5ZyCpw-1; Mon,
- 27 Mar 2023 09:25:14 -0400
-X-MC-Unique: Gp_dhOClMuuzeJvv5ZyCpw-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-670-jNuicCUkNJy7AYBceHBSsg-1; Mon,
+ 27 Mar 2023 09:25:15 -0400
+X-MC-Unique: jNuicCUkNJy7AYBceHBSsg-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 8F5881F8BB;
- Mon, 27 Mar 2023 13:25:13 +0000 (UTC)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id 073F421F48;
+ Mon, 27 Mar 2023 13:25:14 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 3A42713329;
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 9FD6613329;
  Mon, 27 Mar 2023 13:25:13 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id 20FmDDmZIWTobgAAMHmgww
+ by imap2.suse-dmz.suse.de with ESMTPSA id oD8UJTmZIWTobgAAMHmgww
  (envelope-from <mwilck@suse.com>); Mon, 27 Mar 2023 13:25:13 +0000
 From: mwilck@suse.com
 To: Douglas Gilbert <dgilbert@interlog.com>,
 	Hannes Reinecke <hare@suse.de>
-Date: Mon, 27 Mar 2023 15:24:56 +0200
-Message-Id: <20230327132459.29531-1-mwilck@suse.com>
+Date: Mon, 27 Mar 2023 15:24:57 +0200
+Message-Id: <20230327132459.29531-2-mwilck@suse.com>
+In-Reply-To: <20230327132459.29531-1-mwilck@suse.com>
+References: <20230327132459.29531-1-mwilck@suse.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -82,9 +86,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: [dm-devel] [RFC PATCH 0/3] sg3_utils: udev rules: restrict use of
- ambiguous device IDs
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: [dm-devel] [PATCH 1/3] 55-scsi-sg3_id.rules: don't set unreliable
+ device ID by default
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -101,7 +105,7 @@ Cc: James Bottomley <jejb@linux.vnet.ibm.com>, linux-scsi@vger.kernel.org,
  dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: suse.com
 Content-Type: text/plain; charset="us-ascii"
@@ -109,53 +113,97 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-Most modern SCSI devices provide VPD page 83 with at least one highly
-reliable device identifier, like NAA Registered Extended or EUI-64, or
-the ata-id identifier. Other device identifier types have shown to be less
-reliable and possibly ambiguous. Ambiguity in particular is a problem with
-multipath-tools, which may group unrelated devices together in a multipath
-map, causing possible data corruption.
+Some of the methods to determine the SCSI device ID are known to be
+unreliable and, and possibly cause dm-multipath to falsely detect
+a multipath setup and cause data corruption. These methods will
+only be used if the known reliable device IDs (like NAA registered)
+are unavailable.
 
-The device identifiers are used in two independent ways by the udev rules:
-a) to set ID_SERIAL for subsystems like multipath, and b) to create
-/dev/disk/by-id/scsi-... symlinks. Our udev rules have traditionally created
-symlinks for every device identifier obtained from either VPD 83 or 80. This
-may cause issues, especially on large installments with storage devices that
-exhibit the same identifier for many logical units. At the same time, these
-symlinks are rarely used.
+Don't apply these methods by default. Make the methods to use configurable
+instead. Configuration is done by setting the udev property
+".SCSI_ID_SERIAL_SRC" to any combination of the letters T, L, V, S:
 
-Avoid using unreliable identifiers for setting ID_SERIAL, and don't create
-symlinks for these identifiers. Add a configuration method that allows
-users to easily re-enable these methods and symlinks if they need to
-(this might be the case on systems with legacy devices that are referenced
-in /etc/crypttab, lvm.conf, or the like). This is done by introducing
-environment variables .SCSI_ID_SERIAL_SRC and .SCSI_ID_SYMLINK_SRC, to
-control use of device identifiers for determining ID_SERIAL and for creating
-symlinks, respectively. Both variables can contain the letters "T", "L", "V",
-and "S" to enable T10-vendor ID, NAA local ID, vendor-specific ID, and VPD 80
-based ID, respectively.
+  T: T10 vendor ID ("1...")
+  L: NAA local ("33...")
+  V: vendor-specific ("0...")
+  S: vendor/model/serial number ("S...")
 
-Distributions can change the defaults for these environment variables
-to provide backward compatibility for their users, while offering users
-an easy way to change the settings.
+The ordering of the letters in .SCSI_ID_SERIAL_SRC doesn't matter,
+the precedence is always T, L, V, S.
 
-I'm sending this as RFC, because I expect that not everyone will agree
-which identifiers should be enabled by default.
+Regardless of using these properties for ID_SERIAL, we can infer that
+if any of these properties is set, it's correct to set ID_BUS="scsi".
 
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ scripts/55-scsi-sg3_id.rules | 53 +++++++++++++++++++++++++++++++++---
+ 1 file changed, 49 insertions(+), 4 deletions(-)
 
-Martin Wilck (3):
-  55-scsi-sg3_id.rules: don't set unreliable device ID by default
-  58-scsi-sg3_symlink.rules: don't create extra by-id symlinks by
-    default
-  udev: add 00-scsi-sg3_config.rules for user configuration
-
- Makefile.am                       |  1 +
- scripts/00-scsi-sg3_config.rules  | 23 ++++++++++++++
- scripts/55-scsi-sg3_id.rules      | 53 ++++++++++++++++++++++++++++---
- scripts/58-scsi-sg3_symlink.rules | 46 +++++++++++++++++++++------
- 4 files changed, 109 insertions(+), 14 deletions(-)
- create mode 100644 scripts/00-scsi-sg3_config.rules
-
+diff --git a/scripts/55-scsi-sg3_id.rules b/scripts/55-scsi-sg3_id.rules
+index 453210b..33b2ad3 100644
+--- a/scripts/55-scsi-sg3_id.rules
++++ b/scripts/55-scsi-sg3_id.rules
+@@ -99,11 +99,56 @@ ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_NAA_REG}=="?*", ENV{ID_BUS}="scsi", ENV
+ ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_NAA_EXT}=="?*", ENV{ID_BUS}="scsi", ENV{ID_SERIAL}="3$env{SCSI_IDENT_LUN_NAA_EXT}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_NAA_EXT}"
+ ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_EUI64}=="?*", ENV{ID_BUS}="scsi", ENV{ID_SERIAL}="2$env{SCSI_IDENT_LUN_EUI64}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_EUI64}"
+ ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_NAME}=="?*", ENV{ID_BUS}="scsi", ENV{ID_SERIAL}="8$env{SCSI_IDENT_LUN_NAME}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_NAME}"
+-ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_T10}=="?*", ENV{ID_BUS}="scsi", ENV{ID_SERIAL}="1$env{SCSI_IDENT_LUN_T10}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_T10}"
+-ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_NAA_LOCAL}=="?*", ENV{ID_BUS}="scsi", ENV{ID_SERIAL}="3$env{SCSI_IDENT_LUN_NAA_LOCAL}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_NAA_LOCAL}"
+-ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_LUN_VENDOR}=="?*", ENV{ID_BUS}="scsi", ENV{ID_SERIAL}="0$env{SCSI_VENDOR}_$env{SCSI_MODEL}_$env{SCSI_IDENT_LUN_VENDOR}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_VENDOR}"
+-ENV{ID_SERIAL}!="?*", ENV{SCSI_IDENT_SERIAL}=="?*", ENV{ID_BUS}="scsi", ENV{ID_SERIAL}="S$env{SCSI_VENDOR}_$env{SCSI_MODEL}_$env{SCSI_IDENT_SERIAL}", ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_SERIAL}"
+ 
+ # Compat ID_SCSI_SERIAL setting
+ ENV{ID_SCSI_SERIAL}!="?*", ENV{SCSI_IDENT_SERIAL}=="?*", ENV{ID_SCSI_SERIAL}="$env{SCSI_IDENT_SERIAL}"
++
++# Enable or disable possibly ambiguous SCSI device ID sources for setting ID_SERIAL
++#
++# .SCSI_ID_SERIAL_SRC can be any combination of the characters "TLVS":
++#   T: T10 vendor ID ("1...") from VPD 0x83
++#   L: NAA local ("33...") from VPD 0x83
++#   V: vendor-specific ("0...") from VPD 0x83
++#   S: vendor/model/serial number ("S...") from VPD 0x80
++# The ordering of the letters doesn't matter, the precedence is always T, L, V, S
++# NAA (except "local") and EUI-64 IDs (see below), as well as ATA IDs, always take precedence over
++# the sources configured here.
++#
++# This only needs to be changed if there are legacy SCSI devices that don't provide any reliable
++# device identifiers, and some subsystem like multipath requires that ID_SERIAL is set.
++# Be aware that multipath actually needs unique identifiers, though.
++# Using ambiguous identifiers for ID_SERIAL can cause data corruption with multipath.
++#
++# To configure this, add an early rule (e.g. /etc/udev/rules.d/00-scsi-serial.rules) e.g. like this:
++# ACTION!="remove", KERNEL=="sd*|sr*|st*|nst*|cciss*", ENV{.SCSI_ID_SERIAL_SRC}="TLVS"
++#
++# By default, only T10 vendor ID is allowed.
++ENV{.SCSI_ID_SERIAL_SRC}!="?*", ENV{.SCSI_ID_SERIAL_SRC}="T"
++
++ENV{ID_SERIAL}=="?*", GOTO="sg3_utils_id_end"
++ENV{SCSI_IDENT_LUN_T10}=="?*", ENV{ID_BUS}="scsi"
++ENV{SCSI_IDENT_LUN_T10}=="?*", ENV{.SCSI_ID_SERIAL_SRC}=="*T*", \
++    ENV{ID_SERIAL}="1$env{SCSI_IDENT_LUN_T10}", \
++    ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_T10}"
++
++ENV{ID_SERIAL}=="?*", GOTO="sg3_utils_id_end"
++ENV{SCSI_IDENT_LUN_NAA_LOCAL}=="?*", ENV{ID_BUS}="scsi"
++ENV{SCSI_IDENT_LUN_NAA_LOCAL}=="?*", ENV{.SCSI_ID_SERIAL_SRC}=="*L*", \
++    ENV{ID_SERIAL}="3$env{SCSI_IDENT_LUN_NAA_LOCAL}", \
++    ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_NAA_LOCAL}"
++
++ENV{ID_SERIAL}=="?*", GOTO="sg3_utils_id_end"
++ENV{SCSI_IDENT_LUN_VENDOR}=="?*", ENV{ID_BUS}="scsi"
++ENV{SCSI_IDENT_LUN_VENDOR}=="?*", ENV{.SCSI_ID_SERIAL_SRC}=="*V*", \
++    ENV{ID_SERIAL}="0$env{SCSI_VENDOR}_$env{SCSI_MODEL}_$env{SCSI_IDENT_LUN_VENDOR}", \
++    ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_LUN_VENDOR}"
++
++ENV{ID_SERIAL}=="?*", GOTO="sg3_utils_id_end"
++ENV{SCSI_IDENT_SERIAL}=="?*", ENV{ID_BUS}="scsi"
++ENV{SCSI_IDENT_SERIAL}=="?*", ENV{.SCSI_ID_SERIAL_SRC}=="*S*", \
++    ENV{ID_SERIAL}="S$env{SCSI_VENDOR}_$env{SCSI_MODEL}_$env{SCSI_IDENT_SERIAL}", \
++    ENV{ID_SERIAL_SHORT}="$env{SCSI_IDENT_SERIAL}"
++
+ LABEL="sg3_utils_id_end"
++ENV{ID_SERIAL}!="?*", ENV{DEVTYPE}=="disk", \
++    PROGRAM="/bin/logger -t 55-scsi-sg3_id.rules -p daemon.warning \"WARNING: SCSI device %k has no device ID, consider changing .SCSI_ID_SERIAL_SRC in 00-scsi-sg3_config.rules\""
 -- 
 2.39.2
 
