@@ -1,87 +1,96 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8DB62C77B62
-	for <dm-devel@archiver.kernel.org>; Wed, 29 Mar 2023 17:10:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C9A0DC6FD18
+	for <dm-devel@archiver.kernel.org>; Wed, 29 Mar 2023 17:44:45 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1680109834;
+	s=mimecast20190719; t=1680111884;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=S5UOrbrbRqZdvkaRmqanKpFFPH/Uq9Ln/B65/euEr7M=;
-	b=JvBocEnydqiuVgZUXSQJm2PUkxK71yjd0yl0KsdguBYHGyztWCdzrX/CAx+7g3xpp6Zkgg
-	4ITy6qaofn8Gck95FlR7KAZsbwz75w3/A+2b+T9HX72UsLNAFj9hEyTg68wS4+80PNBV3i
-	WqA6OyDVwXZCvmx2/XhPsBERuTFNGs8=
+	bh=iIVq+h09dx2VZiimMvkPM4TbNRF1aLUXR6sz3FqM0qU=;
+	b=Ra5fPRCY6AbF2Lu6VPrs/sF6umQRXraRVzQoB01yLpNabwHkdU5DewaHb+ay6Ia4lkPzT1
+	+dhV4e9D7eKL+fzGbZhb/WSJJ+aE1PKd1Txk9+lFwIXT1066HQSI95rGpFKl1HmbDRsZ6r
+	hrmm6ZzBk9Cmbshr0fBJycKRchjnesI=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-487-dBKlNtOzNtitQdx3wBCDSg-1; Wed, 29 Mar 2023 13:10:31 -0400
-X-MC-Unique: dBKlNtOzNtitQdx3wBCDSg-1
+ us-mta-152-PQx5ZafdPFG-VKinaAE7dQ-1; Wed, 29 Mar 2023 13:44:41 -0400
+X-MC-Unique: PQx5ZafdPFG-VKinaAE7dQ-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 406C888B7A8;
-	Wed, 29 Mar 2023 17:10:29 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B7F34802D32;
+	Wed, 29 Mar 2023 17:44:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2F8BE4020C83;
-	Wed, 29 Mar 2023 17:10:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 570AA40BC798;
+	Wed, 29 Mar 2023 17:44:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0C4B11946595;
-	Wed, 29 Mar 2023 17:10:29 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1877C1946588;
+	Wed, 29 Mar 2023 17:44:38 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id CD43A1946587
- for <dm-devel@listman.corp.redhat.com>; Wed, 29 Mar 2023 17:08:07 +0000 (UTC)
+ ESMTP id 515901946587
+ for <dm-devel@listman.corp.redhat.com>; Wed, 29 Mar 2023 17:42:32 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id AF75A492B01; Wed, 29 Mar 2023 17:08:07 +0000 (UTC)
+ id 190E514171BE; Wed, 29 Mar 2023 17:42:32 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A7DF2492C3E
- for <dm-devel@redhat.com>; Wed, 29 Mar 2023 17:08:07 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1147814171BB
+ for <dm-devel@redhat.com>; Wed, 29 Mar 2023 17:42:32 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
  bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8DA4B293249B
- for <dm-devel@redhat.com>; Wed, 29 Mar 2023 17:08:07 +0000 (UTC)
-Received: from esa1.hgst.iphmx.com (esa1.hgst.iphmx.com [68.232.141.245]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-549-Rz9Rex2pM_i6sLwF1EpgGg-3; Wed, 29 Mar 2023 13:08:03 -0400
-X-MC-Unique: Rz9Rex2pM_i6sLwF1EpgGg-3
-X-IronPort-AV: E=Sophos;i="5.98,301,1673884800"; d="scan'208";a="338882627"
-Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com)
- ([199.255.45.14])
- by ob1.hgst.iphmx.com with ESMTP; 30 Mar 2023 01:07:00 +0800
-IronPort-SDR: oayU5tz+Ijk0rQXCe4S0MYeKAgma9KLNR496l9nbMgPZ4+/G6OHCqJSlnWkyBUKMrvjh4/kwzX
- 4G4NspPeTtLLMlxg0Rpcj2ubIxFjCj+sBhPg+Yo9kFV0Ig7pZQw7cl43HSm73vamRV4NToGxcA
- AMSZxBBAmSkG+3e+wf9w6rgKXNByrwG78fM952uO96rpjK455NuQrhrjHd6IPfdbQRqxIqEF3L
- fKEu1RxG1XbBFTVoulOYfTugPF68gz3lW2eO6ny/fVtYL/nnZjLDiQmohh/v1LMiuk2LaAZxDU
- Kdc=
-Received: from uls-op-cesaip01.wdc.com ([10.248.3.36])
- by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 29 Mar 2023 09:23:10 -0700
-IronPort-SDR: U5CGYwW7Mew4WMH5XhHkS/wuvmKwsV1daJfGn7mZ+KLy/D/2KzvAdqeW79QUzxkDDWCslNWS+3
- hfvcVA5xa6rhSLDzb3KfH/lUhdr07i4tMiJaXo9yDb7M099aYD7m8SSm1/TGzyiWeuthdMo6G4
- 1dqWHhFwukM6o56/rWlCzBDM8Yn4tgV0RKs3pHn6poLpoeq6m4TkzOJgNZqdXwKHDt6xdkbOI+
- GotM7nHfSGcs2b2MrRQzeYXxRBWgESDZAFW7lZj9grqtdnnN4x1FPIawAtJPMCytnEQx+jwiWl
- t5c=
-WDCIronportException: Internal
-Received: from unknown (HELO redsun91.ssa.fujisawa.hgst.com) ([10.149.66.72])
- by uls-op-cesaip01.wdc.com with ESMTP; 29 Mar 2023 10:07:00 -0700
-From: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-To: Jens Axboe <axboe@kernel.dk>
-Date: Wed, 29 Mar 2023 10:06:00 -0700
-Message-Id: <aeff063d2f56092df8cae0a6e9c1a8e771994407.1680108414.git.johannes.thumshirn@wdc.com>
-In-Reply-To: <cover.1680108414.git.johannes.thumshirn@wdc.com>
-References: <cover.1680108414.git.johannes.thumshirn@wdc.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E908A185A7A2
+ for <dm-devel@redhat.com>; Wed, 29 Mar 2023 17:42:31 +0000 (UTC)
+Received: from mail-wm1-f52.google.com (mail-wm1-f52.google.com
+ [209.85.128.52]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-177-uTyzan3PNHWbe-3JLlHrgA-1; Wed, 29 Mar 2023 13:42:30 -0400
+X-MC-Unique: uTyzan3PNHWbe-3JLlHrgA-1
+Received: by mail-wm1-f52.google.com with SMTP id
+ q7-20020a05600c46c700b003ef6e809574so6948536wmo.4
+ for <dm-devel@redhat.com>; Wed, 29 Mar 2023 10:42:29 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112; t=1680111748;
+ h=content-transfer-encoding:in-reply-to:from:references:cc:to
+ :content-language:subject:user-agent:mime-version:date:message-id
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=5uvenYggsdgWLPmG+QeJ50DimdtmxwZ2Ee6m2Qn7gyA=;
+ b=l/bcnnPM10mH88SMGpmdLoMPo4AE1liiJWTSlNfQbwjXI061kt2gcQXPe0QvTeVk0z
+ gKTC8HBZyQLjkUF4AtjDGCtDs/yAQz5nN6kkErekMnScyp6T6lmWz2/9h7GtG3I9yA7k
+ MDsAUyGHBfpfiH0h2Pw+LRPPT2TrnqXw3Je3EnrGSrSopzdJ2i2/8V5fkGCRlCCI808f
+ i4OZ/1RuNT5Wn71D+zelbUfjTBpjvF0frHsfCK8rMtrUuZ3wr+akF/oKQ58iiQyCyjZA
+ QKpuyguXxCmIKDw3VHzd3WVBbUHQu1MuVWg/Gj27v+QPNg8BZ7HkLdvSP0AEzt50RJjX
+ 9EnA==
+X-Gm-Message-State: AO0yUKW1hWe1t0r86t+z8oi9VDgNu3dzfaGbbYSwvpoWlKrJYl9xvZe7
+ UmNVEd+11dJGYgrHYUD2a5PZ7w==
+X-Google-Smtp-Source: AK7set8U2m8jxGBYC+koRV0xgkued9spplMAETyRbpw1f3ElGcD9WPU0LFbzg8AUk2q8cW1CSjeHMA==
+X-Received: by 2002:a7b:cc95:0:b0:3ee:775:c573 with SMTP id
+ p21-20020a7bcc95000000b003ee0775c573mr14193573wma.20.1680111748719; 
+ Wed, 29 Mar 2023 10:42:28 -0700 (PDT)
+Received: from [172.16.10.51] (188.4.154.192.dsl.dyn.forthnet.gr.
+ [188.4.154.192]) by smtp.gmail.com with ESMTPSA id
+ z20-20020a7bc7d4000000b003eeb1d6a470sm2972720wmk.13.2023.03.29.10.42.27
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Wed, 29 Mar 2023 10:42:28 -0700 (PDT)
+Message-ID: <09c87d98-7111-a968-7c61-c898b4d9dc5b@arrikto.com>
+Date: Wed, 29 Mar 2023 20:42:26 +0300
 MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.9.0
+To: Mike Snitzer <snitzer@kernel.org>, Gwendal Grignou <gwendal@chromium.org>
+References: <CAMHSBOXxdtGxQ8MTv4Tz+fcngaOJS5r62Br6VEDJESg2g5jP4w@mail.gmail.com>
+ <ZCMTwjEIt6QO1u3o@redhat.com>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+In-Reply-To: <ZCMTwjEIt6QO1u3o@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -89,9 +98,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-Subject: [dm-devel] [PATCH 14/19] floppy: use __bio_add_page for adding
- single page to bio
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Subject: Re: [dm-devel] dm-clone: Request option to send discard to source
+ device during hydration
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,53 +112,92 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-raid@vger.kernel.org, Damien Le Moal <damien.lemoal@wdc.com>,
- cluster-devel@redhat.com, Chaitanya Kulkarni <kch@nvidia.com>,
- Andreas Gruenbacher <agruenba@redhat.com>, Song Liu <song@kernel.org>,
- Dave Kleikamp <shaggy@kernel.org>,
- Johannes Thumshirn <johannes.thumshirn@wdc.com>,
- Mike Snitzer <snitzer@kernel.org>, jfs-discussion@lists.sourceforge.net,
- Matthew Wilcox <willy@infradead.org>, Ming Lei <ming.lei@redhat.com>,
- linux-block@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com,
- David Sterba <dsterba@suse.com>, linux-fsdevel@vger.kernel.org,
- Christoph Hellwig <hch@lst.de>, linux-btrfs@vger.kernel.org,
- Bob Peterson <rpeterso@redhat.com>
+Cc: Sarthak Kukreti <sarthakkukreti@google.com>, dm-devel@redhat.com,
+ ntsironis@gmail.com, Daniil Lunev <dlunev@google.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: wdc.com
-Content-Type: text/plain; charset="us-ascii"
+X-Mimecast-Originator: arrikto.com
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-The floppy code uses bio_add_page() to add a page to a newly created bio.
-bio_add_page() can fail, but the return value is never checked.
+On 3/28/23 19:20, Mike Snitzer wrote:
+> On Mon, Mar 27 2023 at  4:24P -0400,
+> Gwendal Grignou <gwendal@chromium.org> wrote:
+> 
+>> On ChromeOS, we are working on migrating file backed loopback devices
+>> to thinpool logical volumes using dm-clone on the Chromebook local
+>> SSD.
+>> Dm-clone hydration workflow is a great fit but the design of dm-clone
+>> assumes a read-only source device. Data present in the backing file
+>> will be copied to the new logical volume but can be safely deleted
+>> only when the hydration process is complete. During migration, some
+>> data will be duplicated and usage on the Chromebook SSD will
+>> unnecessarily increase.
+>> Would it be reasonable to add a discard option when enabling the
+>> hydration process to discard data as we go on the source device?
+>> 2 implementations are possible:
+>> a- add a state to the hydration state machine to ensure a region is
+>> discarded before considering another region.
+>> b- a simpler implementation where the discard is sent asynchronously
+>> at the end of a region copy. It may not complete successfully (in case
+>> the device crashes during the hydration for instance), but will vastly
+>> reduce the amount of data left  in the source device at the end of the
+>> hydration.
+>>
+>> I prefer b) as it is easier to implement, but a) is cleaner from a
+>> usage point of view.
+> 
+> In general, discards may not complete for any number of reasons. So
+> while a) gives you finer-grained potential for space being
+> deallocated, b) would likely suffice given that a device crash is
+> pretty unlikely (at least I would think).  And in the case of file
+> backed loopback devices, independent of dm-clone, you can just issue
+> discard(s) to all free space after a crash?
+> 
+> However you elect to do it, you'd do well to make it an optional
+> "discard_rw_src" (or some better name) feature that is configured when
+> you load the dm-clone target.
+> 
 
-Use __bio_add_page() as adding a single page to a newly created bio is
-guaranteed to succeed.
+I agree with Mike, but I also want to note the following.
 
-This brings us a step closer to marking bio_add_page() as __must_check.
+dm-clone commits its on-disk metadata periodically every second, and
+every time a FLUSH or FUA bio is written. This is done to improve
+performance.
 
-Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
----
- drivers/block/floppy.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+This means the dm-clone device behaves like a physical disk that has a
+volatile write cache. If power is lost you may lose some recent writes,
+_and_ dm-clone might need to rehydrate some regions.
 
-diff --git a/drivers/block/floppy.c b/drivers/block/floppy.c
-index 487840e3564d..6f46a30f7c36 100644
---- a/drivers/block/floppy.c
-+++ b/drivers/block/floppy.c
-@@ -4147,7 +4147,7 @@ static int __floppy_read_block_0(struct block_device *bdev, int drive)
- 	cbdata.drive = drive;
- 
- 	bio_init(&bio, bdev, &bio_vec, 1, REQ_OP_READ);
--	bio_add_page(&bio, page, block_size(bdev), 0);
-+	__bio_add_page(&bio, page, block_size(bdev), 0);
- 
- 	bio.bi_iter.bi_sector = 0;
- 	bio.bi_flags |= (1 << BIO_QUIET);
--- 
-2.39.2
+So, you can't discard a region on the source device after the copy
+operation has finished, because then the following scenario will result
+in data corruption:
+
+1. dm-clone hydrates a region
+2. dm-clone discards the region on the source device, either
+    synchronously (a) or asynchronously (b)
+3. The system crashes before the metadata is committed
+4. The system comes up, and dm-clone rehydrates the region, because it
+    thinks it has not been hydrated yet
+5. The source device might contain garbage for this region, since we
+    discarded it previously
+6. You have data corruption
+
+So, you can only discard hydrated regions for which the metadata have
+been committed on disk.
+
+I think you could discard hydrated regions on the source device
+periodically, right after committing the metadata.
+
+dm-clone keeps track of the regions hydrated during each metadata
+transaction, so after committing the metadata for the current
+transaction, you could also sent an asynchronous discard for these
+regions.
+
+Nikos.
 
 --
 dm-devel mailing list
