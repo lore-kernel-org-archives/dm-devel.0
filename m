@@ -4,197 +4,107 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9BFF1C6FD18
-	for <dm-devel@archiver.kernel.org>; Wed, 29 Mar 2023 06:05:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1BE8EC74A5B
+	for <dm-devel@archiver.kernel.org>; Wed, 29 Mar 2023 08:41:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1680069948;
+	s=mimecast20190719; t=1680079291;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=xLZoUOCfj89WttRPHD6PBjsjhl+05mHlSajfvZQv1ms=;
-	b=DZd3Zwar6vizKUktBDjfQt1KOgi/GLr1eGkBdgmcIvZfXye8Ih0Vf5FtjEuru8oHECFFSn
-	pWGbBzA8wYepA9ORYuMbv5apdGmEVl5kQGVFwsW7ak/3yzKwyiRIXkQWaXobtpMWY6tABZ
-	dGNp5BBDTBzD3q4JWlptZfmwLzf0XI4=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=7oO0BIVroumudanE65oeNdTzC5sATuy8tO1OJWDBh+I=;
+	b=QBmjHJ1L8rXM5AusDg2hTY/jV0KpXOxW08FXtSgLXX0LpOLUfAeZXKoYxc2unCfGCt/Xj0
+	0hMAOpaYb4yxfPBFTbKZF365SY6UXKDCMsBNPE62NvXlqmPvBbKkhXfAB3DQOjjiwIQukM
+	aDj74pmqxN7shiekHYaLnNXAR7yW9hY=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-512-MctE8Au9OjG3nwIyLTJVQA-1; Wed, 29 Mar 2023 02:05:44 -0400
-X-MC-Unique: MctE8Au9OjG3nwIyLTJVQA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-112-oyCdClF9MFGiHZ1opEX0mQ-1; Wed, 29 Mar 2023 04:41:28 -0400
+X-MC-Unique: oyCdClF9MFGiHZ1opEX0mQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DCFC029DD98F;
-	Wed, 29 Mar 2023 06:05:42 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7C016101A531;
+	Wed, 29 Mar 2023 08:41:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 148924042AC0;
-	Wed, 29 Mar 2023 06:05:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 94B31C15BA0;
+	Wed, 29 Mar 2023 08:41:24 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D19CB194658D;
-	Wed, 29 Mar 2023 06:05:28 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5FD81194658D;
+	Wed, 29 Mar 2023 08:41:24 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
  [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1769D194658C
- for <dm-devel@listman.corp.redhat.com>; Tue, 28 Mar 2023 15:51:05 +0000 (UTC)
+ ESMTP id B4887194658C
+ for <dm-devel@listman.corp.redhat.com>; Wed, 29 Mar 2023 08:41:22 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id EF072C15BB8; Tue, 28 Mar 2023 15:51:04 +0000 (UTC)
+ id 7B3E7C15BB8; Wed, 29 Mar 2023 08:41:22 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E5D41C15BA0
- for <dm-devel@redhat.com>; Tue, 28 Mar 2023 15:51:04 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C45B83C0C883
- for <dm-devel@redhat.com>; Tue, 28 Mar 2023 15:51:04 +0000 (UTC)
-Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
- [205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-128-J-D02MukN6GiwZICs-_Q8g-1; Tue, 28 Mar 2023 11:50:59 -0400
-X-MC-Unique: J-D02MukN6GiwZICs-_Q8g-1
-Received: from pps.filterd (m0246617.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id
- 32SFnxZi023139; Tue, 28 Mar 2023 15:50:30 GMT
-Received: from phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com
- (phxpaimrmta01.appoci.oracle.com [138.1.114.2])
- by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3pm37g002k-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Tue, 28 Mar 2023 15:50:30 +0000
-Received: from pps.filterd
- (phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
- by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (8.17.1.5/8.17.1.5)
- with ESMTP id 32SFaSWO020349; Tue, 28 Mar 2023 15:50:29 GMT
-Received: from nam12-dm6-obe.outbound.protection.outlook.com
- (mail-dm6nam12lp2172.outbound.protection.outlook.com [104.47.59.172])
- by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id
- 3phqd6u4j0-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Tue, 28 Mar 2023 15:50:29 +0000
-Received: from DM5PR10MB1466.namprd10.prod.outlook.com (2603:10b6:3:b::7) by
- IA1PR10MB5899.namprd10.prod.outlook.com (2603:10b6:208:3d5::9) with Microsoft
- SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.6178.41; Tue, 28 Mar 2023 15:50:27 +0000
-Received: from DM5PR10MB1466.namprd10.prod.outlook.com
- ([fe80::dcf6:889b:21f3:7425]) by DM5PR10MB1466.namprd10.prod.outlook.com
- ([fe80::dcf6:889b:21f3:7425%6]) with mapi id 15.20.6222.033; Tue, 28 Mar 2023
- 15:50:26 +0000
-Message-ID: <06c0cc8a-cf98-9687-93f1-a1da07578912@oracle.com>
-Date: Tue, 28 Mar 2023 10:50:24 -0500
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 73DB0C15BA0
+ for <dm-devel@redhat.com>; Wed, 29 Mar 2023 08:41:22 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 57099101A552
+ for <dm-devel@redhat.com>; Wed, 29 Mar 2023 08:41:22 +0000 (UTC)
+Received: from esa3.hgst.iphmx.com (esa3.hgst.iphmx.com [216.71.153.141]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-653-dSYmcVugO92ybQDg1kQFjg-2; Wed, 29 Mar 2023 04:41:20 -0400
+X-MC-Unique: dSYmcVugO92ybQDg1kQFjg-2
+X-IronPort-AV: E=Sophos;i="5.98,300,1673884800"; d="scan'208";a="231749342"
+Received: from uls-op-cesaip01.wdc.com (HELO uls-op-cesaep01.wdc.com)
+ ([199.255.45.14])
+ by ob1.hgst.iphmx.com with ESMTP; 29 Mar 2023 16:40:16 +0800
+IronPort-SDR: 97aGgXYC0pfuRn9FnHcN0YIcAlqqqMj67dS4d/Izi9/FDJQw5vx6Ms24KDJVSBHtTcBfamhW47
+ qelIOa0CBMbVsQUlrjZTW9s+Sak11SL0vxxxoT2+w4DLr57/+F77tp1QGlOMOchDQE+5PEN+CX
+ 9forJPvGCMUkWC92qlo7oWySfI9awOywMEwUg7H/pK/3XvZQDnNcl0UuqqB5ckV776tJPyJqIN
+ kWsXxuLtQe2jEqy4iKrXLC9bOZ2glq3m51AmAK/X6d4dqPuGvUzbQo2/ZklUO2FJAAR9VsoyXX
+ h4o=
+Received: from uls-op-cesaip01.wdc.com ([10.248.3.36])
+ by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 29 Mar 2023 00:56:25 -0700
+IronPort-SDR: h7LNVuMKCk2XdBfmAZaiXQNvn0TYiCAQjFNtxYiGXWlbPVNcnKU4G1y8yVU12rpetgIji6Oner
+ Y/fpgo8/FOoFxZHRRRNciaFVK6qI20W2lGfDAAlITl94eB+WPL3TXoi/H1CBjMyCj5XBTA6jre
+ SsK5JubvNne8ryt9hqZjypibTUyUeprV8z96gf+/NzokFTGPid1vj9yyHBhazzgtam/R6vERFN
+ FTE+IWJIEl7BZb9FQ3QQqaBVu7S5SEOy3VvUBOp2Df20xGH6+7BnNO6j7aAgKWpkWMZUGK8hlH
+ zPY=
+WDCIronportException: Internal
+Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
+ by uls-op-cesaip01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 29 Mar 2023 01:40:17 -0700
+Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4Pmg3g5Lrbz1RtVx
+ for <dm-devel@redhat.com>; Wed, 29 Mar 2023 01:40:15 -0700 (PDT)
+X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
+Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
+ by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
+ port 10026) with ESMTP id 0_mz5PFEDpKD for <dm-devel@redhat.com>;
+ Wed, 29 Mar 2023 01:40:14 -0700 (PDT)
+Received: from [10.225.163.116] (unknown [10.225.163.116])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4Pmg3Z3bThz1RtVm;
+ Wed, 29 Mar 2023 01:40:10 -0700 (PDT)
+Message-ID: <e725768d-19f5-a78a-2b05-c0b189624fea@opensource.wdc.com>
+Date: Wed, 29 Mar 2023 17:40:09 +0900
+MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
  Thunderbird/102.9.0
-To: kernel test robot <lkp@intel.com>, bvanassche@acm.org, hch@lst.de,
- martin.petersen@oracle.com, linux-scsi@vger.kernel.org,
- james.bottomley@hansenpartnership.com, linux-block@vger.kernel.org,
- dm-devel@redhat.com, snitzer@kernel.org, axboe@kernel.dk,
- linux-nvme@lists.infradead.org, chaitanyak@nvidia.com,
- kbusch@kernel.org, target-devel@vger.kernel.org
-References: <20230324181741.13908-12-michael.christie@oracle.com>
- <202303281502.U47uzous-lkp@intel.com>
-From: Mike Christie <michael.christie@oracle.com>
-In-Reply-To: <202303281502.U47uzous-lkp@intel.com>
-X-ClientProxiedBy: CH0PR13CA0003.namprd13.prod.outlook.com
- (2603:10b6:610:b1::8) To DM5PR10MB1466.namprd10.prod.outlook.com
- (2603:10b6:3:b::7)
-MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: DM5PR10MB1466:EE_|IA1PR10MB5899:EE_
-X-MS-Office365-Filtering-Correlation-Id: ecd0c1bc-9597-4623-e872-08db2fa42644
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: IikP/SPCYjRFwGE7D2pR2sG1/AErY2v3WgYe4BjiYoBpZw6sIoYtPZLd/SYxhwHpqIHJBQwAyDlxTnS36EOZ197RfVn2pbsORGv+ItX9IkZdcyJ4GxX1eoiZEpU3xqtyCJ3XwOUs3HcdyyWBC9KmFX3zt7U5qFOTMzoMsOAES/mUqGArl8sBNWJoE6QS2ksXBpCFKGVhf0ENUGMZHMeTfmlTdc0APBXol4Vbj0zP6X+qqPGzgTwjHt010iwoUqEVTYDj9zYg5IdawGxMP9IJJV8J8e1LQz3ZiQU+K8ZOEpwS2/KLjIqxe0C2ehnV/TbeQK9vHMELCIiXonmgvOq1O3oNfCCAF1AZERZIRZ5IcCbNISvDge05IPBjfT8tU6NTqbGmskPLNeFJUHqifpW2so8BK57+mkNG7ryKTnzd2OchztODZTORbrHnqaxeqouxJiO4fS2oLEObx2kw0Cpwcwjq5eXUia6m6I9ji1KGZ8NwVCkQL+nxgaUBssQT2ou3VhntLaCyzy4BFHEjaE2ZEmWmeTk0FlKk7RAkXvRWCwLbmvqavcem1M/Buce1UEZ6aOcaXtBWafluZMXafYO4NQNjsVtbS89oHkbN6qgj7orssZy5qEmKLg4E6C4I7dmH06DmSE/Nto511KxFJyUaUGDSNKqzoyakiOGWsYMC7bUNvem4I2hAPgsqwCC65S/p
-X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:DM5PR10MB1466.namprd10.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230028)(39860400002)(396003)(366004)(346002)(376002)(136003)(451199021)(38100700002)(31696002)(2906002)(86362001)(36756003)(921005)(186003)(4326008)(6512007)(26005)(478600001)(7416002)(5660300002)(53546011)(8936002)(31686004)(6486002)(41300700001)(966005)(6506007)(316002)(66946007)(66476007)(2616005)(66556008)(83380400001)(8676002)(45980500001)(43740500002);
- DIR:OUT; SFP:1101
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?utf-8?B?R2ZMNWxpWHoxMnAzNnI1R2FEc2lJc21nOGc3VjROOVFqU1AzRFpBMy9EaWlE?=
- =?utf-8?B?eFhRTGZzV25YOEhxRkVqTTlzTlMvNWdnL0JxNzNVOGI3KzgwMnFWeUhQYUlD?=
- =?utf-8?B?Z21XRkxsNUJlMERuclVURXN3Z0ZNcU82ZFRJakhpR2tHS3NmWllNYUhEV2hX?=
- =?utf-8?B?bW9KQ0IzcVd2WENUWVZsQVZjdXZrd2JXU0tKWTJobEVDaUxUSWgzZzJJZjlz?=
- =?utf-8?B?eDUwSHl5c21MdVNKZXZpMXdxeDgwQllBQ3paZDJEcTQ0VGlOaldzcEg4V0xV?=
- =?utf-8?B?Sm5WSzdCbmJKdlNiQ0tVUjNqcHBFTGNYZDMvZ2N0SVYwZFpablhmb00xQnB5?=
- =?utf-8?B?TjkydFRjU2tma2R4SEdCajB5OExheEE1a2JEbU5UUHhhVGo2eU8zd0N2czk4?=
- =?utf-8?B?VnJTSis5RWIzTStiSEE5N01NN1JKN2tSV0lKRmdybFdLdmFQNmxIVC9GSFc4?=
- =?utf-8?B?aUxzMU5xMXkybFEybW1mS1NjdWYwZ2szZEFSa0tvZGhzZmUrOUkxWHdJRUhp?=
- =?utf-8?B?Ni9oWW01bHc4SFk5VHhZZE9JK0Exck43cm5ReVp2TUMzWm0vazh3OXYyL202?=
- =?utf-8?B?WWlXSVBmRGhHdVVRRUYvVGY0UE5KdGM0Z1luWnZRN1dlS0d5SnVzYXhBZmdJ?=
- =?utf-8?B?UndMMmNGMCtZNndQUGJ1V1RWN3g0SVFtdEg0SFZ6cEVvNm9LNWMzS0crVXVR?=
- =?utf-8?B?bEFMOWliUUpIOVFtMSsrNUNXUmk2Q0tBTTl0dWJnUjBQeDRUTVF5dVEzTjJa?=
- =?utf-8?B?Z3BqNGRPL0l2VEtxNmt6eC96SUplTkJMNm5GMHRmN2FrMXY5OWVRTmR6Qmlv?=
- =?utf-8?B?bDFiTmNuM2dEb2Nma2R0REx4R1VDVm9ZUTJEQy9vUkRwSlFQb1kwbjMvdVEv?=
- =?utf-8?B?NE52L0Nsd2Ivek52OHJZTjl1L1FxeDFrS3BsZWpzY0tuQUNBNm55bFZKVkFM?=
- =?utf-8?B?ZEhidU82WjR4SENJNHlqMXR5Smtpakp3WGdKeStaNFpvZ2l1cEZpeksvcnlp?=
- =?utf-8?B?Z1pLeFNNSnB2dG50NlEwbTE5cGVBb0p5cFB2NnM1U0JpeFFMMnFKOVlGQnpM?=
- =?utf-8?B?bGhmN3Y0NHdhSy83Y3MrS0hYZXN2R2RTVjlKdzBZWVdGYW5sUG44VHNER1lr?=
- =?utf-8?B?TTczczQyM0tVTHc4bGg5UnQ1L1FzTUJaQzB3YTM3YnZuSS9ybTBPalQ3Ylp4?=
- =?utf-8?B?TVczQnRzSmxvT2UxSG43NHkzcUJqNlUvNXhtdjkzajZiL2VYRkF4RzV4ZmhV?=
- =?utf-8?B?c0RadWJWVElJMEh4ZGxVdkVqV3poaUhQYjJ6Zjdzb1NPYVplTk1IZ2dPMmxH?=
- =?utf-8?B?WkFxNkpwNHBhQzR6ZUxkcmxZenFYWGFnNS9ma08reHBwNXJQeTZHV1pvaFp2?=
- =?utf-8?B?MWs0RVJwSVdMaHFrVGgySHhNZUk5M29ONlIyQ2JQRFh5SGhYOFFyTnJQQVo3?=
- =?utf-8?B?LysyaXhiMnNza3NhOG8vdHRHWVdpMEtLZnV2emdrd2V6SnVqQUF1MksvOHFI?=
- =?utf-8?B?T0FjMTloRkFwcjBkdnoxZStmMkYycGFLMmF5UHNKVDVVZ2hVM3ZHako3SUlq?=
- =?utf-8?B?WGh3eXVtVHB3SVNmSnMrQWQyaDhydkVPdTZpODdjVWtwMkt0Ty93Ly9lUWhF?=
- =?utf-8?B?Z0VWM2ZCTjVJcUo1VE5WTHVMbTlHc2ZMYXlkOFN1VCs5MnhCdWdrZTFLNWpk?=
- =?utf-8?B?R1o4WDEvR2NPb0g5K1dNek84eDVNSDRBQ0lCZ25VdVNtUVRVWUNDSGQ5YXFZ?=
- =?utf-8?B?ckFrczY2RTNWVzRUK2N3dksrSTc1R1JaYS9ESnRiMWhsVVg0YU5XZjhrbXc3?=
- =?utf-8?B?SDFoTzVJckRtME1sZ3BYNWtrbDlXRUJ1b0FDa25oSVBGS1dXcGZnNzlLampG?=
- =?utf-8?B?ZDB1YjZjN3JqRC9iNWRtL2VMMEhMOE1ZMENaRzVWdG1KOUNSdFNuZUs5S3Bo?=
- =?utf-8?B?cGhkeWJEcDBOTE9HUnpWQ0kyK2ZDMng1SVhvOUFydHppTlFrWXRKbU9UREZz?=
- =?utf-8?B?SVJiTnVrcy9KZExSSTkyU3RJWVJmeWhXNUU4bzd2Y2RIV1I1MWZ0a1ZTMjRl?=
- =?utf-8?B?UGVJL05UZHczSlR6Q043NGdRek1VeFRtQ3ByM1pmV2JnbjdJOVZBdmZZV2p6?=
- =?utf-8?B?RE5GUVFxUExjWnJISjBhQmg3bFF6NUoybnB5LzlCaitiajRORm5QTTZEa0Y3?=
- =?utf-8?B?enc9PQ==?=
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0: =?utf-8?B?MzZpaWtOVnRsZHlaY251UmlZZllFUjNDeEhpU2hreWQ3STNlODNBN2dCZVFq?=
- =?utf-8?B?WkRJOUJ5dzRsc1Q5TmoxdjE0b2ZoMXE5SjZqQytmS0M4SmUwajdvOEVVV2VS?=
- =?utf-8?B?MDQ3YktrL0kveGhneUp4SkR6c3FLdmJjbzFYQkc2UEtzODhUY2E1ODNlVklt?=
- =?utf-8?B?RURsV3Vpa2RVRGJNMFlJZXcxeVIvUk9UL3RUL09tc0ZWaDg4NHIxRUlYV1dp?=
- =?utf-8?B?WXBVMDNYenlOd2RDMGVaV2R0R1drMlNGUWNFSVJLakdGeVlCWVBKdzJ6bkZ5?=
- =?utf-8?B?R0VybzdreHVGMmdJQktXSjdFcXRkayt6bGU0MjRtOW5qMGxpTmp5S2NrRVN6?=
- =?utf-8?B?QmpkOUJMUU1uaHNlME8rcU1HWktjd1p5dTNiN3hTOXN6SVFqbUFWSlZENDlI?=
- =?utf-8?B?d2FvT3BacUt1MnQxbno2R0djNzQvV2NtYmdQbEtBYksrZHpUekJHUEk1VzNv?=
- =?utf-8?B?VjJkb0Q1Ri9HOHR1aUNLU043b3BaeG52M095eWdFRzF1QmJxZlY2THNpcVZP?=
- =?utf-8?B?WGpsT0ZLMVlkRjlmV2FWK2dreU45OGhKVGJJV1NPenhiM2tJVWdBQncxVUNa?=
- =?utf-8?B?MERidWRHL05DdmZLUllHbVRXTTBPeDIwejRjaG8yNjc0SmErakpYRUZCUjBi?=
- =?utf-8?B?UElyV2hzaGhublg2QzYrdDQ5N3BQdC9iRmVCeEE2WFVkaHkyaUpqUDZBSG4r?=
- =?utf-8?B?MTFaVFBrVGh0Y3V1QkQrKzBJTVpLZndKZjNvZDMvdmZtL3hENDY1cWJMWkNT?=
- =?utf-8?B?NUZ3TCtpUldwM2pTUXcxQXFpZTBlNWhoZmZINmlnZG5Yd2VyendTYm9HTGFX?=
- =?utf-8?B?TXJianJYa25OaTBUejJUaS9SK3VUdVdTeEV4RWtVU3JveDdJckV4ZHBUbXRs?=
- =?utf-8?B?SHJFWVJRc2o2RmIyTkY3R3MxQTVxRkxDQXRHUTdyYk1hdGoyd0RIcWJnWnM2?=
- =?utf-8?B?SGFKNWR0dGFUNWZncjdlUkZpNnVWK3E1UFlCckJtU292SVhJcHV5NjBZakIx?=
- =?utf-8?B?Tys0U2oyUk5BOXkzbFNQc1FyVzhCM0p0T1IwMkI0SkIrVXdSdEdaa1VaT1Nn?=
- =?utf-8?B?djZ4cnlUUEZTZVBkUGRKRlJ6WjYydkNKcWdhRTBkd2Z3SklvU3ZkRnBkd285?=
- =?utf-8?B?T0pQV2hBRnc1YysyZng3cm1lOUFSVkVuWi9lOFVyNTJVSytaNWVoR0NyZnU2?=
- =?utf-8?B?bDJ2L0Fxbm1MY0UrcWZXRlI4QXVYdkZ0dG5veERoUElIREdOcVlSSTBmeVJz?=
- =?utf-8?B?Q3loaVpJVjFCeVRnOGU1N3RLZ2xjbjNOcjZaRlNKY3gvQ3UvUWNPbUsxWXJi?=
- =?utf-8?B?WGdLd0RwQm9JY1FFMGpxMk5hL3l4NnRnVllxWk83cWRQeGFMQUhhY01lQ1RE?=
- =?utf-8?B?VXNOL1Y1dk56REVTVW9IajlCdzNUZlN1ZEF4K3BWdGZKajlPbzJIcUdFVjBE?=
- =?utf-8?B?S01PSWpzbEo0MTErZ0tQNmRsU2R4RFEzczdncUZBPT0=?=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: ecd0c1bc-9597-4623-e872-08db2fa42644
-X-MS-Exchange-CrossTenant-AuthSource: DM5PR10MB1466.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 28 Mar 2023 15:50:26.8234 (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: yZWn+824+EEpWYZq7WpdXYypd4BnkmAjR4W6KSO6OtZ9LjSOwqYbtOA08kK3OrmNFuB2w75Bxmm7xcBwmjswRBbmp0N6X6uFvWNfnUwT4Is=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: IA1PR10MB5899
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.254,Aquarius:18.0.942,Hydra:6.0.573,FMLib:17.11.170.22
- definitions=2023-03-24_11,2023-03-28_02,2023-02-09_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 suspectscore=0
- mlxscore=0 phishscore=0
- malwarescore=0 adultscore=0 spamscore=0 mlxlogscore=999 bulkscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2303200000
- definitions=main-2303280123
-X-Proofpoint-GUID: PmyGD-3HxLD0-5h2QLCWMVWeiO32z980
-X-Proofpoint-ORIG-GUID: PmyGD-3HxLD0-5h2QLCWMVWeiO32z980
+To: Anuj Gupta <anuj20.g@samsung.com>, Jens Axboe <axboe@kernel.dk>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@redhat.com, Keith Busch <kbusch@kernel.org>,
+ Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
+ James Smart <james.smart@broadcom.com>, Chaitanya Kulkarni <kch@nvidia.com>,
+ Alexander Viro <viro@zeniv.linux.org.uk>,
+ Christian Brauner <brauner@kernel.org>
+References: <20230327084103.21601-1-anuj20.g@samsung.com>
+ <CGME20230327084216epcas5p3945507ecd94688c40c29195127ddc54d@epcas5p3.samsung.com>
+ <20230327084103.21601-2-anuj20.g@samsung.com>
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Organization: Western Digital Research
+In-Reply-To: <20230327084103.21601-2-anuj20.g@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -203,8 +113,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-X-Mailman-Approved-At: Wed, 29 Mar 2023 06:05:27 +0000
-Subject: Re: [dm-devel] [PATCH v5 11/18] nvme: Add pr_ops read_keys support
+Subject: Re: [dm-devel] [PATCH v8 1/9] block: Introduce queue limits for
+ copy-offload support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -216,75 +126,160 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: oe-kbuild-all@lists.linux.dev
+Cc: bvanassche@acm.org, joshi.k@samsung.com, gost.dev@samsung.com,
+ nitheshshetty@gmail.com, linux-kernel@vger.kernel.org,
+ linux-nvme@lists.infradead.org, ming.lei@redhat.com,
+ linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ Nitesh Shetty <nj.shetty@samsung.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: oracle.com
+X-Mimecast-Originator: opensource.wdc.com
 Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 3/28/23 2:11 AM, kernel test robot wrote:
-> Hi Mike,
+On 3/27/23 17:40, Anuj Gupta wrote:
+> From: Nitesh Shetty <nj.shetty@samsung.com>
 > 
-> I love your patch! Perhaps something to improve:
+> Add device limits as sysfs entries,
+>         - copy_offload (RW)
+>         - copy_max_bytes (RW)
+>         - copy_max_bytes_hw (RO)
 > 
-> [auto build test WARNING on mkp-scsi/for-next]
-> [also build test WARNING on jejb-scsi/for-next axboe-block/for-next linus/master v6.3-rc4 next-20230328]
-> [If your patch is applied to the wrong git tree, kindly drop us a note.
-> And when submitting patch, we suggest to use '--base' as documented in
-> https://git-scm.com/docs/git-format-patch#_base_tree_information]
+> Above limits help to split the copy payload in block layer.
+> copy_offload: used for setting copy offload(1) or emulation(0).
+> copy_max_bytes: maximum total length of copy in single payload.
+> copy_max_bytes_hw: Reflects the device supported maximum limit.
 > 
-> url:    https://github.com/intel-lab-lkp/linux/commits/Mike-Christie/block-Add-PR-callouts-for-read-keys-and-reservation/20230325-022314
-> base:   https://git.kernel.org/pub/scm/linux/kernel/git/mkp/scsi.git for-next
-> patch link:    https://lore.kernel.org/r/20230324181741.13908-12-michael.christie%40oracle.com
-> patch subject: [PATCH v5 11/18] nvme: Add pr_ops read_keys support
-> config: i386-randconfig-s002 (https://download.01.org/0day-ci/archive/20230328/202303281502.U47uzous-lkp@intel.com/config)
-> compiler: gcc-11 (Debian 11.3.0-8) 11.3.0
-> reproduce:
->         # apt-get install sparse
->         # sparse version: v0.6.4-39-gce1a6720-dirty
->         # https://github.com/intel-lab-lkp/linux/commit/fcd2233cf643c550ab3cea2b6102077b1d05b389
->         git remote add linux-review https://github.com/intel-lab-lkp/linux
->         git fetch --no-tags linux-review Mike-Christie/block-Add-PR-callouts-for-read-keys-and-reservation/20230325-022314
->         git checkout fcd2233cf643c550ab3cea2b6102077b1d05b389
->         # save the config file
->         mkdir build_dir && cp config build_dir/.config
->         make W=1 C=1 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__' O=build_dir ARCH=i386 olddefconfig
->         make W=1 C=1 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__' O=build_dir ARCH=i386 SHELL=/bin/bash drivers/nvme/host/
+> Reviewed-by: Hannes Reinecke <hare@suse.de>
+> Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
+> Signed-off-by: Kanchan Joshi <joshi.k@samsung.com>
+> Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
+> ---
+>  Documentation/ABI/stable/sysfs-block | 36 ++++++++++++++++
+>  block/blk-settings.c                 | 24 +++++++++++
+>  block/blk-sysfs.c                    | 64 ++++++++++++++++++++++++++++
+>  include/linux/blkdev.h               | 12 ++++++
+>  include/uapi/linux/fs.h              |  3 ++
+>  5 files changed, 139 insertions(+)
 > 
-> If you fix the issue, kindly add following tag where applicable
-> | Reported-by: kernel test robot <lkp@intel.com>
-> | Link: https://lore.kernel.org/oe-kbuild-all/202303281502.U47uzous-lkp@intel.com/
-> 
-> sparse warnings: (new ones prefixed by >>)
->>> drivers/nvme/host/pr.c:165:24: sparse: sparse: incorrect type in assignment (different base types) @@     expected restricted __le32 [assigned] [usertype] cdw11 @@     got int @@
->    drivers/nvme/host/pr.c:165:24: sparse:     expected restricted __le32 [assigned] [usertype] cdw11
->    drivers/nvme/host/pr.c:165:24: sparse:     got int
->>> drivers/nvme/host/pr.c:171:21: sparse: sparse: restricted __le32 degrades to integer
-> 
-> vim +165 drivers/nvme/host/pr.c
-> 
->    156	
->    157	static int nvme_pr_resv_report(struct block_device *bdev, void *data,
->    158			u32 data_len, bool *eds)
->    159	{
->    160		struct nvme_command c = { };
->    161		int ret;
->    162	
->    163		c.common.opcode = nvme_cmd_resv_report;
->    164		c.common.cdw10 = cpu_to_le32(nvme_bytes_to_numd(data_len));
->  > 165		c.common.cdw11 = NVME_EXTENDED_DATA_STRUCT;
->    166		*eds = true;
->    167	
->    168	retry:
->    169		ret = nvme_send_pr_command(bdev, &c, data, data_len);
->    170		if (ret == NVME_SC_HOST_ID_INCONSIST &&
->  > 171		    c.common.cdw11 == NVME_EXTENDED_DATA_STRUCT) {
+> diff --git a/Documentation/ABI/stable/sysfs-block b/Documentation/ABI/stable/sysfs-block
+> index c57e5b7cb532..f5c56ad91ad6 100644
+> --- a/Documentation/ABI/stable/sysfs-block
+> +++ b/Documentation/ABI/stable/sysfs-block
+> @@ -155,6 +155,42 @@ Description:
+>  		last zone of the device which may be smaller.
+>  
+>  
+> +What:		/sys/block/<disk>/queue/copy_offload
+> +Date:		November 2022
+> +Contact:	linux-block@vger.kernel.org
+> +Description:
+> +		[RW] When read, this file shows whether offloading copy to
+> +		device is enabled (1) or disabled (0). Writing '0' to this
 
-Kernel test bot is correct. Will fix.
+...to a device...
+
+> +		file will disable offloading copies for this device.
+> +		Writing any '1' value will enable this feature. If device
+
+If the device does...
+
+> +		does not support offloading, then writing 1, will result in
+> +		error.
+> +
+> +
+> +What:		/sys/block/<disk>/queue/copy_max_bytes
+> +Date:		November 2022
+> +Contact:	linux-block@vger.kernel.org
+> +Description:
+> +		[RW] While 'copy_max_bytes_hw' is the hardware limit for the
+> +		device, 'copy_max_bytes' setting is the software limit.
+> +		Setting this value lower will make Linux issue smaller size
+> +		copies from block layer.
+
+		This is the maximum number of bytes that the block
+                layer will allow for a copy request. Must be smaller than
+                or equal to the maximum size allowed by the hardware indicated
+		by copy_max_bytes_hw. Write 0 to use the default kernel
+		settings.
+
+> +
+> +
+> +What:		/sys/block/<disk>/queue/copy_max_bytes_hw
+> +Date:		November 2022
+> +Contact:	linux-block@vger.kernel.org
+> +Description:
+> +		[RO] Devices that support offloading copy functionality may have
+> +		internal limits on the number of bytes that can be offloaded
+> +		in a single operation. The `copy_max_bytes_hw`
+> +		parameter is set by the device driver to the maximum number of
+> +		bytes that can be copied in a single operation. Copy
+> +		requests issued to the device must not exceed this limit.
+> +		A value of 0 means that the device does not
+> +		support copy offload.
+
+		[RO] This is the maximum number of kilobytes supported in a
+                single data copy offload operation. A value of 0 means that the
+		device does not support copy offload.
+
+> +
+> +
+>  What:		/sys/block/<disk>/queue/crypto/
+>  Date:		February 2022
+>  Contact:	linux-block@vger.kernel.org
+> diff --git a/block/blk-settings.c b/block/blk-settings.c
+> index 896b4654ab00..350f3584f691 100644
+> --- a/block/blk-settings.c
+> +++ b/block/blk-settings.c
+> @@ -59,6 +59,8 @@ void blk_set_default_limits(struct queue_limits *lim)
+>  	lim->zoned = BLK_ZONED_NONE;
+>  	lim->zone_write_granularity = 0;
+>  	lim->dma_alignment = 511;
+> +	lim->max_copy_sectors_hw = 0;
+> +	lim->max_copy_sectors = 0;
+>  }
+>  
+>  /**
+> @@ -82,6 +84,8 @@ void blk_set_stacking_limits(struct queue_limits *lim)
+>  	lim->max_dev_sectors = UINT_MAX;
+>  	lim->max_write_zeroes_sectors = UINT_MAX;
+>  	lim->max_zone_append_sectors = UINT_MAX;
+> +	lim->max_copy_sectors_hw = ULONG_MAX;
+> +	lim->max_copy_sectors = ULONG_MAX;
+>  }
+>  EXPORT_SYMBOL(blk_set_stacking_limits);
+>  
+> @@ -183,6 +187,22 @@ void blk_queue_max_discard_sectors(struct request_queue *q,
+>  }
+>  EXPORT_SYMBOL(blk_queue_max_discard_sectors);
+>  
+> +/**
+> + * blk_queue_max_copy_sectors_hw - set max sectors for a single copy payload
+> + * @q:  the request queue for the device
+> + * @max_copy_sectors: maximum number of sectors to copy
+> + **/
+> +void blk_queue_max_copy_sectors_hw(struct request_queue *q,
+> +		unsigned int max_copy_sectors)
+> +{
+> +	if (max_copy_sectors >= MAX_COPY_TOTAL_LENGTH)
+
+Confusing name as LENGTH may be interpreted as bytes. MAX_COPY_SECTORS would be
+better.
+
+> +		max_copy_sectors = MAX_COPY_TOTAL_LENGTH;
+> +
+> +	q->limits.max_copy_sectors_hw = max_copy_sectors;
+> +	q->limits.max_copy_sectors = max_copy_sectors;
+> +}
+> +EXPORT_SYMBOL_GPL(blk_queue_max_copy_sectors_hw);
+
+
+-- 
+Damien Le Moal
+Western Digital Research
 
 --
 dm-devel mailing list
