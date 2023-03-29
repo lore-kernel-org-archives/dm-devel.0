@@ -1,87 +1,105 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 578DFC74A5B
-	for <dm-devel@archiver.kernel.org>; Wed, 29 Mar 2023 18:37:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id BC8B1C74A5B
+	for <dm-devel@archiver.kernel.org>; Wed, 29 Mar 2023 23:29:35 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1680115078;
+	s=mimecast20190719; t=1680132574;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=DoLzBz6zkQN9orxEw7OBwJ6Dn7KjRzlfM/Hdo1teJG8=;
-	b=FQkyxHRsGSmNbV1yraPPXnliZun4MwOJ0C2Ft61vFlffSmOZyAxL3xZ7Srf/Le/T7fLIQi
-	plJ/nkq6cihRlllwZI6INQMeuZHQwLhSV+nrM4FUZ2x8TxAEdKOqCN5TuQ4VMThIEvMDye
-	6wUKWLeuyob8nh8xPRrvdeTmiGTqPjE=
+	bh=UMfSx7jKbv6k1QfHxZjZaBAUtueka6bx9p7y0SoNZB4=;
+	b=NOvGrbZKYjPl7ogitPZyCtkX8+90uhjf0JrC845d05zXHEnpsnU5EnLCq52XCeIoDaiUib
+	gt8VerNqWqQ9CRUj/f4s76X/aUVzRIA9KsXaw6E+RKQgKpgk3tjEswEQW3+tV5rn72pVYM
+	yKUy0WpGjGTttZQ2PFkRiLMtvLPAJ/Q=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-253-6sHl53eCMXuALwkFhLYM3A-1; Wed, 29 Mar 2023 14:37:56 -0400
-X-MC-Unique: 6sHl53eCMXuALwkFhLYM3A-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-662-dyfVz2YGNkSLHnkkEJU5ow-1; Wed, 29 Mar 2023 19:29:31 -0400
+X-MC-Unique: dyfVz2YGNkSLHnkkEJU5ow-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 37B17101A54F;
-	Wed, 29 Mar 2023 18:37:54 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EA66B185A78F;
+	Wed, 29 Mar 2023 23:29:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D88F91121330;
-	Wed, 29 Mar 2023 18:37:53 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id AD8E0492B00;
+	Wed, 29 Mar 2023 23:29:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A54891946588;
-	Wed, 29 Mar 2023 18:37:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7CE2D1946588;
+	Wed, 29 Mar 2023 23:29:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3AD1F1946587
- for <dm-devel@listman.corp.redhat.com>; Wed, 29 Mar 2023 18:37:24 +0000 (UTC)
+ ESMTP id 3108D1946587
+ for <dm-devel@listman.corp.redhat.com>; Wed, 29 Mar 2023 23:29:25 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2A205202701F; Wed, 29 Mar 2023 18:37:24 +0000 (UTC)
+ id 1433440BC798; Wed, 29 Mar 2023 23:29:25 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2248C202701E
- for <dm-devel@redhat.com>; Wed, 29 Mar 2023 18:37:24 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 01CA529AA3B9
- for <dm-devel@redhat.com>; Wed, 29 Mar 2023 18:37:24 +0000 (UTC)
-Received: from mga05.intel.com (mga05.intel.com [192.55.52.43]) by
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0CB5C40BC797
+ for <dm-devel@redhat.com>; Wed, 29 Mar 2023 23:29:25 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E6653857F48
+ for <dm-devel@redhat.com>; Wed, 29 Mar 2023 23:29:24 +0000 (UTC)
+Received: from esa5.hgst.iphmx.com (esa5.hgst.iphmx.com [216.71.153.144]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-641-Cu9ylMvsPJafwJyx7UGGWA-1; Wed, 29 Mar 2023 14:37:22 -0400
-X-MC-Unique: Cu9ylMvsPJafwJyx7UGGWA-1
-X-IronPort-AV: E=McAfee;i="6600,9927,10664"; a="427243799"
-X-IronPort-AV: E=Sophos;i="5.98,301,1673942400"; d="scan'208";a="427243799"
-Received: from fmsmga005.fm.intel.com ([10.253.24.32])
- by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
- 29 Mar 2023 11:37:12 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10664"; a="1014137919"
-X-IronPort-AV: E=Sophos;i="5.98,301,1673942400"; d="scan'208";a="1014137919"
-Received: from lkp-server01.sh.intel.com (HELO b613635ddfff) ([10.239.97.150])
- by fmsmga005.fm.intel.com with ESMTP; 29 Mar 2023 11:37:07 -0700
-Received: from kbuild by b613635ddfff with local (Exim 4.96)
- (envelope-from <lkp@intel.com>) id 1phafS-000Jp4-2L;
- Wed, 29 Mar 2023 18:37:06 +0000
-Date: Thu, 30 Mar 2023 02:36:31 +0800
-From: kernel test robot <lkp@intel.com>
-To: Anuj Gupta <anuj20.g@samsung.com>, Jens Axboe <axboe@kernel.dk>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- dm-devel@redhat.com, Keith Busch <kbusch@kernel.org>,
- Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
- James Smart <james.smart@broadcom.com>,
- Chaitanya Kulkarni <kch@nvidia.com>,
- Alexander Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>
-Message-ID: <202303300238.vmt9ne37-lkp@intel.com>
-References: <20230327084103.21601-7-anuj20.g@samsung.com>
+ us-mta-348-IzGwj-OBNCGhvd5VdFEzWA-3; Wed, 29 Mar 2023 19:29:23 -0400
+X-MC-Unique: IzGwj-OBNCGhvd5VdFEzWA-3
+X-IronPort-AV: E=Sophos;i="5.98,301,1673884800"; d="scan'208";a="226647943"
+Received: from uls-op-cesaip02.wdc.com (HELO uls-op-cesaep02.wdc.com)
+ ([199.255.45.15])
+ by ob1.hgst.iphmx.com with ESMTP; 30 Mar 2023 07:29:20 +0800
+IronPort-SDR: aCHvRaqS1Ek8sh4yEDRnt5tiAW5S9KWRLbM2pI/SEje4pi5jeDd5YJ0TWadjad0Yy9GPhFVnTl
+ KGTUqgd503+i4Hdim5UTOqW6zGFdKGe/KJfxYrT4M2sObCzZ3qvz3yC59+NsWcEpvL7s31cV8l
+ gfKeYiRrFjfZWi6Et1aYAdVl4fU5vuIS7dtYG4IC03LqCEj+bO4SemMUksIi54Kt0/1Ail77AJ
+ tt/Ij5w3mQXtEozKGvRVGiVkxd4PrGIqVjiF/lE/kGjon5YjvcBirLIe+XpsCih4hLWUoGDfBg
+ SAc=
+Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
+ by uls-op-cesaep02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 29 Mar 2023 15:39:49 -0700
+IronPort-SDR: PKnyaE6lMbU1WItImtOkf5WYE1Q6yej6te/e4zmsDNShQFTZG+mklbyrk9GBwF+0f62dWdBMBN
+ Qh29hYIZY4aqcTEEjZialp3k1pwBI2yfHzxJ6NuYi8GfYtXQouYE70QYE2xYconnexbfluFAMD
+ 8978rXoOPZLTrNFThUhR5qoYg3ltcECfPd/1Ze2Wg3yBX9AEc6h/ViH2d5sEUrvGSS5cmrkpeb
+ JTu5VARYxl4rxPMhT+8CTSi7+hmNerCaqOuzZNJt9lzRbiv3XBPS6WOh2008e5SwVXxLv4fVZa
+ wT4=
+WDCIronportException: Internal
+Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
+ by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 29 Mar 2023 16:29:21 -0700
+Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4Pn2nX1rnNz1RtVy
+ for <dm-devel@redhat.com>; Wed, 29 Mar 2023 16:29:20 -0700 (PDT)
+X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
+Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
+ by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
+ port 10026) with ESMTP id Ul4XdvRTHRzM for <dm-devel@redhat.com>;
+ Wed, 29 Mar 2023 16:29:19 -0700 (PDT)
+Received: from [10.225.163.116] (unknown [10.225.163.116])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4Pn2nR75BJz1RtVm;
+ Wed, 29 Mar 2023 16:29:15 -0700 (PDT)
+Message-ID: <a3e8f1cb-4d76-dcb0-41a7-43b015d25dd4@opensource.wdc.com>
+Date: Thu, 30 Mar 2023 08:29:14 +0900
 MIME-Version: 1.0
-In-Reply-To: <20230327084103.21601-7-anuj20.g@samsung.com>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.9.0
+To: Johannes Thumshirn <johannes.thumshirn@wdc.com>,
+ Jens Axboe <axboe@kernel.dk>
+References: <cover.1680108414.git.johannes.thumshirn@wdc.com>
+ <7849b142e073b20f033e5124a39080f59e5f19d2.1680108414.git.johannes.thumshirn@wdc.com>
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Organization: Western Digital Research
+In-Reply-To: <7849b142e073b20f033e5124a39080f59e5f19d2.1680108414.git.johannes.thumshirn@wdc.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -89,9 +107,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: Re: [dm-devel] [PATCH v8 6/9] nvmet: add copy command support for
- bdev and file ns
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] [PATCH 01/19] swap: use __bio_add_page to add page
+ to bio
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,160 +121,38 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: bvanassche@acm.org, joshi.k@samsung.com,
- Nitesh Shetty <nj.shetty@samsung.com>, gost.dev@samsung.com,
- anuj20.g@samsung.com, linux-kernel@vger.kernel.org,
- linux-nvme@lists.infradead.org, ming.lei@redhat.com,
- linux-block@vger.kernel.org, oe-kbuild-all@lists.linux.dev,
- linux-fsdevel@vger.kernel.org, damien.lemoal@opensource.wdc.com,
- nitheshshetty@gmail.com
+Cc: linux-raid@vger.kernel.org, Damien Le Moal <damien.lemoal@wdc.com>,
+ cluster-devel@redhat.com, Chaitanya Kulkarni <kch@nvidia.com>,
+ Andreas Gruenbacher <agruenba@redhat.com>, Song Liu <song@kernel.org>,
+ Dave Kleikamp <shaggy@kernel.org>, Mike Snitzer <snitzer@kernel.org>,
+ jfs-discussion@lists.sourceforge.net, Matthew Wilcox <willy@infradead.org>,
+ Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org,
+ linux-mm@kvack.org, dm-devel@redhat.com, David Sterba <dsterba@suse.com>,
+ linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>,
+ linux-btrfs@vger.kernel.org, Bob Peterson <rpeterso@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: intel.com
-Content-Disposition: inline
+X-Mimecast-Originator: opensource.wdc.com
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi Anuj,
+On 3/30/23 02:05, Johannes Thumshirn wrote:
+> The swap code only adds a single page to a newly created bio. So use
+> __bio_add_page() to add the page which is guaranteed to succeed in this
+> case.
+> 
+> This brings us closer to marking bio_add_page() as __must_check.
+> 
+> Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 
-Thank you for the patch! Perhaps something to improve:
-
-[auto build test WARNING on axboe-block/for-next]
-[also build test WARNING on linus/master v6.3-rc4 next-20230329]
-[cannot apply to device-mapper-dm/for-next]
-[If your patch is applied to the wrong git tree, kindly drop us a note.
-And when submitting patch, we suggest to use '--base' as documented in
-https://git-scm.com/docs/git-format-patch#_base_tree_information]
-
-url:    https://github.com/intel-lab-lkp/linux/commits/Anuj-Gupta/block-Add-copy-offload-support-infrastructure/20230329-162018
-base:   https://git.kernel.org/pub/scm/linux/kernel/git/axboe/linux-block.git for-next
-patch link:    https://lore.kernel.org/r/20230327084103.21601-7-anuj20.g%40samsung.com
-patch subject: [PATCH v8 6/9] nvmet: add copy command support for bdev and file ns
-config: arm64-randconfig-s041-20230329 (https://download.01.org/0day-ci/archive/20230330/202303300238.vmt9ne37-lkp@intel.com/config)
-compiler: aarch64-linux-gcc (GCC) 12.1.0
-reproduce:
-        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
-        chmod +x ~/bin/make.cross
-        # apt-get install sparse
-        # sparse version: v0.6.4-39-gce1a6720-dirty
-        # https://github.com/intel-lab-lkp/linux/commit/f846a8ac40882d9d42532e9e2b43560650ef8510
-        git remote add linux-review https://github.com/intel-lab-lkp/linux
-        git fetch --no-tags linux-review Anuj-Gupta/block-Add-copy-offload-support-infrastructure/20230329-162018
-        git checkout f846a8ac40882d9d42532e9e2b43560650ef8510
-        # save the config file
-        mkdir build_dir && cp config build_dir/.config
-        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross C=1 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__' O=build_dir ARCH=arm64 olddefconfig
-        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross C=1 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__' O=build_dir ARCH=arm64 SHELL=/bin/bash drivers/nvme/target/
-
-If you fix the issue, kindly add following tag where applicable
-| Reported-by: kernel test robot <lkp@intel.com>
-| Link: https://lore.kernel.org/oe-kbuild-all/202303300238.vmt9ne37-lkp@intel.com/
-
-sparse warnings: (new ones prefixed by >>)
->> drivers/nvme/target/admin-cmd.c:539:29: sparse: sparse: cast from restricted __le16
-
-vim +539 drivers/nvme/target/admin-cmd.c
-
-   490	
-   491	static void nvmet_execute_identify_ns(struct nvmet_req *req)
-   492	{
-   493		struct nvme_id_ns *id;
-   494		u16 status;
-   495	
-   496		if (le32_to_cpu(req->cmd->identify.nsid) == NVME_NSID_ALL) {
-   497			req->error_loc = offsetof(struct nvme_identify, nsid);
-   498			status = NVME_SC_INVALID_NS | NVME_SC_DNR;
-   499			goto out;
-   500		}
-   501	
-   502		id = kzalloc(sizeof(*id), GFP_KERNEL);
-   503		if (!id) {
-   504			status = NVME_SC_INTERNAL;
-   505			goto out;
-   506		}
-   507	
-   508		/* return an all zeroed buffer if we can't find an active namespace */
-   509		status = nvmet_req_find_ns(req);
-   510		if (status) {
-   511			status = 0;
-   512			goto done;
-   513		}
-   514	
-   515		if (nvmet_ns_revalidate(req->ns)) {
-   516			mutex_lock(&req->ns->subsys->lock);
-   517			nvmet_ns_changed(req->ns->subsys, req->ns->nsid);
-   518			mutex_unlock(&req->ns->subsys->lock);
-   519		}
-   520	
-   521		/*
-   522		 * nuse = ncap = nsze isn't always true, but we have no way to find
-   523		 * that out from the underlying device.
-   524		 */
-   525		id->ncap = id->nsze =
-   526			cpu_to_le64(req->ns->size >> req->ns->blksize_shift);
-   527		switch (req->port->ana_state[req->ns->anagrpid]) {
-   528		case NVME_ANA_INACCESSIBLE:
-   529		case NVME_ANA_PERSISTENT_LOSS:
-   530			break;
-   531		default:
-   532			id->nuse = id->nsze;
-   533			break;
-   534		}
-   535	
-   536		if (req->ns->bdev)
-   537			nvmet_bdev_set_limits(req->ns->bdev, id);
-   538		else {
- > 539			id->msrc = (u8)to0based(BIO_MAX_VECS - 1);
-   540			id->mssrl = cpu_to_le16(BIO_MAX_VECS <<
-   541					(PAGE_SHIFT - SECTOR_SHIFT));
-   542			id->mcl = cpu_to_le32(le16_to_cpu(id->mssrl));
-   543		}
-   544	
-   545		/*
-   546		 * We just provide a single LBA format that matches what the
-   547		 * underlying device reports.
-   548		 */
-   549		id->nlbaf = 0;
-   550		id->flbas = 0;
-   551	
-   552		/*
-   553		 * Our namespace might always be shared.  Not just with other
-   554		 * controllers, but also with any other user of the block device.
-   555		 */
-   556		id->nmic = NVME_NS_NMIC_SHARED;
-   557		id->anagrpid = cpu_to_le32(req->ns->anagrpid);
-   558	
-   559		memcpy(&id->nguid, &req->ns->nguid, sizeof(id->nguid));
-   560	
-   561		id->lbaf[0].ds = req->ns->blksize_shift;
-   562	
-   563		if (req->sq->ctrl->pi_support && nvmet_ns_has_pi(req->ns)) {
-   564			id->dpc = NVME_NS_DPC_PI_FIRST | NVME_NS_DPC_PI_LAST |
-   565				  NVME_NS_DPC_PI_TYPE1 | NVME_NS_DPC_PI_TYPE2 |
-   566				  NVME_NS_DPC_PI_TYPE3;
-   567			id->mc = NVME_MC_EXTENDED_LBA;
-   568			id->dps = req->ns->pi_type;
-   569			id->flbas = NVME_NS_FLBAS_META_EXT;
-   570			id->lbaf[0].ms = cpu_to_le16(req->ns->metadata_size);
-   571		}
-   572	
-   573		if (req->ns->readonly)
-   574			id->nsattr |= NVME_NS_ATTR_RO;
-   575	done:
-   576		if (!status)
-   577			status = nvmet_copy_to_sgl(req, 0, id, sizeof(*id));
-   578	
-   579		kfree(id);
-   580	out:
-   581		nvmet_req_complete(req, status);
-   582	}
-   583	
+Reviewed-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 
 -- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests
+Damien Le Moal
+Western Digital Research
 
 --
 dm-devel mailing list
