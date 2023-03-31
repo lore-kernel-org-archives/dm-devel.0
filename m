@@ -4,142 +4,142 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1F47EC76196
-	for <dm-devel@archiver.kernel.org>; Fri, 31 Mar 2023 12:28:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2EB67C6FD18
+	for <dm-devel@archiver.kernel.org>; Fri, 31 Mar 2023 12:29:02 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1680265688;
+	s=mimecast20190719; t=1680265741;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=b+SBTJKQ8fbpztxO2uSsXFvFgQcWzcXttIMD5rhobrw=;
-	b=Klo49Uk0BUdMbjIG6DI4akrm17/c4X4skvkXCnVajhzKGhPNsO+mNzjfNmzobSAdDkcBRV
-	zLQa7LJ+nyOmLVPtK6is7VWM16dVREVCf/z3Drwry6CpxL5RhEzMWaMpFTeazK4+6saupp
-	Sj+guVKjKWMKSbZqD4sqfzDpYPjWI74=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=AWgM/MWbJrSHHfO1Kk9zRqZ18hNuSqG73GCmNkKM2L8=;
+	b=T5vO0aOAswDdwM3hzPWxjNiM8IOP6fTx1DlWci5eFSYYWUPt848aS5gWAQE6Dlk3AF341C
+	tdHj1pTve957AGqJwCxq4sYKaNfP0W05d+yXiTHlYNovqGjfFNdq3oRD+qZPV2/TcvT9ll
+	7q9+xEB2wNzj+0gtLhMQZbNGeivolX8=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-343-1cmT0CT2M9Cnnp54tKhPhg-1; Fri, 31 Mar 2023 08:28:04 -0400
-X-MC-Unique: 1cmT0CT2M9Cnnp54tKhPhg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-591-tKCpiZavMvSD7iC6XVdlTw-1; Fri, 31 Mar 2023 08:28:57 -0400
+X-MC-Unique: tKCpiZavMvSD7iC6XVdlTw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D9BAC801206;
-	Fri, 31 Mar 2023 12:28:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 553CD281297C;
+	Fri, 31 Mar 2023 12:28:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8B7D41415117;
-	Fri, 31 Mar 2023 12:28:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 440C94020C82;
+	Fri, 31 Mar 2023 12:28:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3415F19465BD;
-	Fri, 31 Mar 2023 12:27:52 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 00AD519466DF;
+	Fri, 31 Mar 2023 12:28:45 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6D20C1946A41
- for <dm-devel@listman.corp.redhat.com>; Fri, 31 Mar 2023 12:27:14 +0000 (UTC)
+ ESMTP id 05C2C19465BD
+ for <dm-devel@listman.corp.redhat.com>; Fri, 31 Mar 2023 12:28:39 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 55B8A1415119; Fri, 31 Mar 2023 12:27:14 +0000 (UTC)
+ id DAB674042AC6; Fri, 31 Mar 2023 12:28:33 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4D31C1415117
- for <dm-devel@redhat.com>; Fri, 31 Mar 2023 12:27:14 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3106385C6E4
- for <dm-devel@redhat.com>; Fri, 31 Mar 2023 12:27:14 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D26F64042AC0
+ for <dm-devel@redhat.com>; Fri, 31 Mar 2023 12:28:33 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B6B91855300
+ for <dm-devel@redhat.com>; Fri, 31 Mar 2023 12:28:33 +0000 (UTC)
 Received: from mailout1.w1.samsung.com (mailout1.w1.samsung.com
  [210.118.77.11]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-210-b3CZvOEWMgC5AiSNPucA7w-1; Fri, 31 Mar 2023 08:27:10 -0400
-X-MC-Unique: b3CZvOEWMgC5AiSNPucA7w-1
-Received: from eucas1p2.samsung.com (unknown [182.198.249.207])
+ us-mta-5-v0JKNmCCPaOd8kxnPLhSaQ-1; Fri, 31 Mar 2023 08:28:30 -0400
+X-MC-Unique: v0JKNmCCPaOd8kxnPLhSaQ-1
+Received: from eucas1p1.samsung.com (unknown [182.198.249.206])
  by mailout1.w1.samsung.com (KnoxPortal) with ESMTP id
- 20230331122047euoutp01b141e0dc14fdafd925953b22693f34a7~RgFcIzNtb3266232662euoutp01i
- for <dm-devel@redhat.com>; Fri, 31 Mar 2023 12:20:47 +0000 (GMT)
+ 20230331122829euoutp016a5f8d6b0b243c524d8844822082da89~RgMKT_und0937709377euoutp01j
+ for <dm-devel@redhat.com>; Fri, 31 Mar 2023 12:28:29 +0000 (GMT)
 DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.w1.samsung.com
- 20230331122047euoutp01b141e0dc14fdafd925953b22693f34a7~RgFcIzNtb3266232662euoutp01i
-Received: from eusmges1new.samsung.com (unknown [203.254.199.242]) by
+ 20230331122829euoutp016a5f8d6b0b243c524d8844822082da89~RgMKT_und0937709377euoutp01j
+Received: from eusmges2new.samsung.com (unknown [203.254.199.244]) by
  eucas1p2.samsung.com (KnoxPortal) with ESMTP id
- 20230331122046eucas1p2dd047848b60f9ddc31dd7b266bd86d77~RgFbxwOsi1098310983eucas1p24;
- Fri, 31 Mar 2023 12:20:46 +0000 (GMT)
-Received: from eucas1p1.samsung.com ( [182.198.249.206]) by
- eusmges1new.samsung.com (EUCPMTA) with SMTP id 14.78.09503.E10D6246; Fri, 31
- Mar 2023 13:20:46 +0100 (BST)
+ 20230331122828eucas1p2221a593a3ccb1b434b1da25a71533046~RgMKBh0II1636116361eucas1p2T;
+ Fri, 31 Mar 2023 12:28:28 +0000 (GMT)
+Received: from eucas1p2.samsung.com ( [182.198.249.207]) by
+ eusmges2new.samsung.com (EUCPMTA) with SMTP id 69.8A.09966.CE1D6246; Fri, 31
+ Mar 2023 13:28:28 +0100 (BST)
 Received: from eusmtrp2.samsung.com (unknown [182.198.249.139]) by
- eucas1p2.samsung.com (KnoxPortal) with ESMTPA id
- 20230331122046eucas1p247e0cd2d06229a6b7cae9cb26ea43d5b~RgFbZahPc1098310983eucas1p23;
- Fri, 31 Mar 2023 12:20:46 +0000 (GMT)
+ eucas1p1.samsung.com (KnoxPortal) with ESMTPA id
+ 20230331122828eucas1p18e0bbbda45a6955f59fc82b29f42a8bb~RgMJifuNI3167431674eucas1p1Z;
+ Fri, 31 Mar 2023 12:28:28 +0000 (GMT)
 Received: from eusmgms2.samsung.com (unknown [182.198.249.180]) by
  eusmtrp2.samsung.com (KnoxPortal) with ESMTP id
- 20230331122046eusmtrp238c8959c39aa187032906ac97e80131b~RgFbYiwNm2670526705eusmtrp2U;
- Fri, 31 Mar 2023 12:20:46 +0000 (GMT)
-X-AuditID: cbfec7f2-ea5ff7000000251f-bf-6426d01eee9e
+ 20230331122828eusmtrp201ce7800d6dbc2a659cda30347164a5b~RgMJhvdcU3136031360eusmtrp2K;
+ Fri, 31 Mar 2023 12:28:28 +0000 (GMT)
+X-AuditID: cbfec7f4-d39ff700000026ee-91-6426d1ece90a
 Received: from eusmtip2.samsung.com ( [203.254.199.222]) by
- eusmgms2.samsung.com (EUCPMTA) with SMTP id F3.4E.09583.E10D6246; Fri, 31
- Mar 2023 13:20:46 +0100 (BST)
+ eusmgms2.samsung.com (EUCPMTA) with SMTP id 69.7F.09583.CE1D6246; Fri, 31
+ Mar 2023 13:28:28 +0100 (BST)
 Received: from CAMSVWEXC02.scsc.local (unknown [106.1.227.72]) by
  eusmtip2.samsung.com (KnoxPortal) with ESMTPA id
- 20230331122046eusmtip2b8baf2b87eb1e2370ba007aa92d0a40b~RgFbLcVLU2523725237eusmtip2g;
- Fri, 31 Mar 2023 12:20:46 +0000 (GMT)
+ 20230331122828eusmtip254994547f7b3b5d847ad1a6ec553e362~RgMJVz-6Q2915729157eusmtip2I;
+ Fri, 31 Mar 2023 12:28:28 +0000 (GMT)
 Received: from localhost (106.110.32.140) by CAMSVWEXC02.scsc.local
  (2002:6a01:e348::6a01:e348) with Microsoft SMTP Server (TLS) id 15.0.1497.2;
- Fri, 31 Mar 2023 13:20:45 +0100
-Date: Fri, 31 Mar 2023 14:12:29 +0200
+ Fri, 31 Mar 2023 13:28:27 +0100
+Date: Fri, 31 Mar 2023 14:20:11 +0200
 From: Pankaj Raghav <p.raghav@samsung.com>
 To: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-Message-ID: <20230331121156.7c7nbxfhagdufpzo@blixen>
+Message-ID: <20230331122011.nq27xmkqmajvx6a5@blixen>
 MIME-Version: 1.0
-In-Reply-To: <7849b142e073b20f033e5124a39080f59e5f19d2.1680108414.git.johannes.thumshirn@wdc.com>
+In-Reply-To: <339841b3b7ce6b2faf56bcaf9d92e298d878ef64.1680108414.git.johannes.thumshirn@wdc.com>
 X-Originating-IP: [106.110.32.140]
-X-ClientProxiedBy: CAMSVWEXC02.scsc.local (2002:6a01:e348::6a01:e348) To
+X-ClientProxiedBy: CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347) To
  CAMSVWEXC02.scsc.local (2002:6a01:e348::6a01:e348)
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFvrBKsWRmVeSWpSXmKPExsWy7djPc7pyF9RSDBZPM7TYtm43u8Xqu/1s
- FidXP2azaG3/xmSx991sVosLPxqZLPYsmsRksXL1USaLix9bmSz+dt1jsnh6dRZQyS1ti0uP
- V7Bb7Nl7ksXi3pr/rBbt83cxWhya3Mxk0TW7lc3i9p0fzBYnbklbHF/+l83i9485bA5iHptX
- aHlcPlvqsWlVJ5vHpk+T2D12L/jM5LH7ZgObR2/zOzaP9/uusnms33KVxWPz6WqPz5vkPNoP
- dDMF8ERx2aSk5mSWpRbp2yVwZcz/doOtYCNzxfprsQ2Mj5i6GDk5JARMJI5NaGHsYuTiEBJY
- wSixunsRG4TzhVFi1+QXrBDOZ0aJ7a+uw7WceLyHBSKxnFFiX9M2Rriq46eeQjlbGCUuntsE
- 1sIioCqx4etl9i5GDg42AS2Jxk52kLCIgLHEle8LwSYxC5xmlVh4/QsrSEJYwE2ibepCsCJe
- oHVH7ixnhLAFJU7OfMICYjML6Egs2P2JDWQms4C0xPJ/HCBhToFEiZt7FkBdqiTRsPkMC4Rd
- K7G3+QA7hP2NU+LUCiEI20Vix+rNUPXCEq+Ob4GqkZH4v3M+VLxa4umN38wgd0oItDBK9O9c
- D7ZXQsBaou9MDoTpKLFrii2EySdx460gxJF8EpO2TWeGCPNKdLRBLVWT2NG0lXECo/IsJG/N
- QvLWLIS3FjAyr2IUTy0tzk1PLTbMSy3XK07MLS7NS9dLzs/dxAhMnKf/Hf+0g3Huq496hxiZ
- OBgPMUpwMCuJ8BYaq6YI8aYkVlalFuXHF5XmpBYfYpTmYFES59W2PZksJJCeWJKanZpakFoE
- k2Xi4JRqYGJ/Mq99ttHmVS9fhk9x2O7O7HvTf+/R+lhRfRXOv75H4oX0PF9zSC0zsTrB2Hsi
- eKO1iPxXL+MvIfrzNi9OcG46+ol153PN+JnpYbKbTDaqOVs9D1OquC2Qvc6bJZbv0SouaanZ
- J+X3chn66V2wn3wx+Nano/cD+ev+KYgXdvDKXHV6X3w0czGPM8dGn7d1vwrNFazUsroWMtkd
- +Ls72vL37s3Kn4871TzKdpGfZlo61e5ruFDCKqVOfjP5pt+WNy4fDn79+XDsAe7Oo6avAv35
- 39y5bHdLp1fXyF+qKOcGH9MF62viPsXSs85vcJbSfPmjgyG4/s+0ABtmk9XT80s+SRrPL0wQ
- ULNpnrtUiaU4I9FQi7moOBEAP8WwqwsEAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFprGKsWRmVeSWpSXmKPExsVy+t/xe7pyF9RSDK5cErfYtm43u8Xqu/1s
- FidXP2azaG3/xmSx991sVosLPxqZLPYsmsRksXL1USaLix9bmSz+dt1jsnh6dRZQyS1ti0uP
- V7Bb7Nl7ksXi3pr/rBbt83cxWhya3Mxk0TW7lc3i9p0fzBYnbklbHF/+l83i9485bA5iHptX
- aHlcPlvqsWlVJ5vHpk+T2D12L/jM5LH7ZgObR2/zOzaP9/uusnms33KVxWPz6WqPz5vkPNoP
- dDMF8ETp2RTll5akKmTkF5fYKkUbWhjpGVpa6BmZWOoZGpvHWhmZKunb2aSk5mSWpRbp2yXo
- Zcz/doOtYCNzxfprsQ2Mj5i6GDk5JARMJE483sMCYgsJLGWUeLRWCiIuI/Hpykd2CFtY4s+1
- LrYuRi6gmo+MEptubYFytjBKfJz6G6yKRUBVYsPXy0A2BwebgJZEYydYWETAWOLK94UsIPXM
- AqdZJT7PfskIkhAWcJNom7oQrIgX6Iojd5YzQlwxhVFi8msViLigxMmZT8CuYxbQkViw+xMb
- yHxmAWmJ5f84QMKcAokSN/csgHpGSaJh8xkWCLtWovPVabYJjMKzkEyahWTSLIRJCxiZVzGK
- pJYW56bnFhvpFSfmFpfmpesl5+duYgQmkG3Hfm7Zwbjy1Ue9Q4xMHIyHGCU4mJVEeAuNVVOE
- eFMSK6tSi/Lji0pzUosPMZoCQ2Iis5Rocj4wheWVxBuaGZgamphZGphamhkrifN6FnQkCgmk
- J5akZqemFqQWwfQxcXBKNTDFVzyrFHN98C7HflXCTe5DketvM5byVt4rXXFnmnXppfPP/gtl
- BZ5b8vLrudR/D3Iz/Fasl/4UvMc041N88wNOBgf+xBThdu+rZRy24sznqrl8jSra+Ll+/Yzt
- 3xBydFb+naTaadW32p4G3VITy/E2PH3Ft25+7jOHcJGd0efa9vScOnT3UZHSofkuTbK2e6aF
- OpbGm31dtmbVN/uOqc+ubDQIvfkv/5/Jt4LA442q4pY3XU00w07n5CmwnVj63Te1aaPR/7fN
- 6xx/JofOXyfrWGzyV7Sgq/yyyfkbxVGrbKvEPRfzpB0tL9sqLRthkNB5f0FPx8pVbt/eSXo8
- /JRkIvyyfrYM914byRPTBJRYijMSDbWYi4oTAXZ/WI2pAwAA
-X-CMS-MailID: 20230331122046eucas1p247e0cd2d06229a6b7cae9cb26ea43d5b
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFvrNKsWRmVeSWpSXmKPExsWy7djP87pvLqqlGJz9q2+xbd1udovVd/vZ
+ LE6ufsxm0dr+jcli77vZrBYXfjQyWexZNInJYuXqo0wWFz+2Mln87brHZPH06iygklvaFpce
+ r2C32LP3JIvFvTX/WS3a5+9itDg0uZnJomt2K5vF7Ts/mC1O3JK2OL78L5vF7x9z2BzEPDav
+ 0PK4fLbUY9OqTjaPTZ8msXvsXvCZyWP3zQY2j97md2we7/ddZfNYv+Uqi8fm09UenzfJebQf
+ 6GYK4InisklJzcksSy3St0vgythycCtLwXyWik/vPzM2MO5i7mLk5JAQMJHYuec4YxcjF4eQ
+ wApGiaZrv9kgnC+MEo9unYdyPjNKfDj9hgWm5d6kN0wQieVAVb9OMMFV/fiwih3C2cIocfja
+ e0aQFhYBVYlfS5uAEhwcbAJaEo2d7CBhEQFjiSvfF7KA1DMLHGWVOPL6H1i9sECwRMenL2A2
+ L9C6JSuuMUHYghInZz4BO4NZQEdiwe5PbCAzmQWkJZb/4wAJcwokSlycchrqOSWJhs1noK6u
+ lTi15RbYoRIC/zglHn1dCVXkItHa9wmqSFji1fEt7BC2jMT/nfOZIOxqiac3fjNDNLcwSvTv
+ XA+2WELAWqLvTA5EjaPEh+ermCDCfBI33gpCnMknMWnbdGaIMK9ER5sQRLWaxI6mrYwTGJVn
+ IXlsFpLHZiE8toCReRWjeGppcW56arFRXmq5XnFibnFpXrpecn7uJkZg+jz97/iXHYzLX33U
+ O8TIxMF4iFGCg1lJhLfQWDVFiDclsbIqtSg/vqg0J7X4EKM0B4uSOK+27clkIYH0xJLU7NTU
+ gtQimCwTB6dUA9Pi3qdGz/s9tdgZs7dEvDzRoeu3cuJflcIf9xLN3mTPX8cj/7FtMWf84VOm
+ W/efD3GNO5Z/98G7F5PerH7WciD4WlaD6/81qq13dyu4XzNYNfG6zdlKkTVslx/IvYvUvvk6
+ VKPql75r/QPjmcfO5q2t3ffzT7b5pmntInvCrBI2nQnJvHE8eJXfN/60FEON8mWix5VYFJ9+
+ Cfp+8qnK109Lrx2rmDhF5Fd8+/1zpjFGjJGXtZLyXZ+dn/drKu/rlokhX47Ht6xdmyg8id1r
+ 9c91sRxf5c/cEC/ynjildvOrUmXnrzrxC9Z8mLe+bNpNxQW7m/uO757mwXbvi/L6OcHHtI87
+ bPlgJeP9tn5GQi+jqhJLcUaioRZzUXEiAMYrDlwOBAAA
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFprJKsWRmVeSWpSXmKPExsVy+t/xe7pvLqqlGKycLGCxbd1udovVd/vZ
+ LE6ufsxm0dr+jcli77vZrBYXfjQyWexZNInJYuXqo0wWFz+2Mln87brHZPH06iygklvaFpce
+ r2C32LP3JIvFvTX/WS3a5+9itDg0uZnJomt2K5vF7Ts/mC1O3JK2OL78L5vF7x9z2BzEPDav
+ 0PK4fLbUY9OqTjaPTZ8msXvsXvCZyWP3zQY2j97md2we7/ddZfNYv+Uqi8fm09UenzfJebQf
+ 6GYK4InSsynKLy1JVcjILy6xVYo2tDDSM7S00DMysdQzNDaPtTIyVdK3s0lJzcksSy3St0vQ
+ y9hycCtLwXyWik/vPzM2MO5i7mLk5JAQMJG4N+kNUxcjF4eQwFJGiZndO5kgEjISn658ZIew
+ hSX+XOtigyj6yChx4v4mdghnC6PExBefwKpYBFQlfi1tArI5ONgEtCQaO8HCIgLGEle+L2QB
+ qWcWOMoq8evLRVaQhLBAsMStLzsYQWxeoDOWrLgGdcYURolFnyezQiQEJU7OfMICYjML6Egs
+ 2P2JDWQBs4C0xPJ/HCBhToFEiYtTTkO9oyTRsPkMC4RdK/H57zPGCYzCs5BMmoVk0iyESQsY
+ mVcxiqSWFuem5xYb6RUn5haX5qXrJefnbmIEppFtx35u2cG48tVHvUOMTByMhxglOJiVRHgL
+ jVVThHhTEiurUovy44tKc1KLDzGaAoNiIrOUaHI+MJHllcQbmhmYGpqYWRqYWpoZK4nzehZ0
+ JAoJpCeWpGanphakFsH0MXFwSjUw5R9bcLzD4NIWde1u7fOP/SucVqQIqGQuy140dyW/WHqq
+ LouScp+Uk/cjIYskyYc3meaefvvsxeqzCVukT/42ktXKLKvaGeKvGOnWpb30lf3GQmc5lquX
+ 6xidCvd/Ed26rWu15O9re02m27Hl/Jzt9fak9NRiwTvVnnm88wXCv7H4HL6+K0Q2Vuf/xLeb
+ G66KfwsSzK+e2sApdtD15JSgMG5bwdPnb802a90RsdQo7mWV6NP3pQKzlJZfVltyOsb47fYf
+ /vzvQhosjrW8Sywu81/1Kf5+xkPhzNl7vvfum/nqee4ClnvHJcKi0uqSPvy3FzYpehp2xcZ7
+ V05ct/838c3ym1sf8H1L49i80iVGiaU4I9FQi7moOBEABax/UawDAAA=
+X-CMS-MailID: 20230331122828eucas1p18e0bbbda45a6955f59fc82b29f42a8bb
 X-Msg-Generator: CA
-X-RootMTR: 20230331122046eucas1p247e0cd2d06229a6b7cae9cb26ea43d5b
+X-RootMTR: 20230331122828eucas1p18e0bbbda45a6955f59fc82b29f42a8bb
 X-EPHeader: CA
 CMS-TYPE: 201P
-X-CMS-RootMailID: 20230331122046eucas1p247e0cd2d06229a6b7cae9cb26ea43d5b
+X-CMS-RootMailID: 20230331122828eucas1p18e0bbbda45a6955f59fc82b29f42a8bb
 References: <cover.1680108414.git.johannes.thumshirn@wdc.com>
- <7849b142e073b20f033e5124a39080f59e5f19d2.1680108414.git.johannes.thumshirn@wdc.com>
- <CGME20230331122046eucas1p247e0cd2d06229a6b7cae9cb26ea43d5b@eucas1p2.samsung.com>
+ <339841b3b7ce6b2faf56bcaf9d92e298d878ef64.1680108414.git.johannes.thumshirn@wdc.com>
+ <CGME20230331122828eucas1p18e0bbbda45a6955f59fc82b29f42a8bb@eucas1p1.samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -147,9 +147,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH 01/19] swap: use __bio_add_page to add page
- to bio
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: Re: [dm-devel] [PATCH 13/19] zram: use __bio_add_page for adding
+ single page to bio
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -169,23 +169,26 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org,
  Matthew Wilcox <willy@infradead.org>, Ming Lei <ming.lei@redhat.com>,
  linux-block@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com,
  David Sterba <dsterba@suse.com>, linux-fsdevel@vger.kernel.org,
- Christoph Hellwig <hch@lst.de>, linux-btrfs@vger.kernel.org, Bob
- Peterson <rpeterso@redhat.com>
+ Christoph Hellwig <hch@lst.de>, linux-btrfs@vger.kernel.org,
+ Bob Peterson <rpeterso@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: samsung.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Mar 29, 2023 at 10:05:47AM -0700, Johannes Thumshirn wrote:
-> The swap code only adds a single page to a newly created bio. So use
-> __bio_add_page() to add the page which is guaranteed to succeed in this
-> case.
+On Wed, Mar 29, 2023 at 10:05:59AM -0700, Johannes Thumshirn wrote:
+> The zram writeback code uses bio_add_page() to add a page to a newly
+> created bio. bio_add_page() can fail, but the return value is never
+> checked.
 > 
-> This brings us closer to marking bio_add_page() as __must_check.
+> Use __bio_add_page() as adding a single page to a newly created bio is
+> guaranteed to succeed.
+> 
+> This brings us a step closer to marking bio_add_page() as __must_check.
 > 
 > Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 
