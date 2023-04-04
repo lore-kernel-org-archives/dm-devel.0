@@ -1,96 +1,108 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D01B2C6FD1D
-	for <dm-devel@archiver.kernel.org>; Tue,  4 Apr 2023 17:48:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 264A7C76188
+	for <dm-devel@archiver.kernel.org>; Wed,  5 Apr 2023 06:41:23 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1680630516;
+	s=mimecast20190719; t=1680676882;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=ZhPrq0oFDv5RysRHIJw+rfQMgY26kYwqQqKnWPfBdD8=;
-	b=Vzz5WZ7J+itLLVAmdWYdxlH8QB52XbGeZ3uQ5l6IFNksW5lAKIZPMqwUTPzo6WeItulLOl
-	fOGrl2XJ4EnelJTFjvO3AY9/5CSOTMTQwpEtt1OeP9d4aE4MgBq15/gMMxybc/ejumJYXS
-	rBdayGSh6rq4kWI8EE1XkAePaEKRjAQ=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=coyiuA+RjmMkKiABlwHZ7ZQaZr+Vczqt5BKCHEwKwSo=;
+	b=RC7FPpeB8EjXA17JLvePBaWUvRqfE5MW0Gt9agrJwmy+dkpgef1neMsZ63zhAEgGGlBPPo
+	YZ5NDM1UDWu+RVEZlyJ13C/tuP1+F30ZFV0UCCTB/hbG7BxZe1sj9Eh0G6zHU7vGaKy8vO
+	5YFUq9LROuApZnu6zupdpmCDMjppJnY=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-99-o3jbSpkAOJOG9MEh5OU-KA-1; Tue, 04 Apr 2023 13:48:35 -0400
-X-MC-Unique: o3jbSpkAOJOG9MEh5OU-KA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-510-ttEF1NE3O62MhAIt-_gYzw-1; Wed, 05 Apr 2023 02:41:19 -0400
+X-MC-Unique: ttEF1NE3O62MhAIt-_gYzw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F00EC181821A;
-	Tue,  4 Apr 2023 17:48:32 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 521173C0F193;
+	Wed,  5 Apr 2023 06:41:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1DE68140EBF4;
-	Tue,  4 Apr 2023 17:48:30 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 398FFC084B3;
+	Wed,  5 Apr 2023 06:41:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C19FC1946597;
-	Tue,  4 Apr 2023 17:48:29 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 176521946597;
+	Wed,  5 Apr 2023 06:41:15 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6CCBF1946595
- for <dm-devel@listman.corp.redhat.com>; Tue,  4 Apr 2023 17:48:29 +0000 (UTC)
+ ESMTP id 58F64194658C
+ for <dm-devel@listman.corp.redhat.com>; Tue,  4 Apr 2023 08:26:39 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5F31B492C14; Tue,  4 Apr 2023 17:48:29 +0000 (UTC)
+ id 3B5E71121318; Tue,  4 Apr 2023 08:26:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 57814492C13
- for <dm-devel@redhat.com>; Tue,  4 Apr 2023 17:48:29 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 3378D1121315
+ for <dm-devel@redhat.com>; Tue,  4 Apr 2023 08:26:39 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3BC5E3815F79
- for <dm-devel@redhat.com>; Tue,  4 Apr 2023 17:48:29 +0000 (UTC)
-Received: from mail-qv1-f53.google.com (mail-qv1-f53.google.com
- [209.85.219.53]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 14E05811E7C
+ for <dm-devel@redhat.com>; Tue,  4 Apr 2023 08:26:39 +0000 (UTC)
+Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com
+ [209.85.221.51]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-175-os39irK8MzOSeZ3aS-rhbQ-1; Tue, 04 Apr 2023 13:48:27 -0400
-X-MC-Unique: os39irK8MzOSeZ3aS-rhbQ-1
-Received: by mail-qv1-f53.google.com with SMTP id m16so24108009qvi.12
- for <dm-devel@redhat.com>; Tue, 04 Apr 2023 10:48:26 -0700 (PDT)
+ us-mta-662-xvL82K2DOranFR-Tr5Fwvw-1; Tue, 04 Apr 2023 04:26:35 -0400
+X-MC-Unique: xvL82K2DOranFR-Tr5Fwvw-1
+Received: by mail-wr1-f51.google.com with SMTP id e18so31860242wra.9;
+ Tue, 04 Apr 2023 01:26:34 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112; t=1680630506;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
- :message-id:reply-to;
- bh=mb4UlbgNUBjFEiIuxVNvAB9dErFsvyXvvy0R6TUZ3Og=;
- b=PJU2OI/cKsLiCWHyMrVtQoyLrEyZ8+fQ01e9vz8N9IeHrUu5XsWwOGWYgFAcNKH0FK
- z4MBC5AK8uW+plru0qIjkrWP9qgb9wmcRYLI5ZmL4zAuLsSKTIxwNpK2zG+7468yLXB/
- MHXKita5iUVmCHvjcnQNEat4laUOYcPAM2X0jbGVkeRaz+2GhrOF7SroUrkLConPRiG/
- J6DnSgEntMynQOHNc4dKIR851oRMiohmDR4c1NDLU/7U852IMrq8sUAnmatBNaaxfInp
- YRp2s3+xy7JSESG+t5G5U/45vnxZxAHwQJqC4hlLuHdGGXRZ04Vh7d6NQJhvwSjzl0Rh
- AVhA==
-X-Gm-Message-State: AAQBX9c48PwKE+B5zSH/dL0Raey++FVzVADburitrFSUMBSw8uG/bZFX
- H5N9XnahY6HsZca0HCa7627IqXk=
-X-Google-Smtp-Source: AKy350a/8D9NxKsEY8kuTWND8t08XKRZNRiPqVXk15c5G0YDBaTT31CfCtDZqcD3EWyLnQhy9dLOWw==
-X-Received: by 2002:a05:6214:27ea:b0:5ce:6636:a45 with SMTP id
- jt10-20020a05621427ea00b005ce66360a45mr5360407qvb.25.1680630506534; 
- Tue, 04 Apr 2023 10:48:26 -0700 (PDT)
-Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
- [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- o207-20020a3741d8000000b007486052d731sm3343606qka.10.2023.04.04.10.48.25
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 04 Apr 2023 10:48:26 -0700 (PDT)
-Date: Tue, 4 Apr 2023 13:48:24 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Yangtao Li <frank.li@vivo.com>
-Message-ID: <ZCxi6A5iXt5N0HNL@redhat.com>
-References: <20230318131633.41573-1-frank.li@vivo.com>
+ d=1e100.net; s=20210112; t=1680596793;
+ h=content-transfer-encoding:in-reply-to:from:content-language
+ :references:cc:to:subject:user-agent:mime-version:date:message-id
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=P+IA0sfS8Hko6hpK1HZztJ6kiawc/hgiN78OoxbJlkE=;
+ b=UmR3DJMdS3kodNIerj+qT1TEyHqbY0l9USLOivkGdU6IKc5ykBMAEZbYN0GZRKIsoT
+ gYrZWlq2f5HjLVLY1SE6sfRSUqCfQTAFK3inaL6tgueBYMqYhOcL3ffsZlYKgtB1CVsV
+ dgqDhQjLqVAMRuWcU4OW/VL1Z6ndOcXbnz/zwQo8M1twOfcSz/F4guGTycbi9fb96tjn
+ 77WtRzzycgWXKS9yQjdebnzIi9fAXOQknWum3MmxXM1+7yG7OQvhxYGC9z3P94BBa4Mk
+ tXnpDDM99vSQAyEXU9B7XgZ7aAzBJ0VDkN1vxXbxJli2Z7KPl/FZoEDXn492tjONqkJH
+ Y01Q==
+X-Gm-Message-State: AAQBX9dK1F2CrXJ1iDys7xvMKg/k6ETsKqmL2Ujd7lfLuBKnFtN9loBP
+ iR6uTfB42lG2N9KDPkYR56M=
+X-Google-Smtp-Source: AKy350YRAl3M0jE5+UynIwckjiW+CsHm28SGM1LHNiMQ7J8tXe8xmw1F2qmXD/R4sfgmgOX6wBeBhg==
+X-Received: by 2002:adf:e0c3:0:b0:2cf:e747:b0d4 with SMTP id
+ m3-20020adfe0c3000000b002cfe747b0d4mr940685wri.40.1680596793398; 
+ Tue, 04 Apr 2023 01:26:33 -0700 (PDT)
+Received: from [192.168.32.129] (aftr-82-135-86-174.dynamic.mnet-online.de.
+ [82.135.86.174]) by smtp.gmail.com with ESMTPSA id
+ t6-20020a7bc3c6000000b003ee1b2ab9a0sm14294575wmj.11.2023.04.04.01.26.32
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Tue, 04 Apr 2023 01:26:32 -0700 (PDT)
+Message-ID: <bbc98aa3-24f0-8ee6-9d74-483564a14f0f@kernel.org>
+Date: Tue, 4 Apr 2023 10:26:31 +0200
 MIME-Version: 1.0
-In-Reply-To: <20230318131633.41573-1-frank.li@vivo.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-Subject: Re: [dm-devel] dm: Add error information printing for
- dm_register_target()
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.9.0
+To: Song Liu <song@kernel.org>, Johannes Thumshirn <johannes.thumshirn@wdc.com>
+References: <cover.1680172791.git.johannes.thumshirn@wdc.com>
+ <8b8a3bb2db8c5183ef36c1810f2ac776ac526327.1680172791.git.johannes.thumshirn@wdc.com>
+ <CAPhsuW7a+mpn+VprfA2mC5Fc+M9BFq8i6d-y+-o5G1u5dOsk2Q@mail.gmail.com>
+From: Johannes Thumshirn <jth@kernel.org>
+In-Reply-To: <CAPhsuW7a+mpn+VprfA2mC5Fc+M9BFq8i6d-y+-o5G1u5dOsk2Q@mail.gmail.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Mailman-Approved-At: Wed, 05 Apr 2023 06:41:14 +0000
+Subject: Re: [dm-devel] [PATCH v2 17/19] md: raid1: check if adding pages to
+ resync bio fails
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -102,43 +114,48 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
+Cc: Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org,
+ Damien Le Moal <damien.lemoal@wdc.com>, cluster-devel@redhat.com,
+ Chaitanya Kulkarni <kch@nvidia.com>, Andreas Gruenbacher <agruenba@redhat.com>,
+ Dave Kleikamp <shaggy@kernel.org>,
+ Damien Le Moal <damien.lemoal@opensource.wdc.com>,
+ Mike Snitzer <snitzer@kernel.org>, jfs-discussion@lists.sourceforge.net,
+ Matthew Wilcox <willy@infradead.org>, Ming Lei <ming.lei@redhat.com>,
+ linux-block@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com,
+ David Sterba <dsterba@suse.com>, linux-fsdevel@vger.kernel.org,
+ Christoph Hellwig <hch@lst.de>, linux-btrfs@vger.kernel.org,
+ Bob Peterson <rpeterso@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-On Sat, Mar 18 2023 at  9:16P -0400,
-Yangtao Li <frank.li@vivo.com> wrote:
-
-> Ensure that all error handling branches print error information. In this
-> way, when this function fails, the upper-layer functions can directly
-> return an error code without missing debugging information. Otherwise,
-> the error message will be printed redundantly or missing. BTW, remove
-> redundant printing information.
-> 
-> Signed-off-by: Yangtao Li <frank.li@vivo.com>
-
-Hi,
-
-I've picked this up with a few changes (your patch caused me to look
-closer at some of the target code and we had some missed cleanup):
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.4&id=6827af4a9a9f5bb664c42abf7c11af4978d72201
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.4&id=6b79a428c02769f2a11f8ae76bf866226d134887
-
-So I rebased your patch and tweaked it slightly (and splitting it), see:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.4&id=e6c908b5d86faf3dbcf314b1c07c342268e32def
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.4&id=2a455a0b418f972d61b68f9321b7d1892c16b4f7
-
-Thanks,
-Mike
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gMzEvMDMvMjAyMyAyMDoxMywgU29uZyBMaXUgd3JvdGU6Cj4gT24gVGh1LCBNYXIgMzAsIDIw
+MjMgYXQgMzo0NOKAr0FNIEpvaGFubmVzIFRodW1zaGlybgo+IDxqb2hhbm5lcy50aHVtc2hpcm5A
+d2RjLmNvbT4gd3JvdGU6Cj4+Cj4+IENoZWNrIGlmIGFkZGluZyBwYWdlcyB0byByZXN5bmMgYmlv
+IGZhaWxzIGFuZCBpZiBiYWlsIG91dC4KPj4KPj4gQXMgdGhlIGNvbW1lbnQgYWJvdmUgc3VnZ2Vz
+dHMgdGhpcyBjYW5ub3QgaGFwcGVuLCBXQVJOIGlmIGl0IGFjdHVhbGx5Cj4+IGhhcHBlbnMuCj4+
+Cj4+IFRoaXMgd2F5IHdlIGNhbiBtYXJrIGJpb19hZGRfcGFnZXMgYXMgX19tdXN0X2NoZWNrLgo+
+Pgo+PiBTaWduZWQtb2ZmLWJ5OiBKb2hhbm5lcyBUaHVtc2hpcm4gPGpvaGFubmVzLnRodW1zaGly
+bkB3ZGMuY29tPgo+PiBSZXZpZXdlZC1ieTogRGFtaWVuIExlIE1vYWwgPGRhbWllbi5sZW1vYWxA
+b3BlbnNvdXJjZS53ZGMuY29tPgo+PiAtLS0KPj4gICBkcml2ZXJzL21kL3JhaWQxLTEwLmMgfCAg
+NyArKysrKystCj4+ICAgZHJpdmVycy9tZC9yYWlkMTAuYyAgIHwgMTIgKysrKysrKysrKy0tCj4+
+ICAgMiBmaWxlcyBjaGFuZ2VkLCAxNiBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygtKQo+Pgo+
+PiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9yYWlkMS0xMC5jIGIvZHJpdmVycy9tZC9yYWlkMS0x
+MC5jCj4+IGluZGV4IGU2MWY2Y2FkNGUwOC4uYzIxYjZjMTY4NzUxIDEwMDY0NAo+PiAtLS0gYS9k
+cml2ZXJzL21kL3JhaWQxLTEwLmMKPj4gKysrIGIvZHJpdmVycy9tZC9yYWlkMS0xMC5jCj4+IEBA
+IC0xMDUsNyArMTA1LDEyIEBAIHN0YXRpYyB2b2lkIG1kX2Jpb19yZXNldF9yZXN5bmNfcGFnZXMo
+c3RydWN0IGJpbyAqYmlvLCBzdHJ1Y3QgcmVzeW5jX3BhZ2VzICpycCwKPj4gICAgICAgICAgICAg
+ICAgICAgKiB3b24ndCBmYWlsIGJlY2F1c2UgdGhlIHZlYyB0YWJsZSBpcyBiaWcKPj4gICAgICAg
+ICAgICAgICAgICAgKiBlbm91Z2ggdG8gaG9sZCBhbGwgdGhlc2UgcGFnZXMKPj4gICAgICAgICAg
+ICAgICAgICAgKi8KPiAKPiBXZSBrbm93IHRoZXNlIHdvbid0IGZhaWwuIFNoYWxsIHdlIGp1c3Qg
+dXNlIF9fYmlvX2FkZF9wYWdlPwoKV2UgY291bGQgeWVzLCBidXQgSSBraW5kIG9mIGxpa2UgdGhl
+IGFzc2VydCgpIHN0eWxlIHdhcm5pbmcuCkJ1dCBvZiBjYXVzZSB1bHRpbWF0ZWx5IHlvdXIgY2Fs
+bC4KCkJ5dGUsCglKb2hhbm5lcwoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
+ZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
+ZXZlbAo=
 
