@@ -4,100 +4,75 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7137DC7619A
-	for <dm-devel@archiver.kernel.org>; Tue, 11 Apr 2023 06:44:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 23CA6C76196
+	for <dm-devel@archiver.kernel.org>; Tue, 11 Apr 2023 06:44:20 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1681195458;
+	s=mimecast20190719; t=1681195459;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:mime-version:mime-version:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=IEZDw72vGvYHKP/R+sD5/qYG6BWWi5cA0JdvPF3AoGU=;
-	b=dfCIpG+0OjQdTQAI9+bfAVmAogiFeYJNUcw48swrHy6m372qlQJ6XDxXJCG6qAvPdULHVy
-	ii0CvDkcceaWyyz1iYHM+giwXZ2haeXO0Wicvv02IoKCox7foLqcT3O3Jm/LPFcK4BFxIy
-	hMTqpVJgxj+2Ej5h+wkgCkeOvQ9tbbE=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=6B/yFOZXrDIM9JwPgPlLvAzM7UC2t2+cmwujyxuFW7U=;
+	b=IK0JbVZWsHhSUnOCPNF8/fiBOzIdfiR8cCpZnBBPPDrXpaZj9WVCpU/n4Ex4qM8EVma+gP
+	xDEFjZaL7cfspW2Yob85PzmAH+8NHa1qFVZ2DIhtLWVpSkdhtX23TP054VxaFzzBlbQgYS
+	OWbrao4xQ1QenqXmL+7hogdARxk6HvU=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-399-Yz5M0cEeO9-sK5zs1pfReQ-1; Tue, 11 Apr 2023 02:44:15 -0400
-X-MC-Unique: Yz5M0cEeO9-sK5zs1pfReQ-1
+ us-mta-167-DbYNpNxAMP-mi5JESpp7_Q-1; Tue, 11 Apr 2023 02:44:15 -0400
+X-MC-Unique: DbYNpNxAMP-mi5JESpp7_Q-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A34338996E7;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1AD301C06904;
 	Tue, 11 Apr 2023 06:44:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8C882C15BB8;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 046CAE09080;
 	Tue, 11 Apr 2023 06:44:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3386D1946A7E;
-	Tue, 11 Apr 2023 06:44:11 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D529A1946A6C;
+	Tue, 11 Apr 2023 06:44:10 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 461BA19465B5
- for <dm-devel@listman.corp.redhat.com>; Fri,  7 Apr 2023 20:06:19 +0000 (UTC)
+ ESMTP id 7ECBF1946586
+ for <dm-devel@listman.corp.redhat.com>; Mon, 10 Apr 2023 23:12:48 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 33B081121315; Fri,  7 Apr 2023 20:06:19 +0000 (UTC)
+ id 72172C15BB8; Mon, 10 Apr 2023 23:12:48 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2BE861121314
- for <dm-devel@redhat.com>; Fri,  7 Apr 2023 20:06:19 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6A35AC15BA0
+ for <dm-devel@redhat.com>; Mon, 10 Apr 2023 23:12:48 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
  bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 09D7A380610A
- for <dm-devel@redhat.com>; Fri,  7 Apr 2023 20:06:19 +0000 (UTC)
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
- [205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-231-_AIxQPKQNUOfN5sW_LoiZQ-1; Fri, 07 Apr 2023 16:06:17 -0400
-X-MC-Unique: _AIxQPKQNUOfN5sW_LoiZQ-1
-Received: from pps.filterd (m0333520.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id
- 337FwobR017328; Fri, 7 Apr 2023 20:05:56 GMT
-Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com
- (iadpaimrmta02.appoci.oracle.com [147.154.18.20])
- by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3ppcnd5wu4-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 07 Apr 2023 20:05:56 +0000
-Received: from pps.filterd
- (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
- by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (8.17.1.19/8.17.1.19)
- with ESMTP id 337J0UK9034219; Fri, 7 Apr 2023 20:05:55 GMT
-Received: from pps.reinject (localhost [127.0.0.1])
- by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id
- 3pptjxeec5-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 07 Apr 2023 20:05:55 +0000
-Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com
- (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
- by pps.reinject (8.17.1.5/8.17.1.5) with ESMTP id 337K5tqq010228;
- Fri, 7 Apr 2023 20:05:55 GMT
-Received: from mnchrist-mac.us.oracle.com (dhcp-10-154-128-1.vpn.oracle.com
- [10.154.128.1])
- by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTP id
- 3pptjxeeam-1; Fri, 07 Apr 2023 20:05:54 +0000
-From: Mike Christie <michael.christie@oracle.com>
-To: bvanassche@acm.org, hch@lst.de, martin.petersen@oracle.com,
- linux-scsi@vger.kernel.org, james.bottomley@hansenpartnership.com,
- linux-block@vger.kernel.org, dm-devel@redhat.com, snitzer@kernel.org,
- axboe@kernel.dk, linux-nvme@lists.infradead.org, chaitanyak@nvidia.com,
- kbusch@kernel.org, target-devel@vger.kernel.org
-Date: Fri,  7 Apr 2023 15:05:33 -0500
-Message-Id: <20230407200551.12660-1-michael.christie@oracle.com>
-MIME-Version: 1.0
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.254,Aquarius:18.0.942,Hydra:6.0.573,FMLib:17.11.170.22
- definitions=2023-04-07_12,2023-04-06_03,2023-02-09_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 malwarescore=0
- adultscore=0
- phishscore=0 bulkscore=0 mlxscore=0 suspectscore=0 spamscore=0
- mlxlogscore=999 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.12.0-2303200000 definitions=main-2304070180
-X-Proofpoint-GUID: iHg0PBtxfmh4W4-XsTYDZ3rbexyC2Cq0
-X-Proofpoint-ORIG-GUID: iHg0PBtxfmh4W4-XsTYDZ3rbexyC2Cq0
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4F5AB811E7C
+ for <dm-devel@redhat.com>; Mon, 10 Apr 2023 23:12:48 +0000 (UTC)
+Received: from mga11.intel.com (mga11.intel.com [192.55.52.93]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-675-gi-JSF0_PAOMUBgPGhTMHw-3; Mon, 10 Apr 2023 19:12:44 -0400
+X-MC-Unique: gi-JSF0_PAOMUBgPGhTMHw-3
+X-IronPort-AV: E=McAfee;i="6600,9927,10676"; a="340962543"
+X-IronPort-AV: E=Sophos;i="5.98,335,1673942400"; d="scan'208";a="340962543"
+Received: from fmsmga004.fm.intel.com ([10.253.24.48])
+ by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 10 Apr 2023 16:11:40 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10676"; a="757608002"
+X-IronPort-AV: E=Sophos;i="5.98,335,1673942400"; d="scan'208";a="757608002"
+Received: from chang-linux-3.sc.intel.com ([172.25.66.173])
+ by fmsmga004.fm.intel.com with ESMTP; 10 Apr 2023 16:11:40 -0700
+From: "Chang S. Bae" <chang.seok.bae@intel.com>
+To: linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org,
+ dm-devel@redhat.com
+Date: Mon, 10 Apr 2023 15:59:29 -0700
+Message-Id: <20230410225936.8940-6-chang.seok.bae@intel.com>
+In-Reply-To: <20230410225936.8940-1-chang.seok.bae@intel.com>
+References: <20220112211258.21115-1-chang.seok.bae@intel.com>
+ <20230410225936.8940-1-chang.seok.bae@intel.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -105,9 +80,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mailman-Approved-At: Tue, 11 Apr 2023 06:44:09 +0000
-Subject: [dm-devel] [PATCH v6 00/18] Use block pr_ops in LIO
+Subject: [dm-devel] [PATCH v6 05/12] x86/msr-index: Add MSRs for Key Locker
+ internal wrapping key
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -119,102 +95,78 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
+Cc: x86@kernel.org, herbert@gondor.apana.org.au, ardb@kernel.org,
+ chang.seok.bae@intel.com, dave.hansen@linux.intel.com,
+ dan.j.williams@intel.com, mingo@kernel.org, ebiggers@kernel.org,
+ lalithambika.krishnakumar@intel.com, Peter Zijlstra <peterz@infradead.org>,
+ Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+ luto@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, bernie.keany@intel.com,
+ tglx@linutronix.de, bp@suse.de, gmazyland@gmail.com,
+ charishma1.gairuboyina@intel.com
+MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: oracle.com
+X-Mimecast-Originator: intel.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The patches in this thread allow us to use the block pr_ops with LIO's
-target_core_iblock module to support cluster applications in VMs. They
-were built over Linus's tree. They also apply over linux-next and
-Martin's tree and Jens's trees.
+The CPU state that contains the internal wrapping key is in the same power
+domain as the cache. So any sleep state that would invalidate the cache
+(like S3) also invalidates the state of the wrapping key.
 
-Currently, to use windows clustering or linux clustering (pacemaker +
-cluster labs scsi fence agents) in VMs with LIO and vhost-scsi, you have
-to use tcmu or pscsi or use a cluster aware FS/framework for the LIO pr
-file. Setting up a cluster FS/framework is pain and waste when your real
-backend device is already a distributed device, and pscsi and tcmu are
-nice for specific use cases, but iblock gives you the best performance and
-allows you to use stacked devices like dm-multipath. So these patches
-allow iblock to work like pscsi/tcmu where they can pass a PR command to
-the backend module. And then iblock will use the pr_ops to pass the PR
-command to the real devices similar to what we do for unmap today.
+But, since the state is inaccessible to software, it needs a special
+mechanism to save and restore the key during deep sleep.
 
-The patches are separated in the following groups:
-Patch 1 - 2:
-- Add block layer callouts for reading reservations and rename reservation
-  error code.
-Patch 3 - 5:
-- SCSI support for new callouts.
-Patch 6:
-- DM support for new callouts.
-Patch 7 - 13:
-- NVMe support for new callouts.
-Patch 14 - 18:
-- LIO support for new callouts.
+A set of new MSRs are provided as an abstract interface to save and restore
+the wrapping key, and to check the key status.
 
-This patchset has been tested with the libiscsi PGR ops and with window's
-failover cluster verification test. Note that for scsi backend devices we
-need this patchset:
+The wrapping key is saved in a platform-scoped state of non-volatile media.
+The backup itself and its path from the CPU are encrypted and integrity
+protected.
 
-https://lore.kernel.org/linux-scsi/20230123221046.125483-1-michael.christie@oracle.com/T/#m4834a643ffb5bac2529d65d40906d3cfbdd9b1b7
+But this storage's non-volatility is not architecturally guaranteed across
+off states, such as S5 and G3.
 
-to handle UAs. To reduce the size of this patchset that's being done
-separately to make reviewing easier. And to make merging easier this
-patchset and the one above do not have any conflicts so can be merged
-in different trees.
+The MSRs will be used to back up the key for S3/4 sleep states. Then the
+kernel code writes one of them to restore the key in each CPU state.
 
-v6:
-- Drop dm use comment.
-- Move scsi pr type conversion code to scsi_common.c/.h.
-- Fix le NVME_EXTENDED_DATA_STRUCT use.
-- Fix sparse warnings like sense_reason_t use.
+Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
+Reviewed-by: Dan Williams <dan.j.williams@intel.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: "H. Peter Anvin" <hpa@zytor.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: x86@kernel.org
+Cc: linux-kernel@vger.kernel.org
+---
+Changes from RFC v2:
+* Update the changelog. (Dan Williams)
+* Rename the MSRs. (Dan Williams)
+---
+ arch/x86/include/asm/msr-index.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-v5:
-- Use []/struct_size with nvme reservation structs
-- Add Keith's copywrite to pr.c
-- Drop else in nvme_send_pr_command
-- Fix PR_EXCLUSIVE_ACCESS_ALL_REGS use in block_pr_type_from_nvme
-
-v4:
-- Pass read_keys number of keys instead of array len
-- Keep the switch use when converting between block and scsi/nvme PR
-types. Drop default case so compiler spits out warning if in the future
-a new value is added.
-- Add helper for handling
-nvme_send_ns_head_pr_command/nvme_send_ns_pr_command
-- Use void * instead of u8* for passing data buffer.
-- Rename status variable to rs.
-- Have caller init buffer/structs instead of nvme/scsi callouts.
-- Drop blk_status to err code.
-
-v3:
-- Fix patch subject formatting.
-- Fix coding style.
-- Rearrange patches so helpers are added with users to avoid compilation
-errors.
-- Move pr type conversion to array and add nvme_pr_type.
-- Add Extended Data Structure control flag enum and use in code for checks.
-- Move nvme pr code to new file.
-- Add more info to patch subjects about why we need to add blk_status
-to pr_ops.
-- Use generic SCSI passthrough error handling interface.
-- Fix checkpatch --strict errors. Note that I kept the existing coding
-style that it complained about because it looked like it was the preferred
-style for the code and I didn't want a mix and match.
-
-v2:
-- Drop BLK_STS_NEXUS rename changes. Will do separately.
-- Add NVMe support.
-- Fixed bug in target_core_iblock where a variable was not initialized
-mentioned by Christoph.
-- Fixed sd pr_ops UA handling issue found when running libiscsi PGR tests.
-- Added patches to allow pr_ops to pass up a BLK_STS so we could return
-a RESERVATION_CONFLICT status when a pr_ops callout fails.
-
+diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
+index ad35355ee43e..4fa3b9e26162 100644
+--- a/arch/x86/include/asm/msr-index.h
++++ b/arch/x86/include/asm/msr-index.h
+@@ -1115,4 +1115,10 @@
+ 						* a #GP
+ 						*/
+ 
++/* MSRs for managing an internal wrapping key for Key Locker. */
++#define MSR_IA32_IWKEY_COPY_STATUS		0x00000990
++#define MSR_IA32_IWKEY_BACKUP_STATUS		0x00000991
++#define MSR_IA32_BACKUP_IWKEY_TO_PLATFORM	0x00000d91
++#define MSR_IA32_COPY_IWKEY_TO_LOCAL		0x00000d92
++
+ #endif /* _ASM_X86_MSR_INDEX_H */
+-- 
+2.17.1
 
 --
 dm-devel mailing list
