@@ -1,106 +1,78 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 99E6DC77B6F
-	for <dm-devel@archiver.kernel.org>; Tue, 11 Apr 2023 06:44:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2D318C77B75
+	for <dm-devel@archiver.kernel.org>; Tue, 11 Apr 2023 06:44:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1681195456;
+	s=mimecast20190719; t=1681195457;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=zBs2XuD2fQmHUz9FJsBPhxdZYkR6z5oBySV4isdlMJE=;
-	b=M5R66yhUn4FLoAAtfZjVd4nUF84DneDo18S99qbi0fEOI2W0/m/igy8zUUp6R4CYLjGmXn
-	24DgWy7dJYjUbULXTnP33BRx8iNkCvubQNv5G8aJMISMUe1bylzRKLGJRRIk2cctv8zUsx
-	Y7FJugxFTajeZzqdIFLlUU005Zrj4ek=
+	bh=FNEdDJOJVVqgcJsRSBq/hwV93JZYpn2M6rSciHtVTLo=;
+	b=i0AW7vkhlNeFtzLndKnEG+59s7ZzEIANbu9YLz6AeIdtvYIZw5gQaSPMM+u64YRkWqUMwQ
+	0fi/8vKxLXNOsFaC/jUpR5EwfybckemvNdm+R7/3bbaV04iZmhyIxAK9CepTye24yYcZVR
+	RyHZiiiTBGS0PCKSWTqCnXWVZqB4hc8=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-467-HA3BASmWNUmGjEp5-qV9FQ-1; Tue, 11 Apr 2023 02:44:13 -0400
-X-MC-Unique: HA3BASmWNUmGjEp5-qV9FQ-1
+ us-mta-116-BHDCZGK7OBuQLZ1st0dN7A-1; Tue, 11 Apr 2023 02:44:13 -0400
+X-MC-Unique: BHDCZGK7OBuQLZ1st0dN7A-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C2E0F185A78B;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 925698533F1;
 	Tue, 11 Apr 2023 06:44:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id AEFD7202717D;
-	Tue, 11 Apr 2023 06:44:11 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AC3581946A5E;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 295F7202701F;
 	Tue, 11 Apr 2023 06:44:10 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 03B461946588;
+	Tue, 11 Apr 2023 06:44:10 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7092319465BD
- for <dm-devel@listman.corp.redhat.com>; Fri,  7 Apr 2023 20:08:49 +0000 (UTC)
+ ESMTP id 682741946586
+ for <dm-devel@listman.corp.redhat.com>; Mon, 10 Apr 2023 23:12:48 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 477942166B32; Fri,  7 Apr 2023 20:08:49 +0000 (UTC)
+ id 4E23A492B01; Mon, 10 Apr 2023 23:12:48 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 407902166B31
- for <dm-devel@redhat.com>; Fri,  7 Apr 2023 20:08:49 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 46321492B00
+ for <dm-devel@redhat.com>; Mon, 10 Apr 2023 23:12:48 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
  bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 21D063802B8A
- for <dm-devel@redhat.com>; Fri,  7 Apr 2023 20:08:49 +0000 (UTC)
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
- [205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-447-4PIm5zz0NGuvXbOz3zXOsw-1; Fri, 07 Apr 2023 16:08:39 -0400
-X-MC-Unique: 4PIm5zz0NGuvXbOz3zXOsw-1
-Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id
- 337Fx1w1019773; Fri, 7 Apr 2023 20:06:28 GMT
-Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com
- (iadpaimrmta02.appoci.oracle.com [147.154.18.20])
- by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3ppbd45w5n-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 07 Apr 2023 20:06:28 +0000
-Received: from pps.filterd
- (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
- by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (8.17.1.19/8.17.1.19)
- with ESMTP id 337ISbGW034201; Fri, 7 Apr 2023 20:06:27 GMT
-Received: from pps.reinject (localhost [127.0.0.1])
- by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id
- 3pptjxef3k-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 07 Apr 2023 20:06:27 +0000
-Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com
- (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
- by pps.reinject (8.17.1.5/8.17.1.5) with ESMTP id 337K5trG010228;
- Fri, 7 Apr 2023 20:06:27 GMT
-Received: from mnchrist-mac.us.oracle.com (dhcp-10-154-128-1.vpn.oracle.com
- [10.154.128.1])
- by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTP id
- 3pptjxeeam-13; Fri, 07 Apr 2023 20:06:27 +0000
-From: Mike Christie <michael.christie@oracle.com>
-To: bvanassche@acm.org, hch@lst.de, martin.petersen@oracle.com,
- linux-scsi@vger.kernel.org, james.bottomley@hansenpartnership.com,
- linux-block@vger.kernel.org, dm-devel@redhat.com, snitzer@kernel.org,
- axboe@kernel.dk, linux-nvme@lists.infradead.org, chaitanyak@nvidia.com,
- kbusch@kernel.org, target-devel@vger.kernel.org
-Date: Fri,  7 Apr 2023 15:05:45 -0500
-Message-Id: <20230407200551.12660-13-michael.christie@oracle.com>
-In-Reply-To: <20230407200551.12660-1-michael.christie@oracle.com>
-References: <20230407200551.12660-1-michael.christie@oracle.com>
-MIME-Version: 1.0
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.254,Aquarius:18.0.942,Hydra:6.0.573,FMLib:17.11.170.22
- definitions=2023-04-07_12,2023-04-06_03,2023-02-09_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 malwarescore=0
- adultscore=0
- phishscore=0 bulkscore=0 mlxscore=0 suspectscore=0 spamscore=0
- mlxlogscore=774 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.12.0-2303200000 definitions=main-2304070180
-X-Proofpoint-ORIG-GUID: nFaU9bZWIh3QTwQeAZsvDLSz0079EoxM
-X-Proofpoint-GUID: nFaU9bZWIh3QTwQeAZsvDLSz0079EoxM
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 28115811E7C
+ for <dm-devel@redhat.com>; Mon, 10 Apr 2023 23:12:48 +0000 (UTC)
+Received: from mga11.intel.com (mga11.intel.com [192.55.52.93]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-675-DWcabwtdO_qJIdP81UbG2g-5; Mon, 10 Apr 2023 19:12:46 -0400
+X-MC-Unique: DWcabwtdO_qJIdP81UbG2g-5
+X-IronPort-AV: E=McAfee;i="6600,9927,10676"; a="340962574"
+X-IronPort-AV: E=Sophos;i="5.98,335,1673942400"; d="scan'208";a="340962574"
+Received: from fmsmga004.fm.intel.com ([10.253.24.48])
+ by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 10 Apr 2023 16:11:41 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10676"; a="757608012"
+X-IronPort-AV: E=Sophos;i="5.98,335,1673942400"; d="scan'208";a="757608012"
+Received: from chang-linux-3.sc.intel.com ([172.25.66.173])
+ by fmsmga004.fm.intel.com with ESMTP; 10 Apr 2023 16:11:40 -0700
+From: "Chang S. Bae" <chang.seok.bae@intel.com>
+To: linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org,
+ dm-devel@redhat.com
+Date: Mon, 10 Apr 2023 15:59:32 -0700
+Message-Id: <20230410225936.8940-9-chang.seok.bae@intel.com>
+In-Reply-To: <20230410225936.8940-1-chang.seok.bae@intel.com>
+References: <20220112211258.21115-1-chang.seok.bae@intel.com>
+ <20230410225936.8940-1-chang.seok.bae@intel.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -108,9 +80,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mailman-Approved-At: Tue, 11 Apr 2023 06:44:09 +0000
-Subject: [dm-devel] [PATCH v6 12/18] nvme: Add a nvme_pr_type enum
+Subject: [dm-devel] [PATCH v6 08/12] x86/PM/keylocker: Restore internal
+ wrapping key on resume from ACPI S3/4
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -122,117 +95,333 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Chaitanya Kulkarni <kch@nvidia.com>,
- Mike Christie <michael.christie@oracle.com>
+Cc: x86@kernel.org, herbert@gondor.apana.org.au,
+ "Rafael J. Wysocki" <rafael@kernel.org>, ardb@kernel.org,
+ chang.seok.bae@intel.com, dave.hansen@linux.intel.com,
+ dan.j.williams@intel.com, mingo@kernel.org, ebiggers@kernel.org,
+ lalithambika.krishnakumar@intel.com, Ingo Molnar <mingo@redhat.com>,
+ Borislav Petkov <bp@alien8.de>, luto@kernel.org,
+ "H. Peter Anvin" <hpa@zytor.com>, linux-pm@vger.kernel.org,
+ bernie.keany@intel.com, tglx@linutronix.de, bp@suse.de, gmazyland@gmail.com,
+ charishma1.gairuboyina@intel.com
+MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: oracle.com
+X-Mimecast-Originator: intel.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The next patch adds support to report the reservation type, so we need to
-be able to convert from the NVMe PR value we get from the device to the
-linux block layer PR value that will be returned to callers. To prepare
-for that, this patch adds a nvme_pr_type enum and renames the nvme_pr_type
-function.
+When the system enters the ACPI S3 or S4 sleep states, the internal
+wrapping key is discarded.
 
-Signed-off-by: Mike Christie <michael.christie@oracle.com>
-Reviewed-by: Chaitanya Kulkarni <kch@nvidia.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+The primary use case for the feature is bare metal dm-crypt. The key needs
+to be restored properly on wakeup, as dm-crypt does not prompt for the key
+on resume from suspend. Even the prompt it does perform for unlocking
+the volume where the hibernation image is stored, it still expects to reuse
+the key handles within the hibernation image once it is loaded. So it is
+motivated to meet dm-crypt's expectation that the key handles in the
+suspend-image remain valid after resume from an S-state.
+
+Key Locker provides a mechanism to back up the internal wrapping key in
+non-volatile storage. The kernel requests a backup right after the key is
+loaded at boot time. It is copied back to each CPU upon wakeup.
+
+While the backup may be maintained in NVM across S5 and G3 "off"
+states it is not architecturally guaranteed, nor is it expected by dm-crypt
+which expects to prompt for the key each time the volume is started.
+
+The entirety of Key Locker needs to be disabled if the backup mechanism is
+not available unless CONFIG_SUSPEND=n, otherwise dm-crypt requires the
+backup to be available.
+
+In the event of a key restore failure the kernel proceeds with an
+initialized IWKey state. This has the effect of invalidating any key
+handles that might be present in a suspend-image. When this happens
+dm-crypt will see I/O errors resulting from error returns from
+crypto_skcipher_{en,de}crypt(). While this will disrupt operations in the
+current boot, data is not at risk and access is restored at the next reboot
+to create new handles relative to the current IWKey.
+
+Manage a feature-specific flag to communicate with the crypto
+implementation. This ensures to stop using the AES instructions upon the
+key restore failure while not turning off the feature.
+
+Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
+Reviewed-by: Dan Williams <dan.j.williams@intel.com>
+Acked-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Borislav Petkov <bp@alien8.de>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: "H. Peter Anvin" <hpa@zytor.com>
+Cc: "Rafael J. Wysocki" <rafael@kernel.org>
+Cc: x86@kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-pm@vger.kernel.org
 ---
- drivers/nvme/host/pr.c | 24 ++++++++++++------------
- include/linux/nvme.h   |  9 +++++++++
- 2 files changed, 21 insertions(+), 12 deletions(-)
+Changes from v5:
+* Fix the 'valid_kl' flag not to be set when the feature is disabled.
+  (Reported by Marvin Hsu marvin.hsu@intel.com) Add the function
+  comment about this.
+* Improve the error handling in setup_keylocker(). All the error cases
+  fall through the end that disables the feature. Otherwise, all the
+  successful cases return immediately.
 
-diff --git a/drivers/nvme/host/pr.c b/drivers/nvme/host/pr.c
-index 0ee656404437..732c56b417c2 100644
---- a/drivers/nvme/host/pr.c
-+++ b/drivers/nvme/host/pr.c
-@@ -9,24 +9,24 @@
+Changes from v4:
+* Update the changelog and title. (Rafael Wysocki)
+
+Changes from v3:
+* Fix the build issue with !X86_KEYLOCKER. (Eric Biggers)
+
+Changes from RFC v2:
+* Change the backup key failure handling. (Dan Williams)
+
+Changes from RFC v1:
+* Folded the warning message into the if condition check. (Rafael
+  Wysocki)
+* Rebased on the changes of the previous patches.
+* Added error code for key restoration failures.
+* Moved the restore helper.
+* Added function descriptions.
+---
+ arch/x86/include/asm/keylocker.h |   4 +
+ arch/x86/kernel/keylocker.c      | 138 ++++++++++++++++++++++++++++++-
+ arch/x86/power/cpu.c             |   2 +
+ 3 files changed, 140 insertions(+), 4 deletions(-)
+
+diff --git a/arch/x86/include/asm/keylocker.h b/arch/x86/include/asm/keylocker.h
+index 820ac29c06d9..c1d27fb5a1c3 100644
+--- a/arch/x86/include/asm/keylocker.h
++++ b/arch/x86/include/asm/keylocker.h
+@@ -32,9 +32,13 @@ struct iwkey {
+ #ifdef CONFIG_X86_KEYLOCKER
+ void setup_keylocker(struct cpuinfo_x86 *c);
+ void destroy_keylocker_data(void);
++void restore_keylocker(void);
++extern bool valid_keylocker(void);
+ #else
+ #define setup_keylocker(c) do { } while (0)
+ #define destroy_keylocker_data() do { } while (0)
++#define restore_keylocker() do { } while (0)
++static inline bool valid_keylocker(void) { return false; }
+ #endif
  
- #include "nvme.h"
+ #endif /*__ASSEMBLY__ */
+diff --git a/arch/x86/kernel/keylocker.c b/arch/x86/kernel/keylocker.c
+index 2519102f72f1..72d075499067 100644
+--- a/arch/x86/kernel/keylocker.c
++++ b/arch/x86/kernel/keylocker.c
+@@ -11,20 +11,45 @@
+ #include <asm/fpu/api.h>
+ #include <asm/keylocker.h>
+ #include <asm/tlbflush.h>
++#include <asm/msr.h>
  
--static char nvme_pr_type(enum pr_type type)
-+static enum nvme_pr_type nvme_pr_type_from_blk(enum pr_type type)
- {
- 	switch (type) {
- 	case PR_WRITE_EXCLUSIVE:
--		return 1;
-+		return NVME_PR_WRITE_EXCLUSIVE;
- 	case PR_EXCLUSIVE_ACCESS:
--		return 2;
-+		return NVME_PR_EXCLUSIVE_ACCESS;
- 	case PR_WRITE_EXCLUSIVE_REG_ONLY:
--		return 3;
-+		return NVME_PR_WRITE_EXCLUSIVE_REG_ONLY;
- 	case PR_EXCLUSIVE_ACCESS_REG_ONLY:
--		return 4;
-+		return NVME_PR_EXCLUSIVE_ACCESS_REG_ONLY;
- 	case PR_WRITE_EXCLUSIVE_ALL_REGS:
--		return 5;
-+		return NVME_PR_WRITE_EXCLUSIVE_ALL_REGS;
- 	case PR_EXCLUSIVE_ACCESS_ALL_REGS:
--		return 6;
--	default:
--		return 0;
-+		return NVME_PR_EXCLUSIVE_ACCESS_ALL_REGS;
- 	}
+ static __initdata struct keylocker_setup_data {
++	bool initialized;
+ 	struct iwkey key;
+ } kl_setup;
+ 
++/*
++ * This flag is set with IWKey load. When the key restore fails, it is
++ * reset. This restore state is exported to the crypto library, then AES-KL
++ * will not be used there. So, the feature is soft-disabled with this flag.
++ */
++static bool valid_kl;
 +
-+	return 0;
- }
- 
- static int nvme_send_ns_head_pr_command(struct block_device *bdev,
-@@ -127,7 +127,7 @@ static int nvme_pr_reserve(struct block_device *bdev, u64 key,
- 	if (flags & ~PR_FL_IGNORE_KEY)
- 		return -EOPNOTSUPP;
- 
--	cdw10 = nvme_pr_type(type) << 8;
-+	cdw10 = nvme_pr_type_from_blk(type) << 8;
- 	cdw10 |= ((flags & PR_FL_IGNORE_KEY) ? 1 << 3 : 0);
- 	return nvme_pr_command(bdev, cdw10, key, 0, nvme_cmd_resv_acquire);
- }
-@@ -135,7 +135,7 @@ static int nvme_pr_reserve(struct block_device *bdev, u64 key,
- static int nvme_pr_preempt(struct block_device *bdev, u64 old, u64 new,
- 		enum pr_type type, bool abort)
- {
--	u32 cdw10 = nvme_pr_type(type) << 8 | (abort ? 2 : 1);
-+	u32 cdw10 = nvme_pr_type_from_blk(type) << 8 | (abort ? 2 : 1);
- 
- 	return nvme_pr_command(bdev, cdw10, old, new, nvme_cmd_resv_acquire);
- }
-@@ -149,7 +149,7 @@ static int nvme_pr_clear(struct block_device *bdev, u64 key)
- 
- static int nvme_pr_release(struct block_device *bdev, u64 key, enum pr_type type)
- {
--	u32 cdw10 = nvme_pr_type(type) << 8 | (key ? 0 : 1 << 3);
-+	u32 cdw10 = nvme_pr_type_from_blk(type) << 8 | (key ? 0 : 1 << 3);
- 
- 	return nvme_pr_command(bdev, cdw10, key, 0, nvme_cmd_resv_release);
- }
-diff --git a/include/linux/nvme.h b/include/linux/nvme.h
-index c18bd55a4ead..182b6d614eb1 100644
---- a/include/linux/nvme.h
-+++ b/include/linux/nvme.h
-@@ -759,6 +759,15 @@ enum {
- 	NVME_LBART_ATTRIB_HIDE	= 1 << 1,
- };
- 
-+enum nvme_pr_type {
-+	NVME_PR_WRITE_EXCLUSIVE			= 1,
-+	NVME_PR_EXCLUSIVE_ACCESS		= 2,
-+	NVME_PR_WRITE_EXCLUSIVE_REG_ONLY	= 3,
-+	NVME_PR_EXCLUSIVE_ACCESS_REG_ONLY	= 4,
-+	NVME_PR_WRITE_EXCLUSIVE_ALL_REGS	= 5,
-+	NVME_PR_EXCLUSIVE_ACCESS_ALL_REGS	= 6,
-+};
++bool valid_keylocker(void)
++{
++	return valid_kl;
++}
++EXPORT_SYMBOL_GPL(valid_keylocker);
 +
- enum nvme_eds {
- 	NVME_EXTENDED_DATA_STRUCT	= 0x1,
- };
+ static void __init generate_keylocker_data(void)
+ {
+ 	get_random_bytes(&kl_setup.key.integrity_key,  sizeof(kl_setup.key.integrity_key));
+ 	get_random_bytes(&kl_setup.key.encryption_key, sizeof(kl_setup.key.encryption_key));
+ }
+ 
++/*
++ * This is invoked when the bootup is finished, which means IWKey is
++ * loaded. Then, the 'valid_kl' flag is set here when the feature is
++ * enabled.
++ */
+ void __init destroy_keylocker_data(void)
+ {
++	if (!cpu_feature_enabled(X86_FEATURE_KEYLOCKER))
++		return;
++
+ 	memset(&kl_setup.key, KEY_DESTROY, sizeof(kl_setup.key));
++	kl_setup.initialized = true;
++	valid_kl = true;
+ }
+ 
+ static void __init load_keylocker(void)
+@@ -34,6 +59,27 @@ static void __init load_keylocker(void)
+ 	kernel_fpu_end();
+ }
+ 
++/**
++ * copy_keylocker - Copy the internal wrapping key from the backup.
++ *
++ * Request hardware to copy the key in non-volatile storage to the CPU
++ * state.
++ *
++ * Returns:	-EBUSY if the copy fails, 0 if successful.
++ */
++static int copy_keylocker(void)
++{
++	u64 status;
++
++	wrmsrl(MSR_IA32_COPY_IWKEY_TO_LOCAL, 1);
++
++	rdmsrl(MSR_IA32_IWKEY_COPY_STATUS, status);
++	if (status & BIT(0))
++		return 0;
++	else
++		return -EBUSY;
++}
++
+ /**
+  * setup_keylocker - Enable the feature.
+  * @c:		A pointer to struct cpuinfo_x86
+@@ -52,6 +98,7 @@ void __ref setup_keylocker(struct cpuinfo_x86 *c)
+ 
+ 	if (c == &boot_cpu_data) {
+ 		u32 eax, ebx, ecx, edx;
++		bool backup_available;
+ 
+ 		cpuid_count(KEYLOCKER_CPUID, 0, &eax, &ebx, &ecx, &edx);
+ 		/*
+@@ -65,13 +112,54 @@ void __ref setup_keylocker(struct cpuinfo_x86 *c)
+ 			goto disable;
+ 		}
+ 
++		backup_available = !!(ebx & KEYLOCKER_CPUID_EBX_BACKUP);
++		/*
++		 * The internal wrapping key in CPU state is volatile in
++		 * S3/4 states. So ensure the backup capability along with
++		 * S-states.
++		 */
++		if (!backup_available && IS_ENABLED(CONFIG_SUSPEND)) {
++			pr_debug("x86/keylocker: No key backup support with possible S3/4.\n");
++			goto disable;
++		}
++
+ 		generate_keylocker_data();
+-	}
++		load_keylocker();
+ 
+-	load_keylocker();
++		/* Backup an internal wrapping key in non-volatile media. */
++		if (backup_available)
++			wrmsrl(MSR_IA32_BACKUP_IWKEY_TO_PLATFORM, 1);
+ 
+-	pr_info_once("x86/keylocker: Enabled.\n");
+-	return;
++		pr_info("x86/keylocker: Enabled.\n");
++		return;
++	} else {
++		int rc;
++
++		/*
++		 * Load the internal wrapping key directly when available
++		 * in memory, which is only possible at boot-time.
++		 *
++		 * NB: When system wakes up, this path also recovers the
++		 * internal wrapping key.
++		 */
++		if (!kl_setup.initialized) {
++			load_keylocker();
++			return;
++		} else if (valid_kl) {
++			rc = copy_keylocker();
++			if (!rc)
++				return;
++
++			/*
++			 * The boot CPU was successful but the key copy
++			 * fails here. Then, the subsequent feature use
++			 * will have inconsistent keys and failures. So,
++			 * invalidate the feature via the flag.
++			 */
++			valid_kl = false;
++			pr_err_once("x86/keylocker: Invalid copy status (rc: %d).\n", rc);
++		}
++	}
+ 
+ disable:
+ 	setup_clear_cpu_cap(X86_FEATURE_KEYLOCKER);
+@@ -80,3 +168,45 @@ void __ref setup_keylocker(struct cpuinfo_x86 *c)
+ 	/* Make sure the feature disabled for kexec-reboot. */
+ 	cr4_clear_bits(X86_CR4_KEYLOCKER);
+ }
++
++/**
++ * restore_keylocker - Restore the internal wrapping key.
++ *
++ * The boot CPU executes this while other CPUs restore it through the setup
++ * function.
++ */
++void restore_keylocker(void)
++{
++	u64 backup_status;
++	int rc;
++
++	if (!cpu_feature_enabled(X86_FEATURE_KEYLOCKER) || !valid_kl)
++		return;
++
++	/*
++	 * The IA32_IWKEYBACKUP_STATUS MSR contains a bitmap that indicates
++	 * an invalid backup if bit 0 is set and a read (or write) error if
++	 * bit 2 is set.
++	 */
++	rdmsrl(MSR_IA32_IWKEY_BACKUP_STATUS, backup_status);
++	if (backup_status & BIT(0)) {
++		rc = copy_keylocker();
++		if (rc)
++			pr_err("x86/keylocker: Invalid copy state (rc: %d).\n", rc);
++		else
++			return;
++	} else {
++		pr_err("x86/keylocker: The key backup access failed with %s.\n",
++		       (backup_status & BIT(2)) ? "read error" : "invalid status");
++	}
++
++	/*
++	 * Now the backup key is not available. Invalidate the feature via
++	 * the flag to avoid any subsequent use. But keep the feature with
++	 * zero IWKeys instead of disabling it. The current users will see
++	 * key handle integrity failure but that's because of the internal
++	 * key change.
++	 */
++	pr_err("x86/keylocker: Failed to restore internal wrapping key.\n");
++	valid_kl = false;
++}
+diff --git a/arch/x86/power/cpu.c b/arch/x86/power/cpu.c
+index 236447ee9beb..34d2cf946b13 100644
+--- a/arch/x86/power/cpu.c
++++ b/arch/x86/power/cpu.c
+@@ -27,6 +27,7 @@
+ #include <asm/mmu_context.h>
+ #include <asm/cpu_device_id.h>
+ #include <asm/microcode.h>
++#include <asm/keylocker.h>
+ 
+ #ifdef CONFIG_X86_32
+ __visible unsigned long saved_context_ebx;
+@@ -264,6 +265,7 @@ static void notrace __restore_processor_state(struct saved_context *ctxt)
+ 	x86_platform.restore_sched_clock_state();
+ 	cache_bp_restore();
+ 	perf_restore_debug_store();
++	restore_keylocker();
+ 
+ 	c = &cpu_data(smp_processor_id());
+ 	if (cpu_has(c, X86_FEATURE_MSR_IA32_FEAT_CTL))
 -- 
-2.25.1
+2.17.1
 
 --
 dm-devel mailing list
