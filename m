@@ -4,90 +4,89 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B623CC77B77
-	for <dm-devel@archiver.kernel.org>; Wed, 12 Apr 2023 06:39:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6F9B7C77B79
+	for <dm-devel@archiver.kernel.org>; Wed, 12 Apr 2023 06:39:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1681281568;
+	s=mimecast20190719; t=1681281569;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=zMy/BGtsUw7FW0QIdAUS4FUPKPqni+ghgP9EX5fVAnc=;
-	b=ezfK3Rr+QRijyzpe+yLN6r0SyQSru5/K7s+rV0mcTGp4Ww/9mY8+5xrQugNslhkoF0cFzZ
-	LqPruDK254QO7lKpJ1Y3wi1zZC+akAYqMXE6s+0zjxwa3vhwpsjfFXgW0iL/hEDPc+Np22
-	exNmcqsUxzyh16cSOcXHbjbUcMWy2vI=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Szks3f2vLOChXPLEzJYAsiAG4o6+3f/5aJ9j8ET+88w=;
+	b=jF8he4mDDsQkedh5LGymglunuaXJGEJaE7FbeT6rIZ7QFAEV866OJGLU6Usd9/tXLLcQHu
+	nY/GLMwcVIM3kHNvELOMY+jH8To0cjtmSGm/4G9ph7nzdMOCyWgioYtUgQaYLgDma1KjGN
+	RQF+M1gWEG/aD1nbJDW8h4ihH6HCPR4=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-411-_03BDukFOWmrhMeC2WApCw-1; Wed, 12 Apr 2023 02:39:25 -0400
-X-MC-Unique: _03BDukFOWmrhMeC2WApCw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-465-vYZcg9vPMb2aHSR8zau79g-1; Wed, 12 Apr 2023 02:39:26 -0400
+X-MC-Unique: vYZcg9vPMb2aHSR8zau79g-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5E2543C0F684;
-	Wed, 12 Apr 2023 06:39:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 18141857FB9;
+	Wed, 12 Apr 2023 06:39:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 467F640C83A9;
-	Wed, 12 Apr 2023 06:39:22 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0425B202717E;
+	Wed, 12 Apr 2023 06:39:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B699C19472D4;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E481E19472E3;
 	Wed, 12 Apr 2023 06:39:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1FB0A1946586
- for <dm-devel@listman.corp.redhat.com>; Tue, 11 Apr 2023 08:19:33 +0000 (UTC)
+ ESMTP id B4B461946586
+ for <dm-devel@listman.corp.redhat.com>; Tue, 11 Apr 2023 08:19:58 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 02ED6C15BBA; Tue, 11 Apr 2023 08:19:33 +0000 (UTC)
+ id 97AEB14171BF; Tue, 11 Apr 2023 08:19:58 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id EE654C15BB8
- for <dm-devel@redhat.com>; Tue, 11 Apr 2023 08:19:32 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8F88314171B7
+ for <dm-devel@redhat.com>; Tue, 11 Apr 2023 08:19:58 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B99B1800B23
- for <dm-devel@redhat.com>; Tue, 11 Apr 2023 08:19:32 +0000 (UTC)
-Received: from mailout2.samsung.com (mailout2.samsung.com [203.254.224.25])
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 70AE8855318
+ for <dm-devel@redhat.com>; Tue, 11 Apr 2023 08:19:58 +0000 (UTC)
+Received: from mailout1.samsung.com (mailout1.samsung.com [203.254.224.24])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-211-XDo5TrptNKW8gynRzryhtQ-1; Tue, 11 Apr 2023 04:19:31 -0400
-X-MC-Unique: XDo5TrptNKW8gynRzryhtQ-1
+ us-mta-510-nK05ip3vN12CAWBj4p2lHQ-1; Tue, 11 Apr 2023 04:19:55 -0400
+X-MC-Unique: nK05ip3vN12CAWBj4p2lHQ-1
 Received: from epcas5p2.samsung.com (unknown [182.195.41.40])
- by mailout2.samsung.com (KnoxPortal) with ESMTP id
- 20230411081927epoutp02f2d3f78851468d182b9d6c03f6749692~U044NMvIt0479104791epoutp02D
- for <dm-devel@redhat.com>; Tue, 11 Apr 2023 08:19:27 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.samsung.com
- 20230411081927epoutp02f2d3f78851468d182b9d6c03f6749692~U044NMvIt0479104791epoutp02D
-Received: from epsnrtp3.localdomain (unknown [182.195.42.164]) by
+ by mailout1.samsung.com (KnoxPortal) with ESMTP id
+ 20230411081952epoutp01378c8299b39cfd6bdccff86f707bd8e1~U05PL3BdL0717807178epoutp01y
+ for <dm-devel@redhat.com>; Tue, 11 Apr 2023 08:19:52 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.samsung.com
+ 20230411081952epoutp01378c8299b39cfd6bdccff86f707bd8e1~U05PL3BdL0717807178epoutp01y
+Received: from epsnrtp1.localdomain (unknown [182.195.42.162]) by
  epcas5p1.samsung.com (KnoxPortal) with ESMTP id
- 20230411081927epcas5p1713b44eac41715d509f27fc66575b7be~U043rdlaf0857608576epcas5p1S;
- Tue, 11 Apr 2023 08:19:27 +0000 (GMT)
-Received: from epsmges5p1new.samsung.com (unknown [182.195.38.183]) by
- epsnrtp3.localdomain (Postfix) with ESMTP id 4PwdzX62G3z4x9QJ; Tue, 11 Apr
- 2023 08:19:20 +0000 (GMT)
-Received: from epcas5p4.samsung.com ( [182.195.41.42]) by
+ 20230411081952epcas5p13d0164cc4c6fc74079317057dbb8f959~U05OscMoq0228502285epcas5p1J;
+ Tue, 11 Apr 2023 08:19:52 +0000 (GMT)
+Received: from epsmges5p1new.samsung.com (unknown [182.195.38.177]) by
+ epsnrtp1.localdomain (Postfix) with ESMTP id 4Pwf0647fBz4x9Pr; Tue, 11 Apr
+ 2023 08:19:50 +0000 (GMT)
+Received: from epcas5p2.samsung.com ( [182.195.41.40]) by
  epsmges5p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
- 24.6B.09961.80815346; Tue, 11 Apr 2023 17:19:20 +0900 (KST)
+ 43.9B.09961.62815346; Tue, 11 Apr 2023 17:19:50 +0900 (KST)
 Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
  epcas5p1.samsung.com (KnoxPortal) with ESMTPA id
- 20230411081313epcas5p1ce798f50564cefde203c730980b7d557~U0zb5qb6z0300903009epcas5p15;
- Tue, 11 Apr 2023 08:13:13 +0000 (GMT)
+ 20230411081400epcas5p151186138b36daf361520b08618300502~U00HSKMnJ1534615346epcas5p1-;
+ Tue, 11 Apr 2023 08:14:00 +0000 (GMT)
 Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
  epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
- 20230411081313epsmtrp13c39e473fafb0aee76348d6b1013b46a~U0zb2-1Jp1886118861epsmtrp1a;
- Tue, 11 Apr 2023 08:13:13 +0000 (GMT)
-X-AuditID: b6c32a49-2c1ff700000026e9-46-64351808a27a
+ 20230411081400epsmtrp146444ac54d2b6b40e011a9ecd7a73d6a~U00HP9d9s1886118861epsmtrp1Y;
+ Tue, 11 Apr 2023 08:14:00 +0000 (GMT)
+X-AuditID: b6c32a49-2c1ff700000026e9-ab-643518266927
 Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
  epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
- B0.1F.08279.99615346; Tue, 11 Apr 2023 17:13:13 +0900 (KST)
+ 85.2F.08279.8C615346; Tue, 11 Apr 2023 17:14:00 +0900 (KST)
 Received: from green5.sa.corp.samsungelectronics.net (unknown
  [107.110.206.5]) by epsmtip2.samsung.com (KnoxPortal) with ESMTPA id
- 20230411081308epsmtip29cdda8c4b5592a8bf683a23dae46fb91~U0zXIqfFz2397423974epsmtip2S;
- Tue, 11 Apr 2023 08:13:08 +0000 (GMT)
+ 20230411081356epsmtip2a79113ab5665be1b002625fbcee5446c~U00D5G5402416524165epsmtip2Y;
+ Tue, 11 Apr 2023 08:13:56 +0000 (GMT)
 From: Anuj Gupta <anuj20.g@samsung.com>
 To: Jens Axboe <axboe@kernel.dk>, Alasdair Kergon <agk@redhat.com>, Mike
  Snitzer <snitzer@kernel.org>, dm-devel@redhat.com, Keith Busch
@@ -95,55 +94,56 @@ To: Jens Axboe <axboe@kernel.dk>, Alasdair Kergon <agk@redhat.com>, Mike
  <sagi@grimberg.me>, James Smart <james.smart@broadcom.com>, Chaitanya
  Kulkarni <kch@nvidia.com>, Alexander Viro <viro@zeniv.linux.org.uk>,
  Christian Brauner <brauner@kernel.org>
-Date: Tue, 11 Apr 2023 13:40:31 +0530
-Message-Id: <20230411081041.5328-5-anuj20.g@samsung.com>
+Date: Tue, 11 Apr 2023 13:40:36 +0530
+Message-Id: <20230411081041.5328-10-anuj20.g@samsung.com>
 In-Reply-To: <20230411081041.5328-1-anuj20.g@samsung.com>
 MIME-Version: 1.0
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Tf1CTdRzH7/s842Fw4T0C5rdZiLs8EOXHgOEXk0hDfYyyReeV5h0+xx42
- ZL9uG2JJ55Ik9YAhFXdtxDDMFC6xMX4IDGooP2Y0dJChArMbdbnjl/YDRaCNjfK/1+f9eX/u
- 8+N7XzYeXOzPYefI1IxSRku4RCCrqWtDVDQb8oVxro4AVG/txtHxsnkc1Y1oCeTqegBQxfQj
- HDk6U5F5Uu+Hhr+/gqH2r8oxdLHuGobazs5g6NriBIHKLT8DND6kw5D59kbUbu5jIXtrJYEM
- 58f9keXTQgy1OD8CqGnOgKNLrikW6r29Btnme/xegZR9MJ3SjfUT1BXdiD9lG/2ORdn78yhj
- 7SmCajh3jGob1hBUSeEkQU11DBFUqakWUA3Xj1IPjWGU0TmBCVbsz90qZmghowxnZFlyYY5M
- lMJNfzvz1Ux+UhwvmpeMNnPDZbSUSeGmvS6I3pkjcV+AG36YluS5JQGtUnFjX96qlOepmXCx
- XKVO4TIKoUSRqIhR0VJVnkwUI2PUW3hxcfF8t/Fgrrh5oJGlMEcemW66ztKAe+tOgwA2JBPh
- yW/+YZ0Ggexgsg1AU9MFzBs8ALCxVO/vDf4G0PbI4b9cYrwxgHsTZgBL+yYwTyKYLMRg58Ie
- DxNkBLz6+wngMYWSRTicGT+11AQnb2LwiWkK97hCyANweLKO8DCLXA8d395a0oNIBMe6PB62
- u10s1I6t9MgBZDJ88uVJwmtZCfu+cLI8jJNrYWGjfmkiSNYEwM6OO75R06Dx8aifl0Pg/R6T
- T+fAP7RFPhbBWfs45mUFLOzuAF5OhSes2qUZcHIDrG+N9covwM+tlzBv3xWwZM7pKw2CLVXL
- zIWfXKz0MYTmnzQ+pqCj8q7vvsUAnq224mUgXPfUPrqn9tH937oa4LXgOUahkooYFV/BkzH5
- /z1zllxqBEvfImp3CxhxTMdYAMYGFgDZODc06K/FBGFwkJB+/wNGKc9U5kkYlQXw3fc+g3NW
- Zcnd/0qmzuQlJsclJiUlJSYnJPG4q4MiUvqygkkRrWZyGUbBKJfrMHYAR4MRmyrC7nXkdxU0
- RN3NzrSaY4Ra5y8i28Bq/f6121+aM2QM1QfGM8KD2c3KdTSnsq77xcCPhX39ijc32WbWHNn2
- WFZbtTujuBe+eznk16ODeMjzN8MqLux4LX1wb4vcaM6QzUi1HJWgyH5s431RjUS/paxeYhd0
- 5g+lDYw9bK3KyE4Xv1G/w9ZzKGFeLdp2CDdk74kB3akHjEWDmq/PzTrYkTWCH3ZG7Ns1sj2+
- JMXFIeL7z7v2ts+i4xZnb2TdO6yFD/naGwu7bq0qslXvC3zWdNXVcjmnuYC3/hmp3pb+lmnz
- j38WRCzayqtR7FDob/MnNe+FfGZtvzNqEA/k9BimD3NZKjHNi8KVKvpfXh6PFZ8EAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Rf0yMcRzHfZ/n6ekpTk9Xy5em5tSIXD/IviYhP/YIYzbLCnXcs6t1d7W7
- ToTuqmXJUsuWdbGU3LqIdalz1ZEnItWKyI/JZaL87C6OoaSr2fz3+rxf7+39x4fC+beJeVSi
- PJVVyEVSAelKNLQKfJeVeIWJg01jQnTtQRuOsgrHcXS5v4BEH1tHASq2/sTRwK21yPyl1Ak9
- bzFhqLmiCEP6y3cx1FRuw9Ddic8kKuL6AHr7RIsh84ulqNncTqDexnMkKtO9dUbcmWwM3RjM
- BKjhdxmOrn4cIdD9F96oe/ye0zrI9D7eymgtXSRj0vY7M92vagmmt0vFGKpPkkxdpZppeq4h
- mfzsLyQzcvMJyZy+Xg2Yuo6jzFeDD2MY/IztnB3jGi5mpYmHWEVQRLxrgrGnnkgxLz5sbegg
- NOD1gjzgQkF6BTQ87MEdzKebAOzpjJ3OIXzwXgem2QPq/ww55wHXyU4mBu2Gr4RDkPQieGco
- BziEJ12Iw0cWDek4cHoAg91D35wcLQ86BlYMXSQdTND+cKDm6dQcj0bQ0joyydTkRBAssLg7
- Yhd6FRw7n0s6Yv5kpbKZmG67w/aSwSnGaV+YXV+KFwJa+5/S/qcuAKwazGVTlDKJTBmSEiJn
- 04RKkUypkkuEB5NlBjD15SUBN4Cx2irkAEYBDkAKF3jy7BPLxXyeWHQknVUkxylUUlbJAW+K
- EMzh9eS1x/FpiSiVTWLZFFbxz2KUyzwNVhPWmGMdu7lv2MbNYH2yohK3bbpe07Zs7/YATYws
- /mRRFld2bmzYu8QYMGC8doqcMypfE9vQ7rV6YmNSllNz9K/wE5Gm0R9ViVigWu3XFxN8wHip
- fs/p+Ee5z/QbhtuqvLaEznoXJayJCOesobWa2HQ3CdhhD9b6JekWtKiucNmekYzJQtqWZ5pm
- f6+dqbIFNI6/rJDkzkjz0m2Q6swRb0Lz2eRLgatyPtmP709LJ4LOrm/N2JWm3CK2rZRGdx6z
- R2121xMFt0M6jhs/VPXBfvVrl2TZ/F1uJeqrNnUkxSveL4jy317RRbhnuA2OdGWUa/csjLX5
- HKtq0u8u2H1FQCgTRCFLcIVS9Be63jIhVAMAAA==
-X-CMS-MailID: 20230411081313epcas5p1ce798f50564cefde203c730980b7d557
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Te0xTVxzHc+7tC5bOa9F4YJt2nQOLAdrR4oHwSmbmXViUTLYlbK7etTeF
+ UNqmLehGFh4dojwFAxuVyUM35bHiChIEixsMBRwroaDIgpBYHpOnLKtuSFxLYfO/z/d3vt/z
+ O+d3cjg4r4Ltx0lWG2idmlIJWN6Mth7hviB/KFWInJd2o+aBWzjKObuOo8aJEhaa71kFqGLl
+ bxytDdpwNHUzBlmXzjPR/Z+uY+hGXRmG6ht7MdRZ+xhDvc8XWais+y5A06MmDFnH96Mb1n4G
+ sndUsVD199Ns1H3OiKF2RzZAbWvVODLPLzNQ3/gr6GHBaYBs67eZsX6kfSSONE0Ossjrpgk2
+ aXvwI4O0D6aRloYzLLLlUibZeT+LRRYZl1yG3Ekmudw1yiKLWxsA2XIng/zTspu0OBax+G2J
+ KZFJNKWgdXxaLdcoktXKKEHcUdnbMmmYSBwkDkcHBHw1lUpHCQ6+Fx/0TrLKNRABP51SpblK
+ 8ZReLwiJjtRp0gw0P0mjN0QJaK1CpZVog/VUqj5NrQxW04YIsUj0ltRlPJ6S9NTsq22OOGlb
+ WmJmgTxxPuBwICGBU1XKfODN4RGdAPY09WEesQrg5a+fgXzg5RJOAIeW+VuB8WyZx2MFsMl5
+ jekRRgyO2Wdxd4BFBMBfZnOBe2EHcQqHj6fPMNwCJ5pwOLWytrGtDxEN7zbksN3MIN6ED62V
+ G2kuEQ7Nl2fZnnYhsGRyu7vs5So/+/Y0y2PZDvsrHQw348QeaLx2HnfvD4lmL2gdKHAJtksc
+ hKZItwUSPvDR7Va2h/3gHyWnNlkJn9qnMQ9rofFWF/BwDMwdKMHdJ8AJIWzuCPGUX4PlA2bM
+ 0/VlWLTm2IxyYfuFLRbAvPqqTYbQ+lvWJpNw7tf2zVkVAnix8wH7LOCbXriN6YXbmP5vXQPw
+ BuBLa/WpSlov1YrV9In/XliuSbWAjQ8S+G47mJhaCe4GGAd0A8jBBTu4fz0PVfC4CurzL2id
+ RqZLU9H6biB1TbsU99sp17h+mNogE0vCRZKwsDBJeGiYWLCLGxDVL+cRSspAp9C0ltZt5TCO
+ l18WFkAJwTxciD0x71zv0AXRPHlN3ZGdKHNE6ftN3OG5J63lDREc8+sJ8uCamSHK8Zl4m2kw
+ 9upYsdOxq/CCP1/0e3PtVczBmX/jJfzLOxE/rHqVNh5O/0Sc+F15QiSltTGiPpjrevWY//CH
+ 9OLxEXq4LEHR32tpqT1Ut/yx5GRFYPhXe73juQf22Hmj769Lbl7M6Esqym4XF+d+FF0yZFmw
+ 5lV1Fe4LbmsaHPlUnxEaU70qHSuFlZlC5yH+vSUwc8555cpk42j1wnrlUVmZ2rzWNjxXaOy3
+ /zwpnKnfm2jrqDt7jDmrKkjZ/0/XE++YUYnPvUfm9OqiI53C9CBeTlwsS8DQJ1HiQFynp/4F
+ EBl72KkEAAA=
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Re0hTYRjG+845Ox5X1tmM+qZhMYtISxsWfN3sip0ospsRktjQk1lujR1N
+ LcjZuuhWuSys1sIVq3CG0rznpjaztLKVZpRd7KKJ2exqWmbmSYL+e/j9Hh5eeClcfJ/woeKV
+ iaxaKU+QkkKitFY6eVb9hLmxs3vNElR45xaODhgGcZT/IotE3bVfAMr59ANHA40uHL2qXowc
+ PecE6GlNBYbsF7MxlJdfh6HKC58xVDfkJlG28zFAHS1GDDlaA5Hd0UCg5usmEuVe7vBAzpNa
+ DJW3pwNUOpCLo4LujwSqb/VFb/UZALkGbwuW+DDNj1YzxrZGkqkwvvBgXC+vEUxzYxJjs2aS
+ TJEljal8qiGZY9qe4cKhNgHzsaqFZI4XWwFTdHcf89Xmx9ja3di6cZHChbFsQvweVh0cuk24
+ o79Aoiqcn+Lq6RFowBGZDlAUpOfA1vRoHRBSYroSwKGSPg8d8BzmEN7pugxGsjfM+93pMVJK
+ x2BfRy/GC5KeDm92HgK8GE8bcNjUpiF5gdN2HOaZl/LZmw6Fj60H/q4S9DT41nEW57MXPQ8W
+ XOFX+SuCYVabiMeew/jX+QySx2IaQYudGGmLYMPZdmJkfTLUlpzDDYA2/qeM/ykzwKxAwqo4
+ RZyCk6lkSjY5iJMruCRlXFDMboUN/H15wIxyUGb9FOQEGAWcAFK4dLxX71BIrNgrVp66l1Xv
+ jlYnJbCcE/hShHSi1wNdQ7SYjpMnsrtYVsWq/1mM8vTRYEXFdaHPw0HOfq06O9Mt6k9JqF8V
+ 1QjDfbve9cHaUeVdFdy0kgWv1dPx1aqFz/z199yhhmxFxnrFWl1u2kHL7Qfbk7+79cr+ljGq
+ gWLzoinajBXCDWlhY6MMd8MOc7VR1nhN2JVEOqc+5sw7SVbA0Z/Bz/JF/mW+ET9TR4tuCru/
+ 9JqqTHLqjUX0QR939US65VtVvN9KSbXAvHHFVf/AglOZL8c1Zaru+W2qSQWXroV0w0d2WdOy
+ pSURhcmFi0/uDOlkAiO8XyWelqSsnDol+knH2BuTMNMH2xpqv2BQeTiylXwYc0m/td/QEhkw
+ Mxy9Vym3OEzLSddmvClmn6iyQkpwO+SyAFzNyf8ANvLyWGEDAAA=
+X-CMS-MailID: 20230411081400epcas5p151186138b36daf361520b08618300502
 X-Msg-Generator: CA
 X-Sendblock-Type: REQ_APPROVE
 CMS-TYPE: 105P
 DLP-Filter: Pass
 X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20230411081313epcas5p1ce798f50564cefde203c730980b7d557
+X-CMS-RootMailID: 20230411081400epcas5p151186138b36daf361520b08618300502
 References: <20230411081041.5328-1-anuj20.g@samsung.com>
- <CGME20230411081313epcas5p1ce798f50564cefde203c730980b7d557@epcas5p1.samsung.com>
+ <CGME20230411081400epcas5p151186138b36daf361520b08618300502@epcas5p1.samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -151,10 +151,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mailman-Approved-At: Wed, 12 Apr 2023 06:39:18 +0000
-Subject: [dm-devel] [PATCH v9 4/9] fs,
- block: copy_file_range for def_blk_ops for direct block device
+Subject: [dm-devel] [PATCH v9 9/9] null_blk: add support for copy offload
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -166,15 +165,15 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: bvanassche@acm.org, joshi.k@samsung.com, gost.dev@samsung.com,
- anuj20.g@samsung.com, linux-kernel@vger.kernel.org,
- linux-nvme@lists.infradead.org, ming.lei@redhat.com,
- linux-block@vger.kernel.org, dlemoal@kernel.org,
+Cc: Vincent Fu <vincent.fu@samsung.com>, bvanassche@acm.org,
+ joshi.k@samsung.com, gost.dev@samsung.com, anuj20.g@samsung.com,
+ linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
+ ming.lei@redhat.com, linux-block@vger.kernel.org, dlemoal@kernel.org,
  Nitesh Shetty <nj.shetty@samsung.com>, linux-fsdevel@vger.kernel.org,
- nitheshshetty@gmail.com
+ Damien Le Moal <damien.lemoal@opensource.wdc.com>, nitheshshetty@gmail.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: samsung.com
 Content-Type: text/plain; charset="us-ascii"
@@ -182,139 +181,213 @@ Content-Transfer-Encoding: 7bit
 
 From: Nitesh Shetty <nj.shetty@samsung.com>
 
-For direct block device opened with O_DIRECT, use copy_file_range to
-issue device copy offload, and fallback to generic_copy_file_range incase
-device copy offload capability is absent.
-Modify checks to allow bdevs to use copy_file_range.
+Implementaion is based on existing read and write infrastructure.
+copy_max_bytes: A new configfs and module parameter is introduced, which
+can be used to set hardware/driver supported maximum copy limit.
 
-Suggested-by: Ming Lei <ming.lei@redhat.com>
+Suggested-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
 Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
+Signed-off-by: Vincent Fu <vincent.fu@samsung.com>
 ---
- block/blk-lib.c        | 19 +++++++++++++++++++
- block/fops.c           | 20 ++++++++++++++++++++
- fs/read_write.c        | 11 +++++++++--
- include/linux/blkdev.h |  3 +++
- 4 files changed, 51 insertions(+), 2 deletions(-)
+ drivers/block/null_blk/main.c     | 101 ++++++++++++++++++++++++++++++
+ drivers/block/null_blk/null_blk.h |   8 +++
+ 2 files changed, 109 insertions(+)
 
-diff --git a/block/blk-lib.c b/block/blk-lib.c
-index 2b6e0f5b1f31..b6e193603789 100644
---- a/block/blk-lib.c
-+++ b/block/blk-lib.c
-@@ -512,6 +512,25 @@ int blkdev_issue_copy(struct block_device *bdev_in, loff_t pos_in,
- }
- EXPORT_SYMBOL_GPL(blkdev_issue_copy);
+diff --git a/drivers/block/null_blk/main.c b/drivers/block/null_blk/main.c
+index bc2c58724df3..e273e18ace74 100644
+--- a/drivers/block/null_blk/main.c
++++ b/drivers/block/null_blk/main.c
+@@ -157,6 +157,10 @@ static int g_max_sectors;
+ module_param_named(max_sectors, g_max_sectors, int, 0444);
+ MODULE_PARM_DESC(max_sectors, "Maximum size of a command (in 512B sectors)");
  
-+int blkdev_copy_offload(struct block_device *bdev_in, loff_t pos_in,
-+		      struct block_device *bdev_out, loff_t pos_out, size_t len,
-+		      cio_iodone_t endio, void *private, gfp_t gfp_mask)
++static int g_copy_max_bytes = COPY_MAX_BYTES;
++module_param_named(copy_max_bytes, g_copy_max_bytes, int, 0444);
++MODULE_PARM_DESC(copy_max_bytes, "Maximum size of a copy command (in bytes)");
++
+ static unsigned int nr_devices = 1;
+ module_param(nr_devices, uint, 0444);
+ MODULE_PARM_DESC(nr_devices, "Number of devices to register");
+@@ -409,6 +413,7 @@ NULLB_DEVICE_ATTR(home_node, uint, NULL);
+ NULLB_DEVICE_ATTR(queue_mode, uint, NULL);
+ NULLB_DEVICE_ATTR(blocksize, uint, NULL);
+ NULLB_DEVICE_ATTR(max_sectors, uint, NULL);
++NULLB_DEVICE_ATTR(copy_max_bytes, uint, NULL);
+ NULLB_DEVICE_ATTR(irqmode, uint, NULL);
+ NULLB_DEVICE_ATTR(hw_queue_depth, uint, NULL);
+ NULLB_DEVICE_ATTR(index, uint, NULL);
+@@ -550,6 +555,7 @@ static struct configfs_attribute *nullb_device_attrs[] = {
+ 	&nullb_device_attr_queue_mode,
+ 	&nullb_device_attr_blocksize,
+ 	&nullb_device_attr_max_sectors,
++	&nullb_device_attr_copy_max_bytes,
+ 	&nullb_device_attr_irqmode,
+ 	&nullb_device_attr_hw_queue_depth,
+ 	&nullb_device_attr_index,
+@@ -631,6 +637,7 @@ static ssize_t memb_group_features_show(struct config_item *item, char *page)
+ 			"badblocks,blocking,blocksize,cache_size,"
+ 			"completion_nsec,discard,home_node,hw_queue_depth,"
+ 			"irqmode,max_sectors,mbps,memory_backed,no_sched,"
++			"copy_max_bytes,"
+ 			"poll_queues,power,queue_mode,shared_tag_bitmap,size,"
+ 			"submit_queues,use_per_node_hctx,virt_boundary,zoned,"
+ 			"zone_capacity,zone_max_active,zone_max_open,"
+@@ -693,6 +700,7 @@ static struct nullb_device *null_alloc_dev(void)
+ 	dev->queue_mode = g_queue_mode;
+ 	dev->blocksize = g_bs;
+ 	dev->max_sectors = g_max_sectors;
++	dev->copy_max_bytes = g_copy_max_bytes;
+ 	dev->irqmode = g_irqmode;
+ 	dev->hw_queue_depth = g_hw_queue_depth;
+ 	dev->blocking = g_blocking;
+@@ -1242,6 +1250,81 @@ static int null_transfer(struct nullb *nullb, struct page *page,
+ 	return err;
+ }
+ 
++static inline int nullb_setup_copy_read(struct nullb *nullb,
++		struct bio *bio)
 +{
-+	struct request_queue *in_q = bdev_get_queue(bdev_in);
-+	struct request_queue *out_q = bdev_get_queue(bdev_out);
-+	int ret = 0;
++	struct nullb_copy_token *token = bvec_kmap_local(&bio->bi_io_vec[0]);
 +
-+	if (blkdev_copy_sanity_check(bdev_in, pos_in, bdev_out, pos_out, len))
-+		return 0;
++	memcpy(token->subsys, "nullb", 5);
++	token->sector_in = bio->bi_iter.bi_sector;
++	token->nullb = nullb;
++	token->sectors = bio->bi_iter.bi_size >> SECTOR_SHIFT;
 +
-+	if (blk_queue_copy(in_q) && blk_queue_copy(out_q))
-+		ret = __blkdev_copy_offload(bdev_in, pos_in, bdev_out, pos_out,
-+				len, endio, private, gfp_mask);
++	return 0;
++}
 +
++static inline int nullb_setup_copy_write(struct nullb *nullb,
++		struct bio *bio, bool is_fua)
++{
++	struct nullb_copy_token *token = bvec_kmap_local(&bio->bi_io_vec[0]);
++	sector_t sector_in, sector_out;
++	void *in, *out;
++	size_t rem, temp;
++	unsigned long offset_in, offset_out;
++	struct nullb_page *t_page_in, *t_page_out;
++	int ret = -EIO;
++
++	if (unlikely(memcmp(token->subsys, "nullb", 5)))
++		return -EINVAL;
++	if (unlikely(token->nullb != nullb))
++		return -EINVAL;
++	if (WARN_ON(token->sectors != bio->bi_iter.bi_size >> SECTOR_SHIFT))
++		return -EINVAL;
++
++	sector_in = token->sector_in;
++	sector_out = bio->bi_iter.bi_sector;
++	rem = token->sectors << SECTOR_SHIFT;
++
++	spin_lock_irq(&nullb->lock);
++	while (rem > 0) {
++		temp = min_t(size_t, nullb->dev->blocksize, rem);
++		offset_in = (sector_in & SECTOR_MASK) << SECTOR_SHIFT;
++		offset_out = (sector_out & SECTOR_MASK) << SECTOR_SHIFT;
++
++		if (null_cache_active(nullb) && !is_fua)
++			null_make_cache_space(nullb, PAGE_SIZE);
++
++		t_page_in = null_lookup_page(nullb, sector_in, false,
++			!null_cache_active(nullb));
++		if (!t_page_in)
++			goto err;
++		t_page_out = null_insert_page(nullb, sector_out,
++			!null_cache_active(nullb) || is_fua);
++		if (!t_page_out)
++			goto err;
++
++		in = kmap_local_page(t_page_in->page);
++		out = kmap_local_page(t_page_out->page);
++
++		memcpy(out + offset_out, in + offset_in, temp);
++		kunmap_local(out);
++		kunmap_local(in);
++		__set_bit(sector_out & SECTOR_MASK, t_page_out->bitmap);
++
++		if (is_fua)
++			null_free_sector(nullb, sector_out, true);
++
++		rem -= temp;
++		sector_in += temp >> SECTOR_SHIFT;
++		sector_out += temp >> SECTOR_SHIFT;
++	}
++
++	ret = 0;
++err:
++	spin_unlock_irq(&nullb->lock);
 +	return ret;
 +}
-+EXPORT_SYMBOL_GPL(blkdev_copy_offload);
 +
- static int __blkdev_issue_write_zeroes(struct block_device *bdev,
- 		sector_t sector, sector_t nr_sects, gfp_t gfp_mask,
- 		struct bio **biop, unsigned flags)
-diff --git a/block/fops.c b/block/fops.c
-index d2e6be4e3d1c..3b7c05831d5c 100644
---- a/block/fops.c
-+++ b/block/fops.c
-@@ -611,6 +611,25 @@ static ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
- 	return ret;
- }
+ static int null_handle_rq(struct nullb_cmd *cmd)
+ {
+ 	struct request *rq = cmd->rq;
+@@ -1252,6 +1335,13 @@ static int null_handle_rq(struct nullb_cmd *cmd)
+ 	struct req_iterator iter;
+ 	struct bio_vec bvec;
  
-+static ssize_t blkdev_copy_file_range(struct file *file_in, loff_t pos_in,
-+				struct file *file_out, loff_t pos_out,
-+				size_t len, unsigned int flags)
-+{
-+	struct block_device *in_bdev = I_BDEV(bdev_file_inode(file_in));
-+	struct block_device *out_bdev = I_BDEV(bdev_file_inode(file_out));
-+	int comp_len = 0;
++	if (rq->cmd_flags & REQ_COPY) {
++		if (op_is_write(req_op(rq)))
++			return nullb_setup_copy_write(nullb, rq->bio,
++						rq->cmd_flags & REQ_FUA);
++		return nullb_setup_copy_read(nullb, rq->bio);
++	}
 +
-+	if ((file_in->f_iocb_flags & IOCB_DIRECT) &&
-+		(file_out->f_iocb_flags & IOCB_DIRECT))
-+		comp_len = blkdev_copy_offload(in_bdev, pos_in, out_bdev,
-+				 pos_out, len, NULL, NULL, GFP_KERNEL);
-+	if (comp_len != len)
-+		comp_len = generic_copy_file_range(file_in, pos_in + comp_len,
-+			file_out, pos_out + comp_len, len - comp_len, flags);
+ 	spin_lock_irq(&nullb->lock);
+ 	rq_for_each_segment(bvec, rq, iter) {
+ 		len = bvec.bv_len;
+@@ -1279,6 +1369,13 @@ static int null_handle_bio(struct nullb_cmd *cmd)
+ 	struct bio_vec bvec;
+ 	struct bvec_iter iter;
+ 
++	if (bio->bi_opf & REQ_COPY) {
++		if (op_is_write(bio_op(bio)))
++			return nullb_setup_copy_write(nullb, bio,
++							bio->bi_opf & REQ_FUA);
++		return nullb_setup_copy_read(nullb, bio);
++	}
 +
-+	return comp_len;
-+}
-+
- #define	BLKDEV_FALLOC_FL_SUPPORTED					\
- 		(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |		\
- 		 FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE)
-@@ -694,6 +713,7 @@ const struct file_operations def_blk_fops = {
- 	.splice_read	= generic_file_splice_read,
- 	.splice_write	= iter_file_splice_write,
- 	.fallocate	= blkdev_fallocate,
-+	.copy_file_range = blkdev_copy_file_range,
+ 	spin_lock_irq(&nullb->lock);
+ 	bio_for_each_segment(bvec, bio, iter) {
+ 		len = bvec.bv_len;
+@@ -2109,6 +2206,10 @@ static int null_add_dev(struct nullb_device *dev)
+ 		dev->max_sectors = queue_max_hw_sectors(nullb->q);
+ 	dev->max_sectors = min(dev->max_sectors, BLK_DEF_MAX_SECTORS);
+ 	blk_queue_max_hw_sectors(nullb->q, dev->max_sectors);
++	blk_queue_max_copy_sectors_hw(nullb->q,
++			       dev->copy_max_bytes >> SECTOR_SHIFT);
++	if (dev->copy_max_bytes)
++		blk_queue_flag_set(QUEUE_FLAG_COPY, nullb->disk->queue);
+ 
+ 	if (dev->virt_boundary)
+ 		blk_queue_virt_boundary(nullb->q, PAGE_SIZE - 1);
+diff --git a/drivers/block/null_blk/null_blk.h b/drivers/block/null_blk/null_blk.h
+index eb5972c50be8..c67c098d92fa 100644
+--- a/drivers/block/null_blk/null_blk.h
++++ b/drivers/block/null_blk/null_blk.h
+@@ -67,6 +67,13 @@ enum {
+ 	NULL_Q_MQ	= 2,
  };
  
- static __init int blkdev_init(void)
-diff --git a/fs/read_write.c b/fs/read_write.c
-index a21ba3be7dbe..47e848fcfd42 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -20,6 +20,7 @@
- #include <linux/compat.h>
- #include <linux/mount.h>
- #include <linux/fs.h>
-+#include <linux/blkdev.h>
- #include "internal.h"
- 
- #include <linux/uaccess.h>
-@@ -1447,7 +1448,11 @@ static int generic_copy_file_checks(struct file *file_in, loff_t pos_in,
- 		return -EOVERFLOW;
- 
- 	/* Shorten the copy to EOF */
--	size_in = i_size_read(inode_in);
-+	if (S_ISBLK(inode_in->i_mode))
-+		size_in = bdev_nr_bytes(I_BDEV(file_in->f_mapping->host));
-+	else
-+		size_in = i_size_read(inode_in);
++struct nullb_copy_token {
++	char subsys[5];
++	struct nullb *nullb;
++	u64 sector_in;
++	u64 sectors;
++};
 +
- 	if (pos_in >= size_in)
- 		count = 0;
- 	else
-@@ -1708,7 +1713,9 @@ int generic_file_rw_checks(struct file *file_in, struct file *file_out)
- 	/* Don't copy dirs, pipes, sockets... */
- 	if (S_ISDIR(inode_in->i_mode) || S_ISDIR(inode_out->i_mode))
- 		return -EISDIR;
--	if (!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode))
-+
-+	if ((!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode)) &&
-+		(!S_ISBLK(inode_in->i_mode) || !S_ISBLK(inode_out->i_mode)))
- 		return -EINVAL;
- 
- 	if (!(file_in->f_mode & FMODE_READ) ||
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index a54153610800..468d5f3378e2 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1057,6 +1057,9 @@ int blkdev_issue_secure_erase(struct block_device *bdev, sector_t sector,
- int blkdev_issue_copy(struct block_device *bdev_in, loff_t pos_in,
- 		      struct block_device *bdev_out, loff_t pos_out, size_t len,
- 		      cio_iodone_t end_io, void *private, gfp_t gfp_mask);
-+int blkdev_copy_offload(struct block_device *bdev_in, loff_t pos_in,
-+		      struct block_device *bdev_out, loff_t pos_out, size_t len,
-+		      cio_iodone_t end_io, void *private, gfp_t gfp_mask);
- struct bio *bio_map_kern(struct request_queue *q, void *data, unsigned int len,
- 		gfp_t gfp_mask);
- void bio_map_kern_endio(struct bio *bio);
+ struct nullb_device {
+ 	struct nullb *nullb;
+ 	struct config_item item;
+@@ -102,6 +109,7 @@ struct nullb_device {
+ 	unsigned int queue_mode; /* block interface */
+ 	unsigned int blocksize; /* block size */
+ 	unsigned int max_sectors; /* Max sectors per command */
++	unsigned long copy_max_bytes; /* Max copy offload length in bytes */
+ 	unsigned int irqmode; /* IRQ completion handler */
+ 	unsigned int hw_queue_depth; /* queue depth */
+ 	unsigned int index; /* index of the disk, only valid with a disk */
 -- 
 2.35.1.500.gb896f729e2
 
