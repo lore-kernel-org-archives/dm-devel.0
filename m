@@ -1,11 +1,11 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0AA26C77B76
-	for <dm-devel@archiver.kernel.org>; Thu, 13 Apr 2023 06:55:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2278AC77B78
+	for <dm-devel@archiver.kernel.org>; Thu, 13 Apr 2023 06:55:17 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1681368916;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
@@ -14,76 +14,77 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=vf/INx7rk+lO62GHYQQLU6O/e9BTYOrKmReKLywP8ko=;
-	b=ef1565zYbVmaPy/T7qmfSM/QgGNrwPPIu9bVLQgT1txKCcJ/Edys957RkhwoF8Rb6HHVKL
-	Cl7DpmAwUfM9ungR9b3eHWBlh4yxfQJtVVsSsIgo0eHG5EqL3gXdLpkw6Z7cNHpu51zBbY
-	rjrPP5l3XlF88TU9HhxYWtkm+kULzcI=
+	bh=08AAIfcjL8AiBr1TuIJ33NCDeZNwMgBb/jlF/ibWtYY=;
+	b=XTrezmkoD2JV0m/FwWJ7nnqcb0Ri1bG/BnKbYCg2LCQJ+itPTQsL5FDyFw61slxPS03Uw7
+	ClzpzJWwNLMcxLEz9c276g1t2uFYIIzSs71MAYr+QFNayvLfQp4SevVv8wjdEvcLUlev6C
+	I1dk3XKBRvygWSSNm8hPyX/cGodKC1w=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-507-yR71yKlMNmatg-xAdLkxtw-1; Thu, 13 Apr 2023 02:55:12 -0400
-X-MC-Unique: yR71yKlMNmatg-xAdLkxtw-1
+ us-mta-614-GTlmBfiMNyCwTGP1Gfxxtg-1; Thu, 13 Apr 2023 02:55:12 -0400
+X-MC-Unique: GTlmBfiMNyCwTGP1Gfxxtg-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BA3F229DD996;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6FC4E38601AE;
 	Thu, 13 Apr 2023 06:55:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A9CDD1415117;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 55D8C1415117;
 	Thu, 13 Apr 2023 06:55:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7454319465A2;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4CCEA19465A2;
 	Thu, 13 Apr 2023 06:55:09 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
  [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id BCB551946587
- for <dm-devel@listman.corp.redhat.com>; Wed, 12 Apr 2023 10:57:46 +0000 (UTC)
+ ESMTP id E7229194658F
+ for <dm-devel@listman.corp.redhat.com>; Wed, 12 Apr 2023 09:36:32 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9CB0B492C3E; Wed, 12 Apr 2023 10:57:46 +0000 (UTC)
+ id D942A492B00; Wed, 12 Apr 2023 09:36:32 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 95E2D492B00
- for <dm-devel@redhat.com>; Wed, 12 Apr 2023 10:57:46 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 73A5985C6E3
- for <dm-devel@redhat.com>; Wed, 12 Apr 2023 10:57:46 +0000 (UTC)
-Received: from mail-pl1-f171.google.com (mail-pl1-f171.google.com
- [209.85.214.171]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D1B8D492C3E
+ for <dm-devel@redhat.com>; Wed, 12 Apr 2023 09:36:32 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AE6E83822DEA
+ for <dm-devel@redhat.com>; Wed, 12 Apr 2023 09:36:32 +0000 (UTC)
+Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com
+ [209.85.214.182]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-653-I92lEQqPMWuOxtBAW5ODyg-1; Wed, 12 Apr 2023 06:57:45 -0400
-X-MC-Unique: I92lEQqPMWuOxtBAW5ODyg-1
-Received: by mail-pl1-f171.google.com with SMTP id h24so11109857plr.1
- for <dm-devel@redhat.com>; Wed, 12 Apr 2023 03:57:44 -0700 (PDT)
+ us-mta-511-u3xYs32VMZCyKgNyOF1RGQ-1; Wed, 12 Apr 2023 05:36:31 -0400
+X-MC-Unique: u3xYs32VMZCyKgNyOF1RGQ-1
+Received: by mail-pl1-f182.google.com with SMTP id p8so10822125plk.9
+ for <dm-devel@redhat.com>; Wed, 12 Apr 2023 02:36:30 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112; t=1681297064; x=1683889064;
+ d=1e100.net; s=20210112; t=1681292190; x=1683884190;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=CcYYNtaDxHlH75DVzktS520/qEGVSpcAU/4xvgOpO10=;
- b=6CpIhkb49z0RfCUYbHSUWrOCVWshbY798smPoAPGHA11j+PCP1tJKa3B3j2P9VrjHK
- SwX0npXMvJyqrMJG7VpALb/fn6V0BENcDUR3N8IvxO4qtyo8CHV0KtT9R5PByJSIgNHQ
- N5Mh59YMu5Eg9DCcoUYXleJYkbyoDqkRUGBF1tK7bWw07QEQrdZUgGmjThcbEukR2w1W
- KbYxIaUcV0/NEAXT/YBC3Kt5p56kSSjTBGLxx4EvFOTshCWDAikpQ89GflheeXbD0xi4
- lOIaxjXP5zF8ym3aTDgdCpdnR6XWztkpbsuk9cl9lm2DZG7kZXBlh/bKzv8ieXjsfRfW
- XwjA==
-X-Gm-Message-State: AAQBX9eEfS+7JimO1csY3Z5t61niT7572AH6xfc/uZHujLyfw5pANXJB
- 3WBAArvHYd7Dcb/4ilwp4fPQww==
-X-Google-Smtp-Source: AKy350b6VhmArfjtfG5hPTUB1cljJ9QaEx7TyP53/04DDnKkbVZXFIF0jKcWKxQnKxuBsS2tM1Ls6A==
-X-Received: by 2002:a17:902:fa05:b0:1a6:3af1:9c3a with SMTP id
- la5-20020a170902fa0500b001a63af19c3amr9987792plb.22.1681297063711; 
- Wed, 12 Apr 2023 03:57:43 -0700 (PDT)
+ bh=hEe8hBiVZGVRUXUAkMcCqAaNuITvRlmRpl8r5dCVshg=;
+ b=dF1cRWZx0BYzhGfnaSa0inwoKicF0Ga/f3gM2zn283FoeVlV9jqHncshl43ESX//Cu
+ kV7MpO33EjbBaEeV7bOUoDqSO2x0KvQCdwUdyiIB4zVSQf0uyOpoafYquoigdxPpkynP
+ y6sYAigNA5Fi8KDK23NoF9ZdiPfWqzlg0BUfQjlUwY/lR/YSGiH5oTBQCsmbIqOBAYFs
+ T29An/Wo9lE6fPAhxYPlOdBuxUHG9YPC7MTGZXy3/cq39MDo3a9i9PcYyx0Eet50SCs3
+ j38zQ7KgoY+Gdx0j667/aWuip8c8gSTH8rCv92aCTUDA+e48URmP7IjeqUlXHEPcT0CE
+ xqZw==
+X-Gm-Message-State: AAQBX9eg2viLZ5xYVwpffotvvtemko+HxSXhecNpo66IfZJPi8YVHVB0
+ hrPRm8e35wiKGHIY0S33oZpBow==
+X-Google-Smtp-Source: AKy350Yuyqi9PvDH0Vwd39k3KHlVJ83Rk7wT+lEZyICoZ0hcAReJ0KiGRGXsrOp6YBiITphPH0p+sQ==
+X-Received: by 2002:a17:90a:5b:b0:233:feb4:895f with SMTP id
+ 27-20020a17090a005b00b00233feb4895fmr18452539pjb.44.1681292189750; 
+ Wed, 12 Apr 2023 02:36:29 -0700 (PDT)
 Received: from localhost.localdomain ([124.123.191.81])
  by smtp.gmail.com with ESMTPSA id
- p10-20020a1709026b8a00b001a6467cfbeasm4942246plk.53.2023.04.12.03.57.37
+ m12-20020a1709026bcc00b001a183ade911sm11109741plt.56.2023.04.12.02.36.20
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 12 Apr 2023 03:57:43 -0700 (PDT)
+ Wed, 12 Apr 2023 02:36:29 -0700 (PDT)
 From: Naresh Kamboju <naresh.kamboju@linaro.org>
 To: michael.christie@oracle.com
-Date: Wed, 12 Apr 2023 16:27:34 +0530
-Message-Id: <20230412105734.293024-1-naresh.kamboju@linaro.org>
+Date: Wed, 12 Apr 2023 15:06:17 +0530
+Message-Id: <20230412093617.285177-1-naresh.kamboju@linaro.org>
 In-Reply-To: <20230407200551.12660-1-michael.christie@oracle.com>
 References: <20230407200551.12660-1-michael.christie@oracle.com>
 MIME-Version: 1.0
@@ -110,13 +111,14 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Cc: shy828301@gmail.com, roman.gushchin@linux.dev,
  linux-nvme@lists.infradead.org, james.bottomley@hansenpartnership.com,
- linux-mm@kvack.org, dm-devel@redhat.com, target-devel@vger.kernel.org,
- hch@lst.de, bvanassche@acm.org, linux-scsi@vger.kernel.org,
- willy@infradead.org, chaitanyak@nvidia.com, ryan.roberts@arm.com,
- snitzer@kernel.org, linux-block@vger.kernel.org, lkft-triage@lists.linaro.org,
- kbusch@kernel.org, yuzhao@google.com, axboe@kernel.dk,
- martin.petersen@oracle.com, mkoutny@suse.com, akpm@linux-foundation.org,
- zokeefe@google.com, kirill.shutemov@linux.intel.com
+ dm-devel@redhat.com, target-devel@vger.kernel.org, hch@lst.de,
+ bvanassche@acm.org, linux-scsi@vger.kernel.org, willy@infradead.org,
+ chaitanyak@nvidia.com, ryan.roberts@arm.com, keescook@chromium.org,
+ snitzer@kernel.org, linux-block@vger.kernel.org, kbusch@kernel.org,
+ vbabka@suse.cz, yuzhao@google.com, axboe@kernel.dk, martin.petersen@oracle.com,
+ halbuer@sra.uni-hannover.de, mkoutny@suse.com, akpm@linux-foundation.org,
+ mgorman@techsingularity.net, zokeefe@google.com,
+ kirill.shutemov@linux.intel.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
@@ -128,81 +130,90 @@ Content-Transfer-Encoding: 7bit
 [sorry for the adding you in CC]
 
 While running LTP controllers test suite on this patch set applied on top of
-the next-20230406 and the following kernel panic noticed on qemu-x86_64.
+the next-20230406 and the following kernel panic noticed on qemu-i386.
+
+crash log:
+---------
+pids 1 TINFO: timeout per run is 0h 25m 0s
+pids 1 TINFO: test starts with cgroup version 1
+pids 1 TINFO: Running testcase 6 with 10 processes
+pids 1 TINFO: set a limit that is smaller than current number of pids
+<6>[  782.211806] cgroup: fork rejected by pids controller in /ltp/test-2724
+pids 1 TPASS: fork failed as expected
+/opt/ltp/testcases/bin/tst_test.sh: line 150:  2760 Killed                  pids_task2
+/opt/ltp/testcases/bin/tst_test.sh: line 150:  2761 Killed                  pids_task2
+/opt/ltp/testcases/bin/tst_test.sh: line 150:  2762 Killed                  pids_task2
+/opt/ltp/testcases/bin/tst_test.sh: line 150:  2763 Killed                  pids_task2
+/opt/ltp/testcases/bin/tst_test.sh: line 150:  2764 Killed                  pids_task2
+/opt/ltp/testcases/bin/tst_test.sh: line 150:  2765 Killed                  pids_task2
+/opt/ltp/testcases/bin/tst_test.sh: line 150:  2766 Killed                  pids_task2
+/opt/ltp/testcases/bin/tst_test.sh: line 150:  2767 Killed                  pids_task2
+/opt/ltp/testcases/bin/tst_test.sh: line 150:  2768 Killed                  pids_task2
+/opt/ltp/testcases/bin/tst_test.sh: line 150:  2769 Killed                  pids_task2
+<4>[  782.594441] int3: 0000 [#1] PREEMPT SMP
+<4>[  782.594783] CPU: 1 PID: 2724 Comm: pids.sh Not tainted 6.3.0-rc5-next-20230406 #1
+<4>[  782.594915] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.14.0-2 04/01/2014
+<4>[  782.595168] EIP: get_page_from_freelist+0x157/0xccc
+<4>[  782.595745] Code: 48 04 8d 43 08 85 c9 0f 85 fe 07 00 00 3b 73 0c 0f 82 f5 07 00 00 89 45 c8 8b 45 c8 8b 00 89 45 e0 85 c0 0f 84 fc 07 00 00 3e <8d> 74 26 00 8b 45 cc 80 78 14 00 0f 84 90 05 00 00 8b 45 e0 8b 58
+<4>[  782.595850] EAX: 00000000 EBX: c7ab5ce4 ECX: 00000800 EDX: 00000000
+<4>[  782.595889] ESI: 00400dc0 EDI: 00000000 EBP: c7ab5c78 ESP: c7ab5c04
+<4>[  782.595928] DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068 EFLAGS: 00000297
+<4>[  782.596017] CR0: 80050033 CR2: 086d1d54 CR3: 06eaa000 CR4: 000006d0
+<4>[  782.596188] Call Trace:
+<4>[  782.596503]  ? exc_int3+0x10/0x130
+<4>[  782.596630]  ? __irq_exit_rcu+0x15/0xcc
+<4>[  782.596655]  ? sysvec_call_function+0x3c/0x3c
+<4>[  782.596677]  ? __irq_exit_rcu+0x15/0xcc
+<4>[  782.596694]  ? irqentry_exit+0x26/0x58
+<4>[  782.596733]  __alloc_pages+0x156/0xf50
+<4>[  782.596783]  ? handle_exception+0x133/0x133
+<4>[  782.596817]  ? __rcu_read_unlock+0x1e/0x30
+<4>[  782.596843]  ? sysvec_call_function+0x3c/0x3c
+<4>[  782.596880]  ? __irq_exit_rcu+0x15/0xcc
+<4>[  782.596903]  pte_alloc_one+0x23/0x88
+<4>[  782.596928]  __pte_alloc+0x21/0xb0
+<4>[  782.596981]  ? trace_hardirqs_on+0x2c/0x88
+<4>[  782.597002]  copy_page_range+0x67d/0xb40
+<4>[  782.597049]  ? mas_wr_modify+0x10e/0x364
+<4>[  782.597069]  ? mod_objcg_state+0x99/0x378
+<4>[  782.597103]  ? mas_wr_store_entry.isra.0+0x10c/0x534
+<4>[  782.597127]  ? mas_store+0x45/0xb0
+<4>[  782.597160]  copy_process+0x1de6/0x1f9c
+<4>[  782.597179]  ? lockref_get_not_dead+0x2c/0x38
+<4>[  782.597246]  kernel_clone+0xc1/0x3dc
+<4>[  782.597279]  __ia32_sys_clone+0x71/0x8c
+<4>[  782.597320]  __do_fast_syscall_32+0x4c/0xb8
+<4>[  782.597340]  do_fast_syscall_32+0x32/0x74
+<4>[  782.597361]  do_SYSENTER_32+0x15/0x24
+<4>[  782.597381]  entry_SYSENTER_32+0x98/0xf1
+<4>[  782.597484] EIP: 0xb7f3e579
+<4>[  782.597838] Code: b8 01 10 06 03 74 b4 01 10 07 03 74 b0 01 10 08 03 74 d8 01 00 00 00 00 00 00 00 00 00 00 00 00 00 51 52 55 89 e5 0f 34 cd 80 <5d> 5a 59 c3 90 90 90 90 8d 76 00 58 b8 77 00 00 00 cd 80 90 8d 76
+<4>[  782.597856] EAX: ffffffda EBX: 01200011 ECX: 00000000 EDX: 00000000
+<4>[  782.597876] ESI: 00000000 EDI: b7f398e8 EBP: b7f01e3c ESP: bfa4599c
+<4>[  782.597889] DS: 007b ES: 007b FS: 0000 GS: 0033 SS: 007b EFLAGS: 00000286
+<4>[  782.598167] Modules linked in:
+<4>[  782.616852]  ---[ end trace 0000000000000000 ] ---
+<4>[  782.616998] EIP: get_page_from_freelist+0x157/0xccc
+<4>[  782.617213] Code: 48 04 8d 43 08 85 c9 0f 85 fe 07 00 00 3b 73 0c 0f 82 f5 07 00 00 89 45 c8 8b 45 c8 8b 00 89 45 e0 85 c0 0f 84 fc 07 00 00 3e <8d> 74 26 00 8b 45 cc 80 78 14 00 0f 84 90 05 00 00 8b 45 e0 8b 58
+<4>[  782.617234] EAX: 00000000 EBX: c7ab5ce4 ECX: 00000800 EDX: 00000000
+<4>[  782.617247] ESI: 00400dc0 EDI: 00000000 EBP: c7ab5c78 ESP: c7ab5c04
+<4>[  782.617260] DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068 EFLAGS: 00000297
+<4>[  782.617276] CR0: 80050033 CR2: 086d1d54 CR3: 06eaa000 CR4: 000006d0
+<0>[  782.617472] Kernel panic - not syncing: Fatal exception in interrupt
+<0>[  782.619115] Kernel Offset: disabled
 
 
-Lore link: https://lore.kernel.org/linux-block/20230407200551.12660-1-michael.christie@oracle.com/
+Crash log details,
+https://qa-reports.linaro.org/~anders.roxell/linux-mainline-patches/build/lore_kernel_org_linux-block_20230404140835_25166-1-sergei_shtepa_veeam_com/testrun/16171777/suite/log-parser-test/test/check-kernel-panic/details/
+https://qa-reports.linaro.org/~anders.roxell/linux-mainline-patches/build/lore_kernel_org_linux-block_20230404140835_25166-1-sergei_shtepa_veeam_com/testrun/16171777/suite/log-parser-test/test/check-kernel-panic/log
+
+Build artifacts links,
+https://storage.tuxsuite.com/public/linaro/anders/builds/2OGpRflnb14kT3aJdPte4NdjKoT/
+vmlinux: https://storage.tuxsuite.com/public/linaro/anders/builds/2OGpRflnb14kT3aJdPte4NdjKoT/vmlinux.xz
+System.map: https://storage.tuxsuite.com/public/linaro/anders/builds/2OGpRflnb14kT3aJdPte4NdjKoT/System.map
 
 
-cpuset_inherit 31 TPASS: mem_exclusive: Inherited information is right!
-cpuset_inherit 33 TPASS: mem_hardwall: Inherited information is right!
-<4>[ 1234.875309] int3: 0000 [#1] PREEMPT SMP PTI
-<4>[ 1234.875748] CPU: 1 PID: 32990 Comm: umount Not tainted 6.3.0-rc5-next-20230406 #1
-<4>[ 1234.875946] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.14.0-2 04/01/2014
-<4>[ 1234.876062] RIP: 0010:__alloc_pages+0xdf/0x310
-<4>[ 1234.876666] Code: 4c 89 45 b0 83 3d b8 1c cb 01 00 0f 85 a2 01 00 00 44 89 f0 c1 e8 03 83 e0 03 89 75 a0 89 45 c0 be 01 00 00 00 4c 89 45 98 0f <1f> 44 00 00 4d 89 c5 44 89 f0 44 89 75 a4 41 f7 c6 00 04 00 00 74
-<4>[ 1234.876885] RSP: 0000:ffff8b9305f47c10 EFLAGS: 00000202
-<4>[ 1234.877418] RAX: 0000000000000001 RBX: 0000000000000000 RCX: 0000000000000000
-<4>[ 1234.877433] RDX: 0000000000000000 RSI: 0000000000000001 RDI: 0000000000140cca
-<4>[ 1234.877446] RBP: ffff8b9305f47c78 R08: 0000000000000000 R09: 0000000000000000
-<4>[ 1234.877460] R10: 0000000000100cca R11: 0000000000000000 R12: 0000000000000003
-<4>[ 1234.877472] R13: ffff88d28b753b00 R14: 0000000000140cca R15: ffff88d2ffffb300
-<4>[ 1234.877518] FS:  0000000000000000(0000) GS:ffff88d2fbd00000(0000) knlGS:0000000000000000
-<4>[ 1234.877547] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-<4>[ 1234.877568] CR2: 0000000000408ee0 CR3: 0000000111432000 CR4: 00000000000006e0
-<4>[ 1234.877662] Call Trace:
-<4>[ 1234.877828]  <TASK>
-<4>[ 1234.877954]  __folio_alloc+0x1e/0x50
-<4>[ 1234.878051]  vma_alloc_folio+0x4af/0x520
-<4>[ 1234.878066]  ? _raw_spin_unlock+0x1a/0x40
-<4>[ 1234.878079]  ? do_wp_page+0x164/0xdd0
-<4>[ 1234.878093]  ? trace_preempt_on+0x1e/0x80
-<4>[ 1234.878105]  ? preempt_count_sub+0x63/0x80
-<4>[ 1234.878118]  do_wp_page+0x3cb/0xdd0
-<4>[ 1234.878129]  ? handle_mm_fault+0x739/0x19e0
-<4>[ 1234.878142]  ? _raw_spin_lock+0x23/0x50
-<4>[ 1234.878159]  handle_mm_fault+0x770/0x19e0
-<4>[ 1234.878170]  ? up_write+0x52/0xe0
-<4>[ 1234.878196]  do_user_addr_fault+0x4d4/0x6c0
-<4>[ 1234.878210]  ? trace_hardirqs_off_finish+0x38/0x90
-<4>[ 1234.878222]  exc_page_fault+0x80/0x1d0
-<4>[ 1234.878234]  asm_exc_page_fault+0x2b/0x30
-<4>[ 1234.878291] RIP: 0033:0x7f3f910e65f6
-<4>[ 1234.878542] Code: 2f 0a 00 00 e8 5b 23 ff ff 48 89 85 60 fd ff ff 48 8b 85 88 fd ff ff 48 8b 80 e8 00 00 00 48 85 c0 74 0b 48 8b 9d 68 fd ff ff <48> 89 58 08 48 8b 85 68 fd ff ff c7 40 18 01 00 00 00 e8 43 2b fe
-<4>[ 1234.878552] RSP: 002b:00007fff6f8dce50 EFLAGS: 00000206
-<4>[ 1234.878563] RAX: 0000000000408ed8 RBX: 00007f3f910fe0d8 RCX: 00007f3f910c6270
-<4>[ 1234.878569] RDX: 0000000000000000 RSI: 00007f3f910fe2a0 RDI: 00007fff6f8dcf10
-<4>[ 1234.878575] RBP: 00007fff6f8dd110 R08: 0000000000000000 R09: 0000000000000007
-<4>[ 1234.878581] R10: 0000000000000000 R11: 0000000000000008 R12: 0000000000000000
-<4>[ 1234.878585] R13: 00007f3f910fe2a0 R14: 00007fff6f8dced0 R15: 0000000000000000
-<4>[ 1234.878636]  </TASK>
-<4>[ 1234.878693] Modules linked in:
-<4>[ 1234.894886] ---[ end trace 0000000000000000 ]---
-<4>[ 1234.895879] RIP: 0010:__alloc_pages+0xdf/0x310
-<4>[ 1234.895921] Code: 4c 89 45 b0 83 3d b8 1c cb 01 00 0f 85 a2 01 00 00 44 89 f0 c1 e8 03 83 e0 03 89 75 a0 89 45 c0 be 01 00 00 00 4c 89 45 98 0f <1f> 44 00 00 4d 89 c5 44 89 f0 44 89 75 a4 41 f7 c6 00 04 00 00 74
-<4>[ 1234.895936] RSP: 0000:ffff8b9305f47c10 EFLAGS: 00000202
-<4>[ 1234.895956] RAX: 0000000000000001 RBX: 0000000000000000 RCX: 0000000000000000
-<4>[ 1234.895966] RDX: 0000000000000000 RSI: 0000000000000001 RDI: 0000000000140cca
-<4>[ 1234.895977] RBP: ffff8b9305f47c78 R08: 0000000000000000 R09: 0000000000000000
-<4>[ 1234.895985] R10: 0000000000100cca R11: 0000000000000000 R12: 0000000000000003
-<4>[ 1234.895993] R13: ffff88d28b753b00 R14: 0000000000140cca R15: ffff88d2ffffb300
-<4>[ 1234.896003] FS:  0000000000000000(0000) GS:ffff88d2fbd00000(0000) knlGS:0000000000000000
-<4>[ 1234.896016] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-<4>[ 1234.896026] CR2: 0000000000408ee0 CR3: 0000000111432000 CR4: 00000000000006e0
-<0>[ 1234.896379] Kernel panic - not syncing: Fatal exception in interrupt
-<0>[ 1234.900046] Kernel Offset: 0x8800000 from 0xffffffff81000000 (relocation range: 0xffffffff80000000-0xffffffffbfffffff)
-
-Links:
-https://qa-reports.linaro.org/~anders.roxell/linux-mainline-patches/build/lore_kernel_org_linux-block_20230407200551_12660-1-michael_christie_oracle_com/testrun/16172098/suite/log-parser-test/test/check-kernel-panic/log
-https://qa-reports.linaro.org/~anders.roxell/linux-mainline-patches/build/lore_kernel_org_linux-block_20230407200551_12660-1-michael_christie_oracle_com/testrun/16172061/suite/log-parser-test/test/check-kernel-panic/log
-
-https://qa-reports.linaro.org/~anders.roxell/linux-mainline-patches/build/lore_kernel_org_linux-block_20230407200551_12660-1-michael_christie_oracle_com/testrun/16172098/suite/log-parser-test/tests/
-https://qa-reports.linaro.org/~anders.roxell/linux-mainline-patches/build/lore_kernel_org_linux-block_20230407200551_12660-1-michael_christie_oracle_com/testrun/16172061/suite/log-parser-test/tests/
-
-
-Steps to reproduce:
--------------------
-
+steps to reproduce:
 # To install tuxrun on your system globally:
 # sudo pip3 install -U tuxrun==0.41.0
 #
@@ -210,17 +221,16 @@ Steps to reproduce:
 
 tuxrun   \
  --runtime podman   \
- --device qemu-x86_64   \
- --kernel https://storage.tuxsuite.com/public/linaro/anders/builds/2OGpdVeBBG4Gj6aACnSdSGva2LN/bzImage   \
- --modules https://storage.tuxsuite.com/public/linaro/anders/builds/2OGpdVeBBG4Gj6aACnSdSGva2LN/modules.tar.xz   \
- --rootfs https://storage.tuxsuite.com/public/linaro/lkft/oebuilds/2OFRZUnV2Q9jOFdE3gH3Gq2v692/images/intel-corei7-64/lkft-tux-image-intel-corei7-64-20230410193144.rootfs.ext4.gz   \
+ --device qemu-i386   \
+ --kernel https://storage.tuxsuite.com/public/linaro/anders/builds/2OGpRflnb14kT3aJdPte4NdjKoT/bzImage   \
+ --modules https://storage.tuxsuite.com/public/linaro/anders/builds/2OGpRflnb14kT3aJdPte4NdjKoT/modules.tar.xz   \
+ --rootfs https://storage.tuxsuite.com/public/linaro/lkft/oebuilds/2OFRZUbhWDZYvEcYrKKj1AJ618K/images/intel-core2-32/lkft-tux-image-intel-core2-32-20230410193126.rootfs.ext4.gz   \
  --parameters SKIPFILE=skipfile-lkft.yaml   \
  --parameters SHARD_NUMBER=10   \
  --parameters SHARD_INDEX=10   \
  --image docker.io/lavasoftware/lava-dispatcher:2023.01.0020.gc1598238f   \
  --tests ltp-controllers   \
  --timeouts boot=15 ltp-controllers=80
-
 
 
 --
