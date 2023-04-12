@@ -1,152 +1,92 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5CF94C77B61
-	for <dm-devel@archiver.kernel.org>; Thu, 13 Apr 2023 06:28:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0AA26C77B76
+	for <dm-devel@archiver.kernel.org>; Thu, 13 Apr 2023 06:55:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1681367314;
+	s=mimecast20190719; t=1681368916;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Ai10KUaK10Lx6sVVfLwgFcgR6AIn7+vw4AI6MPddXO4=;
-	b=ZHAmwvoW2yN3mWZqnquJbSmAil09/uQR9iroltKjW/IDIWHul+FFyzSSOF8IBAvaKrmYSA
-	6LOxIGlS7AHcqq5cL/pKFEFze6qbdeZ45NxQuQYVX3NqOkIMWMbBNlA3ESykvBhQ1lLrQN
-	Aj03cKyKuCJWaSHXd1U9oJWT8PR7Lks=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=vf/INx7rk+lO62GHYQQLU6O/e9BTYOrKmReKLywP8ko=;
+	b=ef1565zYbVmaPy/T7qmfSM/QgGNrwPPIu9bVLQgT1txKCcJ/Edys957RkhwoF8Rb6HHVKL
+	Cl7DpmAwUfM9ungR9b3eHWBlh4yxfQJtVVsSsIgo0eHG5EqL3gXdLpkw6Z7cNHpu51zBbY
+	rjrPP5l3XlF88TU9HhxYWtkm+kULzcI=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-418-6PY7n2DPO960JVmjbmKIbg-1; Thu, 13 Apr 2023 02:28:32 -0400
-X-MC-Unique: 6PY7n2DPO960JVmjbmKIbg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-507-yR71yKlMNmatg-xAdLkxtw-1; Thu, 13 Apr 2023 02:55:12 -0400
+X-MC-Unique: yR71yKlMNmatg-xAdLkxtw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A98A101A54F;
-	Thu, 13 Apr 2023 06:28:30 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BA3F229DD996;
+	Thu, 13 Apr 2023 06:55:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8767C47CE1;
-	Thu, 13 Apr 2023 06:28:28 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A9CDD1415117;
+	Thu, 13 Apr 2023 06:55:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 52A9D19465A2;
-	Thu, 13 Apr 2023 06:28:28 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7454319465A2;
+	Thu, 13 Apr 2023 06:55:09 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 499151946597
- for <dm-devel@listman.corp.redhat.com>; Thu, 13 Apr 2023 06:28:27 +0000 (UTC)
+ ESMTP id BCB551946587
+ for <dm-devel@listman.corp.redhat.com>; Wed, 12 Apr 2023 10:57:46 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 396522166B29; Thu, 13 Apr 2023 06:28:27 +0000 (UTC)
+ id 9CB0B492C3E; Wed, 12 Apr 2023 10:57:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 314812166B26
- for <dm-devel@redhat.com>; Thu, 13 Apr 2023 06:28:27 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0E2A4185A78B
- for <dm-devel@redhat.com>; Thu, 13 Apr 2023 06:28:27 +0000 (UTC)
-Received: from NAM11-DM6-obe.outbound.protection.outlook.com
- (mail-dm6nam11on2043.outbound.protection.outlook.com [40.107.223.43]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-649-6UifMC01PnStvrSwkW5jbg-1; Thu, 13 Apr 2023 02:28:23 -0400
-X-MC-Unique: 6UifMC01PnStvrSwkW5jbg-1
-Received: from MW2PR12MB4667.namprd12.prod.outlook.com (2603:10b6:302:12::28)
- by CH3PR12MB7761.namprd12.prod.outlook.com (2603:10b6:610:14e::17)
- with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6298.30; Thu, 13 Apr
- 2023 06:28:20 +0000
-Received: from MW2PR12MB4667.namprd12.prod.outlook.com
- ([fe80::6b01:9498:e881:8fb3]) by MW2PR12MB4667.namprd12.prod.outlook.com
- ([fe80::6b01:9498:e881:8fb3%4]) with mapi id 15.20.6298.030; Thu, 13 Apr 2023
- 06:28:20 +0000
-From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
-To: Anuj Gupta <anuj20.g@samsung.com>, Jens Axboe <axboe@kernel.dk>, Alasdair
- Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>, Keith Busch <kbusch@kernel.org>, 
- Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, James Smart
- <james.smart@broadcom.com>, Chaitanya Kulkarni <chaitanyak@nvidia.com>,
- Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner
- <brauner@kernel.org>
-Thread-Topic: [PATCH v9 9/9] null_blk: add support for copy offload
-Thread-Index: AQHZbE5nst5YOYqA/020poicHbZ9H68oyaoA
-Date: Thu, 13 Apr 2023 06:28:20 +0000
-Message-ID: <b8eb491b-ecb6-c559-1340-9984897f2aa4@nvidia.com>
-References: <20230411081041.5328-1-anuj20.g@samsung.com>
- <CGME20230411081400epcas5p151186138b36daf361520b08618300502@epcas5p1.samsung.com>
- <20230411081041.5328-10-anuj20.g@samsung.com>
-In-Reply-To: <20230411081041.5328-10-anuj20.g@samsung.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.9.0
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: MW2PR12MB4667:EE_|CH3PR12MB7761:EE_
-x-ms-office365-filtering-correlation-id: da22d29b-b61f-40b7-acb1-08db3be84676
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: ixTpiDzlma0BGpv0nfJoO54r3/+qAiZtyRMPM2e31890DOafLV/BsVO6f4W0uGPAgMsp+YGxZrOYXFnQONu5HZUFpJJjD70O0PeX9T0fWdh6w90MVXkQSkYQdsiIDfhEbGInhWovQ9NPL3/fgIKau4LEpJTkDquJxOQqlFP/s3MTpr35yEQBbk+4aXxONDFr+sh/Ey6qpYEb13OK1atOjA0pw206utzLqoqlzEtUbrxcDEM12ZCU6Ai5JTQTPsq8t4XLMATYIzv6JBEk9d1K9hiRNPReUtAPsOXcPtv70zp4C0snZJMvlcnI0c4wlMJjRsp+EmhyMZn4rLDi2IKDpI/0x5lQLS1/gr1H/7tEfR9aStKyX/CuEp1CrgDtIlzrnxlJ9/xlTfldnE0aq3a3WwqCrCrud3g59KKdAJ6B/Vj40V7dz+blcbpu3BbSdQzfn1Yv7tTvVag2O7dDuh0fWCVtv2s1fbIjqPpLO2OkKQJa5B5CChCLhD65iUr1PsXcD6tW+qLVItRRf65Ejh+qnP3zN0rUp2jiOj4nSqk6gKaamF3BAY53rWBg69vVZe878YDv0YAPuccv6NXPLW/dxu5STnLKSv5oIH0h2yBWiif9pbCpSvCgSApcF6r6ORw5cafCbmfJBTZLY0Lmg97zOBuoPlbCNHaWpcz7ZDvkP6P73kNM8uG8e4XcIlz/8iC32OEXMO9AoMvN0ozg3+N7JQ==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:MW2PR12MB4667.namprd12.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230028)(4636009)(396003)(366004)(346002)(39860400002)(376002)(136003)(451199021)(8676002)(186003)(8936002)(38100700002)(6506007)(6512007)(53546011)(478600001)(316002)(31696002)(54906003)(86362001)(921005)(76116006)(66946007)(91956017)(110136005)(6486002)(64756008)(4326008)(66556008)(66476007)(36756003)(66446008)(71200400001)(41300700001)(7416002)(122000001)(2616005)(83380400001)(31686004)(38070700005)(5660300002)(2906002)(43740500002)(45980500001);
- DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?eExaYndSbXZLcU9SeVJTTVZjYmd1WmhlOEZleFFTU1h4VTJKc2FIZkdnVUsy?=
- =?utf-8?B?cHJRTnY3STIrQjFvemMxOTN3RUQ2SElJN2dqbUxuZW9sL0FCTWZvcTdwejRC?=
- =?utf-8?B?ZVhzM3p0ZjlSRmhpcHpvcDNZOW9wZ1JOY3M0dVU4NW1CL2ZNTU5hMVRYbUgy?=
- =?utf-8?B?K0o0MlFZcDhEQmVOZVVoQlIxbHRHM3ZvR3RDbDlWZkR6RG9EVkZDQUJ3eGtL?=
- =?utf-8?B?TlFOVUQxL3VsL2M1bTlreStsaUY0aGJISG9YZzZCTUhMRGxDbUgyZUk3ZHRp?=
- =?utf-8?B?R0VlMlpwVkVSdEhWdlpJTVd1YVJhZDRHcU5CU0dpVi9GVnJUMnRzd3RQcUtK?=
- =?utf-8?B?Rm42S3dmVjg5Z1oxdndXNUZqdjBXcDRLN2pqbzdvQnFnSnhrUE1keHZKdkVh?=
- =?utf-8?B?a1VOOER2WjhzaDZwMkZ3cFhmNUI3c2RWTnY3bXYyT0pyMmFOK05IYUlqZDdy?=
- =?utf-8?B?S1g1UE1SVEtDL3NiSncyaDVrVys5VjU5VkozdC9Kajh3UXg5Yy9NOXhuUWlw?=
- =?utf-8?B?cUlSMm01b3RhZDFvZ3B2RXBPYzVKekRjcFhNcEpLNUFoQ2xKWXlkdEpNTXdC?=
- =?utf-8?B?VmhZU1lDWkYzd0hDeHVSaE1CdTNJczI3REdFN1RLRnNkZ3pnWHZHR3lBWUJ6?=
- =?utf-8?B?OExrSHlhZEZpVzBVTklGUE9lNGVFUTU4azgwOThiM1NBME41TWRRMTBsajQ0?=
- =?utf-8?B?UzZxcW1ncDhuNjkxbmxtVFRMOExUdGp4ZVpKL200WDFaUXBOL1M1c240Ukxt?=
- =?utf-8?B?MHpJVXpCdmJhbC9pSGt2VVlDM3RPaklPdnMwaGhsLzZoMi9aVjFvWXNLNGVV?=
- =?utf-8?B?RTMraUNnQXJncHZUWU0vQ2p1MWoyVDR3OHFoRlFyZzhCTGF6TVNIMmhGeUVp?=
- =?utf-8?B?UFp3L3VHTnBWcThxTVpFRW8vMHZWZTJ5RVU4SU1lQWxnS1Q4TGhQVm94Ym5P?=
- =?utf-8?B?Y0pFd3Nja0srSWVjaWhUaXlVMUViZVd2Vm9hMVY1UW5IVzlhVmtHdEJEK2hk?=
- =?utf-8?B?VGlYcG5PajVEcytOWkZVRWM1dmt4TitHYm0rdUp3SEZsWjRmbDREeXRCUFpm?=
- =?utf-8?B?OCtCYjFiVFcrWlhFWDdTMDFOSktvanZTNW1ZUlViRXRBUytPUEJ6dW1FbHpp?=
- =?utf-8?B?L0xMSWdRNGQ1MVdmMFE2WEg5WGhEbk5UVHNGVXZFU1pwdG94bFJWa1BtaStv?=
- =?utf-8?B?UWUxM1RHSnpCeVpWSWNrbHJEVmhxSzd5WStDdXZvM0VXc1VwUGlBMk1iNlVD?=
- =?utf-8?B?UVk1UHBhT2ttcFhQKzh6RjNKTWJxRWppSkpDU2I2WEN2Zm5yTGYxUGlUd3hk?=
- =?utf-8?B?ZkhJV3VYdWJhV2NJRnVPbTVTWkU4ZmhLMDlJNFlSc3Fwa2tpUHlWR0NtVlpB?=
- =?utf-8?B?c3Z2ZGJTV1dyc3k2TkJicENncEhBaWxEMFpjVU10UHNjVjc5ZVIyTC9xQ1NJ?=
- =?utf-8?B?Nzdna1NHRkcvVWdxVW1kSVcyaDVCSFNFNm5Cd1MwRGFqVU1VZ1pYaUQ1NEFo?=
- =?utf-8?B?MkNlZjNuWXpjU0FsTytrNi91TE9wWHN2NFgvNVMrREIzdjcwVWN4YkwvbjNG?=
- =?utf-8?B?bUF1RlZqTWVQYXVzY2QxSVN4dnVURDhuSGl6L3pnaFNOc3k4YS9WSkNkOXZV?=
- =?utf-8?B?ZUdib2JkM0xON2hQTnF1VXN4bC9XV2Z1WVdnejhYY2FmYk1RSlhpL25WSkVY?=
- =?utf-8?B?WlB0RFRhR3VYa1Y1WlRtMzFXb2JOWHh2ckh3MzRHdG1hL2xYbnZlOElLTWw5?=
- =?utf-8?B?bmRoVnBOeHZWMEh1ekdoT09qb3dTRUdOWGJkUmUybXptUyszQzJtb3hoamdi?=
- =?utf-8?B?NldvcW5rK2ozaFlXN0xWSlQvNDBwbEtkWk1tS1JMNVJlL0paWFJxcWZDRGtp?=
- =?utf-8?B?ajNLbUlEOXF6SXptVmZhNHFCUHhnQTVtL3h0Yk9FeEM4Z28vZWM2VG54UmRm?=
- =?utf-8?B?Z2FJOHExdG80c3o3czdUd1hTdG1GNndEWk9sNU1xQ3FhSmo0Q0xaM1pVQ2Fr?=
- =?utf-8?B?UlJhN3I4WXIyTzJwc1RTalkxN0pMak12anc1a2pUbWpmOUVjZzdnQURHTHFD?=
- =?utf-8?B?cWg5ajBHeEdmSTJaYklHWWZ4aDF5YlNRQmRZbmdpYUR4NXorYmJIWVNZSlhi?=
- =?utf-8?B?bEVrM2lxZFFSUW8yMkN6cWZ5ajJLSSsyUVVFdnVqYXFXT1ZUd0FXaDVBYUlv?=
- =?utf-8?Q?g924MqpcBdB8tEgDseTgGVkmVIqCw/uhcLuFDmM+WvK1?=
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 95E2D492B00
+ for <dm-devel@redhat.com>; Wed, 12 Apr 2023 10:57:46 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 73A5985C6E3
+ for <dm-devel@redhat.com>; Wed, 12 Apr 2023 10:57:46 +0000 (UTC)
+Received: from mail-pl1-f171.google.com (mail-pl1-f171.google.com
+ [209.85.214.171]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-653-I92lEQqPMWuOxtBAW5ODyg-1; Wed, 12 Apr 2023 06:57:45 -0400
+X-MC-Unique: I92lEQqPMWuOxtBAW5ODyg-1
+Received: by mail-pl1-f171.google.com with SMTP id h24so11109857plr.1
+ for <dm-devel@redhat.com>; Wed, 12 Apr 2023 03:57:44 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112; t=1681297064; x=1683889064;
+ h=content-transfer-encoding:mime-version:references:in-reply-to
+ :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=CcYYNtaDxHlH75DVzktS520/qEGVSpcAU/4xvgOpO10=;
+ b=6CpIhkb49z0RfCUYbHSUWrOCVWshbY798smPoAPGHA11j+PCP1tJKa3B3j2P9VrjHK
+ SwX0npXMvJyqrMJG7VpALb/fn6V0BENcDUR3N8IvxO4qtyo8CHV0KtT9R5PByJSIgNHQ
+ N5Mh59YMu5Eg9DCcoUYXleJYkbyoDqkRUGBF1tK7bWw07QEQrdZUgGmjThcbEukR2w1W
+ KbYxIaUcV0/NEAXT/YBC3Kt5p56kSSjTBGLxx4EvFOTshCWDAikpQ89GflheeXbD0xi4
+ lOIaxjXP5zF8ym3aTDgdCpdnR6XWztkpbsuk9cl9lm2DZG7kZXBlh/bKzv8ieXjsfRfW
+ XwjA==
+X-Gm-Message-State: AAQBX9eEfS+7JimO1csY3Z5t61niT7572AH6xfc/uZHujLyfw5pANXJB
+ 3WBAArvHYd7Dcb/4ilwp4fPQww==
+X-Google-Smtp-Source: AKy350b6VhmArfjtfG5hPTUB1cljJ9QaEx7TyP53/04DDnKkbVZXFIF0jKcWKxQnKxuBsS2tM1Ls6A==
+X-Received: by 2002:a17:902:fa05:b0:1a6:3af1:9c3a with SMTP id
+ la5-20020a170902fa0500b001a63af19c3amr9987792plb.22.1681297063711; 
+ Wed, 12 Apr 2023 03:57:43 -0700 (PDT)
+Received: from localhost.localdomain ([124.123.191.81])
+ by smtp.gmail.com with ESMTPSA id
+ p10-20020a1709026b8a00b001a6467cfbeasm4942246plk.53.2023.04.12.03.57.37
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 12 Apr 2023 03:57:43 -0700 (PDT)
+From: Naresh Kamboju <naresh.kamboju@linaro.org>
+To: michael.christie@oracle.com
+Date: Wed, 12 Apr 2023 16:27:34 +0530
+Message-Id: <20230412105734.293024-1-naresh.kamboju@linaro.org>
+In-Reply-To: <20230407200551.12660-1-michael.christie@oracle.com>
+References: <20230407200551.12660-1-michael.christie@oracle.com>
 MIME-Version: 1.0
-X-OriginatorOrg: Nvidia.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: MW2PR12MB4667.namprd12.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: da22d29b-b61f-40b7-acb1-08db3be84676
-X-MS-Exchange-CrossTenant-originalarrivaltime: 13 Apr 2023 06:28:20.3580 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 43083d15-7273-40c1-b7db-39efd9ccc17a
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: iDTHKweywMDxgXELI23sGRCfPWYzHd3An4QwIAU1HZ3qIUTjtZ+qPLAdBQy82XZla/vQzN+FTCQwxd97842ZHw==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: CH3PR12MB7761
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -154,8 +94,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH v9 9/9] null_blk: add support for copy offload
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Mailman-Approved-At: Thu, 13 Apr 2023 06:55:08 +0000
+Subject: [dm-devel] [PATCH v6 00/18] Use block pr_ops in LIO
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -167,203 +108,124 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Vincent Fu <vincent.fu@samsung.com>,
- "bvanassche@acm.org" <bvanassche@acm.org>,
- "joshi.k@samsung.com" <joshi.k@samsung.com>,
- "gost.dev@samsung.com" <gost.dev@samsung.com>,
- "nitheshshetty@gmail.com" <nitheshshetty@gmail.com>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
- "ming.lei@redhat.com" <ming.lei@redhat.com>,
- "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
- "dlemoal@kernel.org" <dlemoal@kernel.org>,
- "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
- Damien Le Moal <damien.lemoal@opensource.wdc.com>,
- Nitesh Shetty <nj.shetty@samsung.com>
+Cc: shy828301@gmail.com, roman.gushchin@linux.dev,
+ linux-nvme@lists.infradead.org, james.bottomley@hansenpartnership.com,
+ linux-mm@kvack.org, dm-devel@redhat.com, target-devel@vger.kernel.org,
+ hch@lst.de, bvanassche@acm.org, linux-scsi@vger.kernel.org,
+ willy@infradead.org, chaitanyak@nvidia.com, ryan.roberts@arm.com,
+ snitzer@kernel.org, linux-block@vger.kernel.org, lkft-triage@lists.linaro.org,
+ kbusch@kernel.org, yuzhao@google.com, axboe@kernel.dk,
+ martin.petersen@oracle.com, mkoutny@suse.com, akpm@linux-foundation.org,
+ zokeefe@google.com, kirill.shutemov@linux.intel.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: nvidia.com
-Content-Language: en-US
-Content-ID: <92C70530638E9A4CBFBC230DEA5AF1D5@namprd12.prod.outlook.com>
+X-Mimecast-Originator: linaro.org
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 4/11/23 01:10, Anuj Gupta wrote:
-> From: Nitesh Shetty <nj.shetty@samsung.com>
->
-> Implementaion is based on existing read and write infrastructure.
-> copy_max_bytes: A new configfs and module parameter is introduced, which
-> can be used to set hardware/driver supported maximum copy limit.
->
-> Suggested-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-> Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
-> Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
-> Signed-off-by: Vincent Fu <vincent.fu@samsung.com>
-> ---
->   drivers/block/null_blk/main.c     | 101 ++++++++++++++++++++++++++++++
->   drivers/block/null_blk/null_blk.h |   8 +++
->   2 files changed, 109 insertions(+)
->
-> diff --git a/drivers/block/null_blk/main.c b/drivers/block/null_blk/main.c
-> index bc2c58724df3..e273e18ace74 100644
-> --- a/drivers/block/null_blk/main.c
-> +++ b/drivers/block/null_blk/main.c
-> @@ -157,6 +157,10 @@ static int g_max_sectors;
->   module_param_named(max_sectors, g_max_sectors, int, 0444);
->   MODULE_PARM_DESC(max_sectors, "Maximum size of a command (in 512B sectors)");
->   
-> +static int g_copy_max_bytes = COPY_MAX_BYTES;
+[sorry for the adding you in CC]
 
-how about following ? matches nullb_device->copy_max_bytes type ..
+While running LTP controllers test suite on this patch set applied on top of
+the next-20230406 and the following kernel panic noticed on qemu-x86_64.
 
--static int g_copy_max_bytes = COPY_MAX_BYTES;
--module_param_named(copy_max_bytes, g_copy_max_bytes, int, 0444);
-+static unsigned long g_copy_max_bytes = COPY_MAX_BYTES;
-+module_param_named(copy_max_bytes, g_copy_max_bytes, ulong, 0444);
 
-[...]
+Lore link: https://lore.kernel.org/linux-block/20230407200551.12660-1-michael.christie@oracle.com/
 
-> @@ -631,6 +637,7 @@ static ssize_t memb_group_features_show(struct config_item *item, char *page)
->   			"badblocks,blocking,blocksize,cache_size,"
->   			"completion_nsec,discard,home_node,hw_queue_depth,"
->   			"irqmode,max_sectors,mbps,memory_backed,no_sched,"
-> +			"copy_max_bytes,"
->   			"poll_queues,power,queue_mode,shared_tag_bitmap,size,"
->   			"submit_queues,use_per_node_hctx,virt_boundary,zoned,"
->   			"zone_capacity,zone_max_active,zone_max_open,"
 
-why not ?
+cpuset_inherit 31 TPASS: mem_exclusive: Inherited information is right!
+cpuset_inherit 33 TPASS: mem_hardwall: Inherited information is right!
+<4>[ 1234.875309] int3: 0000 [#1] PREEMPT SMP PTI
+<4>[ 1234.875748] CPU: 1 PID: 32990 Comm: umount Not tainted 6.3.0-rc5-next-20230406 #1
+<4>[ 1234.875946] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.14.0-2 04/01/2014
+<4>[ 1234.876062] RIP: 0010:__alloc_pages+0xdf/0x310
+<4>[ 1234.876666] Code: 4c 89 45 b0 83 3d b8 1c cb 01 00 0f 85 a2 01 00 00 44 89 f0 c1 e8 03 83 e0 03 89 75 a0 89 45 c0 be 01 00 00 00 4c 89 45 98 0f <1f> 44 00 00 4d 89 c5 44 89 f0 44 89 75 a4 41 f7 c6 00 04 00 00 74
+<4>[ 1234.876885] RSP: 0000:ffff8b9305f47c10 EFLAGS: 00000202
+<4>[ 1234.877418] RAX: 0000000000000001 RBX: 0000000000000000 RCX: 0000000000000000
+<4>[ 1234.877433] RDX: 0000000000000000 RSI: 0000000000000001 RDI: 0000000000140cca
+<4>[ 1234.877446] RBP: ffff8b9305f47c78 R08: 0000000000000000 R09: 0000000000000000
+<4>[ 1234.877460] R10: 0000000000100cca R11: 0000000000000000 R12: 0000000000000003
+<4>[ 1234.877472] R13: ffff88d28b753b00 R14: 0000000000140cca R15: ffff88d2ffffb300
+<4>[ 1234.877518] FS:  0000000000000000(0000) GS:ffff88d2fbd00000(0000) knlGS:0000000000000000
+<4>[ 1234.877547] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+<4>[ 1234.877568] CR2: 0000000000408ee0 CR3: 0000000111432000 CR4: 00000000000006e0
+<4>[ 1234.877662] Call Trace:
+<4>[ 1234.877828]  <TASK>
+<4>[ 1234.877954]  __folio_alloc+0x1e/0x50
+<4>[ 1234.878051]  vma_alloc_folio+0x4af/0x520
+<4>[ 1234.878066]  ? _raw_spin_unlock+0x1a/0x40
+<4>[ 1234.878079]  ? do_wp_page+0x164/0xdd0
+<4>[ 1234.878093]  ? trace_preempt_on+0x1e/0x80
+<4>[ 1234.878105]  ? preempt_count_sub+0x63/0x80
+<4>[ 1234.878118]  do_wp_page+0x3cb/0xdd0
+<4>[ 1234.878129]  ? handle_mm_fault+0x739/0x19e0
+<4>[ 1234.878142]  ? _raw_spin_lock+0x23/0x50
+<4>[ 1234.878159]  handle_mm_fault+0x770/0x19e0
+<4>[ 1234.878170]  ? up_write+0x52/0xe0
+<4>[ 1234.878196]  do_user_addr_fault+0x4d4/0x6c0
+<4>[ 1234.878210]  ? trace_hardirqs_off_finish+0x38/0x90
+<4>[ 1234.878222]  exc_page_fault+0x80/0x1d0
+<4>[ 1234.878234]  asm_exc_page_fault+0x2b/0x30
+<4>[ 1234.878291] RIP: 0033:0x7f3f910e65f6
+<4>[ 1234.878542] Code: 2f 0a 00 00 e8 5b 23 ff ff 48 89 85 60 fd ff ff 48 8b 85 88 fd ff ff 48 8b 80 e8 00 00 00 48 85 c0 74 0b 48 8b 9d 68 fd ff ff <48> 89 58 08 48 8b 85 68 fd ff ff c7 40 18 01 00 00 00 e8 43 2b fe
+<4>[ 1234.878552] RSP: 002b:00007fff6f8dce50 EFLAGS: 00000206
+<4>[ 1234.878563] RAX: 0000000000408ed8 RBX: 00007f3f910fe0d8 RCX: 00007f3f910c6270
+<4>[ 1234.878569] RDX: 0000000000000000 RSI: 00007f3f910fe2a0 RDI: 00007fff6f8dcf10
+<4>[ 1234.878575] RBP: 00007fff6f8dd110 R08: 0000000000000000 R09: 0000000000000007
+<4>[ 1234.878581] R10: 0000000000000000 R11: 0000000000000008 R12: 0000000000000000
+<4>[ 1234.878585] R13: 00007f3f910fe2a0 R14: 00007fff6f8dced0 R15: 0000000000000000
+<4>[ 1234.878636]  </TASK>
+<4>[ 1234.878693] Modules linked in:
+<4>[ 1234.894886] ---[ end trace 0000000000000000 ]---
+<4>[ 1234.895879] RIP: 0010:__alloc_pages+0xdf/0x310
+<4>[ 1234.895921] Code: 4c 89 45 b0 83 3d b8 1c cb 01 00 0f 85 a2 01 00 00 44 89 f0 c1 e8 03 83 e0 03 89 75 a0 89 45 c0 be 01 00 00 00 4c 89 45 98 0f <1f> 44 00 00 4d 89 c5 44 89 f0 44 89 75 a4 41 f7 c6 00 04 00 00 74
+<4>[ 1234.895936] RSP: 0000:ffff8b9305f47c10 EFLAGS: 00000202
+<4>[ 1234.895956] RAX: 0000000000000001 RBX: 0000000000000000 RCX: 0000000000000000
+<4>[ 1234.895966] RDX: 0000000000000000 RSI: 0000000000000001 RDI: 0000000000140cca
+<4>[ 1234.895977] RBP: ffff8b9305f47c78 R08: 0000000000000000 R09: 0000000000000000
+<4>[ 1234.895985] R10: 0000000000100cca R11: 0000000000000000 R12: 0000000000000003
+<4>[ 1234.895993] R13: ffff88d28b753b00 R14: 0000000000140cca R15: ffff88d2ffffb300
+<4>[ 1234.896003] FS:  0000000000000000(0000) GS:ffff88d2fbd00000(0000) knlGS:0000000000000000
+<4>[ 1234.896016] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+<4>[ 1234.896026] CR2: 0000000000408ee0 CR3: 0000000111432000 CR4: 00000000000006e0
+<0>[ 1234.896379] Kernel panic - not syncing: Fatal exception in interrupt
+<0>[ 1234.900046] Kernel Offset: 0x8800000 from 0xffffffff81000000 (relocation range: 0xffffffff80000000-0xffffffffbfffffff)
 
-@@ -637,11 +637,12 @@ static ssize_t memb_group_features_show(struct config_item *item, char *page)
-                         "badblocks,blocking,blocksize,cache_size,"
-                         "completion_nsec,discard,home_node,hw_queue_depth,"
-                         "irqmode,max_sectors,mbps,memory_backed,no_sched,"
--                       "copy_max_bytes,"
-                         "poll_queues,power,queue_mode,shared_tag_bitmap,size,"
-                         "submit_queues,use_per_node_hctx,virt_boundary,zoned,"
-                         "zone_capacity,zone_max_active,zone_max_open,"
--                       "zone_nr_conv,zone_offline,zone_readonly,zone_size\n");
-+                       "zone_nr_conv,zone_offline,zone_readonly,zone_size"
-+                       "copy_max_bytes\n");
-  }
-  
-[...]
-  
-+static inline int nullb_setup_copy_read(struct nullb *nullb,
-+		struct bio *bio)
-+{
-+	struct nullb_copy_token *token = bvec_kmap_local(&bio->bi_io_vec[0]);
-+
-+	memcpy(token->subsys, "nullb", 5);
+Links:
+https://qa-reports.linaro.org/~anders.roxell/linux-mainline-patches/build/lore_kernel_org_linux-block_20230407200551_12660-1-michael_christie_oracle_com/testrun/16172098/suite/log-parser-test/test/check-kernel-panic/log
+https://qa-reports.linaro.org/~anders.roxell/linux-mainline-patches/build/lore_kernel_org_linux-block_20230407200551_12660-1-michael_christie_oracle_com/testrun/16172061/suite/log-parser-test/test/check-kernel-panic/log
 
-do you really need to use memcpy here ? can token->subsys be a pointer
-and use with assignment token->subsys = nullb ?
+https://qa-reports.linaro.org/~anders.roxell/linux-mainline-patches/build/lore_kernel_org_linux-block_20230407200551_12660-1-michael_christie_oracle_com/testrun/16172098/suite/log-parser-test/tests/
+https://qa-reports.linaro.org/~anders.roxell/linux-mainline-patches/build/lore_kernel_org_linux-block_20230407200551_12660-1-michael_christie_oracle_com/testrun/16172061/suite/log-parser-test/tests/
 
-+	token->sector_in = bio->bi_iter.bi_sector;
-+	token->nullb = nullb;
-+	token->sectors = bio->bi_iter.bi_size >> SECTOR_SHIFT;
-+
-+	return 0;
-+}
-+
 
-no point in return 0 , use local bool for fua instead of repeating
-expression and no need to fold line for nullb_setup_copy_read()
-makes is easy to read and removes extra lines and indentation see below :-
+Steps to reproduce:
+-------------------
 
--static inline int nullb_setup_copy_read(struct nullb *nullb,
--               struct bio *bio)
-+static inline void nullb_setup_copy_read(struct nullb *nullb, struct bio *bio)
-  {
-         struct nullb_copy_token *token = bvec_kmap_local(&bio->bi_io_vec[0]);
-  
--       memcpy(token->subsys, "nullb", 5);
-+       token->subsys = "nullb;
-         token->sector_in = bio->bi_iter.bi_sector;
-         token->nullb = nullb;
-         token->sectors = bio->bi_iter.bi_size >> SECTOR_SHIFT;
--
--       return 0;
-  }
-  
-  static inline int nullb_setup_copy_write(struct nullb *nullb,
-@@ -1334,20 +1331,21 @@ static int null_handle_rq(struct nullb_cmd *cmd)
-         sector_t sector = blk_rq_pos(rq);
-         struct req_iterator iter;
-         struct bio_vec bvec;
-+       bool fua = rq->cmd_flags & REQ_FUA;
-  
-         if (rq->cmd_flags & REQ_COPY) {
-                 if (op_is_write(req_op(rq)))
--                       return nullb_setup_copy_write(nullb, rq->bio,
--                                               rq->cmd_flags & REQ_FUA);
--               return nullb_setup_copy_read(nullb, rq->bio);
-+                       return nullb_setup_copy_write(nullb, rq->bio, fua);
-+
-+               nullb_setup_copy_read(nullb, rq->bio);
-+               return 0;
-         }
-  
-         spin_lock_irq(&nullb->lock);
-         rq_for_each_segment(bvec, rq, iter) {
-                 len = bvec.bv_len;
-                 err = null_transfer(nullb, bvec.bv_page, len, bvec.bv_offset,
--                                    op_is_write(req_op(rq)), sector,
--                                    rq->cmd_flags & REQ_FUA);
-+                                    op_is_write(req_op(rq)), sector, fua);
-                 if (err) {
-                         spin_unlock_irq(&nullb->lock);
-                         return err;
-@@ -1368,12 +1366,13 @@ static int null_handle_bio(struct nullb_cmd *cmd)
-         sector_t sector = bio->bi_iter.bi_sector;
-         struct bio_vec bvec;
-         struct bvec_iter iter;
-+       bool fua = bio->bi_opf & REQ_FUA
-  
-         if (bio->bi_opf & REQ_COPY) {
-                 if (op_is_write(bio_op(bio)))
--                       return nullb_setup_copy_write(nullb, bio,
--                                                       bio->bi_opf & REQ_FUA);
--               return nullb_setup_copy_read(nullb, bio);
-+                       return nullb_setup_copy_write(nullb, bio, fua);
-+               nullb_setup_copy_read(nullb, bio);
-+               return 0;
-         }
-  
+# To install tuxrun on your system globally:
+# sudo pip3 install -U tuxrun==0.41.0
+#
+# See https://tuxrun.org/ for complete documentation.
+
+tuxrun   \
+ --runtime podman   \
+ --device qemu-x86_64   \
+ --kernel https://storage.tuxsuite.com/public/linaro/anders/builds/2OGpdVeBBG4Gj6aACnSdSGva2LN/bzImage   \
+ --modules https://storage.tuxsuite.com/public/linaro/anders/builds/2OGpdVeBBG4Gj6aACnSdSGva2LN/modules.tar.xz   \
+ --rootfs https://storage.tuxsuite.com/public/linaro/lkft/oebuilds/2OFRZUnV2Q9jOFdE3gH3Gq2v692/images/intel-corei7-64/lkft-tux-image-intel-corei7-64-20230410193144.rootfs.ext4.gz   \
+ --parameters SKIPFILE=skipfile-lkft.yaml   \
+ --parameters SHARD_NUMBER=10   \
+ --parameters SHARD_INDEX=10   \
+ --image docker.io/lavasoftware/lava-dispatcher:2023.01.0020.gc1598238f   \
+ --tests ltp-controllers   \
+ --timeouts boot=15 ltp-controllers=80
 
 
 
-[...]
-  
-+struct nullb_copy_token {
-+	char subsys[5];
-+	struct nullb *nullb;
-+	u64 sector_in;
-+	u64 sectors;
-+};
-+
-
-why not use sector_t ?
-
-diff --git a/drivers/block/null_blk/null_blk.h b/drivers/block/null_blk/null_blk.h
-index c67c098d92fa..ffa4b6a6d19b 100644
---- a/drivers/block/null_blk/null_blk.h
-+++ b/drivers/block/null_blk/null_blk.h
-@@ -70,8 +70,8 @@ enum {
-  struct nullb_copy_token {
-         char subsys[5];
-         struct nullb *nullb;
--       u64 sector_in;
--       u64 sectors;
-+       sector_t sector_in;
-+       sector_t sectors;
-  };
-  
-
--ck
-
+--
+Linaro LKFT
+https://lkft.linaro.org
 
 --
 dm-devel mailing list
