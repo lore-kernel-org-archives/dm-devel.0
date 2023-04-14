@@ -1,93 +1,97 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6009FC77B6E
-	for <dm-devel@archiver.kernel.org>; Fri, 14 Apr 2023 13:33:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8AEADC77B73
+	for <dm-devel@archiver.kernel.org>; Fri, 14 Apr 2023 18:15:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1681479180;
+	s=mimecast20190719; t=1681496102;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=oIwvEppsPikbiT9Tzv1YUKnuQj2gyj28bwMnGiaoVFA=;
-	b=V0csKcX+5bzvCw+okVEuiuzdCQ7GZHTov8E91WGPsD3N5WEVxWQoGKq3UVQLf9m+8L4MbC
-	VQogdHObcv0//fzJaC4ZrJBGYZf9MOoEj3E8CnhY6plHxMU3YZB3r0GM4lVSMb3sVT4er/
-	PYPwHPRrqfzqmqTsZrK8euBD1MOqce4=
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=H9604o3tho3VpSktFR8ojzuyrIpXysJ73eb6Zglc0S4=;
+	b=Eiht8KomQmltw8ZdgHjc2qr5u8f11fxnCSq9p7MrfyTU2gsS3PcGtrAEGz8JxjOQ7KTPet
+	TGmVVZAyxt4WJbTo1aQzgfl06VHmA2B90BpRkmx9edatx7EM4Vnj3+ANq82e+OdbytHcwD
+	kZtX9dpbtex6axM3eQVzuuB089GJaEo=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-500-I3koaM27P56WUIaBwM4hpg-1; Fri, 14 Apr 2023 09:32:56 -0400
-X-MC-Unique: I3koaM27P56WUIaBwM4hpg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-501-cZ6O5ztCPd-0y9YJFnbCDw-1; Fri, 14 Apr 2023 14:14:59 -0400
+X-MC-Unique: cZ6O5ztCPd-0y9YJFnbCDw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DA72F855304;
-	Fri, 14 Apr 2023 13:32:54 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1763EC16028;
-	Fri, 14 Apr 2023 13:32:51 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6F7B8185A792;
+	Fri, 14 Apr 2023 18:14:57 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6A86F1121320;
+	Fri, 14 Apr 2023 18:14:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DCA2119459FC;
-	Fri, 14 Apr 2023 13:32:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AB23D194658C;
+	Fri, 14 Apr 2023 18:14:53 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C217C1946A7F
- for <dm-devel@listman.corp.redhat.com>; Fri, 14 Apr 2023 13:32:49 +0000 (UTC)
+ ESMTP id 7527E1946589
+ for <dm-devel@listman.corp.redhat.com>; Fri, 14 Apr 2023 18:14:52 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 508D6492C14; Fri, 14 Apr 2023 13:32:49 +0000 (UTC)
+ id 1E90840C6E71; Fri, 14 Apr 2023 18:14:52 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 495D0492C13
- for <dm-devel@redhat.com>; Fri, 14 Apr 2023 13:32:49 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2D4E8858F0E
- for <dm-devel@redhat.com>; Fri, 14 Apr 2023 13:32:49 +0000 (UTC)
-Received: from mail-yw1-f198.google.com (mail-yw1-f198.google.com
- [209.85.128.198]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1785340C6E70
+ for <dm-devel@redhat.com>; Fri, 14 Apr 2023 18:14:52 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F031F101A531
+ for <dm-devel@redhat.com>; Fri, 14 Apr 2023 18:14:51 +0000 (UTC)
+Received: from mail-qv1-f48.google.com (mail-qv1-f48.google.com
+ [209.85.219.48]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-403-_6O2GzqGMryccZFCohQqyw-1; Fri, 14 Apr 2023 09:32:43 -0400
-X-MC-Unique: _6O2GzqGMryccZFCohQqyw-1
-Received: by mail-yw1-f198.google.com with SMTP id
- 00721157ae682-54f69fb5cafso125490507b3.12
- for <dm-devel@redhat.com>; Fri, 14 Apr 2023 06:32:43 -0700 (PDT)
+ us-mta-608-uN5N8VKkP6ioEdL7O1AWdQ-1; Fri, 14 Apr 2023 14:14:50 -0400
+X-MC-Unique: uN5N8VKkP6ioEdL7O1AWdQ-1
+Received: by mail-qv1-f48.google.com with SMTP id e9so14113399qvv.2
+ for <dm-devel@redhat.com>; Fri, 14 Apr 2023 11:14:50 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1681479163; x=1684071163;
- h=cc:to:subject:message-id:date:from:in-reply-to:references
- :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
- :reply-to;
- bh=qiZ6xGR1+shMcUKHKrXEqZ3GxAVuvJO4tkdbPJ4Qa+w=;
- b=Px/77314GZP+2e1cP9NuJfW8Ea2Ypj6ZPnPVsfSKXipwNP3y4VOR8LyYn3ZFlDRyR6
- R6eqsLP/R1PXWKHOcBdFBfCZFzNfU215Jgs4SHP4HTaXDMzfuZdhvaYSjJ2Huk+phwm2
- nZ/mfcO5XxL+rrPpR1bd7dQB0QxHYSuVAOKz5U/Nk4LMZtVKOSa8yn6U0xCs/S1l9ec0
- 01PvJtAeNeTJXG2/QEu8/QoglFqeUpJXllvBzoggbK44AjLWtrkaQlOFkX2LNatcgf9M
- hEp8JNSFmRWM+QTL3S12JkuKohjqIjJ3cWjZyraMfxtxXql+vBafclG3OPJRfrCx8Hlx
- MfZA==
-X-Gm-Message-State: AAQBX9dcIkIf+GQzGxB/9a8J721kAkRAScbQFVHAiuT7dfq3mNOh766V
- GcYD8tBeHOTgkv/wQt1LQyrtcKFgINxZhYAVd2wbmJoLd6yPxwpHYEEL0ggY7UG1HupLNMDhurj
- kTqXg+Y35VubKYpKQbyfnf4hZc8osrJY=
-X-Received: by 2002:a25:cfce:0:b0:b8f:54f5:89ff with SMTP id
- f197-20020a25cfce000000b00b8f54f589ffmr3744491ybg.11.1681479162845; 
- Fri, 14 Apr 2023 06:32:42 -0700 (PDT)
-X-Google-Smtp-Source: AKy350bc0jucjLxOaDncmJ2lqlh+3OIbcT2yz5fth7/Iif+VdlRfMwHulrdYoGLUdQMY6pR2KJk+TPKOj5F4Zd80U0g=
-X-Received: by 2002:a25:cfce:0:b0:b8f:54f5:89ff with SMTP id
- f197-20020a25cfce000000b00b8f54f589ffmr3744476ybg.11.1681479162580; Fri, 14
- Apr 2023 06:32:42 -0700 (PDT)
-MIME-Version: 1.0
+ d=1e100.net; s=20221208; t=1681496090; x=1684088090;
+ h=in-reply-to:content-transfer-encoding:content-disposition
+ :mime-version:references:message-id:subject:cc:to:from:date
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=7nJQ/Y9J49ZegPKB8YDx6kUTeaR5VGKNsyTpo7amzJY=;
+ b=EIpZ3Als0QS2ZxifiKysUQqG9Y2MrKIn7MlLWA3FG0hgSOUhRWeOKFD+rKZef90oLB
+ cafNHV7vM9QtSZzuyyv3A7SpXf0bVI1esRWGZDpXPTygu+WGJZfaK5W8ENjMca0AO4k9
+ /Lxlsk1kGjA2xlx6sTxZWEsLauicA8azrQCVHDPgD5H1LhsJQkWy3V4H1LOudhe8CADA
+ 5dX5N/nhssgNBcuy9FykYMECHPl4KE1lWVlC+liuTZXnnuvbWAGwDlPbF9bNA6R+34Xb
+ tfu5I9y+GAZ3f/ILkYVCRjcXZSsf+Wg8oYNk4Dmv0ESIuIhmNmWUd8POi99kbb84YS0e
+ e8SA==
+X-Gm-Message-State: AAQBX9c1f3M5pXzp6dca/ohBrNZU+vp7ZK0y43r/3EAY84bHhsoE7FJW
+ 6algcncUsH1WBZ6OgpM60YcVvqY=
+X-Google-Smtp-Source: AKy350aBWPFHkYsTqcbjhT+BLekXSdnuSITWMCofPdO8r8eSxwXlme3SBrswbw26osXgHeiptCRusA==
+X-Received: by 2002:ad4:5baf:0:b0:5ef:50ea:2914 with SMTP id
+ 15-20020ad45baf000000b005ef50ea2914mr4886152qvq.22.1681496090079; 
+ Fri, 14 Apr 2023 11:14:50 -0700 (PDT)
+Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
+ [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
+ fb9-20020ad44f09000000b005e9a1409458sm1277586qvb.71.2023.04.14.11.14.49
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Fri, 14 Apr 2023 11:14:49 -0700 (PDT)
+Date: Fri, 14 Apr 2023 14:14:48 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Sarthak Kukreti <sarthakkukreti@chromium.org>,
+ Joe Thornber <thornber@redhat.com>
+Message-ID: <ZDmYGO7zPqu5y0HW@redhat.com>
 References: <20221229071647.437095-1-sarthakkukreti@chromium.org>
  <20230414000219.92640-1-sarthakkukreti@chromium.org>
  <20230414000219.92640-3-sarthakkukreti@chromium.org>
-In-Reply-To: <20230414000219.92640-3-sarthakkukreti@chromium.org>
-From: Joe Thornber <thornber@redhat.com>
-Date: Fri, 14 Apr 2023 14:32:31 +0100
-Message-ID: <CAJ0trDbyqoKEDN4kzcdn+vWhx+hk6pTM4ndf-E02f3uT9YZ3Uw@mail.gmail.com>
-To: Sarthak Kukreti <sarthakkukreti@chromium.org>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+ <CAJ0trDbyqoKEDN4kzcdn+vWhx+hk6pTM4ndf-E02f3uT9YZ3Uw@mail.gmail.com>
+MIME-Version: 1.0
+In-Reply-To: <CAJ0trDbyqoKEDN4kzcdn+vWhx+hk6pTM4ndf-E02f3uT9YZ3Uw@mail.gmail.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 Subject: Re: [dm-devel] [PATCH v3 2/3] dm: Add support for block provisioning
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -100,115 +104,81 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
  Theodore Ts'o <tytso@mit.edu>, "Michael S. Tsirkin" <mst@redhat.com>,
  sarthakkukreti@google.com, "Darrick J. Wong" <djwong@kernel.org>,
  Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
- Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- Andreas Dilger <adilger.kernel@dilger.ca>, Daniil Lunev <dlunev@google.com>,
- Stefan Hajnoczi <stefanha@redhat.com>, linux-fsdevel@vger.kernel.org,
- linux-ext4@vger.kernel.org, Brian Foster <bfoster@redhat.com>,
- Alasdair Kergon <agk@redhat.com>
+ linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>,
+ dm-devel@redhat.com, Andreas Dilger <adilger.kernel@dilger.ca>,
+ Daniil Lunev <dlunev@google.com>, Stefan Hajnoczi <stefanha@redhat.com>,
+ linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
+ Brian Foster <bfoster@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============7792129218009807477=="
-
---===============7792129218009807477==
-Content-Type: multipart/alternative; boundary="0000000000002ee75605f94be0ad"
-
---0000000000002ee75605f94be0ad
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-On Fri, Apr 14, 2023 at 7:52=E2=80=AFAM Sarthak Kukreti <sarthakkukreti@chr=
-omium.org>
-wrote:
-
-> Add support to dm devices for REQ_OP_PROVISION. The default mode
-> is to passthrough the request to the underlying device, if it
-> supports it. dm-thinpool uses the provision request to provision
-> blocks for a dm-thin device. dm-thinpool currently does not
-> pass through REQ_OP_PROVISION to underlying devices.
->
-> For shared blocks, provision requests will break sharing and copy the
-> contents of the entire block.
->
-
-I see two issue with this patch:
-
-i) You use get_bio_block_range() to see which blocks the provision bio
-covers.  But this function only returns
-complete blocks that are covered (it was designed for discard).  Unlike
-discard, provision is not a hint so those
-partial blocks will need to be provisioned too.
-
-ii) You are setting off multiple dm_thin_new_mapping operations in flight
-at once.  Each of these receives
-the same virt_cell and frees it  when it completes.  So I think we have
-multiple frees occuring?  In addition you also
-release the cell yourself in process_provision_cell().  Fixing this is not
-trivial, you'll need to reference count the cells,
-and aggregate the mapping operation results.
-
-I think it would be far easier to restrict the size of the provision bio to
-be no bigger than one thinp block (as we do for normal io).  This way dm
-core can split the bios, chain the child bios rather than having to
-reference count mapping ops, and aggregate the results.
-
-- Joe
-
---0000000000002ee75605f94be0ad
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr"><div dir=3D"ltr"><br></div><br><div class=3D"gmail_quote">=
-<div dir=3D"ltr" class=3D"gmail_attr">On Fri, Apr 14, 2023 at 7:52=E2=80=AF=
-AM Sarthak Kukreti &lt;<a href=3D"mailto:sarthakkukreti@chromium.org">sarth=
-akkukreti@chromium.org</a>&gt; wrote:<br></div><blockquote class=3D"gmail_q=
-uote" style=3D"margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,2=
-04);padding-left:1ex">Add support to dm devices for REQ_OP_PROVISION. The d=
-efault mode<br>
-is to passthrough the request to the underlying device, if it<br>
-supports it. dm-thinpool uses the provision request to provision<br>
-blocks for a dm-thin device. dm-thinpool currently does not<br>
-pass through REQ_OP_PROVISION to underlying devices.<br>
-<br>
-For shared blocks, provision requests will break sharing and copy the<br>
-contents of the entire block.<br></blockquote><div><br></div><div>I see two=
- issue with this patch:</div><div><br></div><div>i) You use get_bio_block_r=
-ange() to see which blocks the provision bio covers.=C2=A0 But this functio=
-n only returns</div><div>complete blocks that are covered (it was designed =
-for discard).=C2=A0 Unlike discard, provision is not a hint so those</div><=
-div>partial blocks will need to be provisioned too.</div><div><br></div><di=
-v>ii) You are setting off multiple dm_thin_new_mapping operations in flight=
- at once.=C2=A0 Each of these receives</div><div>the same virt_cell and fre=
-es it=C2=A0 when it completes.=C2=A0 So I think we have multiple frees occu=
-ring?=C2=A0 In addition you also</div><div>release the cell yourself in pro=
-cess_provision_cell().=C2=A0 Fixing this is not trivial, you&#39;ll need to=
- reference count the cells,</div><div>and aggregate the mapping operation r=
-esults.</div><div><br></div><div>I think it would be far easier to restrict=
- the size of the provision bio to be no bigger than one thinp block (as we =
-do for normal io).=C2=A0 This way dm core can split the bios, chain the chi=
-ld bios rather than having to reference count mapping ops, and aggregate th=
-e results.</div><div><br></div><div>- Joe</div><div><br></div><div><br></di=
-v><div><br></div><div>=C2=A0</div></div></div>
-
---0000000000002ee75605f94be0ad--
-
---===============7792129218009807477==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: kernel.org
 Content-Disposition: inline
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
-
---===============7792129218009807477==--
+T24gRnJpLCBBcHIgMTQgMjAyMyBhdCAgOTozMlAgLTA0MDAsCkpvZSBUaG9ybmJlciA8dGhvcm5i
+ZXJAcmVkaGF0LmNvbT4gd3JvdGU6Cgo+IE9uIEZyaSwgQXByIDE0LCAyMDIzIGF0IDc6NTLigK9B
+TSBTYXJ0aGFrIEt1a3JldGkgPHNhcnRoYWtrdWtyZXRpQGNocm9taXVtLm9yZz4KPiB3cm90ZToK
+PiAKPiA+IEFkZCBzdXBwb3J0IHRvIGRtIGRldmljZXMgZm9yIFJFUV9PUF9QUk9WSVNJT04uIFRo
+ZSBkZWZhdWx0IG1vZGUKPiA+IGlzIHRvIHBhc3N0aHJvdWdoIHRoZSByZXF1ZXN0IHRvIHRoZSB1
+bmRlcmx5aW5nIGRldmljZSwgaWYgaXQKPiA+IHN1cHBvcnRzIGl0LiBkbS10aGlucG9vbCB1c2Vz
+IHRoZSBwcm92aXNpb24gcmVxdWVzdCB0byBwcm92aXNpb24KPiA+IGJsb2NrcyBmb3IgYSBkbS10
+aGluIGRldmljZS4gZG0tdGhpbnBvb2wgY3VycmVudGx5IGRvZXMgbm90Cj4gPiBwYXNzIHRocm91
+Z2ggUkVRX09QX1BST1ZJU0lPTiB0byB1bmRlcmx5aW5nIGRldmljZXMuCj4gPgo+ID4gRm9yIHNo
+YXJlZCBibG9ja3MsIHByb3Zpc2lvbiByZXF1ZXN0cyB3aWxsIGJyZWFrIHNoYXJpbmcgYW5kIGNv
+cHkgdGhlCj4gPiBjb250ZW50cyBvZiB0aGUgZW50aXJlIGJsb2NrLgo+ID4KPiAKPiBJIHNlZSB0
+d28gaXNzdWUgd2l0aCB0aGlzIHBhdGNoOgo+IAo+IGkpIFlvdSB1c2UgZ2V0X2Jpb19ibG9ja19y
+YW5nZSgpIHRvIHNlZSB3aGljaCBibG9ja3MgdGhlIHByb3Zpc2lvbiBiaW8KPiBjb3ZlcnMuICBC
+dXQgdGhpcyBmdW5jdGlvbiBvbmx5IHJldHVybnMKPiBjb21wbGV0ZSBibG9ja3MgdGhhdCBhcmUg
+Y292ZXJlZCAoaXQgd2FzIGRlc2lnbmVkIGZvciBkaXNjYXJkKS4gIFVubGlrZQo+IGRpc2NhcmQs
+IHByb3Zpc2lvbiBpcyBub3QgYSBoaW50IHNvIHRob3NlCj4gcGFydGlhbCBibG9ja3Mgd2lsbCBu
+ZWVkIHRvIGJlIHByb3Zpc2lvbmVkIHRvby4KPiAKPiBpaSkgWW91IGFyZSBzZXR0aW5nIG9mZiBt
+dWx0aXBsZSBkbV90aGluX25ld19tYXBwaW5nIG9wZXJhdGlvbnMgaW4gZmxpZ2h0Cj4gYXQgb25j
+ZS4gIEVhY2ggb2YgdGhlc2UgcmVjZWl2ZXMKPiB0aGUgc2FtZSB2aXJ0X2NlbGwgYW5kIGZyZWVz
+IGl0ICB3aGVuIGl0IGNvbXBsZXRlcy4gIFNvIEkgdGhpbmsgd2UgaGF2ZQo+IG11bHRpcGxlIGZy
+ZWVzIG9jY3VyaW5nPyAgSW4gYWRkaXRpb24geW91IGFsc28KPiByZWxlYXNlIHRoZSBjZWxsIHlv
+dXJzZWxmIGluIHByb2Nlc3NfcHJvdmlzaW9uX2NlbGwoKS4gIEZpeGluZyB0aGlzIGlzIG5vdAo+
+IHRyaXZpYWwsIHlvdSdsbCBuZWVkIHRvIHJlZmVyZW5jZSBjb3VudCB0aGUgY2VsbHMsCj4gYW5k
+IGFnZ3JlZ2F0ZSB0aGUgbWFwcGluZyBvcGVyYXRpb24gcmVzdWx0cy4KPiAKPiBJIHRoaW5rIGl0
+IHdvdWxkIGJlIGZhciBlYXNpZXIgdG8gcmVzdHJpY3QgdGhlIHNpemUgb2YgdGhlIHByb3Zpc2lv
+biBiaW8gdG8KPiBiZSBubyBiaWdnZXIgdGhhbiBvbmUgdGhpbnAgYmxvY2sgKGFzIHdlIGRvIGZv
+ciBub3JtYWwgaW8pLiAgVGhpcyB3YXkgZG0KPiBjb3JlIGNhbiBzcGxpdCB0aGUgYmlvcywgY2hh
+aW4gdGhlIGNoaWxkIGJpb3MgcmF0aGVyIHRoYW4gaGF2aW5nIHRvCj4gcmVmZXJlbmNlIGNvdW50
+IG1hcHBpbmcgb3BzLCBhbmQgYWdncmVnYXRlIHRoZSByZXN1bHRzLgoKSSBoYXBwZW5lZCB0byBi
+ZSBsb29raW5nIGF0IGltcGxlbWVudGluZyBXUklURV9aRVJPRVMgc3VwcG9ydCBmb3IgRE0KdGhp
+bnAgeWVzdGVyZGF5IGFuZCByZWFjaGVkIHRoZSBzYW1lIGNvbmNsdXNzaW9uIHJlbGF0aXZlIHRv
+IGl0IChib3RoCm9mIEpvZSdzIHBvaW50cyBhYm92ZSwgZm9yIG1lICJpaSkiIHdhczogdGhlIGRt
+LWJpby1wcmlzb24tdjEgcmFuZ2UKbG9ja2luZyB3ZSBkbyBmb3IgZGlzY2FyZHMgbmVlZHMgd29y
+ayBmb3Igb3RoZXIgdHlwZXMgb2YgSU8pLgoKV2UgY2FuIHdvcmsgdG8gbWFrZSBSRVFfT1BfUFJP
+VklTSU9OIHNwYW5uaW5nIG11bHRpcGxlIHRoaW5wIGJsb2Nrcwpwb3NzaWJsZSBhcyBmb2xsb3ct
+b24gb3B0aW1pemF0aW9uOyBidXQgaW4gdGhlIG5lYXItdGVybSBETSB0aGlucApuZWVkcyBSRVFf
+T1BfUFJPVklTSU9OIHRvIGJlIHNwbGl0IG9uIGEgdGhpbnAgYmxvY2sgYm91bmRhcnkuCgpUaGlz
+IHNwbGl0dGluZyBjYW4gYmUgYXNzaXN0ZWQgYnkgYmxvY2sgY29yZSBpbiB0ZXJtcyBvZiBhIG5l
+dwoncHJvdmlzaW9uX2dyYW51bGFyaXR5JyAod2hpY2ggZm9yIHRoaW5wLCBpdCdkIGJlIHNldCB0
+byB0aGUgdGhpbnAKYmxvY2tzaXplKS4gIEJ1dCBJIGRvbid0IGtub3cgdGhhdCB3ZSBuZWVkIHRv
+IGdvIHRoYXQgZmFyIChJJ20KdGhpbmtpbmcgaXRzIGZpbmUgdG8gaGF2ZSBETSBkbyB0aGUgc3Bs
+aXR0aW5nIGl0IG5lZWRzIGFuZCBvbmx5CmVsZXZhdGUgcmVsYXRlZCBjb2RlIHRvIGJsb2NrIGNv
+cmUgaWYvd2hlbiBuZWVkZWQgaW4gdGhlIGZ1dHVyZSkuCgpETSBjb3JlIGNhbiB0YWtlIG9uIGNv
+bmRpdGlvbmFsbHkgaW1wb3NpbmcgaXRzIG1heF9pb19sZW4oKSB0byBoYW5kbGUKc3BsaXR0aW5n
+IFJFUV9PUF9QUk9WSVNJT04gYXMgbmVlZGVkIG9uIGEgcGVyLXRhcmdldCBiYXNpcy4gVGhpcyBE
+TQpjb3JlIGNvbW1pdCBJJ3ZlIHN0YWdlZCBmb3IgNi40IG1ha2VzIHRoaXMgcXVpdGUgYSBzaW1w
+bGUgY2hhbmdlOgpodHRwczovL2dpdC5rZXJuZWwub3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dp
+dC9kZXZpY2UtbWFwcGVyL2xpbnV4LWRtLmdpdC9jb21taXQvP2g9ZG0tNi40JmlkPTEzZjZmYWNm
+M2ZhZWVkMzRjYTM4MWFlZjRjOWIxNTNjN2FlZDM5NzIKClNvIHBsZWFzZSByZWJhc2Ugb24gbGlu
+dXgtZG0uZ2l0J3MgZG0tNi40IGJyYW5jaCwgYW5kIGZvcgpSRVFfT1BfUFJPVklTSU9OIGRtLmM6
+X19wcm9jZXNzX2Fibm9ybWFsX2lvKCkgeW91J2QgYWRkIHRoaXM6CgoJY2FzZSBSRVFfT1BfUFJP
+VklTSU9OOgogICAgICAgICAgICAgICAgbnVtX2Jpb3MgPSB0aS0+bnVtX3Byb3Zpc2lvbl9iaW9z
+OwogICAgICAgICAgICAgICAgaWYgKHRpLT5tYXhfcHJvdmlzaW9uX2dyYW51bGFyaXR5KQogICAg
+ICAgICAgICAgICAgICAgICAgICBtYXhfZ3JhbnVsYXJpdHkgPSBsaW1pdHMtPm1heF9wcm92aXNp
+b25fc2VjdG9yczsKICAgICAgICAgICAgICAgIGJyZWFrOwoKSSdsbCByZXBseSBhZ2FpbiBsYXRl
+ciB0b2RheSAodG8gcGF0Y2ggMidzIGFjdHVhbCBjb2RlIGNoYW5nZXMpLApiZWNhdXNlIEkgY2F1
+Z2h0IGF0IGxlYXN0IG9uZSBvdGhlciB0aGluZyB3b3J0aCBtZW50aW9uaW5nLgoKVGhhbmtzLApN
+aWtlCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
+L2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
 
