@@ -4,82 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2C0ADC77B7A
-	for <dm-devel@archiver.kernel.org>; Mon, 17 Apr 2023 18:06:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id BCDD2C77B72
+	for <dm-devel@archiver.kernel.org>; Mon, 17 Apr 2023 19:12:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1681754776;
+	s=mimecast20190719; t=1681758726;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=P9chVNwG0G3+AyarvZtZceAtpGtpgv6c5TlC8nx1TTQ=;
-	b=HKwt5KWHsy4yOwJ69ZKm7IyAUAUrtLNUrtABtnVq1SVCJXkLR6F1v88XBW3e6NB2ky6jrK
-	1APLVA67kFqmrUilPv7T96HRIqlok/VYRqTpZtWMeQ76Q1fY/84UJpGTobmi/GMfT3WYY8
-	MJ6N2B543de+5tH+3/HwVtm9jeanZhU=
+	bh=ZgQE/yqA0OHBGJc906uYLqYBS3UrN5PNWQl7gtjKAoU=;
+	b=YQMvdZLs9eDVqYV4hKZ8Mhv4ErekH2qouzFd3IcZY59F3Vcv0A0uimYh2oQuZgp6ap8Zem
+	8NK7dtyt4OYZSW710HyDBwkZfNkC0JL9C3niGc4wE+eBGFWlrUo9OwnG1Ky3cbSM29StlP
+	swtQ4XBmrokEyv6SovfjNQK14kXAxcg=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-572-VBc8fnnGONCsRYncptQqXw-1; Mon, 17 Apr 2023 14:06:14 -0400
-X-MC-Unique: VBc8fnnGONCsRYncptQqXw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-204-p8PdmIndNmCMVZ5C5cnk1w-1; Mon, 17 Apr 2023 15:12:03 -0400
+X-MC-Unique: p8PdmIndNmCMVZ5C5cnk1w-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 605E488B7A1;
-	Mon, 17 Apr 2023 18:06:12 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 13DD4185A790;
+	Mon, 17 Apr 2023 19:12:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0FDA351FF;
-	Mon, 17 Apr 2023 18:06:12 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7095BC15BA0;
+	Mon, 17 Apr 2023 19:11:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C8AD9194658D;
-	Mon, 17 Apr 2023 18:06:11 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 463BC194658C;
+	Mon, 17 Apr 2023 19:11:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id EA6451946587
- for <dm-devel@listman.corp.redhat.com>; Mon, 17 Apr 2023 18:06:10 +0000 (UTC)
+ ESMTP id 6B2D41946587
+ for <dm-devel@listman.corp.redhat.com>; Mon, 17 Apr 2023 19:11:58 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D8D532A68; Mon, 17 Apr 2023 18:06:10 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D1EB647CD0
- for <dm-devel@redhat.com>; Mon, 17 Apr 2023 18:06:10 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B393238173C4
- for <dm-devel@redhat.com>; Mon, 17 Apr 2023 18:06:10 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-635-ukzYfyPoNAezvegZUFROQA-1; Mon,
- 17 Apr 2023 14:06:07 -0400
-X-MC-Unique: ukzYfyPoNAezvegZUFROQA-1
-Received: by linux.microsoft.com (Postfix, from userid 1052)
- id 627AA21C1E42; Mon, 17 Apr 2023 11:06:05 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 627AA21C1E42
-Date: Mon, 17 Apr 2023 11:06:05 -0700
-From: Fan Wu <wufan@linux.microsoft.com>
-To: Paul Moore <paul@paul-moore.com>
-Message-ID: <20230417180605.GA402@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
-References: <1675119451-23180-1-git-send-email-wufan@linux.microsoft.com>
- <1675119451-23180-6-git-send-email-wufan@linux.microsoft.com>
- <CAHC9VhRa+NwKzLfQBmHfMgUp6_d5soQG7JBq-Vn=MUeUAt4tuQ@mail.gmail.com>
- <20230410191035.GB18827@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
- <CAHC9VhQDvWDshaZvJrHmjcwyHFxv9oYTN9bn0xiTtFZQRp+GPg@mail.gmail.com>
- <20230412233606.GA16658@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
- <CAHC9VhTs3Njfg=1baQ6=58rPLBmyB3cW0R-MfAaEcRF-jAaYBw@mail.gmail.com>
+ id 5BAD9492B0D; Mon, 17 Apr 2023 19:11:58 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 4B7C1492B0C;
+ Mon, 17 Apr 2023 19:11:58 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 33HJBwvl020263; Mon, 17 Apr 2023 15:11:58 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 33HJBvCi020259; Mon, 17 Apr 2023 15:11:57 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Mon, 17 Apr 2023 15:11:57 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Matthew Wilcox <willy@infradead.org>, Jens Axboe <axboe@kernel.dk>,
+ Christoph Hellwig <hch@lst.de>, "Darrick J. Wong" <djwong@kernel.org>
+Message-ID: <alpine.LRH.2.21.2304171433370.17217@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
 MIME-Version: 1.0
-In-Reply-To: <CAHC9VhTs3Njfg=1baQ6=58rPLBmyB3cW0R-MfAaEcRF-jAaYBw@mail.gmail.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: Re: [dm-devel] [RFC PATCH v9 05/16] ipe: add userspace interface
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+Subject: [dm-devel] [PATCH] block: fix a crash when bio_for_each_folio_all
+ iterates over an empty bio
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,68 +74,77 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, tytso@mit.edu,
- dm-devel@redhat.com, corbet@lwn.net, roberto.sassu@huawei.com,
- Deven Bowers <deven.desai@linux.microsoft.com>, linux-doc@vger.kernel.org,
- snitzer@kernel.org, jmorris@namei.org, zohar@linux.ibm.com,
- linux-kernel@vger.kernel.org, ebiggers@kernel.org,
- linux-security-module@vger.kernel.org, linux-audit@redhat.com,
- eparis@redhat.com, linux-fscrypt@vger.kernel.org,
- linux-integrity@vger.kernel.org, agk@redhat.com, serge@hallyn.com
+Cc: linux-block@vger.kernel.org, Mike Snitzer <msnitzer@redhat.com>,
+ dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: linux.microsoft.com
-Content-Disposition: inline
+X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Apr 13, 2023 at 02:45:07PM -0400, Paul Moore wrote:
-> On Wed, Apr 12, 2023 at 7:36???PM Fan Wu <wufan@linux.microsoft.com> wrote:
-> > On Tue, Apr 11, 2023 at 05:45:41PM -0400, Paul Moore wrote:
-> > > On Mon, Apr 10, 2023 at 3:10???PM Fan Wu <wufan@linux.microsoft.com> wrote:
-> > > > On Thu, Mar 02, 2023 at 02:04:42PM -0500, Paul Moore wrote:
-> > > > > On Mon, Jan 30, 2023 at 5:58???PM Fan Wu <wufan@linux.microsoft.com> wrote:
-> 
-> ...
-> 
-> > > I guess this does make me wonder about keeping a non-active policy
-> > > loaded in the kernel, what purpose does that serve?
-> > >
-> >
-> > The non-active policy doesn't serve anything unless it is activated. User can
-> > even delete a policy if that is no longer needed. Non-active is just the default
-> > state when a new policy is loaded.
-> >
-> > If IPE supports namespace, there is another use case where different containers
-> > can select different policies as the active policy from among multiple loaded
-> > policies. Deven has presented a demo of this during LSS 2021. But this goes
-> > beyond the scope of this version.
-> 
-> Do you plan to add namespace support at some point in the
-> not-too-distant future?  If so, I'm okay with keeping support for
-> multiple policies, but if you think you're only going to support one
-> active policy at a time, it might be better to remove support for
-> multiple (inactive) policies.
-> 
-> -- 
-> paul-moore.com
+If we use bio_for_each_folio_all on an empty bio, it will access the first
+bio vector unconditionally (it is uninitialized) and it may crash
+depending on the uninitialized data.
 
-Another benefit of having multiple policies is that it provides isolation
-between different policies. For instance, if we have two policies named
-"policy_a" and "policy_b," we can ensure that only team a can update "policy_a,"
-and only team b can update "policy_b." This way, both teams can update
-their policy without affecting others. However, if there is only one policy
-in the system, both teams will have to operate on the same policy, making it
-less manageable.
+This patch fixes it by checking the parameter "i" against "bio->bi_vcnt"
+and returning NULL fi->folio if it is out of range.
 
-Besides, removing multiple (inactive) policies support will
-render the policy_name field meaningless, and we should only audit the policy
-hash. I am fine if we decide to go for the single policy option.
+The patch also drops the test "if (fi->_i + 1 < bio->bi_vcnt)" from
+bio_next_folio because the same condition is already being checked in
+bio_first_folio.
 
--Fan
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
+---
+ include/linux/bio.h |   24 +++++++++++++-----------
+ 1 file changed, 13 insertions(+), 11 deletions(-)
+
+Index: linux-2.6/include/linux/bio.h
+===================================================================
+--- linux-2.6.orig/include/linux/bio.h
++++ linux-2.6/include/linux/bio.h
+@@ -279,15 +279,19 @@ struct folio_iter {
+ static inline void bio_first_folio(struct folio_iter *fi, struct bio *bio,
+ 				   int i)
+ {
+-	struct bio_vec *bvec = bio_first_bvec_all(bio) + i;
++	if (i < bio->bi_vcnt) {
++		struct bio_vec *bvec = bio_first_bvec_all(bio) + i;
+ 
+-	fi->folio = page_folio(bvec->bv_page);
+-	fi->offset = bvec->bv_offset +
+-			PAGE_SIZE * (bvec->bv_page - &fi->folio->page);
+-	fi->_seg_count = bvec->bv_len;
+-	fi->length = min(folio_size(fi->folio) - fi->offset, fi->_seg_count);
+-	fi->_next = folio_next(fi->folio);
+-	fi->_i = i;
++		fi->folio = page_folio(bvec->bv_page);
++		fi->offset = bvec->bv_offset +
++				PAGE_SIZE * (bvec->bv_page - &fi->folio->page);
++		fi->_seg_count = bvec->bv_len;
++		fi->length = min(folio_size(fi->folio) - fi->offset, fi->_seg_count);
++		fi->_next = folio_next(fi->folio);
++		fi->_i = i;
++	} else {
++		fi->folio = NULL;
++	}
+ }
+ 
+ static inline void bio_next_folio(struct folio_iter *fi, struct bio *bio)
+@@ -298,10 +302,8 @@ static inline void bio_next_folio(struct
+ 		fi->offset = 0;
+ 		fi->length = min(folio_size(fi->folio), fi->_seg_count);
+ 		fi->_next = folio_next(fi->folio);
+-	} else if (fi->_i + 1 < bio->bi_vcnt) {
+-		bio_first_folio(fi, bio, fi->_i + 1);
+ 	} else {
+-		fi->folio = NULL;
++		bio_first_folio(fi, bio, fi->_i + 1);
+ 	}
+ }
+ 
 --
 dm-devel mailing list
 dm-devel@redhat.com
