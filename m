@@ -4,93 +4,99 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E3FEFC77B7A
-	for <dm-devel@archiver.kernel.org>; Mon, 17 Apr 2023 16:20:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D6B4FC77B7A
+	for <dm-devel@archiver.kernel.org>; Mon, 17 Apr 2023 17:33:59 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1681748438;
+	s=mimecast20190719; t=1681752838;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Jw9LZq5nJh6TTygpUku1cDBhss1Bjic0eFXrXyDUHKA=;
-	b=iRSu0thawNIZnR4sr2OLaFBjD0ZXTcfI8X/W6haxj/ROypPIde5WQtDMPfDGIbXZxX202S
-	n616PGpNhl7/HU1iP4P2G25Q+fMYnRJCZLbqIOXSQ21irLePTiztCB0WaqVOSZV2BSfXEU
-	bRDQ242pRanDKVAcfc6eF3Pbyn/Tjr8=
+	bh=EmeNgffwgxWUnUA99iY6u9aoEGbv9TRlhqiED4a1f5A=;
+	b=GUUNJ6ozzTohp/+hNuR2Xn+ZMKccWKFGZtfQvn/ovlTzWjZKxMkn9w0yjghx696xUmpaIg
+	5dF7gi6rq3GGOMrI2XcQHSW7mD2CD4ef9aQ0izYYsudjeSVgAiFiK4f4+vOIa3YPJXFGlg
+	C8gjhzea/KOxXvK6EvS6qah4gJBUWnU=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-611-1mPOzlAYP6aaLiCf3bjnZw-1; Mon, 17 Apr 2023 12:20:37 -0400
-X-MC-Unique: 1mPOzlAYP6aaLiCf3bjnZw-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-547-AnAeE527OlKysCDwFGqkDA-1; Mon, 17 Apr 2023 13:33:57 -0400
+X-MC-Unique: AnAeE527OlKysCDwFGqkDA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5A871101A531;
-	Mon, 17 Apr 2023 16:20:35 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3E13D492B03;
-	Mon, 17 Apr 2023 16:20:33 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8A8BA85A588;
+	Mon, 17 Apr 2023 17:33:55 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4845B40C6E6E;
+	Mon, 17 Apr 2023 17:33:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D22DE194658D;
-	Mon, 17 Apr 2023 16:20:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 08551194658C;
+	Mon, 17 Apr 2023 17:33:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0B101194658C
- for <dm-devel@listman.corp.redhat.com>; Mon, 17 Apr 2023 16:20:32 +0000 (UTC)
+ ESMTP id 0A3EA1946587
+ for <dm-devel@listman.corp.redhat.com>; Mon, 17 Apr 2023 17:33:46 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A9BB4C15BA0; Mon, 17 Apr 2023 16:20:31 +0000 (UTC)
+ id 72C862166B29; Mon, 17 Apr 2023 17:33:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A1C06C15E7F
- for <dm-devel@redhat.com>; Mon, 17 Apr 2023 16:20:31 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 86CE93C0F19A
- for <dm-devel@redhat.com>; Mon, 17 Apr 2023 16:20:31 +0000 (UTC)
-Received: from mail-qv1-f44.google.com (mail-qv1-f44.google.com
- [209.85.219.44]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6B3662166B26
+ for <dm-devel@redhat.com>; Mon, 17 Apr 2023 17:33:46 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4B4B48314EB
+ for <dm-devel@redhat.com>; Mon, 17 Apr 2023 17:33:46 +0000 (UTC)
+Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
+ [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-54-u0c2MhhWPyartoxW_Q32ww-1; Mon, 17 Apr 2023 12:20:27 -0400
-X-MC-Unique: u0c2MhhWPyartoxW_Q32ww-1
-Received: by mail-qv1-f44.google.com with SMTP id m16so14354839qvx.9
- for <dm-devel@redhat.com>; Mon, 17 Apr 2023 09:20:27 -0700 (PDT)
+ us-mta-423-V7FrTO0JOGGI5ZSj25bgmQ-1; Mon, 17 Apr 2023 13:33:45 -0400
+X-MC-Unique: V7FrTO0JOGGI5ZSj25bgmQ-1
+Received: by mail-qv1-f71.google.com with SMTP id
+ qf10-20020a0562144b8a00b005e7c60f8fe0so13073279qvb.6
+ for <dm-devel@redhat.com>; Mon, 17 Apr 2023 10:33:45 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1681748427; x=1684340427;
+ d=1e100.net; s=20221208; t=1681752824; x=1684344824;
  h=in-reply-to:content-disposition:mime-version:references:message-id
  :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
  :message-id:reply-to;
- bh=Ub7tIRwtkL3uHAk4AECnTw80MqWTDLFc81n+6HzSTcQ=;
- b=GeppgNTy2CGgowpbzzTwJFVOG29TE/fPzSHJE8haw+b48iznoqx4dNVS+6DbUNa4Ky
- a6sFaQXrNvj51v4aVOdsvl4u2j3Evd0G30fUC1QpPyu40Ia3eA3EKAvSVtyX8UEbgpFw
- EtQYmR5s1TF7+B9A6eN8ERnAxNeOW7MnXPX9hcWIp8uaLFO+suefIp5P0wHWwzu3hPTc
- z3OvpYKPfOXAH0/svHLiC2pnu48cySbO6WfXHPWJnIeNWHqQdQFJEPRQrVEGX/YvAgWA
- QhFa3PYLjeswAKqfR/52E/Z1NZNzZZMtNaPoaJ8bC9w2ORK2vfkXtqLRttlH2TYSZbzv
- 1NdA==
-X-Gm-Message-State: AAQBX9fM18jujovyTbNwr3CZRYiP+F1qM15zSO9UZNMQsMvzLm+ByjQg
- Or/nWBAfhnrqrVBJejhAPGhdp3XqjMI6I0sFKo0k
-X-Google-Smtp-Source: AKy350Zif85wmja9YUeBTmaCZVN0DyRBM/DP2PS9ZycOFsNEmNYPlKv/tw8AZBWEGdX0pkmFsSASJg==
-X-Received: by 2002:a05:6214:c45:b0:5ef:6b9a:6948 with SMTP id
- r5-20020a0562140c4500b005ef6b9a6948mr6838354qvj.17.1681748427225; 
- Mon, 17 Apr 2023 09:20:27 -0700 (PDT)
-Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
- [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- b8-20020ac812c8000000b003e4dab0776esm3391128qtj.40.2023.04.17.09.20.26
+ bh=Jm85SSVaopQAxnU3x7Lrot1DU+GlbD9SOLxgFW9cj5k=;
+ b=WinSFafDBrc0A7cPeP5BVm2p1o6azJVhnPA9IdWdpaiFe3G3XtPwe5JVCiLt3UANQR
+ Plx7LDtxSMJD4GsEsDhA2APq+SLk4JLDrrTlbdXTwC6kkaijcvJU6D8YHjIbXkhR5HmU
+ J8FEMkE4lIWlfzG8e3uU2kePNW2hwnjxXlsvDsd4irsnYxvNfx+K9XauJmGMyPVU2YvB
+ qAGcTyGDtwyLq1qJ5YNvFJp5044hEdLAK0Qtxn4FZ9NcRwp7/ea8r+lDVvyeJ3AT8DUU
+ YUENb5MZMYliHRoARiH4icDF7LoSzNOFNgaMSsC8ZrkPzlcWWtbmxaPtMCsyt47+DSfL
+ g2fA==
+X-Gm-Message-State: AAQBX9eX1ptYJdQh2ntUvUGT4pq+qihvLfO19mWEwQFycHLJDkm7zF/I
+ 069mKdPRZ+VjWipuDc6AMf9m+blvhBEOSwR3Yit5jtoHHU7LVboJNky2pzzcelcYA18sXUeM/Po
+ igkyCFJZlLKHo10s=
+X-Received: by 2002:a05:622a:1746:b0:3ec:e29f:6f4f with SMTP id
+ l6-20020a05622a174600b003ece29f6f4fmr13735681qtk.33.1681752824524; 
+ Mon, 17 Apr 2023 10:33:44 -0700 (PDT)
+X-Google-Smtp-Source: AKy350ZygDANXtkSDESQaT+/nlutXw5EifsNXMDbt5vvWnxrF6WrCl5NaVCG+oOnpCy/E82arPOA9Q==
+X-Received: by 2002:a05:622a:1746:b0:3ec:e29f:6f4f with SMTP id
+ l6-20020a05622a174600b003ece29f6f4fmr13735633qtk.33.1681752824192; 
+ Mon, 17 Apr 2023 10:33:44 -0700 (PDT)
+Received: from bfoster (c-24-61-119-116.hsd1.ma.comcast.net. [24.61.119.116])
+ by smtp.gmail.com with ESMTPSA id
+ p24-20020a05620a22f800b0074a2467f541sm3337263qki.35.2023.04.17.10.33.43
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 17 Apr 2023 09:20:26 -0700 (PDT)
-Date: Mon, 17 Apr 2023 12:20:25 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Zheng Zhang <zheng.zhang@email.ucr.edu>
-Message-ID: <ZD1xyZxb3rHot8PV@redhat.com>
-References: <CAC_GQSoYOYfO84RCwO86mgkNoyBZoLkS_5w0Btu3w9qVP7Q1vw@mail.gmail.com>
+ Mon, 17 Apr 2023 10:33:43 -0700 (PDT)
+Date: Mon, 17 Apr 2023 13:35:46 -0400
+From: Brian Foster <bfoster@redhat.com>
+To: Sarthak Kukreti <sarthakkukreti@chromium.org>
+Message-ID: <ZD2DcvyHdNmkdwr1@bfoster>
+References: <20221229071647.437095-1-sarthakkukreti@chromium.org>
+ <20230414000219.92640-1-sarthakkukreti@chromium.org>
+ <20230414000219.92640-2-sarthakkukreti@chromium.org>
 MIME-Version: 1.0
-In-Reply-To: <CAC_GQSoYOYfO84RCwO86mgkNoyBZoLkS_5w0Btu3w9qVP7Q1vw@mail.gmail.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: Re: [dm-devel] Possible deadlock detected in Linux 6.2.0 in
- dm_get_inactive_table (dm-ioctl.c)
+In-Reply-To: <20230414000219.92640-2-sarthakkukreti@chromium.org>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH v3 1/3] block: Introduce provisioning
+ primitives
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -102,109 +108,196 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, mpatocka@redhat.com, linux-kernel@vger.kernel.org,
- agk@redhat.com
+Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
+ Theodore Ts'o <tytso@mit.edu>, "Michael S. Tsirkin" <mst@redhat.com>,
+ sarthakkukreti@google.com, "Darrick J. Wong" <djwong@kernel.org>,
+ Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
+ Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Andreas Dilger <adilger.kernel@dilger.ca>, Daniil Lunev <dlunev@google.com>,
+ Stefan Hajnoczi <stefanha@redhat.com>, linux-fsdevel@vger.kernel.org,
+ linux-ext4@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
+X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Apr 17 2023 at  1:08P -0400,
-Zheng Zhang <zheng.zhang@email.ucr.edu> wrote:
-
-> Alasdir, Mike, and to whom it may concern:
+On Thu, Apr 13, 2023 at 05:02:17PM -0700, Sarthak Kukreti wrote:
+> Introduce block request REQ_OP_PROVISION. The intent of this request
+> is to request underlying storage to preallocate disk space for the given
+> block range. Block devices that support this capability will export
+> a provision limit within their request queues.
 > 
-> Hello! We have found a bug in the Linux kernel version 6.2.0 by syzkaller
-> with our own templates. The bug causes a possible recursive locking
-> scenario, resulting in a deadlock.
-> The key trace is as follows (the complete trace is in the attached report
-> file):
+> This patch also adds the capability to call fallocate() in mode 0
+> on block devices, which will send REQ_OP_PROVISION to the block
+> device for the specified range,
 > 
->  down_read+0x9d/0x450 kernel/locking/rwsem.c:1509
+> Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
+> ---
+>  block/blk-core.c          |  5 ++++
+>  block/blk-lib.c           | 53 +++++++++++++++++++++++++++++++++++++++
+>  block/blk-merge.c         | 18 +++++++++++++
+>  block/blk-settings.c      | 19 ++++++++++++++
+>  block/blk-sysfs.c         |  8 ++++++
+>  block/bounce.c            |  1 +
+>  block/fops.c              | 14 ++++++++---
+>  include/linux/bio.h       |  6 +++--
+>  include/linux/blk_types.h |  5 +++-
+>  include/linux/blkdev.h    | 16 ++++++++++++
+>  10 files changed, 138 insertions(+), 7 deletions(-)
 > 
->  dm_get_inactive_table+0x2b/0xc0 drivers/md/dm-ioctl.c:773
+...
+> diff --git a/block/fops.c b/block/fops.c
+> index d2e6be4e3d1c..f82da2fb8af0 100644
+> --- a/block/fops.c
+> +++ b/block/fops.c
+> @@ -625,7 +625,7 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
+>  	int error;
+>  
+>  	/* Fail if we don't recognize the flags. */
+> -	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
+> +	if (mode != 0 && mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
+>  		return -EOPNOTSUPP;
+>  
+>  	/* Don't go off the end of the device. */
+> @@ -649,11 +649,17 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
+>  	filemap_invalidate_lock(inode->i_mapping);
+>  
+>  	/* Invalidate the page cache, including dirty pages. */
+> -	error = truncate_bdev_range(bdev, file->f_mode, start, end);
+> -	if (error)
+> -		goto fail;
+> +	if (mode != 0) {
+> +		error = truncate_bdev_range(bdev, file->f_mode, start, end);
+> +		if (error)
+> +			goto fail;
+> +	}
+>  
+>  	switch (mode) {
+> +	case 0:
+> +		error = blkdev_issue_provision(bdev, start >> SECTOR_SHIFT,
+> +					       len >> SECTOR_SHIFT, GFP_KERNEL);
+> +		break;
+
+I would think we'd want to support any combination of
+FALLOC_FL_KEEP_SIZE and FALLOC_FL_UNSHARE_RANGE..? All of the other
+commands support the former modifier, for one. It also looks like if
+somebody attempts to invoke with mode == FALLOC_FL_KEEP_SIZE, even with
+the current upstream code that would perform the bdev truncate before
+returning -EOPNOTSUPP. That seems like a bit of an unfortunate side
+effect to me.
+
+WRT to unshare, if the PROVISION request is always going to imply an
+unshare (which seems reasonable to me), there's probably no reason to
+-EOPNOTSUPP if a caller explicitly passes UNSHARE_RANGE.
+
+Brian
+
+>  	case FALLOC_FL_ZERO_RANGE:
+>  	case FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE:
+>  		error = blkdev_issue_zeroout(bdev, start >> SECTOR_SHIFT,
+> diff --git a/include/linux/bio.h b/include/linux/bio.h
+> index d766be7152e1..9820b3b039f2 100644
+> --- a/include/linux/bio.h
+> +++ b/include/linux/bio.h
+> @@ -57,7 +57,8 @@ static inline bool bio_has_data(struct bio *bio)
+>  	    bio->bi_iter.bi_size &&
+>  	    bio_op(bio) != REQ_OP_DISCARD &&
+>  	    bio_op(bio) != REQ_OP_SECURE_ERASE &&
+> -	    bio_op(bio) != REQ_OP_WRITE_ZEROES)
+> +	    bio_op(bio) != REQ_OP_WRITE_ZEROES &&
+> +	    bio_op(bio) != REQ_OP_PROVISION)
+>  		return true;
+>  
+>  	return false;
+> @@ -67,7 +68,8 @@ static inline bool bio_no_advance_iter(const struct bio *bio)
+>  {
+>  	return bio_op(bio) == REQ_OP_DISCARD ||
+>  	       bio_op(bio) == REQ_OP_SECURE_ERASE ||
+> -	       bio_op(bio) == REQ_OP_WRITE_ZEROES;
+> +	       bio_op(bio) == REQ_OP_WRITE_ZEROES ||
+> +	       bio_op(bio) == REQ_OP_PROVISION;
+>  }
+>  
+>  static inline void *bio_data(struct bio *bio)
+> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+> index 99be590f952f..27bdf88f541c 100644
+> --- a/include/linux/blk_types.h
+> +++ b/include/linux/blk_types.h
+> @@ -385,7 +385,10 @@ enum req_op {
+>  	REQ_OP_DRV_IN		= (__force blk_opf_t)34,
+>  	REQ_OP_DRV_OUT		= (__force blk_opf_t)35,
+>  
+> -	REQ_OP_LAST		= (__force blk_opf_t)36,
+> +	/* request device to provision block */
+> +	REQ_OP_PROVISION        = (__force blk_opf_t)37,
+> +
+> +	REQ_OP_LAST		= (__force blk_opf_t)38,
+>  };
+>  
+>  enum req_flag_bits {
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index 941304f17492..239e2f418b6e 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -303,6 +303,7 @@ struct queue_limits {
+>  	unsigned int		discard_granularity;
+>  	unsigned int		discard_alignment;
+>  	unsigned int		zone_write_granularity;
+> +	unsigned int		max_provision_sectors;
+>  
+>  	unsigned short		max_segments;
+>  	unsigned short		max_integrity_segments;
+> @@ -921,6 +922,8 @@ extern void blk_queue_max_discard_sectors(struct request_queue *q,
+>  		unsigned int max_discard_sectors);
+>  extern void blk_queue_max_write_zeroes_sectors(struct request_queue *q,
+>  		unsigned int max_write_same_sectors);
+> +extern void blk_queue_max_provision_sectors(struct request_queue *q,
+> +		unsigned int max_provision_sectors);
+>  extern void blk_queue_logical_block_size(struct request_queue *, unsigned int);
+>  extern void blk_queue_max_zone_append_sectors(struct request_queue *q,
+>  		unsigned int max_zone_append_sectors);
+> @@ -1060,6 +1063,9 @@ int __blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+>  int blkdev_issue_secure_erase(struct block_device *bdev, sector_t sector,
+>  		sector_t nr_sects, gfp_t gfp);
+>  
+> +extern int blkdev_issue_provision(struct block_device *bdev, sector_t sector,
+> +		sector_t nr_sects, gfp_t gfp_mask);
+> +
+>  #define BLKDEV_ZERO_NOUNMAP	(1 << 0)  /* do not free blocks */
+>  #define BLKDEV_ZERO_NOFALLBACK	(1 << 1)  /* don't write explicit zeroes */
+>  
+> @@ -1139,6 +1145,11 @@ static inline unsigned short queue_max_discard_segments(const struct request_que
+>  	return q->limits.max_discard_segments;
+>  }
+>  
+> +static inline unsigned short queue_max_provision_sectors(const struct request_queue *q)
+> +{
+> +	return q->limits.max_provision_sectors;
+> +}
+> +
+>  static inline unsigned int queue_max_segment_size(const struct request_queue *q)
+>  {
+>  	return q->limits.max_segment_size;
+> @@ -1281,6 +1292,11 @@ static inline bool bdev_nowait(struct block_device *bdev)
+>  	return test_bit(QUEUE_FLAG_NOWAIT, &bdev_get_queue(bdev)->queue_flags);
+>  }
+>  
+> +static inline unsigned int bdev_max_provision_sectors(struct block_device *bdev)
+> +{
+> +	return bdev_get_queue(bdev)->limits.max_provision_sectors;
+> +}
+> +
+>  static inline enum blk_zoned_model bdev_zoned_model(struct block_device *bdev)
+>  {
+>  	return blk_queue_zoned_model(bdev_get_queue(bdev));
+> -- 
+> 2.40.0.634.g4ca3ef3211-goog
 > 
->  __dev_status+0x4fd/0x7c0 drivers/md/dm-ioctl.c:844
->  table_clear+0x197/0x280 drivers/md/dm-ioctl.c:1537
-> 
-> In table_clear, it acquires a *write lock*
-> https://elixir.bootlin.com/linux/v6.2/source/drivers/md/dm-ioctl.c#L1520
-> down_write(&_hash_lock);
-> 
-> Then before the lock is released at L1539, there is a path shown above:
-> table_clear -> __dev_status -> dm_get_inactive_table ->  down_read
-> https://elixir.bootlin.com/linux/v6.2/source/drivers/md/dm-ioctl.c#L773
-> down_read(&_hash_lock);
-> It tries to acquire* the same read lock* again, resulting in the deadlock
-> problem
-> 
-> Attached is the report, log, and reproducers generated by syzkaller
-> Please let me know if there is any additional information that I can
-> provide to help debug this issue.
-> Thanks!
-
-Thanks for the report, I've staged this fix:
-
-From: Mike Snitzer <snitzer@kernel.org>
-Subject: [PATCH] dm ioctl: fix nested locking in table_clear() to remove
- deadlock concern
-
-syzkaller found the following problematic rwsem locking (with write
-lock already held):
-
- down_read+0x9d/0x450 kernel/locking/rwsem.c:1509
- dm_get_inactive_table+0x2b/0xc0 drivers/md/dm-ioctl.c:773
- __dev_status+0x4fd/0x7c0 drivers/md/dm-ioctl.c:844
- table_clear+0x197/0x280 drivers/md/dm-ioctl.c:1537
-
-In table_clear, it first acquires a write lock
-https://elixir.bootlin.com/linux/v6.2/source/drivers/md/dm-ioctl.c#L1520
-down_write(&_hash_lock);
-
-Then before the lock is released at L1539, there is a path shown above:
-table_clear -> __dev_status -> dm_get_inactive_table ->  down_read
-https://elixir.bootlin.com/linux/v6.2/source/drivers/md/dm-ioctl.c#L773
-down_read(&_hash_lock);
-
-It tries to acquire the same read lock again, resulting in the deadlock
-problem.
-
-Fix this by moving table_clear()'s __dev_status() call to after its
-up_write(&_hash_lock);
-
-Cc: stable@vger.kernel.org
-Reported-by: Zheng Zhang <zheng.zhang@email.ucr.edu>
-Signed-off-by: Mike Snitzer <snitzer@kernel.org>
----
- drivers/md/dm-ioctl.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 50a1259294d1..7d5c9c582ed2 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1556,11 +1556,12 @@ static int table_clear(struct file *filp, struct dm_ioctl *param, size_t param_s
- 		has_new_map = true;
- 	}
- 
--	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
--
--	__dev_status(hc->md, param);
- 	md = hc->md;
- 	up_write(&_hash_lock);
-+
-+	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
-+	__dev_status(md, param);
-+
- 	if (old_map) {
- 		dm_sync_table(md);
- 		dm_table_destroy(old_map);
--- 
-2.40.0
 
 --
 dm-devel mailing list
