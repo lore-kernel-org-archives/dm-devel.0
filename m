@@ -4,88 +4,93 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DEA98C77B72
-	for <dm-devel@archiver.kernel.org>; Fri, 14 Apr 2023 23:12:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E3FEFC77B7A
+	for <dm-devel@archiver.kernel.org>; Mon, 17 Apr 2023 16:20:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1681513936;
-	h=from:from:sender:sender:reply-to:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:mime-version:mime-version:
-	 content-type:content-type:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=lIifh4fmlEMFpS0SSkh7XGxaPiWF2U7KKffOYO7/9Ns=;
-	b=hxuL8MyKA5hF4qTJdxwAw4+gOBFGWOU4olVgZ07K+Yti83Ss/6lQ0k9AC7QEtKxHG4PfCE
-	KhF9ZugGo8RjPMiSoXx0oEE2EN8CcOV9D8hQOD5Y1F6HoV0txP0IvlAr/4FH39304PA6Ty
-	dmr4rzSFZR9UGbEXC1Syyo0gfSojo2s=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	s=mimecast20190719; t=1681748438;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=Jw9LZq5nJh6TTygpUku1cDBhss1Bjic0eFXrXyDUHKA=;
+	b=iRSu0thawNIZnR4sr2OLaFBjD0ZXTcfI8X/W6haxj/ROypPIde5WQtDMPfDGIbXZxX202S
+	n616PGpNhl7/HU1iP4P2G25Q+fMYnRJCZLbqIOXSQ21irLePTiztCB0WaqVOSZV2BSfXEU
+	bRDQ242pRanDKVAcfc6eF3Pbyn/Tjr8=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-217-lRYxIRAbOwurC-O1m0oMaQ-1; Fri, 14 Apr 2023 19:12:13 -0400
-X-MC-Unique: lRYxIRAbOwurC-O1m0oMaQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-611-1mPOzlAYP6aaLiCf3bjnZw-1; Mon, 17 Apr 2023 12:20:37 -0400
+X-MC-Unique: 1mPOzlAYP6aaLiCf3bjnZw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8400F29AA2EE;
-	Fri, 14 Apr 2023 23:12:11 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5A871101A531;
+	Mon, 17 Apr 2023 16:20:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1B5872027043;
-	Fri, 14 Apr 2023 23:12:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 3E13D492B03;
+	Mon, 17 Apr 2023 16:20:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EC9F1194658C;
-	Fri, 14 Apr 2023 23:12:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D22DE194658D;
+	Mon, 17 Apr 2023 16:20:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id F25331946589
- for <dm-devel@listman.corp.redhat.com>; Fri, 14 Apr 2023 23:12:08 +0000 (UTC)
+ ESMTP id 0B101194658C
+ for <dm-devel@listman.corp.redhat.com>; Mon, 17 Apr 2023 16:20:32 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D650740B3EDA; Fri, 14 Apr 2023 23:12:08 +0000 (UTC)
+ id A9BB4C15BA0; Mon, 17 Apr 2023 16:20:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id CE92640B3ED9
- for <dm-devel@redhat.com>; Fri, 14 Apr 2023 23:12:08 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A1C06C15E7F
+ for <dm-devel@redhat.com>; Mon, 17 Apr 2023 16:20:31 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B2FB3811E7C
- for <dm-devel@redhat.com>; Fri, 14 Apr 2023 23:12:08 +0000 (UTC)
-Received: from mail-pg1-f174.google.com (mail-pg1-f174.google.com
- [209.85.215.174]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 86CE93C0F19A
+ for <dm-devel@redhat.com>; Mon, 17 Apr 2023 16:20:31 +0000 (UTC)
+Received: from mail-qv1-f44.google.com (mail-qv1-f44.google.com
+ [209.85.219.44]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-642-HfDzuGh9OFuAw8-vfT7xrA-1; Fri, 14 Apr 2023 19:12:06 -0400
-X-MC-Unique: HfDzuGh9OFuAw8-vfT7xrA-1
-Received: by mail-pg1-f174.google.com with SMTP id h193so9515982pgc.6
- for <dm-devel@redhat.com>; Fri, 14 Apr 2023 16:12:06 -0700 (PDT)
+ us-mta-54-u0c2MhhWPyartoxW_Q32ww-1; Mon, 17 Apr 2023 12:20:27 -0400
+X-MC-Unique: u0c2MhhWPyartoxW_Q32ww-1
+Received: by mail-qv1-f44.google.com with SMTP id m16so14354839qvx.9
+ for <dm-devel@redhat.com>; Mon, 17 Apr 2023 09:20:27 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1681513925; x=1684105925;
- h=to:subject:message-id:date:from:reply-to:mime-version
- :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=rcwvZAG6CsByMDLpTlCsYYylLznzB8II2IFyK5NIkms=;
- b=Sb/4kh5jWrAy1HVKSh3TVZzBGFGbITKjdpMGfHmRVoiPuLtRoeiyJ0DDaqoAuRUU7R
- mfmSjMxxemCcdSxrwJnUoEMifS/GqE8dKk8MWX46XeZPmz6uvdTkGP7vStxzahI/qAj+
- s0sLlfM100htzSDXfi/YZc/xZyIt3rR3RUsegAuogIXKC8/VnXHZnR54SsqU6X2oI/YS
- oDUV8/rBbtZT1QpDPc7ljgUQUvml+YVedLjtMD4kZq070gdJ/klSfhdTjL1z/RAt0Rn0
- vixqEIwfnm16cbRBRcElqAEPbbriJcsX+nXuEDV4ycB3v0bwq10xMcOzuxPDkECvQteE
- 5Brw==
-X-Gm-Message-State: AAQBX9frwusNb37GbQ4auEXy8qzx+nR+CdW0C1m+OjB94bhEU1bOZIu7
- Q910x5Q6nn3wIBcy5XvnFBgUL2itNYT9W6gE4I5WG/z1hNBBJg==
-X-Google-Smtp-Source: AKy350bkDgDl7Ja76DQJN34ZPro8ZbewhA1n3VrrMwAZ0fr4Y238OY3G7rSUowUGYcEwmeJcOnNG51FAjhMhKnO0hgg=
-X-Received: by 2002:a65:55cd:0:b0:514:3d3d:da5a with SMTP id
- k13-20020a6555cd000000b005143d3dda5amr1268219pgs.3.1681513925097; Fri, 14 Apr
- 2023 16:12:05 -0700 (PDT)
+ d=1e100.net; s=20221208; t=1681748427; x=1684340427;
+ h=in-reply-to:content-disposition:mime-version:references:message-id
+ :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+ :message-id:reply-to;
+ bh=Ub7tIRwtkL3uHAk4AECnTw80MqWTDLFc81n+6HzSTcQ=;
+ b=GeppgNTy2CGgowpbzzTwJFVOG29TE/fPzSHJE8haw+b48iznoqx4dNVS+6DbUNa4Ky
+ a6sFaQXrNvj51v4aVOdsvl4u2j3Evd0G30fUC1QpPyu40Ia3eA3EKAvSVtyX8UEbgpFw
+ EtQYmR5s1TF7+B9A6eN8ERnAxNeOW7MnXPX9hcWIp8uaLFO+suefIp5P0wHWwzu3hPTc
+ z3OvpYKPfOXAH0/svHLiC2pnu48cySbO6WfXHPWJnIeNWHqQdQFJEPRQrVEGX/YvAgWA
+ QhFa3PYLjeswAKqfR/52E/Z1NZNzZZMtNaPoaJ8bC9w2ORK2vfkXtqLRttlH2TYSZbzv
+ 1NdA==
+X-Gm-Message-State: AAQBX9fM18jujovyTbNwr3CZRYiP+F1qM15zSO9UZNMQsMvzLm+ByjQg
+ Or/nWBAfhnrqrVBJejhAPGhdp3XqjMI6I0sFKo0k
+X-Google-Smtp-Source: AKy350Zif85wmja9YUeBTmaCZVN0DyRBM/DP2PS9ZycOFsNEmNYPlKv/tw8AZBWEGdX0pkmFsSASJg==
+X-Received: by 2002:a05:6214:c45:b0:5ef:6b9a:6948 with SMTP id
+ r5-20020a0562140c4500b005ef6b9a6948mr6838354qvj.17.1681748427225; 
+ Mon, 17 Apr 2023 09:20:27 -0700 (PDT)
+Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
+ [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
+ b8-20020ac812c8000000b003e4dab0776esm3391128qtj.40.2023.04.17.09.20.26
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Mon, 17 Apr 2023 09:20:26 -0700 (PDT)
+Date: Mon, 17 Apr 2023 12:20:25 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Zheng Zhang <zheng.zhang@email.ucr.edu>
+Message-ID: <ZD1xyZxb3rHot8PV@redhat.com>
+References: <CAC_GQSoYOYfO84RCwO86mgkNoyBZoLkS_5w0Btu3w9qVP7Q1vw@mail.gmail.com>
 MIME-Version: 1.0
-From: Mike Stramba <mikestramba@gmail.com>
-Date: Fri, 14 Apr 2023 19:11:53 -0400
-Message-ID: <CAA5vqSa9Byg4p_WSfuPu9hVaBRhWsnPG-wBGEjR3w7MD2Lr8_g@mail.gmail.com>
-To: dm-devel@redhat.com
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] device mapper on qemu / Ubuntu 9.4.0-1ubuntu1~20.04.1
+In-Reply-To: <CAC_GQSoYOYfO84RCwO86mgkNoyBZoLkS_5w0Btu3w9qVP7Q1vw@mail.gmail.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: Re: [dm-devel] Possible deadlock detected in Linux 6.2.0 in
+ dm_get_inactive_table (dm-ioctl.c)
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -97,132 +102,112 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Reply-To: mikestramba@gmail.com
+Cc: dm-devel@redhat.com, mpatocka@redhat.com, linux-kernel@vger.kernel.org,
+ agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: gmail.com
-Content-Type: multipart/mixed; boundary="===============7057088281565381345=="
-
---===============7057088281565381345==
-Content-Type: multipart/alternative; boundary="00000000000030bec105f953f822"
-
---00000000000030bec105f953f822
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-Greetings all
-
-I am trying to run zipl on:
-
- Linux version 5.4.0-125-generic (buildd@bos02-s390x-015) (gcc version
-9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.1)) #141-Ubuntu SMP
-
-which is running under qemu (version 6.2.0 (Debian 1:6.2+dfsg-2ubuntu6.6)
-
-Is running  zipl_helper.device-mapper under qemu possible ?
-
-If it is, here are the details :
-
----------------------
-sudo zipl
-
-I am receiving the following errors
-:
-Using config file '/etc/zipl.conf'
-Building bootmap in '/mnt/vdb/boot'
-Adding IPL section 'ubuntu' (default)
-Run /lib/s390-tools/zipl_helper.device-mapper /mnt/vdb/boot
-Error: Could not retrieve device-mapper information for device 'vdb'
-<<<<<<<<<<<<<<<<<<<<<<<<<<<
-Error: Could not add image file '/home/mike/kernel/hello-kernel': Script
-could not determine target parameters
-
-
------------- etc/zipl.conf
-[defaultboot]
-default=3Dubuntu
-
-[ubuntu]
-target=3D/mnt/vdb/boot
-image=3D/home/mike/kernel/hello-kernel
-ramdisk=3D /home/mike/kernel/initrd.img
-
--------------  lsblk ----------------
-NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
-loop0                       7:0    0 53.4M  1 loop /snap/core20/1613
-loop1                       7:1    0 54.6M  1 loop /snap/core20/1853
-loop2                       7:2    0   59M  1 loop /snap/lxd/22755
-loop3                       7:3    0 46.4M  1 loop /snap/snapd/18599
-loop4                       7:4    0 77.8M  1 loop /snap/lxd/24063
-vda                       252:0    0    5G  0 disk
-=E2=94=9C=E2=94=80vda1                    252:1    0  1.8G  0 part
-=E2=94=94=E2=94=80vda2                    252:2    0  3.3G  0 part
-  =E2=94=94=E2=94=80ubuntu--vg-ubuntu--lv 253:0    0  3.3G  0 lvm  /
-
-vdb                       252:16   0  100M  0 disk /mnt/vdb <<<<<<<<<<<<<<<=
-<
-
---00000000000030bec105f953f822
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-<div dir=3D"ltr">Greetings all<div><br></div><div>I am trying to run zipl=
-=C2=A0on:</div><div><br></div><div>=C2=A0Linux version 5.4.0-125-generic (b=
-uildd@bos02-s390x-015) (gcc version 9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.1)) =
-#141-Ubuntu SMP=C2=A0</div><div><br></div><div>which is running under qemu =
-(version=C2=A06.2.0 (Debian 1:6.2+dfsg-2ubuntu6.6)</div><div><br></div><div=
->Is running=C2=A0 zipl_helper.device-mapper=C2=A0under qemu possible ?</div=
-><div><br></div><div>If it is, here are the details :</div><div><br></div><=
-div>---------------------</div><div>sudo zipl</div><div><br></div><div>I am=
- receiving the following errors=C2=A0</div><div>:</div><div>Using config fi=
-le &#39;/etc/zipl.conf&#39;<br>Building bootmap in &#39;/mnt/vdb/boot&#39;<=
-br>Adding IPL section &#39;ubuntu&#39; (default)<br>Run /lib/s390-tools/zip=
-l_helper.device-mapper /mnt/vdb/boot<br>Error: Could not retrieve device-ma=
-pper information for device &#39;vdb&#39; &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&=
-lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;=
-<br>Error: Could not add image file &#39;/home/mike/kernel/hello-kernel&#39=
-;: Script could not determine target parameters<br></div><div><br></div><di=
-v><br></div><div>------------ etc/zipl.conf</div><div>[defaultboot]<br>defa=
-ult=3Dubuntu<br><br>[ubuntu]<br>target=3D/mnt/vdb/boot<br>image=3D/home/mik=
-e/kernel/hello-kernel<br>ramdisk=3D /home/mike/kernel/initrd.img<br></div><=
-div><br></div><div>-------------=C2=A0 lsblk ----------------<br></div><div=
->NAME =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0MAJ:MIN RM =C2=A0SIZE RO TYPE MOUNTPOINT<br>loop0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 7:0 =C2=A0 =C2=
-=A00 53.4M =C2=A01 loop /snap/core20/1613<br>loop1 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 7:1 =C2=A0 =C2=A00 54.=
-6M =C2=A01 loop /snap/core20/1853<br>loop2 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 7:2 =C2=A0 =C2=A00 =C2=A0 59M=
- =C2=A01 loop /snap/lxd/22755<br>loop3 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 7:3 =C2=A0 =C2=A00 46.4M =C2=A01 =
-loop /snap/snapd/18599<br>loop4 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 7:4 =C2=A0 =C2=A00 77.8M =C2=A01 loop /s=
-nap/lxd/24063<br>vda =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 252:0 =C2=A0 =C2=A00 =C2=A0 =C2=A05G =C2=A00 disk<=
-br>=E2=94=9C=E2=94=80vda1 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0252:1 =C2=A0 =C2=A00 =C2=A01.8G =C2=A00 part<br>=E2=94=
-=94=E2=94=80vda2 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0252:2 =C2=A0 =C2=A00 =C2=A03.3G =C2=A00 part<br>=C2=A0 =E2=94=
-=94=E2=94=80ubuntu--vg-ubuntu--lv 253:0 =C2=A0 =C2=A00 =C2=A03.3G =C2=A00 l=
-vm =C2=A0/</div><div><br>vdb =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 252:16 =C2=A0 0 =C2=A0100M =C2=A00 disk /mn=
-t/vdb &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;<br><=
-/div><div><br></div><div><br></div></div>
-
---00000000000030bec105f953f822--
-
---===============7057088281565381345==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: kernel.org
 Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+On Mon, Apr 17 2023 at  1:08P -0400,
+Zheng Zhang <zheng.zhang@email.ucr.edu> wrote:
+
+> Alasdir, Mike, and to whom it may concern:
+> 
+> Hello! We have found a bug in the Linux kernel version 6.2.0 by syzkaller
+> with our own templates. The bug causes a possible recursive locking
+> scenario, resulting in a deadlock.
+> The key trace is as follows (the complete trace is in the attached report
+> file):
+> 
+>  down_read+0x9d/0x450 kernel/locking/rwsem.c:1509
+> 
+>  dm_get_inactive_table+0x2b/0xc0 drivers/md/dm-ioctl.c:773
+> 
+>  __dev_status+0x4fd/0x7c0 drivers/md/dm-ioctl.c:844
+>  table_clear+0x197/0x280 drivers/md/dm-ioctl.c:1537
+> 
+> In table_clear, it acquires a *write lock*
+> https://elixir.bootlin.com/linux/v6.2/source/drivers/md/dm-ioctl.c#L1520
+> down_write(&_hash_lock);
+> 
+> Then before the lock is released at L1539, there is a path shown above:
+> table_clear -> __dev_status -> dm_get_inactive_table ->  down_read
+> https://elixir.bootlin.com/linux/v6.2/source/drivers/md/dm-ioctl.c#L773
+> down_read(&_hash_lock);
+> It tries to acquire* the same read lock* again, resulting in the deadlock
+> problem
+> 
+> Attached is the report, log, and reproducers generated by syzkaller
+> Please let me know if there is any additional information that I can
+> provide to help debug this issue.
+> Thanks!
+
+Thanks for the report, I've staged this fix:
+
+From: Mike Snitzer <snitzer@kernel.org>
+Subject: [PATCH] dm ioctl: fix nested locking in table_clear() to remove
+ deadlock concern
+
+syzkaller found the following problematic rwsem locking (with write
+lock already held):
+
+ down_read+0x9d/0x450 kernel/locking/rwsem.c:1509
+ dm_get_inactive_table+0x2b/0xc0 drivers/md/dm-ioctl.c:773
+ __dev_status+0x4fd/0x7c0 drivers/md/dm-ioctl.c:844
+ table_clear+0x197/0x280 drivers/md/dm-ioctl.c:1537
+
+In table_clear, it first acquires a write lock
+https://elixir.bootlin.com/linux/v6.2/source/drivers/md/dm-ioctl.c#L1520
+down_write(&_hash_lock);
+
+Then before the lock is released at L1539, there is a path shown above:
+table_clear -> __dev_status -> dm_get_inactive_table ->  down_read
+https://elixir.bootlin.com/linux/v6.2/source/drivers/md/dm-ioctl.c#L773
+down_read(&_hash_lock);
+
+It tries to acquire the same read lock again, resulting in the deadlock
+problem.
+
+Fix this by moving table_clear()'s __dev_status() call to after its
+up_write(&_hash_lock);
+
+Cc: stable@vger.kernel.org
+Reported-by: Zheng Zhang <zheng.zhang@email.ucr.edu>
+Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+---
+ drivers/md/dm-ioctl.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index 50a1259294d1..7d5c9c582ed2 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1556,11 +1556,12 @@ static int table_clear(struct file *filp, struct dm_ioctl *param, size_t param_s
+ 		has_new_map = true;
+ 	}
+ 
+-	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
+-
+-	__dev_status(hc->md, param);
+ 	md = hc->md;
+ 	up_write(&_hash_lock);
++
++	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
++	__dev_status(md, param);
++
+ 	if (old_map) {
+ 		dm_sync_table(md);
+ 		dm_table_destroy(old_map);
+-- 
+2.40.0
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-
---===============7057088281565381345==--
 
