@@ -1,78 +1,88 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 23A69C77B73
-	for <dm-devel@archiver.kernel.org>; Wed, 19 Apr 2023 17:26:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 25310C77B78
+	for <dm-devel@archiver.kernel.org>; Wed, 19 Apr 2023 18:56:20 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1681925208;
+	s=mimecast20190719; t=1681930579;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=yKmadqJ8MUeawo/qsqwe562IFc9a9gccJTNgFTX8l3E=;
-	b=JOxiwUNTlcdXVaZeEu5OBwiC9FSeOOmdn/2mvECjMKszjTOYCr+39Tbngcd2T+Uhmfvw5e
-	dBZF85nyVViRpx3CExgtRFZurHq/MR56kYcmx1cK+qROnixbPXAOMZcwgbTjiEQGidrY96
-	g50tnQZBNX8dIxRVN9A7yiA5mpM+RYQ=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=+nY2kHbJg2qfnfwYVu5MLGGiSkEWTz5txSpVqUM4zCU=;
+	b=h/FYAyZErcvcmogZ7S7rzvgKgq7c4yhjZ5brnfKn2C38/ZsXjKvtCFuV8NzgGdgvVzmBIc
+	x8Qk1o4Wy9JuZyzUlkcSl0YHh89gQER064q7wQMGdX0nZyfjEjzhVJ9MkpxfrKk23Z+HO8
+	vVetfcoKskSTqoaavT0PIBcvZXvoeAM=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-484-tPd-U5QcN6Knhc_VvVoLYg-1; Wed, 19 Apr 2023 13:26:45 -0400
-X-MC-Unique: tPd-U5QcN6Knhc_VvVoLYg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-361-K8Wh-YuPMI60bq3nBkWfhg-1; Wed, 19 Apr 2023 14:56:17 -0400
+X-MC-Unique: K8Wh-YuPMI60bq3nBkWfhg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1AFD41C189A7;
-	Wed, 19 Apr 2023 17:26:43 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DB7C101A556;
+	Wed, 19 Apr 2023 18:56:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 98ABA40BC798;
-	Wed, 19 Apr 2023 17:26:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 35FC140C2064;
+	Wed, 19 Apr 2023 18:56:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5C05A19465B9;
-	Wed, 19 Apr 2023 17:26:41 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 11C2119465B9;
+	Wed, 19 Apr 2023 18:56:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4F49D19465B5
- for <dm-devel@listman.corp.redhat.com>; Wed, 19 Apr 2023 17:26:08 +0000 (UTC)
+ ESMTP id 7E31419465B5
+ for <dm-devel@listman.corp.redhat.com>; Wed, 19 Apr 2023 18:56:13 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3F27D40C201F; Wed, 19 Apr 2023 17:26:08 +0000 (UTC)
+ id 4ED56C16026; Wed, 19 Apr 2023 18:56:13 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 378ED40C2064
- for <dm-devel@redhat.com>; Wed, 19 Apr 2023 17:26:08 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 46D02C16024
+ for <dm-devel@redhat.com>; Wed, 19 Apr 2023 18:56:13 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1BB901C189A7
- for <dm-devel@redhat.com>; Wed, 19 Apr 2023 17:26:08 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-192-_mu-_X4TMmKklm9650SgqQ-1; Wed, 19 Apr 2023 13:26:04 -0400
-X-MC-Unique: _mu-_X4TMmKklm9650SgqQ-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 4B77064053;
- Wed, 19 Apr 2023 17:26:03 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id AD6ABC433EF;
- Wed, 19 Apr 2023 17:26:02 +0000 (UTC)
-Date: Wed, 19 Apr 2023 10:26:02 -0700
-From: "Darrick J. Wong" <djwong@kernel.org>
-To: Mike Snitzer <snitzer@kernel.org>
-Message-ID: <20230419172602.GE360881@frogsfrogsfrogs>
-References: <20230414000219.92640-1-sarthakkukreti@chromium.org>
- <20230418221207.244685-1-sarthakkukreti@chromium.org>
- <20230418221207.244685-2-sarthakkukreti@chromium.org>
- <20230419153611.GE360885@frogsfrogsfrogs>
- <ZEAUHnWqt9cIiJRb@redhat.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2BE96857F81
+ for <dm-devel@redhat.com>; Wed, 19 Apr 2023 18:56:13 +0000 (UTC)
+Received: from mga11.intel.com (mga11.intel.com [192.55.52.93]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-609-T8AYbNQ_MjiGkIjoN4J7CA-1; Wed, 19 Apr 2023 14:56:09 -0400
+X-MC-Unique: T8AYbNQ_MjiGkIjoN4J7CA-1
+X-IronPort-AV: E=McAfee;i="6600,9927,10685"; a="343015580"
+X-IronPort-AV: E=Sophos;i="5.99,210,1677571200"; d="scan'208";a="343015580"
+Received: from fmsmga003.fm.intel.com ([10.253.24.29])
+ by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 19 Apr 2023 11:56:07 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10685"; a="780939661"
+X-IronPort-AV: E=Sophos;i="5.99,210,1677571200"; d="scan'208";a="780939661"
+Received: from lkp-server01.sh.intel.com (HELO b613635ddfff) ([10.239.97.150])
+ by FMSMGA003.fm.intel.com with ESMTP; 19 Apr 2023 11:56:01 -0700
+Received: from kbuild by b613635ddfff with local (Exim 4.96)
+ (envelope-from <lkp@intel.com>) id 1ppCyH-000f74-01;
+ Wed, 19 Apr 2023 18:56:01 +0000
+Date: Thu, 20 Apr 2023 02:55:53 +0800
+From: kernel test robot <lkp@intel.com>
+To: Nitesh Shetty <nj.shetty@samsung.com>, Jens Axboe <axboe@kernel.dk>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@redhat.com, Keith Busch <kbusch@kernel.org>,
+ Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
+ James Smart <james.smart@broadcom.com>,
+ Chaitanya Kulkarni <kch@nvidia.com>,
+ Alexander Viro <viro@zeniv.linux.org.uk>,
+ Christian Brauner <brauner@kernel.org>
+Message-ID: <202304200240.fsLkpzvk-lkp@intel.com>
+References: <20230419114320.13674-7-nj.shetty@samsung.com>
 MIME-Version: 1.0
-In-Reply-To: <ZEAUHnWqt9cIiJRb@redhat.com>
+In-Reply-To: <20230419114320.13674-7-nj.shetty@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -80,9 +90,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH v4 1/4] block: Introduce provisioning
- primitives
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH v10 6/9] nvmet: add copy command support for
+ bdev and file ns
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -94,201 +104,129 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
- Theodore Ts'o <tytso@mit.edu>, Stefan Hajnoczi <stefanha@redhat.com>,
- "Michael S. Tsirkin" <mst@redhat.com>, Jason Wang <jasowang@redhat.com>,
- Bart Van Assche <bvanassche@google.com>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- Andreas Dilger <adilger.kernel@dilger.ca>, Daniil Lunev <dlunev@google.com>,
- Sarthak Kukreti <sarthakkukreti@chromium.org>, linux-fsdevel@vger.kernel.org,
- linux-ext4@vger.kernel.org, Brian Foster <bfoster@redhat.com>,
- Alasdair Kergon <agk@redhat.com>
+Cc: bvanassche@acm.org, joshi.k@samsung.com, gost.dev@samsung.com,
+ anuj20.g@samsung.com, linux-kernel@vger.kernel.org,
+ linux-nvme@lists.infradead.org, ming.lei@redhat.com,
+ linux-block@vger.kernel.org, dlemoal@kernel.org, oe-kbuild-all@lists.linux.dev,
+ linux-fsdevel@vger.kernel.org, nitheshshetty@gmail.com,
+ Nitesh Shetty <nj.shetty@samsung.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
+X-Mimecast-Originator: intel.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Apr 19, 2023 at 12:17:34PM -0400, Mike Snitzer wrote:
-> On Wed, Apr 19 2023 at 11:36P -0400,
-> Darrick J. Wong <djwong@kernel.org> wrote:
-> 
-> > On Tue, Apr 18, 2023 at 03:12:04PM -0700, Sarthak Kukreti wrote:
-> > > Introduce block request REQ_OP_PROVISION. The intent of this request
-> > > is to request underlying storage to preallocate disk space for the given
-> > > block range. Block devices that support this capability will export
-> > > a provision limit within their request queues.
-> > > 
-> > > This patch also adds the capability to call fallocate() in mode 0
-> > > on block devices, which will send REQ_OP_PROVISION to the block
-> > > device for the specified range,
-> > > 
-> > > Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
-> > > ---
-> > >  block/blk-core.c          |  5 ++++
-> > >  block/blk-lib.c           | 53 +++++++++++++++++++++++++++++++++++++++
-> > >  block/blk-merge.c         | 18 +++++++++++++
-> > >  block/blk-settings.c      | 19 ++++++++++++++
-> > >  block/blk-sysfs.c         |  8 ++++++
-> > >  block/bounce.c            |  1 +
-> > >  block/fops.c              | 25 +++++++++++++-----
-> > >  include/linux/bio.h       |  6 +++--
-> > >  include/linux/blk_types.h |  5 +++-
-> > >  include/linux/blkdev.h    | 16 ++++++++++++
-> > >  10 files changed, 147 insertions(+), 9 deletions(-)
-> > > 
-> > 
-> > <cut to the fallocate part; the block/ changes look fine to /me/ at
-> > first glance, but what do I know... ;)>
-> > 
-> > > diff --git a/block/fops.c b/block/fops.c
-> > > index d2e6be4e3d1c..e1775269654a 100644
-> > > --- a/block/fops.c
-> > > +++ b/block/fops.c
-> > > @@ -611,9 +611,13 @@ static ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
-> > >  	return ret;
-> > >  }
-> > >  
-> > > +#define	BLKDEV_FALLOC_FL_TRUNCATE				\
-> > 
-> > At first I thought from this name that you were defining a new truncate
-> > mode for fallocate, then I realized that this is mask for deciding if we
-> > /want/ to truncate the pagecache.
-> > 
-> > #define		BLKDEV_FALLOC_TRUNCATE_MASK ?
-> > 
-> > > +		(FALLOC_FL_PUNCH_HOLE |	FALLOC_FL_ZERO_RANGE |	\
-> > 
-> > Ok, so discarding and writing zeroes truncates the page cache, makes
-> > sense since we're "writing" directly to the block device.
-> > 
-> > > +		 FALLOC_FL_NO_HIDE_STALE)
-> > 
-> > Here things get tricky -- some of the FALLOC_FL mode bits are really an
-> > opcode and cannot be specified together, whereas others select optional
-> > behavior for certain opcodes.
-> > 
-> > IIRC, the mutually exclusive opcodes are:
-> > 
-> > 	PUNCH_HOLE
-> > 	ZERO_RANGE
-> > 	COLLAPSE_RANGE
-> > 	INSERT_RANGE
-> > 	(none of the above, for allocation)
-> > 
-> > and the "variants on a theme are":
-> > 
-> > 	KEEP_SIZE
-> > 	NO_HIDE_STALE
-> > 	UNSHARE_RANGE
-> > 
-> > not all of which are supported by all the opcodes.
-> > 
-> > Does it make sense to truncate the page cache if userspace passes in
-> > mode == NO_HIDE_STALE?  There's currently no defined meaning for this
-> > combination, but I think this means we'll truncate the pagecache before
-> > deciding if we're actually going to issue any commands.
-> > 
-> > I think that's just a bug in the existing code -- it should be
-> > validating that @mode is any of the supported combinations *before*
-> > truncating the pagecache.
-> > 
-> > Otherwise you could have a mkfs program that starts writing new fs
-> > metadata, decides to provision the storage (say for a logging region),
-> > doesn't realize it's running on an old kernel, and then oops the
-> > provision attempt fails but have we now shredded the pagecache and lost
-> > all the writes?
-> 
-> While that just caused me to have an "oh shit, that's crazy" (in a
-> scary way) belly laugh...
+Hi Nitesh,
 
-I just tried this and:
+kernel test robot noticed the following build warnings:
 
-# xfs_io -c 'pwrite -S 0x58 1m 1m' -c fsync -c 'pwrite -S 0x59 1m 4096' -c 'pread -v 1m 64' -c 'falloc 1m 4096' -c 'pread -v 1m 64' /dev/sda
-wrote 1048576/1048576 bytes at offset 1048576
-1 MiB, 256 ops; 0.0013 sec (723.589 MiB/sec and 185238.7844 ops/sec)
-wrote 4096/4096 bytes at offset 1048576
-4 KiB, 1 ops; 0.0000 sec (355.114 MiB/sec and 90909.0909 ops/sec)
-00100000:  59 59 59 59 59 59 59 59 59 59 59 59 59 59 59 59  YYYYYYYYYYYYYYYY
-00100010:  59 59 59 59 59 59 59 59 59 59 59 59 59 59 59 59  YYYYYYYYYYYYYYYY
-00100020:  59 59 59 59 59 59 59 59 59 59 59 59 59 59 59 59  YYYYYYYYYYYYYYYY
-00100030:  59 59 59 59 59 59 59 59 59 59 59 59 59 59 59 59  YYYYYYYYYYYYYYYY
-read 64/64 bytes at offset 1048576
-64.000000 bytes, 1 ops; 0.0000 sec (1.565 MiB/sec and 25641.0256 ops/sec)
-fallocate: Operation not supported
-00100000:  58 58 58 58 58 58 58 58 58 58 58 58 58 58 58 58  XXXXXXXXXXXXXXXX
-00100010:  58 58 58 58 58 58 58 58 58 58 58 58 58 58 58 58  XXXXXXXXXXXXXXXX
-00100020:  58 58 58 58 58 58 58 58 58 58 58 58 58 58 58 58  XXXXXXXXXXXXXXXX
-00100030:  58 58 58 58 58 58 58 58 58 58 58 58 58 58 58 58  XXXXXXXXXXXXXXXX
-read 64/64 bytes at offset 1048576
-64.000000 bytes, 1 ops; 0.0003 sec (176.554 KiB/sec and 2824.8588 ops/sec)
+[auto build test WARNING on next-20230418]
+[cannot apply to axboe-block/for-next device-mapper-dm/for-next linus/master v6.3-rc7 v6.3-rc6 v6.3-rc5 v6.3-rc7]
+[If your patch is applied to the wrong git tree, kindly drop us a note.
+And when submitting patch, we suggest to use '--base' as documented in
+https://git-scm.com/docs/git-format-patch#_base_tree_information]
 
-(Write 1MB of Xs, flush it to disk, write 4k of Ys, confirm the Y's are
-in the page cache, fail to fallocate, reread and spot the Xs that we
-supposedly overwrote.)
+url:    https://github.com/intel-lab-lkp/linux/commits/Nitesh-Shetty/block-Add-copy-offload-support-infrastructure/20230419-204352
+patch link:    https://lore.kernel.org/r/20230419114320.13674-7-nj.shetty%40samsung.com
+patch subject: [PATCH v10 6/9] nvmet: add copy command support for bdev and file ns
+config: m68k-randconfig-s032-20230416 (https://download.01.org/0day-ci/archive/20230420/202304200240.fsLkpzvk-lkp@intel.com/config)
+compiler: m68k-linux-gcc (GCC) 12.1.0
+reproduce:
+        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # apt-get install sparse
+        # sparse version: v0.6.4-39-gce1a6720-dirty
+        # https://github.com/intel-lab-lkp/linux/commit/420b04f7ba9a54898d62c1d60905f8cf952afde2
+        git remote add linux-review https://github.com/intel-lab-lkp/linux
+        git fetch --no-tags linux-review Nitesh-Shetty/block-Add-copy-offload-support-infrastructure/20230419-204352
+        git checkout 420b04f7ba9a54898d62c1d60905f8cf952afde2
+        # save the config file
+        mkdir build_dir && cp config build_dir/.config
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross C=1 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__' O=build_dir ARCH=m68k olddefconfig
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross C=1 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__' O=build_dir ARCH=m68k SHELL=/bin/bash drivers/nvme/target/
 
-oops.
+If you fix the issue, kindly add following tag where applicable
+| Reported-by: kernel test robot <lkp@intel.com>
+| Link: https://lore.kernel.org/oe-kbuild-all/202304200240.fsLkpzvk-lkp@intel.com/
 
-> (And obviously needs fixing independent of this patchset)
-> 
-> Shouldn't mkfs first check that the underlying storage supports
-> REQ_OP_PROVISION by verifying
-> /sys/block/<dev>/queue/provision_max_bytes exists and is not 0?
-> (Just saying, we need to add new features more defensively.. you just
-> made the case based on this scenario's implications alone)
+sparse warnings: (new ones prefixed by >>)
+>> drivers/nvme/target/io-cmd-bdev.c:55:27: sparse: sparse: incorrect type in argument 1 (different base types) @@     expected unsigned int [usertype] val @@     got restricted __le16 [usertype] mssrl @@
+   drivers/nvme/target/io-cmd-bdev.c:55:27: sparse:     expected unsigned int [usertype] val
+   drivers/nvme/target/io-cmd-bdev.c:55:27: sparse:     got restricted __le16 [usertype] mssrl
+>> drivers/nvme/target/io-cmd-bdev.c:55:27: sparse: sparse: cast from restricted __le16
+>> drivers/nvme/target/io-cmd-bdev.c:55:27: sparse: sparse: cast from restricted __le16
+>> drivers/nvme/target/io-cmd-bdev.c:55:27: sparse: sparse: cast from restricted __le16
+>> drivers/nvme/target/io-cmd-bdev.c:55:27: sparse: sparse: cast from restricted __le16
+   drivers/nvme/target/io-cmd-bdev.c:57:29: sparse: sparse: cast from restricted __le16
+   drivers/nvme/target/io-cmd-bdev.c:60:27: sparse: sparse: incorrect type in argument 1 (different base types) @@     expected unsigned int [usertype] val @@     got restricted __le16 [usertype] mssrl @@
+   drivers/nvme/target/io-cmd-bdev.c:60:27: sparse:     expected unsigned int [usertype] val
+   drivers/nvme/target/io-cmd-bdev.c:60:27: sparse:     got restricted __le16 [usertype] mssrl
+   drivers/nvme/target/io-cmd-bdev.c:60:27: sparse: sparse: cast from restricted __le16
+   drivers/nvme/target/io-cmd-bdev.c:60:27: sparse: sparse: cast from restricted __le16
+   drivers/nvme/target/io-cmd-bdev.c:60:27: sparse: sparse: cast from restricted __le16
+   drivers/nvme/target/io-cmd-bdev.c:60:27: sparse: sparse: cast from restricted __le16
 
-Not for fallocate -- for regular files, there's no way to check if the
-filesystem actually supports the operation requested other than to try
-it and see if it succeeds.  We probably should've defined a DRY_RUN flag
-for that purpose back when it was introduced.
+vim +55 drivers/nvme/target/io-cmd-bdev.c
 
-For fallocate calls to block devices, yes, the program can check the
-queue limits in sysfs if fstat says the supplied path is a block device,
-but I don't know that most programs are that thorough.  The fallocate(1)
-CLI program does not check.
+    12	
+    13	void nvmet_bdev_set_limits(struct block_device *bdev, struct nvme_id_ns *id)
+    14	{
+    15		/* Logical blocks per physical block, 0's based. */
+    16		const __le16 lpp0b = to0based(bdev_physical_block_size(bdev) /
+    17					      bdev_logical_block_size(bdev));
+    18	
+    19		/*
+    20		 * For NVMe 1.2 and later, bit 1 indicates that the fields NAWUN,
+    21		 * NAWUPF, and NACWU are defined for this namespace and should be
+    22		 * used by the host for this namespace instead of the AWUN, AWUPF,
+    23		 * and ACWU fields in the Identify Controller data structure. If
+    24		 * any of these fields are zero that means that the corresponding
+    25		 * field from the identify controller data structure should be used.
+    26		 */
+    27		id->nsfeat |= 1 << 1;
+    28		id->nawun = lpp0b;
+    29		id->nawupf = lpp0b;
+    30		id->nacwu = lpp0b;
+    31	
+    32		/*
+    33		 * Bit 4 indicates that the fields NPWG, NPWA, NPDG, NPDA, and
+    34		 * NOWS are defined for this namespace and should be used by
+    35		 * the host for I/O optimization.
+    36		 */
+    37		id->nsfeat |= 1 << 4;
+    38		/* NPWG = Namespace Preferred Write Granularity. 0's based */
+    39		id->npwg = lpp0b;
+    40		/* NPWA = Namespace Preferred Write Alignment. 0's based */
+    41		id->npwa = id->npwg;
+    42		/* NPDG = Namespace Preferred Deallocate Granularity. 0's based */
+    43		id->npdg = to0based(bdev_discard_granularity(bdev) /
+    44				    bdev_logical_block_size(bdev));
+    45		/* NPDG = Namespace Preferred Deallocate Alignment */
+    46		id->npda = id->npdg;
+    47		/* NOWS = Namespace Optimal Write Size */
+    48		id->nows = to0based(bdev_io_opt(bdev) / bdev_logical_block_size(bdev));
+    49	
+    50		/*Copy limits*/
+    51		if (bdev_max_copy_sectors(bdev)) {
+    52			id->msrc = id->msrc;
+    53			id->mssrl = cpu_to_le16((bdev_max_copy_sectors(bdev) <<
+    54					SECTOR_SHIFT) / bdev_logical_block_size(bdev));
+  > 55			id->mcl = cpu_to_le32(id->mssrl);
+    56		} else {
+    57			id->msrc = (u8)to0based(BIO_MAX_VECS - 1);
+    58			id->mssrl = cpu_to_le16((BIO_MAX_VECS << PAGE_SHIFT) /
+    59					bdev_logical_block_size(bdev));
+    60			id->mcl = cpu_to_le32(id->mssrl);
+    61		}
+    62	}
+    63	
 
-Then I moved on to fs utilities:
-
-ext4: For discard, mke2fs calls BLKDISCARD if it detects a block device
-via fstat, and falloc(PUNCH|KEEP_SIZE) for anything else.  For zeroing,
-it only uses falloc(ZERO) or falloc(PUNCH|KEEP_SIZE) and does not try to
-use BLKZEROOUT.  It does not check sysfs queue limits at all.
-
-XFS: mkfs.xfs issues BLKDISCARD before writing anything to the device,
-so that's fine.  It uses falloc(ZERO) to erase the log, but since
-xfsprogs provides its own buffer cache and uses O_DIRECT, pagecache
-coherency problems aren't an issue.
-
-btrfs: mkfs.btrfs only issues BLKDISCARD, and only before it starts
-writing the new fs, so no problems there.
-
---D
-
-> Sarthak, please note I said "provision_max_bytes": all other ops
-> (e.g. DISCARD, WRITE_ZEROES, etc) have <op>_max_bytes exported through
-> sysfs, not <op>_max_sectors.  Please export provision_max_bytes, e.g.:
-> 
-> diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-> index 202aa78f933e..2e5ac7b1ffbd 100644
-> --- a/block/blk-sysfs.c
-> +++ b/block/blk-sysfs.c
-> @@ -605,12 +605,12 @@ QUEUE_RO_ENTRY(queue_io_min, "minimum_io_size");
->  QUEUE_RO_ENTRY(queue_io_opt, "optimal_io_size");
->  
->  QUEUE_RO_ENTRY(queue_max_discard_segments, "max_discard_segments");
-> -QUEUE_RO_ENTRY(queue_max_provision_sectors, "max_provision_sectors");
->  QUEUE_RO_ENTRY(queue_discard_granularity, "discard_granularity");
->  QUEUE_RO_ENTRY(queue_discard_max_hw, "discard_max_hw_bytes");
->  QUEUE_RW_ENTRY(queue_discard_max, "discard_max_bytes");
->  QUEUE_RO_ENTRY(queue_discard_zeroes_data, "discard_zeroes_data");
->  
-> +QUEUE_RO_ENTRY(queue_provision_max, "provision_max_bytes");
->  QUEUE_RO_ENTRY(queue_write_same_max, "write_same_max_bytes");
->  QUEUE_RO_ENTRY(queue_write_zeroes_max, "write_zeroes_max_bytes");
->  QUEUE_RO_ENTRY(queue_zone_append_max, "zone_append_max_bytes");
+-- 
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests
 
 --
 dm-devel mailing list
