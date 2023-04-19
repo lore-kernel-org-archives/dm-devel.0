@@ -1,11 +1,11 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CF30BC77B72
-	for <dm-devel@archiver.kernel.org>; Thu, 20 Apr 2023 06:57:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4E7CDC7EE22
+	for <dm-devel@archiver.kernel.org>; Thu, 20 Apr 2023 06:57:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1681973840;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
@@ -14,135 +14,81 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=C/o0Q4svmDVa81a/quIYdvp417fkvYu3F9MwBZxDAOs=;
-	b=OHNvjjd+ipr3HTRsvd6URn7uMne/rlz1RghR6imkJC1+eN/EA1kreHNt8ViRxky0By7OsN
-	1S54tnTYqtOlTi3bb6VZA17S3niHZPi3I9jDnVPxq35c/DNl15XMVIn3kDqt+JFFQ9eZlO
-	OIZQ0G9QUHxA05FQULWgw88qO86/SxM=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=6ZYAULUuXKhDV45BBK1WBFUkYr9gn4PqQ0XsojMCE1M=;
+	b=JBPGxQ1emJe8/wOLEBzu+U+VQ1dDbcANaWKXS8jtqSmtKtlxMgos95Yhq1MQOOiYrB2tVd
+	8AbZiaSLX+qmXhRTGCgIK/MgS1k2EKsRMwisBmMNpUJU2+vsd+Qvp2rqFabYnw2c9y2Ipe
+	TSdRJuLlXtdOteQ3jUIIETqD8Tem87Y=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-663-4UKTn7S8MRaWlT0c5QmZHw-1; Thu, 20 Apr 2023 02:57:18 -0400
-X-MC-Unique: 4UKTn7S8MRaWlT0c5QmZHw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-572-jeTSc_GKMhKtEWpicukN7g-1; Thu, 20 Apr 2023 02:57:18 -0400
+X-MC-Unique: jeTSc_GKMhKtEWpicukN7g-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0A148280604C;
-	Thu, 20 Apr 2023 06:57:11 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8A540811E7D;
+	Thu, 20 Apr 2023 06:57:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EA82C40BC799;
-	Thu, 20 Apr 2023 06:57:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 762B5112131B;
+	Thu, 20 Apr 2023 06:57:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B160C19472D9;
-	Thu, 20 Apr 2023 06:57:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8B84419472D8;
+	Thu, 20 Apr 2023 06:57:06 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A82C419465A0
- for <dm-devel@listman.corp.redhat.com>; Wed, 19 Apr 2023 11:54:59 +0000 (UTC)
+ ESMTP id E1F5319465B1
+ for <dm-devel@listman.corp.redhat.com>; Wed, 19 Apr 2023 14:10:41 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 88CB851E3; Wed, 19 Apr 2023 11:54:59 +0000 (UTC)
+ id D49BF40C201F; Wed, 19 Apr 2023 14:10:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 80A4D2958
- for <dm-devel@redhat.com>; Wed, 19 Apr 2023 11:54:59 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id CC77240C2064
+ for <dm-devel@redhat.com>; Wed, 19 Apr 2023 14:10:41 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 64707858F0E
- for <dm-devel@redhat.com>; Wed, 19 Apr 2023 11:54:59 +0000 (UTC)
-Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-634-8ZNkRjcYPNqolT7vMpf7vw-1; Wed, 19 Apr 2023 07:54:57 -0400
-X-MC-Unique: 8ZNkRjcYPNqolT7vMpf7vw-1
-Received: from epcas5p4.samsung.com (unknown [182.195.41.42])
- by mailout3.samsung.com (KnoxPortal) with ESMTP id
- 20230419115454epoutp03544b33003019edc459def95e26f2ca6d~XU-Q5AVHT1365913659epoutp03L
- for <dm-devel@redhat.com>; Wed, 19 Apr 2023 11:54:54 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com
- 20230419115454epoutp03544b33003019edc459def95e26f2ca6d~XU-Q5AVHT1365913659epoutp03L
-Received: from epsnrtp3.localdomain (unknown [182.195.42.164]) by
- epcas5p3.samsung.com (KnoxPortal) with ESMTP id
- 20230419115453epcas5p38f000f783a08296ce1442ed383ed5af3~XU-QVDK4C2577325773epcas5p3M;
- Wed, 19 Apr 2023 11:54:53 +0000 (GMT)
-Received: from epsmges5p2new.samsung.com (unknown [182.195.38.176]) by
- epsnrtp3.localdomain (Postfix) with ESMTP id 4Q1fNW5y7Qz4x9Pr; Wed, 19 Apr
- 2023 11:54:51 +0000 (GMT)
-Received: from epcas5p1.samsung.com ( [182.195.41.39]) by
- epsmges5p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
- E4.9D.09540.B86DF346; Wed, 19 Apr 2023 20:54:51 +0900 (KST)
-Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
- epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
- 20230419114801epcas5p2eb7e9c375817d827d5175468de34f0cb~XU5QHChIv1524715247epcas5p2l;
- Wed, 19 Apr 2023 11:48:01 +0000 (GMT)
-Received: from epsmgms1p2.samsung.com (unknown [182.195.42.42]) by
- epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
- 20230419114801epsmtrp1476d5be0b44a2a0755f0370122e2d9eb~XU5QFxr0I1843518435epsmtrp1j;
- Wed, 19 Apr 2023 11:48:01 +0000 (GMT)
-X-AuditID: b6c32a4a-70dfa70000002544-a1-643fd68b68b7
-Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
- epsmgms1p2.samsung.com (Symantec Messaging Gateway) with SMTP id
- 4A.93.08609.0F4DF346; Wed, 19 Apr 2023 20:48:00 +0900 (KST)
-Received: from green245.sa.corp.samsungelectronics.net (unknown
- [107.99.41.245]) by epsmtip1.samsung.com (KnoxPortal) with ESMTPA id
- 20230419114757epsmtip146c11a6792a756842f64d0b81903c6bf~XU5Mf0aLU2050920509epsmtip1S;
- Wed, 19 Apr 2023 11:47:57 +0000 (GMT)
-From: Nitesh Shetty <nj.shetty@samsung.com>
-To: Jens Axboe <axboe@kernel.dk>, Alasdair Kergon <agk@redhat.com>, Mike
- Snitzer <snitzer@kernel.org>, dm-devel@redhat.com, Keith Busch
- <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>, Sagi Grimberg
- <sagi@grimberg.me>, James Smart <james.smart@broadcom.com>, Chaitanya
- Kulkarni <kch@nvidia.com>, Alexander Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>
-Date: Wed, 19 Apr 2023 17:13:13 +0530
-Message-Id: <20230419114320.13674-9-nj.shetty@samsung.com>
-In-Reply-To: <20230419114320.13674-1-nj.shetty@samsung.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8E7F33C0E23A
+ for <dm-devel@redhat.com>; Wed, 19 Apr 2023 14:10:41 +0000 (UTC)
+Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com
+ [209.85.128.53]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-100-L47Ubh2uOUCNSQaizmhkpA-1; Wed, 19 Apr 2023 10:10:35 -0400
+X-MC-Unique: L47Ubh2uOUCNSQaizmhkpA-1
+Received: by mail-wm1-f53.google.com with SMTP id
+ 5b1f17b1804b1-3f17edbc15eso6535795e9.3; 
+ Wed, 19 Apr 2023 07:10:34 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1681913433; x=1684505433;
+ h=content-transfer-encoding:mime-version:references:in-reply-to
+ :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=asKpmswp0ZeanhVo76Eo+6VNkXdxI3jhQK0PDuQZThY=;
+ b=KutFTRo9QBzv8kXuJqli0ukUpATK946rXhJzZqbzdREqvm2CWpS+9J58y6WSaHpwOW
+ 0gjypfyfTRlVnVH/AD4fafq0nZpyGXGql/Al7fy7VkxIp4UE7f1BeMSvxO0cVOympGc1
+ jUpX20W7E+h+aa3+bbVczapSNalrsL0xJTrbvsESal/vdZRZmJZSP0bZOEQRI9E2Fktn
+ SjN6m2nlQw4074YNk09W4O33sD1Aw1XmQAb/JP6NliFEuZg/oUvQqEqm79ScLRDzQFMo
+ J1mETj1a8ha3Xwkruy+yIGrEjEnkHkzSGLiCvk/3qbB6KYHN6Api6/8PKs2Ree5pOCN2
+ EZpA==
+X-Gm-Message-State: AAQBX9dC9jvxQqbdqpat8WeNTjgV9kt60OiPPQ20Xw4uM87NhnED+pG8
+ Q/cHqX6T2kFOSn+Vo69WPAY=
+X-Google-Smtp-Source: AKy350YqBEkn+VSvf2DvOCXN7mDa/WvroFJZvGVNeDs7bs2faerUsWpsWUIcEH/19Lk45zhWOo8M7g==
+X-Received: by 2002:adf:e892:0:b0:2f8:67ee:5ca9 with SMTP id
+ d18-20020adfe892000000b002f867ee5ca9mr4765546wrm.65.1681913433175; 
+ Wed, 19 Apr 2023 07:10:33 -0700 (PDT)
+Received: from localhost.localdomain
+ (aftr-62-216-205-204.dynamic.mnet-online.de. [62.216.205.204])
+ by smtp.googlemail.com with ESMTPSA id
+ q17-20020a5d61d1000000b002faaa9a1721sm7612089wrv.58.2023.04.19.07.10.31
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 19 Apr 2023 07:10:32 -0700 (PDT)
+From: Johannes Thumshirn <jth@kernel.org>
+To: axboe@kernel.dk
+Date: Wed, 19 Apr 2023 16:09:13 +0200
+Message-Id: <20230419140929.5924-4-jth@kernel.org>
+In-Reply-To: <20230419140929.5924-1-jth@kernel.org>
+References: <20230419140929.5924-1-jth@kernel.org>
 MIME-Version: 1.0
-X-Brightmail-Tracker: H4sIAAAAAAAAA01Te0xTZxTfd297W0iKl8LmR/ci3YNhR6EM6gfyMoq7QxbZiPxhNN1NewMM
- aJs+QHCLRR4BfPDSMQoTVIKzqASojIdlrAwRHDORARGDMFfYAxWBCSGusJbi5n+/8/vO7/zO
- OV8OF+cXcwTcVKWO0SjpdCHhzmrv8/cLOD4WrQjKHxKj5qEbODpWZsdR02Qpgeb6FgH66skq
- jqa/j0aWxzVsdLe3E0PXz1dg6FJTP4a6zy1gqH/9EYEqrGMAzYwaMWSZEKHrlkEWGumqJVBd
- 4wwHWSvzMNRhywWo/Vkdjq7OzbPQzYlX0W37ADsGUiO/7KWMU8ME1Wmc5FC377ewqJFhPdVq
- KiaotoajVPddA0GdzHtMUPM9owR1ymwCVNutI9RS6xtUq+0RluBxIC0ihaEVjMaXUcpVilRl
- cqRwb6JslyxUGiQJkISh7UJfJZ3BRAp3xycE7ElNd2xA6JtJp+sdVAKt1QoDoyI0Kr2O8U1R
- aXWRQkatSFeHqMVaOkOrVyaLlYwuXBIUFBzqSPwsLaXKVMVW57IPz9p/IAzga1YJ4HIhGQJ7
- 2hJKgDuXT3YDaLl8heMKFgG8s9ZIlAA3R7AEYFev3ImdgsrRuk2+C8C2p1yXoACDXfb2jaoE
- KYK31jd4b7IQhwszxSxngJN3MPiPeR53qr3IWDh4fo3lxCzyHbhwrXcD88hwWGZrIVztBcLS
- KU8n7UbugBd7KnFXiiccrLZtpOPkmzDvWg3urA/JOjdYZT5BuDrdDccNw5vYC/41YOa4sAD+
- WVq4ibPgpdPfEi5xPoDGcSNwPUTDgqFS3NkETvrD5q5AF/06PDN0FXMZe8CTz2yYi+fBjrPP
- 8VvwcnP9pq8PHFvJ3ZyFgg1nRK5lnQJwYW6VXQZ8jS/MY3xhHuP/zvUANwEfRq3NSGa0oepg
- JZP13x/LVRmtYOMmtsV1gF+nn4itAOMCK4BcXOjN+yk2XMHnKejsHEajkmn06YzWCkId+y7H
- BS/LVY6jUupkkpCwoBCpVBoS9oFUItzK84sclPPJZFrHpDGMmtE812FcN4EB+47WZSUtfVyQ
- xEmSH2+hLk738xRMzJZvjm6J5qZ9aZ5iPaw4JIt5lz29JrFHLt970K23fLE8UYQO/ahM3LF2
- MHCrT8z99wqjgstPPBTON/dNdWtmpYGrT6kPDTm5WtuAELpNFyX18ffXAHoyy/z5cL7J+8LZ
- gwNRr436Uce48tPEhI+lc2dS277IcXH9in02YPGwx7nkcjr205Xfx4bcFWnc2oa/398z2UzL
- DDli4P0gu5oXX50iCEaviOKkff5FF/jR8S+JboZmNmVmCxLj8MyP1oPLl/9YXXs73NxBY2D7
- Pc+fE0zY/gOyTEPjziteEUc4nE+sv+3Lrp1jbiyIhCxtCi3Zhmu09L/Q6E0JnAQAAA==
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Ra0hTYRzGe885Ox4Hs9MSfVObtehDSpZi8GqmVqiHkqwIArvYagcnzTk2
- LbMkbRBkmUMjdWam1cQl2TTFyyxb3pa38JJleaOZlTg198XErZwEfXt4fs/z/D/8KZxvJDyo
- BFkyq5CJpEKSS9S9FQp2zg+GiXdbi0JQ1bt2HN1Qr+Do2WgOiWbe/gLo/vwSjiZeh6FmSxEH
- fWppwJChLBdDFc/aMNRUuoChNvssiXKNHwCaGtJgqHnEFxmaTQQaaHxAohLtlBMy5qkwVG/O
- BKhuuQRHz2fmCNQ54on6Vjo44ZAZGDzMaMZ7SKZBM+rE9I3pCWagJ4Wp1t0imZon15mmTxkk
- k62ykMzcqyGSuftSB5iarqvMYrWAqTbPYkddYrkhYlaacIlV7Ao9x5Xk6/I58kxO6reVN2QG
- KCCygDMF6UCYN1RCZgEuxafrAfz+sRxbA5ugdqUVX9MbYYVt2mktpMLgzGjlX0BRJO0Lu+zU
- qu9Kq3HYP57hWMLpCQz2TVs5q+2NdAQ0ldkc5wh6O1yobXFoHh0M1WY9uToE6V0wZ3zDqu1M
- 74Xlr/Ich/l/I3eMNrAW3wBNhWZHFae9oaq2CFcDWvMf0vyHHgFMBzaxcmVifKLSXx4gYy/7
- KUWJyhRZvN+FpMRq4Hizj089MOjm/YwAo4ARQAoXuvK6I4LFfJ5YdCWNVSTFKVKkrNIIPClC
- 6M57n2WK49PxomT2IsvKWcU/ilHOHhlY59abr5fm08/GhCD7xMlrj3sq0iUhQT4zB7PFEcqX
- 3sVF0vsCVlXu+8Z2Wuu0bfyA3SPotibetP78noLfWw5MVgmx4bljP7WD52vaR+CZL43Lbmxq
- IPQ+U+hle1ozdbU4/9SP9IAk16Z9tMRWuWT4udx3OTl0gccXp81N+Ftj9IV6uTRHgLoNOxYK
- Jq3am3pL/+eH97idA7cY21JvvnOBb7TF3a33+LRK3TGyOXQxHIwJetbx/LfebvULjj0S5akv
- OdFSK4mdtNmHItUpluj9L1KjSiWHjqmqIs05dd2HYABuGlQjN1nl8W+/JGUue6z9ix6jX4V5
- XieGXRrVQkIpEfn74Aql6A8UcQ2tVQMAAA==
-X-CMS-MailID: 20230419114801epcas5p2eb7e9c375817d827d5175468de34f0cb
-X-Msg-Generator: CA
-X-Sendblock-Type: REQ_APPROVE
-CMS-TYPE: 105P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20230419114801epcas5p2eb7e9c375817d827d5175468de34f0cb
-References: <20230419114320.13674-1-nj.shetty@samsung.com>
- <CGME20230419114801epcas5p2eb7e9c375817d827d5175468de34f0cb@epcas5p2.samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -150,10 +96,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mailman-Approved-At: Thu, 20 Apr 2023 06:57:04 +0000
-Subject: [dm-devel] [PATCH v10 8/9] dm: Enable copy offload for dm-linear
- target
+Subject: [dm-devel] [PATCH v3 03/19] dm: dm-zoned: use __bio_add_page for
+ adding single metadata page
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -165,41 +111,71 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: bvanassche@acm.org, joshi.k@samsung.com, gost.dev@samsung.com,
- anuj20.g@samsung.com, linux-kernel@vger.kernel.org,
- linux-nvme@lists.infradead.org, ming.lei@redhat.com,
- linux-block@vger.kernel.org, dlemoal@kernel.org,
- Nitesh Shetty <nj.shetty@samsung.com>, linux-fsdevel@vger.kernel.org,
- nitheshshetty@gmail.com
+Cc: shaggy@kernel.org, jfs-discussion@lists.sourceforge.net, linux-mm@kvack.org,
+ dm-devel@redhat.com, hch@lst.de, agruenba@redhat.com,
+ Damien Le Moal <damien.lemoal@opensource.wdc.com>, willy@infradead.org,
+ cluster-devel@redhat.com, kch@nvidia.com, snitzer@kernel.org,
+ ming.lei@redhat.com, linux-block@vger.kernel.org, rpeterso@redhat.com,
+ dsterba@suse.com, linux-raid@vger.kernel.org, damien.lemoal@wdc.com,
+ song@kernel.org, johannes.thumshirn@wdc.com, linux-fsdevel@vger.kernel.org,
+ linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: samsung.com
+X-Mimecast-Originator: kernel.org
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Setting copy_offload_supported flag to enable offload.
+From: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 
-Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
+dm-zoned uses bio_add_page() for adding a single page to a freshly created
+metadata bio.
+
+Use __bio_add_page() instead as adding a single page to a new bio is
+always guaranteed to succeed.
+
+This brings us a step closer to marking bio_add_page() __must_check
+
+Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+Reviewed-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 ---
- drivers/md/dm-linear.c | 1 +
- 1 file changed, 1 insertion(+)
+ drivers/md/dm-zoned-metadata.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index f4448d520ee9..1d1ee30bbefb 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -62,6 +62,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	ti->num_discard_bios = 1;
- 	ti->num_secure_erase_bios = 1;
- 	ti->num_write_zeroes_bios = 1;
-+	ti->copy_offload_supported = 1;
- 	ti->private = lc;
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index cf9402064aba..8dbe102ab271 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -577,7 +577,7 @@ static struct dmz_mblock *dmz_get_mblock_slow(struct dmz_metadata *zmd,
+ 	bio->bi_iter.bi_sector = dmz_blk2sect(block);
+ 	bio->bi_private = mblk;
+ 	bio->bi_end_io = dmz_mblock_bio_end_io;
+-	bio_add_page(bio, mblk->page, DMZ_BLOCK_SIZE, 0);
++	__bio_add_page(bio, mblk->page, DMZ_BLOCK_SIZE, 0);
+ 	submit_bio(bio);
+ 
+ 	return mblk;
+@@ -728,7 +728,7 @@ static int dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
+ 	bio->bi_iter.bi_sector = dmz_blk2sect(block);
+ 	bio->bi_private = mblk;
+ 	bio->bi_end_io = dmz_mblock_bio_end_io;
+-	bio_add_page(bio, mblk->page, DMZ_BLOCK_SIZE, 0);
++	__bio_add_page(bio, mblk->page, DMZ_BLOCK_SIZE, 0);
+ 	submit_bio(bio);
+ 
  	return 0;
+@@ -752,7 +752,7 @@ static int dmz_rdwr_block(struct dmz_dev *dev, enum req_op op,
+ 	bio = bio_alloc(dev->bdev, 1, op | REQ_SYNC | REQ_META | REQ_PRIO,
+ 			GFP_NOIO);
+ 	bio->bi_iter.bi_sector = dmz_blk2sect(block);
+-	bio_add_page(bio, page, DMZ_BLOCK_SIZE, 0);
++	__bio_add_page(bio, page, DMZ_BLOCK_SIZE, 0);
+ 	ret = submit_bio_wait(bio);
+ 	bio_put(bio);
  
 -- 
-2.35.1.500.gb896f729e2
+2.39.2
 
 --
 dm-devel mailing list
