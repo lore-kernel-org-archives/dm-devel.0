@@ -4,89 +4,88 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 802FAC77B61
-	for <dm-devel@archiver.kernel.org>; Mon, 24 Apr 2023 15:55:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5D00AC7618E
+	for <dm-devel@archiver.kernel.org>; Mon, 24 Apr 2023 17:08:34 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1682351728;
+	s=mimecast20190719; t=1682356113;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=wB9BRd2Ldg50QMEZhaEU966CAgwD832tYjOdhkgUDiQ=;
-	b=R/H8sw/uLBeJdLAR6LK09Y99YkqmEyWo9DeIRp6XEk58Rc9bdQ9JX8fgeNYFvjmM+Cvlg6
-	7VOi7kqNPpMFDrNQmW98k6T5FA3bjrEb041IyrMYVmgBtVUZxwM7NuWQ38zTgnAfV/tE5z
-	uLQEaZk0cnm3qeRhxlTA8RfxL9fb6Z8=
+	bh=jukdOvKn77YGq8xG1GN8DpU8ZVilkvRse0huo4gbfmU=;
+	b=GAPlnRd2nk6iXRhgY76vQ+yMY266uPmZSqLybI931gl4NLv4wnoABECgOfAjH5T6l1rpAj
+	pceiFLtMMaM6Cp14JBmyISD7L83czHvskupjSvDhvkKBSYthwDB0kUWRbn9Tg6mjw0Hccb
+	PV+1nU2R/yMdQgzg1UtNp+TJG39hmQg=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-381-pm0uruR6P96tHdz3FbtbnA-1; Mon, 24 Apr 2023 11:55:25 -0400
-X-MC-Unique: pm0uruR6P96tHdz3FbtbnA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-427-w0-IpIpINzOacZ6CLzthRw-1; Mon, 24 Apr 2023 13:08:32 -0400
+X-MC-Unique: w0-IpIpINzOacZ6CLzthRw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C790685A5B1;
-	Mon, 24 Apr 2023 15:55:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 20EB6185A791;
+	Mon, 24 Apr 2023 17:08:30 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9453E14171B8;
-	Mon, 24 Apr 2023 15:55:18 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CB517492B03;
+	Mon, 24 Apr 2023 17:08:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5D3331946589;
-	Mon, 24 Apr 2023 15:55:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BCEAC194658F;
+	Mon, 24 Apr 2023 17:08:28 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id F13D61946588
- for <dm-devel@listman.corp.redhat.com>; Mon, 24 Apr 2023 15:55:07 +0000 (UTC)
+ ESMTP id DD1DD194658D
+ for <dm-devel@listman.corp.redhat.com>; Mon, 24 Apr 2023 17:06:24 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D735B40C6E6A; Mon, 24 Apr 2023 15:55:02 +0000 (UTC)
+ id CDD0B1400AFC; Mon, 24 Apr 2023 17:06:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id CF70C40C6E68
- for <dm-devel@redhat.com>; Mon, 24 Apr 2023 15:55:02 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AE7BA857F81
- for <dm-devel@redhat.com>; Mon, 24 Apr 2023 15:55:02 +0000 (UTC)
-Received: from mga04.intel.com (mga04.intel.com [192.55.52.120]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-127-FbOV4zSlPoqj9frQmU0JHA-1; Mon, 24 Apr 2023 11:55:00 -0400
-X-MC-Unique: FbOV4zSlPoqj9frQmU0JHA-1
-X-IronPort-AV: E=McAfee;i="6600,9927,10690"; a="345244379"
-X-IronPort-AV: E=Sophos;i="5.99,223,1677571200"; d="scan'208";a="345244379"
-Received: from fmsmga002.fm.intel.com ([10.253.24.26])
- by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
- 24 Apr 2023 08:54:58 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10690"; a="804667850"
-X-IronPort-AV: E=Sophos;i="5.99,223,1677571200"; d="scan'208";a="804667850"
-Received: from lkp-server01.sh.intel.com (HELO b613635ddfff) ([10.239.97.150])
- by fmsmga002.fm.intel.com with ESMTP; 24 Apr 2023 08:54:53 -0700
-Received: from kbuild by b613635ddfff with local (Exim 4.96)
- (envelope-from <lkp@intel.com>) id 1pqyWi-000iUi-2i;
- Mon, 24 Apr 2023 15:54:52 +0000
-Date: Mon, 24 Apr 2023 23:54:28 +0800
-From: kernel test robot <lkp@intel.com>
-To: Sarthak Kukreti <sarthakkukreti@chromium.org>, dm-devel@redhat.com,
- linux-block@vger.kernel.org, linux-ext4@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Message-ID: <202304242302.5zYRfUub-lkp@intel.com>
-References: <20230420004850.297045-2-sarthakkukreti@chromium.org>
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C59C214171FF
+ for <dm-devel@redhat.com>; Mon, 24 Apr 2023 17:06:24 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A7994185A78F
+ for <dm-devel@redhat.com>; Mon, 24 Apr 2023 17:06:24 +0000 (UTC)
+Received: from mail-qt1-f178.google.com (mail-qt1-f178.google.com
+ [209.85.160.178]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-146-CPbuzdctOA25jjIw2Z5Ewg-1; Mon, 24 Apr 2023 13:06:23 -0400
+X-MC-Unique: CPbuzdctOA25jjIw2Z5Ewg-1
+Received: by mail-qt1-f178.google.com with SMTP id
+ d75a77b69052e-3ef38bea86aso23133491cf.3
+ for <dm-devel@redhat.com>; Mon, 24 Apr 2023 10:06:22 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1682355982; x=1684947982;
+ h=content-transfer-encoding:content-disposition:mime-version
+ :message-id:subject:cc:to:from:date:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=7yklLbqlcqtrLAi6NPm1yED06AEzT2zgjyK/N8/omp4=;
+ b=TJwFl75cnAKBYD+60tHnzffke7ETG3JfIHUw0eQsWw9evShVUpkFEB6kOXPpOS9dx9
+ JTPd/1zi7kF+BnNT5H3A1Zf8YGu4Qur0+mFY66CMFDXM2nyRs6Tcu3++9xP3THQlxc2Y
+ t+sRr2KFyuzXD1881W7MHwIJEbwsz01Ppl1XQfN0AFVcMVvtwncHDaXVsrNhLzjx+E4H
+ i94gYszWPQ7wgKAy9dvTmd5HHKs6H8qc0lJNt8pNQNDaZQ78ggUZQ2rqQaT1eAQSDrF3
+ eWdNyZ5weUVNv/BSbEwf0as/EOYWGaARxwom6lCZfQLk3CQ4TocYTzC/SUTK96neVxAA
+ zHDg==
+X-Gm-Message-State: AAQBX9f0g0fk/I5SjaL5sP+qruvPc/i3QqPkG7amGRX7OX9ifMnmQyry
+ 31b3kabb4UCNYfkvWTz2YvorpeQ=
+X-Google-Smtp-Source: AKy350brVxKaGhLDydvLKmragyduatuEbwboVV80UVjcEanKSaEuXYLIfGeTGTYCa2/6OOHlbVAMkg==
+X-Received: by 2002:a05:622a:44d:b0:3ef:4100:cd0c with SMTP id
+ o13-20020a05622a044d00b003ef4100cd0cmr21666840qtx.63.1682355982319; 
+ Mon, 24 Apr 2023 10:06:22 -0700 (PDT)
+Received: from localhost ([217.138.198.173]) by smtp.gmail.com with ESMTPSA id
+ k2-20020a05620a0b8200b0074a6c29df4dsm3695999qkh.119.2023.04.24.10.06.21
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Mon, 24 Apr 2023 10:06:21 -0700 (PDT)
+Date: Mon, 24 Apr 2023 13:06:20 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <ZEa3DOLC3GAX/MVx@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <20230420004850.297045-2-sarthakkukreti@chromium.org>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH v5 1/5] block: Don't invalidate pagecache for
- invalid falloc modes
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Subject: [dm-devel] [git pull] device mapper changes for 6.4
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -98,197 +97,195 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Bart Van Assche <bvanassche@google.com>,
- Theodore Ts'o <tytso@mit.edu>, "Michael S. Tsirkin" <mst@redhat.com>,
- "Darrick J. Wong" <djwong@kernel.org>, Jason Wang <jasowang@redhat.com>,
- llvm@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
- Christoph Hellwig <hch@infradead.org>,
- Andreas Dilger <adilger.kernel@dilger.ca>, Daniil Lunev <dlunev@google.com>,
- Stefan Hajnoczi <stefanha@redhat.com>, oe-kbuild-all@lists.linux.dev,
- Brian Foster <bfoster@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Cc: Michael =?iso-8859-1?Q?Wei=DF?= <michael.weiss@aisec.fraunhofer.de>,
+ Yangtao Li <frank.li@vivo.com>, Yu Zhe <yuzhe@nfschina.com>,
+ Tom Rix <trix@redhat.com>, Joe Thornber <ejt@redhat.com>,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Mikulas Patocka <mpatocka@redhat.com>, Yeongjin Gil <youngjin.gil@samsung.com>,
+ Li Lingfeng <lilingfeng3@huawei.com>, Alasdair G Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: intel.com
+X-Mimecast-Originator: kernel.org
 Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-Hi Sarthak,
+Hi Linus,
 
-kernel test robot noticed the following build warnings:
+The following changes since commit 666eed46769d929c3e13636134ecfc67d75ef548=
+:
 
-[auto build test WARNING on device-mapper-dm/for-next]
-[also build test WARNING on linus/master v6.3 next-20230421]
-[cannot apply to axboe-block/for-next]
-[If your patch is applied to the wrong git tree, kindly drop us a note.
-And when submitting patch, we suggest to use '--base' as documented in
-https://git-scm.com/docs/git-format-patch#_base_tree_information]
+  dm: fix __send_duplicate_bios() to always allow for splitting IO (2023-03=
+-30 15:54:32 -0400)
 
-url:    https://github.com/intel-lab-lkp/linux/commits/Sarthak-Kukreti/block-Introduce-provisioning-primitives/20230420-095025
-base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
-patch link:    https://lore.kernel.org/r/20230420004850.297045-2-sarthakkukreti%40chromium.org
-patch subject: [PATCH v5 1/5] block: Don't invalidate pagecache for invalid falloc modes
-config: hexagon-randconfig-r006-20230424 (https://download.01.org/0day-ci/archive/20230424/202304242302.5zYRfUub-lkp@intel.com/config)
-compiler: clang version 17.0.0 (https://github.com/llvm/llvm-project 437b7602e4a998220871de78afcb020b9c14a661)
-reproduce (this is a W=1 build):
-        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
-        chmod +x ~/bin/make.cross
-        # https://github.com/intel-lab-lkp/linux/commit/8bd0744b438be1722c5f8c1fe077e9dcef0e81b7
-        git remote add linux-review https://github.com/intel-lab-lkp/linux
-        git fetch --no-tags linux-review Sarthak-Kukreti/block-Introduce-provisioning-primitives/20230420-095025
-        git checkout 8bd0744b438be1722c5f8c1fe077e9dcef0e81b7
-        # save the config file
-        mkdir build_dir && cp config build_dir/.config
-        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=clang make.cross W=1 O=build_dir ARCH=hexagon olddefconfig
-        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=clang make.cross W=1 O=build_dir ARCH=hexagon SHELL=/bin/bash
+are available in the Git repository at:
 
-If you fix the issue, kindly add following tag where applicable
-| Reported-by: kernel test robot <lkp@intel.com>
-| Link: https://lore.kernel.org/oe-kbuild-all/202304242302.5zYRfUub-lkp@intel.com/
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git =
+tags/for-6.4/dm-changes
 
-All warnings (new ones prefixed by >>):
+for you to fetch changes up to 38d11da522aacaa05898c734a1cec86f1e611129:
 
-   In file included from block/fops.c:9:
-   In file included from include/linux/blkdev.h:9:
-   In file included from include/linux/blk_types.h:10:
-   In file included from include/linux/bvec.h:10:
-   In file included from include/linux/highmem.h:12:
-   In file included from include/linux/hardirq.h:11:
-   In file included from ./arch/hexagon/include/generated/asm/hardirq.h:1:
-   In file included from include/asm-generic/hardirq.h:17:
-   In file included from include/linux/irq.h:20:
-   In file included from include/linux/io.h:13:
-   In file included from arch/hexagon/include/asm/io.h:334:
-   include/asm-generic/io.h:547:31: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-           val = __raw_readb(PCI_IOBASE + addr);
-                             ~~~~~~~~~~ ^
-   include/asm-generic/io.h:560:61: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-           val = __le16_to_cpu((__le16 __force)__raw_readw(PCI_IOBASE + addr));
-                                                           ~~~~~~~~~~ ^
-   include/uapi/linux/byteorder/little_endian.h:37:51: note: expanded from macro '__le16_to_cpu'
-   #define __le16_to_cpu(x) ((__force __u16)(__le16)(x))
-                                                     ^
-   In file included from block/fops.c:9:
-   In file included from include/linux/blkdev.h:9:
-   In file included from include/linux/blk_types.h:10:
-   In file included from include/linux/bvec.h:10:
-   In file included from include/linux/highmem.h:12:
-   In file included from include/linux/hardirq.h:11:
-   In file included from ./arch/hexagon/include/generated/asm/hardirq.h:1:
-   In file included from include/asm-generic/hardirq.h:17:
-   In file included from include/linux/irq.h:20:
-   In file included from include/linux/io.h:13:
-   In file included from arch/hexagon/include/asm/io.h:334:
-   include/asm-generic/io.h:573:61: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-           val = __le32_to_cpu((__le32 __force)__raw_readl(PCI_IOBASE + addr));
-                                                           ~~~~~~~~~~ ^
-   include/uapi/linux/byteorder/little_endian.h:35:51: note: expanded from macro '__le32_to_cpu'
-   #define __le32_to_cpu(x) ((__force __u32)(__le32)(x))
-                                                     ^
-   In file included from block/fops.c:9:
-   In file included from include/linux/blkdev.h:9:
-   In file included from include/linux/blk_types.h:10:
-   In file included from include/linux/bvec.h:10:
-   In file included from include/linux/highmem.h:12:
-   In file included from include/linux/hardirq.h:11:
-   In file included from ./arch/hexagon/include/generated/asm/hardirq.h:1:
-   In file included from include/asm-generic/hardirq.h:17:
-   In file included from include/linux/irq.h:20:
-   In file included from include/linux/io.h:13:
-   In file included from arch/hexagon/include/asm/io.h:334:
-   include/asm-generic/io.h:584:33: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-           __raw_writeb(value, PCI_IOBASE + addr);
-                               ~~~~~~~~~~ ^
-   include/asm-generic/io.h:594:59: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-           __raw_writew((u16 __force)cpu_to_le16(value), PCI_IOBASE + addr);
-                                                         ~~~~~~~~~~ ^
-   include/asm-generic/io.h:604:59: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-           __raw_writel((u32 __force)cpu_to_le32(value), PCI_IOBASE + addr);
-                                                         ~~~~~~~~~~ ^
->> block/fops.c:678:2: warning: unused label 'fail' [-Wunused-label]
-    fail:
-    ^~~~~
-   7 warnings generated.
+  dm: don't lock fs when the map is NULL in process of resume (2023-04-19 1=
+1:51:37 -0400)
 
+Please pull, thanks.
+Mike
 
-vim +/fail +678 block/fops.c
+----------------------------------------------------------------
+- Split dm-bufio's rw_semaphore and rbtree. Offers improvements to
+  dm-bufio's locking to allow increased concurrent IO -- particularly
+  for read access for buffers already in dm-bufio's cache.
 
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  613  
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  614  #define	BLKDEV_FALLOC_FL_SUPPORTED					\
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  615  		(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |		\
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  616  		 FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE)
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  617  
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  618  static long blkdev_fallocate(struct file *file, int mode, loff_t start,
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  619  			     loff_t len)
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  620  {
-f278eb3d8178f9 Ming Lei          2021-09-23  621  	struct inode *inode = bdev_file_inode(file);
-f278eb3d8178f9 Ming Lei          2021-09-23  622  	struct block_device *bdev = I_BDEV(inode);
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  623  	loff_t end = start + len - 1;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  624  	loff_t isize;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  625  	int error;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  626  
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  627  	/* Fail if we don't recognize the flags. */
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  628  	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  629  		return -EOPNOTSUPP;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  630  
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  631  	/* Don't go off the end of the device. */
-2a93ad8fcb377b Christoph Hellwig 2021-10-18  632  	isize = bdev_nr_bytes(bdev);
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  633  	if (start >= isize)
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  634  		return -EINVAL;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  635  	if (end >= isize) {
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  636  		if (mode & FALLOC_FL_KEEP_SIZE) {
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  637  			len = isize - start;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  638  			end = start + len - 1;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  639  		} else
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  640  			return -EINVAL;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  641  	}
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  642  
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  643  	/*
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  644  	 * Don't allow IO that isn't aligned to logical block size.
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  645  	 */
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  646  	if ((start | len) & (bdev_logical_block_size(bdev) - 1))
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  647  		return -EINVAL;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  648  
-f278eb3d8178f9 Ming Lei          2021-09-23  649  	filemap_invalidate_lock(inode->i_mapping);
-f278eb3d8178f9 Ming Lei          2021-09-23  650  
-8bd0744b438be1 Sarthak Kukreti   2023-04-19  651  	/*
-8bd0744b438be1 Sarthak Kukreti   2023-04-19  652  	 * Invalidate the page cache, including dirty pages, for valid
-8bd0744b438be1 Sarthak Kukreti   2023-04-19  653  	 * de-allocate mode calls to fallocate().
-8bd0744b438be1 Sarthak Kukreti   2023-04-19  654  	 */
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  655  	switch (mode) {
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  656  	case FALLOC_FL_ZERO_RANGE:
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  657  	case FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE:
-8bd0744b438be1 Sarthak Kukreti   2023-04-19  658  		error = truncate_bdev_range(bdev, file->f_mode, start, end) ||
-8bd0744b438be1 Sarthak Kukreti   2023-04-19  659  			blkdev_issue_zeroout(bdev, start >> SECTOR_SHIFT,
-6549a874fb65e7 Pavel Begunkov    2021-10-20  660  					     len >> SECTOR_SHIFT, GFP_KERNEL,
-6549a874fb65e7 Pavel Begunkov    2021-10-20  661  					     BLKDEV_ZERO_NOUNMAP);
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  662  		break;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  663  	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE:
-8bd0744b438be1 Sarthak Kukreti   2023-04-19  664  		error = truncate_bdev_range(bdev, file->f_mode, start, end) ||
-8bd0744b438be1 Sarthak Kukreti   2023-04-19  665  			blkdev_issue_zeroout(bdev, start >> SECTOR_SHIFT,
-6549a874fb65e7 Pavel Begunkov    2021-10-20  666  					     len >> SECTOR_SHIFT, GFP_KERNEL,
-6549a874fb65e7 Pavel Begunkov    2021-10-20  667  					     BLKDEV_ZERO_NOFALLBACK);
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  668  		break;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  669  	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE:
-8bd0744b438be1 Sarthak Kukreti   2023-04-19  670  		error = truncate_bdev_range(bdev, file->f_mode, start, end) ||
-8bd0744b438be1 Sarthak Kukreti   2023-04-19  671  			blkdev_issue_discard(bdev, start >> SECTOR_SHIFT,
-44abff2c0b970a Christoph Hellwig 2022-04-15  672  					     len >> SECTOR_SHIFT, GFP_KERNEL);
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  673  		break;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  674  	default:
-f278eb3d8178f9 Ming Lei          2021-09-23  675  		error = -EOPNOTSUPP;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  676  	}
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  677  
-f278eb3d8178f9 Ming Lei          2021-09-23 @678   fail:
-f278eb3d8178f9 Ming Lei          2021-09-23  679  	filemap_invalidate_unlock(inode->i_mapping);
-f278eb3d8178f9 Ming Lei          2021-09-23  680  	return error;
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  681  }
-cd82cca7ebfe9c Christoph Hellwig 2021-09-07  682  
+- Also split dm-bio-prison-v1's spinlock and rbtree with comparable
+  aim at improving concurrent IO (for the DM thinp target).
 
--- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests
+- Both the dm-bufio and dm-bio-prison-v1 scaling of the number of
+  locks and rbtrees used are managed by dm_num_hash_locks(). And the
+  hash function used by both is dm_hash_locks_index().
+
+- Allow DM targets to require DISCARD, WRITE_ZEROES and SECURE_ERASE
+  to be split at the target specified boundary (in terms of
+  max_discard_sectors, max_write_zeroes_sectors and
+  max_secure_erase_sectors respectively).
+
+- DM verity error handling fix for check_at_most_once on FEC.
+
+- Update DM verity target to emit audit events on verification failure
+  and more.
+
+- DM core ->io_hints improvements needed in support of new discard
+  support that is added to the DM "zero" and "error" targets.
+
+- Fix missing kmem_cache_destroy() call in initialization error path
+  of both the DM integrity and DM clone targets.
+
+- A couple fixes for DM flakey, also add "error_reads" feature.
+
+- Fix DM core's resume to not lock FS when the DM map is NULL;
+  otherwise initial table load can race with FS mount that takes
+  superblock's ->s_umount rw_semaphore.
+
+- Various small improvements to both DM core and DM targets.
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEJfWUX4UqZ4x1O2wixSPxCi2dA1oFAmRGtWwACgkQxSPxCi2d
+A1pBqgf/W7op3/PdXBI+tlb7j05MEvMaZx0vz3l+qF36SMglaP1yZLZPiU9MCX2V
+Sm2t4p7VEn5gAxvmzqa0/pLINC7u/m1IW9O6y3qdOEFAgwJ2st+/yaDqgguN5kiA
+uOzecyDfR7n0WU5rkaO2EUneO7MrYweLR3IROFNFNHndl4bVJOafDcOJvmsI4YYe
+5PIMHb+AGND+O2lIVOvSiPD6e85trcRWkr2X6DUYlllV3XEaBLke5MP1OAp+o/Y5
+MFPfznnuiEvcFAzsBoDebC5j7RBQjHw12Bp8ltZV1ZFbdvluw9q1GD2/uyR5UolV
+jmerZXKThV7lRJYqilUmt74Rxl2JSg=3D=3D
+=3DzPkM
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Joe Thornber (8):
+      dm bufio: remove unused dm_bufio_release_move interface
+      dm bufio: add LRU abstraction
+      dm bufio: add dm_buffer_cache abstraction
+      dm bufio: improve concurrent IO performance
+      dm bufio: add lock_history optimization for cache iterators
+      dm thin: speed up cell_defer_no_holder()
+      dm bio prison v1: improve concurrent IO performance
+      dm: improve hash_locks sizing and hash function
+
+Li Lingfeng (1):
+      dm: don't lock fs when the map is NULL in process of resume
+
+Michael Wei=DF (1):
+      dm verity: emit audit events on verification failure and more
+
+Mike Snitzer (16):
+      dm bufio: use WARN_ON in dm_bufio_client_destroy and dm_bufio_exit
+      dm bufio: never crash if dm_bufio_in_request()
+      dm bufio: don't bug for clear developer oversight
+      dm bufio: move dm_bufio_client members to avoid spanning cachelines
+      dm: split discards further if target sets max_discard_granularity
+      dm bio prison v1: add dm_cell_key_has_valid_range
+      dm: add dm_num_hash_locks()
+      dm bufio: prepare to intelligently size dm_buffer_cache's buffer_tree=
+s
+      dm bufio: intelligently size dm_buffer_cache's buffer_trees
+      dm bio prison v1: prepare to intelligently size dm_bio_prison's priso=
+n_regions
+      dm bio prison v1: intelligently size dm_bio_prison's prison_regions
+      dm clone: call kmem_cache_destroy() in dm_clone_init() error path
+      dm integrity: call kmem_cache_destroy() in dm_integrity_init() error =
+path
+      dm: allow targets to require splitting WRITE_ZEROES and SECURE_ERASE
+      dm: unexport dm_get_queue_limits()
+      dm ioctl: fix nested locking in table_clear() to remove deadlock conc=
+ern
+
+Mikulas Patocka (8):
+      dm bufio: use waitqueue_active in __free_buffer_wake
+      dm bufio: use multi-page bio vector
+      dm table: allow targets without devices to set ->io_hints
+      dm zero: add discard support
+      dm error: add discard support
+      dm flakey: fix a crash with invalid table line
+      dm flakey: remove trailing space in the table line
+      dm flakey: add an "error_reads" option
+
+Tom Rix (1):
+      dm raid: remove unused d variable
+
+Yangtao Li (3):
+      dm: push error reporting down to dm_register_target()
+      dm mirror: add DMERR message if alloc_workqueue fails
+      dm: add helper macro for simple DM target module init and exit
+
+Yeongjin Gil (1):
+      dm verity: fix error handling for check_at_most_once on FEC
+
+Yu Zhe (1):
+      dm: remove unnecessary (void*) conversions
+
+ .../admin-guide/device-mapper/dm-flakey.rst        |    4 +
+ drivers/md/dm-bio-prison-v1.c                      |   94 +-
+ drivers/md/dm-bio-prison-v1.h                      |   15 +
+ drivers/md/dm-bufio.c                              | 1988 ++++++++++++++--=
+----
+ drivers/md/dm-cache-target.c                       |    1 -
+ drivers/md/dm-clone-target.c                       |    2 +-
+ drivers/md/dm-crypt.c                              |   20 +-
+ drivers/md/dm-delay.c                              |   26 +-
+ drivers/md/dm-dust.c                               |   19 +-
+ drivers/md/dm-ebs-target.c                         |   19 +-
+ drivers/md/dm-era-target.c                         |   22 +-
+ drivers/md/dm-flakey.c                             |   71 +-
+ drivers/md/dm-integrity.c                          |   15 +-
+ drivers/md/dm-io.c                                 |    4 +-
+ drivers/md/dm-ioctl.c                              |   12 +-
+ drivers/md/dm-kcopyd.c                             |    4 +-
+ drivers/md/dm-linear.c                             |    6 +-
+ drivers/md/dm-log-writes.c                         |   21 +-
+ drivers/md/dm-log.c                                |   24 +-
+ drivers/md/dm-mpath.c                              |    5 +-
+ drivers/md/dm-raid.c                               |   22 +-
+ drivers/md/dm-raid1.c                              |   24 +-
+ drivers/md/dm-snap-persistent.c                    |    2 +-
+ drivers/md/dm-snap.c                               |   12 +-
+ drivers/md/dm-stripe.c                             |    4 +-
+ drivers/md/dm-switch.c                             |   20 +-
+ drivers/md/dm-table.c                              |    6 +-
+ drivers/md/dm-target.c                             |   20 +-
+ drivers/md/dm-thin.c                               |  125 +-
+ drivers/md/dm-unstripe.c                           |   14 +-
+ drivers/md/dm-verity-fec.c                         |    4 +-
+ drivers/md/dm-verity-target.c                      |   42 +-
+ drivers/md/dm-writecache.c                         |   22 +-
+ drivers/md/dm-zero.c                               |   31 +-
+ drivers/md/dm-zoned-metadata.c                     |    6 +-
+ drivers/md/dm-zoned-target.c                       |   16 +-
+ drivers/md/dm.c                                    |   47 +-
+ drivers/md/dm.h                                    |   22 +
+ include/linux/device-mapper.h                      |   40 +-
+ include/linux/dm-bufio.h                           |    6 -
+ include/uapi/linux/dm-ioctl.h                      |    4 +-
+ 41 files changed, 1777 insertions(+), 1084 deletions(-)
 
 --
 dm-devel mailing list
