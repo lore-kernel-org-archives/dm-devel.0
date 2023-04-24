@@ -1,94 +1,75 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D45C5C77B73
-	for <dm-devel@archiver.kernel.org>; Mon, 24 Apr 2023 06:04:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0DE36C77B61
+	for <dm-devel@archiver.kernel.org>; Mon, 24 Apr 2023 06:22:34 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1682316250;
+	s=mimecast20190719; t=1682317354;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=B5ozoFbmwHGNcUi1ZWBIe045dVXGDpjG5YjhxaaZcl4=;
-	b=aagdvMaNf++YHu6O+Ve4WkwEPnKAquxPsLRFEaV5NXm7ueas4+E8d4cHp2ukZBQLaHQe5a
-	pb6M7+lZ1TIAFizAxKO9gFIJN7vdfW6qercxCCaOMVaUv8Zyp0g0i33BzbLr6+zCpedmw5
-	jk0oxOqNMvCvDHXANIKZ+HJFqvCWSnE=
+	bh=/KrJrXl3trvMZ6JVEEdWmZQDca3r83AOpNejFpGBthE=;
+	b=FdqZN+MAgcgXzcjFT+HI80/G/+W1HFmb5+syRHO4j7MZ0e8VnJ/o63u6Za+zRR2OOEgPhP
+	IxI5PZnkdfu6mdLy73LswJybm0Z72n8frnQGD47z5lfv5XzfYhUd61vEAH7X1Y6C34OAoY
+	hw07OGvW0/K9lLjVFLGyFsYKDrVIA1M=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-605-huUgEPVCM2CeyEIPMKl0KQ-1; Mon, 24 Apr 2023 02:04:07 -0400
-X-MC-Unique: huUgEPVCM2CeyEIPMKl0KQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-122-yq_k2WmzMiuF27T6rO-yIQ-1; Mon, 24 Apr 2023 02:22:30 -0400
+X-MC-Unique: yq_k2WmzMiuF27T6rO-yIQ-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 076C21C17437;
-	Mon, 24 Apr 2023 06:04:06 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 771641C05AF1;
+	Mon, 24 Apr 2023 06:22:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5384E492B0F;
-	Mon, 24 Apr 2023 06:04:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2999E40BC798;
+	Mon, 24 Apr 2023 06:22:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3CF011946A48;
-	Mon, 24 Apr 2023 06:04:01 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DBE4E1946587;
+	Mon, 24 Apr 2023 06:22:27 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id BC72B1946A40
- for <dm-devel@listman.corp.redhat.com>; Fri, 21 Apr 2023 06:58:08 +0000 (UTC)
+ ESMTP id 4E1161946586
+ for <dm-devel@listman.corp.redhat.com>; Mon, 24 Apr 2023 06:22:27 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 98822492C14; Fri, 21 Apr 2023 06:57:58 +0000 (UTC)
+ id 2BF6D2027043; Mon, 24 Apr 2023 06:22:27 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 912CB492C13
- for <dm-devel@redhat.com>; Fri, 21 Apr 2023 06:57:58 +0000 (UTC)
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2441F2027046
+ for <dm-devel@redhat.com>; Mon, 24 Apr 2023 06:22:26 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
  bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 74D28101A554
- for <dm-devel@redhat.com>; Fri, 21 Apr 2023 06:57:58 +0000 (UTC)
-Received: from mail-pf1-f171.google.com (mail-pf1-f171.google.com
- [209.85.210.171]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B4DE03806703
+ for <dm-devel@redhat.com>; Mon, 24 Apr 2023 06:22:26 +0000 (UTC)
+Received: from bombadil.infradead.org (bombadil.infradead.org
+ [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-471-LzbeR3XWOgyjXUsl_qux8A-1; Fri, 21 Apr 2023 02:57:56 -0400
-X-MC-Unique: LzbeR3XWOgyjXUsl_qux8A-1
-Received: by mail-pf1-f171.google.com with SMTP id
- d2e1a72fcca58-63d4595d60fso12425913b3a.0
- for <dm-devel@redhat.com>; Thu, 20 Apr 2023 23:57:56 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1682060276; x=1684652276;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
- :message-id:reply-to;
- bh=iCQQOrDHvv7muofgTvhggno9gmpvYe5WVwBD+zXre78=;
- b=dVD1Nnd3Ngfyd6AO2pqXOigEaBDBLwtMMpZKLMI1Cq7xps/T4T9fhLVRzBho40FPEE
- Oxq8mf73ni9Ebqj3oVdwiLWCsePyV2lfYLqjQWWoBlbvc9eQdjDn/yCOIXAi7wnUI62p
- JWt11sLp09No3lSw78w2yjaD9735lNYyIgm7qGZCuJzxJRJ1a7uooM2ZYvWfr/8bjRNU
- ng/PWUXywkWePlJZVmOSSH5FfnuZQPOlF09k/Xd/6JPWK5uFTdHkAtlDU78eH6Tjt7I1
- Yc11IoLu3zV8c5zrICWyf60yqorMmlr35mBVe2mCBE9jtoMt3WGCsW8IlIwVwWprgavD
- E81A==
-X-Gm-Message-State: AAQBX9f1hpK8my9HnevuXAsumQl5r7VgIXNkGw9xdiR6hhjRIKWndgoc
- KoJLKdUheSCYwOwqJjUlloTfLQ==
-X-Google-Smtp-Source: AKy350ZEEP/PrU7kYgyyZkKivdaMPHUVf5WGz+Wiu1WQ8mlkUVfjfkCNB7ZnxyH4DOCp4JsT1PbWNg==
-X-Received: by 2002:aa7:8554:0:b0:63d:40bb:a88b with SMTP id
- y20-20020aa78554000000b0063d40bba88bmr8194787pfn.14.1682060275718; 
- Thu, 20 Apr 2023 23:57:55 -0700 (PDT)
-Received: from google.com (KD124209188001.ppp-bb.dion.ne.jp. [124.209.188.1])
- by smtp.gmail.com with ESMTPSA id
- 136-20020a63008e000000b0051806da5cd6sm2038374pga.60.2023.04.20.23.57.49
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 20 Apr 2023 23:57:54 -0700 (PDT)
-Date: Fri, 21 Apr 2023 15:57:47 +0900
-From: Sergey Senozhatsky <senozhatsky@chromium.org>
-To: Johannes Thumshirn <jth@kernel.org>
-Message-ID: <20230421065747.GB1496740@google.com>
-References: <20230420100501.32981-1-jth@kernel.org>
- <20230420100501.32981-14-jth@kernel.org>
+ us-mta-659-CKpOnGWPPimjfoBt2-B4UQ-1; Mon, 24 Apr 2023 02:22:25 -0400
+X-MC-Unique: CKpOnGWPPimjfoBt2-B4UQ-1
+Received: from hch by bombadil.infradead.org with local (Exim 4.96 #2 (Red Hat
+ Linux)) id 1pqpAv-00FPys-1e; Mon, 24 Apr 2023 05:55:45 +0000
+Date: Sun, 23 Apr 2023 22:55:45 -0700
+From: Christoph Hellwig <hch@infradead.org>
+To: Dave Chinner <david@fromorbit.com>
+Message-ID: <ZEYZ4ScVDXviFJ/J@infradead.org>
+References: <20230421195807.2804512-1-mcgrof@kernel.org>
+ <20230421195807.2804512-4-mcgrof@kernel.org>
+ <ZELuiBNNHTk4EdxH@casper.infradead.org>
+ <ZEMH9h/cd9Cp1t+X@bombadil.infradead.org>
+ <20230421223420.GH3223426@dread.disaster.area>
 MIME-Version: 1.0
-In-Reply-To: <20230420100501.32981-14-jth@kernel.org>
+In-Reply-To: <20230421223420.GH3223426@dread.disaster.area>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+ bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -96,10 +77,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-X-Mailman-Approved-At: Mon, 24 Apr 2023 06:04:00 +0000
-Subject: Re: [dm-devel] [PATCH v4 13/22] zram: use __bio_add_page for adding
- single page to bio
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH 3/5] iomap: simplify iomap_init() with
+ PAGE_SECTORS
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -111,43 +91,46 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: shaggy@kernel.org, jfs-discussion@lists.sourceforge.net, linux-mm@kvack.org,
- dm-devel@redhat.com, hch@lst.de, agruenba@redhat.com,
- Damien Le Moal <damien.lemoal@opensource.wdc.com>, willy@infradead.org,
- cluster-devel@redhat.com, kch@nvidia.com, snitzer@kernel.org,
- ming.lei@redhat.com, linux-block@vger.kernel.org, rpeterso@redhat.com,
- dsterba@suse.com, axboe@kernel.dk, linux-raid@vger.kernel.org,
- damien.lemoal@wdc.com, song@kernel.org, johannes.thumshirn@wdc.com,
- Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
- linux-btrfs@vger.kernel.org
+Cc: djwong@kernel.org, philipp.reisner@linbit.com, linux-mm@kvack.org,
+ dm-devel@redhat.com, agk@redhat.com, drbd-dev@lists.linbit.com,
+ christoph.boehmwalder@linbit.com, Matthew Wilcox <willy@infradead.org>,
+ hch@infradead.org, p.raghav@samsung.com, senozhatsky@chromium.org,
+ snitzer@kernel.org, linux-block@vger.kernel.org, kbusch@kernel.org,
+ axboe@kernel.dk, da.gomez@samsung.com, linux-kernel@vger.kernel.org,
+ linux-xfs@vger.kernel.org, minchan@kernel.org,
+ Luis Chamberlain <mcgrof@kernel.org>, patches@lists.linux.dev,
+ linux-fsdevel@vger.kernel.org, lars.ellenberg@linbit.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: chromium.org
+X-Mimecast-Originator: infradead.org
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-+ Minchan
+On Sat, Apr 22, 2023 at 08:34:20AM +1000, Dave Chinner wrote:
+> > 
+> > -	return bioset_init(&iomap_ioend_bioset, 4 * (PAGE_SIZE / SECTOR_SIZE),
+> > +	return bioset_init(&iomap_ioend_bioset, 4 * PAGE_SECTORS,
+> 
+> Yes, please.
+> 
+> > The shift just seemed optimal if we're just going to change it.
+> 
+> Nope, it's just premature optimisation at the expense of
+> maintainability. The compiler will optimise the multiplication into
+> shifts if that is the fastest way to do it for the given
+> architecture the code is being compiled to.
 
-On (23/04/20 12:04), Johannes Thumshirn wrote:
-> 
-> From: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-> 
-> The zram writeback code uses bio_add_page() to add a page to a newly
-> created bio. bio_add_page() can fail, but the return value is never
-> checked.
-> 
-> Use __bio_add_page() as adding a single page to a newly created bio is
-> guaranteed to succeed.
-> 
-> This brings us a step closer to marking bio_add_page() as __must_check.
-> 
-> Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-> Reviewed-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+We still had cases of the compiler not doing obvious
+multiplication/division to shift conversion lately.  That being said:
 
-Reviewed-by: Sergey Senozhatsky <senozhatsky@chromium.org>
+ 1) this is an initialization path, no one actually cares
+ 2) we're dealing with constants here, and compilers are really good
+    at constant folding
+
+so yes, this should be using the much more readable version.
 
 --
 dm-devel mailing list
