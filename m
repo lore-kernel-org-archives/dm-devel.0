@@ -1,85 +1,86 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4576AC77B7E
-	for <dm-devel@archiver.kernel.org>; Tue,  2 May 2023 10:22:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1D001C77B7E
+	for <dm-devel@archiver.kernel.org>; Tue,  2 May 2023 10:22:15 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1683022929;
+	s=mimecast20190719; t=1683022934;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=0g2AAwBmwyqXVK6mzRMxLvq2I+neFJrTByiEyZogeo4=;
-	b=DUalymjGX5O0m7QeMoKXj9d69whvYdp1qMHFa+tRsBFfcN8GuwVGq45D8+skrbHXILamCS
-	LZ+KQ84o8aXo1WHyzdKOCZrs0XFdP4ATrisX18SPk7hnc7uuAh/S6x8JNJzSxC/XUJxCxK
-	fe90TyKTWob/93M9Q/JF10dC+/TegSU=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=1/qmBS6H9b0OY0THv42NSVeF4gM0cLgQ6EI6ZXViYUw=;
+	b=V1kDZnCwUnHd5x6TlRm29ZSN0gImvFV8CcptGlGairTdJQg/KUmdvwz01+svwHOHxXRoaH
+	x4rnwbLPd0Z9i3F/2nVDrYUZWEmsAvhfaKVJ8W+LBoNRMm2NefyU5IP8hCDbTqED1d7jjc
+	hwiaUEoQLrc1Q7aZIP7JOcvf4lUQruQ=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-592-b7liDTSiMVG9Bcp10zImvQ-1; Tue, 02 May 2023 06:22:08 -0400
-X-MC-Unique: b7liDTSiMVG9Bcp10zImvQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-257-3DcALUhnPRaidRXkSHi4SA-1; Tue, 02 May 2023 06:22:13 -0400
+X-MC-Unique: 3DcALUhnPRaidRXkSHi4SA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6231C858F09;
-	Tue,  2 May 2023 10:22:06 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4DDFD3C10140;
+	Tue,  2 May 2023 10:22:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4F7EE2026DFD;
-	Tue,  2 May 2023 10:22:06 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 39AB3492C13;
+	Tue,  2 May 2023 10:22:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 683F5194658C;
-	Tue,  2 May 2023 10:22:05 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1FFFB194658C;
+	Tue,  2 May 2023 10:22:11 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id AD85A1946589
- for <dm-devel@listman.corp.redhat.com>; Tue,  2 May 2023 10:22:03 +0000 (UTC)
+ ESMTP id 836A91946589
+ for <dm-devel@listman.corp.redhat.com>; Tue,  2 May 2023 10:22:10 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8BC8863F5F; Tue,  2 May 2023 10:22:03 +0000 (UTC)
+ id 742E22024CDD; Tue,  2 May 2023 10:22:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 843C263F4A
- for <dm-devel@redhat.com>; Tue,  2 May 2023 10:22:03 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 65833884EC0
- for <dm-devel@redhat.com>; Tue,  2 May 2023 10:22:03 +0000 (UTC)
-Received: from esa5.hgst.iphmx.com (esa5.hgst.iphmx.com [216.71.153.144]) by
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6CA4D2024CDC
+ for <dm-devel@redhat.com>; Tue,  2 May 2023 10:22:10 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 502841C06ECC
+ for <dm-devel@redhat.com>; Tue,  2 May 2023 10:22:10 +0000 (UTC)
+Received: from esa3.hgst.iphmx.com (esa3.hgst.iphmx.com [216.71.153.141]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-107-bPO-1UTsNU2PeeGIMkIVQg-5; Tue, 02 May 2023 06:21:59 -0400
-X-MC-Unique: bPO-1UTsNU2PeeGIMkIVQg-5
-X-IronPort-AV: E=Sophos;i="5.99,243,1677513600"; d="scan'208";a="229597986"
+ us-mta-417-S-CIVL8jPL-uiqMN6C0V8w-1; Tue, 02 May 2023 06:22:06 -0400
+X-MC-Unique: S-CIVL8jPL-uiqMN6C0V8w-1
+X-IronPort-AV: E=Sophos;i="5.99,243,1677513600"; d="scan'208";a="234672956"
 Received: from uls-op-cesaip02.wdc.com (HELO uls-op-cesaep02.wdc.com)
  ([199.255.45.15])
- by ob1.hgst.iphmx.com with ESMTP; 02 May 2023 18:21:59 +0800
-IronPort-SDR: X1orary6J6U5+iqUXNHe1SVkrBb0QCMiSb5baNBgIHqddHEcDa/5R40A1selyNKIPEMadWbsuC
- 0TZAGSwRzO162QMgF+JPjnyI6LlUytQNIdcZPcvquCnUhxAHrtKxtKlZCeZ5DOupeIpk6g3Jxm
- 0bjPVI5JrQARMykog4V4yEYg82UtDuciY970k5DScA9vIXO5HQZiDkXiY5x2RsxvCb1OwJRCRM
- ED9UeJdU/ncAbweCp/rFNyJGFvUYUJoFylluz8hpoRRKwOg/d4mu70TcesJZ122EzPZBLWve5v
- fdA=
+ by ob1.hgst.iphmx.com with ESMTP; 02 May 2023 18:22:04 +0800
+IronPort-SDR: 8LiZVqSljEUj30YTT1ib3plIX5pqE9tDlNMifwLGF3Hw1MBfuc7PtGgexo1EqUwA/AR59Maw+L
+ sQ2tdPtZNrhtt9VEEgb/CyHRouzcto92W8/fLIuXQZmXSQQF3c/t0L7OeXNbCIOVMf2DQS4qxt
+ llm2sE035ndkL8y3PlFmGjgGO95AvRpTDcBfhKok7Kt59wr+sWVltGR8RgjUrWa1U+8vKa9Ei0
+ fRHit/vDOzpIkIblU5iq8ACQ22yNs781FKqAsvEtckrl5NTgYJeIXiv9PkySb7RIdno/auc4EW
+ Dbc=
 Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
  by uls-op-cesaep02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 02 May 2023 02:31:45 -0700
-IronPort-SDR: dt0ORTo7y2OvtYPVqxqZKcSlk8TEG/M5IxYJloXDNMtpbFDpduCookvi33MCWWG4kgtbDfnjoU
- qNWcylSMPeGsO0kq0NXDl4G2C7gt3I+rFtkistntPpO5mSXx+HBp1mYREWSzEfGneChk6WparM
- /i8YU9a9mKVsFFGu/e5aSvIr5Y8Ea9LImoNB16+9AysmzPJOxOBZEoak3fvRhFlXukbVn/nkDx
- drQrakT6xd36x6OU6prDHLUpKa5+rnrr2e8A/8Ynql1R4XRsK2thU0KyPWPdS53E7jOulhZ7Dk
- rYQ=
+ 02 May 2023 02:31:52 -0700
+IronPort-SDR: TXRvj4xGS7bs358T8JG44prCEdQDntGn6p0l+szUnQQoKJ/zDUjD7hIPnB3WnqR6eTNxy9YLTk
+ XRVgfqPge2tLXX9S3JBmh6cFtTa0a693VSeDeLsqNSigQnxtFdohY1ax9DQgKdHPBtM4lfEiTv
+ Zjg5Y/0Mwg7HWndmnbK/j/QEahj/maRXY3CFUHrYGs0T63rGwDf3VFa2xZKPr+8lNUgMWnCebU
+ hTXKsOGNGJGduWGl5A13GiLONk3DA+8Ged0SvyX7QurqVHjtBsMs2BE1hlpq5qA4aMSbZ6U+Xr
+ NI8=
 WDCIronportException: Internal
 Received: from myd008205.ad.shared (HELO localhost.localdomain)
  ([10.225.1.100])
- by uls-op-cesaip02.wdc.com with ESMTP; 02 May 2023 03:21:55 -0700
+ by uls-op-cesaip02.wdc.com with ESMTP; 02 May 2023 03:21:59 -0700
 From: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 To: "axboe @ kernel . dk" <axboe@kernel.dk>
-Date: Tue,  2 May 2023 12:19:32 +0200
-Message-Id: <20230502101934.24901-19-johannes.thumshirn@wdc.com>
+Date: Tue,  2 May 2023 12:19:33 +0200
+Message-Id: <20230502101934.24901-20-johannes.thumshirn@wdc.com>
 In-Reply-To: <20230502101934.24901-1-johannes.thumshirn@wdc.com>
 References: <20230502101934.24901-1-johannes.thumshirn@wdc.com>
 MIME-Version: 1.0
@@ -90,8 +91,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: [dm-devel] [PATCH v5 18/20] block: add __bio_add_folio
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: [dm-devel] [PATCH v5 19/20] fs: iomap: use __bio_add_folio where
+ possible
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -112,51 +114,55 @@ Cc: linux-block@vger.kernel.org, damien.lemoal@wdc.com, kch@nvidia.com,
  rpeterso@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: wdc.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Just like for bio_add_pages() add a no-fail variant for bio_add_folio().
+When the iomap buffered-io code can't add a folio to a bio, it allocates a
+new bio and adds the folio to that one. This is done using bio_add_folio(),
+but doesn't check for errors.
+
+As adding a folio to a newly created bio can't fail, use the newly
+introduced __bio_add_folio() function.
 
 Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 ---
- block/bio.c         | 8 ++++++++
- include/linux/bio.h | 1 +
- 2 files changed, 9 insertions(+)
+ fs/iomap/buffered-io.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/block/bio.c b/block/bio.c
-index 043944fd46eb..350c653d4a57 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -1138,6 +1138,14 @@ int bio_add_page(struct bio *bio, struct page *page,
- }
- EXPORT_SYMBOL(bio_add_page);
+diff --git a/fs/iomap/buffered-io.c b/fs/iomap/buffered-io.c
+index 063133ec77f4..42c5fc0ad329 100644
+--- a/fs/iomap/buffered-io.c
++++ b/fs/iomap/buffered-io.c
+@@ -312,7 +312,7 @@ static loff_t iomap_readpage_iter(const struct iomap_iter *iter,
+ 			ctx->bio->bi_opf |= REQ_RAHEAD;
+ 		ctx->bio->bi_iter.bi_sector = sector;
+ 		ctx->bio->bi_end_io = iomap_read_end_io;
+-		bio_add_folio(ctx->bio, folio, plen, poff);
++		__bio_add_folio(ctx->bio, folio, plen, poff);
+ 	}
  
-+void __bio_add_folio(struct bio *bio, struct folio *folio, size_t len,
-+		     size_t off)
-+{
-+	WARN_ON_ONCE(len > UINT_MAX);
-+	WARN_ON_ONCE(off > UINT_MAX);
-+	__bio_add_page(bio, &folio->page, len, off);
-+}
-+
- /**
-  * bio_add_folio - Attempt to add part of a folio to a bio.
-  * @bio: BIO to add to.
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 5d5b081ee062..4232a17e6b10 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -473,6 +473,7 @@ int bio_add_zone_append_page(struct bio *bio, struct page *page,
- 			     unsigned int len, unsigned int offset);
- void __bio_add_page(struct bio *bio, struct page *page,
- 		unsigned int len, unsigned int off);
-+void __bio_add_folio(struct bio *, struct folio *, size_t len, size_t off);
- int bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter);
- void bio_iov_bvec_set(struct bio *bio, struct iov_iter *iter);
- void __bio_release_pages(struct bio *bio, bool mark_dirty);
+ done:
+@@ -539,7 +539,7 @@ static int iomap_read_folio_sync(loff_t block_start, struct folio *folio,
+ 
+ 	bio_init(&bio, iomap->bdev, &bvec, 1, REQ_OP_READ);
+ 	bio.bi_iter.bi_sector = iomap_sector(iomap, block_start);
+-	bio_add_folio(&bio, folio, plen, poff);
++	__bio_add_folio(&bio, folio, plen, poff);
+ 	return submit_bio_wait(&bio);
+ }
+ 
+@@ -1582,7 +1582,7 @@ iomap_add_to_ioend(struct inode *inode, loff_t pos, struct folio *folio,
+ 
+ 	if (!bio_add_folio(wpc->ioend->io_bio, folio, len, poff)) {
+ 		wpc->ioend->io_bio = iomap_chain_bio(wpc->ioend->io_bio);
+-		bio_add_folio(wpc->ioend->io_bio, folio, len, poff);
++		__bio_add_folio(wpc->ioend->io_bio, folio, len, poff);
+ 	}
+ 
+ 	if (iop)
 -- 
 2.40.0
 
