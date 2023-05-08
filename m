@@ -4,88 +4,166 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 57273C77B75
-	for <dm-devel@archiver.kernel.org>; Sat,  6 May 2023 06:32:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 130DFC7EE25
+	for <dm-devel@archiver.kernel.org>; Tue,  9 May 2023 00:03:31 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1683354750;
+	s=mimecast20190719; t=1683590611;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=A9iQMN7trXESrAnCWtxClsyW4/Ww1Emm+q1aJGgP8b8=;
-	b=g9IEocYOhOho5ziVZgKeWtsoqIv7P3o/GhZnWXQxV9hpkjP/3PxRDF8NCFSVUTDhWC9K/a
-	lAyqhFyN3mgpHFnPupLlml9gjOo4bC+dIAHqQLsAsRvPEoOnJjt0HOn9c3Uu2ZjhB+pOM1
-	jgzWhpifKYL0++vFM67lWpv7wtL5c4k=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=PAx7MZDvmTHrdWQ4lqBtImQJPropHOZ9W5cqf3LQ8Ag=;
+	b=EzMtGvWnD8/yfDG6IVhRFwgBcGmMwl/nnkBr5fdRyDUb5ZEzy/miTT9j/c0Wm25M2g9oFZ
+	/3CwK+kfdUgKxeMD+QVvGiWYYGBHZTo0E+4ntMjc4ctITYttV4LUEkQImPqvqC51aVjJIN
+	PsQkZOoa2aZcr5vcmJhanwJTXQjU0/I=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-401-a0TCVh5oOJWqpO4cUMYirw-1; Sat, 06 May 2023 02:32:27 -0400
-X-MC-Unique: a0TCVh5oOJWqpO4cUMYirw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-615-ENruc8sLPQeT3SSjVLuKig-1; Mon, 08 May 2023 20:03:29 -0400
+X-MC-Unique: ENruc8sLPQeT3SSjVLuKig-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A12AB84AF30;
-	Sat,  6 May 2023 06:32:25 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DC6883813F34;
+	Tue,  9 May 2023 00:03:27 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8CED4C15BA0;
-	Sat,  6 May 2023 06:32:25 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5284A2166B40;
+	Tue,  9 May 2023 00:03:27 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 716DA1946588;
-	Sat,  6 May 2023 06:32:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C234C19452D3;
+	Tue,  9 May 2023 00:03:23 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id DEC321946586
- for <dm-devel@listman.corp.redhat.com>; Sat,  6 May 2023 06:32:24 +0000 (UTC)
+ ESMTP id 1144219465A0
+ for <dm-devel@listman.corp.redhat.com>; Mon,  8 May 2023 18:21:25 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id CD19EC16024; Sat,  6 May 2023 06:32:24 +0000 (UTC)
+ id E3A5014171C0; Mon,  8 May 2023 18:21:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C4CE5C15BA0
- for <dm-devel@redhat.com>; Sat,  6 May 2023 06:32:18 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D890314171BC
+ for <dm-devel@redhat.com>; Mon,  8 May 2023 18:19:28 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 828E81C06EE7
- for <dm-devel@redhat.com>; Sat,  6 May 2023 06:32:18 +0000 (UTC)
-Received: from mail-ed1-f41.google.com (mail-ed1-f41.google.com
- [209.85.208.41]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-298-W1VFC2tTPfm-WZ2D5SuAwg-1; Sat, 06 May 2023 02:32:14 -0400
-X-MC-Unique: W1VFC2tTPfm-WZ2D5SuAwg-1
-Received: by mail-ed1-f41.google.com with SMTP id
- 4fb4d7f45d1cf-50b37f3e664so4618957a12.1
- for <dm-devel@redhat.com>; Fri, 05 May 2023 23:32:14 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1683354734; x=1685946734;
- h=content-transfer-encoding:cc:to:subject:message-id:date:from
- :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=dh+rLv64T/XKdExtopYbn1p2e3mwdhjXoRnI90UeXPc=;
- b=JZCoOPVw80ZscfHYJe3wHLvPBpjc1RKQOrFR4UUO8QLDCak+cKjdj9j4E5jug6H90k
- gqYQoUbF0gM5frFcdvhLDEGw2+tAw2oEELwZg8GGBVNOwQ4rHRtLrzhq5UOHc1cl4pZu
- dW2z870iYyWDXWhq3buMD/2Dv24OIZH4s9Id+aoMU6xkxw4gYqojVPhA01qPUldrbU+Y
- uI5BARtLnbH1043ZL9PiwO5iNquP9BSYzXvCG4hH3PDhrx1o84P3CL4h1bzkp6BdTvkX
- sVLBgcrOlbjiXmWCUUwTp8KzykgcDsJSva2LP+Qy0/N6DgZMWcimiIDvmxwh4PsAXT8d
- kUNw==
-X-Gm-Message-State: AC+VfDzPnGguwBW1T+jk1ILSrOSeFXR3h3aINn52LVdjDm+trXqaHMsv
- qVm5YdAmwNb5cFmOoYlzerlKzXjXxyzPqDwIcoV8JQ==
-X-Google-Smtp-Source: ACHHUZ49lLaiO0buFBePac28VZVZZ5J4y63mNd4+sXRBHhN0wwrJ6PD3jFK0pFSF8IgYJk2lmVOifSuBIwb8CLlZkRk=
-X-Received: by 2002:a17:907:9605:b0:93e:fa12:aa1a with SMTP id
- gb5-20020a170907960500b0093efa12aa1amr3601469ejc.1.1683354733732; Fri, 05 May
- 2023 23:32:13 -0700 (PDT)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 969BB1C06908
+ for <dm-devel@redhat.com>; Mon,  8 May 2023 18:19:28 +0000 (UTC)
+Received: from mga07.intel.com (mga07.intel.com [134.134.136.100]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-620-FVvdhLQlMZit3uWi_CveIg-1; Mon, 08 May 2023 14:19:26 -0400
+X-MC-Unique: FVvdhLQlMZit3uWi_CveIg-1
+X-IronPort-AV: E=McAfee;i="6600,9927,10704"; a="415283496"
+X-IronPort-AV: E=Sophos;i="5.99,259,1677571200"; d="scan'208";a="415283496"
+Received: from fmsmga003.fm.intel.com ([10.253.24.29])
+ by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 08 May 2023 11:18:21 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10704"; a="788205487"
+X-IronPort-AV: E=Sophos;i="5.99,259,1677571200"; d="scan'208";a="788205487"
+Received: from orsmsx602.amr.corp.intel.com ([10.22.229.15])
+ by FMSMGA003.fm.intel.com with ESMTP; 08 May 2023 11:18:21 -0700
+Received: from orsmsx611.amr.corp.intel.com (10.22.229.24) by
+ ORSMSX602.amr.corp.intel.com (10.22.229.15) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2507.23; Mon, 8 May 2023 11:18:20 -0700
+Received: from orsmsx610.amr.corp.intel.com (10.22.229.23) by
+ ORSMSX611.amr.corp.intel.com (10.22.229.24) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2507.23; Mon, 8 May 2023 11:18:20 -0700
+Received: from ORSEDG601.ED.cps.intel.com (10.7.248.6) by
+ orsmsx610.amr.corp.intel.com (10.22.229.23) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2507.23 via Frontend Transport; Mon, 8 May 2023 11:18:20 -0700
+Received: from NAM12-MW2-obe.outbound.protection.outlook.com (104.47.66.41) by
+ edgegateway.intel.com (134.134.137.102) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.1.2507.23; Mon, 8 May 2023 11:18:20 -0700
+Received: from PH0PR11MB4855.namprd11.prod.outlook.com (2603:10b6:510:41::12)
+ by DS0PR11MB7997.namprd11.prod.outlook.com (2603:10b6:8:125::14) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6363.32; Mon, 8 May
+ 2023 18:18:17 +0000
+Received: from PH0PR11MB4855.namprd11.prod.outlook.com
+ ([fe80::cfb2:e73:907d:cb77]) by PH0PR11MB4855.namprd11.prod.outlook.com
+ ([fe80::cfb2:e73:907d:cb77%5]) with mapi id 15.20.6363.032; Mon, 8 May 2023
+ 18:18:17 +0000
+Message-ID: <90ce2028-dfdb-9b9a-24a6-9f9210cedbcb@intel.com>
+Date: Mon, 8 May 2023 11:18:14 -0700
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101
+ Thunderbird/102.9.1
+To: Eric Biggers <ebiggers@kernel.org>
+References: <20220112211258.21115-1-chang.seok.bae@intel.com>
+ <20230410225936.8940-1-chang.seok.bae@intel.com>
+ <20230410225936.8940-9-chang.seok.bae@intel.com> <ZFWMwQc4NKg7ueqG@gmail.com>
+From: "Chang S. Bae" <chang.seok.bae@intel.com>
+In-Reply-To: <ZFWMwQc4NKg7ueqG@gmail.com>
+X-ClientProxiedBy: BY3PR10CA0010.namprd10.prod.outlook.com
+ (2603:10b6:a03:255::15) To PH0PR11MB4855.namprd11.prod.outlook.com
+ (2603:10b6:510:41::12)
 MIME-Version: 1.0
-References: <20230414000219.92640-1-sarthakkukreti@chromium.org>
- <20230420004850.297045-1-sarthakkukreti@chromium.org>
- <20230420004850.297045-5-sarthakkukreti@chromium.org>
- <ZFAP5yQ0mwE4F6Vg@redhat.com>
-In-Reply-To: <ZFAP5yQ0mwE4F6Vg@redhat.com>
-From: Sarthak Kukreti <sarthakkukreti@chromium.org>
-Date: Fri, 5 May 2023 23:32:02 -0700
-Message-ID: <CAG9=OMNh8w9hmkU6ZHBm8bN0NGCL4NaKv7XAEQrFvTKKNcXLLg@mail.gmail.com>
-To: Mike Snitzer <snitzer@kernel.org>
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: PH0PR11MB4855:EE_|DS0PR11MB7997:EE_
+X-MS-Office365-Filtering-Correlation-Id: ed718c69-7605-49d8-9f41-08db4ff09883
+X-LD-Processed: 46c98d88-e344-4ed4-8496-4ed7712e255d,ExtAddr
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0
+X-Microsoft-Antispam-Message-Info: 7DrBZnYs+qp2unAhOBMmdr4D1jWBo2YkCjfxaZHwHHDxP8Y6ccsMc4aErUcEIiYlwQF9WEchInPUG85DD7sWAxsP1bxlbATgYQ65YGaZ87xWAacJyPRuYdCoxG+4DwsihTsZPhCAbnJ1mrH92vR2Z1TUhskqnum8A9V83CZTbp87WUQ7bgcBr7tRtvCye3Qxi5OjblMp3wLcnYbcUsDBDYCAiwgE/ZlzILwmyuv9oR8Z0eh3fM71TzHJ3RMc6NBiXABYVuZbyXIXk9uPzYZark5LYZuTaVrpe4gKo4Ie2CFYDrtCU/OcjnLBW2EwlsT15x08z9MuZ2h7xJF4ZL9w8btC/Vn7kfUwU6yKrobwFZ1Wls/JyMRYcUk2qPM7KYriNY7iuykvzT8LncGkNNWqnAeG9nnAfwRxXp8MCGqXOG/bBeyvrIMgtKaFHr4eD60F1dz3ao/zIPnAAfP7wQXpS2eYWCLBgCJxs4ssMloyjadSCm3PqEQbhGOM1eDWrIIP25e8EesW5C8Ns+2ZzXKyarhAhk6gmynk42QCk48jDIrMwckB2wXLzDzIxLm7VSVbIbe3R5FeJkwKN1X4OZWiuXMSt54qqPy3hTnmN2zpWCk2M80nXA9Uye/NJXRI4ARwZapNT3b7nB322mMms1GlrA==
+X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:PH0PR11MB4855.namprd11.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230028)(346002)(366004)(396003)(136003)(376002)(39860400002)(451199021)(8676002)(8936002)(5660300002)(2906002)(7416002)(82960400001)(36756003)(38100700002)(478600001)(6486002)(6666004)(54906003)(31686004)(83380400001)(2616005)(53546011)(186003)(26005)(6512007)(86362001)(6916009)(4326008)(31696002)(66946007)(6506007)(316002)(66476007)(66556008)(41300700001)(43740500002)(45980500001);
+ DIR:OUT; SFP:1102
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?utf-8?B?VlhNeTBicnd3dXdidXdtWEdqK09HUkpJWkIvM0FwSWVIUzM1M2xUNWY5UUZF?=
+ =?utf-8?B?bmw2aGlpcGVpbnpJVU1VVEp5WFIwWEF0d2tBaERObWpXS1lEMmk2Z2gxNWk2?=
+ =?utf-8?B?WHJXVTZ1QWt4SU1JdUg2OEZ0cHhsN25pVVNQc1dFbEFMTkdUeEtDOUluaFFr?=
+ =?utf-8?B?cjZYUUlLUjMwaWhpdkZSRzVOU0QxMXJPVEdSNHN3anNhUkowR0pKU3Q0Ri9T?=
+ =?utf-8?B?L0RCdTB1WDFuTThHWFBPS3VEdDdORHpjMlBxWmUzWXFTclRhbGZwcXZOYlJV?=
+ =?utf-8?B?djBqcWxwcnhEQXlQMWxScXlkeGRlM0NTbS9nMXNJQUZBb2wrZmx0QmFadVVB?=
+ =?utf-8?B?L0hEVUgrZElISG9MMlR6bE52YkJtWGp4clB4OUh1YlhlYzYwN3gxbjUwNm5w?=
+ =?utf-8?B?VDlWSjVoYm50UlE1SzlqaVVNcThPTytNc0lPTHBNeHExcTRSODVjYnQydEpx?=
+ =?utf-8?B?b1F4UzBWREgxelc1OHhKdmRIK0xHNXZMYWJJWWU1djR2NERjYmtlODJZV1Ft?=
+ =?utf-8?B?NTZWSHdBQmMwOS9od0k5a3llRi9tbzFxYXpEVkxzUVFLOHJlQmFTUmNobngw?=
+ =?utf-8?B?UzFPZkkxNVoxcy9oL1lKdnUxRkpQa1hyb09GNVJTMVFPcEpLWHkvbnNZU28z?=
+ =?utf-8?B?RlV6OTgxcDhiYW43UG5mR1F4SUV5N1RCKzBQdmlocjA0VmlTWktoSnRSdGlW?=
+ =?utf-8?B?Y3pTaTZ4Q0wxdE9Qb1I1TUFHNXpxaWFTZHV4NFI1TTBVKytDbnVseDExUGVD?=
+ =?utf-8?B?Z1hqYTFsOVRCYlQ1Mk9DbDVDMUZ2TFo3WTNlTmhMRFNZTEkxdDl6YXUzOEZ5?=
+ =?utf-8?B?WEhHNmpIWW5ac2NMWEdmc0dGeldGMUdJbytTS0RBYXBjWGRzQi9ZQjA5UHQ2?=
+ =?utf-8?B?S1lCdGdQOWR5aDNyUWJ4NkE4QlJ6UUwyYUVNQkEzbXdCSmVNNVN4ZHZwZEhI?=
+ =?utf-8?B?SmlheTBVaFRkemdlbmdjcUFCZkdzN1BOdkFzemhzcFhLbjkvQ2djY2cyRG1v?=
+ =?utf-8?B?UjhJM0pRaXhlTVQ0elBNK0xoUEZnQlk0Nks2Mnpuc1k3SWFPLzFPMHlWWVJv?=
+ =?utf-8?B?SGxoK3k0VXEzRTZabHMvQUdtTlptZ1NWZk15Y3h0TlBkK0ova3RxRlhSOFJq?=
+ =?utf-8?B?ZUtMUUwrN0d4TENoaDc5RlRWSzJoK2lwQmRRcnV6Q1JNeDFqczFMaG5jOE9N?=
+ =?utf-8?B?QjY3cE9QWms1TitkQ2ZMVjZ4S05LOXVmNUFhWmNMZGYrVlpsaStheEs2MmRH?=
+ =?utf-8?B?bEx2L2x5bnFDeTA3UGdHcDZPRlNZRTA0L3RhM2tGSUFTYngvTE1UZGt2RWFo?=
+ =?utf-8?B?K29UdEk4YTFEbnJzS256WXJWOHZiMk81c0pETlJLYzQ5dVJTRS9XYnY4Qm5x?=
+ =?utf-8?B?eFRyTWh2ZnpvUUhYUDNwb3I4dHFsengyQzVoRlVZQ1lDdWhHZm9JVy80RWJP?=
+ =?utf-8?B?bStMQzhhT3Q1ZUU0Qks5U3dPeXU1SmVYOG9yMnlyMVdFQy9ra05ISmlKR1JS?=
+ =?utf-8?B?UVJkRjBzemJuVVdLS2VJYm9jaDVGOVdUeUxMQXl2cHU0U0FuNTBya1V4WUFo?=
+ =?utf-8?B?MGt4REJEZElhMFpMOURzd0o1SGY4RVdMSmhkMWxLakpHWEVmSEtZeUI1bVNk?=
+ =?utf-8?B?SVVlSnVnZlEzZjBXMWtaOXd1OTBKY1VYeVE0TjdRSDZCVnlGdUwzcTZqTUZ5?=
+ =?utf-8?B?TS9vRk9WSXIvUDRkbDh6dEE4TWRycWxtcmdTTDd5Mko5bFFVR2dvYlhqM0x4?=
+ =?utf-8?B?bERZMlBhdUMvOUxFbkUzeWpJZ2ZhLzNwM0NWZjRUTE9EbngzbTd2OFhIL1B3?=
+ =?utf-8?B?bHdEb0ZQdFYydks3YlcrZm5semErTWFtVW5Kdy9BSFRpS3pNaFlHMFZlUUxx?=
+ =?utf-8?B?VkYyNFovVVdqdGw0SGsxbEN2ZktmeTNYczdjbkRFazVlRi92NDRDNUx2VFZR?=
+ =?utf-8?B?VnkyTmhOOTA0ZkU0NnhFQjVTd0JJdHM3ZlhmSFV2bUoxeXlmazB0ekJRMkM0?=
+ =?utf-8?B?YmpacTc2VnE1dEZrNmt1Yk5ZUTdkVGY3cGhFb0tSREpsbm9JT2hMMUQ1blFm?=
+ =?utf-8?B?MXRwaTVEVEpoVzJpaTRUMnpSbFZxUVNZeEMrUGw4Ynl1dEVXY0ZOZnUvNzFL?=
+ =?utf-8?B?SUdUQlpmbVpiVTNKWTJkSVllUDk5NzhXMy9jNGJ5VGh3VnNHZklYblU0cDE2?=
+ =?utf-8?B?MlE9PQ==?=
+X-MS-Exchange-CrossTenant-Network-Message-Id: ed718c69-7605-49d8-9f41-08db4ff09883
+X-MS-Exchange-CrossTenant-AuthSource: PH0PR11MB4855.namprd11.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 08 May 2023 18:18:17.5017 (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 46c98d88-e344-4ed4-8496-4ed7712e255d
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: qf0vl5voZ3upq7glWWubEEZaC6H3/fZrTIMGNdm+Lx2Ta6M7pBZDdml3Aeib6B3RDy9XeFcCQa3Rfnc7NxZASy4fGdp7OvH9H1DCY7Vi+dE=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DS0PR11MB7997
+X-OriginatorOrg: intel.com
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -93,8 +171,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH v5 4/5] dm-thin: Add REQ_OP_PROVISION support
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Mailman-Approved-At: Tue, 09 May 2023 00:03:21 +0000
+Subject: Re: [dm-devel] [PATCH v6 08/12] x86/PM/keylocker: Restore internal
+ wrapping key on resume from ACPI S3/4
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -106,53 +186,70 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
- Theodore Ts'o <tytso@mit.edu>, "Michael S. Tsirkin" <mst@redhat.com>,
- "Darrick J. Wong" <djwong@kernel.org>, Jason Wang <jasowang@redhat.com>,
- Bart Van Assche <bvanassche@google.com>, linux-kernel@vger.kernel.org,
- ejt@redhat.com, linux-block@vger.kernel.org, dm-devel@redhat.com,
- Andreas Dilger <adilger.kernel@dilger.ca>, Daniil Lunev <dlunev@google.com>,
- Stefan Hajnoczi <stefanha@redhat.com>, linux-fsdevel@vger.kernel.org,
- linux-ext4@vger.kernel.org, Brian Foster <bfoster@redhat.com>,
- Alasdair Kergon <agk@redhat.com>
+Cc: x86@kernel.org, herbert@gondor.apana.org.au,
+ "Rafael J. Wysocki" <rafael@kernel.org>, ardb@kernel.org,
+ linux-pm@vger.kernel.org, dave.hansen@linux.intel.com,
+ dan.j.williams@intel.com, linux-kernel@vger.kernel.org, mingo@kernel.org,
+ lalithambika.krishnakumar@intel.com, dm-devel@redhat.com,
+ Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+ linux-crypto@vger.kernel.org, luto@kernel.org, "H. Peter
+ Anvin" <hpa@zytor.com>, bernie.keany@intel.com, tglx@linutronix.de, bp@suse.de,
+ gmazyland@gmail.com, charishma1.gairuboyina@intel.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: chromium.org
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+X-Mimecast-Originator: intel.com
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-T24gTW9uLCBNYXkgMSwgMjAyMyBhdCAxMjoxNeKAr1BNIE1pa2UgU25pdHplciA8c25pdHplckBr
-ZXJuZWwub3JnPiB3cm90ZToKPgo+IE9uIFdlZCwgQXByIDE5IDIwMjMgYXQgIDg6NDhQIC0wNDAw
-LAo+IFNhcnRoYWsgS3VrcmV0aSA8c2FydGhha2t1a3JldGlAY2hyb21pdW0ub3JnPiB3cm90ZToK
-Pgo+ID4gZG0tdGhpbnBvb2wgdXNlcyB0aGUgcHJvdmlzaW9uIHJlcXVlc3QgdG8gcHJvdmlzaW9u
-Cj4gPiBibG9ja3MgZm9yIGEgZG0tdGhpbiBkZXZpY2UuIGRtLXRoaW5wb29sIGN1cnJlbnRseSBk
-b2VzIG5vdAo+ID4gcGFzcyB0aHJvdWdoIFJFUV9PUF9QUk9WSVNJT04gdG8gdW5kZXJseWluZyBk
-ZXZpY2VzLgo+ID4KPiA+IEZvciBzaGFyZWQgYmxvY2tzLCBwcm92aXNpb24gcmVxdWVzdHMgd2ls
-bCBicmVhayBzaGFyaW5nIGFuZCBjb3B5IHRoZQo+ID4gY29udGVudHMgb2YgdGhlIGVudGlyZSBi
-bG9jay4gQWRkaXRpb25hbGx5LCBpZiAnc2tpcF9ibG9ja196ZXJvaW5nJwo+ID4gaXMgbm90IHNl
-dCwgZG0tdGhpbiB3aWxsIG9wdCB0byB6ZXJvIG91dCB0aGUgZW50aXJlIHJhbmdlIGFzIGEgcGFy
-dAo+ID4gb2YgcHJvdmlzaW9uaW5nLgo+ID4KPiA+IFNpZ25lZC1vZmYtYnk6IFNhcnRoYWsgS3Vr
-cmV0aSA8c2FydGhha2t1a3JldGlAY2hyb21pdW0ub3JnPgo+ID4gLS0tCj4gPiAgZHJpdmVycy9t
-ZC9kbS10aGluLmMgfCA3MyArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-Ky0tLQo+ID4gIDEgZmlsZSBjaGFuZ2VkLCA2OCBpbnNlcnRpb25zKCspLCA1IGRlbGV0aW9ucygt
-KQo+ID4KPiA+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLXRoaW4uYyBiL2RyaXZlcnMvbWQv
-ZG0tdGhpbi5jCj4gPiBpbmRleCAyYjEzYzk0OWJkNzIuLjU4ZDYzM2Y1YzkyOCAxMDA2NDQKPiA+
-IC0tLSBhL2RyaXZlcnMvbWQvZG0tdGhpbi5jCj4gPiArKysgYi9kcml2ZXJzL21kL2RtLXRoaW4u
-Ywo+ID4gQEAgLTE4OTEsNyArMTg5Myw4IEBAIHN0YXRpYyB2b2lkIHByb2Nlc3Nfc2hhcmVkX2Jp
-byhzdHJ1Y3QgdGhpbl9jICp0Yywgc3RydWN0IGJpbyAqYmlvLAo+ID4KPiA+ICAgICAgIGlmIChi
-aW9fZGF0YV9kaXIoYmlvKSA9PSBXUklURSAmJiBiaW8tPmJpX2l0ZXIuYmlfc2l6ZSkgewo+ID4g
-ICAgICAgICAgICAgICBicmVha19zaGFyaW5nKHRjLCBiaW8sIGJsb2NrLCAma2V5LCBsb29rdXBf
-cmVzdWx0LCBkYXRhX2NlbGwpOwo+ID4gLSAgICAgICAgICAgICBjZWxsX2RlZmVyX25vX2hvbGRl
-cih0YywgdmlydF9jZWxsKTsKPiA+ICsgICAgICAgICAgICAgaWYgKGJpb19vcChiaW8pICE9IFJF
-UV9PUF9QUk9WSVNJT04pCj4gPiArICAgICAgICAgICAgICAgICAgICAgY2VsbF9kZWZlcl9ub19o
-b2xkZXIodGMsIHZpcnRfY2VsbCk7Cj4KPiBDYW4geW91IHBsZWFzZSBleHBsYWluIHdoeSBjZWxs
-X2RlZmVyX25vX2hvbGRlcigpIGlzIHNraXBwZWQgZm9yIFJFUV9PUF9QUk9WSVNJT04gaGVyZT8K
-PgpJIHJlY2FsbGVkIHNlZWluZyBhIEJVRyBpbiBkbS1wcmlzb24tdjEgaWYgSSBhbGxvd2VkCmNl
-bGxfZGVmZXJfbm9faG9sZGVyKCkgZm9yIFJFUV9PUF9QUk9WSVNJT04sIGJ1dCBmcm9tIGFkZGl0
-aW9uYWwKdGVzdGluZywgaXQgbG9va3MgbGlrZSBpdCB3YXMgbGVmdCBiZWhpbmQgZnJvbSBhIGNs
-ZWFudXAgaW4gdjQuCkRyb3BwZWQgaW4gdjYuCgpUaGFua3MKU2FydGhhawoKPiBUaGFua3MsCj4g
-TWlrZQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
-Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
+On 5/5/2023 4:09 PM, Eric Biggers wrote:
+> On Mon, Apr 10, 2023 at 03:59:32PM -0700, Chang S. Bae wrote:
+>> +/*
+>> + * This flag is set with IWKey load. When the key restore fails, it is
+>> + * reset. This restore state is exported to the crypto library, then AES-KL
+>> + * will not be used there. So, the feature is soft-disabled with this flag.
+>> + */
+>> +static bool valid_kl;
+>> +
+>> +bool valid_keylocker(void)
+>> +{
+>> +	return valid_kl;
+>> +}
+>> +EXPORT_SYMBOL_GPL(valid_keylocker);
+> 
+> It would be simpler to export this bool directly.
+
+Yeah, but this wrapper is for code encapsulation. The code outside of 
+the core code is not allowed to overwrite the value.
+
+Perhaps, it is better to export it only with the AES-KL module:
+
+#if IS_MODULE(CONFIG_CRYPTO_AES_KL)
+EXPORT_SYMBOL_GPL(valid_keylocker);
+#endif
+
+
+>> +	if (status & BIT(0))
+>> +		return 0;
+>> +	else
+>> +		return -EBUSY;
+> [...]
+>> +		pr_info("x86/keylocker: Enabled.\n");
+>> +		return;
+>> +	} else {
+>> +		int rc;
+> 
+> The kernel coding style usually doesn't use 'else' after a return.
+
+Yeah, right. Will fix up.
+
+Thanks,
+Chang
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
