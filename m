@@ -4,75 +4,89 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 53903C77B7C
-	for <dm-devel@archiver.kernel.org>; Thu, 11 May 2023 19:17:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9E0A4C77B7C
+	for <dm-devel@archiver.kernel.org>; Thu, 11 May 2023 20:03:48 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1683832676;
+	s=mimecast20190719; t=1683835427;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=xCrdsiLMczTjw4eAQCRsQOuw/gyr3dFb7Kt0K7Zlu+s=;
-	b=SpyeQlHDqzPX8QAldsNwkTCAWJvF+izz4AD/z1o82Q5X6UdNW0+f8N5dzHQSCAH3XOK7ey
-	aybsrxxJBEGMlC4H8ahd947h9COYtHKBH+J8+G4wzBx/bLHpYomZuvhGjkWALAQHAcLx98
-	wwsHvuEX+xme4assCpmOl1z9fobauyo=
+	bh=iBmf2KNVpszyeHEt2C2jyTUDo4m8rtyR5/Wqf/xKYPE=;
+	b=PTCYwqUXdBklDcHqq2ipwioYLABNbk2epjsi42/Cg5XUrC+PzCST+83bJhOfmINmXtnwvX
+	nz77B4s5vraPQ8YrntSaDkLdgmcvS7WBHUF4gxrwYtzJxMcLzkGP+jTVCOu2YlLqEveFJA
+	OBUHA7qCO4gED7npfwC37dWQq9j2i9Y=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-102-HQ0PxPSIOTKUaD53harOOQ-1; Thu, 11 May 2023 15:17:52 -0400
-X-MC-Unique: HQ0PxPSIOTKUaD53harOOQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-640-rQQeTgVeMcukPQusFlI3Zg-1; Thu, 11 May 2023 16:03:43 -0400
+X-MC-Unique: rQQeTgVeMcukPQusFlI3Zg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5AA5F868900;
-	Thu, 11 May 2023 19:17:46 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8244D81DA1A;
+	Thu, 11 May 2023 20:03:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0316040C2076;
-	Thu, 11 May 2023 19:17:46 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 135A3C15BA0;
+	Thu, 11 May 2023 20:03:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B2C1319451E4;
-	Thu, 11 May 2023 19:17:45 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D339D19451E4;
+	Thu, 11 May 2023 20:03:39 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
  [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 115F719451E3
- for <dm-devel@listman.corp.redhat.com>; Thu, 11 May 2023 19:17:44 +0000 (UTC)
+ ESMTP id 786EF19451E3
+ for <dm-devel@listman.corp.redhat.com>; Thu, 11 May 2023 20:03:38 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E33A040C2077; Thu, 11 May 2023 19:17:43 +0000 (UTC)
+ id 6657E40C2077; Thu, 11 May 2023 20:03:38 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DBDC840C2076
- for <dm-devel@redhat.com>; Thu, 11 May 2023 19:17:43 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 5E89040C2076
+ for <dm-devel@redhat.com>; Thu, 11 May 2023 20:03:38 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B842288D027
- for <dm-devel@redhat.com>; Thu, 11 May 2023 19:17:43 +0000 (UTC)
-Received: from mga07.intel.com (mga07.intel.com [134.134.136.100]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-671-O1Ak8TNtOrughverDIMn7g-1; Thu, 11 May 2023 15:17:39 -0400
-X-MC-Unique: O1Ak8TNtOrughverDIMn7g-1
-X-IronPort-AV: E=McAfee;i="6600,9927,10707"; a="416225329"
-X-IronPort-AV: E=Sophos;i="5.99,268,1677571200"; d="scan'208";a="416225329"
-Received: from fmsmga004.fm.intel.com ([10.253.24.48])
- by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
- 11 May 2023 12:17:37 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10707"; a="769493704"
-X-IronPort-AV: E=Sophos;i="5.99,268,1677571200"; d="scan'208";a="769493704"
-Received: from chang-linux-3.sc.intel.com ([172.25.66.173])
- by fmsmga004.fm.intel.com with ESMTP; 11 May 2023 12:17:37 -0700
-From: "Chang S. Bae" <chang.seok.bae@intel.com>
-To: linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org,
- dm-devel@redhat.com
-Date: Thu, 11 May 2023 12:05:17 -0700
-Message-Id: <20230511190517.10149-1-chang.seok.bae@intel.com>
-In-Reply-To: <08da7a0a-6b66-2c0e-eb56-96b5ee8faa30@intel.com>
-References: <08da7a0a-6b66-2c0e-eb56-96b5ee8faa30@intel.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3DAED3C10EC9
+ for <dm-devel@redhat.com>; Thu, 11 May 2023 20:03:38 +0000 (UTC)
+Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com
+ [209.85.218.41]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-421-n19ZBxCiOHOwO--OzNbQUQ-1; Thu, 11 May 2023 16:03:35 -0400
+X-MC-Unique: n19ZBxCiOHOwO--OzNbQUQ-1
+Received: by mail-ej1-f41.google.com with SMTP id
+ a640c23a62f3a-969f90d71d4so615420566b.3
+ for <dm-devel@redhat.com>; Thu, 11 May 2023 13:03:35 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1683835414; x=1686427414;
+ h=content-transfer-encoding:cc:to:subject:message-id:date:from
+ :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=U8xH7zGQzzRbqK6D4Oqhm3xKHhC25ViGnrUjwC/gsSw=;
+ b=N40qVAqU0xvAFb94PiLZN9SV25IdPW8yudrmoV5IcVXVCkctgjRu6T7FtihEaghB3I
+ W9N/kQTCQpt5VcnJS8GnuQZWQ125MC4Kjch3739D4qYX7nJSh+ATLf44N9ypRCBZz1l/
+ 1kr6FBNc8R3Y9+SwyJwl3sbJasAg3xhLyuNX4AZF/MU/vGNZj8NnEIaVro5y3vEi5J8+
+ 09AyB6/othCFeMj+Ex1Z553M/oMeYL9g1C7SE2xMLdx8XpOq3fJiVfl9J1LAHZ4jJg8d
+ QzMSziXW4GM0SycQC/x99kVV3oBHbE/BTGXmMCX59N9iWVeu3/6fOtTKHLB2MrZiosIp
+ QFGA==
+X-Gm-Message-State: AC+VfDwrqz1W0kBZK3bGjb5jkGC+FVpwOMKq4CxrTHt7XT9ZrzTeawAj
+ DHBcewbIFlAHmkArCIVRVlO/0rBy4Vuky49BgSX1LQ==
+X-Google-Smtp-Source: ACHHUZ79IojXfbkX6DfE2MLOr1tErOiC5hf30sNWjiHWJExQyVXKxDUaQO3ACK/0ZNMxUV3252rL9e3+SLQj4skO4N0=
+X-Received: by 2002:a17:907:9694:b0:969:ba95:a3a0 with SMTP id
+ hd20-20020a170907969400b00969ba95a3a0mr12334138ejc.23.1683835414423; Thu, 11
+ May 2023 13:03:34 -0700 (PDT)
+MIME-Version: 1.0
+References: <20230420004850.297045-1-sarthakkukreti@chromium.org>
+ <20230506062909.74601-1-sarthakkukreti@chromium.org>
+ <20230506062909.74601-5-sarthakkukreti@chromium.org>
+ <ZFp7ykxGFUbPG1ON@redhat.com>
+In-Reply-To: <ZFp7ykxGFUbPG1ON@redhat.com>
+From: Sarthak Kukreti <sarthakkukreti@chromium.org>
+Date: Thu, 11 May 2023 13:03:23 -0700
+Message-ID: <CAG9=OMOMrFcy6UdL8-3wZGwOr1nqLm1bpvL+G1g2dvBhJWU2Kw@mail.gmail.com>
+To: Mike Snitzer <snitzer@kernel.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -81,8 +95,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [PATCH v6 10/12] crypto: x86/aes - Prepare for a new AES
- implementation
+Subject: Re: [dm-devel] [PATCH v6 4/5] dm-thin: Add REQ_OP_PROVISION support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -94,851 +107,174 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: x86@kernel.org, herbert@gondor.apana.org.au,
- "David S. Miller" <davem@davemloft.net>, ardb@kernel.org,
- chang.seok.bae@intel.com, dave.hansen@linux.intel.com,
- dan.j.williams@intel.com, mingo@kernel.org, ebiggers@kernel.org,
- lalithambika.krishnakumar@intel.com, Ingo Molnar <mingo@redhat.com>,
- bp@alien8.de, luto@kernel.org, "H. Peter Anvin" <hpa@zytor.com>,
- bernie.keany@intel.com, tglx@linutronix.de, gmazyland@gmail.com,
- charishma1.gairuboyina@intel.com
-MIME-Version: 1.0
+Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
+ Theodore Ts'o <tytso@mit.edu>, "Michael S. Tsirkin" <mst@redhat.com>,
+ "Darrick J. Wong" <djwong@kernel.org>, Jason Wang <jasowang@redhat.com>,
+ Bart Van Assche <bvanassche@google.com>, linux-kernel@vger.kernel.org,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Andreas Dilger <adilger.kernel@dilger.ca>,
+ Stefan Hajnoczi <stefanha@redhat.com>, linux-fsdevel@vger.kernel.org,
+ linux-ext4@vger.kernel.org, Brian Foster <bfoster@redhat.com>,
+ Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: intel.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: chromium.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-Note, this only incorporates the fix for the performance issue. It is
-intended for those who want to run the series quickly. Otherwise, please
-ignore this. The next posting will address all the feedback.
-
----
-
-Key Locker's AES instruction set ('AES-KL') has a similar programming
-interface to AES-NI. The internal ABI in the assembly code will have the
-same prototype as AES-NI. Then, the glue code will be the same as AES-NI's.
-
-Refactor the common C code to avoid code duplication. The AES-NI code uses
-it with a function pointer argument to call back the AES-NI assembly code.
-So will the AES-KL code.
-
-Introduce wrappers for data transformation functions to return an error
-code. AES-KL may populate an error during data transformation.
-
-Export those refactored functions and new wrappers that the AES-KL code
-will reference.
-
-Also move some constant values to a common assembly code.
-
-No functional change intended.
-
-Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
-Acked-by: Dan Williams <dan.j.williams@intel.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: "David S. Miller" <davem@davemloft.net>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: "H. Peter Anvin" <hpa@zytor.com>
-Cc: Ard Biesheuvel <ardb@kernel.org>
-Cc: Eric Biggers <ebiggers@kernel.org>
-Cc: x86@kernel.org
-Cc: linux-crypto@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
----
-Changes from v6:
-* Inline the XTS helpers. Otherwise, measurable overhead is induced
-  by indirect calls with the retpoline instrumentation. (Eric Biggers)
-  Then, remove the glue helper .c file.
-
-Changes from v5:
-* Clean up the staled function definition -- cbc_crypt_common().
-* Ensure kernel_fpu_end() for the possible error return from
-  xts_crypt_common()->crypt1_fn().
-
-Changes from v4:
-* Drop CBC mode changes. (Eric Biggers)
-
-Changes from v3:
-* Drop ECB and CTR mode changes. (Eric Biggers)
-* Export symbols. (Eric Biggers)
-
-Changes from RFC v2:
-* Massage the changelog. (Dan Williams)
-
-Changes from RFC v1:
-* Added as a new patch. (Ard Biesheuvel)
-  Link: https://lore.kernel.org/lkml/CAMj1kXGa4f21eH0mdxd1pQsZMUjUr1Btq+Dgw-gC=O-yYft7xw@mail.gmail.com/
----
- arch/x86/crypto/aes-intel_asm.S    |  26 ++++
- arch/x86/crypto/aes-intel_glue.h   | 162 ++++++++++++++++++++
- arch/x86/crypto/aesni-intel_asm.S  |  58 +++----
- arch/x86/crypto/aesni-intel_glue.c | 235 +++++++++--------------------
- arch/x86/crypto/aesni-intel_glue.h |  17 +++
- 5 files changed, 295 insertions(+), 203 deletions(-)
- create mode 100644 arch/x86/crypto/aes-intel_asm.S
- create mode 100644 arch/x86/crypto/aes-intel_glue.h
- create mode 100644 arch/x86/crypto/aesni-intel_glue.h
-
-diff --git a/arch/x86/crypto/aes-intel_asm.S b/arch/x86/crypto/aes-intel_asm.S
-new file mode 100644
-index 000000000000..98abf875af79
---- /dev/null
-+++ b/arch/x86/crypto/aes-intel_asm.S
-@@ -0,0 +1,26 @@
-+/* SPDX-License-Identifier: GPL-2.0-or-later */
-+
-+/*
-+ * Constant values shared between AES implementations:
-+ */
-+
-+.pushsection .rodata
-+.align 16
-+.Lcts_permute_table:
-+	.byte		0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
-+	.byte		0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
-+	.byte		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
-+	.byte		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
-+	.byte		0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
-+	.byte		0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
-+#ifdef __x86_64__
-+.Lbswap_mask:
-+	.byte 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
-+#endif
-+.popsection
-+
-+.section	.rodata.cst16.gf128mul_x_ble_mask, "aM", @progbits, 16
-+.align 16
-+.Lgf128mul_x_ble_mask:
-+	.octa 0x00000000000000010000000000000087
-+.previous
-diff --git a/arch/x86/crypto/aes-intel_glue.h b/arch/x86/crypto/aes-intel_glue.h
-new file mode 100644
-index 000000000000..5877d0988e36
---- /dev/null
-+++ b/arch/x86/crypto/aes-intel_glue.h
-@@ -0,0 +1,162 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+
-+/*
-+ * Shared glue code between AES implementations, refactored from the AES-NI's.
-+ *
-+ * The helper code is inlined for a performance reason. With the mitigation
-+ * for speculative executions like retpoline, indirect calls become very
-+ * expensive at a cost of measurable overhead.
-+ */
-+
-+#ifndef _AES_INTEL_GLUE_H
-+#define _AES_INTEL_GLUE_H
-+
-+#include <linux/err.h>
-+#include <crypto/algapi.h>
-+#include <crypto/aes.h>
-+#include <crypto/xts.h>
-+#include <crypto/scatterwalk.h>
-+#include <crypto/internal/aead.h>
-+#include <crypto/internal/simd.h>
-+
-+#define AES_ALIGN			16
-+#define AES_ALIGN_ATTR			__attribute__((__aligned__(AES_ALIGN)))
-+#define AES_BLOCK_MASK			(~(AES_BLOCK_SIZE - 1))
-+#define AES_ALIGN_EXTRA			((AES_ALIGN - 1) & ~(CRYPTO_MINALIGN - 1))
-+#define CRYPTO_AES_CTX_SIZE		(sizeof(struct crypto_aes_ctx) + AES_ALIGN_EXTRA)
-+#define XTS_AES_CTX_SIZE		(sizeof(struct aes_xts_ctx) + AES_ALIGN_EXTRA)
-+
-+struct aes_xts_ctx {
-+	struct crypto_aes_ctx tweak_ctx AES_ALIGN_ATTR;
-+	struct crypto_aes_ctx crypt_ctx AES_ALIGN_ATTR;
-+};
-+
-+static inline struct crypto_aes_ctx *aes_ctx(void *raw_ctx)
-+{
-+	unsigned long addr = (unsigned long)raw_ctx;
-+	unsigned long align = AES_ALIGN;
-+
-+	if (align <= crypto_tfm_ctx_alignment())
-+		align = 1;
-+
-+	return (struct crypto_aes_ctx *)ALIGN(addr, align);
-+}
-+
-+static inline int
-+xts_setkey_common(struct crypto_skcipher *tfm, const u8 *key, unsigned int keylen,
-+		  int (*fn)(struct crypto_tfm *tfm, void *ctx, const u8 *in_key,
-+			    unsigned int key_len))
-+{
-+	struct aes_xts_ctx *ctx = crypto_skcipher_ctx(tfm);
-+	int err;
-+
-+	err = xts_verify_key(tfm, key, keylen);
-+	if (err)
-+		return err;
-+
-+	keylen /= 2;
-+
-+	/* first half of xts-key is for crypt */
-+	err = fn(crypto_skcipher_tfm(tfm), &ctx->crypt_ctx, key, keylen);
-+	if (err)
-+		return err;
-+
-+	/* second half of xts-key is for tweak */
-+	return fn(crypto_skcipher_tfm(tfm), &ctx->tweak_ctx, key + keylen, keylen);
-+}
-+
-+static inline int
-+xts_crypt_common(struct skcipher_request *req,
-+		 int (*crypt_fn)(const struct crypto_aes_ctx *ctx, u8 *out, const u8 *in,
-+				 unsigned int len, u8 *iv),
-+		 int (*crypt1_fn)(const void *ctx, u8 *out, const u8 *in))
-+{
-+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-+	struct aes_xts_ctx *ctx = crypto_skcipher_ctx(tfm);
-+	int tail = req->cryptlen % AES_BLOCK_SIZE;
-+	struct skcipher_request subreq;
-+	struct skcipher_walk walk;
-+	int err;
-+
-+	if (req->cryptlen < AES_BLOCK_SIZE)
-+		return -EINVAL;
-+
-+	err = skcipher_walk_virt(&walk, req, false);
-+	if (!walk.nbytes)
-+		return err;
-+
-+	if (unlikely(tail > 0 && walk.nbytes < walk.total)) {
-+		int blocks = DIV_ROUND_UP(req->cryptlen, AES_BLOCK_SIZE) - 2;
-+
-+		skcipher_walk_abort(&walk);
-+
-+		skcipher_request_set_tfm(&subreq, tfm);
-+		skcipher_request_set_callback(&subreq,
-+					      skcipher_request_flags(req),
-+					      NULL, NULL);
-+		skcipher_request_set_crypt(&subreq, req->src, req->dst,
-+					   blocks * AES_BLOCK_SIZE, req->iv);
-+		req = &subreq;
-+
-+		err = skcipher_walk_virt(&walk, req, false);
-+		if (!walk.nbytes)
-+			return err;
-+	} else {
-+		tail = 0;
-+	}
-+
-+	kernel_fpu_begin();
-+
-+	/* calculate first value of T */
-+	err = crypt1_fn(aes_ctx(&ctx->tweak_ctx), walk.iv, walk.iv);
-+	if (err) {
-+		kernel_fpu_end();
-+		return err;
-+	}
-+
-+	while (walk.nbytes > 0) {
-+		int nbytes = walk.nbytes;
-+
-+		if (nbytes < walk.total)
-+			nbytes &= ~(AES_BLOCK_SIZE - 1);
-+
-+		err = crypt_fn(aes_ctx(&ctx->crypt_ctx), walk.dst.virt.addr, walk.src.virt.addr,
-+			       nbytes, walk.iv);
-+		kernel_fpu_end();
-+		if (err)
-+			return err;
-+
-+		err = skcipher_walk_done(&walk, walk.nbytes - nbytes);
-+
-+		if (walk.nbytes > 0)
-+			kernel_fpu_begin();
-+	}
-+
-+	if (unlikely(tail > 0 && !err)) {
-+		struct scatterlist sg_src[2], sg_dst[2];
-+		struct scatterlist *src, *dst;
-+
-+		dst = src = scatterwalk_ffwd(sg_src, req->src, req->cryptlen);
-+		if (req->dst != req->src)
-+			dst = scatterwalk_ffwd(sg_dst, req->dst, req->cryptlen);
-+
-+		skcipher_request_set_crypt(req, src, dst, AES_BLOCK_SIZE + tail,
-+					   req->iv);
-+
-+		err = skcipher_walk_virt(&walk, &subreq, false);
-+		if (err)
-+			return err;
-+
-+		kernel_fpu_begin();
-+		err = crypt_fn(aes_ctx(&ctx->crypt_ctx), walk.dst.virt.addr, walk.src.virt.addr,
-+			       walk.nbytes, walk.iv);
-+		kernel_fpu_end();
-+		if (err)
-+			return err;
-+
-+		err = skcipher_walk_done(&walk, 0);
-+	}
-+	return err;
-+}
-+
-+#endif /* _AES_INTEL_GLUE_H */
-diff --git a/arch/x86/crypto/aesni-intel_asm.S b/arch/x86/crypto/aesni-intel_asm.S
-index 837c1e0aa021..9ea4f13464d5 100644
---- a/arch/x86/crypto/aesni-intel_asm.S
-+++ b/arch/x86/crypto/aesni-intel_asm.S
-@@ -28,6 +28,7 @@
- #include <linux/linkage.h>
- #include <asm/frame.h>
- #include <asm/nospec-branch.h>
-+#include "aes-intel_asm.S"
- 
- /*
-  * The following macros are used to move an (un)aligned 16 byte value to/from
-@@ -1820,10 +1821,10 @@ SYM_FUNC_START_LOCAL(_key_expansion_256b)
- SYM_FUNC_END(_key_expansion_256b)
- 
- /*
-- * int aesni_set_key(struct crypto_aes_ctx *ctx, const u8 *in_key,
-- *                   unsigned int key_len)
-+ * int _aesni_set_key(struct crypto_aes_ctx *ctx, const u8 *in_key,
-+ *                    unsigned int key_len)
-  */
--SYM_FUNC_START(aesni_set_key)
-+SYM_FUNC_START(_aesni_set_key)
- 	FRAME_BEGIN
- #ifndef __x86_64__
- 	pushl KEYP
-@@ -1932,12 +1933,12 @@ SYM_FUNC_START(aesni_set_key)
- #endif
- 	FRAME_END
- 	RET
--SYM_FUNC_END(aesni_set_key)
-+SYM_FUNC_END(_aesni_set_key)
- 
- /*
-- * void aesni_enc(const void *ctx, u8 *dst, const u8 *src)
-+ * void _aesni_enc(const void *ctx, u8 *dst, const u8 *src)
-  */
--SYM_FUNC_START(aesni_enc)
-+SYM_FUNC_START(_aesni_enc)
- 	FRAME_BEGIN
- #ifndef __x86_64__
- 	pushl KEYP
-@@ -1956,7 +1957,7 @@ SYM_FUNC_START(aesni_enc)
- #endif
- 	FRAME_END
- 	RET
--SYM_FUNC_END(aesni_enc)
-+SYM_FUNC_END(_aesni_enc)
- 
- /*
-  * _aesni_enc1:		internal ABI
-@@ -2124,9 +2125,9 @@ SYM_FUNC_START_LOCAL(_aesni_enc4)
- SYM_FUNC_END(_aesni_enc4)
- 
- /*
-- * void aesni_dec (const void *ctx, u8 *dst, const u8 *src)
-+ * void _aesni_dec (const void *ctx, u8 *dst, const u8 *src)
-  */
--SYM_FUNC_START(aesni_dec)
-+SYM_FUNC_START(_aesni_dec)
- 	FRAME_BEGIN
- #ifndef __x86_64__
- 	pushl KEYP
-@@ -2146,7 +2147,7 @@ SYM_FUNC_START(aesni_dec)
- #endif
- 	FRAME_END
- 	RET
--SYM_FUNC_END(aesni_dec)
-+SYM_FUNC_END(_aesni_dec)
- 
- /*
-  * _aesni_dec1:		internal ABI
-@@ -2689,21 +2690,6 @@ SYM_FUNC_START(aesni_cts_cbc_dec)
- 	RET
- SYM_FUNC_END(aesni_cts_cbc_dec)
- 
--.pushsection .rodata
--.align 16
--.Lcts_permute_table:
--	.byte		0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
--	.byte		0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
--	.byte		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
--	.byte		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
--	.byte		0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
--	.byte		0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80
--#ifdef __x86_64__
--.Lbswap_mask:
--	.byte 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
--#endif
--.popsection
--
- #ifdef __x86_64__
- /*
-  * _aesni_inc_init:	internal ABI
-@@ -2819,12 +2805,6 @@ SYM_FUNC_END(aesni_ctr_enc)
- 
- #endif
- 
--.section	.rodata.cst16.gf128mul_x_ble_mask, "aM", @progbits, 16
--.align 16
--.Lgf128mul_x_ble_mask:
--	.octa 0x00000000000000010000000000000087
--.previous
--
- /*
-  * _aesni_gf128mul_x_ble:		internal ABI
-  *	Multiply in GF(2^128) for XTS IVs
-@@ -2844,10 +2824,10 @@ SYM_FUNC_END(aesni_ctr_enc)
- 	pxor KEY, IV;
- 
- /*
-- * void aesni_xts_encrypt(const struct crypto_aes_ctx *ctx, u8 *dst,
-- *			  const u8 *src, unsigned int len, le128 *iv)
-+ * void _aesni_xts_encrypt(const struct crypto_aes_ctx *ctx, u8 *dst,
-+ *			   const u8 *src, unsigned int len, le128 *iv)
-  */
--SYM_FUNC_START(aesni_xts_encrypt)
-+SYM_FUNC_START(_aesni_xts_encrypt)
- 	FRAME_BEGIN
- #ifndef __x86_64__
- 	pushl IVP
-@@ -2996,13 +2976,13 @@ SYM_FUNC_START(aesni_xts_encrypt)
- 
- 	movups STATE, (OUTP)
- 	jmp .Lxts_enc_ret
--SYM_FUNC_END(aesni_xts_encrypt)
-+SYM_FUNC_END(_aesni_xts_encrypt)
- 
- /*
-- * void aesni_xts_decrypt(const struct crypto_aes_ctx *ctx, u8 *dst,
-- *			  const u8 *src, unsigned int len, le128 *iv)
-+ * void _aesni_xts_decrypt(const struct crypto_aes_ctx *ctx, u8 *dst,
-+ *			   const u8 *src, unsigned int len, le128 *iv)
-  */
--SYM_FUNC_START(aesni_xts_decrypt)
-+SYM_FUNC_START(_aesni_xts_decrypt)
- 	FRAME_BEGIN
- #ifndef __x86_64__
- 	pushl IVP
-@@ -3158,4 +3138,4 @@ SYM_FUNC_START(aesni_xts_decrypt)
- 
- 	movups STATE, (OUTP)
- 	jmp .Lxts_dec_ret
--SYM_FUNC_END(aesni_xts_decrypt)
-+SYM_FUNC_END(_aesni_xts_decrypt)
-diff --git a/arch/x86/crypto/aesni-intel_glue.c b/arch/x86/crypto/aesni-intel_glue.c
-index a5b0cb3efeba..e7a9e8e01680 100644
---- a/arch/x86/crypto/aesni-intel_glue.c
-+++ b/arch/x86/crypto/aesni-intel_glue.c
-@@ -36,33 +36,24 @@
- #include <linux/spinlock.h>
- #include <linux/static_call.h>
- 
-+#include "aes-intel_glue.h"
-+#include "aesni-intel_glue.h"
- 
--#define AESNI_ALIGN	16
--#define AESNI_ALIGN_ATTR __attribute__ ((__aligned__(AESNI_ALIGN)))
--#define AES_BLOCK_MASK	(~(AES_BLOCK_SIZE - 1))
- #define RFC4106_HASH_SUBKEY_SIZE 16
--#define AESNI_ALIGN_EXTRA ((AESNI_ALIGN - 1) & ~(CRYPTO_MINALIGN - 1))
--#define CRYPTO_AES_CTX_SIZE (sizeof(struct crypto_aes_ctx) + AESNI_ALIGN_EXTRA)
--#define XTS_AES_CTX_SIZE (sizeof(struct aesni_xts_ctx) + AESNI_ALIGN_EXTRA)
- 
- /* This data is stored at the end of the crypto_tfm struct.
-  * It's a type of per "session" data storage location.
-  * This needs to be 16 byte aligned.
-  */
- struct aesni_rfc4106_gcm_ctx {
--	u8 hash_subkey[16] AESNI_ALIGN_ATTR;
--	struct crypto_aes_ctx aes_key_expanded AESNI_ALIGN_ATTR;
-+	u8 hash_subkey[16] AES_ALIGN_ATTR;
-+	struct crypto_aes_ctx aes_key_expanded AES_ALIGN_ATTR;
- 	u8 nonce[4];
- };
- 
- struct generic_gcmaes_ctx {
--	u8 hash_subkey[16] AESNI_ALIGN_ATTR;
--	struct crypto_aes_ctx aes_key_expanded AESNI_ALIGN_ATTR;
--};
--
--struct aesni_xts_ctx {
--	u8 raw_tweak_ctx[sizeof(struct crypto_aes_ctx)] AESNI_ALIGN_ATTR;
--	u8 raw_crypt_ctx[sizeof(struct crypto_aes_ctx)] AESNI_ALIGN_ATTR;
-+	u8 hash_subkey[16] AES_ALIGN_ATTR;
-+	struct crypto_aes_ctx aes_key_expanded AES_ALIGN_ATTR;
- };
- 
- #define GCM_BLOCK_LEN 16
-@@ -80,10 +71,10 @@ struct gcm_context_data {
- 	u8 hash_keys[GCM_BLOCK_LEN * 16];
- };
- 
--asmlinkage int aesni_set_key(struct crypto_aes_ctx *ctx, const u8 *in_key,
--			     unsigned int key_len);
--asmlinkage void aesni_enc(const void *ctx, u8 *out, const u8 *in);
--asmlinkage void aesni_dec(const void *ctx, u8 *out, const u8 *in);
-+asmlinkage int _aesni_set_key(struct crypto_aes_ctx *ctx, const u8 *in_key,
-+			      unsigned int key_len);
-+asmlinkage void _aesni_enc(const void *ctx, u8 *out, const u8 *in);
-+asmlinkage void _aesni_dec(const void *ctx, u8 *out, const u8 *in);
- asmlinkage void aesni_ecb_enc(struct crypto_aes_ctx *ctx, u8 *out,
- 			      const u8 *in, unsigned int len);
- asmlinkage void aesni_ecb_dec(struct crypto_aes_ctx *ctx, u8 *out,
-@@ -97,14 +88,51 @@ asmlinkage void aesni_cts_cbc_enc(struct crypto_aes_ctx *ctx, u8 *out,
- asmlinkage void aesni_cts_cbc_dec(struct crypto_aes_ctx *ctx, u8 *out,
- 				  const u8 *in, unsigned int len, u8 *iv);
- 
-+int aesni_set_key(struct crypto_aes_ctx *ctx, const u8 *in_key,
-+		  unsigned int key_len)
-+{
-+	return _aesni_set_key(ctx, in_key, key_len);
-+}
-+EXPORT_SYMBOL_GPL(aesni_set_key);
-+
-+int aesni_enc(const void *ctx, u8 *out, const u8 *in)
-+{
-+	_aesni_enc(ctx, out, in);
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(aesni_enc);
-+
-+int aesni_dec(const void *ctx, u8 *out, const u8 *in)
-+{
-+	_aesni_dec(ctx, out, in);
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(aesni_dec);
-+
- #define AVX_GEN2_OPTSIZE 640
- #define AVX_GEN4_OPTSIZE 4096
- 
--asmlinkage void aesni_xts_encrypt(const struct crypto_aes_ctx *ctx, u8 *out,
--				  const u8 *in, unsigned int len, u8 *iv);
-+asmlinkage void _aesni_xts_encrypt(const struct crypto_aes_ctx *ctx, u8 *out,
-+				   const u8 *in, unsigned int len, u8 *iv);
- 
--asmlinkage void aesni_xts_decrypt(const struct crypto_aes_ctx *ctx, u8 *out,
--				  const u8 *in, unsigned int len, u8 *iv);
-+asmlinkage void _aesni_xts_decrypt(const struct crypto_aes_ctx *ctx, u8 *out,
-+				   const u8 *in, unsigned int len, u8 *iv);
-+
-+int aesni_xts_encrypt(const struct crypto_aes_ctx *ctx, u8 *out, const u8 *in,
-+		      unsigned int len, u8 *iv)
-+{
-+	_aesni_xts_encrypt(ctx, out, in, len, iv);
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(aesni_xts_encrypt);
-+
-+int aesni_xts_decrypt(const struct crypto_aes_ctx *ctx, u8 *out, const u8 *in,
-+		      unsigned int len, u8 *iv)
-+{
-+	_aesni_xts_decrypt(ctx, out, in, len, iv);
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(aesni_xts_decrypt);
- 
- #ifdef CONFIG_X86_64
- 
-@@ -201,7 +229,7 @@ static __ro_after_init DEFINE_STATIC_KEY_FALSE(gcm_use_avx2);
- static inline struct
- aesni_rfc4106_gcm_ctx *aesni_rfc4106_gcm_ctx_get(struct crypto_aead *tfm)
- {
--	unsigned long align = AESNI_ALIGN;
-+	unsigned long align = AES_ALIGN;
- 
- 	if (align <= crypto_tfm_ctx_alignment())
- 		align = 1;
-@@ -211,7 +239,7 @@ aesni_rfc4106_gcm_ctx *aesni_rfc4106_gcm_ctx_get(struct crypto_aead *tfm)
- static inline struct
- generic_gcmaes_ctx *generic_gcmaes_ctx_get(struct crypto_aead *tfm)
- {
--	unsigned long align = AESNI_ALIGN;
-+	unsigned long align = AES_ALIGN;
- 
- 	if (align <= crypto_tfm_ctx_alignment())
- 		align = 1;
-@@ -219,16 +247,6 @@ generic_gcmaes_ctx *generic_gcmaes_ctx_get(struct crypto_aead *tfm)
- }
- #endif
- 
--static inline struct crypto_aes_ctx *aes_ctx(void *raw_ctx)
--{
--	unsigned long addr = (unsigned long)raw_ctx;
--	unsigned long align = AESNI_ALIGN;
--
--	if (align <= crypto_tfm_ctx_alignment())
--		align = 1;
--	return (struct crypto_aes_ctx *)ALIGN(addr, align);
--}
--
- static int aes_set_key_common(struct crypto_tfm *tfm, void *raw_ctx,
- 			      const u8 *in_key, unsigned int key_len)
- {
-@@ -243,7 +261,7 @@ static int aes_set_key_common(struct crypto_tfm *tfm, void *raw_ctx,
- 		err = aes_expandkey(ctx, in_key, key_len);
- 	else {
- 		kernel_fpu_begin();
--		err = aesni_set_key(ctx, in_key, key_len);
-+		err = _aesni_set_key(ctx, in_key, key_len);
- 		kernel_fpu_end();
- 	}
- 
-@@ -264,7 +282,7 @@ static void aesni_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
- 		aes_encrypt(ctx, dst, src);
- 	} else {
- 		kernel_fpu_begin();
--		aesni_enc(ctx, dst, src);
-+		_aesni_enc(ctx, dst, src);
- 		kernel_fpu_end();
- 	}
- }
-@@ -277,7 +295,7 @@ static void aesni_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
- 		aes_decrypt(ctx, dst, src);
- 	} else {
- 		kernel_fpu_begin();
--		aesni_dec(ctx, dst, src);
-+		_aesni_dec(ctx, dst, src);
- 		kernel_fpu_end();
- 	}
- }
-@@ -491,7 +509,7 @@ static int cts_cbc_decrypt(struct skcipher_request *req)
- 
- #ifdef CONFIG_X86_64
- static void aesni_ctr_enc_avx_tfm(struct crypto_aes_ctx *ctx, u8 *out,
--			      const u8 *in, unsigned int len, u8 *iv)
-+				 const u8 *in, unsigned int len, u8 *iv)
- {
- 	/*
- 	 * based on key length, override with the by8 version
-@@ -528,7 +546,7 @@ static int ctr_crypt(struct skcipher_request *req)
- 		nbytes &= ~AES_BLOCK_MASK;
- 
- 		if (walk.nbytes == walk.total && nbytes > 0) {
--			aesni_enc(ctx, keystream, walk.iv);
-+			_aesni_enc(ctx, keystream, walk.iv);
- 			crypto_xor_cpy(walk.dst.virt.addr + walk.nbytes - nbytes,
- 				       walk.src.virt.addr + walk.nbytes - nbytes,
- 				       keystream, nbytes);
-@@ -673,8 +691,8 @@ static int gcmaes_crypt_by_sg(bool enc, struct aead_request *req,
- 			      u8 *iv, void *aes_ctx, u8 *auth_tag,
- 			      unsigned long auth_tag_len)
- {
--	u8 databuf[sizeof(struct gcm_context_data) + (AESNI_ALIGN - 8)] __aligned(8);
--	struct gcm_context_data *data = PTR_ALIGN((void *)databuf, AESNI_ALIGN);
-+	u8 databuf[sizeof(struct gcm_context_data) + (AES_ALIGN - 8)] __aligned(8);
-+	struct gcm_context_data *data = PTR_ALIGN((void *)databuf, AES_ALIGN);
- 	unsigned long left = req->cryptlen;
- 	struct scatter_walk assoc_sg_walk;
- 	struct skcipher_walk walk;
-@@ -829,8 +847,8 @@ static int helper_rfc4106_encrypt(struct aead_request *req)
- 	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
- 	struct aesni_rfc4106_gcm_ctx *ctx = aesni_rfc4106_gcm_ctx_get(tfm);
- 	void *aes_ctx = &(ctx->aes_key_expanded);
--	u8 ivbuf[16 + (AESNI_ALIGN - 8)] __aligned(8);
--	u8 *iv = PTR_ALIGN(&ivbuf[0], AESNI_ALIGN);
-+	u8 ivbuf[16 + (AES_ALIGN - 8)] __aligned(8);
-+	u8 *iv = PTR_ALIGN(&ivbuf[0], AES_ALIGN);
- 	unsigned int i;
- 	__be32 counter = cpu_to_be32(1);
- 
-@@ -857,8 +875,8 @@ static int helper_rfc4106_decrypt(struct aead_request *req)
- 	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
- 	struct aesni_rfc4106_gcm_ctx *ctx = aesni_rfc4106_gcm_ctx_get(tfm);
- 	void *aes_ctx = &(ctx->aes_key_expanded);
--	u8 ivbuf[16 + (AESNI_ALIGN - 8)] __aligned(8);
--	u8 *iv = PTR_ALIGN(&ivbuf[0], AESNI_ALIGN);
-+	u8 ivbuf[16 + (AES_ALIGN - 8)] __aligned(8);
-+	u8 *iv = PTR_ALIGN(&ivbuf[0], AES_ALIGN);
- 	unsigned int i;
- 
- 	if (unlikely(req->assoclen != 16 && req->assoclen != 20))
-@@ -883,128 +901,17 @@ static int helper_rfc4106_decrypt(struct aead_request *req)
- static int xts_aesni_setkey(struct crypto_skcipher *tfm, const u8 *key,
- 			    unsigned int keylen)
- {
--	struct aesni_xts_ctx *ctx = crypto_skcipher_ctx(tfm);
--	int err;
--
--	err = xts_verify_key(tfm, key, keylen);
--	if (err)
--		return err;
--
--	keylen /= 2;
--
--	/* first half of xts-key is for crypt */
--	err = aes_set_key_common(crypto_skcipher_tfm(tfm), ctx->raw_crypt_ctx,
--				 key, keylen);
--	if (err)
--		return err;
--
--	/* second half of xts-key is for tweak */
--	return aes_set_key_common(crypto_skcipher_tfm(tfm), ctx->raw_tweak_ctx,
--				  key + keylen, keylen);
--}
--
--static int xts_crypt(struct skcipher_request *req, bool encrypt)
--{
--	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
--	struct aesni_xts_ctx *ctx = crypto_skcipher_ctx(tfm);
--	int tail = req->cryptlen % AES_BLOCK_SIZE;
--	struct skcipher_request subreq;
--	struct skcipher_walk walk;
--	int err;
--
--	if (req->cryptlen < AES_BLOCK_SIZE)
--		return -EINVAL;
--
--	err = skcipher_walk_virt(&walk, req, false);
--	if (!walk.nbytes)
--		return err;
--
--	if (unlikely(tail > 0 && walk.nbytes < walk.total)) {
--		int blocks = DIV_ROUND_UP(req->cryptlen, AES_BLOCK_SIZE) - 2;
--
--		skcipher_walk_abort(&walk);
--
--		skcipher_request_set_tfm(&subreq, tfm);
--		skcipher_request_set_callback(&subreq,
--					      skcipher_request_flags(req),
--					      NULL, NULL);
--		skcipher_request_set_crypt(&subreq, req->src, req->dst,
--					   blocks * AES_BLOCK_SIZE, req->iv);
--		req = &subreq;
--
--		err = skcipher_walk_virt(&walk, req, false);
--		if (!walk.nbytes)
--			return err;
--	} else {
--		tail = 0;
--	}
--
--	kernel_fpu_begin();
--
--	/* calculate first value of T */
--	aesni_enc(aes_ctx(ctx->raw_tweak_ctx), walk.iv, walk.iv);
--
--	while (walk.nbytes > 0) {
--		int nbytes = walk.nbytes;
--
--		if (nbytes < walk.total)
--			nbytes &= ~(AES_BLOCK_SIZE - 1);
--
--		if (encrypt)
--			aesni_xts_encrypt(aes_ctx(ctx->raw_crypt_ctx),
--					  walk.dst.virt.addr, walk.src.virt.addr,
--					  nbytes, walk.iv);
--		else
--			aesni_xts_decrypt(aes_ctx(ctx->raw_crypt_ctx),
--					  walk.dst.virt.addr, walk.src.virt.addr,
--					  nbytes, walk.iv);
--		kernel_fpu_end();
--
--		err = skcipher_walk_done(&walk, walk.nbytes - nbytes);
--
--		if (walk.nbytes > 0)
--			kernel_fpu_begin();
--	}
--
--	if (unlikely(tail > 0 && !err)) {
--		struct scatterlist sg_src[2], sg_dst[2];
--		struct scatterlist *src, *dst;
--
--		dst = src = scatterwalk_ffwd(sg_src, req->src, req->cryptlen);
--		if (req->dst != req->src)
--			dst = scatterwalk_ffwd(sg_dst, req->dst, req->cryptlen);
--
--		skcipher_request_set_crypt(req, src, dst, AES_BLOCK_SIZE + tail,
--					   req->iv);
--
--		err = skcipher_walk_virt(&walk, &subreq, false);
--		if (err)
--			return err;
--
--		kernel_fpu_begin();
--		if (encrypt)
--			aesni_xts_encrypt(aes_ctx(ctx->raw_crypt_ctx),
--					  walk.dst.virt.addr, walk.src.virt.addr,
--					  walk.nbytes, walk.iv);
--		else
--			aesni_xts_decrypt(aes_ctx(ctx->raw_crypt_ctx),
--					  walk.dst.virt.addr, walk.src.virt.addr,
--					  walk.nbytes, walk.iv);
--		kernel_fpu_end();
--
--		err = skcipher_walk_done(&walk, 0);
--	}
--	return err;
-+	return xts_setkey_common(tfm, key, keylen, aes_set_key_common);
- }
- 
- static int xts_encrypt(struct skcipher_request *req)
- {
--	return xts_crypt(req, true);
-+	return xts_crypt_common(req, aesni_xts_encrypt, aesni_enc);
- }
- 
- static int xts_decrypt(struct skcipher_request *req)
- {
--	return xts_crypt(req, false);
-+	return xts_crypt_common(req, aesni_xts_decrypt, aesni_enc);
- }
- 
- static struct crypto_alg aesni_cipher_alg = {
-@@ -1160,8 +1067,8 @@ static int generic_gcmaes_encrypt(struct aead_request *req)
- 	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
- 	struct generic_gcmaes_ctx *ctx = generic_gcmaes_ctx_get(tfm);
- 	void *aes_ctx = &(ctx->aes_key_expanded);
--	u8 ivbuf[16 + (AESNI_ALIGN - 8)] __aligned(8);
--	u8 *iv = PTR_ALIGN(&ivbuf[0], AESNI_ALIGN);
-+	u8 ivbuf[16 + (AES_ALIGN - 8)] __aligned(8);
-+	u8 *iv = PTR_ALIGN(&ivbuf[0], AES_ALIGN);
- 	__be32 counter = cpu_to_be32(1);
- 
- 	memcpy(iv, req->iv, 12);
-@@ -1177,8 +1084,8 @@ static int generic_gcmaes_decrypt(struct aead_request *req)
- 	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
- 	struct generic_gcmaes_ctx *ctx = generic_gcmaes_ctx_get(tfm);
- 	void *aes_ctx = &(ctx->aes_key_expanded);
--	u8 ivbuf[16 + (AESNI_ALIGN - 8)] __aligned(8);
--	u8 *iv = PTR_ALIGN(&ivbuf[0], AESNI_ALIGN);
-+	u8 ivbuf[16 + (AES_ALIGN - 8)] __aligned(8);
-+	u8 *iv = PTR_ALIGN(&ivbuf[0], AES_ALIGN);
- 
- 	memcpy(iv, req->iv, 12);
- 	*((__be32 *)(iv+12)) = counter;
-diff --git a/arch/x86/crypto/aesni-intel_glue.h b/arch/x86/crypto/aesni-intel_glue.h
-new file mode 100644
-index 000000000000..81ecacb4e54c
---- /dev/null
-+++ b/arch/x86/crypto/aesni-intel_glue.h
-@@ -0,0 +1,17 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+
-+/*
-+ * Support for Intel AES-NI instructions. This file contains function
-+ * prototypes to be referenced for other AES implementations
-+ */
-+
-+int aesni_set_key(struct crypto_aes_ctx *ctx, const u8 *in_key, unsigned int key_len);
-+
-+int aesni_enc(const void *ctx, u8 *out, const u8 *in);
-+int aesni_dec(const void *ctx, u8 *out, const u8 *in);
-+
-+int aesni_xts_encrypt(const struct crypto_aes_ctx *ctx, u8 *out, const u8 *in,
-+		      unsigned int len, u8 *iv);
-+int aesni_xts_decrypt(const struct crypto_aes_ctx *ctx, u8 *out, const u8 *in,
-+		      unsigned int len, u8 *iv);
-+
--- 
-2.17.1
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gVHVlLCBNYXkgOSwgMjAyMyBhdCA5OjU44oCvQU0gTWlrZSBTbml0emVyIDxzbml0emVyQGtl
+cm5lbC5vcmc+IHdyb3RlOgo+Cj4gT24gU2F0LCBNYXkgMDYgMjAyMyBhdCAgMjoyOVAgLTA0MDAs
+Cj4gU2FydGhhayBLdWtyZXRpIDxzYXJ0aGFra3VrcmV0aUBjaHJvbWl1bS5vcmc+IHdyb3RlOgo+
+Cj4gPiBkbS10aGlucG9vbCB1c2VzIHRoZSBwcm92aXNpb24gcmVxdWVzdCB0byBwcm92aXNpb24K
+PiA+IGJsb2NrcyBmb3IgYSBkbS10aGluIGRldmljZS4gZG0tdGhpbnBvb2wgY3VycmVudGx5IGRv
+ZXMgbm90Cj4gPiBwYXNzIHRocm91Z2ggUkVRX09QX1BST1ZJU0lPTiB0byB1bmRlcmx5aW5nIGRl
+dmljZXMuCj4gPgo+ID4gRm9yIHNoYXJlZCBibG9ja3MsIHByb3Zpc2lvbiByZXF1ZXN0cyB3aWxs
+IGJyZWFrIHNoYXJpbmcgYW5kIGNvcHkgdGhlCj4gPiBjb250ZW50cyBvZiB0aGUgZW50aXJlIGJs
+b2NrLiBBZGRpdGlvbmFsbHksIGlmICdza2lwX2Jsb2NrX3plcm9pbmcnCj4gPiBpcyBub3Qgc2V0
+LCBkbS10aGluIHdpbGwgb3B0IHRvIHplcm8gb3V0IHRoZSBlbnRpcmUgcmFuZ2UgYXMgYSBwYXJ0
+Cj4gPiBvZiBwcm92aXNpb25pbmcuCj4gPgo+ID4gU2lnbmVkLW9mZi1ieTogU2FydGhhayBLdWty
+ZXRpIDxzYXJ0aGFra3VrcmV0aUBjaHJvbWl1bS5vcmc+Cj4gPiAtLS0KPiA+ICBkcml2ZXJzL21k
+L2RtLXRoaW4uYyB8IDcwICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+LS0tCj4gPiAgMSBmaWxlIGNoYW5nZWQsIDY2IGluc2VydGlvbnMoKyksIDQgZGVsZXRpb25zKC0p
+Cj4gPgo+ID4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tdGhpbi5jIGIvZHJpdmVycy9tZC9k
+bS10aGluLmMKPiA+IGluZGV4IDJiMTNjOTQ5YmQ3Mi4uM2Y5NGY1M2FjOTU2IDEwMDY0NAo+ID4g
+LS0tIGEvZHJpdmVycy9tZC9kbS10aGluLmMKPiA+ICsrKyBiL2RyaXZlcnMvbWQvZG0tdGhpbi5j
+Cj4gPiBAQCAtMjc0LDYgKzI3NCw3IEBAIHN0cnVjdCBwb29sIHsKPiA+Cj4gPiAgICAgICBwcm9j
+ZXNzX2Jpb19mbiBwcm9jZXNzX2JpbzsKPiA+ICAgICAgIHByb2Nlc3NfYmlvX2ZuIHByb2Nlc3Nf
+ZGlzY2FyZDsKPiA+ICsgICAgIHByb2Nlc3NfYmlvX2ZuIHByb2Nlc3NfcHJvdmlzaW9uOwo+ID4K
+PiA+ICAgICAgIHByb2Nlc3NfY2VsbF9mbiBwcm9jZXNzX2NlbGw7Cj4gPiAgICAgICBwcm9jZXNz
+X2NlbGxfZm4gcHJvY2Vzc19kaXNjYXJkX2NlbGw7Cj4gPiBAQCAtOTEzLDcgKzkxNCw4IEBAIHN0
+YXRpYyB2b2lkIF9faW5jX3JlbWFwX2FuZF9pc3N1ZV9jZWxsKHZvaWQgKmNvbnRleHQsCj4gPiAg
+ICAgICBzdHJ1Y3QgYmlvICpiaW87Cj4gPgo+ID4gICAgICAgd2hpbGUgKChiaW8gPSBiaW9fbGlz
+dF9wb3AoJmNlbGwtPmJpb3MpKSkgewo+ID4gLSAgICAgICAgICAgICBpZiAob3BfaXNfZmx1c2go
+YmlvLT5iaV9vcGYpIHx8IGJpb19vcChiaW8pID09IFJFUV9PUF9ESVNDQVJEKQo+ID4gKyAgICAg
+ICAgICAgICBpZiAob3BfaXNfZmx1c2goYmlvLT5iaV9vcGYpIHx8IGJpb19vcChiaW8pID09IFJF
+UV9PUF9ESVNDQVJEIHx8Cj4gPiArICAgICAgICAgICAgICAgICBiaW9fb3AoYmlvKSA9PSBSRVFf
+T1BfUFJPVklTSU9OKQo+ID4gICAgICAgICAgICAgICAgICAgICAgIGJpb19saXN0X2FkZCgmaW5m
+by0+ZGVmZXJfYmlvcywgYmlvKTsKPiA+ICAgICAgICAgICAgICAgZWxzZSB7Cj4gPiAgICAgICAg
+ICAgICAgICAgICAgICAgaW5jX2FsbF9pb19lbnRyeShpbmZvLT50Yy0+cG9vbCwgYmlvKTsKPiA+
+IEBAIC0xMjQ1LDggKzEyNDcsOCBAQCBzdGF0aWMgaW50IGlvX292ZXJsYXBzX2Jsb2NrKHN0cnVj
+dCBwb29sICpwb29sLCBzdHJ1Y3QgYmlvICpiaW8pCj4gPgo+ID4gIHN0YXRpYyBpbnQgaW9fb3Zl
+cndyaXRlc19ibG9jayhzdHJ1Y3QgcG9vbCAqcG9vbCwgc3RydWN0IGJpbyAqYmlvKQo+ID4gIHsK
+PiA+IC0gICAgIHJldHVybiAoYmlvX2RhdGFfZGlyKGJpbykgPT0gV1JJVEUpICYmCj4gPiAtICAg
+ICAgICAgICAgIGlvX292ZXJsYXBzX2Jsb2NrKHBvb2wsIGJpbyk7Cj4gPiArICAgICByZXR1cm4g
+KGJpb19kYXRhX2RpcihiaW8pID09IFdSSVRFKSAmJiBpb19vdmVybGFwc19ibG9jayhwb29sLCBi
+aW8pICYmCj4gPiArICAgICAgICAgICAgYmlvX29wKGJpbykgIT0gUkVRX09QX1BST1ZJU0lPTjsK
+PiA+ICB9Cj4gPgo+ID4gIHN0YXRpYyB2b2lkIHNhdmVfYW5kX3NldF9lbmRpbyhzdHJ1Y3QgYmlv
+ICpiaW8sIGJpb19lbmRfaW9fdCAqKnNhdmUsCj4gPiBAQCAtMTk1Myw2ICsxOTU1LDUxIEBAIHN0
+YXRpYyB2b2lkIHByb3Zpc2lvbl9ibG9jayhzdHJ1Y3QgdGhpbl9jICp0Yywgc3RydWN0IGJpbyAq
+YmlvLCBkbV9ibG9ja190IGJsb2NrCj4gPiAgICAgICB9Cj4gPiAgfQo+ID4KPiA+ICtzdGF0aWMg
+dm9pZCBwcm9jZXNzX3Byb3Zpc2lvbl9iaW8oc3RydWN0IHRoaW5fYyAqdGMsIHN0cnVjdCBiaW8g
+KmJpbykKPiA+ICt7Cj4gPiArICAgICBpbnQgcjsKPiA+ICsgICAgIHN0cnVjdCBwb29sICpwb29s
+ID0gdGMtPnBvb2w7Cj4gPiArICAgICBkbV9ibG9ja190IGJsb2NrID0gZ2V0X2Jpb19ibG9jayh0
+YywgYmlvKTsKPiA+ICsgICAgIHN0cnVjdCBkbV9iaW9fcHJpc29uX2NlbGwgKmNlbGw7Cj4gPiAr
+ICAgICBzdHJ1Y3QgZG1fY2VsbF9rZXkga2V5Owo+ID4gKyAgICAgc3RydWN0IGRtX3RoaW5fbG9v
+a3VwX3Jlc3VsdCBsb29rdXBfcmVzdWx0Owo+ID4gKwo+ID4gKyAgICAgLyoKPiA+ICsgICAgICAq
+IElmIGNlbGwgaXMgYWxyZWFkeSBvY2N1cGllZCwgdGhlbiB0aGUgYmxvY2sgaXMgYWxyZWFkeQo+
+ID4gKyAgICAgICogYmVpbmcgcHJvdmlzaW9uZWQgc28gd2UgaGF2ZSBub3RoaW5nIGZ1cnRoZXIg
+dG8gZG8gaGVyZS4KPiA+ICsgICAgICAqLwo+ID4gKyAgICAgYnVpbGRfdmlydHVhbF9rZXkodGMt
+PnRkLCBibG9jaywgJmtleSk7Cj4gPiArICAgICBpZiAoYmlvX2RldGFpbihwb29sLCAma2V5LCBi
+aW8sICZjZWxsKSkKPiA+ICsgICAgICAgICAgICAgcmV0dXJuOwo+ID4gKwo+ID4gKyAgICAgaWYg
+KHRjLT5yZXF1ZXVlX21vZGUpIHsKPiA+ICsgICAgICAgICAgICAgY2VsbF9yZXF1ZXVlKHBvb2ws
+IGNlbGwpOwo+ID4gKyAgICAgICAgICAgICByZXR1cm47Cj4gPiArICAgICB9Cj4gPiArCj4gPiAr
+ICAgICByID0gZG1fdGhpbl9maW5kX2Jsb2NrKHRjLT50ZCwgYmxvY2ssIDEsICZsb29rdXBfcmVz
+dWx0KTsKPiA+ICsgICAgIHN3aXRjaCAocikgewo+ID4gKyAgICAgY2FzZSAwOgo+ID4gKyAgICAg
+ICAgICAgICBpZiAobG9va3VwX3Jlc3VsdC5zaGFyZWQpIHsKPiA+ICsgICAgICAgICAgICAgICAg
+ICAgICBwcm9jZXNzX3NoYXJlZF9iaW8odGMsIGJpbywgYmxvY2ssICZsb29rdXBfcmVzdWx0LCBj
+ZWxsKTsKPiA+ICsgICAgICAgICAgICAgfSBlbHNlIHsKPiA+ICsgICAgICAgICAgICAgICAgICAg
+ICBiaW9fZW5kaW8oYmlvKTsKPiA+ICsgICAgICAgICAgICAgICAgICAgICBjZWxsX2RlZmVyX25v
+X2hvbGRlcih0YywgY2VsbCk7Cj4gPiArICAgICAgICAgICAgIH0KPiA+ICsgICAgICAgICAgICAg
+YnJlYWs7Cj4gPiArICAgICBjYXNlIC1FTk9EQVRBOgo+ID4gKyAgICAgICAgICAgICBwcm92aXNp
+b25fYmxvY2sodGMsIGJpbywgYmxvY2ssIGNlbGwpOwo+ID4gKyAgICAgICAgICAgICBicmVhazsK
+PiA+ICsKPiA+ICsgICAgIGRlZmF1bHQ6Cj4gPiArICAgICAgICAgICAgIERNRVJSX0xJTUlUKCIl
+czogZG1fdGhpbl9maW5kX2Jsb2NrKCkgZmFpbGVkOiBlcnJvciA9ICVkIiwKPiA+ICsgICAgICAg
+ICAgICAgICAgICAgICAgICAgX19mdW5jX18sIHIpOwo+ID4gKyAgICAgICAgICAgICBjZWxsX2Rl
+ZmVyX25vX2hvbGRlcih0YywgY2VsbCk7Cj4gPiArICAgICAgICAgICAgIGJpb19pb19lcnJvcihi
+aW8pOwo+ID4gKyAgICAgICAgICAgICBicmVhazsKPiA+ICsgICAgIH0KPiA+ICt9Cj4gPiArCj4g
+PiAgc3RhdGljIHZvaWQgcHJvY2Vzc19jZWxsKHN0cnVjdCB0aGluX2MgKnRjLCBzdHJ1Y3QgZG1f
+YmlvX3ByaXNvbl9jZWxsICpjZWxsKQo+ID4gIHsKPiA+ICAgICAgIGludCByOwo+ID4gQEAgLTIy
+MjgsNiArMjI3NSw4IEBAIHN0YXRpYyB2b2lkIHByb2Nlc3NfdGhpbl9kZWZlcnJlZF9iaW9zKHN0
+cnVjdCB0aGluX2MgKnRjKQo+ID4KPiA+ICAgICAgICAgICAgICAgaWYgKGJpb19vcChiaW8pID09
+IFJFUV9PUF9ESVNDQVJEKQo+ID4gICAgICAgICAgICAgICAgICAgICAgIHBvb2wtPnByb2Nlc3Nf
+ZGlzY2FyZCh0YywgYmlvKTsKPiA+ICsgICAgICAgICAgICAgZWxzZSBpZiAoYmlvX29wKGJpbykg
+PT0gUkVRX09QX1BST1ZJU0lPTikKPiA+ICsgICAgICAgICAgICAgICAgICAgICBwb29sLT5wcm9j
+ZXNzX3Byb3Zpc2lvbih0YywgYmlvKTsKPiA+ICAgICAgICAgICAgICAgZWxzZQo+ID4gICAgICAg
+ICAgICAgICAgICAgICAgIHBvb2wtPnByb2Nlc3NfYmlvKHRjLCBiaW8pOwo+ID4KPiA+IEBAIC0y
+NTc5LDYgKzI2MjgsNyBAQCBzdGF0aWMgdm9pZCBzZXRfcG9vbF9tb2RlKHN0cnVjdCBwb29sICpw
+b29sLCBlbnVtIHBvb2xfbW9kZSBuZXdfbW9kZSkKPiA+ICAgICAgICAgICAgICAgZG1fcG9vbF9t
+ZXRhZGF0YV9yZWFkX29ubHkocG9vbC0+cG1kKTsKPiA+ICAgICAgICAgICAgICAgcG9vbC0+cHJv
+Y2Vzc19iaW8gPSBwcm9jZXNzX2Jpb19mYWlsOwo+ID4gICAgICAgICAgICAgICBwb29sLT5wcm9j
+ZXNzX2Rpc2NhcmQgPSBwcm9jZXNzX2Jpb19mYWlsOwo+ID4gKyAgICAgICAgICAgICBwb29sLT5w
+cm9jZXNzX3Byb3Zpc2lvbiA9IHByb2Nlc3NfYmlvX2ZhaWw7Cj4gPiAgICAgICAgICAgICAgIHBv
+b2wtPnByb2Nlc3NfY2VsbCA9IHByb2Nlc3NfY2VsbF9mYWlsOwo+ID4gICAgICAgICAgICAgICBw
+b29sLT5wcm9jZXNzX2Rpc2NhcmRfY2VsbCA9IHByb2Nlc3NfY2VsbF9mYWlsOwo+ID4gICAgICAg
+ICAgICAgICBwb29sLT5wcm9jZXNzX3ByZXBhcmVkX21hcHBpbmcgPSBwcm9jZXNzX3ByZXBhcmVk
+X21hcHBpbmdfZmFpbDsKPiA+IEBAIC0yNTkyLDYgKzI2NDIsNyBAQCBzdGF0aWMgdm9pZCBzZXRf
+cG9vbF9tb2RlKHN0cnVjdCBwb29sICpwb29sLCBlbnVtIHBvb2xfbW9kZSBuZXdfbW9kZSkKPiA+
+ICAgICAgICAgICAgICAgZG1fcG9vbF9tZXRhZGF0YV9yZWFkX29ubHkocG9vbC0+cG1kKTsKPiA+
+ICAgICAgICAgICAgICAgcG9vbC0+cHJvY2Vzc19iaW8gPSBwcm9jZXNzX2Jpb19yZWFkX29ubHk7
+Cj4gPiAgICAgICAgICAgICAgIHBvb2wtPnByb2Nlc3NfZGlzY2FyZCA9IHByb2Nlc3NfYmlvX3N1
+Y2Nlc3M7Cj4gPiArICAgICAgICAgICAgIHBvb2wtPnByb2Nlc3NfcHJvdmlzaW9uID0gcHJvY2Vz
+c19iaW9fZmFpbDsKPiA+ICAgICAgICAgICAgICAgcG9vbC0+cHJvY2Vzc19jZWxsID0gcHJvY2Vz
+c19jZWxsX3JlYWRfb25seTsKPiA+ICAgICAgICAgICAgICAgcG9vbC0+cHJvY2Vzc19kaXNjYXJk
+X2NlbGwgPSBwcm9jZXNzX2NlbGxfc3VjY2VzczsKPiA+ICAgICAgICAgICAgICAgcG9vbC0+cHJv
+Y2Vzc19wcmVwYXJlZF9tYXBwaW5nID0gcHJvY2Vzc19wcmVwYXJlZF9tYXBwaW5nX2ZhaWw7Cj4g
+PiBAQCAtMjYxMiw2ICsyNjYzLDcgQEAgc3RhdGljIHZvaWQgc2V0X3Bvb2xfbW9kZShzdHJ1Y3Qg
+cG9vbCAqcG9vbCwgZW51bSBwb29sX21vZGUgbmV3X21vZGUpCj4gPiAgICAgICAgICAgICAgIHBv
+b2wtPm91dF9vZl9kYXRhX3NwYWNlID0gdHJ1ZTsKPiA+ICAgICAgICAgICAgICAgcG9vbC0+cHJv
+Y2Vzc19iaW8gPSBwcm9jZXNzX2Jpb19yZWFkX29ubHk7Cj4gPiAgICAgICAgICAgICAgIHBvb2wt
+PnByb2Nlc3NfZGlzY2FyZCA9IHByb2Nlc3NfZGlzY2FyZF9iaW87Cj4gPiArICAgICAgICAgICAg
+IHBvb2wtPnByb2Nlc3NfcHJvdmlzaW9uID0gcHJvY2Vzc19iaW9fZmFpbDsKPiA+ICAgICAgICAg
+ICAgICAgcG9vbC0+cHJvY2Vzc19jZWxsID0gcHJvY2Vzc19jZWxsX3JlYWRfb25seTsKPiA+ICAg
+ICAgICAgICAgICAgcG9vbC0+cHJvY2Vzc19wcmVwYXJlZF9tYXBwaW5nID0gcHJvY2Vzc19wcmVw
+YXJlZF9tYXBwaW5nOwo+ID4gICAgICAgICAgICAgICBzZXRfZGlzY2FyZF9jYWxsYmFja3MocG9v
+bCk7Cj4gPiBAQCAtMjYyOCw2ICsyNjgwLDcgQEAgc3RhdGljIHZvaWQgc2V0X3Bvb2xfbW9kZShz
+dHJ1Y3QgcG9vbCAqcG9vbCwgZW51bSBwb29sX21vZGUgbmV3X21vZGUpCj4gPiAgICAgICAgICAg
+ICAgIGRtX3Bvb2xfbWV0YWRhdGFfcmVhZF93cml0ZShwb29sLT5wbWQpOwo+ID4gICAgICAgICAg
+ICAgICBwb29sLT5wcm9jZXNzX2JpbyA9IHByb2Nlc3NfYmlvOwo+ID4gICAgICAgICAgICAgICBw
+b29sLT5wcm9jZXNzX2Rpc2NhcmQgPSBwcm9jZXNzX2Rpc2NhcmRfYmlvOwo+ID4gKyAgICAgICAg
+ICAgICBwb29sLT5wcm9jZXNzX3Byb3Zpc2lvbiA9IHByb2Nlc3NfcHJvdmlzaW9uX2JpbzsKPiA+
+ICAgICAgICAgICAgICAgcG9vbC0+cHJvY2Vzc19jZWxsID0gcHJvY2Vzc19jZWxsOwo+ID4gICAg
+ICAgICAgICAgICBwb29sLT5wcm9jZXNzX3ByZXBhcmVkX21hcHBpbmcgPSBwcm9jZXNzX3ByZXBh
+cmVkX21hcHBpbmc7Cj4gPiAgICAgICAgICAgICAgIHNldF9kaXNjYXJkX2NhbGxiYWNrcyhwb29s
+KTsKPiA+IEBAIC0yNzQ5LDcgKzI4MDIsOCBAQCBzdGF0aWMgaW50IHRoaW5fYmlvX21hcChzdHJ1
+Y3QgZG1fdGFyZ2V0ICp0aSwgc3RydWN0IGJpbyAqYmlvKQo+ID4gICAgICAgICAgICAgICByZXR1
+cm4gRE1fTUFQSU9fU1VCTUlUVEVEOwo+ID4gICAgICAgfQo+ID4KPiA+IC0gICAgIGlmIChvcF9p
+c19mbHVzaChiaW8tPmJpX29wZikgfHwgYmlvX29wKGJpbykgPT0gUkVRX09QX0RJU0NBUkQpIHsK
+PiA+ICsgICAgIGlmIChvcF9pc19mbHVzaChiaW8tPmJpX29wZikgfHwgYmlvX29wKGJpbykgPT0g
+UkVRX09QX0RJU0NBUkQgfHwKPiA+ICsgICAgICAgICBiaW9fb3AoYmlvKSA9PSBSRVFfT1BfUFJP
+VklTSU9OKSB7Cj4gPiAgICAgICAgICAgICAgIHRoaW5fZGVmZXJfYmlvX3dpdGhfdGhyb3R0bGUo
+dGMsIGJpbyk7Cj4gPiAgICAgICAgICAgICAgIHJldHVybiBETV9NQVBJT19TVUJNSVRURUQ7Cj4g
+PiAgICAgICB9Cj4gPiBAQCAtMzM5Niw2ICszNDUwLDkgQEAgc3RhdGljIGludCBwb29sX2N0cihz
+dHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgdW5zaWduZWQgaW50IGFyZ2MsIGNoYXIgKiphcmd2KQo+ID4g
+ICAgICAgcHQtPmFkanVzdGVkX3BmID0gcHQtPnJlcXVlc3RlZF9wZiA9IHBmOwo+ID4gICAgICAg
+dGktPm51bV9mbHVzaF9iaW9zID0gMTsKPiA+ICAgICAgIHRpLT5saW1pdF9zd2FwX2Jpb3MgPSB0
+cnVlOwo+ID4gKyAgICAgdGktPm51bV9wcm92aXNpb25fYmlvcyA9IDE7Cj4gPiArICAgICB0aS0+
+cHJvdmlzaW9uX3N1cHBvcnRlZCA9IHRydWU7Cj4gPiArICAgICB0aS0+bWF4X3Byb3Zpc2lvbl9n
+cmFudWxhcml0eSA9IHRydWU7Cj4gPgo+ID4gICAgICAgLyoKPiA+ICAgICAgICAqIE9ubHkgbmVl
+ZCB0byBlbmFibGUgZGlzY2FyZHMgaWYgdGhlIHBvb2wgc2hvdWxkIHBhc3MKPiA+IEBAIC00MTE0
+LDYgKzQxNzEsOCBAQCBzdGF0aWMgdm9pZCBwb29sX2lvX2hpbnRzKHN0cnVjdCBkbV90YXJnZXQg
+KnRpLCBzdHJ1Y3QgcXVldWVfbGltaXRzICpsaW1pdHMpCj4gPiAgICAgICAgKiBUaGUgcG9vbCB1
+c2VzIHRoZSBzYW1lIGRpc2NhcmQgbGltaXRzIGFzIHRoZSB1bmRlcmx5aW5nIGRhdGEKPiA+ICAg
+ICAgICAqIGRldmljZS4gIERNIGNvcmUgaGFzIGFscmVhZHkgc2V0IHRoaXMgdXAuCj4gPiAgICAg
+ICAgKi8KPiA+ICsKPiA+ICsgICAgIGxpbWl0cy0+bWF4X3Byb3Zpc2lvbl9zZWN0b3JzID0gcG9v
+bC0+c2VjdG9yc19wZXJfYmxvY2s7Cj4gPiAgfQo+ID4KPiA+ICBzdGF0aWMgc3RydWN0IHRhcmdl
+dF90eXBlIHBvb2xfdGFyZ2V0ID0gewo+ID4gQEAgLTQyODgsNiArNDM0Nyw5IEBAIHN0YXRpYyBp
+bnQgdGhpbl9jdHIoc3RydWN0IGRtX3RhcmdldCAqdGksIHVuc2lnbmVkIGludCBhcmdjLCBjaGFy
+ICoqYXJndikKPiA+ICAgICAgICAgICAgICAgdGktPm1heF9kaXNjYXJkX2dyYW51bGFyaXR5ID0g
+dHJ1ZTsKPiA+ICAgICAgIH0KPiA+Cj4gPiArICAgICB0aS0+bnVtX3Byb3Zpc2lvbl9iaW9zID0g
+MTsKPiA+ICsgICAgIHRpLT5wcm92aXNpb25fc3VwcG9ydGVkID0gdHJ1ZTsKPiA+ICsKPgo+IFdl
+IG5lZWQgdGhpcyBpbiB0aGluX2N0cjogdGktPm1heF9wcm92aXNpb25fZ3JhbnVsYXJpdHkgPSB0
+cnVlOwo+Cj4gTW9yZSBuZWVkZWQgaW4gdGhlIHRoaW4gdGFyZ2V0IHRoYW4gdGhpbi1wb29sOyBv
+dGhlcndpc2UgcHJvdmlzaW9uIGJpbwo+IGlzc3VlZCB0byB0aGluIGRldmljZXMgd29uJ3QgYmUg
+c3BsaXQgYXBwcm9wcmlhdGVseS4gIEJ1dCBJIGRvIHRoaW5rCj4gaXRzIGZpbmUgdG8gc2V0IGlu
+IGJvdGggdGhpbl9jdHIgYW5kIHBvb2xfY3RyLgo+Cj4gT3RoZXJ3aXNlLCBsb29rcyBnb29kLgo+
+ClRoYW5rcyEgSSdsbCBhZGQgaXQgdG8gdGhlIG5leHQgaXRlcmF0aW9uIChpbiBhZGRpdGlvbiB0
+byBhbnkgb3RoZXIKZmVlZGJhY2sgdGhhdCdzIGFkZGVkIHRvIHY2KS4KCkdpdmVuIHRoYXQgdGhp
+cyBzZXJpZXMgY292ZXJzIG11bHRpcGxlIHN1YnN5c3RlbXMsIHdvdWxkIHRoZXJlIGJlIGEKcHJl
+ZmVycmVkIHdheSBvZiBxdWV1ZWluZyB0aGlzIGZvciBtZXJnZT8KCkJlc3QKU2FydGhhawoKPiBU
+aGFua3MsCj4gTWlrZQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5j
+b20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
 
