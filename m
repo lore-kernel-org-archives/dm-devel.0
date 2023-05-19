@@ -4,83 +4,95 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C02C6C77B7A
-	for <dm-devel@archiver.kernel.org>; Fri, 19 May 2023 15:17:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 22E65C77B7A
+	for <dm-devel@archiver.kernel.org>; Fri, 19 May 2023 15:23:25 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684509460;
+	s=mimecast20190719; t=1684509803;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=v4lPG5G4QVcg2FmHan7U5qAsyiQKjNieKxhllAs/T2I=;
-	b=U30Ou4SHDHK4sP9/uSxd4q2NCmiF+0OijN3afYSTX6ivaNkizON8MAWCotD1BENXRbciyz
-	aYZxlA/wLJsVv0XtXcHM3zPbpPW90sLdMlXYjsSb1bHUsBo4zoHRCOpMbbTlAjwVfQ8c9J
-	ChbfCYgkY3KSOEh6jAMp/RGAMDFaFwc=
+	bh=oNlZ+XPmL4O/l5aIbTvvxgJVnV4Ng4qxjbHV8CIC4h4=;
+	b=b3yi+fEMA8C77JmPBoua6bE5qpkbiPBa23yu+zC7MoIPZhiHkKPvlTsN7b1Tr3NapwPAof
+	RqbtYuh0M53G7ddvf8GINwj5amiXAA/+3Mk7RgvhODHKwbENvSNq/64O5SIixX0XYGPJc2
+	Yntjk7wNbzyfbRntMauVCh0z2uw4aL4=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-643-ucUSjEdVNNaIjBcVMzZwQg-1; Fri, 19 May 2023 11:17:37 -0400
-X-MC-Unique: ucUSjEdVNNaIjBcVMzZwQg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-629-qHOt__e1MgGaQ0j1a3WuAw-1; Fri, 19 May 2023 11:23:20 -0400
+X-MC-Unique: qHOt__e1MgGaQ0j1a3WuAw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 89D71101A52C;
-	Fri, 19 May 2023 15:17:35 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BB9F1101A52C;
+	Fri, 19 May 2023 15:23:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 36EB32026D49;
-	Fri, 19 May 2023 15:17:35 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6AAFB140E954;
+	Fri, 19 May 2023 15:23:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E421719465B2;
-	Fri, 19 May 2023 15:17:34 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2563619465B2;
+	Fri, 19 May 2023 15:23:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0ABA819465A4
- for <dm-devel@listman.corp.redhat.com>; Fri, 19 May 2023 15:17:33 +0000 (UTC)
+ ESMTP id 6294119465A4
+ for <dm-devel@listman.corp.redhat.com>; Fri, 19 May 2023 15:23:16 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C5D231121315; Fri, 19 May 2023 15:17:33 +0000 (UTC)
+ id 517E340C6CCD; Fri, 19 May 2023 15:23:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id BE9721121314
- for <dm-devel@redhat.com>; Fri, 19 May 2023 15:17:33 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 48EB740C6CD1
+ for <dm-devel@redhat.com>; Fri, 19 May 2023 15:23:16 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
  [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 997C5858F1C
- for <dm-devel@redhat.com>; Fri, 19 May 2023 15:17:33 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-622-BilOl3CIOKSch0I_195u_w-1; Fri, 19 May 2023 11:17:30 -0400
-X-MC-Unique: BilOl3CIOKSch0I_195u_w-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id EDFAF6558D;
- Fri, 19 May 2023 15:17:28 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 510EBC433D2;
- Fri, 19 May 2023 15:17:28 +0000 (UTC)
-Date: Fri, 19 May 2023 08:17:27 -0700
-From: "Darrick J. Wong" <djwong@kernel.org>
-To: Sarthak Kukreti <sarthakkukreti@chromium.org>
-Message-ID: <20230519151727.GD11642@frogsfrogsfrogs>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 29FA5800141
+ for <dm-devel@redhat.com>; Fri, 19 May 2023 15:23:16 +0000 (UTC)
+Received: from mail-qt1-f170.google.com (mail-qt1-f170.google.com
+ [209.85.160.170]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-266-yfZwcfonMve3TAsgFu8FFA-1; Fri, 19 May 2023 11:23:14 -0400
+X-MC-Unique: yfZwcfonMve3TAsgFu8FFA-1
+Received: by mail-qt1-f170.google.com with SMTP id
+ d75a77b69052e-3f38e1142d0so16937061cf.2
+ for <dm-devel@redhat.com>; Fri, 19 May 2023 08:23:14 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1684509794; x=1687101794;
+ h=in-reply-to:content-disposition:mime-version:references:message-id
+ :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+ :message-id:reply-to;
+ bh=KQivtLqNJRG8EpR/lUW7uy3izlo40t0jANCAkNQxEPE=;
+ b=QJ9C/Bs8P3LmUCneuQzI6IZRcyFechUHVyapCSlZzFzAHZfmY5zS1x3kWW5cNvHh4x
+ AWs1YfZoky/shFKSlyHiUlv1gDG8v2H9m+Yh41p0TNS5gcVWQlUIueUhZH1lcF80V+ZE
+ qNZuTneqYo8j4CwabZrJtgVIOS3gpnydRmST++wDqPgAiopvkqYtpetwlWgMp/ryK2PS
+ h8KB+aREjQ2K6KGAMyWDFAa1DIa6sMJJjLlSQRg8legoCyVt2aOvQK/8HG0FbDXZ3X8v
+ 41IoJzZrttl8Art1aCQecrIF77tEWPnTKsheZcik6yk3GMoehNiNHZhZVv+OAchHs6lQ
+ fM9A==
+X-Gm-Message-State: AC+VfDwZXQ5apXL3UR2o/rlCQhxx8PoXXNIxYuT9gfjsVj/uFfSCgb8Q
+ sppojK9c8zgQbg1Okf6H3YPDE50=
+X-Google-Smtp-Source: ACHHUZ5KZDF2WuE+iLnjFEJ4qmC2nD5mUZp17EvZzOJDdFPHVvmlXVoj6ey88vsNHzWaS5Y6xHhQeQ==
+X-Received: by 2002:a05:622a:192:b0:3f5:92b:eff9 with SMTP id
+ s18-20020a05622a019200b003f5092beff9mr3992630qtw.46.1684509793876; 
+ Fri, 19 May 2023 08:23:13 -0700 (PDT)
+Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
+ [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
+ b28-20020a05620a127c00b0075941df3365sm1164925qkl.52.2023.05.19.08.23.13
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Fri, 19 May 2023 08:23:13 -0700 (PDT)
+Date: Fri, 19 May 2023 11:23:12 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Sarthak Kukreti <sarthakkukreti@chromium.org>,
+ Joe Thornber <ejt@redhat.com>
+Message-ID: <ZGeUYESOQsZkOQ1Q@redhat.com>
 References: <20230518223326.18744-1-sarthakkukreti@chromium.org>
- <20230518223326.18744-2-sarthakkukreti@chromium.org>
+ <20230518223326.18744-5-sarthakkukreti@chromium.org>
 MIME-Version: 1.0
-In-Reply-To: <20230518223326.18744-2-sarthakkukreti@chromium.org>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: Re: [dm-devel] [PATCH v7 1/5] block: Don't invalidate pagecache for
- invalid falloc modes
+In-Reply-To: <20230518223326.18744-5-sarthakkukreti@chromium.org>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] [PATCH v7 4/5] dm-thin: Add REQ_OP_PROVISION support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -94,91 +106,80 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
  Theodore Ts'o <tytso@mit.edu>, "Michael S. Tsirkin" <mst@redhat.com>,
- Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
- Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
- stable@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com,
+ "Darrick J. Wong" <djwong@kernel.org>, Jason Wang <jasowang@redhat.com>,
+ Bart Van Assche <bvanassche@google.com>, linux-kernel@vger.kernel.org,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
  Andreas Dilger <adilger.kernel@dilger.ca>,
  Stefan Hajnoczi <stefanha@redhat.com>, linux-fsdevel@vger.kernel.org,
  linux-ext4@vger.kernel.org, Brian Foster <bfoster@redhat.com>,
  Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, May 18, 2023 at 03:33:22PM -0700, Sarthak Kukreti wrote:
-> Only call truncate_bdev_range() if the fallocate mode is
-> supported. This fixes a bug where data in the pagecache
-> could be invalidated if the fallocate() was called on the
-> block device with an invalid mode.
+On Thu, May 18 2023 at  6:33P -0400,
+Sarthak Kukreti <sarthakkukreti@chromium.org> wrote:
+
+> dm-thinpool uses the provision request to provision
+> blocks for a dm-thin device. dm-thinpool currently does not
+> pass through REQ_OP_PROVISION to underlying devices.
 > 
-> Fixes: 25f4c41415e5 ("block: implement (some of) fallocate for block devices")
-> Cc: stable@vger.kernel.org
-> Reported-by: Darrick J. Wong <djwong@kernel.org>
+> For shared blocks, provision requests will break sharing and copy the
+> contents of the entire block. Additionally, if 'skip_block_zeroing'
+> is not set, dm-thin will opt to zero out the entire range as a part
+> of provisioning.
+> 
 > Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
-
-Thanks for fixing this,
-
-Reviewed-by: Darrick J. Wong <djwong@kernel.org>
-
---D
-
 > ---
->  block/fops.c | 21 ++++++++++++++++-----
->  1 file changed, 16 insertions(+), 5 deletions(-)
+>  drivers/md/dm-thin.c | 74 +++++++++++++++++++++++++++++++++++++++++---
+>  1 file changed, 70 insertions(+), 4 deletions(-)
 > 
-> diff --git a/block/fops.c b/block/fops.c
-> index d2e6be4e3d1c..4c70fdc546e7 100644
-> --- a/block/fops.c
-> +++ b/block/fops.c
-> @@ -648,24 +648,35 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
+> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> index 2b13c949bd72..f1b68b558cf0 100644
+> --- a/drivers/md/dm-thin.c
+> +++ b/drivers/md/dm-thin.c
+> @@ -1245,8 +1247,8 @@ static int io_overlaps_block(struct pool *pool, struct bio *bio)
 >  
->  	filemap_invalidate_lock(inode->i_mapping);
+>  static int io_overwrites_block(struct pool *pool, struct bio *bio)
+>  {
+> -	return (bio_data_dir(bio) == WRITE) &&
+> -		io_overlaps_block(pool, bio);
+> +	return (bio_data_dir(bio) == WRITE) && io_overlaps_block(pool, bio) &&
+> +	       bio_op(bio) != REQ_OP_PROVISION;
+>  }
 >  
-> -	/* Invalidate the page cache, including dirty pages. */
-> -	error = truncate_bdev_range(bdev, file->f_mode, start, end);
-> -	if (error)
-> -		goto fail;
-> -
-> +	/*
-> +	 * Invalidate the page cache, including dirty pages, for valid
-> +	 * de-allocate mode calls to fallocate().
-> +	 */
->  	switch (mode) {
->  	case FALLOC_FL_ZERO_RANGE:
->  	case FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE:
-> +		error = truncate_bdev_range(bdev, file->f_mode, start, end);
-> +		if (error)
-> +			goto fail;
+>  static void save_and_set_endio(struct bio *bio, bio_end_io_t **save,
+> @@ -1394,6 +1396,9 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
+>  	m->data_block = data_block;
+>  	m->cell = cell;
+>  
+> +	if (bio && bio_op(bio) == REQ_OP_PROVISION)
+> +		m->bio = bio;
 > +
->  		error = blkdev_issue_zeroout(bdev, start >> SECTOR_SHIFT,
->  					     len >> SECTOR_SHIFT, GFP_KERNEL,
->  					     BLKDEV_ZERO_NOUNMAP);
->  		break;
->  	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE:
-> +		error = truncate_bdev_range(bdev, file->f_mode, start, end);
-> +		if (error)
-> +			goto fail;
-> +
->  		error = blkdev_issue_zeroout(bdev, start >> SECTOR_SHIFT,
->  					     len >> SECTOR_SHIFT, GFP_KERNEL,
->  					     BLKDEV_ZERO_NOFALLBACK);
->  		break;
->  	case FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE | FALLOC_FL_NO_HIDE_STALE:
-> +		error = truncate_bdev_range(bdev, file->f_mode, start, end);
-> +		if (error)
-> +			goto fail;
-> +
->  		error = blkdev_issue_discard(bdev, start >> SECTOR_SHIFT,
->  					     len >> SECTOR_SHIFT, GFP_KERNEL);
->  		break;
-> -- 
-> 2.40.1.698.g37aff9b760-goog
-> 
+>  	/*
+>  	 * If the whole block of data is being overwritten or we are not
+>  	 * zeroing pre-existing data, we can issue the bio immediately.
+
+This doesn't seem like the best way to address avoiding passdown of
+provision bios (relying on process_prepared_mapping's implementation
+that happens to do the right thing if m->bio set).  Doing so cascades
+into relying on complete_overwrite_bio() happening to _not_ actually
+being specific to "overwrite" bios.
+
+I don't have a better suggestion yet but will look closer.  Just think
+this needs to be formalized a bit more rather than it happening to
+"just work".
+
+Cc'ing Joe to see what he thinks too.  This is something we can clean
+up with a follow-on patch though, so not a show-stopper for this
+series.
+
+Mike
 
 --
 dm-devel mailing list
