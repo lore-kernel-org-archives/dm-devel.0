@@ -4,65 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D4598C7EE23
-	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 08:52:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3B8ECC7EE26
+	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 08:54:44 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684831936;
+	s=mimecast20190719; t=1684832083;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=aKcaIznEB30V4XvoFcTHeCvbSKRjis6a/PP+7B/9IQM=;
-	b=Z+5uoHonZqyc13QhN0HeK8lzRBHpYSgGkKZUXHdG9iFwgXgFhC4K8wHZ/yNY0wmv8kK9Tt
-	VFTJkkKT9+VTChxWH7/cak/JqKolP3JfWVJNonPvHrpSchZ1qCUC7P5qQpFWdz+RCrQUi0
-	/LltEtG54XloPSAq6bfZBozpsK12GdE=
+	bh=uoBNAzSlxdM3VoeE+ia3zHj2FQ0mZDlgRfAFZ+zhUH4=;
+	b=WiAh7Ei8RBMrT8vKfS+RvW8LWXhDyXa8aPd7qftpTuAVsg3+gCnd88ceVXfeSvn6wm6Vtx
+	M2kxpQPVPVGVbfewiImk8xBSCL1fU773x5YLYM6frJW5tKB1q+AbkCx68Z1hDUJ42FmGF1
+	+86yzIaWJ8dRdZUTtdpKZBFXH8AT8SA=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-422-RPkzelHSO_-u_e86hXo6RQ-1; Tue, 23 May 2023 04:52:13 -0400
-X-MC-Unique: RPkzelHSO_-u_e86hXo6RQ-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-88-6J0osx9NNWOiN_2DZAcPvw-1; Tue, 23 May 2023 04:54:41 -0400
+X-MC-Unique: 6J0osx9NNWOiN_2DZAcPvw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 430B3800B2A;
-	Tue, 23 May 2023 08:52:07 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D6B53101A55C;
+	Tue, 23 May 2023 08:54:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 312B7492B00;
-	Tue, 23 May 2023 08:52:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C3FA62166B25;
+	Tue, 23 May 2023 08:54:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EE1AC19465A0;
-	Tue, 23 May 2023 08:52:06 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9B3AF19465A0;
+	Tue, 23 May 2023 08:54:39 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8F7651946595
- for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 08:52:06 +0000 (UTC)
+ ESMTP id A8B7E1946595
+ for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 08:54:38 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 81377140EBB8; Tue, 23 May 2023 08:52:06 +0000 (UTC)
+ id 9653D20296C8; Tue, 23 May 2023 08:54:38 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 794B9140E95D
- for <dm-devel@redhat.com>; Tue, 23 May 2023 08:52:06 +0000 (UTC)
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8E0C620296C6
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 08:54:38 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [205.139.110.61])
+ [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5E34A3C17C64
- for <dm-devel@redhat.com>; Tue, 23 May 2023 08:52:06 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 727D6185A78E
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 08:54:38 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-134-_1sRxX3UOb6T5zZPDpM9lA-1; Tue, 23 May 2023 04:52:04 -0400
-X-MC-Unique: _1sRxX3UOb6T5zZPDpM9lA-1
+ us-mta-303-YWEFF88zNk29CNEhat_W6g-1; Tue, 23 May 2023 04:54:36 -0400
+X-MC-Unique: YWEFF88zNk29CNEhat_W6g-1
 Received: from [2001:4bb8:188:23b2:6ade:85c9:530f:6eb0] (helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q1MiS-009Gce-39; Tue, 23 May 2023 07:45:57 +0000
+ id 1q1Miu-009H5F-2p; Tue, 23 May 2023 07:46:26 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue, 23 May 2023 09:45:18 +0200
-Message-Id: <20230523074535.249802-8-hch@lst.de>
+Date: Tue, 23 May 2023 09:45:28 +0200
+Message-Id: <20230523074535.249802-18-hch@lst.de>
 In-Reply-To: <20230523074535.249802-1-hch@lst.de>
 References: <20230523074535.249802-1-hch@lst.de>
 MIME-Version: 1.0
@@ -75,8 +75,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: [dm-devel] [PATCH 07/24] init: refactor mount_root
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: [dm-devel] [PATCH 17/24] dm-snap: simplify the origin_dev ==
+ cow_dev check in snapshot_ctr
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -98,186 +99,62 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Provide stubs for all the lower level mount helpers, and just switch
-on ROOT_DEV in the main function.
+Use the block_device acquired in dm_get_device for the check instead
+of doing an extra lookup.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- init/do_mounts.c | 104 +++++++++++++++++++++++++----------------------
- 1 file changed, 56 insertions(+), 48 deletions(-)
+ drivers/md/dm-snap.c | 14 +++++---------
+ 1 file changed, 5 insertions(+), 9 deletions(-)
 
-diff --git a/init/do_mounts.c b/init/do_mounts.c
-index a2c0baace0992c..e708b02d9d6566 100644
---- a/init/do_mounts.c
-+++ b/init/do_mounts.c
-@@ -453,15 +453,14 @@ void __init mount_root_generic(char *name, int flags)
- #define NFSROOT_TIMEOUT_MAX	30
- #define NFSROOT_RETRY_MAX	5
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 9c49f53760d066..7832974b73eb03 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -1241,7 +1241,6 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	int i;
+ 	int r = -EINVAL;
+ 	char *origin_path, *cow_path;
+-	dev_t origin_dev, cow_dev;
+ 	unsigned int args_used, num_flush_bios = 1;
+ 	fmode_t origin_mode = FMODE_READ;
  
--static int __init mount_nfs_root(void)
-+static void __init mount_nfs_root(void)
- {
- 	char *root_dev, *root_data;
- 	unsigned int timeout;
--	int try, err;
-+	int try;
- 
--	err = nfs_root_data(&root_dev, &root_data);
--	if (err != 0)
--		return 0;
-+	if (nfs_root_data(&root_dev, &root_data))
-+		goto fail;
- 
- 	/*
- 	 * The server or network may not be ready, so try several
-@@ -470,10 +469,8 @@ static int __init mount_nfs_root(void)
- 	 */
- 	timeout = NFSROOT_TIMEOUT_MIN;
- 	for (try = 1; ; try++) {
--		err = do_mount_root(root_dev, "nfs",
--					root_mountflags, root_data);
--		if (err == 0)
--			return 1;
-+		if (!do_mount_root(root_dev, "nfs", root_mountflags, root_data))
-+			return;
- 		if (try > NFSROOT_RETRY_MAX)
- 			break;
- 
-@@ -483,9 +480,14 @@ static int __init mount_nfs_root(void)
- 		if (timeout > NFSROOT_TIMEOUT_MAX)
- 			timeout = NFSROOT_TIMEOUT_MAX;
+@@ -1279,24 +1278,21 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		ti->error = "Cannot get origin device";
+ 		goto bad_origin;
  	}
--	return 0;
-+fail:
-+	pr_err("VFS: Unable to mount root fs via NFS.\n");
- }
--#endif
-+#else
-+static inline void mount_nfs_root(void)
-+{
-+}
-+#endif /* CONFIG_ROOT_NFS */
+-	origin_dev = s->origin->bdev->bd_dev;
  
- #ifdef CONFIG_CIFS_ROOT
+ 	cow_path = argv[0];
+ 	argv++;
+ 	argc--;
  
-@@ -495,22 +497,20 @@ extern int cifs_root_data(char **dev, char **opts);
- #define CIFSROOT_TIMEOUT_MAX	30
- #define CIFSROOT_RETRY_MAX	5
- 
--static int __init mount_cifs_root(void)
-+static void __init mount_cifs_root(void)
- {
- 	char *root_dev, *root_data;
- 	unsigned int timeout;
--	int try, err;
-+	int try;
- 
--	err = cifs_root_data(&root_dev, &root_data);
--	if (err != 0)
--		return 0;
-+	if (cifs_root_data(&root_dev, &root_data))
-+		goto fail;
- 
- 	timeout = CIFSROOT_TIMEOUT_MIN;
- 	for (try = 1; ; try++) {
--		err = do_mount_root(root_dev, "cifs", root_mountflags,
--				    root_data);
--		if (err == 0)
--			return 1;
-+		if (!do_mount_root(root_dev, "cifs", root_mountflags,
-+				   root_data))
-+			return;
- 		if (try > CIFSROOT_RETRY_MAX)
- 			break;
- 
-@@ -519,9 +519,14 @@ static int __init mount_cifs_root(void)
- 		if (timeout > CIFSROOT_TIMEOUT_MAX)
- 			timeout = CIFSROOT_TIMEOUT_MAX;
+-	cow_dev = dm_get_dev_t(cow_path);
+-	if (cow_dev && cow_dev == origin_dev) {
+-		ti->error = "COW device cannot be the same as origin device";
+-		r = -EINVAL;
+-		goto bad_cow;
+-	}
+-
+ 	r = dm_get_device(ti, cow_path, dm_table_get_mode(ti->table), &s->cow);
+ 	if (r) {
+ 		ti->error = "Cannot get COW device";
+ 		goto bad_cow;
  	}
--	return 0;
-+fail:
-+	pr_err("VFS: Unable to mount root fs via SMB.\n");
- }
--#endif
-+#else
-+static inline void mount_cifs_root(void)
-+{
-+}
-+#endif /* CONFIG_CIFS_ROOT */
++	if (s->cow->bdev && s->cow->bdev == s->origin->bdev) {
++		ti->error = "COW device cannot be the same as origin device";
++		r = -EINVAL;
++		goto bad_store;
++	}
  
- static bool __init fs_is_nodev(char *fstype)
- {
-@@ -563,35 +568,38 @@ static int __init mount_nodev_root(void)
- 	return err;
- }
- 
--void __init mount_root(void)
--{
--#ifdef CONFIG_ROOT_NFS
--	if (ROOT_DEV == Root_NFS) {
--		if (!mount_nfs_root())
--			printk(KERN_ERR "VFS: Unable to mount root fs via NFS.\n");
--		return;
--	}
--#endif
--#ifdef CONFIG_CIFS_ROOT
--	if (ROOT_DEV == Root_CIFS) {
--		if (!mount_cifs_root())
--			printk(KERN_ERR "VFS: Unable to mount root fs via SMB.\n");
--		return;
--	}
--#endif
--	if (ROOT_DEV == 0 && root_device_name && root_fs_names) {
--		if (mount_nodev_root() == 0)
--			return;
--	}
- #ifdef CONFIG_BLOCK
--	{
--		int err = create_dev("/dev/root", ROOT_DEV);
-+static void __init mount_block_root(void)
-+{
-+	int err = create_dev("/dev/root", ROOT_DEV);
-+
-+	if (err < 0)
-+		pr_emerg("Failed to create /dev/root: %d\n", err);
-+	mount_root_generic("/dev/root", root_mountflags);
-+}
-+#else
-+static inline void mount_block_root(void)
-+{
-+}
-+#endif /* CONFIG_BLOCK */
- 
--		if (err < 0)
--			pr_emerg("Failed to create /dev/root: %d\n", err);
--		mount_root_generic("/dev/root", root_mountflags);
-+void __init mount_root(void)
-+{
-+	switch (ROOT_DEV) {
-+	case Root_NFS:
-+		mount_nfs_root();
-+		break;
-+	case Root_CIFS:
-+		mount_cifs_root();
-+		break;
-+	case 0:
-+		if (root_device_name && root_fs_names && mount_nodev_root() == 0)
-+			break;
-+		fallthrough;
-+	default:
-+		mount_block_root();
-+		break;
- 	}
--#endif
- }
- 
- /*
+ 	r = dm_exception_store_create(ti, argc, argv, s, &args_used, &s->store);
+ 	if (r) {
 -- 
 2.39.2
 
