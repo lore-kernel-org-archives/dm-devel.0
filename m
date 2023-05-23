@@ -1,68 +1,68 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 922D0C7EE23
-	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 08:56:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id AE992C7EE26
+	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 08:56:23 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684832173;
+	s=mimecast20190719; t=1684832182;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=qExVVRVQtrFchNmkRlyy7W2Cp4qNyJFbP8NnFhmmncY=;
-	b=H8qBuYfxDThuxFoUZTdPS8MKmIsKq4Tnyvi3DrPFG9NsaNvQAlUuLWDKs4JBOd0iCRYtqY
-	21eM/r5M9LIW6dtnAU1NoqYbSO3zLvX7XApKdje0GL9/nsf83mtHByfZJT+m3Ya8yWIcc7
-	Xf2lnDPG4negongwjeJuHyo3Fa3VNjU=
+	bh=p2CWhDDXeRHgvJPSCIizp3lpe4GSPdOCAK1wSCvrJ5M=;
+	b=i3PnTr7Jto3ogp6TMRjstef5Ojhbmq2+70+aY5HHLAbvELSn7F/XPb/prjoIe9C4GYOm78
+	WPclUE5dBg2iow+ZgKcMJruhBJBF10MA7i7eLDKsiPWTrDwECc8avLm7L8MnGZ7YaVg60L
+	5C3uczsgXiesWrDOiCyfJ0I0/yFocgk=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-659-rJTDud4WMZeWtw7kN_Tqtw-1; Tue, 23 May 2023 04:56:10 -0400
-X-MC-Unique: rJTDud4WMZeWtw7kN_Tqtw-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-530-SlmJirOaP2-2mNaDbfWsVw-1; Tue, 23 May 2023 04:56:19 -0400
+X-MC-Unique: SlmJirOaP2-2mNaDbfWsVw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C83DC185A78E;
-	Tue, 23 May 2023 08:56:08 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 42971101A55C;
+	Tue, 23 May 2023 08:56:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B681A492B00;
-	Tue, 23 May 2023 08:56:08 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 322DB400E116;
+	Tue, 23 May 2023 08:56:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7F7AC19465A0;
-	Tue, 23 May 2023 08:56:08 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 229BC19465A0;
+	Tue, 23 May 2023 08:56:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 35CCB19465A8
- for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 08:56:07 +0000 (UTC)
+ ESMTP id 66C611946595
+ for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 08:56:15 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 19739112131E; Tue, 23 May 2023 08:56:07 +0000 (UTC)
+ id 51DAD200AE6F; Tue, 23 May 2023 08:56:15 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1228E1121319
- for <dm-devel@redhat.com>; Tue, 23 May 2023 08:56:07 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 49B9C202696C
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 08:56:15 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E9D0F8032F5
- for <dm-devel@redhat.com>; Tue, 23 May 2023 08:56:06 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2D05E3C17C63
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 08:56:15 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-201-qpg2gtr6Ps6w_dn7XeU9HA-1; Tue, 23 May 2023 04:56:04 -0400
-X-MC-Unique: qpg2gtr6Ps6w_dn7XeU9HA-1
+ us-mta-205-_uEub4jUMzihzJoVGXBTZw-1; Tue, 23 May 2023 04:56:13 -0400
+X-MC-Unique: _uEub4jUMzihzJoVGXBTZw-1
 Received: from [2001:4bb8:188:23b2:6ade:85c9:530f:6eb0] (helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q1MjA-009HLC-0s; Tue, 23 May 2023 07:46:40 +0000
+ id 1q1MiY-009Ghn-18; Tue, 23 May 2023 07:46:02 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue, 23 May 2023 09:45:33 +0200
-Message-Id: <20230523074535.249802-23-hch@lst.de>
+Date: Tue, 23 May 2023 09:45:20 +0200
+Message-Id: <20230523074535.249802-10-hch@lst.de>
 In-Reply-To: <20230523074535.249802-1-hch@lst.de>
 References: <20230523074535.249802-1-hch@lst.de>
 MIME-Version: 1.0
@@ -75,9 +75,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: [dm-devel] [PATCH 22/24] mtd: block2mtd: factor the early block
- device open logic into a helper
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: [dm-devel] [PATCH 09/24] init: don't remove the /dev/ prefix from
+ error messages
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -99,102 +99,67 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Simply add_device a bit by splitting out the cumbersome early boot logic
-into a separate helper.
+Remove the code that drops the /dev/ prefix from root_device_name, which
+is only used for error messages when mounting the root device fails.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/mtd/devices/block2mtd.c | 53 +++++++++++++++++++--------------
- 1 file changed, 30 insertions(+), 23 deletions(-)
+ init/do_mounts.c | 17 ++++++-----------
+ 1 file changed, 6 insertions(+), 11 deletions(-)
 
-diff --git a/drivers/mtd/devices/block2mtd.c b/drivers/mtd/devices/block2mtd.c
-index 4c21e9f13bead5..182eed68c75634 100644
---- a/drivers/mtd/devices/block2mtd.c
-+++ b/drivers/mtd/devices/block2mtd.c
-@@ -215,34 +215,18 @@ static void block2mtd_free_device(struct block2mtd_dev *dev)
- 	kfree(dev);
- }
- 
--
--static struct block2mtd_dev *add_device(char *devname, int erase_size,
--		char *label, int timeout)
-+static struct block_device *mdtblock_early_get_bdev(const char *devname,
-+		fmode_t mode, int timeout, struct block2mtd_dev *dev)
+diff --git a/init/do_mounts.c b/init/do_mounts.c
+index 1405ee7218bf00..74cc96bffbdd71 100644
+--- a/init/do_mounts.c
++++ b/init/do_mounts.c
+@@ -607,8 +607,6 @@ void __init mount_root(char *root_device_name)
+  */
+ void __init prepare_namespace(void)
  {
-+	struct block_device *bdev = ERR_PTR(-ENODEV);
- #ifndef MODULE
- 	int i;
--#endif
--	const fmode_t mode = FMODE_READ | FMODE_WRITE | FMODE_EXCL;
--	struct block_device *bdev;
--	struct block2mtd_dev *dev;
--	char *name;
+-	char *root_device_name;
 -
--	if (!devname)
--		return NULL;
--
--	dev = kzalloc(sizeof(struct block2mtd_dev), GFP_KERNEL);
--	if (!dev)
--		return NULL;
+ 	if (root_delay) {
+ 		printk(KERN_INFO "Waiting %d sec before mounting root device...\n",
+ 		       root_delay);
+@@ -627,19 +625,16 @@ void __init prepare_namespace(void)
+ 	md_run_setup();
  
--	/* Get a handle on the device */
--	bdev = blkdev_get_by_path(devname, mode, dev);
--
--#ifndef MODULE
- 	/*
- 	 * We might not have the root device mounted at this point.
- 	 * Try to resolve the device name by other means.
- 	 */
--	for (i = 0; IS_ERR(bdev) && i <= timeout; i++) {
-+	for (i = 0; i <= timeout; i++) {
- 		dev_t devt;
- 
- 		if (i)
-@@ -254,12 +238,35 @@ static struct block2mtd_dev *add_device(char *devname, int erase_size,
- 			msleep(1000);
- 		wait_for_device_probe();
- 
--		if (early_lookup_bdev(devname, &devt))
--			continue;
--		bdev = blkdev_get_by_dev(devt, mode, dev);
-+		if (!early_lookup_bdev(devname, &devt)) {
-+			bdev = blkdev_get_by_dev(devt, mode, dev);
-+			if (!IS_ERR(bdev))
-+				break;
-+		}
+ 	if (saved_root_name[0]) {
+-		root_device_name = saved_root_name;
+-		if (!strncmp(root_device_name, "mtd", 3) ||
+-		    !strncmp(root_device_name, "ubi", 3)) {
+-			mount_root_generic(root_device_name, root_device_name,
++		if (!strncmp(saved_root_name, "mtd", 3) ||
++		    !strncmp(saved_root_name, "ubi", 3)) {
++			mount_root_generic(saved_root_name, saved_root_name,
+ 					   root_mountflags);
+ 			goto out;
+ 		}
+-		ROOT_DEV = name_to_dev_t(root_device_name);
+-		if (strncmp(root_device_name, "/dev/", 5) == 0)
+-			root_device_name += 5;
++		ROOT_DEV = name_to_dev_t(saved_root_name);
  	}
- #endif
-+	return bdev;
-+}
-+
-+static struct block2mtd_dev *add_device(char *devname, int erase_size,
-+		char *label, int timeout)
-+{
-+	const fmode_t mode = FMODE_READ | FMODE_WRITE | FMODE_EXCL;
-+	struct block_device *bdev;
-+	struct block2mtd_dev *dev;
-+	char *name;
  
-+	if (!devname)
-+		return NULL;
-+
-+	dev = kzalloc(sizeof(struct block2mtd_dev), GFP_KERNEL);
-+	if (!dev)
-+		return NULL;
-+
-+	/* Get a handle on the device */
-+	bdev = blkdev_get_by_path(devname, mode, dev);
-+	if (IS_ERR(bdev))
-+		bdev = mdtblock_early_get_bdev(devname, mode, timeout, dev);
- 	if (IS_ERR(bdev)) {
- 		pr_err("error: cannot open device %s\n", devname);
- 		goto err_free_block2mtd;
+-	if (initrd_load(root_device_name))
++	if (initrd_load(saved_root_name))
+ 		goto out;
+ 
+ 	/* wait for any asynchronous scanning to complete */
+@@ -652,7 +647,7 @@ void __init prepare_namespace(void)
+ 		async_synchronize_full();
+ 	}
+ 
+-	mount_root(root_device_name);
++	mount_root(saved_root_name);
+ out:
+ 	devtmpfs_mount();
+ 	init_mount(".", "/", NULL, MS_MOVE, NULL);
 -- 
 2.39.2
 
