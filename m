@@ -1,101 +1,101 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C973EC7EE31
-	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 21:46:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 43981C7EE2F
+	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 21:46:45 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684878400;
+	s=mimecast20190719; t=1684878404;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=LJPe8j1OPHBRkKLiwdLEEit9iVTbXqc6wX1EMd8CBlU=;
-	b=dMBzyFQFUJe2vg5srcqMwadVznF1ETvfixVKXncgNgQjs2+vDIaf6h7rIQxvc8CU8J4kCx
-	NcGLwYiJ6eS2X2JkTnY4lK0Lhj5lbNupEby3FAldWnPRu+mC311yG9fXsdRmXxUWWQSeIy
-	jyfPYjK1kDddgPEMdWIXOINrs6dxv9w=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=GZ46UTpJ9OI9sUZCNudIzUEM/2u7LmRSdK4WicLikIQ=;
+	b=i8m6jdSSbq5QITwIksa3PUqYkveo2ro4qrw/I/IbPh6cyZCGWcc5YEKNwWPjjOToedq5eU
+	y275i53w0fqGUxC2vPOuIiWtSTl9MZ9Q+DdQ29RW5fMeRMdCC9cto4omSlKtVZLGJUfP09
+	MUNVRY8fkewYOGSVfoe2nn8HHm6aP3w=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-137-7Ncv9Qu6PXSy0_pxwRNtSg-1; Tue, 23 May 2023 17:46:39 -0400
-X-MC-Unique: 7Ncv9Qu6PXSy0_pxwRNtSg-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-338-M4kRzD7pPWG7jWRR_NivJA-1; Tue, 23 May 2023 17:46:40 -0400
+X-MC-Unique: M4kRzD7pPWG7jWRR_NivJA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 85BA12814251;
-	Tue, 23 May 2023 21:46:36 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3E921185A78E;
+	Tue, 23 May 2023 21:46:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6E9D7492B0A;
-	Tue, 23 May 2023 21:46:36 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 252D5492B00;
+	Tue, 23 May 2023 21:46:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5E12919465B3;
-	Tue, 23 May 2023 21:46:36 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0438519465B7;
+	Tue, 23 May 2023 21:46:38 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8918B19465A0
- for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 21:46:34 +0000 (UTC)
+ ESMTP id B387419465B6
+ for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 21:46:36 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7DAA72166B26; Tue, 23 May 2023 21:46:34 +0000 (UTC)
+ id 9304F482060; Tue, 23 May 2023 21:46:36 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 73C632166B25
- for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:34 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 89D97492B00
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:36 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 485483C14AA4
- for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:34 +0000 (UTC)
-Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
- [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 61A59101B041
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:36 +0000 (UTC)
+Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
+ [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-349-eo0la4a5Ns6ROTUBVDuMiw-1; Tue, 23 May 2023 17:46:32 -0400
-X-MC-Unique: eo0la4a5Ns6ROTUBVDuMiw-1
-Received: by mail-qk1-f199.google.com with SMTP id
- af79cd13be357-75b185c9736so34343585a.2
- for <dm-devel@redhat.com>; Tue, 23 May 2023 14:46:32 -0700 (PDT)
+ us-mta-322-GBhnEuVEPpe5ZgXmTF4Nww-1; Tue, 23 May 2023 17:46:35 -0400
+X-MC-Unique: GBhnEuVEPpe5ZgXmTF4Nww-1
+Received: by mail-qv1-f71.google.com with SMTP id
+ 6a1803df08f44-62380ffb993so1570526d6.1
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 14:46:35 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1684878392; x=1687470392;
+ d=1e100.net; s=20221208; t=1684878394; x=1687470394;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=CRgm523iy6WCNopZQ86Z4hDYJIm2IlN2p1HmqdP8jkY=;
- b=g55fEiNRAVyGVEE4H4DjoqGdFlM8atVh8n8bqNG6WcbIG2v+YvygBZfivaLsbOYQum
- LobGgrzUwFE7adhjj8nrmmrAEI2YBmLVIHNNfJrj8/QgUjXTxA1iTV4oR6A9H/nXrHq1
- 42DkMtyyNX6DP3FdZTOHYjt9R8DXcAzScCkJCdhHGU8Hl3W8HeRWLeK+N1JA8DaYPZrT
- vNlAh1ziZEa6FKVUi3wbLZmZdbDmYjvZgcDVVBmEpQZ7Fi67GR36o7jveilVs4ZY3TZi
- kiRd0YIljWa+7V6Fkwxr8Dsk1fPLqZtfQ70Q5ZBiBfD4BHVOk8HR0H2s+232/DiX/wRY
- +0uQ==
-X-Gm-Message-State: AC+VfDxMCGZarJl1ntt/n96vRSQfv0wnuzdkX4Psnp5/eGQZ8rAVWpKX
- Y242v6Q6E/U3WLpgqy76ReVCpskD0QOKi7EloQBRWSam9Dnr+5SDwJhJjoz28QBLLj32SpzKOZ4
- /C8EtYf+NgqD0hVq5eaZ2gBujRbYfRRPxFatERsDp9V7+pcBpV1GTSa606HmZNqRPrNdhJarj
-X-Received: by 2002:a05:620a:808c:b0:75b:23a0:d9e9 with SMTP id
- ef12-20020a05620a808c00b0075b23a0d9e9mr6489089qkb.63.1684878390147; 
+ bh=XS5zRFpqtwMZyGCSSC3V+iRwMmB4U9RK+jldD0pCdto=;
+ b=hpEvnjdlwjvJFRa5GDFMaMhg126Phpm6rdNUdID0FlI8/RyoO/3oVIbrYyUe1bRp3j
+ sKdytE8O22NbDTiNZGD3N6cGaq3mfMEqvnlkRq/CxnFOiJGvKbSzcIIKDYButYN1O7z/
+ PxBUaHjujMCt6/FE9B7G6UbSIqJV9o9dH+RvVemjEd9nX1YRwiIXNklOCKWl1OfJS9+a
+ GjMoYkCQsClUYK9+N9iFzDhHWApte991YKJ7+tNpwGKS/THE3Wr6VHOGsmO07X/M8azH
+ eV5KJjwAmOnfu+V/66quqLWA9QF3lhnyGoXTR8+EH/kR669SO8RflBD4KwM8zHdq1HMX
+ OhoA==
+X-Gm-Message-State: AC+VfDxvIwZZjsMCZLcnv17SiepFqxmb6YQtrdXTPdPSVImvnxNNfIaB
+ Nleiqz9cRe/zPVfhlrEoKQ5clKKPWUVJi4zlnLvuKfEXjtUzHXyes14EpOQGvGIUPA7nLkMYWxF
+ dFpw7O3jCmOnycJhhNWosoiGUsv6QtFtiB1iRVTi4MDcMLxgkHUF/o14CNgCN+w1Yay7m2HD6
+X-Received: by 2002:ad4:5be5:0:b0:623:640d:2b30 with SMTP id
+ k5-20020ad45be5000000b00623640d2b30mr24445789qvc.52.1684878392359; 
+ Tue, 23 May 2023 14:46:32 -0700 (PDT)
+X-Google-Smtp-Source: ACHHUZ4cwYvm649e9eAtJS/u8rF3lsAMJlyv85qgwK4gbmsVV04bpah5Q0JYrBX+idmVizTJ8rGT9Q==
+X-Received: by 2002:ad4:5be5:0:b0:623:640d:2b30 with SMTP id
+ k5-20020ad45be5000000b00623640d2b30mr24445704qvc.52.1684878390513; 
  Tue, 23 May 2023 14:46:30 -0700 (PDT)
-X-Google-Smtp-Source: ACHHUZ7Knx4CpUdTyTbeYcUrZQO+HgL9Ns9DBPju6zcDrSk8EIAjGBUH0L21wB7BVOKQklv/6kfggQ==
-X-Received: by 2002:a05:620a:808c:b0:75b:23a0:d9e9 with SMTP id
- ef12-20020a05620a808c00b0075b23a0d9e9mr6488966qkb.63.1684878387704; 
- Tue, 23 May 2023 14:46:27 -0700 (PDT)
 Received: from bf36-1.. (173-166-2-198-newengland.hfc.comcastbusiness.net.
  [173.166.2.198]) by smtp.gmail.com with ESMTPSA id
- el14-20020ad459ce000000b0062119a7a7a3sm3086780qvb.4.2023.05.23.14.46.26
+ el14-20020ad459ce000000b0062119a7a7a3sm3086780qvb.4.2023.05.23.14.46.29
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 23 May 2023 14:46:27 -0700 (PDT)
+ Tue, 23 May 2023 14:46:30 -0700 (PDT)
 From: "J. corwin Coburn" <corwin@redhat.com>
 To: dm-devel@redhat.com,
 	linux-block@vger.kernel.org
-Date: Tue, 23 May 2023 17:45:22 -0400
-Message-Id: <20230523214539.226387-23-corwin@redhat.com>
+Date: Tue, 23 May 2023 17:45:25 -0400
+Message-Id: <20230523214539.226387-26-corwin@redhat.com>
 In-Reply-To: <20230523214539.226387-1-corwin@redhat.com>
 References: <20230523214539.226387-1-corwin@redhat.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: [dm-devel] [PATCH v2 22/39] Add hash locks and hash zones.
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+Subject: [dm-devel] [PATCH v2 25/39] Add vdo_slab.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -110,2582 +110,2760 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: vdo-devel@redhat.com, "J. corwin Coburn" <corwin@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-In order to deduplicate concurrent writes of the same data (to different
-locations), data_vios which are writing the same data are grouped together
-in a "hash lock," named for and keyed by the hash of the data being
-written. Each hash lock is assigned to a hash zone based on a portion of
-its hash.
+Most of the vdo volume belongs to the slab depot. The depot contains a
+collection of slabs. The slabs can be up to 32GB, and are divided into
+three sections. Most of a slab consists of a linear sequence of 4K blocks.
+These blocks are used either to store data, or to hold portions of the
+block map (see subsequent patches). In addition to the data blocks, each
+slab has a set of reference counters, using 1 byte for each data block.
+Finally each slab has a journal. Reference updates are written to the slab
+journal, which is written out one block at a time as each block fills. A
+copy of the reference counters is kept in memory, and are written out a
+block at a time, in oldest-dirtied-order whenever there is a need to
+reclaim slab journal space. The journal is used both to ensure that the
+main recovery journal (see subsequent patches) can regularly free up space,
+and also to amortize the cost of updating individual reference blocks.
+
+This patch adds the slab structure as well as the slab journal and
+reference counters.
 
 Signed-off-by: J. corwin Coburn <corwin@redhat.com>
 ---
- drivers/md/dm-vdo/dedupe.c | 2451 ++++++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/dedupe.h |   93 ++
- 2 files changed, 2544 insertions(+)
- create mode 100644 drivers/md/dm-vdo/dedupe.c
- create mode 100644 drivers/md/dm-vdo/dedupe.h
+ drivers/md/dm-vdo/slab-depot.c | 2458 ++++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/slab-depot.h |  253 ++++
+ 2 files changed, 2711 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/slab-depot.c
+ create mode 100644 drivers/md/dm-vdo/slab-depot.h
 
-diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
+diff --git a/drivers/md/dm-vdo/slab-depot.c b/drivers/md/dm-vdo/slab-depot.c
 new file mode 100644
-index 00000000000..18c7509ef90
+index 00000000000..e98ad5a1a52
 --- /dev/null
-+++ b/drivers/md/dm-vdo/dedupe.c
-@@ -0,0 +1,2451 @@
++++ b/drivers/md/dm-vdo/slab-depot.c
+@@ -0,0 +1,2458 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright Red Hat
 + */
 +
-+/**
-+ * DOC:
-+ *
-+ * Hash Locks:
-+ *
-+ * A hash_lock controls and coordinates writing, index access, and dedupe among groups of data_vios
-+ * concurrently writing identical blocks, allowing them to deduplicate not only against advice but
-+ * also against each other. This saves on index queries and allows those data_vios to concurrently
-+ * deduplicate against a single block instead of being serialized through a PBN read lock. Only one
-+ * index query is needed for each hash_lock, instead of one for every data_vio.
-+ *
-+ * A hash_lock acts like a state machine perhaps more than as a lock. Other than the starting and
-+ * ending states INITIALIZING and BYPASSING, every state represents and is held for the duration of
-+ * an asynchronous operation. All state transitions are performed on the thread of the hash_zone
-+ * containing the lock. An asynchronous operation is almost always performed upon entering a state,
-+ * and the callback from that operation triggers exiting the state and entering a new state.
-+ *
-+ * In all states except DEDUPING, there is a single data_vio, called the lock agent, performing the
-+ * asynchronous operations on behalf of the lock. The agent will change during the lifetime of the
-+ * lock if the lock is shared by more than one data_vio. data_vios waiting to deduplicate are kept
-+ * on a wait queue. Viewed a different way, the agent holds the lock exclusively until the lock
-+ * enters the DEDUPING state, at which point it becomes a shared lock that all the waiters (and any
-+ * new data_vios that arrive) use to share a PBN lock. In state DEDUPING, there is no agent. When
-+ * the last data_vio in the lock calls back in DEDUPING, it becomes the agent and the lock becomes
-+ * exclusive again. New data_vios that arrive in the lock will also go on the wait queue.
-+ *
-+ * The existence of lock waiters is a key factor controlling which state the lock transitions to
-+ * next. When the lock is new or has waiters, it will always try to reach DEDUPING, and when it
-+ * doesn't, it will try to clean up and exit.
-+ *
-+ * Deduping requires holding a PBN lock on a block that is known to contain data identical to the
-+ * data_vios in the lock, so the lock will send the agent to the duplicate zone to acquire the PBN
-+ * lock (LOCKING), to the kernel I/O threads to read and verify the data (VERIFYING), or to write a
-+ * new copy of the data to a full data block or a slot in a compressed block (WRITING).
-+ *
-+ * Cleaning up consists of updating the index when the data location is different from the initial
-+ * index query (UPDATING, triggered by stale advice, compression, and rollover), releasing the PBN
-+ * lock on the duplicate block (UNLOCKING), and if the agent is the last data_vio referencing the
-+ * lock, releasing the hash_lock itself back to the hash zone (BYPASSING).
-+ *
-+ * The shortest sequence of states is for non-concurrent writes of new data:
-+ *   INITIALIZING -> QUERYING -> WRITING -> BYPASSING
-+ * This sequence is short because no PBN read lock or index update is needed.
-+ *
-+ * Non-concurrent, finding valid advice looks like this (endpoints elided):
-+ *   -> QUERYING -> LOCKING -> VERIFYING -> DEDUPING -> UNLOCKING ->
-+ * Or with stale advice (endpoints elided):
-+ *   -> QUERYING -> LOCKING -> VERIFYING -> UNLOCKING -> WRITING -> UPDATING ->
-+ *
-+ * When there are not enough available reference count increments available on a PBN for a data_vio
-+ * to deduplicate, a new lock is forked and the excess waiters roll over to the new lock (which
-+ * goes directly to WRITING). The new lock takes the place of the old lock in the lock map so new
-+ * data_vios will be directed to it. The two locks will proceed independently, but only the new
-+ * lock will have the right to update the index (unless it also forks).
-+ *
-+ * Since rollover happens in a lock instance, once a valid data location has been selected, it will
-+ * not change. QUERYING and WRITING are only performed once per lock lifetime. All other
-+ * non-endpoint states can be re-entered.
-+ *
-+ * The function names in this module follow a convention referencing the states and transitions in
-+ * the state machine. For example, for the LOCKING state, there are start_locking() and
-+ * finish_locking() functions.  start_locking() is invoked by the finish function of the state (or
-+ * states) that transition to LOCKING. It performs the actual lock state change and must be invoked
-+ * on the hash zone thread.  finish_locking() is called by (or continued via callback from) the
-+ * code actually obtaining the lock. It does any bookkeeping or decision-making required and
-+ * invokes the appropriate start function of the state being transitioned to after LOCKING.
-+ *
-+ * ----------------------------------------------------------------------
-+ *
-+ * Index Queries:
-+ *
-+ * A query to the UDS index is handled asynchronously by the index's threads. When the query is
-+ * complete, a callback supplied with the query will be called from one of the those threads. Under
-+ * heavy system load, the index may be slower to respond then is desirable for reasonable I/O
-+ * throughput. Since deduplication of writes is not necessary for correct operation of a VDO
-+ * device, it is acceptable to timeout out slow index queries and proceed to fulfill a write
-+ * request without deduplicating. However, because the uds_request struct itself is supplied by the
-+ * caller, we can not simply reuse a uds_request object which we have chosen to timeout. Hence,
-+ * each hash_zone maintains a pool of dedupe_contexts which each contain a uds_request along with a
-+ * reference to the data_vio on behalf of which they are performing a query.
-+ *
-+ * When a hash_lock needs to query the index, it attempts to acquire an unused dedupe_context from
-+ * its hash_zone's pool. If one is available, that context is prepared, associated with the
-+ * hash_lock's agent, added to the list of pending contexts, and then sent to the index. The
-+ * context's state will be transitioned from DEDUPE_CONTEXT_IDLE to DEDUPE_CONTEXT_PENDING. If all
-+ * goes well, the dedupe callback will be called by the index which will change the context's state
-+ * to DEDUPE_CONTEXT_COMPLETE, and the associated data_vio will be enqueued to run back in the hash
-+ * zone where the query results will be processed and the context will be put back in the idle
-+ * state and returned to the hash_zone's available list.
-+ *
-+ * The first time an index query is launched from a given hash_zone, a timer is started. When the
-+ * timer fires, the hash_zone's completion is enqueued to run in the hash_zone where the zone's
-+ * pending list will be searched for any contexts in the pending state which have been running for
-+ * too long. Those contexts are transitioned to the DEDUPE_CONTEXT_TIMED_OUT state and moved to the
-+ * zone's timed_out list where they won't be examined again if there is a subsequent time out). The
-+ * data_vios associated with timed out contexts are sent to continue processing their write
-+ * operation without deduplicating. The timer is also restarted.
-+ *
-+ * When the dedupe callback is run for a context which is in the timed out state, that context is
-+ * moved to the DEDUPE_CONTEXT_TIMED_OUT_COMPLETE state. No other action need be taken as the
-+ * associated data_vios have already been dispatched.
-+ *
-+ * If a hash_lock needs a dedupe context, and the available list is empty, the timed_out list will
-+ * be searched for any contexts which are timed out and complete. One of these will be used
-+ * immediately, and the rest will be returned to the available list and marked idle.
-+ */
-+
-+#include "dedupe.h"
++#include "slab-depot.h"
 +
 +#include <linux/atomic.h>
-+#include <linux/jiffies.h>
-+#include <linux/kernel.h>
-+#include <linux/kobject.h>
-+#include <linux/list.h>
-+#include <linux/ratelimit.h>
-+#include <linux/spinlock.h>
-+#include <linux/timer.h>
++#include <linux/bio.h>
++#include <linux/log2.h>
++#include <linux/min_heap.h>
++#include <linux/minmax.h>
 +
 +#include "logger.h"
 +#include "memory-alloc.h"
 +#include "numeric.h"
 +#include "permassert.h"
 +#include "string-utils.h"
-+#include "uds.h"
 +
 +#include "action-manager.h"
 +#include "admin-state.h"
 +#include "completion.h"
 +#include "constants.h"
 +#include "data-vio.h"
++#include "encodings.h"
 +#include "io-submitter.h"
-+#include "packer.h"
 +#include "physical-zone.h"
-+#include "pointer-map.h"
-+#include "slab-depot.h"
-+#include "statistics.h"
++#include "priority-table.h"
++#include "recovery-journal.h"
++#include "repair.h"
++#include "status-codes.h"
 +#include "types.h"
 +#include "vdo.h"
++#include "vio.h"
 +#include "wait-queue.h"
 +
-+enum hash_lock_state {
-+	/* State for locks that are not in use or are being initialized. */
-+	VDO_HASH_LOCK_INITIALIZING,
++static const u64 BYTES_PER_WORD = sizeof(u64);
++static const bool NORMAL_OPERATION = true;
 +
-+	/* This is the sequence of states typically used on the non-dedupe path. */
-+	VDO_HASH_LOCK_QUERYING,
-+	VDO_HASH_LOCK_WRITING,
-+	VDO_HASH_LOCK_UPDATING,
++/**
++ * get_lock() - Get the lock object for a slab journal block by sequence number.
++ * @journal: vdo_slab journal to retrieve from.
++ * @sequence_number: Sequence number of the block.
++ *
++ * Return: The lock object for the given sequence number.
++ */
++static inline struct journal_lock * __must_check
++get_lock(struct slab_journal *journal, sequence_number_t sequence_number)
++{
++	return &journal->locks[sequence_number % journal->size];
++}
 +
-+	/* The remaining states are typically used on the dedupe path in this order. */
-+	VDO_HASH_LOCK_LOCKING,
-+	VDO_HASH_LOCK_VERIFYING,
-+	VDO_HASH_LOCK_DEDUPING,
-+	VDO_HASH_LOCK_UNLOCKING,
++static bool is_slab_open(struct vdo_slab *slab)
++{
++	return (!vdo_is_state_quiescing(&slab->state) && !vdo_is_state_quiescent(&slab->state));
++}
++
++/**
++ * must_make_entries_to_flush() - Check whether there are entry waiters which should delay a flush.
++ * @journal: The journal to check.
++ *
++ * Return: true if there are no entry waiters, or if the slab is unrecovered.
++ */
++static inline bool __must_check must_make_entries_to_flush(struct slab_journal *journal)
++{
++	return ((journal->slab->status != VDO_SLAB_REBUILDING) &&
++		vdo_has_waiters(&journal->entry_waiters));
++}
++
++/**
++ * is_reaping() - Check whether a reap is currently in progress.
++ * @journal: The journal which may be reaping.
++ *
++ * Return: true if the journal is reaping.
++ */
++static inline bool __must_check is_reaping(struct slab_journal *journal)
++{
++	return (journal->head != journal->unreapable);
++}
++
++/**
++ * initialize_tail_block() - Initialize tail block as a new block.
++ * @journal: The journal whose tail block is being initialized.
++ */
++static void initialize_tail_block(struct slab_journal *journal)
++{
++	struct slab_journal_block_header *header = &journal->tail_header;
++
++	header->sequence_number = journal->tail;
++	header->entry_count = 0;
++	header->has_block_map_increments = false;
++}
++
++/**
++ * initialize_journal_state() - Set all journal fields appropriately to start journaling.
++ * @journal: The journal to be reset, based on its tail sequence number.
++ */
++static void initialize_journal_state(struct slab_journal *journal)
++{
++	journal->unreapable = journal->head;
++	journal->reap_lock = get_lock(journal, journal->unreapable);
++	journal->next_commit = journal->tail;
++	journal->summarized = journal->last_summarized = journal->tail;
++	initialize_tail_block(journal);
++}
++
++/**
++ * block_is_full() - Check whether a journal block is full.
++ * @journal: The slab journal for the block.
++ *
++ * Return: true if the tail block is full.
++ */
++static bool __must_check block_is_full(struct slab_journal *journal)
++{
++	journal_entry_count_t count = journal->tail_header.entry_count;
++
++	return (journal->tail_header.has_block_map_increments ?
++		(journal->full_entries_per_block == count) :
++		(journal->entries_per_block == count));
++}
++
++static void add_entries(struct slab_journal *journal);
++static void update_tail_block_location(struct slab_journal *journal);
++static void release_journal_locks(struct waiter *waiter, void *context);
++
++/**
++ * is_slab_journal_blank() - Check whether a slab's journal is blank.
++ *
++ * A slab journal is blank if it has never had any entries recorded in it.
++ *
++ * Return: true if the slab's journal has never been modified.
++ */
++static bool is_slab_journal_blank(const struct vdo_slab *slab)
++{
++	return ((slab->journal.tail == 1) && (slab->journal.tail_header.entry_count == 0));
++}
++
++/**
++ * mark_slab_journal_dirty() - Put a slab journal on the dirty ring of its allocator in the correct
++ *                             order.
++ * @journal: The journal to be marked dirty.
++ * @lock: The recovery journal lock held by the slab journal.
++ */
++static void mark_slab_journal_dirty(struct slab_journal *journal, sequence_number_t lock)
++{
++	struct slab_journal *dirty_journal;
++	struct list_head *dirty_list = &journal->slab->allocator->dirty_slab_journals;
++
++	ASSERT_LOG_ONLY(journal->recovery_lock == 0, "slab journal was clean");
++
++	journal->recovery_lock = lock;
++	list_for_each_entry_reverse(dirty_journal, dirty_list, dirty_entry) {
++		if (dirty_journal->recovery_lock <= journal->recovery_lock)
++			break;
++	}
++
++	list_move_tail(&journal->dirty_entry, dirty_journal->dirty_entry.next);
++}
++
++static void mark_slab_journal_clean(struct slab_journal *journal)
++{
++	journal->recovery_lock = 0;
++	list_del_init(&journal->dirty_entry);
++}
++
++static void check_if_slab_drained(struct vdo_slab *slab)
++{
++	bool read_only;
++	struct slab_journal *journal = &slab->journal;
++	const struct admin_state_code *code;
++
++	if (!vdo_is_state_draining(&slab->state) ||
++	    must_make_entries_to_flush(journal) ||
++	    is_reaping(journal) ||
++	    journal->waiting_to_commit ||
++	    !list_empty(&journal->uncommitted_blocks) ||
++	    journal->updating_slab_summary ||
++	    (slab->active_count > 0))
++		return;
++
++	/* When not suspending or recovering, the slab must be clean. */
++	code = vdo_get_admin_state_code(&slab->state);
++	read_only = vdo_is_read_only(slab->allocator->depot->vdo);
++	if (!read_only &&
++	    vdo_has_waiters(&slab->dirty_blocks) &&
++	    (code != VDO_ADMIN_STATE_SUSPENDING) &&
++	    (code != VDO_ADMIN_STATE_RECOVERING))
++		return;
++
++	vdo_finish_draining_with_result(&slab->state, (read_only ? VDO_READ_ONLY : VDO_SUCCESS));
++}
++
++/**
++ * finish_reaping() - Actually advance the head of the journal now that any necessary flushes are
++ *                    complete.
++ * @journal: The journal to be reaped.
++ */
++static void finish_reaping(struct slab_journal *journal)
++{
++	journal->head = journal->unreapable;
++	add_entries(journal);
++	check_if_slab_drained(journal->slab);
++}
++
++static void reap_slab_journal(struct slab_journal *journal);
++
++/**
++ * complete_reaping() - Finish reaping now that we have flushed the lower layer and then try
++ *                      reaping again in case we deferred reaping due to an outstanding vio.
++ * @completion: The flush vio.
++ */
++static void complete_reaping(struct vdo_completion *completion)
++{
++	struct slab_journal *journal = completion->parent;
++
++	return_vio_to_pool(journal->slab->allocator->vio_pool,
++			   vio_as_pooled_vio(as_vio(UDS_FORGET(completion))));
++	finish_reaping(journal);
++	reap_slab_journal(journal);
++}
++
++/**
++ * handle_flush_error() - Handle an error flushing the lower layer.
++ * @completion: The flush vio.
++ */
++static void handle_flush_error(struct vdo_completion *completion)
++{
++	vio_record_metadata_io_error(as_vio(completion));
++	vdo_enter_read_only_mode(completion->vdo, completion->result);
++	complete_reaping(completion);
++}
++
++static void flush_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct slab_journal *journal = vio->completion.parent;
++
++	continue_vio_after_io(vio,
++			      complete_reaping,
++			      journal->slab->allocator->thread_id);
++}
++
++/**
++ * flush_for_reaping() - A waiter callback for getting a vio with which to flush the lower layer
++ *                       prior to reaping.
++ * @waiter: The journal as a flush waiter.
++ * @context: The newly acquired flush vio.
++ */
++static void flush_for_reaping(struct waiter *waiter, void *context)
++{
++	struct slab_journal *journal = container_of(waiter, struct slab_journal, flush_waiter);
++	struct pooled_vio *pooled = context;
++	struct vio *vio = &pooled->vio;
++
++	vio->completion.parent = journal;
++	submit_flush_vio(vio, flush_endio, handle_flush_error);
++}
++
++/**
++ * reap_slab_journal() - Conduct a reap on a slab journal to reclaim unreferenced blocks.
++ * @journal: The slab journal.
++ */
++static void reap_slab_journal(struct slab_journal *journal)
++{
++	bool reaped = false;
++
++	if (is_reaping(journal))
++		/* We already have a reap in progress so wait for it to finish. */
++		return;
++
++	if ((journal->slab->status != VDO_SLAB_REBUILT) ||
++	    !vdo_is_state_normal(&journal->slab->state) ||
++	    vdo_is_read_only(journal->slab->allocator->depot->vdo))
++		/*
++		 * We must not reap in the first two cases, and there's no point in read-only mode.
++		 */
++		return;
 +
 +	/*
-+	 * Terminal state for locks returning to the pool. Must be last both because it's the final
-+	 * state, and also because it's used to count the states.
++	 * Start reclaiming blocks only when the journal head has no references. Then stop when a
++	 * block is referenced or reap reaches the most recently written block, referenced by the
++	 * slab summary, which has the sequence number just before the tail.
 +	 */
-+	VDO_HASH_LOCK_BYPASSING,
-+};
++	while ((journal->unreapable < journal->tail) && (journal->reap_lock->count == 0)) {
++		reaped = true;
++		journal->unreapable++;
++		journal->reap_lock++;
++		if (journal->reap_lock == &journal->locks[journal->size])
++			journal->reap_lock = &journal->locks[0];
++	}
 +
-+static const char * const LOCK_STATE_NAMES[] = {
-+	[VDO_HASH_LOCK_BYPASSING] = "BYPASSING",
-+	[VDO_HASH_LOCK_DEDUPING] = "DEDUPING",
-+	[VDO_HASH_LOCK_INITIALIZING] = "INITIALIZING",
-+	[VDO_HASH_LOCK_LOCKING] = "LOCKING",
-+	[VDO_HASH_LOCK_QUERYING] = "QUERYING",
-+	[VDO_HASH_LOCK_UNLOCKING] = "UNLOCKING",
-+	[VDO_HASH_LOCK_UPDATING] = "UPDATING",
-+	[VDO_HASH_LOCK_VERIFYING] = "VERIFYING",
-+	[VDO_HASH_LOCK_WRITING] = "WRITING",
-+};
-+
-+struct hash_lock {
-+	/* The block hash covered by this lock */
-+	struct uds_record_name hash;
-+
-+	/* When the lock is unused, this list entry allows the lock to be pooled */
-+	struct list_head pool_node;
++	if (!reaped)
++		return;
 +
 +	/*
-+	 * A list containing the data VIOs sharing this lock, all having the same record name and
-+	 * data block contents, linked by their hash_lock_node fields.
++	 * It is never safe to reap a slab journal block without first issuing a flush, regardless
++	 * of whether a user flush has been received or not. In the absence of the flush, the
++	 * reference block write which released the locks allowing the slab journal to reap may not
++	 * be persisted. Although slab summary writes will eventually issue flushes, multiple slab
++	 * journal block writes can be issued while previous slab summary updates have not yet been
++	 * made. Even though those slab journal block writes will be ignored if the slab summary
++	 * update is not persisted, they may still overwrite the to-be-reaped slab journal block
++	 * resulting in a loss of reference count updates (VDO-2912).
 +	 */
-+	struct list_head duplicate_ring;
-+
-+	/* The number of data_vios sharing this lock instance */
-+	data_vio_count_t reference_count;
-+
-+	/* The maximum value of reference_count in the lifetime of this lock */
-+	data_vio_count_t max_references;
-+
-+	/* The current state of this lock */
-+	enum hash_lock_state state;
-+
-+	/* True if the UDS index should be updated with new advice */
-+	bool update_advice;
-+
-+	/* True if the advice has been verified to be a true duplicate */
-+	bool verified;
-+
-+	/* True if the lock has already accounted for an initial verification */
-+	bool verify_counted;
-+
-+	/* True if this lock is registered in the lock map (cleared on rollover) */
-+	bool registered;
-+
-+	/*
-+	 * If verified is false, this is the location of a possible duplicate. If verified is true,
-+	 * it is the verified location of a true duplicate.
-+	 */
-+	struct zoned_pbn duplicate;
-+
-+	/* The PBN lock on the block containing the duplicate data */
-+	struct pbn_lock *duplicate_lock;
-+
-+	/* The data_vio designated to act on behalf of the lock */
-+	struct data_vio *agent;
-+
-+	/*
-+	 * Other data_vios with data identical to the agent who are currently waiting for the agent
-+	 * to get the information they all need to deduplicate--either against each other, or
-+	 * against an existing duplicate on disk.
-+	 */
-+	struct wait_queue waiters;
-+};
-+
-+enum {
-+	LOCK_POOL_CAPACITY = MAXIMUM_VDO_USER_VIOS,
-+};
-+
-+struct hash_zones {
-+	struct action_manager *manager;
-+	struct kobject dedupe_directory;
-+	struct uds_parameters parameters;
-+	struct uds_index_session *index_session;
-+	struct ratelimit_state ratelimiter;
-+	atomic64_t timeouts;
-+	atomic64_t dedupe_context_busy;
-+
-+	/* This spinlock protects the state fields and the starting of dedupe requests. */
-+	spinlock_t lock;
-+
-+	/* The fields in the next block are all protected by the lock */
-+	struct vdo_completion completion;
-+	enum index_state index_state;
-+	enum index_state index_target;
-+	struct admin_state state;
-+	bool changing;
-+	bool create_flag;
-+	bool dedupe_flag;
-+	bool error_flag;
-+	u64 reported_timeouts;
-+
-+	/* The number of zones */
-+	zone_count_t zone_count;
-+	/* The hash zones themselves */
-+	struct hash_zone zones[];
-+};
-+
-+static inline struct hash_zone *as_hash_zone(struct vdo_completion *completion)
-+{
-+	vdo_assert_completion_type(completion, VDO_HASH_ZONE_COMPLETION);
-+	return container_of(completion, struct hash_zone, completion);
-+}
-+
-+static inline struct hash_zones *as_hash_zones(struct vdo_completion *completion)
-+{
-+	vdo_assert_completion_type(completion, VDO_HASH_ZONES_COMPLETION);
-+	return container_of(completion, struct hash_zones, completion);
-+}
-+
-+static inline void assert_in_hash_zone(struct hash_zone *zone, const char *name)
-+{
-+	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == zone->thread_id),
-+			"%s called on hash zone thread",
-+			name);
++	journal->flush_waiter.callback = flush_for_reaping;
++	acquire_vio_from_pool(journal->slab->allocator->vio_pool, &journal->flush_waiter);
 +}
 +
 +/**
-+ * return_hash_lock_to_pool() - (Re)initialize a hash lock and return it to its pool.
-+ * @zone: The zone from which the lock was borrowed.
-+ * @lock: The lock that is no longer in use.
-+ */
-+static void return_hash_lock_to_pool(struct hash_zone *zone, struct hash_lock *lock)
-+{
-+	memset(lock, 0, sizeof(*lock));
-+	INIT_LIST_HEAD(&lock->pool_node);
-+	INIT_LIST_HEAD(&lock->duplicate_ring);
-+	vdo_initialize_wait_queue(&lock->waiters);
-+	list_add_tail(&lock->pool_node, &zone->lock_pool);
-+}
-+
-+/**
-+ * vdo_get_duplicate_lock() - Get the PBN lock on the duplicate data location for a data_vio from
-+ *                            the hash_lock the data_vio holds (if there is one).
-+ * @data_vio: The data_vio to query.
++ * adjust_slab_journal_block_reference() - Adjust the reference count for a slab journal block.
++ * @journal: The slab journal.
++ * @sequence_number: The journal sequence number of the referenced block.
++ * @adjustment: Amount to adjust the reference counter.
 + *
-+ * Return: The PBN lock on the data_vio's duplicate location.
++ * Note that when the adjustment is negative, the slab journal will be reaped.
 + */
-+struct pbn_lock *vdo_get_duplicate_lock(struct data_vio *data_vio)
++static void
++adjust_slab_journal_block_reference(struct slab_journal *journal,
++				    sequence_number_t sequence_number,
++				    int adjustment)
 +{
-+	if (data_vio->hash_lock == NULL)
-+		return NULL;
-+	return data_vio->hash_lock->duplicate_lock;
++	struct journal_lock *lock;
++
++	if (sequence_number == 0)
++		return;
++
++	if (journal->slab->status == VDO_SLAB_REPLAYING)
++		/* Locks should not be used during offline replay. */
++		return;
++
++	ASSERT_LOG_ONLY((adjustment != 0), "adjustment must be non-zero");
++	lock = get_lock(journal, sequence_number);
++	if (adjustment < 0)
++		ASSERT_LOG_ONLY((-adjustment <= lock->count),
++				"adjustment %d of lock count %u for slab journal block %llu must not underflow",
++				adjustment,
++				lock->count,
++				(unsigned long long) sequence_number);
++
++	lock->count += adjustment;
++	if (lock->count == 0)
++		reap_slab_journal(journal);
 +}
 +
 +/**
-+ * get_hash_lock_state_name() - Get the string representation of a hash lock state.
-+ * @state: The hash lock state.
++ * release_journal_locks() - Callback invoked after a slab summary update completes.
++ * @waiter: The slab summary waiter that has just been notified.
++ * @context: The result code of the update.
 + *
-+ * Return: The short string representing the state
-+ */
-+static const char *get_hash_lock_state_name(enum hash_lock_state state)
-+{
-+	/* Catch if a state has been added without updating the name array. */
-+	STATIC_ASSERT((VDO_HASH_LOCK_BYPASSING + 1) == ARRAY_SIZE(LOCK_STATE_NAMES));
-+	return (state < ARRAY_SIZE(LOCK_STATE_NAMES)) ? LOCK_STATE_NAMES[state] : "INVALID";
-+}
-+
-+/**
-+ * assert_hash_lock_agent() - Assert that a data_vio is the agent of its hash lock, and that this
-+ *                            is being called in the hash zone.
-+ * @data_vio: The data_vio expected to be the lock agent.
-+ * @where: A string describing the function making the assertion.
-+ */
-+static void assert_hash_lock_agent(struct data_vio *data_vio, const char *where)
-+{
-+	/* Not safe to access the agent field except from the hash zone. */
-+	assert_data_vio_in_hash_zone(data_vio);
-+	ASSERT_LOG_ONLY(data_vio == data_vio->hash_lock->agent,
-+			"%s must be for the hash lock agent", where);
-+}
-+
-+/**
-+ * set_duplicate_lock() - Set the duplicate lock held by a hash lock. May only be called in the
-+ *                        physical zone of the PBN lock.
-+ * @hash_lock: The hash lock to update.
-+ * @pbn_lock: The PBN read lock to use as the duplicate lock.
-+ */
-+static void set_duplicate_lock(struct hash_lock *hash_lock, struct pbn_lock *pbn_lock)
-+{
-+	ASSERT_LOG_ONLY((hash_lock->duplicate_lock == NULL),
-+			"hash lock must not already hold a duplicate lock");
-+
-+	pbn_lock->holder_count += 1;
-+	hash_lock->duplicate_lock = pbn_lock;
-+}
-+
-+/**
-+ * dequeue_lock_waiter() - Remove the first data_vio from the lock's wait queue and return it.
-+ * @lock: The lock containing the wait queue.
++ * Registered in the constructor on behalf of update_tail_block_location().
 + *
-+ * Return: The first (oldest) waiter in the queue, or NULL if the queue is empty.
++ * Implements waiter_callback.
 + */
-+static inline struct data_vio *dequeue_lock_waiter(struct hash_lock *lock)
++static void release_journal_locks(struct waiter *waiter, void *context)
 +{
-+	return waiter_as_data_vio(vdo_dequeue_next_waiter(&lock->waiters));
-+}
++	sequence_number_t first, i;
++	struct slab_journal *journal =
++		container_of(waiter, struct slab_journal, slab_summary_waiter);
++	int result = *((int *)context);
 +
-+/**
-+ * set_hash_lock() - Set, change, or clear the hash lock a data_vio is using.
-+ * @data_vio: The data_vio to update.
-+ * @new_lock: The hash lock the data_vio is joining.
-+ *
-+ * Updates the hash lock (or locks) to reflect the change in membership.
-+ */
-+static void set_hash_lock(struct data_vio *data_vio, struct hash_lock *new_lock)
-+{
-+	struct hash_lock *old_lock = data_vio->hash_lock;
-+
-+	if (old_lock != NULL) {
-+		ASSERT_LOG_ONLY(data_vio->hash_zone != NULL,
-+				"must have a hash zone when holding a hash lock");
-+		ASSERT_LOG_ONLY(!list_empty(&data_vio->hash_lock_entry),
-+				"must be on a hash lock ring when holding a hash lock");
-+		ASSERT_LOG_ONLY(old_lock->reference_count > 0,
-+				"hash lock reference must be counted");
-+
-+		if ((old_lock->state != VDO_HASH_LOCK_BYPASSING) &&
-+		    (old_lock->state != VDO_HASH_LOCK_UNLOCKING))
++	if (result != VDO_SUCCESS) {
++		if (result != VDO_READ_ONLY)
 +			/*
-+			 * If the reference count goes to zero in a non-terminal state, we're most
-+			 * likely leaking this lock.
++			 * Don't bother logging what might be lots of errors if we are already in
++			 * read-only mode.
 +			 */
-+			ASSERT_LOG_ONLY(old_lock->reference_count > 1,
-+					"hash locks should only become unreferenced in a terminal state, not state %s",
-+					get_hash_lock_state_name(old_lock->state));
++			uds_log_error_strerror(result,
++					       "failed slab summary update %llu",
++					       (unsigned long long) journal->summarized);
 +
-+		list_del_init(&data_vio->hash_lock_entry);
-+		old_lock->reference_count -= 1;
-+
-+		data_vio->hash_lock = NULL;
++		journal->updating_slab_summary = false;
++		vdo_enter_read_only_mode(journal->slab->allocator->depot->vdo, result);
++		check_if_slab_drained(journal->slab);
++		return;
 +	}
 +
-+	if (new_lock != NULL) {
++	if (journal->partial_write_in_progress && (journal->summarized == journal->tail)) {
++		journal->partial_write_in_progress = false;
++		add_entries(journal);
++	}
++
++	first = journal->last_summarized;
++	journal->last_summarized = journal->summarized;
++	for (i = journal->summarized - 1; i >= first; i--) {
 +		/*
-+		 * Keep all data_vios sharing the lock on a ring since they can complete in any
-+		 * order and we'll always need a pointer to one to compare data.
++		 * Release the lock the summarized block held on the recovery journal. (During
++		 * replay, recovery_start will always be 0.)
 +		 */
-+		list_move_tail(&data_vio->hash_lock_entry, &new_lock->duplicate_ring);
-+		new_lock->reference_count += 1;
-+		if (new_lock->max_references < new_lock->reference_count)
-+			new_lock->max_references = new_lock->reference_count;
++		if (journal->recovery_journal != NULL) {
++			zone_count_t zone_number = journal->slab->allocator->zone_number;
 +
-+		data_vio->hash_lock = new_lock;
++			vdo_release_recovery_journal_block_reference(journal->recovery_journal,
++								     get_lock(journal, i)->recovery_start,
++								     VDO_ZONE_TYPE_PHYSICAL,
++								     zone_number);
++		}
++
++		/*
++		 * Release our own lock against reaping for blocks that are committed. (This
++		 * function will not change locks during replay.)
++		 */
++		adjust_slab_journal_block_reference(journal, i, -1);
 +	}
-+}
 +
-+/* There are loops in the state diagram, so some forward decl's are needed. */
-+static void start_deduping(struct hash_lock *lock, struct data_vio *agent, bool agent_is_done);
-+static void start_locking(struct hash_lock *lock, struct data_vio *agent);
-+static void start_writing(struct hash_lock *lock, struct data_vio *agent);
-+static void unlock_duplicate_pbn(struct vdo_completion *completion);
-+static void transfer_allocation_lock(struct data_vio *data_vio);
++	journal->updating_slab_summary = false;
 +
-+/**
-+ * exit_hash_lock() - Bottleneck for data_vios that have written or deduplicated and that are no
-+ *                    longer needed to be an agent for the hash lock.
-+ * @data_vio: The data_vio to complete and send to be cleaned up.
-+ */
-+static void exit_hash_lock(struct data_vio *data_vio)
-+{
-+	/* Release the hash lock now, saving a thread transition in cleanup. */
-+	vdo_release_hash_lock(data_vio);
++	reap_slab_journal(journal);
 +
-+	/* Complete the data_vio and start the clean-up path to release any locks it still holds. */
-+	data_vio->vio.completion.callback = complete_data_vio;
-+
-+	continue_data_vio(data_vio);
++	/* Check if the slab summary needs to be updated again. */
++	update_tail_block_location(journal);
 +}
 +
 +/**
-+ * set_duplicate_location() - Set the location of the duplicate block for data_vio, updating the
-+ *                            is_duplicate and duplicate fields from a zoned_pbn.
-+ * @data_vio: The data_vio to modify.
-+ * @source: The location of the duplicate.
++ * update_tail_block_location() - Update the tail block location in the slab summary, if necessary.
++ * @journal: The slab journal that is updating its tail block location.
 + */
-+static void set_duplicate_location(struct data_vio *data_vio, const struct zoned_pbn source)
++static void update_tail_block_location(struct slab_journal *journal)
 +{
-+	data_vio->is_duplicate = (source.pbn != VDO_ZERO_BLOCK);
-+	data_vio->duplicate = source;
-+}
++	block_count_t free_block_count;
++	struct vdo_slab *slab = journal->slab;
 +
-+/**
-+ * retire_lock_agent() - Retire the active lock agent, replacing it with the first lock waiter, and
-+ *                       make the retired agent exit the hash lock.
-+ * @lock: The hash lock to update.
-+ *
-+ * Return: The new lock agent (which will be NULL if there was no waiter)
-+ */
-+static struct data_vio *retire_lock_agent(struct hash_lock *lock)
-+{
-+	struct data_vio *old_agent = lock->agent;
-+	struct data_vio *new_agent = dequeue_lock_waiter(lock);
++	if (journal->updating_slab_summary ||
++	    vdo_is_read_only(journal->slab->allocator->depot->vdo) ||
++	    (journal->last_summarized >= journal->next_commit)) {
++		check_if_slab_drained(slab);
++		return;
++	}
 +
-+	lock->agent = new_agent;
-+	exit_hash_lock(old_agent);
-+	if (new_agent != NULL)
-+		set_duplicate_location(new_agent, lock->duplicate);
-+	return new_agent;
-+}
++	if (slab->status != VDO_SLAB_REBUILT) {
++		u8 hint = slab->allocator->summary_entries[slab->slab_number].fullness_hint;
 +
-+/**
-+ * wait_on_hash_lock() - Add a data_vio to the lock's queue of waiters.
-+ * @lock: The hash lock on which to wait.
-+ * @data_vio: The data_vio to add to the queue.
-+ */
-+static void wait_on_hash_lock(struct hash_lock *lock, struct data_vio *data_vio)
-+{
-+	vdo_enqueue_waiter(&lock->waiters, &data_vio->waiter);
++		free_block_count = ((block_count_t) hint) << slab->allocator->depot->hint_shift;
++	} else {
++		free_block_count = slab->free_blocks;
++	}
++
++	journal->summarized = journal->next_commit;
++	journal->updating_slab_summary = true;
 +
 +	/*
-+	 * Make sure the agent doesn't block indefinitely in the packer since it now has at least
-+	 * one other data_vio waiting on it.
++	 * Update slab summary as dirty.
++	 * vdo_slab journal can only reap past sequence number 1 when all the ref counts for this
++	 * slab have been written to the layer. Therefore, indicate that the ref counts must be
++	 * loaded when the journal head has reaped past sequence number 1.
 +	 */
-+	if ((lock->state != VDO_HASH_LOCK_WRITING) || !cancel_data_vio_compression(lock->agent))
++	update_slab_summary_entry(slab,
++				  &journal->slab_summary_waiter,
++				  journal->summarized % journal->size,
++				  (journal->head > 1),
++				  false,
++				  free_block_count);
++}
++
++/**
++ * reopen_slab_journal() - Reopen a slab's journal by emptying it and then adding pending entries.
++ */
++static void reopen_slab_journal(struct vdo_slab *slab)
++{
++	struct slab_journal *journal = &slab->journal;
++	sequence_number_t block;
++
++	ASSERT_LOG_ONLY(journal->tail_header.entry_count == 0,
++			"vdo_slab journal's active block empty before reopening");
++	journal->head = journal->tail;
++	initialize_journal_state(journal);
++
++	/* Ensure no locks are spuriously held on an empty journal. */
++	for (block = 1; block <= journal->size; block++)
++		ASSERT_LOG_ONLY((get_lock(journal, block)->count == 0),
++				"Scrubbed journal's block %llu is not locked",
++				(unsigned long long) block);
++
++	add_entries(journal);
++}
++
++static sequence_number_t get_committing_sequence_number(const struct pooled_vio *vio)
++{
++	const struct packed_slab_journal_block *block =
++		(const struct packed_slab_journal_block *) vio->vio.data;
++
++	return __le64_to_cpu(block->header.sequence_number);
++}
++
++/**
++ * complete_write() - Handle post-commit processing.
++ * @completion: The write vio as a completion.
++ *
++ * This is the callback registered by write_slab_journal_block().
++ */
++static void complete_write(struct vdo_completion *completion)
++{
++	int result = completion->result;
++	struct pooled_vio *pooled = vio_as_pooled_vio(as_vio(completion));
++	struct slab_journal *journal = completion->parent;
++	sequence_number_t committed = get_committing_sequence_number(pooled);
++
++	list_del_init(&pooled->list_entry);
++	return_vio_to_pool(journal->slab->allocator->vio_pool, UDS_FORGET(pooled));
++
++	if (result != VDO_SUCCESS) {
++		vio_record_metadata_io_error(as_vio(completion));
++		uds_log_error_strerror(result,
++				       "cannot write slab journal block %llu",
++				       (unsigned long long) committed);
++		vdo_enter_read_only_mode(journal->slab->allocator->depot->vdo, result);
++		check_if_slab_drained(journal->slab);
++		return;
++	}
++
++	WRITE_ONCE(journal->events->blocks_written, journal->events->blocks_written + 1);
++
++	if (list_empty(&journal->uncommitted_blocks)) {
++		/* If no blocks are outstanding, then the commit point is at the tail. */
++		journal->next_commit = journal->tail;
++	} else {
++		/* The commit point is always the beginning of the oldest incomplete block. */
++		pooled = container_of(journal->uncommitted_blocks.next,
++				      struct pooled_vio,
++				      list_entry);
++		journal->next_commit = get_committing_sequence_number(pooled);
++	}
++
++	update_tail_block_location(journal);
++}
++
++static void write_slab_journal_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct slab_journal *journal = vio->completion.parent;
++
++	continue_vio_after_io(vio, complete_write, journal->slab->allocator->thread_id);
++}
++
++/**
++ * write_slab_journal_block() - Write a slab journal block.
++ * @waiter: The vio pool waiter which was just notified.
++ * @context: The vio pool entry for the write.
++ *
++ * Callback from acquire_vio_from_pool() registered in commit_tail().
++ */
++static void write_slab_journal_block(struct waiter *waiter, void *context)
++{
++	struct pooled_vio *pooled = context;
++	struct vio *vio = &pooled->vio;
++	struct slab_journal *journal = container_of(waiter, struct slab_journal, resource_waiter);
++	struct slab_journal_block_header *header = &journal->tail_header;
++	int unused_entries = journal->entries_per_block - header->entry_count;
++	physical_block_number_t block_number;
++	const struct admin_state_code *operation;
++
++	header->head = journal->head;
++	list_add_tail(&pooled->list_entry, &journal->uncommitted_blocks);
++	vdo_pack_slab_journal_block_header(header, &journal->block->header);
++
++	/* Copy the tail block into the vio. */
++	memcpy(pooled->vio.data, journal->block, VDO_BLOCK_SIZE);
++
++	ASSERT_LOG_ONLY(unused_entries >= 0, "vdo_slab journal block is not overfull");
++	if (unused_entries > 0) {
++		/*
++		 * Release the per-entry locks for any unused entries in the block we are about to
++		 * write.
++		 */
++		adjust_slab_journal_block_reference(journal,
++						    header->sequence_number,
++						    -unused_entries);
++		journal->partial_write_in_progress = !block_is_full(journal);
++	}
++
++	block_number = journal->slab->journal_origin + (header->sequence_number % journal->size);
++	vio->completion.parent = journal;
++
++	/*
++	 * This block won't be read in recovery until the slab summary is updated to refer to it.
++	 * The slab summary update does a flush which is sufficient to protect us from VDO-2331.
++	 */
++	submit_metadata_vio(UDS_FORGET(vio),
++			    block_number,
++			    write_slab_journal_endio,
++			    complete_write,
++			    REQ_OP_WRITE);
++
++	/* Since the write is submitted, the tail block structure can be reused. */
++	journal->tail++;
++	initialize_tail_block(journal);
++	journal->waiting_to_commit = false;
++
++	operation = vdo_get_admin_state_code(&journal->slab->state);
++	if (operation == VDO_ADMIN_STATE_WAITING_FOR_RECOVERY) {
++		vdo_finish_operation(&journal->slab->state,
++				     (vdo_is_read_only(journal->slab->allocator->depot->vdo) ?
++				      VDO_READ_ONLY :
++				      VDO_SUCCESS));
++		return;
++	}
++
++	add_entries(journal);
++}
++
++/**
++ * commit_tail() - Commit the tail block of the slab journal.
++ * @journal: The journal whose tail block should be committed.
++ */
++static void commit_tail(struct slab_journal *journal)
++{
++	if ((journal->tail_header.entry_count == 0) && must_make_entries_to_flush(journal))
++		/*
++		 * There are no entries at the moment, but there are some waiters, so defer
++		 * initiating the flush until those entries are ready to write.
++		 */
++		return;
++
++	if (vdo_is_read_only(journal->slab->allocator->depot->vdo) ||
++	    journal->waiting_to_commit ||
++	    (journal->tail_header.entry_count == 0))
++		/*
++		 * There is nothing to do since the tail block is empty, or writing, or the journal
++		 * is in read-only mode.
++		 */
 +		return;
 +
 +	/*
-+	 * Even though we're waiting, we also have to send ourselves as a one-way message to the
-+	 * packer to ensure the agent continues executing. This is safe because
-+	 * cancel_vio_compression() guarantees the agent won't continue executing until this
-+	 * message arrives in the packer, and because the wait queue link isn't used for sending
-+	 * the message.
++	 * Since we are about to commit the tail block, this journal no longer needs to be on the
++	 * ring of journals which the recovery journal might ask to commit.
 +	 */
-+	data_vio->compression.lock_holder = lock->agent;
-+	launch_data_vio_packer_callback(data_vio, vdo_remove_lock_holder_from_packer);
++	mark_slab_journal_clean(journal);
++
++	journal->waiting_to_commit = true;
++
++	journal->resource_waiter.callback = write_slab_journal_block;
++	acquire_vio_from_pool(journal->slab->allocator->vio_pool, &journal->resource_waiter);
 +}
 +
 +/**
-+ * abort_waiter() - waiter_callback function that shunts waiters to write their blocks without
-+ *                  optimization.
-+ * @waiter: The data_vio's waiter link.
-+ * @context: Not used.
-+ */
-+static void abort_waiter(struct waiter *waiter, void *context __always_unused)
-+{
-+	write_data_vio(waiter_as_data_vio(waiter));
-+}
-+
-+/**
-+ * start_bypassing() - Stop using the hash lock.
-+ * @lock: The hash lock.
-+ * @agent: The data_vio acting as the agent for the lock.
++ * encode_slab_journal_entry() - Encode a slab journal entry.
++ * @tail_header: The unpacked header for the block.
++ * @payload: The journal block payload to hold the entry.
++ * @sbn: The slab block number of the entry to encode.
++ * @operation: The type of the entry.
++ * @increment: True if this is an increment.
 + *
-+ * Stops using the hash lock. This is the final transition for hash locks which did not get an
-+ * error.
++ * Exposed for unit tests.
 + */
-+static void start_bypassing(struct hash_lock *lock, struct data_vio *agent)
++static void
++encode_slab_journal_entry(struct slab_journal_block_header *tail_header,
++			  slab_journal_payload *payload,
++			  slab_block_number sbn,
++			  enum journal_operation operation,
++			  bool increment)
 +{
-+	lock->state = VDO_HASH_LOCK_BYPASSING;
-+	exit_hash_lock(agent);
-+}
++	journal_entry_count_t entry_number = tail_header->entry_count++;
 +
-+void vdo_clean_failed_hash_lock(struct data_vio *data_vio)
-+{
-+	struct hash_lock *lock = data_vio->hash_lock;
++	if (operation == VDO_JOURNAL_BLOCK_MAP_REMAPPING) {
++		if (!tail_header->has_block_map_increments) {
++			memset(payload->full_entries.entry_types,
++			       0,
++			       VDO_SLAB_JOURNAL_ENTRY_TYPES_SIZE);
++			tail_header->has_block_map_increments = true;
++		}
 +
-+	if (lock->state == VDO_HASH_LOCK_BYPASSING) {
-+		exit_hash_lock(data_vio);
-+		return;
++		payload->full_entries.entry_types[entry_number / 8] |=
++			((u8)1 << (entry_number % 8));
 +	}
 +
-+	if (lock->agent == NULL) {
-+		lock->agent = data_vio;
-+	} else if (data_vio != lock->agent) {
-+		exit_hash_lock(data_vio);
-+		return;
-+	}
-+
-+	lock->state = VDO_HASH_LOCK_BYPASSING;
-+
-+	/* Ensure we don't attempt to update advice when cleaning up. */
-+	lock->update_advice = false;
-+
-+	vdo_notify_all_waiters(&lock->waiters, abort_waiter, NULL);
-+
-+	if (lock->duplicate_lock != NULL) {
-+		/* The agent must reference the duplicate zone to launch it. */
-+		data_vio->duplicate = lock->duplicate;
-+		launch_data_vio_duplicate_zone_callback(data_vio, unlock_duplicate_pbn);
-+		return;
-+	}
-+
-+	lock->agent = NULL;
-+	data_vio->is_duplicate = false;
-+	exit_hash_lock(data_vio);
++	vdo_pack_slab_journal_entry(&payload->entries[entry_number], sbn, increment);
 +}
 +
 +/**
-+ * finish_unlocking() - Handle the result of the agent for the lock releasing a read lock on
-+ *                      duplicate candidate.
-+ * @completion: The completion of the data_vio acting as the lock's agent.
++ * expand_journal_point() - Convert a recovery journal journal_point which refers to both an
++ *                          increment and a decrement to a single point which refers to one or the
++ *                          other.
++ * @recovery_point: The journal point to convert.
++ * @increment: Whether the current entry is an increment.
 + *
-+ * This continuation is registered in unlock_duplicate_pbn().
++ * Return: The expanded journal point
++ *
++ * Because each data_vio has but a single recovery journal point, but may need to make both
++ * increment and decrement entries in the same slab journal. In order to distinguish the two
++ * entries, the entry count of the expanded journal point is twice the actual recovery journal
++ * entry count for increments, and one more than that for decrements.
 + */
-+static void finish_unlocking(struct vdo_completion *completion)
++static struct journal_point
++expand_journal_point(struct journal_point recovery_point, bool increment)
 +{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct hash_lock *lock = agent->hash_lock;
++	recovery_point.entry_count *= 2;
++	if (!increment)
++		recovery_point.entry_count++;
 +
-+	assert_hash_lock_agent(agent, __func__);
++	return recovery_point;
++}
 +
-+	ASSERT_LOG_ONLY(lock->duplicate_lock == NULL,
-+			"must have released the duplicate lock for the hash lock");
++/**
++ * add_entry() - Actually add an entry to the slab journal, potentially firing off a write if a
++ *               block becomes full.
++ * @journal: The slab journal to append to.
++ * @pbn: The pbn being adjusted.
++ * @operation: The type of entry to make.
++ * @increment: True if this is an increment.
++ * @recovery_point: The expanded recovery point.
++ *
++ * This function is synchronous.
++ */
++static void add_entry(struct slab_journal *journal,
++		      physical_block_number_t pbn,
++		      enum journal_operation operation,
++		      bool increment,
++		      struct journal_point recovery_point)
++{
++	struct packed_slab_journal_block *block = journal->block;
++	int result;
 +
-+	if (!lock->verified) {
++	result = ASSERT(vdo_before_journal_point(&journal->tail_header.recovery_point,
++						 &recovery_point),
++			"recovery journal point is monotonically increasing, recovery point: %llu.%u, block recovery point: %llu.%u",
++			(unsigned long long) recovery_point.sequence_number,
++			recovery_point.entry_count,
++			(unsigned long long) journal->tail_header.recovery_point.sequence_number,
++			journal->tail_header.recovery_point.entry_count);
++	if (result != VDO_SUCCESS) {
++		vdo_enter_read_only_mode(journal->slab->allocator->depot->vdo, result);
++		return;
++	}
++
++	if (operation == VDO_JOURNAL_BLOCK_MAP_REMAPPING) {
++		result = ASSERT((journal->tail_header.entry_count <
++				 journal->full_entries_per_block),
++				"block has room for full entries");
++		if (result != VDO_SUCCESS) {
++			vdo_enter_read_only_mode(journal->slab->allocator->depot->vdo, result);
++			return;
++		}
++	}
++
++	encode_slab_journal_entry(&journal->tail_header,
++				  &block->payload,
++				  pbn - journal->slab->start,
++				  operation,
++				  increment);
++	journal->tail_header.recovery_point = recovery_point;
++	if (block_is_full(journal))
++		commit_tail(journal);
++}
++
++static inline block_count_t journal_length(const struct slab_journal *journal)
++{
++	return journal->tail - journal->head;
++}
++
++/**
++ * vdo_attempt_replay_into_slab() - Replay a recovery journal entry into a slab's journal.
++ * @slab: The slab to play into.
++ * @pbn: The PBN for the entry.
++ * @operation: The type of entry to add.
++ * @increment: True if this entry is an increment.
++ * @recovery_point: The recovery journal point corresponding to this entry.
++ * @parent: The completion to notify when there is space to add the entry if the entry could not be
++ *          added immediately.
++ *
++ * Return: true if the entry was added immediately.
++ */
++bool vdo_attempt_replay_into_slab(struct vdo_slab *slab,
++				  physical_block_number_t pbn,
++				  enum journal_operation operation,
++				  bool increment,
++				  struct journal_point *recovery_point,
++				  struct vdo_completion *parent)
++{
++	struct slab_journal *journal = &slab->journal;
++	struct slab_journal_block_header *header = &journal->tail_header;
++	struct journal_point expanded = expand_journal_point(*recovery_point, increment);
++
++	/* Only accept entries after the current recovery point. */
++	if (!vdo_before_journal_point(&journal->tail_header.recovery_point, &expanded))
++		return true;
++
++	if ((header->entry_count >= journal->full_entries_per_block) &&
++	    (header->has_block_map_increments || (operation == VDO_JOURNAL_BLOCK_MAP_REMAPPING)))
 +		/*
-+		 * UNLOCKING -> WRITING transition: The lock we released was on an unverified
-+		 * block, so it must have been a lock on advice we were verifying, not on a
-+		 * location that was used for deduplication. Go write (or compress) the block to
-+		 * get a location to dedupe against.
++		 * The tail block does not have room for the entry we are attempting to add so
++		 * commit the tail block now.
 +		 */
-+		start_writing(lock, agent);
++		commit_tail(journal);
++
++	if (journal->waiting_to_commit) {
++		vdo_start_operation_with_waiter(&journal->slab->state,
++						VDO_ADMIN_STATE_WAITING_FOR_RECOVERY,
++						parent,
++						NULL);
++		return false;
++	}
++
++	if (journal_length(journal) >= journal->size) {
++		/*
++		 * We must have reaped the current head before the crash, since the blocked
++		 * threshold keeps us from having more entries than fit in a slab journal; hence we
++		 * can just advance the head (and unreapable block), as needed.
++		 */
++		journal->head++;
++		journal->unreapable++;
++	}
++
++	if (journal->slab->status == VDO_SLAB_REBUILT)
++		journal->slab->status = VDO_SLAB_REPLAYING;
++
++	add_entry(journal, pbn, operation, increment, expanded);
++	return true;
++}
++
++/**
++ * requires_reaping() - Check whether the journal must be reaped before adding new entries.
++ * @journal: The journal to check.
++ *
++ * Return: true if the journal must be reaped.
++ */
++static bool requires_reaping(const struct slab_journal *journal)
++{
++	return (journal_length(journal) >= journal->blocking_threshold);
++}
++
++/** finish_summary_update() - A waiter callback that resets the writing state of a slab. */
++static void finish_summary_update(struct waiter *waiter, void *context)
++{
++	struct vdo_slab *slab = container_of(waiter, struct vdo_slab, summary_waiter);
++	int result = *((int *) context);
++
++	slab->active_count--;
++
++	if ((result != VDO_SUCCESS) && (result != VDO_READ_ONLY)) {
++		uds_log_error_strerror(result, "failed to update slab summary");
++		vdo_enter_read_only_mode(slab->allocator->depot->vdo, result);
++	}
++
++	check_if_slab_drained(slab);
++}
++
++static void write_reference_block(struct waiter *waiter, void *context);
++
++/**
++ * launch_reference_block_write() - Launch the write of a dirty reference block by first acquiring
++ *                                  a VIO for it from the pool.
++ * @waiter: The waiter of the block which is starting to write.
++ * @context: The parent slab of the block.
++ *
++ * This can be asynchronous since the writer will have to wait if all VIOs in the pool are
++ * currently in use.
++ */
++static void launch_reference_block_write(struct waiter *waiter, void *context)
++{
++	struct vdo_slab *slab = context;
++
++	if (vdo_is_read_only(slab->allocator->depot->vdo))
++		return;
++
++	slab->active_count++;
++	container_of(waiter, struct reference_block, waiter)->is_writing = true;
++	waiter->callback = write_reference_block;
++	acquire_vio_from_pool(slab->allocator->vio_pool, waiter);
++}
++
++static void save_dirty_reference_blocks(struct vdo_slab *slab)
++{
++	vdo_notify_all_waiters(&slab->dirty_blocks, launch_reference_block_write, slab);
++	check_if_slab_drained(slab);
++}
++
++/**
++ * finish_reference_block_write() - After a reference block has written, clean it, release its
++ *                                  locks, and return its VIO to the pool.
++ * @completion: The VIO that just finished writing.
++ */
++static void finish_reference_block_write(struct vdo_completion *completion)
++{
++	struct vio *vio = as_vio(completion);
++	struct pooled_vio *pooled = vio_as_pooled_vio(vio);
++	struct reference_block *block = completion->parent;
++	struct vdo_slab *slab = block->slab;
++	tail_block_offset_t offset;
++
++	slab->active_count--;
++
++	/* Release the slab journal lock. */
++	adjust_slab_journal_block_reference(&slab->journal,
++					    block->slab_journal_lock_to_release,
++					    -1);
++	return_vio_to_pool(slab->allocator->vio_pool, pooled);
++
++	/*
++	 * We can't clear the is_writing flag earlier as releasing the slab journal lock may cause
++	 * us to be dirtied again, but we don't want to double enqueue.
++	 */
++	block->is_writing = false;
++
++	if (vdo_is_read_only(completion->vdo)) {
++		check_if_slab_drained(slab);
++		return;
++	}
++
++	/* Re-queue the block if it was re-dirtied while it was writing. */
++	if (block->is_dirty) {
++		vdo_enqueue_waiter(&block->slab->dirty_blocks, &block->waiter);
++		if (vdo_is_state_draining(&slab->state))
++			/* We must be saving, and this block will otherwise not be relaunched. */
++			save_dirty_reference_blocks(slab);
++
 +		return;
 +	}
 +
 +	/*
-+	 * With the lock released, the verified duplicate block may already have changed and will
-+	 * need to be re-verified if a waiter arrived.
++	 * Mark the slab as clean in the slab summary if there are no dirty or writing blocks
++	 * and no summary update in progress.
 +	 */
-+	lock->verified = false;
-+
-+	if (vdo_has_waiters(&lock->waiters)) {
-+		/*
-+		 * UNLOCKING -> LOCKING transition: A new data_vio entered the hash lock while the
-+		 * agent was releasing the PBN lock. The current agent exits and the waiter has to
-+		 * re-lock and re-verify the duplicate location.
-+		 *
-+		 * TODO: If we used the current agent to re-acquire the PBN lock we wouldn't need
-+		 * to re-verify.
-+		 */
-+		agent = retire_lock_agent(lock);
-+		start_locking(lock, agent);
++	if ((slab->active_count > 0) || vdo_has_waiters(&slab->dirty_blocks))
 +		return;
++
++	offset = slab->allocator->summary_entries[slab->slab_number].tail_block_offset;
++	slab->active_count++;
++	slab->summary_waiter.callback = finish_summary_update;
++	update_slab_summary_entry(slab,
++				  &slab->summary_waiter,
++				  offset,
++				  true,
++				  true,
++				  slab->free_blocks);
++}
++
++/**
++ * get_reference_counters_for_block() - Find the reference counters for a given block.
++ * @block: The reference_block in question.
++ *
++ * Return: A pointer to the reference counters for this block.
++ */
++static vdo_refcount_t * __must_check
++get_reference_counters_for_block(struct reference_block *block)
++{
++	size_t block_index = block - block->slab->reference_blocks;
++
++	return &block->slab->counters[block_index * COUNTS_PER_BLOCK];
++}
++
++/**
++ * pack_reference_block() - Copy data from a reference block to a buffer ready to be written out.
++ * @block: The block to copy.
++ * @buffer: The char buffer to fill with the packed block.
++ */
++static void pack_reference_block(struct reference_block *block, void *buffer)
++{
++	struct packed_reference_block *packed = buffer;
++	vdo_refcount_t *counters = get_reference_counters_for_block(block);
++	sector_count_t i;
++	struct packed_journal_point commit_point;
++
++	vdo_pack_journal_point(&block->slab->slab_journal_point, &commit_point);
++
++	for (i = 0; i < VDO_SECTORS_PER_BLOCK; i++) {
++		packed->sectors[i].commit_point = commit_point;
++		memcpy(packed->sectors[i].counts,
++		       counters + (i * COUNTS_PER_SECTOR),
++		       (sizeof(vdo_refcount_t) * COUNTS_PER_SECTOR));
 +	}
++}
++
++static void write_reference_block_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct reference_block *block = vio->completion.parent;
++	thread_id_t thread_id = block->slab->allocator->thread_id;
++
++	continue_vio_after_io(vio, finish_reference_block_write, thread_id);
++}
++
++/**
++ * handle_io_error() - Handle an I/O error reading or writing a reference count block.
++ * @completion: The VIO doing the I/O as a completion.
++ */
++static void handle_io_error(struct vdo_completion *completion)
++{
++	int result = completion->result;
++	struct vio *vio = as_vio(completion);
++	struct vdo_slab *slab = ((struct reference_block *) completion->parent)->slab;
++
++	vio_record_metadata_io_error(vio);
++	return_vio_to_pool(slab->allocator->vio_pool, vio_as_pooled_vio(vio));
++	slab->active_count--;
++	vdo_enter_read_only_mode(slab->allocator->depot->vdo, result);
++	check_if_slab_drained(slab);
++}
++
++/**
++ * write_reference_block() - After a dirty block waiter has gotten a VIO from the VIO pool, copy
++ *                           its counters and associated data into the VIO, and launch the write.
++ * @waiter: The waiter of the dirty block.
++ * @context: The VIO returned by the pool.
++ */
++static void write_reference_block(struct waiter *waiter, void *context)
++{
++	size_t block_offset;
++	physical_block_number_t pbn;
++	struct pooled_vio *pooled = context;
++	struct vdo_completion *completion = &pooled->vio.completion;
++	struct reference_block *block = container_of(waiter, struct reference_block, waiter);
++
++	pack_reference_block(block, pooled->vio.data);
++	block_offset = (block - block->slab->reference_blocks);
++	pbn = (block->slab->ref_counts_origin + block_offset);
++	block->slab_journal_lock_to_release = block->slab_journal_lock;
++	completion->parent = block;
 +
 +	/*
-+	 * UNLOCKING -> BYPASSING transition: The agent is done with the lock and no other
-+	 * data_vios reference it, so remove it from the lock map and return it to the pool.
++	 * Mark the block as clean, since we won't be committing any updates that happen after this
++	 * moment. As long as VIO order is preserved, two VIOs updating this block at once will not
++	 * cause complications.
 +	 */
-+	start_bypassing(lock, agent);
-+}
-+
-+/**
-+ * unlock_duplicate_pbn() - Release a read lock on the PBN of the block that may or may not have
-+ *                          contained duplicate data.
-+ * @completion: The completion of the data_vio acting as the lock's agent.
-+ *
-+ * This continuation is launched by start_unlocking(), and calls back to finish_unlocking() on the
-+ * hash zone thread.
-+ */
-+static void unlock_duplicate_pbn(struct vdo_completion *completion)
-+{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct hash_lock *lock = agent->hash_lock;
-+
-+	assert_data_vio_in_duplicate_zone(agent);
-+	ASSERT_LOG_ONLY(lock->duplicate_lock != NULL, "must have a duplicate lock to release");
-+
-+	vdo_release_physical_zone_pbn_lock(agent->duplicate.zone,
-+					   agent->duplicate.pbn,
-+					   UDS_FORGET(lock->duplicate_lock));
-+	if (lock->state == VDO_HASH_LOCK_BYPASSING) {
-+		complete_data_vio(completion);
-+		return;
-+	}
-+
-+	launch_data_vio_hash_zone_callback(agent, finish_unlocking);
-+}
-+
-+/**
-+ * start_unlocking() - Release a read lock on the PBN of the block that may or may not have
-+ *                     contained duplicate data.
-+ * @lock: The hash lock.
-+ * @agent: The data_vio currently acting as the agent for the lock.
-+ */
-+static void start_unlocking(struct hash_lock *lock, struct data_vio *agent)
-+{
-+	lock->state = VDO_HASH_LOCK_UNLOCKING;
-+	launch_data_vio_duplicate_zone_callback(agent, unlock_duplicate_pbn);
-+}
-+
-+static void release_context(struct dedupe_context *context)
-+{
-+	struct hash_zone *zone = context->zone;
-+
-+	WRITE_ONCE(zone->active, zone->active - 1);
-+	list_move(&context->list_entry, &zone->available);
-+}
-+
-+static void process_update_result(struct data_vio *agent)
-+{
-+	struct dedupe_context *context = agent->dedupe_context;
-+
-+	if ((context == NULL) ||
-+	    !change_context_state(context, DEDUPE_CONTEXT_COMPLETE, DEDUPE_CONTEXT_IDLE))
-+		return;
-+
-+	release_context(context);
-+}
-+
-+/**
-+ * finish_updating() - Process the result of a UDS update performed by the agent for the lock.
-+ * @completion: The completion of the data_vio that performed the update
-+ *
-+ * This continuation is registered in start_querying().
-+ */
-+static void finish_updating(struct vdo_completion *completion)
-+{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct hash_lock *lock = agent->hash_lock;
-+
-+	assert_hash_lock_agent(agent, __func__);
-+
-+	process_update_result(agent);
++	block->is_dirty = false;
 +
 +	/*
-+	 * UDS was updated successfully, so don't update again unless the duplicate location
-+	 * changes due to rollover.
++	 * Flush before writing to ensure that the recovery journal and slab journal entries which
++	 * cover this reference update are stable (VDO-2331).
 +	 */
-+	lock->update_advice = false;
++	WRITE_ONCE(block->slab->allocator->ref_counts_statistics.blocks_written,
++		   block->slab->allocator->ref_counts_statistics.blocks_written + 1);
 +
-+	if (vdo_has_waiters(&lock->waiters)) {
-+		/*
-+		 * UPDATING -> DEDUPING transition: A new data_vio arrived during the UDS update.
-+		 * Send it on the verified dedupe path. The agent is done with the lock, but the
-+		 * lock may still need to use it to clean up after rollover.
-+		 */
-+		start_deduping(lock, agent, true);
-+		return;
-+	}
-+
-+	if (lock->duplicate_lock != NULL) {
-+		/*
-+		 * UPDATING -> UNLOCKING transition: No one is waiting to dedupe, but we hold a
-+		 * duplicate PBN lock, so go release it.
-+		 */
-+		start_unlocking(lock, agent);
-+		return;
-+	}
-+
-+	/*
-+	 * UPDATING -> BYPASSING transition: No one is waiting to dedupe and there's no lock to
-+	 * release.
-+	 */
-+	start_bypassing(lock, agent);
++	completion->callback_thread_id = ((struct block_allocator *) pooled->context)->thread_id;
++	submit_metadata_vio(&pooled->vio,
++			    pbn,
++			    write_reference_block_endio,
++			    handle_io_error,
++			    REQ_OP_WRITE | REQ_PREFLUSH);
 +}
 +
-+static void query_index(struct data_vio *data_vio, enum uds_request_type operation);
-+
-+/**
-+ * start_updating() - Continue deduplication with the last step, updating UDS with the location of
-+ *                    the duplicate that should be returned as advice in the future.
-+ * @lock: The hash lock.
-+ * @agent: The data_vio currently acting as the agent for the lock.
-+ */
-+static void start_updating(struct hash_lock *lock, struct data_vio *agent)
++static void reclaim_journal_space(struct slab_journal *journal)
 +{
-+	lock->state = VDO_HASH_LOCK_UPDATING;
++	block_count_t length = journal_length(journal);
++	struct vdo_slab *slab = journal->slab;
++	block_count_t write_count = vdo_count_waiters(&slab->dirty_blocks);
++	block_count_t written;
 +
-+	ASSERT_LOG_ONLY(lock->verified, "new advice should have been verified");
-+	ASSERT_LOG_ONLY(lock->update_advice, "should only update advice if needed");
++	if ((length < journal->flushing_threshold) || (write_count == 0))
++		return;
 +
-+	agent->last_async_operation = VIO_ASYNC_OP_UPDATE_DEDUPE_INDEX;
-+	set_data_vio_hash_zone_callback(agent, finish_updating);
-+	query_index(agent, UDS_UPDATE);
++	/* The slab journal is over the first threshold, schedule some reference block writes. */
++	WRITE_ONCE(journal->events->flush_count, journal->events->flush_count + 1);
++	if (length < journal->flushing_deadline)
++		/* Schedule more writes the closer to the deadline we get. */
++		write_count = max_t(block_count_t,
++				    write_count / (journal->flushing_deadline - length + 1),
++				    1);
++
++	for (written = 0; written < write_count; written++)
++		vdo_notify_next_waiter(&slab->dirty_blocks, launch_reference_block_write, slab);
 +}
 +
 +/**
-+ * finish_deduping() - Handle a data_vio that has finished deduplicating against the block locked
-+ *                     by the hash lock.
-+ * @lock: The hash lock.
-+ * @data_vio: The lock holder that has finished deduplicating.
++ * reference_count_to_status() - Convert a reference count to a reference status.
++ * @count: The count to convert.
 + *
-+ * If there are other data_vios still sharing the lock, this will just release the data_vio's share
-+ * of the lock and finish processing the data_vio. If this is the last data_vio holding the lock,
-+ * this makes the data_vio the lock agent and uses it to advance the state of the lock so it can
-+ * eventually be released.
++ * Return: The appropriate reference status.
 + */
-+static void finish_deduping(struct hash_lock *lock, struct data_vio *data_vio)
++static enum reference_status __must_check
++reference_count_to_status(vdo_refcount_t count)
 +{
-+	struct data_vio *agent = data_vio;
-+
-+	ASSERT_LOG_ONLY(lock->agent == NULL, "shouldn't have an agent in DEDUPING");
-+	ASSERT_LOG_ONLY(!vdo_has_waiters(&lock->waiters),
-+			"shouldn't have any lock waiters in DEDUPING");
-+
-+	/* Just release the lock reference if other data_vios are still deduping. */
-+	if (lock->reference_count > 1) {
-+		exit_hash_lock(data_vio);
-+		return;
-+	}
-+
-+	/* The hash lock must have an agent for all other lock states. */
-+	lock->agent = agent;
-+	if (lock->update_advice)
-+		/*
-+		 * DEDUPING -> UPDATING transition: The location of the duplicate block changed
-+		 * since the initial UDS query because of compression, rollover, or because the
-+		 * query agent didn't have an allocation. The UDS update was delayed in case there
-+		 * was another change in location, but with only this data_vio using the hash lock,
-+		 * it's time to update the advice.
-+		 */
-+		start_updating(lock, agent);
++	if (count == EMPTY_REFERENCE_COUNT)
++		return RS_FREE;
++	else if (count == 1)
++		return RS_SINGLE;
++	else if (count == PROVISIONAL_REFERENCE_COUNT)
++		return RS_PROVISIONAL;
 +	else
-+		/*
-+		 * DEDUPING -> UNLOCKING transition: Release the PBN read lock on the duplicate
-+		 * location so the hash lock itself can be released (contingent on no new data_vios
-+		 * arriving in the lock before the agent returns).
-+		 */
-+		start_unlocking(lock, agent);
++		return RS_SHARED;
 +}
 +
 +/**
-+ * acquire_lock() - Get the lock for a record name.
-+ * @zone: The zone responsible for the hash.
-+ * @hash: The hash to lock.
-+ * @replace_lock: If non-NULL, the lock already registered for the hash which should be replaced by
-+ *                the new lock.
-+ * @lock_ptr: A pointer to receive the hash lock.
-+ *
-+ * Gets the lock for the hash (record name) of the data in a data_vio, or if one does not exist (or
-+ * if we are explicitly rolling over), initialize a new lock for the hash and register it in the
-+ * zone. This must only be called in the correct thread for the zone.
++ * dirty_block() - Mark a reference count block as dirty, potentially adding it to the dirty queue
++ *                 if it wasn't already dirty.
++ * @block: The reference block to mark as dirty.
++ */
++static void dirty_block(struct reference_block *block)
++{
++	if (block->is_dirty)
++		return;
++
++	block->is_dirty = true;
++	if (!block->is_writing)
++		vdo_enqueue_waiter(&block->slab->dirty_blocks, &block->waiter);
++}
++
++/**
++ * get_reference_block() - Get the reference block that covers the given block index.
++ */
++static struct reference_block * __must_check
++get_reference_block(struct vdo_slab *slab, slab_block_number index)
++{
++	return &slab->reference_blocks[index / COUNTS_PER_BLOCK];
++}
++
++/**
++ * slab_block_number_from_pbn() - Determine the index within the slab of a particular physical
++ *                                block number.
++ * @slab: The slab.
++ * @physical_block_number: The physical block number.
++ * @slab_block_number_ptr: A pointer to the slab block number.
 + *
 + * Return: VDO_SUCCESS or an error code.
 + */
-+static int __must_check acquire_lock(struct hash_zone *zone,
-+				     const struct uds_record_name *hash,
-+				     struct hash_lock *replace_lock,
-+				     struct hash_lock **lock_ptr)
++static int __must_check
++slab_block_number_from_pbn(struct vdo_slab *slab,
++			   physical_block_number_t physical_block_number,
++			   slab_block_number *slab_block_number_ptr)
 +{
-+	struct hash_lock *lock, *new_lock;
-+	int result;
++	u64 slab_block_number;
 +
-+	/*
-+	 * Borrow and prepare a lock from the pool so we don't have to do two pointer_map accesses
-+	 * in the common case of no lock contention.
-+	 */
-+	result = ASSERT(!list_empty(&zone->lock_pool), "never need to wait for a free hash lock");
-+	if (result != VDO_SUCCESS)
-+		return result;
++	if (physical_block_number < slab->start)
++		return VDO_OUT_OF_RANGE;
 +
-+	new_lock = list_entry(zone->lock_pool.prev, struct hash_lock, pool_node);
-+	list_del_init(&new_lock->pool_node);
++	slab_block_number = physical_block_number - slab->start;
++	if (slab_block_number >= slab->allocator->depot->slab_config.data_blocks)
++		return VDO_OUT_OF_RANGE;
 +
-+	/*
-+	 * Fill in the hash of the new lock so we can map it, since we have to use the hash as the
-+	 * map key.
-+	 */
-+	new_lock->hash = *hash;
-+
-+	result = vdo_pointer_map_put(zone->hash_lock_map,
-+				     &new_lock->hash,
-+				     new_lock,
-+				     (replace_lock != NULL),
-+				     (void **) &lock);
-+	if (result != VDO_SUCCESS) {
-+		return_hash_lock_to_pool(zone, UDS_FORGET(new_lock));
-+		return result;
-+	}
-+
-+	if (replace_lock != NULL) {
-+		/* On mismatch put the old lock back and return a severe error */
-+		ASSERT_LOG_ONLY(lock == replace_lock, "old lock must have been in the lock map");
-+		/* TODO: Check earlier and bail out? */
-+		ASSERT_LOG_ONLY(replace_lock->registered,
-+				"old lock must have been marked registered");
-+		replace_lock->registered = false;
-+	}
-+
-+	if (lock == replace_lock) {
-+		lock = new_lock;
-+		lock->registered = true;
-+	} else {
-+		/* There's already a lock for the hash, so we don't need the borrowed lock. */
-+		return_hash_lock_to_pool(zone, UDS_FORGET(new_lock));
-+	}
-+
-+	*lock_ptr = lock;
++	*slab_block_number_ptr = slab_block_number;
 +	return VDO_SUCCESS;
 +}
 +
 +/**
-+ * enter_forked_lock() - Bind the data_vio to a new hash lock.
-+ *
-+ * Implements waiter_callback. Binds the data_vio that was waiting to a new hash lock and waits on
-+ * that lock.
++ * get_reference_counter() - Get the reference counter that covers the given physical block number.
++ * @slab: The slab to query.
++ * @pbn: The physical block number.
++ * @counter_ptr: A pointer to the reference counter.
 + */
-+static void enter_forked_lock(struct waiter *waiter, void *context)
++static int __must_check
++get_reference_counter(struct vdo_slab *slab,
++		      physical_block_number_t pbn,
++		      vdo_refcount_t **counter_ptr)
 +{
-+	struct data_vio *data_vio = waiter_as_data_vio(waiter);
-+	struct hash_lock *new_lock = (struct hash_lock *) context;
++	slab_block_number index;
++	int result = slab_block_number_from_pbn(slab, pbn, &index);
 +
-+	set_hash_lock(data_vio, new_lock);
-+	wait_on_hash_lock(new_lock, data_vio);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	*counter_ptr = &slab->counters[index];
++
++	return VDO_SUCCESS;
++}
++
++static unsigned int calculate_slab_priority(struct vdo_slab *slab)
++{
++	block_count_t free_blocks = slab->free_blocks;
++	unsigned int unopened_slab_priority = slab->allocator->unopened_slab_priority;
++	unsigned int priority;
++
++	/*
++	 * Wholly full slabs must be the only ones with lowest priority, 0.
++	 *
++	 * Slabs that have never been opened (empty, newly initialized, and never been written to)
++	 * have lower priority than previously opened slabs that have a significant number of free
++	 * blocks. This ranking causes VDO to avoid writing physical blocks for the first time
++	 * unless there are very few free blocks that have been previously written to.
++	 *
++	 * Since VDO doesn't discard blocks currently, reusing previously written blocks makes VDO
++	 * a better client of any underlying storage that is thinly-provisioned (though discarding
++	 * would be better).
++	 *
++	 * For all other slabs, the priority is derived from the logarithm of the number of free
++	 * blocks. Slabs with the same order of magnitude of free blocks have the same priority.
++	 * With 2^23 blocks, the priority will range from 1 to 25. The reserved
++	 * unopened_slab_priority divides the range and is skipped by the logarithmic mapping.
++	 */
++
++	if (free_blocks == 0)
++		return 0;
++
++	if (is_slab_journal_blank(slab))
++		return unopened_slab_priority;
++
++	priority = (1 + ilog2(free_blocks));
++	return ((priority < unopened_slab_priority) ? priority : priority + 1);
++}
++
++/*
++ * Slabs are essentially prioritized by an approximation of the number of free blocks in the slab
++ * so slabs with lots of free blocks with be opened for allocation before slabs that have few free
++ * blocks.
++ */
++static void prioritize_slab(struct vdo_slab *slab)
++{
++	ASSERT_LOG_ONLY(list_empty(&slab->allocq_entry),
++			"a slab must not already be on a ring when prioritizing");
++	slab->priority = calculate_slab_priority(slab);
++	vdo_priority_table_enqueue(slab->allocator->prioritized_slabs,
++				   slab->priority,
++				   &slab->allocq_entry);
 +}
 +
 +/**
-+ * fork_hash_lock() - Fork a hash lock because it has run out of increments on the duplicate PBN.
-+ * @old_lock: The hash lock to fork.
-+ * @new_agent: The data_vio that will be the agent for the new lock.
-+ *
-+ * Transfers the new agent and any lock waiters to a new hash lock instance which takes the place
-+ * of the old lock in the lock map. The old lock remains active, but will not update advice.
++ * adjust_free_block_count() - Adjust the free block count and (if needed) reprioritize the slab.
++ * @increment: should be true if the free block count went up.
 + */
-+static void fork_hash_lock(struct hash_lock *old_lock, struct data_vio *new_agent)
++static void adjust_free_block_count(struct vdo_slab *slab, bool increment)
 +{
-+	struct hash_lock *new_lock;
++	struct block_allocator *allocator = slab->allocator;
++
++	WRITE_ONCE(allocator->allocated_blocks,
++		   allocator->allocated_blocks + (increment ? -1 : 1));
++
++	/* The open slab doesn't need to be reprioritized until it is closed. */
++	if (slab == allocator->open_slab)
++		return;
++
++	/* Don't bother adjusting the priority table if unneeded. */
++	if (slab->priority == calculate_slab_priority(slab))
++		return;
++
++	/*
++	 * Reprioritize the slab to reflect the new free block count by removing it from the table
++	 * and re-enqueuing it with the new priority.
++	 */
++	vdo_priority_table_remove(allocator->prioritized_slabs, &slab->allocq_entry);
++	prioritize_slab(slab);
++}
++
++/**
++ * increment_for_data() - Increment the reference count for a data block.
++ * @slab: The slab which owns the block.
++ * @block: The reference block which contains the block being updated.
++ * @block_number: The block to update.
++ * @old_status: The reference status of the data block before this increment.
++ * @lock: The pbn_lock associated with this increment (may be NULL).
++ * @counter_ptr: A pointer to the count for the data block (in, out).
++ * @adjust_block_count: Whether to update the allocator's free block count.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int increment_for_data(struct vdo_slab *slab,
++			      struct reference_block *block,
++			      slab_block_number block_number,
++			      enum reference_status old_status,
++			      struct pbn_lock *lock,
++			      vdo_refcount_t *counter_ptr,
++			      bool adjust_block_count)
++{
++	switch (old_status) {
++	case RS_FREE:
++		*counter_ptr = 1;
++		block->allocated_count++;
++		slab->free_blocks--;
++		if (adjust_block_count)
++			adjust_free_block_count(slab, false);
++
++		break;
++
++	case RS_PROVISIONAL:
++		*counter_ptr = 1;
++		break;
++
++	default:
++		/* Single or shared */
++		if (*counter_ptr >= MAXIMUM_REFERENCE_COUNT)
++			return uds_log_error_strerror(VDO_REF_COUNT_INVALID,
++						      "Incrementing a block already having 254 references (slab %u, offset %u)",
++						      slab->slab_number,
++						      block_number);
++		(*counter_ptr)++;
++	}
++
++	if (lock != NULL)
++		vdo_unassign_pbn_lock_provisional_reference(lock);
++	return VDO_SUCCESS;
++}
++
++/**
++ * decrement_for_data() - Decrement the reference count for a data block.
++ * @slab: The slab which owns the block.
++ * @block: The reference block which contains the block being updated.
++ * @block_number: The block to update.
++ * @old_status: The reference status of the data block before this decrement.
++ * @updater: The reference updater doing this operation in case we need to look up the pbn lock.
++ * @lock: The pbn_lock associated with the block being decremented (may be NULL).
++ * @counter_ptr: A pointer to the count for the data block (in, out).
++ * @adjust_block_count: Whether to update the allocator's free block count.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int decrement_for_data(struct vdo_slab *slab,
++			      struct reference_block *block,
++			      slab_block_number block_number,
++			      enum reference_status old_status,
++			      struct reference_updater *updater,
++			      vdo_refcount_t *counter_ptr,
++			      bool adjust_block_count)
++{
++	switch (old_status) {
++	case RS_FREE:
++		return uds_log_error_strerror(VDO_REF_COUNT_INVALID,
++					      "Decrementing free block at offset %u in slab %u",
++					      block_number,
++					      slab->slab_number);
++
++	case RS_PROVISIONAL:
++	case RS_SINGLE:
++		if (updater->zpbn.zone != NULL) {
++			struct pbn_lock *lock = vdo_get_physical_zone_pbn_lock(updater->zpbn.zone,
++									       updater->zpbn.pbn);
++
++			if (lock != NULL) {
++				/*
++				 * There is a read lock on this block, so the block must not become
++				 * unreferenced.
++				 */
++				*counter_ptr = PROVISIONAL_REFERENCE_COUNT;
++				vdo_assign_pbn_lock_provisional_reference(lock);
++				break;
++			}
++		}
++
++		*counter_ptr = EMPTY_REFERENCE_COUNT;
++		block->allocated_count--;
++		slab->free_blocks++;
++		if (adjust_block_count)
++			adjust_free_block_count(slab, true);
++
++		break;
++
++	default:
++		/* Shared */
++		(*counter_ptr)--;
++	}
++
++	return VDO_SUCCESS;
++}
++
++/**
++ * increment_for_block_map() - Increment the reference count for a block map page.
++ * @slab: The slab which owns the block.
++ * @block: The reference block which contains the block being updated.
++ * @block_number: The block to update.
++ * @old_status: The reference status of the block before this increment.
++ * @lock: The pbn_lock associated with this increment (may be NULL).
++ * @normal_operation: Whether we are in normal operation vs. recovery or rebuild.
++ * @counter_ptr: A pointer to the count for the block (in, out).
++ * @adjust_block_count: Whether to update the allocator's free block count.
++ *
++ * All block map increments should be from provisional to MAXIMUM_REFERENCE_COUNT. Since block map
++ * blocks never dedupe they should never be adjusted from any other state. The adjustment always
++ * results in MAXIMUM_REFERENCE_COUNT as this value is used to prevent dedupe against block map
++ * blocks.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int increment_for_block_map(struct vdo_slab *slab,
++				   struct reference_block *block,
++				   slab_block_number block_number,
++				   enum reference_status old_status,
++				   struct pbn_lock *lock,
++				   bool normal_operation,
++				   vdo_refcount_t *counter_ptr,
++				   bool adjust_block_count)
++{
++	switch (old_status) {
++	case RS_FREE:
++		if (normal_operation)
++			return uds_log_error_strerror(VDO_REF_COUNT_INVALID,
++						      "Incrementing unallocated block map block (slab %u, offset %u)",
++						      slab->slab_number,
++						      block_number);
++
++		*counter_ptr = MAXIMUM_REFERENCE_COUNT;
++		block->allocated_count++;
++		slab->free_blocks--;
++		if (adjust_block_count)
++			adjust_free_block_count(slab, false);
++
++		return VDO_SUCCESS;
++
++	case RS_PROVISIONAL:
++		if (!normal_operation)
++			return uds_log_error_strerror(VDO_REF_COUNT_INVALID,
++						      "Block map block had provisional reference during replay (slab %u, offset %u)",
++						      slab->slab_number,
++						      block_number);
++
++		*counter_ptr = MAXIMUM_REFERENCE_COUNT;
++		if (lock != NULL)
++			vdo_unassign_pbn_lock_provisional_reference(lock);
++		return VDO_SUCCESS;
++
++	default:
++		return uds_log_error_strerror(VDO_REF_COUNT_INVALID,
++					      "Incrementing a block map block which is already referenced %u times (slab %u, offset %u)",
++					      *counter_ptr,
++					      slab->slab_number,
++					      block_number);
++	}
++}
++
++static bool __must_check is_valid_journal_point(const struct journal_point *point)
++{
++	return ((point != NULL) && (point->sequence_number > 0));
++}
++
++/**
++ * update_reference_count() - Update the reference count of a block.
++ * @slab: The slab which owns the block.
++ * @block: The reference block which contains the block being updated.
++ * @block_number: The block to update.
++ * @slab_journal_point: The slab journal point at which this update is journaled.
++ * @updater: The reference updater.
++ * @normal_operation: Whether we are in normal operation vs. recovery or rebuild.
++ * @adjust_block_count: Whether to update the slab's free block count.
++ * @provisional_decrement_ptr: A pointer which will be set to true if this update was a decrement
++ *                             of a provisional reference.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int
++update_reference_count(struct vdo_slab *slab,
++		       struct reference_block *block,
++		       slab_block_number block_number,
++		       const struct journal_point *slab_journal_point,
++		       struct reference_updater *updater,
++		       bool normal_operation,
++		       bool adjust_block_count,
++		       bool *provisional_decrement_ptr)
++{
++	vdo_refcount_t *counter_ptr = &slab->counters[block_number];
++	enum reference_status old_status = reference_count_to_status(*counter_ptr);
 +	int result;
 +
-+	result = acquire_lock(new_agent->hash_zone, &new_agent->record_name, old_lock, &new_lock);
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(new_agent, result);
-+		return;
-+	}
-+
-+	/*
-+	 * Only one of the two locks should update UDS. The old lock is out of references, so it
-+	 * would be poor dedupe advice in the short term.
-+	 */
-+	old_lock->update_advice = false;
-+	new_lock->update_advice = true;
-+
-+	set_hash_lock(new_agent, new_lock);
-+	new_lock->agent = new_agent;
-+
-+	vdo_notify_all_waiters(&old_lock->waiters, enter_forked_lock, new_lock);
-+
-+	new_agent->is_duplicate = false;
-+	start_writing(new_lock, new_agent);
-+}
-+
-+/**
-+ * launch_dedupe() - Reserve a reference count increment for a data_vio and launch it on the dedupe
-+ *                   path.
-+ * @lock: The hash lock.
-+ * @data_vio: The data_vio to deduplicate using the hash lock.
-+ * @has_claim: true if the data_vio already has claimed an increment from the duplicate lock.
-+ *
-+ * If no increments are available, this will roll over to a new hash lock and launch the data_vio
-+ * as the writing agent for that lock.
-+ */
-+static void launch_dedupe(struct hash_lock *lock, struct data_vio *data_vio, bool has_claim)
-+{
-+	if (!has_claim && !vdo_claim_pbn_lock_increment(lock->duplicate_lock)) {
-+		/* Out of increments, so must roll over to a new lock. */
-+		fork_hash_lock(lock, data_vio);
-+		return;
-+	}
-+
-+	/* Deduplicate against the lock's verified location. */
-+	set_duplicate_location(data_vio, lock->duplicate);
-+	data_vio->new_mapped = data_vio->duplicate;
-+	update_metadata_for_data_vio_write(data_vio, lock->duplicate_lock);
-+}
-+
-+/**
-+ * start_deduping() - Enter the hash lock state where data_vios deduplicate in parallel against a
-+ *                    true copy of their data on disk.
-+ * @lock: The hash lock.
-+ * @agent: The data_vio acting as the agent for the lock.
-+ * @agent_is_done: true only if the agent has already written or deduplicated against its data.
-+ *
-+ * If the agent itself needs to deduplicate, an increment for it must already have been claimed
-+ * from the duplicate lock, ensuring the hash lock will still have a data_vio holding it.
-+ */
-+static void start_deduping(struct hash_lock *lock, struct data_vio *agent, bool agent_is_done)
-+{
-+	lock->state = VDO_HASH_LOCK_DEDUPING;
-+
-+	/*
-+	 * We don't take the downgraded allocation lock from the agent unless we actually need to
-+	 * deduplicate against it.
-+	 */
-+	if (lock->duplicate_lock == NULL) {
-+		ASSERT_LOG_ONLY(!vdo_is_state_compressed(agent->new_mapped.state),
-+				"compression must have shared a lock");
-+		ASSERT_LOG_ONLY(agent_is_done, "agent must have written the new duplicate");
-+		transfer_allocation_lock(agent);
-+	}
-+
-+	ASSERT_LOG_ONLY(vdo_is_pbn_read_lock(lock->duplicate_lock),
-+			"duplicate_lock must be a PBN read lock");
-+
-+	/*
-+	 * This state is not like any of the other states. There is no designated agent--the agent
-+	 * transitioning to this state and all the waiters will be launched to deduplicate in
-+	 * parallel.
-+	 */
-+	lock->agent = NULL;
-+
-+	/*
-+	 * Launch the agent (if not already deduplicated) and as many lock waiters as we have
-+	 * available increments for on the dedupe path. If we run out of increments, rollover will
-+	 * be triggered and the remaining waiters will be transferred to the new lock.
-+	 */
-+	if (!agent_is_done) {
-+		launch_dedupe(lock, agent, true);
-+		agent = NULL;
-+	}
-+	while (vdo_has_waiters(&lock->waiters))
-+		launch_dedupe(lock, dequeue_lock_waiter(lock), false);
-+
-+	if (agent_is_done)
-+		/*
-+		 * In the degenerate case where all the waiters rolled over to a new lock, this
-+		 * will continue to use the old agent to clean up this lock, and otherwise it just
-+		 * lets the agent exit the lock.
-+		 */
-+		finish_deduping(lock, agent);
-+}
-+
-+/**
-+ * increment_stat() - Increment a statistic counter in a non-atomic yet thread-safe manner.
-+ * @stat: The statistic field to increment.
-+ */
-+static void increment_stat(u64 *stat)
-+{
-+	/*
-+	 * Must only be mutated on the hash zone thread. Prevents any compiler shenanigans from
-+	 * affecting other threads reading stats.
-+	 */
-+	WRITE_ONCE(*stat, *stat + 1);
-+}
-+
-+/**
-+ * finish_verifying() - Handle the result of the agent for the lock comparing its data to the
-+ *                      duplicate candidate.
-+ * @completion: The completion of the data_vio used to verify dedupe
-+ *
-+ * This continuation is registered in start_verifying().
-+ */
-+static void finish_verifying(struct vdo_completion *completion)
-+{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct hash_lock *lock = agent->hash_lock;
-+
-+	assert_hash_lock_agent(agent, __func__);
-+
-+	lock->verified = agent->is_duplicate;
-+
-+	/*
-+	 * Only count the result of the initial verification of the advice as valid or stale, and
-+	 * not any re-verifications due to PBN lock releases.
-+	 */
-+	if (!lock->verify_counted) {
-+		lock->verify_counted = true;
-+		if (lock->verified)
-+			increment_stat(&agent->hash_zone->statistics.dedupe_advice_valid);
-+		else
-+			increment_stat(&agent->hash_zone->statistics.dedupe_advice_stale);
-+	}
-+
-+	/*
-+	 * Even if the block is a verified duplicate, we can't start to deduplicate unless we can
-+	 * claim a reference count increment for the agent.
-+	 */
-+	if (lock->verified && !vdo_claim_pbn_lock_increment(lock->duplicate_lock)) {
-+		agent->is_duplicate = false;
-+		lock->verified = false;
-+	}
-+
-+	if (lock->verified) {
-+		/*
-+		 * VERIFYING -> DEDUPING transition: The advice is for a true duplicate, so start
-+		 * deduplicating against it, if references are available.
-+		 */
-+		start_deduping(lock, agent, false);
++	if (!updater->increment) {
++		result = decrement_for_data(slab,
++					    block,
++					    block_number,
++					    old_status,
++					    updater,
++					    counter_ptr,
++					    adjust_block_count);
++		if ((result == VDO_SUCCESS) && (old_status == RS_PROVISIONAL)) {
++			if (provisional_decrement_ptr != NULL)
++				*provisional_decrement_ptr = true;
++			return VDO_SUCCESS;
++		}
++	} else if (updater->operation == VDO_JOURNAL_DATA_REMAPPING) {
++		result = increment_for_data(slab,
++					    block,
++					    block_number,
++					    old_status,
++					    updater->lock,
++					    counter_ptr,
++					    adjust_block_count);
 +	} else {
-+		/*
-+		 * VERIFYING -> UNLOCKING transition: Either the verify failed or we'd try to
-+		 * dedupe and roll over immediately, which would fail because it would leave the
-+		 * lock without an agent to release the PBN lock. In both cases, the data will have
-+		 * to be written or compressed, but first the advice PBN must be unlocked by the
-+		 * VERIFYING agent.
-+		 */
-+		lock->update_advice = true;
-+		start_unlocking(lock, agent);
++		result = increment_for_block_map(slab,
++						 block,
++						 block_number,
++						 old_status,
++						 updater->lock,
++						 normal_operation,
++						 counter_ptr,
++						 adjust_block_count);
 +	}
++
++	if (result != VDO_SUCCESS)
++		return result;
++
++	if (is_valid_journal_point(slab_journal_point))
++		slab->slab_journal_point = *slab_journal_point;
++
++	return VDO_SUCCESS;
 +}
 +
-+static bool blocks_equal(char *block1, char *block2)
++static int __must_check
++adjust_reference_count(struct vdo_slab *slab,
++		       struct reference_updater *updater,
++		       const struct journal_point *slab_journal_point)
 +{
-+	int i;
++	slab_block_number block_number;
++	int result;
++	struct reference_block *block;
++	bool provisional_decrement = false;
 +
++	if (!is_slab_open(slab))
++		return VDO_INVALID_ADMIN_STATE;
 +
-+	for (i = 0; i < VDO_BLOCK_SIZE; i += sizeof(u64))
-+		if (*((u64 *) &block1[i]) != *((u64 *) &block2[i]))
-+			return false;
++	result = slab_block_number_from_pbn(slab, updater->zpbn.pbn, &block_number);
++	if (result != VDO_SUCCESS)
++		return result;
 +
++	block = get_reference_block(slab, block_number);
++	result = update_reference_count(slab,
++					block,
++					block_number,
++					slab_journal_point,
++					updater,
++					NORMAL_OPERATION,
++					true,
++					&provisional_decrement);
++	if ((result != VDO_SUCCESS) || provisional_decrement)
++		return result;
++
++	if (block->is_dirty && (block->slab_journal_lock > 0)) {
++		sequence_number_t entry_lock = slab_journal_point->sequence_number;
++		/*
++		 * This block is already dirty and a slab journal entry has been made for it since
++		 * the last time it was clean. We must release the per-entry slab journal lock for
++		 * the entry associated with the update we are now doing.
++		 */
++		result = ASSERT(is_valid_journal_point(slab_journal_point),
++				"Reference count adjustments need slab journal points.");
++		if (result != VDO_SUCCESS)
++			return result;
++
++		adjust_slab_journal_block_reference(&slab->journal, entry_lock, -1);
++		return VDO_SUCCESS;
++	}
++
++	/*
++	 * This may be the first time we are applying an update for which there is a slab journal
++	 * entry to this block since the block was cleaned. Therefore, we convert the per-entry
++	 * slab journal lock to an uncommitted reference block lock, if there is a per-entry lock.
++	 */
++	if (is_valid_journal_point(slab_journal_point))
++		block->slab_journal_lock = slab_journal_point->sequence_number;
++	else
++		block->slab_journal_lock = 0;
++
++	dirty_block(block);
++	return VDO_SUCCESS;
++}
++
++/**
++ * add_entry_from_waiter() - Add an entry to the slab journal.
++ * @waiter: The vio which should make an entry now.
++ * @context: The slab journal to make an entry in.
++ *
++ * This callback is invoked by add_entries() once it has determined that we are ready to make
++ * another entry in the slab journal. Implements waiter_callback.
++ */
++static void add_entry_from_waiter(struct waiter *waiter, void *context)
++{
++	int result;
++	struct reference_updater *updater = container_of(waiter, struct reference_updater, waiter);
++	struct data_vio *data_vio = data_vio_from_reference_updater(updater);
++	struct slab_journal *journal = context;
++	struct slab_journal_block_header *header = &journal->tail_header;
++	struct journal_point slab_journal_point = {
++		.sequence_number = header->sequence_number,
++		.entry_count = header->entry_count,
++	};
++	sequence_number_t recovery_block = data_vio->recovery_journal_point.sequence_number;
++
++	if (header->entry_count == 0) {
++		/*
++		 * This is the first entry in the current tail block, so get a lock on the recovery
++		 * journal which we will hold until this tail block is committed.
++		 */
++		get_lock(journal, header->sequence_number)->recovery_start = recovery_block;
++		if (journal->recovery_journal != NULL) {
++			zone_count_t zone_number = journal->slab->allocator->zone_number;
++
++			vdo_acquire_recovery_journal_block_reference(journal->recovery_journal,
++								     recovery_block,
++								     VDO_ZONE_TYPE_PHYSICAL,
++								     zone_number);
++		}
++
++		mark_slab_journal_dirty(journal, recovery_block);
++		reclaim_journal_space(journal);
++	}
++
++	add_entry(journal,
++		  updater->zpbn.pbn,
++		  updater->operation,
++		  updater->increment,
++		  expand_journal_point(data_vio->recovery_journal_point, updater->increment));
++
++	if (journal->slab->status != VDO_SLAB_REBUILT) {
++		/*
++		 * If the slab is unrecovered, scrubbing will take care of the count since the
++		 * update is now recorded in the journal.
++		 */
++		adjust_slab_journal_block_reference(journal,
++						    slab_journal_point.sequence_number,
++						    -1);
++		result = VDO_SUCCESS;
++	} else {
++		/* Now that an entry has been made in the slab journal, update the counter. */
++		result = adjust_reference_count(journal->slab, updater, &slab_journal_point);
++	}
++
++	if (updater->increment)
++		continue_data_vio_with_error(data_vio, result);
++	else
++		vdo_continue_completion(&data_vio->decrement_completion, result);
++}
++
++/**
++ * is_next_entry_a_block_map_increment() - Check whether the next entry to be made is a block map
++ *                                         increment.
++ * @journal: The journal.
++ *
++ * Return: true if the first entry waiter's operation is a block map increment.
++ */
++static inline bool is_next_entry_a_block_map_increment(struct slab_journal *journal)
++{
++	struct waiter *waiter = vdo_get_first_waiter(&journal->entry_waiters);
++	struct reference_updater *updater = container_of(waiter, struct reference_updater, waiter);
++
++	return (updater->operation == VDO_JOURNAL_BLOCK_MAP_REMAPPING);
++}
++
++/**
++ * add_entries() - Add as many entries as possible from the queue of vios waiting to make entries.
++ * @journal: The journal to which entries may be added.
++ *
++ * By processing the queue in order, we ensure that slab journal entries are made in the same order
++ * as recovery journal entries for the same increment or decrement.
++ */
++static void add_entries(struct slab_journal *journal)
++{
++	if (journal->adding_entries)
++		/* Protect against re-entrancy. */
++		return;
++
++	journal->adding_entries = true;
++	while (vdo_has_waiters(&journal->entry_waiters)) {
++		struct slab_journal_block_header *header = &journal->tail_header;
++
++		if (journal->partial_write_in_progress ||
++		    (journal->slab->status == VDO_SLAB_REBUILDING))
++			/*
++			 * Don't add entries while rebuilding or while a partial write is
++			 * outstanding (VDO-2399).
++			 */
++			break;
++
++		if (journal->waiting_to_commit) {
++			/*
++			 * If we are waiting for resources to write the tail block, and the tail
++			 * block is full, we can't make another entry.
++			 */
++			WRITE_ONCE(journal->events->tail_busy_count,
++				   journal->events->tail_busy_count + 1);
++			break;
++		} else if (is_next_entry_a_block_map_increment(journal) &&
++			   (header->entry_count >= journal->full_entries_per_block)) {
++			/*
++			 * The tail block does not have room for a block map increment, so commit
++			 * it now.
++			 */
++			commit_tail(journal);
++			if (journal->waiting_to_commit) {
++				WRITE_ONCE(journal->events->tail_busy_count,
++					   journal->events->tail_busy_count + 1);
++				break;
++			}
++		}
++
++		/* If the slab is over the blocking threshold, make the vio wait. */
++		if (requires_reaping(journal)) {
++			WRITE_ONCE(journal->events->blocked_count,
++				   journal->events->blocked_count + 1);
++			save_dirty_reference_blocks(journal->slab);
++			break;
++		}
++
++		if (header->entry_count == 0) {
++			struct journal_lock *lock = get_lock(journal, header->sequence_number);
++
++			/*
++			 * Check if the on disk slab journal is full. Because of the blocking and
++			 * scrubbing thresholds, this should never happen.
++			 */
++			if (lock->count > 0) {
++				ASSERT_LOG_ONLY((journal->head + journal->size) == journal->tail,
++						"New block has locks, but journal is not full");
++
++				/*
++				 * The blocking threshold must let the journal fill up if the new
++				 * block has locks; if the blocking threshold is smaller than the
++				 * journal size, the new block cannot possibly have locks already.
++				 */
++				ASSERT_LOG_ONLY((journal->blocking_threshold >= journal->size),
++						"New block can have locks already iff blocking threshold is at the end of the journal");
++
++				WRITE_ONCE(journal->events->disk_full_count,
++					   journal->events->disk_full_count + 1);
++				save_dirty_reference_blocks(journal->slab);
++				break;
++			}
++
++			/*
++			 * Don't allow the new block to be reaped until all of the reference count
++			 * blocks are written and the journal block has been fully committed as
++			 * well.
++			 */
++			lock->count = journal->entries_per_block + 1;
++
++			if (header->sequence_number == 1) {
++				struct vdo_slab *slab = journal->slab;
++				block_count_t i;
++
++				/*
++				 * This is the first entry in this slab journal, ever. Dirty all of
++				 * the reference count blocks. Each will acquire a lock on the tail
++				 * block so that the journal won't be reaped until the reference
++				 * counts are initialized. The lock acquisition must be done by the
++				 * ref_counts since here we don't know how many reference blocks
++				 * the ref_counts has.
++				 */
++				for (i = 0; i < slab->reference_block_count; i++) {
++					slab->reference_blocks[i].slab_journal_lock = 1;
++					dirty_block(&slab->reference_blocks[i]);
++				}
++
++				adjust_slab_journal_block_reference(journal,
++								    1,
++								    slab->reference_block_count);
++			}
++		}
++
++		vdo_notify_next_waiter(&journal->entry_waiters, add_entry_from_waiter, journal);
++	}
++
++	journal->adding_entries = false;
++
++	/* If there are no waiters, and we are flushing or saving, commit the tail block. */
++	if (vdo_is_state_draining(&journal->slab->state) &&
++	    !vdo_is_state_suspending(&journal->slab->state) &&
++	    !vdo_has_waiters(&journal->entry_waiters))
++		commit_tail(journal);
++}
++
++/**
++ * reset_search_cursor() - Reset the free block search back to the first reference counter in the
++ *                         first reference block of a slab.
++ */
++static void reset_search_cursor(struct vdo_slab *slab)
++{
++	struct search_cursor *cursor = &slab->search_cursor;
++
++	cursor->block = cursor->first_block;
++	cursor->index = 0;
++	/* Unit tests have slabs with only one reference block (and it's a runt). */
++	cursor->end_index = min_t(u32, COUNTS_PER_BLOCK, slab->block_count);
++}
++
++/**
++ * advance_search_cursor() - Advance the search cursor to the start of the next reference block in
++ *                           a slab,
++ *
++ * Wraps around to the first reference block if the current block is the last reference block.
++ *
++ * Return: true unless the cursor was at the last reference block.
++ */
++static bool advance_search_cursor(struct vdo_slab *slab)
++{
++	struct search_cursor *cursor = &slab->search_cursor;
++
++	/*
++	 * If we just finished searching the last reference block, then wrap back around to the
++	 * start of the array.
++	 */
++	if (cursor->block == cursor->last_block) {
++		reset_search_cursor(slab);
++		return false;
++	}
++
++	/* We're not already at the end, so advance to cursor to the next block. */
++	cursor->block++;
++	cursor->index = cursor->end_index;
++
++	if (cursor->block == cursor->last_block)
++		/* The last reference block will usually be a runt. */
++		cursor->end_index = slab->block_count;
++	else
++		cursor->end_index += COUNTS_PER_BLOCK;
 +	return true;
 +}
 +
-+static void verify_callback(struct vdo_completion *completion)
++/**
++ * replay_reference_count_change() - Replay the reference count adjustment from a slab journal
++ *                                   entry into the reference count for a block.
++ * @slab: The slab.
++ * @entry_point: The slab journal point for the entry.
++ * @entry: The slab journal entry being replayed.
++ *
++ * The adjustment will be ignored if it was already recorded in the reference count.
++ *
++ * Return: VDO_SUCCESS or an error code.
++ */
++static int
++replay_reference_count_change(struct vdo_slab *slab,
++			      const struct journal_point *entry_point,
++			      struct slab_journal_entry entry)
 +{
-+	struct data_vio *agent = as_data_vio(completion);
-+
-+	agent->is_duplicate = blocks_equal(agent->vio.data, agent->scratch_block);
-+	launch_data_vio_hash_zone_callback(agent, finish_verifying);
-+}
-+
-+static void uncompress_and_verify(struct vdo_completion *completion)
-+{
-+	struct data_vio *agent = as_data_vio(completion);
 +	int result;
++	struct reference_block *block = get_reference_block(slab, entry.sbn);
++	sector_count_t sector = (entry.sbn % COUNTS_PER_BLOCK) / COUNTS_PER_SECTOR;
++	struct reference_updater updater = {
++		.operation = entry.operation,
++		.increment = entry.increment,
++	};
 +
-+	result = uncompress_data_vio(agent, agent->duplicate.state, agent->scratch_block);
-+	if (result == VDO_SUCCESS) {
-+		verify_callback(completion);
-+		return;
-+	}
++	if (!vdo_before_journal_point(&block->commit_points[sector], entry_point))
++		/* This entry is already reflected in the existing counts, so do nothing. */
++		return VDO_SUCCESS;
 +
-+	agent->is_duplicate = false;
-+	launch_data_vio_hash_zone_callback(agent, finish_verifying);
-+}
++	/* This entry is not yet counted in the reference counts. */
++	result = update_reference_count(slab,
++					block,
++					entry.sbn,
++					entry_point,
++					&updater,
++					!NORMAL_OPERATION,
++					false,
++					NULL);
++	if (result != VDO_SUCCESS)
++		return result;
 +
-+static void verify_endio(struct bio *bio)
-+{
-+	struct data_vio *agent = vio_as_data_vio(bio->bi_private);
-+	int result = blk_status_to_errno(bio->bi_status);
-+
-+	vdo_count_completed_bios(bio);
-+	if (result != VDO_SUCCESS) {
-+		agent->is_duplicate = false;
-+		launch_data_vio_hash_zone_callback(agent, finish_verifying);
-+		return;
-+	}
-+
-+	if (vdo_is_state_compressed(agent->duplicate.state)) {
-+		launch_data_vio_cpu_callback(agent,
-+					     uncompress_and_verify,
-+					     CPU_Q_COMPRESS_BLOCK_PRIORITY);
-+		return;
-+	}
-+
-+	launch_data_vio_cpu_callback(agent, verify_callback, CPU_Q_COMPLETE_READ_PRIORITY);
++	dirty_block(block);
++	return VDO_SUCCESS;
 +}
 +
 +/**
-+ * start_verifying() - Begin the data verification phase.
-+ * @lock: The hash lock (must be LOCKING).
-+ * @agent: The data_vio to use to read and compare candidate data.
++ * find_zero_byte_in_word() - Find the array index of the first zero byte in word-sized range of
++ *                            reference counters.
++ * @word_ptr: A pointer to the eight counter bytes to check.
++ * @start_index: The array index corresponding to word_ptr[0].
++ * @fail_index: The array index to return if no zero byte is found.
 + *
-+ * Continue the deduplication path for a hash lock by using the agent to read (and possibly
-+ * decompress) the data at the candidate duplicate location, comparing it to the data in the agent
-+ * to verify that the candidate is identical to all the data_vios sharing the hash. If so, it can
-+ * be deduplicated against, otherwise a data_vio allocation will have to be written to and used for
-+ * dedupe.
++ * The search does no bounds checking; the function relies on the array being sufficiently padded.
++ *
++ * Return: The array index of the first zero byte in the word, or the value passed as fail_index if
++ *         no zero byte was found.
 + */
-+static void start_verifying(struct hash_lock *lock, struct data_vio *agent)
++static inline slab_block_number
++find_zero_byte_in_word(const u8 *word_ptr,
++		       slab_block_number start_index,
++		       slab_block_number fail_index)
 +{
-+	int result;
-+	struct vio *vio = &agent->vio;
-+	char *buffer = (vdo_is_state_compressed(agent->duplicate.state) ?
-+			(char *) agent->compression.block :
-+			agent->scratch_block);
++	u64 word = get_unaligned_le64(word_ptr);
 +
-+	lock->state = VDO_HASH_LOCK_VERIFYING;
-+	ASSERT_LOG_ONLY(!lock->verified, "hash lock only verifies advice once");
++	/* This looks like a loop, but GCC will unroll the eight iterations for us. */
++	unsigned int offset;
 +
-+	agent->last_async_operation = VIO_ASYNC_OP_VERIFY_DUPLICATION;
-+	result = vio_reset_bio(vio, buffer, verify_endio, REQ_OP_READ, agent->duplicate.pbn);
-+	if (result != VDO_SUCCESS) {
-+		set_data_vio_hash_zone_callback(agent, finish_verifying);
-+		continue_data_vio_with_error(agent, result);
-+		return;
++	for (offset = 0; offset < BYTES_PER_WORD; offset++) {
++		/* Assumes little-endian byte order, which we have on X86. */
++		if ((word & 0xFF) == 0)
++			return (start_index + offset);
++		word >>= 8;
 +	}
 +
-+	set_data_vio_bio_zone_callback(agent, process_vio_io);
-+	vdo_launch_completion_with_priority(&vio->completion, BIO_Q_VERIFY_PRIORITY);
++	return fail_index;
 +}
 +
 +/**
-+ * finish_locking() - Handle the result of the agent for the lock attempting to obtain a PBN read
-+ *                    lock on the candidate duplicate block.
-+ * @completion: The completion of the data_vio that attempted to get the read lock.
++ * vdo_find_free_block() - Find the first block with a reference count of zero in the specified
++ *                         range of reference counter indexes.
++ * @slab: The slab counters to scan.
++ * @index_ptr: A pointer to hold the array index of the free block.
 + *
-+ * This continuation is registered in lock_duplicate_pbn().
++ * Exposed for unit testing.
++ *
++ * Return: true if a free block was found in the specified range.
 + */
-+static void finish_locking(struct vdo_completion *completion)
++static bool
++find_free_block(const struct vdo_slab *slab, slab_block_number *index_ptr)
 +{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct hash_lock *lock = agent->hash_lock;
++	slab_block_number zero_index;
++	slab_block_number next_index = slab->search_cursor.index;
++	slab_block_number end_index = slab->search_cursor.end_index;
++	u8 *next_counter = &slab->counters[next_index];
++	u8 *end_counter = &slab->counters[end_index];
 +
-+	assert_hash_lock_agent(agent, __func__);
-+
-+	if (!agent->is_duplicate) {
-+		ASSERT_LOG_ONLY(lock->duplicate_lock == NULL,
-+				"must not hold duplicate_lock if not flagged as a duplicate");
-+		/*
-+		 * LOCKING -> WRITING transition: The advice block is being modified or has no
-+		 * available references, so try to write or compress the data, remembering to
-+		 * update UDS later with the new advice.
-+		 */
-+		increment_stat(&agent->hash_zone->statistics.dedupe_advice_stale);
-+		lock->update_advice = true;
-+		start_writing(lock, agent);
-+		return;
-+	}
-+
-+	ASSERT_LOG_ONLY(lock->duplicate_lock != NULL,
-+			"must hold duplicate_lock if flagged as a duplicate");
-+
-+	if (!lock->verified) {
-+		/*
-+		 * LOCKING -> VERIFYING transition: Continue on the unverified dedupe path, reading
-+		 * the candidate duplicate and comparing it to the agent's data to decide whether
-+		 * it is a true duplicate or stale advice.
-+		 */
-+		start_verifying(lock, agent);
-+		return;
-+	}
-+
-+	if (!vdo_claim_pbn_lock_increment(lock->duplicate_lock)) {
-+		/*
-+		 * LOCKING -> UNLOCKING transition: The verified block was re-locked, but has no
-+		 * available increments left. Must first release the useless PBN read lock before
-+		 * rolling over to a new copy of the block.
-+		 */
-+		agent->is_duplicate = false;
-+		lock->verified = false;
-+		lock->update_advice = true;
-+		start_unlocking(lock, agent);
-+		return;
++	/*
++	 * Search every byte of the first unaligned word. (Array is padded so reading past end is
++	 * safe.)
++	 */
++	zero_index = find_zero_byte_in_word(next_counter, next_index, end_index);
++	if (zero_index < end_index) {
++		*index_ptr = zero_index;
++		return true;
 +	}
 +
 +	/*
-+	 * LOCKING -> DEDUPING transition: Continue on the verified dedupe path, deduplicating
-+	 * against a location that was previously verified or written to.
++	 * On architectures where unaligned word access is expensive, this would be a good place to
++	 * advance to an alignment boundary.
 +	 */
-+	start_deduping(lock, agent, false);
-+}
++	next_index += BYTES_PER_WORD;
++	next_counter += BYTES_PER_WORD;
 +
-+static bool acquire_provisional_reference(struct data_vio *agent,
-+					  struct pbn_lock *lock,
-+					  struct slab_depot *depot)
-+{
-+	/* Ensure that the newly-locked block is referenced. */
-+	struct vdo_slab *slab = vdo_get_slab(depot, agent->duplicate.pbn);
-+	int result = vdo_acquire_provisional_reference(slab, agent->duplicate.pbn, lock);
++	/*
++	 * Now we're word-aligned; check an word at a time until we find a word containing a zero.
++	 * (Array is padded so reading past end is safe.)
++	 */
++	while (next_counter < end_counter) {
++		/*
++		 * The following code is currently an exact copy of the code preceding the loop,
++		 * but if you try to merge them by using a do loop, it runs slower because a jump
++		 * instruction gets added at the start of the iteration.
++		 */
++		zero_index = find_zero_byte_in_word(next_counter, next_index, end_index);
++		if (zero_index < end_index) {
++			*index_ptr = zero_index;
++			return true;
++		}
 +
-+	if (result == VDO_SUCCESS)
-+		return true;
++		next_index += BYTES_PER_WORD;
++		next_counter += BYTES_PER_WORD;
++	}
 +
-+	uds_log_warning_strerror(result,
-+				 "Error acquiring provisional reference for dedupe candidate; aborting dedupe");
-+	agent->is_duplicate = false;
-+	vdo_release_physical_zone_pbn_lock(agent->duplicate.zone, agent->duplicate.pbn, lock);
-+	continue_data_vio_with_error(agent, result);
 +	return false;
 +}
 +
 +/**
-+ * lock_duplicate_pbn() - Acquire a read lock on the PBN of the block containing candidate
-+ *                        duplicate data (compressed or uncompressed).
-+ * @completion: The completion of the data_vio attempting to acquire the physical block lock on
-+ *              behalf of its hash lock.
++ * search_current_reference_block() - Search the reference block currently saved in the search
++ *                                    cursor for a reference count of zero, starting at the saved
++ *                                    counter index.
++ * @slab: The slab to search.
++ * @free_index_ptr: A pointer to receive the array index of the zero reference count.
 + *
-+ * If the PBN is already locked for writing, the lock attempt is abandoned and is_duplicate will be
-+ * cleared before calling back. this continuation is launched from start_locking(), and calls back
-+ * to finish_locking() on the hash zone thread.
++ * Return: true if an unreferenced counter was found.
 + */
-+static void lock_duplicate_pbn(struct vdo_completion *completion)
++static bool search_current_reference_block(const struct vdo_slab *slab,
++					   slab_block_number *free_index_ptr)
 +{
-+	unsigned int increment_limit;
-+	struct pbn_lock *lock;
-+	int result;
-+
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct slab_depot *depot = vdo_from_data_vio(agent)->depot;
-+	struct physical_zone *zone = agent->duplicate.zone;
-+
-+	assert_data_vio_in_duplicate_zone(agent);
-+
-+	set_data_vio_hash_zone_callback(agent, finish_locking);
-+
-+	/*
-+	 * While in the zone that owns it, find out how many additional references can be made to
-+	 * the block if it turns out to truly be a duplicate.
-+	 */
-+	increment_limit = vdo_get_increment_limit(depot, agent->duplicate.pbn);
-+	if (increment_limit == 0) {
-+		/*
-+		 * We could deduplicate against it later if a reference happened to be released
-+		 * during verification, but it's probably better to bail out now.
-+		 */
-+		agent->is_duplicate = false;
-+		continue_data_vio(agent);
-+		return;
-+	}
-+
-+	result = vdo_attempt_physical_zone_pbn_lock(zone,
-+						    agent->duplicate.pbn,
-+						    VIO_READ_LOCK,
-+						    &lock);
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(agent, result);
-+		return;
-+	}
-+
-+	if (!vdo_is_pbn_read_lock(lock)) {
-+		/*
-+		 * There are three cases of write locks: uncompressed data block writes, compressed
-+		 * (packed) block writes, and block map page writes. In all three cases, we give up
-+		 * on trying to verify the advice and don't bother to try deduplicate against the
-+		 * data in the write lock holder.
-+		 *
-+		 * 1) We don't ever want to try to deduplicate against a block map page.
-+		 *
-+		 * 2a) It's very unlikely we'd deduplicate against an entire packed block, both
-+		 * because of the chance of matching it, and because we don't record advice for it,
-+		 * but for the uncompressed representation of all the fragments it contains. The
-+		 * only way we'd be getting lock contention is if we've written the same
-+		 * representation coincidentally before, had it become unreferenced, and it just
-+		 * happened to be packed together from compressed writes when we go to verify the
-+		 * lucky advice. Giving up is a minuscule loss of potential dedupe.
-+		 *
-+		 * 2b) If the advice is for a slot of a compressed block, it's about to get
-+		 * smashed, and the write smashing it cannot contain our data--it would have to be
-+		 * writing on behalf of our hash lock, but that's impossible since we're the lock
-+		 * agent.
-+		 *
-+		 * 3a) If the lock is held by a data_vio with different data, the advice is already
-+		 * stale or is about to become stale.
-+		 *
-+		 * 3b) If the lock is held by a data_vio that matches us, we may as well either
-+		 * write it ourselves (or reference the copy we already wrote) instead of
-+		 * potentially having many duplicates wait for the lock holder to write, journal,
-+		 * hash, and finally arrive in the hash lock. We lose a chance to avoid a UDS
-+		 * update in the very rare case of advice for a free block that just happened to be
-+		 * allocated to a data_vio with the same hash. There's also a chance to save on a
-+		 * block write, at the cost of a block verify. Saving on a full block compare in
-+		 * all stale advice cases almost certainly outweighs saving a UDS update and
-+		 * trading a write for a read in a lucky case where advice would have been saved
-+		 * from becoming stale.
-+		 */
-+		agent->is_duplicate = false;
-+		continue_data_vio(agent);
-+		return;
-+	}
-+
-+	if (lock->holder_count == 0) {
-+		if (!acquire_provisional_reference(agent, lock, depot))
-+			return;
-+
-+		/*
-+		 * The increment limit we grabbed earlier is still valid. The lock now holds the
-+		 * rights to acquire all those references. Those rights will be claimed by hash
-+		 * locks sharing this read lock.
-+		 */
-+		lock->increment_limit = increment_limit;
-+	}
-+
-+	/*
-+	 * We've successfully acquired a read lock on behalf of the hash lock, so mark it as such.
-+	 */
-+	set_duplicate_lock(agent->hash_lock, lock);
-+
-+	/*
-+	 * TODO: Optimization: We could directly launch the block verify, then switch to a hash
-+	 * thread.
-+	 */
-+	continue_data_vio(agent);
++	/* Don't bother searching if the current block is known to be full. */
++	return ((slab->search_cursor.block->allocated_count < COUNTS_PER_BLOCK) &&
++		find_free_block(slab, free_index_ptr));
 +}
 +
 +/**
-+ * start_locking() - Continue deduplication for a hash lock that has obtained valid advice of a
-+ *                   potential duplicate through its agent.
-+ * @lock: The hash lock (currently must be QUERYING).
-+ * @agent: The data_vio bearing the dedupe advice.
++ * search_reference_blocks() - Search each reference block for a reference count of zero.
++ * @slab: The slab to search.
++ * @free_index_ptr: A pointer to receive the array index of the zero reference count.
++ *
++ * Searches each reference block for a reference count of zero, starting at the reference block and
++ * counter index saved in the search cursor and searching up to the end of the last reference
++ * block. The search does not wrap.
++ *
++ * Return: true if an unreferenced counter was found.
 + */
-+static void start_locking(struct hash_lock *lock, struct data_vio *agent)
++static bool
++search_reference_blocks(struct vdo_slab *slab, slab_block_number *free_index_ptr)
 +{
-+	ASSERT_LOG_ONLY(lock->duplicate_lock == NULL,
-+			"must not acquire a duplicate lock when already holding it");
++	/* Start searching at the saved search position in the current block. */
++	if (search_current_reference_block(slab, free_index_ptr))
++		return true;
 +
-+	lock->state = VDO_HASH_LOCK_LOCKING;
++	/* Search each reference block up to the end of the slab. */
++	while (advance_search_cursor(slab))
++		if (search_current_reference_block(slab, free_index_ptr))
++			return true;
 +
-+	/*
-+	 * TODO: Optimization: If we arrange to continue on the duplicate zone thread when
-+	 * accepting the advice, and don't explicitly change lock states (or use an agent-local
-+	 * state, or an atomic), we can avoid a thread transition here.
-+	 */
-+	agent->last_async_operation = VIO_ASYNC_OP_LOCK_DUPLICATE_PBN;
-+	launch_data_vio_duplicate_zone_callback(agent, lock_duplicate_pbn);
++	return false;
 +}
 +
 +/**
-+ * finish_writing() - Re-entry point for the lock agent after it has finished writing or
-+ *                    compressing its copy of the data block.
-+ * @lock: The hash lock, which must be in state WRITING.
-+ * @agent: The data_vio that wrote its data for the lock.
-+ *
-+ * The agent will never need to dedupe against anything, so it's done with the lock, but the lock
-+ * may not be finished with it, as a UDS update might still be needed.
-+ *
-+ * If there are other lock holders, the agent will hand the job to one of them and exit, leaving
-+ * the lock to deduplicate against the just-written block. If there are no other lock holders, the
-+ * agent either exits (and later tears down the hash lock), or it remains the agent and updates
-+ * UDS.
++ * make_provisional_reference() - Do the bookkeeping for making a provisional reference.
 + */
-+static void finish_writing(struct hash_lock *lock, struct data_vio *agent)
++static void
++make_provisional_reference(struct vdo_slab *slab, slab_block_number block_number)
 +{
-+	/*
-+	 * Dedupe against the data block or compressed block slot the agent wrote. Since we know
-+	 * the write succeeded, there's no need to verify it.
-+	 */
-+	lock->duplicate = agent->new_mapped;
-+	lock->verified = true;
-+
-+	if (vdo_is_state_compressed(lock->duplicate.state) &&
-+	    lock->registered)
-+		/*
-+		 * Compression means the location we gave in the UDS query is not the location
-+		 * we're using to deduplicate.
-+		 */
-+		lock->update_advice = true;
-+
-+	/* If there are any waiters, we need to start deduping them. */
-+	if (vdo_has_waiters(&lock->waiters)) {
-+		/*
-+		 * WRITING -> DEDUPING transition: an asynchronously-written block failed to
-+		 * compress, so the PBN lock on the written copy was already transferred. The agent
-+		 * is done with the lock, but the lock may still need to use it to clean up after
-+		 * rollover.
-+		 */
-+		start_deduping(lock, agent, true);
-+		return;
-+	}
++	struct reference_block *block = get_reference_block(slab, block_number);
 +
 +	/*
-+	 * There are no waiters and the agent has successfully written, so take a step towards
-+	 * being able to release the hash lock (or just release it).
++	 * Make the initial transition from an unreferenced block to a
++	 * provisionally allocated block.
 +	 */
-+	if (lock->update_advice) {
-+		/*
-+		 * WRITING -> UPDATING transition: There's no waiter and a UDS update is needed, so
-+		 * retain the WRITING agent and use it to launch the update. The happens on
-+		 * compression, rollover, or the QUERYING agent not having an allocation.
-+		 */
-+		start_updating(lock, agent);
-+	} else if (lock->duplicate_lock != NULL) {
-+		/*
-+		 * WRITING -> UNLOCKING transition: There's no waiter and no update needed, but the
-+		 * compressed write gave us a shared duplicate lock that we must release.
-+		 */
-+		set_duplicate_location(agent, lock->duplicate);
-+		start_unlocking(lock, agent);
-+	} else {
-+		/*
-+		 * WRITING -> BYPASSING transition: There's no waiter, no update needed, and no
-+		 * duplicate lock held, so both the agent and lock have no more work to do. The
-+		 * agent will release its allocation lock in cleanup.
-+		 */
-+		start_bypassing(lock, agent);
-+	}
++	slab->counters[block_number] = PROVISIONAL_REFERENCE_COUNT;
++
++	/* Account for the allocation. */
++	block->allocated_count++;
++	slab->free_blocks--;
 +}
 +
 +/**
-+ * select_writing_agent() - Search through the lock waiters for a data_vio that has an allocation.
-+ * @lock: The hash lock to modify.
-+ *
-+ * If an allocation is found, swap agents, put the old agent at the head of the wait queue, then
-+ * return the new agent. Otherwise, just return the current agent.
++ * dirty_all_reference_blocks() - Mark all reference count blocks in a slab as dirty.
 + */
-+static struct data_vio *select_writing_agent(struct hash_lock *lock)
++static void dirty_all_reference_blocks(struct vdo_slab *slab)
 +{
-+	struct wait_queue temp_queue;
-+	struct data_vio *data_vio;
++	block_count_t i;
 +
-+	vdo_initialize_wait_queue(&temp_queue);
-+
-+	/*
-+	 * Move waiters to the temp queue one-by-one until we find an allocation. Not ideal to
-+	 * search, but it only happens when nearly out of space.
-+	 */
-+	while (((data_vio = dequeue_lock_waiter(lock)) != NULL) &&
-+	       !data_vio_has_allocation(data_vio)) {
-+		/* Use the lower-level enqueue since we're just moving waiters around. */
-+		vdo_enqueue_waiter(&temp_queue, &data_vio->waiter);
-+	}
-+
-+	if (data_vio != NULL) {
-+		/*
-+		 * Move the rest of the waiters over to the temp queue, preserving the order they
-+		 * arrived at the lock.
-+		 */
-+		vdo_transfer_all_waiters(&lock->waiters, &temp_queue);
-+
-+		/*
-+		 * The current agent is being replaced and will have to wait to dedupe; make it the
-+		 * first waiter since it was the first to reach the lock.
-+		 */
-+		vdo_enqueue_waiter(&lock->waiters, &lock->agent->waiter);
-+		lock->agent = data_vio;
-+	} else {
-+		/* No one has an allocation, so keep the current agent. */
-+		data_vio = lock->agent;
-+	}
-+
-+	/* Swap all the waiters back onto the lock's queue. */
-+	vdo_transfer_all_waiters(&temp_queue, &lock->waiters);
-+	return data_vio;
++	for (i = 0; i < slab->reference_block_count; i++)
++		dirty_block(&slab->reference_blocks[i]);
 +}
 +
 +/**
-+ * start_writing() - Begin the non-duplicate write path.
-+ * @lock: The hash lock (currently must be QUERYING).
-+ * @agent: The data_vio currently acting as the agent for the lock.
-+ *
-+ * Begins the non-duplicate write path for a hash lock that had no advice, selecting a data_vio
-+ * with an allocation as a new agent, if necessary, then resuming the agent on the data_vio write
-+ * path.
++ * clear_provisional_references() - Clear the provisional reference counts from a reference block.
++ * @block: The block to clear.
 + */
-+static void start_writing(struct hash_lock *lock, struct data_vio *agent)
++static void clear_provisional_references(struct reference_block *block)
 +{
-+	lock->state = VDO_HASH_LOCK_WRITING;
++	vdo_refcount_t *counters = get_reference_counters_for_block(block);
++	block_count_t j;
 +
-+	/*
-+	 * The agent might not have received an allocation and so can't be used for writing, but
-+	 * it's entirely possible that one of the waiters did.
-+	 */
-+	if (!data_vio_has_allocation(agent)) {
-+		agent = select_writing_agent(lock);
-+		/* If none of the waiters had an allocation, the writes all have to fail. */
-+		if (!data_vio_has_allocation(agent)) {
-+			/*
-+			 * TODO: Should we keep a variant of BYPASSING that causes new arrivals to
-+			 * fail immediately if they don't have an allocation? It might be possible
-+			 * that on some path there would be non-waiters still referencing the lock,
-+			 * so it would remain in the map as everything is currently spelled, even
-+			 * if the agent and all waiters release.
-+			 */
-+			continue_data_vio_with_error(agent, VDO_NO_SPACE);
-+			return;
++	for (j = 0; j < COUNTS_PER_BLOCK; j++) {
++		if (counters[j] == PROVISIONAL_REFERENCE_COUNT) {
++			counters[j] = EMPTY_REFERENCE_COUNT;
++			block->allocated_count--;
++		}
++	}
++}
++
++static inline bool journal_points_equal(struct journal_point first, struct journal_point second)
++{
++	return ((first.sequence_number == second.sequence_number) &&
++		(first.entry_count == second.entry_count));
++}
++
++/**
++ * unpack_reference_block() - Unpack reference counts blocks into the internal memory structure.
++ * @packed: The written reference block to be unpacked.
++ * @block: The internal reference block to be loaded.
++ */
++static void
++unpack_reference_block(struct packed_reference_block *packed, struct reference_block *block)
++{
++	block_count_t index;
++	sector_count_t i;
++	struct vdo_slab *slab = block->slab;
++	vdo_refcount_t *counters = get_reference_counters_for_block(block);
++
++	for (i = 0; i < VDO_SECTORS_PER_BLOCK; i++) {
++		struct packed_reference_sector *sector = &packed->sectors[i];
++
++		vdo_unpack_journal_point(&sector->commit_point, &block->commit_points[i]);
++		memcpy(counters + (i * COUNTS_PER_SECTOR),
++		       sector->counts,
++		       (sizeof(vdo_refcount_t) * COUNTS_PER_SECTOR));
++		/* The slab_journal_point must be the latest point found in any sector. */
++		if (vdo_before_journal_point(&slab->slab_journal_point, &block->commit_points[i]))
++			slab->slab_journal_point = block->commit_points[i];
++
++		if ((i > 0) &&
++		    !journal_points_equal(block->commit_points[0], block->commit_points[i])) {
++			size_t block_index = block - block->slab->reference_blocks;
++
++			uds_log_warning("Torn write detected in sector %u of reference block %zu of slab %u",
++					i,
++					block_index,
++					block->slab->slab_number);
 +		}
 +	}
 +
-+	/*
-+	 * If the agent compresses, it might wait indefinitely in the packer, which would be bad if
-+	 * there are any other data_vios waiting.
-+	 */
-+	if (vdo_has_waiters(&lock->waiters))
-+		cancel_data_vio_compression(agent);
-+
-+	/*
-+	 * Send the agent to the compress/pack/write path in vioWrite. If it succeeds, it will
-+	 * return to the hash lock via vdo_continue_hash_lock() and call finish_writing().
-+	 */
-+	launch_compress_data_vio(agent);
++	block->allocated_count = 0;
++	for (index = 0; index < COUNTS_PER_BLOCK; index++)
++		if (counters[index] != EMPTY_REFERENCE_COUNT)
++			block->allocated_count++;
 +}
 +
-+/*
-+ * Decode VDO duplicate advice from the old_metadata field of a UDS request.
-+ * Returns true if valid advice was found and decoded
++/**
++ * finish_reference_block_load() - After a reference block has been read, unpack it.
++ * @completion: The VIO that just finished reading.
 + */
-+static bool decode_uds_advice(struct dedupe_context *context)
++static void finish_reference_block_load(struct vdo_completion *completion)
 +{
-+	const struct uds_request *request = &context->request;
-+	struct data_vio *data_vio = context->requestor;
-+	size_t offset = 0;
-+	const struct uds_record_data *encoding = &request->old_metadata;
-+	struct vdo *vdo = vdo_from_data_vio(data_vio);
-+	struct zoned_pbn *advice = &data_vio->duplicate;
-+	u8 version;
-+	int result;
++	struct vio *vio = as_vio(completion);
++	struct pooled_vio *pooled = vio_as_pooled_vio(vio);
++	struct reference_block *block = completion->parent;
++	struct vdo_slab *slab = block->slab;
 +
-+	if ((request->status != UDS_SUCCESS) || !request->found)
-+		return false;
++	unpack_reference_block((struct packed_reference_block *) vio->data, block);
++	return_vio_to_pool(slab->allocator->vio_pool, pooled);
++	slab->active_count--;
++	clear_provisional_references(block);
 +
-+	version = encoding->data[offset++];
-+	if (version != UDS_ADVICE_VERSION) {
-+		uds_log_error("invalid UDS advice version code %u", version);
-+		return false;
-+	}
-+
-+	advice->state = encoding->data[offset++];
-+	advice->pbn = get_unaligned_le64(&encoding->data[offset]);
-+	offset += sizeof(u64);
-+	BUG_ON(offset != UDS_ADVICE_SIZE);
-+
-+	/* Don't use advice that's clearly meaningless. */
-+	if ((advice->state == VDO_MAPPING_STATE_UNMAPPED) || (advice->pbn == VDO_ZERO_BLOCK)) {
-+		uds_log_debug("Invalid advice from deduplication server: pbn %llu, state %u. Giving up on deduplication of logical block %llu",
-+			      (unsigned long long) advice->pbn,
-+			      advice->state,
-+			      (unsigned long long) data_vio->logical.lbn);
-+		atomic64_inc(&vdo->stats.invalid_advice_pbn_count);
-+		return false;
-+	}
-+
-+	result = vdo_get_physical_zone(vdo, advice->pbn, &advice->zone);
-+	if ((result != VDO_SUCCESS) || (advice->zone == NULL)) {
-+		uds_log_debug("Invalid physical block number from deduplication server: %llu, giving up on deduplication of logical block %llu",
-+			      (unsigned long long) advice->pbn,
-+			      (unsigned long long) data_vio->logical.lbn);
-+		atomic64_inc(&vdo->stats.invalid_advice_pbn_count);
-+		return false;
-+	}
-+
-+	return true;
++	slab->free_blocks -= block->allocated_count;
++	check_if_slab_drained(slab);
 +}
 +
-+static void process_query_result(struct data_vio *agent)
++static void load_reference_block_endio(struct bio *bio)
 +{
-+	struct dedupe_context *context = agent->dedupe_context;
++	struct vio *vio = bio->bi_private;
++	struct reference_block *block = vio->completion.parent;
 +
-+	if (context == NULL)
-+		return;
++	continue_vio_after_io(vio, finish_reference_block_load, block->slab->allocator->thread_id);
++}
 +
-+	if (change_context_state(context, DEDUPE_CONTEXT_COMPLETE, DEDUPE_CONTEXT_IDLE)) {
-+		agent->is_duplicate = decode_uds_advice(context);
-+		release_context(context);
++/**
++ * load_reference_block() - After a block waiter has gotten a VIO from the VIO pool, load the
++ *                          block.
++ * @waiter: The waiter of the block to load.
++ * @context: The VIO returned by the pool.
++ */
++static void load_reference_block(struct waiter *waiter, void *context)
++{
++	struct pooled_vio *pooled = context;
++	struct vio *vio = &pooled->vio;
++	struct reference_block *block = container_of(waiter, struct reference_block, waiter);
++	size_t block_offset = (block - block->slab->reference_blocks);
++
++	vio->completion.parent = block;
++	submit_metadata_vio(vio,
++			    block->slab->ref_counts_origin + block_offset,
++			    load_reference_block_endio,
++			    handle_io_error,
++			    REQ_OP_READ);
++}
++
++/**
++ * load_reference_blocks() - Load a slab's reference blocks from the underlying storage into a
++ *                           pre-allocated reference counter.
++ */
++static void load_reference_blocks(struct vdo_slab *slab)
++{
++	block_count_t i;
++
++	slab->free_blocks = slab->block_count;
++	slab->active_count = slab->reference_block_count;
++	for (i = 0; i < slab->reference_block_count; i++) {
++		struct waiter *waiter = &slab->reference_blocks[i].waiter;
++
++		waiter->callback = load_reference_block;
++		acquire_vio_from_pool(slab->allocator->vio_pool, waiter);
 +	}
 +}
 +
 +/**
-+ * finish_querying() - Process the result of a UDS query performed by the agent for the lock.
-+ * @completion: The completion of the data_vio that performed the query.
++ * drain_slab() - Drain all reference count I/O.
 + *
-+ * This continuation is registered in start_querying().
++ * Depending upon the type of drain being performed (as recorded in the ref_count's vdo_slab), the
++ * reference blocks may be loaded from disk or dirty reference blocks may be written out.
 + */
-+static void finish_querying(struct vdo_completion *completion)
++static void drain_slab(struct vdo_slab *slab)
 +{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct hash_lock *lock = agent->hash_lock;
++	bool save;
++	bool load;
++	const struct admin_state_code *state = vdo_get_admin_state_code(&slab->state);
 +
-+	assert_hash_lock_agent(agent, __func__);
-+
-+	process_query_result(agent);
-+
-+	if (agent->is_duplicate) {
-+		lock->duplicate = agent->duplicate;
-+		/*
-+		 * QUERYING -> LOCKING transition: Valid advice was obtained from UDS. Use the
-+		 * QUERYING agent to start the hash lock on the unverified dedupe path, verifying
-+		 * that the advice can be used.
-+		 */
-+		start_locking(lock, agent);
-+	} else {
-+		/*
-+		 * The agent will be used as the duplicate if has an allocation; if it does, that
-+		 * location was posted to UDS, so no update will be needed.
-+		 */
-+		lock->update_advice = !data_vio_has_allocation(agent);
-+		/*
-+		 * QUERYING -> WRITING transition: There was no advice or the advice wasn't valid,
-+		 * so try to write or compress the data.
-+		 */
-+		start_writing(lock, agent);
-+	}
-+}
-+
-+/**
-+ * start_querying() - Start deduplication for a hash lock.
-+ * @lock: The initialized hash lock.
-+ * @data_vio: The data_vio that has just obtained the new lock.
-+ *
-+ * Starts deduplication for a hash lock that has finished initializing by making the data_vio that
-+ * requested it the agent, entering the QUERYING state, and using the agent to perform the UDS
-+ * query on behalf of the lock.
-+ */
-+static void start_querying(struct hash_lock *lock, struct data_vio *data_vio)
-+{
-+	lock->agent = data_vio;
-+	lock->state = VDO_HASH_LOCK_QUERYING;
-+	data_vio->last_async_operation = VIO_ASYNC_OP_CHECK_FOR_DUPLICATION;
-+	set_data_vio_hash_zone_callback(data_vio, finish_querying);
-+	query_index(data_vio, (data_vio_has_allocation(data_vio) ? UDS_POST : UDS_QUERY));
-+}
-+
-+/**
-+ * report_bogus_lock_state() - Complain that a data_vio has entered a hash_lock that is in an
-+ *                             unimplemented or unusable state and continue the data_vio with an
-+ *                             error.
-+ * @lock: The hash lock.
-+ * @data_vio: The data_vio attempting to enter the lock.
-+ */
-+static void report_bogus_lock_state(struct hash_lock *lock, struct data_vio *data_vio)
-+{
-+	ASSERT_LOG_ONLY(false,
-+			"hash lock must not be in unimplemented state %s",
-+			get_hash_lock_state_name(lock->state));
-+	continue_data_vio_with_error(data_vio, VDO_LOCK_ERROR);
-+}
-+
-+/**
-+ * vdo_continue_hash_lock() - Continue the processing state after writing, compressing, or
-+ *                            deduplicating.
-+ * @data_vio: The data_vio to continue processing in its hash lock.
-+ *
-+ * Asynchronously continue processing a data_vio in its hash lock after it has finished writing,
-+ * compressing, or deduplicating, so it can share the result with any data_vios waiting in the hash
-+ * lock, or update the UDS index, or simply release its share of the lock.
-+ *
-+ * Context: This must only be called in the correct thread for the hash zone.
-+ */
-+void vdo_continue_hash_lock(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+	struct hash_lock *lock = data_vio->hash_lock;
-+
-+	switch (lock->state) {
-+	case VDO_HASH_LOCK_WRITING:
-+		ASSERT_LOG_ONLY(data_vio == lock->agent,
-+				"only the lock agent may continue the lock");
-+		finish_writing(lock, data_vio);
-+		break;
-+
-+	case VDO_HASH_LOCK_DEDUPING:
-+		finish_deduping(lock, data_vio);
-+		break;
-+
-+	case VDO_HASH_LOCK_BYPASSING:
-+		/* This data_vio has finished the write path and the lock doesn't need it. */
-+		exit_hash_lock(data_vio);
-+		break;
-+
-+	case VDO_HASH_LOCK_INITIALIZING:
-+	case VDO_HASH_LOCK_QUERYING:
-+	case VDO_HASH_LOCK_UPDATING:
-+	case VDO_HASH_LOCK_LOCKING:
-+	case VDO_HASH_LOCK_VERIFYING:
-+	case VDO_HASH_LOCK_UNLOCKING:
-+		/* A lock in this state should never be re-entered. */
-+		report_bogus_lock_state(lock, data_vio);
-+		break;
-+
-+	default:
-+		report_bogus_lock_state(lock, data_vio);
-+	}
-+}
-+
-+/**
-+ * is_hash_collision() - Check to see if a hash collision has occurred.
-+ * @lock: The lock to check.
-+ * @candidate: The data_vio seeking to share the lock.
-+ *
-+ * Check whether the data in data_vios sharing a lock is different than in a data_vio seeking to
-+ * share the lock, which should only be possible in the extremely unlikely case of a hash
-+ * collision.
-+ *
-+ * Return: true if the given data_vio must not share the lock because it doesn't have the same data
-+ *         as the lock holders.
-+ */
-+static bool is_hash_collision(struct hash_lock *lock, struct data_vio *candidate)
-+{
-+	struct data_vio *lock_holder;
-+	struct hash_zone *zone;
-+	bool collides;
-+
-+	if (list_empty(&lock->duplicate_ring))
-+		return false;
-+
-+	lock_holder = list_first_entry(&lock->duplicate_ring, struct data_vio, hash_lock_entry);
-+	zone = candidate->hash_zone;
-+	collides = !blocks_equal(lock_holder->vio.data, candidate->vio.data);
-+	if (collides)
-+		increment_stat(&zone->statistics.concurrent_hash_collisions);
-+	else
-+		increment_stat(&zone->statistics.concurrent_data_matches);
-+
-+	return collides;
-+}
-+
-+static inline int assert_hash_lock_preconditions(const struct data_vio *data_vio)
-+{
-+	int result;
-+
-+	/* FIXME: BUG_ON() and/or enter read-only mode? */
-+	result = ASSERT(data_vio->hash_lock == NULL, "must not already hold a hash lock");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = ASSERT(list_empty(&data_vio->hash_lock_entry),
-+			"must not already be a member of a hash lock ring");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	return ASSERT(data_vio->recovery_sequence_number == 0,
-+		      "must not hold a recovery lock when getting a hash lock");
-+}
-+
-+/**
-+ * vdo_acquire_hash_lock() - Acquire or share a lock on a record name.
-+ * @data_vio: The data_vio acquiring a lock on its record name.
-+ *
-+ * Acquire or share a lock on the hash (record name) of the data in a data_vio, updating the
-+ * data_vio to reference the lock. This must only be called in the correct thread for the zone. In
-+ * the unlikely case of a hash collision, this function will succeed, but the data_vio will not get
-+ * a lock reference.
-+ */
-+void vdo_acquire_hash_lock(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+	struct hash_lock *lock;
-+	int result;
-+
-+	assert_data_vio_in_hash_zone(data_vio);
-+
-+	result = assert_hash_lock_preconditions(data_vio);
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(data_vio, result);
-+		return;
-+	}
-+
-+	result = acquire_lock(data_vio->hash_zone, &data_vio->record_name, NULL, &lock);
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(data_vio, result);
-+		return;
-+	}
-+
-+	if (is_hash_collision(lock, data_vio)) {
-+		/*
-+		 * Hash collisions are extremely unlikely, but the bogus dedupe would be a data
-+		 * corruption. Bypass optimization entirely. We can't compress a data_vio without
-+		 * a hash_lock as the compressed write depends on the hash_lock to manage the
-+		 * references for the compressed block.
-+		 */
-+		write_data_vio(data_vio);
-+		return;
-+	}
-+
-+	set_hash_lock(data_vio, lock);
-+	switch (lock->state) {
-+	case VDO_HASH_LOCK_INITIALIZING:
-+		start_querying(lock, data_vio);
++	if (state == VDO_ADMIN_STATE_SUSPENDING)
 +		return;
 +
-+	case VDO_HASH_LOCK_QUERYING:
-+	case VDO_HASH_LOCK_WRITING:
-+	case VDO_HASH_LOCK_UPDATING:
-+	case VDO_HASH_LOCK_LOCKING:
-+	case VDO_HASH_LOCK_VERIFYING:
-+	case VDO_HASH_LOCK_UNLOCKING:
-+		/* The lock is busy, and can't be shared yet. */
-+		wait_on_hash_lock(lock, data_vio);
++	if ((state != VDO_ADMIN_STATE_REBUILDING) && (state != VDO_ADMIN_STATE_SAVE_FOR_SCRUBBING))
++		commit_tail(&slab->journal);
++
++	if ((state == VDO_ADMIN_STATE_RECOVERING) || (slab->counters == NULL))
 +		return;
 +
-+	case VDO_HASH_LOCK_BYPASSING:
-+		/* We can't use this lock, so bypass optimization entirely. */
-+		vdo_release_hash_lock(data_vio);
-+		write_data_vio(data_vio);
-+		return;
-+
-+	case VDO_HASH_LOCK_DEDUPING:
-+		launch_dedupe(lock, data_vio, false);
-+		return;
-+
-+	default:
-+		/* A lock in this state should not be acquired by new VIOs. */
-+		report_bogus_lock_state(lock, data_vio);
-+	}
-+}
-+
-+/**
-+ * vdo_release_hash_lock() - Release a data_vio's share of a hash lock, if held, and null out the
-+ *                           data_vio's reference to it.
-+ * @data_vio: The data_vio releasing its hash lock.
-+ *
-+ * If the data_vio is the only one holding the lock, this also releases any resources or locks used
-+ * by the hash lock (such as a PBN read lock on a block containing data with the same hash) and
-+ * returns the lock to the hash zone's lock pool.
-+ *
-+ * Context: This must only be called in the correct thread for the hash zone.
-+ */
-+void vdo_release_hash_lock(struct data_vio *data_vio)
-+{
-+	struct hash_lock *lock = data_vio->hash_lock;
-+	struct hash_zone *zone = data_vio->hash_zone;
-+
-+	if (lock == NULL)
-+		return;
-+
-+	set_hash_lock(data_vio, NULL);
-+
-+	if (lock->reference_count > 0)
-+		/* The lock is still in use by other data_vios. */
-+		return;
-+
-+	if (lock->registered) {
-+		struct hash_lock *removed;
-+
-+		removed = vdo_pointer_map_remove(zone->hash_lock_map, &lock->hash);
-+		ASSERT_LOG_ONLY(lock == removed, "hash lock being released must have been mapped");
-+	} else {
-+		ASSERT_LOG_ONLY(lock != vdo_pointer_map_get(zone->hash_lock_map, &lock->hash),
-+				"unregistered hash lock must not be in the lock map");
-+	}
-+
-+	ASSERT_LOG_ONLY(!vdo_has_waiters(&lock->waiters),
-+			"hash lock returned to zone must have no waiters");
-+	ASSERT_LOG_ONLY((lock->duplicate_lock == NULL),
-+			"hash lock returned to zone must not reference a PBN lock");
-+	ASSERT_LOG_ONLY((lock->state == VDO_HASH_LOCK_BYPASSING),
-+			"returned hash lock must not be in use with state %s",
-+			get_hash_lock_state_name(lock->state));
-+	ASSERT_LOG_ONLY(list_empty(&lock->pool_node),
-+			"hash lock returned to zone must not be in a pool ring");
-+	ASSERT_LOG_ONLY(list_empty(&lock->duplicate_ring),
-+			"hash lock returned to zone must not reference DataVIOs");
-+
-+	return_hash_lock_to_pool(zone, lock);
-+}
-+
-+/**
-+ * transfer_allocation_lock() - Transfer a data_vio's downgraded allocation PBN lock to the
-+ *                              data_vio's hash lock, converting it to a duplicate PBN lock.
-+ * @data_vio: The data_vio holding the allocation lock to transfer.
-+ */
-+static void transfer_allocation_lock(struct data_vio *data_vio)
-+{
-+	struct allocation *allocation = &data_vio->allocation;
-+	struct hash_lock *hash_lock = data_vio->hash_lock;
-+
-+	ASSERT_LOG_ONLY(data_vio->new_mapped.pbn == allocation->pbn,
-+			"transferred lock must be for the block written");
-+
-+	allocation->pbn = VDO_ZERO_BLOCK;
-+
-+	ASSERT_LOG_ONLY(vdo_is_pbn_read_lock(allocation->lock),
-+			"must have downgraded the allocation lock before transfer");
-+
-+	hash_lock->duplicate = data_vio->new_mapped;
-+	data_vio->duplicate = data_vio->new_mapped;
-+
-+	/*
-+	 * Since the lock is being transferred, the holder count doesn't change (and isn't even
-+	 * safe to examine on this thread).
-+	 */
-+	hash_lock->duplicate_lock = UDS_FORGET(allocation->lock);
-+}
-+
-+/**
-+ * vdo_share_compressed_write_lock() - Make a data_vio's hash lock a shared holder of the PBN lock
-+ *                                     on the compressed block to which its data was just written.
-+ * @data_vio: The data_vio which was just compressed.
-+ * @pbn_lock: The PBN lock on the compressed block.
-+ *
-+ * If the lock is still a write lock (as it will be for the first share), it will be converted to a
-+ * read lock. This also reserves a reference count increment for the data_vio.
-+ */
-+void vdo_share_compressed_write_lock(struct data_vio *data_vio, struct pbn_lock *pbn_lock)
-+{
-+	bool claimed;
-+
-+	ASSERT_LOG_ONLY(vdo_get_duplicate_lock(data_vio) == NULL,
-+			"a duplicate PBN lock should not exist when writing");
-+	ASSERT_LOG_ONLY(vdo_is_state_compressed(data_vio->new_mapped.state),
-+			"lock transfer must be for a compressed write");
-+	assert_data_vio_in_new_mapped_zone(data_vio);
-+
-+	/* First sharer downgrades the lock. */
-+	if (!vdo_is_pbn_read_lock(pbn_lock))
-+		vdo_downgrade_pbn_write_lock(pbn_lock, true);
-+
-+	/*
-+	 * Get a share of the PBN lock, ensuring it cannot be released until after this data_vio
-+	 * has had a chance to journal a reference.
-+	 */
-+	data_vio->duplicate = data_vio->new_mapped;
-+	data_vio->hash_lock->duplicate = data_vio->new_mapped;
-+	set_duplicate_lock(data_vio->hash_lock, pbn_lock);
-+
-+	/*
-+	 * Claim a reference for this data_vio. Necessary since another hash_lock might start
-+	 * deduplicating against it before our incRef.
-+	 */
-+	claimed = vdo_claim_pbn_lock_increment(pbn_lock);
-+	ASSERT_LOG_ONLY(claimed, "impossible to fail to claim an initial increment");
-+}
-+
-+/** compare_keys() - Implements pointer_key_comparator. */
-+static bool compare_keys(const void *this_key, const void *that_key)
-+{
-+	/* Null keys are not supported. */
-+	return (memcmp(this_key, that_key, sizeof(struct uds_record_name)) == 0);
-+}
-+
-+/** hash_key() - Implements pointer_key_comparator. */
-+static u32 hash_key(const void *key)
-+{
-+	const struct uds_record_name *name = key;
-+
-+	/* Use a fragment of the record name as a hash code. */
-+	return get_unaligned_le32(&name->name[4]);
-+}
-+
-+static int __must_check
-+initialize_zone(struct vdo *vdo, struct hash_zones *zones, zone_count_t zone_number)
-+{
-+	int result;
-+	data_vio_count_t i;
-+	struct hash_zone *zone = &zones->zones[zone_number];
-+
-+	result = vdo_make_pointer_map(VDO_LOCK_MAP_CAPACITY,
-+				      0,
-+				      compare_keys,
-+				      hash_key,
-+				      &zone->hash_lock_map);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	vdo_set_admin_state_code(&zone->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
-+	zone->zone_number = zone_number;
-+	zone->thread_id = vdo->thread_config.hash_zone_threads[zone_number];
-+	vdo_initialize_completion(&zone->completion, vdo, VDO_HASH_ZONE_COMPLETION);
-+	vdo_set_completion_callback(&zone->completion,
-+				    timeout_index_operations_callback,
-+				    zone->thread_id);
-+	INIT_LIST_HEAD(&zone->lock_pool);
-+	result = UDS_ALLOCATE(LOCK_POOL_CAPACITY,
-+			      struct hash_lock,
-+			      "hash_lock array",
-+			      &zone->lock_array);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	for (i = 0; i < LOCK_POOL_CAPACITY; i++)
-+		return_hash_lock_to_pool(zone, &zone->lock_array[i]);
-+
-+	INIT_LIST_HEAD(&zone->available);
-+	INIT_LIST_HEAD(&zone->pending);
-+	result = uds_make_funnel_queue(&zone->timed_out_complete);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	timer_setup(&zone->timer, timeout_index_operations, 0);
-+
-+	for (i = 0; i < MAXIMUM_VDO_USER_VIOS; i++) {
-+		struct dedupe_context *context = &zone->contexts[i];
-+
-+		context->zone = zone;
-+		context->request.callback = finish_index_operation;
-+		context->request.session = zones->index_session;
-+		list_add(&context->list_entry, &zone->available);
-+	}
-+
-+	return vdo_make_default_thread(vdo, zone->thread_id);
-+}
-+
-+/** get_thread_id_for_zone() - Implements vdo_zone_thread_getter. */
-+static thread_id_t get_thread_id_for_zone(void *context, zone_count_t zone_number)
-+{
-+	struct hash_zones *zones = context;
-+
-+	return zones->zones[zone_number].thread_id;
-+}
-+
-+/**
-+ * vdo_make_hash_zones() - Create the hash zones.
-+ *
-+ * @vdo: The vdo to which the zone will belong.
-+ * @zones_ptr: A pointer to hold the zones.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+int vdo_make_hash_zones(struct vdo *vdo, struct hash_zones **zones_ptr)
-+{
-+	int result;
-+	struct hash_zones *zones;
-+	zone_count_t z;
-+	zone_count_t zone_count = vdo->thread_config.hash_zone_count;
-+
-+	if (zone_count == 0)
-+		return VDO_SUCCESS;
-+
-+	result = UDS_ALLOCATE_EXTENDED(struct hash_zones,
-+				       zone_count,
-+				       struct hash_zone,
-+				       __func__,
-+				       &zones);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = initialize_index(vdo, zones);
-+	if (result != VDO_SUCCESS) {
-+		UDS_FREE(zones);
-+		return result;
-+	}
-+
-+	vdo_set_admin_state_code(&zones->state, VDO_ADMIN_STATE_NEW);
-+
-+	zones->zone_count = zone_count;
-+	for (z = 0; z < zone_count; z++) {
-+		result = initialize_zone(vdo, zones, z);
-+		if (result != VDO_SUCCESS) {
-+			vdo_free_hash_zones(zones);
-+			return result;
++	save = false;
++	load = slab->allocator->summary_entries[slab->slab_number].load_ref_counts;
++	if (state == VDO_ADMIN_STATE_SCRUBBING) {
++		if (load) {
++			load_reference_blocks(slab);
++			return;
 +		}
++	} else if (state == VDO_ADMIN_STATE_SAVE_FOR_SCRUBBING) {
++		if (!load)
++			/* These reference counts were never written, so mark them all dirty. */
++			dirty_all_reference_blocks(slab);
++
++		save = true;
++	} else if (state == VDO_ADMIN_STATE_REBUILDING) {
++		/*
++		 * Write out the counters if the slab has written them before, or it has any
++		 * non-zero reference counts, or there are any slab journal blocks.
++		 */
++		block_count_t data_blocks = slab->allocator->depot->slab_config.data_blocks;
++
++		if (load ||
++		    (slab->free_blocks != data_blocks) ||
++		    !is_slab_journal_blank(slab)) {
++			dirty_all_reference_blocks(slab);
++			save = true;
++		}
++	} else if (state == VDO_ADMIN_STATE_SAVING) {
++		save = (slab->status == VDO_SLAB_REBUILT);
++	} else {
++		vdo_finish_draining_with_result(&slab->state, VDO_SUCCESS);
++		return;
 +	}
 +
-+	result = vdo_make_action_manager(zones->zone_count,
-+					 get_thread_id_for_zone,
-+					 vdo->thread_config.admin_thread,
-+					 zones,
-+					 NULL,
-+					 vdo,
-+					 &zones->manager);
-+	if (result != VDO_SUCCESS) {
-+		vdo_free_hash_zones(zones);
++	if (save)
++		save_dirty_reference_blocks(slab);
++}
++
++static int allocate_slab_counters(struct vdo_slab *slab)
++{
++	int result;
++	size_t index, bytes;
++
++	result = ASSERT(slab->reference_blocks == NULL,
++			"vdo_slab %u doesn't allocate refcounts twice",
++			slab->slab_number);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	result = UDS_ALLOCATE(slab->reference_block_count,
++			      struct reference_block,
++			      __func__,
++			      &slab->reference_blocks);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	/*
++	 * Allocate such that the runt slab has a full-length memory array, plus a little padding
++	 * so we can word-search even at the very end.
++	 */
++	bytes = (slab->reference_block_count * COUNTS_PER_BLOCK) + (2 * BYTES_PER_WORD);
++	result = UDS_ALLOCATE(bytes, vdo_refcount_t, "ref counts array", &slab->counters);
++	if (result != UDS_SUCCESS) {
++		UDS_FREE(UDS_FORGET(slab->reference_blocks));
 +		return result;
 +	}
 +
-+	*zones_ptr = zones;
++	slab->search_cursor.first_block = slab->reference_blocks;
++	slab->search_cursor.last_block = &slab->reference_blocks[slab->reference_block_count - 1];
++	reset_search_cursor(slab);
++
++	for (index = 0; index < slab->reference_block_count; index++) {
++		slab->reference_blocks[index] = (struct reference_block) {
++			.slab = slab,
++		};
++	}
++
 +	return VDO_SUCCESS;
 +}
 +
-+void vdo_finish_dedupe_index(struct hash_zones *zones)
++static int allocate_counters_if_clean(struct vdo_slab *slab)
 +{
-+	if (zones == NULL)
-+		return;
++	if (vdo_is_state_clean_load(&slab->state))
++		return allocate_slab_counters(slab);
 +
-+	uds_destroy_index_session(UDS_FORGET(zones->index_session));
++	return VDO_SUCCESS;
 +}
 +
-+/**
-+ * vdo_free_hash_zones() - Free the hash zones.
-+ * @zones: The zone to free.
-+ */
-+void vdo_free_hash_zones(struct hash_zones *zones)
++static void finish_loading_journal(struct vdo_completion *completion)
 +{
-+	zone_count_t i;
++	struct vio *vio = as_vio(completion);
++	struct slab_journal *journal = completion->parent;
++	struct vdo_slab *slab = journal->slab;
++	struct packed_slab_journal_block *block = (struct packed_slab_journal_block *) vio->data;
++	struct slab_journal_block_header header;
 +
-+	if (zones == NULL)
-+		return;
++	vdo_unpack_slab_journal_block_header(&block->header, &header);
 +
-+	UDS_FREE(UDS_FORGET(zones->manager));
++	/* FIXME: should it be an error if the following conditional fails? */
++	if ((header.metadata_type == VDO_METADATA_SLAB_JOURNAL) &&
++	    (header.nonce == slab->allocator->nonce)) {
++		journal->tail = header.sequence_number + 1;
 +
-+	for (i = 0; i < zones->zone_count; i++) {
-+		struct hash_zone *zone = &zones->zones[i];
-+
-+		uds_free_funnel_queue(UDS_FORGET(zone->timed_out_complete));
-+		vdo_free_pointer_map(UDS_FORGET(zone->hash_lock_map));
-+		UDS_FREE(UDS_FORGET(zone->lock_array));
++		/*
++		 * If the slab is clean, this implies the slab journal is empty, so advance the
++		 * head appropriately.
++		 */
++		journal->head = (slab->allocator->summary_entries[slab->slab_number].is_dirty ?
++				 header.head :
++				 journal->tail);
++		journal->tail_header = header;
++		initialize_journal_state(journal);
 +	}
 +
-+	if (zones->index_session != NULL)
-+		vdo_finish_dedupe_index(zones);
-+
-+	ratelimit_state_exit(&zones->ratelimiter);
-+	if (vdo_get_admin_state_code(&zones->state) == VDO_ADMIN_STATE_NEW)
-+		UDS_FREE(zones);
-+	else
-+		kobject_put(&zones->dedupe_directory);
++	return_vio_to_pool(slab->allocator->vio_pool, vio_as_pooled_vio(vio));
++	vdo_finish_loading_with_result(&slab->state, allocate_counters_if_clean(slab));
 +}
 +
-+static void initiate_suspend_index(struct admin_state *state)
++static void read_slab_journal_tail_endio(struct bio *bio)
 +{
-+	struct hash_zones *zones = container_of(state, struct hash_zones, state);
-+	enum index_state index_state;
++	struct vio *vio = bio->bi_private;
++	struct slab_journal *journal = vio->completion.parent;
 +
-+	spin_lock(&zones->lock);
-+	index_state = zones->index_state;
-+	spin_unlock(&zones->lock);
++	continue_vio_after_io(vio, finish_loading_journal, journal->slab->allocator->thread_id);
++}
 +
-+	if (index_state != IS_CLOSED) {
-+		bool save = vdo_is_state_saving(&zones->state);
-+		int result;
++static void handle_load_error(struct vdo_completion *completion)
++{
++	int result = completion->result;
++	struct slab_journal *journal = completion->parent;
++	struct vio *vio = as_vio(completion);
 +
-+		result = uds_suspend_index_session(zones->index_session, save);
-+		if (result != UDS_SUCCESS)
-+			uds_log_error_strerror(result, "Error suspending dedupe index");
-+	}
-+
-+	vdo_finish_draining(state);
++	vio_record_metadata_io_error(vio);
++	return_vio_to_pool(journal->slab->allocator->vio_pool, vio_as_pooled_vio(vio));
++	vdo_finish_loading_with_result(&journal->slab->state, result);
 +}
 +
 +/**
-+ * suspend_index() - Suspend the UDS index prior to draining hash zones.
++ * read_slab_journal_tail() - Read the slab journal tail block by using a vio acquired from the vio
++ *                            pool.
++ * @waiter: The vio pool waiter which has just been notified.
++ * @context: The vio pool entry given to the waiter.
 + *
-+ * Implements vdo_action_preamble
++ * This is the success callback from acquire_vio_from_pool() when loading a slab journal.
 + */
-+static void suspend_index(void *context, struct vdo_completion *completion)
++static void read_slab_journal_tail(struct waiter *waiter, void *context)
 +{
-+	struct hash_zones *zones = context;
++	struct slab_journal *journal = container_of(waiter, struct slab_journal, resource_waiter);
++	struct vdo_slab *slab = journal->slab;
++	struct pooled_vio *pooled = context;
++	struct vio *vio = &pooled->vio;
++	tail_block_offset_t last_commit_point =
++		slab->allocator->summary_entries[slab->slab_number].tail_block_offset;
 +
-+	vdo_start_draining(&zones->state,
-+			   vdo_get_current_manager_operation(zones->manager),
-+			   completion,
-+			   initiate_suspend_index);
++	/*
++	 * Slab summary keeps the commit point offset, so the tail block is the block before that.
++	 * Calculation supports small journals in unit tests.
++	 */
++	tail_block_offset_t tail_block = ((last_commit_point == 0) ?
++					  (tail_block_offset_t)(journal->size - 1) :
++					  (last_commit_point - 1));
++
++	vio->completion.parent = journal;
++	vio->completion.callback_thread_id = slab->allocator->thread_id;
++	submit_metadata_vio(vio,
++			    slab->journal_origin + tail_block,
++			    read_slab_journal_tail_endio,
++			    handle_load_error,
++			    REQ_OP_READ);
 +}
 +
 +/**
-+ * initiate_drain() - Initiate a drain.
-+ *
-+ * Implements vdo_admin_initiator.
++ * load_slab_journal() - Load a slab's journal by reading the journal's tail.
 + */
-+static void initiate_drain(struct admin_state *state)
++static void load_slab_journal(struct vdo_slab *slab)
 +{
-+	check_for_drain_complete(container_of(state, struct hash_zone, state));
-+}
++	struct slab_journal *journal = &slab->journal;
++	tail_block_offset_t last_commit_point;
 +
-+/**
-+ * drain_hash_zone() - Drain a hash zone.
-+ *
-+ * Implements vdo_zone_action.
-+ */
-+static void drain_hash_zone(void *context, zone_count_t zone_number, struct vdo_completion *parent)
-+{
-+	struct hash_zones *zones = context;
-+
-+	vdo_start_draining(&zones->zones[zone_number].state,
-+			   vdo_get_current_manager_operation(zones->manager),
-+			   parent,
-+			   initiate_drain);
-+}
-+
-+/** vdo_drain_hash_zones() - Drain all hash zones. */
-+void vdo_drain_hash_zones(struct hash_zones *zones, struct vdo_completion *parent)
-+{
-+	vdo_schedule_operation(zones->manager,
-+			       parent->vdo->suspend_type,
-+			       suspend_index,
-+			       drain_hash_zone,
-+			       NULL,
-+			       parent);
-+}
-+
-+static void launch_dedupe_state_change(struct hash_zones *zones)
-+{
-+	/* ASSERTION: We enter with the lock held. */
-+	if (zones->changing || !vdo_is_state_normal(&zones->state))
-+		/* Either a change is already in progress, or changes are not allowed. */
-+		return;
-+
-+	if (zones->create_flag || (zones->index_state != zones->index_target)) {
-+		zones->changing = true;
-+		vdo_launch_completion(&zones->completion);
++	last_commit_point = slab->allocator->summary_entries[slab->slab_number].tail_block_offset;
++	if ((last_commit_point == 0) &&
++	    !slab->allocator->summary_entries[slab->slab_number].load_ref_counts) {
++		/*
++		 * This slab claims that it has a tail block at (journal->size - 1), but a head of
++		 * 1. This is impossible, due to the scrubbing threshold, on a real system, so
++		 * don't bother reading the (bogus) data off disk.
++		 */
++		ASSERT_LOG_ONLY(((journal->size < 16) ||
++				 (journal->scrubbing_threshold < (journal->size - 1))),
++				"Scrubbing threshold protects against reads of unwritten slab journal blocks");
++		vdo_finish_loading_with_result(&slab->state, allocate_counters_if_clean(slab));
 +		return;
 +	}
 +
-+	/* ASSERTION: We exit with the lock held. */
++	journal->resource_waiter.callback = read_slab_journal_tail;
++	acquire_vio_from_pool(slab->allocator->vio_pool, &journal->resource_waiter);
 +}
 +
-+/**
-+ * resume_index() - Resume the UDS index prior to resuming hash zones.
-+ *
-+ * Implements vdo_action_preamble
-+ */
-+static void resume_index(void *context, struct vdo_completion *parent)
++static void free_slab(struct vdo_slab *slab)
 +{
-+	struct hash_zones *zones = context;
-+	struct device_config *config = parent->vdo->device_config;
++	if (slab == NULL)
++		return;
++
++	list_del(&slab->allocq_entry);
++	UDS_FREE(UDS_FORGET(slab->journal.block));
++	UDS_FREE(UDS_FORGET(slab->journal.locks));
++	UDS_FREE(UDS_FORGET(slab->counters));
++	UDS_FREE(UDS_FORGET(slab->reference_blocks));
++	UDS_FREE(slab);
++}
++
++static int initialize_slab_journal(struct vdo_slab *slab)
++{
++	struct slab_journal *journal = &slab->journal;
++	const struct slab_config *slab_config = &slab->allocator->depot->slab_config;
 +	int result;
 +
-+	zones->parameters.name = config->parent_device_name;
-+	result = uds_resume_index_session(zones->index_session, zones->parameters.name);
-+	if (result != UDS_SUCCESS)
-+		uds_log_error_strerror(result, "Error resuming dedupe index");
++	result = UDS_ALLOCATE(slab_config->slab_journal_blocks,
++			      struct journal_lock,
++			      __func__,
++			      &journal->locks);
++	if (result != VDO_SUCCESS)
++		return result;
 +
-+	spin_lock(&zones->lock);
-+	vdo_resume_if_quiescent(&zones->state);
++	result = UDS_ALLOCATE(VDO_BLOCK_SIZE,
++			      char,
++			      "struct packed_slab_journal_block",
++			      (char **) &journal->block);
++	if (result != VDO_SUCCESS)
++		return result;
 +
-+	if (config->deduplication) {
-+		zones->index_target = IS_OPENED;
-+		WRITE_ONCE(zones->dedupe_flag, true);
++	journal->slab = slab;
++	journal->size = slab_config->slab_journal_blocks;
++	journal->flushing_threshold = slab_config->slab_journal_flushing_threshold;
++	journal->blocking_threshold = slab_config->slab_journal_blocking_threshold;
++	journal->scrubbing_threshold = slab_config->slab_journal_scrubbing_threshold;
++	journal->entries_per_block = VDO_SLAB_JOURNAL_ENTRIES_PER_BLOCK;
++	journal->full_entries_per_block = VDO_SLAB_JOURNAL_FULL_ENTRIES_PER_BLOCK;
++	journal->events = &slab->allocator->slab_journal_statistics;
++	journal->recovery_journal = slab->allocator->depot->vdo->recovery_journal;
++	journal->tail = 1;
++	journal->head = 1;
++
++	journal->flushing_deadline = journal->flushing_threshold;
++	/*
++	 * Set there to be some time between the deadline and the blocking threshold, so that
++	 * hopefully all are done before blocking.
++	 */
++	if ((journal->blocking_threshold - journal->flushing_threshold) > 5)
++		journal->flushing_deadline = journal->blocking_threshold - 5;
++
++	journal->slab_summary_waiter.callback = release_journal_locks;
++
++	INIT_LIST_HEAD(&journal->dirty_entry);
++	INIT_LIST_HEAD(&journal->uncommitted_blocks);
++
++	journal->tail_header.nonce = slab->allocator->nonce;
++	journal->tail_header.metadata_type = VDO_METADATA_SLAB_JOURNAL;
++	initialize_journal_state(journal);
++	return VDO_SUCCESS;
++}
++
++/**
++ * make_slab() - Construct a new, empty slab.
++ * @slab_origin: The physical block number within the block allocator partition of the first block
++ *               in the slab.
++ * @allocator: The block allocator to which the slab belongs.
++ * @slab_number: The slab number of the slab.
++ * @is_new: true if this slab is being allocated as part of a resize.
++ * @slab_ptr: A pointer to receive the new slab.
++ *
++ * Return: VDO_SUCCESS or an error code.
++ */
++static int __must_check
++make_slab(physical_block_number_t slab_origin,
++	  struct block_allocator *allocator,
++	  slab_count_t slab_number,
++	  bool is_new,
++	  struct vdo_slab **slab_ptr)
++{
++	const struct slab_config *slab_config = &allocator->depot->slab_config;
++	struct vdo_slab *slab;
++	int result;
++
++	result = UDS_ALLOCATE(1, struct vdo_slab, __func__, &slab);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	*slab = (struct vdo_slab) {
++		.allocator = allocator,
++		.start = slab_origin,
++		.end = slab_origin + slab_config->slab_blocks,
++		.slab_number = slab_number,
++		.ref_counts_origin = slab_origin + slab_config->data_blocks,
++		.journal_origin = vdo_get_slab_journal_start_block(slab_config, slab_origin),
++		.block_count = slab_config->data_blocks,
++		.free_blocks = slab_config->data_blocks,
++		.reference_block_count =
++			vdo_get_saved_reference_count_size(slab_config->data_blocks),
++	};
++	INIT_LIST_HEAD(&slab->allocq_entry);
++
++	result = initialize_slab_journal(slab);
++	if (result != VDO_SUCCESS) {
++		free_slab(slab);
++		return result;
++	}
++
++	if (is_new) {
++		vdo_set_admin_state_code(&slab->state, VDO_ADMIN_STATE_NEW);
++		result = allocate_slab_counters(slab);
++		if (result != VDO_SUCCESS) {
++			free_slab(slab);
++			return result;
++		}
 +	} else {
-+		zones->index_target = IS_CLOSED;
++		vdo_set_admin_state_code(&slab->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
 +	}
 +
-+	launch_dedupe_state_change(zones);
-+	spin_unlock(&zones->lock);
-+
-+	vdo_finish_completion(parent);
++	*slab_ptr = slab;
++	return VDO_SUCCESS;
 +}
 +
-+/**
-+ * resume_hash_zone() - Resume a hash zone.
-+ *
-+ * Implements vdo_zone_action.
-+ */
-+static void
-+resume_hash_zone(void *context, zone_count_t zone_number, struct vdo_completion *parent)
-+{
-+	struct hash_zone *zone = &(((struct hash_zones *) context)->zones[zone_number]);
-+
-+	vdo_fail_completion(parent, vdo_resume_if_quiescent(&zone->state));
-+}
-+
-+/**
-+ * vdo_resume_hash_zones() - Resume a set of hash zones.
-+ * @zones: The hash zones to resume.
-+ * @parent: The object to notify when the zones have resumed.
-+ */
-+void vdo_resume_hash_zones(struct hash_zones *zones, struct vdo_completion *parent)
-+{
-+	if (vdo_is_read_only(parent->vdo)) {
-+		vdo_launch_completion(parent);
-+		return;
-+	}
-+
-+	vdo_schedule_operation(zones->manager,
-+			       VDO_ADMIN_STATE_RESUMING,
-+			       resume_index,
-+			       resume_hash_zone,
-+			       NULL,
-+			       parent);
-+}
-+
-+/**
-+ * get_hash_zone_statistics() - Add the statistics for this hash zone to the tally for all zones.
-+ * @zone: The hash zone to query.
-+ * @tally: The tally
-+ */
-+static void
-+get_hash_zone_statistics(const struct hash_zone *zone, struct hash_lock_statistics *tally)
-+{
-+	const struct hash_lock_statistics *stats = &zone->statistics;
-+
-+	tally->dedupe_advice_valid += READ_ONCE(stats->dedupe_advice_valid);
-+	tally->dedupe_advice_stale += READ_ONCE(stats->dedupe_advice_stale);
-+	tally->concurrent_data_matches += READ_ONCE(stats->concurrent_data_matches);
-+	tally->concurrent_hash_collisions += READ_ONCE(stats->concurrent_hash_collisions);
-+	tally->curr_dedupe_queries += READ_ONCE(zone->active);
-+}
-+
-+static void get_index_statistics(struct hash_zones *zones, struct index_statistics *stats)
-+{
-+	enum index_state state;
-+	struct uds_index_stats index_stats;
-+	int result;
-+
-+	spin_lock(&zones->lock);
-+	state = zones->index_state;
-+	spin_unlock(&zones->lock);
-+
-+	if (state != IS_OPENED)
-+		return;
-+
-+	result = uds_get_index_session_stats(zones->index_session, &index_stats);
-+	if (result != UDS_SUCCESS) {
-+		uds_log_error_strerror(result, "Error reading index stats");
-+		return;
-+	}
-+
-+	stats->entries_indexed = index_stats.entries_indexed;
-+	stats->posts_found = index_stats.posts_found;
-+	stats->posts_not_found = index_stats.posts_not_found;
-+	stats->queries_found = index_stats.queries_found;
-+	stats->queries_not_found = index_stats.queries_not_found;
-+	stats->updates_found = index_stats.updates_found;
-+	stats->updates_not_found = index_stats.updates_not_found;
-+	stats->entries_discarded = index_stats.entries_discarded;
-+}
-+
-+/**
-+ * vdo_get_dedupe_statistics() - Tally the statistics from all the hash zones and the UDS index.
-+ * @hash_zones: The hash zones to query
-+ *
-+ * Return: The sum of the hash lock statistics from all hash zones plus the statistics from the UDS
-+ *         index
-+ */
-+void vdo_get_dedupe_statistics(struct hash_zones *zones, struct vdo_statistics *stats)
-+
-+{
-+	zone_count_t zone;
-+
-+	for (zone = 0; zone < zones->zone_count; zone++)
-+		get_hash_zone_statistics(&zones->zones[zone], &stats->hash_lock);
-+
-+	get_index_statistics(zones, &stats->index);
-+
-+	/*
-+	 * zones->timeouts gives the number of timeouts, and dedupe_context_busy gives the number
-+	 * of queries not made because of earlier timeouts.
-+	 */
-+	stats->dedupe_advice_timeouts =
-+		(atomic64_read(&zones->timeouts) + atomic64_read(&zones->dedupe_context_busy));
-+}
-+
-+/**
-+ * vdo_select_hash_zone() - Select the hash zone responsible for locking a given record name.
-+ * @zones: The hash_zones from which to select.
-+ * @name: The record name.
-+ *
-+ * Return: The hash zone responsible for the record name.
-+ */
-+struct hash_zone *
-+vdo_select_hash_zone(struct hash_zones *zones, const struct uds_record_name *name)
-+{
-+	/*
-+	 * Use a fragment of the record name as a hash code. Eight bits of hash should suffice
-+	 * since the number of hash zones is small.
-+	 * TODO: Verify that the first byte is independent enough.
-+	 */
-+	u32 hash = name->name[0];
-+
-+	/*
-+	 * Scale the 8-bit hash fragment to a zone index by treating it as a binary fraction and
-+	 * multiplying that by the zone count. If the hash is uniformly distributed over [0 ..
-+	 * 2^8-1], then (hash * count / 2^8) should be uniformly distributed over [0 .. count-1].
-+	 * The multiply and shift is much faster than a divide (modulus) on X86 CPUs.
-+	 */
-+	hash = (hash * zones->zone_count) >> 8;
-+	return &zones->zones[hash];
-+}
-+
-+/**
-+ * dump_hash_lock() - Dump a compact description of hash_lock to the log if the lock is not on the
-+ *                    free list.
-+ * @lock: The hash lock to dump.
-+ */
-+static void dump_hash_lock(const struct hash_lock *lock)
-+{
-+	const char *state;
-+
-+	if (!list_empty(&lock->pool_node))
-+		/* This lock is on the free list. */
-+		return;
-+
-+	/*
-+	 * Necessarily cryptic since we can log a lot of these. First three chars of state is
-+	 * unambiguous. 'U' indicates a lock not registered in the map.
-+	 */
-+	state = get_hash_lock_state_name(lock->state);
-+	uds_log_info("  hl %px: %3.3s %c%llu/%u rc=%u wc=%zu agt=%px",
-+		     (const void *) lock, state, (lock->registered ? 'D' : 'U'),
-+		     (unsigned long long) lock->duplicate.pbn,
-+		     lock->duplicate.state, lock->reference_count,
-+		     vdo_count_waiters(&lock->waiters), (void *) lock->agent);
-+}
-+
-+static const char *index_state_to_string(struct hash_zones *zones, enum index_state state)
-+{
-+	if (!vdo_is_state_normal(&zones->state))
-+		return SUSPENDED;
-+
-+	switch (state) {
-+	case IS_CLOSED:
-+		return zones->error_flag ? ERROR : CLOSED;
-+	case IS_CHANGING:
-+		return zones->index_target == IS_OPENED ? OPENING : CLOSING;
-+	case IS_OPENED:
-+		return READ_ONCE(zones->dedupe_flag) ? ONLINE : OFFLINE;
-+	default:
-+		return UNKNOWN;
-+	}
-+}
-+
-+/**
-+ * vdo_dump_hash_zone() - Dump information about a hash zone to the log for debugging.
-+ * @zone: The zone to dump.
-+ */
-+static void dump_hash_zone(const struct hash_zone *zone)
-+{
-+	data_vio_count_t i;
-+
-+	if (zone->hash_lock_map == NULL) {
-+		uds_log_info("struct hash_zone %u: NULL map", zone->zone_number);
-+		return;
-+	}
-+
-+	uds_log_info("struct hash_zone %u: mapSize=%zu",
-+		     zone->zone_number,
-+		     vdo_pointer_map_size(zone->hash_lock_map));
-+	for (i = 0; i < LOCK_POOL_CAPACITY; i++)
-+		dump_hash_lock(&zone->lock_array[i]);
-+}
-+
-+/**
-+ * vdo_dump_hash_zones() - Dump information about the hash zones to the log for debugging.
-+ * @zones: The zones to dump.
-+ */
-+void vdo_dump_hash_zones(struct hash_zones *zones)
-+{
-+	const char *state, *target;
-+	zone_count_t zone;
-+
-+	spin_lock(&zones->lock);
-+	state = index_state_to_string(zones, zones->index_state);
-+	target = (zones->changing ? index_state_to_string(zones, zones->index_target) : NULL);
-+	spin_unlock(&zones->lock);
-+
-+	uds_log_info("UDS index: state: %s", state);
-+	if (target != NULL)
-+		uds_log_info("UDS index: changing to state: %s", target);
-+
-+	for (zone = 0; zone < zones->zone_count; zone++)
-+		dump_hash_zone(&zones->zones[zone]);
-+}
-+
-diff --git a/drivers/md/dm-vdo/dedupe.h b/drivers/md/dm-vdo/dedupe.h
+diff --git a/drivers/md/dm-vdo/slab-depot.h b/drivers/md/dm-vdo/slab-depot.h
 new file mode 100644
-index 00000000000..e119d74c6f0
+index 00000000000..509804e3dac
 --- /dev/null
-+++ b/drivers/md/dm-vdo/dedupe.h
-@@ -0,0 +1,93 @@
++++ b/drivers/md/dm-vdo/slab-depot.h
+@@ -0,0 +1,253 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright Red Hat
 + */
 +
-+#ifndef VDO_DEDUPE_H
-+#define VDO_DEDUPE_H
++#ifndef VDO_SLAB_DEPOT_H
++#define VDO_SLAB_DEPOT_H
 +
++#include <linux/atomic.h>
++#include <linux/dm-kcopyd.h>
 +#include <linux/list.h>
-+#include <linux/timer.h>
 +
-+#include "uds.h"
++#include "numeric.h"
 +
 +#include "admin-state.h"
-+#include "constants.h"
++#include "completion.h"
++#include "data-vio.h"
++#include "encodings.h"
++#include "physical-zone.h"
++#include "priority-table.h"
++#include "recovery-journal.h"
 +#include "statistics.h"
 +#include "types.h"
++#include "vio.h"
 +#include "wait-queue.h"
 +
-+struct dedupe_context {
-+	struct hash_zone *zone;
-+	struct uds_request request;
-+	struct list_head list_entry;
-+	struct funnel_queue_entry queue_entry;
-+	u64 submission_jiffies;
-+	struct data_vio *requestor;
-+	atomic_t state;
++/*
++ * Represents the possible status of a block.
++ */
++enum reference_status {
++	RS_FREE, /* this block is free */
++	RS_SINGLE, /* this block is singly-referenced */
++	RS_SHARED, /* this block is shared */
++	RS_PROVISIONAL /* this block is provisionally allocated */
 +};
 +
-+struct hash_lock;
++struct vdo_slab;
 +
-+struct hash_zone {
-+	/* Which hash zone this is */
-+	zone_count_t zone_number;
++struct journal_lock {
++	u16 count;
++	sequence_number_t recovery_start;
++};
 +
-+	/* The administrative state of the zone */
-+	struct admin_state state;
++struct slab_journal {
++	/* A waiter object for getting a VIO pool entry */
++	struct waiter resource_waiter;
++	/* A waiter object for updating the slab summary */
++	struct waiter slab_summary_waiter;
++	/* A waiter object for getting a vio with which to flush */
++	struct waiter flush_waiter;
++	/* The queue of VIOs waiting to make an entry */
++	struct wait_queue entry_waiters;
++	/* The parent slab reference of this journal */
++	struct vdo_slab *slab;
 +
-+	/* The thread ID for this zone */
-+	thread_id_t thread_id;
++	/* Whether a tail block commit is pending */
++	bool waiting_to_commit;
++	/* Whether the journal is updating the slab summary */
++	bool updating_slab_summary;
++	/* Whether the journal is adding entries from the entry_waiters queue */
++	bool adding_entries;
++	/* Whether a partial write is in progress */
++	bool partial_write_in_progress;
 +
-+	/* Mapping from record name fields to hash_locks */
-+	struct pointer_map *hash_lock_map;
++	/* The oldest block in the journal on disk */
++	sequence_number_t head;
++	/* The oldest block in the journal which may not be reaped */
++	sequence_number_t unreapable;
++	/* The end of the half-open interval of the active journal */
++	sequence_number_t tail;
++	/* The next journal block to be committed */
++	sequence_number_t next_commit;
++	/* The tail sequence number that is written in the slab summary */
++	sequence_number_t summarized;
++	/* The tail sequence number that was last summarized in slab summary */
++	sequence_number_t last_summarized;
 +
-+	/* List containing all unused hash_locks */
-+	struct list_head lock_pool;
++	/* The sequence number of the recovery journal lock */
++	sequence_number_t recovery_lock;
 +
 +	/*
-+	 * Statistics shared by all hash locks in this zone. Only modified on the hash zone thread,
-+	 * but queried by other threads.
++	 * The number of entries which fit in a single block. Can't use the constant because unit
++	 * tests change this number.
 +	 */
-+	struct hash_lock_statistics statistics;
++	journal_entry_count_t entries_per_block;
++	/*
++	 * The number of full entries which fit in a single block. Can't use the constant because
++	 * unit tests change this number.
++	 */
++	journal_entry_count_t full_entries_per_block;
 +
-+	/* Array of all hash_locks */
-+	struct hash_lock *lock_array;
++	/* The recovery journal of the VDO (slab journal holds locks on it) */
++	struct recovery_journal *recovery_journal;
 +
-+	/* These fields are used to manage the dedupe contexts */
-+	struct list_head available;
-+	struct list_head pending;
-+	struct funnel_queue *timed_out_complete;
-+	struct timer_list timer;
-+	struct vdo_completion completion;
-+	unsigned int active;
-+	atomic_t timer_state;
++	/* The statistics shared by all slab journals in our physical zone */
++	struct slab_journal_statistics *events;
++	/* A list of the VIO pool entries for outstanding journal block writes */
++	struct list_head uncommitted_blocks;
 +
-+	/* The dedupe contexts for querying the index from this zone */
-+	struct dedupe_context contexts[MAXIMUM_VDO_USER_VIOS];
++	/*
++	 * The current tail block header state. This will be packed into the block just before it
++	 * is written.
++	 */
++	struct slab_journal_block_header tail_header;
++	/* A pointer to a block-sized buffer holding the packed block data */
++	struct packed_slab_journal_block *block;
++
++	/* The number of blocks in the on-disk journal */
++	block_count_t size;
++	/* The number of blocks at which to start pushing reference blocks */
++	block_count_t flushing_threshold;
++	/* The number of blocks at which all reference blocks should be writing */
++	block_count_t flushing_deadline;
++	/* The number of blocks at which to wait for reference blocks to write */
++	block_count_t blocking_threshold;
++	/* The number of blocks at which to scrub the slab before coming online */
++	block_count_t scrubbing_threshold;
++
++	/* This list entry is for block_allocator to keep a queue of dirty journals */
++	struct list_head dirty_entry;
++
++	/* The lock for the oldest unreaped block of the journal */
++	struct journal_lock *reap_lock;
++	/* The locks for each on disk block */
++	struct journal_lock *locks;
 +};
 +
-+struct hash_zones;
++/*
++ * Reference_block structure
++ *
++ * Blocks are used as a proxy, permitting saves of partial refcounts.
++ */
++struct reference_block {
++	/* This block waits on the ref_counts to tell it to write */
++	struct waiter waiter;
++	/* The slab to which this reference_block belongs */
++	struct vdo_slab *slab;
++	/* The number of references in this block that represent allocations */
++	block_size_t allocated_count;
++	/* The slab journal block on which this block must hold a lock */
++	sequence_number_t slab_journal_lock;
++	/* The slab journal block which should be released when this block is committed */
++	sequence_number_t slab_journal_lock_to_release;
++	/* The point up to which each sector is accurate on disk */
++	struct journal_point commit_points[VDO_SECTORS_PER_BLOCK];
++	/* Whether this block has been modified since it was written to disk */
++	bool is_dirty;
++	/* Whether this block is currently writing */
++	bool is_writing;
++};
 +
-+struct pbn_lock * __must_check vdo_get_duplicate_lock(struct data_vio *data_vio);
++/* The search_cursor represents the saved position of a free block search. */
++struct search_cursor {
++	/* The reference block containing the current search index */
++	struct reference_block *block;
++	/* The position at which to start searching for the next free counter */
++	slab_block_number index;
++	/* The position just past the last valid counter in the current block */
++	slab_block_number end_index;
 +
-+void vdo_acquire_hash_lock(struct vdo_completion *completion);
-+void vdo_continue_hash_lock(struct vdo_completion *completion);
-+void vdo_release_hash_lock(struct data_vio *data_vio);
-+void vdo_clean_failed_hash_lock(struct data_vio *data_vio);
-+void vdo_share_compressed_write_lock(struct data_vio *data_vio, struct pbn_lock *pbn_lock);
++	/* A pointer to the first reference block in the slab */
++	struct reference_block *first_block;
++	/* A pointer to the last reference block in the slab */
++	struct reference_block *last_block;
++};
 +
-+int __must_check vdo_make_hash_zones(struct vdo *vdo, struct hash_zones **zones_ptr);
++enum slab_rebuild_status {
++	VDO_SLAB_REBUILT,
++	VDO_SLAB_REPLAYING,
++	VDO_SLAB_REQUIRES_SCRUBBING,
++	VDO_SLAB_REQUIRES_HIGH_PRIORITY_SCRUBBING,
++	VDO_SLAB_REBUILDING,
++};
 +
-+void vdo_free_hash_zones(struct hash_zones *zones);
++/*
++ * This is the type declaration for the vdo_slab type. A vdo_slab currently consists of a run of
++ * 2^23 data blocks, but that will soon change to dedicate a small number of those blocks for
++ * metadata storage for the reference counts and slab journal for the slab.
++ *
++ * A reference count is maintained for each physical block number. The vast majority of blocks have
++ * a very small reference count (usually 0 or 1). For references less than or equal to MAXIMUM_REFS
++ * (254) the reference count is stored in counters[pbn].
++ */
++struct vdo_slab {
++	/* A list entry to queue this slab in a block_allocator list */
++	struct list_head allocq_entry;
 +
-+void vdo_drain_hash_zones(struct hash_zones *zones, struct vdo_completion *parent);
++	/* The struct block_allocator that owns this slab */
++	struct block_allocator *allocator;
 +
-+void vdo_get_dedupe_statistics(struct hash_zones *zones, struct vdo_statistics *stats);
++	/* The journal for this slab */
++	struct slab_journal journal;
 +
-+struct hash_zone * __must_check
-+vdo_select_hash_zone(struct hash_zones *zones, const struct uds_record_name *name);
++	/* The slab number of this slab */
++	slab_count_t slab_number;
++	/* The offset in the allocator partition of the first block in this slab */
++	physical_block_number_t start;
++	/* The offset of the first block past the end of this slab */
++	physical_block_number_t end;
++	/* The starting translated PBN of the slab journal */
++	physical_block_number_t journal_origin;
++	/* The starting translated PBN of the reference counts */
++	physical_block_number_t ref_counts_origin;
 +
-+void vdo_dump_hash_zones(struct hash_zones *zones);
++	/* The administrative state of the slab */
++	struct admin_state state;
++	/* The status of the slab */
++	enum slab_rebuild_status status;
++	/* Whether the slab was ever queued for scrubbing */
++	bool was_queued_for_scrubbing;
 +
-+#endif /* VDO_DEDUPE_H */
++	/* The priority at which this slab has been queued for allocation */
++	u8 priority;
++
++	/* Fields beyond this point are the reference counts for the data blocks in this slab. */
++	/* The size of the counters array */
++	u32 block_count;
++	/* The number of free blocks */
++	u32 free_blocks;
++	/* The array of reference counts */
++	vdo_refcount_t *counters; /* use UDS_ALLOCATE to align data ptr */
++
++	/* The saved block pointer and array indexes for the free block search */
++	struct search_cursor search_cursor;
++
++	/* A list of the dirty blocks waiting to be written out */
++	struct wait_queue dirty_blocks;
++	/* The number of blocks which are currently writing */
++	size_t active_count;
++
++	/* A waiter object for updating the slab summary */
++	struct waiter summary_waiter;
++
++	/* The latest slab journal for which there has been a reference count update */
++	struct journal_point slab_journal_point;
++
++	/* The number of reference count blocks */
++	u32 reference_block_count;
++	/* reference count block array */
++	struct reference_block *reference_blocks;
++};
++
++bool __must_check
++vdo_attempt_replay_into_slab(struct vdo_slab *slab,
++			     physical_block_number_t pbn,
++			     enum journal_operation operation,
++			     bool increment,
++			     struct journal_point *recovery_point,
++			     struct vdo_completion *parent);
++
++void vdo_notify_slab_journals_are_recovered(struct vdo_completion *completion);
++
++#endif /* VDO_SLAB_DEPOT_H */
 -- 
 2.40.1
 
