@@ -4,98 +4,98 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B6BAEC7EE26
-	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 21:49:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 980AAC7EE2E
+	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 21:49:20 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684878552;
+	s=mimecast20190719; t=1684878559;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=iJetRwTW8hxHr4Pk10Xs6yzWU4Mnxi3QZY8hrAddG/8=;
-	b=dyt+FN57omb7pf94TSm62MZGrURJO2xXH0EGnCIYm8ZcWzUPQjpoPg8BbFZ6ZuaTgES9k+
-	Vj9wDxNnGThFZF9GH6bqIyJqRE3IjpK6AeaANJOuOxJR3o1wNFbeD1jIMjwLrL5veb2CCZ
-	E/wAGME5F+gVWfZfzW7y5S49DmcvUbE=
+	bh=+7voFe+9X3wqDDsu4OMKeYmKfDhQSjvsjlsjSFeMKZY=;
+	b=dR2lF0HHoua+pCPyFyh0jlDsYjDfI2f6u8GibuvOkMDXTE6EGEoxEQhl/J3iFWfm0cFRkM
+	v3mJLqJUTcntgdcQUkn2fl+22HiOLqdlO6f5Z8R+OcwAx5VDU+UlkWdRkwCNEHtLWEK/IB
+	1hS9ZepEirez7NNuxWsvVKTkiyMPlvA=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-440-oJtBxEXaOMaXLuLcmNxPvg-1; Tue, 23 May 2023 17:46:57 -0400
-X-MC-Unique: oJtBxEXaOMaXLuLcmNxPvg-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-544-nnu8LJYsOk2rDm0zeJQh_g-1; Tue, 23 May 2023 17:46:19 -0400
+X-MC-Unique: nnu8LJYsOk2rDm0zeJQh_g-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EC60C80231B;
-	Tue, 23 May 2023 21:46:54 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 807C985A5BA;
+	Tue, 23 May 2023 21:46:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D872D1121314;
-	Tue, 23 May 2023 21:46:54 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 67FE140CFD47;
+	Tue, 23 May 2023 21:46:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BA92319465B3;
-	Tue, 23 May 2023 21:46:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3790319465B9;
+	Tue, 23 May 2023 21:46:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 85F1219465A0
- for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 21:46:53 +0000 (UTC)
+ ESMTP id 1EC9319465B7
+ for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 21:46:16 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6485D40CFD46; Tue, 23 May 2023 21:46:53 +0000 (UTC)
+ id 0014C1121315; Tue, 23 May 2023 21:46:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 5BD1B40CFD45
- for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:53 +0000 (UTC)
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id EB8CC1121314
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:15 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 30AD4811E9A
- for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:53 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C11913828886
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:15 +0000 (UTC)
 Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
  [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-5-6zaz9voqMFKabHxftdmiCA-1; Tue, 23 May 2023 17:46:52 -0400
-X-MC-Unique: 6zaz9voqMFKabHxftdmiCA-1
+ us-mta-567-PSq7bMwTOxOu9VztzlSkKw-1; Tue, 23 May 2023 17:46:14 -0400
+X-MC-Unique: PSq7bMwTOxOu9VztzlSkKw-1
 Received: by mail-qk1-f197.google.com with SMTP id
- af79cd13be357-75b1c0a6b2fso35542485a.0
- for <dm-devel@redhat.com>; Tue, 23 May 2023 14:46:51 -0700 (PDT)
+ af79cd13be357-75b07b420a5so59404585a.3
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 14:46:14 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1684878411; x=1687470411;
+ d=1e100.net; s=20221208; t=1684878374; x=1687470374;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=5jAGb7/OOcrdKxLjM3Ho8tvnBeo2/+IuPDJNBeOn0SY=;
- b=AVB/qsMpvh72O67v6PNGEKNLmjLRd1deAnKVkv3CGxHqRP3M2fEop/0tDuSMXBGwCb
- itCIiGpUmUvDeYhDIA1evrpAiMLDZ42U/OD1rD6iWihbnEeeN4IdwE+MxHp+qzKryy0W
- Xe/K5NkOfmonqdkdI/bdYjmefUSBaE1EB6iCzq4ix1FqkswCScok88uxx4Qx93oHkSy8
- P0tP/uRXH8SdgBjR3aHAMs6PwMM6K1aXFSK+1mgtYthLOqH3JesFtGdLh6M8ImfdONL2
- IJatXP0eiYqgm7OOVI1UXiVapgF0MYN0aOaDq4biXW3RxEYgUEbVruImqwFQMJLmRbCR
- pZrA==
-X-Gm-Message-State: AC+VfDxJcBmmIGRkDsRf4ZLzmTZjXCYLkPh1cDkZH6HGnY+WTO3dIcsq
- /J5anlKf1sUe1xJXc3jKCbXT5I7lY2XRD22YybYyIAWqTvtKFJM+585f+RqTYVZ2fyTBCg2h7Uc
- JmD5kW5N5tA6sVG/IRxn8GReI/LJrmw2rCh+6HDEI1S0mMRqZt6GFlBDoOiHWS4ZJp+EIVTnN
-X-Received: by 2002:a05:620a:8a0f:b0:75b:23a1:8e38 with SMTP id
- qt15-20020a05620a8a0f00b0075b23a18e38mr4777258qkn.9.1684878410178; 
- Tue, 23 May 2023 14:46:50 -0700 (PDT)
-X-Google-Smtp-Source: ACHHUZ4zaH5UCmBLHEMzDfC8idkVW+fLHLqJuKYWDlZdh6kykYncc1zEs8wrM1DPw1P+sStYIWvrcQ==
-X-Received: by 2002:a05:620a:8a0f:b0:75b:23a1:8e38 with SMTP id
- qt15-20020a05620a8a0f00b0075b23a18e38mr4777197qkn.9.1684878408448; 
- Tue, 23 May 2023 14:46:48 -0700 (PDT)
+ bh=D0vmuzRoMzE2NGqd4llx2/H/Zo9s5C7yYyJ92B+xiRo=;
+ b=CfC44y2RO8eBPfuc7msOjFB3KK5fXxO9m41Ky9YYql8440cmNbfe3uUYIvC05Vz6hU
+ 5Yc+Zto42LSYCZzPKogmehiRplouYsaXH8LEbaAyNZCYiiICcZcsfpKY11vZrNGFshxJ
+ ivsgonkQJVLGTfZQopsibSuhilhJ6vm0eMfDzLx0zMWmOiPq9eO0tkqbWU9/2wlOTHzK
+ U5wTKUWYHysyc4lULIRzS2jq5L8wM2lXCLrrnMt11N4HruuENQEDGn/QRHW4KurWOWfv
+ 4gr0job4fGqngxGTjrW03Z0yWic+Ps0d9wAUE9eJUrs9yaNBhsv6iYWz8M7iAGLcby8K
+ bkvQ==
+X-Gm-Message-State: AC+VfDzBtBOyQTxm/EZhiZ64O88U8xHmndgOuWD9YODuTjY6RuHIYTLG
+ oNOcINIvQfdo0qLqJbQA+mP/GT11FmCRHTUV02Cz1tSRdPPTW0oinGoehN5QiRp+xXYFcW5l44f
+ FesmzqfoeJe7C3Zs93u9BYL1upIAy7pDIIX8nGkjDs4tXxAfzVWmA41N86RX/cAQywiNASRVF
+X-Received: by 2002:a05:620a:8193:b0:75b:23a1:3637 with SMTP id
+ ot19-20020a05620a819300b0075b23a13637mr5093135qkn.72.1684878372750; 
+ Tue, 23 May 2023 14:46:12 -0700 (PDT)
+X-Google-Smtp-Source: ACHHUZ63PIcPp3bOz2kb4uH3cCywnCVdtTMeYd6H0d+QtgnrPk7lOAH8fiXbYY6ugWQSVUxPGs7LwQ==
+X-Received: by 2002:a05:620a:8193:b0:75b:23a1:3637 with SMTP id
+ ot19-20020a05620a819300b0075b23a13637mr5093071qkn.72.1684878371309; 
+ Tue, 23 May 2023 14:46:11 -0700 (PDT)
 Received: from bf36-1.. (173-166-2-198-newengland.hfc.comcastbusiness.net.
  [173.166.2.198]) by smtp.gmail.com with ESMTPSA id
- f25-20020a05620a15b900b0075b196ae392sm1489722qkk.104.2023.05.23.14.46.47
+ x3-20020ae9e903000000b007592af6fce6sm2234465qkf.43.2023.05.23.14.46.10
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 23 May 2023 14:46:48 -0700 (PDT)
+ Tue, 23 May 2023 14:46:10 -0700 (PDT)
 From: "J. corwin Coburn" <corwin@redhat.com>
 To: dm-devel@redhat.com,
 	linux-block@vger.kernel.org
-Date: Tue, 23 May 2023 17:45:33 -0400
-Message-Id: <20230523214539.226387-34-corwin@redhat.com>
+Date: Tue, 23 May 2023 17:45:15 -0400
+Message-Id: <20230523214539.226387-16-corwin@redhat.com>
 In-Reply-To: <20230523214539.226387-1-corwin@redhat.com>
 References: <20230523214539.226387-1-corwin@redhat.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [PATCH v2 33/39] Add the vdo structure itself.
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: [dm-devel] [PATCH v2 15/39] Implement top-level deduplication index.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -110,2259 +110,2189 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: vdo-devel@redhat.com, "J. corwin Coburn" <corwin@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+The top-level deduplication index brings all the earlier components
+together. The top-level index creates the separate zone structures that
+enable the index to handle several requests in parallel, handles
+dispatching requests to the right zones and components, and coordinates
+metadata to ensure that it remain consistent. It also coordinates recovery
+in the event of an unexpected index failure.
+
+If sparse caching is enabled, the top-level index also handles the
+coordination required by the sparse chapter index cache, which (unlike most
+index structures) is shared among all zones.
+
 Signed-off-by: J. corwin Coburn <corwin@redhat.com>
 ---
- drivers/md/dm-vdo/vdo.c | 1846 +++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/vdo.h |  381 ++++++++
- 2 files changed, 2227 insertions(+)
- create mode 100644 drivers/md/dm-vdo/vdo.c
- create mode 100644 drivers/md/dm-vdo/vdo.h
+ drivers/md/dm-vdo/index.c        | 1403 ++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/index.h        |   83 ++
+ drivers/md/dm-vdo/sparse-cache.c |  595 +++++++++++++
+ drivers/md/dm-vdo/sparse-cache.h |   49 ++
+ 4 files changed, 2130 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/index.c
+ create mode 100644 drivers/md/dm-vdo/index.h
+ create mode 100644 drivers/md/dm-vdo/sparse-cache.c
+ create mode 100644 drivers/md/dm-vdo/sparse-cache.h
 
-diff --git a/drivers/md/dm-vdo/vdo.c b/drivers/md/dm-vdo/vdo.c
+diff --git a/drivers/md/dm-vdo/index.c b/drivers/md/dm-vdo/index.c
 new file mode 100644
-index 00000000000..2e3c9bce1bf
+index 00000000000..64442203d07
 --- /dev/null
-+++ b/drivers/md/dm-vdo/vdo.c
-@@ -0,0 +1,1846 @@
++++ b/drivers/md/dm-vdo/index.c
+@@ -0,0 +1,1403 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright Red Hat
 + */
 +
-+/*
-+ * This file contains the main entry points for normal operations on a vdo as well as functions for
-+ * constructing and destroying vdo instances (in memory).
-+ */
 +
-+/**
-+ * DOC:
-+ *
-+ * A read_only_notifier has a single completion which is used to perform read-only notifications,
-+ * however, vdo_enter_read_only_mode() may be called from any thread. A pair of fields, protected
-+ * by a spinlock, are used to control the read-only mode entry process. The first field holds the
-+ * read-only error. The second is the state field, which may hold any of the four special values
-+ * enumerated here.
-+ *
-+ * When vdo_enter_read_only_mode() is called from some vdo thread, if the read_only_error field
-+ * already contains an error (i.e. its value is not VDO_SUCCESS), then some other error has already
-+ * initiated the read-only process, and nothing more is done. Otherwise, the new error is stored in
-+ * the read_only_error field, and the state field is consulted. If the state is MAY_NOTIFY, it is
-+ * set to NOTIFYING, and the notification process begins. If the state is MAY_NOT_NOTIFY, then
-+ * notifications are currently disallowed, generally due to the vdo being suspended. In this case,
-+ * the nothing more will be done until the vdo is resumed, at which point the notification will be
-+ * performed. In any other case, the vdo is already read-only, and there is nothing more to do.
-+ */
++#include "index.h"
 +
-+#include "vdo.h"
-+
-+#include <linux/completion.h>
-+#include <linux/device-mapper.h>
-+#include <linux/kernel.h>
-+#include <linux/lz4.h>
-+#include <linux/module.h>
-+#include <linux/mutex.h>
-+#include <linux/spinlock.h>
-+#include <linux/types.h>
-+
++#include "hash-utils.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
-+#include "permassert.h"
-+#include "string-utils.h"
++#include "request-queue.h"
++#include "sparse-cache.h"
 +
-+#include "block-map.h"
-+#include "completion.h"
-+#include "data-vio.h"
-+#include "dedupe.h"
-+#include "encodings.h"
-+#include "io-submitter.h"
-+#include "logical-zone.h"
-+#include "packer.h"
-+#include "physical-zone.h"
-+#include "pool-sysfs.h"
-+#include "recovery-journal.h"
-+#include "release-versions.h"
-+#include "slab-depot.h"
-+#include "statistics.h"
-+#include "status-codes.h"
-+#include "vio.h"
-+#include "work-queue.h"
-+
-+
-+enum { PARANOID_THREAD_CONSISTENCY_CHECKS = 0 };
-+
-+struct sync_completion {
-+	struct vdo_completion vdo_completion;
-+	struct completion completion;
-+};
++static const u64 NO_LAST_SAVE = U64_MAX;
 +
 +/*
-+ * We don't expect this set to ever get really large, so a linked list is adequate. We can use a
-+ * pointer_map if we need to later.
++ * When searching for deduplication records, the index first searches the volume index, and then
++ * searches the chapter index for the relevant chapter. If the chapter has been fully committed to
++ * storage, the chapter pages are loaded into the page cache. If the chapter has not yet been
++ * committed (either the open chapter or a recently closed one), the index searches the in-memory
++ * representation of the chapter. Finally, if the volume index does not find a record and the index
++ * is sparse, the index will search the sparse cache.
++ *
++ * The index send two kinds of messages to coordinate between zones: chapter close messages for the
++ * chapter writer, and sparse cache barrier messages for the sparse cache.
++ *
++ * The chapter writer is responsible for committing chapters of records to storage. Since zones can
++ * get different numbers of records, some zones may fall behind others. Each time a zone fills up
++ * its available space in a chapter, it informs the chapter writer that the chapter is complete,
++ * and also informs all other zones that it has closed the chapter. Each other zone will then close
++ * the chapter immediately, regardless of how full it is, in order to minimize skew between zones.
++ * Once every zone has closed the chapter, the chapter writer will commit that chapter to storage.
++ *
++ * The last zone to close the chapter also removes the oldest chapter from the volume index.
++ * Although that chapter is invalid for zones that have moved on, the existence of the open chapter
++ * means that those zones will never ask the volume index about it. No zone is allowed to get more
++ * than one chapter ahead of any other. If a zone is so far ahead that it tries to close another
++ * chapter before the previous one has been closed by all zones, it is forced to wait.
++ *
++ * The sparse cache relies on having the same set of chapter indexes available to all zones. When a
++ * request wants to add a chapter to the sparse cache, it sends a barrier message to each zone
++ * during the triage stage that acts as a rendezvous. Once every zone has reached the barrier and
++ * paused its operations, the cache membership is changed and each zone is then informed that it
++ * can proceed. More details can be found in the sparse cache documentation.
++ *
++ * If a sparse cache has only one zone, it will not create a triage queue, but it still needs the
++ * barrier message to change the sparse cache membership, so the index simulates the message by
++ * invoking the handler directly.
 + */
-+struct device_registry {
-+	struct list_head links;
-+	/* TODO: Convert to rcu per kernel recommendation. */
-+	rwlock_t lock;
++
++struct chapter_writer {
++	/* The index to which we belong */
++	struct uds_index *index;
++	/* The thread to do the writing */
++	struct thread *thread;
++	/* The lock protecting the following fields */
++	struct mutex mutex;
++	/* The condition signalled on state changes */
++	struct cond_var cond;
++	/* Set to true to stop the thread */
++	bool stop;
++	/* The result from the most recent write */
++	int result;
++	/* The number of bytes allocated by the chapter writer */
++	size_t memory_size;
++	/* The number of zones which have submitted a chapter for writing */
++	unsigned int zones_to_write;
++	/* Open chapter index used by uds_close_open_chapter() */
++	struct open_chapter_index *open_chapter_index;
++	/* Collated records used by uds_close_open_chapter() */
++	struct uds_volume_record *collated_records;
++	/* The chapters to write (one per zone) */
++	struct open_chapter_zone *chapters[];
 +};
 +
-+static struct device_registry registry;
-+
-+/**
-+ * vdo_initialize_device_registry_once() - Initialize the necessary structures for the device
-+ *                                         registry.
-+ */
-+void vdo_initialize_device_registry_once(void)
++static bool is_zone_chapter_sparse(const struct index_zone *zone, u64 virtual_chapter)
 +{
-+	INIT_LIST_HEAD(&registry.links);
-+	rwlock_init(&registry.lock);
++	return uds_is_chapter_sparse(zone->index->volume->geometry,
++				     zone->oldest_virtual_chapter,
++				     zone->newest_virtual_chapter,
++				     virtual_chapter);
 +}
 +
-+/** vdo_is_equal() - Implements vdo_filter_t. */
-+static bool vdo_is_equal(struct vdo *vdo, const void *context)
-+{
-+	return ((void *) vdo == context);
-+}
-+
-+/**
-+ * filter_vdos_locked() - Find a vdo in the registry if it exists there.
-+ * @filter: The filter function to apply to devices.
-+ * @context: A bit of context to provide the filter.
-+ *
-+ * Context: Must be called holding the lock.
-+ *
-+ * Return: the vdo object found, if any.
-+ */
-+static struct vdo * __must_check filter_vdos_locked(vdo_filter_t *filter, const void *context)
-+{
-+	struct vdo *vdo;
-+
-+	list_for_each_entry(vdo, &registry.links, registration)
-+		if (filter(vdo, context))
-+			return vdo;
-+
-+	return NULL;
-+}
-+
-+/**
-+ * vdo_find_matching() - Find and return the first (if any) vdo matching a given filter function.
-+ * @filter: The filter function to apply to vdos.
-+ * @context: A bit of context to provide the filter.
-+ */
-+struct vdo *vdo_find_matching(vdo_filter_t *filter, const void *context)
-+{
-+	struct vdo *vdo;
-+
-+	read_lock(&registry.lock);
-+	vdo = filter_vdos_locked(filter, context);
-+	read_unlock(&registry.lock);
-+	return vdo;
-+}
-+
-+static void start_vdo_request_queue(void *ptr)
-+{
-+	struct vdo_thread *thread = vdo_get_work_queue_owner(vdo_get_current_work_queue());
-+
-+	uds_register_allocating_thread(&thread->allocating_thread,
-+				       &thread->vdo->allocations_allowed);
-+}
-+
-+static void finish_vdo_request_queue(void *ptr)
-+{
-+	uds_unregister_allocating_thread();
-+}
-+
-+#ifdef MODULE
-+#define MODULE_NAME THIS_MODULE->name
-+#else
-+#define MODULE_NAME "dm-vdo"
-+#endif  /* MODULE */
-+
-+static const struct vdo_work_queue_type default_queue_type = {
-+	.start = start_vdo_request_queue,
-+	.finish = finish_vdo_request_queue,
-+	.max_priority = VDO_DEFAULT_Q_MAX_PRIORITY,
-+	.default_priority = VDO_DEFAULT_Q_COMPLETION_PRIORITY,
-+};
-+
-+static const struct vdo_work_queue_type bio_ack_q_type = {
-+	.start = NULL,
-+	.finish = NULL,
-+	.max_priority = BIO_ACK_Q_MAX_PRIORITY,
-+	.default_priority = BIO_ACK_Q_ACK_PRIORITY,
-+};
-+
-+static const struct vdo_work_queue_type cpu_q_type = {
-+	.start = NULL,
-+	.finish = NULL,
-+	.max_priority = CPU_Q_MAX_PRIORITY,
-+	.default_priority = CPU_Q_MAX_PRIORITY,
-+};
-+
-+static void uninitialize_thread_config(struct thread_config *config)
-+{
-+	UDS_FREE(UDS_FORGET(config->logical_threads));
-+	UDS_FREE(UDS_FORGET(config->physical_threads));
-+	UDS_FREE(UDS_FORGET(config->hash_zone_threads));
-+	UDS_FREE(UDS_FORGET(config->bio_threads));
-+	memset(config, 0, sizeof(struct thread_config));
-+}
-+
-+static void
-+assign_thread_ids(struct thread_config *config, thread_id_t thread_ids[], zone_count_t count)
-+{
-+	zone_count_t zone;
-+
-+	for (zone = 0; zone < count; zone++)
-+		thread_ids[zone] = config->thread_count++;
-+}
-+
-+/**
-+ * initialize_thread_config() - Initialize the thread mapping
-+ *
-+ * If the logical, physical, and hash zone counts are all 0, a single thread will be shared by all
-+ * three plus the packer and recovery journal. Otherwise, there must be at least one of each type,
-+ * and each will have its own thread, as will the packer and recovery journal.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+static int __must_check
-+initialize_thread_config(struct thread_count_config counts, struct thread_config *config)
++static int
++launch_zone_message(struct uds_zone_message message, unsigned int zone, struct uds_index *index)
 +{
 +	int result;
-+	bool single = ((counts.logical_zones + counts.physical_zones + counts.hash_zones) == 0);
++	struct uds_request *request;
 +
-+	config->bio_thread_count = counts.bio_threads;
-+	if (single) {
-+		config->logical_zone_count = 1;
-+		config->physical_zone_count = 1;
-+		config->hash_zone_count = 1;
-+	} else {
-+		config->logical_zone_count = counts.logical_zones;
-+		config->physical_zone_count = counts.physical_zones;
-+		config->hash_zone_count = counts.hash_zones;
-+	}
-+
-+	result = UDS_ALLOCATE(config->logical_zone_count,
-+			      thread_id_t,
-+			      "logical thread array",
-+			      &config->logical_threads);
-+	if (result != VDO_SUCCESS) {
-+		uninitialize_thread_config(config);
++	result = UDS_ALLOCATE(1, struct uds_request, __func__, &request);
++	if (result != UDS_SUCCESS)
 +		return result;
-+	}
 +
-+	result = UDS_ALLOCATE(config->physical_zone_count,
-+			      thread_id_t,
-+			      "physical thread array",
-+			      &config->physical_threads);
-+	if (result != VDO_SUCCESS) {
-+		uninitialize_thread_config(config);
-+		return result;
-+	}
++	request->index = index;
++	request->unbatched = true;
++	request->zone_number = zone;
++	request->zone_message = message;
 +
-+	result = UDS_ALLOCATE(config->hash_zone_count,
-+			      thread_id_t,
-+			      "hash thread array",
-+			      &config->hash_zone_threads);
-+	if (result != VDO_SUCCESS) {
-+		uninitialize_thread_config(config);
-+		return result;
-+	}
-+
-+	result = UDS_ALLOCATE(config->bio_thread_count,
-+			      thread_id_t,
-+			      "bio thread array",
-+			      &config->bio_threads);
-+	if (result != VDO_SUCCESS) {
-+		uninitialize_thread_config(config);
-+		return result;
-+	}
-+
-+	if (single) {
-+		config->logical_threads[0] = config->thread_count;
-+		config->physical_threads[0] = config->thread_count;
-+		config->hash_zone_threads[0] = config->thread_count++;
-+	} else {
-+		config->admin_thread = config->thread_count;
-+		config->journal_thread = config->thread_count++;
-+		config->packer_thread = config->thread_count++;
-+		assign_thread_ids(config, config->logical_threads, counts.logical_zones);
-+		assign_thread_ids(config, config->physical_threads, counts.physical_zones);
-+		assign_thread_ids(config, config->hash_zone_threads, counts.hash_zones);
-+	}
-+
-+	config->dedupe_thread = config->thread_count++;
-+	config->bio_ack_thread =
-+		((counts.bio_ack_threads > 0) ? config->thread_count++ : VDO_INVALID_THREAD_ID);
-+	config->cpu_thread = config->thread_count++;
-+	assign_thread_ids(config, config->bio_threads, counts.bio_threads);
-+	return VDO_SUCCESS;
++	uds_enqueue_request(request, STAGE_MESSAGE);
++	return UDS_SUCCESS;
 +}
 +
-+/**
-+ * vdo_read_geometry_block() - Synchronously read the geometry block from a vdo's underlying block
-+ *                             device.
-+ * @vdo: The vdo whose geometry is to be read.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+static int __must_check read_geometry_block(struct vdo *vdo)
++static void enqueue_barrier_messages(struct uds_index *index, u64 virtual_chapter)
 +{
-+	struct vio *vio;
-+	char *block;
-+	int result;
++	struct uds_zone_message message = {
++		.type = UDS_MESSAGE_SPARSE_CACHE_BARRIER,
++		.virtual_chapter = virtual_chapter,
++	};
++	unsigned int zone;
 +
-+	result = UDS_ALLOCATE(VDO_BLOCK_SIZE, u8, __func__, &block);
-+	if (result != VDO_SUCCESS)
-+		return result;
++	for (zone = 0; zone < index->zone_count; zone++) {
++		int result = launch_zone_message(message, zone, index);
 +
-+	result = create_metadata_vio(vdo, VIO_TYPE_GEOMETRY, VIO_PRIORITY_HIGH, NULL, block, &vio);
-+	if (result != VDO_SUCCESS) {
-+		UDS_FREE(block);
-+		return result;
++		ASSERT_LOG_ONLY((result == UDS_SUCCESS), "barrier message allocation");
 +	}
++}
++
++/*
++ * Determine whether this request should trigger a sparse cache barrier message to change the
++ * membership of the sparse cache. If a change in membership is desired, the function returns the
++ * chapter number to add.
++ */
++static u64 triage_index_request(struct uds_index *index, struct uds_request *request)
++{
++	u64 virtual_chapter;
++	struct index_zone *zone;
++
++	virtual_chapter = uds_lookup_volume_index_name(index->volume_index, &request->record_name);
++	if (virtual_chapter == NO_CHAPTER)
++		return NO_CHAPTER;
++
++	zone = index->zones[request->zone_number];
++	if (!is_zone_chapter_sparse(zone, virtual_chapter))
++		return NO_CHAPTER;
 +
 +	/*
-+	 * This is only safe because, having not already loaded the geometry, the vdo's geometry's
-+	 * bio_offset field is 0, so the fact that vio_reset_bio() will subtract that offset from
-+	 * the supplied pbn is not a problem.
++	 * FIXME: Optimize for a common case by remembering the chapter from the most recent
++	 * barrier message and skipping this chapter if is it the same.
 +	 */
-+	result = vio_reset_bio(vio, block, NULL, REQ_OP_READ, VDO_GEOMETRY_BLOCK_LOCATION);
-+	if (result != VDO_SUCCESS) {
-+		free_vio(UDS_FORGET(vio));
-+		UDS_FREE(block);
-+		return result;
-+	}
 +
-+	bio_set_dev(vio->bio, vdo_get_backing_device(vdo));
-+	submit_bio_wait(vio->bio);
-+	result = blk_status_to_errno(vio->bio->bi_status);
-+	free_vio(UDS_FORGET(vio));
-+	if (result != 0) {
-+		uds_log_error_strerror(result, "synchronous read failed");
-+		UDS_FREE(block);
-+		return -EIO;
-+	}
-+
-+	result = vdo_parse_geometry_block((u8 *) block, &vdo->geometry);
-+	UDS_FREE(block);
-+	return result;
++	return virtual_chapter;
 +}
 +
-+static bool get_zone_thread_name(const thread_id_t thread_ids[],
-+				 zone_count_t count,
-+				 thread_id_t id,
-+				 const char *prefix,
-+				 char *buffer,
-+				 size_t buffer_length)
-+{
-+	if (id >= thread_ids[0]) {
-+		thread_id_t index = id - thread_ids[0];
-+
-+		if (index < count) {
-+			snprintf(buffer, buffer_length, "%s%d", prefix, index);
-+			return true;
-+		}
-+	}
-+	return false;
-+}
-+
-+/**
-+ * get_thread_name() - Format the name of the worker thread desired to support a given work queue.
-+ * @thread_config: The thread configuration.
-+ * @thread_id: The thread id.
-+ * @buffer: Where to put the formatted name.
-+ * @buffer_length: Size of the output buffer.
-+ *
-+ * The physical layer may add a prefix identifying the product; the output from this function
-+ * should just identify the thread.
-+ */
-+static void
-+get_thread_name(const struct thread_config *thread_config,
-+		thread_id_t thread_id,
-+		char *buffer,
-+		size_t buffer_length)
-+{
-+	if (thread_id == thread_config->journal_thread) {
-+		if (thread_config->packer_thread == thread_id) {
-+			/*
-+			 * This is the "single thread" config where one thread is used for the
-+			 * journal, packer, logical, physical, and hash zones. In that case, it is
-+			 * known as the "request queue."
-+			 */
-+			snprintf(buffer, buffer_length, "reqQ");
-+			return;
-+		}
-+
-+		snprintf(buffer, buffer_length, "journalQ");
-+		return;
-+	} else if (thread_id == thread_config->admin_thread) {
-+		/* Theoretically this could be different from the journal thread. */
-+		snprintf(buffer, buffer_length, "adminQ");
-+		return;
-+	} else if (thread_id == thread_config->packer_thread) {
-+		snprintf(buffer, buffer_length, "packerQ");
-+		return;
-+	} else if (thread_id == thread_config->dedupe_thread) {
-+		snprintf(buffer, buffer_length, "dedupeQ");
-+		return;
-+	} else if (thread_id == thread_config->bio_ack_thread) {
-+		snprintf(buffer, buffer_length, "ackQ");
-+		return;
-+	} else if (thread_id == thread_config->cpu_thread) {
-+		snprintf(buffer, buffer_length, "cpuQ");
-+		return;
-+	}
-+
-+	if (get_zone_thread_name(thread_config->logical_threads,
-+				 thread_config->logical_zone_count,
-+				 thread_id,
-+				 "logQ",
-+				 buffer,
-+				 buffer_length))
-+		return;
-+
-+	if (get_zone_thread_name(thread_config->physical_threads,
-+				 thread_config->physical_zone_count,
-+				 thread_id,
-+				 "physQ",
-+				 buffer,
-+				 buffer_length))
-+		return;
-+
-+	if (get_zone_thread_name(thread_config->hash_zone_threads,
-+				 thread_config->hash_zone_count,
-+				 thread_id,
-+				 "hashQ",
-+				 buffer,
-+				 buffer_length))
-+		return;
-+
-+	if (get_zone_thread_name(thread_config->bio_threads,
-+				 thread_config->bio_thread_count,
-+				 thread_id,
-+				 "bioQ",
-+				 buffer,
-+				 buffer_length))
-+		return;
-+
-+	/* Some sort of misconfiguration? */
-+	snprintf(buffer, buffer_length, "reqQ%d", thread_id);
-+}
-+
-+/**
-+ * vdo_make_thread() - Construct a single vdo work_queue and its associated thread (or threads for
-+ *                     round-robin queues).
-+ * @vdo: The vdo which owns the thread.
-+ * @thread_id: The id of the thread to create (as determined by the thread_config).
-+ * @type: The description of the work queue for this thread.
-+ * @queue_count: The number of actual threads/queues contained in the "thread".
-+ * @contexts: An array of queue_count contexts, one for each individual queue; may be NULL.
-+ *
-+ * Each "thread" constructed by this method is represented by a unique thread id in the thread
-+ * config, and completions can be enqueued to the queue and run on the threads comprising this
-+ * entity.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+int vdo_make_thread(struct vdo *vdo,
-+		    thread_id_t thread_id,
-+		    const struct vdo_work_queue_type *type,
-+		    unsigned int queue_count,
-+		    void *contexts[])
-+{
-+	struct vdo_thread *thread = &vdo->threads[thread_id];
-+	char queue_name[MAX_VDO_WORK_QUEUE_NAME_LEN];
-+
-+	if (type == NULL)
-+		type = &default_queue_type;
-+
-+	if (thread->queue != NULL)
-+		return ASSERT(vdo_work_queue_type_is(thread->queue, type),
-+			      "already constructed vdo thread %u is of the correct type",
-+			      thread_id);
-+
-+	thread->vdo = vdo;
-+	thread->thread_id = thread_id;
-+	get_thread_name(&vdo->thread_config, thread_id, queue_name, sizeof(queue_name));
-+	return vdo_make_work_queue(vdo->thread_name_prefix,
-+				   queue_name,
-+				   thread,
-+				   type,
-+				   queue_count,
-+				   contexts,
-+				   &thread->queue);
-+}
-+
-+/**
-+ * register_vdo() - Register a VDO; it must not already be registered.
-+ * @vdo: The vdo to register.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+static int register_vdo(struct vdo *vdo)
-+{
-+	int result;
-+
-+	write_lock(&registry.lock);
-+	result = ASSERT(filter_vdos_locked(vdo_is_equal, vdo) == NULL,
-+			"VDO not already registered");
-+	if (result == VDO_SUCCESS) {
-+		INIT_LIST_HEAD(&vdo->registration);
-+		list_add_tail(&vdo->registration, &registry.links);
-+	}
-+	write_unlock(&registry.lock);
-+
-+	return result;
-+}
-+
-+/**
-+ * initialize_vdo() - Do the portion of initializing a vdo which will clean up after itself on
-+ *                    error.
-+ * @vdo: The vdo being initialized
-+ * @config: The configuration of the vdo
-+ * @instance: The instance number of the vdo
-+ * @reason: The buffer to hold the failure reason on error
++/*
++ * Simulate a message to change the sparse cache membership for a single-zone sparse index. This
++ * allows us to forgo the complicated locking required by a multi-zone sparse index. Any other kind
++ * of index does nothing here.
 + */
 +static int
-+initialize_vdo(struct vdo *vdo, struct device_config *config, unsigned int instance, char **reason)
++simulate_index_zone_barrier_message(struct index_zone *zone, struct uds_request *request)
++{
++	u64 sparse_virtual_chapter;
++
++	if ((zone->index->zone_count > 1) ||
++	    !uds_is_sparse_geometry(zone->index->volume->geometry))
++		return UDS_SUCCESS;
++
++	sparse_virtual_chapter = triage_index_request(zone->index, request);
++	if (sparse_virtual_chapter == NO_CHAPTER)
++		return UDS_SUCCESS;
++
++	return uds_update_sparse_cache(zone, sparse_virtual_chapter);
++}
++
++/* This is the request processing function for the triage queue. */
++static void triage_request(struct uds_request *request)
++{
++	struct uds_index *index = request->index;
++	u64 sparse_virtual_chapter = triage_index_request(index, request);
++
++	if (sparse_virtual_chapter != NO_CHAPTER)
++		enqueue_barrier_messages(index, sparse_virtual_chapter);
++
++	uds_enqueue_request(request, STAGE_INDEX);
++}
++
++static int finish_previous_chapter(struct uds_index *index, u64 current_chapter_number)
 +{
 +	int result;
-+	zone_count_t i;
++	struct chapter_writer *writer = index->chapter_writer;
 +
-+	vdo->device_config = config;
-+	vdo->starting_sector_offset = config->owning_target->begin;
-+	vdo->instance = instance;
-+	vdo->allocations_allowed = true;
-+	vdo_set_admin_state_code(&vdo->admin.state, VDO_ADMIN_STATE_NEW);
-+	INIT_LIST_HEAD(&vdo->device_config_list);
-+	vdo_initialize_completion(&vdo->admin.completion, vdo, VDO_ADMIN_COMPLETION);
-+	init_completion(&vdo->admin.callback_sync);
-+	mutex_init(&vdo->stats_mutex);
-+	result = read_geometry_block(vdo);
-+	if (result != VDO_SUCCESS) {
-+		*reason = "Could not load geometry block";
++	uds_lock_mutex(&writer->mutex);
++	while (index->newest_virtual_chapter < current_chapter_number)
++		uds_wait_cond(&writer->cond, &writer->mutex);
++	result = writer->result;
++	uds_unlock_mutex(&writer->mutex);
++
++	if (result != UDS_SUCCESS)
++		return uds_log_error_strerror(result, "Writing of previous open chapter failed");
++
++	return UDS_SUCCESS;
++}
++
++static int swap_open_chapter(struct index_zone *zone)
++{
++	int result;
++	struct open_chapter_zone *temporary_chapter;
++
++	result = finish_previous_chapter(zone->index, zone->newest_virtual_chapter);
++	if (result != UDS_SUCCESS)
 +		return result;
-+	}
 +
-+	result = initialize_thread_config(config->thread_counts, &vdo->thread_config);
-+	if (result != VDO_SUCCESS) {
-+		*reason = "Cannot create thread configuration";
-+		return result;
-+	}
++	temporary_chapter = zone->open_chapter;
++	zone->open_chapter = zone->writing_chapter;
++	zone->writing_chapter = temporary_chapter;
++	return UDS_SUCCESS;
++}
 +
-+	uds_log_info("zones: %d logical, %d physical, %d hash; total threads: %d",
-+		     config->thread_counts.logical_zones,
-+		     config->thread_counts.physical_zones,
-+		     config->thread_counts.hash_zones,
-+		     vdo->thread_config.thread_count);
++/*
++ * Inform the chapter writer that this zone is done with this chapter. The chapter won't start
++ * writing until all zones have closed it.
++ */
++static unsigned int start_closing_chapter(struct uds_index *index,
++					  unsigned int zone_number,
++					  struct open_chapter_zone *chapter)
++{
++	unsigned int finished_zones;
++	struct chapter_writer *writer = index->chapter_writer;
 +
-+	/* Compression context storage */
-+	result = UDS_ALLOCATE(config->thread_counts.cpu_threads,
-+			      char *,
-+			      "LZ4 context",
-+			      &vdo->compression_context);
-+	if (result != VDO_SUCCESS) {
-+		*reason = "cannot allocate LZ4 context";
-+		return result;
-+	}
++	uds_lock_mutex(&writer->mutex);
++	finished_zones = ++writer->zones_to_write;
++	writer->chapters[zone_number] = chapter;
++	uds_broadcast_cond(&writer->cond);
++	uds_unlock_mutex(&writer->mutex);
 +
-+	for (i = 0; i < config->thread_counts.cpu_threads; i++) {
-+		result = UDS_ALLOCATE(LZ4_MEM_COMPRESS,
-+				      char,
-+				      "LZ4 context",
-+				      &vdo->compression_context[i]);
-+		if (result != VDO_SUCCESS) {
-+			*reason = "cannot allocate LZ4 context";
++	return finished_zones;
++}
++
++static int announce_chapter_closed(struct index_zone *zone, u64 closed_chapter)
++{
++	int result;
++	unsigned int i;
++	struct uds_zone_message zone_message = {
++		.type = UDS_MESSAGE_ANNOUNCE_CHAPTER_CLOSED,
++		.virtual_chapter = closed_chapter,
++	};
++
++	for (i = 0; i < zone->index->zone_count; i++) {
++		if (zone->id == i)
++			continue;
++
++		result = launch_zone_message(zone_message, i, zone->index);
++		if (result != UDS_SUCCESS)
 +			return result;
-+		}
 +	}
 +
-+	result = register_vdo(vdo);
-+	if (result != VDO_SUCCESS) {
-+		*reason = "Cannot add VDO to device registry";
++	return UDS_SUCCESS;
++}
++
++static int open_next_chapter(struct index_zone *zone)
++{
++	int result;
++	u64 closed_chapter;
++	u64 expiring;
++	unsigned int finished_zones;
++	u32 expire_chapters;
++
++	uds_log_debug("closing chapter %llu of zone %u after %u entries (%u short)",
++		      (unsigned long long) zone->newest_virtual_chapter,
++		      zone->id,
++		      zone->open_chapter->size,
++		      zone->open_chapter->capacity - zone->open_chapter->size);
++
++	result = swap_open_chapter(zone);
++	if (result != UDS_SUCCESS)
 +		return result;
++
++	closed_chapter = zone->newest_virtual_chapter++;
++	uds_set_volume_index_zone_open_chapter(zone->index->volume_index,
++					       zone->id,
++					       zone->newest_virtual_chapter);
++	uds_reset_open_chapter(zone->open_chapter);
++
++	finished_zones = start_closing_chapter(zone->index, zone->id, zone->writing_chapter);
++	if ((finished_zones == 1) && (zone->index->zone_count > 1)) {
++		result = announce_chapter_closed(zone, closed_chapter);
++		if (result != UDS_SUCCESS)
++			return result;
 +	}
 +
-+	vdo_set_admin_state_code(&vdo->admin.state, VDO_ADMIN_STATE_INITIALIZED);
++	expiring = zone->oldest_virtual_chapter;
++	expire_chapters = uds_chapters_to_expire(zone->index->volume->geometry,
++						 zone->newest_virtual_chapter);
++	zone->oldest_virtual_chapter += expire_chapters;
++
++	if (finished_zones < zone->index->zone_count)
++		return UDS_SUCCESS;
++
++	while (expire_chapters-- > 0)
++		uds_forget_chapter(zone->index->volume, expiring++);
++
++	return UDS_SUCCESS;
++}
++
++static int handle_chapter_closed(struct index_zone *zone, u64 virtual_chapter)
++{
++	if (zone->newest_virtual_chapter == virtual_chapter)
++		return open_next_chapter(zone);
++
++	return UDS_SUCCESS;
++}
++
++static int dispatch_index_zone_control_request(struct uds_request *request)
++{
++	struct uds_zone_message *message = &request->zone_message;
++	struct index_zone *zone = request->index->zones[request->zone_number];
++
++	switch (message->type) {
++	case UDS_MESSAGE_SPARSE_CACHE_BARRIER:
++		return uds_update_sparse_cache(zone, message->virtual_chapter);
++
++	case UDS_MESSAGE_ANNOUNCE_CHAPTER_CLOSED:
++		return handle_chapter_closed(zone, message->virtual_chapter);
++
++	default:
++		uds_log_error("invalid message type: %d", message->type);
++		return UDS_INVALID_ARGUMENT;
++	}
++}
++
++static void set_request_location(struct uds_request *request, enum uds_index_region new_location)
++{
++	request->location = new_location;
++	request->found = ((new_location == UDS_LOCATION_IN_OPEN_CHAPTER) ||
++			  (new_location == UDS_LOCATION_IN_DENSE) ||
++			  (new_location == UDS_LOCATION_IN_SPARSE));
++}
++
++static void set_chapter_location(struct uds_request *request,
++				 const struct index_zone *zone,
++				 u64 virtual_chapter)
++{
++	request->found = true;
++	if (virtual_chapter == zone->newest_virtual_chapter)
++		request->location = UDS_LOCATION_IN_OPEN_CHAPTER;
++	else if (is_zone_chapter_sparse(zone, virtual_chapter))
++		request->location = UDS_LOCATION_IN_SPARSE;
++	else
++		request->location = UDS_LOCATION_IN_DENSE;
++}
++
++static int search_sparse_cache_in_zone(struct index_zone *zone,
++				       struct uds_request *request,
++				       u64 virtual_chapter,
++				       bool *found)
++{
++	int result;
++	struct volume *volume;
++	u16 record_page_number;
++	u32 chapter;
++
++	result = uds_search_sparse_cache(zone,
++					 &request->record_name,
++					 &virtual_chapter,
++					 &record_page_number);
++	if ((result != UDS_SUCCESS) || (virtual_chapter == NO_CHAPTER))
++		return result;
++
++	request->virtual_chapter = virtual_chapter;
++	volume = zone->index->volume;
++	chapter = uds_map_to_physical_chapter(volume->geometry, virtual_chapter);
++	return uds_search_cached_record_page(volume, request, chapter, record_page_number, found);
++}
++
++static int get_record_from_zone(struct index_zone *zone, struct uds_request *request, bool *found)
++{
++	struct volume *volume;
++
++	if (request->location == UDS_LOCATION_RECORD_PAGE_LOOKUP) {
++		*found = true;
++		return UDS_SUCCESS;
++	} else if (request->location == UDS_LOCATION_UNAVAILABLE) {
++		*found = false;
++		return UDS_SUCCESS;
++	}
++
++	if (request->virtual_chapter == zone->newest_virtual_chapter) {
++		uds_search_open_chapter(zone->open_chapter,
++					&request->record_name,
++					&request->old_metadata,
++					found);
++		return UDS_SUCCESS;
++	}
++
++	if ((zone->newest_virtual_chapter > 0) &&
++	    (request->virtual_chapter == (zone->newest_virtual_chapter - 1)) &&
++	    (zone->writing_chapter->size > 0)) {
++		uds_search_open_chapter(zone->writing_chapter,
++					&request->record_name,
++					&request->old_metadata,
++					found);
++		return UDS_SUCCESS;
++	}
++
++	volume = zone->index->volume;
++	if (is_zone_chapter_sparse(zone, request->virtual_chapter) &&
++	    uds_sparse_cache_contains(volume->sparse_cache,
++				      request->virtual_chapter,
++				      request->zone_number))
++		return search_sparse_cache_in_zone(zone, request, request->virtual_chapter, found);
++
++	return uds_search_volume_page_cache(volume, request, found);
++}
++
++static int put_record_in_zone(struct index_zone *zone,
++			      struct uds_request *request,
++			      const struct uds_record_data *metadata)
++{
++	unsigned int remaining;
++
++	remaining = uds_put_open_chapter(zone->open_chapter, &request->record_name, metadata);
++	if (remaining == 0)
++		return open_next_chapter(zone);
++
++	return UDS_SUCCESS;
++}
++
++static int search_index_zone(struct index_zone *zone, struct uds_request *request)
++{
++	int result;
++	struct volume_index_record record;
++	bool overflow_record, found = false;
++	struct uds_record_data *metadata;
++	u64 chapter;
++
++	result = uds_get_volume_index_record(zone->index->volume_index,
++					     &request->record_name,
++					     &record);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (record.is_found) {
++		if (request->requeued && request->virtual_chapter != record.virtual_chapter)
++			set_request_location(request, UDS_LOCATION_UNKNOWN);
++
++		request->virtual_chapter = record.virtual_chapter;
++		result = get_record_from_zone(zone, request, &found);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
++	if (found)
++		set_chapter_location(request, zone, record.virtual_chapter);
++
++	/*
++	 * If a record has overflowed a chapter index in more than one chapter (or overflowed in
++	 * one chapter and collided with an existing record), it will exist as a collision record
++	 * in the volume index, but we won't find it in the volume. This case needs special
++	 * handling.
++	 */
++	overflow_record = (record.is_found && record.is_collision && !found);
++	chapter = zone->newest_virtual_chapter;
++	if (found || overflow_record) {
++		if ((request->type == UDS_QUERY_NO_UPDATE) ||
++		    ((request->type == UDS_QUERY) && overflow_record))
++			/* There is nothing left to do. */
++			return UDS_SUCCESS;
++
++		if (record.virtual_chapter != chapter)
++			/*
++			 * Update the volume index to reference the new chapter for the block. If
++			 * the record had been deleted or dropped from the chapter index, it will
++			 * be back.
++			 */
++			result = uds_set_volume_index_record_chapter(&record, chapter);
++		else if (request->type != UDS_UPDATE)
++			/* The record is already in the open chapter. */
++			return UDS_SUCCESS;
++	} else {
++		/*
++		 * The record wasn't in the volume index, so check whether the
++		 * name is in a cached sparse chapter. If we found the name on
++		 * a previous search, use that result instead.
++		 */
++		if (request->location == UDS_LOCATION_RECORD_PAGE_LOOKUP) {
++			found = true;
++		} else if (request->location == UDS_LOCATION_UNAVAILABLE) {
++			found = false;
++		} else if (uds_is_sparse_geometry(zone->index->volume->geometry) &&
++			   !uds_is_volume_index_sample(zone->index->volume_index,
++						       &request->record_name)) {
++			result = search_sparse_cache_in_zone(zone, request, NO_CHAPTER, &found);
++			if (result != UDS_SUCCESS)
++				return result;
++		}
++
++		if (found)
++			set_request_location(request, UDS_LOCATION_IN_SPARSE);
++
++		if ((request->type == UDS_QUERY_NO_UPDATE) ||
++		    ((request->type == UDS_QUERY) && !found))
++			/* There is nothing left to do. */
++			return UDS_SUCCESS;
++
++		/*
++		 * Add a new entry to the volume index referencing the open chapter. This needs to
++		 * be done both for new records, and for records from cached sparse chapters.
++		 */
++		result = uds_put_volume_index_record(&record, chapter);
++	}
++
++	if (result == UDS_OVERFLOW)
++		/*
++		 * The volume index encountered a delta list overflow. The condition was already
++		 * logged. We will go on without adding the record to the open chapter.
++		 */
++		return UDS_SUCCESS;
++
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (!found || (request->type == UDS_UPDATE))
++		/* This is a new record or we're updating an existing record. */
++		metadata = &request->new_metadata;
++	else
++		/* Move the existing record to the open chapter. */
++		metadata = &request->old_metadata;
++
++	return put_record_in_zone(zone, request, metadata);
++}
++
++static int remove_from_index_zone(struct index_zone *zone, struct uds_request *request)
++{
++	int result;
++	struct volume_index_record record;
++
++	result = uds_get_volume_index_record(zone->index->volume_index,
++					     &request->record_name,
++					     &record);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (!record.is_found)
++		return UDS_SUCCESS;
++
++	/* If the request was requeued, check whether the saved state is still valid. */
++
++	if (record.is_collision) {
++		set_chapter_location(request, zone, record.virtual_chapter);
++	} else {
++		/* Non-collision records are hints, so resolve the name in the chapter. */
++		bool found;
++
++		if (request->requeued && request->virtual_chapter != record.virtual_chapter)
++			set_request_location(request, UDS_LOCATION_UNKNOWN);
++
++		request->virtual_chapter = record.virtual_chapter;
++		result = get_record_from_zone(zone, request, &found);
++		if (result != UDS_SUCCESS)
++			return result;
++
++		if (!found)
++			/* There is no record to remove. */
++			return UDS_SUCCESS;
++	}
++
++	set_chapter_location(request, zone, record.virtual_chapter);
++
++	/*
++	 * Delete the volume index entry for the named record only. Note that a later search might
++	 * later return stale advice if there is a colliding name in the same chapter, but it's a
++	 * very rare case (1 in 2^21).
++	 */
++	result = uds_remove_volume_index_record(&record);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	/*
++	 * If the record is in the open chapter, we must remove it or mark it deleted to avoid
++	 * trouble if the record is added again later.
++	 */
++	if (request->location == UDS_LOCATION_IN_OPEN_CHAPTER)
++		uds_remove_from_open_chapter(zone->open_chapter, &request->record_name);
++
++	return UDS_SUCCESS;
++}
++
++static int dispatch_index_request(struct uds_index *index, struct uds_request *request)
++{
++	int result;
++	struct index_zone *zone = index->zones[request->zone_number];
++
++	if (!request->requeued) {
++		result = simulate_index_zone_barrier_message(zone, request);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
++	switch (request->type) {
++	case UDS_POST:
++	case UDS_UPDATE:
++	case UDS_QUERY:
++	case UDS_QUERY_NO_UPDATE:
++		result = search_index_zone(zone, request);
++		break;
++
++	case UDS_DELETE:
++		result = remove_from_index_zone(zone, request);
++		break;
++
++	default:
++		result = uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
++						  "invalid request type: %d",
++						  request->type);
++		break;
++	}
++
 +	return result;
 +}
 +
-+/**
-+ * vdo_make() - Allocate and initialize a vdo.
-+ * @instance: Device instantiation counter.
-+ * @config: The device configuration.
-+ * @reason: The reason for any failure during this call.
-+ * @vdo_ptr: A pointer to hold the created vdo.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+int vdo_make(unsigned int instance,
-+	     struct device_config *config,
-+	     char **reason,
-+	     struct vdo **vdo_ptr)
++/* This is the request processing function invoked by each zone's thread. */
++static void execute_zone_request(struct uds_request *request)
 +{
 +	int result;
-+	struct vdo *vdo;
++	struct uds_index *index = request->index;
 +
-+	/* VDO-3769 - Set a generic reason so we don't ever return garbage. */
-+	*reason = "Unspecified error";
++	if (request->zone_message.type != UDS_MESSAGE_NONE) {
++		result = dispatch_index_zone_control_request(request);
++		if (result != UDS_SUCCESS)
++			uds_log_error_strerror(result,
++					       "error executing message: %d",
++					       request->zone_message.type);
 +
-+	result = UDS_ALLOCATE(1, struct vdo, __func__, &vdo);
-+	if (result != UDS_SUCCESS) {
-+		*reason = "Cannot allocate VDO";
-+		return result;
++		/* Once the message is processed it can be freed. */
++		UDS_FREE(UDS_FORGET(request));
++		return;
 +	}
 +
-+	result = initialize_vdo(vdo, config, instance, reason);
-+	if (result != VDO_SUCCESS) {
-+		vdo_destroy(vdo);
-+		return result;
++	index->need_to_save = true;
++	if (request->requeued && (request->status != UDS_SUCCESS)) {
++		set_request_location(request, UDS_LOCATION_UNAVAILABLE);
++		index->callback(request);
++		return;
 +	}
 +
-+	/* From here on, the caller will clean up if there is an error. */
-+	*vdo_ptr = vdo;
++	result = dispatch_index_request(index, request);
++	if (result == UDS_QUEUED)
++		/* The request has been requeued so don't let it complete. */
++		return;
 +
-+	snprintf(vdo->thread_name_prefix,
-+		 sizeof(vdo->thread_name_prefix),
-+		 "%s%u",
-+		 MODULE_NAME,
-+		 instance);
-+	BUG_ON(vdo->thread_name_prefix[0] == '\0');
-+	result = UDS_ALLOCATE(vdo->thread_config.thread_count,
-+			      struct vdo_thread,
-+			      __func__,
-+			      &vdo->threads);
-+	if (result != VDO_SUCCESS) {
-+		*reason = "Cannot allocate thread structures";
-+		return result;
-+	}
++	if (!request->found)
++		set_request_location(request, UDS_LOCATION_UNAVAILABLE);
 +
-+	result = vdo_make_thread(vdo,
-+				 vdo->thread_config.admin_thread,
-+				 &default_queue_type,
-+				 1,
-+				 NULL);
-+	if (result != VDO_SUCCESS) {
-+		*reason = "Cannot make admin thread";
-+		return result;
-+	}
++	request->status = result;
++	index->callback(request);
++}
 +
-+	result = vdo_make_flusher(vdo);
-+	if (result != VDO_SUCCESS) {
-+		*reason = "Cannot make flusher zones";
-+		return result;
-+	}
++static int initialize_index_queues(struct uds_index *index, const struct geometry *geometry)
++{
++	int result;
++	unsigned int i;
 +
-+	result = vdo_make_packer(vdo, DEFAULT_PACKER_BINS, &vdo->packer);
-+	if (result != VDO_SUCCESS) {
-+		*reason = "Cannot make packer zones";
-+		return result;
-+	}
-+
-+	BUG_ON(vdo->device_config->logical_block_size <= 0);
-+	BUG_ON(vdo->device_config->owned_device == NULL);
-+	result = make_data_vio_pool(vdo,
-+				    MAXIMUM_VDO_USER_VIOS,
-+				    MAXIMUM_VDO_USER_VIOS * 3 / 4,
-+				    &vdo->data_vio_pool);
-+	if (result != VDO_SUCCESS) {
-+		*reason = "Cannot allocate data_vio pool";
-+		return result;
-+	}
-+
-+	result = vdo_make_io_submitter(config->thread_counts.bio_threads,
-+				       config->thread_counts.bio_rotation_interval,
-+				       get_data_vio_pool_request_limit(vdo->data_vio_pool),
-+				       vdo,
-+				       &vdo->io_submitter);
-+	if (result != VDO_SUCCESS) {
-+		*reason = "bio submission initialization failed";
-+		return result;
-+	}
-+
-+	if (vdo_uses_bio_ack_queue(vdo)) {
-+		result = vdo_make_thread(vdo,
-+					 vdo->thread_config.bio_ack_thread,
-+					 &bio_ack_q_type,
-+					 config->thread_counts.bio_ack_threads,
-+					 NULL);
-+		if (result != VDO_SUCCESS) {
-+			*reason = "bio ack queue initialization failed";
++	for (i = 0; i < index->zone_count; i++) {
++		result = uds_make_request_queue("indexW",
++						&execute_zone_request,
++						&index->zone_queues[i]);
++		if (result != UDS_SUCCESS)
 +			return result;
++	}
++
++	/* The triage queue is only needed for sparse multi-zone indexes. */
++	if ((index->zone_count > 1) && uds_is_sparse_geometry(geometry)) {
++		result = uds_make_request_queue("triageW", &triage_request, &index->triage_queue);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
++	return UDS_SUCCESS;
++}
++
++/* This is the driver function for the chapter writer thread. */
++static void close_chapters(void *arg)
++{
++	int result;
++	struct chapter_writer *writer = arg;
++	struct uds_index *index = writer->index;
++
++	uds_log_debug("chapter writer starting");
++	uds_lock_mutex(&writer->mutex);
++	for (;;) {
++		while (writer->zones_to_write < index->zone_count) {
++			if (writer->stop && (writer->zones_to_write == 0)) {
++				/*
++				 * We've been told to stop, and all of the zones are in the same
++				 * open chapter, so we can exit now.
++				 */
++				uds_unlock_mutex(&writer->mutex);
++				uds_log_debug("chapter writer stopping");
++				return;
++			}
++			uds_wait_cond(&writer->cond, &writer->mutex);
++		}
++
++		/*
++		 * Release the lock while closing a chapter. We probably don't need to do this, but
++		 * it seems safer in principle. It's OK to access the chapter and chapter_number
++		 * fields without the lock since those aren't allowed to change until we're done.
++		 */
++		uds_unlock_mutex(&writer->mutex);
++
++		if (index->has_saved_open_chapter) {
++			/*
++			 * Remove the saved open chapter the first time we close an open chapter
++			 * after loading from a clean shutdown, or after doing a clean save. The
++			 * lack of the saved open chapter will indicate that a recovery is
++			 * necessary.
++			 */
++			index->has_saved_open_chapter = false;
++			result = uds_discard_open_chapter(index->layout);
++			if (result == UDS_SUCCESS)
++				uds_log_debug("Discarding saved open chapter");
++		}
++
++		result = uds_close_open_chapter(writer->chapters,
++						index->zone_count,
++						index->volume,
++						writer->open_chapter_index,
++						writer->collated_records,
++						index->newest_virtual_chapter);
++
++		uds_lock_mutex(&writer->mutex);
++		index->newest_virtual_chapter++;
++		index->oldest_virtual_chapter +=
++			uds_chapters_to_expire(index->volume->geometry,
++					       index->newest_virtual_chapter);
++		writer->result = result;
++		writer->zones_to_write = 0;
++		uds_broadcast_cond(&writer->cond);
++	}
++}
++
++static void stop_chapter_writer(struct chapter_writer *writer)
++{
++	struct thread *writer_thread = 0;
++
++	uds_lock_mutex(&writer->mutex);
++	if (writer->thread != 0) {
++		writer_thread = writer->thread;
++		writer->thread = 0;
++		writer->stop = true;
++		uds_broadcast_cond(&writer->cond);
++	}
++	uds_unlock_mutex(&writer->mutex);
++
++	if (writer_thread != 0)
++		uds_join_threads(writer_thread);
++}
++
++static void free_chapter_writer(struct chapter_writer *writer)
++{
++	if (writer == NULL)
++		return;
++
++	stop_chapter_writer(writer);
++	uds_destroy_mutex(&writer->mutex);
++	uds_destroy_cond(&writer->cond);
++	uds_free_open_chapter_index(writer->open_chapter_index);
++	UDS_FREE(writer->collated_records);
++	UDS_FREE(writer);
++}
++
++static int make_chapter_writer(struct uds_index *index, struct chapter_writer **writer_ptr)
++{
++	int result;
++	struct chapter_writer *writer;
++	size_t collated_records_size =
++		(sizeof(struct uds_volume_record) * index->volume->geometry->records_per_chapter);
++
++	result = UDS_ALLOCATE_EXTENDED(struct chapter_writer,
++				       index->zone_count,
++				       struct open_chapter_zone *,
++				       "Chapter Writer",
++				       &writer);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	writer->index = index;
++	result = uds_init_mutex(&writer->mutex);
++	if (result != UDS_SUCCESS) {
++		UDS_FREE(writer);
++		return result;
++	}
++
++	result = uds_init_cond(&writer->cond);
++	if (result != UDS_SUCCESS) {
++		uds_destroy_mutex(&writer->mutex);
++		UDS_FREE(writer);
++		return result;
++	}
++
++	result = uds_allocate_cache_aligned(collated_records_size,
++					    "collated records",
++					    &writer->collated_records);
++	if (result != UDS_SUCCESS) {
++		free_chapter_writer(writer);
++		return result;
++	}
++
++	result = uds_make_open_chapter_index(&writer->open_chapter_index,
++					     index->volume->geometry,
++					     index->volume->nonce);
++	if (result != UDS_SUCCESS) {
++		free_chapter_writer(writer);
++		return result;
++	}
++
++	writer->memory_size = (sizeof(struct chapter_writer) +
++			       index->zone_count * sizeof(struct open_chapter_zone *) +
++			       collated_records_size +
++			       writer->open_chapter_index->memory_size);
++
++	result = uds_create_thread(close_chapters, writer, "writer", &writer->thread);
++	if (result != UDS_SUCCESS) {
++		free_chapter_writer(writer);
++		return result;
++	}
++
++	*writer_ptr = writer;
++	return UDS_SUCCESS;
++}
++
++static int load_index(struct uds_index *index)
++{
++	int result;
++	u64 last_save_chapter;
++
++	result = uds_load_index_state(index->layout, index);
++	if (result != UDS_SUCCESS)
++		return UDS_INDEX_NOT_SAVED_CLEANLY;
++
++	last_save_chapter = ((index->last_save != NO_LAST_SAVE) ? index->last_save : 0);
++
++	uds_log_info("loaded index from chapter %llu through chapter %llu",
++		     (unsigned long long) index->oldest_virtual_chapter,
++		     (unsigned long long) last_save_chapter);
++
++	return UDS_SUCCESS;
++}
++
++static int rebuild_index_page_map(struct uds_index *index, u64 vcn)
++{
++	int result;
++	struct delta_index_page *chapter_index_page;
++	struct geometry *geometry = index->volume->geometry;
++	u32 chapter = uds_map_to_physical_chapter(geometry, vcn);
++	u32 expected_list_number = 0;
++	u32 index_page_number;
++	u32 lowest_delta_list;
++	u32 highest_delta_list;
++
++	for (index_page_number = 0;
++	     index_page_number < geometry->index_pages_per_chapter;
++	     index_page_number++) {
++		result = uds_get_volume_index_page(index->volume,
++						   chapter,
++						   index_page_number,
++						   &chapter_index_page);
++		if (result != UDS_SUCCESS)
++			return uds_log_error_strerror(result,
++						      "failed to read index page %u in chapter %u",
++						      index_page_number,
++						      chapter);
++
++		lowest_delta_list = chapter_index_page->lowest_list_number;
++		highest_delta_list = chapter_index_page->highest_list_number;
++		if (lowest_delta_list != expected_list_number)
++			return uds_log_error_strerror(UDS_CORRUPT_DATA,
++						      "chapter %u index page %u is corrupt",
++						      chapter,
++						      index_page_number);
++
++		uds_update_index_page_map(index->volume->index_page_map,
++					  vcn,
++					  chapter,
++					  index_page_number,
++					  highest_delta_list);
++		expected_list_number = highest_delta_list + 1;
++	}
++
++	return UDS_SUCCESS;
++}
++
++static int replay_record(struct uds_index *index,
++			 const struct uds_record_name *name,
++			 u64 virtual_chapter,
++			 bool will_be_sparse_chapter)
++{
++	int result;
++	struct volume_index_record record;
++	bool update_record;
++
++	if (will_be_sparse_chapter && !uds_is_volume_index_sample(index->volume_index, name))
++		/*
++		 * This entry will be in a sparse chapter after the rebuild completes, and it is
++		 * not a sample, so just skip over it.
++		 */
++		return UDS_SUCCESS;
++
++	result = uds_get_volume_index_record(index->volume_index, name, &record);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (record.is_found) {
++		if (record.is_collision) {
++			if (record.virtual_chapter == virtual_chapter)
++				/* The record is already correct. */
++				return UDS_SUCCESS;
++
++			update_record = true;
++		} else if (record.virtual_chapter == virtual_chapter) {
++			/*
++			 * There is a volume index entry pointing to the current chapter, but we
++			 * don't know if it is for the same name as the one we are currently
++			 * working on or not. For now, we're just going to assume that it isn't.
++			 * This will create one extra collision record if there was a deleted
++			 * record in the current chapter.
++			 */
++			update_record = false;
++		} else {
++			/*
++			 * If we're rebuilding, we don't normally want to go to disk to see if the
++			 * record exists, since we will likely have just read the record from disk
++			 * (i.e. we know it's there). The exception to this is when we find an
++			 * entry in the volume index that has a different chapter. In this case, we
++			 * need to search that chapter to determine if the volume index entry was
++			 * for the same record or a different one.
++			 */
++			result = uds_search_volume_page_cache_for_rebuild(index->volume,
++									  name,
++									  record.virtual_chapter,
++									  &update_record);
++			if (result != UDS_SUCCESS)
++				return result;
++			}
++	} else {
++		update_record = false;
++	}
++
++	if (update_record)
++		/*
++		 * Update the volume index to reference the new chapter for the block. If the
++		 * record had been deleted or dropped from the chapter index, it will be back.
++		 */
++		result = uds_set_volume_index_record_chapter(&record, virtual_chapter);
++	else
++		/*
++		 * Add a new entry to the volume index referencing the open chapter. This should be
++		 * done regardless of whether we are a brand new record or a sparse record, i.e.
++		 * one that doesn't exist in the index but does on disk, since for a sparse record,
++		 * we would want to un-sparsify if it did exist.
++		 */
++		result = uds_put_volume_index_record(&record, virtual_chapter);
++
++	if ((result == UDS_DUPLICATE_NAME) || (result == UDS_OVERFLOW))
++		/* The rebuilt index will lose these records. */
++		return UDS_SUCCESS;
++
++	return result;
++}
++
++static bool check_for_suspend(struct uds_index *index)
++{
++	bool closing;
++
++	if (index->load_context == NULL)
++		return false;
++
++	uds_lock_mutex(&index->load_context->mutex);
++	if (index->load_context->status != INDEX_SUSPENDING) {
++		uds_unlock_mutex(&index->load_context->mutex);
++		return false;
++	}
++
++	/* Notify that we are suspended and wait for the resume. */
++	index->load_context->status = INDEX_SUSPENDED;
++	uds_broadcast_cond(&index->load_context->cond);
++
++	while ((index->load_context->status != INDEX_OPENING) &&
++	       (index->load_context->status != INDEX_FREEING))
++		uds_wait_cond(&index->load_context->cond, &index->load_context->mutex);
++
++	closing = (index->load_context->status == INDEX_FREEING);
++	uds_unlock_mutex(&index->load_context->mutex);
++	return closing;
++}
++
++static int replay_chapter(struct uds_index *index, u64 virtual, bool sparse)
++{
++	int result;
++	u32 i;
++	u32 j;
++	const struct geometry *geometry;
++	u32 physical_chapter;
++
++	if (check_for_suspend(index)) {
++		uds_log_info("Replay interrupted by index shutdown at chapter %llu",
++			     (unsigned long long) virtual);
++		return -EBUSY;
++	}
++
++	geometry = index->volume->geometry;
++	physical_chapter = uds_map_to_physical_chapter(geometry, virtual);
++	uds_prefetch_volume_chapter(index->volume, physical_chapter);
++	uds_set_volume_index_open_chapter(index->volume_index, virtual);
++
++	result = rebuild_index_page_map(index, virtual);
++	if (result != UDS_SUCCESS)
++		return uds_log_error_strerror(result,
++					      "could not rebuild index page map for chapter %u",
++					      physical_chapter);
++
++	for (i = 0; i < geometry->record_pages_per_chapter; i++) {
++		u8 *record_page;
++		u32 record_page_number;
++
++		record_page_number = geometry->index_pages_per_chapter + i;
++		result = uds_get_volume_record_page(index->volume,
++						    physical_chapter,
++						    record_page_number,
++						    &record_page);
++		if (result != UDS_SUCCESS)
++			return uds_log_error_strerror(result,
++						      "could not get page %d",
++						      record_page_number);
++
++		for (j = 0; j < geometry->records_per_page; j++) {
++			const u8 *name_bytes;
++			struct uds_record_name name;
++
++			name_bytes = record_page + (j * BYTES_PER_RECORD);
++			memcpy(&name.name, name_bytes, UDS_RECORD_NAME_SIZE);
++			result = replay_record(index, &name, virtual, sparse);
++			if (result != UDS_SUCCESS)
++				return result;
 +		}
 +	}
 +
-+	result = vdo_make_thread(vdo,
-+				 vdo->thread_config.cpu_thread,
-+				 &cpu_q_type,
-+				 config->thread_counts.cpu_threads,
-+				 (void **) vdo->compression_context);
-+	if (result != VDO_SUCCESS) {
-+		*reason = "CPU queue initialization failed";
++	return UDS_SUCCESS;
++}
++
++static int replay_volume(struct uds_index *index)
++{
++	int result;
++	u64 old_map_update;
++	u64 new_map_update;
++	u64 virtual;
++	u64 from_virtual = index->oldest_virtual_chapter;
++	u64 upto_virtual = index->newest_virtual_chapter;
++	bool will_be_sparse;
++
++	uds_log_info("Replaying volume from chapter %llu through chapter %llu",
++		     (unsigned long long) from_virtual,
++		     (unsigned long long) upto_virtual);
++
++	/*
++	 * The index failed to load, so the volume index is empty. Add records to the volume index
++	 * in order, skipping non-hooks in chapters which will be sparse to save time.
++	 *
++	 * Go through each record page of each chapter and add the records back to the volume
++	 * index. This should not cause anything to be written to either the open chapter or the
++	 * on-disk volume. Also skip the on-disk chapter corresponding to upto_virtual, as this
++	 * would have already been purged from the volume index when the chapter was opened.
++	 *
++	 * Also, go through each index page for each chapter and rebuild the index page map.
++	 */
++	old_map_update = index->volume->index_page_map->last_update;
++	for (virtual = from_virtual; virtual < upto_virtual; ++virtual) {
++		will_be_sparse = uds_is_chapter_sparse(index->volume->geometry,
++						       from_virtual,
++						       upto_virtual,
++						       virtual);
++		result = replay_chapter(index, virtual, will_be_sparse);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
++	/* Also reap the chapter being replaced by the open chapter. */
++	uds_set_volume_index_open_chapter(index->volume_index, upto_virtual);
++
++	new_map_update = index->volume->index_page_map->last_update;
++	if (new_map_update != old_map_update)
++		uds_log_info("replay changed index page map update from %llu to %llu",
++			     (unsigned long long) old_map_update,
++			     (unsigned long long) new_map_update);
++
++	return UDS_SUCCESS;
++}
++
++static int rebuild_index(struct uds_index *index)
++{
++	int result;
++	u64 lowest;
++	u64 highest;
++	bool is_empty = false;
++	u32 chapters_per_volume = index->volume->geometry->chapters_per_volume;
++
++	index->volume->lookup_mode = LOOKUP_FOR_REBUILD;
++	result = uds_find_volume_chapter_boundaries(index->volume, &lowest, &highest, &is_empty);
++	if (result != UDS_SUCCESS)
++		return uds_log_fatal_strerror(result,
++					      "cannot rebuild index: unknown volume chapter boundaries");
++
++	if (is_empty) {
++		index->newest_virtual_chapter = 0;
++		index->oldest_virtual_chapter = 0;
++		index->volume->lookup_mode = LOOKUP_NORMAL;
++		return UDS_SUCCESS;
++	}
++
++	index->newest_virtual_chapter = highest + 1;
++	index->oldest_virtual_chapter = lowest;
++	if (index->newest_virtual_chapter == (index->oldest_virtual_chapter + chapters_per_volume))
++		/* Skip the chapter shadowed by the open chapter. */
++		index->oldest_virtual_chapter++;
++
++	result = replay_volume(index);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	index->volume->lookup_mode = LOOKUP_NORMAL;
++	return UDS_SUCCESS;
++}
++
++static void free_index_zone(struct index_zone *zone)
++{
++	if (zone == NULL)
++		return;
++
++	uds_free_open_chapter(zone->open_chapter);
++	uds_free_open_chapter(zone->writing_chapter);
++	UDS_FREE(zone);
++}
++
++static int make_index_zone(struct uds_index *index, unsigned int zone_number)
++{
++	int result;
++	struct index_zone *zone;
++
++	result = UDS_ALLOCATE(1, struct index_zone, "index zone", &zone);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = uds_make_open_chapter(index->volume->geometry,
++				       index->zone_count,
++				       &zone->open_chapter);
++	if (result != UDS_SUCCESS) {
++		free_index_zone(zone);
 +		return result;
 +	}
 +
-+	return VDO_SUCCESS;
-+}
-+
-+static void finish_vdo(struct vdo *vdo)
-+{
-+	int i;
-+
-+	if (vdo->threads == NULL)
-+		return;
-+
-+	vdo_cleanup_io_submitter(vdo->io_submitter);
-+	vdo_finish_dedupe_index(vdo->hash_zones);
-+
-+	for (i = 0; i < vdo->thread_config.thread_count; i++)
-+		vdo_finish_work_queue(vdo->threads[i].queue);
-+}
-+
-+/**
-+ * free_listeners() - Free the list of read-only listeners associated with a thread.
-+ * @thread_data: The thread holding the list to free.
-+ */
-+static void free_listeners(struct vdo_thread *thread)
-+{
-+	struct read_only_listener *listener, *next;
-+
-+	for (listener = UDS_FORGET(thread->listeners); listener != NULL; listener = next) {
-+		next = UDS_FORGET(listener->next);
-+		UDS_FREE(listener);
++	result = uds_make_open_chapter(index->volume->geometry,
++				       index->zone_count,
++				       &zone->writing_chapter);
++	if (result != UDS_SUCCESS) {
++		free_index_zone(zone);
++		return result;
 +	}
++
++	zone->index = index;
++	zone->id = zone_number;
++	index->zones[zone_number] = zone;
++
++	return UDS_SUCCESS;
 +}
 +
-+static void uninitialize_super_block(struct vdo_super_block *super_block)
++int uds_make_index(struct configuration *config,
++		   enum uds_open_index_type open_type,
++		   struct index_load_context *load_context,
++		   index_callback_t callback,
++		   struct uds_index **new_index)
 +{
-+	free_vio_components(&super_block->vio);
-+	UDS_FREE(super_block->buffer);
++	int result;
++	bool loaded = false;
++	bool new = (open_type == UDS_CREATE);
++	struct uds_index *index = NULL;
++	struct index_zone *zone;
++	u64 nonce;
++	unsigned int z;
++
++	result = UDS_ALLOCATE_EXTENDED(struct uds_index,
++				       config->zone_count,
++				       struct uds_request_queue *,
++				       "index",
++				       &index);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	index->zone_count = config->zone_count;
++
++	result = uds_make_index_layout(config, new, &index->layout);
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return result;
++	}
++
++	result = UDS_ALLOCATE(index->zone_count, struct index_zone *, "zones", &index->zones);
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return result;
++	}
++
++	result = uds_make_volume(config, index->layout, &index->volume);
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return result;
++	}
++
++	index->volume->lookup_mode = LOOKUP_NORMAL;
++	for (z = 0; z < index->zone_count; z++) {
++		result = make_index_zone(index, z);
++		if (result != UDS_SUCCESS) {
++			uds_free_index(index);
++			return uds_log_error_strerror(result, "Could not create index zone");
++		}
++	}
++
++	nonce = uds_get_volume_nonce(index->layout);
++	result = uds_make_volume_index(config, nonce, &index->volume_index);
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return uds_log_error_strerror(result, "could not make volume index");
++	}
++
++	index->load_context = load_context;
++	index->callback = callback;
++
++	result = initialize_index_queues(index, config->geometry);
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return result;
++	}
++
++	result = make_chapter_writer(index, &index->chapter_writer);
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return result;
++	}
++
++	if (!new) {
++		result = load_index(index);
++		switch (result) {
++		case UDS_SUCCESS:
++			loaded = true;
++			break;
++		case -ENOMEM:
++			/* We should not try a rebuild for this error. */
++			uds_log_error_strerror(result, "index could not be loaded");
++			break;
++		default:
++			uds_log_error_strerror(result, "index could not be loaded");
++			if (open_type == UDS_LOAD) {
++				result = rebuild_index(index);
++				if (result != UDS_SUCCESS)
++					uds_log_error_strerror(result,
++							       "index could not be rebuilt");
++			}
++			break;
++		}
++	}
++
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return uds_log_error_strerror(result, "fatal error in %s()", __func__);
++	}
++
++	for (z = 0; z < index->zone_count; z++) {
++		zone = index->zones[z];
++		zone->oldest_virtual_chapter = index->oldest_virtual_chapter;
++		zone->newest_virtual_chapter = index->newest_virtual_chapter;
++	}
++
++	if (index->load_context != NULL) {
++		uds_lock_mutex(&index->load_context->mutex);
++		index->load_context->status = INDEX_READY;
++		/*
++		 * If we get here, suspend is meaningless, but notify any thread trying to suspend
++		 * us so it doesn't hang.
++		 */
++		uds_broadcast_cond(&index->load_context->cond);
++		uds_unlock_mutex(&index->load_context->mutex);
++	}
++
++	index->has_saved_open_chapter = loaded;
++	index->need_to_save = !loaded;
++	*new_index = index;
++	return UDS_SUCCESS;
 +}
 +
-+/**
-+ * unregister_vdo() - Remove a vdo from the device registry.
-+ * @vdo: The vdo to remove.
-+ */
-+static void unregister_vdo(struct vdo *vdo)
-+{
-+	write_lock(&registry.lock);
-+	if (filter_vdos_locked(vdo_is_equal, vdo) == vdo)
-+		list_del_init(&vdo->registration);
-+
-+	write_unlock(&registry.lock);
-+}
-+
-+/**
-+ * vdo_destroy() - Destroy a vdo instance.
-+ * @vdo: The vdo to destroy (may be NULL).
-+ */
-+void vdo_destroy(struct vdo *vdo)
++void uds_free_index(struct uds_index *index)
 +{
 +	unsigned int i;
 +
-+	if (vdo == NULL)
++	if (index == NULL)
 +		return;
 +
-+	/* A running VDO should never be destroyed without suspending first. */
-+	BUG_ON(vdo_get_admin_state(vdo)->normal);
++	uds_request_queue_finish(index->triage_queue);
++	for (i = 0; i < index->zone_count; i++)
++		uds_request_queue_finish(index->zone_queues[i]);
 +
-+	vdo->allocations_allowed = true;
++	free_chapter_writer(index->chapter_writer);
 +
-+	/* Stop services that need to gather VDO statistics from the worker threads. */
-+	if (vdo->sysfs_added) {
-+		init_completion(&vdo->stats_shutdown);
-+		kobject_put(&vdo->stats_directory);
-+		wait_for_completion(&vdo->stats_shutdown);
++	uds_free_volume_index(index->volume_index);
++	if (index->zones != NULL) {
++		for (i = 0; i < index->zone_count; i++)
++			free_index_zone(index->zones[i]);
++		UDS_FREE(index->zones);
 +	}
 +
-+	finish_vdo(vdo);
-+	unregister_vdo(vdo);
-+	free_data_vio_pool(vdo->data_vio_pool);
-+	vdo_free_io_submitter(UDS_FORGET(vdo->io_submitter));
-+	vdo_free_flusher(UDS_FORGET(vdo->flusher));
-+	vdo_free_packer(UDS_FORGET(vdo->packer));
-+	vdo_free_recovery_journal(UDS_FORGET(vdo->recovery_journal));
-+	vdo_free_slab_depot(UDS_FORGET(vdo->depot));
-+	vdo_uninitialize_layout(&vdo->layout);
-+	vdo_uninitialize_layout(&vdo->next_layout);
-+	if (vdo->partition_copier)
-+		dm_kcopyd_client_destroy(UDS_FORGET(vdo->partition_copier));
-+	uninitialize_super_block(&vdo->super_block);
-+	vdo_free_block_map(UDS_FORGET(vdo->block_map));
-+	vdo_free_hash_zones(UDS_FORGET(vdo->hash_zones));
-+	vdo_free_physical_zones(UDS_FORGET(vdo->physical_zones));
-+	vdo_free_logical_zones(UDS_FORGET(vdo->logical_zones));
-+
-+	if (vdo->threads != NULL) {
-+		for (i = 0; i < vdo->thread_config.thread_count; i++) {
-+			free_listeners(&vdo->threads[i]);
-+			vdo_free_work_queue(UDS_FORGET(vdo->threads[i].queue));
-+		}
-+		UDS_FREE(UDS_FORGET(vdo->threads));
-+	}
-+
-+	uninitialize_thread_config(&vdo->thread_config);
-+
-+	if (vdo->compression_context != NULL) {
-+		for (i = 0; i < vdo->device_config->thread_counts.cpu_threads; i++)
-+			UDS_FREE(UDS_FORGET(vdo->compression_context[i]));
-+
-+		UDS_FREE(UDS_FORGET(vdo->compression_context));
-+	}
-+
-+	/*
-+	 * The call to kobject_put on the kobj sysfs node will decrement its reference count; when
-+	 * the count goes to zero the VDO object will be freed as a side effect.
-+	 */
-+	if (!vdo->sysfs_added)
-+		UDS_FREE(vdo);
-+	else
-+		kobject_put(&vdo->vdo_directory);
++	uds_free_volume(index->volume);
++	uds_free_index_layout(UDS_FORGET(index->layout));
++	UDS_FREE(index);
 +}
 +
-+static int initialize_super_block(struct vdo *vdo, struct vdo_super_block *super_block)
++/* Wait for the chapter writer to complete any outstanding writes. */
++void uds_wait_for_idle_index(struct uds_index *index)
++{
++	struct chapter_writer *writer = index->chapter_writer;
++
++	uds_lock_mutex(&writer->mutex);
++	while (writer->zones_to_write > 0)
++		uds_wait_cond(&writer->cond, &writer->mutex);
++	uds_unlock_mutex(&writer->mutex);
++}
++
++/* This function assumes that all requests have been drained. */
++int uds_save_index(struct uds_index *index)
 +{
 +	int result;
 +
-+	result = UDS_ALLOCATE(VDO_BLOCK_SIZE,
-+			      char,
-+			      "encoded super block",
-+			      (char **) &vdo->super_block.buffer);
-+	if (result != VDO_SUCCESS)
-+		return result;
++	if (!index->need_to_save)
++		return UDS_SUCCESS;
 +
-+	return allocate_vio_components(vdo,
-+				       VIO_TYPE_SUPER_BLOCK,
-+				       VIO_PRIORITY_METADATA,
-+				       NULL,
-+				       1,
-+				       (char *) super_block->buffer,
-+				       &vdo->super_block.vio);
-+}
++	uds_wait_for_idle_index(index);
++	index->prev_save = index->last_save;
++	index->last_save = ((index->newest_virtual_chapter == 0) ?
++			    NO_LAST_SAVE :
++			    index->newest_virtual_chapter - 1);
++	uds_log_info("beginning save (vcn %llu)", (unsigned long long) index->last_save);
 +
-+/**
-+ * finish_reading_super_block() - Continue after loading the super block.
-+ * @completion: The super block vio.
-+ *
-+ * This callback is registered in vdo_load_super_block().
-+ */
-+static void finish_reading_super_block(struct vdo_completion *completion)
-+{
-+	struct vdo_super_block *super_block =
-+		container_of(as_vio(completion), struct vdo_super_block, vio);
-+
-+	vdo_continue_completion(UDS_FORGET(completion->parent),
-+				vdo_decode_super_block(super_block->buffer));
-+}
-+
-+/**
-+ * handle_super_block_read_error() - Handle an error reading the super block.
-+ * @completion: The super block vio.
-+ *
-+ * This error handler is registered in vdo_load_super_block().
-+ */
-+static void handle_super_block_read_error(struct vdo_completion *completion)
-+{
-+	vio_record_metadata_io_error(as_vio(completion));
-+	finish_reading_super_block(completion);
-+}
-+
-+static void read_super_block_endio(struct bio *bio)
-+{
-+	struct vio *vio = bio->bi_private;
-+	struct vdo_completion *parent = vio->completion.parent;
-+
-+	continue_vio_after_io(vio, finish_reading_super_block, parent->callback_thread_id);
-+}
-+
-+/**
-+ * vdo_load_super_block() - Allocate a super block and read its contents from storage.
-+ * @vdo: The vdo containing the super block on disk.
-+ * @parent: The completion to notify after loading the super block.
-+ */
-+void vdo_load_super_block(struct vdo *vdo, struct vdo_completion *parent)
-+{
-+	int result;
-+
-+	result = initialize_super_block(vdo, &vdo->super_block);
-+	if (result != VDO_SUCCESS) {
-+		vdo_continue_completion(parent, result);
-+		return;
++	result = uds_save_index_state(index->layout, index);
++	if (result != UDS_SUCCESS) {
++		uds_log_info("save index failed");
++		index->last_save = index->prev_save;
++	} else {
++		index->has_saved_open_chapter = true;
++		index->need_to_save = false;
++		uds_log_info("finished save (vcn %llu)", (unsigned long long) index->last_save);
 +	}
 +
-+	vdo->super_block.vio.completion.parent = parent;
-+	submit_metadata_vio(&vdo->super_block.vio,
-+			    vdo_get_data_region_start(vdo->geometry),
-+			    read_super_block_endio,
-+			    handle_super_block_read_error,
-+			    REQ_OP_READ);
-+}
-+
-+/**
-+ * pool_stats_release() - Signal that sysfs stats have been shut down.
-+ * @directory: The vdo stats directory.
-+ */
-+static void pool_stats_release(struct kobject *directory)
-+{
-+	struct vdo *vdo = container_of(directory, struct vdo, stats_directory);
-+
-+	complete(&vdo->stats_shutdown);
-+}
-+
-+ATTRIBUTE_GROUPS(vdo_pool_stats);
-+static struct kobj_type stats_directory_type = {
-+	.release = pool_stats_release,
-+	.sysfs_ops = &vdo_pool_stats_sysfs_ops,
-+	.default_groups = vdo_pool_stats_groups,
-+};
-+
-+/**
-+ * vdo_add_sysfs_stats_dir() - Add the stats directory to the vdo sysfs directory.
-+ * @vdo: The vdo.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+int vdo_add_sysfs_stats_dir(struct vdo *vdo)
-+{
-+	int result;
-+
-+	kobject_init(&vdo->stats_directory, &stats_directory_type);
-+	result = kobject_add(&vdo->stats_directory, &vdo->vdo_directory, "statistics");
-+	if (result != 0)
-+		return VDO_CANT_ADD_SYSFS_NODE;
-+
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * vdo_get_backing_device() - Get the block device object underlying a vdo.
-+ * @vdo: The vdo.
-+ *
-+ * Return: The vdo's current block device.
-+ */
-+struct block_device *vdo_get_backing_device(const struct vdo *vdo)
-+{
-+	return vdo->device_config->owned_device->bdev;
-+}
-+
-+/**
-+ * vdo_get_device_name() - Get the device name associated with the vdo target.
-+ * @target: The target device interface.
-+ *
-+ * Return: The block device name.
-+ */
-+const char *vdo_get_device_name(const struct dm_target *target)
-+{
-+	return dm_device_name(dm_table_get_md(target->table));
-+}
-+
-+/**
-+ * vdo_synchronous_flush() - Issue a flush request and wait for it to complete.
-+ * @vdo: The vdo.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+int vdo_synchronous_flush(struct vdo *vdo)
-+{
-+	int result;
-+	struct bio bio;
-+
-+	bio_init(&bio, vdo_get_backing_device(vdo), 0, 0,
-+		 REQ_OP_WRITE | REQ_PREFLUSH);
-+	submit_bio_wait(&bio);
-+	result = blk_status_to_errno(bio.bi_status);
-+
-+	atomic64_inc(&vdo->stats.flush_out);
-+	if (result != 0) {
-+		uds_log_error_strerror(result, "synchronous flush failed");
-+		result = -EIO;
-+	}
-+
-+	bio_uninit(&bio);
 +	return result;
 +}
 +
-+/**
-+ * vdo_get_state() - Get the current state of the vdo.
-+ * @vdo: The vdo.
-+
-+ * Context: This method may be called from any thread.
-+ *
-+ * Return: The current state of the vdo.
-+ */
-+enum vdo_state vdo_get_state(const struct vdo *vdo)
++int uds_replace_index_storage(struct uds_index *index, const char *path)
 +{
-+	enum vdo_state state = atomic_read(&vdo->state);
-+
-+	/* pairs with barriers where state field is changed */
-+	smp_rmb();
-+	return state;
++	return uds_replace_volume_storage(index->volume, index->layout, path);
 +}
 +
-+/**
-+ * vdo_set_state() - Set the current state of the vdo.
-+ * @vdo: The vdo whose state is to be set.
-+ * @state: The new state of the vdo.
-+ *
-+ * Context: This method may be called from any thread.
-+ */
-+void vdo_set_state(struct vdo *vdo, enum vdo_state state)
++/* Accessing statistics should be safe from any thread. */
++void uds_get_index_stats(struct uds_index *index, struct uds_index_stats *counters)
 +{
-+	/* pairs with barrier in vdo_get_state */
-+	smp_wmb();
-+	atomic_set(&vdo->state, state);
++	struct volume_index_stats stats;
++
++	uds_get_volume_index_stats(index->volume_index, &stats);
++	counters->entries_indexed = stats.record_count;
++	counters->collisions = stats.collision_count;
++	counters->entries_discarded = stats.discard_count;
++
++	counters->memory_used = (index->volume_index->memory_size +
++				 index->volume->cache_size +
++				 index->chapter_writer->memory_size);
 +}
 +
-+/**
-+ * vdo_get_admin_state() - Get the admin state of the vdo.
-+ * @vdo: The vdo.
-+ *
-+ * Return: The code for the vdo's current admin state.
-+ */
-+const struct admin_state_code *vdo_get_admin_state(const struct vdo *vdo)
++void uds_enqueue_request(struct uds_request *request, enum request_stage stage)
 +{
-+	return vdo_get_admin_state_code(&vdo->admin.state);
-+}
++	struct uds_index *index = request->index;
++	struct uds_request_queue *queue;
 +
-+/**
-+ * record_vdo() - Record the state of the VDO for encoding in the super block.
-+ */
-+static void record_vdo(struct vdo *vdo)
-+{
-+	vdo->states.release_version = vdo->geometry.release_version;
-+	vdo->states.vdo.state = vdo_get_state(vdo);
-+	vdo->states.block_map = vdo_record_block_map(vdo->block_map);
-+	vdo->states.recovery_journal = vdo_record_recovery_journal(vdo->recovery_journal);
-+	vdo->states.slab_depot = vdo_record_slab_depot(vdo->depot);
-+	vdo->states.layout = vdo->layout;
-+}
-+
-+/**
-+ * continue_super_block_parent() - Continue the parent of a super block save operation.
-+ * @completion: The super block vio.
-+ *
-+ * This callback is registered in vdo_save_components().
-+ */
-+static void continue_super_block_parent(struct vdo_completion *completion)
-+{
-+	vdo_continue_completion(UDS_FORGET(completion->parent), completion->result);
-+}
-+
-+/**
-+ * handle_save_error() - Log a super block save error.
-+ * @completion: The super block vio.
-+ *
-+ * This error handler is registered in vdo_save_components().
-+ */
-+static void handle_save_error(struct vdo_completion *completion)
-+{
-+	struct vdo_super_block *super_block =
-+		container_of(as_vio(completion), struct vdo_super_block, vio);
-+
-+	vio_record_metadata_io_error(&super_block->vio);
-+	uds_log_error_strerror(completion->result, "super block save failed");
-+	/*
-+	 * Mark the super block as unwritable so that we won't attempt to write it again. This
-+	 * avoids the case where a growth attempt fails writing the super block with the new size,
-+	 * but the subsequent attempt to write out the read-only state succeeds. In this case,
-+	 * writes which happened just before the suspend would not be visible if the VDO is
-+	 * restarted without rebuilding, but, after a read-only rebuild, the effects of those
-+	 * writes would reappear.
-+	 */
-+	super_block->unwritable = true;
-+	completion->callback(completion);
-+}
-+
-+static void super_block_write_endio(struct bio *bio)
-+{
-+	struct vio *vio = bio->bi_private;
-+	struct vdo_completion *parent = vio->completion.parent;
-+
-+	continue_vio_after_io(vio, continue_super_block_parent, parent->callback_thread_id);
-+}
-+
-+/**
-+ * vdo_save_components() - Encode the vdo and save the super block asynchronously.
-+ * @vdo: The vdo whose state is being saved.
-+ * @parent: The completion to notify when the save is complete.
-+ */
-+void vdo_save_components(struct vdo *vdo, struct vdo_completion *parent)
-+{
-+	struct vdo_super_block *super_block = &vdo->super_block;
-+
-+	if (super_block->unwritable) {
-+		vdo_continue_completion(parent, VDO_READ_ONLY);
-+		return;
-+	}
-+
-+	if (super_block->vio.completion.parent != NULL) {
-+		vdo_continue_completion(parent, VDO_COMPONENT_BUSY);
-+		return;
-+	}
-+
-+	record_vdo(vdo);
-+
-+	vdo_encode_super_block(super_block->buffer, &vdo->states);
-+	super_block->vio.completion.parent = parent;
-+	super_block->vio.completion.callback_thread_id = parent->callback_thread_id;
-+	submit_metadata_vio(&super_block->vio,
-+			    vdo_get_data_region_start(vdo->geometry),
-+			    super_block_write_endio,
-+			    handle_save_error,
-+			    REQ_OP_WRITE | REQ_PREFLUSH | REQ_FUA);
-+}
-+
-+/**
-+ * vdo_register_read_only_listener() - Register a listener to be notified when the VDO goes
-+ *                                     read-only.
-+ * @vdo: The vdo to register with.
-+ * @listener: The object to notify.
-+ * @notification: The function to call to send the notification.
-+ * @thread_id: The id of the thread on which to send the notification.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+int vdo_register_read_only_listener(struct vdo *vdo,
-+				    void *listener,
-+				    vdo_read_only_notification *notification,
-+				    thread_id_t thread_id)
-+{
-+	struct vdo_thread *thread = &vdo->threads[thread_id];
-+	struct read_only_listener *read_only_listener;
-+	int result;
-+
-+	result = ASSERT(thread_id != vdo->thread_config.dedupe_thread,
-+			"read only listener not registered on dedupe thread");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(1, struct read_only_listener, __func__, &read_only_listener);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	*read_only_listener = (struct read_only_listener) {
-+		.listener = listener,
-+		.notify = notification,
-+		.next = thread->listeners,
-+	};
-+
-+	thread->listeners = read_only_listener;
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * notify_vdo_of_read_only_mode() - Notify a vdo that it is going read-only.
-+ * @listener: The vdo.
-+ * @parent: The completion to notify in order to acknowledge the notification.
-+ *
-+ * This will save the read-only state to the super block.
-+ *
-+ * Implements vdo_read_only_notification.
-+ */
-+static void notify_vdo_of_read_only_mode(void *listener, struct vdo_completion *parent)
-+{
-+	struct vdo *vdo = listener;
-+
-+	if (vdo_in_read_only_mode(vdo))
-+		vdo_finish_completion(parent);
-+
-+	vdo_set_state(vdo, VDO_READ_ONLY_MODE);
-+	vdo_save_components(vdo, parent);
-+}
-+
-+/**
-+ * vdo_enable_read_only_entry() - Enable a vdo to enter read-only mode on errors.
-+ * @vdo: The vdo to enable.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+int vdo_enable_read_only_entry(struct vdo *vdo)
-+{
-+	thread_id_t id;
-+	bool is_read_only = vdo_in_read_only_mode(vdo);
-+	struct read_only_notifier *notifier = &vdo->read_only_notifier;
-+
-+	if (is_read_only) {
-+		notifier->read_only_error = VDO_READ_ONLY;
-+		notifier->state = NOTIFIED;
-+	} else {
-+		notifier->state = MAY_NOT_NOTIFY;
-+	}
-+
-+	spin_lock_init(&notifier->lock);
-+	vdo_initialize_completion(&notifier->completion, vdo, VDO_READ_ONLY_MODE_COMPLETION);
-+
-+	for (id = 0; id < vdo->thread_config.thread_count; id++)
-+		vdo->threads[id].is_read_only = is_read_only;
-+
-+	return vdo_register_read_only_listener(vdo,
-+					       vdo,
-+					       notify_vdo_of_read_only_mode,
-+					       vdo->thread_config.admin_thread);
-+}
-+
-+/**
-+ * vdo_wait_until_not_entering_read_only_mode() - Wait until no read-only notifications are in
-+ *                                                progress and prevent any subsequent
-+ *                                                notifications.
-+ * @parent: The completion to notify when no threads are entering read-only mode.
-+ *
-+ * Notifications may be re-enabled by calling vdo_allow_read_only_mode_entry().
-+ */
-+void vdo_wait_until_not_entering_read_only_mode(struct vdo_completion *parent)
-+{
-+	struct vdo *vdo = parent->vdo;
-+	struct read_only_notifier *notifier = &vdo->read_only_notifier;
-+
-+	vdo_assert_on_admin_thread(vdo, __func__);
-+
-+	if (notifier->waiter != NULL) {
-+		vdo_continue_completion(parent, VDO_COMPONENT_BUSY);
-+		return;
-+	}
-+
-+	spin_lock(&notifier->lock);
-+	if (notifier->state == NOTIFYING)
-+		notifier->waiter = parent;
-+	else if (notifier->state == MAY_NOTIFY)
-+		notifier->state = MAY_NOT_NOTIFY;
-+	spin_unlock(&notifier->lock);
-+
-+	if (notifier->waiter == NULL) {
-+		/*
-+		 * A notification was not in progress, and now they are
-+		 * disallowed.
-+		 */
-+		vdo_launch_completion(parent);
-+		return;
-+	}
-+}
-+
-+/**
-+ * as_notifier() - Convert a generic vdo_completion to a read_only_notifier.
-+ * @completion: The completion to convert.
-+ *
-+ * Return: The completion as a read_only_notifier.
-+ */
-+static inline struct read_only_notifier *as_notifier(struct vdo_completion *completion)
-+{
-+	vdo_assert_completion_type(completion, VDO_READ_ONLY_MODE_COMPLETION);
-+	return container_of(completion, struct read_only_notifier, completion);
-+}
-+
-+/**
-+ * finish_entering_read_only_mode() - Complete the process of entering read only mode.
-+ * @completion: The read-only mode completion.
-+ */
-+static void finish_entering_read_only_mode(struct vdo_completion *completion)
-+{
-+	struct read_only_notifier *notifier = as_notifier(completion);
-+
-+	vdo_assert_on_admin_thread(completion->vdo, __func__);
-+
-+	spin_lock(&notifier->lock);
-+	notifier->state = NOTIFIED;
-+	spin_unlock(&notifier->lock);
-+
-+	if (notifier->waiter != NULL)
-+		vdo_continue_completion(UDS_FORGET(notifier->waiter), completion->result);
-+}
-+
-+/**
-+ * make_thread_read_only() - Inform each thread that the VDO is in read-only mode.
-+ * @completion: The read-only mode completion.
-+ */
-+static void make_thread_read_only(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+	thread_id_t thread_id = completion->callback_thread_id;
-+	struct read_only_notifier *notifier = as_notifier(completion);
-+	struct read_only_listener *listener = completion->parent;
-+
-+	if (listener == NULL) {
-+		/* This is the first call on this thread */
-+		struct vdo_thread *thread = &vdo->threads[thread_id];
-+
-+		thread->is_read_only = true;
-+		listener = thread->listeners;
-+		if (thread_id == 0)
-+			uds_log_error_strerror(READ_ONCE(notifier->read_only_error),
-+					       "Unrecoverable error, entering read-only mode");
-+	} else {
-+		/* We've just finished notifying a listener */
-+		listener = listener->next;
-+	}
-+
-+	if (listener != NULL) {
-+		/* We have a listener to notify */
-+		vdo_prepare_completion(completion,
-+				       make_thread_read_only,
-+				       make_thread_read_only,
-+				       thread_id,
-+				       listener);
-+		listener->notify(listener->listener, completion);
-+		return;
-+	}
-+
-+	/* We're done with this thread */
-+	if (++thread_id == vdo->thread_config.dedupe_thread)
-+		/*
-+		 * We don't want to notify the dedupe thread since it may be
-+		 * blocked rebuilding the index.
-+		 */
-+		++thread_id;
-+
-+	if (thread_id >= vdo->thread_config.thread_count)
-+		/* There are no more threads */
-+		vdo_prepare_completion(completion,
-+				       finish_entering_read_only_mode,
-+				       finish_entering_read_only_mode,
-+				       vdo->thread_config.admin_thread,
-+				       NULL);
-+	else
-+		vdo_prepare_completion(completion,
-+				       make_thread_read_only,
-+				       make_thread_read_only,
-+				       thread_id,
-+				       NULL);
-+
-+	vdo_launch_completion(completion);
-+}
-+
-+/**
-+ * vdo_allow_read_only_mode_entry() - Allow the notifier to put the VDO into read-only mode,
-+ *                                    reversing the effects of
-+ *                                    vdo_wait_until_not_entering_read_only_mode().
-+ * @parent: The object to notify once the operation is complete.
-+ *
-+ * If some thread tried to put the vdo into read-only mode while notifications were disallowed, it
-+ * will be done when this method is called. If that happens, the parent will not be notified until
-+ * the vdo has actually entered read-only mode and attempted to save the super block.
-+ *
-+ * Context: This method may only be called from the admin thread.
-+ */
-+void vdo_allow_read_only_mode_entry(struct vdo_completion *parent)
-+{
-+	struct vdo *vdo = parent->vdo;
-+	struct read_only_notifier *notifier = &vdo->read_only_notifier;
-+
-+	vdo_assert_on_admin_thread(vdo, __func__);
-+
-+	if (notifier->waiter != NULL) {
-+		vdo_continue_completion(parent, VDO_COMPONENT_BUSY);
-+		return;
-+	}
-+
-+	spin_lock(&notifier->lock);
-+	if (notifier->state == MAY_NOT_NOTIFY) {
-+		if (notifier->read_only_error == VDO_SUCCESS) {
-+			notifier->state = MAY_NOTIFY;
-+		} else {
-+			notifier->state = NOTIFYING;
-+			notifier->waiter = parent;
++	switch (stage) {
++	case STAGE_TRIAGE:
++		if (index->triage_queue != NULL) {
++			queue = index->triage_queue;
++			break;
 +		}
-+	}
-+	spin_unlock(&notifier->lock);
 +
-+	if (notifier->waiter == NULL) {
-+		/* We're done */
-+		vdo_launch_completion(parent);
-+		return;
-+	}
++		fallthrough;
 +
-+	/* Do the pending notification. */
-+	make_thread_read_only(&notifier->completion);
-+}
++	case STAGE_INDEX:
++		request->zone_number =
++			uds_get_volume_index_zone(index->volume_index, &request->record_name);
++		fallthrough;
 +
-+/**
-+ * vdo_enter_read_only_mode() - Put a VDO into read-only mode and save the read-only state in the
-+ *                              super block.
-+ * @vdo: The vdo.
-+ * @error_code: The error which caused the VDO to enter read-only mode.
-+ *
-+ * This method is a no-op if the VDO is already read-only.
-+ */
-+void vdo_enter_read_only_mode(struct vdo *vdo, int error_code)
-+{
-+	bool notify = false;
-+	thread_id_t thread_id = vdo_get_callback_thread_id();
-+	struct read_only_notifier *notifier = &vdo->read_only_notifier;
-+	struct vdo_thread *thread;
-+
-+	if (thread_id != VDO_INVALID_THREAD_ID) {
-+		thread = &vdo->threads[thread_id];
-+		if (thread->is_read_only)
-+			/* This thread has already gone read-only. */
-+			return;
-+
-+		/* Record for this thread that the VDO is read-only. */
-+		thread->is_read_only = true;
-+	}
-+
-+	spin_lock(&notifier->lock);
-+	if (notifier->read_only_error == VDO_SUCCESS) {
-+		WRITE_ONCE(notifier->read_only_error, error_code);
-+		if (notifier->state == MAY_NOTIFY) {
-+			notifier->state = NOTIFYING;
-+			notify = true;
-+		}
-+	}
-+	spin_unlock(&notifier->lock);
-+
-+	if (!notify)
-+		/* The notifier is already aware of a read-only error */
-+		return;
-+
-+	/* Initiate a notification starting on the lowest numbered thread. */
-+	vdo_launch_completion_callback(&notifier->completion, make_thread_read_only, 0);
-+}
-+
-+/**
-+ * vdo_is_read_only() - Check whether the VDO is read-only.
-+ * @vdo: The vdo.
-+ *
-+ * Return: true if the vdo is read-only.
-+ *
-+ * This method may be called from any thread, as opposed to examining the VDO's state field which
-+ * is only safe to check from the admin thread.
-+ */
-+bool vdo_is_read_only(struct vdo *vdo)
-+{
-+	return vdo->threads[vdo_get_callback_thread_id()].is_read_only;
-+}
-+
-+/**
-+ * vdo_in_read_only_mode() - Check whether a vdo is in read-only mode.
-+ * @vdo: The vdo to query.
-+ *
-+ * Return: true if the vdo is in read-only mode.
-+ */
-+bool vdo_in_read_only_mode(const struct vdo *vdo)
-+{
-+	return (vdo_get_state(vdo) == VDO_READ_ONLY_MODE);
-+}
-+
-+/**
-+ * vdo_in_recovery_mode() - Check whether the vdo is in recovery mode.
-+ * @vdo: The vdo to query.
-+ *
-+ * Return: true if the vdo is in recovery mode.
-+ */
-+bool vdo_in_recovery_mode(const struct vdo *vdo)
-+{
-+	return (vdo_get_state(vdo) == VDO_RECOVERING);
-+}
-+
-+/**
-+ * vdo_enter_recovery_mode() - Put the vdo into recovery mode.
-+ * @vdo: The vdo.
-+ */
-+void vdo_enter_recovery_mode(struct vdo *vdo)
-+{
-+	vdo_assert_on_admin_thread(vdo, __func__);
-+
-+	if (vdo_in_read_only_mode(vdo))
-+		return;
-+
-+	uds_log_info("Entering recovery mode");
-+	vdo_set_state(vdo, VDO_RECOVERING);
-+}
-+
-+/**
-+ * complete_synchronous_action() - Signal the waiting thread that a synchronous action is complete.
-+ * @completion: The sync completion.
-+ */
-+static void complete_synchronous_action(struct vdo_completion *completion)
-+{
-+	vdo_assert_completion_type(completion, VDO_SYNC_COMPLETION);
-+	complete(&(container_of(completion, struct sync_completion, vdo_completion)->completion));
-+}
-+
-+/**
-+ * perform_synchronous_action() - Launch an action on a VDO thread and wait for it to complete.
-+ * @vdo: The vdo.
-+ * @action: The callback to launch.
-+ * @thread_id: The thread on which to run the action.
-+ * @parent: The parent of the sync completion (may be NULL).
-+ */
-+static int perform_synchronous_action(struct vdo *vdo,
-+				      vdo_action *action,
-+				      thread_id_t thread_id,
-+				      void *parent)
-+{
-+	struct sync_completion sync;
-+
-+	vdo_initialize_completion(&sync.vdo_completion, vdo, VDO_SYNC_COMPLETION);
-+	init_completion(&sync.completion);
-+	sync.vdo_completion.parent = parent;
-+	vdo_launch_completion_callback(&sync.vdo_completion, action, thread_id);
-+	wait_for_completion(&sync.completion);
-+	return sync.vdo_completion.result;
-+}
-+
-+/**
-+ * set_compression_callback() - Callback to turn compression on or off.
-+ * @completion: The completion.
-+ */
-+static void set_compression_callback(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+	bool *enable = completion->parent;
-+	bool was_enabled = vdo_get_compressing(vdo);
-+
-+	if (*enable != was_enabled) {
-+		WRITE_ONCE(vdo->compressing, *enable);
-+		if (was_enabled)
-+			/* Signal the packer to flush since compression has been disabled. */
-+			vdo_flush_packer(vdo->packer);
-+	}
-+
-+	uds_log_info("compression is %s", (*enable ? "enabled" : "disabled"));
-+	*enable = was_enabled;
-+	complete_synchronous_action(completion);
-+}
-+
-+/**
-+ * vdo_set_compressing() - Turn compression on or off.
-+ * @vdo: The vdo.
-+ * @enable: Whether to enable or disable compression.
-+ *
-+ * Return: Whether compression was previously on or off.
-+ */
-+bool vdo_set_compressing(struct vdo *vdo, bool enable)
-+{
-+	perform_synchronous_action(vdo,
-+				   set_compression_callback,
-+				   vdo->thread_config.packer_thread,
-+				   &enable);
-+	return enable;
-+}
-+
-+/**
-+ * vdo_get_compressing() - Get whether compression is enabled in a vdo.
-+ * @vdo: The vdo.
-+ *
-+ * Return: State of compression.
-+ */
-+bool vdo_get_compressing(struct vdo *vdo)
-+{
-+	return READ_ONCE(vdo->compressing);
-+}
-+
-+static size_t get_block_map_cache_size(const struct vdo *vdo)
-+{
-+	return ((size_t) vdo->device_config->cache_size) * VDO_BLOCK_SIZE;
-+}
-+
-+static struct error_statistics __must_check get_vdo_error_statistics(const struct vdo *vdo)
-+{
-+	/*
-+	 * The error counts can be incremented from arbitrary threads and so must be incremented
-+	 * atomically, but they are just statistics with no semantics that could rely on memory
-+	 * order, so unfenced reads are sufficient.
-+	 */
-+	const struct atomic_statistics *atoms = &vdo->stats;
-+
-+	return (struct error_statistics) {
-+		.invalid_advice_pbn_count = atomic64_read(&atoms->invalid_advice_pbn_count),
-+		.no_space_error_count = atomic64_read(&atoms->no_space_error_count),
-+		.read_only_error_count = atomic64_read(&atoms->read_only_error_count),
-+	};
-+}
-+
-+static void copy_bio_stat(struct bio_stats *b, const struct atomic_bio_stats *a)
-+{
-+	b->read = atomic64_read(&a->read);
-+	b->write = atomic64_read(&a->write);
-+	b->discard = atomic64_read(&a->discard);
-+	b->flush = atomic64_read(&a->flush);
-+	b->empty_flush = atomic64_read(&a->empty_flush);
-+	b->fua = atomic64_read(&a->fua);
-+}
-+
-+static struct bio_stats subtract_bio_stats(struct bio_stats minuend, struct bio_stats subtrahend)
-+{
-+	return (struct bio_stats) {
-+		.read = minuend.read - subtrahend.read,
-+		.write = minuend.write - subtrahend.write,
-+		.discard = minuend.discard - subtrahend.discard,
-+		.flush = minuend.flush - subtrahend.flush,
-+		.empty_flush = minuend.empty_flush - subtrahend.empty_flush,
-+		.fua = minuend.fua - subtrahend.fua,
-+	};
-+}
-+
-+/**
-+ * vdo_get_physical_blocks_allocated() - Get the number of physical blocks in use by user data.
-+ * @vdo: The vdo.
-+ *
-+ * Return: The number of blocks allocated for user data.
-+ */
-+static block_count_t __must_check vdo_get_physical_blocks_allocated(const struct vdo *vdo)
-+{
-+	return (vdo_get_slab_depot_allocated_blocks(vdo->depot) -
-+		vdo_get_journal_block_map_data_blocks_used(vdo->recovery_journal));
-+}
-+
-+/**
-+ * vdo_get_physical_blocks_overhead() - Get the number of physical blocks used by vdo metadata.
-+ * @vdo: The vdo.
-+ *
-+ * Return: The number of overhead blocks.
-+ */
-+static block_count_t __must_check vdo_get_physical_blocks_overhead(const struct vdo *vdo)
-+{
-+	/*
-+	 * config.physical_blocks is mutated during resize and is in a packed structure,
-+	 * but resize runs on admin thread.
-+	 * TODO: Verify that this is always safe.
-+	 */
-+	return (vdo->states.vdo.config.physical_blocks -
-+		vdo_get_slab_depot_data_blocks(vdo->depot) +
-+		vdo_get_journal_block_map_data_blocks_used(vdo->recovery_journal));
-+}
-+
-+static const char *vdo_describe_state(enum vdo_state state)
-+{
-+	/* These strings should all fit in the 15 chars of VDOStatistics.mode. */
-+	switch (state) {
-+	case VDO_RECOVERING:
-+		return "recovering";
-+
-+	case VDO_READ_ONLY_MODE:
-+		return "read-only";
++	case STAGE_MESSAGE:
++		queue = index->zone_queues[request->zone_number];
++		break;
 +
 +	default:
-+		return "normal";
-+	}
-+}
-+
-+/**
-+ * get_vdo_statistics() - Populate a vdo_statistics structure on the admin thread.
-+ * @vdo: The vdo.
-+ * @stats: The statistics structure to populate.
-+ */
-+static void get_vdo_statistics(const struct vdo *vdo, struct vdo_statistics *stats)
-+{
-+	struct recovery_journal *journal = vdo->recovery_journal;
-+	enum vdo_state state = vdo_get_state(vdo);
-+
-+	vdo_assert_on_admin_thread(vdo, __func__);
-+
-+	/* start with a clean slate */
-+	memset(stats, 0, sizeof(struct vdo_statistics));
-+
-+	/*
-+	 * These are immutable properties of the vdo object, so it is safe to query them from any
-+	 * thread.
-+	 */
-+	stats->version = STATISTICS_VERSION;
-+	stats->release_version = VDO_CURRENT_RELEASE_VERSION_NUMBER;
-+	stats->logical_blocks = vdo->states.vdo.config.logical_blocks;
-+	/*
-+	 * config.physical_blocks is mutated during resize and is in a packed structure, but resize
-+	 * runs on the admin thread.
-+	 * TODO: verify that this is always safe
-+	 */
-+	stats->physical_blocks = vdo->states.vdo.config.physical_blocks;
-+	stats->block_size = VDO_BLOCK_SIZE;
-+	stats->complete_recoveries = vdo->states.vdo.complete_recoveries;
-+	stats->read_only_recoveries = vdo->states.vdo.read_only_recoveries;
-+	stats->block_map_cache_size = get_block_map_cache_size(vdo);
-+
-+	/* The callees are responsible for thread-safety. */
-+	stats->data_blocks_used = vdo_get_physical_blocks_allocated(vdo);
-+	stats->overhead_blocks_used = vdo_get_physical_blocks_overhead(vdo);
-+	stats->logical_blocks_used = vdo_get_recovery_journal_logical_blocks_used(journal);
-+	vdo_get_slab_depot_statistics(vdo->depot, stats);
-+	stats->journal = vdo_get_recovery_journal_statistics(journal);
-+	stats->packer = vdo_get_packer_statistics(vdo->packer);
-+	stats->block_map = vdo_get_block_map_statistics(vdo->block_map);
-+	vdo_get_dedupe_statistics(vdo->hash_zones, stats);
-+	stats->errors = get_vdo_error_statistics(vdo);
-+	stats->in_recovery_mode = (state == VDO_RECOVERING);
-+	snprintf(stats->mode, sizeof(stats->mode), "%s", vdo_describe_state(state));
-+
-+	stats->instance = vdo->instance;
-+	stats->current_vios_in_progress = get_data_vio_pool_active_requests(vdo->data_vio_pool);
-+	stats->max_vios = get_data_vio_pool_maximum_requests(vdo->data_vio_pool);
-+
-+	stats->flush_out = atomic64_read(&vdo->stats.flush_out);
-+	stats->logical_block_size = vdo->device_config->logical_block_size;
-+	copy_bio_stat(&stats->bios_in, &vdo->stats.bios_in);
-+	copy_bio_stat(&stats->bios_in_partial, &vdo->stats.bios_in_partial);
-+	copy_bio_stat(&stats->bios_out, &vdo->stats.bios_out);
-+	copy_bio_stat(&stats->bios_meta, &vdo->stats.bios_meta);
-+	copy_bio_stat(&stats->bios_journal, &vdo->stats.bios_journal);
-+	copy_bio_stat(&stats->bios_page_cache, &vdo->stats.bios_page_cache);
-+	copy_bio_stat(&stats->bios_out_completed, &vdo->stats.bios_out_completed);
-+	copy_bio_stat(&stats->bios_meta_completed, &vdo->stats.bios_meta_completed);
-+	copy_bio_stat(&stats->bios_journal_completed, &vdo->stats.bios_journal_completed);
-+	copy_bio_stat(&stats->bios_page_cache_completed, &vdo->stats.bios_page_cache_completed);
-+	copy_bio_stat(&stats->bios_acknowledged, &vdo->stats.bios_acknowledged);
-+	copy_bio_stat(&stats->bios_acknowledged_partial, &vdo->stats.bios_acknowledged_partial);
-+	stats->bios_in_progress = subtract_bio_stats(stats->bios_in, stats->bios_acknowledged);
-+	uds_get_memory_stats(&stats->memory_usage.bytes_used,
-+			     &stats->memory_usage.peak_bytes_used);
-+}
-+
-+/**
-+ * vdo_fetch_statistics_callback() - Action to populate a vdo_statistics
-+ *                                   structure on the admin thread.
-+ * @completion: The completion.
-+ *
-+ * This callback is registered in vdo_fetch_statistics().
-+ */
-+static void vdo_fetch_statistics_callback(struct vdo_completion *completion)
-+{
-+	get_vdo_statistics(completion->vdo, completion->parent);
-+	complete_synchronous_action(completion);
-+}
-+
-+/**
-+ * vdo_fetch_statistics() - Fetch statistics on the correct thread.
-+ * @vdo: The vdo.
-+ * @stats: The vdo statistics are returned here.
-+ */
-+void vdo_fetch_statistics(struct vdo *vdo, struct vdo_statistics *stats)
-+{
-+	perform_synchronous_action(vdo,
-+				   vdo_fetch_statistics_callback,
-+				   vdo->thread_config.admin_thread,
-+				   stats);
-+}
-+
-+/**
-+ * vdo_get_callback_thread_id() - Get the id of the callback thread on which a completion is
-+ *                                currently running.
-+ *
-+ * Return: The current thread ID, or -1 if no such thread.
-+ */
-+thread_id_t vdo_get_callback_thread_id(void)
-+{
-+	struct vdo_work_queue *queue = vdo_get_current_work_queue();
-+	struct vdo_thread *thread;
-+	thread_id_t thread_id;
-+
-+	if (queue == NULL)
-+		return VDO_INVALID_THREAD_ID;
-+
-+	thread = vdo_get_work_queue_owner(queue);
-+	thread_id = thread->thread_id;
-+
-+	if (PARANOID_THREAD_CONSISTENCY_CHECKS) {
-+		BUG_ON(thread_id >= thread->vdo->thread_config.thread_count);
-+		BUG_ON(thread != &thread->vdo->threads[thread_id]);
++		ASSERT_LOG_ONLY(false, "invalid index stage: %d", stage);
++		return;
 +	}
 +
-+	return thread_id;
++	uds_request_queue_enqueue(queue, request);
 +}
-+
-+/**
-+ * vdo_dump_status() - Dump status information about a vdo to the log for debugging.
-+ * @vdo: The vdo to dump.
-+ */
-+void vdo_dump_status(const struct vdo *vdo)
-+{
-+	zone_count_t zone;
-+
-+	vdo_dump_flusher(vdo->flusher);
-+	vdo_dump_recovery_journal_statistics(vdo->recovery_journal);
-+	vdo_dump_packer(vdo->packer);
-+	vdo_dump_slab_depot(vdo->depot);
-+
-+	for (zone = 0; zone < vdo->thread_config.logical_zone_count; zone++)
-+		vdo_dump_logical_zone(&vdo->logical_zones->zones[zone]);
-+
-+	for (zone = 0; zone < vdo->thread_config.physical_zone_count; zone++)
-+		vdo_dump_physical_zone(&vdo->physical_zones->zones[zone]);
-+
-+	vdo_dump_hash_zones(vdo->hash_zones);
-+}
-+
-+/**
-+ * vdo_assert_on_admin_thread() - Assert that we are running on the admin thread.
-+ * @vdo: The vdo.
-+ * @name: The name of the function which should be running on the admin thread (for logging).
-+ */
-+void vdo_assert_on_admin_thread(const struct vdo *vdo, const char *name)
-+{
-+	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == vdo->thread_config.admin_thread),
-+			"%s called on admin thread",
-+			name);
-+}
-+
-+/**
-+ * vdo_assert_on_logical_zone_thread() - Assert that this function was called on the specified
-+ *                                       logical zone thread.
-+ * @vdo: The vdo.
-+ * @logical_zone: The number of the logical zone.
-+ * @name: The name of the calling function.
-+ */
-+void vdo_assert_on_logical_zone_thread(const struct vdo *vdo,
-+				       zone_count_t logical_zone,
-+				       const char *name)
-+{
-+	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() ==
-+			 vdo->thread_config.logical_threads[logical_zone]),
-+			"%s called on logical thread",
-+			name);
-+}
-+
-+/**
-+ * vdo_assert_on_physical_zone_thread() - Assert that this function was called on the specified
-+ *                                        physical zone thread.
-+ * @vdo: The vdo.
-+ * @physical_zone: The number of the physical zone.
-+ * @name: The name of the calling function.
-+ */
-+void vdo_assert_on_physical_zone_thread(const struct vdo *vdo,
-+					zone_count_t physical_zone,
-+					const char *name)
-+{
-+	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() ==
-+			 vdo->thread_config.physical_threads[physical_zone]),
-+			"%s called on physical thread",
-+			name);
-+}
-+
-+/**
-+ * vdo_get_physical_zone() - Get the physical zone responsible for a given physical block number.
-+ * @vdo: The vdo containing the physical zones.
-+ * @pbn: The PBN of the data block.
-+ * @zone_ptr: A pointer to return the physical zone.
-+ *
-+ * Gets the physical zone responsible for a given physical block number of a data block in this vdo
-+ * instance, or of the zero block (for which a NULL zone is returned). For any other block number
-+ * that is not in the range of valid data block numbers in any slab, an error will be returned.
-+ * This function is safe to call on invalid block numbers; it will not put the vdo into read-only
-+ * mode.
-+ *
-+ * Return: VDO_SUCCESS or VDO_OUT_OF_RANGE if the block number is invalid or an error code for any
-+ *         other failure.
-+ */
-+int vdo_get_physical_zone(const struct vdo *vdo,
-+			  physical_block_number_t pbn,
-+			  struct physical_zone **zone_ptr)
-+{
-+	struct vdo_slab *slab;
-+	int result;
-+
-+	if (pbn == VDO_ZERO_BLOCK) {
-+		*zone_ptr = NULL;
-+		return VDO_SUCCESS;
-+	}
-+
-+	/*
-+	 * Used because it does a more restrictive bounds check than vdo_get_slab(), and done first
-+	 * because it won't trigger read-only mode on an invalid PBN.
-+	 */
-+	if (!vdo_is_physical_data_block(vdo->depot, pbn))
-+		return VDO_OUT_OF_RANGE;
-+
-+	/* With the PBN already checked, we should always succeed in finding a slab. */
-+	slab = vdo_get_slab(vdo->depot, pbn);
-+	result = ASSERT(slab != NULL, "vdo_get_slab must succeed on all valid PBNs");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	*zone_ptr = &vdo->physical_zones->zones[slab->allocator->zone_number];
-+	return VDO_SUCCESS;
-+}
-diff --git a/drivers/md/dm-vdo/vdo.h b/drivers/md/dm-vdo/vdo.h
+diff --git a/drivers/md/dm-vdo/index.h b/drivers/md/dm-vdo/index.h
 new file mode 100644
-index 00000000000..b775451d8f2
+index 00000000000..9dfb2e1b85d
 --- /dev/null
-+++ b/drivers/md/dm-vdo/vdo.h
-@@ -0,0 +1,381 @@
++++ b/drivers/md/dm-vdo/index.h
+@@ -0,0 +1,83 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright Red Hat
 + */
 +
-+#ifndef VDO_H
-+#define VDO_H
++#ifndef UDS_INDEX_H
++#define UDS_INDEX_H
 +
-+#include <linux/atomic.h>
-+#include <linux/blk_types.h>
-+#include <linux/completion.h>
-+#include <linux/dm-kcopyd.h>
-+#include <linux/kobject.h>
-+#include <linux/list.h>
-+#include <linux/spinlock.h>
++#include "index-layout.h"
++#include "index-session.h"
++#include "open-chapter.h"
++#include "volume.h"
++#include "volume-index.h"
 +
-+#include "admin-state.h"
-+#include "encodings.h"
-+#include "packer.h"
-+#include "physical-zone.h"
-+#include "statistics.h"
-+#include "thread-registry.h"
-+#include "types.h"
++/*
++ * The index is a high-level structure which represents the totality of the UDS index. It manages
++ * the queues for incoming requests and dispatches them to the appropriate sub-components like the
++ * volume or the volume index. It also manages administrative tasks such as saving and loading the
++ * index.
++ *
++ * The index is divided into a number of independent zones and assigns each request to a zone based
++ * on its name. Most sub-components are similarly divided into zones as well so that requests in
++ * each zone usually operate without interference or coordination between zones.
++ */
++
++typedef void (*index_callback_t)(struct uds_request *request);
++
++struct index_zone {
++	struct uds_index *index;
++	struct open_chapter_zone *open_chapter;
++	struct open_chapter_zone *writing_chapter;
++	u64 oldest_virtual_chapter;
++	u64 newest_virtual_chapter;
++	unsigned int id;
++};
++
++struct uds_index {
++	bool has_saved_open_chapter;
++	bool need_to_save;
++	struct index_load_context *load_context;
++	struct index_layout *layout;
++	struct volume_index *volume_index;
++	struct volume *volume;
++	unsigned int zone_count;
++	struct index_zone **zones;
++
++	u64 oldest_virtual_chapter;
++	u64 newest_virtual_chapter;
++
++	u64 last_save;
++	u64 prev_save;
++	struct chapter_writer *chapter_writer;
++
++	index_callback_t callback;
++	struct uds_request_queue *triage_queue;
++	struct uds_request_queue *zone_queues[];
++};
++
++enum request_stage {
++	STAGE_TRIAGE,
++	STAGE_INDEX,
++	STAGE_MESSAGE,
++};
++
++int __must_check uds_make_index(struct configuration *config,
++				enum uds_open_index_type open_type,
++				struct index_load_context *load_context,
++				index_callback_t callback,
++				struct uds_index **new_index);
++
++int __must_check uds_save_index(struct uds_index *index);
++
++void uds_free_index(struct uds_index *index);
++
++int __must_check uds_replace_index_storage(struct uds_index *index, const char *path);
++
++void uds_get_index_stats(struct uds_index *index, struct uds_index_stats *counters);
++
++void uds_enqueue_request(struct uds_request *request, enum request_stage stage);
++
++void uds_wait_for_idle_index(struct uds_index *index);
++
++#endif /* UDS_INDEX_H */
+diff --git a/drivers/md/dm-vdo/sparse-cache.c b/drivers/md/dm-vdo/sparse-cache.c
+new file mode 100644
+index 00000000000..3a88392adca
+--- /dev/null
++++ b/drivers/md/dm-vdo/sparse-cache.c
+@@ -0,0 +1,595 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright Red Hat
++ */
++
++#include "sparse-cache.h"
++
++#include <linux/cache.h>
++#include <linux/dm-bufio.h>
++
++#include "chapter-index.h"
++#include "config.h"
++#include "index.h"
++#include "logger.h"
++#include "memory-alloc.h"
++#include "permassert.h"
++#include "uds-threads.h"
++
++/*
++ * Since the cache is small, it is implemented as a simple array of cache entries. Searching for a
++ * specific virtual chapter is implemented as a linear search. The cache replacement policy is
++ * least-recently-used (LRU). Again, the small size of the cache allows the LRU order to be
++ * maintained by shifting entries in an array list.
++ *
++ * Changing the contents of the cache requires the coordinated participation of all zone threads
++ * via the careful use of barrier messages sent to all the index zones by the triage queue worker
++ * thread. The critical invariant for coordination is that the cache membership must not change
++ * between updates, so that all calls to uds_sparse_cache_contains() from the zone threads must all
++ * receive the same results for every virtual chapter number. To ensure that critical invariant,
++ * state changes such as "that virtual chapter is no longer in the volume" and "skip searching that
++ * chapter because it has had too many cache misses" are represented separately from the cache
++ * membership information (the virtual chapter number).
++ *
++ * As a result of this invariant, we have the guarantee that every zone thread will call
++ * uds_update_sparse_cache() once and exactly once to request a chapter that is not in the cache,
++ * and the serialization of the barrier requests from the triage queue ensures they will all
++ * request the same chapter number. This means the only synchronization we need can be provided by
++ * a pair of thread barriers used only in the uds_update_sparse_cache() call, providing a critical
++ * section where a single zone thread can drive the cache update while all the other zone threads
++ * are known to be blocked, waiting in the second barrier. Outside that critical section, all the
++ * zone threads implicitly hold a shared lock. Inside it, the thread for zone zero holds an
++ * exclusive lock. No other threads may access or modify the cache entries.
++ *
++ * Chapter statistics must only be modified by a single thread, which is also the zone zero thread.
++ * All fields that might be frequently updated by that thread are kept in separate cache-aligned
++ * structures so they will not cause cache contention via "false sharing" with the fields that are
++ * frequently accessed by all of the zone threads.
++ *
++ * The LRU order is managed independently by each zone thread, and each zone uses its own list for
++ * searching and cache membership queries. The zone zero list is used to decide which chapter to
++ * evict when the cache is updated, and its search list is copied to the other threads at that
++ * time.
++ *
++ * The virtual chapter number field of the cache entry is the single field indicating whether a
++ * chapter is a member of the cache or not. The value NO_CHAPTER is used to represent a null or
++ * undefined chapter number. When present in the virtual chapter number field of a
++ * cached_chapter_index, it indicates that the cache entry is dead, and all the other fields of
++ * that entry (other than immutable pointers to cache memory) are undefined and irrelevant. Any
++ * cache entry that is not marked as dead is fully defined and a member of the cache, and
++ * uds_sparse_cache_contains() will always return true for any virtual chapter number that appears
++ * in any of the cache entries.
++ *
++ * A chapter index that is a member of the cache may be excluded from searches between calls to
++ * uds_update_sparse_cache() in two different ways. First, when a chapter falls off the end of the
++ * volume, its virtual chapter number will be less that the oldest virtual chapter number. Since
++ * that chapter is no longer part of the volume, there's no point in continuing to search that
++ * chapter index. Once invalidated, that virtual chapter will still be considered a member of the
++ * cache, but it will no longer be searched for matching names.
++ *
++ * The second mechanism is a heuristic based on keeping track of the number of consecutive search
++ * misses in a given chapter index. Once that count exceeds a threshold, the skip_search flag will
++ * be set to true, causing the chapter to be skipped when searching the entire cache, but still
++ * allowing it to be found when searching for a hook in that specific chapter. Finding a hook will
++ * clear the skip_search flag, once again allowing the non-hook searches to use that cache entry.
++ * Again, regardless of the state of the skip_search flag, the virtual chapter must still
++ * considered to be a member of the cache for uds_sparse_cache_contains().
++ */
++
++enum {
++	SKIP_SEARCH_THRESHOLD = 20000,
++	ZONE_ZERO = 0,
++};
++
++/*
++ * These counters are essentially fields of the struct cached_chapter_index, but are segregated
++ * into this structure because they are frequently modified. They are grouped and aligned to keep
++ * them on different cache lines from the chapter fields that are accessed far more often than they
++ * are updated.
++ */
++struct __aligned(L1_CACHE_BYTES) cached_index_counters {
++	u64 consecutive_misses;
++};
++
++struct __aligned(L1_CACHE_BYTES) cached_chapter_index {
++	/*
++	 * The virtual chapter number of the cached chapter index. NO_CHAPTER means this cache
++	 * entry is unused. This field must only be modified in the critical section in
++	 * uds_update_sparse_cache().
++	 */
++	u64 virtual_chapter;
++
++	u32 index_pages_count;
++
++	/*
++	 * These pointers are immutable during the life of the cache. The contents of the arrays
++	 * change when the cache entry is replaced.
++	 */
++	struct delta_index_page *index_pages;
++	struct dm_buffer **page_buffers;
++
++	/*
++	 * If set, skip the chapter when searching the entire cache. This flag is just a
++	 * performance optimization. This flag is mutable between cache updates, but it rarely
++	 * changes and is frequently accessed, so it groups with the immutable fields.
++	 */
++	bool skip_search;
++
++	/*
++	 * The cache-aligned counters change often and are placed at the end of the structure to
++	 * prevent false sharing with the more stable fields above.
++	 */
++	struct cached_index_counters counters;
++};
++
++/*
++ * A search_list represents an ordering of the sparse chapter index cache entry array, from most
++ * recently accessed to least recently accessed, which is the order in which the indexes should be
++ * searched and the reverse order in which they should be evicted from the cache.
++ *
++ * Cache entries that are dead or empty are kept at the end of the list, avoiding the need to even
++ * iterate over them to search, and ensuring that dead entries are replaced before any live entries
++ * are evicted.
++ *
++ * The search list is instantiated for each zone thread, avoiding any need for synchronization. The
++ * structure is allocated on a cache boundary to avoid false sharing of memory cache lines between
++ * zone threads.
++ */
++struct search_list {
++	u8 capacity;
++	u8 first_dead_entry;
++	struct cached_chapter_index *entries[];
++};
++
++struct sparse_cache {
++	const struct geometry *geometry;
++	unsigned int capacity;
++	unsigned int zone_count;
++
++	unsigned int skip_threshold;
++	struct search_list *search_lists[MAX_ZONES];
++	struct cached_chapter_index **scratch_entries;
++
++	struct barrier begin_update_barrier;
++	struct barrier end_update_barrier;
++
++	struct cached_chapter_index chapters[];
++};
++
++static int __must_check
++initialize_cached_chapter_index(struct cached_chapter_index *chapter,
++				const struct geometry *geometry)
++{
++	int result;
++
++	chapter->virtual_chapter = NO_CHAPTER;
++	chapter->index_pages_count = geometry->index_pages_per_chapter;
++
++	result = UDS_ALLOCATE(chapter->index_pages_count,
++			      struct delta_index_page,
++			      __func__,
++			      &chapter->index_pages);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	return UDS_ALLOCATE(chapter->index_pages_count,
++			    struct dm_buffer *,
++			    "sparse index volume pages",
++			    &chapter->page_buffers);
++}
++
++static int __must_check make_search_list(struct sparse_cache *cache, struct search_list **list_ptr)
++{
++	struct search_list *list;
++	unsigned int bytes;
++	u8 i;
++	int result;
++
++	bytes = (sizeof(struct search_list) +
++		 (cache->capacity * sizeof(struct cached_chapter_index *)));
++	result = uds_allocate_cache_aligned(bytes, "search list", &list);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	list->capacity = cache->capacity;
++	list->first_dead_entry = 0;
++
++	for (i = 0; i < list->capacity; i++)
++		list->entries[i] = &cache->chapters[i];
++
++	*list_ptr = list;
++	return UDS_SUCCESS;
++}
++
++int uds_make_sparse_cache(const struct geometry *geometry,
++			  unsigned int capacity,
++			  unsigned int zone_count,
++			  struct sparse_cache **cache_ptr)
++{
++	int result;
++	unsigned int i;
++	struct sparse_cache *cache;
++	unsigned int bytes;
++
++	bytes = (sizeof(struct sparse_cache) + (capacity * sizeof(struct cached_chapter_index)));
++	result = uds_allocate_cache_aligned(bytes, "sparse cache", &cache);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	cache->geometry = geometry;
++	cache->capacity = capacity;
++	cache->zone_count = zone_count;
++
++	/*
++	 * Scale down the skip threshold since the cache only counts cache misses in zone zero, but
++	 * requests are being handled in all zones.
++	 */
++	cache->skip_threshold = (SKIP_SEARCH_THRESHOLD / zone_count);
++
++	result = uds_initialize_barrier(&cache->begin_update_barrier, zone_count);
++	if (result != UDS_SUCCESS) {
++		uds_free_sparse_cache(cache);
++		return result;
++	}
++
++	result = uds_initialize_barrier(&cache->end_update_barrier, zone_count);
++	if (result != UDS_SUCCESS) {
++		uds_free_sparse_cache(cache);
++		return result;
++	}
++
++	for (i = 0; i < capacity; i++) {
++		result = initialize_cached_chapter_index(&cache->chapters[i], geometry);
++		if (result != UDS_SUCCESS) {
++			uds_free_sparse_cache(cache);
++			return result;
++		}
++	}
++
++	for (i = 0; i < zone_count; i++) {
++		result = make_search_list(cache, &cache->search_lists[i]);
++		if (result != UDS_SUCCESS) {
++			uds_free_sparse_cache(cache);
++			return result;
++		}
++	}
++
++	/* purge_search_list() needs some temporary lists for sorting. */
++	result = UDS_ALLOCATE(capacity * 2,
++			      struct cached_chapter_index *,
++			      "scratch entries",
++			      &cache->scratch_entries);
++	if (result != UDS_SUCCESS) {
++		uds_free_sparse_cache(cache);
++		return result;
++	}
++
++	*cache_ptr = cache;
++	return UDS_SUCCESS;
++}
++
++static inline void set_skip_search(struct cached_chapter_index *chapter, bool skip_search)
++{
++	/* Check before setting to reduce cache line contention. */
++	if (READ_ONCE(chapter->skip_search) != skip_search)
++		WRITE_ONCE(chapter->skip_search, skip_search);
++}
++
++static void score_search_hit(struct cached_chapter_index *chapter)
++{
++	chapter->counters.consecutive_misses = 0;
++	set_skip_search(chapter, false);
++}
++
++static void score_search_miss(struct sparse_cache *cache, struct cached_chapter_index *chapter)
++{
++	chapter->counters.consecutive_misses++;
++	if (chapter->counters.consecutive_misses > cache->skip_threshold)
++		set_skip_search(chapter, true);
++}
++
++static void release_cached_chapter_index(struct cached_chapter_index *chapter)
++{
++	unsigned int i;
++
++	chapter->virtual_chapter = NO_CHAPTER;
++	if (chapter->page_buffers == NULL)
++		return;
++
++	for (i = 0; i < chapter->index_pages_count; i++)
++		if (chapter->page_buffers[i] != NULL)
++			dm_bufio_release(UDS_FORGET(chapter->page_buffers[i]));
++}
++
++void uds_free_sparse_cache(struct sparse_cache *cache)
++{
++	unsigned int i;
++
++	if (cache == NULL)
++		return;
++
++	UDS_FREE(cache->scratch_entries);
++
++	for (i = 0; i < cache->zone_count; i++)
++		UDS_FREE(cache->search_lists[i]);
++
++	for (i = 0; i < cache->capacity; i++) {
++		release_cached_chapter_index(&cache->chapters[i]);
++		UDS_FREE(cache->chapters[i].index_pages);
++		UDS_FREE(cache->chapters[i].page_buffers);
++	}
++
++	uds_destroy_barrier(&cache->begin_update_barrier);
++	uds_destroy_barrier(&cache->end_update_barrier);
++	UDS_FREE(cache);
++}
++
++/*
++ * Take the indicated element of the search list and move it to the start, pushing the pointers
++ * previously before it back down the list.
++ */
++static inline void set_newest_entry(struct search_list *search_list, u8 index)
++{
++	struct cached_chapter_index *newest;
++
++	if (index > 0) {
++		newest = search_list->entries[index];
++		memmove(&search_list->entries[1],
++			&search_list->entries[0],
++			index * sizeof(struct cached_chapter_index *));
++		search_list->entries[0] = newest;
++	}
++
++	/*
++	 * This function may have moved a dead chapter to the front of the list for reuse, in which
++	 * case the set of dead chapters becomes smaller.
++	 */
++	if (search_list->first_dead_entry <= index)
++		search_list->first_dead_entry++;
++}
++
++bool uds_sparse_cache_contains(struct sparse_cache *cache,
++			   u64 virtual_chapter,
++			   unsigned int zone_number)
++{
++	struct search_list *search_list;
++	struct cached_chapter_index *chapter;
++	u8 i;
++
++	/*
++	 * The correctness of the barriers depends on the invariant that between calls to
++	 * uds_update_sparse_cache(), the answers this function returns must never vary: the result
++	 * for a given chapter must be identical across zones. That invariant must be maintained
++	 * even if the chapter falls off the end of the volume, or if searching it is disabled
++	 * because of too many search misses.
++	 */
++	search_list = cache->search_lists[zone_number];
++	for (i = 0; i < search_list->first_dead_entry; i++) {
++		chapter = search_list->entries[i];
++
++		if (virtual_chapter == chapter->virtual_chapter) {
++			if (zone_number == ZONE_ZERO)
++				score_search_hit(chapter);
++
++			set_newest_entry(search_list, i);
++			return true;
++		}
++	}
++
++	return false;
++}
++
++/*
++ * Re-sort cache entries into three sets (active, skippable, and dead) while maintaining the LRU
++ * ordering that already existed. This operation must only be called during the critical section in
++ * uds_update_sparse_cache().
++ */
++static void purge_search_list(struct search_list *search_list,
++			      struct sparse_cache *cache,
++			      u64 oldest_virtual_chapter)
++{
++	struct cached_chapter_index **entries;
++	struct cached_chapter_index **skipped;
++	struct cached_chapter_index **dead;
++	struct cached_chapter_index *chapter;
++	unsigned int next_alive = 0;
++	unsigned int next_skipped = 0;
++	unsigned int next_dead = 0;
++	unsigned int i;
++
++	entries = &search_list->entries[0];
++	skipped = &cache->scratch_entries[0];
++	dead = &cache->scratch_entries[search_list->capacity];
++
++	for (i = 0; i < search_list->first_dead_entry; i++) {
++		chapter = search_list->entries[i];
++		if ((chapter->virtual_chapter < oldest_virtual_chapter) ||
++		    (chapter->virtual_chapter == NO_CHAPTER))
++			dead[next_dead++] = chapter;
++		else if (chapter->skip_search)
++			skipped[next_skipped++] = chapter;
++		else
++			entries[next_alive++] = chapter;
++	}
++
++	memcpy(&entries[next_alive],
++	       skipped,
++	       next_skipped * sizeof(struct cached_chapter_index *));
++	memcpy(&entries[next_alive + next_skipped],
++	       dead,
++	       next_dead * sizeof(struct cached_chapter_index *));
++	search_list->first_dead_entry = next_alive + next_skipped;
++}
++
++static int __must_check cache_chapter_index(struct cached_chapter_index *chapter,
++					    u64 virtual_chapter,
++					    const struct volume *volume)
++{
++	int result;
++
++	release_cached_chapter_index(chapter);
++
++	result = uds_read_chapter_index_from_volume(volume,
++						    virtual_chapter,
++						    chapter->page_buffers,
++						    chapter->index_pages);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	chapter->counters.consecutive_misses = 0;
++	chapter->virtual_chapter = virtual_chapter;
++	chapter->skip_search = false;
++
++	return UDS_SUCCESS;
++}
++
++static inline void copy_search_list(const struct search_list *source, struct search_list *target)
++{
++	*target = *source;
++	memcpy(target->entries,
++	       source->entries,
++	       source->capacity * sizeof(struct cached_chapter_index *));
++}
++
++/*
++ * Update the sparse cache to contain a chapter index. This function must be called by all the zone
++ * threads with the same chapter number to correctly enter the thread barriers used to synchronize
++ * the cache updates.
++ */
++int uds_update_sparse_cache(struct index_zone *zone, u64 virtual_chapter)
++{
++	int result = UDS_SUCCESS;
++	const struct uds_index *index = zone->index;
++	struct sparse_cache *cache = index->volume->sparse_cache;
++
++	if (uds_sparse_cache_contains(cache, virtual_chapter, zone->id))
++		return UDS_SUCCESS;
++
++	/*
++	 * Wait for every zone thread to reach its corresponding barrier request and invoke this
++	 * function before starting to modify the cache.
++	 */
++	uds_enter_barrier(&cache->begin_update_barrier);
++
++	/*
++	 * This is the start of the critical section: the zone zero thread is captain, effectively
++	 * holding an exclusive lock on the sparse cache. All the other zone threads must do
++	 * nothing between the two barriers. They will wait at the end_update_barrier again for the
++	 * captain to finish the update.
++	 */
++
++	if (zone->id == ZONE_ZERO) {
++		unsigned int z;
++		struct search_list *list = cache->search_lists[ZONE_ZERO];
++
++		purge_search_list(list, cache, zone->oldest_virtual_chapter);
++
++		if (virtual_chapter >= index->oldest_virtual_chapter) {
++			set_newest_entry(list, list->capacity - 1);
++			result = cache_chapter_index(list->entries[0],
++						     virtual_chapter,
++						     index->volume);
++		}
++
++		for (z = 1; z < cache->zone_count; z++)
++			copy_search_list(list, cache->search_lists[z]);
++	}
++
++	/*
++	 * This is the end of the critical section. All cache invariants must have been restored.
++	 */
++	uds_enter_barrier(&cache->end_update_barrier);
++	return result;
++}
++
++void uds_invalidate_sparse_cache(struct sparse_cache *cache)
++{
++	unsigned int i;
++
++	for (i = 0; i < cache->capacity; i++)
++		release_cached_chapter_index(&cache->chapters[i]);
++}
++
++static inline bool should_skip_chapter(struct cached_chapter_index *chapter,
++				       u64 oldest_chapter,
++				       u64 requested_chapter)
++{
++	if ((chapter->virtual_chapter == NO_CHAPTER) ||
++	    (chapter->virtual_chapter < oldest_chapter))
++		return true;
++
++	if (requested_chapter != NO_CHAPTER)
++		return requested_chapter != chapter->virtual_chapter;
++	else
++		return READ_ONCE(chapter->skip_search);
++}
++
++static int __must_check
++search_cached_chapter_index(struct cached_chapter_index *chapter,
++			    const struct geometry *geometry,
++			    const struct index_page_map *index_page_map,
++			    const struct uds_record_name *name,
++			    u16 *record_page_ptr)
++{
++	u32 physical_chapter = uds_map_to_physical_chapter(geometry, chapter->virtual_chapter);
++	u32 index_page_number = uds_find_index_page_number(index_page_map, name, physical_chapter);
++	struct delta_index_page *index_page = &chapter->index_pages[index_page_number];
++
++	return uds_search_chapter_index_page(index_page, geometry, name, record_page_ptr);
++}
++
++int uds_search_sparse_cache(struct index_zone *zone,
++			    const struct uds_record_name *name,
++			    u64 *virtual_chapter_ptr,
++			    u16 *record_page_ptr)
++{
++	int result;
++	struct volume *volume = zone->index->volume;
++	struct sparse_cache *cache = volume->sparse_cache;
++	struct cached_chapter_index *chapter;
++	struct search_list *search_list;
++	u8 i;
++	/* Search the entire cache unless a specific chapter was requested. */
++	bool search_one = (*virtual_chapter_ptr != NO_CHAPTER);
++
++	*record_page_ptr = NO_CHAPTER_INDEX_ENTRY;
++	search_list = cache->search_lists[zone->id];
++	for (i = 0; i < search_list->first_dead_entry; i++) {
++		chapter = search_list->entries[i];
++
++		if (should_skip_chapter(chapter,
++					zone->oldest_virtual_chapter,
++					*virtual_chapter_ptr))
++			continue;
++
++		result = search_cached_chapter_index(chapter,
++						     cache->geometry,
++						     volume->index_page_map,
++						     name,
++						     record_page_ptr);
++		if (result != UDS_SUCCESS)
++			return result;
++
++		if (*record_page_ptr != NO_CHAPTER_INDEX_ENTRY) {
++			/*
++			 * In theory, this might be a false match while a true match exists in
++			 * another chapter, but that's a very rare case and not worth the extra
++			 * search complexity.
++			 */
++			set_newest_entry(search_list, i);
++			if (zone->id == ZONE_ZERO)
++				score_search_hit(chapter);
++
++			*virtual_chapter_ptr = chapter->virtual_chapter;
++			return UDS_SUCCESS;
++		}
++
++		if (zone->id == ZONE_ZERO)
++			score_search_miss(cache, chapter);
++
++		if (search_one)
++			break;
++	}
++
++	return UDS_SUCCESS;
++}
+diff --git a/drivers/md/dm-vdo/sparse-cache.h b/drivers/md/dm-vdo/sparse-cache.h
+new file mode 100644
+index 00000000000..dd7ad462bb8
+--- /dev/null
++++ b/drivers/md/dm-vdo/sparse-cache.h
+@@ -0,0 +1,49 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright Red Hat
++ */
++
++#ifndef UDS_SPARSE_CACHE_H
++#define UDS_SPARSE_CACHE_H
++
++#include "geometry.h"
 +#include "uds.h"
-+#include "work-queue.h"
-+
-+enum notifier_state {
-+	/** Notifications are allowed but not in progress */
-+	MAY_NOTIFY,
-+	/** A notification is in progress */
-+	NOTIFYING,
-+	/** Notifications are not allowed */
-+	MAY_NOT_NOTIFY,
-+	/** A notification has completed */
-+	NOTIFIED,
-+};
-+
-+/**
-+ * typedef vdo_read_only_notification - A function to notify a listener that the VDO has gone
-+ *                                      read-only.
-+ * @listener: The object to notify.
-+ * @parent: The completion to notify in order to acknowledge the notification.
-+ */
-+typedef void vdo_read_only_notification(void *listener, struct vdo_completion *parent);
 +
 +/*
-+ * An object to be notified when the VDO enters read-only mode
-+ */
-+struct read_only_listener {
-+	/* The listener */
-+	void *listener;
-+	/* The method to call to notify the listener */
-+	vdo_read_only_notification *notify;
-+	/* A pointer to the next listener */
-+	struct read_only_listener *next;
-+};
-+
-+struct vdo_thread {
-+	struct vdo *vdo;
-+	thread_id_t thread_id;
-+	struct vdo_work_queue *queue;
-+	/*
-+	 * Each thread maintains its own notion of whether the VDO is read-only so that the
-+	 * read-only state can be checked from any base thread without worrying about
-+	 * synchronization or thread safety. This does mean that knowledge of the VDO going
-+	 * read-only does not occur simultaneously across the VDO's threads, but that does not seem
-+	 * to cause any problems.
-+	 */
-+	bool is_read_only;
-+	/*
-+	 * A list of objects waiting to be notified on this thread that the VDO has entered
-+	 * read-only mode.
-+	 */
-+	struct read_only_listener *listeners;
-+	struct registered_thread allocating_thread;
-+};
-+
-+/* Keep struct bio statistics atomically */
-+struct atomic_bio_stats {
-+	atomic64_t read; /* Number of not REQ_WRITE bios */
-+	atomic64_t write; /* Number of REQ_WRITE bios */
-+	atomic64_t discard; /* Number of REQ_DISCARD bios */
-+	atomic64_t flush; /* Number of REQ_FLUSH bios */
-+	atomic64_t empty_flush; /* Number of REQ_PREFLUSH bios without data */
-+	atomic64_t fua; /* Number of REQ_FUA bios */
-+};
-+
-+/* Counters are atomic since updates can arrive concurrently from arbitrary threads. */
-+struct atomic_statistics {
-+	atomic64_t bios_submitted;
-+	atomic64_t bios_completed;
-+	atomic64_t flush_out;
-+	atomic64_t invalid_advice_pbn_count;
-+	atomic64_t no_space_error_count;
-+	atomic64_t read_only_error_count;
-+	struct atomic_bio_stats bios_in;
-+	struct atomic_bio_stats bios_in_partial;
-+	struct atomic_bio_stats bios_out;
-+	struct atomic_bio_stats bios_out_completed;
-+	struct atomic_bio_stats bios_acknowledged;
-+	struct atomic_bio_stats bios_acknowledged_partial;
-+	struct atomic_bio_stats bios_meta;
-+	struct atomic_bio_stats bios_meta_completed;
-+	struct atomic_bio_stats bios_journal;
-+	struct atomic_bio_stats bios_journal_completed;
-+	struct atomic_bio_stats bios_page_cache;
-+	struct atomic_bio_stats bios_page_cache_completed;
-+};
-+
-+struct read_only_notifier {
-+	/* The completion for entering read-only mode */
-+	struct vdo_completion completion;
-+	/* A completion waiting for notifications to be drained or enabled */
-+	struct vdo_completion *waiter;
-+	/* Lock to protect the next two fields */
-+	spinlock_t lock;
-+	/* The code of the error which put the VDO into read-only mode */
-+	int read_only_error;
-+	/* The current state of the notifier (values described above) */
-+	enum notifier_state state;
-+};
-+
-+/*
-+ * The thread ID returned when the current thread is not a vdo thread, or can not be determined
-+ * (usually due to being at interrupt context).
-+ */
-+#define VDO_INVALID_THREAD_ID ((thread_id_t) -1)
-+
-+struct thread_config {
-+	zone_count_t logical_zone_count;
-+	zone_count_t physical_zone_count;
-+	zone_count_t hash_zone_count;
-+	thread_count_t bio_thread_count;
-+	thread_count_t thread_count;
-+	thread_id_t admin_thread;
-+	thread_id_t journal_thread;
-+	thread_id_t packer_thread;
-+	thread_id_t dedupe_thread;
-+	thread_id_t bio_ack_thread;
-+	thread_id_t cpu_thread;
-+	thread_id_t *logical_threads;
-+	thread_id_t *physical_threads;
-+	thread_id_t *hash_zone_threads;
-+	thread_id_t *bio_threads;
-+};
-+
-+struct thread_count_config;
-+
-+struct vdo_super_block {
-+	/* The vio for reading and writing the super block to disk */
-+	struct vio vio;
-+	/* A buffer to hold the super block */
-+	u8 *buffer;
-+	/* Whether this super block may not be written */
-+	bool unwritable;
-+};
-+
-+struct data_vio_pool;
-+
-+struct vdo_administrator {
-+	struct vdo_completion completion;
-+	struct admin_state state;
-+	atomic_t busy;
-+	u32 phase;
-+	struct completion callback_sync;
-+};
-+
-+struct vdo {
-+	char thread_name_prefix[MAX_VDO_WORK_QUEUE_NAME_LEN];
-+	struct vdo_thread *threads;
-+	vdo_action *action;
-+	struct vdo_completion *completion;
-+	struct vio_tracer *vio_tracer;
-+
-+	/* The atomic version of the state of this vdo */
-+	atomic_t state;
-+	/* The full state of all components */
-+	struct vdo_component_states states;
-+	/*
-+	 * A counter value to attach to thread names and log messages to identify the individual
-+	 * device.
-+	 */
-+	unsigned int instance;
-+	/* The read-only notifier */
-+	struct read_only_notifier read_only_notifier;
-+	/* The load-time configuration of this vdo */
-+	struct device_config *device_config;
-+	/* The thread mapping */
-+	struct thread_config thread_config;
-+
-+	/* The super block */
-+	struct vdo_super_block super_block;
-+
-+	/* The partitioning of the underlying storage */
-+	struct layout layout;
-+	struct layout next_layout;
-+	struct dm_kcopyd_client *partition_copier;
-+
-+	/* The block map */
-+	struct block_map *block_map;
-+
-+	/* The journal for block map recovery */
-+	struct recovery_journal *recovery_journal;
-+
-+	/* The slab depot */
-+	struct slab_depot *depot;
-+
-+	/* The compressed-block packer */
-+	struct packer *packer;
-+	/* Whether incoming data should be compressed */
-+	bool compressing;
-+
-+	/* The handler for flush requests */
-+	struct flusher *flusher;
-+
-+	/* The state the vdo was in when loaded (primarily for unit tests) */
-+	enum vdo_state load_state;
-+
-+	/* The logical zones of this vdo */
-+	struct logical_zones *logical_zones;
-+
-+	/* The physical zones of this vdo */
-+	struct physical_zones *physical_zones;
-+
-+	/* The hash lock zones of this vdo */
-+	struct hash_zones *hash_zones;
-+
-+	/* Bio submission manager used for sending bios to the storage device. */
-+	struct io_submitter *io_submitter;
-+
-+	/* The pool of data_vios for servicing incoming bios */
-+	struct data_vio_pool *data_vio_pool;
-+
-+	/* The manager for administrative operations */
-+	struct vdo_administrator admin;
-+
-+	/* Flags controlling administrative operations */
-+	const struct admin_state_code *suspend_type;
-+	bool allocations_allowed;
-+	bool dump_on_shutdown;
-+	atomic_t processing_message;
-+
-+	/*
-+	 * Statistics
-+	 * Atomic stats counters
-+	 */
-+	struct atomic_statistics stats;
-+	/* Used to gather statistics without allocating memory */
-+	struct vdo_statistics stats_buffer;
-+	/* Protects the stats_buffer */
-+	struct mutex stats_mutex;
-+	/* true if sysfs directory is set up */
-+	bool sysfs_added;
-+	/* Used when shutting down the sysfs statistics */
-+	struct completion stats_shutdown;
-+
-+
-+	/* A list of all device_configs referencing this vdo */
-+	struct list_head device_config_list;
-+
-+	/* This VDO's list entry for the device registry */
-+	struct list_head registration;
-+
-+	/* Underlying block device info. */
-+	u64 starting_sector_offset;
-+	struct volume_geometry geometry;
-+
-+	/* For sysfs */
-+	struct kobject vdo_directory;
-+	struct kobject stats_directory;
-+
-+	/* N blobs of context data for LZ4 code, one per CPU thread. */
-+	char **compression_context;
-+};
-+
-+
-+/**
-+ * vdo_uses_bio_ack_queue() - Indicate whether the vdo is configured to use a separate work queue
-+ *                            for acknowledging received and processed bios.
-+ * @vdo: The vdo.
++ * The sparse cache is a cache of entire chapter indexes from sparse chapters used for searching
++ * for names after all other search paths have failed. It contains only complete chapter indexes;
++ * record pages from sparse chapters and single index pages used for resolving hooks are kept in
++ * the regular page cache in the volume.
 + *
-+ * Note that this directly controls the handling of write operations, but the compile-time flag
-+ * VDO_USE_BIO_ACK_QUEUE_FOR_READ is also checked for read operations.
-+ *
-+ * Return: Whether a bio-acknowledgement work queue is in use.
++ * The most important property of this cache is the absence of synchronization for read operations.
++ * Safe concurrent access to the cache by the zone threads is controlled by the triage queue and
++ * the barrier requests it issues to the zone queues. The set of cached chapters does not and must
++ * not change between the carefully coordinated calls to uds_update_sparse_cache() from the zone
++ * threads. Outside of updates, every zone will get the same result when calling
++ * uds_sparse_cache_contains() as every other zone.
 + */
-+static inline bool vdo_uses_bio_ack_queue(struct vdo *vdo)
-+{
-+	return vdo->device_config->thread_counts.bio_ack_threads > 0;
-+}
 +
-+/**
-+ * typedef vdo_filter_t - Method type for vdo matching methods.
-+ *
-+ * A filter function returns false if the vdo doesn't match.
-+ */
-+typedef bool vdo_filter_t(struct vdo *vdo, const void *context);
++struct index_zone;
++struct sparse_cache;
 +
-+void vdo_initialize_device_registry_once(void);
-+struct vdo * __must_check vdo_find_matching(vdo_filter_t *filter, const void *context);
++int __must_check uds_make_sparse_cache(const struct geometry *geometry,
++				       unsigned int capacity,
++				       unsigned int zone_count,
++				       struct sparse_cache **cache_ptr);
 +
-+int __must_check vdo_make_thread(struct vdo *vdo,
-+				 thread_id_t thread_id,
-+				 const struct vdo_work_queue_type *type,
-+				 unsigned int queue_count,
-+				 void *contexts[]);
++void uds_free_sparse_cache(struct sparse_cache *cache);
 +
-+static inline int __must_check vdo_make_default_thread(struct vdo *vdo, thread_id_t thread_id)
-+{
-+	return vdo_make_thread(vdo, thread_id, NULL, 1, NULL);
-+}
++bool uds_sparse_cache_contains(struct sparse_cache *cache,
++			       u64 virtual_chapter,
++			       unsigned int zone_number);
 +
-+int __must_check
-+vdo_make(unsigned int instance, struct device_config *config, char **reason, struct vdo **vdo_ptr);
++int __must_check uds_update_sparse_cache(struct index_zone *zone, u64 virtual_chapter);
 +
-+void vdo_destroy(struct vdo *vdo);
++void uds_invalidate_sparse_cache(struct sparse_cache *cache);
 +
-+void vdo_load_super_block(struct vdo *vdo, struct vdo_completion *parent);
++int __must_check uds_search_sparse_cache(struct index_zone *zone,
++					 const struct uds_record_name *name,
++					 u64 *virtual_chapter_ptr,
++					 u16 *record_page_ptr);
 +
-+int __must_check vdo_add_sysfs_stats_dir(struct vdo *vdo);
-+
-+struct block_device * __must_check vdo_get_backing_device(const struct vdo *vdo);
-+
-+const char * __must_check vdo_get_device_name(const struct dm_target *target);
-+
-+int __must_check vdo_synchronous_flush(struct vdo *vdo);
-+
-+const struct admin_state_code * __must_check vdo_get_admin_state(const struct vdo *vdo);
-+
-+bool vdo_set_compressing(struct vdo *vdo, bool enable);
-+
-+bool vdo_get_compressing(struct vdo *vdo);
-+
-+void vdo_fetch_statistics(struct vdo *vdo, struct vdo_statistics *stats);
-+
-+thread_id_t vdo_get_callback_thread_id(void);
-+
-+enum vdo_state __must_check vdo_get_state(const struct vdo *vdo);
-+
-+void vdo_set_state(struct vdo *vdo, enum vdo_state state);
-+
-+void vdo_save_components(struct vdo *vdo, struct vdo_completion *parent);
-+
-+int vdo_register_read_only_listener(struct vdo *vdo,
-+				    void *listener,
-+				    vdo_read_only_notification *notification,
-+				    thread_id_t thread_id);
-+
-+int vdo_enable_read_only_entry(struct vdo *vdo);
-+
-+void vdo_wait_until_not_entering_read_only_mode(struct vdo_completion *parent);
-+
-+void vdo_allow_read_only_mode_entry(struct vdo_completion *parent);
-+
-+void vdo_enter_read_only_mode(struct vdo *vdo, int error_code);
-+
-+bool __must_check vdo_is_read_only(struct vdo *vdo);
-+
-+bool __must_check vdo_in_read_only_mode(const struct vdo *vdo);
-+
-+bool __must_check vdo_in_recovery_mode(const struct vdo *vdo);
-+
-+void vdo_enter_recovery_mode(struct vdo *vdo);
-+
-+void vdo_assert_on_admin_thread(const struct vdo *vdo, const char *name);
-+
-+void vdo_assert_on_logical_zone_thread(const struct vdo *vdo,
-+				       zone_count_t logical_zone,
-+				       const char *name);
-+
-+void vdo_assert_on_physical_zone_thread(const struct vdo *vdo,
-+					zone_count_t physical_zone,
-+					const char *name);
-+
-+int __must_check vdo_get_physical_zone(const struct vdo *vdo,
-+				       physical_block_number_t pbn,
-+				       struct physical_zone **zone_ptr);
-+
-+void vdo_dump_status(const struct vdo *vdo);
-+
-+#endif /* VDO_H */
++#endif /* UDS_SPARSE_CACHE_H */
 -- 
 2.40.1
 
