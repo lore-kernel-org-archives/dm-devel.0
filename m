@@ -4,98 +4,98 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A5A67C7EE30
-	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 21:46:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2953CC7EE23
+	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 21:46:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684878362;
+	s=mimecast20190719; t=1684878366;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=xcbsM5huWlEMbqgztOvdcODj4W0u5VVedLbd1rw4/Q8=;
-	b=JLAm6RBfppZCm7np0z49f5KYt51TA2+ysLrkNlUbSaOb2McNzSJquRpgJgmwwPOHERo8he
-	s+u3wbPd29T65MlN++iK/hDFLd0ek87OZ0hksYNyYCF97zavRqGKNy5YZthC0Qu8RkVN1b
-	xupwl5VnLLxrHgIrMwzkP5C7eZwl1YA=
+	bh=fnYEUPjaFQVZXCsHGbulvDofKONgX6CYz1ucnE08q1U=;
+	b=dV0YhPbsLMNDNPOXP8XlmabDHZrKdxBMzFXYuBXdWZ6XX6/8Uif9Ui+1q6U7pp9pAnRKYe
+	KViDT+80IWmVzkY8N8BrpiCPPVReiirBW9hlf5PUUm5ylPdQN8ESY/F1J/2oHg1Qi7NwtS
+	futEq9UsU04jNt1Qn25ORh1B0Ul9MN8=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-605-h8INQLPONByUDV6synNdZA-1; Tue, 23 May 2023 17:45:57 -0400
-X-MC-Unique: h8INQLPONByUDV6synNdZA-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-674-8CVTh9W0NCGpQ4tdxUv3Rg-1; Tue, 23 May 2023 17:45:57 -0400
+X-MC-Unique: 8CVTh9W0NCGpQ4tdxUv3Rg-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E264485A5BE;
-	Tue, 23 May 2023 21:45:54 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3A8EE185A78B;
+	Tue, 23 May 2023 21:45:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3F2DA492B0B;
-	Tue, 23 May 2023 21:45:53 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id DCFA8482060;
+	Tue, 23 May 2023 21:45:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1F95819465B3;
-	Tue, 23 May 2023 21:45:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CAA3019465B7;
+	Tue, 23 May 2023 21:45:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A703019465B1
- for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 21:45:51 +0000 (UTC)
+ ESMTP id AC0F619466DF
+ for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 21:45:53 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 874F240CFD49; Tue, 23 May 2023 21:45:51 +0000 (UTC)
+ id 90900140E962; Tue, 23 May 2023 21:45:53 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7CC2040CFD46
- for <dm-devel@redhat.com>; Tue, 23 May 2023 21:45:51 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [207.211.31.81])
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 88108140E95D
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 21:45:53 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
+ [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5169B1C03DAB
- for <dm-devel@redhat.com>; Tue, 23 May 2023 21:45:51 +0000 (UTC)
-Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
- [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5ACDA3C14AA5
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 21:45:53 +0000 (UTC)
+Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
+ [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-591-53zd96ehM2iDNjvbTuiQAQ-1; Tue, 23 May 2023 17:45:49 -0400
-X-MC-Unique: 53zd96ehM2iDNjvbTuiQAQ-1
-Received: by mail-qk1-f199.google.com with SMTP id
- af79cd13be357-75b12375915so60181685a.0
- for <dm-devel@redhat.com>; Tue, 23 May 2023 14:45:49 -0700 (PDT)
+ us-mta-212-FJlYwdNJNN6c7TKkL_kWFQ-1; Tue, 23 May 2023 17:45:52 -0400
+X-MC-Unique: FJlYwdNJNN6c7TKkL_kWFQ-1
+Received: by mail-qk1-f198.google.com with SMTP id
+ af79cd13be357-75b2f94940bso54359185a.2
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 14:45:52 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1684878349; x=1687470349;
+ d=1e100.net; s=20221208; t=1684878351; x=1687470351;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=6muNpMeXcIL+uD4VKem2lAYHIVISJwiPq+u7Ti36osA=;
- b=JwCROWovK7F6AO4d7vEfKF24j/Wv9c8iTLsUYWxV1Y2yzwnGF8R5XKQyh1K+LBy4SQ
- c5ZaiRGtufvmjgRYNwGt0q5wLTBsGrDdBL4Tu2buCszZuNWm34OQEaUcRuVDC1rromuZ
- iZE86vNUobENkSWKlU0ucGDeYjRy63y9qyCsazweV0NE9Q1O2xSjlX+VFO/YoxwzOWTE
- QiKZMPsDZs5c1QU++Ek92dJHyjehPF9lmTKWcl0sT/Adn5dxgij1BrhHU5qilsDOGnze
- uw+Cmti86qwoQ6U+r+aiSC1ICKZv91T+7k0P/mFqEC+mGAMElNZxrpBfDR/GBdFTyfMD
- pm5w==
-X-Gm-Message-State: AC+VfDz/1WoEC/jg+whd5Ig723vckNiXKkwTmK3K+3PP6/0MqxoVtB+j
- CMClYclFUcvvhx6JIraSS5Oe5DYzEsoqVgxksND8UEqYqYSY6ZmedOtupdTwtuJ7bH/as2DAR5g
- CoHeqCK2i5RKk7hmK7jqIHmyFf9GwcIY1HeDkVyYGa8bGsX7srjSAcs9LyIvNj1Px5nAmsKUL
-X-Received: by 2002:a05:620a:6284:b0:75b:23a0:decf with SMTP id
- ov4-20020a05620a628400b0075b23a0decfmr5759023qkn.77.1684878348280; 
- Tue, 23 May 2023 14:45:48 -0700 (PDT)
-X-Google-Smtp-Source: ACHHUZ46IPwuzIuoQyLm1eye/GdSLolb7e1A0XeQk+gxCg/euhizp9qzpPcMfD21N3GcmwhIo8KFiw==
-X-Received: by 2002:a05:620a:6284:b0:75b:23a0:decf with SMTP id
- ov4-20020a05620a628400b0075b23a0decfmr5758968qkn.77.1684878347071; 
- Tue, 23 May 2023 14:45:47 -0700 (PDT)
+ bh=BXVHYJI4o65v3yWmtJqqd5Md+0xUsboI9mynlQtwVCQ=;
+ b=IfvvCRwopxHLYuMl8Hvm06nK0ndubdBipCdQrnPYx1ba3f/uxJC4FM8JgIB3G5U2bK
+ zjxUjk235fR/so984A62nJU4lnJTmtkV3iQUVcxT2Htkok9qsbYoicpgLE1iRGkqcDz9
+ dWPxSVuiZkM87VosQUT9JP/FkrjXvg2mkvGUyrCQm2H0Cq8QwHUxLUK8nH4QM8NnBvcT
+ U0Dzxyk/r6CwQOfQv8rWRO7mlGU9tlyrRpRCKGDM2QucnZwS1seFy6Ypij7Ed384uumZ
+ OYZ4+NDcR+CmeaNZ+eVbz7jOcjqXURYGjbUhcp4MQHD7oFItdVCBEJ1DcGy4EJlB7dme
+ CH6A==
+X-Gm-Message-State: AC+VfDyi51QmXbTbzb5+ilJWV5IL6hi71eCwoH9XFk8pjMfkhK+F4hg4
+ CQIRI80fvancCp1bvYW8x9pCQE9yYqIkrnQsPdKSErn0NIF6/hx8iWzLypS9GGgSlubxE+Pl6Y3
+ ZwjqEADaF30jJbKvjaHZBJbtBXooS+y2H1QRJ7iGcra5uX/jT3TVJvWvmvqPphb6kUtFGHbBp
+X-Received: by 2002:a05:620a:1a1f:b0:75b:23a1:45f with SMTP id
+ bk31-20020a05620a1a1f00b0075b23a1045fmr6833601qkb.37.1684878350829; 
+ Tue, 23 May 2023 14:45:50 -0700 (PDT)
+X-Google-Smtp-Source: ACHHUZ7HXk9kHw0f/SefZKzFY77LK9R6InSBb50RjDoveKLrWQ9VfLxogn8LEHfLNX3eMxMg8Zam4g==
+X-Received: by 2002:a05:620a:1a1f:b0:75b:23a1:45f with SMTP id
+ bk31-20020a05620a1a1f00b0075b23a1045fmr6833526qkb.37.1684878349843; 
+ Tue, 23 May 2023 14:45:49 -0700 (PDT)
 Received: from bf36-1.. (173-166-2-198-newengland.hfc.comcastbusiness.net.
  [173.166.2.198]) by smtp.gmail.com with ESMTPSA id
- s24-20020ae9f718000000b0074fafbea974sm2821592qkg.2.2023.05.23.14.45.46
+ s24-20020ae9f718000000b0074fafbea974sm2821592qkg.2.2023.05.23.14.45.49
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 23 May 2023 14:45:46 -0700 (PDT)
+ Tue, 23 May 2023 14:45:49 -0700 (PDT)
 From: "J. corwin Coburn" <corwin@redhat.com>
 To: dm-devel@redhat.com,
 	linux-block@vger.kernel.org
-Date: Tue, 23 May 2023 17:45:01 -0400
-Message-Id: <20230523214539.226387-2-corwin@redhat.com>
+Date: Tue, 23 May 2023 17:45:04 -0400
+Message-Id: <20230523214539.226387-5-corwin@redhat.com>
 In-Reply-To: <20230523214539.226387-1-corwin@redhat.com>
 References: <20230523214539.226387-1-corwin@redhat.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [PATCH v2 01/39] Add documentation for dm-vdo.
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Subject: [dm-devel] [PATCH v2 04/39] Add basic logging and support utilities.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -110,813 +110,1086 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: vdo-devel@redhat.com, "J. corwin Coburn" <corwin@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-This adds the admin-guide documentation for dm-vdo.
-
-vdo.rst is the guide to using dm-vdo. vdo-design is an overview of the
-design of dm-vdo.
+Add various support utilities for the vdo target and deduplication index,
+including logging utilities, string and time management, and index-specific
+error codes.
 
 Signed-off-by: J. corwin Coburn <corwin@redhat.com>
 ---
- .../admin-guide/device-mapper/vdo-design.rst  | 390 ++++++++++++++++++
- .../admin-guide/device-mapper/vdo.rst         | 386 +++++++++++++++++
- 2 files changed, 776 insertions(+)
- create mode 100644 Documentation/admin-guide/device-mapper/vdo-design.rst
- create mode 100644 Documentation/admin-guide/device-mapper/vdo.rst
+ drivers/md/dm-vdo/errors.c       | 316 +++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/errors.h       |  83 ++++++++
+ drivers/md/dm-vdo/logger.c       | 304 +++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/logger.h       | 112 +++++++++++
+ drivers/md/dm-vdo/permassert.c   |  35 ++++
+ drivers/md/dm-vdo/permassert.h   |  65 +++++++
+ drivers/md/dm-vdo/string-utils.c |  28 +++
+ drivers/md/dm-vdo/string-utils.h |  23 +++
+ drivers/md/dm-vdo/time-utils.h   |  28 +++
+ 9 files changed, 994 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/errors.c
+ create mode 100644 drivers/md/dm-vdo/errors.h
+ create mode 100644 drivers/md/dm-vdo/logger.c
+ create mode 100644 drivers/md/dm-vdo/logger.h
+ create mode 100644 drivers/md/dm-vdo/permassert.c
+ create mode 100644 drivers/md/dm-vdo/permassert.h
+ create mode 100644 drivers/md/dm-vdo/string-utils.c
+ create mode 100644 drivers/md/dm-vdo/string-utils.h
+ create mode 100644 drivers/md/dm-vdo/time-utils.h
 
-diff --git a/Documentation/admin-guide/device-mapper/vdo-design.rst b/Documentation/admin-guide/device-mapper/vdo-design.rst
+diff --git a/drivers/md/dm-vdo/errors.c b/drivers/md/dm-vdo/errors.c
 new file mode 100644
-index 00000000000..aa26901feb9
+index 00000000000..7654a1f9f97
 --- /dev/null
-+++ b/Documentation/admin-guide/device-mapper/vdo-design.rst
-@@ -0,0 +1,390 @@
-+================
-+Design of dm-vdo
-+================
++++ b/drivers/md/dm-vdo/errors.c
+@@ -0,0 +1,316 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright Red Hat
++ */
 +
-+The dm-vdo (virtual data optimizer) target provides inline deduplication,
-+compression, zero-block elimination, and thin provisioning. A dm-vdo target
-+can be backed by up to 256TB of storage, and can present a logical size of
-+up to 4PB. This target was originally developed at Permabit Technology
-+Corp. starting in 2009. It was first released in 2013 and has been used in
-+production environments ever since. It was made open-source in 2017 after
-+Permabit was acquired by Red Hat. This document describes the design of
-+dm-vdo. For usage, see vdo.rst in the same directory as this file.
++#include "errors.h"
 +
-+Because deduplication rates fall drastically as the block size increases, a
-+vdo target has a maximum block size of 4K. However, it can achieve
-+deduplication rates of 254:1, i.e. up to 254 copies of a given 4K block can
-+reference a single 4K of actual storage. It can achieve compression rates
-+of 14:1. All zero blocks consume no storage at all.
++#include <linux/compiler.h>
++#include <linux/errno.h>
 +
-+Theory of Operation
-+===================
++#include "logger.h"
++#include "permassert.h"
++#include "string-utils.h"
 +
-+The design of dm-vdo is based on the idea that deduplication is a two-part
-+problem. The first is to recognize duplicate data. The second is to avoid
-+storing multiple copies of those duplicates. Therefore, dm-vdo has two main
-+parts: a deduplication index (called UDS) that is used to discover
-+duplicate data, and a data store with a reference counted block map that
-+maps from logical block addresses to the actual storage location of the
-+data.
++static const struct error_info successful = { "UDS_SUCCESS", "Success" };
 +
-+Zones and Threading
-+-------------------
++static const char *const message_table[] = {
++	[EPERM] = "Operation not permitted",
++	[ENOENT] = "No such file or directory",
++	[ESRCH] = "No such process",
++	[EINTR] = "Interrupted system call",
++	[EIO] = "Input/output error",
++	[ENXIO] = "No such device or address",
++	[E2BIG] = "Argument list too long",
++	[ENOEXEC] = "Exec format error",
++	[EBADF] = "Bad file descriptor",
++	[ECHILD] = "No child processes",
++	[EAGAIN] = "Resource temporarily unavailable",
++	[ENOMEM] = "Cannot allocate memory",
++	[EACCES] = "Permission denied",
++	[EFAULT] = "Bad address",
++	[ENOTBLK] = "Block device required",
++	[EBUSY] = "Device or resource busy",
++	[EEXIST] = "File exists",
++	[EXDEV] = "Invalid cross-device link",
++	[ENODEV] = "No such device",
++	[ENOTDIR] = "Not a directory",
++	[EISDIR] = "Is a directory",
++	[EINVAL] = "Invalid argument",
++	[ENFILE] = "Too many open files in system",
++	[EMFILE] = "Too many open files",
++	[ENOTTY] = "Inappropriate ioctl for device",
++	[ETXTBSY] = "Text file busy",
++	[EFBIG] = "File too large",
++	[ENOSPC] = "No space left on device",
++	[ESPIPE] = "Illegal seek",
++	[EROFS] = "Read-only file system",
++	[EMLINK] = "Too many links",
++	[EPIPE] = "Broken pipe",
++	[EDOM] = "Numerical argument out of domain",
++	[ERANGE] = "Numerical result out of range"
++};
 +
-+Due to the complexity of data optimization, the number of metadata
-+structures involved in a single write operation to a vdo target is larger
-+than most other targets. Furthermore, because vdo must operate on small
-+block sizes in order to achieve good deduplication rates, acceptable
-+performance can only be achieved through parallelism. Therefore, vdo's
-+design attempts to be lock-free. Most of a vdo's main data structures are
-+designed to be easily divided into "zones" such that any given bio must
-+only access a single zone of any zoned structure. Safety with minimal
-+locking is achieved by ensuring that during normal operation, each zone is
-+assigned to a specific thread, and only that thread will access the portion
-+of that data structure in that zone. Associated with each thread is a work
-+queue. Each bio is associated with a request object which can be added to a
-+work queue when the next phase of its operation requires access to the
-+structures in the zone associated with that queue. Although each structure
-+may be divided into zones, this division is not reflected in the on-disk
-+representation of each data structure. Therefore, the number of zones for
-+each structure, and hence the number of threads, is configured each time a
-+vdo target is started.
++static const struct error_info error_list[] = {
++	{ "UDS_OVERFLOW", "Index overflow" },
++	{ "UDS_INVALID_ARGUMENT", "Invalid argument passed to internal routine" },
++	{ "UDS_BAD_STATE", "UDS data structures are in an invalid state" },
++	{ "UDS_DUPLICATE_NAME", "Attempt to enter the same name into a delta index twice" },
++	{ "UDS_ASSERTION_FAILED", "Assertion failed" },
++	{ "UDS_QUEUED", "Request queued" },
++	{ "UDS_BUFFER_ERROR", "Buffer error" },
++	{ "UDS_NO_DIRECTORY", "Expected directory is missing" },
++	{ "UDS_ALREADY_REGISTERED", "Error range already registered" },
++	{ "UDS_OUT_OF_RANGE", "Cannot access data outside specified limits" },
++	{ "UDS_EMODULE_LOAD", "Could not load modules" },
++	{ "UDS_DISABLED", "UDS library context is disabled" },
++	{ "UDS_UNKNOWN_ERROR", "Unknown error" },
++	{ "UDS_UNSUPPORTED_VERSION", "Unsupported version" },
++	{ "UDS_CORRUPT_DATA", "Some index structure is corrupt" },
++	{ "UDS_NO_INDEX", "No index found" },
++	{ "UDS_INDEX_NOT_SAVED_CLEANLY", "Index not saved cleanly" },
++};
 +
-+The Deduplication Index
-+-----------------------
++struct error_block {
++	const char *name;
++	int base;
++	int last;
++	int max;
++	const struct error_info *infos;
++};
 +
-+In order to identify duplicate data efficiently, vdo was designed to
-+leverage some common characteristics of duplicate data. From empirical
-+observations, we gathered two key insights. The first is that in most data
-+sets with significant amounts of duplicate data, the duplicates tend to
-+have temporal locality. When a duplicate appears, it is more likely that
-+other duplicates will be detected, and that those duplicates will have been
-+written at about the same time. This is why the index keeps records in
-+temporal order. The second insight is that new data is more likely to
-+duplicate recent data than it is to duplicate older data and in general,
-+there are diminishing returns to looking further back in time. Therefore,
-+when the index is full, it should cull its oldest records to make space for
-+new ones. Another important idea behind the design of the index is that the
-+ultimate goal of deduplication is to reduce storage costs. Since there is a
-+trade-off between the storage saved and the resources expended to achieve
-+those savings, vdo does not attempt to find every last duplicate block. It
-+is sufficient to find and eliminate most of the redundancy.
++enum {
++	MAX_ERROR_BLOCKS = 6,
++};
 +
-+Each block of data is hashed to produce a 16-byte block name which serves
-+as an identifier for the block. An index record consists of this block name
-+paired with the presumed location of that data on the underlying storage.
-+However, it is not possible to guarantee that the index is accurate. Most
-+often, this occurs because it is too costly to update the index when a
-+block is over-written or discarded. Doing so would require either storing
-+the block name along with the blocks, which is difficult to do efficiently
-+in block-based storage, or reading and rehashing each block before
-+overwriting it. Inaccuracy can also result from a hash collision where two
-+different blocks have the same name. In practice, this is extremely
-+unlikely, but because vdo does not use a cryptographic hash, a malicious
-+workload can be constructed. Because of these inaccuracies, vdo treats the
-+locations in the index as hints, and reads each indicated block to verify
-+that it is indeed a duplicate before sharing the existing block with a new
-+one.
++static struct {
++	int allocated;
++	int count;
++	struct error_block blocks[MAX_ERROR_BLOCKS];
++} registered_errors = {
++	.allocated = MAX_ERROR_BLOCKS,
++	.count = 1,
++	.blocks = { {
++			.name = "UDS Error",
++			.base = UDS_ERROR_CODE_BASE,
++			.last = UDS_ERROR_CODE_LAST,
++			.max = UDS_ERROR_CODE_BLOCK_END,
++			.infos = error_list,
++		  } },
++};
 +
-+Records are collected into groups called chapters. New records are added to
-+the newest chapter, called the open chapter. This chapter is stored in a
-+format optimized for adding and modifying records, and the content of the
-+open chapter is not finalized until it runs out of space for new records.
-+When the open chapter fills up, it is closed and a new open chapter is
-+created to collect new records.
++/* Get the error info for an error number. Also returns the name of the error block, if known. */
++static const char *get_error_info(int errnum, const struct error_info **info_ptr)
++{
++	struct error_block *block;
 +
-+Closing a chapter converts it to a different format which is optimized for
-+writing. The records are written to a series of record pages based on the
-+order in which they were received. This means that records with temporal
-+locality should be on a small number of pages, reducing the I/O required to
-+retrieve them. The chapter also compiles an index that indicates which
-+record page contains any given name. This index means that a request for a
-+name can determine exactly which record page may contain that record,
-+without having to load the entire chapter from storage. This index uses
-+only a subset of the block name as its key, so it cannot guarantee that an
-+index entry refers to the desired block name. It can only guarantee that if
-+there is a record for this name, it will be on the indicated page. The
-+contents of a closed chapter are never altered in any way; these chapters
-+are read-only structures.
++	if (errnum == UDS_SUCCESS) {
++		*info_ptr = &successful;
++		return NULL;
++	}
 +
-+Once enough records have been written to fill up all the available index
-+space, the oldest chapter gets removed to make space for new chapters. Any
-+time a request finds a matching record in the index, that record is copied
-+to the open chapter. This ensures that useful block names remain available
-+in the index, while unreferenced block names are forgotten.
++	for (block = registered_errors.blocks;
++	     block < registered_errors.blocks + registered_errors.count;
++	     ++block) {
++		if ((errnum >= block->base) && (errnum < block->last)) {
++			*info_ptr = block->infos + (errnum - block->base);
++			return block->name;
++		} else if ((errnum >= block->last) && (errnum < block->max)) {
++			*info_ptr = NULL;
++			return block->name;
++		}
++	}
 +
-+In order to find records in older chapters, the index also maintains a
-+higher level structure called the volume index, which contains entries
-+mapping a block name to the chapter containing its newest record. This
-+mapping is updated as records for the block name are copied or updated,
-+ensuring that only the newer record for a given block name is findable.
-+Older records for a block name can no longer be found even though they have
-+not been deleted. Like the chapter index, the volume index uses only a
-+subset of the block name as its key and can not definitively say that a
-+record exists for a name. It can only say which chapter would contain the
-+record if a record exists. The volume index is stored entirely in memory
-+and is saved to storage only when the vdo target is shut down.
++	return NULL;
++}
 +
-+From the viewpoint of a request for a particular block name, first it will
-+look up the name in the volume index which will indicate either that the
-+record is new, or which chapter to search. If the latter, the request looks
-+up its name in the chapter index to determine if the record is new, or
-+which record page to search. Finally, if not new, the request will look for
-+its record on the indicated record page. This process may require up to two
-+page reads per request (one for the chapter index page and one for the
-+request page). However, recently accessed pages are cached so that these
-+page reads can be amortized across many block name requests.
++/* Return a string describing a system error message. */
++static const char *system_string_error(int errnum, char *buf, size_t buflen)
++{
++	size_t len;
++	const char *error_string = NULL;
 +
-+The volume index and the chapter indexes are implemented using a
-+memory-efficient structure called a delta index. Instead of storing the
-+entire key (the block name) for each entry, the entries are sorted by name
-+and only the difference between adjacent keys (the delta) is stored.
-+Because we expect the hashes to be evenly distributed, the size of the
-+deltas follows an exponential distribution. Because of this distribution,
-+the deltas are expressed in a Huffman code to take up even less space. The
-+entire sorted list of keys is called a delta list. This structure allows
-+the index to use many fewer bytes per entry than a traditional hash table,
-+but it is slightly more expensive to look up entries, because a request
-+must read every entry in a delta list to add up the deltas in order to find
-+the record it needs. The delta index reduces this lookup cost by splitting
-+its key space into many sub-lists, each starting at a fixed key value, so
-+that each individual list is short.
++	if ((errnum > 0) && (errnum < ARRAY_SIZE(message_table)))
++		error_string = message_table[errnum];
 +
-+The default index size can hold 64 million records, corresponding to about
-+256GB. This means that the index can identify duplicate data if the
-+original data was written within the last 256GB of writes. This range is
-+called the deduplication window. If new writes duplicate data that is older
-+than that, the index will not be able to find it because the records of the
-+older data have been removed. So when writing a 200 GB file to a vdo
-+target, and then immediately writing it again, the two copies will
-+deduplicate perfectly. Doing the same with a 500 GB file will result in no
-+deduplication, because the beginning of the file will no longer be in the
-+index by the time the second write begins (assuming there is no duplication
-+within the file itself).
++	len = ((error_string == NULL) ?
++		 snprintf(buf, buflen, "Unknown error %d", errnum) :
++		 snprintf(buf, buflen, "%s", error_string));
++	if (len < buflen)
++		return buf;
 +
-+If you anticipate a data workload that will see useful deduplication beyond
-+the 256GB threshold, vdo can be configured to use a larger index with a
-+correspondingly larger deduplication window. (This configuration can only
-+be set when the target is created, not altered later. It is important to
-+consider the expected workload for a vdo target before configuring it.)
-+There are two ways to do this.
++	buf[0] = '\0';
++	return "System error";
++}
 +
-+One way is to increase the memory size of the index, which also increases
-+the amount of backing storage required. Doubling the size of the index will
-+double the length of the deduplication window at the expense of doubling
-+the storage size and the memory requirements.
++/* Convert an error code to a descriptive string. */
++const char *uds_string_error(int errnum, char *buf, size_t buflen)
++{
++	char *buffer = buf;
++	char *buf_end = buf + buflen;
++	const struct error_info *info = NULL;
++	const char *block_name;
 +
-+The other way is to enable sparse indexing. Sparse indexing increases the
-+deduplication window by a factor of 10, at the expense of also increasing
-+the storage size by a factor of 10. However with sparse indexing, the
-+memory requirements do not increase; the trade-off is slightly more
-+computation per request, and a slight decrease in the amount of
-+deduplication detected. (For workloads with significant amounts of
-+duplicate data, sparse indexing will detect 97-99% of the deduplication
-+that a standard, or "dense", index will detect.)
++	if (buf == NULL)
++		return NULL;
 +
-+The Data Store
-+--------------
++	if (errnum < 0)
++		errnum = -errnum;
 +
-+The data store is implemented by three main data structures, all of which
-+work in concert to reduce or amortize metadata updates across as many data
-+writes as possible.
++	block_name = get_error_info(errnum, &info);
++	if (block_name != NULL) {
++		if (info != NULL)
++			buffer = uds_append_to_buffer(buffer,
++						      buf_end,
++						      "%s: %s",
++						      block_name,
++						      info->message);
++		else
++			buffer = uds_append_to_buffer(buffer,
++						      buf_end,
++						      "Unknown %s %d",
++						      block_name,
++						      errnum);
++	} else if (info != NULL) {
++		buffer = uds_append_to_buffer(buffer, buf_end, "%s", info->message);
++	} else {
++		const char *tmp = system_string_error(errnum, buffer, buf_end - buffer);
 +
-+*The Slab Depot*
++		if (tmp != buffer)
++			buffer = uds_append_to_buffer(buffer, buf_end, "%s", tmp);
++		else
++			buffer += strlen(tmp);
++	}
++	return buf;
++}
 +
-+Most of the vdo volume belongs to the slab depot. The depot contains a
-+collection of slabs. The slabs can be up to 32GB, and are divided into
-+three sections. Most of a slab consists of a linear sequence of 4K blocks.
-+These blocks are used either to store data, or to hold portions of the
-+block map (see below). In addition to the data blocks, each slab has a set
-+of reference counters, using 1 byte for each data block. Finally each slab
-+has a journal. Reference updates are written to the slab journal, which is
-+written out one block at a time as each block fills. A copy of the
-+reference counters are kept in memory, and are written out a block at a
-+time, in oldest-dirtied-order whenever there is a need to reclaim slab
-+journal space. The journal is used both to ensure that the main recovery
-+journal (see below) can regularly free up space, and also to amortize the
-+cost of updating individual reference blocks.
++/* Convert an error code to its name. */
++const char *uds_string_error_name(int errnum, char *buf, size_t buflen)
++{
++	char *buffer = buf;
++	char *buf_end = buf + buflen;
++	const struct error_info *info = NULL;
++	const char *block_name;
 +
-+Each slab is independent of every other. They are assigned to "physical
-+zones" in round-robin fashion. If there are P physical zones, then slab n
-+is assigned to zone n mod P.
++	if (errnum < 0)
++		errnum = -errnum;
 +
-+The slab depot maintains an additional small data structure, the "slab
-+summary," which is used to reduce the amount of work needed to come back
-+online after a crash. The slab summary maintains an entry for each slab
-+indicating whether or not the slab has ever been used, whether it is clean
-+(i.e. all of its reference count updates have been persisted to storage),
-+and approximately how full it is. During recovery, each physical zone will
-+attempt to recover at least one slab, stopping whenever it has recovered a
-+slab which has some free blocks. Once each zone has some space (or has
-+determined that none is available), the target can resume normal operation
-+in a degraded mode. Read and write requests can be serviced, perhaps with
-+degraded performance, while the remainder of the dirty slabs are recovered.
++	block_name = get_error_info(errnum, &info);
++	if (block_name != NULL) {
++		if (info != NULL)
++			buffer = uds_append_to_buffer(buffer, buf_end, "%s", info->name);
++		else
++			buffer = uds_append_to_buffer(buffer,
++						      buf_end,
++						      "%s %d",
++						      block_name,
++						      errnum);
++	} else if (info != NULL) {
++		buffer = uds_append_to_buffer(buffer, buf_end, "%s", info->name);
++	} else {
++		const char *tmp;
 +
-+*The Block Map*
++		tmp = system_string_error(errnum, buffer, buf_end - buffer);
++		if (tmp != buffer)
++			buffer = uds_append_to_buffer(buffer, buf_end, "%s", tmp);
++		else
++			buffer += strlen(tmp);
++	}
++	return buf;
++}
 +
-+The block map contains the logical to physical mapping. It can be thought
-+of as an array with one entry per logical address. Each entry is 5 bytes,
-+36 bits of which contain the physical block number which holds the data for
-+the given logical address. The other 4 bits are used to indicate the nature
-+of the mapping. Of the 16 possible states, one represents a logical address
-+which is unmapped (i.e. it has never been written, or has been discarded),
-+one represents an uncompressed block, and the other 14 states are used to
-+indicate that the mapped data is compressed, and which of the compression
-+slots in the compressed block this logical address maps to (see below).
++/*
++ * Translate an error code into a value acceptable to the kernel. The input error code may be a
++ * system-generated value (such as -EIO), or an internal UDS status code. The result will be a
++ * negative errno value.
++ */
++int uds_map_to_system_error(int error)
++{
++	char error_name[UDS_MAX_ERROR_NAME_SIZE];
++	char error_message[UDS_MAX_ERROR_MESSAGE_SIZE];
 +
-+In practice, the array of mapping entries is divided into "block map
-+pages," each of which fits in a single 4K block. Each block map page
-+consists of a header, and 812 mapping entries (812 being the number that
-+fit). Each mapping page is actually a leaf of a radix tree which consists
-+of block map pages at each level. There are 60 radix trees which are
-+assigned to "logical zones" in round robin fashion (if there are L logical
-+zones, tree n will belong to zone n mod L). At each level, the trees are
-+interleaved, so logical addresses 0-811 belong to tree 0, logical addresses
-+812-1623 belong to tree 1, and so on. The interleaving is maintained all
-+the way up the forest. 60 was chosen as the number of trees because it is
-+highly composite and hence results in an evenly distributed number of trees
-+per zone for a large number of possible logical zone counts. The storage
-+for the 60 tree roots is allocated at format time. All other block map
-+pages are allocated out of the slabs as needed. This flexible allocation
-+avoids the need to pre-allocate space for the entire set of logical
-+mappings and also makes growing the logical size of a vdo easy to
-+implement.
++	/* 0 is success, and negative values are already system error codes. */
++	if (likely(error <= 0))
++		return error;
 +
-+In operation, the block map maintains two caches. It is prohibitive to keep
-+the entire leaf level of the trees in memory, so each logical zone
-+maintains its own cache of leaf pages. The size of this cache is
-+configurable at target start time. The second cache is allocated at start
-+time, and is large enough to hold all the non-leaf pages of the entire
-+block map. This cache is populated as needed.
++	if (error < 1024)
++		/* This is probably an errno from userspace. */
++		return -error;
 +
-+*The Recovery Journal*
++	/* Internal UDS errors */
++	switch (error) {
++	case UDS_NO_INDEX:
++	case UDS_CORRUPT_DATA:
++		/* The index doesn't exist or can't be recovered. */
++		return -ENOENT;
 +
-+The recovery journal is used to amortize updates across the block map and
-+slab depot. Each write request causes an entry to be made in the journal.
-+Entries are either "data remappings" or "block map remappings." For a data
-+remapping, the journal records the logical address affected and its old and
-+new physical mappings. For a block map remapping, the journal records the
-+block map page number and the physical block allocated for it (block map
-+pages are never reclaimed, so the old mapping is always 0). Each journal
-+entry and the data write it represents must be stable on disk before the
-+other metadata structures may be updated to reflect the operation.
++	case UDS_INDEX_NOT_SAVED_CLEANLY:
++	case UDS_UNSUPPORTED_VERSION:
++		/*
++		 * The index exists, but can't be loaded. Tell the client it exists so they don't
++		 * destroy it inadvertently.
++		 */
++		return -EEXIST;
 +
-+*Write Path*
++	case UDS_DISABLED:
++		/* The session is unusable; only returned by requests. */
++		return -EIO;
 +
-+A write bio is first assigned a "data_vio," the request object which will
-+operate on behalf of the bio. (A "vio," from Vdo I/O, is vdo's wrapper for
-+bios; metadata operations use a vio, whereas submitted bios require the
-+much larger data_vio.) There is a fixed pool of 2048 data_vios. This number
-+was chosen both to bound the amount of work that is required to recover
-+from a crash, and because measurements indicate that increasing it consumes
-+more resources, but does not improve performance. These measurements have
-+been, and should continue to be, revisited over time.
++	default:
++		/* Translate an unexpected error into something generic. */
++		uds_log_info("%s: mapping status code %d (%s: %s) to -EIO",
++			     __func__,
++			     error,
++			     uds_string_error_name(error, error_name, sizeof(error_name)),
++			     uds_string_error(error, error_message, sizeof(error_message)));
++		return -EIO;
++	}
++}
 +
-+Once a data_vio is assigned, the following steps are performed:
++/*
++ * Register a block of error codes.
++ *
++ * @block_name: the name of the block of error codes
++ * @first_error: the first error code in the block
++ * @next_free_error: one past the highest possible error in the block
++ * @infos: a pointer to the error info array for the block
++ * @info_size: the size of the error info array
++ */
++int uds_register_error_block(const char *block_name,
++			     int first_error,
++			     int next_free_error,
++			     const struct error_info *infos,
++			     size_t info_size)
++{
++	int result;
++	struct error_block *block;
++	struct error_block new_block = {
++		.name = block_name,
++		.base = first_error,
++		.last = first_error + (info_size / sizeof(struct error_info)),
++		.max = next_free_error,
++		.infos = infos,
++	};
 +
-+1. The bio's data is checked to see if it is all zeros, and copied if not.
-+2. A lock is obtained on the logical address of the bio. Because
-+   deduplication involves sharing blocks, it is vital to prevent
-+   simultaneous modifications of the same block.
-+3. The block map tree is traversed, loading any non-leaf pages which cover
-+   the logical address and are not already in memory. If any of these
-+   pages, or the leaf page which covers the logical address have not been
-+   allocated, and the block is not all zeros, they are allocated at this
-+   time.
-+4. If the block is a zero block, skip to step 9. Otherwise, an attempt is
-+   made to allocate a free data block.
-+5. If an allocation was obtained, the bio is acknowledged.
-+6. The bio's data is hashed.
-+7. The data_vio obtains or joins a "hash lock," which represents all of the
-+   bios currently writing the same data.
-+8. If the hash lock does not already have a data_vio acting as its agent,
-+   the current one assumes that role. As the agent:
-+	a) The index is queried.
-+	b) If an entry is found, the indicated block is read and compared
-+           to the data being written.
-+	c) If the data matches, we have identified duplicate data. As many
-+           of the data_vios as there are references available for that
-+           block (including the agent) are shared. If there are more
-+           data_vios in the hash lock than there are references available,
-+           one of them becomes the new agent and continues as if there was
-+           no duplicate found.
-+	d) If no duplicate was found, the data being written will be
-+           compressed. If the compressed size is sufficiently small, the
-+           data_vio will go to the packer where it may be placed in a bin
-+           along with other data_vios.
-+	e) Once a bin is full, either because it is out of space, or
-+           because all 14 of its slots are in use, it is written out.
-+	f) Each data_vio from the bin just written is the agent of some
-+           hash lock, it will now proceed to treat the just written
-+           compressed block as if it were a duplicate and share it with as
-+           many other data_vios in its hash lock as possible.
-+	g) If the agent is not a duplicate, and it got an allocation in
-+           step 3, it will write its data to the block it was allocated. If
-+           the agent does not have an allocation, but another data_vio in
-+           the hash lock does, that data_vio will become the agent and
-+           write the data.
-+	h) If the data was written, this new block is treated as a
-+           duplicate and shared as much as possible with any other
-+           data_vios in the hash lock.
-+	i) If the agent did write new data (whether compressed or not), the
-+           index is updated to reflect the new entry.
-+9. If a non-zero data_vio was not shared and not able to write its data,
-+   the bio is acknowledged with an out-of-space error. Otherwise, the block
-+   map is queried to determine the previous mapping of the logical address.
-+10. An entry is made in the recovery journal. The data_vio will block in
-+    the journal until a flush has completed to ensure the data it may have
-+    written is stable. It must also wait until its journal entry is stable
-+    on disk. (Journal writes are all issued with the FUA bit set.)
-+11. Once the recovery journal entry is stable, the data_vio makes slab
-+    journal entries, an increment entry for the new mapping, and a
-+    decrement entry for the old mapping, if that mapping was non-zero. For
-+    correctness during recovery, the slab journal entries in any given slab
-+    journal must be in the same order as the corresponding recovery journal
-+    entries. Therefore, if the two entries are in different zones, they are
-+    made concurrently, and if they are in the same zone, the increment is
-+    always made before the decrement in order to avoid underflow. After
-+    each slab journal entry is made in memory, the associated reference
-+    count is also updated in memory. Each of these updates will get written
-+    out as needed. (Slab journal blocks are written out either when they
-+    are full, or when the recovery journal requests they do so in order to
-+    allow the recovery journal to free up space; reference count blocks are
-+    written out whenever the associated slab journal requests they do so in
-+    order to free up slab journal space.)
-+12. Once all the reference count updates are done, the block map is updated
-+    and the write is complete.
-+13. If the data_vio did not use its allocation, it releases the allocated
-+    block. The data_vio then returns to the pool.
++	result = ASSERT(first_error < next_free_error, "well-defined error block range");
++	if (result != UDS_SUCCESS)
++		return result;
 +
-+*Read Path*
++	if (registered_errors.count == registered_errors.allocated)
++		/* This should never happen. */
++		return UDS_OVERFLOW;
 +
-+Reads are much simpler than writes. After a data_vio is assigned to the
-+bio, and the logical lock is obtained, the block map is queried. If the
-+block is mapped, the appropriate physical block is read, and if necessary,
-+decompressed.
++	for (block = registered_errors.blocks;
++	     block < registered_errors.blocks + registered_errors.count;
++	     ++block) {
++		if (strcmp(block_name, block->name) == 0)
++			return UDS_DUPLICATE_NAME;
 +
-+*Recovery*
++		/* Ensure error ranges do not overlap. */
++		if ((first_error < block->max) && (next_free_error > block->base))
++			return UDS_ALREADY_REGISTERED;
++	}
 +
-+When a vdo is restarted after a crash, it will attempt to recover from the
-+recovery journal. During the pre-resume phase of the next start, the
-+recovery journal is read. The increment portion of valid entries are played
-+into the block map. Next, valid entries are played, in order as required,
-+into the slab journals. Finally, each physical zone attempts to replay at
-+least one slab journal to reconstruct the reference counts of one slab.
-+Once each zone has some free space (or has determined that it has none),
-+the vdo comes back online, while the remainder of the slab journals are
-+used to reconstruct the rest of the reference counts.
-+
-+*Read-only Rebuild*
-+
-+If a vdo encounters an unrecoverable error, it will enter read-only mode.
-+This mode indicates that some previously acknowledged data may have been
-+lost. The vdo may be instructed to rebuild as best it can in order to
-+return to a writable state. However, this is never done automatically due
-+to the likelihood that data has been lost. During a read-only rebuild, the
-+block map is recovered from the recovery journal as before. However, the
-+reference counts are not rebuilt from the slab journals. Rather, the
-+reference counts are zeroed, and then the entire block map is traversed,
-+and the reference counts are updated from it. While this may lose some
-+data, it ensures that the block map and reference counts are consistent.
-diff --git a/Documentation/admin-guide/device-mapper/vdo.rst b/Documentation/admin-guide/device-mapper/vdo.rst
++	registered_errors.blocks[registered_errors.count++] = new_block;
++	return UDS_SUCCESS;
++}
+diff --git a/drivers/md/dm-vdo/errors.h b/drivers/md/dm-vdo/errors.h
 new file mode 100644
-index 00000000000..30e6f3d60d9
+index 00000000000..1740bac8936
 --- /dev/null
-+++ b/Documentation/admin-guide/device-mapper/vdo.rst
-@@ -0,0 +1,386 @@
-+dm-vdo
-+======
-+
-+The dm-vdo (virtual data optimizer) device mapper target provides
-+block-level deduplication, compression, and thin provisioning. As a device
-+mapper target, it can add these features to the storage stack, compatible
-+with any file system. The vdo target does not protect against data
-+corruption, relying instead on integrity protection of the storage below
-+it. It is strongly recommended that lvm be used to manage vdo volumes. See
-+lvmvdo(7).
-+
-+Userspace component
-+===================
-+
-+Formatting a vdo volume requires the use of the 'vdoformat' tool, available
-+at:
-+
-+https://github.com/dm-vdo/vdo/
-+
-+In most cases, a vdo target will recover from a crash automatically the
-+next time it is started. In cases where it encountered an unrecoverable
-+error (either during normal operation or crash recovery) the target will
-+enter or come up in read-only mode. Because read-only mode is indicative of
-+data-loss, a positive action must be taken to bring vdo out of read-only
-+mode. The 'vdoforcerebuild' tool, available from the same repo, is used to
-+prepare a read-only vdo to exit read-only mode. After running this tool,
-+the vdo target will rebuild its metadata the next time it is
-+started. Although some data may be lost, the rebuilt vdo's metadata will be
-+internally consistent and the target will be writable again.
-+
-+The repo also contains additional userspace tools which can be used to
-+inspect a vdo target's on-disk metadata. Fortunately, these tools are
-+rarely needed except by dm-vdo developers.
-+
-+Target interface
-+================
-+
-+Table line
-+----------
-+
-+::
-+
-+	<offset> <logical device size> vdo V4 <storage device>
-+	<storage device size> <minimum I/O size> <block map cache size>
-+	<block map era length> [optional arguments]
-+
-+
-+Required parameters:
-+
-+	offset:
-+		The offset, in sectors, at which the vdo volume's logical
-+		space begins.
-+
-+	logical device size:
-+		The size of the device which the vdo volume will service,
-+		in sectors. Must match the current logical size of the vdo
-+		volume.
-+
-+	storage device:
-+		The device holding the vdo volume's data and metadata.
-+
-+	storage device size:
-+		The size of the device holding the vdo volume, as a number
-+		of 4096-byte blocks. Must match the current size of the vdo
-+		volume.
-+
-+	minimum I/O size:
-+		The minimum I/O size for this vdo volume to accept, in
-+		bytes. Valid values are 512 or 4096. The recommended value
-+		is 4096.
-+
-+	block map cache size:
-+		The size of the block map cache, as a number of 4096-byte
-+		blocks. The minimum and recommended value is 32768 blocks.
-+		If the logical thread count is non-zero, the cache size
-+		must be at least 4096 blocks per logical thread.
-+
-+	block map era length:
-+		The speed with which the block map cache writes out
-+		modified block map pages. A smaller era length is likely to
-+		reduce the amount of time spent rebuilding, at the cost of
-+		increased block map writes during normal operation. The
-+		maximum and recommended value is 16380; the minimum value
-+		is 1.
-+
-+Optional parameters:
-+--------------------
-+Some or all of these parameters may be specified as <key> <value> pairs.
-+
-+Thread related parameters:
-+
-+Different categories of work are assigned to separate thread groups, and
-+the number of threads in each group can be configured separately.
-+
-+If <hash>, <logical>, and <physical> are all set to 0, the work handled by
-+all three thread types will be handled by a single thread. If any of these
-+values are non-zero, all of them must be non-zero.
-+
-+	ack:
-+		The number of threads used to complete bios. Since
-+		completing a bio calls an arbitrary completion function
-+		outside the vdo volume, threads of this type allow the vdo
-+		volume to continue processing requests even when bio
-+		completion is slow. The default is 1.
-+
-+	bio:
-+		The number of threads used to issue bios to the underlying
-+		storage. Threads of this type allow the vdo volume to
-+		continue processing requests even when bio submission is
-+		slow. The default is 4.
-+
-+	bioRotationInterval:
-+		The number of bios to enqueue on each bio thread before
-+		switching to the next thread. The value must be greater
-+		than 0 and not more than 1024; the default is 64.
-+
-+	cpu:
-+		The number of threads used to do CPU-intensive work, such
-+		as hashing and compression. The default is 1.
-+
-+	hash:
-+		The number of threads used to manage data comparisons for
-+		deduplication based on the hash value of data blocks. The
-+		default is 0.
-+
-+	logical:
-+		The number of threads used to manage caching and locking
-+		based on the logical address of incoming bios. The default
-+		is 0; the maximum is 60.
-+
-+	physical:
-+		The number of threads used to manage administration of the
-+		underlying storage device. At format time, a slab size for
-+		the vdo is chosen; the vdo storage device must be large
-+		enough to have at least 1 slab per physical thread. The
-+		default is 0; the maximum is 16.
-+
-+Miscellaneous parameters:
-+
-+	maxDiscard:
-+		The maximum size of discard bio accepted, in 4096-byte
-+		blocks. I/O requests to a vdo volume are normally split
-+		into 4096-byte blocks, and processed up to 2048 at a time.
-+		However, discard requests to a vdo volume can be
-+		automatically split to a larger size, up to <maxDiscard>
-+		4096-byte blocks in a single bio, and are limited to 1500
-+		at a time. Increasing this value may provide better overall
-+		performance, at the cost of increased latency for the
-+		individual discard requests. The default and minimum is 1;
-+		the maximum is UINT_MAX / 4096.
-+
-+	deduplication:
-+		Whether deduplication is enabled. The default is 'on'; the
-+		acceptable values are 'on' and 'off'.
-+
-+	compression:
-+		Whether compression is enabled. The default is 'off'; the
-+		acceptable values are 'on' and 'off'.
-+		
-+Device modification
-+-------------------
-+
-+A modified table may be loaded into a running, non-suspended vdo volume.
-+The modifications will take effect when the device is next resumed. The
-+modifiable parameters are <logical device size>, <physical device size>,
-+<maxDiscard>, <compression>, and <deduplication>.
-+
-+If the logical device size or physical device size are changed, upon
-+successful resume vdo will store the new values and require them on future
-+startups. These two parameters may not be decreased. The logical device
-+size may not exceed 4 PB. The physical device size must increase by at
-+least 32832 4096-byte blocks if at all, and must not exceed the size of the
-+underlying storage device. Additionally, when formatting the vdo device, a
-+slab size is chosen: the physical device size may never increase above the
-+size which provides 8192 slabs, and each increase must be large enough to
-+add at least one new slab.
-+
-+Examples:
-+
-+Start a previously-formatted vdo volume with 1 GB logical space and 1 GB
-+physical space, storing to /dev/dm-1 which has more than 1 GB of space.
-+
-+::
-+
-+	dmsetup create vdo0 --table \
-+	"0 2097152 vdo V4 /dev/dm-1 262144 4096 32768 16380"
-+
-+Grow the logical size to 4 GB.
-+
-+::
-+
-+	dmsetup reload vdo0 --table \
-+	"0 8388608 vdo V4 /dev/dm-1 262144 4096 32768 16380"
-+	dmsetup resume vdo0
-+
-+Grow the physical size to 2 GB.
-+
-+::
-+
-+	dmsetup reload vdo0 --table \
-+	"0 8388608 vdo V4 /dev/dm-1 524288 4096 32768 16380"
-+	dmsetup resume vdo0
-+
-+Grow the physical size by 1 GB more and increase max discard sectors.
-+
-+::
-+
-+	dmsetup reload vdo0 --table \
-+	"0 10485760 vdo V4 /dev/dm-1 786432 4096 32768 16380 maxDiscard 8"
-+	dmsetup resume vdo0
-+
-+Stop the vdo volume.
-+
-+::
-+
-+	dmsetup remove vdo0
-+
-+Start the vdo volume again. Note that the logical and physical device sizes
-+must still match, but other parameters can change.
-+
-+::
-+
-+	dmsetup create vdo1 --table \
-+	"0 10485760 vdo V4 /dev/dm-1 786432 512 65550 5000 hash 1 logical 3 physical 2"
-+
-+Messages
-+--------
-+All vdo devices accept messages in the form:
-+
-+::
-+        dmsetup message <target-name> 0 <message-name> <message-parameters>
-+
-+The messages are:
-+
-+        stats:
-+		Outputs the current view of the vdo statistics. Mostly used
-+		by the vdostats userspace program to interpret the output
-+		buffer.
-+
-+        dump:
-+		Dumps many internal structures to the system log. This is
-+		not always safe to run, so it should only be used to debug
-+		a hung vdo. Optional parameters to specify structures to
-+		dump are:
-+
-+			viopool: The pool of I/O requests incoming bios
-+			pools: A synonym of 'viopool'
-+			vdo: Most of the structures managing on-disk data 
-+			queues: Basic information about each vdo thread
-+			threads: A synonym of 'queues'
-+			default: Equivalent to 'queues vdo' 
-+			all: All of the above.
-+        
-+        dump-on-shutdown:
-+		Perform a default dump next time vdo shuts down.
-+
-+
-+Status
-+------
-+
-+::
-+
-+    <device> <operating mode> <in recovery> <index state>
-+    <compression state> <physical blocks used> <total physical blocks>
-+
-+	device:
-+		The name of the vdo volume.
-+
-+	operating mode:
-+		The current operating mode of the vdo volume; values may be
-+		'normal', 'recovering' (the volume has detected an issue
-+		with its metadata and is attempting to repair itself), and
-+		'read-only' (an error has occurred that forces the vdo
-+		volume to only support read operations and not writes).
-+
-+	in recovery:
-+		Whether the vdo volume is currently in recovery mode;
-+		values may be 'recovering' or '-' which indicates not
-+		recovering.
-+
-+	index state:
-+		The current state of the deduplication index in the vdo
-+		volume; values may be 'closed', 'closing', 'error',
-+		'offline', 'online', 'opening', and 'unknown'.
-+
-+	compression state:
-+		The current state of compression in the vdo volume; values
-+		may be 'offline' and 'online'.
-+
-+	used physical blocks:
-+		The number of physical blocks in use by the vdo volume.
-+
-+	total physical blocks:
-+		The total number of physical blocks the vdo volume may use;
-+		the difference between this value and the
-+		<used physical blocks> is the number of blocks the vdo
-+		volume has left before being full.
-+
-+Memory Requirements
-+===================
-+
-+A vdo target requires a fixed 38 MB of RAM along with the following amounts
-+that scale with the target:
-+
-+- 1.15 MB of RAM for each 1 MB of configured block map cache size. The
-+  block map cache requires a minimum of 150 MB.
-+- 1.6 MB of RAM for each 1 TB of logical space.
-+- 268 MB of RAM for each 1 TB of physical storage managed by the volume.
-+
-+The deduplication index requires additional memory which scales with the
-+size of the deduplication window. For dense indexes, the index requires 1
-+GB of RAM per 1 TB of window. For sparse indexes, the index requires 1 GB
-+of RAM per 10 TB of window. The index configuration is set when the target
-+is formatted and may not be modified.
-+
-+Run-time Usage
-+==============
-+
-+When using dm-vdo, it is important to be aware of the ways in which its
-+behavior differs from other storage targets.
-+
-+- There is no guarantee that over-writes of existing blocks will succeed.
-+  Because the underlying storage may be multiply referenced, over-writing
-+  an existing block generally requires a vdo to have a free block
-+  available.
-+  
-+- When blocks are no longer in use, sending a discard request for those
-+  blocks lets the vdo release references for those blocks. If the vdo is
-+  thinly provisioned, discarding unused blocks is essential to prevent the
-+  target from running out of space. However, due to the sharing of
-+  duplicate blocks, no discard request for any given logical block is
-+  guaranteed to reclaim space.
-+
-+- Assuming the underlying storage properly implements flush requests, vdo
-+  is resilient against crashes, however, unflushed writes may or may not
-+  persist after a crash.
-+
-+- Each write to a vdo target entails a significant amount of processing.
-+  However, much of the work is paralellizable. Therefore, vdo targets
-+  achieve better throughput at higher I/O depths, and can support up 2048
-+  requests in parallel.
-+
-+Tuning
-+======
-+
-+The vdo device has many options, and it can be difficult to make optimal
-+choices without perfect knowledge of the workload. Additionally, most
-+configuration options must be set when a vdo target is started, and cannot
-+be changed without shutting it down completely; the configuration cannot be
-+changed while the target is active. Ideally, tuning with simulated
-+workloads should be performed before deploying vdo in production
-+environments.
-+
-+The most important value to adjust is the block map cache size. In order to
-+service a request for any logical address, a vdo must load the portion of
-+the block map which holds the relevant mapping. These mappings are cached.
-+Performance will suffer when the working set does not fit in the cache. By
-+default, a vdo allocates 128 MB of metadata cache in RAM to support
-+efficient access to 100 GB of logical space at a time. It should be scaled
-+up proportionally for larger working sets.
-+
-+The logical and physical thread counts should also be adjusted. A logical
-+thread controls a disjoint section of the block map, so additional logical
-+threads increase parallelism and can increase throughput. Physical threads
-+control a disjoint section of the data blocks, so additional physical
-+threads can also increase throughput. However, excess threads can waste
-+resources and increase contention.
-+
-+Bio submission threads control the parallelism involved in sending I/O to
-+the underlying storage; fewer threads mean there is more opportunity to
-+reorder I/O requests for performance benefit, but also that each I/O
-+request has to wait longer before being submitted.
-+
-+Bio acknowledgment threads are used for finishing I/O requests. This is
-+done on dedicated threads since the amount of work required to execute a
-+bio's callback can not be controlled by the vdo itself. Usually one thread
-+is sufficient but additional threads may be beneficial, particularly when
-+bios have CPU-heavy callbacks.
-+
-+CPU threads are used for hashing and for compression; in workloads with
-+compression enabled, more threads may result in higher throughput.
-+
-+Hash threads are used to sort active requests by hash and determine whether
-+they should deduplicate; the most CPU intensive actions done by these
-+threads are comparison of 4096-byte data blocks. In most cases, a single
-+hash thread is sufficient.
++++ b/drivers/md/dm-vdo/errors.h
+@@ -0,0 +1,83 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright Red Hat
++ */
++
++#ifndef UDS_ERRORS_H
++#define UDS_ERRORS_H
++
++#include <linux/compiler.h>
++#include <linux/types.h>
++
++/* Custom error codes and error-related utilities for UDS */
++
++/* Valid status codes for internal UDS functions. */
++enum uds_status_codes {
++	/* Successful return */
++	UDS_SUCCESS = 0,
++
++	/* Used as a base value for reporting internal errors */
++	UDS_ERROR_CODE_BASE = 1024,
++	/* Index overflow */
++	UDS_OVERFLOW = UDS_ERROR_CODE_BASE + 0,
++	/* Invalid argument passed to internal routine */
++	UDS_INVALID_ARGUMENT = UDS_ERROR_CODE_BASE + 1,
++	/* UDS data structures are in an invalid state */
++	UDS_BAD_STATE = UDS_ERROR_CODE_BASE + 2,
++	/* Attempt to enter the same name into an internal structure twice */
++	UDS_DUPLICATE_NAME = UDS_ERROR_CODE_BASE + 3,
++	/* An assertion failed */
++	UDS_ASSERTION_FAILED = UDS_ERROR_CODE_BASE + 4,
++	/* A request has been queued for later processing (not an error) */
++	UDS_QUEUED = UDS_ERROR_CODE_BASE + 5,
++	/* A problem has occurred with a buffer */
++	UDS_BUFFER_ERROR = UDS_ERROR_CODE_BASE + 6,
++	/* No directory was found where one was expected */
++	UDS_NO_DIRECTORY = UDS_ERROR_CODE_BASE + 7,
++	/* This error range has already been registered */
++	UDS_ALREADY_REGISTERED = UDS_ERROR_CODE_BASE + 8,
++	/* Attempt to read or write data outside the valid range */
++	UDS_OUT_OF_RANGE = UDS_ERROR_CODE_BASE + 9,
++	/* Could not load modules */
++	UDS_EMODULE_LOAD = UDS_ERROR_CODE_BASE + 10,
++	/* The index session is disabled */
++	UDS_DISABLED = UDS_ERROR_CODE_BASE + 11,
++	/* Unknown error */
++	UDS_UNKNOWN_ERROR = UDS_ERROR_CODE_BASE + 12,
++	/* The index configuration or volume format is no longer supported */
++	UDS_UNSUPPORTED_VERSION = UDS_ERROR_CODE_BASE + 13,
++	/* Some index structure is corrupt */
++	UDS_CORRUPT_DATA = UDS_ERROR_CODE_BASE + 14,
++	/* No index state found */
++	UDS_NO_INDEX = UDS_ERROR_CODE_BASE + 15,
++	/* Attempt to access incomplete index save data */
++	UDS_INDEX_NOT_SAVED_CLEANLY = UDS_ERROR_CODE_BASE + 16,
++	/* One more than the last UDS_INTERNAL error code */
++	UDS_ERROR_CODE_LAST,
++	/* One more than the last error this block will ever use */
++	UDS_ERROR_CODE_BLOCK_END = UDS_ERROR_CODE_BASE + 440,
++};
++
++enum {
++	UDS_MAX_ERROR_NAME_SIZE = 80,
++	UDS_MAX_ERROR_MESSAGE_SIZE = 128,
++};
++
++struct error_info {
++	const char *name;
++	const char *message;
++};
++
++const char * __must_check uds_string_error(int errnum, char *buf, size_t buflen);
++
++const char *uds_string_error_name(int errnum, char *buf, size_t buflen);
++
++int uds_map_to_system_error(int error);
++
++int uds_register_error_block(const char *block_name,
++			     int first_error,
++			     int last_reserved_error,
++			     const struct error_info *infos,
++			     size_t info_size);
++
++#endif /* UDS_ERRORS_H */
+diff --git a/drivers/md/dm-vdo/logger.c b/drivers/md/dm-vdo/logger.c
+new file mode 100644
+index 00000000000..45a9d8b3936
+--- /dev/null
++++ b/drivers/md/dm-vdo/logger.c
+@@ -0,0 +1,304 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright Red Hat
++ */
++
++#include "logger.h"
++
++#include <linux/delay.h>
++#include <linux/hardirq.h>
++#include <linux/module.h>
++#include <linux/printk.h>
++#include <linux/sched.h>
++
++#include "thread-device.h"
++#include "uds-threads.h"
++
++struct priority_name {
++	const char *name;
++	const int priority;
++};
++
++static const struct priority_name PRIORITIES[] = {
++	{ "ALERT", UDS_LOG_ALERT },
++	{ "CRITICAL", UDS_LOG_CRIT },
++	{ "CRIT", UDS_LOG_CRIT },
++	{ "DEBUG", UDS_LOG_DEBUG },
++	{ "EMERGENCY", UDS_LOG_EMERG },
++	{ "EMERG", UDS_LOG_EMERG },
++	{ "ERROR", UDS_LOG_ERR },
++	{ "ERR", UDS_LOG_ERR },
++	{ "INFO", UDS_LOG_INFO },
++	{ "NOTICE", UDS_LOG_NOTICE },
++	{ "PANIC", UDS_LOG_EMERG },
++	{ "WARN", UDS_LOG_WARNING },
++	{ "WARNING", UDS_LOG_WARNING },
++	{ NULL, -1 },
++};
++
++static const char *const PRIORITY_STRINGS[] = {
++	"EMERGENCY",
++	"ALERT",
++	"CRITICAL",
++	"ERROR",
++	"WARN",
++	"NOTICE",
++	"INFO",
++	"DEBUG",
++};
++
++static int log_level = UDS_LOG_INFO;
++
++int uds_get_log_level(void)
++{
++	return log_level;
++}
++
++void uds_set_log_level(int new_log_level)
++{
++	log_level = new_log_level;
++}
++
++int uds_log_string_to_priority(const char *string)
++{
++	int i;
++
++	for (i = 0; PRIORITIES[i].name != NULL; i++)
++		if (strcasecmp(string, PRIORITIES[i].name) == 0)
++			return PRIORITIES[i].priority;
++	return UDS_LOG_INFO;
++}
++
++const char *uds_log_priority_to_string(int priority)
++{
++	if ((priority < 0) || (priority >= (int) ARRAY_SIZE(PRIORITY_STRINGS)))
++		return "unknown";
++	return PRIORITY_STRINGS[priority];
++}
++
++static const char *get_current_interrupt_type(void)
++{
++	if (in_nmi())
++		return "NMI";
++	if (in_irq())
++		return "HI";
++	if (in_softirq())
++		return "SI";
++	return "INTR";
++}
++
++/**
++ * emit_log_message_to_kernel() - Emit a log message to the kernel at the specified priority.
++ *
++ * @priority: The priority at which to log the message
++ * @fmt: The format string of the message
++ */
++static void emit_log_message_to_kernel(int priority, const char *fmt, ...)
++{
++	va_list args;
++	struct va_format vaf;
++
++	if (priority > uds_get_log_level())
++		return;
++
++	va_start(args, fmt);
++	vaf.fmt = fmt;
++	vaf.va = &args;
++
++	switch (priority) {
++	case UDS_LOG_EMERG:
++	case UDS_LOG_ALERT:
++	case UDS_LOG_CRIT:
++		printk(KERN_CRIT "%pV", &vaf);
++		break;
++	case UDS_LOG_ERR:
++		printk(KERN_ERR "%pV", &vaf);
++		break;
++	case UDS_LOG_WARNING:
++		printk(KERN_WARNING "%pV", &vaf);
++		break;
++	case UDS_LOG_NOTICE:
++		printk(KERN_NOTICE "%pV", &vaf);
++		break;
++	case UDS_LOG_INFO:
++		printk(KERN_INFO "%pV", &vaf);
++		break;
++	case UDS_LOG_DEBUG:
++		printk(KERN_DEBUG "%pV", &vaf);
++		break;
++	default:
++		printk(KERN_DEFAULT "%pV", &vaf);
++		break;
++	}
++
++	va_end(args);
++}
++
++/**
++ * emit_log_message() - Emit a log message to the kernel log in a format suited to the current
++ *                      thread context.
++ *
++ * Context info formats:
++ *
++ * interrupt:           uds[NMI]: blah
++ * kvdo thread:         kvdo12:foobarQ: blah
++ * thread w/device id:  kvdo12:myprog: blah
++ * other thread:        uds: myprog: blah
++ *
++ * Fields: module name, interrupt level, process name, device ID.
++ *
++ * @priority: the priority at which to log the message
++ * @module: The name of the module doing the logging
++ * @prefix: The prefix of the log message
++ * @vaf1: The first message format descriptor
++ * @vaf2: The second message format descriptor
++ */
++static void emit_log_message(int priority,
++			     const char *module,
++			     const char *prefix,
++			     const struct va_format *vaf1,
++			     const struct va_format *vaf2)
++{
++	int device_instance;
++
++	/*
++	 * In interrupt context, identify the interrupt type and module. Ignore the process/thread
++	 * since it could be anything.
++	 */
++	if (in_interrupt()) {
++		const char *type = get_current_interrupt_type();
++
++		emit_log_message_to_kernel(priority,
++					   "%s[%s]: %s%pV%pV\n",
++					   module, type, prefix, vaf1, vaf2);
++		return;
++	}
++
++	/* Not at interrupt level; we have a process we can look at, and might have a device ID. */
++	device_instance = uds_get_thread_device_id();
++	if (device_instance >= 0) {
++		emit_log_message_to_kernel(priority,
++					   "%s%u:%s: %s%pV%pV\n",
++					   module, device_instance,
++					   current->comm, prefix, vaf1, vaf2);
++		return;
++	}
++
++	/*
++	 * If it's a kernel thread and the module name is a prefix of its name, assume it is ours
++	 * and only identify the thread.
++	 */
++	if (((current->flags & PF_KTHREAD) != 0) &&
++	    (strncmp(module, current->comm, strlen(module)) == 0)) {
++		emit_log_message_to_kernel(priority,
++					   "%s: %s%pV%pV\n",
++					   current->comm, prefix, vaf1, vaf2);
++		return;
++	}
++
++	/* Identify the module and the process. */
++	emit_log_message_to_kernel(priority,
++				   "%s: %s: %s%pV%pV\n",
++				   module, current->comm, prefix, vaf1, vaf2);
++}
++
++/*
++ * uds_log_embedded_message() - Log a message embedded within another message.
++ * @priority: the priority at which to log the message
++ * @module: the name of the module doing the logging
++ * @prefix: optional string prefix to message, may be NULL
++ * @fmt1: format of message first part (required)
++ * @args1: arguments for message first part (required)
++ * @fmt2: format of message second part
++ */
++void uds_log_embedded_message(int priority,
++			      const char *module,
++			      const char *prefix,
++			      const char *fmt1,
++			      va_list args1,
++			      const char *fmt2,
++			      ...)
++{
++	va_list args1_copy;
++	va_list args2;
++	struct va_format vaf1, vaf2;
++
++	va_start(args2, fmt2);
++
++	if (module == NULL)
++		module = UDS_LOGGING_MODULE_NAME;
++	if (prefix == NULL)
++		prefix = "";
++
++	/*
++	 * It is implementation dependent whether va_list is defined as an array type that decays
++	 * to a pointer when passed as an argument. Copy args1 and args2 with va_copy so that vaf1
++	 * and vaf2 get proper va_list pointers irrespective of how va_list is defined.
++	 */
++	va_copy(args1_copy, args1);
++	vaf1.fmt = fmt1;
++	vaf1.va = &args1_copy;
++
++	vaf2.fmt = fmt2;
++	vaf2.va = &args2;
++
++	emit_log_message(priority, module, prefix, &vaf1, &vaf2);
++
++	va_end(args1_copy);
++	va_end(args2);
++}
++
++int uds_vlog_strerror(int priority,
++		      int errnum,
++		      const char *module,
++		      const char *format,
++		      va_list args)
++{
++	char errbuf[UDS_MAX_ERROR_MESSAGE_SIZE];
++	const char *message = uds_string_error(errnum, errbuf, sizeof(errbuf));
++
++	uds_log_embedded_message(priority,
++				 module,
++				 NULL,
++				 format,
++				 args,
++				 ": %s (%d)",
++				 message,
++				 errnum);
++	return errnum;
++}
++
++int __uds_log_strerror(int priority, int errnum, const char *module, const char *format, ...)
++{
++	va_list args;
++
++	va_start(args, format);
++	uds_vlog_strerror(priority, errnum, module, format, args);
++	va_end(args);
++	return errnum;
++}
++
++void uds_log_backtrace(int priority)
++{
++	if (priority > uds_get_log_level())
++		return;
++	dump_stack();
++}
++
++void __uds_log_message(int priority, const char *module, const char *format, ...)
++{
++	va_list args;
++
++	va_start(args, format);
++	uds_log_embedded_message(priority, module, NULL, format, args, "%s", "");
++	va_end(args);
++}
++
++/*
++ * Sleep or delay a few milliseconds in an attempt to allow the log buffers to be flushed lest they
++ * be overrun.
++ */
++void uds_pause_for_logger(void)
++{
++	fsleep(4000);
++}
+diff --git a/drivers/md/dm-vdo/logger.h b/drivers/md/dm-vdo/logger.h
+new file mode 100644
+index 00000000000..4e3ea3f0263
+--- /dev/null
++++ b/drivers/md/dm-vdo/logger.h
+@@ -0,0 +1,112 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright Red Hat
++ */
++
++#ifndef UDS_LOGGER_H
++#define UDS_LOGGER_H
++
++#include <linux/module.h>
++#include <linux/ratelimit.h>
++
++/* Custom logging utilities for UDS */
++
++#define UDS_LOG_EMERG 0
++#define UDS_LOG_ALERT 1
++#define UDS_LOG_CRIT 2
++#define UDS_LOG_ERR 3
++#define UDS_LOG_WARNING 4
++#define UDS_LOG_NOTICE 5
++#define UDS_LOG_INFO 6
++#define UDS_LOG_DEBUG 7
++
++#if defined(MODULE)
++#define UDS_LOGGING_MODULE_NAME THIS_MODULE->name
++#else /* compiled into the kernel */
++#define UDS_LOGGING_MODULE_NAME "vdo"
++#endif
++
++/* Apply a rate limiter to a log method call. */
++#define uds_log_ratelimit(log_fn, ...)                                    \
++	do {                                                              \
++		static DEFINE_RATELIMIT_STATE(_rs,                        \
++					      DEFAULT_RATELIMIT_INTERVAL, \
++					      DEFAULT_RATELIMIT_BURST);   \
++		if (__ratelimit(&_rs)) {                                  \
++			log_fn(__VA_ARGS__);                              \
++		}                                                         \
++	} while (0)
++
++int uds_get_log_level(void);
++
++void uds_set_log_level(int new_log_level);
++
++int uds_log_string_to_priority(const char *string);
++
++const char *uds_log_priority_to_string(int priority);
++
++void uds_log_embedded_message(int priority,
++			      const char *module,
++			      const char *prefix,
++			      const char *fmt1,
++			      va_list args1,
++			      const char *fmt2,
++			      ...)
++	__printf(4, 0) __printf(6, 7);
++
++void uds_log_backtrace(int priority);
++
++/* All log functions will preserve the caller's value of errno. */
++
++#define uds_log_strerror(priority, errnum, ...) \
++	__uds_log_strerror(priority, errnum, UDS_LOGGING_MODULE_NAME, __VA_ARGS__)
++
++int __uds_log_strerror(int priority, int errnum, const char *module, const char *format, ...)
++	__printf(4, 5);
++
++int uds_vlog_strerror(int priority,
++		      int errnum,
++		      const char *module,
++		      const char *format,
++		      va_list args)
++	__printf(4, 0);
++
++/* Log an error prefixed with the string associated with the errnum. */
++#define uds_log_error_strerror(errnum, ...) \
++	uds_log_strerror(UDS_LOG_ERR, errnum, __VA_ARGS__)
++
++#define uds_log_debug_strerror(errnum, ...) \
++	uds_log_strerror(UDS_LOG_DEBUG, errnum, __VA_ARGS__)
++
++#define uds_log_info_strerror(errnum, ...) \
++	uds_log_strerror(UDS_LOG_INFO, errnum, __VA_ARGS__)
++
++#define uds_log_notice_strerror(errnum, ...) \
++	uds_log_strerror(UDS_LOG_NOTICE, errnum, __VA_ARGS__)
++
++#define uds_log_warning_strerror(errnum, ...) \
++	uds_log_strerror(UDS_LOG_WARNING, errnum, __VA_ARGS__)
++
++#define uds_log_fatal_strerror(errnum, ...) \
++	uds_log_strerror(UDS_LOG_CRIT, errnum, __VA_ARGS__)
++
++#define uds_log_message(priority, ...) \
++	__uds_log_message(priority, UDS_LOGGING_MODULE_NAME, __VA_ARGS__)
++
++void __uds_log_message(int priority, const char *module, const char *format, ...)
++	__printf(3, 4);
++
++#define uds_log_debug(...) uds_log_message(UDS_LOG_DEBUG, __VA_ARGS__)
++
++#define uds_log_info(...) uds_log_message(UDS_LOG_INFO, __VA_ARGS__)
++
++#define uds_log_notice(...) uds_log_message(UDS_LOG_NOTICE, __VA_ARGS__)
++
++#define uds_log_warning(...) uds_log_message(UDS_LOG_WARNING, __VA_ARGS__)
++
++#define uds_log_error(...) uds_log_message(UDS_LOG_ERR, __VA_ARGS__)
++
++#define uds_log_fatal(...) uds_log_message(UDS_LOG_CRIT, __VA_ARGS__)
++
++void uds_pause_for_logger(void);
++#endif /* UDS_LOGGER_H */
+diff --git a/drivers/md/dm-vdo/permassert.c b/drivers/md/dm-vdo/permassert.c
+new file mode 100644
+index 00000000000..6c20372eb3a
+--- /dev/null
++++ b/drivers/md/dm-vdo/permassert.c
+@@ -0,0 +1,35 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright Red Hat
++ */
++
++#include "permassert.h"
++
++#include "errors.h"
++#include "logger.h"
++
++int uds_assertion_failed(const char *expression_string,
++			 const char *file_name,
++			 int line_number,
++			 const char *format,
++			 ...)
++{
++	va_list args;
++
++	va_start(args, format);
++
++	uds_log_embedded_message(UDS_LOG_ERR,
++				 UDS_LOGGING_MODULE_NAME,
++				 "assertion \"",
++				 format,
++				 args,
++				 "\" (%s) failed at %s:%d",
++				 expression_string,
++				 file_name,
++				 line_number);
++	uds_log_backtrace(UDS_LOG_ERR);
++
++	va_end(args);
++
++	return UDS_ASSERTION_FAILED;
++}
+diff --git a/drivers/md/dm-vdo/permassert.h b/drivers/md/dm-vdo/permassert.h
+new file mode 100644
+index 00000000000..224652c88de
+--- /dev/null
++++ b/drivers/md/dm-vdo/permassert.h
+@@ -0,0 +1,65 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright Red Hat
++ */
++
++#ifndef PERMASSERT_H
++#define PERMASSERT_H
++
++#include <linux/compiler.h>
++
++#include "errors.h"
++
++/* Utilities for asserting that certain conditions are met */
++
++#define STRINGIFY(X) #X
++#define STRINGIFY_VALUE(X) STRINGIFY(X)
++
++/*
++ * A hack to apply the "warn if unused" attribute to an integral expression.
++ *
++ * Since GCC doesn't propagate the warn_unused_result attribute to conditional expressions
++ * incorporating calls to functions with that attribute, this function can be used to wrap such an
++ * expression. With optimization enabled, this function contributes no additional instructions, but
++ * the warn_unused_result attribute still applies to the code calling it.
++ */
++static inline int __must_check uds_must_use(int value)
++{
++	return value;
++}
++
++/* Assert that an expression is true and return an error if it is not. */
++#define ASSERT(expr, ...) uds_must_use(__UDS_ASSERT(expr, __VA_ARGS__))
++
++/* Log a message if the expression is not true. */
++#define ASSERT_LOG_ONLY(expr, ...) __UDS_ASSERT(expr, __VA_ARGS__)
++
++#define __UDS_ASSERT(expr, ...)				      \
++	(likely(expr) ? UDS_SUCCESS			      \
++		      : uds_assertion_failed(STRINGIFY(expr), __FILE__, __LINE__, __VA_ARGS__))
++
++/* Log an assertion failure message. */
++int uds_assertion_failed(const char *expression_string,
++			 const char *file_name,
++			 int line_number,
++			 const char *format,
++			 ...)
++	__printf(4, 5);
++
++#define STATIC_ASSERT(expr)	     \
++	do {			     \
++		switch (0) {	     \
++		case 0:		     \
++			;	     \
++			fallthrough; \
++		case expr:	     \
++			;	     \
++			fallthrough; \
++		default:	     \
++			break;	     \
++		}		     \
++	} while (0)
++
++#define STATIC_ASSERT_SIZEOF(type, expected_size) STATIC_ASSERT(sizeof(type) == (expected_size))
++
++#endif /* PERMASSERT_H */
+diff --git a/drivers/md/dm-vdo/string-utils.c b/drivers/md/dm-vdo/string-utils.c
+new file mode 100644
+index 00000000000..ac8cd76a8ff
+--- /dev/null
++++ b/drivers/md/dm-vdo/string-utils.c
+@@ -0,0 +1,28 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright Red Hat
++ */
++
++#include "string-utils.h"
++
++#include "errors.h"
++#include "logger.h"
++#include "memory-alloc.h"
++#include "permassert.h"
++#include "uds.h"
++
++char *uds_append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
++{
++	va_list args;
++	size_t n;
++
++	va_start(args, fmt);
++	n = vsnprintf(buffer, buf_end - buffer, fmt, args);
++	if (n >= (size_t) (buf_end - buffer))
++		buffer = buf_end;
++	else
++		buffer += n;
++	va_end(args);
++
++	return buffer;
++}
+diff --git a/drivers/md/dm-vdo/string-utils.h b/drivers/md/dm-vdo/string-utils.h
+new file mode 100644
+index 00000000000..a27cf84a953
+--- /dev/null
++++ b/drivers/md/dm-vdo/string-utils.h
+@@ -0,0 +1,23 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright Red Hat
++ */
++
++#ifndef UDS_STRING_UTILS_H
++#define UDS_STRING_UTILS_H
++
++#include <linux/kernel.h>
++#include <linux/string.h>
++
++/* Utilities related to string manipulation */
++
++static inline const char *uds_bool_to_string(bool value)
++{
++	return value ? "true" : "false";
++}
++
++/* Append a formatted string to the end of a buffer. */
++char *uds_append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
++	__printf(3, 4);
++
++#endif /* UDS_STRING_UTILS_H */
+diff --git a/drivers/md/dm-vdo/time-utils.h b/drivers/md/dm-vdo/time-utils.h
+new file mode 100644
+index 00000000000..82d89108a85
+--- /dev/null
++++ b/drivers/md/dm-vdo/time-utils.h
+@@ -0,0 +1,28 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright Red Hat
++ */
++
++#ifndef UDS_TIME_UTILS_H
++#define UDS_TIME_UTILS_H
++
++#include <linux/ktime.h>
++#include <linux/time.h>
++#include <linux/types.h>
++
++static inline s64 ktime_to_seconds(ktime_t reltime)
++{
++	return reltime / NSEC_PER_SEC;
++}
++
++static inline ktime_t current_time_ns(clockid_t clock)
++{
++	return clock == CLOCK_MONOTONIC ? ktime_get_ns() : ktime_get_real_ns();
++}
++
++static inline ktime_t current_time_us(void)
++{
++	return current_time_ns(CLOCK_REALTIME) / NSEC_PER_USEC;
++}
++
++#endif /* UDS_TIME_UTILS_H */
 -- 
 2.40.1
 
