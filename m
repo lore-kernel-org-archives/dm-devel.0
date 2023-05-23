@@ -4,73 +4,80 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 796BFC77B7C
-	for <dm-devel@archiver.kernel.org>; Wed, 24 May 2023 04:50:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 09AAEC7EE31
+	for <dm-devel@archiver.kernel.org>; Wed, 24 May 2023 04:50:38 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684903839;
+	s=mimecast20190719; t=1684903838;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=eSSP5rRKD8HWYS8FoPdKQXGp4JyJNDNyH5cawXjdFnw=;
-	b=DtEBYRzpgNcjhlNMslvZGA80ubQY84SXVH581lRmBT0Sif8xTRabEPHNH70utcRK6z5eQW
-	clk17Ess0AoFw6wufMtCqsgS8omJXhXA5WVAereeDkJx3GmqLlp7X/OszsB8D2cLtgtinz
-	53dJ795iGBqTa2tLedf5u5CE1fz2y/o=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=O3IQ8JYbs5Ly5XFll0Vb+WARHOvJOGj95mwBEciPgSc=;
+	b=cPd0MAUxy/xR53Uf1CQe/zwRkQA+UCYGWXUA3re4w76SYGaMor5p5ABwQT068ioF780YPH
+	j6eXMGGWkcE3Ie6Rb/kIrKKNhWLhTkjdlV3lgoXzvjHmd47xF331QnD4ajnWQ7ZtIQiLDx
+	9utZkSQ5ZuLqT+5wRLGAubeSKyJjRPg=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-437-NYyJkAUqP9WTjsUL8xilYg-1; Wed, 24 May 2023 00:50:37 -0400
-X-MC-Unique: NYyJkAUqP9WTjsUL8xilYg-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-621-kweuAjNzPKuBCD-zjDwu3g-1; Wed, 24 May 2023 00:50:36 -0400
+X-MC-Unique: kweuAjNzPKuBCD-zjDwu3g-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6A1AC3800E91;
-	Wed, 24 May 2023 04:50:35 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 992AE8039CC;
+	Wed, 24 May 2023 04:50:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 57DFB400DFF;
-	Wed, 24 May 2023 04:50:35 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 869421121314;
+	Wed, 24 May 2023 04:50:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3B87919465BD;
-	Wed, 24 May 2023 04:50:35 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 13A6419452C3;
+	Wed, 24 May 2023 04:50:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 9EE5619465B1
- for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 10:00:20 +0000 (UTC)
+ ESMTP id 1E5421946595
+ for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 08:10:05 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 890B4C164EE; Tue, 23 May 2023 10:00:20 +0000 (UTC)
+ id E9EB91121314; Tue, 23 May 2023 08:10:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8178DC1ED9C
- for <dm-devel@redhat.com>; Tue, 23 May 2023 10:00:20 +0000 (UTC)
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E2B601121315
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 08:10:04 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 643A42A59575
- for <dm-devel@redhat.com>; Tue, 23 May 2023 10:00:20 +0000 (UTC)
-Received: from mslow1.mail.gandi.net (mslow1.mail.gandi.net
- [217.70.178.240]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-619-oMRQI9S1PPmcxza8Zwi5Qg-1; Tue, 23 May 2023 06:00:18 -0400
-X-MC-Unique: oMRQI9S1PPmcxza8Zwi5Qg-1
-Received: from relay8-d.mail.gandi.net (unknown [IPv6:2001:4b98:dc4:8::228])
- by mslow1.mail.gandi.net (Postfix) with ESMTP id C8723CFDAA
- for <dm-devel@redhat.com>; Tue, 23 May 2023 09:32:46 +0000 (UTC)
-Received: (Authenticated sender: miquel.raynal@bootlin.com)
- by mail.gandi.net (Postfix) with ESMTPSA id 692C81BF208;
- Tue, 23 May 2023 09:32:37 +0000 (UTC)
-Date: Tue, 23 May 2023 11:32:36 +0200
-From: Miquel Raynal <miquel.raynal@bootlin.com>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20230523113236.7003c303@xps-13>
-In-Reply-To: <20230523074535.249802-23-hch@lst.de>
-References: <20230523074535.249802-1-hch@lst.de>
- <20230523074535.249802-23-hch@lst.de>
-Organization: Bootlin
-MIME-Version: 1.0
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 649881C068C0
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 08:10:04 +0000 (UTC)
+Received: from azure-sdnproxy.icoremail.net (azure-sdnproxy.icoremail.net
+ [52.175.55.52]) by relay.mimecast.com with ESMTP id
+ us-mta-140-16tgbBnDP2yWO930sfiSHA-1; Tue, 23 May 2023 04:10:01 -0400
+X-MC-Unique: 16tgbBnDP2yWO930sfiSHA-1
+Received: from ubuntu.localdomain (unknown [218.12.19.251])
+ by mail-app2 (Coremail) with SMTP id by_KCgDX_n1Ccmxk1PiyAw--.43277S2;
+ Tue, 23 May 2023 15:59:07 +0800 (CST)
+From: Duoming Zhou <duoming@zju.edu.cn>
+To: linux-kernel@vger.kernel.org
+Date: Tue, 23 May 2023 15:58:57 +0800
+Message-Id: <20230523075857.76520-1-duoming@zju.edu.cn>
+X-CM-TRANSID: by_KCgDX_n1Ccmxk1PiyAw--.43277S2
+X-Coremail-Antispam: 1UD129KBjvJXoW7Zr18ur45Ww47Wr1kXFyrWFg_yoW8Xw47pF
+ WruF95CFy8Gr4Ygw1DKF18tFy5Gw4kGFW3GFW8Wa43AF15Xr1vvFy2krWUtr4UZF95ZFy7
+ ZFWkAay5WF1qy37anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+ 9KBjDU0xBIdaVrnRJUUUkS14x267AKxVWUJVW8JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+ rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+ 1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4U
+ JVW0owA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+ Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+ I7IYx2IY67AKxVWUXVWUAwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
+ 4UM4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwCY02Avz4vE14v_GF4l
+ 42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJV
+ WUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r126r1DMIIYrxkI7VAK
+ I48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r1j6r
+ 4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY
+ 6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjfU52NtUUUUU
+X-CM-SenderInfo: qssqjiasttq6lmxovvfxof0/1tbiAwQEAWRrhN4LtgAxsb
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,10 +85,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mailman-Approved-At: Wed, 24 May 2023 04:50:30 +0000
-Subject: Re: [dm-devel] [PATCH 22/24] mtd: block2mtd: factor the early block
- device open logic into a helper
+Subject: [dm-devel] [PATCH] dm crypt: fix sleep-in-atomic-context bug in
+ kcryptd_crypt_tasklet
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -93,30 +100,63 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Vignesh Raghavendra <vigneshr@ti.com>,
- "Rafael J. Wysocki" <rafael@kernel.org>,
- Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-pm@vger.kernel.org,
- Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- linux-mtd@lists.infradead.org, Pavel Machek <pavel@ucw.cz>,
- Richard Weinberger <richard@nod.at>, Joern Engel <joern@lazybastard.org>
+Cc: dm-devel@redhat.com, Duoming Zhou <duoming@zju.edu.cn>, snitzer@kernel.org,
+ agk@redhat.com
+MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: bootlin.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+X-Mimecast-Originator: zju.edu.cn
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-SGkgQ2hyaXN0b3BoLAoKaGNoQGxzdC5kZSB3cm90ZSBvbiBUdWUsIDIzIE1heSAyMDIzIDA5OjQ1
-OjMzICswMjAwOgoKPiBTaW1wbHkgYWRkX2RldmljZSBhIGJpdCBieSBzcGxpdHRpbmcgb3V0IHRo
-ZSBjdW1iZXJzb21lIGVhcmx5IGJvb3QgbG9naWMKCkkgZ3Vlc3MgeW91IG1lYW50ICJTaW1wbGlm
-eS4uLiIKCk90aGVyd2lzZSBsZ3RtIHNvLAoKUmV2aWV3ZWQtYnk6IE1pcXVlbCBSYXluYWwgPG1p
-cXVlbC5yYXluYWxAYm9vdGxpbi5jb20+Cgo+IGludG8gYSBzZXBhcmF0ZSBoZWxwZXIuCj4gCj4g
-U2lnbmVkLW9mZi1ieTogQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBsc3QuZGU+Cj4gLS0tCj4gIGRy
-aXZlcnMvbXRkL2RldmljZXMvYmxvY2sybXRkLmMgfCA1MyArKysrKysrKysrKysrKysrKysrLS0t
-LS0tLS0tLS0tLS0KPiAgMSBmaWxlIGNoYW5nZWQsIDMwIGluc2VydGlvbnMoKyksIDIzIGRlbGV0
-aW9ucygtKQo+IAoKVGhhbmtzLApNaXF1w6hsCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVsCg==
+In order to improve the IO performance of the dm-crypt
+implementation, the commit 39d42fa96ba1 ("dm crypt:
+add flags to optionally bypass kcryptd workqueues")
+adds tasklet to do the crypto operations.
+
+The tasklet callback function kcryptd_crypt_tasklet()
+calls kcryptd_crypt() which is an original workqueue
+callback function that may sleep. As a result, the
+sleep-in-atomic-context bug may happen. The process
+is shown below.
+
+   (atomic context)
+kcryptd_crypt_tasklet()
+  kcryptd_crypt()
+    kcryptd_crypt_write_convert()
+      wait_for_completion() //may sleep
+
+The wait_for_completion() is a function that may sleep.
+In order to mitigate the bug, this patch changes
+wait_for_completion() to try_wait_for_completion().
+
+Fixes: 39d42fa96ba1 ("dm crypt: add flags to optionally bypass kcryptd workqueues")
+Signed-off-by: Duoming Zhou <duoming@zju.edu.cn>
+---
+ drivers/md/dm-crypt.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 8b47b913ee8..5e2b2463d87 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -2085,7 +2085,8 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+ 	crypt_finished = atomic_dec_and_test(&ctx->cc_pending);
+ 	if (!crypt_finished && kcryptd_crypt_write_inline(cc, ctx)) {
+ 		/* Wait for completion signaled by kcryptd_async_done() */
+-		wait_for_completion(&ctx->restart);
++		while (!try_wait_for_completion(&ctx->restart))
++			;
+ 		crypt_finished = 1;
+ 	}
+ 
+-- 
+2.17.1
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
