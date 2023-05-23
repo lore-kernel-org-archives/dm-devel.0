@@ -4,95 +4,93 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CC9BCC77B75
-	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 16:59:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 10A6EC7EE26
+	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 17:29:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684861155;
+	s=mimecast20190719; t=1684862952;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=SmRA/2grfAtBTQittIbAZ6tPKDU5/hQ4zhQGtHvQJto=;
-	b=bQ/Gtx1Kk69nRtCfkxm4uqBofO59qvsJfcMrwsjaj4cMPD3em+0puqYFG/GrzOaiyPV+3P
-	9jCXxxEjV0qruWOflluuKNvD4mxwcnTwcL1efXnJHvLP5P0qTCkzUkPom7ZA38eFWiPKIJ
-	LmSBQKLeFkVCl6EYMljcX/Ndq5CsrM8=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=B9jWXq484Y9chv68bUfgui5fGzNhJAc0n41nPCDZcR0=;
+	b=f+COrKvq91j8AdpvpXajxS6q20GX3Nonwff15/S7PH8/dR9YHZTWq9n2zZWzL6VGx+J5+N
+	G8b59a636F6fpD3xFssff5OttXQ2ThvCLIdQZq4Mmsix7H6F2VSOK5SPr8Yi9YaE48Gc1m
+	a5MpiYhALyi9XT5ENnFoo4PXCeATwoo=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-433-G8MmK1izOTawjWD-t637Kg-1; Tue, 23 May 2023 12:59:14 -0400
-X-MC-Unique: G8MmK1izOTawjWD-t637Kg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-497-GFvrxnxrM7mr-pi2abBuRg-1; Tue, 23 May 2023 13:29:11 -0400
+X-MC-Unique: GFvrxnxrM7mr-pi2abBuRg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 98D9C3847087;
-	Tue, 23 May 2023 16:59:12 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6BCAA1019C87;
+	Tue, 23 May 2023 17:29:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8723B40CFD00;
-	Tue, 23 May 2023 16:59:12 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A1C5B140E95D;
+	Tue, 23 May 2023 17:29:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4703A19465A8;
-	Tue, 23 May 2023 16:59:12 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6730619465A8;
+	Tue, 23 May 2023 17:29:08 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E504619465A0
- for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 16:59:10 +0000 (UTC)
+ ESMTP id 401EF19465A0
+ for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 17:29:07 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A53FC40D1B60; Tue, 23 May 2023 16:59:05 +0000 (UTC)
+ id C0B2D140E961; Tue, 23 May 2023 17:29:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 9D63840C6CCF
- for <dm-devel@redhat.com>; Tue, 23 May 2023 16:59:05 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [205.139.110.61])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B8AB7140E95D
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 17:29:06 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 821573C0C887
- for <dm-devel@redhat.com>; Tue, 23 May 2023 16:59:05 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 959742A59574
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 17:29:06 +0000 (UTC)
 Received: from mail-qv1-f44.google.com (mail-qv1-f44.google.com
  [209.85.219.44]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-516-DONjQWxaOtu_G775H27s-A-1; Tue, 23 May 2023 12:59:03 -0400
-X-MC-Unique: DONjQWxaOtu_G775H27s-A-1
+ us-mta-459-nbTHQMHNNAGksGIusee6gQ-1; Tue, 23 May 2023 13:29:01 -0400
+X-MC-Unique: nbTHQMHNNAGksGIusee6gQ-1
 Received: by mail-qv1-f44.google.com with SMTP id
- 6a1803df08f44-62382e86f81so32050926d6.2
- for <dm-devel@redhat.com>; Tue, 23 May 2023 09:59:03 -0700 (PDT)
+ 6a1803df08f44-62596e46d30so5199516d6.1
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 10:29:01 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1684861143; x=1687453143;
+ d=1e100.net; s=20221208; t=1684862941; x=1687454941;
  h=in-reply-to:content-disposition:mime-version:references:message-id
  :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
  :message-id:reply-to;
- bh=iwRGjqJkSXRPJHHzQwuRJHCwrUdQwcyQ9byVzjawyEc=;
- b=PHC/rKWwsXrCCdalBJtQfqBzBakQsNXtWHQul09J3R3CIHlv6INOFXIVRlj5gIJd/U
- ZIjQvyweBSONKMzdHGj2VfnGSsS9A8RhnDEDXhw+FfiHB89zRbOo55AgzFuw0XAN7h9W
- rGoSftz4OpFfHwRwvKyBmc+12z78KKHVyY866Kph5pwA7jXnr03mLRQbhmLqXf9o4S8g
- YEaZHUROnvJKFXzz9sWd9M2ByxpNIJWGaCUGbedklnUw3J8nk2CRF9KuDCs8fyus75bC
- 12QOISPcurirFVrO0vhYsv4O/bdTNWgX/eAsHCgP8ZED6dDY4HY2v3hH0+PMAXRSBr4r
- zU6A==
-X-Gm-Message-State: AC+VfDweNs62noDdfCN1RjZFYwwCI0LjBe7m7O4u81Hl6g64aug3FZCC
- uVWEpj/MzDFVH7Ux9D/eWdSzcdE=
-X-Google-Smtp-Source: ACHHUZ7KDQ2Jp5KWH/08+Nowc+ZerVbKYaqFsCmja4tNY6veUp3xnJBwfILDlwQLmRkuu4hWo14WpA==
-X-Received: by 2002:ad4:5742:0:b0:621:64c7:235f with SMTP id
- q2-20020ad45742000000b0062164c7235fmr24446598qvx.27.1684861143301; 
- Tue, 23 May 2023 09:59:03 -0700 (PDT)
+ bh=88ji2ehp7Y51Xu9y1iJArVPSJqfYf526w71azZN8Kpg=;
+ b=VeV6BwNwZ3wsiuaIzDRm5KFc6WG6pQ578TEWroqmHibTe5dyTLrycpZ8e5aDo1EsK6
+ WePHcrm23jx1NZ2BKOGaVuQCZc4LkBjIbyIljyWLVN0DLgIcKB6fQTqzrv1F5UpsR2A0
+ 47A0AW3kbWF1/P9xuq1oW1KdUX0nI4wliabkkrVWKJKWZqzSCWlXI5KzElhpfy33KVHi
+ cJ3MYfjDnYnlDmy6mNu/CNJ993q5XJQ5F6tjVbhwtb3CEGFgUm3mxUXDtV5K/zlw2jAV
+ fGF9sPcW5kIxCBb11xedZ8Z2jiUfqAfsWULeVK/dKfu7DaB5ekeIPXIFlRKshCi+QKYO
+ S3sQ==
+X-Gm-Message-State: AC+VfDwdi6o2B6aFYWbpxxIUzueIhKXMiJzVZ249+iGcfFCYIgdf+10C
+ Pr7lmRD6vYlVs/Azj9ZreMKwR5s=
+X-Google-Smtp-Source: ACHHUZ6ppaovW6MrAx8+WrlMFkTJ9U/3siFa5SZn2V1/hKufKCBU2/85YLyX7aa4/3GEKAaK2QRmNQ==
+X-Received: by 2002:a05:6214:ac8:b0:5ef:6142:cb05 with SMTP id
+ g8-20020a0562140ac800b005ef6142cb05mr28205100qvi.20.1684862940865; 
+ Tue, 23 May 2023 10:29:00 -0700 (PDT)
 Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
  [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- x19-20020ae9f813000000b00759333a57adsm2666246qkh.11.2023.05.23.09.59.02
+ mx13-20020a0562142e0d00b0061a2094694fsm2919225qvb.24.2023.05.23.10.29.00
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 23 May 2023 09:59:02 -0700 (PDT)
-Date: Tue, 23 May 2023 12:59:01 -0400
+ Tue, 23 May 2023 10:29:00 -0700 (PDT)
+Date: Tue, 23 May 2023 13:28:59 -0400
 From: Mike Snitzer <snitzer@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <ZGzw1c60WJBTNclC@redhat.com>
-References: <20230523074535.249802-1-hch@lst.de>
- <20230523074535.249802-21-hch@lst.de>
+To: Du Rui <durui@linux.alibaba.com>
+Message-ID: <ZGz32yw7ecKhW+lj@redhat.com>
+References: <9505927dabc3b6695d62dfe1be371b12f5bdebf7.1684491648.git.durui@linux.alibaba.com>
 MIME-Version: 1.0
-In-Reply-To: <20230523074535.249802-21-hch@lst.de>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH 20/24] dm: only call early_lookup_bdev from
- early boot context
+In-Reply-To: <9505927dabc3b6695d62dfe1be371b12f5bdebf7.1684491648.git.durui@linux.alibaba.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Subject: Re: [dm-devel] dm overlaybd: targets mapping OverlayBD image
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -104,83 +102,67 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Vignesh Raghavendra <vigneshr@ti.com>,
- "Rafael J. Wysocki" <rafael@kernel.org>,
- Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-pm@vger.kernel.org,
- Joern Engel <joern@lazybastard.org>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, Richard Weinberger <richard@nod.at>,
- dm-devel@redhat.com, linux-mtd@lists.infradead.org,
- Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>
+Cc: Giuseppe Scrivano <gscrivan@redhat.com>, dm-devel@redhat.com,
+ linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>,
+ Alexander Larsson <alexl@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, May 23 2023 at  3:45P -0400,
-Christoph Hellwig <hch@lst.de> wrote:
+On Fri, May 19 2023 at  6:27P -0400,
+Du Rui <durui@linux.alibaba.com> wrote:
 
-> early_lookup_bdev is supposed to only be called from the early boot
-> code, but dm_get_device calls it as a general fallback when lookup_bdev
-> fails, which is problematic because early_lookup_bdev bypasses all normal
-> path based permission checking, and might cause problems with certain
-> container environments renaming devices.
+> OverlayBD is a novel layering block-level image format, which is design
+> for container, secure container and applicable to virtual machine,
+> published in USENIX ATC '20
+> https://www.usenix.org/system/files/atc20-li-huiba.pdf
 > 
-> Switch to only call early_lookup_bdev when dm is built-in and the system
-> state in not running yet.  This means it is still available when tables
-> are constructed by dm-init.c from the kernel command line, but not
-> otherwise.
+> OverlayBD already has a ContainerD non-core sub-project implementation
+> in userspace, as an accelerated container image service
+> https://github.com/containerd/accelerated-container-image
 > 
-> Note that this strictly speaking changes the kernel ABI as the PARTUUID=
-> and PARTLABEL= style syntax is now not available during a running
-> systems.  They never were intended for that, but this breaks things
-> we'll have to figure out a way to make them available again.  But if
-> avoidable in any way I'd rather avoid that.
+> It could be much more efficient when do decompressing and mapping works
+> in the kernel with the framework of device-mapper, in many circumstances,
+> such as secure container runtime, mobile-devices, etc.
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/md/dm-table.c | 9 +++++++--
->  1 file changed, 7 insertions(+), 2 deletions(-)
+> This patch contains a module, dm-overlaybd, provides two kinds of targets
+> dm-zfile and dm-lsmt, to expose a group of block-devices contains
+> OverlayBD image as a overlaid read-only block-device.
 > 
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index e997f4322a9967..c230241a76b374 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -326,8 +326,11 @@ static int upgrade_mode(struct dm_dev_internal *dd, fmode_t new_mode,
->  /*
->   * Add a device to the list, or just increment the usage count if
->   * it's already present.
-> + *
-> + * Note: the __ref annotation is because this function can call the __init
-> + * marked early_lookup_bdev when called during early boot code from dm-init.c.
->   */
-> -int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
-> +int __ref dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
->  		  struct dm_dev **result)
->  {
->  	int r;
-> @@ -346,8 +349,10 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
->  			return -EOVERFLOW;
->  	} else {
->  		r = lookup_bdev(path, &dev);
-> -		if (r)
-> +#ifndef MODULE
-> +		if (r && system_state < SYSTEM_RUNNING)
->  			r = early_lookup_bdev(path, &dev);
-> +#endif
->  		if (r)
->  			return -ENODEV;
->  	}
-> -- 
-> 2.39.2
-> 
+> Signed-off-by: Du Rui <durui@linux.alibaba.com>
 
-I think/hope this will be fine:
+<snip, original patch here: [1] >
 
-Reviewed-by: Mike Snitzer <snitzer@kernel.org>
+I appreciate that this work is being done with an eye toward
+containerd "community" and standardization but based on my limited
+research it appears that this format of OCI image storage/use is only
+used by Alibaba? (but I could be wrong...)
+
+But you'd do well to explain why the userspace solution isn't
+acceptable. Are there security issues that moving the implementation
+to kernel addresses?
+
+I also have doubts that this solution is _actually_ more performant
+than a proper filesystem based solution that allows page cache sharing
+of container image data across multiple containers.
+
+There is an active discussion about, and active development effort
+for, using overlayfs + erofs for container images.  I'm reluctant to
+merge this DM based container image approach without wider consensus
+from other container stakeholders.
+
+But short of reaching wider consensus on the need for these DM
+targets: there is nothing preventing you from carrying these changes
+in your alibaba kernel.
+
+Mike
+
+[1]: https://patchwork.kernel.org/project/dm-devel/patch/9505927dabc3b6695d62dfe1be371b12f5bdebf7.1684491648.git.durui@linux.alibaba.com/
 
 --
 dm-devel mailing list
