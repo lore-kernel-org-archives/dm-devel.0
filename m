@@ -4,65 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AE992C7EE26
-	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 08:56:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D436FC7EE26
+	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 08:56:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684832182;
+	s=mimecast20190719; t=1684832189;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=p2CWhDDXeRHgvJPSCIizp3lpe4GSPdOCAK1wSCvrJ5M=;
-	b=i3PnTr7Jto3ogp6TMRjstef5Ojhbmq2+70+aY5HHLAbvELSn7F/XPb/prjoIe9C4GYOm78
-	WPclUE5dBg2iow+ZgKcMJruhBJBF10MA7i7eLDKsiPWTrDwECc8avLm7L8MnGZ7YaVg60L
-	5C3uczsgXiesWrDOiCyfJ0I0/yFocgk=
+	bh=N8RornZmP11j+4BMKedNXmjOO8S6/nsAeuIQxfmw2sk=;
+	b=YLFyTPycjc4OfwBvxCsjm9yi+uOvzhz10aBkvxLuZMTG7QNQ+gl6Y7sTM4iTDsQcYcLGLh
+	TmcdqIRowME9IIcN0OgqSIuq5hwcCk5P4VqT6sjYZPFt6pVzer8n/d7brGPwJSStTBvSCV
+	GlWMKKISe+UkgWgyViDs9mVdCuKAjM4=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-530-SlmJirOaP2-2mNaDbfWsVw-1; Tue, 23 May 2023 04:56:19 -0400
-X-MC-Unique: SlmJirOaP2-2mNaDbfWsVw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-304-0OdodPZVMHiEeX3110hoaQ-1; Tue, 23 May 2023 04:56:26 -0400
+X-MC-Unique: 0OdodPZVMHiEeX3110hoaQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 42971101A55C;
-	Tue, 23 May 2023 08:56:17 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A7144800141;
+	Tue, 23 May 2023 08:56:24 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 322DB400E116;
-	Tue, 23 May 2023 08:56:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 942E5492B0A;
+	Tue, 23 May 2023 08:56:24 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 229BC19465A0;
-	Tue, 23 May 2023 08:56:17 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5E57E19465A0;
+	Tue, 23 May 2023 08:56:24 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 66C611946595
- for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 08:56:15 +0000 (UTC)
+ ESMTP id C7D521946595
+ for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 08:56:23 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 51DAD200AE6F; Tue, 23 May 2023 08:56:15 +0000 (UTC)
+ id B8FA32166B27; Tue, 23 May 2023 08:56:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 49B9C202696C
- for <dm-devel@redhat.com>; Tue, 23 May 2023 08:56:15 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B0B512166B26
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 08:56:23 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
+ [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2D05E3C17C63
- for <dm-devel@redhat.com>; Tue, 23 May 2023 08:56:15 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 94C7F802A55
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 08:56:23 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-205-_uEub4jUMzihzJoVGXBTZw-1; Tue, 23 May 2023 04:56:13 -0400
-X-MC-Unique: _uEub4jUMzihzJoVGXBTZw-1
+ us-mta-320-IZ6-OKUsNBKTFpkVt5m4yw-1; Tue, 23 May 2023 04:56:21 -0400
+X-MC-Unique: IZ6-OKUsNBKTFpkVt5m4yw-1
 Received: from [2001:4bb8:188:23b2:6ade:85c9:530f:6eb0] (helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q1MiY-009Ghn-18; Tue, 23 May 2023 07:46:02 +0000
+ id 1q1Mj1-009HBv-1X; Tue, 23 May 2023 07:46:31 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue, 23 May 2023 09:45:20 +0200
-Message-Id: <20230523074535.249802-10-hch@lst.de>
+Date: Tue, 23 May 2023 09:45:30 +0200
+Message-Id: <20230523074535.249802-20-hch@lst.de>
 In-Reply-To: <20230523074535.249802-1-hch@lst.de>
 References: <20230523074535.249802-1-hch@lst.de>
 MIME-Version: 1.0
@@ -75,9 +75,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: [dm-devel] [PATCH 09/24] init: don't remove the /dev/ prefix from
- error messages
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: [dm-devel] [PATCH 19/24] dm: remove dm_get_dev_t
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -99,67 +98,72 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Remove the code that drops the /dev/ prefix from root_device_name, which
-is only used for error messages when mounting the root device fails.
+Open code dm_get_dev_t in the only remaining caller, and propagate the
+exact error code from lookup_bdev and early_lookup_bdev.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- init/do_mounts.c | 17 ++++++-----------
- 1 file changed, 6 insertions(+), 11 deletions(-)
+ drivers/md/dm-table.c         | 20 ++++----------------
+ include/linux/device-mapper.h |  2 --
+ 2 files changed, 4 insertions(+), 18 deletions(-)
 
-diff --git a/init/do_mounts.c b/init/do_mounts.c
-index 1405ee7218bf00..74cc96bffbdd71 100644
---- a/init/do_mounts.c
-+++ b/init/do_mounts.c
-@@ -607,8 +607,6 @@ void __init mount_root(char *root_device_name)
-  */
- void __init prepare_namespace(void)
- {
--	char *root_device_name;
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 05aa16da43b0d5..e997f4322a9967 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -323,20 +323,6 @@ static int upgrade_mode(struct dm_dev_internal *dd, fmode_t new_mode,
+ 	return 0;
+ }
+ 
+-/*
+- * Convert the path to a device
+- */
+-dev_t dm_get_dev_t(const char *path)
+-{
+-	dev_t dev;
 -
- 	if (root_delay) {
- 		printk(KERN_INFO "Waiting %d sec before mounting root device...\n",
- 		       root_delay);
-@@ -627,19 +625,16 @@ void __init prepare_namespace(void)
- 	md_run_setup();
- 
- 	if (saved_root_name[0]) {
--		root_device_name = saved_root_name;
--		if (!strncmp(root_device_name, "mtd", 3) ||
--		    !strncmp(root_device_name, "ubi", 3)) {
--			mount_root_generic(root_device_name, root_device_name,
-+		if (!strncmp(saved_root_name, "mtd", 3) ||
-+		    !strncmp(saved_root_name, "ubi", 3)) {
-+			mount_root_generic(saved_root_name, saved_root_name,
- 					   root_mountflags);
- 			goto out;
- 		}
--		ROOT_DEV = name_to_dev_t(root_device_name);
--		if (strncmp(root_device_name, "/dev/", 5) == 0)
--			root_device_name += 5;
-+		ROOT_DEV = name_to_dev_t(saved_root_name);
+-	if (lookup_bdev(path, &dev) &&
+-	    early_lookup_bdev(path, &dev))
+-		return 0;
+-	return dev;
+-}
+-EXPORT_SYMBOL_GPL(dm_get_dev_t);
+-
+ /*
+  * Add a device to the list, or just increment the usage count if
+  * it's already present.
+@@ -359,8 +345,10 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 		if (MAJOR(dev) != major || MINOR(dev) != minor)
+ 			return -EOVERFLOW;
+ 	} else {
+-		dev = dm_get_dev_t(path);
+-		if (!dev)
++		r = lookup_bdev(path, &dev);
++		if (r)
++			r = early_lookup_bdev(path, &dev);
++		if (r)
+ 			return -ENODEV;
  	}
+ 	if (dev == disk_devt(t->md->disk))
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index a52d2b9a68460a..c27b84002d8382 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -170,8 +170,6 @@ struct dm_dev {
+ 	char name[16];
+ };
  
--	if (initrd_load(root_device_name))
-+	if (initrd_load(saved_root_name))
- 		goto out;
- 
- 	/* wait for any asynchronous scanning to complete */
-@@ -652,7 +647,7 @@ void __init prepare_namespace(void)
- 		async_synchronize_full();
- 	}
- 
--	mount_root(root_device_name);
-+	mount_root(saved_root_name);
- out:
- 	devtmpfs_mount();
- 	init_mount(".", "/", NULL, MS_MOVE, NULL);
+-dev_t dm_get_dev_t(const char *path);
+-
+ /*
+  * Constructors should call these functions to ensure destination devices
+  * are opened/closed correctly.
 -- 
 2.39.2
 
