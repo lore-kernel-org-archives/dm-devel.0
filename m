@@ -4,98 +4,98 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D4AB6C7EE2E
-	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 21:46:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B1EE9C7EE23
+	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 21:46:44 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684878397;
+	s=mimecast20190719; t=1684878403;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=w3jN8RsLT1Up21eCNHO1hCD13WheKBZSxfDvMORYZnk=;
-	b=czLCI8t5ab2BbKDpmbLX7q6I6BkpWBTxI3iceHIf6QFI/JQSQMst74I1IZU5bAQH6qVJfx
-	YbIKclauungJ9oPqKkYhpR8PLvQ/u0q+arzPK0xGrMdxhu01J1NSDKX/6v8zOHFlIku8SD
-	zhOwEEhcbjLTtNRgDsiuLxcN0wRg4b0=
+	bh=tQ5i10hJtG2c+WVOgybJyusPqzPSV47l3yS8O2QJYvE=;
+	b=N/GIRuhQoQrTzL5eA1jt44oHW2HTskLR4zQKWMigAD8rBTmKHM/7hWb0mqKj0IMafRMJ+b
+	19C4vFeBW9w17svtXs4gvMsZbV754xZtECGG/CuCFERuzpm+CeJdR9EzRewoFpaIAKN1Bu
+	ze8erYi7btkjagAS6fRe9RJwEtiV00U=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-58-ccEnYdfUMPmx9tkuXAxQRA-1; Tue, 23 May 2023 17:46:35 -0400
-X-MC-Unique: ccEnYdfUMPmx9tkuXAxQRA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-74-WpOgIwG7Ol686At2yfiliw-1; Tue, 23 May 2023 17:46:41 -0400
+X-MC-Unique: WpOgIwG7Ol686At2yfiliw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D49478039A9;
-	Tue, 23 May 2023 21:46:33 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BB12F101B04C;
+	Tue, 23 May 2023 21:46:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BFA2D40C6CCF;
-	Tue, 23 May 2023 21:46:33 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A4C18140E961;
+	Tue, 23 May 2023 21:46:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9B60A1946A44;
-	Tue, 23 May 2023 21:46:33 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 97E6C19465BA;
+	Tue, 23 May 2023 21:46:38 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
  [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 23C7B19465A8
- for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 21:46:33 +0000 (UTC)
+ ESMTP id 40B8619465B1
+ for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 21:46:37 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 179D840C6CD7; Tue, 23 May 2023 21:46:33 +0000 (UTC)
+ id 3285340C6CD7; Tue, 23 May 2023 21:46:37 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 103C940C6CCF
- for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:33 +0000 (UTC)
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2AA0840C6CCF
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:37 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DEA6680231B
- for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:32 +0000 (UTC)
-Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
- [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 071C61C01EA7
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:37 +0000 (UTC)
+Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
+ [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-213-VN_lVud8OUCVMxED8mI8bA-1; Tue, 23 May 2023 17:46:31 -0400
-X-MC-Unique: VN_lVud8OUCVMxED8mI8bA-1
-Received: by mail-qv1-f69.google.com with SMTP id
- 6a1803df08f44-62115d818ecso2152206d6.0
- for <dm-devel@redhat.com>; Tue, 23 May 2023 14:46:31 -0700 (PDT)
+ us-mta-202-2qLilaaYPHao_vQJ8TW2cQ-1; Tue, 23 May 2023 17:46:28 -0400
+X-MC-Unique: 2qLilaaYPHao_vQJ8TW2cQ-1
+Received: by mail-qv1-f71.google.com with SMTP id
+ 6a1803df08f44-6238a4e544bso993196d6.0
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 14:46:28 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1684878391; x=1687470391;
+ d=1e100.net; s=20221208; t=1684878387; x=1687470387;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=ca99wY+Asy+Y0nWqsRz/NEHr1hYrbgbH/BRwhr2+xUg=;
- b=DkqviOFQo3PHvxYiLMALIpbWwQxtBXjUcrXIKltjEEBb16XaGoVEVxauHcIl26z44K
- vNvtHVAzqJz6eUHHXXZcA6gQh1hKtJ31QZgRSxMToUgk82k/s4ap0QbElFAXhaxK6LAb
- uTvCthC/Vho9A6fm2dstsc/TvTwcMA7XOFmrBXhIJWz6Nto0rNsktZOdST1yHE+H99IM
- /nfmLEtJdLZtsgNinwg/QvnIgy7HiDZy+/AU4A5vrTjJ6RirBbySP1Tj5/bATHiCLkQi
- 2Vu+T+cMrbdmGiHaUyQRqr1tBJhsx06iTQs4jRQ50X70/aii1c2XhQHYurFuDUBhUsnq
- Uoyw==
-X-Gm-Message-State: AC+VfDwEfs6aDqkh6NrJhOBLDD82knqqKk6gV8hd0mETQwViCj/+kIgf
- aQ4bSW7noUKStqUpJ1zjJI2ZXkCbG1AjVBntbM/TqcnK0SOsTE3cNj+ROFKEbZNMRM/k/QbaXkt
- om9a/TBGXTIEJC0Ckt4uaFsoX/euLNBT6gJozR7K8Urg5KA5PZqfQv3MJyQ9BLHYgje5L4pmo
-X-Received: by 2002:a05:6214:5099:b0:5e3:c84a:9422 with SMTP id
- kk25-20020a056214509900b005e3c84a9422mr24458007qvb.2.1684878390194; 
- Tue, 23 May 2023 14:46:30 -0700 (PDT)
-X-Google-Smtp-Source: ACHHUZ4Oy5pLvRpJO0RytE1Q9FH/tfYIFKwHjAMG7wVQEPjZlsM9fki6kPwabhyf7V15C5p7sUFyuQ==
-X-Received: by 2002:a05:6214:5099:b0:5e3:c84a:9422 with SMTP id
- kk25-20020a056214509900b005e3c84a9422mr24457963qvb.2.1684878389325; 
- Tue, 23 May 2023 14:46:29 -0700 (PDT)
+ bh=OTVayQTP1dhlLa4ni7VZ3jGZ3Jhye6Ab4mQLwtPJXYA=;
+ b=YdIdPbL0k5J8QTb1PkdW0V0phRZpp4q6NEMOSpP414625E6jOtk+5eDWkD7uKtKvf5
+ Zu9iXtAvAnyaEaIzhrMqJ/kPyQLZthqLsta5bKqtHbVwpjcYiU72l3cwDkUrOcteNW4B
+ 2MFQt8VJcCvnXtRwfKocsNDHP9hLFmWnI7di40kWMV8PSG+PMg3nZSWz/1bP7V2N3bgF
+ 0/xeAmYN5P5uMVyjJ3AJTvFSaQFd043MMORjLuYwXSqlLfCgB/fgLtCDuIITFHzWce9i
+ GlyqL/Y3GKn192sfTC/ceYmDMteor5zMZ2qZy7Y9c6uGiM2Zq2SVD3iesNkXsAFNzyRR
+ ndmA==
+X-Gm-Message-State: AC+VfDx8erbcUz45kxodUtDUE2paiQ+kLxy4AIe+1JkPklh5ZNe99iBv
+ Fvts1RqSvU2f5yNxOzVv19f0wpdYiANC8GFKOCUO51yzfCQ88RmCHLeC3cJNPsKgSOUf1pM/Hch
+ gdFI+ZyIapG2kU6kiTsjxXT30qumlIaPylT+0L/bKhbmUpCIuPPuOOIqC4bhjr3jyI7mNPN3S
+X-Received: by 2002:a05:6214:2306:b0:61b:6fcd:34b7 with SMTP id
+ gc6-20020a056214230600b0061b6fcd34b7mr28327039qvb.17.1684878387039; 
+ Tue, 23 May 2023 14:46:27 -0700 (PDT)
+X-Google-Smtp-Source: ACHHUZ5Q+Yoz25SMByRTOnbMoU6h1KdwtlRnMJEdMFAl6TfhY001J7N6s1noXPe12sIvClkBzjjGdA==
+X-Received: by 2002:a05:6214:2306:b0:61b:6fcd:34b7 with SMTP id
+ gc6-20020a056214230600b0061b6fcd34b7mr28326982qvb.17.1684878386048; 
+ Tue, 23 May 2023 14:46:26 -0700 (PDT)
 Received: from bf36-1.. (173-166-2-198-newengland.hfc.comcastbusiness.net.
  [173.166.2.198]) by smtp.gmail.com with ESMTPSA id
- el14-20020ad459ce000000b0062119a7a7a3sm3086780qvb.4.2023.05.23.14.46.28
+ el14-20020ad459ce000000b0062119a7a7a3sm3086780qvb.4.2023.05.23.14.46.25
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 23 May 2023 14:46:29 -0700 (PDT)
+ Tue, 23 May 2023 14:46:25 -0700 (PDT)
 From: "J. corwin Coburn" <corwin@redhat.com>
 To: dm-devel@redhat.com,
 	linux-block@vger.kernel.org
-Date: Tue, 23 May 2023 17:45:24 -0400
-Message-Id: <20230523214539.226387-25-corwin@redhat.com>
+Date: Tue, 23 May 2023 17:45:20 -0400
+Message-Id: <20230523214539.226387-21-corwin@redhat.com>
 In-Reply-To: <20230523214539.226387-1-corwin@redhat.com>
 References: <20230523214539.226387-1-corwin@redhat.com>
 MIME-Version: 1.0
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: [dm-devel] [PATCH v2 24/39] Add the compressed block bin packer.
+Subject: [dm-devel] [PATCH v2 20/39] Add flush support to vdo.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -110,752 +110,567 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: vdo-devel@redhat.com, "J. corwin Coburn" <corwin@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-When blocks do not deduplicate, vdo will attempt to compress them. Up to 14
-compressed blocks may be packed into a single data block (this limitation
-is imposed by the block map). The packer implements a simple best-fit
-packing algorithm and also manages the formatting and writing of compressed
-blocks when bins fill.
+This patch adds support for handling incoming flush and/or FUA bios. Each
+such bio is assigned to a struct vdo_flush. These are allocated as needed,
+but there is always one kept in reserve in case allocations fail. In the
+event of an allocation failure, bios may need to wait for an outstanding
+flush to complete.
+
+The logical address space is partitioned into logical zones, each handled
+by its own thread. Each zone keeps a list of all data_vios handling write
+requests for logical addresses in that zone. When a flush bio is processed,
+each logical zone is informed of the flush. When all of the writes which
+are in progress at the time of the notification have completed in all
+zones, the flush bio is then allowed to complete.
 
 Signed-off-by: J. corwin Coburn <corwin@redhat.com>
 ---
- drivers/md/dm-vdo/packer.c | 794 +++++++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/packer.h | 123 ++++++
- 2 files changed, 917 insertions(+)
- create mode 100644 drivers/md/dm-vdo/packer.c
- create mode 100644 drivers/md/dm-vdo/packer.h
+ drivers/md/dm-vdo/flush.c        | 563 +++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/flush.h        |  44 +++
+ drivers/md/dm-vdo/logical-zone.c | 378 +++++++++++++++++++++
+ drivers/md/dm-vdo/logical-zone.h |  87 +++++
+ 4 files changed, 1072 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/flush.c
+ create mode 100644 drivers/md/dm-vdo/flush.h
+ create mode 100644 drivers/md/dm-vdo/logical-zone.c
+ create mode 100644 drivers/md/dm-vdo/logical-zone.h
 
-diff --git a/drivers/md/dm-vdo/packer.c b/drivers/md/dm-vdo/packer.c
+diff --git a/drivers/md/dm-vdo/flush.c b/drivers/md/dm-vdo/flush.c
 new file mode 100644
-index 00000000000..f9b67777850
+index 00000000000..e5088ac08a6
 --- /dev/null
-+++ b/drivers/md/dm-vdo/packer.c
-@@ -0,0 +1,794 @@
++++ b/drivers/md/dm-vdo/flush.c
+@@ -0,0 +1,563 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright Red Hat
 + */
 +
-+#include "packer.h"
++#include "flush.h"
 +
-+#include <linux/atomic.h>
-+#include <linux/blkdev.h>
++#include <linux/mempool.h>
++#include <linux/spinlock.h>
 +
 +#include "logger.h"
 +#include "memory-alloc.h"
 +#include "permassert.h"
-+#include "string-utils.h"
 +
 +#include "admin-state.h"
 +#include "completion.h"
-+#include "constants.h"
-+#include "data-vio.h"
-+#include "dedupe.h"
-+#include "encodings.h"
 +#include "io-submitter.h"
-+#include "physical-zone.h"
-+#include "status-codes.h"
++#include "logical-zone.h"
++#include "slab-depot.h"
++#include "types.h"
 +#include "vdo.h"
-+#include "vio.h"
 +
-+static const struct version_number COMPRESSED_BLOCK_1_0 = {
-+	.major_version = 1,
-+	.minor_version = 0,
-+};
-+
-+enum {
-+	COMPRESSED_BLOCK_1_0_SIZE = 4 + 4 + (2 * VDO_MAX_COMPRESSION_SLOTS),
++struct flusher {
++	struct vdo_completion completion;
++	/** The vdo to which this flusher belongs */
++	struct vdo *vdo;
++	/** The administrative state of the flusher */
++	struct admin_state state;
++	/** The current flush generation of the vdo */
++	sequence_number_t flush_generation;
++	/** The first unacknowledged flush generation */
++	sequence_number_t first_unacknowledged_generation;
++	/** The queue of flush requests waiting to notify other threads */
++	struct wait_queue notifiers;
++	/** The queue of flush requests waiting for VIOs to complete */
++	struct wait_queue pending_flushes;
++	/** The flush generation for which notifications are being sent */
++	sequence_number_t notify_generation;
++	/** The logical zone to notify next */
++	struct logical_zone *logical_zone_to_notify;
++	/** The ID of the thread on which flush requests should be made */
++	thread_id_t thread_id;
++	/** The pool of flush requests */
++	mempool_t *flush_pool;
++	/** Bios waiting for a flush request to become available */
++	struct bio_list waiting_flush_bios;
++	/** The lock to protect the previous fields */
++	spinlock_t lock;
++	/** The rotor for selecting the bio queue for submitting flush bios */
++	zone_count_t bio_queue_rotor;
++	/** The number of flushes submitted to the current bio queue */
++	int flush_count;
 +};
 +
 +/**
-+ * vdo_get_compressed_block_fragment() - Get a reference to a compressed fragment from a compressed
-+ *                                       block.
-+ * @mapping_state [in] The mapping state for the look up.
-+ * @compressed_block [in] The compressed block that was read from disk.
-+ * @fragment_offset [out] The offset of the fragment within a compressed block.
-+ * @fragment_size [out] The size of the fragment.
-+ *
-+ * Return: If a valid compressed fragment is found, VDO_SUCCESS; otherwise, VDO_INVALID_FRAGMENT if
-+ *         the fragment is invalid.
-+ */
-+int vdo_get_compressed_block_fragment(enum block_mapping_state mapping_state,
-+				      struct compressed_block *block,
-+				      u16 *fragment_offset,
-+				      u16 *fragment_size)
-+{
-+	u16 compressed_size;
-+	u16 offset = 0;
-+	unsigned int i;
-+	u8 slot;
-+	struct version_number version;
-+
-+	if (!vdo_is_state_compressed(mapping_state))
-+		return VDO_INVALID_FRAGMENT;
-+
-+	version = vdo_unpack_version_number(block->header.version);
-+	if (!vdo_are_same_version(version, COMPRESSED_BLOCK_1_0))
-+		return VDO_INVALID_FRAGMENT;
-+
-+	slot = mapping_state - VDO_MAPPING_STATE_COMPRESSED_BASE;
-+	if (slot >= VDO_MAX_COMPRESSION_SLOTS)
-+		return VDO_INVALID_FRAGMENT;
-+
-+	compressed_size = __le16_to_cpu(block->header.sizes[slot]);
-+	for (i = 0; i < slot; i++) {
-+		offset += __le16_to_cpu(block->header.sizes[i]);
-+		if (offset >= VDO_COMPRESSED_BLOCK_DATA_SIZE)
-+			return VDO_INVALID_FRAGMENT;
-+	}
-+
-+	if ((offset + compressed_size) > VDO_COMPRESSED_BLOCK_DATA_SIZE)
-+		return VDO_INVALID_FRAGMENT;
-+
-+	*fragment_offset = offset;
-+	*fragment_size = compressed_size;
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * assert_on_packer_thread() - Check that we are on the packer thread.
-+ * @packer: The packer.
++ * assert_on_flusher_thread() - Check that we are on the flusher thread.
++ * @flusher: The flusher.
 + * @caller: The function which is asserting.
 + */
-+static inline void assert_on_packer_thread(struct packer *packer, const char *caller)
++static inline void assert_on_flusher_thread(struct flusher *flusher, const char *caller)
 +{
-+	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == packer->thread_id),
-+			"%s() called from packer thread", caller);
++	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == flusher->thread_id),
++			"%s() called from flusher thread",
++			caller);
 +}
 +
 +/**
-+ * insert_in_sorted_list() - Insert a bin to the list.
-+ * @packer: The packer.
-+ * @bin: The bin to move to its sorted position.
++ * as_flusher() - Convert a generic vdo_completion to a flusher.
++ * @completion: The completion to convert.
 + *
-+ * The list is in ascending order of free space. Since all bins are already in the list, this
-+ * actually moves the bin to the correct position in the list.
++ * Return: The completion as a flusher.
 + */
-+static void insert_in_sorted_list(struct packer *packer, struct packer_bin *bin)
++static struct flusher *as_flusher(struct vdo_completion *completion)
 +{
-+	struct packer_bin *active_bin;
++	vdo_assert_completion_type(completion, VDO_FLUSH_NOTIFICATION_COMPLETION);
++	return container_of(completion, struct flusher, completion);
++}
 +
-+	list_for_each_entry(active_bin, &packer->bins, list)
-+		if (active_bin->free_space > bin->free_space) {
-+			list_move_tail(&bin->list, &active_bin->list);
++/**
++ * completion_as_vdo_flush() - Convert a generic vdo_completion to a vdo_flush.
++ * @completion: The completion to convert.
++ *
++ * Return: The completion as a vdo_flush.
++ */
++static inline struct vdo_flush *completion_as_vdo_flush(struct vdo_completion *completion)
++{
++	vdo_assert_completion_type(completion, VDO_FLUSH_COMPLETION);
++	return container_of(completion, struct vdo_flush, completion);
++}
++
++/**
++ * waiter_as_flush() - Convert a vdo_flush's generic wait queue entry back to the vdo_flush.
++ * @waiter: The wait queue entry to convert.
++ *
++ * Return: The wait queue entry as a vdo_flush.
++ */
++static struct vdo_flush *waiter_as_flush(struct waiter *waiter)
++{
++	return container_of(waiter, struct vdo_flush, waiter);
++}
++
++static void *allocate_flush(gfp_t gfp_mask, void *pool_data)
++{
++	struct vdo_flush *flush;
++
++	if ((gfp_mask & GFP_NOWAIT) == GFP_NOWAIT) {
++		flush = UDS_ALLOCATE_NOWAIT(struct vdo_flush, __func__);
++	} else {
++		int result = UDS_ALLOCATE(1, struct vdo_flush, __func__, &flush);
++
++		if (result != VDO_SUCCESS)
++			uds_log_error_strerror(result, "failed to allocate spare flush");
++	}
++
++	if (flush != NULL) {
++		struct flusher *flusher = pool_data;
++
++		vdo_initialize_completion(&flush->completion, flusher->vdo, VDO_FLUSH_COMPLETION);
++	}
++
++	return flush;
++}
++
++static void free_flush(void *element, void *pool_data __always_unused)
++{
++	UDS_FREE(element);
++}
++
++/**
++ * vdo_make_flusher() - Make a flusher for a vdo.
++ * @vdo: The vdo which owns the flusher.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++int vdo_make_flusher(struct vdo *vdo)
++{
++	int result = UDS_ALLOCATE(1, struct flusher, __func__, &vdo->flusher);
++
++	if (result != VDO_SUCCESS)
++		return result;
++
++	vdo->flusher->vdo = vdo;
++	vdo->flusher->thread_id = vdo->thread_config.packer_thread;
++	vdo_set_admin_state_code(&vdo->flusher->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
++	vdo_initialize_completion(&vdo->flusher->completion, vdo,
++				  VDO_FLUSH_NOTIFICATION_COMPLETION);
++
++	spin_lock_init(&vdo->flusher->lock);
++	bio_list_init(&vdo->flusher->waiting_flush_bios);
++	vdo->flusher->flush_pool = mempool_create(1, allocate_flush, free_flush, vdo->flusher);
++	return ((vdo->flusher->flush_pool == NULL) ? -ENOMEM : VDO_SUCCESS);
++}
++
++/**
++ * vdo_free_flusher() - Free a flusher.
++ * @flusher: The flusher to free.
++ */
++void vdo_free_flusher(struct flusher *flusher)
++{
++	if (flusher == NULL)
++		return;
++
++	if (flusher->flush_pool != NULL)
++		mempool_destroy(UDS_FORGET(flusher->flush_pool));
++	UDS_FREE(flusher);
++}
++
++/**
++ * vdo_get_flusher_thread_id() - Get the ID of the thread on which flusher functions should be
++ *                               called.
++ * @flusher: The flusher to query.
++ *
++ * Return: The ID of the thread which handles the flusher.
++ */
++thread_id_t vdo_get_flusher_thread_id(struct flusher *flusher)
++{
++	return flusher->thread_id;
++}
++
++static void notify_flush(struct flusher *flusher);
++static void vdo_complete_flush(struct vdo_flush *flush);
++
++/**
++ * finish_notification() - Finish the notification process.
++ * @completion: The flusher completion.
++ *
++ * Finishes the notification process by checking if any flushes have completed and then starting
++ * the notification of the next flush request if one came in while the current notification was in
++ * progress. This callback is registered in flush_packer_callback().
++ */
++static void finish_notification(struct vdo_completion *completion)
++{
++	struct flusher *flusher = as_flusher(completion);
++
++	assert_on_flusher_thread(flusher, __func__);
++
++	vdo_enqueue_waiter(&flusher->pending_flushes,
++			   vdo_dequeue_next_waiter(&flusher->notifiers));
++	vdo_complete_flushes(flusher);
++	if (vdo_has_waiters(&flusher->notifiers))
++		notify_flush(flusher);
++}
++
++/**
++ * flush_packer_callback() - Flush the packer.
++ * @completion: The flusher completion.
++ *
++ * Flushes the packer now that all of the logical and physical zones have been notified of the new
++ * flush request. This callback is registered in increment_generation().
++ */
++static void flush_packer_callback(struct vdo_completion *completion)
++{
++	struct flusher *flusher = as_flusher(completion);
++
++	vdo_increment_packer_flush_generation(flusher->vdo->packer);
++	vdo_launch_completion_callback(completion, finish_notification, flusher->thread_id);
++}
++
++/**
++ * increment_generation() - Increment the flush generation in a logical zone.
++ * @completion: The flusher as a completion.
++ *
++ * If there are more logical zones, go on to the next one, otherwise, prepare the physical zones.
++ * This callback is registered both in notify_flush() and in itself.
++ */
++static void increment_generation(struct vdo_completion *completion)
++{
++	struct flusher *flusher = as_flusher(completion);
++	struct logical_zone *zone = flusher->logical_zone_to_notify;
++
++	vdo_increment_logical_zone_flush_generation(zone, flusher->notify_generation);
++	if (zone->next == NULL) {
++		vdo_launch_completion_callback(completion,
++					       flush_packer_callback,
++					       flusher->thread_id);
++		return;
++	}
++
++	flusher->logical_zone_to_notify = zone->next;
++	vdo_launch_completion_callback(completion,
++				       increment_generation,
++				       flusher->logical_zone_to_notify->thread_id);
++}
++
++/**
++ * notify_flush() - Launch a flush notification.
++ * @flusher: The flusher doing the notification.
++ */
++static void notify_flush(struct flusher *flusher)
++{
++	struct vdo_flush *flush = waiter_as_flush(vdo_get_first_waiter(&flusher->notifiers));
++
++	flusher->notify_generation = flush->flush_generation;
++	flusher->logical_zone_to_notify = &flusher->vdo->logical_zones->zones[0];
++	flusher->completion.requeue = true;
++	vdo_launch_completion_callback(&flusher->completion,
++				       increment_generation,
++				       flusher->logical_zone_to_notify->thread_id);
++}
++
++/**
++ * flush_vdo() - Start processing a flush request.
++ * @completion: A flush request (as a vdo_completion)
++ *
++ * This callback is registered in launch_flush().
++ */
++static void flush_vdo(struct vdo_completion *completion)
++{
++	struct vdo_flush *flush = completion_as_vdo_flush(completion);
++	struct flusher *flusher = completion->vdo->flusher;
++	bool may_notify;
++	int result;
++
++	assert_on_flusher_thread(flusher, __func__);
++	result = ASSERT(vdo_is_state_normal(&flusher->state), "flusher is in normal operation");
++	if (result != VDO_SUCCESS) {
++		vdo_enter_read_only_mode(flusher->vdo, result);
++		vdo_complete_flush(flush);
++		return;
++	}
++
++	flush->flush_generation = flusher->flush_generation++;
++	may_notify = !vdo_has_waiters(&flusher->notifiers);
++	vdo_enqueue_waiter(&flusher->notifiers, &flush->waiter);
++	if (may_notify)
++		notify_flush(flusher);
++}
++
++/**
++ * check_for_drain_complete() - Check whether the flusher has drained.
++ * @flusher: The flusher.
++ */
++static void check_for_drain_complete(struct flusher *flusher)
++{
++	bool drained;
++
++	if (!vdo_is_state_draining(&flusher->state) || vdo_has_waiters(&flusher->pending_flushes))
++		return;
++
++	spin_lock(&flusher->lock);
++	drained = bio_list_empty(&flusher->waiting_flush_bios);
++	spin_unlock(&flusher->lock);
++
++	if (drained)
++		vdo_finish_draining(&flusher->state);
++}
++
++/**
++ * vdo_complete_flushes() - Attempt to complete any flushes which might have finished.
++ * @flusher: The flusher.
++ */
++void vdo_complete_flushes(struct flusher *flusher)
++{
++	sequence_number_t oldest_active_generation = U64_MAX;
++	struct logical_zone *zone;
++
++	assert_on_flusher_thread(flusher, __func__);
++
++	for (zone = &flusher->vdo->logical_zones->zones[0]; zone != NULL; zone = zone->next)
++		oldest_active_generation =
++			min(oldest_active_generation, READ_ONCE(zone->oldest_active_generation));
++
++	while (vdo_has_waiters(&flusher->pending_flushes)) {
++		struct vdo_flush *flush =
++			waiter_as_flush(vdo_get_first_waiter(&flusher->pending_flushes));
++
++		if (flush->flush_generation >= oldest_active_generation)
 +			return;
-+		}
 +
-+	list_move_tail(&bin->list, &packer->bins);
-+}
-+
-+/**
-+ * make_bin() - Allocate a bin and put it into the packer's list.
-+ * @packer: The packer.
-+ */
-+static int __must_check make_bin(struct packer *packer)
-+{
-+	struct packer_bin *bin;
-+	int result;
-+
-+	result = UDS_ALLOCATE_EXTENDED(struct packer_bin,
-+				       VDO_MAX_COMPRESSION_SLOTS,
-+				       struct vio *,
-+				       __func__,
-+				       &bin);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	bin->free_space = VDO_COMPRESSED_BLOCK_DATA_SIZE;
-+	INIT_LIST_HEAD(&bin->list);
-+	list_add_tail(&bin->list, &packer->bins);
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * vdo_make_packer() - Make a new block packer.
-+ *
-+ * @vdo: The vdo to which this packer belongs.
-+ * @bin_count: The number of partial bins to keep in memory.
-+ * @packer_ptr: A pointer to hold the new packer.
-+ *
-+ * Return: VDO_SUCCESS or an error
-+ */
-+int vdo_make_packer(struct vdo *vdo, block_count_t bin_count, struct packer **packer_ptr)
-+{
-+	struct packer *packer;
-+	block_count_t i;
-+	int result;
-+
-+	result = UDS_ALLOCATE(1, struct packer, __func__, &packer);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	packer->thread_id = vdo->thread_config.packer_thread;
-+	packer->size = bin_count;
-+	INIT_LIST_HEAD(&packer->bins);
-+	vdo_set_admin_state_code(&packer->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
-+
-+	for (i = 0; i < bin_count; i++) {
-+		result = make_bin(packer);
-+		if (result != VDO_SUCCESS) {
-+			vdo_free_packer(packer);
-+			return result;
-+		}
++		ASSERT_LOG_ONLY((flush->flush_generation ==
++				 flusher->first_unacknowledged_generation),
++				"acknowledged next expected flush, %llu, was: %llu",
++				(unsigned long long) flusher->first_unacknowledged_generation,
++				(unsigned long long) flush->flush_generation);
++		vdo_dequeue_next_waiter(&flusher->pending_flushes);
++		vdo_complete_flush(flush);
++		flusher->first_unacknowledged_generation++;
 +	}
 +
-+	/*
-+	 * The canceled bin can hold up to half the number of user vios. Every canceled vio in the
-+	 * bin must have a canceler for which it is waiting, and any canceler will only have
-+	 * canceled one lock holder at a time.
-+	 */
-+	result = UDS_ALLOCATE_EXTENDED(struct packer_bin,
-+				       MAXIMUM_VDO_USER_VIOS / 2,
-+				       struct vio *, __func__,
-+				       &packer->canceled_bin);
-+	if (result != VDO_SUCCESS) {
-+		vdo_free_packer(packer);
-+		return result;
-+	}
-+
-+	result = vdo_make_default_thread(vdo, packer->thread_id);
-+	if (result != VDO_SUCCESS) {
-+		vdo_free_packer(packer);
-+		return result;
-+	}
-+
-+	*packer_ptr = packer;
-+	return VDO_SUCCESS;
++	check_for_drain_complete(flusher);
 +}
 +
 +/**
-+ * vdo_free_packer() - Free a block packer.
-+ * @packer: The packer to free.
++ * vdo_dump_flusher() - Dump the flusher, in a thread-unsafe fashion.
++ * @flusher: The flusher.
 + */
-+void vdo_free_packer(struct packer *packer)
++void vdo_dump_flusher(const struct flusher *flusher)
 +{
-+	struct packer_bin *bin, *tmp;
-+
-+	if (packer == NULL)
-+		return;
-+
-+	list_for_each_entry_safe(bin, tmp, &packer->bins, list) {
-+		list_del_init(&bin->list);
-+		UDS_FREE(bin);
-+	}
-+
-+	UDS_FREE(UDS_FORGET(packer->canceled_bin));
-+	UDS_FREE(packer);
++	uds_log_info("struct flusher");
++	uds_log_info("  flush_generation=%llu first_unacknowledged_generation=%llu",
++		     (unsigned long long) flusher->flush_generation,
++		     (unsigned long long) flusher->first_unacknowledged_generation);
++	uds_log_info("  notifiers queue is %s; pending_flushes queue is %s",
++		     (vdo_has_waiters(&flusher->notifiers) ? "not empty" : "empty"),
++		     (vdo_has_waiters(&flusher->pending_flushes) ? "not empty" : "empty"));
 +}
 +
 +/**
-+ * get_packer_from_data_vio() - Get the packer from a data_vio.
-+ * @data_vio: The data_vio.
++ * initialize_flush() - Initialize a vdo_flush structure.
++ * @flush: The flush to initialize.
++ * @vdo: The vdo being flushed.
 + *
-+ * Return: The packer from the VDO to which the data_vio belongs.
++ * Initializes a vdo_flush structure, transferring all the bios in the flusher's waiting_flush_bios
++ * list to it. The caller MUST already hold the lock.
 + */
-+static inline struct packer *get_packer_from_data_vio(struct data_vio *data_vio)
++static void initialize_flush(struct vdo_flush *flush, struct vdo *vdo)
 +{
-+	return vdo_from_data_vio(data_vio)->packer;
++	bio_list_init(&flush->bios);
++	bio_list_merge(&flush->bios, &vdo->flusher->waiting_flush_bios);
++	bio_list_init(&vdo->flusher->waiting_flush_bios);
++}
++
++static void launch_flush(struct vdo_flush *flush)
++{
++	struct vdo_completion *completion = &flush->completion;
++
++	vdo_prepare_completion(completion,
++			       flush_vdo,
++			       flush_vdo,
++			       completion->vdo->thread_config.packer_thread,
++			       NULL);
++	vdo_enqueue_completion(completion, VDO_DEFAULT_Q_FLUSH_PRIORITY);
 +}
 +
 +/**
-+ * vdo_get_packer_statistics() - Get the current statistics from the packer.
-+ * @packer: The packer to query.
++ * vdo_launch_flush() - Function called to start processing a flush request.
++ * @vdo: The vdo.
++ * @bio: The bio containing an empty flush request.
 + *
-+ * Return: a copy of the current statistics for the packer.
++ * This is called when we receive an empty flush bio from the block layer, and before acknowledging
++ * a non-empty bio with the FUA flag set.
 + */
-+struct packer_statistics vdo_get_packer_statistics(const struct packer *packer)
-+{
-+	const struct packer_statistics *stats = &packer->statistics;
-+
-+	return (struct packer_statistics) {
-+		.compressed_fragments_written = READ_ONCE(stats->compressed_fragments_written),
-+		.compressed_blocks_written = READ_ONCE(stats->compressed_blocks_written),
-+		.compressed_fragments_in_packer = READ_ONCE(stats->compressed_fragments_in_packer),
-+	};
-+}
-+
-+/**
-+ * abort_packing() - Abort packing a data_vio.
-+ * @data_vio: The data_vio to abort.
-+ */
-+static void abort_packing(struct data_vio *data_vio)
-+{
-+	struct packer *packer = get_packer_from_data_vio(data_vio);
-+
-+	WRITE_ONCE(packer->statistics.compressed_fragments_in_packer,
-+		   packer->statistics.compressed_fragments_in_packer - 1);
-+
-+	write_data_vio(data_vio);
-+}
-+
-+/**
-+ * release_compressed_write_waiter() - Update a data_vio for which a successful compressed write
-+ *                                     has completed and send it on its way.
-+
-+ * @data_vio: The data_vio to release.
-+ * @allocation: The allocation to which the compressed block was written.
-+ */
-+static void
-+release_compressed_write_waiter(struct data_vio *data_vio, struct allocation *allocation)
-+{
-+	data_vio->new_mapped = (struct zoned_pbn) {
-+		.pbn = allocation->pbn,
-+		.zone = allocation->zone,
-+		.state = data_vio->compression.slot + VDO_MAPPING_STATE_COMPRESSED_BASE,
-+	};
-+
-+	vdo_share_compressed_write_lock(data_vio, allocation->lock);
-+	update_metadata_for_data_vio_write(data_vio, allocation->lock);
-+}
-+
-+/**
-+ * finish_compressed_write() - Finish a compressed block write.
-+ * @completion: The compressed write completion.
-+ *
-+ * This callback is registered in continue_after_allocation().
-+ */
-+static void finish_compressed_write(struct vdo_completion *completion)
-+{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct data_vio *client, *next;
-+
-+	assert_data_vio_in_allocated_zone(agent);
-+
-+	/*
-+	 * Process all the non-agent waiters first to ensure that the pbn lock can not be released
-+	 * until all of them have had a chance to journal their increfs.
-+	 */
-+	for (client = agent->compression.next_in_batch; client != NULL; client = next) {
-+		next = client->compression.next_in_batch;
-+		release_compressed_write_waiter(client, &agent->allocation);
-+	}
-+
-+	completion->error_handler = handle_data_vio_error;
-+	release_compressed_write_waiter(agent, &agent->allocation);
-+}
-+
-+static void handle_compressed_write_error(struct vdo_completion *completion)
-+{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct allocation *allocation = &agent->allocation;
-+	struct data_vio *client, *next;
-+
-+	if (vdo_requeue_completion_if_needed(completion, allocation->zone->thread_id))
-+		return;
-+
-+	update_vio_error_stats(as_vio(completion),
-+			       "Completing compressed write vio for physical block %llu with error",
-+			       (unsigned long long) allocation->pbn);
-+
-+	for (client = agent->compression.next_in_batch; client != NULL; client = next) {
-+		next = client->compression.next_in_batch;
-+		write_data_vio(client);
-+	}
-+
-+	/* Now that we've released the batch from the packer, forget the error and continue on. */
-+	vdo_reset_completion(completion);
-+	completion->error_handler = handle_data_vio_error;
-+	write_data_vio(agent);
-+}
-+
-+/**
-+ * add_to_bin() - Put a data_vio in a specific packer_bin in which it will definitely fit.
-+ * @bin: The bin in which to put the data_vio.
-+ * @data_vio: The data_vio to add.
-+ */
-+static void add_to_bin(struct packer_bin *bin, struct data_vio *data_vio)
-+{
-+	data_vio->compression.bin = bin;
-+	data_vio->compression.slot = bin->slots_used;
-+	bin->incoming[bin->slots_used++] = data_vio;
-+}
-+
-+/**
-+ * remove_from_bin() - Get the next data_vio whose compression has not been canceled from a bin.
-+ * @packer: The packer.
-+ * @bin: The bin from which to get a data_vio.
-+ *
-+ * Any canceled data_vios will be moved to the canceled bin.
-+ * Return: An uncanceled data_vio from the bin or NULL if there are none.
-+ */
-+static struct data_vio *remove_from_bin(struct packer *packer, struct packer_bin *bin)
-+{
-+	while (bin->slots_used > 0) {
-+		struct data_vio *data_vio = bin->incoming[--bin->slots_used];
-+
-+		if (!advance_data_vio_compression_stage(data_vio).may_not_compress) {
-+			data_vio->compression.bin = NULL;
-+			return data_vio;
-+		}
-+
-+		add_to_bin(packer->canceled_bin, data_vio);
-+	}
-+
-+	/* The bin is now empty. */
-+	bin->free_space = VDO_COMPRESSED_BLOCK_DATA_SIZE;
-+	return NULL;
-+}
-+
-+/**
-+ * initialize_compressed_block() - Initialize a compressed block.
-+ * @block: The compressed block to initialize.
-+ * @size: The size of the agent's fragment.
-+ *
-+ * This method initializes the compressed block in the compressed write agent. Because the
-+ * compressor already put the agent's compressed fragment at the start of the compressed block's
-+ * data field, it needn't be copied. So all we need do is initialize the header and set the size of
-+ * the agent's fragment.
-+ */
-+static void initialize_compressed_block(struct compressed_block *block, u16 size)
++void vdo_launch_flush(struct vdo *vdo, struct bio *bio)
 +{
 +	/*
-+	 * Make sure the block layout isn't accidentally changed by changing the length of the
-+	 * block header.
++	 * Try to allocate a vdo_flush to represent the flush request. If the allocation fails,
++	 * we'll deal with it later.
 +	 */
-+	STATIC_ASSERT_SIZEOF(struct compressed_block_header, COMPRESSED_BLOCK_1_0_SIZE);
++	struct vdo_flush *flush = mempool_alloc(vdo->flusher->flush_pool, GFP_NOWAIT);
++	struct flusher *flusher = vdo->flusher;
++	const struct admin_state_code *code = vdo_get_admin_state_code(&flusher->state);
 +
-+	block->header.version = vdo_pack_version_number(COMPRESSED_BLOCK_1_0);
-+	block->header.sizes[0] = __cpu_to_le16(size);
-+}
++	ASSERT_LOG_ONLY(!code->quiescent, "Flushing not allowed in state %s", code->name);
 +
-+/**
-+ * pack_fragment() - Pack a data_vio's fragment into the compressed block in which it is already
-+ *                   known to fit.
-+ * @compression: The agent's compression_state to pack in to.
-+ * @data_vio: The data_vio to pack.
-+ * @offset: The offset into the compressed block at which to pack the fragment.
-+ * @compressed_block: The compressed block which will be written out when batch is fully packed.
-+ *
-+ * Return: The new amount of space used.
-+ */
-+static block_size_t __must_check
-+pack_fragment(struct compression_state *compression,
-+	      struct data_vio *data_vio,
-+	      block_size_t offset,
-+	      slot_number_t slot,
-+	      struct compressed_block *block)
-+{
-+	struct compression_state *to_pack = &data_vio->compression;
-+	char *fragment = to_pack->block->data;
++	spin_lock(&flusher->lock);
 +
-+	to_pack->next_in_batch = compression->next_in_batch;
-+	compression->next_in_batch = data_vio;
-+	to_pack->slot = slot;
-+	block->header.sizes[slot] = __cpu_to_le16(to_pack->size);
-+	memcpy(&block->data[offset], fragment, to_pack->size);
-+	return (offset + to_pack->size);
-+}
++	/* We have a new bio to start. Add it to the list. */
++	bio_list_add(&flusher->waiting_flush_bios, bio);
 +
-+/**
-+ * compressed_write_end_io() - The bio_end_io for a compressed block write.
-+ * @bio: The bio for the compressed write.
-+ */
-+static void compressed_write_end_io(struct bio *bio)
-+{
-+	struct data_vio *data_vio = vio_as_data_vio(bio->bi_private);
-+
-+	vdo_count_completed_bios(bio);
-+	set_data_vio_allocated_zone_callback(data_vio, finish_compressed_write);
-+	continue_data_vio_with_error(data_vio, blk_status_to_errno(bio->bi_status));
-+}
-+
-+/**
-+ * write_bin() - Write out a bin.
-+ * @packer: The packer.
-+ * @bin: The bin to write.
-+ */
-+static void write_bin(struct packer *packer, struct packer_bin *bin)
-+{
-+	int result;
-+	block_size_t offset;
-+	slot_number_t slot = 1;
-+	struct compression_state *compression;
-+	struct compressed_block *block;
-+	struct data_vio *agent = remove_from_bin(packer, bin);
-+	struct data_vio *client;
-+	struct packer_statistics *stats;
-+
-+	if (agent == NULL)
-+		return;
-+
-+	compression = &agent->compression;
-+	compression->slot = 0;
-+	block = compression->block;
-+	initialize_compressed_block(block, compression->size);
-+	offset = compression->size;
-+
-+	while ((client = remove_from_bin(packer, bin)) != NULL)
-+		offset = pack_fragment(compression, client, offset, slot++, block);
-+
-+	/*
-+	 * If the batch contains only a single vio, then we save nothing by saving the compressed
-+	 * form. Continue processing the single vio in the batch.
-+	 */
-+	if (slot == 1) {
-+		abort_packing(agent);
++	if (flush == NULL) {
++		spin_unlock(&flusher->lock);
 +		return;
 +	}
 +
-+	if (slot < VDO_MAX_COMPRESSION_SLOTS)
-+		/* Clear out the sizes of the unused slots */
-+		memset(&block->header.sizes[slot],
-+		       0,
-+		       (VDO_MAX_COMPRESSION_SLOTS - slot) * sizeof(__le16));
++	/* We have flushes to start. Capture them in the vdo_flush structure. */
++	initialize_flush(flush, vdo);
++	spin_unlock(&flusher->lock);
 +
-+	agent->vio.completion.error_handler = handle_compressed_write_error;
-+	if (vdo_is_read_only(vdo_from_data_vio(agent))) {
-+		continue_data_vio_with_error(agent, VDO_READ_ONLY);
-+		return;
-+	}
-+
-+	result = vio_reset_bio(&agent->vio,
-+			       (char *) block,
-+			       compressed_write_end_io,
-+			       REQ_OP_WRITE,
-+			       agent->allocation.pbn);
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(agent, result);
-+		return;
-+	}
-+
-+	/*
-+	 * Once the compressed write is submitted, the fragments are no longer in the packer, so
-+	 * update stats now.
-+	 */
-+	stats = &packer->statistics;
-+	WRITE_ONCE(stats->compressed_fragments_in_packer,
-+		   (stats->compressed_fragments_in_packer - slot));
-+	WRITE_ONCE(stats->compressed_fragments_written,
-+		   (stats->compressed_fragments_written + slot));
-+	WRITE_ONCE(stats->compressed_blocks_written, stats->compressed_blocks_written + 1);
-+
-+	submit_data_vio_io(agent);
++	/* Finish launching the flushes. */
++	launch_flush(flush);
 +}
 +
 +/**
-+ * add_data_vio_to_packer_bin() - Add a data_vio to a bin's incoming queue
-+ * @packer: The packer.
-+ * @bin: The bin to which to add the data_vio.
-+ * @data_vio: The data_vio to add to the bin's queue.
++ * release_flush() - Release a vdo_flush structure that has completed its work.
++ * @flush: The completed flush structure to re-use or free.
 + *
-+ * Adds a data_vio to a bin's incoming queue, handles logical space change, and calls physical
-+ * space processor.
++ * If there are any pending flush requests whose vdo_flush allocation failed, they will be launched
++ * by immediately re-using the released vdo_flush. If there is no spare vdo_flush, the released
++ * structure will become the spare. Otherwise, the vdo_flush will be freed.
 + */
-+static void add_data_vio_to_packer_bin(struct packer *packer,
-+				       struct packer_bin *bin,
-+				       struct data_vio *data_vio)
++static void release_flush(struct vdo_flush *flush)
 +{
-+	/* If the selected bin doesn't have room, start a new batch to make room. */
-+	if (bin->free_space < data_vio->compression.size)
-+		write_bin(packer, bin);
++	bool relaunch_flush;
++	struct flusher *flusher = flush->completion.vdo->flusher;
 +
-+	add_to_bin(bin, data_vio);
-+	bin->free_space -= data_vio->compression.size;
++	spin_lock(&flusher->lock);
++	if (bio_list_empty(&flusher->waiting_flush_bios)) {
++		relaunch_flush = false;
++	} else {
++		/* We have flushes to start. Capture them in a flush request. */
++		initialize_flush(flush, flusher->vdo);
++		relaunch_flush = true;
++	}
++	spin_unlock(&flusher->lock);
 +
-+	/* If we happen to exactly fill the bin, start a new batch. */
-+	if ((bin->slots_used == VDO_MAX_COMPRESSION_SLOTS) ||
-+	    (bin->free_space == 0))
-+		write_bin(packer, bin);
-+
-+	/* Now that we've finished changing the free space, restore the sort order. */
-+	insert_in_sorted_list(packer, bin);
-+}
-+
-+/**
-+ * select_bin() - Select the bin that should be used to pack the compressed data in a data_vio with
-+ *                other data_vios.
-+ * @packer: The packer.
-+ * @data_vio: The data_vio.
-+ */
-+static struct packer_bin * __must_check
-+select_bin(struct packer *packer, struct data_vio *data_vio)
-+{
-+	/*
-+	 * First best fit: select the bin with the least free space that has enough room for the
-+	 * compressed data in the data_vio.
-+	 */
-+	struct packer_bin *bin, *fullest_bin;
-+
-+	list_for_each_entry(bin, &packer->bins, list)
-+		if (bin->free_space >= data_vio->compression.size)
-+			return bin;
-+
-+	/*
-+	 * None of the bins have enough space for the data_vio. We're not allowed to create new
-+	 * bins, so we have to overflow one of the existing bins. It's pretty intuitive to select
-+	 * the fullest bin, since that "wastes" the least amount of free space in the compressed
-+	 * block. But if the space currently used in the fullest bin is smaller than the compressed
-+	 * size of the incoming block, it seems wrong to force that bin to write when giving up on
-+	 * compressing the incoming data_vio would likewise "waste" the least amount of free space.
-+	 */
-+	fullest_bin = list_first_entry(&packer->bins, struct packer_bin, list);
-+	if (data_vio->compression.size >=
-+	    (VDO_COMPRESSED_BLOCK_DATA_SIZE - fullest_bin->free_space))
-+		return NULL;
-+
-+	/*
-+	 * The fullest bin doesn't have room, but writing it out and starting a new batch with the
-+	 * incoming data_vio will increase the packer's free space.
-+	 */
-+	return fullest_bin;
-+}
-+
-+/**
-+ * vdo_attempt_packing() - Attempt to rewrite the data in this data_vio as part of a compressed
-+ *                         block.
-+ * @data_vio: The data_vio to pack.
-+ */
-+void vdo_attempt_packing(struct data_vio *data_vio)
-+{
-+	int result;
-+	struct packer_bin *bin;
-+	struct data_vio_compression_status status = get_data_vio_compression_status(data_vio);
-+	struct packer *packer = get_packer_from_data_vio(data_vio);
-+
-+	assert_on_packer_thread(packer, __func__);
-+
-+	result = ASSERT((status.stage == DATA_VIO_COMPRESSING),
-+			"attempt to pack data_vio not ready for packing, stage: %u",
-+			status.stage);
-+	if (result != VDO_SUCCESS)
-+		return;
-+
-+	/*
-+	 * Increment whether or not this data_vio will be packed or not since abort_packing()
-+	 * always decrements the counter.
-+	 */
-+	WRITE_ONCE(packer->statistics.compressed_fragments_in_packer,
-+		   packer->statistics.compressed_fragments_in_packer + 1);
-+
-+	/*
-+	 * If packing of this data_vio is disallowed for administrative reasons, give up before
-+	 * making any state changes.
-+	 */
-+	if (!vdo_is_state_normal(&packer->state) ||
-+	    (data_vio->flush_generation < packer->flush_generation)) {
-+		abort_packing(data_vio);
++	if (relaunch_flush) {
++		/* Finish launching the flushes. */
++		launch_flush(flush);
 +		return;
 +	}
 +
-+	/*
-+	 * The check of may_vio_block_in_packer() here will set the data_vio's compression state to
-+	 * VIO_PACKING if the data_vio is allowed to be compressed (if it has already been
-+	 * canceled, we'll fall out here). Once the data_vio is in the VIO_PACKING state, it must
-+	 * be guaranteed to be put in a bin before any more requests can be processed by the packer
-+	 * thread. Otherwise, a canceling data_vio could attempt to remove the canceled data_vio
-+	 * from the packer and fail to rendezvous with it (VDO-2809). We must also make sure that
-+	 * we will actually bin the data_vio and not give up on it as being larger than the space
-+	 * used in the fullest bin. Hence we must call select_bin() before calling
-+	 * may_vio_block_in_packer() (VDO-2826).
-+	 */
-+	bin = select_bin(packer, data_vio);
-+	if ((bin == NULL) ||
-+	    (advance_data_vio_compression_stage(data_vio).stage != DATA_VIO_PACKING)) {
-+		abort_packing(data_vio);
-+		return;
-+	}
-+
-+	add_data_vio_to_packer_bin(packer, bin, data_vio);
++	mempool_free(flush, flusher->flush_pool);
 +}
 +
 +/**
-+ * check_for_drain_complete() - Check whether the packer has drained.
-+ * @packer: The packer.
++ * vdo_complete_flush_callback() - Function called to complete and free a flush request, registered
++ *                                 in vdo_complete_flush().
++ * @completion: The flush request.
 + */
-+static void check_for_drain_complete(struct packer *packer)
++static void vdo_complete_flush_callback(struct vdo_completion *completion)
 +{
-+	if (vdo_is_state_draining(&packer->state) && (packer->canceled_bin->slots_used == 0))
-+		vdo_finish_draining(&packer->state);
-+}
++	struct vdo_flush *flush = completion_as_vdo_flush(completion);
++	struct vdo *vdo = completion->vdo;
++	struct bio *bio;
 +
-+/**
-+ * write_all_non_empty_bins() - Write out all non-empty bins on behalf of a flush or suspend.
-+ * @packer: The packer being flushed.
-+ */
-+static void write_all_non_empty_bins(struct packer *packer)
-+{
-+	struct packer_bin *bin;
-+
-+	list_for_each_entry(bin, &packer->bins, list)
-+		write_bin(packer, bin);
++	while ((bio = bio_list_pop(&flush->bios)) != NULL) {
 +		/*
-+		 * We don't need to re-sort the bin here since this loop will make every bin have
-+		 * the same amount of free space, so every ordering is sorted.
++		 * We're not acknowledging this bio now, but we'll never touch it again, so this is
++		 * the last chance to account for it.
 +		 */
++		vdo_count_bios(&vdo->stats.bios_acknowledged, bio);
 +
-+	check_for_drain_complete(packer);
-+}
-+
-+/**
-+ * vdo_flush_packer() - Request that the packer flush asynchronously.
-+ * @packer: The packer to flush.
-+ *
-+ * All bins with at least two compressed data blocks will be written out, and any solitary pending
-+ * VIOs will be released from the packer. While flushing is in progress, any VIOs submitted to
-+ * vdo_attempt_packing() will be continued immediately without attempting to pack them.
-+ */
-+void vdo_flush_packer(struct packer *packer)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	if (vdo_is_state_normal(&packer->state))
-+		write_all_non_empty_bins(packer);
-+}
-+
-+/**
-+ * vdo_remove_lock_holder_from_packer() - Remove a lock holder from the packer.
-+ * @completion: The data_vio which needs a lock held by a data_vio in the packer. The data_vio's
-+ *              compression.lock_holder field will point to the data_vio to remove.
-+ */
-+void vdo_remove_lock_holder_from_packer(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+	struct packer *packer = get_packer_from_data_vio(data_vio);
-+	struct data_vio *lock_holder;
-+	struct packer_bin *bin;
-+	slot_number_t slot;
-+
-+	assert_data_vio_in_packer_zone(data_vio);
-+
-+	lock_holder = UDS_FORGET(data_vio->compression.lock_holder);
-+	bin = lock_holder->compression.bin;
-+	ASSERT_LOG_ONLY((bin != NULL), "data_vio in packer has a bin");
-+
-+	slot = lock_holder->compression.slot;
-+	bin->slots_used--;
-+	if (slot < bin->slots_used) {
-+		bin->incoming[slot] = bin->incoming[bin->slots_used];
-+		bin->incoming[slot]->compression.slot = slot;
++		/* Update the device, and send it on down... */
++		bio_set_dev(bio, vdo_get_backing_device(vdo));
++		atomic64_inc(&vdo->stats.flush_out);
++		submit_bio_noacct(bio);
 +	}
 +
-+	lock_holder->compression.bin = NULL;
-+	lock_holder->compression.slot = 0;
 +
-+	if (bin != packer->canceled_bin) {
-+		bin->free_space += lock_holder->compression.size;
-+		insert_in_sorted_list(packer, bin);
-+	}
-+
-+	abort_packing(lock_holder);
-+	check_for_drain_complete(packer);
++	/*
++	 * Release the flush structure, freeing it, re-using it as the spare, or using it to launch
++	 * any flushes that had to wait when allocations failed.
++	 */
++	release_flush(flush);
 +}
 +
 +/**
-+ * vdo_increment_packer_flush_generation() - Increment the flush generation in the packer.
-+ * @packer: The packer.
-+ *
-+ * This will also cause the packer to flush so that any VIOs from previous generations will exit
-+ * the packer.
++ * select_bio_queue() - Select the bio queue on which to finish a flush request.
++ * @flusher: The flusher finishing the request.
 + */
-+void vdo_increment_packer_flush_generation(struct packer *packer)
++static thread_id_t select_bio_queue(struct flusher *flusher)
 +{
-+	assert_on_packer_thread(packer, __func__);
-+	packer->flush_generation++;
-+	vdo_flush_packer(packer);
++	struct vdo *vdo = flusher->vdo;
++	zone_count_t bio_threads = flusher->vdo->thread_config.bio_thread_count;
++	int interval;
++
++	if (bio_threads == 1)
++		return vdo->thread_config.bio_threads[0];
++
++	interval = vdo->device_config->thread_counts.bio_rotation_interval;
++	if (flusher->flush_count == interval) {
++		flusher->flush_count = 1;
++		flusher->bio_queue_rotor = ((flusher->bio_queue_rotor + 1) % bio_threads);
++	} else {
++		flusher->flush_count++;
++	}
++
++	return vdo->thread_config.bio_threads[flusher->bio_queue_rotor];
++}
++
++/**
++ * vdo_complete_flush() - Complete and free a vdo flush request.
++ * @flush: The flush request.
++ */
++static void vdo_complete_flush(struct vdo_flush *flush)
++{
++	struct vdo_completion *completion = &flush->completion;
++
++	vdo_prepare_completion(completion,
++			       vdo_complete_flush_callback,
++			       vdo_complete_flush_callback,
++			       select_bio_queue(completion->vdo->flusher),
++			       NULL);
++	vdo_enqueue_completion(completion, BIO_Q_FLUSH_PRIORITY);
 +}
 +
 +/**
@@ -865,200 +680,563 @@ index 00000000000..f9b67777850
 + */
 +static void initiate_drain(struct admin_state *state)
 +{
-+	struct packer *packer = container_of(state, struct packer, state);
-+
-+	write_all_non_empty_bins(packer);
++	check_for_drain_complete(container_of(state, struct flusher, state));
 +}
 +
 +/**
-+ * vdo_drain_packer() - Drain the packer by preventing any more VIOs from entering the packer and
-+ *                      then flushing.
-+ * @packer: The packer to drain.
-+ * @completion: The completion to finish when the packer has drained.
-+ */
-+void vdo_drain_packer(struct packer *packer, struct vdo_completion *completion)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	vdo_start_draining(&packer->state, VDO_ADMIN_STATE_SUSPENDING, completion, initiate_drain);
-+}
-+
-+/**
-+ * vdo_resume_packer() - Resume a packer which has been suspended.
-+ * @packer: The packer to resume.
-+ * @parent: The completion to finish when the packer has resumed.
-+ */
-+void vdo_resume_packer(struct packer *packer, struct vdo_completion *parent)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	vdo_continue_completion(parent, vdo_resume_if_quiescent(&packer->state));
-+}
-+
-+static void dump_packer_bin(const struct packer_bin *bin, bool canceled)
-+{
-+	if (bin->slots_used == 0)
-+		/* Don't dump empty bins. */
-+		return;
-+
-+	uds_log_info("	  %sBin slots_used=%u free_space=%zu",
-+		     (canceled ? "Canceled" : ""), bin->slots_used,
-+		     bin->free_space);
-+
-+	/*
-+	 * FIXME: dump vios in bin->incoming? The vios should have been dumped from the vio pool.
-+	 * Maybe just dump their addresses so it's clear they're here?
-+	 */
-+}
-+
-+/**
-+ * vdo_dump_packer() - Dump the packer.
-+ * @packer: The packer.
++ * vdo_drain_flusher() - Drain the flusher.
++ * @flusher: The flusher to drain.
++ * @completion: The completion to finish when the flusher has drained.
 + *
-+ * Context: dumps in a thread-unsafe fashion.
++ * Drains the flusher by preventing any more VIOs from entering the flusher and then flushing. The
++ * flusher will be left in the suspended state.
 + */
-+void vdo_dump_packer(const struct packer *packer)
++void vdo_drain_flusher(struct flusher *flusher, struct vdo_completion *completion)
 +{
-+	struct packer_bin *bin;
-+
-+	uds_log_info("packer");
-+	uds_log_info("	flushGeneration=%llu state %s  packer_bin_count=%llu",
-+		     (unsigned long long) packer->flush_generation,
-+		     vdo_get_admin_state_code(&packer->state)->name,
-+		     (unsigned long long) packer->size);
-+
-+	list_for_each_entry(bin, &packer->bins, list)
-+		dump_packer_bin(bin, false);
-+
-+	dump_packer_bin(packer->canceled_bin, true);
++	assert_on_flusher_thread(flusher, __func__);
++	vdo_start_draining(&flusher->state,
++			   VDO_ADMIN_STATE_SUSPENDING,
++			   completion,
++			   initiate_drain);
 +}
-diff --git a/drivers/md/dm-vdo/packer.h b/drivers/md/dm-vdo/packer.h
++
++/**
++ * vdo_resume_flusher() - Resume a flusher which has been suspended.
++ * @flusher: The flusher to resume.
++ * @parent: The completion to finish when the flusher has resumed.
++ */
++void vdo_resume_flusher(struct flusher *flusher, struct vdo_completion *parent)
++{
++	assert_on_flusher_thread(flusher, __func__);
++	vdo_continue_completion(parent, vdo_resume_if_quiescent(&flusher->state));
++}
+diff --git a/drivers/md/dm-vdo/flush.h b/drivers/md/dm-vdo/flush.h
 new file mode 100644
-index 00000000000..8eed435cf9f
+index 00000000000..2e66a477d5d
 --- /dev/null
-+++ b/drivers/md/dm-vdo/packer.h
-@@ -0,0 +1,123 @@
++++ b/drivers/md/dm-vdo/flush.h
+@@ -0,0 +1,44 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright Red Hat
 + */
 +
-+#ifndef VDO_PACKER_H
-+#define VDO_PACKER_H
++#ifndef VDO_FLUSH_H
++#define VDO_FLUSH_H
++
++#include "types.h"
++#include "vio.h"
++#include "wait-queue.h"
++#include "work-queue.h"
++
++/* A marker for tracking which journal entries are affected by a flush request. */
++struct vdo_flush {
++	/* The completion for enqueueing this flush request. */
++	struct vdo_completion completion;
++	/* The flush bios covered by this request */
++	struct bio_list bios;
++	/* The wait queue entry for this flush */
++	struct waiter waiter;
++	/* Which flush this struct represents */
++	sequence_number_t flush_generation;
++};
++
++struct flusher;
++
++int __must_check vdo_make_flusher(struct vdo *vdo);
++
++void vdo_free_flusher(struct flusher *flusher);
++
++thread_id_t __must_check vdo_get_flusher_thread_id(struct flusher *flusher);
++
++void vdo_complete_flushes(struct flusher *flusher);
++
++void vdo_dump_flusher(const struct flusher *flusher);
++
++void vdo_launch_flush(struct vdo *vdo, struct bio *bio);
++
++void vdo_drain_flusher(struct flusher *flusher, struct vdo_completion *completion);
++
++void vdo_resume_flusher(struct flusher *flusher, struct vdo_completion *parent);
++
++#endif /* VDO_FLUSH_H */
+diff --git a/drivers/md/dm-vdo/logical-zone.c b/drivers/md/dm-vdo/logical-zone.c
+new file mode 100644
+index 00000000000..6fffac8169a
+--- /dev/null
++++ b/drivers/md/dm-vdo/logical-zone.c
+@@ -0,0 +1,378 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright Red Hat
++ */
++
++#include "logical-zone.h"
++
++#include "logger.h"
++#include "memory-alloc.h"
++#include "permassert.h"
++#include "string-utils.h"
++
++#include "action-manager.h"
++#include "admin-state.h"
++#include "block-map.h"
++#include "completion.h"
++#include "constants.h"
++#include "data-vio.h"
++#include "flush.h"
++#include "int-map.h"
++#include "physical-zone.h"
++#include "vdo.h"
++
++enum {
++	ALLOCATIONS_PER_ZONE = 128,
++};
++
++/**
++ * as_logical_zone() - Convert a generic vdo_completion to a logical_zone.
++ * @completion: The completion to convert.
++ *
++ * Return: The completion as a logical_zone.
++ */
++static struct logical_zone *as_logical_zone(struct vdo_completion *completion)
++{
++	vdo_assert_completion_type(completion, VDO_GENERATION_FLUSHED_COMPLETION);
++	return container_of(completion, struct logical_zone, completion);
++}
++
++/* get_thread_id_for_zone() - Implements vdo_zone_thread_getter. */
++static thread_id_t get_thread_id_for_zone(void *context, zone_count_t zone_number)
++{
++	struct logical_zones *zones = context;
++
++	return zones->zones[zone_number].thread_id;
++}
++
++/**
++ * initialize_zone() - Initialize a logical zone.
++ * @zones: The logical_zones to which this zone belongs.
++ * @zone_number: The logical_zone's index.
++ */
++static int initialize_zone(struct logical_zones *zones, zone_count_t zone_number)
++{
++	int result;
++	struct vdo *vdo = zones->vdo;
++	struct logical_zone *zone = &zones->zones[zone_number];
++	zone_count_t allocation_zone_number;
++
++	result = vdo_make_int_map(VDO_LOCK_MAP_CAPACITY, 0, &zone->lbn_operations);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	if (zone_number < vdo->thread_config.logical_zone_count - 1)
++		zone->next = &zones->zones[zone_number + 1];
++
++	vdo_initialize_completion(&zone->completion, vdo, VDO_GENERATION_FLUSHED_COMPLETION);
++	zone->zones = zones;
++	zone->zone_number = zone_number;
++	zone->thread_id = vdo->thread_config.logical_threads[zone_number];
++	zone->block_map_zone = &vdo->block_map->zones[zone_number];
++	INIT_LIST_HEAD(&zone->write_vios);
++	vdo_set_admin_state_code(&zone->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
++
++	allocation_zone_number = zone->thread_id % vdo->thread_config.physical_zone_count;
++	zone->allocation_zone = &vdo->physical_zones->zones[allocation_zone_number];
++
++	return vdo_make_default_thread(vdo, zone->thread_id);
++}
++
++/**
++ * vdo_make_logical_zones() - Create a set of logical zones.
++ * @vdo: The vdo to which the zones will belong.
++ * @zones_ptr: A pointer to hold the new zones.
++ *
++ * Return: VDO_SUCCESS or an error code.
++ */
++int vdo_make_logical_zones(struct vdo *vdo, struct logical_zones **zones_ptr)
++{
++	struct logical_zones *zones;
++	int result;
++	zone_count_t zone;
++	zone_count_t zone_count = vdo->thread_config.logical_zone_count;
++
++	if (zone_count == 0)
++		return VDO_SUCCESS;
++
++	result = UDS_ALLOCATE_EXTENDED(struct logical_zones, zone_count,
++				       struct logical_zone, __func__, &zones);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	zones->vdo = vdo;
++	zones->zone_count = zone_count;
++	for (zone = 0; zone < zone_count; zone++) {
++		result = initialize_zone(zones, zone);
++		if (result != VDO_SUCCESS) {
++			vdo_free_logical_zones(zones);
++			return result;
++		}
++	}
++
++	result = vdo_make_action_manager(zones->zone_count,
++					 get_thread_id_for_zone,
++					 vdo->thread_config.admin_thread,
++					 zones,
++					 NULL,
++					 vdo,
++					 &zones->manager);
++	if (result != VDO_SUCCESS) {
++		vdo_free_logical_zones(zones);
++		return result;
++	}
++
++	*zones_ptr = zones;
++	return VDO_SUCCESS;
++}
++
++/**
++ * vdo_free_logical_zones() - Free a set of logical zones.
++ * @zones: The set of zones to free.
++ */
++void vdo_free_logical_zones(struct logical_zones *zones)
++{
++	zone_count_t index;
++
++	if (zones == NULL)
++		return;
++
++	UDS_FREE(UDS_FORGET(zones->manager));
++
++	for (index = 0; index < zones->zone_count; index++)
++		vdo_free_int_map(UDS_FORGET(zones->zones[index].lbn_operations));
++
++	UDS_FREE(zones);
++}
++
++static inline void assert_on_zone_thread(struct logical_zone *zone, const char *what)
++{
++	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == zone->thread_id),
++			"%s() called on correct thread", what);
++}
++
++/**
++ * check_for_drain_complete() - Check whether this zone has drained.
++ * @zone: The zone to check.
++ */
++static void check_for_drain_complete(struct logical_zone *zone)
++{
++	if (!vdo_is_state_draining(&zone->state) || zone->notifying ||
++	    !list_empty(&zone->write_vios))
++		return;
++
++	vdo_finish_draining(&zone->state);
++}
++
++/**
++ * initiate_drain() - Initiate a drain.
++ *
++ * Implements vdo_admin_initiator.
++ */
++static void initiate_drain(struct admin_state *state)
++{
++	check_for_drain_complete(container_of(state, struct logical_zone, state));
++}
++
++/**
++ * drain_logical_zone() - Drain a logical zone.
++ *
++ * Implements vdo_zone_action.
++ */
++static void
++drain_logical_zone(void *context, zone_count_t zone_number, struct vdo_completion *parent)
++{
++	struct logical_zones *zones = context;
++
++	vdo_start_draining(&zones->zones[zone_number].state,
++			   vdo_get_current_manager_operation(zones->manager),
++			   parent,
++			   initiate_drain);
++}
++
++void vdo_drain_logical_zones(struct logical_zones *zones,
++			     const struct admin_state_code *operation,
++			     struct vdo_completion *parent)
++{
++	vdo_schedule_operation(zones->manager, operation, NULL, drain_logical_zone, NULL, parent);
++}
++
++/**
++ * resume_logical_zone() - Resume a logical zone.
++ *
++ * Implements vdo_zone_action.
++ */
++static void
++resume_logical_zone(void *context, zone_count_t zone_number, struct vdo_completion *parent)
++{
++	struct logical_zone *zone = &(((struct logical_zones *) context)->zones[zone_number]);
++
++	vdo_fail_completion(parent, vdo_resume_if_quiescent(&zone->state));
++}
++
++/**
++ * vdo_resume_logical_zones() - Resume a set of logical zones.
++ * @zones: The logical zones to resume.
++ * @parent: The object to notify when the zones have resumed.
++ */
++void vdo_resume_logical_zones(struct logical_zones *zones, struct vdo_completion *parent)
++{
++	vdo_schedule_operation(zones->manager, VDO_ADMIN_STATE_RESUMING, NULL,
++			       resume_logical_zone, NULL, parent);
++}
++
++/**
++ * update_oldest_active_generation() - Update the oldest active generation.
++ * @zone: The zone.
++ *
++ * Return: true if the oldest active generation has changed.
++ */
++static bool update_oldest_active_generation(struct logical_zone *zone)
++{
++	struct data_vio *data_vio =
++		list_first_entry_or_null(&zone->write_vios, struct data_vio, write_entry);
++	sequence_number_t oldest =
++		(data_vio == NULL) ? zone->flush_generation : data_vio->flush_generation;
++
++	if (oldest == zone->oldest_active_generation)
++		return false;
++
++	WRITE_ONCE(zone->oldest_active_generation, oldest);
++	return true;
++}
++
++/**
++ * vdo_increment_logical_zone_flush_generation() - Increment the flush generation in a logical
++ *                                                 zone.
++ * @zone: The logical zone.
++ * @expected_generation: The expected value of the flush generation before the increment.
++ */
++void vdo_increment_logical_zone_flush_generation(struct logical_zone *zone,
++						 sequence_number_t expected_generation)
++{
++	assert_on_zone_thread(zone, __func__);
++	ASSERT_LOG_ONLY((zone->flush_generation == expected_generation),
++			"logical zone %u flush generation %llu should be %llu before increment",
++			zone->zone_number,
++			(unsigned long long) zone->flush_generation,
++			(unsigned long long) expected_generation);
++
++	zone->flush_generation++;
++	zone->ios_in_flush_generation = 0;
++	update_oldest_active_generation(zone);
++}
++
++/**
++ * vdo_acquire_flush_generation_lock() - Acquire the shared lock on a flush generation by a write
++ *                                       data_vio.
++ * @data_vio: The data_vio.
++ */
++void vdo_acquire_flush_generation_lock(struct data_vio *data_vio)
++{
++	struct logical_zone *zone = data_vio->logical.zone;
++
++	assert_on_zone_thread(zone, __func__);
++	ASSERT_LOG_ONLY(vdo_is_state_normal(&zone->state), "vdo state is normal");
++
++	data_vio->flush_generation = zone->flush_generation;
++	list_add_tail(&data_vio->write_entry, &zone->write_vios);
++	zone->ios_in_flush_generation++;
++}
++
++static void attempt_generation_complete_notification(struct vdo_completion *completion);
++
++/**
++ * notify_flusher() - Notify the flush that at least one generation no longer has active VIOs.
++ * @completion: The zone completion.
++ *
++ * This callback is registered in attempt_generation_complete_notification().
++ */
++static void notify_flusher(struct vdo_completion *completion)
++{
++	struct logical_zone *zone = as_logical_zone(completion);
++
++	vdo_complete_flushes(zone->zones->vdo->flusher);
++	vdo_launch_completion_callback(completion,
++				       attempt_generation_complete_notification,
++				       zone->thread_id);
++}
++
++/**
++ * void attempt_generation_complete_notification() - Notify the flusher if some generation no
++ *                                                   longer has active VIOs.
++ * @completion: The zone completion.
++ */
++static void attempt_generation_complete_notification(struct vdo_completion *completion)
++{
++	struct logical_zone *zone = as_logical_zone(completion);
++
++	assert_on_zone_thread(zone, __func__);
++	if (zone->oldest_active_generation <= zone->notification_generation) {
++		zone->notifying = false;
++		check_for_drain_complete(zone);
++		return;
++	}
++
++	zone->notifying = true;
++	zone->notification_generation = zone->oldest_active_generation;
++	vdo_launch_completion_callback(&zone->completion, notify_flusher,
++				       vdo_get_flusher_thread_id(zone->zones->vdo->flusher));
++}
++
++/**
++ * vdo_release_flush_generation_lock() - Release the shared lock on a flush generation held by a
++ *                                       write data_vio.
++ * @data_vio: The data_vio whose lock is to be released.
++ *
++ * If there are pending flushes, and this data_vio completes the oldest generation active in this
++ * zone, an attempt will be made to finish any flushes which may now be complete.
++ */
++void vdo_release_flush_generation_lock(struct data_vio *data_vio)
++{
++	struct logical_zone *zone = data_vio->logical.zone;
++
++	assert_on_zone_thread(zone, __func__);
++
++	if (!data_vio_has_flush_generation_lock(data_vio))
++		return;
++
++	list_del_init(&data_vio->write_entry);
++	ASSERT_LOG_ONLY((zone->oldest_active_generation <= data_vio->flush_generation),
++			"data_vio releasing lock on generation %llu is not older than oldest active generation %llu",
++			(unsigned long long) data_vio->flush_generation,
++			(unsigned long long) zone->oldest_active_generation);
++
++	if (!update_oldest_active_generation(zone) || zone->notifying)
++		return;
++
++	attempt_generation_complete_notification(&zone->completion);
++}
++
++struct physical_zone *vdo_get_next_allocation_zone(struct logical_zone *zone)
++{
++	if (zone->allocation_count == ALLOCATIONS_PER_ZONE) {
++		zone->allocation_count = 0;
++		zone->allocation_zone = zone->allocation_zone->next;
++	}
++
++	zone->allocation_count++;
++	return zone->allocation_zone;
++}
++
++/**
++ * vdo_dump_logical_zone() - Dump information about a logical zone to the log for debugging.
++ * @zone: The zone to dump
++ *
++ * Context: the information is dumped in a thread-unsafe fashion.
++ *
++ */
++void vdo_dump_logical_zone(const struct logical_zone *zone)
++{
++	uds_log_info("logical_zone %u", zone->zone_number);
++	uds_log_info("  flush_generation=%llu oldest_active_generation=%llu notification_generation=%llu notifying=%s ios_in_flush_generation=%llu",
++		     (unsigned long long) READ_ONCE(zone->flush_generation),
++		     (unsigned long long) READ_ONCE(zone->oldest_active_generation),
++		     (unsigned long long) READ_ONCE(zone->notification_generation),
++		     uds_bool_to_string(READ_ONCE(zone->notifying)),
++		     (unsigned long long) READ_ONCE(zone->ios_in_flush_generation));
++}
+diff --git a/drivers/md/dm-vdo/logical-zone.h b/drivers/md/dm-vdo/logical-zone.h
+new file mode 100644
+index 00000000000..3da788b0c2f
+--- /dev/null
++++ b/drivers/md/dm-vdo/logical-zone.h
+@@ -0,0 +1,87 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright Red Hat
++ */
++
++#ifndef VDO_LOGICAL_ZONE_H
++#define VDO_LOGICAL_ZONE_H
 +
 +#include <linux/list.h>
 +
 +#include "admin-state.h"
-+#include "constants.h"
-+#include "encodings.h"
-+#include "statistics.h"
++#include "int-map.h"
 +#include "types.h"
-+#include "wait-queue.h"
 +
-+enum {
-+	DEFAULT_PACKER_BINS = 16,
-+};
++struct physical_zone;
 +
-+/* The header of a compressed block. */
-+struct compressed_block_header {
-+	/* Unsigned 32-bit major and minor versions, little-endian */
-+	struct packed_version_number version;
-+
-+	/* List of unsigned 16-bit compressed block sizes, little-endian */
-+	__le16 sizes[VDO_MAX_COMPRESSION_SLOTS];
-+} __packed;
-+
-+enum {
-+	VDO_COMPRESSED_BLOCK_DATA_SIZE = VDO_BLOCK_SIZE - sizeof(struct compressed_block_header),
-+
-+	/*
-+	 * A compressed block is only written if we can pack at least two fragments into it, so a
-+	 * fragment which fills the entire data portion of a compressed block is too big.
-+	 */
-+	VDO_MAX_COMPRESSED_FRAGMENT_SIZE = VDO_COMPRESSED_BLOCK_DATA_SIZE - 1,
-+};
-+
-+/* * The compressed block overlay. */
-+struct compressed_block {
-+	struct compressed_block_header header;
-+	char data[VDO_COMPRESSED_BLOCK_DATA_SIZE];
-+} __packed;
-+
-+/*
-+ * Each packer_bin holds an incomplete batch of data_vios that only partially fill a compressed
-+ * block. The bins are kept in a ring sorted by the amount of unused space so the first bin with
-+ * enough space to hold a newly-compressed data_vio can easily be found. When the bin fills up or
-+ * is flushed, the first uncanceled data_vio in the bin is selected to be the agent for that bin.
-+ * Upon entering the packer, each data_vio already has its compressed data in the first slot of the
-+ * data_vio's compressed_block (overlaid on the data_vio's scratch_block). So the agent's fragment
-+ * is already in place. The fragments for the other uncanceled data_vios in the bin are packed into
-+ * the agent's compressed block. The agent then writes out the compressed block. If the write is
-+ * successful, the agent shares its pbn lock which each of the other data_vios in its compressed
-+ * block and sends each on its way. Finally the agent itself continues on the write path as before.
-+ *
-+ * There is one special bin which is used to hold data_vios which have been canceled and removed
-+ * from their bin by the packer. These data_vios need to wait for the canceller to rendezvous with
-+ * them (VDO-2809) and so they sit in this special bin.
-+ */
-+struct packer_bin {
-+	/* List links for packer.packer_bins */
-+	struct list_head list;
-+	/* The number of items in the bin */
-+	slot_number_t slots_used;
-+	/* The number of compressed block bytes remaining in the current batch */
-+	size_t free_space;
-+	/* The current partial batch of data_vios, waiting for more */
-+	struct data_vio *incoming[];
-+};
-+
-+struct packer {
-+	/* The ID of the packer's callback thread */
++struct logical_zone {
++	/* The completion for flush notifications */
++	struct vdo_completion completion;
++	/* The owner of this zone */
++	struct logical_zones *zones;
++	/* Which logical zone this is */
++	zone_count_t zone_number;
++	/* The thread id for this zone */
 +	thread_id_t thread_id;
-+	/* The number of bins */
-+	block_count_t size;
-+	/* A list of all packer_bins, kept sorted by free_space */
-+	struct list_head bins;
-+	/*
-+	 * A bin to hold data_vios which were canceled out of the packer and are waiting to
-+	 * rendezvous with the canceling data_vio.
-+	 */
-+	struct packer_bin *canceled_bin;
-+
++	/* In progress operations keyed by LBN */
++	struct int_map *lbn_operations;
++	/* The logical to physical map */
++	struct block_map_zone *block_map_zone;
 +	/* The current flush generation */
 +	sequence_number_t flush_generation;
-+
-+	/* The administrative state of the packer */
++	/*
++	 * The oldest active generation in this zone. This is mutated only on the logical zone
++	 * thread but is queried from the flusher thread.
++	 */
++	sequence_number_t oldest_active_generation;
++	/* The number of IOs in the current flush generation */
++	block_count_t ios_in_flush_generation;
++	/* The youngest generation of the current notification */
++	sequence_number_t notification_generation;
++	/* Whether a notification is in progress */
++	bool notifying;
++	/* The queue of active data write VIOs */
++	struct list_head write_vios;
++	/* The administrative state of the zone */
 +	struct admin_state state;
-+
-+	/* Statistics are only updated on the packer thread, but are accessed from other threads */
-+	struct packer_statistics statistics;
++	/* The physical zone from which to allocate */
++	struct physical_zone *allocation_zone;
++	/* The number of allocations done from the current allocation_zone */
++	block_count_t allocation_count;
++	/* The next zone */
++	struct logical_zone *next;
 +};
 +
-+int vdo_get_compressed_block_fragment(enum block_mapping_state mapping_state,
-+				      struct compressed_block *block,
-+				      u16 *fragment_offset,
-+				      u16 *fragment_size);
++struct logical_zones {
++	/* The vdo whose zones these are */
++	struct vdo *vdo;
++	/* The manager for administrative actions */
++	struct action_manager *manager;
++	/* The number of zones */
++	zone_count_t zone_count;
++	/* The logical zones themselves */
++	struct logical_zone zones[];
++};
 +
-+int __must_check
-+vdo_make_packer(struct vdo *vdo, block_count_t bin_count, struct packer **packer_ptr);
++int __must_check vdo_make_logical_zones(struct vdo *vdo, struct logical_zones **zones_ptr);
 +
-+void vdo_free_packer(struct packer *packer);
++void vdo_free_logical_zones(struct logical_zones *zones);
 +
-+struct packer_statistics __must_check vdo_get_packer_statistics(const struct packer *packer);
++void vdo_drain_logical_zones(struct logical_zones *zones,
++			     const struct admin_state_code *operation,
++			     struct vdo_completion *completion);
 +
-+void vdo_attempt_packing(struct data_vio *data_vio);
++void vdo_resume_logical_zones(struct logical_zones *zones, struct vdo_completion *parent);
 +
-+void vdo_flush_packer(struct packer *packer);
++void vdo_increment_logical_zone_flush_generation(struct logical_zone *zone,
++						 sequence_number_t expected_generation);
 +
-+void vdo_remove_lock_holder_from_packer(struct vdo_completion *completion);
++void vdo_acquire_flush_generation_lock(struct data_vio *data_vio);
 +
-+void vdo_increment_packer_flush_generation(struct packer *packer);
++void vdo_release_flush_generation_lock(struct data_vio *data_vio);
 +
-+void vdo_drain_packer(struct packer *packer, struct vdo_completion *completion);
++struct physical_zone * __must_check vdo_get_next_allocation_zone(struct logical_zone *zone);
 +
-+void vdo_resume_packer(struct packer *packer, struct vdo_completion *parent);
++void vdo_dump_logical_zone(const struct logical_zone *zone);
 +
-+void vdo_dump_packer(const struct packer *packer);
-+
-+#endif /* VDO_PACKER_H */
++#endif /* VDO_LOGICAL_ZONE_H */
 -- 
 2.40.1
 
