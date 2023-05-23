@@ -4,99 +4,98 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C0378C7EE26
-	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 21:46:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id EF07FC7EE23
+	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 21:46:20 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684878378;
+	s=mimecast20190719; t=1684878380;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=6s+bZG8o0NL+M1l8QMTf8fE7+f90B0VuLvAS9mqMIAM=;
-	b=VV7hPE4MdTdQpskTNcgNTDVuakiAZ2CAEkjDf3lG28E2VAfnNBULnM9syTMzTAUcvRRkhc
-	eSR0X0KLDx1XJLlGnPV3VtqWjc1s5P7db5mbmY3Ev2KiEUoxhvSBznXHjkb9TT50+efN0Y
-	E/lcFUrGgh4/UKSyTJblPpt+++tmckM=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=PhkcebSBxnRUVRMdI89k6/Dt5nP2r7dTRKivzejSb3I=;
+	b=Y1vdCPXa2ECJBpGuDrjirkLL5fajIGpO0NDz1BiIMXSeUgoF7fAimyonbUUc9nZKFXRF8p
+	cXw2ad70LPIO8i96VtwqnG7Fx/e9X1RAa16axUySTElSUYK7mHE/SI0ZrAPjsLbT1Qf8VY
+	cR7woZP4XS4fYB1qL3bQnR7ItPlUObQ=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-482-t5YmGQdtPSCdG-ITGqeJ2A-1; Tue, 23 May 2023 17:46:14 -0400
-X-MC-Unique: t5YmGQdtPSCdG-ITGqeJ2A-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-218-2_FYvNGvOPO4gdDW4xtFLw-1; Tue, 23 May 2023 17:46:16 -0400
+X-MC-Unique: 2_FYvNGvOPO4gdDW4xtFLw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BF5BC803469;
-	Tue, 23 May 2023 21:46:12 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 243AA1C07587;
+	Tue, 23 May 2023 21:46:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A460A2166B27;
-	Tue, 23 May 2023 21:46:12 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0E9301121314;
+	Tue, 23 May 2023 21:46:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 738CB19465BA;
-	Tue, 23 May 2023 21:46:12 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B83721946A45;
+	Tue, 23 May 2023 21:46:13 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 5FCC319465BC
- for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 21:46:11 +0000 (UTC)
+ ESMTP id C95EF19465BA
+ for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 21:46:12 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 530152166B27; Tue, 23 May 2023 21:46:11 +0000 (UTC)
+ id BC3B01121319; Tue, 23 May 2023 21:46:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 49BAF2166B25
- for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:11 +0000 (UTC)
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B42551121315
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:12 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 213E2811E8D
- for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:11 +0000 (UTC)
-Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
- [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8BDD485A5BF
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:12 +0000 (UTC)
+Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
+ [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-232-jAdZSutUPmaSFtCL9hvEiw-1; Tue, 23 May 2023 17:46:09 -0400
-X-MC-Unique: jAdZSutUPmaSFtCL9hvEiw-1
-Received: by mail-qk1-f200.google.com with SMTP id
- af79cd13be357-75b131362e3so33460185a.0
- for <dm-devel@redhat.com>; Tue, 23 May 2023 14:46:09 -0700 (PDT)
+ us-mta-110-lZMUoT1NMc2KbearzFk2dw-1; Tue, 23 May 2023 17:46:11 -0400
+X-MC-Unique: lZMUoT1NMc2KbearzFk2dw-1
+Received: by mail-qk1-f197.google.com with SMTP id
+ af79cd13be357-75b12375915so60237385a.0
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 14:46:11 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1684878369; x=1687470369;
+ d=1e100.net; s=20221208; t=1684878370; x=1687470370;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=fzAbTlRzB1J3jZ/djzQp4nVjLzXI4QKgpvLkpCG4kEA=;
- b=W32fM7m4ooYGXbGNI5fzjGuTL5AZB1edrNS+OhPWDi1xYUJIhBStgefu4vGEM3DdPL
- t1W7C7QSJH/FNbOvjlL95vXr/F5UUBJogIYh+i5OhvVrk8z6F1SUOPiXJ+0bfQm5Kjih
- KsJuKm3imRGeRVKZ+T88iya3QGCK3pKaIvwFnMlFeJKrCgHqyjxpkxtsrAf5rU5NJFSA
- z9iVRxh/wZui0n+CCReiDRB7Aove9VEAS8+slA5XdDxA9rYRXIMPw1n7qiwkl+erfoTt
- 3oCftwc7g47PMXXiI5iSSiQU3VuZcH4FtQR+VcFqbGp5YDF/HomhQWNu8xApVo9YsIC7
- 7ekQ==
-X-Gm-Message-State: AC+VfDygySeQc3h4b8myVOWzZrKV1iNqJc0Qjb+Nsc8cxdB88SXW1xTl
- jvA5BjlEGaic6GUgYcqO/fMd9Djuas+u7uPU+OjZc9Y7SyOMN+kDYS9EQ4gTW+SYusmZtYoFBuk
- Vsek4GmV+PssWHhJOg/mMqy5F4Iw75L10I02xH82Hzm6a812Mcyt/978yhVR6430NVC8TIVEe
-X-Received: by 2002:a37:654e:0:b0:75b:23a1:41b with SMTP id
- z75-20020a37654e000000b0075b23a1041bmr5478358qkb.49.1684878368014; 
- Tue, 23 May 2023 14:46:08 -0700 (PDT)
-X-Google-Smtp-Source: ACHHUZ6vJBgs57u2ybS9YETf1/p3peJ/yKlOVCIR7t5J8a85bus5FPMWQFCHfiZhn1cHokAHp/J/+w==
-X-Received: by 2002:a37:654e:0:b0:75b:23a1:41b with SMTP id
- z75-20020a37654e000000b0075b23a1041bmr5478279qkb.49.1684878366612; 
- Tue, 23 May 2023 14:46:06 -0700 (PDT)
+ bh=K2caBkVEDZKNMLKBt4HsybLYgsdA0PUHBrfEN9eDHo0=;
+ b=kfEKWYaVx7pGMAwHBxB5hLGgCGk0nnctaj15Ll0sQ8PxiHB9x5j8it9nyTfSS5MXmR
+ nJDz+4E/POqA6KyHXitbmjQZtWa34ewltucURMb76vxlQhXzf2ZodZq5r+TgZMdljnAA
+ 8mf51wfwt1UKEbQtPBRzNr8+XopnUn3p1b6hNj4mzMO3SuV8CQxQtnOBNMCqunsvWhYp
+ jaRz1y+NJusHnCvFOwVU3G/VXb4md2z99AOCHU+AWZGj2e1upzPR1aXU8U//243v3eaB
+ PvpipCU/LanX5sZP/YygENQWT82Lhhmin6uK7x24n3H2ds9P7iRof0RieyiZEE8Nhk0L
+ KWzg==
+X-Gm-Message-State: AC+VfDyskrUQh+GpXCTt8QlnTTDgbpyxtcNFNcGccgpRldHgzVFn1wcC
+ 7hyKovZKjvLpDd0Prcr/NZg1JNVgmqAEzx30K1sHKP1UAaBroRWZjQ9u6MaxNFeAwytS6HM83gx
+ fSUL7RCIJbYW5NoIQzUnb+8k0TIGriQGWS+eZaiLOlEVR4ZgCAqVRRQSRTAdwAMgn/Kwt0QOP
+X-Received: by 2002:a05:620a:688f:b0:75b:23a0:de8d with SMTP id
+ rv15-20020a05620a688f00b0075b23a0de8dmr6289251qkn.11.1684878369216; 
+ Tue, 23 May 2023 14:46:09 -0700 (PDT)
+X-Google-Smtp-Source: ACHHUZ4zahBRWobs0fOfDPQj2IScJChqj6LQVkZxRVuwF/6TcN6WGVYg0gn01ZKCf83WkWuPoXpnmw==
+X-Received: by 2002:a05:620a:688f:b0:75b:23a0:de8d with SMTP id
+ rv15-20020a05620a688f00b0075b23a0de8dmr6289158qkn.11.1684878367460; 
+ Tue, 23 May 2023 14:46:07 -0700 (PDT)
 Received: from bf36-1.. (173-166-2-198-newengland.hfc.comcastbusiness.net.
  [173.166.2.198]) by smtp.gmail.com with ESMTPSA id
- x3-20020ae9e903000000b007592af6fce6sm2234465qkf.43.2023.05.23.14.46.05
+ x3-20020ae9e903000000b007592af6fce6sm2234465qkf.43.2023.05.23.14.46.06
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 23 May 2023 14:46:06 -0700 (PDT)
+ Tue, 23 May 2023 14:46:07 -0700 (PDT)
 From: "J. corwin Coburn" <corwin@redhat.com>
 To: dm-devel@redhat.com,
 	linux-block@vger.kernel.org
-Date: Tue, 23 May 2023 17:45:10 -0400
-Message-Id: <20230523214539.226387-11-corwin@redhat.com>
+Date: Tue, 23 May 2023 17:45:11 -0400
+Message-Id: <20230523214539.226387-12-corwin@redhat.com>
 In-Reply-To: <20230523214539.226387-1-corwin@redhat.com>
 References: <20230523214539.226387-1-corwin@redhat.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: [dm-devel] [PATCH v2 10/39] Add deduplication index storage
- interface.
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: [dm-devel] [PATCH v2 11/39] Implement the delta index.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -111,2486 +110,2430 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: vdo-devel@redhat.com, "J. corwin Coburn" <corwin@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-This patch adds infrastructure for managing reads and writes to the
-underlying storage layer for the deduplication index. The deduplication
-index uses dm-bufio for all of its reads and writes, so part of this
-infrastructure is managing the various dm-bufio clients required. It also
-adds the buffered reader and buffered writer abstractions, which simplify
-reading and writing metadata structures that span several blocks.
+The delta index is a space and memory efficient alternative to a hashtable.
+Instead of storing the entire key for each entry, the entries are sorted by
+key and only the difference between adjacent keys (the delta) is stored.
+If the keys are evenly distributed, the size of the deltas follows an
+exponential distribution, and the deltas can use a Huffman code to take up
+even less space.
 
-This patch also includes structures and utilities for encoding and decoding
-all of the deduplication index metadata, collectively called the index
-layout.
+This structure allows the index to use many fewer bytes per entry than a
+traditional hash table, but it is slightly more expensive to look up
+entries, because a request must read and sum every entry in a list of
+deltas in order to find a given record. The delta index reduces this lookup
+cost by splitting its key space into many sub-lists, each starting at a
+fixed key value, so that each individual list is short.
 
 Signed-off-by: J. corwin Coburn <corwin@redhat.com>
 ---
- drivers/md/dm-vdo/index-layout.c | 1775 ++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/index-layout.h |   42 +
- drivers/md/dm-vdo/io-factory.c   |  458 ++++++++
- drivers/md/dm-vdo/io-factory.h   |   66 ++
- drivers/md/dm-vdo/numeric.h      |   78 ++
- 5 files changed, 2419 insertions(+)
- create mode 100644 drivers/md/dm-vdo/index-layout.c
- create mode 100644 drivers/md/dm-vdo/index-layout.h
- create mode 100644 drivers/md/dm-vdo/io-factory.c
- create mode 100644 drivers/md/dm-vdo/io-factory.h
- create mode 100644 drivers/md/dm-vdo/numeric.h
+ drivers/md/dm-vdo/delta-index.c | 2018 +++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/delta-index.h |  292 +++++
+ drivers/md/dm-vdo/hash-utils.h  |   66 +
+ 3 files changed, 2376 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/delta-index.c
+ create mode 100644 drivers/md/dm-vdo/delta-index.h
+ create mode 100644 drivers/md/dm-vdo/hash-utils.h
 
-diff --git a/drivers/md/dm-vdo/index-layout.c b/drivers/md/dm-vdo/index-layout.c
+diff --git a/drivers/md/dm-vdo/delta-index.c b/drivers/md/dm-vdo/delta-index.c
 new file mode 100644
-index 00000000000..df231c037ed
+index 00000000000..aec6670e3ff
 --- /dev/null
-+++ b/drivers/md/dm-vdo/index-layout.c
-@@ -0,0 +1,1775 @@
++++ b/drivers/md/dm-vdo/delta-index.c
+@@ -0,0 +1,2018 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright Red Hat
 + */
++#include "delta-index.h"
 +
-+#include "index-layout.h"
-+
-+#include <linux/random.h>
++#include <linux/bitops.h>
++#include <linux/bits.h>
++#include <linux/compiler.h>
++#include <linux/limits.h>
++#include <linux/log2.h>
 +
 +#include "config.h"
++#include "cpu.h"
++#include "errors.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
-+#include "murmurhash3.h"
 +#include "numeric.h"
-+#include "open-chapter.h"
++#include "permassert.h"
++#include "string-utils.h"
 +#include "time-utils.h"
-+#include "volume-index.h"
++#include "uds.h"
 +
 +/*
-+ * The UDS layout on storage media is divided into a number of fixed-size regions, the sizes of
-+ * which are computed when the index is created. Every header and region begins on 4K block
-+ * boundary. Save regions are further sub-divided into regions of their own.
++ * The entries in a delta index could be stored in a single delta list, but to reduce search times
++ * and update costs it uses multiple delta lists. These lists are stored in a single chunk of
++ * memory managed by the delta_zone structure. The delta_zone can move the data around within its
++ * memory, so the location of each delta list is recorded as a bit offset into the memory. Because
++ * the volume index can contain over a million delta lists, we want to be efficient with the size
++ * of the delta list header information. This information is encoded into 16 bytes per list. The
++ * volume index delta list memory can easily exceed 4 gigabits, so a 64 bit value is needed to
++ * address the memory. The volume index delta lists average around 6 kilobits, so 16 bits are
++ * sufficient to store the size of a delta list.
 + *
-+ * Each region has a kind and an instance number. Some kinds only have one instance and therefore
-+ * use RL_SOLE_INSTANCE (-1) as the instance number. The RL_KIND_INDEX used to use instances to
-+ * represent sub-indices; now, however there is only ever one sub-index and therefore one instance.
-+ * The RL_KIND_VOLUME_INDEX uses instances to record which zone is being saved.
++ * Each delta list is stored as a bit stream. Within the delta list encoding, bits and bytes are
++ * numbered in little endian order. Within a byte, bit 0 is the least significant bit (0x1), and
++ * bit 7 is the most significant bit (0x80). Within a bit stream, bit 7 is the most signficant bit
++ * of byte 0, and bit 8 is the least significant bit of byte 1. Within a byte array, a byte's
++ * number corresponds to its index in the array.
 + *
-+ * Every region header has a type and version.
++ * A standard delta list entry is stored as a fixed length payload (the value) followed by a
++ * variable length key (the delta). A collision entry is used when two block names have the same
++ * delta list address. A collision entry always follows a standard entry for the hash with which it
++ * collides, and is encoded with DELTA == 0 with an additional 256 bits field at the end,
++ * containing the full block name. An entry with a delta of 0 at the beginning of a delta list
++ * indicates a normal entry.
 + *
-+ *     +-+-+---------+--------+--------+-+
-+ *     | | |   I N D E X  0   101, 0   | |
-+ *     |H|C+---------+--------+--------+S|
-+ *     |D|f| Volume  | Save   | Save   |e|
-+ *     |R|g| Region  | Region | Region |a|
-+ *     | | | 201, -1 | 202, 0 | 202, 1 |l|
-+ *     +-+-+--------+---------+--------+-+
++ * The delta in each entry is encoded with a variable-length Huffman code to minimize the memory
++ * used by small deltas. The Huffman code is specified by three parameters, which can be computed
++ * from the desired mean delta when the index is full. (See compute_coding constants() for
++ * details.)
 + *
-+ * The header contains the encoded region layout table as well as some index configuration data.
-+ * The sub-index region and its subdivisions are maintained in the same table.
++ * The bit field utilities used to read and write delta entries assume that it is possible to read
++ * some bytes beyond the end of the bit field, so a delta_zone memory allocation is guarded by two
++ * invalid delta lists to prevent reading outside the delta_zone memory. The valid delta lists are
++ * numbered 1 to N, and the guard lists are numbered 0 and N+1. The function to decode the bit
++ * stream include a step that skips over bits set to 0 until the first 1 bit is found. A corrupted
++ * delta list could cause this step to run off the end of the delta_zone memory, so as extra
++ * protection against this happening, the tail guard list is set to all ones.
 + *
-+ * There are two save regions to preserve the old state in case saving the new state is incomplete.
-+ * They are used in alternation. Each save region is further divided into sub-regions.
-+ *
-+ *     +-+-----+------+------+-----+-----+
-+ *     |H| IPM | MI   | MI   |     | OC  |
-+ *     |D|     | zone | zone | ... |     |
-+ *     |R| 301 | 302  | 302  |     | 303 |
-+ *     | | -1  |  0   |  1   |     | -1  |
-+ *     +-+-----+------+------+-----+-----+
-+ *
-+ * The header contains the encoded region layout table as well as index state data for that save.
-+ * Each save also has a unique nonce.
++ * The delta_index supports two different forms. The mutable form is created by
++ * uds_initialize_delta_index(), and is used for the volume index and for open chapter indexes. The
++ * immutable form is created by uds_initialize_delta_index_page(), and is used for closed (and
++ * cached) chapter index pages. The immutable form does not allocate delta list headers or
++ * temporary offsets, and thus is somewhat more memory efficient.
 + */
 +
++/*
++ * This is the largest field size supported by get_field() and set_field(). Any field that is
++ * larger is not guaranteed to fit in a single byte-aligned u32.
++ */
 +enum {
-+	MAGIC_SIZE = 32,
-+	NONCE_INFO_SIZE = 32,
-+	MAX_SAVES = 2,
-+};
-+
-+enum region_kind {
-+	RL_KIND_EMPTY = 0,
-+	RL_KIND_HEADER = 1,
-+	RL_KIND_CONFIG = 100,
-+	RL_KIND_INDEX = 101,
-+	RL_KIND_SEAL = 102,
-+	RL_KIND_VOLUME = 201,
-+	RL_KIND_SAVE = 202,
-+	RL_KIND_INDEX_PAGE_MAP = 301,
-+	RL_KIND_VOLUME_INDEX = 302,
-+	RL_KIND_OPEN_CHAPTER = 303,
-+};
-+
-+/* Some region types are historical and are no longer used. */
-+enum region_type {
-+	RH_TYPE_FREE = 0, /* unused */
-+	RH_TYPE_SUPER = 1,
-+	RH_TYPE_SAVE = 2,
-+	RH_TYPE_CHECKPOINT = 3, /* unused */
-+	RH_TYPE_UNSAVED = 4,
-+};
-+
-+enum {
-+	RL_SOLE_INSTANCE = 65535,
++	MAX_FIELD_BITS = (sizeof(u32) - 1) * BITS_PER_BYTE + 1,
 +};
 +
 +/*
-+ * Super block version 2 is the first released version.
-+ *
-+ * Super block version 3 is the normal version used from RHEL 8.2 onwards.
-+ *
-+ * Super block versions 4 through 6 were incremental development versions and
-+ * are not supported.
-+ *
-+ * Super block version 7 is used for volumes which have been reduced in size by one chapter in
-+ * order to make room to prepend LVM metadata to a volume originally created without lvm. This
-+ * allows the index to retain most its deduplication records.
++ * This is the largest field size supported by get_big_field() and set_big_field(). Any field that
++ * is larger is not guaranteed to fit in a single byte-aligned u64.
 + */
 +enum {
-+	SUPER_VERSION_MINIMUM = 3,
-+	SUPER_VERSION_CURRENT = 3,
-+	SUPER_VERSION_MAXIMUM = 7,
++	MAX_BIG_FIELD_BITS = (sizeof(u64) - 1) * BITS_PER_BYTE + 1,
 +};
-+
-+static const u8 LAYOUT_MAGIC[MAGIC_SIZE] = "*ALBIREO*SINGLE*FILE*LAYOUT*001*";
-+static const u64 REGION_MAGIC = 0x416c6252676e3031; /* 'AlbRgn01' */
-+
-+struct region_header {
-+	u64 magic;
-+	u64 region_blocks;
-+	u16 type;
-+	/* Currently always version 1 */
-+	u16 version;
-+	u16 region_count;
-+	u16 payload;
-+};
-+
-+struct layout_region {
-+	u64 start_block;
-+	u64 block_count;
-+	u32 __unused;
-+	u16 kind;
-+	u16 instance;
-+};
-+
-+struct region_table {
-+	size_t encoded_size;
-+	struct region_header header;
-+	struct layout_region regions[];
-+};
-+
-+struct index_save_data {
-+	u64 timestamp;
-+	u64 nonce;
-+	/* Currently always version 1 */
-+	u32 version;
-+	u32 unused__;
-+};
-+
-+struct index_state_version {
-+	s32 signature;
-+	s32 version_id;
-+};
-+
-+static const struct index_state_version INDEX_STATE_VERSION_301 = {
-+	.signature  = -1,
-+	.version_id = 301,
-+};
-+
-+struct index_state_data301 {
-+	struct index_state_version version;
-+	u64 newest_chapter;
-+	u64 oldest_chapter;
-+	u64 last_save;
-+	u32 unused;
-+	u32 padding;
-+};
-+
-+struct index_save_layout {
-+	unsigned int zone_count;
-+	struct layout_region index_save;
-+	struct layout_region header;
-+	struct layout_region index_page_map;
-+	struct layout_region free_space;
-+	struct layout_region volume_index_zones[MAX_ZONES];
-+	struct layout_region open_chapter;
-+	struct index_save_data save_data;
-+	struct index_state_data301 state_data;
-+};
-+
-+struct sub_index_layout {
-+	u64 nonce;
-+	struct layout_region sub_index;
-+	struct layout_region volume;
-+	struct index_save_layout *saves;
-+};
-+
-+struct super_block_data {
-+	u8 magic_label[MAGIC_SIZE];
-+	u8 nonce_info[NONCE_INFO_SIZE];
-+	u64 nonce;
-+	u32 version;
-+	u32 block_size;
-+	u16 index_count;
-+	u16 max_saves;
-+	/* Padding reflects a blank field on permanent storage */
-+	u8 padding[4];
-+	u64 open_chapter_blocks;
-+	u64 page_map_blocks;
-+	u64 volume_offset;
-+	u64 start_offset;
-+};
-+
-+struct index_layout {
-+	struct io_factory *factory;
-+	size_t factory_size;
-+	off_t offset;
-+	struct super_block_data super;
-+	struct layout_region header;
-+	struct layout_region config;
-+	struct sub_index_layout index;
-+	struct layout_region seal;
-+	u64 total_blocks;
-+};
-+
-+struct save_layout_sizes {
-+	unsigned int save_count;
-+	size_t block_size;
-+	u64 volume_blocks;
-+	u64 volume_index_blocks;
-+	u64 page_map_blocks;
-+	u64 open_chapter_blocks;
-+	u64 save_blocks;
-+	u64 sub_index_blocks;
-+	u64 total_blocks;
-+	size_t total_size;
-+};
-+
-+static inline bool is_converted_super_block(struct super_block_data *super)
-+{
-+	return super->version == 7;
-+}
-+
-+static int __must_check compute_sizes(const struct configuration *config,
-+				      struct save_layout_sizes *sls)
-+{
-+	int result;
-+	struct geometry *geometry = config->geometry;
-+
-+	memset(sls, 0, sizeof(*sls));
-+	sls->save_count = MAX_SAVES;
-+	sls->block_size = UDS_BLOCK_SIZE;
-+	sls->volume_blocks = geometry->bytes_per_volume / sls->block_size;
-+
-+	result = uds_compute_volume_index_save_blocks(config,
-+						      sls->block_size,
-+						      &sls->volume_index_blocks);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "cannot compute index save size");
-+
-+	sls->page_map_blocks =
-+		DIV_ROUND_UP(uds_compute_index_page_map_save_size(geometry), sls->block_size);
-+	sls->open_chapter_blocks =
-+		DIV_ROUND_UP(uds_compute_saved_open_chapter_size(geometry), sls->block_size);
-+	sls->save_blocks =
-+		1 + (sls->volume_index_blocks + sls->page_map_blocks + sls->open_chapter_blocks);
-+	sls->sub_index_blocks = sls->volume_blocks + (sls->save_count * sls->save_blocks);
-+	sls->total_blocks = 3 + sls->sub_index_blocks;
-+	sls->total_size = sls->total_blocks * sls->block_size;
-+
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_compute_index_size(const struct uds_parameters *parameters, u64 *index_size)
-+{
-+	int result;
-+	struct configuration *index_config;
-+	struct save_layout_sizes sizes;
-+
-+	if (index_size == NULL) {
-+		uds_log_error("Missing output size pointer");
-+		return -EINVAL;
-+	}
-+
-+	result = uds_make_configuration(parameters, &index_config);
-+	if (result != UDS_SUCCESS) {
-+		uds_log_error_strerror(result, "cannot compute index size");
-+		return uds_map_to_system_error(result);
-+	}
-+
-+	result = compute_sizes(index_config, &sizes);
-+	uds_free_configuration(index_config);
-+	if (result != UDS_SUCCESS)
-+		return uds_map_to_system_error(result);
-+
-+	*index_size = sizes.total_size;
-+	return UDS_SUCCESS;
-+}
-+
-+/* Create unique data using the current time and a pseudorandom number. */
-+static void create_unique_nonce_data(u8 *buffer)
-+{
-+	ktime_t now = current_time_ns(CLOCK_REALTIME);
-+	u32 rand;
-+	size_t offset = 0;
-+
-+	get_random_bytes(&rand, sizeof(u32));
-+	memcpy(buffer + offset, &now, sizeof(now));
-+	offset += sizeof(now);
-+	memcpy(buffer + offset, &rand, sizeof(rand));
-+	offset += sizeof(rand);
-+	while (offset < NONCE_INFO_SIZE) {
-+		size_t len = min(NONCE_INFO_SIZE - offset, offset);
-+
-+		memcpy(buffer + offset, buffer, len);
-+		offset += len;
-+	}
-+}
-+
-+static u64 hash_stuff(u64 start, const void *data, size_t len)
-+{
-+	u32 seed = start ^ (start >> 27);
-+	u8 hash_buffer[16];
-+
-+	murmurhash3_128(data, len, seed, hash_buffer);
-+	return get_unaligned_le64(hash_buffer + 4);
-+}
-+
-+/* Generate a primary nonce from the provided data. */
-+static u64 generate_primary_nonce(const void *data, size_t len)
-+{
-+	return hash_stuff(0xa1b1e0fc, data, len);
-+}
 +
 +/*
-+ * Deterministically generate a secondary nonce from an existing nonce and some arbitrary data by
-+ * hashing the original nonce and the data to produce a new nonce.
++ * This is the number of guard bytes needed at the end of the memory byte array when using the bit
++ * utilities. These utilities call get_big_field() and set_big_field(), which can access up to 7
++ * bytes beyond the end of the desired field. The definition is written to make it clear how this
++ * value is derived.
 + */
-+static u64 generate_secondary_nonce(u64 nonce, const void *data, size_t len)
++enum {
++	POST_FIELD_GUARD_BYTES = sizeof(u64) - 1,
++};
++
++/* The number of guard bits that are needed in the tail guard list */
++enum {
++	GUARD_BITS = POST_FIELD_GUARD_BYTES * BITS_PER_BYTE
++};
++
++/*
++ * The maximum size of a single delta list in bytes. We count guard bytes in this value because a
++ * buffer of this size can be used with move_bits().
++ */
++enum {
++	DELTA_LIST_MAX_BYTE_COUNT =
++		((U16_MAX + BITS_PER_BYTE) / BITS_PER_BYTE + POST_FIELD_GUARD_BYTES)
++};
++
++/* The number of extra bytes and bits needed to store a collision entry */
++enum {
++	COLLISION_BYTES = UDS_RECORD_NAME_SIZE,
++	COLLISION_BITS = COLLISION_BYTES * BITS_PER_BYTE
++};
++
++/*
++ * Immutable delta lists are packed into pages containing a header that encodes the delta list
++ * information into 19 bits per list (64KB bit offset).
++ */
++
++enum { IMMUTABLE_HEADER_SIZE = 19 };
++
++/*
++ * Constants and structures for the saved delta index. "DI" is for delta_index, and -##### is a
++ * number to increment when the format of the data changes.
++ */
++
++enum {
++	MAGIC_SIZE = 8,
++};
++
++static const char DELTA_INDEX_MAGIC[] = "DI-00002";
++
++struct delta_index_header {
++	char magic[MAGIC_SIZE];
++	u32 zone_number;
++	u32 zone_count;
++	u32 first_list;
++	u32 list_count;
++	u64 record_count;
++	u64 collision_count;
++};
++
++/*
++ * Header data used for immutable delta index pages. This data is followed by the delta list offset
++ * table.
++ */
++struct delta_page_header {
++	/* Externally-defined nonce */
++	u64 nonce;
++	/* The virtual chapter number */
++	u64 virtual_chapter_number;
++	/* Index of the first delta list on the page */
++	u16 first_list;
++	/* Number of delta lists on the page */
++	u16 list_count;
++} __packed;
++
++static inline u64 get_delta_list_byte_start(const struct delta_list *delta_list)
 +{
-+	return hash_stuff(nonce + 1, data, len);
++	return delta_list->start / BITS_PER_BYTE;
 +}
 +
-+static int __must_check open_layout_reader(struct index_layout *layout,
-+					   struct layout_region *lr,
-+					   off_t offset,
-+					   struct buffered_reader **reader_ptr)
++static inline u16 get_delta_list_byte_size(const struct delta_list *delta_list)
 +{
-+	return uds_make_buffered_reader(layout->factory,
-+					lr->start_block + offset,
-+					lr->block_count,
-+					reader_ptr);
++	unsigned int bit_offset = delta_list->start % BITS_PER_BYTE;
++
++	return BITS_TO_BYTES(bit_offset + delta_list->size);
 +}
 +
-+static int open_region_reader(struct index_layout *layout,
-+			      struct layout_region *region,
-+			      struct buffered_reader **reader_ptr)
++static void rebalance_delta_zone(const struct delta_zone *delta_zone, u32 first, u32 last)
 +{
-+	return open_layout_reader(layout, region, -layout->super.start_offset, reader_ptr);
++	struct delta_list *delta_list;
++	u64 new_start;
++
++	if (first == last) {
++		/* Only one list is moving, and we know there is space. */
++		delta_list = &delta_zone->delta_lists[first];
++		new_start = delta_zone->new_offsets[first];
++		if (delta_list->start != new_start) {
++			u64 source;
++			u64 destination;
++
++			source = get_delta_list_byte_start(delta_list);
++			delta_list->start = new_start;
++			destination = get_delta_list_byte_start(delta_list);
++			memmove(delta_zone->memory + destination,
++				delta_zone->memory + source,
++				get_delta_list_byte_size(delta_list));
++		}
++	} else {
++		/*
++		 * There is more than one list. Divide the problem in half, and use recursive calls
++		 * to process each half. Note that after this computation, first <= middle, and
++		 * middle < last.
++		 */
++		u32 middle = (first + last) / 2;
++
++		delta_list = &delta_zone->delta_lists[middle];
++		new_start = delta_zone->new_offsets[middle];
++
++		/*
++		 * The direction that our middle list is moving determines which half of the
++		 * problem must be processed first.
++		 */
++		if (new_start > delta_list->start) {
++			rebalance_delta_zone(delta_zone, middle + 1, last);
++			rebalance_delta_zone(delta_zone, first, middle);
++		} else {
++			rebalance_delta_zone(delta_zone, first, middle);
++			rebalance_delta_zone(delta_zone, middle + 1, last);
++		}
++	}
 +}
 +
-+static int __must_check open_layout_writer(struct index_layout *layout,
-+					   struct layout_region *lr,
-+					   off_t offset,
-+					   struct buffered_writer **writer_ptr)
++static inline size_t get_zone_memory_size(unsigned int zone_count, size_t memory_size)
 +{
-+	return uds_make_buffered_writer(layout->factory,
-+					lr->start_block + offset,
-+					lr->block_count,
-+					writer_ptr);
++	/* Round up so that each zone is a multiple of 64K in size. */
++	enum {
++		ALLOC_BOUNDARY = 64 * 1024,
++	};
++
++	return (memory_size / zone_count + ALLOC_BOUNDARY - 1) & -ALLOC_BOUNDARY;
 +}
 +
-+static int open_region_writer(struct index_layout *layout,
-+			      struct layout_region *region,
-+			      struct buffered_writer **writer_ptr)
++void uds_reset_delta_index(const struct delta_index *delta_index)
 +{
-+	return open_layout_writer(layout, region, -layout->super.start_offset, writer_ptr);
-+}
++	unsigned int z;
 +
-+static void
-+generate_super_block_data(struct save_layout_sizes *sls, struct super_block_data *super)
-+{
-+	memset(super, 0, sizeof(*super));
-+	memcpy(super->magic_label, LAYOUT_MAGIC, MAGIC_SIZE);
-+	create_unique_nonce_data(super->nonce_info);
-+
-+	super->nonce = generate_primary_nonce(super->nonce_info, sizeof(super->nonce_info));
-+	super->version = SUPER_VERSION_CURRENT;
-+	super->block_size = sls->block_size;
-+	super->index_count = 1;
-+	super->max_saves = sls->save_count;
-+	super->open_chapter_blocks = sls->open_chapter_blocks;
-+	super->page_map_blocks = sls->page_map_blocks;
-+	super->volume_offset = 0;
-+	super->start_offset = 0;
-+}
-+
-+static void define_sub_index_nonce(struct index_layout *layout)
-+{
-+	struct sub_index_nonce_data {
++	/*
++	 * Initialize all delta lists to be empty. We keep 2 extra delta list descriptors, one
++	 * before the first real entry and one after so that we don't need to bounds check the
++	 * array access when calculating preceding and following gap sizes.
++	 */
++	for (z = 0; z < delta_index->zone_count; z++) {
++		u64 list_bits;
++		u64 spacing;
 +		u64 offset;
-+		u16 index_id;
-+	};
-+	struct sub_index_layout *sil = &layout->index;
-+	u64 primary_nonce = layout->super.nonce;
-+	u8 buffer[sizeof(struct sub_index_nonce_data)] = { 0 };
-+	size_t offset = 0;
++		unsigned int i;
++		struct delta_zone *zone = &delta_index->delta_zones[z];
++		struct delta_list *delta_lists = zone->delta_lists;
 +
-+	encode_u64_le(buffer, &offset, sil->sub_index.start_block);
-+	encode_u16_le(buffer, &offset, 0);
-+	sil->nonce = generate_secondary_nonce(primary_nonce, buffer, sizeof(buffer));
-+	if (sil->nonce == 0)
-+		sil->nonce = generate_secondary_nonce(~primary_nonce + 1, buffer, sizeof(buffer));
++		/* Zeroing the delta list headers initializes the head guard list correctly. */
++		memset(delta_lists, 0, (zone->list_count + 2) * sizeof(struct delta_list));
++
++		/* Set all the bits in the end guard list. */
++		list_bits = (u64) zone->size * BITS_PER_BYTE - GUARD_BITS;
++		delta_lists[zone->list_count + 1].start = list_bits;
++		delta_lists[zone->list_count + 1].size = GUARD_BITS;
++		memset(zone->memory + (list_bits / BITS_PER_BYTE), ~0, POST_FIELD_GUARD_BYTES);
++
++		/* Evenly space out the real delta lists by setting regular offsets. */
++		spacing = list_bits / zone->list_count;
++		offset = spacing / 2;
++		for (i = 1; i <= zone->list_count; i++) {
++			delta_lists[i].start = offset;
++			offset += spacing;
++		}
++
++		/* Update the statistics. */
++		zone->discard_count += zone->record_count;
++		zone->record_count = 0;
++		zone->collision_count = 0;
++	}
 +}
 +
-+static void
-+setup_sub_index(struct index_layout *layout, u64 start_block, struct save_layout_sizes *sls)
++/* Compute the Huffman coding parameters for the given mean delta. The Huffman code is specified by
++ * three parameters:
++ *
++ *  MINBITS   The number of bits in the smallest code
++ *  BASE      The number of values coded using a code of length MINBITS
++ *  INCR      The number of values coded by using one additional bit
++ *
++ * These parameters are related by this equation:
++ *
++ *	BASE + INCR == 1 << MINBITS
++ *
++ * The math for the Huffman code of an exponential distribution says that
++ *
++ *	INCR = log(2) * MEAN_DELTA
++ *
++ * Then use the smallest MINBITS value so that
++ *
++ *	(1 << MINBITS) > INCR
++ *
++ * And then
++ *
++ *	BASE = (1 << MINBITS) - INCR
++ *
++ * Now the index can generate a code such that
++ * - The first BASE values code using MINBITS bits.
++ * - The next INCR values code using MINBITS+1 bits.
++ * - The next INCR values code using MINBITS+2 bits.
++ * - (and so on).
++ */
++static void compute_coding_constants(u32 mean_delta, u16 *min_bits, u32 *min_keys, u32 *incr_keys)
 +{
-+	struct sub_index_layout *sil = &layout->index;
-+	u64 next_block = start_block;
-+	unsigned int i;
++	/*
++	 * We want to compute the rounded value of log(2) * mean_delta. Since we cannot always use
++	 * floating point, use a really good integer approximation.
++	 */
++	*incr_keys = (836158UL * mean_delta + 603160UL) / 1206321UL;
++	*min_bits = bits_per(*incr_keys + 1);
++	*min_keys = (1 << *min_bits) - *incr_keys;
++}
 +
-+	sil->sub_index = (struct layout_region) {
-+		.start_block = start_block,
-+		.block_count = sls->sub_index_blocks,
-+		.kind = RL_KIND_INDEX,
-+		.instance = 0,
-+	};
++void uds_uninitialize_delta_index(struct delta_index *delta_index)
++{
++	unsigned int z;
 +
-+	sil->volume = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = sls->volume_blocks,
-+		.kind = RL_KIND_VOLUME,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
++	if (delta_index->delta_zones == NULL)
++		return;
 +
-+	next_block += sls->volume_blocks;
-+
-+	for (i = 0; i < sls->save_count; i++) {
-+		sil->saves[i].index_save = (struct layout_region) {
-+			.start_block = next_block,
-+			.block_count = sls->save_blocks,
-+			.kind = RL_KIND_SAVE,
-+			.instance = i,
-+		};
-+
-+		next_block += sls->save_blocks;
++	for (z = 0; z < delta_index->zone_count; z++) {
++		UDS_FREE(UDS_FORGET(delta_index->delta_zones[z].new_offsets));
++		UDS_FREE(UDS_FORGET(delta_index->delta_zones[z].delta_lists));
++		UDS_FREE(UDS_FORGET(delta_index->delta_zones[z].memory));
 +	}
 +
-+	define_sub_index_nonce(layout);
++	UDS_FREE(delta_index->delta_zones);
++	memset(delta_index, 0, sizeof(struct delta_index));
 +}
 +
-+static void initialize_layout(struct index_layout *layout, struct save_layout_sizes *sls)
++static int initialize_delta_zone(struct delta_zone *delta_zone,
++				 size_t size,
++				 u32 first_list,
++				 u32 list_count,
++				 u32 mean_delta,
++				 u32 payload_bits,
++				 u8 tag)
 +{
-+	u64 next_block = layout->offset / sls->block_size;
++	int result;
 +
-+	layout->total_blocks = sls->total_blocks;
-+	generate_super_block_data(sls, &layout->super);
-+	layout->header = (struct layout_region) {
-+		.start_block = next_block++,
-+		.block_count = 1,
-+		.kind = RL_KIND_HEADER,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
++	result = UDS_ALLOCATE(size, u8, "delta list", &delta_zone->memory);
++	if (result != UDS_SUCCESS)
++		return result;
 +
-+	layout->config = (struct layout_region) {
-+		.start_block = next_block++,
-+		.block_count = 1,
-+		.kind = RL_KIND_CONFIG,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
++	result = UDS_ALLOCATE(list_count + 2, u64, "delta list temp", &delta_zone->new_offsets);
++	if (result != UDS_SUCCESS)
++		return result;
 +
-+	setup_sub_index(layout, next_block, sls);
-+	next_block += sls->sub_index_blocks;
++	/* Allocate the delta lists. */
++	result = UDS_ALLOCATE(list_count + 2,
++			      struct delta_list,
++			      "delta lists",
++			      &delta_zone->delta_lists);
++	if (result != UDS_SUCCESS)
++		return result;
 +
-+	layout->seal = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = 1,
-+		.kind = RL_KIND_SEAL,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
++	compute_coding_constants(mean_delta,
++				 &delta_zone->min_bits,
++				 &delta_zone->min_keys,
++				 &delta_zone->incr_keys);
++	delta_zone->value_bits = payload_bits;
++	delta_zone->buffered_writer = NULL;
++	delta_zone->size = size;
++	delta_zone->rebalance_time = 0;
++	delta_zone->rebalance_count = 0;
++	delta_zone->record_count = 0;
++	delta_zone->collision_count = 0;
++	delta_zone->discard_count = 0;
++	delta_zone->overflow_count = 0;
++	delta_zone->first_list = first_list;
++	delta_zone->list_count = list_count;
++	delta_zone->tag = tag;
++
++	return UDS_SUCCESS;
 +}
 +
-+static int __must_check
-+make_index_save_region_table(struct index_save_layout *isl, struct region_table **table_ptr)
++int uds_initialize_delta_index(struct delta_index *delta_index,
++			       unsigned int zone_count,
++			       u32 list_count,
++			       u32 mean_delta,
++			       u32 payload_bits,
++			       size_t memory_size,
++			       u8 tag)
 +{
 +	int result;
 +	unsigned int z;
-+	struct region_table *table;
-+	struct layout_region *lr;
-+	u16 region_count;
-+	size_t payload;
-+	size_t type;
++	size_t zone_memory;
 +
-+	if (isl->zone_count > 0) {
-+		/*
-+		 * Normal save regions: header, page map, volume index zones,
-+		 * open chapter, and possibly free space.
-+		 */
-+		region_count = 3 + isl->zone_count;
-+		if (isl->free_space.block_count > 0)
-+			region_count++;
-+
-+		payload = sizeof(isl->save_data) + sizeof(isl->state_data);
-+		type = RH_TYPE_SAVE;
-+	} else {
-+		/* Empty save regions: header, page map, free space. */
-+		region_count = 3;
-+		payload = sizeof(isl->save_data);
-+		type = RH_TYPE_UNSAVED;
-+	}
-+
-+	result = UDS_ALLOCATE_EXTENDED(struct region_table,
-+				       region_count,
-+				       struct layout_region,
-+				       "layout region table for ISL",
-+				       &table);
++	result = UDS_ALLOCATE(zone_count,
++			      struct delta_zone,
++			      "Delta Index Zones",
++			      &delta_index->delta_zones);
 +	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	lr = &table->regions[0];
-+	*lr++ = isl->header;
-+	*lr++ = isl->index_page_map;
-+	for (z = 0; z < isl->zone_count; z++)
-+		*lr++ = isl->volume_index_zones[z];
++	delta_index->zone_count = zone_count;
++	delta_index->list_count = list_count;
++	delta_index->lists_per_zone = DIV_ROUND_UP(list_count, zone_count);
++	delta_index->memory_size = 0;
++	delta_index->mutable = true;
++	delta_index->tag = tag;
 +
-+	if (isl->zone_count > 0)
-+		*lr++ = isl->open_chapter;
++	for (z = 0; z < zone_count; z++) {
++		u32 lists_in_zone = delta_index->lists_per_zone;
++		u32 first_list_in_zone = z * lists_in_zone;
 +
-+	if (isl->free_space.block_count > 0)
-+		*lr++ = isl->free_space;
++		if (z == zone_count - 1) {
++			/*
++			 * The last zone gets fewer lists if zone_count doesn't evenly divide
++			 * list_count. We'll have an underflow if the assertion below doesn't hold.
++			 */
++			if (delta_index->list_count <= first_list_in_zone) {
++				uds_uninitialize_delta_index(delta_index);
++				return uds_log_error_strerror(UDS_INVALID_ARGUMENT,
++							      "%u delta lists not enough for %u zones",
++							      list_count,
++							      zone_count);
++			}
++			lists_in_zone = delta_index->list_count - first_list_in_zone;
++		}
 +
-+	table->header = (struct region_header) {
-+		.magic = REGION_MAGIC,
-+		.region_blocks = isl->index_save.block_count,
-+		.type = type,
-+		.version = 1,
-+		.region_count = region_count,
-+		.payload = payload,
-+	};
++		zone_memory = get_zone_memory_size(zone_count, memory_size);
++		result = initialize_delta_zone(&delta_index->delta_zones[z],
++					       zone_memory,
++					       first_list_in_zone,
++					       lists_in_zone,
++					       mean_delta,
++					       payload_bits,
++					       tag);
++		if (result != UDS_SUCCESS) {
++			uds_uninitialize_delta_index(delta_index);
++			return result;
++		}
 +
-+	table->encoded_size = (sizeof(struct region_header) + payload +
-+			       region_count * sizeof(struct layout_region));
-+	*table_ptr = table;
++		delta_index->memory_size +=
++			(sizeof(struct delta_zone) + zone_memory +
++			 (lists_in_zone + 2) * (sizeof(struct delta_list) + sizeof(u64)));
++	}
++
++	uds_reset_delta_index(delta_index);
 +	return UDS_SUCCESS;
 +}
 +
-+static void encode_region_table(u8 *buffer, size_t *offset, struct region_table *table)
++/* Read a bit field from an arbitrary bit boundary. */
++static inline u32 get_field(const u8 *memory, u64 offset, u8 size)
++{
++	const void *addr = memory + offset / BITS_PER_BYTE;
++
++	return (get_unaligned_le32(addr) >> (offset % BITS_PER_BYTE)) & ((1 << size) - 1);
++}
++
++/* Write a bit field to an arbitrary bit boundary. */
++static inline void set_field(u32 value, u8 *memory, u64 offset, u8 size)
++{
++	void *addr = memory + offset / BITS_PER_BYTE;
++	int shift = offset % BITS_PER_BYTE;
++	u32 data = get_unaligned_le32(addr);
++
++	data &= ~(((1 << size) - 1) << shift);
++	data |= value << shift;
++	put_unaligned_le32(data, addr);
++}
++
++/* Get the bit offset to the immutable delta list header. */
++static inline u32 get_immutable_header_offset(u32 list_number)
++{
++	return sizeof(struct delta_page_header) * BITS_PER_BYTE +
++		list_number * IMMUTABLE_HEADER_SIZE;
++}
++
++/* Get the bit offset to the start of the immutable delta list bit stream. */
++static inline u32 get_immutable_start(const u8 *memory, u32 list_number)
++{
++	return get_field(memory, get_immutable_header_offset(list_number), IMMUTABLE_HEADER_SIZE);
++}
++
++/* Set the bit offset to the start of the immutable delta list bit stream. */
++static inline void set_immutable_start(u8 *memory, u32 list_number, u32 start)
++{
++	set_field(start, memory, get_immutable_header_offset(list_number), IMMUTABLE_HEADER_SIZE);
++}
++
++static bool verify_delta_index_page(u64 nonce,
++				    u16 list_count,
++				    u64 expected_nonce,
++				    u8 *memory,
++				    size_t memory_size)
 +{
 +	unsigned int i;
 +
-+	encode_u64_le(buffer, offset, REGION_MAGIC);
-+	encode_u64_le(buffer, offset, table->header.region_blocks);
-+	encode_u16_le(buffer, offset, table->header.type);
-+	encode_u16_le(buffer, offset, table->header.version);
-+	encode_u16_le(buffer, offset, table->header.region_count);
-+	encode_u16_le(buffer, offset, table->header.payload);
++	/*
++	 * Verify the nonce. A mismatch can happen here during rebuild if we haven't written the
++	 * entire volume at least once.
++	 */
++	if (nonce != expected_nonce)
++		return false;
 +
-+	for (i = 0; i < table->header.region_count; i++) {
-+		encode_u64_le(buffer, offset, table->regions[i].start_block);
-+		encode_u64_le(buffer, offset, table->regions[i].block_count);
-+		encode_u32_le(buffer, offset, 0);
-+		encode_u16_le(buffer, offset, table->regions[i].kind);
-+		encode_u16_le(buffer, offset, table->regions[i].instance);
++	/* Verify that the number of delta lists can fit in the page. */
++	if (list_count > ((memory_size - sizeof(struct delta_page_header)) *
++			  BITS_PER_BYTE / IMMUTABLE_HEADER_SIZE))
++		return false;
++
++	/*
++	 * Verify that the first delta list is immediately after the last delta
++	 * list header.
++	 */
++	if (get_immutable_start(memory, 0) != get_immutable_header_offset(list_count + 1))
++		return false;
++
++	/* Verify that the lists are in the correct order. */
++	for (i = 0; i < list_count; i++)
++		if (get_immutable_start(memory, i) > get_immutable_start(memory, i + 1))
++			return false;
++
++	/*
++	 * Verify that the last list ends on the page, and that there is room
++	 * for the post-field guard bits.
++	 */
++	if (get_immutable_start(memory, list_count) >
++	    (memory_size - POST_FIELD_GUARD_BYTES) * BITS_PER_BYTE)
++		return false;
++
++	/* Verify that the guard bytes are correctly set to all ones. */
++	for (i = 0; i < POST_FIELD_GUARD_BYTES; i++) {
++		if (memory[memory_size - POST_FIELD_GUARD_BYTES + i] != (u8) ~0)
++			return false;
++	}
++
++	/* All verifications passed. */
++	return true;
++}
++
++/* Initialize a delta index page to refer to a supplied page. */
++int uds_initialize_delta_index_page(struct delta_index_page *delta_index_page,
++				    u64 expected_nonce,
++				    u32 mean_delta,
++				    u32 payload_bits,
++				    u8 *memory,
++				    size_t memory_size)
++{
++	u64 nonce;
++	u64 vcn;
++	u64 first_list;
++	u64 list_count;
++	struct delta_page_header *header = (struct delta_page_header *) memory;
++	struct delta_zone *delta_zone = &delta_index_page->delta_zone;
++	const u8 *nonce_addr = (const u8 *) &header->nonce;
++	const u8 *vcn_addr = (const u8 *) &header->virtual_chapter_number;
++	const u8 *first_list_addr = (const u8 *) &header->first_list;
++	const u8 *list_count_addr = (const u8 *) &header->list_count;
++
++	/* First assume that the header is little endian. */
++	nonce = get_unaligned_le64(nonce_addr);
++	vcn = get_unaligned_le64(vcn_addr);
++	first_list = get_unaligned_le16(first_list_addr);
++	list_count = get_unaligned_le16(list_count_addr);
++	if (!verify_delta_index_page(nonce, list_count, expected_nonce, memory, memory_size)) {
++		/* If that fails, try big endian. */
++		nonce = get_unaligned_be64(nonce_addr);
++		vcn = get_unaligned_be64(vcn_addr);
++		first_list = get_unaligned_be16(first_list_addr);
++		list_count = get_unaligned_be16(list_count_addr);
++		if (!verify_delta_index_page(nonce,
++					     list_count,
++					     expected_nonce,
++					     memory,
++					     memory_size))
++			/*
++			 * Both attempts failed. Do not log this as an error, because it can happen
++			 * during a rebuild if we haven't written the entire volume at least once.
++			 */
++			return UDS_CORRUPT_DATA;
++	}
++
++	delta_index_page->delta_index.delta_zones = delta_zone;
++	delta_index_page->delta_index.zone_count = 1;
++	delta_index_page->delta_index.list_count = list_count;
++	delta_index_page->delta_index.lists_per_zone = list_count;
++	delta_index_page->delta_index.mutable = false;
++	delta_index_page->delta_index.tag = 'p';
++	delta_index_page->virtual_chapter_number = vcn;
++	delta_index_page->lowest_list_number = first_list;
++	delta_index_page->highest_list_number = first_list + list_count - 1;
++
++	compute_coding_constants(mean_delta,
++				 &delta_zone->min_bits,
++				 &delta_zone->min_keys,
++				 &delta_zone->incr_keys);
++	delta_zone->value_bits = payload_bits;
++	delta_zone->memory = memory;
++	delta_zone->delta_lists = NULL;
++	delta_zone->new_offsets = NULL;
++	delta_zone->buffered_writer = NULL;
++	delta_zone->size = memory_size;
++	delta_zone->rebalance_time = 0;
++	delta_zone->rebalance_count = 0;
++	delta_zone->record_count = 0;
++	delta_zone->collision_count = 0;
++	delta_zone->discard_count = 0;
++	delta_zone->overflow_count = 0;
++	delta_zone->first_list = 0;
++	delta_zone->list_count = list_count;
++	delta_zone->tag = 'p';
++
++	return UDS_SUCCESS;
++}
++
++/* Read a large bit field from an arbitrary bit boundary. */
++static inline u64 get_big_field(const u8 *memory, u64 offset, u8 size)
++{
++	const void *addr = memory + offset / BITS_PER_BYTE;
++
++	return (get_unaligned_le64(addr) >> (offset % BITS_PER_BYTE)) & ((1UL << size) - 1);
++}
++
++/* Write a large bit field to an arbitrary bit boundary. */
++static inline void set_big_field(u64 value, u8 *memory, u64 offset, u8 size)
++{
++	void *addr = memory + offset / BITS_PER_BYTE;
++	u8 shift = offset % BITS_PER_BYTE;
++	u64 data = get_unaligned_le64(addr);
++
++	data &= ~(((1UL << size) - 1) << shift);
++	data |= value << shift;
++	put_unaligned_le64(data, addr);
++}
++
++/* Set a sequence of bits to all zeros. */
++static inline void set_zero(u8 *memory, u64 offset, u32 size)
++{
++	if (size > 0) {
++		u8 *addr = memory + offset / BITS_PER_BYTE;
++		u8 shift = offset % BITS_PER_BYTE;
++		u32 count = size + shift > BITS_PER_BYTE ? (u32) BITS_PER_BYTE - shift : size;
++
++		*addr++ &= ~(((1 << count) - 1) << shift);
++		for (size -= count; size > BITS_PER_BYTE; size -= BITS_PER_BYTE)
++			*addr++ = 0;
++
++		if (size > 0)
++			*addr &= 0xFF << size;
 +	}
 +}
 +
-+static int __must_check write_index_save_header(struct index_save_layout *isl,
-+						struct region_table *table,
-+						struct buffered_writer *writer)
++/*
++ * Move several bits from a higher to a lower address, moving the lower addressed bits first. The
++ * size and memory offsets are measured in bits.
++ */
++static void move_bits_down(const u8 *from, u64 from_offset, u8 *to, u64 to_offset, u32 size)
++{
++	const u8 *source;
++	u8 *destination;
++	u8 offset;
++	u8 count;
++	u64 field;
++
++	/* Start by moving one field that ends on a to int boundary. */
++	count = (MAX_BIG_FIELD_BITS - ((to_offset + MAX_BIG_FIELD_BITS) % BITS_PER_TYPE(u32)));
++	field = get_big_field(from, from_offset, count);
++	set_big_field(field, to, to_offset, count);
++	from_offset += count;
++	to_offset += count;
++	size -= count;
++
++	/* Now do the main loop to copy 32 bit chunks that are int-aligned at the destination. */
++	offset = from_offset % BITS_PER_TYPE(u32);
++	source = from + (from_offset - offset) / BITS_PER_BYTE;
++	destination = to + to_offset / BITS_PER_BYTE;
++	while (size > MAX_BIG_FIELD_BITS) {
++		put_unaligned_le32(get_unaligned_le64(source) >> offset, destination);
++		source += sizeof(u32);
++		destination += sizeof(u32);
++		from_offset += BITS_PER_TYPE(u32);
++		to_offset += BITS_PER_TYPE(u32);
++		size -= BITS_PER_TYPE(u32);
++	}
++
++	/* Finish up by moving any remaining bits. */
++	if (size > 0) {
++		field = get_big_field(from, from_offset, size);
++		set_big_field(field, to, to_offset, size);
++	}
++}
++
++/*
++ * Move several bits from a lower to a higher address, moving the higher addressed bits first. The
++ * size and memory offsets are measured in bits.
++ */
++static void move_bits_up(const u8 *from, u64 from_offset, u8 *to, u64 to_offset, u32 size)
++{
++	const u8 *source;
++	u8 *destination;
++	u8 offset;
++	u8 count;
++	u64 field;
++
++	/* Start by moving one field that begins on a destination int boundary. */
++	count = (to_offset + size) % BITS_PER_TYPE(u32);
++	if (count > 0) {
++		size -= count;
++		field = get_big_field(from, from_offset + size, count);
++		set_big_field(field, to, to_offset + size, count);
++	}
++
++	/* Now do the main loop to copy 32 bit chunks that are int-aligned at the destination. */
++	offset = (from_offset + size) % BITS_PER_TYPE(u32);
++	source = from + (from_offset + size - offset) / BITS_PER_BYTE;
++	destination = to + (to_offset + size) / BITS_PER_BYTE;
++	while (size > MAX_BIG_FIELD_BITS) {
++		source -= sizeof(u32);
++		destination -= sizeof(u32);
++		size -= BITS_PER_TYPE(u32);
++		put_unaligned_le32(get_unaligned_le64(source) >> offset, destination);
++	}
++
++	/* Finish up by moving any remaining bits. */
++	if (size > 0) {
++		field = get_big_field(from, from_offset, size);
++		set_big_field(field, to, to_offset, size);
++	}
++}
++
++/*
++ * Move bits from one field to another. When the fields overlap, behave as if we first move all the
++ * bits from the source to a temporary value, and then move all the bits from the temporary value
++ * to the destination. The size and memory offsets are measured in bits.
++ */
++static void move_bits(const u8 *from, u64 from_offset, u8 *to, u64 to_offset, u32 size)
++{
++	u64 field;
++
++	/* A small move doesn't require special handling. */
++	if (size <= MAX_BIG_FIELD_BITS) {
++		if (size > 0) {
++			field = get_big_field(from, from_offset, size);
++			set_big_field(field, to, to_offset, size);
++		}
++
++		return;
++	}
++
++	if (from_offset > to_offset)
++		move_bits_down(from, from_offset, to, to_offset, size);
++	else
++		move_bits_up(from, from_offset, to, to_offset, size);
++}
++
++/*
++ * Pack delta lists from a mutable delta index into an immutable delta index page. A range of delta
++ * lists (starting with a specified list index) is copied from the mutable delta index into a
++ * memory page used in the immutable index. The number of lists copied onto the page is returned in
++ * list_count.
++ */
++int uds_pack_delta_index_page(const struct delta_index *delta_index,
++			      u64 header_nonce,
++			      u8 *memory,
++			      size_t memory_size,
++			      u64 virtual_chapter_number,
++			      u32 first_list,
++			      u32 *list_count)
++{
++	const struct delta_zone *delta_zone;
++	struct delta_list *delta_lists;
++	u32 max_lists;
++	u32 n_lists = 0;
++	u32 offset;
++	u32 i;
++	int free_bits;
++	int bits;
++	struct delta_page_header *header;
++
++	delta_zone = &delta_index->delta_zones[0];
++	delta_lists = &delta_zone->delta_lists[first_list + 1];
++	max_lists = delta_index->list_count - first_list;
++
++	/*
++	 * Compute how many lists will fit on the page. Subtract the size of the fixed header, one
++	 * delta list offset, and the guard bytes from the page size to determine how much space is
++	 * available for delta lists.
++	 */
++	free_bits = memory_size * BITS_PER_BYTE;
++	free_bits -= get_immutable_header_offset(1);
++	free_bits -= GUARD_BITS;
++	if (free_bits < IMMUTABLE_HEADER_SIZE)
++		/* This page is too small to store any delta lists. */
++		return uds_log_error_strerror(UDS_OVERFLOW,
++					      "Chapter Index Page of %zu bytes is too small",
++					      memory_size);
++
++	while (n_lists < max_lists) {
++		/* Each list requires a delta list offset and the list data. */
++		bits = IMMUTABLE_HEADER_SIZE + delta_lists[n_lists].size;
++		if (bits > free_bits)
++			break;
++
++		n_lists++;
++		free_bits -= bits;
++	}
++
++	*list_count = n_lists;
++
++	header = (struct delta_page_header *) memory;
++	put_unaligned_le64(header_nonce, (u8 *) &header->nonce);
++	put_unaligned_le64(virtual_chapter_number, (u8 *) &header->virtual_chapter_number);
++	put_unaligned_le16(first_list, (u8 *) &header->first_list);
++	put_unaligned_le16(n_lists, (u8 *) &header->list_count);
++
++	/* Construct the delta list offset table. */
++	offset = get_immutable_header_offset(n_lists + 1);
++	set_immutable_start(memory, 0, offset);
++	for (i = 0; i < n_lists; i++) {
++		offset += delta_lists[i].size;
++		set_immutable_start(memory, i + 1, offset);
++	}
++
++	/* Copy the delta list data onto the memory page. */
++	for (i = 0; i < n_lists; i++)
++		move_bits(delta_zone->memory,
++			  delta_lists[i].start,
++			  memory,
++			  get_immutable_start(memory, i),
++			  delta_lists[i].size);
++
++	/* Set all the bits in the guard bytes. */
++	memset(memory + memory_size - POST_FIELD_GUARD_BYTES, ~0, POST_FIELD_GUARD_BYTES);
++	return UDS_SUCCESS;
++}
++
++/* Compute the new offsets of the delta lists. */
++static void compute_new_list_offsets(struct delta_zone *delta_zone,
++				     u32 growing_index,
++				     size_t growing_size,
++				     size_t used_space)
++{
++	size_t spacing;
++	u32 i;
++	struct delta_list *delta_lists = delta_zone->delta_lists;
++	u32 tail_guard_index = delta_zone->list_count + 1;
++
++	spacing = (delta_zone->size - used_space) / delta_zone->list_count;
++	delta_zone->new_offsets[0] = 0;
++	for (i = 0; i <= delta_zone->list_count; i++) {
++		delta_zone->new_offsets[i + 1] =
++			(delta_zone->new_offsets[i] +
++			 get_delta_list_byte_size(&delta_lists[i]) + spacing);
++		delta_zone->new_offsets[i] *= BITS_PER_BYTE;
++		delta_zone->new_offsets[i] += delta_lists[i].start % BITS_PER_BYTE;
++		if (i == 0)
++			delta_zone->new_offsets[i + 1] -= spacing / 2;
++		if (i + 1 == growing_index)
++			delta_zone->new_offsets[i + 1] += growing_size;
++	}
++
++	delta_zone->new_offsets[tail_guard_index] =
++		(delta_zone->size * BITS_PER_BYTE - delta_lists[tail_guard_index].size);
++}
++
++static void rebalance_lists(struct delta_zone *delta_zone)
++{
++	struct delta_list *delta_lists;
++	u32 i;
++	size_t used_space = 0;
++
++	/* Extend and balance memory to receive the delta lists */
++	delta_lists = delta_zone->delta_lists;
++	for (i = 0; i <= delta_zone->list_count + 1; i++)
++		used_space += get_delta_list_byte_size(&delta_lists[i]);
++
++	compute_new_list_offsets(delta_zone, 0, 0, used_space);
++	for (i = 1; i <= delta_zone->list_count + 1; i++)
++		delta_lists[i].start = delta_zone->new_offsets[i];
++}
++
++/* Start restoring a delta index from multiple input streams. */
++int uds_start_restoring_delta_index(struct delta_index *delta_index,
++				    struct buffered_reader **buffered_readers,
++				    unsigned int reader_count)
 +{
 +	int result;
-+	u8 *buffer;
-+	size_t offset = 0;
++	unsigned int zone_count = reader_count;
++	u64 record_count = 0;
++	u64 collision_count = 0;
++	u32 first_list[MAX_ZONES];
++	u32 list_count[MAX_ZONES];
++	unsigned int z;
++	u32 list_next = 0;
++	const struct delta_zone *delta_zone;
 +
-+	result = UDS_ALLOCATE(table->encoded_size, u8, "index save data", &buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
++	/* Read and validate each header. */
++	for (z = 0; z < zone_count; z++) {
++		struct delta_index_header header;
++		u8 buffer[sizeof(struct delta_index_header)];
++		size_t offset = 0;
 +
-+	encode_region_table(buffer, &offset, table);
-+	encode_u64_le(buffer, &offset, isl->save_data.timestamp);
-+	encode_u64_le(buffer, &offset, isl->save_data.nonce);
-+	encode_u32_le(buffer, &offset, isl->save_data.version);
-+	encode_u32_le(buffer, &offset, 0);
-+	if (isl->zone_count > 0) {
-+		encode_u32_le(buffer, &offset, INDEX_STATE_VERSION_301.signature);
-+		encode_u32_le(buffer, &offset, INDEX_STATE_VERSION_301.version_id);
-+		encode_u64_le(buffer, &offset, isl->state_data.newest_chapter);
-+		encode_u64_le(buffer, &offset, isl->state_data.oldest_chapter);
-+		encode_u64_le(buffer, &offset, isl->state_data.last_save);
-+		encode_u64_le(buffer, &offset, 0);
++		result = uds_read_from_buffered_reader(buffered_readers[z],
++						       buffer,
++						       sizeof(buffer));
++		if (result != UDS_SUCCESS)
++			return uds_log_warning_strerror(result,
++							"failed to read delta index header");
++
++		memcpy(&header.magic, buffer, MAGIC_SIZE);
++		offset += MAGIC_SIZE;
++		decode_u32_le(buffer, &offset, &header.zone_number);
++		decode_u32_le(buffer, &offset, &header.zone_count);
++		decode_u32_le(buffer, &offset, &header.first_list);
++		decode_u32_le(buffer, &offset, &header.list_count);
++		decode_u64_le(buffer, &offset, &header.record_count);
++		decode_u64_le(buffer, &offset, &header.collision_count);
++
++		result = ASSERT(offset == sizeof(struct delta_index_header),
++				"%zu bytes decoded of %zu expected",
++				offset,
++				sizeof(struct delta_index_header));
++		if (result != UDS_SUCCESS)
++			return uds_log_warning_strerror(result,
++							"failed to read delta index header");
++
++		if (memcmp(header.magic, DELTA_INDEX_MAGIC, MAGIC_SIZE) != 0)
++			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++							"delta index file has bad magic number");
++
++		if (zone_count != header.zone_count)
++			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++							"delta index files contain mismatched zone counts (%u,%u)",
++							zone_count,
++							header.zone_count);
++
++		if (header.zone_number != z)
++			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++							"delta index zone %u found in slot %u",
++							header.zone_number,
++							z);
++
++		first_list[z] = header.first_list;
++		list_count[z] = header.list_count;
++		record_count += header.record_count;
++		collision_count += header.collision_count;
++
++		if (first_list[z] != list_next)
++			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++							"delta index file for zone %u starts with list %u instead of list %u",
++							z,
++							first_list[z],
++							list_next);
++
++		list_next += list_count[z];
 +	}
 +
-+	result = uds_write_to_buffered_writer(writer, buffer, offset);
-+	UDS_FREE(buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
++	if (list_next != delta_index->list_count)
++		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++						"delta index files contain %u delta lists instead of %u delta lists",
++						list_next,
++						delta_index->list_count);
 +
-+	return uds_flush_buffered_writer(writer);
++	if (collision_count > record_count)
++		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++						"delta index files contain %llu collisions and %llu records",
++						(unsigned long long) collision_count,
++						(unsigned long long) record_count);
++
++	uds_reset_delta_index(delta_index);
++	delta_index->delta_zones[0].record_count = record_count;
++	delta_index->delta_zones[0].collision_count = collision_count;
++
++	/* Read the delta lists and distribute them to the proper zones. */
++	for (z = 0; z < zone_count; z++) {
++		u32 i;
++
++		delta_index->load_lists[z] = 0;
++		for (i = 0; i < list_count[z]; i++) {
++			u16 delta_list_size;
++			u32 list_number;
++			unsigned int zone_number;
++			u8 size_data[sizeof(u16)];
++
++			result = uds_read_from_buffered_reader(buffered_readers[z],
++							       size_data,
++							       sizeof(size_data));
++			if (result != UDS_SUCCESS)
++				return uds_log_warning_strerror(result,
++								"failed to read delta index size");
++
++			delta_list_size = get_unaligned_le16(size_data);
++			if (delta_list_size > 0)
++				delta_index->load_lists[z] += 1;
++
++			list_number = first_list[z] + i;
++			zone_number = list_number / delta_index->lists_per_zone;
++			delta_zone = &delta_index->delta_zones[zone_number];
++			list_number -= delta_zone->first_list;
++			delta_zone->delta_lists[list_number + 1].size = delta_list_size;
++		}
++	}
++
++	/* Prepare each zone to start receiving the delta list data. */
++	for (z = 0; z < delta_index->zone_count; z++)
++		rebalance_lists(&delta_index->delta_zones[z]);
++	return UDS_SUCCESS;
 +}
 +
-+static int write_index_save_layout(struct index_layout *layout, struct index_save_layout *isl)
++static int restore_delta_list_to_zone(struct delta_zone *delta_zone,
++				      const struct delta_list_save_info *save_info,
++				      const u8 *data)
++{
++	struct delta_list *delta_list;
++	u16 bit_count;
++	u16 byte_count;
++	u32 list_number = save_info->index - delta_zone->first_list;
++
++	if (list_number >= delta_zone->list_count)
++		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++						"invalid delta list number %u not in range [%u,%u)",
++						save_info->index,
++						delta_zone->first_list,
++						delta_zone->first_list +
++						delta_zone->list_count);
++
++	delta_list = &delta_zone->delta_lists[list_number + 1];
++	if (delta_list->size == 0)
++		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++						"unexpected delta list number %u",
++						save_info->index);
++
++	bit_count = delta_list->size + save_info->bit_offset;
++	byte_count = BITS_TO_BYTES(bit_count);
++	if (save_info->byte_count != byte_count)
++		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++						"unexpected delta list size %u != %u",
++						save_info->byte_count,
++						byte_count);
++
++	move_bits(data,
++		  save_info->bit_offset,
++		  delta_zone->memory,
++		  delta_list->start,
++		  delta_list->size);
++	return UDS_SUCCESS;
++}
++
++static int restore_delta_list_data(struct delta_index *delta_index,
++				   unsigned int load_zone,
++				   struct buffered_reader *buffered_reader,
++				   u8 *data)
 +{
 +	int result;
-+	struct region_table *table;
-+	struct buffered_writer *writer;
++	struct delta_list_save_info save_info;
++	u8 buffer[sizeof(struct delta_list_save_info)];
++	unsigned int new_zone;
 +
-+	result = make_index_save_region_table(isl, &table);
++	result = uds_read_from_buffered_reader(buffered_reader, buffer, sizeof(buffer));
 +	if (result != UDS_SUCCESS)
-+		return result;
++		return uds_log_warning_strerror(result, "failed to read delta list data");
 +
-+	result = open_region_writer(layout, &isl->header, &writer);
-+	if (result != UDS_SUCCESS) {
-+		UDS_FREE(table);
-+		return result;
-+	}
-+
-+	result = write_index_save_header(isl, table, writer);
-+	UDS_FREE(table);
-+	uds_free_buffered_writer(writer);
-+
-+	return result;
-+}
-+
-+static void reset_index_save_layout(struct index_save_layout *isl, u64 page_map_blocks)
-+{
-+	u64 free_blocks;
-+	u64 next_block = isl->index_save.start_block;
-+
-+	isl->zone_count = 0;
-+	memset(&isl->save_data, 0, sizeof(isl->save_data));
-+
-+	isl->header = (struct layout_region) {
-+		.start_block = next_block++,
-+		.block_count = 1,
-+		.kind = RL_KIND_HEADER,
-+		.instance = RL_SOLE_INSTANCE,
++	save_info = (struct delta_list_save_info) {
++		.tag = buffer[0],
++		.bit_offset = buffer[1],
++		.byte_count = get_unaligned_le16(&buffer[2]),
++		.index = get_unaligned_le32(&buffer[4]),
 +	};
 +
-+	isl->index_page_map = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = page_map_blocks,
-+		.kind = RL_KIND_INDEX_PAGE_MAP,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
++	if ((save_info.bit_offset >= BITS_PER_BYTE) ||
++	    (save_info.byte_count > DELTA_LIST_MAX_BYTE_COUNT))
++		return uds_log_warning_strerror(UDS_CORRUPT_DATA, "corrupt delta list data");
 +
-+	next_block += page_map_blocks;
++	/* Make sure the data is intended for this delta index. */
++	if (save_info.tag != delta_index->tag)
++		return UDS_CORRUPT_DATA;
 +
-+	free_blocks = isl->index_save.block_count - page_map_blocks - 1;
-+	isl->free_space = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = free_blocks,
-+		.kind = RL_KIND_EMPTY,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
++	if (save_info.index >= delta_index->list_count)
++		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++						"invalid delta list number %u of %u",
++						save_info.index,
++						delta_index->list_count);
++
++	result = uds_read_from_buffered_reader(buffered_reader, data, save_info.byte_count);
++	if (result != UDS_SUCCESS)
++		return uds_log_warning_strerror(result,
++						"failed to read delta list data");
++
++	delta_index->load_lists[load_zone] -= 1;
++	new_zone = save_info.index / delta_index->lists_per_zone;
++	return restore_delta_list_to_zone(&delta_index->delta_zones[new_zone], &save_info, data);
 +}
 +
-+static int __must_check
-+invalidate_old_save(struct index_layout *layout, struct index_save_layout *isl)
-+{
-+	reset_index_save_layout(isl, layout->super.page_map_blocks);
-+	return write_index_save_layout(layout, isl);
-+}
-+
-+static int discard_index_state_data(struct index_layout *layout)
++/* Restore delta lists from saved data. */
++int uds_finish_restoring_delta_index(struct delta_index *delta_index,
++				     struct buffered_reader **buffered_readers,
++				     unsigned int reader_count)
 +{
 +	int result;
 +	int saved_result = UDS_SUCCESS;
-+	unsigned int i;
++	unsigned int z;
++	u8 *data;
 +
-+	for (i = 0; i < layout->super.max_saves; i++) {
-+		result = invalidate_old_save(layout, &layout->index.saves[i]);
++	result = UDS_ALLOCATE(DELTA_LIST_MAX_BYTE_COUNT, u8, __func__, &data);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	for (z = 0; z < reader_count; z++) {
++		while (delta_index->load_lists[z] > 0) {
++			result = restore_delta_list_data(delta_index,
++							 z,
++							 buffered_readers[z],
++							 data);
++			if (result != UDS_SUCCESS) {
++				saved_result = result;
++				break;
++			}
++		}
++	}
++
++	UDS_FREE(data);
++	return saved_result;
++}
++
++int uds_check_guard_delta_lists(struct buffered_reader **buffered_readers,
++				unsigned int reader_count)
++{
++	int result;
++	unsigned int z;
++	u8 buffer[sizeof(struct delta_list_save_info)];
++
++	for (z = 0; z < reader_count; z++) {
++		result = uds_read_from_buffered_reader(buffered_readers[z],
++						       buffer,
++						       sizeof(buffer));
 +		if (result != UDS_SUCCESS)
-+			saved_result = result;
-+	}
++			return result;
 +
-+	if (saved_result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result,
-+					      "%s: cannot destroy all index saves",
-+					      __func__);
++		if (buffer[0] != 'z')
++			return UDS_CORRUPT_DATA;
++	}
 +
 +	return UDS_SUCCESS;
 +}
 +
-+static int __must_check
-+make_layout_region_table(struct index_layout *layout, struct region_table **table_ptr)
++static int flush_delta_list(struct delta_zone *zone, u32 flush_index)
 +{
++	struct delta_list *delta_list;
++	u8 buffer[sizeof(struct delta_list_save_info)];
 +	int result;
-+	unsigned int i;
-+	/* Regions: header, config, index, volume, saves, seal */
-+	u16 region_count = 5 + layout->super.max_saves;
-+	u16 payload;
-+	struct region_table *table;
-+	struct layout_region *lr;
 +
-+	result = UDS_ALLOCATE_EXTENDED(struct region_table,
-+				       region_count,
-+				       struct layout_region,
-+				       "layout region table",
-+				       &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
++	delta_list = &zone->delta_lists[flush_index + 1];
 +
-+	lr = &table->regions[0];
-+	*lr++ = layout->header;
-+	*lr++ = layout->config;
-+	*lr++ = layout->index.sub_index;
-+	*lr++ = layout->index.volume;
++	buffer[0] = zone->tag;
++	buffer[1] = delta_list->start % BITS_PER_BYTE;
++	put_unaligned_le16(get_delta_list_byte_size(delta_list), &buffer[2]);
++	put_unaligned_le32(zone->first_list + flush_index, &buffer[4]);
 +
-+	for (i = 0; i < layout->super.max_saves; i++)
-+		*lr++ = layout->index.saves[i].index_save;
-+
-+	*lr++ = layout->seal;
-+
-+	if (is_converted_super_block(&layout->super))
-+		payload = sizeof(struct super_block_data);
-+	else
-+		payload = (sizeof(struct super_block_data) -
-+			   sizeof(layout->super.volume_offset) -
-+			   sizeof(layout->super.start_offset));
-+
-+	table->header = (struct region_header) {
-+		.magic = REGION_MAGIC,
-+		.region_blocks = layout->total_blocks,
-+		.type = RH_TYPE_SUPER,
-+		.version = 1,
-+		.region_count = region_count,
-+		.payload = payload,
-+	};
-+
-+	table->encoded_size = (sizeof(struct region_header) + payload +
-+			       region_count * sizeof(struct layout_region));
-+	*table_ptr = table;
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check write_layout_header(struct index_layout *layout,
-+					    struct region_table *table,
-+					    struct buffered_writer *writer)
-+{
-+	int result;
-+	u8 *buffer;
-+	size_t offset = 0;
-+
-+	result = UDS_ALLOCATE(table->encoded_size, u8, "layout data", &buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	encode_region_table(buffer, &offset, table);
-+	memcpy(buffer + offset, &layout->super.magic_label, MAGIC_SIZE);
-+	offset += MAGIC_SIZE;
-+	memcpy(buffer + offset, &layout->super.nonce_info, NONCE_INFO_SIZE);
-+	offset += NONCE_INFO_SIZE;
-+	encode_u64_le(buffer, &offset, layout->super.nonce);
-+	encode_u32_le(buffer, &offset, layout->super.version);
-+	encode_u32_le(buffer, &offset, layout->super.block_size);
-+	encode_u16_le(buffer, &offset, layout->super.index_count);
-+	encode_u16_le(buffer, &offset, layout->super.max_saves);
-+	encode_u32_le(buffer, &offset, 0);
-+	encode_u64_le(buffer, &offset, layout->super.open_chapter_blocks);
-+	encode_u64_le(buffer, &offset, layout->super.page_map_blocks);
-+
-+	if (is_converted_super_block(&layout->super)) {
-+		encode_u64_le(buffer, &offset, layout->super.volume_offset);
-+		encode_u64_le(buffer, &offset, layout->super.start_offset);
-+	}
-+
-+	result = uds_write_to_buffered_writer(writer, buffer, offset);
-+	UDS_FREE(buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return uds_flush_buffered_writer(writer);
-+}
-+
-+static int __must_check write_uds_index_config(struct index_layout *layout,
-+					       struct configuration *config,
-+					       off_t offset)
-+{
-+	int result;
-+	struct buffered_writer *writer = NULL;
-+
-+	result = open_layout_writer(layout, &layout->config, offset, &writer);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "failed to open config region");
-+
-+	result = uds_write_config_contents(writer, config, layout->super.version);
++	result = uds_write_to_buffered_writer(zone->buffered_writer, buffer, sizeof(buffer));
 +	if (result != UDS_SUCCESS) {
-+		uds_free_buffered_writer(writer);
-+		return uds_log_error_strerror(result, "failed to write config region");
++		uds_log_warning_strerror(result, "failed to write delta list memory");
++		return result;
 +	}
 +
-+	result = uds_flush_buffered_writer(writer);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_buffered_writer(writer);
-+		return uds_log_error_strerror(result, "cannot flush config writer");
-+	}
-+
-+	uds_free_buffered_writer(writer);
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check save_layout(struct index_layout *layout, off_t offset)
-+{
-+	int result;
-+	struct buffered_writer *writer = NULL;
-+	struct region_table *table;
-+
-+	result = make_layout_region_table(layout, &table);
++	result = uds_write_to_buffered_writer(zone->buffered_writer,
++					      zone->memory + get_delta_list_byte_start(delta_list),
++					      get_delta_list_byte_size(delta_list));
 +	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = open_layout_writer(layout, &layout->header, offset, &writer);
-+	if (result != UDS_SUCCESS) {
-+		UDS_FREE(table);
-+		return result;
-+	}
-+
-+	result = write_layout_header(layout, table, writer);
-+	UDS_FREE(table);
-+	uds_free_buffered_writer(writer);
++		uds_log_warning_strerror(result, "failed to write delta list memory");
 +
 +	return result;
 +}
 +
-+static int create_index_layout(struct index_layout *layout, struct configuration *config)
++/* Start saving a delta index zone to a buffered output stream. */
++int uds_start_saving_delta_index(const struct delta_index *delta_index,
++				 unsigned int zone_number,
++				 struct buffered_writer *buffered_writer)
 +{
 +	int result;
-+	struct save_layout_sizes sizes;
-+
-+	result = compute_sizes(config, &sizes);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(sizes.save_count,
-+			      struct index_save_layout,
-+			      __func__,
-+			      &layout->index.saves);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	initialize_layout(layout, &sizes);
-+
-+	result = discard_index_state_data(layout);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = write_uds_index_config(layout, config, 0);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return save_layout(layout, 0);
-+}
-+
-+static u64 generate_index_save_nonce(u64 volume_nonce, struct index_save_layout *isl)
-+{
-+	struct save_nonce_data {
-+		struct index_save_data data;
-+		u64 offset;
-+	} nonce_data;
-+	u8 buffer[sizeof(nonce_data)];
++	u32 i;
++	struct delta_zone *delta_zone;
++	u8 buffer[sizeof(struct delta_index_header)];
 +	size_t offset = 0;
 +
-+	encode_u64_le(buffer, &offset, isl->save_data.timestamp);
-+	encode_u64_le(buffer, &offset, 0);
-+	encode_u32_le(buffer, &offset, isl->save_data.version);
-+	encode_u32_le(buffer, &offset, 0U);
-+	encode_u64_le(buffer, &offset, isl->index_save.start_block);
-+	ASSERT_LOG_ONLY(offset == sizeof(nonce_data),
++	delta_zone = &delta_index->delta_zones[zone_number];
++	memcpy(buffer, DELTA_INDEX_MAGIC, MAGIC_SIZE);
++	offset += MAGIC_SIZE;
++	encode_u32_le(buffer, &offset, zone_number);
++	encode_u32_le(buffer, &offset, delta_index->zone_count);
++	encode_u32_le(buffer, &offset, delta_zone->first_list);
++	encode_u32_le(buffer, &offset, delta_zone->list_count);
++	encode_u64_le(buffer, &offset, delta_zone->record_count);
++	encode_u64_le(buffer, &offset, delta_zone->collision_count);
++
++	result = ASSERT(offset == sizeof(struct delta_index_header),
 +			"%zu bytes encoded of %zu expected",
 +			offset,
-+			sizeof(nonce_data));
-+	return generate_secondary_nonce(volume_nonce, buffer, sizeof(buffer));
++			sizeof(struct delta_index_header));
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = uds_write_to_buffered_writer(buffered_writer, buffer, offset);
++	if (result != UDS_SUCCESS)
++		return uds_log_warning_strerror(result, "failed to write delta index header");
++
++	for (i = 0; i < delta_zone->list_count; i++) {
++		u8 data[sizeof(u16)];
++		struct delta_list *delta_list;
++
++		delta_list = &delta_zone->delta_lists[i + 1];
++		put_unaligned_le16(delta_list->size, data);
++		result = uds_write_to_buffered_writer(buffered_writer, data, sizeof(data));
++		if (result != UDS_SUCCESS)
++			return uds_log_warning_strerror(result, "failed to write delta list size");
++	}
++
++	delta_zone->buffered_writer = buffered_writer;
++	return UDS_SUCCESS;
 +}
 +
-+static u64 validate_index_save_layout(struct index_save_layout *isl, u64 volume_nonce)
++int uds_finish_saving_delta_index(const struct delta_index *delta_index, unsigned int zone_number)
 +{
-+	if ((isl->zone_count == 0) || (isl->save_data.timestamp == 0))
-+		return 0;
++	int result;
++	int first_error = UDS_SUCCESS;
++	u32 i;
++	struct delta_zone *delta_zone;
++	struct delta_list *delta_list;
 +
-+	if (isl->save_data.nonce != generate_index_save_nonce(volume_nonce, isl))
-+		return 0;
++	delta_zone = &delta_index->delta_zones[zone_number];
++	for (i = 0; i < delta_zone->list_count; i++) {
++		delta_list = &delta_zone->delta_lists[i + 1];
++		if (delta_list->size > 0) {
++			result = flush_delta_list(delta_zone, i);
++			if ((result != UDS_SUCCESS) && (first_error == UDS_SUCCESS))
++				first_error = result;
++		}
++	}
 +
-+	return isl->save_data.timestamp;
++	delta_zone->buffered_writer = NULL;
++	return first_error;
 +}
 +
++int uds_write_guard_delta_list(struct buffered_writer *buffered_writer)
++{
++	int result;
++	u8 buffer[sizeof(struct delta_list_save_info)];
++
++	memset(buffer, 0, sizeof(struct delta_list_save_info));
++	buffer[0] = 'z';
++
++	result = uds_write_to_buffered_writer(buffered_writer, buffer, sizeof(buffer));
++	if (result != UDS_SUCCESS)
++		uds_log_warning_strerror(result, "failed to write guard delta list");
++
++	return UDS_SUCCESS;
++}
++
++size_t uds_compute_delta_index_save_bytes(u32 list_count, size_t memory_size)
++{
++	/* One zone will use at least as much memory as other zone counts. */
++	return (sizeof(struct delta_index_header) +
++		list_count * (sizeof(struct delta_list_save_info) + 1) +
++		get_zone_memory_size(1, memory_size));
++}
++
++static int assert_not_at_end(const struct delta_index_entry *delta_entry)
++{
++	int result = ASSERT(!delta_entry->at_end,
++			    "operation is invalid because the list entry is at the end of the delta list");
++	if (result != UDS_SUCCESS)
++		result = UDS_BAD_STATE;
++
++	return result;
++}
++
++/*
++ * Prepare to search for an entry in the specified delta list.
++ *
++ * This is always the first function to be called when dealing with delta index entries. It is
++ * always followed by calls to uds_next_delta_index_entry() to iterate through a delta list. The
++ * fields of the delta_index_entry argument will be set up for iteration, but will not contain an
++ * entry from the list.
++ */
++int uds_start_delta_index_search(const struct delta_index *delta_index,
++				 u32 list_number,
++				 u32 key,
++				 struct delta_index_entry *delta_entry)
++{
++	int result;
++	unsigned int zone_number;
++	struct delta_zone *delta_zone;
++	struct delta_list *delta_list;
++
++	result = ASSERT((list_number < delta_index->list_count),
++			"Delta list number (%u) is out of range (%u)",
++			list_number,
++			delta_index->list_count);
++	if (result != UDS_SUCCESS)
++		return UDS_CORRUPT_DATA;
++
++	zone_number = list_number / delta_index->lists_per_zone;
++	delta_zone = &delta_index->delta_zones[zone_number];
++	list_number -= delta_zone->first_list;
++	result = ASSERT((list_number < delta_zone->list_count),
++			"Delta list number (%u) is out of range (%u) for zone (%u)",
++			list_number,
++			delta_zone->list_count,
++			zone_number);
++	if (result != UDS_SUCCESS)
++		return UDS_CORRUPT_DATA;
++
++	if (delta_index->mutable) {
++		delta_list = &delta_zone->delta_lists[list_number + 1];
++	} else {
++		u32 end_offset;
++
++		/*
++		 * Translate the immutable delta list header into a temporary
++		 * full delta list header.
++		 */
++		delta_list = &delta_entry->temp_delta_list;
++		delta_list->start = get_immutable_start(delta_zone->memory, list_number);
++		end_offset = get_immutable_start(delta_zone->memory, list_number + 1);
++		delta_list->size = end_offset - delta_list->start;
++		delta_list->save_key = 0;
++		delta_list->save_offset = 0;
++	}
++
++	if (key > delta_list->save_key) {
++		delta_entry->key = delta_list->save_key;
++		delta_entry->offset = delta_list->save_offset;
++	} else {
++		delta_entry->key = 0;
++		delta_entry->offset = 0;
++		if (key == 0)
++			/*
++			 * This usually means we're about to walk the entire delta list, so get all
++			 * of it into the CPU cache.
++			 */
++			uds_prefetch_range(&delta_zone->memory[delta_list->start / BITS_PER_BYTE],
++					   delta_list->size / BITS_PER_BYTE,
++					   false);
++	}
++
++	delta_entry->at_end = false;
++	delta_entry->delta_zone = delta_zone;
++	delta_entry->delta_list = delta_list;
++	delta_entry->entry_bits = 0;
++	delta_entry->is_collision = false;
++	delta_entry->list_number = list_number;
++	delta_entry->list_overflow = false;
++	delta_entry->value_bits = delta_zone->value_bits;
++	return UDS_SUCCESS;
++}
++
++static inline u64 get_delta_entry_offset(const struct delta_index_entry *delta_entry)
++{
++	return delta_entry->delta_list->start + delta_entry->offset;
++}
++
++/*
++ * Decode a delta index entry delta value. The delta_index_entry basically describes the previous
++ * list entry, and has had its offset field changed to point to the subsequent entry. We decode the
++ * bit stream and update the delta_list_entry to describe the entry.
++ */
++static inline void decode_delta(struct delta_index_entry *delta_entry)
++{
++	int key_bits;
++	u32 delta;
++	const struct delta_zone *delta_zone = delta_entry->delta_zone;
++	const u8 *memory = delta_zone->memory;
++	u64 delta_offset = get_delta_entry_offset(delta_entry) + delta_entry->value_bits;
++	const u8 *addr = memory + delta_offset / BITS_PER_BYTE;
++	int offset = delta_offset % BITS_PER_BYTE;
++	u32 data = get_unaligned_le32(addr) >> offset;
++
++	addr += sizeof(u32);
++	key_bits = delta_zone->min_bits;
++	delta = data & ((1 << key_bits) - 1);
++	if (delta >= delta_zone->min_keys) {
++		data >>= key_bits;
++		if (data == 0) {
++			key_bits = sizeof(u32) * BITS_PER_BYTE - offset;
++			while ((data = get_unaligned_le32(addr)) == 0) {
++				addr += sizeof(u32);
++				key_bits += sizeof(u32) * BITS_PER_BYTE;
++			}
++		}
++		key_bits += ffs(data);
++		delta += ((key_bits - delta_zone->min_bits - 1) * delta_zone->incr_keys);
++	}
++	delta_entry->delta = delta;
++	delta_entry->key += delta;
++
++	/* Check for a collision, a delta of zero after the start. */
++	if (unlikely((delta == 0) && (delta_entry->offset > 0))) {
++		delta_entry->is_collision = true;
++		delta_entry->entry_bits = delta_entry->value_bits + key_bits + COLLISION_BITS;
++	} else {
++		delta_entry->is_collision = false;
++		delta_entry->entry_bits = delta_entry->value_bits + key_bits;
++	}
++}
++
++noinline int uds_next_delta_index_entry(struct delta_index_entry *delta_entry)
++{
++	int result;
++	const struct delta_list *delta_list;
++	u32 next_offset;
++	u16 size;
++
++	result = assert_not_at_end(delta_entry);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	delta_list = delta_entry->delta_list;
++	delta_entry->offset += delta_entry->entry_bits;
++	size = delta_list->size;
++	if (unlikely(delta_entry->offset >= size)) {
++		delta_entry->at_end = true;
++		delta_entry->delta = 0;
++		delta_entry->is_collision = false;
++		result = ASSERT((delta_entry->offset == size),
++				"next offset past end of delta list");
++		if (result != UDS_SUCCESS)
++			result = UDS_CORRUPT_DATA;
++
++		return result;
++	}
++
++	decode_delta(delta_entry);
++
++	next_offset = delta_entry->offset + delta_entry->entry_bits;
++	if (next_offset > size) {
++		/*
++		 * This is not an assertion because uds_validate_chapter_index_page() wants to
++		 * handle this error.
++		 */
++		uds_log_warning("Decoded past the end of the delta list");
++		return UDS_CORRUPT_DATA;
++	}
++
++	return UDS_SUCCESS;
++}
++
++int uds_remember_delta_index_offset(const struct delta_index_entry *delta_entry)
++{
++	int result;
++	struct delta_list *delta_list = delta_entry->delta_list;
++
++	result = ASSERT(!delta_entry->is_collision, "entry is not a collision");
++	if (result != UDS_SUCCESS)
++		return result;
++
++	delta_list->save_key = delta_entry->key - delta_entry->delta;
++	delta_list->save_offset = delta_entry->offset;
++	return UDS_SUCCESS;
++}
++
++static void set_delta(struct delta_index_entry *delta_entry, u32 delta)
++{
++	const struct delta_zone *delta_zone = delta_entry->delta_zone;
++	u32 key_bits = (delta_zone->min_bits +
++			((delta_zone->incr_keys -
++			  delta_zone->min_keys + delta) /
++			 delta_zone->incr_keys));
++
++	delta_entry->delta = delta;
++	delta_entry->entry_bits = delta_entry->value_bits + key_bits;
++}
++
++static void get_collision_name(const struct delta_index_entry *entry, u8 *name)
++{
++	u64 offset = get_delta_entry_offset(entry) + entry->entry_bits - COLLISION_BITS;
++	const u8 *addr = entry->delta_zone->memory + offset / BITS_PER_BYTE;
++	int size = COLLISION_BYTES;
++	int shift = offset % BITS_PER_BYTE;
++
++	while (--size >= 0)
++		*name++ = get_unaligned_le16(addr++) >> shift;
++}
++
++static void set_collision_name(const struct delta_index_entry *entry, const u8 *name)
++{
++	u64 offset = get_delta_entry_offset(entry) + entry->entry_bits - COLLISION_BITS;
++	u8 *addr = entry->delta_zone->memory + offset / BITS_PER_BYTE;
++	int size = COLLISION_BYTES;
++	int shift = offset % BITS_PER_BYTE;
++	u16 mask = ~((u16) 0xFF << shift);
++	u16 data;
++
++	while (--size >= 0) {
++		data = (get_unaligned_le16(addr) & mask) | (*name++ << shift);
++		put_unaligned_le16(data, addr++);
++	}
++}
++
++int uds_get_delta_index_entry(const struct delta_index *delta_index,
++			      u32 list_number,
++			      u32 key,
++			      const u8 *name,
++			      struct delta_index_entry *delta_entry)
++{
++	int result;
++
++	result = uds_start_delta_index_search(delta_index, list_number, key, delta_entry);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	do {
++		result = uds_next_delta_index_entry(delta_entry);
++		if (result != UDS_SUCCESS)
++			return result;
++	} while (!delta_entry->at_end && (key > delta_entry->key));
++
++	result = uds_remember_delta_index_offset(delta_entry);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (!delta_entry->at_end && (key == delta_entry->key)) {
++		struct delta_index_entry collision_entry = *delta_entry;
++
++		for (;;) {
++			u8 full_name[COLLISION_BYTES];
++
++			result = uds_next_delta_index_entry(&collision_entry);
++			if (result != UDS_SUCCESS)
++				return result;
++
++			if (collision_entry.at_end || !collision_entry.is_collision)
++				break;
++
++			get_collision_name(&collision_entry, full_name);
++			if (memcmp(full_name, name, COLLISION_BYTES) == 0) {
++				*delta_entry = collision_entry;
++				break;
++			}
++		}
++	}
++
++	return UDS_SUCCESS;
++}
++
++int uds_get_delta_entry_collision(const struct delta_index_entry *delta_entry, u8 *name)
++{
++	int result;
++
++	result = assert_not_at_end(delta_entry);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = ASSERT(delta_entry->is_collision,
++			"Cannot get full block name from a non-collision delta index entry");
++	if (result != UDS_SUCCESS)
++		return UDS_BAD_STATE;
++
++	get_collision_name(delta_entry, name);
++	return UDS_SUCCESS;
++}
++
++u32 uds_get_delta_entry_value(const struct delta_index_entry *delta_entry)
++{
++	return get_field(delta_entry->delta_zone->memory,
++			 get_delta_entry_offset(delta_entry),
++			 delta_entry->value_bits);
++}
++
++static int assert_mutable_entry(const struct delta_index_entry *delta_entry)
++{
++	int result = ASSERT((delta_entry->delta_list != &delta_entry->temp_delta_list),
++			    "delta index is mutable");
++	if (result != UDS_SUCCESS)
++		result = UDS_BAD_STATE;
++
++	return result;
++}
++
++int uds_set_delta_entry_value(const struct delta_index_entry *delta_entry, u32 value)
++{
++	int result;
++	u32 value_mask = (1 << delta_entry->value_bits) - 1;
++
++	result = assert_mutable_entry(delta_entry);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = assert_not_at_end(delta_entry);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = ASSERT((value & value_mask) == value,
++			"Value (%u) being set in a delta index is too large (must fit in %u bits)",
++			value,
++			delta_entry->value_bits);
++	if (result != UDS_SUCCESS)
++		return UDS_INVALID_ARGUMENT;
++
++	set_field(value,
++		  delta_entry->delta_zone->memory,
++		  get_delta_entry_offset(delta_entry),
++		  delta_entry->value_bits);
++	return UDS_SUCCESS;
++}
++
++/*
++ * Extend the memory used by the delta lists by adding growing_size bytes before the list indicated
++ * by growing_index, then rebalancing the lists in the new chunk.
++ */
 +static int
-+find_latest_uds_index_save_slot(struct index_layout *layout, struct index_save_layout **isl_ptr)
++extend_delta_zone(struct delta_zone *delta_zone, u32 growing_index, size_t growing_size)
 +{
-+	struct index_save_layout *latest = NULL;
-+	struct index_save_layout *isl;
-+	unsigned int i;
-+	u64 save_time = 0;
-+	u64 latest_time = 0;
++	ktime_t start_time;
++	ktime_t end_time;
++	struct delta_list *delta_lists;
++	u32 i;
++	size_t used_space;
 +
-+	for (i = 0; i < layout->super.max_saves; i++) {
-+		isl = &layout->index.saves[i];
-+		save_time = validate_index_save_layout(isl, layout->index.nonce);
-+		if (save_time > latest_time) {
-+			latest = isl;
-+			latest_time = save_time;
-+		}
-+	}
 +
-+	if (latest == NULL) {
-+		uds_log_error("No valid index save found");
-+		return UDS_INDEX_NOT_SAVED_CLEANLY;
-+	}
++	/* Calculate the amount of space that is or will be in use. */
++	start_time = current_time_ns(CLOCK_MONOTONIC);
++	delta_lists = delta_zone->delta_lists;
++	used_space = growing_size;
++	for (i = 0; i <= delta_zone->list_count + 1; i++)
++		used_space += get_delta_list_byte_size(&delta_lists[i]);
 +
-+	*isl_ptr = latest;
++	if (delta_zone->size < used_space)
++		return UDS_OVERFLOW;
++
++	/* Compute the new offsets of the delta lists. */
++	compute_new_list_offsets(delta_zone, growing_index, growing_size, used_space);
++
++	/*
++	 * When we rebalance the delta list, we will include the end guard list in the rebalancing.
++	 * It contains the end guard data, which must be copied.
++	 */
++	rebalance_delta_zone(delta_zone, 1, delta_zone->list_count + 1);
++	end_time = current_time_ns(CLOCK_MONOTONIC);
++	delta_zone->rebalance_count++;
++	delta_zone->rebalance_time += ktime_sub(end_time, start_time);
 +	return UDS_SUCCESS;
 +}
 +
-+int uds_discard_open_chapter(struct index_layout *layout)
++static int insert_bits(struct delta_index_entry *delta_entry, u16 size)
 +{
-+	int result;
-+	struct index_save_layout *isl;
-+	struct buffered_writer *writer;
++	u64 free_before;
++	u64 free_after;
++	u64 source;
++	u64 destination;
++	u32 count;
++	bool before_flag;
++	u8 *memory;
++	struct delta_zone *delta_zone = delta_entry->delta_zone;
++	struct delta_list *delta_list = delta_entry->delta_list;
++	/* Compute bits in use before and after the inserted bits. */
++	u32 total_size = delta_list->size;
++	u32 before_size = delta_entry->offset;
++	u32 after_size = total_size - delta_entry->offset;
 +
-+	result = find_latest_uds_index_save_slot(layout, &isl);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = open_region_writer(layout, &isl->open_chapter, &writer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_write_to_buffered_writer(writer, NULL, UDS_BLOCK_SIZE);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_buffered_writer(writer);
-+		return result;
++	if (total_size + size > U16_MAX) {
++		delta_entry->list_overflow = true;
++		delta_zone->overflow_count++;
++		return UDS_OVERFLOW;
 +	}
 +
-+	result = uds_flush_buffered_writer(writer);
-+	uds_free_buffered_writer(writer);
-+	return result;
-+}
++	/* Compute bits available before and after the delta list. */
++	free_before = (delta_list[0].start - (delta_list[-1].start + delta_list[-1].size));
++	free_after = (delta_list[1].start - (delta_list[0].start + delta_list[0].size));
 +
-+int uds_load_index_state(struct index_layout *layout, struct uds_index *index)
-+{
-+	int result;
-+	unsigned int zone;
-+	struct index_save_layout *isl;
-+	struct buffered_reader *readers[MAX_ZONES];
-+
-+	result = find_latest_uds_index_save_slot(layout, &isl);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	index->newest_virtual_chapter = isl->state_data.newest_chapter;
-+	index->oldest_virtual_chapter = isl->state_data.oldest_chapter;
-+	index->last_save = isl->state_data.last_save;
-+
-+	result = open_region_reader(layout, &isl->open_chapter, &readers[0]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_load_open_chapter(index, readers[0]);
-+	uds_free_buffered_reader(readers[0]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	for (zone = 0; zone < isl->zone_count; zone++) {
-+		result = open_region_reader(layout,
-+					    &isl->volume_index_zones[zone],
-+					    &readers[zone]);
-+		if (result != UDS_SUCCESS) {
-+			for (; zone > 0; zone--)
-+				uds_free_buffered_reader(readers[zone - 1]);
-+
-+			return result;
-+		}
-+	}
-+
-+	result = uds_load_volume_index(index->volume_index, readers, isl->zone_count);
-+	for (zone = 0; zone < isl->zone_count; zone++)
-+		uds_free_buffered_reader(readers[zone]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = open_region_reader(layout, &isl->index_page_map, &readers[0]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_read_index_page_map(index->volume->index_page_map, readers[0]);
-+	uds_free_buffered_reader(readers[0]);
-+
-+	return result;
-+}
-+
-+static struct index_save_layout *select_oldest_index_save_layout(struct index_layout *layout)
-+{
-+	struct index_save_layout *oldest = NULL;
-+	struct index_save_layout *isl;
-+	unsigned int i;
-+	u64 save_time = 0;
-+	u64 oldest_time = 0;
-+
-+	for (i = 0; i < layout->super.max_saves; i++) {
-+		isl = &layout->index.saves[i];
-+		save_time = validate_index_save_layout(isl, layout->index.nonce);
-+		if (oldest == NULL || save_time < oldest_time) {
-+			oldest = isl;
-+			oldest_time = save_time;
-+		}
-+	}
-+
-+	return oldest;
-+}
-+
-+static void instantiate_index_save_layout(struct index_save_layout *isl,
-+					  struct super_block_data *super,
-+					  u64 volume_nonce,
-+					  unsigned int zone_count)
-+{
-+	unsigned int z;
-+	u64 next_block;
-+	u64 free_blocks;
-+	u64 volume_index_blocks;
-+
-+	isl->zone_count = zone_count;
-+	memset(&isl->save_data, 0, sizeof(isl->save_data));
-+	isl->save_data.timestamp = ktime_to_ms(current_time_ns(CLOCK_REALTIME));
-+	isl->save_data.version = 1;
-+	isl->save_data.nonce = generate_index_save_nonce(volume_nonce, isl);
-+
-+	next_block = isl->index_save.start_block;
-+	isl->header = (struct layout_region) {
-+		.start_block = next_block++,
-+		.block_count = 1,
-+		.kind = RL_KIND_HEADER,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	isl->index_page_map = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = super->page_map_blocks,
-+		.kind = RL_KIND_INDEX_PAGE_MAP,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+	next_block += super->page_map_blocks;
-+
-+	free_blocks = (isl->index_save.block_count - 1 -
-+		       super->page_map_blocks -
-+		       super->open_chapter_blocks);
-+	volume_index_blocks = free_blocks / isl->zone_count;
-+	for (z = 0; z < isl->zone_count; z++) {
-+		isl->volume_index_zones[z] = (struct layout_region) {
-+			.start_block = next_block,
-+			.block_count = volume_index_blocks,
-+			.kind = RL_KIND_VOLUME_INDEX,
-+			.instance = z,
-+		};
-+
-+		next_block += volume_index_blocks;
-+		free_blocks -= volume_index_blocks;
-+	}
-+
-+	isl->open_chapter = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = super->open_chapter_blocks,
-+		.kind = RL_KIND_OPEN_CHAPTER,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	next_block += super->open_chapter_blocks;
-+
-+	isl->free_space = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = free_blocks,
-+		.kind = RL_KIND_EMPTY,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+}
-+
-+static int setup_uds_index_save_slot(struct index_layout *layout,
-+				     unsigned int zone_count,
-+				     struct index_save_layout **isl_ptr)
-+{
-+	int result;
-+	struct index_save_layout *isl;
-+
-+	isl = select_oldest_index_save_layout(layout);
-+	result = invalidate_old_save(layout, isl);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	instantiate_index_save_layout(isl, &layout->super, layout->index.nonce, zone_count);
-+
-+	*isl_ptr = isl;
-+	return UDS_SUCCESS;
-+}
-+
-+static void cancel_uds_index_save(struct index_save_layout *isl)
-+{
-+	memset(&isl->save_data, 0, sizeof(isl->save_data));
-+	memset(&isl->state_data, 0, sizeof(isl->state_data));
-+	isl->zone_count = 0;
-+}
-+
-+int uds_save_index_state(struct index_layout *layout, struct uds_index *index)
-+{
-+	int result;
-+	unsigned int zone;
-+	struct index_save_layout *isl;
-+	struct buffered_writer *writers[MAX_ZONES];
-+
-+	result = setup_uds_index_save_slot(layout, index->zone_count, &isl);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	isl->state_data	= (struct index_state_data301) {
-+		.newest_chapter = index->newest_virtual_chapter,
-+		.oldest_chapter = index->oldest_virtual_chapter,
-+		.last_save = index->last_save,
-+	};
-+
-+	result = open_region_writer(layout, &isl->open_chapter, &writers[0]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	result = uds_save_open_chapter(index, writers[0]);
-+	uds_free_buffered_writer(writers[0]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	for (zone = 0; zone < index->zone_count; zone++) {
-+		result = open_region_writer(layout,
-+					    &isl->volume_index_zones[zone],
-+					    &writers[zone]);
-+		if (result != UDS_SUCCESS) {
-+			for (; zone > 0; zone--)
-+				uds_free_buffered_writer(writers[zone - 1]);
-+
-+			cancel_uds_index_save(isl);
-+			return result;
-+		}
-+	}
-+
-+	result = uds_save_volume_index(index->volume_index, writers, index->zone_count);
-+	for (zone = 0; zone < index->zone_count; zone++)
-+		uds_free_buffered_writer(writers[zone]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	result = open_region_writer(layout, &isl->index_page_map, &writers[0]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	result = uds_write_index_page_map(index->volume->index_page_map, writers[0]);
-+	uds_free_buffered_writer(writers[0]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	return write_index_save_layout(layout, isl);
-+}
-+
-+static int __must_check
-+load_region_table(struct buffered_reader *reader, struct region_table **table_ptr)
-+{
-+	int result;
-+	unsigned int i;
-+	struct region_header header;
-+	struct region_table *table;
-+	u8 buffer[sizeof(struct region_header)];
-+	size_t offset = 0;
-+
-+	result = uds_read_from_buffered_reader(reader, buffer, sizeof(buffer));
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "cannot read region table header");
-+
-+	decode_u64_le(buffer, &offset, &header.magic);
-+	decode_u64_le(buffer, &offset, &header.region_blocks);
-+	decode_u16_le(buffer, &offset, &header.type);
-+	decode_u16_le(buffer, &offset, &header.version);
-+	decode_u16_le(buffer, &offset, &header.region_count);
-+	decode_u16_le(buffer, &offset, &header.payload);
-+
-+	if (header.magic != REGION_MAGIC)
-+		return UDS_NO_INDEX;
-+
-+	if (header.version != 1)
-+		return uds_log_error_strerror(UDS_UNSUPPORTED_VERSION,
-+					      "unknown region table version %hu",
-+					      header.version);
-+
-+	result = UDS_ALLOCATE_EXTENDED(struct region_table,
-+				       header.region_count,
-+				       struct layout_region,
-+				       "single file layout region table",
-+				       &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	table->header = header;
-+	for (i = 0; i < header.region_count; i++) {
-+		u8 region_buffer[sizeof(struct layout_region)];
-+
-+		offset = 0;
-+		result = uds_read_from_buffered_reader(reader,
-+						       region_buffer,
-+						       sizeof(region_buffer));
-+		if (result != UDS_SUCCESS) {
-+			UDS_FREE(table);
-+			return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+						      "cannot read region table layouts");
-+		}
-+
-+		decode_u64_le(region_buffer, &offset, &table->regions[i].start_block);
-+		decode_u64_le(region_buffer, &offset, &table->regions[i].block_count);
-+		offset += sizeof(u32);
-+		decode_u16_le(region_buffer, &offset, &table->regions[i].kind);
-+		decode_u16_le(region_buffer, &offset, &table->regions[i].instance);
-+	}
-+
-+	*table_ptr = table;
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check read_super_block_data(struct buffered_reader *reader,
-+					      struct index_layout *layout,
-+					      size_t saved_size)
-+{
-+	int result;
-+	struct super_block_data *super = &layout->super;
-+	u8 *buffer;
-+	size_t offset = 0;
-+
-+	result = UDS_ALLOCATE(saved_size, u8, "super block data", &buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_read_from_buffered_reader(reader, buffer, saved_size);
-+	if (result != UDS_SUCCESS) {
-+		UDS_FREE(buffer);
-+		return uds_log_error_strerror(result, "cannot read region table header");
-+	}
-+
-+	memcpy(&super->magic_label, buffer, MAGIC_SIZE);
-+	offset += MAGIC_SIZE;
-+	memcpy(&super->nonce_info, buffer + offset, NONCE_INFO_SIZE);
-+	offset += NONCE_INFO_SIZE;
-+	decode_u64_le(buffer, &offset, &super->nonce);
-+	decode_u32_le(buffer, &offset, &super->version);
-+	decode_u32_le(buffer, &offset, &super->block_size);
-+	decode_u16_le(buffer, &offset, &super->index_count);
-+	decode_u16_le(buffer, &offset, &super->max_saves);
-+	offset += sizeof(u32);
-+	decode_u64_le(buffer, &offset, &super->open_chapter_blocks);
-+	decode_u64_le(buffer, &offset, &super->page_map_blocks);
-+
-+	if (is_converted_super_block(super)) {
-+		decode_u64_le(buffer, &offset, &super->volume_offset);
-+		decode_u64_le(buffer, &offset, &super->start_offset);
++	if ((size <= free_before) && (size <= free_after)) {
++		/*
++		 * We have enough space to use either before or after the list. Select the smaller
++		 * amount of data. If it is exactly the same, try to take from the larger amount of
++		 * free space.
++		 */
++		if (before_size < after_size)
++			before_flag = true;
++		else if (after_size < before_size)
++			before_flag = false;
++		else
++			before_flag = free_before > free_after;
++	} else if (size <= free_before) {
++		/* There is space before but not after. */
++		before_flag = true;
++	} else if (size <= free_after) {
++		/* There is space after but not before. */
++		before_flag = false;
 +	} else {
-+		super->volume_offset = 0;
-+		super->start_offset = 0;
-+	}
++		/*
++		 * Neither of the surrounding spaces is large enough for this request. Extend
++		 * and/or rebalance the delta list memory choosing to move the least amount of
++		 * data.
++		 */
++		int result;
++		u32 growing_index = delta_entry->list_number + 1;
 +
-+	UDS_FREE(buffer);
-+
-+	if (memcmp(super->magic_label, LAYOUT_MAGIC, MAGIC_SIZE) != 0)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA, "unknown superblock magic label");
-+
-+	if ((super->version < SUPER_VERSION_MINIMUM) ||
-+	    (super->version == 4) ||
-+	    (super->version == 5) ||
-+	    (super->version == 6) ||
-+	    (super->version > SUPER_VERSION_MAXIMUM))
-+		return uds_log_error_strerror(UDS_UNSUPPORTED_VERSION,
-+					      "unknown superblock version number %u",
-+					      super->version);
-+
-+	if (super->volume_offset < super->start_offset)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "inconsistent offsets (start %llu, volume %llu)",
-+					      (unsigned long long) super->start_offset,
-+					      (unsigned long long) super->volume_offset);
-+
-+	/* Sub-indexes are no longer used but the layout retains this field. */
-+	if (super->index_count != 1)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "invalid subindex count %u",
-+					      super->index_count);
-+
-+	if (generate_primary_nonce(super->nonce_info, sizeof(super->nonce_info)) != super->nonce)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "inconsistent superblock nonce");
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check verify_region(struct layout_region *lr,
-+				      u64 start_block,
-+				      enum region_kind kind,
-+				      unsigned int instance)
-+{
-+	if (lr->start_block != start_block)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA, "incorrect layout region offset");
-+
-+	if (lr->kind != kind)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA, "incorrect layout region kind");
-+
-+	if (lr->instance != instance)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "incorrect layout region instance");
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check
-+verify_sub_index(struct index_layout *layout, u64 start_block, struct region_table *table)
-+{
-+	int result;
-+	unsigned int i;
-+	struct sub_index_layout *sil = &layout->index;
-+	u64 next_block = start_block;
-+
-+	sil->sub_index = table->regions[2];
-+	result = verify_region(&sil->sub_index, next_block, RL_KIND_INDEX, 0);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	define_sub_index_nonce(layout);
-+
-+	sil->volume = table->regions[3];
-+	result = verify_region(&sil->volume, next_block, RL_KIND_VOLUME, RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += sil->volume.block_count + layout->super.volume_offset;
-+
-+	for (i = 0; i < layout->super.max_saves; i++) {
-+		sil->saves[i].index_save = table->regions[i + 4];
-+		result = verify_region(&sil->saves[i].index_save, next_block, RL_KIND_SAVE, i);
++		before_flag = before_size < after_size;
++		if (!before_flag)
++			growing_index++;
++		result = extend_delta_zone(delta_zone, growing_index, BITS_TO_BYTES(size));
 +		if (result != UDS_SUCCESS)
 +			return result;
-+
-+		next_block += sil->saves[i].index_save.block_count;
 +	}
 +
-+	next_block -= layout->super.volume_offset;
-+	if (next_block != start_block + sil->sub_index.block_count)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "sub index region does not span all saves");
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check
-+reconstitute_layout(struct index_layout *layout, struct region_table *table, u64 first_block)
-+{
-+	int result;
-+	u64 next_block = first_block;
-+
-+	result = UDS_ALLOCATE(layout->super.max_saves,
-+			      struct index_save_layout,
-+			      __func__,
-+			      &layout->index.saves);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	layout->total_blocks = table->header.region_blocks;
-+
-+	layout->header = table->regions[0];
-+	result = verify_region(&layout->header, next_block++, RL_KIND_HEADER, RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	layout->config = table->regions[1];
-+	result = verify_region(&layout->config, next_block++, RL_KIND_CONFIG, RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = verify_sub_index(layout, next_block, table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += layout->index.sub_index.block_count;
-+
-+	layout->seal = table->regions[table->header.region_count - 1];
-+	result = verify_region(&layout->seal,
-+			       next_block + layout->super.volume_offset,
-+			       RL_KIND_SEAL,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (++next_block != (first_block + layout->total_blocks))
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "layout table does not span total blocks");
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check load_super_block(struct index_layout *layout,
-+					 size_t block_size,
-+					 u64 first_block,
-+					 struct buffered_reader *reader)
-+{
-+	int result;
-+	struct region_table *table = NULL;
-+	struct super_block_data *super = &layout->super;
-+
-+	result = load_region_table(reader, &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (table->header.type != RH_TYPE_SUPER) {
-+		UDS_FREE(table);
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA, "not a superblock region table");
-+	}
-+
-+	result = read_super_block_data(reader, layout, table->header.payload);
-+	if (result != UDS_SUCCESS) {
-+		UDS_FREE(table);
-+		return uds_log_error_strerror(result, "unknown superblock format");
-+	}
-+
-+	if (super->block_size != block_size) {
-+		UDS_FREE(table);
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "superblock saved block_size %u differs from supplied block_size %zu",
-+					      super->block_size,
-+					      block_size);
-+	}
-+
-+	first_block -= (super->volume_offset - super->start_offset);
-+	result = reconstitute_layout(layout, table, first_block);
-+	UDS_FREE(table);
-+	return result;
-+}
-+
-+static int __must_check read_index_save_data(struct buffered_reader *reader,
-+					     struct index_save_layout *isl,
-+					     size_t saved_size)
-+{
-+	int result;
-+	struct index_state_version file_version;
-+	u8 buffer[sizeof(struct index_save_data) + sizeof(struct index_state_data301)];
-+	size_t offset = 0;
-+
-+	if (saved_size != sizeof(buffer))
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "unexpected index save data size %zu",
-+					      saved_size);
-+
-+	result = uds_read_from_buffered_reader(reader, buffer, sizeof(buffer));
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "cannot read index save data");
-+
-+	decode_u64_le(buffer, &offset, &isl->save_data.timestamp);
-+	decode_u64_le(buffer, &offset, &isl->save_data.nonce);
-+	decode_u32_le(buffer, &offset, &isl->save_data.version);
-+	offset += sizeof(u32);
-+
-+	if (isl->save_data.version > 1)
-+		return uds_log_error_strerror(UDS_UNSUPPORTED_VERSION,
-+					      "unknown index save version number %u",
-+					      isl->save_data.version);
-+
-+	decode_s32_le(buffer, &offset, &file_version.signature);
-+	decode_s32_le(buffer, &offset, &file_version.version_id);
-+
-+	if ((file_version.signature != INDEX_STATE_VERSION_301.signature) ||
-+	    (file_version.version_id != INDEX_STATE_VERSION_301.version_id))
-+		return uds_log_error_strerror(UDS_UNSUPPORTED_VERSION,
-+					      "index state version %d,%d is unsupported",
-+					      file_version.signature,
-+					      file_version.version_id);
-+
-+	decode_u64_le(buffer, &offset, &isl->state_data.newest_chapter);
-+	decode_u64_le(buffer, &offset, &isl->state_data.oldest_chapter);
-+	decode_u64_le(buffer, &offset, &isl->state_data.last_save);
-+	/* Skip past some historical fields that are now unused */
-+	offset += sizeof(u32) + sizeof(u32);
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check
-+reconstruct_index_save(struct index_save_layout *isl, struct region_table *table)
-+{
-+	int result;
-+	unsigned int z;
-+	struct layout_region *last_region;
-+	u64 next_block = isl->index_save.start_block;
-+	u64 last_block = next_block + isl->index_save.block_count;
-+
-+	isl->zone_count = table->header.region_count - 3;
-+
-+	last_region = &table->regions[table->header.region_count - 1];
-+	if (last_region->kind == RL_KIND_EMPTY) {
-+		isl->free_space = *last_region;
-+		isl->zone_count--;
++	delta_list->size += size;
++	if (before_flag) {
++		source = delta_list->start;
++		destination = source - size;
++		delta_list->start -= size;
++		count = before_size;
 +	} else {
-+		isl->free_space = (struct layout_region) {
-+			.start_block = last_block,
-+			.block_count = 0,
-+			.kind = RL_KIND_EMPTY,
-+			.instance = RL_SOLE_INSTANCE,
-+		};
++		source = delta_list->start + delta_entry->offset;
++		destination = source + size;
++		count = after_size;
 +	}
 +
-+	isl->header = table->regions[0];
-+	result = verify_region(&isl->header, next_block++, RL_KIND_HEADER, RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	isl->index_page_map = table->regions[1];
-+	result = verify_region(&isl->index_page_map,
-+			       next_block,
-+			       RL_KIND_INDEX_PAGE_MAP,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += isl->index_page_map.block_count;
-+
-+	for (z = 0; z < isl->zone_count; z++) {
-+		isl->volume_index_zones[z] = table->regions[z + 2];
-+		result = verify_region(&isl->volume_index_zones[z],
-+				       next_block,
-+				       RL_KIND_VOLUME_INDEX,
-+				       z);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		next_block += isl->volume_index_zones[z].block_count;
-+	}
-+
-+	isl->open_chapter = table->regions[isl->zone_count + 2];
-+	result = verify_region(&isl->open_chapter,
-+			       next_block,
-+			       RL_KIND_OPEN_CHAPTER,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += isl->open_chapter.block_count;
-+
-+	result = verify_region(&isl->free_space, next_block, RL_KIND_EMPTY, RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += isl->free_space.block_count;
-+	if (next_block != last_block)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "index save layout table incomplete");
-+
++	memory = delta_zone->memory;
++	move_bits(memory, source, memory, destination, count);
 +	return UDS_SUCCESS;
 +}
 +
-+static int __must_check load_index_save(struct index_save_layout *isl,
-+					struct buffered_reader *reader,
-+					unsigned int instance)
++static void encode_delta(const struct delta_index_entry *delta_entry)
 +{
-+	int result;
-+	struct region_table *table = NULL;
-+
-+	result = load_region_table(reader, &table);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result,
-+					      "cannot read index save %u header",
-+					      instance);
-+
-+	if (table->header.region_blocks != isl->index_save.block_count) {
-+		u64 region_blocks = table->header.region_blocks;
-+
-+		UDS_FREE(table);
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "unexpected index save %u region block count %llu",
-+					      instance,
-+					      (unsigned long long) region_blocks);
-+	}
-+
-+	if (table->header.type == RH_TYPE_UNSAVED) {
-+		UDS_FREE(table);
-+		reset_index_save_layout(isl, 0);
-+		return UDS_SUCCESS;
-+	}
-+
-+
-+	if (table->header.type != RH_TYPE_SAVE) {
-+		UDS_FREE(table);
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "unexpected index save %u header type %u",
-+					      instance,
-+					      table->header.type);
-+	}
-+
-+	result = read_index_save_data(reader, isl, table->header.payload);
-+	if (result != UDS_SUCCESS) {
-+		UDS_FREE(table);
-+		return uds_log_error_strerror(result,
-+					      "unknown index save %u data format",
-+					      instance);
-+	}
-+
-+	result = reconstruct_index_save(isl, table);
-+	UDS_FREE(table);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result,
-+					      "cannot reconstruct index save %u",
-+					      instance);
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check load_sub_index_regions(struct index_layout *layout)
-+{
-+	int result;
-+	unsigned int j;
-+	struct index_save_layout *isl;
-+	struct buffered_reader *reader;
-+
-+	for (j = 0; j < layout->super.max_saves; ++j) {
-+		isl = &layout->index.saves[j];
-+		result = open_region_reader(layout, &isl->index_save, &reader);
-+
-+		if (result != UDS_SUCCESS) {
-+			uds_log_error_strerror(result, "cannot get reader for index 0 save %u", j);
-+			return result;
-+		}
-+
-+		result = load_index_save(isl, reader, j);
-+		uds_free_buffered_reader(reader);
-+		if (result != UDS_SUCCESS) {
-+			/* Another save slot might be valid. */
-+			reset_index_save_layout(isl, 0);
-+			continue;
-+		}
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check
-+verify_uds_index_config(struct index_layout *layout, struct configuration *config)
-+{
-+	int result;
-+	struct buffered_reader *reader = NULL;
++	u32 temp;
++	u32 t1;
++	u32 t2;
 +	u64 offset;
++	const struct delta_zone *delta_zone = delta_entry->delta_zone;
++	u8 *memory = delta_zone->memory;
 +
-+	offset = layout->super.volume_offset - layout->super.start_offset;
-+	result = open_layout_reader(layout, &layout->config, offset, &reader);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "failed to open config reader");
-+
-+	result = uds_validate_config_contents(reader, config);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_buffered_reader(reader);
-+		return uds_log_error_strerror(result, "failed to read config region");
-+	}
-+
-+	uds_free_buffered_reader(reader);
-+	return UDS_SUCCESS;
-+}
-+
-+static int load_index_layout(struct index_layout *layout, struct configuration *config)
-+{
-+	int result;
-+	struct buffered_reader *reader;
-+
-+	result = uds_make_buffered_reader(layout->factory,
-+					  layout->offset / UDS_BLOCK_SIZE,
-+					  1,
-+					  &reader);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "unable to read superblock");
-+
-+	result = load_super_block(layout, UDS_BLOCK_SIZE, layout->offset / UDS_BLOCK_SIZE, reader);
-+	uds_free_buffered_reader(reader);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = verify_uds_index_config(layout, config);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return load_sub_index_regions(layout);
-+}
-+
-+static int create_layout_factory(struct index_layout *layout, const struct configuration *config)
-+{
-+	int result;
-+	size_t writable_size;
-+	struct io_factory *factory = NULL;
-+
-+	result = uds_make_io_factory(config->name, &factory);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	writable_size = uds_get_writable_size(factory) & -UDS_BLOCK_SIZE;
-+	if (writable_size < config->size + config->offset) {
-+		uds_put_io_factory(factory);
-+		uds_log_error("index storage (%zu) is smaller than the requested size %zu",
-+			      writable_size,
-+			      config->size + config->offset);
-+		return -ENOSPC;
-+	}
-+
-+	layout->factory = factory;
-+	layout->factory_size = (config->size > 0) ? config->size : writable_size;
-+	layout->offset = config->offset;
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_make_index_layout(struct configuration *config,
-+			  bool new_layout,
-+			  struct index_layout **layout_ptr)
-+{
-+	int result;
-+	struct index_layout *layout = NULL;
-+	struct save_layout_sizes sizes;
-+
-+	result = compute_sizes(config, &sizes);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(1, struct index_layout, __func__, &layout);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = create_layout_factory(layout, config);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_index_layout(layout);
-+		return result;
-+	}
-+
-+	if (layout->factory_size < sizes.total_size) {
-+		uds_log_error("index storage (%zu) is smaller than the required size %llu",
-+			      layout->factory_size,
-+			      (unsigned long long) sizes.total_size);
-+		uds_free_index_layout(layout);
-+		return -ENOSPC;
-+	}
-+
-+	if (new_layout)
-+		result = create_index_layout(layout, config);
-+	else
-+		result = load_index_layout(layout, config);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_index_layout(layout);
-+		return result;
-+	}
-+
-+	*layout_ptr = layout;
-+	return UDS_SUCCESS;
-+}
-+
-+void uds_free_index_layout(struct index_layout *layout)
-+{
-+	if (layout == NULL)
++	offset = get_delta_entry_offset(delta_entry) + delta_entry->value_bits;
++	if (delta_entry->delta < delta_zone->min_keys) {
++		set_field(delta_entry->delta, memory, offset, delta_zone->min_bits);
 +		return;
++	}
 +
-+	UDS_FREE(layout->index.saves);
-+	if (layout->factory != NULL)
-+		uds_put_io_factory(layout->factory);
-+
-+	UDS_FREE(layout);
++	temp = delta_entry->delta - delta_zone->min_keys;
++	t1 = (temp % delta_zone->incr_keys) + delta_zone->min_keys;
++	t2 = temp / delta_zone->incr_keys;
++	set_field(t1, memory, offset, delta_zone->min_bits);
++	set_zero(memory, offset + delta_zone->min_bits, t2);
++	set_field(1, memory, offset + delta_zone->min_bits + t2, 1);
 +}
 +
-+int uds_replace_index_layout_storage(struct index_layout *layout, const char *name)
++static void encode_entry(const struct delta_index_entry *delta_entry, u32 value, const u8 *name)
 +{
-+	return uds_replace_storage(layout->factory, name);
++	u8 *memory = delta_entry->delta_zone->memory;
++	u64 offset = get_delta_entry_offset(delta_entry);
++
++	set_field(value, memory, offset, delta_entry->value_bits);
++	encode_delta(delta_entry);
++	if (name != NULL)
++		set_collision_name(delta_entry, name);
 +}
 +
-+/* Obtain a dm_bufio_client for the volume region. */
-+int uds_open_volume_bufio(struct index_layout *layout,
-+			  size_t block_size,
-+			  unsigned int reserved_buffers,
-+			  struct dm_bufio_client **client_ptr)
++/*
++ * Create a new entry in the delta index. If the entry is a collision, the full 256 bit name must
++ * be provided.
++ */
++int uds_put_delta_index_entry(struct delta_index_entry *delta_entry,
++			      u32 key,
++			      u32 value,
++			      const u8 *name)
 +{
-+	off_t offset = (layout->index.volume.start_block +
-+			layout->super.volume_offset -
-+			layout->super.start_offset);
++	int result;
++	struct delta_zone *delta_zone;
 +
-+	return uds_make_bufio(layout->factory, offset, block_size, reserved_buffers, client_ptr);
++	result = assert_mutable_entry(delta_entry);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (delta_entry->is_collision)
++		/*
++		 * The caller wants us to insert a collision entry onto a collision entry. This
++		 * happens when we find a collision and attempt to add the name again to the index.
++		 * This is normally a fatal error unless we are replaying a closed chapter while we
++		 * are rebuilding a volume index.
++		 */
++		return UDS_DUPLICATE_NAME;
++
++	if (delta_entry->offset < delta_entry->delta_list->save_offset) {
++		/*
++		 * The saved entry offset is after the new entry and will no longer be valid, so
++		 * replace it with the insertion point.
++		 */
++		result = uds_remember_delta_index_offset(delta_entry);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
++	if (name != NULL) {
++		/* Insert a collision entry which is placed after this entry. */
++		result = assert_not_at_end(delta_entry);
++		if (result != UDS_SUCCESS)
++			return result;
++
++		result = ASSERT((key == delta_entry->key), "incorrect key for collision entry");
++		if (result != UDS_SUCCESS)
++			return result;
++
++		delta_entry->offset += delta_entry->entry_bits;
++		set_delta(delta_entry, 0);
++		delta_entry->is_collision = true;
++		delta_entry->entry_bits += COLLISION_BITS;
++		result = insert_bits(delta_entry, delta_entry->entry_bits);
++	} else if (delta_entry->at_end) {
++		/* Insert a new entry at the end of the delta list. */
++		result = ASSERT((key >= delta_entry->key), "key past end of list");
++		if (result != UDS_SUCCESS)
++			return result;
++
++		set_delta(delta_entry, key - delta_entry->key);
++		delta_entry->key = key;
++		delta_entry->at_end = false;
++		result = insert_bits(delta_entry, delta_entry->entry_bits);
++	} else {
++		u16 old_entry_size;
++		u16 additional_size;
++		struct delta_index_entry next_entry;
++		u32 next_value;
++
++		/*
++		 * Insert a new entry which requires the delta in the following entry to be
++		 * updated.
++		 */
++		result = ASSERT((key < delta_entry->key), "key precedes following entry");
++		if (result != UDS_SUCCESS)
++			return result;
++
++		result = ASSERT((key >= delta_entry->key - delta_entry->delta),
++				"key effects following entry's delta");
++		if (result != UDS_SUCCESS)
++			return result;
++
++		old_entry_size = delta_entry->entry_bits;
++		next_entry = *delta_entry;
++		next_value = uds_get_delta_entry_value(&next_entry);
++		set_delta(delta_entry, key - (delta_entry->key - delta_entry->delta));
++		delta_entry->key = key;
++		set_delta(&next_entry, next_entry.key - key);
++		next_entry.offset += delta_entry->entry_bits;
++		/* The two new entries are always bigger than the single entry being replaced. */
++		additional_size = (delta_entry->entry_bits +
++				   next_entry.entry_bits - old_entry_size);
++		result = insert_bits(delta_entry, additional_size);
++		if (result != UDS_SUCCESS)
++			return result;
++
++		encode_entry(&next_entry, next_value, NULL);
++	}
++
++	if (result != UDS_SUCCESS)
++		return result;
++
++	encode_entry(delta_entry, value, name);
++	delta_zone = delta_entry->delta_zone;
++	delta_zone->record_count++;
++	delta_zone->collision_count += delta_entry->is_collision ? 1 : 0;
++	return UDS_SUCCESS;
 +}
 +
-+u64 uds_get_volume_nonce(struct index_layout *layout)
++static void delete_bits(const struct delta_index_entry *delta_entry, int size)
 +{
-+	return layout->index.nonce;
++	u64 source;
++	u64 destination;
++	u32 count;
++	bool before_flag;
++	struct delta_list *delta_list = delta_entry->delta_list;
++	u8 *memory = delta_entry->delta_zone->memory;
++	/* Compute bits retained before and after the deleted bits. */
++	u32 total_size = delta_list->size;
++	u32 before_size = delta_entry->offset;
++	u32 after_size = total_size - delta_entry->offset - size;
++
++	/*
++	 * Determine whether to add to the available space either before or after the delta list.
++	 * We prefer to move the least amount of data. If it is exactly the same, try to add to the
++	 * smaller amount of free space.
++	 */
++	if (before_size < after_size) {
++		before_flag = true;
++	} else if (after_size < before_size) {
++		before_flag = false;
++	} else {
++		u64 free_before =
++			(delta_list[0].start - (delta_list[-1].start + delta_list[-1].size));
++		u64 free_after =
++			(delta_list[1].start - (delta_list[0].start + delta_list[0].size));
++
++		before_flag = (free_before < free_after);
++	}
++
++	delta_list->size -= size;
++	if (before_flag) {
++		source = delta_list->start;
++		destination = source + size;
++		delta_list->start += size;
++		count = before_size;
++	} else {
++		destination = delta_list->start + delta_entry->offset;
++		source = destination + size;
++		count = after_size;
++	}
++
++	move_bits(memory, source, memory, destination, count);
 +}
-diff --git a/drivers/md/dm-vdo/index-layout.h b/drivers/md/dm-vdo/index-layout.h
++
++int uds_remove_delta_index_entry(struct delta_index_entry *delta_entry)
++{
++	int result;
++	struct delta_index_entry next_entry;
++	struct delta_zone *delta_zone;
++	struct delta_list *delta_list;
++
++	result = assert_mutable_entry(delta_entry);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	next_entry = *delta_entry;
++	result = uds_next_delta_index_entry(&next_entry);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	delta_zone = delta_entry->delta_zone;
++
++	if (delta_entry->is_collision) {
++		/* This is a collision entry, so just remove it. */
++		delete_bits(delta_entry, delta_entry->entry_bits);
++		next_entry.offset = delta_entry->offset;
++		delta_zone->collision_count -= 1;
++	} else if (next_entry.at_end) {
++		/* This entry is at the end of the list, so just remove it. */
++		delete_bits(delta_entry, delta_entry->entry_bits);
++		next_entry.key -= delta_entry->delta;
++		next_entry.offset = delta_entry->offset;
++	} else {
++		/* The delta in the next entry needs to be updated. */
++		u32 next_value = uds_get_delta_entry_value(&next_entry);
++		u16 old_size = delta_entry->entry_bits + next_entry.entry_bits;
++
++		if (next_entry.is_collision) {
++			next_entry.is_collision = false;
++			delta_zone->collision_count -= 1;
++		}
++
++		set_delta(&next_entry, delta_entry->delta + next_entry.delta);
++		next_entry.offset = delta_entry->offset;
++		/* The one new entry is always smaller than the two entries being replaced. */
++		delete_bits(delta_entry, old_size - next_entry.entry_bits);
++		encode_entry(&next_entry, next_value, NULL);
++	}
++
++	delta_zone->record_count--;
++	delta_zone->discard_count++;
++	*delta_entry = next_entry;
++
++	delta_list = delta_entry->delta_list;
++	if (delta_entry->offset < delta_list->save_offset) {
++		/* The saved entry offset is no longer valid. */
++		delta_list->save_key = 0;
++		delta_list->save_offset = 0;
++	}
++
++	return UDS_SUCCESS;
++}
++
++void uds_get_delta_index_stats(const struct delta_index *delta_index,
++			       struct delta_index_stats *stats)
++{
++	unsigned int z;
++	const struct delta_zone *delta_zone;
++
++	memset(stats, 0, sizeof(struct delta_index_stats));
++	for (z = 0; z < delta_index->zone_count; z++) {
++		delta_zone = &delta_index->delta_zones[z];
++		stats->rebalance_time += delta_zone->rebalance_time;
++		stats->rebalance_count += delta_zone->rebalance_count;
++		stats->record_count += delta_zone->record_count;
++		stats->collision_count += delta_zone->collision_count;
++		stats->discard_count += delta_zone->discard_count;
++		stats->overflow_count += delta_zone->overflow_count;
++		stats->list_count += delta_zone->list_count;
++	}
++}
++
++size_t uds_compute_delta_index_size(u32 entry_count, u32 mean_delta, u32 payload_bits)
++{
++	u16 min_bits;
++	u32 incr_keys;
++	u32 min_keys;
++
++	compute_coding_constants(mean_delta, &min_bits, &min_keys, &incr_keys);
++	/* On average, each delta is encoded into about min_bits + 1.5 bits. */
++	return entry_count * (payload_bits + min_bits + 1) + entry_count / 2;
++}
++
++u32 uds_get_delta_index_page_count(u32 entry_count,
++				   u32 list_count,
++				   u32 mean_delta,
++				   u32 payload_bits,
++				   size_t bytes_per_page)
++{
++	unsigned int bits_per_delta_list;
++	unsigned int bits_per_page;
++	size_t bits_per_index;
++
++	/* Compute the expected number of bits needed for all the entries. */
++	bits_per_index = uds_compute_delta_index_size(entry_count, mean_delta, payload_bits);
++	bits_per_delta_list = bits_per_index / list_count;
++
++	/* Add in the immutable delta list headers. */
++	bits_per_index += list_count * IMMUTABLE_HEADER_SIZE;
++	/* Compute the number of usable bits on an immutable index page. */
++	bits_per_page = ((bytes_per_page - sizeof(struct delta_page_header)) * BITS_PER_BYTE);
++	/*
++	 * Reduce the bits per page by one immutable delta list header and one delta list to
++	 * account for internal fragmentation.
++	 */
++	bits_per_page -= IMMUTABLE_HEADER_SIZE + bits_per_delta_list;
++	/* Now compute the number of pages needed. */
++	return DIV_ROUND_UP(bits_per_index, bits_per_page);
++}
++
++void uds_log_delta_index_entry(struct delta_index_entry *delta_entry)
++{
++	uds_log_ratelimit(uds_log_info,
++			  "List 0x%X Key 0x%X Offset 0x%X%s%s List_size 0x%X%s",
++			  delta_entry->list_number,
++			  delta_entry->key,
++			  delta_entry->offset,
++			  delta_entry->at_end ? " end" : "",
++			  delta_entry->is_collision ? " collision" : "",
++			  delta_entry->delta_list->size,
++			  delta_entry->list_overflow ? " overflow" : "");
++	delta_entry->list_overflow = false;
++}
+diff --git a/drivers/md/dm-vdo/delta-index.h b/drivers/md/dm-vdo/delta-index.h
 new file mode 100644
-index 00000000000..02e368c0331
+index 00000000000..ee505d9a6eb
 --- /dev/null
-+++ b/drivers/md/dm-vdo/index-layout.h
-@@ -0,0 +1,42 @@
++++ b/drivers/md/dm-vdo/delta-index.h
+@@ -0,0 +1,292 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright Red Hat
 + */
 +
-+#ifndef UDS_INDEX_LAYOUT_H
-+#define UDS_INDEX_LAYOUT_H
++#ifndef UDS_DELTA_INDEX_H
++#define UDS_DELTA_INDEX_H
++
++#include <linux/cache.h>
 +
 +#include "config.h"
 +#include "io-factory.h"
-+#include "uds.h"
-+
-+/*
-+ * The index layout describes the format of the index on the underlying storage, and is responsible
-+ * for creating those structures when the index is first created. It also validates the index data
-+ * when loading a saved index, and updates it when saving the index.
-+ */
-+
-+struct index_layout;
-+
-+int __must_check uds_make_index_layout(struct configuration *config,
-+				       bool new_layout,
-+				       struct index_layout **layout_ptr);
-+
-+void uds_free_index_layout(struct index_layout *layout);
-+
-+int __must_check uds_replace_index_layout_storage(struct index_layout *layout, const char *name);
-+
-+int __must_check uds_load_index_state(struct index_layout *layout, struct uds_index *index);
-+
-+int __must_check uds_save_index_state(struct index_layout *layout, struct uds_index *index);
-+
-+int __must_check uds_discard_open_chapter(struct index_layout *layout);
-+
-+u64 __must_check uds_get_volume_nonce(struct index_layout *layout);
-+
-+int __must_check uds_open_volume_bufio(struct index_layout *layout,
-+				       size_t block_size,
-+				       unsigned int reserved_buffers,
-+				       struct dm_bufio_client **client_ptr);
-+
-+#endif /* UDS_INDEX_LAYOUT_H */
-diff --git a/drivers/md/dm-vdo/io-factory.c b/drivers/md/dm-vdo/io-factory.c
-new file mode 100644
-index 00000000000..d8c03e9ab43
---- /dev/null
-+++ b/drivers/md/dm-vdo/io-factory.c
-@@ -0,0 +1,458 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright Red Hat
-+ */
-+
-+#include "io-factory.h"
-+
-+#include <linux/atomic.h>
-+#include <linux/blkdev.h>
-+#include <linux/err.h>
-+#include <linux/mount.h>
-+
-+#include "logger.h"
-+#include "memory-alloc.h"
 +#include "numeric.h"
-+
-+enum { BLK_FMODE = FMODE_READ | FMODE_WRITE };
++#include "time-utils.h"
 +
 +/*
-+ * The I/O factory object manages access to index storage, which is a contiguous range of blocks on
-+ * a block device.
++ * A delta index is a key-value store, where each entry maps an address (the key) to a payload (the
++ * value). The entries are sorted by address, and only the delta between successive addresses is
++ * stored in the entry. The addresses are assumed to be uniformly distributed, and the deltas are
++ * therefore exponentially distributed.
 + *
-+ * The factory holds the open device and is responsible for closing it. The factory has methods to
-+ * make helper structures that can be used to access sections of the index.
++ * A delta_index can either be mutable or immutable depending on its expected use. The immutable
++ * form of a delta index is used for the indexes of closed chapters committed to the volume. The
++ * mutable form of a delta index is used by the volume index, and also by the chapter index in an
++ * open chapter. Like the index as a whole, each mutable delta index is divided into a number of
++ * independent zones.
 + */
-+struct io_factory {
-+	struct block_device *bdev;
-+	atomic_t ref_count;
++
++struct delta_list {
++	/* The offset of the delta list start, in bits */
++	u64 start;
++	/* The number of bits in the delta list */
++	u16 size;
++	/* Where the last search "found" the key, in bits */
++	u16 save_offset;
++	/* The key for the record just before save_offset */
++	u32 save_key;
 +};
 +
-+/* The buffered reader allows efficient I/O by reading page-sized segments into a buffer. */
-+struct buffered_reader {
-+	struct io_factory *factory;
-+	struct dm_bufio_client *client;
-+	struct dm_buffer *buffer;
-+	sector_t limit;
-+	sector_t block_number;
-+	u8 *start;
-+	u8 *end;
++struct delta_zone {
++	/* The delta list memory */
++	u8 *memory;
++	/* The delta list headers */
++	struct delta_list *delta_lists;
++	/* Temporary starts of delta lists */
++	u64 *new_offsets;
++	/* Buffered writer for saving an index */
++	struct buffered_writer *buffered_writer;
++	/* The size of delta list memory */
++	size_t size;
++	/* Nanoseconds spent rebalancing */
++	ktime_t rebalance_time;
++	/* Number of memory rebalances */
++	u32 rebalance_count;
++	/* The number of bits in a stored value */
++	u8 value_bits;
++	/* The number of bits in the minimal key code */
++	u16 min_bits;
++	/* The number of keys used in a minimal code */
++	u32 min_keys;
++	/* The number of keys used for another code bit */
++	u32 incr_keys;
++	/* The number of records in the index */
++	u64 record_count;
++	/* The number of collision records */
++	u64 collision_count;
++	/* The number of records removed */
++	u64 discard_count;
++	/* The number of UDS_OVERFLOW errors detected */
++	u64 overflow_count;
++	/* The index of the first delta list */
++	u32 first_list;
++	/* The number of delta lists */
++	u32 list_count;
++	/* Tag belonging to this delta index */
++	u8 tag;
++} __aligned(L1_CACHE_BYTES);
++
++struct delta_list_save_info {
++	/* Tag identifying which delta index this list is in */
++	u8 tag;
++	/* Bit offset of the start of the list data */
++	u8 bit_offset;
++	/* Number of bytes of list data */
++	u16 byte_count;
++	/* The delta list number within the delta index */
++	u32 index;
++} __packed;
++
++struct delta_index {
++	/* The zones */
++	struct delta_zone *delta_zones;
++	/* The number of zones */
++	unsigned int zone_count;
++	/* The number of delta lists */
++	u32 list_count;
++	/* Maximum lists per zone */
++	u32 lists_per_zone;
++	/* Total memory allocated to this index */
++	size_t memory_size;
++	/* The number of non-empty lists at load time per zone */
++	u32 load_lists[MAX_ZONES];
++	/* True if this index is mutable */
++	bool mutable;
++	/* Tag belonging to this delta index */
++	u8 tag;
 +};
 +
-+enum { MAX_READ_AHEAD_BLOCKS = 4 };
-+
 +/*
-+ * The buffered writer allows efficient I/O by buffering writes and committing page-sized segments
-+ * to storage.
++ * A delta_index_page describes a single page of a chapter index. The delta_index field allows the
++ * page to be treated as an immutable delta_index. We use the delta_zone field to treat the chapter
++ * index page as a single zone index, and without the need to do an additional memory allocation.
 + */
-+struct buffered_writer {
-+	struct io_factory *factory;
-+	struct dm_bufio_client *client;
-+	struct dm_buffer *buffer;
-+	sector_t limit;
-+	sector_t block_number;
-+	u8 *start;
-+	u8 *end;
-+	int error;
++struct delta_index_page {
++	struct delta_index delta_index;
++	/* These values are loaded from the DeltaPageHeader */
++	u32 lowest_list_number;
++	u32 highest_list_number;
++	u64 virtual_chapter_number;
++	/* This structure describes the single zone of a delta index page. */
++	struct delta_zone delta_zone;
 +};
 +
-+static void uds_get_io_factory(struct io_factory *factory)
-+{
-+	atomic_inc(&factory->ref_count);
-+}
-+
-+static int get_block_device_from_name(const char *name, struct block_device **bdev)
-+{
-+	dev_t device = name_to_dev_t(name);
-+
-+	if (device != 0)
-+		*bdev = blkdev_get_by_dev(device, BLK_FMODE, NULL);
-+	else
-+		*bdev = blkdev_get_by_path(name, BLK_FMODE, NULL);
-+	if (IS_ERR(*bdev)) {
-+		uds_log_error_strerror(-PTR_ERR(*bdev), "%s is not a block device", name);
-+		return UDS_INVALID_ARGUMENT;
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_make_io_factory(const char *path, struct io_factory **factory_ptr)
-+{
-+	int result;
-+	struct block_device *bdev;
-+	struct io_factory *factory;
-+
-+	result = get_block_device_from_name(path, &bdev);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(1, struct io_factory, __func__, &factory);
-+	if (result != UDS_SUCCESS) {
-+		blkdev_put(bdev, BLK_FMODE);
-+		return result;
-+	}
-+
-+	factory->bdev = bdev;
-+	atomic_set_release(&factory->ref_count, 1);
-+
-+	*factory_ptr = factory;
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_replace_storage(struct io_factory *factory, const char *path)
-+{
-+	int result;
-+	struct block_device *bdev;
-+
-+	result = get_block_device_from_name(path, &bdev);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	blkdev_put(factory->bdev, BLK_FMODE);
-+	factory->bdev = bdev;
-+	return UDS_SUCCESS;
-+}
-+
-+/* Free an I/O factory once all references have been released. */
-+void uds_put_io_factory(struct io_factory *factory)
-+{
-+	if (atomic_add_return(-1, &factory->ref_count) <= 0) {
-+		blkdev_put(factory->bdev, BLK_FMODE);
-+		UDS_FREE(factory);
-+	}
-+}
-+
-+size_t uds_get_writable_size(struct io_factory *factory)
-+{
-+	return i_size_read(factory->bdev->bd_inode);
-+}
-+
-+/* Create a struct dm_bufio_client for an index region starting at offset. */
-+int uds_make_bufio(struct io_factory *factory,
-+		   off_t block_offset,
-+		   size_t block_size,
-+		   unsigned int reserved_buffers,
-+		   struct dm_bufio_client **client_ptr)
-+{
-+	struct dm_bufio_client *client;
-+
-+	client = dm_bufio_client_create(factory->bdev,
-+					block_size,
-+					reserved_buffers,
-+					0,
-+					NULL,
-+					NULL,
-+					0);
-+	if (IS_ERR(client))
-+		return -PTR_ERR(client);
-+
-+	dm_bufio_set_sector_offset(client, block_offset * SECTORS_PER_BLOCK);
-+	*client_ptr = client;
-+	return UDS_SUCCESS;
-+}
-+
-+static void read_ahead(struct buffered_reader *reader, sector_t block_number)
-+{
-+	if (block_number < reader->limit) {
-+		sector_t read_ahead =
-+			min((sector_t) MAX_READ_AHEAD_BLOCKS, reader->limit - block_number);
-+
-+		dm_bufio_prefetch(reader->client, block_number, read_ahead);
-+	}
-+}
-+
-+void uds_free_buffered_reader(struct buffered_reader *reader)
-+{
-+	if (reader == NULL)
-+		return;
-+
-+	if (reader->buffer != NULL)
-+		dm_bufio_release(reader->buffer);
-+
-+	dm_bufio_client_destroy(reader->client);
-+	uds_put_io_factory(reader->factory);
-+	UDS_FREE(reader);
-+}
-+
-+/* Create a buffered reader for an index region starting at offset. */
-+int uds_make_buffered_reader(struct io_factory *factory,
-+			     off_t offset,
-+			     u64 block_count,
-+			     struct buffered_reader **reader_ptr)
-+{
-+	int result;
-+	struct dm_bufio_client *client = NULL;
-+	struct buffered_reader *reader = NULL;
-+
-+	result = uds_make_bufio(factory, offset, UDS_BLOCK_SIZE, 1, &client);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(1, struct buffered_reader, "buffered reader", &reader);
-+	if (result != UDS_SUCCESS) {
-+		dm_bufio_client_destroy(client);
-+		return result;
-+	}
-+
-+	*reader = (struct buffered_reader) {
-+		.factory = factory,
-+		.client = client,
-+		.buffer = NULL,
-+		.limit = block_count,
-+		.block_number = 0,
-+		.start = NULL,
-+		.end = NULL,
-+	};
-+
-+	read_ahead(reader, 0);
-+	uds_get_io_factory(factory);
-+	*reader_ptr = reader;
-+	return UDS_SUCCESS;
-+}
-+
-+static int position_reader(struct buffered_reader *reader, sector_t block_number, off_t offset)
-+{
-+	struct dm_buffer *buffer = NULL;
-+	void *data;
-+
-+	if ((reader->end == NULL) || (block_number != reader->block_number)) {
-+		if (block_number >= reader->limit)
-+			return UDS_OUT_OF_RANGE;
-+
-+		if (reader->buffer != NULL)
-+			dm_bufio_release(UDS_FORGET(reader->buffer));
-+
-+		data = dm_bufio_read(reader->client, block_number, &buffer);
-+		if (IS_ERR(data))
-+			return -PTR_ERR(data);
-+
-+		reader->buffer = buffer;
-+		reader->start = data;
-+		if (block_number == reader->block_number + 1)
-+			read_ahead(reader, block_number + 1);
-+	}
-+
-+	reader->block_number = block_number;
-+	reader->end = reader->start + offset;
-+	return UDS_SUCCESS;
-+}
-+
-+static size_t bytes_remaining_in_read_buffer(struct buffered_reader *reader)
-+{
-+	return (reader->end == NULL) ? 0 : reader->start + UDS_BLOCK_SIZE - reader->end;
-+}
-+
-+static int reset_reader(struct buffered_reader *reader)
-+{
-+	sector_t block_number;
-+
-+	if (bytes_remaining_in_read_buffer(reader) > 0)
-+		return UDS_SUCCESS;
-+
-+	block_number = reader->block_number;
-+	if (reader->end != NULL)
-+		++block_number;
-+
-+	return position_reader(reader, block_number, 0);
-+}
-+
-+int uds_read_from_buffered_reader(struct buffered_reader *reader, u8 *data, size_t length)
-+{
-+	int result = UDS_SUCCESS;
-+	size_t chunk_size;
-+
-+	while (length > 0) {
-+		result = reset_reader(reader);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		chunk_size = min(length, bytes_remaining_in_read_buffer(reader));
-+		memcpy(data, reader->end, chunk_size);
-+		length -= chunk_size;
-+		data += chunk_size;
-+		reader->end += chunk_size;
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
 +/*
-+ * Verify that the next data on the reader matches the required value. If the value matches, the
-+ * matching contents are consumed. If the value does not match, the reader state is unchanged.
++ * Notes on the delta_index_entries:
++ *
++ * The fields documented as "public" can be read by any code that uses a delta_index. The fields
++ * documented as "private" carry information between delta_index method calls and should not be
++ * used outside the delta_index module.
++ *
++ * (1) The delta_index_entry is used like an iterator when searching a delta list.
++ *
++ * (2) It is also the result of a successful search and can be used to refer to the element found
++ *     by the search.
++ *
++ * (3) It is also the result of an unsuccessful search and can be used to refer to the insertion
++ *     point for a new record.
++ *
++ * (4) If at_end is true, the delta_list entry can only be used as the insertion point for a new
++ *     record at the end of the list.
++ *
++ * (5) If at_end is false and is_collision is true, the delta_list entry fields refer to a
++ *     collision entry in the list, and the delta_list entry can be used a a reference to this
++ *     entry.
++ *
++ * (6) If at_end is false and is_collision is false, the delta_list entry fields refer to a
++ *     non-collision entry in the list. Such delta_list entries can be used as a reference to a
++ *     found entry, or an insertion point for a non-collision entry before this entry, or an
++ *     insertion point for a collision entry that collides with this entry.
 + */
-+int uds_verify_buffered_data(struct buffered_reader *reader, const u8 *value, size_t length)
-+{
-+	int result = UDS_SUCCESS;
-+	size_t chunk_size;
-+	sector_t start_block_number = reader->block_number;
-+	int start_offset = reader->end - reader->start;
++struct delta_index_entry {
++	/* Public fields */
++	/* The key for this entry */
++	u32 key;
++	/* We are after the last list entry */
++	bool at_end;
++	/* This record is a collision */
++	bool is_collision;
 +
-+	while (length > 0) {
-+		result = reset_reader(reader);
-+		if (result != UDS_SUCCESS) {
-+			result = UDS_CORRUPT_DATA;
-+			break;
-+		}
++	/* Private fields */
++	/* This delta list overflowed */
++	bool list_overflow;
++	/* The number of bits used for the value */
++	u8 value_bits;
++	/* The number of bits used for the entire entry */
++	u16 entry_bits;
++	/* The delta index zone */
++	struct delta_zone *delta_zone;
++	/* The delta list containing the entry */
++	struct delta_list *delta_list;
++	/* The delta list number */
++	u32 list_number;
++	/* Bit offset of this entry within the list */
++	u16 offset;
++	/* The delta between this and previous entry */
++	u32 delta;
++	/* Temporary delta list for immutable indices */
++	struct delta_list temp_delta_list;
++};
 +
-+		chunk_size = min(length, bytes_remaining_in_read_buffer(reader));
-+		if (memcmp(value, reader->end, chunk_size) != 0) {
-+			result = UDS_CORRUPT_DATA;
-+			break;
-+		}
++struct delta_index_stats {
++	/* Number of bytes allocated */
++	size_t memory_allocated;
++	/* Nanoseconds spent rebalancing */
++	ktime_t rebalance_time;
++	/* Number of memory rebalances */
++	u32 rebalance_count;
++	/* The number of records in the index */
++	u64 record_count;
++	/* The number of collision records */
++	u64 collision_count;
++	/* The number of records removed */
++	u64 discard_count;
++	/* The number of UDS_OVERFLOW errors detected */
++	u64 overflow_count;
++	/* The number of delta lists */
++	u32 list_count;
++};
 +
-+		length -= chunk_size;
-+		value += chunk_size;
-+		reader->end += chunk_size;
-+	}
++int __must_check uds_initialize_delta_index(struct delta_index *delta_index,
++					    unsigned int zone_count,
++					    u32 list_count,
++					    u32 mean_delta,
++					    u32 payload_bits,
++					    size_t memory_size,
++					    u8 tag);
 +
-+	if (result != UDS_SUCCESS)
-+		position_reader(reader, start_block_number, start_offset);
++int __must_check uds_initialize_delta_index_page(struct delta_index_page *delta_index_page,
++						 u64 expected_nonce,
++						 u32 mean_delta,
++						 u32 payload_bits,
++						 u8 *memory,
++						 size_t memory_size);
 +
-+	return result;
-+}
++void uds_uninitialize_delta_index(struct delta_index *delta_index);
 +
-+/* Create a buffered writer for an index region starting at offset. */
-+int uds_make_buffered_writer(struct io_factory *factory,
-+			     off_t offset,
-+			     u64 block_count,
-+			     struct buffered_writer **writer_ptr)
-+{
-+	int result;
-+	struct dm_bufio_client *client = NULL;
-+	struct buffered_writer *writer;
++void uds_reset_delta_index(const struct delta_index *delta_index);
 +
-+	result = uds_make_bufio(factory, offset, UDS_BLOCK_SIZE, 1, &client);
-+	if (result != UDS_SUCCESS)
-+		return result;
++int __must_check uds_pack_delta_index_page(const struct delta_index *delta_index,
++					   u64 header_nonce,
++					   u8 *memory,
++					   size_t memory_size,
++					   u64 virtual_chapter_number,
++					   u32 first_list,
++					   u32 *list_count);
 +
-+	result = UDS_ALLOCATE(1, struct buffered_writer, "buffered writer", &writer);
-+	if (result != UDS_SUCCESS) {
-+		dm_bufio_client_destroy(client);
-+		return result;
-+	}
++int __must_check uds_start_restoring_delta_index(struct delta_index *delta_index,
++						 struct buffered_reader **buffered_readers,
++						 unsigned int reader_count);
 +
-+	*writer = (struct buffered_writer) {
-+		.factory = factory,
-+		.client = client,
-+		.buffer = NULL,
-+		.limit = block_count,
-+		.start = NULL,
-+		.end = NULL,
-+		.block_number = 0,
-+		.error = UDS_SUCCESS,
-+	};
++int __must_check uds_finish_restoring_delta_index(struct delta_index *delta_index,
++						  struct buffered_reader **buffered_readers,
++						  unsigned int reader_count);
 +
-+	uds_get_io_factory(factory);
-+	*writer_ptr = writer;
-+	return UDS_SUCCESS;
-+}
++int __must_check
++uds_check_guard_delta_lists(struct buffered_reader **buffered_readers, unsigned int reader_count);
 +
-+static size_t get_remaining_write_space(struct buffered_writer *writer)
-+{
-+	return writer->start + UDS_BLOCK_SIZE - writer->end;
-+}
++int __must_check uds_start_saving_delta_index(const struct delta_index *delta_index,
++					      unsigned int zone_number,
++					      struct buffered_writer *buffered_writer);
 +
-+static int __must_check prepare_next_buffer(struct buffered_writer *writer)
-+{
-+	struct dm_buffer *buffer = NULL;
-+	void *data;
++int __must_check
++uds_finish_saving_delta_index(const struct delta_index *delta_index, unsigned int zone_number);
 +
-+	if (writer->block_number >= writer->limit) {
-+		writer->error = UDS_OUT_OF_RANGE;
-+		return UDS_OUT_OF_RANGE;
-+	}
++int __must_check uds_write_guard_delta_list(struct buffered_writer *buffered_writer);
 +
-+	data = dm_bufio_new(writer->client, writer->block_number, &buffer);
-+	if (IS_ERR(data)) {
-+		writer->error = -PTR_ERR(data);
-+		return writer->error;
-+	}
++size_t __must_check uds_compute_delta_index_save_bytes(u32 list_count, size_t memory_size);
 +
-+	writer->buffer = buffer;
-+	writer->start = data;
-+	writer->end = data;
-+	return UDS_SUCCESS;
-+}
++int __must_check uds_start_delta_index_search(const struct delta_index *delta_index,
++					      u32 list_number,
++					      u32 key,
++					      struct delta_index_entry *iterator);
 +
-+static int flush_previous_buffer(struct buffered_writer *writer)
-+{
-+	size_t available;
++int __must_check uds_next_delta_index_entry(struct delta_index_entry *delta_entry);
 +
-+	if (writer->buffer == NULL)
-+		return writer->error;
++int __must_check uds_remember_delta_index_offset(const struct delta_index_entry *delta_entry);
 +
-+	if (writer->error == UDS_SUCCESS) {
-+		available = get_remaining_write_space(writer);
++int __must_check uds_get_delta_index_entry(const struct delta_index *delta_index,
++					   u32 list_number,
++					   u32 key,
++					   const u8 *name,
++					   struct delta_index_entry *delta_entry);
 +
-+		if (available > 0)
-+			memset(writer->end, 0, available);
++int __must_check
++uds_get_delta_entry_collision(const struct delta_index_entry *delta_entry, u8 *name);
 +
-+		dm_bufio_mark_buffer_dirty(writer->buffer);
-+	}
++u32 __must_check uds_get_delta_entry_value(const struct delta_index_entry *delta_entry);
 +
-+	dm_bufio_release(writer->buffer);
-+	writer->buffer = NULL;
-+	writer->start = NULL;
-+	writer->end = NULL;
-+	writer->block_number++;
-+	return writer->error;
-+}
++int __must_check uds_set_delta_entry_value(const struct delta_index_entry *delta_entry, u32 value);
 +
-+void uds_free_buffered_writer(struct buffered_writer *writer)
-+{
-+	int result;
++int __must_check uds_put_delta_index_entry(struct delta_index_entry *delta_entry,
++					   u32 key,
++					   u32 value,
++					   const u8 *name);
 +
-+	if (writer == NULL)
-+		return;
++int __must_check uds_remove_delta_index_entry(struct delta_index_entry *delta_entry);
 +
-+	flush_previous_buffer(writer);
-+	result = -dm_bufio_write_dirty_buffers(writer->client);
-+	if (result != UDS_SUCCESS)
-+		uds_log_warning_strerror(result, "%s: failed to sync storage", __func__);
++void uds_get_delta_index_stats(const struct delta_index *delta_index,
++			       struct delta_index_stats *stats);
 +
-+	dm_bufio_client_destroy(writer->client);
-+	uds_put_io_factory(writer->factory);
-+	UDS_FREE(writer);
-+}
++size_t __must_check
++uds_compute_delta_index_size(u32 entry_count, u32 mean_delta, u32 payload_bits);
 +
-+/*
-+ * Append data to the buffer, writing as needed. If no data is provided, zeros are written instead.
-+ * If a write error occurs, it is recorded and returned on every subsequent write attempt.
-+ */
-+int uds_write_to_buffered_writer(struct buffered_writer *writer, const u8 *data, size_t length)
-+{
-+	int result = writer->error;
-+	size_t chunk_size;
++u32 uds_get_delta_index_page_count(u32 entry_count,
++				   u32 list_count,
++				   u32 mean_delta,
++				   u32 payload_bits,
++				   size_t bytes_per_page);
 +
-+	while ((length > 0) && (result == UDS_SUCCESS)) {
-+		if (writer->buffer == NULL) {
-+			result = prepare_next_buffer(writer);
-+			continue;
-+		}
++void uds_log_delta_index_entry(struct delta_index_entry *delta_entry);
 +
-+		chunk_size = min(length, get_remaining_write_space(writer));
-+		if (data == NULL) {
-+			memset(writer->end, 0, chunk_size);
-+		} else {
-+			memcpy(writer->end, data, chunk_size);
-+			data += chunk_size;
-+		}
-+
-+		length -= chunk_size;
-+		writer->end += chunk_size;
-+
-+		if (get_remaining_write_space(writer) == 0)
-+			result = uds_flush_buffered_writer(writer);
-+	}
-+
-+	return result;
-+}
-+
-+int uds_flush_buffered_writer(struct buffered_writer *writer)
-+{
-+	if (writer->error != UDS_SUCCESS)
-+		return writer->error;
-+
-+	return flush_previous_buffer(writer);
-+}
-diff --git a/drivers/md/dm-vdo/io-factory.h b/drivers/md/dm-vdo/io-factory.h
++#endif /* UDS_DELTA_INDEX_H */
+diff --git a/drivers/md/dm-vdo/hash-utils.h b/drivers/md/dm-vdo/hash-utils.h
 new file mode 100644
-index 00000000000..1aa5ded6204
+index 00000000000..d67f418aded
 --- /dev/null
-+++ b/drivers/md/dm-vdo/io-factory.h
++++ b/drivers/md/dm-vdo/hash-utils.h
 @@ -0,0 +1,66 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright Red Hat
 + */
 +
-+#ifndef UDS_IO_FACTORY_H
-+#define UDS_IO_FACTORY_H
++#ifndef UDS_HASH_UTILS_H
++#define UDS_HASH_UTILS_H
 +
-+#include <linux/dm-bufio.h>
++#include "geometry.h"
++#include "numeric.h"
++#include "uds.h"
 +
-+/*
-+ * The I/O factory manages all low-level I/O operations to the underlying storage device. Its main
-+ * clients are the index layout and the volume. The buffered reader and buffered writer interfaces
-+ * are helpers for accessing data in a contiguous range of storage blocks.
-+ */
++/* Utilities for extracting portions of a request name for various uses. */
 +
-+struct buffered_reader;
-+struct buffered_writer;
-+
-+struct io_factory;
-+
++/* How various portions of a record name are apportioned. */
 +enum {
-+	UDS_BLOCK_SIZE = 4096,
-+	SECTORS_PER_BLOCK = UDS_BLOCK_SIZE >> SECTOR_SHIFT,
++	VOLUME_INDEX_BYTES_OFFSET = 0,
++	VOLUME_INDEX_BYTES_COUNT = 8,
++	CHAPTER_INDEX_BYTES_OFFSET = 8,
++	CHAPTER_INDEX_BYTES_COUNT = 6,
++	SAMPLE_BYTES_OFFSET = 14,
++	SAMPLE_BYTES_COUNT = 2,
 +};
 +
-+int __must_check uds_make_io_factory(const char *path, struct io_factory **factory_ptr);
-+
-+int __must_check uds_replace_storage(struct io_factory *factory, const char *path);
-+
-+void uds_put_io_factory(struct io_factory *factory);
-+
-+size_t __must_check uds_get_writable_size(struct io_factory *factory);
-+
-+int __must_check uds_make_bufio(struct io_factory *factory,
-+				off_t block_offset,
-+				size_t block_size,
-+				unsigned int reserved_buffers,
-+				struct dm_bufio_client **client_ptr);
-+
-+int __must_check uds_make_buffered_reader(struct io_factory *factory,
-+					  off_t offset,
-+					  u64 block_count,
-+					  struct buffered_reader **reader_ptr);
-+
-+void uds_free_buffered_reader(struct buffered_reader *reader);
-+
-+int __must_check
-+uds_read_from_buffered_reader(struct buffered_reader *reader, u8 *data, size_t length);
-+
-+int __must_check
-+uds_verify_buffered_data(struct buffered_reader *reader, const u8 *value, size_t length);
-+
-+int __must_check uds_make_buffered_writer(struct io_factory *factory,
-+					  off_t offset,
-+					  u64 block_count,
-+					  struct buffered_writer **writer_ptr);
-+
-+void uds_free_buffered_writer(struct buffered_writer *buffer);
-+
-+int __must_check
-+uds_write_to_buffered_writer(struct buffered_writer *writer, const u8 *data, size_t length);
-+
-+int __must_check uds_flush_buffered_writer(struct buffered_writer *writer);
-+
-+#endif /* UDS_IO_FACTORY_H */
-diff --git a/drivers/md/dm-vdo/numeric.h b/drivers/md/dm-vdo/numeric.h
-new file mode 100644
-index 00000000000..bd4ca019d1b
---- /dev/null
-+++ b/drivers/md/dm-vdo/numeric.h
-@@ -0,0 +1,78 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright Red Hat
-+ */
-+
-+#ifndef UDS_NUMERIC_H
-+#define UDS_NUMERIC_H
-+
-+#include <asm/unaligned.h>
-+#include <linux/kernel.h>
-+#include <linux/types.h>
-+
-+/*
-+ * These utilities encode or decode a number from an offset in a larger data buffer and then
-+ * advance the offset pointer to the next field in the buffer.
-+ */
-+
-+static inline void decode_s64_le(const u8 *buffer, size_t *offset, s64 *decoded)
++static inline u64 uds_extract_chapter_index_bytes(const struct  uds_record_name *name)
 +{
-+	*decoded = get_unaligned_le64(buffer + *offset);
-+	*offset += sizeof(s64);
++	const u8 *chapter_bits = &name->name[CHAPTER_INDEX_BYTES_OFFSET];
++	u64 bytes = (u64) get_unaligned_be16(chapter_bits) << 32;
++
++	bytes |= get_unaligned_be32(chapter_bits + 2);
++	return bytes;
 +}
 +
-+static inline void encode_s64_le(u8 *data, size_t *offset, s64 to_encode)
++static inline u64 uds_extract_volume_index_bytes(const struct uds_record_name *name)
 +{
-+	put_unaligned_le64(to_encode, data + *offset);
-+	*offset += sizeof(s64);
++	return get_unaligned_be64(&name->name[VOLUME_INDEX_BYTES_OFFSET]);
 +}
 +
-+static inline void decode_u64_le(const u8 *buffer, size_t *offset, u64 *decoded)
++static inline u32 uds_extract_sampling_bytes(const struct uds_record_name *name)
 +{
-+	*decoded = get_unaligned_le64(buffer + *offset);
-+	*offset += sizeof(u64);
++	return get_unaligned_be16(&name->name[SAMPLE_BYTES_OFFSET]);
 +}
 +
-+static inline void encode_u64_le(u8 *data, size_t *offset, u64 to_encode)
++/* Compute the chapter delta list for a given name. */
++static inline u32
++uds_hash_to_chapter_delta_list(const struct uds_record_name *name, const struct geometry *geometry)
 +{
-+	put_unaligned_le64(to_encode, data + *offset);
-+	*offset += sizeof(u64);
++	return ((uds_extract_chapter_index_bytes(name) >> geometry->chapter_address_bits) &
++		((1 << geometry->chapter_delta_list_bits) - 1));
 +}
 +
-+static inline void decode_s32_le(const u8 *buffer, size_t *offset, s32 *decoded)
++/* Compute the chapter delta address for a given name. */
++static inline u32
++uds_hash_to_chapter_delta_address(const struct uds_record_name *name,
++				  const struct geometry *geometry)
 +{
-+	*decoded = get_unaligned_le32(buffer + *offset);
-+	*offset += sizeof(s32);
++	return uds_extract_chapter_index_bytes(name) & ((1 << geometry->chapter_address_bits) - 1);
 +}
 +
-+static inline void encode_s32_le(u8 *data, size_t *offset, s32 to_encode)
++static inline unsigned int
++uds_name_to_hash_slot(const struct uds_record_name *name, unsigned int slot_count)
 +{
-+	put_unaligned_le32(to_encode, data + *offset);
-+	*offset += sizeof(s32);
++	return (unsigned int) (uds_extract_chapter_index_bytes(name) % slot_count);
 +}
 +
-+static inline void decode_u32_le(const u8 *buffer, size_t *offset, u32 *decoded)
-+{
-+	*decoded = get_unaligned_le32(buffer + *offset);
-+	*offset += sizeof(u32);
-+}
-+
-+static inline void encode_u32_le(u8 *data, size_t *offset, u32 to_encode)
-+{
-+	put_unaligned_le32(to_encode, data + *offset);
-+	*offset += sizeof(u32);
-+}
-+
-+static inline void decode_u16_le(const u8 *buffer, size_t *offset, u16 *decoded)
-+{
-+	*decoded = get_unaligned_le16(buffer + *offset);
-+	*offset += sizeof(u16);
-+}
-+
-+static inline void encode_u16_le(u8 *data, size_t *offset, u16 to_encode)
-+{
-+	put_unaligned_le16(to_encode, data + *offset);
-+	*offset += sizeof(u16);
-+}
-+
-+#endif /* UDS_NUMERIC_H */
++#endif /* UDS_HASH_UTILS_H */
 -- 
 2.40.1
 
