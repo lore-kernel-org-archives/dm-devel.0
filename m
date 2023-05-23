@@ -1,102 +1,101 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4DB87C7EE30
-	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 21:47:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1B3A9C7EE2F
+	for <dm-devel@archiver.kernel.org>; Tue, 23 May 2023 21:47:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684878423;
+	s=mimecast20190719; t=1684878429;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=1v6Mefbus0Q4rsM2dJTD+kE70Y5Bwm52HUPZ8p9RM6o=;
-	b=L3LJDhGo/ltHsso282zGfsESwTN9383FBTlSTLEVAEcMopNZ4tJCFjtvzg/O+FC/Za0Oj5
-	N+oY+fhUDdLeLwdKQtze6kgyawGMpNVKJ309L2sJ1FfUYifbhXIiMksc0g499C8zVcC5JI
-	bE9ipYB8l41rH5T+pRTeKOHIATm92Wk=
+	bh=FO8rhstocuGrPlQRpeekXYvKkl6DWFkhL2Sw0orqw60=;
+	b=JEmG79krghosCXZ2T0bzUf9twtFd6O1QoMArw9g1Kcg01pPTH3+qmv0WXFoWqVB76R8hYA
+	0nttVSjl5v9sE/y+fyPVheR/d0/2vTuXVslzdpBoP5t+Y3w81LCEJE5wSwBSmDH/jejg/z
+	lmsd75g2bz9Jc4DmCJy9Z6LhbPKjLuw=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-12-LAPR6ODmM0q1KY0_jYTdRw-1; Tue, 23 May 2023 17:47:01 -0400
-X-MC-Unique: LAPR6ODmM0q1KY0_jYTdRw-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-517-65VN_AN5Nza9ydpD66p5WQ-1; Tue, 23 May 2023 17:46:15 -0400
+X-MC-Unique: 65VN_AN5Nza9ydpD66p5WQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 198153C14AAF;
-	Tue, 23 May 2023 21:46:58 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A7CF41C0758C;
+	Tue, 23 May 2023 21:46:13 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F1AFE401024;
-	Tue, 23 May 2023 21:46:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8B4DF2166B26;
+	Tue, 23 May 2023 21:46:13 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BE15C19465B7;
-	Tue, 23 May 2023 21:46:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7B48A19465B1;
+	Tue, 23 May 2023 21:46:13 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4579819465A0
- for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 21:46:56 +0000 (UTC)
+ ESMTP id 35BF019465A8
+ for <dm-devel@listman.corp.redhat.com>; Tue, 23 May 2023 21:46:12 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 379579E63; Tue, 23 May 2023 21:46:56 +0000 (UTC)
+ id 153062166B26; Tue, 23 May 2023 21:46:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E71B9D7A
- for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:56 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [205.139.110.61])
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0C9832166B25
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:12 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0691F3C14AB6
- for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:56 +0000 (UTC)
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DA73A3828896
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 21:46:11 +0000 (UTC)
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+ [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-664-j3ZZh-94OjWHqI5JPhUodQ-1; Tue, 23 May 2023 17:46:54 -0400
-X-MC-Unique: j3ZZh-94OjWHqI5JPhUodQ-1
-Received: by mail-qk1-f197.google.com with SMTP id
- af79cd13be357-75b1bc4a19aso166229685a.0
- for <dm-devel@redhat.com>; Tue, 23 May 2023 14:46:54 -0700 (PDT)
+ us-mta-45-izHu4RE8OquBES42RtyNww-1; Tue, 23 May 2023 17:46:10 -0400
+X-MC-Unique: izHu4RE8OquBES42RtyNww-1
+Received: by mail-qk1-f199.google.com with SMTP id
+ af79cd13be357-75935a16b8eso35664885a.0
+ for <dm-devel@redhat.com>; Tue, 23 May 2023 14:46:10 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1684878413; x=1687470413;
+ d=1e100.net; s=20221208; t=1684878370; x=1687470370;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=SKqreX6gSN0P+IRYK7Uh4QG04v9/WEXewx5Y3NZ7odk=;
- b=EN2330AA5OUbgpuA7XKTIezq8Ti2/ljEd/mZPC2OdIYx+rzDVIW9GnxkPVO4S5GQ6Q
- vfVrwlRbs22Vk58ZRufhXn9cLq5MONw2mkom119l9ZPLqlW3jaIB+RNeDA85bqvDM9t/
- vm4cjyM9HXdfk7vFu/OhZ62Se+IMKLEYO8u7JcG1SmhltKeq7TEVt5fW9sKaSeRvdX3D
- sQ8m+8v/q7m3+viml4ke3aEvjax78rBS9FZsZQzayIghzywgdPLxWeHIyTm7eChsYXUI
- 9b7ar59AVFmOISipfuQET+qsf97hOdrjqZBnZ04jMsDhgkZXH2ieWI59d8UzL70Ylv/Q
- HZmA==
-X-Gm-Message-State: AC+VfDzh8ShppJJ4fu6iQp7rh+eV6QJ6osF7IvaXjOb0Nn0ZQHSCHanh
- 3nNtCBWnUjRApEPqPEcc9DFLnqXO/alXI5E+hFyv2WweVtxUFHskgOcGSDMNd9t+HqASUnDz4cM
- /bgextB6Rhi3s1C8nRqGNZk0spsjbXsrwonpvFut0ERRxzTbJLxmu45zIB6WVJfI+9bDAJI0d
-X-Received: by 2002:a05:620a:84c7:b0:75b:23a1:d83f with SMTP id
- pq7-20020a05620a84c700b0075b23a1d83fmr6638219qkn.1.1684878411856; 
- Tue, 23 May 2023 14:46:51 -0700 (PDT)
-X-Google-Smtp-Source: ACHHUZ74jp1ObGRvmNHU2N+dw6EkW3a6VvfFOKgzPO9OMFLwkPu5KHXilfY4RE5BNF1E1v4+NvMEOQ==
-X-Received: by 2002:a05:620a:84c7:b0:75b:23a1:d83f with SMTP id
- pq7-20020a05620a84c700b0075b23a1d83fmr6638120qkn.1.1684878409426; 
- Tue, 23 May 2023 14:46:49 -0700 (PDT)
+ bh=QCTmU/U1W45bdrCiqtOn+TDWUJPKi+OHglEUgEL3Wgc=;
+ b=PZNSJ8hcfN6NGP7/afgLO2vP+yhSuntJqWIDw6+9bzBvCG3CL1DXSQEKjHpT/LwWPQ
+ BsMIe9FjT2+tUlcD0BcO/an0k42wOIIQFHAkdqDNksca9HRSiP47qK8qLWqhSWkQJMDG
+ PqDVhNmcezRIItOPrbj15vyOYuRC0ee9DmYp/uA8q7lZNJx4l+iEy6XY8h5COCm9019A
+ VgSk7qTZIqPr3QP3FHabx/ITmNd58yLtsIs28epKhfNUFigzrrtqasM6xD3Ho9W+Ijt/
+ zMMqeyl6WWY8ax9rthw0g+nT1/Wft9CgimzwGc1qw3YrWqUuSSMLM7BLIvUJLvrJynqY
+ LJZQ==
+X-Gm-Message-State: AC+VfDx2rVz1auDKzgev8O+AIrMhoh9OTVSfOwk1pYouHnHfb6I5Gomc
+ JoiXkgodID9BdwHTyrWnCP6/BYQgTsGxHRsH/rmtdIydD605AgrcPMotRYniZxOQD99fCzQ0mQo
+ Xw2jixYrSFKIu3RCxqGBuPdYmkppr1LnIo7oJnhs7j9RB14r2gkDFnt/lJ2JP8gZR5sgwh0rG
+X-Received: by 2002:a05:620a:3d89:b0:75b:23a0:e7b8 with SMTP id
+ ts9-20020a05620a3d8900b0075b23a0e7b8mr4874098qkn.25.1684878369156; 
+ Tue, 23 May 2023 14:46:09 -0700 (PDT)
+X-Google-Smtp-Source: ACHHUZ7Ne6fwju0enxpB2eXmULXKZYdX5mYJcIfeMLcJSnAJtmSjqOyEcykQayETk66onXAQlilj0w==
+X-Received: by 2002:a05:620a:3d89:b0:75b:23a0:e7b8 with SMTP id
+ ts9-20020a05620a3d8900b0075b23a0e7b8mr4874050qkn.25.1684878368214; 
+ Tue, 23 May 2023 14:46:08 -0700 (PDT)
 Received: from bf36-1.. (173-166-2-198-newengland.hfc.comcastbusiness.net.
  [173.166.2.198]) by smtp.gmail.com with ESMTPSA id
- f25-20020a05620a15b900b0075b196ae392sm1489722qkk.104.2023.05.23.14.46.48
+ x3-20020ae9e903000000b007592af6fce6sm2234465qkf.43.2023.05.23.14.46.07
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 23 May 2023 14:46:49 -0700 (PDT)
+ Tue, 23 May 2023 14:46:07 -0700 (PDT)
 From: "J. corwin Coburn" <corwin@redhat.com>
 To: dm-devel@redhat.com,
 	linux-block@vger.kernel.org
-Date: Tue, 23 May 2023 17:45:34 -0400
-Message-Id: <20230523214539.226387-35-corwin@redhat.com>
+Date: Tue, 23 May 2023 17:45:12 -0400
+Message-Id: <20230523214539.226387-13-corwin@redhat.com>
 In-Reply-To: <20230523214539.226387-1-corwin@redhat.com>
 References: <20230523214539.226387-1-corwin@redhat.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: [dm-devel] [PATCH v2 34/39] Add the on-disk formats and marshalling
- of vdo structures.
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: [dm-devel] [PATCH v2 12/39] Implement the volume index.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -111,2862 +110,1507 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: vdo-devel@redhat.com, "J. corwin Coburn" <corwin@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+The volume index is a large delta index that maps each record name to the
+chapter which contains the newest record for that name. The volume index
+can contain several million records and is stored entirely in memory while
+the index is operating, accounting for the majority of the deduplication
+index's memory budget.
+
+The volume index is composed of two subindexes in order to handle sparse
+hook names separately from regular names. If sparse indexing is not
+enabled, the sparse hook portion of the volume index is not used or
+instantiated.
+
 Signed-off-by: J. corwin Coburn <corwin@redhat.com>
 ---
- drivers/md/dm-vdo/encodings.c | 1523 +++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/encodings.h | 1307 ++++++++++++++++++++++++++++
- 2 files changed, 2830 insertions(+)
- create mode 100644 drivers/md/dm-vdo/encodings.c
- create mode 100644 drivers/md/dm-vdo/encodings.h
+ drivers/md/dm-vdo/volume-index.c | 1272 ++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/volume-index.h |  192 +++++
+ 2 files changed, 1464 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/volume-index.c
+ create mode 100644 drivers/md/dm-vdo/volume-index.h
 
-diff --git a/drivers/md/dm-vdo/encodings.c b/drivers/md/dm-vdo/encodings.c
+diff --git a/drivers/md/dm-vdo/volume-index.c b/drivers/md/dm-vdo/volume-index.c
 new file mode 100644
-index 00000000000..0666f00e1e7
+index 00000000000..0a5944cfa8e
 --- /dev/null
-+++ b/drivers/md/dm-vdo/encodings.c
-@@ -0,0 +1,1523 @@
++++ b/drivers/md/dm-vdo/volume-index.c
+@@ -0,0 +1,1272 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright Red Hat
 + */
++#include "volume-index.h"
 +
-+#include "encodings.h"
-+
++#include <linux/bitops.h>
++#include <linux/bits.h>
++#include <linux/cache.h>
++#include <linux/compiler.h>
 +#include <linux/log2.h>
 +
++#include "config.h"
++#include "errors.h"
++#include "geometry.h"
++#include "hash-utils.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
++#include "numeric.h"
 +#include "permassert.h"
-+
-+#include "constants.h"
-+#include "release-versions.h"
-+#include "status-codes.h"
-+#include "types.h"
-+
-+struct geometry_block {
-+	char magic_number[VDO_GEOMETRY_MAGIC_NUMBER_SIZE];
-+	struct packed_header header;
-+	u32 checksum;
-+} __packed;
-+
-+static const struct header GEOMETRY_BLOCK_HEADER_5_0 = {
-+	.id = VDO_GEOMETRY_BLOCK,
-+	.version = {
-+		.major_version = 5,
-+		.minor_version = 0,
-+	},
-+	/*
-+	 * Note: this size isn't just the payload size following the header, like it is everywhere
-+	 * else in VDO.
-+	 */
-+	.size = sizeof(struct geometry_block) + sizeof(struct volume_geometry),
-+};
-+
-+static const struct header GEOMETRY_BLOCK_HEADER_4_0 = {
-+	.id = VDO_GEOMETRY_BLOCK,
-+	.version = {
-+		.major_version = 4,
-+		.minor_version = 0,
-+	},
-+	/*
-+	 * Note: this size isn't just the payload size following the header, like it is everywhere
-+	 * else in VDO.
-+	 */
-+	.size = sizeof(struct geometry_block) + sizeof(struct volume_geometry_4_0),
-+};
-+
-+const u8 VDO_GEOMETRY_MAGIC_NUMBER[VDO_GEOMETRY_MAGIC_NUMBER_SIZE + 1] = "dmvdo001";
-+
-+static const release_version_number_t COMPATIBLE_RELEASE_VERSIONS[] = {
-+	VDO_MAGNESIUM_RELEASE_VERSION_NUMBER,
-+	VDO_ALUMINUM_RELEASE_VERSION_NUMBER,
-+};
-+
-+enum {
-+	PAGE_HEADER_4_1_SIZE = 8 + 8 + 8 + 1 + 1 + 1 + 1,
-+};
-+
-+static const struct version_number BLOCK_MAP_4_1 = {
-+	.major_version = 4,
-+	.minor_version = 1,
-+};
-+
-+const struct header VDO_BLOCK_MAP_HEADER_2_0 = {
-+	.id = VDO_BLOCK_MAP,
-+	.version = {
-+		.major_version = 2,
-+		.minor_version = 0,
-+	},
-+	.size = sizeof(struct block_map_state_2_0),
-+};
-+
-+const struct header VDO_RECOVERY_JOURNAL_HEADER_7_0 = {
-+	.id = VDO_RECOVERY_JOURNAL,
-+	.version = {
-+			.major_version = 7,
-+			.minor_version = 0,
-+		},
-+	.size = sizeof(struct recovery_journal_state_7_0),
-+};
-+
-+const struct header VDO_SLAB_DEPOT_HEADER_2_0 = {
-+	.id = VDO_SLAB_DEPOT,
-+	.version = {
-+		.major_version = 2,
-+		.minor_version = 0,
-+	},
-+	.size = sizeof(struct slab_depot_state_2_0),
-+};
-+
-+const struct header VDO_LAYOUT_HEADER_3_0 = {
-+	.id = VDO_LAYOUT,
-+	.version = {
-+		.major_version = 3,
-+		.minor_version = 0,
-+	},
-+	.size = sizeof(struct layout_3_0) + (sizeof(struct partition_3_0) * VDO_PARTITION_COUNT),
-+};
-+
-+static const enum partition_id REQUIRED_PARTITIONS[] = {
-+	VDO_BLOCK_MAP_PARTITION,
-+	VDO_SLAB_DEPOT_PARTITION,
-+	VDO_RECOVERY_JOURNAL_PARTITION,
-+	VDO_SLAB_SUMMARY_PARTITION,
-+};
++#include "uds.h"
++#include "uds-threads.h"
 +
 +/*
-+ * The current version for the data encoded in the super block. This must be changed any time there
-+ * is a change to encoding of the component data of any VDO component.
++ * The volume index is a combination of two separate subindexes, one containing sparse hook entries
++ * (retained for all chapters), and one containing the remaining entries (retained only for the
++ * dense chapters). If there are no sparse chapters, only the non-hook sub index is used, and it
++ * will contain all records for all chapters.
++ *
++ * The volume index is also divided into zones, with one thread operating on each zone. Each
++ * incoming request is dispatched to the appropriate thread, and then to the appropriate subindex.
++ * Each delta list is handled by a single zone. To ensure that the distribution of delta lists to
++ * zones doesn't underflow (leaving some zone with no delta lists), the minimum number of delta
++ * lists must be the square of the maximum zone count for both subindexes.
++ *
++ * Each subindex zone is a delta index where the payload is a chapter number. The volume index can
++ * compute the delta list number, address, and zone number from the record name in order to
++ * dispatch record handling to the correct structures.
++ *
++ * Most operations that use all the zones take place either before request processing is allowed,
++ * or after all requests have been flushed in order to shut down. The only multi-threaded operation
++ * supported during normal operation is the uds_lookup_volume_index_name() method, used to determine
++ * whether a new chapter should be loaded into the sparse index cache. This operation only uses the
++ * sparse hook subindex, and the zone mutexes are used to make this operation safe.
++ *
++ * There are three ways of expressing chapter numbers in the volume index: virtual, index, and
++ * rolling. The interface to the volume index uses virtual chapter numbers, which are 64 bits long.
++ * Internally the subindex stores only the minimal number of bits necessary by masking away the
++ * high-order bits. When the index needs to deal with ordering of index chapter numbers, as when
++ * flushing entries from older chapters, it rolls the index chapter number around so that the
++ * smallest one in use is mapped to 0. See convert_index_to_virtual() or flush_invalid_entries()
++ * for an example of this technique.
++ *
++ * For efficiency, when older chapter numbers become invalid, the index does not immediately remove
++ * the invalidated entries. Instead it lazily removes them from a given delta list the next time it
++ * walks that list during normal operation. Because of this, the index size must be increased
++ * somewhat to accommodate all the invalid entries that have not yet been removed. For the standard
++ * index sizes, this requires about 4 chapters of old entries per 1024 chapters of valid entries in
++ * the index.
 + */
-+static const struct version_number VDO_COMPONENT_DATA_41_0 = {
-+	.major_version = 41,
-+	.minor_version = 0,
++
++struct sub_index_parameters {
++	/* The number of bits in address mask */
++	u8 address_bits;
++	/* The number of bits in chapter number */
++	u8 chapter_bits;
++	/* The mean delta */
++	u32 mean_delta;
++	/* The number of delta lists */
++	u64 list_count;
++	/* The number of chapters used */
++	u32 chapter_count;
++	/* The number of bits per chapter */
++	size_t chapter_size_in_bits;
++	/* The number of bytes of delta list memory */
++	size_t memory_size;
++	/* The number of bytes the index should keep free at all times */
++	size_t target_free_bytes;
 +};
 +
-+const struct version_number VDO_VOLUME_VERSION_67_0 = {
-+	.major_version = 67,
-+	.minor_version = 0,
++struct split_config {
++	/* The hook subindex configuration */
++	struct configuration hook_config;
++	struct geometry hook_geometry;
++
++	/* The non-hook subindex configuration */
++	struct configuration non_hook_config;
++	struct geometry non_hook_geometry;
 +};
 +
-+static const struct header SUPER_BLOCK_HEADER_12_0 = {
-+	.id = VDO_SUPER_BLOCK,
-+	.version = {
-+			.major_version = 12,
-+			.minor_version = 0,
-+		},
-+
-+	/* This is the minimum size, if the super block contains no components. */
-+	.size = VDO_SUPER_BLOCK_FIXED_SIZE - VDO_ENCODED_HEADER_SIZE,
++struct chapter_range {
++	u32 chapter_start;
++	u32 chapter_count;
 +};
 +
-+/**
-+ * validate_version() - Check whether a version matches an expected version.
-+ * @expected_version: The expected version.
-+ * @actual_version: The version being validated.
-+ * @component_name: The name of the component or the calling function (for error logging).
-+ *
-+ * Logs an error describing a mismatch.
-+ *
-+ * Return: VDO_SUCCESS             if the versions are the same,
-+ *         VDO_UNSUPPORTED_VERSION if the versions don't match.
-+ */
-+static int __must_check validate_version(struct version_number expected_version,
-+					 struct version_number actual_version,
-+					 const char *component_name)
++enum { MAGIC_SIZE = 8 };
++static const char MAGIC_START_5[] = "MI5-0005";
++
++struct sub_index_data {
++	char magic[MAGIC_SIZE]; /* MAGIC_START_5 */
++	u64 volume_nonce;
++	u64 virtual_chapter_low;
++	u64 virtual_chapter_high;
++	u32 first_list;
++	u32 list_count;
++};
++
++static const char MAGIC_START_6[] = "MI6-0001";
++
++struct volume_index_data {
++	char magic[MAGIC_SIZE]; /* MAGIC_START_6 */
++	u32 sparse_sample_rate;
++};
++
++static inline u32
++extract_address(const struct volume_sub_index *sub_index, const struct uds_record_name *name)
 +{
-+	if (!vdo_are_same_version(expected_version, actual_version))
-+		return uds_log_error_strerror(VDO_UNSUPPORTED_VERSION,
-+					      "%s version mismatch, expected %d.%d, got %d.%d",
-+					      component_name,
-+					      expected_version.major_version,
-+					      expected_version.minor_version,
-+					      actual_version.major_version,
-+					      actual_version.minor_version);
-+	return VDO_SUCCESS;
++	return uds_extract_volume_index_bytes(name) & sub_index->address_mask;
 +}
 +
-+/**
-+ * vdo_validate_header() - Check whether a header matches expectations.
-+ * @expected_header: The expected header.
-+ * @actual_header: The header being validated.
-+ * @exact_size: If true, the size fields of the two headers must be the same, otherwise it is
-+ *              required that actual_header.size >= expected_header.size.
-+ * @name: The name of the component or the calling function (for error logging).
-+ *
-+ * Logs an error describing the first mismatch found.
-+ *
-+ * Return: VDO_SUCCESS             if the header meets expectations,
-+ *         VDO_INCORRECT_COMPONENT if the component ids don't match,
-+ *         VDO_UNSUPPORTED_VERSION if the versions or sizes don't match.
-+ */
-+int vdo_validate_header(const struct header *expected_header,
-+			const struct header *actual_header,
-+			bool exact_size,
-+			const char *name)
++static inline u32
++extract_dlist_num(const struct volume_sub_index *sub_index, const struct uds_record_name *name)
 +{
-+	int result;
++	u64 bits = uds_extract_volume_index_bytes(name);
 +
-+	if (expected_header->id != actual_header->id)
-+		return uds_log_error_strerror(VDO_INCORRECT_COMPONENT,
-+					      "%s ID mismatch, expected %d, got %d",
-+					      name,
-+					      expected_header->id,
-+					      actual_header->id);
-+
-+	result = validate_version(expected_header->version, actual_header->version, name);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	if ((expected_header->size > actual_header->size) ||
-+	    (exact_size && (expected_header->size < actual_header->size)))
-+		return uds_log_error_strerror(VDO_UNSUPPORTED_VERSION,
-+					      "%s size mismatch, expected %zu, got %zu",
-+					      name,
-+					      expected_header->size,
-+					      actual_header->size);
-+
-+	return VDO_SUCCESS;
++	return (bits >> sub_index->address_bits) % sub_index->list_count;
 +}
 +
-+static void encode_version_number(u8 *buffer, size_t *offset, struct version_number version)
++static inline const struct volume_sub_index_zone *
++get_zone_for_record(const struct volume_index_record *record)
 +{
-+	struct packed_version_number packed = vdo_pack_version_number(version);
-+
-+	memcpy(buffer + *offset, &packed, sizeof(packed));
-+	*offset += sizeof(packed);
++	return &record->sub_index->zones[record->zone_number];
 +}
 +
-+void vdo_encode_header(u8 *buffer, size_t *offset, const struct header *header)
++static inline u64
++convert_index_to_virtual(const struct volume_index_record *record, u32 index_chapter)
 +{
-+	struct packed_header packed = vdo_pack_header(header);
++	const struct volume_sub_index_zone *volume_index_zone = get_zone_for_record(record);
++	u32 rolling_chapter = ((index_chapter - volume_index_zone->virtual_chapter_low) &
++			       record->sub_index->chapter_mask);
 +
-+	memcpy(buffer + *offset, &packed, sizeof(packed));
-+	*offset += sizeof(packed);
++	return volume_index_zone->virtual_chapter_low + rolling_chapter;
 +}
 +
-+static void decode_version_number(u8 *buffer, size_t *offset, struct version_number *version)
++static inline u32
++convert_virtual_to_index(const struct volume_sub_index *sub_index, u64 virtual_chapter)
 +{
-+	struct packed_version_number packed;
-+
-+	memcpy(&packed, buffer + *offset, sizeof(packed));
-+	*offset += sizeof(packed);
-+	*version = vdo_unpack_version_number(packed);
++	return virtual_chapter & sub_index->chapter_mask;
 +}
 +
-+void vdo_decode_header(u8 *buffer, size_t *offset, struct header *header)
++static inline bool
++is_virtual_chapter_indexed(const struct volume_index_record *record, u64 virtual_chapter)
 +{
-+	struct packed_header packed;
++	const struct volume_sub_index_zone *volume_index_zone = get_zone_for_record(record);
 +
-+	memcpy(&packed, buffer + *offset, sizeof(packed));
-+	*offset += sizeof(packed);
-+
-+	*header = vdo_unpack_header(&packed);
++	return ((virtual_chapter >= volume_index_zone->virtual_chapter_low) &&
++		(virtual_chapter <= volume_index_zone->virtual_chapter_high));
 +}
 +
-+/**
-+ * is_loadable_release_version() - Determine whether the supplied release version can be understood
-+ *                                 by the VDO code.
-+ * @version: The release version number to check.
-+ *
-+ * Return: True if the given version can be loaded.
-+ */
-+static inline bool is_loadable_release_version(release_version_number_t version)
++static inline bool has_sparse(const struct volume_index *volume_index)
 +{
-+	unsigned int i;
-+
-+	if (version == VDO_CURRENT_RELEASE_VERSION_NUMBER)
-+		return true;
-+
-+	for (i = 0; i < ARRAY_SIZE(COMPATIBLE_RELEASE_VERSIONS); i++)
-+		if (version == COMPATIBLE_RELEASE_VERSIONS[i])
-+			return true;
-+
-+	return false;
++	return volume_index->sparse_sample_rate > 0;
 +}
 +
-+/**
-+ * decode_volume_geometry() - Decode the on-disk representation of a volume geometry from a buffer.
-+ * @buffer: A buffer to decode from.
-+ * @offset: The offset in the buffer at which to decode.
-+ * @geometry: The structure to receive the decoded fields.
-+ * @version: The geometry block version to decode.
-+ */
-+static void
-+decode_volume_geometry(u8 *buffer, size_t *offset, struct volume_geometry *geometry, u32 version)
++bool uds_is_volume_index_sample(const struct volume_index *volume_index,
++				const struct uds_record_name *name)
 +{
-+	release_version_number_t release_version;
-+	enum volume_region_id id;
-+	nonce_t nonce;
-+	block_count_t bio_offset = 0;
-+	u32 mem;
-+	bool sparse;
++	if (!has_sparse(volume_index))
++		return false;
 +
-+	decode_u32_le(buffer, offset, &release_version);
-+	decode_u64_le(buffer, offset, &nonce);
-+	geometry->release_version = release_version;
-+	geometry->nonce = nonce;
-+
-+	memcpy((unsigned char *) &geometry->uuid, buffer + *offset, sizeof(uuid_t));
-+	*offset += sizeof(uuid_t);
-+
-+	if (version > 4)
-+		decode_u64_le(buffer, offset, &bio_offset);
-+	geometry->bio_offset = bio_offset;
-+
-+	for (id = 0; id < VDO_VOLUME_REGION_COUNT; id++) {
-+		physical_block_number_t start_block;
-+		enum volume_region_id saved_id;
-+
-+		decode_u32_le(buffer, offset, &saved_id);
-+		decode_u64_le(buffer, offset, &start_block);
-+
-+		geometry->regions[id] = (struct volume_region) {
-+			.id = saved_id,
-+			.start_block = start_block,
-+		};
-+	}
-+
-+	decode_u32_le(buffer, offset, &mem);
-+	*offset += sizeof(u32);
-+	sparse = buffer[(*offset)++];
-+
-+	geometry->index_config = (struct index_config) {
-+		.mem = mem,
-+		.sparse = sparse,
-+	};
++	return (uds_extract_sampling_bytes(name) % volume_index->sparse_sample_rate) == 0;
 +}
 +
-+/**
-+ * vdo_parse_geometry_block() - Decode and validate an encoded geometry block.
-+ * @block: The encoded geometry block.
-+ * @geometry: The structure to receive the decoded fields.
-+ */
-+int __must_check vdo_parse_geometry_block(u8 *block, struct volume_geometry *geometry)
++static inline const struct volume_sub_index *
++get_sub_index(const struct volume_index *volume_index, const struct uds_record_name *name)
 +{
-+	u32 checksum, saved_checksum;
-+	struct header header;
-+	size_t offset = 0;
-+	int result;
-+
-+	if (memcmp(block, VDO_GEOMETRY_MAGIC_NUMBER, VDO_GEOMETRY_MAGIC_NUMBER_SIZE) != 0)
-+		return VDO_BAD_MAGIC;
-+	offset += VDO_GEOMETRY_MAGIC_NUMBER_SIZE;
-+
-+	vdo_decode_header(block, &offset, &header);
-+	if (header.version.major_version <= 4)
-+		result = vdo_validate_header(&GEOMETRY_BLOCK_HEADER_4_0, &header, true, __func__);
-+	else
-+		result = vdo_validate_header(&GEOMETRY_BLOCK_HEADER_5_0, &header, true, __func__);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	decode_volume_geometry(block, &offset, geometry, header.version.major_version);
-+
-+	result = ASSERT(header.size == offset + sizeof(u32),
-+			"should have decoded up to the geometry checksum");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	/* Decode and verify the checksum. */
-+	checksum = vdo_crc32(block, offset);
-+	decode_u32_le(block, &offset, &saved_checksum);
-+
-+	if (!is_loadable_release_version(geometry->release_version))
-+		return uds_log_error_strerror(VDO_UNSUPPORTED_VERSION,
-+					      "release version %d cannot be loaded",
-+					      geometry->release_version);
-+
-+	return ((checksum == saved_checksum) ? VDO_SUCCESS : VDO_CHECKSUM_MISMATCH);
++	return (uds_is_volume_index_sample(volume_index, name) ?
++		&volume_index->vi_hook :
++		&volume_index->vi_non_hook);
 +}
 +
-+struct block_map_page *vdo_format_block_map_page(void *buffer,
-+						 nonce_t nonce,
-+						 physical_block_number_t pbn,
-+						 bool initialized)
++static unsigned int get_volume_sub_index_zone(const struct volume_sub_index *sub_index,
++					      const struct uds_record_name *name)
 +{
-+	struct block_map_page *page = (struct block_map_page *) buffer;
-+
-+	memset(buffer, 0, VDO_BLOCK_SIZE);
-+	page->version = vdo_pack_version_number(BLOCK_MAP_4_1);
-+	page->header.nonce = __cpu_to_le64(nonce);
-+	page->header.pbn = __cpu_to_le64(pbn);
-+	page->header.initialized = initialized;
-+	return page;
++	return extract_dlist_num(sub_index, name) / sub_index->delta_index.lists_per_zone;
 +}
 +
-+enum block_map_page_validity
-+vdo_validate_block_map_page(struct block_map_page *page,
-+			    nonce_t nonce,
-+			    physical_block_number_t pbn)
++unsigned int uds_get_volume_index_zone(const struct volume_index *volume_index,
++				       const struct uds_record_name *name)
 +{
-+	STATIC_ASSERT_SIZEOF(struct block_map_page_header, PAGE_HEADER_4_1_SIZE);
-+
-+	if (!vdo_are_same_version(BLOCK_MAP_4_1, vdo_unpack_version_number(page->version)) ||
-+	    !page->header.initialized ||
-+	    (nonce != __le64_to_cpu(page->header.nonce)))
-+		return VDO_BLOCK_MAP_PAGE_INVALID;
-+
-+	if (pbn != vdo_get_block_map_page_pbn(page))
-+		return VDO_BLOCK_MAP_PAGE_BAD;
-+
-+	return VDO_BLOCK_MAP_PAGE_VALID;
++	return get_volume_sub_index_zone(get_sub_index(volume_index, name), name);
 +}
 +
-+static int
-+decode_block_map_state_2_0(u8 *buffer, size_t *offset, struct block_map_state_2_0 *state)
++static int compute_volume_sub_index_parameters(const struct configuration *config,
++					       struct sub_index_parameters *params)
 +{
-+	size_t initial_offset;
-+	block_count_t flat_page_count, root_count;
-+	physical_block_number_t flat_page_origin, root_origin;
-+	struct header header;
-+	int result;
++	enum { DELTA_LIST_SIZE = 256 };
++	u64 entries_in_volume_index, address_span;
++	u32 chapters_in_volume_index, invalid_chapters;
++	u32 rounded_chapters;
++	u64 delta_list_records;
++	u32 address_count;
++	u64 index_size_in_bits;
++	size_t expected_index_size;
++	u64 min_delta_lists = MAX_ZONES * MAX_ZONES;
++	struct geometry *geometry = config->geometry;
++	u64 records_per_chapter = geometry->records_per_chapter;
 +
-+	vdo_decode_header(buffer, offset, &header);
-+	result = vdo_validate_header(&VDO_BLOCK_MAP_HEADER_2_0, &header, true, __func__);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	initial_offset = *offset;
-+
-+	decode_u64_le(buffer, offset, &flat_page_origin);
-+	result = ASSERT(flat_page_origin == VDO_BLOCK_MAP_FLAT_PAGE_ORIGIN,
-+			"Flat page origin must be %u (recorded as %llu)",
-+			VDO_BLOCK_MAP_FLAT_PAGE_ORIGIN,
-+			(unsigned long long) state->flat_page_origin);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	decode_u64_le(buffer, offset, &flat_page_count);
-+	result = ASSERT(flat_page_count == 0,
-+			"Flat page count must be 0 (recorded as %llu)",
-+			(unsigned long long) state->flat_page_count);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	decode_u64_le(buffer, offset, &root_origin);
-+	decode_u64_le(buffer, offset, &root_count);
-+
-+	result = ASSERT(VDO_BLOCK_MAP_HEADER_2_0.size == *offset - initial_offset,
-+			"decoded block map component size must match header size");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	*state = (struct block_map_state_2_0) {
-+		.flat_page_origin = flat_page_origin,
-+		.flat_page_count = flat_page_count,
-+		.root_origin = root_origin,
-+		.root_count = root_count,
-+	};
-+
-+	return VDO_SUCCESS;
-+}
-+
-+static void
-+encode_block_map_state_2_0(u8 *buffer, size_t *offset, struct block_map_state_2_0 state)
-+{
-+	size_t initial_offset;
-+
-+	vdo_encode_header(buffer, offset, &VDO_BLOCK_MAP_HEADER_2_0);
-+
-+	initial_offset = *offset;
-+	encode_u64_le(buffer, offset, state.flat_page_origin);
-+	encode_u64_le(buffer, offset, state.flat_page_count);
-+	encode_u64_le(buffer, offset, state.root_origin);
-+	encode_u64_le(buffer, offset, state.root_count);
-+
-+	ASSERT_LOG_ONLY(VDO_BLOCK_MAP_HEADER_2_0.size == *offset - initial_offset,
-+			"encoded block map component size must match header size");
-+}
-+
-+/**
-+ * vdo_compute_new_forest_pages() - Compute the number of pages which must be allocated at each
-+ *                                  level in order to grow the forest to a new number of entries.
-+ * @entries: The new number of entries the block map must address.
-+ *
-+ * Return: The total number of non-leaf pages required.
-+ */
-+block_count_t vdo_compute_new_forest_pages(root_count_t root_count,
-+					   struct boundary *old_sizes,
-+					   block_count_t entries,
-+					   struct boundary *new_sizes)
-+{
-+	page_count_t leaf_pages = max(vdo_compute_block_map_page_count(entries), 1U);
-+	page_count_t level_size = DIV_ROUND_UP(leaf_pages, root_count);
-+	block_count_t total_pages = 0;
-+	height_t height;
-+
-+	for (height = 0; height < VDO_BLOCK_MAP_TREE_HEIGHT; height++) {
-+		block_count_t new_pages;
-+
-+		level_size = DIV_ROUND_UP(level_size, VDO_BLOCK_MAP_ENTRIES_PER_PAGE);
-+		new_sizes->levels[height] = level_size;
-+		new_pages = level_size;
-+		if (old_sizes != NULL)
-+			new_pages -= old_sizes->levels[height];
-+		total_pages += (new_pages * root_count);
-+	}
-+
-+	return total_pages;
-+}
-+
-+/**
-+ * encode_recovery_journal_state_7_0() - Encode the state of a recovery journal.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+static void
-+encode_recovery_journal_state_7_0(u8 *buffer,
-+				  size_t *offset,
-+				  struct recovery_journal_state_7_0 state)
-+{
-+	size_t initial_offset;
-+
-+	vdo_encode_header(buffer, offset, &VDO_RECOVERY_JOURNAL_HEADER_7_0);
-+
-+	initial_offset = *offset;
-+	encode_u64_le(buffer, offset, state.journal_start);
-+	encode_u64_le(buffer, offset, state.logical_blocks_used);
-+	encode_u64_le(buffer, offset, state.block_map_data_blocks);
-+
-+	ASSERT_LOG_ONLY(VDO_RECOVERY_JOURNAL_HEADER_7_0.size == *offset - initial_offset,
-+			"encoded recovery journal component size must match header size");
-+}
-+
-+/**
-+ * decode_recovery_journal_state_7_0() - Decode the state of a recovery journal saved in a buffer.
-+ * @buffer: The buffer containing the saved state.
-+ * @state: A pointer to a recovery journal state to hold the result of a successful decode.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+static int __must_check
-+decode_recovery_journal_state_7_0(u8 *buffer,
-+				  size_t *offset,
-+				  struct recovery_journal_state_7_0 *state)
-+{
-+	struct header header;
-+	int result;
-+	size_t initial_offset;
-+	sequence_number_t journal_start;
-+	block_count_t logical_blocks_used, block_map_data_blocks;
-+
-+	vdo_decode_header(buffer, offset, &header);
-+	result = vdo_validate_header(&VDO_RECOVERY_JOURNAL_HEADER_7_0, &header, true, __func__);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	initial_offset = *offset;
-+	decode_u64_le(buffer, offset, &journal_start);
-+	decode_u64_le(buffer, offset, &logical_blocks_used);
-+	decode_u64_le(buffer, offset, &block_map_data_blocks);
-+
-+	result = ASSERT(VDO_RECOVERY_JOURNAL_HEADER_7_0.size == *offset - initial_offset,
-+			"decoded recovery journal component size must match header size");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	*state = (struct recovery_journal_state_7_0) {
-+		.journal_start = journal_start,
-+		.logical_blocks_used = logical_blocks_used,
-+		.block_map_data_blocks = block_map_data_blocks,
-+	};
-+
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * vdo_get_journal_operation_name() - Get the name of a journal operation.
-+ * @operation: The operation to name.
-+ *
-+ * Return: The name of the operation.
-+ */
-+const char *vdo_get_journal_operation_name(enum journal_operation operation)
-+{
-+	switch (operation) {
-+	case VDO_JOURNAL_DATA_REMAPPING:
-+		return "data remapping";
-+
-+	case VDO_JOURNAL_BLOCK_MAP_REMAPPING:
-+		return "block map remapping";
-+
-+	default:
-+		return "unknown journal operation";
-+	}
-+}
-+
-+/**
-+ * encode_slab_depot_state_2_0() - Encode the state of a slab depot into a buffer.
-+ *
-+ * Return: UDS_SUCCESS or an error.
-+ */
-+static void
-+encode_slab_depot_state_2_0(u8 *buffer, size_t *offset, struct slab_depot_state_2_0 state)
-+{
-+	size_t initial_offset;
-+
-+	vdo_encode_header(buffer, offset, &VDO_SLAB_DEPOT_HEADER_2_0);
-+
-+	initial_offset = *offset;
-+	encode_u64_le(buffer, offset, state.slab_config.slab_blocks);
-+	encode_u64_le(buffer, offset, state.slab_config.data_blocks);
-+	encode_u64_le(buffer, offset, state.slab_config.reference_count_blocks);
-+	encode_u64_le(buffer, offset, state.slab_config.slab_journal_blocks);
-+	encode_u64_le(buffer, offset, state.slab_config.slab_journal_flushing_threshold);
-+	encode_u64_le(buffer, offset, state.slab_config.slab_journal_blocking_threshold);
-+	encode_u64_le(buffer, offset, state.slab_config.slab_journal_scrubbing_threshold);
-+	encode_u64_le(buffer, offset, state.first_block);
-+	encode_u64_le(buffer, offset, state.last_block);
-+	buffer[(*offset)++] = state.zone_count;
-+
-+	ASSERT_LOG_ONLY(VDO_SLAB_DEPOT_HEADER_2_0.size == *offset - initial_offset,
-+			"encoded block map component size must match header size");
-+}
-+
-+/**
-+ * decode_slab_depot_state_2_0() - Decode slab depot component state version 2.0 from a buffer.
-+ *
-+ * Return: UDS_SUCCESS or an error code.
-+ */
-+static int
-+decode_slab_depot_state_2_0(u8 *buffer, size_t *offset, struct slab_depot_state_2_0 *state)
-+{
-+	struct header header;
-+	int result;
-+	size_t initial_offset;
-+	struct slab_config slab_config;
-+	block_count_t count;
-+	physical_block_number_t first_block, last_block;
-+	zone_count_t zone_count;
-+
-+	vdo_decode_header(buffer, offset, &header);
-+	result = vdo_validate_header(&VDO_SLAB_DEPOT_HEADER_2_0, &header, true, __func__);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	initial_offset = *offset;
-+	decode_u64_le(buffer, offset, &count);
-+	slab_config.slab_blocks = count;
-+
-+	decode_u64_le(buffer, offset, &count);
-+	slab_config.data_blocks = count;
-+
-+	decode_u64_le(buffer, offset, &count);
-+	slab_config.reference_count_blocks = count;
-+
-+	decode_u64_le(buffer, offset, &count);
-+	slab_config.slab_journal_blocks = count;
-+
-+	decode_u64_le(buffer, offset, &count);
-+	slab_config.slab_journal_flushing_threshold = count;
-+
-+	decode_u64_le(buffer, offset, &count);
-+	slab_config.slab_journal_blocking_threshold = count;
-+
-+	decode_u64_le(buffer, offset, &count);
-+	slab_config.slab_journal_scrubbing_threshold = count;
-+
-+	decode_u64_le(buffer, offset, &first_block);
-+	decode_u64_le(buffer, offset, &last_block);
-+	zone_count = buffer[(*offset)++];
-+
-+	result = ASSERT(VDO_SLAB_DEPOT_HEADER_2_0.size == *offset - initial_offset,
-+			"decoded slab depot component size must match header size");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	*state = (struct slab_depot_state_2_0) {
-+		.slab_config = slab_config,
-+		.first_block = first_block,
-+		.last_block = last_block,
-+		.zone_count = zone_count,
-+	};
-+
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * vdo_configure_slab_depot() - Configure the slab depot.
-+ * @partition: The slab depot partition
-+ * @slab_config: The configuration of a single slab.
-+ * @zone_count: The number of zones the depot will use.
-+ * @state: The state structure to be configured.
-+ *
-+ * Configures the slab_depot for the specified storage capacity, finding the number of data blocks
-+ * that will fit and still leave room for the depot metadata, then return the saved state for that
-+ * configuration.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+int vdo_configure_slab_depot(const struct partition *partition,
-+			     struct slab_config slab_config,
-+			     zone_count_t zone_count,
-+			     struct slab_depot_state_2_0 *state)
-+{
-+	block_count_t total_slab_blocks, total_data_blocks;
-+	size_t slab_count;
-+	physical_block_number_t last_block;
-+	block_count_t slab_size = slab_config.slab_blocks;
-+
-+	uds_log_debug("slabDepot %s(block_count=%llu, first_block=%llu, slab_size=%llu, zone_count=%u)",
-+		      __func__,
-+		      (unsigned long long) partition->count,
-+		      (unsigned long long) partition->offset,
-+		      (unsigned long long) slab_size,
-+		      zone_count);
-+
-+	/* We do not allow runt slabs, so we waste up to a slab's worth. */
-+	slab_count = (partition->count / slab_size);
-+	if (slab_count == 0)
-+		return VDO_NO_SPACE;
-+
-+	if (slab_count > MAX_VDO_SLABS)
-+		return VDO_TOO_MANY_SLABS;
-+
-+	total_slab_blocks = slab_count * slab_config.slab_blocks;
-+	total_data_blocks = slab_count * slab_config.data_blocks;
-+	last_block = partition->offset + total_slab_blocks;
-+
-+	*state = (struct slab_depot_state_2_0) {
-+		.slab_config = slab_config,
-+		.first_block = partition->offset,
-+		.last_block = last_block,
-+		.zone_count = zone_count,
-+	};
-+
-+	uds_log_debug("slab_depot last_block=%llu, total_data_blocks=%llu, slab_count=%zu, left_over=%llu",
-+		      (unsigned long long) last_block,
-+		      (unsigned long long) total_data_blocks,
-+		      slab_count,
-+		      (unsigned long long) (partition->count - (last_block - partition->offset)));
-+
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * vdo_configure_slab() - Measure and initialize the configuration to use for each slab.
-+ * @slab_size: The number of blocks per slab.
-+ * @slab_journal_blocks: The number of blocks for the slab journal.
-+ * @slab_config: The slab configuration to initialize.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+int vdo_configure_slab(block_count_t slab_size,
-+		       block_count_t slab_journal_blocks,
-+		       struct slab_config *slab_config)
-+{
-+	block_count_t ref_blocks, meta_blocks, data_blocks;
-+	block_count_t flushing_threshold, remaining, blocking_threshold;
-+	block_count_t minimal_extra_space, scrubbing_threshold;
-+
-+	if (slab_journal_blocks >= slab_size)
-+		return VDO_BAD_CONFIGURATION;
-+
++	params->chapter_count = geometry->chapters_per_volume;
 +	/*
-+	 * This calculation should technically be a recurrence, but the total number of metadata
-+	 * blocks is currently less than a single block of ref_counts, so we'd gain at most one
-+	 * data block in each slab with more iteration.
++	 * Make sure that the number of delta list records in the volume index does not change when
++	 * the volume is reduced by one chapter. This preserves the mapping from name to volume
++	 * index delta list.
 +	 */
-+	ref_blocks = vdo_get_saved_reference_count_size(slab_size - slab_journal_blocks);
-+	meta_blocks = (ref_blocks + slab_journal_blocks);
-+
-+	/* Make sure test code hasn't configured slabs to be too small. */
-+	if (meta_blocks >= slab_size)
-+		return VDO_BAD_CONFIGURATION;
++	rounded_chapters = params->chapter_count;
++	if (uds_is_reduced_geometry(geometry))
++		rounded_chapters += 1;
++	delta_list_records = records_per_chapter * rounded_chapters;
++	address_count = config->volume_index_mean_delta * DELTA_LIST_SIZE;
++	params->list_count = max(delta_list_records / DELTA_LIST_SIZE, min_delta_lists);
++	params->address_bits = bits_per(address_count - 1);
++	params->chapter_bits = bits_per(rounded_chapters - 1);
++	if ((u32) params->list_count != params->list_count)
++		return uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
++						"cannot initialize volume index with %llu delta lists",
++						(unsigned long long) params->list_count);
++	if (params->address_bits > 31)
++		return uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
++						"cannot initialize volume index with %u address bits",
++						params->address_bits);
 +
 +	/*
-+	 * If the slab size is very small, assume this must be a unit test and override the number
-+	 * of data blocks to be a power of two (wasting blocks in the slab). Many tests need their
-+	 * data_blocks fields to be the exact capacity of the configured volume, and that used to
-+	 * fall out since they use a power of two for the number of data blocks, the slab size was
-+	 * a power of two, and every block in a slab was a data block.
++	 * The probability that a given delta list is not touched during the writing of an entire
++	 * chapter is:
 +	 *
-+	 * TODO: Try to figure out some way of structuring testParameters and unit tests so this
-+	 * hack isn't needed without having to edit several unit tests every time the metadata size
-+	 * changes by one block.
++	 * double p_not_touched = pow((double) (params->list_count - 1) / params->list_count,
++	 *                            records_per_chapter);
++	 *
++	 * For the standard index sizes, about 78% of the delta lists are not touched, and
++	 * therefore contain old index entries that have not been eliminated by the lazy LRU
++	 * processing. Then the number of old index entries that accumulate over the entire index,
++	 * in terms of full chapters worth of entries, is:
++	 *
++	 * double invalid_chapters = p_not_touched / (1.0 - p_not_touched);
++	 *
++	 * For the standard index sizes, the index needs about 3.5 chapters of space for the old
++	 * entries in a 1024 chapter index, so round this up to use 4 chapters per 1024 chapters in
++	 * the index.
 +	 */
-+	data_blocks = slab_size - meta_blocks;
-+	if ((slab_size < 1024) && !is_power_of_2(data_blocks))
-+		data_blocks = ((block_count_t) 1 << ilog2(data_blocks));
++	invalid_chapters = max(rounded_chapters / 256, 2U);
++	chapters_in_volume_index = rounded_chapters + invalid_chapters;
++	entries_in_volume_index = records_per_chapter * chapters_in_volume_index;
++
++	address_span = params->list_count << params->address_bits;
++	params->mean_delta = address_span / entries_in_volume_index;
 +
 +	/*
-+	 * Configure the slab journal thresholds. The flush threshold is 168 of 224 blocks in
-+	 * production, or 3/4ths, so we use this ratio for all sizes.
++	 * Compute the expected size of a full index, then set the total memory to be 6% larger
++	 * than that expected size. This number should be large enough that there are not many
++	 * rebalances when the index is full.
 +	 */
-+	flushing_threshold = ((slab_journal_blocks * 3) + 3) / 4;
-+	/*
-+	 * The blocking threshold should be far enough from the flushing threshold to not produce
-+	 * delays, but far enough from the end of the journal to allow multiple successive recovery
-+	 * failures.
-+	 */
-+	remaining = slab_journal_blocks - flushing_threshold;
-+	blocking_threshold = flushing_threshold + ((remaining * 5) / 7);
-+	/* The scrubbing threshold should be at least 2048 entries before the end of the journal. */
-+	minimal_extra_space = 1 + (MAXIMUM_VDO_USER_VIOS / VDO_SLAB_JOURNAL_FULL_ENTRIES_PER_BLOCK);
-+	scrubbing_threshold = blocking_threshold;
-+	if (slab_journal_blocks > minimal_extra_space)
-+		scrubbing_threshold = slab_journal_blocks - minimal_extra_space;
-+	if (blocking_threshold > scrubbing_threshold)
-+		blocking_threshold = scrubbing_threshold;
++	params->chapter_size_in_bits = uds_compute_delta_index_size(records_per_chapter,
++								    params->mean_delta,
++								    params->chapter_bits);
++	index_size_in_bits = params->chapter_size_in_bits * chapters_in_volume_index;
++	expected_index_size = index_size_in_bits / BITS_PER_BYTE;
++	params->memory_size = expected_index_size * 106 / 100;
 +
-+	*slab_config = (struct slab_config) {
-+		.slab_blocks = slab_size,
-+		.data_blocks = data_blocks,
-+		.reference_count_blocks = ref_blocks,
-+		.slab_journal_blocks = slab_journal_blocks,
-+		.slab_journal_flushing_threshold = flushing_threshold,
-+		.slab_journal_blocking_threshold = blocking_threshold,
-+		.slab_journal_scrubbing_threshold = scrubbing_threshold};
-+	return VDO_SUCCESS;
++	params->target_free_bytes = expected_index_size / 20;
++	return UDS_SUCCESS;
 +}
 +
-+/**
-+ * vdo_decode_slab_journal_entry() - Decode a slab journal entry.
-+ * @block: The journal block holding the entry.
-+ * @entry_count: The number of the entry.
-+ *
-+ * Return: The decoded entry.
-+ */
-+struct slab_journal_entry
-+vdo_decode_slab_journal_entry(struct packed_slab_journal_block *block,
-+			      journal_entry_count_t entry_count)
++static void uninitialize_volume_sub_index(struct volume_sub_index *sub_index)
 +{
-+	struct slab_journal_entry entry =
-+		vdo_unpack_slab_journal_entry(&block->payload.entries[entry_count]);
-+
-+	if (block->header.has_block_map_increments &&
-+	    ((block->payload.full_entries.entry_types[entry_count / 8] &
-+	      ((u8)1 << (entry_count % 8))) != 0))
-+		entry.operation = VDO_JOURNAL_BLOCK_MAP_REMAPPING;
-+
-+	return entry;
++	UDS_FREE(UDS_FORGET(sub_index->flush_chapters));
++	UDS_FREE(UDS_FORGET(sub_index->zones));
++	uds_uninitialize_delta_index(&sub_index->delta_index);
 +}
 +
-+/**
-+ * allocate_partition() - Allocate a partition and add it to a layout.
-+ * @layout: The layout containing the partition.
-+ * @id: The id of the partition.
-+ * @offset: The offset into the layout at which the partition begins.
-+ * @size: The size of the partition in blocks.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+static int allocate_partition(struct layout *layout,
-+			      u8 id,
-+			      physical_block_number_t offset,
-+			      block_count_t size)
++void uds_free_volume_index(struct volume_index *volume_index)
 +{
-+	struct partition *partition;
-+	int result;
-+
-+	result = UDS_ALLOCATE(1, struct partition, __func__, &partition);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	partition->id = id;
-+	partition->offset = offset;
-+	partition->count = size;
-+	partition->next = layout->head;
-+	layout->head = partition;
-+
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * make_partition() - Create a new partition from the beginning or end of the unused space in a
-+ *                    layout.
-+ * @layout: The layout.
-+ * @id: The id of the partition to make.
-+ * @size: The number of blocks to carve out; if 0, all remaining space will be used.
-+ * @beginning: True if the partition should start at the beginning of the unused space.
-+ *
-+ * Return: A success or error code, particularly VDO_NO_SPACE if there are fewer than size blocks
-+ *         remaining.
-+ */
-+static int __must_check
-+make_partition(struct layout *layout,
-+	       enum partition_id id,
-+	       block_count_t size,
-+	       bool beginning)
-+{
-+	int result;
-+	physical_block_number_t offset;
-+	block_count_t free_blocks = layout->last_free - layout->first_free;
-+
-+	if (size == 0) {
-+		if (free_blocks == 0)
-+			return VDO_NO_SPACE;
-+		size = free_blocks;
-+	} else if (size > free_blocks) {
-+		return VDO_NO_SPACE;
-+	}
-+
-+	result = vdo_get_partition(layout, id, NULL);
-+	if (result != VDO_UNKNOWN_PARTITION)
-+		return VDO_PARTITION_EXISTS;
-+
-+	offset = beginning ? layout->first_free : (layout->last_free - size);
-+
-+	result = allocate_partition(layout, id, offset, size);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	layout->num_partitions++;
-+	if (beginning)
-+		layout->first_free += size;
-+	else
-+		layout->last_free = layout->last_free - size;
-+
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * vdo_initialize_layout() - Lay out the partitions of a vdo.
-+ * @size: The entire size of the vdo.
-+ * @origin: The start of the layout on the underlying storage in blocks.
-+ * @block_map_blocks: The size of the block map partition.
-+ * @journal_blocks: The size of the journal partition.
-+ * @summary_blocks: The size of the slab summary partition.
-+ * @layout: The layout to initialize.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+int vdo_initialize_layout(block_count_t size,
-+			  physical_block_number_t offset,
-+			  block_count_t block_map_blocks,
-+			  block_count_t journal_blocks,
-+			  block_count_t summary_blocks,
-+			  struct layout *layout)
-+{
-+	int result;
-+	block_count_t necessary_size =
-+		(offset + block_map_blocks + journal_blocks + summary_blocks);
-+
-+	if (necessary_size > size)
-+		return uds_log_error_strerror(VDO_NO_SPACE, "Not enough space to make a VDO");
-+
-+	*layout = (struct layout) {
-+		.start = offset,
-+		.size = size,
-+		.first_free = offset,
-+		.last_free = size,
-+		.num_partitions = 0,
-+		.head = NULL,
-+	};
-+
-+	result = make_partition(layout, VDO_BLOCK_MAP_PARTITION, block_map_blocks, true);
-+	if (result != VDO_SUCCESS) {
-+		vdo_uninitialize_layout(layout);
-+		return result;
-+	}
-+
-+	result = make_partition(layout, VDO_SLAB_SUMMARY_PARTITION, summary_blocks, false);
-+	if (result != VDO_SUCCESS) {
-+		vdo_uninitialize_layout(layout);
-+		return result;
-+	}
-+
-+	result = make_partition(layout, VDO_RECOVERY_JOURNAL_PARTITION, journal_blocks, false);
-+	if (result != VDO_SUCCESS) {
-+		vdo_uninitialize_layout(layout);
-+		return result;
-+	}
-+
-+	result = make_partition(layout, VDO_SLAB_DEPOT_PARTITION, 0, true);
-+	if (result != VDO_SUCCESS)
-+		vdo_uninitialize_layout(layout);
-+
-+	return result;
-+}
-+
-+/**
-+ * vdo_uninitialize_layout() - Clean up a layout.
-+ * @layout: The layout to clean up.
-+ *
-+ * All partitions created by this layout become invalid pointers.
-+ */
-+void vdo_uninitialize_layout(struct layout *layout)
-+{
-+	while (layout->head != NULL) {
-+		struct partition *part = layout->head;
-+
-+		layout->head = part->next;
-+		UDS_FREE(part);
-+	}
-+
-+	memset(layout, 0, sizeof(struct layout));
-+}
-+
-+/**
-+ * vdo_get_partition() - Get a partition by id.
-+ * @layout: The layout from which to get a partition.
-+ * @id: The id of the partition.
-+ * @partition_ptr: A pointer to hold the partition.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+int vdo_get_partition(struct layout *layout,
-+		      enum partition_id id,
-+		      struct partition **partition_ptr)
-+{
-+	struct partition *partition;
-+
-+	for (partition = layout->head; partition != NULL; partition = partition->next) {
-+		if (partition->id == id) {
-+			if (partition_ptr != NULL)
-+				*partition_ptr = partition;
-+			return VDO_SUCCESS;
-+		}
-+	}
-+
-+	return VDO_UNKNOWN_PARTITION;
-+}
-+
-+/**
-+ * vdo_get_known_partition() - Get a partition by id from a validated layout.
-+ * @layout: The layout from which to get a partition.
-+ * @id: The id of the partition.
-+ *
-+ * Return: the partition
-+ */
-+struct partition *vdo_get_known_partition(struct layout *layout, enum partition_id id)
-+{
-+	struct partition *partition;
-+	int result = vdo_get_partition(layout, id, &partition);
-+
-+	ASSERT_LOG_ONLY(result == VDO_SUCCESS, "layout has expected partition: %u", id);
-+
-+	return partition;
-+}
-+
-+static void encode_layout(u8 *buffer, size_t *offset, const struct layout *layout)
-+{
-+	const struct partition *partition;
-+	size_t initial_offset;
-+	struct header header = VDO_LAYOUT_HEADER_3_0;
-+
-+	STATIC_ASSERT_SIZEOF(enum partition_id, sizeof(u8));
-+	ASSERT_LOG_ONLY(layout->num_partitions <= U8_MAX,
-+			"layout partition count must fit in a byte");
-+
-+	vdo_encode_header(buffer, offset, &header);
-+
-+	initial_offset = *offset;
-+	encode_u64_le(buffer, offset, layout->first_free);
-+	encode_u64_le(buffer, offset, layout->last_free);
-+	buffer[(*offset)++] = layout->num_partitions;
-+
-+	ASSERT_LOG_ONLY(sizeof(struct layout_3_0) == *offset - initial_offset,
-+			"encoded size of a layout header must match structure");
-+
-+	for (partition = layout->head; partition != NULL; partition = partition->next) {
-+		buffer[(*offset)++] = partition->id;
-+		encode_u64_le(buffer, offset, partition->offset);
-+		/* This field only exists for backwards compatibility */
-+		encode_u64_le(buffer, offset, 0);
-+		encode_u64_le(buffer, offset, partition->count);
-+	}
-+
-+	ASSERT_LOG_ONLY(header.size == *offset - initial_offset,
-+			"encoded size of a layout must match header size");
-+}
-+
-+static int
-+decode_layout(u8 *buffer,
-+	      size_t *offset,
-+	      physical_block_number_t start,
-+	      block_count_t size,
-+	      struct layout *layout)
-+{
-+	struct header header;
-+	struct layout_3_0 layout_header;
-+	struct partition *partition;
-+	size_t initial_offset;
-+	physical_block_number_t first_free, last_free;
-+	u8 partition_count;
-+	u8 i;
-+	int result;
-+
-+	vdo_decode_header(buffer, offset, &header);
-+	/* Layout is variable size, so only do a minimum size check here. */
-+	result = vdo_validate_header(&VDO_LAYOUT_HEADER_3_0, &header, false, __func__);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	initial_offset = *offset;
-+	decode_u64_le(buffer, offset, &first_free);
-+	decode_u64_le(buffer, offset, &last_free);
-+	partition_count = buffer[(*offset)++];
-+	layout_header = (struct layout_3_0) {
-+		.first_free = first_free,
-+		.last_free = last_free,
-+		.partition_count = partition_count,
-+	};
-+
-+	result = ASSERT(sizeof(struct layout_3_0) == *offset - initial_offset,
-+			"decoded size of a layout header must match structure");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	layout->start = start;
-+	layout->size = size;
-+	layout->first_free = layout_header.first_free;
-+	layout->last_free = layout_header.last_free;
-+	layout->num_partitions = layout_header.partition_count;
-+
-+	if (layout->num_partitions > VDO_PARTITION_COUNT)
-+		return uds_log_error_strerror(VDO_UNKNOWN_PARTITION,
-+					      "layout has extra partitions");
-+
-+	for (i = 0; i < layout->num_partitions; i++) {
-+		u8 id;
-+		u64 partition_offset, count;
-+
-+		id = buffer[(*offset)++];
-+		decode_u64_le(buffer, offset, &partition_offset);
-+		*offset += sizeof(u64);
-+		decode_u64_le(buffer, offset, &count);
-+
-+		result = allocate_partition(layout, id, partition_offset, count);
-+		if (result != VDO_SUCCESS) {
-+			vdo_uninitialize_layout(layout);
-+			return result;
-+		}
-+	}
-+
-+	/* Validate that the layout has all (and only) the required partitions */
-+	for (i = 0; i < VDO_PARTITION_COUNT; i++) {
-+		result = vdo_get_partition(layout, REQUIRED_PARTITIONS[i], &partition);
-+		if (result != VDO_SUCCESS) {
-+			vdo_uninitialize_layout(layout);
-+			return uds_log_error_strerror(result,
-+						      "layout is missing required partition %u",
-+						      REQUIRED_PARTITIONS[i]);
-+		}
-+
-+		start += partition->count;
-+	}
-+
-+	if (start != size) {
-+		vdo_uninitialize_layout(layout);
-+		return uds_log_error_strerror(UDS_BAD_STATE, "partitions do not cover the layout");
-+	}
-+
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * pack_vdo_config() - Convert a vdo_config to its packed on-disk representation.
-+ * @config: The vdo config to convert.
-+ *
-+ * Return: The platform-independent representation of the config.
-+ */
-+static struct packed_vdo_config pack_vdo_config(struct vdo_config config)
-+{
-+	return (struct packed_vdo_config) {
-+		.logical_blocks = __cpu_to_le64(config.logical_blocks),
-+		.physical_blocks = __cpu_to_le64(config.physical_blocks),
-+		.slab_size = __cpu_to_le64(config.slab_size),
-+		.recovery_journal_size = __cpu_to_le64(config.recovery_journal_size),
-+		.slab_journal_blocks = __cpu_to_le64(config.slab_journal_blocks),
-+	};
-+}
-+
-+/**
-+ * pack_vdo_component() - Convert a vdo_component to its packed on-disk representation.
-+ * @component: The VDO component data to convert.
-+ *
-+ * Return: The platform-independent representation of the component.
-+ */
-+static struct packed_vdo_component_41_0 pack_vdo_component(const struct vdo_component component)
-+{
-+	return (struct packed_vdo_component_41_0) {
-+		.state = __cpu_to_le32(component.state),
-+		.complete_recoveries = __cpu_to_le64(component.complete_recoveries),
-+		.read_only_recoveries = __cpu_to_le64(component.read_only_recoveries),
-+		.config = pack_vdo_config(component.config),
-+		.nonce = __cpu_to_le64(component.nonce),
-+	};
-+}
-+
-+static void encode_vdo_component(u8 *buffer, size_t *offset, struct vdo_component component)
-+{
-+	struct packed_vdo_component_41_0 packed;
-+
-+	encode_version_number(buffer, offset, VDO_COMPONENT_DATA_41_0);
-+	packed = pack_vdo_component(component);
-+	memcpy(buffer + *offset, &packed, sizeof(packed));
-+	*offset += sizeof(packed);
-+}
-+
-+/**
-+ * unpack_vdo_config() - Convert a packed_vdo_config to its native in-memory representation.
-+ * @config: The packed vdo config to convert.
-+ *
-+ * Return: The native in-memory representation of the vdo config.
-+ */
-+static struct vdo_config unpack_vdo_config(struct packed_vdo_config config)
-+{
-+	return (struct vdo_config) {
-+		.logical_blocks = __le64_to_cpu(config.logical_blocks),
-+		.physical_blocks = __le64_to_cpu(config.physical_blocks),
-+		.slab_size = __le64_to_cpu(config.slab_size),
-+		.recovery_journal_size = __le64_to_cpu(config.recovery_journal_size),
-+		.slab_journal_blocks = __le64_to_cpu(config.slab_journal_blocks),
-+	};
-+}
-+
-+/**
-+ * unpack_vdo_component_41_0() - Convert a packed_vdo_component_41_0 to its native in-memory
-+ *				 representation.
-+ * @component: The packed vdo component data to convert.
-+ *
-+ * Return: The native in-memory representation of the component.
-+ */
-+static struct vdo_component
-+unpack_vdo_component_41_0(struct packed_vdo_component_41_0 component)
-+{
-+	return (struct vdo_component) {
-+		.state = __le32_to_cpu(component.state),
-+		.complete_recoveries = __le64_to_cpu(component.complete_recoveries),
-+		.read_only_recoveries = __le64_to_cpu(component.read_only_recoveries),
-+		.config = unpack_vdo_config(component.config),
-+		.nonce = __le64_to_cpu(component.nonce),
-+	};
-+}
-+
-+/**
-+ * vdo_decode_component() - Decode the component data for the vdo itself out of the super block.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+static int decode_vdo_component(u8 *buffer, size_t *offset, struct vdo_component *component)
-+{
-+	struct version_number version;
-+	struct packed_vdo_component_41_0 packed;
-+	int result;
-+
-+	decode_version_number(buffer, offset, &version);
-+	result = validate_version(version, VDO_COMPONENT_DATA_41_0, "VDO component data");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	memcpy(&packed, buffer + *offset, sizeof(packed));
-+	*offset += sizeof(packed);
-+	*component = unpack_vdo_component_41_0(packed);
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * vdo_validate_config() - Validate constraints on a VDO config.
-+ * @config: The VDO config.
-+ * @physical_block_count: The minimum block count of the underlying storage.
-+ * @logical_block_count: The expected logical size of the VDO, or 0 if the logical size may be
-+ *			 unspecified.
-+ *
-+ * Return: A success or error code.
-+ */
-+int vdo_validate_config(const struct vdo_config *config,
-+			block_count_t physical_block_count,
-+			block_count_t logical_block_count)
-+{
-+	struct slab_config slab_config;
-+	int result;
-+
-+	result = ASSERT(config->slab_size > 0, "slab size unspecified");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = ASSERT(is_power_of_2(config->slab_size), "slab size must be a power of two");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = ASSERT(config->slab_size <= (1 << MAX_VDO_SLAB_BITS),
-+			"slab size must be less than or equal to 2^%d",
-+			MAX_VDO_SLAB_BITS);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = ASSERT(config->slab_journal_blocks >= MINIMUM_VDO_SLAB_JOURNAL_BLOCKS,
-+			"slab journal size meets minimum size");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = ASSERT(config->slab_journal_blocks <= config->slab_size,
-+			"slab journal size is within expected bound");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = vdo_configure_slab(config->slab_size, config->slab_journal_blocks, &slab_config);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = ASSERT((slab_config.data_blocks >= 1),
-+			"slab must be able to hold at least one block");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = ASSERT(config->physical_blocks > 0, "physical blocks unspecified");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = ASSERT(config->physical_blocks <= MAXIMUM_VDO_PHYSICAL_BLOCKS,
-+			"physical block count %llu exceeds maximum %llu",
-+			(unsigned long long) config->physical_blocks,
-+			(unsigned long long) MAXIMUM_VDO_PHYSICAL_BLOCKS);
-+	if (result != UDS_SUCCESS)
-+		return VDO_OUT_OF_RANGE;
-+
-+	if (physical_block_count != config->physical_blocks) {
-+		uds_log_error("A physical size of %llu blocks was specified, not the %llu blocks configured in the vdo super block",
-+			      (unsigned long long) physical_block_count,
-+			      (unsigned long long) config->physical_blocks);
-+		return VDO_PARAMETER_MISMATCH;
-+	}
-+
-+	if (logical_block_count > 0) {
-+		result = ASSERT((config->logical_blocks > 0), "logical blocks unspecified");
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		if (logical_block_count != config->logical_blocks) {
-+			uds_log_error("A logical size of %llu blocks was specified, but that differs from the %llu blocks configured in the vdo super block",
-+				      (unsigned long long) logical_block_count,
-+				      (unsigned long long) config->logical_blocks);
-+			return VDO_PARAMETER_MISMATCH;
-+		}
-+	}
-+
-+	result = ASSERT(config->logical_blocks <= MAXIMUM_VDO_LOGICAL_BLOCKS,
-+			"logical blocks too large");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = ASSERT(config->recovery_journal_size > 0, "recovery journal size unspecified");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = ASSERT(is_power_of_2(config->recovery_journal_size),
-+			"recovery journal size must be a power of two");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return result;
-+}
-+
-+/**
-+ * vdo_destroy_component_states() - Clean up any allocations in a vdo_component_states.
-+ * @states: The component states to destroy.
-+ */
-+void vdo_destroy_component_states(struct vdo_component_states *states)
-+{
-+	if (states == NULL)
++	if (volume_index == NULL)
 +		return;
 +
-+	vdo_uninitialize_layout(&states->layout);
++	if (volume_index->zones != NULL) {
++		unsigned int zone;
++
++		for (zone = 0; zone < volume_index->zone_count; zone++)
++			uds_destroy_mutex(&volume_index->zones[zone].hook_mutex);
++		UDS_FREE(UDS_FORGET(volume_index->zones));
++	}
++
++	uninitialize_volume_sub_index(&volume_index->vi_non_hook);
++	uninitialize_volume_sub_index(&volume_index->vi_hook);
++	UDS_FREE(volume_index);
 +}
 +
-+/**
-+ * decode_components() - Decode the components now that we know the component data is a version we
-+ *                       understand.
-+ * @buffer: The buffer being decoded.
-+ * @offset: The offset to start decoding from.
-+ * @geometry: The vdo geometry
-+ * @states: An object to hold the successfully decoded state.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+static int __must_check decode_components(u8 *buffer,
-+					  size_t *offset,
-+					  struct volume_geometry *geometry,
-+					  struct vdo_component_states *states)
++
++static int
++compute_volume_sub_index_save_bytes(const struct configuration *config, size_t *bytes)
++{
++	struct sub_index_parameters params = { .address_bits = 0 };
++	int result;
++
++	result = compute_volume_sub_index_parameters(config, &params);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	*bytes = (sizeof(struct sub_index_data) + params.list_count * sizeof(u64) +
++		  uds_compute_delta_index_save_bytes(params.list_count, params.memory_size));
++	return UDS_SUCCESS;
++}
++
++/* This function is only useful if the configuration includes sparse chapters. */
++static void split_configuration(const struct configuration *config, struct split_config *split)
++{
++	u64 sample_rate, sample_records;
++	u64 dense_chapters, sparse_chapters;
++
++	/* Start with copies of the base configuration. */
++	split->hook_config = *config;
++	split->hook_geometry = *config->geometry;
++	split->hook_config.geometry = &split->hook_geometry;
++	split->non_hook_config = *config;
++	split->non_hook_geometry = *config->geometry;
++	split->non_hook_config.geometry = &split->non_hook_geometry;
++
++	sample_rate = config->sparse_sample_rate;
++	sparse_chapters = config->geometry->sparse_chapters_per_volume;
++	dense_chapters = config->geometry->chapters_per_volume - sparse_chapters;
++	sample_records = config->geometry->records_per_chapter / sample_rate;
++
++	/* Adjust the number of records indexed for each chapter. */
++	split->hook_geometry.records_per_chapter = sample_records;
++	split->non_hook_geometry.records_per_chapter -= sample_records;
++
++	/* Adjust the number of chapters indexed. */
++	split->hook_geometry.sparse_chapters_per_volume = 0;
++	split->non_hook_geometry.sparse_chapters_per_volume = 0;
++	split->non_hook_geometry.chapters_per_volume = dense_chapters;
++}
++
++static int compute_volume_index_save_bytes(const struct configuration *config, size_t *bytes)
++{
++	size_t hook_bytes, non_hook_bytes;
++	struct split_config split;
++	int result;
++
++	if (!uds_is_sparse_geometry(config->geometry))
++		return compute_volume_sub_index_save_bytes(config, bytes);
++
++	split_configuration(config, &split);
++	result = compute_volume_sub_index_save_bytes(&split.hook_config, &hook_bytes);
++	if (result != UDS_SUCCESS)
++		return result;
++	result = compute_volume_sub_index_save_bytes(&split.non_hook_config, &non_hook_bytes);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	*bytes = sizeof(struct volume_index_data) + hook_bytes + non_hook_bytes;
++	return UDS_SUCCESS;
++}
++
++int uds_compute_volume_index_save_blocks(const struct configuration *config,
++					 size_t block_size,
++					 u64 *block_count)
++{
++	size_t bytes;
++	int result;
++
++	result = compute_volume_index_save_bytes(config, &bytes);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	bytes += sizeof(struct delta_list_save_info);
++	*block_count = DIV_ROUND_UP(bytes, block_size) + MAX_ZONES;
++	return UDS_SUCCESS;
++}
++
++/* Flush invalid entries while walking the delta list. */
++static inline int flush_invalid_entries(struct volume_index_record *record,
++					struct chapter_range *flush_range,
++					u32 *next_chapter_to_invalidate)
 +{
 +	int result;
 +
-+	decode_vdo_component(buffer, offset, &states->vdo);
-+
-+	result = decode_layout(buffer,
-+			       offset,
-+			       vdo_get_data_region_start(*geometry) + 1,
-+			       states->vdo.config.physical_blocks,
-+			       &states->layout);
-+	if (result != VDO_SUCCESS)
++	result = uds_next_delta_index_entry(&record->delta_entry);
++	if (result != UDS_SUCCESS)
 +		return result;
++	while (!record->delta_entry.at_end) {
++		u32 index_chapter = uds_get_delta_entry_value(&record->delta_entry);
++		u32 relative_chapter = ((index_chapter - flush_range->chapter_start) &
++					record->sub_index->chapter_mask);
 +
-+	result = decode_recovery_journal_state_7_0(buffer, offset, &states->recovery_journal);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = decode_slab_depot_state_2_0(buffer, offset, &states->slab_depot);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = decode_block_map_state_2_0(buffer, offset, &states->block_map);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	ASSERT_LOG_ONLY(*offset == VDO_COMPONENT_DATA_OFFSET + VDO_COMPONENT_DATA_SIZE,
-+			"All decoded component data was used");
-+	return VDO_SUCCESS;
++		if (likely(relative_chapter >= flush_range->chapter_count)) {
++			if (relative_chapter < *next_chapter_to_invalidate)
++				*next_chapter_to_invalidate = relative_chapter;
++			break;
++		}
++		result = uds_remove_delta_index_entry(&record->delta_entry);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++	return UDS_SUCCESS;
 +}
 +
-+/**
-+ * vdo_decode_component_states() - Decode the payload of a super block.
-+ * @buffer: The buffer containing the encoded super block contents.
-+ * @geometry: The vdo geometry
-+ * @states: A pointer to hold the decoded states.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+int vdo_decode_component_states(u8 *buffer,
-+				struct volume_geometry *geometry,
-+				struct vdo_component_states *states)
++/* Find the matching record, or the list offset where the record would go. */
++static int get_volume_index_entry(struct volume_index_record *record,
++				  u32 list_number,
++				  u32 key,
++				  struct chapter_range *flush_range)
 +{
++	struct volume_index_record other_record;
++	const struct volume_sub_index *sub_index = record->sub_index;
++	u32 next_chapter_to_invalidate = sub_index->chapter_mask;
 +	int result;
-+	size_t offset = VDO_COMPONENT_DATA_OFFSET;
 +
-+	/* Get and check the release version against the one from the geometry. */
-+	decode_u32_le(buffer, &offset, &states->release_version);
-+	if (states->release_version != geometry->release_version)
-+		return uds_log_error_strerror(VDO_UNSUPPORTED_VERSION,
-+					      "Geometry release version %u does not match super block release version %u",
-+					      geometry->release_version,
-+					      states->release_version);
++	result = uds_start_delta_index_search(&sub_index->delta_index,
++					      list_number,
++					      0,
++					      &record->delta_entry);
++	if (result != UDS_SUCCESS)
++		return result;
++	do {
++		result = flush_invalid_entries(record, flush_range, &next_chapter_to_invalidate);
++		if (result != UDS_SUCCESS)
++			return result;
++	} while (!record->delta_entry.at_end && (key > record->delta_entry.key));
 +
-+	/* Check the VDO volume version */
-+	decode_version_number(buffer, &offset, &states->volume_version);
-+	result = validate_version(VDO_VOLUME_VERSION_67_0, states->volume_version, "volume");
-+	if (result != VDO_SUCCESS)
++	result = uds_remember_delta_index_offset(&record->delta_entry);
++	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	result = decode_components(buffer, &offset, geometry, states);
-+	if (result != VDO_SUCCESS)
-+		vdo_uninitialize_layout(&states->layout);
++	/* Check any collision records for a more precise match. */
++	other_record = *record;
++	if (!other_record.delta_entry.at_end && (key == other_record.delta_entry.key)) {
++		for (;;) {
++			u8 collision_name[UDS_RECORD_NAME_SIZE];
++
++			result = flush_invalid_entries(&other_record,
++						       flush_range,
++						       &next_chapter_to_invalidate);
++			if (result != UDS_SUCCESS)
++				return result;
++			if (other_record.delta_entry.at_end ||
++			    !other_record.delta_entry.is_collision)
++				break;
++			result = uds_get_delta_entry_collision(&other_record.delta_entry,
++							       collision_name);
++			if (result != UDS_SUCCESS)
++				return result;
++			if (memcmp(collision_name, record->name, UDS_RECORD_NAME_SIZE) == 0) {
++				*record = other_record;
++				break;
++			}
++		}
++	}
++	while (!other_record.delta_entry.at_end) {
++		result = flush_invalid_entries(&other_record,
++					       flush_range,
++					       &next_chapter_to_invalidate);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++	next_chapter_to_invalidate += flush_range->chapter_start;
++	next_chapter_to_invalidate &= sub_index->chapter_mask;
++	flush_range->chapter_start = next_chapter_to_invalidate;
++	flush_range->chapter_count = 0;
++	return UDS_SUCCESS;
++}
++
++static int get_volume_sub_index_record(struct volume_sub_index *sub_index,
++				       const struct uds_record_name *name,
++				       struct volume_index_record *record)
++{
++	int result;
++	const struct volume_sub_index_zone *volume_index_zone;
++	u32 address = extract_address(sub_index, name);
++	u32 delta_list_number = extract_dlist_num(sub_index, name);
++	u64 flush_chapter = sub_index->flush_chapters[delta_list_number];
++
++	record->sub_index = sub_index;
++	record->mutex = NULL;
++	record->name = name;
++	record->zone_number = delta_list_number / sub_index->delta_index.lists_per_zone;
++	volume_index_zone = get_zone_for_record(record);
++
++	if (flush_chapter < volume_index_zone->virtual_chapter_low) {
++		struct chapter_range range;
++		u64 flush_count = volume_index_zone->virtual_chapter_low - flush_chapter;
++
++		range.chapter_start = convert_virtual_to_index(sub_index, flush_chapter);
++		range.chapter_count = (flush_count > sub_index->chapter_mask ?
++				       sub_index->chapter_mask + 1 :
++				       flush_count);
++		result = get_volume_index_entry(record, delta_list_number, address, &range);
++		flush_chapter = convert_index_to_virtual(record, range.chapter_start);
++		if (flush_chapter > volume_index_zone->virtual_chapter_high)
++			flush_chapter = volume_index_zone->virtual_chapter_high;
++		sub_index->flush_chapters[delta_list_number] = flush_chapter;
++	} else {
++		result = uds_get_delta_index_entry(&sub_index->delta_index,
++						   delta_list_number,
++						   address,
++						   name->name,
++						   &record->delta_entry);
++	}
++	if (result != UDS_SUCCESS)
++		return result;
++	record->is_found = (!record->delta_entry.at_end && (record->delta_entry.key == address));
++	if (record->is_found) {
++		u32 index_chapter = uds_get_delta_entry_value(&record->delta_entry);
++
++		record->virtual_chapter = convert_index_to_virtual(record, index_chapter);
++	}
++	record->is_collision = record->delta_entry.is_collision;
++	return UDS_SUCCESS;
++}
++
++int uds_get_volume_index_record(struct volume_index *volume_index,
++				const struct uds_record_name *name,
++				struct volume_index_record *record)
++{
++	int result;
++
++	if (uds_is_volume_index_sample(volume_index, name)) {
++		/*
++		 * Other threads cannot be allowed to call uds_lookup_volume_index_name() while
++		 * this thread is finding the volume index record. Due to the lazy LRU flushing of
++		 * the volume index, uds_get_volume_index_record() is not a read-only operation.
++		 */
++		unsigned int zone = get_volume_sub_index_zone(&volume_index->vi_hook, name);
++		struct mutex *mutex = &volume_index->zones[zone].hook_mutex;
++
++		uds_lock_mutex(mutex);
++		result = get_volume_sub_index_record(&volume_index->vi_hook, name, record);
++		uds_unlock_mutex(mutex);
++		/* Remember the mutex so that other operations on the index record can use it. */
++		record->mutex = mutex;
++	} else {
++		result = get_volume_sub_index_record(&volume_index->vi_non_hook, name, record);
++	}
++	return result;
++}
++
++int uds_put_volume_index_record(struct volume_index_record *record, u64 virtual_chapter)
++{
++	int result;
++	u32 address;
++	const struct volume_sub_index *sub_index = record->sub_index;
++
++	if (!is_virtual_chapter_indexed(record, virtual_chapter)) {
++		const struct volume_sub_index_zone *volume_index_zone =
++			get_zone_for_record(record);
++		return uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
++						"cannot put record into chapter number %llu that is out of the valid range %llu to %llu",
++						(unsigned long long) virtual_chapter,
++						(unsigned long long) volume_index_zone->virtual_chapter_low,
++						(unsigned long long) volume_index_zone->virtual_chapter_high);
++	}
++	address = extract_address(sub_index, record->name);
++	if (unlikely(record->mutex != NULL))
++		uds_lock_mutex(record->mutex);
++	result = uds_put_delta_index_entry(&record->delta_entry,
++					   address,
++					   convert_virtual_to_index(sub_index, virtual_chapter),
++					   record->is_found ? record->name->name : NULL);
++	if (unlikely(record->mutex != NULL))
++		uds_unlock_mutex(record->mutex);
++	switch (result) {
++	case UDS_SUCCESS:
++		record->virtual_chapter = virtual_chapter;
++		record->is_collision = record->delta_entry.is_collision;
++		record->is_found = true;
++		break;
++	case UDS_OVERFLOW:
++		uds_log_ratelimit(uds_log_warning_strerror,
++				  UDS_OVERFLOW,
++				  "Volume index entry dropped due to overflow condition");
++		uds_log_delta_index_entry(&record->delta_entry);
++		break;
++	default:
++		break;
++	}
++	return result;
++}
++
++int uds_remove_volume_index_record(struct volume_index_record *record)
++{
++	int result;
++
++	if (!record->is_found)
++		return uds_log_warning_strerror(UDS_BAD_STATE, "illegal operation on new record");
++	/* Mark the record so that it cannot be used again */
++	record->is_found = false;
++	if (unlikely(record->mutex != NULL))
++		uds_lock_mutex(record->mutex);
++	result = uds_remove_delta_index_entry(&record->delta_entry);
++	if (unlikely(record->mutex != NULL))
++		uds_unlock_mutex(record->mutex);
++	return result;
++}
++
++static void set_volume_sub_index_zone_open_chapter(struct volume_sub_index *sub_index,
++						   unsigned int zone_number,
++						   u64 virtual_chapter)
++{
++	u64 used_bits = 0;
++	struct volume_sub_index_zone *zone = &sub_index->zones[zone_number];
++	struct delta_zone *delta_zone;
++	u32 i;
++
++	zone->virtual_chapter_low = (virtual_chapter >= sub_index->chapter_count ?
++				     virtual_chapter - sub_index->chapter_count + 1 :
++				     0);
++	zone->virtual_chapter_high = virtual_chapter;
++
++	/* Check to see if the new zone data is too large. */
++	delta_zone = &sub_index->delta_index.delta_zones[zone_number];
++	for (i = 1; i <= delta_zone->list_count; i++)
++		used_bits += delta_zone->delta_lists[i].size;
++
++	if (used_bits > sub_index->max_zone_bits) {
++		/* Expire enough chapters to free the desired space. */
++		u64 expire_count =
++			1 + (used_bits - sub_index->max_zone_bits) / sub_index->chapter_zone_bits;
++
++		if (expire_count == 1) {
++			uds_log_ratelimit(uds_log_info,
++					  "zone %u:  At chapter %llu, expiring chapter %llu early",
++					  zone_number,
++					  (unsigned long long) virtual_chapter,
++					  (unsigned long long) zone->virtual_chapter_low);
++			zone->early_flushes++;
++			zone->virtual_chapter_low++;
++		} else {
++			u64 first_expired = zone->virtual_chapter_low;
++
++			if (first_expired + expire_count < zone->virtual_chapter_high) {
++				zone->early_flushes += expire_count;
++				zone->virtual_chapter_low += expire_count;
++			} else {
++				zone->early_flushes +=
++					zone->virtual_chapter_high - zone->virtual_chapter_low;
++				zone->virtual_chapter_low = zone->virtual_chapter_high;
++			}
++			uds_log_ratelimit(uds_log_info,
++					  "zone %u:  At chapter %llu, expiring chapters %llu to %llu early",
++					  zone_number,
++					  (unsigned long long) virtual_chapter,
++					  (unsigned long long) first_expired,
++					  (unsigned long long) zone->virtual_chapter_low - 1);
++		}
++	}
++}
++
++void uds_set_volume_index_zone_open_chapter(struct volume_index *volume_index,
++					    unsigned int zone_number,
++					    u64 virtual_chapter)
++{
++	struct mutex *mutex = &volume_index->zones[zone_number].hook_mutex;
++
++	set_volume_sub_index_zone_open_chapter(&volume_index->vi_non_hook,
++					       zone_number,
++					       virtual_chapter);
++
++	/*
++	 * Other threads cannot be allowed to call uds_lookup_volume_index_name() while the open
++	 * chapter number is changing.
++	 */
++	if (has_sparse(volume_index)) {
++		uds_lock_mutex(mutex);
++		set_volume_sub_index_zone_open_chapter(&volume_index->vi_hook,
++						       zone_number,
++						       virtual_chapter);
++		uds_unlock_mutex(mutex);
++	}
++}
++
++/*
++ * Set the newest open chapter number for the index, while also advancing the oldest valid chapter
++ * number.
++ */
++void uds_set_volume_index_open_chapter(struct volume_index *volume_index, u64 virtual_chapter)
++{
++	unsigned int zone;
++
++	for (zone = 0; zone < volume_index->zone_count; zone++)
++		uds_set_volume_index_zone_open_chapter(volume_index, zone, virtual_chapter);
++}
++
++int uds_set_volume_index_record_chapter(struct volume_index_record *record, u64 virtual_chapter)
++{
++	const struct volume_sub_index *sub_index = record->sub_index;
++	int result;
++
++	if (!record->is_found)
++		return uds_log_warning_strerror(UDS_BAD_STATE, "illegal operation on new record");
++	if (!is_virtual_chapter_indexed(record, virtual_chapter)) {
++		const struct volume_sub_index_zone *sub_index_zone = get_zone_for_record(record);
++
++		return uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
++						"cannot set chapter number %llu that is out of the valid range %llu to %llu",
++						(unsigned long long) virtual_chapter,
++						(unsigned long long) sub_index_zone->virtual_chapter_low,
++						(unsigned long long) sub_index_zone->virtual_chapter_high);
++	}
++	if (unlikely(record->mutex != NULL))
++		uds_lock_mutex(record->mutex);
++	result = uds_set_delta_entry_value(&record->delta_entry,
++					   convert_virtual_to_index(sub_index, virtual_chapter));
++	if (unlikely(record->mutex != NULL))
++		uds_unlock_mutex(record->mutex);
++	if (result != UDS_SUCCESS)
++		return result;
++	record->virtual_chapter = virtual_chapter;
++	return UDS_SUCCESS;
++}
++
++static u64 lookup_volume_sub_index_name(const struct volume_sub_index *sub_index,
++					const struct uds_record_name *name)
++{
++	int result;
++	u32 address = extract_address(sub_index, name);
++	u32 delta_list_number = extract_dlist_num(sub_index, name);
++	unsigned int zone_number = get_volume_sub_index_zone(sub_index, name);
++	const struct volume_sub_index_zone *zone = &sub_index->zones[zone_number];
++	u64 virtual_chapter;
++	u32 index_chapter;
++	u32 rolling_chapter;
++	struct delta_index_entry delta_entry;
++
++	result = uds_get_delta_index_entry(&sub_index->delta_index,
++					   delta_list_number,
++					   address,
++					   name->name,
++					   &delta_entry);
++	if (result != UDS_SUCCESS)
++		return NO_CHAPTER;
++
++	if (delta_entry.at_end || (delta_entry.key != address))
++		return NO_CHAPTER;
++
++	index_chapter = uds_get_delta_entry_value(&delta_entry);
++	rolling_chapter = (index_chapter - zone->virtual_chapter_low) & sub_index->chapter_mask;
++
++	virtual_chapter = zone->virtual_chapter_low + rolling_chapter;
++	if (virtual_chapter > zone->virtual_chapter_high)
++		return NO_CHAPTER;
++
++	return virtual_chapter;
++}
++
++/* Do a read-only lookup of the record name for sparse cache management. */
++u64 uds_lookup_volume_index_name(const struct volume_index *volume_index,
++				 const struct uds_record_name *name)
++{
++	unsigned int zone_number = uds_get_volume_index_zone(volume_index, name);
++	struct mutex *mutex = &volume_index->zones[zone_number].hook_mutex;
++	u64 virtual_chapter;
++
++	if (!uds_is_volume_index_sample(volume_index, name))
++		return NO_CHAPTER;
++
++	uds_lock_mutex(mutex);
++	virtual_chapter = lookup_volume_sub_index_name(&volume_index->vi_hook, name);
++	uds_unlock_mutex(mutex);
++
++	return virtual_chapter;
++}
++
++static void abort_restoring_volume_sub_index(struct volume_sub_index *sub_index)
++{
++	uds_reset_delta_index(&sub_index->delta_index);
++}
++
++static void abort_restoring_volume_index(struct volume_index *volume_index)
++{
++	abort_restoring_volume_sub_index(&volume_index->vi_non_hook);
++	if (has_sparse(volume_index))
++		abort_restoring_volume_sub_index(&volume_index->vi_hook);
++}
++
++static int start_restoring_volume_sub_index(struct volume_sub_index *sub_index,
++					    struct buffered_reader **readers,
++					    unsigned int reader_count)
++{
++	unsigned int z;
++	int result;
++	u64 virtual_chapter_low = 0, virtual_chapter_high = 0;
++	unsigned int i;
++
++	for (i = 0; i < reader_count; i++) {
++		struct sub_index_data header;
++		u8 buffer[sizeof(struct sub_index_data)];
++		size_t offset = 0;
++		u32 j;
++
++		result = uds_read_from_buffered_reader(readers[i], buffer, sizeof(buffer));
++		if (result != UDS_SUCCESS)
++			return uds_log_warning_strerror(result,
++							"failed to read volume index header");
++
++		memcpy(&header.magic, buffer, MAGIC_SIZE);
++		offset += MAGIC_SIZE;
++		decode_u64_le(buffer, &offset, &header.volume_nonce);
++		decode_u64_le(buffer, &offset, &header.virtual_chapter_low);
++		decode_u64_le(buffer, &offset, &header.virtual_chapter_high);
++		decode_u32_le(buffer, &offset, &header.first_list);
++		decode_u32_le(buffer, &offset, &header.list_count);
++
++		result = ASSERT(offset = sizeof(buffer),
++				"%zu bytes decoded of %zu expected",
++				offset,
++				sizeof(buffer));
++		if (result != UDS_SUCCESS)
++			result = UDS_CORRUPT_DATA;
++
++		if (memcmp(header.magic, MAGIC_START_5, MAGIC_SIZE) != 0)
++			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++							"volume index file had bad magic number");
++
++		if (sub_index->volume_nonce == 0)
++			sub_index->volume_nonce = header.volume_nonce;
++		else if (header.volume_nonce != sub_index->volume_nonce)
++			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++							"volume index volume nonce incorrect");
++
++		if (i == 0) {
++			virtual_chapter_low = header.virtual_chapter_low;
++			virtual_chapter_high = header.virtual_chapter_high;
++		} else if (virtual_chapter_high != header.virtual_chapter_high) {
++			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++							"Inconsistent volume index zone files: Chapter range is [%llu,%llu], chapter range %d is [%llu,%llu]",
++							(unsigned long long) virtual_chapter_low,
++							(unsigned long long) virtual_chapter_high,
++							i,
++							(unsigned long long) header.virtual_chapter_low,
++							(unsigned long long) header.virtual_chapter_high);
++		} else if (virtual_chapter_low < header.virtual_chapter_low) {
++			virtual_chapter_low = header.virtual_chapter_low;
++		}
++
++		for (j = 0; j < header.list_count; j++) {
++			u8 decoded[sizeof(u64)];
++
++			result = uds_read_from_buffered_reader(readers[i], decoded, sizeof(u64));
++			if (result != UDS_SUCCESS)
++				return uds_log_warning_strerror(result,
++								"failed to read volume index flush ranges");
++
++			sub_index->flush_chapters[header.first_list + j] =
++				get_unaligned_le64(decoded);
++		}
++	}
++
++	for (z = 0; z < sub_index->zone_count; z++) {
++		memset(&sub_index->zones[z], 0, sizeof(struct volume_sub_index_zone));
++		sub_index->zones[z].virtual_chapter_low = virtual_chapter_low;
++		sub_index->zones[z].virtual_chapter_high = virtual_chapter_high;
++	}
++
++	result = uds_start_restoring_delta_index(&sub_index->delta_index, readers, reader_count);
++	if (result != UDS_SUCCESS)
++		return uds_log_warning_strerror(result, "restoring delta index failed");
++
++	return UDS_SUCCESS;
++}
++
++static int start_restoring_volume_index(struct volume_index *volume_index,
++					struct buffered_reader **buffered_readers,
++					unsigned int reader_count)
++{
++	unsigned int i;
++	int result;
++
++	if (!has_sparse(volume_index))
++		return start_restoring_volume_sub_index(&volume_index->vi_non_hook,
++							buffered_readers,
++							reader_count);
++
++	for (i = 0; i < reader_count; i++) {
++		struct volume_index_data header;
++		u8 buffer[sizeof(struct volume_index_data)];
++		size_t offset = 0;
++
++		result = uds_read_from_buffered_reader(buffered_readers[i], buffer, sizeof(buffer));
++		if (result != UDS_SUCCESS)
++			return uds_log_warning_strerror(result,
++							"failed to read volume index header");
++
++		memcpy(&header.magic, buffer, MAGIC_SIZE);
++		offset += MAGIC_SIZE;
++		decode_u32_le(buffer, &offset, &header.sparse_sample_rate);
++
++		result = ASSERT(offset == sizeof(buffer),
++				"%zu bytes decoded of %zu expected",
++				offset,
++				sizeof(buffer));
++		if (result != UDS_SUCCESS)
++			result = UDS_CORRUPT_DATA;
++
++		if (memcmp(header.magic, MAGIC_START_6, MAGIC_SIZE) != 0)
++			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
++							"volume index file had bad magic number");
++
++		if (i == 0) {
++			volume_index->sparse_sample_rate = header.sparse_sample_rate;
++		} else if (volume_index->sparse_sample_rate != header.sparse_sample_rate) {
++			uds_log_warning_strerror(UDS_CORRUPT_DATA,
++						 "Inconsistent sparse sample rate in delta index zone files: %u vs. %u",
++						 volume_index->sparse_sample_rate,
++						 header.sparse_sample_rate);
++			return UDS_CORRUPT_DATA;
++		}
++	}
++
++	result = start_restoring_volume_sub_index(&volume_index->vi_non_hook,
++						  buffered_readers,
++						  reader_count);
++	if (result != UDS_SUCCESS)
++		return result;
++	return start_restoring_volume_sub_index(&volume_index->vi_hook,
++						buffered_readers,
++						reader_count);
++}
++
++static int finish_restoring_volume_sub_index(struct volume_sub_index *sub_index,
++					     struct buffered_reader **buffered_readers,
++					     unsigned int reader_count)
++{
++	return uds_finish_restoring_delta_index(&sub_index->delta_index,
++						buffered_readers,
++						reader_count);
++}
++
++static int finish_restoring_volume_index(struct volume_index *volume_index,
++					 struct buffered_reader **buffered_readers,
++					 unsigned int reader_count)
++{
++	int result;
++
++	result = finish_restoring_volume_sub_index(&volume_index->vi_non_hook,
++						   buffered_readers,
++						   reader_count);
++	if ((result == UDS_SUCCESS) && has_sparse(volume_index))
++		result = finish_restoring_volume_sub_index(&volume_index->vi_hook,
++							   buffered_readers,
++							   reader_count);
++	return result;
++}
++
++int uds_load_volume_index(struct volume_index *volume_index,
++			  struct buffered_reader **readers,
++			  unsigned int reader_count)
++{
++	int result;
++
++	/* Start by reading the header section of the stream. */
++	result = start_restoring_volume_index(volume_index, readers, reader_count);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = finish_restoring_volume_index(volume_index, readers, reader_count);
++	if (result != UDS_SUCCESS) {
++		abort_restoring_volume_index(volume_index);
++		return result;
++	}
++
++	/* Check the final guard lists to make sure there is no extra data. */
++	result = uds_check_guard_delta_lists(readers, reader_count);
++	if (result != UDS_SUCCESS)
++		abort_restoring_volume_index(volume_index);
 +
 +	return result;
 +}
 +
-+/**
-+ * vdo_validate_component_states() - Validate the decoded super block configuration.
-+ * @states: The state decoded from the super block.
-+ * @geometry_nonce: The nonce from the geometry block.
-+ * @physical_size: The minimum block count of the underlying storage.
-+ * @logical_size: The expected logical size of the VDO, or 0 if the logical size may be
-+ *                unspecified.
-+ *
-+ * Return: VDO_SUCCESS or an error if the configuration is invalid.
-+ */
-+int vdo_validate_component_states(struct vdo_component_states *states,
-+				  nonce_t geometry_nonce,
-+				  block_count_t physical_size,
-+				  block_count_t logical_size)
++static int start_saving_volume_sub_index(const struct volume_sub_index *sub_index,
++					 unsigned int zone_number,
++					 struct buffered_writer *buffered_writer)
 +{
-+	if (geometry_nonce != states->vdo.nonce)
-+		return uds_log_error_strerror(VDO_BAD_NONCE,
-+					      "Geometry nonce %llu does not match superblock nonce %llu",
-+					      (unsigned long long) geometry_nonce,
-+					      (unsigned long long) states->vdo.nonce);
-+
-+	return vdo_validate_config(&states->vdo.config, physical_size, logical_size);
-+}
-+
-+/**
-+ * vdo_encode_component_states() - Encode the state of all vdo components in the super block.
-+ */
-+static void
-+vdo_encode_component_states(u8 *buffer, size_t *offset, const struct vdo_component_states *states)
-+{
-+	encode_u32_le(buffer, offset, states->release_version);
-+	encode_version_number(buffer, offset, states->volume_version);
-+	encode_vdo_component(buffer, offset, states->vdo);
-+	encode_layout(buffer, offset, &states->layout);
-+	encode_recovery_journal_state_7_0(buffer, offset, states->recovery_journal);
-+	encode_slab_depot_state_2_0(buffer, offset, states->slab_depot);
-+	encode_block_map_state_2_0(buffer, offset, states->block_map);
-+
-+	ASSERT_LOG_ONLY(*offset == VDO_COMPONENT_DATA_OFFSET + VDO_COMPONENT_DATA_SIZE,
-+			"All super block component data was encoded");
-+}
-+
-+/**
-+ * vdo_encode_super_block() - Encode a super block into its on-disk representation.
-+ */
-+void vdo_encode_super_block(u8 *buffer, struct vdo_component_states *states)
-+{
-+	u32 checksum;
-+	struct header header = SUPER_BLOCK_HEADER_12_0;
-+	size_t offset = 0;
-+
-+	header.size += VDO_COMPONENT_DATA_SIZE;
-+	vdo_encode_header(buffer, &offset, &header);
-+	vdo_encode_component_states(buffer, &offset, states);
-+
-+	checksum = vdo_crc32(buffer, offset);
-+	encode_u32_le(buffer, &offset, checksum);
-+
-+	/*
-+	 * Even though the buffer is a full block, to avoid the potential corruption from a torn
-+	 * write, the entire encoding must fit in the first sector.
-+	 */
-+	ASSERT_LOG_ONLY(offset <= VDO_SECTOR_SIZE, "entire superblock must fit in one sector");
-+}
-+
-+/**
-+ * vdo_decode_super_block() - Decode a super block from its on-disk representation.
-+ */
-+int vdo_decode_super_block(u8 *buffer)
-+{
-+	struct header header;
 +	int result;
-+	u32 checksum, saved_checksum;
++	struct volume_sub_index_zone *volume_index_zone = &sub_index->zones[zone_number];
++	u32 first_list = sub_index->delta_index.delta_zones[zone_number].first_list;
++	u32 list_count = sub_index->delta_index.delta_zones[zone_number].list_count;
++	u8 buffer[sizeof(struct sub_index_data)];
 +	size_t offset = 0;
++	u32 i;
 +
-+	/* Decode and validate the header. */
-+	vdo_decode_header(buffer, &offset, &header);
-+	result = vdo_validate_header(&SUPER_BLOCK_HEADER_12_0, &header, false, __func__);
-+	if (result != VDO_SUCCESS)
++	memcpy(buffer, MAGIC_START_5, MAGIC_SIZE);
++	offset += MAGIC_SIZE;
++	encode_u64_le(buffer, &offset, sub_index->volume_nonce);
++	encode_u64_le(buffer, &offset, volume_index_zone->virtual_chapter_low);
++	encode_u64_le(buffer, &offset, volume_index_zone->virtual_chapter_high);
++	encode_u32_le(buffer, &offset, first_list);
++	encode_u32_le(buffer, &offset, list_count);
++
++	result =  ASSERT(offset == sizeof(struct sub_index_data),
++			 "%zu bytes of config written, of %zu expected",
++			 offset,
++			 sizeof(struct sub_index_data));
++	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	if (header.size > VDO_COMPONENT_DATA_SIZE + sizeof(u32))
-+		/*
-+		 * We can't check release version or checksum until we know the content size, so we
-+		 * have to assume a version mismatch on unexpected values.
-+		 */
-+		return uds_log_error_strerror(VDO_UNSUPPORTED_VERSION,
-+					      "super block contents too large: %zu",
-+					      header.size);
++	result = uds_write_to_buffered_writer(buffered_writer, buffer, offset);
++	if (result != UDS_SUCCESS)
++		return uds_log_warning_strerror(result, "failed to write volume index header");
 +
-+	/* Skip past the component data for now, to verify the checksum. */
-+	offset += VDO_COMPONENT_DATA_SIZE;
++	for (i = 0; i < list_count; i++) {
++		u8 encoded[sizeof(u64)];
 +
-+	checksum = vdo_crc32(buffer, offset);
-+	decode_u32_le(buffer, &offset, &saved_checksum);
++		put_unaligned_le64(sub_index->flush_chapters[first_list + i], &encoded);
++		result = uds_write_to_buffered_writer(buffered_writer, encoded, sizeof(u64));
++		if (result != UDS_SUCCESS)
++			return uds_log_warning_strerror(result,
++							"failed to write volume index flush ranges");
++	}
 +
-+	result = ASSERT(offset == VDO_SUPER_BLOCK_FIXED_SIZE + VDO_COMPONENT_DATA_SIZE,
-+			"must have decoded entire superblock payload");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	return ((checksum != saved_checksum) ? VDO_CHECKSUM_MISMATCH : VDO_SUCCESS);
++	return uds_start_saving_delta_index(&sub_index->delta_index, zone_number, buffered_writer);
 +}
-diff --git a/drivers/md/dm-vdo/encodings.h b/drivers/md/dm-vdo/encodings.h
++
++static int start_saving_volume_index(const struct volume_index *volume_index,
++				     unsigned int zone_number,
++				     struct buffered_writer *writer)
++{
++	u8 buffer[sizeof(struct volume_index_data)];
++	size_t offset = 0;
++	int result;
++
++	if (!has_sparse(volume_index))
++		return start_saving_volume_sub_index(&volume_index->vi_non_hook,
++						     zone_number,
++						     writer);
++
++	memcpy(buffer, MAGIC_START_6, MAGIC_SIZE);
++	offset += MAGIC_SIZE;
++	encode_u32_le(buffer, &offset, volume_index->sparse_sample_rate);
++	result = ASSERT(offset == sizeof(struct volume_index_data),
++			"%zu bytes of header written, of %zu expected",
++			offset,
++			sizeof(struct volume_index_data));
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = uds_write_to_buffered_writer(writer, buffer, offset);
++	if (result != UDS_SUCCESS) {
++		uds_log_warning_strerror(result, "failed to write volume index header");
++		return result;
++	}
++
++	result = start_saving_volume_sub_index(&volume_index->vi_non_hook, zone_number, writer);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	return start_saving_volume_sub_index(&volume_index->vi_hook, zone_number, writer);
++}
++
++static int
++finish_saving_volume_sub_index(const struct volume_sub_index *sub_index, unsigned int zone_number)
++{
++	return uds_finish_saving_delta_index(&sub_index->delta_index, zone_number);
++}
++
++static int
++finish_saving_volume_index(const struct volume_index *volume_index, unsigned int zone_number)
++{
++	int result;
++
++	result = finish_saving_volume_sub_index(&volume_index->vi_non_hook, zone_number);
++	if ((result == UDS_SUCCESS) && has_sparse(volume_index))
++		result = finish_saving_volume_sub_index(&volume_index->vi_hook, zone_number);
++	return result;
++}
++
++int uds_save_volume_index(struct volume_index *volume_index,
++			  struct buffered_writer **writers,
++			  unsigned int writer_count)
++{
++	int result = UDS_SUCCESS;
++	unsigned int zone;
++
++	for (zone = 0; zone < writer_count; ++zone) {
++		result = start_saving_volume_index(volume_index, zone, writers[zone]);
++		if (result != UDS_SUCCESS)
++			break;
++
++		result = finish_saving_volume_index(volume_index, zone);
++		if (result != UDS_SUCCESS)
++			break;
++
++		result = uds_write_guard_delta_list(writers[zone]);
++		if (result != UDS_SUCCESS)
++			break;
++
++		result = uds_flush_buffered_writer(writers[zone]);
++		if (result != UDS_SUCCESS)
++			break;
++	}
++
++	return result;
++}
++
++static void get_volume_sub_index_stats(const struct volume_sub_index *sub_index,
++				       struct volume_index_stats *stats)
++{
++	struct delta_index_stats dis;
++	unsigned int z;
++
++	uds_get_delta_index_stats(&sub_index->delta_index, &dis);
++	stats->rebalance_time = dis.rebalance_time;
++	stats->rebalance_count = dis.rebalance_count;
++	stats->record_count = dis.record_count;
++	stats->collision_count = dis.collision_count;
++	stats->discard_count = dis.discard_count;
++	stats->overflow_count = dis.overflow_count;
++	stats->delta_lists = dis.list_count;
++	stats->early_flushes = 0;
++	for (z = 0; z < sub_index->zone_count; z++)
++		stats->early_flushes += sub_index->zones[z].early_flushes;
++}
++
++void uds_get_volume_index_stats(const struct volume_index *volume_index,
++				struct volume_index_stats *stats)
++{
++	struct volume_index_stats sparse_stats;
++
++	get_volume_sub_index_stats(&volume_index->vi_non_hook, stats);
++	if (!has_sparse(volume_index))
++		return;
++
++	get_volume_sub_index_stats(&volume_index->vi_hook, &sparse_stats);
++	stats->rebalance_time += sparse_stats.rebalance_time;
++	stats->rebalance_count += sparse_stats.rebalance_count;
++	stats->record_count += sparse_stats.record_count;
++	stats->collision_count += sparse_stats.collision_count;
++	stats->discard_count += sparse_stats.discard_count;
++	stats->overflow_count += sparse_stats.overflow_count;
++	stats->delta_lists += sparse_stats.delta_lists;
++	stats->early_flushes += sparse_stats.early_flushes;
++}
++
++static int initialize_volume_sub_index(const struct configuration *config,
++				       u64 volume_nonce,
++				       u8 tag,
++				       struct volume_sub_index *sub_index)
++{
++	struct sub_index_parameters params = { .address_bits = 0 };
++	unsigned int zone_count = config->zone_count;
++	u64 available_bytes = 0;
++	unsigned int z;
++	int result;
++
++	result = compute_volume_sub_index_parameters(config, &params);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	sub_index->address_bits = params.address_bits;
++	sub_index->address_mask = (1u << params.address_bits) - 1;
++	sub_index->chapter_bits = params.chapter_bits;
++	sub_index->chapter_mask = (1u << params.chapter_bits) - 1;
++	sub_index->chapter_count = params.chapter_count;
++	sub_index->list_count = params.list_count;
++	sub_index->zone_count = zone_count;
++	sub_index->chapter_zone_bits = params.chapter_size_in_bits / zone_count;
++	sub_index->volume_nonce = volume_nonce;
++
++	result = uds_initialize_delta_index(&sub_index->delta_index,
++					    zone_count,
++					    params.list_count,
++					    params.mean_delta,
++					    params.chapter_bits,
++					    params.memory_size,
++					    tag);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	for (z = 0; z < sub_index->delta_index.zone_count; z++)
++		available_bytes += sub_index->delta_index.delta_zones[z].size;
++	available_bytes -= params.target_free_bytes;
++	sub_index->max_zone_bits = (available_bytes * BITS_PER_BYTE) / zone_count;
++	sub_index->memory_size = (sub_index->delta_index.memory_size +
++				  sizeof(struct volume_sub_index) +
++				  (params.list_count * sizeof(u64)) +
++				  (zone_count * sizeof(struct volume_sub_index_zone)));
++
++	/* The following arrays are initialized to all zeros. */
++	result = UDS_ALLOCATE(params.list_count,
++			      u64,
++			      "first chapter to flush",
++			      &sub_index->flush_chapters);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	return UDS_ALLOCATE(zone_count,
++			    struct volume_sub_index_zone,
++			    "volume index zones",
++			    &sub_index->zones);
++}
++
++int uds_make_volume_index(const struct configuration *config,
++			  u64 volume_nonce,
++			  struct volume_index **volume_index_ptr)
++{
++	struct split_config split;
++	unsigned int zone;
++	struct volume_index *volume_index;
++	int result;
++
++	result = UDS_ALLOCATE(1, struct volume_index, "volume index", &volume_index);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	volume_index->zone_count = config->zone_count;
++
++	if (!uds_is_sparse_geometry(config->geometry)) {
++		result = initialize_volume_sub_index(config,
++						     volume_nonce,
++						     'm',
++						     &volume_index->vi_non_hook);
++		if (result != UDS_SUCCESS) {
++			uds_free_volume_index(volume_index);
++			return result;
++		}
++
++		volume_index->memory_size = volume_index->vi_non_hook.memory_size;
++		*volume_index_ptr = volume_index;
++		return UDS_SUCCESS;
++	}
++
++	volume_index->sparse_sample_rate = config->sparse_sample_rate;
++
++	result = UDS_ALLOCATE(config->zone_count,
++			      struct volume_index_zone,
++			      "volume index zones",
++			      &volume_index->zones);
++	if (result != UDS_SUCCESS) {
++		uds_free_volume_index(volume_index);
++		return result;
++	}
++
++	for (zone = 0; zone < config->zone_count; zone++) {
++		result = uds_init_mutex(&volume_index->zones[zone].hook_mutex);
++		if (result != UDS_SUCCESS) {
++			uds_free_volume_index(volume_index);
++			return result;
++		}
++	}
++
++	split_configuration(config, &split);
++	result = initialize_volume_sub_index(&split.non_hook_config,
++					     volume_nonce,
++					     'd',
++					     &volume_index->vi_non_hook);
++	if (result != UDS_SUCCESS) {
++		uds_free_volume_index(volume_index);
++		return uds_log_error_strerror(result, "Error creating non hook volume index");
++	}
++
++	result = initialize_volume_sub_index(&split.hook_config,
++					     volume_nonce,
++					     's',
++					     &volume_index->vi_hook);
++	if (result != UDS_SUCCESS) {
++		uds_free_volume_index(volume_index);
++		return uds_log_error_strerror(result, "Error creating hook volume index");
++	}
++
++	volume_index->memory_size =
++		volume_index->vi_non_hook.memory_size + volume_index->vi_hook.memory_size;
++	*volume_index_ptr = volume_index;
++	return UDS_SUCCESS;
++}
+diff --git a/drivers/md/dm-vdo/volume-index.h b/drivers/md/dm-vdo/volume-index.h
 new file mode 100644
-index 00000000000..a0592f2300c
+index 00000000000..eed37ce22de
 --- /dev/null
-+++ b/drivers/md/dm-vdo/encodings.h
-@@ -0,0 +1,1307 @@
++++ b/drivers/md/dm-vdo/volume-index.h
+@@ -0,0 +1,192 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright Red Hat
 + */
 +
-+#ifndef VDO_ENCODINGS_H
-+#define VDO_ENCODINGS_H
++#ifndef UDS_VOLUME_INDEX_H
++#define UDS_VOLUME_INDEX_H
 +
-+#include <linux/blk_types.h>
-+#include <linux/crc32.h>
 +#include <linux/limits.h>
-+#include <linux/uuid.h>
 +
-+#include "numeric.h"
++#include "config.h"
++#include "delta-index.h"
 +#include "uds.h"
-+
-+#include "constants.h"
-+#include "types.h"
++#include "uds-threads.h"
 +
 +/*
-+ * An in-memory representation of a version number for versioned structures on disk.
++ * The volume index is the primary top-level index for UDS. It contains records which map a record
++ * name to the chapter where a record with that name is stored. This mapping can definitively say
++ * when no record exists. However, because we only use a subset of the name for this index, it
++ * cannot definitively say that a record for the entry does exist. It can only say that if a record
++ * exists, it will be in a particular chapter. The request can then be dispatched to that chapter
++ * for further processing.
 + *
-+ * A version number consists of two portions, a major version and a minor version. Any format
-+ * change which does not require an explicit upgrade step from the previous version should
-+ * increment the minor version. Any format change which either requires an explicit upgrade step,
-+ * or is wholly incompatible (i.e. can not be upgraded to), should increment the major version, and
-+ * set the minor version to 0.
++ * If the volume_index_record does not actually match the record name, the index can store a more
++ * specific collision record to disambiguate the new entry from the existing one. Index entries are
++ * managed with volume_index_record structures.
 + */
-+struct version_number {
-+	u32 major_version;
-+	u32 minor_version;
++
++static const u64 NO_CHAPTER = U64_MAX;
++
++struct volume_index_stats {
++	/* Nanoseconds spent rebalancing */
++	ktime_t rebalance_time;
++	/* Number of memory rebalances */
++	u32 rebalance_count;
++	/* The number of records in the index */
++	u64 record_count;
++	/* The number of collision records */
++	u64 collision_count;
++	/* The number of records removed */
++	u64 discard_count;
++	/* The number of UDS_OVERFLOWs detected */
++	u64 overflow_count;
++	/* The number of delta lists */
++	u32 delta_lists;
++	/* Number of early flushes */
++	u64 early_flushes;
 +};
 +
-+/*
-+ * A packed, machine-independent, on-disk representation of a version_number. Both fields are
-+ * stored in little-endian byte order.
-+ */
-+struct packed_version_number {
-+	__le32 major_version;
-+	__le32 minor_version;
-+} __packed;
++struct volume_sub_index_zone {
++	u64 virtual_chapter_low;
++	u64 virtual_chapter_high;
++	u64 early_flushes;
++} __aligned(L1_CACHE_BYTES);
 +
-+/* The registry of component ids for use in headers */
-+#define VDO_SUPER_BLOCK 0
-+#define VDO_LAYOUT 1
-+#define VDO_RECOVERY_JOURNAL 2
-+#define VDO_SLAB_DEPOT 3
-+#define VDO_BLOCK_MAP 4
-+#define VDO_GEOMETRY_BLOCK 5
-+
-+/* The header for versioned data stored on disk. */
-+struct header {
-+	u32 id; /* The component this is a header for */
-+	struct version_number version; /* The version of the data format */
-+	size_t size; /* The size of the data following this header */
++struct volume_sub_index {
++	/* The delta index */
++	struct delta_index delta_index;
++	/* The first chapter to be flushed in each zone */
++	u64 *flush_chapters;
++	/* The zones */
++	struct volume_sub_index_zone *zones;
++	/* The volume nonce */
++	u64 volume_nonce;
++	/* Expected size of a chapter (per zone) */
++	u64 chapter_zone_bits;
++	/* Maximum size of the index (per zone) */
++	u64 max_zone_bits;
++	/* The number of bits in address mask */
++	u8 address_bits;
++	/* Mask to get address within delta list */
++	u32 address_mask;
++	/* The number of bits in chapter number */
++	u8 chapter_bits;
++	/* The largest storable chapter number */
++	u32 chapter_mask;
++	/* The number of chapters used */
++	u32 chapter_count;
++	/* The number of delta lists */
++	u32 list_count;
++	/* The number of zones */
++	unsigned int zone_count;
++	/* The amount of memory allocated */
++	u64 memory_size;
 +};
 +
-+/* A packed, machine-independent, on-disk representation of a component header. */
-+struct packed_header {
-+	__le32 id;
-+	struct packed_version_number version;
-+	__le64 size;
-+} __packed;
++struct volume_index_zone {
++	/* Protects the sampled index in this zone */
++	struct mutex hook_mutex;
++} __aligned(L1_CACHE_BYTES);
 +
-+enum {
-+	VDO_GEOMETRY_BLOCK_LOCATION = 0,
-+	VDO_GEOMETRY_MAGIC_NUMBER_SIZE = 8,
-+	VDO_DEFAULT_GEOMETRY_BLOCK_VERSION = 5,
-+};
-+
-+struct index_config {
-+	u32 mem;
-+	u32 unused;
-+	bool sparse;
-+} __packed;
-+
-+enum volume_region_id {
-+	VDO_INDEX_REGION = 0,
-+	VDO_DATA_REGION = 1,
-+	VDO_VOLUME_REGION_COUNT,
-+};
-+
-+struct volume_region {
-+	/* The ID of the region */
-+	enum volume_region_id id;
-+	/*
-+	 * The absolute starting offset on the device. The region continues until the next region
-+	 * begins.
-+	 */
-+	physical_block_number_t start_block;
-+} __packed;
-+
-+struct volume_geometry {
-+	/* The release version number of this volume */
-+	release_version_number_t release_version;
-+	/* The nonce of this volume */
-+	nonce_t nonce;
-+	/* The uuid of this volume */
-+	uuid_t uuid;
-+	/* The block offset to be applied to bios */
-+	block_count_t bio_offset;
-+	/* The regions in ID order */
-+	struct volume_region regions[VDO_VOLUME_REGION_COUNT];
-+	/* The index config */
-+	struct index_config index_config;
-+} __packed;
-+
-+/* This volume geometry struct is used for sizing only */
-+struct volume_geometry_4_0 {
-+	/* The release version number of this volume */
-+	release_version_number_t release_version;
-+	/* The nonce of this volume */
-+	nonce_t nonce;
-+	/* The uuid of this volume */
-+	uuid_t uuid;
-+	/* The regions in ID order */
-+	struct volume_region regions[VDO_VOLUME_REGION_COUNT];
-+	/* The index config */
-+	struct index_config index_config;
-+} __packed;
-+
-+extern const u8 VDO_GEOMETRY_MAGIC_NUMBER[VDO_GEOMETRY_MAGIC_NUMBER_SIZE + 1];
-+
-+/**
-+ * DOC: Block map entries
-+ *
-+ * The entry for each logical block in the block map is encoded into five bytes, which saves space
-+ * in both the on-disk and in-memory layouts. It consists of the 36 low-order bits of a
-+ * physical_block_number_t (addressing 256 terabytes with a 4KB block size) and a 4-bit encoding of
-+ * a block_mapping_state.
-+ *
-+ * Of the 8 high bits of the 5-byte structure:
-+ *
-+ * Bits 7..4: The four highest bits of the 36-bit physical block number
-+ * Bits 3..0: The 4-bit block_mapping_state
-+ *
-+ * The following 4 bytes are the low order bytes of the physical block number, in little-endian
-+ * order.
-+ *
-+ * Conversion functions to and from a data location are provided.
-+ */
-+struct block_map_entry {
-+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-+	unsigned mapping_state : 4;
-+	unsigned pbn_high_nibble : 4;
-+#else
-+	unsigned pbn_high_nibble : 4;
-+	unsigned mapping_state : 4;
-+#endif
-+
-+	__le32 pbn_low_word;
-+} __packed;
-+
-+struct block_map_page_header {
-+	__le64 nonce;
-+	__le64 pbn;
-+
-+	/** May be non-zero on disk */
-+	u8 unused_long_word[8];
-+
-+	/* Whether this page has been written twice to disk */
-+	bool initialized;
-+
-+	/* Always zero on disk */
-+	u8 unused_byte1;
-+
-+	/* May be non-zero on disk */
-+	u8 unused_byte2;
-+	u8 unused_byte3;
-+} __packed;
-+
-+struct block_map_page {
-+	struct packed_version_number version;
-+	struct block_map_page_header header;
-+	struct block_map_entry entries[];
-+} __packed;
-+
-+enum block_map_page_validity {
-+	VDO_BLOCK_MAP_PAGE_VALID,
-+	VDO_BLOCK_MAP_PAGE_INVALID,
-+	/* Valid page found in the wrong location on disk */
-+	VDO_BLOCK_MAP_PAGE_BAD,
-+};
-+
-+struct block_map_state_2_0 {
-+	physical_block_number_t flat_page_origin;
-+	block_count_t flat_page_count;
-+	physical_block_number_t root_origin;
-+	block_count_t root_count;
-+} __packed;
-+
-+struct boundary {
-+	page_number_t levels[VDO_BLOCK_MAP_TREE_HEIGHT];
-+};
-+
-+extern const struct header VDO_BLOCK_MAP_HEADER_2_0;
-+
-+/* The state of the recovery journal as encoded in the VDO super block. */
-+struct recovery_journal_state_7_0 {
-+	/** Sequence number to start the journal */
-+	sequence_number_t journal_start;
-+	/** Number of logical blocks used by VDO */
-+	block_count_t logical_blocks_used;
-+	/** Number of block map pages allocated */
-+	block_count_t block_map_data_blocks;
-+} __packed;
-+
-+extern const struct header VDO_RECOVERY_JOURNAL_HEADER_7_0;
-+
-+typedef u16 journal_entry_count_t;
-+
-+/*
-+ * A recovery journal entry stores three physical locations: a data location that is the value of a
-+ * single mapping in the block map tree, and the two locations of the block map pages and slots
-+ * that are acquiring and releasing a reference to the location. The journal entry also stores an
-+ * operation code that says whether the mapping is for a logical block or for the block map tree
-+ * itself.
-+ */
-+struct recovery_journal_entry {
-+	struct block_map_slot slot;
-+	struct data_location mapping;
-+	struct data_location unmapping;
-+	enum journal_operation operation;
-+};
-+
-+/* The packed, on-disk representation of a recovery journal entry. */
-+struct packed_recovery_journal_entry {
-+	/*
-+	 * In little-endian bit order:
-+	 * Bits 15..12: The four highest bits of the 36-bit physical block number of the block map
-+	 * tree page
-+	 * Bits 11..2: The 10-bit block map page slot number
-+	 * Bit 1..0: The journal_operation of the entry (this actually only requires 1 bit, but
-+	 *           it is convenient to keep the extra bit as part of this field.
-+	 */
-+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-+	unsigned operation : 2;
-+	unsigned slot_low : 6;
-+	unsigned slot_high : 4;
-+	unsigned pbn_high_nibble : 4;
-+#else
-+	unsigned slot_low : 6;
-+	unsigned operation : 2;
-+	unsigned pbn_high_nibble : 4;
-+	unsigned slot_high : 4;
-+#endif
-+
-+	/*
-+	 * Bits 47..16: The 32 low-order bits of the block map page PBN, in little-endian byte
-+	 * order
-+	 */
-+	__le32 pbn_low_word;
-+
-+	/*
-+	 * Bits 87..48: The five-byte block map entry encoding the location that will be stored in
-+	 * the block map page slot
-+	 */
-+	struct block_map_entry mapping;
-+
-+	/*
-+	 * Bits 127..88: The five-byte block map entry encoding the location that was stored in the
-+	 * block map page slot
-+	 */
-+	struct block_map_entry unmapping;
-+} __packed;
-+
-+/* The packed, on-disk representation of an old format recovery journal entry. */
-+struct packed_recovery_journal_entry_1 {
-+	/*
-+	 * In little-endian bit order:
-+	 * Bits 15..12: The four highest bits of the 36-bit physical block number of the block map
-+	 *              tree page
-+	 * Bits 11..2: The 10-bit block map page slot number
-+	 * Bits 1..0: The 2-bit journal_operation of the entry
-+	 *
-+	 */
-+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-+	unsigned operation : 2;
-+	unsigned slot_low : 6;
-+	unsigned slot_high : 4;
-+	unsigned pbn_high_nibble : 4;
-+#else
-+	unsigned slot_low : 6;
-+	unsigned operation : 2;
-+	unsigned pbn_high_nibble : 4;
-+	unsigned slot_high : 4;
-+#endif
-+
-+	/*
-+	 * Bits 47..16: The 32 low-order bits of the block map page PBN, in little-endian byte
-+	 * order
-+	 */
-+	__le32 pbn_low_word;
-+
-+	/*
-+	 * Bits 87..48: The five-byte block map entry encoding the location that was or will be
-+	 * stored in the block map page slot
-+	 */
-+	struct block_map_entry block_map_entry;
-+} __packed;
-+
-+enum journal_operation_1 {
-+	VDO_JOURNAL_DATA_DECREMENT = 0,
-+	VDO_JOURNAL_DATA_INCREMENT = 1,
-+	VDO_JOURNAL_BLOCK_MAP_DECREMENT = 2,
-+	VDO_JOURNAL_BLOCK_MAP_INCREMENT = 3,
-+} __packed;
-+
-+struct recovery_block_header {
-+	sequence_number_t block_map_head; /* Block map head sequence number */
-+	sequence_number_t slab_journal_head; /* Slab journal head seq. number */
-+	sequence_number_t sequence_number; /* Sequence number for this block */
-+	nonce_t nonce; /* A given VDO instance's nonce */
-+	block_count_t logical_blocks_used; /* Logical blocks in use */
-+	block_count_t block_map_data_blocks; /* Allocated block map pages */
-+	journal_entry_count_t entry_count; /* Number of entries written */
-+	u8 check_byte; /* The protection check byte */
-+	u8 recovery_count; /* Number of recoveries completed */
-+	enum vdo_metadata_type metadata_type; /* Metadata type */
++struct volume_index {
++	u32 sparse_sample_rate;
++	unsigned int zone_count;
++	u64 memory_size;
++	struct volume_sub_index vi_non_hook;
++	struct volume_sub_index vi_hook;
++	struct volume_index_zone *zones;
 +};
 +
 +/*
-+ * The packed, on-disk representation of a recovery journal block header. All fields are kept in
-+ * little-endian byte order.
++ * The volume_index_record structure is used to facilitate processing of a record name. A client
++ * first calls uds_get_volume_index_record() to find the volume index record for a record name. The
++ * fields of the record can then be examined to determine the state of the record.
++ *
++ * If is_found is false, then the index did not find an entry for the record name. Calling
++ * uds_put_volume_index_record() will insert a new entry for that name at the proper place.
++ *
++ * If is_found is true, then we did find an entry for the record name, and the virtual_chapter and
++ * is_collision fields reflect the entry found. Subsequently, a call to
++ * uds_remove_volume_index_record() will remove the entry, a call to
++ * uds_set_volume_index_record_chapter() will update the existing entry, and a call to
++ * uds_put_volume_index_record() will insert a new collision record after the existing entry.
 + */
-+struct packed_journal_header {
-+	/* Block map head 64-bit sequence number */
-+	__le64 block_map_head;
++struct volume_index_record {
++	/* Public fields */
 +
-+	/* Slab journal head 64-bit sequence number */
-+	__le64 slab_journal_head;
++	/* Chapter where the record info is found */
++	u64 virtual_chapter;
++	/* This record is a collision */
++	bool is_collision;
++	/* This record is the requested record */
++	bool is_found;
 +
-+	/* The 64-bit sequence number for this block */
-+	__le64 sequence_number;
++	/* Private fields */
 +
-+	/* A given VDO instance's 64-bit nonce */
-+	__le64 nonce;
-+
-+	/* 8-bit metadata type (should always be one for the recovery journal) */
-+	u8 metadata_type;
-+
-+	/* 16-bit count of the entries encoded in the block */
-+	__le16 entry_count;
-+
-+	/* 64-bit count of the logical blocks used when this block was opened */
-+	__le64 logical_blocks_used;
-+
-+	/* 64-bit count of the block map blocks used when this block was opened */
-+	__le64 block_map_data_blocks;
-+
-+	/* The protection check byte */
-+	u8 check_byte;
-+
-+	/* The number of recoveries completed */
-+	u8 recovery_count;
-+} __packed;
-+
-+struct packed_journal_sector {
-+	/* The protection check byte */
-+	u8 check_byte;
-+
-+	/* The number of recoveries completed */
-+	u8 recovery_count;
-+
-+	/* The number of entries in this sector */
-+	u8 entry_count;
-+
-+	/* Journal entries for this sector */
-+	struct packed_recovery_journal_entry entries[];
-+} __packed;
-+
-+enum {
-+	/* The number of entries in each sector (except the last) when filled */
-+	RECOVERY_JOURNAL_ENTRIES_PER_SECTOR =
-+		((VDO_SECTOR_SIZE - sizeof(struct packed_journal_sector)) /
-+		 sizeof(struct packed_recovery_journal_entry)),
-+	RECOVERY_JOURNAL_ENTRIES_PER_BLOCK = RECOVERY_JOURNAL_ENTRIES_PER_SECTOR * 7,
-+	/* The number of entries in a v1 recovery journal block. */
-+	RECOVERY_JOURNAL_1_ENTRIES_PER_BLOCK = 311,
-+	/* The number of entries in each v1 sector (except the last) when filled */
-+	RECOVERY_JOURNAL_1_ENTRIES_PER_SECTOR =
-+		((VDO_SECTOR_SIZE - sizeof(struct packed_journal_sector)) /
-+		 sizeof(struct packed_recovery_journal_entry_1)),
-+	/* The number of entries in the last sector when a block is full */
-+	RECOVERY_JOURNAL_1_ENTRIES_IN_LAST_SECTOR =
-+		(RECOVERY_JOURNAL_1_ENTRIES_PER_BLOCK % RECOVERY_JOURNAL_1_ENTRIES_PER_SECTOR),
++	/* Zone that contains this name */
++	unsigned int zone_number;
++	/* The volume index */
++	struct volume_sub_index *sub_index;
++	/* Mutex for accessing this delta index entry in the hook index */
++	struct mutex *mutex;
++	/* The record name to which this record refers */
++	const struct uds_record_name *name;
++	/* The delta index entry for this record */
++	struct delta_index_entry delta_entry;
 +};
 +
-+/* A type representing a reference count of a block. */
-+typedef u8 vdo_refcount_t;
++int __must_check uds_make_volume_index(const struct configuration *config,
++				       u64 volume_nonce,
++				       struct volume_index **volume_index);
 +
-+/* The absolute position of an entry in a recovery journal or slab journal. */
-+struct journal_point {
-+	sequence_number_t sequence_number;
-+	journal_entry_count_t entry_count;
-+};
++void uds_free_volume_index(struct volume_index *volume_index);
 +
-+/* A packed, platform-independent encoding of a struct journal_point. */
-+struct packed_journal_point {
-+	/*
-+	 * The packed representation is the little-endian 64-bit representation of the low-order 48
-+	 * bits of the sequence number, shifted up 16 bits, or'ed with the 16-bit entry count.
-+	 *
-+	 * Very long-term, the top 16 bits of the sequence number may not always be zero, as this
-+	 * encoding assumes--see BZ 1523240.
-+	 */
-+	__le64 encoded_point;
-+} __packed;
++int __must_check uds_compute_volume_index_save_blocks(const struct configuration *config,
++						      size_t block_size,
++						      u64 *block_count);
 +
-+/* Special vdo_refcount_t values. */
-+#define EMPTY_REFERENCE_COUNT 0
-+enum {
-+	MAXIMUM_REFERENCE_COUNT = 254,
-+	PROVISIONAL_REFERENCE_COUNT = 255,
-+};
++unsigned int __must_check
++uds_get_volume_index_zone(const struct volume_index *volume_index,
++			  const struct uds_record_name *name);
 +
-+enum {
-+	COUNTS_PER_SECTOR =
-+		((VDO_SECTOR_SIZE - sizeof(struct packed_journal_point)) / sizeof(vdo_refcount_t)),
-+	COUNTS_PER_BLOCK = COUNTS_PER_SECTOR * VDO_SECTORS_PER_BLOCK,
-+};
-+
-+/* The format of each sector of a reference_block on disk. */
-+struct packed_reference_sector {
-+	struct packed_journal_point commit_point;
-+	vdo_refcount_t counts[COUNTS_PER_SECTOR];
-+} __packed;
-+
-+struct packed_reference_block {
-+	struct packed_reference_sector sectors[VDO_SECTORS_PER_BLOCK];
-+};
-+
-+struct slab_depot_state_2_0 {
-+	struct slab_config slab_config;
-+	physical_block_number_t first_block;
-+	physical_block_number_t last_block;
-+	zone_count_t zone_count;
-+} __packed;
-+
-+extern const struct header VDO_SLAB_DEPOT_HEADER_2_0;
++bool __must_check uds_is_volume_index_sample(const struct volume_index *volume_index,
++					     const struct uds_record_name *name);
 +
 +/*
-+ * vdo_slab journal blocks may have one of two formats, depending upon whether or not any of the
-+ * entries in the block are block map increments. Since the steady state for a VDO is that all of
-+ * the necessary block map pages will be allocated, most slab journal blocks will have only data
-+ * entries. Such blocks can hold more entries, hence the two formats.
++ * This function is only used to manage sparse cache membership. Most requests should use
++ * uds_get_volume_index_record() to look up index records instead.
 + */
-+
-+/* A single slab journal entry */
-+struct slab_journal_entry {
-+	slab_block_number sbn;
-+	enum journal_operation operation;
-+	bool increment;
-+};
-+
-+/* A single slab journal entry in its on-disk form */
-+typedef struct {
-+	u8 offset_low8;
-+	u8 offset_mid8;
-+
-+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-+	unsigned offset_high7 : 7;
-+	unsigned increment : 1;
-+#else
-+	unsigned increment : 1;
-+	unsigned offset_high7 : 7;
-+#endif
-+} __packed packed_slab_journal_entry;
-+
-+/* The unpacked representation of the header of a slab journal block */
-+struct slab_journal_block_header {
-+	/* Sequence number for head of journal */
-+	sequence_number_t head;
-+	/* Sequence number for this block */
-+	sequence_number_t sequence_number;
-+	/* The nonce for a given VDO instance */
-+	nonce_t nonce;
-+	/* Recovery journal point for last entry */
-+	struct journal_point recovery_point;
-+	/* Metadata type */
-+	enum vdo_metadata_type metadata_type;
-+	/* Whether this block contains block map increments */
-+	bool has_block_map_increments;
-+	/* The number of entries in the block */
-+	journal_entry_count_t entry_count;
-+};
-+
-+/*
-+ * The packed, on-disk representation of a slab journal block header. All fields are kept in
-+ * little-endian byte order.
-+ */
-+struct packed_slab_journal_block_header {
-+	/* 64-bit sequence number for head of journal */
-+	__le64 head;
-+	/* 64-bit sequence number for this block */
-+	__le64 sequence_number;
-+	/* Recovery journal point for the last entry, packed into 64 bits */
-+	struct packed_journal_point recovery_point;
-+	/* The 64-bit nonce for a given VDO instance */
-+	__le64 nonce;
-+	/* 8-bit metadata type (should always be two, for the slab journal) */
-+	u8 metadata_type;
-+	/* Whether this block contains block map increments */
-+	bool has_block_map_increments;
-+	/* 16-bit count of the entries encoded in the block */
-+	__le16 entry_count;
-+} __packed;
-+
-+enum {
-+	VDO_SLAB_JOURNAL_PAYLOAD_SIZE =
-+		VDO_BLOCK_SIZE - sizeof(struct packed_slab_journal_block_header),
-+	VDO_SLAB_JOURNAL_FULL_ENTRIES_PER_BLOCK = (VDO_SLAB_JOURNAL_PAYLOAD_SIZE * 8) / 25,
-+	VDO_SLAB_JOURNAL_ENTRY_TYPES_SIZE =
-+		((VDO_SLAB_JOURNAL_FULL_ENTRIES_PER_BLOCK - 1) / 8) + 1,
-+	VDO_SLAB_JOURNAL_ENTRIES_PER_BLOCK =
-+		(VDO_SLAB_JOURNAL_PAYLOAD_SIZE / sizeof(packed_slab_journal_entry)),
-+};
-+
-+/* The payload of a slab journal block which has block map increments */
-+struct full_slab_journal_entries {
-+	/* The entries themselves */
-+	packed_slab_journal_entry entries[VDO_SLAB_JOURNAL_FULL_ENTRIES_PER_BLOCK];
-+	/* The bit map indicating which entries are block map increments */
-+	u8 entry_types[VDO_SLAB_JOURNAL_ENTRY_TYPES_SIZE];
-+} __packed;
-+
-+typedef union {
-+	/* Entries which include block map increments */
-+	struct full_slab_journal_entries full_entries;
-+	/* Entries which are only data updates */
-+	packed_slab_journal_entry entries[VDO_SLAB_JOURNAL_ENTRIES_PER_BLOCK];
-+	/* Ensure the payload fills to the end of the block */
-+	u8 space[VDO_SLAB_JOURNAL_PAYLOAD_SIZE];
-+} __packed slab_journal_payload;
-+
-+struct packed_slab_journal_block {
-+	struct packed_slab_journal_block_header header;
-+	slab_journal_payload payload;
-+} __packed;
-+
-+/* The offset of a slab journal tail block. */
-+typedef u8 tail_block_offset_t;
-+
-+struct slab_summary_entry {
-+	/* Bits 7..0: The offset of the tail block within the slab journal */
-+	tail_block_offset_t tail_block_offset;
-+
-+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-+	/* Bits 13..8: A hint about the fullness of the slab */
-+	unsigned int fullness_hint : 6;
-+	/* Bit 14: Whether the ref_counts must be loaded from the layer */
-+	unsigned int load_ref_counts : 1;
-+	/* Bit 15: The believed cleanliness of this slab */
-+	unsigned int is_dirty : 1;
-+#else
-+	/* Bit 15: The believed cleanliness of this slab */
-+	unsigned int is_dirty : 1;
-+	/* Bit 14: Whether the ref_counts must be loaded from the layer */
-+	unsigned int load_ref_counts : 1;
-+	/* Bits 13..8: A hint about the fullness of the slab */
-+	unsigned int fullness_hint : 6;
-+#endif
-+} __packed;
-+
-+enum {
-+	VDO_SLAB_SUMMARY_FULLNESS_HINT_BITS = 6,
-+	VDO_SLAB_SUMMARY_ENTRIES_PER_BLOCK = VDO_BLOCK_SIZE / sizeof(struct slab_summary_entry),
-+	VDO_SLAB_SUMMARY_BLOCKS_PER_ZONE = MAX_VDO_SLABS / VDO_SLAB_SUMMARY_ENTRIES_PER_BLOCK,
-+	VDO_SLAB_SUMMARY_BLOCKS = VDO_SLAB_SUMMARY_BLOCKS_PER_ZONE * MAX_VDO_PHYSICAL_ZONES,
-+};
-+
-+struct layout {
-+	physical_block_number_t start;
-+	block_count_t size;
-+	physical_block_number_t first_free;
-+	physical_block_number_t last_free;
-+	size_t num_partitions;
-+	struct partition *head;
-+};
-+
-+struct partition {
-+	enum partition_id id; /* The id of this partition */
-+	physical_block_number_t offset; /* The offset into the layout of this partition */
-+	block_count_t count; /* The number of blocks in the partition */
-+	struct partition *next; /* A pointer to the next partition in the layout */
-+};
-+
-+struct layout_3_0 {
-+	physical_block_number_t first_free;
-+	physical_block_number_t last_free;
-+	u8 partition_count;
-+} __packed;
-+
-+struct partition_3_0 {
-+	enum partition_id id;
-+	physical_block_number_t offset;
-+	physical_block_number_t base; /* unused but retained for backwards compatibility */
-+	block_count_t count;
-+} __packed;
-+
-+/*
-+ * The configuration of the VDO service.
-+ */
-+struct vdo_config {
-+	block_count_t logical_blocks; /* number of logical blocks */
-+	block_count_t physical_blocks; /* number of physical blocks */
-+	block_count_t slab_size; /* number of blocks in a slab */
-+	block_count_t recovery_journal_size; /* number of recovery journal blocks */
-+	block_count_t slab_journal_blocks; /* number of slab journal blocks */
-+};
-+
-+/* This is the structure that captures the vdo fields saved as a super block component. */
-+struct vdo_component {
-+	enum vdo_state state;
-+	u64 complete_recoveries;
-+	u64 read_only_recoveries;
-+	struct vdo_config config;
-+	nonce_t nonce;
-+};
-+
-+/*
-+ * A packed, machine-independent, on-disk representation of the vdo_config in the VDO component
-+ * data in the super block.
-+ */
-+struct packed_vdo_config {
-+	__le64 logical_blocks;
-+	__le64 physical_blocks;
-+	__le64 slab_size;
-+	__le64 recovery_journal_size;
-+	__le64 slab_journal_blocks;
-+} __packed;
-+
-+/*
-+ * A packed, machine-independent, on-disk representation of version 41.0 of the VDO component data
-+ * in the super block.
-+ */
-+struct packed_vdo_component_41_0 {
-+	__le32 state;
-+	__le64 complete_recoveries;
-+	__le64 read_only_recoveries;
-+	struct packed_vdo_config config;
-+	__le64 nonce;
-+} __packed;
-+
-+/*
-+ * The version of the on-disk format of a VDO volume. This should be incremented any time the
-+ * on-disk representation of any VDO structure changes. Changes which require only online upgrade
-+ * steps should increment the minor version. Changes which require an offline upgrade or which can
-+ * not be upgraded to at all should increment the major version and set the minor version to 0.
-+ */
-+extern const struct version_number VDO_VOLUME_VERSION_67_0;
-+
-+enum {
-+	VDO_ENCODED_HEADER_SIZE = sizeof(struct packed_header),
-+	BLOCK_MAP_COMPONENT_ENCODED_SIZE =
-+		VDO_ENCODED_HEADER_SIZE + sizeof(struct block_map_state_2_0),
-+	RECOVERY_JOURNAL_COMPONENT_ENCODED_SIZE =
-+		VDO_ENCODED_HEADER_SIZE + sizeof(struct recovery_journal_state_7_0),
-+	SLAB_DEPOT_COMPONENT_ENCODED_SIZE =
-+		VDO_ENCODED_HEADER_SIZE + sizeof(struct slab_depot_state_2_0),
-+	VDO_PARTITION_COUNT = 4,
-+	VDO_LAYOUT_ENCODED_SIZE = (VDO_ENCODED_HEADER_SIZE +
-+				   sizeof(struct layout_3_0) +
-+				   (sizeof(struct partition_3_0) * VDO_PARTITION_COUNT)),
-+	VDO_SUPER_BLOCK_FIXED_SIZE = VDO_ENCODED_HEADER_SIZE + sizeof(u32),
-+	VDO_MAX_COMPONENT_DATA_SIZE = VDO_SECTOR_SIZE - VDO_SUPER_BLOCK_FIXED_SIZE,
-+	VDO_COMPONENT_ENCODED_SIZE =
-+		(sizeof(struct packed_version_number) + sizeof(struct packed_vdo_component_41_0)),
-+	VDO_COMPONENT_DATA_OFFSET = VDO_ENCODED_HEADER_SIZE,
-+	VDO_COMPONENT_DATA_SIZE = (sizeof(release_version_number_t) +
-+				   sizeof(struct packed_version_number) +
-+				   VDO_COMPONENT_ENCODED_SIZE +
-+				   VDO_LAYOUT_ENCODED_SIZE +
-+				   RECOVERY_JOURNAL_COMPONENT_ENCODED_SIZE +
-+				   SLAB_DEPOT_COMPONENT_ENCODED_SIZE +
-+				   BLOCK_MAP_COMPONENT_ENCODED_SIZE),
-+};
-+
-+/* The entirety of the component data encoded in the VDO super block. */
-+struct vdo_component_states {
-+	/* The release version */
-+	release_version_number_t release_version;
-+
-+	/* The VDO volume version */
-+	struct version_number volume_version;
-+
-+	/* Components */
-+	struct vdo_component vdo;
-+	struct block_map_state_2_0 block_map;
-+	struct recovery_journal_state_7_0 recovery_journal;
-+	struct slab_depot_state_2_0 slab_depot;
-+
-+	/* Our partitioning of the underlying storage */
-+	struct layout layout;
-+};
-+
-+/**
-+ * vdo_are_same_version() - Check whether two version numbers are the same.
-+ * @version_a: The first version.
-+ * @version_b: The second version.
-+ *
-+ * Return: true if the two versions are the same.
-+ */
-+static inline bool
-+vdo_are_same_version(struct version_number version_a, struct version_number version_b)
-+{
-+	return ((version_a.major_version == version_b.major_version) &&
-+		(version_a.minor_version == version_b.minor_version));
-+}
-+
-+/**
-+ * vdo_is_upgradable_version() - Check whether an actual version is upgradable to an expected
-+ *                               version.
-+ * @expected_version: The expected version.
-+ * @actual_version: The version being validated.
-+ *
-+ * An actual version is upgradable if its major number is expected but its minor number differs,
-+ * and the expected version's minor number is greater than the actual version's minor number.
-+ *
-+ * Return: true if the actual version is upgradable.
-+ */
-+static inline bool vdo_is_upgradable_version(struct version_number expected_version,
-+					     struct version_number actual_version)
-+{
-+	return ((expected_version.major_version == actual_version.major_version) &&
-+		(expected_version.minor_version > actual_version.minor_version));
-+}
-+
-+int __must_check vdo_validate_header(const struct header *expected_header,
-+				     const struct header *actual_header,
-+				     bool exact_size,
-+				     const char *component_name);
-+
-+void vdo_encode_header(u8 *buffer, size_t *offset, const struct header *header);
-+void vdo_decode_header(u8 *buffer, size_t *offset, struct header *header);
-+
-+/**
-+ * vdo_pack_version_number() - Convert a version_number to its packed on-disk representation.
-+ * @version: The version number to convert.
-+ *
-+ * Return: the platform-independent representation of the version
-+ */
-+static inline struct packed_version_number vdo_pack_version_number(struct version_number version)
-+{
-+	return (struct packed_version_number) {
-+		.major_version = __cpu_to_le32(version.major_version),
-+		.minor_version = __cpu_to_le32(version.minor_version),
-+	};
-+}
-+
-+/**
-+ * vdo_unpack_version_number() - Convert a packed_version_number to its native in-memory
-+ *                               representation.
-+ * @version: The version number to convert.
-+ *
-+ * Return: The platform-independent representation of the version.
-+ */
-+static inline struct version_number vdo_unpack_version_number(struct packed_version_number version)
-+{
-+	return (struct version_number) {
-+		.major_version = __le32_to_cpu(version.major_version),
-+		.minor_version = __le32_to_cpu(version.minor_version),
-+	};
-+}
-+
-+/**
-+ * vdo_pack_header() - Convert a component header to its packed on-disk representation.
-+ * @header: The header to convert.
-+ *
-+ * Return: the platform-independent representation of the header
-+ */
-+static inline struct packed_header vdo_pack_header(const struct header *header)
-+{
-+	return (struct packed_header) {
-+		.id = __cpu_to_le32(header->id),
-+		.version = vdo_pack_version_number(header->version),
-+		.size = __cpu_to_le64(header->size),
-+	};
-+}
-+
-+/**
-+ * vdo_unpack_header() - Convert a packed_header to its native in-memory representation.
-+ * @header: The header to convert.
-+ *
-+ * Return: The platform-independent representation of the version.
-+ */
-+static inline struct header vdo_unpack_header(const struct packed_header *header)
-+{
-+	return (struct header) {
-+		.id = __le32_to_cpu(header->id),
-+		.version = vdo_unpack_version_number(header->version),
-+		.size = __le64_to_cpu(header->size),
-+	};
-+}
-+
-+/**
-+ * vdo_get_index_region_start() - Get the start of the index region from a geometry.
-+ * @geometry: The geometry.
-+ *
-+ * Return: The start of the index region.
-+ */
-+static inline physical_block_number_t __must_check
-+vdo_get_index_region_start(struct volume_geometry geometry)
-+{
-+	return geometry.regions[VDO_INDEX_REGION].start_block;
-+}
-+
-+/**
-+ * vdo_get_data_region_start() - Get the start of the data region from a geometry.
-+ * @geometry: The geometry.
-+ *
-+ * Return: The start of the data region.
-+ */
-+static inline physical_block_number_t __must_check
-+vdo_get_data_region_start(struct volume_geometry geometry)
-+{
-+	return geometry.regions[VDO_DATA_REGION].start_block;
-+}
-+
-+/**
-+ * vdo_get_index_region_size() - Get the size of the index region from a geometry.
-+ * @geometry: The geometry.
-+ *
-+ * Return: The size of the index region.
-+ */
-+static inline physical_block_number_t __must_check
-+vdo_get_index_region_size(struct volume_geometry geometry)
-+{
-+	return vdo_get_data_region_start(geometry) -
-+		vdo_get_index_region_start(geometry);
-+}
-+
-+int __must_check vdo_parse_geometry_block(unsigned char *block, struct volume_geometry *geometry);
-+
-+static inline bool vdo_is_state_compressed(const enum block_mapping_state mapping_state)
-+{
-+	return (mapping_state > VDO_MAPPING_STATE_UNCOMPRESSED);
-+}
-+
-+static inline struct block_map_entry
-+vdo_pack_block_map_entry(physical_block_number_t pbn, enum block_mapping_state mapping_state)
-+{
-+	return (struct block_map_entry) {
-+		.mapping_state = (mapping_state & 0x0F),
-+		.pbn_high_nibble = ((pbn >> 32) & 0x0F),
-+		.pbn_low_word = __cpu_to_le32(pbn & UINT_MAX),
-+	};
-+}
-+
-+static inline struct data_location vdo_unpack_block_map_entry(const struct block_map_entry *entry)
-+{
-+	physical_block_number_t low32 = __le32_to_cpu(entry->pbn_low_word);
-+	physical_block_number_t high4 = entry->pbn_high_nibble;
-+
-+	return (struct data_location) {
-+		.pbn = ((high4 << 32) | low32),
-+		.state = entry->mapping_state,
-+	};
-+}
-+
-+static inline bool vdo_is_mapped_location(const struct data_location *location)
-+{
-+	return (location->state != VDO_MAPPING_STATE_UNMAPPED);
-+}
-+
-+static inline bool vdo_is_valid_location(const struct data_location *location)
-+{
-+	if (location->pbn == VDO_ZERO_BLOCK)
-+		return !vdo_is_state_compressed(location->state);
-+	else
-+		return vdo_is_mapped_location(location);
-+}
-+
-+static inline physical_block_number_t __must_check
-+vdo_get_block_map_page_pbn(const struct block_map_page *page)
-+{
-+	return __le64_to_cpu(page->header.pbn);
-+}
-+
-+struct block_map_page *vdo_format_block_map_page(void *buffer,
-+						 nonce_t nonce,
-+						 physical_block_number_t pbn,
-+						 bool initialized);
-+
-+enum block_map_page_validity __must_check
-+vdo_validate_block_map_page(struct block_map_page *page,
-+			    nonce_t nonce,
-+			    physical_block_number_t pbn);
-+
-+static inline page_count_t vdo_compute_block_map_page_count(block_count_t entries)
-+{
-+	return DIV_ROUND_UP(entries, VDO_BLOCK_MAP_ENTRIES_PER_PAGE);
-+}
-+
-+block_count_t __must_check
-+vdo_compute_new_forest_pages(root_count_t root_count,
-+			     struct boundary *old_sizes,
-+			     block_count_t entries,
-+			     struct boundary *new_sizes);
-+
-+/**
-+ * vdo_pack_recovery_journal_entry() - Return the packed, on-disk representation of a recovery
-+ *                                     journal entry.
-+ * @entry: The journal entry to pack.
-+ *
-+ * Return: The packed representation of the journal entry.
-+ */
-+static inline struct packed_recovery_journal_entry
-+vdo_pack_recovery_journal_entry(const struct recovery_journal_entry *entry)
-+{
-+	return (struct packed_recovery_journal_entry) {
-+		.operation = entry->operation,
-+		.slot_low = entry->slot.slot & 0x3F,
-+		.slot_high = (entry->slot.slot >> 6) & 0x0F,
-+		.pbn_high_nibble = (entry->slot.pbn >> 32) & 0x0F,
-+		.pbn_low_word = __cpu_to_le32(entry->slot.pbn & UINT_MAX),
-+		.mapping = vdo_pack_block_map_entry(entry->mapping.pbn, entry->mapping.state),
-+		.unmapping = vdo_pack_block_map_entry(entry->unmapping.pbn,
-+						      entry->unmapping.state),
-+	};
-+}
-+
-+/**
-+ * vdo_unpack_recovery_journal_entry() - Unpack the on-disk representation of a recovery journal
-+ *                                       entry.
-+ * @entry: The recovery journal entry to unpack.
-+ *
-+ * Return: The unpacked entry.
-+ */
-+static inline struct recovery_journal_entry
-+vdo_unpack_recovery_journal_entry(const struct packed_recovery_journal_entry *entry)
-+{
-+	physical_block_number_t low32 = __le32_to_cpu(entry->pbn_low_word);
-+	physical_block_number_t high4 = entry->pbn_high_nibble;
-+
-+	return (struct recovery_journal_entry) {
-+		.operation = entry->operation,
-+		.slot = {
-+			.pbn = ((high4 << 32) | low32),
-+			.slot = (entry->slot_low | (entry->slot_high << 6)),
-+		},
-+		.mapping = vdo_unpack_block_map_entry(&entry->mapping),
-+		.unmapping = vdo_unpack_block_map_entry(&entry->unmapping),
-+	};
-+}
-+
-+const char * __must_check vdo_get_journal_operation_name(enum journal_operation operation);
-+
-+/**
-+ * vdo_is_valid_recovery_journal_sector() - Determine whether the header of the given sector could
-+ *                                          describe a valid sector for the given journal block
-+ *                                          header.
-+ * @header: The unpacked block header to compare against.
-+ * @sector: The packed sector to check.
-+ * @sector_number: The number of the sector being checked.
-+ *
-+ * Return: true if the sector matches the block header.
-+ */
-+static inline bool __must_check
-+vdo_is_valid_recovery_journal_sector(const struct recovery_block_header *header,
-+				     const struct packed_journal_sector *sector,
-+				     u8 sector_number)
-+{
-+	if ((header->check_byte != sector->check_byte) ||
-+	    (header->recovery_count != sector->recovery_count))
-+		return false;
-+
-+	if (header->metadata_type == VDO_METADATA_RECOVERY_JOURNAL_2)
-+		return sector->entry_count <= RECOVERY_JOURNAL_ENTRIES_PER_SECTOR;
-+
-+	if (sector_number == 7)
-+		return sector->entry_count <= RECOVERY_JOURNAL_1_ENTRIES_IN_LAST_SECTOR;
-+
-+	return sector->entry_count <= RECOVERY_JOURNAL_1_ENTRIES_PER_SECTOR;
-+}
-+
-+/**
-+ * vdo_compute_recovery_journal_block_number() - Compute the physical block number of the recovery
-+ *                                               journal block which would have a given sequence
-+ *                                               number.
-+ * @journal_size: The size of the journal.
-+ * @sequence_number: The sequence number.
-+ *
-+ * Return: The pbn of the journal block which would the specified sequence number.
-+ */
-+static inline physical_block_number_t __must_check
-+vdo_compute_recovery_journal_block_number(block_count_t journal_size,
-+					  sequence_number_t sequence_number)
-+{
-+	/*
-+	 * Since journal size is a power of two, the block number modulus can just be extracted
-+	 * from the low-order bits of the sequence.
-+	 */
-+	return (sequence_number & (journal_size - 1));
-+}
-+
-+/**
-+ * vdo_get_journal_block_sector() - Find the recovery journal sector from the block header and
-+ *                                  sector number.
-+ * @header: The header of the recovery journal block.
-+ * @sector_number: The index of the sector (1-based).
-+ *
-+ * Return: A packed recovery journal sector.
-+ */
-+static inline struct packed_journal_sector * __must_check
-+vdo_get_journal_block_sector(struct packed_journal_header *header, int sector_number)
-+{
-+	char *sector_data = ((char *) header) + (VDO_SECTOR_SIZE * sector_number);
-+
-+	return (struct packed_journal_sector *) sector_data;
-+}
-+
-+/**
-+ * vdo_pack_recovery_block_header() - Generate the packed representation of a recovery block
-+ *                                    header.
-+ * @header: The header containing the values to encode.
-+ * @packed: The header into which to pack the values.
-+ */
-+static inline void vdo_pack_recovery_block_header(const struct recovery_block_header *header,
-+						  struct packed_journal_header *packed)
-+{
-+	*packed = (struct packed_journal_header) {
-+		.block_map_head = __cpu_to_le64(header->block_map_head),
-+		.slab_journal_head = __cpu_to_le64(header->slab_journal_head),
-+		.sequence_number = __cpu_to_le64(header->sequence_number),
-+		.nonce = __cpu_to_le64(header->nonce),
-+		.logical_blocks_used = __cpu_to_le64(header->logical_blocks_used),
-+		.block_map_data_blocks = __cpu_to_le64(header->block_map_data_blocks),
-+		.entry_count = __cpu_to_le16(header->entry_count),
-+		.check_byte = header->check_byte,
-+		.recovery_count = header->recovery_count,
-+		.metadata_type = header->metadata_type,
-+	};
-+}
-+
-+/**
-+ * vdo_unpack_recovery_block_header() - Decode the packed representation of a recovery block
-+ *                                      header.
-+ * @packed: The packed header to decode.
-+ *
-+ * Return: The unpacked header.
-+ */
-+static inline struct recovery_block_header
-+vdo_unpack_recovery_block_header(const struct packed_journal_header *packed)
-+{
-+	return (struct recovery_block_header) {
-+		.block_map_head = __le64_to_cpu(packed->block_map_head),
-+		.slab_journal_head = __le64_to_cpu(packed->slab_journal_head),
-+		.sequence_number = __le64_to_cpu(packed->sequence_number),
-+		.nonce = __le64_to_cpu(packed->nonce),
-+		.logical_blocks_used = __le64_to_cpu(packed->logical_blocks_used),
-+		.block_map_data_blocks = __le64_to_cpu(packed->block_map_data_blocks),
-+		.entry_count = __le16_to_cpu(packed->entry_count),
-+		.check_byte = packed->check_byte,
-+		.recovery_count = packed->recovery_count,
-+		.metadata_type = packed->metadata_type,
-+	};
-+}
-+
-+/**
-+ * vdo_compute_slab_count() - Compute the number of slabs a depot with given parameters would have.
-+ * @first_block: PBN of the first data block.
-+ * @last_block: PBN of the last data block.
-+ * @slab_size_shift: Exponent for the number of blocks per slab.
-+ *
-+ * Return: The number of slabs.
-+ */
-+static inline slab_count_t
-+vdo_compute_slab_count(physical_block_number_t first_block,
-+		       physical_block_number_t last_block,
-+		       unsigned int slab_size_shift)
-+{
-+	return (slab_count_t) ((last_block - first_block) >> slab_size_shift);
-+}
-+
-+int __must_check vdo_configure_slab_depot(const struct partition *partition,
-+					  struct slab_config slab_config,
-+					  zone_count_t zone_count,
-+					  struct slab_depot_state_2_0 *state);
-+
-+int __must_check vdo_configure_slab(block_count_t slab_size,
-+				    block_count_t slab_journal_blocks,
-+				    struct slab_config *slab_config);
-+
-+/**
-+ * vdo_get_saved_reference_count_size() - Get the number of blocks required to save a reference
-+ *                                        counts state covering the specified number of data
-+ *                                        blocks.
-+ * @block_count: The number of physical data blocks that can be referenced.
-+ *
-+ * Return: The number of blocks required to save reference counts with the given block count.
-+ */
-+static inline block_count_t
-+vdo_get_saved_reference_count_size(block_count_t block_count)
-+{
-+	return DIV_ROUND_UP(block_count, COUNTS_PER_BLOCK);
-+}
-+
-+/**
-+ * vdo_get_slab_journal_start_block() - Get the physical block number of the start of the slab
-+ *                                      journal relative to the start block allocator partition.
-+ * @slab_config: The slab configuration of the VDO.
-+ * @origin: The first block of the slab.
-+ */
-+static inline physical_block_number_t __must_check
-+vdo_get_slab_journal_start_block(const struct slab_config *slab_config,
-+				 physical_block_number_t origin)
-+{
-+	return origin + slab_config->data_blocks + slab_config->reference_count_blocks;
-+}
-+
-+/**
-+ * vdo_advance_journal_point() - Move the given journal point forward by one entry.
-+ * @point: The journal point to adjust.
-+ * @entries_per_block: The number of entries in one full block.
-+ */
-+static inline void
-+vdo_advance_journal_point(struct journal_point *point, journal_entry_count_t entries_per_block)
-+{
-+	point->entry_count++;
-+	if (point->entry_count == entries_per_block) {
-+		point->sequence_number++;
-+		point->entry_count = 0;
-+	}
-+}
-+
-+/**
-+ * vdo_before_journal_point() - Check whether the first point precedes the second point.
-+ * @first: The first journal point.
-+ * @second: The second journal point.
-+ *
-+ * Return: true if the first point precedes the second point.
-+ */
-+static inline bool
-+vdo_before_journal_point(const struct journal_point *first, const struct journal_point *second)
-+{
-+	return ((first->sequence_number < second->sequence_number) ||
-+		((first->sequence_number == second->sequence_number) &&
-+		 (first->entry_count < second->entry_count)));
-+}
-+
-+/**
-+ * vdo_pack_journal_point() - Encode the journal location represented by a
-+ *                            journal_point into a packed_journal_point.
-+ * @unpacked: The unpacked input point.
-+ * @packed: The packed output point.
-+ */
-+static inline void
-+vdo_pack_journal_point(const struct journal_point *unpacked, struct packed_journal_point *packed)
-+{
-+	packed->encoded_point =
-+		__cpu_to_le64((unpacked->sequence_number << 16) | unpacked->entry_count);
-+}
-+
-+/**
-+ * vdo_unpack_journal_point() - Decode the journal location represented by a packed_journal_point
-+ *                              into a journal_point.
-+ * @packed: The packed input point.
-+ * @unpacked: The unpacked output point.
-+ */
-+static inline void
-+vdo_unpack_journal_point(const struct packed_journal_point *packed, struct journal_point *unpacked)
-+{
-+	u64 native = __le64_to_cpu(packed->encoded_point);
-+
-+	unpacked->sequence_number = (native >> 16);
-+	unpacked->entry_count = (native & 0xffff);
-+}
-+
-+/**
-+ * vdo_pack_slab_journal_block_header() - Generate the packed representation of a slab block
-+ *                                        header.
-+ * @header: The header containing the values to encode.
-+ * @packed: The header into which to pack the values.
-+ */
-+static inline void
-+vdo_pack_slab_journal_block_header(const struct slab_journal_block_header *header,
-+				   struct packed_slab_journal_block_header *packed)
-+{
-+	packed->head = __cpu_to_le64(header->head);
-+	packed->sequence_number = __cpu_to_le64(header->sequence_number);
-+	packed->nonce = __cpu_to_le64(header->nonce);
-+	packed->entry_count = __cpu_to_le16(header->entry_count);
-+	packed->metadata_type = header->metadata_type;
-+	packed->has_block_map_increments = header->has_block_map_increments;
-+
-+	vdo_pack_journal_point(&header->recovery_point, &packed->recovery_point);
-+}
-+
-+/**
-+ * vdo_unpack_slab_journal_block_header() - Decode the packed representation of a slab block
-+ *                                          header.
-+ * @packed: The packed header to decode.
-+ * @header: The header into which to unpack the values.
-+ */
-+static inline void
-+vdo_unpack_slab_journal_block_header(const struct packed_slab_journal_block_header *packed,
-+				     struct slab_journal_block_header *header)
-+{
-+	*header = (struct slab_journal_block_header) {
-+		.head = __le64_to_cpu(packed->head),
-+		.sequence_number = __le64_to_cpu(packed->sequence_number),
-+		.nonce = __le64_to_cpu(packed->nonce),
-+		.entry_count = __le16_to_cpu(packed->entry_count),
-+		.metadata_type = packed->metadata_type,
-+		.has_block_map_increments = packed->has_block_map_increments,
-+	};
-+	vdo_unpack_journal_point(&packed->recovery_point, &header->recovery_point);
-+}
-+
-+/**
-+ * vdo_pack_slab_journal_entry() - Generate the packed encoding of a slab journal entry.
-+ * @packed: The entry into which to pack the values.
-+ * @sbn: The slab block number of the entry to encode.
-+ * @is_increment: The increment flag.
-+ */
-+static inline void vdo_pack_slab_journal_entry(packed_slab_journal_entry *packed,
-+					       slab_block_number sbn,
-+					       bool is_increment)
-+{
-+	packed->offset_low8 = (sbn & 0x0000FF);
-+	packed->offset_mid8 = (sbn & 0x00FF00) >> 8;
-+	packed->offset_high7 = (sbn & 0x7F0000) >> 16;
-+	packed->increment = is_increment ? 1 : 0;
-+}
-+
-+/**
-+ * vdo_unpack_slab_journal_entry() - Decode the packed representation of a slab journal entry.
-+ * @packed: The packed entry to decode.
-+ *
-+ * Return: The decoded slab journal entry.
-+ */
-+static inline struct slab_journal_entry __must_check
-+vdo_unpack_slab_journal_entry(const packed_slab_journal_entry *packed)
-+{
-+	struct slab_journal_entry entry;
-+
-+	entry.sbn = packed->offset_high7;
-+	entry.sbn <<= 8;
-+	entry.sbn |= packed->offset_mid8;
-+	entry.sbn <<= 8;
-+	entry.sbn |= packed->offset_low8;
-+	entry.operation = VDO_JOURNAL_DATA_REMAPPING;
-+	entry.increment = packed->increment;
-+	return entry;
-+}
-+
-+struct slab_journal_entry __must_check
-+vdo_decode_slab_journal_entry(struct packed_slab_journal_block *block,
-+			      journal_entry_count_t entry_count);
-+
-+/**
-+ * vdo_get_slab_summary_hint_shift() - Compute the shift for slab summary hints.
-+ * @slab_size_shift: Exponent for the number of blocks per slab.
-+ *
-+ * Return: The hint shift.
-+ */
-+static inline u8 __must_check vdo_get_slab_summary_hint_shift(unsigned int slab_size_shift)
-+{
-+	return ((slab_size_shift > VDO_SLAB_SUMMARY_FULLNESS_HINT_BITS) ?
-+		(slab_size_shift - VDO_SLAB_SUMMARY_FULLNESS_HINT_BITS) :
-+		0);
-+}
-+
-+int __must_check vdo_initialize_layout(block_count_t size,
-+				       physical_block_number_t offset,
-+				       block_count_t block_map_blocks,
-+				       block_count_t journal_blocks,
-+				       block_count_t summary_blocks,
-+				       struct layout *layout);
-+
-+void vdo_uninitialize_layout(struct layout *layout);
-+
-+int __must_check vdo_get_partition(struct layout *layout,
-+				   enum partition_id id,
-+				   struct partition **partition_ptr);
-+
-+struct partition * __must_check
-+vdo_get_known_partition(struct layout *layout, enum partition_id id);
-+
-+int vdo_validate_config(const struct vdo_config *config,
-+			block_count_t physical_block_count,
-+			block_count_t logical_block_count);
-+
-+void vdo_destroy_component_states(struct vdo_component_states *states);
++u64 __must_check uds_lookup_volume_index_name(const struct volume_index *volume_index,
++					      const struct uds_record_name *name);
++
++int __must_check uds_get_volume_index_record(struct volume_index *volume_index,
++					     const struct uds_record_name *name,
++					     struct volume_index_record *record);
 +
 +int __must_check
-+vdo_decode_component_states(u8 *buffer,
-+			    struct volume_geometry *geometry,
-+			    struct vdo_component_states *states);
++uds_put_volume_index_record(struct volume_index_record *record, u64 virtual_chapter);
++
++int __must_check uds_remove_volume_index_record(struct volume_index_record *record);
 +
 +int __must_check
-+vdo_validate_component_states(struct vdo_component_states *states,
-+			      nonce_t geometry_nonce,
-+			      block_count_t physical_size,
-+			      block_count_t logical_size);
++uds_set_volume_index_record_chapter(struct volume_index_record *record, u64 virtual_chapter);
 +
-+void vdo_encode_super_block(u8 *buffer, struct vdo_component_states *states);
-+int __must_check vdo_decode_super_block(u8 *buffer);
++void uds_set_volume_index_open_chapter(struct volume_index *volume_index, u64 virtual_chapter);
 +
-+/* We start with 0L and postcondition with ~0L to match our historical usage in userspace. */
-+static inline u32 vdo_crc32(const void *buf, unsigned long len)
-+{
-+	return (crc32(0L, buf, len) ^ ~0L);
-+}
++void uds_set_volume_index_zone_open_chapter(struct volume_index *volume_index,
++					    unsigned int zone_number,
++					    u64 virtual_chapter);
 +
-+#endif /* VDO_ENCODINGS_H */
++int __must_check uds_load_volume_index(struct volume_index *volume_index,
++				       struct buffered_reader **readers,
++				       unsigned int reader_count);
++
++int __must_check uds_save_volume_index(struct volume_index *volume_index,
++				       struct buffered_writer **writers,
++				       unsigned int writer_count);
++
++void uds_get_volume_index_stats(const struct volume_index *volume_index,
++				struct volume_index_stats *stats);
++
++#endif /* UDS_VOLUME_INDEX_H */
 -- 
 2.40.1
 
