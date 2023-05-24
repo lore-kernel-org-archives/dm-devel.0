@@ -1,75 +1,72 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6CBA8C77B7C
-	for <dm-devel@archiver.kernel.org>; Wed, 24 May 2023 05:52:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 00D62C77B7A
+	for <dm-devel@archiver.kernel.org>; Wed, 24 May 2023 06:07:26 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1684907529;
+	s=mimecast20190719; t=1684908445;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=JwQau56KZ0J6BiDvrjN8/HpQKR1xebOzJ4aBgy+eZnQ=;
-	b=Y3nzXaadC8ZcrgURSqAVgJ7SIyNwMUgN4GWu0IOTpavK1WoARUiF4ZVAE6ZTvpcVchuPm8
-	/YlizgGGJOyOwjwQdlux/GN3WtV/tFDIJV8BMP8xwhkj1aXTQ2Mke22PB3r32UnL4xUIKf
-	ApsxGhP5zW4hza1IHnFKiEYh7GTWBlg=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=BOutyxtzNw88QqTFP8qDUu0veCKn3ZOUAq4cPNg1AS8=;
+	b=FnjeESSCXi+zu+/OOGnNogZmIgiRKxeojFsra9IF89NHSU5UYdzjJI7QptDy1pfT+QpGAu
+	UlR2h5xECkZckIsX8ut+cC4wvhgLJPghKobQdinkvV0JRd7RxGc1jLaKESiFtzwPTLj7XM
+	cbQa6YBJ1UTD7sfD0FZ+cuNdXXMlPSw=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-136-E7hQPeB9NO6bmUcA_dcrjg-1; Wed, 24 May 2023 01:52:06 -0400
-X-MC-Unique: E7hQPeB9NO6bmUcA_dcrjg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-315-fxROvZbHN0KGa0_jaJryMQ-1; Wed, 24 May 2023 02:07:24 -0400
+X-MC-Unique: fxROvZbHN0KGa0_jaJryMQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1F7F3802355;
-	Wed, 24 May 2023 05:52:04 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0EFF940CFD45;
-	Wed, 24 May 2023 05:52:04 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 26F791C05EA9;
+	Wed, 24 May 2023 06:07:23 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B364BC54184;
+	Wed, 24 May 2023 06:07:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C5C8119465B6;
-	Wed, 24 May 2023 05:52:03 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 858DE19465A8;
+	Wed, 24 May 2023 06:07:17 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
  [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0B98219465A8
- for <dm-devel@listman.corp.redhat.com>; Wed, 24 May 2023 05:52:03 +0000 (UTC)
+ ESMTP id 59F5519465A0
+ for <dm-devel@listman.corp.redhat.com>; Wed, 24 May 2023 06:07:11 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E1D748162; Wed, 24 May 2023 05:52:02 +0000 (UTC)
+ id 3298F8162; Wed, 24 May 2023 06:07:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D99697AE4
- for <dm-devel@redhat.com>; Wed, 24 May 2023 05:52:02 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2B87C9E60
+ for <dm-devel@redhat.com>; Wed, 24 May 2023 06:07:06 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
+ [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A5076811E7C
- for <dm-devel@redhat.com>; Wed, 24 May 2023 05:52:02 +0000 (UTC)
-Received: from bombadil.infradead.org (bombadil.infradead.org
- [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-344-Qxz9fazXNBGoB8BPUdU7Fg-1; Wed, 24 May 2023 01:51:55 -0400
-X-MC-Unique: Qxz9fazXNBGoB8BPUdU7Fg-1
-Received: from [2601:1c2:980:9ec0::2764]
- by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q1gbH-00CMaO-18; Wed, 24 May 2023 04:59:51 +0000
-Message-ID: <e96e4e85-7371-2859-b9a5-0f2c1f3b97d9@infradead.org>
-Date: Tue, 23 May 2023 21:59:50 -0700
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.11.0
-From: Randy Dunlap <rdunlap@infradead.org>
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 13C588032EF
+ for <dm-devel@redhat.com>; Wed, 24 May 2023 06:07:06 +0000 (UTC)
+Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-94-F1dFRRSDMAaYRROpG0Gh6w-1; Wed, 24 May 2023 02:07:04 -0400
+X-MC-Unique: F1dFRRSDMAaYRROpG0Gh6w-1
+Received: by verein.lst.de (Postfix, from userid 2407)
+ id BB12668CFE; Wed, 24 May 2023 08:06:59 +0200 (CEST)
+Date: Wed, 24 May 2023 08:06:59 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Mike Snitzer <snitzer@kernel.org>
+Message-ID: <20230524060659.GB19611@lst.de>
 References: <20230523074535.249802-1-hch@lst.de>
- <20230523074535.249802-16-hch@lst.de>
- <b384f464-92c6-6a14-4072-1faa9fa6a6a8@infradead.org>
-In-Reply-To: <b384f464-92c6-6a14-4072-1faa9fa6a6a8@infradead.org>
+ <20230523074535.249802-20-hch@lst.de> <ZGzujNVLaQD2npwH@redhat.com>
+MIME-Version: 1.0
+In-Reply-To: <ZGzujNVLaQD2npwH@redhat.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,8 +75,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH 15/24] block: move the code to do early boot
- lookup of block devices to block/
+Subject: Re: [dm-devel] [PATCH 19/24] dm: remove dm_get_dev_t
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,53 +87,38 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Vignesh Raghavendra <vigneshr@ti.com>,
+Cc: Jens Axboe <axboe@kernel.dk>, Vignesh Raghavendra <vigneshr@ti.com>,
  "Rafael J. Wysocki" <rafael@kernel.org>,
  Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-pm@vger.kernel.org,
  Joern Engel <joern@lazybastard.org>, linux-kernel@vger.kernel.org,
  linux-block@vger.kernel.org, Richard Weinberger <richard@nod.at>,
- dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@redhat.com, linux-mtd@lists.infradead.org,
  Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>,
- linux-mtd@lists.infradead.org
+ Christoph Hellwig <hch@lst.de>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: infradead.org
-Content-Language: en-US
+X-Mimecast-Originator: lst.de
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+On Tue, May 23, 2023 at 12:49:16PM -0400, Mike Snitzer wrote:
+> > -		dev = dm_get_dev_t(path);
+> > -		if (!dev)
+> > +		r = lookup_bdev(path, &dev);
+> > +		if (r)
+> > +			r = early_lookup_bdev(path, &dev);
+> > +		if (r)
+> >  			return -ENODEV;
+> >  	}
+> >  	if (dev == disk_devt(t->md->disk))
+> 
+> OK, but you aren't actually propagating the exact error code.  Did
+> you intend to change the return from -ENODEV to r?
 
-
-On 5/23/23 21:58, Randy Dunlap wrote:
-> 
-> 
-> On 5/23/23 00:45, Christoph Hellwig wrote:
->> diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
->> index f08b83e62c6222..3f8cf6dc7de887 100644
->> --- a/Documentation/admin-guide/kernel-parameters.txt
->> +++ b/Documentation/admin-guide/kernel-parameters.txt
->> @@ -5452,7 +5452,7 @@
->>  			port and the regular usb controller gets disabled.
->>  
->>  	root=		[KNL] Root filesystem
->> -			See early_lookup_bdev comment in init/do_mounts.c.
->> +			See early_lookup_bdev comment in block/early-lookup.c
-> 
-> Patch 13 does this:
-> 
->  	root=		[KNL] Root filesystem
-> -			See name_to_dev_t comment in init/do_mounts.c.
-> +			See early_lookup_bdev comment in init/do_mounts.c.
-> 
-> Should this latter chunk be dropped?
-> 
-
-Oh, oops, reverse order of patches?
-
--- 
-~Randy
+Yes, thanks.
 
 --
 dm-devel mailing list
