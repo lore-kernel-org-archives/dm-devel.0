@@ -4,7 +4,7 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 11650C7EE31
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2F12CC7EE33
 	for <dm-devel@archiver.kernel.org>; Thu, 25 May 2023 07:12:35 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1684998755;
@@ -14,49 +14,76 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=WPCmS20U88f6m2E4Eju0Vn2X0L8Wee6sxUTAHaRJMIU=;
-	b=h5vvqWfm+8DzAiKBkxkAaxzSCRWNCG6lWNX/d3p+JFN+YcYTCbGNTbR+ESvdz6XOvAs/JK
-	bZeJbhWDSGEldqDSnxRg3BfvtyFKqb1PeyRRo3cVCV+WzMBb8bRRePrL25TuPIHgbmn3vi
-	sGs4jv6H9CPe1vLPVAzcPsC4RO/pLbY=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=asHYKBrQd3/PlMTQDA3I+sSa0k+rJEbSgYr4ekMXk+8=;
+	b=hcGjUoqihp2w87vgJzoNZfa2zZF2XREqlOH04E5PuGYT0jrjAFG+x1J6xJPgzEgAG8OYBZ
+	EzaYAO3R3TkJxJUDskB4FIy/UMF8Hgb+cDK0TUMN8ukqNVkZRv8jhfg24SkJ39BzWOk/5h
+	+/m04FQX7bfHLPKBsROOhKM+/LZys2E=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-562-QQ3CjbvyPxay6LS01o8Kag-1; Thu, 25 May 2023 03:12:31 -0400
-X-MC-Unique: QQ3CjbvyPxay6LS01o8Kag-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-528-75G3AqKfOPuublP4hjInoQ-1; Thu, 25 May 2023 03:12:32 -0400
+X-MC-Unique: 75G3AqKfOPuublP4hjInoQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 56577185A7AC;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C272C3C01C26;
 	Thu, 25 May 2023 07:12:29 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3F55B401026;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 71DE5492B0C;
 	Thu, 25 May 2023 07:12:29 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5EA441946A46;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8946019452C7;
 	Thu, 25 May 2023 07:12:28 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 9BD9C19465A0
- for <dm-devel@listman.corp.redhat.com>; Wed, 24 May 2023 08:11:15 +0000 (UTC)
+ ESMTP id D1CF919465A0
+ for <dm-devel@listman.corp.redhat.com>; Wed, 24 May 2023 08:26:35 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8AE4F20296C8; Wed, 24 May 2023 08:11:15 +0000 (UTC)
-Received: from localhost (unknown [10.39.192.9])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0182620296C6;
- Wed, 24 May 2023 08:11:14 +0000 (UTC)
-From: Giuseppe Scrivano <gscrivan@redhat.com>
-To: Gao Xiang <hsiangkao@linux.alibaba.com>
+ id C2B16492B00; Wed, 24 May 2023 08:26:35 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id BA9E5482060
+ for <dm-devel@redhat.com>; Wed, 24 May 2023 08:26:35 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
+ [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9CB93101B05D
+ for <dm-devel@redhat.com>; Wed, 24 May 2023 08:26:35 +0000 (UTC)
+Received: from out30-112.freemail.mail.aliyun.com
+ (out30-112.freemail.mail.aliyun.com [115.124.30.112]) by relay.mimecast.com
+ with ESMTP with STARTTLS (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384)
+ id us-mta-592-Sytu7vF3MF-lSTyUA9CezA-1; Wed, 24 May 2023 04:26:31 -0400
+X-MC-Unique: Sytu7vF3MF-lSTyUA9CezA-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R741e4; CH=green; DM=||false|;
+ DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=ay29a033018045170;
+ MF=hsiangkao@linux.alibaba.com; NM=1; PH=DS; RN=7; SR=0;
+ TI=SMTPD_---0VjNOvI8_1684916785
+Received: from 30.97.48.247(mailfrom:hsiangkao@linux.alibaba.com
+ fp:SMTPD_---0VjNOvI8_1684916785) by smtp.aliyun-inc.com;
+ Wed, 24 May 2023 16:26:27 +0800
+Message-ID: <02524ece-956f-f5d8-fb21-adc4e5617dc6@linux.alibaba.com>
+Date: Wed, 24 May 2023 16:26:25 +0800
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:102.0)
+ Gecko/20100101 Thunderbird/102.10.0
+To: Giuseppe Scrivano <gscrivan@redhat.com>
 References: <9505927dabc3b6695d62dfe1be371b12f5bdebf7.1684491648.git.durui@linux.alibaba.com>
  <ZGz32yw7ecKhW+lj@redhat.com>
  <CAL7ro1FPEqXyOuX_WPMYdsT6rW-bD5EU=v=oWKsd6XscykLF6Q@mail.gmail.com>
  <fd4d0429-4da3-8217-6c13-14fd8a198920@linux.alibaba.com>
-Date: Wed, 24 May 2023 10:11:13 +0200
-In-Reply-To: <fd4d0429-4da3-8217-6c13-14fd8a198920@linux.alibaba.com> (Gao
- Xiang's message of "Wed, 24 May 2023 15:13:49 +0800")
-Message-ID: <87r0r6ywri.fsf@redhat.com>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/28.2 (gnu/linux)
-MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+ <87r0r6ywri.fsf@redhat.com>
+From: Gao Xiang <hsiangkao@linux.alibaba.com>
+In-Reply-To: <87r0r6ywri.fsf@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mailman-Approved-At: Thu, 25 May 2023 07:12:27 +0000
 Subject: Re: [dm-devel] dm overlaybd: targets mapping OverlayBD image
 X-BeenThere: dm-devel@redhat.com
@@ -75,117 +102,86 @@ Cc: Du Rui <durui@linux.alibaba.com>, Mike Snitzer <snitzer@kernel.org>,
  Alexander Larsson <alexl@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+X-Mimecast-Originator: linux.alibaba.com
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-R2FvIFhpYW5nIDxoc2lhbmdrYW9AbGludXguYWxpYmFiYS5jb20+IHdyaXRlczoKCj4gT24gMjAy
-My81LzI0IDIzOjQzLCBBbGV4YW5kZXIgTGFyc3NvbiB3cm90ZToKPj4gT24gVHVlLCBNYXkgMjMs
-IDIwMjMgYXQgNzoyOeKAr1BNIE1pa2UgU25pdHplciA8c25pdHplckBrZXJuZWwub3JnPiB3cm90
-ZToKPj4+Cj4+PiBPbiBGcmksIE1heSAxOSAyMDIzIGF0ICA2OjI3UCAtMDQwMCwKPj4+IER1IFJ1
-aSA8ZHVydWlAbGludXguYWxpYmFiYS5jb20+IHdyb3RlOgo+Pj4KPj4+PiBPdmVybGF5QkQgaXMg
-YSBub3ZlbCBsYXllcmluZyBibG9jay1sZXZlbCBpbWFnZSBmb3JtYXQsIHdoaWNoIGlzIGRlc2ln
-bgo+Pj4+IGZvciBjb250YWluZXIsIHNlY3VyZSBjb250YWluZXIgYW5kIGFwcGxpY2FibGUgdG8g
-dmlydHVhbCBtYWNoaW5lLAo+Pj4+IHB1Ymxpc2hlZCBpbiBVU0VOSVggQVRDICcyMAo+Pj4+IGh0
-dHBzOi8vd3d3LnVzZW5peC5vcmcvc3lzdGVtL2ZpbGVzL2F0YzIwLWxpLWh1aWJhLnBkZgo+Pj4+
-Cj4+Pj4gT3ZlcmxheUJEIGFscmVhZHkgaGFzIGEgQ29udGFpbmVyRCBub24tY29yZSBzdWItcHJv
-amVjdCBpbXBsZW1lbnRhdGlvbgo+Pj4+IGluIHVzZXJzcGFjZSwgYXMgYW4gYWNjZWxlcmF0ZWQg
-Y29udGFpbmVyIGltYWdlIHNlcnZpY2UKPj4+PiBodHRwczovL2dpdGh1Yi5jb20vY29udGFpbmVy
-ZC9hY2NlbGVyYXRlZC1jb250YWluZXItaW1hZ2UKPj4+Pgo+Pj4+IEl0IGNvdWxkIGJlIG11Y2gg
-bW9yZSBlZmZpY2llbnQgd2hlbiBkbyBkZWNvbXByZXNzaW5nIGFuZCBtYXBwaW5nIHdvcmtzCj4+
-Pj4gaW4gdGhlIGtlcm5lbCB3aXRoIHRoZSBmcmFtZXdvcmsgb2YgZGV2aWNlLW1hcHBlciwgaW4g
-bWFueSBjaXJjdW1zdGFuY2VzLAo+Pj4+IHN1Y2ggYXMgc2VjdXJlIGNvbnRhaW5lciBydW50aW1l
-LCBtb2JpbGUtZGV2aWNlcywgZXRjLgo+Pj4+Cj4+Pj4gVGhpcyBwYXRjaCBjb250YWlucyBhIG1v
-ZHVsZSwgZG0tb3ZlcmxheWJkLCBwcm92aWRlcyB0d28ga2luZHMgb2YgdGFyZ2V0cwo+Pj4+IGRt
-LXpmaWxlIGFuZCBkbS1sc210LCB0byBleHBvc2UgYSBncm91cCBvZiBibG9jay1kZXZpY2VzIGNv
-bnRhaW5zCj4+Pj4gT3ZlcmxheUJEIGltYWdlIGFzIGEgb3ZlcmxhaWQgcmVhZC1vbmx5IGJsb2Nr
-LWRldmljZS4KPj4+Pgo+Pj4+IFNpZ25lZC1vZmYtYnk6IER1IFJ1aSA8ZHVydWlAbGludXguYWxp
-YmFiYS5jb20+Cj4+Pgo+Pj4gPHNuaXAsIG9yaWdpbmFsIHBhdGNoIGhlcmU6IFsxXSA+Cj4+IEEg
-bG9uZyBsb25nIHRpbWUgYWdvIEkgd3JvdGUgYSBkb2NrZXIgY29udGFpbmVyIGltYWdlIGJhc2Vk
-IG9uCj4+IGRtLXNuYXBzaG90IHRoYXQgaXMgdmFndWVseSBzaW1pbGFyIHRvIHRoaXMgb25lLiBJ
-dCBpcyBzdGlsbAo+PiBhdmFpbGFibGUsIGJ1dCBub2JvZHkgcmVhbGx5IHVzZXMgaXQuIEl0IGhh
-cyBzZXZlcmFsIHdlYWtuZXNzZXMuIEZpcnN0Cj4+IG9mIGFsbCB0aGUgY29udGFpbmVyIGltYWdl
-IGlzIGFuIGFjdHVhbCBmaWxlc3lzdGVtLCBzbyB5b3UgbmVlZCB0bwo+PiBwcmUtYWxsb2NhdGUg
-YSBmaXhlZCBtYXggc2l6ZSBmb3IgaW1hZ2VzIGF0IGNvbnN0cnVjdGlvbiB0aW1lLgo+PiBTZWNv
-bmRseSwgYWxsIHRoZSBsdm0gdm9sdW1lIGNoYW5nZXMgYW5kIG1vdW50cyBkdXJpbmcgcnVudGlt
-ZSBjYXVzZWQKPj4gd2VpcmQgYmVoYXZpb3VyIChlc3BlY2lhbGx5IGF0IHNjYWxlKSB0aGF0IHdh
-cyBwYWluZnVsIHRvIG1hbmFnZSAoanVzdAo+PiBzZWFyY2ggdGhlIGRvY2tlciBpc3N1ZSB0cmFj
-a2VyIGZvciBkZXZtYXBwZXIgYmFja2VuZCkuIEluIHRoZSBlbmQKPj4gZXZlcnlvbmUgbW92ZWQg
-dG8gYSBmaWxlc3lzdGVtIGJhc2VkIGltcGxlbWVudGF0aW9uIChvdmVybGF5ZnMgYmFzZWQpLgo+
-Cj4gWWVhaCwgYW5kIEkgdGhpbmsgcmVwcm9kdWNpYmlsaXR5IGlzc3VlIGlzIGFub3RoZXIgcHJv
-YmxlbSwgd2hpY2ggbWVhbnMKPiBpdCdzIHF1aXRlIGhhcmQgdG8gc2VsZWN0IGEgcmFuZG9tIGZz
-IHdpdGhvdXQgc29tZSBjaGFuZ2UgdG8gZ2V0IHRoZQo+IGJlc3QgcmVzdWx0LiAgSSBkbyBmaW5k
-IHRoZXNlIGd1eXMgd29yayBvbiBlMmZzcHJvZ3MgYWdhaW4gYW5kIGFnYWluLgo+Cj4gSSd2ZSBh
-bHJlYWR5IHRvbGQgdGhlbSBpbnRlcm5hbGx5IGFnYWluIGFuZCBhZ2FpbiwgYnV0Li4gVGhleSBv
-bmx5IGZvY3VzCj4gb24gc29tZSBtaW5vciBwb2ludHMgc3VjaCBhcyBob3cgdG8gZG8gSS9PIGFu
-ZCBDUFUgcHJlZmV0Y2ggdG8gZ2V0Cj4gKHNvbWV3aGF0KSBiZXR0ZXIgcGVyZm9ybWFuY2UgYW5k
-IGJlYXQgRVJPRlMuICBJIGRvbid0IGtub3csIEkgaGF2ZSBubwo+IGVub3VnaCB0aW1lIHRvIGV2
-ZW4gbG9vayBpbnRvIHRoYXQgd2hldGhlciB0aGlzIG5ldyBrZXJuZWwgc3R1ZmZzIGlzCj4gZmlu
-ZTogYmVjYXVzZSBvZiBhIHZlcnkgc2ltcGxpc3QgaWRlYToKPgo+ICBzdGFja2VkIHN0b3JhZ2Ug
-b3ZlcmhlYWQgZ2VuZXJhbGx5IHRha2VzIGRvdWJsZSBydW50aW1lL21lbW9yeQo+IGZvb3Rwcmlu
-dHM6Cj4gICAgZmlsZXN5c3RlbSArIGJsb2NrIGRyaXZlcnMKPgo+PiAKPj4+IEkgYXBwcmVjaWF0
-ZSB0aGF0IHRoaXMgd29yayBpcyBiZWluZyBkb25lIHdpdGggYW4gZXllIHRvd2FyZAo+Pj4gY29u
-dGFpbmVyZCAiY29tbXVuaXR5IiBhbmQgc3RhbmRhcmRpemF0aW9uIGJ1dCBiYXNlZCBvbiBteSBs
-aW1pdGVkCj4+PiByZXNlYXJjaCBpdCBhcHBlYXJzIHRoYXQgdGhpcyBmb3JtYXQgb2YgT0NJIGlt
-YWdlIHN0b3JhZ2UvdXNlIGlzIG9ubHkKPj4+IHVzZWQgYnkgQWxpYmFiYT8gKGJ1dCBJIGNvdWxk
-IGJlIHdyb25nLi4uKQo+Pj4KPj4+IEJ1dCB5b3UnZCBkbyB3ZWxsIHRvIGV4cGxhaW4gd2h5IHRo
-ZSB1c2Vyc3BhY2Ugc29sdXRpb24gaXNuJ3QKPj4+IGFjY2VwdGFibGUuIEFyZSB0aGVyZSBzZWN1
-cml0eSBpc3N1ZXMgdGhhdCBtb3ZpbmcgdGhlIGltcGxlbWVudGF0aW9uCj4+PiB0byBrZXJuZWwg
-YWRkcmVzc2VzPwo+Pj4KPj4+IEkgYWxzbyBoYXZlIGRvdWJ0cyB0aGF0IHRoaXMgc29sdXRpb24g
-aXMgX2FjdHVhbGx5XyBtb3JlIHBlcmZvcm1hbnQKPj4+IHRoYW4gYSBwcm9wZXIgZmlsZXN5c3Rl
-bSBiYXNlZCBzb2x1dGlvbiB0aGF0IGFsbG93cyBwYWdlIGNhY2hlIHNoYXJpbmcKPj4+IG9mIGNv
-bnRhaW5lciBpbWFnZSBkYXRhIGFjcm9zcyBtdWx0aXBsZSBjb250YWluZXJzLgo+PiBUaGlzIHNv
-bHV0aW9uIGRvZXNuJ3QgZXZlbiBhbGxvdyBwYWdlIGNhY2hlIHNoYXJpbmcgYmV0d2VlbiBzaGFy
-ZWQKPj4gbGF5ZXJzIChsaWtlIGN1cnJlbnQgY29udGFpbmVycyBkbyksIG11Y2ggbGVzcyBiZXR3
-ZWVuIGluZGVwZW5kZW50Cj4+IGxheWVycy4KPj4gCj4+PiBUaGVyZSBpcyBhbiBhY3RpdmUgZGlz
-Y3Vzc2lvbiBhYm91dCwgYW5kIGFjdGl2ZSBkZXZlbG9wbWVudCBlZmZvcnQKPj4+IGZvciwgdXNp
-bmcgb3ZlcmxheWZzICsgZXJvZnMgZm9yIGNvbnRhaW5lciBpbWFnZXMuICBJJ20gcmVsdWN0YW50
-IHRvCj4+PiBtZXJnZSB0aGlzIERNIGJhc2VkIGNvbnRhaW5lciBpbWFnZSBhcHByb2FjaCB3aXRo
-b3V0IHdpZGVyIGNvbnNlbnN1cwo+Pj4gZnJvbSBvdGhlciBjb250YWluZXIgc3Rha2Vob2xkZXJz
-Lgo+Pj4KPj4+IEJ1dCBzaG9ydCBvZiByZWFjaGluZyB3aWRlciBjb25zZW5zdXMgb24gdGhlIG5l
-ZWQgZm9yIHRoZXNlIERNCj4+PiB0YXJnZXRzOiB0aGVyZSBpcyBub3RoaW5nIHByZXZlbnRpbmcg
-eW91IGZyb20gY2FycnlpbmcgdGhlc2UgY2hhbmdlcwo+Pj4gaW4geW91ciBhbGliYWJhIGtlcm5l
-bC4KPj4gRXJvZnMgYWxyZWFkeSBoYXMgc29tZSBibG9jay1sZXZlbCBzdXBwb3J0IGZvciBjb250
-YWluZXIgaW1hZ2VzCj4+ICh3aXRoCj4+IG55ZHVzKSwgYW5kIGNvbXBvc2VmcyB3b3JrcyB3aXRo
-IGN1cnJlbnQgaW4ta2VybmVsIEVST0ZTK292ZXJsYXlmcy4KPj4gQW5kIHRoaXMgbmV3IGFwcHJv
-YWNoIGRvZXNuJ3QgaGVscCBmb3IgdGhlIElNSE8gY3VycmVudCB3ZWFrIHNwb3Qgd2UKPj4gaGF2
-ZSwgd2hpY2ggaXMgdW5wcml2aWxlZ2VkIGNvbnRhaW5lciBpbWFnZXMuCj4+IEFsc28sIHdoaWxl
-IE9DSSBhcnRpZmFjdHMgY2FuIGJlIHVzZWQgdG8gc3RvcmUgYW55IGtpbmQgb2YgaW1hZ2UKPj4g
-Zm9ybWF0cyAob3IgYW55IG90aGVyIGtpbmQgb2YgZmlsZSkgSSB0aGluayBmb3IgYW4gYWN0dWFs
-IHN0YW5kYXJkaXplZAo+PiBuZXcgaW1hZ2UgZm9ybWF0IGl0IHdvdWxkIGJlIGJldHRlciB0byB3
-b3JrIHdpdGggdGhlIE9DSSBvcmcgdG8gY29tZQo+PiB1cCB3aXRoIGEgT0NJIHYyIHN0YW5kYXJk
-IGltYWdlIGZvcm1hdC4KPiBBZ3JlZWQsIEkgaG9wZSB5b3UgZ3V5cyBjb3VsZCBhY3R1YWxseSBz
-aXQgZG93biBhbmQgZXZhbHVhdGUgYSBwcm9wZXIKPiBzb2x1dGlvbiBvbiB0aGUgbmV4dCBPQ0kg
-djIsIGN1cnJlbnRseSBJIGtub3cgdGhlcmUgYXJlOgo+Cj4gIC0gQ29tcG9zZWZzCj4gIC0gKGUp
-c3Rhcmd6ICAgaHR0cHM6Ly9naXRodWIuY29tL2NvbnRhaW5lcmQvc3Rhcmd6LXNuYXBzaG90dGVy
-Cj4gIC0gTnlkdXMgICAgICAgaHR0cHM6Ly9naXRodWIuY29tL2NvbnRhaW5lcmQvbnlkdXMtc25h
-cHNob3R0ZXIKPiAgLSBPdmVybGF5QkQgICBodHRwczovL2dpdGh1Yi5jb20vY29udGFpbmVyZC9h
-Y2NlbGVyYXRlZC1jb250YWluZXItaW1hZ2UKPiAgLSBTT0NJICAgICAgICBodHRwczovL2dpdGh1
-Yi5jb20vYXdzbGFicy9zb2NpLXNuYXBzaG90dGVyCj4gIC0gVGFyZnMKPiAgLSAobWF5YmUgZXZl
-biBtb3JlLi4pCj4KPiBIb25lc3RseSwgSSBkbyB0aGluayBPU1RyZWUvQ29tcG9zZWZzIGlzIHRo
-ZSBiZXN0IGFwcHJvYWNoIGZvciBub3cgZm9yCj4gZGVkdXBsaWNhdGlvbiBhbmQgcGFnZSBjYWNo
-ZSBzaGFyaW5nIChkdWUgdG8ga2VybmVsIGxpbWl0YXRpb24gb2YgcGFnZQo+IGNhY2hlIHNoYXJp
-bmcgYW5kIG92ZXJsYXlmcyBjb3B5dXAgbGltaXRhdGlvbikuICBJJ20gdG9vIHRpcmVkIG9mCj4g
-Y29udGFpbmVyIGltYWdlIHN0dWZmcyBob25lc3RseS4gIFRvbyBtdWNoIHVubmVjZXNzYXJ5IG1h
-bnBvd2VyIHdhc3RlLgoKZm9yIGEgZmlsZS1iYXNlZCBzdG9yYWdlIG1vZGVsLCBJIGFtIG5vdCBz
-dXJlIGEgbmV3IGZvcm1hdCB3b3VsZCByZWFsbHkKYnV5IHVzIG11Y2ggb3IgaXQgY2FuIGJlIHNp
-Z25pZmljYW50bHkgZGlmZmVyZW50LgoKV2l0aG91dCBhIHByb3BlciBzdXBwb3J0IGZyb20gdGhl
-IGtlcm5lbCwgYSBuZXcgZm9ybWF0IHdvdWxkIHN0aWxsIG5lZWQKdG8gY3JlYXRlIHRoZSBsYXlv
-dXQgb3ZlcmxheSBleHBlY3RzLCBzbyBpdCB3b24ndCBiZSBtdWNoIGRpZmZlcmVudCB0aGFuCndo
-YXQgd2UgaGF2ZSBub3cuCgpUaGUgY3VycmVudCBPQ0kgZm9ybWF0LCB3aXRoIHNvbWUgdHdlYWtz
-IGxpa2UgKGUpc3Rhcmd6IG9yIHpzdGQ6Y2h1bmtlZCwKYWxyZWFkeSBtYWtlIGl0cyBjb250ZW50
-IGFkZHJlc3NhYmxlIGFuZCBhIGNsaWVudCBjYW4gcmV0cmlldmUgb25seSB0aGUKc3Vic2V0IG9m
-IHRoZSBmaWxlcyB0aGF0IGFyZSBuZWVkZWQuICBBdCB0aGUgc2FtZSB0aW1lIHdlIG1haW50YWlu
-IHRoZQpzaW1wbGljaXR5IG9mIGEgdGFyYmFsbCBhbmQgaXQgd29uJ3QgYnJlYWsgZXhpc3Rpbmcg
-Y2xpZW50cy4KCklNTywgdGhlIG1vc3QgaW50ZXJlc3RpbmcgcHJvYmxlbSBpcyBob3cgdG8gc3Rv
-cmUgdGhlc2UgaW1hZ2VzIGxvY2FsbHkKYW5kIGhvdyB0aGUga2VybmVsIGNhbiBoZWxwIHdpdGgg
-dGhhdC4KClRoZSBpZGVhIGJlaGluZCBjb21wb3NlZnMgaXMgdG8gcmVwbGFjZSB0aGUgZXhpc3Rp
-bmcgc3RvcmFnZSBtb2RlbCB1c2VkCmZvciBvdmVybGF5LCB3aGVyZSBlYWNoIGxheWVyIGhhcyBp
-dHMgb3duIGRpcmVjdG9yeSwgd2l0aCBhIHNpbmdsZQpkaXJlY3Rvcnkgd2hlcmUgYWxsIHRoZSBm
-aWxlcyBhcmUgc3RvcmVkIGJ5IHRoZWlyIGNoZWNrc3VtLiAgVGhlCmV4cGVjdGVkIGxheW91dCB0
-aGVuIGlzIHJlY3JlYXRlZCBhdCBydW50aW1lLgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVsCg==
+Hi Giuseppe,
+
+On 2023/5/24 01:11, Giuseppe Scrivano wrote:
+> Gao Xiang <hsiangkao@linux.alibaba.com> writes:
+> 
+
+...
+
+>> Agreed, I hope you guys could actually sit down and evaluate a proper
+>> solution on the next OCI v2, currently I know there are:
+>>
+>>   - Composefs
+>>   - (e)stargz   https://github.com/containerd/stargz-snapshotter
+>>   - Nydus       https://github.com/containerd/nydus-snapshotter
+>>   - OverlayBD   https://github.com/containerd/accelerated-container-image
+>>   - SOCI        https://github.com/awslabs/soci-snapshotter
+>>   - Tarfs
+>>   - (maybe even more..)
+>>
+>> Honestly, I do think OSTree/Composefs is the best approach for now for
+>> deduplication and page cache sharing (due to kernel limitation of page
+>> cache sharing and overlayfs copyup limitation).  I'm too tired of
+>> container image stuffs honestly.  Too much unnecessary manpower waste.
+> 
+> for a file-based storage model, I am not sure a new format would really
+> buy us much or it can be significantly different.
+> 
+> Without a proper support from the kernel, a new format would still need
+> to create the layout overlay expects, so it won't be much different than
+> what we have now.
+
+I've seen lot efforts on this, for example,
+https://docs.google.com/presentation/d/1lBKVrYzm9JEYuw-gIEsrcePSK0jL1Boe/edit#slide=id.p22
+
+Merging the writable layer and read-only layers with overlayfs is
+feasible. I mean, at least for composefs model on backing XFS/btrfs, we
+could merge these layers with overlayfs so that I guess reflink could
+be done to avoid full copyup as well?  I do think that's a net win.
+
+> 
+> The current OCI format, with some tweaks like (e)stargz or zstd:chunked,
+> already make its content addressable and a client can retrieve only the
+> subset of the files that are needed.  At the same time we maintain the
+> simplicity of a tarball and it won't break existing clients.
+
+(e)stargz or zstd:chunked still needs to be converted by the publisher
+and not all exist OCI images are stored in this way.  But apart from
+detailed comparsion, disk mapping image approaches seems really a
+drawback at least on my side.
+
+Anyway, I think it's what OCIv2 would like to eventually address
+anyway.
+
+> 
+> IMO, the most interesting problem is how to store these images locally
+> and how the kernel can help with that.
+
+I think composefs model can do both sides. But I'm not sure the final
+conclusion, I tend to leave it to the OCI guys.
+
+> 
+> The idea behind composefs is to replace the existing storage model used
+> for overlay, where each layer has its own directory, with a single
+> directory where all the files are stored by their checksum.  The
+> expected layout then is recreated at runtime.
+
+Yes, what I'd like to say, without finer page cache sharing mechanism,
+the composefs way sounds better to me honestly to the whole system.
+
+Thanks,
+Gao Xiang
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
