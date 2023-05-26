@@ -4,68 +4,68 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CCDAEC77B7C
-	for <dm-devel@archiver.kernel.org>; Fri, 26 May 2023 08:52:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id F3B38C77B7C
+	for <dm-devel@archiver.kernel.org>; Fri, 26 May 2023 08:53:43 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685091148;
+	s=mimecast20190719; t=1685091222;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Pm1z+kVqWbjaxGlwDeQFznjeaTJVp/p72ZnOnwk1vd4=;
-	b=PX67jqKspiezz2RLLRuT3oXaVWc7nbZMzJ32b0nNSb/7fBizkuSFkfL1R0KLAjpVtldSTm
-	uAT83CaZF8XwJKSQdYnHt8KfhXCo4jQAPwrwTazoBczrECwj+UT2/Z9Mvrvdgwdyw3+ByF
-	tNc+XHZFsAj1iYkBOopXwbIRDLGKXyw=
+	bh=5w5G4xoClGABb+IeXgmUBJ6YfMteQyLA2JOL+IQ4y10=;
+	b=TZLicptmLJpD23+bRuPk5mq+oOOCjg/0iHinjSaQtwJd+X+kFu/AkpW9jvz7yBxWMcwivu
+	UTW6yyVCViexvKyYsaOeBietmDJx1DxgmYHYUmivPA2GYveJ3p6MVoSXyGYrMeFxOnbgUf
+	IgDjviueHokAnmHcOqDft9zG6NQCu0M=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-122-JGKhd8xMO4CkX-P7LdHepQ-1; Fri, 26 May 2023 04:52:25 -0400
-X-MC-Unique: JGKhd8xMO4CkX-P7LdHepQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-554-s-p9jkGrMsqObAw8aW3WbA-1; Fri, 26 May 2023 04:53:39 -0400
+X-MC-Unique: s-p9jkGrMsqObAw8aW3WbA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8A9E81C0ED0D;
-	Fri, 26 May 2023 08:52:23 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9B3591C12F86;
+	Fri, 26 May 2023 08:53:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 36A9A40C1438;
-	Fri, 26 May 2023 08:52:23 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 89BE81121314;
+	Fri, 26 May 2023 08:53:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E696919465A4;
-	Fri, 26 May 2023 08:52:22 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 45CA119465A4;
+	Fri, 26 May 2023 08:53:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 48D8219465A0
- for <dm-devel@listman.corp.redhat.com>; Fri, 26 May 2023 08:52:22 +0000 (UTC)
+ ESMTP id 3F93319465A0
+ for <dm-devel@listman.corp.redhat.com>; Fri, 26 May 2023 08:53:36 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2CC4A407DEC3; Fri, 26 May 2023 08:52:22 +0000 (UTC)
+ id 156B940D1B66; Fri, 26 May 2023 08:53:36 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 25679407DEC6
- for <dm-devel@redhat.com>; Fri, 26 May 2023 08:52:16 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [207.211.31.81])
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0EDCA40D1B67
+ for <dm-devel@redhat.com>; Fri, 26 May 2023 08:53:36 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 093FE8030D0
- for <dm-devel@redhat.com>; Fri, 26 May 2023 08:52:16 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E32363C0ED58
+ for <dm-devel@redhat.com>; Fri, 26 May 2023 08:53:35 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-323-vtKgZwqNMaC2Vmb8n8S41Q-1; Fri, 26 May 2023 04:52:14 -0400
-X-MC-Unique: vtKgZwqNMaC2Vmb8n8S41Q-1
+ us-mta-101-ummdIBI-OhexfboliMbtIw-1; Fri, 26 May 2023 04:53:34 -0400
+X-MC-Unique: ummdIBI-OhexfboliMbtIw-1
 Received: from hch by bombadil.infradead.org with local (Exim 4.96 #2 (Red Hat
- Linux)) id 1q2Sa5-001ZC5-2F; Fri, 26 May 2023 08:13:49 +0000
-Date: Fri, 26 May 2023 01:13:49 -0700
+ Linux)) id 1q2SZW-001Z7f-3C; Fri, 26 May 2023 08:13:14 +0000
+Date: Fri, 26 May 2023 01:13:14 -0700
 From: Christoph Hellwig <hch@infradead.org>
 To: Luis Chamberlain <mcgrof@kernel.org>
-Message-ID: <ZHBqPbMCsNHVRvkt@infradead.org>
+Message-ID: <ZHBqGosY0tWkNdIR@infradead.org>
 References: <20230526073336.344543-1-mcgrof@kernel.org>
- <20230526073336.344543-4-mcgrof@kernel.org>
+ <20230526073336.344543-2-mcgrof@kernel.org>
 MIME-Version: 1.0
-In-Reply-To: <20230526073336.344543-4-mcgrof@kernel.org>
+In-Reply-To: <20230526073336.344543-2-mcgrof@kernel.org>
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
  bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -75,9 +75,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH v2 3/5] iomap: simplify iomap_init() with
- PAGE_SECTORS
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] [PATCH v2 1/5] block: annotate bdev_disk_changed()
+ deprecation with a symbol namespace
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -100,16 +100,28 @@ Cc: djwong@kernel.org, philipp.reisner@linbit.com, linux-mm@kvack.org,
  lars.ellenberg@linbit.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: infradead.org
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Looks good:
+On Fri, May 26, 2023 at 12:33:32AM -0700, Luis Chamberlain wrote:
+> This ensures no other users pop up by mistake easily and provides
+> us a with an easy vehicle to do the same with other routines should
+> we need it later.
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+I don't see how this is related to the rest of the seris.  I also don't
+think it's a good idea.  The APIs isn't deprecated per se.  It just
+should not be called by drivers.  The right thing would be an interface
+like
+
+EXPORT_SYMBOL_GPL_FOR(bdev_disk_changed, loop.ko, CONFIG_BLK_DEV_LOOP);
+EXPORT_SYMBOL_GPL_FOR(bdev_disk_changed, dasd_mod.ko, CONFIG_DASD);
+
+with the modulo code enforcing that no one but the module this is
+explicitly exorted for can use the symbol.
 
 --
 dm-devel mailing list
