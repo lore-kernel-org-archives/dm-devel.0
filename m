@@ -1,93 +1,93 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DB866C7EE2F
-	for <dm-devel@archiver.kernel.org>; Tue, 30 May 2023 20:54:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1A4DDC7EE23
+	for <dm-devel@archiver.kernel.org>; Tue, 30 May 2023 20:55:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685480092;
+	s=mimecast20190719; t=1685480103;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=KI3CEgfRFH6yoO/+/WXpbPzpwAT6EB6TjhxxDw99epM=;
-	b=EmK3M2raKACyFArNbG4UJgbh3CHo8DGZSLqKr1tVb9wPfpC8L3+hQlKmKr8s4ynOF6qud3
-	08ihp4LXKU3YJAPReKp5iKth7Q3mWUUnnvxjdbaQnzcLSXECsUwo6ZuOyIeV/AQaNwEdbz
-	gk8xpgpqNAEL6e9zFt7cjrs6aUAs99U=
+	bh=mUm8DDSoJfi2HHCvZt8bGIRQOQRly3mR2S9xZX6xFIM=;
+	b=Sh/ooC87EKztq9qOytK+xIYMHFk4dEzCpDY9f/k02RYmKezq6mtgUszh301T0Or4oOkDyu
+	XesPge/0e1bdB7PlDPOsv/iIyBt71fA43phbIozKhdBrpEILUle5ibEvMWwXfdc8tWyKKz
+	FwxmQYfYGxhMBU8+RqapnsMWVQzskiE=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-92-afFAyTI6MuORu0Qz1nj97g-1; Tue, 30 May 2023 16:54:51 -0400
-X-MC-Unique: afFAyTI6MuORu0Qz1nj97g-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-220-k031uJpON_ijIvYvxq3P1A-1; Tue, 30 May 2023 16:54:39 -0400
+X-MC-Unique: k031uJpON_ijIvYvxq3P1A-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C2513280BCA7;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3671D280D586;
 	Tue, 30 May 2023 20:54:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4D8612023273;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2291440C6CCC;
 	Tue, 30 May 2023 20:54:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D74C119451E2;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A6F9E19451D4;
 	Tue, 30 May 2023 20:54:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id EFF3419465A0
- for <dm-devel@listman.corp.redhat.com>; Tue, 30 May 2023 20:40:54 +0000 (UTC)
+ ESMTP id C529F1946595
+ for <dm-devel@listman.corp.redhat.com>; Tue, 30 May 2023 20:35:09 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C4394400DFF; Tue, 30 May 2023 20:40:54 +0000 (UTC)
+ id A32EF140EBD7; Tue, 30 May 2023 20:35:09 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id BB8B2492B00
- for <dm-devel@redhat.com>; Tue, 30 May 2023 20:40:54 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 9B9CC140EBB8
+ for <dm-devel@redhat.com>; Tue, 30 May 2023 20:35:09 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
+ [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9B5821C0150D
- for <dm-devel@redhat.com>; Tue, 30 May 2023 20:40:54 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 72BB2296A600
+ for <dm-devel@redhat.com>; Tue, 30 May 2023 20:35:09 +0000 (UTC)
 Received: from wout5-smtp.messagingengine.com
  (wout5-smtp.messagingengine.com [64.147.123.21]) by relay.mimecast.com with
  ESMTP with STARTTLS (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-652-nFevvtGoM4WIzgRzcDcf7w-1; Tue, 30 May 2023 16:40:52 -0400
-X-MC-Unique: nFevvtGoM4WIzgRzcDcf7w-1
-Received: from compute2.internal (compute2.nyi.internal [10.202.2.46])
- by mailout.west.internal (Postfix) with ESMTP id F2B183200930;
- Tue, 30 May 2023 16:32:03 -0400 (EDT)
+ us-mta-47-EEiphBbRPAmjXY_UvB16qA-1; Tue, 30 May 2023 16:32:52 -0400
+X-MC-Unique: EEiphBbRPAmjXY_UvB16qA-1
+Received: from compute1.internal (compute1.nyi.internal [10.202.2.41])
+ by mailout.west.internal (Postfix) with ESMTP id 4714F3200941;
+ Tue, 30 May 2023 16:32:15 -0400 (EDT)
 Received: from mailfrontend1 ([10.202.2.162])
- by compute2.internal (MEProxy); Tue, 30 May 2023 16:32:04 -0400
-X-ME-Sender: <xms:Q112ZMJhVikC1UrX3Mb_HLcgL_u4cRjw7_2N3_37WA8f1GdiBc0pnw>
- <xme:Q112ZMIHatiw5Vza07l_H3J8Q5Jo6SiJ0JklzDq2oVq19WcxL7-SLcq2Z6xIGOn9e
- WudhjdY1xw9uGw>
-X-ME-Received: <xmr:Q112ZMvxVcJBiasn5UFXjTImzNzJJWI7pNevtYfQQmMTBB-b8IybX_PYolTn_jMKlOzP0fkNc-E>
+ by compute1.internal (MEProxy); Tue, 30 May 2023 16:32:16 -0400
+X-ME-Sender: <xms:Tl12ZLCrjMwa5dd8nXInpbI80j8aks7WDHGQdC47Q6JkvDKgesheeg>
+ <xme:Tl12ZBhWW6gzbLQXIBx87Wn5FhMOV1Jmqe7Bu4LvPr1RNpfkJmMNYXM8yoX9-WtnK
+ KOwvl36hcRBn78>
+X-ME-Received: <xmr:Tl12ZGmQvePgFgiwvtACF3E10lqS1U8ApvlnKupnDUwSSod63Ptq06kbfUX7FZofZWiSkLg8hdg>
 X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvhedrfeekjedgudeglecutefuodetggdotefrod
  ftvfcurfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfgh
  necuuegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmd
  enucfjughrpefhvfevufffkffojghfggfgsedtkeertdertddtnecuhfhrohhmpeffvghm
  ihcuofgrrhhivgcuqfgsvghnohhurhcuoeguvghmihesihhnvhhishhisghlvghthhhinh
  hgshhlrggsrdgtohhmqeenucggtffrrghtthgvrhhnpeejffejgffgueegudevvdejkefg
- hefghffhffejteekleeufeffteffhfdtudehteenucevlhhushhtvghrufhiiigvpedtne
+ hefghffhffejteekleeufeffteffhfdtudehteenucevlhhushhtvghrufhiiigvpedvne
  curfgrrhgrmhepmhgrihhlfhhrohhmpeguvghmihesihhnvhhishhisghlvghthhhinhhg
  shhlrggsrdgtohhm
-X-ME-Proxy: <xmx:Q112ZJbB2ysOiize_ujypULuG_R3Cn4Yq-9hscSDMSK5ll_YW10Haw>
- <xmx:Q112ZDb1CeOkQsN1ioyuZQeKryd91axJ67ADAgGmg8uxAd6cVc2vzw>
- <xmx:Q112ZFCIOgBVdd0gvdQPehRl4EuciVdHt2_LQ9qvpSUR9DQCv8tXpQ>
- <xmx:Q112ZH4GTf0whc09NpBt8a1c0iKBwD4CvlewH7ytbqUM7jnZPa7ciw>
+X-ME-Proxy: <xmx:Tl12ZNw-JLuG8i_8xOIdX4SeeayTYC2T2NBU3vVW_z588mtnm1MNXQ>
+ <xmx:Tl12ZAQw_DXvdm36tgmR2p2Ev34IIuqgkFUOmqOOyl5qMY21MCCl5Q>
+ <xmx:Tl12ZAamGsz2l8le4BoAmD-xKUjEfjqYwtGU3y6fUVm9ndKsvfHsDw>
+ <xmx:Tl12ZFSWJmukln6Pasz6VSPEKly6NXMAjEHrAUW2zz3CBGO838Esww>
 Feedback-ID: iac594737:Fastmail
 Received: by mail.messagingengine.com (Postfix) with ESMTPA; Tue,
- 30 May 2023 16:32:02 -0400 (EDT)
+ 30 May 2023 16:32:14 -0400 (EDT)
 From: Demi Marie Obenour <demi@invisiblethingslab.com>
 To: Jens Axboe <axboe@kernel.dk>,
  =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>,
  Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
  dm-devel@redhat.com
-Date: Tue, 30 May 2023 16:31:10 -0400
-Message-Id: <20230530203116.2008-11-demi@invisiblethingslab.com>
+Date: Tue, 30 May 2023 16:31:14 -0400
+Message-Id: <20230530203116.2008-15-demi@invisiblethingslab.com>
 In-Reply-To: <20230530203116.2008-1-demi@invisiblethingslab.com>
 References: <20230530203116.2008-1-demi@invisiblethingslab.com>
 MIME-Version: 1.0
@@ -98,10 +98,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mailman-Approved-At: Tue, 30 May 2023 20:54:23 +0000
-Subject: [dm-devel] [PATCH v2 10/16] device-mapper: Refuse to create device
- named "control"
+Subject: [dm-devel] [PATCH v2 14/16] block,
+ loop: Increment diskseq when releasing a loop device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -119,39 +119,67 @@ Cc: Demi Marie Obenour <demi@invisiblethingslab.com>,
  <marmarek@invisiblethingslab.com>, linux-kernel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: invisiblethingslab.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Typical userspace setups create a symlink under /dev/mapper with the
-name of the device, but /dev/mapper/control is reserved for the control
-device.  Therefore, trying to create such a device is almost certain to
-be a userspace bug.
+The previous patch for checking diskseq in blkback is not enough to
+prevent the following race:
+
+1. Program X opens a loop device
+2. Program X gets the diskseq of the loop device.
+3. Program X associates a file with the loop device.
+4. Program X passes the loop device major, minor, and diskseq to
+   something, such as Xen blkback.
+5. Program X exits.
+6. Program Y detaches the file from the loop device.
+7. Program Y attaches a different file to the loop device.
+8. Xen blkback finally gets around to opening the loop device and checks
+   that the diskseq is what it expects it to be.  Even though the
+   diskseq is the expected value, the result is that blkback is
+   accessing the wrong file.
+
+To prevent this race condition, increment the diskseq of a loop device
+when it is detached from its file descriptor.  This causes blkback (or
+any other program, for that matter) to fail at step 8.  Export the
+inc_diskseq() function to make this possible.
 
 Signed-off-by: Demi Marie Obenour <demi@invisiblethingslab.com>
 ---
- drivers/md/dm-ioctl.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+I considered destroying the loop device altogether instead of bumping
+its diskseq, but was not able to accomplish that.  Suggestions welcome.
+---
+ block/genhd.c        | 1 +
+ drivers/block/loop.c | 6 ++++++
+ 2 files changed, 7 insertions(+)
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 52aa5505d23b2f3d9c0faf6e8a91b74cd7845581..9ae00e3c1a72c19575814cf473774835b364320b 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -771,7 +771,12 @@ static int get_target_version(struct file *filp, struct dm_ioctl *param, size_t
- static int check_name(const char *name)
+diff --git a/block/genhd.c b/block/genhd.c
+index 1cb489b927d50ab06a84a4bfd6913ca8ba7318d4..c0ca2c387732171321555cd57565fbc606768505 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -1502,3 +1502,4 @@ void inc_diskseq(struct gendisk *disk)
  {
- 	if (strchr(name, '/')) {
--		DMERR("invalid device name");
-+		DMERR("device name cannot contain '/'");
-+		return -EINVAL;
-+	}
+ 	disk->diskseq = atomic64_inc_return(&diskseq);
+ }
++EXPORT_SYMBOL(inc_diskseq);
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index bc31bb7072a2cb7294d32066f5d0aa14130349b4..05ea5fb41508b4106f184dd6b4c37942716bdcac 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -1205,6 +1205,12 @@ static void __loop_clr_fd(struct loop_device *lo, bool release)
+ 	if (!part_shift)
+ 		set_bit(GD_SUPPRESS_PART_SCAN, &lo->lo_disk->state);
+ 	mutex_lock(&lo->lo_mutex);
 +
-+	if (strcmp(name, DM_CONTROL_NODE) == 0) {
-+		DMERR("device name cannot be \"%s\"", DM_CONTROL_NODE);
- 		return -EINVAL;
- 	}
++	/*
++	 * Increment the disk sequence number, so that userspace knows this
++	 * device now points to something else.
++	 */
++	inc_diskseq(lo->lo_disk);
+ 	lo->lo_state = Lo_unbound;
+ 	mutex_unlock(&lo->lo_mutex);
  
 -- 
 Sincerely,
