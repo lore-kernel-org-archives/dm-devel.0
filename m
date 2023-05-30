@@ -4,89 +4,93 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DE6F9C7EE2F
-	for <dm-devel@archiver.kernel.org>; Tue, 30 May 2023 20:54:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2914FC7EE39
+	for <dm-devel@archiver.kernel.org>; Tue, 30 May 2023 20:54:51 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685480089;
+	s=mimecast20190719; t=1685480090;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=QkijMHinjcs4Ijp8UEMjLJnuEfUx7wyW60FCsQp4yG4=;
-	b=GOA9cdTXUmcR4wZvCEB07/Hcmgz/zBE7hJmOB4jLaq33txo3K6AtyOrKHWk5Ce6o6+GWxj
-	13RCJj+gM4UbOxh7kCHx/stI2gQbqogvqBBAwG/ibUda20DXkvgn6cXhOy0kKhB1GIEnq1
-	UJdMZCBHkiiCE63bk50HvqHLF5rKUxo=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=ghhkiJzSzjCP1N0T1Q/FQ80KLvUxlw1aIDaKLCJGC7w=;
+	b=SJXaj5Ueodx/KST3ug9n2TsFAnidAfYxu6/kaGkFf0LxxCUgGCB+8qe7F0hoeYlCvSB71A
+	F27lx5ln0/r58BrJtKO7s4d2huOJU6IfcIWpzm1vAC5G/7FgsSpH73UVSHr6AvNzHT8EvO
+	hYYGdPF05ZS8tMGt5F9hpCoWoQVJ8w0=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-122-Ow_S88eNO-mO28e3xHw6oQ-1; Tue, 30 May 2023 16:54:48 -0400
-X-MC-Unique: Ow_S88eNO-mO28e3xHw6oQ-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-518-eHhJN0ezO2OhVjLHBErSmg-1; Tue, 30 May 2023 16:54:48 -0400
+X-MC-Unique: eHhJN0ezO2OhVjLHBErSmg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DABC33C11C78;
-	Tue, 30 May 2023 20:54:35 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 29AF7100F66D;
+	Tue, 30 May 2023 20:54:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C25D8400DFF;
-	Tue, 30 May 2023 20:54:35 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 150CC112132D;
+	Tue, 30 May 2023 20:54:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4F58B194F26E;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A8A65194F4B4;
 	Tue, 30 May 2023 20:54:30 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D2868194658C
- for <dm-devel@listman.corp.redhat.com>; Mon, 29 May 2023 16:36:28 +0000 (UTC)
+ ESMTP id 8071E19465A0
+ for <dm-devel@listman.corp.redhat.com>; Tue, 30 May 2023 20:40:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B6308420A8; Mon, 29 May 2023 16:36:28 +0000 (UTC)
+ id 63A69492B0C; Tue, 30 May 2023 20:40:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id AE24335443
- for <dm-devel@redhat.com>; Mon, 29 May 2023 16:36:28 +0000 (UTC)
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 5C2AF492B0B
+ for <dm-devel@redhat.com>; Tue, 30 May 2023 20:40:56 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9243F3806729
- for <dm-devel@redhat.com>; Mon, 29 May 2023 16:36:28 +0000 (UTC)
-Received: from mail-yw1-f169.google.com (mail-yw1-f169.google.com
- [209.85.128.169]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-450-kZ9EtWj8OjmprUgd_6dOkQ-1; Mon, 29 May 2023 12:36:25 -0400
-X-MC-Unique: kZ9EtWj8OjmprUgd_6dOkQ-1
-Received: by mail-yw1-f169.google.com with SMTP id
- 00721157ae682-565e6beb7aaso26298947b3.2; 
- Mon, 29 May 2023 09:36:24 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1685378184; x=1687970184;
- h=cc:to:subject:message-id:date:from:in-reply-to:references
- :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
- :reply-to;
- bh=XGlmlfpGRhYW8HjfyI5EG9tKXwTbZGzHl2Gw/X6ax14=;
- b=VdKP/FkQWFCCQibrw9MI1VTsxbXXkbS/fix7YUNWTOl37Mkw45pT+mz+CgPMsRDObx
- pswAS01cReTDpu34RH3X9XjGZE/vCxBmY23m6AHERB4rm5BVWsLoqS1oT+jtIi5gOjjn
- p3AHm45kBn2FMCq7SyT+X+pnsSiBcfi94Mm8xHzXxSFnp1BeFXrarfMZ+tV+EQsQNoCM
- wdvxKJfVsLa0D1VlpeMBsYhREwSHJYTuUHD59Ih/oAvs6PcHN5GK0Tk9X5OPutJaYiGM
- 5NLFmG3iYLkztN0i9LkHCcASlMd/GkkToqY3+xgIjCnjg5N5B0sx1szYNdE83lJltA8M
- o/tA==
-X-Gm-Message-State: AC+VfDwwKl1xlreAShU/KfP+IPy1unxI6f6jNXLFRa1h45uvqAqoXmfD
- HaCpZ+iVedFbbXrfMS7AUCiFC5LjF/DLm52bIHejBfRCZCAL91bY
-X-Google-Smtp-Source: ACHHUZ7InCRLGF330bSJ+LMuRh4g/NfzTfd2m8OEywQty5+b+eU+JLZRKLHh0ktsR3qbMPwu4QSHwqAz7Ha/ifAXWSw=
-X-Received: by 2002:a0d:d88b:0:b0:565:bb04:53fa with SMTP id
- a133-20020a0dd88b000000b00565bb0453famr11663162ywe.10.1685378184319; Mon, 29
- May 2023 09:36:24 -0700 (PDT)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3786329324BD
+ for <dm-devel@redhat.com>; Tue, 30 May 2023 20:40:56 +0000 (UTC)
+Received: from wout5-smtp.messagingengine.com
+ (wout5-smtp.messagingengine.com [64.147.123.21]) by relay.mimecast.com with
+ ESMTP with STARTTLS (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-149-qCZ_Yv64N-CwFBltE0TIDg-1; Tue, 30 May 2023 16:40:53 -0400
+X-MC-Unique: qCZ_Yv64N-CwFBltE0TIDg-1
+Received: from compute3.internal (compute3.nyi.internal [10.202.2.43])
+ by mailout.west.internal (Postfix) with ESMTP id E7B28320091C;
+ Tue, 30 May 2023 16:31:48 -0400 (EDT)
+Received: from mailfrontend1 ([10.202.2.162])
+ by compute3.internal (MEProxy); Tue, 30 May 2023 16:31:49 -0400
+X-ME-Sender: <xms:NF12ZPsxzLb6qiNMX1P2rmKAhz4tbssdhxqb5b2W4EpVXzuVeLIYuA>
+ <xme:NF12ZAfmMk9oJ8u-mhK6Ui9Ulx5bvQ75B1qWdW7mwmhy1E8VWdhGqMqT5i45iBhrL
+ 5_Kp9tH1jr-geA>
+X-ME-Received: <xmr:NF12ZCyTKoszpzg74E1caX7SPMUAsM7ZbJgaQdN_fT3vsPw-0CdsBuS4E3sGSm5CMXcpcrCEQj8>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvhedrfeekjedgudegkecutefuodetggdotefrod
+ ftvfcurfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfgh
+ necuuegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmd
+ enucfjughrpefhvfevufffkffojghfggfgsedtkeertdertddtnecuhfhrohhmpeffvghm
+ ihcuofgrrhhivgcuqfgsvghnohhurhcuoeguvghmihesihhnvhhishhisghlvghthhhinh
+ hgshhlrggsrdgtohhmqeenucggtffrrghtthgvrhhnpeejffejgffgueegudevvdejkefg
+ hefghffhffejteekleeufeffteffhfdtudehteenucevlhhushhtvghrufhiiigvpedune
+ curfgrrhgrmhepmhgrihhlfhhrohhmpeguvghmihesihhnvhhishhisghlvghthhhinhhg
+ shhlrggsrdgtohhm
+X-ME-Proxy: <xmx:NF12ZOOdzZrmzTTxQPerP2vAcrpzO6xwvMZsOM5HHfWIHjdkHwKsOw>
+ <xmx:NF12ZP_v7UgW9QNz5GrWbg7QsOI10Y-VgTtA-VukT93FIMsnJVueuQ>
+ <xmx:NF12ZOXl6LQXxBP_VPj-MHje4cHa370IULNKDufIrLuGd68vCXJiiw>
+ <xmx:NF12ZLSelBIStPRHT1mOrFfztO0x3Inl8EpbIXnSumWL1iS8_dkzOg>
+Feedback-ID: iac594737:Fastmail
+Received: by mail.messagingengine.com (Postfix) with ESMTPA; Tue,
+ 30 May 2023 16:31:47 -0400 (EDT)
+From: Demi Marie Obenour <demi@invisiblethingslab.com>
+To: Jens Axboe <axboe@kernel.dk>,
+ =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@redhat.com
+Date: Tue, 30 May 2023 16:31:05 -0400
+Message-Id: <20230530203116.2008-6-demi@invisiblethingslab.com>
+In-Reply-To: <20230530203116.2008-1-demi@invisiblethingslab.com>
+References: <20230530203116.2008-1-demi@invisiblethingslab.com>
 MIME-Version: 1.0
-References: <20230522104146.2856-1-nj.shetty@samsung.com>
- <CGME20230522104536epcas5p23dd8108dd267ec588e5c36e8f9eb9fe8@epcas5p2.samsung.com>
- <20230522104146.2856-3-nj.shetty@samsung.com>
- <20230524154049.GD11607@frogsfrogsfrogs>
-In-Reply-To: <20230524154049.GD11607@frogsfrogsfrogs>
-From: Nitesh Shetty <nitheshshetty@gmail.com>
-Date: Mon, 29 May 2023 22:06:13 +0530
-Message-ID: <CAOSviJ2-=U+Y2vFOq6=8n=uHqXgoud3=7gaH7H7sw2jiPXtNPA@mail.gmail.com>
-To: "Darrick J. Wong" <djwong@kernel.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -94,10 +98,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mailman-Approved-At: Tue, 30 May 2023 20:54:23 +0000
-Subject: Re: [dm-devel] [PATCH v11 2/9] block: Add copy offload support
- infrastructure
+Subject: [dm-devel] [PATCH v2 05/16] device-mapper: Target parameters must
+ not overlap next target spec
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -109,62 +113,113 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-nvme@lists.infradead.org, James.Bottomley@hansenpartnership.com,
- linux-mm@kvack.org, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>,
- Alasdair Kergon <agk@redhat.com>, Sagi Grimberg <sagi@grimberg.me>,
- linux-scsi@vger.kernel.org, gost.dev@samsung.com,
- James Smart <james.smart@broadcom.com>,
- "Matthew Wilcox \(Oracle\)" <willy@infradead.org>,
- Nitesh Shetty <nj.shetty@samsung.com>, Chaitanya Kulkarni <kch@nvidia.com>,
- anuj20.g@samsung.com, Mike Snitzer <snitzer@kernel.org>, ming.lei@redhat.com,
- linux-block@vger.kernel.org, dlemoal@kernel.org,
- Alexander Viro <viro@zeniv.linux.org.uk>, Keith Busch <kbusch@kernel.org>,
- bvanassche@acm.org, Jens Axboe <axboe@kernel.dk>,
- Christian Brauner <brauner@kernel.org>, joshi.k@samsung.com,
- martin.petersen@oracle.com, linux-kernel@vger.kernel.org,
- linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
+Cc: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
+ <marmarek@invisiblethingslab.com>, stable@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
+ Demi Marie Obenour <demi@invisiblethingslab.com>,
+ xen-devel@lists.xenproject.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: gmail.com
+X-Mimecast-Originator: invisiblethingslab.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-> > +/*
-> > + * @bdev_in: source block device
-> > + * @pos_in:  source offset
-> > + * @bdev_out:        destination block device
-> > + * @pos_out: destination offset
-> > + * @len:     length in bytes to be copied
-> > + * @endio:   endio function to be called on completion of copy operation,
-> > + *           for synchronous operation this should be NULL
-> > + * @private: endio function will be called with this private data, should be
-> > + *           NULL, if operation is synchronous in nature
-> > + * @gfp_mask:   memory allocation flags (for bio_alloc)
-> > + *
-> > + * Returns the length of bytes copied or error if encountered
-> > + *
-> > + * Description:
-> > + *   Copy source offset from source block device to destination block
-> > + *   device. Max total length of copy is limited to MAX_COPY_TOTAL_LENGTH
-> > + */
-> > +int blkdev_issue_copy(struct block_device *bdev_in, loff_t pos_in,
->
-> I'd have thought you'd return ssize_t here.  If the two block devices
-> are loopmounted xfs files, we can certainly reflink "copy" more than 2GB
-> at a time.
->
-> --D
->
+The NUL terminator for each target parameter string must preceed the
+following 'struct dm_target_spec'.  Otherwise, dm_split_args() might
+corrupt this struct.
 
-Sure we will add this to make API future proof, but at present we do have
-a limit for copy. COPY_MAX_BYTES(=128MB) at present. This limit is based
-on our internal testing, we have plans to increase/remove with this
-limit in future phases.
+Signed-off-by: Demi Marie Obenour <demi@invisiblethingslab.com>
+Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
+Cc: stable@vger.kernel.org
+---
+ drivers/md/dm-ioctl.c | 32 +++++++++++++++++++-------------
+ 1 file changed, 19 insertions(+), 13 deletions(-)
 
-Thank you,
-Nitesh Shetty
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index 9f505abba3dc22bffc6acb335c0bf29fec288fd5..491ef55b9e8662c3b02a2162b8c93ee086c078a1 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1391,7 +1391,7 @@ static inline fmode_t get_mode(struct dm_ioctl *param)
+ 	return mode;
+ }
+ 
+-static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
++static int next_target(struct dm_target_spec *last, uint32_t next, const char *end,
+ 		       struct dm_target_spec **spec, char **target_params)
+ {
+ 	static_assert(_Alignof(struct dm_target_spec) <= 8,
+@@ -1404,7 +1404,7 @@ static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
+ 	 * sizeof(struct dm_target_spec) or more, as otherwise *last was
+ 	 * out of bounds already.
+ 	 */
+-	size_t remaining = (char *)end - (char *)last;
++	size_t remaining = end - (char *)last;
+ 
+ 	/*
+ 	 * There must be room for both the next target spec and the
+@@ -1423,7 +1423,7 @@ static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
+ 	*spec = (struct dm_target_spec *) ((unsigned char *) last + next);
+ 	*target_params = (char *) (*spec + 1);
+ 
+-	return invalid_str(*target_params, end);
++	return 0;
+ }
+ 
+ static int populate_table(struct dm_table *table,
+@@ -1433,24 +1433,21 @@ static int populate_table(struct dm_table *table,
+ 	unsigned int i = 0;
+ 	struct dm_target_spec *spec = (struct dm_target_spec *) param;
+ 	uint32_t next = param->data_start;
+-	void *end = (void *) param + param_size;
++	const char *const end = (const char *) param + param_size;
+ 	char *target_params;
++	size_t min_size = sizeof(struct dm_ioctl);
+ 
+ 	if (!param->target_count) {
+ 		DMERR("%s: no targets specified", __func__);
+ 		return -EINVAL;
+ 	}
+ 
+-	if (next < sizeof(struct dm_ioctl)) {
+-		DMERR("%s: first target spec (offset %u) overlaps 'struct dm_ioctl'",
+-		      __func__, next);
+-		return -EINVAL;
+-	}
+-
+ 	for (i = 0; i < param->target_count; i++) {
+-		if (next < sizeof(*spec)) {
+-			DMERR("%s: next target spec (offset %u) overlaps 'struct dm_target_spec'",
+-			      __func__, next);
++		const char *nul_terminator;
++
++		if (next < min_size) {
++			DMERR("%s: next target spec (offset %u) overlaps %s",
++			      __func__, next, i ? "previous target" : "'struct dm_ioctl'");
+ 			return -EINVAL;
+ 		}
+ 
+@@ -1460,6 +1457,15 @@ static int populate_table(struct dm_table *table,
+ 			return r;
+ 		}
+ 
++		nul_terminator = memchr(target_params, 0, (size_t)(end - target_params));
++		if (nul_terminator == NULL) {
++			DMERR("%s: target parameters not NUL-terminated", __func__);
++			return -EINVAL;
++		}
++
++		/* Add 1 for NUL terminator */
++		min_size = (nul_terminator - (const char *)spec) + 1;
++
+ 		r = dm_table_add_target(table, spec->target_type,
+ 					(sector_t) spec->sector_start,
+ 					(sector_t) spec->length,
+-- 
+Sincerely,
+Demi Marie Obenour (she/her/hers)
+Invisible Things Lab
 
 --
 dm-devel mailing list
