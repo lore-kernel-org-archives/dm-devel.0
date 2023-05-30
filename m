@@ -4,67 +4,101 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C0F9DC7EE23
-	for <dm-devel@archiver.kernel.org>; Tue, 30 May 2023 21:00:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8837CC77B7A
+	for <dm-devel@archiver.kernel.org>; Tue, 30 May 2023 23:03:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685480446;
+	s=mimecast20190719; t=1685487812;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=iuXdOxkrjq2xexH1R8+UXHVNNSM9t143PYqwXQj+xWQ=;
-	b=Er7E7zGDfA4hEFcL/+fj4JID+miPy7koZbd0DdXQ4nrFTI3KxEAZI3aZNPZt9fWaIO8zqo
-	XXgEZYUMlfqwfZ543zu14VKC6FOBWVrGAodZkrrZA8CDM0dKbWIaYAz4syqnNvfBmHBjT2
-	qZujUhH39P6b5B3kFPKYKUxqJ+p46rI=
+	bh=hdpvNDhzK3Qe5E1dnSOsKcBjts1mhhzDA3Kg0bcKa70=;
+	b=I3CakHyYP0Aa1hFbp9u+VIxTxcLhIa7bWRhX4R9N+v7mEWlH0TK1YcZVIfsMsRBArNm6NX
+	hKqE7J9w4Spd4w9UsyksyUxx3Xl6uQmHzmgvWsD4h1YeTt49pP338PiFswQVkt56bVtFxG
+	5raTRSNklmKGAuP5pgV+MR2E27VfeVs=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-36-6gujN1OWPvu4Ixac3Uf8fQ-1; Tue, 30 May 2023 17:00:43 -0400
-X-MC-Unique: 6gujN1OWPvu4Ixac3Uf8fQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-486-TVn_Ey6tNgiiH3dqSvv-WA-1; Tue, 30 May 2023 19:03:28 -0400
+X-MC-Unique: TVn_Ey6tNgiiH3dqSvv-WA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 534C0800B35;
-	Tue, 30 May 2023 21:00:41 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3782A492B0B;
-	Tue, 30 May 2023 21:00:41 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A9A5D185A78E;
+	Tue, 30 May 2023 23:03:26 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 30DD4202696C;
+	Tue, 30 May 2023 23:03:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 07F3619465A2;
-	Tue, 30 May 2023 21:00:41 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5F9A219465B3;
+	Tue, 30 May 2023 23:03:24 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2497B19465A0
- for <dm-devel@listman.corp.redhat.com>; Tue, 30 May 2023 21:00:39 +0000 (UTC)
+ ESMTP id 1813A19465A0
+ for <dm-devel@listman.corp.redhat.com>; Tue, 30 May 2023 23:03:23 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E2DF740C6EC4; Tue, 30 May 2023 21:00:39 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
- (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D1E1640C1437;
- Tue, 30 May 2023 21:00:39 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 34UL0d5h028698; Tue, 30 May 2023 17:00:39 -0400
-Received: from localhost (mpatocka@localhost)
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 34UL0dCe028695; Tue, 30 May 2023 17:00:39 -0400
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
- owned process doing -bs
-Date: Tue, 30 May 2023 17:00:39 -0400 (EDT)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Kent Overstreet <kent.overstreet@linux.dev>
-In-Reply-To: <ZHUcmeYrUmtytdDU@moria.home.lan>
-Message-ID: <alpine.LRH.2.21.2305300809350.13307@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.21.2305260915400.12513@file01.intranet.prod.int.rdu2.redhat.com>
- <ZHUcmeYrUmtytdDU@moria.home.lan>
-User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
+ id EAB4940CF8F7; Tue, 30 May 2023 23:03:22 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E32DA40CF8F6
+ for <dm-devel@redhat.com>; Tue, 30 May 2023 23:03:22 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C1B08185A793
+ for <dm-devel@redhat.com>; Tue, 30 May 2023 23:03:22 +0000 (UTC)
+Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
+ [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-185-lwxuZ3-EN-6wKpYLgkIx7w-1; Tue, 30 May 2023 19:03:21 -0400
+X-MC-Unique: lwxuZ3-EN-6wKpYLgkIx7w-1
+Received: by mail-qk1-f198.google.com with SMTP id
+ af79cd13be357-75b1c0a6b2fso356815585a.0
+ for <dm-devel@redhat.com>; Tue, 30 May 2023 16:03:21 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1685487801; x=1688079801;
+ h=content-transfer-encoding:in-reply-to:from:references:cc:to
+ :content-language:subject:user-agent:mime-version:date:message-id
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=pKs4wbQndTavzhsczBJzKi8qv7Q4nRnq+Yk6Q+JcObA=;
+ b=P9dS0j8dLrfcbDliYNSFTk15Z4mYvgm3xfB8ojpsJ2qtzNqPAPWOevUFx+cu7p8wZC
+ z4hwU+l4NvxXzNZCb38YzHrW6TI9CEAkcYHK2VCMDJ8HV+VcvO5N3toUArxTqXiK3TUw
+ 0PBkzMr5rB7DDpLgcfRbe01orG6FbPJo/VXzDuya4rzA7Dm86/tf7WVWai1CK8LQj4+1
+ eJfaT8nVwJ+WEUwG7QTpLREF3i70jOacXXUBV9g5WHqi1KeWQAW3GbniX3RF7sPz78If
+ eU8+Bd/8w0P54nKCteK01590HAulLUJWiT6Oi5OiNQHDmRctMkZ57F52I3bCXzq/Jzoi
+ EioA==
+X-Gm-Message-State: AC+VfDwxg4ewwS0UBR3zN1engzFAW2Wi5pwr7PAh0JCYd89iIjV3A8Fa
+ 8hC0FhtIntEOFPwRH1d5DRFzYFkyx0+ODrm3GMo+cozuBde/VF5eG84KrqHT1OQQiqqPEYnT6Mv
+ JUMR61fMV7oQwTvU=
+X-Received: by 2002:a05:620a:884:b0:75b:23a1:8e6a with SMTP id
+ b4-20020a05620a088400b0075b23a18e6amr3588728qka.59.1685487801131; 
+ Tue, 30 May 2023 16:03:21 -0700 (PDT)
+X-Google-Smtp-Source: ACHHUZ7U7dNXZBhOi8VI9A5TO3l+qcE1AblN+OzvViMpHOENYgH+39jJlsruHW8G0OV5WKI/KyEQvA==
+X-Received: by 2002:a05:620a:884:b0:75b:23a1:8e6a with SMTP id
+ b4-20020a05620a088400b0075b23a18e6amr3588712qka.59.1685487800847; 
+ Tue, 30 May 2023 16:03:20 -0700 (PDT)
+Received: from [192.168.1.133] ([209.6.119.155])
+ by smtp.gmail.com with ESMTPSA id
+ o14-20020a05620a130e00b0075cb085cbc8sm4191403qkj.97.2023.05.30.16.03.07
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Tue, 30 May 2023 16:03:11 -0700 (PDT)
+Message-ID: <be55a799-5367-cd05-2b58-c002f9f2935d@redhat.com>
+Date: Tue, 30 May 2023 19:03:07 -0400
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] fuzzing bcachefs with dm-flakey
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.10.0
+To: Eric Biggers <ebiggers@kernel.org>
+References: <20230523214539.226387-1-corwin@redhat.com>
+ <20230523224047.GE888341@google.com>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <20230523224047.GE888341@google.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: Re: [dm-devel] [vdo-devel] [PATCH v2 00/39] Add the dm-vdo
+ deduplication and compression device mapper target.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -76,107 +110,39 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-fsdevel@vger.kernel.org, linux-bcachefs@vger.kernel.org,
- dm-devel@redhat.com
+Cc: linux-block@vger.kernel.org, vdo-devel@redhat.com, dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-
-
-On Mon, 29 May 2023, Kent Overstreet wrote:
-
-> On Mon, May 29, 2023 at 04:59:40PM -0400, Mikulas Patocka wrote:
-> > Hi
-> > 
-> > I improved the dm-flakey device mapper target, so that it can do random 
-> > corruption of read and write bios - I uploaded it here: 
-> > https://people.redhat.com/~mpatocka/testcases/bcachefs/dm-flakey.c
-> > 
-> > I set up dm-flakey, so that it corrupts 10% of read bios and 10% of write 
-> > bios with this command:
-> > dmsetup create flakey --table "0 `blockdev --getsize /dev/ram0` flakey /dev/ram0 0 0 1 4 random_write_corrupt 100000000 random_read_corrupt 100000000"
+On 5/23/23 18:40, Eric Biggers wrote:
+> On Tue, May 23, 2023 at 05:45:00PM -0400, J. corwin Coburn wrote:
+>> The dm-vdo target provides inline deduplication, compression, zero-block
+>> elimination, and thin provisioning. A dm-vdo target can be backed by up to
+>> 256TB of storage, and can present a logical size of up to 4PB. This target
+>> was originally developed at Permabit Technology Corp. starting in 2009. It
+>> was first released in 2013 and has been used in production environments
+>> ever since. It was made open-source in 2017 after Permabit was acquired by
+>> Red Hat.
 > 
-> I've got some existing ktest tests for error injection:
-> https://evilpiepirate.org/git/ktest.git/tree/tests/bcachefs/single_device.ktest#n200
-> https://evilpiepirate.org/git/ktest.git/tree/tests/bcachefs/replication.ktest#n491
-> 
-> I haven't looked at dm-flakey before, I take it you're silently
-> corrupting data instead of just failing the IOs like these tests do?
+> As with any kernel patchset, please mention the git commit that it applies to.
+> This can be done using the --base option to 'git format-patch'.
 
-Yes, silently corrupting.
+This will be in the next version of the patch set.
 
-When I tried to simulate I/O errors with dm-flakey, bcachefs worked 
-correcly - there were no errors returned to userspace and no crashes.
+> - Eric
+> 
+> _______________________________________________
+> vdo-devel mailing list
+> vdo-devel@redhat.com
+> https://listman.redhat.com/mailman/listinfo/vdo-devel
+> 
 
-Perhaps, it should treat metadata checksum errors in the same way as disk 
-failures?
-
-> Let's add what you're doing to ktest, and see if we can merge it with
-> the existing tests.
-
-> Good catches on all of them. Darrick's been on me to get fuzz testing
-> going, looks like it's definitely needed :)
-> 
-> However, there's two things I want in place first before I put much
-> effort into fuzz testing:
-> 
->  - Code coverage analysis. ktest used to have integrated code coverage
->    analysis, where you'd tell it a subdirectory of the kernel tree
->    (doing code coverage analysis for the entire kernel is impossibly
->    slow) and it would run tests and then give you the lcov output.
-> 
->    However, several years ago something about kbuild changed, and the
->    method ktest was using for passing in build flags for a specific
->    subdir on the command line stopped working. I would like to track
->    down someone who understands kbuild and get this working again.
-> 
->  - Fault injection
-> 
->    Years and years ago, when I was still at Google and this was just
->    bcache, we had fault injection that worked like dynamic debug: you
->    could call dynamic_fault("type of fault") anywhere in your code,
->    and it returned a bool indicating whether that fault had been enabled
->    - and faults were controllable at runtime via debugfs, we had tests
->    that iterated over e.g. faults in the initialization path, or memory
->    allocation failures, and flipped them on one by one and ran
->    $test_workload.
-> 
->    The memory allocation profiling stuff that Suren and I have been
->    working on includes code tagging, which is for (among other things) a
->    new and simplified implementation of dynamic fault injection, which
->    I'm going to push forward again once the memory allocation profiling
->    stuff gets merged.
-> 
-> The reason I want this stuff is because fuzz testing tends to be a
-> heavyweight, scattershot approach.
-> 
-> I want to be able to look at the code coverage analysis first to e.g.
-> work on a chunk of code at a time and make sure it's tested thoroughly,
-> instead of jumping around in the code at random depending on what fuzz
-> testing finds, and when we are fuzz testing I want to be able to add
-> fault injection points and write unit tests so that we can have much
-> more targeted, quicker to run tests going forward.
-> 
-> Can I get you interested in either of those things? I'd really love to
-> find someone to hand off or collaborate with on the fault injection
-> stuff in particular.
-
-I'd like to know how do you want to do coverage analysis? By instrumenting 
-each branch and creating a test case that tests that the branch goes both 
-ways?
-
-I know that people who write spacecraft-grade software do such tests, but 
-I can't quite imagine how would that work in a filesystem.
-
-"grep -w if fs/bcachefs/*.[ch] | wc -l" shows that there are 5828 
-conditions. That's one condition for every 15.5 lines.
-
-Mikulas
 --
 dm-devel mailing list
 dm-devel@redhat.com
