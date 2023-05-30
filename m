@@ -4,92 +4,89 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1A4DDC7EE23
-	for <dm-devel@archiver.kernel.org>; Tue, 30 May 2023 20:55:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0BA55C7EE23
+	for <dm-devel@archiver.kernel.org>; Tue, 30 May 2023 20:58:55 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685480103;
+	s=mimecast20190719; t=1685480335;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=mUm8DDSoJfi2HHCvZt8bGIRQOQRly3mR2S9xZX6xFIM=;
-	b=Sh/ooC87EKztq9qOytK+xIYMHFk4dEzCpDY9f/k02RYmKezq6mtgUszh301T0Or4oOkDyu
-	XesPge/0e1bdB7PlDPOsv/iIyBt71fA43phbIozKhdBrpEILUle5ibEvMWwXfdc8tWyKKz
-	FwxmQYfYGxhMBU8+RqapnsMWVQzskiE=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=hLoiCuaOU3slso+vdQHo1FjcqOEre+Qmndpvm132UL4=;
+	b=OoNB/jSyNG4ifwSIsPzHapLLaJ2P0vra3C3vZkSt7ERaZcjufTuz4aREPBjrIvnIc4QVmr
+	5Xk3SsgOKiSicV7r5rBqTgrlZ5SX5Bbtl7ZY8Dbo36nYNbXnWxqHpzc+ddPN4ThfW9Plvh
+	NZHCIqI140t2gUeBCxKPQLkFZVsXiIY=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-220-k031uJpON_ijIvYvxq3P1A-1; Tue, 30 May 2023 16:54:39 -0400
-X-MC-Unique: k031uJpON_ijIvYvxq3P1A-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-249-I3m95H7WO3GxVqW4zplQ3Q-1; Tue, 30 May 2023 16:58:51 -0400
+X-MC-Unique: I3m95H7WO3GxVqW4zplQ3Q-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3671D280D586;
-	Tue, 30 May 2023 20:54:33 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 07AE485A5AA;
+	Tue, 30 May 2023 20:58:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2291440C6CCC;
-	Tue, 30 May 2023 20:54:33 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B2473C0448F;
+	Tue, 30 May 2023 20:58:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A6F9E19451D4;
-	Tue, 30 May 2023 20:54:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9148719465A0;
+	Tue, 30 May 2023 20:58:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C529F1946595
- for <dm-devel@listman.corp.redhat.com>; Tue, 30 May 2023 20:35:09 +0000 (UTC)
+ ESMTP id 95AE0194658C
+ for <dm-devel@listman.corp.redhat.com>; Tue, 30 May 2023 00:20:57 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A32EF140EBD7; Tue, 30 May 2023 20:35:09 +0000 (UTC)
+ id 5E8F420296C8; Tue, 30 May 2023 00:20:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 9B9CC140EBB8
- for <dm-devel@redhat.com>; Tue, 30 May 2023 20:35:09 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 55BE520296C6
+ for <dm-devel@redhat.com>; Tue, 30 May 2023 00:20:57 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 72BB2296A600
- for <dm-devel@redhat.com>; Tue, 30 May 2023 20:35:09 +0000 (UTC)
-Received: from wout5-smtp.messagingengine.com
- (wout5-smtp.messagingengine.com [64.147.123.21]) by relay.mimecast.com with
- ESMTP with STARTTLS (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-47-EEiphBbRPAmjXY_UvB16qA-1; Tue, 30 May 2023 16:32:52 -0400
-X-MC-Unique: EEiphBbRPAmjXY_UvB16qA-1
-Received: from compute1.internal (compute1.nyi.internal [10.202.2.41])
- by mailout.west.internal (Postfix) with ESMTP id 4714F3200941;
- Tue, 30 May 2023 16:32:15 -0400 (EDT)
-Received: from mailfrontend1 ([10.202.2.162])
- by compute1.internal (MEProxy); Tue, 30 May 2023 16:32:16 -0400
-X-ME-Sender: <xms:Tl12ZLCrjMwa5dd8nXInpbI80j8aks7WDHGQdC47Q6JkvDKgesheeg>
- <xme:Tl12ZBhWW6gzbLQXIBx87Wn5FhMOV1Jmqe7Bu4LvPr1RNpfkJmMNYXM8yoX9-WtnK
- KOwvl36hcRBn78>
-X-ME-Received: <xmr:Tl12ZGmQvePgFgiwvtACF3E10lqS1U8ApvlnKupnDUwSSod63Ptq06kbfUX7FZofZWiSkLg8hdg>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvhedrfeekjedgudeglecutefuodetggdotefrod
- ftvfcurfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfgh
- necuuegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmd
- enucfjughrpefhvfevufffkffojghfggfgsedtkeertdertddtnecuhfhrohhmpeffvghm
- ihcuofgrrhhivgcuqfgsvghnohhurhcuoeguvghmihesihhnvhhishhisghlvghthhhinh
- hgshhlrggsrdgtohhmqeenucggtffrrghtthgvrhhnpeejffejgffgueegudevvdejkefg
- hefghffhffejteekleeufeffteffhfdtudehteenucevlhhushhtvghrufhiiigvpedvne
- curfgrrhgrmhepmhgrihhlfhhrohhmpeguvghmihesihhnvhhishhisghlvghthhhinhhg
- shhlrggsrdgtohhm
-X-ME-Proxy: <xmx:Tl12ZNw-JLuG8i_8xOIdX4SeeayTYC2T2NBU3vVW_z588mtnm1MNXQ>
- <xmx:Tl12ZAQw_DXvdm36tgmR2p2Ev34IIuqgkFUOmqOOyl5qMY21MCCl5Q>
- <xmx:Tl12ZAamGsz2l8le4BoAmD-xKUjEfjqYwtGU3y6fUVm9ndKsvfHsDw>
- <xmx:Tl12ZFSWJmukln6Pasz6VSPEKly6NXMAjEHrAUW2zz3CBGO838Esww>
-Feedback-ID: iac594737:Fastmail
-Received: by mail.messagingengine.com (Postfix) with ESMTPA; Tue,
- 30 May 2023 16:32:14 -0400 (EDT)
-From: Demi Marie Obenour <demi@invisiblethingslab.com>
-To: Jens Axboe <axboe@kernel.dk>,
- =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- dm-devel@redhat.com
-Date: Tue, 30 May 2023 16:31:14 -0400
-Message-Id: <20230530203116.2008-15-demi@invisiblethingslab.com>
-In-Reply-To: <20230530203116.2008-1-demi@invisiblethingslab.com>
-References: <20230530203116.2008-1-demi@invisiblethingslab.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 36E4B811E78
+ for <dm-devel@redhat.com>; Tue, 30 May 2023 00:20:57 +0000 (UTC)
+Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com
+ [209.85.214.182]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-614-5MO5U6WeOHKmSxdDvZLkkg-1; Mon, 29 May 2023 20:20:51 -0400
+X-MC-Unique: 5MO5U6WeOHKmSxdDvZLkkg-1
+Received: by mail-pl1-f182.google.com with SMTP id
+ d9443c01a7336-1b034ca1195so12714445ad.2; 
+ Mon, 29 May 2023 17:20:50 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1685406049; x=1687998049;
+ h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+ :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=/NF2aPP0D8BvSL9lGQzSeSkCmVZlO98Ug44UgsXpd+0=;
+ b=TF6onFL+D0aZuWqnGumiF6leZBMVu5lIRIOZfzbD5J+L2LhjqxLdFwSIYL9VjzDMsw
+ /T/MNFRmSsV0XAZOyjv/1ba0hjMlCtEw9Sh8FIyT1BM0mPUBWXoN0hEoCohyAGyESLCe
+ YauWPwP1fQBuJWSBtBuKNpR5M8U++K1NmqHxITJGTQzyoLTOEb1G93+WWow4gffyh+ra
+ pinQt41p7qfqACntQ8nd4uByIU66+BdGfAOBkTw0KnMoxDHusx6v3Na3SUeQDyZSbJCX
+ sup1yzfJ0+QUPVx2HtlWdi2W9IJNsnITf7E1jBedFcBC4kjpY/LoeJLQjXiM4FsgqGUh
+ K41A==
+X-Gm-Message-State: AC+VfDwu2ml1I26UYacSpoXVmThrpvUWAoDDJkkXCpudfVBUOuk7S1wQ
+ D3xrNDRhKfFCquCpn4TW2T/rje4iuhaQjA==
+X-Google-Smtp-Source: ACHHUZ61cyoiq1wUcZ3LyKk4WhTEeI7/kAsUjcfYvbfIuWeqQuFs6skkg/Ui+1GOWKCpizXfaGWUoA==
+X-Received: by 2002:a17:902:c44b:b0:1af:b681:5313 with SMTP id
+ m11-20020a170902c44b00b001afb6815313mr611964plm.33.1685406049120; 
+ Mon, 29 May 2023 17:20:49 -0700 (PDT)
+Received: from localhost.localdomain ([76.132.108.20])
+ by smtp.gmail.com with ESMTPSA id
+ w22-20020a170902a71600b001b024ee5f6esm5337280plq.81.2023.05.29.17.20.48
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Mon, 29 May 2023 17:20:48 -0700 (PDT)
+From: Russell Harmon <eatnumber1@gmail.com>
+To: mpatocka@redhat.com,
+	snitzer@redhat.com,
+	dm-devel@redhat.com
+Date: Mon, 29 May 2023 17:20:32 -0700
+Message-Id: <20230530002032.15227-1-eatnumber1@gmail.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -98,10 +95,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-X-Mailman-Approved-At: Tue, 30 May 2023 20:54:23 +0000
-Subject: [dm-devel] [PATCH v2 14/16] block,
- loop: Increment diskseq when releasing a loop device
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Mailman-Approved-At: Tue, 30 May 2023 20:58:47 +0000
+Subject: [dm-devel] [PATCH] Improve the dm-integrity documentation.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -113,78 +109,129 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Demi Marie Obenour <demi@invisiblethingslab.com>,
- linux-block@vger.kernel.org, xen-devel@lists.xenproject.org,
- =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
- <marmarek@invisiblethingslab.com>, linux-kernel@vger.kernel.org
+Cc: Russell Harmon <eatnumber1@gmail.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: invisiblethingslab.com
+X-Mimecast-Originator: gmail.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The previous patch for checking diskseq in blkback is not enough to
-prevent the following race:
+Documents the meaning of the "buffer", adds documentation of the current
+defaults, and provides an example of how the tunables relate to each
+other.
 
-1. Program X opens a loop device
-2. Program X gets the diskseq of the loop device.
-3. Program X associates a file with the loop device.
-4. Program X passes the loop device major, minor, and diskseq to
-   something, such as Xen blkback.
-5. Program X exits.
-6. Program Y detaches the file from the loop device.
-7. Program Y attaches a different file to the loop device.
-8. Xen blkback finally gets around to opening the loop device and checks
-   that the diskseq is what it expects it to be.  Even though the
-   diskseq is the expected value, the result is that blkback is
-   accessing the wrong file.
-
-To prevent this race condition, increment the diskseq of a loop device
-when it is detached from its file descriptor.  This causes blkback (or
-any other program, for that matter) to fail at step 8.  Export the
-inc_diskseq() function to make this possible.
-
-Signed-off-by: Demi Marie Obenour <demi@invisiblethingslab.com>
+Signed-off-by: Russell Harmon <eatnumber1@gmail.com>
 ---
-I considered destroying the loop device altogether instead of bumping
-its diskseq, but was not able to accomplish that.  Suggestions welcome.
----
- block/genhd.c        | 1 +
- drivers/block/loop.c | 6 ++++++
- 2 files changed, 7 insertions(+)
+ .../device-mapper/dm-integrity.rst            | 44 ++++++++++++-------
+ 1 file changed, 27 insertions(+), 17 deletions(-)
 
-diff --git a/block/genhd.c b/block/genhd.c
-index 1cb489b927d50ab06a84a4bfd6913ca8ba7318d4..c0ca2c387732171321555cd57565fbc606768505 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -1502,3 +1502,4 @@ void inc_diskseq(struct gendisk *disk)
- {
- 	disk->diskseq = atomic64_inc_return(&diskseq);
- }
-+EXPORT_SYMBOL(inc_diskseq);
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index bc31bb7072a2cb7294d32066f5d0aa14130349b4..05ea5fb41508b4106f184dd6b4c37942716bdcac 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -1205,6 +1205,12 @@ static void __loop_clr_fd(struct loop_device *lo, bool release)
- 	if (!part_shift)
- 		set_bit(GD_SUPPRESS_PART_SCAN, &lo->lo_disk->state);
- 	mutex_lock(&lo->lo_mutex);
-+
-+	/*
-+	 * Increment the disk sequence number, so that userspace knows this
-+	 * device now points to something else.
-+	 */
-+	inc_diskseq(lo->lo_disk);
- 	lo->lo_state = Lo_unbound;
- 	mutex_unlock(&lo->lo_mutex);
+diff --git a/Documentation/admin-guide/device-mapper/dm-integrity.rst b/Documentation/admin-guide/device-mapper/dm-integrity.rst
+index 8db172efa272..634a780d7c51 100644
+--- a/Documentation/admin-guide/device-mapper/dm-integrity.rst
++++ b/Documentation/admin-guide/device-mapper/dm-integrity.rst
+@@ -25,7 +25,7 @@ mode it calculates and verifies the integrity tag internally. In this
+ mode, the dm-integrity target can be used to detect silent data
+ corruption on the disk or in the I/O path.
  
+-There's an alternate mode of operation where dm-integrity uses bitmap
++There's an alternate mode of operation where dm-integrity uses a bitmap
+ instead of a journal. If a bit in the bitmap is 1, the corresponding
+ region's data and integrity tags are not synchronized - if the machine
+ crashes, the unsynchronized regions will be recalculated. The bitmap mode
+@@ -38,6 +38,15 @@ the device. But it will only format the device if the superblock contains
+ zeroes. If the superblock is neither valid nor zeroed, the dm-integrity
+ target can't be loaded.
+ 
++Accesses to the on-disk metadata area containing checksums (aka tags) is
++buffered using dm-bufio. When an access to any given metadata area
++occurs, each unique metadata area gets its own buffer(s). The buffer size
++is capped at the size of the metadata area, but may be smaller, thereby
++requiring multiple buffers to represent the full metadata area. A smaller
++buffer size will produce a smaller resulting read/write operation to the
++metadata area for small reads/writes. A full write to the data covered by
++a single buffer does *not* skip the read of the metadata.
++
+ To use the target for the first time:
+ 
+ 1. overwrite the superblock with zeroes
+@@ -93,7 +102,7 @@ journal_sectors:number
+ 	device. If the device is already formatted, the value from the
+ 	superblock is used.
+ 
+-interleave_sectors:number
++interleave_sectors:number (default 32768)
+ 	The number of interleaved sectors. This values is rounded down to
+ 	a power of two. If the device is already formatted, the value from
+ 	the superblock is used.
+@@ -102,20 +111,16 @@ meta_device:device
+ 	Don't interleave the data and metadata on the device. Use a
+ 	separate device for metadata.
+ 
+-buffer_sectors:number
+-	The number of sectors in one buffer. The value is rounded down to
+-	a power of two.
++buffer_sectors:number (default 128)
++	The number of sectors in one metadata buffer. The value is rounded
++	down to a power of two.
+ 
+-	The tag area is accessed using buffers, the buffer size is
+-	configurable. The large buffer size means that the I/O size will
+-	be larger, but there could be less I/Os issued.
+-
+-journal_watermark:number
++journal_watermark:number (default 50)
+ 	The journal watermark in percents. When the size of the journal
+ 	exceeds this watermark, the thread that flushes the journal will
+ 	be started.
+ 
+-commit_time:number
++commit_time:number (default 10000)
+ 	Commit time in milliseconds. When this time passes, the journal is
+ 	written. The journal is also written immediately if the FLUSH
+ 	request is received.
+@@ -163,11 +168,10 @@ journal_mac:algorithm(:key)	(the key is optional)
+ 	the journal. Thus, modified sector number would be detected at
+ 	this stage.
+ 
+-block_size:number
+-	The size of a data block in bytes.  The larger the block size the
++block_size:number (default 512)
++	The size of a data block in bytes. The larger the block size the
+ 	less overhead there is for per-block integrity metadata.
+-	Supported values are 512, 1024, 2048 and 4096 bytes.  If not
+-	specified the default block size is 512 bytes.
++	Supported values are 512, 1024, 2048 and 4096 bytes.
+ 
+ sectors_per_bit:number
+ 	In the bitmap mode, this parameter specifies the number of
+@@ -209,6 +213,12 @@ table and swap the tables with suspend and resume). The other arguments
+ should not be changed when reloading the target because the layout of disk
+ data depend on them and the reloaded target would be non-functional.
+ 
++For example, on a device using the default interleave_sectors of 32768, a
++block_size of 512, and an internal_hash of crc32c with a tag size of 4
++bytes, it will take 128 KiB of tags to track a full data area, requiring
++256 sectors of metadata per data area. With the default buffer_sectors of
++128, that means there will be 2 buffers per metadata area, or 2 buffers
++per 16 MiB of data.
+ 
+ Status line:
+ 
+@@ -285,8 +295,8 @@ The layout of the formatted block device:
+ * one or more runs of interleaved tags and data.
+     Each run contains:
+ 
+-	* tag area - it contains integrity tags. There is one tag for each
+-	  sector in the data area
++	* tag area - it contains integrity tags. There is one tag for each sector in
++	  the data area. The size of this area is always 4KiB or greater.
+ 	* data area - it contains data sectors. The number of data sectors
+ 	  in one run must be a power of two. log2 of this value is stored
+ 	  in the superblock.
 -- 
-Sincerely,
-Demi Marie Obenour (she/her/hers)
-Invisible Things Lab
+2.34.1
 
 --
 dm-devel mailing list
