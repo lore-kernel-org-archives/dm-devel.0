@@ -1,103 +1,70 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0BA55C7EE23
-	for <dm-devel@archiver.kernel.org>; Tue, 30 May 2023 20:58:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C0F9DC7EE23
+	for <dm-devel@archiver.kernel.org>; Tue, 30 May 2023 21:00:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685480335;
+	s=mimecast20190719; t=1685480446;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=hLoiCuaOU3slso+vdQHo1FjcqOEre+Qmndpvm132UL4=;
-	b=OoNB/jSyNG4ifwSIsPzHapLLaJ2P0vra3C3vZkSt7ERaZcjufTuz4aREPBjrIvnIc4QVmr
-	5Xk3SsgOKiSicV7r5rBqTgrlZ5SX5Bbtl7ZY8Dbo36nYNbXnWxqHpzc+ddPN4ThfW9Plvh
-	NZHCIqI140t2gUeBCxKPQLkFZVsXiIY=
+	bh=iuXdOxkrjq2xexH1R8+UXHVNNSM9t143PYqwXQj+xWQ=;
+	b=Er7E7zGDfA4hEFcL/+fj4JID+miPy7koZbd0DdXQ4nrFTI3KxEAZI3aZNPZt9fWaIO8zqo
+	XXgEZYUMlfqwfZ543zu14VKC6FOBWVrGAodZkrrZA8CDM0dKbWIaYAz4syqnNvfBmHBjT2
+	qZujUhH39P6b5B3kFPKYKUxqJ+p46rI=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-249-I3m95H7WO3GxVqW4zplQ3Q-1; Tue, 30 May 2023 16:58:51 -0400
-X-MC-Unique: I3m95H7WO3GxVqW4zplQ3Q-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-36-6gujN1OWPvu4Ixac3Uf8fQ-1; Tue, 30 May 2023 17:00:43 -0400
+X-MC-Unique: 6gujN1OWPvu4Ixac3Uf8fQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 07AE485A5AA;
-	Tue, 30 May 2023 20:58:50 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 534C0800B35;
+	Tue, 30 May 2023 21:00:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B2473C0448F;
-	Tue, 30 May 2023 20:58:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 3782A492B0B;
+	Tue, 30 May 2023 21:00:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9148719465A0;
-	Tue, 30 May 2023 20:58:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 07F3619465A2;
+	Tue, 30 May 2023 21:00:41 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 95AE0194658C
- for <dm-devel@listman.corp.redhat.com>; Tue, 30 May 2023 00:20:57 +0000 (UTC)
+ ESMTP id 2497B19465A0
+ for <dm-devel@listman.corp.redhat.com>; Tue, 30 May 2023 21:00:39 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5E8F420296C8; Tue, 30 May 2023 00:20:57 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 55BE520296C6
- for <dm-devel@redhat.com>; Tue, 30 May 2023 00:20:57 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 36E4B811E78
- for <dm-devel@redhat.com>; Tue, 30 May 2023 00:20:57 +0000 (UTC)
-Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com
- [209.85.214.182]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-614-5MO5U6WeOHKmSxdDvZLkkg-1; Mon, 29 May 2023 20:20:51 -0400
-X-MC-Unique: 5MO5U6WeOHKmSxdDvZLkkg-1
-Received: by mail-pl1-f182.google.com with SMTP id
- d9443c01a7336-1b034ca1195so12714445ad.2; 
- Mon, 29 May 2023 17:20:50 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1685406049; x=1687998049;
- h=content-transfer-encoding:mime-version:message-id:date:subject:cc
- :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
- :reply-to;
- bh=/NF2aPP0D8BvSL9lGQzSeSkCmVZlO98Ug44UgsXpd+0=;
- b=TF6onFL+D0aZuWqnGumiF6leZBMVu5lIRIOZfzbD5J+L2LhjqxLdFwSIYL9VjzDMsw
- /T/MNFRmSsV0XAZOyjv/1ba0hjMlCtEw9Sh8FIyT1BM0mPUBWXoN0hEoCohyAGyESLCe
- YauWPwP1fQBuJWSBtBuKNpR5M8U++K1NmqHxITJGTQzyoLTOEb1G93+WWow4gffyh+ra
- pinQt41p7qfqACntQ8nd4uByIU66+BdGfAOBkTw0KnMoxDHusx6v3Na3SUeQDyZSbJCX
- sup1yzfJ0+QUPVx2HtlWdi2W9IJNsnITf7E1jBedFcBC4kjpY/LoeJLQjXiM4FsgqGUh
- K41A==
-X-Gm-Message-State: AC+VfDwu2ml1I26UYacSpoXVmThrpvUWAoDDJkkXCpudfVBUOuk7S1wQ
- D3xrNDRhKfFCquCpn4TW2T/rje4iuhaQjA==
-X-Google-Smtp-Source: ACHHUZ61cyoiq1wUcZ3LyKk4WhTEeI7/kAsUjcfYvbfIuWeqQuFs6skkg/Ui+1GOWKCpizXfaGWUoA==
-X-Received: by 2002:a17:902:c44b:b0:1af:b681:5313 with SMTP id
- m11-20020a170902c44b00b001afb6815313mr611964plm.33.1685406049120; 
- Mon, 29 May 2023 17:20:49 -0700 (PDT)
-Received: from localhost.localdomain ([76.132.108.20])
- by smtp.gmail.com with ESMTPSA id
- w22-20020a170902a71600b001b024ee5f6esm5337280plq.81.2023.05.29.17.20.48
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 29 May 2023 17:20:48 -0700 (PDT)
-From: Russell Harmon <eatnumber1@gmail.com>
-To: mpatocka@redhat.com,
-	snitzer@redhat.com,
-	dm-devel@redhat.com
-Date: Mon, 29 May 2023 17:20:32 -0700
-Message-Id: <20230530002032.15227-1-eatnumber1@gmail.com>
+ id E2DF740C6EC4; Tue, 30 May 2023 21:00:39 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D1E1640C1437;
+ Tue, 30 May 2023 21:00:39 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 34UL0d5h028698; Tue, 30 May 2023 17:00:39 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 34UL0dCe028695; Tue, 30 May 2023 17:00:39 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Tue, 30 May 2023 17:00:39 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Kent Overstreet <kent.overstreet@linux.dev>
+In-Reply-To: <ZHUcmeYrUmtytdDU@moria.home.lan>
+Message-ID: <alpine.LRH.2.21.2305300809350.13307@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.21.2305260915400.12513@file01.intranet.prod.int.rdu2.redhat.com>
+ <ZHUcmeYrUmtytdDU@moria.home.lan>
+User-Agent: Alpine 2.21 (LRH 202 2017-01-01)
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-X-Mailman-Approved-At: Tue, 30 May 2023 20:58:47 +0000
-Subject: [dm-devel] [PATCH] Improve the dm-integrity documentation.
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] fuzzing bcachefs with dm-flakey
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -109,130 +76,107 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Russell Harmon <eatnumber1@gmail.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-bcachefs@vger.kernel.org,
+ dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: gmail.com
+X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Documents the meaning of the "buffer", adds documentation of the current
-defaults, and provides an example of how the tunables relate to each
-other.
 
-Signed-off-by: Russell Harmon <eatnumber1@gmail.com>
----
- .../device-mapper/dm-integrity.rst            | 44 ++++++++++++-------
- 1 file changed, 27 insertions(+), 17 deletions(-)
 
-diff --git a/Documentation/admin-guide/device-mapper/dm-integrity.rst b/Documentation/admin-guide/device-mapper/dm-integrity.rst
-index 8db172efa272..634a780d7c51 100644
---- a/Documentation/admin-guide/device-mapper/dm-integrity.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-integrity.rst
-@@ -25,7 +25,7 @@ mode it calculates and verifies the integrity tag internally. In this
- mode, the dm-integrity target can be used to detect silent data
- corruption on the disk or in the I/O path.
- 
--There's an alternate mode of operation where dm-integrity uses bitmap
-+There's an alternate mode of operation where dm-integrity uses a bitmap
- instead of a journal. If a bit in the bitmap is 1, the corresponding
- region's data and integrity tags are not synchronized - if the machine
- crashes, the unsynchronized regions will be recalculated. The bitmap mode
-@@ -38,6 +38,15 @@ the device. But it will only format the device if the superblock contains
- zeroes. If the superblock is neither valid nor zeroed, the dm-integrity
- target can't be loaded.
- 
-+Accesses to the on-disk metadata area containing checksums (aka tags) is
-+buffered using dm-bufio. When an access to any given metadata area
-+occurs, each unique metadata area gets its own buffer(s). The buffer size
-+is capped at the size of the metadata area, but may be smaller, thereby
-+requiring multiple buffers to represent the full metadata area. A smaller
-+buffer size will produce a smaller resulting read/write operation to the
-+metadata area for small reads/writes. A full write to the data covered by
-+a single buffer does *not* skip the read of the metadata.
-+
- To use the target for the first time:
- 
- 1. overwrite the superblock with zeroes
-@@ -93,7 +102,7 @@ journal_sectors:number
- 	device. If the device is already formatted, the value from the
- 	superblock is used.
- 
--interleave_sectors:number
-+interleave_sectors:number (default 32768)
- 	The number of interleaved sectors. This values is rounded down to
- 	a power of two. If the device is already formatted, the value from
- 	the superblock is used.
-@@ -102,20 +111,16 @@ meta_device:device
- 	Don't interleave the data and metadata on the device. Use a
- 	separate device for metadata.
- 
--buffer_sectors:number
--	The number of sectors in one buffer. The value is rounded down to
--	a power of two.
-+buffer_sectors:number (default 128)
-+	The number of sectors in one metadata buffer. The value is rounded
-+	down to a power of two.
- 
--	The tag area is accessed using buffers, the buffer size is
--	configurable. The large buffer size means that the I/O size will
--	be larger, but there could be less I/Os issued.
--
--journal_watermark:number
-+journal_watermark:number (default 50)
- 	The journal watermark in percents. When the size of the journal
- 	exceeds this watermark, the thread that flushes the journal will
- 	be started.
- 
--commit_time:number
-+commit_time:number (default 10000)
- 	Commit time in milliseconds. When this time passes, the journal is
- 	written. The journal is also written immediately if the FLUSH
- 	request is received.
-@@ -163,11 +168,10 @@ journal_mac:algorithm(:key)	(the key is optional)
- 	the journal. Thus, modified sector number would be detected at
- 	this stage.
- 
--block_size:number
--	The size of a data block in bytes.  The larger the block size the
-+block_size:number (default 512)
-+	The size of a data block in bytes. The larger the block size the
- 	less overhead there is for per-block integrity metadata.
--	Supported values are 512, 1024, 2048 and 4096 bytes.  If not
--	specified the default block size is 512 bytes.
-+	Supported values are 512, 1024, 2048 and 4096 bytes.
- 
- sectors_per_bit:number
- 	In the bitmap mode, this parameter specifies the number of
-@@ -209,6 +213,12 @@ table and swap the tables with suspend and resume). The other arguments
- should not be changed when reloading the target because the layout of disk
- data depend on them and the reloaded target would be non-functional.
- 
-+For example, on a device using the default interleave_sectors of 32768, a
-+block_size of 512, and an internal_hash of crc32c with a tag size of 4
-+bytes, it will take 128 KiB of tags to track a full data area, requiring
-+256 sectors of metadata per data area. With the default buffer_sectors of
-+128, that means there will be 2 buffers per metadata area, or 2 buffers
-+per 16 MiB of data.
- 
- Status line:
- 
-@@ -285,8 +295,8 @@ The layout of the formatted block device:
- * one or more runs of interleaved tags and data.
-     Each run contains:
- 
--	* tag area - it contains integrity tags. There is one tag for each
--	  sector in the data area
-+	* tag area - it contains integrity tags. There is one tag for each sector in
-+	  the data area. The size of this area is always 4KiB or greater.
- 	* data area - it contains data sectors. The number of data sectors
- 	  in one run must be a power of two. log2 of this value is stored
- 	  in the superblock.
--- 
-2.34.1
+On Mon, 29 May 2023, Kent Overstreet wrote:
 
+> On Mon, May 29, 2023 at 04:59:40PM -0400, Mikulas Patocka wrote:
+> > Hi
+> > 
+> > I improved the dm-flakey device mapper target, so that it can do random 
+> > corruption of read and write bios - I uploaded it here: 
+> > https://people.redhat.com/~mpatocka/testcases/bcachefs/dm-flakey.c
+> > 
+> > I set up dm-flakey, so that it corrupts 10% of read bios and 10% of write 
+> > bios with this command:
+> > dmsetup create flakey --table "0 `blockdev --getsize /dev/ram0` flakey /dev/ram0 0 0 1 4 random_write_corrupt 100000000 random_read_corrupt 100000000"
+> 
+> I've got some existing ktest tests for error injection:
+> https://evilpiepirate.org/git/ktest.git/tree/tests/bcachefs/single_device.ktest#n200
+> https://evilpiepirate.org/git/ktest.git/tree/tests/bcachefs/replication.ktest#n491
+> 
+> I haven't looked at dm-flakey before, I take it you're silently
+> corrupting data instead of just failing the IOs like these tests do?
+
+Yes, silently corrupting.
+
+When I tried to simulate I/O errors with dm-flakey, bcachefs worked 
+correcly - there were no errors returned to userspace and no crashes.
+
+Perhaps, it should treat metadata checksum errors in the same way as disk 
+failures?
+
+> Let's add what you're doing to ktest, and see if we can merge it with
+> the existing tests.
+
+> Good catches on all of them. Darrick's been on me to get fuzz testing
+> going, looks like it's definitely needed :)
+> 
+> However, there's two things I want in place first before I put much
+> effort into fuzz testing:
+> 
+>  - Code coverage analysis. ktest used to have integrated code coverage
+>    analysis, where you'd tell it a subdirectory of the kernel tree
+>    (doing code coverage analysis for the entire kernel is impossibly
+>    slow) and it would run tests and then give you the lcov output.
+> 
+>    However, several years ago something about kbuild changed, and the
+>    method ktest was using for passing in build flags for a specific
+>    subdir on the command line stopped working. I would like to track
+>    down someone who understands kbuild and get this working again.
+> 
+>  - Fault injection
+> 
+>    Years and years ago, when I was still at Google and this was just
+>    bcache, we had fault injection that worked like dynamic debug: you
+>    could call dynamic_fault("type of fault") anywhere in your code,
+>    and it returned a bool indicating whether that fault had been enabled
+>    - and faults were controllable at runtime via debugfs, we had tests
+>    that iterated over e.g. faults in the initialization path, or memory
+>    allocation failures, and flipped them on one by one and ran
+>    $test_workload.
+> 
+>    The memory allocation profiling stuff that Suren and I have been
+>    working on includes code tagging, which is for (among other things) a
+>    new and simplified implementation of dynamic fault injection, which
+>    I'm going to push forward again once the memory allocation profiling
+>    stuff gets merged.
+> 
+> The reason I want this stuff is because fuzz testing tends to be a
+> heavyweight, scattershot approach.
+> 
+> I want to be able to look at the code coverage analysis first to e.g.
+> work on a chunk of code at a time and make sure it's tested thoroughly,
+> instead of jumping around in the code at random depending on what fuzz
+> testing finds, and when we are fuzz testing I want to be able to add
+> fault injection points and write unit tests so that we can have much
+> more targeted, quicker to run tests going forward.
+> 
+> Can I get you interested in either of those things? I'd really love to
+> find someone to hand off or collaborate with on the fault injection
+> stuff in particular.
+
+I'd like to know how do you want to do coverage analysis? By instrumenting 
+each branch and creating a test case that tests that the branch goes both 
+ways?
+
+I know that people who write spacecraft-grade software do such tests, but 
+I can't quite imagine how would that work in a filesystem.
+
+"grep -w if fs/bcachefs/*.[ch] | wc -l" shows that there are 5828 
+conditions. That's one condition for every 15.5 lines.
+
+Mikulas
 --
 dm-devel mailing list
 dm-devel@redhat.com
