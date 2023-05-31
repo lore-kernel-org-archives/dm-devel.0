@@ -1,136 +1,93 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1C5F2C77B73
-	for <dm-devel@archiver.kernel.org>; Wed, 31 May 2023 15:51:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6F028C77B73
+	for <dm-devel@archiver.kernel.org>; Wed, 31 May 2023 15:51:27 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685548271;
+	s=mimecast20190719; t=1685548286;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=9DPoH7A4G0SxxF4/WgwpT6qkzkvfJKh8uXAzshEwXB4=;
-	b=HMr5Qw5Fx2hT7+/24vlQ7Dix96qpUXNuP7YxMqJGvp3qFXZw0WzZpLLFJ3zSnrlyZhDUAf
-	+GjK5P9Xcg5CZZvD8YtPFxJqmKNXkTKfgI+ecVDOD3VJPJm7z6ekTVmE/8tvTbmW+61fvS
-	TAIT3RROaLsTcy23PLm9am4/FSJ+dRs=
+	bh=bVYt2YHSAjMLZfA+IhQrcPP+BP6QaErham+i3yoILMY=;
+	b=bLex+BKy0/osmnWNDEgvvQOlogAMcLwKnEnPOpqUJqPXCFevWHgFRPxAH5edCENDN6CcFS
+	5hut4CVPBQG++tk2uXThU0FhhPJtXho1BCp6vyGzgCWfYj/OrJw9GjKRUvAdEgY8UJkKeW
+	zV23zusdLCX1k2iRKEKy8ejHX7+FOXw=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-408-u0lkvCczMPiMbM-KH4OU9Q-1; Wed, 31 May 2023 11:51:10 -0400
-X-MC-Unique: u0lkvCczMPiMbM-KH4OU9Q-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-643-6ofrHy32ONa2DTJcbhHQQw-1; Wed, 31 May 2023 11:51:25 -0400
+X-MC-Unique: 6ofrHy32ONa2DTJcbhHQQw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B222A802355;
-	Wed, 31 May 2023 15:51:07 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4A365811E7C;
+	Wed, 31 May 2023 15:51:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 95C1D40D1B62;
-	Wed, 31 May 2023 15:51:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 3707D40CFD45;
+	Wed, 31 May 2023 15:51:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5D3AC19465A8;
-	Wed, 31 May 2023 15:51:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8CD6619465BC;
+	Wed, 31 May 2023 15:51:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 802841946595
- for <dm-devel@listman.corp.redhat.com>; Wed, 31 May 2023 15:45:19 +0000 (UTC)
+ ESMTP id 6ACD21946595
+ for <dm-devel@listman.corp.redhat.com>; Wed, 31 May 2023 15:50:22 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E95AC140E963; Wed, 31 May 2023 15:45:18 +0000 (UTC)
+ id 4692B112132D; Wed, 31 May 2023 15:50:22 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E09DB140E962
- for <dm-devel@redhat.com>; Wed, 31 May 2023 15:45:13 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [207.211.31.81])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 3E7CE112132C
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 15:50:22 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ACF4D101A585
- for <dm-devel@redhat.com>; Wed, 31 May 2023 15:45:13 +0000 (UTC)
-Received: from EUR01-DB5-obe.outbound.protection.outlook.com
- (mail-db5eur01on2040.outbound.protection.outlook.com [40.107.15.40]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-205-X_JGM-wOPDWVID9kX7Z_Tw-1; Wed, 31 May 2023 11:45:12 -0400
-X-MC-Unique: X_JGM-wOPDWVID9kX7Z_Tw-1
-Received: from AS8PR04MB8040.eurprd04.prod.outlook.com (2603:10a6:20b:2a9::22)
- by AS4PR04MB9268.eurprd04.prod.outlook.com (2603:10a6:20b:4e3::11)
- with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6455.22; Wed, 31 May
- 2023 15:45:08 +0000
-Received: from AS8PR04MB8040.eurprd04.prod.outlook.com
- ([fe80::2947:7809:4229:a8af]) by AS8PR04MB8040.eurprd04.prod.outlook.com
- ([fe80::2947:7809:4229:a8af%4]) with mapi id 15.20.6433.024; Wed, 31 May 2023
- 15:45:08 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
- "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH 0/5] multipath: Add a group_by_tgp path grouping policy
-Thread-Index: AQHZiqX3AHwb/SstxUylYlZgFQMxSK90mHOA
-Date: Wed, 31 May 2023 15:45:08 +0000
-Message-ID: <41034230c46f90eafd26fc8a557790ef9d6d16db.camel@suse.com>
-References: <1684537332-23033-1-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1684537332-23033-1-git-send-email-bmarzins@redhat.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.48.1
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: AS8PR04MB8040:EE_|AS4PR04MB9268:EE_
-x-ms-office365-filtering-correlation-id: 2e0f738d-d82f-4d32-965c-08db61ee0332
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: 4lEua8geKGal9Wa/PTEJxTA1t0iaPyhNDUdz9FZ2G4zIHrmFMNaeXBItc76a9rgcQN5FsRWOcKjJQWngq4/hFTYWXf9+KKyuFoLCRJo57yYjtiP6F4OHOQHEQtzyGV11F8k+9PXeicJhugmBhweJXeimXZ45TqR6CfRwzZdWt/3WfqmfdzIJCfTnWwrG7SoRwUB/nmf6GKjKrA96fsJaZmEoQXk4M6JZuQCRHpihI8VZGBmXOlD7UyN3fLrjrAp3bDlJ6pJxsL3mWWXwLVGt0iyLaDRqVXt+N69qE2ZfejbN3T2WlEsn8LfHNcszRMSY9OlohToK4Ed6wKfyRjb1Lxf8xZan55un2CLmaWtRJ4zNonkzVz0K/RhUZSKtatGy1LxA+9YgvRjBqWiG2MZe+uimz5uCbBIOw0i4c6EH7EvpwmXHI/mwRaFAe9ymWsh+FE1qBCtHkp3PSPBLfQaKP75eDti00Jrn0P5BuJLW121vBU4KIaamsw/wFoMF5kpRdy6Jz4iDE01OE5MXYfgAYjXk1QRAlZkahv9ELJ9o6tfFEmKqvg9YFQCw2Vplc56xVwU4wqURkUJiY5b9cdtuoZNGxj0a3jpbhX2QLu7EAhCD48aJ4lK6gsg6aRSy0lKy
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:AS8PR04MB8040.eurprd04.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230028)(396003)(366004)(39860400002)(376002)(346002)(136003)(451199021)(110136005)(8936002)(5660300002)(316002)(8676002)(2906002)(66446008)(66556008)(4326008)(66476007)(66946007)(76116006)(91956017)(64756008)(66899021)(41300700001)(44832011)(478600001)(71200400001)(6486002)(6506007)(6512007)(122000001)(186003)(26005)(83380400001)(36756003)(38070700005)(86362001)(2616005)(38100700002);
- DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?GyYD3evtgYpSXYLg6wbdX44u3z7AHJt0iYzWxrYJHo0q+E3/TfXkClZAq?=
- =?iso-8859-15?Q?ALm/ydzQ45fI/6/I3Xfbv/kSvZt/IvLgoeoxvgaQt1Bc+rBsObhjBgz8Y?=
- =?iso-8859-15?Q?Jlrr+J4qKYjUbRbnCnTxEEqV5Bt/LfINr/v1T5tv8osQwNnZkYaWaB1qe?=
- =?iso-8859-15?Q?dYScqXDrUWV4+CUoEdZsVb3j9fHUo83JsW78WZpYLmu8Yf5iT7mVtpKl+?=
- =?iso-8859-15?Q?aGvmc1Mi5V+IqU6VPYqXkGOPtXi389vVSfNsmTfXubQYN5sg7MQ5QZQEV?=
- =?iso-8859-15?Q?F/qrau72w41TBSKS8CBxxVP9y2GOGK8O59+gqxLGTw2LhoYgBW/EpAeh8?=
- =?iso-8859-15?Q?JKxnmeNw/dHvFG+J9prYcwL+cX3Bs98zWyzeMlEEMZOTfjbZo7QP3iiLQ?=
- =?iso-8859-15?Q?MY0sdB/MHK8k326WnaxgmPtxaCFZsQ0GPDAEARQbdqbCYVNjLRczMovHQ?=
- =?iso-8859-15?Q?zXiHG9crIsuEZyaUUs5DG8msqL7vYwi1TykMx4og3Aa51zLhZMqzOq0jZ?=
- =?iso-8859-15?Q?ij0XI1dm23AXi+6O8KT00xVb0lJXejXgxbv7q4MVaCW3HJvyrnEZTbhgn?=
- =?iso-8859-15?Q?BPla57u6OrkTlZPQ9vvaivxtMxapMw8/hM0zGrR8plpV7mk3cmmBHPZjz?=
- =?iso-8859-15?Q?L8JGoHzMaU5Z2Tl2CMt/tJ79WlQHtRPERlGdTUvE6LNrudvs6kId3thX7?=
- =?iso-8859-15?Q?CIw7Usy+4HyD+TeDKyG2gXr2Ge7yXcuHHNRoFweneMLzl6qrN6xg651sZ?=
- =?iso-8859-15?Q?XQfWuPQsv2aiftNlhLrcOdQSmEyld9SUltitVRzZAtmQzRhpsMklInfXC?=
- =?iso-8859-15?Q?Fps1gb1zjzXgCq8oDGlkW3h3fh8K2QV2IjXtOLDaP/eM4hyrv3jeOer5f?=
- =?iso-8859-15?Q?5RudpXHfqSOqxVVwodfhGuGhDR1kFPHuW+NBNHF/imEr4ZiZiT4RfJqE+?=
- =?iso-8859-15?Q?O5JLRPCh4VqDTFJzeOwcUxTYOmvp4el1NaQaU2ObGo7xRKJOmVNgSSco6?=
- =?iso-8859-15?Q?Uychjhb0RJZQ5WKYqMJmlZjCvNHEPsy+CbSANPezJNVgcAWW9GxmNgNZU?=
- =?iso-8859-15?Q?ts9W8ahnUPcGvE83IoB16asUC8ykc3dJkVznJBZ9lpIFQHcmDsS5QHsnr?=
- =?iso-8859-15?Q?9D+pgU71Yqx+p13SgjiTrxsNpTWdU/G70qmqpdd0D4fyRApqEorCFI76U?=
- =?iso-8859-15?Q?wA7lqNvBDorAwLqPqQy6zVVHDvqUNG3SwFxLd7hyAFFcy7Qw+Sw6NkGSD?=
- =?iso-8859-15?Q?vJXm0YdM05BzkoK+Eh2q1thw4Ib8rQcOSqbLJCyWLU3RhAavqJ3OUuKM/?=
- =?iso-8859-15?Q?u2RusWheJDJ+ijmC4Bgcu2VzSW3HE0XObP3Fx3EQEYsu3wdGsQ6akTBHA?=
- =?iso-8859-15?Q?9bypoo0v/2SI/CptpOinmC41tFg9eXS/+m73kRWVzgNhTQW14K9Zf6KBR?=
- =?iso-8859-15?Q?nu/58Bz50M427BPjGpykVF7JOVWE+fuUniVFrmg7Suwxwoj5WIXe+vpxQ?=
- =?iso-8859-15?Q?qbb0LjTsopqQEC0vdLD1bOwLR8EGYtCEamG8hH69D3wsMX/oJqt4omTLy?=
- =?iso-8859-15?Q?LVk1RMBy/0UhpKtkQGeAVTL7EcfF8oVX4ptz6gLhCNdJRly7brs9X+KRk?=
- =?iso-8859-15?Q?YqBsnYhccCSIAyubOAJ0RQ4QgqU05E/TbAL8SOxTyKISzegwUffQgi4U1?=
- =?iso-8859-15?Q?zqFT?=
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 23B2D80120A
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 15:50:22 +0000 (UTC)
+Received: from mail-il1-f173.google.com (mail-il1-f173.google.com
+ [209.85.166.173]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-482-kZiTHELRN1KlIO7u3f2M0A-1; Wed, 31 May 2023 11:50:20 -0400
+X-MC-Unique: kZiTHELRN1KlIO7u3f2M0A-1
+Received: by mail-il1-f173.google.com with SMTP id
+ e9e14a558f8ab-33110a36153so1282555ab.0
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 08:50:20 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1685548219; x=1688140219;
+ h=content-transfer-encoding:mime-version:date:message-id:subject
+ :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=Kr7AYf3i1eBygjzH5q6AjnbmzDMGTDydvzH6ggOcr8w=;
+ b=kYkdMjlrQHRG5/TSuLfkchc2RznSGc8jQOpvbYRFaJ3fViE4NOYVfgpgQOUXFeWbue
+ d7PR6W5FiRHObZGHLCuxFOfrprNZbLrCdGa6xLVVYev8UF+zpUaURv5mPfIR7Q7fkG4t
+ /b1r0hMJxwKUSFEg4kHsDiEP4QU9IoIhjzWVojddRaSUE1Qsk99fcDzJlHk67snmGXHO
+ QrQ3FLWpfK6ubfms/HWHUHtZ9CEnlG4RTJArUao7L7r2XIvBzgFR9lPUJK5SYr7lcHwU
+ tCnJgAsNmOF0ThHgNM+kDd9eerOOywD5UGcZ6ouEMgJaQFERGjIng9X15U2PljUg74eH
+ X/bQ==
+X-Gm-Message-State: AC+VfDxRk7jNXd4EtP7yI1tFr6QrOVx3aDYxfWIALy+vna6otikW4QzM
+ xzGPD48P4gnv3tWn0Edewkjz1w==
+X-Google-Smtp-Source: ACHHUZ4Vc5K9goUssaOAlBejpFmpFM1M2MosneBhWp7jmoz34Mcc3cGA6Lj397yP4Jgger0rhBRBog==
+X-Received: by 2002:a05:6e02:1061:b0:32b:51df:26a0 with SMTP id
+ q1-20020a056e02106100b0032b51df26a0mr1411548ilj.2.1685548219545; 
+ Wed, 31 May 2023 08:50:19 -0700 (PDT)
+Received: from [127.0.0.1] ([96.43.243.2]) by smtp.gmail.com with ESMTPSA id
+ a4-20020a927f04000000b0033355fa5440sm3211579ild.37.2023.05.31.08.50.18
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 31 May 2023 08:50:18 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+In-Reply-To: <cover.1685532726.git.johannes.thumshirn@wdc.com>
+References: <cover.1685532726.git.johannes.thumshirn@wdc.com>
+Message-Id: <168554821814.183617.716542495633198655.b4-ty@kernel.dk>
+Date: Wed, 31 May 2023 09:50:18 -0600
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: AS8PR04MB8040.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 2e0f738d-d82f-4d32-965c-08db61ee0332
-X-MS-Exchange-CrossTenant-originalarrivaltime: 31 May 2023 15:45:08.6429 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: XilzTOz45POEeF8KIQkPxKO7WKTDFmnPaCjppTMYRa+pKgyz9YdvSub4ia8HO42vhQ2x1jeo3JBdC3f55SjXkg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AS4PR04MB9268
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -138,9 +95,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH 0/5] multipath: Add a group_by_tgp path
- grouping policy
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH v7 00/20] bio: check return values of
+ bio_add_page
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -152,87 +109,85 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: linux-raid@vger.kernel.org, Damien Le Moal <damien.lemoal@wdc.com>,
+ cluster-devel@redhat.com, Chaitanya Kulkarni <kch@nvidia.com>,
+ Andreas Gruenbacher <agruenba@redhat.com>, Song Liu <song@kernel.org>,
+ Dave Kleikamp <shaggy@kernel.org>, Mike Snitzer <snitzer@kernel.org>,
+ jfs-discussion@lists.sourceforge.net, Matthew Wilcox <willy@infradead.org>,
+ Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org,
+ linux-mm@kvack.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>,
+ linux-fsdevel@vger.kernel.org, gouha7@uniontech.com,
+ Christoph Hellwig <hch@lst.de>, Bob Peterson <rpeterso@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: suse.com
-Content-Language: en-US
-Content-ID: <699856B62923824CA6657B76518E2775@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
-
-On Fri, 2023-05-19 at 18:02 -0500, Benjamin Marzinski wrote:
-> This patchset is adds a new path grouping policy that can be used
-> with
-> ALUA devices. The goal is to avoid the temporary incorrect path
-> groupings that can happen when paths change priorities.
->=20
-
-Thanks a lot for doing this. It has been on my todo list for a long
-time. And sorry to make you wait so long for the review.
-
-> There is one thing that I'm not sure of.=A0 Is there any possiblity of
-> a
-> path device changing the target port group it belongs to while it
-> use?
-> If so, then we would need code to check for this and reload the
-> device
-> if it occurs.
-
-The kernel ALUA code seems to be written to deal with such changes. The
-spec is unclear about it. The spec says that the primary TPG is a set
-of target ports that have the same state _at all times_, which we might
-boldly interpret such that the TPG can't change (if it did, the target
-ports wouldn't have the same state "at all times" any more). But well,
-I don't think we should rely upon that.
-
-So yes, I think we should be prepared to handle TPG change, even if
-it's very unlikely to happen in practice. But it doesn't need to be in
-this patch set. After all, the worst thing that can happen is that the
-grouping might be wrong in a very unusual situation. With group-by-
-prio, that happens all the time, although only temporarily.
-
-Regards
-Martin
+X-Mimecast-Originator: kernel.dk
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
 
->=20
-> Benjamin Marzinski (5):
-> =A0 libmultipath: add group_by_tpg path_grouping_policy
-> =A0 libmultipath: don't copy pgpolicy string in get_pgpolicy_name
-> =A0 libmultipath: add ALUA tpg path wildcard
-> =A0 multipath-tools tests: add tests for group_by_tpg policy
-> =A0 libmultipath: add "detect_pgpolicy" config option
->=20
-> =A0libmultipath/config.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 2 +
-> =A0libmultipath/config.h=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 2 +
-> =A0libmultipath/configure.c=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 1 +
-> =A0libmultipath/defaults.h=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 1 +
-> =A0libmultipath/dict.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 17 =
-++-
-> =A0libmultipath/discovery.c=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 1 +
-> =A0libmultipath/hwtable.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 1 +
-> =A0libmultipath/libmultipath.version |=A0 10 +-
-> =A0libmultipath/pgpolicies.c=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 42 ++++---
-> =A0libmultipath/pgpolicies.h=A0=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 6 +-
-> =A0libmultipath/print.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 9 =
-++
-> =A0libmultipath/prioritizers/alua.c=A0 |=A0=A0 1 +
-> =A0libmultipath/propsel.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 50 ++++++=
-+-
-> =A0libmultipath/propsel.h=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 1 +
-> =A0libmultipath/structs.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 1 +
-> =A0libmultipath/structs.h=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 10 ++
-> =A0multipath/main.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=
-=A0=A0 1 +
-> =A0multipath/multipath.conf.5=A0=A0=A0=A0=A0=A0=A0 |=A0 16 +++
-> =A0tests/pgpolicy.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 | =
-201
-> ++++++++++++++++++++++++++++++
-> =A019 files changed, 338 insertions(+), 35 deletions(-)
->=20
+On Wed, 31 May 2023 04:50:23 -0700, Johannes Thumshirn wrote:
+> We have two functions for adding a page to a bio, __bio_add_page() which is
+> used to add a single page to a freshly created bio and bio_add_page() which is
+> used to add a page to an existing bio.
+> 
+> While __bio_add_page() is expected to succeed, bio_add_page() can fail.
+> 
+> This series converts the callers of bio_add_page() which can easily use
+> __bio_add_page() to using it and checks the return of bio_add_page() for
+> callers that don't work on a freshly created bio.
+> 
+> [...]
+
+Applied, thanks!
+
+[01/20] swap: use __bio_add_page to add page to bio
+        commit: cb58bf91b138c1a8b18cca9503308789e26e3522
+[02/20] drbd: use __bio_add_page to add page to bio
+        commit: 8f11f79f193c935da617375ba5ea4e768a73a094
+[03/20] dm: dm-zoned: use __bio_add_page for adding single metadata page
+        commit: fc8ac3e539561aff1c0a255d701d9412d425373c
+[04/20] fs: buffer: use __bio_add_page to add single page to bio
+        commit: 741af75d4027b1229fc6e62f4e3c4378dfe04897
+[05/20] md: use __bio_add_page to add single page
+        commit: 3c383235c51dcd6198d37ac3ac06e2acad79f981
+[06/20] md: raid5-log: use __bio_add_page to add single page
+        commit: b0a2f17cad9d3fa564d67c543f5d19343401fefd
+[07/20] md: raid5: use __bio_add_page to add single page to new bio
+        commit: 6eea4ff8528d6a5b9f0eeb47992e48a8f44b5b8f
+[08/20] jfs: logmgr: use __bio_add_page to add single page to bio
+        commit: 2896db174ced7a800863223f9e74543b98271ba0
+[09/20] gfs2: use __bio_add_page for adding single page to bio
+        commit: effa7ddeeba782406c81b572791a142fbdaf6b05
+[10/20] zonefs: use __bio_add_page for adding single page to bio
+        commit: 0fa5b08cf6e17b0a64ffcc5894d8efe186691ab8
+[11/20] zram: use __bio_add_page for adding single page to bio
+        commit: 34848c910b911838e1e83e1370cb988b578c8860
+[12/20] floppy: use __bio_add_page for adding single page to bio
+        commit: 5225229b8fdfb3e65520c43547ecf9a737161c3f
+[13/20] md: check for failure when adding pages in alloc_behind_master_bio
+        commit: 6473bc325644b9c8473e6c92bfb520a68dce1e12
+[14/20] md: raid1: use __bio_add_page for adding single page to bio
+        commit: 2f9848178cfa4ac68a5b46e63e5163a09b8bd80f
+[15/20] md: raid1: check if adding pages to resync bio fails
+        commit: 33332be32fe91ff54ff326b3a1608973544e835a
+[16/20] dm-crypt: use __bio_add_page to add single page to clone bio
+        commit: 9be63ecfdd63f957b9ed25eaf85666d22a02d7a5
+[17/20] block: mark bio_add_page as __must_check
+        commit: 5b3e39c1cc8e1cf31a398830dd665eb15546b4f7
+[18/20] block: add bio_add_folio_nofail
+        commit: 42205551d1d43b1b42942fb7ef023cf954136cea
+[19/20] fs: iomap: use bio_add_folio_nofail where possible
+        commit: f31c58ab3ddaf64503d7988197602d7443d5be37
+[20/20] block: mark bio_add_folio as __must_check
+        commit: 9320744e4dbe10df6059b2b6531946c200a0ba3b
+
+Best regards,
+-- 
+Jens Axboe
+
+
 
 --
 dm-devel mailing list
