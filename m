@@ -4,68 +4,68 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B225CC77B7C
-	for <dm-devel@archiver.kernel.org>; Wed, 31 May 2023 04:23:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5D062C77B73
+	for <dm-devel@archiver.kernel.org>; Wed, 31 May 2023 04:24:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685507037;
+	s=mimecast20190719; t=1685507048;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=BX0a5IzuHn3YldtMBTWzV83mTd4BNTcHU/glIEg+KhQ=;
-	b=N5cmcxAsfLhk5l/XIHOpwuvcGoLF/s5MDKZMTXMfZbDeMwe5pPlbRbfG4/9VVRiyx7cJ/a
-	2OOo/CNRDVkC0CbLT5XO7c0Fl4kinjXExF613Cyy/vdmBtIRLPDt4M9jGBnF8pHXUPDVq/
-	7RHU+4lLJlhlMnT/PCCsyAVg2r8qRQg=
+	bh=Pm1z+kVqWbjaxGlwDeQFznjeaTJVp/p72ZnOnwk1vd4=;
+	b=Bb03GFhOt4jNsXku8GlspV3W04PNKcbNpeLQGqks8RxhT+ouTPK1wA/b+5gfCiprZ4E9dJ
+	P6YHLyF54SZAIc42m6cZbXSxg7Lu7v7mKEZPCSmAkdx2e/EahOpqINFeOdTLsJXGu+gUP2
+	TFAdsrHcmuvWVihdaIooqk+e1DvHBgQ=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-463-qNgvEXPcMsygR5-bUw3BzA-1; Wed, 31 May 2023 00:23:54 -0400
-X-MC-Unique: qNgvEXPcMsygR5-bUw3BzA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-351-HaoydznFPJuPcZp04g_CNA-1; Wed, 31 May 2023 00:24:05 -0400
+X-MC-Unique: HaoydznFPJuPcZp04g_CNA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2D2A3811E78;
-	Wed, 31 May 2023 04:23:52 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8C749811E78;
+	Wed, 31 May 2023 04:24:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1AE8140CFD45;
-	Wed, 31 May 2023 04:23:52 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7AF03420A8;
+	Wed, 31 May 2023 04:24:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E4C7A19465A8;
-	Wed, 31 May 2023 04:23:51 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 37D6F19465B6;
+	Wed, 31 May 2023 04:24:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 371DA19465A8
- for <dm-devel@listman.corp.redhat.com>; Wed, 31 May 2023 04:23:50 +0000 (UTC)
+ ESMTP id C789D19465A8
+ for <dm-devel@listman.corp.redhat.com>; Wed, 31 May 2023 04:24:02 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D8C6240CFD46; Wed, 31 May 2023 04:23:49 +0000 (UTC)
+ id A982720296C8; Wed, 31 May 2023 04:24:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D16A140CFD45
- for <dm-devel@redhat.com>; Wed, 31 May 2023 04:23:49 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [205.139.110.61])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A232120296C6
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 04:24:02 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B6F7D299E743
- for <dm-devel@redhat.com>; Wed, 31 May 2023 04:23:49 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8BAD4811E8F
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 04:24:02 +0000 (UTC)
 Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-482-7O8JTQlFOQeDi7ZflcpvFQ-1; Wed, 31 May 2023 00:23:42 -0400
-X-MC-Unique: 7O8JTQlFOQeDi7ZflcpvFQ-1
+ us-mta-497-4AocBxS-POuOHMB20EE9EQ-1; Wed, 31 May 2023 00:23:57 -0400
+X-MC-Unique: 4AocBxS-POuOHMB20EE9EQ-1
 Received: by verein.lst.de (Postfix, from userid 2407)
- id 2A61568B05; Wed, 31 May 2023 06:23:39 +0200 (CEST)
-Date: Wed, 31 May 2023 06:23:38 +0200
+ id 9924A68B05; Wed, 31 May 2023 06:23:53 +0200 (CEST)
+Date: Wed, 31 May 2023 06:23:53 +0200
 From: Christoph Hellwig <hch@lst.de>
 To: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-Message-ID: <20230531042338.GK32705@lst.de>
+Message-ID: <20230531042353.GL32705@lst.de>
 References: <cover.1685461490.git.johannes.thumshirn@wdc.com>
- <d7cfd04d410accee4148d8c0e51230bcb8b4bb8f.1685461490.git.johannes.thumshirn@wdc.com>
+ <05f4a70914885813a2ccdbb8aa7eb7d75f79329a.1685461490.git.johannes.thumshirn@wdc.com>
 MIME-Version: 1.0
-In-Reply-To: <d7cfd04d410accee4148d8c0e51230bcb8b4bb8f.1685461490.git.johannes.thumshirn@wdc.com>
+In-Reply-To: <05f4a70914885813a2ccdbb8aa7eb7d75f79329a.1685461490.git.johannes.thumshirn@wdc.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -74,9 +74,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH v6 13/20] md: check for failure when adding
- pages in alloc_behind_master_bio
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH v6 14/20] md: raid1: use __bio_add_page for
+ adding single page to bio
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -101,22 +101,12 @@ Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
  linux-mm@kvack.org, linux-fsdevel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-
-On Tue, May 30, 2023 at 08:49:16AM -0700, Johannes Thumshirn wrote:
-> alloc_behind_master_bio() can possibly add multiple pages to a bio, but it
-> is not checking for the return value of bio_add_page() if adding really
-> succeeded.
-> 
-> Check if the page adding succeeded and if not bail out.
-> 
-> Reviewed-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-> Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 
 Looks good:
 
