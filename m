@@ -4,82 +4,82 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4B859C77B7C
-	for <dm-devel@archiver.kernel.org>; Wed, 31 May 2023 11:38:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1473EC77B73
+	for <dm-devel@archiver.kernel.org>; Wed, 31 May 2023 11:38:58 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685533134;
+	s=mimecast20190719; t=1685533137;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=EyCxZFIddmCCtWdgUTAPnZ2XzSO3bli8v+yftF1Fw4M=;
-	b=Ax9mKXTsr2zmVNeYaxXrmokFe4H+fdmXPOtKz0+WZhMFMlNoYl+2ZPLHrgYrcOMVIS3ppV
-	Y8Wo4zGjb6SU215hPyvYePYLwowjEMUKO6lw3wTjMUxSvTz1oOr5AeiSJRHdzLpNzj7flw
-	mLzznrYYa5hURrb9kW2v1tiocJ3oaSs=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=QBzN4BQpSf1bhzWDg5IxcvifEKS6QsfAsqp6FWS0Rug=;
+	b=gniOlKoOLMlMH0Mv0IKSMHVUlLUaCNdBTh6BtSGsSR+92OOIL51Uba5Bt59ifsOxClVPiq
+	UyUvo1p/vBt0E/k4081eh3B9eqGJw+wvMNd+vY/4Ee6gdk1By+Pi9r6a4clzHXBg1MTQe6
+	GTtA7C4WrfXfMUoxyHL79j68cnms4b8=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-612-3oQ--LJePv-NElLd-vG0ww-1; Wed, 31 May 2023 07:38:50 -0400
-X-MC-Unique: 3oQ--LJePv-NElLd-vG0ww-1
+ us-mta-152-8hTO1ZA0MCGy2xr6igLfww-1; Wed, 31 May 2023 07:38:54 -0400
+X-MC-Unique: 8hTO1ZA0MCGy2xr6igLfww-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 93D1B3C397CC;
-	Wed, 31 May 2023 11:38:48 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8EF0D811E78;
+	Wed, 31 May 2023 11:38:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6FC51C154D7;
-	Wed, 31 May 2023 11:38:46 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7EC43C15474;
+	Wed, 31 May 2023 11:38:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3A16E19465A2;
-	Wed, 31 May 2023 11:38:41 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1F80E19465A0;
+	Wed, 31 May 2023 11:38:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4DF8319465A0
- for <dm-devel@listman.corp.redhat.com>; Wed, 31 May 2023 11:38:19 +0000 (UTC)
+ ESMTP id 0A15519465A0
+ for <dm-devel@listman.corp.redhat.com>; Wed, 31 May 2023 11:38:40 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2E80F20296C8; Wed, 31 May 2023 11:38:19 +0000 (UTC)
+ id E8E77492B0B; Wed, 31 May 2023 11:38:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 273CA20296C6
- for <dm-devel@redhat.com>; Wed, 31 May 2023 11:38:19 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [205.139.110.61])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E13D9492B0A
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 11:38:34 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F0CD185A5BD
- for <dm-devel@redhat.com>; Wed, 31 May 2023 11:38:18 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C7CA68032E4
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 11:38:34 +0000 (UTC)
 Received: from esa4.hgst.iphmx.com (esa4.hgst.iphmx.com [216.71.154.42]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-586-tJvKrHTKM-6xLjlSLNS8Qw-2; Wed, 31 May 2023 07:38:14 -0400
-X-MC-Unique: tJvKrHTKM-6xLjlSLNS8Qw-2
-X-IronPort-AV: E=Sophos;i="6.00,207,1681142400"; d="scan'208";a="230206729"
+ us-mta-670-22d2064LNfuS84__EsAaSQ-4; Wed, 31 May 2023 07:38:26 -0400
+X-MC-Unique: 22d2064LNfuS84__EsAaSQ-4
+X-IronPort-AV: E=Sophos;i="6.00,207,1681142400"; d="scan'208";a="230206746"
 Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com)
  ([199.255.45.14])
- by ob1.hgst.iphmx.com with ESMTP; 31 May 2023 19:38:10 +0800
-IronPort-SDR: qHS3qaVvVkaTDizAJLoEN5HEGjNIpI3Yr5wyUtgapYEHRNu97KkKSDzOSlDxUSRooSNOQm3mWE
- 0KJYeAXO3Ogvv7pv7BqRSGW6fjvRz9aXhfBRDQ7pF3wW0+yko4g+JE4E+mFDLGDz3V/ZB9MVme
- bAsl5E2CsCgvji6owVbx5zQOT1NqKTQguPo7C7gvx4Fs7RhrK7NWIsIxDgTHsmKz3UviWhnZlP
- UP05bUiiwxhdHuWcPJR0/6a1cANtJCFYKXH72nj9abnQIBgvw1hGUGpXW/OEgCNb+vRRXtV4g5
- A60=
+ by ob1.hgst.iphmx.com with ESMTP; 31 May 2023 19:38:25 +0800
+IronPort-SDR: t8iQUOZWPpVTCZoUZ+k5HlCFf5kWVpUq+N3qvy+GqdxB7d+W/wUJ466kViU9ZDIx4nZ9+VbT0+
+ ULeSvf8N5pG5jZo/qh+Kq/weZg9nIqApVqNAg9SVIPL4MbFRX/wZcmiT5RQxA9YZKtr147N+z3
+ s4ALhSamapsEJb8QPamxcSnRNIXfSuDkzOgbTzM2nESdIJUgnibV8qDN5jvJjvHasdEwt7CgEQ
+ rprSvs8Uu52ENjWZboy66oyRKlkSlptIAkjq6GXyurmyPsGcGLYf5Tq0GK41lVY2enRjOkVprU
+ NJE=
 Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
  by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 31 May 2023 03:53:02 -0700
-IronPort-SDR: elnARq94Fzfs9J/SRdQfPNSX2Mj47szsB+03GiXquQ2ST3HVuP3adJmqVxYOTx4q+O3Ar0gSDG
- obKu1tjEmPaDp0Baw6hhej1TiKvLCydrnnSOivc5pAoD/cOgpqCNYnEP6/Mqd74RpC+Wx0vSBH
- GI3+WyE4fAK6iQr0axj5aoe3KHl8hMhJY0SalgRpsyxXvDMZmnHERLU4aQaTJg2RMSrIbWgvpC
- 3iHVAQtCOiND+WXOqNqjAwGt4qQsXSe/P0EYzlIb2M+HDt/lrHj4VzKNRsn7VyLQUoD32UrxG5
- 92Y=
+ 31 May 2023 03:53:17 -0700
+IronPort-SDR: aNTVBj/pNYOm8LQW/Ysyt++eETiXP7If4qejTn0fgwq+ZBvvjbFqnWjX4cdzAcsB81x+GtufD5
+ 4CHrk3zAtKxRtt5SrrV2bu+MNhH63gMrYcc4D4gKpDa93KWb6m58gjDK9xoBngjeugS4uWE7z9
+ NwbSUCGGc2OIi/GQCF/6Y8t55/FhJdhT39gpNtonggVW3HmW/CajaG1O4A2XU5aP3EL6Og0AOz
+ J6wM93B7s7mTIZOtB8dnVwSE7Xkm+VtttBGZJwZi8mxnvp3q64E/M567+71xJT/zY9kw6Ysvqx
+ QD8=
 WDCIronportException: Internal
 Received: from unknown (HELO redsun91.ssa.fujisawa.hgst.com) ([10.149.66.6])
- by uls-op-cesaip02.wdc.com with ESMTP; 31 May 2023 04:38:07 -0700
+ by uls-op-cesaip02.wdc.com with ESMTP; 31 May 2023 04:38:22 -0700
 From: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed, 31 May 2023 04:37:43 -0700
-Message-ID: <64f8ac179cc54aa316c75aaadd71e107ba12917d.1685461490.git.johannes.thumshirn@wdc.com>
+Date: Wed, 31 May 2023 04:37:48 -0700
+Message-ID: <1ee0465c7b2634a4435e65a4d0b06019a73d8389.1685461490.git.johannes.thumshirn@wdc.com>
 In-Reply-To: <cover.1685461490.git.johannes.thumshirn@wdc.com>
 References: <cover.1685461490.git.johannes.thumshirn@wdc.com>
 MIME-Version: 1.0
@@ -90,9 +90,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: [dm-devel] [PATCH v6 01/20] swap: use __bio_add_page to add page to
- bio
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: [dm-devel] [PATCH v6 06/20] md: raid5-log: use __bio_add_page to
+ add single page
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -122,60 +122,37 @@ X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: wdc.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Message-ID: <20230531113743.Ikc7myvYOUflCnLMcLo4xQDm5U5XIIEMgO3tWMBCYUA@z>
+Message-ID: <20230531113748.D69wIok55dVaKWadPwmr8sylBQ91cBpFOuAjj6bUdr4@z>
 
-The swap code only adds a single page to a newly created bio. So use
-__bio_add_page() to add the page which is guaranteed to succeed in this
-case.
+The raid5 log metadata submission code uses bio_add_page() to add a page
+to a newly created bio. bio_add_page() can fail, but the return value is
+never checked.
 
-This brings us closer to marking bio_add_page() as __must_check.
+Use __bio_add_page() as adding a single page to a newly created bio is
+guaranteed to succeed.
+
+This brings us a step closer to marking bio_add_page() as __must_check.
 
 Reviewed-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Acked-by: Song Liu <song@kernel.org>
 Signed-off-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 ---
- mm/page_io.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ drivers/md/raid5-cache.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/mm/page_io.c b/mm/page_io.c
-index 87b682d18850..684cd3c7b59b 100644
---- a/mm/page_io.c
-+++ b/mm/page_io.c
-@@ -338,7 +338,7 @@ static void swap_writepage_bdev_sync(struct page *page,
- 	bio_init(&bio, sis->bdev, &bv, 1,
- 		 REQ_OP_WRITE | REQ_SWAP | wbc_to_write_flags(wbc));
- 	bio.bi_iter.bi_sector = swap_page_sector(page);
--	bio_add_page(&bio, page, thp_size(page), 0);
-+	__bio_add_page(&bio, page, thp_size(page), 0);
+diff --git a/drivers/md/raid5-cache.c b/drivers/md/raid5-cache.c
+index 46182b955aef..852b265c5db4 100644
+--- a/drivers/md/raid5-cache.c
++++ b/drivers/md/raid5-cache.c
+@@ -792,7 +792,7 @@ static struct r5l_io_unit *r5l_new_meta(struct r5l_log *log)
+ 	io->current_bio = r5l_bio_alloc(log);
+ 	io->current_bio->bi_end_io = r5l_log_endio;
+ 	io->current_bio->bi_private = io;
+-	bio_add_page(io->current_bio, io->meta_page, PAGE_SIZE, 0);
++	__bio_add_page(io->current_bio, io->meta_page, PAGE_SIZE, 0);
  
- 	bio_associate_blkg_from_page(&bio, page);
- 	count_swpout_vm_event(page);
-@@ -360,7 +360,7 @@ static void swap_writepage_bdev_async(struct page *page,
- 			GFP_NOIO);
- 	bio->bi_iter.bi_sector = swap_page_sector(page);
- 	bio->bi_end_io = end_swap_bio_write;
--	bio_add_page(bio, page, thp_size(page), 0);
-+	__bio_add_page(bio, page, thp_size(page), 0);
+ 	r5_reserve_log_entry(log, io);
  
- 	bio_associate_blkg_from_page(bio, page);
- 	count_swpout_vm_event(page);
-@@ -468,7 +468,7 @@ static void swap_readpage_bdev_sync(struct page *page,
- 
- 	bio_init(&bio, sis->bdev, &bv, 1, REQ_OP_READ);
- 	bio.bi_iter.bi_sector = swap_page_sector(page);
--	bio_add_page(&bio, page, thp_size(page), 0);
-+	__bio_add_page(&bio, page, thp_size(page), 0);
- 	/*
- 	 * Keep this task valid during swap readpage because the oom killer may
- 	 * attempt to access it in the page fault retry time check.
-@@ -488,7 +488,7 @@ static void swap_readpage_bdev_async(struct page *page,
- 	bio = bio_alloc(sis->bdev, 1, REQ_OP_READ, GFP_KERNEL);
- 	bio->bi_iter.bi_sector = swap_page_sector(page);
- 	bio->bi_end_io = end_swap_bio_read;
--	bio_add_page(bio, page, thp_size(page), 0);
-+	__bio_add_page(bio, page, thp_size(page), 0);
- 	count_vm_event(PSWPIN);
- 	submit_bio(bio);
- }
 -- 
 2.40.1
 
