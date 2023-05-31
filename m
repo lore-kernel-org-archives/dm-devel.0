@@ -4,65 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 432C0C7EE2E
-	for <dm-devel@archiver.kernel.org>; Wed, 31 May 2023 13:30:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9602DC77B73
+	for <dm-devel@archiver.kernel.org>; Wed, 31 May 2023 13:30:08 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685539801;
+	s=mimecast20190719; t=1685539807;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=CHosrflB0KbKY5rJL5BEi6htXpCKycI79gTEkVMAWsM=;
-	b=dL4vEUW1HyReLKILw6sBJ47D3+pNdCKLYDmbr1XB15dMFRDg2HrHrEAqGUdNsS73LOwOxW
-	AF2Q5tbnZMUJYhVx2i36MDnKg9348Io69i3NxQq1jhREhyfQtVYsCQKzWn/w1YojPxlw0h
-	EiK4448+Nh9iy4qKIc4MBMooqVvcSNs=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=4TPiQyIwy+RXqWsVmf10JneD9GuzGhafSplMADyOrYM=;
+	b=ETdbxRKgzCf97Ig8IpUTuepYeVPJaIJ4KiZ5EaO/Q+fb8jRkuj1tG66BnDE7VhDjSSRqAh
+	7zyItxcD0D/35JSUKINfhl9CDFidpJ13yAV6b+wwZgX+5jP/XjHGcdIshqqqKqiqYoaE2i
+	/E9tcXCQ+HOECkqdPf3Lrjd7eYYMeXk=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-74-kXZaqhksNpqEwx-unyNeOw-1; Wed, 31 May 2023 09:29:58 -0400
-X-MC-Unique: kXZaqhksNpqEwx-unyNeOw-1
+ us-mta-590-ZwUXo8C1O4asx5Jc5cUNgw-1; Wed, 31 May 2023 09:30:04 -0400
+X-MC-Unique: ZwUXo8C1O4asx5Jc5cUNgw-1
 Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3A726803C83;
-	Wed, 31 May 2023 13:29:56 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 508623C14AB1;
+	Wed, 31 May 2023 13:30:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 28500492B00;
-	Wed, 31 May 2023 13:29:56 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 3CA0748205F;
+	Wed, 31 May 2023 13:30:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E9B8E19465A0;
-	Wed, 31 May 2023 13:29:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 26AE219465B7;
+	Wed, 31 May 2023 13:29:51 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 21FC01946595
- for <dm-devel@listman.corp.redhat.com>; Wed, 31 May 2023 12:57:03 +0000 (UTC)
+ ESMTP id 3EF9F19465BA
+ for <dm-devel@listman.corp.redhat.com>; Wed, 31 May 2023 12:57:29 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 11B5048205E; Wed, 31 May 2023 12:57:03 +0000 (UTC)
+ id 27E5540CFD48; Wed, 31 May 2023 12:57:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0989E400DFF
- for <dm-devel@redhat.com>; Wed, 31 May 2023 12:57:03 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [205.139.110.61])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 20CBF40CFD46
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 12:57:24 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DC7D128078CE
- for <dm-devel@redhat.com>; Wed, 31 May 2023 12:57:02 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 07C7B185A78B
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 12:57:24 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-20-KtzPfj5KNtWqan5RmKrihw-1; Wed, 31 May 2023 08:57:01 -0400
-X-MC-Unique: KtzPfj5KNtWqan5RmKrihw-1
+ us-mta-404-5zLprGEUOdKKPCHmFIkMYg-1; Wed, 31 May 2023 08:57:22 -0400
+X-MC-Unique: 5zLprGEUOdKKPCHmFIkMYg-1
 Received: from [2001:4bb8:182:6d06:2e49:a56:513a:92ee] (helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q4LNl-00HRdJ-2S; Wed, 31 May 2023 12:56:54 +0000
+ id 1q4LO6-00HRx9-1J; Wed, 31 May 2023 12:57:14 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed, 31 May 2023 14:55:25 +0200
-Message-Id: <20230531125535.676098-15-hch@lst.de>
+Date: Wed, 31 May 2023 14:55:29 +0200
+Message-Id: <20230531125535.676098-19-hch@lst.de>
 In-Reply-To: <20230531125535.676098-1-hch@lst.de>
 References: <20230531125535.676098-1-hch@lst.de>
 MIME-Version: 1.0
@@ -75,9 +75,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-Subject: [dm-devel] [PATCH 14/24] init: clear root_wait on all invalid root=
- strings
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: [dm-devel] [PATCH 18/24] dm: open code dm_get_dev_t in dm_init_init
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -105,74 +104,32 @@ X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Instead of only clearing root_wait in devt_from_partuuid when the UUID
-format was invalid, do that in parse_root_device for all strings that
-failed to parse.
+dm_init_init is called from early boot code, and thus lookup_bdev
+will never succeed.  Just open code that call to early_lookup_bdev
+instead.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Mike Snitzer <snitzer@kernel.org>
 ---
- init/do_mounts.c | 18 +++++++++++-------
- 1 file changed, 11 insertions(+), 7 deletions(-)
+ drivers/md/dm-init.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/init/do_mounts.c b/init/do_mounts.c
-index f1953aeb321978..0b36a5f39ee8e2 100644
---- a/init/do_mounts.c
-+++ b/init/do_mounts.c
-@@ -112,14 +112,14 @@ static int devt_from_partuuid(const char *uuid_str, dev_t *devt)
+diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
+index d369457dbed0ed..2a71bcdba92d14 100644
+--- a/drivers/md/dm-init.c
++++ b/drivers/md/dm-init.c
+@@ -293,8 +293,10 @@ static int __init dm_init_init(void)
  
- 		/* Explicitly fail on poor PARTUUID syntax. */
- 		if (sscanf(slash + 1, "PARTNROFF=%d%c", &offset, &c) != 1)
--			goto clear_root_wait;
-+			goto out_invalid;
- 		cmp.len = slash - uuid_str;
- 	} else {
- 		cmp.len = strlen(uuid_str);
+ 	for (i = 0; i < ARRAY_SIZE(waitfor); i++) {
+ 		if (waitfor[i]) {
++			dev_t dev;
++
+ 			DMINFO("waiting for device %s ...", waitfor[i]);
+-			while (!dm_get_dev_t(waitfor[i]))
++			while (early_lookup_bdev(waitfor[i], &dev))
+ 				fsleep(5000);
+ 		}
  	}
- 
- 	if (!cmp.len)
--		goto clear_root_wait;
-+		goto out_invalid;
- 
- 	dev = class_find_device(&block_class, NULL, &cmp, &match_dev_by_uuid);
- 	if (!dev)
-@@ -139,12 +139,9 @@ static int devt_from_partuuid(const char *uuid_str, dev_t *devt)
- 	put_device(dev);
- 	return 0;
- 
--clear_root_wait:
-+out_invalid:
- 	pr_err("VFS: PARTUUID= is invalid.\n"
- 	       "Expected PARTUUID=<valid-uuid-id>[/PARTNROFF=%%d]\n");
--	if (root_wait)
--		pr_err("Disabling rootwait; root= is invalid.\n");
--	root_wait = 0;
- 	return -EINVAL;
- }
- 
-@@ -611,6 +608,7 @@ static void __init wait_for_root(char *root_device_name)
- 
- static dev_t __init parse_root_device(char *root_device_name)
- {
-+	int error;
- 	dev_t dev;
- 
- 	if (!strncmp(root_device_name, "mtd", 3) ||
-@@ -623,8 +621,14 @@ static dev_t __init parse_root_device(char *root_device_name)
- 	if (strcmp(root_device_name, "/dev/ram") == 0)
- 		return Root_RAM0;
- 
--	if (early_lookup_bdev(root_device_name, &dev))
-+	error = early_lookup_bdev(root_device_name, &dev);
-+	if (error) {
-+		if (error == -EINVAL && root_wait) {
-+			pr_err("Disabling rootwait; root= is invalid.\n");
-+			root_wait = 0;
-+		}
- 		return 0;
-+	}
- 	return dev;
- }
- 
 -- 
 2.39.2
 
