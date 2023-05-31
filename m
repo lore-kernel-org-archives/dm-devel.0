@@ -4,135 +4,135 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id EB1EDC77B73
-	for <dm-devel@archiver.kernel.org>; Wed, 31 May 2023 16:44:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7FDCBC77B73
+	for <dm-devel@archiver.kernel.org>; Wed, 31 May 2023 16:46:59 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685551465;
+	s=mimecast20190719; t=1685551617;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=ybQWJaw9FAwr6/y8+uApGWGr4beYTW4HgLHqMyVYZPw=;
-	b=XC0kWhDwAfF/vhbuPl43JQwzjKiJNk8+lQXPYvpy6FdZZikQWfZ1AWekQTeZcK9U8qKuXD
-	JNcgbPrRviPY/UfLVwWD4hIs5yV+vKsOjsabP0+Jx1x1m98CTb3xphe8ybY6SACtJlyeBZ
-	SqFtQPLO3WRkpevbolQViMQWrs0u9L0=
+	bh=RKTOkLF2GCYBTmcCW3PKVbs5fJFhC+OaNUokVccO/co=;
+	b=M3VqDWr63cO70JU1qfyPFO1M+alOSVtEJLmv3LwHlgiHBT52UML2SNWZqOJeR6q6zxCtqs
+	hG1V3GSGKSzIwOq6ISgGB3bCJW62egsqhl8INC5bTrfkVxhJ8G1C7ZrJXt+wz+A6bU8YCQ
+	DmmPwRzQoqyRBjmxQmbn3BzduzQCg4E=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-439--WGfw1LvOyqg3Kv3HFPd2g-1; Wed, 31 May 2023 12:44:23 -0400
-X-MC-Unique: -WGfw1LvOyqg3Kv3HFPd2g-1
+ us-mta-657-v-VTCeeQMPO56_3X935sRg-1; Wed, 31 May 2023 12:46:56 -0400
+X-MC-Unique: v-VTCeeQMPO56_3X935sRg-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E9FE81C09053;
-	Wed, 31 May 2023 16:44:20 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4C22F1C04B57;
+	Wed, 31 May 2023 16:46:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1CCA940C6EC4;
-	Wed, 31 May 2023 16:44:19 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 3243F40C6EC4;
+	Wed, 31 May 2023 16:46:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id ECAD219465B6;
-	Wed, 31 May 2023 16:44:13 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CEBAC19465A2;
+	Wed, 31 May 2023 16:46:46 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
  [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 49F3C1946595
- for <dm-devel@listman.corp.redhat.com>; Wed, 31 May 2023 16:28:52 +0000 (UTC)
+ ESMTP id A107F1946595
+ for <dm-devel@listman.corp.redhat.com>; Wed, 31 May 2023 16:27:37 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2C854492B0B; Wed, 31 May 2023 16:28:47 +0000 (UTC)
+ id 73521492B0D; Wed, 31 May 2023 16:27:37 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 245C2492B0A
- for <dm-devel@redhat.com>; Wed, 31 May 2023 16:28:47 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [205.139.110.61])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6B201492B0B
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 16:27:37 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 054588007D9
- for <dm-devel@redhat.com>; Wed, 31 May 2023 16:28:47 +0000 (UTC)
-Received: from EUR04-HE1-obe.outbound.protection.outlook.com
- (mail-he1eur04on2040.outbound.protection.outlook.com [40.107.7.40]) by
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 304F9185A791
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 16:27:37 +0000 (UTC)
+Received: from EUR04-VI1-obe.outbound.protection.outlook.com
+ (mail-vi1eur04on2072.outbound.protection.outlook.com [40.107.8.72]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-574-wDBG49BnPkq8Bnx-gdBGoQ-1; Wed, 31 May 2023 12:28:45 -0400
-X-MC-Unique: wDBG49BnPkq8Bnx-gdBGoQ-1
+ us-mta-372-ANntB6ffNyC1nh-HDcSTXw-1; Wed, 31 May 2023 12:27:33 -0400
+X-MC-Unique: ANntB6ffNyC1nh-HDcSTXw-1
 Received: from AS8PR04MB8040.eurprd04.prod.outlook.com (2603:10a6:20b:2a9::22)
- by DBAPR04MB7383.eurprd04.prod.outlook.com (2603:10a6:10:1b3::5) with
- Microsoft SMTP Server (version=TLS1_2,
+ by AS8PR04MB7493.eurprd04.prod.outlook.com (2603:10a6:20b:293::7)
+ with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6433.23; Wed, 31 May
- 2023 16:28:42 +0000
+ 2023 16:27:30 +0000
 Received: from AS8PR04MB8040.eurprd04.prod.outlook.com
  ([fe80::2947:7809:4229:a8af]) by AS8PR04MB8040.eurprd04.prod.outlook.com
  ([fe80::2947:7809:4229:a8af%4]) with mapi id 15.20.6433.024; Wed, 31 May 2023
- 16:28:42 +0000
+ 16:27:30 +0000
 From: Martin Wilck <martin.wilck@suse.com>
 To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
  "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH 5/5] multipathd: don't assume mpp->paths will exist in
- need_switch_pathgroup
-Thread-Index: AQHZk9z2KbbT8YdkxESp1uv342TLxg==
-Date: Wed, 31 May 2023 16:28:42 +0000
-Message-ID: <bf7e213a0a838e04e56ce2d4930dbcaa5c34072d.camel@suse.com>
+Thread-Topic: [PATCH 4/5] multipathd: reload map if the path groups are out of
+ order
+Thread-Index: AQHZjpZ2q6vNqLfPoUixhg0FPwfDKa90nGiA
+Date: Wed, 31 May 2023 16:27:30 +0000
+Message-ID: <76217148d8069829795fb1d8608d5c5da60402e2.camel@suse.com>
 References: <1684970472-28669-1-git-send-email-bmarzins@redhat.com>
- <1684970472-28669-6-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1684970472-28669-6-git-send-email-bmarzins@redhat.com>
+ <1684970472-28669-5-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1684970472-28669-5-git-send-email-bmarzins@redhat.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 user-agent: Evolution 3.48.1
 x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: AS8PR04MB8040:EE_|DBAPR04MB7383:EE_
-x-ms-office365-filtering-correlation-id: de926afb-6793-49c2-5bc5-08db61f41900
+x-ms-traffictypediagnostic: AS8PR04MB8040:EE_|AS8PR04MB7493:EE_
+x-ms-office365-filtering-correlation-id: 2a493894-908a-4e89-d3da-08db61f3ee66
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: ubyRaPXHFW2SkXbi4dx0AsWPA0xc+NIjWITM3jdBDsmrWsQMTM4+Ery3V/tbjEBYX3tpb4RIfc54SGsujZ+4jRGKqjt3RYXJRyWCwyHGvgqpm/VHSGI07SpML3g8Y8YXLvH9XgwepdIiGfTED6bao8OFyTu+M5eCOV1I9xqFE1FN9TTy8RuTkwVJc/RTo1qujCjy1w8p6URsJem7v7/xQkMetBKvv6qlvIP7ijGg5PCwHHX1muq9cOleqEjtqZfwk/eyDbu81GhXjsa4WX4ZpM/RWvsdLjvBh8GDVSAdgJwTf31Ekmwebo3rtyEzmV9WSOpYm8kZv4NurUF2Xd0RFjmYf7UM9BS+PtGkM14Vqk5DiZ4lDM4YHHfqeH9ws5azJ+YVCa1Eb5i5mVpvUh1JNonPYVTTnz/aNpHcE7rRb53WaUYfqgovEDTx0oCz/rJXLvelQF1DJEidUElq8cfmovl6+yedBmPKikZK+otrInD+YwUGyaDIRr596WFwKCHKxm/4XNKw/58M1pzbkzpPUJ2L29tc1e7PLXhQ5g+oHRZHR25d+v7Uq0ZQ72A1u4oUBETzxPLyYyZhx66jHHR2bnUsZhSXDb4z28+mim6Nz726wR3MrkVKMyoYuzmYr53nvbWW67nD03lfkFGTGMoveQ==
+x-microsoft-antispam-message-info: hvRJiFku8oWMrfDncailtXuDW0GjNnHmqBQGxaTP1g4Av88pfKLNfRzEMcu3FYaMsgfKQhzQ3/q3A/63CFij1Z+6KqX6ox8tzox9F74slR3NwRvl3XmYg3GimMvnGV5u6KL6fG6mr11sxMqEllL1NCYb4IyW4Fq9mqG2L41sbFYElbiBhH7JUmkBybKl4eFIlxjD9HorbQlgFbk776hz8PQciI11mAxDXvlx9hCRx+Xjd9BmjIEyW+h67lut/ExwglrYA7R01gHSYcWzIJ0zJRRh7vRfwBFIxbAsWvZrIGjJ2EmCb1OuODz8WbpUSz9HnSQGCRiPacIPrSnPTuXvpFHZVXYNZ43P+KWpnLweGEl1rQCO9T0iKBfxbCyZhClFlvBE5vCiP8uMrzBaJlvAnOpUoYdeOVFt8WbbIpoLh/MFBUDTfcot58woenMpc/qlL6Z8USS+DtCsxi/MfxqisRkgP9VvOg9bAXmaJ++gvF/RddKYf+ZSEFD6ffYmAUIMDbXuahq65PQe9JFv7z2WY72Hp/6bOLdgjmQ1DOLk+PKwIXZr754ffcUXC8VDb7U2mae2qgr/0WkWYDG6JPzjCtiSgESuXEO/rXETue3owJkvakI9tMHDzt4+CZXCufEB
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
  IPV:NLI; SFV:NSPM; H:AS8PR04MB8040.eurprd04.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230028)(39860400002)(366004)(136003)(346002)(396003)(376002)(451199021)(26005)(38100700002)(41300700001)(6486002)(186003)(83380400001)(6512007)(6506007)(2616005)(478600001)(110136005)(71200400001)(8936002)(122000001)(66446008)(64756008)(66476007)(66556008)(66946007)(91956017)(4326008)(316002)(5660300002)(76116006)(8676002)(44832011)(4744005)(86362001)(2906002)(38070700005)(36756003)(178253001);
+ SFS:(13230028)(346002)(136003)(366004)(376002)(396003)(39860400002)(451199021)(186003)(2616005)(110136005)(6506007)(26005)(2906002)(6512007)(478600001)(44832011)(83380400001)(38070700005)(6486002)(86362001)(8676002)(38100700002)(8936002)(122000001)(41300700001)(5660300002)(316002)(76116006)(66946007)(66556008)(64756008)(66476007)(36756003)(66446008)(71200400001)(91956017)(4326008);
  DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?WuSfeATN1MwNSh06K/y6hIwPQhMCCqDAHnhgcCgmX4YjxRb9izBdrpwVv?=
- =?iso-8859-15?Q?2L9DbjH+QE821QdtaOapjMBkewAqZ7Sq8hwweU1ebeuQitmwOGHYgWpOq?=
- =?iso-8859-15?Q?Cm4mI13dwuFvLnUo0s6DY7uZDLhtqn5jXO8yCEJy+QU48YglEyE0/OQSK?=
- =?iso-8859-15?Q?ta86gq/DGw6trU6rfOVPAn/NMfejvvY+HU5ZFUgfc92z4u3GbgOG/xZ72?=
- =?iso-8859-15?Q?fOf7qoQZsdE0S953IbRpdDNQ62FlAe/3NpZ/Ptu31UOK4tvwMHTqgeKEy?=
- =?iso-8859-15?Q?zw4yEsQNl8VZm31BpoSLjNv7/OmK5aPN5F/tJhQKJErR7h/PrZgzEnT4z?=
- =?iso-8859-15?Q?KAV5zA298yMbV7Gbh+9Ft99FtiEPohWQesw8uHnEFlr3IswBoO5/Tb9MD?=
- =?iso-8859-15?Q?Qj8m8kd9lvKQbgQkFGmfPVSCtmPVk0DYv9V8SsMr3zXddHJyzXpW189I3?=
- =?iso-8859-15?Q?zok54mbzGlTQnuaO5ofLMUxqniB9RIcT5pBot0DtcsN4TkCoaYVBOe66l?=
- =?iso-8859-15?Q?QegFPGcfDqDH8eVAyNfezZFlGPZ4lk2Cx3zQe3mLT2ACPzGmjrOm2Ua9c?=
- =?iso-8859-15?Q?P4HqS8YdMh4TNgtYSiiS2AdxooBHca9yl5RGTSyOSu3c8ASetkvNZ23rT?=
- =?iso-8859-15?Q?3sSjQfUnGr3NO4rDPIy6URkg5Tgcgkd0NtpLVzlswkXPgFRKDu/gxBiij?=
- =?iso-8859-15?Q?ulyKU19nsVit0zeVFABfWrss0BwN7tr7wgmoi/hcv6+ZzYzUFsJ7k74HA?=
- =?iso-8859-15?Q?0kLKRxsNHIYgliE/piy8JFQnDxIORnU5Hu2k0laYsZgrmn2GyaKhul9rg?=
- =?iso-8859-15?Q?5GwEeSCkaUR/YVckQbNbggfiEVBkT1eFmF0J30c1bI7T32gB8HLEYKj8N?=
- =?iso-8859-15?Q?5g2KbNRJ8wacIdboHrEM7kK8AKv4XFAVepKbnn812eyd52iywUa3CPbGa?=
- =?iso-8859-15?Q?XPRNPahDHYVxBKDHrva8jgEZ7unP97OQ1BQ5DdV1xzlSWmhZMioyOwNfj?=
- =?iso-8859-15?Q?9IOXqOKxtPuW1P8RrntOD+haxWq3EZnbxQ5TqaXw9YHoeIGF/1s/NsCsH?=
- =?iso-8859-15?Q?RN4K2Qc0dalmhxghmFT5H9RxErBZCuxtLGwat22kOAX7P3hjNIcEy8YnH?=
- =?iso-8859-15?Q?xy8i3fOoWyknP0GdNsS8go6DuTo5BLTEBg2kuOAMnq7SUuWoyWdJMotKE?=
- =?iso-8859-15?Q?Lr+aFv7j8wWlZloNDA1GCCVg2/fRGln8bzrs7WHAcV+inYOY+E80iGj4L?=
- =?iso-8859-15?Q?Oe1/+x/5ZHxFWDfrRxZ53ircmjej71vwuN0Xx9c51tP4KRXAReZz0znQU?=
- =?iso-8859-15?Q?YEqSUKUFPHMxZQPPl1sVQc4K8QsnLVHVJykFwSMWjy1G28wfvW9l/1X60?=
- =?iso-8859-15?Q?w1TGqmxZa/PvSW8ZWAvQgMTZrITxbRcm5Rj+fz0bz5kAAXl/E/FvJbXA6?=
- =?iso-8859-15?Q?w3EB8ge/28m2jp74PxVwEE2D0pgEYPuusieGh+tD9E5Xvxb3UDb8S7Oew?=
- =?iso-8859-15?Q?oEEd+rQfwO90LIgrDrPVAKSBCCbSFek0Vh0noq1wXp4diAEJIh6rL0ApT?=
- =?iso-8859-15?Q?E43Qm/8vqe1aiD2DO7JeA9RzVSHIdS4t+ldbSzNAJLl2wxuLurQ5kjh0Z?=
- =?iso-8859-15?Q?vHTjOR0NII2q6/6COnR//UcaBD8EMsP6aRhHQCya0mzIgX8vNCWaOCe/Q?=
- =?iso-8859-15?Q?22IRGqwaR0sLgJokf2GryKE8Ww=3D=3D?=
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?SonJDheXbUJsWr2rRoZSS+FN+32haXMLDGWUelwO6prXLowOJI0SL0rzE?=
+ =?iso-8859-15?Q?XSaJRu0fvlfCM5UeqS21J/d/N6uKKxPHpkXa/S8rlLM1u/026eW4oJfYr?=
+ =?iso-8859-15?Q?M+gLPsdhTrpJfrLzxz/K9oKsnuTTJRnOPI0S1xZKZgxHOuKWvU6IVb3fc?=
+ =?iso-8859-15?Q?U+ENr9V1dXB4Q/rAwPlr2sHaj/Wvs99KttXNe4HGPPXNGTZB+Xh54ZpZ8?=
+ =?iso-8859-15?Q?nfrEUsLFI48GT5+AmMJC0XMw1n/tBT1XmuUwpE2KfH+hNIFMJeK0HoXPK?=
+ =?iso-8859-15?Q?SD6aaDEASUivMfuGknKVcXNChug38DgYd1N5sK9SzcUfBJaexQfy+Lwz7?=
+ =?iso-8859-15?Q?0JHkUVRZdD08CEaXfiTh4KwspNcbx2Upcusc0bn+Ask4hm1a4XPrD9WJZ?=
+ =?iso-8859-15?Q?9hGHGwHvbUHwX7PlfZlyS9WqRTlMzEx1VLejumHZ5yPD6/hme02FKDJXv?=
+ =?iso-8859-15?Q?9wQHS5sVQ3/tDZrQpei0iqJBAhx1NVttSC9auPdAD+U76DnDXwsBHk35O?=
+ =?iso-8859-15?Q?2AeL/JvqTM9gZO/8b4UfUJTMsqcum4T+BR3JXpLjOPmPGaLExU5bxBcX2?=
+ =?iso-8859-15?Q?SUYFMUZVtG8/kzPz4XMSLHyE78tfZ1bC75r28nlphBYyvBeWprybh1jAI?=
+ =?iso-8859-15?Q?OPBToPdaLn85A7CyWd/8FFu4eVl32WiGOPTpn5tvS+q+vszaQJnmMoFP8?=
+ =?iso-8859-15?Q?WhcWnQ57wDQHWGyPEA/d1COSX0ypwgCqCDFwgRauDIdCF2a62sfWcMfE8?=
+ =?iso-8859-15?Q?AVPT3kXWIriyz5Fqbysa1HKh6MidunyLKRpijYLqxAytGWrpqFnjBhucZ?=
+ =?iso-8859-15?Q?BaE1Ji1K0VH/AXxOcuLN+zjUp7mqiMNHEvqp78pzok36cX4aART3G06HO?=
+ =?iso-8859-15?Q?U4SGKxWZROweKTmzfx0CMn9fTU9lS6BBWz3lvEpbBc9Wk7wGij6O7rrx1?=
+ =?iso-8859-15?Q?bbtkTRm1tAtIN/HBFxDmwCM//ykoBXunmg+400q+regsVt05qFajGNI4Z?=
+ =?iso-8859-15?Q?tMC+8rK0vZxgMoJGKh1rdqRDo4sxQlykU3BhDpvCMOVeo664vm5yTCLIT?=
+ =?iso-8859-15?Q?Ktdzed3FbEEzGadGL5oy70XQ74o7rX11mgZ7IeReHnf5ccupj1b2NPQpE?=
+ =?iso-8859-15?Q?E9ldSqze55QhOvMcTX7cu8gGCeqp3Uy2k9rs6YHAi0+3uN3mQRxA+t5ok?=
+ =?iso-8859-15?Q?qVDKoMLi5Cd55TkSSavyCYcKdmcIg31l0w9H0vWnOKjkYNvBZMoNpsihS?=
+ =?iso-8859-15?Q?gzE5zXo1630JVUnVjMCg6uUAw1aK21Tld0CrP6PDuI9aXMMkf26ot6pGV?=
+ =?iso-8859-15?Q?EbzOcdYs5MngZo4SC0QgRIJpJf1NhJercYccJ0WvBC3tUFnYt2iDmFPrV?=
+ =?iso-8859-15?Q?ZEeNXaZMVePEIwd09Mv+KLeI31JS5iky6dyZvKFDWrrCbdXHmzeD5E8/h?=
+ =?iso-8859-15?Q?hmmbTC6vikJqNKnIc2DYqoazquPEf74J07A7YMSHcb/Zoh4atYWxBik2T?=
+ =?iso-8859-15?Q?M3DOWd7mEhKlI9ME4BX1B695PrhyGAOfZLyXjxj4H+L1uEtgj7ms/QScq?=
+ =?iso-8859-15?Q?3LkoShdlZhyJiHb92V2ke1cr0RwGW0kZTGxqoStKVpluUS36JvFOEhS8n?=
+ =?iso-8859-15?Q?ItXESNbXpBn6qhTbwtfCoxcAFzIpVi3ZUzt5rszfpLWUpucdT8XHDXjJz?=
+ =?iso-8859-15?Q?d0mn?=
 MIME-Version: 1.0
 X-OriginatorOrg: suse.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: AS8PR04MB8040.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: de926afb-6793-49c2-5bc5-08db61f41900
-X-MS-Exchange-CrossTenant-originalarrivaltime: 31 May 2023 16:28:42.2004 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 2a493894-908a-4e89-d3da-08db61f3ee66
+X-MS-Exchange-CrossTenant-originalarrivaltime: 31 May 2023 16:27:30.7461 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: vqstaL/vj2+jmi3F1AqryBzIMkUG+d0zazplZ+MQzmEhF3eBIOUeo2yxWX2TaqlEyzrxUdwyn1mKdEJ/KOp3+A==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DBAPR04MB7383
+X-MS-Exchange-CrossTenant-userprincipalname: agZcauq0qBuwAX9fZaaKXuiIqep7bihyChB4cPsJDYFAC5qOswmlf/6S/ChTr/au160PA743f0P0Gg3HpRXOIw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AS8PR04MB7493
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -141,8 +141,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-Subject: Re: [dm-devel] [PATCH 5/5] multipathd: don't assume mpp->paths will
- exist in need_switch_pathgroup
+Subject: Re: [dm-devel] [PATCH 4/5] multipathd: reload map if the path
+ groups are out of order
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -161,22 +161,292 @@ X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: suse.com
 Content-Language: en-US
-Content-ID: <2E4E89DB7CF706438DB2867372D33257@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-ID: <C4FCE891E3A4AB46BB9645EECF493A3A@eurprd04.prod.outlook.com>
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
 On Wed, 2023-05-24 at 18:21 -0500, Benjamin Marzinski wrote:
-> When need_switch_pathgroup() is called by deferred_failback_tick(),
-> there is a chance that mpp->paths will be NULL, even if there are
-> paths
-> in the multipath device's pathgroups. Instead check if there are
-> multiple pathgroups, since multipath can't be using the wrong
-> pathgroup
-> if there is one or none.
-> 
+> need_switch_pathgroup() only checks if the currently used pathgroup
+> is
+> not the highest priority pathgroup. If it isn't, all multipathd does
+> is
+> instruct the kernel to switch to the correct pathgroup.=A0 However, the
+> kernel treats the pathgroups as if they were ordered by priority.
+> When
+> the kernel runs out of paths to use in the currently selected
+> pathgroup,
+> it will start checking the pathgroups in order until it finds one
+> with
+> usable paths.
+>=20
+> need_switch_pathgroup() should also check if the pathgroups are out
+> of
+> order, and if so, multipathd should reload the map to reorder them
+> correctly.
+>=20
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+> =A0libmultipath/libmultipath.version |=A0 5 ++++
+> =A0libmultipath/switchgroup.c=A0=A0=A0=A0=A0=A0=A0 | 27 +++++++++++++++++=
++++++
+> =A0libmultipath/switchgroup.h=A0=A0=A0=A0=A0=A0=A0 |=A0 1 +
+> =A0multipathd/main.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 | 38=
+ +++++++++++++++++++++--------
+> --
+> =A04 files changed, 59 insertions(+), 12 deletions(-)
+>=20
+> diff --git a/libmultipath/libmultipath.version
+> b/libmultipath/libmultipath.version
+> index 8f72c452..38074699 100644
+> --- a/libmultipath/libmultipath.version
+> +++ b/libmultipath/libmultipath.version
+> @@ -237,3 +237,8 @@ global:
+> =A0local:
+> =A0=A0=A0=A0=A0=A0=A0=A0*;
+> =A0};
+> +
+> +LIBMULTIPATH_19.1.0 {
+> +global:
+> +=A0=A0=A0=A0=A0=A0=A0path_groups_in_order;
+> +} LIBMULTIPATH_19.0.0;
+> diff --git a/libmultipath/switchgroup.c b/libmultipath/switchgroup.c
+> index b1e1f39b..b1180839 100644
+> --- a/libmultipath/switchgroup.c
+> +++ b/libmultipath/switchgroup.c
+> @@ -7,6 +7,33 @@
+> =A0#include "structs.h"
+> =A0#include "switchgroup.h"
+> =A0
+> +bool path_groups_in_order(struct multipath *mpp)
+> +{
+> +=A0=A0=A0=A0=A0=A0=A0int i;
+> +=A0=A0=A0=A0=A0=A0=A0struct pathgroup *pgp;
+> +=A0=A0=A0=A0=A0=A0=A0bool seen_marginal_pg =3D false;
+> +=A0=A0=A0=A0=A0=A0=A0int last_prio =3D INT_MAX;
+> +
+> +=A0=A0=A0=A0=A0=A0=A0if (VECTOR_SIZE(mpp->pg) < 2)
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return true;
+> +
+> +=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot(mpp->pg, pgp, i) {
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* skip pgs with PRIO_UNDEF=
+, since this is likely
+> temporary */
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (!pgp->paths || pgp->pri=
+ority =3D=3D PRIO_UNDEF)
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0con=
+tinue;
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pgp->marginal && !seen_=
+marginal_pg) {
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0las=
+t_prio =3D INT_MAX;
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0con=
+tinue;
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (seen_marginal_pg && !pg=
+p->marginal)
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0ret=
+urn false;
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pgp->priority > last_pr=
+io)
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0ret=
+urn false;
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0last_prio =3D pgp->priority=
+;
+> +=A0=A0=A0=A0=A0=A0=A0}
+> +=A0=A0=A0=A0=A0=A0=A0return true;
+> +}
+> +
+> =A0void path_group_prio_update(struct pathgroup *pgp)
+> =A0{
+> =A0=A0=A0=A0=A0=A0=A0=A0int i;
+> diff --git a/libmultipath/switchgroup.h b/libmultipath/switchgroup.h
+> index 9365e2e2..43dbb6c9 100644
+> --- a/libmultipath/switchgroup.h
+> +++ b/libmultipath/switchgroup.h
+> @@ -1,2 +1,3 @@
+> =A0void path_group_prio_update (struct pathgroup * pgp);
+> =A0int select_path_group (struct multipath * mpp);
+> +bool path_groups_in_order(struct multipath *mpp);
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index e7c272ad..2ea7c76b 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -396,7 +396,7 @@ void put_multipath_config(__attribute__((unused))
+> void *arg)
+> =A0}
+> =A0
+> =A0static int
+> -need_switch_pathgroup (struct multipath * mpp, int refresh)
+> +need_switch_pathgroup (struct multipath * mpp, int refresh, bool
+> *need_reload)
+> =A0{
+> =A0=A0=A0=A0=A0=A0=A0=A0struct pathgroup * pgp;
+> =A0=A0=A0=A0=A0=A0=A0=A0struct path * pp;
+> @@ -404,6 +404,7 @@ need_switch_pathgroup (struct multipath * mpp,
+> int refresh)
+> =A0=A0=A0=A0=A0=A0=A0=A0struct config *conf;
+> =A0=A0=A0=A0=A0=A0=A0=A0int bestpg;
+> =A0
+> +=A0=A0=A0=A0=A0=A0=A0*need_reload =3D false;
+> =A0=A0=A0=A0=A0=A0=A0=A0if (!mpp)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
+> =A0
+> @@ -430,10 +431,9 @@ need_switch_pathgroup (struct multipath * mpp,
+> int refresh)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0mpp->bestpg =3D bestpg;
+> -=A0=A0=A0=A0=A0=A0=A0if (mpp->bestpg !=3D mpp->nextpg)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> +=A0=A0=A0=A0=A0=A0=A0*need_reload =3D !path_groups_in_order(mpp);
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+This will start another loop over the path groups. Can we just
+integrate the path_groups_in_order() logic into the loop right here?
+
+
+
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0return 0;
+> +=A0=A0=A0=A0=A0=A0=A0return (*need_reload || mpp->bestpg !=3D mpp->nextp=
+g);
+> =A0}
+> =A0
+> =A0static void
+> @@ -1982,20 +1982,26 @@ ghost_delay_tick(struct vectors *vecs)
+> =A0}
+> =A0
+> =A0static void
+> -deferred_failback_tick (vector mpvec)
+> +deferred_failback_tick (struct vectors *vecs)
+> =A0{
+> =A0=A0=A0=A0=A0=A0=A0=A0struct multipath * mpp;
+> =A0=A0=A0=A0=A0=A0=A0=A0unsigned int i;
+> +=A0=A0=A0=A0=A0=A0=A0bool need_reload;
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot (mpvec, mpp, i) {
+> +=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot (vecs->mpvec, mpp, i) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/*
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 * deferred failback gett=
+ing sooner
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 */
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (mpp->pgfailback > 0 &=
+& mpp->failback_tick > 0) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0m=
+pp->failback_tick--;
+> =A0
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if =
+(!mpp->failback_tick &&
+> need_switch_pathgroup(mpp, 1))
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(mpp);
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if =
+(!mpp->failback_tick &&
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0 need_switch_pathgroup(mpp, 1,
+> &need_reload)) {
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0if (need_reload)
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0reload_and_sync_map(mpp,
+> vecs, 0);
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0else
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(mpp);
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> =A0=A0=A0=A0=A0=A0=A0=A0}
+> =A0}
+> @@ -2579,6 +2585,7 @@ check_path (struct vectors * vecs, struct path
+> * pp, unsigned int ticks)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0int prio_changed =3D upda=
+te_prio(pp, new_path_up);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0bool need_refresh =3D (!n=
+ew_path_up && prio_changed &&
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->priority !=3D PRIO_UNDEF);
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0bool need_reload;
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (prio_changed &&
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->mpp->pgpoli=
+cyfn =3D=3D (pgpolicyfn
+> *)group_by_prio &&
+> @@ -2586,15 +2593,22 @@ check_path (struct vectors * vecs, struct
+> path * pp, unsigned int ticks)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
+ondlog(2, "%s: path priorities changed.
+> reloading",
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->alias);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0r=
+eload_and_sync_map(pp->mpp, vecs,
+> !new_path_up);
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0} else if (need_switch_path=
+group(pp->mpp,
+> need_refresh)) {
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0} else if (need_switch_path=
+group(pp->mpp,
+> need_refresh,
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 &need=
+_reload)) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0i=
+f (pp->mpp->pgfailback > 0 &&
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0 (new_path_up || pp->mpp->failback_tick <=3D
+> 0))
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->failback_tick =3D
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->pgfailback + 1;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0e=
+lse if (pp->mpp->pgfailback =3D=3D -
+> FAILBACK_IMMEDIATE ||
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0 (chkr_new_path_up &&
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0 followover_should_failback(pp)))
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(pp->mpp);
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0 followover_should_failback(pp))) {
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0if (need_reload)
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0reload_and_sync_map(pp->mpp,
+> vecs,
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0
+> !need_refresh &&
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0
+> !new_path_up);
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0else
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(pp->mpp);
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> =A0=A0=A0=A0=A0=A0=A0=A0}
+> =A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> @@ -2720,7 +2734,7 @@ unlock:
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_push(clea=
+nup_lock, &vecs->lock);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0lock(&vecs->lock);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pthread_testcancel();
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0deferred_failback_tick(vecs=
+->mpvec);
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0deferred_failback_tick(vecs=
+);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0retry_count_tick(vecs->mp=
+vec);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0missing_uev_wait_tick(vec=
+s);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0ghost_delay_tick(vecs);
+
+
 
 --
 dm-devel mailing list
