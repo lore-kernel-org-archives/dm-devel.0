@@ -1,68 +1,68 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3B358C7EE23
-	for <dm-devel@archiver.kernel.org>; Wed, 31 May 2023 14:22:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 03728C7EE23
+	for <dm-devel@archiver.kernel.org>; Wed, 31 May 2023 14:28:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685542922;
+	s=mimecast20190719; t=1685543332;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=1DwCwT88Ebo+BB66dCstIexDOHLVQuP1wOuBLbl5CJw=;
-	b=BRDReMQCaZKTo43lGcxZH6SrCCsOfg1I7RsIioLeEONQLnX2x8z2E1s/7l9ITwP3HEwOFM
-	i2GLr723dg9kqQQYzXYmOQ0x/RJ59FM+sB/Kqjavrfr3t9L1wmBOouhUEebT8vzeQDx0qR
-	ZtzreJhevvyJGNzrFKghMLeXo/lzXyM=
+	bh=9Dwqyu0AllYzmdlwWH1ktWJJzePExTO1IjBpI71mtiA=;
+	b=d8Dqw44B1bkYcS7c62ljkP49Qt9gLQ4UfJD12JaW5TQ/yISr2YRgVmIDI+QD5xOQjTM9t8
+	8oiHeTp6nIAUxT1o3t0ppsZ3j0NAq3+zdBkG5vAtDyj7BAJH7GMqayXThd1eux5hq4fNPV
+	jkUoeU+njbZcU5Y8Zj+skEsw8FQaj38=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-220-ZBqts79ZP7K7r0pL57un1Q-1; Wed, 31 May 2023 10:22:00 -0400
-X-MC-Unique: ZBqts79ZP7K7r0pL57un1Q-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-93-eybC7dXFOEW-GcH6tnIEGQ-1; Wed, 31 May 2023 10:28:48 -0400
+X-MC-Unique: eybC7dXFOEW-GcH6tnIEGQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 33727280AA2F;
-	Wed, 31 May 2023 14:21:58 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 81D1B1C01E94;
+	Wed, 31 May 2023 14:28:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 220A540CFD46;
-	Wed, 31 May 2023 14:21:58 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2C47D2166B26;
+	Wed, 31 May 2023 14:28:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2379219451C3;
-	Wed, 31 May 2023 14:21:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0D68B19465B5;
+	Wed, 31 May 2023 14:28:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 462211946595
- for <dm-devel@listman.corp.redhat.com>; Wed, 31 May 2023 13:53:45 +0000 (UTC)
+ ESMTP id 166421946595
+ for <dm-devel@listman.corp.redhat.com>; Wed, 31 May 2023 13:54:34 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1F99140CFD46; Wed, 31 May 2023 13:53:45 +0000 (UTC)
+ id A521CC154D8; Wed, 31 May 2023 13:54:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1877A40CFD45
- for <dm-devel@redhat.com>; Wed, 31 May 2023 13:53:45 +0000 (UTC)
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 9D8E6C154D7
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 13:54:34 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E330B185A78B
- for <dm-devel@redhat.com>; Wed, 31 May 2023 13:53:44 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 81D7280331C
+ for <dm-devel@redhat.com>; Wed, 31 May 2023 13:54:34 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-189-c5zkwAhhOTSzVhg085eenQ-1; Wed, 31 May 2023 09:53:43 -0400
-X-MC-Unique: c5zkwAhhOTSzVhg085eenQ-1
+ us-mta-190-DvT1DxRPO666z1mJWMR7Ug-1; Wed, 31 May 2023 09:54:33 -0400
+X-MC-Unique: DvT1DxRPO666z1mJWMR7Ug-1
 Received: from [2001:4bb8:182:6d06:2e49:a56:513a:92ee] (helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q4LNG-00HRDS-1i; Wed, 31 May 2023 12:56:23 +0000
+ id 1q4LN0-00HR49-2P; Wed, 31 May 2023 12:56:07 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed, 31 May 2023 14:55:19 +0200
-Message-Id: <20230531125535.676098-9-hch@lst.de>
+Date: Wed, 31 May 2023 14:55:16 +0200
+Message-Id: <20230531125535.676098-6-hch@lst.de>
 In-Reply-To: <20230531125535.676098-1-hch@lst.de>
 References: <20230531125535.676098-1-hch@lst.de>
 MIME-Version: 1.0
@@ -75,8 +75,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [PATCH 08/24] init: pass root_device_name explicitly
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: [dm-devel] [PATCH 05/24] init: remove pointless Root_* values
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -98,221 +98,85 @@ Cc: Loic Poulain <loic.poulain@linaro.org>,
  linux-mtd@lists.infradead.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Instead of declaring root_device_name as a global variable pass it as an
-argument to the functions using it.
+Remove all unused defines, and just use the expanded versions for
+the SCSI disk majors.
+
+I've decided to keep Root_RAM0 even if it could be expanded as there
+is a lot of special casing for it in the init code.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- init/do_mounts.c        | 29 ++++++++++++++++-------------
- init/do_mounts.h        | 14 +++++++-------
- init/do_mounts_initrd.c | 11 ++++++-----
- 3 files changed, 29 insertions(+), 25 deletions(-)
+ arch/alpha/kernel/setup.c               | 2 +-
+ arch/ia64/kernel/setup.c                | 2 +-
+ arch/powerpc/platforms/powermac/setup.c | 3 ++-
+ include/linux/root_dev.h                | 8 --------
+ 4 files changed, 4 insertions(+), 11 deletions(-)
 
-diff --git a/init/do_mounts.c b/init/do_mounts.c
-index e708b02d9d6566..1405ee7218bf00 100644
---- a/init/do_mounts.c
-+++ b/init/do_mounts.c
-@@ -28,7 +28,6 @@
- #include "do_mounts.h"
- 
- int root_mountflags = MS_RDONLY | MS_SILENT;
--static char * __initdata root_device_name;
- static char __initdata saved_root_name[64];
- static int root_wait;
- 
-@@ -391,7 +390,7 @@ static int __init do_mount_root(const char *name, const char *fs,
- 	return ret;
- }
- 
--void __init mount_root_generic(char *name, int flags)
-+void __init mount_root_generic(char *name, char *pretty_name, int flags)
- {
- 	struct page *page = alloc_page(GFP_KERNEL);
- 	char *fs_names = page_address(page);
-@@ -425,7 +424,7 @@ void __init mount_root_generic(char *name, int flags)
- 		 * and give them a list of the available devices
- 		 */
- 		printk("VFS: Cannot open root device \"%s\" or %s: error %d\n",
--				root_device_name, b, err);
-+				pretty_name, b, err);
- 		printk("Please append a correct \"root=\" boot option; here are the available partitions:\n");
- 
- 		printk_all_partitions();
-@@ -541,7 +540,7 @@ static bool __init fs_is_nodev(char *fstype)
- 	return ret;
- }
- 
--static int __init mount_nodev_root(void)
-+static int __init mount_nodev_root(char *root_device_name)
- {
- 	char *fs_names, *fstype;
- 	int err = -EINVAL;
-@@ -569,21 +568,21 @@ static int __init mount_nodev_root(void)
- }
- 
- #ifdef CONFIG_BLOCK
--static void __init mount_block_root(void)
-+static void __init mount_block_root(char *root_device_name)
- {
- 	int err = create_dev("/dev/root", ROOT_DEV);
- 
- 	if (err < 0)
- 		pr_emerg("Failed to create /dev/root: %d\n", err);
--	mount_root_generic("/dev/root", root_mountflags);
-+	mount_root_generic("/dev/root", root_device_name, root_mountflags);
- }
- #else
--static inline void mount_block_root(void)
-+static inline void mount_block_root(char *root_device_name)
- {
- }
- #endif /* CONFIG_BLOCK */
- 
--void __init mount_root(void)
-+void __init mount_root(char *root_device_name)
- {
- 	switch (ROOT_DEV) {
- 	case Root_NFS:
-@@ -593,11 +592,12 @@ void __init mount_root(void)
- 		mount_cifs_root();
- 		break;
- 	case 0:
--		if (root_device_name && root_fs_names && mount_nodev_root() == 0)
-+		if (root_device_name && root_fs_names &&
-+		    mount_nodev_root(root_device_name) == 0)
- 			break;
- 		fallthrough;
- 	default:
--		mount_block_root();
-+		mount_block_root(root_device_name);
- 		break;
- 	}
- }
-@@ -607,6 +607,8 @@ void __init mount_root(void)
-  */
- void __init prepare_namespace(void)
- {
-+	char *root_device_name;
-+
- 	if (root_delay) {
- 		printk(KERN_INFO "Waiting %d sec before mounting root device...\n",
- 		       root_delay);
-@@ -628,7 +630,8 @@ void __init prepare_namespace(void)
- 		root_device_name = saved_root_name;
- 		if (!strncmp(root_device_name, "mtd", 3) ||
- 		    !strncmp(root_device_name, "ubi", 3)) {
--			mount_root_generic(root_device_name, root_mountflags);
-+			mount_root_generic(root_device_name, root_device_name,
-+					   root_mountflags);
- 			goto out;
- 		}
- 		ROOT_DEV = name_to_dev_t(root_device_name);
-@@ -636,7 +639,7 @@ void __init prepare_namespace(void)
- 			root_device_name += 5;
- 	}
- 
--	if (initrd_load())
-+	if (initrd_load(root_device_name))
- 		goto out;
- 
- 	/* wait for any asynchronous scanning to complete */
-@@ -649,7 +652,7 @@ void __init prepare_namespace(void)
- 		async_synchronize_full();
- 	}
- 
--	mount_root();
-+	mount_root(root_device_name);
- out:
- 	devtmpfs_mount();
- 	init_mount(".", "/", NULL, MS_MOVE, NULL);
-diff --git a/init/do_mounts.h b/init/do_mounts.h
-index 33623025f6951a..15e372b00ce704 100644
---- a/init/do_mounts.h
-+++ b/init/do_mounts.h
-@@ -10,8 +10,8 @@
- #include <linux/root_dev.h>
- #include <linux/init_syscalls.h>
- 
--void  mount_root_generic(char *name, int flags);
--void  mount_root(void);
-+void  mount_root_generic(char *name, char *pretty_name, int flags);
-+void  mount_root(char *root_device_name);
- extern int root_mountflags;
- 
- static inline __init int create_dev(char *name, dev_t dev)
-@@ -33,11 +33,11 @@ static inline int rd_load_image(char *from) { return 0; }
+diff --git a/arch/alpha/kernel/setup.c b/arch/alpha/kernel/setup.c
+index 33bf3a62700270..b650ff1cb022ee 100644
+--- a/arch/alpha/kernel/setup.c
++++ b/arch/alpha/kernel/setup.c
+@@ -658,7 +658,7 @@ setup_arch(char **cmdline_p)
  #endif
  
- #ifdef CONFIG_BLK_DEV_INITRD
--
--bool __init initrd_load(void);
--
-+bool __init initrd_load(char *root_device_name);
- #else
--
--static inline bool initrd_load(void) { return false; }
-+static inline bool initrd_load(char *root_device_name)
-+{
-+	return false;
-+	}
+ 	/* Default root filesystem to sda2.  */
+-	ROOT_DEV = Root_SDA2;
++	ROOT_DEV = MKDEV(SCSI_DISK0_MAJOR, 2);
  
- #endif
-diff --git a/init/do_mounts_initrd.c b/init/do_mounts_initrd.c
-index 686d1ff3af4bb1..425f4bcf4b77e0 100644
---- a/init/do_mounts_initrd.c
-+++ b/init/do_mounts_initrd.c
-@@ -83,7 +83,7 @@ static int __init init_linuxrc(struct subprocess_info *info, struct cred *new)
- 	return 0;
- }
+ #ifdef CONFIG_EISA
+ 	/* FIXME:  only set this when we actually have EISA in this box? */
+diff --git a/arch/ia64/kernel/setup.c b/arch/ia64/kernel/setup.c
+index c0572804427275..becdb4f33c2195 100644
+--- a/arch/ia64/kernel/setup.c
++++ b/arch/ia64/kernel/setup.c
+@@ -627,7 +627,7 @@ setup_arch (char **cmdline_p)
+ 	 * is physical disk 1 partition 1 and the Linux root disk is
+ 	 * physical disk 1 partition 2.
+ 	 */
+-	ROOT_DEV = Root_SDA2;		/* default to second partition on first drive */
++	ROOT_DEV = MKDEV(SCSI_DISK0_MAJOR, 2);
  
--static void __init handle_initrd(void)
-+static void __init handle_initrd(char *root_device_name)
- {
- 	struct subprocess_info *info;
- 	static char *argv[] = { "linuxrc", NULL, };
-@@ -95,7 +95,8 @@ static void __init handle_initrd(void)
- 	real_root_dev = new_encode_dev(ROOT_DEV);
- 	create_dev("/dev/root.old", Root_RAM0);
- 	/* mount initrd on rootfs' /root */
--	mount_root_generic("/dev/root.old", root_mountflags & ~MS_RDONLY);
-+	mount_root_generic("/dev/root.old", root_device_name,
-+			   root_mountflags & ~MS_RDONLY);
- 	init_mkdir("/old", 0700);
- 	init_chdir("/old");
+ 	if (is_uv_system())
+ 		uv_setup(cmdline_p);
+diff --git a/arch/powerpc/platforms/powermac/setup.c b/arch/powerpc/platforms/powermac/setup.c
+index 193cc9c394221b..0c41f4b005bcf3 100644
+--- a/arch/powerpc/platforms/powermac/setup.c
++++ b/arch/powerpc/platforms/powermac/setup.c
+@@ -76,7 +76,8 @@ int pmac_newworld;
  
-@@ -117,7 +118,7 @@ static void __init handle_initrd(void)
+ static int current_root_goodness = -1;
  
- 	init_chdir("/");
- 	ROOT_DEV = new_decode_dev(real_root_dev);
--	mount_root();
-+	mount_root(root_device_name);
+-#define DEFAULT_ROOT_DEVICE Root_SDA1	/* sda1 - slightly silly choice */
++/* sda1 - slightly silly choice */
++#define DEFAULT_ROOT_DEVICE	MKDEV(SCSI_DISK0_MAJOR, 1)
  
- 	printk(KERN_NOTICE "Trying to move old root to /initrd ... ");
- 	error = init_mount("/old", "/root/initrd", NULL, MS_MOVE, NULL);
-@@ -133,7 +134,7 @@ static void __init handle_initrd(void)
- 	}
- }
+ sys_ctrler_t sys_ctrler = SYS_CTRLER_UNKNOWN;
+ EXPORT_SYMBOL(sys_ctrler);
+diff --git a/include/linux/root_dev.h b/include/linux/root_dev.h
+index 4e78651371ba92..ed3ea8da642972 100644
+--- a/include/linux/root_dev.h
++++ b/include/linux/root_dev.h
+@@ -10,14 +10,6 @@ enum {
+ 	Root_NFS = MKDEV(UNNAMED_MAJOR, 255),
+ 	Root_CIFS = MKDEV(UNNAMED_MAJOR, 254),
+ 	Root_RAM0 = MKDEV(RAMDISK_MAJOR, 0),
+-	Root_RAM1 = MKDEV(RAMDISK_MAJOR, 1),
+-	Root_FD0 = MKDEV(FLOPPY_MAJOR, 0),
+-	Root_HDA1 = MKDEV(IDE0_MAJOR, 1),
+-	Root_HDA2 = MKDEV(IDE0_MAJOR, 2),
+-	Root_SDA1 = MKDEV(SCSI_DISK0_MAJOR, 1),
+-	Root_SDA2 = MKDEV(SCSI_DISK0_MAJOR, 2),
+-	Root_HDC1 = MKDEV(IDE1_MAJOR, 1),
+-	Root_SR0 = MKDEV(SCSI_CDROM_MAJOR, 0),
+ };
  
--bool __init initrd_load(void)
-+bool __init initrd_load(char *root_device_name)
- {
- 	if (mount_initrd) {
- 		create_dev("/dev/ram", Root_RAM0);
-@@ -145,7 +146,7 @@ bool __init initrd_load(void)
- 		 */
- 		if (rd_load_image("/initrd.image") && ROOT_DEV != Root_RAM0) {
- 			init_unlink("/initrd.image");
--			handle_initrd();
-+			handle_initrd(root_device_name);
- 			return true;
- 		}
- 	}
+ extern dev_t ROOT_DEV;
 -- 
 2.39.2
 
