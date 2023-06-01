@@ -1,101 +1,96 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 91E16C77B7E
-	for <dm-devel@archiver.kernel.org>; Thu,  1 Jun 2023 18:46:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 259B7C7EE23
+	for <dm-devel@archiver.kernel.org>; Thu,  1 Jun 2023 19:10:29 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685645175;
+	s=mimecast20190719; t=1685646629;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=UP93FNYLA6L4JqRlhcNQAWbVnLrwP7Vnaw6RsJHUypM=;
-	b=ZpfITUPckF5dkpPKl4l/+RhgB42pLmwNwjNPA9d7omuyyGpyneapQutCMKWLdF9/r6sV98
-	NMGvZwewDpvgbiUhxUQBnaCOmxFM+xfQH3BkLuI9jsEsE+PmogXidP8STTHfXySmt1QeH1
-	6aKNmbWg1M6eOfc7K6I8R/CgIkfA+8E=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=++wnEBLydvmco7YG5vZEd3C1BpJfpRU9NsVFBdjWAuE=;
+	b=CPqSaxWPEmOgB+H/qLzzAhV1oRoQgPeLiZISS281uTKxXi/VZo7f0tOFMtoumM1J5RelDJ
+	NyZq8eAKWzPpax7bfmSYREySgAhrplluVCn6BmMXo9jPzqdLkerQc4BpCzglq7mDTjJfI8
+	j+LrlpUKPY3dmV6nsuOPdC2RnbWouT4=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-264-XawkdkeUMDWHeYjDxUZpxg-1; Thu, 01 Jun 2023 14:46:13 -0400
-X-MC-Unique: XawkdkeUMDWHeYjDxUZpxg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-567-Naqqk7T9M4yNAx6hlFqYYA-1; Thu, 01 Jun 2023 15:10:27 -0400
+X-MC-Unique: Naqqk7T9M4yNAx6hlFqYYA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AA6A5800BFF;
-	Thu,  1 Jun 2023 18:46:11 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E51BC1C01E99;
+	Thu,  1 Jun 2023 19:10:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 56C1814171BC;
-	Thu,  1 Jun 2023 18:46:11 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D7657C15474;
+	Thu,  1 Jun 2023 19:10:24 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 359651946595;
-	Thu,  1 Jun 2023 18:46:11 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9E3C91946595;
+	Thu,  1 Jun 2023 19:10:24 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D244F194658C
- for <dm-devel@listman.corp.redhat.com>; Thu,  1 Jun 2023 18:46:09 +0000 (UTC)
+ ESMTP id CE31B194658C
+ for <dm-devel@listman.corp.redhat.com>; Thu,  1 Jun 2023 19:10:22 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C0A33492B0B; Thu,  1 Jun 2023 18:46:09 +0000 (UTC)
+ id B9F022166B27; Thu,  1 Jun 2023 19:10:22 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B8E41492B0A
- for <dm-devel@redhat.com>; Thu,  1 Jun 2023 18:46:09 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [205.139.110.61])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B19E32166B25
+ for <dm-devel@redhat.com>; Thu,  1 Jun 2023 19:10:22 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A585185A793
- for <dm-devel@redhat.com>; Thu,  1 Jun 2023 18:46:09 +0000 (UTC)
-Received: from mail-qv1-f42.google.com (mail-qv1-f42.google.com
- [209.85.219.42]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 95438811E7F
+ for <dm-devel@redhat.com>; Thu,  1 Jun 2023 19:10:22 +0000 (UTC)
+Received: from mail-qv1-f49.google.com (mail-qv1-f49.google.com
+ [209.85.219.49]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-394-6s_fae4QNSOJVUDt_mHtFg-1; Thu, 01 Jun 2023 14:46:08 -0400
-X-MC-Unique: 6s_fae4QNSOJVUDt_mHtFg-1
-Received: by mail-qv1-f42.google.com with SMTP id
- 6a1803df08f44-6260a9ef126so10580986d6.2
- for <dm-devel@redhat.com>; Thu, 01 Jun 2023 11:46:08 -0700 (PDT)
+ us-mta-65-CWvZh6yZNoa8t-oz8OyAIA-1; Thu, 01 Jun 2023 15:10:20 -0400
+X-MC-Unique: CWvZh6yZNoa8t-oz8OyAIA-1
+Received: by mail-qv1-f49.google.com with SMTP id
+ 6a1803df08f44-626195b4909so11056816d6.0
+ for <dm-devel@redhat.com>; Thu, 01 Jun 2023 12:10:20 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1685645167; x=1688237167;
+ d=1e100.net; s=20221208; t=1685646620; x=1688238620;
  h=in-reply-to:content-disposition:mime-version:references:message-id
  :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
  :message-id:reply-to;
- bh=OhyufVORgAPdxy2e2nylP7DQVEhvcm7KBzR049ls10E=;
- b=NbrbdAZPsPmK3MnFCAZWjO1JcVWIotcaj+eZEgIQQz6ITMe7TmdWQAMcpDmq7HE0QG
- qQw4/9MwAUdkWZuUFC11oMbU7MJLoVlsbZeQBiwJJnANitTxEtRaXE4aFFZlOf1hlbQK
- +N1ox43JrdOVe/Xq8otE1185N9J6SqsbBgb/GujYg7QzpTRUfRr/AwxB0uCi18risQvs
- uM6rYhqjwzkUcJmNyUqjI45Vub9hxzVrToNZuDRvPM8tCgkbdhhHZMAb1ItDV7/jPK+S
- m0c+DxcXxrvTkcssme7ttjtwoqBF5kGfLcGHjRIIyYyVS9W3xkcUF6PlT2EC9X8V3GYb
- fkyA==
-X-Gm-Message-State: AC+VfDwA406sf01/Zc9JoYgKDN9W+J3oBGAcMoqgl4hCOd2wig1zSlX4
- Bqw5OKYyuOyzgd5J6WVhTsmEMmw=
-X-Google-Smtp-Source: ACHHUZ6u3xR1YiMGmuLlFSVcpQijECu4NK+3gxplM1YXFxd6uPbdqueU4kLpHglpcsupIu+Tz62ckA==
-X-Received: by 2002:a05:6214:aca:b0:625:b849:fa3 with SMTP id
- g10-20020a0562140aca00b00625b8490fa3mr11540334qvi.30.1685645167691; 
- Thu, 01 Jun 2023 11:46:07 -0700 (PDT)
+ bh=hm7Jjh9TF3Bsq+esRbEZ2y936YTbpq5qnxQF0w6eX7M=;
+ b=AhnQGEdYydmVchOzNJ+RvChM8DE8n68O4wj2jj7/+nPIzOzXEGTu60iHdnWAteSIzR
+ 5JPaIWD6g35spWIGFU7We/6bcEVePOkIHR4XMQPqcLyXN0iiiQHN9V1s2uuUkbyAfMdg
+ 9XKwRqpq4XX1iypvhLgu/PwnonxQv6iQP64C2+UqxhTq3IksOS2rY77xRkcreDSmHhb5
+ OyJdeDf+wCjFXIUS7QKoivh8Zz2IQlL6L6IGNb+zdb4z76zZL5MQ8HmMwbgzsqbAvVOc
+ 6QKbY+ufJDifYYkmNVUFuWAil+ZkIRtf/Ngq1Wafvj7YfC6l43Aoklo7slbfkDr0opv7
+ 33zg==
+X-Gm-Message-State: AC+VfDzGJ43Gj+9G1z6c9RkSgz349UKo65ZxSfXxWgr90lHYSpSHMnRH
+ mqUqwMl68zvuaMplBlEnbqhEo4M=
+X-Google-Smtp-Source: ACHHUZ7bZ4cyi3vQcWjCBhem09VoTvBAo4ZBUsrNepalRX5b0TnPcFZq7rotFJybrs3TC5fTvPZnGQ==
+X-Received: by 2002:a05:6214:1bcb:b0:628:3e37:e175 with SMTP id
+ m11-20020a0562141bcb00b006283e37e175mr6190986qvc.25.1685646620329; 
+ Thu, 01 Jun 2023 12:10:20 -0700 (PDT)
 Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
  [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- y3-20020ac87c83000000b003e89e2b3c23sm7940746qtv.58.2023.06.01.11.46.06
+ mn6-20020a0562145ec600b0060530c942f4sm7830403qvb.46.2023.06.01.12.10.19
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 01 Jun 2023 11:46:07 -0700 (PDT)
-Date: Thu, 1 Jun 2023 14:46:06 -0400
+ Thu, 01 Jun 2023 12:10:19 -0700 (PDT)
+Date: Thu, 1 Jun 2023 15:10:18 -0400
 From: Mike Snitzer <snitzer@kernel.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Message-ID: <ZHjnbkcpZ/yZWRsE@redhat.com>
-References: <20230502101934.24901-1-johannes.thumshirn@wdc.com>
- <20230502101934.24901-17-johannes.thumshirn@wdc.com>
- <alpine.LRH.2.21.2305301045220.3943@file01.intranet.prod.int.rdu2.redhat.com>
- <ZHYbIYxGbcXbpvIK@redhat.com>
- <alpine.LRH.2.21.2305301527410.18906@file01.intranet.prod.int.rdu2.redhat.com>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Message-ID: <ZHjtGvf+gHxeV83V@redhat.com>
+References: <ZHhbL+SbWRnTW4b7@gondor.apana.org.au>
 MIME-Version: 1.0
-In-Reply-To: <alpine.LRH.2.21.2305301527410.18906@file01.intranet.prod.int.rdu2.redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-Subject: Re: [dm-devel] [PATCH v5 16/20] dm-crypt: check if adding pages to
- clone bio fails
+In-Reply-To: <ZHhbL+SbWRnTW4b7@gondor.apana.org.au>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] dm crypt: Avoid using MAX_CIPHER_BLOCKSIZE
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -107,76 +102,97 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "axboe @ kernel . dk" <axboe@kernel.dk>, shaggy@kernel.org,
- damien.lemoal@wdc.com, cluster-devel@redhat.com, kch@nvidia.com,
- agruenba@redhat.com, linux-mm@kvack.org,
- Johannes Thumshirn <johannes.thumshirn@wdc.com>,
- Damien Le Moal <damien.lemoal@opensource.wdc.com>,
- jfs-discussion@lists.sourceforge.net, willy@infradead.org, ming.lei@redhat.com,
- linux-raid@vger.kernel.org, song@kernel.org, dm-devel@redhat.com,
- linux-block@vger.kernel.org, rpeterso@redhat.com,
- linux-fsdevel@vger.kernel.org, hch@lst.de
+Cc: dm-devel@redhat.com,
+ Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
+ Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, May 30 2023 at  3:43P -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Thu, Jun 01 2023 at  4:47P -0400,
+Herbert Xu <herbert@gondor.apana.org.au> wrote:
 
+> MAX_CIPHER_BLOCKSIZE is an internal implementation detail and should
+> not be relied on by users of the Crypto API.
 > 
+> Instead of storing the IV on the stack, allocate it together with
+> the crypto request.
 > 
-> On Tue, 30 May 2023, Mike Snitzer wrote:
+> Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+> ---
 > 
-> > On Tue, May 30 2023 at 11:13P -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> > > Hi
-> > > 
-> > > I nack this. This just adds code that can't ever be executed.
-> > > 
-> > > dm-crypt already allocates enough entries in the vector (see "unsigned int 
-> > > nr_iovecs = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;"), so bio_add_page can't 
-> > > fail.
-> > > 
-> > > If you want to add __must_check to bio_add_page, you should change the 
-> > > dm-crypt code to:
-> > > if (!bio_add_page(clone, page, len, 0)) {
-> > > 	WARN(1, "this can't happen");
-> > > 	return NULL;
-> > > }
-> > > and not write recovery code for a can't-happen case.
-> > 
-> > Thanks for the review Mikulas. But the proper way forward, in the
-> > context of this patchset, is to simply change bio_add_page() to
-> > __bio_add_page()
-> > 
-> > Subject becomes: "dm crypt: use __bio_add_page to add single page to clone bio"
-> > 
-> > And header can explain that "crypt_alloc_buffer() already allocates
-> > enough entries in the clone bio's vector, so bio_add_page can't fail".
-> > 
-> > Mike
+>  drivers/md/dm-crypt.c |   15 +++++++++++----
+>  1 file changed, 11 insertions(+), 4 deletions(-)
 > 
-> Yes, __bio_add_page would look nicer. But bio_add_page can merge adjacent 
-> pages into a single bvec entry and __bio_add_page can't (I don't know how 
-> often the merging happens or what is the performance implication of 
-> non-merging).
-> 
-> I think that for the next merge window, we can apply this patch: 
-> https://listman.redhat.com/archives/dm-devel/2023-May/054046.html
-> which makes this discussion irrelevant. (you can change bio_add_page to 
-> __bio_add_page in it)
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 40cb1719ae4d..0e7e443dde11 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -31,10 +31,10 @@
+>  #include <asm/unaligned.h>
+>  #include <crypto/hash.h>
+>  #include <crypto/md5.h>
+> -#include <crypto/algapi.h>
+>  #include <crypto/skcipher.h>
+>  #include <crypto/aead.h>
+>  #include <crypto/authenc.h>
+> +#include <crypto/utils.h>
+>  #include <linux/rtnetlink.h> /* for struct rtattr and RTA macros only */
+>  #include <linux/key-type.h>
+>  #include <keys/user-type.h>
+> @@ -743,16 +743,23 @@ static int crypt_iv_eboiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+>  static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
+>  			    struct dm_crypt_request *dmreq)
+>  {
+> -	u8 buf[MAX_CIPHER_BLOCKSIZE] __aligned(__alignof__(__le64));
+> +	struct crypto_skcipher *tfm = any_tfm(cc);
+>  	struct skcipher_request *req;
+>  	struct scatterlist src, dst;
+>  	DECLARE_CRYPTO_WAIT(wait);
+> +	unsigned int reqsize;
+>  	int err;
+> +	u8 *buf;
+>  
+> -	req = skcipher_request_alloc(any_tfm(cc), GFP_NOIO);
+> +	reqsize = ALIGN(crypto_skcipher_reqsize(tfm), __alignof__(__le64));
+> +
+> +	req = kmalloc(reqsize + cc->iv_size, GFP_NOIO);
+>  	if (!req)
+>  		return -ENOMEM;
+>  
+> +	skcipher_request_set_tfm(req, tfm);
+> +
+> +	buf = (u8 *)req + reqsize;
+>  	memset(buf, 0, cc->iv_size);
+>  	*(__le64 *)buf = cpu_to_le64(dmreq->iv_sector * cc->sector_size);
+>  
+> @@ -761,7 +768,7 @@ static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
+>  	skcipher_request_set_crypt(req, &src, &dst, cc->iv_size, buf);
+>  	skcipher_request_set_callback(req, 0, crypto_req_done, &wait);
+>  	err = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
+> -	skcipher_request_free(req);
+> +	kfree_sensitive(req);
+>  
+>  	return err;
+>  }
 
-Yes, your patch is on my TODO list.  I've rebased my dm-6.5 branch on
-the latest block 6.5 branch.  I'll be reviewing/rebasing/applying your
-patch soon.
 
-Mike
+Strikes me as strange that open-coding skcipher_request_{alloc,free}
+is ideal, but dm-crypt is the only non-crypto consumer of
+MAX_CIPHER_BLOCKSIZE so really not worth standing up yet another
+interface wrapper.
+
+Anyway, this code is certainly better for dm-crypt's needs.  I'm happy
+with you applying this change via your crypto tree.
+
+Reviewed-by: Mike Snitzer <snitzer@kernel.org>
+
+Thanks.
 
 --
 dm-devel mailing list
