@@ -1,91 +1,91 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 789B6C7EE23
-	for <dm-devel@archiver.kernel.org>; Thu,  1 Jun 2023 21:31:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2C2A1C7EE2E
+	for <dm-devel@archiver.kernel.org>; Thu,  1 Jun 2023 21:31:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685655069;
+	s=mimecast20190719; t=1685655072;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=MAuK6T1BAURQ1yhO0xWI3SVks7hY/3h9l482eIkXeS0=;
-	b=h8pY9wEWPXPHXFS2xBz2RCDM/CEtAOtWCB994Ngub7bJK/7QzLtRxDWLqh81NHvm8z5NeW
-	cuoHZhfqq0jGNExVoQC0WGWPAIOOxAncYBIVcoiUsYVBQ1n2WSHiv2yU85Isw/hXeWKlHm
-	PD/kQt6GrWxhOMG4ANLB//AH/lNBjbw=
+	bh=fK981mmeTGCBsB5zZdKGnkAn4+eR2YDc9F7jTTUiGqU=;
+	b=RsGHaF0nZRegBX+YDXMO932cLWmqYWPdaxrw8YxXTmvMVc4LCXqZept3D9h0zylP4+jFg4
+	MNDcxL0qT/B556ODlatY6oiQKOdiKS1y3AnX1VoUJEmpnmcT0YdAZVmiE5R6nvfNdr3fPm
+	sCzmGzBuBIX/0QT5g7ITmbpQ7LG0omk=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-320-mMV7UpoyOBa4AvhMb-BucA-1; Thu, 01 Jun 2023 17:31:07 -0400
-X-MC-Unique: mMV7UpoyOBa4AvhMb-BucA-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-583-J_mHSHjsMQ60tZU99kWEPg-1; Thu, 01 Jun 2023 17:31:08 -0400
+X-MC-Unique: J_mHSHjsMQ60tZU99kWEPg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D598B101A53B;
-	Thu,  1 Jun 2023 21:31:05 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B1230811E85;
+	Thu,  1 Jun 2023 21:31:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3F354492B0A;
-	Thu,  1 Jun 2023 21:31:04 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9E7F240C6EC4;
+	Thu,  1 Jun 2023 21:31:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E34C419465A0;
-	Thu,  1 Jun 2023 21:31:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 765771946595;
+	Thu,  1 Jun 2023 21:31:06 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6ACA5194658C
- for <dm-devel@listman.corp.redhat.com>; Thu,  1 Jun 2023 21:31:03 +0000 (UTC)
+ ESMTP id 8C9171946F02
+ for <dm-devel@listman.corp.redhat.com>; Thu,  1 Jun 2023 21:31:04 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4D33DC154D9; Thu,  1 Jun 2023 21:31:03 +0000 (UTC)
+ id 7C08740D1B60; Thu,  1 Jun 2023 21:31:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 45657C154D7
- for <dm-devel@redhat.com>; Thu,  1 Jun 2023 21:31:03 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6A9BD40C6EC4
+ for <dm-devel@redhat.com>; Thu,  1 Jun 2023 21:31:04 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
+ [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 25CDF800B2A
- for <dm-devel@redhat.com>; Thu,  1 Jun 2023 21:31:03 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4505D185A797
+ for <dm-devel@redhat.com>; Thu,  1 Jun 2023 21:31:04 +0000 (UTC)
 Received: from out5-smtp.messagingengine.com (out5-smtp.messagingengine.com
  [66.111.4.29]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-573-zAeM7f-vNySdm-CtQQcxng-1; Thu, 01 Jun 2023 17:31:01 -0400
-X-MC-Unique: zAeM7f-vNySdm-CtQQcxng-1
+ us-mta-568-tqD8TPYtMLSfc1NEQ9_HvQ-1; Thu, 01 Jun 2023 17:31:01 -0400
+X-MC-Unique: tqD8TPYtMLSfc1NEQ9_HvQ-1
 Received: from compute4.internal (compute4.nyi.internal [10.202.2.44])
- by mailout.nyi.internal (Postfix) with ESMTP id 51B315C01D4;
- Thu,  1 Jun 2023 17:25:20 -0400 (EDT)
+ by mailout.nyi.internal (Postfix) with ESMTP id ED3F95C01D0;
+ Thu,  1 Jun 2023 17:25:18 -0400 (EDT)
 Received: from mailfrontend2 ([10.202.2.163])
- by compute4.internal (MEProxy); Thu, 01 Jun 2023 17:25:20 -0400
-X-ME-Sender: <xms:wAx5ZCop7mZ0sTHJh6aoixbkmxXE2hpeBBeaZkvdf0fWSbsehwCnGw>
- <xme:wAx5ZApfEXNvHSO10vsufNin_SAdjUB3gVaNzAkdWzjJShuQG0v7xXjdTTDuL3PbQ
- AuwmDJkN4i0a7k>
-X-ME-Received: <xmr:wAx5ZHPLYNpMCuEbyVrjrHzrxcFisklaeh4Xortc_jx63i9ls9tcqnqszl1clo4EzXEbzPztBOU>
+ by compute4.internal (MEProxy); Thu, 01 Jun 2023 17:25:18 -0400
+X-ME-Sender: <xms:vgx5ZJl5JgAUmNufEDYwNrsN-G-EO1QHsCR4dSUnokpwRfYWGjzzaA>
+ <xme:vgx5ZE1Yo7CUXEE8RUAbNCt-a2-XbccgbUHqR4kXBCEIbdbgHqUHkViNfzWl5SG6-
+ 4qFydbJAtancIs>
+X-ME-Received: <xmr:vgx5ZPoePhu157xZX-bbv9bP7pmGparlpW5qqGnD907mpClxwjMJ2GaKSQ86f7WG21O_oVMoxrY>
 X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvhedrfeeluddgudeiudcutefuodetggdotefrod
  ftvfcurfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfgh
  necuuegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmd
  enucfjughrpefhvfevufffkffojghfggfgsedtkeertdertddtnecuhfhrohhmpeffvghm
  ihcuofgrrhhivgcuqfgsvghnohhurhcuoeguvghmihesihhnvhhishhisghlvghthhhinh
  hgshhlrggsrdgtohhmqeenucggtffrrghtthgvrhhnpeejffejgffgueegudevvdejkefg
- hefghffhffejteekleeufeffteffhfdtudehteenucevlhhushhtvghrufhiiigvpedune
+ hefghffhffejteekleeufeffteffhfdtudehteenucevlhhushhtvghrufhiiigvpedtne
  curfgrrhgrmhepmhgrihhlfhhrohhmpeguvghmihesihhnvhhishhisghlvghthhhinhhg
  shhlrggsrdgtohhm
-X-ME-Proxy: <xmx:wAx5ZB5e536P_TRuBejVQt_cQiplNTKjKAzNptqLpQPP2iATdXDspQ>
- <xmx:wAx5ZB7L_eqEFw3Ns9k1frl4_L1CH2Jr5jaUtLU9OLBdKUU3u_eVBg>
- <xmx:wAx5ZBgMG9dI4j10NYs_2vLlWxLRnHWZqQBkNLxmHhAXvYdKoRsUqw>
- <xmx:wAx5ZLncHxR2y9IyXXRcNarRGZph6zvk8iAelJKk8lHREVjQGLCDAw>
+X-ME-Proxy: <xmx:vgx5ZJk4owg_jhg1X2Q0y-8-n3Pmh7l4WlNHs6avJIjGRn_608YbQA>
+ <xmx:vgx5ZH1TqGmlycWHksJaGk7SzXvvbrAwXecbkgip5uQ5DCMr1NgN8w>
+ <xmx:vgx5ZIt20BUPJ49zXBNs04qcnRkE8iYmzz5VaApQ3y7kYwyhrhVP_A>
+ <xmx:vgx5ZIwCP6Zwe8ZOcSjHX3FU-hk_ADpXTpOmK0PUcrGICiZQ3__59g>
 Feedback-ID: iac594737:Fastmail
 Received: by mail.messagingengine.com (Postfix) with ESMTPA; Thu,
- 1 Jun 2023 17:25:19 -0400 (EDT)
+ 1 Jun 2023 17:25:18 -0400 (EDT)
 From: Demi Marie Obenour <demi@invisiblethingslab.com>
 To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
  dm-devel@redhat.com
-Date: Thu,  1 Jun 2023 17:24:53 -0400
-Message-Id: <20230601212456.1533-5-demi@invisiblethingslab.com>
+Date: Thu,  1 Jun 2023 17:24:52 -0400
+Message-Id: <20230601212456.1533-4-demi@invisiblethingslab.com>
 In-Reply-To: <20230601212456.1533-1-demi@invisiblethingslab.com>
 References: <20230601212456.1533-1-demi@invisiblethingslab.com>
 MIME-Version: 1.0
@@ -96,8 +96,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: [dm-devel] [PATCH 4/6] device-mapper: Avoid double-fetch of version
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: [dm-devel] [PATCH 3/6] device-mapper: structs and parameter strings
+ must not overlap
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -113,73 +114,100 @@ Cc: Demi Marie Obenour <demi@invisiblethingslab.com>,
  linux-kernel@vger.kernel.org, stable@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: invisiblethingslab.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The version is fetched once in check_version(), which then does some
-validation and then overwrites the version in userspace with the API
-version supported by the kernel.  copy_params() then fetches the version
-from userspace *again*, and this time no validation is done.  The result
-is that the kernel's version number is completely controllable by
-userspace, provided that userspace can win a race condition.
+The NUL terminator for each target parameter string must precede the
+following 'struct dm_target_spec'.  Otherwise, dm_split_args() might
+corrupt this struct.  Furthermore, the first 'struct dm_target_spec'
+must come after the 'struct dm_ioctl', as if it overlaps too much
+dm_split_args() could corrupt the 'struct dm_ioctl'.
 
-Fix this flaw by not copying the version back to the kernel the second
-time.  This is not exploitable as the version is not further used in the
-kernel.  However, it could become a problem if future patches start
-relying on the version field.
-
+Signed-off-by: Demi Marie Obenour <demi@invisiblethingslab.com>
 Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
 Cc: stable@vger.kernel.org
-Signed-off-by: Demi Marie Obenour <demi@invisiblethingslab.com>
 ---
- drivers/md/dm-ioctl.c | 14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
+ drivers/md/dm-ioctl.c | 28 +++++++++++++++++++++-------
+ 1 file changed, 21 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index da6ca26b51d0953df380582bb3a51c2ec22c27cb..fd46b249f6f856c49752063fc49d720e95df0525 100644
+index 64e8f16d344c47057de5e2d29e3d63202197dca0..da6ca26b51d0953df380582bb3a51c2ec22c27cb 100644
 --- a/drivers/md/dm-ioctl.c
 +++ b/drivers/md/dm-ioctl.c
-@@ -1873,12 +1873,13 @@ static ioctl_fn lookup_ioctl(unsigned int cmd, int *ioctl_flags)
-  * As well as checking the version compatibility this always
-  * copies the kernel interface version out.
-  */
--static int check_version(unsigned int cmd, struct dm_ioctl __user *user)
-+static int check_version(unsigned int cmd, struct dm_ioctl __user *user,
-+			 struct dm_ioctl *kernel_params)
+@@ -1391,7 +1391,7 @@ static inline fmode_t get_mode(struct dm_ioctl *param)
+ 	return mode;
+ }
+ 
+-static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
++static int next_target(struct dm_target_spec *last, uint32_t next, const char *end,
+ 		       struct dm_target_spec **spec, char **target_params)
  {
--	uint32_t version[3];
- 	int r = 0;
-+	uint32_t *version = kernel_params->version;
- 
--	if (copy_from_user(version, user->version, sizeof(version)))
-+	if (copy_from_user(version, user->version, sizeof(user->version)))
- 		return -EFAULT;
- 
- 	if ((version[0] != DM_VERSION_MAJOR) ||
-@@ -1922,7 +1923,10 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kern
- 	const size_t minimum_data_size = offsetof(struct dm_ioctl, data);
- 	unsigned int noio_flag;
- 
--	if (copy_from_user(param_kernel, user, minimum_data_size))
-+	/* Version has been copied from userspace already, avoid TOCTOU */
-+	if (copy_from_user((char *)param_kernel + sizeof(param_kernel->version),
-+			   (char __user *)user + sizeof(param_kernel->version),
-+			   minimum_data_size - sizeof(param_kernel->version)))
- 		return -EFAULT;
- 
- 	if (param_kernel->data_size < minimum_data_size) {
-@@ -2034,7 +2038,7 @@ static int ctl_ioctl(struct file *file, uint command, struct dm_ioctl __user *us
- 	 * Check the interface version passed in.  This also
- 	 * writes out the kernel's interface version.
+ 	static_assert(_Alignof(struct dm_target_spec) <= 8,
+@@ -1404,7 +1404,7 @@ static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
+ 	 * sizeof(struct dm_target_spec) or more, as otherwise *last was
+ 	 * out of bounds already.
  	 */
--	r = check_version(cmd, user);
-+	r = check_version(cmd, user, &param_kernel);
- 	if (r)
- 		return r;
+-	size_t remaining = (char *)end - (char *)last;
++	size_t remaining = end - (char *)last;
  
+ 	/*
+ 	 * There must be room for both the next target spec and the
+@@ -1423,10 +1423,7 @@ static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
+ 	*spec = (struct dm_target_spec *) ((unsigned char *) last + next);
+ 	*target_params = (char *) (*spec + 1);
+ 
+-	if (*spec < (last + 1))
+-		return -EINVAL;
+-
+-	return invalid_str(*target_params, end);
++	return 0;
+ }
+ 
+ static int populate_table(struct dm_table *table,
+@@ -1436,8 +1433,9 @@ static int populate_table(struct dm_table *table,
+ 	unsigned int i = 0;
+ 	struct dm_target_spec *spec = (struct dm_target_spec *) param;
+ 	uint32_t next = param->data_start;
+-	void *end = (void *) param + param_size;
++	const char *const end = (const char *) param + param_size;
+ 	char *target_params;
++	size_t min_size = sizeof(struct dm_ioctl);
+ 
+ 	if (!param->target_count) {
+ 		DMERR("%s: no targets specified", __func__);
+@@ -1445,6 +1443,13 @@ static int populate_table(struct dm_table *table,
+ 	}
+ 
+ 	for (i = 0; i < param->target_count; i++) {
++		const char *nul_terminator;
++
++		if (next < min_size) {
++			DMERR("%s: next target spec (offset %u) overlaps %s",
++			      __func__, next, i ? "previous target" : "'struct dm_ioctl'");
++			return -EINVAL;
++		}
+ 
+ 		r = next_target(spec, next, end, &spec, &target_params);
+ 		if (r) {
+@@ -1452,6 +1457,15 @@ static int populate_table(struct dm_table *table,
+ 			return r;
+ 		}
+ 
++		nul_terminator = memchr(target_params, 0, (size_t)(end - target_params));
++		if (nul_terminator == NULL) {
++			DMERR("%s: target parameters not NUL-terminated", __func__);
++			return -EINVAL;
++		}
++
++		/* Add 1 for NUL terminator */
++		min_size = (size_t)(nul_terminator - (const char *)spec) + 1;
++
+ 		r = dm_table_add_target(table, spec->target_type,
+ 					(sector_t) spec->sector_start,
+ 					(sector_t) spec->length,
 -- 
 Sincerely,
 Demi Marie Obenour (she/her/hers)
