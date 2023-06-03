@@ -4,73 +4,73 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7E90EC7EE2E
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 191C8C7EE33
 	for <dm-devel@archiver.kernel.org>; Sat,  3 Jun 2023 15:35:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685806520;
+	s=mimecast20190719; t=1685806521;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=TYAUsRCcVcKTyvhiElmaeq6W92esAt48D6bUlsSgQxw=;
-	b=BmPh9CPhT362Ud03NK8UT7TbymzeTJ2RcY/wsMAST8Z9w5d9IGIJAhgLc7B6vhl6YllXcW
-	KrdKVDVnv6kQG4CkQUmkp3Ng3UtDoH1p1SxjNCpfSFq3XL1Lb56RlClsDLF7tk7rT513yd
-	oS+j+xzabab6FvE+4jbLAirTIyebmGI=
+	bh=pM3Jk/gkjYYOrhGfRjJ17BsW9SQSc44meaBg2voxgfI=;
+	b=BW/2ktNqlz4MeuFCfd+rw6VSDW15vqdD9RF1/iIBbDJbSDJ5gQrJc92BqOg0N4cOR88I6x
+	48YkDs5F3dZzaMJ9ECDlqIRQ3drtc0OexAuF+yOoKvCKuyry0cuyuC2tUJVIgHOZWgeOOo
+	kKz5hmXE5kogIX4xQ1lZfghVArT1Akc=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-654-Oe9CV9B0MGKL9qwTkDwmlQ-1; Sat, 03 Jun 2023 11:35:15 -0400
-X-MC-Unique: Oe9CV9B0MGKL9qwTkDwmlQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-618-y2lf5maPOoGZcGMdz_Z_Zw-1; Sat, 03 Jun 2023 11:35:16 -0400
+X-MC-Unique: y2lf5maPOoGZcGMdz_Z_Zw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B9F088032F1;
-	Sat,  3 Jun 2023 15:35:13 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8279F101AA76;
+	Sat,  3 Jun 2023 15:35:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A826440317D;
-	Sat,  3 Jun 2023 15:35:13 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7219940C6EC4;
+	Sat,  3 Jun 2023 15:35:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EA55C1946A45;
-	Sat,  3 Jun 2023 15:35:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 429A61946F0F;
+	Sat,  3 Jun 2023 15:35:10 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id CDA8E19465B7
- for <dm-devel@listman.corp.redhat.com>; Sat,  3 Jun 2023 15:35:08 +0000 (UTC)
+ ESMTP id 360E019465B6
+ for <dm-devel@listman.corp.redhat.com>; Sat,  3 Jun 2023 15:35:09 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B135C407DEC3; Sat,  3 Jun 2023 15:35:08 +0000 (UTC)
+ id 19ECB40C6EC4; Sat,  3 Jun 2023 15:35:09 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A949F407DEC0
- for <dm-devel@redhat.com>; Sat,  3 Jun 2023 15:35:08 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [205.139.110.61])
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1236140C6CCC
+ for <dm-devel@redhat.com>; Sat,  3 Jun 2023 15:35:09 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8DC5C811E7F
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EB5FD3806623
  for <dm-devel@redhat.com>; Sat,  3 Jun 2023 15:35:08 +0000 (UTC)
 Received: from mga14.intel.com (mga14.intel.com [192.55.52.115]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-306-SSO38kyKNf-L6zzJ_-pCIQ-1; Sat, 03 Jun 2023 11:35:05 -0400
-X-MC-Unique: SSO38kyKNf-L6zzJ_-pCIQ-1
-X-IronPort-AV: E=McAfee;i="6600,9927,10730"; a="356097322"
-X-IronPort-AV: E=Sophos;i="6.00,216,1681196400"; d="scan'208";a="356097322"
+ us-mta-66-p7_8YMddP7CQP770XXRZTA-3; Sat, 03 Jun 2023 11:35:06 -0400
+X-MC-Unique: p7_8YMddP7CQP770XXRZTA-3
+X-IronPort-AV: E=McAfee;i="6600,9927,10730"; a="356097400"
+X-IronPort-AV: E=Sophos;i="6.00,216,1681196400"; d="scan'208";a="356097400"
 Received: from orsmga007.jf.intel.com ([10.7.209.58])
  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
- 03 Jun 2023 08:35:03 -0700
+ 03 Jun 2023 08:35:05 -0700
 X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10730"; a="702274235"
-X-IronPort-AV: E=Sophos;i="6.00,216,1681196400"; d="scan'208";a="702274235"
+X-IronPort-AV: E=McAfee;i="6600,9927,10730"; a="702274253"
+X-IronPort-AV: E=Sophos;i="6.00,216,1681196400"; d="scan'208";a="702274253"
 Received: from chang-linux-3.sc.intel.com ([172.25.66.173])
- by orsmga007.jf.intel.com with ESMTP; 03 Jun 2023 08:35:02 -0700
+ by orsmga007.jf.intel.com with ESMTP; 03 Jun 2023 08:35:04 -0700
 From: "Chang S. Bae" <chang.seok.bae@intel.com>
 To: linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org,
  dm-devel@redhat.com
-Date: Sat,  3 Jun 2023 08:22:17 -0700
-Message-Id: <20230603152227.12335-3-chang.seok.bae@intel.com>
+Date: Sat,  3 Jun 2023 08:22:20 -0700
+Message-Id: <20230603152227.12335-6-chang.seok.bae@intel.com>
 In-Reply-To: <20230603152227.12335-1-chang.seok.bae@intel.com>
 References: <20230524165717.14062-1-chang.seok.bae@intel.com>
  <20230603152227.12335-1-chang.seok.bae@intel.com>
@@ -81,9 +81,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [PATCH v8 02/12] x86/cpufeature: Enumerate Key Locker
- feature
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: [dm-devel] [PATCH v8 05/12] x86/msr-index: Add MSRs for Key Locker
+ wrapping key
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -105,31 +105,31 @@ Cc: x86@kernel.org, herbert@gondor.apana.org.au, ardb@kernel.org,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: intel.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Key Locker is a CPU feature to minimize exposure of clear-text key
-material. An encoded form, called 'key handle', is referenced for data
-encryption or decryption instead of accessing the clear text key.
+The CPU state that contains the wrapping key is in the same power
+domain as the cache. So any sleep state that would invalidate the
+cache (like S3) also invalidates the state of the wrapping key.
 
-A wrapping key loaded in the CPU's software-inaccessible state is used
-to transform a user key into a key handle. On rarely unexpected
-hardware failure, the key could be lost.
+But, since the state is inaccessible to software, it needs a special
+mechanism to save and restore the key during deep sleep.
 
-Here enumerate this hardware capability. It will not be shown up in
-/proc/cpuinfo as userspace usage is not supported. This is because
-there is no ABI to coordinate the wrapping-key failure.
+A set of new MSRs are provided as an abstract interface to save and
+restore the wrapping key, and to check the key status. The wrapping
+key is saved in a platform-scoped state of non-volatile media. The
+backup itself and its path from the CPU are encrypted and integrity
+protected.
 
-The feature supports Advanced Encryption Standard (AES) cipher
-algorithm with new SIMD instruction set like its predecessor (AES-NI).
-Mark the feature depending on XMM2. The new AES implementation will be
-in the crypto library.
+Define those MSRs to be used to save and restore the key for S3/4
+sleep states.
 
-Add X86_FEATURE_KEYLOCKER to the disabled features mask at the moment.
-It will be enabled under a new config option.
+But the backup storage's non-volatility is not architecturally
+guaranteed across off-states, such as S5 and G3. Then, the kernel may
+generate a new key on the next boot.
 
 Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
 Reviewed-by: Dan Williams <dan.j.williams@intel.com>
@@ -143,84 +143,31 @@ Cc: x86@kernel.org
 Cc: linux-kernel@vger.kernel.org
 ---
 Changes from v6:
-* Massage the changelog -- re-organize the change descriptions
+* Tweak the changelog -- put the last for those about other sleep
+  states
 
 Changes from RFC v2:
-* Do not publish the feature flag to userspace.
-* Update the changelog.
-
-Changes from RFC v1:
-* Updated the changelog.
+* Update the changelog. (Dan Williams)
+* Rename the MSRs. (Dan Williams)
 ---
- arch/x86/include/asm/cpufeatures.h          | 1 +
- arch/x86/include/asm/disabled-features.h    | 8 +++++++-
- arch/x86/include/uapi/asm/processor-flags.h | 2 ++
- arch/x86/kernel/cpu/cpuid-deps.c            | 1 +
- 4 files changed, 11 insertions(+), 1 deletion(-)
+ arch/x86/include/asm/msr-index.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
-index cb8ca46213be..4a12673df7e9 100644
---- a/arch/x86/include/asm/cpufeatures.h
-+++ b/arch/x86/include/asm/cpufeatures.h
-@@ -389,6 +389,7 @@
- #define X86_FEATURE_AVX512_VPOPCNTDQ	(16*32+14) /* POPCNT for vectors of DW/QW */
- #define X86_FEATURE_LA57		(16*32+16) /* 5-level page tables */
- #define X86_FEATURE_RDPID		(16*32+22) /* RDPID instruction */
-+#define X86_FEATURE_KEYLOCKER		(16*32+23) /* "" Key Locker */
- #define X86_FEATURE_BUS_LOCK_DETECT	(16*32+24) /* Bus Lock detect */
- #define X86_FEATURE_CLDEMOTE		(16*32+25) /* CLDEMOTE instruction */
- #define X86_FEATURE_MOVDIRI		(16*32+27) /* MOVDIRI instruction */
-diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
-index fafe9be7a6f4..eb841d694ed9 100644
---- a/arch/x86/include/asm/disabled-features.h
-+++ b/arch/x86/include/asm/disabled-features.h
-@@ -38,6 +38,12 @@
- # define DISABLE_OSPKE		(1<<(X86_FEATURE_OSPKE & 31))
- #endif /* CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS */
+diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
+index 3aedae61af4f..cd8555c0f3c2 100644
+--- a/arch/x86/include/asm/msr-index.h
++++ b/arch/x86/include/asm/msr-index.h
+@@ -1117,4 +1117,10 @@
+ 						* a #GP
+ 						*/
  
-+#ifdef CONFIG_X86_KEYLOCKER
-+# define DISABLE_KEYLOCKER	0
-+#else
-+# define DISABLE_KEYLOCKER	(1<<(X86_FEATURE_KEYLOCKER & 31))
-+#endif /* CONFIG_X86_KEYLOCKER */
++/* MSRs for managing a CPU-internal wrapping key for Key Locker. */
++#define MSR_IA32_IWKEY_COPY_STATUS		0x00000990
++#define MSR_IA32_IWKEY_BACKUP_STATUS		0x00000991
++#define MSR_IA32_BACKUP_IWKEY_TO_PLATFORM	0x00000d91
++#define MSR_IA32_COPY_IWKEY_TO_LOCAL		0x00000d92
 +
- #ifdef CONFIG_X86_5LEVEL
- # define DISABLE_LA57	0
- #else
-@@ -126,7 +132,7 @@
- #define DISABLED_MASK14	0
- #define DISABLED_MASK15	0
- #define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP| \
--			 DISABLE_ENQCMD)
-+			 DISABLE_ENQCMD|DISABLE_KEYLOCKER)
- #define DISABLED_MASK17	0
- #define DISABLED_MASK18	0
- #define DISABLED_MASK19	0
-diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
-index d898432947ff..262348aeaad1 100644
---- a/arch/x86/include/uapi/asm/processor-flags.h
-+++ b/arch/x86/include/uapi/asm/processor-flags.h
-@@ -128,6 +128,8 @@
- #define X86_CR4_PCIDE		_BITUL(X86_CR4_PCIDE_BIT)
- #define X86_CR4_OSXSAVE_BIT	18 /* enable xsave and xrestore */
- #define X86_CR4_OSXSAVE		_BITUL(X86_CR4_OSXSAVE_BIT)
-+#define X86_CR4_KEYLOCKER_BIT	19 /* enable Key Locker */
-+#define X86_CR4_KEYLOCKER	_BITUL(X86_CR4_KEYLOCKER_BIT)
- #define X86_CR4_SMEP_BIT	20 /* enable SMEP support */
- #define X86_CR4_SMEP		_BITUL(X86_CR4_SMEP_BIT)
- #define X86_CR4_SMAP_BIT	21 /* enable SMAP support */
-diff --git a/arch/x86/kernel/cpu/cpuid-deps.c b/arch/x86/kernel/cpu/cpuid-deps.c
-index f6748c8bd647..200c5e69f78c 100644
---- a/arch/x86/kernel/cpu/cpuid-deps.c
-+++ b/arch/x86/kernel/cpu/cpuid-deps.c
-@@ -81,6 +81,7 @@ static const struct cpuid_dep cpuid_deps[] = {
- 	{ X86_FEATURE_XFD,			X86_FEATURE_XSAVES    },
- 	{ X86_FEATURE_XFD,			X86_FEATURE_XGETBV1   },
- 	{ X86_FEATURE_AMX_TILE,			X86_FEATURE_XFD       },
-+	{ X86_FEATURE_KEYLOCKER,		X86_FEATURE_XMM2      },
- 	{}
- };
- 
+ #endif /* _ASM_X86_MSR_INDEX_H */
 -- 
 2.17.1
 
