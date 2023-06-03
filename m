@@ -4,7 +4,7 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5EBA0C7EE24
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 15EBCC7EE29
 	for <dm-devel@archiver.kernel.org>; Sat,  3 Jun 2023 15:35:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1685806520;
@@ -14,63 +14,63 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=NAT+nHl9cQd9cc0k9mf5hhgd9kRdqp6nQuCPPAxRU/U=;
-	b=ga8fxwULEP9LMn4gc9/g4Hs+P882iF0obOq4UgGH2Rhmfu+l2Pqy43+ZRcB8+c5e4O3tl3
-	ADzYV3vlM16RJ51jXoYFawPZH18N51LNxGDFUb3orogNZpqZCbwtBM41V+BTqC6QzkB10w
-	7RG3lJQ0TJve03tqLqt0jmFSkijaI2k=
+	bh=wzElLeKdMhRzl0XQqAH30NinA6T4RnFWN/UujMZ/8Hg=;
+	b=P6SFL6uMqoPJmISxGZHjD+Zke0xahgHxFamTg5Z2meeobfM6g8yWfBcD1BOorXj8bRs6Mt
+	A/gs84k5nlaj2pN6Ur7gVe73bmsaLkF2oeN4K0Sw+hSuFmxgA/mIsShfFVwZWWRg69ExUb
+	Huv23FPwJzfsraZinc3sCjJNtT5dVCA=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-393-iP5vRjp8MnqCSl49YCk6Rw-1; Sat, 03 Jun 2023 11:35:19 -0400
-X-MC-Unique: iP5vRjp8MnqCSl49YCk6Rw-1
+ us-mta-201-EShTUrJsNb6v59ulSXiDHg-1; Sat, 03 Jun 2023 11:35:17 -0400
+X-MC-Unique: EShTUrJsNb6v59ulSXiDHg-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 071668039B6;
-	Sat,  3 Jun 2023 15:35:16 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E78CB407DEC0;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 08D2C800888;
 	Sat,  3 Jun 2023 15:35:15 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A1E171946F00;
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EA2A6407DEC0;
 	Sat,  3 Jun 2023 15:35:14 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2AF991946F18;
+	Sat,  3 Jun 2023 15:35:12 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E99A91946595
- for <dm-devel@listman.corp.redhat.com>; Sat,  3 Jun 2023 15:35:12 +0000 (UTC)
+ ESMTP id D5B7419466DF
+ for <dm-devel@listman.corp.redhat.com>; Sat,  3 Jun 2023 15:35:09 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id CACCB40C6CCC; Sat,  3 Jun 2023 15:35:12 +0000 (UTC)
+ id C291753BB; Sat,  3 Jun 2023 15:35:09 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C414540C6EC4
- for <dm-devel@redhat.com>; Sat,  3 Jun 2023 15:35:12 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [207.211.31.81])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id BACFF7AE4
+ for <dm-devel@redhat.com>; Sat,  3 Jun 2023 15:35:09 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AA74E101A53A
- for <dm-devel@redhat.com>; Sat,  3 Jun 2023 15:35:12 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 96E87802E58
+ for <dm-devel@redhat.com>; Sat,  3 Jun 2023 15:35:09 +0000 (UTC)
 Received: from mga14.intel.com (mga14.intel.com [192.55.52.115]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-423-8VpHfR0fMf6oPGGaS13FYg-4; Sat, 03 Jun 2023 11:35:10 -0400
-X-MC-Unique: 8VpHfR0fMf6oPGGaS13FYg-4
-X-IronPort-AV: E=McAfee;i="6600,9927,10730"; a="356097509"
-X-IronPort-AV: E=Sophos;i="6.00,216,1681196400"; d="scan'208";a="356097509"
+ us-mta-66-KM-A9lADOd2dj-XtDUNPSQ-2; Sat, 03 Jun 2023 11:35:05 -0400
+X-MC-Unique: KM-A9lADOd2dj-XtDUNPSQ-2
+X-IronPort-AV: E=McAfee;i="6600,9927,10730"; a="356097308"
+X-IronPort-AV: E=Sophos;i="6.00,216,1681196400"; d="scan'208";a="356097308"
 Received: from orsmga007.jf.intel.com ([10.7.209.58])
  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
- 03 Jun 2023 08:35:09 -0700
+ 03 Jun 2023 08:35:02 -0700
 X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10730"; a="702274278"
-X-IronPort-AV: E=Sophos;i="6.00,216,1681196400"; d="scan'208";a="702274278"
+X-IronPort-AV: E=McAfee;i="6600,9927,10730"; a="702274230"
+X-IronPort-AV: E=Sophos;i="6.00,216,1681196400"; d="scan'208";a="702274230"
 Received: from chang-linux-3.sc.intel.com ([172.25.66.173])
- by orsmga007.jf.intel.com with ESMTP; 03 Jun 2023 08:35:08 -0700
+ by orsmga007.jf.intel.com with ESMTP; 03 Jun 2023 08:35:01 -0700
 From: "Chang S. Bae" <chang.seok.bae@intel.com>
 To: linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org,
  dm-devel@redhat.com
-Date: Sat,  3 Jun 2023 08:22:25 -0700
-Message-Id: <20230603152227.12335-11-chang.seok.bae@intel.com>
+Date: Sat,  3 Jun 2023 08:22:16 -0700
+Message-Id: <20230603152227.12335-2-chang.seok.bae@intel.com>
 In-Reply-To: <20230603152227.12335-1-chang.seok.bae@intel.com>
 References: <20230524165717.14062-1-chang.seok.bae@intel.com>
  <20230603152227.12335-1-chang.seok.bae@intel.com>
@@ -81,9 +81,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: [dm-devel] [PATCH v8 10/12] crypto: x86/aesni - Use the proper data
- type in struct aesni_xts_ctx
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: [dm-devel] [PATCH v8 01/12] Documentation/x86: Document Key Locker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -95,14 +94,13 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: x86@kernel.org, herbert@gondor.apana.org.au,
- "David S. Miller" <davem@davemloft.net>, ardb@kernel.org,
- chang.seok.bae@intel.com, dave.hansen@linux.intel.com,
- dan.j.williams@intel.com, mingo@kernel.org, ebiggers@kernel.org,
- lalithambika.krishnakumar@intel.com, Ingo Molnar <mingo@redhat.com>,
- bp@alien8.de, charishma1.gairuboyina@intel.com, luto@kernel.org,
- "H. Peter Anvin" <hpa@zytor.com>, bernie.keany@intel.com, tglx@linutronix.de,
- nhuck@google.com, gmazyland@gmail.com, elliott@hpe.com
+Cc: x86@kernel.org, herbert@gondor.apana.org.au, linux-doc@vger.kernel.org,
+ Jonathan Corbet <corbet@lwn.net>, ardb@kernel.org, chang.seok.bae@intel.com,
+ dave.hansen@linux.intel.com, dan.j.williams@intel.com, mingo@kernel.org,
+ ebiggers@kernel.org, lalithambika.krishnakumar@intel.com,
+ Ingo Molnar <mingo@redhat.com>, bp@alien8.de, charishma1.gairuboyina@intel.com,
+ luto@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, bernie.keany@intel.com,
+ tglx@linutronix.de, nhuck@google.com, gmazyland@gmail.com, elliott@hpe.com
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
@@ -112,186 +110,156 @@ X-Mimecast-Originator: intel.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Every field in struct aesni_xts_ctx is a pointer to a byte array. Each
-array has a size of struct crypto_aes_ctx. Then, the field can be
-redefined as that struct type instead of the obscure pointer.
+Document the overview of the feature along with relevant consideration
+when provisioning dm-crypt volumes with AES-KL instead of AES-NI.
 
-Subsequently, the address to struct aesni_xts_ctx should be aligned
-right away rather than on every access to the field.
-
-Thus, redefine struct aesni_xts_ctx, and align its address on the
-front. This draws a rework by refactoring the common alignment code.
-
-Then, the refactored code itself appears to be useful to simplify
-the overall runtime alignment. So, use it for other modes.
-
-Suggested-by: Eric Biggers <ebiggers@kernel.org>
 Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: "David S. Miller" <davem@davemloft.net>
-Cc: Eric Biggers <ebiggers@kernel.org>
+Reviewed-by: Dan Williams <dan.j.williams@intel.com>
 Cc: Thomas Gleixner <tglx@linutronix.de>
 Cc: Ingo Molnar <mingo@redhat.com>
 Cc: Borislav Petkov <bp@alien8.de>
 Cc: Dave Hansen <dave.hansen@linux.intel.com>
 Cc: "H. Peter Anvin" <hpa@zytor.com>
+Cc: Jonathan Corbet <corbet@lwn.net>
 Cc: x86@kernel.org
-Cc: linux-crypto@vger.kernel.org
+Cc: linux-doc@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 ---
-Changes from v7:
-* Massage the helper function to be usable for other alignment code
-  such as aesni_rfc4106_gcm_ctx_get() and generic_gcmaes_ctx_get().
-  (Eric Biggers)
-
 Changes from v6:
-* Add as a new patch. (Eric Biggers)
+* Rebase on the upstream -- commit ff61f0791ce9 ("docs: move x86
+  documentation into Documentation/arch/"). (Nathan Huckleberry)
+* Remove a duplicated sentence -- 'But there is no AES-KL instruction
+  to process a 192-bit key.'
+* Update the text for clarity and readability:
+  - Clarify the error code and exemplify the backup failure
+  - Use 'wrapping key' instead of less readable 'IWKey'
 
-This fix was considered to be better addressed before the preparatory
-AES-NI code rework.
+Changes from v5:
+* Fix a typo: 'feature feature' -> 'feature'
+
+Changes from RFC v2:
+* Add as a new patch.
+
+The preview is available here:
+  https://htmlpreview.github.io/?https://github.com/intel-staging/keylocker/kdoc/arch/x86/keylocker.html
 ---
- arch/x86/crypto/aesni-intel_glue.c | 51 +++++++++++++++---------------
- 1 file changed, 25 insertions(+), 26 deletions(-)
+ Documentation/arch/x86/index.rst     |  1 +
+ Documentation/arch/x86/keylocker.rst | 97 ++++++++++++++++++++++++++++
+ 2 files changed, 98 insertions(+)
+ create mode 100644 Documentation/arch/x86/keylocker.rst
 
-diff --git a/arch/x86/crypto/aesni-intel_glue.c b/arch/x86/crypto/aesni-intel_glue.c
-index a5b0cb3efeba..589648142c17 100644
---- a/arch/x86/crypto/aesni-intel_glue.c
-+++ b/arch/x86/crypto/aesni-intel_glue.c
-@@ -61,8 +61,8 @@ struct generic_gcmaes_ctx {
- };
- 
- struct aesni_xts_ctx {
--	u8 raw_tweak_ctx[sizeof(struct crypto_aes_ctx)] AESNI_ALIGN_ATTR;
--	u8 raw_crypt_ctx[sizeof(struct crypto_aes_ctx)] AESNI_ALIGN_ATTR;
-+	struct crypto_aes_ctx tweak_ctx AESNI_ALIGN_ATTR;
-+	struct crypto_aes_ctx crypt_ctx AESNI_ALIGN_ATTR;
- };
- 
- #define GCM_BLOCK_LEN 16
-@@ -80,6 +80,13 @@ struct gcm_context_data {
- 	u8 hash_keys[GCM_BLOCK_LEN * 16];
- };
- 
-+static inline void *aes_align_addr(void *addr)
-+{
-+	if (crypto_tfm_ctx_alignment() >= AESNI_ALIGN)
-+		return addr;
-+	return PTR_ALIGN(addr, AESNI_ALIGN);
-+}
+diff --git a/Documentation/arch/x86/index.rst b/Documentation/arch/x86/index.rst
+index c73d133fd37c..256359c24669 100644
+--- a/Documentation/arch/x86/index.rst
++++ b/Documentation/arch/x86/index.rst
+@@ -42,3 +42,4 @@ x86-specific Documentation
+    features
+    elf_auxvec
+    xstate
++   keylocker
+diff --git a/Documentation/arch/x86/keylocker.rst b/Documentation/arch/x86/keylocker.rst
+new file mode 100644
+index 000000000000..5557b8d0659a
+--- /dev/null
++++ b/Documentation/arch/x86/keylocker.rst
+@@ -0,0 +1,97 @@
++.. SPDX-License-Identifier: GPL-2.0
 +
- asmlinkage int aesni_set_key(struct crypto_aes_ctx *ctx, const u8 *in_key,
- 			     unsigned int key_len);
- asmlinkage void aesni_enc(const void *ctx, u8 *out, const u8 *in);
-@@ -201,32 +208,24 @@ static __ro_after_init DEFINE_STATIC_KEY_FALSE(gcm_use_avx2);
- static inline struct
- aesni_rfc4106_gcm_ctx *aesni_rfc4106_gcm_ctx_get(struct crypto_aead *tfm)
- {
--	unsigned long align = AESNI_ALIGN;
--
--	if (align <= crypto_tfm_ctx_alignment())
--		align = 1;
--	return PTR_ALIGN(crypto_aead_ctx(tfm), align);
-+	return (struct aesni_rfc4106_gcm_ctx *)aes_align_addr(crypto_aead_ctx(tfm));
- }
- 
- static inline struct
- generic_gcmaes_ctx *generic_gcmaes_ctx_get(struct crypto_aead *tfm)
- {
--	unsigned long align = AESNI_ALIGN;
--
--	if (align <= crypto_tfm_ctx_alignment())
--		align = 1;
--	return PTR_ALIGN(crypto_aead_ctx(tfm), align);
-+	return (struct generic_gcmaes_ctx *)aes_align_addr(crypto_aead_ctx(tfm));
- }
- #endif
- 
- static inline struct crypto_aes_ctx *aes_ctx(void *raw_ctx)
- {
--	unsigned long addr = (unsigned long)raw_ctx;
--	unsigned long align = AESNI_ALIGN;
-+	return (struct crypto_aes_ctx *)aes_align_addr(raw_ctx);
-+}
- 
--	if (align <= crypto_tfm_ctx_alignment())
--		align = 1;
--	return (struct crypto_aes_ctx *)ALIGN(addr, align);
-+static inline struct aesni_xts_ctx *aes_xts_ctx(struct crypto_skcipher *tfm)
-+{
-+	return (struct aesni_xts_ctx *)aes_align_addr(crypto_skcipher_ctx(tfm));
- }
- 
- static int aes_set_key_common(struct crypto_tfm *tfm, void *raw_ctx,
-@@ -883,7 +882,7 @@ static int helper_rfc4106_decrypt(struct aead_request *req)
- static int xts_aesni_setkey(struct crypto_skcipher *tfm, const u8 *key,
- 			    unsigned int keylen)
- {
--	struct aesni_xts_ctx *ctx = crypto_skcipher_ctx(tfm);
-+	struct aesni_xts_ctx *ctx = aes_xts_ctx(tfm);
- 	int err;
- 
- 	err = xts_verify_key(tfm, key, keylen);
-@@ -893,20 +892,20 @@ static int xts_aesni_setkey(struct crypto_skcipher *tfm, const u8 *key,
- 	keylen /= 2;
- 
- 	/* first half of xts-key is for crypt */
--	err = aes_set_key_common(crypto_skcipher_tfm(tfm), ctx->raw_crypt_ctx,
-+	err = aes_set_key_common(crypto_skcipher_tfm(tfm), &ctx->crypt_ctx,
- 				 key, keylen);
- 	if (err)
- 		return err;
- 
- 	/* second half of xts-key is for tweak */
--	return aes_set_key_common(crypto_skcipher_tfm(tfm), ctx->raw_tweak_ctx,
-+	return aes_set_key_common(crypto_skcipher_tfm(tfm), &ctx->tweak_ctx,
- 				  key + keylen, keylen);
- }
- 
- static int xts_crypt(struct skcipher_request *req, bool encrypt)
- {
- 	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
--	struct aesni_xts_ctx *ctx = crypto_skcipher_ctx(tfm);
-+	struct aesni_xts_ctx *ctx = aes_xts_ctx(tfm);
- 	int tail = req->cryptlen % AES_BLOCK_SIZE;
- 	struct skcipher_request subreq;
- 	struct skcipher_walk walk;
-@@ -942,7 +941,7 @@ static int xts_crypt(struct skcipher_request *req, bool encrypt)
- 	kernel_fpu_begin();
- 
- 	/* calculate first value of T */
--	aesni_enc(aes_ctx(ctx->raw_tweak_ctx), walk.iv, walk.iv);
-+	aesni_enc(&ctx->tweak_ctx, walk.iv, walk.iv);
- 
- 	while (walk.nbytes > 0) {
- 		int nbytes = walk.nbytes;
-@@ -951,11 +950,11 @@ static int xts_crypt(struct skcipher_request *req, bool encrypt)
- 			nbytes &= ~(AES_BLOCK_SIZE - 1);
- 
- 		if (encrypt)
--			aesni_xts_encrypt(aes_ctx(ctx->raw_crypt_ctx),
-+			aesni_xts_encrypt(&ctx->crypt_ctx,
- 					  walk.dst.virt.addr, walk.src.virt.addr,
- 					  nbytes, walk.iv);
- 		else
--			aesni_xts_decrypt(aes_ctx(ctx->raw_crypt_ctx),
-+			aesni_xts_decrypt(&ctx->crypt_ctx,
- 					  walk.dst.virt.addr, walk.src.virt.addr,
- 					  nbytes, walk.iv);
- 		kernel_fpu_end();
-@@ -983,11 +982,11 @@ static int xts_crypt(struct skcipher_request *req, bool encrypt)
- 
- 		kernel_fpu_begin();
- 		if (encrypt)
--			aesni_xts_encrypt(aes_ctx(ctx->raw_crypt_ctx),
-+			aesni_xts_encrypt(&ctx->crypt_ctx,
- 					  walk.dst.virt.addr, walk.src.virt.addr,
- 					  walk.nbytes, walk.iv);
- 		else
--			aesni_xts_decrypt(aes_ctx(ctx->raw_crypt_ctx),
-+			aesni_xts_decrypt(&ctx->crypt_ctx,
- 					  walk.dst.virt.addr, walk.src.virt.addr,
- 					  walk.nbytes, walk.iv);
- 		kernel_fpu_end();
++==============
++x86 Key Locker
++==============
++
++Introduction
++============
++
++Key Locker is a CPU feature to reduce key exfiltration opportunities
++while maintaining a programming interface similar to AES-NI. It
++converts the AES key into an encoded form, called the 'key handle'.
++The key handle is a wrapped version of the clear-text key where the
++wrapping key has limited exposure. Once converted, all subsequent data
++encryption using new AES instructions (AES-KL) uses this key handle,
++reducing the exposure of private key material in memory.
++
++CPU-internal Wrapping Key
++=========================
++
++The CPU-internal wrapping key is an entity in a software-invisible CPU
++state. On every system boot, a new key is loaded. So the key handle that
++was encoded by the old wrapping key is no longer usable on system shutdown
++or reboot.
++
++And the key may be lost on the following exceptional situation upon wakeup:
++
++Wrapping Key Restore Failure
++----------------------------
++
++The CPU state is volatile with the ACPI S3/4 sleep states. When the system
++supports those states, the key has to be backed up so that it is restored
++on wake up. The kernel saves the key in non-volatile media.
++
++The event of a wrapping key restore failure upon resume from suspend, all
++established key handles become invalid. In flight dm-crypt operations
++receive error results from pending operations. In the likely scenario that
++dm-crypt is hosting the root filesystem the recovery is identical to if a
++storage controller failed to resume from suspend, reboot. If the volume
++impacted by a wrapping key restore failure is a data-volume then it is
++possible that I/O errors on that volume do not bring down the rest of the
++system. However, a reboot is still required because the kernel will have
++soft-disabled Key Locker. Upon the failure, the crypto library code will
++return -ENODEV on every AES-KL function call. The Key Locker implementation
++only loads a new wrapping key at initial boot, not any time after like
++resume from suspend.
++
++Use Case and Non-use Cases
++==========================
++
++Bare metal disk encryption is the only intended use case.
++
++Userspace usage is not supported because there is no ABI provided to
++communicate and coordinate wrapping-key restore failure to userspace. For
++now, key restore failures are only coordinated with kernel users. But the
++kernel can not prevent userspace from using the feature's AES instructions
++('AES-KL') when the feature has been enabled. So, the lack of userspace
++support is only documented, not actively enforced.
++
++Key Locker is not expected to be advertised to guest VMs and the kernel
++implementation ignores it even if the VMM enumerates the capability. The
++expectation is that a guest VM wants private wrapping key state, but the
++architecture does not provide that. An emulation of that capability, by
++caching per-VM wrapping keys in memory, defeats the purpose of Key Locker.
++The backup / restore facility is also not performant enough to be suitable
++for guest VM context switches.
++
++AES Instruction Set
++===================
++
++The feature accompanies a new AES instruction set. This instruction set is
++analogous to AES-NI. A set of AES-NI instructions can be mapped to an
++AES-KL instruction. For example, AESENC128KL is responsible for ten rounds
++of transformation, which is equivalent to nine times AESENC and one
++AESENCLAST in AES-NI.
++
++But they have some notable differences:
++
++* AES-KL provides a secure data transformation using an encrypted key.
++
++* If an invalid key handle is provided, e.g. a corrupted one or a handle
++  restriction failure, the instruction fails with setting RFLAGS.ZF. The
++  crypto library implementation includes the flag check to return -EINVAL.
++  Note that this flag is also set if the wrapping key is changed, e.g.,
++  because of the backup error.
++
++* AES-KL implements support for 128-bit and 256-bit keys, but there is no
++  AES-KL instruction to process an 192-bit key. The AES-KL cipher
++  implementation logs a warning message with a 192-bit key and then falls
++  back to AES-NI. So, this 192-bit key-size limitation is only documented,
++  not enforced. It means the key will remain in clear-text in memory. This
++  is to meet Linux crypto-cipher expectation that each implementation must
++  support all the AES-compliant key sizes.
++
++* Some AES-KL hardware implementation may have noticeable performance
++  overhead when compared with AES-NI instructions.
++
 -- 
 2.17.1
 
