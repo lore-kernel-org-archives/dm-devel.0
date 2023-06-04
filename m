@@ -4,74 +4,88 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C22A1C7EE23
-	for <dm-devel@archiver.kernel.org>; Sun,  4 Jun 2023 15:34:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DF33EC77B73
+	for <dm-devel@archiver.kernel.org>; Sun,  4 Jun 2023 18:25:46 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685892895;
+	s=mimecast20190719; t=1685903145;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=N7zqQZ5nHPB8o/aJNREWW1XqQvMC786JGADkL+Qj1zk=;
-	b=bs4LO10pEr9Nag/g7loPbW4klnj8lokZ2EOl/3VIf+Qm+z4/yZhTpH+QCDzIicHzY66XVa
-	zV9AtC5lZ6lsZyMFyE7+vXtnRHldu5Ss8R6nJePBGBTUAk+t16ay7VbgXx61c0udIHjD/K
-	vQYEBiIyu1Cy42exmuD46jiR1NQOFRU=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=2E1H4qjW0dBaclgKyKv+eG1IbB/SrYZe51bQQk4GTPQ=;
+	b=i+5ezvsZrFLveqcjqdBMIVhQFns3UDliOMv/gyhZdI9rRfwEy5oK3vqnLH6EJ7PElVvP/a
+	VoLvZLCOEBTYChOhJwZihoY5mfuaxYTPn4ixgsc4RSfjDO9hGixycolJXs1IES/NdzbGZB
+	1mrf3tN4+n58IdLMwel+ZQ+ar6C60eg=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-610-nb2YYgiQOi2oG6eLIc5srg-1; Sun, 04 Jun 2023 11:34:52 -0400
-X-MC-Unique: nb2YYgiQOi2oG6eLIc5srg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-512-oy6c3l2rN5yHiDT4o5S85Q-1; Sun, 04 Jun 2023 14:25:42 -0400
+X-MC-Unique: oy6c3l2rN5yHiDT4o5S85Q-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 61FA98007D9;
-	Sun,  4 Jun 2023 15:34:50 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9D08D40C6EC4;
-	Sun,  4 Jun 2023 15:34:44 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8DD6C2A2AD4E;
+	Sun,  4 Jun 2023 18:25:40 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D6A5840CFD46;
+	Sun,  4 Jun 2023 18:25:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3F1BA19465A0;
-	Sun,  4 Jun 2023 15:34:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8B59419465A0;
+	Sun,  4 Jun 2023 18:25:38 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id BE7D71946595
- for <dm-devel@listman.corp.redhat.com>; Sun,  4 Jun 2023 15:34:42 +0000 (UTC)
+ ESMTP id 25ACA1946595
+ for <dm-devel@listman.corp.redhat.com>; Sun,  4 Jun 2023 18:25:37 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5263740CFD47; Sun,  4 Jun 2023 15:34:42 +0000 (UTC)
+ id D18161410F26; Sun,  4 Jun 2023 18:25:36 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4AA9440CFD46
- for <dm-devel@redhat.com>; Sun,  4 Jun 2023 15:34:42 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [207.211.31.81])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id CA0021410F25
+ for <dm-devel@redhat.com>; Sun,  4 Jun 2023 18:25:36 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
+ [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2DCCC3C01DFB
- for <dm-devel@redhat.com>; Sun,  4 Jun 2023 15:34:42 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-417-f6tbh0UBOS6rN9hpOW9RtQ-1; Sun, 04 Jun 2023 11:34:40 -0400
-X-MC-Unique: f6tbh0UBOS6rN9hpOW9RtQ-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 91F8D60B2F;
- Sun,  4 Jun 2023 15:34:39 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 76917C433D2;
- Sun,  4 Jun 2023 15:34:37 +0000 (UTC)
-Date: Sun, 4 Jun 2023 08:34:34 -0700
-From: Eric Biggers <ebiggers@kernel.org>
-To: "Chang S. Bae" <chang.seok.bae@intel.com>
-Message-ID: <20230604153434.GA1212@quark.localdomain>
-References: <20230524165717.14062-1-chang.seok.bae@intel.com>
- <20230603152227.12335-1-chang.seok.bae@intel.com>
- <20230603152227.12335-11-chang.seok.bae@intel.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AF0FD3C10220
+ for <dm-devel@redhat.com>; Sun,  4 Jun 2023 18:25:36 +0000 (UTC)
+Received: from mail-qk1-f172.google.com (mail-qk1-f172.google.com
+ [209.85.222.172]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-518-A4WEyFKPM8-sjLIhPWFeog-1; Sun, 04 Jun 2023 14:25:33 -0400
+X-MC-Unique: A4WEyFKPM8-sjLIhPWFeog-1
+Received: by mail-qk1-f172.google.com with SMTP id
+ af79cd13be357-75ca95c4272so360241885a.0; 
+ Sun, 04 Jun 2023 11:25:32 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1685903132; x=1688495132;
+ h=content-transfer-encoding:cc:to:subject:message-id:date:from
+ :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=XoDaxZYrMXoYYBthZoKFtcpdtCIkJoVqe+cep/VE5FA=;
+ b=l7yZTrTW9hfGH5mVjnHTWwfYpvu/WHaNkxUB1lcaOTrWn5HT6VaJgomNIkpMbha/EJ
+ Vbmtu1TVMtVjo52Z9WI+8vsDlLr9M94BvMpwfevR+yLd4sAqUNk84iDzAhe8RQx79/eT
+ KS+wPpFxT87L61sDQNjfacZz3tJ52BkF/XQhS0HbbP4PmUCcziwLA4zvqj2+UpVCMqf8
+ 2tCz+dR8VML6WRj9YSZpbkUJzlwBsqpEhUUsrw9Y3XHIKERgI+6XkCj5lsrTN3Tytg8E
+ k9ZrovhFwt1IipleFU1o1M81uLiPc+aHGIzTKD9XDytqZAFlA4Pu93HCQTgQz/L+Le6w
+ ya6g==
+X-Gm-Message-State: AC+VfDyQGJ1Qd+i5RxWliYJPBwEclFMKorltMigE4uOkD53EiNzcVOIj
+ 6Msp/T0vzU0YTMXvVKUXGZFmK04po0euTef5aI8=
+X-Google-Smtp-Source: ACHHUZ75hj0npR7Uh2z3sGVtGxoxc23KedhBpuzoaTVP7JzmVvaxeN9sMOGv56XXiOAqq2XhXgpOVrBmK4o+ZK40yd4=
+X-Received: by 2002:ac8:5851:0:b0:3f5:3ff4:be07 with SMTP id
+ h17-20020ac85851000000b003f53ff4be07mr5004691qth.64.1685903132352; Sun, 04
+ Jun 2023 11:25:32 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <20230603152227.12335-11-chang.seok.bae@intel.com>
+References: <ZHs2BHGBrJ-YGd-v@debian.me>
+ <20230603201525.9409-1-eatnumber1@gmail.com>
+ <65b7bc64-4a4b-c056-db65-cd77bcc3d1d9@gmail.com>
+In-Reply-To: <65b7bc64-4a4b-c056-db65-cd77bcc3d1d9@gmail.com>
+From: Russell Harmon <eatnumber1@gmail.com>
+Date: Sun, 4 Jun 2023 11:25:06 -0700
+Message-ID: <CA+zrezTegR8jHQA3MNM6WnfFU_RP4=fiCuk6WgwJZsjZ2PYUSw@mail.gmail.com>
+To: Bagas Sanjaya <bagasdotme@gmail.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -79,9 +93,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH v8 10/12] crypto: x86/aesni - Use the proper
- data type in struct aesni_xts_ctx
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Subject: Re: [dm-devel] [PATCH] Improve the dm-integrity documentation.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -93,86 +106,34 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: x86@kernel.org, herbert@gondor.apana.org.au,
- "David S. Miller" <davem@davemloft.net>, ardb@kernel.org,
- dave.hansen@linux.intel.com, dan.j.williams@intel.com,
- linux-kernel@vger.kernel.org, charishma1.gairuboyina@intel.com,
- mingo@kernel.org, lalithambika.krishnakumar@intel.com, dm-devel@redhat.com,
- Ingo Molnar <mingo@redhat.com>, bp@alien8.de, linux-crypto@vger.kernel.org,
- luto@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, bernie.keany@intel.com,
- tglx@linutronix.de, nhuck@google.com, gmazyland@gmail.com, elliott@hpe.com
+Cc: dm-devel@redhat.com, mpatocka@redhat.com, snitzer@redhat.com,
+ linux-doc@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: gmail.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On Sat, Jun 03, 2023 at 08:22:25AM -0700, Chang S. Bae wrote:
-> Every field in struct aesni_xts_ctx is a pointer to a byte array.
-
-A byte array.  Not a pointer to a byte array.
-
-> Then, the field can be redefined as that struct type instead of the obscure
-> pointer.
-
-There's no pointer.
-
->  static inline struct
->  aesni_rfc4106_gcm_ctx *aesni_rfc4106_gcm_ctx_get(struct crypto_aead *tfm)
->  {
-> -	unsigned long align = AESNI_ALIGN;
-> -
-> -	if (align <= crypto_tfm_ctx_alignment())
-> -		align = 1;
-> -	return PTR_ALIGN(crypto_aead_ctx(tfm), align);
-> +	return (struct aesni_rfc4106_gcm_ctx *)aes_align_addr(crypto_aead_ctx(tfm));
->  }
-
-Explicit casts from 'void *' are unnecessary.
-
->  static int xts_aesni_setkey(struct crypto_skcipher *tfm, const u8 *key,
->  			    unsigned int keylen)
->  {
-> -	struct aesni_xts_ctx *ctx = crypto_skcipher_ctx(tfm);
-> +	struct aesni_xts_ctx *ctx = aes_xts_ctx(tfm);
->  	int err;
->  
->  	err = xts_verify_key(tfm, key, keylen);
-> @@ -893,20 +892,20 @@ static int xts_aesni_setkey(struct crypto_skcipher *tfm, const u8 *key,
->  	keylen /= 2;
->  
->  	/* first half of xts-key is for crypt */
-> -	err = aes_set_key_common(crypto_skcipher_tfm(tfm), ctx->raw_crypt_ctx,
-> +	err = aes_set_key_common(crypto_skcipher_tfm(tfm), &ctx->crypt_ctx,
->  				 key, keylen);
->  	if (err)
->  		return err;
->  
->  	/* second half of xts-key is for tweak */
-> -	return aes_set_key_common(crypto_skcipher_tfm(tfm), ctx->raw_tweak_ctx,
-> +	return aes_set_key_common(crypto_skcipher_tfm(tfm), &ctx->tweak_ctx,
->  				  key + keylen, keylen);
->  }
-
-To re-iterate what I said on v6, the runtime alignment to a 16-byte boundary
-should happen when translating the raw crypto_skcipher_ctx() into the pointer to
-the aes_xts_ctx.  It should not happen when accessing each individual field in
-the aes_xts_ctx.
-
-Yet, this code is still doing runtime alignment when accessing each individual
-field, as the second argument to aes_set_key_common() is 'void *raw_ctx' which
-aes_set_key_common() runtime-aligns to crypto_aes_ctx.
-
-We should keep everything consistent, which means making aes_set_key_common()
-take a pointer to crypto_aes_ctx and not do the runtime alignment.
-
-- Eric
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gU3VuLCBKdW4gNCwgMjAyMyBhdCA3OjA34oCvQU0gQmFnYXMgU2FuamF5YSA8YmFnYXNkb3Rt
+ZUBnbWFpbC5jb20+IHdyb3RlOgo+Cj4gT24gNi80LzIzIDAzOjE1LCBSdXNzZWxsIEhhcm1vbiB3
+cm90ZToKPiA+IFRoYW5rcyBmb3IgdGFraW5nIGEgbG9vay4gSGVyZSdzIHRoZSBtdWx0aS1wYXRj
+aCBzZXJpZXMgcGx1cyB0aGUgY2hhbmdlcwo+ID4geW91IHN1Z2dlc3RlZC4KPiA+Cj4gPgo+Cj4g
+VGhpcyBpcyB2MiwgcmlnaHQ/IE5leHQgcmVyb2xsLCByZW1lbWJlciB0byB2ZXJzaW9uIHlvdXIg
+cGF0Y2hlcwo+IChwYXNzIC12IHRvIGdpdC1mb3JtYXQtcGF0Y2goMSkpLgoKV2lsbCBkby4KCj4g
+QWxzbywgSSBkb24ndCBzZWUgZGVzY3JpcHRpb24gKHRoYXQgd291bGQgYmUgY29tbWl0IG1lc3Nh
+Z2UKPiBvbmNlIGFwcGxpZWQgYnkgam9uKSBpbiBhbGwgcGF0Y2hlcyBvbiB0aGlzIHNlcmllcy4g
+SSBob3BlIHlvdQo+IGhhdmUgYSB0aW1lIHJlYWRpbmcgRG9jdW1lbnRhdGlvbi9wcm9jZXNzL3N1
+Ym1pdHRpbmctcGF0Y2hlcy5yc3QKPiBzbyB0aGF0IHRyaXZpYWwgbWlzdGFrZXMgbGlrZSB0aGlz
+IHNob3VsZG4ndCBoYXBwZW4gYWdhaW4uIEluCj4gYW55IGNhc2UsIHdoZW4gcHJlcGFyaW5nIHBh
+dGNoIHNlcmllcywgYWx3YXlzIGFkZCBjb3ZlciBsZXR0ZXIKPiBieSBwYXNzaW5nIC0tY292ZXIt
+bGV0dGVyIHRvIGdpdC1mb3JtYXQtcGF0Y2goMSkgdGhlbiBlZGl0IHRoZQo+IGdlbmVyYXRlZCB0
+ZW1wbGF0ZSAobG9vayBmb3IgMDAwMC0qLWNvdmVyLWxldHRlci5wYXRjaCkuCgpNeSAidGhhbmtz
+IGZvciB0YWtpbmcgYSBsb29rIiBlbWFpbCB3YXMgdGhlIGNvdmVyIGxldHRlci4KCkludGVyZXN0
+aW5nIHRoYXQgdGhlIGNvbW1pdCBtZXNzYWdlIGRpZG4ndCBnbyB0aHJvdWdoIGluIHRoZSBib2R5
+LAp0aGV5J3JlIGVhY2ggb25lIGxpbmUgYW5kIHdlcmUgbW92ZWQgdG8gdGhlIHN1YmplY3QgbGlu
+ZS4gSSdsbCB0cnkKYWdhaW4gYW5kIGFkZCBhIGxpdHRsZSBtb3JlIGRlc2NyaXB0aW9uLgoKLS0K
+ZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFu
+LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
 
