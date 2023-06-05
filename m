@@ -4,90 +4,90 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 066C2C7EE24
-	for <dm-devel@archiver.kernel.org>; Mon,  5 Jun 2023 12:30:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 686D6C7EE24
+	for <dm-devel@archiver.kernel.org>; Mon,  5 Jun 2023 12:32:11 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685968232;
+	s=mimecast20190719; t=1685968330;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=5cKlF/H2ZWvU3sQiuMCGH+OclTgHzBydHdwoBvhXPww=;
-	b=bEs7+iL3AxvC72eZMu81aX4bABQH6BDczCDm3T4agQs7SkS2mQxbPOltZoke5x3DM7OlDY
-	JSkVVGP8KKNm7ikYyVxiXUZGV4nZc7YXqBVJD7Jc4hu4svFJyb/MiuotUJqbCCRG8H//fY
-	NjWHEPlFU0i9AYMIP+lELdWCwOZAjyc=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=+Z0ekJonurTJjKXNjxViH2krxcN/ZqWCkCikmwHZsEM=;
+	b=KDXqlwAYBOGGljqzgMo/Xr0Khl1n3H240vqStcXmB8oA790qF5dolh2zfruo1g92MwxtVr
+	MAnFOcEwxaHaO2eceRZQ0xpoXn93531wPrPrUcta9TVMpM2OJZW3mIL1it9UViidttY8ry
+	WK2tT3JL9Of8Dm9X5/wsPXniVVTN3hY=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-553-0Vc6uOo9OsqEHhkC6fi4Dw-1; Mon, 05 Jun 2023 08:30:29 -0400
-X-MC-Unique: 0Vc6uOo9OsqEHhkC6fi4Dw-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-587-4zBhQJ4jM22ybSO4RNs0bQ-1; Mon, 05 Jun 2023 08:30:14 -0400
+X-MC-Unique: 4zBhQJ4jM22ybSO4RNs0bQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1A84580120A;
-	Mon,  5 Jun 2023 12:30:27 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C4FA3825BA0;
+	Mon,  5 Jun 2023 12:30:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 066D8403174;
-	Mon,  5 Jun 2023 12:30:27 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 894582026D6A;
+	Mon,  5 Jun 2023 12:30:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D719919465B6;
-	Mon,  5 Jun 2023 12:30:18 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 177D11946A46;
+	Mon,  5 Jun 2023 12:29:58 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
  [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4CE1919465A0
- for <dm-devel@listman.corp.redhat.com>; Mon,  5 Jun 2023 12:30:05 +0000 (UTC)
+ ESMTP id 51FD419465BD
+ for <dm-devel@listman.corp.redhat.com>; Mon,  5 Jun 2023 12:29:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3CD26140E954; Mon,  5 Jun 2023 12:30:05 +0000 (UTC)
+ id 3E53B140E956; Mon,  5 Jun 2023 12:29:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 34EE31410F26
- for <dm-devel@redhat.com>; Mon,  5 Jun 2023 12:30:05 +0000 (UTC)
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 35C31140E954
+ for <dm-devel@redhat.com>; Mon,  5 Jun 2023 12:29:56 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 12001101AA44
- for <dm-devel@redhat.com>; Mon,  5 Jun 2023 12:30:05 +0000 (UTC)
-Received: from mailout4.samsung.com (mailout4.samsung.com [203.254.224.34])
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 183D23825BB4
+ for <dm-devel@redhat.com>; Mon,  5 Jun 2023 12:29:56 +0000 (UTC)
+Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-113-7qDeIPJ7MOW-kVG2VQq74w-1; Mon, 05 Jun 2023 08:30:03 -0400
-X-MC-Unique: 7qDeIPJ7MOW-kVG2VQq74w-1
+ us-mta-554-_udiLZSpPcOFRDaGZgsGWg-1; Mon, 05 Jun 2023 08:29:54 -0400
+X-MC-Unique: _udiLZSpPcOFRDaGZgsGWg-1
 Received: from epcas5p4.samsung.com (unknown [182.195.41.42])
- by mailout4.samsung.com (KnoxPortal) with ESMTP id
- 20230605123000epoutp04b4c5412622fcbfec28326176aa4e1f9d~lwyU5FPaA1857918579epoutp045
- for <dm-devel@redhat.com>; Mon,  5 Jun 2023 12:30:00 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout4.samsung.com
- 20230605123000epoutp04b4c5412622fcbfec28326176aa4e1f9d~lwyU5FPaA1857918579epoutp045
+ by mailout3.samsung.com (KnoxPortal) with ESMTP id
+ 20230605122951epoutp0353a1e17c342d6c9fb6cb58e551e589d1~lwyMZyNrN1128511285epoutp03N
+ for <dm-devel@redhat.com>; Mon,  5 Jun 2023 12:29:51 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com
+ 20230605122951epoutp0353a1e17c342d6c9fb6cb58e551e589d1~lwyMZyNrN1128511285epoutp03N
 Received: from epsnrtp2.localdomain (unknown [182.195.42.163]) by
  epcas5p1.samsung.com (KnoxPortal) with ESMTP id
- 20230605122959epcas5p19650c5e46b41292eb1c31b9f6432d755~lwyUPcDrR2755927559epcas5p1X;
- Mon,  5 Jun 2023 12:29:59 +0000 (GMT)
-Received: from epsmges5p2new.samsung.com (unknown [182.195.38.174]) by
- epsnrtp2.localdomain (Postfix) with ESMTP id 4QZXxL1NZgz4x9Pw; Mon,  5 Jun
- 2023 12:29:58 +0000 (GMT)
-Received: from epcas5p3.samsung.com ( [182.195.41.41]) by
- epsmges5p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
- 09.07.44881.645DD746; Mon,  5 Jun 2023 21:29:58 +0900 (KST)
-Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
- epcas5p3.samsung.com (KnoxPortal) with ESMTPA id
- 20230605122416epcas5p3b37c08a7bf7ad57361b22be0f30d3bf7~lwtUX_CAR0800608006epcas5p33;
- Mon,  5 Jun 2023 12:24:16 +0000 (GMT)
-Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
- epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
- 20230605122415epsmtrp11bd9a11fb9f4c12a0751ff4cdb618775~lwtUW6YFY1611816118epsmtrp1r;
- Mon,  5 Jun 2023 12:24:15 +0000 (GMT)
-X-AuditID: b6c32a4a-ea9fa7000001af51-bb-647dd546e72a
+ 20230605122950epcas5p136d93b014386a849cfd5869aaec685f3~lwyLul6So0215902159epcas5p1h;
+ Mon,  5 Jun 2023 12:29:50 +0000 (GMT)
+Received: from epsmges5p3new.samsung.com (unknown [182.195.38.174]) by
+ epsnrtp2.localdomain (Postfix) with ESMTP id 4QZXx91CgYz4x9Pv; Mon,  5 Jun
+ 2023 12:29:49 +0000 (GMT)
+Received: from epcas5p1.samsung.com ( [182.195.41.39]) by
+ epsmges5p3new.samsung.com (Symantec Messaging Gateway) with SMTP id
+ 8C.5D.16380.D35DD746; Mon,  5 Jun 2023 21:29:49 +0900 (KST)
+Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
+ epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
+ 20230605122349epcas5p2de6c758bc38194ebfb1fd8c700e45608~lws7aUZgZ3244532445epcas5p2G;
+ Mon,  5 Jun 2023 12:23:49 +0000 (GMT)
+Received: from epsmgms1p2.samsung.com (unknown [182.195.42.42]) by
+ epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
+ 20230605122349epsmtrp29f7a21e8ed8ea1907e7bb327a40f384c~lws7ZGsem1056310563epsmtrp2Z;
+ Mon,  5 Jun 2023 12:23:49 +0000 (GMT)
+X-AuditID: b6c32a4b-7dffd70000013ffc-11-647dd53dac52
 Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
- epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
- 3F.BC.27706.FE3DD746; Mon,  5 Jun 2023 21:24:15 +0900 (KST)
+ epsmgms1p2.samsung.com (Symantec Messaging Gateway) with SMTP id
+ 09.D5.28392.5D3DD746; Mon,  5 Jun 2023 21:23:49 +0900 (KST)
 Received: from green245.sa.corp.samsungelectronics.net (unknown
  [107.99.41.245]) by epsmtip2.samsung.com (KnoxPortal) with ESMTPA id
- 20230605122411epsmtip20cac9b9b910a1f71d950a511e1a00c94~lwtQSajIv2526925269epsmtip2i;
- Mon,  5 Jun 2023 12:24:11 +0000 (GMT)
+ 20230605122343epsmtip245dddb1bc0bcc26599c570b39b4b9fcb~lws2FYJfX2527325273epsmtip2l;
+ Mon,  5 Jun 2023 12:23:43 +0000 (GMT)
 From: Nitesh Shetty <nj.shetty@samsung.com>
 To: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, Alasdair
  Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
@@ -95,57 +95,57 @@ To: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, Alasdair
  <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, James Smart
  <james.smart@broadcom.com>, Chaitanya Kulkarni <kch@nvidia.com>, Alexander
  Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>
-Date: Mon,  5 Jun 2023 17:47:25 +0530
-Message-Id: <20230605121732.28468-10-nj.shetty@samsung.com>
+Date: Mon,  5 Jun 2023 17:47:23 +0530
+Message-Id: <20230605121732.28468-8-nj.shetty@samsung.com>
 In-Reply-To: <20230605121732.28468-1-nj.shetty@samsung.com>
 MIME-Version: 1.0
-X-Brightmail-Tracker: H4sIAAAAAAAAA01Te0xTZxT3u7e9FLa6y2t8QphNJ25AeBSBfaAMzFCvsEwCLpuSDCu9AUJp
- m7bopjLAjsdgtAhjbNWJCCqvSAZKShEwRXkjc4gPGMON4iI4Xk5gVGAthc3/fr9zfuc75/y+
- HBZuo7FwZCWI5LRUxBdyCStGQ5urq8fewRSBd2snA9V2t+PodP4yjqpHVASabJsD6LuZf3Ck
- v5kFkKGvH0cD+s3ocWswap46y0SPbjZi6MbFAgxVVt/GUFPpLIYKdPcBGh9UY6h5yB2VZpYz
- 0I3mLgYa0J4jUMnlcQuU+0BDoCsdKxjSFSowpNGnA9RgKMHR1clpBuocckJjudkA9S93MJFh
- 8RwRspUauBdOqUf7CKpRPWJB9f/2E4Oqr3CjBvqSqbqqrwmqvjyVanqURlBlykImlaeYMioz
- RpnU7PgQg5puGSQo5bUqQNX3nIywOZy4K57mC2gphxbFigUJorggbnhUzAcxfv7ePA9eAHqP
- yxHxk+ggbuiHER57E4RGt7icY3xhsjEUwZfJuF7v75KKk+U0J14skwdxaYlAKPGVeMr4SbJk
- UZyniJYH8ry9ffyMwiOJ8cWna5iSidDPx6sqQBpoC8gBlixI+sKf035l5gArlg3ZBOAtQysw
- kzkApwvqLMxkHsCsxovYRklLaw9hTjQDmPnLM9xMMjBYc2fOqGKxCNId9qyyTHE7sgKH6Qu9
- DBPByVIGHH7yDTA9ZUsGw5HnStyEGaQLvDSWRpiK2eRO2Pt9lAlC0guqRq1NCktj9Gmfbk3N
- Jq1h1w96hgnj5FaouH52bQZITljC1VuXCfOkofCPphqmGdvCiY5rFmbsCJ+qMtfxcVj5bQVh
- Lv4KQPUDNTAngmFGtwo3DYGTrrBW62UOO8Oi7quYufFmmGfQr7vChprzG/htWFN7YX2GLfD+
- Qvo6pmD53F3MbJbS2Ku/hZkPOOpXFlK/spD6/9YXAF4FttASWVIcLfOT+Ijo4/99c6w4qQ6s
- nZBbmAb8/njGUwcwFtAByMK5dmxt2EmBDVvA/+IELRXHSJOFtEwH/Ix+n8Ed7WPFxhsUyWN4
- vgHevv7+/r4BO/x5XAf2O0FdsTZkHF9OJ9K0hJZu1GEsS8c0bL9D4CeNXxrsh7vkpYt7xos/
- fuboHr2kEAonU10IJ69PF1/6WB0DVs050YNaWX7q0dlDR4vpfWHS8KmUwsLOity0ot0h8pKC
- h0V1VMsY6n234c6OwwtHBJPV1dkPh18G8ZTN+5VO00kc1fwb2rdWrrjM/RVkbKHofz3zniyy
- /qPC7Q1v9v+dZZWQmnvXp8xzKc+zbzAKBp9hupC9T3LnBaJWzWtl27vGDmisX2xz7oj8M6Ry
- Hz916PlydvWLyEMrA+kxbPxg3u4T6dtUe0ZX4w/mBvPCfQKvK2Y2DdvZtq/sDEupvmSoLzgl
- PqU94Lz02dCPDnm3O2tSVmbs26P14TPnN3EZsng+zw2Xyvj/AnmzEAjLBAAA
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFnrDIsWRmVeSWpSXmKPExsWy7bCSvO77y7UpBie/GVmsP3WM2aJpwl9m
- i9V3+9ksXh/+xGgx7cNPZosnB9oZLX6fPc9scfkJn8WD/fYWe9/NZrW4eWAnk8WeRZOYLFau
- PspksXvhRyaLSYeuMVo8vTqLyWLvLW2LhW1LWCz27D3JYnF51xw2i/nLnrJbdF/fwWax/Pg/
- JotDk5uZLHY8aWS02PZ7PrPFutfvWSxO3JK2eNzdwWhx/u9xVovfP+awOch7XL7i7THr/lk2
- j52z7rJ7nL+3kcVj8wotj8tnSz02repk89i8pN5j980GNo/FfZNZPXqb3wFVtt5n9fj49BaL
- x/t9V9k8+rasYvTYfLo6QCiKyyYlNSezLLVI3y6BK2N60xrWglcuFU9XrWBsYDxs2cXIySEh
- YCKxb/9pti5GLg4hgd2MEv/PPGSHSEhKLPt7hBnCFpZY+e85O0RRM5PEs5tHWbsYOTjYBLQl
- Tv/nAImLCGxhljj7azIriMMssJ1FYsn6pawg3cIC9hJ3P/eBTWIRUJVY+riBDaSZV8Ba4syM
- YBBTQkBfov++IEgFJ1D05dlDzCBhIQEriavvbUDCvAKCEidnPmEBsZkF5CWat85mnsAoMAtJ
- ahaS1AJGplWMkqkFxbnpucWGBYZ5qeV6xYm5xaV56XrJ+bmbGMEJQktzB+P2VR/0DjEycTAe
- YpTgYFYS4d3lVZ0ixJuSWFmVWpQfX1Sak1p8iFGag0VJnPdC18l4IYH0xJLU7NTUgtQimCwT
- B6dUA9PO2Bkd5eIck7INnlrP6bnyleE0l0RO8JOfn/Z8NHP5HPjj1O5gZhUTH8XXJhkRf/Tf
- lCR9KLlexq1Y5fmObc9s5cblHt9y5iSaz55v9GzFooyLfKvtI+9nXch+I+1uKbre+q1R2803
- d8+v74usFP69IvpluAnLcmOFqoPBX+zvvDnBFGrX++U422xOP2+P07WBF/K/vlWeOWvt3POP
- Nhh9kPK6e+Z+R/DUhjlWHSlMv48aCMetKhNJZvGan5l3IvDetq+Ghaq3mpUlrO7sPJy28F2L
- s8DDzWdV6xecPS2ot0uh+e0jq+UsofeNza9ckCqLbsgJUVpWM9dJ0Hj+cttGEeETH5dF+HS8
- SK5RWa3EUpyRaKjFXFScCAD58AP4fwMAAA==
-X-CMS-MailID: 20230605122416epcas5p3b37c08a7bf7ad57361b22be0f30d3bf7
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Te0xTVxzHPfe2t8Ws7AISDw+32k0IGB6dpTtVGWQjcjPcVrdlEXErHVwe
+ AdqutwwHWYCBOjSCwJihOB5KeG4ghUEBYVJRxnuOh5MBGkLjJlsBGQEkwqgtm/99zvf8vr/X
+ yeHi9hUcZ26sQkOrFfJ4AbGT1XzTw93Lf+zLSN+H/WxU33cbR7VTOQSau/kYoG8X1nA0e+Ms
+ QCOztujBTwGow1TERvdutGLo+pU8DFXX3sJQe9kihvIM4wAZx7QY6pjYj8rOlLPQ9Y5eFhpp
+ u0ygkgojB52/qydQZc8Ghgz5GRjSz6YD1LxegqO6uXkW+nnCBQ0/7WGj9dXLRKArNTIaQmnv
+ DxJUq3aKQw1PN7CoxipPamQwkdLVZBFUY3kq1X4vjaCuZuezqQsZJoJaNE6wqPnOMYLKbqoB
+ VGN/CrWke0lqdyLucAwtj6TVfFoRoYyMVUT7C0I+kL0l8xP7Cr2EEvS6gK+QJ9D+gqCjUq8j
+ sfFb2xHwP5fHJ25JUjnDCHzeOKxWJmpofoyS0fgLaFVkvEqk8mbkCUyiItpbQWsOCn19X/Pb
+ CgyPi/m7c5mlanI+9SQ/Pg20OZ4DNlxIimBOazvrHNjJtSfbAZwbXSUsh8cAGv8xAXOUPbkE
+ 4GDL7m3H4m8twBLUBmBrXr7VcRqDZ550cc4BLpcg98P+Ta5Z30VW4TB9ZeBZDZwsx2H1Xwts
+ cyoHUgK75hsxM7PIfVCf/hVmNvPIg3Cg6SMzQtIH5ty3M0fYkIfgn4MG3Mw80g72Fs6yzIyT
+ L8OMH4twc3pIDtnAlj+mCEunQfBK7pCVHeCjniaOhZ3hkqnDqifB6m+qCIs5E0DtXS2wXATA
+ 0305uLkJnPSA9W0+FnkPLOirwyyFbeGF9VnMovOgvnibX4Hf15da8zvB8ZV0K1PQmGGw7job
+ wFHdGOci4GufG0j73EDa/0uXArwGONEqJiGaZvxUBxR00n+PHKFM0IFnH8YzRA9mHix4GwDG
+ BQYAubhgF6/t7ZRIe16k/ItkWq2UqRPjacYA/Lb2nYs7O0Yot36cQiMTiiS+IrFYLJIcEAsF
+ u3nu/r0R9mS0XEPH0bSKVm/7MK6NcxoGiAr/ZF7oypzXd8FRyYpEt0+iujJ3iEMq9bLNfTMc
+ terksvvTcN0d+4LR5l/6J7tXz+aWc08uf33+UtkIf3hgr0/WcePRzXBhlKT8qnL5jtR0S8kZ
+ y607XsSQoS7GydrxUwPN0hTTh06Btx8Vn+g6psceagaQg9uLqQEz3dOZP5Q21BcUKd50Ueo2
+ dpjePRQ+JG73zArLW7tYqcv+9FVPVYJgOkktwYIL63yPBI2WdhtySukJ6aUpR9m13KlfM6Tv
+ e78QcY39XtWUm2vYrGtwQtbehtDAzD1B74RVh9EeMtu1jsacjzfaaGqO7i1hFx5jOidTlaGf
+ FXvxf28nFkWlAhYTIxd64mpG/i8/msbEuQQAAA==
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrNIsWRmVeSWpSXmKPExsWy7bCSvO7Vy7UpBu/7WS3WnzrGbLH6bj+b
+ xevDnxgtpn34yWzx5EA7o8XlJ3wWD/bbW+x9N5vV4uaBnUwWexZNYrJYufook8XuhR+ZLCYd
+ usZo8fTqLCaLvbe0LRa2LWGx2LP3JIvF5V1z2CzmL3vKbtF9fQebxfLj/5gsDk1uZrLY8aSR
+ 0WLb7/nMFutev2exOHFL2uL83+OsFr9/zGFzkPG4fMXbY9b9s2weO2fdZfc4f28ji8fmFVoe
+ l8+Wemxa1cnmsXlJvcfumw1sHov7JrN69Da/Y/P4+PQWi8f7fVfZPPq2rGL02Hy62uPzJrkA
+ wSgum5TUnMyy1CJ9uwSujLf7vrIUbJGq+DU5p4Fxl2gXIyeHhICJxMcb2xm7GLk4hAR2MEp0
+ bmtnhkhISiz7ewTKFpZY+e85O0RRM5PE843NQB0cHGwC2hKn/3OAxEUEtjBLnP01mRXEYRbY
+ xizx4cMXdpBuYQFLiYPvNzOB2CwCqhI7GpuYQJp5BawkzmwJAzElBPQl+u8LglRwClhLvDx7
+ iBkkLARUcfW9DUiYV0BQ4uTMJywgNrOAvETz1tnMExgFZiFJzUKSWsDItIpRMrWgODc9t9iw
+ wCgvtVyvODG3uDQvXS85P3cTIzj+tbR2MO5Z9UHvECMTB+MhRgkOZiUR3l1e1SlCvCmJlVWp
+ RfnxRaU5qcWHGKU5WJTEeS90nYwXEkhPLEnNTk0tSC2CyTJxcEo1MIkbP1hnzBXvn/7r08Hs
+ PyxMm8T0AyI23dS9++JZ7gGm9Vou2mt3WV/4t0Xnzc0qfZO5U75qesgEzp1RVXd5s8gBF/ue
+ E2dnPb+9KEssXMjrbVOVpf0XPpf1tY01RdtKTqXZmlfo5r8T3P5DMs3GXit3qd7XtfwxG1NL
+ LM5apX/9sf3Xq1+iKkLzmb0/Rnav+9Z5bt+8xkuLDbnEnphtylaPdPI9utGco8uFZ/eC2Q9C
+ 7qh9Ut46pVeJ5WfBtpyjupVT2mPU7sTLu2Umz74jdd1D79Ck73dj8jn+Hbq6Lif6ftcRbSZP
+ /ozlp38HKzDbsnrO3byYd9bUevMbLE59sssr51+XOd9npt3b991mthJLcUaioRZzUXEiAC14
+ gQpuAwAA
+X-CMS-MailID: 20230605122349epcas5p2de6c758bc38194ebfb1fd8c700e45608
 X-Msg-Generator: CA
 X-Sendblock-Type: REQ_APPROVE
 CMS-TYPE: 105P
 DLP-Filter: Pass
 X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20230605122416epcas5p3b37c08a7bf7ad57361b22be0f30d3bf7
+X-CMS-RootMailID: 20230605122349epcas5p2de6c758bc38194ebfb1fd8c700e45608
 References: <20230605121732.28468-1-nj.shetty@samsung.com>
- <CGME20230605122416epcas5p3b37c08a7bf7ad57361b22be0f30d3bf7@epcas5p3.samsung.com>
+ <CGME20230605122349epcas5p2de6c758bc38194ebfb1fd8c700e45608@epcas5p2.samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -154,7 +154,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: [dm-devel] [PATCH v12 9/9] null_blk: add support for copy offload
+Subject: [dm-devel] [PATCH v12 7/9] dm: Add support for copy offload
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -166,261 +166,125 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Anuj Gupta <anuj20.g@samsung.com>,
- Damien Le Moal <damien.lemoal@opensource.wdc.com>,
- linux-nvme@lists.infradead.org, bvanassche@acm.org, linux-scsi@vger.kernel.org,
- Vincent Fu <vincent.fu@samsung.com>, djwong@kernel.org,
- nitheshshetty@gmail.com, linux-doc@vger.kernel.org,
- linux-kernel@vger.kernel.org, willy@infradead.org, ming.lei@redhat.com,
- linux-block@vger.kernel.org, dlemoal@kernel.org, martin.petersen@oracle.com,
- linux-fsdevel@vger.kernel.org, gost.dev@samsung.com,
- Nitesh Shetty <nj.shetty@samsung.com>
+Cc: linux-nvme@lists.infradead.org, bvanassche@acm.org,
+ linux-scsi@vger.kernel.org, linux-doc@vger.kernel.org, djwong@kernel.org,
+ nitheshshetty@gmail.com, linux-kernel@vger.kernel.org, willy@infradead.org,
+ ming.lei@redhat.com, linux-block@vger.kernel.org, dlemoal@kernel.org,
+ martin.petersen@oracle.com, linux-fsdevel@vger.kernel.org,
+ gost.dev@samsung.com, Nitesh Shetty <nj.shetty@samsung.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: samsung.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Implementaion is based on existing read and write infrastructure.
-copy_max_bytes: A new configfs and module parameter is introduced, which
-can be used to set hardware/driver supported maximum copy limit.
+Before enabling copy for dm target, check if underlying devices and
+dm target support copy. Avoid split happening inside dm target.
+Fail early if the request needs split, currently splitting copy
+request is not supported.
 
-Suggested-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
 Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
-Signed-off-by: Vincent Fu <vincent.fu@samsung.com>
 ---
- Documentation/block/null_blk.rst  |   5 ++
- drivers/block/null_blk/main.c     | 108 ++++++++++++++++++++++++++++--
- drivers/block/null_blk/null_blk.h |   8 +++
- 3 files changed, 116 insertions(+), 5 deletions(-)
+ drivers/md/dm-table.c         | 41 +++++++++++++++++++++++++++++++++++
+ drivers/md/dm.c               |  7 ++++++
+ include/linux/device-mapper.h |  5 +++++
+ 3 files changed, 53 insertions(+)
 
-diff --git a/Documentation/block/null_blk.rst b/Documentation/block/null_blk.rst
-index 4dd78f24d10a..6153e02fcf13 100644
---- a/Documentation/block/null_blk.rst
-+++ b/Documentation/block/null_blk.rst
-@@ -149,3 +149,8 @@ zone_size=[MB]: Default: 256
- zone_nr_conv=[nr_conv]: Default: 0
-   The number of conventional zones to create when block device is zoned.  If
-   zone_nr_conv >= nr_zones, it will be reduced to nr_zones - 1.
-+
-+copy_max_bytes=[size in bytes]: Default: COPY_MAX_BYTES
-+  A module and configfs parameter which can be used to set hardware/driver
-+  supported maximum copy offload limit.
-+  COPY_MAX_BYTES(=128MB at present) is defined in fs.h
-diff --git a/drivers/block/null_blk/main.c b/drivers/block/null_blk/main.c
-index b3fedafe301e..34e009b3ebd5 100644
---- a/drivers/block/null_blk/main.c
-+++ b/drivers/block/null_blk/main.c
-@@ -157,6 +157,10 @@ static int g_max_sectors;
- module_param_named(max_sectors, g_max_sectors, int, 0444);
- MODULE_PARM_DESC(max_sectors, "Maximum size of a command (in 512B sectors)");
- 
-+static unsigned long g_copy_max_bytes = COPY_MAX_BYTES;
-+module_param_named(copy_max_bytes, g_copy_max_bytes, ulong, 0444);
-+MODULE_PARM_DESC(copy_max_bytes, "Maximum size of a copy command (in bytes)");
-+
- static unsigned int nr_devices = 1;
- module_param(nr_devices, uint, 0444);
- MODULE_PARM_DESC(nr_devices, "Number of devices to register");
-@@ -409,6 +413,7 @@ NULLB_DEVICE_ATTR(home_node, uint, NULL);
- NULLB_DEVICE_ATTR(queue_mode, uint, NULL);
- NULLB_DEVICE_ATTR(blocksize, uint, NULL);
- NULLB_DEVICE_ATTR(max_sectors, uint, NULL);
-+NULLB_DEVICE_ATTR(copy_max_bytes, uint, NULL);
- NULLB_DEVICE_ATTR(irqmode, uint, NULL);
- NULLB_DEVICE_ATTR(hw_queue_depth, uint, NULL);
- NULLB_DEVICE_ATTR(index, uint, NULL);
-@@ -550,6 +555,7 @@ static struct configfs_attribute *nullb_device_attrs[] = {
- 	&nullb_device_attr_queue_mode,
- 	&nullb_device_attr_blocksize,
- 	&nullb_device_attr_max_sectors,
-+	&nullb_device_attr_copy_max_bytes,
- 	&nullb_device_attr_irqmode,
- 	&nullb_device_attr_hw_queue_depth,
- 	&nullb_device_attr_index,
-@@ -656,7 +662,8 @@ static ssize_t memb_group_features_show(struct config_item *item, char *page)
- 			"poll_queues,power,queue_mode,shared_tag_bitmap,size,"
- 			"submit_queues,use_per_node_hctx,virt_boundary,zoned,"
- 			"zone_capacity,zone_max_active,zone_max_open,"
--			"zone_nr_conv,zone_offline,zone_readonly,zone_size\n");
-+			"zone_nr_conv,zone_offline,zone_readonly,zone_size,"
-+			"copy_max_bytes\n");
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 1398f1d6e83e..b3269271e761 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1867,6 +1867,39 @@ static bool dm_table_supports_nowait(struct dm_table *t)
+ 	return true;
  }
  
- CONFIGFS_ATTR_RO(memb_group_, features);
-@@ -722,6 +729,7 @@ static struct nullb_device *null_alloc_dev(void)
- 	dev->queue_mode = g_queue_mode;
- 	dev->blocksize = g_bs;
- 	dev->max_sectors = g_max_sectors;
-+	dev->copy_max_bytes = g_copy_max_bytes;
- 	dev->irqmode = g_irqmode;
- 	dev->hw_queue_depth = g_hw_queue_depth;
- 	dev->blocking = g_blocking;
-@@ -1271,6 +1279,78 @@ static int null_transfer(struct nullb *nullb, struct page *page,
- 	return err;
- }
- 
-+static inline void nullb_setup_copy_read(struct nullb *nullb, struct bio *bio)
++static int device_not_copy_capable(struct dm_target *ti, struct dm_dev *dev,
++				      sector_t start, sector_t len, void *data)
 +{
-+	struct nullb_copy_token *token = bvec_kmap_local(&bio->bi_io_vec[0]);
++	struct request_queue *q = bdev_get_queue(dev->bdev);
 +
-+	token->subsys = "nullb";
-+	token->sector_in = bio->bi_iter.bi_sector;
-+	token->nullb = nullb;
-+	token->sectors = bio->bi_iter.bi_size >> SECTOR_SHIFT;
++	return !blk_queue_copy(q);
 +}
 +
-+static inline int nullb_setup_copy_write(struct nullb *nullb,
-+		struct bio *bio, bool is_fua)
++static bool dm_table_supports_copy(struct dm_table *t)
 +{
-+	struct nullb_copy_token *token = bvec_kmap_local(&bio->bi_io_vec[0]);
-+	sector_t sector_in, sector_out;
-+	void *in, *out;
-+	size_t rem, temp;
-+	unsigned long offset_in, offset_out;
-+	struct nullb_page *t_page_in, *t_page_out;
-+	int ret = -EIO;
++	struct dm_target *ti;
++	unsigned int i;
 +
-+	if (unlikely(memcmp(token->subsys, "nullb", 5)))
-+		return -EINVAL;
-+	if (unlikely(token->nullb != nullb))
-+		return -EINVAL;
-+	if (WARN_ON(token->sectors != bio->bi_iter.bi_size >> SECTOR_SHIFT))
-+		return -EINVAL;
++	for (i = 0; i < t->num_targets; i++) {
++		ti = dm_table_get_target(t, i);
 +
-+	sector_in = token->sector_in;
-+	sector_out = bio->bi_iter.bi_sector;
-+	rem = token->sectors << SECTOR_SHIFT;
++		if (!ti->copy_offload_supported)
++			return false;
 +
-+	spin_lock_irq(&nullb->lock);
-+	while (rem > 0) {
-+		temp = min_t(size_t, nullb->dev->blocksize, rem);
-+		offset_in = (sector_in & SECTOR_MASK) << SECTOR_SHIFT;
-+		offset_out = (sector_out & SECTOR_MASK) << SECTOR_SHIFT;
-+
-+		if (null_cache_active(nullb) && !is_fua)
-+			null_make_cache_space(nullb, PAGE_SIZE);
-+
-+		t_page_in = null_lookup_page(nullb, sector_in, false,
-+			!null_cache_active(nullb));
-+		if (!t_page_in)
-+			goto err;
-+		t_page_out = null_insert_page(nullb, sector_out,
-+			!null_cache_active(nullb) || is_fua);
-+		if (!t_page_out)
-+			goto err;
-+
-+		in = kmap_local_page(t_page_in->page);
-+		out = kmap_local_page(t_page_out->page);
-+
-+		memcpy(out + offset_out, in + offset_in, temp);
-+		kunmap_local(out);
-+		kunmap_local(in);
-+		__set_bit(sector_out & SECTOR_MASK, t_page_out->bitmap);
-+
-+		if (is_fua)
-+			null_free_sector(nullb, sector_out, true);
-+
-+		rem -= temp;
-+		sector_in += temp >> SECTOR_SHIFT;
-+		sector_out += temp >> SECTOR_SHIFT;
++		/*
++		 * target provides copy support (as implied by setting
++		 * 'copy_offload_supported')
++		 * and it relies on _all_ data devices having copy support.
++		 */
++		if (!ti->type->iterate_devices ||
++		     ti->type->iterate_devices(ti,
++			     device_not_copy_capable, NULL))
++			return false;
 +	}
 +
-+	ret = 0;
-+err:
-+	spin_unlock_irq(&nullb->lock);
-+	return ret;
++	return true;
 +}
 +
- static int null_handle_rq(struct nullb_cmd *cmd)
+ static int device_not_discard_capable(struct dm_target *ti, struct dm_dev *dev,
+ 				      sector_t start, sector_t len, void *data)
  {
- 	struct request *rq = cmd->rq;
-@@ -1280,13 +1360,20 @@ static int null_handle_rq(struct nullb_cmd *cmd)
- 	sector_t sector = blk_rq_pos(rq);
- 	struct req_iterator iter;
- 	struct bio_vec bvec;
-+	bool fua = rq->cmd_flags & REQ_FUA;
-+
-+	if (rq->cmd_flags & REQ_COPY) {
-+		if (op_is_write(req_op(rq)))
-+			return nullb_setup_copy_write(nullb, rq->bio, fua);
-+		nullb_setup_copy_read(nullb, rq->bio);
-+		return 0;
+@@ -1949,6 +1982,14 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 		q->limits.discard_misaligned = 0;
+ 	}
+ 
++	if (!dm_table_supports_copy(t)) {
++		blk_queue_flag_clear(QUEUE_FLAG_COPY, q);
++		q->limits.max_copy_sectors = 0;
++		q->limits.max_copy_sectors_hw = 0;
++	} else {
++		blk_queue_flag_set(QUEUE_FLAG_COPY, q);
 +	}
- 
- 	spin_lock_irq(&nullb->lock);
- 	rq_for_each_segment(bvec, rq, iter) {
- 		len = bvec.bv_len;
- 		err = null_transfer(nullb, bvec.bv_page, len, bvec.bv_offset,
--				     op_is_write(req_op(rq)), sector,
--				     rq->cmd_flags & REQ_FUA);
-+				     op_is_write(req_op(rq)), sector, fua);
- 		if (err) {
- 			spin_unlock_irq(&nullb->lock);
- 			return err;
-@@ -1307,13 +1394,20 @@ static int null_handle_bio(struct nullb_cmd *cmd)
- 	sector_t sector = bio->bi_iter.bi_sector;
- 	struct bio_vec bvec;
- 	struct bvec_iter iter;
-+	bool fua = bio->bi_opf & REQ_FUA;
 +
-+	if (bio->bi_opf & REQ_COPY) {
-+		if (op_is_write(bio_op(bio)))
-+			return nullb_setup_copy_write(nullb, bio, fua);
-+		nullb_setup_copy_read(nullb, bio);
-+		return 0;
+ 	if (!dm_table_supports_secure_erase(t))
+ 		q->limits.max_secure_erase_sectors = 0;
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 4361a01bff3a..d9f45a1f0a77 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1720,6 +1720,13 @@ static blk_status_t __split_and_process_bio(struct clone_info *ci)
+ 	if (unlikely(ci->is_abnormal_io))
+ 		return __process_abnormal_io(ci, ti);
+ 
++	if ((unlikely(op_is_copy(ci->bio->bi_opf)) &&
++			max_io_len(ti, ci->sector) < ci->sector_count)) {
++		DMERR("Error, IO size(%u) > max target size(%llu)\n",
++			ci->sector_count, max_io_len(ti, ci->sector));
++		return BLK_STS_IOERR;
 +	}
- 
- 	spin_lock_irq(&nullb->lock);
- 	bio_for_each_segment(bvec, bio, iter) {
- 		len = bvec.bv_len;
- 		err = null_transfer(nullb, bvec.bv_page, len, bvec.bv_offset,
--				     op_is_write(bio_op(bio)), sector,
--				     bio->bi_opf & REQ_FUA);
-+				     op_is_write(bio_op(bio)), sector, fua);
- 		if (err) {
- 			spin_unlock_irq(&nullb->lock);
- 			return err;
-@@ -2161,6 +2255,10 @@ static int null_add_dev(struct nullb_device *dev)
- 		dev->max_sectors = queue_max_hw_sectors(nullb->q);
- 	dev->max_sectors = min(dev->max_sectors, BLK_DEF_MAX_SECTORS);
- 	blk_queue_max_hw_sectors(nullb->q, dev->max_sectors);
-+	blk_queue_max_copy_sectors_hw(nullb->q,
-+			       dev->copy_max_bytes >> SECTOR_SHIFT);
-+	if (dev->copy_max_bytes)
-+		blk_queue_flag_set(QUEUE_FLAG_COPY, nullb->disk->queue);
- 
- 	if (dev->virt_boundary)
- 		blk_queue_virt_boundary(nullb->q, PAGE_SIZE - 1);
-diff --git a/drivers/block/null_blk/null_blk.h b/drivers/block/null_blk/null_blk.h
-index 929f659dd255..3dda593b0747 100644
---- a/drivers/block/null_blk/null_blk.h
-+++ b/drivers/block/null_blk/null_blk.h
-@@ -67,6 +67,13 @@ enum {
- 	NULL_Q_MQ	= 2,
++
+ 	/*
+ 	 * Only support bio polling for normal IO, and the target io is
+ 	 * exactly inside the dm_io instance (verified in dm_poll_dm_io)
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index a52d2b9a6846..04016bd76e73 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -398,6 +398,11 @@ struct dm_target {
+ 	 * bio_set_dev(). NOTE: ideally a target should _not_ need this.
+ 	 */
+ 	bool needs_bio_set_dev:1;
++
++	/*
++	 * copy offload is supported
++	 */
++	bool copy_offload_supported:1;
  };
  
-+struct nullb_copy_token {
-+	char *subsys;
-+	struct nullb *nullb;
-+	sector_t sector_in;
-+	sector_t sectors;
-+};
-+
- struct nullb_device {
- 	struct nullb *nullb;
- 	struct config_group group;
-@@ -107,6 +114,7 @@ struct nullb_device {
- 	unsigned int queue_mode; /* block interface */
- 	unsigned int blocksize; /* block size */
- 	unsigned int max_sectors; /* Max sectors per command */
-+	unsigned long copy_max_bytes; /* Max copy offload length in bytes */
- 	unsigned int irqmode; /* IRQ completion handler */
- 	unsigned int hw_queue_depth; /* queue depth */
- 	unsigned int index; /* index of the disk, only valid with a disk */
+ void *dm_per_bio_data(struct bio *bio, size_t data_size);
 -- 
 2.35.1.500.gb896f729e2
 
