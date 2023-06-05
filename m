@@ -4,65 +4,103 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C4350C77B73
-	for <dm-devel@archiver.kernel.org>; Mon,  5 Jun 2023 19:08:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3BB95C7EE23
+	for <dm-devel@archiver.kernel.org>; Mon,  5 Jun 2023 21:25:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685992115;
+	s=mimecast20190719; t=1686000345;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=J/fuJcyLZ5Lu1B5zRlwPcMLN3yhUx/7aiy7jy3+vKGI=;
-	b=fpEIs7415NgdjMPAmGD/Mj1vZPF/GNsYDddLptcCRNIsXxd8lM8E658PgJMTqxZ1oVsjZV
-	By/5gYN+UXs2WYdXV+CssMSP1K+/ukv6wpONRcUFgh96N8LgUH9GPck41IcF6NFpSs7hhD
-	la13XyhqjFNdHqAO7Dx87uRJLqxYe4k=
+	bh=LYpe8zLI++b8HOlR+5PLq8HjPJHIiLpOvhiHLl+RSQ0=;
+	b=OOF6fgiEY381dLyNRFFadKWF4Z5ef8N6HC2vSz0TKgg7aCeHokuhOBttrp6ayVk8ruN6m6
+	saP+8xNBIDlcihMDPCN6MKCLdzaj4HRfrD9xUsMDr0iCByA97u71TrYoSOdFWK9CT2Q39D
+	tVttb55Rmu0eENSKmRdYLJg/+7Kk7mM=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-614-6N4zM70ZPySagKK8feZHbw-1; Mon, 05 Jun 2023 15:08:32 -0400
-X-MC-Unique: 6N4zM70ZPySagKK8feZHbw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-438-i7dY97kSNM6mBLeiOLVTKQ-1; Mon, 05 Jun 2023 17:23:10 -0400
+X-MC-Unique: i7dY97kSNM6mBLeiOLVTKQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7D3EC85A5AA;
-	Mon,  5 Jun 2023 19:08:29 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D8B8E8039C0;
+	Mon,  5 Jun 2023 21:15:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 24F8C1121315;
-	Mon,  5 Jun 2023 19:08:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8093D492B00;
+	Mon,  5 Jun 2023 21:15:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0290A19465A3;
-	Mon,  5 Jun 2023 19:08:29 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 41D0319465A8;
+	Mon,  5 Jun 2023 21:15:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 039E31946595
- for <dm-devel@listman.corp.redhat.com>; Mon,  5 Jun 2023 19:08:11 +0000 (UTC)
+ ESMTP id 00B8019465A4
+ for <dm-devel@listman.corp.redhat.com>; Mon,  5 Jun 2023 21:15:02 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 01C309E8F; Mon,  5 Jun 2023 19:08:11 +0000 (UTC)
-Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D35419E8E;
- Mon,  5 Jun 2023 19:08:10 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 355J88Ee020860;
- Mon, 5 Jun 2023 14:08:08 -0500
-Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 355J87Es020859;
- Mon, 5 Jun 2023 14:08:07 -0500
-Date: Mon, 5 Jun 2023 14:08:07 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Message-ID: <20230605190807.GT24096@octiron.msp.redhat.com>
-References: <1684970472-28669-1-git-send-email-bmarzins@redhat.com>
- <1684970472-28669-5-git-send-email-bmarzins@redhat.com>
- <76217148d8069829795fb1d8608d5c5da60402e2.camel@suse.com>
+ id E05F540218C; Mon,  5 Jun 2023 21:15:02 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D85FA401470
+ for <dm-devel@redhat.com>; Mon,  5 Jun 2023 21:15:02 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
+ [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B02BF185A78F
+ for <dm-devel@redhat.com>; Mon,  5 Jun 2023 21:15:02 +0000 (UTC)
+Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com
+ [209.85.218.41]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-318-jwH92ttjMjetRVa3O1hSrA-1; Mon, 05 Jun 2023 17:14:59 -0400
+X-MC-Unique: jwH92ttjMjetRVa3O1hSrA-1
+Received: by mail-ej1-f41.google.com with SMTP id
+ a640c23a62f3a-977d4a1cf0eso262002866b.1
+ for <dm-devel@redhat.com>; Mon, 05 Jun 2023 14:14:58 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1685999698; x=1688591698;
+ h=content-transfer-encoding:cc:to:subject:message-id:date:from
+ :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=aY9b2eYrM9qWAWS74IvkUjX1eUU5yy6UtG6476GK6Ok=;
+ b=aoKThS11NDxRP3IGlCFpWjUxg64C/XvGNNIWAhzkNLXjzWJeo0+fVTdHIwlptSD1z/
+ Uq3P4Rzkb9t56UvsE8A9C1c+6884M+c8W+m3oba02e58szlE0lMBHW4KdoUmj5PakHUD
+ 2vpZbw+oNs6msRuci3GvozS95qijt0VTL0i/qvSZfyHWv9o97n7rdOg8Wg0mGGn7HObx
+ WiZ7+i63ign4nPscQ5BDJaF4uG8fTHiTl/s3ovxz4ecl15mbCHYg3IdynS48KTnjk8GS
+ mQPSNwATfutQcPgF64zbdvkjPyW/f6EpDSfp+PYhqM6Gtwy1dD6tZGLtvlBakrRcBIg3
+ zEsw==
+X-Gm-Message-State: AC+VfDxnzZYjfzz5NRlsBqVwNT3wpmsEG63+9MapJZtCL8qZ7jozoV7K
+ 7SzGsY0x3lis+UdCKjobh474VUbtEMZbpzV+I8NPjg==
+X-Google-Smtp-Source: ACHHUZ7murrbOxSSx4GpLx59bPJNo97XmGmVMQ0R4Lh5x3mm34bbhXjsDzAQAQinArp+kzhpjq89U2WTusv8UzpiAUM=
+X-Received: by 2002:a17:907:9803:b0:974:56aa:6dce with SMTP id
+ ji3-20020a170907980300b0097456aa6dcemr71859ejc.46.1685999697739; Mon, 05 Jun
+ 2023 14:14:57 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <76217148d8069829795fb1d8608d5c5da60402e2.camel@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH 4/5] multipathd: reload map if the path
- groups are out of order
+References: <ZG+KoxDMeyogq4J0@bfoster> <ZHB954zGG1ag0E/t@dread.disaster.area>
+ <CAJ0trDbspRaDKzTzTjFdPHdB9n0Q9unfu1cEk8giTWoNu3jP8g@mail.gmail.com>
+ <ZHFEfngPyUOqlthr@dread.disaster.area>
+ <CAJ0trDZJQwvAzngZLBJ1hB0XkQ1HRHQOdNQNTw9nK-U5i-0bLA@mail.gmail.com>
+ <ZHYB/6l5Wi+xwkbQ@redhat.com>
+ <CAJ0trDaUOevfiEpXasOESrLHTCcr=oz28ywJU+s+YOiuh7iWow@mail.gmail.com>
+ <ZHYWAGmKhwwmTjW/@redhat.com>
+ <CAG9=OMMnDfN++-bJP3jLmUD6O=Q_ApV5Dr392_5GqsPAi_dDkg@mail.gmail.com>
+ <ZHqOvq3ORETQB31m@dread.disaster.area> <ZHti/MLnX5xGw9b7@redhat.com>
+In-Reply-To: <ZHti/MLnX5xGw9b7@redhat.com>
+From: Sarthak Kukreti <sarthakkukreti@chromium.org>
+Date: Mon, 5 Jun 2023 14:14:44 -0700
+Message-ID: <CAG9=OMNv80fOyVixEY01XESnOFzYyfj9j8etHMq_Ap52z4UWNQ@mail.gmail.com>
+To: Mike Snitzer <snitzer@kernel.org>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+Subject: Re: [dm-devel] [PATCH v7 0/5] Introduce provisioning primitives
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -74,306 +112,302 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
+ Joe Thornber <thornber@redhat.com>, "Michael S. Tsirkin" <mst@redhat.com>,
+ "Darrick J. Wong" <djwong@kernel.org>, Jason Wang <jasowang@redhat.com>,
+ Bart Van Assche <bvanassche@google.com>, Dave Chinner <david@fromorbit.com>,
+ linux-kernel@vger.kernel.org, Joe Thornber <ejt@redhat.com>,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Andreas Dilger <adilger.kernel@dilger.ca>,
+ Stefan Hajnoczi <stefanha@redhat.com>, linux-fsdevel@vger.kernel.org,
+ Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org,
+ Brian Foster <bfoster@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+X-Mimecast-Originator: chromium.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On Wed, May 31, 2023 at 04:27:30PM +0000, Martin Wilck wrote:
-> On Wed, 2023-05-24 at 18:21 -0500, Benjamin Marzinski wrote:
-> > need_switch_pathgroup() only checks if the currently used pathgroup
-> > is
-> > not the highest priority pathgroup. If it isn't, all multipathd does
-> > is
-> > instruct the kernel to switch to the correct pathgroup.=A0 However, the
-> > kernel treats the pathgroups as if they were ordered by priority.
-> > When
-> > the kernel runs out of paths to use in the currently selected
-> > pathgroup,
-> > it will start checking the pathgroups in order until it finds one
-> > with
-> > usable paths.
-> >=20
-> > need_switch_pathgroup() should also check if the pathgroups are out
-> > of
-> > order, and if so, multipathd should reload the map to reorder them
-> > correctly.
-> >=20
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> > =A0libmultipath/libmultipath.version |=A0 5 ++++
-> > =A0libmultipath/switchgroup.c=A0=A0=A0=A0=A0=A0=A0 | 27 +++++++++++++++=
-+++++++
-> > =A0libmultipath/switchgroup.h=A0=A0=A0=A0=A0=A0=A0 |=A0 1 +
-> > =A0multipathd/main.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 | =
-38 +++++++++++++++++++++--------
-> > --
-> > =A04 files changed, 59 insertions(+), 12 deletions(-)
-> >=20
-> > diff --git a/libmultipath/libmultipath.version
-> > b/libmultipath/libmultipath.version
-> > index 8f72c452..38074699 100644
-> > --- a/libmultipath/libmultipath.version
-> > +++ b/libmultipath/libmultipath.version
-> > @@ -237,3 +237,8 @@ global:
-> > =A0local:
-> > =A0=A0=A0=A0=A0=A0=A0=A0*;
-> > =A0};
-> > +
-> > +LIBMULTIPATH_19.1.0 {
-> > +global:
-> > +=A0=A0=A0=A0=A0=A0=A0path_groups_in_order;
-> > +} LIBMULTIPATH_19.0.0;
-> > diff --git a/libmultipath/switchgroup.c b/libmultipath/switchgroup.c
-> > index b1e1f39b..b1180839 100644
-> > --- a/libmultipath/switchgroup.c
-> > +++ b/libmultipath/switchgroup.c
-> > @@ -7,6 +7,33 @@
-> > =A0#include "structs.h"
-> > =A0#include "switchgroup.h"
-> > =A0
-> > +bool path_groups_in_order(struct multipath *mpp)
-> > +{
-> > +=A0=A0=A0=A0=A0=A0=A0int i;
-> > +=A0=A0=A0=A0=A0=A0=A0struct pathgroup *pgp;
-> > +=A0=A0=A0=A0=A0=A0=A0bool seen_marginal_pg =3D false;
-> > +=A0=A0=A0=A0=A0=A0=A0int last_prio =3D INT_MAX;
-> > +
-> > +=A0=A0=A0=A0=A0=A0=A0if (VECTOR_SIZE(mpp->pg) < 2)
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return true;
-> > +
-> > +=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot(mpp->pg, pgp, i) {
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* skip pgs with PRIO_UND=
-EF, since this is likely
-> > temporary */
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (!pgp->paths || pgp->p=
-riority =3D=3D PRIO_UNDEF)
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
-ontinue;
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pgp->marginal && !see=
-n_marginal_pg) {
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0l=
-ast_prio =3D INT_MAX;
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
-ontinue;
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (seen_marginal_pg && !=
-pgp->marginal)
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0r=
-eturn false;
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pgp->priority > last_=
-prio)
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0r=
-eturn false;
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0last_prio =3D pgp->priori=
-ty;
-> > +=A0=A0=A0=A0=A0=A0=A0}
-> > +=A0=A0=A0=A0=A0=A0=A0return true;
-> > +}
-> > +
-> > =A0void path_group_prio_update(struct pathgroup *pgp)
-> > =A0{
-> > =A0=A0=A0=A0=A0=A0=A0=A0int i;
-> > diff --git a/libmultipath/switchgroup.h b/libmultipath/switchgroup.h
-> > index 9365e2e2..43dbb6c9 100644
-> > --- a/libmultipath/switchgroup.h
-> > +++ b/libmultipath/switchgroup.h
-> > @@ -1,2 +1,3 @@
-> > =A0void path_group_prio_update (struct pathgroup * pgp);
-> > =A0int select_path_group (struct multipath * mpp);
-> > +bool path_groups_in_order(struct multipath *mpp);
-> > diff --git a/multipathd/main.c b/multipathd/main.c
-> > index e7c272ad..2ea7c76b 100644
-> > --- a/multipathd/main.c
-> > +++ b/multipathd/main.c
-> > @@ -396,7 +396,7 @@ void put_multipath_config(__attribute__((unused))
-> > void *arg)
-> > =A0}
-> > =A0
-> > =A0static int
-> > -need_switch_pathgroup (struct multipath * mpp, int refresh)
-> > +need_switch_pathgroup (struct multipath * mpp, int refresh, bool
-> > *need_reload)
-> > =A0{
-> > =A0=A0=A0=A0=A0=A0=A0=A0struct pathgroup * pgp;
-> > =A0=A0=A0=A0=A0=A0=A0=A0struct path * pp;
-> > @@ -404,6 +404,7 @@ need_switch_pathgroup (struct multipath * mpp,
-> > int refresh)
-> > =A0=A0=A0=A0=A0=A0=A0=A0struct config *conf;
-> > =A0=A0=A0=A0=A0=A0=A0=A0int bestpg;
-> > =A0
-> > +=A0=A0=A0=A0=A0=A0=A0*need_reload =3D false;
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (!mpp)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > =A0
-> > @@ -430,10 +431,9 @@ need_switch_pathgroup (struct multipath * mpp,
-> > int refresh)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0mpp->bestpg =3D bestpg;
-> > -=A0=A0=A0=A0=A0=A0=A0if (mpp->bestpg !=3D mpp->nextpg)
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
-> > +=A0=A0=A0=A0=A0=A0=A0*need_reload =3D !path_groups_in_order(mpp);
->=20
-> This will start another loop over the path groups. Can we just
-> integrate the path_groups_in_order() logic into the loop right here?
->=20
-
-Sure
--Ben
-
->=20
->=20
-> > =A0
-> > -=A0=A0=A0=A0=A0=A0=A0return 0;
-> > +=A0=A0=A0=A0=A0=A0=A0return (*need_reload || mpp->bestpg !=3D mpp->nex=
-tpg);
-> > =A0}
-> > =A0
-> > =A0static void
-> > @@ -1982,20 +1982,26 @@ ghost_delay_tick(struct vectors *vecs)
-> > =A0}
-> > =A0
-> > =A0static void
-> > -deferred_failback_tick (vector mpvec)
-> > +deferred_failback_tick (struct vectors *vecs)
-> > =A0{
-> > =A0=A0=A0=A0=A0=A0=A0=A0struct multipath * mpp;
-> > =A0=A0=A0=A0=A0=A0=A0=A0unsigned int i;
-> > +=A0=A0=A0=A0=A0=A0=A0bool need_reload;
-> > =A0
-> > -=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot (mpvec, mpp, i) {
-> > +=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot (vecs->mpvec, mpp, i) {
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/*
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 * deferred failback ge=
-tting sooner
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 */
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (mpp->pgfailback > 0=
- && mpp->failback_tick > 0) {
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0mpp->failback_tick--;
-> > =A0
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0i=
-f (!mpp->failback_tick &&
-> > need_switch_pathgroup(mpp, 1))
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(mpp);
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0i=
-f (!mpp->failback_tick &&
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0 need_switch_pathgroup(mpp, 1,
-> > &need_reload)) {
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0if (need_reload)
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0reload_and_sync_map(mpp,
-> > vecs, 0);
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0else
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(mpp);
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> > =A0=A0=A0=A0=A0=A0=A0=A0}
-> > =A0}
-> > @@ -2579,6 +2585,7 @@ check_path (struct vectors * vecs, struct path
-> > * pp, unsigned int ticks)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0int prio_changed =3D up=
-date_prio(pp, new_path_up);
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0bool need_refresh =3D (=
-!new_path_up && prio_changed &&
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->priority !=3D PRIO_UNDEF);
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0bool need_reload;
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (prio_changed &&
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->mpp->pgpo=
-licyfn =3D=3D (pgpolicyfn
-> > *)group_by_prio &&
-> > @@ -2586,15 +2593,22 @@ check_path (struct vectors * vecs, struct
-> > path * pp, unsigned int ticks)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0condlog(2, "%s: path priorities changed.
-> > reloading",
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->alias);
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0reload_and_sync_map(pp->mpp, vecs,
-> > !new_path_up);
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0} else if (need_switch_pa=
-thgroup(pp->mpp,
-> > need_refresh)) {
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0} else if (need_switch_pa=
-thgroup(pp->mpp,
-> > need_refresh,
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 &n=
-eed_reload)) {
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0if (pp->mpp->pgfailback > 0 &&
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0 (new_path_up || pp->mpp->failback_tick <=3D
-> > 0))
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->failback_tick =3D
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->pgfailback + 1;
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0else if (pp->mpp->pgfailback =3D=3D -
-> > FAILBACK_IMMEDIATE ||
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0 (chkr_new_path_up &&
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0 followover_should_failback(pp)))
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(pp->mpp);
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0 followover_should_failback(pp))) {
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0if (need_reload)
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0reload_and_sync_map(pp->mpp=
-,
-> > vecs,
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0
-> > !need_refresh &&
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0
-> > !new_path_up);
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0else
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(pp->mpp);
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> > =A0=A0=A0=A0=A0=A0=A0=A0}
-> > =A0=A0=A0=A0=A0=A0=A0=A0return 1;
-> > @@ -2720,7 +2734,7 @@ unlock:
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_push(cl=
-eanup_lock, &vecs->lock);
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0lock(&vecs->lock);
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pthread_testcancel();
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0deferred_failback_tick(ve=
-cs->mpvec);
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0deferred_failback_tick(ve=
-cs);
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0retry_count_tick(vecs->=
-mpvec);
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0missing_uev_wait_tick(v=
-ecs);
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0ghost_delay_tick(vecs);
->=20
->=20
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gU2F0LCBKdW4gMywgMjAyMyBhdCA4OjU34oCvQU0gTWlrZSBTbml0emVyIDxzbml0emVyQGtl
+cm5lbC5vcmc+IHdyb3RlOgo+Cj4gT24gRnJpLCBKdW4gMDIgMjAyMyBhdCAgODo1MlAgLTA0MDAs
+Cj4gRGF2ZSBDaGlubmVyIDxkYXZpZEBmcm9tb3JiaXQuY29tPiB3cm90ZToKPgo+ID4gT24gRnJp
+LCBKdW4gMDIsIDIwMjMgYXQgMTE6NDQ6MjdBTSAtMDcwMCwgU2FydGhhayBLdWtyZXRpIHdyb3Rl
+Ogo+ID4gPiBPbiBUdWUsIE1heSAzMCwgMjAyMyBhdCA4OjI44oCvQU0gTWlrZSBTbml0emVyIDxz
+bml0emVyQGtlcm5lbC5vcmc+IHdyb3RlOgo+ID4gPiA+Cj4gPiA+ID4gT24gVHVlLCBNYXkgMzAg
+MjAyMyBhdCAxMDo1NVAgLTA0MDAsCj4gPiA+ID4gSm9lIFRob3JuYmVyIDx0aG9ybmJlckByZWRo
+YXQuY29tPiB3cm90ZToKPiA+ID4gPgo+ID4gPiA+ID4gT24gVHVlLCBNYXkgMzAsIDIwMjMgYXQg
+MzowMuKAr1BNIE1pa2UgU25pdHplciA8c25pdHplckBrZXJuZWwub3JnPiB3cm90ZToKPiA+ID4g
+PiA+Cj4gPiA+ID4gPiA+Cj4gPiA+ID4gPiA+IEFsc28gSm9lLCBmb3IgeW91IHByb3Bvc2VkIGRt
+LXRoaW5wIGRlc2lnbiB3aGVyZSB5b3UgZGlzdGlucXVpc2gKPiA+ID4gPiA+ID4gYmV0d2VlbiAi
+cHJvdmlzaW9uIiBhbmQgInJlc2VydmUiOiBXb3VsZCBpdCBtYWtlIHNlbnNlIGZvciBSRVFfTUVU
+QQo+ID4gPiA+ID4gPiAoZS5nLiBhbGwgWEZTIG1ldGFkYXRhKSB3aXRoIFJFUV9QUk9WSVNJT04g
+dG8gYmUgdHJlYXRlZCBhcyBhbgo+ID4gPiA+ID4gPiBMQkEtc3BlY2lmaWMgaGFyZCByZXF1ZXN0
+PyAgV2hlcmVhcyBSRVFfUFJPVklTSU9OIG9uIGl0cyBvd24gcHJvdmlkZXMKPiA+ID4gPiA+ID4g
+bW9yZSBmcmVlZG9tIHRvIGp1c3QgcmVzZXJ2ZSB0aGUgbGVuZ3RoIG9mIGJsb2Nrcz8gKGUuZy4g
+Zm9yIFhGUwo+ID4gPiA+ID4gPiBkZWxhbGxvYyB3aGVyZSBMQkEgcmFuZ2UgaXMgdW5rbm93biwg
+YnV0IGRtLXRoaW5wIGNhbiBiZSBhc2tlZCB0bwo+ID4gPiA+ID4gPiByZXNlcnZlIHNwYWNlIHRv
+IGFjY29tb2RhdGUgaXQpLgo+ID4gPiA+ID4gPgo+ID4gPiA+ID4KPiA+ID4gPiA+IE15IHByb3Bv
+c2FsIG9ubHkgaW52b2x2ZXMgJ3Jlc2VydmUnLiAgUHJvdmlzaW9uaW5nIHdpbGwgYmUgZG9uZSBh
+cyBwYXJ0IG9mCj4gPiA+ID4gPiB0aGUgdXN1YWwgaW8gcGF0aC4KPiA+ID4gPgo+ID4gPiA+IE9L
+LCBJIHRoaW5rIHdlJ2QgZG8gd2VsbCB0byBwaW4gZG93biB0aGUgdG9wLWxldmVsIGJsb2NrIGlu
+dGVyZmFjZXMgaW4KPiA+ID4gPiBxdWVzdGlvbi4gQmVjYXVzZSB0aGlzIHBhdGNoc2V0J3MgYmxv
+Y2sgaW50ZXJmYWNlIHBhdGNoICgyLzUpIGhlYWRlcgo+ID4gPiA+IHNheXM6Cj4gPiA+ID4KPiA+
+ID4gPiAiVGhpcyBwYXRjaCBhbHNvIGFkZHMgdGhlIGNhcGFiaWxpdHkgdG8gY2FsbCBmYWxsb2Nh
+dGUoKSBpbiBtb2RlIDAKPiA+ID4gPiBvbiBibG9jayBkZXZpY2VzLCB3aGljaCB3aWxsIHNlbmQg
+UkVRX09QX1BST1ZJU0lPTiB0byB0aGUgYmxvY2sKPiA+ID4gPiBkZXZpY2UgZm9yIHRoZSBzcGVj
+aWZpZWQgcmFuZ2UsIgo+ID4gPiA+Cj4gPiA+ID4gU28gaXQgd2lyZXMgdXAgYmxrZGV2X2ZhbGxv
+Y2F0ZSgpIHRvIGNhbGwgYmxrZGV2X2lzc3VlX3Byb3Zpc2lvbigpLiBBCj4gPiA+ID4gdXNlciBv
+ZiBYRlMgY291bGQgdGhlbiB1c2UgZmFsbG9jYXRlKCkgZm9yIHVzZXIgZGF0YSAtLSB3aGljaCB3
+b3VsZAo+ID4gPiA+IGNhdXNlIHRoaW5wJ3MgcmVzZXJ2ZSB0byBfbm90XyBiZSB1c2VkIGZvciBj
+cml0aWNhbCBtZXRhZGF0YS4KPiA+Cj4gPiBNaWtlLCBJIHRoaW5rIHlvdSBtaWdodCBoYXZlIG1p
+c3VuZGVyc3Rvb2Qgd2hhdCBJIGhhdmUgYmVlbiBwcm9wb3NpbmcuCj4gPiBQb3NzaWJseSB1bmlu
+dGVudGlvbmFsbHksIEkgZGlkbid0IGNhbGwgaXQgUkVRX09QX1BST1ZJU0lPTiBidXQKPiA+IHRo
+YXQncyB3aGF0IEkgaW50ZW5kZWQgLSB0aGUgb3BlcmF0aW9uIGRvZXMgbm90IGNvbnRhaW4gZGF0
+YSBhdCBhbGwuCj4gPiBJdCdzIGFuIG9wZXJhdGlvbiBsaWtlIFJFUV9PUF9ESVNDQVJEIG9yIFJF
+UV9PUF9XUklURV9aRVJPUyAtIGl0Cj4gPiBjb250YWlucyBhIHJhbmdlIG9mIHNlY3RvcnMgdGhh
+dCBuZWVkIHRvIGJlIHByb3Zpc2lvbmVkIChvcgo+ID4gZGlzY2FyZGVkKSwgYW5kIG5vdGhpbmcg
+ZWxzZS4KPgo+IE5vLCBJIHVuZGVyc3Rvb2QgdGhhdC4KPgo+ID4gVGhlIHdyaXRlIElPcyB0aGVt
+c2VsdmVzIGFyZSBub3QgdGFnZ2VkIHdpdGggYW55dGhpbmcgc3BlY2lhbCBhdCBhbGwuCj4KPiBJ
+IGtub3csIGJ1dCBJJ3ZlIGJlZW4gbG9va2luZyBhdCBob3cgdG8gYWxzbyBoYW5kbGUgdGhlIGRl
+bGFsbG9jCj4gdXNlY2FzZSAoYW5kIHllcyBJIGtub3cgeW91IGZlZWwgaXQgZG9lc24ndCBuZWVk
+IGhhbmRsaW5nLCB0aGUgaXNzdWUKPiBpcyBYRlMgZG9lcyBkZWFsIG5pY2VseSB3aXRoIGVuc3Vy
+aW5nIGl0IGhhcyBzcGFjZSB3aGVuIGl0IHRyYWNrcyBpdHMKPiBhbGxvY2F0aW9ucyBvbiAidGhp
+Y2siIHN0b3JhZ2UgLS0gc28gYWRkaW5nIGNvb3JkaW5hdGlvbiBiZXR3ZWVuIFhGUwo+IGFuZCBk
+bS10aGluIGxheWVycyBwcm92aWRlcyBjb21wYXJhYmxlIHNhZmV0eS4uIHRoYXQgc2FmZXR5IGlz
+IGFuCj4gZXhwZWN0ZWQgbm9ybSkuCj4KPiBCdXQgcmF0aGVyIHRoYW4gZGlzY3VzcyBpbiB0ZXJt
+cyBvZiBkYXRhIHZzIG1ldGFkYXRhLCB0aGUgZGlzdGluY3Rpb24KPiBpczoKPiAxKSBMQkEgcmFu
+Z2UgcmVzZXJ2YXRpb24gKG5vcm1hbCBjYXNlLCB5b3VyIHByb3Bvc2FsKQo+IDIpIG5vbi1MQkEg
+cmVzZXJ2YXRpb24gKGFic29sdXRlIHZhbHVlLCBMQkEgcmFuZ2UgaXMga25vd24gYXQgbGF0ZXIg
+c3RhZ2UpCj4KPiBCdXQgSSdtIGNsZWFybHkgZ29pbmcgb2ZmIHNjcmlwdCBmb3IgZHdlbGxpbmcg
+b24gd2FudGluZyB0byBoYW5kbGUKPiBib3RoLgo+Cj4gTXkgbG9va2luZyBhdCAoYWIpdXNpbmcg
+UkVRX01FVEEgYmVpbmcgc2V0ICh1c2UgMSkgdnMgbm90ICh1c2UgMikgd2FzCj4gYSBjcnVkZSBz
+aW1wbGlmaWNhdGlvbiBmb3IgYnJhbmNoaW5nIGJldHdlZW4gdGhlIDIgYXBwcm9hY2hlcy4KPgo+
+IEFuZCBJIHVuZGVyc3RhbmQgSSBtYWRlIHlvdSBuZXJ2b3VzIGJ5IGV4cGFuZGluZyB0aGUgc2Nv
+cGUgdG8gYSBtdWNoCj4gbW9yZSBtdWRkbGVkL3NoaXR0eSBpbnRlcmZhY2UuIDspCj4KPiBXZSBh
+bGwganVzdCBuZWVkIHRvIGZvY3VzIG9uIHlvdXIgcHJvcG9zYWwgYW5kIEpvZSdzIGRtLXRoaW4K
+PiByZXNlcnZhdGlvbiBkZXNpZ24uLi4KPgo+IFtTYXJ0aGFrOiBGWUksIHRoaXMgaW1wbGllcyB0
+aGF0IGl0IGRvZXNuJ3QgcmVhbGx5IG1ha2Ugc2Vuc2UgdG8gYWRkCj4gZG0tdGhpbnAgc3VwcG9y
+dCBiZWZvcmUgSm9lJ3MgZGVzaWduIGlzIGltcGxlbWVudGVkLiAgT3RoZXJ3aXNlIHdlJ2xsCj4g
+aGF2ZSAyIGRpZmZlcmVudCByZXNwb25zZXMgdG8gUkVRX09QX1BST1ZJU0lPTi4gIFRoZSBvbmUg
+dGhhdCBpcwo+IGNhcHR1cmVkIGluIHlvdXIgcGF0Y2hzZXQgaXNuJ3QgYWRlcXVhdGUgdG8gcHJv
+cGVybHkgaGFuZGxlIGVuc3VyaW5nCj4gdXBwZXIgbGF5ZXIgKGxpa2UgWEZTKSBjYW4gZGVwZW5k
+IG9uIHRoZSBzcGFjZSBiZWluZyBhdmFpbGFibGUgYWNyb3NzCj4gc25hcHNob3QgYm91bmRhcmll
+cy5dCj4KQWNrLiBXb3VsZCBpdCBiZSBwcmVtYXR1cmUgZm9yIHRoZSByZXN0IG9mIHRoZSBzZXJp
+ZXMgdG8gZ28gdGhyb3VnaAooUkVRX09QX1BST1ZJU0lPTiArIHN1cHBvcnQgZm9yIGxvb3AgYW5k
+IG5vbi1kbS10aGlucCBkZXZpY2UtbWFwcGVyCnRhcmdldHMpPyBJJ2QgbGlrZSB0byBzdGFydCB1
+c2luZyB0aGlzIGFzIGEgcmVmZXJlbmNlIHRvIHN1Z2dlc3QKYWRkaXRpb25zIHRvIHRoZSB2aXJ0
+aW8tc3BlYyBmb3IgdmlydGlvLWJsayBzdXBwb3J0IGFuZCBzdGFydCBsb29raW5nCmF0IHdoYXQg
+YW4gZXh0NCBpbXBsZW1lbnRhdGlvbiB3b3VsZCBsb29rIGxpa2UuCgo+ID4gaS5lLiBUaGUgcHJv
+cG9zYWwgSSBtYWRlIGRvZXMgbm90IHVzZSBSRVFfUFJPVklTSU9OIGFueXdoZXJlIGluIHRoZQo+
+ID4gbWV0YWRhdGEvZGF0YSBJTyBwYXRoOyBwcm92aXNpb25lZCByZWdpb25zIGFyZSBjcmVhdGVk
+IGJ5IHNlcGFyYXRlCj4gPiBvcGVyYXRpb25zIGFuZCBtdXN0IGJlIHRyYWNrZWQgYnkgdGhlIHVu
+ZGVybHlpbmcgYmxvY2sgZGV2aWNlLCB0aGVuCj4gPiB0cmVhdCBhbnkgd3JpdGUgSU8gdG8gdGhv
+c2UgcmVnaW9ucyBhcyAibXVzdCBub3QgZmFpbCB3LyBFTk9TUEMiCj4gPiBJT3MuCj4gPgo+ID4g
+VGhlcmUgc2VlbXMgdG8gYmUgYSBsb3Qgb2YgZmVhciBhYm91dCB1c2VyIGRhdGEgcmVxdWlyaW5n
+Cj4gPiBwcm92aXNpb25pbmcuIFRoaXMgaXMgdW5mb3VuZGVkIC0gcHJvdmlzaW9uaW5nIGlzIG9u
+bHkgbmVlZGVkIGZvcgo+ID4gZXhwbGljaXRseSBwcm92aXNpb25lZCBzcGFjZSB2aWEgZmFsbG9j
+YXRlKCksIG5vdCBldmVyeSBieXRlIG9mCj4gPiB1c2VyIGRhdGEgd3JpdHRlbiB0byB0aGUgZmls
+ZXN5c3RlbSAodGhlIG1vZGVsIEJyaWFuIGlzIHByb3Bvc2luZykuCj4KPiBBcyBJIG1lbnRpb25l
+ZCBhYm92ZSwgSSB3YXMganVzdCB0cnlpbmcgdG8gZ2V0IFhGUy1vbi10aGlucCB0bwo+IG1haW50
+YWluIHBhcml0eSB3aXRoIGhvdyBYRlMncyBkZWxhbGxvYyBhY2NvdW50aW5nIHdvcmtzIG9uICJ0
+aGljayIKPiBzdG9yYWdlLgo+Cj4gQnV0IGhhcHB5IHRvIHB1dCB0aGF0IHRvIG9uZSBzaWRlLiAg
+TWFpbnRhaW4gZm9jdXMgbGlrZSBJIG1lbnRpb25lZAo+IGFib3ZlLiAgSSdtIGhhcHB5IHdlIGhh
+dmUgbW9tZW50dW0gYW5kIGFncmVlbWVudCBvbiB0aGlzIGRlc2lnbiBub3cuCj4gUmF0aGVyIHRo
+YW4gYmUgY29udGVudCB3aXRoIHRoYXQsIEkgd2FzIG1pc3Rha2VubHkgbG9va2luZyBhdCBvdGhl
+cgo+IGFzcGVjdHMgYW5kIGluIGRvaW5nIHNvIGludHJvZHVjZWQgIm5vaXNlIiBiZWZvcmUgd2Un
+dmUgaW1wbGVtZW50ZWQKPiB3aGF0IHdlIGFsbCBjb21wbGV0ZWx5IGFncmVlIG9uOiB5b3VyIGFu
+ZCBqb2UncyBkZXNpZ25zLgo+Cj4gPiBFeGNlc3NpdmUgdXNlIG9mIGZhbGxvY2F0ZSgpIGlzIHNl
+bGYgY29ycmVjdGluZyAtIGlmIHVzZXJzIGFuZC9vcgo+ID4gdGhlaXIgYXBwbGljYXRpb25zIHBy
+b3Zpc2lvbiB0b28gbXVjaCwgdGhleSBhcmUgZ29pbmcgdG8gZ2V0IEVOT1NQQwo+ID4gb3IgaGF2
+ZSB0byBwYXkgbW9yZSB0byBleHBhbmQgdGhlIGJhY2tpbmcgcG9vbCByZXNlcnZlcyB0aGV5IG5l
+ZWQuCj4gPiBCdXQgdGhhdCdzIG5vdCBhIHByb2JsZW0gdGhlIGJsb2NrIGRldmljZSBzaG91bGQg
+YmUgdHJ5aW5nIHRvIHNvbHZlOwo+ID4gdGhhdCdzIGEgcHJvYmxlbSBmb3IgdGhlIHN5c2FkbWlu
+IGFuZC9vciBiZWFuIGNvdW50ZXJzIHRvIGFkZHJlc3MuCj4gPgo+ID4gPiA+Cj4gPiA+ID4gVGhl
+IG9ubHkgd2F5IHRvIGRpc3RpbnF1aXNoIHRoZSBjYWxsZXIgKGJldHdlZW4gb24tYmVoYWxmIG9m
+IHVzZXIgZGF0YQo+ID4gPiA+IHZzIFhGUyBtZXRhZGF0YSkgd291bGQgYmUgUkVRX01FVEE/Cj4g
+PiA+ID4KPiA+ID4gPiBTbyBzaG91bGQgZG0tdGhpbnAgaGF2ZSBhIFJFUV9NRVRBLWJhc2VkIGRp
+c3RpbmN0aW9uPyBPciBqdXN0IHRyZWF0Cj4gPiA+ID4gYWxsIFJFUV9PUF9QUk9WSVNJT04gdGhl
+IHNhbWU/Cj4gPiA+ID4KPiA+ID4gSSdtIGluIGZhdm9yIG9mIGEgUkVRX01FVEEtYmFzZWQgZGlz
+dGluY3Rpb24uCj4gPgo+ID4gV2h5PyBXaGF0ICpyZXF1aXJlbWVudCogaXMgZHJpdmluZyB0aGUg
+bmVlZCBmb3IgdGhpcyBkaXN0aW5jdGlvbj8KPgo+IFRoaW5rIEkgYW5zd2VyZWQgdGhhdCBhYm92
+ZSwgWEZTIGRlbGFsbG9jIGFjY291bnRpbmcgcGFyaXR5IG9uIHRoaW5wLgo+CkkgYWN0dWFsbHkg
+aGFkIGEgZmV3IGRpZmZlcmVudCB1c2UtY2FzZXMgaW4gbWluZCAoYXBhcnQgZnJvbSB0aGUgdXNl
+cgpkYXRhIHByb3Zpc2lvbmluZyAnZmVhcicgdGhhdCB5b3UgcG9pbnRlZCBvdXQpOiBpbiBlc3Nl
+bmNlLCB0aGVyZSBhcmUKY2FzZXMgd2hlcmUgdXNlcnNwYWNlIHdvdWxkIGJlbmVmaXQgZnJvbSBo
+YXZpbmcgbW9yZSBjb250cm9sIG92ZXIgaG93Cm11Y2ggc3BhY2UgYSBzbmFwc2hvdCB0YWtlczoK
+CjEpIEluIHRoZSBvcmlnaW5hbCBSRkMgcGF0Y2hzZXQgWzFdLCBJIGFsbHVkZWQgdG8gdGhpcyBi
+ZWluZyBhCm1lY2hhbmlzbSBmb3IgcHJlLWFsbG9jYXRpbmcgc3BhY2UgZm9yIHByZXNlcnZpbmcg
+c3BhY2UgZm9yIHRoaW4KbG9naWNhbCB2b2x1bWVzLiBUaGUgdXNlLWNhc2UgSSdkIGxpa2UgdG8g
+ZXhwbG9yZSBpcyBkZWx0YSB1cGRhdGFibGUKcmVhZC1vbmx5IGZpbGVzeXN0ZW1zIHNpbWlsYXIg
+dG8gc3lzdGVtZCBzeXN0ZW0gZXh0ZW5zaW9ucyBbMl06IEluCmVzc2VuY2U6CmEpIFByZXNlcnZl
+IHNwYWNlIGZvciBhICdiYXNlJyB0aGluIGxvZ2ljYWwgdm9sdW1lIHRoYXQgd2lsbCBjb250YWlu
+IGEKcmVhZC1vbmx5IGZpbGVzeXN0ZW0gb24gb3Zlci10aGUtYWlyIGluc3RhbGxhdGlvbjogZm9y
+IGZpbGVzeXN0ZW1zCmxpa2Ugc3F1YXNoZnMgYW5kIGVyb2ZzLCBwcmV0dHkgbXVjaCB0aGUgZW50
+aXJlIGltYWdlIGlzIGEgY29tcHJlc3NlZApmaWxlIHRoYXQgSSdkIGxpa2UgdG8gcmVzZXJ2ZSBz
+cGFjZSBmb3IgYmVmb3JlIGluc3RhbGxhdGlvbi4KYikgQmVmb3JlIHVwZGF0ZSwgY3JlYXRlIGEg
+dGhpbiBzbmFwc2hvdCBhbmQgcHJlc2VydmUgZW5vdWdoIHNwYWNlIHRvCmVuc3VyZSB0aGF0IGEg
+ZGVsdGEgdXBkYXRlIHdpbGwgc3VjY2VlZCAoZWcuIGJsb2NrIGxldmVsIGRpZmYgb2YgdGhlCmJh
+c2UgaW1hZ2UpLiBUaGVuLCB0aGUgdXBkYXRlIGlzIGd1YXJhbnRlZWQgdG8gaGF2ZSBkaXNrIHNw
+YWNlIHRvCnN1Y2NlZWQgKHNpbWlsYXIgdG8gdGhlIEEtQiB1cGRhdGUgZ3VhcmFudGVlcyBvbiBD
+aHJvbWVPUykuIE9uCnN1Y2Nlc3MsIHdlIG1lcmdlIHRoZSBzbmFwc2hvdCBhbmQgcmVzZXJ2ZSBh
+biB1cGRhdGUgc25hcHNob3QgZm9yIHRoZQpuZXh0IHBvc3NpYmxlIHVwZGF0ZS4gT24gZmFpbHVy
+ZSwgd2UgZHJvcCB0aGUgc25hcHNob3QuCgoyKSBUaGUgb3RoZXIgaWRlYSBJIHdhbnRlZCB0byBl
+eHBsb3JlIHdhcyByb2xsYmFjayBwcm90ZWN0aW9uIGZvcgpzdGF0ZWZ1bCBmaWxlc3lzdGVtIGZl
+YXR1cmVzOiBpbiBlc3NlbmNlLCBpZiBhbiB1cGRhdGUgZnJvbSBrZXJuZWwgNC54CnRvIDUueSBm
+YWlsZWQgdmVyeSBxdWlja2x5IChkdWUgdG8gdW5yZWxhdGVkIHJlYXNvbnMpIGFuZCB3ZSBlbmFi
+bGVkCnNvbWUgc3RhdGVmdWwgZmlsZXN5c3RlbSBmZWF0dXJlcyB0aGF0IGFyZSBvbmx5IHN1cHBv
+cnRlZCBvbiA1LnksIHdlJ2QKYmUgYWJsZSB0byByb2xsYmFjayB0byA0LnggaWYgd2UgdXNlZCBz
+aG9ydC1saXZlZCBzbmFwc2hvdHMgKGluIHRoZQpDaHJvbWl1bU9TIHdvcmxkLCB0aGUgbGlmZXRp
+bWUgb2YgdGhlc2Ugc25hcHNob3RzIHdvdWxkIGJlIDwgMTBzIHBlcgpib290KS4KCk9uIHJlZmxl
+Y3Rpb24sIHRoZSBtZXRhZGF0YSB2cyB1c2VyIGRhdGEgZGlzdGluY3Rpb24gd2FzIGEgbWVhbnMg
+dG8gYW4KZW5kIGZvciBtZTogSSdkIGxpa2UgdG8gcmV0YWluIHRoZSBjYXBhYmlsaXR5IHRvIGNy
+ZWF0ZSB0aGluCnNob3J0LWxpdmVkIHNuYXBzaG90cyBmcm9tIHVzZXJzcGFjZSBfcmVnYXJkbGVz
+c18gb2YgdGhlIHByb3Zpc2lvbmVkCnJhbmdlcyBvZiBhIHRoaW4gdm9sdW1lIGFuZCB0aGUgZmxl
+eGliaWxpdHkgdG8gbWFuaXB1bGF0ZSB0aGUgc3BhY2UKcmVxdWlyZW1lbnRzIG9uIHRoZXNlIHNu
+YXBzaG90IHZvbHVtZXMgZnJvbSB1c2Vyc3BhY2UuIFRoaXMgbWlnaHQKYXBwZWFyIGFzICJiZWFu
+LWNvdW50aW5nIiBidXQgaWYgSSBoYXZlIGVnLiBhIDRHQiByZWFkLW9ubHkgY29tcHJlc3NlZApm
+aWxlc3lzdGVtIGFuZCBJIGtub3csIGEgcHJpb3JpLCBhbiB1cGRhdGUgd2lsbCB0YWtlIGF0IG1v
+c3QgNDAwTSwgSQpzaG91bGRuJ3QgbmVlZCB0byAobW9tZW50YXJpbHkpIHJlc2VydmUgYW5vdGhl
+ciA0R0Igb3IgYWRkIG1vcmUgZGlza3MKdG8gY29tcGxldGUgdGhlIHVwZGF0ZS4KClsxXSBodHRw
+czovL2xrbWwub3JnL2xrbWwvMjAyMi85LzE1Lzc4NQpbMl0gaHR0cHM6Ly93d3cuZnJlZWRlc2t0
+b3Aub3JnL3NvZnR3YXJlL3N5c3RlbWQvbWFuL3N5c3RlbWQtc3lzZXh0Lmh0bWwKCj4gPiBBcyB0
+aGUgcGVyc29uIHdobyBwcm9wb3NlZCB0aGlzIG5ldyBSRVFfT1BfUFJPVklTSU9OIGFyY2hpdGVj
+dHVyZSwKPiA+IEknbSBkZWFkIHNldCBhZ2FpbnN0IGl0LiAgQWxsb3dpbmcgdGhlIGJsb2NrIGRl
+dmljZSBwcm92aWRlIGEgc2V0IG9mCj4gPiBwb29ybHkgZGVmaW5lZCAiY29uZGl0aW9uYWwgZ3Vh
+cmFudGVlcyIgcG9saWNpZXMgaW5zdGVhZCBvZiBhCj4gPiBtZWNoYW5pc20gd2l0aCBhIHNpbmds
+ZSBpcm9uY2xhZCBndWFyYW50ZWUgZGVmZWF0cyB0aGUgZW50aXJlCj4gPiBwdXJwb3NlIG9mIHRo
+ZSBwcm9wb3NhbC4KPiA+Cj4gPiBXZSBoYXZlIGEgcmVxdWlyZW1lbnQgZnJvbSB0aGUgKmtlcm5l
+bCBBQkkqIHRoYXQgKnVzZXIgZGF0YSB3cml0ZXMqCj4gPiBtdXN0IG5vdCBmYWlsIHdpdGggRU5P
+U1BDIGFmdGVyIGFuIGZhbGxvY2F0ZSgpIG9wZXJhdGlvbi4gIFRoYXQncwo+ID4gb25lIG9mIHRo
+ZSBoaWdoIGxldmVsIHBvbGljaWVzIHdlIG5lZWQgdG8gaW1wbGVtZW50LiBUaGUgZmlsZXN5c3Rl
+bQo+ID4gaXMgYWxyZWFkeSBjYXBhYmxlIG9mIGd1YXJhbnRlZWluZyBpdCB3b24ndCBnaXZlIHRo
+ZSB1c2VyIEVOT1NQQwo+ID4gYWZ0ZXIgZmFsbG9jYXRlLCB3ZSBub3cgbmVlZCBhIGd1YXJhbnRl
+ZSBmcm9tIHRoZSBmaWxlc3lzdGVtJ3MKPiA+IGJhY2tpbmcgc3RvcmUgdGhhdCBpdCB3b24ndCBn
+aXZlIEVOT1NQQywgdG9vLgo+Cj4gWWVzLCBJIHdhcyB0cnlpbmcgdG8gbmF2aWdhdGUgSm9lJ3Mg
+cmVsdWN0YW5jZSB0byBldmVuIHN1cHBvcnQKPiBmYWxsb2NhdGUoKSBmb3IgYXJiaXRyYXJ5IHVz
+ZXIgZGF0YS4gIFRoYXQncyB3aGVyZSB0aGUgUkVRX01FVEEgdnMKPiBkYXRhIGRpc3RpbmN0aW9u
+IGNyZXB0IGluIGZvciBtZS4gIEJ1dCBhcyB5b3Ugc2F5OiB1c2luZyBmYWxsb2NhdGUoKQo+IGV4
+Y2Vzc2l2ZWx5IGlzIHNlbGYtY29ycmVjdGluZy4KPgo+ID4gVGhlIF9vdGhlciB0aGluZ18gd2Ug
+bmVlZCB0byBpbXBsZW1lbnQgaXMgYSBtZXRob2Qgb2YgZ3VhcmFudGVlaW5nCj4gPiB0aGUgZmls
+ZXN5c3RlbSB3b24ndCBzaHV0IGRvd24gd2hlbiB0aGUgYmFja2luZyBkZXZpY2UgZ29lcyBFTk9T
+UEMKPiA+IHVuZXhwZWN0ZWQgZHVyaW5nIG1ldGFkYXRhIHdyaXRlYmFjay4gIFNvIHdlIGFsc28g
+bmVlZCB0aGUgYmFja2luZwo+ID4gZGV2aWNlIHRvIGd1YXJhbnRlZSB0aGUgcmVnaW9ucyB3ZSB3
+cml0ZSBtZXRhZGF0YSB0byB3b24ndCBnaXZlCj4gPiBFTk9TUEMuCj4KPiBZZWFwLgo+Cj4gPiBU
+aGF0J3MgdGhlIHdob2xlIHBvaW50IG9mIFJFUV9PUF9QUk9WSVNJT046IGZyb20gdGhlIGxheWVy
+cyBhYm92ZQo+ID4gdGhlIGJsb2NrIGRldmljZSwgdGhlcmUgaXMgLXplcm8tIGRpZmZlcmVuY2Ug
+YmV0d2VlbiB0aGUgZ3VhcmFudGVlCj4gPiB3ZSBuZWVkIGZvciB1c2VyIGRhdGEgd3JpdGVzIHRv
+IGF2b2lkIEVOT1NQQyBhbmQgZm9yIG1ldGFkYXRhIHdyaXRlcwo+ID4gdG8gYXZvaWQgRU5PU1BD
+LiBUaGV5IGFyZSBvbmUgYW5kIHRoZSBzYW1lLgo+Cj4gSSBrbm93LiAgVGhlIGRpZmZlcmVuY2Ug
+Y29tZXMgZnJvbSBkZWxhbGxvYyBpbml0aWFsbHkgbmVlZGluZyBhbgo+IGFic29sdXRlIHZhbHVl
+IG9mIHJlc2VydmUgcmF0aGVyIHRoYW4gYSBzcGVjaWZpYyBMQkEgcmFuZ2UuCj4KPiA+IEhlbmNl
+IGlmIHRoZSBibG9jayBkZXZpY2UgaXMgZ29pbmcgdG8gc2F5ICJJIHN1cHBvcnQgcHJvdmlzaW9u
+aW5nIgo+ID4gYnV0IHRoZW4gZ2l2ZSBkaWZmZXJlbnQgY29uZGl0aW9uYWwgZ3VhcmFudGVlcyBh
+Y2NvcmRpbmcgdG8gdGhlCj4gPiAqdHlwZSBvZiBkYXRhKiBpbiB0aGUgSU8gcmVxdWVzdCwgdGhl
+biBpdCBkb2VzIG5vdCBwcm92aWRlIHRoZQo+ID4gZnVuY3Rpb25hbGl0eSB0aGUgaGlnaGVyIGxh
+eWVycyBhY3R1YWxseSByZXF1aXJlIGZyb20gaXQuCj4KPiBJIHdhcyBnb2luZyBmb3IgcmVsYXhp
+bmcgdGhlICJkeW5hbWljIiBhcHByb2FjaCAoQnJpYW4ncykgdG8gYmUKPiBiZXN0LWVmZm9ydCAt
+LSBhbmQgcmVhbGx5IG9ubHkgZm9yIFhGUyBkZWxhbGxvYyB1c2VjYXNlLiAgRXZlcnkgb3RoZXIK
+PiB1c2VjYXNlIHdvdWxkIHJlc3BlY3QgeW91ciBhbmQgSm9lJ3MgdmlzaW9uLgo+Cj4gPiBJbmRl
+ZWQsIHdoYXQgdHlwZSBvZiBkYXRhIHRoZSBJTyBjb250YWlucyBpcyAqY29udGV4dCBkZXBlbmRl
+bnQqLgo+ID4gRm9yIGV4YW1wbGUsIHNvbWV0aW1lcyB3ZSB3cml0ZSBtZXRhZGF0YSB3aXRoIHVz
+ZXIgZGF0YSBJTyBhbmQgYnV0Cj4gPiB3ZSBzdGlsbCBuZWVkIHByb3Zpc2lvbmluZyBndWFyYW50
+ZWVzIGFzIGlmIGl0IHdhcyBpc3N1ZWQgYXMKPiA+IG1ldGFkYXRhIElPLiBUaGlzIGlzIHRoZSBj
+YXNlIGZvciBta2ZzIGluaXRpYWxpc2luZyB0aGUgZmlsZSBzeXN0ZW0KPiA+IGJ5IHdyaXRpbmcg
+ZGlyZWN0bHkgdG8gdGhlIGJsb2NrIGRldmljZS4KPgo+IEknbSBhd2FyZS4KPgo+ID4gSU9Xcywg
+ZmlsZXN5c3RlbSBtZXRhZGF0YSBJTyBpc3N1ZWQgZnJvbSBrZXJuZWwgY29udGV4dCB3b3VsZCBi
+ZQo+ID4gY29uc2lkZXJlZCBtZXRhZGF0YSBJTywgYnV0IGZyb20gdXNlcnNwYWNlIGl0IHdvdWxk
+IGJlIGNvbnNpZGVyZWQKPiA+IG5vcm1hbCB1c2VyIGRhdGEgSU8gYW5kIGhlbmNlIHRyZWF0ZWQg
+ZGlmZmVyZW50bHkuIEJ1dCB0aGUgcmVhbGl0eQo+ID4gaXMgdGhhdCB0aGV5IGJvdGggbmVlZCB0
+aGUgc2FtZSBwcm92aXNpb25pbmcgZ3VhcmFudGVlcyB0byBiZQo+ID4gcHJvdmlkZWQgYnkgdGhl
+IGJsb2NrIGRldmljZS4KPgo+IFdoYXQgSSB3YXMgbG9va2luZyBhdCBpcyBtYWtpbmcgdGhlIGZh
+bGxvY2F0ZSBpbnRlcmZhY2UgYWJsZSB0bwo+IGV4cHJlc3M6IEkgbmVlZCBkYXZlJ3MgcmVxdWly
+ZW1lbnRzIChib2ctc3RhbmRhcmQgYWN0dWFsbHkpIHZzIEkgbmVlZAo+IG5vbi1MQkEgYmVzdCBl
+ZmZvcnQuCj4KPiA+IFNvIGhvdyBkbyB1c2Vyc3BhY2UgdG9vbHMgZGVhbCB3aXRoIHRoaXMgaWYg
+dGhlIGJsb2NrIGRldmljZQo+ID4gcmVxdWlyZXMgUkVRX01FVEEgb24gdXNlciBkYXRhIElPcyB0
+byBkbyB0aGUgcmlnaHQgdGhpbmcgaGVyZT8gQW5kCj4gPiBpZiB3ZSBwcm92aWRlIGEgbWVjaGFu
+aXNtIHRvIGFsbG93IHRoaXMsIGhvdyBkbyB3ZSBwcmV2ZW50IHVzZXJzcGFjZQo+ID4gZm9yIGFs
+d2F5cyB1c2luZyBpdCBvbiB3cml0ZXMgdG8gZmFsbG9jYXRlKCkgcHJvdmlzaW9uZWQgc3BhY2U/
+Cj4gPgo+ID4gSXQncyBqdXN0IG5vdCBwcmFjdGljYWwgZm9yIHRoZSBibG9jayBkZXZpY2UgdG8g
+YWRkIGFyYml0cmFyeQo+ID4gY29uc3RyYWludHMgYmFzZWQgb24gdGhlIHR5cGUgb2YgSU8gYmVj
+YXVzZSB3ZSB0aGVuIGhhdmUgdG8gYWRkCj4gPiBtZWNoYW5pc21zIHRvIHVzZXJzcGFjZSBBUElz
+IHRvIGFsbG93IHRoZW0gdG8gY29udHJvbCB0aGUgSU8gY29udGV4dAo+ID4gc28gdGhlIGJsb2Nr
+IGRldmljZSB3aWxsIGRvIHRoZSByaWdodCB0aGluZy4gRXNwZWNpYWxseSBjb25zaWRlcmluZwo+
+ID4gd2UgcmVhbGx5IG9ubHkgbmVlZCBvbmUgdHlwZSBvZiBndWFyYW50ZWUgcmVnYXJkbGVzcyBv
+ZiB3aGVyZSB0aGUgSU8KPiA+IG9yaWdpbmF0ZXMgZnJvbSBvciB3aGF0IHR5cGUgb2YgZGF0YSB0
+aGUgSU8gY29udGFpbnMuLi4uCj4KPiBJZiBhbnl0aGluZyBteSBkaXNwb3NpdGlvbiBvbiB0aGUg
+Y29uZGl0aW9uYWwgdG8gcmVxdWlyZSBhIFJFUV9NRVRBCj4gKG9yIHNvbWUgZmFsbG9jYXRlIGdl
+bmVyYXRlZCBSRVFfVU5TSEFSRSBkaXR0byB0byByZWZsZWN0IHRoZSBzYW1lKSB0bwo+IHBlcmZv
+cm0geW91ciBhcHByb2FjaCB0byBSRVFfT1BfUFJPVklTSU9OIGFuZCBob25vciBmYWxsb2NhdGUo
+KQo+IHJlcXVpcmVtZW50cyBpcyBhIGJpZyBwcm9ibGVtLiAgV291bGQgYmUgbXVjaCBiZXR0ZXIg
+dG8gaGF2ZSBhIGZsYWcgdG8KPiBleHByZXNzICJ0aGlzIHJlc2VydmF0aW9uIGRvZXMgbm90IGhh
+dmUgYW4gTEJBIHJhbmdlIF95ZXRfLAo+IG5ldmVydGhlbGVzcyB0cnkgdG8gYmUgbWluZGZ1bCBv
+ZiB0aGlzIGV4cGVjdGVkIG5lYXItdGVybSBibG9jawo+IGFsbG9jYXRpb24iLgo+Cj4gQnV0IEkn
+bGwgc3RvcCBpbmxpbmluZyByZXBldGl0aXZlIChzaW1pbGFyIGJ1dCBkaWZmZXJlbnQpIGFuc3dl
+cnMgdG8KPiB5b3VyIGNvbmNlcm4gbm93IDspCj4KPiA+ID4gRG9lcyB0aGF0IGltcGx5IHRoYXQK
+PiA+ID4gUkVRX01FVEEgYWxzbyBuZWVkcyB0byBiZSBwYXNzZWQgdGhyb3VnaCB0aGUgYmxvY2sv
+ZmlsZXN5c3RlbSBzdGFjawo+ID4gPiAoZWcuIFJFUV9PUF9QUk9WSU9OICsgUkVRX01FVEEgb24g
+YSBsb29wIGRldmljZSB0cmFuc2xhdGVzIHRvIGEKPiA+ID4gZmFsbG9jYXRlKDxpbnNlcnQgbWV0
+YSBmbGFnIG5hbWU+KSB0byB0aGUgdW5kZXJseWluZyBmaWxlKT8KPiA+Cj4gPiBUaGlzIGlzIGV4
+YWN0bHkgdGhlIHNhbWUgY2FzZSBhcyBhYm92ZTogdGhlIGxvb3BiYWNrIGRldmljZSBkb2VzCj4g
+PiB1c2VyIGRhdGEgSU8gdG8gdGhlIGJhY2tpbmcgZmlsZS4gSGVuY2Ugd2UgaGF2ZSBhbm90aGVy
+IHNpdHVhdGlvbgo+ID4gd2hlcmUgbWV0YWRhdGEgSU8gaXMgaXNzdWVkIHRvIGZhbGxvY2F0ZSgp
+ZCB1c2VyIGRhdGEgcmFuZ2VzIGFzIHVzZXIKPiA+IGRhdGEgcmFuZ2VzIGFuZCBzbyB3b3VsZCBi
+ZSBnaXZlbiBhIGxlc3NlciBndWFyYW50ZWUgdGhhdCB3b3VsZCBsZWFkCj4gPiB0byB1cHBlciBm
+aWxlc3lzdGVtIGZhaWx1cmUuIEJPdGggdXBwZXIgYW5kIGxvd2VyIGZpbGVzeXN0ZW0gZGF0YQo+
+ID4gYW5kIG1ldGFkYXRhIG5lZWQgdG8gYmUgcHJvdmlkZWQgdGhlIHNhbWUgRU5PU1BDIGd1YXJh
+bnRlZXMgYnkgdGhlaXIKPiA+IGJhY2tpbmcgc3RvcmVzLi4uLgo+ID4KPiA+IFRoZSB3aG9sZSBw
+b2ludCBvZiB0aGUgUkVRX09QX1BST1ZJU0lPTiBwcm9wb3NhbCBJIG1hZGUgaXMgdGhhdCBpdAo+
+ID4gZG9lc24ndCByZXF1aXJlIGFueSBzcGVjaWFsIGhhbmRsaW5nIGluIGNvcm5lciBjYXNlcyBs
+aWtlIHRoaXMuCj4gPiBUaGVyZSBhcmUgbm8gY3Jvc3MtbGF5ZXIgaW50ZXJhY3Rpb25zIG5lZWRl
+ZCB0byBtYWtlIGV2ZXJ5dGhpbmcgd29yawo+ID4gY29ycmVjdGx5IGJlY2F1c2UgdGhlIHByb3Zp
+c2lvbmluZyBndWFyYW50ZWUgaXMgbm90IC1kYXRhIHR5cGUKPiA+IGRlcGVuZGVudCouIFRoZSBl
+bnRpcmUgdXNlciBJTyBwYXRoIGNvZGUgcmVtYWlucyB1bnRvdWNoZWQgYW5kCj4gPiBibGlzc2Z1
+bGx5IHVuYXdhcmUgb2YgcHJvdmlzaW9uZWQgcmVnaW9ucy4KPiA+Cj4gPiBBbmQsIHJlYWxpc3Rp
+Y2FsbHksIGlmIHdlIGhhdmUgdG8gc3RhcnQgaGFuZGxpbmcgY29tcGxleCBjb3JuZXIKPiA+IGNh
+c2VzIGluIHRoZSBmaWxlc3lzdGVtIGFuZCBJTyBwYXRoIGxheWVycyB0byBtYWtlIFJFUV9PUF9Q
+Uk9WSVNJT04KPiA+IHdvcmsgY29ycmVjdGx5IGJlY2F1c2Ugb2YgYXJiaXRhcnkgY29uc3RyYWlu
+dHMgaW1wb3NlZCBieSB0aGUgYmxvY2sKPiA+IGxheWVyIGltcGxlbWVudGF0aW9ucywgdGhlbiB3
+ZSd2ZSBmYWlsZWQgbWlzZXJhYmx5IGF0IHRoZSBkZXNpZ24gYW5kCj4gPiBhcmNoaXRlY3R1cmUg
+c3RhZ2UuCj4gPgo+ID4gS2VlcCBpbiBtaW5kIHRoYXQgZXZlcnkgYXR0ZW1wdCBtYWRlIHNvIGZh
+ciB0byBhZGRyZXNzIHRoZSBwcm9ibGVtcwo+ID4gd2l0aCBibG9jayBkZXZpY2UgRU5PU1BDIGVy
+cm9ycyBoYXMgZmFpbGVkIGJlY2F1c2Ugb2YgdGhlIGNvbXBsZXhpdHkKPiA+IG9mIHRoZSBjb3Ju
+ZXIgY2FzZXMgdGhhdCBoYXZlIGFyaXNlbiBkdXJpbmcgZGVzaWduIGFuZC9vcgo+ID4gaW1wbGVt
+ZW50YXRpb24uIEl0J3MgcHJldHR5IGlyb25pYyB0aGF0IG5vdyB3ZSBoYXZlIGEgcHJvcG9zYWwg
+dGhhdAo+ID4gaXMgcmVtYXJrYWJseSBzaW1wbGUsIGZyZWUgb2YgY29ybmVyIGNhc2VzIGFuZCBo
+YXMgdmlydHVhbGx5IG5vCj4gPiBjcm9zcy1sYXllciBjb3VwbGluZyBhdCBhbGwsIHRoZSBmaXJz
+dCB0aGluZyB0aGF0IHBlb3BsZSB3YW50IHRvIGRvCj4gPiBpcyBhZGQgYXJiaXRyYXJ5IGltcGxl
+bWVudGF0aW9uIGNvbnN0cmFpbnRzIHRoYXQgcmVzdWx0IGluIGNvbXBsZXgKPiA+IGNyb3NzLWxh
+eWVyIGNvcm5lciBjYXNlcyB0aGF0IG5vdyBuZWVkIHRvIGJlIGhhbmRsZWQuLi4uCj4gPgo+ID4g
+UHV0IHNpbXBseTogaWYgd2UgcmVzdHJpY3QgUkVRX09QX1BST1ZJU0lPTiBndWFyYW50ZWVzIHRv
+IGp1c3QKPiA+IFJFUV9NRVRBIHdyaXRlcyAob3IgYW55IG90aGVyIHNwZWNpZmljIHR5cGUgb2Yg
+d3JpdGUgb3BlcmF0aW9uKSB0aGVuCj4gPiBpdCdzIHNpbXBseSBub3Qgd29ydGggcGVyc3Vpbmcg
+YXQgdGhlIGZpbGVzeXN0ZW0gbGV2ZWwgYmVjYXVzZSB0aGUKPiA+IGd1YXJhbnRlZXMgd2UgYWN0
+dWFsbHkgbmVlZCBqdXN0IGFyZW4ndCB0aGVyZSBhbmQgdGhlIGNvbXBsZXhpdHkgb2YKPiA+IGRp
+c2NvdmVyaW5nIGFuZCBoYW5kbGluZyB0aG9zZSBjb3JuZXIgY2FzZXMganVzdCBpc24ndCB3b3J0
+aCB0aGUKPiA+IGVmZm9ydC4KCkZhaXIgcG9pbnRzLCBJIGNlcnRhaW5seSBkb24ndCB3YW50IHRv
+IGRlcmFpbCB0aGlzIGNvbnZlcnNhdGlvbjsgSSdkCmJlIGhhcHB5IHRvIHNlZSB0aGlzIHdvcmsg
+bWVyZ2VkIHNvb25lciByYXRoZXIgdGhhbiBsYXRlci4gRm9yCnBvc3Rlcml0eSwgSSdsbCBkaXN0
+aWxsIHdoYXQgSSBzYWlkIGFib3ZlIGludG8gdGhlIGZvbGxvd2luZzogSSdkIGxpa2UKYSBjYXBh
+YmlsaXR5IGZvciB1c2Vyc3BhY2UgdG8gY3JlYXRlIHRoaW4gc25hcHNob3RzIHRoYXQgaWdub3Jl
+IHRoZQp0aGluIHZvbHVtZSdzIHByb3Zpc2lvbmVkIGFyZWFzLiBJT1csIGFuIG9wdC1pbiBmbGFn
+IHdoaWNoIG1ha2VzCnNuYXBzaG90cyBmYWxsYmFjayB0byB3aGF0IHRoZXkgZG8gdG9kYXkgdG8g
+cHJvdmlkZSBmbGV4aWJpbGl0eSB0bwp1c2Vyc3BhY2UgdG8gZGVjaWRlIHRoZSBzcGFjZSByZXF1
+aXJlbWVudHMgZm9yIHRoZSBhYm92ZSBtZW50aW9uZWQKc2NlbmFyaW9zLCBhbmQgYXQgdGhlIHNh
+bWUgdGltZSwgbm90IGFkZGluZyBzZXBhcmF0ZSBjb3JuZXIgY2FzZQpoYW5kbGluZyBmb3IgZmls
+ZXN5c3RlbXMuIEJ1dCB0byByZWl0ZXJhdGUsIG15IGludGVudCBpc24ndCB0byBwaWxlCnRoaXMg
+b250byB0aGUgd29yayB5b3UsIE1pa2UgYW5kIEpvZSBoYXZlIHBsYW5uZWQ7IGp1c3Qgc29tZSBp
+bnNpZ2h0CmludG8gd2h5IEknbSBpbiBmYXZvciBvZiBpZGVhcyB0aGF0IHJlZHVjZSB0aGUgc25h
+cHNob3Qgc2l6ZS4KCkJlc3QKU2FydGhhawoKPgo+IEhlcmUgaXMgd2hlcmUgSSBnZXQgdG8gc2F5
+OiBJIHRoaW5rIHlvdSBtaXN1bmRlcnN0b29kIG1lIChidXQgaXQgd2FzCj4gbXkgZmF1bHQgZm9y
+IG5vdCBiZWluZyBhYnNvbHV0ZWx5IGNsZWFyOiBJJ20gdmVyeSBtdWNoIG9uIHRoZSBzYW1lCj4g
+cGFnZSBhcyB5b3UgYW5kIEpvZTsgYW5kIHlvdXIgdmlzaW9ucyBuZWVkIHRvIGp1c3QgYmUgaW1w
+bGVtZW50ZWQKPiBBU0FQKS4KPgo+IEkgd2FzIHRha2luZyB5b3VyIGRlc2lnbnMgYXMgYSBnaXZl
+biwgYnV0IGxvb2tpbmcgZnVydGhlciBhdDogaG93IGRvCj4gd2UgYWxzbyBoYW5kbGUgdGhlIG5v
+bi1MQkEgKGRlbGFsbG9jKSB1c2VjYXNlIF9iZWZvcmVfIHdlIGluY2x1ZGUKPiBSRVFfT1BfUFJP
+VklTSU9OIGluIGtlcm5lbC4KPgo+IEJ1dCBJJ20gaGFwcHkgdG8gbGV0IHRoZSBkZWxhbGxvYyBj
+YXNlIGdvICh3ZSBjYW4gcmV2aXNpdCBhZGRyZXNzaW5nCj4gaXQgaWYvd2hlbiBuZWVkZWQpLgo+
+Cj4gTWlrZQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
+cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
 
