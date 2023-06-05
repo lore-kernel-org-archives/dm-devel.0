@@ -4,7 +4,7 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 25CC3C77B73
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id ACD4CC7EE24
 	for <dm-devel@archiver.kernel.org>; Mon,  5 Jun 2023 05:09:41 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1685941780;
@@ -14,78 +14,78 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=PxBcXT/OVAqNRC26O2smbnKoLDpb2DKxoXYcVJbg8g0=;
-	b=b167bNW4r7l0RJ6MaW5kToIo1yHzIA/2yEknH8bM9Hhm8zbKOGtresDKeuo6gW/GtFlaIZ
-	2JDvk4lMZu3WMvQ0CymED2a/NbXAAfPfYH+aHeLhB6GpLpFAmXSwbm+eB5QmUK0G2VSAD6
-	D6Mv/r7Sxffs/Q71sX3Jhz5eMAMl+m8=
+	bh=srYWc2uqbffqne4vU+u7WGiQhuXR5Ihk4HiU1ut6kS8=;
+	b=BJLmh4V6GLKEMrU7YOxNnxkzy/eEvc1IJbSrbzJCcEOl72msHtEDyX/3Cu5q1mIWd3gn9b
+	JMNyGuXPpbN8fJfJVBhLklcmHoc93/Uv2Fl1in+2BzQeFzvvud5/R6bkJL++irfGwkPQyt
+	peNvp0ukuB+U7zaQnW2dv2FJ29a4lM4=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-368-q9HPuZytO7aTA7sTQifpoA-1; Mon, 05 Jun 2023 01:09:36 -0400
-X-MC-Unique: q9HPuZytO7aTA7sTQifpoA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-636-epeNOAt7OOWcKhakr8t0jA-1; Mon, 05 Jun 2023 01:09:38 -0400
+X-MC-Unique: epeNOAt7OOWcKhakr8t0jA-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D34E28032F1;
-	Mon,  5 Jun 2023 05:09:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1BE5B811E8E;
+	Mon,  5 Jun 2023 05:09:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BD41E2166B25;
-	Mon,  5 Jun 2023 05:09:34 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0818F40CFD46;
+	Mon,  5 Jun 2023 05:09:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 98BFD19465A0;
-	Mon,  5 Jun 2023 05:09:34 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C65CE19465A0;
+	Mon,  5 Jun 2023 05:09:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 36EB41946595
- for <dm-devel@listman.corp.redhat.com>; Mon,  5 Jun 2023 05:09:33 +0000 (UTC)
+ ESMTP id A5D4719465B1
+ for <dm-devel@listman.corp.redhat.com>; Mon,  5 Jun 2023 05:09:34 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 247012166B27; Mon,  5 Jun 2023 05:09:33 +0000 (UTC)
+ id 86E6F9E72; Mon,  5 Jun 2023 05:09:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1BDCF2166B25
- for <dm-devel@redhat.com>; Mon,  5 Jun 2023 05:09:33 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7FBF09E75
+ for <dm-devel@redhat.com>; Mon,  5 Jun 2023 05:09:27 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
+ [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EE6598027F5
- for <dm-devel@redhat.com>; Mon,  5 Jun 2023 05:09:32 +0000 (UTC)
-Received: from mail-pf1-f176.google.com (mail-pf1-f176.google.com
- [209.85.210.176]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E801B85A5BE
+ for <dm-devel@redhat.com>; Mon,  5 Jun 2023 05:09:26 +0000 (UTC)
+Received: from mail-qk1-f182.google.com (mail-qk1-f182.google.com
+ [209.85.222.182]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-130-JuuCb0SfNCG7FJFbmSS2tw-1; Mon, 05 Jun 2023 01:09:27 -0400
-X-MC-Unique: JuuCb0SfNCG7FJFbmSS2tw-1
-Received: by mail-pf1-f176.google.com with SMTP id
- d2e1a72fcca58-652426346bbso1945059b3a.3; 
- Sun, 04 Jun 2023 22:09:27 -0700 (PDT)
+ us-mta-256-IXEtAzWEMQeH3lwP3ScqgQ-1; Mon, 05 Jun 2023 01:09:25 -0400
+X-MC-Unique: IXEtAzWEMQeH3lwP3ScqgQ-1
+Received: by mail-qk1-f182.google.com with SMTP id
+ af79cd13be357-75d3f2c9d13so241390485a.1; 
+ Sun, 04 Jun 2023 22:09:24 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1685941766; x=1688533766;
+ d=1e100.net; s=20221208; t=1685941764; x=1688533764;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=Wwm6y0uAqQL65eNndzr7gfbmRUptPUVk/b+gJobQ0ZE=;
- b=d5q347LfLO+pBna5OF2MCgai9nMtPfmTgzX0RWFi1xDe07yUI2W8zohjSecB+Zo0IK
- UNafXaX5MYKJHdmhMuZ/dsDErqOmKAn3zoxW8xjbL9iGA5d/DbtnZnfyehq4xXkWzaHL
- wcXA1Xz+3XQ+/e8QLKlUbOHQKuE9pKLMcO3S26dF994ex2D1J7oL/DY+cYJJL0y+OZ6h
- t5CudnlQRMFP7YbDMlEFCQ1WMZH4NaMeydMnYdsU9NNdo0NwniTPfNEATPQkerQJO9V3
- RpkDcE7OoFvNcyxptcTm+wmXlOTAxbu75XmzgxKTixa/wIEylFgwKfd/C5YejlR08cjr
- q7fA==
-X-Gm-Message-State: AC+VfDwTYLST17PLuWhpoMIoqhhLVfL/oml0mMwmb7PimQ0zUsMPeNVL
- R9iqt8ab1qHsofvXqOVukgM=
-X-Google-Smtp-Source: ACHHUZ7A+41eKnG/u3IdkDoLdozgfNSgaF3ptgh5m/NSIvlHyFo5a3hmQ9mo1hD4H0gJj50ugAtc6Q==
-X-Received: by 2002:a05:6a00:150a:b0:652:9f37:8d27 with SMTP id
- q10-20020a056a00150a00b006529f378d27mr5492787pfu.8.1685941765803; 
- Sun, 04 Jun 2023 22:09:25 -0700 (PDT)
+ bh=JV27aquw/ZAgJlQRmYYQBIObAUSulk0jluLIU1m6Gg4=;
+ b=VT2NxuR4q8LrdYzmuKw1NAf1I/Q9c9dIo2eGJOrzkouWEGGZ2aeXEB99WDmIWSKcKA
+ rIwtaEvQ4N7BNqlDLaH0h+oEqcWUxUr5GetU8TAL8jM2ELiAZNwlgJIldASILKT28+hX
+ QlB6fIMkyUUTUom3uBSWJI82iAJKOeCzeLwLD1/LU/EadpS7CLUMFOPiK4R9eCx/6O3i
+ htxQwVgeal9lhRRshLRXiJkyt20DFWyucF6eO9ypmKTANzmYUTfrzLguLMxD2WJlnRON
+ vxJceXaysrrZzCN9LIYIweZkhvSj3FAyuQOy/vTOecp9ymGM80i/492c1zlcNjFfqmRW
+ O11g==
+X-Gm-Message-State: AC+VfDy1sQwv3CQUK7wbYX+67tJ+cYvxoNnC9h3IJNrMCm73L1Jo9RSV
+ OYnLC2YNDL4zfU1aZzaHZOU=
+X-Google-Smtp-Source: ACHHUZ4dVa9BGbkpJ2SS7J4by0gwenCyV3fGr7C4RMpOELogeyPD1tHwOfq+IRqOcINi90N0zr2few==
+X-Received: by 2002:a05:620a:1a24:b0:75b:23a1:3625 with SMTP id
+ bk36-20020a05620a1a2400b0075b23a13625mr24255840qkb.54.1685941764205; 
+ Sun, 04 Jun 2023 22:09:24 -0700 (PDT)
 Received: from localhost.localdomain ([76.132.108.20])
  by smtp.gmail.com with ESMTPSA id
- fe16-20020a056a002f1000b0064d48d98260sm4329175pfb.156.2023.06.04.22.09.25
+ fe16-20020a056a002f1000b0064d48d98260sm4329175pfb.156.2023.06.04.22.09.23
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Sun, 04 Jun 2023 22:09:25 -0700 (PDT)
+ Sun, 04 Jun 2023 22:09:23 -0700 (PDT)
 From: Russell Harmon <eatnumber1@gmail.com>
 To: bagasdotme@gmail.com
-Date: Sun,  4 Jun 2023 22:08:53 -0700
-Message-Id: <20230605050853.6240-5-eatnumber1@gmail.com>
+Date: Sun,  4 Jun 2023 22:08:52 -0700
+Message-Id: <20230605050853.6240-4-eatnumber1@gmail.com>
 In-Reply-To: <20230605050853.6240-1-eatnumber1@gmail.com>
 References: <20230604190604.4800-1-eatnumber1@gmail.com>
  <20230605050853.6240-1-eatnumber1@gmail.com>
@@ -97,9 +97,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: [dm-devel] [PATCH v4 4/4] Documentation: dm-integrity: Document an
- example of how the tunables relate.
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: [dm-devel] [PATCH v4 3/4] Documentation: dm-integrity: Document
+ default values.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -115,7 +115,7 @@ Cc: Russell Harmon <eatnumber1@gmail.com>, dm-devel@redhat.com,
  mpatocka@redhat.com, snitzer@redhat.com, linux-doc@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: gmail.com
 Content-Type: text/plain; charset="us-ascii"
@@ -123,26 +123,69 @@ Content-Transfer-Encoding: 7bit
 
 Signed-off-by: Russell Harmon <eatnumber1@gmail.com>
 ---
- Documentation/admin-guide/device-mapper/dm-integrity.rst | 6 ++++++
- 1 file changed, 6 insertions(+)
+ .../device-mapper/dm-integrity.rst            | 22 +++++++++----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 
 diff --git a/Documentation/admin-guide/device-mapper/dm-integrity.rst b/Documentation/admin-guide/device-mapper/dm-integrity.rst
-index 0241457c0027..d8a5f14d0e3c 100644
+index 31f514675809..0241457c0027 100644
 --- a/Documentation/admin-guide/device-mapper/dm-integrity.rst
 +++ b/Documentation/admin-guide/device-mapper/dm-integrity.rst
-@@ -213,6 +213,12 @@ table and swap the tables with suspend and resume). The other arguments
- should not be changed when reloading the target because the layout of disk
- data depend on them and the reloaded target would be non-functional.
+@@ -102,7 +102,7 @@ journal_sectors:number
+ 	device. If the device is already formatted, the value from the
+ 	superblock is used.
  
-+For example, on a device using the default interleave_sectors of 32768, a
-+block_size of 512, and an internal_hash of crc32c with a tag size of 4
-+bytes, it will take 128 KiB of tags to track a full data area, requiring
-+256 sectors of metadata per data area. With the default buffer_sectors of
-+128, that means there will be 2 buffers per metadata area, or 2 buffers
-+per 16 MiB of data.
+-interleave_sectors:number
++interleave_sectors:number (default 32768)
+ 	The number of interleaved sectors. This values is rounded down to
+ 	a power of two. If the device is already formatted, the value from
+ 	the superblock is used.
+@@ -111,16 +111,16 @@ meta_device:device
+ 	Don't interleave the data and metadata on the device. Use a
+ 	separate device for metadata.
  
- Status line:
+-buffer_sectors:number
+-	The number of sectors in one buffer. The value is rounded down to
+-	a power of two.
++buffer_sectors:number (default 128)
++	The number of sectors in one metadata buffer. The value is rounded
++	down to a power of two.
  
+-journal_watermark:number
++journal_watermark:number (default 50)
+ 	The journal watermark in percents. When the size of the journal
+ 	exceeds this watermark, the thread that flushes the journal will
+ 	be started.
+ 
+-commit_time:number
++commit_time:number (default 10000)
+ 	Commit time in milliseconds. When this time passes, the journal is
+ 	written. The journal is also written immediately if the FLUSH
+ 	request is received.
+@@ -168,11 +168,10 @@ journal_mac:algorithm(:key)	(the key is optional)
+ 	the journal. Thus, modified sector number would be detected at
+ 	this stage.
+ 
+-block_size:number
+-	The size of a data block in bytes.  The larger the block size the
++block_size:number (default 512)
++	The size of a data block in bytes. The larger the block size the
+ 	less overhead there is for per-block integrity metadata.
+-	Supported values are 512, 1024, 2048 and 4096 bytes.  If not
+-	specified the default block size is 512 bytes.
++	Supported values are 512, 1024, 2048 and 4096 bytes.
+ 
+ sectors_per_bit:number
+ 	In the bitmap mode, this parameter specifies the number of
+@@ -291,7 +290,8 @@ The layout of the formatted block device:
+     Each run contains:
+ 
+ 	* tag area - it contains integrity tags. There is one tag for each
+-	  sector in the data area
++	  sector in the data area. The size of this area is always 4KiB or
++	  greater.
+ 	* data area - it contains data sectors. The number of data sectors
+ 	  in one run must be a power of two. log2 of this value is stored
+ 	  in the superblock.
 -- 
 2.34.1
 
