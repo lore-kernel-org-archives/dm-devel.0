@@ -4,71 +4,92 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E649DC7EE23
-	for <dm-devel@archiver.kernel.org>; Mon,  5 Jun 2023 15:03:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6A62FC7EE23
+	for <dm-devel@archiver.kernel.org>; Mon,  5 Jun 2023 17:22:15 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685977387;
+	s=mimecast20190719; t=1685985734;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=d/vQd490jIQDGTe75BdyIQs5Q6dY6/fDZs8VCmgFY38=;
-	b=WKqWGMTKJhHo2vt5X2I8sqLYN0gx8Gsy+wxxfKVMhkD8FO0gfAIiGw8UutJ4j+x181CF+V
-	U+a/ivgfn4WAUyGRMOmYFl+mUdCQWp9nh8gigb4XYOXYdjGgGXDQx+M0dsDIuDgcsX/Mrh
-	bvp59iQkqvwYSTVLwfDHnS1wksep1Q4=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=rt4d4Mp0hkj262xErgszH+NihPXR19aypd3DVhONV+c=;
+	b=V4tt7LFo+bFAOxjCTHrBOi1jM90g4wp4I3XBcADs2hLkZthtQ8rGqVjL5aSTkYodOMlnDH
+	6+A4ZPDzRg/aP1T6IopBoSSuV/vEr/h+l2Jcz7Dv7HIZm7QcfvsyRYAKOq2YrbsvKe6O1w
+	5aCdeVopimrQqJKf6dzwpFgdxzbdOvg=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-35-Xu_Glo2vNsi1Q2UleWLJig-1; Mon, 05 Jun 2023 11:02:20 -0400
-X-MC-Unique: Xu_Glo2vNsi1Q2UleWLJig-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-609-jxiG9tpgMcy2oMuiTNXy3w-1; Mon, 05 Jun 2023 13:22:13 -0400
+X-MC-Unique: jxiG9tpgMcy2oMuiTNXy3w-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 35B32810BDD;
-	Mon,  5 Jun 2023 15:01:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6FADB1C08781;
+	Mon,  5 Jun 2023 17:22:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 92BD52166B25;
-	Mon,  5 Jun 2023 15:01:16 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A7674C1603B;
+	Mon,  5 Jun 2023 17:22:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 66F3719465A3;
-	Mon,  5 Jun 2023 15:01:16 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8272C19465A3;
+	Mon,  5 Jun 2023 17:22:09 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id F15C11946595
- for <dm-devel@listman.corp.redhat.com>; Mon,  5 Jun 2023 15:01:14 +0000 (UTC)
+ ESMTP id 9AD561946595
+ for <dm-devel@listman.corp.redhat.com>; Mon,  5 Jun 2023 17:22:08 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 97C969E8B; Mon,  5 Jun 2023 15:01:14 +0000 (UTC)
+ id 83731C16046; Mon,  5 Jun 2023 17:22:08 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 90CBA9E72
- for <dm-devel@redhat.com>; Mon,  5 Jun 2023 15:01:14 +0000 (UTC)
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 79011C16044
+ for <dm-devel@redhat.com>; Mon,  5 Jun 2023 17:22:08 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 735763C0C8AA
- for <dm-devel@redhat.com>; Mon,  5 Jun 2023 15:01:14 +0000 (UTC)
-Received: from bombadil.infradead.org (bombadil.infradead.org
- [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5D4FB8007D9
+ for <dm-devel@redhat.com>; Mon,  5 Jun 2023 17:22:08 +0000 (UTC)
+Received: from mail-oi1-f181.google.com (mail-oi1-f181.google.com
+ [209.85.167.181]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-207-6zmDBr0UNrybhNmR8L83Yg-1; Mon, 05 Jun 2023 11:01:12 -0400
-X-MC-Unique: 6zmDBr0UNrybhNmR8L83Yg-1
-Received: from hch by bombadil.infradead.org with local (Exim 4.96 #2 (Red Hat
- Linux)) id 1q6AUn-00FeYT-1D; Mon, 05 Jun 2023 13:43:41 +0000
-Date: Mon, 5 Jun 2023 06:43:41 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Nitesh Shetty <nj.shetty@samsung.com>
-Message-ID: <ZH3mjUb+yqI11XD8@infradead.org>
-References: <20230605121732.28468-1-nj.shetty@samsung.com>
- <CGME20230605122310epcas5p4aaebfc26fe5377613a36fe50423cf494@epcas5p4.samsung.com>
- <20230605121732.28468-6-nj.shetty@samsung.com>
+ us-mta-304-f20ftG8gNIuLLBybQAfwyw-1; Mon, 05 Jun 2023 13:22:05 -0400
+X-MC-Unique: f20ftG8gNIuLLBybQAfwyw-1
+Received: by mail-oi1-f181.google.com with SMTP id
+ 5614622812f47-39b349405d9so69722b6e.1
+ for <dm-devel@redhat.com>; Mon, 05 Jun 2023 10:22:05 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1685985725; x=1688577725;
+ h=content-transfer-encoding:mime-version:date:message-id:subject
+ :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=6XZ3PYFTW8wBOrcxa44gmTJZRL7p9p613s1N10mZMVY=;
+ b=U7fMAXTeEVQP0Q9cA2Q4/NoxxG+6XQD/22/ohPATR/e4XVMXHeLxaATSgE4CU+38+I
+ PJW5Y3hs9fUuQSw3AXgUAY9N6DA4Be0K0nJ8IHCdXR5apINU0w6YC/ZEuXzB3PQDWcFs
+ 7w7Wi3Jjx8cK3lodo6xskCds0raJjZLLSyRbZjkCfypiqI+qQh2irf7itMd6b2Zjue87
+ fDVVzElrjOTUsExWhmRrjQzokRZp+bEtoC21iQ6kmNq4JcNvrJrmuJjWBf2WClH+DPIS
+ fAjJxZVGteYwUw5GzbrmfYuIBNKHQz0kaL5gRErCshTtAroKEKn+oyvaK2LYrP0xA/yj
+ KX3g==
+X-Gm-Message-State: AC+VfDyaqOReAnCnp1J9xGNkYWwdkDRGRJJA14GbQeDvI1qc3LgeIe0Z
+ jRkc9LOlytVzutGAZ0fsUDfajA==
+X-Google-Smtp-Source: ACHHUZ55ijmtRxUtr2PJeE7u8S0QvWcKyGSmOe2wfBtgxRK6mvg8iopMfucIMuRB5AN9ZmOkwUXzHA==
+X-Received: by 2002:a05:6358:c401:b0:127:6a3c:2280 with SMTP id
+ ff1-20020a056358c40100b001276a3c2280mr4551121rwb.2.1685985724648; 
+ Mon, 05 Jun 2023 10:22:04 -0700 (PDT)
+Received: from [127.0.0.1] ([2600:380:c01c:32f0:eff8:7692:bf8a:abc6])
+ by smtp.gmail.com with ESMTPSA id
+ cl9-20020a17090af68900b0025643e5da99sm7993666pjb.37.2023.06.05.10.22.02
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Mon, 05 Jun 2023 10:22:03 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: Christoph Hellwig <hch@lst.de>
+In-Reply-To: <20230531125535.676098-2-hch@lst.de>
+References: <20230531125535.676098-1-hch@lst.de>
+ <20230531125535.676098-2-hch@lst.de>
+Message-Id: <168598572280.2504.3952473013804137907.b4-ty@kernel.dk>
+Date: Mon, 05 Jun 2023 11:22:02 -0600
 MIME-Version: 1.0
-In-Reply-To: <20230605121732.28468-6-nj.shetty@samsung.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
- bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -76,8 +97,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH v12 5/9] nvme: add copy offload support
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH 01/24] driver core: return bool from
+ driver_probe_done
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -89,78 +111,85 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-doc@vger.kernel.org, djwong@kernel.org,
- linux-nvme@lists.infradead.org, dm-devel@redhat.com,
- Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>,
- Sagi Grimberg <sagi@grimberg.me>, linux-scsi@vger.kernel.org,
- Jonathan Corbet <corbet@lwn.net>, gost.dev@samsung.com,
- nitheshshetty@gmail.com, James Smart <james.smart@broadcom.com>,
- willy@infradead.org, Chaitanya Kulkarni <kch@nvidia.com>,
- Anuj Gupta <anuj20.g@samsung.com>, Mike Snitzer <snitzer@kernel.org>,
- ming.lei@redhat.com, linux-block@vger.kernel.org, dlemoal@kernel.org,
- Alexander Viro <viro@zeniv.linux.org.uk>, Keith Busch <kbusch@kernel.org>,
- bvanassche@acm.org, Jens Axboe <axboe@kernel.dk>,
- Christian Brauner <brauner@kernel.org>, Kanchan Joshi <joshi.k@samsung.com>,
- martin.petersen@oracle.com, linux-kernel@vger.kernel.org,
- linux-fsdevel@vger.kernel.org,
- Javier =?iso-8859-1?Q?Gonz=E1lez?= <javier.gonz@samsung.com>
+Cc: Loic Poulain <loic.poulain@linaro.org>,
+ Vignesh Raghavendra <vigneshr@ti.com>, "Rafael J. Wysocki" <rafael@kernel.org>,
+ Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-pm@vger.kernel.org,
+ Joern Engel <joern@lazybastard.org>, linux-kernel@vger.kernel.org,
+ linux-block@vger.kernel.org, Richard Weinberger <richard@nod.at>,
+ dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
+ Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>,
+ linux-mtd@lists.infradead.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: infradead.org
-Content-Disposition: inline
+X-Mimecast-Originator: kernel.dk
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
->  		break;
->  	case REQ_OP_READ:
-> -		ret = nvme_setup_rw(ns, req, cmd, nvme_cmd_read);
-> +		if (unlikely(req->cmd_flags & REQ_COPY))
-> +			nvme_setup_copy_read(ns, req);
-> +		else
-> +			ret = nvme_setup_rw(ns, req, cmd, nvme_cmd_read);
->  		break;
->  	case REQ_OP_WRITE:
-> -		ret = nvme_setup_rw(ns, req, cmd, nvme_cmd_write);
-> +		if (unlikely(req->cmd_flags & REQ_COPY))
-> +			ret = nvme_setup_copy_write(ns, req, cmd);
-> +		else
-> +			ret = nvme_setup_rw(ns, req, cmd, nvme_cmd_write);
 
-Yikes.  Overloading REQ_OP_READ and REQ_OP_WRITE with something entirely
-different brings us back the horrors of the block layer 15 years ago.
-Don't do that.  Please add separate REQ_COPY_IN/OUT (or maybe
-SEND/RECEIVE or whatever) methods.
+On Wed, 31 May 2023 14:55:12 +0200, Christoph Hellwig wrote:
+> bool is the most sensible return value for a yes/no return.  Also
+> add __init as this funtion is only called from the early boot code.
+> 
+> 
 
-> +	/* setting copy limits */
-> +	if (blk_queue_flag_test_and_set(QUEUE_FLAG_COPY, q))
+Applied, thanks!
 
-I don't understand this comment.
+[01/24] driver core: return bool from driver_probe_done
+        commit: aa5f6ed8c21ec1aa5fd688118d8d5cd87c5ffc1d
+[02/24] PM: hibernate: factor out a helper to find the resume device
+        commit: 02b42d58f3898134b900ff3030561099e38adb32
+[03/24] PM: hibernate: remove the global snapshot_test variable
+        commit: d6545e687271ab27472eebff770f2de6a5f1a464
+[04/24] PM: hibernate: move finding the resume device out of software_resume
+        commit: cc89c63e2fe37d476357c82390dfb12edcd41cdd
+[05/24] init: remove pointless Root_* values
+        commit: f5524c3fadba35c075a5131bad74e3041507a694
+[06/24] init: rename mount_block_root to mount_root_generic
+        commit: e3102722ffe77094ba9e7e46380792b3dd8a7abd
+[07/24] init: refactor mount_root
+        commit: a6a41d39c2d91ff2543d31b6cc6070f3957e3aea
+[08/24] init: pass root_device_name explicitly
+        commit: c8643c72bc42781fc169c6498a3902bec447099e
+[09/24] init: don't remove the /dev/ prefix from error messages
+        commit: 73231b58b1b496d631fa0ecf9fa7f64f5a07c6e3
+[10/24] init: handle ubi/mtd root mounting like all other root types
+        commit: 07d63cbb67cdb5e2a7720fdd8579b3be979c2d66
+[11/24] init: factor the root_wait logic in prepare_namespace into a helper
+        commit: 3701c600a3e735b9fbac6f7a73e4c086090c97ca
+[12/24] init: move the nfs/cifs/ram special cases out of name_to_dev_t
+        commit: c0c1a7dcb6f5db4500e6574294674213bc24940c
+[13/24] init: improve the name_to_dev_t interface
+        commit: cf056a43121559d3642419917d405c3237ded90a
+[14/24] init: clear root_wait on all invalid root= strings
+        commit: 079caa35f7863cd9958b4555ae873ea4d352a502
+[15/24] block: move the code to do early boot lookup of block devices to block/
+        commit: 702f3189e454b3c3c2f3c99dbf30acf41aab707c
+[16/24] block: move more code to early-lookup.c
+        commit: 7cadcaf1d82618852745e7206fffa2c72c17ce4b
+[17/24] dm-snap: simplify the origin_dev == cow_dev check in snapshot_ctr
+        commit: 26110d5afe8117d1b505fe735ac709bdf063f4da
+[18/24] dm: open code dm_get_dev_t in dm_init_init
+        commit: 49177377e910a8fd5cd1388c966d8fbb51075c3c
+[19/24] dm: remove dm_get_dev_t
+        commit: d4a28d7defe79006e59293a4b43d518ba8483fb0
+[20/24] dm: only call early_lookup_bdev from early boot context
+        commit: 7a126d5bf975f082281fb9b45d110cd49b7c3ee4
+[21/24] PM: hibernate: don't use early_lookup_bdev in resume_store
+        commit: 1e8c813b083c4122dfeaa5c3b11028331026e85d
+[22/24] mtd: block2mtd: factor the early block device open logic into a helper
+        commit: b2baa57475e3a24bb9ad27bb9047ea3be94627f5
+[23/24] mtd: block2mtd: don't call early_lookup_bdev after the system is running
+        commit: 8d03187ee7328af8e18ef1782289e0b034e75485
+[24/24] block: mark early_lookup_bdev as __init
+        commit: 2577f53f42947d8ca01666e3444bb7307319ea38
 
-> +struct nvme_copy_token {
-> +	char *subsys;
-> +	struct nvme_ns *ns;
-> +	sector_t src_sector;
-> +	sector_t sectors;
-> +};
+Best regards,
+-- 
+Jens Axboe
 
-Why do we need a subsys token?  Inter-namespace copy is pretty crazy,
-and not really anything we should aim for.  But this whole token design
-is pretty odd anyway.  The only thing we'd need is a sequence number /
-idr / etc to find an input and output side match up, as long as we
-stick to the proper namespace scope.
 
-> +	if (unlikely((req->cmd_flags & REQ_COPY) &&
-> +				(req_op(req) == REQ_OP_READ))) {
-> +		blk_mq_start_request(req);
-> +		return BLK_STS_OK;
-> +	}
-
-This really needs to be hiden inside of nvme_setup_cmd.  And given
-that other drivers might need similar handling the best way is probably
-to have a new magic BLK_STS_* value for request started but we're
-not actually sending it to hardware.
 
 --
 dm-devel mailing list
