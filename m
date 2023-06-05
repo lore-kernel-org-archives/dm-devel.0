@@ -1,105 +1,68 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6A62FC7EE23
-	for <dm-devel@archiver.kernel.org>; Mon,  5 Jun 2023 17:22:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8257FC7EE24
+	for <dm-devel@archiver.kernel.org>; Mon,  5 Jun 2023 18:23:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1685985734;
+	s=mimecast20190719; t=1685989386;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=rt4d4Mp0hkj262xErgszH+NihPXR19aypd3DVhONV+c=;
-	b=V4tt7LFo+bFAOxjCTHrBOi1jM90g4wp4I3XBcADs2hLkZthtQ8rGqVjL5aSTkYodOMlnDH
-	6+A4ZPDzRg/aP1T6IopBoSSuV/vEr/h+l2Jcz7Dv7HIZm7QcfvsyRYAKOq2YrbsvKe6O1w
-	5aCdeVopimrQqJKf6dzwpFgdxzbdOvg=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=uGeAMfhW+l8oPJOUwPekyQ0slucX/Moq8kSyE3FoaxY=;
+	b=AJwp7mqCI3CB77Tu3MXcfgHUN9xwa7Wx0t6CYxsbEKGW6fWJPwE7uvUJE3/lqY86GUxTFo
+	YUCt6jKhAh7YXHwOpgTclUsofL7n1zDGyBhllwoTpqWAmx4wRwCg/8KDQlwHKdzZyaWeL5
+	rV+ZyVgwLHkvqb4x2dn9ipUbJc6hXJ4=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-609-jxiG9tpgMcy2oMuiTNXy3w-1; Mon, 05 Jun 2023 13:22:13 -0400
-X-MC-Unique: jxiG9tpgMcy2oMuiTNXy3w-1
+ us-mta-588-v6bwifntO1i_hvOicz50Gg-1; Mon, 05 Jun 2023 14:23:03 -0400
+X-MC-Unique: v6bwifntO1i_hvOicz50Gg-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6FADB1C08781;
-	Mon,  5 Jun 2023 17:22:11 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4E83F802E58;
+	Mon,  5 Jun 2023 18:23:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A7674C1603B;
-	Mon,  5 Jun 2023 17:22:09 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id BAFDDC1603B;
+	Mon,  5 Jun 2023 18:22:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8272C19465A3;
-	Mon,  5 Jun 2023 17:22:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 77B1619465A3;
+	Mon,  5 Jun 2023 18:22:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 9AD561946595
- for <dm-devel@listman.corp.redhat.com>; Mon,  5 Jun 2023 17:22:08 +0000 (UTC)
+ ESMTP id E6EF01946595
+ for <dm-devel@listman.corp.redhat.com>; Mon,  5 Jun 2023 18:22:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 83731C16046; Mon,  5 Jun 2023 17:22:08 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 79011C16044
- for <dm-devel@redhat.com>; Mon,  5 Jun 2023 17:22:08 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5D4FB8007D9
- for <dm-devel@redhat.com>; Mon,  5 Jun 2023 17:22:08 +0000 (UTC)
-Received: from mail-oi1-f181.google.com (mail-oi1-f181.google.com
- [209.85.167.181]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-304-f20ftG8gNIuLLBybQAfwyw-1; Mon, 05 Jun 2023 13:22:05 -0400
-X-MC-Unique: f20ftG8gNIuLLBybQAfwyw-1
-Received: by mail-oi1-f181.google.com with SMTP id
- 5614622812f47-39b349405d9so69722b6e.1
- for <dm-devel@redhat.com>; Mon, 05 Jun 2023 10:22:05 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1685985725; x=1688577725;
- h=content-transfer-encoding:mime-version:date:message-id:subject
- :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=6XZ3PYFTW8wBOrcxa44gmTJZRL7p9p613s1N10mZMVY=;
- b=U7fMAXTeEVQP0Q9cA2Q4/NoxxG+6XQD/22/ohPATR/e4XVMXHeLxaATSgE4CU+38+I
- PJW5Y3hs9fUuQSw3AXgUAY9N6DA4Be0K0nJ8IHCdXR5apINU0w6YC/ZEuXzB3PQDWcFs
- 7w7Wi3Jjx8cK3lodo6xskCds0raJjZLLSyRbZjkCfypiqI+qQh2irf7itMd6b2Zjue87
- fDVVzElrjOTUsExWhmRrjQzokRZp+bEtoC21iQ6kmNq4JcNvrJrmuJjWBf2WClH+DPIS
- fAjJxZVGteYwUw5GzbrmfYuIBNKHQz0kaL5gRErCshTtAroKEKn+oyvaK2LYrP0xA/yj
- KX3g==
-X-Gm-Message-State: AC+VfDyaqOReAnCnp1J9xGNkYWwdkDRGRJJA14GbQeDvI1qc3LgeIe0Z
- jRkc9LOlytVzutGAZ0fsUDfajA==
-X-Google-Smtp-Source: ACHHUZ55ijmtRxUtr2PJeE7u8S0QvWcKyGSmOe2wfBtgxRK6mvg8iopMfucIMuRB5AN9ZmOkwUXzHA==
-X-Received: by 2002:a05:6358:c401:b0:127:6a3c:2280 with SMTP id
- ff1-20020a056358c40100b001276a3c2280mr4551121rwb.2.1685985724648; 
- Mon, 05 Jun 2023 10:22:04 -0700 (PDT)
-Received: from [127.0.0.1] ([2600:380:c01c:32f0:eff8:7692:bf8a:abc6])
- by smtp.gmail.com with ESMTPSA id
- cl9-20020a17090af68900b0025643e5da99sm7993666pjb.37.2023.06.05.10.22.02
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 05 Jun 2023 10:22:03 -0700 (PDT)
-From: Jens Axboe <axboe@kernel.dk>
-To: Christoph Hellwig <hch@lst.de>
-In-Reply-To: <20230531125535.676098-2-hch@lst.de>
-References: <20230531125535.676098-1-hch@lst.de>
- <20230531125535.676098-2-hch@lst.de>
-Message-Id: <168598572280.2504.3952473013804137907.b4-ty@kernel.dk>
-Date: Mon, 05 Jun 2023 11:22:02 -0600
+ id BE17A40CFD47; Mon,  5 Jun 2023 18:22:56 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 9987040CFD46;
+ Mon,  5 Jun 2023 18:22:56 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 355IMsoB020637;
+ Mon, 5 Jun 2023 13:22:54 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 355IMrld020636;
+ Mon, 5 Jun 2023 13:22:53 -0500
+Date: Mon, 5 Jun 2023 13:22:53 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Message-ID: <20230605182252.GS24096@octiron.msp.redhat.com>
+References: <1684970472-28669-1-git-send-email-bmarzins@redhat.com>
+ <1684970472-28669-4-git-send-email-bmarzins@redhat.com>
+ <83a2e2ce4669e4c031a49ac9b9ebc064a25c42bd.camel@suse.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH 01/24] driver core: return bool from
- driver_probe_done
+In-Reply-To: <83a2e2ce4669e4c031a49ac9b9ebc064a25c42bd.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: Re: [dm-devel] [PATCH 3/5] multipathd: refresh all priorities if
+ one has changed
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -111,86 +74,197 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Loic Poulain <loic.poulain@linaro.org>,
- Vignesh Raghavendra <vigneshr@ti.com>, "Rafael J. Wysocki" <rafael@kernel.org>,
- Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-pm@vger.kernel.org,
- Joern Engel <joern@lazybastard.org>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, Richard Weinberger <richard@nod.at>,
- dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
- Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>,
- linux-mtd@lists.infradead.org
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.dk
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
+On Wed, May 31, 2023 at 04:27:25PM +0000, Martin Wilck wrote:
+> On Wed, 2023-05-24 at 18:21 -0500, Benjamin Marzinski wrote:
+> > For multipath devices with path group policies other than
+> > group_by_prio,
+> > multipathd wasn't updating all the paths' priorities when calling
+> > need_switch_pathgroup(), even in cases where it likely was necessary.
+> > When a path just becomes usable again, all paths' priorities get
+> > updated
+> > by update_prio().=A0 But if the priority changes on a path that is
+> > already
+> > up, the other paths' priorities only get updated if the multipath
+> > device
+> > uses the group_by_prio path_grouping_policy, otherwise
+> > need_switch_pathgroup() is called with refresh set to 0. But if the
+> > priority of the checked path has changed, then likely so have the
+> > priorities of other paths. Since the pathgroup's priority is the
+> > average
+> > of its paths' priorities, changing the priority of just one path may
+> > not
+> > change the average enough to reorder the pathgroups.
+> >=20
+> > Instead, set refresh in need_switch_pathgroup() if the priorty has
+> > changed to something other than PRIO_UNDEF (which usually means an
+> > error
+> > has occured) and the priorities of the other paths haven't already
+> > been
+> > updated by update_prio().
+> >=20
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> > =A0multipathd/main.c | 35 +++++++++++++++++++++--------------
+> > =A01 file changed, 21 insertions(+), 14 deletions(-)
+> >=20
+> > diff --git a/multipathd/main.c b/multipathd/main.c
+> > index bdeffe76..e7c272ad 100644
+> > --- a/multipathd/main.c
+> > +++ b/multipathd/main.c
+> > @@ -2575,20 +2575,27 @@ check_path (struct vectors * vecs, struct
+> > path * pp, unsigned int ticks)
+> > =A0
+> > =A0=A0=A0=A0=A0=A0=A0=A0if (marginal_changed)
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0reload_and_sync_map(pp-=
+>mpp, vecs, 1);
+> > -=A0=A0=A0=A0=A0=A0=A0else if (update_prio(pp, new_path_up) &&
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 (pp->mpp->pgpolicyfn =3D=3D (pgpolicyfn=
+ *)group_by_prio) &&
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->mpp->pgfailback =3D=3D -FAILBACK=
+_IMMEDIATE) {
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(2, "%s: path prio=
+rities changed. reloading",
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p=
+p->mpp->alias);
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0reload_and_sync_map(pp->m=
+pp, vecs, !new_path_up);
+> > -=A0=A0=A0=A0=A0=A0=A0} else if (need_switch_pathgroup(pp->mpp, 0)) {
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pp->mpp->pgfailback >=
+ 0 &&
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 (new_path_up ||=
+ pp->mpp->failback_tick <=3D 0))
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p=
+p->mpp->failback_tick =3D
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->pgfailback + 1;
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0else if (pp->mpp->pgfailb=
+ack =3D=3D -FAILBACK_IMMEDIATE
+> > ||
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 =
+(chkr_new_path_up &&
+> > followover_should_failback(pp)))
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0s=
+witch_pathgroup(pp->mpp);
+> > +=A0=A0=A0=A0=A0=A0=A0else {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0int prio_changed =3D upda=
+te_prio(pp, new_path_up);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0bool need_refresh =3D (!n=
+ew_path_up && prio_changed &&
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->priority !=3D PRIO_UNDEF);
+> > +
+>=20
+> I have always found it confusing that we recalculate the priorities in
+> two functions (update_prio() and need_switch_pathgroup()), passing
+> boolean flags back and forth. IMO we should move this logic to
+> update_prio(), so that we don't need to refresh any priorities in
+> need_switch_pathgroup() any more. after determining the prio of the
+> "primary" path device, update_prio() has all the information
+> it needs to figure out whether priorities of other paths must be
+> refreshed.
+>=20
+> That would even make the code easier to understand, IMO.
+>=20
+> Regards
+> Martin
 
-On Wed, 31 May 2023 14:55:12 +0200, Christoph Hellwig wrote:
-> bool is the most sensible return value for a yes/no return.  Also
-> add __init as this funtion is only called from the early boot code.
-> 
-> 
+So the difference in this code between when we choose to update all the
+paths' prios for the group_by_prio case, and when we choose to update
+all the paths' prios for the other pgpolicies comes down to how we treat
+PRIO_UNDEF. I didn't change the group_by_prio behavior. So right now,
+for group_by_prio devices, we will update all the paths' priorities if
+the checked path switches priorities to PRIO_UNDEF. My question is, "Is
+this the right thing to do?"
 
-Applied, thanks!
+In the best case, if the prioritizer fails on one path, it will fail on
+all the other paths in the pathgroup as well, so that they stay
+together. In the worst case it will fail on paths in other pathgroups,
+so that incorrect paths get grouped together. Granted, I'm not sure how
+much of a difference it makes in the worst case, since the other
+priorities would get checked eventually, and would get placed in the
+wrong group then.
 
-[01/24] driver core: return bool from driver_probe_done
-        commit: aa5f6ed8c21ec1aa5fd688118d8d5cd87c5ffc1d
-[02/24] PM: hibernate: factor out a helper to find the resume device
-        commit: 02b42d58f3898134b900ff3030561099e38adb32
-[03/24] PM: hibernate: remove the global snapshot_test variable
-        commit: d6545e687271ab27472eebff770f2de6a5f1a464
-[04/24] PM: hibernate: move finding the resume device out of software_resume
-        commit: cc89c63e2fe37d476357c82390dfb12edcd41cdd
-[05/24] init: remove pointless Root_* values
-        commit: f5524c3fadba35c075a5131bad74e3041507a694
-[06/24] init: rename mount_block_root to mount_root_generic
-        commit: e3102722ffe77094ba9e7e46380792b3dd8a7abd
-[07/24] init: refactor mount_root
-        commit: a6a41d39c2d91ff2543d31b6cc6070f3957e3aea
-[08/24] init: pass root_device_name explicitly
-        commit: c8643c72bc42781fc169c6498a3902bec447099e
-[09/24] init: don't remove the /dev/ prefix from error messages
-        commit: 73231b58b1b496d631fa0ecf9fa7f64f5a07c6e3
-[10/24] init: handle ubi/mtd root mounting like all other root types
-        commit: 07d63cbb67cdb5e2a7720fdd8579b3be979c2d66
-[11/24] init: factor the root_wait logic in prepare_namespace into a helper
-        commit: 3701c600a3e735b9fbac6f7a73e4c086090c97ca
-[12/24] init: move the nfs/cifs/ram special cases out of name_to_dev_t
-        commit: c0c1a7dcb6f5db4500e6574294674213bc24940c
-[13/24] init: improve the name_to_dev_t interface
-        commit: cf056a43121559d3642419917d405c3237ded90a
-[14/24] init: clear root_wait on all invalid root= strings
-        commit: 079caa35f7863cd9958b4555ae873ea4d352a502
-[15/24] block: move the code to do early boot lookup of block devices to block/
-        commit: 702f3189e454b3c3c2f3c99dbf30acf41aab707c
-[16/24] block: move more code to early-lookup.c
-        commit: 7cadcaf1d82618852745e7206fffa2c72c17ce4b
-[17/24] dm-snap: simplify the origin_dev == cow_dev check in snapshot_ctr
-        commit: 26110d5afe8117d1b505fe735ac709bdf063f4da
-[18/24] dm: open code dm_get_dev_t in dm_init_init
-        commit: 49177377e910a8fd5cd1388c966d8fbb51075c3c
-[19/24] dm: remove dm_get_dev_t
-        commit: d4a28d7defe79006e59293a4b43d518ba8483fb0
-[20/24] dm: only call early_lookup_bdev from early boot context
-        commit: 7a126d5bf975f082281fb9b45d110cd49b7c3ee4
-[21/24] PM: hibernate: don't use early_lookup_bdev in resume_store
-        commit: 1e8c813b083c4122dfeaa5c3b11028331026e85d
-[22/24] mtd: block2mtd: factor the early block device open logic into a helper
-        commit: b2baa57475e3a24bb9ad27bb9047ea3be94627f5
-[23/24] mtd: block2mtd: don't call early_lookup_bdev after the system is running
-        commit: 8d03187ee7328af8e18ef1782289e0b034e75485
-[24/24] block: mark early_lookup_bdev as __init
-        commit: 2577f53f42947d8ca01666e3444bb7307319ea38
+Perhaps it would be better to treat PRIO_UNDEF like PATH_PENDING, where
+we will continue to use the old priority if we get a PRIO_UNDEF result.
 
-Best regards,
--- 
-Jens Axboe
+The choices are:
+1. make both the group_by_prio and the non-group_by_prio cases recheck
+   all paths on PRIO_UNDEF (this keeps the group_by_prio behavior the
+   same).
+2. make both cases NOT recheck all paths on PRIO_UNDEF.
+3. keep the destinction between the two (make update_prio() check the
+   pgplicy, and act accordingly)
+4. Make paths keep their previous priority when they would have returned
+   PRIO_UNDEF, so we never switch to PRIO_UNDEF.
 
+All the choices except 3 seem reasonable. 1 keeps things how they are
+for group_by_prio. 2 leans towards moving PRIO_UNDEF paths out of their
+current pathgroup.  4 leans towards keeping PRIO_UNDEF paths in their
+current pathgroup.
 
+The other question is, what do we do for the delayed case. Right now,
+once we finish waiting for our delay in deferred_failback_tick(), we
+automatically refresh the priorities of all the devices in our
+need_switch_pathgroup() call.  We could add an update_prio() call before
+it to keep this behavior, but if we are already refreshing all the
+paths' priorities when we need to, I'm not sure that it's necessary to
+do it again here.
 
+Thoughts?
+-Ben
+
+>=20
+>=20
+>=20
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (prio_changed &&
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->mpp->pgpoli=
+cyfn =3D=3D (pgpolicyfn
+> > *)group_by_prio &&
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->mpp->pgfail=
+back =3D=3D -FAILBACK_IMMEDIATE) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
+ondlog(2, "%s: path priorities changed.
+> > reloading",
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->alias);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0r=
+eload_and_sync_map(pp->mpp, vecs,
+> > !new_path_up);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0} else if (need_switch_pa=
+thgroup(pp->mpp,
+> > need_refresh)) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0i=
+f (pp->mpp->pgfailback > 0 &&
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0 (new_path_up || pp->mpp->failback_tick <=3D
+> > 0))
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->failback_tick =3D
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->pgfailback + 1;
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0e=
+lse if (pp->mpp->pgfailback =3D=3D -
+> > FAILBACK_IMMEDIATE ||
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0 (chkr_new_path_up &&
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0 followover_should_failback(pp)))
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(pp->mpp);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> > =A0=A0=A0=A0=A0=A0=A0=A0}
+> > =A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> > =A0}
 --
 dm-devel mailing list
 dm-devel@redhat.com
