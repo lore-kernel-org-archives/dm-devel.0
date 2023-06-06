@@ -1,70 +1,70 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id BE541C7EE37
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 07:42:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7FC69C7EE2A
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 07:42:17 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686037335;
+	s=mimecast20190719; t=1686037336;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=ci8jybLbMGt+nKpYVNaNDI9Qh7ZhMSS00cDvWruxEro=;
-	b=ZAeIBsyTGs78X+W3sWPKRM85bQD0PBR4Ml9zO3NSqU3H/4u+XEMJxua2vqZ1jGnggO6BqB
-	raU2jKMA0MtxBxANx2MYzrwYSy8ikxMei65i8Uj3Wo4IePImxEEnYxlHd6sF6vKHHiBXgF
-	xrbhyLRZ0aoULfsCLgibHt+yLAdZ0zY=
+	bh=JTf+YYiaL+Ccz1K+zmlCHOrvdzGSl4Uiyw5nXqeIv3g=;
+	b=CxjL9Nov7mjIqrC6EoQUF19eXE1DtSUL6DWjRidmNEI/fgaU+L/MyKdRIlhCjUhuE/P0W9
+	2gswCJzu4RV5zFwwGZKbSoBwbjQvP8NzcBHPnQ9XXv8pSIMBiNzHWU6XEpNIs3r4dSb/i6
+	FpYgboPyRjl3FpN0ZibSOOUATb6Y+oU=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-619-gAZREz20NCqgiwMUtfLU6A-1; Tue, 06 Jun 2023 03:42:12 -0400
-X-MC-Unique: gAZREz20NCqgiwMUtfLU6A-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-14-OtsNh_yeNhmUjuA8_W8iLA-1; Tue, 06 Jun 2023 03:42:13 -0400
+X-MC-Unique: OtsNh_yeNhmUjuA8_W8iLA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 12F0A800BFF;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EDBEF101B046;
 	Tue,  6 Jun 2023 07:42:10 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 00E4640CFD46;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D7CEC9E8B;
 	Tue,  6 Jun 2023 07:42:10 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C4A1419465BB;
-	Tue,  6 Jun 2023 07:42:09 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CD4B219465B9;
+	Tue,  6 Jun 2023 07:42:10 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
  [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 09D4A1946595
- for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 07:42:09 +0000 (UTC)
+ ESMTP id 966DE1946595
+ for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 07:42:10 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id DDAF02166B28; Tue,  6 Jun 2023 07:42:08 +0000 (UTC)
+ id 84BC32166B28; Tue,  6 Jun 2023 07:42:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D44A22166B27
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:41:43 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7A8902166B27
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:41:36 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
+ [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9F7BC811E94
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:41:43 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 36A4F3847089
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:41:36 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-645--IjpS0PIOFC7mpAG7Z1bQg-1; Tue, 06 Jun 2023 03:41:41 -0400
-X-MC-Unique: -IjpS0PIOFC7mpAG7Z1bQg-1
+ us-mta-474-ZZAeVyQpNH67CtEoGwt_0A-1; Tue, 06 Jun 2023 03:41:33 -0400
+X-MC-Unique: ZZAeVyQpNH67CtEoGwt_0A-1
 Received: from
  2a02-8389-2341-5b80-39d3-4735-9a3c-88d8.cable.dynamic.v6.surfer.at
  ([2a02:8389:2341:5b80:39d3:4735:9a3c:88d8] helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q6RJd-000ZwB-0Y; Tue, 06 Jun 2023 07:41:17 +0000
+ id 1q6RJR-000Zlq-1O; Tue, 06 Jun 2023 07:41:05 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue,  6 Jun 2023 09:39:45 +0200
-Message-Id: <20230606073950.225178-27-hch@lst.de>
+Date: Tue,  6 Jun 2023 09:39:41 +0200
+Message-Id: <20230606073950.225178-23-hch@lst.de>
 In-Reply-To: <20230606073950.225178-1-hch@lst.de>
 References: <20230606073950.225178-1-hch@lst.de>
 MIME-Version: 1.0
@@ -78,8 +78,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: [dm-devel] [PATCH 26/31] block: move a few internal definitions out
- of blkdev.h
+Subject: [dm-devel] [PATCH 22/31] nvme: replace the fmode_t argument to the
+ nvme ioctl handlers with a simple bool
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,122 +108,261 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-All these helpers are only used in core block code, so move them out of
-the public header.
+Instead of passing a fmode_t and only checking it fo0r FMODE_WRITE, pass
+a bool open_for_write to prepare for callers that won't have the fmode_t.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/blk.h            | 23 +++++++++++++++++++++--
- include/linux/blkdev.h | 27 ---------------------------
- 2 files changed, 21 insertions(+), 29 deletions(-)
+ drivers/nvme/host/ioctl.c | 62 +++++++++++++++++++++------------------
+ 1 file changed, 34 insertions(+), 28 deletions(-)
 
-diff --git a/block/blk.h b/block/blk.h
-index 9582fcd0df4123..6910220aa030f1 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -394,10 +394,27 @@ static inline struct bio *blk_queue_bounce(struct bio *bio,
- #ifdef CONFIG_BLK_DEV_ZONED
- void disk_free_zone_bitmaps(struct gendisk *disk);
- void disk_clear_zone_settings(struct gendisk *disk);
--#else
-+int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
-+		unsigned int cmd, unsigned long arg);
-+int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
-+		unsigned int cmd, unsigned long arg);
-+#else /* CONFIG_BLK_DEV_ZONED */
- static inline void disk_free_zone_bitmaps(struct gendisk *disk) {}
- static inline void disk_clear_zone_settings(struct gendisk *disk) {}
--#endif
-+static inline int blkdev_report_zones_ioctl(struct block_device *bdev,
-+		fmode_t mode, unsigned int cmd, unsigned long arg)
-+{
-+	return -ENOTTY;
-+}
-+static inline int blkdev_zone_mgmt_ioctl(struct block_device *bdev,
-+		fmode_t mode, unsigned int cmd, unsigned long arg)
-+{
-+	return -ENOTTY;
-+}
-+#endif /* CONFIG_BLK_DEV_ZONED */
-+
-+struct block_device *bdev_alloc(struct gendisk *disk, u8 partno);
-+void bdev_add(struct block_device *bdev, dev_t dev);
+diff --git a/drivers/nvme/host/ioctl.c b/drivers/nvme/host/ioctl.c
+index 81c5c9e3847747..8bf09047348ee9 100644
+--- a/drivers/nvme/host/ioctl.c
++++ b/drivers/nvme/host/ioctl.c
+@@ -14,7 +14,7 @@ enum {
+ };
  
- int blk_alloc_ext_minor(void);
- void blk_free_ext_minor(unsigned int minor);
-@@ -449,6 +466,8 @@ extern struct device_attribute dev_attr_events_poll_msecs;
- 
- extern struct attribute_group blk_trace_attr_group;
- 
-+int truncate_bdev_range(struct block_device *bdev, fmode_t mode, loff_t lstart,
-+		loff_t lend);
- long blkdev_ioctl(struct file *file, unsigned cmd, unsigned long arg);
- long compat_blkdev_ioctl(struct file *file, unsigned cmd, unsigned long arg);
- 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 97803603902076..6b65623e447c02 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -318,7 +318,6 @@ typedef int (*report_zones_cb)(struct blk_zone *zone, unsigned int idx,
- void disk_set_zoned(struct gendisk *disk, enum blk_zoned_model model);
- 
- #ifdef CONFIG_BLK_DEV_ZONED
--
- #define BLK_ALL_ZONES  ((unsigned int)-1)
- int blkdev_report_zones(struct block_device *bdev, sector_t sector,
- 			unsigned int nr_zones, report_zones_cb cb, void *data);
-@@ -328,33 +327,11 @@ extern int blkdev_zone_mgmt(struct block_device *bdev, enum req_op op,
- 			    gfp_t gfp_mask);
- int blk_revalidate_disk_zones(struct gendisk *disk,
- 			      void (*update_driver_data)(struct gendisk *disk));
--
--extern int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
--				     unsigned int cmd, unsigned long arg);
--extern int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
--				  unsigned int cmd, unsigned long arg);
--
- #else /* CONFIG_BLK_DEV_ZONED */
--
- static inline unsigned int bdev_nr_zones(struct block_device *bdev)
+ static bool nvme_cmd_allowed(struct nvme_ns *ns, struct nvme_command *c,
+-		unsigned int flags, fmode_t mode)
++		unsigned int flags, bool open_for_write)
  {
- 	return 0;
+ 	u32 effects;
+ 
+@@ -80,7 +80,7 @@ static bool nvme_cmd_allowed(struct nvme_ns *ns, struct nvme_command *c,
+ 	 * writing.
+ 	 */
+ 	if (nvme_is_write(c) || (effects & NVME_CMD_EFFECTS_LBCC))
+-		return mode & FMODE_WRITE;
++		return open_for_write;
+ 	return true;
  }
--
--static inline int blkdev_report_zones_ioctl(struct block_device *bdev,
--					    fmode_t mode, unsigned int cmd,
--					    unsigned long arg)
--{
--	return -ENOTTY;
--}
--
--static inline int blkdev_zone_mgmt_ioctl(struct block_device *bdev,
--					 fmode_t mode, unsigned int cmd,
--					 unsigned long arg)
--{
--	return -ENOTTY;
--}
--
- #endif /* CONFIG_BLK_DEV_ZONED */
  
- /*
-@@ -1493,11 +1470,7 @@ void blkdev_put(struct block_device *bdev, void *holder);
- struct block_device *blkdev_get_no_open(dev_t dev);
- void blkdev_put_no_open(struct block_device *bdev);
+@@ -337,7 +337,7 @@ static bool nvme_validate_passthru_nsid(struct nvme_ctrl *ctrl,
  
--struct block_device *bdev_alloc(struct gendisk *disk, u8 partno);
--void bdev_add(struct block_device *bdev, dev_t dev);
- struct block_device *I_BDEV(struct inode *inode);
--int truncate_bdev_range(struct block_device *bdev, fmode_t mode, loff_t lstart,
--		loff_t lend);
+ static int nvme_user_cmd(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
+ 		struct nvme_passthru_cmd __user *ucmd, unsigned int flags,
+-		fmode_t mode)
++		bool open_for_write)
+ {
+ 	struct nvme_passthru_cmd cmd;
+ 	struct nvme_command c;
+@@ -365,7 +365,7 @@ static int nvme_user_cmd(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
+ 	c.common.cdw14 = cpu_to_le32(cmd.cdw14);
+ 	c.common.cdw15 = cpu_to_le32(cmd.cdw15);
  
- #ifdef CONFIG_BLOCK
- void invalidate_bdev(struct block_device *bdev);
+-	if (!nvme_cmd_allowed(ns, &c, 0, mode))
++	if (!nvme_cmd_allowed(ns, &c, 0, open_for_write))
+ 		return -EACCES;
+ 
+ 	if (cmd.timeout_ms)
+@@ -385,7 +385,7 @@ static int nvme_user_cmd(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
+ 
+ static int nvme_user_cmd64(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
+ 		struct nvme_passthru_cmd64 __user *ucmd, unsigned int flags,
+-		fmode_t mode)
++		bool open_for_write)
+ {
+ 	struct nvme_passthru_cmd64 cmd;
+ 	struct nvme_command c;
+@@ -412,7 +412,7 @@ static int nvme_user_cmd64(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
+ 	c.common.cdw14 = cpu_to_le32(cmd.cdw14);
+ 	c.common.cdw15 = cpu_to_le32(cmd.cdw15);
+ 
+-	if (!nvme_cmd_allowed(ns, &c, flags, mode))
++	if (!nvme_cmd_allowed(ns, &c, flags, open_for_write))
+ 		return -EACCES;
+ 
+ 	if (cmd.timeout_ms)
+@@ -583,7 +583,7 @@ static int nvme_uring_cmd_io(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
+ 	c.common.cdw14 = cpu_to_le32(READ_ONCE(cmd->cdw14));
+ 	c.common.cdw15 = cpu_to_le32(READ_ONCE(cmd->cdw15));
+ 
+-	if (!nvme_cmd_allowed(ns, &c, 0, ioucmd->file->f_mode))
++	if (!nvme_cmd_allowed(ns, &c, 0, ioucmd->file->f_mode & FMODE_WRITE))
+ 		return -EACCES;
+ 
+ 	d.metadata = READ_ONCE(cmd->metadata);
+@@ -649,13 +649,13 @@ static bool is_ctrl_ioctl(unsigned int cmd)
+ }
+ 
+ static int nvme_ctrl_ioctl(struct nvme_ctrl *ctrl, unsigned int cmd,
+-		void __user *argp, fmode_t mode)
++		void __user *argp, bool open_for_write)
+ {
+ 	switch (cmd) {
+ 	case NVME_IOCTL_ADMIN_CMD:
+-		return nvme_user_cmd(ctrl, NULL, argp, 0, mode);
++		return nvme_user_cmd(ctrl, NULL, argp, 0, open_for_write);
+ 	case NVME_IOCTL_ADMIN64_CMD:
+-		return nvme_user_cmd64(ctrl, NULL, argp, 0, mode);
++		return nvme_user_cmd64(ctrl, NULL, argp, 0, open_for_write);
+ 	default:
+ 		return sed_ioctl(ctrl->opal_dev, cmd, argp);
+ 	}
+@@ -680,14 +680,14 @@ struct nvme_user_io32 {
+ #endif /* COMPAT_FOR_U64_ALIGNMENT */
+ 
+ static int nvme_ns_ioctl(struct nvme_ns *ns, unsigned int cmd,
+-		void __user *argp, unsigned int flags, fmode_t mode)
++		void __user *argp, unsigned int flags, bool open_for_write)
+ {
+ 	switch (cmd) {
+ 	case NVME_IOCTL_ID:
+ 		force_successful_syscall_return();
+ 		return ns->head->ns_id;
+ 	case NVME_IOCTL_IO_CMD:
+-		return nvme_user_cmd(ns->ctrl, ns, argp, flags, mode);
++		return nvme_user_cmd(ns->ctrl, ns, argp, flags, open_for_write);
+ 	/*
+ 	 * struct nvme_user_io can have different padding on some 32-bit ABIs.
+ 	 * Just accept the compat version as all fields that are used are the
+@@ -702,7 +702,8 @@ static int nvme_ns_ioctl(struct nvme_ns *ns, unsigned int cmd,
+ 		flags |= NVME_IOCTL_VEC;
+ 		fallthrough;
+ 	case NVME_IOCTL_IO64_CMD:
+-		return nvme_user_cmd64(ns->ctrl, ns, argp, flags, mode);
++		return nvme_user_cmd64(ns->ctrl, ns, argp, flags,
++				       open_for_write);
+ 	default:
+ 		return -ENOTTY;
+ 	}
+@@ -712,6 +713,7 @@ int nvme_ioctl(struct block_device *bdev, fmode_t mode,
+ 		unsigned int cmd, unsigned long arg)
+ {
+ 	struct nvme_ns *ns = bdev->bd_disk->private_data;
++	bool open_for_write = mode & FMODE_WRITE;
+ 	void __user *argp = (void __user *)arg;
+ 	unsigned int flags = 0;
+ 
+@@ -719,19 +721,20 @@ int nvme_ioctl(struct block_device *bdev, fmode_t mode,
+ 		flags |= NVME_IOCTL_PARTITION;
+ 
+ 	if (is_ctrl_ioctl(cmd))
+-		return nvme_ctrl_ioctl(ns->ctrl, cmd, argp, mode);
+-	return nvme_ns_ioctl(ns, cmd, argp, flags, mode);
++		return nvme_ctrl_ioctl(ns->ctrl, cmd, argp, open_for_write);
++	return nvme_ns_ioctl(ns, cmd, argp, flags, open_for_write);
+ }
+ 
+ long nvme_ns_chr_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ {
+ 	struct nvme_ns *ns =
+ 		container_of(file_inode(file)->i_cdev, struct nvme_ns, cdev);
++	bool open_for_write = file->f_mode & FMODE_WRITE;
+ 	void __user *argp = (void __user *)arg;
+ 
+ 	if (is_ctrl_ioctl(cmd))
+-		return nvme_ctrl_ioctl(ns->ctrl, cmd, argp, file->f_mode);
+-	return nvme_ns_ioctl(ns, cmd, argp, 0, file->f_mode);
++		return nvme_ctrl_ioctl(ns->ctrl, cmd, argp, open_for_write);
++	return nvme_ns_ioctl(ns, cmd, argp, 0, open_for_write);
+ }
+ 
+ static int nvme_uring_cmd_checks(unsigned int issue_flags)
+@@ -800,7 +803,7 @@ int nvme_ns_chr_uring_cmd_iopoll(struct io_uring_cmd *ioucmd,
+ #ifdef CONFIG_NVME_MULTIPATH
+ static int nvme_ns_head_ctrl_ioctl(struct nvme_ns *ns, unsigned int cmd,
+ 		void __user *argp, struct nvme_ns_head *head, int srcu_idx,
+-		fmode_t mode)
++		bool open_for_write)
+ 	__releases(&head->srcu)
+ {
+ 	struct nvme_ctrl *ctrl = ns->ctrl;
+@@ -808,7 +811,7 @@ static int nvme_ns_head_ctrl_ioctl(struct nvme_ns *ns, unsigned int cmd,
+ 
+ 	nvme_get_ctrl(ns->ctrl);
+ 	srcu_read_unlock(&head->srcu, srcu_idx);
+-	ret = nvme_ctrl_ioctl(ns->ctrl, cmd, argp, mode);
++	ret = nvme_ctrl_ioctl(ns->ctrl, cmd, argp, open_for_write);
+ 
+ 	nvme_put_ctrl(ctrl);
+ 	return ret;
+@@ -818,6 +821,7 @@ int nvme_ns_head_ioctl(struct block_device *bdev, fmode_t mode,
+ 		unsigned int cmd, unsigned long arg)
+ {
+ 	struct nvme_ns_head *head = bdev->bd_disk->private_data;
++	bool open_for_write = mode & FMODE_WRITE;
+ 	void __user *argp = (void __user *)arg;
+ 	struct nvme_ns *ns;
+ 	int srcu_idx, ret = -EWOULDBLOCK;
+@@ -838,9 +842,9 @@ int nvme_ns_head_ioctl(struct block_device *bdev, fmode_t mode,
+ 	 */
+ 	if (is_ctrl_ioctl(cmd))
+ 		return nvme_ns_head_ctrl_ioctl(ns, cmd, argp, head, srcu_idx,
+-					mode);
++					       open_for_write);
+ 
+-	ret = nvme_ns_ioctl(ns, cmd, argp, flags, mode);
++	ret = nvme_ns_ioctl(ns, cmd, argp, flags, open_for_write);
+ out_unlock:
+ 	srcu_read_unlock(&head->srcu, srcu_idx);
+ 	return ret;
+@@ -849,6 +853,7 @@ int nvme_ns_head_ioctl(struct block_device *bdev, fmode_t mode,
+ long nvme_ns_head_chr_ioctl(struct file *file, unsigned int cmd,
+ 		unsigned long arg)
+ {
++	bool open_for_write = file->f_mode & FMODE_WRITE;
+ 	struct cdev *cdev = file_inode(file)->i_cdev;
+ 	struct nvme_ns_head *head =
+ 		container_of(cdev, struct nvme_ns_head, cdev);
+@@ -863,9 +868,9 @@ long nvme_ns_head_chr_ioctl(struct file *file, unsigned int cmd,
+ 
+ 	if (is_ctrl_ioctl(cmd))
+ 		return nvme_ns_head_ctrl_ioctl(ns, cmd, argp, head, srcu_idx,
+-				file->f_mode);
++				open_for_write);
+ 
+-	ret = nvme_ns_ioctl(ns, cmd, argp, 0, file->f_mode);
++	ret = nvme_ns_ioctl(ns, cmd, argp, 0, open_for_write);
+ out_unlock:
+ 	srcu_read_unlock(&head->srcu, srcu_idx);
+ 	return ret;
+@@ -940,7 +945,7 @@ int nvme_dev_uring_cmd(struct io_uring_cmd *ioucmd, unsigned int issue_flags)
+ }
+ 
+ static int nvme_dev_user_cmd(struct nvme_ctrl *ctrl, void __user *argp,
+-		fmode_t mode)
++		bool open_for_write)
+ {
+ 	struct nvme_ns *ns;
+ 	int ret;
+@@ -964,7 +969,7 @@ static int nvme_dev_user_cmd(struct nvme_ctrl *ctrl, void __user *argp,
+ 	kref_get(&ns->kref);
+ 	up_read(&ctrl->namespaces_rwsem);
+ 
+-	ret = nvme_user_cmd(ctrl, ns, argp, 0, mode);
++	ret = nvme_user_cmd(ctrl, ns, argp, 0, open_for_write);
+ 	nvme_put_ns(ns);
+ 	return ret;
+ 
+@@ -976,16 +981,17 @@ static int nvme_dev_user_cmd(struct nvme_ctrl *ctrl, void __user *argp,
+ long nvme_dev_ioctl(struct file *file, unsigned int cmd,
+ 		unsigned long arg)
+ {
++	bool open_for_write = file->f_mode & FMODE_WRITE;
+ 	struct nvme_ctrl *ctrl = file->private_data;
+ 	void __user *argp = (void __user *)arg;
+ 
+ 	switch (cmd) {
+ 	case NVME_IOCTL_ADMIN_CMD:
+-		return nvme_user_cmd(ctrl, NULL, argp, 0, file->f_mode);
++		return nvme_user_cmd(ctrl, NULL, argp, 0, open_for_write);
+ 	case NVME_IOCTL_ADMIN64_CMD:
+-		return nvme_user_cmd64(ctrl, NULL, argp, 0, file->f_mode);
++		return nvme_user_cmd64(ctrl, NULL, argp, 0, open_for_write);
+ 	case NVME_IOCTL_IO_CMD:
+-		return nvme_dev_user_cmd(ctrl, argp, file->f_mode);
++		return nvme_dev_user_cmd(ctrl, argp, open_for_write);
+ 	case NVME_IOCTL_RESET:
+ 		if (!capable(CAP_SYS_ADMIN))
+ 			return -EACCES;
 -- 
 2.39.2
 
