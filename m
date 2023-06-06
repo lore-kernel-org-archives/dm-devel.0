@@ -4,67 +4,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CFD91C77B7A
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 07:41:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CCA60C77B7A
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 07:41:49 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686037301;
+	s=mimecast20190719; t=1686037308;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=tcSbjLq8qxerERhd8C2h6Bc+i5GtPm+JLBCZCcTfHec=;
-	b=bIo8g0l1bKuukumV4x0A1f3crm7d7uWY1bkepBCKN5bYK/mrlIwravw+xgmbnALwo1AoOE
-	BompcVTclTmzB5mIZHxfmMmULwicdkXdSnD1P69jih8XblZBJ/RqwrUWMZr1Q0QeKrwmSx
-	BeDTQAZbh714kVXZu1oUkAX/FnnyHaY=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=SSre03ZExnw3IOI5WG77mt+HrOMBuf11DTvdWL+H3Vs=;
+	b=FR+EK1M9U46XbMK/3htA5AKTxBPtxnLWh1ObDCNOHK8XKolOWVR3xXTfPwGmEim38VTueQ
+	M42N02anpScMfmFGPt8CdxjRuV6KLrlp1u+xH2Yvsx9Rcva2IATjqd5toVbI3O6/Z9U/w5
+	HQ6Uk86isEQy0eTN4cNbJ+6cm0sFZy4=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-421-hkpX2aLWOaSUiKk8BfNPWg-1; Tue, 06 Jun 2023 03:41:38 -0400
-X-MC-Unique: hkpX2aLWOaSUiKk8BfNPWg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-137-tyZqTyA2MIqv82Aht_8xAg-1; Tue, 06 Jun 2023 03:41:45 -0400
+X-MC-Unique: tyZqTyA2MIqv82Aht_8xAg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 20349185A78E;
-	Tue,  6 Jun 2023 07:41:36 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A078C28135B1;
+	Tue,  6 Jun 2023 07:41:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0F155140E954;
-	Tue,  6 Jun 2023 07:41:36 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8E52B20268C5;
+	Tue,  6 Jun 2023 07:41:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D5A9919465B9;
-	Tue,  6 Jun 2023 07:41:35 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 42AD11946A45;
+	Tue,  6 Jun 2023 07:41:43 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 765731946595
- for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 07:41:34 +0000 (UTC)
+ ESMTP id 382B11946595
+ for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 07:41:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 557794021AA; Tue,  6 Jun 2023 07:41:34 +0000 (UTC)
+ id 25FBAC16044; Tue,  6 Jun 2023 07:41:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4D7EE48205F
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:41:34 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1E68DC0448E
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:41:42 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0A0378030CD
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:41:34 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E9DF4811E85
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:41:41 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-280-rsroKlrFPeOoWujRvf6rKg-1; Tue, 06 Jun 2023 03:41:32 -0400
-X-MC-Unique: rsroKlrFPeOoWujRvf6rKg-1
+ us-mta-94-IuGrcvvXOnGOFxVGscLMTg-1; Tue, 06 Jun 2023 03:41:39 -0400
+X-MC-Unique: IuGrcvvXOnGOFxVGscLMTg-1
 Received: from
  2a02-8389-2341-5b80-39d3-4735-9a3c-88d8.cable.dynamic.v6.surfer.at
  ([2a02:8389:2341:5b80:39d3:4735:9a3c:88d8] helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q6RJU-000ZoJ-0B; Tue, 06 Jun 2023 07:41:08 +0000
+ id 1q6RJX-000Zqu-1D; Tue, 06 Jun 2023 07:41:11 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue,  6 Jun 2023 09:39:42 +0200
-Message-Id: <20230606073950.225178-24-hch@lst.de>
+Date: Tue,  6 Jun 2023 09:39:43 +0200
+Message-Id: <20230606073950.225178-25-hch@lst.de>
 In-Reply-To: <20230606073950.225178-1-hch@lst.de>
 References: <20230606073950.225178-1-hch@lst.de>
 MIME-Version: 1.0
@@ -77,9 +77,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-Subject: [dm-devel] [PATCH 23/31] mtd: block: use a simple bool to track
- open for write
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: [dm-devel] [PATCH 24/31] rnbd-srv: replace sess->open_flags with a
+ "bool readonly"
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,61 +108,108 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Instead of propagating the fmode_t, just use a bool to track if a mtd
-block device was opened for writing.
+Stop passing the fmode_t around and just use a simple bool to track if
+an export is read-only.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/mtd/mtd_blkdevs.c    | 2 +-
- drivers/mtd/mtdblock.c       | 2 +-
- include/linux/mtd/blktrans.h | 2 +-
- 3 files changed, 3 insertions(+), 3 deletions(-)
+ drivers/block/rnbd/rnbd-srv-sysfs.c |  3 +--
+ drivers/block/rnbd/rnbd-srv.c       | 15 +++++++--------
+ drivers/block/rnbd/rnbd-srv.h       |  2 +-
+ 3 files changed, 9 insertions(+), 11 deletions(-)
 
-diff --git a/drivers/mtd/mtd_blkdevs.c b/drivers/mtd/mtd_blkdevs.c
-index f0bb09fde95e3a..bd0b7545364349 100644
---- a/drivers/mtd/mtd_blkdevs.c
-+++ b/drivers/mtd/mtd_blkdevs.c
-@@ -208,7 +208,7 @@ static int blktrans_open(struct gendisk *disk, fmode_t mode)
- 	ret = __get_mtd_device(dev->mtd);
- 	if (ret)
- 		goto error_release;
--	dev->file_mode = mode;
-+	dev->writable = mode & FMODE_WRITE;
+diff --git a/drivers/block/rnbd/rnbd-srv-sysfs.c b/drivers/block/rnbd/rnbd-srv-sysfs.c
+index d5d9267e1fa5e4..ebd95771c85ec7 100644
+--- a/drivers/block/rnbd/rnbd-srv-sysfs.c
++++ b/drivers/block/rnbd/rnbd-srv-sysfs.c
+@@ -88,8 +88,7 @@ static ssize_t read_only_show(struct kobject *kobj, struct kobj_attribute *attr,
  
- unlock:
- 	dev->open++;
-diff --git a/drivers/mtd/mtdblock.c b/drivers/mtd/mtdblock.c
-index a0a1194dc1d902..fa476fb4dffb6c 100644
---- a/drivers/mtd/mtdblock.c
-+++ b/drivers/mtd/mtdblock.c
-@@ -294,7 +294,7 @@ static void mtdblock_release(struct mtd_blktrans_dev *mbd)
- 		 * It was the last usage. Free the cache, but only sync if
- 		 * opened for writing.
- 		 */
--		if (mbd->file_mode & FMODE_WRITE)
-+		if (mbd->writable)
- 			mtd_sync(mbd->mtd);
- 		vfree(mtdblk->cache_data);
+ 	sess_dev = container_of(kobj, struct rnbd_srv_sess_dev, kobj);
+ 
+-	return sysfs_emit(page, "%d\n",
+-			  !(sess_dev->open_flags & FMODE_WRITE));
++	return sysfs_emit(page, "%d\n", sess_dev->readonly);
+ }
+ 
+ static struct kobj_attribute rnbd_srv_dev_session_ro_attr =
+diff --git a/drivers/block/rnbd/rnbd-srv.c b/drivers/block/rnbd/rnbd-srv.c
+index 29d560472d05ba..b680071342b898 100644
+--- a/drivers/block/rnbd/rnbd-srv.c
++++ b/drivers/block/rnbd/rnbd-srv.c
+@@ -222,7 +222,7 @@ void rnbd_destroy_sess_dev(struct rnbd_srv_sess_dev *sess_dev, bool keep_id)
+ 	blkdev_put(sess_dev->bdev, NULL);
+ 	mutex_lock(&sess_dev->dev->lock);
+ 	list_del(&sess_dev->dev_list);
+-	if (sess_dev->open_flags & FMODE_WRITE)
++	if (!sess_dev->readonly)
+ 		sess_dev->dev->open_write_cnt--;
+ 	mutex_unlock(&sess_dev->dev->lock);
+ 
+@@ -561,7 +561,7 @@ static void rnbd_srv_fill_msg_open_rsp(struct rnbd_msg_open_rsp *rsp,
+ static struct rnbd_srv_sess_dev *
+ rnbd_srv_create_set_sess_dev(struct rnbd_srv_session *srv_sess,
+ 			      const struct rnbd_msg_open *open_msg,
+-			      struct block_device *bdev, fmode_t open_flags,
++			      struct block_device *bdev, bool readonly,
+ 			      struct rnbd_srv_dev *srv_dev)
+ {
+ 	struct rnbd_srv_sess_dev *sdev = rnbd_sess_dev_alloc(srv_sess);
+@@ -576,7 +576,7 @@ rnbd_srv_create_set_sess_dev(struct rnbd_srv_session *srv_sess,
+ 	sdev->bdev		= bdev;
+ 	sdev->sess		= srv_sess;
+ 	sdev->dev		= srv_dev;
+-	sdev->open_flags	= open_flags;
++	sdev->readonly		= readonly;
+ 	sdev->access_mode	= open_msg->access_mode;
+ 
+ 	return sdev;
+@@ -681,13 +681,12 @@ static int process_msg_open(struct rnbd_srv_session *srv_sess,
+ 	struct rnbd_srv_sess_dev *srv_sess_dev;
+ 	const struct rnbd_msg_open *open_msg = msg;
+ 	struct block_device *bdev;
+-	fmode_t open_flags;
++	fmode_t open_flags = FMODE_READ;
+ 	char *full_path;
+ 	struct rnbd_msg_open_rsp *rsp = data;
+ 
+ 	trace_process_msg_open(srv_sess, open_msg);
+ 
+-	open_flags = FMODE_READ;
+ 	if (open_msg->access_mode != RNBD_ACCESS_RO)
+ 		open_flags |= FMODE_WRITE;
+ 
+@@ -736,9 +735,9 @@ static int process_msg_open(struct rnbd_srv_session *srv_sess,
+ 		goto blkdev_put;
  	}
-diff --git a/include/linux/mtd/blktrans.h b/include/linux/mtd/blktrans.h
-index 15cc9b95e32b52..6e471436bba556 100644
---- a/include/linux/mtd/blktrans.h
-+++ b/include/linux/mtd/blktrans.h
-@@ -34,7 +34,7 @@ struct mtd_blktrans_dev {
- 	struct blk_mq_tag_set *tag_set;
- 	spinlock_t queue_lock;
- 	void *priv;
--	fmode_t file_mode;
-+	bool writable;
- };
  
- struct mtd_blktrans_ops {
+-	srv_sess_dev = rnbd_srv_create_set_sess_dev(srv_sess, open_msg,
+-						     bdev, open_flags,
+-						     srv_dev);
++	srv_sess_dev = rnbd_srv_create_set_sess_dev(srv_sess, open_msg, bdev,
++				open_msg->access_mode == RNBD_ACCESS_RO,
++				srv_dev);
+ 	if (IS_ERR(srv_sess_dev)) {
+ 		pr_err("Opening device '%s' on session %s failed, creating sess_dev failed, err: %ld\n",
+ 		       full_path, srv_sess->sessname, PTR_ERR(srv_sess_dev));
+diff --git a/drivers/block/rnbd/rnbd-srv.h b/drivers/block/rnbd/rnbd-srv.h
+index f5962fd31d62e4..76077a9db3dd55 100644
+--- a/drivers/block/rnbd/rnbd-srv.h
++++ b/drivers/block/rnbd/rnbd-srv.h
+@@ -52,7 +52,7 @@ struct rnbd_srv_sess_dev {
+ 	struct kobject                  kobj;
+ 	u32                             device_id;
+ 	bool				keep_id;
+-	fmode_t                         open_flags;
++	bool				readonly;
+ 	struct kref			kref;
+ 	struct completion               *destroy_comp;
+ 	char				pathname[NAME_MAX];
 -- 
 2.39.2
 
