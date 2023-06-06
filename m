@@ -4,102 +4,104 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id F4197C83005
-	for <dm-devel@archiver.kernel.org>; Wed,  7 Jun 2023 06:49:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 297B9C87FDC
+	for <dm-devel@archiver.kernel.org>; Wed,  7 Jun 2023 06:49:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686120541;
+	s=mimecast20190719; t=1686120542;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=V1lIA5jyiJISvhghhdRTvWHGqSEriaIFU2/8s1z72o0=;
-	b=PQHt7Ndqa/0heLPM3rp0cnyBoERUsZgROTDLCM5fjEnwun13ue4Sz2HFZHP1Mi+DYVy1rk
-	WotURG8SiwOju0nsuW8mmtaFtgdLxW/yo679gLSqIdqLPA3NFMMB/Ec/AVlRxAaKFA/GVy
-	p6gxQC4knvNmnD/xyOXOxeJL77zMQUY=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=mTQUL2/eg5hluX2AJW8xPox5lRZ0cL5Pv4M2b9/EGuM=;
+	b=iBTWqDN80JVJXjucJimnP0eaC6QQv91BZv5iOc/XgdQOf9w1idhJOfAEinG18dn2jrras7
+	NivXGu/SUpPO/GmoUyVj28kVW/Bzg6p/L7b0gr6cLN+LTmlUnblp63nwmJb0iT6vohBg8q
+	VViGduisILpyZAa4wXqRS8hBKtaZ1Zs=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-638-Xm7N2KJGOyGF_w00Pol9AQ-1; Wed, 07 Jun 2023 02:48:59 -0400
-X-MC-Unique: Xm7N2KJGOyGF_w00Pol9AQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-492-uiJ3ViGeNZ-n4v1cadf88g-1; Wed, 07 Jun 2023 02:48:58 -0400
+X-MC-Unique: uiJ3ViGeNZ-n4v1cadf88g-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D42DF805AF7;
-	Wed,  7 Jun 2023 06:48:56 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C159640E6A43;
-	Wed,  7 Jun 2023 06:48:56 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1F6B8194E006;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F3F4A1C06EC9;
 	Wed,  7 Jun 2023 06:48:55 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E29F9C16044;
+	Wed,  7 Jun 2023 06:48:55 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4C0B719451E2;
+	Wed,  7 Jun 2023 06:48:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4458B1946595
- for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 11:03:52 +0000 (UTC)
+ ESMTP id A3C8919465BA
+ for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 22:52:37 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C59CC9E8D; Tue,  6 Jun 2023 11:03:51 +0000 (UTC)
+ id B4651140E957; Tue,  6 Jun 2023 22:52:37 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id BE32C9E8B
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 11:03:34 +0000 (UTC)
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id AC77F140E956
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 22:52:36 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 35230185A792
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 11:03:34 +0000 (UTC)
-Received: from mail-pg1-f200.google.com (mail-pg1-f200.google.com
- [209.85.215.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D7B9E2801A44
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 22:52:36 +0000 (UTC)
+Received: from mail-wr1-f44.google.com (mail-wr1-f44.google.com
+ [209.85.221.44]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-554-VUaz89pMMv-7i9r8tyxeJA-1; Tue, 06 Jun 2023 07:03:33 -0400
-X-MC-Unique: VUaz89pMMv-7i9r8tyxeJA-1
-Received: by mail-pg1-f200.google.com with SMTP id
- 41be03b00d2f7-53fd224ad48so1799611a12.2
- for <dm-devel@redhat.com>; Tue, 06 Jun 2023 04:03:32 -0700 (PDT)
+ us-mta-278-oUNyAXXlOkuhRygFVwMhwQ-1; Tue, 06 Jun 2023 18:50:47 -0400
+X-MC-Unique: oUNyAXXlOkuhRygFVwMhwQ-1
+Received: by mail-wr1-f44.google.com with SMTP id
+ ffacd0b85a97d-30ad458f085so14569f8f.0
+ for <dm-devel@redhat.com>; Tue, 06 Jun 2023 15:50:47 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1686049411; x=1688641411;
+ d=1e100.net; s=20221208; t=1686091846; x=1688683846;
  h=in-reply-to:content-disposition:mime-version:references:message-id
  :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
  :message-id:reply-to;
- bh=PECCGAhd7teBhoQVIkKkQ0gCChVRirWpXr8QC6vVa88=;
- b=fqEoB6AjmX7CscAcoELqhcd0n/td4cyfMsiycw6IduOEW6Z4nqbYNQ3s9q0C4IYw6u
- Ql3CyADTVT8HhJjXWDI16hzfFGXCqb7/PDiVNCDW/S2ya2r1MyqpO8tU/E4j1s+YFdU9
- 4I+ulFI1cu4i9GPuznwHjEnvcXL50t1qsxquGFCNphdOZAHmgWVRtsYuKBkIAGVsG7eb
- cHQsSkoJCZzzZajO6I/5gG9EQqjmm0YAEUeoS4S1Mu9SRnqYA4H39bzDnHP/Zh08MQEL
- cNRMDv0YZ9SyhE/ue6/rGsDEDYvT+PMNDgNm+7sySO1rRgr54MkWhkGo/3hydGggxFGK
- pVsQ==
-X-Gm-Message-State: AC+VfDwRL72Sa4RhR7FN6FLxWFJq4w6UxqdSBt0HmevO5pQzedbQcQMA
- ZHpTgwemlyQzCC1t9Oa66ZZDfecpDlmmW4mhli3D8s3j2sCkPzGagAVWl2wed0y/V3zwhKMtFj+
- pO146wcsRRiqJazg=
-X-Received: by 2002:a17:90a:cb8f:b0:24e:2e86:5465 with SMTP id
- a15-20020a17090acb8f00b0024e2e865465mr244058pju.31.1686049411620; 
- Tue, 06 Jun 2023 04:03:31 -0700 (PDT)
-X-Google-Smtp-Source: ACHHUZ7Ut1fWyiC1Sxe/ag4hpzoFeyDmazttp0G3bC8zYvg1LgXcS3Mz6lzRVYGA5vny7y9WWqUGuQ==
-X-Received: by 2002:a17:90a:cb8f:b0:24e:2e86:5465 with SMTP id
- a15-20020a17090acb8f00b0024e2e865465mr244050pju.31.1686049411302; 
- Tue, 06 Jun 2023 04:03:31 -0700 (PDT)
-Received: from localhost ([209.132.188.80]) by smtp.gmail.com with ESMTPSA id
- l3-20020a6542c3000000b005307501cfe4sm6611337pgp.44.2023.06.06.04.03.30
+ bh=ZsgUvAUYrCnrR/1XiT9juxzkogVY5Vs72GapwMni78s=;
+ b=Sh0K0Xg6fPQfVZTjNTW/KwOMiVpUD2FEKODugabAa+kKw7mEDVMNWtTDf+p8l+zAyN
+ wgBhSGvUa0aWCzbmEl8gJSVu80409Z1kQhnLZt0YWQLfohV+dF0novkLz+aLDqV5vcWN
+ Yw7peG+w5K4YAVHQKl8pDmnMfiInXcHe/WUPkib3dCB6yGBoPevr0cimxjDuDfFN/m+7
+ /kmgbeT0+EehKl5weXlqAfsN/744Gluz45FxPaY8JC1TRCCv9BZc9pnTYTaiXG8fdrTE
+ sVcfaQ5rGVmZOoUC+hZj0ABM1RFhvPcZyUt4nIwyl9G1g+Y4l22unh4sefxCgxmNBYTA
+ 3iJQ==
+X-Gm-Message-State: AC+VfDwSQ+htYsKUC4THLwCp3o1rsWaxBQXcZSJB533BO0prUekQIiu2
+ Mw3hn1rsMdxHx2KjHoFq/CZ40w==
+X-Google-Smtp-Source: ACHHUZ6DIZ/PhyT9JV3FzdchvbYZ3qIwLNNEqf/pmfFBTRfAYv0aDDapWKAK27qD8k0ew1wS3jRAUg==
+X-Received: by 2002:a5d:6b82:0:b0:30e:47e2:7eca with SMTP id
+ n2-20020a5d6b82000000b0030e47e27ecamr4524731wrx.3.1686091845858; 
+ Tue, 06 Jun 2023 15:50:45 -0700 (PDT)
+Received: from equinox
+ (2.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.a.1.e.e.d.f.d.0.b.8.0.1.0.0.2.ip6.arpa.
+ [2001:8b0:dfde:e1a0::2]) by smtp.gmail.com with ESMTPSA id
+ l6-20020a5d4bc6000000b0030ae3a6be5bsm13760443wrt.78.2023.06.06.15.50.44
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Tue, 06 Jun 2023 04:03:30 -0700 (PDT)
-Date: Tue, 6 Jun 2023 19:02:19 +0800
-From: Coiby Xu <coxu@redhat.com>
-To: Milan Broz <gmazyland@gmail.com>
-Message-ID: <oosx274kf6kzasncdfdg5a53ut6wey3nlnbho5x3rql2df3zep@c6r6m4whphvh>
-References: <20230601072444.2033855-1-coxu@redhat.com>
- <20230602213452.GC628@quark.localdomain>
- <f569a35a-bff9-9dbb-2ded-7e02ee060a9a@gmail.com>
- <36mz3gn764ceadfbuhhmoo2zaiqmzplpkdcnszha2hzhmb3i62@sm6hilxryzk4>
- <a5eaa21d-6551-5857-98cd-50578fe59566@gmail.com>
+ Tue, 06 Jun 2023 15:50:45 -0700 (PDT)
+Date: Tue, 6 Jun 2023 23:50:43 +0100
+From: Phillip Potter <phil@philpotter.co.uk>
+To: Christoph Hellwig <hch@lst.de>
+Message-ID: <ZH+4QyeJ2WCOaPGO@equinox>
+References: <20230606073950.225178-1-hch@lst.de>
+ <20230606073950.225178-3-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <a5eaa21d-6551-5857-98cd-50578fe59566@gmail.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+In-Reply-To: <20230606073950.225178-3-hch@lst.de>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mailman-Approved-At: Wed, 07 Jun 2023 06:48:52 +0000
-Subject: Re: [dm-devel] [PATCH 0/5] Support kdump with LUKS encryption by
- reusing LUKS volume key
+Subject: Re: [dm-devel] [PATCH 02/31] cdrom: remove the unused bdev argument
+ to cdrom_open
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -111,113 +113,103 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Baoquan He <bhe@redhat.com>, Kairui Song <ryncsn@gmail.com>, x86@kernel.org,
- kexec@lists.infradead.org, linux-kernel@vger.kernel.org,
- Pingfan Liu <kernelfans@gmail.com>, Eric Biggers <ebiggers@kernel.org>,
- Dave Hansen <dave.hansen@intel.com>, dm-devel@redhat.com,
- Jan Pazdziora <jpazdziora@redhat.com>, Thomas Staudt <tstaudt@de.ibm.com>,
- Vitaly Kuznetsov <vkuznets@redhat.com>, Dave Young <dyoung@redhat.com>
+Cc: Vignesh Raghavendra <vigneshr@ti.com>,
+ "Rafael J. Wysocki" <rafael@kernel.org>, linux-nvme@lists.infradead.org,
+ Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>,
+ dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>,
+ Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>,
+ Jack Wang <jinpu.wang@ionos.com>, linux-nilfs@vger.kernel.org,
+ linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>,
+ linux-pm@vger.kernel.org, linux-um@lists.infradead.org,
+ Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>,
+ linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
+ Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>,
+ Jens Axboe <axboe@kernel.dk>, Christian Brauner <brauner@kernel.org>,
+ "Martin K. Petersen" <martin.petersen@oracle.com>,
+ linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
+ linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
+X-Mimecast-Originator: philpotter.co.uk
 Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Mon, Jun 05, 2023 at 09:09:49AM +0200, Milan Broz wrote:
->On 6/5/23 04:31, Coiby Xu wrote:
->>Hi Eric and Milan,
->>
->>On Sat, Jun 03, 2023 at 11:22:52AM +0200, Milan Broz wrote:
->>>On 6/2/23 23:34, Eric Biggers wrote:
->>>>On Thu, Jun 01, 2023 at 03:24:39PM +0800, Coiby Xu wrote:
->>>>>[PATCH 0/5] Support kdump with LUKS encryption by reusing LUKS volume key
->>>>
->>>>The kernel has no concept of LUKS at all.  It provides dm-crypt, which LUKS
->>>>happens to use.  But LUKS is a userspace concept.
->>>>
->>>>This is a kernel patchset, so why does it make sense for it to be talking about
->>>>LUKS at all?  Perhaps you mean dm-crypt?
->>>
->>>Exactly.
->>
->>Thanks for raising the above concern! The use cases like CoreOS and
->>Confidential VMs explicitly want kdump to work for LUKS. And correct me
->>if I'm wrong, I think the two problems addressed by this patch set only
->>apply to LUKS so the kdump part of the kernel only cares about the LUKS
->>case. If there are use cases where similar approach is needed, I'll be
->>happy to make the solution more generic.
->>
->>>
->>>I had the same comment almost a year ago... and it still applies:
->>>https://lore.kernel.org/all/c857dcf8-024e-ab8a-fd26-295ce2e0ae41@gmail.com/
->>>
->>>Anyway, please fix the naming before this patchset can be read or reviewed!
->>>
->>>LUKS is user-space key management only (on-disk metadata); the kernel has
->>>no idea how the key is derived or what LUKS is - dm-crypt only knows the key
->>>(either through keyring or directly in the mapping table).
->>>
->>>Polluting kernel namespace with "luks" names variables is wrong - dm-crypt
->>>is used in many other mappings (plain, bitlocker, veracrypt, ...)
->>>Just use the dm-crypt key, do not reference LUKS at all.
->>
->>Thanks for the reminding! That comment was on the first RFC version. But
->>starting with "RFC v2", there is no longer any interaction with dm-crypt
->>(to save a copy of the LUKS volume key for the kdump kernel) and now I
->>make cryptsetup talks to the kdump part of the kernel via the sysfs to
->>reuse the volume key. So only the kdump part of the kernel needs to know
->>LUKS which is what it cares. Thus I don't think there is any kernel
->>namespace pollution now.
->
->Hi,
->
->I am sorry if I did understand correctly, but I thought that kdump is part
->of the kernel.
+On Tue, Jun 06, 2023 at 09:39:21AM +0200, Christoph Hellwig wrote:
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  drivers/cdrom/cdrom.c | 3 +--
+>  drivers/cdrom/gdrom.c | 2 +-
+>  drivers/scsi/sr.c     | 2 +-
+>  include/linux/cdrom.h | 3 +--
+>  4 files changed, 4 insertions(+), 6 deletions(-)
+> 
+> diff --git a/drivers/cdrom/cdrom.c b/drivers/cdrom/cdrom.c
+> index 416f723a2dbb33..e3eab319cb0474 100644
+> --- a/drivers/cdrom/cdrom.c
+> +++ b/drivers/cdrom/cdrom.c
+> @@ -1155,8 +1155,7 @@ int open_for_data(struct cdrom_device_info *cdi)
+>   * is in their own interest: device control becomes a lot easier
+>   * this way.
+>   */
+> -int cdrom_open(struct cdrom_device_info *cdi, struct block_device *bdev,
+> -	       fmode_t mode)
+> +int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode)
+>  {
+>  	int ret;
+>  
+> diff --git a/drivers/cdrom/gdrom.c b/drivers/cdrom/gdrom.c
+> index ceded5772aac6d..eaa2d5a90bc82f 100644
+> --- a/drivers/cdrom/gdrom.c
+> +++ b/drivers/cdrom/gdrom.c
+> @@ -481,7 +481,7 @@ static int gdrom_bdops_open(struct block_device *bdev, fmode_t mode)
+>  	bdev_check_media_change(bdev);
+>  
+>  	mutex_lock(&gdrom_mutex);
+> -	ret = cdrom_open(gd.cd_info, bdev, mode);
+> +	ret = cdrom_open(gd.cd_info, mode);
+>  	mutex_unlock(&gdrom_mutex);
+>  	return ret;
+>  }
+> diff --git a/drivers/scsi/sr.c b/drivers/scsi/sr.c
+> index 12869e6d4ebda8..61b83880e395a4 100644
+> --- a/drivers/scsi/sr.c
+> +++ b/drivers/scsi/sr.c
+> @@ -498,7 +498,7 @@ static int sr_block_open(struct block_device *bdev, fmode_t mode)
+>  		sr_revalidate_disk(cd);
+>  
+>  	mutex_lock(&cd->lock);
+> -	ret = cdrom_open(&cd->cdi, bdev, mode);
+> +	ret = cdrom_open(&cd->cdi, mode);
+>  	mutex_unlock(&cd->lock);
+>  
+>  	scsi_autopm_put_device(sdev);
+> diff --git a/include/linux/cdrom.h b/include/linux/cdrom.h
+> index 67caa909e3e615..cc5717cb0fa8a8 100644
+> --- a/include/linux/cdrom.h
+> +++ b/include/linux/cdrom.h
+> @@ -101,8 +101,7 @@ int cdrom_read_tocentry(struct cdrom_device_info *cdi,
+>  		struct cdrom_tocentry *entry);
+>  
+>  /* the general block_device operations structure: */
+> -extern int cdrom_open(struct cdrom_device_info *cdi, struct block_device *bdev,
+> -			fmode_t mode);
+> +int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode);
+>  extern void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode);
+>  extern int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
+>  		       fmode_t mode, unsigned int cmd, unsigned long arg);
+> -- 
+> 2.39.2
+> 
 
-Yes, there is the kernel part of the kdump although there is also the
-userspace part to make the feature complete:)
+Thanks for the patch, looks good to me.
 
->
->I am trying to say that kernel generally has no concept of LUKS;
->this is a userspace abstraction for key management.
->
->Even the cryptsetup dm-crypt configuration mapping table generated from LUKS
->has nothing LUKS special in it (only in DM-UUID as a name prefix).
->
->So I do not understand why you need to mention LUKS even in kdump part.
->Perhaps it is still only a naming problem, nothing more.
->
->All you need is to preserve key and configuration parameters (for dm-crypt).
->If it is set by cryptsetup, dmsetup, or any other way is not important - on this
->kernel layer, it has nothing to do with LUKS key management metadata.
->
->No problem if you support only LUKS in userspace, but really, all this machinery
->should work for any dm-crypt devices. Perhaps your patch even works for it already.
+Signed-off-by: Phillip Potter <phil@philpotter.co.uk>
 
-Thanks for the explanation! After reflecting on your words for some
-time, I realize I had an implicit assumption. I assumed is if I use a
-name like dm_crypt_key instead of luks_volume_key, I need to support all
-mappings like plain, bitlocker, veracrypt as mentioned by you and this
-could mean much more efforts. So I'm not motivated to do that as
-currently users only request kdump to work for LUKS.  
-
-But maybe I can divide the efforts into the kernel part and userspace
-part. For the kernel part, almost no effort is needed since only
-renaming is needed as pointed out by you. For the userpace part, maybe
-it's OK to support preserving key only for LUKS2 in cryptsetup as hinted
-by your last paragraph? Does it look good to you from the viewpoint of
-the maintainer of cryptsetup?
-
->
->Milan
->
-
--- 
-Best regards,
-Coiby
+Regards,
+Phil
 
 --
 dm-devel mailing list
