@@ -4,67 +4,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7B284C7EE24
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 07:51:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id AF53AC7EE2A
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 07:51:55 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686037910;
+	s=mimecast20190719; t=1686037914;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=ljwHkQ6KRAedhHAre7a6iRIcwVwH8lqMzOPwr19iyZo=;
-	b=GVf9oCs+9nozk8yOhuMpKa5JKsqRIV/+5hCkLbH2kPaxzCEDHX/5v3N3yIj34ix0Jl2YKs
-	0HOY2SdbUX+8brrTuEN24Fwo2ckg0TQJB7/HnhIftsFCoypool9fP7mXagRv7PyASFoAhN
-	35xWyRVrDkNFpp+yftvejGZvbzzWHJA=
+	bh=YPiwBxnY3IE2t6TzO8JRytaMwEPqeYCQLTJBRLkm59M=;
+	b=Vwd8/GP9CNRoJerZDa0aCZtMN1jCVB2G49ztpsu7MS1SD6K44xuAnwkQGITYqf5y++UKle
+	t9LDwf+8zVJQpjv6nW5vSaJcWxF5U6tGagIJjTgGNTQAaR1LPPEuS5mnqxzoLB6SSrCPXj
+	WYcL9hz3IwGP728vbr0aFHMRKJ5zemc=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-191-Csj20IjXMjKlnDF8Qd8sbQ-1; Tue, 06 Jun 2023 03:51:46 -0400
-X-MC-Unique: Csj20IjXMjKlnDF8Qd8sbQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-361-_iYRMrjuMVCK8JSGUjx7CA-1; Tue, 06 Jun 2023 03:51:53 -0400
+X-MC-Unique: _iYRMrjuMVCK8JSGUjx7CA-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9270B3802124;
-	Tue,  6 Jun 2023 07:51:43 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 39FBA280BC52;
+	Tue,  6 Jun 2023 07:51:47 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E8C07C1603B;
-	Tue,  6 Jun 2023 07:51:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 288B340CFD46;
+	Tue,  6 Jun 2023 07:51:47 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BF10519465B9;
-	Tue,  6 Jun 2023 07:51:41 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EC0EE19465B9;
+	Tue,  6 Jun 2023 07:51:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D1FF61946595
- for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 07:51:39 +0000 (UTC)
+ ESMTP id 17D261946595
+ for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 07:51:46 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 681DE40D1B66; Tue,  6 Jun 2023 07:51:39 +0000 (UTC)
+ id DEC812026D6A; Tue,  6 Jun 2023 07:51:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 6037F40D1B69
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:51:39 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D70642026D49
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:51:45 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 370438027F5
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:51:39 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A9DC88028B1
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:51:45 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-135-J8RZCL_BO8601GkInQTEtQ-1; Tue, 06 Jun 2023 03:51:37 -0400
-X-MC-Unique: J8RZCL_BO8601GkInQTEtQ-1
+ us-mta-385-XNeoDMbyNxCeLyB8E9LTjw-1; Tue, 06 Jun 2023 03:51:44 -0400
+X-MC-Unique: XNeoDMbyNxCeLyB8E9LTjw-1
 Received: from
  2a02-8389-2341-5b80-39d3-4735-9a3c-88d8.cable.dynamic.v6.surfer.at
  ([2a02:8389:2341:5b80:39d3:4735:9a3c:88d8] helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q6RIN-000Yal-0r; Tue, 06 Jun 2023 07:39:59 +0000
+ id 1q6RIh-000YuD-04; Tue, 06 Jun 2023 07:40:19 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue,  6 Jun 2023 09:39:21 +0200
-Message-Id: <20230606073950.225178-3-hch@lst.de>
+Date: Tue,  6 Jun 2023 09:39:27 +0200
+Message-Id: <20230606073950.225178-9-hch@lst.de>
 In-Reply-To: <20230606073950.225178-1-hch@lst.de>
 References: <20230606073950.225178-1-hch@lst.de>
 MIME-Version: 1.0
@@ -77,9 +77,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: [dm-devel] [PATCH 02/31] cdrom: remove the unused bdev argument to
- cdrom_open
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: [dm-devel] [PATCH 08/31] block: share code between
+ disk_check_media_change and disk_force_media_change
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,74 +108,82 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+Factor the common logic between disk_check_media_change and
+disk_force_media_change into a helper.
+
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/cdrom/cdrom.c | 3 +--
- drivers/cdrom/gdrom.c | 2 +-
- drivers/scsi/sr.c     | 2 +-
- include/linux/cdrom.h | 3 +--
- 4 files changed, 4 insertions(+), 6 deletions(-)
+ block/disk-events.c | 37 ++++++++++++++++---------------------
+ 1 file changed, 16 insertions(+), 21 deletions(-)
 
-diff --git a/drivers/cdrom/cdrom.c b/drivers/cdrom/cdrom.c
-index 416f723a2dbb33..e3eab319cb0474 100644
---- a/drivers/cdrom/cdrom.c
-+++ b/drivers/cdrom/cdrom.c
-@@ -1155,8 +1155,7 @@ int open_for_data(struct cdrom_device_info *cdi)
-  * is in their own interest: device control becomes a lot easier
-  * this way.
-  */
--int cdrom_open(struct cdrom_device_info *cdi, struct block_device *bdev,
--	       fmode_t mode)
-+int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode)
- {
- 	int ret;
- 
-diff --git a/drivers/cdrom/gdrom.c b/drivers/cdrom/gdrom.c
-index ceded5772aac6d..eaa2d5a90bc82f 100644
---- a/drivers/cdrom/gdrom.c
-+++ b/drivers/cdrom/gdrom.c
-@@ -481,7 +481,7 @@ static int gdrom_bdops_open(struct block_device *bdev, fmode_t mode)
- 	bdev_check_media_change(bdev);
- 
- 	mutex_lock(&gdrom_mutex);
--	ret = cdrom_open(gd.cd_info, bdev, mode);
-+	ret = cdrom_open(gd.cd_info, mode);
- 	mutex_unlock(&gdrom_mutex);
- 	return ret;
+diff --git a/block/disk-events.c b/block/disk-events.c
+index 8b1b63225738f8..06f325662b3494 100644
+--- a/block/disk-events.c
++++ b/block/disk-events.c
+@@ -262,6 +262,18 @@ static unsigned int disk_clear_events(struct gendisk *disk, unsigned int mask)
+ 	return pending;
  }
-diff --git a/drivers/scsi/sr.c b/drivers/scsi/sr.c
-index 12869e6d4ebda8..61b83880e395a4 100644
---- a/drivers/scsi/sr.c
-+++ b/drivers/scsi/sr.c
-@@ -498,7 +498,7 @@ static int sr_block_open(struct block_device *bdev, fmode_t mode)
- 		sr_revalidate_disk(cd);
  
- 	mutex_lock(&cd->lock);
--	ret = cdrom_open(&cd->cdi, bdev, mode);
-+	ret = cdrom_open(&cd->cdi, mode);
- 	mutex_unlock(&cd->lock);
++static bool __disk_check_media_change(struct gendisk *disk, unsigned int events)
++{
++	if (!(events & DISK_EVENT_MEDIA_CHANGE))
++		return false;
++
++	if (__invalidate_device(disk->part0, true))
++		pr_warn("VFS: busy inodes on changed media %s\n",
++			disk->disk_name);
++	set_bit(GD_NEED_PART_SCAN, &disk->state);
++	return true;
++}
++
+ /**
+  * disk_check_media_change - check if a removable media has been changed
+  * @disk: gendisk to check
+@@ -274,18 +286,9 @@ static unsigned int disk_clear_events(struct gendisk *disk, unsigned int mask)
+  */
+ bool disk_check_media_change(struct gendisk *disk)
+ {
+-	unsigned int events;
+-
+-	events = disk_clear_events(disk, DISK_EVENT_MEDIA_CHANGE |
+-				   DISK_EVENT_EJECT_REQUEST);
+-	if (!(events & DISK_EVENT_MEDIA_CHANGE))
+-		return false;
+-
+-	if (__invalidate_device(disk->part0, true))
+-		pr_warn("VFS: busy inodes on changed media %s\n",
+-			disk->disk_name);
+-	set_bit(GD_NEED_PART_SCAN, &disk->state);
+-	return true;
++	return __disk_check_media_change(disk,
++			disk_clear_events(disk, DISK_EVENT_MEDIA_CHANGE |
++						DISK_EVENT_EJECT_REQUEST));
+ }
+ EXPORT_SYMBOL(disk_check_media_change);
  
- 	scsi_autopm_put_device(sdev);
-diff --git a/include/linux/cdrom.h b/include/linux/cdrom.h
-index 67caa909e3e615..cc5717cb0fa8a8 100644
---- a/include/linux/cdrom.h
-+++ b/include/linux/cdrom.h
-@@ -101,8 +101,7 @@ int cdrom_read_tocentry(struct cdrom_device_info *cdi,
- 		struct cdrom_tocentry *entry);
+@@ -303,15 +306,7 @@ EXPORT_SYMBOL(disk_check_media_change);
+ bool disk_force_media_change(struct gendisk *disk, unsigned int events)
+ {
+ 	disk_event_uevent(disk, events);
+-
+-	if (!(events & DISK_EVENT_MEDIA_CHANGE))
+-		return false;
+-
+-	if (__invalidate_device(disk->part0, true))
+-		pr_warn("VFS: busy inodes on changed media %s\n",
+-			disk->disk_name);
+-	set_bit(GD_NEED_PART_SCAN, &disk->state);
+-	return true;
++	return __disk_check_media_change(disk, events);
+ }
+ EXPORT_SYMBOL_GPL(disk_force_media_change);
  
- /* the general block_device operations structure: */
--extern int cdrom_open(struct cdrom_device_info *cdi, struct block_device *bdev,
--			fmode_t mode);
-+int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode);
- extern void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode);
- extern int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
- 		       fmode_t mode, unsigned int cmd, unsigned long arg);
 -- 
 2.39.2
 
