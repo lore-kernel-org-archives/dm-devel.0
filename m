@@ -1,119 +1,80 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A0F9CC7EE24
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 17:01:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1C660C77B7A
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 17:06:29 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686070915;
+	s=mimecast20190719; t=1686071188;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=afgTjFYTrIO3YU72vCUKtt9oqBf7VTIqwDcLnYnWF9A=;
-	b=DH+YPO21kgOzVBVIO0ARAEYOhn++WcC9pbAX213z8eRHTSkcL3neovFQP6TAiVr63/4Hms
-	pAhlJj3lrFOUbS6PIYTN+5k8KDxKNfDkd05g2cSDXrXgOf+rYSE27c2dYCmm3F6jzzAn/X
-	xgdVPn/5wLJXNpCu1teQBwofZTaKGNU=
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=YJth4bYgOONinLSPTpi0S13LUYY8CjeA/j+2zuy5GuY=;
+	b=hb9A1qcurGyBj+hf0UprjnPZI//xHk3SMqc8MpvqekNLf9nOfuQgpfF9BVwJ3abI8uQCYx
+	+sJK7FlMqEwNek0i3qivGBP1P5C6HLuxOjqG4iUUGWGWYfON+j1iEyxZBQPgpktzQLJKpE
+	SbhMB9TY4Yvk2behMQhnk5IPTpv+ngc=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-646-Qh_MNw_8OYCzggU2M7Q1vw-1; Tue, 06 Jun 2023 13:01:53 -0400
-X-MC-Unique: Qh_MNw_8OYCzggU2M7Q1vw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-665-P_V3Np4JPn6rSkST1cJo0Q-1; Tue, 06 Jun 2023 13:06:25 -0400
+X-MC-Unique: P_V3Np4JPn6rSkST1cJo0Q-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 822FA185A78E;
-	Tue,  6 Jun 2023 17:01:50 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6D0F92026D49;
-	Tue,  6 Jun 2023 17:01:50 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9CD58185A793;
+	Tue,  6 Jun 2023 17:06:22 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4670F9E8B;
+	Tue,  6 Jun 2023 17:06:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 33FDA1946A45;
-	Tue,  6 Jun 2023 17:01:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E2A8B19465BC;
+	Tue,  6 Jun 2023 17:06:20 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1E0F819465BD
- for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 17:01:38 +0000 (UTC)
+ ESMTP id 0706919465BA
+ for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 17:06:09 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0A3F440D1B68; Tue,  6 Jun 2023 17:01:38 +0000 (UTC)
+ id 6432F40336D; Tue,  6 Jun 2023 17:06:09 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 028CF40D1B66
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 17:01:37 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [205.139.110.61])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 5BF6F477F61
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 17:06:09 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BE4F83C01C37
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 17:01:37 +0000 (UTC)
-Received: from out4-smtp.messagingengine.com (out4-smtp.messagingengine.com
- [66.111.4.28]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-424-zxcCIk6SPZaJx3ql6WNSsQ-1; Tue, 06 Jun 2023 13:01:33 -0400
-X-MC-Unique: zxcCIk6SPZaJx3ql6WNSsQ-1
-Received: from compute3.internal (compute3.nyi.internal [10.202.2.43])
- by mailout.nyi.internal (Postfix) with ESMTP id 19C075C012D;
- Tue,  6 Jun 2023 13:01:33 -0400 (EDT)
-Received: from mailfrontend1 ([10.202.2.162])
- by compute3.internal (MEProxy); Tue, 06 Jun 2023 13:01:33 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
- invisiblethingslab.com; h=cc:cc:content-type:content-type:date
- :date:from:from:in-reply-to:in-reply-to:message-id:mime-version
- :references:reply-to:sender:subject:subject:to:to; s=fm1; t=
- 1686070893; x=1686157293; bh=l2EzN6E/qocsYv3o8wJqF7HDny4dm9MwaMQ
- 5WBtXj4Q=; b=ZADMKl3MnlVwGXHqpt8eGbGaF8puWI4iVmYboN61PHb5av+UeP/
- Mwcs8RsetL/Ia1TD3XjbeOVyX1XtQDmaenLSZv1k7n7V1YkeHHiC8e1SJJDsF1uw
- z+iMJ25KJxfOkmKN30YtM/UuLgeI859JUNhHCWvTsG+ZrTje3ObKDlToP1VaiGLn
- JIKypbEJ+w1d+sAz60ZP170xoGwtqPgI6yIr4K1GTGftVa6dqC6OTRPaU5vqYjYQ
- a1AZG7vWO16iD8L9QQvURJuLbkqLyi60yG+ghLCzdYIQN3F5Tcn00OVxO8NogdOd
- SzYbivZrzph0bf4589ArZksnRFEFjVbf/Lg==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
- messagingengine.com; h=cc:cc:content-type:content-type:date:date
- :feedback-id:feedback-id:from:from:in-reply-to:in-reply-to
- :message-id:mime-version:references:reply-to:sender:subject
- :subject:to:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender
- :x-sasl-enc; s=fm1; t=1686070893; x=1686157293; bh=l2EzN6E/qocsY
- v3o8wJqF7HDny4dm9MwaMQ5WBtXj4Q=; b=eiiOaOKtqq5GhqSypOjJmRkmI4fKP
- Z09ALho2siegC6nBwRb6eOJeFL+U1zmRVQj3ABZ0jn41SZ5R4XVv4XruydlJ/2gx
- fHOpVgzqtkEd7kk+nLRbTsbSzLbZpbi/vWof52KNRn7+OvPI8OWOtwJI7dvjoPG/
- pzj/Dn4SWtBsnVvUA26m26Eya9slFNCIHumJBzOlkzuna3OlAnYQ5PAc4t7BcjWj
- lFzcnWHMWvQ5OOXhVvpgiS0iv7jTFCczZPIUuLm7yIANApgwu96x+HX+d3+zieqy
- Rl9v0VEvKT1RyayBe9p4m9RIMs6igKPUBNQUY6sMYlBD+UTEA9JcX/6Zg==
-X-ME-Sender: <xms:a2Z_ZAWpQed-F1Rq8M57HU6BNvRoFM9TPwzr3RY-q3crE2xsPWlIzg>
- <xme:a2Z_ZEmRYeNXKD01xmCSSiOV3skS_x8dVqTu6_-qRv1DHPn7ZSDWy5KJVZN5TA-bD
- 0-cMTfme4y2C8w>
-X-ME-Received: <xmr:a2Z_ZEbKvq29I-9GutIe_25UN5PkfaWTdN0eXKPnRXHr4wHsQmzVGAUE3xk>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvhedrgedtuddguddtlecutefuodetggdotefrod
- ftvfcurfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfgh
- necuuegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmd
- enucfjughrpeffhffvvefukfhfgggtuggjsehgtderredttdejnecuhfhrohhmpeffvghm
- ihcuofgrrhhivgcuqfgsvghnohhurhcuoeguvghmihesihhnvhhishhisghlvghthhhinh
- hgshhlrggsrdgtohhmqeenucggtffrrghtthgvrhhnpedvjeetgeekhfetudfhgfetffeg
- fffguddvgffhffeifeeikeektdehgeetheffleenucevlhhushhtvghrufhiiigvpedtne
- curfgrrhgrmhepmhgrihhlfhhrohhmpeguvghmihesihhnvhhishhisghlvghthhhinhhg
- shhlrggsrdgtohhm
-X-ME-Proxy: <xmx:a2Z_ZPVvYtX4NM-79g7DVuGNFvi3TqziTCvFMV6f152Nokz7N0TrjQ>
- <xmx:a2Z_ZKmNnzPaKH5oPSBnNxVPgMC6SivDnaYg1nmGO0MdVNwRkoKwJw>
- <xmx:a2Z_ZEfD5_pUCg9jce7fGwlO3jU0942-qvYTAM01zBHl9VNe2WhpnA>
- <xmx:bWZ_ZIZZr1wY8mOjIoKzsVLl53G6HUnb2iXQ4YAYwPxGNbRxTpG4lw>
-Feedback-ID: iac594737:Fastmail
-Received: by mail.messagingengine.com (Postfix) with ESMTPA; Tue,
- 6 Jun 2023 13:01:31 -0400 (EDT)
-Date: Tue, 6 Jun 2023 13:01:20 -0400
-From: Demi Marie Obenour <demi@invisiblethingslab.com>
-To: Roger Pau =?utf-8?B?TW9ubsOp?= <roger.pau@citrix.com>
-Message-ID: <ZH9mZGbM32CDmKGF@itl-email>
-References: <20230530203116.2008-1-demi@invisiblethingslab.com>
- <20230530203116.2008-14-demi@invisiblethingslab.com>
- <ZH7tizoYl8YVFN9B@Air-de-Roger>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3EFCF2814243
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 17:06:09 +0000 (UTC)
+Received: from stravinsky.debian.org (stravinsky.debian.org [82.195.75.108])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-445-hF0OFoyoNeGg9MvLVQ7MFw-1; Tue,
+ 06 Jun 2023 13:06:07 -0400
+X-MC-Unique: hF0OFoyoNeGg9MvLVQ7MFw-1
+Received: from authenticated user by stravinsky.debian.org with esmtpsa
+ (TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_256_GCM:256)
+ (Exim 4.94.2) (envelope-from <zeha@debian.org>)
+ id 1q6a8D-003eFO-Do; Tue, 06 Jun 2023 17:06:05 +0000
+From: Chris Hofstaedtler <zeha@debian.org>
+To: dm-devel@redhat.com
+Date: Tue,  6 Jun 2023 19:05:32 +0200
+Message-Id: <20230606170532.1345-1-zeha@debian.org>
 MIME-Version: 1.0
-In-Reply-To: <ZH7tizoYl8YVFN9B@Air-de-Roger>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH v2 13/16] xen-blkback: Implement diskseq
- checks
+X-Debian-User: zeha
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: [dm-devel] [PATCH] multipath-tools build: rename PKGCONFIG to
+ PKG_CONFIG
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -125,266 +86,119 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@kernel.org>,
- Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?=
- <marmarek@invisiblethingslab.com>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- xen-devel@lists.xenproject.org, Alasdair Kergon <agk@redhat.com>
-Content-Type: multipart/mixed; boundary="===============6293424882616864623=="
+Cc: Chris Hofstaedtler <zeha@debian.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-
-
---===============6293424882616864623==
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="gvaHE6UC2pWo4unn"
-Content-Disposition: inline
-
-
---gvaHE6UC2pWo4unn
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-Date: Tue, 6 Jun 2023 13:01:20 -0400
-From: Demi Marie Obenour <demi@invisiblethingslab.com>
-To: Roger Pau =?utf-8?B?TW9ubsOp?= <roger.pau@citrix.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, dm-devel@redhat.com,
-	Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?= <marmarek@invisiblethingslab.com>,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	xen-devel@lists.xenproject.org
-Subject: Re: [PATCH v2 13/16] xen-blkback: Implement diskseq checks
-
-On Tue, Jun 06, 2023 at 10:25:47AM +0200, Roger Pau Monn=C3=A9 wrote:
-> On Tue, May 30, 2023 at 04:31:13PM -0400, Demi Marie Obenour wrote:
-> > This allows specifying a disk sequence number in XenStore.  If it does
-> > not match the disk sequence number of the underlying device, the device
-> > will not be exported and a warning will be logged.  Userspace can use
-> > this to eliminate race conditions due to major/minor number reuse.
-> > Old kernels do not support the new syntax, but a later patch will allow
-> > userspace to discover that the new syntax is supported.
-> >=20
-> > Signed-off-by: Demi Marie Obenour <demi@invisiblethingslab.com>
-> > ---
-> >  drivers/block/xen-blkback/xenbus.c | 112 +++++++++++++++++++++++------
-> >  1 file changed, 89 insertions(+), 23 deletions(-)
-> >=20
-> > diff --git a/drivers/block/xen-blkback/xenbus.c b/drivers/block/xen-blk=
-back/xenbus.c
-> > index 4807af1d58059394d7a992335dabaf2bc3901721..9c3eb148fbd802c74e626c3=
-d7bcd69dcb09bd921 100644
-> > --- a/drivers/block/xen-blkback/xenbus.c
-> > +++ b/drivers/block/xen-blkback/xenbus.c
-> > @@ -24,6 +24,7 @@ struct backend_info {
-> >  	struct xenbus_watch	backend_watch;
-> >  	unsigned		major;
-> >  	unsigned		minor;
-> > +	unsigned long long	diskseq;
->=20
-> Since diskseq is declared as u64 in gendisk, better use the same type
-> here too?
-
-simple_strtoull() returns an unsigned long long, and C permits unsigned
-long long to be larger than 64 bits.
-
-> >  	char			*mode;
-> >  };
-> > =20
-> > @@ -479,7 +480,7 @@ static void xen_vbd_free(struct xen_vbd *vbd)
-> > =20
-> >  static int xen_vbd_create(struct xen_blkif *blkif, blkif_vdev_t handle,
-> >  			  unsigned major, unsigned minor, int readonly,
-> > -			  int cdrom)
-> > +			  bool cdrom, u64 diskseq)
-> >  {
-> >  	struct xen_vbd *vbd;
-> >  	struct block_device *bdev;
-> > @@ -507,6 +508,26 @@ static int xen_vbd_create(struct xen_blkif *blkif,=
- blkif_vdev_t handle,
-> >  		xen_vbd_free(vbd);
-> >  		return -ENOENT;
-> >  	}
-> > +
-> > +	if (diskseq) {
-> > +		struct gendisk *disk =3D bdev->bd_disk;
->=20
-> const.
->=20
-> > +
-> > +		if (unlikely(disk =3D=3D NULL)) {
-> > +			pr_err("%s: device %08x has no gendisk\n",
-> > +			       __func__, vbd->pdevice);
-> > +			xen_vbd_free(vbd);
-> > +			return -EFAULT;
->=20
-> ENODEV or ENOENT might be more accurate IMO.
-
-I will drop it, as this turns out to be unreachable code.
-
-> > +		}
-> > +
-> > +		if (unlikely(disk->diskseq !=3D diskseq)) {
-> > +			pr_warn("%s: device %08x has incorrect sequence "
-> > +				"number 0x%llx (expected 0x%llx)\n",
->=20
-> I prefer %#llx, and likely pr_err like above.  Also I think it's now
-> preferred to not split printed lines, so that `grep "has incorrect
-> sequence number" ...` can find the instance.
-
-Ah, so _that_ is why I got a warning from checkpatch!
-
-> > +				__func__, vbd->pdevice, disk->diskseq, diskseq);
-> > +			xen_vbd_free(vbd);
-> > +			return -ENODEV;
-> > +		}
-> > +	}
-> > +
-> >  	vbd->size =3D vbd_sz(vbd);
-> > =20
-> >  	if (cdrom || disk_to_cdi(vbd->bdev->bd_disk))
-> > @@ -707,6 +728,9 @@ static void backend_changed(struct xenbus_watch *wa=
-tch,
-> >  	int cdrom =3D 0;
-> >  	unsigned long handle;
-> >  	char *device_type;
-> > +	char *diskseq_str =3D NULL;
->=20
-> const, and I think there's no need to init to NULL.
->=20
-> > +	int diskseq_len;
->=20
-> unsigned int
->=20
-> > +	unsigned long long diskseq;
->=20
-> u64
->=20
-> > =20
-> >  	pr_debug("%s %p %d\n", __func__, dev, dev->otherend_id);
-> > =20
-> > @@ -725,10 +749,46 @@ static void backend_changed(struct xenbus_watch *=
-watch,
-> >  		return;
-> >  	}
-> > =20
-> > -	if (be->major | be->minor) {
-> > -		if (be->major !=3D major || be->minor !=3D minor)
-> > -			pr_warn("changing physical device (from %x:%x to %x:%x) not support=
-ed.\n",
-> > -				be->major, be->minor, major, minor);
-> > +	diskseq_str =3D xenbus_read(XBT_NIL, dev->nodename, "diskseq", &disks=
-eq_len);
-> > +	if (IS_ERR(diskseq_str)) {
-> > +		int err =3D PTR_ERR(diskseq_str);
-> > +		diskseq_str =3D NULL;
-> > +
-> > +		/*
-> > +		 * If this does not exist, it means legacy userspace that does not
-> > +		 * support diskseq.
-> > +		 */
-> > +		if (unlikely(!XENBUS_EXIST_ERR(err))) {
-> > +			xenbus_dev_fatal(dev, err, "reading diskseq");
-> > +			return;
-> > +		}
-> > +		diskseq =3D 0;
-> > +	} else if (diskseq_len <=3D 0) {
-> > +		xenbus_dev_fatal(dev, -EFAULT, "diskseq must not be empty");
-> > +		goto fail;
-> > +	} else if (diskseq_len > 16) {
-> > +		xenbus_dev_fatal(dev, -ERANGE, "diskseq too long: got %d but limit i=
-s 16",
-> > +				 diskseq_len);
-> > +		goto fail;
-> > +	} else if (diskseq_str[0] =3D=3D '0') {
-> > +		xenbus_dev_fatal(dev, -ERANGE, "diskseq must not start with '0'");
-> > +		goto fail;
-> > +	} else {
-> > +		char *diskseq_end;
-> > +		diskseq =3D simple_strtoull(diskseq_str, &diskseq_end, 16);
-> > +		if (diskseq_end !=3D diskseq_str + diskseq_len) {
-> > +			xenbus_dev_fatal(dev, -EINVAL, "invalid diskseq");
-> > +			goto fail;
-> > +		}
-> > +		kfree(diskseq_str);
-> > +		diskseq_str =3D NULL;
-> > +	}
->=20
-> Won't it be simpler to use xenbus_scanf() with %llx formatter?
-
-xenbus_scanf() doesn=E2=80=99t check for overflow and accepts lots of junk =
-it
-really should not.  Should this be fixed in xenbus_scanf()?
-
-> Also, we might want to fetch "physical-device" and "diskseq" inside
-> the same xenstore transaction.
-
-Should the rest of the xenstore reads be included in the same
-transaction?
-
-> Also, you tie this logic to the "physical-device" watch, which
-> strictly implies that the "diskseq" node must be written to xenstore
-> before the "physical-device" node.  This seems fragile, but I don't
-> see much better optiono since the "diskseq" is optional.
-
-What about including the diskseq in the "physical-device" node?  Perhaps
-use diskseq@major:minor syntax?
-
-> The node and its behaviour should be documented in blkif.h.
-
-Indeed so.
-
-> > +	if (be->major | be->minor | be->diskseq) {
-> > +		if (be->major !=3D major || be->minor !=3D minor || be->diskseq !=3D=
- diskseq)
-> > +			pr_warn("changing physical device (from %x:%x:%llx to %x:%x:%llx)"
-> > +				" not supported.\n",
-> > +				be->major, be->minor, be->diskseq, major, minor, diskseq);
-> >  		return;
->=20
-> You are leaking diskseq_str here, and in all the error cases between
-> here and up to the call to xen_vbd_create().
-
-I will fix this by moving the diskseq reading code into its own
-function.
---=20
-Sincerely,
-Demi Marie Obenour (she/her/hers)
-Invisible Things Lab
-
---gvaHE6UC2pWo4unn
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCgAdFiEEdodNnxM2uiJZBxxxsoi1X/+cIsEFAmR/ZmUACgkQsoi1X/+c
-IsFcXw/+O0uik5rd4boydxFX99UjfrkGiog1pfbmuhUxgisJFIPtkNnbz2S66pb5
-h2wD5k3BZC+Sl/Mbt4LKpKbRM9qJWhhGZZjNG7n0GTBw08k9WJP2QhlJVLkqwtWt
-Fg+JyZACmla53o0nlhrvMZGAtNN0f/4S3z2ary6h6AqNRl5nIAso9E7qEMkaZ/aW
-EMGGdy5gWhAUUfFeo7pG7LlgPUPZHLZ0EdpqOuVW37B3w3DbeRuX1abRgQwpBZcC
-1bx6MY1y59+K5tri4ONQHSDriBH8z0hcHLUTYNaGCBCWiC+19zY+njahy9gAEit+
-YjoiTevhLSn+UtxPB6Fi/233LEQySlGyS90McFx+3fMnkc32sOoxxI3drAxWUDCB
-iKY4VMgvdUrCi6zN+IWITMDCRsQzidLs5rUPPj14Lf6w7R7wKaxTvMZBlcbbQBBU
-PKUo2homKpex3/Qxw7/c5DyZ0M/oPEuJyp/lmHmEDXDMqInF9PI+A8ukSaFOzE96
-jCBO8ay7vpXZG5jEx9FRF/T8JGmYnL6F/cu5P+o8t2vxNg0fe9w5Jg0o3zjEkraC
-Qxu9cpr4/44ySNx7cB7fUXMkw4+Ubbe0UrFcyX9NvKtaB8F5H+tptCHyGJ0hQa36
-6Z9EKHUoChcUGKMLAJ1GUI383RpDqbzdOS5FS97X/HlIc7B9S4Q=
-=ln1g
------END PGP SIGNATURE-----
-
---gvaHE6UC2pWo4unn--
-
-
---===============6293424882616864623==
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: debian.org
 Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+
+Debian's build system helpers automatically set "PKG_CONFIG" correctly, so it
+would be convenient for Debian to use this name instead of "PKGCONFIG".
+
+The majority of projects also seem to call this makefile variable "PKG_CONFIG".
+
+Signed-off-by: Chris Hofstaedtler <zeha@debian.org>
+---
+ Makefile.inc        | 8 ++++----
+ create-config.mk    | 6 +++---
+ libdmmp/Makefile    | 4 ++--
+ multipathd/Makefile | 2 +-
+ 4 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/Makefile.inc b/Makefile.inc
+index 2e25d2ea..502cd0f1 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -20,9 +20,9 @@ SCSI_DH_MODULES_PRELOAD :=
+ 
+ EXTRAVERSION := $(shell rev=$$(git rev-parse --short=7 HEAD 2>/dev/null); echo $${rev:+-g$$rev})
+ 
+-# PKGCONFIG must be read from the environment to enable compilation
++# PKG_CONFIG must be read from the environment to enable compilation
+ # in Debian multiarch setups
+-PKGCONFIG	?= pkg-config
++PKG_CONFIG	?= pkg-config
+ 
+ ifeq ($(TOPDIR),)
+ 	TOPDIR	= ..
+@@ -56,8 +56,8 @@ pkgconfdir	:= $(usrlibdir)/pkgconfig
+ plugindir       := $(prefix)/$(LIB)/multipath
+ configdir       := $(prefix)/etc/multipath/conf.d
+ runtimedir      := $(if $(shell test -L /var/run -o ! -d /var/run && echo 1),/run,/var/run)
+-devmapper_incdir := $(or $(shell $(PKGCONFIG) --variable=includedir devmapper),/usr/include)
+-libudev_incdir	:= $(or $(shell $(PKGCONFIG) --variable=includedir libudev),/usr/include)
++devmapper_incdir := $(or $(shell $(PKG_CONFIG) --variable=includedir devmapper),/usr/include)
++libudev_incdir	:= $(or $(shell $(PKG_CONFIG) --variable=includedir libudev),/usr/include)
+ kernel_incdir	:= /usr/include
+ 
+ ifeq ($(V),)
+diff --git a/create-config.mk b/create-config.mk
+index f128375f..d1255971 100644
+--- a/create-config.mk
++++ b/create-config.mk
+@@ -104,7 +104,7 @@ ifneq ($(call check_var,ELS_DTAG_LNK_INTEGRITY,$(kernel_incdir)/scsi/fc/fc_els.h
+ 	FPIN_SUPPORT = 1
+ endif
+ 
+-libmount_h := $(shell $(PKGCONFIG) --variable=includedir mount)/libmount/libmount.h
++libmount_h := $(shell $(PKG_CONFIG) --variable=includedir mount)/libmount/libmount.h
+ ifneq ($(call check_func,mnt_unref_cache,$(libmount_h)),0)
+ 	DEFINES += LIBMOUNT_HAS_MNT_UNREF_CACHE
+ endif
+@@ -117,13 +117,13 @@ ifneq ($(call check_file,$(kernel_incdir)/linux/nvme_ioctl.h),0)
+ 	ANA_SUPPORT := 1
+ endif
+ 
+-ENABLE_LIBDMMP := $(call check_cmd,$(PKGCONFIG) --exists json-c)
++ENABLE_LIBDMMP := $(call check_cmd,$(PKG_CONFIG) --exists json-c)
+ 
+ ifeq ($(ENABLE_DMEVENTS_POLL),0)
+ 	DEFINES += -DNO_DMEVENTS_POLL
+ endif
+ 
+-SYSTEMD := $(strip $(or $(shell $(PKGCONFIG) --modversion libsystemd 2>/dev/null | awk '{print $$1}'), \
++SYSTEMD := $(strip $(or $(shell $(PKG_CONFIG) --modversion libsystemd 2>/dev/null | awk '{print $$1}'), \
+ 			$(shell systemctl --version 2>/dev/null | sed -n 's/systemd \([0-9]*\).*/\1/p')))
+ 
+ 
+diff --git a/libdmmp/Makefile b/libdmmp/Makefile
+index 6d28caf9..9ece9528 100644
+--- a/libdmmp/Makefile
++++ b/libdmmp/Makefile
+@@ -14,10 +14,10 @@ HEADERS := libdmmp/libdmmp.h
+ 
+ OBJS := libdmmp.o libdmmp_mp.o libdmmp_pg.o libdmmp_path.o libdmmp_misc.o
+ 
+-CPPFLAGS += -I$(libdmmpdir) -I$(mpathcmddir) $(shell $(PKGCONFIG) --cflags json-c)
++CPPFLAGS += -I$(libdmmpdir) -I$(mpathcmddir) $(shell $(PKG_CONFIG) --cflags json-c)
+ CFLAGS += $(LIB_CFLAGS) -fvisibility=hidden
+ 
+-LIBDEPS += $(shell $(PKGCONFIG) --libs json-c) -L$(mpathcmddir) -lmpathcmd -lpthread
++LIBDEPS += $(shell $(PKG_CONFIG) --libs json-c) -L$(mpathcmddir) -lmpathcmd -lpthread
+ 
+ all: $(LIBS) doc
+ .PHONY:	doc clean install uninstall check speed_test dep_clean
+diff --git a/multipathd/Makefile b/multipathd/Makefile
+index dca8e10b..0d0146c5 100644
+--- a/multipathd/Makefile
++++ b/multipathd/Makefile
+@@ -4,7 +4,7 @@ EXEC := multipathd
+ CLI := multipathc
+ 
+ CPPFLAGS += -I$(multipathdir) -I$(mpathutildir) -I$(mpathpersistdir) -I$(mpathcmddir) -I$(thirdpartydir) \
+-	$(shell $(PKGCONFIG) --modversion liburcu 2>/dev/null | \
++	$(shell $(PKG_CONFIG) --modversion liburcu 2>/dev/null | \
+ 		awk -F. '{ printf("-DURCU_VERSION=0x%06x", 256 * ( 256 * $$1 + $$2) + $$3); }') \
+ 	-DBINDIR='"$(bindir)"' $(SYSTEMD_CPPFLAGS)
+ 
+-- 
+2.39.2
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-
---===============6293424882616864623==--
 
