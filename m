@@ -1,70 +1,70 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 020E5C77B7A
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 07:52:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 964A7C7EE32
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 07:52:19 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686037937;
+	s=mimecast20190719; t=1686037938;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=FBRDOE+J3TNV//JuiphYkG0OGek53YqkLUJbx5lIKHo=;
-	b=h3ln9Gy7fPVUpY1OLFzlEaLFd+8xBVzVywBMM+KZBWJqWDbu2lpGOJxbFjyVLx8dshfxTp
-	lRVUde3Ct9WNLzRvlPC6+UKutlUClTTHZUbkO4PW163MqIgc85wQZFhuiKTf4Yo9hQIk42
-	n1AwAPnZrGEkal28YZnU8lejJEUG7kg=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=8rbsLqa1aE+cpadHjmasUsvUhYbRmOR/GEgx/YcpwRw=;
+	b=MEmeFwTqiXmg+mIT/JD2z5zhZ6NdzM3NXUZFc2Q7dFwAtekACe1AbgaaZiT+u73yPwrHdH
+	t+d/dwOpp+VIBrpNtotH9Yl0OOEYSXPM8I0wKE9k50Gbvq24QWxhSgIV82r6Uaa1iiNWKF
+	IHns+KnpV05ogoa7j1cDaJzk1xtvqao=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-271-J3KsGjLQPHOB502rybVAcw-1; Tue, 06 Jun 2023 03:52:13 -0400
-X-MC-Unique: J3KsGjLQPHOB502rybVAcw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-646-klVtjG71N1uNTopyJnUNqg-1; Tue, 06 Jun 2023 03:52:15 -0400
+X-MC-Unique: klVtjG71N1uNTopyJnUNqg-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C9BAB85A5AA;
-	Tue,  6 Jun 2023 07:52:10 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3B84438117E7;
+	Tue,  6 Jun 2023 07:52:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B6B35C1603B;
-	Tue,  6 Jun 2023 07:52:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 23E19403367;
+	Tue,  6 Jun 2023 07:52:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9B00319465B9;
-	Tue,  6 Jun 2023 07:52:10 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0ED0B19465B9;
+	Tue,  6 Jun 2023 07:52:12 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6909C19465B9
- for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 07:52:09 +0000 (UTC)
+ ESMTP id 0CA891946595
+ for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 07:52:11 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 585FF400F4E; Tue,  6 Jun 2023 07:52:09 +0000 (UTC)
+ id F051F4021AB; Tue,  6 Jun 2023 07:52:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 504184A927E
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:52:09 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E7A284021AA
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:52:10 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2372C8030D7
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:52:09 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BE2F528078CC
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:52:10 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-41-n5AJHKK_NGW5ztIzkrhLhw-1; Tue, 06 Jun 2023 03:52:07 -0400
-X-MC-Unique: n5AJHKK_NGW5ztIzkrhLhw-1
+ us-mta-618--jBs6iiRNJSCoPM1vczuoA-1; Tue, 06 Jun 2023 03:52:09 -0400
+X-MC-Unique: -jBs6iiRNJSCoPM1vczuoA-1
 Received: from
  2a02-8389-2341-5b80-39d3-4735-9a3c-88d8.cable.dynamic.v6.surfer.at
  ([2a02:8389:2341:5b80:39d3:4735:9a3c:88d8] helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q6RIQ-000YcF-1K; Tue, 06 Jun 2023 07:40:02 +0000
+ id 1q6RJ4-000ZMJ-0X; Tue, 06 Jun 2023 07:40:42 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue,  6 Jun 2023 09:39:22 +0200
-Message-Id: <20230606073950.225178-4-hch@lst.de>
+Date: Tue,  6 Jun 2023 09:39:34 +0200
+Message-Id: <20230606073950.225178-16-hch@lst.de>
 In-Reply-To: <20230606073950.225178-1-hch@lst.de>
 References: <20230606073950.225178-1-hch@lst.de>
 MIME-Version: 1.0
@@ -77,9 +77,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-Subject: [dm-devel] [PATCH 03/31] cdrom: remove the unused mode argument to
- cdrom_ioctl
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+Subject: [dm-devel] [PATCH 15/31] btrfs: don't pass a holder for
+ non-exclusive blkdev_get_by_path
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,74 +108,143 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+Passing a holder to blkdev_get_by_path when FMODE_EXCL isn't set doesn't
+make sense, so pass NULL instead and remove the holder argument from the
+call chains the only end up in non-FMODE_EXCL blkdev_get_by_path calls.
+
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/cdrom/cdrom.c | 2 +-
- drivers/cdrom/gdrom.c | 2 +-
- drivers/scsi/sr.c     | 2 +-
- include/linux/cdrom.h | 4 ++--
- 4 files changed, 5 insertions(+), 5 deletions(-)
+ fs/btrfs/super.c   | 16 ++++++----------
+ fs/btrfs/volumes.c | 17 ++++++++---------
+ fs/btrfs/volumes.h |  3 +--
+ 3 files changed, 15 insertions(+), 21 deletions(-)
 
-diff --git a/drivers/cdrom/cdrom.c b/drivers/cdrom/cdrom.c
-index e3eab319cb0474..245e5bbb05d41c 100644
---- a/drivers/cdrom/cdrom.c
-+++ b/drivers/cdrom/cdrom.c
-@@ -3336,7 +3336,7 @@ static int mmc_ioctl(struct cdrom_device_info *cdi, unsigned int cmd,
-  * ATAPI / SCSI specific code now mainly resides in mmc_ioctl().
+diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
+index ec18e22106023b..1a2ee9407f5414 100644
+--- a/fs/btrfs/super.c
++++ b/fs/btrfs/super.c
+@@ -849,8 +849,7 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
+  * All other options will be parsed on much later in the mount process and
+  * only when we need to allocate a new super block.
   */
- int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
--		fmode_t mode, unsigned int cmd, unsigned long arg)
-+		unsigned int cmd, unsigned long arg)
+-static int btrfs_parse_device_options(const char *options, fmode_t flags,
+-				      void *holder)
++static int btrfs_parse_device_options(const char *options, fmode_t flags)
  {
- 	void __user *argp = (void __user *)arg;
- 	int ret;
-diff --git a/drivers/cdrom/gdrom.c b/drivers/cdrom/gdrom.c
-index eaa2d5a90bc82f..14922403983e9e 100644
---- a/drivers/cdrom/gdrom.c
-+++ b/drivers/cdrom/gdrom.c
-@@ -505,7 +505,7 @@ static int gdrom_bdops_ioctl(struct block_device *bdev, fmode_t mode,
- 	int ret;
- 
- 	mutex_lock(&gdrom_mutex);
--	ret = cdrom_ioctl(gd.cd_info, bdev, mode, cmd, arg);
-+	ret = cdrom_ioctl(gd.cd_info, bdev, cmd, arg);
- 	mutex_unlock(&gdrom_mutex);
- 
- 	return ret;
-diff --git a/drivers/scsi/sr.c b/drivers/scsi/sr.c
-index 61b83880e395a4..444c7efc14cba7 100644
---- a/drivers/scsi/sr.c
-+++ b/drivers/scsi/sr.c
-@@ -539,7 +539,7 @@ static int sr_block_ioctl(struct block_device *bdev, fmode_t mode, unsigned cmd,
- 	scsi_autopm_get_device(sdev);
- 
- 	if (cmd != CDROMCLOSETRAY && cmd != CDROMEJECT) {
--		ret = cdrom_ioctl(&cd->cdi, bdev, mode, cmd, arg);
-+		ret = cdrom_ioctl(&cd->cdi, bdev, cmd, arg);
- 		if (ret != -ENOSYS)
- 			goto put;
+ 	substring_t args[MAX_OPT_ARGS];
+ 	char *device_name, *opts, *orig, *p;
+@@ -884,8 +883,7 @@ static int btrfs_parse_device_options(const char *options, fmode_t flags,
+ 				error = -ENOMEM;
+ 				goto out;
+ 			}
+-			device = btrfs_scan_one_device(device_name, flags,
+-					holder);
++			device = btrfs_scan_one_device(device_name, flags);
+ 			kfree(device_name);
+ 			if (IS_ERR(device)) {
+ 				error = PTR_ERR(device);
+@@ -1477,13 +1475,13 @@ static struct dentry *btrfs_mount_root(struct file_system_type *fs_type,
  	}
-diff --git a/include/linux/cdrom.h b/include/linux/cdrom.h
-index cc5717cb0fa8a8..4aea8c82d16971 100644
---- a/include/linux/cdrom.h
-+++ b/include/linux/cdrom.h
-@@ -103,8 +103,8 @@ int cdrom_read_tocentry(struct cdrom_device_info *cdi,
- /* the general block_device operations structure: */
- int cdrom_open(struct cdrom_device_info *cdi, fmode_t mode);
- extern void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode);
--extern int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
--		       fmode_t mode, unsigned int cmd, unsigned long arg);
-+int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
-+		unsigned int cmd, unsigned long arg);
- extern unsigned int cdrom_check_events(struct cdrom_device_info *cdi,
- 				       unsigned int clearing);
  
+ 	mutex_lock(&uuid_mutex);
+-	error = btrfs_parse_device_options(data, mode, fs_type);
++	error = btrfs_parse_device_options(data, mode);
+ 	if (error) {
+ 		mutex_unlock(&uuid_mutex);
+ 		goto error_fs_info;
+ 	}
+ 
+-	device = btrfs_scan_one_device(device_name, mode, fs_type);
++	device = btrfs_scan_one_device(device_name, mode);
+ 	if (IS_ERR(device)) {
+ 		mutex_unlock(&uuid_mutex);
+ 		error = PTR_ERR(device);
+@@ -2190,8 +2188,7 @@ static long btrfs_control_ioctl(struct file *file, unsigned int cmd,
+ 	switch (cmd) {
+ 	case BTRFS_IOC_SCAN_DEV:
+ 		mutex_lock(&uuid_mutex);
+-		device = btrfs_scan_one_device(vol->name, FMODE_READ,
+-					       &btrfs_root_fs_type);
++		device = btrfs_scan_one_device(vol->name, FMODE_READ);
+ 		ret = PTR_ERR_OR_ZERO(device);
+ 		mutex_unlock(&uuid_mutex);
+ 		break;
+@@ -2205,8 +2202,7 @@ static long btrfs_control_ioctl(struct file *file, unsigned int cmd,
+ 		break;
+ 	case BTRFS_IOC_DEVICES_READY:
+ 		mutex_lock(&uuid_mutex);
+-		device = btrfs_scan_one_device(vol->name, FMODE_READ,
+-					       &btrfs_root_fs_type);
++		device = btrfs_scan_one_device(vol->name, FMODE_READ);
+ 		if (IS_ERR(device)) {
+ 			mutex_unlock(&uuid_mutex);
+ 			ret = PTR_ERR(device);
+diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
+index 784ccc8f6c69c1..035868cee3ddc3 100644
+--- a/fs/btrfs/volumes.c
++++ b/fs/btrfs/volumes.c
+@@ -1348,8 +1348,7 @@ int btrfs_forget_devices(dev_t devt)
+  * and we are not allowed to call set_blocksize during the scan. The superblock
+  * is read via pagecache
+  */
+-struct btrfs_device *btrfs_scan_one_device(const char *path, fmode_t flags,
+-					   void *holder)
++struct btrfs_device *btrfs_scan_one_device(const char *path, fmode_t flags)
+ {
+ 	struct btrfs_super_block *disk_super;
+ 	bool new_device_added = false;
+@@ -1368,16 +1367,16 @@ struct btrfs_device *btrfs_scan_one_device(const char *path, fmode_t flags,
+ 	 */
+ 
+ 	/*
+-	 * Avoid using flag |= FMODE_EXCL here, as the systemd-udev may
+-	 * initiate the device scan which may race with the user's mount
+-	 * or mkfs command, resulting in failure.
+-	 * Since the device scan is solely for reading purposes, there is
+-	 * no need for FMODE_EXCL. Additionally, the devices are read again
++	 * Avoid an exclusive open here, as the systemd-udev may initiate the
++	 * device scan which may race with the user's mount or mkfs command,
++	 * resulting in failure.
++	 * Since the device scan is solely for reading purposes, there is no
++	 * need for an exclusive open. Additionally, the devices are read again
+ 	 * during the mount process. It is ok to get some inconsistent
+ 	 * values temporarily, as the device paths of the fsid are the only
+ 	 * required information for assembling the volume.
+ 	 */
+-	bdev = blkdev_get_by_path(path, flags, holder, NULL);
++	bdev = blkdev_get_by_path(path, flags, NULL, NULL);
+ 	if (IS_ERR(bdev))
+ 		return ERR_CAST(bdev);
+ 
+@@ -2381,7 +2380,7 @@ int btrfs_get_dev_args_from_path(struct btrfs_fs_info *fs_info,
+ 		return -ENOMEM;
+ 	}
+ 
+-	ret = btrfs_get_bdev_and_sb(path, FMODE_READ, fs_info->bdev_holder, 0,
++	ret = btrfs_get_bdev_and_sb(path, FMODE_READ, NULL, 0,
+ 				    &bdev, &disk_super);
+ 	if (ret) {
+ 		btrfs_put_dev_args_from_path(args);
+diff --git a/fs/btrfs/volumes.h b/fs/btrfs/volumes.h
+index bf47a1a70813ba..eb97a397b3c3fb 100644
+--- a/fs/btrfs/volumes.h
++++ b/fs/btrfs/volumes.h
+@@ -600,8 +600,7 @@ struct btrfs_block_group *btrfs_create_chunk(struct btrfs_trans_handle *trans,
+ void btrfs_mapping_tree_free(struct extent_map_tree *tree);
+ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices,
+ 		       fmode_t flags, void *holder);
+-struct btrfs_device *btrfs_scan_one_device(const char *path,
+-					   fmode_t flags, void *holder);
++struct btrfs_device *btrfs_scan_one_device(const char *path, fmode_t flags);
+ int btrfs_forget_devices(dev_t devt);
+ void btrfs_close_devices(struct btrfs_fs_devices *fs_devices);
+ void btrfs_free_extra_devids(struct btrfs_fs_devices *fs_devices);
 -- 
 2.39.2
 
