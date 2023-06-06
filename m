@@ -4,8 +4,8 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D4EDEC7EE45
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 20:13:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4CB13C77B7A
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 20:13:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1686082418;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
@@ -14,51 +14,51 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=61nRhe122U9smQPu3uFC4Tp2Md8i/JGq/zD86KPT3Yo=;
-	b=WsVdYXA7Tv9IffRzz5GdZwu3D/3NSxXTtdv0eHLTVYtwCFwNOU7gsU1gzYYWZ+/AcNw/h/
-	/5I+D+toOBYOJyTfJvW1FlQXXdCtC4QVoOFhyAxF1uQSkvxqVLTdoc34ly25myhi7gGJvD
-	fQH2bjl0ZuZhFO5OG1b50vU0hDBO4ko=
+	bh=OMNliP1R8N2ySFzyDt2+DftMnAmLeBs4JTlGaGg+R9Y=;
+	b=HOeYPrPyZzJVk0PkMxtNjqudh7rl2D6qIE1YbXOcNLvuxFHdt+8y+gwSyqLSJHB5A1K4YR
+	TF+Yo7R/DtXsrJwwqEgnLY5hYOmGqHnJpYWRZJOrnNOcBEsXjgvFWljv45tsxCRpdwm63K
+	JMdvfeB9VNXeojVa+84cfAmzlDkyYVo=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-113-3Kurvbi7P_-tan3LvNDlMg-1; Tue, 06 Jun 2023 16:13:34 -0400
-X-MC-Unique: 3Kurvbi7P_-tan3LvNDlMg-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-395-qknZgUuIPL-H_uIfvpHhmQ-1; Tue, 06 Jun 2023 16:13:37 -0400
+X-MC-Unique: qknZgUuIPL-H_uIfvpHhmQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C320A811E8F;
-	Tue,  6 Jun 2023 20:13:31 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 775CE101A590;
+	Tue,  6 Jun 2023 20:13:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B3F93403367;
-	Tue,  6 Jun 2023 20:13:31 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 628E3C16047;
+	Tue,  6 Jun 2023 20:13:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AB46919452C2;
-	Tue,  6 Jun 2023 20:13:31 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2F23C19465BD;
+	Tue,  6 Jun 2023 20:13:30 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
  [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B492419465BD
- for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 20:13:29 +0000 (UTC)
+ ESMTP id B353A19465BA
+ for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 20:13:24 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A74A940D1B6A; Tue,  6 Jun 2023 20:13:29 +0000 (UTC)
+ id 958D440D1B68; Tue,  6 Jun 2023 20:13:24 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8EA1340D1B66;
- Tue,  6 Jun 2023 20:13:29 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 804CC40D1B66;
+ Tue,  6 Jun 2023 20:13:24 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 356KDRma029292;
- Tue, 6 Jun 2023 15:13:27 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 356KDMG8029276;
+ Tue, 6 Jun 2023 15:13:22 -0500
 Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 356KDQx9029291;
- Tue, 6 Jun 2023 15:13:26 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 356KDLWU029275;
+ Tue, 6 Jun 2023 15:13:21 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Tue,  6 Jun 2023 15:13:11 -0500
-Message-Id: <1686082391-29210-12-git-send-email-bmarzins@redhat.com>
+Date: Tue,  6 Jun 2023 15:13:07 -0500
+Message-Id: <1686082391-29210-8-git-send-email-bmarzins@redhat.com>
 In-Reply-To: <1686082391-29210-1-git-send-email-bmarzins@redhat.com>
 References: <1686082391-29210-1-git-send-email-bmarzins@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: [dm-devel] [PATCH V2 11/11] multipathd: don't assume mpp->paths
- will exist in need_switch_pathgroup
+Subject: [dm-devel] [PATCH V2 07/11] libmultipath: don't count PRIO_UNDEF
+ paths for pathgroup priority
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -75,37 +75,61 @@ Cc: device-mapper development <dm-devel@redhat.com>,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-When need_switch_pathgroup() is called by deferred_failback_tick(),
-there is a chance that mpp->paths will be NULL, even if there are paths
-in the multipath device's pathgroups. Instead check if there are
-multiple pathgroups, since multipath can't be using the wrong pathgroup
-if there is one or none.
+When multipath is not set to group_by_prio, different paths in a
+pathgroup can have different priorities. If there is a problem getting
+the priority of an active path, its priority will be set to PRIO_UNDEF.
+This will change the priority of the whole pathgroup, even though it's
+likely that this is simply a temporary error. Instead, do not count
+PRIO_UNDEF paths towards to priority of the path group, unless there are
+no paths that have an actual priority. This will not effect the priority
+of multipath devices with group_by_prio, since all paths in a pathgroup
+will have the same priority.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/switchgroup.c | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 05c74e9e..539cff54 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -438,7 +438,7 @@ need_switch_pathgroup (struct multipath * mpp, bool *need_reload)
- 	if (!mpp)
- 		return 0;
+diff --git a/libmultipath/switchgroup.c b/libmultipath/switchgroup.c
+index 6fdfcfa7..b1e1f39b 100644
+--- a/libmultipath/switchgroup.c
++++ b/libmultipath/switchgroup.c
+@@ -12,6 +12,7 @@ void path_group_prio_update(struct pathgroup *pgp)
+ 	int i;
+ 	int priority = 0;
+ 	int marginal = 0;
++	int defined_prios = 0;
+ 	struct path * pp;
  
--	if (!mpp->pg || VECTOR_SIZE(mpp->paths) == 0)
-+	if (VECTOR_SIZE(mpp->pg) < 2)
- 		return 0;
- 
- 	bestpg = select_path_group(mpp);
+ 	pgp->enabled_paths = 0;
+@@ -24,12 +25,17 @@ void path_group_prio_update(struct pathgroup *pgp)
+ 			marginal++;
+ 		if (pp->state == PATH_UP ||
+ 		    pp->state == PATH_GHOST) {
+-			priority += pp->priority;
++			if (pp->priority != PRIO_UNDEF) {
++				defined_prios++;
++				priority += pp->priority;
++			}
+ 			pgp->enabled_paths++;
+ 		}
+ 	}
+-	if (pgp->enabled_paths)
+-		pgp->priority = priority / pgp->enabled_paths;
++	if (defined_prios)
++		pgp->priority = priority / defined_prios;
++	else if (pgp->enabled_paths)
++		pgp->priority = PRIO_UNDEF;
+ 	else
+ 		pgp->priority = 0;
+ 	if (marginal && marginal == i)
 -- 
 2.17.2
 
