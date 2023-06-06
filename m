@@ -4,175 +4,66 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7B3DAC7EE24
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 04:18:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 056EAC77B73
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 04:42:24 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686025108;
+	s=mimecast20190719; t=1686026544;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=+EdPTke6aKSztKW7HtUnZD9Rg89yONCFBlvU/U+q7GI=;
-	b=PvXBl/Wad8Kv18hSHpivsIO1caXJrtEQE83B6BDBbG/rpBnJfPECl709U7Rc7Ov3fIZTdM
-	AwjhU0Inp7CiuyAY/JcGYwbJ19Gl/kgaldXEV7xiUGcXRYwmMarn30bi+r1O63J/Rc9aHR
-	8D5dyfgdh/RowLcNW4U4KSasX8s25kk=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Ol7/8hYckC11y8NIRqfsE5PC2e9mQ3Z+hDpwelU1zR4=;
+	b=XyIUJQiothALa758LA/xqWS+cyYiY6wu6M0GMWdZJN1aUeKUkE1doqVLcSmvEECgfH10DN
+	VWdDa2P76ywcfrB016Bm+rnOGZKHO14x77KTFWmxO7HMeTkWwaxV/t2NiqCesvfNE5nqGv
+	PZA7bj/KtTOS1QkAGcuCGVhEqse+kI0=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-557-BlbqEr_6OweRTmbrsgq4Sg-1; Tue, 06 Jun 2023 00:18:27 -0400
-X-MC-Unique: BlbqEr_6OweRTmbrsgq4Sg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-571-9xKIIX-tP36sryAkcWt-Ug-1; Tue, 06 Jun 2023 00:42:22 -0400
+X-MC-Unique: 9xKIIX-tP36sryAkcWt-Ug-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A91C029DD98D;
-	Tue,  6 Jun 2023 04:18:25 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 72F147AE4;
-	Tue,  6 Jun 2023 04:18:23 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 37729811E7C;
+	Tue,  6 Jun 2023 04:42:21 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7425A492B00;
+	Tue,  6 Jun 2023 04:42:20 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4A48019465B7;
-	Tue,  6 Jun 2023 04:18:23 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 47D3F19465B7;
+	Tue,  6 Jun 2023 04:42:20 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 77D721946595
- for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 04:18:21 +0000 (UTC)
+ ESMTP id 96D101946595
+ for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 04:42:18 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 48F37140E955; Tue,  6 Jun 2023 04:18:21 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 40AD3140E954
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 04:18:21 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1E49E801224
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 04:18:21 +0000 (UTC)
-Received: from mga11.intel.com (mga11.intel.com [192.55.52.93]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-612-JnM5MWT4O0-6JphcCyyuxg-1; Tue, 06 Jun 2023 00:18:17 -0400
-X-MC-Unique: JnM5MWT4O0-6JphcCyyuxg-1
-X-IronPort-AV: E=McAfee;i="6600,9927,10732"; a="354052384"
-X-IronPort-AV: E=Sophos;i="6.00,219,1681196400"; d="scan'208";a="354052384"
-Received: from fmsmga005.fm.intel.com ([10.253.24.32])
- by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
- 05 Jun 2023 21:18:15 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10732"; a="1039025039"
-X-IronPort-AV: E=Sophos;i="6.00,219,1681196400"; d="scan'208";a="1039025039"
-Received: from fmsmsx602.amr.corp.intel.com ([10.18.126.82])
- by fmsmga005.fm.intel.com with ESMTP; 05 Jun 2023 21:18:15 -0700
-Received: from fmsmsx610.amr.corp.intel.com (10.18.126.90) by
- fmsmsx602.amr.corp.intel.com (10.18.126.82) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2507.23; Mon, 5 Jun 2023 21:18:15 -0700
-Received: from fmsedg602.ED.cps.intel.com (10.1.192.136) by
- fmsmsx610.amr.corp.intel.com (10.18.126.90) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2507.23 via Frontend Transport; Mon, 5 Jun 2023 21:18:15 -0700
-Received: from NAM12-DM6-obe.outbound.protection.outlook.com (104.47.59.173)
- by edgegateway.intel.com (192.55.55.71) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.1.2507.23; Mon, 5 Jun 2023 21:18:14 -0700
-Received: from PH0PR11MB4855.namprd11.prod.outlook.com (2603:10b6:510:41::12)
- by DM4PR11MB5518.namprd11.prod.outlook.com (2603:10b6:5:39a::8) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6455.32; Tue, 6 Jun
- 2023 04:18:12 +0000
-Received: from PH0PR11MB4855.namprd11.prod.outlook.com
- ([fe80::a41b:1b6c:8306:7644]) by PH0PR11MB4855.namprd11.prod.outlook.com
- ([fe80::a41b:1b6c:8306:7644%6]) with mapi id 15.20.6455.030; Tue, 6 Jun 2023
- 04:18:12 +0000
-Message-ID: <0c32fc78-5755-09b8-4d2c-81101e33fdee@intel.com>
-Date: Mon, 5 Jun 2023 21:18:10 -0700
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101
- Thunderbird/102.11.0
-To: Randy Dunlap <rdunlap@infradead.org>, <linux-kernel@vger.kernel.org>,
- <linux-crypto@vger.kernel.org>, <dm-devel@redhat.com>
-References: <20230524165717.14062-1-chang.seok.bae@intel.com>
- <20230603152227.12335-1-chang.seok.bae@intel.com>
- <20230603152227.12335-2-chang.seok.bae@intel.com>
- <32ffb593-c39c-c741-7b6f-6f1cbcb1d558@infradead.org>
-From: "Chang S. Bae" <chang.seok.bae@intel.com>
-In-Reply-To: <32ffb593-c39c-c741-7b6f-6f1cbcb1d558@infradead.org>
-X-ClientProxiedBy: BYAPR07CA0011.namprd07.prod.outlook.com
- (2603:10b6:a02:bc::24) To PH0PR11MB4855.namprd11.prod.outlook.com
- (2603:10b6:510:41::12)
+ id 82AA11121315; Tue,  6 Jun 2023 04:42:18 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 60BAB1121314;
+ Tue,  6 Jun 2023 04:42:18 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 3564gFcr023775;
+ Mon, 5 Jun 2023 23:42:16 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 3564gFHC023774;
+ Mon, 5 Jun 2023 23:42:15 -0500
+Date: Mon, 5 Jun 2023 23:42:15 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Message-ID: <20230606044215.GV24096@octiron.msp.redhat.com>
+References: <1684970472-28669-1-git-send-email-bmarzins@redhat.com>
+ <1684970472-28669-5-git-send-email-bmarzins@redhat.com>
+ <76217148d8069829795fb1d8608d5c5da60402e2.camel@suse.com>
+ <20230605190807.GT24096@octiron.msp.redhat.com>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: PH0PR11MB4855:EE_|DM4PR11MB5518:EE_
-X-MS-Office365-Filtering-Correlation-Id: 928138a0-dcd2-4476-8676-08db66450aac
-X-LD-Processed: 46c98d88-e344-4ed4-8496-4ed7712e255d,ExtAddr
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: nlpH+S7yY6VXm3gAT2+Sbb/0VbEcqjWU8WaLy/fCRydGIzj3spyjERffY+tep8VB/x0oZGJn85/wv7Ke6LCt1MvG8KvYhBDv7Lk3Gh6/smvfdHhZp1UA0xN7kmhOm+W/gn+R2PHxfrU2/aDB7Wgk+w3ljQBwg0XJ+JZFJKn15ORcA8ASzkYtNi7ZxZIuPgQ7bnpx6u9/Bo+RLdFvBigVqFAi1Xlx7KcsRZPgzQXWlxdxMb2hya4RQmLwLhIOtP5b1KfSaBK0EMZYVccDq8D5FmF6iPYqm5IYJpPCg+5YYpRqA2UkXUM0MkNfofpzaAlNyiL+6I8h3bbmAb/TDjeKpXJ1SfkuQAqSthjkmDMWmI1v4uU1okfBHCU2UKoKEOTxKFj2zKzPEL82CMZXCQC9w2oB1BULaCBnw4NYtPi0nzp4CuGmttG4KQwi9WhSgoWZNY7cLh1Zb5mLohgL2qSDeAfrW4d2OyYR4Eo7Yx+q7JPvJlrb++bkVzWFklLURpyzxjd2yXATZQ8PcAZRFYYKn3g/Fx0/lXgjHTSU5pM+YX4vQemqh+SvLGRslZwBeruH7L1ODZV/Lm1qZbSIvsJj9vMVTWWZ2sIXyRTyUuspv9RQC1xNLUk6QTHJ4QUODGeeIWUY0LI57Axz3eixDGgGEw==
-X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:PH0PR11MB4855.namprd11.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230028)(346002)(136003)(376002)(396003)(39860400002)(366004)(451199021)(6506007)(186003)(26005)(6512007)(53546011)(2616005)(31686004)(83380400001)(7416002)(6486002)(36756003)(2906002)(4744005)(8676002)(8936002)(82960400001)(54906003)(478600001)(86362001)(5660300002)(31696002)(38100700002)(316002)(66476007)(41300700001)(4326008)(66556008)(66946007)(45980500001)(43740500002);
- DIR:OUT; SFP:1102
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?utf-8?B?SzlkSVZsRW1DOG1oU3NhRUFCS2Z6bGZRVSs5ZUllNkFEdEpBYXNQdFNtSXcw?=
- =?utf-8?B?dlJFdUR2R3ZkdnJVdnc1Ym5jUWJwNlBMU3ZUbE9Hd1ZuU3ZhM2lEeFJjeWh3?=
- =?utf-8?B?OU9FL2QzeWFGV1p2cmEyaTIvbWNJd3psVFdqYkQrWHAxRGkzZExvZ0lZT083?=
- =?utf-8?B?MEh4UTRiQm93b2ZhR0xMb3hiTG9oWWo1a2xiM0lVUFd2bHloTHdqS3htSkRv?=
- =?utf-8?B?ZkdyWjdSaHFyMTdJcDVQak1Pa0dacU1ZcWJaNEsyWVl6Y1JpWVBCMUh5SDdC?=
- =?utf-8?B?cmNTOGJIWE1wT2N0My90VzU1by9wRDB4M1IwYWlkMVdUOUM1ejdqd0J3MTV2?=
- =?utf-8?B?dFVwYldvamQrQnJvaFowamVjcFlFQWk3NjNxcTV3aExMcm5QdGcyYllqZzIw?=
- =?utf-8?B?czlZN3NVMnhSZXJGdDhORU1sdDlsTHpSV0pBaXVoUzNQWHhCNFgwbnFLM1Vt?=
- =?utf-8?B?bENZZDNNTFdibXg1RW1hdVNBNStxTlV2a0wzaVM5OU93OTU1amwrNXFySXRs?=
- =?utf-8?B?b2tta0hJNUtJR1JRREY5L1hhZkN3NjYwZEsxanYrdE9OcXJTaXJBYllIMjk2?=
- =?utf-8?B?dmVabEtUV3VoYTRYN0U5VldTaTlGeVZDZU5Sall3RHhoTWhuSldQcEdpMm9O?=
- =?utf-8?B?Tit2RXh4Ty94dVBKenhFWFNOZXBFWi9zakZKN1pjMG9Ra3RpdDY5bXkyMUpn?=
- =?utf-8?B?UFdESDBiQktyR1h6eHV4ZkxadjJCdnNHQ1VnSUhUUk1HOEplWVMvSG96TXdo?=
- =?utf-8?B?Uy9JaXZNM3l3ck9idlk0aURxMmhmZzhJYldmeitUYTBmRy9pYVpKaTJHV2Vi?=
- =?utf-8?B?aFp2UmdMMnYyL3hLMVVxOEx0VmhQRS9FVWIwLzFiU0lvZC9vTlNaaWdndmQz?=
- =?utf-8?B?VjQ4eGdMV1JKdlZwYUVtQkpJUWpCcnlOdkxKb0VlU3JBUDFHSE8vL0tGZFht?=
- =?utf-8?B?bGRzMjMzZGptbDZBUU5xRlpNWXdFeW4xbjJndWtxZWdscGxFMFdnR21LTkpX?=
- =?utf-8?B?RFBqY3E1dkpoVnZDQzJoSEFkTkNOMlhPbExsV0Z3Qm13UjFPakQrcGtFb2gv?=
- =?utf-8?B?RkxiU1QyUFhhNjlhNEF1aEtNQTB0K0U4ZEx0Z0xZYldKVzZMd3YzSUJXOGw1?=
- =?utf-8?B?M3MvWDVTcDdaOTBvM2FRUit6QUFnUEFMQnpNS3EvZWdRUXNkYmdhSFYrQ3lK?=
- =?utf-8?B?cUpCU3hmNnlqN3FnTEQ0N1QwS0FHeU5kTVJGbU5acVdsd2NFSU5TeVQ1dmtE?=
- =?utf-8?B?M3lwbW44bTR3bjNid3VqUmMvNWx0UUMxWWVsUGVOTXJtTWZEWjVhWndZRFh5?=
- =?utf-8?B?VFlqT3JOb29yVllCUFNZNy96cFBHWk12bm1hU3Y5dGd4aitZYWpESEtVcGc1?=
- =?utf-8?B?cWRJVmpvSnRDWXg4dWpBVGI3OW5ibDhOUkhmYjEzTnA2YWprN3ZzV2hib1ZB?=
- =?utf-8?B?aXFDVGJqeExSQ3VtUVdKbnRWOEcxYXBlUW1CMm5yOWFiRlRCMTRCWUE1Z3Fp?=
- =?utf-8?B?SXNleFVNRGRyRFpCQ3ZVY2NVK2RNRTRlRDkwQmp6aFEzUHFqdjVFeGdrRDJx?=
- =?utf-8?B?K3pqTStHaUh1TjRyM1Y5N0diNU9OaDhLaks1ZHE2MHpOUTZjVzlidS9JdHVT?=
- =?utf-8?B?VTVZTytNMytMWHFhaml6VlNpbTVpRFZCVFhJOWEwVytucVM4QUZuKzBuazRJ?=
- =?utf-8?B?MEJyTTA3ZWl4RzNycll2ZVNsTHF5UjBNVjFIYSswcEt4T1ZmYmgrMkhCSkNE?=
- =?utf-8?B?UFRvN1AxVVlmQm9PdWZXQWZ4Yy9FdFNRT0hyZE5MdWpWMVZObnlNTUpFMFpy?=
- =?utf-8?B?VG11T1NQc04wNGQ3OVkvN2hIcm1LbVlUaEVZU0ZZRys1UERpMmFTeW85L3Z2?=
- =?utf-8?B?akhPNXR1RGVQeEVGV044blZvTExEanJuNEFMWGZOVDg5dEdnamJKQ2huVkZ5?=
- =?utf-8?B?aGRWR3ZTNVB3VUxYbzRDS2NZV0xGYlhHbUlRRm5tM0NhMlJnY1N2QVdIUmx0?=
- =?utf-8?B?NkI1T25yS3djdmxLM210bW1JSjNGMXFBVDZaWFBmUHFQa2YwdWdmYXk0Q0FH?=
- =?utf-8?B?cEdCdGFjQXcvR2QvUzFvSVR0OFNoWkFSU3FNbWFRaUJYdEFkdkIrZW5nNlJR?=
- =?utf-8?B?VnFyWVFDUURxZURFTHdXczh4VDN4aHRFRFQzdjdmaXBxVHhUZjdYN1RmTUhV?=
- =?utf-8?B?V2c9PQ==?=
-X-MS-Exchange-CrossTenant-Network-Message-Id: 928138a0-dcd2-4476-8676-08db66450aac
-X-MS-Exchange-CrossTenant-AuthSource: PH0PR11MB4855.namprd11.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 06 Jun 2023 04:18:12.3798 (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 46c98d88-e344-4ed4-8496-4ed7712e255d
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: qS9EL/oh3Wz5fjILXR4yrRF46gEA70x4lDIeWiK91/bnmqBZ9G1rDXIIDKmdmyrXjLY9OXw+sgS0PfWgoafCABzXZGixD/chDpMUq5EWNbQ=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM4PR11MB5518
-X-OriginatorOrg: intel.com
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH v8 01/12] Documentation/x86: Document Key
- Locker
+In-Reply-To: <20230605190807.GT24096@octiron.msp.redhat.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH 4/5] multipathd: reload map if the path
+ groups are out of order
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -184,47 +75,332 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: x86@kernel.org, herbert@gondor.apana.org.au, linux-doc@vger.kernel.org,
- Jonathan Corbet <corbet@lwn.net>, ardb@kernel.org, dave.hansen@linux.intel.com,
- dan.j.williams@intel.com, mingo@kernel.org, ebiggers@kernel.org,
- lalithambika.krishnakumar@intel.com, Ingo Molnar <mingo@redhat.com>,
- bp@alien8.de, charishma1.gairuboyina@intel.com, luto@kernel.org,
- "H. Peter Anvin" <hpa@zytor.com>, bernie.keany@intel.com, tglx@linutronix.de,
- nhuck@google.com, gmazyland@gmail.com, elliott@hpe.com
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: intel.com
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-On 6/5/2023 7:17 PM, Randy Dunlap wrote:
-> On 6/3/23 08:22, Chang S. Bae wrote:
->> +
->> +* AES-KL implements support for 128-bit and 256-bit keys, but there is no
->> +  AES-KL instruction to process an 192-bit key. The AES-KL cipher
->> +  implementation logs a warning message with a 192-bit key and then falls
->> +  back to AES-NI. So, this 192-bit key-size limitation is only documented,
-> 
-> Is it logged anywhere?  i.e., a kernel log message?
+On Mon, Jun 05, 2023 at 02:08:07PM -0500, Benjamin Marzinski wrote:
+> On Wed, May 31, 2023 at 04:27:30PM +0000, Martin Wilck wrote:
+> > On Wed, 2023-05-24 at 18:21 -0500, Benjamin Marzinski wrote:
+> > > need_switch_pathgroup() only checks if the currently used pathgroup
+> > > is
+> > > not the highest priority pathgroup. If it isn't, all multipathd does
+> > > is
+> > > instruct the kernel to switch to the correct pathgroup.=A0 However, t=
+he
+> > > kernel treats the pathgroups as if they were ordered by priority.
+> > > When
+> > > the kernel runs out of paths to use in the currently selected
+> > > pathgroup,
+> > > it will start checking the pathgroups in order until it finds one
+> > > with
+> > > usable paths.
+> > >=20
+> > > need_switch_pathgroup() should also check if the pathgroups are out
+> > > of
+> > > order, and if so, multipathd should reload the map to reorder them
+> > > correctly.
+> > >=20
+> > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > > ---
+> > > =A0libmultipath/libmultipath.version |=A0 5 ++++
+> > > =A0libmultipath/switchgroup.c=A0=A0=A0=A0=A0=A0=A0 | 27 +++++++++++++=
++++++++++
+> > > =A0libmultipath/switchgroup.h=A0=A0=A0=A0=A0=A0=A0 |=A0 1 +
+> > > =A0multipathd/main.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 =
+| 38 +++++++++++++++++++++--------
+> > > --
+> > > =A04 files changed, 59 insertions(+), 12 deletions(-)
+> > >=20
+> > > diff --git a/libmultipath/libmultipath.version
+> > > b/libmultipath/libmultipath.version
+> > > index 8f72c452..38074699 100644
+> > > --- a/libmultipath/libmultipath.version
+> > > +++ b/libmultipath/libmultipath.version
+> > > @@ -237,3 +237,8 @@ global:
+> > > =A0local:
+> > > =A0=A0=A0=A0=A0=A0=A0=A0*;
+> > > =A0};
+> > > +
+> > > +LIBMULTIPATH_19.1.0 {
+> > > +global:
+> > > +=A0=A0=A0=A0=A0=A0=A0path_groups_in_order;
+> > > +} LIBMULTIPATH_19.0.0;
+> > > diff --git a/libmultipath/switchgroup.c b/libmultipath/switchgroup.c
+> > > index b1e1f39b..b1180839 100644
+> > > --- a/libmultipath/switchgroup.c
+> > > +++ b/libmultipath/switchgroup.c
+> > > @@ -7,6 +7,33 @@
+> > > =A0#include "structs.h"
+> > > =A0#include "switchgroup.h"
+> > > =A0
+> > > +bool path_groups_in_order(struct multipath *mpp)
+> > > +{
+> > > +=A0=A0=A0=A0=A0=A0=A0int i;
+> > > +=A0=A0=A0=A0=A0=A0=A0struct pathgroup *pgp;
+> > > +=A0=A0=A0=A0=A0=A0=A0bool seen_marginal_pg =3D false;
+> > > +=A0=A0=A0=A0=A0=A0=A0int last_prio =3D INT_MAX;
+> > > +
+> > > +=A0=A0=A0=A0=A0=A0=A0if (VECTOR_SIZE(mpp->pg) < 2)
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return true;
+> > > +
+> > > +=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot(mpp->pg, pgp, i) {
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* skip pgs with PRIO_U=
+NDEF, since this is likely
+> > > temporary */
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (!pgp->paths || pgp-=
+>priority =3D=3D PRIO_UNDEF)
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0continue;
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pgp->marginal && !s=
+een_marginal_pg) {
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0last_prio =3D INT_MAX;
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0continue;
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (seen_marginal_pg &&=
+ !pgp->marginal)
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0return false;
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pgp->priority > las=
+t_prio)
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0return false;
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0last_prio =3D pgp->prio=
+rity;
+> > > +=A0=A0=A0=A0=A0=A0=A0}
+> > > +=A0=A0=A0=A0=A0=A0=A0return true;
+> > > +}
+> > > +
+> > > =A0void path_group_prio_update(struct pathgroup *pgp)
+> > > =A0{
+> > > =A0=A0=A0=A0=A0=A0=A0=A0int i;
+> > > diff --git a/libmultipath/switchgroup.h b/libmultipath/switchgroup.h
+> > > index 9365e2e2..43dbb6c9 100644
+> > > --- a/libmultipath/switchgroup.h
+> > > +++ b/libmultipath/switchgroup.h
+> > > @@ -1,2 +1,3 @@
+> > > =A0void path_group_prio_update (struct pathgroup * pgp);
+> > > =A0int select_path_group (struct multipath * mpp);
+> > > +bool path_groups_in_order(struct multipath *mpp);
+> > > diff --git a/multipathd/main.c b/multipathd/main.c
+> > > index e7c272ad..2ea7c76b 100644
+> > > --- a/multipathd/main.c
+> > > +++ b/multipathd/main.c
+> > > @@ -396,7 +396,7 @@ void put_multipath_config(__attribute__((unused))
+> > > void *arg)
+> > > =A0}
+> > > =A0
+> > > =A0static int
+> > > -need_switch_pathgroup (struct multipath * mpp, int refresh)
+> > > +need_switch_pathgroup (struct multipath * mpp, int refresh, bool
+> > > *need_reload)
+> > > =A0{
+> > > =A0=A0=A0=A0=A0=A0=A0=A0struct pathgroup * pgp;
+> > > =A0=A0=A0=A0=A0=A0=A0=A0struct path * pp;
+> > > @@ -404,6 +404,7 @@ need_switch_pathgroup (struct multipath * mpp,
+> > > int refresh)
+> > > =A0=A0=A0=A0=A0=A0=A0=A0struct config *conf;
+> > > =A0=A0=A0=A0=A0=A0=A0=A0int bestpg;
+> > > =A0
+> > > +=A0=A0=A0=A0=A0=A0=A0*need_reload =3D false;
+> > > =A0=A0=A0=A0=A0=A0=A0=A0if (!mpp)
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
+> > > =A0
+> > > @@ -430,10 +431,9 @@ need_switch_pathgroup (struct multipath * mpp,
+> > > int refresh)
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
+> > > =A0
+> > > =A0=A0=A0=A0=A0=A0=A0=A0mpp->bestpg =3D bestpg;
+> > > -=A0=A0=A0=A0=A0=A0=A0if (mpp->bestpg !=3D mpp->nextpg)
+> > > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> > > +=A0=A0=A0=A0=A0=A0=A0*need_reload =3D !path_groups_in_order(mpp);
+> >=20
+> > This will start another loop over the path groups. Can we just
+> > integrate the path_groups_in_order() logic into the loop right here?
+> >=20
+>=20
+> Sure
 
-Yes, this is the relevant change in the last patch:
+Actually, after looking into this more, pushing those two functions
+together makes the logic more confusing. Plus select_path_group() is
+used by multiple other functions that don't need to check if the path
+groups are out of order.
 
- > +static int aeskl_setkey(struct crypto_tfm *tfm, void *raw_ctx, const 
-u8 *in_key,
- > +			unsigned int keylen)
- > +{
-...
- > +	if (unlikely(keylen == AES_KEYSIZE_192)) {
- > +		pr_warn_once("AES-KL does not support 192-bit key. Use AES-NI.\n");
-...
- > +}
+There's no reason for path_groups_in_order to be in libmultipath, since
+it's only needed by multipathd. I'll fix that. But I would rather not
+join it with select_path_group(). Since we just loop over the pathgroups
+and not the paths within them, we will likely go through the loop a
+couple of times, and we don't actually perform any costly actions during
+the loops that would make combining them look more attractive. The
+performance gains for need_switch_pathgroup() aren't worth making the
+logic harder to follow (and the minor performance hits when we don't
+need to check the order), IMHO.=20
 
-Thanks,
-Chang
+-Ben
 
+> -Ben
+>=20
+> >=20
+> >=20
+> > > =A0
+> > > -=A0=A0=A0=A0=A0=A0=A0return 0;
+> > > +=A0=A0=A0=A0=A0=A0=A0return (*need_reload || mpp->bestpg !=3D mpp->n=
+extpg);
+> > > =A0}
+> > > =A0
+> > > =A0static void
+> > > @@ -1982,20 +1982,26 @@ ghost_delay_tick(struct vectors *vecs)
+> > > =A0}
+> > > =A0
+> > > =A0static void
+> > > -deferred_failback_tick (vector mpvec)
+> > > +deferred_failback_tick (struct vectors *vecs)
+> > > =A0{
+> > > =A0=A0=A0=A0=A0=A0=A0=A0struct multipath * mpp;
+> > > =A0=A0=A0=A0=A0=A0=A0=A0unsigned int i;
+> > > +=A0=A0=A0=A0=A0=A0=A0bool need_reload;
+> > > =A0
+> > > -=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot (mpvec, mpp, i) {
+> > > +=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot (vecs->mpvec, mpp, i) {
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/*
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 * deferred failback =
+getting sooner
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 */
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (mpp->pgfailback >=
+ 0 && mpp->failback_tick > 0) {
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0mpp->failback_tick--;
+> > > =A0
+> > > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0if (!mpp->failback_tick &&
+> > > need_switch_pathgroup(mpp, 1))
+> > > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(mpp);
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0if (!mpp->failback_tick &&
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0 need_switch_pathgroup(mpp, 1,
+> > > &need_reload)) {
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0if (need_reload)
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0reload_and_sync_map(mpp,
+> > > vecs, 0);
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0else
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(mpp);
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0}
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> > > =A0=A0=A0=A0=A0=A0=A0=A0}
+> > > =A0}
+> > > @@ -2579,6 +2585,7 @@ check_path (struct vectors * vecs, struct path
+> > > * pp, unsigned int ticks)
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0int prio_changed =3D =
+update_prio(pp, new_path_up);
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0bool need_refresh =3D=
+ (!new_path_up && prio_changed &&
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->priority !=3D PRIO_UNDEF);
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0bool need_reload;
+> > > =A0
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (prio_changed &&
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->mpp->pg=
+policyfn =3D=3D (pgpolicyfn
+> > > *)group_by_prio &&
+> > > @@ -2586,15 +2593,22 @@ check_path (struct vectors * vecs, struct
+> > > path * pp, unsigned int ticks)
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0condlog(2, "%s: path priorities changed.
+> > > reloading",
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->alias);
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0reload_and_sync_map(pp->mpp, vecs,
+> > > !new_path_up);
+> > > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0} else if (need_switch_=
+pathgroup(pp->mpp,
+> > > need_refresh)) {
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0} else if (need_switch_=
+pathgroup(pp->mpp,
+> > > need_refresh,
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+ &need_reload)) {
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0if (pp->mpp->pgfailback > 0 &&
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0 (new_path_up || pp->mpp->failback_tick <=3D
+> > > 0))
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->failback_tick =3D
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->mpp->pgfailback + 1;
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0else if (pp->mpp->pgfailback =3D=3D -
+> > > FAILBACK_IMMEDIATE ||
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0 (chkr_new_path_up &&
+> > > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 followover_should_failback(pp)))
+> > > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(pp->mpp);
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 followover_should_failback(pp))) {
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0if (need_reload)
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0reload_and_sync_map(pp->=
+mpp,
+> > > vecs,
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0
+> > > !need_refresh &&
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0
+> > > !new_path_up);
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0else
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0switch_pathgroup(pp->mpp=
+);
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0}
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> > > =A0=A0=A0=A0=A0=A0=A0=A0}
+> > > =A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> > > @@ -2720,7 +2734,7 @@ unlock:
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_push(=
+cleanup_lock, &vecs->lock);
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0lock(&vecs->lock);
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pthread_testcancel();
+> > > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0deferred_failback_tick(=
+vecs->mpvec);
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0deferred_failback_tick(=
+vecs);
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0retry_count_tick(vecs=
+->mpvec);
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0missing_uev_wait_tick=
+(vecs);
+> > > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0ghost_delay_tick(vecs=
+);
+> >=20
+> >=20
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://listman.redhat.com/mailman/listinfo/dm-devel
 --
 dm-devel mailing list
 dm-devel@redhat.com
