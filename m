@@ -4,67 +4,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 244F0C7EE2A
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 07:54:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3DA11C77B7A
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Jun 2023 07:54:44 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686038080;
+	s=mimecast20190719; t=1686038083;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=gSos/1DnX78LNmWV/1f7ulBR95w0MBD129C6QZeubj8=;
-	b=dKK8Llpbn/pQ4cI3z9BePoS6alH2jphEkgBa1PG3ULm1P8RBNCWsprADhePzXpCHmn2m99
-	NUS08sMPBCMAc7QMFL7FXswsi7AnpEKdnwKIgxPuGnotddlsiqumoWqNFEEv3mNKahsDBY
-	Sglg91lfQhZ+pqte6dYpDFfFZuiHZjk=
+	bh=qtMPmCWrkjbFj4byQfcpejNPiz3USUUokEUa69xjC3o=;
+	b=aPOnHCetrhy0k8cyjDYOyjpfeWSIz72iKNmrYHrFcTAPNWtfNjbhijIA46qm5ZO9T6LYvv
+	lGhrM2/QUND2O9d5rErjgwZ9P2llR7oPPFC+OKAhbQHKD4B0XlX1+0reegmSOf1sYuFROk
+	o4Q4Pypf4UPO5TjJGrVSTYuC/83GEu4=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-452-LIjPZS7GN0mxScqLDSlerQ-1; Tue, 06 Jun 2023 03:54:38 -0400
-X-MC-Unique: LIjPZS7GN0mxScqLDSlerQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-612-O9E6am8SNS-gAetoppMB_Q-1; Tue, 06 Jun 2023 03:54:42 -0400
+X-MC-Unique: O9E6am8SNS-gAetoppMB_Q-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E1876381494D;
-	Tue,  6 Jun 2023 07:54:35 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AAB343C0F223;
+	Tue,  6 Jun 2023 07:54:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CF9CC400F4E;
-	Tue,  6 Jun 2023 07:54:35 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 98FA54021AA;
+	Tue,  6 Jun 2023 07:54:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9078019465B9;
-	Tue,  6 Jun 2023 07:54:35 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8283719465B9;
+	Tue,  6 Jun 2023 07:54:39 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B55041946595
- for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 07:54:33 +0000 (UTC)
+ ESMTP id ED40E1946A46
+ for <dm-devel@listman.corp.redhat.com>; Tue,  6 Jun 2023 07:54:37 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 95DA79E8B; Tue,  6 Jun 2023 07:54:33 +0000 (UTC)
+ id DAC52C0297C; Tue,  6 Jun 2023 07:54:37 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8E03D7AE4
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:54:33 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [205.139.110.61])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D2B4CC154D1
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:54:37 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 634623C0F22D
- for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:54:33 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A6546280228F
+ for <dm-devel@redhat.com>; Tue,  6 Jun 2023 07:54:37 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-70-cBbjXVNKNBCCSXEnKnEIyQ-1; Tue, 06 Jun 2023 03:54:31 -0400
-X-MC-Unique: cBbjXVNKNBCCSXEnKnEIyQ-1
+ us-mta-136-FgnufPgtPemCkWxXoX0fEg-1; Tue, 06 Jun 2023 03:54:36 -0400
+X-MC-Unique: FgnufPgtPemCkWxXoX0fEg-1
 Received: from
  2a02-8389-2341-5b80-39d3-4735-9a3c-88d8.cable.dynamic.v6.surfer.at
  ([2a02:8389:2341:5b80:39d3:4735:9a3c:88d8] helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q6RIK-000YaI-16; Tue, 06 Jun 2023 07:39:56 +0000
+ id 1q6RIT-000YeY-1a; Tue, 06 Jun 2023 07:40:06 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue,  6 Jun 2023 09:39:20 +0200
-Message-Id: <20230606073950.225178-2-hch@lst.de>
+Date: Tue,  6 Jun 2023 09:39:23 +0200
+Message-Id: <20230606073950.225178-5-hch@lst.de>
 In-Reply-To: <20230606073950.225178-1-hch@lst.de>
 References: <20230606073950.225178-1-hch@lst.de>
 MIME-Version: 1.0
@@ -77,9 +77,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: [dm-devel] [PATCH 01/31] block: also call ->open for incremental
- partition opens
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: [dm-devel] [PATCH 04/31] cdrom: remove the unused cdrom_close_write
+ release code
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,65 +108,66 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-For whole devices ->open is called for each open, but for partitions it
-is only called on the first open of a partition.  This is problematic
-as various block drivers look at open flags and might not do all setup
-for ioctl only or NDELAY opens.
+cdrom_close_write is empty, and the for_data flag it is keyed off is
+never set.  Remove all this clutter.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/bdev.c | 18 ++++++++----------
- 1 file changed, 8 insertions(+), 10 deletions(-)
+ drivers/cdrom/cdrom.c | 15 ---------------
+ include/linux/cdrom.h |  1 -
+ 2 files changed, 16 deletions(-)
 
-diff --git a/block/bdev.c b/block/bdev.c
-index 5c46ff10770638..981f6135795138 100644
---- a/block/bdev.c
-+++ b/block/bdev.c
-@@ -683,9 +683,6 @@ static int blkdev_get_part(struct block_device *part, fmode_t mode)
- 	struct gendisk *disk = part->bd_disk;
- 	int ret;
- 
--	if (atomic_read(&part->bd_openers))
--		goto done;
--
- 	ret = blkdev_get_whole(bdev_whole(part), mode);
- 	if (ret)
- 		return ret;
-@@ -694,9 +691,10 @@ static int blkdev_get_part(struct block_device *part, fmode_t mode)
- 	if (!bdev_nr_sectors(part))
- 		goto out_blkdev_put;
- 
--	disk->open_partitions++;
--	set_init_blocksize(part);
--done:
-+	if (!atomic_read(&part->bd_openers)) {
-+		disk->open_partitions++;
-+		set_init_blocksize(part);
-+	}
- 	atomic_inc(&part->bd_openers);
- 	return 0;
- 
-@@ -709,10 +707,10 @@ static void blkdev_put_part(struct block_device *part, fmode_t mode)
- {
- 	struct block_device *whole = bdev_whole(part);
- 
--	if (!atomic_dec_and_test(&part->bd_openers))
--		return;
--	blkdev_flush_mapping(part);
--	whole->bd_disk->open_partitions--;
-+	if (atomic_dec_and_test(&part->bd_openers)) {
-+		blkdev_flush_mapping(part);
-+		whole->bd_disk->open_partitions--;
-+	}
- 	blkdev_put_whole(whole, mode);
+diff --git a/drivers/cdrom/cdrom.c b/drivers/cdrom/cdrom.c
+index 245e5bbb05d41c..08abf1ffede002 100644
+--- a/drivers/cdrom/cdrom.c
++++ b/drivers/cdrom/cdrom.c
+@@ -978,15 +978,6 @@ static void cdrom_dvd_rw_close_write(struct cdrom_device_info *cdi)
+ 	cdi->media_written = 0;
  }
  
+-static int cdrom_close_write(struct cdrom_device_info *cdi)
+-{
+-#if 0
+-	return cdrom_flush_cache(cdi);
+-#else
+-	return 0;
+-#endif
+-}
+-
+ /* badly broken, I know. Is due for a fixup anytime. */
+ static void cdrom_count_tracks(struct cdrom_device_info *cdi, tracktype *tracks)
+ {
+@@ -1282,12 +1273,6 @@ void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode)
+ 	opened_for_data = !(cdi->options & CDO_USE_FFLAGS) ||
+ 		!(mode & FMODE_NDELAY);
+ 
+-	/*
+-	 * flush cache on last write release
+-	 */
+-	if (CDROM_CAN(CDC_RAM) && !cdi->use_count && cdi->for_data)
+-		cdrom_close_write(cdi);
+-
+ 	cdo->release(cdi);
+ 	if (cdi->use_count == 0) {      /* last process that closes dev*/
+ 		if (opened_for_data &&
+diff --git a/include/linux/cdrom.h b/include/linux/cdrom.h
+index 4aea8c82d16971..0a5db0b0c958a1 100644
+--- a/include/linux/cdrom.h
++++ b/include/linux/cdrom.h
+@@ -61,7 +61,6 @@ struct cdrom_device_info {
+ 	__u8 last_sense;
+ 	__u8 media_written;		/* dirty flag, DVD+RW bookkeeping */
+ 	unsigned short mmc3_profile;	/* current MMC3 profile */
+-	int for_data;
+ 	int (*exit)(struct cdrom_device_info *);
+ 	int mrw_mode_page;
+ 	__s64 last_media_change_ms;
 -- 
 2.39.2
 
