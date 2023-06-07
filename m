@@ -1,64 +1,64 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5EA56C7EE25
-	for <dm-devel@archiver.kernel.org>; Wed,  7 Jun 2023 20:48:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id F2236C83003
+	for <dm-devel@archiver.kernel.org>; Wed,  7 Jun 2023 20:48:19 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686170896;
+	s=mimecast20190719; t=1686170899;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=cFlqEg2PRUwUP3UgzMBwcTJc/iP/CTsUYkDNG7dbzCo=;
-	b=R0EeibtSk/MbvmDxl3qFLQviKfggiRFOSWcY0slmJvclaOYyAf1qv0WazpTOQab10lr3mV
-	caC8c9wniCfZNCi7cmxMpEG8feQo7JEwGtl8wAL0pZ653IAc11H8A7sw50YvO3G8KSi/Nb
-	Ae82Hl2+rKGmNchLM+pVKlOUsPzFoK8=
+	bh=okowIUmCVEXlaUiZ8h9S8HX6Yl+TKB4+1FOSzxeh7VI=;
+	b=AzQXs3cLy0E5RafSirGnHupXFnZdjmzz4tZLttrWi//jsGHuU8xXpW3yZBlaJh96FBceM9
+	Dvr6e9xD5v23YREp+/czY8M2G7juosHQTxtp9V0+kTRA5f7T5JSdbKFmkFG2wAF4vvfdpR
+	UEntNuguZAF+dR02AlXO8L5fBVSlwrA=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-586-2-xeIl94M9aXlFpRmnKUgA-1; Wed, 07 Jun 2023 16:48:13 -0400
-X-MC-Unique: 2-xeIl94M9aXlFpRmnKUgA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-271-kfDr6Vw5OhWmOw-M7LOLGQ-1; Wed, 07 Jun 2023 16:48:15 -0400
+X-MC-Unique: kfDr6Vw5OhWmOw-M7LOLGQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A4FCB185A791;
-	Wed,  7 Jun 2023 20:48:10 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 049078030CD;
+	Wed,  7 Jun 2023 20:48:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9480840CFD46;
-	Wed,  7 Jun 2023 20:48:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E87AA2026D6A;
+	Wed,  7 Jun 2023 20:48:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 74F4319452C6;
-	Wed,  7 Jun 2023 20:48:10 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DAE5119452C3;
+	Wed,  7 Jun 2023 20:48:06 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 236CD19452C7
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 20:48:09 +0000 (UTC)
+ ESMTP id 40CD019452C3
+ for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 20:48:05 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 13ADA492B00; Wed,  7 Jun 2023 20:48:09 +0000 (UTC)
+ id 14A1D400F4E; Wed,  7 Jun 2023 20:48:05 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E2FBB4021AA;
- Wed,  7 Jun 2023 20:48:08 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E9A23403176;
+ Wed,  7 Jun 2023 20:48:04 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 357Km6Xr005829;
- Wed, 7 Jun 2023 15:48:06 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 357Km2GM005817;
+ Wed, 7 Jun 2023 15:48:02 -0500
 Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 357Km5TS005828;
- Wed, 7 Jun 2023 15:48:05 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 357Km11d005816;
+ Wed, 7 Jun 2023 15:48:01 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Wed,  7 Jun 2023 15:47:51 -0500
-Message-Id: <1686170873-5754-10-git-send-email-bmarzins@redhat.com>
+Date: Wed,  7 Jun 2023 15:47:48 -0500
+Message-Id: <1686170873-5754-7-git-send-email-bmarzins@redhat.com>
 In-Reply-To: <1686170873-5754-1-git-send-email-bmarzins@redhat.com>
 References: <1686170873-5754-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-Subject: [dm-devel] [PATCH V3 09/11] multipathd: only refresh priorities in
- update_prio()
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: [dm-devel] [PATCH V3 06/11] libmultipath: add
+ "detect_pgpolicy_use_tpg" config option
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -75,301 +75,299 @@ Cc: device-mapper development <dm-devel@redhat.com>,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Multipathd previously had various rules to update priorities in
-update_prio(), need_switch_pathgroup(), and reload_map(). Instead, only
-update the priority in update_prio().  To cover the cases where the
-priorities were getting updated in other functions, update_prio() now
-always updates all paths' priorities, if the priority on the path that
-it was called with changes.
+If this and "detect_pgpolicy" are both selected and ALUA is
+autodetected, the multipath device will use the "group_by_tpg" policy
+instead of the "group_by_prio" policy.
 
-Also, do not try to update a path's priority if it is down. Previously,
-when refreshing all the paths' priorities, a path could have its
-priority updated when it was in the PATH_DOWN state, as long as its
-priority was PRIO_UNDEF. But if a path is down, and the last time
-multipath tried to get its priority, it failed, it seems likely that the
-prioritizer will just fail again.
-
-Finally, skip updating all paths' priorities in
-deferred_failback_tick().  Now that all the paths' priorities will get
-updated when one changes before starting the deferred failback count,
-it's no longer necessary to update them all again when the failback
-timeout expires.  The checker loop will continue to update them
-correctly while the timeout is going on.
-
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/cli_handlers.c  |   8 +--
- multipathd/fpin_handlers.c |   4 +-
- multipathd/main.c          | 109 +++++++++++++------------------------
- multipathd/main.h          |   3 +-
- 4 files changed, 45 insertions(+), 79 deletions(-)
+ libmultipath/config.c             |  2 ++
+ libmultipath/config.h             |  2 ++
+ libmultipath/configure.c          |  1 +
+ libmultipath/defaults.h           |  1 +
+ libmultipath/dict.c               | 11 +++++++++++
+ libmultipath/hwtable.c            |  1 +
+ libmultipath/libmultipath.version | 10 +++-------
+ libmultipath/propsel.c            | 24 ++++++++++++++++++++++--
+ libmultipath/propsel.h            |  1 +
+ libmultipath/structs.h            |  7 +++++++
+ multipath/multipath.conf.5        | 13 +++++++++++++
+ 11 files changed, 64 insertions(+), 9 deletions(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 44bf43df..c9addfbb 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -810,7 +810,7 @@ cli_reload(void *v, struct strbuf *reply, void *data)
- 		return 1;
- 	}
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 2e742373..7b207590 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -453,6 +453,7 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
+ 	merge_num(detect_prio);
+ 	merge_num(detect_checker);
+ 	merge_num(detect_pgpolicy);
++	merge_num(detect_pgpolicy_use_tpg);
+ 	merge_num(deferred_remove);
+ 	merge_num(delay_watch_checks);
+ 	merge_num(delay_wait_checks);
+@@ -619,6 +620,7 @@ store_hwe (vector hwtable, struct hwentry * dhwe)
+ 	hwe->detect_prio = dhwe->detect_prio;
+ 	hwe->detect_checker = dhwe->detect_checker;
+ 	hwe->detect_pgpolicy = dhwe->detect_pgpolicy;
++	hwe->detect_pgpolicy_use_tpg = dhwe->detect_pgpolicy_use_tpg;
+ 	hwe->ghost_delay = dhwe->ghost_delay;
+ 	hwe->vpd_vendor_id = dhwe->vpd_vendor_id;
  
--	return reload_and_sync_map(mpp, vecs, 0);
-+	return reload_and_sync_map(mpp, vecs);
- }
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 014c6849..0a2c297b 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -77,6 +77,7 @@ struct hwentry {
+ 	int detect_prio;
+ 	int detect_checker;
+ 	int detect_pgpolicy;
++	int detect_pgpolicy_use_tpg;
+ 	int deferred_remove;
+ 	int delay_watch_checks;
+ 	int delay_wait_checks;
+@@ -173,6 +174,7 @@ struct config {
+ 	int detect_prio;
+ 	int detect_checker;
+ 	int detect_pgpolicy;
++	int detect_pgpolicy_use_tpg;
+ 	int force_sync;
+ 	int deferred_remove;
+ 	int processed_main_config;
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 366b166f..ac99edc8 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -305,6 +305,7 @@ int setup_map(struct multipath *mpp, char **params, struct vectors *vecs)
  
- static int resize_map(struct multipath *mpp, unsigned long long size,
-@@ -1449,7 +1449,7 @@ static int cli_set_marginal(void * v, struct strbuf *reply, void * data)
- 	}
- 	pp->marginal = 1;
+ 	select_pgfailback(conf, mpp);
+ 	select_detect_pgpolicy(conf, mpp);
++	select_detect_pgpolicy_use_tpg(conf, mpp);
+ 	select_pgpolicy(conf, mpp);
  
--	return reload_and_sync_map(pp->mpp, vecs, 0);
-+	return reload_and_sync_map(pp->mpp, vecs);
- }
+ 	/*
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 8f2d2f05..b3f11d4c 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -30,6 +30,7 @@
+ #define DEFAULT_DETECT_PRIO	DETECT_PRIO_ON
+ #define DEFAULT_DETECT_CHECKER	DETECT_CHECKER_ON
+ #define DEFAULT_DETECT_PGPOLICY	DETECT_PGPOLICY_ON
++#define DEFAULT_DETECT_PGPOLICY_USE_TPG	DETECT_PGPOLICY_USE_TPG_OFF
+ #define DEFAULT_DEFERRED_REMOVE	DEFERRED_REMOVE_OFF
+ #define DEFAULT_DELAY_CHECKS	NU_NO
+ #define DEFAULT_ERR_CHECKS	NU_NO
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index edd4923d..6b3e04a3 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -876,6 +876,14 @@ declare_ovr_snprint(detect_pgpolicy, print_yes_no_undef)
+ declare_hw_handler(detect_pgpolicy, set_yes_no_undef)
+ declare_hw_snprint(detect_pgpolicy, print_yes_no_undef)
  
- static int cli_unset_marginal(void * v, struct strbuf *reply, void * data)
-@@ -1476,7 +1476,7 @@ static int cli_unset_marginal(void * v, struct strbuf *reply, void * data)
- 	}
- 	pp->marginal = 0;
- 
--	return reload_and_sync_map(pp->mpp, vecs, 0);
-+	return reload_and_sync_map(pp->mpp, vecs);
- }
- 
- static int cli_unset_all_marginal(void * v, struct strbuf *reply, void * data)
-@@ -1513,7 +1513,7 @@ static int cli_unset_all_marginal(void * v, struct strbuf *reply, void * data)
- 		vector_foreach_slot (pgp->paths, pp, j)
- 			pp->marginal = 0;
- 
--	return reload_and_sync_map(mpp, vecs, 0);
-+	return reload_and_sync_map(mpp, vecs);
- }
- 
- #define HANDLER(x) x
-diff --git a/multipathd/fpin_handlers.c b/multipathd/fpin_handlers.c
-index 8f464f04..aa0f63c9 100644
---- a/multipathd/fpin_handlers.c
-+++ b/multipathd/fpin_handlers.c
-@@ -127,7 +127,7 @@ empty:
- 	/* walk backwards because reload_and_sync_map() can remove mpp */
- 	vector_foreach_slot_backwards(vecs->mpvec, mpp, i) {
- 		if (mpp->fpin_must_reload) {
--			ret = reload_and_sync_map(mpp, vecs, 0);
-+			ret = reload_and_sync_map(mpp, vecs);
- 			if (ret == 2)
- 				condlog(2, "map removed during reload");
- 			else
-@@ -262,7 +262,7 @@ unref:
- 	/* walk backwards because reload_and_sync_map() can remove mpp */
- 	vector_foreach_slot_backwards(vecs->mpvec, mpp, i) {
- 		if (mpp->fpin_must_reload) {
--			ret = reload_and_sync_map(mpp, vecs, 0);
-+			ret = reload_and_sync_map(mpp, vecs);
- 			if (ret == 2)
- 				condlog(2, "map removed during reload");
- 			else
-diff --git a/multipathd/main.c b/multipathd/main.c
-index bdeffe76..f603d143 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -396,32 +396,13 @@ void put_multipath_config(__attribute__((unused)) void *arg)
- }
- 
- static int
--need_switch_pathgroup (struct multipath * mpp, int refresh)
-+need_switch_pathgroup (struct multipath * mpp)
- {
--	struct pathgroup * pgp;
--	struct path * pp;
--	unsigned int i, j;
--	struct config *conf;
- 	int bestpg;
- 
- 	if (!mpp)
- 		return 0;
- 
--	/*
--	 * Refresh path priority values
--	 */
--	if (refresh) {
--		vector_foreach_slot (mpp->pg, pgp, i) {
--			vector_foreach_slot (pgp->paths, pp, j) {
--				conf = get_multipath_config();
--				pthread_cleanup_push(put_multipath_config,
--						     conf);
--				pathinfo(pp, conf, DI_PRIO);
--				pthread_cleanup_pop(1);
--			}
--		}
--	}
--
- 	if (!mpp->pg || VECTOR_SIZE(mpp->paths) == 0)
- 		return 0;
- 
-@@ -1594,7 +1575,7 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 			else {
- 				if (ro == 1)
- 					pp->mpp->force_readonly = 1;
--				retval = reload_and_sync_map(mpp, vecs, 0);
-+				retval = reload_and_sync_map(mpp, vecs);
- 				if (retval == 2)
- 					condlog(2, "%s: map removed during reload", pp->dev);
- 				else {
-@@ -1994,7 +1975,7 @@ deferred_failback_tick (vector mpvec)
- 		if (mpp->pgfailback > 0 && mpp->failback_tick > 0) {
- 			mpp->failback_tick--;
- 
--			if (!mpp->failback_tick && need_switch_pathgroup(mpp, 1))
-+			if (!mpp->failback_tick && need_switch_pathgroup(mpp))
- 				switch_pathgroup(mpp);
- 		}
- 	}
-@@ -2051,54 +2032,40 @@ int update_prio(struct path *pp, int refresh_all)
- 	int i, j, changed = 0;
- 	struct config *conf;
- 
--	if (refresh_all) {
--		vector_foreach_slot (pp->mpp->pg, pgp, i) {
--			vector_foreach_slot (pgp->paths, pp1, j) {
--				oldpriority = pp1->priority;
--				conf = get_multipath_config();
--				pthread_cleanup_push(put_multipath_config,
--						     conf);
--				pathinfo(pp1, conf, DI_PRIO);
--				pthread_cleanup_pop(1);
--				if (pp1->priority != oldpriority)
--					changed = 1;
--			}
--		}
--		return changed;
--	}
- 	oldpriority = pp->priority;
--	conf = get_multipath_config();
--	pthread_cleanup_push(put_multipath_config, conf);
--	if (pp->state != PATH_DOWN)
-+	if (pp->state != PATH_DOWN) {
-+		conf = get_multipath_config();
-+		pthread_cleanup_push(put_multipath_config, conf);
- 		pathinfo(pp, conf, DI_PRIO);
--	pthread_cleanup_pop(1);
-+		pthread_cleanup_pop(1);
-+	}
- 
--	if (pp->priority == oldpriority)
-+	if (pp->priority == oldpriority && !refresh_all)
- 		return 0;
--	return 1;
++declare_def_handler(detect_pgpolicy_use_tpg, set_yes_no_undef)
++declare_def_snprint_defint(detect_pgpolicy_use_tpg, print_yes_no_undef,
++			   DEFAULT_DETECT_PGPOLICY_USE_TPG)
++declare_ovr_handler(detect_pgpolicy_use_tpg, set_yes_no_undef)
++declare_ovr_snprint(detect_pgpolicy_use_tpg, print_yes_no_undef)
++declare_hw_handler(detect_pgpolicy_use_tpg, set_yes_no_undef)
++declare_hw_snprint(detect_pgpolicy_use_tpg, print_yes_no_undef)
 +
-+	vector_foreach_slot (pp->mpp->pg, pgp, i) {
-+		vector_foreach_slot (pgp->paths, pp1, j) {
-+			if (pp1 == pp || pp1->state == PATH_DOWN)
-+				continue;
-+			oldpriority = pp1->priority;
-+			conf = get_multipath_config();
-+			pthread_cleanup_push(put_multipath_config, conf);
-+			pathinfo(pp1, conf, DI_PRIO);
-+			pthread_cleanup_pop(1);
-+			if (pp1->priority != oldpriority)
-+				changed = 1;
-+		}
-+	}
-+	return changed;
- }
+ declare_def_handler(force_sync, set_yes_no)
+ declare_def_snprint(force_sync, print_yes_no)
  
--static int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh,
-+static int reload_map(struct vectors *vecs, struct multipath *mpp,
- 		      int is_daemon)
- {
- 	char *params __attribute__((cleanup(cleanup_charp))) = NULL;
--	struct path *pp;
--	int i, r;
-+	int r;
+@@ -2121,6 +2129,7 @@ init_keywords(vector keywords)
+ 	install_keyword("detect_prio", &def_detect_prio_handler, &snprint_def_detect_prio);
+ 	install_keyword("detect_checker", &def_detect_checker_handler, &snprint_def_detect_checker);
+ 	install_keyword("detect_pgpolicy", &def_detect_pgpolicy_handler, &snprint_def_detect_pgpolicy);
++	install_keyword("detect_pgpolicy_use_tpg", &def_detect_pgpolicy_use_tpg_handler, &snprint_def_detect_pgpolicy_use_tpg);
+ 	install_keyword("force_sync", &def_force_sync_handler, &snprint_def_force_sync);
+ 	install_keyword("strict_timing", &def_strict_timing_handler, &snprint_def_strict_timing);
+ 	install_keyword("deferred_remove", &def_deferred_remove_handler, &snprint_def_deferred_remove);
+@@ -2212,6 +2221,7 @@ init_keywords(vector keywords)
+ 	install_keyword("detect_prio", &hw_detect_prio_handler, &snprint_hw_detect_prio);
+ 	install_keyword("detect_checker", &hw_detect_checker_handler, &snprint_hw_detect_checker);
+ 	install_keyword("detect_pgpolicy", &hw_detect_pgpolicy_handler, &snprint_hw_detect_pgpolicy);
++	install_keyword("detect_pgpolicy_use_tpg", &hw_detect_pgpolicy_use_tpg_handler, &snprint_hw_detect_pgpolicy_use_tpg);
+ 	install_keyword("deferred_remove", &hw_deferred_remove_handler, &snprint_hw_deferred_remove);
+ 	install_keyword("delay_watch_checks", &hw_delay_watch_checks_handler, &snprint_hw_delay_watch_checks);
+ 	install_keyword("delay_wait_checks", &hw_delay_wait_checks_handler, &snprint_hw_delay_wait_checks);
+@@ -2255,6 +2265,7 @@ init_keywords(vector keywords)
+ 	install_keyword("detect_prio", &ovr_detect_prio_handler, &snprint_ovr_detect_prio);
+ 	install_keyword("detect_checker", &ovr_detect_checker_handler, &snprint_ovr_detect_checker);
+ 	install_keyword("detect_pgpolicy", &ovr_detect_pgpolicy_handler, &snprint_ovr_detect_pgpolicy);
++	install_keyword("detect_pgpolicy_use_tpg", &ovr_detect_pgpolicy_use_tpg_handler, &snprint_ovr_detect_pgpolicy_use_tpg);
+ 	install_keyword("deferred_remove", &ovr_deferred_remove_handler, &snprint_ovr_deferred_remove);
+ 	install_keyword("delay_watch_checks", &ovr_delay_watch_checks_handler, &snprint_ovr_delay_watch_checks);
+ 	install_keyword("delay_wait_checks", &ovr_delay_wait_checks_handler, &snprint_ovr_delay_wait_checks);
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 0b3e7c49..ae6aac79 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -68,6 +68,7 @@
+ 		.detect_prio   = DETECT_PRIO_ON,
+ 		.detect_checker = DETECT_CHECKER_ON,
+ 		.detect_pgpolicy = DETECT_PGPOLICY_ON,
++		.detect_pgpolicy_use_tpg = DETECT_PGPOLICY_USE_TPG_OFF,
+ 		.deferred_remove = DEFERRED_REMOVE_OFF,
+ 		.delay_watch_checks = DELAY_CHECKS_OFF,
+ 		.delay_wait_checks = DELAY_CHECKS_OFF,
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index aba1a30e..8f72c452 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -43,7 +43,7 @@ LIBMPATHCOMMON_1.0.0 {
+ 	put_multipath_config;
+ };
  
- 	update_mpp_paths(mpp, vecs->pathvec);
--	if (refresh) {
--		vector_foreach_slot (mpp->paths, pp, i) {
--			struct config *conf = get_multipath_config();
--			pthread_cleanup_push(put_multipath_config, conf);
--			r = pathinfo(pp, conf, DI_PRIO);
--			pthread_cleanup_pop(1);
--			if (r) {
--				condlog(2, "%s: failed to refresh pathinfo",
--					mpp->alias);
--				return 1;
--			}
--		}
--	}
- 	if (setup_map(mpp, &params, vecs)) {
- 		condlog(0, "%s: failed to setup map", mpp->alias);
- 		return 1;
-@@ -2115,10 +2082,9 @@ static int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh,
+-LIBMULTIPATH_18.0.0 {
++LIBMULTIPATH_19.0.0 {
+ global:
+ 	/* symbols referenced by multipath and multipathd */
+ 	add_foreign;
+@@ -116,6 +116,7 @@ global:
+ 	get_refwwid;
+ 	get_state;
+ 	get_udev_device;
++	get_uid;
+ 	get_used_hwes;
+ 	get_vpd_sgio;
+ 	group_by_prio;
+@@ -141,6 +142,7 @@ global:
+ 	pathcount;
+ 	path_discovery;
+ 	path_get_tpgs;
++	pathinfo;
+ 	path_offline;
+ 	print_all_paths;
+ 	print_foreign_topology;
+@@ -235,9 +237,3 @@ global:
+ local:
+ 	*;
+ };
+-
+-LIBMULTIPATH_18.1.0 {
+-global:
+-	get_uid;
+-	pathinfo;
+-} LIBMULTIPATH_18.0.0;
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 10b84948..df10a68f 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -280,6 +280,22 @@ out:
  	return 0;
  }
  
--int reload_and_sync_map(struct multipath *mpp,
--			struct vectors *vecs, int refresh)
-+int reload_and_sync_map(struct multipath *mpp, struct vectors *vecs)
- {
--	if (reload_map(vecs, mpp, refresh, 1))
-+	if (reload_map(vecs, mpp, 1))
- 		return 1;
- 	if (setup_multipath(vecs, mpp) != 0)
- 		return 2;
-@@ -2573,25 +2539,26 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
- 	 */
- 	condlog(4, "path prio refresh");
- 
--	if (marginal_changed)
--		reload_and_sync_map(pp->mpp, vecs, 1);
--	else if (update_prio(pp, new_path_up) &&
--	    (pp->mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio) &&
--	     pp->mpp->pgfailback == -FAILBACK_IMMEDIATE) {
-+	if (marginal_changed) {
-+		update_prio(pp, 1);
-+		reload_and_sync_map(pp->mpp, vecs);
-+	} else if (update_prio(pp, new_path_up) &&
-+		   pp->mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio &&
-+		   pp->mpp->pgfailback == -FAILBACK_IMMEDIATE) {
- 		condlog(2, "%s: path priorities changed. reloading",
- 			pp->mpp->alias);
--		reload_and_sync_map(pp->mpp, vecs, !new_path_up);
--	} else if (need_switch_pathgroup(pp->mpp, 0)) {
-+		reload_and_sync_map(pp->mpp, vecs);
-+	} else if (need_switch_pathgroup(pp->mpp)) {
- 		if (pp->mpp->pgfailback > 0 &&
- 		    (new_path_up || pp->mpp->failback_tick <= 0))
--			pp->mpp->failback_tick =
--				pp->mpp->pgfailback + 1;
-+			pp->mpp->failback_tick = pp->mpp->pgfailback + 1;
- 		else if (pp->mpp->pgfailback == -FAILBACK_IMMEDIATE ||
- 			 (chkr_new_path_up && followover_should_failback(pp)))
- 			switch_pathgroup(pp->mpp);
- 	}
- 	return 1;
- }
++int select_detect_pgpolicy_use_tpg(struct config *conf, struct multipath *mp)
++{
++	const char *origin;
 +
- enum checker_state {
- 	CHECKER_STARTING,
- 	CHECKER_RUNNING,
-diff --git a/multipathd/main.h b/multipathd/main.h
-index e8bee8e6..a253d186 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -47,8 +47,7 @@ int __setup_multipath (struct vectors * vecs, struct multipath * mpp,
- 		       int reset);
- #define setup_multipath(vecs, mpp) __setup_multipath(vecs, mpp, 1)
- int update_multipath (struct vectors *vecs, char *mapname, int reset);
--int reload_and_sync_map(struct multipath *mpp, struct vectors *vecs,
--			int refresh);
-+int reload_and_sync_map(struct multipath *mpp, struct vectors *vecs);
++	mp_set_ovr(detect_pgpolicy_use_tpg);
++	mp_set_hwe(detect_pgpolicy_use_tpg);
++	mp_set_conf(detect_pgpolicy_use_tpg);
++	mp_set_default(detect_pgpolicy_use_tpg,
++		       DEFAULT_DETECT_PGPOLICY_USE_TPG);
++out:
++	condlog(3, "%s: detect_pgpolicy_use_tpg = %s %s", mp->alias,
++		(mp->detect_pgpolicy_use_tpg == DETECT_PGPOLICY_USE_TPG_ON)?
++		"yes" : "no", origin);
++	return 0;
++}
++
+ int select_pgpolicy(struct config *conf, struct multipath * mp)
+ {
+ 	const char *origin;
+@@ -291,7 +307,10 @@ int select_pgpolicy(struct config *conf, struct multipath * mp)
+ 		goto out;
+ 	}
+ 	if (mp->detect_pgpolicy == DETECT_PGPOLICY_ON && verify_alua_prio(mp)) {
+-		mp->pgpolicy = GROUP_BY_PRIO;
++		if (mp->detect_pgpolicy_use_tpg == DETECT_PGPOLICY_USE_TPG_ON)
++			mp->pgpolicy = GROUP_BY_TPG;
++		else
++			mp->pgpolicy = GROUP_BY_PRIO;
+ 		origin = autodetect_origin;
+ 		goto out;
+ 	}
+@@ -301,7 +320,8 @@ int select_pgpolicy(struct config *conf, struct multipath * mp)
+ 	mp_set_conf(pgpolicy);
+ 	mp_set_default(pgpolicy, DEFAULT_PGPOLICY);
+ out:
+-	if (mp->pgpolicy == GROUP_BY_TPG && !verify_alua_prio(mp)) {
++	if (mp->pgpolicy == GROUP_BY_TPG && origin != autodetect_origin &&
++	    !verify_alua_prio(mp)) {
+ 		mp->pgpolicy = DEFAULT_PGPOLICY;
+ 		origin = "(setting: emergency fallback - not all paths use alua prio)";
+ 		log_prio = 1;
+diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
+index 513ee6ac..73615c2f 100644
+--- a/libmultipath/propsel.h
++++ b/libmultipath/propsel.h
+@@ -1,6 +1,7 @@
+ int select_rr_weight (struct config *conf, struct multipath * mp);
+ int select_pgfailback (struct config *conf, struct multipath * mp);
+ int select_detect_pgpolicy (struct config *conf, struct multipath * mp);
++int select_detect_pgpolicy_use_tpg (struct config *conf, struct multipath * mp);
+ int select_pgpolicy (struct config *conf, struct multipath * mp);
+ int select_selector (struct config *conf, struct multipath * mp);
+ int select_alias (struct config *conf, struct multipath * mp);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 682a7e17..97f9de5a 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -149,6 +149,12 @@ enum detect_pgpolicy_states {
+ 	DETECT_PGPOLICY_ON = YNU_YES,
+ };
  
- void handle_path_wwid_change(struct path *pp, struct vectors *vecs);
- bool check_path_wwid_change(struct path *pp);
++enum detect_pgpolicy_use_tpg_states {
++	DETECT_PGPOLICY_USE_TPG_UNDEF = YNU_UNDEF,
++	DETECT_PGPOLICY_USE_TPG_OFF = YNU_NO,
++	DETECT_PGPOLICY_USE_TPG_ON = YNU_YES,
++};
++
+ enum deferred_remove_states {
+ 	DEFERRED_REMOVE_UNDEF = YNU_UNDEF,
+ 	DEFERRED_REMOVE_OFF = YNU_NO,
+@@ -396,6 +402,7 @@ struct multipath {
+ 	char wwid[WWID_SIZE];
+ 	char alias_old[WWID_SIZE];
+ 	int detect_pgpolicy;
++	int detect_pgpolicy_use_tpg;
+ 	int pgpolicy;
+ 	pgpolicyfn *pgpolicyfn;
+ 	int nextpg;
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 3b25b5d4..8a0ff0d8 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -254,6 +254,19 @@ The default is: \fIyes\fR
+ .
+ .
+ .TP
++.B detect_pgpolicy_use_tpg
++If both this and \fIdetect_pgpolicy\fR are set to \fIyes\fR and all path
++devcices are configured with either the \fIalua\fR or \fIsysfs\fR prioritizer,
++the multipath device will automatically use the \fIgroup_by_tpg\fR
++path_grouping_policy. If set to \fIno\fR, the path_grouping_policy will be
++selected by the method described for \fIdetect_pgpolicy\fR above.
++.RS
++.TP
++The default is: \fIno\fR
++.RE
++.
++.
++.TP
+ .B pg_timeout
+ (Deprecated) This option is not supported any more, and the value is ignored.
+ .
 -- 
 2.17.2
 
