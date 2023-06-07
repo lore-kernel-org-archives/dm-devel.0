@@ -1,76 +1,76 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 49D46C7EE37
-	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 06:48:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 96D7EC7EE23
+	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 06:48:58 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686206938;
+	s=mimecast20190719; t=1686206937;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=eHuSDYS7i81D0k22hsbxlbArXBjom7Ew9iUDr5NkOLE=;
-	b=A6I23OwPgjpeQkaqfkMXEtj+tqUzLBhBb5SC4asHVelGhid9PI9uob/nopcWKtLv13/oXy
-	u90sU1XarPN727eWXdfst2mdWko8Avimhipqt2D4spIiirGjImNm1pEOABRpuOTTOV/YyJ
-	iqBvbZFuRwyxot47iMS58WqTfWN8TI8=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=VRZu5d/hGNOmKh/sAtCQKRdzUc1ifKZ8afgLQ9vLuzI=;
+	b=Rr1ijYm65H/n3vYWh/dqOiwXDZWFs5RLwpW+Tht5CRkCKQbsM8J8+X8zWWOXZUFT8Bw86X
+	zq3v7vUM1Ml0tB5MPgXiNoWB0wypMyoBfugIbpeJvcduk5WP7S4WZEyyc0CX/jeeSfrSht
+	7As2JK0Pmbeuzd5S7rK9wI/npOTccTA=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-623-R4cTpOCiOjea6Jmox1FAug-1; Thu, 08 Jun 2023 02:48:54 -0400
-X-MC-Unique: R4cTpOCiOjea6Jmox1FAug-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-498-Lgza1efyNgKAaPpFzlsidg-1; Thu, 08 Jun 2023 02:48:53 -0400
+X-MC-Unique: Lgza1efyNgKAaPpFzlsidg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DA8E28EC12A;
-	Thu,  8 Jun 2023 06:48:50 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 98B728028B2;
+	Thu,  8 Jun 2023 06:48:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4CC64112132D;
-	Thu,  8 Jun 2023 06:48:50 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 879F2C154D2;
+	Thu,  8 Jun 2023 06:48:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 33CDE194E109;
-	Thu,  8 Jun 2023 06:48:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 91DB0194E015;
+	Thu,  8 Jun 2023 06:48:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 10E4119465BA
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 09:03:20 +0000 (UTC)
+ ESMTP id 09C5919465BA
+ for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 08:35:34 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9D7282166B25; Wed,  7 Jun 2023 09:03:20 +0000 (UTC)
+ id EE01E140EBB8; Wed,  7 Jun 2023 08:35:33 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 95CE92166B26
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 09:03:20 +0000 (UTC)
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E6BE0140E954
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 08:35:33 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 75EC53C11CC8
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 09:03:20 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CBF6B802BF5
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 08:35:33 +0000 (UTC)
 Received: from dfw.source.kernel.org (dfw.source.kernel.org
  [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-404-BOSfyCIRMFWLBjlYdwLHrQ-1; Wed, 07 Jun 2023 05:03:19 -0400
-X-MC-Unique: BOSfyCIRMFWLBjlYdwLHrQ-1
+ us-mta-320-Oz6xR2LGMD6bkqdUP3tqcw-1; Wed, 07 Jun 2023 04:35:32 -0400
+X-MC-Unique: Oz6xR2LGMD6bkqdUP3tqcw-1
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 4DC4E61E0B;
- Wed,  7 Jun 2023 09:03:18 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3DCCDC433D2;
- Wed,  7 Jun 2023 09:03:12 +0000 (UTC)
-Date: Wed, 7 Jun 2023 11:03:09 +0200
+ by dfw.source.kernel.org (Postfix) with ESMTPS id 5D1CB63C51;
+ Wed,  7 Jun 2023 08:35:31 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 78533C433D2;
+ Wed,  7 Jun 2023 08:35:25 +0000 (UTC)
+Date: Wed, 7 Jun 2023 10:35:22 +0200
 From: Christian Brauner <brauner@kernel.org>
 To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20230607-kernkompetenz-halbleiter-b8874bc39061@brauner>
+Message-ID: <20230607-renovieren-getier-8fba2cb1185d@brauner>
 References: <20230606073950.225178-1-hch@lst.de>
- <20230606073950.225178-27-hch@lst.de>
+ <20230606073950.225178-12-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20230606073950.225178-27-hch@lst.de>
+In-Reply-To: <20230606073950.225178-12-hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,10 +78,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mailman-Approved-At: Thu, 08 Jun 2023 06:48:45 +0000
-Subject: Re: [dm-devel] [PATCH 26/31] block: move a few internal definitions
- out of blkdev.h
+Subject: Re: [dm-devel] [PATCH 11/31] block: rename blkdev_close to
+ blkdev_release
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -110,16 +110,15 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Jun 06, 2023 at 09:39:45AM +0200, Christoph Hellwig wrote:
-> All these helpers are only used in core block code, so move them out of
-> the public header.
+On Tue, Jun 06, 2023 at 09:39:30AM +0200, Christoph Hellwig wrote:
+> Make the function name match the method name.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
