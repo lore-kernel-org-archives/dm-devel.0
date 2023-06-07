@@ -1,91 +1,91 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C5486C7EE25
-	for <dm-devel@archiver.kernel.org>; Wed,  7 Jun 2023 23:28:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D5857C77B7A
+	for <dm-devel@archiver.kernel.org>; Wed,  7 Jun 2023 23:50:38 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686180508;
+	s=mimecast20190719; t=1686181837;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=EdS5C5plPlDyEW1qoWTe4ThO7XkS3UPhQKlt5Q+DC1c=;
-	b=aYHbcnESZyls6dTWEPpmcLQJWEUun8I2CVe+NRcVKjcmz2JlvPpjjpIkWrQN15t55XZMzr
-	lufknRxjZLW64aDI9r1iHAZZ8mBw2Im8y71+rRiD9VX2IPEA8eEQ3HGinf/dwmRjUZkoDM
-	sphaBNviJ7z9Hq1XzhKBy06NYQMmUPc=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=fqFzsWlCpSyy2XrgIyLil3v+cYxGPnmZ9m6sR6Fa5v0=;
+	b=gPpd8fyMHgUUwyC9F0gvs/TA7TAbbr5a6OCHkf74UbjiGPVw+rSA0+AuqVIfutD+O44Agu
+	YfWEqyMTOpeBhIELbJKTz/Phjp22m8usv1xllUfBXUGEpsYV8i2fYjJZAmZRWBABu4DieL
+	t+JT/108Rq2esOQE81PZ4ha/3ZxmsvI=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-241-WpPbeDz3PzmdE_zs7PJZww-1; Wed, 07 Jun 2023 19:28:27 -0400
-X-MC-Unique: WpPbeDz3PzmdE_zs7PJZww-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-54-IZGihhorPhyfHtTtcdcllA-1; Wed, 07 Jun 2023 19:50:34 -0400
+X-MC-Unique: IZGihhorPhyfHtTtcdcllA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9E12B1C04188;
-	Wed,  7 Jun 2023 23:28:25 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A8FE08030D5;
+	Wed,  7 Jun 2023 23:50:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 084F09E8D;
-	Wed,  7 Jun 2023 23:28:24 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 58043492B00;
+	Wed,  7 Jun 2023 23:50:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B4E1719452C4;
-	Wed,  7 Jun 2023 23:27:59 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1581E19452C4;
+	Wed,  7 Jun 2023 23:50:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 78F1219465BA
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 23:27:30 +0000 (UTC)
+ ESMTP id 1BE8819465BA
+ for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 23:50:29 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 607002166B26; Wed,  7 Jun 2023 23:27:30 +0000 (UTC)
+ id BF6FC140E955; Wed,  7 Jun 2023 23:50:29 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 577682166B25
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 23:27:30 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B7BCA140E954
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 23:50:29 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 37DA328237C1
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 23:27:30 +0000 (UTC)
-Received: from mail-qt1-f169.google.com (mail-qt1-f169.google.com
- [209.85.160.169]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9403329A9D52
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 23:50:29 +0000 (UTC)
+Received: from mail-qk1-f170.google.com (mail-qk1-f170.google.com
+ [209.85.222.170]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-31-aE3dR64LNUSRTHkbiLvWzA-1; Wed, 07 Jun 2023 19:27:26 -0400
-X-MC-Unique: aE3dR64LNUSRTHkbiLvWzA-1
-Received: by mail-qt1-f169.google.com with SMTP id
- d75a77b69052e-3f9c2e3914aso7166101cf.3
- for <dm-devel@redhat.com>; Wed, 07 Jun 2023 16:27:26 -0700 (PDT)
+ us-mta-621-EJkQzaWYNJKuX-uPIKHckw-1; Wed, 07 Jun 2023 19:50:28 -0400
+X-MC-Unique: EJkQzaWYNJKuX-uPIKHckw-1
+Received: by mail-qk1-f170.google.com with SMTP id
+ af79cd13be357-75ec7e8e826so15285a.0
+ for <dm-devel@redhat.com>; Wed, 07 Jun 2023 16:50:27 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1686180446; x=1688772446;
- h=in-reply-to:content-transfer-encoding:content-disposition
- :mime-version:references:message-id:subject:cc:to:from:date
- :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=voj5Mda8Zfoqf83eL6TpEP6bEfS34qzT4ho4GEckRy8=;
- b=Fqwhdegsp2JX6zsf4A4qBLL2i9rJYauCw0zfkN7KgSrfBgCQe0+pULvutMVFv8SmKN
- e1LZMzuF6GEAfSERp9DVWTIfgzL7HnDTW6k0kVXhD7M/y4n1q2POQaEKhilnXTxnSrrx
- COfNfDb2cXRbpBbChSsaXfe1SQ/Y8mkLlsbWcpFmnjKcxLl2sw2nQSGZ4lpbykdeWDrX
- NU+CsABSUV16RPH0bQVr8vQdfhH8r1zJjbJg3nA/Pt+qNOu8dC+1A/WhOMLiCBh0INBB
- E5frc5R31J1I4T4UvT6cGBzb1rmQMsiOkY7OJYbpyqN7uYoX/p0G0djYVovtLFTztO1j
- 2NXg==
-X-Gm-Message-State: AC+VfDzNiZ1QjdVqf6dlWZjYzHRddBeobB213rps/lgFDPR4lyjQ0Kev
- Xi4VGUmfWOH/VChVP5Lr148gEW4=
-X-Google-Smtp-Source: ACHHUZ6bssYu3BmODSfk7D3JoJ9AovgnvY3uNrvFLLvCnNUVf2dqD8Ue69PPoyqRe4HMmDod3/Cmnw==
-X-Received: by 2002:ac8:5c16:0:b0:3d8:2352:a661 with SMTP id
- i22-20020ac85c16000000b003d82352a661mr6003241qti.3.1686180446161; 
- Wed, 07 Jun 2023 16:27:26 -0700 (PDT)
+ d=1e100.net; s=20221208; t=1686181827; x=1688773827;
+ h=in-reply-to:content-disposition:mime-version:references:message-id
+ :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+ :message-id:reply-to;
+ bh=mhikzEBmpROllrpUkG6N5rn5swH/R/MkyomEPj+0LRU=;
+ b=iAtaItfZgCh7bbRj9vTrM6lZNG/PqQBSppOo3uKHrooa2P3WoMYc1xSd5T4oBVcbP6
+ U/4mwOAmFpmFUT6FQOyK35NZRwixkOBBcEqhp4w8WrerOWW88Xg8mRpUR8unBwAILpOh
+ iZkKgKEZ0B+M6Ko9VNdlKlFLeE5DIaVk7HZQ41Zwhk9gyqEynMVkz09BbJLZXs9wGh7p
+ fJ7yIgMHrR66XL7zY6Tj3+qmRzzMXPIRiDX3b9WiCatFH1gGhL6txWOVp4fuLXtNK/W0
+ efrauG+tcPjutdclFVKUXpJ0VNHOOXrE5Syv0v5n3D4OT7RD/6EiaFZ1det2KtGB09/d
+ ZCUw==
+X-Gm-Message-State: AC+VfDyfnwDNAe2hv/VhyPzZfOoEM/+Na8zAOjLYYjaM2KsipkdpYyW7
+ G2CfMuVJIAlLUw/0ao+sDtZ3Bfw=
+X-Google-Smtp-Source: ACHHUZ6y+cOL+ZxgisiLenJjAOucQc9Wtuow/WkgwMRhUI55SkTWbqnmzTclMfUHnNVFzRSWwX/5Nw==
+X-Received: by 2002:a05:620a:2b4b:b0:75b:23a1:3651 with SMTP id
+ dp11-20020a05620a2b4b00b0075b23a13651mr4139465qkb.18.1686181827499; 
+ Wed, 07 Jun 2023 16:50:27 -0700 (PDT)
 Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
  [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- i9-20020ac84f49000000b003f018e18c35sm286121qtw.27.2023.06.07.16.27.25
+ x12-20020ae9f80c000000b0075ca4cd03d4sm245229qkh.64.2023.06.07.16.50.26
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 07 Jun 2023 16:27:25 -0700 (PDT)
-Date: Wed, 7 Jun 2023 19:27:24 -0400
+ Wed, 07 Jun 2023 16:50:27 -0700 (PDT)
+Date: Wed, 7 Jun 2023 19:50:25 -0400
 From: Mike Snitzer <snitzer@kernel.org>
-To: Sarthak Kukreti <sarthakkukreti@chromium.org>
-Message-ID: <ZIESXNF5anyvJEjm@redhat.com>
+To: Dave Chinner <david@fromorbit.com>
+Message-ID: <ZIEXwTd17z0iYW4s@redhat.com>
 References: <CAJ0trDbspRaDKzTzTjFdPHdB9n0Q9unfu1cEk8giTWoNu3jP8g@mail.gmail.com>
  <ZHFEfngPyUOqlthr@dread.disaster.area>
  <CAJ0trDZJQwvAzngZLBJ1hB0XkQ1HRHQOdNQNTw9nK-U5i-0bLA@mail.gmail.com>
@@ -95,10 +95,10 @@ References: <CAJ0trDbspRaDKzTzTjFdPHdB9n0Q9unfu1cEk8giTWoNu3jP8g@mail.gmail.com>
  <CAG9=OMMnDfN++-bJP3jLmUD6O=Q_ApV5Dr392_5GqsPAi_dDkg@mail.gmail.com>
  <ZHqOvq3ORETQB31m@dread.disaster.area>
  <ZHti/MLnX5xGw9b7@redhat.com>
- <CAG9=OMNv80fOyVixEY01XESnOFzYyfj9j8etHMq_Ap52z4UWNQ@mail.gmail.com>
+ <ZH/k9ss2Cg9HYrEV@dread.disaster.area>
 MIME-Version: 1.0
-In-Reply-To: <CAG9=OMNv80fOyVixEY01XESnOFzYyfj9j8etHMq_Ap52z4UWNQ@mail.gmail.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+In-Reply-To: <ZH/k9ss2Cg9HYrEV@dread.disaster.area>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 Subject: Re: [dm-devel] [PATCH v7 0/5] Introduce provisioning primitives
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -112,69 +112,150 @@ List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
- Joe Thornber <thornber@redhat.com>, dm-devel@redhat.com,
+ Joe Thornber <thornber@redhat.com>,
+ Sarthak Kukreti <sarthakkukreti@chromium.org>, dm-devel@redhat.com,
  "Michael S. Tsirkin" <mst@redhat.com>, "Darrick J. Wong" <djwong@kernel.org>,
  Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
- Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org,
- Christoph Hellwig <hch@infradead.org>, Joe Thornber <ejt@redhat.com>,
- Andreas Dilger <adilger.kernel@dilger.ca>,
+ linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>,
+ Joe Thornber <ejt@redhat.com>, Andreas Dilger <adilger.kernel@dilger.ca>,
  Stefan Hajnoczi <stefanha@redhat.com>, linux-fsdevel@vger.kernel.org,
  Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org,
  Brian Foster <bfoster@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
 Content-Disposition: inline
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gTW9uLCBKdW4gMDUgMjAyMyBhdCAgNToxNFAgLTA0MDAsClNhcnRoYWsgS3VrcmV0aSA8c2Fy
-dGhha2t1a3JldGlAY2hyb21pdW0ub3JnPiB3cm90ZToKCj4gT24gU2F0LCBKdW4gMywgMjAyMyBh
-dCA4OjU34oCvQU0gTWlrZSBTbml0emVyIDxzbml0emVyQGtlcm5lbC5vcmc+IHdyb3RlOgo+ID4K
-PiA+IFdlIGFsbCBqdXN0IG5lZWQgdG8gZm9jdXMgb24geW91ciBwcm9wb3NhbCBhbmQgSm9lJ3Mg
-ZG0tdGhpbgo+ID4gcmVzZXJ2YXRpb24gZGVzaWduLi4uCj4gPgo+ID4gW1NhcnRoYWs6IEZZSSwg
-dGhpcyBpbXBsaWVzIHRoYXQgaXQgZG9lc24ndCByZWFsbHkgbWFrZSBzZW5zZSB0byBhZGQKPiA+
-IGRtLXRoaW5wIHN1cHBvcnQgYmVmb3JlIEpvZSdzIGRlc2lnbiBpcyBpbXBsZW1lbnRlZC4gIE90
-aGVyd2lzZSB3ZSdsbAo+ID4gaGF2ZSAyIGRpZmZlcmVudCByZXNwb25zZXMgdG8gUkVRX09QX1BS
-T1ZJU0lPTi4gIFRoZSBvbmUgdGhhdCBpcwo+ID4gY2FwdHVyZWQgaW4geW91ciBwYXRjaHNldCBp
-c24ndCBhZGVxdWF0ZSB0byBwcm9wZXJseSBoYW5kbGUgZW5zdXJpbmcKPiA+IHVwcGVyIGxheWVy
-IChsaWtlIFhGUykgY2FuIGRlcGVuZCBvbiB0aGUgc3BhY2UgYmVpbmcgYXZhaWxhYmxlIGFjcm9z
-cwo+ID4gc25hcHNob3QgYm91bmRhcmllcy5dCj4gPgo+IEFjay4gV291bGQgaXQgYmUgcHJlbWF0
-dXJlIGZvciB0aGUgcmVzdCBvZiB0aGUgc2VyaWVzIHRvIGdvIHRocm91Z2gKPiAoUkVRX09QX1BS
-T1ZJU0lPTiArIHN1cHBvcnQgZm9yIGxvb3AgYW5kIG5vbi1kbS10aGlucCBkZXZpY2UtbWFwcGVy
-Cj4gdGFyZ2V0cyk/IEknZCBsaWtlIHRvIHN0YXJ0IHVzaW5nIHRoaXMgYXMgYSByZWZlcmVuY2Ug
-dG8gc3VnZ2VzdAo+IGFkZGl0aW9ucyB0byB0aGUgdmlydGlvLXNwZWMgZm9yIHZpcnRpby1ibGsg
-c3VwcG9ydCBhbmQgc3RhcnQgbG9va2luZwo+IGF0IHdoYXQgYW4gZXh0NCBpbXBsZW1lbnRhdGlv
-biB3b3VsZCBsb29rIGxpa2UuCgpQbGVhc2UgZHJvcCB0aGUgZG0tdGhpbi5jIGFuZCBkbS1zbmFw
-LmMgY2hhbmdlcy4gIGRtLXNuYXAuYyB3b3VsZCBuZWVkCm1vcmUgd29yayB0byBwcm92aWRlIHRo
-ZSB0eXBlIG9mIGd1YXJhbnRlZSBYRlMgcmVxdWlyZXMgYWNyb3NzCnNuYXBzaG90IGJvdW5kYXJp
-ZXMuIEknbSBpbmNsaW5lZCB0byBfbm90XyBhZGQgZG0tc25hcC5jIHN1cHBvcnQKYmVjYXVzZSBp
-dCBpcyBiZXN0IHRvIGp1c3QgdXNlIGRtLXRoaW4uCgpBbmQgRllJIGV2ZW4geW91ciBkbS10aGlu
-IHBhdGNoIHdpbGwgYmUgdGhlIHN0YXJ0aW5nIHBvaW50IGZvciB0aGUKZG0tdGhpbiBzdXBwb3J0
-ICh3ZSdsbCBrZWVwIGF0dHJpYnV0aW9uIHRvIHlvdSBmb3IgYWxsIHRoZSBjb2RlIGluIGEKc2Vw
-YXJhdGUgcGF0Y2gpLgoKPiBGYWlyIHBvaW50cywgSSBjZXJ0YWlubHkgZG9uJ3Qgd2FudCB0byBk
-ZXJhaWwgdGhpcyBjb252ZXJzYXRpb247IEknZAo+IGJlIGhhcHB5IHRvIHNlZSB0aGlzIHdvcmsg
-bWVyZ2VkIHNvb25lciByYXRoZXIgdGhhbiBsYXRlci4KCk9uY2UgdGhvc2UgZG0gdGFyZ2V0IGNo
-YW5nZXMgYXJlIGRyb3BwZWQgSSB0aGluayB0aGUgcmVzdCBvZiB0aGUKc2VyaWVzIGlzIGZpbmUg
-dG8gZ28gdXBzdHJlYW0gbm93LiAgRmVlbCBmcmVlIHRvIHBvc3QgYSB2OC4KCj4gRm9yIHBvc3Rl
-cml0eSwgSSdsbCBkaXN0aWxsIHdoYXQgSSBzYWlkIGFib3ZlIGludG8gdGhlIGZvbGxvd2luZzog
-SSdkIGxpa2UKPiBhIGNhcGFiaWxpdHkgZm9yIHVzZXJzcGFjZSB0byBjcmVhdGUgdGhpbiBzbmFw
-c2hvdHMgdGhhdCBpZ25vcmUgdGhlCj4gdGhpbiB2b2x1bWUncyBwcm92aXNpb25lZCBhcmVhcy4g
-SU9XLCBhbiBvcHQtaW4gZmxhZyB3aGljaCBtYWtlcwo+IHNuYXBzaG90cyBmYWxsYmFjayB0byB3
-aGF0IHRoZXkgZG8gdG9kYXkgdG8gcHJvdmlkZSBmbGV4aWJpbGl0eSB0bwo+IHVzZXJzcGFjZSB0
-byBkZWNpZGUgdGhlIHNwYWNlIHJlcXVpcmVtZW50cyBmb3IgdGhlIGFib3ZlIG1lbnRpb25lZAo+
-IHNjZW5hcmlvcywgYW5kIGF0IHRoZSBzYW1lIHRpbWUsIG5vdCBhZGRpbmcgc2VwYXJhdGUgY29y
-bmVyIGNhc2UKPiBoYW5kbGluZyBmb3IgZmlsZXN5c3RlbXMuIEJ1dCB0byByZWl0ZXJhdGUsIG15
-IGludGVudCBpc24ndCB0byBwaWxlCj4gdGhpcyBvbnRvIHRoZSB3b3JrIHlvdSwgTWlrZSBhbmQg
-Sm9lIGhhdmUgcGxhbm5lZDsganVzdCBzb21lIGluc2lnaHQKPiBpbnRvIHdoeSBJJ20gaW4gZmF2
-b3Igb2YgaWRlYXMgdGhhdCByZWR1Y2UgdGhlIHNuYXBzaG90IHNpemUuCgpJIHRoaW5rIGl0J2Qg
-YmUgdXNlZnVsIHRvIGlnbm9yZSBhIHRoaW4gZGV2aWNlJ3MgcmVzZXJ2YXRpb24gZm9yCnJlYWQt
-b25seSBzbmFwc2hvdHMuICBBZGRpbmcgdGhlIGFiaWxpdHkgdG8gY3JlYXRlIHJlYWQtb25seSB0
-aGluCnNuYXBzaG90cyBjb3VsZCBtYWtlIHNlbnNlIChsYXRlciBhY3RpdmF0aW9ucyBkb24ndCBu
-ZWNlc3NhcmlseSBuZWVkCnRvIGltcG9zZSByZWFkLW9ubHksIGRvaW5nIHNvIHdvdWxkIHJlcXVp
-cmUgc29tZSBhZGRpdGlvbmFsIHdvcmspLgoKTWlrZQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
-CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9s
-aXN0aW5mby9kbS1kZXZlbAo=
+On Tue, Jun 06 2023 at 10:01P -0400,
+Dave Chinner <david@fromorbit.com> wrote:
+
+> On Sat, Jun 03, 2023 at 11:57:48AM -0400, Mike Snitzer wrote:
+> > On Fri, Jun 02 2023 at  8:52P -0400,
+> > Dave Chinner <david@fromorbit.com> wrote:
+> > 
+> > > Mike, I think you might have misunderstood what I have been proposing.
+> > > Possibly unintentionally, I didn't call it REQ_OP_PROVISION but
+> > > that's what I intended - the operation does not contain data at all.
+> > > It's an operation like REQ_OP_DISCARD or REQ_OP_WRITE_ZEROS - it
+> > > contains a range of sectors that need to be provisioned (or
+> > > discarded), and nothing else.
+> > 
+> > No, I understood that.
+> > 
+> > > The write IOs themselves are not tagged with anything special at all.
+> > 
+> > I know, but I've been looking at how to also handle the delalloc
+> > usecase (and yes I know you feel it doesn't need handling, the issue
+> > is XFS does deal nicely with ensuring it has space when it tracks its
+> > allocations on "thick" storage
+> 
+> Oh, no it doesn't. It -works for most cases-, but that does not mean
+> it provides any guarantees at all. We can still get ENOSPC for user
+> data when delayed allocation reservations "run out".
+> 
+> This may be news to you, but the ephemeral XFS delayed allocation
+> space reservation is not accurate. It contains a "fudge factor"
+> called "indirect length". This is a "wet finger in the wind"
+> estimation of how much new metadata will need to be allocated to
+> index the physical allocations when they are made. It assumes large
+> data extents are allocated, which is good enough for most cases, but
+> it is no guarantee when there are no large data extents available to
+> allocate (e.g. near ENOSPC!).
+> 
+> And therein lies the fundamental problem with ephemeral range
+> reservations: at the time of reservation, we don't know how many
+> individual physical LBA ranges the reserved data range is actually
+> going to span.
+> 
+> As a result, XFS delalloc reservations are a "close-but-not-quite"
+> reservation backed by a global reserve pool that can be dipped into
+> if we run out of delalloc reservation. If the reserve pool is then
+> fully depleted before all delalloc conversion completes, we'll still
+> give ENOSPC. The pool is sized such that the vast majority of
+> workloads will complete delalloc conversion successfully before the
+> pool is depleted.
+> 
+> Hence XFS gives everyone the -appearance- that it deals nicely with
+> ENOSPC conditions, but it never provides a -guarantee- that any
+> accepted write will always succeed without ENOSPC.
+> 
+> IMO, using this "close-but-not-quite" reservation as the basis of
+> space requirements for other layers to provide "won't ENOSPC"
+> guarantees is fraught with problems. We already know that it is
+> insufficient in important corner cases at the filesystem level, and
+> we also know that lower layers trying to do ephemeral space
+> reservations will have exactly the same problems providing a
+> guarantee. And these are problems we've been unable to engineer
+> around in the past, so the likelihood we can engineer around them
+> now or in the future is also very unlikely.
+
+Thanks for clarifying. Wasn't aware of XFS delalloc's "wet finger in
+the air" ;)
+
+So do you think it reasonable to require applications to fallocate
+their data files? Unaware if users are aware to take that extra step.
+
+> > -- so adding coordination between XFS
+> > and dm-thin layers provides comparable safety.. that safety is an
+> > expected norm).
+> >
+> > But rather than discuss in terms of data vs metadata, the distinction
+> > is:
+> > 1) LBA range reservation (normal case, your proposal)
+> > 2) non-LBA reservation (absolute value, LBA range is known at later stage)
+> > 
+> > But I'm clearly going off script for dwelling on wanting to handle
+> > both.
+> 
+> Right, because if we do 1) then we don't need 2). :)
+
+Sure.
+
+> > My looking at (ab)using REQ_META being set (use 1) vs not (use 2) was
+> > a crude simplification for branching between the 2 approaches.
+> > 
+> > And I understand I made you nervous by expanding the scope to a much
+> > more muddled/shitty interface. ;)
+> 
+> Nervous? No, I'm simply trying to make sure that everyone is on the
+> same page. i.e. that if we water down the guarantee that 1) relies
+> on, then it's not actually useful to filesystems at all.
+
+Yeah, makes sense.
+ 
+> > > Put simply: if we restrict REQ_OP_PROVISION guarantees to just
+> > > REQ_META writes (or any other specific type of write operation) then
+> > > it's simply not worth persuing at the filesystem level because the
+> > > guarantees we actually need just aren't there and the complexity of
+> > > discovering and handling those corner cases just isn't worth the
+> > > effort.
+> > 
+> > Here is where I get to say: I think you misunderstood me (but it was
+> > my fault for not being absolutely clear: I'm very much on the same
+> > page as you and Joe; and your visions need to just be implemented
+> > ASAP).
+> 
+> OK, good that we've clarified the misunderstandings on both sides
+> quickly :)
+
+Do you think you're OK to scope out, and/or implement, the XFS changes
+if you use v7 of this patchset as the starting point? (v8 should just
+be v7 minus the dm-thin.c and dm-snap.c changes).  The thinp
+support in v7 will work enough to allow XFS to issue REQ_OP_PROVISION
+and/or fallocate (via mkfs.xfs) to dm-thin devices.
+
+And Joe and I can make independent progress on the dm-thin.c changes
+needed to ensure the REQ_OP_PROVISION gaurantee you need.
+
+Thanks,
+Mike
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
