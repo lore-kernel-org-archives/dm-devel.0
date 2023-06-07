@@ -4,7 +4,7 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 80B36C87FDC
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4413EC7EE45
 	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 06:49:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1686206960;
@@ -14,77 +14,73 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=e8PeIx3sbo9CFlUHbLN7RKUtbWz5VFg+cVNhHXcYIKE=;
-	b=Dv/yNW/HAiKgqxkRU0Ruc1cW2qTqYnVXcPGOmpn36OYGlUODEP/1KeNRZel0O8xi68KG7k
-	PYbzGw+gzk7/FCKxRbHRFjOi0/VnZAltmM+RHEcXIGhoWafycgGgbJBsMJiBF0u9h2Zlyh
-	fDf88WpI+v355wW2jp3wyFNSghiaDxI=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=t/jUQhMqKQYbL2GQr3pNrhV6xOmcVP+sK3RhAShoPWY=;
+	b=UXw3JFOewSw5i7r2X1o7TkW4izJxMMSIRaymCYaR6qz8bsHKCrz2qaOhSss9XvnrFUC1Gz
+	t8RHiLaR65ULtcCkZZXr32MRuhRF17OM/yDlfSVwYyGLtlwH5SSf3cOTVyN3N86vpLydI4
+	p1WOx4Yqrg9aVWTrOSTS5COzmaAxwN0=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-448-gzxturwbPZ-_H3n94vc4Aw-1; Thu, 08 Jun 2023 02:49:16 -0400
-X-MC-Unique: gzxturwbPZ-_H3n94vc4Aw-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-82-KKWeizlcOUOllO5Hs8sqlQ-1; Thu, 08 Jun 2023 02:49:17 -0400
+X-MC-Unique: KKWeizlcOUOllO5Hs8sqlQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C9C3985A5BD;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4B13B28EC110;
 	Thu,  8 Jun 2023 06:49:13 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B946C492B0B;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 31118C034A3;
 	Thu,  8 Jun 2023 06:49:13 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8C79319378C6;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5D0D819376EE;
 	Thu,  8 Jun 2023 06:48:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C94F619465BA
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 09:41:26 +0000 (UTC)
+ ESMTP id DF5A719465BA
+ for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 13:14:44 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A431A40218C; Wed,  7 Jun 2023 09:41:26 +0000 (UTC)
+ id 939F0C1603B; Wed,  7 Jun 2023 13:14:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 9C9A2492B00
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 09:41:26 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8BFE4C16044
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 13:14:39 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
+ [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 804288002BF
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 09:41:26 +0000 (UTC)
-Received: from mail-ed1-f53.google.com (mail-ed1-f53.google.com
- [209.85.208.53]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-520-Vt5nfUByM8OnIkiHFoyUBQ-1; Wed, 07 Jun 2023 05:41:24 -0400
-X-MC-Unique: Vt5nfUByM8OnIkiHFoyUBQ-1
-Received: by mail-ed1-f53.google.com with SMTP id
- 4fb4d7f45d1cf-5149c76f4dbso1141886a12.1
- for <dm-devel@redhat.com>; Wed, 07 Jun 2023 02:41:24 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1686130883; x=1688722883;
- h=content-transfer-encoding:cc:to:subject:message-id:date:from
- :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=/hFPeu/3BJQ1XAEBfX/WbvMEVzeUhOBPi58IZ/Esj6w=;
- b=IIDyW8uiVBkYUbxNvNiptN+BYsAvswctCTg3WVJJqKOdErDkUslU40BTGDzLcCdO9H
- lVOpGYB/Jyj4LVhYyS4mzLbiDEqge+HbPJ3uWWxYp6JEFup5J1Ljd5hZVrpb7gYosHVK
- EV239sAtRd9XFoeHABxnkxAn3d2a5Zj1vrxPslM6bWBwbLS6UsLZ8zfFPTgnf2+zwu4y
- tfjZb7w3uKsYXo8loVQmxoYNIJ1i1Xc8mCfrIJowG7Py/BbhG0/PbBI5gOvC7BPIMYvo
- fAO3Ftnm03gx/CcQI51tGM+iGpnPH2ToclC3xk6HUsepp+Z+8zTQRsZvhWje/Oev4zsb
- A33Q==
-X-Gm-Message-State: AC+VfDwQTYwPHArM60E9mgJZPyXhtRjsHa8Z6yw1bu0qTsyhEFCSpcJL
- BwFAPpc5o023n+LLs/MPvgWSNKeJwCEb+HBRx8YDBw==
-X-Google-Smtp-Source: ACHHUZ78LLb5/9Eve9DZQqNC/TRa3vxkXV4pVMAtKfHjnQnscHPEcmWv/7uCCN4Q8kcsT8KuG+XDWcwCZO/ggZjCnJk=
-X-Received: by 2002:a17:907:2d8c:b0:94e:e97b:c65 with SMTP id
- gt12-20020a1709072d8c00b0094ee97b0c65mr5404803ejc.60.1686130883637; Wed, 07
- Jun 2023 02:41:23 -0700 (PDT)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 60E42101B055
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 13:14:39 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-3-oovL067VOLuX4DnyiExJZQ-1; Wed,
+ 07 Jun 2023 09:14:36 -0400
+X-MC-Unique: oovL067VOLuX4DnyiExJZQ-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id A641A219FE;
+ Wed,  7 Jun 2023 13:14:35 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 7308A1346D;
+ Wed,  7 Jun 2023 13:14:35 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap2.suse-dmz.suse.de with ESMTPSA id uiivG7uCgGS9YAAAMHmgww
+ (envelope-from <hare@suse.de>); Wed, 07 Jun 2023 13:14:35 +0000
+Message-ID: <04517ec2-bf6c-0783-9494-fb12a89d07a0@suse.de>
+Date: Wed, 7 Jun 2023 15:14:35 +0200
 MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.11.0
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
 References: <20230606073950.225178-1-hch@lst.de>
- <20230606073950.225178-11-hch@lst.de>
-In-Reply-To: <20230606073950.225178-11-hch@lst.de>
-From: Jinpu Wang <jinpu.wang@ionos.com>
-Date: Wed, 7 Jun 2023 11:41:12 +0200
-Message-ID: <CAMGffEkqXCkxpA+qqDVfx0echCPvNpWgK3hZWbb11F6cv2EQ-A@mail.gmail.com>
-To: Christoph Hellwig <hch@lst.de>
+ <20230606073950.225178-31-hch@lst.de>
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <20230606073950.225178-31-hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -92,10 +88,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mailman-Approved-At: Thu, 08 Jun 2023 06:48:45 +0000
-Subject: Re: [dm-devel] [PATCH 10/31] block: remove the unused mode argument
- to ->release
+Subject: Re: [dm-devel] [PATCH 30/31] block: store the holder in
+ file->private_data
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -112,40 +108,93 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>,
  dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>,
  Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>,
- linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org,
- Richard Weinberger <richard@nod.at>, linux-pm@vger.kernel.org,
- linux-um@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>,
- Coly Li <colyli@suse.de>, linux-block@vger.kernel.org,
- linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>,
- David Sterba <dsterba@suse.com>, Jens Axboe <axboe@kernel.dk>,
+ Jack Wang <jinpu.wang@ionos.com>, linux-nilfs@vger.kernel.org,
+ linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>,
+ linux-pm@vger.kernel.org, linux-um@lists.infradead.org,
+ Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>,
+ linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
+ Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>,
  Christian Brauner <brauner@kernel.org>,
  "Martin K. Petersen" <martin.petersen@oracle.com>,
  linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: ionos.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+X-Mimecast-Originator: suse.de
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-T24gVHVlLCBKdW4gNiwgMjAyMyBhdCA5OjQw4oCvQU0gQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBs
-c3QuZGU+IHdyb3RlOgo+Cj4gVGhlIG1vZGUgYXJndW1lbnQgdG8gdGhlIC0+cmVsZWFzZSBibG9j
-a19kZXZpY2Vfb3BlcmF0aW9uIGlzIG5ldmVyIHVzZWQsCj4gc28gcmVtb3ZlIGl0Lgo+Cj4gU2ln
-bmVkLW9mZi1ieTogQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBsc3QuZGU+Cj4gLS0tCj4gIGFyY2gv
-dW0vZHJpdmVycy91YmRfa2Vybi5jICAgICAgICAgIHwgIDQgKystLQo+ICBhcmNoL3h0ZW5zYS9w
-bGF0Zm9ybXMvaXNzL3NpbWRpc2suYyB8ICAyICstCj4gIGJsb2NrL2JkZXYuYyAgICAgICAgICAg
-ICAgICAgICAgICAgIHwgMTQgKysrKysrKy0tLS0tLS0KPiAgZHJpdmVycy9ibG9jay9hbWlmbG9w
-LmMgICAgICAgICAgICAgfCAgMiArLQo+ICBkcml2ZXJzL2Jsb2NrL2FvZS9hb2VibGsuYyAgICAg
-ICAgICB8ICAyICstCj4gIGRyaXZlcnMvYmxvY2svYXRhZmxvcC5jICAgICAgICAgICAgIHwgIDQg
-KystLQo+ICBkcml2ZXJzL2Jsb2NrL2RyYmQvZHJiZF9tYWluLmMgICAgICB8ICA0ICsrLS0KPiAg
-ZHJpdmVycy9ibG9jay9mbG9wcHkuYyAgICAgICAgICAgICAgfCAgMiArLQo+ICBkcml2ZXJzL2Js
-b2NrL2xvb3AuYyAgICAgICAgICAgICAgICB8ICAyICstCj4gIGRyaXZlcnMvYmxvY2svbmJkLmMg
-ICAgICAgICAgICAgICAgIHwgIDIgKy0KPiAgZHJpdmVycy9ibG9jay9wa3RjZHZkLmMgICAgICAg
-ICAgICAgfCAgNCArKy0tCj4gIGRyaXZlcnMvYmxvY2svcmJkLmMgICAgICAgICAgICAgICAgIHwg
-IDIgKy0KPiAgZHJpdmVycy9ibG9jay9ybmJkL3JuYmQtY2x0LmMgICAgICAgfCAgMiArLQpBY2tl
-ZC1ieTogSmFjayBXYW5nIDxqaW5wdS53YW5nQGlvbm9zLmNvbT4gIyBmb3Igcm5iZAoKLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJl
-ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
+On 6/6/23 09:39, Christoph Hellwig wrote:
+> Store the file struct used as the holder in file->private_data as an
+> indicator that this file descriptor was opened exclusively to  remove
+> the last use of FMODE_EXCL.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>   block/fops.c | 14 ++++++++------
+>   1 file changed, 8 insertions(+), 6 deletions(-)
+> 
+> diff --git a/block/fops.c b/block/fops.c
+> index c40b9f978e3bc7..915e0ef7560993 100644
+> --- a/block/fops.c
+> +++ b/block/fops.c
+> @@ -478,7 +478,7 @@ blk_mode_t file_to_blk_mode(struct file *file)
+>   		mode |= BLK_OPEN_READ;
+>   	if (file->f_mode & FMODE_WRITE)
+>   		mode |= BLK_OPEN_WRITE;
+> -	if (file->f_mode & FMODE_EXCL)
+> +	if (file->private_data)
+>   		mode |= BLK_OPEN_EXCL;
+>   	if ((file->f_flags & O_ACCMODE) == 3)
+>   		mode |= BLK_OPEN_WRITE_IOCTL;
+> @@ -501,12 +501,15 @@ static int blkdev_open(struct inode *inode, struct file *filp)
+>   	filp->f_flags |= O_LARGEFILE;
+>   	filp->f_mode |= FMODE_NOWAIT | FMODE_BUF_RASYNC;
+>   
+> +	/*
+> +	 * Use the file private data to store the holder, file_to_blk_mode
+> +	 * relies on this.
+> +	 */
+
+Can you update the comment to reflect that we're only use the
+->private_data field for exclusive open?
+I know it's indicated by the condition, but we really should
+be clarify this usage.
+
+>   	if (filp->f_flags & O_EXCL)
+> -		filp->f_mode |= FMODE_EXCL;
+> +		filp->private_data = filp;
+>   
+>   	bdev = blkdev_get_by_dev(inode->i_rdev, file_to_blk_mode(filp),
+> -				 (filp->f_mode & FMODE_EXCL) ? filp : NULL,
+> -				 NULL);
+> +				 filp->private_data, NULL);
+>   	if (IS_ERR(bdev))
+>   		return PTR_ERR(bdev);
+>   
+> @@ -517,8 +520,7 @@ static int blkdev_open(struct inode *inode, struct file *filp)
+>   
+>   static int blkdev_release(struct inode *inode, struct file *filp)
+>   {
+> -	blkdev_put(I_BDEV(filp->f_mapping->host),
+> -		   (filp->f_mode & FMODE_EXCL) ? filp : NULL);
+> +	blkdev_put(I_BDEV(filp->f_mapping->host), filp->private_data);
+>   	return 0;
+>   }
+>   
+Other than that:
+
+Reviewed-by: Hannes Reinecke <hare@suse.de>
+
+Cheers,
+
+Hannes
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
