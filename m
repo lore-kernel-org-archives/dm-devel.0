@@ -4,74 +4,87 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1A7B7C7EE2E
-	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 06:49:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 62218C7EE23
+	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 06:49:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686206953;
+	s=mimecast20190719; t=1686206955;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=ThDyL+gbj2dk9OP8rV0+aRnerpf9A58B9lQ+S6808QA=;
-	b=Li60WDhH+9aQIyB+x+SvYp9RzI0mWtURfgaygt51y8bf6IQePj0+t96XskRvbIuRFoKuQo
-	cV/CtHHdEUt7r0/erTsI460kb+vFHgU0ZQTiTKKPOFKZFKY3CWpxmilGG5BvOfi0x89n3V
-	kVqqAgiGq30kxadhI6cX2vBJ3ZOWEYM=
+	bh=+A4g98evtAJ8cM0/UzvIIPCDfTeIOl07VuLVDamMa5I=;
+	b=K66B9YXNYlfEIccqp+SInCXPtDqsTJ7c9bQWK0LGSrObcfXxnYaUIpYtcZstRW2BA6Dfpd
+	XXkzKaS3dCTPg3kuG8KMgxoa/TlZt4UeR/uigL1KAEj9uabnFMAyLz3qYq/qpN+j39fwFL
+	+vYBk+n8nwjN2mDyVrBiBVJrZPIgaqA=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-592-LTNLRmxPMmGkIdJSEuawcA-1; Thu, 08 Jun 2023 02:49:11 -0400
-X-MC-Unique: LTNLRmxPMmGkIdJSEuawcA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-612-m08dLtvcOi-9VWcEwfPGig-1; Thu, 08 Jun 2023 02:49:12 -0400
+X-MC-Unique: m08dLtvcOi-9VWcEwfPGig-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B3C591C0A580;
-	Thu,  8 Jun 2023 06:49:05 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C23E28EC12B;
+	Thu,  8 Jun 2023 06:49:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A130A9E8D;
-	Thu,  8 Jun 2023 06:49:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 894DA4026E0;
+	Thu,  8 Jun 2023 06:49:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 491AA194F276;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7FE431954399;
 	Thu,  8 Jun 2023 06:48:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 89F0619465BA
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 09:32:24 +0000 (UTC)
+ ESMTP id 10D2A19465BA
+ for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 09:38:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5400A9E8D; Wed,  7 Jun 2023 09:32:24 +0000 (UTC)
+ id E12EA403362; Wed,  7 Jun 2023 09:38:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4C95B7AE4
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 09:32:24 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D9A6C477F61
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 09:38:41 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
+ [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2AF4A101A53A
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 09:32:24 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-133-pWWxNvU4P22z8tp_2UsXaw-1; Wed, 07 Jun 2023 05:32:22 -0400
-X-MC-Unique: pWWxNvU4P22z8tp_2UsXaw-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 933B460C35;
- Wed,  7 Jun 2023 09:32:21 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5B105C433EF;
- Wed,  7 Jun 2023 09:32:15 +0000 (UTC)
-Date: Wed, 7 Jun 2023 11:32:12 +0200
-From: Christian Brauner <brauner@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20230607-kribbeln-dilettanten-b901b57dd962@brauner>
-References: <20230606073950.225178-1-hch@lst.de>
- <20230606073950.225178-29-hch@lst.de>
- <20230607-kocht-kornfeld-a249c6740e38@brauner>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B1BE73801FF4
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 09:38:41 +0000 (UTC)
+Received: from mail-ej1-f48.google.com (mail-ej1-f48.google.com
+ [209.85.218.48]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-150-znr1SkYAMJSe8Bl0S6crcA-1; Wed, 07 Jun 2023 05:38:40 -0400
+X-MC-Unique: znr1SkYAMJSe8Bl0S6crcA-1
+Received: by mail-ej1-f48.google.com with SMTP id
+ a640c23a62f3a-9745ba45cd1so935079366b.1
+ for <dm-devel@redhat.com>; Wed, 07 Jun 2023 02:38:39 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1686130719; x=1688722719;
+ h=content-transfer-encoding:cc:to:subject:message-id:date:from
+ :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=gjKWGYzTLmxl6ndmaqY1vhf0MYCxKeiBaM5D6TZOn9k=;
+ b=SdG2XdJ8n8eWN67RRzpehW5MWEi7Pso27Wc3kU+AK9DPrfkNowh/M2v8ONABgVD0fi
+ goColi7HKiGAesH9yvoCS/NyEvfbPDSbZW2fcCo5GyFSy5PfEu/sPQbX0NcTKPC2XqlC
+ PwJLSDWM+iAblj740K+v8432YegJd3MJyyXvu0nnzjtI0G/+y2soyXnrYralhnhffFlB
+ vascI9AX634N9SgyXXtuj9BBK+HS3nvDk9Y7DwjhAVbzJFhoJv/r6Dt923xfBj+Ljnd1
+ E+NHBL+5oqPd4MouWSQFFYq1IRFvRixABHPeeDneBgVk5DVDpqJRooObReDLEQ6KhGcd
+ eu8Q==
+X-Gm-Message-State: AC+VfDxEChvfp+g5buOwSfCuvhVxhp8J1IGKjGdbCoZfebReQIyel7pR
+ x5WVEN4FWyecG1n13dY3wgSD0LAAMh+dMwXy19BYHg==
+X-Google-Smtp-Source: ACHHUZ4JO4oLBtR+CLz1tcyt1M0aK5Az38dx3TKZ26TI2779MlmTOIaNGaUTpmyncHvDOVtnmf3szZ6EUx+OtsgHRJ4=
+X-Received: by 2002:a17:907:3f22:b0:96b:1608:3563 with SMTP id
+ hq34-20020a1709073f2200b0096b16083563mr5475281ejc.58.1686130718689; Wed, 07
+ Jun 2023 02:38:38 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <20230607-kocht-kornfeld-a249c6740e38@brauner>
+References: <20230606073950.225178-1-hch@lst.de>
+ <20230606073950.225178-15-hch@lst.de>
+In-Reply-To: <20230606073950.225178-15-hch@lst.de>
+From: Jinpu Wang <jinpu.wang@ionos.com>
+Date: Wed, 7 Jun 2023 11:38:27 +0200
+Message-ID: <CAMGffEk8Zex5+u69YW9AXGQh-ch79mw7=Gn3L1M=qwvZCVa5VA@mail.gmail.com>
+To: Christoph Hellwig <hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -79,10 +92,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mailman-Approved-At: Thu, 08 Jun 2023 06:48:45 +0000
-Subject: Re: [dm-devel] [PATCH 28/31] block: replace fmode_t with a
- block-specific type for block open flags
+Subject: Re: [dm-devel] [PATCH 14/31] rnbd-srv: don't pass a holder for
+ non-exclusive blkdev_get_by_path
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -99,426 +112,43 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>,
  dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>,
  Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>,
- Jack Wang <jinpu.wang@ionos.com>, linux-nilfs@vger.kernel.org,
- linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>,
- linux-pm@vger.kernel.org, linux-um@lists.infradead.org,
- Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>,
- linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
- Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>,
- Jens Axboe <axboe@kernel.dk>,
+ linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org,
+ Richard Weinberger <richard@nod.at>, linux-pm@vger.kernel.org,
+ linux-um@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>,
+ Coly Li <colyli@suse.de>, linux-block@vger.kernel.org,
+ linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>,
+ David Sterba <dsterba@suse.com>, Jens Axboe <axboe@kernel.dk>,
+ Christian Brauner <brauner@kernel.org>,
  "Martin K. Petersen" <martin.petersen@oracle.com>,
  linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: ionos.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On Wed, Jun 07, 2023 at 11:21:24AM +0200, Christian Brauner wrote:
-> On Tue, Jun 06, 2023 at 09:39:47AM +0200, Christoph Hellwig wrote:
-> > The only overlap between the block open flags mapped into the fmode_t and
-> > other uses of fmode_t are FMODE_READ and FMODE_WRITE.  Define a new
-> 
-> and FMODE_EXCL afaict
-> 
-> > blk_mode_t instead for use in blkdev_get_by_*, ->open and ->ioctl and
-> > stop abusing fmode_t.
-> > 
-> > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> > ---
-> >  arch/um/drivers/ubd_kern.c          |  8 +++---
-> >  arch/xtensa/platforms/iss/simdisk.c |  2 +-
-> >  block/bdev.c                        | 32 +++++++++++-----------
-> >  block/blk-zoned.c                   |  8 +++---
-> >  block/blk.h                         | 11 ++++----
-> >  block/fops.c                        | 26 +++++++++++++-----
-> >  block/genhd.c                       |  8 +++---
-> >  block/ioctl.c                       | 42 +++++++++--------------------
-> >  drivers/block/amiflop.c             | 12 ++++-----
-> >  drivers/block/aoe/aoeblk.c          |  4 +--
-> >  drivers/block/ataflop.c             | 25 +++++++++--------
-> >  drivers/block/drbd/drbd_main.c      |  7 ++---
-> >  drivers/block/drbd/drbd_nl.c        |  2 +-
-> >  drivers/block/floppy.c              | 28 +++++++++----------
-> >  drivers/block/loop.c                | 22 +++++++--------
-> >  drivers/block/mtip32xx/mtip32xx.c   |  4 +--
-> >  drivers/block/nbd.c                 |  4 +--
-> >  drivers/block/pktcdvd.c             | 17 ++++++------
-> >  drivers/block/rbd.c                 |  2 +-
-> >  drivers/block/rnbd/rnbd-clt.c       |  4 +--
-> >  drivers/block/rnbd/rnbd-srv.c       |  4 +--
-> >  drivers/block/sunvdc.c              |  2 +-
-> >  drivers/block/swim.c                | 16 +++++------
-> >  drivers/block/swim3.c               | 24 ++++++++---------
-> >  drivers/block/ublk_drv.c            |  2 +-
-> >  drivers/block/xen-blkback/xenbus.c  |  2 +-
-> >  drivers/block/xen-blkfront.c        |  2 +-
-> >  drivers/block/z2ram.c               |  2 +-
-> >  drivers/block/zram/zram_drv.c       |  6 ++---
-> >  drivers/cdrom/cdrom.c               |  4 +--
-> >  drivers/cdrom/gdrom.c               |  4 +--
-> >  drivers/md/bcache/bcache.h          |  2 +-
-> >  drivers/md/bcache/request.c         |  4 +--
-> >  drivers/md/bcache/super.c           |  6 ++---
-> >  drivers/md/dm-cache-target.c        | 12 ++++-----
-> >  drivers/md/dm-clone-target.c        | 10 +++----
-> >  drivers/md/dm-core.h                |  7 +++--
-> >  drivers/md/dm-era-target.c          |  6 +++--
-> >  drivers/md/dm-ioctl.c               | 10 +++----
-> >  drivers/md/dm-snap.c                |  4 +--
-> >  drivers/md/dm-table.c               | 11 ++++----
-> >  drivers/md/dm-thin.c                |  9 ++++---
-> >  drivers/md/dm-verity-fec.c          |  2 +-
-> >  drivers/md/dm-verity-target.c       |  6 ++---
-> >  drivers/md/dm.c                     | 10 +++----
-> >  drivers/md/dm.h                     |  2 +-
-> >  drivers/md/md.c                     |  8 +++---
-> >  drivers/mmc/core/block.c            |  8 +++---
-> >  drivers/mtd/devices/block2mtd.c     |  4 +--
-> >  drivers/mtd/mtd_blkdevs.c           |  4 +--
-> >  drivers/mtd/ubi/block.c             |  5 ++--
-> >  drivers/nvme/host/core.c            |  2 +-
-> >  drivers/nvme/host/ioctl.c           |  8 +++---
-> >  drivers/nvme/host/multipath.c       |  2 +-
-> >  drivers/nvme/host/nvme.h            |  4 +--
-> >  drivers/nvme/target/io-cmd-bdev.c   |  2 +-
-> >  drivers/s390/block/dasd.c           |  6 ++---
-> >  drivers/s390/block/dasd_genhd.c     |  3 ++-
-> >  drivers/s390/block/dasd_int.h       |  3 ++-
-> >  drivers/s390/block/dasd_ioctl.c     |  2 +-
-> >  drivers/s390/block/dcssblk.c        |  4 +--
-> >  drivers/scsi/sd.c                   | 19 ++++++-------
-> >  drivers/scsi/sr.c                   | 10 +++----
-> >  drivers/target/target_core_iblock.c |  5 ++--
-> >  drivers/target/target_core_pscsi.c  |  4 +--
-> >  fs/btrfs/dev-replace.c              |  2 +-
-> >  fs/btrfs/super.c                    |  4 +--
-> >  fs/btrfs/volumes.c                  | 16 +++++------
-> >  fs/btrfs/volumes.h                  |  4 +--
-> >  fs/erofs/super.c                    |  2 +-
-> >  fs/ext4/super.c                     |  2 +-
-> >  fs/jfs/jfs_logmgr.c                 |  2 +-
-> >  fs/nfs/blocklayout/dev.c            |  5 ++--
-> >  fs/ocfs2/cluster/heartbeat.c        |  3 ++-
-> >  fs/reiserfs/journal.c               |  4 +--
-> >  fs/xfs/xfs_super.c                  |  2 +-
-> >  include/linux/blkdev.h              | 30 ++++++++++++++++-----
-> >  include/linux/cdrom.h               |  3 ++-
-> >  include/linux/device-mapper.h       |  8 +++---
-> >  kernel/power/swap.c                 |  6 ++---
-> >  mm/swapfile.c                       |  2 +-
-> >  81 files changed, 324 insertions(+), 311 deletions(-)
-> > 
-> > diff --git a/arch/um/drivers/ubd_kern.c b/arch/um/drivers/ubd_kern.c
-> > index 20c1a16199c503..50206feac577d5 100644
-> > --- a/arch/um/drivers/ubd_kern.c
-> > +++ b/arch/um/drivers/ubd_kern.c
-> > @@ -108,9 +108,9 @@ static inline void ubd_set_bit(__u64 bit, unsigned char *data)
-> >  static DEFINE_MUTEX(ubd_lock);
-> >  static DEFINE_MUTEX(ubd_mutex); /* replaces BKL, might not be needed */
-> >  
-> > -static int ubd_open(struct gendisk *disk, fmode_t mode);
-> > +static int ubd_open(struct gendisk *disk, blk_mode_t mode);
-> >  static void ubd_release(struct gendisk *disk);
-> > -static int ubd_ioctl(struct block_device *bdev, fmode_t mode,
-> > +static int ubd_ioctl(struct block_device *bdev, blk_mode_t mode,
-> >  		     unsigned int cmd, unsigned long arg);
-> >  static int ubd_getgeo(struct block_device *bdev, struct hd_geometry *geo);
-> >  
-> > @@ -1154,7 +1154,7 @@ static int __init ubd_driver_init(void){
-> >  
-> >  device_initcall(ubd_driver_init);
-> >  
-> > -static int ubd_open(struct gendisk *disk, fmode_t mode)
-> > +static int ubd_open(struct gendisk *disk, blk_mode_t mode)
-> >  {
-> >  	struct ubd *ubd_dev = disk->private_data;
-> >  	int err = 0;
-> > @@ -1389,7 +1389,7 @@ static int ubd_getgeo(struct block_device *bdev, struct hd_geometry *geo)
-> >  	return 0;
-> >  }
-> >  
-> > -static int ubd_ioctl(struct block_device *bdev, fmode_t mode,
-> > +static int ubd_ioctl(struct block_device *bdev, blk_mode_t mode,
-> >  		     unsigned int cmd, unsigned long arg)
-> >  {
-> >  	struct ubd *ubd_dev = bdev->bd_disk->private_data;
-> > diff --git a/arch/xtensa/platforms/iss/simdisk.c b/arch/xtensa/platforms/iss/simdisk.c
-> > index 2ad9da3de0d90f..178cf96ca10acb 100644
-> > --- a/arch/xtensa/platforms/iss/simdisk.c
-> > +++ b/arch/xtensa/platforms/iss/simdisk.c
-> > @@ -120,7 +120,7 @@ static void simdisk_submit_bio(struct bio *bio)
-> >  	bio_endio(bio);
-> >  }
-> >  
-> > -static int simdisk_open(struct gendisk *disk, fmode_t mode)
-> > +static int simdisk_open(struct gendisk *disk, blk_mode_t mode)
-> >  {
-> >  	struct simdisk *dev = disk->private_data;
-> >  
-> > diff --git a/block/bdev.c b/block/bdev.c
-> > index db63e5bcc46ffa..bd558a9ba3cd97 100644
-> > --- a/block/bdev.c
-> > +++ b/block/bdev.c
-> > @@ -93,7 +93,7 @@ EXPORT_SYMBOL(invalidate_bdev);
-> >   * Drop all buffers & page cache for given bdev range. This function bails
-> >   * with error if bdev has other exclusive owner (such as filesystem).
-> >   */
-> > -int truncate_bdev_range(struct block_device *bdev, fmode_t mode,
-> > +int truncate_bdev_range(struct block_device *bdev, blk_mode_t mode,
-> >  			loff_t lstart, loff_t lend)
-> >  {
-> >  	/*
-> > @@ -101,14 +101,14 @@ int truncate_bdev_range(struct block_device *bdev, fmode_t mode,
-> >  	 * while we discard the buffer cache to avoid discarding buffers
-> >  	 * under live filesystem.
-> >  	 */
-> > -	if (!(mode & FMODE_EXCL)) {
-> > +	if (!(mode & BLK_OPEN_EXCL)) {
-> >  		int err = bd_prepare_to_claim(bdev, truncate_bdev_range, NULL);
-> >  		if (err)
-> >  			goto invalidate;
-> >  	}
-> >  
-> >  	truncate_inode_pages_range(bdev->bd_inode->i_mapping, lstart, lend);
-> > -	if (!(mode & FMODE_EXCL))
-> > +	if (!(mode & BLK_OPEN_EXCL))
-> >  		bd_abort_claiming(bdev, truncate_bdev_range);
-> >  	return 0;
-> >  
-> > @@ -647,7 +647,7 @@ static void blkdev_flush_mapping(struct block_device *bdev)
-> >  	bdev_write_inode(bdev);
-> >  }
-> >  
-> > -static int blkdev_get_whole(struct block_device *bdev, fmode_t mode)
-> > +static int blkdev_get_whole(struct block_device *bdev, blk_mode_t mode)
-> >  {
-> >  	struct gendisk *disk = bdev->bd_disk;
-> >  	int ret;
-> > @@ -679,7 +679,7 @@ static void blkdev_put_whole(struct block_device *bdev)
-> >  		bdev->bd_disk->fops->release(bdev->bd_disk);
-> >  }
-> >  
-> > -static int blkdev_get_part(struct block_device *part, fmode_t mode)
-> > +static int blkdev_get_part(struct block_device *part, blk_mode_t mode)
-> >  {
-> >  	struct gendisk *disk = part->bd_disk;
-> >  	int ret;
-> > @@ -743,11 +743,11 @@ void blkdev_put_no_open(struct block_device *bdev)
-> >  {
-> >  	put_device(&bdev->bd_device);
-> >  }
-> > -
-> > +	
-> 
-> nit: This is whitespace damage, I think. There's a trailing tab.
-> 
-> >  /**
-> >   * blkdev_get_by_dev - open a block device by device number
-> >   * @dev: device number of block device to open
-> > - * @mode: FMODE_* mask
-> > + * @mode: open mode (BLK_OPEN_*)
-> >   * @holder: exclusive holder identifier
-> >   * @hops: holder operations
-> >   *
-> > @@ -765,7 +765,7 @@ void blkdev_put_no_open(struct block_device *bdev)
-> >   * RETURNS:
-> >   * Reference to the block_device on success, ERR_PTR(-errno) on failure.
-> >   */
-> > -struct block_device *blkdev_get_by_dev(dev_t dev, fmode_t mode, void *holder,
-> > +struct block_device *blkdev_get_by_dev(dev_t dev, blk_mode_t mode, void *holder,
-> >  		const struct blk_holder_ops *hops)
-> >  {
-> >  	bool unblock_events = true;
-> > @@ -775,8 +775,8 @@ struct block_device *blkdev_get_by_dev(dev_t dev, fmode_t mode, void *holder,
-> >  
-> >  	ret = devcgroup_check_permission(DEVCG_DEV_BLOCK,
-> >  			MAJOR(dev), MINOR(dev),
-> > -			((mode & FMODE_READ) ? DEVCG_ACC_READ : 0) |
-> > -			((mode & FMODE_WRITE) ? DEVCG_ACC_WRITE : 0));
-> > +			((mode & BLK_OPEN_READ) ? DEVCG_ACC_READ : 0) |
-> > +			((mode & BLK_OPEN_WRITE) ? DEVCG_ACC_WRITE : 0));
-> >  	if (ret)
-> >  		return ERR_PTR(ret);
-> >  
-> > @@ -786,12 +786,12 @@ struct block_device *blkdev_get_by_dev(dev_t dev, fmode_t mode, void *holder,
-> >  	disk = bdev->bd_disk;
-> >  
-> >  	if (holder) {
-> > -		mode |= FMODE_EXCL;
-> > +		mode |= BLK_OPEN_EXCL;
-> >  		ret = bd_prepare_to_claim(bdev, holder, hops);
-> >  		if (ret)
-> >  			goto put_blkdev;
-> >  	} else {
-> > -		if (WARN_ON_ONCE(mode & FMODE_EXCL)) {
-> > +		if (WARN_ON_ONCE(mode & BLK_OPEN_EXCL)) {
-> >  			ret = -EIO;
-> >  			goto put_blkdev;
-> >  		}
-> > @@ -821,7 +821,7 @@ struct block_device *blkdev_get_by_dev(dev_t dev, fmode_t mode, void *holder,
-> >  		 * writeable reference is too fragile given the way @mode is
-> >  		 * used in blkdev_get/put().
-> >  		 */
-> > -		if ((mode & FMODE_WRITE) && !bdev->bd_write_holder &&
-> > +		if ((mode & BLK_OPEN_WRITE) && !bdev->bd_write_holder &&
-> >  		    (disk->event_flags & DISK_EVENT_FLAG_BLOCK_ON_EXCL_WRITE)) {
-> >  			bdev->bd_write_holder = true;
-> >  			unblock_events = false;
-> > @@ -848,7 +848,7 @@ EXPORT_SYMBOL(blkdev_get_by_dev);
-> >  /**
-> >   * blkdev_get_by_path - open a block device by name
-> >   * @path: path to the block device to open
-> > - * @mode: FMODE_* mask
-> > + * @mode: open mode (BLK_OPEN_*)
-> >   * @holder: exclusive holder identifier
-> >   *
-> >   * Open the block device described by the device file at @path.  If @holder is
-> > @@ -861,7 +861,7 @@ EXPORT_SYMBOL(blkdev_get_by_dev);
-> >   * RETURNS:
-> >   * Reference to the block_device on success, ERR_PTR(-errno) on failure.
-> >   */
-> > -struct block_device *blkdev_get_by_path(const char *path, fmode_t mode,
-> > +struct block_device *blkdev_get_by_path(const char *path, blk_mode_t mode,
-> >  		void *holder, const struct blk_holder_ops *hops)
-> >  {
-> >  	struct block_device *bdev;
-> > @@ -873,7 +873,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode,
-> >  		return ERR_PTR(error);
-> >  
-> >  	bdev = blkdev_get_by_dev(dev, mode, holder, hops);
-> > -	if (!IS_ERR(bdev) && (mode & FMODE_WRITE) && bdev_read_only(bdev)) {
-> > +	if (!IS_ERR(bdev) && (mode & BLK_OPEN_WRITE) && bdev_read_only(bdev)) {
-> >  		blkdev_put(bdev, holder);
-> >  		return ERR_PTR(-EACCES);
-> >  	}
-> > diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-> > index 02cc2c629ac9be..0f9f97cdddd99c 100644
-> > --- a/block/blk-zoned.c
-> > +++ b/block/blk-zoned.c
-> > @@ -356,8 +356,8 @@ int blkdev_report_zones_ioctl(struct block_device *bdev, unsigned int cmd,
-> >  	return 0;
-> >  }
-> >  
-> > -static int blkdev_truncate_zone_range(struct block_device *bdev, fmode_t mode,
-> > -				      const struct blk_zone_range *zrange)
-> > +static int blkdev_truncate_zone_range(struct block_device *bdev,
-> > +		blk_mode_t mode, const struct blk_zone_range *zrange)
-> >  {
-> >  	loff_t start, end;
-> >  
-> > @@ -376,7 +376,7 @@ static int blkdev_truncate_zone_range(struct block_device *bdev, fmode_t mode,
-> >   * BLKRESETZONE, BLKOPENZONE, BLKCLOSEZONE and BLKFINISHZONE ioctl processing.
-> >   * Called from blkdev_ioctl.
-> >   */
-> > -int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
-> > +int blkdev_zone_mgmt_ioctl(struct block_device *bdev, blk_mode_t mode,
-> >  			   unsigned int cmd, unsigned long arg)
-> >  {
-> >  	void __user *argp = (void __user *)arg;
-> > @@ -390,7 +390,7 @@ int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
-> >  	if (!bdev_is_zoned(bdev))
-> >  		return -ENOTTY;
-> >  
-> > -	if (!(mode & FMODE_WRITE))
-> > +	if (!(mode & BLK_OPEN_WRITE))
-> >  		return -EBADF;
-> >  
-> >  	if (copy_from_user(&zrange, argp, sizeof(struct blk_zone_range)))
-> > diff --git a/block/blk.h b/block/blk.h
-> > index e28d5d67d31a28..768852a84fefb3 100644
-> > --- a/block/blk.h
-> > +++ b/block/blk.h
-> > @@ -396,7 +396,7 @@ void disk_free_zone_bitmaps(struct gendisk *disk);
-> >  void disk_clear_zone_settings(struct gendisk *disk);
-> >  int blkdev_report_zones_ioctl(struct block_device *bdev, unsigned int cmd,
-> >  		unsigned long arg);
-> > -int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
-> > +int blkdev_zone_mgmt_ioctl(struct block_device *bdev, blk_mode_t mode,
-> >  		unsigned int cmd, unsigned long arg);
-> >  #else /* CONFIG_BLK_DEV_ZONED */
-> >  static inline void disk_free_zone_bitmaps(struct gendisk *disk) {}
-> > @@ -407,7 +407,7 @@ static inline int blkdev_report_zones_ioctl(struct block_device *bdev,
-> >  	return -ENOTTY;
-> >  }
-> >  static inline int blkdev_zone_mgmt_ioctl(struct block_device *bdev,
-> > -		fmode_t mode, unsigned int cmd, unsigned long arg)
-> > +		blk_mode_t mode, unsigned int cmd, unsigned long arg)
-> >  {
-> >  	return -ENOTTY;
-> >  }
-> > @@ -451,7 +451,7 @@ static inline void bio_release_page(struct bio *bio, struct page *page)
-> >  
-> >  struct request_queue *blk_alloc_queue(int node_id);
-> >  
-> > -int disk_scan_partitions(struct gendisk *disk, fmode_t mode);
-> > +int disk_scan_partitions(struct gendisk *disk, blk_mode_t mode);
-> >  
-> >  int disk_alloc_events(struct gendisk *disk);
-> >  void disk_add_events(struct gendisk *disk);
-> > @@ -466,8 +466,9 @@ extern struct device_attribute dev_attr_events_poll_msecs;
-> >  
-> >  extern struct attribute_group blk_trace_attr_group;
-> >  
-> > -int truncate_bdev_range(struct block_device *bdev, fmode_t mode, loff_t lstart,
-> > -		loff_t lend);
-> > +blk_mode_t file_to_blk_mode(struct file *file);
-> > +int truncate_bdev_range(struct block_device *bdev, blk_mode_t mode,
-> > +		loff_t lstart, loff_t lend);
-> >  long blkdev_ioctl(struct file *file, unsigned cmd, unsigned long arg);
-> >  long compat_blkdev_ioctl(struct file *file, unsigned cmd, unsigned long arg);
-> >  
-> > diff --git a/block/fops.c b/block/fops.c
-> > index 9f26e25bafa172..928c37a214f785 100644
-> > --- a/block/fops.c
-> > +++ b/block/fops.c
-> > @@ -470,6 +470,24 @@ static int blkdev_fsync(struct file *filp, loff_t start, loff_t end,
-> >  	return error;
-> >  }
-> >  
-> > +blk_mode_t file_to_blk_mode(struct file *file)
-> > +{
-> > +	blk_mode_t mode = 0;
-> > +
-> > +	if (file->f_mode & FMODE_READ)
-> > +		mode |= BLK_OPEN_READ;
-> > +	if (file->f_mode & FMODE_WRITE)
-> > +		mode |= BLK_OPEN_WRITE;
-> > +	if (file->f_mode & FMODE_EXCL)
-> > +		mode |= BLK_OPEN_EXCL;
-> > +	if ((file->f_flags & O_ACCMODE) == 3)
-> 
-> I really don't like magic numbers like this.
-> 
-> Groan, O_RDONLY being defined as 0 strikes again...
-> Becuase of this quirk we internally map
-> 
-> O_RDONLY(0) -> FMODE_READ(1)
-> O_WRONLY(1) -> FMODE_WRITE(2)
-> O_RDWR(3)   -> (FMODE_READ | FMODE_WRITE)
-
-s/O_RDWR(3)/O_RDWR(2)/
-
-> 
-> so checking for the raw 3 here is confusing in addition to being a magic
-> number as it could give the impression that what's checked here is
-> (O_WRONLY | O_RDWR) which doesn't make sense...
-> 
-> So my perference would be in descending order of preference:
-> 
-> (file->f_flags & O_ACCMODE) == (FMODE_READ | FMODE_WRITE)
-> 
-> or while a little less clear but informative enough for people familiar
-> with the O_RDONLY quirk:
-> 
-> if ((file->f_flags & O_ACCMODE) == O_ACCMODE)
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gVHVlLCBKdW4gNiwgMjAyMyBhdCA5OjQw4oCvQU0gQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBs
+c3QuZGU+IHdyb3RlOgo+Cj4gUGFzc2luZyBhIGhvbGRlciB0byBibGtkZXZfZ2V0X2J5X3BhdGgg
+d2hlbiBGTU9ERV9FWENMIGlzbid0IHNldCBkb2Vzbid0Cj4gbWFrZSBzZW5zZSwgc28gcGFzcyBO
+VUxMIGluc3RlYWQuCj4KPiBTaWduZWQtb2ZmLWJ5OiBDaHJpc3RvcGggSGVsbHdpZyA8aGNoQGxz
+dC5kZT4KQWNrZWQtYnk6IEphY2sgV2FuZyA8amlucHUud2FuZ0Bpb25vcy5jb20+Cj4gLS0tCj4g
+IGRyaXZlcnMvYmxvY2svcm5iZC9ybmJkLXNydi5jIHwgMiArLQo+ICAxIGZpbGUgY2hhbmdlZCwg
+MSBpbnNlcnRpb24oKyksIDEgZGVsZXRpb24oLSkKPgo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL2Js
+b2NrL3JuYmQvcm5iZC1zcnYuYyBiL2RyaXZlcnMvYmxvY2svcm5iZC9ybmJkLXNydi5jCj4gaW5k
+ZXggY2VjMjJiYmFlMmY5YTUuLmNlNTA1ZTU1MmY0ZDUwIDEwMDY0NAo+IC0tLSBhL2RyaXZlcnMv
+YmxvY2svcm5iZC9ybmJkLXNydi5jCj4gKysrIGIvZHJpdmVycy9ibG9jay9ybmJkL3JuYmQtc3J2
+LmMKPiBAQCAtNzE5LDcgKzcxOSw3IEBAIHN0YXRpYyBpbnQgcHJvY2Vzc19tc2dfb3BlbihzdHJ1
+Y3Qgcm5iZF9zcnZfc2Vzc2lvbiAqc3J2X3Nlc3MsCj4gICAgICAgICAgICAgICAgIGdvdG8gcmVq
+ZWN0Owo+ICAgICAgICAgfQo+Cj4gLSAgICAgICBiZGV2ID0gYmxrZGV2X2dldF9ieV9wYXRoKGZ1
+bGxfcGF0aCwgb3Blbl9mbGFncywgVEhJU19NT0RVTEUsIE5VTEwpOwo+ICsgICAgICAgYmRldiA9
+IGJsa2Rldl9nZXRfYnlfcGF0aChmdWxsX3BhdGgsIG9wZW5fZmxhZ3MsIE5VTEwsIE5VTEwpOwo+
+ICAgICAgICAgaWYgKElTX0VSUihiZGV2KSkgewo+ICAgICAgICAgICAgICAgICByZXQgPSBQVFJf
+RVJSKGJkZXYpOwo+ICAgICAgICAgICAgICAgICBwcl9lcnIoIk9wZW5pbmcgZGV2aWNlICclcycg
+b24gc2Vzc2lvbiAlcyBmYWlsZWQsIGZhaWxlZCB0byBvcGVuIHRoZSBibG9jayBkZXZpY2UsIGVy
+cjogJWRcbiIsCj4gLS0KPiAyLjM5LjIKPgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
+dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
+by9kbS1kZXZlbAo=
 
