@@ -1,85 +1,76 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 81976C7EE2E
-	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 06:48:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 49D46C7EE37
+	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 06:48:59 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686206937;
-	h=from:from:sender:sender:reply-to:reply-to:subject:subject:date:date:
+	s=mimecast20190719; t=1686206938;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=myuTZVGXN34ZsvvVRSwXHfAvyttClad1aQfHtzH2c50=;
-	b=UM4zPg2QMXTPXXwCKPoMF72oiwrses1YaJ61qk3qr2v00Jc1yYefiUn6sUoDG1pCb8Dzff
-	5ecxtS2Sin2z/ZqvwkU1VU5kJkl8QllDO97oM5nIsoDC7FdJ8fnP+HTOW6bgNLvLfquhjY
-	PXsWrtzuG7f9tV7/qhSArGqDg6MoJ6s=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=eHuSDYS7i81D0k22hsbxlbArXBjom7Ew9iUDr5NkOLE=;
+	b=A6I23OwPgjpeQkaqfkMXEtj+tqUzLBhBb5SC4asHVelGhid9PI9uob/nopcWKtLv13/oXy
+	u90sU1XarPN727eWXdfst2mdWko8Avimhipqt2D4spIiirGjImNm1pEOABRpuOTTOV/YyJ
+	iqBvbZFuRwyxot47iMS58WqTfWN8TI8=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-74-4yf4b6epMeeat5_jzXiFQA-1; Thu, 08 Jun 2023 02:48:53 -0400
-X-MC-Unique: 4yf4b6epMeeat5_jzXiFQA-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-623-R4cTpOCiOjea6Jmox1FAug-1; Thu, 08 Jun 2023 02:48:54 -0400
+X-MC-Unique: R4cTpOCiOjea6Jmox1FAug-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 66152803DC2;
-	Thu,  8 Jun 2023 06:48:49 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DA8E28EC12A;
+	Thu,  8 Jun 2023 06:48:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 532494026E0;
-	Thu,  8 Jun 2023 06:48:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4CC64112132D;
+	Thu,  8 Jun 2023 06:48:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 782EF193F519;
-	Thu,  8 Jun 2023 06:48:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 33CDE194E109;
+	Thu,  8 Jun 2023 06:48:48 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 88C7E19452C7
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 15:25:51 +0000 (UTC)
+ ESMTP id 10E4119465BA
+ for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 09:03:20 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 26EC59E90; Wed,  7 Jun 2023 15:25:51 +0000 (UTC)
+ id 9D7282166B25; Wed,  7 Jun 2023 09:03:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1FE079E8B
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 15:25:51 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 95CE92166B26
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 09:03:20 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0B5DB1019C9E
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 15:25:36 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-77-KE0x2tWXNNmbTmwXVycrVA-1; Wed,
- 07 Jun 2023 09:49:10 -0400
-X-MC-Unique: KE0x2tWXNNmbTmwXVycrVA-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 75EC53C11CC8
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 09:03:20 +0000 (UTC)
+Received: from dfw.source.kernel.org (dfw.source.kernel.org
+ [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-404-BOSfyCIRMFWLBjlYdwLHrQ-1; Wed, 07 Jun 2023 05:03:19 -0400
+X-MC-Unique: BOSfyCIRMFWLBjlYdwLHrQ-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by smtp-out1.suse.de (Postfix) with ESMTPS id C1B66219B5;
- Wed,  7 Jun 2023 13:39:09 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 1C3E41346D;
- Wed,  7 Jun 2023 13:39:09 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id AS4SBX2IgGQXbwAAMHmgww
- (envelope-from <dsterba@suse.cz>); Wed, 07 Jun 2023 13:39:09 +0000
-Date: Wed, 7 Jun 2023 15:32:53 +0200
-From: David Sterba <dsterba@suse.cz>
+ by dfw.source.kernel.org (Postfix) with ESMTPS id 4DC4E61E0B;
+ Wed,  7 Jun 2023 09:03:18 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3DCCDC433D2;
+ Wed,  7 Jun 2023 09:03:12 +0000 (UTC)
+Date: Wed, 7 Jun 2023 11:03:09 +0200
+From: Christian Brauner <brauner@kernel.org>
 To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20230607133253.GO25292@twin.jikos.cz>
+Message-ID: <20230607-kernkompetenz-halbleiter-b8874bc39061@brauner>
 References: <20230606073950.225178-1-hch@lst.de>
- <20230606073950.225178-16-hch@lst.de>
+ <20230606073950.225178-27-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20230606073950.225178-16-hch@lst.de>
-User-Agent: Mutt/1.5.23.1-rc1 (2014-03-12)
+In-Reply-To: <20230606073950.225178-27-hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -87,10 +78,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mailman-Approved-At: Thu, 08 Jun 2023 06:48:45 +0000
-Subject: Re: [dm-devel] [PATCH 15/31] btrfs: don't pass a holder for
- non-exclusive blkdev_get_by_path
+Subject: Re: [dm-devel] [PATCH 26/31] block: move a few internal definitions
+ out of blkdev.h
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -102,7 +93,6 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Reply-To: dsterba@suse.cz
 Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  "Rafael J. Wysocki" <rafael@kernel.org>, linux-nvme@lists.infradead.org,
  Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>,
@@ -114,30 +104,28 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>,
  linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
  Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>,
- Jens Axboe <axboe@kernel.dk>, Christian Brauner <brauner@kernel.org>,
+ Jens Axboe <axboe@kernel.dk>,
  "Martin K. Petersen" <martin.petersen@oracle.com>,
  linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: suse.cz
+X-Mimecast-Originator: kernel.org
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Jun 06, 2023 at 09:39:34AM +0200, Christoph Hellwig wrote:
-> Passing a holder to blkdev_get_by_path when FMODE_EXCL isn't set doesn't
-> make sense, so pass NULL instead and remove the holder argument from the
-> call chains the only end up in non-FMODE_EXCL blkdev_get_by_path calls.
+On Tue, Jun 06, 2023 at 09:39:45AM +0200, Christoph Hellwig wrote:
+> All these helpers are only used in core block code, so move them out of
+> the public header.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
 
-Please add
-
-"Exclusive mode for device scanning is not used since 50d281fc434c
- ("btrfs: scan device in non-exclusive mode")."
-
-Acked-by: David Sterba <dsterba@suse.com>
+Looks good to me,
+Acked-by: Christian Brauner <brauner@kernel.org>
 
 --
 dm-devel mailing list
