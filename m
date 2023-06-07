@@ -1,146 +1,68 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AAC43C7EE23
-	for <dm-devel@archiver.kernel.org>; Wed,  7 Jun 2023 18:42:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 35409C7EE23
+	for <dm-devel@archiver.kernel.org>; Wed,  7 Jun 2023 18:46:40 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686163343;
+	s=mimecast20190719; t=1686163599;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=MRkA+nCDaI0Ld61AhlTIXOT8NomsMnmwPrImFw+ZQI8=;
-	b=JL83j2xF2uSerR3EJ06lkVR4XDbdvp1fPtPDyTjx7tio6PJVl3al5aFo5vJ0zNPaMolnUM
-	ZQuRsafkm4zlSUN6KEzwZLKfzYKkkWF9QDu9uSnPAzX0GOgNFjkUfJTwFkdY+nL1EiZV9l
-	F+fufoZGln6zIu8QOkXFkAiuPpV8GZg=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=4eA7H/xl1RdmnixNgAglhVSLIFckOG6XkmcJxZDwQjE=;
+	b=K5GoUx7IaZYZvHxScusb4x+XyNt+ZZdQCnxP7/3cI1zgAsY1+xV9G7nQHYTblNEZ5363e/
+	o52fEObbY/MnCpEVGZ0zhN9n4pIZhhGv9RJiNK95w3aCo6zuSIFmJnsK/svYnpXb0KFSYo
+	4A157NJ6jFmDBBefJVIcSBSK7AikV/4=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-121-8dHHCPMYMMiNYuhjY8Ihgg-1; Wed, 07 Jun 2023 14:42:20 -0400
-X-MC-Unique: 8dHHCPMYMMiNYuhjY8Ihgg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-670-xTfpFc-XNIuWXrINduMTKg-1; Wed, 07 Jun 2023 14:46:36 -0400
+X-MC-Unique: xTfpFc-XNIuWXrINduMTKg-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AED308030CF;
-	Wed,  7 Jun 2023 18:42:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D8D843C0286A;
+	Wed,  7 Jun 2023 18:46:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5BA3040D1B68;
-	Wed,  7 Jun 2023 18:42:18 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C44D8492B00;
+	Wed,  7 Jun 2023 18:46:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0F8C119452C3;
-	Wed,  7 Jun 2023 18:42:18 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 849ED19452C3;
+	Wed,  7 Jun 2023 18:46:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E6E0519465BA
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 18:42:16 +0000 (UTC)
+ ESMTP id ECEA719465BA
+ for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 18:46:32 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C163AC0004B; Wed,  7 Jun 2023 18:42:16 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B8074C0448E
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 18:42:16 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9969F101A53B
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 18:42:16 +0000 (UTC)
-Received: from EUR04-VI1-obe.outbound.protection.outlook.com
- (mail-vi1eur04on2082.outbound.protection.outlook.com [40.107.8.82]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-389-Alxf8GaQPtCL0fVCXNUe-g-1; Wed, 07 Jun 2023 14:42:14 -0400
-X-MC-Unique: Alxf8GaQPtCL0fVCXNUe-g-1
-Received: from AS8PR04MB8040.eurprd04.prod.outlook.com (2603:10a6:20b:2a9::22)
- by DUZPR04MB9967.eurprd04.prod.outlook.com (2603:10a6:10:4dd::6) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6455.32; Wed, 7 Jun
- 2023 18:42:12 +0000
-Received: from AS8PR04MB8040.eurprd04.prod.outlook.com
- ([fe80::e365:d65a:a200:40c1]) by AS8PR04MB8040.eurprd04.prod.outlook.com
- ([fe80::e365:d65a:a200:40c1%4]) with mapi id 15.20.6455.034; Wed, 7 Jun 2023
- 18:42:12 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
- "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH V2 00/11] multipath: Add a group_by_tgp pgpolicy
-Thread-Index: AQHZmLNXKG21etlSWUmXA5Hem5m1yK9/riIA
-Date: Wed, 7 Jun 2023 18:42:12 +0000
-Message-ID: <7daee84937d0d2ec2f1cba92969b0c90733b0925.camel@suse.com>
+ id A9300403367; Wed,  7 Jun 2023 18:46:32 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 013F8403176;
+ Wed,  7 Jun 2023 18:46:31 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 357IkTfg005208;
+ Wed, 7 Jun 2023 13:46:29 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 357IkSrb005207;
+ Wed, 7 Jun 2023 13:46:28 -0500
+Date: Wed, 7 Jun 2023 13:46:28 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Message-ID: <20230607184628.GE32239@octiron.msp.redhat.com>
 References: <1686082391-29210-1-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1686082391-29210-1-git-send-email-bmarzins@redhat.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.48.1
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: AS8PR04MB8040:EE_|DUZPR04MB9967:EE_
-x-ms-office365-filtering-correlation-id: 709a71ec-18d1-4393-9595-08db6786e82f
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: 3I1wenEoxWAOf4FHWTocXH7Oz7spOAPxMnuJn8jk+gf/u9R2OkwA5KBZ1h9PBNDbweV4ZigxE3VPut3acc/LM+RCk9Ih0E1yRkAC3RsnKbbT17y1rDZgiVF9sPZAj/ev9lWN88MCYXor0txsz74Y0q8ehWV7KdUzvdFuV9OPqY6TThfrWDK49H/93s1EOdp2bZ/J+U3N68408cJOUiMOlhI9tZssmAvrw2GPjnWPi4Dg5VaG1iloNdgHaQNAhtNgdab0QTe1VL5vhmbDwSEk3fvoCWWt7ZD8oHyjRlTTQFJLEvZ1i3qmL8bBCVklDsxUls2swSVfFYnff4OAiKXVq0urDIRNSP/c0a4OJjo1Rx7GZk+Hx1H5dVyWrcNZQHcYH1PrWFAPMxJHJC/VOgtUG/omRPwcYbBO/6PhrwXeRaPH5NA9OyX1x+xXiK16XsgB1592tj+8FVnYsL+6VtamnuGJm2bSYysCu+3kiYu+QBwuI0R9yZLn7It59pXxMB/M/zSM+MB9fbthAwJJ+9wM2BIaw9xa/QrVxVEqqoWiR7TQHhnMS/xGIb7kQyA4ulW5xd0+vpBZ8YsmyMwyrgTIE8JtjnMdyHmdcJ5S7bLrLoRihaDBJXRpkqOB9+QDYUEj
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:AS8PR04MB8040.eurprd04.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230028)(376002)(396003)(136003)(39860400002)(346002)(366004)(451199021)(36756003)(86362001)(2906002)(4744005)(38070700005)(44832011)(5660300002)(66476007)(6486002)(6506007)(6512007)(26005)(186003)(478600001)(91956017)(71200400001)(110136005)(66556008)(76116006)(66446008)(38100700002)(66946007)(2616005)(4326008)(122000001)(316002)(64756008)(41300700001)(8676002)(8936002);
- DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?tMGZVIabeZZGhW6m0hx6z8MB/+JN5KuUeUS1psQeNHJOXfcLomQeVymHr?=
- =?iso-8859-15?Q?jr91syEkq8n7r2g/dJFYdadHRSCkcd+OvSOVRvNVdFNho6KxEG6vcPbzR?=
- =?iso-8859-15?Q?SN9NPdXivm2M1HseT2jJZffpNoYeDMLOnE95irC2w/yIhRTUc8Gjpg9zv?=
- =?iso-8859-15?Q?M/svLOtYZzeprgc70IUVD1r4lh7QA6sHuSRUhHAfn86TS6/LsUEZEyhy1?=
- =?iso-8859-15?Q?zdAsgUX5oGMYqrKdMOzgVgSg67UHfxIB+vn0OT7xjshgoL2S3W5ReBBS2?=
- =?iso-8859-15?Q?F5m8IzT3Cz4xQknclX/OjYP0NIMc1z4OQTzC2yJpJ89ywNb+awYR8Csil?=
- =?iso-8859-15?Q?9bKcojrFlhfn9bhQhqpbJm3TJ3BSQAqfGsu3MVR9mP5Cmqgn4/f4AltlT?=
- =?iso-8859-15?Q?hdXe1bT+bvOTouqdP7jJLlRqk8N3HTZ66UhJcD2Dyz8KOtbnpYgFJmPeW?=
- =?iso-8859-15?Q?fyCeyP6H8VRoZOhK8qmH/4chTDkFeO8QVOHb0mxbZtApfh2P69gili5Dh?=
- =?iso-8859-15?Q?+ogML83zINJJrKxSwhvTDXosNtfbIsn6pjuLFomar4lgm+dnNX/V3aUPO?=
- =?iso-8859-15?Q?nLtzNvGX9z3xAbwAq+G0AnFbG9XZLjJjuzIj1uWm+gXWucBWAF65ikL9F?=
- =?iso-8859-15?Q?Gjgq1miZGElg/COAyWVUAL3n0g0/LuR6hjcWhsbwGI40D4NVxgF8G5Z/j?=
- =?iso-8859-15?Q?pWq+i4wrzK8pMx3nJ+b+nAHC2ecZlqOWITHfSgn285UUJU5m1334p+wT7?=
- =?iso-8859-15?Q?LKaKmWpZ0JI964WgejVAEefgnGSOX9SHZFWrUgAGLVgGYEFeo2sPOphz5?=
- =?iso-8859-15?Q?gJ5ZEcYxBga++YaOP6yyPacvwvx2egi9nZXMYI8BZ6oU6zw53qPVitF8v?=
- =?iso-8859-15?Q?tUdN7YMnY/OPgzqzE6NfwUjHOjgU9MYCBzQA2YE3Nv7uARtzRE+7Dii4M?=
- =?iso-8859-15?Q?rg7T2/PX6yM4kRmq3x2UbE9Ekh7JIAfDh7C3ujuaKEa2VUXpl5mY6ZOhG?=
- =?iso-8859-15?Q?d10TR9xl0K7rkuWKSu5PprkE3EZMfmz1x2fTW2Ek04ChvBm3tLtvCzB7J?=
- =?iso-8859-15?Q?US3eB+yrwKn+XZdnVdlVdjTXRLxWOm/qlPjpHakmy4KyETObG8OTPg2vr?=
- =?iso-8859-15?Q?LSNZrOq3F73exa8To4qa3PwzxtD+cX2jsrPOVvtBiBP26s+8m2glLePaf?=
- =?iso-8859-15?Q?0q9DBYeLaxqt0hW5QY2vlAHg5W9fePMos78+CDOA50UdRTMAXLU0yMOJg?=
- =?iso-8859-15?Q?+iopf5aYW+8lVp4YxBjHK8wziWEdRbxZsttBjOxArQlVOjp/wxxveZW6r?=
- =?iso-8859-15?Q?IrtRw9ENeEzT+JjUFDw0rgxVLPSRWW7WY0cO61a4eL0QN2PLxrRZrVCOU?=
- =?iso-8859-15?Q?s3Zx+gbNORmPnTTaBdVNxOgDjCekJ5hqoJJeJJ7JNfid/bKAv7uiKapad?=
- =?iso-8859-15?Q?p5CMDc9UbNHqdGGYrwCIUZyyr+i6sI0RJp2C3LgvE2AyYfGkVZuUzuxWW?=
- =?iso-8859-15?Q?L0xcWy6QnjIhNzXhNDNxzz3DkxKKjOjwX/VLpoGGj4Qi6U/EMJDXstpCg?=
- =?iso-8859-15?Q?8DFkB8zb9mUXzHonB2glMmES7NG8Jjyp8Yw7hPNPhe+njZ7VL8Sa/g2FY?=
- =?iso-8859-15?Q?/fA4THw5yt4Z9SnFPCOhlpxTvsHrlKy9AUg1NYWfG01WtRt8mnL4Dcxlf?=
- =?iso-8859-15?Q?N/dO?=
+ <1686082391-29210-2-git-send-email-bmarzins@redhat.com>
+ <ba8f322db61002338353839fbd2d4921a5c11ebd.camel@suse.com>
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: AS8PR04MB8040.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 709a71ec-18d1-4393-9595-08db6786e82f
-X-MS-Exchange-CrossTenant-originalarrivaltime: 07 Jun 2023 18:42:12.1602 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: nM6grg9mbpB/RlTPVDbb+7iIcRakOm3ceUPP8NBMKLJCXJOM8Y9tXnH/A33yOJe3+OW/BXuhsm5yQmV1BD3NWA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DUZPR04MB9967
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH V2 00/11] multipath: Add a group_by_tgp
- pgpolicy
+In-Reply-To: <ba8f322db61002338353839fbd2d4921a5c11ebd.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: Re: [dm-devel] [PATCH V2 01/11] libmultipath: add group_by_tpg
+ path_grouping_policy
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -155,32 +77,206 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: suse.com
-Content-Language: en-US
-Content-ID: <97C843F30B8CD64FA5B388B6F6E9A82A@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-On Tue, 2023-06-06 at 15:13 -0500, Benjamin Marzinski wrote:
-> This patchset is a combination of my previous two patchsets
-> 
-> [PATCH 0/5] multipath: Add a group_by_tgp path grouping policy
-> [PATCH 0/5] priority and pathgroup switching changes
-> 
-> The first part adds a new path grouping policy that can be used with
-> ALUA devices. The goal is to avoid the temporary incorrect path
-> groupings that can happen when paths change priorities.
-> 
+On Wed, Jun 07, 2023 at 06:31:19PM +0000, Martin Wilck wrote:
+> On Tue, 2023-06-06 at 15:13 -0500, Benjamin Marzinski wrote:
+> > =A0#endif
+> > diff --git a/libmultipath/prioritizers/alua.c
+> > b/libmultipath/prioritizers/alua.c
+> > index 0ab06e2b..4888a974 100644
+> > --- a/libmultipath/prioritizers/alua.c
+> > +++ b/libmultipath/prioritizers/alua.c
+> > @@ -65,6 +65,7 @@ get_alua_info(struct path * pp, unsigned int
+> > timeout)
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0return -ALUA_PRIO_NOT_SUPPORTED;
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return -ALUA_PRIO_RTPG_=
+FAILED;
+> > =A0=A0=A0=A0=A0=A0=A0=A0}
+> > +=A0=A0=A0=A0=A0=A0=A0pp->tpg_id =3D tpg;
+> > =A0=A0=A0=A0=A0=A0=A0=A0condlog(3, "%s: reported target port group is %=
+i", pp->dev,
+>=20
+>=20
+> I still think that we should log a change here. Perhaps we should keep
+> the existing condlog() and just use prio 2 if the tpg_id changed, and
+> prio 4 if it didn't (the current 3 clutters the logs quite a bit).
 
-Lest I forget: it'd be nice to add functionality (in a later set) to
-print the TPG id of a pathgroup in the topology output if group_by_tpg
-was used.
+Oops. My Bad. I meant to add that. I'll send a follow-on patch.=20
 
-Thanks,
-Martin
+-Ben
 
+>=20
+> Regards
+> Martin
+>=20
+>=20
+>=20
+> > tpg);
+> > =A0=A0=A0=A0=A0=A0=A0=A0rc =3D get_asymmetric_access_state(pp, tpg, tim=
+eout);
+> > =A0=A0=A0=A0=A0=A0=A0=A0if (rc < 0) {
+> > diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+> > index a25cc921..841fa247 100644
+> > --- a/libmultipath/propsel.c
+> > +++ b/libmultipath/propsel.c
+> > @@ -35,7 +35,8 @@ pgpolicyfn *pgpolicies[] =3D {
+> > =A0=A0=A0=A0=A0=A0=A0=A0one_group,
+> > =A0=A0=A0=A0=A0=A0=A0=A0group_by_serial,
+> > =A0=A0=A0=A0=A0=A0=A0=A0group_by_prio,
+> > -=A0=A0=A0=A0=A0=A0=A0group_by_node_name
+> > +=A0=A0=A0=A0=A0=A0=A0group_by_node_name,
+> > +=A0=A0=A0=A0=A0=A0=A0group_by_tpg,
+> > =A0};
+> > =A0
+> > =A0#define do_set(var, src, dest,
+> > msg)=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > @@ -249,10 +250,26 @@ out:
+> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
+> > =A0}
+> > =A0
+> > +static bool
+> > +verify_alua_prio(struct multipath *mp)
+> > +{
+> > +=A0=A0=A0=A0=A0=A0=A0int i;
+> > +=A0=A0=A0=A0=A0=A0=A0struct path *pp;
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot(mp->paths, pp, i) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0const char *name =3D prio=
+_name(&pp->prio);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (strncmp(name, PRIO_AL=
+UA, PRIO_NAME_LEN) &&
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 strncmp(name, P=
+RIO_SYSFS, PRIO_NAME_LEN))
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 =
+return false;
+> > +=A0=A0=A0=A0=A0=A0=A0}
+> > +=A0=A0=A0=A0=A0=A0=A0return true;
+> > +}
+> > +
+> > =A0int select_pgpolicy(struct config *conf, struct multipath * mp)
+> > =A0{
+> > =A0=A0=A0=A0=A0=A0=A0=A0const char *origin;
+> > =A0=A0=A0=A0=A0=A0=A0=A0char buff[POLICY_NAME_SIZE];
+> > +=A0=A0=A0=A0=A0=A0=A0int log_prio =3D 3;
+> > =A0
+> > =A0=A0=A0=A0=A0=A0=A0=A0if (conf->pgpolicy_flag > 0) {
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0mp->pgpolicy =3D conf->=
+pgpolicy_flag;
+> > @@ -265,9 +282,15 @@ int select_pgpolicy(struct config *conf, struct
+> > multipath * mp)
+> > =A0=A0=A0=A0=A0=A0=A0=A0mp_set_conf(pgpolicy);
+> > =A0=A0=A0=A0=A0=A0=A0=A0mp_set_default(pgpolicy, DEFAULT_PGPOLICY);
+> > =A0out:
+> > +=A0=A0=A0=A0=A0=A0=A0if (mp->pgpolicy =3D=3D GROUP_BY_TPG && !verify_a=
+lua_prio(mp)) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0mp->pgpolicy =3D DEFAULT_=
+PGPOLICY;
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0origin =3D "(setting: eme=
+rgency fallback - not all
+> > paths use alua prio)";
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0log_prio =3D 1;
+> > +=A0=A0=A0=A0=A0=A0=A0}
+> > =A0=A0=A0=A0=A0=A0=A0=A0mp->pgpolicyfn =3D pgpolicies[mp->pgpolicy];
+> > =A0=A0=A0=A0=A0=A0=A0=A0get_pgpolicy_name(buff, POLICY_NAME_SIZE, mp->p=
+gpolicy);
+> > -=A0=A0=A0=A0=A0=A0=A0condlog(3, "%s: path_grouping_policy =3D %s %s", =
+mp->alias,
+> > buff, origin);
+> > +=A0=A0=A0=A0=A0=A0=A0condlog(log_prio, "%s: path_grouping_policy =3D %=
+s %s", mp-
+> > >alias, buff,
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0origin);
+> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
+> > =A0}
+> > =A0
+> > diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+> > index 87e84d5d..39504dca 100644
+> > --- a/libmultipath/structs.c
+> > +++ b/libmultipath/structs.c
+> > @@ -125,6 +125,7 @@ alloc_path (void)
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->sg_id.proto_id =3D =
+PROTOCOL_UNSET;
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->fd =3D -1;
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->tpgs =3D TPGS_UNDEF=
+;
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->tpg_id =3D GROUP_ID_U=
+NDEF;
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->priority =3D PRIO_U=
+NDEF;
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->checkint =3D CHECKI=
+NT_UNDEF;
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0checker_clear(&pp->chec=
+ker);
+> > diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+> > index a1208751..0eea19b4 100644
+> > --- a/libmultipath/structs.h
+> > +++ b/libmultipath/structs.h
+> > @@ -317,6 +317,8 @@ struct hd_geometry {
+> > =A0};
+> > =A0#endif
+> > =A0
+> > +#define GROUP_ID_UNDEF -1
+> > +
+> > =A0struct path {
+> > =A0=A0=A0=A0=A0=A0=A0=A0char dev[FILE_NAME_SIZE];
+> > =A0=A0=A0=A0=A0=A0=A0=A0char dev_t[BLK_DEV_SIZE];
+> > @@ -372,6 +374,7 @@ struct path {
+> > =A0=A0=A0=A0=A0=A0=A0=A0/* configlet pointers */
+> > =A0=A0=A0=A0=A0=A0=A0=A0vector hwe;
+> > =A0=A0=A0=A0=A0=A0=A0=A0struct gen_path generic_path;
+> > +=A0=A0=A0=A0=A0=A0=A0int tpg_id;
+> > =A0};
+> > =A0
+> > =A0typedef int (pgpolicyfn) (struct multipath *, vector);
+> > diff --git a/multipath/main.c b/multipath/main.c
+> > index 90f940f1..b78f3162 100644
+> > --- a/multipath/main.c
+> > +++ b/multipath/main.c
+> > @@ -157,6 +157,7 @@ usage (char * progname)
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0"=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0 . group_by_serial=A0=A0=A0=A0 one priority group
+> > per serial\n"
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0"=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0 . group_by_prio=A0=A0=A0=A0=A0=A0 one priority group
+> > per priority lvl\n"
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0"=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0 . group_by_node_name=A0 one priority group
+> > per target node\n"
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0"=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0 . group_by_tpg=A0=A0=A0=A0=A0=A0=A0 one priority group
+> > per ALUA target port group\n"
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0"=A0 -v lvl=A0 verbosit=
+y level:\n"
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0"=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0 . 0 no output\n"
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0"=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0 . 1 print created devmap names only\n"
+> > diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+> > index b4dccd1b..b65a543d 100644
+> > --- a/multipath/multipath.conf.5
+> > +++ b/multipath/multipath.conf.5
+> > @@ -233,6 +233,10 @@ per-multipath option in the configuration file.
+> > =A0One priority group per target node name. Target node names are
+> > fetched
+> > =A0in \fI/sys/class/fc_transport/target*/node_name\fR.
+> > =A0.TP
+> > +.I group_by_tpg
+> > +One priority group per ALUA target port group. In order to use this
+> > policy,
+> > +all paths in the multipath device must have \fIprio\fR set to
+> > \fBalua\fR.
+> > +.TP
+> > =A0The default is: \fBfailover\fR
+> > =A0.RE
+> > =A0.
 --
 dm-devel mailing list
 dm-devel@redhat.com
