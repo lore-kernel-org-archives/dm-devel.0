@@ -1,11 +1,11 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 66735C7EE45
-	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 06:49:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0CEACC7EE37
+	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 06:49:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1686206950;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
@@ -14,63 +14,60 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=OVp4a+Kk4C2Bn612jYOffqusVaty6ynNG+oXNEblRYY=;
-	b=NiVjf+4rs32FXeg6KH+gYtlcU9dmaTpdjDSOGSE3UAw1nCT9kFBRd2YZzU2T0WdjC9+dW3
-	P/xHDhwXlsCFIC4agTp5M/9oql4KUUzqvlzOH0wUlYHk+bqwwZuzroCspcLdHuAnXmdHb2
-	14iFrhbDmYIwmk8wsP+ncaK8s8kdRbM=
+	bh=zSve+Ihjl9g9fwhALXmxBnqJ82IN8InlfX7npBXQhyg=;
+	b=E20xR+DMraKK662NhGB5bf9n3lDfPyX8KpAag8nbuEhulopUJK2OY1F6M2z+eI/ndkc/dy
+	bjg4GV9duno0JuMGLD2HYd4aVj61gKjcrwwO5rwUuBYgI/h7s7qYkMSuUxeEC7bfCr4aon
+	I/5EaQlQ+qlN4uZZ/SApzjQ6w44MZnY=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-633-xHAG2aZ_PQmT7wtQRZ-vFg-1; Thu, 08 Jun 2023 02:49:07 -0400
-X-MC-Unique: xHAG2aZ_PQmT7wtQRZ-vFg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-558-LvfLUPnJNe280WbM-hr8PQ-1; Thu, 08 Jun 2023 02:49:06 -0400
+X-MC-Unique: LvfLUPnJNe280WbM-hr8PQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8D294803493;
-	Thu,  8 Jun 2023 06:49:03 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D4670101B044;
+	Thu,  8 Jun 2023 06:49:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 7A51B9E8D;
-	Thu,  8 Jun 2023 06:49:03 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C09C64026E2;
+	Thu,  8 Jun 2023 06:49:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 397F2194E10F;
-	Thu,  8 Jun 2023 06:48:52 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BB72519451DE;
+	Thu,  8 Jun 2023 06:48:50 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4D28A19465BA
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 08:58:09 +0000 (UTC)
+ ESMTP id 5650B19451CA
+ for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 12:19:04 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3B32340CFD47; Wed,  7 Jun 2023 08:58:09 +0000 (UTC)
+ id CE3689E9E; Wed,  7 Jun 2023 12:18:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 3437C40CFD46
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 08:58:09 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C62639E9C
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 12:18:56 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1A1808039A4
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 08:58:09 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-617-ozJNQkFJOTyZqLjGph20QQ-1; Wed, 07 Jun 2023 04:58:07 -0400
-X-MC-Unique: ozJNQkFJOTyZqLjGph20QQ-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id B784863C9E;
- Wed,  7 Jun 2023 08:58:06 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7D982C433EF;
- Wed,  7 Jun 2023 08:58:00 +0000 (UTC)
-Date: Wed, 7 Jun 2023 10:57:57 +0200
-From: Christian Brauner <brauner@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20230607-lider-beilegen-479e8cf3bf53@brauner>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ABDC6811E92
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 12:18:56 +0000 (UTC)
+Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-57-iRcnD41gPqu1DTNBvxff2w-1; Wed, 07 Jun 2023 08:18:54 -0400
+X-MC-Unique: iRcnD41gPqu1DTNBvxff2w-1
+Received: by verein.lst.de (Postfix, from userid 2407)
+ id AC1196732D; Wed,  7 Jun 2023 14:18:50 +0200 (CEST)
+Date: Wed, 7 Jun 2023 14:18:50 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Christian Brauner <brauner@kernel.org>
+Message-ID: <20230607121850.GA14396@lst.de>
 References: <20230606073950.225178-1-hch@lst.de>
- <20230606073950.225178-20-hch@lst.de>
+ <20230606073950.225178-31-hch@lst.de>
+ <20230607-verjagen-weise-4fb3d76a6313@brauner>
 MIME-Version: 1.0
-In-Reply-To: <20230606073950.225178-20-hch@lst.de>
+In-Reply-To: <20230607-verjagen-weise-4fb3d76a6313@brauner>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,10 +75,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-X-Mailman-Approved-At: Thu, 08 Jun 2023 06:48:45 +0000
-Subject: Re: [dm-devel] [PATCH 19/31] scsi: replace the fmode_t argument to
- scsi_cmd_allowed with a simple bool
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Mailman-Approved-At: Thu, 08 Jun 2023 06:48:46 +0000
+Subject: Re: [dm-devel] [PATCH 30/31] block: store the holder in
+ file->private_data
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -98,34 +95,42 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>,
  dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>,
  Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>,
- Jack Wang <jinpu.wang@ionos.com>, linux-nilfs@vger.kernel.org,
- linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>,
- linux-pm@vger.kernel.org, linux-um@lists.infradead.org,
- Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>,
- linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
- Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>,
- Jens Axboe <axboe@kernel.dk>,
+ Jack Wang <jinpu.wang@ionos.com>, Christoph Hellwig <hch@lst.de>,
+ linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org,
+ Richard Weinberger <richard@nod.at>, linux-pm@vger.kernel.org,
+ linux-um@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>,
+ Coly Li <colyli@suse.de>, linux-block@vger.kernel.org,
+ linux-bcache@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>,
+ David Sterba <dsterba@suse.com>, Jens Axboe <axboe@kernel.dk>,
  "Martin K. Petersen" <martin.petersen@oracle.com>,
  linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
+X-Mimecast-Originator: lst.de
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Jun 06, 2023 at 09:39:38AM +0200, Christoph Hellwig wrote:
-> Instead of passing a fmode_t and only checking it for FMODE_WRITE, pass
-> a bool open_for_write to prepare for callers that won't have the fmode_t.
+On Wed, Jun 07, 2023 at 11:24:55AM +0200, Christian Brauner wrote:
+> On Tue, Jun 06, 2023 at 09:39:49AM +0200, Christoph Hellwig wrote:
+> > Store the file struct used as the holder in file->private_data as an
+> > indicator that this file descriptor was opened exclusively to  remove
+> > the last use of FMODE_EXCL.
+> > 
+> > Signed-off-by: Christoph Hellwig <hch@lst.de>
+> > ---
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
+> Feels a bit odd to store the object itself but anyway,
+> Acked-by: Christian Brauner <brauner@kernel.org>
 
-Looks good to me,
-Acked-by: Christian Brauner <brauner@kernel.org>
+We could literally store anything we want.  The only reason I picked the
+file is because: a) we have it around and b) that allows passing it
+to blkdev_put without a branch in blkdev_release.
+
+If you prefer something else I can change it.
 
 --
 dm-devel mailing list
