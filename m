@@ -1,10 +1,10 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5B83FC7EE2E
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CD506C87FDD
 	for <dm-devel@archiver.kernel.org>; Wed,  7 Jun 2023 20:48:08 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1686170887;
@@ -14,51 +14,50 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Q4DZOR46g8wL+A8Y4EYISL3B2VYQTprcQftcKC3lxoM=;
-	b=V8WxexHC8m7zE0GdCOkdZxgBk5rFwPR2/PRgs1/8vhbXQUYR5T6TLOBIe0HakGl77UN9G/
-	O5PWzxgzxavoXwHu/ee/ytm3c/Oms/ZGCSYgHcASxvatw0ji4mMVaOKgKSqv+2giwCUq5B
-	MMbUVgJ1aCuKA4fnRV4XkAKVafH+cn4=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=KjIpSWzxYUHaiH5jTySsUo05l4UBiMex/ZVt38mIkGQ=;
+	b=IirqDkAnKpKUUSuI8qTw0Gyq+sG1AySN86qj439VEE/dkhPVksQphW3i+8FIqZcvbJePrs
+	DnivvcUoP3usbYj0ddS7Q4MfknJ+SYvCMFnaA9NVW2zVO7W1prLbVXee5UYaxfoI0aINYT
+	JTREOFZ+B3b6/GPWeT5gW01UQkNEIYw=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-631-K4mIBTW3P--PaIJYv7Ld5Q-1; Wed, 07 Jun 2023 16:48:04 -0400
-X-MC-Unique: K4mIBTW3P--PaIJYv7Ld5Q-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-304-jaN7g9oBPsaFX8lfFja_cQ-1; Wed, 07 Jun 2023 16:48:06 -0400
+X-MC-Unique: jaN7g9oBPsaFX8lfFja_cQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 13248296A612;
-	Wed,  7 Jun 2023 20:48:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1207D811E85;
+	Wed,  7 Jun 2023 20:48:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C16DC9E8B;
-	Wed,  7 Jun 2023 20:48:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EE4D82166B27;
+	Wed,  7 Jun 2023 20:48:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7E87219452C3;
-	Wed,  7 Jun 2023 20:48:01 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A987919452C6;
+	Wed,  7 Jun 2023 20:48:03 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
  [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D416B19465BA
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 20:47:59 +0000 (UTC)
+ ESMTP id 30B2D19465BA
+ for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 20:48:01 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B3D56140E957; Wed,  7 Jun 2023 20:47:59 +0000 (UTC)
+ id 11144140E955; Wed,  7 Jun 2023 20:48:01 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 9D9B0140E956;
- Wed,  7 Jun 2023 20:47:59 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id EE3BD140E954;
+ Wed,  7 Jun 2023 20:48:00 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 357KlvC3005801;
- Wed, 7 Jun 2023 15:47:57 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 357KlwJq005805;
+ Wed, 7 Jun 2023 15:47:58 -0500
 Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 357Klujc005800;
- Wed, 7 Jun 2023 15:47:56 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 357KlvEQ005804;
+ Wed, 7 Jun 2023 15:47:57 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Wed,  7 Jun 2023 15:47:44 -0500
-Message-Id: <1686170873-5754-3-git-send-email-bmarzins@redhat.com>
+Date: Wed,  7 Jun 2023 15:47:45 -0500
+Message-Id: <1686170873-5754-4-git-send-email-bmarzins@redhat.com>
 In-Reply-To: <1686170873-5754-1-git-send-email-bmarzins@redhat.com>
 References: <1686170873-5754-1-git-send-email-bmarzins@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: [dm-devel] [PATCH V3 02/11] libmultipath: don't copy pgpolicy
- string in get_pgpolicy_name
+Subject: [dm-devel] [PATCH V3 03/11] libmultipath: add ALUA tpg path wildcard
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -75,128 +74,47 @@ Cc: device-mapper development <dm-devel@redhat.com>,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-copying the value into a passed in buffer doesn't help any of the
-callers of this function. It's just wasted work.
+Make it possible to easily check a path's target port group.
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/dict.c       |  6 +-----
- libmultipath/pgpolicies.c | 27 ++++++++-------------------
- libmultipath/pgpolicies.h |  2 +-
- libmultipath/propsel.c    |  6 ++----
- 4 files changed, 12 insertions(+), 29 deletions(-)
+ libmultipath/print.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 2e9b45f9..dddd3cd6 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -1209,14 +1209,10 @@ set_pgpolicy(vector strvec, void *ptr, const char *file, int line_nr)
- int
- print_pgpolicy(struct strbuf *buff, long pgpolicy)
- {
--	char str[POLICY_NAME_SIZE];
--
- 	if (!pgpolicy)
- 		return 0;
- 
--	get_pgpolicy_name(str, POLICY_NAME_SIZE, pgpolicy);
--
--	return append_strbuf_quoted(buff, str);
-+	return append_strbuf_quoted(buff, get_pgpolicy_name(pgpolicy));
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 3193dbe0..360308d2 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -782,6 +782,14 @@ snprint_path_vpd_data(struct strbuf *buff, const struct path * pp)
+ 	return append_strbuf_str(buff, "[undef]");
  }
  
- declare_def_handler(pgpolicy, set_pgpolicy)
-diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
-index e14da8cc..edc3c611 100644
---- a/libmultipath/pgpolicies.c
-+++ b/libmultipath/pgpolicies.c
-@@ -31,34 +31,23 @@ int get_pgpolicy_id(char * str)
- 	return IOPOLICY_UNDEF;
- }
- 
--int get_pgpolicy_name(char * buff, int len, int id)
-+const char *get_pgpolicy_name(int id)
- {
--	char * s;
--
- 	switch (id) {
- 	case FAILOVER:
--		s = "failover";
--		break;
-+		return "failover";
- 	case MULTIBUS:
--		s = "multibus";
--		break;
-+		return "multibus";
- 	case GROUP_BY_SERIAL:
--		s = "group_by_serial";
--		break;
-+		return "group_by_serial";
- 	case GROUP_BY_PRIO:
--		s = "group_by_prio";
--		break;
-+		return "group_by_prio";
- 	case GROUP_BY_NODE_NAME:
--		s = "group_by_node_name";
--		break;
-+		return "group_by_node_name";
- 	case GROUP_BY_TPG:
--		s = "group_by_tpg";
--		break;
--	default:
--		s = "undefined";
--		break;
-+		return "group_by_tpg";
- 	}
--	return snprintf(buff, len, "%s", s);
-+	return "undefined"; /* IOPOLICY_UNDEF */
- }
- 
- 
-diff --git a/libmultipath/pgpolicies.h b/libmultipath/pgpolicies.h
-index d3ab2f35..9e4ddda2 100644
---- a/libmultipath/pgpolicies.h
-+++ b/libmultipath/pgpolicies.h
-@@ -21,7 +21,7 @@ enum iopolicies {
++static int
++snprint_alua_tpg(struct strbuf *buff, const struct path * pp)
++{
++	if (pp->tpg_id < 0)
++		return append_strbuf_str(buff, "[undef]");
++	return print_strbuf(buff, "0x%04x", pp->tpg_id);
++}
++
+ static const struct multipath_data mpd[] = {
+ 	{'n', "name",          snprint_name},
+ 	{'w', "uuid",          snprint_multipath_uuid},
+@@ -836,6 +844,7 @@ static const struct path_data pd[] = {
+ 	{'P', "protocol",      snprint_path_protocol},
+ 	{'I', "init_st",       snprint_initialized},
+ 	{'L', "LUN hex",       snprint_path_lunhex},
++	{'A', "TPG",           snprint_alua_tpg},
  };
  
- int get_pgpolicy_id(char *);
--int get_pgpolicy_name (char *, int, int);
-+const char *get_pgpolicy_name (int);
- int group_paths(struct multipath *, int);
- /*
-  * policies
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 841fa247..d214281b 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -268,7 +268,6 @@ verify_alua_prio(struct multipath *mp)
- int select_pgpolicy(struct config *conf, struct multipath * mp)
- {
- 	const char *origin;
--	char buff[POLICY_NAME_SIZE];
- 	int log_prio = 3;
- 
- 	if (conf->pgpolicy_flag > 0) {
-@@ -288,9 +287,8 @@ out:
- 		log_prio = 1;
- 	}
- 	mp->pgpolicyfn = pgpolicies[mp->pgpolicy];
--	get_pgpolicy_name(buff, POLICY_NAME_SIZE, mp->pgpolicy);
--	condlog(log_prio, "%s: path_grouping_policy = %s %s", mp->alias, buff,
--		origin);
-+	condlog(log_prio, "%s: path_grouping_policy = %s %s", mp->alias,
-+		get_pgpolicy_name(mp->pgpolicy), origin);
- 	return 0;
- }
- 
+ static const struct pathgroup_data pgd[] = {
 -- 
 2.17.2
 
