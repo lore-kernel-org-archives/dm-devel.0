@@ -4,7 +4,7 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5B63AC7EE37
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7E183C7EE45
 	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 06:48:55 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1686206934;
@@ -14,63 +14,63 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=7dJGgZStBrjEnq0DKq4hBZeZrxEvoEY5boivMhd0F9A=;
-	b=h5rHM/xbow1XB0ECZn7Ni4dGdE1UWDnRRHsxe70LWaRn/8BU/RcH0Vl2sF2HJXp/7KiaPd
-	XmkOCFCVZPrEJ42JQ/TBZCg5mTh5yNk6K+m/8LdQ1lq98ll82ojh7wVLhV6TeBwxpzLiwo
-	b5sl6moH2Q7Ggql0WzyErT7oqmInm4s=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=JH0aUF+GWLG96jDTV2JTTIjvT3m6fQeekSC9wVVkfWg=;
+	b=R2FIJ26w/GI2t9FdfXsPjwiLC8kN7X3jyvtqScoYmuAqzLvhOcTvy71VTX3rAl1hBATpO5
+	YDvgpKdlLTcQEj4tmpSdLUWCzmFy2TX5ZwZG38vPBAQ2LZrzkejxZpkLxKalLdENW07nJe
+	A2kqBtqqUuDnyGp+6lSVSxICrjbpIC4=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-595-o0xDvkumO1uGHttJfeEH5A-1; Thu, 08 Jun 2023 02:48:51 -0400
-X-MC-Unique: o0xDvkumO1uGHttJfeEH5A-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-475-txjKa3JIP1qONcaEPz_pxg-1; Thu, 08 Jun 2023 02:48:51 -0400
+X-MC-Unique: txjKa3JIP1qONcaEPz_pxg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7B2333815EF0;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 79B4B803DC5;
 	Thu,  8 Jun 2023 06:48:48 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E40484026E0;
-	Thu,  8 Jun 2023 06:48:47 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 53CAC2026D49;
+	Thu,  8 Jun 2023 06:48:48 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D561419451D5;
-	Thu,  8 Jun 2023 06:48:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0E79B19451DD;
+	Thu,  8 Jun 2023 06:48:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7073E19465BA
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 08:25:26 +0000 (UTC)
+ ESMTP id 5F64019465BA
+ for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 08:56:41 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 345FB4021AA; Wed,  7 Jun 2023 08:25:26 +0000 (UTC)
+ id 2E082477F61; Wed,  7 Jun 2023 08:56:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2C6EB492B00
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 08:25:26 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2664A403176
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 08:56:41 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
+ [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0EB443C0C88F
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 08:25:26 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0A948811E8D
+ for <dm-devel@redhat.com>; Wed,  7 Jun 2023 08:56:41 +0000 (UTC)
 Received: from dfw.source.kernel.org (dfw.source.kernel.org
  [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-20-WH3hvQK8Pk2hGOsMi0BhkQ-1; Wed, 07 Jun 2023 04:25:24 -0400
-X-MC-Unique: WH3hvQK8Pk2hGOsMi0BhkQ-1
+ us-mta-619-uhk0XkaqPCa5tZgnqEMIDg-1; Wed, 07 Jun 2023 04:56:39 -0400
+X-MC-Unique: uhk0XkaqPCa5tZgnqEMIDg-1
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 517B1615B0;
- Wed,  7 Jun 2023 08:25:23 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1F50BC433EF;
- Wed,  7 Jun 2023 08:25:16 +0000 (UTC)
-Date: Wed, 7 Jun 2023 10:25:14 +0200
+ by dfw.source.kernel.org (Postfix) with ESMTPS id BDFE163429;
+ Wed,  7 Jun 2023 08:56:38 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A1335C433EF;
+ Wed,  7 Jun 2023 08:56:32 +0000 (UTC)
+Date: Wed, 7 Jun 2023 10:56:29 +0200
 From: Christian Brauner <brauner@kernel.org>
 To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20230607-chefsessel-angeordnet-269f0596f9b3@brauner>
+Message-ID: <20230607-fliehen-abwurf-56e4abb8cc2a@brauner>
 References: <20230606073950.225178-1-hch@lst.de>
- <20230606073950.225178-8-hch@lst.de>
+ <20230606073950.225178-19-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20230606073950.225178-8-hch@lst.de>
+In-Reply-To: <20230606073950.225178-19-hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,10 +78,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mailman-Approved-At: Thu, 08 Jun 2023 06:48:45 +0000
-Subject: Re: [dm-devel] [PATCH 07/31] block: pass a gendisk on
- bdev_check_media_change
+Subject: Re: [dm-devel] [PATCH 18/31] fs: remove sb->s_mode
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -110,23 +109,21 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Jun 06, 2023 at 09:39:26AM +0200, Christoph Hellwig wrote:
-> bdev_check_media_change should only ever be called for the whole device.
-> Pass a gendisk to make that explicit and rename the function to
-> disk_check_media_change.
+On Tue, Jun 06, 2023 at 09:39:37AM +0200, Christoph Hellwig wrote:
+> There is no real need to store the open mode in the super_block now.
+> It is only used by f2fs, which can easily recalculate it.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
 
-Under the assumption it did only in fact ever only get called on the
-whole device so far,
+Looks good to me,
 Acked-by: Christian Brauner <brauner@kernel.org>
 
 --
