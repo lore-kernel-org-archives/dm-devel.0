@@ -1,70 +1,70 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 76555C87FDC
-	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 11:04:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2D730C7EE23
+	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 11:05:36 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686222295;
+	s=mimecast20190719; t=1686222335;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=61mJYGOUc+nNCuJz3Tlkt2zBDCV6mPOFnRZBHjcFbFQ=;
-	b=aRyKD34AsEVnwvhy2QSKL3rEelHydOHXb+EhLYW8aUqce4Vj2jgja4aXcykZPbnyA1WLsd
-	UgskeulDvLT7wk+LazayHZd/CcJ54c+krYBm7qgnbMdTLeeh+AFtVLA4u/OoLFJ1rKf+gl
-	b8AbNK7zvqHTud5rhc19qoOS8fpfNfs=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=7k6Gp3XCIn3wUlx2mPbj4BR/ZYLSoCR5i8oioO2x0M8=;
+	b=jR4rl2UOIcct7GjouUA+dQXv2mxQpTVsvzJphj2wI9cON3YNGv8Jk1ib9qOuSVLk5Lrp9d
+	8vmzKmoAEm5FwrWWJHgg/3dr3sGaqqbd0yNDmlXp9BaIv6GyYumOUxFzHHg8EoEcV7yR1o
+	OeBtG/phpyNKFtfXVW6/SphK4dN8VPg=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-192-qfaUOPF4N0G2PLNGK5030Q-1; Thu, 08 Jun 2023 07:04:52 -0400
-X-MC-Unique: qfaUOPF4N0G2PLNGK5030Q-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-217-kL6xSjAQOIu8dBxt_ywsQQ-1; Thu, 08 Jun 2023 07:05:31 -0400
+X-MC-Unique: kL6xSjAQOIu8dBxt_ywsQQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 112EA1C00BA5;
-	Thu,  8 Jun 2023 11:04:50 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0EB60101A52C;
+	Thu,  8 Jun 2023 11:05:30 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F07362166B25;
-	Thu,  8 Jun 2023 11:04:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id F083F492B0C;
+	Thu,  8 Jun 2023 11:05:29 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DABEB19451C1;
-	Thu,  8 Jun 2023 11:04:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D073819451C3;
+	Thu,  8 Jun 2023 11:05:24 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 468E819451C0
- for <dm-devel@listman.corp.redhat.com>; Thu,  8 Jun 2023 11:04:38 +0000 (UTC)
+ ESMTP id CB86419451C2
+ for <dm-devel@listman.corp.redhat.com>; Thu,  8 Jun 2023 11:04:47 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 276BD2026D6A; Thu,  8 Jun 2023 11:04:38 +0000 (UTC)
+ id A03449E94; Thu,  8 Jun 2023 11:04:47 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2004B2026D49
- for <dm-devel@redhat.com>; Thu,  8 Jun 2023 11:04:38 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [205.139.110.61])
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 988999E93
+ for <dm-devel@redhat.com>; Thu,  8 Jun 2023 11:04:47 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
+ [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 04755803DBC
- for <dm-devel@redhat.com>; Thu,  8 Jun 2023 11:04:38 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 74B09101A531
+ for <dm-devel@redhat.com>; Thu,  8 Jun 2023 11:04:47 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-628-lXozaj3FOpqHsr5ZMtICgg-1; Thu, 08 Jun 2023 07:04:36 -0400
-X-MC-Unique: lXozaj3FOpqHsr5ZMtICgg-1
+ us-mta-463-wgTlESpKMOerFd8A9DXkDA-1; Thu, 08 Jun 2023 07:04:45 -0400
+X-MC-Unique: wgTlESpKMOerFd8A9DXkDA-1
 Received: from
  2a02-8389-2341-5b80-39d3-4735-9a3c-88d8.cable.dynamic.v6.surfer.at
  ([2a02:8389:2341:5b80:39d3:4735:9a3c:88d8] helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q7DR7-0092nK-2n; Thu, 08 Jun 2023 11:04:14 +0000
+ id 1q7DRF-0092vE-2z; Thu, 08 Jun 2023 11:04:22 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Thu,  8 Jun 2023 13:02:53 +0200
-Message-Id: <20230608110258.189493-26-hch@lst.de>
+Date: Thu,  8 Jun 2023 13:02:56 +0200
+Message-Id: <20230608110258.189493-29-hch@lst.de>
 In-Reply-To: <20230608110258.189493-1-hch@lst.de>
 References: <20230608110258.189493-1-hch@lst.de>
 MIME-Version: 1.0
@@ -77,9 +77,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: [dm-devel] [PATCH 25/30] block: move a few internal definitions out
- of blkdev.h
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: [dm-devel] [PATCH 28/30] block: always use I_BDEV on
+ file->f_mapping->host to find the bdev
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,124 +108,100 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-All these helpers are only used in core block code, so move them out of
-the public header.
+Always use I_BDEV(file->f_mapping->host) to find the bdev for a file to
+free up file->private_data for other uses.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Hannes Reinecke <hare@suse.de>
 Acked-by: Christian Brauner <brauner@kernel.org>
 ---
- block/blk.h            | 23 +++++++++++++++++++++--
- include/linux/blkdev.h | 27 ---------------------------
- 2 files changed, 21 insertions(+), 29 deletions(-)
+ block/fops.c | 18 ++++++++----------
+ 1 file changed, 8 insertions(+), 10 deletions(-)
 
-diff --git a/block/blk.h b/block/blk.h
-index 9582fcd0df4123..6910220aa030f1 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -394,10 +394,27 @@ static inline struct bio *blk_queue_bounce(struct bio *bio,
- #ifdef CONFIG_BLK_DEV_ZONED
- void disk_free_zone_bitmaps(struct gendisk *disk);
- void disk_clear_zone_settings(struct gendisk *disk);
--#else
-+int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
-+		unsigned int cmd, unsigned long arg);
-+int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
-+		unsigned int cmd, unsigned long arg);
-+#else /* CONFIG_BLK_DEV_ZONED */
- static inline void disk_free_zone_bitmaps(struct gendisk *disk) {}
- static inline void disk_clear_zone_settings(struct gendisk *disk) {}
--#endif
-+static inline int blkdev_report_zones_ioctl(struct block_device *bdev,
-+		fmode_t mode, unsigned int cmd, unsigned long arg)
-+{
-+	return -ENOTTY;
-+}
-+static inline int blkdev_zone_mgmt_ioctl(struct block_device *bdev,
-+		fmode_t mode, unsigned int cmd, unsigned long arg)
-+{
-+	return -ENOTTY;
-+}
-+#endif /* CONFIG_BLK_DEV_ZONED */
-+
-+struct block_device *bdev_alloc(struct gendisk *disk, u8 partno);
-+void bdev_add(struct block_device *bdev, dev_t dev);
- 
- int blk_alloc_ext_minor(void);
- void blk_free_ext_minor(unsigned int minor);
-@@ -449,6 +466,8 @@ extern struct device_attribute dev_attr_events_poll_msecs;
- 
- extern struct attribute_group blk_trace_attr_group;
- 
-+int truncate_bdev_range(struct block_device *bdev, fmode_t mode, loff_t lstart,
-+		loff_t lend);
- long blkdev_ioctl(struct file *file, unsigned cmd, unsigned long arg);
- long compat_blkdev_ioctl(struct file *file, unsigned cmd, unsigned long arg);
- 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 97803603902076..6b65623e447c02 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -318,7 +318,6 @@ typedef int (*report_zones_cb)(struct blk_zone *zone, unsigned int idx,
- void disk_set_zoned(struct gendisk *disk, enum blk_zoned_model model);
- 
- #ifdef CONFIG_BLK_DEV_ZONED
--
- #define BLK_ALL_ZONES  ((unsigned int)-1)
- int blkdev_report_zones(struct block_device *bdev, sector_t sector,
- 			unsigned int nr_zones, report_zones_cb cb, void *data);
-@@ -328,33 +327,11 @@ extern int blkdev_zone_mgmt(struct block_device *bdev, enum req_op op,
- 			    gfp_t gfp_mask);
- int blk_revalidate_disk_zones(struct gendisk *disk,
- 			      void (*update_driver_data)(struct gendisk *disk));
--
--extern int blkdev_report_zones_ioctl(struct block_device *bdev, fmode_t mode,
--				     unsigned int cmd, unsigned long arg);
--extern int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
--				  unsigned int cmd, unsigned long arg);
--
- #else /* CONFIG_BLK_DEV_ZONED */
--
- static inline unsigned int bdev_nr_zones(struct block_device *bdev)
+diff --git a/block/fops.c b/block/fops.c
+index 086612103b9dd9..0d714d050a462c 100644
+--- a/block/fops.c
++++ b/block/fops.c
+@@ -54,7 +54,7 @@ static bool blkdev_dio_unaligned(struct block_device *bdev, loff_t pos,
+ static ssize_t __blkdev_direct_IO_simple(struct kiocb *iocb,
+ 		struct iov_iter *iter, unsigned int nr_pages)
  {
+-	struct block_device *bdev = iocb->ki_filp->private_data;
++	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
+ 	struct bio_vec inline_vecs[DIO_INLINE_BIO_VECS], *vecs;
+ 	loff_t pos = iocb->ki_pos;
+ 	bool should_dirty = false;
+@@ -170,7 +170,7 @@ static void blkdev_bio_end_io(struct bio *bio)
+ static ssize_t __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter,
+ 		unsigned int nr_pages)
+ {
+-	struct block_device *bdev = iocb->ki_filp->private_data;
++	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
+ 	struct blk_plug plug;
+ 	struct blkdev_dio *dio;
+ 	struct bio *bio;
+@@ -310,7 +310,7 @@ static ssize_t __blkdev_direct_IO_async(struct kiocb *iocb,
+ 					struct iov_iter *iter,
+ 					unsigned int nr_pages)
+ {
+-	struct block_device *bdev = iocb->ki_filp->private_data;
++	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
+ 	bool is_read = iov_iter_rw(iter) == READ;
+ 	blk_opf_t opf = is_read ? REQ_OP_READ : dio_bio_write_op(iocb);
+ 	struct blkdev_dio *dio;
+@@ -451,7 +451,7 @@ static loff_t blkdev_llseek(struct file *file, loff_t offset, int whence)
+ static int blkdev_fsync(struct file *filp, loff_t start, loff_t end,
+ 		int datasync)
+ {
+-	struct block_device *bdev = filp->private_data;
++	struct block_device *bdev = I_BDEV(filp->f_mapping->host);
+ 	int error;
+ 
+ 	error = file_write_and_wait_range(filp, start, end);
+@@ -516,7 +516,6 @@ static int blkdev_open(struct inode *inode, struct file *filp)
+ 	if (IS_ERR(bdev))
+ 		return PTR_ERR(bdev);
+ 
+-	filp->private_data = bdev;
+ 	filp->f_mapping = bdev->bd_inode->i_mapping;
+ 	filp->f_wb_err = filemap_sample_wb_err(filp->f_mapping);
+ 	return 0;
+@@ -524,9 +523,8 @@ static int blkdev_open(struct inode *inode, struct file *filp)
+ 
+ static int blkdev_release(struct inode *inode, struct file *filp)
+ {
+-	struct block_device *bdev = filp->private_data;
+-
+-	blkdev_put(bdev, (filp->f_mode & FMODE_EXCL) ? filp : NULL);
++	blkdev_put(I_BDEV(filp->f_mapping->host),
++		   (filp->f_mode & FMODE_EXCL) ? filp : NULL);
  	return 0;
  }
--
--static inline int blkdev_report_zones_ioctl(struct block_device *bdev,
--					    fmode_t mode, unsigned int cmd,
--					    unsigned long arg)
--{
--	return -ENOTTY;
--}
--
--static inline int blkdev_zone_mgmt_ioctl(struct block_device *bdev,
--					 fmode_t mode, unsigned int cmd,
--					 unsigned long arg)
--{
--	return -ENOTTY;
--}
--
- #endif /* CONFIG_BLK_DEV_ZONED */
  
- /*
-@@ -1493,11 +1470,7 @@ void blkdev_put(struct block_device *bdev, void *holder);
- struct block_device *blkdev_get_no_open(dev_t dev);
- void blkdev_put_no_open(struct block_device *bdev);
+@@ -539,7 +537,7 @@ static int blkdev_release(struct inode *inode, struct file *filp)
+  */
+ static ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ {
+-	struct block_device *bdev = iocb->ki_filp->private_data;
++	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
+ 	struct inode *bd_inode = bdev->bd_inode;
+ 	loff_t size = bdev_nr_bytes(bdev);
+ 	size_t shorted = 0;
+@@ -575,7 +573,7 @@ static ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
  
--struct block_device *bdev_alloc(struct gendisk *disk, u8 partno);
--void bdev_add(struct block_device *bdev, dev_t dev);
- struct block_device *I_BDEV(struct inode *inode);
--int truncate_bdev_range(struct block_device *bdev, fmode_t mode, loff_t lstart,
--		loff_t lend);
- 
- #ifdef CONFIG_BLOCK
- void invalidate_bdev(struct block_device *bdev);
+ static ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
+ {
+-	struct block_device *bdev = iocb->ki_filp->private_data;
++	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
+ 	loff_t size = bdev_nr_bytes(bdev);
+ 	loff_t pos = iocb->ki_pos;
+ 	size_t shorted = 0;
 -- 
 2.39.2
 
