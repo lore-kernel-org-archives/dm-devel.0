@@ -4,68 +4,69 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 83CA6C7EE25
-	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 08:41:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E4879C7EE45
+	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 09:05:01 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686213710;
+	s=mimecast20190719; t=1686215100;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=cis2JEg5pEGyOyRA2LwNzleudXcrvQAmhszlQYUpW+s=;
-	b=cpaxPAY6A3g4Mtmji/B1qtnyUpSlBABE8+FVzb9dMdNmgd1CxKCVsuNvwuTlIy4N6KkKLU
-	/oyw9UL8KCKdvEDMjQyE5eqjk0DYkb6MHtn/MYy+5dLm5EoydZS+oJfATakYcgA9NKGcdz
-	H/bheB0rj3dn7PgWOOUwuSZFDp0852s=
+	bh=mfC75rKlS0iG9WO4OWdYMjBaMwiLP4reSJF5qLNrANs=;
+	b=bKItdrRQm8JbJ8g90vepH7bAcP++45cuII2pjU3ihk5JZmWl+KsYeJxnhdnwTMuydABoPF
+	tTNqYn+UVKLqAVHQIuvrA9uP/NvvJ0a9julvLMJ4ZntMJcB7yzX9/Ah2SSxh0slY7wOndi
+	P9HMjAaACBXC/D3+mHP9PCl52wet1hI=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-644-7TanekaAN1-W8MhXgzKPPw-1; Thu, 08 Jun 2023 04:41:44 -0400
-X-MC-Unique: 7TanekaAN1-W8MhXgzKPPw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-388-gYsU73N5NEGY82r3gxH2BA-1; Thu, 08 Jun 2023 05:04:54 -0400
+X-MC-Unique: gYsU73N5NEGY82r3gxH2BA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8EDBA858EEC;
-	Thu,  8 Jun 2023 08:41:42 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A9CC0185A78E;
+	Thu,  8 Jun 2023 09:04:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 95655C16044;
-	Thu,  8 Jun 2023 08:41:40 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 95AC5140E956;
+	Thu,  8 Jun 2023 09:04:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5449F19452CC;
-	Thu,  8 Jun 2023 08:41:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 57AD419452CC;
+	Thu,  8 Jun 2023 09:04:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id CCE3F194658C
- for <dm-devel@listman.corp.redhat.com>; Thu,  8 Jun 2023 08:41:38 +0000 (UTC)
+ ESMTP id 23374194658C
+ for <dm-devel@listman.corp.redhat.com>; Thu,  8 Jun 2023 09:04:51 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id AD6EC40D1B68; Thu,  8 Jun 2023 08:41:38 +0000 (UTC)
+ id DD4D22166B26; Thu,  8 Jun 2023 09:04:50 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A6D1F40D1B66
- for <dm-devel@redhat.com>; Thu,  8 Jun 2023 08:41:38 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [205.139.110.61])
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D48752166B25
+ for <dm-devel@redhat.com>; Thu,  8 Jun 2023 09:04:50 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 90EF728EA6E4
- for <dm-devel@redhat.com>; Thu,  8 Jun 2023 08:41:38 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BCF881C04186
+ for <dm-devel@redhat.com>; Thu,  8 Jun 2023 09:04:50 +0000 (UTC)
 Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-648-c8LqHK6dNju3Qj_PPAn2jw-1; Thu, 08 Jun 2023 04:41:35 -0400
-X-MC-Unique: c8LqHK6dNju3Qj_PPAn2jw-1
+ us-mta-562-nevv7DvjM16_X_7COzw_Mw-1; Thu, 08 Jun 2023 05:04:48 -0400
+X-MC-Unique: nevv7DvjM16_X_7COzw_Mw-1
 Received: by verein.lst.de (Postfix, from userid 2407)
- id 9341068BFE; Thu,  8 Jun 2023 10:41:29 +0200 (CEST)
-Date: Thu, 8 Jun 2023 10:41:29 +0200
+ id A178768AA6; Thu,  8 Jun 2023 11:04:44 +0200 (CEST)
+Date: Thu, 8 Jun 2023 11:04:44 +0200
 From: Christoph Hellwig <hch@lst.de>
 To: Phillip Potter <phil@philpotter.co.uk>
-Message-ID: <20230608084129.GA14689@lst.de>
+Message-ID: <20230608090444.GA15075@lst.de>
 References: <20230606073950.225178-1-hch@lst.de>
  <20230606073950.225178-7-hch@lst.de> <ZH+6qd1W75G49P7p@equinox>
+ <20230608084129.GA14689@lst.de> <ZIGVn9E9ME26V0Gn@equinox>
 MIME-Version: 1.0
-In-Reply-To: <ZH+6qd1W75G49P7p@equinox>
+In-Reply-To: <ZIGVn9E9ME26V0Gn@equinox>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -74,7 +75,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 Subject: Re: [dm-devel] [PATCH 06/31] cdrom: remove the unused mode argument
  to cdrom_release
 X-BeenThere: dm-devel@redhat.com
@@ -105,20 +106,23 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Jun 07, 2023 at 12:00:57AM +0100, Phillip Potter wrote:
-> Looks good, thanks.
-> 
-> Signed-off-by: Phillip Potter <phil@philpotter.co.uk>
+On Thu, Jun 08, 2023 at 09:47:27AM +0100, Phillip Potter wrote:
+> Yes indeed - I was under the impression it was appropriate for a
+> maintainer to signal their approval of a patch to maintained code using
+> a Signed-off-by tag due to their involvement in the submission process?
+> Apologies if I've got this wrong, happy to send Reviewed-bys by all
+> means.
 
-Hmm, these signoffs don't really make sense here.  Were they intended
-as Reviewed-bys?
+Signed-off-by is for the chain that the patches pass through.  You add
+it when you apply or forward the patch.  Just give me a Reviewed-by
+tag and say it shold apply to patches 1 to 6 and I'll add it.
 
 --
 dm-devel mailing list
