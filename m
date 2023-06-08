@@ -4,67 +4,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E7B13C7EE29
-	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 11:52:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 02325C7EE23
+	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 11:52:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686225153;
+	s=mimecast20190719; t=1686225167;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=1D1yBDrHkmza1YAq8uu7YRPxpUi59KNjEIZc7VofZlo=;
-	b=gsQLWG2TDRJJX60RnbXpO47xvbyzxWuMqwFSNwxXvup8REsu8JmlS/2vaopilzl3Nsrs/l
-	juLq/gfggzOjhxklInBevm7tajSF/q9leE/oN456xxYhxrLECt/7NxBXWRYO3ZHJr0QAWf
-	FKYVtisT6eUICTeI1D5pJnvv1oKRdfY=
+	bh=zjaK9al/sKtkwDKg0SoXgL9z4gmCQRTesC1x2p5hly4=;
+	b=U2wOgdSJh4dj3URpm1JBKOOiuf6xYjofEqm81hl1LYmotD53sBeXt0ZXsmZSqDPJ3y86aI
+	Rg/4VFFXle1D0cEs5Y//XBuB/3v9y96LAFrRYWc1iPSuj1HgjL0hYWMvwoUJKk2pxibCKJ
+	uMKZJGRVYy6aLanRZWFW0bL7PJhKDeQ=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-599-oYmU0k08P-GOq0UI8P7v1A-1; Thu, 08 Jun 2023 07:52:29 -0400
-X-MC-Unique: oYmU0k08P-GOq0UI8P7v1A-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-623-ZGWoOirzN0Oeb-dAsWZJBw-1; Thu, 08 Jun 2023 07:52:45 -0400
+X-MC-Unique: ZGWoOirzN0Oeb-dAsWZJBw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2D48C382888E;
-	Thu,  8 Jun 2023 11:52:28 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B14C11C04194;
+	Thu,  8 Jun 2023 11:52:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1AD7A4021AA;
-	Thu,  8 Jun 2023 11:52:28 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9E6F02026D49;
+	Thu,  8 Jun 2023 11:52:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E432919452D3;
-	Thu,  8 Jun 2023 11:52:27 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 66BCC19452D3;
+	Thu,  8 Jun 2023 11:52:43 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 20D96194658C
- for <dm-devel@listman.corp.redhat.com>; Thu,  8 Jun 2023 11:52:25 +0000 (UTC)
+ ESMTP id 731F8194658C
+ for <dm-devel@listman.corp.redhat.com>; Thu,  8 Jun 2023 11:52:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0338140D1B69; Thu,  8 Jun 2023 11:52:25 +0000 (UTC)
+ id 4EAE0492B0B; Thu,  8 Jun 2023 11:52:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F040340D1B68
- for <dm-devel@redhat.com>; Thu,  8 Jun 2023 11:52:24 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 473A7492B0A
+ for <dm-devel@redhat.com>; Thu,  8 Jun 2023 11:52:42 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D1C651C05EA7
- for <dm-devel@redhat.com>; Thu,  8 Jun 2023 11:52:24 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2858C3C02187
+ for <dm-devel@redhat.com>; Thu,  8 Jun 2023 11:52:42 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-221-YBlvjO73MaOVHYWmztwDOQ-1; Thu, 08 Jun 2023 07:52:23 -0400
-X-MC-Unique: YBlvjO73MaOVHYWmztwDOQ-1
+ us-mta-643-YNjKnFZhNn-nT4Ee4fEfTg-1; Thu, 08 Jun 2023 07:52:33 -0400
+X-MC-Unique: YNjKnFZhNn-nT4Ee4fEfTg-1
 Received: from
  2a02-8389-2341-5b80-39d3-4735-9a3c-88d8.cable.dynamic.v6.surfer.at
  ([2a02:8389:2341:5b80:39d3:4735:9a3c:88d8] helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q7DPz-0091cl-2t; Thu, 08 Jun 2023 11:03:04 +0000
+ id 1q7DQW-00929D-1d; Thu, 08 Jun 2023 11:03:36 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Thu,  8 Jun 2023 13:02:29 +0200
-Message-Id: <20230608110258.189493-2-hch@lst.de>
+Date: Thu,  8 Jun 2023 13:02:41 +0200
+Message-Id: <20230608110258.189493-14-hch@lst.de>
 In-Reply-To: <20230608110258.189493-1-hch@lst.de>
 References: <20230608110258.189493-1-hch@lst.de>
 MIME-Version: 1.0
@@ -77,9 +77,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: [dm-devel] [PATCH 01/30] block: also call ->open for incremental
- partition opens
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: [dm-devel] [PATCH 13/30] rnbd-srv: don't pass a holder for
+ non-exclusive blkdev_get_by_path
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,82 +108,36 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-For whole devices ->open is called for each open, but for partitions it
-is only called on the first open of a partition, e.g.:
-
-  open("/dev/vdb", ...)
-  open("/dev/vdb", ...)
-    - 2 call to ->open
-
-  open("/dev/vdb1", ...)
-  open("/dev/vdb", ...)
-    - 2 call to ->open
-
-  open("/dev/vdb", ...)
-  open("/dev/vdb", ...)
-    - just open call to ->open
-
-This is problematic as various block drivers look at open flags and
-might not do all the required setup if the earlier open was with an
-odd flag like O_NDELAY or the magic 3 ioctl-only open mode.
+Passing a holder to blkdev_get_by_path when FMODE_EXCL isn't set doesn't
+make sense, so pass NULL instead.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Phillip Potter <phil@philpotter.co.uk>
 Reviewed-by: Hannes Reinecke <hare@suse.de>
 Acked-by: Christian Brauner <brauner@kernel.org>
+Acked-by: Jack Wang <jinpu.wang@ionos.com>
 ---
- block/bdev.c | 18 ++++++++----------
- 1 file changed, 8 insertions(+), 10 deletions(-)
+ drivers/block/rnbd/rnbd-srv.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/block/bdev.c b/block/bdev.c
-index 5c46ff10770638..981f6135795138 100644
---- a/block/bdev.c
-+++ b/block/bdev.c
-@@ -683,9 +683,6 @@ static int blkdev_get_part(struct block_device *part, fmode_t mode)
- 	struct gendisk *disk = part->bd_disk;
- 	int ret;
+diff --git a/drivers/block/rnbd/rnbd-srv.c b/drivers/block/rnbd/rnbd-srv.c
+index cec22bbae2f9a5..ce505e552f4d50 100644
+--- a/drivers/block/rnbd/rnbd-srv.c
++++ b/drivers/block/rnbd/rnbd-srv.c
+@@ -719,7 +719,7 @@ static int process_msg_open(struct rnbd_srv_session *srv_sess,
+ 		goto reject;
+ 	}
  
--	if (atomic_read(&part->bd_openers))
--		goto done;
--
- 	ret = blkdev_get_whole(bdev_whole(part), mode);
- 	if (ret)
- 		return ret;
-@@ -694,9 +691,10 @@ static int blkdev_get_part(struct block_device *part, fmode_t mode)
- 	if (!bdev_nr_sectors(part))
- 		goto out_blkdev_put;
- 
--	disk->open_partitions++;
--	set_init_blocksize(part);
--done:
-+	if (!atomic_read(&part->bd_openers)) {
-+		disk->open_partitions++;
-+		set_init_blocksize(part);
-+	}
- 	atomic_inc(&part->bd_openers);
- 	return 0;
- 
-@@ -709,10 +707,10 @@ static void blkdev_put_part(struct block_device *part, fmode_t mode)
- {
- 	struct block_device *whole = bdev_whole(part);
- 
--	if (!atomic_dec_and_test(&part->bd_openers))
--		return;
--	blkdev_flush_mapping(part);
--	whole->bd_disk->open_partitions--;
-+	if (atomic_dec_and_test(&part->bd_openers)) {
-+		blkdev_flush_mapping(part);
-+		whole->bd_disk->open_partitions--;
-+	}
- 	blkdev_put_whole(whole, mode);
- }
- 
+-	bdev = blkdev_get_by_path(full_path, open_flags, THIS_MODULE, NULL);
++	bdev = blkdev_get_by_path(full_path, open_flags, NULL, NULL);
+ 	if (IS_ERR(bdev)) {
+ 		ret = PTR_ERR(bdev);
+ 		pr_err("Opening device '%s' on session %s failed, failed to open the block device, err: %d\n",
 -- 
 2.39.2
 
