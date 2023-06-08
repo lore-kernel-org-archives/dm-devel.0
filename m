@@ -1,70 +1,70 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2D730C7EE23
-	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 11:05:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 36D2BC7EE45
+	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 11:05:57 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686222335;
+	s=mimecast20190719; t=1686222356;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=7k6Gp3XCIn3wUlx2mPbj4BR/ZYLSoCR5i8oioO2x0M8=;
-	b=jR4rl2UOIcct7GjouUA+dQXv2mxQpTVsvzJphj2wI9cON3YNGv8Jk1ib9qOuSVLk5Lrp9d
-	8vmzKmoAEm5FwrWWJHgg/3dr3sGaqqbd0yNDmlXp9BaIv6GyYumOUxFzHHg8EoEcV7yR1o
-	OeBtG/phpyNKFtfXVW6/SphK4dN8VPg=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=ubKoKHQXpxVVQylSUZXtiHFJOsSoIT3j3geWfnz57ao=;
+	b=T5/zrNTkCevYVxQcdDdWTOC+rf5fFkxfVEbAVr/FJPdw/rdCQatKo9uvlG+3oPV135H7jK
+	Aqq6n4PYouaAT1lHt6akuTtL8rV6mZfDmL3XpGYDe7OkLFjA+K3RG3Gw+p/nE4I1bvtVgG
+	75pq3EEmu8KIKqvqXJ1bearpLDi/jGM=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-217-kL6xSjAQOIu8dBxt_ywsQQ-1; Thu, 08 Jun 2023 07:05:31 -0400
-X-MC-Unique: kL6xSjAQOIu8dBxt_ywsQQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-68-pLLsNMOKPuC6kH0QJsCdHw-1; Thu, 08 Jun 2023 07:05:52 -0400
+X-MC-Unique: pLLsNMOKPuC6kH0QJsCdHw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0EB60101A52C;
-	Thu,  8 Jun 2023 11:05:30 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BCAE41C00B98;
+	Thu,  8 Jun 2023 11:05:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F083F492B0C;
-	Thu,  8 Jun 2023 11:05:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id AADBA1121314;
+	Thu,  8 Jun 2023 11:05:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D073819451C3;
-	Thu,  8 Jun 2023 11:05:24 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AB0A019451D0;
+	Thu,  8 Jun 2023 11:05:45 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id CB86419451C2
- for <dm-devel@listman.corp.redhat.com>; Thu,  8 Jun 2023 11:04:47 +0000 (UTC)
+ ESMTP id A4DFA194658C
+ for <dm-devel@listman.corp.redhat.com>; Thu,  8 Jun 2023 11:04:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A03449E94; Thu,  8 Jun 2023 11:04:47 +0000 (UTC)
+ id 8C75F140E957; Thu,  8 Jun 2023 11:04:51 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 988999E93
- for <dm-devel@redhat.com>; Thu,  8 Jun 2023 11:04:47 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-1.mimecast.com
- [207.211.31.81])
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8504B140E955
+ for <dm-devel@redhat.com>; Thu,  8 Jun 2023 11:04:51 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 74B09101A531
- for <dm-devel@redhat.com>; Thu,  8 Jun 2023 11:04:47 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 676A83814956
+ for <dm-devel@redhat.com>; Thu,  8 Jun 2023 11:04:51 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-463-wgTlESpKMOerFd8A9DXkDA-1; Thu, 08 Jun 2023 07:04:45 -0400
-X-MC-Unique: wgTlESpKMOerFd8A9DXkDA-1
+ us-mta-52-wqMC4tmQOr2Lrz02ZDoX2g-1; Thu, 08 Jun 2023 07:04:49 -0400
+X-MC-Unique: wqMC4tmQOr2Lrz02ZDoX2g-1
 Received: from
  2a02-8389-2341-5b80-39d3-4735-9a3c-88d8.cable.dynamic.v6.surfer.at
  ([2a02:8389:2341:5b80:39d3:4735:9a3c:88d8] helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
- id 1q7DRF-0092vE-2z; Thu, 08 Jun 2023 11:04:22 +0000
+ id 1q7DRK-0092zc-2h; Thu, 08 Jun 2023 11:04:27 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Thu,  8 Jun 2023 13:02:56 +0200
-Message-Id: <20230608110258.189493-29-hch@lst.de>
+Date: Thu,  8 Jun 2023 13:02:58 +0200
+Message-Id: <20230608110258.189493-31-hch@lst.de>
 In-Reply-To: <20230608110258.189493-1-hch@lst.de>
 References: <20230608110258.189493-1-hch@lst.de>
 MIME-Version: 1.0
@@ -77,9 +77,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: [dm-devel] [PATCH 28/30] block: always use I_BDEV on
- file->f_mapping->host to find the bdev
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Subject: [dm-devel] [PATCH 30/30] fs: remove the now unused FMODE_* flags
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,100 +107,40 @@ Cc: Vignesh Raghavendra <vigneshr@ti.com>,
  linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Always use I_BDEV(file->f_mapping->host) to find the bdev for a file to
-free up file->private_data for other uses.
+FMODE_NDELAY, FMODE_EXCL and FMODE_WRITE_IOCTL were only used for
+block internal purposed and are now entirely unused, so remove them.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Hannes Reinecke <hare@suse.de>
-Acked-by: Christian Brauner <brauner@kernel.org>
+Reviewed-by: Christian Brauner <brauner@kernel.org>
 ---
- block/fops.c | 18 ++++++++----------
- 1 file changed, 8 insertions(+), 10 deletions(-)
+ include/linux/fs.h | 7 -------
+ 1 file changed, 7 deletions(-)
 
-diff --git a/block/fops.c b/block/fops.c
-index 086612103b9dd9..0d714d050a462c 100644
---- a/block/fops.c
-+++ b/block/fops.c
-@@ -54,7 +54,7 @@ static bool blkdev_dio_unaligned(struct block_device *bdev, loff_t pos,
- static ssize_t __blkdev_direct_IO_simple(struct kiocb *iocb,
- 		struct iov_iter *iter, unsigned int nr_pages)
- {
--	struct block_device *bdev = iocb->ki_filp->private_data;
-+	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
- 	struct bio_vec inline_vecs[DIO_INLINE_BIO_VECS], *vecs;
- 	loff_t pos = iocb->ki_pos;
- 	bool should_dirty = false;
-@@ -170,7 +170,7 @@ static void blkdev_bio_end_io(struct bio *bio)
- static ssize_t __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter,
- 		unsigned int nr_pages)
- {
--	struct block_device *bdev = iocb->ki_filp->private_data;
-+	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
- 	struct blk_plug plug;
- 	struct blkdev_dio *dio;
- 	struct bio *bio;
-@@ -310,7 +310,7 @@ static ssize_t __blkdev_direct_IO_async(struct kiocb *iocb,
- 					struct iov_iter *iter,
- 					unsigned int nr_pages)
- {
--	struct block_device *bdev = iocb->ki_filp->private_data;
-+	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
- 	bool is_read = iov_iter_rw(iter) == READ;
- 	blk_opf_t opf = is_read ? REQ_OP_READ : dio_bio_write_op(iocb);
- 	struct blkdev_dio *dio;
-@@ -451,7 +451,7 @@ static loff_t blkdev_llseek(struct file *file, loff_t offset, int whence)
- static int blkdev_fsync(struct file *filp, loff_t start, loff_t end,
- 		int datasync)
- {
--	struct block_device *bdev = filp->private_data;
-+	struct block_device *bdev = I_BDEV(filp->f_mapping->host);
- 	int error;
- 
- 	error = file_write_and_wait_range(filp, start, end);
-@@ -516,7 +516,6 @@ static int blkdev_open(struct inode *inode, struct file *filp)
- 	if (IS_ERR(bdev))
- 		return PTR_ERR(bdev);
- 
--	filp->private_data = bdev;
- 	filp->f_mapping = bdev->bd_inode->i_mapping;
- 	filp->f_wb_err = filemap_sample_wb_err(filp->f_mapping);
- 	return 0;
-@@ -524,9 +523,8 @@ static int blkdev_open(struct inode *inode, struct file *filp)
- 
- static int blkdev_release(struct inode *inode, struct file *filp)
- {
--	struct block_device *bdev = filp->private_data;
--
--	blkdev_put(bdev, (filp->f_mode & FMODE_EXCL) ? filp : NULL);
-+	blkdev_put(I_BDEV(filp->f_mapping->host),
-+		   (filp->f_mode & FMODE_EXCL) ? filp : NULL);
- 	return 0;
- }
- 
-@@ -539,7 +537,7 @@ static int blkdev_release(struct inode *inode, struct file *filp)
-  */
- static ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
- {
--	struct block_device *bdev = iocb->ki_filp->private_data;
-+	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
- 	struct inode *bd_inode = bdev->bd_inode;
- 	loff_t size = bdev_nr_bytes(bdev);
- 	size_t shorted = 0;
-@@ -575,7 +573,7 @@ static ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
- 
- static ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
- {
--	struct block_device *bdev = iocb->ki_filp->private_data;
-+	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
- 	loff_t size = bdev_nr_bytes(bdev);
- 	loff_t pos = iocb->ki_pos;
- 	size_t shorted = 0;
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index ad1d2c9afb3fa4..8045c7ef4000c2 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -119,13 +119,6 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
+ #define FMODE_PWRITE		((__force fmode_t)0x10)
+ /* File is opened for execution with sys_execve / sys_uselib */
+ #define FMODE_EXEC		((__force fmode_t)0x20)
+-/* File is opened with O_NDELAY (only set for block devices) */
+-#define FMODE_NDELAY		((__force fmode_t)0x40)
+-/* File is opened with O_EXCL (only set for block devices) */
+-#define FMODE_EXCL		((__force fmode_t)0x80)
+-/* File is opened using open(.., 3, ..) and is writeable only for ioctls
+-   (specialy hack for floppy.c) */
+-#define FMODE_WRITE_IOCTL	((__force fmode_t)0x100)
+ /* 32bit hashes as llseek() offset (for directories) */
+ #define FMODE_32BITHASH         ((__force fmode_t)0x200)
+ /* 64bit hashes as llseek() offset (for directories) */
 -- 
 2.39.2
 
