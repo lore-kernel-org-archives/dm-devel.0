@@ -4,102 +4,191 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D5857C77B7A
-	for <dm-devel@archiver.kernel.org>; Wed,  7 Jun 2023 23:50:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 96BB9C7EE43
+	for <dm-devel@archiver.kernel.org>; Thu,  8 Jun 2023 01:37:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686181837;
+	s=mimecast20190719; t=1686188241;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=fqFzsWlCpSyy2XrgIyLil3v+cYxGPnmZ9m6sR6Fa5v0=;
-	b=gPpd8fyMHgUUwyC9F0gvs/TA7TAbbr5a6OCHkf74UbjiGPVw+rSA0+AuqVIfutD+O44Agu
-	YfWEqyMTOpeBhIELbJKTz/Phjp22m8usv1xllUfBXUGEpsYV8i2fYjJZAmZRWBABu4DieL
-	t+JT/108Rq2esOQE81PZ4ha/3ZxmsvI=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=ebk6DHQl+DZvEsam8irS1p0vGTtQ2wBDnyZIfhf11LE=;
+	b=N8RufpYDo87hlgyaUpMnCBDz8B5Xt72a096kA9HatnlmQ+1mESYLnizT/YALiph9pMR+Ps
+	pG80P/jx+mCC166TRwCJMkMqDaYl/bBDrQ+o3H1UzxgKQ0W17V92fFt9harmFFE9lK9Mwr
+	YUXcPtIAm5MeakaZR2uMfPdbpV30qXs=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-54-IZGihhorPhyfHtTtcdcllA-1; Wed, 07 Jun 2023 19:50:34 -0400
-X-MC-Unique: IZGihhorPhyfHtTtcdcllA-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-56-vPU_5ZwXMDuzaALySqs4Ag-1; Wed, 07 Jun 2023 21:37:20 -0400
+X-MC-Unique: vPU_5ZwXMDuzaALySqs4Ag-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A8FE08030D5;
-	Wed,  7 Jun 2023 23:50:32 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 58043492B00;
-	Wed,  7 Jun 2023 23:50:32 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2291F1C05156;
+	Thu,  8 Jun 2023 01:37:18 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D511A2026D6A;
+	Thu,  8 Jun 2023 01:37:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1581E19452C4;
-	Wed,  7 Jun 2023 23:50:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 82A4819452C4;
+	Thu,  8 Jun 2023 01:37:15 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1BE8819465BA
- for <dm-devel@listman.corp.redhat.com>; Wed,  7 Jun 2023 23:50:29 +0000 (UTC)
+ ESMTP id C251519465BA
+ for <dm-devel@listman.corp.redhat.com>; Thu,  8 Jun 2023 01:37:14 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id BF6FC140E955; Wed,  7 Jun 2023 23:50:29 +0000 (UTC)
+ id 7F0C12026D6A; Thu,  8 Jun 2023 01:37:14 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B7BCA140E954
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 23:50:29 +0000 (UTC)
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7740D2026E03
+ for <dm-devel@redhat.com>; Thu,  8 Jun 2023 01:37:14 +0000 (UTC)
 Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9403329A9D52
- for <dm-devel@redhat.com>; Wed,  7 Jun 2023 23:50:29 +0000 (UTC)
-Received: from mail-qk1-f170.google.com (mail-qk1-f170.google.com
- [209.85.222.170]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-621-EJkQzaWYNJKuX-uPIKHckw-1; Wed, 07 Jun 2023 19:50:28 -0400
-X-MC-Unique: EJkQzaWYNJKuX-uPIKHckw-1
-Received: by mail-qk1-f170.google.com with SMTP id
- af79cd13be357-75ec7e8e826so15285a.0
- for <dm-devel@redhat.com>; Wed, 07 Jun 2023 16:50:27 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1686181827; x=1688773827;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
- :message-id:reply-to;
- bh=mhikzEBmpROllrpUkG6N5rn5swH/R/MkyomEPj+0LRU=;
- b=iAtaItfZgCh7bbRj9vTrM6lZNG/PqQBSppOo3uKHrooa2P3WoMYc1xSd5T4oBVcbP6
- U/4mwOAmFpmFUT6FQOyK35NZRwixkOBBcEqhp4w8WrerOWW88Xg8mRpUR8unBwAILpOh
- iZkKgKEZ0B+M6Ko9VNdlKlFLeE5DIaVk7HZQ41Zwhk9gyqEynMVkz09BbJLZXs9wGh7p
- fJ7yIgMHrR66XL7zY6Tj3+qmRzzMXPIRiDX3b9WiCatFH1gGhL6txWOVp4fuLXtNK/W0
- efrauG+tcPjutdclFVKUXpJ0VNHOOXrE5Syv0v5n3D4OT7RD/6EiaFZ1det2KtGB09/d
- ZCUw==
-X-Gm-Message-State: AC+VfDyfnwDNAe2hv/VhyPzZfOoEM/+Na8zAOjLYYjaM2KsipkdpYyW7
- G2CfMuVJIAlLUw/0ao+sDtZ3Bfw=
-X-Google-Smtp-Source: ACHHUZ6y+cOL+ZxgisiLenJjAOucQc9Wtuow/WkgwMRhUI55SkTWbqnmzTclMfUHnNVFzRSWwX/5Nw==
-X-Received: by 2002:a05:620a:2b4b:b0:75b:23a1:3651 with SMTP id
- dp11-20020a05620a2b4b00b0075b23a13651mr4139465qkb.18.1686181827499; 
- Wed, 07 Jun 2023 16:50:27 -0700 (PDT)
-Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
- [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- x12-20020ae9f80c000000b0075ca4cd03d4sm245229qkh.64.2023.06.07.16.50.26
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 07 Jun 2023 16:50:27 -0700 (PDT)
-Date: Wed, 7 Jun 2023 19:50:25 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Dave Chinner <david@fromorbit.com>
-Message-ID: <ZIEXwTd17z0iYW4s@redhat.com>
-References: <CAJ0trDbspRaDKzTzTjFdPHdB9n0Q9unfu1cEk8giTWoNu3jP8g@mail.gmail.com>
- <ZHFEfngPyUOqlthr@dread.disaster.area>
- <CAJ0trDZJQwvAzngZLBJ1hB0XkQ1HRHQOdNQNTw9nK-U5i-0bLA@mail.gmail.com>
- <ZHYB/6l5Wi+xwkbQ@redhat.com>
- <CAJ0trDaUOevfiEpXasOESrLHTCcr=oz28ywJU+s+YOiuh7iWow@mail.gmail.com>
- <ZHYWAGmKhwwmTjW/@redhat.com>
- <CAG9=OMMnDfN++-bJP3jLmUD6O=Q_ApV5Dr392_5GqsPAi_dDkg@mail.gmail.com>
- <ZHqOvq3ORETQB31m@dread.disaster.area>
- <ZHti/MLnX5xGw9b7@redhat.com>
- <ZH/k9ss2Cg9HYrEV@dread.disaster.area>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4C9C5185A78F
+ for <dm-devel@redhat.com>; Thu,  8 Jun 2023 01:37:14 +0000 (UTC)
+Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
+ [205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-38-RjCSqK-oO7-8pjF9djOE2g-1; Wed, 07 Jun 2023 21:37:12 -0400
+X-MC-Unique: RjCSqK-oO7-8pjF9djOE2g-1
+Received: from pps.filterd (m0246632.ppops.net [127.0.0.1])
+ by mx0b-00069f02.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id
+ 357Mv4uw026210; Thu, 8 Jun 2023 01:36:43 GMT
+Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com
+ (iadpaimrmta02.appoci.oracle.com [147.154.18.20])
+ by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3r2a6rb4nx-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Thu, 08 Jun 2023 01:36:43 +0000
+Received: from pps.filterd
+ (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
+ by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (8.17.1.19/8.17.1.19)
+ with ESMTP id 357NhJKd010489; Thu, 8 Jun 2023 01:36:42 GMT
+Received: from nam12-bn8-obe.outbound.protection.outlook.com
+ (mail-bn8nam12lp2169.outbound.protection.outlook.com [104.47.55.169])
+ by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id
+ 3r2a6r8s61-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Thu, 08 Jun 2023 01:36:42 +0000
+Received: from PH0PR10MB4759.namprd10.prod.outlook.com (2603:10b6:510:3d::12)
+ by SN7PR10MB6364.namprd10.prod.outlook.com (2603:10b6:806:26c::20)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6455.32; Thu, 8 Jun
+ 2023 01:36:40 +0000
+Received: from PH0PR10MB4759.namprd10.prod.outlook.com
+ ([fe80::b77c:5f48:7b34:39c0]) by PH0PR10MB4759.namprd10.prod.outlook.com
+ ([fe80::b77c:5f48:7b34:39c0%6]) with mapi id 15.20.6455.030; Thu, 8 Jun 2023
+ 01:36:40 +0000
+To: Christoph Hellwig <hch@infradead.org>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Organization: Oracle Corporation
+Message-ID: <yq1edmm3fk2.fsf@ca-mkp.ca.oracle.com>
+References: <20230605121732.28468-1-nj.shetty@samsung.com>
+ <CGME20230605122310epcas5p4aaebfc26fe5377613a36fe50423cf494@epcas5p4.samsung.com>
+ <20230605121732.28468-6-nj.shetty@samsung.com>
+ <ZH3mjUb+yqI11XD8@infradead.org>
+Date: Wed, 07 Jun 2023 21:36:36 -0400
+In-Reply-To: <ZH3mjUb+yqI11XD8@infradead.org> (Christoph Hellwig's message of
+ "Mon, 5 Jun 2023 06:43:41 -0700")
+X-ClientProxiedBy: SJ0PR13CA0005.namprd13.prod.outlook.com
+ (2603:10b6:a03:2c0::10) To PH0PR10MB4759.namprd10.prod.outlook.com
+ (2603:10b6:510:3d::12)
 MIME-Version: 1.0
-In-Reply-To: <ZH/k9ss2Cg9HYrEV@dread.disaster.area>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH v7 0/5] Introduce provisioning primitives
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: PH0PR10MB4759:EE_|SN7PR10MB6364:EE_
+X-MS-Office365-Filtering-Correlation-Id: b1fbe8f3-2b86-4629-01c2-08db67c0ce8a
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0
+X-Microsoft-Antispam-Message-Info: fw4R/fofLt2Ga76P7yEQn7A2aHlbzx11522LP2yNXtMGr7aRUUgZNEc+b1okUfZ1iyGY8erdq5H/uGpscXl1mLxy8ecQPkaxKTvsokHWCgn4IiWociqpfu376Z7BQkokZgJmfZ5wlIMsKDQgCZGGMDYZGbm+Wkfu/SIZjMLeMUGa6wJBz5kL3TsOrUIV2dBqZlZQ7vyB8Hr1alg4sII+ViWi98Sa/JOjolJA1RyEWhsWsIIquh6BAzlCnXoXjsHOYnnKabb4tW2RRu/Ljv1IEfn4nK2CbGaBKxkGmJWeADah1FUDyaOoa3fLmYjkD67uqQOsHlK38SeeLK4KMpiYhEKBAO7uZ9FgSVJVcOvxL1rXkVkb8QxfDVbjGqw5r1nHKRuyyVG342mQv1591rOB0bZovj7BcZBpMPtYhFrIc0D88fwekQnXKQIW/rq5r5PVSlyOwZQXrSOajjqz8Mgbr8HU4IB+keSZlQqM3wdQAyT9RhYC4OIhTe92kHiZ3zG+ArgJg3HwhMJ68oBdWha933Dx0JyF2/2ukPzKvgYJxb66NiJjJU4yXRJMQcovbw6G
+X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:PH0PR10MB4759.namprd10.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230028)(136003)(396003)(366004)(346002)(376002)(39860400002)(451199021)(8676002)(8936002)(54906003)(478600001)(41300700001)(5660300002)(316002)(6666004)(6486002)(36916002)(7406005)(26005)(6916009)(186003)(7416002)(4326008)(66476007)(66556008)(66946007)(6512007)(6506007)(83380400001)(2906002)(38100700002)(86362001);
+ DIR:OUT; SFP:1101
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?a1P30SACxL2zB9cEUSwKqvrt4DNTcnMxxkraZ+tPJ58rabQAmvUwkt2ghQsc?=
+ =?us-ascii?Q?j7pmo6gmR0QS5E84Xyt/XeS1HWHDKArWqiG2PCsRrXplgZhq3l+Drc9+nOoj?=
+ =?us-ascii?Q?yomHvHKscTkYLRHgICpDyPVeptEb65lD2WSmxYf/oDWQUV3tJckwQoMIt/0V?=
+ =?us-ascii?Q?kYPtF+1UBUJ6LVkVbB8nOunXfOXBE9D/BSVV53NemTCypKDXi8vNJgFBVzBa?=
+ =?us-ascii?Q?A6spB0+gtaAk6vPrtyMqHYhGaDwJScePLY6T7L6UAp0W0wfYlERninTChEzi?=
+ =?us-ascii?Q?KaVP03kav6TQQA46GBMqRtdm93cJvZrUFpWK0mc/MIcEuPHfLqVZBnbzMkxS?=
+ =?us-ascii?Q?XlI+Wpc3lM488axD/nGCDZ/9mDpDyXDrZFUmQGx4oDoOmzwJAQkxv3tI+4Zl?=
+ =?us-ascii?Q?r3+lMC2D67Jc6ap8XDMYp8X0hvac+FVaKuXsi0Da+StUszpUxxQ1MpX6Ajl8?=
+ =?us-ascii?Q?/PmJCU2/5oVYtFuj8Cr8pmnAKmrXkk21/Ke81zVUy1Y+drC8RcRnmV+E83dA?=
+ =?us-ascii?Q?Ct/B4MAilblBNWCMhxaVZ8sK+HK9YG1CU9fkGPDu49ZaxFlg8L4iGCi/z5/v?=
+ =?us-ascii?Q?lmB/16lcD+Sitd5QkGWX8lbvLvxrXfOeTjfS882E57Z0MD63bnb8/QvcCgOZ?=
+ =?us-ascii?Q?CSGENimaMvnxDuvqyACizqHFPOGrLwzJVCqf44eKcXMgoEsMZkuOPgeaVcXc?=
+ =?us-ascii?Q?F0DcMEzy8BTrq76ebdybexaJ5aTf4OxpBclU9xmKsyiddXDbH0oMcG7/2IH8?=
+ =?us-ascii?Q?a2nckjoHKy9CScVr8bHI7GFOb5gBKB16DqsMvj6e96ubWUPaCL6z8zSV+wrs?=
+ =?us-ascii?Q?QX0RVofl7iE9/ZOd/Y7GyJVq2gu+cTWsbT54H6Ian1eUcOOyBEqBXMqGJ5z3?=
+ =?us-ascii?Q?5U7cGTQvmIKTOTA23BlvdcP/CF18tSWI+TMalDyV9559q8P7U/Ldp4fRz7an?=
+ =?us-ascii?Q?GdpAcxyClpLt/APOpRm5OFVQhCanY+MYVZJdLXu1/9/Lnt1vhEi1dgOA7+iC?=
+ =?us-ascii?Q?JZBt7p2Sey2MLPMinA9f49X1ZIsxQAtqdGJ828quJ+WRrWNYNVFRU+f3SN6M?=
+ =?us-ascii?Q?jUphMfF5+jFR0rcBUDXN0FYYRvKW8fwEaw2Vl0x5oiOcKYZrttPovaHNod3X?=
+ =?us-ascii?Q?2j3jRCunGYZOdm0GCD/r+tPpfuQvp9yR6xS0BX4cu4P7+a6lzVn1tMrks2Vw?=
+ =?us-ascii?Q?xlLY9jBjkVxDn+AAd25n6FX0+8mezYlCvl//iAe17lLW+dd95VNAzNTIaHC9?=
+ =?us-ascii?Q?TD/LJpo+NXKy6IXenXg0OUtRtaupuXlXmv/K3tXNJBxnlnj+zhQzYZ7NmHck?=
+ =?us-ascii?Q?VCPFwG+SCAddCk7lNFkEUdk2iOD8xlz+oJUvaremmfy9lhNb1811fvdsdqQ6?=
+ =?us-ascii?Q?ctDTXJSFMS1nvZEKNxcOkdI3XJoTRU1/c2c62mqe/Hv0jdw2QxryZIHb1Iz7?=
+ =?us-ascii?Q?dYKlu8S8XWe97vsDBwSnipl2KyZ+FS7LJ8zkveVocsvJMrO6lFKjrEX19eCx?=
+ =?us-ascii?Q?Ywb3KRmbBnyUuP67fYDlLup4/gMXBwS4PobcPCXzMyJMneLvt49Q284gIc/g?=
+ =?us-ascii?Q?9tchJRNarYsBWCxa7iFUEiEphM6OUB2IX97uKlZPYu/mNAINCTdHh+zfc3IS?=
+ =?us-ascii?Q?5A=3D=3D?=
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0: =?us-ascii?Q?Xt9DQvkA1mvtjCLOc0cRJokqeG8lbBKG/xwoEnFiy+Q8MS/4SDnSyVcHXrFn?=
+ =?us-ascii?Q?pvITJRRR56+wy8RTcpjuXQJhw8UtNPtZaIi93cyTbrWLwV1xZ1WXb21K9qkZ?=
+ =?us-ascii?Q?79hGaRE/jHfy0gwvBVcRntVHf3yNBe3j1dZX8LVHrDOb6jE/vdjgr97J7Qpi?=
+ =?us-ascii?Q?9l1dEIGM5cF+xBtngwxOFphVAeqMso9SMm1nxF6hISN4tGoggsug2u7TyBJK?=
+ =?us-ascii?Q?4awaCxXnbUNBCpDD9TT3iAhgWQ3pPLLgy6kv6dwYr1GbdpeleWN6T4+xZnVy?=
+ =?us-ascii?Q?90iSUi6rtZp+dAgcY9wmYKF4g4hbgNFD3NKU9Dz4/fF1a9weZokpppG+6YfX?=
+ =?us-ascii?Q?blx2NT4tyh10fTy7GdNGDV7mWfUETKL9UdaGDdfxeyFPfZ4y6V+jaO3SfjTt?=
+ =?us-ascii?Q?mVrM/MLYaauaEDbQHAbVyy/DC7b7TCrmXb+5yafJJEoFS2mpiAyMo83hkgtX?=
+ =?us-ascii?Q?5fW7IBH4Z+oP1BvV3OOz7ktjxfDloM2PPdOCU+KjQVkwTaCETugrb15NYIUl?=
+ =?us-ascii?Q?D0CLcjL6fjqsPVMjZ/i4ieulKy5kEAYfPB0HDKJKMDQzTC5mdDxktWQuuC7x?=
+ =?us-ascii?Q?q1Qv1FJ9DuMeKvozEkqPsFBgHK/ImBwRqAHh9mkB/daa2WKiCqZhdIFaz9qy?=
+ =?us-ascii?Q?Bj3XdzfDwrfiHWXhT99rLCp0ls8iTEsttwXQK5FE5TohJPojzpp9nK6xbBn/?=
+ =?us-ascii?Q?6bg8SAUn9ggd1mnqg+MfOjRb14DvgNoX1DVbl8/aAUj3CHgVL+IpPgmxsyQF?=
+ =?us-ascii?Q?YMHColCn2zveO9TFxz/oNECJmvUINGAW9EsM+vAuKZ+vOKtvcUVvGniRSaPq?=
+ =?us-ascii?Q?XwYyUwnvQOTjqSOU+UIvefRBNESkGKgaHWZrkLN1wiXPTgEac29chZ6hyw+6?=
+ =?us-ascii?Q?5fRaCx8PVCPDpDebvofpxazWQSpo3JSiNjvTLqZ10XOXbStpV1My+ENkfLcK?=
+ =?us-ascii?Q?uFxgGPL3AflcotLven2pMJR1TL9S89kEwj2mFyFhg/ID+CiGT+BPW7Rk+Z58?=
+ =?us-ascii?Q?/KgSIgUPXZAU3DeGkTxlMFaTJhTlr29YiV3dq8Quy+i51Jr+va8VajvNTIPd?=
+ =?us-ascii?Q?LEFNV1jysTFi6eUOjle1zpQZ7ezE0EZ+S6Med8r2y7jsir2ahqroSPTYTsdQ?=
+ =?us-ascii?Q?/VkD+LwupCETeujNIEpmiyNguKb9k4YpE2bRVSQE9pFsS5IKc674QXdbE1ns?=
+ =?us-ascii?Q?fn5+7LmNz21+8VUwV7NXmkCwymvVVUvRGTIEyQ=3D=3D?=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: b1fbe8f3-2b86-4629-01c2-08db67c0ce8a
+X-MS-Exchange-CrossTenant-AuthSource: PH0PR10MB4759.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 08 Jun 2023 01:36:40.0608 (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: +419qSlleiNiqe/B5t6fYDUzVlI0Z1U219oVRdcsPohno8I59t3Ba6Nl6quG1aTrNeXL4yWliinDJpiXqThvpxWSTbiLOskx+bCEV15n48s=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SN7PR10MB6364
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.254,Aquarius:18.0.957,Hydra:6.0.573,FMLib:17.11.176.26
+ definitions=2023-06-07_13,2023-06-07_01,2023-05-22_02
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 suspectscore=0
+ malwarescore=0
+ mlxscore=0 bulkscore=0 phishscore=0 mlxlogscore=999 spamscore=0
+ adultscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2305260000 definitions=main-2306080010
+X-Proofpoint-ORIG-GUID: EYrQPd42Zc4BAuABhshJ0UL6k7pfBsyr
+X-Proofpoint-GUID: EYrQPd42Zc4BAuABhshJ0UL6k7pfBsyr
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH v12 5/9] nvme: add copy offload support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -111,148 +200,66 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
- Joe Thornber <thornber@redhat.com>,
- Sarthak Kukreti <sarthakkukreti@chromium.org>, dm-devel@redhat.com,
- "Michael S. Tsirkin" <mst@redhat.com>, "Darrick J. Wong" <djwong@kernel.org>,
- Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
- linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>,
- Joe Thornber <ejt@redhat.com>, Andreas Dilger <adilger.kernel@dilger.ca>,
- Stefan Hajnoczi <stefanha@redhat.com>, linux-fsdevel@vger.kernel.org,
- Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org,
- Brian Foster <bfoster@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Cc: linux-doc@vger.kernel.org, djwong@kernel.org,
+ linux-nvme@lists.infradead.org, dm-devel@redhat.com,
+ Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>,
+ Sagi Grimberg <sagi@grimberg.me>, linux-scsi@vger.kernel.org,
+ Jonathan Corbet <corbet@lwn.net>, gost.dev@samsung.com,
+ nitheshshetty@gmail.com, James Smart <james.smart@broadcom.com>,
+ willy@infradead.org, Nitesh Shetty <nj.shetty@samsung.com>,
+ Chaitanya Kulkarni <kch@nvidia.com>, Anuj Gupta <anuj20.g@samsung.com>,
+ Mike Snitzer <snitzer@kernel.org>, ming.lei@redhat.com,
+ linux-block@vger.kernel.org, dlemoal@kernel.org,
+ Alexander Viro <viro@zeniv.linux.org.uk>, Keith Busch <kbusch@kernel.org>,
+ bvanassche@acm.org, Jens Axboe <axboe@kernel.dk>,
+ Christian Brauner <brauner@kernel.org>, Kanchan Joshi <joshi.k@samsung.com>,
+ martin.petersen@oracle.com, linux-kernel@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org,
+ Javier =?utf-8?Q?Gonz=C3=A1lez?= <javier.gonz@samsung.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
-Content-Disposition: inline
+X-Mimecast-Originator: oracle.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Jun 06 2023 at 10:01P -0400,
-Dave Chinner <david@fromorbit.com> wrote:
 
-> On Sat, Jun 03, 2023 at 11:57:48AM -0400, Mike Snitzer wrote:
-> > On Fri, Jun 02 2023 at  8:52P -0400,
-> > Dave Chinner <david@fromorbit.com> wrote:
-> > 
-> > > Mike, I think you might have misunderstood what I have been proposing.
-> > > Possibly unintentionally, I didn't call it REQ_OP_PROVISION but
-> > > that's what I intended - the operation does not contain data at all.
-> > > It's an operation like REQ_OP_DISCARD or REQ_OP_WRITE_ZEROS - it
-> > > contains a range of sectors that need to be provisioned (or
-> > > discarded), and nothing else.
-> > 
-> > No, I understood that.
-> > 
-> > > The write IOs themselves are not tagged with anything special at all.
-> > 
-> > I know, but I've been looking at how to also handle the delalloc
-> > usecase (and yes I know you feel it doesn't need handling, the issue
-> > is XFS does deal nicely with ensuring it has space when it tracks its
-> > allocations on "thick" storage
-> 
-> Oh, no it doesn't. It -works for most cases-, but that does not mean
-> it provides any guarantees at all. We can still get ENOSPC for user
-> data when delayed allocation reservations "run out".
-> 
-> This may be news to you, but the ephemeral XFS delayed allocation
-> space reservation is not accurate. It contains a "fudge factor"
-> called "indirect length". This is a "wet finger in the wind"
-> estimation of how much new metadata will need to be allocated to
-> index the physical allocations when they are made. It assumes large
-> data extents are allocated, which is good enough for most cases, but
-> it is no guarantee when there are no large data extents available to
-> allocate (e.g. near ENOSPC!).
-> 
-> And therein lies the fundamental problem with ephemeral range
-> reservations: at the time of reservation, we don't know how many
-> individual physical LBA ranges the reserved data range is actually
-> going to span.
-> 
-> As a result, XFS delalloc reservations are a "close-but-not-quite"
-> reservation backed by a global reserve pool that can be dipped into
-> if we run out of delalloc reservation. If the reserve pool is then
-> fully depleted before all delalloc conversion completes, we'll still
-> give ENOSPC. The pool is sized such that the vast majority of
-> workloads will complete delalloc conversion successfully before the
-> pool is depleted.
-> 
-> Hence XFS gives everyone the -appearance- that it deals nicely with
-> ENOSPC conditions, but it never provides a -guarantee- that any
-> accepted write will always succeed without ENOSPC.
-> 
-> IMO, using this "close-but-not-quite" reservation as the basis of
-> space requirements for other layers to provide "won't ENOSPC"
-> guarantees is fraught with problems. We already know that it is
-> insufficient in important corner cases at the filesystem level, and
-> we also know that lower layers trying to do ephemeral space
-> reservations will have exactly the same problems providing a
-> guarantee. And these are problems we've been unable to engineer
-> around in the past, so the likelihood we can engineer around them
-> now or in the future is also very unlikely.
+Christoph,
 
-Thanks for clarifying. Wasn't aware of XFS delalloc's "wet finger in
-the air" ;)
+> Yikes. Overloading REQ_OP_READ and REQ_OP_WRITE with something
+> entirely different brings us back the horrors of the block layer 15
+> years ago. Don't do that. Please add separate REQ_COPY_IN/OUT (or
+> maybe SEND/RECEIVE or whatever) methods.
 
-So do you think it reasonable to require applications to fallocate
-their data files? Unaware if users are aware to take that extra step.
+I agree, I used REQ_COPY_IN and REQ_COPY_OUT in my original series.
 
-> > -- so adding coordination between XFS
-> > and dm-thin layers provides comparable safety.. that safety is an
-> > expected norm).
-> >
-> > But rather than discuss in terms of data vs metadata, the distinction
-> > is:
-> > 1) LBA range reservation (normal case, your proposal)
-> > 2) non-LBA reservation (absolute value, LBA range is known at later stage)
-> > 
-> > But I'm clearly going off script for dwelling on wanting to handle
-> > both.
-> 
-> Right, because if we do 1) then we don't need 2). :)
+>> +	/* setting copy limits */
+>> +	if (blk_queue_flag_test_and_set(QUEUE_FLAG_COPY, q))
+>
+> I don't understand this comment.
+>
+>> +struct nvme_copy_token {
+>> +	char *subsys;
+>> +	struct nvme_ns *ns;
+>> +	sector_t src_sector;
+>> +	sector_t sectors;
+>> +};
+>
+> Why do we need a subsys token? Inter-namespace copy is pretty crazy,
+> and not really anything we should aim for. But this whole token design
+> is pretty odd anyway. The only thing we'd need is a sequence number /
+> idr / etc to find an input and output side match up, as long as we
+> stick to the proper namespace scope.
 
-Sure.
+Yeah, I don't think we need to carry this in a token. Doing the sanity
+check up front in blkdev_copy_offload() should be fine. For NVMe it's
+not currently possible to copy across and for SCSI we'd just make sure
+the copy scope is the same for the two block devices before we even
+issue the operations.
 
-> > My looking at (ab)using REQ_META being set (use 1) vs not (use 2) was
-> > a crude simplification for branching between the 2 approaches.
-> > 
-> > And I understand I made you nervous by expanding the scope to a much
-> > more muddled/shitty interface. ;)
-> 
-> Nervous? No, I'm simply trying to make sure that everyone is on the
-> same page. i.e. that if we water down the guarantee that 1) relies
-> on, then it's not actually useful to filesystems at all.
-
-Yeah, makes sense.
- 
-> > > Put simply: if we restrict REQ_OP_PROVISION guarantees to just
-> > > REQ_META writes (or any other specific type of write operation) then
-> > > it's simply not worth persuing at the filesystem level because the
-> > > guarantees we actually need just aren't there and the complexity of
-> > > discovering and handling those corner cases just isn't worth the
-> > > effort.
-> > 
-> > Here is where I get to say: I think you misunderstood me (but it was
-> > my fault for not being absolutely clear: I'm very much on the same
-> > page as you and Joe; and your visions need to just be implemented
-> > ASAP).
-> 
-> OK, good that we've clarified the misunderstandings on both sides
-> quickly :)
-
-Do you think you're OK to scope out, and/or implement, the XFS changes
-if you use v7 of this patchset as the starting point? (v8 should just
-be v7 minus the dm-thin.c and dm-snap.c changes).  The thinp
-support in v7 will work enough to allow XFS to issue REQ_OP_PROVISION
-and/or fallocate (via mkfs.xfs) to dm-thin devices.
-
-And Joe and I can make independent progress on the dm-thin.c changes
-needed to ensure the REQ_OP_PROVISION gaurantee you need.
-
-Thanks,
-Mike
+-- 
+Martin K. Petersen	Oracle Linux Engineering
 
 --
 dm-devel mailing list
