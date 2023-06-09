@@ -4,83 +4,75 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 27BF7C7EE25
-	for <dm-devel@archiver.kernel.org>; Fri,  9 Jun 2023 04:45:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 857C5C7EE25
+	for <dm-devel@archiver.kernel.org>; Fri,  9 Jun 2023 04:54:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686285924;
+	s=mimecast20190719; t=1686286449;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Tpk4I7TWLxlvD+ZaAhGD/nA7gPYT81DJ8FcVosPKlq4=;
-	b=R/UTsbb3FWqouk8na6fAtW1XCqZA+8HKFrrwNyhfIehOOQ6ccr7VazgTO6MDBYSgpP1QLH
-	cz2JpynSzNsA7qkpn76GxAxvVbdqV/460Nctj7cUQnbeGXTq4W2uXpBmXxAYGwd/Wu/srF
-	CQfB6ftJ44hhNTCUOZtDvNu552CsIuc=
+	bh=8qMNflpHbeG+x3r3S4cSL/dNSTI7e/7ZxzeHT9aOYkg=;
+	b=Zjk6dainwWmfc3JOXqGECREHkRkuolmklSeoFmf2iZp7q9CxOMhi1jI8KEoNRirqtvfN/Z
+	2UDPw1iq/DxfBP/5go8ZbMCeq4+lSNWv4po3Ohps6eCs6peXNxauJRQmITSkz/b8hD4VYY
+	ua/CM9qoACvay0MWBBWI2XDxfq0fG08=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-516-iyDTVBG6M0CCVA53GbWQHw-1; Fri, 09 Jun 2023 00:45:20 -0400
-X-MC-Unique: iyDTVBG6M0CCVA53GbWQHw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-164-wBH_378cMuewusi6bMug6g-1; Fri, 09 Jun 2023 00:54:05 -0400
+X-MC-Unique: wBH_378cMuewusi6bMug6g-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C8A9D296A60E;
-	Fri,  9 Jun 2023 04:45:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E9BE23C021BE;
+	Fri,  9 Jun 2023 04:54:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1AAF3C16044;
-	Fri,  9 Jun 2023 04:45:13 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CC867492B00;
+	Fri,  9 Jun 2023 04:54:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 984FC19451C0;
-	Fri,  9 Jun 2023 04:45:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7721619451C0;
+	Fri,  9 Jun 2023 04:54:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 41D44194658C
- for <dm-devel@listman.corp.redhat.com>; Fri,  9 Jun 2023 04:45:12 +0000 (UTC)
+ ESMTP id 1CED4194658C
+ for <dm-devel@listman.corp.redhat.com>; Fri,  9 Jun 2023 04:54:01 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D033F40CFD47; Fri,  9 Jun 2023 04:45:11 +0000 (UTC)
+ id DDDA540D1B68; Fri,  9 Jun 2023 04:54:00 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C83C140CFD46
- for <dm-devel@redhat.com>; Fri,  9 Jun 2023 04:45:11 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D6F0F40D1B66
+ for <dm-devel@redhat.com>; Fri,  9 Jun 2023 04:54:00 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A8C58185A78F
- for <dm-devel@redhat.com>; Fri,  9 Jun 2023 04:45:11 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-527-8HqT6rZHMJqEr223dbnjWg-1; Fri, 09 Jun 2023 00:45:09 -0400
-X-MC-Unique: 8HqT6rZHMJqEr223dbnjWg-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id F3CFC60C89;
- Fri,  9 Jun 2023 04:45:08 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5F108C433D2;
- Fri,  9 Jun 2023 04:45:08 +0000 (UTC)
-Received: by mail-lf1-f51.google.com with SMTP id
- 2adb3069b0e04-4f658a17aa4so616374e87.0; 
- Thu, 08 Jun 2023 21:45:08 -0700 (PDT)
-X-Gm-Message-State: AC+VfDxIIyyfFOynEtdZA3XLjxkCzfQ15XB162lOhijAehLeJPVbE3UR
- 5scvmkAwBwq75p85/ZIUxrti9sK27Z9P5m9s1ZA=
-X-Google-Smtp-Source: ACHHUZ6HaFF03H53+7vGQJhIsVAaRL+rCqTGiTnj3esTnBlt6KHYOgFQdTsKM9JhvmvBMcUu7+cv00YuNa2U0huGCE0=
-X-Received: by 2002:ac2:5b0d:0:b0:4f4:b3a6:4135 with SMTP id
- v13-20020ac25b0d000000b004f4b3a64135mr143022lfn.55.1686285906337; Thu, 08 Jun
- 2023 21:45:06 -0700 (PDT)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B780C811E78
+ for <dm-devel@redhat.com>; Fri,  9 Jun 2023 04:54:00 +0000 (UTC)
+Received: from bombadil.infradead.org (bombadil.infradead.org
+ [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-539-HVGhCv99O2qnajE9eA6jPg-1; Fri, 09 Jun 2023 00:53:59 -0400
+X-MC-Unique: HVGhCv99O2qnajE9eA6jPg-1
+Received: from hch by bombadil.infradead.org with local (Exim 4.96 #2 (Red Hat
+ Linux)) id 1q7Tfy-00BaXx-39; Fri, 09 Jun 2023 04:24:38 +0000
+Date: Thu, 8 Jun 2023 21:24:38 -0700
+From: Christoph Hellwig <hch@infradead.org>
+To: Nitesh Shetty <nj.shetty@samsung.com>
+Message-ID: <ZIKphgDavKVPREnw@infradead.org>
+References: <20230605121732.28468-1-nj.shetty@samsung.com>
+ <CGME20230605122310epcas5p4aaebfc26fe5377613a36fe50423cf494@epcas5p4.samsung.com>
+ <20230605121732.28468-6-nj.shetty@samsung.com>
+ <ZH3mjUb+yqI11XD8@infradead.org>
+ <20230606113535.rjbhe6eqlyqk4pqq@green245>
+ <ZIAt7vL+/isPJEl5@infradead.org>
+ <20230608120817.jg4xb4jhg77mlksw@green245>
 MIME-Version: 1.0
-References: <20230529132037.2124527-1-yukuai1@huaweicloud.com>
- <0a38ddc1-b47e-04e8-dbf5-25afcd13fff4@huaweicloud.com>
-In-Reply-To: <0a38ddc1-b47e-04e8-dbf5-25afcd13fff4@huaweicloud.com>
-From: Song Liu <song@kernel.org>
-Date: Thu, 8 Jun 2023 21:44:53 -0700
-X-Gmail-Original-Message-ID: <CAPhsuW65AFL=vbcubantu=O-6uVVeDHrO73Oun07DqnYHsv8CA@mail.gmail.com>
-Message-ID: <CAPhsuW65AFL=vbcubantu=O-6uVVeDHrO73Oun07DqnYHsv8CA@mail.gmail.com>
-To: Yu Kuai <yukuai1@huaweicloud.com>
+In-Reply-To: <20230608120817.jg4xb4jhg77mlksw@green245>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+ bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -88,9 +80,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH -next v2 0/6] md: fix that
- MD_RECOVERY_RUNNING can be cleared while sync_thread is still running
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] [PATCH v12 5/9] nvme: add copy offload support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -102,30 +93,59 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: yi.zhang@huawei.com, yangerkun@huawei.com, snitzer@kernel.org,
- linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com,
- guoqing.jiang@linux.dev, "yukuai \(C\)" <yukuai3@huawei.com>, agk@redhat.com
+Cc: linux-doc@vger.kernel.org, djwong@kernel.org,
+ linux-nvme@lists.infradead.org, dm-devel@redhat.com,
+ Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>,
+ Sagi Grimberg <sagi@grimberg.me>, linux-scsi@vger.kernel.org,
+ Jonathan Corbet <corbet@lwn.net>, gost.dev@samsung.com,
+ nitheshshetty@gmail.com, James Smart <james.smart@broadcom.com>,
+ willy@infradead.org, Christoph Hellwig <hch@infradead.org>,
+ Chaitanya Kulkarni <kch@nvidia.com>, Anuj Gupta <anuj20.g@samsung.com>,
+ Mike Snitzer <snitzer@kernel.org>, ming.lei@redhat.com,
+ linux-block@vger.kernel.org, dlemoal@kernel.org,
+ Alexander Viro <viro@zeniv.linux.org.uk>, Keith Busch <kbusch@kernel.org>,
+ bvanassche@acm.org, Jens Axboe <axboe@kernel.dk>,
+ Christian Brauner <brauner@kernel.org>, Kanchan Joshi <joshi.k@samsung.com>,
+ "Martin K. Petersen" <martin.petersen@oracle.com>,
+ linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ Javier =?iso-8859-1?Q?Gonz=E1lez?= <javier.gonz@samsung.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+X-Mimecast-Originator: infradead.org
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gV2VkLCBKdW4gNywgMjAyMyBhdCA3OjQx4oCvUE0gWXUgS3VhaSA8eXVrdWFpMUBodWF3ZWlj
-bG91ZC5jb20+IHdyb3RlOgo+Cj4gSGksCj4KPiDlnKggMjAyMy8wNS8yOSAyMToyMCwgWXUgS3Vh
-aSDlhpnpgZM6Cj4gPiBGcm9tOiBZdSBLdWFpIDx5dWt1YWkzQGh1YXdlaS5jb20+Cj4gPgo+ID4g
-Q2hhbmdlcyBpbiB2MjoKPiA+ICAgLSByZWJhc2UgZm9yIHRoZSBsYXRlc3QgbWQtbmV4dAo+ID4K
-PiA+IFBhdGNoIDEgcmV2ZXJ0IHRoZSBjb21taXQgYmVjYXVzZSBpdCB3aWxsIGNhdXNlIE1EX1JF
-Q09WRVJZX1JVTk5JTkcgdG8gYmUKPiA+IGNsZWFyZWQgd2hpbGUgc3luY190aHJlYWQgaXMgc3Rp
-bGwgcnVubmluZy4gVGhlIGRlYWRsb2NrIHRoaXMgcGF0Y2ggdHJpZXMKPiA+IHRvIGZpeCB3aWxs
-IGJlIGZpeGVkIGJ5IHBhdGNoIDItNS4KPiA+Cj4gPiBQYXRjaCA2IGVuaGFuY2UgY2hlY2tpbmcg
-dG8gcHJldmVudCBNRF9SRUNPVkVSWV9SVU5OSU5HIHRvIGJlIGNsZWFyZWQKPiA+IHdoaWxlIHN5
-bmNfdGhyZWFkIGlzIHN0aWxsIHJ1bm5pbmcuCj4KPiBBbnkgc3VnZ2VzdGlvbnMgb24gdGhpcyBw
-YXRjaHNldD8gSSBhbHJlYWR5IHNlbnQgcmVncmVzc2lvbiB0ZXN0Cj4gZm9yIHRoZSBkZWFkbG9j
-ayBwcm9ibGVtIGZvciBib3RoIHJhaWQxMCBhbmQgcmFpZDQ1Ni4KClNvcnJ5IGZvciB0aGUgZGVs
-YXkuIEkgd2lsbCBsb29rIGludG8gdGhpcyBzb29uLgoKVGhhbmtzLApTb25nCgotLQpkbS1kZXZl
-bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0
-LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
+On Thu, Jun 08, 2023 at 05:38:17PM +0530, Nitesh Shetty wrote:
+> Sure, we can do away with subsys and realign more on single namespace copy.
+> We are planning to use token to store source info, such as src sector,
+> len and namespace. Something like below,
+> 
+> struct nvme_copy_token {
+> 	struct nvme_ns *ns; // to make sure we are copying within same namespace
+> /* store source info during *IN operation, will be used by *OUT operation */
+> 	sector_t src_sector;
+> 	sector_t sectors;
+> };
+> Do you have any better way to handle this in mind ?
+
+In general every time we tried to come up with a request payload that is
+not just data passed to the device it has been a nightmare.
+
+So my gut feeling would be that bi_sector and bi_iter.bi_size are the
+ranges, with multiple bios being allowed to form the input data, similar
+to how we implement discard merging.
+
+The interesting part is how we'd match up these bios.  One idea would
+be that since copy by definition doesn't need integrity data we just
+add a copy_id that unions it, and use a simple per-gendisk copy I/D
+allocator, but I'm not entirely sure how well that interacts stacking
+drivers. 
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
