@@ -4,100 +4,112 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C0160C7EE25
-	for <dm-devel@archiver.kernel.org>; Fri,  9 Jun 2023 00:28:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DD4FCC7EE23
+	for <dm-devel@archiver.kernel.org>; Fri,  9 Jun 2023 03:33:17 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686270506;
+	s=mimecast20190719; t=1686281596;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=lhreQhTKd5mQ11yQXFCSpUp4JsBkbShCsdfSV6dQbqU=;
-	b=N2Z/3DglJi6r88U+zH+6VIs4isi6diA5tCAmoK7DTDYppVj6HMflMCkiO3HiHVhC5tSLVC
-	rJQTcodh9Cgz7zTPHVb3X5EH5EjsMkaRkPi5v6ozYfV6+1yXrYJd2khvOF5KzMB7J1C/8q
-	cXoiejoaKwSyyziwgrkb/NUK75wDMRo=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=9FeHcFSpHbgMe9pQjzIuSQ3VGX6CjVL3VxqTiW202ls=;
+	b=DDRSrwCLysCsnspbqp6d6rZFJ0RnqQkWDFwlOnPxubvZeIzFo0YqpDjLZcs9wYkkyzt6qM
+	d8bSiD5ttdaeIRBvWh3U+SwK28DcG0JlJlDQnWBwNQ1ZzZpg4Lb9sEA/MsNDZCe3hv5bbT
+	P/TpLMoJBoCoRIXgFN3R60G4Yyb3TQQ=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-627-aJhLtuaFPwKVbh3o9w8Pgw-1; Thu, 08 Jun 2023 20:28:23 -0400
-X-MC-Unique: aJhLtuaFPwKVbh3o9w8Pgw-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-629-KKd--HwoMoC26mXqSqPtZA-1; Thu, 08 Jun 2023 23:33:13 -0400
+X-MC-Unique: KKd--HwoMoC26mXqSqPtZA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 21858101AA68;
-	Fri,  9 Jun 2023 00:28:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E3DD22999B38;
+	Fri,  9 Jun 2023 03:33:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C8EB7492B00;
-	Fri,  9 Jun 2023 00:28:21 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CB589140E956;
+	Fri,  9 Jun 2023 03:33:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9AE6C19451C0;
-	Fri,  9 Jun 2023 00:28:21 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A09ED19451C0;
+	Fri,  9 Jun 2023 03:33:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D54AC194658C
- for <dm-devel@listman.corp.redhat.com>; Fri,  9 Jun 2023 00:28:20 +0000 (UTC)
+ ESMTP id C5B3E194658C
+ for <dm-devel@listman.corp.redhat.com>; Fri,  9 Jun 2023 03:33:03 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 946FCC16046; Fri,  9 Jun 2023 00:28:20 +0000 (UTC)
+ id 92B5E40D1B68; Fri,  9 Jun 2023 03:33:03 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8C704C16044
- for <dm-devel@redhat.com>; Fri,  9 Jun 2023 00:28:20 +0000 (UTC)
-Received: from us-smtp-inbound-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8B58540D1B66
+ for <dm-devel@redhat.com>; Fri,  9 Jun 2023 03:33:03 +0000 (UTC)
+Received: from us-smtp-inbound-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 707071C00D00
- for <dm-devel@redhat.com>; Fri,  9 Jun 2023 00:28:20 +0000 (UTC)
-Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
- [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 701B2101A52C
+ for <dm-devel@redhat.com>; Fri,  9 Jun 2023 03:33:03 +0000 (UTC)
+Received: from mail-ot1-f47.google.com (mail-ot1-f47.google.com
+ [209.85.210.47]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-57-TSRW_yvHNuWk2pIKu5j8Sg-1; Thu, 08 Jun 2023 20:28:19 -0400
-X-MC-Unique: TSRW_yvHNuWk2pIKu5j8Sg-1
-Received: by mail-qk1-f200.google.com with SMTP id
- af79cd13be357-75d42a5097bso148407385a.3
- for <dm-devel@redhat.com>; Thu, 08 Jun 2023 17:28:19 -0700 (PDT)
+ us-mta-594-Zq30qN1xOdSiZw_7Adg07g-1; Thu, 08 Jun 2023 23:33:01 -0400
+X-MC-Unique: Zq30qN1xOdSiZw_7Adg07g-1
+Received: by mail-ot1-f47.google.com with SMTP id
+ 46e09a7af769-6b2bdca0884so303393a34.2
+ for <dm-devel@redhat.com>; Thu, 08 Jun 2023 20:33:01 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1686270498; x=1688862498;
+ d=1e100.net; s=20221208; t=1686281580; x=1688873580;
  h=in-reply-to:content-disposition:mime-version:references:message-id
  :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
  :message-id:reply-to;
- bh=dZ0yORwAdXDCRd2fZyWQ1kLxeAr//tPmWz4kXkYhyTs=;
- b=d0v/O3AK1TutRwqVUbEFzncLc/f5vMj0mOQb6TXEBMPkH8yGbg9aZ+2QFzmit2Z73d
- VjE7u4i0haqMPGZGG/2dKrHlsaPZ67h9geEFCawsIC9bOHKHrqE9Ixs+/TdQq7V8MntH
- PlwPLQnNac2dyW46vjTqUXWJc4A6aeYZsn8xbRIFXXucPCfKvvGPTAXPhOba8/G8ICvW
- YPRAZvplqcHFKSMZlzrgy/nwjXLXiDfqmLBvnVGXAySNATtynBhb+Jq6Q5znp/SjRchO
- ipysZe0+LKNFjwKNXOvRmpHsgscsuxFWfcYZa1mS+v+xDgG05y0BYMh+HHEG7gW7YKYU
- AZLQ==
-X-Gm-Message-State: AC+VfDxQ0BrzgHGPug3fmfjrrkojL5S9wIbBa5FiItnds+JnAp3MJHoP
- /V8Njz7P9YGuiKaeNCxrkTNwxl+7rD6/PuiIdIppyWJE2sB4YVbxP2edn9aVIDooLOHgFdvbemy
- 4ZFnGE6XgoSqLag==
-X-Received: by 2002:a05:620a:2810:b0:75b:23a1:830c with SMTP id
- f16-20020a05620a281000b0075b23a1830cmr6973252qkp.7.1686270498615; 
- Thu, 08 Jun 2023 17:28:18 -0700 (PDT)
-X-Google-Smtp-Source: ACHHUZ5VNYOErVU972i4sJBtGLp/lGfEdbBIVxwb21zSx3OzLfsQlP0gnu+6DNqAnZHJO5hi85SI6A==
-X-Received: by 2002:a05:620a:2810:b0:75b:23a1:830c with SMTP id
- f16-20020a05620a281000b0075b23a1830cmr6973236qkp.7.1686270498360; 
- Thu, 08 Jun 2023 17:28:18 -0700 (PDT)
-Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
- [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- m14-20020a05620a13ae00b0075da00ef114sm693183qki.46.2023.06.08.17.28.17
+ bh=6iwigF78U3EwOQGn53e2UyWPNzHupFHtA26oaO3R2wc=;
+ b=TzG4TvykoYqA+OfrI0Vo7O533qtoxv2US1ci8/K4CDdNMF4eb8o4bSDRSFUYgVWq70
+ 9G/RWK/8r/GcrNEfHboZmE6zk0m34yRVZyYB2wzEs0oCUNdhiq9jKGDSvTJifEAVMb7c
+ NtTk+zMq0f2QOn2oJbFYCyNIJYoaOzMq/tgeZCv6EeZXCRySOi9X7lwJxS05p7/B9XPb
+ 8kOLAD9vUVudjndNLr8r73CHCRN4Y+96PlPt4YnzUIBhk5ZLO5Tr8Jh1rvN9D7YRiz+U
+ Pmgk4phmqJ2DHIQY/2DlKDdhEMOiuDzjX73DvHyBr6Qj528nGaocDZ6kLwjulqn0c06K
+ qM4g==
+X-Gm-Message-State: AC+VfDwQB5/iJBkf2xn1sU/JyKo8sph8mcCD/a4tJ340IpTtJfe/O9a1
+ VdnOEN9ykk2kFliQq33a/X+48Q==
+X-Google-Smtp-Source: ACHHUZ4jpAKkv/P4I5GyogL5cyKUBbH9jdQo3rd8sW4sBbrGIyPOxPKXrqwUV/kK78Vqo7hkyQEMOA==
+X-Received: by 2002:a05:6830:3a0a:b0:6a6:6121:dc60 with SMTP id
+ di10-20020a0568303a0a00b006a66121dc60mr317885otb.10.1686281580410; 
+ Thu, 08 Jun 2023 20:33:00 -0700 (PDT)
+Received: from dread.disaster.area (pa49-179-79-151.pa.nsw.optusnet.com.au.
+ [49.179.79.151]) by smtp.gmail.com with ESMTPSA id
+ t1-20020aa79381000000b0064381853bfcsm1723703pfe.89.2023.06.08.20.32.59
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 08 Jun 2023 17:28:17 -0700 (PDT)
-Date: Thu, 8 Jun 2023 20:28:16 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Sarthak Kukreti <sarthakkukreti@chromium.org>,
- Joe Thornber <ejt@redhat.com>, Brian Foster <bfoster@redhat.com>
-Message-ID: <ZIJyIOIPx+jE9/iv@redhat.com>
-References: <20230518223326.18744-1-sarthakkukreti@chromium.org>
- <20230518223326.18744-5-sarthakkukreti@chromium.org>
- <ZGeUYESOQsZkOQ1Q@redhat.com> <ZIJHH+ekx59+6Uu0@redhat.com>
+ Thu, 08 Jun 2023 20:32:59 -0700 (PDT)
+Received: from dave by dread.disaster.area with local (Exim 4.96)
+ (envelope-from <david@fromorbit.com>) id 1q7Srw-009XUr-2X;
+ Fri, 09 Jun 2023 13:32:56 +1000
+Date: Fri, 9 Jun 2023 13:32:56 +1000
+From: Dave Chinner <david@fromorbit.com>
+To: Mike Snitzer <snitzer@kernel.org>
+Message-ID: <ZIKdaJNhSq9JfFDU@dread.disaster.area>
+References: <ZHFEfngPyUOqlthr@dread.disaster.area>
+ <CAJ0trDZJQwvAzngZLBJ1hB0XkQ1HRHQOdNQNTw9nK-U5i-0bLA@mail.gmail.com>
+ <ZHYB/6l5Wi+xwkbQ@redhat.com>
+ <CAJ0trDaUOevfiEpXasOESrLHTCcr=oz28ywJU+s+YOiuh7iWow@mail.gmail.com>
+ <ZHYWAGmKhwwmTjW/@redhat.com>
+ <CAG9=OMMnDfN++-bJP3jLmUD6O=Q_ApV5Dr392_5GqsPAi_dDkg@mail.gmail.com>
+ <ZHqOvq3ORETQB31m@dread.disaster.area>
+ <ZHti/MLnX5xGw9b7@redhat.com>
+ <ZH/k9ss2Cg9HYrEV@dread.disaster.area>
+ <ZIEXwTd17z0iYW4s@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <ZIJHH+ekx59+6Uu0@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH v7 4/5] dm-thin: Add REQ_OP_PROVISION support
+In-Reply-To: <ZIEXwTd17z0iYW4s@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] [PATCH v7 0/5] Introduce provisioning primitives
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -109,135 +121,43 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
- Theodore Ts'o <tytso@mit.edu>, "Michael S. Tsirkin" <mst@redhat.com>,
- "Darrick J. Wong" <djwong@kernel.org>, Jason Wang <jasowang@redhat.com>,
- Bart Van Assche <bvanassche@google.com>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- Andreas Dilger <adilger.kernel@dilger.ca>,
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+ Joe Thornber <thornber@redhat.com>,
+ Sarthak Kukreti <sarthakkukreti@chromium.org>, dm-devel@redhat.com,
+ "Michael S. Tsirkin" <mst@redhat.com>, "Darrick J. Wong" <djwong@kernel.org>,
+ Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
+ linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>,
+ Joe Thornber <ejt@redhat.com>, Andreas Dilger <adilger.kernel@dilger.ca>,
  Stefan Hajnoczi <stefanha@redhat.com>, linux-fsdevel@vger.kernel.org,
- linux-ext4@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+ Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org,
+ Brian Foster <bfoster@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
+X-Mimecast-Originator: fromorbit.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Jun 08 2023 at  5:24P -0400,
-Mike Snitzer <snitzer@kernel.org> wrote:
+On Wed, Jun 07, 2023 at 07:50:25PM -0400, Mike Snitzer wrote:
+> Do you think you're OK to scope out, and/or implement, the XFS changes
+> if you use v7 of this patchset as the starting point? (v8 should just
+> be v7 minus the dm-thin.c and dm-snap.c changes).  The thinp
+> support in v7 will work enough to allow XFS to issue REQ_OP_PROVISION
+> and/or fallocate (via mkfs.xfs) to dm-thin devices.
 
-> On Fri, May 19 2023 at 11:23P -0400,
-> Mike Snitzer <snitzer@kernel.org> wrote:
-> 
-> > On Thu, May 18 2023 at  6:33P -0400,
-> > Sarthak Kukreti <sarthakkukreti@chromium.org> wrote:
-> > 
-> > > dm-thinpool uses the provision request to provision
-> > > blocks for a dm-thin device. dm-thinpool currently does not
-> > > pass through REQ_OP_PROVISION to underlying devices.
-> > > 
-> > > For shared blocks, provision requests will break sharing and copy the
-> > > contents of the entire block. Additionally, if 'skip_block_zeroing'
-> > > is not set, dm-thin will opt to zero out the entire range as a part
-> > > of provisioning.
-> > > 
-> > > Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
-> > > ---
-> > >  drivers/md/dm-thin.c | 74 +++++++++++++++++++++++++++++++++++++++++---
-> > >  1 file changed, 70 insertions(+), 4 deletions(-)
-> > > 
-> > > diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> > > index 2b13c949bd72..f1b68b558cf0 100644
-> > > --- a/drivers/md/dm-thin.c
-> > > +++ b/drivers/md/dm-thin.c
-> > > @@ -1245,8 +1247,8 @@ static int io_overlaps_block(struct pool *pool, struct bio *bio)
-> > >  
-> > >  static int io_overwrites_block(struct pool *pool, struct bio *bio)
-> > >  {
-> > > -	return (bio_data_dir(bio) == WRITE) &&
-> > > -		io_overlaps_block(pool, bio);
-> > > +	return (bio_data_dir(bio) == WRITE) && io_overlaps_block(pool, bio) &&
-> > > +	       bio_op(bio) != REQ_OP_PROVISION;
-> > >  }
-> > >  
-> > >  static void save_and_set_endio(struct bio *bio, bio_end_io_t **save,
-> > > @@ -1394,6 +1396,9 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
-> > >  	m->data_block = data_block;
-> > >  	m->cell = cell;
-> > >  
-> > > +	if (bio && bio_op(bio) == REQ_OP_PROVISION)
-> > > +		m->bio = bio;
-> > > +
-> > >  	/*
-> > >  	 * If the whole block of data is being overwritten or we are not
-> > >  	 * zeroing pre-existing data, we can issue the bio immediately.
-> > 
-> > This doesn't seem like the best way to address avoiding passdown of
-> > provision bios (relying on process_prepared_mapping's implementation
-> > that happens to do the right thing if m->bio set).  Doing so cascades
-> > into relying on complete_overwrite_bio() happening to _not_ actually
-> > being specific to "overwrite" bios.
-> > 
-> > I don't have a better suggestion yet but will look closer.  Just think
-> > this needs to be formalized a bit more rather than it happening to
-> > "just work".
-> > 
-> > Cc'ing Joe to see what he thinks too.  This is something we can clean
-> > up with a follow-on patch though, so not a show-stopper for this
-> > series.
-> 
-> I haven't circled back to look close enough at this but
-> REQ_OP_PROVISION bios _are_ being passed down to the thin-pool's
-> underlying data device.
-> 
-> Brian Foster reported that if he issues a REQ_OP_PROVISION to a thin
-> device after a snapshot (to break sharing), it'll fail with
-> -EOPNOTSUPP (response is from bio being passed down to device that
-> doesn't support it).  I was able to reproduce with:
-> 
-> # fallocate --offset 0 --length 1048576 /dev/test/thin
-> # lvcreate -n snap --snapshot test/thin
-> 
-> # fallocate --offset 0 --length 1048576 /dev/test/thin
-> fallocate: fallocate failed: Operation not supported
-> 
-> But reports success when retried:
-> # fallocate --offset 0 --length 1048576 /dev/test/thin
-> # echo $?
-> 0
-> 
-> It's somewhat moot in that Joe will be reimplementing handling for
-> REQ_OP_PROVISION _but_ in the meantime it'd be nice to have a version
-> of this patch that doesn't error (due to passdown of REQ_OP_PROVISION)
-> when breaking sharing.  Primarily so the XFS guys (Dave and Brian) can
-> make progress.
-> 
-> I'll take a closer look tomorrow but figured I'd let you know.
+Yup, XFS only needs blkdev_issue_provision() and
+bdev_max_provision_sectors() to be present.  filesystem code. The
+initial XFS provisioning detection and fallocate() support is just
+under 50 lines of new code...
 
-This fixes the issue for me (causes process_prepared_mapping to end
-the bio without REQ_OP_PROVISION passdown).
+Cheers,
 
-But like I said above back on May 19: needs cleanup to make it less of
-a hack for the REQ_OP_PROVISION case. At a minimum
-complete_overwrite_bio() would need renaming.
-
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 43a6702f9efe..434a3b37af2f 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -1324,6 +1324,9 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
- 	m->data_block = data_dest;
- 	m->cell = cell;
- 
-+	if (bio_op(bio) == REQ_OP_PROVISION)
-+		m->bio = bio;
-+
- 	/*
- 	 * quiesce action + copy action + an extra reference held for the
- 	 * duration of this function (we may need to inc later for a
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
 
 --
 dm-devel mailing list
