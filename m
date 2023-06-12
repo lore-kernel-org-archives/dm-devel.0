@@ -1,195 +1,92 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 31CA4C7EE2F
-	for <dm-devel@archiver.kernel.org>; Mon, 12 Jun 2023 06:45:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 59786C88CB6
+	for <dm-devel@archiver.kernel.org>; Mon, 12 Jun 2023 14:12:02 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686552353;
+	s=mimecast20190719; t=1686579121;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=FbgWvXEwWIfiDoiHeSyHAezrTp+Bwh1DN4N7YLjGtLY=;
-	b=YVXe5i9IhMyYZm3N6ZPyldOJmM4+NYNOmmTt8aOAILebVicAt0YHjPPhDATwcSPTd5dWKV
-	JG+xPLZUljYB6NM/pVXOoVH5sA6saOLXHAx9fC12kWpSxNspqLaS5X+pynmux8hoTKXJE/
-	w1PbY0FseD9WUx4pMMnf3N8c/6BzwiM=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=c71Xtqv3gDXikdu3WNCaehzU0J+bJRND+8hygWfxZds=;
+	b=WPqq/Q9dQ90A641VgNsvP+79kIDW+XfgkXrmKG1Ppl/7/w8Pd7MSnDzVZlW2qbB8N/GGBi
+	7l3AWoJSWqx0mbXKSkNe5XCqTLLwlWYINl1wDxcPJNMuIQRNbMYvSLqBSaWzxq2PxrAtqp
+	BQgL0YD0O2XyO3+rWWk96vmnGX0zd5E=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-370-MG5P5_XjO8a1jsuq7Vatug-1; Mon, 12 Jun 2023 02:45:49 -0400
-X-MC-Unique: MG5P5_XjO8a1jsuq7Vatug-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-85-31NFiXTROsWGd8i0zDQWMA-1; Mon, 12 Jun 2023 10:11:58 -0400
+X-MC-Unique: 31NFiXTROsWGd8i0zDQWMA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6621E3801FF2;
-	Mon, 12 Jun 2023 06:45:47 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 065EC2166B25;
-	Mon, 12 Jun 2023 06:45:42 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6F367801585;
+	Mon, 12 Jun 2023 14:11:55 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6BAA4492CA6;
+	Mon, 12 Jun 2023 14:11:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A82D219465A3;
-	Mon, 12 Jun 2023 06:45:41 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 094C519465B6;
+	Mon, 12 Jun 2023 14:11:52 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
  [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id AFD81194658C
- for <dm-devel@listman.corp.redhat.com>; Fri,  9 Jun 2023 15:13:57 +0000 (UTC)
+ ESMTP id 0DA03194658C
+ for <dm-devel@listman.corp.redhat.com>; Mon, 12 Jun 2023 14:11:50 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A102D40B4CD6; Fri,  9 Jun 2023 15:13:57 +0000 (UTC)
+ id CFEA440C20F5; Mon, 12 Jun 2023 14:11:50 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 9829B40B4CD7
- for <dm-devel@redhat.com>; Fri,  9 Jun 2023 15:13:57 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C7CF240C20F4
+ for <dm-devel@redhat.com>; Mon, 12 Jun 2023 14:11:50 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 798E03802000
- for <dm-devel@redhat.com>; Fri,  9 Jun 2023 15:13:57 +0000 (UTC)
-Received: from esa1.hc3370-68.iphmx.com (esa1.hc3370-68.iphmx.com
- [216.71.145.142]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-576-pCnFnBeCOwmJJJVkdj8Uww-1; Fri, 09 Jun 2023 11:13:55 -0400
-X-MC-Unique: pCnFnBeCOwmJJJVkdj8Uww-1
-X-IronPort-RemoteIP: 104.47.59.172
-X-IronPort-MID: 112646623
-X-IronPort-Reputation: None
-X-IronPort-Listener: OutboundMail
-X-IronPort-SenderGroup: RELAY_O365
-X-IronPort-MailFlowPolicy: $RELAYED
-IronPort-Data: A9a23:bZ2Nea0tQXqpWgi0i/bD5ZFxkn2cJEfYwER7XKvMYLTBsI5bp2dTn
- GdMXGqOM/+MNmSmf4tya4W290sOsZPVmtY3SAs6pC1hF35El5HIVI+TRqvS04F+DeWYFR46s
- J9OAjXkBJppJpMJjk71atANlVEliefTAOK6ULWeUsxIbVcMYD87jh5+kPIOjIdtgNyoayuAo
- tq3qMDEULOf82cc3lk8teTb8HuDgNyo4GlD5gJmNKgS1LPjvyJ94Kw3dPnZw0TQGuG4LsbiL
- 87fwbew+H/u/htFIrtJRZ6iLyXm6paLVeS/oiI+t5qK23CulQRrukoPD9IOaF8/ttm8t4sZJ
- OOhF3CHYVxB0qXkwIzxWvTDes10FfUuFLTveRBTvSEPpqFvnrSFL/hGVSkL0YMkFulfE0921
- +wmJBo3MhGZuvOp57uJd+cymZF2RCXrFNt3VnBI6xj8VKxjbbWdBqLA6JlfwSs6gd1IEbDGf
- c0FZDFzbRPGJRpSJlMQD5F4l+Ct7pX9W2QA9BTJ+uxqsi6Kk1YZPLvFabI5fvSQQspYhACAr
- 3/u9GXlGBAKcteYzFJp91r137WRwX2lAtl6+LuQ3fpUkUaBn1wqBzokZV6yhte2mGukcocKQ
- 6AT0m90xUQoz2SnQ9z8dxy+vn+fvxQYVsZQEus18wWEwOzf5APxLmEURDlMQN8rrsk7QXom1
- TehltzqLSZivL2cVTSW8bL8hSi0ODQHIHUqZiIeSwYBpd75r+kbgheKQtt9HaqdlND5GTjsh
- TuNqUAWgrwJiMcR2qaT/FbZgimtrJzEUg404ArMWmuvqAh+YeaNY42u9Eie5/JHJ4WxUFaMp
- j4HltKY4eRICouC/ASJQeMQDPSq6uyDPTn0n1FiBd8i+i6r9nrleppfiBluKUEsPssadDvBZ
- E7IpRgX9JJVJGGtb6J8f8S2EctC8ET7PdHsV/SRYt8QZJF0LVWD5Hs3OhTW2H3xmk8xl615I
- Y2cbcunEXcdD+Jg0SayQOAel7Qsw0jS2F/ueHwy9Dz/uZL2WZJfYe5t3IemBgzh0J65nQ==
-IronPort-HdrOrdr: A9a23:Eg5ibq1du1lXLFnmIQMlTgqjBNEkLtp133Aq2lEZdPU1SKylfq
- WV98jzuiWYtN98YhsdcLO7WZVoP0myyXcd2+B4AV7IZmXbUQWTQr1f0Q==
-X-Talos-CUID: 9a23:0/3QzWMDX7+XA+5DSgdf1l4qFuofLnzH8WbPBEaKNGg3V+jA
-X-Talos-MUID: 9a23:73sJ+Ag4CITUvG0W46p0LMMpH8NW8r+8UXA0nrI0i8yNEgJ/KRKHpWHi
-X-IronPort-AV: E=Sophos;i="6.00,229,1681185600"; d="scan'208";a="112646623"
-Received: from mail-dm6nam12lp2172.outbound.protection.outlook.com (HELO
- NAM12-DM6-obe.outbound.protection.outlook.com) ([104.47.59.172])
- by ob1.hc3370-68.iphmx.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 09 Jun 2023 11:13:53 -0400
-Received: from SJ0PR03MB6423.namprd03.prod.outlook.com (2603:10b6:a03:38d::21)
- by PH7PR03MB7161.namprd03.prod.outlook.com (2603:10b6:510:2b7::12)
- with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6455.38; Fri, 9 Jun
- 2023 15:13:51 +0000
-Received: from SJ0PR03MB6423.namprd03.prod.outlook.com
- ([fe80::192:6bdf:b105:64dd]) by SJ0PR03MB6423.namprd03.prod.outlook.com
- ([fe80::192:6bdf:b105:64dd%3]) with mapi id 15.20.6455.028; Fri, 9 Jun 2023
- 15:13:50 +0000
-Date: Fri, 9 Jun 2023 17:13:45 +0200
-From: Roger Pau =?utf-8?B?TW9ubsOp?= <roger.pau@citrix.com>
-To: Demi Marie Obenour <demi@invisiblethingslab.com>
-Message-ID: <ZINBqToBZVdfmr0e@Air-de-Roger>
-References: <20230530203116.2008-1-demi@invisiblethingslab.com>
- <20230530203116.2008-14-demi@invisiblethingslab.com>
- <ZH7tizoYl8YVFN9B@Air-de-Roger> <ZH9mZGbM32CDmKGF@itl-email>
- <ZIA9uBJxx2gqA4Cq@Air-de-Roger> <ZICs+WYCPYdu2yoI@itl-email>
- <ZIGRXrSGmgLF/07O@Air-de-Roger> <ZIH0yQCICZRpliSc@itl-email>
-In-Reply-To: <ZIH0yQCICZRpliSc@itl-email>
-X-ClientProxiedBy: LO4P123CA0542.GBRP123.PROD.OUTLOOK.COM
- (2603:10a6:600:319::7) To SJ0PR03MB6423.namprd03.prod.outlook.com
- (2603:10b6:a03:38d::21)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AC3448007D9
+ for <dm-devel@redhat.com>; Mon, 12 Jun 2023 14:11:50 +0000 (UTC)
+Received: from mail-io1-f53.google.com (mail-io1-f53.google.com
+ [209.85.166.53]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-442-7779Sl2_PfKbiXYJnMWh8g-1; Mon, 12 Jun 2023 10:11:48 -0400
+X-MC-Unique: 7779Sl2_PfKbiXYJnMWh8g-1
+Received: by mail-io1-f53.google.com with SMTP id
+ ca18e2360f4ac-7747cc8bea0so36865839f.1
+ for <dm-devel@redhat.com>; Mon, 12 Jun 2023 07:11:48 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1686579108; x=1689171108;
+ h=content-transfer-encoding:mime-version:date:message-id:subject
+ :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=4muTChvfXbyFleywXuJztp663UoDJyd/b1njxzLhqy8=;
+ b=WTRgkSXGRBpWK0ynOrM4Hz1/dWIjXFy+64jiZwqWbH1OzEy+ZY2/CCO4nDornG+Txj
+ 4aY6So4l8uY1+VQVUqXKYSRh+Y2DNIj2y7BrUvg+TYzDjkslw0lVjnQBrZ9k/DXcsnAG
+ d6osz67ng3rqlzgSrVuXkRzz2vRtqLeVEmTwBoTLerIC/ldwL1xYV3Xh6OI/oFsK+0QC
+ 9XH6jP5ICOyrFSw/Kio24FaSG+1yr98fidvvkM2A0BtcEqotVVzpBhvCrqk9o4ncfVHH
+ s/qVFpxfZ2tDvRw4t6pLNGfZotgq5Xt0RCBxL/4G20CrDIg8JZVPMFoIGJExVt4dj+EV
+ 4SZQ==
+X-Gm-Message-State: AC+VfDxSTEhPYGK68u9ZwSBtocLHl3lgwITofZ+5vt3CLkwIaGiR8VdT
+ HuWgfJ5juxf3yJ4MYR82AP4tKQ==
+X-Google-Smtp-Source: ACHHUZ7oss5Q4qEAESR1LIaLJkD7ZwONVfsRpFehVo9Ss1V9OTMOTrOh14yI7Krm7Ivy+/EbDcrm4g==
+X-Received: by 2002:a6b:690a:0:b0:77a:ee79:652 with SMTP id
+ e10-20020a6b690a000000b0077aee790652mr4231482ioc.1.1686579107952; 
+ Mon, 12 Jun 2023 07:11:47 -0700 (PDT)
+Received: from [127.0.0.1] ([96.43.243.2]) by smtp.gmail.com with ESMTPSA id
+ i19-20020a02cc53000000b0041408b79f1esm2793007jaq.111.2023.06.12.07.11.46
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Mon, 12 Jun 2023 07:11:47 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: Christoph Hellwig <hch@lst.de>
+In-Reply-To: <20230608110258.189493-1-hch@lst.de>
+References: <20230608110258.189493-1-hch@lst.de>
+Message-Id: <168657910650.933808.4041515037046679285.b4-ty@kernel.dk>
+Date: Mon, 12 Jun 2023 08:11:46 -0600
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: SJ0PR03MB6423:EE_|PH7PR03MB7161:EE_
-X-MS-Office365-Filtering-Correlation-Id: ec3c429e-66d9-47fd-0a74-08db68fc218f
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: d5Ue7PcpP3u2dMM+Io7ktvMTdxS4q70nuNMJpQW//v/SbPPgr113/8gaoXOdhKo6Xpxg8hVmXhE3HtQK+ipE1bgmg24ROvuZILfGFzqaj4NDz/aWpFTaV/rXL5EY3uYCOkXgN2eLnC1bGLxDnLRZl5BrfGk0x3D7PYKL6LcziWT0/XkVABeYTG1CxleI9AWEl4OaM70vQ0xalCNuo/qPkvEBSsZR0rb4ITo629Wzek/NDscPu5wQ/Rqsn2t4xOU6cYr7jxIAUKuam0jYW7ODghBV17OAsEaT3Jxy+kSEHtMLT0ISl53hUqRChf07pNxhvi81jolg1iVd5DNRYiOIv3igqyjea7vqgEOU7nHG0cCU+sDmJpd3Gcc/46T1kn7GxmmW7W9AuP4b60m9oGe1rOxttg3ABXDUvlwV/cZWOyYRG1toJXaHX35z6ZUESfcYp4IV/FBwCYlEa+YaaSO0rEmGmw9JIXdqbZR8LP6zqYlifiZsQ+sYGAe6dzTFQfOk9vvZoE57r+iAFizXPGky/bY+A6cWD8EgKYfEDiwbbUrlc29pdourFd5yGvqoxBf1o5p7B5y/3UfGPr1ugIeaczt0cyzhOT+VRdcko2w9xHo=
-X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:SJ0PR03MB6423.namprd03.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230028)(7916004)(4636009)(346002)(376002)(366004)(136003)(396003)(39860400002)(451199021)(2906002)(5660300002)(6916009)(41300700001)(8936002)(8676002)(4326008)(54906003)(66556008)(66476007)(66946007)(478600001)(316002)(6666004)(6486002)(186003)(33716001)(86362001)(83380400001)(85182001)(82960400001)(6506007)(6512007)(9686003)(26005)(38100700002);
- DIR:OUT; SFP:1101
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?utf-8?B?VnJYUlA5U2NnaVFqdlc0V1R5MTNzaXJMR05RQzI1Z0h5SDJHUTBHcjhIbk1Q?=
- =?utf-8?B?ZDYzc3ZtVExlajVzL1RTSXpPc1lpQVZMWXN5dHMxaFc2K0FXcDBFeUEzdng4?=
- =?utf-8?B?OEJxbnN3K1d4ZXhvb2xhRFY4cVhsTzd0OXB4TmZJeGtQeGdpK1NYUUtUS3Fs?=
- =?utf-8?B?c3lyQXhVaHpjODNqRDhqUURKeFZaZ1NzQ04rZnkxRE5TS3VrS2twMlNuYzk2?=
- =?utf-8?B?dmdnakhhaVovSXZSNmdRS3MyWGtVa1Yxc1FzK3ltZHozQ3k0ZjM0d3owTmhu?=
- =?utf-8?B?Tk82WDc4ZVVDK1A5SXIwdUl0R1RqUjQ1QjZjQXR2eEZBT1A2OEd4b3NJOHJW?=
- =?utf-8?B?MytLeEI2UlI3VVNMb21YRkE1QkNUdnRiSmVDb2pHdDBxTFMvZHlsaFJqcEJ2?=
- =?utf-8?B?WjhKcUhic3lwRWhDZUxvNkFJV3psTDdNYWR2VlB1eHE0Z3hUWlRwV1BtMGRS?=
- =?utf-8?B?TnZjV3kvVXVZdDZDZFhHeStQK3pBY1JmaWpabXp3V290MjBNK3J0ZGNFanRI?=
- =?utf-8?B?MHM1YkVmSEZlOGZMNVpFYlp3RXcvWXRSYTFkSHRPaHBkL1BIZzE2MzcwcVJu?=
- =?utf-8?B?MzdyZEQwamtoT2tpN010VngxWUprcktjVytYdzBJd0djc3J3UFBFaGYwY0h3?=
- =?utf-8?B?WXkyb2t5RE5SM0pzN1FIVTdHUFdPVDRORXlOT3A0YTkrVDNEUVhHMHc3ZHRu?=
- =?utf-8?B?bkhhQWhwRzc4ZkdJLzhmM2UraG1QcVpIN0x0eGNROEs0cHR6akxhOHZJRGcz?=
- =?utf-8?B?WFJLWS9reUF6SWI5QkhFQWF5RlkyclVIRytFSnEvOThWeXNtUXpkbmlwVGVl?=
- =?utf-8?B?M1N6NjNCdG5pZHhQOFRMWE1BYnM0b0JYbjlrUmlIZFc0Q2VtQzBIUFM5djBZ?=
- =?utf-8?B?MmZwcWxLYU1mN2Z6c2J4d2h0MXM3R0pjN3ZNS1c3UnkvKzZ2ZVNhdVNRWEhy?=
- =?utf-8?B?R0daZ1U0ZjdhV2xTeVV5UFlIeGoxemp6WmF4c3Y4WGFESlhrR1gyc0NBL0h3?=
- =?utf-8?B?MVN2TUVSSFEvUzFaS1NPL2J5TittQzBhZ3gzUG10NzB6WkpWWlJwTnhydjI4?=
- =?utf-8?B?RWQvRDk1OWVDZW1WSVdWMjZwaVZnZzk2cWpBSm05d3FNUitPakdZd0dTTzZq?=
- =?utf-8?B?K1o2V0VJWWpXYUlDTEFQaW9lMlhDWXhNWGs1WUg2eWFPWlZZUWJGeHBkK0NV?=
- =?utf-8?B?cE1KL0xwamROZmhwRGh4SjAzUmQzSlErNFdlVFlSYWNlOXRCaVQweEo1WFcw?=
- =?utf-8?B?KzR1c3BHb1RWQjh6OHVZNU03eTRDU2I2NWt4KzI3THhEWDNYdVJJMVk0d0Rw?=
- =?utf-8?B?Rmpab3VvWmhhRHVqNXZYRzdyTkxTaDF1V2s0aC9JcjJOamNQalR3eXo3cGc2?=
- =?utf-8?B?WmJCcXZhTTNrS3NEdjRLQ2J5RjFNWGk4SU1XaVFHck9JMlo1V3NOanBCYkY3?=
- =?utf-8?B?NGNaMmFYTEpYWkFUMHJJV1ZMNmJNR1hxeDBIc1JNeHA4bFd3RWZmK2Y3aXh1?=
- =?utf-8?B?UUt6ZXB0YllhemdTUnh6K1A1QTdZaVFPb2M0TFNvcWNqbVBWYnR5RXpzZnVE?=
- =?utf-8?B?ZkJyOWx1RmxZRXI1aDVIMVVIcU44MHRqTm9NL2MwMGsveWlNdVIvVktMKytQ?=
- =?utf-8?B?VUwreEdMT0UvREJZN0haaGpDRGNYNnF4ZmpvSHcvZEYwcFE4ZGFJM28wb2ZY?=
- =?utf-8?B?U3FmV2tMZnB4SHQ2VDZYakdsOU9HVWQvRm5DYXJPQ2Q2ZUZjK29mNUdvS1NN?=
- =?utf-8?B?cXhuVjRzYmRqamx0SVg1by9oYXkzaFNVTUZyRVB5bmVhMVg0VklWdjFyc241?=
- =?utf-8?B?cGprakR5VXdWTzczajI4aDVrSXorTnBWNCtjMjdhaml3VjhTaGxDays2ajA2?=
- =?utf-8?B?bW92NnN0NS9sWjhUd1BidlEyT3NmZ1VtYUR2dVpveURlVllQalFEcTNnVHhz?=
- =?utf-8?B?bEloTytVN0NUSGk1bFNtZWh2ZVFxRDNkNnBneldEVU54UFRuQVo1ZGszWnlI?=
- =?utf-8?B?bGlRZzVvRUxRN2w4cGw2MWNKSTVhMVNCRFg0VnFXNDNXc1lFSWl4WmNTMEtB?=
- =?utf-8?B?ak9IdDlqREp3NXI5a2kwZ2NFYkJCU3dNTUZwZW5QVHhRbHZsTENza2xRQU5E?=
- =?utf-8?Q?l33QYGAbTGml6xbV0FTDYJxoi?=
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0: =?utf-8?B?ZFlkUnFaZ1htMk9XeE5JblFpY1FIVndFM0hNUDVxUE82YVYyV2hiSUorTmJU?=
- =?utf-8?B?UVpHek9KUVF3WnhyZ1g1V3VNcmtSWjZOMmFBakVubDlZVTlxakF4WUhTNjda?=
- =?utf-8?B?V2pveERBcGVDd0hxaUo5WnNlMWFsaVZUR3UwbzFlTE1ZME1aSHhSUWw0RXpw?=
- =?utf-8?B?TXMzSFFoUUdHTWJxUjdSNUI1M01KOHBBSG5rY0VoSmp5Ri8zc1Fnd2RiL2pS?=
- =?utf-8?B?Y0Z6RytWc1ZndUQrSERLSHAyTHpNSnJWL2FRSFFlN3BQclpCbWZZa3k2Q2JW?=
- =?utf-8?B?OTl0eUU5WUpOazlpQ0pIOHl3aHdIYUREYkI1WHNCeHhQekFUYzVMZ0xqM2sv?=
- =?utf-8?B?ZzVvWnVPWnljSjJ0amlPU3JUd2JsTjM5b1pyTXVWYjVnVmVoa2IxcW9YTnNn?=
- =?utf-8?B?TGwzWHlmOS95Q010WmpsVWVPejNVZzRtb2RMV2RlUi9aWlR5ZkhndzRaVm1i?=
- =?utf-8?B?ekpHSy9mejRtVkVTZWpIKzZMK2RmeHNMWVgyQjZwUUVhY0FkdGVGRG0wcDlT?=
- =?utf-8?B?ekprd0hZODM4L3ZmS05aWnlFQm5yeHJyNDlYUFZFRUlGdGYwSkVBcXNEblpm?=
- =?utf-8?B?M2Y4RDhxUlIzZzVYOU9KMVNuQ2RmMmw2VEZobGZrKy95VmtxZTVlQlFSbkpV?=
- =?utf-8?B?SU9KblFPTlJQVTUrdFIvZ3JBM01URmdiSDRQQ2F1dDViU3l3SDJIalRnR1Bq?=
- =?utf-8?B?SjlLdnNxelNlRm05NEpBRzJqNkw3MExrVzhNRE1hekY4dGl2bVFWQm1UbTV3?=
- =?utf-8?B?TkNmbjU5dkg3MFVaalI4L3NyUGhCRks0TDlZZlFwRG9SSnZjaXR5NmMrUElW?=
- =?utf-8?B?Tm1JMzhTNC9hM3l1Qlgva3hPS3R0K3dzLzdoNXlVclErS0VPK3RZc0lnamRp?=
- =?utf-8?B?OGpKbk9HVjYzWHRqb2RQa0ZYN1VxQmI4YXNFT240c2Y2RGtySXloR1IyeXpD?=
- =?utf-8?B?WmJjL0ZvOTVrRmY4YXZsampaM0ZUb0JRZm5GSVR6RnJGU1huQThTYWNqTzZH?=
- =?utf-8?B?cGd4TVFuN3VWSjk1WGtpV0xsU3pzZjVkMzJpdkRWOGZwQmZpMGU0RnFCVDRD?=
- =?utf-8?B?M3M3SDN2OThnekZEOXR2WDQ4TzBUSm9MSTZrdTBKU2VLWE5XKzlqanlSeXZ3?=
- =?utf-8?B?dmNmQXQxc0hqSGR1ZjFLZzdVZWtKZVVWR0V4a3NPNVh5ZXNoU1RRNVo5V2tr?=
- =?utf-8?B?dmdMWnU5YUcvZ0hRSmQzTUFUc0Nvd1VNdFllZFVaRDdReWlnT2Fpb1ZvZkVG?=
- =?utf-8?B?ZEl5UW9FTWx6cWJIQXBiWlVNTG13bGJmYVFOajhQWlVsbFNTUT09?=
-X-OriginatorOrg: citrix.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: ec3c429e-66d9-47fd-0a74-08db68fc218f
-X-MS-Exchange-CrossTenant-AuthSource: SJ0PR03MB6423.namprd03.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 09 Jun 2023 15:13:50.9092 (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 335836de-42ef-43a2-b145-348c2ee9ca5b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: Eg9Y3LdB42Eq1+kEALYd0hKxNYVHh3U6763fXGi05G2CJRGSVkWu8BSrqOcAkO8EBORhfhmdpt8TcZejcFjLhQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH7PR03MB7161
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -198,9 +95,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-X-Mailman-Approved-At: Mon, 12 Jun 2023 06:45:41 +0000
-Subject: Re: [dm-devel] [PATCH v2 13/16] xen-blkback: Implement diskseq
- checks
+Subject: Re: [dm-devel] decouple block open flags from fmode_t v2
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -212,109 +107,114 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@kernel.org>,
- Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?=
- <marmarek@invisiblethingslab.com>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- xen-devel@lists.xenproject.org, Alasdair Kergon <agk@redhat.com>
+Cc: Vignesh Raghavendra <vigneshr@ti.com>,
+ "Rafael J. Wysocki" <rafael@kernel.org>, linux-nvme@lists.infradead.org,
+ Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>,
+ dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>,
+ Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>,
+ Jack Wang <jinpu.wang@ionos.com>, linux-nilfs@vger.kernel.org,
+ linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>,
+ linux-pm@vger.kernel.org, linux-um@lists.infradead.org,
+ Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>,
+ linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
+ Alexander Viro <viro@zeniv.linux.org.uk>, David Sterba <dsterba@suse.com>,
+ Christian Brauner <brauner@kernel.org>,
+ "Martin K. Petersen" <martin.petersen@oracle.com>,
+ linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
+ linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: citrix.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+X-Mimecast-Originator: kernel.dk
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gVGh1LCBKdW4gMDgsIDIwMjMgYXQgMTE6MzM6MjZBTSAtMDQwMCwgRGVtaSBNYXJpZSBPYmVu
-b3VyIHdyb3RlOgo+IE9uIFRodSwgSnVuIDA4LCAyMDIzIGF0IDEwOjI5OjE4QU0gKzAyMDAsIFJv
-Z2VyIFBhdSBNb25uw6kgd3JvdGU6Cj4gPiBPbiBXZWQsIEp1biAwNywgMjAyMyBhdCAxMjoxNDo0
-NlBNIC0wNDAwLCBEZW1pIE1hcmllIE9iZW5vdXIgd3JvdGU6Cj4gPiA+IE9uIFdlZCwgSnVuIDA3
-LCAyMDIzIGF0IDEwOjIwOjA4QU0gKzAyMDAsIFJvZ2VyIFBhdSBNb25uw6kgd3JvdGU6Cj4gPiA+
-ID4gT24gVHVlLCBKdW4gMDYsIDIwMjMgYXQgMDE6MDE6MjBQTSAtMDQwMCwgRGVtaSBNYXJpZSBP
-YmVub3VyIHdyb3RlOgo+ID4gPiA+ID4gT24gVHVlLCBKdW4gMDYsIDIwMjMgYXQgMTA6MjU6NDdB
-TSArMDIwMCwgUm9nZXIgUGF1IE1vbm7DqSB3cm90ZToKPiA+ID4gPiA+ID4gT24gVHVlLCBNYXkg
-MzAsIDIwMjMgYXQgMDQ6MzE6MTNQTSAtMDQwMCwgRGVtaSBNYXJpZSBPYmVub3VyIHdyb3RlOgo+
-ID4gPiA+ID4gPiBBbHNvLCB5b3UgdGllIHRoaXMgbG9naWMgdG8gdGhlICJwaHlzaWNhbC1kZXZp
-Y2UiIHdhdGNoLCB3aGljaAo+ID4gPiA+ID4gPiBzdHJpY3RseSBpbXBsaWVzIHRoYXQgdGhlICJk
-aXNrc2VxIiBub2RlIG11c3QgYmUgd3JpdHRlbiB0byB4ZW5zdG9yZQo+ID4gPiA+ID4gPiBiZWZv
-cmUgdGhlICJwaHlzaWNhbC1kZXZpY2UiIG5vZGUuICBUaGlzIHNlZW1zIGZyYWdpbGUsIGJ1dCBJ
-IGRvbid0Cj4gPiA+ID4gPiA+IHNlZSBtdWNoIGJldHRlciBvcHRpb25vIHNpbmNlIHRoZSAiZGlz
-a3NlcSIgaXMgb3B0aW9uYWwuCj4gPiA+ID4gPiAKPiA+ID4gPiA+IFdoYXQgYWJvdXQgaW5jbHVk
-aW5nIHRoZSBkaXNrc2VxIGluIHRoZSAicGh5c2ljYWwtZGV2aWNlIiBub2RlPyAgUGVyaGFwcwo+
-ID4gPiA+ID4gdXNlIGRpc2tzZXFAbWFqb3I6bWlub3Igc3ludGF4Pwo+ID4gPiA+IAo+ID4gPiA+
-IEhtLCBob3cgd291bGQgeW91IGtub3cgd2hldGhlciB0aGUgYmxrYmFjayBpbnN0YW5jZSBpbiB0
-aGUga2VybmVsCj4gPiA+ID4gc3VwcG9ydHMgdGhlIGRpc2tzZXEgc3ludGF4IGluIHBoeXNpY2Fs
-LWRldmljZT8KPiA+ID4gCj4gPiA+IFRoYXTigJlzIHdoYXQgdGhlIG5leHQgcGF0Y2ggaXMgZm9y
-IPCfmYIuCj4gPiAKPiA+IEhtLCBJIHRoaW5rIHdlIHNob3VsZCBzZXBhcmF0ZSBkaXNrc2VxIHN1
-cHBvcnQgZnJvbSB0aGUgbm90aWZ5IG9wZW4KPiA+IHN0dWZmOiBpdCdzIHBvc3NpYmxlIGEgZGlm
-ZmVyZW50IChub24tTGludXgpIGJhY2tlbmQgd2FudHMgdG8KPiA+IGltcGxlbWVudCBvcGVuIG5v
-dGlmeSBzdXBwb3J0IGJ1dCBkb2Vzbid0IGhhdmUgZGlza3NlcS4KPiAKPiBJIGxpa2UgdGhpcyBp
-ZGVhISAgV2hhdCBhYm91dCBoYXZpbmcgYmxrYmFjayBzZXQgZGlza3NlcSB0byB6ZXJvPwo+IFVz
-ZXJzcGFjZSBjb3VsZCB0aGVuIHJlcGxhY2UgaXQgd2l0aCB0aGUgYWN0dWFsIHZhbHVlLgoKSSB0
-aGluayBpdCB3b3VsZCBiZSBiZXR0ZXIgaWYgd2UgdXNlZCBhIHN5c2ZzIG5vZGUsIGJlY2F1c2Ug
-YmxrZnJvbnQKaGFzIG5vIGJ1c2luZXNzIGlzIGtub3dpbmcgd2hldGhlciBkaXNrc2VxIGlzIHN1
-cHBvcnRlZCBieSB0aGUKYmFja2VuZCBvciBub3QuCgp4ZW5zdG9yZSBzaG91bGQgYmUgcmVzZXJ2
-ZWQgdG8gZmVhdHVyZXMgZXhwb3NlZCBiZXR3ZWVuIGJsa2Zyb250IGFuZApibGtiYWNrIGlmIHBv
-c3NpYmxlLiAgSSBrbm93IHdlIGhhdmVuJ3QgYmVlbiB2ZXJ5IGdvb2QgYXQgdGhpcwpob3dldmVy
-LgoKPiA+ID4gPiBDYW4geW91IGZldGNoIGEgZGlzayB1c2luZyBhIGRpc2tzZXEgaWRlbnRpZmll
-cj8KPiA+ID4gCj4gPiA+IE5vdCB5ZXQsIGFsdGhvdWdoIEkgaGF2ZSBjb25zaWRlcmVkIGFkZGlu
-ZyB0aGlzIGFiaWxpdHkuICBJdCB3b3VsZCBiZQo+ID4gPiBvbmUgc3RlcCB0b3dhcmRzIGEg4oCc
-ZGlza3NlcWZz4oCdIHRoYXQgdXNlcnNwYWNlIGNvdWxkIHVzZSB0byBvcGVuIGEgZGV2aWNlCj4g
-PiA+IGJ5IGRpc2tzZXEuCj4gPiA+IAo+ID4gPiA+IFdoeSBJIHVuZGVyc3RhbmQgdGhhdCB0aGlz
-IGlzIGFuIGV4dHJhIHNhZmV0eSBjaGVjayBpbiBvcmRlciB0byBhc3NlcnQKPiA+ID4gPiBibGti
-YWNrIGlzIG9wZW5pbmcgdGhlIGludGVuZGVkIGRldmljZSwgaXMgdGhpcyBhdHRlbXB0aW5nIHRv
-IGZpeCBzb21lCj4gPiA+ID4gZXhpc3RpbmcgaXNzdWU/Cj4gPiA+IAo+ID4gPiBZZXMsIGl0IGlz
-LiAgSSBoYXZlIGEgYmxvY2sgc2NyaXB0ICh3cml0dGVuIGluIEMpIHRoYXQgdmFsaWRhdGVzIHRo
-ZQo+ID4gPiBkZXZpY2UgaXQgaGFzIG9wZW5lZCBiZWZvcmUgcGFzc2luZyB0aGUgaW5mb3JtYXRp
-b24gdG8gYmxrYmFjay4gIEl0IHVzZXMKPiA+ID4gdGhlIGRpc2tzZXEgdG8gZG8gdGhpcywgYnV0
-IGZvciB0aGF0IHByb3RlY3Rpb24gdG8gYmUgY29tcGxldGUsIGJsa2JhY2sKPiA+ID4gbXVzdCBh
-bHNvIGJlIGF3YXJlIG9mIGl0Lgo+ID4gCj4gPiBCdXQgaWYgeW91ciBibG9jayBzY3JpcHQgb3Bl
-bnMgdGhlIGRldmljZSwgYW5kIGtlZXBzIGl0IG9wZW4gdW50aWwKPiA+IGJsa2JhY2sgaGFzIGFs
-c28gdGFrZW4gYSByZWZlcmVuY2UgdG8gaXQsIHRoZXJlJ3Mgbm8gd2F5IHN1Y2ggZGV2aWNlCj4g
-PiBjb3VsZCBiZSByZW1vdmVkIGFuZCByZWNyZWF0ZWQgaW4gdGhlIHdpbmRvdyB5b3UgcG9pbnQg
-b3V0IGFib3ZlLCBhcwo+ID4gdGhlcmUncyBhbHdheXMgYSByZWZlcmVuY2Ugb24gaXQgdGFrZW4/
-Cj4gCj4gVGhpcyBhc3N1bWVzIHRoYXQgdGhlIGJsb2NrIHNjcmlwdCBpcyBub3Qga2lsbGVkIGlu
-IHRoZSBtZWFudGltZSwKPiB3aGljaCBpcyBub3QgYSBzYWZlIGFzc3VtcHRpb24gZHVlIHRvIHRp
-bWVvdXRzIGFuZCB0aGUgT09NIGtpbGxlci4KCkRvZXNuJ3Qgc2VlbSB2ZXJ5IHJlbGlhYmxlIHRv
-IHVzZSB3aXRoIGRlbGV0ZS1vbi1jbG9zZSBlaXRoZXIgdGhlbi4KCj4gPiA+ID4gSSdtIG5vdCBz
-dXJlIEkgc2VlIGhvdyB0aGUgbWFqb3I6bWlub3IgbnVtYmVycyB3b3VsZCBwb2ludCB0byBhCj4g
-PiA+ID4gZGlmZmVyZW50IGRldmljZSB0aGFuIHRoZSBvbmUgc3BlY2lmaWVkIGJ5IHRoZSB0b29s
-c3RhY2sgdW5sZXNzIHRoZQo+ID4gPiA+IGFkbWluIGV4cGxpY2l0bHkgbWVzc2VzIHdpdGggdGhl
-IGRldmljZXMgYmVmb3JlIGJsa2JhY2sgaGFzIGdvdCB0aW1lCj4gPiA+ID4gdG8gb3BlbiB0aGVt
-LiAgQnV0IHRoZW4gdGhlIGFkbWluIGNhbiBhbHJlYWR5IGRvIHByZXR0eSBtdWNoCj4gPiA+ID4g
-ZXZlcnl0aGluZyBpdCB3YW50cyB3aXRoIHRoZSBzeXN0ZW0uCj4gPiA+IAo+ID4gPiBBZG1pbnMg
-dHlwaWNhbGx5IHJlZmVyIHRvIGUuZy4gZGV2aWNlLW1hcHBlciBkZXZpY2VzIGJ5IG5hbWUsIG5v
-dCBieQo+ID4gPiBtYWpvcjptaW5vciBudW1iZXIuICBJZiBhIGRldmljZSBpcyBkZXN0cm95ZWQg
-YW5kIHJlY3JlYXRlZCByaWdodCBhcyB0aGUKPiA+ID4gYmxvY2sgc2NyaXB0IGlzIHJ1bm5pbmcs
-IHRoaXMgcmFjZSBjb25kaXRpb24gY2FuIG9jY3VyLgo+ID4gCj4gPiBSaWdodCwgYnV0IHdoYXQg
-YWJvdXQgdGhpcyBkZXZpY2UgcmVjcmVhdGlvbiBoYXBwZW5pbmcgYWZ0ZXIgdGhlIGFkbWluCj4g
-PiBoYXMgd3JpdHRlbiB0aGUgZ3Vlc3QgY29uZmlnIGZpbGUgYnV0IGJlZm9yZSB0aGUgY2FsbCB0
-byAobGliKXhsCj4gPiBoYXBwZW5zPyAgYmxrYmFjayB3b3VsZCBhbHNvIGVuZCB1cCB1c2luZyBh
-IGRpZmZlcmVudCBkZXZpY2UgdGhhbgo+ID4gaW5kZW50ZWQsIGFuZCB5b3VyIHByb3Bvc2VkIGFw
-cHJvYWNoIGRvZXNuJ3QgZml4IHRoaXMuICBUaGUgb25seSB3YXkgdG8KPiA+IHNvbHZlIHRoaXMg
-d291bGQgYmUgdG8gcmVmZXJlbmNlIGRldmljZXMgYnkgVVVJRCAoaW93OiBkaXNrc2VxKQo+ID4g
-ZGlyZWN0bHkgaW4gdGhlIGd1ZXN0IGNvbmZpZyBmaWxlLgo+IAo+IFRoYXQgd291bGQgYmUgYSBn
-b29kIGlkZWEsIGJ1dCBpdCBpcyBvcnRob2dvbmFsIHRvIHRoaXMgcGF0Y2guICBNeQo+IHNjcmlw
-dCBvcGVucyB0aGUgZGV2aWNlIGFuZCB1c2VzIHZhcmlvdXMgbWVhbnMgdG8gY2hlY2sgdGhhdCBp
-dCBkaWQKPiBvcGVuIHRoZSBjb3JyZWN0IGRldmljZS4gIEl0IHRoZW4gcGFzc2VzIHRoZSBkaXNr
-c2VxIHRvIGJsa2JhY2suCgpIb3cgeW91IGRvIHRoaXMgd2l0aCBsb3NldHVwPyAgSSBndWVzcyB0
-aGVyZSdzIGFuIGF0b21pYyB3YXkgdG8gc2V0dXAKYSBsb29wIGRldmljZSBhbmQgZ2V0IGl0cyBk
-aXNrc2VxPwoKPiA+IFRoZW4gdGhlIGJsb2NrIHNjcmlwdCB3aWxsIG9wZW4gdGhlIGRldmljZSBi
-eSBkaXNrc2VxIGFuZCBwYXNzIHRoZQo+ID4gbWFqb3I6bWlub3IgbnVtYmVycyB0byBibGtiYWNr
-Lgo+IAo+IEFsdGVybmF0aXZlbHksIHRoZSB0b29sc3RhY2sgY291bGQgd3JpdGUgYm90aCB0aGUg
-ZGlza3NlcSBhbmQKPiBtYWpvcjptaW5vciBudW1iZXJzIGFuZCBiZSBjb25maWRlbnQgdGhhdCBp
-dCBpcyByZWZlcnJpbmcgdG8gdGhlCj4gY29ycmVjdCBkZXZpY2UsIG5vIG1hdHRlciBob3cgbG9u
-ZyBhZ28gaXQgZ290IHRoYXQgaW5mb3JtYXRpb24uCj4gVGhpcyBjb3VsZCBiZSBxdWl0ZSB1c2Vm
-dWwgZm9yIGUuZy4gb25lIFZNIGV4cG9ydGluZyBhIGRldmljZSB0bwo+IGFub3RoZXIgVk0gYnkg
-Y2FsbGluZyBsb3NldHVwKDgpIGFuZCBleHBlY3RpbmcgYSBodW1hbiB0byBtYWtlIGEKPiBkZWNp
-c2lvbiBiYXNlZCBvbiB2YXJpb3VzIHByb3BlcnRpZXMgYWJvdXQgdGhlIGRldmljZS4gIEluIHRo
-aXMKPiBjYXNlIHRoZXJlIGlzIG5vIHVwcGVyIGJvdW5kIG9uIHRoZSByYWNlIHdpbmRvdy4KCklu
-c3RlYWQgb2YgcGxheWluZyB3aXRoIHhlbnN0b3JlIG5vZGVzLCBpdCBtaWdodCBiZSBiZXR0ZXIg
-dG8gc2ltcGx5CmhhdmUgYmxrYmFjayBleHBvcnQgb24gc3lzZnMgdGhlIGRpc2tzZXEgb2YgdGhl
-IG9wZW5lZCBkZXZpY2UsIGFuZCBsZXQKdGhlIGJsb2NrIHNjcmlwdCBjaGVjayB3aGV0aGVyIHRo
-YXQncyBjb3JyZWN0IG9yIG5vdC4gIFRoYXQgaW1wbGllcwpsZXNzIGNvZGUgaW4gdGhlIGtlcm5l
-bCBzaWRlLCBhbmQgZG9lc24ndCBwb2xsdXRlIHhlbnN0b3JlLgoKUmVnYXJkcywgUm9nZXIuCgot
-LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3Rt
-YW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
+
+On Thu, 08 Jun 2023 13:02:28 +0200, Christoph Hellwig wrote:
+> this series adds a new blk_mode_t for block open flags instead of abusing
+> fmode_t.  The block open flags work very different from the normal use of
+> fmode_t and only share the basic READ/WRITE flags with it.  None of the
+> other normal FMODE_* flags is used, but instead there are three
+> block-specific ones not used by anyone else, which can now be removed.
+> 
+> Note that I've only CCed maintainers and lists for drivers and file systems
+> that have non-trivial changes, as otherwise the series would spam literally
+> everyone in the block and file system world.
+> 
+> [...]
+
+Applied, thanks!
+
+[01/30] block: also call ->open for incremental partition opens
+        commit: 9d1c92872e7082f100f629a58b32fa0214aa1aec
+[02/30] cdrom: remove the unused bdev argument to cdrom_open
+        commit: 764b83100b9aff52f950e408539c22a37cdedae8
+[03/30] cdrom: remove the unused mode argument to cdrom_ioctl
+        commit: 473399b50de1fdc12606254351273c71d1786251
+[04/30] cdrom: remove the unused cdrom_close_write release code
+        commit: a4cec8bc14c02e15006a71f02b0e1bbc72b9f796
+[05/30] cdrom: track if a cdrom_device_info was opened for data
+        commit: 8cdf433e2b8e4fc6c7b4393deb93fb258175d537
+[06/30] cdrom: remove the unused mode argument to cdrom_release
+        commit: 7ae24fcee9929f9002b84d8121144b2b3590b58c
+[07/30] block: pass a gendisk on bdev_check_media_change
+        commit: 444aa2c58cb3b6cfe3b7cc7db6c294d73393a894
+[08/30] block: pass a gendisk to ->open
+        commit: d32e2bf83791727a84ad5d3e3d713e82f9adbe30
+[09/30] block: remove the unused mode argument to ->release
+        commit: ae220766d87cd6799dbf918fea10613ae14c0654
+[10/30] block: rename blkdev_close to blkdev_release
+        commit: 7ee34cbc291a28134b60683b246ba58b4b676ec3
+[11/30] swsusp: don't pass a stack address to blkdev_get_by_path
+        commit: c889d0793d9dc07e94a5fddcc05356157fab00b7
+[12/30] bcache: don't pass a stack address to blkdev_get_by_path
+        commit: 29499ab060fec044161be73fb0e448eab97b4813
+[13/30] rnbd-srv: don't pass a holder for non-exclusive blkdev_get_by_path
+        commit: 5ee607675debef509946f8a251d4c30a21493ec2
+[14/30] btrfs: don't pass a holder for non-exclusive blkdev_get_by_path
+        commit: 2ef789288afd365f4245ba97e56189062de5148e
+[15/30] block: use the holder as indication for exclusive opens
+        commit: 2736e8eeb0ccdc71d1f4256c9c9a28f58cc43307
+[16/30] block: add a sb_open_mode helper
+        commit: 3f0b3e785e8b54a40c530fa77b7ab37bec925c57
+[17/30] fs: remove sb->s_mode
+        commit: 81b1fb7d17c0110df839e13468ada9e99bb6e5f4
+[18/30] scsi: replace the fmode_t argument to scsi_cmd_allowed with a simple bool
+        commit: 5f4eb9d5413fdfc779c099fdaf0ff417eb163145
+[19/30] scsi: replace the fmode_t argument to scsi_ioctl with a simple bool
+        commit: 2e80089c18241699c41d0af0669cb93844ff0dc1
+[20/30] scsi: replace the fmode_t argument to ->sg_io_fn with a simple bool
+        commit: 1991299e49fa58c3ba7e91599932f84bf537d592
+[21/30] nvme: replace the fmode_t argument to the nvme ioctl handlers with a simple bool
+        commit: 7d9d7d59d44b7e9236d168472aa222b6543fae25
+[22/30] mtd: block: use a simple bool to track open for write
+        commit: 658afed19ceed54a52b9e9e69c0791c8868ff55d
+[23/30] rnbd-srv: replace sess->open_flags with a "bool readonly"
+        commit: 99b07780814e89f16bec2773c237eb25121f8502
+[24/30] ubd: remove commented out code in ubd_open
+        commit: bd6abfc8e7898ce2163a1ffdbb9ec71a0a081267
+[25/30] block: move a few internal definitions out of blkdev.h
+        commit: cfb425761c79b6056ae5bb73f8d400f03b513959
+[26/30] block: remove unused fmode_t arguments from ioctl handlers
+        commit: 5e4ea834676e3b8965344ca61d36e1ae236249eb
+[27/30] block: replace fmode_t with a block-specific type for block open flags
+        commit: 05bdb9965305bbfdae79b31d22df03d1e2cfcb22
+[28/30] block: always use I_BDEV on file->f_mapping->host to find the bdev
+        commit: 4e762d8623448bb9d32711832ce977a65ff7636a
+[29/30] block: store the holder in file->private_data
+        commit: ee3249a8ce78ef014a71b05157a43fba8dc764e3
+[30/30] fs: remove the now unused FMODE_* flags
+        commit: 0733ad8002916b9dbbbcfe6e92ad44d2657de1c1
+
+Best regards,
+-- 
+Jens Axboe
+
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
