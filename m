@@ -4,94 +4,89 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 25E34EB64D9
-	for <dm-devel@archiver.kernel.org>; Thu, 15 Jun 2023 17:11:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 380BEEB64D9
+	for <dm-devel@archiver.kernel.org>; Thu, 15 Jun 2023 17:56:41 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686849108;
+	s=mimecast20190719; t=1686851800;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=2uToZsmhI6tcpFQCjw2kN2hTV/EvwpS75og1JpPsD04=;
-	b=Q6cF6Tj/ftVjbvdL0EXLI2ID0DOap0zGUen9AVj3zvRAwgVYwTOJv8X9TbNqI8JQFyptfh
-	Oc0sOhIO5kS14mE0qShTVfooUdLhMoYQFATa7LR8JSqkpadWwqsXRbxHSS3Ru9M1SvUdgP
-	ayZSWlqv8oZgC5SMgWei59K4jwL5sAc=
+	bh=CHUxim5pbq4mPEQKtunY8wdZ3Mbz43hNBzKlVutkLO8=;
+	b=MCGnxMspn6nKgY/ALfwx0lCwJwLSYX+FKoFYQjRJXJlG5hdHHALELo+qPhXB40nLQqaXox
+	AcwlQg9Rd8NQ7bX7n/jqhUq3zQlnhpjDOIC1SCXdM0aVsOTlARPBWiZmj9oQuOMIORidPY
+	Z1Qzy9QKC3UdanpGPznXKsv4+vb1Hwk=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-287-NricuvApPEi_W2R27C6FrQ-1; Thu, 15 Jun 2023 13:11:44 -0400
-X-MC-Unique: NricuvApPEi_W2R27C6FrQ-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-331-GL5DiE7vMOiHBbuMoD0GhQ-1; Thu, 15 Jun 2023 13:56:38 -0400
+X-MC-Unique: GL5DiE7vMOiHBbuMoD0GhQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BF3698030AE;
-	Thu, 15 Jun 2023 17:11:42 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2FEB5101A52C;
+	Thu, 15 Jun 2023 17:56:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2FBDF1121314;
-	Thu, 15 Jun 2023 17:11:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id BE1052166B26;
+	Thu, 15 Jun 2023 17:56:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EC47C1946594;
-	Thu, 15 Jun 2023 17:11:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8F7011946594;
+	Thu, 15 Jun 2023 17:56:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D517B1946589
- for <dm-devel@listman.corp.redhat.com>; Thu, 15 Jun 2023 17:11:39 +0000 (UTC)
+ ESMTP id 47E081946589
+ for <dm-devel@listman.corp.redhat.com>; Thu, 15 Jun 2023 17:56:35 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id BF83C1121318; Thu, 15 Jun 2023 17:11:39 +0000 (UTC)
+ id 0C20E40C20F5; Thu, 15 Jun 2023 17:56:35 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B7F7C1121314
- for <dm-devel@redhat.com>; Thu, 15 Jun 2023 17:11:39 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 057A040C20F4
+ for <dm-devel@redhat.com>; Thu, 15 Jun 2023 17:56:34 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9570D3C0D84B
- for <dm-devel@redhat.com>; Thu, 15 Jun 2023 17:11:39 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-499-dzJvd0UYPRSf3V5NG5lQSQ-1; Thu,
- 15 Jun 2023 13:11:37 -0400
-X-MC-Unique: dzJvd0UYPRSf3V5NG5lQSQ-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id C93431FE58;
- Thu, 15 Jun 2023 17:11:35 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 9035A13A32;
- Thu, 15 Jun 2023 17:11:35 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id IM6iIUdGi2QlRwAAMHmgww
- (envelope-from <mwilck@suse.com>); Thu, 15 Jun 2023 17:11:35 +0000
-Message-ID: <abef20de512fe9a76faf2795ea2b6097b3550936.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Chris Hofstaedtler <zeha@debian.org>
-Date: Thu, 15 Jun 2023 19:11:34 +0200
-In-Reply-To: <zy7caef43nvpfetodg6sc7bhp5aj3scvkcg2p5jabnzhtetkq3@4aco3dd4kwrh>
-References: <a674434b-d365-1f07-2c6f-6a4ffa07578f@gmail.com>
- <946fc11571491dd39971288b48095b6480f7914f.camel@suse.com>
- <bjgxqic4umo4rk2srj4mqdgvvxntosb2xxo63fmymirulir7st@jduzswoyhupe>
- <1f452452d8f0952d3fa704f6ad9861392c5b45f7.camel@suse.com>
- <zy7caef43nvpfetodg6sc7bhp5aj3scvkcg2p5jabnzhtetkq3@4aco3dd4kwrh>
-User-Agent: Evolution 3.48.1
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DE2D781DA29
+ for <dm-devel@redhat.com>; Thu, 15 Jun 2023 17:56:34 +0000 (UTC)
+Received: from mail-qv1-f53.google.com (mail-qv1-f53.google.com
+ [209.85.219.53]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-643-fAl5PB2XMy-Ss0QdZDyU7Q-1; Thu, 15 Jun 2023 13:56:33 -0400
+X-MC-Unique: fAl5PB2XMy-Ss0QdZDyU7Q-1
+Received: by mail-qv1-f53.google.com with SMTP id
+ 6a1803df08f44-62ff4f06b3cso5168206d6.1
+ for <dm-devel@redhat.com>; Thu, 15 Jun 2023 10:56:33 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1686851792; x=1689443792;
+ h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=ux3LNqHXiVRVHHXI1YrGB67pM2l99TmywKdYzW7u9cw=;
+ b=a3Mqi9IwdHmOdA0vxaOT9MqJRRnrE5CFVn7wL48Rbp1Ukfu+GwcHBGjHK2FTwblU3l
+ 3y1hV0HTW1fi46+GpF8RhMn//MAGcwAEoLu55Bj/66rQV5v26ggtKh/vayFKg4uiUnHP
+ UoEBX1GB/9ayLPcHk9AT06Ga/52i0Dnu59hzQZKLIsbciQgLkkCueRL30HqzjLrKe85c
+ SmRZic/KpZunLDugWf2BBhbnBBSeAVy9Er13/7zgY8pEL6BQURWoWh6uQLr4wqdHnlje
+ T0882tutyl+ve/NoLSvJOFG4qEdwxyVpEoFmWms+TXLWItreeViISnqbW1X3YapJS03n
+ egnQ==
+X-Gm-Message-State: AC+VfDzUo0R+UgJXwLgUXNNn4GHdUXbaImMj2OKQujCAoK7nweCvnsSL
+ Vr/9ghEkPKoFEtedV08tJO/1G7g=
+X-Google-Smtp-Source: ACHHUZ6Op1iJYarJUSJf4VP6LVaDkRcorQ86vr8KhtOl8L0D+NRk4TIHNaHjR7yqwmo6uTLBeO872w==
+X-Received: by 2002:a05:6214:20e3:b0:625:775e:8802 with SMTP id
+ 3-20020a05621420e300b00625775e8802mr24344268qvk.18.1686851792526; 
+ Thu, 15 Jun 2023 10:56:32 -0700 (PDT)
+Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
+ [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
+ c17-20020a0ce651000000b00621268e14efsm6009526qvn.55.2023.06.15.10.56.31
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Thu, 15 Jun 2023 10:56:32 -0700 (PDT)
+Date: Thu, 15 Jun 2023 13:56:30 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <ZItQzl4ommfR82jP@redhat.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: Re: [dm-devel] multipath-tools: Debian patches
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: [dm-devel] [git pull] device mapper fixes for 6.4-rc7
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,134 +98,77 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
- dm-devel mailing list <dm-devel@redhat.com>
+Cc: Mike Snitzer <snitzer@kernel.org>, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, Li Lingfeng <lilingfeng3@huawei.com>,
+ Alasdair G Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: suse.com
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+X-Mimecast-Originator: kernel.org
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Wed, 2023-06-07 at 17:12 +0200, Chris Hofstaedtler wrote:
->=20
-> > On rpm-based distributions,package management will be able to
-> > figure
-> > out this kind of (in)compatibility, albeit in a more coarse-grained
-> > way
-> > (e.g. the multipathd package requires
-> > libmpathpersist.so.0(LIBMPATHPERSIST_2.1.0)(64bit), which must
-> > match
-> > the provided features of the library package). I suppose something
-> > similar exists in the Debian realm, too.
->=20
-> Do you also rename the package that ships libpathmpersist.so.0 in
-> this case?
+Hi Linus,
 
-No, we don't. The ABI change is solely reflected in the library
-package's symbol versions and abstract provides like the one I showed
-above. The SONAME remains formally remains "libmpathpersist.so.0".
+The following changes since commit f1fcbaa18b28dec10281551dfe6ed3a3ed80e3d6:
 
-readelf -W -V -a reports:
+  Linux 6.4-rc2 (2023-05-14 12:51:40 -0700)
 
-Dynamic section at offset 0x8b78 contains 34 entries:
-  Tag        Type                         Name/Value
-0x000000000000000e (SONAME)             Library soname: [libmpathpersist.so=
-.0]
-...
-Relocation section '.rela.plt' at offset 0x15e0 contains 60 entries:
-    Offset             Info             Type               Symbol's Value  =
-Symbol's Name + Addend
-0000000000009df0  0000004600000007 R_X86_64_JUMP_SLOT     0000000000003600 =
-prout_do_scsi_ioctl@@__LIBMPATHPERSIST_INT_1.0.0 + 0
-0000000000009df8  0000000100000007 R_X86_64_JUMP_SLOT     0000000000000000 =
-__snprintf_chk@GLIBC_2.3.4 + 0
-0000000000009e00  0000000200000007 R_X86_64_JUMP_SLOT     0000000000000000 =
-free@GLIBC_2.2.5 + 0
-0000000000009e08  0000000300000007 R_X86_64_JUMP_SLOT     0000000000000000 =
-__errno_location@GLIBC_2.2.5 + 0
-0000000000009e10  0000000400000007 R_X86_64_JUMP_SLOT     0000000000000000 =
-strncmp@GLIBC_2.2.5 + 0
-0000000000009e18  0000000600000007 R_X86_64_JUMP_SLOT     0000000000000000 =
-libmp_put_multipath_config@LIBMULTIPATH_18.0.0 + 0
-0000000000009e20  0000000700000007 R_X86_64_JUMP_SLOT     0000000000000000 =
-puts@GLIBC_2.2.5 + 0
-0000000000009e28  0000000800000007 R_X86_64_JUMP_SLOT     0000000000000000 =
-select_reservation_key@LIBMULTIPATH_18.0.0 + 0
-0000000000009e30  0000000900000007 R_X86_64_JUMP_SLOT     0000000000000000 =
-dm_map_present@LIBMULTIPATH_18.0.0 + 0
-0000000000009e38  0000000a00000007 R_X86_64_JUMP_SLOT     0000000000000000 =
-put_multipath_config@LIBMPATHCOMMON_1.0.0 + 0
-0000000000009e40  0000000b00000007 R_X86_64_JUMP_SLOT     0000000000000000 =
-free_multipathvec@LIBMULTIPATH_18.0.0 + 0
-0000000000009e48  0000000c00000007 R_X86_64_JUMP_SLOT     0000000000000000 =
-strlcpy@LIBMULTIPATH_16.0.0 + 0
-...
+are available in the Git repository at:
 
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.4/dm-fixes
 
-> I.e. how do you make this example work:
->=20
-> old libmpathpersist.so.0 provides ABI 1
-> new libmpathpersist.so.0(?) provides ABI 2
->=20
-> multipathd was linked against the new libmpathpersist.so.0 (ABI 2)
-> qemu was linked against the old libmpathpersist.so.0 (ABI 1)
->=20
-> I don't see how these can be co-installable if libmpathpersist.so.0
-> is never renamed?
+for you to fetch changes up to be04c14a1bd262a49e5764e5cf864259b7e740fd:
 
-They aren't co-installable. But the dependencies make sure that
-qemu, multipathd, and possibly other consumers will use the ABI version
-that libmpathpersist actually exports. On openSUSE Tumbleweed, our
-rebuild policy will ensure this. On the more long-lived products, we
-usually can't update the ABI in a backward-incompatible way; our QA
-tools would notice if we mistakenly tried. Severe security issues might
-justify an exception, in which case we'd provide patches to update the
-depending packages in a batch.
+  dm: use op specific max_sectors when splitting abnormal io (2023-06-15
+  12:47:16 -0400)
 
-> Maybe other distributions do not need coinstallability, but Debian
-> needs this, because a) on actual installs we support partial
-> upgrades,
+Please pull, thanks.
+Mike
 
-openSUSE supports that, too. In the case at hand, you would need to
-update the "libmpath0", "multipath-tools", and "qemu-tools" packages
-simultaneously.=A0(If you'd try to update just one, the resolver would
-tell you that the other two need to be updated as well).
+----------------------------------------------------------------
+- Fix DM thinp discard performance regression introduced during 6.4
+  merge; where DM core was splitting large discards every 128K
+  (max_sectors_kb) rather than every 64M (discard_max_bytes).
 
-> and b) we do not rebuild all reverse-dependencies of a library the
-> moment a new version of that lib is uploaded.
+- Extend DM core LOCKFS fix, made during 6.4 merge, to also fix race
+  between do_mount and dm's do_suspend (in addition to the earlier
+  fix's do_mount race with dm's do_resume).
 
-Well, in this case the set of reverse-dependencies is rather small.
+- Fix DM thin metadata operations to first check if the thin-pool is
+  in "fail_io" mode; otherwise UAF can occur.
 
-> I also wonder you get from symbol versioning if the old symbols just
-> disappear. ISTM you could get the same effect - cannot by accident
-> load the wrong library version - just by bumping the soname, and
-> ignoring manual symbol versioning?
+- Fix DM thinp's call to __blkdev_issue_discard to use GFP_NOIO rather
+  than GFP_NOWAIT (__blkdev_issue_discard cannot handle NULL return
+  from bio_alloc).
+-----BEGIN PGP SIGNATURE-----
 
-In theory, we could. I guess we could also use some heuristics to
-transform the LIBMPATHPERSIST... string to a SONAME, making the
-libraries co-installable. But so far we didn't need to, and tbh,
-given the small number of users of our library, it doesn't seem to make
-much sense. Feel free to send patches if you want.
+iQEzBAABCAAdFiEEJfWUX4UqZ4x1O2wixSPxCi2dA1oFAmSLTh0ACgkQxSPxCi2d
+A1rmqggAildPKBjT8nqZmU86lpsy60E03OwvBnGPkMF5pjkOUmTjkb5EWVSAmeuO
+ojj0pWlC+1ZvVkiDfkWxt0NL/4ETD4q+5oy1ARBcOawPX6bj0eXLoBr6m10b+KOb
+mKAoXgYrESEzQ2qPBe4a4Lj3zIBXzXpMpW9TtF23z4HnDpnwpED5xNPWBgiWc3O/
+/6MF1ASLp0DWldoL+gmIp9hEzyQzbzgM4uBOGC4UAYk3U1I55qwX6bWDZ9cQNGMh
+AqCSrphuKHvbsb31yb1X3hB3g1XbAeSvvcizgFY0g9ZpncddKm5gx0BWVDO7qGBG
+UxLIec19kQ2CIEx/QJZIhEjneLlJ/g==
+=mME4
+-----END PGP SIGNATURE-----
 
-One reason for the symbol versioning rather than SONAME is that it
-makes the ABI changes more transparent to ourselves. Using abigail
-to compare the latest code against the ABI of the stable version,=20
-we can figure out which parts of the ABI actually changed, and reflect
-this in our libmpathpersist.version file.
+----------------------------------------------------------------
+Li Lingfeng (2):
+      dm: don't lock fs when the map is NULL during suspend or resume
+      dm thin metadata: check fail_io before using data_sm
 
-Thus even if we were to support SONAME, I believe we'd continue using
-the symbol versioning.
+Mike Snitzer (2):
+      dm thin: fix issue_discard to pass GFP_NOIO to __blkdev_issue_discard
+      dm: use op specific max_sectors when splitting abnormal io
 
-> I asked around a bit and got "this seems very unusual" as feedback.
-
-I'm sorry to hear that. But I see nothing in the docs that mandates
-either providing multiple ABI versions, or modifying the SONAME just
-because symbol versions are being used.
-
-Regards,
-Martin
+ drivers/md/dm-ioctl.c         |  5 +----
+ drivers/md/dm-thin-metadata.c | 20 ++++++++++++--------
+ drivers/md/dm-thin.c          |  3 +--
+ drivers/md/dm.c               | 29 ++++++++++++++++++++---------
+ 4 files changed, 34 insertions(+), 23 deletions(-)
 
 --
 dm-devel mailing list
