@@ -1,98 +1,100 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id BA9DCEB64D7
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Jun 2023 20:44:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 81752EB64D7
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Jun 2023 21:18:02 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1686948264;
+	s=mimecast20190719; t=1686950281;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=711yLe1SkgED7cF3mwRzdOpvjBodye5fs7cT6BOMmOs=;
-	b=Y4NP0djl5slSNqxmLnv7ey+e7CKTniAgfS/Sha8NJsjXAuDVH08obhgQAU5I54DbktD7c7
-	4/pEJIaCIWVCoos24Bdn0A17qWVlzP2AIFHHG4gBbitOge8qMCL01DeRUzfgY9HoHDwXGU
-	3CDpV/mFP+Zhf4HTdYbVuu1qgJ9Fsz8=
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=JUDNPoUTtzQSB/KeHRIPF5Vsy5vhhAuScp1/s0EN8LA=;
+	b=MTKVLA33DczDV2oHor7yp/0eZ543FWElIWDZJ7xt0aRJ4OnJBCMXNpX8w/gYMtwoTzlRn8
+	ubKq3zfjCmqeyXfpZSPCNG6pqXbrryOUPGc0NSMvcTVL0UzfV496XIDTgCpoVTsQkeVDL5
+	JsFMl6EkKxtjc1O+XoCcAjtjFyMG/vk=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-106-RRqBslr-PMGhNypjk6WIaQ-1; Fri, 16 Jun 2023 16:44:23 -0400
-X-MC-Unique: RRqBslr-PMGhNypjk6WIaQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-497-fDyYLbjFOhSTTV67quViIA-1; Fri, 16 Jun 2023 17:17:58 -0400
+X-MC-Unique: fDyYLbjFOhSTTV67quViIA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 501A9803DBE;
-	Fri, 16 Jun 2023 20:44:21 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 57CFB17586;
-	Fri, 16 Jun 2023 20:44:19 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F17B5101A531;
+	Fri, 16 Jun 2023 21:17:55 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A61C31121314;
+	Fri, 16 Jun 2023 21:17:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2EF801946594;
-	Fri, 16 Jun 2023 20:44:19 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 700021946594;
+	Fri, 16 Jun 2023 21:17:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 36AAB1946589
- for <dm-devel@listman.corp.redhat.com>; Fri, 16 Jun 2023 20:44:18 +0000 (UTC)
+ ESMTP id 6DD531946589
+ for <dm-devel@listman.corp.redhat.com>; Fri, 16 Jun 2023 21:17:54 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 273B5141510A; Fri, 16 Jun 2023 20:44:18 +0000 (UTC)
+ id 44B8C1121315; Fri, 16 Jun 2023 21:17:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F64C1415102
- for <dm-devel@redhat.com>; Fri, 16 Jun 2023 20:44:02 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 3D62F1121314
+ for <dm-devel@redhat.com>; Fri, 16 Jun 2023 21:17:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1ECE4185A78F
- for <dm-devel@redhat.com>; Fri, 16 Jun 2023 20:44:02 +0000 (UTC)
-Received: from mail-pj1-f48.google.com (mail-pj1-f48.google.com
- [209.85.216.48]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-394-vE6y9bNoNtSjouKDAo4mXw-1; Fri, 16 Jun 2023 16:44:00 -0400
-X-MC-Unique: vE6y9bNoNtSjouKDAo4mXw-1
-Received: by mail-pj1-f48.google.com with SMTP id
- 98e67ed59e1d1-25ea1b6b659so807555a91.2
- for <dm-devel@redhat.com>; Fri, 16 Jun 2023 13:44:00 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1686948239; x=1689540239;
- h=content-transfer-encoding:cc:to:subject:message-id:date:from
- :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=fDBvN/G/XVt3AApxLKnljmBEnEGXzbOrk5RIvU0800k=;
- b=OKc7CtnhI+rSQ6QutQaGOvGeOqj8/6hwIoTwKJLfoXHBQJdWqfWJL7rikpE5TCQ9m5
- SSL4U4jOJMVHhnB386xUiCBWWnFqIyNdbq7iIBRlRIUgrtOxNltfFXRE1qIot8bn2kxC
- m3duZN1aj1Vj2sz8b1HwwLAwj2sVAEWpzu1kG5g+xSLqnFX7AK7U0wK8ThRr9jYIE8x9
- +0as495M6cW2I7f+cgpk9Xit9WOoaRy/370WpeLtTwDrRPY/GJQK1L9Hf2nDXlf0VIrg
- iJgbH1vux1v3UlqwmtN2kg38Pv/ASIJr9wBnSJjyO70yYOsyZ4b0Sw0xeG76x3gjrzdc
- yIHA==
-X-Gm-Message-State: AC+VfDzZjN1b6c/GSMZFUmSEWML4VgcpMBpR6cERkitCjrr1KrydkufQ
- VvQAQ8UDZ7hOacjuxqn9M+g3N6HRwxO96qVq5tbMDCz7
-X-Google-Smtp-Source: ACHHUZ6vCphMcKJWK1gJZ7ngm1JBbk4jT1Id9QUhaOcEJ/q9NyTwTydMEqB9p86QIbV5KXPL+dNIYBk5HMxmMtiivx8=
-X-Received: by 2002:a17:90a:b38e:b0:25b:b3f3:81d9 with SMTP id
- e14-20020a17090ab38e00b0025bb3f381d9mr2507846pjr.11.1686948239208; Fri, 16
- Jun 2023 13:43:59 -0700 (PDT)
-MIME-Version: 1.0
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1FFB5803DBE
+ for <dm-devel@redhat.com>; Fri, 16 Jun 2023 21:17:54 +0000 (UTC)
+Received: from mout.web.de (mout.web.de [212.227.15.4]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-320-nlkroJvsPC2vR6O06W9sTQ-1; Fri,
+ 16 Jun 2023 17:17:52 -0400
+X-MC-Unique: nlkroJvsPC2vR6O06W9sTQ-1
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=web.de;
+ s=s29768273; t=1686950270; x=1687555070; i=lukasstraub2@web.de;
+ bh=JNCzc0EgQlDRqZfB5FrG/Dj779nMF52JmcR+wFzONMc=;
+ h=X-UI-Sender-Class:Date:From:To:Cc:Subject:In-Reply-To:References;
+ b=KWttK0cEIzLeM6v3cs1k4O7Ls7nfQlvpNzG60S9CjmiHjpE2igSmFVqzpsBMXeOWHsik2ST
+ Ik7vqSseYqIW+y99YO554zMcnTZ08iDRf/x291KLqZ4ac/rSz2git7fDteQrJ1LeFmn+qTgkv
+ yNFW1l0VlNM3ED8A6Ztb2EQ2dAcVhRmwWEx0IZpT7+LUgPny8XeNgcPRjkcW12NHQxE+D2jMK
+ NEqs0yHCZ61FdSlkSXUGcYpX9hdIzJPhLBBgUwYz6x0mGTwo5THreIl+jhPWEFnxP7ydOBH8+
+ Emco6mO8ZFYLNFysx8C5N9apPlA5OiVhWiV3Pxon4LtbMMYaUwow==
+X-UI-Sender-Class: 814a7b36-bfc1-4dae-8640-3722d8ec6cd6
+Received: from gecko.fritz.box ([82.207.254.102]) by smtp.web.de (mrweb005
+ [213.165.67.108]) with ESMTPSA (Nemesis) id 1MHVen-1qNlHy3KWv-00DGR4; Fri, 16
+ Jun 2023 23:12:47 +0200
+Date: Fri, 16 Jun 2023 23:12:39 +0200
+From: Lukas Straub <lukasstraub2@web.de>
+To: Marc Smith <msmith626@gmail.com>
+Message-ID: <20230616211239.30ca1616@gecko.fritz.box>
+In-Reply-To: <CAH6h+he=Q+5bV777PDyCsGpxbd68kSt5R6ORqu3y9my+=P=ysw@mail.gmail.com>
 References: <CAH6h+heB57N4StY-Nhs+QV+Z8UkD8x8K+C1T-NVbsz55fT+kfg@mail.gmail.com>
  <20230616183310.66b9734c@mobian.usb.local>
-In-Reply-To: <20230616183310.66b9734c@mobian.usb.local>
-From: Marc Smith <msmith626@gmail.com>
-Date: Fri, 16 Jun 2023 16:43:47 -0400
-Message-ID: <CAH6h+he=Q+5bV777PDyCsGpxbd68kSt5R6ORqu3y9my+=P=ysw@mail.gmail.com>
-To: Lukas Straub <lukasstraub2@web.de>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+ <CAH6h+he=Q+5bV777PDyCsGpxbd68kSt5R6ORqu3y9my+=P=ysw@mail.gmail.com>
+MIME-Version: 1.0
+X-Provags-ID: V03:K1:E0okuzsC3NE1HoD/+rJQAhqEuFlxsisjx4yuDK7SNDhD2RW8Vq0
+ qJ/7xWMlNIqvjGLbdr6/inhqlx0ajqQ4JKIUX+QA1RtPBcQd2DDeHJXMNsg1nSmDHpmG2g+
+ ZUYmdwMBulhdla1KLHteIbrQpP7PiDqgIPtdIpaaa9yvkcin3SwwwA+dYlLJ5fn8BbDTHMP
+ 0TPSCz+jVoj7+uijSOmBQ==
+UI-OutboundReport: notjunk:1;M01:P0:ZIwZGff4i7I=;2J0d3WCEEKe4QcTy+PG6No5fxc6
+ 9EkFfedZPEUaTa5xgHDe/dCEJGVWOLgzMNbO2fD6gEF6pbJxB1VKsitnEL1+qGULle6dPsnb+
+ U4bTbhKHKFnYD/mgIlCRlz940sL+VUXs0KSeLbav2n5LiiqQ63+1ynQ9Wd3xCKqGs3jp7KW6f
+ lIa5KEqx2dgC0WE93nHNTGG87y0gdZcdm0ucPYZWZqutsPy6GX2qeneRDFivOSM9wz68pGEaj
+ CPLj6ol9gugQhaJMoc2p3EL2Rq+yNTJK3m3AAczjBVyN2S+V1Ck0lgZ6MOCvOmvwRuERtG3aR
+ wfGFNQXcJYv6KCNENk+o4n6op6Redtzop1yOKTWF7W6IT+l4gIcFhydYswwx06LWS3k9j0Fqw
+ Uv5iEGFc4sNTqO1trBOBK2AJ4nhY3xW+AfWpYafhI9BR55d9XKdM428Lu3a20KmuqnrBDWFNK
+ w9HxSQa5lweghtpShrPg4a+8OhJmSd1NrUCv8iLoNjlZ1F0paGovbxruJWATMRVTF375QUDlo
+ qkWgBd6PWYput9cc7ggy9Br1C/1X4DomGKcIDvku0L5ncQ+Wa5QVEDujuCLIZOO75bVrI9Zt1
+ 3nSLw2uwa8C7PvF79F2jrCqzMpsCHb9WKqXT2uj1s+66ONZMy8mgjK21HMoZpvQ32nIs788Ax
+ oaijxbr2xRCfoCRCKucQSwVlpz5a4rxTLuzBf6Rqu3E326g/dRAQ9OBHYPWzFL19rnbOKCs1x
+ EEh0m16UZguRJ6I21MEqY5J2sSs6LK6lX8dZEa2M+/6ijTZu3utS1FXaUq3Gw65/D0yI+oAtQ
+ pnafKPlz7+vAaM0nD74wrJOPzxdkFq/g/ZQ4bTFVDteFoaj7LxazwbfmbkaJ2gPOyzFyXxkQC
+ ft1SFd24n1S6HQosOUma2HkH/IgUSg6pgAFV6UsfO6QTaYpRwfiWa9JqQNF+hfL2cQabkx92m
+ lgiLaeDjLnlXkUkuow4hd+6UAIE=
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 Subject: Re: [dm-devel] dm-writecache - Unexpected Data After Host Crash
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -106,78 +108,178 @@ List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Cc: dm-devel@redhat.com
+Content-Type: multipart/mixed; boundary="===============1292534855850701653=="
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: gmail.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 
-T24gRnJpLCBKdW4gMTYsIDIwMjMgYXQgMTI6MzPigK9QTSBMdWthcyBTdHJhdWIgPGx1a2Fzc3Ry
-YXViMkB3ZWIuZGU+IHdyb3RlOgo+Cj4gT24gV2VkLCAxNCBKdW4gMjAyMyAxNzoyOToxNyAtMDQw
-MAo+IE1hcmMgU21pdGggPG1zbWl0aDYyNkBnbWFpbC5jb20+IHdyb3RlOgo+Cj4gPiBIaSwKPiA+
-Cj4gPiBJJ20gdXNpbmcgZG0td3JpdGVjYWNoZSB2aWEgJ2x2bWNhY2hlJyBvbiBMaW51eCA1LjQu
-MjI5ICh2YW5pbGxhCj4gPiBrZXJuZWwub3JnIHNvdXJjZSkuIEkndmUgYmVlbiB0ZXN0aW5nIG15
-IHN0b3JhZ2Ugc2VydmVyIC0tIEknbSB1c2luZyBhCj4gPiBjb3VwbGUgTlZNZSBkcml2ZXMgaW4g
-YW4gTUQgUkFJRDEgYXJyYXkgdGhhdCBpcyB0aGUgY2FjaGUgKGZhc3QpCj4gPiBkZXZpY2UsIGFu
-ZCB1c2luZyBhIDEyLWRyaXZlIE1EIFJBSUQ2IGFycmF5IGFzIHRoZSBvcmlnaW4gKGJhY2tpbmcp
-Cj4gPiBkZXZpY2UuCj4gPgo+ID4gSSBub3RpY2VkIHRoYXQgd2hlbiB0aGUgaG9zdCBjcmFzaGVz
-IChwb3dlciBsb3NzLCBmb3JjZWZ1bGx5IHJlc2V0LAo+ID4gZXRjLikgaXQgc2VlbXMgdGhlIGNh
-Y2hlZCAodmlhIGRtLXdyaXRlY2FjaGUpIExWTSBsb2dpY2FsIHZvbHVtZSBkb2VzCj4gPiBub3Qg
-Y29udGFpbiB0aGUgYml0cyBJIGV4cGVjdC4gT3IgcGVyaGFwcyBJJ20gbWlzc2luZyBzb21ldGhp
-bmcgaW4gaG93Cj4gPiBJIHVuZGVyc3RhbmQvZXhwZWN0IGRtLXdyaXRlY2FjaGUgdG8gZnVuY3Rp
-b24uLi4KPiA+Cj4gPiBJIGNoYW5nZSB0aGUgYXV0by1jb21taXQgc2V0dGluZ3MgdG8gbGFyZ2Vy
-IHZhbHVlcyBzbyB0aGUgZGF0YSBvbiB0aGUKPiA+IGNhY2hlIGRldmljZSBpcyBub3QgZmx1c2hl
-ZCB0byB0aGUgb3JpZ2luIGRldmljZToKPiA+ICMgbHZjaGFuZ2UgLS1jYWNoZXNldHRpbmdzICJh
-dXRvY29tbWl0X2Jsb2Nrcz0xMDAwMDAwMDAwMDAwIgo+ID4gLS1jYWNoZXNldHRpbmdzICJhdXRv
-Y29tbWl0X3RpbWU9MzYwMDAwMCIgZGV2XzFfZGVmYXVsdC9zeXNfZGV2XzAxCj4gPgo+ID4gVGhl
-biBwb3B1bGF0ZSB0aGUgc3RhcnQgb2YgdGhlIGRldmljZSAoY2FjaGVkIExWKSB3aXRoIHplcm9z
-Ogo+ID4gIyBkZCBpZj0vZGV2L3plcm8gb2Y9L2Rldi9kZXZfMV9kZWZhdWx0L3N5c19kZXZfMDEg
-YnM9MU0gY291bnQ9MTAgb2ZsYWc9ZGlyZWN0Cj4KPiBNaXNzaW5nIGZsdXNoL2ZzeW5jLgo+Cj4g
-PiBGb3JjZSBhIGZsdXNoIGZyb20gdGhlIGNhY2hlIGRldmljZSB0byB0aGUgYmFja2luZyBkZXZp
-Y2UgKGFsbCB6ZXJvJ3MKPiA+IGluIHRoZSBmaXJzdCAxMCBNaUIpOgo+ID4gIyBkbXNldHVwIG1l
-c3NhZ2UgZGV2XzFfZGVmYXVsdC1zeXNfZGV2XzAxIDAgZmx1c2gKPiA+Cj4gPiBOb3cgd3JpdGUg
-YSBkaWZmZXJlbnQgcGF0dGVybiB0byB0aGUgZmlyc3QgMTAgTWlCOgo+ID4gIyBmaW8gLS1icz0x
-bSAtLWRpcmVjdD0xIC0tcnc9d3JpdGUgLS1idWZmZXJfcGF0dGVybj0weGZmCj4gPiAtLWlvZW5n
-aW5lPWxpYmFpbyAtLWlvZGVwdGg9MSAtLW51bWpvYnM9MSAtLXNpemU9MTBNCj4gPiAtLW91dHB1
-dC1mb3JtYXQ9dGVyc2UgLS1uYW1lPS9kZXYvZGV2XzFfZGVmYXVsdC9zeXNfZGV2XzAxCj4KPiBB
-Z2Fpbiwgbm8gZmx1c2gvZnN5bmMgaXMgaXNzdWVkLgoKSSdtIGRvaW5nIGRpcmVjdCBJL08gc28g
-SSB3YXNuJ3QgYW50aWNpcGF0aW5nIHRoZSBuZWVkIGZvciBhIGZsdXNoL2ZzeW5jLgoKCj4KPiA+
-IEFuZCB0aGVuIGluZHVjZSBhIHJlc2V0Ogo+ID4gIyBlY2hvIGIgPiAvcHJvYy9zeXNycS10cmln
-Z2VyCj4gPgo+ID4gTm93IGFmdGVyIHRoZSBzeXN0ZW0gYm9vdHMgYmFjayB1cCwgYXNzZW1ibGUg
-dGhlIFJBSUQgYXJyYXlzIGFuZAo+ID4gYWN0aXZhdGUgdGhlIFZHLCB0aGVuIGV4YW1pbmUgdGhl
-IGRhdGE6Cj4gPiAjIHZnY2hhbmdlIC1heSBkZXZfMV9kZWZhdWx0Cj4gPiAjIGRkIGlmPS9kZXYv
-ZGV2XzFfZGVmYXVsdC9zeXNfZGV2XzAxIGJzPTFNIGlmbGFnPWRpcmVjdCBjb3VudD0xMAo+ID4g
-c3RhdHVzPW5veGZlciB8IG9kIC10IHgyCj4gPiAwMDAwMDAwIDAwMDAgMDAwMCAwMDAwIDAwMDAg
-MDAwMCAwMDAwIDAwMDAgMDAwMAo+ID4gKgo+ID4gMTArMCByZWNvcmRzIGluCj4gPiAxMCswIHJl
-Y29yZHMgb3V0Cj4gPiA1MDAwMDAwMAo+ID4KPiA+Cj4gPiBTbyBJJ20gZXhwZWN0aW5nIGFsbCAi
-ZmZmZiIgaW4gdGhlIGZpcnN0IDEwIE1pQiwgYnV0IGluc3RlYWQsIEknbQo+ID4gZ2V0dGluZyB3
-aGF0J3Mgb24gdGhlIG9yaWdpbiBkZXZpY2UsIHplcm9zIChub3Qgd2hhdCB3YXMgd3JpdHRlbiB0
-bwo+ID4gdGhlIGNhY2hlIGRldmljZSkuCj4gPgo+ID4gT2J2aW91c2x5IGluIGEgY3Jhc2ggc2Nl
-bmFyaW8gKHBvd2VyIGxvc3MsIHJlc2V0LCBwYW5pYywgZXRjLikgdGhlCj4gPiBkaXJ0eSBkYXRh
-IGluIHRoZSBjYWNoZSB3b24ndCBiZSBmbHVzaGVkIHRvIHRoZSBvcmlnaW4gZGV2aWNlLAo+ID4g
-aG93ZXZlciwgSSB3YXMgZXhwZWN0aW5nIHdoZW4gdGhlIERNIGRldmljZSBzdGFydGVkIG9uIHRo
-ZSBzdWJzZXF1ZW50Cj4gPiBib290ICh2aWEgYWN0aXZhdGluZyB0aGUgVkcpIHRoYXQgYWxsIG9m
-IHRoZSBkaXJ0eSBkYXRhIHdvdWxkIGJlCj4gPiBwcmVzZW50IC0tIGl0IHNlZW1zIGxpa2UgaXQg
-aXMgbm90Lgo+ID4KPiA+Cj4gPiBUaGFua3MgZm9yIGFueSBpbmZvcm1hdGlvbi9hZHZpY2UsIGl0
-J3MgZ3JlYXRseSBhcHByZWNpYXRlZC4KPgo+IFRoaXMgaXMgdGhlIGV4cGVjdGVkIGJlaGF2aW9y
-LiBJZiB5b3UgZG9uJ3QgaXNzdWUgZmx1c2hlcywgbm8gZ3VhcmFudGVlcwo+IGFyZSBtYWRlIGFi
-b3V0IHRoZSBkdXJhYmlsaXR5IG9mIHRoZSBuZXdseSB3cml0dGVuIGRhdGEuCgpJbnRlcmVzdGlu
-Zy4uLiB3YXMgbm90IGV4cGVjdGluZyB0aGF0LiBJIGd1ZXNzIEkgd2FzIHRocm93biBieSB0aGUg
-dXNlCm9mIHBlcnNpc3RlbnQgbWVkaWEgKFNTRCAvIFBNRU0pLiBJZiBkbS13cml0ZWNhY2hlIGhh
-cyBkaXJ0eSBkYXRhIHRoYXQKaXNuJ3QgZmx1c2hlZCB0byB0aGUgb3JpZ2luIGRldmljZSB5ZXQg
-KG5vIGZsdXNoL2ZzeW5jIGZyb20gdGhlCmFwcGxpY2F0aW9uKSBhbmQgd2UgbG9zZSBwb3dlciwg
-dGhlIGRhdGEgaXMgZ29uZS4uLiB3aHkgbm90IGp1c3QgdXNlCnZvbGF0aWxlIFJBTSBmb3IgdGhl
-IGNhY2hlIHRoZW4/CgpJJ20gc3RpbGwgZXhwZXJpbWVudGluZyBhbmQgbGVhcm5pbmcgdGhlIGNv
-ZGUsIGJ1dCBmcm9tIHdoYXQgSSd2ZSBzZWVuCnNvIGZhciwgdGhlIGRpcnR5IGRhdGEgYmxvY2tz
-IGRvIHJlc2lkZSBvbiB0aGUgU1NEL1BNRU0gZGV2aWNlLCBpdCdzCmp1c3QgdGhlIGVudHJ5IG1h
-cCB0aGF0IGxpdmVzIGluIG1ldGFkYXRhIHRoYXQgaXNuJ3QgdXAtdG8tZGF0ZSBpZiBhCmNyYXNo
-IC8gcG93ZXIgbG9zcyBvY2N1cnMuIEkgYXNzdW1lIHdyaXRpbmcgb3V0IGFsbCBvZiB0aGUgbWV0
-YWRhdGEgb24KZWFjaCBjYWNoZSBjaGFuZ2Ugd291bGQgYmUgdmVyeSBleHBlbnNpdmUgaW4gdGVy
-bXMgb2YgSS9PIHBlcmZvcm1hbmNlLgoKCj4KPiA+Cj4gPiAtLU1hcmMKPiA+Cj4gPiAtLQo+ID4g
-ZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj4gPiBkbS1kZXZlbEByZWRoYXQuY29tCj4gPiBodHRwczov
-L2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCj4gPgo+CgotLQpk
-bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4u
-cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
+--===============1292534855850701653==
+Content-Type: multipart/signed; boundary="Sig_/FYBfDYxROGPISt+Dp9Lu6cK";
+ protocol="application/pgp-signature"; micalg=pgp-sha256
+
+--Sig_/FYBfDYxROGPISt+Dp9Lu6cK
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+On Fri, 16 Jun 2023 16:43:47 -0400
+Marc Smith <msmith626@gmail.com> wrote:
+
+> On Fri, Jun 16, 2023 at 12:33=E2=80=AFPM Lukas Straub <lukasstraub2@web.d=
+e> wrote:
+> >
+> > On Wed, 14 Jun 2023 17:29:17 -0400
+> > Marc Smith <msmith626@gmail.com> wrote:
+> > =20
+> > > Hi,
+> > >
+> > > I'm using dm-writecache via 'lvmcache' on Linux 5.4.229 (vanilla
+> > > kernel.org source). I've been testing my storage server -- I'm using a
+> > > couple NVMe drives in an MD RAID1 array that is the cache (fast)
+> > > device, and using a 12-drive MD RAID6 array as the origin (backing)
+> > > device.
+> > >
+> > > I noticed that when the host crashes (power loss, forcefully reset,
+> > > etc.) it seems the cached (via dm-writecache) LVM logical volume does
+> > > not contain the bits I expect. Or perhaps I'm missing something in how
+> > > I understand/expect dm-writecache to function...
+> > >
+> > > I change the auto-commit settings to larger values so the data on the
+> > > cache device is not flushed to the origin device:
+> > > # lvchange --cachesettings "autocommit_blocks=3D1000000000000"
+> > > --cachesettings "autocommit_time=3D3600000" dev_1_default/sys_dev_01
+> > >
+> > > Then populate the start of the device (cached LV) with zeros:
+> > > # dd if=3D/dev/zero of=3D/dev/dev_1_default/sys_dev_01 bs=3D1M count=
+=3D10 oflag=3Ddirect =20
+> >
+> > Missing flush/fsync.
+> > =20
+> > > Force a flush from the cache device to the backing device (all zero's
+> > > in the first 10 MiB):
+> > > # dmsetup message dev_1_default-sys_dev_01 0 flush
+> > >
+> > > Now write a different pattern to the first 10 MiB:
+> > > # fio --bs=3D1m --direct=3D1 --rw=3Dwrite --buffer_pattern=3D0xff
+> > > --ioengine=3Dlibaio --iodepth=3D1 --numjobs=3D1 --size=3D10M
+> > > --output-format=3Dterse --name=3D/dev/dev_1_default/sys_dev_01 =20
+> >
+> > Again, no flush/fsync is issued. =20
+>=20
+> I'm doing direct I/O so I wasn't anticipating the need for a flush/fsync.
+>=20
+>=20
+> > =20
+> > > And then induce a reset:
+> > > # echo b > /proc/sysrq-trigger
+> > >
+> > > Now after the system boots back up, assemble the RAID arrays and
+> > > activate the VG, then examine the data:
+> > > # vgchange -ay dev_1_default
+> > > # dd if=3D/dev/dev_1_default/sys_dev_01 bs=3D1M iflag=3Ddirect count=
+=3D10
+> > > status=3Dnoxfer | od -t x2
+> > > 0000000 0000 0000 0000 0000 0000 0000 0000 0000
+> > > *
+> > > 10+0 records in
+> > > 10+0 records out
+> > > 50000000
+> > >
+> > >
+> > > So I'm expecting all "ffff" in the first 10 MiB, but instead, I'm
+> > > getting what's on the origin device, zeros (not what was written to
+> > > the cache device).
+> > >
+> > > Obviously in a crash scenario (power loss, reset, panic, etc.) the
+> > > dirty data in the cache won't be flushed to the origin device,
+> > > however, I was expecting when the DM device started on the subsequent
+> > > boot (via activating the VG) that all of the dirty data would be
+> > > present -- it seems like it is not.
+> > >
+> > >
+> > > Thanks for any information/advice, it's greatly appreciated. =20
+> >
+> > This is the expected behavior. If you don't issue flushes, no guarantees
+> > are made about the durability of the newly written data. =20
+>=20
+> Interesting... was not expecting that. I guess I was thrown by the use
+> of persistent media (SSD / PMEM). If dm-writecache has dirty data that
+> isn't flushed to the origin device yet (no flush/fsync from the
+> application) and we lose power, the data is gone... why not just use
+> volatile RAM for the cache then?
+
+Because flushing is the very thing that dm-writecache should accelerate.
+If your application isn't going to flush the data, it may just as well
+throw the data away.
+
+>=20
+> I'm still experimenting and learning the code, but from what I've seen
+> so far, the dirty data blocks do reside on the SSD/PMEM device,
+
+Not even that, many storage devices will buffer written data internally
+in volatile caches. This is obvious on HDDs for performance reasons,
+but SSDs too need to commit metadata internally before writen data is
+visible after a crash.
+
+And consider other scenarios:
+When you're running inside a VM, with the virtual disk being backed by
+a file on a normal filesystem (perhaps without O_DIRECT even).
+
+> it's
+> just the entry map that lives in metadata that isn't up-to-date if a
+> crash / power loss occurs. I assume writing out all of the metadata on
+> each cache change would be very expensive in terms of I/O performance.
+>=20
+>=20
+> > =20
+> > >
+> > > --Marc
+> > >
+> > > --
+> > > dm-devel mailing list
+> > > dm-devel@redhat.com
+> > > https://listman.redhat.com/mailman/listinfo/dm-devel
+> > > =20
+> > =20
+
+
+
+--=20
+
+
+--Sig_/FYBfDYxROGPISt+Dp9Lu6cK
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEg/qxWKDZuPtyYo+kNasLKJxdslgFAmSM0EcACgkQNasLKJxd
+sliLkw/+Ja/Hc/wIYxiaFgD9/4D+AAgdl2cMbpcCdXIC0yi8xJCWlLAVGb+Wkb6L
+6nVRATCqKjwtdoeFbjVgvofxnRPqhBOXnf9bd8/gOEa0kO4tq1r5u3eN9o2Dyh6q
+fEMOIv4yN3l+1ZSxKjkCUvVRCCpTxAWgENEDrldvLUXR2wrV4iQdiThaxV1cGOCl
+uikQHwPzB0W6PECva2xzteD1guWbUnzCx43hZpCCYUpT9akbn8FezRbi7dG7xlYf
+hoslBZWWyVmHF01MzrNHoFKFW03O6HLQaobBTbqjcWwhALswgPgVp8IYI/IX66Ue
+4/eTX56t9BQbX1MsiyJZpVM9/cCuX5OOo9UpyWVxYAzHsq6tNNWE3CQK82yTXCs6
+Gihrqakqal+t1yqBa64LdiTYXZnqqao4B6bUekrDKxcOIdaZeVpQBLL4FjyF6QAh
+9NO/WG+gIO22GsetT2MgUt1lURTMFYKKIUMeGlCnvchGeovomMgSepFcSNd9NJAi
+dDJ+WwhXtptYxeQ6/4RHpgts94huPicqv6PgX4llAGKMWyvT7aWcntlheeWxH0Wa
+UziGO5oOWALuCzTeVr5u3FKU8m3skbd567ktgHZ8ghOOsh5nLwk2toQZiCP8p9NA
+ZuQ2ayDk2V9YEsRLX1fl1geEoZZDRAaPJkPfST5EiFgnCbUHJrw=
+=W6SR
+-----END PGP SIGNATURE-----
+
+--Sig_/FYBfDYxROGPISt+Dp9Lu6cK--
+
+
+--===============1292534855850701653==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
+
+--===============1292534855850701653==--
 
