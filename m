@@ -1,97 +1,66 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id EE816EB64D8
-	for <dm-devel@archiver.kernel.org>; Thu, 22 Jun 2023 16:36:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 44081EB64D8
+	for <dm-devel@archiver.kernel.org>; Thu, 22 Jun 2023 17:30:05 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1687451805;
+	s=mimecast20190719; t=1687455004;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=DIoALQ8wDQRwxJBHto0+xV1c2yMdjn20EAgGdUEm5E0=;
-	b=bVoIZ9HAN16asNydmUtX0tXTv1FmMODyrjDqyIVRewo7/+jISqNAIHSwtCtCnotfRm5CUM
-	7ZbjnDEHFlWThflAyV2bLguR2+JJiY6qQQsBWtx2a9s9SvTbp+5nJ241sJ0MAxfWwTZ1lj
-	A3AyLd69cyON6gTUCDfta7u65TiFp3k=
+	bh=6Ii2j/ocMtplsqmoL1Kj7edb9IRVUhdBk1SQgdELfJ8=;
+	b=dmJOEXTOvCTGbyDKP3PD0999E9c/oUFPdpHL5r48etpEaprUmeRmDlMfw+qlSb58m5xX8m
+	nGXElpuAfem8QhaJyaQXmM6lHQCFryzZvdBcKTyic/YNk2ZCIRCxWLzMXFE/IS1uiq6XY/
+	ey9vglR0kCJzy6p3aHDSGtSLrDyQ8x8=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-642-c7tCviS8PsSahXLrUjQpcw-1; Thu, 22 Jun 2023 12:35:54 -0400
-X-MC-Unique: c7tCviS8PsSahXLrUjQpcw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-675-I8m-QLkZMYif0qCygXnBOA-1; Thu, 22 Jun 2023 13:30:00 -0400
+X-MC-Unique: I8m-QLkZMYif0qCygXnBOA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B75A72809987;
-	Thu, 22 Jun 2023 16:33:05 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A3BBD4087C6D;
-	Thu, 22 Jun 2023 16:33:05 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 16B5A381BDE0;
+	Thu, 22 Jun 2023 17:29:57 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id DC3DA492B01;
+	Thu, 22 Jun 2023 17:29:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3CB9E1946588;
-	Thu, 22 Jun 2023 16:33:05 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id ABE9E1946588;
+	Thu, 22 Jun 2023 17:29:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8BEF61946587
- for <dm-devel@listman.corp.redhat.com>; Thu, 22 Jun 2023 16:33:03 +0000 (UTC)
+ ESMTP id 359561946587
+ for <dm-devel@listman.corp.redhat.com>; Thu, 22 Jun 2023 17:29:53 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 666ED200B402; Thu, 22 Jun 2023 16:33:03 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 5F98C207B2BC
- for <dm-devel@redhat.com>; Thu, 22 Jun 2023 16:33:03 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 709543C285CF
- for <dm-devel@redhat.com>; Thu, 22 Jun 2023 16:28:50 +0000 (UTC)
-Received: from mail-qk1-f182.google.com (mail-qk1-f182.google.com
- [209.85.222.182]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-522-QCATSc7cOP-QArkqI3OmuA-1; Thu, 22 Jun 2023 12:28:32 -0400
-X-MC-Unique: QCATSc7cOP-QArkqI3OmuA-1
-Received: by mail-qk1-f182.google.com with SMTP id
- af79cd13be357-763e1a22a68so141674585a.0
- for <dm-devel@redhat.com>; Thu, 22 Jun 2023 09:28:30 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1687451310; x=1690043310;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
- :message-id:reply-to;
- bh=HAMXHttBEpnNDM1/PVpXSoGpMwQvu/f70ID06t9hTiU=;
- b=OuZQVgmOu/9X+ZImE9201QjlnXdtPDuHezK46lN94uL1rUX9uq9p0suOKHpw0tx3OA
- EeoLqcCOz2NWmkxW8topSDvuhyzQYwRyhY2iKmnDCipgvR1kMctkPMEEWe6AZTWh3+X7
- RewpMOmNYpxAJdplxrkwSvlKBs3m36KvCIbhaNGF4UcqEjb/jU/ws+sqSq+etKEZwCuJ
- Bvwb/FggxJXL5vhNTNWa6d9NOLkUI6stsV1Kh9Y4H0byEa0gWXcjOs4ch8+Rv/an/gIA
- rhhaE60j1fNhV8HD6XS/sGDfrEa9NNGdbRDUbc/HVuTuU7quvTwJaxij+zWqftO4YKzm
- C3YA==
-X-Gm-Message-State: AC+VfDy50WCEKPWYx8diDkDcNsufow0PWkKfZiGhBLjWlon0BneRxdXm
- QkztcGFCVphs38QfOTP43buxS8ISMDHvDBuCdePg
-X-Google-Smtp-Source: ACHHUZ7p4DG4k30IC0D47LxEx/ITMdNMqVumDmArxV9J1Z5ICIuIa8XyBD7+Oxa3DSu7k7IRBmyJHg==
-X-Received: by 2002:a05:620a:1a87:b0:762:1f9:648b with SMTP id
- bl7-20020a05620a1a8700b0076201f9648bmr13356035qkb.18.1687451309870; 
- Thu, 22 Jun 2023 09:28:29 -0700 (PDT)
-Received: from localhost (pool-68-160-166-30.bstnma.fios.verizon.net.
- [68.160.166.30]) by smtp.gmail.com with ESMTPSA id
- w9-20020a05620a128900b007339c5114a9sm3523476qki.103.2023.06.22.09.28.28
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 22 Jun 2023 09:28:29 -0700 (PDT)
-Date: Thu, 22 Jun 2023 12:28:28 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Demi Marie Obenour <demi@invisiblethingslab.com>, mpatocka@redhat.com
-Message-ID: <ZJR2rGZw0Ddf3TFK@redhat.com>
+ id 2332E40C2071; Thu, 22 Jun 2023 17:29:53 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown
+ [10.11.5.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0F4F240C2063;
+ Thu, 22 Jun 2023 17:29:53 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix,
+ from userid 12668)
+ id EEEB630C0457; Thu, 22 Jun 2023 17:29:52 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+ by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id
+ EB4353F7CF; Thu, 22 Jun 2023 19:29:52 +0200 (CEST)
+Date: Thu, 22 Jun 2023 19:29:52 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Demi Marie Obenour <demi@invisiblethingslab.com>
+In-Reply-To: <20230603145244.1538-2-demi@invisiblethingslab.com>
+Message-ID: <7d56d190-b97c-f515-ebd0-c3790f11954@redhat.com>
 References: <20230601212456.1533-1-demi@invisiblethingslab.com>
  <20230603145244.1538-1-demi@invisiblethingslab.com>
  <20230603145244.1538-2-demi@invisiblethingslab.com>
 MIME-Version: 1.0
-In-Reply-To: <20230603145244.1538-2-demi@invisiblethingslab.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 Subject: Re: [dm-devel] [PATCH v2 1/6] device-mapper: Check that target
  specs are sufficiently aligned
 X-BeenThere: dm-devel@redhat.com
@@ -105,19 +74,20 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org,
+Cc: stable@vger.kernel.org, dm-devel@redhat.com,
+ Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
  Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
-Content-Disposition: inline
+X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sat, Jun 03 2023 at 10:52P -0400,
-Demi Marie Obenour <demi@invisiblethingslab.com> wrote:
+
+
+On Sat, 3 Jun 2023, Demi Marie Obenour wrote:
 
 > Otherwise subsequent code will dereference a misaligned
 > `struct dm_target_spec *`, which is undefined behavior.
@@ -139,9 +109,6 @@ Demi Marie Obenour <demi@invisiblethingslab.com> wrote:
 >  {
 > +	static_assert(_Alignof(struct dm_target_spec) <= 8,
 > +		      "struct dm_target_spec has excessive alignment requirements");
-
-Really not sure what you mean by "has excessive alignment requirements"...
-
 > +	if (next % 8) {
 > +		DMERR("Next target spec (offset %u) is not 8-byte aligned", next);
 > +		return -EINVAL;
@@ -150,21 +117,24 @@ Really not sure what you mean by "has excessive alignment requirements"...
 >  	*spec = (struct dm_target_spec *) ((unsigned char *) last + next);
 >  	*target_params = (char *) (*spec + 1);
 >  
+> -- 
+> Sincerely,
+> Demi Marie Obenour (she/her/hers)
+> Invisible Things Lab
 
-But this patch and patches 2 and 3 need more review. I'd like Mikulas to review.
+Hi
 
-I did pick up patches 4-6 for the upcoming 6.5 merge window.
+Some architectures (such as 32-bit x86) specify that the alignment of 
+64-bit integers is only 4-byte. This could in theory break old userspace 
+code that only uses 4-byte alignment. I would change "next % 8" to "next % 
+__alignof__(struct dm_target_spec)".
 
-Note, please prefix with "dm ioctl" instead of "device-mapper".
+I think that there is no need to backport this patch series to the stable 
+kernels because the bugs that it fixes may only be exploited by the user 
+with CAP_SYS_ADMIN privilege. So, there is no security or reliability 
+problem being fixed.
 
-(I just switched my "dm" prefix to "dm ioctl" and forced update on the
-dm-6.5 branch, so the commit I referenced earlier for your version
-copy patch is now here:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.5&id=a5a3de762b3ae8959347928843c12502b1b23163
-)
-
-Mike
-
+Mikulas
 --
 dm-devel mailing list
 dm-devel@redhat.com
