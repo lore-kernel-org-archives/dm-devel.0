@@ -1,72 +1,96 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 91E48C001B0
-	for <dm-devel@archiver.kernel.org>; Fri, 23 Jun 2023 05:26:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C9120EB64D7
+	for <dm-devel@archiver.kernel.org>; Fri, 23 Jun 2023 05:26:40 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1687497996;
+	s=mimecast20190719; t=1687497999;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Sc4Lo2ibnsvwUGwHXFO09DJu2+WMVGTd963bz+xC3b8=;
-	b=SDUkcl4JVA/D5cvOtr4XOUp5IodJqyyVPXk8Dr3ZaKHz32bUh4iSo3FmU4eFoSv+Pp6eju
-	a9BM4iRlxmZJdjbrBL2JVX+syJlJipY/XbIyf+d/mW2VxYTqF2B2YSj4a4M5gIlttXfyYr
-	Uu6vNjLTB3jh5v29LvbBgVqiYjOuPU4=
+	bh=/0boqx8L58gIh2/khA5vUfAokC+a0BO0aUCNrcDam4c=;
+	b=dRitlKkwOZ64/h0nhpp9IlF8m7jZMxyOEF/PhRQuE7zP1LeUZAMoXcOSbcteqck8BzbAiq
+	UXm7Vpv8fRL8GUD/woPh5oMycLTrSnF3q7zrJOZDMZKKP9OZU30mYTAsIDUce2mxnUPDjX
+	YNMEGqj14N7hS53nE8DHEA9mKXj/Gfs=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-375-GoGOK99dNGm523sLlZTwIQ-1; Fri, 23 Jun 2023 01:26:24 -0400
-X-MC-Unique: GoGOK99dNGm523sLlZTwIQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-136-ecoxAMv5P1KXW7c59lu4sA-1; Fri, 23 Jun 2023 01:26:24 -0400
+X-MC-Unique: ecoxAMv5P1KXW7c59lu4sA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 19F158E4514;
-	Fri, 23 Jun 2023 05:26:10 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 37D11185A7A8;
+	Fri, 23 Jun 2023 05:26:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0976240C2072;
-	Fri, 23 Jun 2023 05:26:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 262EA440CB;
+	Fri, 23 Jun 2023 05:26:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 21D54194F271;
-	Fri, 23 Jun 2023 05:25:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1C860194E010;
+	Fri, 23 Jun 2023 05:25:45 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id F04E91946587
- for <dm-devel@listman.corp.redhat.com>; Thu, 22 Jun 2023 08:35:21 +0000 (UTC)
+ ESMTP id 8AC241946587
+ for <dm-devel@listman.corp.redhat.com>; Thu, 22 Jun 2023 08:55:17 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id DF8A4F5AC5; Thu, 22 Jun 2023 08:35:21 +0000 (UTC)
+ id 780E1492B02; Thu, 22 Jun 2023 08:55:17 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D85A0440CB
- for <dm-devel@redhat.com>; Thu, 22 Jun 2023 08:35:21 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6F574492B01
+ for <dm-devel@redhat.com>; Thu, 22 Jun 2023 08:55:17 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BB4C688D542
- for <dm-devel@redhat.com>; Thu, 22 Jun 2023 08:35:21 +0000 (UTC)
-Received: from out-57.mta0.migadu.com (out-57.mta0.migadu.com
- [91.218.175.57]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5172D8022EF
+ for <dm-devel@redhat.com>; Thu, 22 Jun 2023 08:55:17 +0000 (UTC)
+Received: from mail-pl1-f169.google.com (mail-pl1-f169.google.com
+ [209.85.214.169]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-652-jn24G3gJO76tk72s8-N70g-1; Thu, 22 Jun 2023 04:35:19 -0400
-X-MC-Unique: jn24G3gJO76tk72s8-N70g-1
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and
- include these headers.
-From: Qi Zheng <qi.zheng@linux.dev>
+ us-mta-15--zA1iMFTMAaOWlWNYAiV2A-2; Thu, 22 Jun 2023 04:55:15 -0400
+X-MC-Unique: -zA1iMFTMAaOWlWNYAiV2A-2
+Received: by mail-pl1-f169.google.com with SMTP id
+ d9443c01a7336-1b5585e84b4so6827445ad.0
+ for <dm-devel@redhat.com>; Thu, 22 Jun 2023 01:55:15 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1687424115; x=1690016115;
+ h=content-transfer-encoding:mime-version:references:in-reply-to
+ :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=9Gb8UpD3lZt4bh5cbhFKOyQevww2sfofkVlmbPNwxg8=;
+ b=dR6SeTy+pQRiy0geZTe5NdAKw4SUAk+5JMu//p5QMcmHX9qcKttJDthBFjuS0qhAIW
+ KSeosi/P+cXXvbljRoIYZyqTE+PGt17E3Mw3dAAqHylr9b/ixM7tZlCbphuuyk5mPMFz
+ VxgoZhsQzVgEdZ7T3T4YJm8um+m+T6HMPPKLSvGz0BBF4fMpsuu/av/XRMmtH1PHfZx2
+ 88vLeRjkka1q31fS3t/TVR8MbBkm72FgV7T9eX8qAkw/kYtU6VfYF2JZLi65dzgwWHao
+ aO4BT3ImDXH3hpaNXPEOLIH4D5Ao3l38n+OGI2A+GYQQ7hjsT1qlelbeeRynC3AWmG3P
+ wsBQ==
+X-Gm-Message-State: AC+VfDzHCPivqbUXggHZuEwSuezQr5QljcahFC91AR2e1Pbe0ht6VhY5
+ 6pUzAJUtb1H/OAtBDwjxhCzfsA==
+X-Google-Smtp-Source: ACHHUZ4eMYIbb4I7cyZSyRLa7A39+u7jKZFqr72/TYsRg3oKUy2dca/PQ8JGq6DHBe5p8nrFI+JLcw==
+X-Received: by 2002:a17:903:2451:b0:1b0:34c6:3bf2 with SMTP id
+ l17-20020a170903245100b001b034c63bf2mr21539426pls.5.1687424114850; 
+ Thu, 22 Jun 2023 01:55:14 -0700 (PDT)
+Received: from C02DW0BEMD6R.bytedance.net ([139.177.225.254])
+ by smtp.gmail.com with ESMTPSA id
+ h2-20020a170902f7c200b001b549fce345sm4806971plw.230.2023.06.22.01.55.07
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Thu, 22 Jun 2023 01:55:14 -0700 (PDT)
+From: Qi Zheng <zhengqi.arch@bytedance.com>
 To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
  vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
  brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu
-Date: Thu, 22 Jun 2023 08:24:27 +0000
-Message-Id: <20230622082454.4090236-3-qi.zheng@linux.dev>
-In-Reply-To: <20230622082454.4090236-1-qi.zheng@linux.dev>
-References: <20230622082454.4090236-1-qi.zheng@linux.dev>
+Date: Thu, 22 Jun 2023 16:53:15 +0800
+Message-Id: <20230622085335.77010-10-zhengqi.arch@bytedance.com>
+In-Reply-To: <20230622085335.77010-1-zhengqi.arch@bytedance.com>
+References: <20230622085335.77010-1-zhengqi.arch@bytedance.com>
 MIME-Version: 1.0
-X-Migadu-Flow: FLOW_OUT
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -74,12 +98,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Bulk-Signature: yes
-X-Mimecast-Spam-Signature: bulk
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mailman-Approved-At: Fri, 23 Jun 2023 05:25:40 +0000
-Subject: [dm-devel] [PATCH 02/29] mm: vmscan: introduce some helpers for
- dynamically allocating shrinker
+Subject: [dm-devel] [PATCH 09/29] bcache: dynamically allocate the md-bcache
+ shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,129 +113,118 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: mst@redhat.com, jasowang@redhat.com, dri-devel@lists.freedesktop.org,
- virtualization@lists.linux-foundation.org, linux-mm@kvack.org, song@kernel.org,
- dm-devel@redhat.com, ray.huang@amd.com, namit@vmware.com,
- marijn.suijten@somainline.org, airlied@gmail.com, agk@redhat.com,
- robh@kernel.org, senozhatsky@chromium.org, david@redhat.com, clm@fb.com,
- steven.price@arm.com, alyssa.rosenzweig@collabora.com,
- Qi Zheng <zhengqi.arch@bytedance.com>, josef@toxicpanda.com,
- linux-ext4@vger.kernel.org, kent.overstreet@gmail.com,
- xuanzhuo@linux.alibaba.com, linux-arm-msm@vger.kernel.org,
- intel-gfx@lists.freedesktop.org, snitzer@kernel.org, quic_abhinavk@quicinc.com,
- colyli@suse.de, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- linux-bcache@vger.kernel.org, viro@zeniv.linux.org.uk, dsterba@suse.com,
- sean@poorly.run, linux-nfs@vger.kernel.org, tomeu.vizoso@collabora.com,
- kolga@netapp.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org,
- linux-xfs@vger.kernel.org, minchan@kernel.org, robdclark@gmail.com,
- chuck.lever@oracle.com, daniel@ffwll.ch, jack@suse.com,
- dmitry.baryshkov@linaro.org, adilger.kernel@dilger.ca,
- freedreno@lists.freedesktop.org, christian.koenig@amd.com,
- linux-btrfs@vger.kernel.org
+Cc: linux-bcache@vger.kernel.org, linux-xfs@vger.kernel.org,
+ linux-nfs@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ intel-gfx@lists.freedesktop.org, linux-kernel@vger.kernel.org,
+ dri-devel@lists.freedesktop.org, virtualization@lists.linux-foundation.org,
+ linux-raid@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com,
+ Qi Zheng <zhengqi.arch@bytedance.com>, linux-fsdevel@vger.kernel.org,
+ linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: linux.dev
+X-Mimecast-Originator: bytedance.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Qi Zheng <zhengqi.arch@bytedance.com>
-
-Introduce some helpers for dynamically allocating shrinker instance,
-and their uses are as follows:
-
-1. shrinker_alloc_and_init()
-
-Used to allocate and initialize a shrinker instance, the priv_data
-parameter is used to pass the pointer of the previously embedded
-structure of the shrinker instance.
-
-2. shrinker_free()
-
-Used to free the shrinker instance when the registration of shrinker
-fails.
-
-3. unregister_and_free_shrinker()
-
-Used to unregister and free the shrinker instance, and the kfree()
-will be changed to kfree_rcu() later.
+In preparation for implementing lockless slab shrink,
+we need to dynamically allocate the md-bcache shrinker,
+so that it can be freed asynchronously using kfree_rcu().
+Then it doesn't need to wait for RCU read-side critical
+section when releasing the struct cache_set.
 
 Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
 ---
- include/linux/shrinker.h | 12 ++++++++++++
- mm/vmscan.c              | 35 +++++++++++++++++++++++++++++++++++
- 2 files changed, 47 insertions(+)
+ drivers/md/bcache/bcache.h |  2 +-
+ drivers/md/bcache/btree.c  | 23 ++++++++++++++---------
+ drivers/md/bcache/sysfs.c  |  2 +-
+ 3 files changed, 16 insertions(+), 11 deletions(-)
 
-diff --git a/include/linux/shrinker.h b/include/linux/shrinker.h
-index 43e6fcabbf51..8e9ba6fa3fcc 100644
---- a/include/linux/shrinker.h
-+++ b/include/linux/shrinker.h
-@@ -107,6 +107,18 @@ extern void unregister_shrinker(struct shrinker *shrinker);
- extern void free_prealloced_shrinker(struct shrinker *shrinker);
- extern void synchronize_shrinkers(void);
+diff --git a/drivers/md/bcache/bcache.h b/drivers/md/bcache/bcache.h
+index 700dc5588d5f..53c73b372e7a 100644
+--- a/drivers/md/bcache/bcache.h
++++ b/drivers/md/bcache/bcache.h
+@@ -541,7 +541,7 @@ struct cache_set {
+ 	struct bio_set		bio_split;
  
-+typedef unsigned long (*count_objects_cb)(struct shrinker *s,
-+					  struct shrink_control *sc);
-+typedef unsigned long (*scan_objects_cb)(struct shrinker *s,
-+					 struct shrink_control *sc);
-+
-+struct shrinker *shrinker_alloc_and_init(count_objects_cb count,
-+					 scan_objects_cb scan, long batch,
-+					 int seeks, unsigned flags,
-+					 void *priv_data);
-+void shrinker_free(struct shrinker *shrinker);
-+void unregister_and_free_shrinker(struct shrinker *shrinker);
-+
- #ifdef CONFIG_SHRINKER_DEBUG
- extern int shrinker_debugfs_add(struct shrinker *shrinker);
- extern struct dentry *shrinker_debugfs_detach(struct shrinker *shrinker,
-diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 45d17c7cc555..64ff598fbad9 100644
---- a/mm/vmscan.c
-+++ b/mm/vmscan.c
-@@ -809,6 +809,41 @@ void unregister_shrinker(struct shrinker *shrinker)
+ 	/* For the btree cache */
+-	struct shrinker		shrink;
++	struct shrinker		*shrink;
+ 
+ 	/* For the btree cache and anything allocation related */
+ 	struct mutex		bucket_lock;
+diff --git a/drivers/md/bcache/btree.c b/drivers/md/bcache/btree.c
+index 569f48958bde..1131ae91f62a 100644
+--- a/drivers/md/bcache/btree.c
++++ b/drivers/md/bcache/btree.c
+@@ -667,7 +667,7 @@ static int mca_reap(struct btree *b, unsigned int min_order, bool flush)
+ static unsigned long bch_mca_scan(struct shrinker *shrink,
+ 				  struct shrink_control *sc)
+ {
+-	struct cache_set *c = container_of(shrink, struct cache_set, shrink);
++	struct cache_set *c = shrink->private_data;
+ 	struct btree *b, *t;
+ 	unsigned long i, nr = sc->nr_to_scan;
+ 	unsigned long freed = 0;
+@@ -734,7 +734,7 @@ static unsigned long bch_mca_scan(struct shrinker *shrink,
+ static unsigned long bch_mca_count(struct shrinker *shrink,
+ 				   struct shrink_control *sc)
+ {
+-	struct cache_set *c = container_of(shrink, struct cache_set, shrink);
++	struct cache_set *c = shrink->private_data;
+ 
+ 	if (c->shrinker_disabled)
+ 		return 0;
+@@ -752,8 +752,8 @@ void bch_btree_cache_free(struct cache_set *c)
+ 
+ 	closure_init_stack(&cl);
+ 
+-	if (c->shrink.list.next)
+-		unregister_shrinker(&c->shrink);
++	if (c->shrink->list.next)
++		unregister_and_free_shrinker(c->shrink);
+ 
+ 	mutex_lock(&c->bucket_lock);
+ 
+@@ -828,14 +828,19 @@ int bch_btree_cache_alloc(struct cache_set *c)
+ 		c->verify_data = NULL;
+ #endif
+ 
+-	c->shrink.count_objects = bch_mca_count;
+-	c->shrink.scan_objects = bch_mca_scan;
+-	c->shrink.seeks = 4;
+-	c->shrink.batch = c->btree_pages * 2;
++	c->shrink = shrinker_alloc_and_init(bch_mca_count, bch_mca_scan,
++					    c->btree_pages * 2, 4, 0, c);
++	if (!c->shrink) {
++		pr_warn("bcache: %s: could not allocate shrinker\n",
++				__func__);
++		return -ENOMEM;
++	}
+ 
+-	if (register_shrinker(&c->shrink, "md-bcache:%pU", c->set_uuid))
++	if (register_shrinker(c->shrink, "md-bcache:%pU", c->set_uuid)) {
+ 		pr_warn("bcache: %s: could not register shrinker\n",
+ 				__func__);
++		shrinker_free(c->shrink);
++	}
+ 
+ 	return 0;
  }
- EXPORT_SYMBOL(unregister_shrinker);
+diff --git a/drivers/md/bcache/sysfs.c b/drivers/md/bcache/sysfs.c
+index c6f677059214..771577581f52 100644
+--- a/drivers/md/bcache/sysfs.c
++++ b/drivers/md/bcache/sysfs.c
+@@ -866,7 +866,7 @@ STORE(__bch_cache_set)
  
-+struct shrinker *shrinker_alloc_and_init(count_objects_cb count,
-+					 scan_objects_cb scan, long batch,
-+					 int seeks, unsigned flags,
-+					 void *priv_data)
-+{
-+	struct shrinker *shrinker;
-+
-+	shrinker = kzalloc(sizeof(struct shrinker), GFP_KERNEL);
-+	if (!shrinker)
-+		return NULL;
-+
-+	shrinker->count_objects = count;
-+	shrinker->scan_objects = scan;
-+	shrinker->batch = batch;
-+	shrinker->seeks = seeks;
-+	shrinker->flags = flags;
-+	shrinker->private_data = priv_data;
-+
-+	return shrinker;
-+}
-+EXPORT_SYMBOL(shrinker_alloc_and_init);
-+
-+void shrinker_free(struct shrinker *shrinker)
-+{
-+	kfree(shrinker);
-+}
-+EXPORT_SYMBOL(shrinker_free);
-+
-+void unregister_and_free_shrinker(struct shrinker *shrinker)
-+{
-+	unregister_shrinker(shrinker);
-+	kfree(shrinker);
-+}
-+EXPORT_SYMBOL(unregister_and_free_shrinker);
-+
- /**
-  * synchronize_shrinkers - Wait for all running shrinkers to complete.
-  *
+ 		sc.gfp_mask = GFP_KERNEL;
+ 		sc.nr_to_scan = strtoul_or_return(buf);
+-		c->shrink.scan_objects(&c->shrink, &sc);
++		c->shrink->scan_objects(c->shrink, &sc);
+ 	}
+ 
+ 	sysfs_strtoul_clamp(congested_read_threshold_us,
 -- 
 2.30.2
 
