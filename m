@@ -1,11 +1,11 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id EA380EB64D7
-	for <dm-devel@archiver.kernel.org>; Fri, 23 Jun 2023 05:26:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2AC9DC001DD
+	for <dm-devel@archiver.kernel.org>; Fri, 23 Jun 2023 05:26:55 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1687498014;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
@@ -14,83 +14,59 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=hBbHu8joHzlxC5W10jxbf6d0plNDulAVIyZ+P7+Bo8Y=;
-	b=A4EGFReSw6VZtVRBZEcc9Xq9Lp4kkfS0/gZiMeVO4rwJoxzZikKi+hzcF2v2I9I63rcsB2
-	iBEHaByUgi6EZhZ6UwJcQnUM1S6ts6FrM2pKdzvuajZEH793pn31qaYEW9RcUmCqfEIpvA
-	ASIpEAA2meSsmKlp02dYmYaHnWFTIIg=
+	bh=qcS/ryOKZD4D4tv2ysXVhJjyBNbzsImfeo2Iu4TROs8=;
+	b=Wdoqug1jhUoPTTAM4KAEbMVs3+xBop9SxzbCvICLBzhnG08KB3gEzsSUocXYTB5LZ90V6r
+	iEFbbEgj1XZiODAW9FRDGct0qNRuWS53w0Lyf6UeFIolKoq+BSFZJpv04kkgP4ima1u2hk
+	8Y2TXiAiluSfLh38I/obPeUgToqLoMw=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-70-Z3O5iKo2PFa7w6X1iCAZRw-1; Fri, 23 Jun 2023 01:26:47 -0400
-X-MC-Unique: Z3O5iKo2PFa7w6X1iCAZRw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-591-C0dKhPkAO0WHKb7N0bM-CA-1; Fri, 23 Jun 2023 01:26:47 -0400
+X-MC-Unique: C0dKhPkAO0WHKb7N0bM-CA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 056B788D518;
-	Fri, 23 Jun 2023 05:26:24 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E28F188D196;
+	Fri, 23 Jun 2023 05:26:10 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E7EB62014E17;
-	Fri, 23 Jun 2023 05:26:23 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D2BE3F5AD6;
+	Fri, 23 Jun 2023 05:26:10 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 79EE81946A68;
-	Fri, 23 Jun 2023 05:25:55 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 54974195439C;
+	Fri, 23 Jun 2023 05:25:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 231611946587
- for <dm-devel@listman.corp.redhat.com>; Thu, 22 Jun 2023 08:55:45 +0000 (UTC)
+ ESMTP id BC5C4194658C
+ for <dm-devel@listman.corp.redhat.com>; Thu, 22 Jun 2023 08:41:22 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 07A3F40D1A4; Thu, 22 Jun 2023 08:55:35 +0000 (UTC)
+ id B901D440CB; Thu, 22 Jun 2023 08:41:22 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 003FE41EF82
- for <dm-devel@redhat.com>; Thu, 22 Jun 2023 08:55:34 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CCD1238149A5
- for <dm-devel@redhat.com>; Thu, 22 Jun 2023 08:55:34 +0000 (UTC)
-Received: from mail-pl1-f176.google.com (mail-pl1-f176.google.com
- [209.85.214.176]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B20DCF5AC5
+ for <dm-devel@redhat.com>; Thu, 22 Jun 2023 08:41:22 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 95123185A78B
+ for <dm-devel@redhat.com>; Thu, 22 Jun 2023 08:41:22 +0000 (UTC)
+Received: from out-35.mta1.migadu.com (out-35.mta1.migadu.com
+ [95.215.58.35]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-68-xlro4JI-P3i_2xHNjaMtSQ-1; Thu, 22 Jun 2023 04:55:32 -0400
-X-MC-Unique: xlro4JI-P3i_2xHNjaMtSQ-1
-Received: by mail-pl1-f176.google.com with SMTP id
- d9443c01a7336-1b693afe799so2464855ad.1
- for <dm-devel@redhat.com>; Thu, 22 Jun 2023 01:55:32 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1687424131; x=1690016131;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=Rw+THIB7nYtdEoKFrcRpf+DtRSemfk8nQmXyWQCWLOU=;
- b=dANtieWjetT2mMEOwWFjKs0irILrjVuRqHttdw8IkVfaBK/lEtDxCHB3drXqVrpVX1
- AuTkPtfRZlSCOabxj8OHlyPNvbjRtItER1/Blbt/t5HgurmokrgASB7jx0SQPKkewwZq
- 96+M7hkHNR2nfEKIGh2x5q/7Upu32cyhhC1Z4GF5LFB137TXBDbUEDPowi+HtzSJ+zYF
- Iy7yzQxu8Tl2IjBW4ZUbdJrRpiwgsl8w7i6g+UPZaFDp5MpD7YqOyaa6vuO9oza11064
- SatFmQBOEDASgugrjyzAvTGJLaxiu+T7EUCqKsytbP9tP0bOf2FqErQf6H1YTGUgWWLU
- 8hsQ==
-X-Gm-Message-State: AC+VfDzvpTV1A3warc6xHzv+TQjjWio/NcVCeUzNDphperpCESy77rda
- 4zCsirGkMYG/Ltd7aYi6K1feAQ==
-X-Google-Smtp-Source: ACHHUZ74w6zUyxxONmkdhWFpbjqcQv1Ri8s1BW02LunWtr1K9sXtmODVbQHvvX6jLBNiniDuaX5mmA==
-X-Received: by 2002:a17:902:d489:b0:1b4:ddef:841e with SMTP id
- c9-20020a170902d48900b001b4ddef841emr21417877plg.4.1687424131373; 
- Thu, 22 Jun 2023 01:55:31 -0700 (PDT)
-Received: from C02DW0BEMD6R.bytedance.net ([139.177.225.254])
- by smtp.gmail.com with ESMTPSA id
- h2-20020a170902f7c200b001b549fce345sm4806971plw.230.2023.06.22.01.55.23
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 22 Jun 2023 01:55:31 -0700 (PDT)
-From: Qi Zheng <zhengqi.arch@bytedance.com>
+ us-mta-637-9OOtZS9-NMezIWAMyBnncg-1; Thu, 22 Jun 2023 04:41:20 -0400
+X-MC-Unique: 9OOtZS9-NMezIWAMyBnncg-1
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and
+ include these headers.
+From: Qi Zheng <qi.zheng@linux.dev>
 To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
  vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
  brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu
-Date: Thu, 22 Jun 2023 16:53:17 +0800
-Message-Id: <20230622085335.77010-12-zhengqi.arch@bytedance.com>
-In-Reply-To: <20230622085335.77010-1-zhengqi.arch@bytedance.com>
-References: <20230622085335.77010-1-zhengqi.arch@bytedance.com>
+Date: Thu, 22 Jun 2023 08:39:14 +0000
+Message-Id: <20230622083932.4090339-12-qi.zheng@linux.dev>
+In-Reply-To: <20230622083932.4090339-1-qi.zheng@linux.dev>
+References: <20230622083932.4090339-1-qi.zheng@linux.dev>
 MIME-Version: 1.0
+X-Migadu-Flow: FLOW_OUT
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -98,7 +74,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mailman-Approved-At: Fri, 23 Jun 2023 05:25:40 +0000
 Subject: [dm-devel] [PATCH 11/29] virtio_balloon: dynamically allocate the
  virtio-balloon shrinker
@@ -119,14 +95,17 @@ Cc: linux-bcache@vger.kernel.org, linux-xfs@vger.kernel.org,
  dri-devel@lists.freedesktop.org, virtualization@lists.linux-foundation.org,
  linux-raid@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com,
  Qi Zheng <zhengqi.arch@bytedance.com>, linux-fsdevel@vger.kernel.org,
- linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org
+ linux-ext4@vger.kernel.org, freedreno@lists.freedesktop.org,
+ linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: bytedance.com
+X-Mimecast-Originator: linux.dev
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+
+From: Qi Zheng <zhengqi.arch@bytedance.com>
 
 In preparation for implementing lockless slab shrink,
 we need to dynamically allocate the virtio-balloon shrinker,
