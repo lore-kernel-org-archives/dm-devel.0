@@ -1,78 +1,73 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7314AEB64D7
-	for <dm-devel@archiver.kernel.org>; Fri, 23 Jun 2023 03:24:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7F3A9EB64DD
+	for <dm-devel@archiver.kernel.org>; Fri, 23 Jun 2023 05:25:56 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1687490658;
+	s=mimecast20190719; t=1687497955;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=tea47q8AL2MeNxnjnQWR8xnIJn5AVFEYTqYE8azmzFo=;
-	b=Am7URzOOyjn+dzhwWWFrYDnqP/T4Tgi4/vfR4Z0popFnPO/Ni+OlE4n5BpSGXQTglrs4f9
-	mfcJzHA1ijeVMGPvkHWTSBQdDlUCzvFsbt8mp/0UiC/B9o0jraegEAlrsTpqZi8v9d2aFZ
-	Wx39vGmZMdY4B+K9or45f60iA+8fH38=
+	bh=U5ybF56s73T6jyvafxvYdP25B+Yn1XQ9FXjJe25C+zo=;
+	b=JRpBa2rqj35KNqyEf4UO9SH4QxYq5eL6TMgxu71oOMYPp+DrwodPPNcLj0H+VeFil+Wcbh
+	j4W72R9B83PFDHULvWMagMwXbRkEmzmHWOqGG0rlYSkvZAu9aRiWK/X2td2AoNWa1UTOjd
+	1Bx2Hjn7a/1aRgYeXkGW1ywXiXaLE6I=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-613-mSNg7EbsMtiu6kwKEwM1bg-1; Thu, 22 Jun 2023 23:24:15 -0400
-X-MC-Unique: mSNg7EbsMtiu6kwKEwM1bg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-164-BxrognoQMYW_K9pdlu9J6g-1; Fri, 23 Jun 2023 01:25:52 -0400
+X-MC-Unique: BxrognoQMYW_K9pdlu9J6g-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6B9EC88D1B7;
-	Fri, 23 Jun 2023 03:24:13 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CFC49140EBB8;
-	Fri, 23 Jun 2023 03:24:09 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9F535104458C;
+	Fri, 23 Jun 2023 05:25:49 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 336F140C6CD1;
+	Fri, 23 Jun 2023 05:25:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 817861946588;
-	Fri, 23 Jun 2023 03:24:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 52BB91946A43;
+	Fri, 23 Jun 2023 05:25:41 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 5B3F81946587
- for <dm-devel@listman.corp.redhat.com>; Fri, 23 Jun 2023 03:24:08 +0000 (UTC)
+ ESMTP id 0D8DD194658C
+ for <dm-devel@listman.corp.redhat.com>; Thu, 22 Jun 2023 08:41:38 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4935E14682FA; Fri, 23 Jun 2023 03:24:08 +0000 (UTC)
+ id EF50B40D1A4; Thu, 22 Jun 2023 08:41:37 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 41E6E140EBB8
- for <dm-devel@redhat.com>; Fri, 23 Jun 2023 03:24:08 +0000 (UTC)
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C146C492C13
+ for <dm-devel@redhat.com>; Thu, 22 Jun 2023 08:41:37 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
  [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 109D53C01BA9
- for <dm-devel@redhat.com>; Fri, 23 Jun 2023 03:24:08 +0000 (UTC)
-Received: from mga02.intel.com (mga02.intel.com [134.134.136.20]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-426-pBLajp_nOjOT66h4wfNkFw-1; Thu, 22 Jun 2023 23:24:02 -0400
-X-MC-Unique: pBLajp_nOjOT66h4wfNkFw-1
-X-IronPort-AV: E=McAfee;i="6600,9927,10749"; a="350440066"
-X-IronPort-AV: E=Sophos;i="6.01,150,1684825200"; d="scan'208";a="350440066"
-Received: from orsmga008.jf.intel.com ([10.7.209.65])
- by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
- 22 Jun 2023 20:22:57 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10749"; a="744849072"
-X-IronPort-AV: E=Sophos;i="6.01,150,1684825200"; d="scan'208";a="744849072"
-Received: from lkp-server01.sh.intel.com (HELO 783282924a45) ([10.239.97.150])
- by orsmga008.jf.intel.com with ESMTP; 22 Jun 2023 20:22:55 -0700
-Received: from kbuild by 783282924a45 with local (Exim 4.96)
- (envelope-from <lkp@intel.com>) id 1qCXNu-0007xN-2o;
- Fri, 23 Jun 2023 03:22:54 +0000
-Date: Fri, 23 Jun 2023 11:22:23 +0800
-From: kernel test robot <lkp@intel.com>
-To: Demi Marie Obenour <demi@invisiblethingslab.com>
-Message-ID: <202306231121.8VDClqLC-lkp@intel.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A1B7185A791
+ for <dm-devel@redhat.com>; Thu, 22 Jun 2023 08:41:37 +0000 (UTC)
+Received: from out-11.mta1.migadu.com (out-11.mta1.migadu.com
+ [95.215.58.11]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-516-vwDtwt-DMxKVFWvc3VzINg-1; Thu, 22 Jun 2023 04:41:34 -0400
+X-MC-Unique: vwDtwt-DMxKVFWvc3VzINg-1
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and
+ include these headers.
+From: Qi Zheng <qi.zheng@linux.dev>
+To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
+ vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
+ brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu
+Date: Thu, 22 Jun 2023 08:39:16 +0000
+Message-Id: <20230622083932.4090339-14-qi.zheng@linux.dev>
+In-Reply-To: <20230622083932.4090339-1-qi.zheng@linux.dev>
+References: <20230622083932.4090339-1-qi.zheng@linux.dev>
 MIME-Version: 1.0
+X-Migadu-Flow: FLOW_OUT
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -80,10 +75,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: [dm-devel] [device-mapper-dm:for-next 19/24]
- drivers/md/dm-ioctl.c:1402:15: warning: format specifies type 'unsigned
- long' but the argument has type 'unsigned int'
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Mailman-Approved-At: Fri, 23 Jun 2023 05:25:40 +0000
+Subject: [dm-devel] [PATCH 13/29] ext4: dynamically allocate the ext4-es
+ shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -95,144 +90,108 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com,
- llvm@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
- oe-kbuild-all@lists.linux.dev
+Cc: linux-bcache@vger.kernel.org, linux-xfs@vger.kernel.org,
+ linux-nfs@vger.kernel.org, linux-arm-msm@vger.kernel.org,
+ intel-gfx@lists.freedesktop.org, linux-kernel@vger.kernel.org,
+ dri-devel@lists.freedesktop.org, virtualization@lists.linux-foundation.org,
+ linux-raid@vger.kernel.org, linux-mm@kvack.org, dm-devel@redhat.com,
+ Qi Zheng <zhengqi.arch@bytedance.com>, linux-fsdevel@vger.kernel.org,
+ linux-ext4@vger.kernel.org, freedreno@lists.freedesktop.org,
+ linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: intel.com
-Content-Disposition: inline
+X-Mimecast-Originator: linux.dev
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
-head:   7d8bae011ec676d6c0a6ea18f2b74c9c32d57849
-commit: 5df1daff2cc63af7971c0643134f3372aa3b33a1 [19/24] dm ioctl: Check dm_target_spec is sufficiently aligned
-config: hexagon-randconfig-r041-20230622 (https://download.01.org/0day-ci/archive/20230623/202306231121.8VDClqLC-lkp@intel.com/config)
-compiler: clang version 17.0.0 (https://github.com/llvm/llvm-project.git 4a5ac14ee968ff0ad5d2cc1ffa0299048db4c88a)
-reproduce: (https://download.01.org/0day-ci/archive/20230623/202306231121.8VDClqLC-lkp@intel.com/reproduce)
+From: Qi Zheng <zhengqi.arch@bytedance.com>
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202306231121.8VDClqLC-lkp@intel.com/
+In preparation for implementing lockless slab shrink,
+we need to dynamically allocate the ext4-es shrinker,
+so that it can be freed asynchronously using kfree_rcu().
+Then it doesn't need to wait for RCU read-side critical
+section when releasing the struct ext4_sb_info.
 
-All warnings (new ones prefixed by >>):
+Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
+---
+ fs/ext4/ext4.h           |  2 +-
+ fs/ext4/extents_status.c | 21 ++++++++++++---------
+ 2 files changed, 13 insertions(+), 10 deletions(-)
 
-   In file included from drivers/md/dm-ioctl.c:9:
-   In file included from drivers/md/dm-core.h:15:
-   In file included from include/linux/blk-mq.h:5:
-   In file included from include/linux/blkdev.h:9:
-   In file included from include/linux/blk_types.h:10:
-   In file included from include/linux/bvec.h:10:
-   In file included from include/linux/highmem.h:12:
-   In file included from include/linux/hardirq.h:11:
-   In file included from ./arch/hexagon/include/generated/asm/hardirq.h:1:
-   In file included from include/asm-generic/hardirq.h:17:
-   In file included from include/linux/irq.h:20:
-   In file included from include/linux/io.h:13:
-   In file included from arch/hexagon/include/asm/io.h:334:
-   include/asm-generic/io.h:547:31: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-     547 |         val = __raw_readb(PCI_IOBASE + addr);
-         |                           ~~~~~~~~~~ ^
-   include/asm-generic/io.h:560:61: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-     560 |         val = __le16_to_cpu((__le16 __force)__raw_readw(PCI_IOBASE + addr));
-         |                                                         ~~~~~~~~~~ ^
-   include/uapi/linux/byteorder/little_endian.h:37:51: note: expanded from macro '__le16_to_cpu'
-      37 | #define __le16_to_cpu(x) ((__force __u16)(__le16)(x))
-         |                                                   ^
-   In file included from drivers/md/dm-ioctl.c:9:
-   In file included from drivers/md/dm-core.h:15:
-   In file included from include/linux/blk-mq.h:5:
-   In file included from include/linux/blkdev.h:9:
-   In file included from include/linux/blk_types.h:10:
-   In file included from include/linux/bvec.h:10:
-   In file included from include/linux/highmem.h:12:
-   In file included from include/linux/hardirq.h:11:
-   In file included from ./arch/hexagon/include/generated/asm/hardirq.h:1:
-   In file included from include/asm-generic/hardirq.h:17:
-   In file included from include/linux/irq.h:20:
-   In file included from include/linux/io.h:13:
-   In file included from arch/hexagon/include/asm/io.h:334:
-   include/asm-generic/io.h:573:61: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-     573 |         val = __le32_to_cpu((__le32 __force)__raw_readl(PCI_IOBASE + addr));
-         |                                                         ~~~~~~~~~~ ^
-   include/uapi/linux/byteorder/little_endian.h:35:51: note: expanded from macro '__le32_to_cpu'
-      35 | #define __le32_to_cpu(x) ((__force __u32)(__le32)(x))
-         |                                                   ^
-   In file included from drivers/md/dm-ioctl.c:9:
-   In file included from drivers/md/dm-core.h:15:
-   In file included from include/linux/blk-mq.h:5:
-   In file included from include/linux/blkdev.h:9:
-   In file included from include/linux/blk_types.h:10:
-   In file included from include/linux/bvec.h:10:
-   In file included from include/linux/highmem.h:12:
-   In file included from include/linux/hardirq.h:11:
-   In file included from ./arch/hexagon/include/generated/asm/hardirq.h:1:
-   In file included from include/asm-generic/hardirq.h:17:
-   In file included from include/linux/irq.h:20:
-   In file included from include/linux/io.h:13:
-   In file included from arch/hexagon/include/asm/io.h:334:
-   include/asm-generic/io.h:584:33: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-     584 |         __raw_writeb(value, PCI_IOBASE + addr);
-         |                             ~~~~~~~~~~ ^
-   include/asm-generic/io.h:594:59: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-     594 |         __raw_writew((u16 __force)cpu_to_le16(value), PCI_IOBASE + addr);
-         |                                                       ~~~~~~~~~~ ^
-   include/asm-generic/io.h:604:59: warning: performing pointer arithmetic on a null pointer has undefined behavior [-Wnull-pointer-arithmetic]
-     604 |         __raw_writel((u32 __force)cpu_to_le32(value), PCI_IOBASE + addr);
-         |                                                       ~~~~~~~~~~ ^
->> drivers/md/dm-ioctl.c:1402:15: warning: format specifies type 'unsigned long' but the argument has type 'unsigned int' [-Wformat]
-    1402 |                 DMERR("Next dm_target_spec (offset %u) is not %lu-byte aligned",
-         |                                                               ~~~
-         |                                                               %u
-    1403 |                       next, __alignof__(struct dm_target_spec));
-         |                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   include/linux/device-mapper.h:626:47: note: expanded from macro 'DMERR'
-     626 | #define DMERR(fmt, ...) pr_err(DM_FMT(fmt), ##__VA_ARGS__)
-         |                                       ~~~     ^~~~~~~~~~~
-   include/linux/printk.h:498:33: note: expanded from macro 'pr_err'
-     498 |         printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
-         |                                ~~~     ^~~~~~~~~~~
-   include/linux/printk.h:455:60: note: expanded from macro 'printk'
-     455 | #define printk(fmt, ...) printk_index_wrap(_printk, fmt, ##__VA_ARGS__)
-         |                                                     ~~~    ^~~~~~~~~~~
-   include/linux/printk.h:427:19: note: expanded from macro 'printk_index_wrap'
-     427 |                 _p_func(_fmt, ##__VA_ARGS__);                           \
-         |                         ~~~~    ^~~~~~~~~~~
-   7 warnings generated.
-
-
-vim +1402 drivers/md/dm-ioctl.c
-
-  1393	
-  1394	static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
-  1395			       struct dm_target_spec **spec, char **target_params)
-  1396	{
-  1397		static_assert(__alignof__(struct dm_target_spec) <= 8,
-  1398			"struct dm_target_spec must not require more than 8-byte alignment");
-  1399	
-  1400		if (next % __alignof__(struct dm_target_spec)) {
-  1401			DMERR("Next dm_target_spec (offset %u) is not %lu-byte aligned",
-> 1402			      next, __alignof__(struct dm_target_spec));
-  1403			return -EINVAL;
-  1404		}
-  1405	
-  1406		*spec = (struct dm_target_spec *) ((unsigned char *) last + next);
-  1407		*target_params = (char *) (*spec + 1);
-  1408	
-  1409		if (*spec < (last + 1))
-  1410			return -EINVAL;
-  1411	
-  1412		return invalid_str(*target_params, end);
-  1413	}
-  1414	
-
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index 0a2d55faa095..1bd150d454f5 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -1651,7 +1651,7 @@ struct ext4_sb_info {
+ 	__u32 s_csum_seed;
+ 
+ 	/* Reclaim extents from extent status tree */
+-	struct shrinker s_es_shrinker;
++	struct shrinker *s_es_shrinker;
+ 	struct list_head s_es_list;	/* List of inodes with reclaimable extents */
+ 	long s_es_nr_inode;
+ 	struct ext4_es_stats s_es_stats;
+diff --git a/fs/ext4/extents_status.c b/fs/ext4/extents_status.c
+index 9b5b8951afb4..fea82339f4b4 100644
+--- a/fs/ext4/extents_status.c
++++ b/fs/ext4/extents_status.c
+@@ -1596,7 +1596,7 @@ static unsigned long ext4_es_count(struct shrinker *shrink,
+ 	unsigned long nr;
+ 	struct ext4_sb_info *sbi;
+ 
+-	sbi = container_of(shrink, struct ext4_sb_info, s_es_shrinker);
++	sbi = shrink->private_data;
+ 	nr = percpu_counter_read_positive(&sbi->s_es_stats.es_stats_shk_cnt);
+ 	trace_ext4_es_shrink_count(sbi->s_sb, sc->nr_to_scan, nr);
+ 	return nr;
+@@ -1605,8 +1605,7 @@ static unsigned long ext4_es_count(struct shrinker *shrink,
+ static unsigned long ext4_es_scan(struct shrinker *shrink,
+ 				  struct shrink_control *sc)
+ {
+-	struct ext4_sb_info *sbi = container_of(shrink,
+-					struct ext4_sb_info, s_es_shrinker);
++	struct ext4_sb_info *sbi = shrink->private_data;
+ 	int nr_to_scan = sc->nr_to_scan;
+ 	int ret, nr_shrunk;
+ 
+@@ -1690,15 +1689,19 @@ int ext4_es_register_shrinker(struct ext4_sb_info *sbi)
+ 	if (err)
+ 		goto err3;
+ 
+-	sbi->s_es_shrinker.scan_objects = ext4_es_scan;
+-	sbi->s_es_shrinker.count_objects = ext4_es_count;
+-	sbi->s_es_shrinker.seeks = DEFAULT_SEEKS;
+-	err = register_shrinker(&sbi->s_es_shrinker, "ext4-es:%s",
++	sbi->s_es_shrinker = shrinker_alloc_and_init(ext4_es_count, ext4_es_scan,
++						     0, DEFAULT_SEEKS, 0, sbi);
++	if (!sbi->s_es_shrinker)
++		goto err4;
++
++	err = register_shrinker(sbi->s_es_shrinker, "ext4-es:%s",
+ 				sbi->s_sb->s_id);
+ 	if (err)
+-		goto err4;
++		goto err5;
+ 
+ 	return 0;
++err5:
++	shrinker_free(sbi->s_es_shrinker);
+ err4:
+ 	percpu_counter_destroy(&sbi->s_es_stats.es_stats_shk_cnt);
+ err3:
+@@ -1716,7 +1719,7 @@ void ext4_es_unregister_shrinker(struct ext4_sb_info *sbi)
+ 	percpu_counter_destroy(&sbi->s_es_stats.es_stats_cache_misses);
+ 	percpu_counter_destroy(&sbi->s_es_stats.es_stats_all_cnt);
+ 	percpu_counter_destroy(&sbi->s_es_stats.es_stats_shk_cnt);
+-	unregister_shrinker(&sbi->s_es_shrinker);
++	unregister_and_free_shrinker(sbi->s_es_shrinker);
+ }
+ 
+ /*
 -- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
+2.30.2
 
 --
 dm-devel mailing list
