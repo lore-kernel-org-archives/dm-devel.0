@@ -4,106 +4,61 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B57A1EB64DA
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Jun 2023 14:51:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id F261CEB64D7
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Jun 2023 15:41:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1687791103;
+	s=mimecast20190719; t=1687794077;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=6wWsWky0NCzmZFFjhMazYTigWSmVOF+/pHe4gw6HujI=;
-	b=b7asxqyeKlINZcELDTE+MgzU0uBBGXnF7xom1d5dQrq7DEPiE9F+LlAieSFfaE7jxY1sXH
-	kW5OuezA4kGOtYG3I3draW0OL4gAZDAxltTBcdx6QABKjwopvyjJT6B2rkvZiFMOY50UEB
-	1fz78Kh8A/794WhOIolDu6zFopFOiLc=
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=Jfzzz+t0G1Nm8de4m7szDuVaUeBy6GtcfCxIMNHw2+k=;
+	b=E/jMmenI0Zh+UPll5kfimzMXi4Q7H+jgiME/9cmoQXgZ55zSr22LbS+K5hgNrVo8RMqbZ3
+	6prCFYqYTZ4yXBK6nfpIX7jdG/z2AcfEXTdOA+8FvE8aJPMCrH13iciXVIQqNzDYhDaeRO
+	aDloklDslPolv8y+BqlEUnintjaiVag=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-27-eAW1wgevNimert-IKSls6g-1; Mon, 26 Jun 2023 10:51:39 -0400
-X-MC-Unique: eAW1wgevNimert-IKSls6g-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-577-YSi9wOJHO1mMjt3SWBRYkQ-1; Mon, 26 Jun 2023 11:41:13 -0400
+X-MC-Unique: YSi9wOJHO1mMjt3SWBRYkQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A2FAC90ED2E;
-	Mon, 26 Jun 2023 14:51:15 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 53BAA14682F9;
-	Mon, 26 Jun 2023 14:51:15 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 41B24800159;
+	Mon, 26 Jun 2023 15:40:48 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E2E851121339;
+	Mon, 26 Jun 2023 15:40:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 36D1D1946588;
-	Mon, 26 Jun 2023 14:51:15 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7E58F1946588;
+	Mon, 26 Jun 2023 15:40:43 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 89C571946587
- for <dm-devel@listman.corp.redhat.com>; Mon, 26 Jun 2023 14:51:07 +0000 (UTC)
+ ESMTP id 48CBA1946587
+ for <dm-devel@listman.corp.redhat.com>; Mon, 26 Jun 2023 15:40:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7995F2166B26; Mon, 26 Jun 2023 14:51:07 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 713FD2166B25
- for <dm-devel@redhat.com>; Mon, 26 Jun 2023 14:51:07 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 51B5E28040C2
- for <dm-devel@redhat.com>; Mon, 26 Jun 2023 14:51:07 +0000 (UTC)
-Received: from mail-pf1-f181.google.com (mail-pf1-f181.google.com
- [209.85.210.181]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-57-LgEEBOWGPc6MChbZpAmPHQ-1; Mon, 26 Jun 2023 10:50:59 -0400
-X-MC-Unique: LgEEBOWGPc6MChbZpAmPHQ-1
-Received: by mail-pf1-f181.google.com with SMTP id
- d2e1a72fcca58-666683eb028so1479449b3a.0
- for <dm-devel@redhat.com>; Mon, 26 Jun 2023 07:50:58 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1687791057; x=1690383057;
- h=content-transfer-encoding:in-reply-to:from:content-language
- :references:cc:to:subject:user-agent:mime-version:date:message-id
- :sender:x-gm-message-state:from:to:cc:subject:date:message-id
- :reply-to;
- bh=3/i5nGpo6bAYzHRYmjepgeMVK+fjAMmYYEQI4A8dzWk=;
- b=KambB0IsQIqmOBhuRnmJSrmRiSsRHi3t2Ew4o1c1NZYqk0mjjrwBufx03aM7S6ra01
- DzxV9GJaCsn9Ny4jIheYKrcMleQTCSxDMDjULmSf15jQAz7jQq8Fvt4H860xm6Uq9jsz
- VLT93nwm/V/hqZe9onnzCXTrpXArhDviUNViEdCjx33LO1ZilMdjbN4bHdvvih7R21SW
- q4SQ/99SkfZXO6ogBQ9Zcp1dq73Wlm5nAcGC+n5P7e0DcuchSIi71syPJTF3gyvc/Kf7
- 6XBUJD3ceMXk5EK4ulfVoJaxqZi10XuBUNLqVIFY6zdqODXuNM4biNRUZr16WmT4kiPU
- M68Q==
-X-Gm-Message-State: AC+VfDxnMWOowIra7bJOZkjCQlOLFTifylYtDear+TfUNPLdNV0KUld2
- OYbEduNzDzC+OMFXFIw7hole0ACri80=
-X-Google-Smtp-Source: ACHHUZ7gyf8JRcVX0msxlw87KM1NXLxkxhxSkyxpkjUkB5RP08dHtYuS1O5W3TiyOlTbkG5rO5m/Jw==
-X-Received: by 2002:a05:6a00:244f:b0:63b:5c82:e209 with SMTP id
- d15-20020a056a00244f00b0063b5c82e209mr18091552pfj.10.1687791057379; 
- Mon, 26 Jun 2023 07:50:57 -0700 (PDT)
-Received: from ?IPV6:2600:1700:e321:62f0:329c:23ff:fee3:9d7c?
- ([2600:1700:e321:62f0:329c:23ff:fee3:9d7c])
- by smtp.gmail.com with ESMTPSA id
- u15-20020aa7838f000000b0066a6059d399sm3889133pfm.116.2023.06.26.07.50.55
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Mon, 26 Jun 2023 07:50:56 -0700 (PDT)
-Message-ID: <7e708dfa-4019-fe28-afbd-91ad847fada0@roeck-us.net>
-Date: Mon, 26 Jun 2023 07:50:54 -0700
+ id 12BDCC1ED98; Mon, 26 Jun 2023 15:40:42 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown
+ [10.11.5.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 04CEDC1ED97;
+ Mon, 26 Jun 2023 15:40:42 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix,
+ from userid 12668)
+ id E8B0330C045B; Mon, 26 Jun 2023 15:40:41 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+ by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id
+ E1B323FB76; Mon, 26 Jun 2023 17:40:36 +0200 (CEST)
+Date: Mon, 26 Jun 2023 17:40:36 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Marc Smith <msmith626@gmail.com>
+In-Reply-To: <CAH6h+hfninB96O6z7rUFX=KWspnB-WR6oCzBEOF2+49vKfjQKg@mail.gmail.com>
+Message-ID: <2e3230-9ff7-dc7-4e5f-18cb1ad9fa32@redhat.com>
+References: <CAH6h+heB57N4StY-Nhs+QV+Z8UkD8x8K+C1T-NVbsz55fT+kfg@mail.gmail.com>
+ <CAH6h+hfninB96O6z7rUFX=KWspnB-WR6oCzBEOF2+49vKfjQKg@mail.gmail.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.11.0
-To: Christoph Hellwig <hch@lst.de>
-References: <20230531125535.676098-1-hch@lst.de>
- <20230531125535.676098-9-hch@lst.de>
- <c1391658-d785-4b2f-ba7e-01e4668685d7@roeck-us.net>
- <20230626075325.GA26851@lst.de>
-From: Guenter Roeck <linux@roeck-us.net>
-In-Reply-To: <20230626075325.GA26851@lst.de>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH 08/24] init: pass root_device_name explicitly
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: Re: [dm-devel] Fwd: dm-writecache - Unexpected Data After Host Crash
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -115,53 +70,151 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Loic Poulain <loic.poulain@linaro.org>,
- Vignesh Raghavendra <vigneshr@ti.com>, "Rafael J. Wysocki" <rafael@kernel.org>,
- Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-pm@vger.kernel.org,
- Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, Richard Weinberger <richard@nod.at>,
- dm-devel@redhat.com, linux-mtd@lists.infradead.org,
- Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>,
- Joern Engel <joern@lazybastard.org>
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: roeck-us.net
-Content-Language: en-US
+X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed;
+ boundary="185210117-1214614054-1687794036=:2314063"
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+--185210117-1214614054-1687794036=:2314063
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+
+
+
+On Thu, 15 Jun 2023, Marc Smith wrote:
+
+> Hi Mikulas,
+> 
+> Apologies for the direct message, but I noticed it seems you're the
+> original author of dm-writecache and wanted to get your thoughts on
+> the issue described below... I've been going through the code in
+> dm-writecache.c and trying to educate myself; it seems that
+> writecache_read_metadata() is used to read the full set of metadata
+> only in the writecache_resume() function. In writecache_ctr() only the
+> first block of metadata is retrieved. So it seems this explains why in
+> my example below with a system crash (eg, reset / power off / panic)
+> the dirty data that resides on the SSD is not populated on VG
+> activation.
+> 
+> It made me wonder if this is perhaps a bug in LVM2 where the 'resume'
+> message is not being issued to the DM target (and therefore not
+> populating the in-memory metadata structure properly).
+> 
+> I tried an older 5.4.x kernel as well but the issue still persists in
+> that environment.
+> 
+> Thanks for your time.
+> 
+> 
+> --Marc
+
+Hi
+
+I reproduced the issue that you reported, but I think this is not a bug in 
+writecache, but an expected behavior.
+
+Note that O_DIRECT doesn't guarantee that the written data is flushed to 
+the stable storage. With O_DIRECT, we bypass kernel page cache, but the 
+data may be still cached in the hardware cache inside the disk and if the 
+power failure happens, the data may be lost. You need to use the "fsync" 
+or "fdatasync" syscall - it will issue the flush command to the disk and 
+when it returns, it is guaranteed that the data is persistent.
+
+In a similar way, if we write data to dm-writecache, it is not guranteed 
+that the data will be written when the I/O finishes. It may still be 
+cached inside dm-writecache, until "fsync" or "fdatasync" is called.
+
+If I add "--end_fsync=1" to the fio command that you posted below, there 
+is no longer any data loss - after a reboot, the device will contain 0xff. 
+So, dm-writecache works as expected, flushing the data when "fsync" is 
+called.
+
+Mikulas
+
+> ---------- Forwarded message ---------
+> From: Marc Smith <msmith626@gmail.com>
+> Date: Wed, Jun 14, 2023 at 5:29 PM
+> Subject: dm-writecache - Unexpected Data After Host Crash
+> To: <dm-devel@redhat.com>
+> 
+> 
+> Hi,
+> 
+> I'm using dm-writecache via 'lvmcache' on Linux 5.4.229 (vanilla
+> kernel.org source). I've been testing my storage server -- I'm using a
+> couple NVMe drives in an MD RAID1 array that is the cache (fast)
+> device, and using a 12-drive MD RAID6 array as the origin (backing)
+> device.
+> 
+> I noticed that when the host crashes (power loss, forcefully reset,
+> etc.) it seems the cached (via dm-writecache) LVM logical volume does
+> not contain the bits I expect. Or perhaps I'm missing something in how
+> I understand/expect dm-writecache to function...
+> 
+> I change the auto-commit settings to larger values so the data on the
+> cache device is not flushed to the origin device:
+> # lvchange --cachesettings "autocommit_blocks=1000000000000"
+> --cachesettings "autocommit_time=3600000" dev_1_default/sys_dev_01
+> 
+> Then populate the start of the device (cached LV) with zeros:
+> # dd if=/dev/zero of=/dev/dev_1_default/sys_dev_01 bs=1M count=10 oflag=direct
+> 
+> Force a flush from the cache device to the backing device (all zero's
+> in the first 10 MiB):
+> # dmsetup message dev_1_default-sys_dev_01 0 flush
+> 
+> Now write a different pattern to the first 10 MiB:
+> # fio --bs=1m --direct=1 --rw=write --buffer_pattern=0xff
+> --ioengine=libaio --iodepth=1 --numjobs=1 --size=10M
+> --output-format=terse --name=/dev/dev_1_default/sys_dev_01
+> 
+> And then induce a reset:
+> # echo b > /proc/sysrq-trigger
+> 
+> Now after the system boots back up, assemble the RAID arrays and
+> activate the VG, then examine the data:
+> # vgchange -ay dev_1_default
+> # dd if=/dev/dev_1_default/sys_dev_01 bs=1M iflag=direct count=10
+> status=noxfer | od -t x2
+> 0000000 0000 0000 0000 0000 0000 0000 0000 0000
+> *
+> 10+0 records in
+> 10+0 records out
+> 50000000
+> 
+> 
+> So I'm expecting all "ffff" in the first 10 MiB, but instead, I'm
+> getting what's on the origin device, zeros (not what was written to
+> the cache device).
+> 
+> Obviously in a crash scenario (power loss, reset, panic, etc.) the
+> dirty data in the cache won't be flushed to the origin device,
+> however, I was expecting when the DM device started on the subsequent
+> boot (via activating the VG) that all of the dirty data would be
+> present -- it seems like it is not.
+> 
+> 
+> Thanks for any information/advice, it's greatly appreciated.
+> 
+> 
+> --Marc
+> 
+--185210117-1214614054-1687794036=:2314063
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-
-On 6/26/23 00:53, Christoph Hellwig wrote:
-> On Fri, Jun 23, 2023 at 05:08:59PM -0700, Guenter Roeck wrote:
->> Hi,
->>
->> On Wed, May 31, 2023 at 02:55:19PM +0200, Christoph Hellwig wrote:
->>> Instead of declaring root_device_name as a global variable pass it as an
->>> argument to the functions using it.
->>>
->>> Signed-off-by: Christoph Hellwig <hch@lst.de>
->>
->> This patch results in the following build error when trying to build
->> xtensa:tinyconfig.
->>
->> WARNING: modpost: vmlinux: section mismatch in reference: strcpy.isra.0+0x14 (section: .text.unlikely) -> initcall_level_names (section: .init.data)
->> ERROR: modpost: Section mismatches detected.
-> 
-> I can reproduce these with gcc 13.1 on xtensa, but the report makes
-> no sense to me.  If I disable CONFIG_CC_OPTIMIZE_FOR_SIZE it now reports
-> a similar warning for put_page intead of strcpy which seems just as
-> arcance.
-> 
-
-I don't see that (I tried 11.3, 11.4, 12.3, and 13.1), but then I am not sure
-if this is worth tracking down. I just force CONFIG_SECTION_MISMATCH_WARN_ONLY=y
-for xtensa builds instead.
-
-Guenter
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+
+--185210117-1214614054-1687794036=:2314063--
 
