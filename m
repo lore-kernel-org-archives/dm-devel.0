@@ -1,10 +1,10 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6476CEB64DA
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B4236EB64D7
 	for <dm-devel@archiver.kernel.org>; Wed, 28 Jun 2023 21:19:05 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1687987144;
@@ -14,55 +14,55 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=+P5JDZhVpCmAJQxGBtxe30yUHQLPVGZF8lW/XjmPQG8=;
-	b=Fpt/HJP58as2KqBw2kMZ0gOomLakmVHrZCLL//LNouygnd9FweWhmPA++2MJFkwVpDGkd3
-	w9fawtdojSvDdKz748t+Tk4nqx8q5Md2gFyR13KD4IPN7/hyvdYkjicsK9klyjYWeYB+YP
-	3oSgz0GTR/lzjZDYBGyWuov0LLgb8oA=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=btrHaW8bZSowldYj5zDLEOTTULpRdPUNUk5+XhVGiak=;
+	b=Dnyfad+WDn5x76Pp98NLvH9W7CbHFuRMcIKlvcT10eltoMF+Faz6g3FllPxwV9FwEGpFrr
+	E9KLLQ9ycZUUgr+Tun8i9zcENdZ5RmgMtNkZqlCYCXcsowNWBivJ5clu9lbvBEvm67KwDe
+	tOgas2hXkcmiYD6a4iAv6kHBrG87D04=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-596-3x_SvMyFN0ujflBJi-wWhQ-1; Wed, 28 Jun 2023 17:18:59 -0400
-X-MC-Unique: 3x_SvMyFN0ujflBJi-wWhQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-517-VpV5gUYUN8W20Eq-IUVHNA-1; Wed, 28 Jun 2023 17:18:56 -0400
+X-MC-Unique: VpV5gUYUN8W20Eq-IUVHNA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7BFF03C0FCBC;
-	Wed, 28 Jun 2023 21:18:47 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 686D7800969;
+	Wed, 28 Jun 2023 21:18:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6719B40C6F5A;
-	Wed, 28 Jun 2023 21:18:47 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 535CB492B02;
+	Wed, 28 Jun 2023 21:18:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 37A211946594;
-	Wed, 28 Jun 2023 21:18:47 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 13A7C194658F;
+	Wed, 28 Jun 2023 21:18:46 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
  [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2B9681946589
- for <dm-devel@listman.corp.redhat.com>; Wed, 28 Jun 2023 21:18:44 +0000 (UTC)
+ ESMTP id 1711D1946589
+ for <dm-devel@listman.corp.redhat.com>; Wed, 28 Jun 2023 21:18:45 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id F38102166B26; Wed, 28 Jun 2023 21:18:43 +0000 (UTC)
+ id 0A9AD2166B25; Wed, 28 Jun 2023 21:18:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id EC2252166B25
- for <dm-devel@redhat.com>; Wed, 28 Jun 2023 21:18:43 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 028F72166B27
+ for <dm-devel@redhat.com>; Wed, 28 Jun 2023 21:18:44 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D0D17185A78F
- for <dm-devel@redhat.com>; Wed, 28 Jun 2023 21:18:43 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D88BE38117F9
+ for <dm-devel@redhat.com>; Wed, 28 Jun 2023 21:18:44 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-124-ywYGwVrFOeKcDKnI2In6yw-1; Wed,
- 28 Jun 2023 17:18:41 -0400
-X-MC-Unique: ywYGwVrFOeKcDKnI2In6yw-1
+ relay.mimecast.com with ESMTP id us-mta-592-fx104ES8OQiaaFpb-mglGw-1; Wed,
+ 28 Jun 2023 17:18:43 -0400
+X-MC-Unique: fx104ES8OQiaaFpb-mglGw-1
 Received: by linux.microsoft.com (Postfix, from userid 1052)
- id 9FB0920ABD7E; Wed, 28 Jun 2023 14:09:48 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 9FB0920ABD7E
+ id 6619820ABD67; Wed, 28 Jun 2023 14:09:48 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 6619820ABD67
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
  tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
  snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
-Date: Wed, 28 Jun 2023 14:09:25 -0700
-Message-Id: <1687986571-16823-12-git-send-email-wufan@linux.microsoft.com>
+Date: Wed, 28 Jun 2023 14:09:21 -0700
+Message-Id: <1687986571-16823-8-git-send-email-wufan@linux.microsoft.com>
 In-Reply-To: <1687986571-16823-1-git-send-email-wufan@linux.microsoft.com>
 References: <1687986571-16823-1-git-send-email-wufan@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -73,8 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: [dm-devel] [RFC PATCH v10 11/17] dm-verity: consume root hash
- digest and signature data via LSM hook
+Subject: [dm-devel] [RFC PATCH v10 07/17] ipe: add userspace interface
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -95,7 +94,7 @@ Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: linux.microsoft.com
 Content-Type: text/plain; charset="us-ascii"
@@ -103,256 +102,927 @@ Content-Transfer-Encoding: 7bit
 
 From: Deven Bowers <deven.desai@linux.microsoft.com>
 
-dm-verity provides a strong guarantee of a block device's integrity. As
-a generic way to check the integrity of a block device, it provides
-those integrity guarantees to its higher layers, including the filesystem
-level.
-
-An LSM that control access to a resource on the system based on the
-available integrity claims can use this transitive property of
-dm-verity, by querying the underlying block_device of a particular
-file.
-
-The digest and signature information need to be stored in the block
-device to fulfill the next requirement of authorization via LSM policy.
-This will enable the LSM to perform revocation of devices that are still
-mounted, prohibiting execution of files that are no longer authorized
-by the LSM in question.
-
-This patch added two security hook calls in dm-verity to save the
-dm-verity roothash and the roothash signature to LSM blobs.
+As is typical with LSMs, IPE uses securityfs as its interface with
+userspace. for a complete list of the interfaces and the respective
+inputs/outputs, please see the documentation under
+admin-guide/LSM/ipe.rst
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+
 ---
 v2:
-  + No Changes
+  + Split evaluation loop, access control hooks,
+    and evaluation loop from policy parser and userspace
+    interface to pass mailing list character limit
 
 v3:
-  + No changes
+  + Move policy load and activation audit event to 03/12
+  + Fix a potential panic when a policy failed to load.
+  + use pr_warn for a failure to parse instead of an
+    audit record
+  + Remove comments from headers
+  + Add lockdep assertions to ipe_update_active_policy and
+    ipe_activate_policy
+  + Fix up warnings with checkpatch --strict
+  + Use file_ns_capable for CAP_MAC_ADMIN for securityfs
+    nodes.
+  + Use memdup_user instead of kzalloc+simple_write_to_buffer.
+  + Remove strict_parse command line parameter, as it is added
+    by the sysctl command line.
+  + Prefix extern variables with ipe_
 
 v4:
-  + No changes
+  + Remove securityfs to reverse-dependency
+  + Add SHA1 reverse dependency.
+  + Add versioning scheme for IPE properties, and associated
+    interface to query the versioning scheme.
+  + Cause a parser to always return an error on unknown syntax.
+  + Remove strict_parse option
+  + Change active_policy interface from sysctl, to securityfs,
+    and change scheme.
 
 v5:
-  + No changes
+  + Cause an error if a default action is not defined for each
+    operation.
+  + Minor function renames
 
 v6:
-  + Fix an improper cleanup that can result in
-    a leak
+  + No changes
 
 v7:
-  + Squash patch 08/12, 10/12 to [11/16]
-  + Use part0 for block_device, to retrieve the block_device, when
-    calling security_bdev_setsecurity
+  + Propagating changes to support the new ipe_context structure in the
+    evaluation loop.
+
+  + Further split the parser and userspace interface changes into
+    separate commits.
+
+  + "raw" was renamed to "pkcs7" and made read only
+  + "raw"'s write functionality (update a policy) moved to "update"
+  + introduced "version", "policy_name" nodes.
+  + "content" renamed to "policy"
+  + changes to allow the compiled-in policy to be treated
+    identical to deployed-after-the-fact policies.
 
 v8:
-  + Undo squash of 08/12, 10/12 - separating drivers/md/ from
-    security/ & block/
-  + Use common-audit function for dmverity_signature.
-  + Change implementation for storing the dm-verity digest to use the
-    newly introduced dm_verity_digest structure introduced in patch
-    14/20.
-  + Create new structure, dm_verity_digest, containing digest algorithm,
-    size, and digest itself to pass to the LSM layer. V7 was missing the
-    algorithm.
-  + Create an associated public header containing this new structure and
-    the key values for the LSM hook, specific to dm-verity.
-  + Additional information added to commit, discussing the layering of
-    the changes and how the information passed will be used.
+  + Prevent securityfs initialization if the LSM is disabled
 
 v9:
-  + No changes
+  + Switch to securityfs_recursive_remove for policy folder deletion
 
 v10:
-  + No changes
+  + Simplify and correct concurrency
+  + Fix typos
 ---
- drivers/md/dm-verity-target.c     | 25 +++++++++++++++++++++++--
- drivers/md/dm-verity-verify-sig.c | 16 +++++++++++++---
- drivers/md/dm-verity-verify-sig.h | 10 ++++++----
- include/linux/dm-verity.h         | 19 +++++++++++++++++++
- 4 files changed, 61 insertions(+), 9 deletions(-)
- create mode 100644 include/linux/dm-verity.h
+ security/ipe/Makefile    |   2 +
+ security/ipe/fs.c        | 101 ++++++++
+ security/ipe/fs.h        |  16 ++
+ security/ipe/ipe.c       |   3 +
+ security/ipe/ipe.h       |   2 +
+ security/ipe/policy.c    | 111 +++++++++
+ security/ipe/policy.h    |   9 +
+ security/ipe/policy_fs.c | 481 +++++++++++++++++++++++++++++++++++++++
+ 8 files changed, 725 insertions(+)
+ create mode 100644 security/ipe/fs.c
+ create mode 100644 security/ipe/fs.h
+ create mode 100644 security/ipe/policy_fs.c
 
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 26adcfea0302..54d46b2f2723 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -13,6 +13,7 @@
-  * access behavior.
-  */
+diff --git a/security/ipe/Makefile b/security/ipe/Makefile
+index d7f2870d7c09..8602d71250b4 100644
+--- a/security/ipe/Makefile
++++ b/security/ipe/Makefile
+@@ -7,7 +7,9 @@
  
-+#include "dm-core.h"
- #include "dm-verity.h"
- #include "dm-verity-fec.h"
- #include "dm-verity-verify-sig.h"
-@@ -22,6 +23,9 @@
- #include <linux/scatterlist.h>
- #include <linux/string.h>
- #include <linux/jump_label.h>
+ obj-$(CONFIG_SECURITY_IPE) += \
+ 	eval.o \
++	fs.o \
+ 	hooks.o \
+ 	ipe.o \
+ 	policy.o \
++	policy_fs.o \
+ 	policy_parser.o \
+diff --git a/security/ipe/fs.c b/security/ipe/fs.c
+new file mode 100644
+index 000000000000..522162af741a
+--- /dev/null
++++ b/security/ipe/fs.c
+@@ -0,0 +1,101 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
++
++#include <linux/dcache.h>
 +#include <linux/security.h>
-+#include <linux/dm-verity.h>
-+#include <crypto/hash_info.h>
- 
- #define DM_MSG_PREFIX			"verity"
- 
-@@ -1183,6 +1187,8 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	sector_t hash_position;
- 	char dummy;
- 	char *root_hash_digest_to_validate;
-+	struct block_device *bdev;
-+	struct dm_verity_digest root_digest;
- 
- 	v = kzalloc(sizeof(struct dm_verity), GFP_KERNEL);
- 	if (!v) {
-@@ -1225,6 +1231,13 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	}
- 	v->version = num;
- 
-+	bdev = dm_table_get_md(ti->table)->disk->part0;
-+	if (!bdev) {
-+		ti->error = "Mapped device lookup failed";
-+		r = -ENOMEM;
-+		goto bad;
++
++#include "ipe.h"
++#include "fs.h"
++#include "policy.h"
++
++static struct dentry *np __ro_after_init;
++static struct dentry *root __ro_after_init;
++struct dentry *policy_root __ro_after_init;
++
++/**
++ * new_policy - Write handler for the securityfs node, "ipe/new_policy".
++ * @f: Supplies a file structure representing the securityfs node.
++ * @data: Suppleis a buffer passed to the write syscall.
++ * @len: Supplies the length of @data.
++ * @offset: unused.
++ *
++ * Return:
++ * * >0	- Success, Length of buffer written
++ * * <0	- Error
++ */
++static ssize_t new_policy(struct file *f, const char __user *data,
++			  size_t len, loff_t *offset)
++{
++	int rc = 0;
++	char *copy = NULL;
++	struct ipe_policy *p = NULL;
++
++	if (!file_ns_capable(f, &init_user_ns, CAP_MAC_ADMIN))
++		return -EPERM;
++
++	copy = memdup_user_nul(data, len);
++	if (IS_ERR(copy))
++		return PTR_ERR(copy);
++
++	p = ipe_new_policy(NULL, 0, copy, len);
++	if (IS_ERR(p)) {
++		rc = PTR_ERR(p);
++		goto out;
 +	}
 +
- 	r = dm_get_device(ti, argv[1], BLK_OPEN_READ, &v->data_dev);
- 	if (r) {
- 		ti->error = "Data device lookup failed";
-@@ -1357,7 +1370,7 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	}
- 
- 	/* Root hash signature is  a optional parameter*/
--	r = verity_verify_root_hash(root_hash_digest_to_validate,
-+	r = verity_verify_root_hash(bdev, root_hash_digest_to_validate,
- 				    strlen(root_hash_digest_to_validate),
- 				    verify_args.sig,
- 				    verify_args.sig_size);
-@@ -1440,6 +1453,15 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	ti->per_io_data_size = roundup(ti->per_io_data_size,
- 				       __alignof__(struct dm_verity_io));
- 
-+	root_digest.digest = v->root_digest;
-+	root_digest.digest_len = v->digest_size;
-+	root_digest.algo = v->alg_name;
++	rc = ipe_new_policyfs_node(p);
 +
-+	r = security_bdev_setsecurity(bdev, DM_VERITY_ROOTHASH_SEC_NAME, &root_digest,
-+				      sizeof(root_digest));
-+	if (r)
-+		goto bad;
++out:
++	if (rc < 0 && !IS_ERR(p))
++		ipe_free_policy(p);
++	kfree(copy);
++	return (rc < 0) ? rc : len;
++}
 +
- 	verity_verify_sig_opts_cleanup(&verify_args);
- 
- 	dm_audit_log_ctr(DM_MSG_PREFIX, ti, 1);
-@@ -1447,7 +1469,6 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	return 0;
- 
- bad:
--
- 	verity_verify_sig_opts_cleanup(&verify_args);
- 	dm_audit_log_ctr(DM_MSG_PREFIX, ti, 0);
- 	verity_dtr(ti);
-diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
-index 4836508ea50c..33165dd7470f 100644
---- a/drivers/md/dm-verity-verify-sig.c
-+++ b/drivers/md/dm-verity-verify-sig.c
-@@ -9,6 +9,9 @@
- #include <linux/verification.h>
- #include <keys/user-type.h>
- #include <linux/module.h>
-+#include <linux/security.h>
-+#include <linux/dm-verity.h>
-+#include "dm-core.h"
- #include "dm-verity.h"
- #include "dm-verity-verify-sig.h"
- 
-@@ -97,14 +100,17 @@ int verity_verify_sig_parse_opt_args(struct dm_arg_set *as,
-  * verify_verify_roothash - Verify the root hash of the verity hash device
-  *			     using builtin trusted keys.
-  *
-+ * @bdev: block_device representing the device-mapper created block device.
-+ *	  Used by the security hook, to set information about the block_device.
-  * @root_hash: For verity, the roothash/data to be verified.
-  * @root_hash_len: Size of the roothash/data to be verified.
-  * @sig_data: The trusted signature that verifies the roothash/data.
-  * @sig_len: Size of the signature.
-  *
-  */
--int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
--			    const void *sig_data, size_t sig_len)
-+int verity_verify_root_hash(struct block_device *bdev, const void *root_hash,
-+			    size_t root_hash_len, const void *sig_data,
-+			    size_t sig_len)
- {
- 	int ret;
- 
-@@ -126,8 +132,12 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
- 				NULL,
- #endif
- 				VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
-+	if (ret)
-+		return ret;
- 
--	return ret;
-+	return security_bdev_setsecurity(bdev,
-+					 DM_VERITY_SIGNATURE_SEC_NAME,
-+					 sig_data, sig_len);
- }
- 
- void verity_verify_sig_opts_cleanup(struct dm_verity_sig_opts *sig_opts)
-diff --git a/drivers/md/dm-verity-verify-sig.h b/drivers/md/dm-verity-verify-sig.h
-index f36ea92127bf..5c6023fac97b 100644
---- a/drivers/md/dm-verity-verify-sig.h
-+++ b/drivers/md/dm-verity-verify-sig.h
-@@ -20,8 +20,9 @@ struct dm_verity_sig_opts {
- 
- #define DM_VERITY_ROOT_HASH_VERIFICATION_OPTS 2
- 
--int verity_verify_root_hash(const void *data, size_t data_len,
--			    const void *sig_data, size_t sig_len);
-+int verity_verify_root_hash(struct block_device *bdev, const void *data,
-+			    size_t data_len, const void *sig_data,
-+			    size_t sig_len);
- bool verity_verify_is_sig_opt_arg(const char *arg_name);
- 
- int verity_verify_sig_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
-@@ -34,8 +35,9 @@ void verity_verify_sig_opts_cleanup(struct dm_verity_sig_opts *sig_opts);
- 
- #define DM_VERITY_ROOT_HASH_VERIFICATION_OPTS 0
- 
--static inline int verity_verify_root_hash(const void *data, size_t data_len,
--					  const void *sig_data, size_t sig_len)
-+int verity_verify_root_hash(struct block_device *bdev, const void *data,
-+			    size_t data_len, const void *sig_data,
-+			    size_t sig_len)
- {
- 	return 0;
- }
-diff --git a/include/linux/dm-verity.h b/include/linux/dm-verity.h
-new file mode 100644
-index 000000000000..bb0413d55d72
---- /dev/null
-+++ b/include/linux/dm-verity.h
-@@ -0,0 +1,19 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+
-+#ifndef _LINUX_DM_VERITY_H
-+#define _LINUX_DM_VERITY_H
-+
-+#include <linux/types.h>
-+#include <crypto/hash_info.h>
-+#include <linux/device-mapper.h>
-+
-+struct dm_verity_digest {
-+	const char *algo;
-+	const u8 *digest;
-+	size_t digest_len;
++static const struct file_operations np_fops = {
++	.write = new_policy,
 +};
 +
-+#define DM_VERITY_SIGNATURE_SEC_NAME DM_NAME	".verity-signature"
-+#define DM_VERITY_ROOTHASH_SEC_NAME  DM_NAME	".verity-roothash"
++/**
++ * ipe_init_securityfs - Initialize IPE's securityfs tree at fsinit.
++ *
++ * Return:
++ * * !0	- Error
++ * * 0	- OK
++ */
++static int __init ipe_init_securityfs(void)
++{
++	int rc = 0;
 +
-+#endif /* _LINUX_DM_VERITY_H */
++	if (!ipe_enabled)
++		return -EOPNOTSUPP;
++
++	root = securityfs_create_dir("ipe", NULL);
++	if (IS_ERR(root)) {
++		rc = PTR_ERR(root);
++		goto err;
++	}
++
++	policy_root = securityfs_create_dir("policies", root);
++	if (IS_ERR(policy_root)) {
++		rc = PTR_ERR(policy_root);
++		goto err;
++	}
++
++	np = securityfs_create_file("new_policy", 0200, root, NULL, &np_fops);
++	if (IS_ERR(np)) {
++		rc = PTR_ERR(np);
++		goto err;
++	}
++
++	return 0;
++err:
++	securityfs_remove(np);
++	securityfs_remove(policy_root);
++	securityfs_remove(root);
++	return rc;
++}
++
++fs_initcall(ipe_init_securityfs);
+diff --git a/security/ipe/fs.h b/security/ipe/fs.h
+new file mode 100644
+index 000000000000..c1fc0ca4ae93
+--- /dev/null
++++ b/security/ipe/fs.h
+@@ -0,0 +1,16 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
++
++#ifndef _IPE_FS_H
++#define _IPE_FS_H
++
++#include "policy.h"
++
++extern struct dentry *policy_root __ro_after_init;
++
++int ipe_new_policyfs_node(struct ipe_policy *p);
++void ipe_del_policyfs_node(struct ipe_policy *p);
++
++#endif /* _IPE_FS_H */
+diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
+index 8f98ee7b8025..6f063d51b2af 100644
+--- a/security/ipe/ipe.c
++++ b/security/ipe/ipe.c
+@@ -6,6 +6,8 @@
+ #include "ipe.h"
+ #include "hooks.h"
+ 
++bool ipe_enabled;
++
+ static struct lsm_blob_sizes ipe_blobs __ro_after_init = {
+ };
+ 
+@@ -33,6 +35,7 @@ static int __init ipe_init(void)
+ 	int rc = 0;
+ 
+ 	security_add_hooks(ipe_hooks, ARRAY_SIZE(ipe_hooks), "ipe");
++	ipe_enabled = true;
+ 
+ 	return rc;
+ }
+diff --git a/security/ipe/ipe.h b/security/ipe/ipe.h
+index a1c68d0fc2e0..6dec06403eee 100644
+--- a/security/ipe/ipe.h
++++ b/security/ipe/ipe.h
+@@ -13,4 +13,6 @@
+ 
+ #include <linux/lsm_hooks.h>
+ 
++extern bool ipe_enabled;
++
+ #endif /* _IPE_H */
+diff --git a/security/ipe/policy.c b/security/ipe/policy.c
+index 4069ff075093..3e8e4a06a044 100644
+--- a/security/ipe/policy.c
++++ b/security/ipe/policy.c
+@@ -7,9 +7,36 @@
+ #include <linux/verification.h>
+ 
+ #include "ipe.h"
++#include "eval.h"
++#include "fs.h"
+ #include "policy.h"
+ #include "policy_parser.h"
+ 
++/* lock for synchronizing writers across ipe policy */
++DEFINE_MUTEX(ipe_policy_lock);
++
++/**
++ * ver_to_u64 - Convert an internal ipe_policy_version to a u64.
++ * @p: Policy to extract the version from.
++ *
++ * Bits (LSB is index 0):
++ *	[48,32] -> Major
++ *	[32,16] -> Minor
++ *	[16, 0] -> Revision
++ *
++ * Return: u64 version of the embedded version structure.
++ */
++static inline u64 ver_to_u64(const struct ipe_policy *const p)
++{
++	u64 r;
++
++	r = (((u64)p->parsed->version.major) << 32)
++	  | (((u64)p->parsed->version.minor) << 16)
++	  | ((u64)(p->parsed->version.rev));
++
++	return r;
++}
++
+ /**
+  * ipe_free_policy - Deallocate a given IPE policy.
+  * @p: Supplies the policy to free.
+@@ -21,6 +48,7 @@ void ipe_free_policy(struct ipe_policy *p)
+ 	if (IS_ERR_OR_NULL(p))
+ 		return;
+ 
++	ipe_del_policyfs_node(p);
+ 	free_parsed_policy(p->parsed);
+ 	if (!p->pkcs7)
+ 		kfree(p->text);
+@@ -39,6 +67,65 @@ static int set_pkcs7_data(void *ctx, const void *data, size_t len,
+ 	return 0;
+ }
+ 
++/**
++ * ipe_update_policy - parse a new policy and replace @old with it.
++ * @root: Supplies a pointer to the securityfs inode saved the policy.
++ * @text: Supplies a pointer to the plain text policy.
++ * @textlen: Supplies the length of @text.
++ * @pkcs7: Supplies a pointer to a buffer containing a pkcs7 message.
++ * @pkcs7len: Supplies the length of @pkcs7len.
++ *
++ * @text/@textlen is mutually exclusive with @pkcs7/@pkcs7len - see
++ * ipe_new_policy.
++ *
++ * Return:
++ * * !IS_ERR	- The old policy
++ * * -ENOENT	- Policy doesn't exist
++ * * -EINVAL	- New policy is invalid
++ */
++struct ipe_policy *ipe_update_policy(struct inode *root,
++				     const char *text, size_t textlen,
++				     const char *pkcs7, size_t pkcs7len)
++{
++	int rc = 0;
++	struct ipe_policy *old, *ap, *new = NULL;
++
++	lockdep_assert_held(&ipe_policy_lock);
++
++	old = (struct ipe_policy *)root->i_private;
++	if (!old)
++		return ERR_PTR(-ENOENT);
++
++	new = ipe_new_policy(text, textlen, pkcs7, pkcs7len);
++	if (IS_ERR(new))
++		return new;
++
++	if (strcmp(new->parsed->name, old->parsed->name)) {
++		rc = -EINVAL;
++		goto err;
++	}
++
++	if (ver_to_u64(old) > ver_to_u64(new)) {
++		rc = -EINVAL;
++		goto err;
++	}
++
++	root->i_private = new;
++
++	ap = rcu_dereference_protected(ipe_active_policy,
++				       lockdep_is_held(&ipe_policy_lock));
++	if (old == ap)
++		rcu_assign_pointer(ipe_active_policy, new);
++
++	swap(new->policyfs, old->policyfs);
++
++out:
++	return (rc < 0) ? ERR_PTR(rc) : old;
++err:
++	ipe_free_policy(new);
++	goto out;
++}
++
+ /**
+  * ipe_new_policy - Allocate and parse an ipe_policy structure.
+  *
+@@ -95,3 +182,27 @@ struct ipe_policy *ipe_new_policy(const char *text, size_t textlen,
+ 	ipe_free_policy(new);
+ 	return ERR_PTR(rc);
+ }
++
++/**
++ * ipe_set_active_pol - Make @p the active policy.
++ * @p: Supplies a pointer to the policy to make active.
++ *
++ * Return:
++ * * !IS_ERR	- Success
++ * * -EINVAL	- New active policy version is invalid
++ */
++int ipe_set_active_pol(const struct ipe_policy *p)
++{
++	struct ipe_policy *ap = NULL;
++
++	lockdep_assert_held(&ipe_policy_lock);
++
++	ap = rcu_dereference_protected(ipe_active_policy,
++				       lockdep_is_held(&ipe_policy_lock));
++	if (ap && ver_to_u64(ap) > ver_to_u64(p))
++		return -EINVAL;
++
++	rcu_assign_pointer(ipe_active_policy, p);
++
++	return 0;
++}
+diff --git a/security/ipe/policy.h b/security/ipe/policy.h
+index a74856b9966c..94bcbbf79b05 100644
+--- a/security/ipe/policy.h
++++ b/security/ipe/policy.h
+@@ -7,6 +7,7 @@
+ 
+ #include <linux/list.h>
+ #include <linux/types.h>
++#include <linux/fs.h>
+ 
+ enum ipe_op_type {
+ 	__IPE_OP_EXEC = 0,
+@@ -76,10 +77,18 @@ struct ipe_policy {
+ 	size_t textlen;
+ 
+ 	struct ipe_parsed_policy *parsed;
++
++	struct dentry *policyfs;
+ };
+ 
+ struct ipe_policy *ipe_new_policy(const char *text, size_t textlen,
+ 				  const char *pkcs7, size_t pkcs7len);
+ void ipe_free_policy(struct ipe_policy *pol);
++struct ipe_policy *ipe_update_policy(struct inode *root,
++				     const char *text,
++				     size_t textlen, const char *pkcs7,
++				     size_t pkcs7len);
++int ipe_set_active_pol(const struct ipe_policy *p);
++extern struct mutex ipe_policy_lock;
+ 
+ #endif /* _IPE_POLICY_H */
+diff --git a/security/ipe/policy_fs.c b/security/ipe/policy_fs.c
+new file mode 100644
+index 000000000000..52a120118cda
+--- /dev/null
++++ b/security/ipe/policy_fs.c
+@@ -0,0 +1,481 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
++#include <linux/fs.h>
++#include <linux/namei.h>
++#include <linux/types.h>
++#include <linux/dcache.h>
++#include <linux/security.h>
++
++#include "ipe.h"
++#include "policy.h"
++#include "eval.h"
++#include "fs.h"
++
++#define MAX_VERSION_SIZE ARRAY_SIZE("65535.65535.65535")
++
++/**
++ * ipefs_file - defines a file in securityfs.
++ */
++struct ipefs_file {
++	const char *name;
++	umode_t access;
++	const struct file_operations *fops;
++};
++
++/**
++ * read_pkcs7 - Read handler for "ipe/policies/$name/pkcs7".
++ * @f: Supplies a file structure representing the securityfs node.
++ * @data: Suppleis a buffer passed to the write syscall.
++ * @len: Supplies the length of @data.
++ * @offset: unused.
++ *
++ * @data will be populated with the pkcs7 blob representing the policy
++ * on success. If the policy is unsigned (like the boot policy), this
++ * will return -ENOENT.
++ *
++ * Return:
++ * * >0	- Success, Length of buffer written
++ * * <0	- Error
++ */
++static ssize_t read_pkcs7(struct file *f, char __user *data,
++			  size_t len, loff_t *offset)
++{
++	int rc = 0;
++	struct inode *root = NULL;
++	const struct ipe_policy *p = NULL;
++
++	root = d_inode(f->f_path.dentry->d_parent);
++
++	inode_lock_shared(root);
++	p = (struct ipe_policy *)root->i_private;
++	if (!p) {
++		rc = -ENOENT;
++		goto out;
++	}
++
++	if (!p->pkcs7) {
++		rc = -ENOENT;
++		goto out;
++	}
++
++	rc = simple_read_from_buffer(data, len, offset, p->pkcs7, p->pkcs7len);
++
++out:
++	inode_unlock_shared(root);
++
++	return rc;
++}
++
++/**
++ * read_policy - Read handler for "ipe/policies/$name/policy".
++ * @f: Supplies a file structure representing the securityfs node.
++ * @data: Suppleis a buffer passed to the write syscall.
++ * @len: Supplies the length of @data.
++ * @offset: unused.
++ *
++ * @data will be populated with the plain-text version of the policy
++ * on success.
++ *
++ * Return:
++ * * >0	- Success, Length of buffer written
++ * * <0	- Error
++ */
++static ssize_t read_policy(struct file *f, char __user *data,
++			   size_t len, loff_t *offset)
++{
++	int rc = 0;
++	struct inode *root = NULL;
++	const struct ipe_policy *p = NULL;
++
++	root = d_inode(f->f_path.dentry->d_parent);
++
++	inode_lock_shared(root);
++	p = (struct ipe_policy *)root->i_private;
++	if (!p) {
++		rc = -ENOENT;
++		goto out;
++	}
++
++	rc = simple_read_from_buffer(data, len, offset, p->text, p->textlen);
++
++out:
++	inode_unlock_shared(root);
++
++	return rc;
++}
++
++/**
++ * read_name: Read handler for "ipe/policies/$name/name".
++ * @f: Supplies a file structure representing the securityfs node.
++ * @data: Suppleis a buffer passed to the write syscall.
++ * @len: Supplies the length of @data.
++ * @offset: unused.
++ *
++ * @data will be populated with the policy_name attribute on success.
++ *
++ * Return:
++ * * >0	- Success, Length of buffer written
++ * * <0	- Error
++ */
++static ssize_t read_name(struct file *f, char __user *data,
++			 size_t len, loff_t *offset)
++{
++	int rc = 0;
++	struct inode *root = NULL;
++	const struct ipe_policy *p = NULL;
++
++	root = d_inode(f->f_path.dentry->d_parent);
++
++	inode_lock_shared(root);
++	p = (struct ipe_policy *)root->i_private;
++	if (!p) {
++		rc = -ENOENT;
++		goto out;
++	}
++
++	rc = simple_read_from_buffer(data, len, offset, p->parsed->name,
++				     strlen(p->parsed->name));
++
++out:
++	inode_unlock_shared(root);
++
++	return rc;
++}
++
++/**
++ * read_version - Read handler for "ipe/policies/$name/version".
++ * @f: Supplies a file structure representing the securityfs node.
++ * @data: Suppleis a buffer passed to the write syscall.
++ * @len: Supplies the length of @data.
++ * @offset: unused.
++ *
++ * @data will be populated with the version string on success.
++ *
++ * Return:
++ * * >0	- Success, Length of buffer written
++ * * <0	- Error
++ */
++static ssize_t read_version(struct file *f, char __user *data,
++			    size_t len, loff_t *offset)
++{
++	ssize_t rc = 0;
++	size_t bufsize = 0;
++	struct inode *root = NULL;
++	const struct ipe_policy *p = NULL;
++	char buffer[MAX_VERSION_SIZE] = { 0 };
++
++	root = d_inode(f->f_path.dentry->d_parent);
++
++	inode_lock_shared(root);
++	p = (struct ipe_policy *)root->i_private;
++	if (!p) {
++		rc = -ENOENT;
++		goto out;
++	}
++
++	bufsize = scnprintf(buffer, ARRAY_SIZE(buffer), "%hu.%hu.%hu",
++			    p->parsed->version.major, p->parsed->version.minor,
++			    p->parsed->version.rev);
++
++	rc = simple_read_from_buffer(data, len, offset, buffer, bufsize);
++
++out:
++	inode_unlock_shared(root);
++
++	return rc;
++}
++
++/**
++ * setactive - Write handler for "ipe/policies/$name/active".
++ * @f: Supplies a file structure representing the securityfs node.
++ * @data: Supplies a buffer passed to the write syscall.
++ * @len: Supplies the length of @data.
++ * @offset: unused.
++ *
++ * Return:
++ * * >0	- Success, Length of buffer written
++ * * <0	- Error
++ */
++static ssize_t setactive(struct file *f, const char __user *data,
++			 size_t len, loff_t *offset)
++{
++	int rc = 0;
++	bool value = false;
++	struct inode *root = NULL;
++	const struct ipe_policy *p = NULL;
++
++	if (!file_ns_capable(f, &init_user_ns, CAP_MAC_ADMIN))
++		return -EPERM;
++
++	rc = kstrtobool_from_user(data, len, &value);
++	if (rc)
++		return rc;
++
++	if (!value)
++		return -EINVAL;
++
++	root = d_inode(f->f_path.dentry->d_parent);
++	inode_lock(root);
++	mutex_lock(&ipe_policy_lock);
++
++	p = (struct ipe_policy *)root->i_private;
++	if (!p) {
++		rc = -ENOENT;
++		goto out;
++	}
++
++	rc = ipe_set_active_pol(p);
++
++out:
++	mutex_unlock(&ipe_policy_lock);
++	inode_unlock(root);
++	synchronize_rcu();
++	return (rc < 0) ? rc : len;
++}
++
++/**
++ * getactive - Read handler for "ipe/policies/$name/active".
++ * @f: Supplies a file structure representing the securityfs node.
++ * @data: Suppleis a buffer passed to the write syscall.
++ * @len: Supplies the length of @data.
++ * @offset: unused.
++ *
++ * @data will be populated with the 1 or 0 depending on if the
++ * corresponding policy is active.
++ *
++ * Return:
++ * * >0	- Success, Length of buffer written
++ * * <0	- Error
++ */
++static ssize_t getactive(struct file *f, char __user *data,
++			 size_t len, loff_t *offset)
++{
++	int rc = 0;
++	const char *str;
++	struct inode *root = NULL;
++	const struct ipe_policy *p = NULL;
++
++	root = d_inode(f->f_path.dentry->d_parent);
++
++	inode_lock_shared(root);
++	p = (struct ipe_policy *)root->i_private;
++	if (!p) {
++		inode_unlock_shared(root);
++		return -ENOENT;
++	}
++	inode_unlock_shared(root);
++
++	str = (p == rcu_access_pointer(ipe_active_policy)) ? "1" : "0";
++	rc = simple_read_from_buffer(data, len, offset, str, 1);
++
++	return rc;
++}
++
++/**
++ * update_policy - Write handler for "ipe/policies/$name/update".
++ * @f: Supplies a file structure representing the securityfs node.
++ * @data: Supplies a buffer passed to the write syscall.
++ * @len: Supplies the length of @data.
++ * @offset: unused.
++ *
++ * On success this updates the policy represented by $name,
++ * in-place.
++ *
++ * Return:
++ * * >0	- Success, Length of buffer written
++ * * <0	- Error
++ */
++static ssize_t update_policy(struct file *f, const char __user *data,
++			     size_t len, loff_t *offset)
++{
++	char *copy = NULL;
++	struct inode *root = NULL;
++	struct ipe_policy *old = NULL;
++
++	if (!file_ns_capable(f, &init_user_ns, CAP_MAC_ADMIN))
++		return -EPERM;
++
++	copy = memdup_user(data, len);
++	if (IS_ERR(copy))
++		return PTR_ERR(copy);
++
++	root = d_inode(f->f_path.dentry->d_parent);
++	inode_lock(root);
++	mutex_lock(&ipe_policy_lock);
++	old = ipe_update_policy(root, NULL, 0, copy, len);
++	mutex_unlock(&ipe_policy_lock);
++	inode_unlock(root);
++	synchronize_rcu();
++
++	kfree(copy);
++	if (IS_ERR(old))
++		return PTR_ERR(old);
++	ipe_free_policy(old);
++
++	return len;
++}
++
++/**
++ * delete_policy - write handler for  "ipe/policies/$name/delete".
++ * @f: Supplies a file structure representing the securityfs node.
++ * @data: Supplies a buffer passed to the write syscall.
++ * @len: Supplies the length of @data.
++ * @offset: unused.
++ *
++ * On success this deletes the policy represented by $name.
++ *
++ * Return:
++ * * >0	- Success, Length of buffer written
++ * * <0	- Error
++ */
++static ssize_t delete_policy(struct file *f, const char __user *data,
++			     size_t len, loff_t *offset)
++{
++	int rc = 0;
++	bool value = false;
++	struct inode *root = NULL;
++	struct ipe_policy *p = NULL;
++	struct ipe_policy *ap = NULL;
++
++	if (!file_ns_capable(f, &init_user_ns, CAP_MAC_ADMIN))
++		return -EPERM;
++
++	rc = kstrtobool_from_user(data, len, &value);
++	if (rc)
++		return rc;
++
++	if (!value)
++		return -EINVAL;
++
++	root = d_inode(f->f_path.dentry->d_parent);
++	inode_lock(root);
++	mutex_lock(&ipe_policy_lock);
++	p = (struct ipe_policy *)root->i_private;
++	if (!p) {
++		mutex_unlock(&ipe_policy_lock);
++		inode_unlock(root);
++		return -ENOENT;
++	}
++
++	ap = rcu_dereference_protected(ipe_active_policy,
++				       lockdep_is_held(&ipe_policy_lock));
++	if (p == ap) {
++		mutex_unlock(&ipe_policy_lock);
++		inode_unlock(root);
++		return -EPERM;
++	}
++	root->i_private = NULL;
++
++	mutex_unlock(&ipe_policy_lock);
++	inode_unlock(root);
++	synchronize_rcu();
++
++	ipe_free_policy(p);
++	return len;
++}
++
++static const struct file_operations content_fops = {
++	.read = read_policy,
++};
++
++static const struct file_operations pkcs7_fops = {
++	.read = read_pkcs7,
++};
++
++static const struct file_operations name_fops = {
++	.read = read_name,
++};
++
++static const struct file_operations ver_fops = {
++	.read = read_version,
++};
++
++static const struct file_operations active_fops = {
++	.write = setactive,
++	.read = getactive,
++};
++
++static const struct file_operations update_fops = {
++	.write = update_policy,
++};
++
++static const struct file_operations delete_fops = {
++	.write = delete_policy,
++};
++
++/**
++ * policy_subdir - files under a policy subdirectory
++ */
++static const struct ipefs_file policy_subdir[] = {
++	{ "pkcs7", 0444, &pkcs7_fops },
++	{ "policy", 0444, &content_fops },
++	{ "name", 0444, &name_fops },
++	{ "version", 0444, &ver_fops },
++	{ "active", 0600, &active_fops },
++	{ "update", 0200, &update_fops },
++	{ "delete", 0200, &delete_fops },
++};
++
++/**
++ * ipe_del_policyfs_node - Delete a securityfs entry for @p.
++ * @p: Supplies a pointer to the policy to delete a securityfs entry for.
++ */
++void ipe_del_policyfs_node(struct ipe_policy *p)
++{
++	securityfs_recursive_remove(p->policyfs);
++	p->policyfs = NULL;
++}
++
++/**
++ * ipe_new_policyfs_node - Create a securityfs entry for @p.
++ * @p: Supplies a pointer to the policy to create a securityfs entry for.
++ *
++ * Return:
++ * * 0	- OK
++ * * !0	- Error
++ */
++int ipe_new_policyfs_node(struct ipe_policy *p)
++{
++	int rc = 0;
++	size_t i = 0;
++	struct dentry *d = NULL;
++	struct dentry *policyfs = NULL;
++	struct inode *root = NULL;
++	const struct ipefs_file *f = NULL;
++
++	if (p->policyfs)
++		return 0;
++
++	policyfs = securityfs_create_dir(p->parsed->name, policy_root);
++	if (IS_ERR(policyfs)) {
++		rc = PTR_ERR(policyfs);
++		goto err;
++	}
++
++	root = d_inode(policyfs);
++
++	for (i = 0; i < ARRAY_SIZE(policy_subdir); ++i) {
++		f = &policy_subdir[i];
++
++		d = securityfs_create_file(f->name, f->access, policyfs,
++					   NULL, f->fops);
++		if (IS_ERR(d)) {
++			rc = PTR_ERR(d);
++			goto err;
++		}
++	}
++
++	inode_lock(root);
++	mutex_lock(&ipe_policy_lock);
++	p->policyfs = policyfs;
++	root->i_private = p;
++	mutex_unlock(&ipe_policy_lock);
++	inode_unlock(root);
++
++	return 0;
++err:
++	securityfs_recursive_remove(policyfs);
++	return rc;
++}
 -- 
 2.25.1
 
