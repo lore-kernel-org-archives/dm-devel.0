@@ -4,68 +4,143 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AC170EB64D7
-	for <dm-devel@archiver.kernel.org>; Wed, 28 Jun 2023 21:19:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 15378EB64D9
+	for <dm-devel@archiver.kernel.org>; Thu, 29 Jun 2023 07:47:51 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1687987173;
+	s=mimecast20190719; t=1688024871;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=8O38ckQgQFJvMJHhDHgvT06cZ9jhmBX0yi/q5PTK8Xo=;
-	b=cu9UcEejTlweyKs1P2gJklfibnFepXKYwimxy3s8Sb0ZIOFrFLJyu7jG7DHUNxnFKKzFAV
-	zn1DKu9l2QR1FkI4YjPoyWvGtxbOuNik3MIZ+mYTzyMEsj2XsVd5xi4x0xt+Xc+YTFIiF9
-	BLMXjSYsLDj14ys7/+oPlDcWPZbYmG8=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=93YIxgIqY8VudFuZpRXutZQXvWfYnWnfpQFHJFDNp10=;
+	b=NB9PRJkspgEXxegnG0XrghWsVnwma623LV5/NNAG2/ky/E0G6NWlkzbxSOKpjZfDUYjBWy
+	XTPEymqXs2SHBKOFemH+NrBtNjLpcBdhXC4219vZETchQKZsaH2WEWqWiABoNXnBUaL0LN
+	kG+HmWEVvy3AB8hjpYiMj2vGyyZXmLM=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-101-gSkCgm1YNkK0nviiFtZHwA-1; Wed, 28 Jun 2023 17:19:25 -0400
-X-MC-Unique: gSkCgm1YNkK0nviiFtZHwA-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-211-jTK_B0SyPxuIembOxOVfBw-1; Thu, 29 Jun 2023 03:47:47 -0400
+X-MC-Unique: jTK_B0SyPxuIembOxOVfBw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F021F1C07254;
-	Wed, 28 Jun 2023 21:18:53 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id DDE9548FB01;
-	Wed, 28 Jun 2023 21:18:53 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A89571064A5D;
+	Thu, 29 Jun 2023 07:47:45 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id ED49140C2063;
+	Thu, 29 Jun 2023 07:47:42 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8A5711946A76;
-	Wed, 28 Jun 2023 21:18:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B3E0219465B6;
+	Thu, 29 Jun 2023 07:47:42 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8889F1946A71
- for <dm-devel@listman.corp.redhat.com>; Wed, 28 Jun 2023 21:18:48 +0000 (UTC)
+ ESMTP id 82EAB1946589
+ for <dm-devel@listman.corp.redhat.com>; Thu, 29 Jun 2023 07:47:41 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7AB132166B27; Wed, 28 Jun 2023 21:18:48 +0000 (UTC)
+ id 7412040C2071; Thu, 29 Jun 2023 07:47:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7346A2166B26
- for <dm-devel@redhat.com>; Wed, 28 Jun 2023 21:18:48 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 61B1540C2070
+ for <dm-devel@redhat.com>; Thu, 29 Jun 2023 07:47:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5062E8E468E
- for <dm-devel@redhat.com>; Wed, 28 Jun 2023 21:18:48 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-619-YcZ8mYEzMpCruVoMA0ODIw-3; Wed,
- 28 Jun 2023 17:18:44 -0400
-X-MC-Unique: YcZ8mYEzMpCruVoMA0ODIw-3
-Received: by linux.microsoft.com (Postfix, from userid 1052)
- id 38B3720C08FE; Wed, 28 Jun 2023 14:09:48 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 38B3720C08FE
-From: Fan Wu <wufan@linux.microsoft.com>
-To: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
- tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
- snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
-Date: Wed, 28 Jun 2023 14:09:18 -0700
-Message-Id: <1687986571-16823-5-git-send-email-wufan@linux.microsoft.com>
-In-Reply-To: <1687986571-16823-1-git-send-email-wufan@linux.microsoft.com>
-References: <1687986571-16823-1-git-send-email-wufan@linux.microsoft.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3ECDD8E4689
+ for <dm-devel@redhat.com>; Thu, 29 Jun 2023 07:47:41 +0000 (UTC)
+Received: from mailout4.samsung.com (mailout4.samsung.com [203.254.224.34])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-552-gS3Dpt1uP9iMeOpT7wfZzg-1; Thu, 29 Jun 2023 03:47:39 -0400
+X-MC-Unique: gS3Dpt1uP9iMeOpT7wfZzg-1
+Received: from epcas5p2.samsung.com (unknown [182.195.41.40])
+ by mailout4.samsung.com (KnoxPortal) with ESMTP id
+ 20230629074735epoutp04f67c6257915ab225fa606761ae16c4d5~tEamw2qsv1950519505epoutp04h
+ for <dm-devel@redhat.com>; Thu, 29 Jun 2023 07:47:35 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout4.samsung.com
+ 20230629074735epoutp04f67c6257915ab225fa606761ae16c4d5~tEamw2qsv1950519505epoutp04h
+Received: from epsnrtp3.localdomain (unknown [182.195.42.164]) by
+ epcas5p4.samsung.com (KnoxPortal) with ESMTP id
+ 20230629074734epcas5p4cc802435e65817703a6bfa7a237a6433~tEalXK4Ib2970729707epcas5p4t;
+ Thu, 29 Jun 2023 07:47:34 +0000 (GMT)
+Received: from epsmges5p3new.samsung.com (unknown [182.195.38.182]) by
+ epsnrtp3.localdomain (Postfix) with ESMTP id 4Qs9XN4QGHz4x9Q2; Thu, 29 Jun
+ 2023 07:47:32 +0000 (GMT)
+Received: from epcas5p2.samsung.com ( [182.195.41.40]) by
+ epsmges5p3new.samsung.com (Symantec Messaging Gateway) with SMTP id
+ C8.77.06099.4173D946; Thu, 29 Jun 2023 16:47:32 +0900 (KST)
+Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
+ epcas5p4.samsung.com (KnoxPortal) with ESMTPA id
+ 20230628164314epcas5p43d203daae701b950a2649bb97c0c8ef5~s4E-sqhrT1878918789epcas5p4N;
+ Wed, 28 Jun 2023 16:43:14 +0000 (GMT)
+Received: from epsmgms1p2new.samsung.com (unknown [182.195.42.42]) by
+ epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
+ 20230628164314epsmtrp1b4b1b459c8517507dab6d889ddb70aa8~s4E-rV6Yc2914729147epsmtrp1o;
+ Wed, 28 Jun 2023 16:43:14 +0000 (GMT)
+X-AuditID: b6c32a4b-cafff700000017d3-69-649d37142ebc
+Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
+ epsmgms1p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
+ F2.92.30535.2236C946; Thu, 29 Jun 2023 01:43:14 +0900 (KST)
+Received: from green245 (unknown [107.99.41.245]) by epsmtip1.samsung.com
+ (KnoxPortal) with ESMTPA id
+ 20230628164304epsmtip18665c8edaf0a91b72f882ceb4459921d~s4E2b1J9z2949329493epsmtip1U;
+ Wed, 28 Jun 2023 16:43:04 +0000 (GMT)
+Date: Wed, 28 Jun 2023 22:09:58 +0530
+From: Nitesh Shetty <nj.shetty@samsung.com>
+To: Damien Le Moal <dlemoal@kernel.org>
+Message-ID: <20230628163958.tgwtlszadsa7zoub@green245>
+MIME-Version: 1.0
+In-Reply-To: <365d5129-b65e-919a-3ceb-cc2ccf6b7a5a@kernel.org>
+User-Agent: NeoMutt/20171215
+X-Brightmail-Tracker: H4sIAAAAAAAAA02TaUxUVxTHe9978+ZhO/pESC9ggU5DVQzL1GG4IJtRyWsgLS1tPxgbfDAv
+ QIGZySxV2xrBjTiWGVaLI2WpVFlEwtKCLMVAcQSkqMheGkMGRKhIJRUIgmV40Pbb7/zP+eec
+ e04uhdtWCB2peIWWUyvYRDG5ifi5bddODzvf7+XexWUuqLLzNo5OpS/jqHzUSKLptucAXZxd
+ xJHlVipAvZbN6FFLMGqeuSxAQ7duYqjph0wMlZa3YyiztR+g8T4ThpqHd6Oic8UEamruIFBv
+ Qx6JCq6OC9GFgXoSXTOvYKg16zSG6i0pAN2YfkagO8NOqGfZLEBLC3lkiBPT+zCMuWkaFTI9
+ f1QRTE2JO9PbrWOqy86TTE3xSaZxKJlkrhiyBEza6RmS+Wt8mGCe/dJHMobaMsDUdH3NzFU7
+ M9WWp1gEfSghII5j5ZzalVPEKOXxithAcVhk1P4oH5m3xEPih3zFrgo2iQsUHwiP8AiNT1xd
+ jNj1SzZRtypFsBqN2CsoQK3UaTnXOKVGGyjmVPJElVTlqWGTNDpFrKeC0/pLvL3f81ktPJIQ
+ d/H3SaCadDj2IOMqlgxe2umBDQVpKWxe6MH1YBNlSzcCWFc/vx48B7CrMlnIBy8A/GleT2xY
+ eibNBJ9oBrB7uWPdMgHgbwsvMD2gKIJ2gxNz71uRpHfDrleU1WtH74A5WU3AWo7TehLeKSgX
+ WBPbaBbWrRiEVhbRMph920TyvBV2XLKsNbahg2CVqWpNt6e3w9wf/17rC+lhGziab8b56Q7A
+ kYa09Um3wSlzrZBnR/jEeG6dj8LS7BKSN58B0DRgAnwiGJ7tNOLWqXE6Dj4t8uLlt2BO5w3M
+ yji9GaYtWTBeF8H6/A1+B16vLCR5doD98ynrzMAnFwYBv6A5AEsfVJLpwMX0v8eZ/mtnWmvh
+ D8/PnhLwshO8tkLxuAtWNngVAkEZcOBUmqRYTuOj2qPgjv578BhlUjVY+zfuYfVg7NGsZyvA
+ KNAKIIWL7UQjf16W24rk7PGvOLUySq1L5DStwGf1VBm4o32McvXjKbRREqmft1Qmk0n99sgk
+ 4jdF9wfS5LZ0LKvlEjhOxak3fBhl45iM6T/gWquRnvkw/fNI/ZHGPgHt2pK1d99dLOL1L5Rb
+ 2/ePjQyw3x5jvR77F5Qsuo+NgMOLWn+b9oMNecy+EfmEqKNW2hQfi2j8JRGgDp+qyR60v/5N
+ SXD0UsiJCOOvdlPpXR9tyZU13pMiziX+rmtASt3bHQ7HD3kVPhz/+JOxCNm8z6s3dshLd2Zm
+ 5TTvVb3W7ew3eMXjXftP888MURZ7ERcJQj0DjNTyyaAqvI2D3SFuGVh4Qb/3bEV0y9S9g26p
+ uakGYsY5fAshybxfFH3WMJNWNhxa78mZzNONIpdKndCwfSa0YTEU0x1+/J2gosCYfsI++7PS
+ /ksDvuWFOj8xoYljJe64WsP+AxNX4wnABAAA
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFnrPIsWRmVeSWpSXmKPExsWy7bCSnK5S8pwUgz1rWSzWnzrGbNE04S+z
+ xeq7/WwWrw9/YrSY9uEns8WTA+2MFpef8Fk82G9vsffdbFaLmwd2MlnsWTSJyWLl6qNMFpMO
+ XWO0eHp1FpPF3lvaFgvblrBY7Nl7ksXi8q45bBbzlz1lt+i+voPNYvnxf0wWhyY3M1nseNLI
+ aLHu9XsWixO3pC3O/z3OavH7xxw2B2mPy1e8PXbOusvucf7eRhaPzSu0PC6fLfXYtKqTzWPz
+ knqP3Tcb2DwW901m9ehtfsfm8fHpLRaP9/uusnn0bVnF6LH5dLXH501yHpuevGUKEIjisklJ
+ zcksSy3St0vgyjiz/itTwSzxita/nUwNjCeEuhg5OSQETCTOvzjO0sXIxSEksJtR4uCHM6wQ
+ CUmJZX+PMEPYwhIr/z1nhyh6wijR+/YDWxcjBweLgKrEs8+eICabgLbE6f8cIOUiAuoSUyfv
+ YQQpZxboYZO4dQ1kASeHsECixPZ/fewgNq+AmcSUY7PYIGZ+ZpRombGcDSIhKHFy5hOwBmag
+ onmbHzKDLGAWkJZY/g9sAaeAncTGWRvBykUFZCRmLP3KPIFRcBaS7llIumchdC9gZF7FKJla
+ UJybnltsWGCUl1quV5yYW1yal66XnJ+7iRGcJrS0djDuWfVB7xAjEwfjIUYJDmYlEd7bb2an
+ CPGmJFZWpRblxxeV5qQWH2KU5mBREuf99ro3RUggPbEkNTs1tSC1CCbLxMEp1cB02LL7ZoB8
+ v+7nV4u2nG2ewBEYfyx2Jdtl5iP5Wh0vT7VJxrYp2Hlydf/8KXdb4GfWSrW9AVPrZ0vNe9NR
+ 9/N9h90r+5UXJ9WteBH2jMtit/q1Zn7d0ICALWJJycFTVm2Oe3TO2cX29qLJhuvfaz6t9HMP
+ T41syhMsMv048XaozAWFY+oxW7JnLp3j6SvguzdZgGVWnPw8py2Kpw0SfvXvf53+cvvahx8l
+ PaSNjucX7jXIt/vInsozy0067Hpa5S7Nu8vzPOZZvC68cHq256f1QjU7L2rqnLb6xtZ1vWdt
+ 8s+03TtePZ/5q7/W9dPTPT/0YmyufreeJtJ1ZWPQmSedv/8cPp1fd5LrVsW/NIYdSizFGYmG
+ WsxFxYkAxFAvgIIDAAA=
+X-CMS-MailID: 20230628164314epcas5p43d203daae701b950a2649bb97c0c8ef5
+X-Msg-Generator: CA
+X-Sendblock-Type: REQ_APPROVE
+CMS-TYPE: 105P
+DLP-Filter: Pass
+X-CFilter-Loop: Reflected
+X-CMS-RootMailID: 20230627184029epcas5p49a29676fa6dff5f24ddfa5c64e525a51
+References: <20230627183629.26571-1-nj.shetty@samsung.com>
+ <CGME20230627184029epcas5p49a29676fa6dff5f24ddfa5c64e525a51@epcas5p4.samsung.com>
+ <20230627183629.26571-5-nj.shetty@samsung.com>
+ <365d5129-b65e-919a-3ceb-cc2ccf6b7a5a@kernel.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -73,9 +148,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: [dm-devel] [RFC PATCH v10 04/17] ipe: add LSM hooks on execution
- and kernel read
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: Re: [dm-devel] [PATCH v13 4/9] fs,
+ block: copy_file_range for def_blk_ops for direct block device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -87,373 +162,145 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
- Deven Bowers <deven.desai@linux.microsoft.com>, roberto.sassu@huawei.com,
- linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, audit@vger.kernel.org,
- linux-fscrypt@vger.kernel.org, Fan Wu <wufan@linux.microsoft.com>,
- linux-integrity@vger.kernel.org
-MIME-Version: 1.0
+Cc: linux-doc@vger.kernel.org, djwong@kernel.org,
+ linux-nvme@lists.infradead.org, dm-devel@redhat.com,
+ Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>,
+ Sagi Grimberg <sagi@grimberg.me>, linux-scsi@vger.kernel.org,
+ Jonathan Corbet <corbet@lwn.net>, gost.dev@samsung.com,
+ nitheshshetty@gmail.com, willy@infradead.org,
+ Chaitanya Kulkarni <kch@nvidia.com>, Anuj Gupta <anuj20.g@samsung.com>,
+ Mike Snitzer <snitzer@kernel.org>, ming.lei@redhat.com,
+ linux-block@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>,
+ Keith Busch <kbusch@kernel.org>, bvanassche@acm.org,
+ Jens Axboe <axboe@kernel.dk>, Christian Brauner <brauner@kernel.org>,
+ martin.petersen@oracle.com, linux-kernel@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: linux.microsoft.com
+X-Mimecast-Originator: samsung.com
+Content-Type: multipart/mixed;
+ boundary="----CHyoCALg6LzvWsSTaVDWulLjyDTSZVBAz8-9IIrQs0inuafE=_9622e_"
+
+------CHyoCALg6LzvWsSTaVDWulLjyDTSZVBAz8-9IIrQs0inuafE=_9622e_
+Content-Type: text/plain; charset="utf-8"; format="flowed"
+Content-Disposition: inline
+
+On 23/06/28 03:51PM, Damien Le Moal wrote:
+>On 6/28/23 03:36, Nitesh Shetty wrote:
+>> For direct block device opened with O_DIRECT, use copy_file_range to
+>> issue device copy offload, and fallback to generic_copy_file_range incase
+>> device copy offload capability is absent.
+>
+>...if the device does not support copy offload or the device files are not open
+>with O_DIRECT.
+>
+>No ?
+>
+Yes your right. We will fallback to generic_copy_file_range in either of
+these cases.
+
+>> Modify checks to allow bdevs to use copy_file_range.
+>>
+>> Suggested-by: Ming Lei <ming.lei@redhat.com>
+>> Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
+>> Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
+>> ---
+>>  block/blk-lib.c        | 26 ++++++++++++++++++++++++++
+>>  block/fops.c           | 20 ++++++++++++++++++++
+>>  fs/read_write.c        |  7 +++++--
+>>  include/linux/blkdev.h |  4 ++++
+>>  4 files changed, 55 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/block/blk-lib.c b/block/blk-lib.c
+>> index 09e0d5d51d03..7d8e09a99254 100644
+>> --- a/block/blk-lib.c
+>> +++ b/block/blk-lib.c
+>> @@ -473,6 +473,32 @@ ssize_t blkdev_copy_offload(
+>>  }
+>>  EXPORT_SYMBOL_GPL(blkdev_copy_offload);
+>>
+>> +/* Copy source offset from source block device to destination block
+>> + * device. Returns the length of bytes copied.
+>> + */
+>
+>Multi-line comment style: start with a "/*" line please.
+>
+acked
+
+>> +ssize_t blkdev_copy_offload_failfast(
+>
+>What is the "failfast" in the name for ?
+
+We dont want failed copy offload IOs to fallback to block layer copy emulation.
+We wanted a API to return error, if offload fails.
+
+>
+>> +		struct block_device *bdev_in, loff_t pos_in,
+>> +		struct block_device *bdev_out, loff_t pos_out,
+>> +		size_t len, gfp_t gfp_mask)
+>> +{
+>> +	struct request_queue *in_q = bdev_get_queue(bdev_in);
+>> +	struct request_queue *out_q = bdev_get_queue(bdev_out);
+>> +	ssize_t ret = 0;
+>
+>You do not need this initialization.
+>
+
+we need this initialization, because __blkdev_copy_offload return number of
+bytes copied or error value.
+So we can not return 0, incase of success/partial completion.
+blkdev_copy_offload_failfast is expected to return number of bytes copied.
+
+>> +
+>> +	if (blkdev_copy_sanity_check(bdev_in, pos_in, bdev_out, pos_out, len))
+>> +		return 0;
+>> +
+>> +	if (blk_queue_copy(in_q) && blk_queue_copy(out_q)) {
+>
+>Given that I think we do not allow copies between different devices, in_q and
+>out_q should always be the same, no ?
+
+acked, will update this.
+
+>
+>> +		ret = __blkdev_copy_offload(bdev_in, pos_in, bdev_out, pos_out,
+>> +				len, NULL, NULL, gfp_mask);
+>
+>Same here. Why pass 2 bdevs if we only allow copies within the same device ?
+>
+
+acked, will update function arguments to take single bdev.
+
+>> +		if (ret < 0)
+>> +			return 0;
+>> +	}
+>> +
+>> +	return ret;
+>
+>return 0;
+>
+
+Nack, explained above.
+
+Thank you,
+Nitesh Shetty
+
+------CHyoCALg6LzvWsSTaVDWulLjyDTSZVBAz8-9IIrQs0inuafE=_9622e_
+Content-Type: text/plain; charset="utf-8"
+
+
+------CHyoCALg6LzvWsSTaVDWulLjyDTSZVBAz8-9IIrQs0inuafE=_9622e_
 Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-From: Deven Bowers <deven.desai@linux.microsoft.com>
-
-IPE's initial goal is to control both execution and the loading of
-kernel modules based on the system's definition of trust. It
-accomplishes this by plugging into the security hooks for
-bprm_check_security, file_mprotect, mmap_file, kernel_load_data,
-and kernel_read_data.
-
-Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
-Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
----
-v2:
-  + Split evaluation loop, access control hooks,
-    and evaluation loop from policy parser and userspace
-    interface to pass mailing list character limit
-
-v3:
-  + Move ipe_load_properties to patch 04.
-  + Remove useless 0-initializations
-  + Prefix extern variables with ipe_
-  + Remove kernel module parameters, as these are
-    exposed through sysctls.
-  + Add more prose to the IPE base config option
-    help text.
-  + Use GFP_KERNEL for audit_log_start.
-  + Remove unnecessary caching system.
-  + Remove comments from headers
-  + Use rcu_access_pointer for rcu-pointer null check
-  + Remove usage of reqprot; use prot only.
-  + Move policy load and activation audit event to 03/12
-
-v4:
-  + Remove sysctls in favor of securityfs nodes
-  + Re-add kernel module parameters, as these are now
-    exposed through securityfs.
-  + Refactor property audit loop to a separate function.
-
-v5:
-  + fix minor grammatical errors
-  + do not group rule by curly-brace in audit record,
-    reconstruct the exact rule.
-
-v6:
-  + No changes
-
-v7:
-  + Further split lsm creation, the audit system, the evaluation loop
-    and access control hooks into separate commits.
-
-v8:
-  + Rename hook functions to follow the lsmname_hook_name convention
-  + Remove ipe_hook enumeration, can be derived from correlation with
-    syscall audit record.
-
-v9:
-  + Minor changes for adapting to the new parser
-
-v10:
-  + Remove @reqprot part
----
- security/ipe/eval.c  |  14 ++++
- security/ipe/eval.h  |   1 +
- security/ipe/hooks.c | 182 +++++++++++++++++++++++++++++++++++++++++++
- security/ipe/hooks.h |  25 ++++++
- security/ipe/ipe.c   |   6 ++
- 5 files changed, 228 insertions(+)
- create mode 100644 security/ipe/hooks.c
- create mode 100644 security/ipe/hooks.h
-
-diff --git a/security/ipe/eval.c b/security/ipe/eval.c
-index 59144b2ecdda..8d0ec7c80f8f 100644
---- a/security/ipe/eval.c
-+++ b/security/ipe/eval.c
-@@ -17,6 +17,20 @@
- 
- struct ipe_policy __rcu *ipe_active_policy;
- 
-+/**
-+ * build_eval_ctx - Build an evaluation context.
-+ * @ctx: Supplies a pointer to the context to be populdated.
-+ * @file: Supplies a pointer to the file to associated with the evaluation.
-+ * @op: Supplies the IPE policy operation associated with the evaluation.
-+ */
-+void build_eval_ctx(struct ipe_eval_ctx *ctx,
-+		    const struct file *file,
-+		    enum ipe_op_type op)
-+{
-+	ctx->file = file;
-+	ctx->op = op;
-+}
-+
- /**
-  * evaluate_property - Analyze @ctx against a property.
-  * @ctx: Supplies a pointer to the context to be evaluated.
-diff --git a/security/ipe/eval.h b/security/ipe/eval.h
-index 972580dfec15..5abb845d5c4e 100644
---- a/security/ipe/eval.h
-+++ b/security/ipe/eval.h
-@@ -20,6 +20,7 @@ struct ipe_eval_ctx {
- 	const struct file *file;
- };
- 
-+void build_eval_ctx(struct ipe_eval_ctx *ctx, const struct file *file, enum ipe_op_type op);
- int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx);
- 
- #endif /* _IPE_EVAL_H */
-diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
-new file mode 100644
-index 000000000000..d896a5a474bc
---- /dev/null
-+++ b/security/ipe/hooks.c
-@@ -0,0 +1,182 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+
-+#include <linux/fs.h>
-+#include <linux/types.h>
-+#include <linux/binfmts.h>
-+#include <linux/mman.h>
-+
-+#include "ipe.h"
-+#include "hooks.h"
-+#include "eval.h"
-+
-+/**
-+ * ipe_bprm_check_security - ipe security hook function for bprm check.
-+ * @bprm: Supplies a pointer to a linux_binprm structure to source the file
-+ *	  being evaluated.
-+ *
-+ * This LSM hook is called when a binary is loaded through the exec
-+ * family of system calls.
-+ * Return:
-+ * *0	- OK
-+ * *!0	- Error
-+ */
-+int ipe_bprm_check_security(struct linux_binprm *bprm)
-+{
-+	struct ipe_eval_ctx ctx = { 0 };
-+
-+	build_eval_ctx(&ctx, bprm->file, __IPE_OP_EXEC);
-+	return ipe_evaluate_event(&ctx);
-+}
-+
-+/**
-+ * ipe_mmap_file - ipe security hook function for mmap check.
-+ * @f: File being mmap'd. Can be NULL in the case of anonymous memory.
-+ * @reqprot: The requested protection on the mmap, passed from usermode.
-+ * @prot: The effective protection on the mmap, resolved from reqprot and
-+ *	  system configuration.
-+ * @flags: Unused.
-+ *
-+ * This hook is called when a file is loaded through the mmap
-+ * family of system calls.
-+ *
-+ * Return:
-+ * * 0	- OK
-+ * * !0	- Error
-+ */
-+int ipe_mmap_file(struct file *f, unsigned long reqprot, unsigned long prot,
-+		  unsigned long flags)
-+{
-+	struct ipe_eval_ctx ctx = { 0 };
-+
-+	if (prot & PROT_EXEC) {
-+		build_eval_ctx(&ctx, f, __IPE_OP_EXEC);
-+		return ipe_evaluate_event(&ctx);
-+	}
-+
-+	return 0;
-+}
-+
-+/**
-+ * ipe_file_mprotect - ipe security hook function for mprotect check.
-+ * @vma: Existing virtual memory area created by mmap or similar.
-+ * @reqprot: The requested protection on the mmap, passed from usermode.
-+ * @prot: The effective protection on the mmap, resolved from reqprot and
-+ *	  system configuration.
-+ *
-+ * This LSM hook is called when a mmap'd region of memory is changing
-+ * its protections via mprotect.
-+ *
-+ * Return:
-+ * * 0	- OK
-+ * * !0	- Error
-+ */
-+int ipe_file_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
-+		      unsigned long prot)
-+{
-+	struct ipe_eval_ctx ctx = { 0 };
-+
-+	/* Already Executable */
-+	if (vma->vm_flags & VM_EXEC)
-+		return 0;
-+
-+	if (prot & PROT_EXEC) {
-+		build_eval_ctx(&ctx, vma->vm_file, __IPE_OP_EXEC);
-+		return ipe_evaluate_event(&ctx);
-+	}
-+
-+	return 0;
-+}
-+
-+/**
-+ * ipe_kernel_read_file - ipe security hook function for kernel read.
-+ * @file: Supplies a pointer to the file structure being read in from disk.
-+ * @id: Supplies the enumeration identifying the purpose of the read.
-+ * @contents: Unused.
-+ *
-+ * This LSM hook is called when a file is being read in from disk from
-+ * the kernel.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * !0 - Error
-+ */
-+int ipe_kernel_read_file(struct file *file, enum kernel_read_file_id id,
-+			 bool contents)
-+{
-+	enum ipe_op_type op;
-+	struct ipe_eval_ctx ctx;
-+
-+	switch (id) {
-+	case READING_FIRMWARE:
-+		op = __IPE_OP_FIRMWARE;
-+		break;
-+	case READING_MODULE:
-+		op = __IPE_OP_KERNEL_MODULE;
-+		break;
-+	case READING_KEXEC_INITRAMFS:
-+		op = __IPE_OP_KEXEC_INITRAMFS;
-+		break;
-+	case READING_KEXEC_IMAGE:
-+		op = __IPE_OP_KEXEC_IMAGE;
-+		break;
-+	case READING_POLICY:
-+		op = __IPE_OP_IMA_POLICY;
-+		break;
-+	case READING_X509_CERTIFICATE:
-+		op = __IPE_OP_IMA_X509;
-+		break;
-+	default:
-+		op = __IPE_OP_INVALID;
-+		WARN(op == __IPE_OP_INVALID, "no rule setup for enum %d", id);
-+	}
-+
-+	build_eval_ctx(&ctx, file, op);
-+	return ipe_evaluate_event(&ctx);
-+}
-+
-+/**
-+ * ipe_kernel_load_data - ipe security hook function for kernel load data.
-+ * @id: Supplies the enumeration identifying the purpose of the read.
-+ * @contents: Unused.
-+ *
-+ * This LSM hook is called when a buffer is being read in from disk.
-+ *
-+ * Return:
-+ * * 0	- OK
-+ * * !0	- Error
-+ */
-+int ipe_kernel_load_data(enum kernel_load_data_id id, bool contents)
-+{
-+	enum ipe_op_type op;
-+	struct ipe_eval_ctx ctx = { 0 };
-+
-+	switch (id) {
-+	case LOADING_FIRMWARE:
-+		op = __IPE_OP_FIRMWARE;
-+		break;
-+	case LOADING_MODULE:
-+		op = __IPE_OP_KERNEL_MODULE;
-+		break;
-+	case LOADING_KEXEC_INITRAMFS:
-+		op = __IPE_OP_KEXEC_INITRAMFS;
-+		break;
-+	case LOADING_KEXEC_IMAGE:
-+		op = __IPE_OP_KEXEC_IMAGE;
-+		break;
-+	case LOADING_POLICY:
-+		op = __IPE_OP_IMA_POLICY;
-+		break;
-+	case LOADING_X509_CERTIFICATE:
-+		op = __IPE_OP_IMA_X509;
-+		break;
-+	default:
-+		op = __IPE_OP_INVALID;
-+		WARN(op == __IPE_OP_INVALID, "no rule setup for enum %d", id);
-+	}
-+
-+	build_eval_ctx(&ctx, NULL, op);
-+	return ipe_evaluate_event(&ctx);
-+}
-diff --git a/security/ipe/hooks.h b/security/ipe/hooks.h
-new file mode 100644
-index 000000000000..23205452f758
---- /dev/null
-+++ b/security/ipe/hooks.h
-@@ -0,0 +1,25 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+#ifndef _IPE_HOOKS_H
-+#define _IPE_HOOKS_H
-+
-+#include <linux/fs.h>
-+#include <linux/binfmts.h>
-+#include <linux/security.h>
-+
-+int ipe_bprm_check_security(struct linux_binprm *bprm);
-+
-+int ipe_mmap_file(struct file *f, unsigned long reqprot, unsigned long prot,
-+		  unsigned long flags);
-+
-+int ipe_file_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
-+		      unsigned long prot);
-+
-+int ipe_kernel_read_file(struct file *file, enum kernel_read_file_id id,
-+			 bool contents);
-+
-+int ipe_kernel_load_data(enum kernel_load_data_id id, bool contents);
-+
-+#endif /* _IPE_HOOKS_H */
-diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
-index 2ee0f5de29d7..29bedc0b2ad6 100644
---- a/security/ipe/ipe.c
-+++ b/security/ipe/ipe.c
-@@ -4,11 +4,17 @@
-  */
- 
- #include "ipe.h"
-+#include "hooks.h"
- 
- static struct lsm_blob_sizes ipe_blobs __ro_after_init = {
- };
- 
- static struct security_hook_list ipe_hooks[] __ro_after_init = {
-+	LSM_HOOK_INIT(bprm_check_security, ipe_bprm_check_security),
-+	LSM_HOOK_INIT(mmap_file, ipe_mmap_file),
-+	LSM_HOOK_INIT(file_mprotect, ipe_file_mprotect),
-+	LSM_HOOK_INIT(kernel_read_file, ipe_kernel_read_file),
-+	LSM_HOOK_INIT(kernel_load_data, ipe_kernel_load_data),
- };
- 
- /**
--- 
-2.25.1
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+
+------CHyoCALg6LzvWsSTaVDWulLjyDTSZVBAz8-9IIrQs0inuafE=_9622e_--
 
