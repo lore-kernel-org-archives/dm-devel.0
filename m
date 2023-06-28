@@ -1,68 +1,69 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 25E3EEB64D7
-	for <dm-devel@archiver.kernel.org>; Wed, 28 Jun 2023 21:18:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6BEAEEB64D7
+	for <dm-devel@archiver.kernel.org>; Wed, 28 Jun 2023 21:18:59 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1687987134;
+	s=mimecast20190719; t=1687987138;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=kfYOXSO6cO/OPdRJc7P1vN6jbhoUMRIuKSJs1KHhmng=;
-	b=FbEY8+YD+XDlir2Y1YyfoEBRsd+KZ8kd0gmoUDUs8zjMpIIfOpGmo1ai4piZqUeuJhIhzo
-	jjMJicEQI2D+jC4Dpu3epvgFY5UR8PQ9vMxkakXJ59jNMN0ZVwRkfbWKW2wzunD/zilLgF
-	jqvX6tx51rl4jPLCMQSJCOxuKOKqojc=
+	bh=rXGvTe69538WCA9l3S4EYMWQlFodwEHGTFtF2m6fTtU=;
+	b=iWYZIKyEYEvszH9SZQG5gJGJfNgIWsU04p37iC7pN7b6DWkQ7CIok5p9UVw/eLe3HX+RzV
+	TTkUIehotsGSSfr07y+rpNiwVsQqV2gkcUSq9dmP2mZUUm8VyqeJ4qB57lHsdrFhS8Ikej
+	Yk9hr3lQvP/OzQnsF82lBiywOYuhYX4=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-117-Y6mQuQ9tOza_MRi4AjNQpA-1; Wed, 28 Jun 2023 17:18:51 -0400
-X-MC-Unique: Y6mQuQ9tOza_MRi4AjNQpA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-480-s7mKoiw4Mg69DPB5L5PAzw-1; Wed, 28 Jun 2023 17:18:53 -0400
+X-MC-Unique: s7mKoiw4Mg69DPB5L5PAzw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EC10B1044589;
-	Wed, 28 Jun 2023 21:18:45 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A27C48DBAF1;
+	Wed, 28 Jun 2023 21:18:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 00A6140C2063;
-	Wed, 28 Jun 2023 21:18:44 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 879CA2166B29;
+	Wed, 28 Jun 2023 21:18:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DA83B194658D;
-	Wed, 28 Jun 2023 21:18:43 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 45D251946A45;
+	Wed, 28 Jun 2023 21:18:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8D2FC1946589
- for <dm-devel@listman.corp.redhat.com>; Wed, 28 Jun 2023 21:18:43 +0000 (UTC)
+ ESMTP id 2D9EC1946594
+ for <dm-devel@listman.corp.redhat.com>; Wed, 28 Jun 2023 21:18:45 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5B4D748FB02; Wed, 28 Jun 2023 21:18:43 +0000 (UTC)
+ id 0D1FA14682FF; Wed, 28 Jun 2023 21:18:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4E00F48FB01
- for <dm-devel@redhat.com>; Wed, 28 Jun 2023 21:18:43 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 32F663C0FCAC
- for <dm-devel@redhat.com>; Wed, 28 Jun 2023 21:18:43 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 05C4514682FE
+ for <dm-devel@redhat.com>; Wed, 28 Jun 2023 21:18:45 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DFDAC1044590
+ for <dm-devel@redhat.com>; Wed, 28 Jun 2023 21:18:44 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-241-yCbwERyFPViHhnw4pYTxVg-1; Wed,
- 28 Jun 2023 17:18:41 -0400
-X-MC-Unique: yCbwERyFPViHhnw4pYTxVg-1
+ relay.mimecast.com with ESMTP id us-mta-625-hWAtqSfgPDK73g7ZlBIvxQ-1; Wed,
+ 28 Jun 2023 17:18:43 -0400
+X-MC-Unique: hWAtqSfgPDK73g7ZlBIvxQ-1
 Received: by linux.microsoft.com (Postfix, from userid 1052)
- id 46F1520C091F; Wed, 28 Jun 2023 14:09:48 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 46F1520C091F
+ id 55EAC20ABD61; Wed, 28 Jun 2023 14:09:48 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 55EAC20ABD61
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
  tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
  snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
-Date: Wed, 28 Jun 2023 14:09:19 -0700
-Message-Id: <1687986571-16823-6-git-send-email-wufan@linux.microsoft.com>
+Date: Wed, 28 Jun 2023 14:09:20 -0700
+Message-Id: <1687986571-16823-7-git-send-email-wufan@linux.microsoft.com>
 In-Reply-To: <1687986571-16823-1-git-send-email-wufan@linux.microsoft.com>
 References: <1687986571-16823-1-git-send-email-wufan@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -72,9 +73,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-Subject: [dm-devel] [RFC PATCH v10 05/17] ipe: introduce 'boot_verified' as
- a trust provider
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Subject: [dm-devel] [RFC PATCH v10 06/17] security: add new securityfs
+ delete function
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -86,8 +87,7 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
- Deven Bowers <deven.desai@linux.microsoft.com>, roberto.sassu@huawei.com,
+Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org, roberto.sassu@huawei.com,
  linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org,
  linux-block@vger.kernel.org, audit@vger.kernel.org,
  linux-fscrypt@vger.kernel.org, Fan Wu <wufan@linux.microsoft.com>,
@@ -95,313 +95,86 @@ Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: linux.microsoft.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Deven Bowers <deven.desai@linux.microsoft.com>
+When deleting a directory in the security file system, the existing
+securityfs_remove requires the directory to be empty, otherwise
+it will do nothing. This leads to a potential risk that the security
+file system might be in an unclean state when the intentded deletion
+did not happen.
 
-IPE is designed to provide system level trust guarantees, this usually
-implies that trust starts from bootup with a hardware root of trust,
-which validates the bootloader. After this, the bootloader verifies the
-kernel and the initramfs.
+This commit introduces a new function securityfs_recursive_remove
+to recursively delete a directory without leaving an unclean state.
 
-As there's no currently supported integrity method for initramfs, and
-it's typically already verified by the bootloader, introduce a property
-that causes the first superblock to have an execution to be "pinned",
-which is typically initramfs.
-
-When the "pinned" device is unmounted, it will be "unpinned" and
-`boot_verified` property will always evaluate to false afterward.
-
-We use a pointer with a spin_lock to "pin" the device instead of rcu
-because rcu synchronization may sleep, which is not allowed when
-unmounting a device.
-
-Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+Co-developed-by: Christian Brauner (Microsoft) <brauner@kernel.org>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 
 ---
-v2:
-+No Changes
-
-v3:
-+ Remove useless caching system
-+ Move ipe_load_properties to this match
-+ Minor changes from checkpatch --strict warnings
-
-v4:
-+ Remove comments from headers that was missed previously.
-+ Grammatical corrections.
-
-v5:
-+ No significant changes
-
-v6:
-+ No changes
-
-v7:
-+ Reword and refactor patch 04/12 to [09/16], based on changes in the underlying system.
-+ Add common audit function for boolean values
-+ Use common audit function as implementation.
-
-v8:
-+ No changes
+v1-v8:
+  + Not present
 
 v9:
-+ No changes
+  + Introduced
 
 v10:
-+ Replace struct file with struct super_block
+  + No changes
 ---
- security/ipe/eval.c          | 72 +++++++++++++++++++++++++++++++++++-
- security/ipe/eval.h          |  2 +
- security/ipe/hooks.c         | 12 ++++++
- security/ipe/hooks.h         |  2 +
- security/ipe/ipe.c           |  1 +
- security/ipe/policy.h        |  2 +
- security/ipe/policy_parser.c | 37 +++++++++++++++++-
- 7 files changed, 126 insertions(+), 2 deletions(-)
+ include/linux/security.h |  1 +
+ security/inode.c         | 25 +++++++++++++++++++++++++
+ 2 files changed, 26 insertions(+)
 
-diff --git a/security/ipe/eval.c b/security/ipe/eval.c
-index 8d0ec7c80f8f..f19a641535c4 100644
---- a/security/ipe/eval.c
-+++ b/security/ipe/eval.c
-@@ -9,6 +9,7 @@
- #include <linux/file.h>
- #include <linux/sched.h>
- #include <linux/rcupdate.h>
-+#include <linux/spinlock.h>
+diff --git a/include/linux/security.h b/include/linux/security.h
+index e2734e9e44d5..a88076ebc7b1 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -1971,6 +1971,7 @@ struct dentry *securityfs_create_symlink(const char *name,
+ 					 const char *target,
+ 					 const struct inode_operations *iops);
+ extern void securityfs_remove(struct dentry *dentry);
++extern void securityfs_recursive_remove(struct dentry *dentry);
  
- #include "ipe.h"
- #include "eval.h"
-@@ -17,6 +18,44 @@
+ #else /* CONFIG_SECURITYFS */
  
- struct ipe_policy __rcu *ipe_active_policy;
+diff --git a/security/inode.c b/security/inode.c
+index 6c326939750d..13358e8547e8 100644
+--- a/security/inode.c
++++ b/security/inode.c
+@@ -313,6 +313,31 @@ void securityfs_remove(struct dentry *dentry)
+ }
+ EXPORT_SYMBOL_GPL(securityfs_remove);
  
-+static const struct super_block *pinned_sb;
-+static DEFINE_SPINLOCK(pin_lock);
-+#define FILE_SUPERBLOCK(f) ((f)->f_path.mnt->mnt_sb)
++static void remove_one(struct dentry *victim)
++{
++	simple_release_fs(&mount, &mount_count);
++}
 +
 +/**
-+ * pin_sb - Pin the underlying superblock of @f, marking it as trusted.
-+ * @sb: Supplies a super_block structure to be pinned.
++ * securityfs_recursive_remove - recursively removes a file or directory from the securityfs filesystem
++ *
++ * @dentry: a pointer to a the dentry of the file or directory to be removed.
++ *
++ * This function recursively removes a file or directory in securityfs that was
++ * previously created with a call to another securityfs function (like
++ * securityfs_create_file() or variants thereof.)
 + */
-+static void pin_sb(const struct super_block *sb)
++void securityfs_recursive_remove(struct dentry *dentry)
 +{
-+	if (!sb)
++	if (IS_ERR_OR_NULL(dentry))
 +		return;
-+	spin_lock(&pin_lock);
-+	if (!pinned_sb)
-+		pinned_sb = sb;
-+	spin_unlock(&pin_lock);
++
++	simple_pin_fs(&fs_type, &mount, &mount_count);
++	simple_recursive_removal(dentry, remove_one);
++	simple_release_fs(&mount, &mount_count);
 +}
++EXPORT_SYMBOL_GPL(securityfs_recursive_remove);
 +
-+/**
-+ * from_pinned - Determine whether @sb is the pinned super_block.
-+ * @sb: Supplies a super_block to check against the pinned super_block.
-+ *
-+ * Return:
-+ * * true	- @sb is the pinned super_block
-+ * * false	- @sb is not the pinned super_block
-+ */
-+static bool from_pinned(const struct super_block *sb)
-+{
-+	bool rv;
-+
-+	if (!sb)
-+		return false;
-+	spin_lock(&pin_lock);
-+	rv = !IS_ERR_OR_NULL(pinned_sb) && pinned_sb == sb;
-+	spin_unlock(&pin_lock);
-+	return rv;
-+}
-+
- /**
-  * build_eval_ctx - Build an evaluation context.
-  * @ctx: Supplies a pointer to the context to be populdated.
-@@ -27,8 +66,14 @@ void build_eval_ctx(struct ipe_eval_ctx *ctx,
- 		    const struct file *file,
- 		    enum ipe_op_type op)
- {
-+	if (op == __IPE_OP_EXEC && file)
-+		pin_sb(FILE_SUPERBLOCK(file));
-+
- 	ctx->file = file;
- 	ctx->op = op;
-+
-+	if (file)
-+		ctx->from_init_sb = from_pinned(FILE_SUPERBLOCK(file));
- }
- 
- /**
-@@ -43,7 +88,14 @@ void build_eval_ctx(struct ipe_eval_ctx *ctx,
- static bool evaluate_property(const struct ipe_eval_ctx *const ctx,
- 			      struct ipe_prop *p)
- {
--	return false;
-+	switch (p->type) {
-+	case __IPE_PROP_BOOT_VERIFIED_FALSE:
-+		return !ctx->from_init_sb;
-+	case __IPE_PROP_BOOT_VERIFIED_TRUE:
-+		return ctx->from_init_sb;
-+	default:
-+		return false;
-+	}
- }
- 
- /**
-@@ -106,3 +158,21 @@ int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
- 
- 	return rc;
- }
-+
-+/**
-+ * ipe_invalidate_pinned_sb - invalidate the ipe pinned super_block.
-+ * @mnt_sb: super_block to check against the pinned super_block.
-+ *
-+ * This function is called a super_block like the initramfs's is freed,
-+ * if the super_block is currently pinned by ipe it will be invalided,
-+ * so ipe won't consider the block device is boot verified afterward.
-+ */
-+void ipe_invalidate_pinned_sb(const struct super_block *mnt_sb)
-+{
-+	spin_lock(&pin_lock);
-+
-+	if (mnt_sb == pinned_sb)
-+		pinned_sb = ERR_PTR(-EIO);
-+
-+	spin_unlock(&pin_lock);
-+}
-diff --git a/security/ipe/eval.h b/security/ipe/eval.h
-index 5abb845d5c4e..88c625d6af97 100644
---- a/security/ipe/eval.h
-+++ b/security/ipe/eval.h
-@@ -18,9 +18,11 @@ struct ipe_eval_ctx {
- 	enum ipe_op_type op;
- 
- 	const struct file *file;
-+	bool from_init_sb;
- };
- 
- void build_eval_ctx(struct ipe_eval_ctx *ctx, const struct file *file, enum ipe_op_type op);
- int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx);
-+void ipe_invalidate_pinned_sb(const struct super_block *mnt_sb);
- 
- #endif /* _IPE_EVAL_H */
-diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
-index d896a5a474bc..6f94f5c8a0c3 100644
---- a/security/ipe/hooks.c
-+++ b/security/ipe/hooks.c
-@@ -180,3 +180,15 @@ int ipe_kernel_load_data(enum kernel_load_data_id id, bool contents)
- 	build_eval_ctx(&ctx, NULL, op);
- 	return ipe_evaluate_event(&ctx);
- }
-+
-+/**
-+ * ipe_sb_free_security - ipe security hook function for super_block.
-+ * @mnt_sb: Supplies a pointer to a super_block is about to be freed.
-+ *
-+ * IPE does not have any structures with mnt_sb, but uses this hook to
-+ * invalidate a pinned super_block.
-+ */
-+void ipe_sb_free_security(struct super_block *mnt_sb)
-+{
-+	ipe_invalidate_pinned_sb(mnt_sb);
-+}
-diff --git a/security/ipe/hooks.h b/security/ipe/hooks.h
-index 23205452f758..ac0cdfd9877f 100644
---- a/security/ipe/hooks.h
-+++ b/security/ipe/hooks.h
-@@ -22,4 +22,6 @@ int ipe_kernel_read_file(struct file *file, enum kernel_read_file_id id,
- 
- int ipe_kernel_load_data(enum kernel_load_data_id id, bool contents);
- 
-+void ipe_sb_free_security(struct super_block *mnt_sb);
-+
- #endif /* _IPE_HOOKS_H */
-diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
-index 29bedc0b2ad6..8f98ee7b8025 100644
---- a/security/ipe/ipe.c
-+++ b/security/ipe/ipe.c
-@@ -15,6 +15,7 @@ static struct security_hook_list ipe_hooks[] __ro_after_init = {
- 	LSM_HOOK_INIT(file_mprotect, ipe_file_mprotect),
- 	LSM_HOOK_INIT(kernel_read_file, ipe_kernel_read_file),
- 	LSM_HOOK_INIT(kernel_load_data, ipe_kernel_load_data),
-+	LSM_HOOK_INIT(sb_free_security, ipe_sb_free_security),
- };
- 
- /**
-diff --git a/security/ipe/policy.h b/security/ipe/policy.h
-index 113a037f0d71..a74856b9966c 100644
---- a/security/ipe/policy.h
-+++ b/security/ipe/policy.h
-@@ -30,6 +30,8 @@ enum ipe_action_type {
- #define __IPE_ACTION_INVALID __IPE_ACTION_MAX
- 
- enum ipe_prop_type {
-+	__IPE_PROP_BOOT_VERIFIED_FALSE,
-+	__IPE_PROP_BOOT_VERIFIED_TRUE,
- 	__IPE_PROP_MAX
- };
- 
-diff --git a/security/ipe/policy_parser.c b/security/ipe/policy_parser.c
-index 27e5767480b0..28c14adfe6d2 100644
---- a/security/ipe/policy_parser.c
-+++ b/security/ipe/policy_parser.c
-@@ -265,6 +265,12 @@ static enum ipe_action_type parse_action(char *t)
- 	return match_token(t, action_tokens, args);
- }
- 
-+static const match_table_t property_tokens = {
-+	{__IPE_PROP_BOOT_VERIFIED_FALSE,	"boot_verified=FALSE"},
-+	{__IPE_PROP_BOOT_VERIFIED_TRUE,		"boot_verified=TRUE"},
-+	{__IPE_PROP_INVALID,			NULL}
-+};
-+
- /**
-  * parse_property - Parse the property type given a token string.
-  * @t: Supplies the token string to be parsed.
-@@ -277,7 +283,36 @@ static enum ipe_action_type parse_action(char *t)
-  */
- static int parse_property(char *t, struct ipe_rule *r)
- {
--	return -EBADMSG;
-+	substring_t args[MAX_OPT_ARGS];
-+	struct ipe_prop *p = NULL;
-+	int rc = 0;
-+	int token;
-+
-+	p = kzalloc(sizeof(*p), GFP_KERNEL);
-+	if (!p)
-+		return -ENOMEM;
-+
-+	token = match_token(t, property_tokens, args);
-+
-+	switch (token) {
-+	case __IPE_PROP_BOOT_VERIFIED_FALSE:
-+	case __IPE_PROP_BOOT_VERIFIED_TRUE:
-+		p->type = token;
-+		break;
-+	case __IPE_PROP_INVALID:
-+	default:
-+		rc = -EBADMSG;
-+		break;
-+	}
-+	if (rc)
-+		goto err;
-+	list_add_tail(&p->next, &r->props);
-+
-+out:
-+	return rc;
-+err:
-+	kfree(p);
-+	goto out;
- }
- 
- /**
+ #ifdef CONFIG_SECURITY
+ static struct dentry *lsm_dentry;
+ static ssize_t lsm_read(struct file *filp, char __user *buf, size_t count,
 -- 
 2.25.1
 
