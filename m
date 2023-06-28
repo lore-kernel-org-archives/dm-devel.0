@@ -4,94 +4,83 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7CCD1EB64DA
-	for <dm-devel@archiver.kernel.org>; Mon, 10 Jul 2023 06:47:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 199C7EB64D9
+	for <dm-devel@archiver.kernel.org>; Mon, 10 Jul 2023 06:47:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1688971626;
+	s=mimecast20190719; t=1688971629;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=osWCrL8kzENEWPzyeRcPHCPyby+yJlTyyaFTrIxUfg8=;
-	b=OHvUwFdhgZ4hA39mIvS2rHz3V0uC1FQKo+/3KXdbhLKgDp7jlDmqVjWM3rYMg44bFWjOUf
-	V4+SfqwxO+rnA/qeT+8Zj8K21WJQbKFIwcBhoABILxFuZvIudscJ/Fe6xiebdHJozrONlX
-	08uPC11pYjM8eAfSsJ/mzPFD/emW51M=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=21RGVusQ3SmccPwL6SFlQvVzAV6PKcGN1ZXjNq0myhs=;
+	b=VTFs5h7lmVQO+OHWCONMPSfbiXj64eqPAsbnhKH4EdrhmU/XfH4hlXw/MLcP5Ztpc+KwSU
+	6EOwmw5L0VFFpMX07k9wugO4fLUMfv2AoBZ1DJpZVTWBq0kedfFPA7+fVCQN7yjWLflfmW
+	ZtmuENbm/g7Lrkkwck20v5EqyHSY1uE=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-644-VV4-y8u5Mi6v8c99NmCDcw-1; Mon, 10 Jul 2023 02:47:00 -0400
-X-MC-Unique: VV4-y8u5Mi6v8c99NmCDcw-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-216-my1Ln-B6MAa7fL6qMP5I7w-1; Mon, 10 Jul 2023 02:47:07 -0400
+X-MC-Unique: my1Ln-B6MAa7fL6qMP5I7w-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 08D008870D1;
-	Mon, 10 Jul 2023 06:46:58 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3E254280D213;
+	Mon, 10 Jul 2023 06:47:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E88FC4CD0C9;
-	Mon, 10 Jul 2023 06:46:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 265E5492CAD;
+	Mon, 10 Jul 2023 06:47:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A840A19451E3;
-	Mon, 10 Jul 2023 06:46:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CAE271940376;
+	Mon, 10 Jul 2023 06:46:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0F9B91946587
- for <dm-devel@listman.corp.redhat.com>; Fri, 23 Jun 2023 13:33:38 +0000 (UTC)
+ ESMTP id DE13B1946587
+ for <dm-devel@listman.corp.redhat.com>; Wed, 28 Jun 2023 06:49:52 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id CFD3D2166B32; Fri, 23 Jun 2023 13:33:37 +0000 (UTC)
+ id 0596F40C206F; Wed, 28 Jun 2023 06:49:52 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C744F2166B25
- for <dm-devel@redhat.com>; Fri, 23 Jun 2023 13:33:37 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id F238E40C2063
+ for <dm-devel@redhat.com>; Wed, 28 Jun 2023 06:49:51 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A81C3185A7A8
- for <dm-devel@redhat.com>; Fri, 23 Jun 2023 13:33:37 +0000 (UTC)
-Received: from mail-pl1-f172.google.com (mail-pl1-f172.google.com
- [209.85.214.172]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D2F8C92E4C7
+ for <dm-devel@redhat.com>; Wed, 28 Jun 2023 06:49:51 +0000 (UTC)
+Received: from dfw.source.kernel.org (dfw.source.kernel.org
+ [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-582-yoj_Fvq7Pli8wMqhxhEorA-1; Fri, 23 Jun 2023 09:33:36 -0400
-X-MC-Unique: yoj_Fvq7Pli8wMqhxhEorA-1
-Received: by mail-pl1-f172.google.com with SMTP id
- d9443c01a7336-1b5466bc5f8so910825ad.1
- for <dm-devel@redhat.com>; Fri, 23 Jun 2023 06:33:34 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1687527214; x=1690119214;
- h=content-transfer-encoding:in-reply-to:from:references:cc:to
- :content-language:subject:user-agent:mime-version:date:message-id
- :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=ACoox6lHywQa9wO0MGPPVAOCZzDjfudqnGd2G0lw0os=;
- b=OxSm1+CYJ58TVAqDnJ0N4OoXg+jXZu8sufntqsGynojUWDbFBfeewqv/hHw66/UTR1
- QE+fCNtn8rZgS53kEVRarcF2abgezudd49uvTvdspiffBIuUlQl94nYSoCvd1A3zWZR2
- sszmo+xTwzsulMRewIdkYcYyDGgjPZ1NkROKTFPX4TD7oSTf9igBUYZK2t+/KXf+GvXx
- fLrTZMGnMk5RseGadlNq9Qsgi2dZfH/srGj2K3y263gMEqQtA6AVT8WbZKg1qJW7HsVE
- 20QgFG1kl5UdQLpiOMfjH58QZhkD3xjMzlgThKcKNYHDoqgqk4G/Lne9130oLuCj47cj
- 5xdw==
-X-Gm-Message-State: AC+VfDwt/Pkyk9PZd4Z74VVfE/G+Zw4c1CIsPBAHVV5g8vNtwtntfW2Q
- htxdTSCwT9ut6phuhstP+2FZnA==
-X-Google-Smtp-Source: ACHHUZ7fC8cfi9SbpxWbw1P19vY2WFeiY5bxjWE/lWxj83YOdeMLdFfAi7QBoo42W5+SZOFqK06Ryw==
-X-Received: by 2002:a17:902:c945:b0:1ae:3ff8:7fa7 with SMTP id
- i5-20020a170902c94500b001ae3ff87fa7mr26069073pla.4.1687527213878; 
- Fri, 23 Jun 2023 06:33:33 -0700 (PDT)
-Received: from [10.4.168.167] ([139.177.225.254])
- by smtp.gmail.com with ESMTPSA id
- kg14-20020a170903060e00b001b6a27dff99sm4341406plb.159.2023.06.23.06.33.26
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Fri, 23 Jun 2023 06:33:33 -0700 (PDT)
-Message-ID: <43a07dbe-5049-8596-da58-51e0a0d6243c@bytedance.com>
-Date: Fri, 23 Jun 2023 21:33:24 +0800
+ us-mta-296-dJSijXWfPl2mZHPdG7phdA-1; Wed, 28 Jun 2023 02:49:49 -0400
+X-MC-Unique: dJSijXWfPl2mZHPdG7phdA-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature RSA-PSS (2048 bits))
+ (No client certificate requested)
+ by dfw.source.kernel.org (Postfix) with ESMTPS id 3D555612FD;
+ Wed, 28 Jun 2023 06:40:16 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A55F8C433C8;
+ Wed, 28 Jun 2023 06:40:12 +0000 (UTC)
+Message-ID: <0d05d74e-48c5-2b99-dc28-482dc717e508@kernel.org>
+Date: Wed, 28 Jun 2023 15:40:11 +0900
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:102.0)
- Gecko/20100101 Thunderbird/102.12.0
-To: Steven Price <steven.price@arm.com>
-References: <20230622085335.77010-1-zhengqi.arch@bytedance.com>
- <20230622085335.77010-6-zhengqi.arch@bytedance.com>
-From: Qi Zheng <zhengqi.arch@bytedance.com>
-In-Reply-To: <20230622085335.77010-6-zhengqi.arch@bytedance.com>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.12.0
+To: Nitesh Shetty <nj.shetty@samsung.com>, Jens Axboe <axboe@kernel.dk>,
+ Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, dm-devel@redhat.com,
+ Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>,
+ Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>,
+ Alexander Viro <viro@zeniv.linux.org.uk>,
+ Christian Brauner <brauner@kernel.org>
+References: <20230627183629.26571-1-nj.shetty@samsung.com>
+ <CGME20230627184000epcas5p1c7cb01eb1c70bc5a19f76ce21f2ec3f8@epcas5p1.samsung.com>
+ <20230627183629.26571-2-nj.shetty@samsung.com>
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <20230627183629.26571-2-nj.shetty@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -99,10 +88,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mailman-Approved-At: Mon, 10 Jul 2023 06:46:55 +0000
-Subject: Re: [dm-devel] [PATCH 05/29] drm/panfrost: dynamically allocate the
- drm-panfrost shrinker
+Subject: Re: [dm-devel] [PATCH v13 1/9] block: Introduce queue limits for
+ copy-offload support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -114,199 +103,318 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: djwong@kernel.org, roman.gushchin@linux.dev, david@fromorbit.com,
- dri-devel@lists.freedesktop.org, virtualization@lists.linux-foundation.org,
- linux-mm@kvack.org, dm-devel@redhat.com, linux-ext4@vger.kernel.org,
- paulmck@kernel.org, linux-arm-msm@vger.kernel.org,
- intel-gfx@lists.freedesktop.org, brauner@kernel.org,
- linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, vbabka@suse.cz,
- linux-nfs@vger.kernel.org, tytso@mit.edu, linux-kernel@vger.kernel.org,
- linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- akpm@linux-foundation.org, linux-btrfs@vger.kernel.org, tkhai@ya.ru
+Cc: linux-nvme@lists.infradead.org, bvanassche@acm.org,
+ linux-scsi@vger.kernel.org, linux-doc@vger.kernel.org, djwong@kernel.org,
+ nitheshshetty@gmail.com, linux-kernel@vger.kernel.org, willy@infradead.org,
+ ming.lei@redhat.com, linux-block@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org, martin.petersen@oracle.com,
+ Kanchan Joshi <joshi.k@samsung.com>, gost.dev@samsung.com,
+ Anuj Gupta <anuj20.g@samsung.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: bytedance.com
+X-Mimecast-Originator: kernel.org
 Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Hi Steven,
+On 6/28/23 03:36, Nitesh Shetty wrote:
+> Add device limits as sysfs entries,
+>         - copy_offload (RW)
+>         - copy_max_bytes (RW)
+>         - copy_max_bytes_hw (RO)
+> 
+> Above limits help to split the copy payload in block layer.
+> copy_offload: used for setting copy offload(1) or emulation(0).
+> copy_max_bytes: maximum total length of copy in single payload.
+> copy_max_bytes_hw: Reflects the device supported maximum limit.
+> 
+> Reviewed-by: Hannes Reinecke <hare@suse.de>
+> Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
+> Signed-off-by: Kanchan Joshi <joshi.k@samsung.com>
+> Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
+> ---
+>  Documentation/ABI/stable/sysfs-block | 33 +++++++++++++++
+>  block/blk-settings.c                 | 24 +++++++++++
+>  block/blk-sysfs.c                    | 63 ++++++++++++++++++++++++++++
+>  include/linux/blkdev.h               | 12 ++++++
+>  include/uapi/linux/fs.h              |  3 ++
+>  5 files changed, 135 insertions(+)
+> 
+> diff --git a/Documentation/ABI/stable/sysfs-block b/Documentation/ABI/stable/sysfs-block
+> index c57e5b7cb532..3c97303f658b 100644
+> --- a/Documentation/ABI/stable/sysfs-block
+> +++ b/Documentation/ABI/stable/sysfs-block
+> @@ -155,6 +155,39 @@ Description:
+>  		last zone of the device which may be smaller.
+>  
+>  
+> +What:		/sys/block/<disk>/queue/copy_offload
+> +Date:		June 2023
+> +Contact:	linux-block@vger.kernel.org
+> +Description:
+> +		[RW] When read, this file shows whether offloading copy to a
+> +		device is enabled (1) or disabled (0). Writing '0' to this
+> +		file will disable offloading copies for this device.
+> +		Writing any '1' value will enable this feature. If the device
+> +		does not support offloading, then writing 1, will result in an
+> +		error.
 
-The email you replied to was the failed version (due to the error
-below), so I copied your reply and replied to you on this successful
-version.
+I am still not convinced that this one is really necessary. copy_max_bytes_hw !=
+0 indicates that the devices supports copy offload. And setting copy_max_bytes
+to 0 can be used to disable copy offload (which probably should be the default
+for now).
 
-(4.7.1 Error: too many recipients from 49.7.199.173)
+> +
+> +
+> +What:		/sys/block/<disk>/queue/copy_max_bytes
+> +Date:		June 2023
+> +Contact:	linux-block@vger.kernel.org
+> +Description:
+> +		[RW] This is the maximum number of bytes that the block layer
+> +		will allow for a copy request. This will is always smaller or
 
-On 2023/6/23 18:01, Steven Price wrote:
- > On 22/06/2023 09:39, Qi Zheng wrote:
- >> From: Qi Zheng <zhengqi.arch@bytedance.com>
- >>
- >> In preparation for implementing lockless slab shrink,
- >> we need to dynamically allocate the drm-panfrost shrinker,
- >> so that it can be freed asynchronously using kfree_rcu().
- >> Then it doesn't need to wait for RCU read-side critical
- >> section when releasing the struct panfrost_device.
- >>
- >> Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
- >> ---
- >>   drivers/gpu/drm/panfrost/panfrost_device.h    |  2 +-
- >>   .../gpu/drm/panfrost/panfrost_gem_shrinker.c  | 24 ++++++++++---------
- >>   2 files changed, 14 insertions(+), 12 deletions(-)
- >>
- >> diff --git a/drivers/gpu/drm/panfrost/panfrost_device.h 
-b/drivers/gpu/drm/panfrost/panfrost_device.h
- >> index b0126b9fbadc..e667e5689353 100644
- >> --- a/drivers/gpu/drm/panfrost/panfrost_device.h
- >> +++ b/drivers/gpu/drm/panfrost/panfrost_device.h
- >> @@ -118,7 +118,7 @@ struct panfrost_device {
- >>
- >>   	struct mutex shrinker_lock;
- >>   	struct list_head shrinker_list;
- >> -	struct shrinker shrinker;
- >> +	struct shrinker *shrinker;
- >>
- >>   	struct panfrost_devfreq pfdevfreq;
- >>   };
- >> diff --git a/drivers/gpu/drm/panfrost/panfrost_gem_shrinker.c 
-b/drivers/gpu/drm/panfrost/panfrost_gem_shrinker.c
- >> index bf0170782f25..2a5513eb9e1f 100644
- >> --- a/drivers/gpu/drm/panfrost/panfrost_gem_shrinker.c
- >> +++ b/drivers/gpu/drm/panfrost/panfrost_gem_shrinker.c
- >> @@ -18,8 +18,7 @@
- >>   static unsigned long
- >>   panfrost_gem_shrinker_count(struct shrinker *shrinker, struct 
-shrink_control *sc)
- >>   {
- >> -	struct panfrost_device *pfdev =
- >> -		container_of(shrinker, struct panfrost_device, shrinker);
- >> +	struct panfrost_device *pfdev = shrinker->private_data;
- >>   	struct drm_gem_shmem_object *shmem;
- >>   	unsigned long count = 0;
- >>
- >> @@ -65,8 +64,7 @@ static bool panfrost_gem_purge(struct 
-drm_gem_object *obj)
- >>   static unsigned long
- >>   panfrost_gem_shrinker_scan(struct shrinker *shrinker, struct 
-shrink_control *sc)
- >>   {
- >> -	struct panfrost_device *pfdev =
- >> -		container_of(shrinker, struct panfrost_device, shrinker);
- >> +	struct panfrost_device *pfdev = shrinker->private_data;
- >>   	struct drm_gem_shmem_object *shmem, *tmp;
- >>   	unsigned long freed = 0;
- >>
- >> @@ -100,10 +98,15 @@ panfrost_gem_shrinker_scan(struct shrinker 
-*shrinker, struct shrink_control *sc)
- >>   void panfrost_gem_shrinker_init(struct drm_device *dev)
- >>   {
- >>   	struct panfrost_device *pfdev = dev->dev_private;
- >> -	pfdev->shrinker.count_objects = panfrost_gem_shrinker_count;
- >> -	pfdev->shrinker.scan_objects = panfrost_gem_shrinker_scan;
- >> -	pfdev->shrinker.seeks = DEFAULT_SEEKS;
- >> -	WARN_ON(register_shrinker(&pfdev->shrinker, "drm-panfrost"));
- >> +
- >> +	pfdev->shrinker = shrinker_alloc_and_init(panfrost_gem_shrinker_count,
- >> +						  panfrost_gem_shrinker_scan, 0,
- >> +						  DEFAULT_SEEKS, 0, pfdev);
- >> +	if (pfdev->shrinker &&
- >> +	    register_shrinker(pfdev->shrinker, "drm-panfrost")) {
- >> +		shrinker_free(pfdev->shrinker);
- >> +		WARN_ON(1);
- >> +	}
- >
- > So we didn't have good error handling here before, but this is
- > significantly worse. Previously if register_shrinker() failed then the
- > driver could safely continue without a shrinker - it would waste memory
- > but still function.
- >
- > However we now have two failure conditions:
- >   * shrinker_alloc_init() returns NULL. No warning and NULL deferences
- >     will happen later.
- >
- >   * register_shrinker() fails, shrinker_free() will free pdev->shrinker
- >     we get a warning, but followed by a use-after-free later.
- >
- > I think we need to modify panfrost_gem_shrinker_init() to be able to
- > return an error, so a change something like the below (untested) before
- > your change.
+will is -> is
 
-Indeed. I will fix it in the v2.
+> +		equal to the maximum size allowed by the hardware, indicated by
+> +		'copy_max_bytes_hw'. An attempt to set a value higher than
+> +		'copy_max_bytes_hw' will truncate this to 'copy_max_bytes_hw'.
+> +
+> +
+> +What:		/sys/block/<disk>/queue/copy_max_bytes_hw
 
-Thanks,
-Qi
+Nit: In keeping with the spirit of attributes like
+max_hw_sectors_kb/max_sectors_kb, I would call this one copy_max_hw_bytes.
 
- >
- > Steve
- >
- > ----8<---
- > diff --git a/drivers/gpu/drm/panfrost/panfrost_drv.c
- > b/drivers/gpu/drm/panfrost/panfrost_drv.c
- > index bbada731bbbd..f705bbdea360 100644
- > --- a/drivers/gpu/drm/panfrost/panfrost_drv.c
- > +++ b/drivers/gpu/drm/panfrost/panfrost_drv.c
- > @@ -598,10 +598,14 @@ static int panfrost_probe(struct platform_device
- > *pdev)
- >   	if (err < 0)
- >   		goto err_out1;
- >
- > -	panfrost_gem_shrinker_init(ddev);
- > +	err = panfrost_gem_shrinker_init(ddev);
- > +	if (err)
- > +		goto err_out2;
- >
- >   	return 0;
- >
- > +err_out2:
- > +	drm_dev_unregister(ddev);
- >   err_out1:
- >   	pm_runtime_disable(pfdev->dev);
- >   	panfrost_device_fini(pfdev);
- > diff --git a/drivers/gpu/drm/panfrost/panfrost_gem.h
- > b/drivers/gpu/drm/panfrost/panfrost_gem.h
- > index ad2877eeeccd..863d2ec8d4f0 100644
- > --- a/drivers/gpu/drm/panfrost/panfrost_gem.h
- > +++ b/drivers/gpu/drm/panfrost/panfrost_gem.h
- > @@ -81,7 +81,7 @@ panfrost_gem_mapping_get(struct panfrost_gem_object 
-*bo,
- >   void panfrost_gem_mapping_put(struct panfrost_gem_mapping *mapping);
- >   void panfrost_gem_teardown_mappings_locked(struct 
-panfrost_gem_object *bo);
- >
- > -void panfrost_gem_shrinker_init(struct drm_device *dev);
- > +int panfrost_gem_shrinker_init(struct drm_device *dev);
- >   void panfrost_gem_shrinker_cleanup(struct drm_device *dev);
- >
- >   #endif /* __PANFROST_GEM_H__ */
- > diff --git a/drivers/gpu/drm/panfrost/panfrost_gem_shrinker.c
- > b/drivers/gpu/drm/panfrost/panfrost_gem_shrinker.c
- > index bf0170782f25..90265b37636f 100644
- > --- a/drivers/gpu/drm/panfrost/panfrost_gem_shrinker.c
- > +++ b/drivers/gpu/drm/panfrost/panfrost_gem_shrinker.c
- > @@ -97,13 +97,17 @@ panfrost_gem_shrinker_scan(struct shrinker
- > *shrinker, struct shrink_control *sc)
- >    *
- >    * This function registers and sets up the panfrost shrinker.
- >    */
- > -void panfrost_gem_shrinker_init(struct drm_device *dev)
- > +int panfrost_gem_shrinker_init(struct drm_device *dev)
- >   {
- >   	struct panfrost_device *pfdev = dev->dev_private;
- > +	int ret;
- > +
- >   	pfdev->shrinker.count_objects = panfrost_gem_shrinker_count;
- >   	pfdev->shrinker.scan_objects = panfrost_gem_shrinker_scan;
- >   	pfdev->shrinker.seeks = DEFAULT_SEEKS;
- > -	WARN_ON(register_shrinker(&pfdev->shrinker, "drm-panfrost"));
- > +	ret = register_shrinker(&pfdev->shrinker, "drm-panfrost");
- > +
- > +	return ret;
- >   }
- >
- >   /**
- >
+> +Date:		June 2023
+> +Contact:	linux-block@vger.kernel.org
+> +Description:
+> +		[RO] This is the maximum number of bytes that the hardware
+> +		will allow for single data copy request.
+> +		A value of 0 means that the device does not support
+> +		copy offload.
+> +
+> +
+>  What:		/sys/block/<disk>/queue/crypto/
+>  Date:		February 2022
+>  Contact:	linux-block@vger.kernel.org
+> diff --git a/block/blk-settings.c b/block/blk-settings.c
+> index 4dd59059b788..738cd3f21259 100644
+> --- a/block/blk-settings.c
+> +++ b/block/blk-settings.c
+> @@ -59,6 +59,8 @@ void blk_set_default_limits(struct queue_limits *lim)
+>  	lim->zoned = BLK_ZONED_NONE;
+>  	lim->zone_write_granularity = 0;
+>  	lim->dma_alignment = 511;
+> +	lim->max_copy_sectors_hw = 0;
+> +	lim->max_copy_sectors = 0;
+>  }
+>  
+>  /**
+> @@ -82,6 +84,8 @@ void blk_set_stacking_limits(struct queue_limits *lim)
+>  	lim->max_dev_sectors = UINT_MAX;
+>  	lim->max_write_zeroes_sectors = UINT_MAX;
+>  	lim->max_zone_append_sectors = UINT_MAX;
+> +	lim->max_copy_sectors_hw = UINT_MAX;
+> +	lim->max_copy_sectors = UINT_MAX;
+>  }
+>  EXPORT_SYMBOL(blk_set_stacking_limits);
+>  
+> @@ -183,6 +187,22 @@ void blk_queue_max_discard_sectors(struct request_queue *q,
+>  }
+>  EXPORT_SYMBOL(blk_queue_max_discard_sectors);
+>  
+> +/**
+> + * blk_queue_max_copy_sectors_hw - set max sectors for a single copy payload
+> + * @q:  the request queue for the device
+> + * @max_copy_sectors: maximum number of sectors to copy
+> + **/
+> +void blk_queue_max_copy_sectors_hw(struct request_queue *q,
+> +		unsigned int max_copy_sectors)
+> +{
+> +	if (max_copy_sectors > (COPY_MAX_BYTES >> SECTOR_SHIFT))
+> +		max_copy_sectors = COPY_MAX_BYTES >> SECTOR_SHIFT;
+> +
+> +	q->limits.max_copy_sectors_hw = max_copy_sectors;
+> +	q->limits.max_copy_sectors = max_copy_sectors;
+> +}
+> +EXPORT_SYMBOL_GPL(blk_queue_max_copy_sectors_hw);
+> +
+>  /**
+>   * blk_queue_max_secure_erase_sectors - set max sectors for a secure erase
+>   * @q:  the request queue for the device
+> @@ -578,6 +598,10 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+>  	t->max_segment_size = min_not_zero(t->max_segment_size,
+>  					   b->max_segment_size);
+>  
+> +	t->max_copy_sectors = min(t->max_copy_sectors, b->max_copy_sectors);
+> +	t->max_copy_sectors_hw = min(t->max_copy_sectors_hw,
+> +						b->max_copy_sectors_hw);
+> +
+>  	t->misaligned |= b->misaligned;
+>  
+>  	alignment = queue_limit_alignment_offset(b, start);
+> diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+> index afc797fb0dfc..43551778d035 100644
+> --- a/block/blk-sysfs.c
+> +++ b/block/blk-sysfs.c
+> @@ -199,6 +199,62 @@ static ssize_t queue_discard_zeroes_data_show(struct request_queue *q, char *pag
+>  	return queue_var_show(0, page);
+>  }
+>  
+> +static ssize_t queue_copy_offload_show(struct request_queue *q, char *page)
+> +{
+> +	return queue_var_show(blk_queue_copy(q), page);
+> +}
+> +
+> +static ssize_t queue_copy_offload_store(struct request_queue *q,
+> +				       const char *page, size_t count)
+> +{
+> +	unsigned long copy_offload;
+> +	ssize_t ret = queue_var_store(&copy_offload, page, count);
+> +
+> +	if (ret < 0)
+> +		return ret;
+> +
+> +	if (copy_offload && !q->limits.max_copy_sectors_hw)
+> +		return -EINVAL;
+> +
+> +	if (copy_offload)
+> +		blk_queue_flag_set(QUEUE_FLAG_COPY, q);
+> +	else
+> +		blk_queue_flag_clear(QUEUE_FLAG_COPY, q);
+> +
+> +	return count;
+> +}
+
+See above. I think we can drop this attribute.
+
+> +
+> +static ssize_t queue_copy_max_hw_show(struct request_queue *q, char *page)
+> +{
+> +	return sprintf(page, "%llu\n", (unsigned long long)
+> +			q->limits.max_copy_sectors_hw << SECTOR_SHIFT);
+> +}
+> +
+> +static ssize_t queue_copy_max_show(struct request_queue *q, char *page)
+> +{
+> +	return sprintf(page, "%llu\n", (unsigned long long)
+> +			q->limits.max_copy_sectors << SECTOR_SHIFT);
+> +}
+> +
+> +static ssize_t queue_copy_max_store(struct request_queue *q,
+> +				       const char *page, size_t count)
+> +{
+> +	unsigned long max_copy;
+> +	ssize_t ret = queue_var_store(&max_copy, page, count);
+> +
+> +	if (ret < 0)
+> +		return ret;
+> +
+> +	if (max_copy & (queue_logical_block_size(q) - 1))
+> +		return -EINVAL;
+> +
+> +	max_copy >>= SECTOR_SHIFT;
+> +	q->limits.max_copy_sectors = min_t(unsigned int, max_copy,
+> +					q->limits.max_copy_sectors_hw);
+> +
+> +	return count;
+> +}
+> +
+>  static ssize_t queue_write_same_max_show(struct request_queue *q, char *page)
+>  {
+>  	return queue_var_show(0, page);
+> @@ -522,6 +578,10 @@ QUEUE_RO_ENTRY(queue_nr_zones, "nr_zones");
+>  QUEUE_RO_ENTRY(queue_max_open_zones, "max_open_zones");
+>  QUEUE_RO_ENTRY(queue_max_active_zones, "max_active_zones");
+>  
+> +QUEUE_RW_ENTRY(queue_copy_offload, "copy_offload");
+> +QUEUE_RO_ENTRY(queue_copy_max_hw, "copy_max_bytes_hw");
+> +QUEUE_RW_ENTRY(queue_copy_max, "copy_max_bytes");
+> +
+>  QUEUE_RW_ENTRY(queue_nomerges, "nomerges");
+>  QUEUE_RW_ENTRY(queue_rq_affinity, "rq_affinity");
+>  QUEUE_RW_ENTRY(queue_poll, "io_poll");
+> @@ -638,6 +698,9 @@ static struct attribute *queue_attrs[] = {
+>  	&queue_discard_max_entry.attr,
+>  	&queue_discard_max_hw_entry.attr,
+>  	&queue_discard_zeroes_data_entry.attr,
+> +	&queue_copy_offload_entry.attr,
+> +	&queue_copy_max_hw_entry.attr,
+> +	&queue_copy_max_entry.attr,
+>  	&queue_write_same_max_entry.attr,
+>  	&queue_write_zeroes_max_entry.attr,
+>  	&queue_zone_append_max_entry.attr,
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index ed44a997f629..6098665953e6 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -309,6 +309,9 @@ struct queue_limits {
+>  	unsigned int		discard_alignment;
+>  	unsigned int		zone_write_granularity;
+>  
+> +	unsigned int		max_copy_sectors_hw;
+> +	unsigned int		max_copy_sectors;
+> +
+>  	unsigned short		max_segments;
+>  	unsigned short		max_integrity_segments;
+>  	unsigned short		max_discard_segments;
+> @@ -554,6 +557,7 @@ struct request_queue {
+>  #define QUEUE_FLAG_NOWAIT       29	/* device supports NOWAIT */
+>  #define QUEUE_FLAG_SQ_SCHED     30	/* single queue style io dispatch */
+>  #define QUEUE_FLAG_SKIP_TAGSET_QUIESCE	31 /* quiesce_tagset skip the queue*/
+> +#define QUEUE_FLAG_COPY		32	/* enable/disable device copy offload */
+>  
+>  #define QUEUE_FLAG_MQ_DEFAULT	((1UL << QUEUE_FLAG_IO_STAT) |		\
+>  				 (1UL << QUEUE_FLAG_SAME_COMP) |	\
+> @@ -574,6 +578,7 @@ bool blk_queue_flag_test_and_set(unsigned int flag, struct request_queue *q);
+>  	test_bit(QUEUE_FLAG_STABLE_WRITES, &(q)->queue_flags)
+>  #define blk_queue_io_stat(q)	test_bit(QUEUE_FLAG_IO_STAT, &(q)->queue_flags)
+>  #define blk_queue_add_random(q)	test_bit(QUEUE_FLAG_ADD_RANDOM, &(q)->queue_flags)
+> +#define blk_queue_copy(q)	test_bit(QUEUE_FLAG_COPY, &(q)->queue_flags)
+>  #define blk_queue_zone_resetall(q)	\
+>  	test_bit(QUEUE_FLAG_ZONE_RESETALL, &(q)->queue_flags)
+>  #define blk_queue_dax(q)	test_bit(QUEUE_FLAG_DAX, &(q)->queue_flags)
+> @@ -891,6 +896,8 @@ extern void blk_queue_chunk_sectors(struct request_queue *, unsigned int);
+>  extern void blk_queue_max_segments(struct request_queue *, unsigned short);
+>  extern void blk_queue_max_discard_segments(struct request_queue *,
+>  		unsigned short);
+> +extern void blk_queue_max_copy_sectors_hw(struct request_queue *q,
+> +		unsigned int max_copy_sectors);
+>  void blk_queue_max_secure_erase_sectors(struct request_queue *q,
+>  		unsigned int max_sectors);
+>  extern void blk_queue_max_segment_size(struct request_queue *, unsigned int);
+> @@ -1210,6 +1217,11 @@ static inline unsigned int bdev_discard_granularity(struct block_device *bdev)
+>  	return bdev_get_queue(bdev)->limits.discard_granularity;
+>  }
+>  
+> +static inline unsigned int bdev_max_copy_sectors(struct block_device *bdev)
+> +{
+> +	return bdev_get_queue(bdev)->limits.max_copy_sectors;
+> +}
+> +
+>  static inline unsigned int
+>  bdev_max_secure_erase_sectors(struct block_device *bdev)
+>  {
+> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+> index b7b56871029c..dff56813f95a 100644
+> --- a/include/uapi/linux/fs.h
+> +++ b/include/uapi/linux/fs.h
+> @@ -64,6 +64,9 @@ struct fstrim_range {
+>  	__u64 minlen;
+>  };
+>  
+> +/* maximum copy offload length, this is set to 128MB based on current testing */
+> +#define COPY_MAX_BYTES	(1 << 27)
+> +
+>  /* extent-same (dedupe) ioctls; these MUST match the btrfs ioctl definitions */
+>  #define FILE_DEDUPE_RANGE_SAME		0
+>  #define FILE_DEDUPE_RANGE_DIFFERS	1
+
+-- 
+Damien Le Moal
+Western Digital Research
 
 --
 dm-devel mailing list
