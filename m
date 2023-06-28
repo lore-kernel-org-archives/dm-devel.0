@@ -1,10 +1,10 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E03F7C04A6A
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 79DC6EB64D9
 	for <dm-devel@archiver.kernel.org>; Mon, 10 Jul 2023 06:47:19 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1688971638;
@@ -14,86 +14,74 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=ZBmLC0M+SB8/Zx9KHcAIHvrACWJM+cudRXYWpFVLdc8=;
-	b=M8XGyH9mNvLNuhZsa3boJGdDV6RTWQeH2bLPTHWVM4FtaYUz93Yj/T3fbgwbVhlPduNuO1
-	sg5sDAbYicdXxhVNP0F7pEMmf5gDUcPHf4bmQLUfJCV3qFsBC9S72fK3fKboCFGcRM8KQc
-	9wYbr8aoRI3ZFj27mEFpgso9LGxSVbI=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=XPnCHsALtLdMWdzhdQAT2N+1DmtLif5a3monIkwfGmY=;
+	b=TWdJGc6mLFE0EYNT5WprgnJD8Oc3WRQ93c7jyENiFhEXp4gRwTHY+GJKoBAnhGOowSlhxC
+	ST3Kml54fT8jDU0frwd9sU231JTEeaQ3pemTytH2WGRczdi058SdMMVvapRvVgS39dozNI
+	5Xg5L0EOPLWK1LTZLZVJP3zOgg+tQMg=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-407-3i1JtoybP_S1RCDeWw8L2g-1; Mon, 10 Jul 2023 02:47:15 -0400
-X-MC-Unique: 3i1JtoybP_S1RCDeWw8L2g-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-30-BGKFw0z6O1KW_lUuAMjDLQ-1; Mon, 10 Jul 2023 02:47:15 -0400
+X-MC-Unique: BGKFw0z6O1KW_lUuAMjDLQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 81CFA104D517;
-	Mon, 10 Jul 2023 06:47:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 891E53815F19;
+	Mon, 10 Jul 2023 06:47:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 693A4F66B4;
-	Mon, 10 Jul 2023 06:47:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 77C4C40C2072;
+	Mon, 10 Jul 2023 06:47:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E1CAC19465A8;
-	Mon, 10 Jul 2023 06:46:59 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 03E5D19451D5;
+	Mon, 10 Jul 2023 06:46:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id DD70D1946588
- for <dm-devel@listman.corp.redhat.com>; Wed,  5 Jul 2023 15:19:26 +0000 (UTC)
+ ESMTP id 8C23A1946587
+ for <dm-devel@listman.corp.redhat.com>; Wed, 28 Jun 2023 06:51:17 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id BE33F1401C2E; Wed,  5 Jul 2023 15:19:26 +0000 (UTC)
+ id 6BCF9111F3B6; Wed, 28 Jun 2023 06:51:17 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B5EFE15230A8
- for <dm-devel@redhat.com>; Wed,  5 Jul 2023 15:19:26 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 969C52A5957D
- for <dm-devel@redhat.com>; Wed,  5 Jul 2023 15:19:26 +0000 (UTC)
-Received: from mail-il1-f177.google.com (mail-il1-f177.google.com
- [209.85.166.177]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 645D2111F3B0
+ for <dm-devel@redhat.com>; Wed, 28 Jun 2023 06:51:17 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4B07D3C01D9A
+ for <dm-devel@redhat.com>; Wed, 28 Jun 2023 06:51:17 +0000 (UTC)
+Received: from dfw.source.kernel.org (dfw.source.kernel.org
+ [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-619-uBMJ88jqNQ-yVBLRPjP6Ug-1; Wed, 05 Jul 2023 11:19:25 -0400
-X-MC-Unique: uBMJ88jqNQ-yVBLRPjP6Ug-1
-Received: by mail-il1-f177.google.com with SMTP id
- e9e14a558f8ab-345fcf8951fso15439095ab.1; 
- Wed, 05 Jul 2023 08:19:24 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1688570364; x=1691162364;
- h=content-transfer-encoding:in-reply-to:from:references:cc:to
- :content-language:subject:user-agent:mime-version:date:message-id
- :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=vhOVd+fM39By6Neo4SNlvIwXWgDBhgramNmEhS79nFc=;
- b=CIshDiCJz3VQYTU2Q3wTojO22Bb7SwVCelpWOthzzo766A5WQkt5DiyJCQQ3w99l/x
- apWzBlqxa+fLK2ekjr0CWrov+Ic4wQI6XIEdOOxXvxSDQjoRKwsrmSNgpg8f3J2lBbOp
- 27uQvijJ2mZp3AwJ3g6CK5JB0hXdHiH1Kfand1aGcqMVmE89t9Vj9UV5CAIhCJs+nd0+
- 9PKThCepgfOnMuhUVzfdOcCgcNrEE9eyzAsft1mfPCdCGDIWxcJNP9FkPeDznyiUN4JF
- oP2gTyBL0wZ0tBFd2635O3doANj2hWIi+k289O1tot1/5GaAQnt9P/IF6KLmaA6oSaIy
- 6Jiw==
-X-Gm-Message-State: AC+VfDzNQ0uzCfalel8ecBcCLB8ZcGqagjb6a6GFhQnNXKS8OzAfGX7E
- W8DnkJzOdLHgXvq3751cS8SMPLRPsvAoVA==
-X-Google-Smtp-Source: ACHHUZ70uoI88DRVhGiNe4v8NMOn4CckRug5A25bO6UrnrhXn4O+oQb9CB+u9z1UucgpvIObIHjohw==
-X-Received: by 2002:a05:6602:2113:b0:784:314f:8d68 with SMTP id
- x19-20020a056602211300b00784314f8d68mr18093430iox.1.1688570364015; 
- Wed, 05 Jul 2023 08:19:24 -0700 (PDT)
-Received: from ?IPV6:2620:15c:211:201:c1f1:7d21:6172:cbd2?
- ([2620:15c:211:201:c1f1:7d21:6172:cbd2])
- by smtp.gmail.com with ESMTPSA id
- l6-20020a656806000000b005579c73d209sm15456631pgt.1.2023.07.05.08.19.17
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Wed, 05 Jul 2023 08:19:23 -0700 (PDT)
-Message-ID: <1ea08f84-f900-92f2-e32b-2db242a74559@acm.org>
-Date: Wed, 5 Jul 2023 08:19:16 -0700
+ us-mta-84-WlHgca6pNkSco4__N715zg-1; Wed, 28 Jun 2023 02:51:14 -0400
+X-MC-Unique: WlHgca6pNkSco4__N715zg-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature RSA-PSS (2048 bits))
+ (No client certificate requested)
+ by dfw.source.kernel.org (Postfix) with ESMTPS id 9052C61315;
+ Wed, 28 Jun 2023 06:51:13 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3B0FDC433C8;
+ Wed, 28 Jun 2023 06:51:10 +0000 (UTC)
+Message-ID: <365d5129-b65e-919a-3ceb-cc2ccf6b7a5a@kernel.org>
+Date: Wed, 28 Jun 2023 15:51:09 +0900
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.11.0
-To: Matthew Wilcox <willy@infradead.org>
-References: <20230629165206.383-1-jack@suse.cz>
- <20230704122224.16257-1-jack@suse.cz>
- <bb91e76b-0bd8-a949-f8b9-868f919ebcb9@acm.org>
- <ZKRFSZQglwCba9/i@casper.infradead.org>
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <ZKRFSZQglwCba9/i@casper.infradead.org>
+ Thunderbird/102.12.0
+To: Nitesh Shetty <nj.shetty@samsung.com>, Jens Axboe <axboe@kernel.dk>,
+ Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, dm-devel@redhat.com,
+ Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>,
+ Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>,
+ Alexander Viro <viro@zeniv.linux.org.uk>,
+ Christian Brauner <brauner@kernel.org>
+References: <20230627183629.26571-1-nj.shetty@samsung.com>
+ <CGME20230627184029epcas5p49a29676fa6dff5f24ddfa5c64e525a51@epcas5p4.samsung.com>
+ <20230627183629.26571-5-nj.shetty@samsung.com>
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <20230627183629.26571-5-nj.shetty@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -101,10 +89,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mailman-Approved-At: Mon, 10 Jul 2023 06:46:55 +0000
-Subject: Re: [dm-devel] [PATCH 01/32] block: Provide blkdev_get_handle_*
- functions
+Subject: Re: [dm-devel] [PATCH v13 4/9] fs,
+ block: copy_file_range for def_blk_ops for direct block device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -116,63 +104,181 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
- Jan Kara <jack@suse.cz>, "Darrick J. Wong" <djwong@kernel.org>,
- linux-nvme@lists.infradead.org, Joseph Qi <joseph.qi@linux.alibaba.com>,
- dm-devel@redhat.com, target-devel@vger.kernel.org,
- linux-mtd@lists.infradead.org, Jack Wang <jinpu.wang@ionos.com>,
- Alasdair Kergon <agk@redhat.com>, drbd-dev@lists.linbit.com,
- linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org,
- linux-scsi@vger.kernel.org, Sergey Senozhatsky <senozhatsky@chromium.org>,
- Christoph Hellwig <hch@infradead.org>, xen-devel@lists.xenproject.org,
- Gao Xiang <xiang@kernel.org>,
- Christian Borntraeger <borntraeger@linux.ibm.com>,
- Kent Overstreet <kent.overstreet@gmail.com>,
- Sven Schnelle <svens@linux.ibm.com>, linux-pm@vger.kernel.org,
- Mike Snitzer <snitzer@kernel.org>, Chao Yu <chao@kernel.org>,
- Joern Engel <joern@lazybastard.org>, reiserfs-devel@vger.kernel.org,
- linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
- David Sterba <dsterba@suse.com>, Jaegeuk Kim <jaegeuk@kernel.org>,
- Trond Myklebust <trond.myklebust@hammerspace.com>,
- Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org,
- linux-nfs@vger.kernel.org, linux-ext4@vger.kernel.org, Ted Tso <tytso@mit.edu>,
- linux-mm@kvack.org, Song Liu <song@kernel.org>,
- linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
- Minchan Kim <minchan@kernel.org>, ocfs2-devel@oss.oracle.com,
- Anna Schumaker <anna@kernel.org>, linux-fsdevel@vger.kernel.org,
- "Md. Haris Iqbal" <haris.iqbal@ionos.com>,
- Andrew Morton <akpm@linux-foundation.org>, linux-erofs@lists.ozlabs.org,
- linux-btrfs@vger.kernel.org
+Cc: linux-nvme@lists.infradead.org, bvanassche@acm.org,
+ linux-scsi@vger.kernel.org, linux-doc@vger.kernel.org, djwong@kernel.org,
+ nitheshshetty@gmail.com, linux-kernel@vger.kernel.org, willy@infradead.org,
+ ming.lei@redhat.com, linux-block@vger.kernel.org, martin.petersen@oracle.com,
+ linux-fsdevel@vger.kernel.org, gost.dev@samsung.com,
+ Anuj Gupta <anuj20.g@samsung.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: acm.org
+X-Mimecast-Originator: kernel.org
 Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 7/4/23 09:14, Matthew Wilcox wrote:
-> On Tue, Jul 04, 2023 at 07:06:26AM -0700, Bart Van Assche wrote:
->> On 7/4/23 05:21, Jan Kara wrote:
->>> +struct bdev_handle {
->>> +	struct block_device *bdev;
->>> +	void *holder;
->>> +};
->>
->> Please explain in the patch description why a holder pointer is introduced
->> in struct bdev_handle and how it relates to the bd_holder pointer in struct
->> block_device. Is one of the purposes of this patch series perhaps to add
->> support for multiple holders per block device?
+On 6/28/23 03:36, Nitesh Shetty wrote:
+> For direct block device opened with O_DIRECT, use copy_file_range to
+> issue device copy offload, and fallback to generic_copy_file_range incase
+> device copy offload capability is absent.
+
+...if the device does not support copy offload or the device files are not open
+with O_DIRECT.
+
+No ?
+
+> Modify checks to allow bdevs to use copy_file_range.
 > 
-> That is all in patch 0/32.  Why repeat it?
+> Suggested-by: Ming Lei <ming.lei@redhat.com>
+> Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
+> Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
+> ---
+>  block/blk-lib.c        | 26 ++++++++++++++++++++++++++
+>  block/fops.c           | 20 ++++++++++++++++++++
+>  fs/read_write.c        |  7 +++++--
+>  include/linux/blkdev.h |  4 ++++
+>  4 files changed, 55 insertions(+), 2 deletions(-)
+> 
+> diff --git a/block/blk-lib.c b/block/blk-lib.c
+> index 09e0d5d51d03..7d8e09a99254 100644
+> --- a/block/blk-lib.c
+> +++ b/block/blk-lib.c
+> @@ -473,6 +473,32 @@ ssize_t blkdev_copy_offload(
+>  }
+>  EXPORT_SYMBOL_GPL(blkdev_copy_offload);
+>  
+> +/* Copy source offset from source block device to destination block
+> + * device. Returns the length of bytes copied.
+> + */
 
-This cover letter: https://lore.kernel.org/linux-block/20230629165206.383-1-jack@suse.cz/T/#t?
+Multi-line comment style: start with a "/*" line please.
 
-The word "holder" doesn't even occur in that cover letter so how could the
-answer to my question be present in the cover letter?
+> +ssize_t blkdev_copy_offload_failfast(
 
-Bart.
+What is the "failfast" in the name for ?
+
+> +		struct block_device *bdev_in, loff_t pos_in,
+> +		struct block_device *bdev_out, loff_t pos_out,
+> +		size_t len, gfp_t gfp_mask)
+> +{
+> +	struct request_queue *in_q = bdev_get_queue(bdev_in);
+> +	struct request_queue *out_q = bdev_get_queue(bdev_out);
+> +	ssize_t ret = 0;
+
+You do not need this initialization.
+
+> +
+> +	if (blkdev_copy_sanity_check(bdev_in, pos_in, bdev_out, pos_out, len))
+> +		return 0;
+> +
+> +	if (blk_queue_copy(in_q) && blk_queue_copy(out_q)) {
+
+Given that I think we do not allow copies between different devices, in_q and
+out_q should always be the same, no ?
+
+> +		ret = __blkdev_copy_offload(bdev_in, pos_in, bdev_out, pos_out,
+> +				len, NULL, NULL, gfp_mask);
+
+Same here. Why pass 2 bdevs if we only allow copies within the same device ?
+
+> +		if (ret < 0)
+> +			return 0;
+> +	}
+> +
+> +	return ret;
+
+return 0;
+
+> +}
+> +EXPORT_SYMBOL_GPL(blkdev_copy_offload_failfast);
+> +
+>  static int __blkdev_issue_write_zeroes(struct block_device *bdev,
+>  		sector_t sector, sector_t nr_sects, gfp_t gfp_mask,
+>  		struct bio **biop, unsigned flags)
+> diff --git a/block/fops.c b/block/fops.c
+> index a286bf3325c5..a1576304f269 100644
+> --- a/block/fops.c
+> +++ b/block/fops.c
+> @@ -621,6 +621,25 @@ static ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
+>  	return ret;
+>  }
+>  
+> +static ssize_t blkdev_copy_file_range(struct file *file_in, loff_t pos_in,
+> +				struct file *file_out, loff_t pos_out,
+> +				size_t len, unsigned int flags)
+> +{
+> +	struct block_device *in_bdev = I_BDEV(bdev_file_inode(file_in));
+> +	struct block_device *out_bdev = I_BDEV(bdev_file_inode(file_out));
+> +	ssize_t comp_len = 0;
+> +
+> +	if ((file_in->f_iocb_flags & IOCB_DIRECT) &&
+> +		(file_out->f_iocb_flags & IOCB_DIRECT))
+> +		comp_len = blkdev_copy_offload_failfast(in_bdev, pos_in,
+> +				out_bdev, pos_out, len, GFP_KERNEL);
+> +	if (comp_len != len)
+> +		comp_len = generic_copy_file_range(file_in, pos_in + comp_len,
+> +			file_out, pos_out + comp_len, len - comp_len, flags);
+> +
+> +	return comp_len;
+> +}
+> +
+>  #define	BLKDEV_FALLOC_FL_SUPPORTED					\
+>  		(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |		\
+>  		 FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE)
+> @@ -714,6 +733,7 @@ const struct file_operations def_blk_fops = {
+>  	.splice_read	= filemap_splice_read,
+>  	.splice_write	= iter_file_splice_write,
+>  	.fallocate	= blkdev_fallocate,
+> +	.copy_file_range = blkdev_copy_file_range,
+>  };
+>  
+>  static __init int blkdev_init(void)
+> diff --git a/fs/read_write.c b/fs/read_write.c
+> index b07de77ef126..d27148a2543f 100644
+> --- a/fs/read_write.c
+> +++ b/fs/read_write.c
+> @@ -1447,7 +1447,8 @@ static int generic_copy_file_checks(struct file *file_in, loff_t pos_in,
+>  		return -EOVERFLOW;
+>  
+>  	/* Shorten the copy to EOF */
+> -	size_in = i_size_read(inode_in);
+> +	size_in = i_size_read(file_in->f_mapping->host);
+> +
+>  	if (pos_in >= size_in)
+>  		count = 0;
+>  	else
+> @@ -1708,7 +1709,9 @@ int generic_file_rw_checks(struct file *file_in, struct file *file_out)
+>  	/* Don't copy dirs, pipes, sockets... */
+>  	if (S_ISDIR(inode_in->i_mode) || S_ISDIR(inode_out->i_mode))
+>  		return -EISDIR;
+> -	if (!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode))
+> +
+> +	if ((!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode)) &&
+> +		(!S_ISBLK(inode_in->i_mode) || !S_ISBLK(inode_out->i_mode)))
+>  		return -EINVAL;
+>  
+>  	if (!(file_in->f_mode & FMODE_READ) ||
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index c176bf6173c5..850168cad080 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -1047,6 +1047,10 @@ ssize_t blkdev_copy_offload(
+>  		struct block_device *bdev_in, loff_t pos_in,
+>  		struct block_device *bdev_out, loff_t pos_out,
+>  		size_t len, cio_iodone_t end_io, void *private, gfp_t gfp_mask);
+> +ssize_t blkdev_copy_offload_failfast(
+> +		struct block_device *bdev_in, loff_t pos_in,
+> +		struct block_device *bdev_out, loff_t pos_out,
+> +		size_t len, gfp_t gfp_mask);
+>  struct bio *bio_map_kern(struct request_queue *q, void *data, unsigned int len,
+>  		gfp_t gfp_mask);
+>  void bio_map_kern_endio(struct bio *bio);
+
+-- 
+Damien Le Moal
+Western Digital Research
 
 --
 dm-devel mailing list
