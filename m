@@ -4,84 +4,92 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CB8E5EB64D7
-	for <dm-devel@archiver.kernel.org>; Wed, 28 Jun 2023 12:56:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id BE533EB64D7
+	for <dm-devel@archiver.kernel.org>; Wed, 28 Jun 2023 17:51:48 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1687956980;
+	s=mimecast20190719; t=1687974707;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=dc+XjJ9z8tKcnAofV7+1mUgtMhhB5/5kmERflGcqOxs=;
-	b=G91K3naemqafoD9exULP6ealbI0FU+QRrpD9ml+fCfHnmCIwET1RQyWyKLyNUEDeMsuHKy
-	WC5kdZzfz87eqnj/ThVrVz0hP/cbEaCqR21WRc/rE5DKtEwV7WL1TUOc4R+4qM3XYwO1LT
-	P2hdkc1b88slOSlEUvE3T9RwiCSZ7rg=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=Kxxwnw9lQmyYxhBv4lDf6JaX7bHIwmtjAq6YiJ53xuw=;
+	b=ME1r+3axWrFlYM054A8DIyPcvN2I+m/bCpx86zFWEeFzeklcV1/xXf0HCjleYcuAUT/Qzy
+	u3BIBs+s3oYIy4DqX4FpI4iFEzPHOoa6N//t74BWhgOL6TOzAZDNssTuFx2qjwZZ1h/zM3
+	gUzF1nnXvAivPpKlZ/VpG6tdQEN/gs4=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-557-4zEoKCxpPrC53qn7CH639A-1; Wed, 28 Jun 2023 08:56:16 -0400
-X-MC-Unique: 4zEoKCxpPrC53qn7CH639A-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-247-Eu0uT9PBOPqNzcV7uarlAw-1; Wed, 28 Jun 2023 13:51:46 -0400
+X-MC-Unique: Eu0uT9PBOPqNzcV7uarlAw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DBE012814258;
-	Wed, 28 Jun 2023 12:56:11 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3748CF5CE0;
-	Wed, 28 Jun 2023 12:56:11 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 462B9101A54E;
+	Wed, 28 Jun 2023 17:51:44 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D63A8140EBB8;
+	Wed, 28 Jun 2023 17:51:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EF4331946589;
-	Wed, 28 Jun 2023 12:56:05 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7E8031946589;
+	Wed, 28 Jun 2023 17:51:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A00BE1946587
- for <dm-devel@listman.corp.redhat.com>; Wed, 28 Jun 2023 12:52:59 +0000 (UTC)
+ ESMTP id EB17B1946587
+ for <dm-devel@listman.corp.redhat.com>; Wed, 28 Jun 2023 17:51:38 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7C5FF40C206F; Wed, 28 Jun 2023 12:52:54 +0000 (UTC)
+ id B5E802166B26; Wed, 28 Jun 2023 17:51:38 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7453F40C2063
- for <dm-devel@redhat.com>; Wed, 28 Jun 2023 12:52:54 +0000 (UTC)
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id AE0702166B25
+ for <dm-devel@redhat.com>; Wed, 28 Jun 2023 17:51:38 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5892C92E4C0
- for <dm-devel@redhat.com>; Wed, 28 Jun 2023 12:52:54 +0000 (UTC)
-Received: from mga07.intel.com (mga07.intel.com [134.134.136.100]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-91-GwfC1-r5O5-D3i4ckYwAIQ-1; Wed, 28 Jun 2023 08:52:52 -0400
-X-MC-Unique: GwfC1-r5O5-D3i4ckYwAIQ-1
-X-IronPort-AV: E=McAfee;i="6600,9927,10754"; a="427840693"
-X-IronPort-AV: E=Sophos;i="6.01,165,1684825200"; d="scan'208";a="427840693"
-Received: from orsmga001.jf.intel.com ([10.7.209.18])
- by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
- 28 Jun 2023 05:52:50 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10754"; a="752247641"
-X-IronPort-AV: E=Sophos;i="6.01,165,1684825200"; d="scan'208";a="752247641"
-Received: from lkp-server01.sh.intel.com (HELO 783282924a45) ([10.239.97.150])
- by orsmga001.jf.intel.com with ESMTP; 28 Jun 2023 05:52:41 -0700
-Received: from kbuild by 783282924a45 with local (Exim 4.96)
- (envelope-from <lkp@intel.com>) id 1qEUf2-000DGN-2m;
- Wed, 28 Jun 2023 12:52:40 +0000
-Date: Wed, 28 Jun 2023 20:52:40 +0800
-From: kernel test robot <lkp@intel.com>
-To: Nitesh Shetty <nj.shetty@samsung.com>, Jens Axboe <axboe@kernel.dk>,
- Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>, dm-devel@redhat.com,
- Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>,
- Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>,
- Alexander Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>
-Message-ID: <202306282001.ba1qWTf0-lkp@intel.com>
-References: <20230627183629.26571-10-nj.shetty@samsung.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8D99E381D4C9
+ for <dm-devel@redhat.com>; Wed, 28 Jun 2023 17:51:38 +0000 (UTC)
+Received: from mail-pl1-f180.google.com (mail-pl1-f180.google.com
+ [209.85.214.180]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-448-bsviz94lOsuLX-5bMz7nbg-1; Wed, 28 Jun 2023 13:51:36 -0400
+X-MC-Unique: bsviz94lOsuLX-5bMz7nbg-1
+Received: by mail-pl1-f180.google.com with SMTP id
+ d9443c01a7336-1b8062c1ee1so1465605ad.3
+ for <dm-devel@redhat.com>; Wed, 28 Jun 2023 10:51:35 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1687974695; x=1690566695;
+ h=content-transfer-encoding:mime-version:references:in-reply-to
+ :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=Na6wbo2C6aZoJR9rArIrRD0H3fmD8LNX5u5EBRrSJvE=;
+ b=BMEDaQvGf/xGX4BmV3MnieHEmT6XbohFJ8+uziASt+Ya0XDWyd9fCGsr5ZbJahtphi
+ 91yxiawg97lkVE4k8m2JdAuWsFe8QFlMkHRwtFhOPPuu1q0S4QWBW0mpNn9SfuKr4+3v
+ pIuxn+LWrpFTevNNqxmUoysxRmp69WnVSlRz1skGEzIgheAFEBxMkWmAVPJde70JzA2f
+ HWTXxR9gbHxL70eJG2JlihQSnB4VftTkSeHnzDO/qKTePS8NwFebcqofz0qDnAWZqhKj
+ keLtIhuL0xaFOpJVcK+rsNIx86RAROlIIA9UyuO8+3UU28At6gqTJ/+UAgOiwUFyb/8J
+ qzzg==
+X-Gm-Message-State: AC+VfDwxxQapHF3tQ3kbYcYNFLvetGf3vdyzUkgMN2mZTzp7LJ/IM8Hz
+ 1LF95QnPZJypzU0M3TYcqF+wqA==
+X-Google-Smtp-Source: ACHHUZ63L9QbPfTdUQ6qSD2HU+s2JHZnlPcbunw6wounkGXlQH24tFhd3uE8uPfzqtWHgRWnVYh8wA==
+X-Received: by 2002:a17:903:24d:b0:1b6:9b38:6004 with SMTP id
+ j13-20020a170903024d00b001b69b386004mr16700746plh.22.1687974695060; 
+ Wed, 28 Jun 2023 10:51:35 -0700 (PDT)
+Received: from www.outflux.net (198-0-35-241-static.hfc.comcastbusiness.net.
+ [198.0.35.241]) by smtp.gmail.com with ESMTPSA id
+ l13-20020a170902f68d00b001b843593e48sm1326552plg.228.2023.06.28.10.51.32
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 28 Jun 2023 10:51:33 -0700 (PDT)
+From: Kees Cook <keescook@chromium.org>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Matthias Kaehlcke <mka@chromium.org>
+Date: Wed, 28 Jun 2023 10:51:29 -0700
+Message-Id: <168797468756.1160226.11804940754677813929.b4-ty@chromium.org>
+In-Reply-To: <20230627202800.1.Id63f7f59536d20f1ab83e1abdc1fda1471c7d031@changeid>
+References: <20230627202800.1.Id63f7f59536d20f1ab83e1abdc1fda1471c7d031@changeid>
 MIME-Version: 1.0
-In-Reply-To: <20230627183629.26571-10-nj.shetty@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -89,9 +97,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH v13 9/9] null_blk: add support for copy
- offload
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH] dm: verity-loadpin: Add NULL pointer check
+ for 'bdev' parameter
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,139 +111,36 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Anuj Gupta <anuj20.g@samsung.com>,
- Damien Le Moal <damien.lemoal@opensource.wdc.com>,
- linux-nvme@lists.infradead.org, martin.petersen@oracle.com,
- linux-scsi@vger.kernel.org, Vincent Fu <vincent.fu@samsung.com>,
- djwong@kernel.org, nitheshshetty@gmail.com, llvm@lists.linux.dev,
- linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, willy@infradead.org,
- ming.lei@redhat.com, linux-block@vger.kernel.org, dlemoal@kernel.org,
- oe-kbuild-all@lists.linux.dev, linux-fsdevel@vger.kernel.org,
- gost.dev@samsung.com, Nitesh Shetty <nj.shetty@samsung.com>,
- bvanassche@acm.org
+Cc: dm-devel@redhat.com, Kees Cook <keescook@chromium.org>,
+ stable@vger.kernel.org, linux-kernel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: intel.com
-Content-Disposition: inline
+X-Mimecast-Originator: chromium.org
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi Nitesh,
 
-kernel test robot noticed the following build warnings:
+On Tue, 27 Jun 2023 20:28:01 +0000, Matthias Kaehlcke wrote:
+> Add a NULL check for the 'bdev' parameter of
+> dm_verity_loadpin_is_bdev_trusted(). The function is called
+> by loadpin_check(), which passes the block device that
+> corresponds to the super block of the file system from which
+> a file is being loaded. Generally a super_block structure has
+> an associated block device, however that is not always the
+> case (e.g. tmpfs).
+> 
+> [...]
 
-[auto build test WARNING on 53cdf865f90ba922a854c65ed05b519f9d728424]
+Applied, thanks!
 
-url:    https://github.com/intel-lab-lkp/linux/commits/Nitesh-Shetty/block-Introduce-queue-limits-for-copy-offload-support/20230628-163126
-base:   53cdf865f90ba922a854c65ed05b519f9d728424
-patch link:    https://lore.kernel.org/r/20230627183629.26571-10-nj.shetty%40samsung.com
-patch subject: [PATCH v13 9/9] null_blk: add support for copy offload
-config: i386-randconfig-i006-20230628 (https://download.01.org/0day-ci/archive/20230628/202306282001.ba1qWTf0-lkp@intel.com/config)
-compiler: clang version 15.0.7 (https://github.com/llvm/llvm-project.git 8dfdcc7b7bf66834a761bd8de445840ef68e4d1a)
-reproduce: (https://download.01.org/0day-ci/archive/20230628/202306282001.ba1qWTf0-lkp@intel.com/reproduce)
+[1/1] dm: verity-loadpin: Add NULL pointer check for 'bdev' parameter
+      https://git.kernel.org/kees/c/47f04616f2c9
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202306282001.ba1qWTf0-lkp@intel.com/
-
-All warnings (new ones prefixed by >>):
-
->> drivers/block/null_blk/main.c:1295:2: warning: variable 'rem' is used uninitialized whenever 'if' condition is false [-Wsometimes-uninitialized]
-           __rq_for_each_bio(bio, req) {
-           ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-   include/linux/blk-mq.h:1012:6: note: expanded from macro '__rq_for_each_bio'
-           if ((rq->bio))                  \
-               ^~~~~~~~~
-   drivers/block/null_blk/main.c:1300:15: note: uninitialized use occurs here
-           if (WARN_ON(!rem))
-                        ^~~
-   include/asm-generic/bug.h:123:25: note: expanded from macro 'WARN_ON'
-           int __ret_warn_on = !!(condition);                              \
-                                  ^~~~~~~~~
-   drivers/block/null_blk/main.c:1295:2: note: remove the 'if' if its condition is always true
-           __rq_for_each_bio(bio, req) {
-           ^
-   include/linux/blk-mq.h:1012:2: note: expanded from macro '__rq_for_each_bio'
-           if ((rq->bio))                  \
-           ^
-   drivers/block/null_blk/main.c:1287:12: note: initialize the variable 'rem' to silence this warning
-           size_t rem, temp;
-                     ^
-                      = 0
-   1 warning generated.
-
-
-vim +1295 drivers/block/null_blk/main.c
-
-  1281	
-  1282	static inline int nullb_setup_copy_write(struct nullb *nullb,
-  1283			struct request *req, bool is_fua)
-  1284	{
-  1285		sector_t sector_in, sector_out;
-  1286		void *in, *out;
-  1287		size_t rem, temp;
-  1288		struct bio *bio;
-  1289		unsigned long offset_in, offset_out;
-  1290		struct nullb_page *t_page_in, *t_page_out;
-  1291		int ret = -EIO;
-  1292	
-  1293		sector_out = blk_rq_pos(req);
-  1294	
-> 1295		__rq_for_each_bio(bio, req) {
-  1296			sector_in = bio->bi_iter.bi_sector;
-  1297			rem = bio->bi_iter.bi_size;
-  1298		}
-  1299	
-  1300		if (WARN_ON(!rem))
-  1301			return BLK_STS_NOTSUPP;
-  1302	
-  1303		spin_lock_irq(&nullb->lock);
-  1304		while (rem > 0) {
-  1305			temp = min_t(size_t, nullb->dev->blocksize, rem);
-  1306			offset_in = (sector_in & SECTOR_MASK) << SECTOR_SHIFT;
-  1307			offset_out = (sector_out & SECTOR_MASK) << SECTOR_SHIFT;
-  1308	
-  1309			if (null_cache_active(nullb) && !is_fua)
-  1310				null_make_cache_space(nullb, PAGE_SIZE);
-  1311	
-  1312			t_page_in = null_lookup_page(nullb, sector_in, false,
-  1313				!null_cache_active(nullb));
-  1314			if (!t_page_in)
-  1315				goto err;
-  1316			t_page_out = null_insert_page(nullb, sector_out,
-  1317				!null_cache_active(nullb) || is_fua);
-  1318			if (!t_page_out)
-  1319				goto err;
-  1320	
-  1321			in = kmap_local_page(t_page_in->page);
-  1322			out = kmap_local_page(t_page_out->page);
-  1323	
-  1324			memcpy(out + offset_out, in + offset_in, temp);
-  1325			kunmap_local(out);
-  1326			kunmap_local(in);
-  1327			__set_bit(sector_out & SECTOR_MASK, t_page_out->bitmap);
-  1328	
-  1329			if (is_fua)
-  1330				null_free_sector(nullb, sector_out, true);
-  1331	
-  1332			rem -= temp;
-  1333			sector_in += temp >> SECTOR_SHIFT;
-  1334			sector_out += temp >> SECTOR_SHIFT;
-  1335		}
-  1336	
-  1337		ret = 0;
-  1338	err:
-  1339		spin_unlock_irq(&nullb->lock);
-  1340		return ret;
-  1341	}
-  1342	
-
+Best regards,
 -- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
+Kees Cook
 
 --
 dm-devel mailing list
