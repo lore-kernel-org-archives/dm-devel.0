@@ -4,144 +4,144 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C729DEB64DD
-	for <dm-devel@archiver.kernel.org>; Thu, 29 Jun 2023 07:47:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6E749EB64DC
+	for <dm-devel@archiver.kernel.org>; Thu, 29 Jun 2023 07:48:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1688024872;
+	s=mimecast20190719; t=1688024889;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:in-reply-to:in-reply-to:
 	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=DfbiuB5GiZu3kC/v/JTjrRzqf4xc31Pmn55mZdN+oOk=;
-	b=NcRLHvFKRgNMKyZ6TbM2wa4oMtjWB3jma89KSWpqdMW2TgEfMRmlKFwwpla+KVMNn2/z/2
-	UHDwY76KuDbil955FZ+PRuZd+pKtBrwEDlH4KNtX3RrD0/q0TCFeUbJjnzxeFWKpvn16rw
-	5+aGdpm7wkFygQvuVRYz+ivyvWhmz9w=
+	 list-subscribe:list-post; bh=kuZgiG9vY+pLs/Y8e8rRd52sfObulpUWLg+wr0PXy5g=;
+	b=KFiLPCIWaW2Y+aKINhbff30qHwi7qT9RG7jkKd0WPAn9dvhFid7CCKg7AJ2UMU1iYUCKle
+	tcJomXcfNxydS4P3W2oLMo132mEVbqj2EmZn05uLTq3yGK+UkvdV7GNJIlquA12d5p00M5
+	6BFK3vwl2xguSMK2NMEJI/Q+6Hvzf+g=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-459-pD6mTxUyPBCaPwS9g57F7g-1; Thu, 29 Jun 2023 03:47:51 -0400
-X-MC-Unique: pD6mTxUyPBCaPwS9g57F7g-1
+ us-mta-483-jcwVh7G2MCi6euovyPMkwQ-1; Thu, 29 Jun 2023 03:48:05 -0400
+X-MC-Unique: jcwVh7G2MCi6euovyPMkwQ-1
 Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5F3B1185A794;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4286880123E;
 	Thu, 29 Jun 2023 07:47:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 495354CD0C6;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2A2DF4CD0C3;
 	Thu, 29 Jun 2023 07:47:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1EB2F1946A78;
-	Thu, 29 Jun 2023 07:47:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E3AA01946594;
+	Thu, 29 Jun 2023 07:47:48 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E91BD1946A4E
- for <dm-devel@listman.corp.redhat.com>; Thu, 29 Jun 2023 07:47:36 +0000 (UTC)
+ ESMTP id E567A1946A41
+ for <dm-devel@listman.corp.redhat.com>; Thu, 29 Jun 2023 07:47:31 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 29E0640C2070; Thu, 29 Jun 2023 07:47:36 +0000 (UTC)
+ id A7C0D1121314; Thu, 29 Jun 2023 07:47:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2263240C2063
- for <dm-devel@redhat.com>; Thu, 29 Jun 2023 07:47:36 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 9FB921121315
+ for <dm-devel@redhat.com>; Thu, 29 Jun 2023 07:47:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
+ [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 02BD3282CCAB
- for <dm-devel@redhat.com>; Thu, 29 Jun 2023 07:47:36 +0000 (UTC)
-Received: from mailout2.samsung.com (mailout2.samsung.com [203.254.224.25])
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6866A85A58A
+ for <dm-devel@redhat.com>; Thu, 29 Jun 2023 07:47:31 +0000 (UTC)
+Received: from mailout1.samsung.com (mailout1.samsung.com [203.254.224.24])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-595-MgMMEy63OOWDY3hK7iVBeg-1; Thu, 29 Jun 2023 03:47:33 -0400
-X-MC-Unique: MgMMEy63OOWDY3hK7iVBeg-1
-Received: from epcas5p1.samsung.com (unknown [182.195.41.39])
- by mailout2.samsung.com (KnoxPortal) with ESMTP id
- 20230629074730epoutp021e793ab85c3afc717e9aab11d102cfa3~tEaiJi_O11836818368epoutp02-
- for <dm-devel@redhat.com>; Thu, 29 Jun 2023 07:47:30 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.samsung.com
- 20230629074730epoutp021e793ab85c3afc717e9aab11d102cfa3~tEaiJi_O11836818368epoutp02-
+ us-mta-220-8rIND3ggMmefMR5iObF6fw-1; Thu, 29 Jun 2023 03:47:28 -0400
+X-MC-Unique: 8rIND3ggMmefMR5iObF6fw-1
+Received: from epcas5p4.samsung.com (unknown [182.195.41.42])
+ by mailout1.samsung.com (KnoxPortal) with ESMTP id
+ 20230629074725epoutp01f4c77b27e22f0435ff0956e17085fae8~tEadS7IA-2637026370epoutp010
+ for <dm-devel@redhat.com>; Thu, 29 Jun 2023 07:47:25 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.samsung.com
+ 20230629074725epoutp01f4c77b27e22f0435ff0956e17085fae8~tEadS7IA-2637026370epoutp010
 Received: from epsnrtp3.localdomain (unknown [182.195.42.164]) by
- epcas5p1.samsung.com (KnoxPortal) with ESMTP id
- 20230629074730epcas5p1757c69cf1c0b167cb842f822b63f6c4b~tEahfXtAV3101931019epcas5p1h;
- Thu, 29 Jun 2023 07:47:30 +0000 (GMT)
-Received: from epsmgec5p1-new.samsung.com (unknown [182.195.38.180]) by
- epsnrtp3.localdomain (Postfix) with ESMTP id 4Qs9XJ1SDvz4x9Px; Thu, 29 Jun
- 2023 07:47:28 +0000 (GMT)
+ epcas5p3.samsung.com (KnoxPortal) with ESMTP id
+ 20230629074724epcas5p377d1eca0472f465e4e406badb25c08c4~tEacgdOPQ0843708437epcas5p3w;
+ Thu, 29 Jun 2023 07:47:24 +0000 (GMT)
+Received: from epsmgec5p1-new.samsung.com (unknown [182.195.38.174]) by
+ epsnrtp3.localdomain (Postfix) with ESMTP id 4Qs9XC1NWkz4x9Q7; Thu, 29 Jun
+ 2023 07:47:23 +0000 (GMT)
 Received: from epcas5p2.samsung.com ( [182.195.41.40]) by
  epsmgec5p1-new.samsung.com (Symantec Messaging Gateway) with SMTP id
- 9A.62.55173.F073D946; Thu, 29 Jun 2023 16:47:27 +0900 (KST)
-Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
- epcas5p4.samsung.com (KnoxPortal) with ESMTPA id
- 20230628161340epcas5p411a64c804db74c49dc1422826b0e738a~s3rLyhXFJ1535215352epcas5p4W;
- Wed, 28 Jun 2023 16:13:40 +0000 (GMT)
-Received: from epsmgmcp1.samsung.com (unknown [182.195.42.82]) by
- epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
- 20230628161340epsmtrp2ca5526b17aaf8cbe80823878e6175145~s3rLxYezi1270712707epsmtrp2a;
- Wed, 28 Jun 2023 16:13:40 +0000 (GMT)
-X-AuditID: b6c32a50-e61c07000001d785-63-649d370f21f0
+ 57.62.55173.B073D946; Thu, 29 Jun 2023 16:47:23 +0900 (KST)
+Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
+ epcas5p3.samsung.com (KnoxPortal) with ESMTPA id
+ 20230628160713epcas5p36c081366246fbaec7e4a0c0f6923b4b1~s3ljk_4D62429624296epcas5p3j;
+ Wed, 28 Jun 2023 16:07:13 +0000 (GMT)
+Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
+ epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
+ 20230628160713epsmtrp11aadd144fdb002419decec98bb14c3b9~s3ljigv9V0551805518epsmtrp1R;
+ Wed, 28 Jun 2023 16:07:13 +0000 (GMT)
+X-AuditID: b6c32a50-e61c07000001d785-59-649d370b7485
 Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
- epsmgmcp1.samsung.com (Symantec Messaging Gateway) with SMTP id
- 45.56.64355.43C5C946; Thu, 29 Jun 2023 01:13:40 +0900 (KST)
+ epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+ B6.C2.34491.1BA5C946; Thu, 29 Jun 2023 01:07:13 +0900 (KST)
 Received: from green245 (unknown [107.99.41.245]) by epsmtip2.samsung.com
  (KnoxPortal) with ESMTPA id
- 20230628161336epsmtip24012f214e598ff559a5b000f7979953c~s3rIJcCF83058030580epsmtip2E;
- Wed, 28 Jun 2023 16:13:36 +0000 (GMT)
-Date: Wed, 28 Jun 2023 21:40:31 +0530
+ 20230628160702epsmtip232aea2d90a898b8697d094fe374ecf51~s3lZS98o93059830598epsmtip2l;
+ Wed, 28 Jun 2023 16:07:01 +0000 (GMT)
+Date: Wed, 28 Jun 2023 21:33:54 +0530
 From: Nitesh Shetty <nj.shetty@samsung.com>
 To: Damien Le Moal <dlemoal@kernel.org>
-Message-ID: <20230628161031.snidi5qcpiffl2bx@green245>
+Message-ID: <20230628160354.lfzwxyb2i32tkp7d@green245>
 MIME-Version: 1.0
-In-Reply-To: <cdd190e3-d510-f4f3-46ee-3570f0317501@kernel.org>
+In-Reply-To: <e1b0c3d4-1f47-9b12-fdf3-190a9c6b427e@kernel.org>
 User-Agent: NeoMutt/20171215
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Te1BUdRTH/d3dvVyYlrki6q8FkZYYE+Kxwi4/GFgrUG5hDWbRjOnAyt6A
- gGXbhTRrkkeooLwDcUHA0oBFQR4yvB9LSSwqxFOewrRQk8YiCKYMGHCx/O9zvuec33nNj2CZ
- VBrwiBBZJK2QScL4uBG7um33G3akyyWp48Iwhsq0t1goNnWZhUrGUnD0oG0OoKzZpyykazkD
- UK/OGE0070WNMzkcNNRSi6GGH9IxVFzyC4bSNQMATfWrMNQ4bIsun77CRg2NHWzUW5eLo/yf
- pgzQucEaHBW2r2BIkxGHoRpdDEClD/Rs9OuwGfr93FmAupbbOWjpn1z8LXOqt8+HqlWNGVBd
- 4+VsqrLIhuq9E0VVqBNwqvLKKap+KBqnfkzO4FBJcTM49WhqmE3pm/pxKrlKDajKzq+p+QoL
- qkL3N+ZLHg51D6YlUlphScsCI6QhsiAPvs8hf09/ochRYCdwRS58S5kknPbgex3wtdsfEra6
- Hb7ll5KwqFXJV6JU8h3E7oqIqEjaMjhCGenBp+XSMLmz3F4pCVdGyYLsZXSkm8DRcY9wNTAg
- NFh7cYojz7c40ajuwKNBFUwEhgQkneH86T48ERgRJmQDgE8yRjaMOQDbhv7838j+uZn1IiX+
- XhKHcdQCqO/QsBhjGsCllZ71KDZpDR+3FLETAUHgpC3sfE6syabkLpiZ0QDWmEWW47Dn9sk1
- 3kK6wTs1k+s6lxTBpvpSnOHNsOOijr3GhqQY9i8mrOtbSXOYfXVho6FhQ1iaeohhL5j57CGb
- 4S3wr/YqA4Z5cH6mEWf4OCz+vmh9Mkh+B6BqUAUYx14Yr01hMc0Fw4GZ2xsP7YCZ2lKM0Y1h
- 0pIOY3QurMl7wVbwWlnBRoFX4cCTGHxtdkhS8G6vJ7OfeQAHH01zUsFO1UuzqV4qx7AbTJiN
- 5ahW01mkGSxcIRjcDcvqHAoARw14tFwZHkQHCuUCOxl9/L+LB0aEV4D132PjWwNKbizbawBG
- AA2ABItvyh15mCM14UolX52kFRH+iqgwWqkBwtVbpbF4WwMjVr+fLNJf4Ozq6CwSiZxdnUQC
- /nbuuHeC1IQMkkTSoTQtpxUv8jDCkBeNfUNY1/XnoT8K/E4luOdYxx2Y97kQ1DRy12aSN6Ft
- CRfPgIO6G/e7F/espHUcSRzL/e3z959qy/0Ob7c4mHMvNsAOn1C/krxPcKlLfX/aQZgX09l8
- zHDyk66YkMK+8dfaL3ykdHrcrRe2bfPfsaAdzRzLzttpfDUn3UX9oXjUIuvto2ZGbifcN1uP
- WsWH9zy/Kaut1oid3IXXRK2zacWfeYtHry838F4v/LSeN7tvTv+em9yXqyduefO43RnnNy2I
- 5nZJF8aPpCS9GWCLzrDnBZc/9nLeVGyk57iKF7+NJ/0+SKve/65uW/FRo4HSL9rPdx+zuump
- zDJfaH0WZtr/zvV+0/xWPlsZLBHYsBRKyb8fXSBQxgQAAA==
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFvrAIsWRmVeSWpSXmKPExsWy7bCSvK5JzJwUg6fbRS3WnzrGbNE04S+z
- xeq7/WwWrw9/YrSY9uEns8WTA+2MFpef8Fk82G9vsffdbFaLmwd2MlnsWTSJyWLl6qNMFpMO
- XWO0eHp1FpPF3lvaFgvblrBY7Nl7ksXi8q45bBbzlz1lt+i+voPNYvnxf0wWhyY3M1nseNLI
- aLHu9XsWixO3pC0ed3cwWpz/e5zV4vePOWwOMh6Xr3h77Jx1l93j/L2NLB6bV2h5XD5b6rFp
- VSebx+Yl9R67bzaweSzum8zq0dv8js3j49NbLB7v911l8+jbsorRY/Ppao/Pm+Q8Nj15yxQg
- EMVlk5Kak1mWWqRvl8CVMe3ZZraCi9IVfftFGhgbxLoYOTkkBEwkWm/0snYxcnEICWxnlFh6
- diUjREJSYtnfI8wQtrDEyn/P2SGKnjBKLPx+mgUkwSKgKvHlwAogm4ODTUBb4vR/DpCwiIC6
- xNTJexhB6pkFNrNJLL21mgkkISxgJXF2x0OwBbwCZhL7dq9jgxj6mVHi2YFnTBAJQYmTM5+A
- LWAGKpq3+SEzyAJmAWmJ5f/AFnAK2Elc/dbJBmKLCshIzFj6lXkCo+AsJN2zkHTPQuhewMi8
- ilE0taA4Nz03ucBQrzgxt7g0L10vOT93EyM4UWgF7WBctv6v3iFGJg7GQ4wSHMxKIry338xO
- EeJNSaysSi3Kjy8qzUktPsQozcGiJM6rnNOZIiSQnliSmp2aWpBaBJNl4uCUamBaq/flwrJp
- 21uDS+OnbxWYc0N8jm1H8I51rqL7/duM+05P1jdPWRhjPVNjjq1yzjrn5TWlMz59ulSx6OCl
- o1dm3LQ33LzlvMXLudfV5+9PdfI2vuHxKEhh9TSFoNDpGhxTxObaG06wiIo/9kAs8izDq4zv
- 0j3X6grmRwoF7uXlTZ7BdWDllCd+em6VUUnxb6/vyZC1i+Se8LRJbL0Nx2PbK9f33g83lvq7
- rWJDnn2QrFOwfUTKtgxvGbfDzFzreb7X3GUQ9zvXv2aWm6D/4cj9LH2blE+sM12kwf/e+WFf
- U5Vy+3zT7AA9Jt5di9Lmsx2u+9pWeOy1DqvI395q9pTrSy1qBW7OdZqqxnmi4agSS3FGoqEW
- c1FxIgAlx8mFgwMAAA==
-X-CMS-MailID: 20230628161340epcas5p411a64c804db74c49dc1422826b0e738a
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Tf0xTVxTHd99rX4uk5PFDuSsTWZlTIPyoFrggCHMGXgbLyNAsc1nwhb5Q
+ BrS1LYKyKOJkAgLKjwULCE4Zv1QmuK0yEEZ1/IrBDSkRAxIt6ACpwuYgFVjLg8X/Pud7vufc
+ e87N5eMOV3lCfqJcw6jkdLKI2MD5We+x3ds2sFLql2/moqa+33GUdXYJR42jhQSa1s8B9N2L
+ RRwZO78FaNBoh8Y7wlD7bDkXPei8iaG274swVN94B0NFXQaAJoa0GGof8UIXsy9zUFt7LwcN
+ tlYQqOqHCR7KG9YRqLZ7GUNdxScxpDOeAOjatImDekZc0MBSNxeZFyqIcBdq8H4UdVM7yqMG
+ xq5zqJY6T2rwbirV3JBDUC2Xj1O/PsgkqEsFxVwq/+QsQb2cGOFQpltDBFVwowFQLf0Z1Hyz
+ K9VsfI7FkAeSQmQMLWVUbow8XiFNlCeEiqJi4z6M8w/wE3uLg1CgyE1OpzChor3RMd4RicmW
+ xYjcDtPJqRYphlarRb67Q1SKVA3jJlOoNaEiRilNVkqUPmo6RZ0qT/CRM5pgsZ/fDn+L8WCS
+ bLjVXTnplf53XVwmqHTPBTZ8SErglUojNxds4DuQbQA++yOPYIM5AGfL6jA2eAWg6UkJd73k
+ +ayOwybaAVy4vcJjg0kAc0z5HKuLQ26FU7fKLMznE6QX7F/hW2UnchssLW4DVj9O5hKwp6px
+ tasjGQXra3SrfgEZAOv+XJUFpD3sPW9cbWlD7obDp2eAlTeS78Cymn9wax9IjtjAM6ZJzFoL
+ yb1wZdiTvagjnOq+wWNZCP8qzF7jNFhfUkewtd8AqB3WAjYRBk/1FeJWxkkZ1C9UEay+GZb2
+ XcNY3Q7mm40Yqwug7sI6u8MrTdVr/reh4d8Ta0zB61oDzi5oHsAnA5d4Z8EW7RvDad84j+Vg
+ mPMii6u1zIOTLrB2mc+iB2xq9a0G3AYgZJTqlAQm3l8p9pYzaf8/eLwipRms/hvPGB1o/HHJ
+ pwtgfNAFIB8XOQkezpRLHQRS+shRRqWIU6UmM+ou4G95rHO4cGO8wvLx5Jo4sSTITxIQECAJ
+ 2hkgFjkLxiJzpA5kAq1hkhhGyajW6zC+jTAT20J9cO/LQ65zYt+2odi7o1SYODjW9umx9M2T
+ Pac2HTJMFnOKQkp6z3zk+LEr5Ty2v9Bs/ko63j9hSlSdeTZ3NPwAL+jpW5UunTvHIhp2qe30
+ +/S954M5sQ4XaLVtesG4XGDe5x5ePJ2CCtoXH3mQj4l85Sdmp6/tuaVJ20Vpsl3vm+mCit/a
+ ajx++dSGqXZtSCmpbHETSkY3vcoY0w1r3n08897p5CLFHdvajhFTOS9d7TOIjrw2T7XbJ6A8
+ 50ah4aHzuOHi5wXHIl5yoyfmf/LauuNR5O3Ac1f1Zl125P1Fl/DjHlmePR3TkUP0vYzlPQc/
+ 69mf+vqwzbYM+ovolsCOEBFHLaPFnrhKTf8HLnPXj8AEAAA=
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFnrHIsWRmVeSWpSXmKPExsWy7bCSvO7GqDkpBvNXy1msP3WM2aJpwl9m
+ i9V3+9ksXh/+xGgx7cNPZosnB9oZLS4/4bN4sN/eYu+72awWNw/sZLLYs2gSk8XK1UeZLCYd
+ usZo8fTqLCaLvbe0LRa2LWGx2LP3JIvF5V1z2CzmL3vKbtF9fQebxfLj/5gsDk1uZrLY8aSR
+ 0WLd6/csFiduSVuc/3uc1eL3jzlsDtIel694e+ycdZfd4/y9jSwem1doeVw+W+qxaVUnm8fm
+ JfUeu282sHks7pvM6tHb/I7N4+PTWywe7/ddZfPo27KK0WPz6WqPz5vkPDY9ecsUIBDFZZOS
+ mpNZllqkb5fAlbF4RiNTwQzNip4F+g2MLxW6GDk5JARMJN6+28HSxcjFISSwm1Hi75K3TBAJ
+ SYllf48wQ9jCEiv/PWeHKHrCKLF8yVVWkASLgKrEq30zgLo5ONgEtCVO/+cACYsIqEtMnbyH
+ EaSeWaCHTeLWteMsIAlhAW+JlUt3gNXzCphJrLjECjHzM6PEvK5usMW8AoISJ2c+AatnBqqZ
+ t/khM0g9s4C0xPJ/YPM5Bewkrne8YQSxRQVkJGYs/co8gVFwFpLuWUi6ZyF0L2BkXsUomVpQ
+ nJueW2xYYJiXWq5XnJhbXJqXrpecn7uJEZwktDR3MG5f9UHvECMTB+MhRgkOZiUR3ttvZqcI
+ 8aYkVlalFuXHF5XmpBYfYpTmYFES5xV/0ZsiJJCeWJKanZpakFoEk2Xi4JRqYCrj3nZstfa/
+ OgmPTvPKJ0vyKottlHgMlnsZy64ovXru1veHrBK22x0ar8euf1ZdKJ34JfQYZ52KUVr24olH
+ A2un8zNsinVdxLW57nTXulzXzuPTy6s8us2dFNPzhbd/q0m006gqnXVK4syRtl/VE349eed1
+ zqTi38uP9isFyi5E3ipeeC93ymam195f5i5+oPS9cpXvL3OLbTWLrWb7Saeabr0yafaf6+rH
+ zxgs9rvGZG6+5lBSwrX16y4rJfxRC9pr1x6oZ9h1721bxvYJnuc+1Yo90O1f8Lj1k47ZpnrL
+ mVvPr7+qtuf6ujkGEat2hp/ruBTPNUfuH+sarq/L3ilfb9iwVuDBv9fBnMI7SlcrsRRnJBpq
+ MRcVJwIAraR+hIEDAAA=
+X-CMS-MailID: 20230628160713epcas5p36c081366246fbaec7e4a0c0f6923b4b1
 X-Msg-Generator: CA
 X-Sendblock-Type: REQ_APPROVE
 CMS-TYPE: 105P
 DLP-Filter: Pass
 X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20230627184020epcas5p13fdcea52edead5ffa3fae444f923439e
+X-CMS-RootMailID: 20230627184010epcas5p4bb6581408d9b67bbbcad633fb26689c9
 References: <20230627183629.26571-1-nj.shetty@samsung.com>
- <CGME20230627184020epcas5p13fdcea52edead5ffa3fae444f923439e@epcas5p1.samsung.com>
- <20230627183629.26571-4-nj.shetty@samsung.com>
- <cdd190e3-d510-f4f3-46ee-3570f0317501@kernel.org>
+ <CGME20230627184010epcas5p4bb6581408d9b67bbbcad633fb26689c9@epcas5p4.samsung.com>
+ <20230627183629.26571-3-nj.shetty@samsung.com>
+ <e1b0c3d4-1f47-9b12-fdf3-190a9c6b427e@kernel.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -149,8 +149,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH v13 3/9] block: add emulation for copy
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH v13 2/9] block: Add copy offload support
+ infrastructure
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -162,8 +163,8 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Vincent Fu <vincent.fu@samsung.com>, linux-doc@vger.kernel.org,
- djwong@kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com,
+Cc: linux-doc@vger.kernel.org, djwong@kernel.org,
+ linux-nvme@lists.infradead.org, dm-devel@redhat.com,
  Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>,
  Sagi Grimberg <sagi@grimberg.me>, linux-scsi@vger.kernel.org,
  Jonathan Corbet <corbet@lwn.net>, gost.dev@samsung.com,
@@ -181,147 +182,171 @@ X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: samsung.com
 Content-Type: multipart/mixed;
- boundary="----PcSJ1RlEyPKfjXIiTsweH-7MCPtMf9v3nlMrb72LWO-fIHxy=_96484_"
+ boundary="----CHyoCALg6LzvWsSTaVDWulLjyDTSZVBAz8-9IIrQs0inuafE=_961cb_"
 
-------PcSJ1RlEyPKfjXIiTsweH-7MCPtMf9v3nlMrb72LWO-fIHxy=_96484_
+------CHyoCALg6LzvWsSTaVDWulLjyDTSZVBAz8-9IIrQs0inuafE=_961cb_
 Content-Type: text/plain; charset="utf-8"; format="flowed"
 Content-Disposition: inline
 
-On 23/06/28 03:50PM, Damien Le Moal wrote:
+On 23/06/28 03:45PM, Damien Le Moal wrote:
 >On 6/28/23 03:36, Nitesh Shetty wrote:
->> For the devices which does not support copy, copy emulation is added.
->> It is required for in-kernel users like fabrics, where file descriptor is
->> not available and hence they can't use copy_file_range.
->> Copy-emulation is implemented by reading from source into memory and
->> writing to the corresponding destination asynchronously.
->> Also emulation is used, if copy offload fails or partially completes.
+>> Introduce blkdev_copy_offload which takes similar arguments as
+>> copy_file_range and performs copy offload between two bdevs.
+>
+>I am confused... I thought it was discussed to only allow copy offload only
+>within a single bdev for now... Did I missi something ?
+>
+
+Yes, you are right. copy is supported within single bdev only.
+We will update this.
+
+>> Introduce REQ_OP_COPY_DST, REQ_OP_COPY_SRC operation.
+>> Issue REQ_OP_COPY_DST with destination info along with taking a plug.
+>> This flows till request layer and waits for src bio to get merged.
+>> Issue REQ_OP_COPY_SRC with source info and this bio reaches request
+>> layer and merges with dst request.
+>> For any reason, if request comes to driver with either only one of src/dst
+>> info we fail the copy offload.
 >>
->> Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
->> Signed-off-by: Vincent Fu <vincent.fu@samsung.com>
+>> Larger copy will be divided, based on max_copy_sectors limit.
+>>
+>> Suggested-by: Christoph Hellwig <hch@lst.de>
 >> Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
+>> Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
 >> ---
->>  block/blk-lib.c           | 183 +++++++++++++++++++++++++++++++++++++-
->>  block/blk-map.c           |   4 +-
->>  include/linux/blk_types.h |   5 ++
->>  include/linux/blkdev.h    |   3 +
->>  4 files changed, 192 insertions(+), 3 deletions(-)
+>>  block/blk-core.c          |   5 ++
+>>  block/blk-lib.c           | 177 ++++++++++++++++++++++++++++++++++++++
+>>  block/blk-merge.c         |  21 +++++
+>>  block/blk.h               |   9 ++
+>>  block/elevator.h          |   1 +
+>>  include/linux/bio.h       |   4 +-
+>>  include/linux/blk_types.h |  21 +++++
+>>  include/linux/blkdev.h    |   4 +
+>>  8 files changed, 241 insertions(+), 1 deletion(-)
 >>
+>> diff --git a/block/blk-core.c b/block/blk-core.c
+>> index 99d8b9812b18..e6714391c93f 100644
+>> --- a/block/blk-core.c
+>> +++ b/block/blk-core.c
+>> @@ -796,6 +796,11 @@ void submit_bio_noacct(struct bio *bio)
+>>  		if (!q->limits.max_write_zeroes_sectors)
+>>  			goto not_supported;
+>>  		break;
+>> +	case REQ_OP_COPY_SRC:
+>> +	case REQ_OP_COPY_DST:
+>> +		if (!blk_queue_copy(q))
+>> +			goto not_supported;
+>> +		break;
+>>  	default:
+>>  		break;
+>>  	}
 >> diff --git a/block/blk-lib.c b/block/blk-lib.c
->> index 10c3eadd5bf6..09e0d5d51d03 100644
+>> index e59c3069e835..10c3eadd5bf6 100644
 >> --- a/block/blk-lib.c
 >> +++ b/block/blk-lib.c
->> @@ -234,6 +234,180 @@ static ssize_t __blkdev_copy_offload(
->>  	return blkdev_copy_wait_io_completion(cio);
+>> @@ -115,6 +115,183 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
 >>  }
+>>  EXPORT_SYMBOL(blkdev_issue_discard);
 >>
->> +static void *blkdev_copy_alloc_buf(sector_t req_size, sector_t *alloc_size,
->> +		gfp_t gfp_mask)
+>> +/*
+>> + * For synchronous copy offload/emulation, wait and process all in-flight BIOs.
+>> + * This must only be called once all bios have been issued so that the refcount
+>> + * can only decrease. This just waits for all bios to make it through
+>> + * blkdev_copy_(offload/emulate)_(read/write)_endio.
+>> + */
+>> +static ssize_t blkdev_copy_wait_io_completion(struct cio *cio)
 >> +{
->> +	int min_size = PAGE_SIZE;
->> +	void *buf;
+>> +	ssize_t ret;
 >> +
->> +	while (req_size >= min_size) {
->> +		buf = kvmalloc(req_size, gfp_mask);
->> +		if (buf) {
->> +			*alloc_size = req_size;
->> +			return buf;
->> +		}
->> +		/* retry half the requested size */
->
->Kind of obvious :)
-
-Acked. will remove.
-
->
->> +		req_size >>= 1;
+>> +	if (cio->endio)
+>> +		return 0;
+>> +
+>> +	if (atomic_read(&cio->refcount)) {
+>> +		__set_current_state(TASK_UNINTERRUPTIBLE);
+>> +		blk_io_schedule();
 >> +	}
 >> +
->> +	return NULL;
+>> +	ret = cio->comp_len;
+>> +	kfree(cio);
+>> +
+>> +	return ret;
 >> +}
 >> +
->> +static void blkdev_copy_emulate_write_endio(struct bio *bio)
+>> +static void blkdev_copy_offload_read_endio(struct bio *bio)
 >> +{
->> +	struct copy_ctx *ctx = bio->bi_private;
->> +	struct cio *cio = ctx->cio;
+>> +	struct cio *cio = bio->bi_private;
 >> +	sector_t clen;
 >> +
 >> +	if (bio->bi_status) {
 >> +		clen = (bio->bi_iter.bi_sector << SECTOR_SHIFT) - cio->pos_out;
 >> +		cio->comp_len = min_t(sector_t, clen, cio->comp_len);
 >> +	}
->> +	kfree(bvec_virt(&bio->bi_io_vec[0]));
->> +	bio_map_kern_endio(bio);
->> +	kfree(ctx);
->> +	if (atomic_dec_and_test(&cio->refcount)) {
->> +		if (cio->endio) {
->> +			cio->endio(cio->private, cio->comp_len);
->> +			kfree(cio);
->> +		} else
->> +			blk_wake_io_task(cio->waiter);
+>> +	bio_put(bio);
+>> +
+>> +	if (!atomic_dec_and_test(&cio->refcount))
+>> +		return;
+>> +	if (cio->endio) {
+>> +		cio->endio(cio->private, cio->comp_len);
+>> +		kfree(cio);
+>> +	} else
+>> +		blk_wake_io_task(cio->waiter);
 >
->Curly brackets.
+>Curly brackets around else missing.
 >
-acked
 
->> +	}
+Acked.
+
 >> +}
 >> +
->> +static void blkdev_copy_emulate_read_endio(struct bio *read_bio)
+>> +/*
+>> + * __blkdev_copy_offload	- Use device's native copy offload feature.
+>> + * we perform copy operation by sending 2 bio.
+>> + * 1. We take a plug and send a REQ_OP_COPY_DST bio along with destination
+>> + * sector and length. Once this bio reaches request layer, we form a request and
+>> + * wait for src bio to arrive.
+>> + * 2. We issue REQ_OP_COPY_SRC bio along with source sector and length. Once
+>> + * this bio reaches request layer and find a request with previously sent
+>> + * destination info we merge the source bio and return.
+>> + * 3. Release the plug and request is sent to driver
+>> + *
+>> + * Returns the length of bytes copied or error if encountered
+>> + */
+>> +static ssize_t __blkdev_copy_offload(
+>> +		struct block_device *bdev_in, loff_t pos_in,
+>> +		struct block_device *bdev_out, loff_t pos_out,
+>> +		size_t len, cio_iodone_t endio, void *private, gfp_t gfp_mask)
 >> +{
->> +	struct copy_ctx *ctx = read_bio->bi_private;
->> +	struct cio *cio = ctx->cio;
->> +	sector_t clen;
+>> +	struct cio *cio;
+>> +	struct bio *read_bio, *write_bio;
+>> +	sector_t rem, copy_len, max_copy_len;
+>> +	struct blk_plug plug;
 >> +
->> +	if (read_bio->bi_status) {
->> +		clen = (read_bio->bi_iter.bi_sector << SECTOR_SHIFT) -
->> +						cio->pos_in;
->> +		cio->comp_len = min_t(sector_t, clen, cio->comp_len);
->> +		kfree(bvec_virt(&read_bio->bi_io_vec[0]));
->> +		bio_map_kern_endio(read_bio);
->> +		kfree(ctx);
+>> +	cio = kzalloc(sizeof(struct cio), GFP_KERNEL);
+>> +	if (!cio)
+>> +		return -ENOMEM;
+>> +	atomic_set(&cio->refcount, 0);
+>> +	cio->waiter = current;
+>> +	cio->endio = endio;
+>> +	cio->private = private;
 >> +
->> +		if (atomic_dec_and_test(&cio->refcount)) {
->> +			if (cio->endio) {
->> +				cio->endio(cio->private, cio->comp_len);
->> +				kfree(cio);
->> +			} else
->> +				blk_wake_io_task(cio->waiter);
+>> +	max_copy_len = min(bdev_max_copy_sectors(bdev_in),
+>> +			bdev_max_copy_sectors(bdev_out)) << SECTOR_SHIFT;
 >
->Same.
-
-acked
-
+>According to patch 1, this can end up being 0, so the loop below will be infinite.
 >
->> +		}
->> +	}
->> +	schedule_work(&ctx->dispatch_work);
->
->ctx may have been freed above.
 
-acked, will fix this.
+Agreed. As you suggested earlier, once we remove copy_offload parameter
+and checking copy_max_sector to identify copy offload capabilty should
+solve this.
 
->
->> +	kfree(read_bio);
->> +}
->> +
->> +static void blkdev_copy_dispatch_work(struct work_struct *work)
->> +{
->> +	struct copy_ctx *ctx = container_of(work, struct copy_ctx,
->> +			dispatch_work);
->
->Please align the argument, or even better: split the line after "=".
-
-
-acked.
-
-Thank you
+Thank you,
 Nitesh Shetty
 
-------PcSJ1RlEyPKfjXIiTsweH-7MCPtMf9v3nlMrb72LWO-fIHxy=_96484_
+------CHyoCALg6LzvWsSTaVDWulLjyDTSZVBAz8-9IIrQs0inuafE=_961cb_
 Content-Type: text/plain; charset="utf-8"
 
 
-------PcSJ1RlEyPKfjXIiTsweH-7MCPtMf9v3nlMrb72LWO-fIHxy=_96484_
+------CHyoCALg6LzvWsSTaVDWulLjyDTSZVBAz8-9IIrQs0inuafE=_961cb_
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -332,5 +357,5 @@ dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
 
-------PcSJ1RlEyPKfjXIiTsweH-7MCPtMf9v3nlMrb72LWO-fIHxy=_96484_--
+------CHyoCALg6LzvWsSTaVDWulLjyDTSZVBAz8-9IIrQs0inuafE=_961cb_--
 
