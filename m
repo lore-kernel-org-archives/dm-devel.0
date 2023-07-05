@@ -1,76 +1,82 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B0774C0015E
-	for <dm-devel@archiver.kernel.org>; Mon, 10 Jul 2023 06:47:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1ECBBC001DD
+	for <dm-devel@archiver.kernel.org>; Mon, 10 Jul 2023 06:47:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1688971636;
+	s=mimecast20190719; t=1688971637;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=6VChOVQK7FL/zsWG6jlbh3OQEW0FnBX8/oDuubMI/y4=;
-	b=gqwn+hmGV87j3CZFOgNO4zRM6AmWcic8tqwPgjesdofTR4wBTR00/vslgD9IYNLppTm/5h
-	rRrpyHVbZQsFrpGXe9p3VBdsWMlOW64LZx/aaq4uNUf9NKMOs+Ue3mNgSR6+K+PG0Nyu1F
-	JLedhhA+xKoRfncbWQKQkoaysOvEIGU=
+	bh=oa2DXqcNmu8dZeHD3BqrovzcBdsa83kza1c0ek1gQhA=;
+	b=H6bsw2KY6etB5pXlo5Oe3pX9zOnu6X2uNLJO9BHHwF999qnm58YdPmyPgJS1T2Vbbh+7QN
+	gv7dgT/ug8FJ0Qg0uPpwX8lYGEkyAn57Lmm2mMggtFKR/vIMirQRxoulgzjhu6tvN7ueMH
+	LxebizO2BDxPaFzySCwuihaq36vDMpg=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-235-yVInTxcLNQqmT9PJkJVRog-1; Mon, 10 Jul 2023 02:47:11 -0400
-X-MC-Unique: yVInTxcLNQqmT9PJkJVRog-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-350-wYsxrpkOOti0ruG0sgQtnA-1; Mon, 10 Jul 2023 02:47:12 -0400
+X-MC-Unique: wYsxrpkOOti0ruG0sgQtnA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D702C3C11CD7;
-	Mon, 10 Jul 2023 06:47:04 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3E0781C31C68;
+	Mon, 10 Jul 2023 06:47:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C1F91F66BA;
-	Mon, 10 Jul 2023 06:47:04 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1F4FAC54FBC;
+	Mon, 10 Jul 2023 06:47:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BBC2D19451D0;
-	Mon, 10 Jul 2023 06:47:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BDB14193F504;
+	Mon, 10 Jul 2023 06:46:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C3110194658F
- for <dm-devel@listman.corp.redhat.com>; Fri, 23 Jun 2023 21:59:48 +0000 (UTC)
+ ESMTP id 8B8471946588
+ for <dm-devel@listman.corp.redhat.com>; Wed,  5 Jul 2023 16:41:47 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id F3B332166B32; Fri, 23 Jun 2023 21:59:47 +0000 (UTC)
+ id 7B3BB1401C2F; Wed,  5 Jul 2023 16:41:47 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id EB1E72166B25
- for <dm-devel@redhat.com>; Fri, 23 Jun 2023 21:59:47 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 73B7B1401C20
+ for <dm-devel@redhat.com>; Wed,  5 Jul 2023 16:41:47 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
  bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CB10B8CC204
- for <dm-devel@redhat.com>; Fri, 23 Jun 2023 21:59:47 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-633-84kNA_0EOkaR0Ypgx7t0LA-1; Fri, 23 Jun 2023 17:59:45 -0400
-X-MC-Unique: 84kNA_0EOkaR0Ypgx7t0LA-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature RSA-PSS (2048 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id EC17D60F93;
- Fri, 23 Jun 2023 21:49:38 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id A1671C433C8;
- Fri, 23 Jun 2023 21:49:36 +0000 (UTC)
-Date: Fri, 23 Jun 2023 17:49:34 -0400
-From: Chuck Lever <cel@kernel.org>
-To: Qi Zheng <zhengqi.arch@bytedance.com>
-Message-ID: <ZJYTbnmRKF7j3CHW@manet.1015granger.net>
-References: <20230622085335.77010-1-zhengqi.arch@bytedance.com>
- <20230622085335.77010-16-zhengqi.arch@bytedance.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4F4A43C100AA
+ for <dm-devel@redhat.com>; Wed,  5 Jul 2023 16:41:47 +0000 (UTC)
+Received: from mga04.intel.com (mga04.intel.com [192.55.52.120]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-359-RHIWcSjaMd60B8BLa54Pdg-2; Wed, 05 Jul 2023 12:41:43 -0400
+X-MC-Unique: RHIWcSjaMd60B8BLa54Pdg-2
+X-IronPort-AV: E=McAfee;i="6600,9927,10762"; a="362258308"
+X-IronPort-AV: E=Sophos;i="6.01,183,1684825200"; d="scan'208";a="362258308"
+Received: from orsmga005.jf.intel.com ([10.7.209.41])
+ by fmsmga104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 05 Jul 2023 09:40:40 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10762"; a="893241782"
+X-IronPort-AV: E=Sophos;i="6.01,183,1684825200"; d="scan'208";a="893241782"
+Received: from silpixa00400314.ir.intel.com (HELO
+ silpixa00400314.ger.corp.intel.com) ([10.237.222.216])
+ by orsmga005.jf.intel.com with ESMTP; 05 Jul 2023 09:40:36 -0700
+From: Giovanni Cabiddu <giovanni.cabiddu@intel.com>
+To: herbert@gondor.apana.org.au,
+	agk@redhat.com,
+	snitzer@kernel.org
+Date: Wed,  5 Jul 2023 17:40:09 +0100
+Message-Id: <20230705164009.58351-4-giovanni.cabiddu@intel.com>
+In-Reply-To: <20230705164009.58351-1-giovanni.cabiddu@intel.com>
+References: <20230705164009.58351-1-giovanni.cabiddu@intel.com>
 MIME-Version: 1.0
-In-Reply-To: <20230622085335.77010-16-zhengqi.arch@bytedance.com>
+Organization: Intel Research and Development Ireland Ltd - Co. Reg. #308263 -
+ Collinstown Industrial Park, Leixlip, County Kildare - Ireland
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,10 +84,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mailman-Approved-At: Mon, 10 Jul 2023 06:46:55 +0000
-Subject: Re: [dm-devel] [PATCH 15/29] NFSD: dynamically allocate the
- nfsd-client shrinker
+Subject: [dm-devel] [PATCH 3/3] crypto: qat - remove
+ CRYPTO_ALG_ALLOCATES_MEMORY flag
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -93,107 +99,107 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: djwong@kernel.org, roman.gushchin@linux.dev, david@fromorbit.com,
- dri-devel@lists.freedesktop.org, virtualization@lists.linux-foundation.org,
- linux-mm@kvack.org, dm-devel@redhat.com, linux-ext4@vger.kernel.org,
- paulmck@kernel.org, linux-arm-msm@vger.kernel.org,
- intel-gfx@lists.freedesktop.org, linux-nfs@vger.kernel.org,
- linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org, vbabka@suse.cz,
- brauner@kernel.org, tytso@mit.edu, linux-kernel@vger.kernel.org,
- linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- akpm@linux-foundation.org, linux-btrfs@vger.kernel.org, tkhai@ya.ru
+Cc: Giovanni Cabiddu <giovanni.cabiddu@intel.com>,
+ Fiona Trahe <fiona.trahe@intel.com>, horia.geanta@nxp.com,
+ pankaj.gupta@nxp.com, gaurav.jain@nxp.com, heinzm@redhat.com,
+ qat-linux@intel.com, linux-kernel@vger.kernel.org, ebiggers@kernel.org,
+ iuliana.prodan@nxp.com, dm-devel@redhat.com, meenakshi.aggarwal@nxp.com,
+ linux-crypto@vger.kernel.org, davem@davemloft.net, V.Sethi@nxp.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
-Content-Disposition: inline
+X-Mimecast-Originator: intel.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Jun 22, 2023 at 04:53:21PM +0800, Qi Zheng wrote:
-> In preparation for implementing lockless slab shrink,
-> we need to dynamically allocate the nfsd-client shrinker,
-> so that it can be freed asynchronously using kfree_rcu().
-> Then it doesn't need to wait for RCU read-side critical
-> section when releasing the struct nfsd_net.
-> 
-> Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
+Remove the CRYPTO_ALG_ALLOCATES_MEMORY flag from the aead, skcipher
+and acomp alg structures since the driver does not allocate memory in
+the request processing for scatterlists with 4 or less entries.
 
-For 15/29 and 16/29 of this series:
+This allows the QAT driver to be used by dm-crypt.
 
-Acked-by: Chuck Lever <chuck.lever@oracle.com>
+Signed-off-by: Giovanni Cabiddu <giovanni.cabiddu@intel.com>
+Reviewed-by: Fiona Trahe <fiona.trahe@intel.com>
+---
+ drivers/crypto/intel/qat/qat_common/qat_algs.c      | 13 ++++++-------
+ drivers/crypto/intel/qat/qat_common/qat_comp_algs.c |  2 +-
+ 2 files changed, 7 insertions(+), 8 deletions(-)
 
-
-> ---
->  fs/nfsd/netns.h     |  2 +-
->  fs/nfsd/nfs4state.c | 20 ++++++++++++--------
->  2 files changed, 13 insertions(+), 9 deletions(-)
-> 
-> diff --git a/fs/nfsd/netns.h b/fs/nfsd/netns.h
-> index ec49b200b797..f669444d5336 100644
-> --- a/fs/nfsd/netns.h
-> +++ b/fs/nfsd/netns.h
-> @@ -195,7 +195,7 @@ struct nfsd_net {
->  	int			nfs4_max_clients;
->  
->  	atomic_t		nfsd_courtesy_clients;
-> -	struct shrinker		nfsd_client_shrinker;
-> +	struct shrinker		*nfsd_client_shrinker;
->  	struct work_struct	nfsd_shrinker_work;
->  };
->  
-> diff --git a/fs/nfsd/nfs4state.c b/fs/nfsd/nfs4state.c
-> index 6e61fa3acaf1..a06184270548 100644
-> --- a/fs/nfsd/nfs4state.c
-> +++ b/fs/nfsd/nfs4state.c
-> @@ -4388,8 +4388,7 @@ static unsigned long
->  nfsd4_state_shrinker_count(struct shrinker *shrink, struct shrink_control *sc)
->  {
->  	int count;
-> -	struct nfsd_net *nn = container_of(shrink,
-> -			struct nfsd_net, nfsd_client_shrinker);
-> +	struct nfsd_net *nn = shrink->private_data;
->  
->  	count = atomic_read(&nn->nfsd_courtesy_clients);
->  	if (!count)
-> @@ -8094,14 +8093,19 @@ static int nfs4_state_create_net(struct net *net)
->  	INIT_WORK(&nn->nfsd_shrinker_work, nfsd4_state_shrinker_worker);
->  	get_net(net);
->  
-> -	nn->nfsd_client_shrinker.scan_objects = nfsd4_state_shrinker_scan;
-> -	nn->nfsd_client_shrinker.count_objects = nfsd4_state_shrinker_count;
-> -	nn->nfsd_client_shrinker.seeks = DEFAULT_SEEKS;
-> -
-> -	if (register_shrinker(&nn->nfsd_client_shrinker, "nfsd-client"))
-> +	nn->nfsd_client_shrinker = shrinker_alloc_and_init(nfsd4_state_shrinker_count,
-> +							   nfsd4_state_shrinker_scan,
-> +							   0, DEFAULT_SEEKS, 0,
-> +							   nn);
-> +	if (!nn->nfsd_client_shrinker)
->  		goto err_shrinker;
-> +
-> +	if (register_shrinker(nn->nfsd_client_shrinker, "nfsd-client"))
-> +		goto err_register;
->  	return 0;
->  
-> +err_register:
-> +	shrinker_free(nn->nfsd_client_shrinker);
->  err_shrinker:
->  	put_net(net);
->  	kfree(nn->sessionid_hashtbl);
-> @@ -8197,7 +8201,7 @@ nfs4_state_shutdown_net(struct net *net)
->  	struct list_head *pos, *next, reaplist;
->  	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
->  
-> -	unregister_shrinker(&nn->nfsd_client_shrinker);
-> +	unregister_and_free_shrinker(nn->nfsd_client_shrinker);
->  	cancel_work(&nn->nfsd_shrinker_work);
->  	cancel_delayed_work_sync(&nn->laundromat_work);
->  	locks_end_grace(&nn->nfsd4_manager);
-> -- 
-> 2.30.2
-> 
+diff --git a/drivers/crypto/intel/qat/qat_common/qat_algs.c b/drivers/crypto/intel/qat/qat_common/qat_algs.c
+index 3c4bba4a8779..a7a6ac33052a 100644
+--- a/drivers/crypto/intel/qat/qat_common/qat_algs.c
++++ b/drivers/crypto/intel/qat/qat_common/qat_algs.c
+@@ -1278,7 +1278,7 @@ static struct aead_alg qat_aeads[] = { {
+ 		.cra_name = "authenc(hmac(sha1),cbc(aes))",
+ 		.cra_driver_name = "qat_aes_cbc_hmac_sha1",
+ 		.cra_priority = 4001,
+-		.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY,
++		.cra_flags = CRYPTO_ALG_ASYNC,
+ 		.cra_blocksize = AES_BLOCK_SIZE,
+ 		.cra_ctxsize = sizeof(struct qat_alg_aead_ctx),
+ 		.cra_module = THIS_MODULE,
+@@ -1295,7 +1295,7 @@ static struct aead_alg qat_aeads[] = { {
+ 		.cra_name = "authenc(hmac(sha256),cbc(aes))",
+ 		.cra_driver_name = "qat_aes_cbc_hmac_sha256",
+ 		.cra_priority = 4001,
+-		.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY,
++		.cra_flags = CRYPTO_ALG_ASYNC,
+ 		.cra_blocksize = AES_BLOCK_SIZE,
+ 		.cra_ctxsize = sizeof(struct qat_alg_aead_ctx),
+ 		.cra_module = THIS_MODULE,
+@@ -1312,7 +1312,7 @@ static struct aead_alg qat_aeads[] = { {
+ 		.cra_name = "authenc(hmac(sha512),cbc(aes))",
+ 		.cra_driver_name = "qat_aes_cbc_hmac_sha512",
+ 		.cra_priority = 4001,
+-		.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY,
++		.cra_flags = CRYPTO_ALG_ASYNC,
+ 		.cra_blocksize = AES_BLOCK_SIZE,
+ 		.cra_ctxsize = sizeof(struct qat_alg_aead_ctx),
+ 		.cra_module = THIS_MODULE,
+@@ -1330,7 +1330,7 @@ static struct skcipher_alg qat_skciphers[] = { {
+ 	.base.cra_name = "cbc(aes)",
+ 	.base.cra_driver_name = "qat_aes_cbc",
+ 	.base.cra_priority = 4001,
+-	.base.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY,
++	.base.cra_flags = CRYPTO_ALG_ASYNC,
+ 	.base.cra_blocksize = AES_BLOCK_SIZE,
+ 	.base.cra_ctxsize = sizeof(struct qat_alg_skcipher_ctx),
+ 	.base.cra_alignmask = 0,
+@@ -1348,7 +1348,7 @@ static struct skcipher_alg qat_skciphers[] = { {
+ 	.base.cra_name = "ctr(aes)",
+ 	.base.cra_driver_name = "qat_aes_ctr",
+ 	.base.cra_priority = 4001,
+-	.base.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY,
++	.base.cra_flags = CRYPTO_ALG_ASYNC,
+ 	.base.cra_blocksize = 1,
+ 	.base.cra_ctxsize = sizeof(struct qat_alg_skcipher_ctx),
+ 	.base.cra_alignmask = 0,
+@@ -1366,8 +1366,7 @@ static struct skcipher_alg qat_skciphers[] = { {
+ 	.base.cra_name = "xts(aes)",
+ 	.base.cra_driver_name = "qat_aes_xts",
+ 	.base.cra_priority = 4001,
+-	.base.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK |
+-			  CRYPTO_ALG_ALLOCATES_MEMORY,
++	.base.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_NEED_FALLBACK,
+ 	.base.cra_blocksize = AES_BLOCK_SIZE,
+ 	.base.cra_ctxsize = sizeof(struct qat_alg_skcipher_ctx),
+ 	.base.cra_alignmask = 0,
+diff --git a/drivers/crypto/intel/qat/qat_common/qat_comp_algs.c b/drivers/crypto/intel/qat/qat_common/qat_comp_algs.c
+index b533984906ec..bd1383da1c4a 100644
+--- a/drivers/crypto/intel/qat/qat_common/qat_comp_algs.c
++++ b/drivers/crypto/intel/qat/qat_common/qat_comp_algs.c
+@@ -442,7 +442,7 @@ static struct acomp_alg qat_acomp[] = { {
+ 		.cra_name = "deflate",
+ 		.cra_driver_name = "qat_deflate",
+ 		.cra_priority = 4001,
+-		.cra_flags = CRYPTO_ALG_ASYNC | CRYPTO_ALG_ALLOCATES_MEMORY,
++		.cra_flags = CRYPTO_ALG_ASYNC,
+ 		.cra_ctxsize = sizeof(struct qat_compression_ctx),
+ 		.cra_module = THIS_MODULE,
+ 	},
+-- 
+2.40.1
 
 --
 dm-devel mailing list
