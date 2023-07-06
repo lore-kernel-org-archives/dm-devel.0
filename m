@@ -4,146 +4,76 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 43EEBEB64DA
-	for <dm-devel@archiver.kernel.org>; Mon, 10 Jul 2023 06:29:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 88410EB64DC
+	for <dm-devel@archiver.kernel.org>; Mon, 10 Jul 2023 06:47:02 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1688970568;
+	s=mimecast20190719; t=1688971621;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=WruSCfct0V9r4DAkrxzn/1n9i2587aBHAg1ehR5ksKI=;
-	b=Kdr4ZzpkHLgS28VkYdB7IAIdJclAs/+OjTuMP6A3GJZ2oFeAVB3X67oB4msnaiHTQfaez2
-	ERnynGTUFT1DbBaaw+a0melu1cvuf/VWbKyC1UDQAaSKaMmffj9GBK45mRAdxHJPw0w4X6
-	ICcnxrrO89E3eaCi6opah5w+XfHstGs=
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=KSn1UcvBB51IrUgsqj/dQbyI+HD+HXEkc0A2zfWNet4=;
+	b=Rm+3OaYR4Ms7YZm264zmwPw2ziG37sqdpPO6ngzSDTNbdBZMrV0Fsz5PwhzZY3En7mANmI
+	iovToxxIHSywsXO7DJ6FpjvIF+40ITJkU7whr08waXpS/FYvViK+BXR2XdXipxBCJfDeHO
+	XnwP4Vd4bFMw6yRj6lubSEOyapC/zGc=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-42-2R2GYBJMPIiNua2ET-wQ-Q-1; Mon, 10 Jul 2023 02:29:24 -0400
-X-MC-Unique: 2R2GYBJMPIiNua2ET-wQ-Q-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-468-Sy6ww3RdNVCZdeUPZiGSxQ-1; Mon, 10 Jul 2023 02:46:59 -0400
+X-MC-Unique: Sy6ww3RdNVCZdeUPZiGSxQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 827933C0ED45;
-	Mon, 10 Jul 2023 06:29:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 99D3738149C3;
+	Mon, 10 Jul 2023 06:46:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8288DF5CED;
-	Mon, 10 Jul 2023 06:29:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 523564CD0C9;
+	Mon, 10 Jul 2023 06:46:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D96D419452D1;
-	Mon, 10 Jul 2023 06:29:16 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4EDF019451D1;
+	Mon, 10 Jul 2023 06:46:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A27DF1946586
- for <dm-devel@listman.corp.redhat.com>; Mon, 10 Jul 2023 06:29:03 +0000 (UTC)
+ ESMTP id 575C41946588
+ for <dm-devel@listman.corp.redhat.com>; Thu,  6 Jul 2023 00:24:55 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0993D40C2070; Mon, 10 Jul 2023 06:29:03 +0000 (UTC)
+ id C2F131121315; Thu,  6 Jul 2023 00:24:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0129840C206F
- for <dm-devel@redhat.com>; Mon, 10 Jul 2023 06:29:02 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id BBF361121314
+ for <dm-devel@redhat.com>; Thu,  6 Jul 2023 00:24:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A1104802666
+ for <dm-devel@redhat.com>; Thu,  6 Jul 2023 00:24:54 +0000 (UTC)
+Received: from dfw.source.kernel.org (dfw.source.kernel.org
+ [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-355-4gD_-MoEOCSU7MkvFZrMOQ-1; Wed, 05 Jul 2023 20:24:53 -0400
+X-MC-Unique: 4gD_-MoEOCSU7MkvFZrMOQ-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature RSA-PSS (2048 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D6DEB38008A4
- for <dm-devel@redhat.com>; Mon, 10 Jul 2023 06:29:02 +0000 (UTC)
-Received: from mailout2.samsung.com (mailout2.samsung.com [203.254.224.25])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-608-7oFL3zJYPLegBlvfyhds7w-1; Mon, 10 Jul 2023 02:29:00 -0400
-X-MC-Unique: 7oFL3zJYPLegBlvfyhds7w-1
-Received: from epcas5p4.samsung.com (unknown [182.195.41.42])
- by mailout2.samsung.com (KnoxPortal) with ESMTP id
- 20230710062857epoutp02e94980f838680bc6bf78b479f1889625~wbcFQezxY1907019070epoutp02f
- for <dm-devel@redhat.com>; Mon, 10 Jul 2023 06:28:57 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.samsung.com
- 20230710062857epoutp02e94980f838680bc6bf78b479f1889625~wbcFQezxY1907019070epoutp02f
-Received: from epsnrtp1.localdomain (unknown [182.195.42.162]) by
- epcas5p2.samsung.com (KnoxPortal) with ESMTP id
- 20230710062856epcas5p2880af543580e2063d281acd332e97161~wbcEompir0427004270epcas5p2q;
- Mon, 10 Jul 2023 06:28:56 +0000 (GMT)
-Received: from epsmges5p2new.samsung.com (unknown [182.195.38.175]) by
- epsnrtp1.localdomain (Postfix) with ESMTP id 4QzvGb2Td5z4x9Q7; Mon, 10 Jul
- 2023 06:28:55 +0000 (GMT)
-Received: from epcas5p4.samsung.com ( [182.195.41.42]) by
- epsmges5p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
- AE.14.44250.725ABA46; Mon, 10 Jul 2023 15:28:55 +0900 (KST)
-Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
- epcas5p3.samsung.com (KnoxPortal) with ESMTPA id
- 20230710061719epcas5p36b7be425517b0b09d73540b18fc17748~wbR7vCBu91195211952epcas5p3V;
- Mon, 10 Jul 2023 06:17:19 +0000 (GMT)
-Received: from epsmgmcp1.samsung.com (unknown [182.195.42.82]) by
- epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
- 20230710061719epsmtrp1bebd27292cfbc5654c3251e1e80611db~wbR7t2fVC1310913109epsmtrp1d;
- Mon, 10 Jul 2023 06:17:19 +0000 (GMT)
-X-AuditID: b6c32a4a-ec1fd7000000acda-96-64aba52792cd
-Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
- epsmgmcp1.samsung.com (Symantec Messaging Gateway) with SMTP id
- 86.2E.64355.F62ABA46; Mon, 10 Jul 2023 15:17:19 +0900 (KST)
-Received: from green245 (unknown [107.99.41.245]) by epsmtip1.samsung.com
- (KnoxPortal) with ESMTPA id
- 20230710061715epsmtip1965f1b463cf314395eb9ac24b4926cc0~wbR3v5VNB2634026340epsmtip1p;
- Mon, 10 Jul 2023 06:17:15 +0000 (GMT)
-Date: Mon, 10 Jul 2023 11:44:01 +0530
-From: Nitesh Shetty <nj.shetty@samsung.com>
-To: Christoph Hellwig <hch@infradead.org>
-Message-ID: <20230710061401.43uzki644sw5jagz@green245>
+ by dfw.source.kernel.org (Postfix) with ESMTPS id 797AE617AA;
+ Thu,  6 Jul 2023 00:18:15 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPS id C33B1C433C8;
+ Thu,  6 Jul 2023 00:18:14 +0000 (UTC)
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org
+ (localhost.localdomain [127.0.0.1])
+ by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id
+ A1405C64459; Thu,  6 Jul 2023 00:18:14 +0000 (UTC)
 MIME-Version: 1.0
-In-Reply-To: <ZIKphgDavKVPREnw@infradead.org>
-User-Agent: NeoMutt/20171215
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Te0xTdxTH+d3b3hYZ5gISf+ADcjed4MDWlfJDYC6DmOtwhCmbi1nCOnpH
- EWibPsacMVIY76f4GHSggiDPQaBsAwHHygAFtFuYNBJgMAuLNhPkoSIKoy26/fc553tev3Py
- 4+LOXRx3bqxUxSikoniK2MD6sdvL2+fNyjoxr2neATX29+IoueAFjurG8glk7p4D6MLsEo5M
- XekADZk2oomf96POh9+x0d2uNgx1lBdiaKCgHEM1dT0Yai97hKF7o/Mc1LP6D4EK9cMATd3R
- YqhzZDcqS6tgoY7Omyw0dK2EQJeuTnFQtrGVQFV9KxjSn03BUKtJA1CDeYaFboxsQYYXfWy0
- /LSEeNeDHvojjNb+eYug27RjHNow3sSiddXe9NAtNd1cm0nQuorTdPvdJIK+kneWTeemPCTo
- R1MjLHrm+h2CzmupBbRu4CQ937w9wulYXJCEEYkZhScjjZaJY6UxwVTYkaiQKD8hj+/DD0D+
- lKdUlMAEU6GHInwOxMavLYvy/FIUr15zRYiUSmrPO0EKmVrFeEpkSlUwxcjF8XKB3FcpSlCq
- pTG+Uka1j8/j7fVbC/wsTjKgKcLkTx2/KikewZLArw5ZgMuFpACOzLlkgQ1cZ7IdwNkryWyb
- MQdgzfVlziujP28WzwL21oyczEHcJrQBeL/XaBWcyWkAMxY/sTCL3AEXdSssSwuC3A0HVrkW
- 9ybSC45UpVtzcbKbA58YilkWwYUMhBNGs7WOIymE2fUGzMZO8GaxyRpjT/rAwccTwMKu5FZY
- VLloLQTJOXs4+ff8+nShsOeqFrOxC3zQ18KxsTu8n5+2zomw5lw1YUv+BkCtUQtswn6Y2p+P
- W6bGSQkcngm2ubfB8/0N1po4uRHmLpvW6zvC1osv+XVY33iZsLEbHH6iWWcaNv32nLBtawWD
- 5uUfsALgof3f47T/tdNaW+yDmbPJbJt7C6xa4drQCzZe23MZsGuBGyNXJsQwSj/5XimT+Ore
- 0bKEZmD9St7vt4LJiVlfPcC4QA8gF6c2Ocp/qRU7O4pFJ75mFLIohTqeUeqB39qtzuDurtGy
- tb8oVUXxBQE8gVAoFAS8LeRTmx3NqaViZzJGpGLiGEbOKF7mYVx79ySsdGYq91N1JL388cKR
- 3oPZ7gsZnP4Wu2ctAceCawsCW9+KvMjmrvIwVkiVUWoXdO40Si2Qbf0w6EEF5jTuOlgtonSB
- C4KsRVMa16xVSwKC83cuOZQ3VxY+X5R8UaSXq/yLPndr1LdFnH+syPn+g8EAu9SyjNLbyyEd
- r9HhodsPjrJ+H50rOZk4tC3mRgN2KezZEl4J+KW5FMPfWRZ5RvfRYXZ2UPqpbz3uaVKO4yeK
- 04iJo+7e0dm7Mu1NRr15MHDVkFQhv3D7Df3h5hQwm6n5Kyd9TK6pPz5t7KIivfJDDUen/fm8
- 0r7xWKV/1S5TuND1lH3ET+FZZYd2vDc1udmBYiklIr43rlCK/gWa8eSm0wQAAA==
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFvrPIsWRmVeSWpSXmKPExsWy7bCSnG7+otUpBnP36VmsP3WM2aJpwl9m
- i9V3+9ksXh/+xGgx7cNPZosnB9oZLS4/4bN4sN/eYu+72awWNw/sZLLYs2gSk8XpCYuYLFau
- PspksXvhRyaLx3c+s1sc/f+WzWLSoWuMFk+vzmKy2HtL22Jh2xIWiz17T7JYXN41h81i/rKn
- 7Bbd13ewWSw//o/J4tDkZiaLHU8aGS3WvX7PYnHilrTF+b/HWS1+/5jD5iDvcfmKt8es+2fZ
- PHbOusvucf7eRhaPzSu0PC6fLfXYtKqTzWPzknqP3Tcb2DwW901m9ehtfsfm8fHpLRaP9/uu
- snn0bVnF6LH5dLXH501yAYJRXDYpqTmZZalF+nYJXBnXTnUzF6ziruhqbGBvYJzA2cXIySEh
- YCLR03mGuYuRi0NIYDujxP97e9kgEpISy/4eYYawhSVW/nvODmILCTxhlJizyAjEZhFQlfi6
- +R9LFyMHB5uAtsTp/xwgYREBTYlby9vBZjILHGeX2LF5BwtIQljAWuLB9ddgM3kFzCS615xn
- gljcxCxx4HgXK0RCUOLkzCdgDcxARfM2P2QGWcAsIC2x/B/YAk4BXYkz3x4wgtiiAjISM5Z+
- ZZ7AKDgLSfcsJN2zELoXMDKvYhRNLSjOTc9NLjDUK07MLS7NS9dLzs/dxAhOI1pBOxiXrf+r
- d4iRiYPxEKMEB7OSCG/BwVUpQrwpiZVVqUX58UWlOanFhxilOViUxHmVczpThATSE0tSs1NT
- C1KLYLJMHJxSDUzMh+RcBTh2ehzl4HRosmI99OVHYN3f5oS0m1JfDv7ZoOeWq5//6o3VgbIb
- E66/TKi7+lSF52+9gAWfXli8gXBX/Z7Pny9Hxe+WnRKvuT7kU+PNFc3zhN5EuV1LO+z/Wj1r
- J+dNz1XeUgVOdbf0Oo7JzN+0KfvR7fNnOp/nvBQqNV93uMEwOluwUrSR/4PjSffmZU9Yrh02
- POe4e/H0u+pBJ3LOG55k9HylE9T+9DFnm3vEcr0bnk92fHa99c84MjO8e+/M7ftUBR+xSeun
- 7Nh62kr/oUiac9gM40n27xrjpb/kbfVYscvqZqbH/phTBcIyf/Re3HDzS3nSkSx2uO7+erP7
- v3daugYtqBOaX6rEUpyRaKjFXFScCACXJ/QPkgMAAA==
-X-CMS-MailID: 20230710061719epcas5p36b7be425517b0b09d73540b18fc17748
-X-Msg-Generator: CA
-X-Sendblock-Type: REQ_APPROVE
-CMS-TYPE: 105P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20230605122310epcas5p4aaebfc26fe5377613a36fe50423cf494
-References: <20230605121732.28468-1-nj.shetty@samsung.com>
- <CGME20230605122310epcas5p4aaebfc26fe5377613a36fe50423cf494@epcas5p4.samsung.com>
- <20230605121732.28468-6-nj.shetty@samsung.com>
- <ZH3mjUb+yqI11XD8@infradead.org> <20230606113535.rjbhe6eqlyqk4pqq@green245>
- <ZIAt7vL+/isPJEl5@infradead.org> <20230608120817.jg4xb4jhg77mlksw@green245>
- <ZIKphgDavKVPREnw@infradead.org>
+From: patchwork-bot+f2fs@kernel.org
+Message-Id: <168860269464.29151.2364164271547941172.git-patchwork-notify@kernel.org>
+Date: Thu, 06 Jul 2023 00:18:14 +0000
+References: <20230608110258.189493-2-hch@lst.de>
+In-Reply-To: <20230608110258.189493-2-hch@lst.de>
+To: Christoph Hellwig <hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -151,8 +81,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH v12 5/9] nvme: add copy offload support
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Mailman-Approved-At: Mon, 10 Jul 2023 06:46:55 +0000
+Subject: Re: [dm-devel] [f2fs-dev] [PATCH 01/30] block: also call ->open for
+ incremental partition opens
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -164,82 +96,109 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-doc@vger.kernel.org, djwong@kernel.org,
- linux-nvme@lists.infradead.org, dm-devel@redhat.com,
- Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>,
- Sagi Grimberg <sagi@grimberg.me>, linux-scsi@vger.kernel.org,
- Jonathan Corbet <corbet@lwn.net>, gost.dev@samsung.com,
- nitheshshetty@gmail.com, James Smart <james.smart@broadcom.com>,
- willy@infradead.org, Chaitanya Kulkarni <kch@nvidia.com>,
- Anuj Gupta <anuj20.g@samsung.com>, Mike Snitzer <snitzer@kernel.org>,
- ming.lei@redhat.com, linux-block@vger.kernel.org, dlemoal@kernel.org,
- Alexander Viro <viro@zeniv.linux.org.uk>, Keith Busch <kbusch@kernel.org>,
- bvanassche@acm.org, Jens Axboe <axboe@kernel.dk>,
- Christian Brauner <brauner@kernel.org>, Kanchan Joshi <joshi.k@samsung.com>,
- "Martin K. Petersen" <martin.petersen@oracle.com>,
- linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- Javier =?utf-8?B?R29uesOhbGV6?= <javier.gonz@samsung.com>
+Cc: vigneshr@ti.com, rafael@kernel.org, linux-nvme@lists.infradead.org,
+ phil@philpotter.co.uk, clm@fb.com, dm-devel@redhat.com, haris.iqbal@ionos.com,
+ pavel@ucw.cz, miquel.raynal@bootlin.com, jinpu.wang@ionos.com,
+ linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org, richard@nod.at,
+ linux-pm@vger.kernel.org, linux-um@lists.infradead.org, josef@toxicpanda.com,
+ colyli@suse.de, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
+ viro@zeniv.linux.org.uk, dsterba@suse.com, axboe@kernel.dk, brauner@kernel.org,
+ martin.petersen@oracle.com, linux-f2fs-devel@lists.sourceforge.net,
+ linux-fsdevel@vger.kernel.org, linux-mtd@lists.infradead.org,
+ linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: samsung.com
-Content-Type: multipart/mixed;
- boundary="----RbnLpepSOhDWt1JmDV6HMUWO9Dmn-C3OOrycHY1seGoKI43i=_b1f2d_"
-
-------RbnLpepSOhDWt1JmDV6HMUWO9Dmn-C3OOrycHY1seGoKI43i=_b1f2d_
-Content-Type: text/plain; charset="utf-8"; format="flowed"
-Content-Disposition: inline
-
-On 23/06/08 09:24PM, Christoph Hellwig wrote:
->On Thu, Jun 08, 2023 at 05:38:17PM +0530, Nitesh Shetty wrote:
->> Sure, we can do away with subsys and realign more on single namespace copy.
->> We are planning to use token to store source info, such as src sector,
->> len and namespace. Something like below,
->>
->> struct nvme_copy_token {
->> 	struct nvme_ns *ns; // to make sure we are copying within same namespace
->> /* store source info during *IN operation, will be used by *OUT operation */
->> 	sector_t src_sector;
->> 	sector_t sectors;
->> };
->> Do you have any better way to handle this in mind ?
->
->In general every time we tried to come up with a request payload that is
->not just data passed to the device it has been a nightmare.
->
->So my gut feeling would be that bi_sector and bi_iter.bi_size are the
->ranges, with multiple bios being allowed to form the input data, similar
->to how we implement discard merging.
->
->The interesting part is how we'd match up these bios.  One idea would
->be that since copy by definition doesn't need integrity data we just
->add a copy_id that unions it, and use a simple per-gendisk copy I/D
->allocator, but I'm not entirely sure how well that interacts stacking
->drivers.
-
-V13[1] implements that route. Please see if that matches with what you had
-in mind?
-
-[1] https://lore.kernel.org/linux-nvme/20230627183629.26571-1-nj.shetty@samsung.com/
-
-Thank you, 
-Nitesh Shetty
-
-------RbnLpepSOhDWt1JmDV6HMUWO9Dmn-C3OOrycHY1seGoKI43i=_b1f2d_
-Content-Type: text/plain; charset="utf-8"
-
-
-------RbnLpepSOhDWt1JmDV6HMUWO9Dmn-C3OOrycHY1seGoKI43i=_b1f2d_
+X-Mimecast-Originator: kernel.org
 Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+
+Hello:
+
+This series was applied to jaegeuk/f2fs.git (dev)
+by Jens Axboe <axboe@kernel.dk>:
+
+On Thu,  8 Jun 2023 13:02:29 +0200 you wrote:
+> For whole devices ->open is called for each open, but for partitions it
+> is only called on the first open of a partition, e.g.:
+> 
+>   open("/dev/vdb", ...)
+>   open("/dev/vdb", ...)
+>     - 2 call to ->open
+> 
+> [...]
+
+Here is the summary with links:
+  - [f2fs-dev,01/30] block: also call ->open for incremental partition opens
+    https://git.kernel.org/jaegeuk/f2fs/c/9d1c92872e70
+  - [f2fs-dev,02/30] cdrom: remove the unused bdev argument to cdrom_open
+    https://git.kernel.org/jaegeuk/f2fs/c/764b83100b9a
+  - [f2fs-dev,03/30] cdrom: remove the unused mode argument to cdrom_ioctl
+    https://git.kernel.org/jaegeuk/f2fs/c/473399b50de1
+  - [f2fs-dev,04/30] cdrom: remove the unused cdrom_close_write release code
+    https://git.kernel.org/jaegeuk/f2fs/c/a4cec8bc14c0
+  - [f2fs-dev,05/30] cdrom: track if a cdrom_device_info was opened for data
+    https://git.kernel.org/jaegeuk/f2fs/c/8cdf433e2b8e
+  - [f2fs-dev,06/30] cdrom: remove the unused mode argument to cdrom_release
+    https://git.kernel.org/jaegeuk/f2fs/c/7ae24fcee992
+  - [f2fs-dev,07/30] block: pass a gendisk on bdev_check_media_change
+    https://git.kernel.org/jaegeuk/f2fs/c/444aa2c58cb3
+  - [f2fs-dev,08/30] block: pass a gendisk to ->open
+    https://git.kernel.org/jaegeuk/f2fs/c/d32e2bf83791
+  - [f2fs-dev,09/30] block: remove the unused mode argument to ->release
+    https://git.kernel.org/jaegeuk/f2fs/c/ae220766d87c
+  - [f2fs-dev,10/30] block: rename blkdev_close to blkdev_release
+    https://git.kernel.org/jaegeuk/f2fs/c/7ee34cbc291a
+  - [f2fs-dev,11/30] swsusp: don't pass a stack address to blkdev_get_by_path
+    https://git.kernel.org/jaegeuk/f2fs/c/c889d0793d9d
+  - [f2fs-dev,12/30] bcache: don't pass a stack address to blkdev_get_by_path
+    https://git.kernel.org/jaegeuk/f2fs/c/29499ab060fe
+  - [f2fs-dev,13/30] rnbd-srv: don't pass a holder for non-exclusive blkdev_get_by_path
+    https://git.kernel.org/jaegeuk/f2fs/c/5ee607675deb
+  - [f2fs-dev,14/30] btrfs: don't pass a holder for non-exclusive blkdev_get_by_path
+    https://git.kernel.org/jaegeuk/f2fs/c/2ef789288afd
+  - [f2fs-dev,15/30] block: use the holder as indication for exclusive opens
+    https://git.kernel.org/jaegeuk/f2fs/c/2736e8eeb0cc
+  - [f2fs-dev,16/30] block: add a sb_open_mode helper
+    https://git.kernel.org/jaegeuk/f2fs/c/3f0b3e785e8b
+  - [f2fs-dev,17/30] fs: remove sb->s_mode
+    https://git.kernel.org/jaegeuk/f2fs/c/81b1fb7d17c0
+  - [f2fs-dev,18/30] scsi: replace the fmode_t argument to scsi_cmd_allowed with a simple bool
+    https://git.kernel.org/jaegeuk/f2fs/c/5f4eb9d5413f
+  - [f2fs-dev,19/30] scsi: replace the fmode_t argument to scsi_ioctl with a simple bool
+    https://git.kernel.org/jaegeuk/f2fs/c/2e80089c1824
+  - [f2fs-dev,20/30] scsi: replace the fmode_t argument to ->sg_io_fn with a simple bool
+    https://git.kernel.org/jaegeuk/f2fs/c/1991299e49fa
+  - [f2fs-dev,21/30] nvme: replace the fmode_t argument to the nvme ioctl handlers with a simple bool
+    https://git.kernel.org/jaegeuk/f2fs/c/7d9d7d59d44b
+  - [f2fs-dev,22/30] mtd: block: use a simple bool to track open for write
+    https://git.kernel.org/jaegeuk/f2fs/c/658afed19cee
+  - [f2fs-dev,23/30] rnbd-srv: replace sess->open_flags with a "bool readonly"
+    https://git.kernel.org/jaegeuk/f2fs/c/99b07780814e
+  - [f2fs-dev,24/30] ubd: remove commented out code in ubd_open
+    https://git.kernel.org/jaegeuk/f2fs/c/bd6abfc8e789
+  - [f2fs-dev,25/30] block: move a few internal definitions out of blkdev.h
+    https://git.kernel.org/jaegeuk/f2fs/c/cfb425761c79
+  - [f2fs-dev,26/30] block: remove unused fmode_t arguments from ioctl handlers
+    https://git.kernel.org/jaegeuk/f2fs/c/5e4ea834676e
+  - [f2fs-dev,27/30] block: replace fmode_t with a block-specific type for block open flags
+    https://git.kernel.org/jaegeuk/f2fs/c/05bdb9965305
+  - [f2fs-dev,28/30] block: always use I_BDEV on file->f_mapping->host to find the bdev
+    https://git.kernel.org/jaegeuk/f2fs/c/4e762d862344
+  - [f2fs-dev,29/30] block: store the holder in file->private_data
+    https://git.kernel.org/jaegeuk/f2fs/c/ee3249a8ce78
+  - [f2fs-dev,30/30] fs: remove the now unused FMODE_* flags
+    https://git.kernel.org/jaegeuk/f2fs/c/0733ad800291
+
+You are awesome, thank you!
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-
-------RbnLpepSOhDWt1JmDV6HMUWO9Dmn-C3OOrycHY1seGoKI43i=_b1f2d_--
 
