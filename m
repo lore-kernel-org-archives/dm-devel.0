@@ -4,65 +4,95 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A6327EB64DA
-	for <dm-devel@archiver.kernel.org>; Wed,  5 Jul 2023 21:58:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 337EAEB64DC
+	for <dm-devel@archiver.kernel.org>; Thu,  6 Jul 2023 07:18:02 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1688594288;
+	s=mimecast20190719; t=1688627881;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=kjEawu8/5S3m1U8nXoR5RgNm4pZR+sI8mHhc3O5uJ9Y=;
-	b=DGK/sy5eEj+8QO3CIhTv80st1hZuRXjkom/4vOOJ6zuVZcxzeaX+lgf+3HYVrSwYLZ4D6T
-	AIlbr9Dhi+jwLnh7t79oZ9m6f/hUOV8j1N2/vsTz9y1FuFfVDHHaocBlMBzPCbm0B1BUUR
-	Nn+WHzKV/MEDQAdbPsxrWiGZ8Su2pDE=
+	bh=bpKKmyQxkVlRWq790YnYTFAayF6laC0rvdpas8Y82m4=;
+	b=Uc/cCN2FkaVPpFYyJ0+KzG6/4EPbjH+1eniGdiMv6zqtxhRto/HFOYyZpu6l8XssnYWLI8
+	RrJN2yZg5IAbyGwS6OHVFXBX8C00vmfcKSa+h8Kmoz7oAuZhdwV0n96qo7lqbpR3iBNyUL
+	KI4rZXvPD+WGX4kwjHl30X+Z3qJnmt0=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-267-I-9Iw_PDPWCrjuh9bTbSlA-1; Wed, 05 Jul 2023 17:58:05 -0400
-X-MC-Unique: I-9Iw_PDPWCrjuh9bTbSlA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-125-fDK90mIlMj6yuvH3ZdYjVQ-1; Thu, 06 Jul 2023 03:17:57 -0400
+X-MC-Unique: fDK90mIlMj6yuvH3ZdYjVQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 43D53299E76F;
-	Wed,  5 Jul 2023 21:58:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CAABC283477A;
+	Thu,  6 Jul 2023 07:17:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 82294C54FB3;
-	Wed,  5 Jul 2023 21:58:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0C563F641C;
+	Thu,  6 Jul 2023 07:17:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 653F51946589;
-	Wed,  5 Jul 2023 21:58:01 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E55CC19465B7;
+	Thu,  6 Jul 2023 07:17:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A89411946588
- for <dm-devel@listman.corp.redhat.com>; Wed,  5 Jul 2023 21:57:59 +0000 (UTC)
+ ESMTP id D007E1946588
+ for <dm-devel@listman.corp.redhat.com>; Thu,  6 Jul 2023 07:17:51 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6F80AF6404; Wed,  5 Jul 2023 21:57:59 +0000 (UTC)
-Received: from 167-179-156-38.a7b39c.syd.nbn.aussiebb.net (unknown
- [10.67.24.122])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DF133F6401;
- Wed,  5 Jul 2023 21:57:58 +0000 (UTC)
-Received: from gwarestrin.arnor.me.apana.org.au ([192.168.103.7])
- by fornost.hmeau.com with smtp (Exim 4.94.2 #2 (Debian))
- id 1qHAVM-000b7a-Fj; Thu, 06 Jul 2023 07:57:45 +1000
-Received: by gwarestrin.arnor.me.apana.org.au (sSMTP sendmail emulation);
- Thu, 06 Jul 2023 05:57:37 +0800
-Date: Thu, 6 Jul 2023 05:57:37 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Giovanni Cabiddu <giovanni.cabiddu@intel.com>
-Message-ID: <ZKXnUeueV6ncaJM6@gondor.apana.org.au>
-References: <20230705164009.58351-1-giovanni.cabiddu@intel.com>
- <20230705164009.58351-2-giovanni.cabiddu@intel.com>
- <20230705201205.GA866@sol.localdomain>
- <ZKXZUl4VgZkMbOL0@gcabiddu-mobl1.ger.corp.intel.com>
+ id 8ABC44087C6C; Thu,  6 Jul 2023 07:17:51 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 83C834087C6B
+ for <dm-devel@redhat.com>; Thu,  6 Jul 2023 07:17:51 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 68B93185A78F
+ for <dm-devel@redhat.com>; Thu,  6 Jul 2023 07:17:51 +0000 (UTC)
+Received: from dggsgout11.his.huawei.com (hwsga01-in.huaweimarine.com
+ [45.249.212.51]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-453-Ud3F2YaNMo-N_1tF7SsqoQ-1; Thu, 06 Jul 2023 03:17:49 -0400
+X-MC-Unique: Ud3F2YaNMo-N_1tF7SsqoQ-1
+Received: from mail02.huawei.com (unknown [172.30.67.143])
+ by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4QxSXk5cSmz4f3kK5;
+ Thu,  6 Jul 2023 15:17:42 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+ by APP4 (Coremail) with SMTP id gCh0CgCnD7OVaqZkZ3pMNQ--.43123S4;
+ Thu, 06 Jul 2023 15:17:43 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: agk@redhat.com, snitzer@kernel.org, dm-devel@redhat.com, song@kernel.org,
+ heinzm@redhat.com, neilb@suse.de, jbrassow@redhat.com
+Date: Thu,  6 Jul 2023 15:16:19 +0800
+Message-Id: <20230706071622.563073-1-yukuai1@huaweicloud.com>
 MIME-Version: 1.0
-In-Reply-To: <ZKXZUl4VgZkMbOL0@gcabiddu-mobl1.ger.corp.intel.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH 1/3] dm integrity: do not filter algos with
- CRYPTO_ALG_ALLOCATES_MEMORY
+X-CM-TRANSID: gCh0CgCnD7OVaqZkZ3pMNQ--.43123S4
+X-Coremail-Antispam: 1UD129KBjDUn29KB7ZKAUJUUUUU529EdanIXcx71UUUUU7v73
+ VFW2AGmfu7bjvjm3AaLaJ3UjIYCTnIWjp_UUUYc7AC8VAFwI0_Gr0_Xr1l1xkIjI8I6I8E
+ 6xAIw20EY4v20xvaj40_Wr0E3s1l1IIY67AEw4v_Jr0_Jr4l8cAvFVAK0II2c7xJM28Cjx
+ kF64kEwVA0rcxSw2x7M28EF7xvwVC0I7IYx2IY67AKxVWDJVCq3wA2z4x0Y4vE2Ix0cI8I
+ cVCY1x0267AKxVW8Jr0_Cr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87
+ Iv6xkF7I0E14v26rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE
+ 6c02F40Ex7xfMcIj6xIIjxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72
+ CE4IkC6x0Yz7v_Jr0_Gr1lF7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7
+ M4IIrI8v6xkF7I0E8cxan2IY04v7MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r
+ 1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CE
+ b7AF67AKxVWUtVW8ZwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0x
+ vE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq3wCI
+ 42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWI
+ evJa73UjIFyTuYvjfUoOJ5UUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+X-CFilter-Loop: Reflected
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: [dm-devel] [PATCH -next 0/3] dm-raid: minor fixes
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -74,38 +104,34 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Fiona Trahe <fiona.trahe@intel.com>, horia.geanta@nxp.com,
- pankaj.gupta@nxp.com, gaurav.jain@nxp.com, heinzm@redhat.com,
- snitzer@kernel.org, linux-kernel@vger.kernel.org, qat-linux@intel.com,
- Eric Biggers <ebiggers@kernel.org>, iuliana.prodan@nxp.com,
- dm-devel@redhat.com, meenakshi.aggarwal@nxp.com, linux-crypto@vger.kernel.org,
- davem@davemloft.net, agk@redhat.com, V.Sethi@nxp.com
+Cc: yi.zhang@huawei.com, yangerkun@huawei.com, linux-kernel@vger.kernel.org,
+ linux-raid@vger.kernel.org, yukuai1@huaweicloud.com, yukuai3@huawei.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: gondor.apana.org.au
-Content-Disposition: inline
+X-Mimecast-Originator: huaweicloud.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Jul 05, 2023 at 09:57:54PM +0100, Giovanni Cabiddu wrote:
->
-> Then we are then back to square one. We need to check how many entries
-> are present in the scatterlists encrypted by crypt_journal() before
-> adjusting the meaning of !CRYPTO_ALG_ALLOCATES_MEMORY.
+From: Yu Kuai <yukuai3@huawei.com>
 
-Indeed.  I missed the fact that it was preallocating memory with
-GFP_KERNEL.
+This patchset fix two straightforward and easy problems that is found by
+code review, please consider it for the next merge window.
 
-So perhaps the answer is to adjust our API to allow the drivers to
-pre-allocate memory.  I'll look into this.
+Yu Kuai (3):
+  md/dm-raid: fix that 'reconfig_mutex' is not released from error path
+    in raid_ctr()
+  md/dm-raid: cleanup multiple equivalent goto tags from raid_ctr()
+  md/dm-raid: protect md_stop() with 'reconfig_mutex'
 
-Thanks,
+ drivers/md/dm-raid.c | 20 +++++++++-----------
+ drivers/md/md.c      |  2 ++
+ 2 files changed, 11 insertions(+), 11 deletions(-)
+
 -- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+2.39.2
+
 --
 dm-devel mailing list
 dm-devel@redhat.com
