@@ -1,93 +1,92 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D66DCC001B0
-	for <dm-devel@archiver.kernel.org>; Sat,  8 Jul 2023 04:23:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E542BEB64DA
+	for <dm-devel@archiver.kernel.org>; Sat,  8 Jul 2023 04:23:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1688790194;
+	s=mimecast20190719; t=1688790198;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=ZN9J/27g324Wh+A2QqXcekSKtzjMsueFZBDS7yQBZKE=;
-	b=h8cLRE0hTHyh6L2EseGfqww93npjhRNAWbuIV+ottPvLxzzXdOnaPnHtXUm8fJDOHF5O3W
-	Vp2VbHG5yohey1mzdIYUfS3QXhgITCoceGM1dNeQgD/hvy6N+8rXcpSH3tHc0oheHuf4Pt
-	PrRj/93VrVCmnSRQ4IONHeKHafQfjbc=
+	bh=sqeJUVH+7eOae5JtNp9/BLkgEmw05MZpA6YpifTPwe8=;
+	b=LvzF/OFROmt9YHaUj4JUOflfBap4oatbq7XgfXE7wfd+V3YLiYjmeKngztCpIJJQpW0jE9
+	DhIH9FhNX159RgpBW4RfU5SHk1tRpd5vIoOmfDMgql5kn9KG5mGNYhl7wG52VBJNdwmbYv
+	BaTPfXmIn87w8eoH23RPjPqmKVRCzag=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-646--eN9Fr7VONSdzPicFrO1aA-1; Sat, 08 Jul 2023 00:23:13 -0400
-X-MC-Unique: -eN9Fr7VONSdzPicFrO1aA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-215-RjjTcpOoNZaA9MwtP36nLQ-1; Sat, 08 Jul 2023 00:23:14 -0400
+X-MC-Unique: RjjTcpOoNZaA9MwtP36nLQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 985C438041EB;
-	Sat,  8 Jul 2023 04:23:11 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 780B23C0E205;
+	Sat,  8 Jul 2023 04:23:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 82376F66A2;
-	Sat,  8 Jul 2023 04:23:11 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 66B10C09A09;
+	Sat,  8 Jul 2023 04:23:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 720F61946A71;
-	Sat,  8 Jul 2023 04:23:11 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 41BEA1946A70;
+	Sat,  8 Jul 2023 04:23:12 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2B1221946A61
- for <dm-devel@listman.corp.redhat.com>; Sat,  8 Jul 2023 04:23:09 +0000 (UTC)
+ ESMTP id E0BD11946A5A
+ for <dm-devel@listman.corp.redhat.com>; Sat,  8 Jul 2023 04:23:10 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 17E7D207B2DA; Sat,  8 Jul 2023 04:23:09 +0000 (UTC)
+ id B5E231121339; Sat,  8 Jul 2023 04:23:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 106A7207B315
- for <dm-devel@redhat.com>; Sat,  8 Jul 2023 04:23:09 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EA5D728237D7
- for <dm-devel@redhat.com>; Sat,  8 Jul 2023 04:23:08 +0000 (UTC)
-Received: from mail-qk1-f175.google.com (mail-qk1-f175.google.com
- [209.85.222.175]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id AE80F1121333
+ for <dm-devel@redhat.com>; Sat,  8 Jul 2023 04:23:10 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 950B9830F46
+ for <dm-devel@redhat.com>; Sat,  8 Jul 2023 04:23:10 +0000 (UTC)
+Received: from mail-qt1-f179.google.com (mail-qt1-f179.google.com
+ [209.85.160.179]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-453-MPETKYl6O3K0LRf1uO4DxA-1; Sat, 08 Jul 2023 00:23:05 -0400
-X-MC-Unique: MPETKYl6O3K0LRf1uO4DxA-1
-Received: by mail-qk1-f175.google.com with SMTP id
- af79cd13be357-76595a7b111so232927285a.2
- for <dm-devel@redhat.com>; Fri, 07 Jul 2023 21:23:05 -0700 (PDT)
+ us-mta-629-MR0equXNPKuT7fXLh8W8sQ-1; Sat, 08 Jul 2023 00:23:08 -0400
+X-MC-Unique: MR0equXNPKuT7fXLh8W8sQ-1
+Received: by mail-qt1-f179.google.com with SMTP id
+ d75a77b69052e-40292285362so19791091cf.3
+ for <dm-devel@redhat.com>; Fri, 07 Jul 2023 21:23:08 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1688790184; x=1691382184;
+ d=1e100.net; s=20221208; t=1688790188; x=1691382188;
  h=in-reply-to:references:subject:cc:to:from:message-id:date
  :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=tGA1GMuiBFLQbBC9Kx/aFBaGS7w0xHkPHFkJJNA2iSI=;
- b=a9fyK3n0FIo/ZL/tyQ2gEVg2UbgoE3Ww62IoOKV79BTiYGnijXleLRaL5KrGcA0fUS
- WHn/OSb1wDM/nnAs6BpgCoJ1oiWbifRMQ3fuj0Zq7u39oASk8qzcTWuFdfLu3WPVYo2+
- cNMJ6AduLh0gQ+EV0m6GP64HGLe5vx3BM4+brNEvjg/5AsB9oWVPkhWrwao0qA5iqdbW
- nGLnGH1ORJZemY2sQMCfdvm+3w8EMR9mV5mC8c3TKYuPJIJReRU9Pg+WpCuWfIvntNPn
- p77R2NZ58RnrxoJtJq4MUkBgV8V6uBd2U5QCbjhKRSrbNgWXbsdNAyzbliXpGATR4Mrq
- KVIA==
-X-Gm-Message-State: ABy/qLZ7uSyzBlLQkmFR9WYySxIuzGBkhgOcEDfASk2nSXLbDC8sy9i6
- Sok6H+BfKwZidasO+HMvTSo5
-X-Google-Smtp-Source: APBJJlGxWlU5zocT/PpO5XTLqSL3VMNhda6cmnflMBJu2pajHjmBGIr/SrrJ3ymYVbhkX/eeBD8tkA==
-X-Received: by 2002:a05:620a:2903:b0:767:261d:1ef6 with SMTP id
- m3-20020a05620a290300b00767261d1ef6mr8087348qkp.59.1688790184537; 
- Fri, 07 Jul 2023 21:23:04 -0700 (PDT)
+ bh=+Hz3LNSJIA32LS0w6BjIcScwNW8naJ0tmp1lMEgiYII=;
+ b=RMaoZitVeDws6lSuCg9WV+n/Up4FD8bBjeOZ++DbchHkMSoDanlCLmuKGP9op68Q7G
+ 1KMxzgHLW06YhTzyZvcrbKkJHDbjWpF+cKjiPuHSrSfMaK/uwFOx7d6Tv3zSOOUB0R65
+ exwmCoEuvx8Av/JWjNURbocEFBlrTmM0KrTkyosK8Rh5xoZJqmWNhyXfUm5qHLXxAOQG
+ eBJRcy4/d4EynQ/bK2//2k9hwCmdHVERHTTc/mIjb9BlGOmb8w9B1I26YYkdEoEpDlS4
+ I30+ExKalMQ5QjGaFUM4gsgOpNmSq+KDD4+pcVbCiyHcScTuV3h3HSsEWDE6SYj2QDV2
+ mWaQ==
+X-Gm-Message-State: ABy/qLZOuZXNOOQjihQV1Yw97fz1wFOgRF3PAK1ETgcFpReN7B+8BAJl
+ UDQif6pe5gKpM2DTcMtgfKJL
+X-Google-Smtp-Source: APBJJlF7ZdvOpye5Bi9nBRtHP5gbHB7zedNeZ207ssI0QYjswYk8C3ybGJ8VmbiZKLdIlvHd08nvYQ==
+X-Received: by 2002:a05:622a:1010:b0:3f9:efa3:9e6f with SMTP id
+ d16-20020a05622a101000b003f9efa39e6fmr9400841qte.27.1688790187997; 
+ Fri, 07 Jul 2023 21:23:07 -0700 (PDT)
 Received: from localhost ([70.22.175.108]) by smtp.gmail.com with ESMTPSA id
- u15-20020a05620a120f00b007671678e325sm2432817qkj.88.2023.07.07.21.23.04
+ z23-20020ac81017000000b003f9efa2ddb4sm2383994qti.66.2023.07.07.21.23.07
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 07 Jul 2023 21:23:04 -0700 (PDT)
-Date: Sat, 08 Jul 2023 00:23:03 -0400
-Message-ID: <80ae988288d2ac277a4429e85524a9bb.paul@paul-moore.com>
+ Fri, 07 Jul 2023 21:23:07 -0700 (PDT)
+Date: Sat, 08 Jul 2023 00:23:07 -0400
+Message-ID: <1160e6ccbc06a59f243c3e4580f34194.paul@paul-moore.com>
 From: Paul Moore <paul@paul-moore.com>
 To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
  jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
  axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com,
-References: <1687986571-16823-7-git-send-email-wufan@linux.microsoft.com>
-In-Reply-To: <1687986571-16823-7-git-send-email-wufan@linux.microsoft.com>
+References: <1687986571-16823-13-git-send-email-wufan@linux.microsoft.com>
+In-Reply-To: <1687986571-16823-13-git-send-email-wufan@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -95,9 +94,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: Re: [dm-devel] [PATCH RFC v10 6/17] security: add new securityfs
- delete function
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH RFC v10 12/17] ipe: add support for dm-verity
+ as a trust provider
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -109,7 +108,8 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org, roberto.sassu@huawei.com,
+Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
+ Deven Bowers <deven.desai@linux.microsoft.com>, roberto.sassu@huawei.com,
  linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org,
  linux-block@vger.kernel.org, audit@vger.kernel.org,
  linux-fscrypt@vger.kernel.org, Fan Wu <wufan@linux.microsoft.com>,
@@ -117,7 +117,7 @@ Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org, roberto.sassu@huawei.com,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: paul-moore.com
 Content-Type: text/plain; charset="us-ascii"
@@ -125,77 +125,93 @@ Content-Transfer-Encoding: 7bit
 
 On Jun 28, 2023 Fan Wu <wufan@linux.microsoft.com> wrote:
 > 
-> When deleting a directory in the security file system, the existing
-> securityfs_remove requires the directory to be empty, otherwise
-> it will do nothing. This leads to a potential risk that the security
-> file system might be in an unclean state when the intentded deletion
-> did not happen.
+> Allows author of IPE policy to indicate trust for a singular dm-verity
+> volume, identified by roothash, through "dmverity_roothash" and all
+> signed dm-verity volumes, through "dmverity_signature".
 > 
-> This commit introduces a new function securityfs_recursive_remove
-> to recursively delete a directory without leaving an unclean state.
-> 
-> Co-developed-by: "Christian Brauner (Microsoft)" <brauner@kernel.org>
+> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 > ---
->  include/linux/security.h |  1 +
->  security/inode.c         | 25 +++++++++++++++++++++++++
->  2 files changed, 26 insertions(+)
-> 
-> diff --git a/include/linux/security.h b/include/linux/security.h
-> index e2734e9e44d5..a88076ebc7b1 100644
-> --- a/include/linux/security.h
-> +++ b/include/linux/security.h
-> @@ -1971,6 +1971,7 @@ struct dentry *securityfs_create_symlink(const char *name,
->  					 const char *target,
->  					 const struct inode_operations *iops);
->  extern void securityfs_remove(struct dentry *dentry);
-> +extern void securityfs_recursive_remove(struct dentry *dentry);
->  
->  #else /* CONFIG_SECURITYFS */
->  
-> diff --git a/security/inode.c b/security/inode.c
-> index 6c326939750d..13358e8547e8 100644
-> --- a/security/inode.c
-> +++ b/security/inode.c
-> @@ -313,6 +313,31 @@ void securityfs_remove(struct dentry *dentry)
+>  security/ipe/Kconfig         |  18 +++++
+>  security/ipe/Makefile        |   1 +
+>  security/ipe/audit.c         |  25 ++++++
+>  security/ipe/digest.c        | 142 +++++++++++++++++++++++++++++++++++
+>  security/ipe/digest.h        |  26 +++++++
+>  security/ipe/eval.c          | 101 ++++++++++++++++++++++++-
+>  security/ipe/eval.h          |  13 ++++
+>  security/ipe/hooks.c         |  51 +++++++++++++
+>  security/ipe/hooks.h         |   8 ++
+>  security/ipe/ipe.c           |  15 ++++
+>  security/ipe/ipe.h           |   4 +
+>  security/ipe/policy.h        |   3 +
+>  security/ipe/policy_parser.c |  21 ++++++
+>  13 files changed, 427 insertions(+), 1 deletion(-)
+>  create mode 100644 security/ipe/digest.c
+>  create mode 100644 security/ipe/digest.h
+
+...
+
+> diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
+> index 6f94f5c8a0c3..9651e582791e 100644
+> --- a/security/ipe/hooks.c
+> +++ b/security/ipe/hooks.c
+> @@ -192,3 +195,51 @@ void ipe_sb_free_security(struct super_block *mnt_sb)
+>  {
+>  	ipe_invalidate_pinned_sb(mnt_sb);
 >  }
->  EXPORT_SYMBOL_GPL(securityfs_remove);
->  
-> +static void remove_one(struct dentry *victim)
+> +
+> +#ifdef CONFIG_IPE_PROP_DM_VERITY
+> +/**
+> + * ipe_bdev_free_security - free IPE's LSM blob of block_devices.
+> + * @bdev: Supplies a pointer to a block_device that contains the structure
+> + *	  to free.
+> + */
+> +void ipe_bdev_free_security(struct block_device *bdev)
 > +{
-> +	simple_release_fs(&mount, &mount_count);
+> +	struct ipe_bdev *blob = ipe_bdev(bdev);
+> +
+> +	kfree(blob->digest);
+> +	kfree(blob->digest_algo);
 > +}
 > +
 > +/**
-> + * securityfs_recursive_remove - recursively removes a file or directory from the securityfs filesystem
-
-I really want to see lines less than or equal to 80 characters; I
-would suggest this:
-
-"securityfs_recursive_remove - recursively removes a file or directory"
-
-> + * @dentry: a pointer to a the dentry of the file or directory to be removed.
-> + *
-> + * This function recursively removes a file or directory in securityfs that was
-> + * previously created with a call to another securityfs function (like
-> + * securityfs_create_file() or variants thereof.)
+> + * ipe_bdev_setsecurity - save data from a bdev to IPE's LSM blob.
+> + * @bdev: Supplies a pointer to a block_device that contains the LSM blob.
+> + * @key: Supplies the string key that uniquely identifies the value.
+> + * @value: Supplies the value to store.
+> + * @len: The length of @value.
 > + */
-> +void securityfs_recursive_remove(struct dentry *dentry)
+> +int ipe_bdev_setsecurity(struct block_device *bdev, const char *key,
+> +			 const void *value, size_t len)
 > +{
-> +	if (IS_ERR_OR_NULL(dentry))
-> +		return;
+> +	struct ipe_bdev *blob = ipe_bdev(bdev);
+
+Before you can interpret the @key value, you need to first determine
+which type of block device you have been handed.  It is possible that
+multiple block device types could share the same key with very
+different meanings for that key, yes?
+
+> +	if (!strcmp(key, DM_VERITY_ROOTHASH_SEC_NAME)) {
+> +		const struct dm_verity_digest *digest = value;
 > +
-> +	simple_pin_fs(&fs_type, &mount, &mount_count);
-> +	simple_recursive_removal(dentry, remove_one);
-> +	simple_release_fs(&mount, &mount_count);
+> +		blob->digest = kmemdup(digest->digest, digest->digest_len, GFP_KERNEL);
+> +		if (!blob->digest)
+> +			return -ENOMEM;
+> +
+> +		blob->digest_algo = kstrdup_const(digest->algo, GFP_KERNEL);
+> +		if (!blob->digest_algo)
+> +			return -ENOMEM;
+> +
+> +		blob->digest_len = digest->digest_len;
+> +		return 0;
+> +	} else if (!strcmp(key, DM_VERITY_SIGNATURE_SEC_NAME)) {
+> +		blob->dm_verity_signed = true;
+> +		return 0;
+> +	}
+> +
+> +	return -EOPNOTSUPP;
 > +}
-> +EXPORT_SYMBOL_GPL(securityfs_recursive_remove);
-> +
->  #ifdef CONFIG_SECURITY
->  static struct dentry *lsm_dentry;
->  static ssize_t lsm_read(struct file *filp, char __user *buf, size_t count,
-> -- 
-> 2.25.1
+> +#endif /* CONFIG_IPE_PROP_DM_VERITY */
 
 --
 paul-moore.com
