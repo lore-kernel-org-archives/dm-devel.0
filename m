@@ -4,95 +4,93 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 69AD2EB64DA
-	for <dm-devel@archiver.kernel.org>; Mon, 10 Jul 2023 19:05:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5E8B7EB64DA
+	for <dm-devel@archiver.kernel.org>; Mon, 10 Jul 2023 19:36:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1689015917;
+	s=mimecast20190719; t=1689017780;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=5861KWD3d/dGpI//8v3IKMqr0tZlob26W8VkqiCD28M=;
-	b=fHRPiQ5KFAHxqSx8YmpzNWCFDbrbX3HhqhzH64str6AcSN3Qn6bGaGin13H93MBvQjwja+
-	wWIz7gE/ykJwIJP1s9YRjERWuQ15gXlYfBgSpS9NTs2Iv17Z8z7s13nXC3JN7m5k+zD+zC
-	ZtUA2bSTmXkhFdVm3z/zjyn9vXHcgSM=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=23shWbYDUcTSD3yBZV0iAnH4xi4v5jEErRQYVMqm0rg=;
+	b=SXkEYByK9uc6a74iIsBluCtjYUxkHKrSPNslkaCtN5uGMGj743ZcgZOauOuCaC2L6Ir2qS
+	VaZ7+CKcuerSHKDv9nkZKGOQUCO54lG+ZN410HW5r/F9N/qGHgVBft/9uCp46XH+0fQj8q
+	nI2RmI2bU9bacZlEUtDHiNLgySwuBzI=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-507-3QZhb22tN0Oggk2hcQp8tQ-1; Mon, 10 Jul 2023 15:05:15 -0400
-X-MC-Unique: 3QZhb22tN0Oggk2hcQp8tQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-313-JNLXhgAeNU2uKuv-eq16Cg-1; Mon, 10 Jul 2023 15:36:17 -0400
+X-MC-Unique: JNLXhgAeNU2uKuv-eq16Cg-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A0634185A795;
-	Mon, 10 Jul 2023 19:05:13 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 554ED1C07820;
+	Mon, 10 Jul 2023 19:36:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 53D16200A7CA;
-	Mon, 10 Jul 2023 19:05:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id DD225492B01;
+	Mon, 10 Jul 2023 19:36:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D35A219465B9;
-	Mon, 10 Jul 2023 19:05:06 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9829B19465B9;
+	Mon, 10 Jul 2023 19:36:13 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D553319465B8
- for <dm-devel@listman.corp.redhat.com>; Mon, 10 Jul 2023 19:05:05 +0000 (UTC)
+ ESMTP id 8E58F19465B8
+ for <dm-devel@listman.corp.redhat.com>; Mon, 10 Jul 2023 19:36:12 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9BC41C478DE; Mon, 10 Jul 2023 19:05:05 +0000 (UTC)
+ id 124D02166B26; Mon, 10 Jul 2023 19:36:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 92ED8C09A09
- for <dm-devel@redhat.com>; Mon, 10 Jul 2023 19:05:05 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7110380269A
- for <dm-devel@redhat.com>; Mon, 10 Jul 2023 19:05:05 +0000 (UTC)
-Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com
- [209.85.210.169]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0A3BC2166B28
+ for <dm-devel@redhat.com>; Mon, 10 Jul 2023 19:36:12 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C26113C0FC83
+ for <dm-devel@redhat.com>; Mon, 10 Jul 2023 19:36:11 +0000 (UTC)
+Received: from mail-pj1-f43.google.com (mail-pj1-f43.google.com
+ [209.85.216.43]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-421-wUDXNPaeOx-GQa4eYEjN6g-1; Mon, 10 Jul 2023 15:05:03 -0400
-X-MC-Unique: wUDXNPaeOx-GQa4eYEjN6g-1
-Received: by mail-pf1-f169.google.com with SMTP id
- d2e1a72fcca58-6748a616e17so1265135b3a.1
- for <dm-devel@redhat.com>; Mon, 10 Jul 2023 12:05:03 -0700 (PDT)
+ us-mta-214-XbMs9FgnM0CJJziV8fsgPw-1; Mon, 10 Jul 2023 15:36:05 -0400
+X-MC-Unique: XbMs9FgnM0CJJziV8fsgPw-1
+Received: by mail-pj1-f43.google.com with SMTP id
+ 98e67ed59e1d1-262e66481c4so2308805a91.1; 
+ Mon, 10 Jul 2023 12:36:05 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1689015902; x=1691607902;
- h=content-transfer-encoding:in-reply-to:from:references:cc:to
- :content-language:subject:user-agent:mime-version:date:message-id
- :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=aWV26TGTy3//l4E8aINjjrrFmjWk+bhHVAYRbt8sCmU=;
- b=axGN74ZV5zDAPmQXvTboo1nxgyfSPYnhI2Cz70ZYxsYaa0GKg/tRkmrRtaSmyeDCPH
- eeIJJMKT5wFpJc/BOagKksiS8fwqoakMcO6ffDwgiFBjRj3obJqKCkYC08JTYPQQHzyP
- kVC1+2dbmrGl57nzrmpEcuBRApwVmCKpdL3+c/30kjnf6941HQfIwYbCS4HmiZuXbA6A
- hccXaguKmnbukcQ6sETCDXFkWxKfNPDc87A2DXjwFjCB0kwb0dzs2vHJFN3Fk+vusyX9
- sTL8vgvpVC+xfnkqpxxWOquu3M+3REhpqa3vQY3QRo7Q/mLxHSj0wwbYR5ixMwPXCI1s
- VV6Q==
-X-Gm-Message-State: ABy/qLahkRrCYE8y4POfNI1JUE+vigsvwvgH4oFlpdbv/n9j7Pk10JY7
- qPNR15UPC3UbP2jfNmUmaV5+YA==
-X-Google-Smtp-Source: APBJJlEiIWLxcSKnACk8shroBBJlI/U6S4QvWokhBzawLykUkcAHFBh46fnGScu9KFgpew7U4EXhlQ==
-X-Received: by 2002:a17:902:ea0a:b0:1b3:ec39:f42c with SMTP id
- s10-20020a170902ea0a00b001b3ec39f42cmr17068822plg.5.1689015902396; 
- Mon, 10 Jul 2023 12:05:02 -0700 (PDT)
-Received: from [192.168.1.136] ([198.8.77.157])
+ d=1e100.net; s=20221208; t=1689017764; x=1691609764;
+ h=in-reply-to:content-disposition:mime-version:references:message-id
+ :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=0B3XSLLjuEjtNYqEZBG77mA0gS4vthVHEe/V5yRqvhA=;
+ b=QMgGtTUxBG4R5XB43zjNjpG3+TH2aeru8J/suGXrCmZEiVbeKylZ1A9H3IxuPb7drS
+ 1ZCkiPT3h8h06YShmCoepKY7EEummS4ucLPbKGxb7B20npJJJ8jckTU4cg+4jTj3Xj6p
+ +dsbxGdR/I0/1fo45kicVvpyvLVXqdOp/i1JdrARdPVWCswCBTn0rlxymfWRl94Osagv
+ 3PWCskRxY1ak8Tfzana/RkdRa+b/BGnJUuhJb9zugEOcXyBMCelhWzxMR5/ZEBH2yh6q
+ tNkY9ey5yFLhaLEfEQnhLz4aiE0lltxBX2niMjWi+WDba0K8vppa2nFpovGNspXrSBya
+ K9Og==
+X-Gm-Message-State: ABy/qLYd81mVwRCaaK8xNLQOuZnswKjEc8q+PJdVjnOK65fVzCb5qAel
+ 2cgREjkDe0xWTUlfTDHDmiJKEJsAUX05WA==
+X-Google-Smtp-Source: APBJJlFzyIkD31skLQBh/rVvud9fMUns8jkA0cORhGdx1hvMjEDc+DGtv1tFdkuQC6BUAF8giphvPA==
+X-Received: by 2002:a17:90a:88b:b0:262:ff1c:bc37 with SMTP id
+ v11-20020a17090a088b00b00262ff1cbc37mr10796761pjc.2.1689017764300; 
+ Mon, 10 Jul 2023 12:36:04 -0700 (PDT)
+Received: from localhost ([2620:10d:c090:400::5:e2fe])
  by smtp.gmail.com with ESMTPSA id
- c3-20020a170902724300b001b1c3542f57sm241949pll.103.2023.07.10.12.05.01
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Mon, 10 Jul 2023 12:05:01 -0700 (PDT)
-Message-ID: <2ade2716-d875-5e4c-82ce-c4c7f00f1bbc@kernel.dk>
-Date: Mon, 10 Jul 2023 13:05:00 -0600
+ l130-20020a633e88000000b0055b5f206ea2sm82536pga.39.2023.07.10.12.36.03
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Mon, 10 Jul 2023 12:36:03 -0700 (PDT)
+Date: Mon, 10 Jul 2023 09:36:02 -1000
+From: Tejun Heo <tj@kernel.org>
+To: Mike Snitzer <snitzer@kernel.org>
+Message-ID: <ZKxdosGfpQxRxdYp@slm.duckdns.org>
+References: <20230301032904.3561641-1-yangerkun@huaweicloud.com>
+ <b96155f3-0f6c-273d-4e0a-24fe05bb618a@huaweicloud.com>
+ <7f1f7798-dd56-919f-cd59-22cfcafae342@huaweicloud.com>
+ <ZKhbclN3V8taEStt@redhat.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux aarch64; rv:102.0) Gecko/20100101
- Thunderbird/102.12.0
-To: Mikulas Patocka <mpatocka@redhat.com>, Li Nan <linan666@huaweicloud.com>
-References: <alpine.LRH.2.02.2209201350470.26058@file01.intranet.prod.int.rdu2.redhat.com>
- <alpine.LRH.2.02.2209201358120.26535@file01.intranet.prod.int.rdu2.redhat.com>
- <ace0451f-b979-be13-cf47-a8cb3656c72e@huaweicloud.com>
- <4b6788d2-c6e1-948-22d-dbb7cbba657d@redhat.com>
-From: Jens Axboe <axboe@kernel.dk>
-In-Reply-To: <4b6788d2-c6e1-948-22d-dbb7cbba657d@redhat.com>
+In-Reply-To: <ZKhbclN3V8taEStt@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -100,8 +98,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH v2 3/4] brd: enable discard
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH v2] dm-crypt: reexport sysfs of kcryptd
+ workqueue
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -113,46 +112,33 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Christoph Hellwig <hch@infradead.org>, linux-block@vger.kernel.org,
- dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: yangerkun <yangerkun@huaweicloud.com>, dm-devel@redhat.com,
+ mpatocka@redhat.com, jefflexu@linux.alibaba.com, yukuai3@huawei.com,
+ agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.dk
-Content-Language: en-US
+X-Mimecast-Originator: kernel.org
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 7/10/23 9:24?AM, Mikulas Patocka wrote:
-> 
-> 
-> On Mon, 10 Jul 2023, Li Nan wrote:
-> 
->> Hi, Mikulas
->>
->> The lack of discard in ramdisk can cause some issues related to dm. see:
->> https://lore.kernel.org/all/20220228141354.1091687-1-luomeng12@huawei.com/
->>
->> I noticed that your patch series has already supported discard for brd. But
->> this patch series has not been applied to mainline at present, may I ask if
->> you still plan to continue working on it?
->>
->> -- 
->> Thanks,
->> Nan
-> 
-> Hi
-> 
-> I got no response from ramdisk maintainer Jens Axboe. We should ask him, 
-> whether he doesn't want discard on ramdisk at all or whether he wants it.
+Hello, Mike.
 
-When a series is posted and reviewers comment on required changes, I
-always wait for a respin of that series with those addressed. That
-didn't happen, so this didn't get applied.
+On Fri, Jul 07, 2023 at 02:37:38PM -0400, Mike Snitzer wrote:
+> I certainly would like the ability to allow control over the
+> workqueues using WQ_SYSFS.  But with Tejun's latest WQ_UNBOUND changes
+> (just merged during 6.5 merge window) I think we'd do well to audit
+
+That part didn't get merged yet. I'm still waiting on some benchmark results
+to verify that the change won't cause regressions which are difficult to
+work around. The target is the next merge window.
+
+Thanks.
 
 -- 
-Jens Axboe
+tejun
 
 --
 dm-devel mailing list
