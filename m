@@ -4,93 +4,89 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5E8B7EB64DA
-	for <dm-devel@archiver.kernel.org>; Mon, 10 Jul 2023 19:36:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5BC27C001DE
+	for <dm-devel@archiver.kernel.org>; Tue, 11 Jul 2023 06:13:44 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1689017780;
+	s=mimecast20190719; t=1689056023;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=23shWbYDUcTSD3yBZV0iAnH4xi4v5jEErRQYVMqm0rg=;
-	b=SXkEYByK9uc6a74iIsBluCtjYUxkHKrSPNslkaCtN5uGMGj743ZcgZOauOuCaC2L6Ir2qS
-	VaZ7+CKcuerSHKDv9nkZKGOQUCO54lG+ZN410HW5r/F9N/qGHgVBft/9uCp46XH+0fQj8q
-	nI2RmI2bU9bacZlEUtDHiNLgySwuBzI=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=bsEv+oWTx+bGUVQK8ltI4CYD+52QT7bV8dHn52fu0SU=;
+	b=hGuKTJclDAenhwqg5oYxb5l/8Q150OfzkkpUvt6ZH0FTMgXzx41sJaAJ2BAm4mQLfbwO7Z
+	ZZU7k+dG31eekMK2gAB0e1G6KiBDeco5fftPgF34qtEK7sYaYcgckjNBJftE1fU9M+meh7
+	uP1v3UtuQcDbd7EaEzNuRtrPGWz1mtQ=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-313-JNLXhgAeNU2uKuv-eq16Cg-1; Mon, 10 Jul 2023 15:36:17 -0400
-X-MC-Unique: JNLXhgAeNU2uKuv-eq16Cg-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-435-23vx8PTPOfubPAnP9IWqpQ-1; Tue, 11 Jul 2023 02:13:41 -0400
+X-MC-Unique: 23vx8PTPOfubPAnP9IWqpQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 554ED1C07820;
-	Mon, 10 Jul 2023 19:36:15 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id DD225492B01;
-	Mon, 10 Jul 2023 19:36:14 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 775D8810BB4;
+	Tue, 11 Jul 2023 06:13:39 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id ABF80F66AD;
+	Tue, 11 Jul 2023 06:13:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9829B19465B9;
-	Mon, 10 Jul 2023 19:36:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 45CF419465B9;
+	Tue, 11 Jul 2023 06:13:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8E58F19465B8
- for <dm-devel@listman.corp.redhat.com>; Mon, 10 Jul 2023 19:36:12 +0000 (UTC)
+ ESMTP id 245E219465B8
+ for <dm-devel@listman.corp.redhat.com>; Tue, 11 Jul 2023 06:13:31 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 124D02166B26; Mon, 10 Jul 2023 19:36:12 +0000 (UTC)
+ id C7FE3C54FB3; Tue, 11 Jul 2023 06:13:30 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0A3BC2166B28
- for <dm-devel@redhat.com>; Mon, 10 Jul 2023 19:36:12 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C06BDC478DE
+ for <dm-devel@redhat.com>; Tue, 11 Jul 2023 06:13:30 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C26113C0FC83
- for <dm-devel@redhat.com>; Mon, 10 Jul 2023 19:36:11 +0000 (UTC)
-Received: from mail-pj1-f43.google.com (mail-pj1-f43.google.com
- [209.85.216.43]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 87EBB3C0E440
+ for <dm-devel@redhat.com>; Tue, 11 Jul 2023 06:13:30 +0000 (UTC)
+Received: from dggsgout12.his.huawei.com (hwsga02-in.huaweimarine.com
+ [45.249.212.56]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-214-XbMs9FgnM0CJJziV8fsgPw-1; Mon, 10 Jul 2023 15:36:05 -0400
-X-MC-Unique: XbMs9FgnM0CJJziV8fsgPw-1
-Received: by mail-pj1-f43.google.com with SMTP id
- 98e67ed59e1d1-262e66481c4so2308805a91.1; 
- Mon, 10 Jul 2023 12:36:05 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1689017764; x=1691609764;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:sender:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=0B3XSLLjuEjtNYqEZBG77mA0gS4vthVHEe/V5yRqvhA=;
- b=QMgGtTUxBG4R5XB43zjNjpG3+TH2aeru8J/suGXrCmZEiVbeKylZ1A9H3IxuPb7drS
- 1ZCkiPT3h8h06YShmCoepKY7EEummS4ucLPbKGxb7B20npJJJ8jckTU4cg+4jTj3Xj6p
- +dsbxGdR/I0/1fo45kicVvpyvLVXqdOp/i1JdrARdPVWCswCBTn0rlxymfWRl94Osagv
- 3PWCskRxY1ak8Tfzana/RkdRa+b/BGnJUuhJb9zugEOcXyBMCelhWzxMR5/ZEBH2yh6q
- tNkY9ey5yFLhaLEfEQnhLz4aiE0lltxBX2niMjWi+WDba0K8vppa2nFpovGNspXrSBya
- K9Og==
-X-Gm-Message-State: ABy/qLYd81mVwRCaaK8xNLQOuZnswKjEc8q+PJdVjnOK65fVzCb5qAel
- 2cgREjkDe0xWTUlfTDHDmiJKEJsAUX05WA==
-X-Google-Smtp-Source: APBJJlFzyIkD31skLQBh/rVvud9fMUns8jkA0cORhGdx1hvMjEDc+DGtv1tFdkuQC6BUAF8giphvPA==
-X-Received: by 2002:a17:90a:88b:b0:262:ff1c:bc37 with SMTP id
- v11-20020a17090a088b00b00262ff1cbc37mr10796761pjc.2.1689017764300; 
- Mon, 10 Jul 2023 12:36:04 -0700 (PDT)
-Received: from localhost ([2620:10d:c090:400::5:e2fe])
- by smtp.gmail.com with ESMTPSA id
- l130-20020a633e88000000b0055b5f206ea2sm82536pga.39.2023.07.10.12.36.03
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 10 Jul 2023 12:36:03 -0700 (PDT)
-Date: Mon, 10 Jul 2023 09:36:02 -1000
-From: Tejun Heo <tj@kernel.org>
-To: Mike Snitzer <snitzer@kernel.org>
-Message-ID: <ZKxdosGfpQxRxdYp@slm.duckdns.org>
-References: <20230301032904.3561641-1-yangerkun@huaweicloud.com>
- <b96155f3-0f6c-273d-4e0a-24fe05bb618a@huaweicloud.com>
- <7f1f7798-dd56-919f-cd59-22cfcafae342@huaweicloud.com>
- <ZKhbclN3V8taEStt@redhat.com>
+ us-mta-611-m4z5yANrMb2xVT-_4TxLgQ-1; Tue, 11 Jul 2023 02:13:24 -0400
+X-MC-Unique: m4z5yANrMb2xVT-_4TxLgQ-1
+Received: from mail02.huawei.com (unknown [172.30.67.153])
+ by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4R0Vt43QmFz4f3kG1;
+ Tue, 11 Jul 2023 14:13:16 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+ by APP2 (Coremail) with SMTP id Syh0CgD3nOrx8qxkokOANg--.52214S4;
+ Tue, 11 Jul 2023 14:13:18 +0800 (CST)
+From: yangerkun <yangerkun@huaweicloud.com>
+To: snitzer@kernel.org,
+	mpatocka@redhat.com,
+	agk@redhat.com,
+	tj@kernel.org
+Date: Tue, 11 Jul 2023 14:11:29 +0800
+Message-Id: <20230711061129.2706759-1-yangerkun@huaweicloud.com>
 MIME-Version: 1.0
-In-Reply-To: <ZKhbclN3V8taEStt@redhat.com>
+X-CM-TRANSID: Syh0CgD3nOrx8qxkokOANg--.52214S4
+X-Coremail-Antispam: 1UD129KBjvJXoWxCrW5trykuF1fKF4xAw13urg_yoW5Wr4UpF
+ W5Jr13Gws5Kr47Kr90yr18Ja9xGF18GF9xCrWxZ343Cw15WryFqF12yF48XrWkAF95Ja1U
+ ZFWkJa1qkFyFy3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+ 9KBjDU0xBIdaVrnRJUUUyG14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+ rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+ 1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+ JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+ CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+ 2Ix0cI8IcVAFwI0_JrI_JrylYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+ W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1l42xK82IYc2Ij64vI
+ r41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8Gjc
+ xK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r1q6r43MIIYrxkI7VAKI48JMIIF0xvE2Ix0
+ cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r1j6r4UMIIF0xvE42xK8V
+ AvwI8IcIk0rVWrZr1j6s0DMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7Cj
+ xVAFwI0_Jr0_GrUvcSsGvfC2KfnxnUUI43ZEXa7VU1a9aPUUUUU==
+X-CM-SenderInfo: 51dqwvhunx0q5kxd4v5lfo033gof0z/
+X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -98,9 +94,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH v2] dm-crypt: reexport sysfs of kcryptd
- workqueue
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: [dm-devel] [PATCH v3] dm-crypt: reexport sysfs of kcryptd workqueue
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -112,33 +107,107 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: yangerkun <yangerkun@huaweicloud.com>, dm-devel@redhat.com,
- mpatocka@redhat.com, jefflexu@linux.alibaba.com, yukuai3@huawei.com,
- agk@redhat.com
+Cc: yukuai3@huawei.com, dm-devel@redhat.com, yangerkun@huawei.com,
+ yangerkun@huaweicloud.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
-Content-Disposition: inline
+X-Mimecast-Originator: huaweicloud.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hello, Mike.
+From: yangerkun <yangerkun@huawei.com>
 
-On Fri, Jul 07, 2023 at 02:37:38PM -0400, Mike Snitzer wrote:
-> I certainly would like the ability to allow control over the
-> workqueues using WQ_SYSFS.  But with Tejun's latest WQ_UNBOUND changes
-> (just merged during 6.5 merge window) I think we'd do well to audit
+Once there is a heavy IO load, so many encrypt/decrypt work will occupy
+all of the cpu, which may lead the poor performance for other service.
+So the idea like 'a2b8b2d97567 ("dm crypt: export sysfs of kcryptd
+workqueue")' said seems necessary. We can export "kcryptd" workqueue
+sysfs, the entry like cpumask/max_active and so on can help us to limit
+the usage for encrypt/decrypt work.
 
-That part didn't get merged yet. I'm still waiting on some benchmark results
-to verify that the change won't cause regressions which are difficult to
-work around. The target is the next merge window.
+However, that commit does not consider the reload table will call .ctr
+before .dtr, so the reload for dm-crypt will fail since the same sysfs
+problem, and then we revert that commit('48b0777cd93d ("Revert "dm
+crypt: export sysfs of kcryptd workqueue"")').
 
-Thanks.
+Actually, what we should do is give a unique name once we try reload
+table, we can use ida to fix the problem.
 
+Signed-off-by: yangerkun <yangerkun@huawei.com>
+---
+ drivers/md/dm-crypt.c | 28 +++++++++++++++++++++++-----
+ 1 file changed, 23 insertions(+), 5 deletions(-)
+
+v1->v2:
+rewrite the commit msg
+
+v2->v3:
+no logical change, just rebase to latest linux kernel
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 1dc6227d353e..f4678eb71322 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -47,6 +47,8 @@
+ 
+ #define DM_MSG_PREFIX "crypt"
+ 
++static DEFINE_IDA(crypt_queue_ida);
++
+ /*
+  * context holding the current state of a multi-part conversion
+  */
+@@ -182,6 +184,7 @@ struct crypt_config {
+ 		struct crypto_aead **tfms_aead;
+ 	} cipher_tfm;
+ 	unsigned int tfms_count;
++	int crypt_queue_id;
+ 	unsigned long cipher_flags;
+ 
+ 	/*
+@@ -2735,6 +2738,9 @@ static void crypt_dtr(struct dm_target *ti)
+ 	if (cc->crypt_queue)
+ 		destroy_workqueue(cc->crypt_queue);
+ 
++	if (cc->crypt_queue_id)
++		ida_free(&crypt_queue_ida, cc->crypt_queue_id);
++
+ 	crypt_free_tfms(cc);
+ 
+ 	bioset_exit(&cc->bs);
+@@ -3371,12 +3377,24 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 
+ 	if (test_bit(DM_CRYPT_SAME_CPU, &cc->flags))
+-		cc->crypt_queue = alloc_workqueue("kcryptd/%s", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
++		cc->crypt_queue = alloc_workqueue("kcryptd-%s", WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM,
+ 						  1, devname);
+-	else
+-		cc->crypt_queue = alloc_workqueue("kcryptd/%s",
+-						  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM | WQ_UNBOUND,
+-						  num_online_cpus(), devname);
++	else {
++		int id = ida_alloc_min(&crypt_queue_ida, 1, GFP_KERNEL);
++
++		if (id < 0) {
++			ti->error = "Couldn't get kcryptd queue id";
++			ret = id;
++			goto bad;
++		}
++
++		cc->crypt_queue_id = id;
++		cc->crypt_queue = alloc_workqueue("kcryptd-%s-%d",
++						  WQ_CPU_INTENSIVE | WQ_MEM_RECLAIM |
++						  WQ_UNBOUND | WQ_SYSFS,
++						  num_online_cpus(), devname, id);
++	}
++
+ 	if (!cc->crypt_queue) {
+ 		ti->error = "Couldn't create kcryptd queue";
+ 		goto bad;
 -- 
-tejun
+2.39.2
 
 --
 dm-devel mailing list
