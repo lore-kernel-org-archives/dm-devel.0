@@ -1,76 +1,71 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8FFFAC001DC
-	for <dm-devel@archiver.kernel.org>; Fri, 14 Jul 2023 20:54:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4783DC0015E
+	for <dm-devel@archiver.kernel.org>; Fri, 14 Jul 2023 21:47:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1689368064;
+	s=mimecast20190719; t=1689371232;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=e3UOsjdYWgx/7VgHL2m1WZOPnqR6x7vuSG9jsVx6tOM=;
-	b=NzkYA0ALZh6wQGc2DTD/ZsLAylXhMGXWwMEzkoeGSip9ZgSDPM+0oJeJtqAkToAtZrnodk
-	9XAxHekzHzx/lgsvlfBbe/wyiy3B+z15aAcydkG9Q84omHZ0uLL67jgvU0h9oa/Oe1L0y6
-	4D5g6MSQUbgAIVBJ2rpH57rhBDjqMsc=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-215-Sn4_QQ7SPPa_ATMr_ytCbg-1; Fri, 14 Jul 2023 16:54:22 -0400
-X-MC-Unique: Sn4_QQ7SPPa_ATMr_ytCbg-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+	bh=9BMIk8dDdbxPySUWSaPZPHvqn+O8Y7B+ufcA4E2g47E=;
+	b=AD4ZCP9uRGA9RjUib6ZkOYF53hsvtNpLa8z5w6YsOo+Uzz9a5YesKMfhtnHgvX2ZHKx74D
+	NFl0MdLJScIGfKIQgVu4gw+KngfsMKqcnxFm++kNUytA1i3B3j11utL+kHolJ8LRUXZk81
+	Gw79XFYmy+n5rHSBztWMCe96DJGqhgc=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-646-amyk1-usPfy4bGCw1pxrww-1; Fri, 14 Jul 2023 17:47:11 -0400
+X-MC-Unique: amyk1-usPfy4bGCw1pxrww-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E4283185A795;
-	Fri, 14 Jul 2023 20:54:19 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CE5A8492B03;
-	Fri, 14 Jul 2023 20:54:19 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CAE7C1C05AB9;
+	Fri, 14 Jul 2023 21:47:08 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9268010C9D;
+	Fri, 14 Jul 2023 21:47:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6303D1946A42;
-	Fri, 14 Jul 2023 20:54:10 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 647D3194658F;
+	Fri, 14 Jul 2023 21:47:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 408B819465BA
- for <dm-devel@listman.corp.redhat.com>; Fri, 14 Jul 2023 20:54:09 +0000 (UTC)
+ ESMTP id 421681946587
+ for <dm-devel@listman.corp.redhat.com>; Fri, 14 Jul 2023 21:47:06 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2C3D61454142; Fri, 14 Jul 2023 20:54:09 +0000 (UTC)
+ id 2236B40C206F; Fri, 14 Jul 2023 21:47:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 23C0A1454143
- for <dm-devel@redhat.com>; Fri, 14 Jul 2023 20:54:08 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 389C1858EED
- for <dm-devel@redhat.com>; Fri, 14 Jul 2023 20:54:08 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-654-V1z5on5hMPSbHrQgeTtSdQ-1; Fri, 14 Jul 2023 16:54:06 -0400
-X-MC-Unique: V1z5on5hMPSbHrQgeTtSdQ-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature RSA-PSS (2048 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 9FA7A61DF7;
- Fri, 14 Jul 2023 20:54:05 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 88F03C433C8;
- Fri, 14 Jul 2023 20:54:04 +0000 (UTC)
-From: Sasha Levin <sashal@kernel.org>
-To: stable-commits@vger.kernel.org,
-	heinzm@redhat.com
-Date: Fri, 14 Jul 2023 16:54:02 -0400
-Message-Id: <20230714205402.1301836-1-sashal@kernel.org>
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1B6AF40C2063
+ for <dm-devel@redhat.com>; Fri, 14 Jul 2023 21:47:06 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F313E856F66
+ for <dm-devel@redhat.com>; Fri, 14 Jul 2023 21:47:05 +0000 (UTC)
+Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
+ relay.mimecast.com with ESMTP id us-mta-311-XpEvqpgBP5-KSzLy0_ONJA-1; Fri,
+ 14 Jul 2023 17:47:04 -0400
+X-MC-Unique: XpEvqpgBP5-KSzLy0_ONJA-1
+Received: by linux.microsoft.com (Postfix, from userid 1052)
+ id B253220ABD64; Fri, 14 Jul 2023 14:47:02 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com B253220ABD64
+Date: Fri, 14 Jul 2023 14:47:02 -0700
+From: Fan Wu <wufan@linux.microsoft.com>
+To: Paul Moore <paul@paul-moore.com>
+Message-ID: <20230714214702.GC15267@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
+References: <1687986571-16823-5-git-send-email-wufan@linux.microsoft.com>
+ <cbe877b3905033d2b8c7c92e6d0cad4e.paul@paul-moore.com>
 MIME-Version: 1.0
-X-Patchwork-Hint: ignore
-X-stable: review
+In-Reply-To: <cbe877b3905033d2b8c7c92e6d0cad4e.paul@paul-moore.com>
+User-Agent: Mutt/1.5.21 (2010-09-15)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,9 +73,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: [dm-devel] Patch "dm ioctl: have constant on the right side of the
- test" has been added to the 6.1-stable tree
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: Re: [dm-devel] [PATCH RFC v10 4/17] ipe: add LSM hooks on execution
+ and kernel read
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -92,60 +87,179 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
- Alasdair Kergon <agk@redhat.com>
+Cc: axboe@kernel.dk, linux-block@vger.kernel.org, tytso@mit.edu,
+ dm-devel@redhat.com, corbet@lwn.net, roberto.sassu@huawei.com,
+ Deven Bowers <deven.desai@linux.microsoft.com>, linux-doc@vger.kernel.org,
+ snitzer@kernel.org, jmorris@namei.org, zohar@linux.ibm.com,
+ linux-kernel@vger.kernel.org, ebiggers@kernel.org, audit@vger.kernel.org,
+ linux-security-module@vger.kernel.org, eparis@redhat.com,
+ linux-fscrypt@vger.kernel.org, linux-integrity@vger.kernel.org, agk@redhat.com,
+ serge@hallyn.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
+X-Mimecast-Originator: linux.microsoft.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-This is a note to let you know that I've just added the patch titled
+On Sat, Jul 08, 2023 at 12:23:02AM -0400, Paul Moore wrote:
+> On Jun 28, 2023 Fan Wu <wufan@linux.microsoft.com> wrote:
+> > 
+> > IPE's initial goal is to control both execution and the loading of
+> > kernel modules based on the system's definition of trust. It
+> > accomplishes this by plugging into the security hooks for
+> > bprm_check_security, file_mprotect, mmap_file, kernel_load_data,
+> > and kernel_read_data.
+> > 
+> > Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+> > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+> > ---
+> >  security/ipe/eval.c  |  14 ++++
+> >  security/ipe/eval.h  |   1 +
+> >  security/ipe/hooks.c | 182 +++++++++++++++++++++++++++++++++++++++++++
+> >  security/ipe/hooks.h |  25 ++++++
+> >  security/ipe/ipe.c   |   6 ++
+> >  5 files changed, 228 insertions(+)
+> >  create mode 100644 security/ipe/hooks.c
+> >  create mode 100644 security/ipe/hooks.h
+> 
+> Adding the 'hooks.h' header allows for much of code added in the
+> previous patches to finally compile and there are a number of errors,
+> too many to include here.  Please fix those and ensure that each
+> point in the patchset compiles cleanly.
+> 
+Sorry again for the mistake I made here.
 
-    dm ioctl: have constant on the right side of the test
+> > diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
+> > new file mode 100644
+> > index 000000000000..d896a5a474bc
+> > --- /dev/null
+> > +++ b/security/ipe/hooks.c
+> > @@ -0,0 +1,182 @@
+> > +// SPDX-License-Identifier: GPL-2.0
+> > +/*
+> > + * Copyright (C) Microsoft Corporation. All rights reserved.
+> > + */
+> > +
+> > +#include <linux/fs.h>
+> > +#include <linux/types.h>
+> > +#include <linux/binfmts.h>
+> > +#include <linux/mman.h>
+> > +
+> > +#include "ipe.h"
+> > +#include "hooks.h"
+> > +#include "eval.h"
+> > +
+> > +/**
+> > + * ipe_bprm_check_security - ipe security hook function for bprm check.
+> > + * @bprm: Supplies a pointer to a linux_binprm structure to source the file
+> > + *	  being evaluated.
+> > + *
+> > + * This LSM hook is called when a binary is loaded through the exec
+> > + * family of system calls.
+> > + * Return:
+> > + * *0	- OK
+> > + * *!0	- Error
+> > + */
+> > +int ipe_bprm_check_security(struct linux_binprm *bprm)
+> > +{
+> > +	struct ipe_eval_ctx ctx = { 0 };
+> 
+> It's up to you, but when you have a fequently used initializer like
+> this it is often wrapped in a macro:
+> 
+>   #define IPE_EVAL_CTX_INIT ((struct ipe_eval_ctx){ 0 })
+> 
+> ... so that you can write the variable decalaration like this:
+> 
+>   struct ipe_eval_ctx ctx = IPE_EVAL_CTX_INIT;
+> 
+> It's not a requirement, it just tends to look a little cleaner and
+> should you ever need to change the initializer it makes your life
+> a lot easier.
+> 
+Yes I agree this looks way better, I will update all the context init.
 
-to the 6.1-stable tree which can be found at:
-    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
+> > +	build_eval_ctx(&ctx, bprm->file, __IPE_OP_EXEC);
+> > +	return ipe_evaluate_event(&ctx);
+> > +}
+> > +
+> > +/**
+> > + * ipe_mmap_file - ipe security hook function for mmap check.
+> > + * @f: File being mmap'd. Can be NULL in the case of anonymous memory.
+> > + * @reqprot: The requested protection on the mmap, passed from usermode.
+> > + * @prot: The effective protection on the mmap, resolved from reqprot and
+> > + *	  system configuration.
+> > + * @flags: Unused.
+> > + *
+> > + * This hook is called when a file is loaded through the mmap
+> > + * family of system calls.
+> > + *
+> > + * Return:
+> > + * * 0	- OK
+> > + * * !0	- Error
+> > + */
+> > +int ipe_mmap_file(struct file *f, unsigned long reqprot, unsigned long prot,
+> > +		  unsigned long flags)
+> 
+> Since @reqprot is always going to be unused in this function, you
+> might want to mark it as such to help prevent compiler
+> warnings/errors, for example:
+> 
+>  unsigned long reqprot __always_unused
+> 
+Thanks for telling me this useful mark! I will add it.
 
-The filename of the patch is:
-     dm-ioctl-have-constant-on-the-right-side-of-the-test.patch
-and it can be found in the queue-6.1 subdirectory.
-
-If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
-
-
-
-commit 052a2a7fb71535990d598215ed59df6f3f877b93
-Author: Heinz Mauelshagen <heinzm@redhat.com>
-Date:   Tue Feb 7 21:47:45 2023 +0100
-
-    dm ioctl: have constant on the right side of the test
-    
-    [ Upstream commit 5cae0aa77397015f530aeb34f3ced32db6ac2875 ]
-    
-    Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-    Stable-dep-of: 249bed821b4d ("dm ioctl: Avoid double-fetch of version")
-    Signed-off-by: Sasha Levin <sashal@kernel.org>
-
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 2ced382cdd70b..6aeae095086d7 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1819,8 +1819,8 @@ static int check_version(unsigned int cmd, struct dm_ioctl __user *user)
- 	if (copy_from_user(version, user->version, sizeof(version)))
- 		return -EFAULT;
- 
--	if ((DM_VERSION_MAJOR != version[0]) ||
--	    (DM_VERSION_MINOR < version[1])) {
-+	if ((version[0] != DM_VERSION_MAJOR) ||
-+	    (version[1] > DM_VERSION_MINOR)) {
- 		DMERR("ioctl interface mismatch: kernel(%u.%u.%u), user(%u.%u.%u), cmd(%d)",
- 		      DM_VERSION_MAJOR, DM_VERSION_MINOR,
- 		      DM_VERSION_PATCHLEVEL,
+-Fan
+> > +{
+> > +	struct ipe_eval_ctx ctx = { 0 };
+> > +
+> > +	if (prot & PROT_EXEC) {
+> > +		build_eval_ctx(&ctx, f, __IPE_OP_EXEC);
+> > +		return ipe_evaluate_event(&ctx);
+> > +	}
+> > +
+> > +	return 0;
+> > +}
+> > +
+> > +/**
+> > + * ipe_file_mprotect - ipe security hook function for mprotect check.
+> > + * @vma: Existing virtual memory area created by mmap or similar.
+> > + * @reqprot: The requested protection on the mmap, passed from usermode.
+> > + * @prot: The effective protection on the mmap, resolved from reqprot and
+> > + *	  system configuration.
+> > + *
+> > + * This LSM hook is called when a mmap'd region of memory is changing
+> > + * its protections via mprotect.
+> > + *
+> > + * Return:
+> > + * * 0	- OK
+> > + * * !0	- Error
+> > + */
+> > +int ipe_file_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
+> 
+> See my comment above about @reqprot.
+> 
+> > +		      unsigned long prot)
+> > +{
+> > +	struct ipe_eval_ctx ctx = { 0 };
+> > +
+> > +	/* Already Executable */
+> > +	if (vma->vm_flags & VM_EXEC)
+> > +		return 0;
+> > +
+> > +	if (prot & PROT_EXEC) {
+> > +		build_eval_ctx(&ctx, vma->vm_file, __IPE_OP_EXEC);
+> > +		return ipe_evaluate_event(&ctx);
+> > +	}
+> > +
+> > +	return 0;
+> > +}
+> 
+> --
+> paul-moore.com
 
 --
 dm-devel mailing list
