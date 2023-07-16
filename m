@@ -4,69 +4,72 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 868E7EB64DC
-	for <dm-devel@archiver.kernel.org>; Sat, 15 Jul 2023 04:01:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8053BEB64DD
+	for <dm-devel@archiver.kernel.org>; Sun, 16 Jul 2023 15:25:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1689393678;
+	s=mimecast20190719; t=1689521108;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=0Y82WXdLupjB990shUC9RZW/fkYpK6Gn5KpPj/hoIfM=;
-	b=PiNZRf4IERSRm/GRGjKi7GW1xfrsEx7Nqx7NES4r7rmz/aFLtqlkz6PIPWD9x+8IOxO0Ua
-	1RjRLe1ZEu2cMxpcNZ1O5UsP8JJQgd0jLYycZRc/k5KVW+7d8e40D50MNKtsO1WpolVAPZ
-	fSrISFLLjFiOsNOVGAOnZxBuawwS0ZE=
+	bh=OL9UdoDQpoxlAyvv6+n9Hg2nnMzMl5xH1JcJgu7zEg4=;
+	b=eMNVMcUh3Czvnp5bMqWcAvfsid3j0iRXiCDzOZo+x0J0zTzgaSieDCaP5C8IY1lU2Cnbv8
+	NahVosuaFiTkS0mWx4jLKUDn79lbA3+y42GoB8xNbJPKA28S4vyfCHa6hbaX1aJioTyEH+
+	qY8eECfqEWGJAfo+M3fFGYK3O1zzDr4=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-48-_kNS6TENNkqD4NKTRO1ogw-1; Sat, 15 Jul 2023 00:01:15 -0400
-X-MC-Unique: _kNS6TENNkqD4NKTRO1ogw-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-556-QHl8b9mpP8Ol1Tan4xvy4A-1; Sun, 16 Jul 2023 11:25:05 -0400
+X-MC-Unique: QHl8b9mpP8Ol1Tan4xvy4A-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5FF3985A58A;
-	Sat, 15 Jul 2023 04:01:13 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5FEA2856F66;
+	Sun, 16 Jul 2023 15:25:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4C50E2166B25;
-	Sat, 15 Jul 2023 04:01:13 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C0BB7492B03;
+	Sun, 16 Jul 2023 15:24:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 251501946594;
-	Sat, 15 Jul 2023 04:01:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3F982194658C;
+	Sun, 16 Jul 2023 15:24:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 20B4E194658F
- for <dm-devel@listman.corp.redhat.com>; Sat, 15 Jul 2023 04:01:12 +0000 (UTC)
+ ESMTP id F03EF1946588
+ for <dm-devel@listman.corp.redhat.com>; Sun, 16 Jul 2023 15:24:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0E35640D2839; Sat, 15 Jul 2023 04:01:12 +0000 (UTC)
+ id BD950111F3C1; Sun, 16 Jul 2023 15:24:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 04E784067A3A
- for <dm-devel@redhat.com>; Sat, 15 Jul 2023 04:00:49 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B5E97111F3BB
+ for <dm-devel@redhat.com>; Sun, 16 Jul 2023 15:24:56 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E0A778D1682
- for <dm-devel@redhat.com>; Sat, 15 Jul 2023 04:00:48 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-411-i0HEnFkmP4W55a8TpFPczQ-1; Sat,
- 15 Jul 2023 00:00:30 -0400
-X-MC-Unique: i0HEnFkmP4W55a8TpFPczQ-1
-Received: by linux.microsoft.com (Postfix, from userid 1052)
- id 1139721C4693; Fri, 14 Jul 2023 21:00:29 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 1139721C4693
-Date: Fri, 14 Jul 2023 21:00:29 -0700
-From: Fan Wu <wufan@linux.microsoft.com>
-To: Paul Moore <paul@paul-moore.com>
-Message-ID: <20230715040029.GH15267@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
-References: <1687986571-16823-10-git-send-email-wufan@linux.microsoft.com>
- <85af33c02638ebb501b40fd0f3785b12.paul@paul-moore.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 96ADB8D168D
+ for <dm-devel@redhat.com>; Sun, 16 Jul 2023 15:24:56 +0000 (UTC)
+Received: from dfw.source.kernel.org (dfw.source.kernel.org
+ [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-122-bliRhVrINdaFMGiSyoBDnA-1; Sun, 16 Jul 2023 11:24:55 -0400
+X-MC-Unique: bliRhVrINdaFMGiSyoBDnA-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature RSA-PSS (2048 bits))
+ (No client certificate requested)
+ by dfw.source.kernel.org (Postfix) with ESMTPS id 8499160D32;
+ Sun, 16 Jul 2023 15:16:24 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 65317C433C8;
+ Sun, 16 Jul 2023 15:16:23 +0000 (UTC)
+Date: Sun, 16 Jul 2023 17:16:21 +0200
+From: Greg KH <gregkh@linuxfoundation.org>
+To: Mark-PK Tsai <mark-pk.tsai@mediatek.com>
+Message-ID: <2023071603-lustily-defraud-2149@gregkh>
+References: <20230713055841.24815-1-mark-pk.tsai@mediatek.com>
 MIME-Version: 1.0
-In-Reply-To: <85af33c02638ebb501b40fd0f3785b12.paul@paul-moore.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
+In-Reply-To: <20230713055841.24815-1-mark-pk.tsai@mediatek.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -74,8 +77,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH RFC v10 9/17] ipe: add permissive toggle
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH 5.15] dm init: add dm-mod.waitfor to wait for
+ asynchronously probed block devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -87,113 +91,63 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, tytso@mit.edu,
- dm-devel@redhat.com, corbet@lwn.net, roberto.sassu@huawei.com,
- Deven Bowers <deven.desai@linux.microsoft.com>, linux-doc@vger.kernel.org,
- snitzer@kernel.org, jmorris@namei.org, zohar@linux.ibm.com,
- linux-kernel@vger.kernel.org, ebiggers@kernel.org, audit@vger.kernel.org,
- linux-security-module@vger.kernel.org, eparis@redhat.com,
- linux-fscrypt@vger.kernel.org, linux-integrity@vger.kernel.org, agk@redhat.com,
- serge@hallyn.com
+Cc: Peter Korsgaard <peter@korsgaard.com>, Mike Snitzer <snitzer@redhat.com>,
+ Jonathan Corbet <corbet@lwn.net>, yj.chiang@mediatek.com,
+ linux-doc@vger.kernel.org, Mike Snitzer <snitzer@kernel.org>,
+ linux-kernel@vger.kernel.org, stable@vger.kernel.org, dm-devel@redhat.com,
+ linux-mediatek@lists.infradead.org, linux-arm-kernel@lists.infradead.org,
+ Matthias Brugger <matthias.bgg@gmail.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: linux.microsoft.com
+X-Mimecast-Originator: linuxfoundation.org
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sat, Jul 08, 2023 at 12:23:06AM -0400, Paul Moore wrote:
-> On Jun 28, 2023 Fan Wu <wufan@linux.microsoft.com> wrote:
-> > 
-> > IPE, like SELinux, supports a permissive mode. This mode allows policy
-> > authors to test and evaluate IPE policy without it effecting their
-> > programs. When the mode is changed, a 1404 AUDIT_MAC_STATUS
-> > be reported.
-> > 
-> > This patch adds the following audit records:
-> > 
-> >     audit: MAC_STATUS enforcing=0 old_enforcing=1 auid=4294967295
-> >       ses=4294967295 enabled=1 old-enabled=1 lsm=ipe res=1
-> >     audit: MAC_STATUS enforcing=1 old_enforcing=0 auid=4294967295
-> >       ses=4294967295 enabled=1 old-enabled=1 lsm=ipe res=1
-> > 
-> > The audit record only emit when the value from the user input is
-> > different from the current enforce value.
-> > 
-> > Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
-> > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
-> > ---
-> >  security/ipe/audit.c | 22 ++++++++++++++
-> >  security/ipe/audit.h |  1 +
-> >  security/ipe/eval.c  |  9 ++++++
-> >  security/ipe/eval.h  |  1 +
-> >  security/ipe/fs.c    | 69 ++++++++++++++++++++++++++++++++++++++++++++
-> >  5 files changed, 102 insertions(+)
+On Thu, Jul 13, 2023 at 01:58:37PM +0800, Mark-PK Tsai wrote:
+> From: Peter Korsgaard <peter@korsgaard.com>
 > 
-> ...
+> Just calling wait_for_device_probe() is not enough to ensure that
+> asynchronously probed block devices are available (E.G. mmc, usb), so
+> add a "dm-mod.waitfor=<device1>[,..,<deviceN>]" parameter to get
+> dm-init to explicitly wait for specific block devices before
+> initializing the tables with logic similar to the rootwait logic that
+> was introduced with commit  cc1ed7542c8c ("init: wait for
+> asynchronously scanned block devices").
 > 
-> > diff --git a/security/ipe/fs.c b/security/ipe/fs.c
-> > index 6bd2aa84831b..1761d39e4d04 100644
-> > --- a/security/ipe/fs.c
-> > +++ b/security/ipe/fs.c
-> > @@ -16,6 +16,7 @@ static struct dentry *np __ro_after_init;
-> >  static struct dentry *root __ro_after_init;
-> >  struct dentry *policy_root __ro_after_init;
-> >  static struct dentry *audit_node __ro_after_init;
-> > +static struct dentry *enforce_node __ro_after_init;
-> >  
-> >  /**
-> >   * setaudit - Write handler for the securityfs node, "ipe/success_audit"
-> > @@ -68,6 +69,61 @@ static ssize_t getaudit(struct file *f, char __user *data,
-> >  	return simple_read_from_buffer(data, len, offset, result, 1);
-> >  }
-> >  
-> > +/**
-> > + * setenforce - Write handler for the securityfs node, "ipe/enforce"
-> > + * @f: Supplies a file structure representing the securityfs node.
-> > + * @data: Supplies a buffer passed to the write syscall.
-> > + * @len: Supplies the length of @data.
-> > + * @offset: unused.
-> > + *
-> > + * Return:
-> > + * * >0	- Success, Length of buffer written
-> > + * * <0	- Error
-> > + */
-> > +static ssize_t setenforce(struct file *f, const char __user *data,
-> > +			  size_t len, loff_t *offset)
-> > +{
-> > +	int rc = 0;
-> > +	bool new_value, old_value;
-> > +
-> > +	if (!file_ns_capable(f, &init_user_ns, CAP_MAC_ADMIN))
-> > +		return -EPERM;
-> > +
-> > +	old_value = READ_ONCE(enforce);
-> > +	new_value = old_value;
+> E.G. with dm-verity on mmc using:
+> dm-mod.waitfor="PARTLABEL=hash-a,PARTLABEL=root-a"
 > 
-> Why set @new_value equal to @old_value here?
+> [    0.671671] device-mapper: init: waiting for all devices to be available before creating mapped devices
+> [    0.671679] device-mapper: init: waiting for device PARTLABEL=hash-a ...
+> [    0.710695] mmc0: new HS200 MMC card at address 0001
+> [    0.711158] mmcblk0: mmc0:0001 004GA0 3.69 GiB
+> [    0.715954] mmcblk0boot0: mmc0:0001 004GA0 partition 1 2.00 MiB
+> [    0.722085] mmcblk0boot1: mmc0:0001 004GA0 partition 2 2.00 MiB
+> [    0.728093] mmcblk0rpmb: mmc0:0001 004GA0 partition 3 512 KiB, chardev (249:0)
+> [    0.738274]  mmcblk0: p1 p2 p3 p4 p5 p6 p7
+> [    0.751282] device-mapper: init: waiting for device PARTLABEL=root-a ...
+> [    0.751306] device-mapper: init: all devices available
+> [    0.751683] device-mapper: verity: sha256 using implementation "sha256-generic"
+> [    0.759344] device-mapper: ioctl: dm-0 (vroot) is ready
+> [    0.766540] VFS: Mounted root (squashfs filesystem) readonly on device 254:0.
 > 
-Sorry this mistake is the same as the one for audit switch. 
-kstrtobool_from_user will return error if new_value is not set,
-I will remove the above line.
+> Signed-off-by: Peter Korsgaard <peter@korsgaard.com>
+> Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Mark-PK Tsai <mark-pk.tsai@mediatek.com>
+> ---
+>  .../admin-guide/device-mapper/dm-init.rst     |  8 +++++++
+>  drivers/md/dm-init.c                          | 22 ++++++++++++++++++-
+>  2 files changed, 29 insertions(+), 1 deletion(-)
 
--Fan
-> > +	rc = kstrtobool_from_user(data, len, &new_value);
-> > +	if (rc)
-> > +		return rc;
-> > +
-> > +	if (new_value != old_value) {
-> > +		ipe_audit_enforce(new_value, old_value);
-> > +		WRITE_ONCE(enforce, new_value);
-> > +	}
-> > +
-> > +	return len;
-> > +}
-> 
-> --
-> paul-moore.com
+What is the git commit id of this change in Linus's tree?
+
+thanks,
+
+greg k-h
 
 --
 dm-devel mailing list
