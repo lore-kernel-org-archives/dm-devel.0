@@ -4,75 +4,96 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B8678C001DC
-	for <dm-devel@archiver.kernel.org>; Sun, 16 Jul 2023 15:43:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 23EA9C001B0
+	for <dm-devel@archiver.kernel.org>; Mon, 17 Jul 2023 06:42:54 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1689522223;
+	s=mimecast20190719; t=1689576172;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=XGK28Y++gtedh5d+LNBvCdPxvoeXZJ48clAi8+BScTY=;
-	b=B6lPQkI2JD0xgu3oObkTlaeeDpGFIjMu5zI2+jdesSr+DOyQuPbwb82RL0Wg6WJNt6hC73
-	JqcuIinNvxzWSn8eCbsI7vllOYzXOnzeZajEmSbbbCcNky+LSGgGk/XMI1EAGyXSDeUQ/E
-	jXeN1DDPOvuIYeNvIUK5xj8Lo4hcr/U=
+	bh=iE8Z/fU6TTuaxFWaNPOvTQHuNToSVWuVntIX87J6A7Q=;
+	b=Im9nhNKu+wawo9PCFoqglxtW4sd5g7hAQlMBVvSzKhdor7rnnCCDjyYWSKopPj8cLUUgHL
+	/waktFlUouQugYPn04A2sKzPL/wXpQcJFWBKtQB6l2C/PzjbqjfRYbbKitHWg5SJsLVO6f
+	z1ZZEZsAtmopNWe6Qg8ZVPBwFWy+sUE=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-662-vceW9oGZOP6KzSA14-uHkg-1; Sun, 16 Jul 2023 11:43:40 -0400
-X-MC-Unique: vceW9oGZOP6KzSA14-uHkg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-308-tnvus2yVO8OfmtGAXBWgsw-1; Mon, 17 Jul 2023 02:42:49 -0400
+X-MC-Unique: tnvus2yVO8OfmtGAXBWgsw-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 527C48D1688;
-	Sun, 16 Jul 2023 15:43:38 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E1DBF207B34D;
-	Sun, 16 Jul 2023 15:43:37 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B6CBA100BAA7;
+	Mon, 17 Jul 2023 06:42:47 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B1E0510E63;
+	Mon, 17 Jul 2023 06:42:45 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A1154194658C;
-	Sun, 16 Jul 2023 15:43:37 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8EE70194658C;
+	Mon, 17 Jul 2023 06:42:45 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2E7F11946588
- for <dm-devel@listman.corp.redhat.com>; Sun, 16 Jul 2023 15:43:36 +0000 (UTC)
+ ESMTP id 59C6B1946588
+ for <dm-devel@listman.corp.redhat.com>; Mon, 17 Jul 2023 02:12:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 198E840C2074; Sun, 16 Jul 2023 15:43:36 +0000 (UTC)
+ id F1364492B02; Mon, 17 Jul 2023 02:12:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1145540C2073
- for <dm-devel@redhat.com>; Sun, 16 Jul 2023 15:43:36 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E7E2886F122
- for <dm-devel@redhat.com>; Sun, 16 Jul 2023 15:43:35 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-343-6WJAvhhMPQ6sYRB6PEOcFg-1; Sun, 16 Jul 2023 11:43:33 -0400
-X-MC-Unique: 6WJAvhhMPQ6sYRB6PEOcFg-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature RSA-PSS (2048 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 3836A60D57;
- Sun, 16 Jul 2023 15:43:32 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 15F5FC433C8;
- Sun, 16 Jul 2023 15:43:31 +0000 (UTC)
-Date: Sun, 16 Jul 2023 17:43:28 +0200
-From: Greg KH <gregkh@linuxfoundation.org>
-To: Mike Snitzer <snitzer@redhat.com>
-Message-ID: <2023071657-marry-usual-882f@gregkh>
-References: <20230713055841.24815-1-mark-pk.tsai@mediatek.com>
- <2023071603-lustily-defraud-2149@gregkh>
- <CAH6w=aztzhm3Sa-afN2Xk-7mp1BVtTKNXJ=JyXqJvm3wtEnd3Q@mail.gmail.com>
-MIME-Version: 1.0
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E953A492B01
+ for <dm-devel@redhat.com>; Mon, 17 Jul 2023 02:12:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CC31F8D1681
+ for <dm-devel@redhat.com>; Mon, 17 Jul 2023 02:12:41 +0000 (UTC)
+Received: from mailgw02.mediatek.com (mailgw02.mediatek.com [210.61.82.184])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-163-w0c4Pat2ORGsxACg6KwsSw-1; Sun,
+ 16 Jul 2023 22:12:39 -0400
+X-MC-Unique: w0c4Pat2ORGsxACg6KwsSw-1
+X-UUID: 496abba0244511eeb20a276fd37b9834-20230717
+X-CID-P-RULE: Release_Ham
+X-CID-O-INFO: VERSION:1.1.28, REQID:77017d85-47d1-496b-a3d9-dd56ef0fafbd, IP:0,
+ U
+ RL:0,TC:0,Content:0,EDM:0,RT:0,SF:51,FILE:0,BULK:28,RULE:Release_Ham,ACTIO
+ N:release,TS:79
+X-CID-INFO: VERSION:1.1.28, REQID:77017d85-47d1-496b-a3d9-dd56ef0fafbd, IP:0,
+ URL
+ :0,TC:0,Content:0,EDM:0,RT:0,SF:51,FILE:0,BULK:28,RULE:Spam_GS981B3D,ACTIO
+ N:quarantine,TS:79
+X-CID-META: VersionHash:176cd25, CLOUDID:6c33c64c-06c1-468b-847d-5b62d44dbb9b,
+ B
+ ulkID:2307162316286AMI74JA,BulkQuantity:18,Recheck:0,SF:19|48|29|28|17|102
+ ,TC:nil,Content:0|-5,EDM:-3,IP:nil,URL:0,File:nil,Bulk:40|20,QS:nil,BEC:ni
+ l,COL:0,OSI:0,OSA:0,AV:0,LES:1,SPR:NO,DKR:0,DKP:0
+X-CID-BVR: 1,FCT|NGT
+X-CID-BAS: 1,FCT|NGT,0,_
+X-CID-FACTOR: TF_CID_SPAM_FAS, TF_CID_SPAM_FSD, TF_CID_SPAM_OBB,
+ TF_CID_SPAM_FCD, TF_CID_SPAM_SNR,TF_CID_SPAM_SDM,TF_CID_SPAM_ASC
+X-UUID: 496abba0244511eeb20a276fd37b9834-20230717
+Received: from mtkmbs13n1.mediatek.inc [(172.21.101.193)] by
+ mailgw02.mediatek.com (envelope-from <mark-pk.tsai@mediatek.com>)
+ (Generic MTA with TLSv1.2 ECDHE-RSA-AES256-GCM-SHA384 256/256)
+ with ESMTP id 1800077516; Mon, 17 Jul 2023 09:57:29 +0800
+Received: from mtkmbs13n1.mediatek.inc (172.21.101.193) by
+ MTKMBS14N1.mediatek.inc (172.21.101.75) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.1118.26; Mon, 17 Jul 2023 09:57:28 +0800
+Received: from mtksdccf07.mediatek.inc (172.21.84.99) by
+ mtkmbs13n1.mediatek.inc (172.21.101.73) with Microsoft SMTP Server id
+ 15.2.1118.26 via Frontend Transport; Mon, 17 Jul 2023 09:57:28 +0800
+From: Mark-PK Tsai <mark-pk.tsai@mediatek.com>
+To: <snitzer@redhat.com>
+Date: Mon, 17 Jul 2023 09:57:28 +0800
+Message-ID: <20230717015728.12641-1-mark-pk.tsai@mediatek.com>
 In-Reply-To: <CAH6w=aztzhm3Sa-afN2Xk-7mp1BVtTKNXJ=JyXqJvm3wtEnd3Q@mail.gmail.com>
+References: <CAH6w=aztzhm3Sa-afN2Xk-7mp1BVtTKNXJ=JyXqJvm3wtEnd3Q@mail.gmail.com>
+MIME-Version: 1.0
+X-MTK: N
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -80,7 +101,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Mailman-Approved-At: Mon, 17 Jul 2023 06:42:44 +0000
 Subject: Re: [dm-devel] [PATCH 5.15] dm init: add dm-mod.waitfor to wait for
  asynchronously probed block devices
 X-BeenThere: dm-devel@redhat.com
@@ -94,23 +116,19 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-arm-kernel@lists.infradead.org, Peter Korsgaard <peter@korsgaard.com>,
- Jonathan Corbet <corbet@lwn.net>, yj.chiang@mediatek.com,
- linux-doc@vger.kernel.org, Mike Snitzer <snitzer@kernel.org>,
- Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
- stable@vger.kernel.org, "development, device-mapper" <dm-devel@redhat.com>,
- linux-mediatek@lists.infradead.org, Mark-PK Tsai <mark-pk.tsai@mediatek.com>,
- Matthias Brugger <matthias.bgg@gmail.com>, Alasdair Kergon <agk@redhat.com>
+Cc: peter@korsgaard.com, linux-doc@vger.kernel.org, gregkh@linuxfoundation.org,
+ yj.chiang@mediatek.com, corbet@lwn.net, snitzer@kernel.org,
+ linux-kernel@vger.kernel.org, stable@vger.kernel.org, dm-devel@redhat.com,
+ linux-mediatek@lists.infradead.org, agk@redhat.com, matthias.bgg@gmail.com,
+ mark-pk.tsai@mediatek.com, linux-arm-kernel@lists.infradead.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: linuxfoundation.org
-Content-Disposition: inline
+X-Mimecast-Originator: mediatek.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sun, Jul 16, 2023 at 11:36:36AM -0400, Mike Snitzer wrote:
 > On Sun, Jul 16, 2023, 11:16 AM Greg KH <gregkh@linuxfoundation.org> wrote:
 > 
 > > On Thu, Jul 13, 2023 at 01:58:37PM +0800, Mark-PK Tsai wrote:
@@ -171,18 +189,20 @@ On Sun, Jul 16, 2023 at 11:36:36AM -0400, Mike Snitzer wrote:
 > in their own tree. Or at a minimum they need to explain why this
 > change is warranted in stable@.
 
-Ok, I'll drop it from my queue.
+Thanks for your comment.
+The reason why we think this should be backported to stable kernel is
+that it actually fix the potential race condition when make block
+device probe async in stable kernel.
+And we'd like to fix this upstream rather than just take it in
+our custom tree.
 
+> 
 > But to answer your original question the upstream commit is:
 > 
 > 035641b01e72 dm init: add dm-mod.waitfor to wait for asynchronously probed block devices
-
-Ah, showed up in 6.2, so we have to have a 6.1.y backport as well, I
-can't take patches for only older kernels, sorry.
-
-thanks,
-
-greg k-h
+> 
+> Thanks,
+> Mike
 
 --
 dm-devel mailing list
