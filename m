@@ -4,76 +4,78 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CDADCEB64DC
-	for <dm-devel@archiver.kernel.org>; Thu, 20 Jul 2023 04:21:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 64583EB64DC
+	for <dm-devel@archiver.kernel.org>; Thu, 20 Jul 2023 04:41:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1689826871;
+	s=mimecast20190719; t=1689828111;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=bdoQ9I4STky+90CVH/Kd6QiIeXQq0jqCv8PWuNECrPc=;
-	b=VoHA+Un3N3K+R5+eAxd1M6sJtQKaXycfRNw5Wr2vrWZL18bJ1vY25JQcdgwEBVugD14zao
-	CuGKSuc7dJGsOGFTOB9UTU8GMkGg8N/r0dDyzh1f/2YK62EVohaG3XOmEItVAhsCeiWa1e
-	C9jfKaX5fR1D4siRQAohhTdmKk0dSo8=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-96-M50s2mcZMwqg5OPjqnuJ7w-1; Thu, 20 Jul 2023 00:21:10 -0400
-X-MC-Unique: M50s2mcZMwqg5OPjqnuJ7w-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+	bh=CPlq5pMRcy95AP0FcR3XUAXfUhXl+S51NV+aIF9vTBI=;
+	b=iyw7H4TkfPFYMGnBb1tiIRC/iXwFaukHKMC//xczOL/WAzOvH5Heobka5venuf0lekhJ9m
+	XeC4OzrVW1LZktdcVMZE2qCSQwwu+hfSxoUbfsv3d6u3yJVipqH30oueXIm/oH2+8aIw5c
+	+9uEWHC7QLLFqDkRgaOYWgn2f6W4KZ8=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-626-mBfH8CvJPCKqhquzlJ6Y5Q-1; Thu, 20 Jul 2023 00:41:48 -0400
+X-MC-Unique: mBfH8CvJPCKqhquzlJ6Y5Q-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 651A3858290;
-	Thu, 20 Jul 2023 04:21:08 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3C1653C01C20;
+	Thu, 20 Jul 2023 04:41:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 57332F6CCD;
-	Thu, 20 Jul 2023 04:21:06 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CC611C2C863;
+	Thu, 20 Jul 2023 04:41:45 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1CA8019465B9;
-	Thu, 20 Jul 2023 04:21:06 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 694AC19465B9;
+	Thu, 20 Jul 2023 04:41:45 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
  [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id BD5C71946587
- for <dm-devel@listman.corp.redhat.com>; Thu, 20 Jul 2023 04:20:50 +0000 (UTC)
+ ESMTP id 5E9961946587
+ for <dm-devel@listman.corp.redhat.com>; Thu, 20 Jul 2023 04:41:32 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id ED7691454145; Thu, 20 Jul 2023 04:20:49 +0000 (UTC)
+ id 03BCB1454143; Thu, 20 Jul 2023 04:41:32 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E4CC11454142
- for <dm-devel@redhat.com>; Thu, 20 Jul 2023 04:20:49 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C6DAE936D22
- for <dm-devel@redhat.com>; Thu, 20 Jul 2023 04:20:49 +0000 (UTC)
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id EF5251454142
+ for <dm-devel@redhat.com>; Thu, 20 Jul 2023 04:41:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BE9C91C02143
+ for <dm-devel@redhat.com>; Thu, 20 Jul 2023 04:41:31 +0000 (UTC)
 Received: from outgoing.mit.edu (outgoing-auth-1.mit.edu [18.9.28.11]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-580-NbDmSADbNH6jj2_AM7Nxbw-1; Thu, 20 Jul 2023 00:20:48 -0400
-X-MC-Unique: NbDmSADbNH6jj2_AM7Nxbw-1
+ us-mta-369-ZJoVr50nN2y4M69BkarvYw-1; Thu, 20 Jul 2023 00:41:26 -0400
+X-MC-Unique: ZJoVr50nN2y4M69BkarvYw-1
 Received: from cwcc.thunk.org (pool-173-48-116-181.bstnma.fios.verizon.net
  [173.48.116.181]) (authenticated bits=0)
  (User authenticated as tytso@ATHENA.MIT.EDU)
- by outgoing.mit.edu (8.14.7/8.12.4) with ESMTP id 36K4KYAp010027
+ by outgoing.mit.edu (8.14.7/8.12.4) with ESMTP id 36K4fK8T018002
  (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
- Thu, 20 Jul 2023 00:20:35 -0400
+ Thu, 20 Jul 2023 00:41:21 -0400
 Received: by cwcc.thunk.org (Postfix, from userid 15806)
- id 681A615C026A; Thu, 20 Jul 2023 00:20:34 -0400 (EDT)
-Date: Thu, 20 Jul 2023 00:20:34 -0400
+ id 9728615C026A; Thu, 20 Jul 2023 00:41:20 -0400 (EDT)
+Date: Thu, 20 Jul 2023 00:41:20 -0400
 From: "Theodore Ts'o" <tytso@mit.edu>
-To: Martin Steigerwald <martin@lichtvoll.de>
-Message-ID: <20230720042034.GA5764@mit.edu>
+To: Kai Tomerius <kai@tomerius.de>
+Message-ID: <20230720044120.GB5764@mit.edu>
 References: <20230717075035.GA9549@tomerius.de>
+ <CAG4Y6eTU=WsTaSowjkKT-snuvZwqWqnH3cdgGoCkToH02qEkgg@mail.gmail.com>
+ <20230718053017.GB6042@tomerius.de>
+ <CAEYzJUGC8Yj1dQGsLADT+pB-mkac0TAC-typAORtX7SQ1kVt+g@mail.gmail.com>
  <CAG4Y6eTN1XbZ_jAdX+t2mkEN=KoNOqprrCqtX0BVfaH6AxkdtQ@mail.gmail.com>
  <20230718213212.GE3842864@mit.edu>
- <4835096.GXAFRqVoOG@lichtvoll.de>
+ <20230719105138.GA19936@tomerius.de>
 MIME-Version: 1.0
-In-Reply-To: <4835096.GXAFRqVoOG@lichtvoll.de>
+In-Reply-To: <20230719105138.GA19936@tomerius.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -94,56 +96,65 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-embedded@vger.kernel.org, dm-devel@redhat.com,
- Kai Tomerius <kai@tomerius.de>,
- =?iso-8859-1?Q?Bj=F8rn?= Forsman <bjorn.forsman@gmail.com>,
- Ext4 Developers List <linux-ext4@vger.kernel.org>,
- "Alan C. Assis" <acassis@gmail.com>
+Cc: =?iso-8859-1?Q?Bj=F8rn?= Forsman <bjorn.forsman@gmail.com>,
+ dm-devel@redhat.com, Ext4 Developers List <linux-ext4@vger.kernel.org>,
+ "Alan C. Assis" <acassis@gmail.com>, linux-embedded@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: mit.edu
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Jul 19, 2023 at 08:22:43AM +0200, Martin Steigerwald wrote:
+On Wed, Jul 19, 2023 at 12:51:39PM +0200, Kai Tomerius wrote:
+> > In answer to Kai's original question, the setup that was described
+> > should be fine --- assuming high quality hardware.
 > 
-> Is "nobarrier" mount option still a thing? I thought those mount options 
-> have been deprecated or even removed with the introduction of cache flush 
-> handling in kernel 2.6.37?
+> I wonder how to judge that ... it's an eMMC supposedly complying to
+> some JEDEC standard, so it *should* be ok.
 
-Yes, it's a thing, and if your server has a UPS with a reliable power
-failure / low battery feedback, it's *possible* to engineer a reliable
-system.  Or, for example, if you have a phone with an integrated
-battery, so when you drop it the battery compartment won't open and
-the battery won't go flying out, *and* the baseboard management
-controller (BMC) will halt the CPU before the battery complete dies,
-and gives a chance for the flash storage device to commit everything
-before shutdown, *and* the BMC arranges to make sure the same thing
-happens when the user pushes and holds the power button for 30
-seconds, then it could be safe.
+JEDEC promulgates the eMMC interface specification.  That's the
+interface used to talk to the device, much like SATA and SCSI and
+NVMe.  The JEDEC eMMC specification says nothing about the quality of
+the implementation of the FTL, or whether it is safe from power drops,
+or how many wirte cycles are supported before the eMMC soldered on the
+$2000 MCU would expire.
 
-We also use nobarrier for a scratch file systems which by definition
-go away when the borg/kubernetes job dies, and which will *never*
-survive a reboot, let alone a power failure.  In such a situation,
-there's no point sending the cache flush, because the partition will
-be mkfs'ed on reboot.  Or, in if the iSCSI or Cloud Persistent Disk
-will *always* go away when the VM dies, because any persistent state
-is saved to some cluster or distributed file store (e.g., to the MySQL
-server, or Big Table, or Spanner, etc.  In these cases, you don't
-*want* the Cache Flush operation, since skipping it reduce I/O
-overhead.
+If you're a cell phone manufacturer, the way you judge it is *before*
+you buy a few million of the eMMC devices, you subject the samples to
+a huge amount of power drops and other torture tests (including
+verifying the claimed number of write cycles in spec sheet), before
+the device is qualified for use in your product.
 
-So if you know what you are doing, in certain specialized use cases,
-nobarrier can make sense, and it is used today at my $WORK's data
-center for production jobs *all* the time.  So we won't be making
-ext4's nobarrier mount option go away; it has users.  :-)
+> But on another aspect: how about the interaction between dm-integrity
+> and ext4? Sure, they each have their own journal, and they're
+> independent layers. Is there anything that could go wrong, say a block
+> that can't be recovered in the dm-integrity layer, causing ext4 to run
+> into trouble, e.g., an I/O error that prevents ext4 from mounting?
+> 
+> I assume tne answer is "No", but can I be sure?
+
+If there are I/O errors, with or without dm-integrity, you can have
+problems.  dm-integrity will turn bit-flips into hard I/O errors, but
+a bit-flip might cause silent file system cocrruption (at least at
+first), such that when you finally notice that there's a problem,
+several days or weeks or months may have passed, the data loss might
+be far worse.  So turning an innocous bit flip into a hard I/O error
+can be a feature, assuming that you've allowed for it in your system
+architecture.
+
+If you assume that the hardware doesn't introduce I/O errors or bit
+flips, and if you assume you don't have any attackers trying to
+corrupt the block device with bit flips, then sure, nothing will go
+wrong.  You can buy perfect hardware from the same supply store where
+high school physics teachers buy frictionless pulleys and massless
+ropes.  :-)
 
 Cheers,
 
-					- Ted
+						- Ted
 
 --
 dm-devel mailing list
