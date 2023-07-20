@@ -1,72 +1,71 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3144AEB64DA
-	for <dm-devel@archiver.kernel.org>; Thu, 20 Jul 2023 07:57:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CA5BDEB64DC
+	for <dm-devel@archiver.kernel.org>; Thu, 20 Jul 2023 07:59:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1689839847;
+	s=mimecast20190719; t=1689839969;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=XjFJwUxkdCwBUd3pztiC9udr7QPBI9qc3JnUtGuyR70=;
-	b=MQ+bfLackz8PPh1jkVsekXuYqWogstGOaRlk/Eio2Uk0TQWx+1PlrvIb7zAJIxLGWXqyhR
-	c+3HMC5LFQvO537zCcnDIcMCIgrObKrr5NRDOUwmOS0vNVR5hqKSvGc+CVJrg70Ipjavv5
-	DEPUSUhL9uwfpReLE7TBC0LmvdzjqsM=
-Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-346-5zywpfbyMQ2WsXSYy0SMug-1; Thu, 20 Jul 2023 03:57:23 -0400
-X-MC-Unique: 5zywpfbyMQ2WsXSYy0SMug-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	bh=63iCGIZSM9j7ahi9MNoqPouwEbngXlliPbZTup/ymPg=;
+	b=i6SrCX4Hqmf89P9QBDYqctAoF8S7ToFjrpTa2KVysjQOrthKc4udbmZ6woJUQhsytPhmRz
+	qi7W3sZFx09+4tKpUpYqDE0UxwLXoUFyRGFTfaPecRlw5emOOv3f237ElfpdEg/l8ZAdjA
+	xUy0+JvLQuoWaIOE31X46OjJi/WT0Ik=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-121-tU3G8YgFPJG1-nQduR5kOg-1; Thu, 20 Jul 2023 03:59:26 -0400
+X-MC-Unique: tU3G8YgFPJG1-nQduR5kOg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C39BD38025EC;
-	Thu, 20 Jul 2023 07:57:21 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B0C6B87321E;
+	Thu, 20 Jul 2023 07:59:24 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6DE9E492C13;
-	Thu, 20 Jul 2023 07:57:21 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9ACFD200B41D;
+	Thu, 20 Jul 2023 07:59:24 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2EBD719465B9;
-	Thu, 20 Jul 2023 07:57:21 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 65FD319465B9;
+	Thu, 20 Jul 2023 07:59:24 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7976E1946587
- for <dm-devel@listman.corp.redhat.com>; Thu, 20 Jul 2023 07:57:20 +0000 (UTC)
+ ESMTP id BFAA51946587
+ for <dm-devel@listman.corp.redhat.com>; Thu, 20 Jul 2023 07:59:23 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 530F2C2C85A; Thu, 20 Jul 2023 07:57:20 +0000 (UTC)
+ id 47264F77AD; Thu, 20 Jul 2023 07:59:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4A8F5C2C857
- for <dm-devel@redhat.com>; Thu, 20 Jul 2023 07:57:20 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 3E654F6CD8
+ for <dm-devel@redhat.com>; Thu, 20 Jul 2023 07:58:56 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2AE7C104D514
- for <dm-devel@redhat.com>; Thu, 20 Jul 2023 07:57:20 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5A5BB185A793
+ for <dm-devel@redhat.com>; Thu, 20 Jul 2023 07:58:56 +0000 (UTC)
 Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-32-kPDIttlFO0aT7BOTzdlXWg-1; Thu, 20 Jul 2023 03:57:16 -0400
-X-MC-Unique: kPDIttlFO0aT7BOTzdlXWg-1
+ us-mta-602-NoMvYiATNv-5vMM22zFckw-1; Thu, 20 Jul 2023 03:58:53 -0400
+X-MC-Unique: NoMvYiATNv-5vMM22zFckw-1
 Received: by verein.lst.de (Postfix, from userid 2407)
- id 156026732D; Thu, 20 Jul 2023 09:57:11 +0200 (CEST)
-Date: Thu, 20 Jul 2023 09:57:10 +0200
+ id 8E80268B05; Thu, 20 Jul 2023 09:58:50 +0200 (CEST)
+Date: Thu, 20 Jul 2023 09:58:49 +0200
 From: Christoph Hellwig <hch@lst.de>
 To: Nitesh Shetty <nj.shetty@samsung.com>
-Message-ID: <20230720075710.GC5042@lst.de>
+Message-ID: <20230720075849.GA6246@lst.de>
 References: <20230627183629.26571-1-nj.shetty@samsung.com>
- <CGME20230627184029epcas5p49a29676fa6dff5f24ddfa5c64e525a51@epcas5p4.samsung.com>
- <20230627183629.26571-5-nj.shetty@samsung.com>
+ <CGME20230627184000epcas5p1c7cb01eb1c70bc5a19f76ce21f2ec3f8@epcas5p1.samsung.com>
+ <20230627183629.26571-2-nj.shetty@samsung.com>
 MIME-Version: 1.0
-In-Reply-To: <20230627183629.26571-5-nj.shetty@samsung.com>
+In-Reply-To: <20230627183629.26571-2-nj.shetty@samsung.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -75,9 +74,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH v13 4/9] fs,
- block: copy_file_range for def_blk_ops for direct block device
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: Re: [dm-devel] [PATCH v13 1/9] block: Introduce queue limits for
+ copy-offload support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -100,65 +99,31 @@ Cc: linux-doc@vger.kernel.org, djwong@kernel.org,
  linux-block@vger.kernel.org, dlemoal@kernel.org,
  Alexander Viro <viro@zeniv.linux.org.uk>, Keith Busch <kbusch@kernel.org>,
  bvanassche@acm.org, Jens Axboe <axboe@kernel.dk>,
- Christian Brauner <brauner@kernel.org>, martin.petersen@oracle.com,
- linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
+ Christian Brauner <brauner@kernel.org>, Kanchan Joshi <joshi.k@samsung.com>,
+ martin.petersen@oracle.com, linux-kernel@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-> +/* Copy source offset from source block device to destination block
-> + * device. Returns the length of bytes copied.
-> + */
-> +ssize_t blkdev_copy_offload_failfast(
-> +		struct block_device *bdev_in, loff_t pos_in,
-> +		struct block_device *bdev_out, loff_t pos_out,
-> +		size_t len, gfp_t gfp_mask)
-
-This is an odd and very misnamed interface.
-
-Either we have a klkdev_copy() interface that automatically falls back
-to a fallback (maybe with an opt-out), or we have separate
-blkdev_copy_offload/blkdev_copy_emulated interface and let the caller
-decide.  But none of that really is "failfast".
-
-Also this needs to go into the helpers patch and not a patch that is
-supposed to just wire copying up for block device node.
-
-> index b07de77ef126..d27148a2543f 100644
-> --- a/fs/read_write.c
-> +++ b/fs/read_write.c
-> @@ -1447,7 +1447,8 @@ static int generic_copy_file_checks(struct file *file_in, loff_t pos_in,
->  		return -EOVERFLOW;
+> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+> index b7b56871029c..dff56813f95a 100644
+> --- a/include/uapi/linux/fs.h
+> +++ b/include/uapi/linux/fs.h
+> @@ -64,6 +64,9 @@ struct fstrim_range {
+>  	__u64 minlen;
+>  };
 >  
->  	/* Shorten the copy to EOF */
-> -	size_in = i_size_read(inode_in);
-> +	size_in = i_size_read(file_in->f_mapping->host);
+> +/* maximum copy offload length, this is set to 128MB based on current testing */
+> +#define COPY_MAX_BYTES	(1 << 27)
 
-generic_copy_file_checks needs to be fixed to use ->mapping->host both
-or inode_in and inode_out at the top of the file instead of this
-band aid.  And that needs to be a separate patch with a Fixes tag.
-
-> @@ -1708,7 +1709,9 @@ int generic_file_rw_checks(struct file *file_in, struct file *file_out)
->  	/* Don't copy dirs, pipes, sockets... */
->  	if (S_ISDIR(inode_in->i_mode) || S_ISDIR(inode_out->i_mode))
->  		return -EISDIR;
-> -	if (!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode))
-> +
-> +	if ((!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode)) &&
-> +		(!S_ISBLK(inode_in->i_mode) || !S_ISBLK(inode_out->i_mode)))
-
-This is using weird indentation, and might also not be doing
-exactly what we want.  I think the better thing to do here is to:
-
- 1) check for the accetable types only on the in inode
- 2) have a check that the mode matches for the in and out inodes
-
-And please do this as a separate prep patch instead of hiding it here.
+This should not be in the UAPI.  It is a totally arbitrary internal
+limit.
 
 --
 dm-devel mailing list
