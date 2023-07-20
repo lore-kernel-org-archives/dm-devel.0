@@ -4,69 +4,69 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C3F02EB64DA
-	for <dm-devel@archiver.kernel.org>; Thu, 20 Jul 2023 07:51:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3144AEB64DA
+	for <dm-devel@archiver.kernel.org>; Thu, 20 Jul 2023 07:57:28 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1689839462;
+	s=mimecast20190719; t=1689839847;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Q0n/Xk3wQoXrwKtxbE5UyrS9Tl3ZbdVTFRoOn0h/PpA=;
-	b=dOtR1sOLlrWHl3TjCsTGqx8SDVe9AwCmD925PAJRJJWC7YPmRi8ohmJPsxyy7+NQ4mllBW
-	3riw/a3tjNc2oWEH6/BACeB1OOHi57lCzIw1GTNzpPFSsIFrvxl9ozo9gipB3FVY8Erk0E
-	hjlMPL19o3DK+Wxj+t7/Zkl62idiYxs=
+	bh=XjFJwUxkdCwBUd3pztiC9udr7QPBI9qc3JnUtGuyR70=;
+	b=MQ+bfLackz8PPh1jkVsekXuYqWogstGOaRlk/Eio2Uk0TQWx+1PlrvIb7zAJIxLGWXqyhR
+	c+3HMC5LFQvO537zCcnDIcMCIgrObKrr5NRDOUwmOS0vNVR5hqKSvGc+CVJrg70Ipjavv5
+	DEPUSUhL9uwfpReLE7TBC0LmvdzjqsM=
 Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-540-wjHKNR1XMO-Gd_jbtAnuWw-1; Thu, 20 Jul 2023 03:51:01 -0400
-X-MC-Unique: wjHKNR1XMO-Gd_jbtAnuWw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-346-5zywpfbyMQ2WsXSYy0SMug-1; Thu, 20 Jul 2023 03:57:23 -0400
+X-MC-Unique: 5zywpfbyMQ2WsXSYy0SMug-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E0C6A3C0E446;
-	Thu, 20 Jul 2023 07:50:58 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C39BD38025EC;
+	Thu, 20 Jul 2023 07:57:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 81330C2C857;
-	Thu, 20 Jul 2023 07:50:58 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6DE9E492C13;
+	Thu, 20 Jul 2023 07:57:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 504B419465B9;
-	Thu, 20 Jul 2023 07:50:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2EBD719465B9;
+	Thu, 20 Jul 2023 07:57:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 06B4E1946587
- for <dm-devel@listman.corp.redhat.com>; Thu, 20 Jul 2023 07:50:58 +0000 (UTC)
+ ESMTP id 7976E1946587
+ for <dm-devel@listman.corp.redhat.com>; Thu, 20 Jul 2023 07:57:20 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D913A2166B26; Thu, 20 Jul 2023 07:50:57 +0000 (UTC)
+ id 530F2C2C85A; Thu, 20 Jul 2023 07:57:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D08602166B25
- for <dm-devel@redhat.com>; Thu, 20 Jul 2023 07:50:57 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 4A8F5C2C857
+ for <dm-devel@redhat.com>; Thu, 20 Jul 2023 07:57:20 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B22572834774
- for <dm-devel@redhat.com>; Thu, 20 Jul 2023 07:50:57 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2AE7C104D514
+ for <dm-devel@redhat.com>; Thu, 20 Jul 2023 07:57:20 +0000 (UTC)
 Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-397-HbzpNqsdMuSN_xrLWs3gVA-1; Thu, 20 Jul 2023 03:50:55 -0400
-X-MC-Unique: HbzpNqsdMuSN_xrLWs3gVA-1
+ us-mta-32-kPDIttlFO0aT7BOTzdlXWg-1; Thu, 20 Jul 2023 03:57:16 -0400
+X-MC-Unique: kPDIttlFO0aT7BOTzdlXWg-1
 Received: by verein.lst.de (Postfix, from userid 2407)
- id 7C7756732D; Thu, 20 Jul 2023 09:50:50 +0200 (CEST)
-Date: Thu, 20 Jul 2023 09:50:50 +0200
+ id 156026732D; Thu, 20 Jul 2023 09:57:11 +0200 (CEST)
+Date: Thu, 20 Jul 2023 09:57:10 +0200
 From: Christoph Hellwig <hch@lst.de>
 To: Nitesh Shetty <nj.shetty@samsung.com>
-Message-ID: <20230720075050.GB5042@lst.de>
+Message-ID: <20230720075710.GC5042@lst.de>
 References: <20230627183629.26571-1-nj.shetty@samsung.com>
- <CGME20230627184020epcas5p13fdcea52edead5ffa3fae444f923439e@epcas5p1.samsung.com>
- <20230627183629.26571-4-nj.shetty@samsung.com>
+ <CGME20230627184029epcas5p49a29676fa6dff5f24ddfa5c64e525a51@epcas5p4.samsung.com>
+ <20230627183629.26571-5-nj.shetty@samsung.com>
 MIME-Version: 1.0
-In-Reply-To: <20230627183629.26571-4-nj.shetty@samsung.com>
+In-Reply-To: <20230627183629.26571-5-nj.shetty@samsung.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -75,8 +75,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH v13 3/9] block: add emulation for copy
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH v13 4/9] fs,
+ block: copy_file_range for def_blk_ops for direct block device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -88,8 +89,8 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Vincent Fu <vincent.fu@samsung.com>, linux-doc@vger.kernel.org,
- djwong@kernel.org, linux-nvme@lists.infradead.org, dm-devel@redhat.com,
+Cc: linux-doc@vger.kernel.org, djwong@kernel.org,
+ linux-nvme@lists.infradead.org, dm-devel@redhat.com,
  Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>,
  Sagi Grimberg <sagi@grimberg.me>, linux-scsi@vger.kernel.org,
  Jonathan Corbet <corbet@lwn.net>, gost.dev@samsung.com,
@@ -103,71 +104,61 @@ Cc: Vincent Fu <vincent.fu@samsung.com>, linux-doc@vger.kernel.org,
  linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: lst.de
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-> +static void *blkdev_copy_alloc_buf(sector_t req_size, sector_t *alloc_size,
-> +		gfp_t gfp_mask)
-> +{
-> +	int min_size = PAGE_SIZE;
-> +	void *buf;
-> +
-> +	while (req_size >= min_size) {
-> +		buf = kvmalloc(req_size, gfp_mask);
-> +		if (buf) {
-> +			*alloc_size = req_size;
-> +			return buf;
-> +		}
-> +		/* retry half the requested size */
-> +		req_size >>= 1;
-> +	}
-> +
-> +	return NULL;
+> +/* Copy source offset from source block device to destination block
+> + * device. Returns the length of bytes copied.
+> + */
+> +ssize_t blkdev_copy_offload_failfast(
+> +		struct block_device *bdev_in, loff_t pos_in,
+> +		struct block_device *bdev_out, loff_t pos_out,
+> +		size_t len, gfp_t gfp_mask)
 
-Is there any good reason for using vmalloc instead of a bunch
-of distcontiguous pages?
+This is an odd and very misnamed interface.
 
-> +		ctx = kzalloc(sizeof(struct copy_ctx), gfp_mask);
-> +		if (!ctx)
-> +			goto err_ctx;
+Either we have a klkdev_copy() interface that automatically falls back
+to a fallback (maybe with an opt-out), or we have separate
+blkdev_copy_offload/blkdev_copy_emulated interface and let the caller
+decide.  But none of that really is "failfast".
 
-I'd suspect it would be better to just allocte a single buffer and
-only have a single outstanding copy.  That will reduce the bandwith
-you can theoretically get, but copies tend to be background operations
-anyway.  It will reduce the required memory, and thus the chance for
-this operation to fail on a loaded system.  It will also dramatically
-reduce the effect on memory managment.
+Also this needs to go into the helpers patch and not a patch that is
+supposed to just wire copying up for block device node.
 
-> +		read_bio = bio_map_kern(in, buf, buf_len, gfp_mask);
-> +		if (IS_ERR(read_bio))
-> +			goto err_read_bio;
-> +
-> +		write_bio = bio_map_kern(out, buf, buf_len, gfp_mask);
-> +		if (IS_ERR(write_bio))
-> +			goto err_write_bio;
-
-bio_map_kern is only for passthrough I/Os.  You need to use
-a bio_add_page loop here.
-
-> index 336146798e56..f8c80940c7ad 100644
-> --- a/include/linux/blk_types.h
-> +++ b/include/linux/blk_types.h
-> @@ -562,4 +562,9 @@ struct cio {
->  	atomic_t refcount;
->  };
+> index b07de77ef126..d27148a2543f 100644
+> --- a/fs/read_write.c
+> +++ b/fs/read_write.c
+> @@ -1447,7 +1447,8 @@ static int generic_copy_file_checks(struct file *file_in, loff_t pos_in,
+>  		return -EOVERFLOW;
 >  
-> +struct copy_ctx {
-> +	struct cio *cio;
-> +	struct work_struct dispatch_work;
-> +	struct bio *write_bio;
-> +};
+>  	/* Shorten the copy to EOF */
+> -	size_in = i_size_read(inode_in);
+> +	size_in = i_size_read(file_in->f_mapping->host);
 
-This is misnamed as it's only used by the fallback code, and also
-should be private to blk-lib.c.
+generic_copy_file_checks needs to be fixed to use ->mapping->host both
+or inode_in and inode_out at the top of the file instead of this
+band aid.  And that needs to be a separate patch with a Fixes tag.
+
+> @@ -1708,7 +1709,9 @@ int generic_file_rw_checks(struct file *file_in, struct file *file_out)
+>  	/* Don't copy dirs, pipes, sockets... */
+>  	if (S_ISDIR(inode_in->i_mode) || S_ISDIR(inode_out->i_mode))
+>  		return -EISDIR;
+> -	if (!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode))
+> +
+> +	if ((!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode)) &&
+> +		(!S_ISBLK(inode_in->i_mode) || !S_ISBLK(inode_out->i_mode)))
+
+This is using weird indentation, and might also not be doing
+exactly what we want.  I think the better thing to do here is to:
+
+ 1) check for the accetable types only on the in inode
+ 2) have a check that the mode matches for the in and out inodes
+
+And please do this as a separate prep patch instead of hiding it here.
 
 --
 dm-devel mailing list
