@@ -4,59 +4,100 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CE504C0015E
-	for <dm-devel@archiver.kernel.org>; Fri, 21 Jul 2023 13:50:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 65E7AEB64DC
+	for <dm-devel@archiver.kernel.org>; Fri, 21 Jul 2023 14:00:56 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1689947441;
+	s=mimecast20190719; t=1689948055;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=iMkncd3vbrj3s4kZrnu6cwaqcLszVrFuTvht2zo+1HU=;
-	b=X0kG9q8G6J780/0ezoREC6vEvkoTXwG21pKyPkvr394ngASJEHy4XGRacZTFPsIAnvf6/w
-	tTjjXmgPGbA0p7PoXtxIboZzg4FLT4JQLwCanKs1FaUKG5Z1cKTNRDvDPnwMIXdtgYMRT5
-	NLis8kuiJw5Pb6hCOsdYq9SOpzCUP2o=
-Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-84-lvaMa4YyO6aoS93x-eB57w-1; Fri, 21 Jul 2023 09:50:40 -0400
-X-MC-Unique: lvaMa4YyO6aoS93x-eB57w-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+	bh=YMGC0g5rdTGsDF7vUBvvLpbEQZNfuuz71vMoz47X7Ec=;
+	b=D/TqkVGj6tvcNVhMZSx9wm4QeNh4/RE0gCycrGaWdcGoEuWdXcc1PkvLVICyI0VPjKjLPp
+	dBHDlDdI3bYp14loCqLNAlIwHGL+1A31UgnLjfmfChdCRK7BpN+OXs9fA0LawlKJwnmt5X
+	CGvpWp8uF8lY3pVHsroG3WwmkG48t9Q=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-590-f4j04jmMMXa7R_f6o6hHzA-1; Fri, 21 Jul 2023 10:00:52 -0400
+X-MC-Unique: f4j04jmMMXa7R_f6o6hHzA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0985C1C0434C;
-	Fri, 21 Jul 2023 13:50:38 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9D427936D26;
+	Fri, 21 Jul 2023 14:00:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EBFC8C57969;
-	Fri, 21 Jul 2023 13:50:37 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 3DC42492C13;
+	Fri, 21 Jul 2023 14:00:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B306E1946A43;
-	Fri, 21 Jul 2023 13:50:37 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0289F1946A43;
+	Fri, 21 Jul 2023 14:00:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id AE6BB1946586
- for <dm-devel@listman.corp.redhat.com>; Fri, 21 Jul 2023 13:50:35 +0000 (UTC)
+ ESMTP id 0B3A01946586
+ for <dm-devel@listman.corp.redhat.com>; Fri, 21 Jul 2023 14:00:47 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9C8FA492CAC; Fri, 21 Jul 2023 13:50:35 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown
- [10.11.5.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 896A7492B02;
- Fri, 21 Jul 2023 13:50:35 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix,
- from userid 12668)
- id 327CD30C0457; Fri, 21 Jul 2023 13:50:11 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
- by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id
- 319AE3FB76; Fri, 21 Jul 2023 15:50:11 +0200 (CEST)
-Date: Fri, 21 Jul 2023 15:50:11 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Jens Axboe <axboe@kernel.dk>
-Message-ID: <5ae07138-8840-26b1-12a3-bab2ad57c558@redhat.com>
+ id 8F312C5796B; Fri, 21 Jul 2023 14:00:47 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7E2B9C5796A
+ for <dm-devel@redhat.com>; Fri, 21 Jul 2023 14:00:47 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 64087892245
+ for <dm-devel@redhat.com>; Fri, 21 Jul 2023 14:00:47 +0000 (UTC)
+Received: from mail-io1-f44.google.com (mail-io1-f44.google.com
+ [209.85.166.44]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-613-25DDEsXtPLSkRLI9rOO0uw-1; Fri, 21 Jul 2023 10:00:45 -0400
+X-MC-Unique: 25DDEsXtPLSkRLI9rOO0uw-1
+Received: by mail-io1-f44.google.com with SMTP id
+ ca18e2360f4ac-760dff4b701so28477139f.0
+ for <dm-devel@redhat.com>; Fri, 21 Jul 2023 07:00:44 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1689948044; x=1690552844;
+ h=content-transfer-encoding:in-reply-to:from:references:cc:to
+ :content-language:subject:user-agent:mime-version:date:message-id
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=yowB+SDYz3WsGB5u3KbSB7coFl3FEU+ho0O0+py0Ukc=;
+ b=L7fxWjgNK1s3nD/+aBi9JCQspNjaNhAuOhMTdja33wNteaCTunaFQTT2yUYcvzSKAr
+ E5hREfPAXbEExkQyPzbL5OA6Iai5+hyQ0X3bmFGgU7yrfwXY8tYb5AZLocVvBdOs2F9U
+ 3KY9Y1A8LmLR8Ta9H2f054ouwkhETqrR1YCry5SqHr/hUzmJM5owcbVlh49pzSmcNJuT
+ bNn0Lso7bbY+n2VNbDV0ZORRWizGGSa6f6PXYmYOG4MfpAgucPQuJhuzNSAqY9EitXvO
+ c4Ai3zfk6XF6YSF+UK72J1X483LutJ02UQCi1Etv9DFkh4HHJge80ygqh7Xh6X8W/146
+ 9+tA==
+X-Gm-Message-State: ABy/qLbqzKFRuSoURPHMhVOPmxD7q46IPHrP8XGIStbrxkiNpJhLc7dm
+ y8FVDx0iXqgPqFPtRNo1w+sBUA==
+X-Google-Smtp-Source: APBJJlHMT+rxz7f5suX2hWoG4yc3KEkLf1UJ5Q0KxS+wamMFFlkkxKHrGWKDrLBg9z5MlQwuTgUyMQ==
+X-Received: by 2002:a6b:b789:0:b0:787:1926:54ed with SMTP id
+ h131-20020a6bb789000000b00787192654edmr1799444iof.1.1689948044181; 
+ Fri, 21 Jul 2023 07:00:44 -0700 (PDT)
+Received: from [192.168.1.94] ([96.43.243.2]) by smtp.gmail.com with ESMTPSA id
+ b10-20020a5ea70a000000b0078337cd3b3csm1065191iod.54.2023.07.21.07.00.43
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Fri, 21 Jul 2023 07:00:43 -0700 (PDT)
+Message-ID: <6f0b9cbb-6752-6dd8-c184-10798533dfed@kernel.dk>
+Date: Fri, 21 Jul 2023 08:00:42 -0600
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-Subject: [dm-devel] [PATCH v2 2/3] brd: enable discard
+User-Agent: Mozilla/5.0 (X11; Linux aarch64; rv:102.0) Gecko/20100101
+ Thunderbird/102.13.0
+To: Mikulas Patocka <mpatocka@redhat.com>
+References: <9933f5df-dd43-3447-dce3-f513368578@redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
+In-Reply-To: <9933f5df-dd43-3447-dce3-f513368578@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH v2 0/3] brd discard patches
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -73,261 +114,26 @@ Cc: linux-block@vger.kernel.org, Chaitanya Kulkarni <chaitanyak@nvidia.com>,
  dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
+X-Mimecast-Originator: kernel.dk
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-This patch implements discard in the brd driver. We use RCU to free the
-page, so that if there are any concurrent readers or writes, they won't
-touch the page after it is freed.
+On 7/21/23 7:48?AM, Mikulas Patocka wrote:
+> This is a new version of the brd discard patches.
 
-Calling "call_rcu" for each page is inefficient, so we attempt to batch
-multiple pages to a single "call_rcu" call.
+Can you please:
 
-Note that we replace "BUG_ON(!page);" with "if (page) ..." in copy_to_brd
-- the page can't be NULL under normal circumstances, it can only be NULL
-if REQ_OP_WRITE races with REQ_OP_DISCARD. If these two bios race with
-each other on the same page, the result is undefined, so we can handle
-this race condition just by skipping the copying.
+1) Ensure that your postings thread properly, it's all separate emails
+   and the patches don't nest under the cover letter parent.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+2) Include a changelog. What changed since v1?
 
----
- drivers/block/brd.c |  150 +++++++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 136 insertions(+), 14 deletions(-)
+-- 
+Jens Axboe
 
-Index: linux-2.6/drivers/block/brd.c
-===================================================================
---- linux-2.6.orig/drivers/block/brd.c
-+++ linux-2.6/drivers/block/brd.c
-@@ -46,6 +46,8 @@ struct brd_device {
- 	u64			brd_nr_pages;
- };
- 
-+static bool discard;
-+
- /*
-  * Look up and return a brd's page for a given sector.
-  */
-@@ -100,6 +102,54 @@ static int brd_insert_page(struct brd_de
- 	return ret;
- }
- 
-+struct free_page_batch {
-+	struct rcu_head rcu;
-+	struct list_head list;
-+};
-+
-+static void brd_free_page_rcu(struct rcu_head *head)
-+{
-+	__free_page(container_of(head, struct page, rcu_head));
-+}
-+
-+static void brd_free_pages_rcu(struct rcu_head *head)
-+{
-+	struct free_page_batch *batch = container_of(head, struct free_page_batch, rcu);
-+
-+	while (!list_empty(&batch->list)) {
-+		struct page *page = list_entry(batch->list.prev, struct page, lru);
-+
-+		list_del(&page->lru);
-+
-+		__free_page(page);
-+	}
-+
-+	kfree(batch);
-+}
-+
-+static void brd_free_page(struct brd_device *brd, sector_t sector,
-+			  struct free_page_batch **batch)
-+{
-+	struct page *page;
-+	pgoff_t idx;
-+
-+	idx = sector >> PAGE_SECTORS_SHIFT;
-+	page = xa_erase(&brd->brd_pages, idx);
-+
-+	if (page) {
-+		BUG_ON(page->index != idx);
-+		if (!*batch) {
-+			*batch = kmalloc(sizeof(struct free_page_batch), GFP_NOIO);
-+			if (unlikely(!*batch)) {
-+				call_rcu(&page->rcu_head, brd_free_page_rcu);
-+				return;
-+			} 
-+			INIT_LIST_HEAD(&(*batch)->list);
-+		}
-+		list_add(&page->lru, &(*batch)->list);
-+	}
-+}
-+
- /*
-  * Free all backing store pages and xarray. This must only be called when
-  * there are no other users of the device.
-@@ -152,11 +202,11 @@ static void copy_to_brd(struct brd_devic
- 	copy = min_t(size_t, n, PAGE_SIZE - offset);
- 	rcu_read_lock();
- 	page = brd_lookup_page(brd, sector);
--	BUG_ON(!page);
--
--	dst = kmap_atomic(page);
--	memcpy(dst + offset, src, copy);
--	kunmap_atomic(dst);
-+	if (page) {
-+		dst = kmap_atomic(page);
-+		memcpy(dst + offset, src, copy);
-+		kunmap_atomic(dst);
-+	}
- 	rcu_read_unlock();
- 
- 	if (copy < n) {
-@@ -165,11 +215,11 @@ static void copy_to_brd(struct brd_devic
- 		copy = n - copy;
- 		rcu_read_lock();
- 		page = brd_lookup_page(brd, sector);
--		BUG_ON(!page);
--
--		dst = kmap_atomic(page);
--		memcpy(dst, src, copy);
--		kunmap_atomic(dst);
-+		if (page) {
-+			dst = kmap_atomic(page);
-+			memcpy(dst, src, copy);
-+			kunmap_atomic(dst);
-+		}
- 		rcu_read_unlock();
- 	}
- }
-@@ -248,13 +298,47 @@ out:
- 	return err;
- }
- 
-+void brd_do_discard(struct brd_device *brd, struct bio *bio)
-+{
-+	struct free_page_batch *batch = NULL;
-+	sector_t sector, len, front_pad;
-+
-+	if (unlikely(!discard)) {
-+		bio->bi_status = BLK_STS_NOTSUPP;
-+		return;
-+	}
-+
-+	sector = bio->bi_iter.bi_sector;
-+	len = bio_sectors(bio);
-+	front_pad = -sector & (PAGE_SECTORS - 1);
-+	sector += front_pad;
-+	if (unlikely(len <= front_pad))
-+		return;
-+	len -= front_pad;
-+	len = round_down(len, PAGE_SECTORS);
-+	while (len) {
-+		brd_free_page(brd, sector, &batch);
-+		sector += PAGE_SECTORS;
-+		len -= PAGE_SECTORS;
-+		cond_resched();
-+	}
-+	if (batch)
-+		call_rcu(&batch->rcu, brd_free_pages_rcu);
-+}
-+
- static void brd_submit_bio(struct bio *bio)
- {
- 	struct brd_device *brd = bio->bi_bdev->bd_disk->private_data;
--	sector_t sector = bio->bi_iter.bi_sector;
-+	sector_t sector;
- 	struct bio_vec bvec;
- 	struct bvec_iter iter;
- 
-+	if (bio_op(bio) == REQ_OP_DISCARD) {
-+		brd_do_discard(brd, bio);
-+		goto endio;
-+	}
-+
-+	sector = bio->bi_iter.bi_sector;
- 	bio_for_each_segment(bvec, bio, iter) {
- 		unsigned int len = bvec.bv_len;
- 		int err;
-@@ -276,6 +360,7 @@ static void brd_submit_bio(struct bio *b
- 		sector += len >> SECTOR_SHIFT;
- 	}
- 
-+endio:
- 	bio_endio(bio);
- }
- 
-@@ -284,6 +369,40 @@ static const struct block_device_operati
- 	.submit_bio =		brd_submit_bio,
- };
- 
-+static LIST_HEAD(brd_devices);
-+static struct dentry *brd_debugfs_dir;
-+
-+static void brd_set_discard_limits(struct brd_device *brd)
-+{
-+	struct request_queue *queue = brd->brd_disk->queue;
-+	if (discard) {
-+		queue->limits.discard_granularity = PAGE_SIZE;
-+		blk_queue_max_discard_sectors(queue, round_down(UINT_MAX, PAGE_SECTORS));
-+	} else {
-+		queue->limits.discard_granularity = 0;
-+		blk_queue_max_discard_sectors(queue, 0);
-+	}
-+}
-+
-+static int discard_set_bool(const char *val, const struct kernel_param *kp)
-+{
-+	struct brd_device *brd;
-+
-+	int r = param_set_bool(val, kp);
-+	if (r)
-+		return r;
-+
-+	list_for_each_entry(brd, &brd_devices, brd_list)
-+		brd_set_discard_limits(brd);
-+
-+	return 0;
-+}
-+
-+static const struct kernel_param_ops discard_ops = {
-+	.set = discard_set_bool,
-+	.get = param_get_bool,
-+};
-+
- /*
-  * And now the modules code and kernel interface.
-  */
-@@ -299,6 +418,10 @@ static int max_part = 1;
- module_param(max_part, int, 0444);
- MODULE_PARM_DESC(max_part, "Num Minors to reserve between devices");
- 
-+static bool discard = false;
-+module_param_cb(discard, &discard_ops, &discard, 0644);
-+MODULE_PARM_DESC(discard, "Support discard");
-+
- MODULE_LICENSE("GPL");
- MODULE_ALIAS_BLOCKDEV_MAJOR(RAMDISK_MAJOR);
- MODULE_ALIAS("rd");
-@@ -317,9 +440,6 @@ __setup("ramdisk_size=", ramdisk_size);
-  * The device scheme is derived from loop.c. Keep them in synch where possible
-  * (should share code eventually).
-  */
--static LIST_HEAD(brd_devices);
--static struct dentry *brd_debugfs_dir;
--
- static int brd_alloc(int i)
- {
- 	struct brd_device *brd;
-@@ -364,6 +484,8 @@ static int brd_alloc(int i)
- 	 */
- 	blk_queue_physical_block_size(disk->queue, PAGE_SIZE);
- 
-+	brd_set_discard_limits(brd);
-+
- 	/* Tell the block layer that this is not a rotational device */
- 	blk_queue_flag_set(QUEUE_FLAG_NONROT, disk->queue);
- 	blk_queue_flag_set(QUEUE_FLAG_SYNCHRONOUS, disk->queue);
 --
 dm-devel mailing list
 dm-devel@redhat.com
