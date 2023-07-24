@@ -4,92 +4,91 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 205CAC04A94
-	for <dm-devel@archiver.kernel.org>; Tue, 25 Jul 2023 06:43:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C7DD5C04A6A
+	for <dm-devel@archiver.kernel.org>; Tue, 25 Jul 2023 06:43:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690267391;
+	s=mimecast20190719; t=1690267393;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=9V3da+D3/TcutlEiLSyrFeKcx64gLPrplbhW7ik+0G8=;
-	b=AmJFdQcE779tgtIjbIJKOOUwnejVoTpwt/Y+74wEnjpAfb4kdFP/ti626nCLpK4kR0yAX9
-	Wt7BeqmM1+KegRu7z9G9LDNEx9nmZzbMA8kaeeCmDS/CALufiFVPcsFEek0XnGVN78yLAY
-	qunK+Nlht7RVtkYqMmfqndTzjvLVhDw=
+	bh=bEgt+h6FGr0r5kfeSDV4pGFHN8i1/n0WCVCpWOaIwKA=;
+	b=Gg8nmaCg+CqXqa8qnEhqX96PJd24AccPdlXC+owLp77EVd5OuGHENRTijpW0uecMaFJn6w
+	AzUPjC2IRZsF1gsysBCIIOiV9iWzO+CvJCj0F2bchOugmMwO7iJC/LvDWxUz2J1EF800qk
+	XasZbh5QWuZobGkmt1IBi8LtehOemrg=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-497-EVrILRU3OXCjpWdPSgEfrA-1; Tue, 25 Jul 2023 02:43:05 -0400
-X-MC-Unique: EVrILRU3OXCjpWdPSgEfrA-1
+ us-mta-401-kU_Na13-NUuXSwhNKQFplA-1; Tue, 25 Jul 2023 02:43:11 -0400
+X-MC-Unique: kU_Na13-NUuXSwhNKQFplA-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6EBB9800159;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EFB228871B3;
 	Tue, 25 Jul 2023 06:42:56 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 548B12166B27;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D8AF72166B26;
 	Tue, 25 Jul 2023 06:42:56 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 554F41956B89;
-	Tue, 25 Jul 2023 06:42:50 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 21AB0194E101;
+	Tue, 25 Jul 2023 06:42:53 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
  [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 20FA0194658D
- for <dm-devel@listman.corp.redhat.com>; Mon, 24 Jul 2023 09:52:58 +0000 (UTC)
+ ESMTP id E47DD1946588
+ for <dm-devel@listman.corp.redhat.com>; Mon, 24 Jul 2023 09:49:33 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 11DA5C2C857; Mon, 24 Jul 2023 09:52:58 +0000 (UTC)
+ id D406FC2C7D3; Mon, 24 Jul 2023 09:49:33 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 09FEAC2C856
- for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:52:58 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E2AD2800159
- for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:52:57 +0000 (UTC)
-Received: from mail-pg1-f173.google.com (mail-pg1-f173.google.com
- [209.85.215.173]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id CBB18C2C858
+ for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:49:33 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ABC491C03D86
+ for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:49:33 +0000 (UTC)
+Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com
+ [209.85.214.174]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-191-8nCsjYgdN6mSCP2cXvMQFg-2; Mon, 24 Jul 2023 05:52:55 -0400
-X-MC-Unique: 8nCsjYgdN6mSCP2cXvMQFg-2
-Received: by mail-pg1-f173.google.com with SMTP id
- 41be03b00d2f7-55b5a37acb6so327235a12.0
- for <dm-devel@redhat.com>; Mon, 24 Jul 2023 02:52:54 -0700 (PDT)
+ us-mta-517-fBqaKK6zMI--KYmfUm6ayA-2; Mon, 24 Jul 2023 05:49:30 -0400
+X-MC-Unique: fBqaKK6zMI--KYmfUm6ayA-2
+Received: by mail-pl1-f174.google.com with SMTP id
+ d9443c01a7336-1b7dfb95761so5878935ad.1
+ for <dm-devel@redhat.com>; Mon, 24 Jul 2023 02:49:30 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1690192374; x=1690797174;
+ d=1e100.net; s=20221208; t=1690192170; x=1690796970;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=9IhUpcns1yxxzymDv5YqZr0WL/UQLCqdNy71sVoDGM4=;
- b=Waf7CAiNYf1h4DZIGllKY3qyokaWdaVzpVR7tttjUJuokm17iaavSDj905Ioeic+nR
- rl3kwxx83nmwy1vQLxmMyLTmSI6zjruMdrbkZNwOW9pHfWUEzT496I0Oa0MZ26zH+01o
- 4J9HBuPCmHoCdtSBMfkp0HsZzWpDRMJ+Pu7JLRuR/j/C+HSxyA14Kizh5rSShC6PHp4k
- BGmRzfhrb6/ft81C+NhyupPhYl3TM3P4OZoUN2wsTRbQQZwH1rSFA1sjRrV0VjpnSQX3
- QiQzoJx0GgsPAsvNnEiuXYaIt7HHBbQzJr3RrqnZERmdTgc2LSS5QlWNp/PZF565nbk7
- uOWQ==
-X-Gm-Message-State: ABy/qLZNZM+uO597ZpT3vffOorsdPKWBp+cchzfVPWIukBthEM+lrqNe
- YdoLk95+bI2tbKM/hyEwaq9mMw==
-X-Google-Smtp-Source: APBJJlHBx7nK5g3+kldzxnSt3u+r3r/G3QW+9x74hGsko9rk5z0xsgiAGVczPyEk+gpBI6IeMpdddg==
-X-Received: by 2002:a17:902:dad1:b0:1b8:aded:524c with SMTP id
- q17-20020a170902dad100b001b8aded524cmr12547787plx.1.1690192373829; 
- Mon, 24 Jul 2023 02:52:53 -0700 (PDT)
+ bh=ys9vBHKFvUQ64/r6xhiUU0Z6Ew/XYgW4RHIRDMT4d8M=;
+ b=aO2HAUHO5fiius2XupVOhUUE4KQrMtyBOhYjXPCKY54TqAY8lVqYIQAoYyoKLSRP29
+ YHd+R0cLSnEjwTpBandj9+5u5UPlu3Rtc0PN8bT8ef7m5MqNXhU8guZomqtxIb+Anjrf
+ M3gfFH+NXHQLM5p45aah0jOjkwMbszf4znvFQlA37HGCANHmtZ63syAhBjYxhKN6Y4b2
+ rgiUze8qfdskz4sDG108D6RUm2kqnbH3Y/kbTm4R6Vj0lNCwwaVPtY6cOqqsSJMocL15
+ K9dE8g5XCx7b3DlFKw00Au34HfWKdLUMsoFNyR9trvtMMgYV9WqJrfpYBbfp1NA3dSdC
+ uoKQ==
+X-Gm-Message-State: ABy/qLbo+YocAFquywqitE7/gfkw/9Edjl7RZNIZL0RmW7XUM/3WOoyo
+ 1XCjR87VVqQKhznEcFQNtW2Vbw==
+X-Google-Smtp-Source: APBJJlFkBw02O8PtVItEXpmJ/bGWM9sp4fUOmnYSOIyG9XuieUTiinrCv3H33MrLETZpz/mqqXfPcw==
+X-Received: by 2002:a17:903:32c9:b0:1b8:5827:8763 with SMTP id
+ i9-20020a17090332c900b001b858278763mr12116030plr.4.1690192170396; 
+ Mon, 24 Jul 2023 02:49:30 -0700 (PDT)
 Received: from C02DW0BEMD6R.bytedance.net ([203.208.167.147])
  by smtp.gmail.com with ESMTPSA id
- d5-20020a170902c18500b001bb20380bf2sm8467233pld.13.2023.07.24.02.52.42
+ d5-20020a170902c18500b001bb20380bf2sm8467233pld.13.2023.07.24.02.49.19
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 24 Jul 2023 02:52:53 -0700 (PDT)
+ Mon, 24 Jul 2023 02:49:30 -0700 (PDT)
 From: Qi Zheng <zhengqi.arch@bytedance.com>
 To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
  vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
  brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu,
  steven.price@arm.com, cel@kernel.org, senozhatsky@chromium.org,
  yujie.liu@intel.com, gregkh@linuxfoundation.org, muchun.song@linux.dev
-Date: Mon, 24 Jul 2023 17:43:46 +0800
-Message-Id: <20230724094354.90817-40-zhengqi.arch@bytedance.com>
+Date: Mon, 24 Jul 2023 17:43:29 +0800
+Message-Id: <20230724094354.90817-23-zhengqi.arch@bytedance.com>
 In-Reply-To: <20230724094354.90817-1-zhengqi.arch@bytedance.com>
 References: <20230724094354.90817-1-zhengqi.arch@bytedance.com>
 MIME-Version: 1.0
@@ -104,8 +103,8 @@ X-Mimecast-Bulk-Signature: yes
 X-Mimecast-Spam-Signature: bulk
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mailman-Approved-At: Tue, 25 Jul 2023 06:42:42 +0000
-Subject: [dm-devel] [PATCH v2 39/47] zsmalloc: dynamically allocate the
- mm-zspool shrinker
+Subject: [dm-devel] [PATCH v2 22/47] drm/i915: dynamically allocate the
+ i915_gem_mm shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -136,80 +135,98 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
 In preparation for implementing lockless slab shrink, use new APIs to
-dynamically allocate the mm-zspool shrinker, so that it can be freed
+dynamically allocate the i915_gem_mm shrinker, so that it can be freed
 asynchronously using kfree_rcu(). Then it doesn't need to wait for RCU
-read-side critical section when releasing the struct zs_pool.
+read-side critical section when releasing the struct drm_i915_private.
 
 Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
 ---
- mm/zsmalloc.c | 28 ++++++++++++++++------------
- 1 file changed, 16 insertions(+), 12 deletions(-)
+ drivers/gpu/drm/i915/gem/i915_gem_shrinker.c | 30 +++++++++++---------
+ drivers/gpu/drm/i915/i915_drv.h              |  2 +-
+ 2 files changed, 18 insertions(+), 14 deletions(-)
 
-diff --git a/mm/zsmalloc.c b/mm/zsmalloc.c
-index 32f5bc4074df..bbbffe313318 100644
---- a/mm/zsmalloc.c
-+++ b/mm/zsmalloc.c
-@@ -229,7 +229,7 @@ struct zs_pool {
- 	struct zs_pool_stats stats;
+diff --git a/drivers/gpu/drm/i915/gem/i915_gem_shrinker.c b/drivers/gpu/drm/i915/gem/i915_gem_shrinker.c
+index 214763942aa2..a7409b8c2634 100644
+--- a/drivers/gpu/drm/i915/gem/i915_gem_shrinker.c
++++ b/drivers/gpu/drm/i915/gem/i915_gem_shrinker.c
+@@ -284,8 +284,7 @@ unsigned long i915_gem_shrink_all(struct drm_i915_private *i915)
+ static unsigned long
+ i915_gem_shrinker_count(struct shrinker *shrinker, struct shrink_control *sc)
+ {
+-	struct drm_i915_private *i915 =
+-		container_of(shrinker, struct drm_i915_private, mm.shrinker);
++	struct drm_i915_private *i915 = shrinker->private_data;
+ 	unsigned long num_objects;
+ 	unsigned long count;
  
- 	/* Compact classes */
+@@ -302,8 +301,8 @@ i915_gem_shrinker_count(struct shrinker *shrinker, struct shrink_control *sc)
+ 	if (num_objects) {
+ 		unsigned long avg = 2 * count / num_objects;
+ 
+-		i915->mm.shrinker.batch =
+-			max((i915->mm.shrinker.batch + avg) >> 1,
++		i915->mm.shrinker->batch =
++			max((i915->mm.shrinker->batch + avg) >> 1,
+ 			    128ul /* default SHRINK_BATCH */);
+ 	}
+ 
+@@ -313,8 +312,7 @@ i915_gem_shrinker_count(struct shrinker *shrinker, struct shrink_control *sc)
+ static unsigned long
+ i915_gem_shrinker_scan(struct shrinker *shrinker, struct shrink_control *sc)
+ {
+-	struct drm_i915_private *i915 =
+-		container_of(shrinker, struct drm_i915_private, mm.shrinker);
++	struct drm_i915_private *i915 = shrinker->private_data;
+ 	unsigned long freed;
+ 
+ 	sc->nr_scanned = 0;
+@@ -422,12 +420,18 @@ i915_gem_shrinker_vmap(struct notifier_block *nb, unsigned long event, void *ptr
+ 
+ void i915_gem_driver_register__shrinker(struct drm_i915_private *i915)
+ {
+-	i915->mm.shrinker.scan_objects = i915_gem_shrinker_scan;
+-	i915->mm.shrinker.count_objects = i915_gem_shrinker_count;
+-	i915->mm.shrinker.seeks = DEFAULT_SEEKS;
+-	i915->mm.shrinker.batch = 4096;
+-	drm_WARN_ON(&i915->drm, register_shrinker(&i915->mm.shrinker,
+-						  "drm-i915_gem"));
++	i915->mm.shrinker = shrinker_alloc(0, "drm-i915_gem");
++	if (!i915->mm.shrinker) {
++		drm_WARN_ON(&i915->drm, 1);
++	} else {
++		i915->mm.shrinker->scan_objects = i915_gem_shrinker_scan;
++		i915->mm.shrinker->count_objects = i915_gem_shrinker_count;
++		i915->mm.shrinker->seeks = DEFAULT_SEEKS;
++		i915->mm.shrinker->batch = 4096;
++		i915->mm.shrinker->private_data = i915;
++
++		shrinker_register(i915->mm.shrinker);
++	}
+ 
+ 	i915->mm.oom_notifier.notifier_call = i915_gem_shrinker_oom;
+ 	drm_WARN_ON(&i915->drm, register_oom_notifier(&i915->mm.oom_notifier));
+@@ -443,7 +447,7 @@ void i915_gem_driver_unregister__shrinker(struct drm_i915_private *i915)
+ 		    unregister_vmap_purge_notifier(&i915->mm.vmap_notifier));
+ 	drm_WARN_ON(&i915->drm,
+ 		    unregister_oom_notifier(&i915->mm.oom_notifier));
+-	unregister_shrinker(&i915->mm.shrinker);
++	shrinker_unregister(i915->mm.shrinker);
+ }
+ 
+ void i915_gem_shrinker_taints_mutex(struct drm_i915_private *i915,
+diff --git a/drivers/gpu/drm/i915/i915_drv.h b/drivers/gpu/drm/i915/i915_drv.h
+index 682ef2b5c7d5..389e8bf140d7 100644
+--- a/drivers/gpu/drm/i915/i915_drv.h
++++ b/drivers/gpu/drm/i915/i915_drv.h
+@@ -163,7 +163,7 @@ struct i915_gem_mm {
+ 
+ 	struct notifier_block oom_notifier;
+ 	struct notifier_block vmap_notifier;
 -	struct shrinker shrinker;
 +	struct shrinker *shrinker;
  
- #ifdef CONFIG_ZSMALLOC_STAT
- 	struct dentry *stat_dentry;
-@@ -2082,8 +2082,7 @@ static unsigned long zs_shrinker_scan(struct shrinker *shrinker,
- 		struct shrink_control *sc)
- {
- 	unsigned long pages_freed;
--	struct zs_pool *pool = container_of(shrinker, struct zs_pool,
--			shrinker);
-+	struct zs_pool *pool = shrinker->private_data;
- 
- 	/*
- 	 * Compact classes and calculate compaction delta.
-@@ -2101,8 +2100,7 @@ static unsigned long zs_shrinker_count(struct shrinker *shrinker,
- 	int i;
- 	struct size_class *class;
- 	unsigned long pages_to_free = 0;
--	struct zs_pool *pool = container_of(shrinker, struct zs_pool,
--			shrinker);
-+	struct zs_pool *pool = shrinker->private_data;
- 
- 	for (i = ZS_SIZE_CLASSES - 1; i >= 0; i--) {
- 		class = pool->size_class[i];
-@@ -2117,18 +2115,24 @@ static unsigned long zs_shrinker_count(struct shrinker *shrinker,
- 
- static void zs_unregister_shrinker(struct zs_pool *pool)
- {
--	unregister_shrinker(&pool->shrinker);
-+	shrinker_unregister(pool->shrinker);
- }
- 
- static int zs_register_shrinker(struct zs_pool *pool)
- {
--	pool->shrinker.scan_objects = zs_shrinker_scan;
--	pool->shrinker.count_objects = zs_shrinker_count;
--	pool->shrinker.batch = 0;
--	pool->shrinker.seeks = DEFAULT_SEEKS;
-+	pool->shrinker = shrinker_alloc(0, "mm-zspool:%s", pool->name);
-+	if (!pool->shrinker)
-+		return -ENOMEM;
-+
-+	pool->shrinker->scan_objects = zs_shrinker_scan;
-+	pool->shrinker->count_objects = zs_shrinker_count;
-+	pool->shrinker->batch = 0;
-+	pool->shrinker->seeks = DEFAULT_SEEKS;
-+	pool->shrinker->private_data = pool;
- 
--	return register_shrinker(&pool->shrinker, "mm-zspool:%s",
--				 pool->name);
-+	shrinker_register(pool->shrinker);
-+
-+	return 0;
- }
- 
- static int calculate_zspage_chain_size(int class_size)
+ #ifdef CONFIG_MMU_NOTIFIER
+ 	/**
 -- 
 2.30.2
 
