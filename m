@@ -4,91 +4,92 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 22C6FC0015E
-	for <dm-devel@archiver.kernel.org>; Tue, 25 Jul 2023 06:42:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C0922C04A6A
+	for <dm-devel@archiver.kernel.org>; Tue, 25 Jul 2023 06:42:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690267370;
+	s=mimecast20190719; t=1690267371;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=xXCC1n13baK1qFjFHR7anV9wfGSF6mNa53Kfn8GqoI8=;
-	b=FVUF76K9M/KyyiAJ0n3rP9hFAUdVPoPgoCgDra8dh6SecJSLknCx3KawnB7tZl973Nwkzs
-	XSOBMHGrAg8VPkAV6XKPfm3rTjM55I9OWAu2iEQrdtKMx1695p2a0HI9BLRC0GRiXbO+by
-	lHncOTUfqMUiDNpMux/g7SlmTmREMSU=
+	bh=965gLLxgTvahGJgH14vpd/YZwW5BWfjLNvfIXnKUQhk=;
+	b=bruOHM46lGBKb/3OsRE0UBX1Bv5pL4L3JbwPNqKHQCNhWYwdtlNZSze+0SrvYMfsGvF+Ai
+	2joO1gCU4TJ4GYxjVfyMMjzXl8GrqJD0GEgOkz2O2rxS6jzePM377L00/E1LJttyR4BR/9
+	WMQwtFoe/HZiadmhyZloECVbHYQhuQc=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-35-WrCmynZOM6meIk1RIc6TKg-1; Tue, 25 Jul 2023 02:42:48 -0400
-X-MC-Unique: WrCmynZOM6meIk1RIc6TKg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-155-Nzp-3PomPoimB1KSIhxBJQ-1; Tue, 25 Jul 2023 02:42:48 -0400
+X-MC-Unique: Nzp-3PomPoimB1KSIhxBJQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DDA6B85A58A;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DF2351044599;
 	Tue, 25 Jul 2023 06:42:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B2E9CF783D;
-	Tue, 25 Jul 2023 06:42:45 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2A2C6C2C85A;
+	Tue, 25 Jul 2023 06:42:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 137541949750;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2D2F8194037B;
 	Tue, 25 Jul 2023 06:42:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 341DB1946588
- for <dm-devel@listman.corp.redhat.com>; Mon, 24 Jul 2023 09:45:36 +0000 (UTC)
+ ESMTP id 14B1D1946588
+ for <dm-devel@listman.corp.redhat.com>; Mon, 24 Jul 2023 09:49:22 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 06F4A40C206F; Mon, 24 Jul 2023 09:45:36 +0000 (UTC)
+ id DFD284014D05; Mon, 24 Jul 2023 09:49:21 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F3E0640C2063
- for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:45:35 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D76B240C6CCC
+ for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:49:21 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D5BF7104458F
- for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:45:35 +0000 (UTC)
-Received: from mail-pf1-f182.google.com (mail-pf1-f182.google.com
- [209.85.210.182]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BBA5485A58A
+ for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:49:21 +0000 (UTC)
+Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com
+ [209.85.214.174]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-130-_j0Ph_sOMOqTQD6nq6WDhg-1; Mon, 24 Jul 2023 05:45:31 -0400
-X-MC-Unique: _j0Ph_sOMOqTQD6nq6WDhg-1
-Received: by mail-pf1-f182.google.com with SMTP id
- d2e1a72fcca58-682eef7d752so1027574b3a.0
- for <dm-devel@redhat.com>; Mon, 24 Jul 2023 02:45:31 -0700 (PDT)
+ us-mta-517-Kt5dttm3MdejJ8TV3GmvMg-1; Mon, 24 Jul 2023 05:49:19 -0400
+X-MC-Unique: Kt5dttm3MdejJ8TV3GmvMg-1
+Received: by mail-pl1-f174.google.com with SMTP id
+ d9443c01a7336-1b7dfb95761so5878515ad.1
+ for <dm-devel@redhat.com>; Mon, 24 Jul 2023 02:49:19 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1690191931; x=1690796731;
+ d=1e100.net; s=20221208; t=1690192158; x=1690796958;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=ewD/GNBDsb9emQZc+crYJJhL9Ok7DRtPygkZmojk224=;
- b=Kl0RPcURlBDuZyaFBek35tzQv5fI2Cc374C8iqE3cahfFGdeZa+ivPAVRCJw1d7ZZ3
- GkWIsM6dLKT5MU590ysE+kiwOwgNBILN/Bo+EgffAYPm9v2dmVFWo4k5kfckAjyx7jcI
- 0PpHSJ42hxOvumXuTW7AK775/VwAnfPpfXVVZiusweVVYw2LriJx6vINwOFTPP/i3DAP
- Vj6GZQkOl0Oa7/xinYrSVCDzelf6NzjTNp2+oPplHZpa2T3skF1zC5ssHQTkktFhDl7B
- Brt0EeWmH6XwloWlr32sCfZhfI43QeLYyOS3i4i9e99voDtRi9d/yUHVZlAhsDdJAHmK
- 9tiA==
-X-Gm-Message-State: ABy/qLbf1yg/inr8eM5YaHJJoGhduN4QhlqHUjK5ye1MX3CSh+VVpALh
- uRAh1pO0LYAIiCTWsROQ15l8ew==
-X-Google-Smtp-Source: APBJJlF4hVHTEAcnrryQeIsWufK3e63a7rX2g1OMpnBMufUIHv2BcOagu97Dc7evIwstimu7xBX17w==
-X-Received: by 2002:a17:902:e849:b0:1b8:35fa:cdcc with SMTP id
- t9-20020a170902e84900b001b835facdccmr12688015plg.5.1690191930816; 
- Mon, 24 Jul 2023 02:45:30 -0700 (PDT)
+ bh=AVIFplaZ76DyAQXZ2ZJxr5973JfmLiF6XogxT7JwM8U=;
+ b=TbqDKBEsLjK39R7Y7Aee54/bQ7w7FeCl/VTDAL/g7ZPEajRBj6owZAymyX5f1SFjan
+ /ulefTl8zC5r9AFv9nTd+1CGg12e7XltFKtJMdBqJr8LdtFBaroUCUprmn8DKrH16vmF
+ hRAItopYX7sH0TEo9kMSzSW/RYAx2hSxxFKsBLlYibwhU2T7bXSblRgHnNQUJ8So9PMS
+ ZILPQqcBA/g6scCYxkpIvijEp54mx3IlKSa+6KCdj83ozlDtMaGPEAjPTGZvU4Ztmm/Q
+ Anoha3NO5zN1HJaSEr31m4GM4kn5a4EdJsdNAuyDYhJd7BPgNXtvwJ1L5Ug6GD+J3pJi
+ 7yjQ==
+X-Gm-Message-State: ABy/qLbC2bpvz4tgmyYBIyGJF8whaxA+HDEkUO35sB22awlmnpZsJTXO
+ acPMAMpeqC/wXPGT2ul4/1Oiww==
+X-Google-Smtp-Source: APBJJlFR9Ju5Vfb3AHUJ7jWuLYrfbcu6xuKCy8KktQCx0EpABVN8oHS8r350MQ/TdmOpiBIOkTrovA==
+X-Received: by 2002:a17:902:d484:b0:1b8:a27d:f591 with SMTP id
+ c4-20020a170902d48400b001b8a27df591mr12261184plg.5.1690192158548; 
+ Mon, 24 Jul 2023 02:49:18 -0700 (PDT)
 Received: from C02DW0BEMD6R.bytedance.net ([203.208.167.147])
  by smtp.gmail.com with ESMTPSA id
- d5-20020a170902c18500b001bb20380bf2sm8467233pld.13.2023.07.24.02.45.19
+ d5-20020a170902c18500b001bb20380bf2sm8467233pld.13.2023.07.24.02.49.07
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 24 Jul 2023 02:45:30 -0700 (PDT)
+ Mon, 24 Jul 2023 02:49:18 -0700 (PDT)
 From: Qi Zheng <zhengqi.arch@bytedance.com>
 To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
  vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
  brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu,
  steven.price@arm.com, cel@kernel.org, senozhatsky@chromium.org,
  yujie.liu@intel.com, gregkh@linuxfoundation.org, muchun.song@linux.dev
-Date: Mon, 24 Jul 2023 17:43:09 +0800
-Message-Id: <20230724094354.90817-3-zhengqi.arch@bytedance.com>
+Date: Mon, 24 Jul 2023 17:43:28 +0800
+Message-Id: <20230724094354.90817-22-zhengqi.arch@bytedance.com>
 In-Reply-To: <20230724094354.90817-1-zhengqi.arch@bytedance.com>
 References: <20230724094354.90817-1-zhengqi.arch@bytedance.com>
 MIME-Version: 1.0
@@ -99,10 +100,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mailman-Approved-At: Tue, 25 Jul 2023 06:42:42 +0000
-Subject: [dm-devel] [PATCH v2 02/47] mm: shrinker: remove redundant
- shrinker_rwsem in debugfs operations
+Subject: [dm-devel] [PATCH v2 21/47] mm: workingset: dynamically allocate
+ the mm-shadow shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -126,75 +127,76 @@ Cc: kvm@vger.kernel.org, dri-devel@lists.freedesktop.org,
  linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: bytedance.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The debugfs_remove_recursive() will wait for debugfs_file_put() to return,
-so the shrinker will not be freed when doing debugfs operations (such as
-shrinker_debugfs_count_show() and shrinker_debugfs_scan_write()), so there
-is no need to hold shrinker_rwsem during debugfs operations.
+Use new APIs to dynamically allocate the mm-shadow shrinker.
 
 Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
 ---
- mm/shrinker_debug.c | 14 --------------
- 1 file changed, 14 deletions(-)
+ mm/workingset.c | 26 ++++++++++++++------------
+ 1 file changed, 14 insertions(+), 12 deletions(-)
 
-diff --git a/mm/shrinker_debug.c b/mm/shrinker_debug.c
-index 3ab53fad8876..f1becfd45853 100644
---- a/mm/shrinker_debug.c
-+++ b/mm/shrinker_debug.c
-@@ -55,11 +55,6 @@ static int shrinker_debugfs_count_show(struct seq_file *m, void *v)
- 	if (!count_per_node)
- 		return -ENOMEM;
+diff --git a/mm/workingset.c b/mm/workingset.c
+index 4686ae363000..4bc85f739b13 100644
+--- a/mm/workingset.c
++++ b/mm/workingset.c
+@@ -762,12 +762,7 @@ static unsigned long scan_shadow_nodes(struct shrinker *shrinker,
+ 					NULL);
+ }
  
--	ret = down_read_killable(&shrinker_rwsem);
--	if (ret) {
--		kfree(count_per_node);
--		return ret;
--	}
- 	rcu_read_lock();
+-static struct shrinker workingset_shadow_shrinker = {
+-	.count_objects = count_shadow_nodes,
+-	.scan_objects = scan_shadow_nodes,
+-	.seeks = 0, /* ->count reports only fully expendable nodes */
+-	.flags = SHRINKER_NUMA_AWARE | SHRINKER_MEMCG_AWARE,
+-};
++static struct shrinker *workingset_shadow_shrinker;
  
- 	memcg_aware = shrinker->flags & SHRINKER_MEMCG_AWARE;
-@@ -92,7 +87,6 @@ static int shrinker_debugfs_count_show(struct seq_file *m, void *v)
- 	} while ((memcg = mem_cgroup_iter(NULL, memcg, NULL)) != NULL);
+ /*
+  * Our list_lru->lock is IRQ-safe as it nests inside the IRQ-safe
+@@ -779,7 +774,7 @@ static int __init workingset_init(void)
+ {
+ 	unsigned int timestamp_bits;
+ 	unsigned int max_order;
+-	int ret;
++	int ret = -ENOMEM;
  
- 	rcu_read_unlock();
--	up_read(&shrinker_rwsem);
+ 	BUILD_BUG_ON(BITS_PER_LONG < EVICTION_SHIFT);
+ 	/*
+@@ -796,17 +791,24 @@ static int __init workingset_init(void)
+ 	pr_info("workingset: timestamp_bits=%d max_order=%d bucket_order=%u\n",
+ 	       timestamp_bits, max_order, bucket_order);
  
- 	kfree(count_per_node);
+-	ret = prealloc_shrinker(&workingset_shadow_shrinker, "mm-shadow");
+-	if (ret)
++	workingset_shadow_shrinker = shrinker_alloc(SHRINKER_NUMA_AWARE |
++						    SHRINKER_MEMCG_AWARE,
++						    "mm-shadow");
++	if (!workingset_shadow_shrinker)
+ 		goto err;
++
+ 	ret = __list_lru_init(&shadow_nodes, true, &shadow_nodes_key,
+-			      &workingset_shadow_shrinker);
++			      workingset_shadow_shrinker);
+ 	if (ret)
+ 		goto err_list_lru;
+-	register_shrinker_prepared(&workingset_shadow_shrinker);
++
++	workingset_shadow_shrinker->count_objects = count_shadow_nodes;
++	workingset_shadow_shrinker->scan_objects = scan_shadow_nodes;
++
++	shrinker_register(workingset_shadow_shrinker);
+ 	return 0;
+ err_list_lru:
+-	free_prealloced_shrinker(&workingset_shadow_shrinker);
++	shrinker_free_non_registered(workingset_shadow_shrinker);
+ err:
  	return ret;
-@@ -117,7 +111,6 @@ static ssize_t shrinker_debugfs_scan_write(struct file *file,
- 	struct mem_cgroup *memcg = NULL;
- 	int nid;
- 	char kbuf[72];
--	ssize_t ret;
- 
- 	read_len = size < (sizeof(kbuf) - 1) ? size : (sizeof(kbuf) - 1);
- 	if (copy_from_user(kbuf, buf, read_len))
-@@ -146,12 +139,6 @@ static ssize_t shrinker_debugfs_scan_write(struct file *file,
- 		return -EINVAL;
- 	}
- 
--	ret = down_read_killable(&shrinker_rwsem);
--	if (ret) {
--		mem_cgroup_put(memcg);
--		return ret;
--	}
--
- 	sc.nid = nid;
- 	sc.memcg = memcg;
- 	sc.nr_to_scan = nr_to_scan;
-@@ -159,7 +146,6 @@ static ssize_t shrinker_debugfs_scan_write(struct file *file,
- 
- 	shrinker->scan_objects(shrinker, &sc);
- 
--	up_read(&shrinker_rwsem);
- 	mem_cgroup_put(memcg);
- 
- 	return size;
+ }
 -- 
 2.30.2
 
