@@ -1,11 +1,11 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E52EDC04FE2
-	for <dm-devel@archiver.kernel.org>; Tue, 25 Jul 2023 06:43:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 94014C05051
+	for <dm-devel@archiver.kernel.org>; Tue, 25 Jul 2023 06:43:19 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1690267398;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
@@ -14,81 +14,82 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=mp2XRD3z4Az8XjnvM/F90GHlJlsH07O7DxdO7/gOKWE=;
-	b=CP0qIlQ0z95XP+FoDIZOVfEs3fIwrl/blk5KIpLUgKSyWWsPdpIgBmxIhB2M/AT/qqF01z
-	qU9xf9AYpbjT1MG/teHHroTJIhkUji8pOt3iQwQtl93gPUY7NCuObAfU1SFEd8CCNlVk8K
-	8enXWX6EqpcznwhvpaDVdJwTMJdsUo8=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-592-gGtDveHsOjm4jUh9f_9FTw-1; Tue, 25 Jul 2023 02:43:13 -0400
-X-MC-Unique: gGtDveHsOjm4jUh9f_9FTw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+	bh=clSl7k9Wz7MTnZ2XaMSMEsCtTgxLkFXWUYufxBJI0kY=;
+	b=Xlo40btrCEqaftghZKrqAeSQVRDArDsfTuuXfXdVFdK1Xb0kLz7XSn3FohEtJVYBtQgB9O
+	FN9mNtpb60wBGrgubtomKWrH4aBEAkkocYVtSHT1UbKSYR5AWOlNEJH2Ui1xEbDSoYaf43
+	1OHyRZtX1VN5papX5S08AZx64qe2I7E=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-113-gpPQRulhOGmPqfeNyyNZyw-1; Tue, 25 Jul 2023 02:43:14 -0400
+X-MC-Unique: gpPQRulhOGmPqfeNyyNZyw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4F432106522F;
-	Tue, 25 Jul 2023 06:42:57 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AE71D3C10171;
+	Tue, 25 Jul 2023 06:42:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 05E1810E5E;
-	Tue, 25 Jul 2023 06:42:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 91978C2C860;
+	Tue, 25 Jul 2023 06:42:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 503B1194E112;
-	Tue, 25 Jul 2023 06:42:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9E0111937114;
+	Tue, 25 Jul 2023 06:42:48 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D3B0A194658D
- for <dm-devel@listman.corp.redhat.com>; Mon, 24 Jul 2023 09:52:33 +0000 (UTC)
+ ESMTP id D5E5A1946588
+ for <dm-devel@listman.corp.redhat.com>; Mon, 24 Jul 2023 09:54:31 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B5C3B201EC58; Mon, 24 Jul 2023 09:52:33 +0000 (UTC)
+ id B6F6340C2063; Mon, 24 Jul 2023 09:54:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id AD6E9201EE6E
- for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:52:33 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8B9DF81D9EC
- for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:52:33 +0000 (UTC)
-Received: from mail-pg1-f173.google.com (mail-pg1-f173.google.com
- [209.85.215.173]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id AFAA040C206F
+ for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:54:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
+ [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8C5FD185A793
+ for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:54:31 +0000 (UTC)
+Received: from mail-pl1-f180.google.com (mail-pl1-f180.google.com
+ [209.85.214.180]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-191-S8qM7dImPe-xo-9CZEFknw-1; Mon, 24 Jul 2023 05:52:31 -0400
-X-MC-Unique: S8qM7dImPe-xo-9CZEFknw-1
-Received: by mail-pg1-f173.google.com with SMTP id
- 41be03b00d2f7-55b5a37acb6so327158a12.0
- for <dm-devel@redhat.com>; Mon, 24 Jul 2023 02:52:30 -0700 (PDT)
+ us-mta-208-CyjxRS_8OYerPysM_MvKwQ-1; Mon, 24 Jul 2023 05:54:29 -0400
+X-MC-Unique: CyjxRS_8OYerPysM_MvKwQ-1
+Received: by mail-pl1-f180.google.com with SMTP id
+ d9443c01a7336-1bb91c20602so2238045ad.0
+ for <dm-devel@redhat.com>; Mon, 24 Jul 2023 02:54:29 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1690192350; x=1690797150;
+ d=1e100.net; s=20221208; t=1690192469; x=1690797269;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=guTIXae/kI3JPez6Art55JYiwmImAmg2GBvF3i236eo=;
- b=XwnlgCGzaFM4KTuPO2gagnvWrPhLJnTpPcCabo5EbCBeVgxORdNS05UO6JrJs7xBKl
- ef9vqW5sbUnQ9gw1TEW67j+5+7V4Yan9nDNje4hdT812TgjKOmnzbG0PEny5Dt2mVnPI
- n56jOi1empduubm+MHSmJLPiLpClx5jSyfbHsfj/Uopzqca2xczenOWTBLQhc8Tbc4ay
- /jyCU54EbFCMQVFSIEWXN+U/UlR4MdJ5W3KB3OsMiY8io8lcMqhGGr+tmRgqmBck7V/z
- BgI0zPyJv3w2H6CszwY5tNE/eFcXgaOOLYEAoP3GxdL9exo9O6rOJPCA8hpPylAQV/CG
- eqIA==
-X-Gm-Message-State: ABy/qLasRC2X+8/QBvDofO6XMSxlmfMoOq/DnpEw8zLvmZNPqVUkxm6r
- 8MYrHZ4ErS026Mvy/bib4uYT6w==
-X-Google-Smtp-Source: APBJJlHJFdqX7YvzDE87sV65msd4BgjSJaSlmkLSDmv21X9cTIYDURxtd2XgOOda4P7o7DorEuOAJA==
-X-Received: by 2002:a17:903:41cd:b0:1bb:9e6e:a9f3 with SMTP id
- u13-20020a17090341cd00b001bb9e6ea9f3mr4119632ple.4.1690192350104; 
- Mon, 24 Jul 2023 02:52:30 -0700 (PDT)
+ bh=F/oK6bm2Afi7WKsfFLPLaSlUUie3UdhMRHX1z52bb4o=;
+ b=BhYZyg2EW5Mk4SjIMCWn3MdGkVjFqoIEVZub9dWX9CnVjqF8lhwG+92lWON92V3xj+
+ WgTuNy3dFFL47LWopVY2e589ghbN3fgh2TOIaODkfa2r88B8yLxbrDPy71AMFeqwDj83
+ wSqe9CiaWbCO3mkDMyLeaE8VIXVXF4BUjIf1ZqmE8Yp3tFx/zeNmhC2UR8BxJfOT4Cyz
+ y4gBWTM9bPNfxhywJQhkW8hb1uYnXPngtwanyjh5HCZKhZFDvNiv1/sYLiwZQ56fu/TU
+ 3oV3jvz5gk8QcyhrcNziLq56nzRkqBXisgpF8NWp8+M3jEUHlSq84gODQ+eJpzeVRGyX
+ Fv4Q==
+X-Gm-Message-State: ABy/qLY4wk7tw5S4Fc+LubCibIV85BKHJVUTSlRGEv0KuEEJ2f9nRk0P
+ TfqV5qZv0x9Z8Iq28X91+qpyCw==
+X-Google-Smtp-Source: APBJJlFeSJXGwKM1/4Fx4M034iEieIqp39l7VwM/I3gIgSntmWk50xYbsW/3q3bB2XT8c22SamI2Bg==
+X-Received: by 2002:a17:902:dad2:b0:1b8:9fc4:2733 with SMTP id
+ q18-20020a170902dad200b001b89fc42733mr12483608plx.3.1690192468770; 
+ Mon, 24 Jul 2023 02:54:28 -0700 (PDT)
 Received: from C02DW0BEMD6R.bytedance.net ([203.208.167.147])
  by smtp.gmail.com with ESMTPSA id
- d5-20020a170902c18500b001bb20380bf2sm8467233pld.13.2023.07.24.02.52.18
+ d5-20020a170902c18500b001bb20380bf2sm8467233pld.13.2023.07.24.02.54.17
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 24 Jul 2023 02:52:29 -0700 (PDT)
+ Mon, 24 Jul 2023 02:54:28 -0700 (PDT)
 From: Qi Zheng <zhengqi.arch@bytedance.com>
 To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
  vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
  brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu,
  steven.price@arm.com, cel@kernel.org, senozhatsky@chromium.org,
  yujie.liu@intel.com, gregkh@linuxfoundation.org, muchun.song@linux.dev
-Date: Mon, 24 Jul 2023 17:43:44 +0800
-Message-Id: <20230724094354.90817-38-zhengqi.arch@bytedance.com>
+Date: Mon, 24 Jul 2023 17:43:54 +0800
+Message-Id: <20230724094354.90817-48-zhengqi.arch@bytedance.com>
 In-Reply-To: <20230724094354.90817-1-zhengqi.arch@bytedance.com>
 References: <20230724094354.90817-1-zhengqi.arch@bytedance.com>
 MIME-Version: 1.0
@@ -99,12 +100,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Bulk-Signature: yes
-X-Mimecast-Spam-Signature: bulk
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mailman-Approved-At: Tue, 25 Jul 2023 06:42:42 +0000
-Subject: [dm-devel] [PATCH v2 37/47] xfs: dynamically allocate the
- xfs-inodegc shrinker
+Subject: [dm-devel] [PATCH v2 47/47] mm: shrinker: convert shrinker_rwsem to
+ mutex
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -128,110 +127,192 @@ Cc: kvm@vger.kernel.org, dri-devel@lists.freedesktop.org,
  linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: bytedance.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-In preparation for implementing lockless slab shrink, use new APIs to
-dynamically allocate the xfs-inodegc shrinker, so that it can be freed
-asynchronously using kfree_rcu(). Then it doesn't need to wait for RCU
-read-side critical section when releasing the struct xfs_mount.
+Now there are no readers of shrinker_rwsem, so we can simply replace it
+with mutex lock.
 
 Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
 ---
- fs/xfs/xfs_icache.c | 26 +++++++++++++++-----------
- fs/xfs/xfs_mount.c  |  4 ++--
- fs/xfs/xfs_mount.h  |  2 +-
- 3 files changed, 18 insertions(+), 14 deletions(-)
+ drivers/md/dm-cache-metadata.c |  2 +-
+ fs/super.c                     |  2 +-
+ mm/shrinker.c                  | 16 ++++++++--------
+ mm/shrinker_debug.c            | 14 +++++++-------
+ 4 files changed, 17 insertions(+), 17 deletions(-)
 
-diff --git a/fs/xfs/xfs_icache.c b/fs/xfs/xfs_icache.c
-index 453890942d9f..751c380afd5a 100644
---- a/fs/xfs/xfs_icache.c
-+++ b/fs/xfs/xfs_icache.c
-@@ -2225,8 +2225,7 @@ xfs_inodegc_shrinker_count(
- 	struct shrinker		*shrink,
- 	struct shrink_control	*sc)
- {
--	struct xfs_mount	*mp = container_of(shrink, struct xfs_mount,
--						   m_inodegc_shrinker);
-+	struct xfs_mount	*mp = shrink->private_data;
- 	struct xfs_inodegc	*gc;
- 	int			cpu;
+diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
+index acffed750e3e..9e0c69958587 100644
+--- a/drivers/md/dm-cache-metadata.c
++++ b/drivers/md/dm-cache-metadata.c
+@@ -1828,7 +1828,7 @@ int dm_cache_metadata_abort(struct dm_cache_metadata *cmd)
+ 	 * Replacement block manager (new_bm) is created and old_bm destroyed outside of
+ 	 * cmd root_lock to avoid ABBA deadlock that would result (due to life-cycle of
+ 	 * shrinker associated with the block manager's bufio client vs cmd root_lock).
+-	 * - must take shrinker_rwsem without holding cmd->root_lock
++	 * - must take shrinker_mutex without holding cmd->root_lock
+ 	 */
+ 	new_bm = dm_block_manager_create(cmd->bdev, DM_CACHE_METADATA_BLOCK_SIZE << SECTOR_SHIFT,
+ 					 CACHE_MAX_CONCURRENT_LOCKS);
+diff --git a/fs/super.c b/fs/super.c
+index 04643fd80886..602cf54eb7da 100644
+--- a/fs/super.c
++++ b/fs/super.c
+@@ -54,7 +54,7 @@ static char *sb_writers_name[SB_FREEZE_LEVELS] = {
+  * One thing we have to be careful of with a per-sb shrinker is that we don't
+  * drop the last active reference to the superblock from within the shrinker.
+  * If that happens we could trigger unregistering the shrinker from within the
+- * shrinker path and that leads to deadlock on the shrinker_rwsem. Hence we
++ * shrinker path and that leads to deadlock on the shrinker_mutex. Hence we
+  * take a passive reference to the superblock to avoid this from occurring.
+  */
+ static unsigned long super_cache_scan(struct shrinker *shrink,
+diff --git a/mm/shrinker.c b/mm/shrinker.c
+index 90c045620fe3..5c4546d2c234 100644
+--- a/mm/shrinker.c
++++ b/mm/shrinker.c
+@@ -7,7 +7,7 @@
+ #include <trace/events/vmscan.h>
  
-@@ -2247,8 +2246,7 @@ xfs_inodegc_shrinker_scan(
- 	struct shrinker		*shrink,
- 	struct shrink_control	*sc)
- {
--	struct xfs_mount	*mp = container_of(shrink, struct xfs_mount,
--						   m_inodegc_shrinker);
-+	struct xfs_mount	*mp = shrink->private_data;
- 	struct xfs_inodegc	*gc;
- 	int			cpu;
- 	bool			no_items = true;
-@@ -2284,13 +2282,19 @@ int
- xfs_inodegc_register_shrinker(
- 	struct xfs_mount	*mp)
- {
--	struct shrinker		*shrink = &mp->m_inodegc_shrinker;
-+	mp->m_inodegc_shrinker = shrinker_alloc(SHRINKER_NONSLAB,
-+						"xfs-inodegc:%s",
-+						mp->m_super->s_id);
-+	if (!mp->m_inodegc_shrinker)
-+		return -ENOMEM;
-+
-+	mp->m_inodegc_shrinker->count_objects = xfs_inodegc_shrinker_count;
-+	mp->m_inodegc_shrinker->scan_objects = xfs_inodegc_shrinker_scan;
-+	mp->m_inodegc_shrinker->seeks = 0;
-+	mp->m_inodegc_shrinker->batch = XFS_INODEGC_SHRINKER_BATCH;
-+	mp->m_inodegc_shrinker->private_data = mp;
+ LIST_HEAD(shrinker_list);
+-DECLARE_RWSEM(shrinker_rwsem);
++DEFINE_MUTEX(shrinker_mutex);
+ DEFINE_SPINLOCK(shrinker_lock);
  
--	shrink->count_objects = xfs_inodegc_shrinker_count;
--	shrink->scan_objects = xfs_inodegc_shrinker_scan;
--	shrink->seeks = 0;
--	shrink->flags = SHRINKER_NONSLAB;
--	shrink->batch = XFS_INODEGC_SHRINKER_BATCH;
-+	shrinker_register(mp->m_inodegc_shrinker);
+ #ifdef CONFIG_MEMCG
+@@ -80,7 +80,7 @@ int alloc_shrinker_info(struct mem_cgroup *memcg)
+ 	int nid, ret = 0;
+ 	int array_size = 0;
  
--	return register_shrinker(shrink, "xfs-inodegc:%s", mp->m_super->s_id);
-+	return 0;
+-	down_write(&shrinker_rwsem);
++	mutex_lock(&shrinker_mutex);
+ 	array_size = shrinker_unit_size(shrinker_nr_max);
+ 	for_each_node(nid) {
+ 		info = kvzalloc_node(sizeof(*info) + array_size, GFP_KERNEL, nid);
+@@ -91,7 +91,7 @@ int alloc_shrinker_info(struct mem_cgroup *memcg)
+ 			goto err;
+ 		rcu_assign_pointer(memcg->nodeinfo[nid]->shrinker_info, info);
+ 	}
+-	up_write(&shrinker_rwsem);
++	mutex_unlock(&shrinker_mutex);
+ 
+ 	return ret;
+ 
+@@ -104,7 +104,7 @@ static struct shrinker_info *shrinker_info_protected(struct mem_cgroup *memcg,
+ 						     int nid)
+ {
+ 	return rcu_dereference_protected(memcg->nodeinfo[nid]->shrinker_info,
+-					 lockdep_is_held(&shrinker_rwsem));
++					 lockdep_is_held(&shrinker_mutex));
  }
-diff --git a/fs/xfs/xfs_mount.c b/fs/xfs/xfs_mount.c
-index fb87ffb48f7f..27c2d24797c9 100644
---- a/fs/xfs/xfs_mount.c
-+++ b/fs/xfs/xfs_mount.c
-@@ -1018,7 +1018,7 @@ xfs_mountfs(
-  out_log_dealloc:
- 	xfs_log_mount_cancel(mp);
-  out_inodegc_shrinker:
--	unregister_shrinker(&mp->m_inodegc_shrinker);
-+	shrinker_unregister(mp->m_inodegc_shrinker);
-  out_fail_wait:
- 	if (mp->m_logdev_targp && mp->m_logdev_targp != mp->m_ddev_targp)
- 		xfs_buftarg_drain(mp->m_logdev_targp);
-@@ -1100,7 +1100,7 @@ xfs_unmountfs(
- #if defined(DEBUG)
- 	xfs_errortag_clearall(mp);
- #endif
--	unregister_shrinker(&mp->m_inodegc_shrinker);
-+	shrinker_unregister(mp->m_inodegc_shrinker);
- 	xfs_free_perag(mp);
  
- 	xfs_errortag_del(mp);
-diff --git a/fs/xfs/xfs_mount.h b/fs/xfs/xfs_mount.h
-index e2866e7fa60c..562c294ca08e 100644
---- a/fs/xfs/xfs_mount.h
-+++ b/fs/xfs/xfs_mount.h
-@@ -217,7 +217,7 @@ typedef struct xfs_mount {
- 	atomic_t		m_agirotor;	/* last ag dir inode alloced */
+ static struct shrinker_info *shrinker_info_rcu(struct mem_cgroup *memcg,
+@@ -158,7 +158,7 @@ static int expand_shrinker_info(int new_id)
+ 	int new_size, old_size = 0;
+ 	struct mem_cgroup *memcg;
  
- 	/* Memory shrinker to throttle and reprioritize inodegc */
--	struct shrinker		m_inodegc_shrinker;
-+	struct shrinker		*m_inodegc_shrinker;
- 	/*
- 	 * Workqueue item so that we can coalesce multiple inode flush attempts
- 	 * into a single flush.
+-	down_write(&shrinker_rwsem);
++	mutex_lock(&shrinker_mutex);
+ 
+ 	if (!root_mem_cgroup)
+ 		goto out;
+@@ -179,7 +179,7 @@ static int expand_shrinker_info(int new_id)
+ 	if (!ret)
+ 		shrinker_nr_max = new_nr_max;
+ 
+-	up_write(&shrinker_rwsem);
++	mutex_unlock(&shrinker_mutex);
+ 
+ 	return ret;
+ }
+@@ -303,7 +303,7 @@ void reparent_shrinker_deferred(struct mem_cgroup *memcg)
+ 		parent = root_mem_cgroup;
+ 
+ 	/* Prevent from concurrent shrinker_info expand */
+-	down_write(&shrinker_rwsem);
++	mutex_lock(&shrinker_mutex);
+ 	for_each_node(nid) {
+ 		child_info = shrinker_info_protected(memcg, nid);
+ 		parent_info = shrinker_info_protected(parent, nid);
+@@ -316,7 +316,7 @@ void reparent_shrinker_deferred(struct mem_cgroup *memcg)
+ 			}
+ 		}
+ 	}
+-	up_write(&shrinker_rwsem);
++	mutex_unlock(&shrinker_mutex);
+ }
+ #else
+ static int shrinker_memcg_alloc(struct shrinker *shrinker)
+diff --git a/mm/shrinker_debug.c b/mm/shrinker_debug.c
+index badda35464c3..44b620b1919d 100644
+--- a/mm/shrinker_debug.c
++++ b/mm/shrinker_debug.c
+@@ -8,7 +8,7 @@
+ #include <linux/rculist.h>
+ 
+ /* defined in vmscan.c */
+-extern struct rw_semaphore shrinker_rwsem;
++extern struct mutex shrinker_mutex;
+ extern struct list_head shrinker_list;
+ 
+ static DEFINE_IDA(shrinker_debugfs_ida);
+@@ -168,7 +168,7 @@ int shrinker_debugfs_add(struct shrinker *shrinker)
+ 	if (!shrinker_debugfs_root)
+ 		return 0;
+ 
+-	down_write(&shrinker_rwsem);
++	mutex_lock(&shrinker_mutex);
+ 	if (shrinker->debugfs_entry)
+ 		goto fail;
+ 
+@@ -196,7 +196,7 @@ int shrinker_debugfs_add(struct shrinker *shrinker)
+ 			    &shrinker_debugfs_scan_fops);
+ 
+ fail:
+-	up_write(&shrinker_rwsem);
++	mutex_unlock(&shrinker_mutex);
+ 	return ret;
+ }
+ 
+@@ -215,7 +215,7 @@ int shrinker_debugfs_rename(struct shrinker *shrinker, const char *fmt, ...)
+ 	if (!new)
+ 		return -ENOMEM;
+ 
+-	down_write(&shrinker_rwsem);
++	mutex_lock(&shrinker_mutex);
+ 
+ 	old = shrinker->name;
+ 	shrinker->name = new;
+@@ -233,7 +233,7 @@ int shrinker_debugfs_rename(struct shrinker *shrinker, const char *fmt, ...)
+ 			shrinker->debugfs_entry = entry;
+ 	}
+ 
+-	up_write(&shrinker_rwsem);
++	mutex_unlock(&shrinker_mutex);
+ 
+ 	kfree_const(old);
+ 
+@@ -246,7 +246,7 @@ struct dentry *shrinker_debugfs_detach(struct shrinker *shrinker,
+ {
+ 	struct dentry *entry = shrinker->debugfs_entry;
+ 
+-	down_write(&shrinker_rwsem);
++	mutex_lock(&shrinker_mutex);
+ 	kfree_const(shrinker->name);
+ 	shrinker->name = NULL;
+ 
+@@ -257,7 +257,7 @@ struct dentry *shrinker_debugfs_detach(struct shrinker *shrinker,
+ 	 */
+ 	smp_wmb();
+ 	shrinker->debugfs_entry = NULL;
+-	up_write(&shrinker_rwsem);
++	mutex_unlock(&shrinker_mutex);
+ 
+ 	return entry;
+ }
 -- 
 2.30.2
 
