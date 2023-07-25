@@ -1,10 +1,10 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 49DEBC04FDF
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1A4A1C04A94
 	for <dm-devel@archiver.kernel.org>; Tue, 25 Jul 2023 06:43:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1690267395;
@@ -14,85 +14,61 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=TjVklA7eLVov7Y36fkXjlqyp+hdXFX/HXIQvQBW5DeQ=;
-	b=M418wuNxk3OF6R/c8BSixSSLVCzw4lyAVb9gwdw94JX37gh05VF0OTlPy9s6dJuhAf9yvT
-	ZFEUxpZpixIcazAIPYID/Dk+2eGJ9eVmgEZ/QzaYva1BRrzSvlS3r7AS7B6uWhEECzRtmJ
-	8IiLlAwm3hDo/PLYJK8/lYCFLobp0M8=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-490-pJkFk_lmOXW0o9tha_uq9A-1; Tue, 25 Jul 2023 02:43:11 -0400
-X-MC-Unique: pJkFk_lmOXW0o9tha_uq9A-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+	bh=EdSO7giF/LYK/H52GLUe6fKn5UXoNaP+t/5KsC8vl1o=;
+	b=H9+DfMbM7FQxm/5ePSe+nGqdghnZ75SXqU5sn4xnOWqyIiuSBwnhmML96SvWflZw3KuMjF
+	yZO7rxQNWbhg3vE/zNZd/oOAnb1CpC4gebSuZ+MsOkTdy/5zhg2UsR8lTklB/KGYXdASJe
+	v/0HA9U+xPra/wZaVPnqKa5mFvfjTgc=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-587-9pJgMV4gPemYVUm1oteiyg-1; Tue, 25 Jul 2023 02:43:13 -0400
+X-MC-Unique: 9pJgMV4gPemYVUm1oteiyg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DE1E89F70F;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EECA63815F89;
 	Tue, 25 Jul 2023 06:42:53 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1A53AF782E;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id DB2302166B26;
 	Tue, 25 Jul 2023 06:42:53 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 75EFC19465A4;
-	Tue, 25 Jul 2023 06:42:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 18F1A193739B;
+	Tue, 25 Jul 2023 06:42:48 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id BEC311946588
- for <dm-devel@listman.corp.redhat.com>; Mon, 24 Jul 2023 09:46:24 +0000 (UTC)
+ ESMTP id A1C071946589
+ for <dm-devel@listman.corp.redhat.com>; Tue, 25 Jul 2023 03:24:45 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id ACE811121318; Mon, 24 Jul 2023 09:46:24 +0000 (UTC)
+ id 88B7546A3A9; Tue, 25 Jul 2023 03:24:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A56491121315
- for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:46:24 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 80CDA492C13
+ for <dm-devel@redhat.com>; Tue, 25 Jul 2023 03:24:45 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 899AF8030AC
- for <dm-devel@redhat.com>; Mon, 24 Jul 2023 09:46:24 +0000 (UTC)
-Received: from mail-pl1-f176.google.com (mail-pl1-f176.google.com
- [209.85.214.176]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5062A803FEF
+ for <dm-devel@redhat.com>; Tue, 25 Jul 2023 03:24:45 +0000 (UTC)
+Received: from out-58.mta0.migadu.com (out-58.mta0.migadu.com
+ [91.218.175.58]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-153-4Pl-41xZPE-3phZNE7XEkg-1; Mon, 24 Jul 2023 05:46:19 -0400
-X-MC-Unique: 4Pl-41xZPE-3phZNE7XEkg-1
-Received: by mail-pl1-f176.google.com with SMTP id
- d9443c01a7336-1bb85ed352bso2229885ad.0
- for <dm-devel@redhat.com>; Mon, 24 Jul 2023 02:46:19 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1690191978; x=1690796778;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=YJ34aDXYlHmjcWHNnO8BUtZL0Yf5ZszuCt3/FkcxObI=;
- b=gebVenT512chGjtVsiD2zj8KMn69VpFQoZmKUSofBP0nVzqz9XWp+CsteqXCYLFNyF
- ofuex888cmeEAGvbS2CtBQHM0/Fk3IDZu82OqjIyfDL1tGiTm3tU2bRUpB7NhY6uzABW
- fN+Jm1maptS9qD4zuPUKUmXg1ur7NQYEoGLBm/aGw50lKAtS4Spwpz73GdZTHgSNDCY7
- nfj0VZ0xXCiROUs9zN9VHml+DIXbWuat/3838tKjLPYgfm9meyCbk/33EgrBH55IF5n6
- eYcF0U8BDN+MUmkvMTQfiZPeS93Gp13b7A+sDUbn/yxBU0E6lU12cybRfdCekSv/1INs
- MM2Q==
-X-Gm-Message-State: ABy/qLa/bM99zjyxYlBgyfWa/O6bfMjSN0qgseRIe3pOqhwKeoLWFJu5
- bxShoAph1lYbrVNhw2AGTk216w==
-X-Google-Smtp-Source: APBJJlGS+SYk55mAAJOUNGx8fxUIn0OJAQvX8pDu/8/ugt1o28j6t6h3zVeppHUSF07Rw5MgS0vxBA==
-X-Received: by 2002:a17:902:d484:b0:1b8:a27d:f591 with SMTP id
- c4-20020a170902d48400b001b8a27df591mr12255719plg.5.1690191978640; 
- Mon, 24 Jul 2023 02:46:18 -0700 (PDT)
-Received: from C02DW0BEMD6R.bytedance.net ([203.208.167.147])
- by smtp.gmail.com with ESMTPSA id
- d5-20020a170902c18500b001bb20380bf2sm8467233pld.13.2023.07.24.02.46.07
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 24 Jul 2023 02:46:18 -0700 (PDT)
-From: Qi Zheng <zhengqi.arch@bytedance.com>
-To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
- vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
- brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu,
- steven.price@arm.com, cel@kernel.org, senozhatsky@chromium.org,
- yujie.liu@intel.com, gregkh@linuxfoundation.org, muchun.song@linux.dev
-Date: Mon, 24 Jul 2023 17:43:13 +0800
-Message-Id: <20230724094354.90817-7-zhengqi.arch@bytedance.com>
-In-Reply-To: <20230724094354.90817-1-zhengqi.arch@bytedance.com>
-References: <20230724094354.90817-1-zhengqi.arch@bytedance.com>
+ us-mta-267-uzcQ3_YIN6Co9YjvX0i3Ow-1; Mon, 24 Jul 2023 23:24:43 -0400
+X-MC-Unique: uzcQ3_YIN6Co9YjvX0i3Ow-1
 MIME-Version: 1.0
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and
+ include these headers.
+From: Muchun Song <muchun.song@linux.dev>
+In-Reply-To: <d2621ad0-8b99-9154-5ff5-509dec2f32a3@bytedance.com>
+Date: Tue, 25 Jul 2023 11:23:54 +0800
+Message-Id: <6FE62F56-1B4E-4E2A-BEA9-0DA6907A2FA9@linux.dev>
+References: <20230724094354.90817-1-zhengqi.arch@bytedance.com>
+ <20230724094354.90817-2-zhengqi.arch@bytedance.com>
+ <97E80C37-8872-4C5A-A027-A0B35F39152A@linux.dev>
+ <d2621ad0-8b99-9154-5ff5-509dec2f32a3@bytedance.com>
+To: Qi Zheng <zhengqi.arch@bytedance.com>
+X-Migadu-Flow: FLOW_OUT
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -100,12 +76,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Bulk-Signature: yes
-X-Mimecast-Spam-Signature: bulk
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mailman-Approved-At: Tue, 25 Jul 2023 06:42:42 +0000
-Subject: [dm-devel] [PATCH v2 06/47] drm/ttm: dynamically allocate the
- drm-ttm_pool shrinker
+Subject: Re: [dm-devel] [PATCH v2 01/47] mm: vmscan: move shrinker-related
+ code into a separate file
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -117,87 +91,73 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: kvm@vger.kernel.org, dri-devel@lists.freedesktop.org,
- virtualization@lists.linux-foundation.org, linux-mm@kvack.org,
- dm-devel@redhat.com, linux-mtd@lists.infradead.org, x86@kernel.org,
- cluster-devel@redhat.com, xen-devel@lists.xenproject.org,
- linux-ext4@vger.kernel.org, linux-arm-msm@vger.kernel.org, rcu@vger.kernel.org,
- linux-bcache@vger.kernel.org, Qi Zheng <zhengqi.arch@bytedance.com>,
- linux-raid@vger.kernel.org, linux-nfs@vger.kernel.org, netdev@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
- linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org
+Cc: kvm@vger.kernel.org, djwong@kernel.org,
+ Roman Gushchin <roman.gushchin@linux.dev>, david@fromorbit.com,
+ dri-devel@lists.freedesktop.org, virtualization@lists.linux-foundation.org,
+ Linux Memory Management List <linux-mm@kvack.org>, dm-devel@redhat.com,
+ linux-mtd@lists.infradead.org, cel@kernel.org, x86@kernel.org,
+ steven.price@arm.com, cluster-devel@redhat.com, xen-devel@lists.xenproject.org,
+ linux-ext4@vger.kernel.org, "Paul E. McKenney" <paulmck@kernel.org>,
+ linux-arm-msm@vger.kernel.org, linux-nfs@vger.kernel.org, rcu@vger.kernel.org,
+ linux-bcache@vger.kernel.org, yujie.liu@intel.com,
+ Vlastimil Babka <vbabka@suse.cz>, linux-raid@vger.kernel.org,
+ Christian Brauner <brauner@kernel.org>, tytso@mit.edu,
+ Greg KH <gregkh@linuxfoundation.org>, LKML <linux-kernel@vger.kernel.org>,
+ linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
+ Sergey Senozhatsky <senozhatsky@chromium.org>, netdev <netdev@vger.kernel.org>,
+ linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>,
+ linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org, tkhai@ya.ru
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: bytedance.com
+X-Mimecast-Originator: linux.dev
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use new APIs to dynamically allocate the drm-ttm_pool shrinker.
 
-Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
----
- drivers/gpu/drm/ttm/ttm_pool.c | 23 +++++++++++++++--------
- 1 file changed, 15 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/gpu/drm/ttm/ttm_pool.c b/drivers/gpu/drm/ttm/ttm_pool.c
-index cddb9151d20f..e1eb73d0b72a 100644
---- a/drivers/gpu/drm/ttm/ttm_pool.c
-+++ b/drivers/gpu/drm/ttm/ttm_pool.c
-@@ -73,7 +73,7 @@ static struct ttm_pool_type global_dma32_uncached[MAX_ORDER + 1];
- 
- static spinlock_t shrinker_lock;
- static struct list_head shrinker_list;
--static struct shrinker mm_shrinker;
-+static struct shrinker *mm_shrinker;
- 
- /* Allocate pages of size 1 << order with the given gfp_flags */
- static struct page *ttm_pool_alloc_page(struct ttm_pool *pool, gfp_t gfp_flags,
-@@ -734,8 +734,8 @@ static int ttm_pool_debugfs_shrink_show(struct seq_file *m, void *data)
- 	struct shrink_control sc = { .gfp_mask = GFP_NOFS };
- 
- 	fs_reclaim_acquire(GFP_KERNEL);
--	seq_printf(m, "%lu/%lu\n", ttm_pool_shrinker_count(&mm_shrinker, &sc),
--		   ttm_pool_shrinker_scan(&mm_shrinker, &sc));
-+	seq_printf(m, "%lu/%lu\n", ttm_pool_shrinker_count(mm_shrinker, &sc),
-+		   ttm_pool_shrinker_scan(mm_shrinker, &sc));
- 	fs_reclaim_release(GFP_KERNEL);
- 
- 	return 0;
-@@ -779,10 +779,17 @@ int ttm_pool_mgr_init(unsigned long num_pages)
- 			    &ttm_pool_debugfs_shrink_fops);
- #endif
- 
--	mm_shrinker.count_objects = ttm_pool_shrinker_count;
--	mm_shrinker.scan_objects = ttm_pool_shrinker_scan;
--	mm_shrinker.seeks = 1;
--	return register_shrinker(&mm_shrinker, "drm-ttm_pool");
-+	mm_shrinker = shrinker_alloc(0, "drm-ttm_pool");
-+	if (!mm_shrinker)
-+		return -ENOMEM;
-+
-+	mm_shrinker->count_objects = ttm_pool_shrinker_count;
-+	mm_shrinker->scan_objects = ttm_pool_shrinker_scan;
-+	mm_shrinker->seeks = 1;
-+
-+	shrinker_register(mm_shrinker);
-+
-+	return 0;
- }
- 
- /**
-@@ -802,6 +809,6 @@ void ttm_pool_mgr_fini(void)
- 		ttm_pool_type_fini(&global_dma32_uncached[i]);
- 	}
- 
--	unregister_shrinker(&mm_shrinker);
-+	shrinker_unregister(mm_shrinker);
- 	WARN_ON(!list_empty(&shrinker_list));
- }
--- 
-2.30.2
+> On Jul 25, 2023, at 11:09, Qi Zheng <zhengqi.arch@bytedance.com> wrote:
+> 
+> 
+> 
+> On 2023/7/25 10:35, Muchun Song wrote:
+>>> On Jul 24, 2023, at 17:43, Qi Zheng <zhengqi.arch@bytedance.com> wrote:
+>>> 
+>>> The mm/vmscan.c file is too large, so separate the shrinker-related
+>>> code from it into a separate file. No functional changes.
+>>> 
+>>> Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
+>>> ---
+>>> include/linux/shrinker.h |   3 +
+>>> mm/Makefile              |   4 +-
+>>> mm/shrinker.c            | 707 +++++++++++++++++++++++++++++++++++++++
+>>> mm/vmscan.c              | 701 --------------------------------------
+>>> 4 files changed, 712 insertions(+), 703 deletions(-)
+>>> create mode 100644 mm/shrinker.c
+>>> 
+>>> diff --git a/include/linux/shrinker.h b/include/linux/shrinker.h
+>>> index 224293b2dd06..961cb84e51f5 100644
+>>> --- a/include/linux/shrinker.h
+>>> +++ b/include/linux/shrinker.h
+>>> @@ -96,6 +96,9 @@ struct shrinker {
+>>>  */
+>>> #define SHRINKER_NONSLAB (1 << 3)
+>>> 
+>>> +unsigned long shrink_slab(gfp_t gfp_mask, int nid, struct mem_cgroup *memcg,
+>>> +    int priority);
+>> A good cleanup, vmscan.c is so huge.
+>> I'd like to introduce a new header in mm/ directory and contains those
+>> declarations of functions (like this and other debug function in
+>> shrinker_debug.c) since they are used internally across mm.
+> 
+> How about putting them in the mm/internal.h file?
+
+Either is fine to me.
+
+> 
+>> Thanks.
+
 
 --
 dm-devel mailing list
