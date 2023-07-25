@@ -4,66 +4,66 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DADA3C0015E
-	for <dm-devel@archiver.kernel.org>; Wed, 26 Jul 2023 06:34:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id BCE09C001DE
+	for <dm-devel@archiver.kernel.org>; Wed, 26 Jul 2023 06:36:34 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690353261;
+	s=mimecast20190719; t=1690353393;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=LHEgSt/xJ3aNFJ8dl3FSk00saYo5cRWrnI4g6IZ9j58=;
-	b=UIDsqhvyaLw10T9yeHEPqkEN57iucoM9CDVcXL3njyhdGqm9rqLF1zvEiNRjr0S5GtwDvw
-	RJRq0mlAGb+TWopicNfQ0BYbkd/kpoP59GU0ql4zDNbYhJf6017OLIw7qb6kTY9DWDlNkk
-	eNBb+jAUdxqUPamss2MyfUUTDisyYzw=
+	bh=AJDmBElwx+qdztdRUg1A99a5B6xX94Z4WTQ0r9p9wco=;
+	b=URUWPJrLgQTmpGS57CesZYDdHliqxJ+RCNprVAJdK917sM7mqpS1id/jsnui6KZOvd2uCT
+	u3kEbrCp/ZjiZi0u0Ty9J6gzw+38Hfd1lAkChW7Pvo+iymwAggC9OSgi/ybgMMzfuWYQQW
+	akMnCp0J7uxRdyyIcpjK04tPNKgp44M=
 Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-404-lHqiQjmiP2SLs8N1v4D2ng-1; Wed, 26 Jul 2023 02:34:17 -0400
-X-MC-Unique: lHqiQjmiP2SLs8N1v4D2ng-1
+ us-mta-86-IMlcOxa9NEai4Olt-fjN0A-1; Wed, 26 Jul 2023 02:36:30 -0400
+X-MC-Unique: IMlcOxa9NEai4Olt-fjN0A-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6E8042A5955E;
-	Wed, 26 Jul 2023 06:34:15 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A88521C04B51;
+	Wed, 26 Jul 2023 06:36:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5D442F782E;
-	Wed, 26 Jul 2023 06:34:15 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 983CCF6CCF;
+	Wed, 26 Jul 2023 06:36:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1FFCA19465BA;
-	Wed, 26 Jul 2023 06:34:15 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6DA0E19465BA;
+	Wed, 26 Jul 2023 06:36:28 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 74FE91946589
- for <dm-devel@listman.corp.redhat.com>; Tue, 25 Jul 2023 09:25:14 +0000 (UTC)
+ ESMTP id 7946C1946A70
+ for <dm-devel@listman.corp.redhat.com>; Tue, 25 Jul 2023 09:20:27 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4D1C5492CAC; Tue, 25 Jul 2023 09:25:14 +0000 (UTC)
+ id 9287A2166B26; Tue, 25 Jul 2023 09:20:27 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4561B492B01
- for <dm-devel@redhat.com>; Tue, 25 Jul 2023 09:25:14 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 251532800176
- for <dm-devel@redhat.com>; Tue, 25 Jul 2023 09:25:14 +0000 (UTC)
-Received: from out-11.mta1.migadu.com (out-11.mta1.migadu.com
- [95.215.58.11]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8A6582166B25
+ for <dm-devel@redhat.com>; Tue, 25 Jul 2023 09:20:27 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6C8633C0C48D
+ for <dm-devel@redhat.com>; Tue, 25 Jul 2023 09:20:27 +0000 (UTC)
+Received: from out-51.mta0.migadu.com (out-51.mta0.migadu.com
+ [91.218.175.51]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-638-h15LkkiVPlm9KjmAeOnhBg-1; Tue, 25 Jul 2023 05:25:10 -0400
-X-MC-Unique: h15LkkiVPlm9KjmAeOnhBg-1
+ us-mta-351-NinMRLU_PCCwrPG1F1UVAQ-1; Tue, 25 Jul 2023 05:20:25 -0400
+X-MC-Unique: NinMRLU_PCCwrPG1F1UVAQ-1
 MIME-Version: 1.0
 X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and
  include these headers.
 From: Muchun Song <muchun.song@linux.dev>
-In-Reply-To: <20230724094354.90817-9-zhengqi.arch@bytedance.com>
-Date: Tue, 25 Jul 2023 17:24:24 +0800
-Message-Id: <0C8B4C97-C8DF-401D-83E9-A13AE69E73F0@linux.dev>
+In-Reply-To: <20230724094354.90817-7-zhengqi.arch@bytedance.com>
+Date: Tue, 25 Jul 2023 17:19:40 +0800
+Message-Id: <1A349AE9-C4B3-42EB-B2D6-018583CCB102@linux.dev>
 References: <20230724094354.90817-1-zhengqi.arch@bytedance.com>
- <20230724094354.90817-9-zhengqi.arch@bytedance.com>
+ <20230724094354.90817-7-zhengqi.arch@bytedance.com>
 To: Qi Zheng <zhengqi.arch@bytedance.com>
 X-Migadu-Flow: FLOW_OUT
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -73,10 +73,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mailman-Approved-At: Wed, 26 Jul 2023 06:33:26 +0000
-Subject: Re: [dm-devel] [PATCH v2 08/47] erofs: dynamically allocate the
- erofs-shrinker
+Subject: Re: [dm-devel] [PATCH v2 06/47] drm/ttm: dynamically allocate the
+ drm-ttm_pool shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -115,7 +115,7 @@ Content-Transfer-Encoding: 7bit
 
 > On Jul 24, 2023, at 17:43, Qi Zheng <zhengqi.arch@bytedance.com> wrote:
 > 
-> Use new APIs to dynamically allocate the erofs-shrinker.
+> Use new APIs to dynamically allocate the drm-ttm_pool shrinker.
 > 
 > Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
 
