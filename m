@@ -4,100 +4,98 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 272D6C001DE
-	for <dm-devel@archiver.kernel.org>; Wed, 26 Jul 2023 23:46:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DF925C001DF
+	for <dm-devel@archiver.kernel.org>; Wed, 26 Jul 2023 23:46:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690415199;
+	s=mimecast20190719; t=1690415206;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=OxY9q/WE5BH6zgh7GSzlOXYLy58My9lwdmYIOqZNsEc=;
-	b=DAXRZOw0oI/Uqum09bKIPA+UPvC/CL9dKnnkxvtGEzsH3YSSaIJ83S2Tor1gQPdPYJMzyY
-	vqydrAtbiPRNYd8EZnnPr86gWr7+hok1vs8z3jIiOTjWUVx/bZNn/+tGRg8L5ECAho3SaJ
-	aqxJkZUCUzBSVU2b5q8gL/IBUKJv6SE=
+	bh=9avT3ADB8Nqmtf9CY5C7aGKz5p/5AFVaJYTuDqSS6o4=;
+	b=Tdk8Ynibo0K58i9UWoxDeFr4RkgadxAmZvYKlU32+kJiGri1j70ObBkQvYQ65P39ikc3H1
+	cnELX7YtlEnjkF4KJFD+1HjALNhDVuSpu11TH8OgHRWAiIJjKCG7RwVkOfMVKIuJjrl15B
+	OW2WM5UCkhe8XSL7gQdXrgussVrIsEU=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-681-4m23HAftPyysW7a0ia9mhA-1; Wed, 26 Jul 2023 19:46:36 -0400
-X-MC-Unique: 4m23HAftPyysW7a0ia9mhA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-303-6S3iLERkOaq_E766ewyaLQ-1; Wed, 26 Jul 2023 19:46:43 -0400
+X-MC-Unique: 6S3iLERkOaq_E766ewyaLQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 994038564EF;
-	Wed, 26 Jul 2023 23:46:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DB6F78564EF;
+	Wed, 26 Jul 2023 23:46:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1EE85145414E;
-	Wed, 26 Jul 2023 23:46:34 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C7242492B01;
+	Wed, 26 Jul 2023 23:46:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DFD951946A6E;
-	Wed, 26 Jul 2023 23:46:33 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8097F1946A6E;
+	Wed, 26 Jul 2023 23:46:41 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B698A1946A6E
- for <dm-devel@listman.corp.redhat.com>; Wed, 26 Jul 2023 23:34:03 +0000 (UTC)
+ ESMTP id 0EDBF1946A6C
+ for <dm-devel@listman.corp.redhat.com>; Wed, 26 Jul 2023 23:33:01 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9FB7B2166B26; Wed, 26 Jul 2023 23:34:03 +0000 (UTC)
+ id EE0031121339; Wed, 26 Jul 2023 23:33:00 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 9852A2166B25
- for <dm-devel@redhat.com>; Wed, 26 Jul 2023 23:34:03 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E704D1121330
+ for <dm-devel@redhat.com>; Wed, 26 Jul 2023 23:33:00 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7B46C3C11A05
- for <dm-devel@redhat.com>; Wed, 26 Jul 2023 23:34:03 +0000 (UTC)
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CB36E1C05AB1
+ for <dm-devel@redhat.com>; Wed, 26 Jul 2023 23:33:00 +0000 (UTC)
+Received: from mail-vs1-f69.google.com (mail-vs1-f69.google.com
+ [209.85.217.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-183-ClNIzBM9N4aeFt71IZ3uEQ-1; Wed, 26 Jul 2023 19:34:02 -0400
-X-MC-Unique: ClNIzBM9N4aeFt71IZ3uEQ-1
-Received: by mail-qk1-f197.google.com with SMTP id
- af79cd13be357-76c562323fbso48316585a.0
- for <dm-devel@redhat.com>; Wed, 26 Jul 2023 16:34:02 -0700 (PDT)
+ us-mta-318-P7YiDJyHOgeqEG5gqo6PNg-1; Wed, 26 Jul 2023 19:32:59 -0400
+X-MC-Unique: P7YiDJyHOgeqEG5gqo6PNg-1
+Received: by mail-vs1-f69.google.com with SMTP id
+ ada2fe7eead31-44762a3d178so61039137.3
+ for <dm-devel@redhat.com>; Wed, 26 Jul 2023 16:32:59 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1690414441; x=1691019241;
+ d=1e100.net; s=20221208; t=1690414379; x=1691019179;
  h=mime-version:user-agent:message-id:in-reply-to:date:references
  :subject:cc:to:from:x-gm-message-state:from:to:cc:subject:date
  :message-id:reply-to;
- bh=JyD6brWfay5Kmnzh8GFewzS67t7xdwsyLUWArEuoir8=;
- b=Ebe9tN3cgaTEeVHCw2HeeamjZFf2DPSP19K1LhjY60Q7gPfkHRgaJU4CeKSMucBycb
- H5fL3N37Ayk678dJs3+dF4FbY7jVGZw+tBxaGHQV1FI/gFDu9o0ub2R3urCooDnNDDoD
- b1bJ58oe1QYMA8QQfvwvWlhYnVYJ6Q3NPrjQwR4kWZf+9hXs+xjXWWvvVjD+YshMxSfe
- w05uy2YOhKufkoa5iH1aUol5wdRPWZFoGXkATpRfNT+tTjuevVhziDOzbykVkeTVmJi0
- KBg6o0YRxQ2fX6I/7637U9pQcw/0SG2wU6NNReaOlGS1M8KmdlrhN0t78+BTaAKIkRPh
- 66sw==
-X-Gm-Message-State: ABy/qLZPBOA+prGXuTmrn+PFTDrAWMVHs/mTOOSgDrl3h/8AShVZvJOA
- tvzejJUdcmwb5JNYNLOisvRnHYoW/FNQl5iGh6lkQBoI/xFmF2HE+qm5jUImj0rSQQrQjD27ffs
- d0UEHLvTJ8x5mAhE=
-X-Received: by 2002:a0c:b30c:0:b0:5f4:5af6:1304 with SMTP id
- s12-20020a0cb30c000000b005f45af61304mr2936970qve.16.1690414441706; 
- Wed, 26 Jul 2023 16:34:01 -0700 (PDT)
-X-Google-Smtp-Source: APBJJlHonF7eBvYZRAZL1IaNans/eUBaueHJOyyYpEdyvlAkALF78WyY3NVe/g4RFEr5upDuwwY0Fw==
-X-Received: by 2002:a0c:b30c:0:b0:5f4:5af6:1304 with SMTP id
- s12-20020a0cb30c000000b005f45af61304mr2936960qve.16.1690414441482; 
- Wed, 26 Jul 2023 16:34:01 -0700 (PDT)
+ bh=NTp7hPOiEo8RsuNy0X/kowl3tsiOjf8HH084Hc7F5Q8=;
+ b=O18aTIOi4Gtixcwx1PfjUshw2UjDvGGYJ8hRPqE1eAuIN4fGEM/kFuynPrnQM/941H
+ Ts0EZqwR0ZE7vT6Hyl5SYg6mKNz4PsLalzOQpN6cRBLPAUcfdaf4tseJCUTWO3CmMf77
+ dCG6lSivJTkgVkWbRQ7N84StG+tZQHOzXAkSY+4CTRlASaxJgVQEN67dnv1W+ux9ljBY
+ tMq/o9eD7O46qGIwFDJxRRp5NnQfVqCAlJwY8yNlCqUA5GuLT1noq6A6BSqrgtlHhCnp
+ SLtXDmHUBQaRj1g+SqX5toDNCaB52MQNMWEODWsl+FJaeP0qdJ2+dOMtRYHU4vnwlDUY
+ BPaw==
+X-Gm-Message-State: ABy/qLbuPP8+0wbp04DMVIN1vRIchGGlEDN2VuOiLu42UJ84wCg7m2M8
+ QfI1/og7rE19aKYXMIeP9keurFMWYM7A5l6Cg7biRIqxniHeWpv0M50KQiJbJsgHllv/DRyyfJC
+ 9jZ+ifSahnJKuEpo=
+X-Received: by 2002:a67:ebda:0:b0:446:e948:ebd4 with SMTP id
+ y26-20020a67ebda000000b00446e948ebd4mr288252vso.21.1690414379021; 
+ Wed, 26 Jul 2023 16:32:59 -0700 (PDT)
+X-Google-Smtp-Source: APBJJlEBWVn6oNGd3oafZjSwJyje7R1LaMoDnex87Y9R0nZDhsPnx78zVZxqLCqNQUhUZ02837TT9A==
+X-Received: by 2002:a67:ebda:0:b0:446:e948:ebd4 with SMTP id
+ y26-20020a67ebda000000b00446e948ebd4mr288240vso.21.1690414378735; 
+ Wed, 26 Jul 2023 16:32:58 -0700 (PDT)
 Received: from crash ([66.187.232.65]) by smtp.gmail.com with ESMTPSA id
- c23-20020a05620a11b700b00767303dc070sm13060qkk.8.2023.07.26.16.34.00
+ s25-20020a05620a16b900b00767ded911a3sm4703263qkj.116.2023.07.26.16.32.57
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 26 Jul 2023 16:34:00 -0700 (PDT)
+ Wed, 26 Jul 2023 16:32:57 -0700 (PDT)
 From: Ken Raeburn <raeburn@redhat.com>
-To: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
+To: Mike Snitzer <snitzer@kernel.org>
 References: <20230523214539.226387-1-corwin@redhat.com>
  <ZLa086NuWiMkJKJE@redhat.com>
  <CAK1Ur396ThV5AAZx2336uAW3FqSY+bHiiwEPofHB_Kwwr4ag5A@mail.gmail.com>
- <509f4916-a95f-216e-b0ab-7b7a108a48a0@dorminy.me>
-Date: Wed, 26 Jul 2023 19:33:59 -0400
-In-Reply-To: <509f4916-a95f-216e-b0ab-7b7a108a48a0@dorminy.me> (Sweet Tea
- Dorminy's message of "Sun, 23 Jul 2023 02:24:32 -0400")
-Message-ID: <87bkfy9riw.fsf@redhat.com>
+Date: Wed, 26 Jul 2023 19:32:56 -0400
+In-Reply-To: <CAK1Ur396ThV5AAZx2336uAW3FqSY+bHiiwEPofHB_Kwwr4ag5A@mail.gmail.com>
+ (Kenneth Raeburn's message of "Fri, 21 Jul 2023 21:59:05 -0400")
+Message-ID: <87cz0e9rkn.fsf@redhat.com>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/28.2 (gnu/linux)
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 Subject: Re: [dm-devel] [vdo-devel] [PATCH v2 00/39] Add the dm-vdo
  deduplication and compression device mapper target.
 X-BeenThere: dm-devel@redhat.com
@@ -111,56 +109,78 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: vdo-devel@redhat.com, ebiggers@kernel.org,
- Mike Snitzer <snitzer@kernel.org>, linux-block@vger.kernel.org,
- dm-devel@redhat.com, tj@kernel.org
+Cc: linux-block@vger.kernel.org, vdo-devel@redhat.com, dm-devel@redhat.com,
+ ebiggers@kernel.org, tj@kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
 
-Sweet Tea Dorminy <sweettea-kernel@dorminy.me> writes:
+An offline discussion suggested maybe I should've gone into a little
+more detail about how VDO uses its work queues.
 
->  There seems a natural duality between
-> work items passing between threads, each exclusively owning a
-> structure, vs structures passing between threads, each exclusively
-> owning a work item. In the first, the threads are grabbing a notional
-> 'lock' on each item in turn to deal with their structure, as VDO does
-> now; in the second, the threads are grabbing locks on each structure
-> in turn to deal with their item.
+VDO is sufficiently work-intensive that we found long ago that doing all
+the work in one thread wouldn't keep up.
 
-Yes.
+Our multithreaded design started many years ago and grew out of our
+existing design for UDS (VDO's central deduplication index), which,
+somewhat akin to partitioning and sharding in databases, does scanning
+of the in-memory part of the "database" of values in some number (fixed
+at startup) of threads, with the data and work divided up based on
+certain bits of the hash value being looked up, and performs its I/O and
+callbacks from certain other threads. We aren't splitting work to
+multiple machines as database systems sometimes do, but to multiple
+threads and potentially multiple NUMA nodes.
 
-> If kernel workqueues have higher overhead per item for the lightweight
-> work VDO currently does in each step, perhaps the dual of the current
-> scheme would let more work get done per fixed queuing overhead, and
-> thus perform better? VIOs could take locks on sections of structures,
-> and operate on multiple structures before requeueing.
+We try to optimize for keeping the busy case fast, even if it means
+light usage loads don't perform quite as well as they could be made to.
+We try to reduce instances of contention between threads by avoiding
+locks when we can, preferring a fast queueing mechanism or loose
+synchronization between threads. (We haven't kept to it strictly, but
+we've mostly tried to.)
 
-Can you suggest a little more specifically what the "dual" is you're
-picturing?
+In VDO, at the first level, the work is split according to the
+collection of data structures to be updated (e.g., recovery journal vs
+disk block allocation vs block address mapping management).
 
-[...]
-> On the other hand, I played around with switching messagepassing to
-> structurelocking in VDO a number of years ago for fun on the side,
-> just extremely naively replacing each message passing with releasing a
-> mutex on the current set of structures and (trying to) take a mutex on
-> the next set of structures, and ran into some complexity around
-> certain ordering requirements. I think they were around recovery
-> journal entries going into the slab journal and the block map in the
-> same order; and also around the use of different priorities for some
-> different items. I don't have that code anymore, unfortunately, so I
-> don't know how hard it would be to try that experiment again.
+For some data structures, we split the structures further based on
+values of relevant bit-strings for the data structure in question (block
+addresses, hash values). Currently we can split the work N ways for many
+small values of N but it's hard to change N without restarting. The
+processing of a read or write operation generally doesn't need to touch
+more than one "zone" in any of these sets (or two, in a certain write
+case).
 
-Yes, we do have certain ordering requirements in one or two places,
-which sort of breaks the mental model of independently processed VIOs.
-There are also occasionally non-VIO objects which get queued to invoke
-actions on various threads, which I expect might further complicate the
-experiment.
+Giving one thread exclusive access to the data structures means we can
+do away with the locking. Of course, with so many different threads
+owning data structures, we get a lot of queueing in exchange, but we
+depend on a fast, nearly-lock-free MPSC queueing mechanism to keep that
+reasonably efficient.
+
+There's a little more to it in places where we need to preserve the
+order of processing of multiple VIOs in a couple different sections of
+the write path. So we do make some higher-level use of the fact that
+we're adding work to queues with certain behavior, and not just turning
+loose a bunch of threads to contend for a just-released mutex.
+
+Some other bits of work like computing the hash value don't update any
+other data structures, and not only would be amenable to kernel
+workqueue conversion with concurrency greater than 1, but such a
+conversion might open up some interesting options, like hashing on the
+CPU or NUMA node where the data block is likely to reside in cache. But
+for now, using one work management mechanism has been easier than two.
+
+The experiment I referred to in my earlier email with using kernel
+workqueues in VDO kept the same model of protecting data structures by
+making them exclusive to specific threads (or in this case,
+concurrency-1 workqueues) to serialize all access and using message
+passing; it didn't change everything over to using mutexes instead.
+
+I hope some of this helps. I'm happy to answer further questions.
 
 Ken
 
