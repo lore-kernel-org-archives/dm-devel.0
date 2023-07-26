@@ -1,61 +1,100 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CA46CC001DE
-	for <dm-devel@archiver.kernel.org>; Wed, 26 Jul 2023 10:02:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 122FFC001DC
+	for <dm-devel@archiver.kernel.org>; Wed, 26 Jul 2023 16:55:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690365759;
+	s=mimecast20190719; t=1690390504;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=TQtOKFjmcbH2cfd+M0kcH5GpFgUMRJAnOHZ6yW2LoCg=;
-	b=CpmZ3epI+aMCHVTvihvGiYIo72rJmOEb7EzT7A387PJAaiwCSzmKQUpBUxEDj0HMdwqy2C
-	BT+NqufMChP1y4Z0OW8VmytvYFXvEbDYzsDW6KlSrsVkNwSlB9qoxjapiSakxAUnzqVMpd
-	uwMgsu8pDiKpbpmLbRumOzYnr7eR/tc=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-86-JM_ozMrLOlGDpjHGOXSO3A-1; Wed, 26 Jul 2023 06:02:38 -0400
-X-MC-Unique: JM_ozMrLOlGDpjHGOXSO3A-1
+	bh=CLPXYOuK3y/6aaf02SmwnT+OS0r3wYAbzIqE2Ugrpcc=;
+	b=b7zEGTHw9FmajTd+jx5DpO1DT1H4tNE+JxL6BSn4MES8L0snR8gQPsGI77FvR4Aiw4fiqT
+	Hpj3y7Z0GkFR7Keh6GvWk/bEvB7zwh7DAKZ1mwxHNvPMvs7HlsT1cLvoA6lNXmUn/n8Ii5
+	P01Anpd0Tm9H2tJX9y5ampYYLdIz5N4=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-677-2y-AZp04PaeBIthKTVLovA-1; Wed, 26 Jul 2023 12:55:00 -0400
+X-MC-Unique: 2y-AZp04PaeBIthKTVLovA-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A2F538019DC;
-	Wed, 26 Jul 2023 10:02:36 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2D23A1C05AAA;
+	Wed, 26 Jul 2023 16:54:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6B8934094DC0;
-	Wed, 26 Jul 2023 10:02:32 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 89FCD4094DC0;
+	Wed, 26 Jul 2023 16:54:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 226CD1949754;
-	Wed, 26 Jul 2023 10:02:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4E7921946A6E;
+	Wed, 26 Jul 2023 16:54:50 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B05E51946A69
- for <dm-devel@listman.corp.redhat.com>; Wed, 26 Jul 2023 10:02:30 +0000 (UTC)
+ ESMTP id 594ED1946A6C
+ for <dm-devel@listman.corp.redhat.com>; Wed, 26 Jul 2023 15:30:09 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8EFE340732A; Wed, 26 Jul 2023 10:02:30 +0000 (UTC)
-Received: from warthog.procyon.org.uk (unknown [10.42.28.158])
- by smtp.corp.redhat.com (Postfix) with ESMTP id AEA43492B01;
- Wed, 26 Jul 2023 10:02:28 +0000 (UTC)
-Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
- Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
- Kingdom.
- Registered in England and Wales under Company Registration No. 3798903
-From: David Howells <dhowells@redhat.com>
-To: "Theodore Ts'o" <tytso@mit.edu>, Andrew Morton <akpm@linux-foundation.org>,
- Song Liu <song@kernel.org>, Christoph Hellwig <hch@lst.de>,
- Alasdair Kergon <agk@redhat.com>
+ id 361852166B27; Wed, 26 Jul 2023 15:30:09 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2D6002166B26
+ for <dm-devel@redhat.com>; Wed, 26 Jul 2023 15:30:09 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0220338117EB
+ for <dm-devel@redhat.com>; Wed, 26 Jul 2023 15:30:09 +0000 (UTC)
+Received: from mail-yw1-f181.google.com (mail-yw1-f181.google.com
+ [209.85.128.181]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-349-gitNYrPyM26gTBS1GPYvaw-1; Wed, 26 Jul 2023 11:30:04 -0400
+X-MC-Unique: gitNYrPyM26gTBS1GPYvaw-1
+Received: by mail-yw1-f181.google.com with SMTP id
+ 00721157ae682-583b3aa4f41so53890887b3.2; 
+ Wed, 26 Jul 2023 08:30:03 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1690385403; x=1690990203;
+ h=content-transfer-encoding:cc:to:subject:message-id:date:from
+ :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=Lrg+45f8OyZpsYrZsCtiNxFu62qT5zsFL2TVU9KzV9Y=;
+ b=TAbZJVcQjlO4qpYfq/tk3KmyeUCGEQk5vcTpeQ+5ZmILs1Cy5yRSEBid3e8XbCEkGY
+ cbRHPhP9G767YRymGIkLE2mPo5XwRFwYceCw3B97B9T0AseS2z6F4z2M9Xm+DZuwHJ64
+ 9x/g9J4Ml13bf2XNo4d5c9EsEWIwxDPIwpSLF0biuQPcgHcJUtGN76sEjjy5RjLS7m0I
+ oSiviEyj9YNMNs22Nm/h1l0cHyoKx4rQdmjz0WUJhGejsgxP1nsEwk3OuBCp1z/mUN3d
+ PbPlynzgoPBlycY1mJNNuTGlnjNsQRUTXFErln3btFwF1VIPCjbWF0uZL9QQ88lbKrAe
+ MmEQ==
+X-Gm-Message-State: ABy/qLZCNJQFPypZxmYNxq7GLpk+QXEML7DtN69vJr+vbmJRwL9R+Hri
+ I0P5BozNtc96fQD5wj6HwxKvU2eRR3etHQSXUsahJ17watP6W+J2J0w=
+X-Google-Smtp-Source: APBJJlH9c/Cm1Gn1k/bqGcIifEtT5WA6JYO4NWDRh17eGkNuN//LPGYMjb5PrsKWtVwk5jtZLub4b2CzwC+F8JFg/Zw=
+X-Received: by 2002:a81:a151:0:b0:584:5e7e:40c1 with SMTP id
+ y78-20020a81a151000000b005845e7e40c1mr533351ywg.28.1690385402927; Wed, 26 Jul
+ 2023 08:30:02 -0700 (PDT)
 MIME-Version: 1.0
-Date: Wed, 26 Jul 2023 11:02:27 +0100
-Message-ID: <4919.1690365747@warthog.procyon.org.uk>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-Subject: [dm-devel] Processes hung in "D" state in ext4, mm, md and dmcrypt
+References: <4919.1690365747@warthog.procyon.org.uk>
+In-Reply-To: <4919.1690365747@warthog.procyon.org.uk>
+From: Ming Lei <tom.leiming@gmail.com>
+Date: Wed, 26 Jul 2023 23:29:51 +0800
+Message-ID: <CACVXFVM8rcGJu-f+6zOgY8t4KPPR0J=giYD5dnCLL8_XVo234w@mail.gmail.com>
+To: David Howells <dhowells@redhat.com>,
+ linux-block <linux-block@vger.kernel.org>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] Processes hung in "D" state in ext4, mm,
+ md and dmcrypt
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -67,163 +106,47 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org,
- dhowells@redhat.com, linux-mm@kvack.org, dm-devel@redhat.com,
- linux-ext4@vger.kernel.org
+Cc: Theodore Ts'o <tytso@mit.edu>, linux-mm@kvack.org,
+ linux-kernel@vger.kernel.org, Ming Lei <ming.lei@redhat.com>,
+ linux-raid@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com,
+ Andrew Morton <akpm@linux-foundation.org>, linux-ext4@vger.kernel.org,
+ Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-ID: <4918.1690365747.1@warthog.procyon.org.uk>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: gmail.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-Hi,
-
-With 6.5-rc2 (6.5.0-0.rc2.20230721gitf7e3a1bafdea.20.fc39.x86_64), I'm seeing
-a bunch of processes getting stuck in the D state on my desktop after a few
-hours of reading email and compiling stuff.  It's happened every day this week
-so far and I managed to grab stack traces of the stuck processes this morning
-(see attached).
-
-There are two blockdevs involved below, /dev/md2 and /dev/md3.  md3 is a raid1
-array with two partitions with an ext4 partition on it.  md2 is similar but
-it's dm-crypted and ext4 is on top of that.
-
-David
----
-
-   1015 ?        D      0:04 [md2_raid1]
-   1074 ?        D      0:00 [jbd2/sda6-8]
-   1138 ?        D      0:00 [jbd2/md3-8]
-   1167 ?        D      0:10 [dmcrypt_write/253:0]
-   1202 ?        D      0:03 [jbd2/dm-0-8]
- 117547 ?        D      5:12 [kworker/u16:8+flush-9:3]
- 121540 ?        D      0:46 [kworker/u16:10+flush-253:0]
- 125431 pts/2    Dl+    0:00 emacs .stgit-edit.txt
- 125469 ?        D      0:00 /usr/libexec/nmh/rcvstore +kernel
-
-===1015===
-    PID TTY      STAT   TIME COMMAND
-   1015 ?        D      0:04 [md2_raid1]
-[<0>] md_super_wait+0xa2/0xe0
-[<0>] md_bitmap_daemon_work+0x183/0x3b0
-[<0>] md_check_recovery+0x42/0x5a0
-[<0>] raid1d+0x87/0x16f0 [raid1]
-[<0>] md_thread+0xab/0x190
-[<0>] kthread+0xe5/0x120
-[<0>] ret_from_fork+0x31/0x50
-[<0>] ret_from_fork_asm+0x1b/0x30
-
-===1074===
-    PID TTY      STAT   TIME COMMAND
-   1074 ?        D      0:00 [jbd2/sda6-8]
-[<0>] jbd2_journal_commit_transaction+0x11a6/0x1a20
-[<0>] kjournald2+0xad/0x280
-[<0>] kthread+0xe5/0x120
-[<0>] ret_from_fork+0x31/0x50
-[<0>] ret_from_fork_asm+0x1b/0x30
-
-===1138===
-    PID TTY      STAT   TIME COMMAND
-   1138 ?        D      0:00 [jbd2/md3-8]
-[<0>] jbd2_journal_commit_transaction+0x162d/0x1a20
-[<0>] kjournald2+0xad/0x280
-[<0>] kthread+0xe5/0x120
-[<0>] ret_from_fork+0x31/0x50
-[<0>] ret_from_fork_asm+0x1b/0x30
-
-===1167===
-    PID TTY      STAT   TIME COMMAND
-   1167 ?        D      0:10 [dmcrypt_write/253:0]
-[<0>] md_super_wait+0xa2/0xe0
-[<0>] md_bitmap_unplug+0xad/0x120
-[<0>] flush_bio_list+0xf3/0x100 [raid1]
-[<0>] raid1_unplug+0x3b/0xb0 [raid1]
-[<0>] __blk_flush_plug+0xd8/0x160
-[<0>] blk_finish_plug+0x29/0x40
-[<0>] dmcrypt_write+0x132/0x140 [dm_crypt]
-[<0>] kthread+0xe5/0x120
-[<0>] ret_from_fork+0x31/0x50
-[<0>] ret_from_fork_asm+0x1b/0x30
-
-===1202===
-    PID TTY      STAT   TIME COMMAND
-   1202 ?        D      0:03 [jbd2/dm-0-8]
-[<0>] jbd2_journal_commit_transaction+0x162d/0x1a20
-[<0>] kjournald2+0xad/0x280
-[<0>] kthread+0xe5/0x120
-[<0>] ret_from_fork+0x31/0x50
-[<0>] ret_from_fork_asm+0x1b/0x30
-
-===117547===
-    PID TTY      STAT   TIME COMMAND
- 117547 ?        D      5:12 [kworker/u16:8+flush-9:3]
-[<0>] blk_mq_get_tag+0x11e/0x2b0
-[<0>] __blk_mq_alloc_requests+0x1bc/0x350
-[<0>] blk_mq_submit_bio+0x2c7/0x680
-[<0>] __submit_bio+0x8b/0x170
-[<0>] submit_bio_noacct_nocheck+0x159/0x370
-[<0>] __block_write_full_folio+0x1e1/0x400
-[<0>] writepage_cb+0x1a/0x70
-[<0>] write_cache_pages+0x144/0x3b0
-[<0>] do_writepages+0x164/0x1e0
-[<0>] __writeback_single_inode+0x3d/0x360
-[<0>] writeback_sb_inodes+0x1ed/0x4b0
-[<0>] __writeback_inodes_wb+0x4c/0xf0
-[<0>] wb_writeback+0x298/0x310
-[<0>] wb_workfn+0x35b/0x510
-[<0>] process_one_work+0x1de/0x3f0
-[<0>] worker_thread+0x51/0x390
-[<0>] kthread+0xe5/0x120
-[<0>] ret_from_fork+0x31/0x50
-[<0>] ret_from_fork_asm+0x1b/0x30
-
-===121540===
-    PID TTY      STAT   TIME COMMAND
- 121540 ?        D      0:46 [kworker/u16:10+flush-253:0]
-[<0>] folio_wait_bit_common+0x13d/0x350
-[<0>] mpage_prepare_extent_to_map+0x309/0x4d0
-[<0>] ext4_do_writepages+0x25d/0xc90
-[<0>] ext4_writepages+0xad/0x180
-[<0>] do_writepages+0xcf/0x1e0
-[<0>] __writeback_single_inode+0x3d/0x360
-[<0>] writeback_sb_inodes+0x1ed/0x4b0
-[<0>] __writeback_inodes_wb+0x4c/0xf0
-[<0>] wb_writeback+0x298/0x310
-[<0>] wb_workfn+0x35b/0x510
-[<0>] process_one_work+0x1de/0x3f0
-[<0>] worker_thread+0x51/0x390
-[<0>] kthread+0xe5/0x120
-[<0>] ret_from_fork+0x31/0x50
-[<0>] ret_from_fork_asm+0x1b/0x30
-
-===125431===
-    PID TTY      STAT   TIME COMMAND
- 125431 pts/2    Dl+    0:00 emacs .stgit-edit.txt
-[<0>] jbd2_log_wait_commit+0xd8/0x140
-[<0>] ext4_sync_file+0x1cc/0x380
-[<0>] __x64_sys_fsync+0x3b/0x70
-[<0>] do_syscall_64+0x5d/0x90
-[<0>] entry_SYSCALL_64_after_hwframe+0x6e/0xd8
-
-===125469===
-    PID TTY      STAT   TIME COMMAND
- 125469 ?        D      0:00 /usr/libexec/nmh/rcvstore +kernel
-[<0>] folio_wait_bit_common+0x13d/0x350
-[<0>] folio_wait_writeback+0x2c/0x90
-[<0>] truncate_inode_partial_folio+0x5e/0x1a0
-[<0>] truncate_inode_pages_range+0x1da/0x400
-[<0>] truncate_pagecache+0x47/0x60
-[<0>] ext4_setattr+0x685/0xba0
-[<0>] notify_change+0x1e0/0x4a0
-[<0>] do_truncate+0x98/0xf0
-[<0>] do_sys_ftruncate+0x15c/0x1b0
-[<0>] do_syscall_64+0x5d/0x90
-[<0>] entry_SYSCALL_64_after_hwframe+0x6e/0xd8
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gV2VkLCBKdWwgMjYsIDIwMjMgYXQgNjowMuKAr1BNIERhdmlkIEhvd2VsbHMgPGRob3dlbGxz
+QHJlZGhhdC5jb20+IHdyb3RlOgo+Cj4gSGksCj4KPiBXaXRoIDYuNS1yYzIgKDYuNS4wLTAucmMy
+LjIwMjMwNzIxZ2l0ZjdlM2ExYmFmZGVhLjIwLmZjMzkueDg2XzY0KSwgSSdtIHNlZWluZwo+IGEg
+YnVuY2ggb2YgcHJvY2Vzc2VzIGdldHRpbmcgc3R1Y2sgaW4gdGhlIEQgc3RhdGUgb24gbXkgZGVz
+a3RvcCBhZnRlciBhIGZldwo+IGhvdXJzIG9mIHJlYWRpbmcgZW1haWwgYW5kIGNvbXBpbGluZyBz
+dHVmZi4gIEl0J3MgaGFwcGVuZWQgZXZlcnkgZGF5IHRoaXMgd2Vlawo+IHNvIGZhciBhbmQgSSBt
+YW5hZ2VkIHRvIGdyYWIgc3RhY2sgdHJhY2VzIG9mIHRoZSBzdHVjayBwcm9jZXNzZXMgdGhpcyBt
+b3JuaW5nCj4gKHNlZSBhdHRhY2hlZCkuCj4KPiBUaGVyZSBhcmUgdHdvIGJsb2NrZGV2cyBpbnZv
+bHZlZCBiZWxvdywgL2Rldi9tZDIgYW5kIC9kZXYvbWQzLiAgbWQzIGlzIGEgcmFpZDEKPiBhcnJh
+eSB3aXRoIHR3byBwYXJ0aXRpb25zIHdpdGggYW4gZXh0NCBwYXJ0aXRpb24gb24gaXQuICBtZDIg
+aXMgc2ltaWxhciBidXQKPiBpdCdzIGRtLWNyeXB0ZWQgYW5kIGV4dDQgaXMgb24gdG9wIG9mIHRo
+YXQuCj4KLi4uCgo+ID09PTExNzU0Nz09PQo+ICAgICBQSUQgVFRZICAgICAgU1RBVCAgIFRJTUUg
+Q09NTUFORAo+ICAxMTc1NDcgPyAgICAgICAgRCAgICAgIDU6MTIgW2t3b3JrZXIvdTE2OjgrZmx1
+c2gtOTozXQo+IFs8MD5dIGJsa19tcV9nZXRfdGFnKzB4MTFlLzB4MmIwCj4gWzwwPl0gX19ibGtf
+bXFfYWxsb2NfcmVxdWVzdHMrMHgxYmMvMHgzNTAKPiBbPDA+XSBibGtfbXFfc3VibWl0X2Jpbysw
+eDJjNy8weDY4MAo+IFs8MD5dIF9fc3VibWl0X2JpbysweDhiLzB4MTcwCj4gWzwwPl0gc3VibWl0
+X2Jpb19ub2FjY3Rfbm9jaGVjaysweDE1OS8weDM3MAo+IFs8MD5dIF9fYmxvY2tfd3JpdGVfZnVs
+bF9mb2xpbysweDFlMS8weDQwMAo+IFs8MD5dIHdyaXRlcGFnZV9jYisweDFhLzB4NzAKPiBbPDA+
+XSB3cml0ZV9jYWNoZV9wYWdlcysweDE0NC8weDNiMAo+IFs8MD5dIGRvX3dyaXRlcGFnZXMrMHgx
+NjQvMHgxZTAKPiBbPDA+XSBfX3dyaXRlYmFja19zaW5nbGVfaW5vZGUrMHgzZC8weDM2MAo+IFs8
+MD5dIHdyaXRlYmFja19zYl9pbm9kZXMrMHgxZWQvMHg0YjAKPiBbPDA+XSBfX3dyaXRlYmFja19p
+bm9kZXNfd2IrMHg0Yy8weGYwCj4gWzwwPl0gd2Jfd3JpdGViYWNrKzB4Mjk4LzB4MzEwCj4gWzww
+Pl0gd2Jfd29ya2ZuKzB4MzViLzB4NTEwCj4gWzwwPl0gcHJvY2Vzc19vbmVfd29yaysweDFkZS8w
+eDNmMAo+IFs8MD5dIHdvcmtlcl90aHJlYWQrMHg1MS8weDM5MAo+IFs8MD5dIGt0aHJlYWQrMHhl
+NS8weDEyMAo+IFs8MD5dIHJldF9mcm9tX2ZvcmsrMHgzMS8weDUwCj4gWzwwPl0gcmV0X2Zyb21f
+Zm9ya19hc20rMHgxYi8weDMwCgpCVFcsIC1yYzMgZml4ZXMgb25lIHNpbWlsYXIgaXNzdWUgb24g
+dGhlIGFib3ZlIGNvZGUgcGF0aCwgc28gcGxlYXNlIHRyeSAtcmMzLgoKMTA2Mzk3Mzc2YzAzIHNi
+aXRtYXA6IGZpeCBiYXRjaGluZyB3YWtldXAKClRoYW5rcywKTWluZyBMZWkKCi0tCmRtLWRldmVs
+IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQu
+Y29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
 
