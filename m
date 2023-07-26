@@ -4,95 +4,68 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D6EDEC001E0
-	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 06:21:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 075F1C0015E
+	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 06:21:35 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690438889;
+	s=mimecast20190719; t=1690438895;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=02LFX8yrQD2yEV/whHooEPxzfTXUFKmZb2iilsg2lSk=;
-	b=CBnZIKIR+hnXpZKeaSOyWIL3d/j83G+Ga2ILsmAI7JbJTF7WQdf1whz7GpVtQZXFG+mzpc
-	nM71zTt00qoT88bS+oG5AgYfImM7xLXywxNWs9CgIPnRnhJIm9cptvQyWgVdkzwLwgm5Sk
-	ndwq5L2M+892Z5vlBg7In+MzSXW24ic=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-153-ZgdoMogiPr2h05axjv9SAA-1; Thu, 27 Jul 2023 02:21:26 -0400
-X-MC-Unique: ZgdoMogiPr2h05axjv9SAA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+	bh=a57d3znJSo8EcqJ93oqc71boLImVW6jmK9hhYCexkpI=;
+	b=KLAk8kwPRL8HjvGXo8CpuoNxq8qDjFx6WPQLpf8gLHrY533/Suj/vsp+UkaVZu3OiGIdHi
+	0JkjZoaYDPNLjqYwGJxJQ1tKwz02mbpdve1EnkC6yJVcZ7BXcp0p1YA6r88WqEWhvSZFGk
+	kcVSnnDP8WUA39fGgTaTBze/7bBkUHY=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-121-MnioQ-nfNSuZjgtndnPnyw-1; Thu, 27 Jul 2023 02:21:31 -0400
+X-MC-Unique: MnioQ-nfNSuZjgtndnPnyw-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 21EB910504B3;
-	Thu, 27 Jul 2023 06:21:25 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3F4F1381494D;
+	Thu, 27 Jul 2023 06:21:30 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0FBF11121330;
-	Thu, 27 Jul 2023 06:21:25 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2DF4B492B02;
+	Thu, 27 Jul 2023 06:21:30 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E16FD1946A71;
-	Thu, 27 Jul 2023 06:21:24 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1D93E19452C4;
+	Thu, 27 Jul 2023 06:21:30 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 5495E1946A69
- for <dm-devel@listman.corp.redhat.com>; Wed, 26 Jul 2023 09:25:15 +0000 (UTC)
+ ESMTP id 23CCC1946589
+ for <dm-devel@listman.corp.redhat.com>; Wed, 26 Jul 2023 06:49:22 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 33F04F783A; Wed, 26 Jul 2023 09:25:15 +0000 (UTC)
+ id 034E9492CAC; Wed, 26 Jul 2023 06:49:22 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2BF2AF782E
- for <dm-devel@redhat.com>; Wed, 26 Jul 2023 09:25:15 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id EF2CC492B01
+ for <dm-devel@redhat.com>; Wed, 26 Jul 2023 06:49:21 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0CFB688D542
- for <dm-devel@redhat.com>; Wed, 26 Jul 2023 09:25:15 +0000 (UTC)
-Received: from mail-pf1-f175.google.com (mail-pf1-f175.google.com
- [209.85.210.175]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D296D3C0E44F
+ for <dm-devel@redhat.com>; Wed, 26 Jul 2023 06:49:21 +0000 (UTC)
+Received: from out-41.mta0.migadu.com (out-41.mta0.migadu.com
+ [91.218.175.41]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-306-xkt_30aoOuujLTrfhYdKTA-1; Wed, 26 Jul 2023 05:25:12 -0400
-X-MC-Unique: xkt_30aoOuujLTrfhYdKTA-1
-Received: by mail-pf1-f175.google.com with SMTP id
- d2e1a72fcca58-682a5465e9eso1486032b3a.1
- for <dm-devel@redhat.com>; Wed, 26 Jul 2023 02:25:12 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1690363511; x=1690968311;
- h=content-transfer-encoding:in-reply-to:from:references:cc:to
- :content-language:subject:user-agent:mime-version:date:message-id
- :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=ajWZi1kTG9ZsFll3P13XRfH/M90QTcK5ZSE2yNZ8xrc=;
- b=KUfi383///RBtSY33CuPVxSnz77g2cZHczESTOfxdabKcK5xMcHqZ9KHvXNkRm8BsZ
- puYCEGOhNIaRLZ7+dx5Rfcm2v/kRHpgEEVQf41wxNT5nt6mlZf30BRJZgFBwih+v3iBX
- uO6h3kfnWzdlO4Ay/0/4bLUx7swybSqJl2hKPlRj8Jywm3KIGLl5KiusalBvNDADJuPr
- Gam/DMt3T9RN2JqR71F7Pidhei1axhLIevqxkyc1+AmyDRKoe/xs75Yy3n/tTVh0h3Bs
- AR+mQcOdyx4xbCWB6IzOsewTfYTnvpeZ9BI+CG59uXggWEYC7UDMTvFJxxEw5z90soKp
- o2gA==
-X-Gm-Message-State: ABy/qLY8wqN2YUYvuM+I4z23p8ix/6fFxa58EbLnx7h6/nOwXFJec9y+
- aCLFqu/2JA7zbHTgvg/LFjb/dA==
-X-Google-Smtp-Source: APBJJlH7Lt4w+KKgSvUzSkJhF0oF8+b3ljHzveqc3Noqsk7KflIEw6xDKQ/sXRTNdo5n0Hc+oIf56w==
-X-Received: by 2002:a05:6a20:729a:b0:100:b92b:e8be with SMTP id
- o26-20020a056a20729a00b00100b92be8bemr1785615pzk.2.1690363511718; 
- Wed, 26 Jul 2023 02:25:11 -0700 (PDT)
-Received: from [10.70.252.135] ([203.208.167.147])
- by smtp.gmail.com with ESMTPSA id
- h2-20020aa786c2000000b00682a99b01basm2004283pfo.0.2023.07.26.02.25.00
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Wed, 26 Jul 2023 02:25:11 -0700 (PDT)
-Message-ID: <491f5c8f-ccc6-dab8-71b3-caeedc8c4b39@bytedance.com>
-Date: Wed, 26 Jul 2023 17:24:58 +0800
+ us-mta-694-fVFZPohLOcy66Gn1PAZCOA-1; Wed, 26 Jul 2023 02:49:20 -0400
+X-MC-Unique: fVFZPohLOcy66Gn1PAZCOA-1
+Message-ID: <e7204276-9de5-17eb-90ae-e51657d73ef4@linux.dev>
+Date: Wed, 26 Jul 2023 14:49:05 +0800
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:102.0)
- Gecko/20100101 Thunderbird/102.12.0
-To: Muchun Song <muchun.song@linux.dev>
+To: Qi Zheng <zhengqi.arch@bytedance.com>
 References: <20230724094354.90817-1-zhengqi.arch@bytedance.com>
- <20230724094354.90817-18-zhengqi.arch@bytedance.com>
- <3A164818-56E1-4EB4-A927-1B2D23B81659@linux.dev>
-From: Qi Zheng <zhengqi.arch@bytedance.com>
-In-Reply-To: <3A164818-56E1-4EB4-A927-1B2D23B81659@linux.dev>
+ <20230724094354.90817-12-zhengqi.arch@bytedance.com>
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and
+ include these headers.
+From: Muchun Song <muchun.song@linux.dev>
+In-Reply-To: <20230724094354.90817-12-zhengqi.arch@bytedance.com>
+X-Migadu-Flow: FLOW_OUT
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -100,10 +73,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mailman-Approved-At: Thu, 27 Jul 2023 06:20:49 +0000
-Subject: Re: [dm-devel] [PATCH v2 17/47] rcu: dynamically allocate the
- rcu-lazy shrinker
+Subject: Re: [dm-devel] [PATCH v2 11/47] gfs2: dynamically allocate the
+ gfs2-qd shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -115,67 +88,126 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: kvm@vger.kernel.org, djwong@kernel.org,
- Roman Gushchin <roman.gushchin@linux.dev>, david@fromorbit.com,
- dri-devel@lists.freedesktop.org, virtualization@lists.linux-foundation.org,
- linux-mm@kvack.org, dm-devel@redhat.com, linux-mtd@lists.infradead.org,
- cel@kernel.org, x86@kernel.org, steven.price@arm.com, cluster-devel@redhat.com,
- xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org,
- "Paul E. McKenney" <paulmck@kernel.org>, linux-arm-msm@vger.kernel.org,
- linux-nfs@vger.kernel.org, rcu@vger.kernel.org, linux-bcache@vger.kernel.org,
- yujie.liu@intel.com, Vlastimil Babka <vbabka@suse.cz>,
- linux-raid@vger.kernel.org, Christian Brauner <brauner@kernel.org>,
- tytso@mit.edu, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org,
+Cc: kvm@vger.kernel.org, djwong@kernel.org, roman.gushchin@linux.dev,
+ david@fromorbit.com, dri-devel@lists.freedesktop.org,
+ virtualization@lists.linux-foundation.org, linux-mm@kvack.org,
+ dm-devel@redhat.com, linux-mtd@lists.infradead.org, cel@kernel.org,
+ x86@kernel.org, steven.price@arm.com, cluster-devel@redhat.com,
+ xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org, paulmck@kernel.org,
+ linux-arm-msm@vger.kernel.org, brauner@kernel.org, rcu@vger.kernel.org,
+ linux-bcache@vger.kernel.org, yujie.liu@intel.com, vbabka@suse.cz,
+ linux-raid@vger.kernel.org, linux-nfs@vger.kernel.org, tytso@mit.edu,
+ netdev@vger.kernel.org, linux-kernel@vger.kernel.org,
  linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
- senozhatsky@chromium.org, netdev@vger.kernel.org,
- linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>,
+ senozhatsky@chromium.org, gregkh@linuxfoundation.org,
+ linux-fsdevel@vger.kernel.org, akpm@linux-foundation.org,
  linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org, tkhai@ya.ru
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: bytedance.com
-Content-Language: en-US
+X-Mimecast-Originator: linux.dev
 Content-Transfer-Encoding: 7bit
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
 
 
-On 2023/7/26 15:04, Muchun Song wrote:
-> 
-> 
->> On Jul 24, 2023, at 17:43, Qi Zheng <zhengqi.arch@bytedance.com> wrote:
->>
->> Use new APIs to dynamically allocate the rcu-lazy shrinker.
->>
->> Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
->> ---
->> kernel/rcu/tree_nocb.h | 19 +++++++++++--------
->> 1 file changed, 11 insertions(+), 8 deletions(-)
->>
->> diff --git a/kernel/rcu/tree_nocb.h b/kernel/rcu/tree_nocb.h
->> index 43229d2b0c44..919f17561733 100644
->> --- a/kernel/rcu/tree_nocb.h
->> +++ b/kernel/rcu/tree_nocb.h
->> @@ -1397,12 +1397,7 @@ lazy_rcu_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
->> return count ? count : SHRINK_STOP;
->> }
->>
->> -static struct shrinker lazy_rcu_shrinker = {
->> -	.count_objects = lazy_rcu_shrink_count,
->> -	.scan_objects = lazy_rcu_shrink_scan,
->> -	.batch = 0,
->> -	.seeks = DEFAULT_SEEKS,
->> -};
->> +static struct shrinker *lazy_rcu_shrinker;
-> 
-> Seems there is no users of this variable, maybe we could drop
-> this.
+On 2023/7/24 17:43, Qi Zheng wrote:
+> Use new APIs to dynamically allocate the gfs2-qd shrinker.
+>
+> Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
+> ---
+>   fs/gfs2/main.c  |  6 +++---
+>   fs/gfs2/quota.c | 26 ++++++++++++++++++++------
+>   fs/gfs2/quota.h |  3 ++-
+>   3 files changed, 25 insertions(+), 10 deletions(-)
+>
+> diff --git a/fs/gfs2/main.c b/fs/gfs2/main.c
+> index afcb32854f14..e47b1cc79f59 100644
+> --- a/fs/gfs2/main.c
+> +++ b/fs/gfs2/main.c
+> @@ -147,7 +147,7 @@ static int __init init_gfs2_fs(void)
+>   	if (!gfs2_trans_cachep)
+>   		goto fail_cachep8;
+>   
+> -	error = register_shrinker(&gfs2_qd_shrinker, "gfs2-qd");
+> +	error = gfs2_qd_shrinker_init();
+>   	if (error)
+>   		goto fail_shrinker;
+>   
+> @@ -196,7 +196,7 @@ static int __init init_gfs2_fs(void)
+>   fail_wq2:
+>   	destroy_workqueue(gfs_recovery_wq);
+>   fail_wq1:
+> -	unregister_shrinker(&gfs2_qd_shrinker);
+> +	gfs2_qd_shrinker_exit();
+>   fail_shrinker:
+>   	kmem_cache_destroy(gfs2_trans_cachep);
+>   fail_cachep8:
+> @@ -229,7 +229,7 @@ static int __init init_gfs2_fs(void)
+>   
+>   static void __exit exit_gfs2_fs(void)
+>   {
+> -	unregister_shrinker(&gfs2_qd_shrinker);
+> +	gfs2_qd_shrinker_exit();
+>   	gfs2_glock_exit();
+>   	gfs2_unregister_debugfs();
+>   	unregister_filesystem(&gfs2_fs_type);
+> diff --git a/fs/gfs2/quota.c b/fs/gfs2/quota.c
+> index 704192b73605..bc9883cea847 100644
+> --- a/fs/gfs2/quota.c
+> +++ b/fs/gfs2/quota.c
+> @@ -186,13 +186,27 @@ static unsigned long gfs2_qd_shrink_count(struct shrinker *shrink,
+>   	return vfs_pressure_ratio(list_lru_shrink_count(&gfs2_qd_lru, sc));
+>   }
+>   
+> -struct shrinker gfs2_qd_shrinker = {
+> -	.count_objects = gfs2_qd_shrink_count,
+> -	.scan_objects = gfs2_qd_shrink_scan,
+> -	.seeks = DEFAULT_SEEKS,
+> -	.flags = SHRINKER_NUMA_AWARE,
+> -};
+> +static struct shrinker *gfs2_qd_shrinker;
+> +
+> +int gfs2_qd_shrinker_init(void)
 
-Yeah, will change it to a local variable. And the patch #15 is
-the same.
+It's better to declare this as __init.
 
-> 
+> +{
+> +	gfs2_qd_shrinker = shrinker_alloc(SHRINKER_NUMA_AWARE, "gfs2-qd");
+> +	if (!gfs2_qd_shrinker)
+> +		return -ENOMEM;
+> +
+> +	gfs2_qd_shrinker->count_objects = gfs2_qd_shrink_count;
+> +	gfs2_qd_shrinker->scan_objects = gfs2_qd_shrink_scan;
+> +	gfs2_qd_shrinker->seeks = DEFAULT_SEEKS;
+> +
+> +	shrinker_register(gfs2_qd_shrinker);
+>   
+> +	return 0;
+> +}
+> +
+> +void gfs2_qd_shrinker_exit(void)
+> +{
+> +	shrinker_unregister(gfs2_qd_shrinker);
+> +}
+>   
+>   static u64 qd2index(struct gfs2_quota_data *qd)
+>   {
+> diff --git a/fs/gfs2/quota.h b/fs/gfs2/quota.h
+> index 21ada332d555..f9cb863373f7 100644
+> --- a/fs/gfs2/quota.h
+> +++ b/fs/gfs2/quota.h
+> @@ -59,7 +59,8 @@ static inline int gfs2_quota_lock_check(struct gfs2_inode *ip,
+>   }
+>   
+>   extern const struct quotactl_ops gfs2_quotactl_ops;
+> -extern struct shrinker gfs2_qd_shrinker;
+> +int gfs2_qd_shrinker_init(void);
+> +void gfs2_qd_shrinker_exit(void);
+>   extern struct list_lru gfs2_qd_lru;
+>   extern void __init gfs2_quota_hash_init(void);
+>   
 
 --
 dm-devel mailing list
