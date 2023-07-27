@@ -1,76 +1,97 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5DCC0C04A6A
-	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 15:30:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 207C9C001DC
+	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 17:55:01 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690471808;
+	s=mimecast20190719; t=1690480501;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=8tDARzdqnP9nZQElieKeP4OLsRHq1X8l/991RAsSwes=;
-	b=gCHunL0ac6yC8peT8njMWFAOkN2ZOBS+VUWDYiPQQI1BFw+VLZNoLiQs0ZBV1B52YcU5cq
-	dfgACshMH6iS9Pmfh2PhHNm//ebAb09J6mKbJqw8oH0CnwfoR+0fAFX5PNoDeiah6J1PkI
-	vJT66Iz/+nZGCL0UzCx4XpWNpeI7lbs=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-330-k-xKQeytPPqbzweQ-O0SUA-1; Thu, 27 Jul 2023 11:30:04 -0400
-X-MC-Unique: k-xKQeytPPqbzweQ-O0SUA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	bh=ZESC7fMRlu7QGcS9b6+5ADofG0OQ3DUg37nLxxRggs8=;
+	b=JOq+tki5Rrvarm1pbyuZ5VhPu6ORZKwgL/bbF7g9QS21qMOl+C0QzuN2pfajOm4iSPSlZ0
+	BS7BgyqqVBxJbF+xTJ2mdh9lQfV0ELeJl9fz9ayTuRxlWtWs07oc+cSHCCieJxSZr2SH0v
+	CyWfdtPVCUobv/USbInl1nPEfjeflhk=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-517-A0ZOCf-oMLK2o6-RYgykuQ-1; Thu, 27 Jul 2023 13:54:59 -0400
+X-MC-Unique: A0ZOCf-oMLK2o6-RYgykuQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0F7FE185A7A8;
-	Thu, 27 Jul 2023 15:30:02 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2A43C201F11C;
-	Thu, 27 Jul 2023 15:30:01 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 16A3C1C0758C;
+	Thu, 27 Jul 2023 17:54:57 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0040840C2063;
+	Thu, 27 Jul 2023 17:54:56 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DB5E31946A45;
-	Thu, 27 Jul 2023 15:30:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0335919451C9;
+	Thu, 27 Jul 2023 17:54:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8ECA61946586
- for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 15:30:00 +0000 (UTC)
+ ESMTP id 6CCDD1946A6C
+ for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 08:07:43 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6270F4094DC1; Thu, 27 Jul 2023 15:30:00 +0000 (UTC)
+ id 4CB96F77AD; Thu, 27 Jul 2023 08:07:43 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 5B1F94094DC0
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 15:30:00 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3CF72185A793
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 15:30:00 +0000 (UTC)
-Received: from box.fidei.email (box.fidei.email [71.19.144.250]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-2-EF2LETjvM4KR5EiafIbDiA-1; Thu,
- 27 Jul 2023 11:29:55 -0400
-X-MC-Unique: EF2LETjvM4KR5EiafIbDiA-1
-Received: from authenticated-user (box.fidei.email [71.19.144.250])
- (using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits))
- (No client certificate requested)
- by box.fidei.email (Postfix) with ESMTPSA id 391C983618;
- Thu, 27 Jul 2023 11:29:52 -0400 (EDT)
-Message-ID: <f62c9dd4-08e6-4b00-a05d-4071e87405a7@dorminy.me>
-Date: Thu, 27 Jul 2023 11:29:51 -0400
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 44BF8F6CD2
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:07:43 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2338A8870D1
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:07:43 +0000 (UTC)
+Received: from mail-pf1-f172.google.com (mail-pf1-f172.google.com
+ [209.85.210.172]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-679-fy5lW3VcPN-Ii-g-ANOhXg-1; Thu, 27 Jul 2023 04:07:40 -0400
+X-MC-Unique: fy5lW3VcPN-Ii-g-ANOhXg-1
+Received: by mail-pf1-f172.google.com with SMTP id
+ d2e1a72fcca58-682ae5d4184so170628b3a.1
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 01:07:40 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1690445260; x=1691050060;
+ h=content-transfer-encoding:mime-version:references:in-reply-to
+ :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=bO4yc6b0222dRNj48HoFyPuU9QjRVolFKKVhhMGpLKw=;
+ b=NOGs3QeUGYQZeBo8s35ZRVmAvzyKXhNkkkw8oXG1MIODsRopxE/13pdMnI8z7qbK7g
+ NpHLGhSMelvLqptyOPUiHgq1NbpxTi6FBmjAT2wbPZhzg0or2lhjamdRSZQiUGx8j222
+ QcLwLfzJeRml1DIDb/KNlZp0KXx32IFchDFg88OLePcfrX09JWmNbpOGyn0UP3J8bFHy
+ mcxsae6oEsTdmrfBh+5aUSk16NKFolOPrzPmUubfntgZYlSyX4aItg+ASgchTrrTyW11
+ ZdQ+vwrfeJ7oAcI/4vCcw2ke0tYABEAUslBLGIu97vBp1ECPEG2t/xAN+ojZqmYIdGgO
+ BMyQ==
+X-Gm-Message-State: ABy/qLYfhqIm3LNPfBOaQQ0ePcpRBExn/Y+Awh90kDb+KI85iolxARr/
+ Ivldbto6TfR7IvdaYgNS4qLrlw==
+X-Google-Smtp-Source: APBJJlEtjuu7JvMViG/zI1+BRK6QgnXajX34xFKdSMMqB1WswZOW9mIhLIlLvIrLtx031P4ulw5hGg==
+X-Received: by 2002:a05:6a20:9381:b0:137:8f19:1de7 with SMTP id
+ x1-20020a056a20938100b001378f191de7mr6160325pzh.0.1690445259706; 
+ Thu, 27 Jul 2023 01:07:39 -0700 (PDT)
+Received: from C02DW0BEMD6R.bytedance.net ([203.208.167.147])
+ by smtp.gmail.com with ESMTPSA id
+ j8-20020aa78d08000000b006828e49c04csm885872pfe.75.2023.07.27.01.07.26
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Thu, 27 Jul 2023 01:07:39 -0700 (PDT)
+From: Qi Zheng <zhengqi.arch@bytedance.com>
+To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
+ vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
+ brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu,
+ steven.price@arm.com, cel@kernel.org, senozhatsky@chromium.org,
+ yujie.liu@intel.com, gregkh@linuxfoundation.org, muchun.song@linux.dev
+Date: Thu, 27 Jul 2023 16:04:22 +0800
+Message-Id: <20230727080502.77895-10-zhengqi.arch@bytedance.com>
+In-Reply-To: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
+References: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
 MIME-Version: 1.0
-From: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-To: Ken Raeburn <raeburn@redhat.com>
-References: <20230523214539.226387-1-corwin@redhat.com>
- <ZLa086NuWiMkJKJE@redhat.com>
- <CAK1Ur396ThV5AAZx2336uAW3FqSY+bHiiwEPofHB_Kwwr4ag5A@mail.gmail.com>
- <509f4916-a95f-216e-b0ab-7b7a108a48a0@dorminy.me> <87bkfy9riw.fsf@redhat.com>
-In-Reply-To: <87bkfy9riw.fsf@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,9 +99,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] [vdo-devel] [PATCH v2 00/39] Add the dm-vdo
- deduplication and compression device mapper target.
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Mailman-Approved-At: Thu, 27 Jul 2023 17:54:53 +0000
+Subject: [dm-devel] [PATCH v3 09/49] xenbus/backend: dynamically allocate
+ the xen-backend shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -92,64 +114,73 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: vdo-devel@redhat.com, ebiggers@kernel.org,
- Mike Snitzer <snitzer@kernel.org>, linux-block@vger.kernel.org,
- dm-devel@redhat.com, tj@kernel.org
+Cc: kvm@vger.kernel.org, dri-devel@lists.freedesktop.org,
+ virtualization@lists.linux-foundation.org, linux-mm@kvack.org,
+ dm-devel@redhat.com, linux-mtd@lists.infradead.org, x86@kernel.org,
+ cluster-devel@redhat.com, xen-devel@lists.xenproject.org,
+ linux-ext4@vger.kernel.org, linux-arm-msm@vger.kernel.org, rcu@vger.kernel.org,
+ linux-bcache@vger.kernel.org, Qi Zheng <zhengqi.arch@bytedance.com>,
+ Muchun Song <songmuchun@bytedance.com>, linux-raid@vger.kernel.org,
+ linux-nfs@vger.kernel.org, netdev@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
+ linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: dorminy.me
-Content-Language: en-US
+X-Mimecast-Originator: bytedance.com
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
+Use new APIs to dynamically allocate the xen-backend shrinker.
 
-> 
->> If kernel workqueues have higher overhead per item for the lightweight
->> work VDO currently does in each step, perhaps the dual of the current
->> scheme would let more work get done per fixed queuing overhead, and
->> thus perform better? VIOs could take locks on sections of structures,
->> and operate on multiple structures before requeueing.
-> 
-> Can you suggest a little more specifically what the "dual" is you're
-> picturing?
+Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
+Reviewed-by: Muchun Song <songmuchun@bytedance.com>
+---
+ drivers/xen/xenbus/xenbus_probe_backend.c | 18 +++++++++++-------
+ 1 file changed, 11 insertions(+), 7 deletions(-)
 
-It sounds like your experiment consisted of one kernel workqueue per 
-existing thread, with VIOs queueing on each thread in turn precisely as 
-they do at present, so that when the VIO work item is running it's 
-guaranteed to be the unique actor on a particular set of structures 
-(e.g. for a physical thread the physical zone and slabs).
-
-I am thinking of an alternate scheme where e.g. each slab, each block 
-map zone, each packer would be protected by a lock instead of owned by a 
-thread. There would be one workqueue with concurrency allowed where all 
-VIOs would operate.
-
-VIOs would do an initial queuing on a kernel workqueue, and then when 
-the VIO work item would run, they'd take and hold the appropriate locks 
-while they operated on each structure. So they'd take and release slab 
-locks until they found a free block; send off to UDS and get requeued 
-when it came back or the timer expired; try to compress and take/release 
-a lock on the packer while adding itself to a bin and get requeued if 
-appropriate when the packer released it; write and requeue when the 
-write finishes if relevant. Then I think the 'make whatever modification 
-to structures is relevant' part can be done without any requeue: take 
-and release the recovery journal lock; ditto on the relevant slab; again 
-the journal; again the other slab; then the part of the block map; etc.
-
-Yes, there's the intriguing ordering requirements to work through, but 
-maybe as an initial performance experiment the ordering can be ignored 
-to get an idea of whether this scheme could provide acceptable performance.
-
-> There are also occasionally non-VIO objects which get queued to invoke
-> actions on various threads, which I expect might further complicate the
-> experiment.
-
-I think that's the easy part -- queueing a work item to grab a lock and 
-Do Something seems to me a pretty common thing in the kernel code. 
-Unless there are ordering requirements among the non-vios I'm not 
-calling to mind.
+diff --git a/drivers/xen/xenbus/xenbus_probe_backend.c b/drivers/xen/xenbus/xenbus_probe_backend.c
+index da96c260e26b..929c41a5ccee 100644
+--- a/drivers/xen/xenbus/xenbus_probe_backend.c
++++ b/drivers/xen/xenbus/xenbus_probe_backend.c
+@@ -284,13 +284,9 @@ static unsigned long backend_shrink_memory_count(struct shrinker *shrinker,
+ 	return 0;
+ }
+ 
+-static struct shrinker backend_memory_shrinker = {
+-	.count_objects = backend_shrink_memory_count,
+-	.seeks = DEFAULT_SEEKS,
+-};
+-
+ static int __init xenbus_probe_backend_init(void)
+ {
++	struct shrinker *backend_memory_shrinker;
+ 	static struct notifier_block xenstore_notifier = {
+ 		.notifier_call = backend_probe_and_watch
+ 	};
+@@ -305,8 +301,16 @@ static int __init xenbus_probe_backend_init(void)
+ 
+ 	register_xenstore_notifier(&xenstore_notifier);
+ 
+-	if (register_shrinker(&backend_memory_shrinker, "xen-backend"))
+-		pr_warn("shrinker registration failed\n");
++	backend_memory_shrinker = shrinker_alloc(0, "xen-backend");
++	if (!backend_memory_shrinker) {
++		pr_warn("shrinker allocation failed\n");
++		return 0;
++	}
++
++	backend_memory_shrinker->count_objects = backend_shrink_memory_count;
++	backend_memory_shrinker->seeks = DEFAULT_SEEKS;
++
++	shrinker_register(backend_memory_shrinker);
+ 
+ 	return 0;
+ }
+-- 
+2.30.2
 
 --
 dm-devel mailing list
