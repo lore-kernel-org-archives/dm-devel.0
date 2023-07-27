@@ -1,91 +1,111 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AB5BFEB64DD
-	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 20:41:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0603EC00528
+	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 22:59:54 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690490517;
+	s=mimecast20190719; t=1690498794;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=7caaEc3WuBbl2YHL2/tfBVDst/dVS+QT5OGy2NpJ5IQ=;
-	b=ErwS6qiiCITL8jsYkPFjGoyew9aJU021mKKowC0+IPA4VpyurhxVIqbOAdB4iq+igpOJNz
-	BzucnMMKTCsHK00UX7J8qO/H5gYH8mF8V8xxDJIsUHE06lzHQnxTatOCF6kCY2uRzjeYMM
-	yuURbHb1gVGFRjtlxEvcbzcIiU2uJn8=
-Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-412-se0R19NRPeq42Hh_g37oyA-1; Thu, 27 Jul 2023 16:41:54 -0400
-X-MC-Unique: se0R19NRPeq42Hh_g37oyA-1
+	bh=DAvo3zoFuCpBKQTJ1sgmG0SXHaLRbGlgv/vM3yg3YEE=;
+	b=NDAvhVY3YQY2MeFpzSTDAzK6zuNrO6z4Vd90EuOQ13sOut1NWWdmkHkXbAnm6oGPtXYbLE
+	D314XCHv9BKLLNTaZVxHjmkJAm0RYGnSBZeOr0AMoarlaeP/QtBPcx2RxGuPs2u3nX7QnN
+	Kep8829jM50U/Ci3MxuoE/ZuV0RcTTs=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-9-BemeJhqdOSCoFcG1KR3wcQ-1; Thu, 27 Jul 2023 18:59:50 -0400
+X-MC-Unique: BemeJhqdOSCoFcG1KR3wcQ-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5502C29AB3E6;
-	Thu, 27 Jul 2023 20:41:51 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C447A85A58A;
+	Thu, 27 Jul 2023 22:59:48 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EA28AC57965;
-	Thu, 27 Jul 2023 20:41:44 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 62CE6C57964;
+	Thu, 27 Jul 2023 22:59:47 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8E4AC1946A6A;
-	Thu, 27 Jul 2023 20:41:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3392F1946A6A;
+	Thu, 27 Jul 2023 22:59:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6FD331946586
- for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 20:41:43 +0000 (UTC)
+ ESMTP id EB5AA1946586
+ for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 22:59:44 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1C3C240C206F; Thu, 27 Jul 2023 20:41:43 +0000 (UTC)
+ id DB123111F3B6; Thu, 27 Jul 2023 22:59:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 14D6540C2063
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 20:41:43 +0000 (UTC)
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D29F5111F3B0
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 22:59:44 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E1383858F1E
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 20:41:42 +0000 (UTC)
-Received: from mail-qk1-f175.google.com (mail-qk1-f175.google.com
- [209.85.222.175]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A70BE185A78F
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 22:59:44 +0000 (UTC)
+Received: from mail-pf1-f170.google.com (mail-pf1-f170.google.com
+ [209.85.210.170]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-423-M3auZb9zO5CAilGTxkzmKw-1; Thu, 27 Jul 2023 16:41:41 -0400
-X-MC-Unique: M3auZb9zO5CAilGTxkzmKw-1
-Received: by mail-qk1-f175.google.com with SMTP id
- af79cd13be357-76754b9eac0so120025485a.0
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 13:41:40 -0700 (PDT)
+ us-mta-605-E6sKv4BoO6CrssoBXRFwfQ-1; Thu, 27 Jul 2023 18:59:42 -0400
+X-MC-Unique: E6sKv4BoO6CrssoBXRFwfQ-1
+Received: by mail-pf1-f170.google.com with SMTP id
+ d2e1a72fcca58-686f94328a4so673974b3a.0
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 15:59:41 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1690490500; x=1691095300;
- h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+ d=1e100.net; s=20221208; t=1690498781; x=1691103581;
+ h=in-reply-to:content-transfer-encoding:content-disposition
+ :mime-version:references:message-id:subject:cc:to:from:date
  :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=imzr9gf0e2pNdaKE7K17eEPetoldcbtASO5vqhQPuOs=;
- b=W3OlJ/WiJy+Q99/kaxzzays1AdU1rw8ILvYiZ1YiK7ZRP0bN1ScwvY0S84aWM9zC0f
- ecJsm4Apm2ilrQQ+SWOQB2EEU9qV726lDwx3n/mVYBXIrlPoorjwi5FBCVncEyoXCIy8
- PnnVd40+FPIh0y9a+melijETjP71IU38BTvaedEEilNau3u91KpJ3ns87NmtuLnmAfWc
- H4UZ1loCTDXuQVxRWIZLgsESmefKkryqPw9OsJivWxqt6NXFZoMtcfUMrFVYjkmIYtHo
- vGwAR8UV3J3yiT8atOddrg8cPGw235COKtG5rfIXfhYEOB+nOLFVxAl4dNrLNWHE7vfl
- qouw==
-X-Gm-Message-State: ABy/qLbgoLu3Hdz6U1hvjRy7Exd9xt5Mn1r9XrVPfvFJqCpTxaFAXtgV
- P1FyffbjdZkjgekJPpOaTgriTPSNOZ+gLRmvYJo1
-X-Google-Smtp-Source: APBJJlEdn+lfgl6m0z4xO9GaLOCk+43ZMDakR8zQH9o7S3KDV1QulUPjcSb2rs+mdlhI4WHm+HVceA==
-X-Received: by 2002:a05:620a:46a5:b0:769:542:b3fd with SMTP id
- bq37-20020a05620a46a500b007690542b3fdmr705916qkb.8.1690490500539; 
- Thu, 27 Jul 2023 13:41:40 -0700 (PDT)
-Received: from localhost ([185.202.220.182]) by smtp.gmail.com with ESMTPSA id
- ow34-20020a05620a822200b00767c61ee342sm656143qkn.48.2023.07.27.13.41.38
+ bh=8CTrna5t3S7P99W+zrM1I2ApZYIkXTVQedDFVAI6oIw=;
+ b=W9iAagOh0fjE+zAs1vHu0ETLLwttbInolcgE/geSviR7AVcBw8GQoB0NSSxg2C8jDC
+ EXOfNiXb3eA5ab5cAqCt1qoMZTmeqxGkqu3eVq/K1pncit4s3qDNj+bpoyO30W0IcdC/
+ gMa/eEk+OLzIeMRDSo3+pQx3oqSvzN1X/GUKEXEMuy0SiFvn6JositrnYsGpkGOvVYic
+ ZxIdlRgK3/dXYRXPWHNBn8PuTMx29x5i/qnINb9fvdDCLidOf+7lUZxqhvvTFi59h18K
+ BporRD6ZJ/wje2NIurJ9alJnHBOfLS6fZw0cu6eXf1Ij5CNtjnAo36ZUIrwU0hPl4kDv
+ T2Tw==
+X-Gm-Message-State: ABy/qLbQxdcHEm3wTQchU1A6ObCVKO2GAJfdsm0a43YD5Byj00b9/7HS
+ 8XmbVCg37oHV0j/dLngkShs9vg==
+X-Google-Smtp-Source: APBJJlGFE8oAcAZu2XvzWjC5bjR81v7OIjjTfZ8m+EaEe6Rjpq3cuwvHN3I08mErFwOZJpneP9Ly1g==
+X-Received: by 2002:a05:6a00:17a8:b0:64d:42b9:6895 with SMTP id
+ s40-20020a056a0017a800b0064d42b96895mr61072pfg.5.1690498780930; 
+ Thu, 27 Jul 2023 15:59:40 -0700 (PDT)
+Received: from dread.disaster.area (pa49-186-119-116.pa.vic.optusnet.com.au.
+ [49.186.119.116]) by smtp.gmail.com with ESMTPSA id
+ p24-20020aa78618000000b0068702b66ab1sm1115813pfn.174.2023.07.27.15.59.40
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 27 Jul 2023 13:41:39 -0700 (PDT)
-Date: Thu, 27 Jul 2023 16:41:38 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Message-ID: <ZMLWgk816vYI3j11@redhat.com>
+ Thu, 27 Jul 2023 15:59:40 -0700 (PDT)
+Received: from dave by dread.disaster.area with local (Exim 4.96)
+ (envelope-from <david@fromorbit.com>) id 1qP9xJ-00BKKZ-1O;
+ Fri, 28 Jul 2023 08:59:37 +1000
+Date: Fri, 28 Jul 2023 08:59:37 +1000
+From: Dave Chinner <david@fromorbit.com>
+To: Damien Le Moal <dlemoal@kernel.org>
+Message-ID: <ZML22YJi5vPBDEDj@dread.disaster.area>
+References: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
+ <20230727080502.77895-29-zhengqi.arch@bytedance.com>
+ <baaf7de4-9a0e-b953-2b6a-46e60c415614@kernel.org>
+ <56ee1d92-28ee-81cb-9c41-6ca7ea6556b0@bytedance.com>
+ <ba0868b2-9f90-3d81-1c91-8810057fb3ce@kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: [dm-devel] [git pull] device mapper fixes for 6.5-rc4
+In-Reply-To: <ba0868b2-9f90-3d81-1c91-8810057fb3ce@kernel.org>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH v3 28/49] dm zoned: dynamically allocate the
+ dm-zoned-meta shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -97,73 +117,81 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Joe Thornber <ejt@redhat.com>, linux-block@vger.kernel.org,
- dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>,
- Yu Kuai <yukuai3@huawei.com>, Alasdair G Kergon <agk@redhat.com>
+Cc: kvm@vger.kernel.org, djwong@kernel.org, roman.gushchin@linux.dev,
+ Qi Zheng <zhengqi.arch@bytedance.com>,
+ virtualization@lists.linux-foundation.org, linux-mm@kvack.org,
+ dm-devel@redhat.com, linux-mtd@lists.infradead.org, cel@kernel.org,
+ x86@kernel.org, steven.price@arm.com, cluster-devel@redhat.com,
+ xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org, paulmck@kernel.org,
+ linux-arm-msm@vger.kernel.org, brauner@kernel.org, rcu@vger.kernel.org,
+ linux-bcache@vger.kernel.org, dri-devel@lists.freedesktop.org,
+ Muchun Song <songmuchun@bytedance.com>, yujie.liu@intel.com, vbabka@suse.cz,
+ linux-raid@vger.kernel.org, linux-nfs@vger.kernel.org, tytso@mit.edu,
+ netdev@vger.kernel.org, muchun.song@linux.dev, linux-kernel@vger.kernel.org,
+ linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
+ senozhatsky@chromium.org, gregkh@linuxfoundation.org,
+ linux-fsdevel@vger.kernel.org, akpm@linux-foundation.org,
+ linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org, tkhai@ya.ru
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
+X-Mimecast-Originator: fromorbit.com
 Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-Hi Linus,
+On Thu, Jul 27, 2023 at 07:20:46PM +0900, Damien Le Moal wrote:
+> On 7/27/23 17:55, Qi Zheng wrote:
+> >>> =A0=A0=A0=A0=A0=A0=A0=A0=A0 goto err;
+> >>> =A0=A0=A0=A0=A0 }
+> >>> =A0 +=A0=A0=A0 zmd->mblk_shrinker->count_objects =3D dmz_mblock_shrin=
+ker_count;
+> >>> +=A0=A0=A0 zmd->mblk_shrinker->scan_objects =3D dmz_mblock_shrinker_s=
+can;
+> >>> +=A0=A0=A0 zmd->mblk_shrinker->seeks =3D DEFAULT_SEEKS;
+> >>> +=A0=A0=A0 zmd->mblk_shrinker->private_data =3D zmd;
+> >>> +
+> >>> +=A0=A0=A0 shrinker_register(zmd->mblk_shrinker);
+> >>
+> >> I fail to see how this new shrinker API is better... Why isn't there a
+> >> shrinker_alloc_and_register() function ? That would avoid adding all t=
+his code
+> >> all over the place as the new API call would be very similar to the cu=
+rrent
+> >> shrinker_register() call with static allocation.
+> >=20
+> > In some registration scenarios, memory needs to be allocated in advance=
+.
+> > So we continue to use the previous prealloc/register_prepared()
+> > algorithm. The shrinker_alloc_and_register() is just a helper function
+> > that combines the two, and this increases the number of APIs that
+> > shrinker exposes to the outside, so I choose not to add this helper.
+>=20
+> And that results in more code in many places instead of less code + a sim=
+ple
+> inline helper in the shrinker header file...
 
-The following changes since commit fdf0eaf11452d72945af31804e2a1048ee1b574c:
+It's not just a "simple helper" - it's a function that has to take 6
+or 7 parameters with a return value that must be checked and
+handled.
 
-  Linux 6.5-rc2 (2023-07-16 15:10:37 -0700)
+This was done in the first versions of the patch set - the amount of
+code in each caller does not go down and, IMO, was much harder to
+read and determine "this is obviously correct" that what we have
+now.
 
-are available in the Git repository at:
+> So not adding that super simple
+> helper is not exactly the best choice in my opinion.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.5/dm-fixes
+Each to their own - I much prefer the existing style/API over having
+to go look up a helper function every time I want to check some
+random shrinker has been set up correctly....
 
-for you to fetch changes up to 1e4ab7b4c881cf26c1c72b3f56519e03475486fb:
-
-  dm cache policy smq: ensure IO doesn't prevent cleaner policy progress (2023-07-25 11:55:50 -0400)
-
-Please pull, thanks.
-Mike
-
-----------------------------------------------------------------
-- Fix double free on memory allocation failure in DM integrity
-  target's integrity_recalc()
-
-- Fix locking in DM raid target's raid_ctr() and around call to
-  md_stop()
-
-- Fix DM cache target's cleaner policy to always allow work to be
-  queued for writeback; even if cache isn't idle.
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCAAdFiEEJfWUX4UqZ4x1O2wixSPxCi2dA1oFAmTC1UoACgkQxSPxCi2d
-A1pIGAgAhQjlNQ83DexvmMUoNDRGFxOBiOcL9DnVtiXsLd/wTXZTEDIDXJaH9hCq
-MAj7aqadBeHlWT+vNMOYH9ePPtySEKGs8VM/4/fwNtT6wMyqxZZk4JyN7z+YBVJV
-d/9lryVZYRWK7ICgRenR/VSxv8/JgVTBGZZqyl20SXhtlYxndxGcLeV0X8fP3G1Q
-pxdsNuE7TBclB8qrXiPIOlIK0HcSikz6CfQIar3zgip6fO+Wwb92CZ1DOGGi1RJz
-bsTmZXn08l3d1tMJ+y4umZm+Izq8gvWSgDBywRdWq/D6Ao1ScVqY4TExFSSkjDk0
-PUY49vMF/FsKfNt5/VK0/i2U7QAKDQ==
-=92HI
------END PGP SIGNATURE-----
-
-----------------------------------------------------------------
-Joe Thornber (1):
-      dm cache policy smq: ensure IO doesn't prevent cleaner policy progress
-
-Mikulas Patocka (1):
-      dm integrity: fix double free on memory allocation failure
-
-Yu Kuai (3):
-      dm raid: fix missing reconfig_mutex unlock in raid_ctr() error paths
-      dm raid: clean up four equivalent goto tags in raid_ctr()
-      dm raid: protect md_stop() with 'reconfig_mutex'
-
- drivers/md/dm-cache-policy-smq.c | 28 ++++++++++++++++++----------
- drivers/md/dm-integrity.c        |  1 +
- drivers/md/dm-raid.c             | 20 +++++++++-----------
- drivers/md/md.c                  |  2 ++
- 4 files changed, 30 insertions(+), 21 deletions(-)
+-Dave.
+--=20
+Dave Chinner
+david@fromorbit.com
 
 --
 dm-devel mailing list
