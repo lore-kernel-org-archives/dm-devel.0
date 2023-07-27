@@ -4,92 +4,92 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AD846C04A94
-	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 17:55:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7B6C2C41513
+	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 17:55:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690480501;
+	s=mimecast20190719; t=1690480502;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=L92NdSYJjeDbz0tVe63Bp923a0aJjtPKFdttKe/SD/8=;
-	b=SO45LDi1RtkNpHUe/MMOQtHLp8+LxZIQ3IcJJbs+0mMy2guElqqm5lPVHjS1keuZkox965
-	6VMLSfqFAGYmmVYrD9BtxGElRqfxdxMqugvMRhVPun5l32Dk2nwSKJ2r1jFmSODZVrek5u
-	CvxXwPwyI1uZp99OqzWhCiIvHzspuWg=
+	bh=krQWAUBhW3wTGjWLt2WAJMVyKrjHxv+1JpkFq6oDygk=;
+	b=iwpxtuFd6pXQc8hABQtqY+nRECZt70TLbF4Ie+fn3LjshdeJk9pMzm9jMAEbUNonS6pi/J
+	fmgFzjtP2lAYxYX/uWTGkP8arS4sXQkQW/zpF4cqrest8TEArW+uA3ius5NP0uqSFm/P5l
+	I9648Jq9+EcJgaYJ8eKpvfBBKymcKrU=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-515-QXxJ718gN965uxPC6xeU1A-1; Thu, 27 Jul 2023 13:54:59 -0400
-X-MC-Unique: QXxJ718gN965uxPC6xeU1A-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-567-UcFCdgO4O3Sj1gp34f8pCA-1; Thu, 27 Jul 2023 13:55:00 -0400
+X-MC-Unique: UcFCdgO4O3Sj1gp34f8pCA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 92BEC185A7B5;
-	Thu, 27 Jul 2023 17:54:56 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6D830830DB7;
+	Thu, 27 Jul 2023 17:54:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 718B81454147;
-	Thu, 27 Jul 2023 17:54:55 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 53835207B2DF;
+	Thu, 27 Jul 2023 17:54:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 600D91946A75;
-	Thu, 27 Jul 2023 17:54:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2F56619451D7;
+	Thu, 27 Jul 2023 17:54:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id BE5221946A74
- for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 08:11:33 +0000 (UTC)
+ ESMTP id 493291946A6C
+ for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 08:08:19 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id AA24A40C2071; Thu, 27 Jul 2023 08:11:33 +0000 (UTC)
+ id 266641454145; Thu, 27 Jul 2023 08:08:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A033540C2063
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:11:33 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1DFBA145414B
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:08:19 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
- [207.211.31.120])
+ [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6014A830DB4
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:11:33 +0000 (UTC)
-Received: from mail-pf1-f181.google.com (mail-pf1-f181.google.com
- [209.85.210.181]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F3A4210504B4
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:08:18 +0000 (UTC)
+Received: from mail-pf1-f173.google.com (mail-pf1-f173.google.com
+ [209.85.210.173]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-101-IMs63sTdO0ehpFur36W8UQ-1; Thu, 27 Jul 2023 04:11:31 -0400
-X-MC-Unique: IMs63sTdO0ehpFur36W8UQ-1
-Received: by mail-pf1-f181.google.com with SMTP id
- d2e1a72fcca58-682eef7d752so204430b3a.0
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 01:11:31 -0700 (PDT)
+ us-mta-433-j4__tTUaP42lSKqW34QOew-2; Thu, 27 Jul 2023 04:08:16 -0400
+X-MC-Unique: j4__tTUaP42lSKqW34QOew-2
+Received: by mail-pf1-f173.google.com with SMTP id
+ d2e1a72fcca58-682eef7d752so203646b3a.0
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 01:08:16 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1690445490; x=1691050290;
+ d=1e100.net; s=20221208; t=1690445296; x=1691050096;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=ze2BfjPj3zI6XK14aBXxwpj9cG5VKS+QoT9VkWxAsig=;
- b=T5CXLcOun8oe5burMZmQMIq4Wy4a3WRMfdvRK/HG5KvSZyclcFngsLXnDickuB2wzD
- yoBGZjUTnaM2RKzCnN7ImP/CM8wGmW67bzYp1r99AyYrLhx50S0qHIk2mCdU7cHwWI4w
- SGfArCaPobS8xvIMN4udUwVnuJWA2rcdFaXQxZzBhY2Sjst11gzeTSLStrvK6t0E7Ohl
- etqp9n3EpyuhA3BT1eacO73UDcxtuh5yuekOrI3QN62BFwNhkRDQq4g1RZQmSqebD53V
- 4LuOTod/ORUFKGpbKPVDJ+XsdXeODwU3TEnzN7TuEHQ2OJLEHXnauMwUzdAACldJEsGP
- edPQ==
-X-Gm-Message-State: ABy/qLbHGIK8xvwCI5ZrHeH4IuZRFo8QbExeb51vd7gj5NLxKjcPMZhA
- cH/DxmRmyt2LY9AXU4j6T0BHcg==
-X-Google-Smtp-Source: APBJJlFMZtECqV3NWJubuagzux89byKCTiavknA18umD2w/BadGADzl49oXppHX8YppKwxO9L0rdOg==
+ bh=XAY9+N2BbVQBjCT3MmFWkPxUR/2vf6o4m+CtMBoAzag=;
+ b=i+mKH5bn5G/siIL8CRpHfufBsKCzPb7yBcMdwbqDR3HgQofobSdvg8yeu06MZQ5JIB
+ CRf/kbI4W/7HSv247TjyOasQMqCEKzhIOvTO9zkTwNo4RHAo10sXsBDGN2yr27vn6ux9
+ Nd3z7KgMXiTbyxrUMDnJ7C/9U5HZnWTSIZvXiO60mD5W9IJsLIPUfULNx8VdDpTUmdKE
+ dOHVjdeTnIJIE9FBypPXueKCuzQX60/efWmcxYKZlnTVwlnqtf+owaN0iD+wsWQs5C8U
+ 21qmiSyKDh3hVVk0VAEZLy2omYlWShrKX7393GFa1tAWWBQLXbrSJYTUPBvzhDJbrhL2
+ eS3Q==
+X-Gm-Message-State: ABy/qLaW1jnoY6ienaeO2O2kOVJDR8qtc6ATgeNIayZUxhiUTUMpaWqf
+ 91kkkohK7LcTJIoFCBmMOS9vYg==
+X-Google-Smtp-Source: APBJJlFXIDspBDKYt+edW+ekZSGIMkDEJizocNVTOvlzV7xMQBKW4TeDX8VYOaL7MgnXn0ggLAa8Tw==
 X-Received: by 2002:a05:6a00:1586:b0:67f:8ef5:2643 with SMTP id
- u6-20020a056a00158600b0067f8ef52643mr5208150pfk.2.1690445490190; 
- Thu, 27 Jul 2023 01:11:30 -0700 (PDT)
+ u6-20020a056a00158600b0067f8ef52643mr5200829pfk.2.1690445296182; 
+ Thu, 27 Jul 2023 01:08:16 -0700 (PDT)
 Received: from C02DW0BEMD6R.bytedance.net ([203.208.167.147])
  by smtp.gmail.com with ESMTPSA id
- j8-20020aa78d08000000b006828e49c04csm885872pfe.75.2023.07.27.01.11.18
+ j8-20020aa78d08000000b006828e49c04csm885872pfe.75.2023.07.27.01.08.04
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 27 Jul 2023 01:11:29 -0700 (PDT)
+ Thu, 27 Jul 2023 01:08:15 -0700 (PDT)
 From: Qi Zheng <zhengqi.arch@bytedance.com>
 To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
  vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
  brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu,
  steven.price@arm.com, cel@kernel.org, senozhatsky@chromium.org,
  yujie.liu@intel.com, gregkh@linuxfoundation.org, muchun.song@linux.dev
-Date: Thu, 27 Jul 2023 16:04:41 +0800
-Message-Id: <20230727080502.77895-29-zhengqi.arch@bytedance.com>
+Date: Thu, 27 Jul 2023 16:04:25 +0800
+Message-Id: <20230727080502.77895-13-zhengqi.arch@bytedance.com>
 In-Reply-To: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
 References: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
 MIME-Version: 1.0
@@ -100,10 +100,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mailman-Approved-At: Thu, 27 Jul 2023 17:54:53 +0000
-Subject: [dm-devel] [PATCH v3 28/49] dm zoned: dynamically allocate the
- dm-zoned-meta shrinker
+Subject: [dm-devel] [PATCH v3 12/49] gfs2: dynamically allocate the
+ gfs2-glock shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -128,94 +128,68 @@ Cc: kvm@vger.kernel.org, dri-devel@lists.freedesktop.org,
  linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: bytedance.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-In preparation for implementing lockless slab shrink, use new APIs to
-dynamically allocate the dm-zoned-meta shrinker, so that it can be freed
-asynchronously using kfree_rcu(). Then it doesn't need to wait for RCU
-read-side critical section when releasing the struct dmz_metadata.
+Use new APIs to dynamically allocate the gfs2-glock shrinker.
 
 Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
 Reviewed-by: Muchun Song <songmuchun@bytedance.com>
 ---
- drivers/md/dm-zoned-metadata.c | 28 ++++++++++++++++------------
- 1 file changed, 16 insertions(+), 12 deletions(-)
+ fs/gfs2/glock.c | 20 +++++++++++---------
+ 1 file changed, 11 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index 9d3cca8e3dc9..0bcb26a43578 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -187,7 +187,7 @@ struct dmz_metadata {
- 	struct rb_root		mblk_rbtree;
- 	struct list_head	mblk_lru_list;
- 	struct list_head	mblk_dirty_list;
--	struct shrinker		mblk_shrinker;
-+	struct shrinker		*mblk_shrinker;
- 
- 	/* Zone allocation management */
- 	struct mutex		map_lock;
-@@ -615,7 +615,7 @@ static unsigned long dmz_shrink_mblock_cache(struct dmz_metadata *zmd,
- static unsigned long dmz_mblock_shrinker_count(struct shrinker *shrink,
- 					       struct shrink_control *sc)
- {
--	struct dmz_metadata *zmd = container_of(shrink, struct dmz_metadata, mblk_shrinker);
-+	struct dmz_metadata *zmd = shrink->private_data;
- 
- 	return atomic_read(&zmd->nr_mblks);
+diff --git a/fs/gfs2/glock.c b/fs/gfs2/glock.c
+index 1438e7465e30..8d582ba7514f 100644
+--- a/fs/gfs2/glock.c
++++ b/fs/gfs2/glock.c
+@@ -2046,11 +2046,7 @@ static unsigned long gfs2_glock_shrink_count(struct shrinker *shrink,
+ 	return vfs_pressure_ratio(atomic_read(&lru_count));
  }
-@@ -626,7 +626,7 @@ static unsigned long dmz_mblock_shrinker_count(struct shrinker *shrink,
- static unsigned long dmz_mblock_shrinker_scan(struct shrinker *shrink,
- 					      struct shrink_control *sc)
- {
--	struct dmz_metadata *zmd = container_of(shrink, struct dmz_metadata, mblk_shrinker);
-+	struct dmz_metadata *zmd = shrink->private_data;
- 	unsigned long count;
  
- 	spin_lock(&zmd->mblk_lock);
-@@ -2936,19 +2936,23 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
- 	 */
- 	zmd->min_nr_mblks = 2 + zmd->nr_map_blocks + zmd->zone_nr_bitmap_blocks * 16;
- 	zmd->max_nr_mblks = zmd->min_nr_mblks + 512;
--	zmd->mblk_shrinker.count_objects = dmz_mblock_shrinker_count;
--	zmd->mblk_shrinker.scan_objects = dmz_mblock_shrinker_scan;
--	zmd->mblk_shrinker.seeks = DEFAULT_SEEKS;
+-static struct shrinker glock_shrinker = {
+-	.seeks = DEFAULT_SEEKS,
+-	.count_objects = gfs2_glock_shrink_count,
+-	.scan_objects = gfs2_glock_shrink_scan,
+-};
++static struct shrinker *glock_shrinker;
  
- 	/* Metadata cache shrinker */
--	ret = register_shrinker(&zmd->mblk_shrinker, "dm-zoned-meta:(%u:%u)",
--				MAJOR(dev->bdev->bd_dev),
--				MINOR(dev->bdev->bd_dev));
--	if (ret) {
--		dmz_zmd_err(zmd, "Register metadata cache shrinker failed");
-+	zmd->mblk_shrinker = shrinker_alloc(0,  "dm-zoned-meta:(%u:%u)",
-+					    MAJOR(dev->bdev->bd_dev),
-+					    MINOR(dev->bdev->bd_dev));
-+	if (!zmd->mblk_shrinker) {
-+		dmz_zmd_err(zmd, "Allocate metadata cache shrinker failed");
- 		goto err;
+ /**
+  * glock_hash_walk - Call a function for glock in a hash bucket
+@@ -2472,13 +2468,19 @@ int __init gfs2_glock_init(void)
+ 		return -ENOMEM;
  	}
  
-+	zmd->mblk_shrinker->count_objects = dmz_mblock_shrinker_count;
-+	zmd->mblk_shrinker->scan_objects = dmz_mblock_shrinker_scan;
-+	zmd->mblk_shrinker->seeks = DEFAULT_SEEKS;
-+	zmd->mblk_shrinker->private_data = zmd;
+-	ret = register_shrinker(&glock_shrinker, "gfs2-glock");
+-	if (ret) {
++	glock_shrinker = shrinker_alloc(0, "gfs2-glock");
++	if (!glock_shrinker) {
+ 		destroy_workqueue(glock_workqueue);
+ 		rhashtable_destroy(&gl_hash_table);
+-		return ret;
++		return -ENOMEM;
+ 	}
+ 
++	glock_shrinker->count_objects = gfs2_glock_shrink_count;
++	glock_shrinker->scan_objects = gfs2_glock_shrink_scan;
++	glock_shrinker->seeks = DEFAULT_SEEKS;
 +
-+	shrinker_register(zmd->mblk_shrinker);
++	shrinker_register(glock_shrinker);
 +
- 	dmz_zmd_info(zmd, "DM-Zoned metadata version %d", zmd->sb_version);
- 	for (i = 0; i < zmd->nr_devs; i++)
- 		dmz_print_dev(zmd, i);
-@@ -2995,7 +2999,7 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
-  */
- void dmz_dtr_metadata(struct dmz_metadata *zmd)
+ 	for (i = 0; i < GLOCK_WAIT_TABLE_SIZE; i++)
+ 		init_waitqueue_head(glock_wait_table + i);
+ 
+@@ -2487,7 +2489,7 @@ int __init gfs2_glock_init(void)
+ 
+ void gfs2_glock_exit(void)
  {
--	unregister_shrinker(&zmd->mblk_shrinker);
-+	shrinker_free(zmd->mblk_shrinker);
- 	dmz_cleanup_metadata(zmd);
- 	kfree(zmd);
+-	unregister_shrinker(&glock_shrinker);
++	shrinker_free(glock_shrinker);
+ 	rhashtable_destroy(&gl_hash_table);
+ 	destroy_workqueue(glock_workqueue);
  }
 -- 
 2.30.2
