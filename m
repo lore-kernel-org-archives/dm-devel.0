@@ -4,94 +4,90 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 651C6C04FE0
-	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 17:55:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E5548C00528
+	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 17:55:29 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1690480529;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=GvLWEzHAIWezI8DYtJZgjDN+30HEdnGzzCwmf9orwSw=;
-	b=TdLI43pM8S3rNYW2TF7MPW1TLPAjsDbi7E/Lzx/RMExMUUSctisQZyphBVPuE3gfWTC+2i
-	5aqsu9LHLerz2spxB6Y871ALJHiJhdx2xl5FzzplgP5ouyTo9OiNWAUeJwiDfRwhIyBkrf
-	s7ytWjF4LY1fDxs7MAp0IHOmrVppzDk=
-Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-563-xBfi6rpjOkeNKn09WCJTsA-1; Thu, 27 Jul 2023 13:55:24 -0400
-X-MC-Unique: xBfi6rpjOkeNKn09WCJTsA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	bh=Q4Nc5fBvcdrzZXDfhRkQZ1YGB1EXGbmsjoBqt0o97V0=;
+	b=C2FthPshhSse0xbVdCuooJEbmnJtd1m886Wrc0/tQH6fZVsKRxkokRXbk5gkrbfnL+88w2
+	XvYkBEQw24TxrLiNqozeC9kkuAneA5HSINfLlxJ+cNTMP7Y6KLDmkfGNcrii6cnnEQzw41
+	jabUSOMJeKfdjfRldO6oHV8JbdoSCbw=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-217-HVvWHio9PEi82VD4djchhg-1; Thu, 27 Jul 2023 13:55:19 -0400
+X-MC-Unique: HVvWHio9PEi82VD4djchhg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 749B11C09A7F;
-	Thu, 27 Jul 2023 17:55:08 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 00A901C3A06C;
+	Thu, 27 Jul 2023 17:55:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E5A42207B34E;
-	Thu, 27 Jul 2023 17:55:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D7A751454154;
+	Thu, 27 Jul 2023 17:55:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D9EA71946A45;
-	Thu, 27 Jul 2023 17:55:06 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 26C19193775F;
+	Thu, 27 Jul 2023 17:54:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8FCF91946A6C
- for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 08:15:25 +0000 (UTC)
+ ESMTP id 167FC1946A6C
+ for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 08:05:53 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 642A5C2C857; Thu, 27 Jul 2023 08:15:25 +0000 (UTC)
+ id 02226492C13; Thu, 27 Jul 2023 08:05:53 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 5CF08C2C856
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:15:25 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0E7662800E9B
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:15:25 +0000 (UTC)
-Received: from mail-pf1-f175.google.com (mail-pf1-f175.google.com
- [209.85.210.175]) by relay.mimecast.com with ESMTP with STARTTLS
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id EEA604A9004
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:05:52 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3710C28040A7
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:05:52 +0000 (UTC)
+Received: from mail-pf1-f171.google.com (mail-pf1-f171.google.com
+ [209.85.210.171]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-294-hK-1g8tHN9CqGquA7bhHfg-2; Thu, 27 Jul 2023 04:15:22 -0400
-X-MC-Unique: hK-1g8tHN9CqGquA7bhHfg-2
-Received: by mail-pf1-f175.google.com with SMTP id
- d2e1a72fcca58-6862d4a1376so190047b3a.0
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 01:15:22 -0700 (PDT)
+ us-mta-7-LX_5Ih1WPy6kspNZrGUwvg-1; Thu, 27 Jul 2023 04:05:48 -0400
+X-MC-Unique: LX_5Ih1WPy6kspNZrGUwvg-1
+Received: by mail-pf1-f171.google.com with SMTP id
+ d2e1a72fcca58-66d6a9851f3so167333b3a.0
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 01:05:48 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1690445722; x=1691050522;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=kfKKsEp61SZUnTy00HUcIO/dAXsDrrCBrc1q4f5gA2g=;
- b=aa01eL9NCe9KA6oKiCX4Mh28GXYo1caXL/iDM0iif0S5IRJB3YKTY2GY1WE8dcB8a5
- 1uzpksE3GRtvjpQl6wvmZS6ULZa5cOynyNw3TBYEkBYhD6CTQCxBzUoob1+SBc7MfNu0
- P+AoXSHhf5Cws82Hh+xauHAbdopnYmu4sULZvd8tE+Vrk3RaPS4FIt/vM7VzuJ0f4cCA
- N980z9NPnrd0xGRoBNTYwSgzmXF8kU1QiUAijs3XPuhWazK3eZ+wTqbjAzmGkmkult3h
- Yb0NvZ1GIp8dARz1D0ZcNIphmqk+HZeEnTaI82emiemN1N+OXCvdgbb/pp1uvIjHEKnX
- 2fDg==
-X-Gm-Message-State: ABy/qLb91nsjzDRR5fU8hgmVhPXMxCRY8TT1SZ5rdG1bKPiLAKcLs6fp
- 4nHSWUj1Pq+tXXI2TVEqA4+pdQ==
-X-Google-Smtp-Source: APBJJlGaIHiWHX80BWphqmbYYC2Qe9rA0t1NXuG9/ru/q26OnfFQXVEhM5bGyqGhtVnixSectLT5LA==
-X-Received: by 2002:a05:6a00:4792:b0:668:834d:4bd with SMTP id
- dh18-20020a056a00479200b00668834d04bdmr4689753pfb.0.1690445722143; 
- Thu, 27 Jul 2023 01:15:22 -0700 (PDT)
+ d=1e100.net; s=20221208; t=1690445148; x=1691049948;
+ h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+ :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=qdw/R1TEr1q6uUENoD+Woah5iYuWx4u9kScfP8x1rxA=;
+ b=asJ+aoOD+rhezy8NUDUBfS4wS7Q7WizPeWqMmUm0hWiI5PO1jcBVm0KqBUB4u+bpeA
+ wFWQ3n98epPlt/EO7l1QsY1uq3gy20XM+Fj+tzLPam3F8wbMvf8fFgunzcUTkzCPsuHG
+ +xjW1icyztZlJayJUyqWfqId1jgrCobvH/Ox/9+aen13wFM0beLFTviZEh+VI6r6D0Nm
+ 9JNqaveJJE+3DZpdVQCg2CcjArTuJfOd6lY8R80jHi1Yuw1y+595Q+QNpdsmLyooYNyG
+ pV5JbOgP56d8VBiBy3jjNmG+HFSTL5OyfkUPQXywBjNqv/7DtIsJcDxPf7Ws/+SKHLXM
+ q1dA==
+X-Gm-Message-State: ABy/qLa/tZ1SPSebl1R5PfxeWJPUlSp+PJMZqYQK9+9auta+EDctFyiZ
+ UjTEbMc5qVdvwE8E1XPkUegGOA==
+X-Google-Smtp-Source: APBJJlHb1kgnpQXfb8RS/UAhh8zGcgdqY4J3wYE+oXj/zAg8rYeLxmGzIhYoi+ua72NIH6S8sFTnXQ==
+X-Received: by 2002:a05:6a20:1595:b0:137:30db:bc1e with SMTP id
+ h21-20020a056a20159500b0013730dbbc1emr5685837pzj.3.1690445147652; 
+ Thu, 27 Jul 2023 01:05:47 -0700 (PDT)
 Received: from C02DW0BEMD6R.bytedance.net ([203.208.167.147])
  by smtp.gmail.com with ESMTPSA id
- j8-20020aa78d08000000b006828e49c04csm885872pfe.75.2023.07.27.01.15.10
+ j8-20020aa78d08000000b006828e49c04csm885872pfe.75.2023.07.27.01.05.34
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 27 Jul 2023 01:15:21 -0700 (PDT)
+ Thu, 27 Jul 2023 01:05:47 -0700 (PDT)
 From: Qi Zheng <zhengqi.arch@bytedance.com>
 To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
  vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
  brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu,
  steven.price@arm.com, cel@kernel.org, senozhatsky@chromium.org,
  yujie.liu@intel.com, gregkh@linuxfoundation.org, muchun.song@linux.dev
-Date: Thu, 27 Jul 2023 16:05:00 +0800
-Message-Id: <20230727080502.77895-48-zhengqi.arch@bytedance.com>
-In-Reply-To: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
-References: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
+Date: Thu, 27 Jul 2023 16:04:13 +0800
+Message-Id: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -100,10 +96,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Mimecast-Bulk-Signature: yes
+X-Mimecast-Spam-Signature: bulk
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
 X-Mailman-Approved-At: Thu, 27 Jul 2023 17:54:53 +0000
-Subject: [dm-devel] [PATCH v3 47/49] mm: shrinker: make memcg slab shrink
- lockless
+Subject: [dm-devel] [PATCH v3 00/49] use refcount+RCU method to implement
+ lockless slab shrink
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -127,16 +125,101 @@ Cc: kvm@vger.kernel.org, dri-devel@lists.freedesktop.org,
  linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: bytedance.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Like global slab shrink, this commit also uses refcount+RCU method to make
-memcg slab shrink lockless.
+Hi all,
 
-Use the following script to do slab shrink stress test:
+1. Background
+=============
+
+We used to implement the lockless slab shrink with SRCU [1], but then kernel
+test robot reported -88.8% regression in stress-ng.ramfs.ops_per_sec test
+case [2], so we reverted it [3].
+
+This patch series aims to re-implement the lockless slab shrink using the
+refcount+RCU method proposed by Dave Chinner [4].
+
+[1]. https://lore.kernel.org/lkml/20230313112819.38938-1-zhengqi.arch@bytedance.com/
+[2]. https://lore.kernel.org/lkml/202305230837.db2c233f-yujie.liu@intel.com/
+[3]. https://lore.kernel.org/all/20230609081518.3039120-1-qi.zheng@linux.dev/
+[4]. https://lore.kernel.org/lkml/ZIJhou1d55d4H1s0@dread.disaster.area/
+
+2. Implementation
+=================
+
+Currently, the shrinker instances can be divided into the following three types:
+
+a) global shrinker instance statically defined in the kernel, such as
+   workingset_shadow_shrinker.
+
+b) global shrinker instance statically defined in the kernel modules, such as
+   mmu_shrinker in x86.
+
+c) shrinker instance embedded in other structures.
+
+For case a, the memory of shrinker instance is never freed. For case b, the
+memory of shrinker instance will be freed after synchronize_rcu() when the
+module is unloaded. For case c, the memory of shrinker instance will be freed
+along with the structure it is embedded in.
+
+In preparation for implementing lockless slab shrink, we need to dynamically
+allocate those shrinker instances in case c, then the memory can be dynamically
+freed alone by calling kfree_rcu().
+
+This patchset adds the following new APIs for dynamically allocating shrinker,
+and add a private_data field to struct shrinker to record and get the original
+embedded structure.
+
+1. shrinker_alloc()
+2. shrinker_register()
+3. shrinker_free()
+
+In order to simplify shrinker-related APIs and make shrinker more independent of
+other kernel mechanisms, this patchset uses the above APIs to convert all
+shrinkers (including case a and b) to dynamically allocated, and then remove all
+existing APIs. This will also have another advantage mentioned by Dave Chinner:
+
+```
+The other advantage of this is that it will break all the existing out of tree
+code and third party modules using the old API and will no longer work with a
+kernel using lockless slab shrinkers. They need to break (both at the source and
+binary levels) to stop bad things from happening due to using uncoverted
+shrinkers in the new setup.
+```
+
+Then we free the shrinker by calling call_rcu(), and use rcu_read_{lock,unlock}()
+to ensure that the shrinker instance is valid. And the shrinker::refcount
+mechanism ensures that the shrinker instance will not be run again after
+unregistration. So the structure that records the pointer of shrinker instance
+can be safely freed without waiting for the RCU read-side critical section.
+
+In this way, while we implement the lockless slab shrink, we don't need to be
+blocked in unregister_shrinker() to wait RCU read-side critical section.
+
+PATCH 1: fix memory leak in binder_init()
+PATCH 2: move some shrinker-related function declarations to mm/internal.h
+PATCH 3: move shrinker-related code into a separate file
+PATCH 4: remove redundant shrinker_rwsem in debugfs operations
+PATCH 5: add infrastructure for dynamically allocating shrinker
+PATCH 6 ~ 23: dynamically allocate the shrinker instances in case a and b
+PATCH 24 ~ 42: dynamically allocate the shrinker instances in case c
+PATCH 43: remove old APIs
+PATCH 44: introduce pool_shrink_rwsem to implement private synchronize_shrinkers()
+PATCH 45: add a secondary array for shrinker_info::{map, nr_deferred}
+PATCH 46 ~ 47: implement the lockless slab shrink
+PATCH 48 ~ 49: convert shrinker_rwsem to mutex
+
+3. Testing
+==========
+
+3.1 slab shrink stress test
+---------------------------
+
+We can reproduce the down_read_trylock() hotspot through the following script:
 
 ```
 
@@ -186,8 +269,8 @@ case "$1" in
 esac
 ```
 
-Save the above script, then run test and touch commands. Then we can use
-the following perf command to view hotspots:
+Save the above script, then run test and touch commands. Then we can use the
+following perf command to view hotspots:
 
 perf top -U -F 999
 
@@ -221,210 +304,210 @@ perf top -U -F 999
    0.55%  [kernel]           [k] shrinker_put
    0.46%  [kernel]           [k] list_lru_count_one
 
-We can see that the first perf hotspot becomes shrink_slab, which is what
-we expect.
+We can see that the first perf hotspot becomes shrink_slab, which is what we
+expect.
 
-Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
----
- mm/shrinker.c | 80 ++++++++++++++++++++++++++++++++++-----------------
- 1 file changed, 54 insertions(+), 26 deletions(-)
+3.2 registeration and unregisteration stress test
+-------------------------------------------------
 
-diff --git a/mm/shrinker.c b/mm/shrinker.c
-index d318f5621862..fee6f62904fb 100644
---- a/mm/shrinker.c
-+++ b/mm/shrinker.c
-@@ -107,6 +107,12 @@ static struct shrinker_info *shrinker_info_protected(struct mem_cgroup *memcg,
- 					 lockdep_is_held(&shrinker_rwsem));
- }
- 
-+static struct shrinker_info *shrinker_info_rcu(struct mem_cgroup *memcg,
-+					       int nid)
-+{
-+	return rcu_dereference(memcg->nodeinfo[nid]->shrinker_info);
-+}
-+
- static int expand_one_shrinker_info(struct mem_cgroup *memcg, int new_size,
- 				    int old_size, int new_nr_max)
- {
-@@ -198,7 +204,7 @@ void set_shrinker_bit(struct mem_cgroup *memcg, int nid, int shrinker_id)
- 		struct shrinker_info_unit *unit;
- 
- 		rcu_read_lock();
--		info = rcu_dereference(memcg->nodeinfo[nid]->shrinker_info);
-+		info = shrinker_info_rcu(memcg, nid);
- 		unit = info->unit[shriner_id_to_index(shrinker_id)];
- 		if (!WARN_ON_ONCE(shrinker_id >= info->map_nr_max)) {
- 			/* Pairs with smp mb in shrink_slab() */
-@@ -211,7 +217,7 @@ void set_shrinker_bit(struct mem_cgroup *memcg, int nid, int shrinker_id)
- 
- static DEFINE_IDR(shrinker_idr);
- 
--static int prealloc_memcg_shrinker(struct shrinker *shrinker)
-+static int shrinker_memcg_alloc(struct shrinker *shrinker)
- {
- 	int id, ret = -ENOMEM;
- 
-@@ -219,7 +225,6 @@ static int prealloc_memcg_shrinker(struct shrinker *shrinker)
- 		return -ENOSYS;
- 
- 	down_write(&shrinker_rwsem);
--	/* This may call shrinker, so it must use down_read_trylock() */
- 	id = idr_alloc(&shrinker_idr, shrinker, 0, 0, GFP_KERNEL);
- 	if (id < 0)
- 		goto unlock;
-@@ -237,7 +242,7 @@ static int prealloc_memcg_shrinker(struct shrinker *shrinker)
- 	return ret;
- }
- 
--static void unregister_memcg_shrinker(struct shrinker *shrinker)
-+static void shrinker_memcg_remove(struct shrinker *shrinker)
- {
- 	int id = shrinker->id;
- 
-@@ -253,10 +258,15 @@ static long xchg_nr_deferred_memcg(int nid, struct shrinker *shrinker,
- {
- 	struct shrinker_info *info;
- 	struct shrinker_info_unit *unit;
-+	long nr_deferred;
- 
--	info = shrinker_info_protected(memcg, nid);
-+	rcu_read_lock();
-+	info = shrinker_info_rcu(memcg, nid);
- 	unit = info->unit[shriner_id_to_index(shrinker->id)];
--	return atomic_long_xchg(&unit->nr_deferred[shriner_id_to_offset(shrinker->id)], 0);
-+	nr_deferred = atomic_long_xchg(&unit->nr_deferred[shriner_id_to_offset(shrinker->id)], 0);
-+	rcu_read_unlock();
-+
-+	return nr_deferred;
- }
- 
- static long add_nr_deferred_memcg(long nr, int nid, struct shrinker *shrinker,
-@@ -264,10 +274,16 @@ static long add_nr_deferred_memcg(long nr, int nid, struct shrinker *shrinker,
- {
- 	struct shrinker_info *info;
- 	struct shrinker_info_unit *unit;
-+	long nr_deferred;
- 
--	info = shrinker_info_protected(memcg, nid);
-+	rcu_read_lock();
-+	info = shrinker_info_rcu(memcg, nid);
- 	unit = info->unit[shriner_id_to_index(shrinker->id)];
--	return atomic_long_add_return(nr, &unit->nr_deferred[shriner_id_to_offset(shrinker->id)]);
-+	nr_deferred =
-+		atomic_long_add_return(nr, &unit->nr_deferred[shriner_id_to_offset(shrinker->id)]);
-+	rcu_read_unlock();
-+
-+	return nr_deferred;
- }
- 
- void reparent_shrinker_deferred(struct mem_cgroup *memcg)
-@@ -299,12 +315,12 @@ void reparent_shrinker_deferred(struct mem_cgroup *memcg)
- 	up_read(&shrinker_rwsem);
- }
- #else
--static int prealloc_memcg_shrinker(struct shrinker *shrinker)
-+static int shrinker_memcg_alloc(struct shrinker *shrinker)
- {
- 	return -ENOSYS;
- }
- 
--static void unregister_memcg_shrinker(struct shrinker *shrinker)
-+static void shrinker_memcg_remove(struct shrinker *shrinker)
- {
- }
- 
-@@ -464,18 +480,23 @@ static unsigned long shrink_slab_memcg(gfp_t gfp_mask, int nid,
- 	if (!mem_cgroup_online(memcg))
- 		return 0;
- 
--	if (!down_read_trylock(&shrinker_rwsem))
--		return 0;
--
--	info = shrinker_info_protected(memcg, nid);
-+again:
-+	rcu_read_lock();
-+	info = shrinker_info_rcu(memcg, nid);
- 	if (unlikely(!info))
- 		goto unlock;
- 
--	for (; index < shriner_id_to_index(info->map_nr_max); index++) {
-+	if (index < shriner_id_to_index(info->map_nr_max)) {
- 		struct shrinker_info_unit *unit;
- 
- 		unit = info->unit[index];
- 
-+		/*
-+		 * The shrinker_info_unit will not be freed, so we can
-+		 * safely release the RCU lock here.
-+		 */
-+		rcu_read_unlock();
-+
- 		for_each_set_bit(offset, unit->map, SHRINKER_UNIT_BITS) {
- 			struct shrink_control sc = {
- 				.gfp_mask = gfp_mask,
-@@ -485,12 +506,14 @@ static unsigned long shrink_slab_memcg(gfp_t gfp_mask, int nid,
- 			struct shrinker *shrinker;
- 			int shrinker_id = calc_shrinker_id(index, offset);
- 
-+			rcu_read_lock();
- 			shrinker = idr_find(&shrinker_idr, shrinker_id);
--			if (unlikely(!shrinker || !(shrinker->flags & SHRINKER_REGISTERED))) {
--				if (!shrinker)
--					clear_bit(offset, unit->map);
-+			if (unlikely(!shrinker || !shrinker_try_get(shrinker))) {
-+				clear_bit(offset, unit->map);
-+				rcu_read_unlock();
- 				continue;
- 			}
-+			rcu_read_unlock();
- 
- 			/* Call non-slab shrinkers even though kmem is disabled */
- 			if (!memcg_kmem_online() &&
-@@ -523,15 +546,20 @@ static unsigned long shrink_slab_memcg(gfp_t gfp_mask, int nid,
- 					set_shrinker_bit(memcg, nid, shrinker_id);
- 			}
- 			freed += ret;
--
--			if (rwsem_is_contended(&shrinker_rwsem)) {
--				freed = freed ? : 1;
--				goto unlock;
--			}
-+			shrinker_put(shrinker);
- 		}
-+
-+		/*
-+		 * We have already exited the read-side of rcu critical section
-+		 * before calling do_shrink_slab(), the shrinker_info may be
-+		 * released in expand_one_shrinker_info(), so reacquire the
-+		 * shrinker_info.
-+		 */
-+		index++;
-+		goto again;
- 	}
- unlock:
--	up_read(&shrinker_rwsem);
-+	rcu_read_unlock();
- 	return freed;
- }
- #else /* !CONFIG_MEMCG */
-@@ -638,7 +666,7 @@ struct shrinker *shrinker_alloc(unsigned int flags, const char *fmt, ...)
- 	shrinker->flags = flags | SHRINKER_ALLOCATED;
- 
- 	if (flags & SHRINKER_MEMCG_AWARE) {
--		err = prealloc_memcg_shrinker(shrinker);
-+		err = shrinker_memcg_alloc(shrinker);
- 		if (err == -ENOSYS)
- 			shrinker->flags &= ~SHRINKER_MEMCG_AWARE;
- 		else if (err == 0)
-@@ -731,7 +759,7 @@ void shrinker_free(struct shrinker *shrinker)
- 	}
- 
- 	if (shrinker->flags & SHRINKER_MEMCG_AWARE)
--		unregister_memcg_shrinker(shrinker);
-+		shrinker_memcg_remove(shrinker);
- 	up_write(&shrinker_rwsem);
- 
- 	if (debugfs_entry)
+Run the command below to test:
+
+stress-ng --timeout 60 --times --verify --metrics-brief --ramfs 9 &
+
+1) Before applying this patchset:
+
+setting to a 60 second run per stressor
+dispatching hogs: 9 ramfs
+stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+                          (secs)    (secs)    (secs)   (real time) (usr+sys time)
+ramfs            735238     60.00     12.37    363.70     12253.05        1955.08
+for a 60.01s run time:
+   1440.27s available CPU time
+     12.36s user time   (  0.86%)
+    363.70s system time ( 25.25%)
+    376.06s total time  ( 26.11%)
+load average: 10.79 4.47 1.69
+passed: 9: ramfs (9)
+failed: 0
+skipped: 0
+successful run completed in 60.01s (1 min, 0.01 secs)
+
+2) After applying this patchset:
+
+setting to a 60 second run per stressor
+dispatching hogs: 9 ramfs
+stressor       bogo ops real time  usr time  sys time   bogo ops/s     bogo ops/s
+                          (secs)    (secs)    (secs)   (real time) (usr+sys time)
+ramfs            746698     60.00     12.45    376.16     12444.02        1921.47
+for a 60.01s run time:
+   1440.28s available CPU time
+     12.44s user time   (  0.86%)
+    376.16s system time ( 26.12%)
+    388.60s total time  ( 26.98%)
+load average: 9.01 3.85 1.49
+passed: 9: ramfs (9)
+failed: 0
+skipped: 0
+successful run completed in 60.01s (1 min, 0.01 secs)
+
+We can see that the ops/s has hardly changed.
+
+This series is based on next-20230726.
+
+Comments and suggestions are welcome.
+
+Thanks,
+Qi
+
+Changelog in v2 -> v3:
+ - add the patch that [PATCH v3 07/49] depends on
+ - move some shrinker-related function declarations to mm/internal.h
+   (suggested by Muchun Song)
+ - combine shrinker_free_non_registered() and shrinker_unregister() into
+   shrinker_free() (suggested by Dave Chinner)
+ - add missing __init and fix return value in bch_btree_cache_alloc()
+   (pointed by Muchun Song)
+ - remove unnecessary WARN_ON() (pointed by Steven Price)
+ - go back to use completion to implement lockless slab shrink
+   (pointed by Dave Chinner)
+ - collect Acked-bys and Reviewed-bys
+ - rebase onto the next-20230726.
+
+Changelog in v1 -> v2:
+ - implement the new APIs and convert all shrinkers to use it.
+   (suggested by Dave Chinner)
+ - fix UAF in PATCH [05/29] (pointed by Steven Price)
+ - add a secondary array for shrinker_info::{map, nr_deferred}
+ - re-implement the lockless slab shrink
+   (Since unifying the processing of global and memcg slab shrink needs to
+    modify the startup sequence (As I mentioned in https://lore.kernel.org/lkml/38b14080-4ce5-d300-8a0a-c630bca6806b@bytedance.com/),
+    I finally choose to process them separately.)
+ - collect Acked-bys
+
+Qi Zheng (49):
+  binder: fix memory leak in binder_init()
+  mm: move some shrinker-related function declarations to mm/internal.h
+  mm: vmscan: move shrinker-related code into a separate file
+  mm: shrinker: remove redundant shrinker_rwsem in debugfs operations
+  mm: shrinker: add infrastructure for dynamically allocating shrinker
+  kvm: mmu: dynamically allocate the x86-mmu shrinker
+  binder: dynamically allocate the android-binder shrinker
+  drm/ttm: dynamically allocate the drm-ttm_pool shrinker
+  xenbus/backend: dynamically allocate the xen-backend shrinker
+  erofs: dynamically allocate the erofs-shrinker
+  f2fs: dynamically allocate the f2fs-shrinker
+  gfs2: dynamically allocate the gfs2-glock shrinker
+  gfs2: dynamically allocate the gfs2-qd shrinker
+  NFSv4.2: dynamically allocate the nfs-xattr shrinkers
+  nfs: dynamically allocate the nfs-acl shrinker
+  nfsd: dynamically allocate the nfsd-filecache shrinker
+  quota: dynamically allocate the dquota-cache shrinker
+  ubifs: dynamically allocate the ubifs-slab shrinker
+  rcu: dynamically allocate the rcu-lazy shrinker
+  rcu: dynamically allocate the rcu-kfree shrinker
+  mm: thp: dynamically allocate the thp-related shrinkers
+  sunrpc: dynamically allocate the sunrpc_cred shrinker
+  mm: workingset: dynamically allocate the mm-shadow shrinker
+  drm/i915: dynamically allocate the i915_gem_mm shrinker
+  drm/msm: dynamically allocate the drm-msm_gem shrinker
+  drm/panfrost: dynamically allocate the drm-panfrost shrinker
+  dm: dynamically allocate the dm-bufio shrinker
+  dm zoned: dynamically allocate the dm-zoned-meta shrinker
+  md/raid5: dynamically allocate the md-raid5 shrinker
+  bcache: dynamically allocate the md-bcache shrinker
+  vmw_balloon: dynamically allocate the vmw-balloon shrinker
+  virtio_balloon: dynamically allocate the virtio-balloon shrinker
+  mbcache: dynamically allocate the mbcache shrinker
+  ext4: dynamically allocate the ext4-es shrinker
+  jbd2,ext4: dynamically allocate the jbd2-journal shrinker
+  nfsd: dynamically allocate the nfsd-client shrinker
+  nfsd: dynamically allocate the nfsd-reply shrinker
+  xfs: dynamically allocate the xfs-buf shrinker
+  xfs: dynamically allocate the xfs-inodegc shrinker
+  xfs: dynamically allocate the xfs-qm shrinker
+  zsmalloc: dynamically allocate the mm-zspool shrinker
+  fs: super: dynamically allocate the s_shrink
+  mm: shrinker: remove old APIs
+  drm/ttm: introduce pool_shrink_rwsem
+  mm: shrinker: add a secondary array for shrinker_info::{map,
+    nr_deferred}
+  mm: shrinker: make global slab shrink lockless
+  mm: shrinker: make memcg slab shrink lockless
+  mm: shrinker: hold write lock to reparent shrinker nr_deferred
+  mm: shrinker: convert shrinker_rwsem to mutex
+
+ arch/x86/kvm/mmu/mmu.c                        |  18 +-
+ drivers/android/binder.c                      |   1 +
+ drivers/android/binder_alloc.c                |  35 +-
+ drivers/android/binder_alloc.h                |   1 +
+ drivers/gpu/drm/i915/gem/i915_gem_shrinker.c  |  30 +-
+ drivers/gpu/drm/i915/i915_drv.h               |   2 +-
+ drivers/gpu/drm/msm/msm_drv.c                 |   4 +-
+ drivers/gpu/drm/msm/msm_drv.h                 |   4 +-
+ drivers/gpu/drm/msm/msm_gem_shrinker.c        |  34 +-
+ drivers/gpu/drm/panfrost/panfrost_device.h    |   2 +-
+ drivers/gpu/drm/panfrost/panfrost_drv.c       |   6 +-
+ drivers/gpu/drm/panfrost/panfrost_gem.h       |   2 +-
+ .../gpu/drm/panfrost/panfrost_gem_shrinker.c  |  30 +-
+ drivers/gpu/drm/ttm/ttm_pool.c                |  38 +-
+ drivers/md/bcache/bcache.h                    |   2 +-
+ drivers/md/bcache/btree.c                     |  27 +-
+ drivers/md/bcache/sysfs.c                     |   3 +-
+ drivers/md/dm-bufio.c                         |  26 +-
+ drivers/md/dm-cache-metadata.c                |   2 +-
+ drivers/md/dm-zoned-metadata.c                |  28 +-
+ drivers/md/raid5.c                            |  25 +-
+ drivers/md/raid5.h                            |   2 +-
+ drivers/misc/vmw_balloon.c                    |  38 +-
+ drivers/virtio/virtio_balloon.c               |  25 +-
+ drivers/xen/xenbus/xenbus_probe_backend.c     |  18 +-
+ fs/btrfs/super.c                              |   2 +-
+ fs/erofs/utils.c                              |  20 +-
+ fs/ext4/ext4.h                                |   2 +-
+ fs/ext4/extents_status.c                      |  22 +-
+ fs/f2fs/super.c                               |  32 +-
+ fs/gfs2/glock.c                               |  20 +-
+ fs/gfs2/main.c                                |   6 +-
+ fs/gfs2/quota.c                               |  26 +-
+ fs/gfs2/quota.h                               |   3 +-
+ fs/jbd2/journal.c                             |  27 +-
+ fs/kernfs/mount.c                             |   2 +-
+ fs/mbcache.c                                  |  23 +-
+ fs/nfs/nfs42xattr.c                           |  87 +-
+ fs/nfs/super.c                                |  20 +-
+ fs/nfsd/filecache.c                           |  22 +-
+ fs/nfsd/netns.h                               |   4 +-
+ fs/nfsd/nfs4state.c                           |  20 +-
+ fs/nfsd/nfscache.c                            |  31 +-
+ fs/proc/root.c                                |   2 +-
+ fs/quota/dquot.c                              |  18 +-
+ fs/super.c                                    |  38 +-
+ fs/ubifs/super.c                              |  22 +-
+ fs/xfs/xfs_buf.c                              |  25 +-
+ fs/xfs/xfs_buf.h                              |   2 +-
+ fs/xfs/xfs_icache.c                           |  26 +-
+ fs/xfs/xfs_mount.c                            |   4 +-
+ fs/xfs/xfs_mount.h                            |   2 +-
+ fs/xfs/xfs_qm.c                               |  26 +-
+ fs/xfs/xfs_qm.h                               |   2 +-
+ include/linux/fs.h                            |   2 +-
+ include/linux/jbd2.h                          |   2 +-
+ include/linux/memcontrol.h                    |  12 +-
+ include/linux/shrinker.h                      |  67 +-
+ kernel/rcu/tree.c                             |  22 +-
+ kernel/rcu/tree_nocb.h                        |  20 +-
+ mm/Makefile                                   |   4 +-
+ mm/huge_memory.c                              |  69 +-
+ mm/internal.h                                 |  41 +
+ mm/shrinker.c                                 | 770 ++++++++++++++++++
+ mm/shrinker_debug.c                           |  45 +-
+ mm/vmscan.c                                   | 701 ----------------
+ mm/workingset.c                               |  27 +-
+ mm/zsmalloc.c                                 |  28 +-
+ net/sunrpc/auth.c                             |  19 +-
+ 69 files changed, 1534 insertions(+), 1234 deletions(-)
+ create mode 100644 mm/shrinker.c
+
 -- 
 2.30.2
 
