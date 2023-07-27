@@ -4,95 +4,95 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 54112C001DC
-	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 17:55:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 161A5C00528
+	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 17:55:43 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690480540;
+	s=mimecast20190719; t=1690480542;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=RSpOvRWUTILaNoK1iRSfZe4/z6N2qNeNIYPU4cOVBss=;
-	b=DzEiIlHXdbpDa3lblBGGT2jFwMklVJFu4CM34FQqZhSyH+Oc4CapP8DEgHSbyi3nfAUSwe
-	9go/UcuP542Gx3z9eMJgew6wFeQYTiZjFnxV5CgHwmOUoXuj7HqdgYs23G0hdKVzcl9qPP
-	4kM92s2DdFrQHUNcfXCSOrMyaW5oaCI=
-Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-616-PzPqLC0bOvSp5wXznURicQ-1; Thu, 27 Jul 2023 13:55:32 -0400
-X-MC-Unique: PzPqLC0bOvSp5wXznURicQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	bh=JMxXIlkOK65Kc6NerkLZJCNTlBHg3JJanArOfekJVYw=;
+	b=Pj+tREXXJxf9mlZgxg8Mw5tzp1MlLVUK2Xaaavf0iiOesKPicJ2UC73dNNdg5lwDvrWnrp
+	xBSrMkP31XzlhyCdL6djdfyUfDhJ3llS9kcvxonjyTs8ej7BhY8yW6qFt/rKv4DSXMXGxb
+	8ttXJtQcERLnpYCEcSavGuoaOYNuSaQ=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-686-yC8lHLUMPbiZAdpwIlMeCw-1; Thu, 27 Jul 2023 13:55:39 -0400
+X-MC-Unique: yC8lHLUMPbiZAdpwIlMeCw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C6DBD3814960;
-	Thu, 27 Jul 2023 17:55:05 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C52A0104459B;
+	Thu, 27 Jul 2023 17:55:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B336E4A9004;
-	Thu, 27 Jul 2023 17:55:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A962040C2063;
+	Thu, 27 Jul 2023 17:55:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 974AD19452C9;
-	Thu, 27 Jul 2023 17:55:04 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6B39819451E5;
+	Thu, 27 Jul 2023 17:55:05 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id EFAA81946A6C
- for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 08:08:44 +0000 (UTC)
+ ESMTP id 067401946A6C
+ for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 08:55:45 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C40CB145414B; Thu, 27 Jul 2023 08:08:44 +0000 (UTC)
+ id E8F1F492B01; Thu, 27 Jul 2023 08:55:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id BBA8D1454145
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:08:44 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
- [205.139.110.61])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E1642492CA6
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:55:44 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 86BE3104D513
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:08:44 +0000 (UTC)
-Received: from mail-pf1-f180.google.com (mail-pf1-f180.google.com
- [209.85.210.180]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C6657185A7A3
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:55:44 +0000 (UTC)
+Received: from mail-pf1-f181.google.com (mail-pf1-f181.google.com
+ [209.85.210.181]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-172-cSHC6wrBNs6yBy5jXpKxBg-1; Thu, 27 Jul 2023 04:08:41 -0400
-X-MC-Unique: cSHC6wrBNs6yBy5jXpKxBg-1
-Received: by mail-pf1-f180.google.com with SMTP id
- d2e1a72fcca58-6748a616e17so182784b3a.1
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 01:08:41 -0700 (PDT)
+ us-mta-686-s-DJsyE6ONGTQ0c3vLPuKA-1; Thu, 27 Jul 2023 04:55:42 -0400
+X-MC-Unique: s-DJsyE6ONGTQ0c3vLPuKA-1
+Received: by mail-pf1-f181.google.com with SMTP id
+ d2e1a72fcca58-6862d4a1376so198459b3a.0
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 01:55:42 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1690445320; x=1691050120;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=XXAG7UeexodYStcT1Y2gz+/6q+0E2xrK+D1h2eKApUE=;
- b=AV1Sq9O85eDOTEiYyIbGqbsifZc6d+AYcqDW1adjeRxYXu64dFC510Qd3seeuql3GP
- xJO4XdUoFfovwfBJc8TlyEZDMarU37YtGK2H9Lwis0Au/4KR9cDI4KUUTJlsIIoswgPr
- HnNkGiRrtbL0G+QYdN2dnTPAlxr5jFkemRDWtBbbBeLYmU/KzhX8wCn9Tofc5uZObCcL
- ocBNZpPLPhiW0WMRggMCxiwg2i1Rlwet45s6q7OJYfQEbyFdFs5yLzZci4x1i9duMp8H
- iD8eQJ/ur7Qb3JXbmQdxzmeS2801H2cmWMKXsgIWBH58tW1Nfg4QSlwaHMmaRGrRizWR
- VhQQ==
-X-Gm-Message-State: ABy/qLaKROB1jEZZ31PsQT1P3rHo26B/B07cF7cxUWFrwwlQn4puGr5Q
- io1WxYyH1J8yXDI8HFAjYigsUypCHdeV8m5R5cI=
-X-Google-Smtp-Source: APBJJlHkKWPiTWl3kfFSQlaHJ4f9EFj8oaHZmEibAoOMDshGtR3BMo+XERT90zfJYijHcIQQmSOpWQ==
-X-Received: by 2002:a05:6a21:32a9:b0:136:f3ef:4d2 with SMTP id
- yt41-20020a056a2132a900b00136f3ef04d2mr6059155pzb.3.1690445320596; 
- Thu, 27 Jul 2023 01:08:40 -0700 (PDT)
-Received: from C02DW0BEMD6R.bytedance.net ([203.208.167.147])
+ d=1e100.net; s=20221208; t=1690448142; x=1691052942;
+ h=content-transfer-encoding:in-reply-to:from:references:cc:to
+ :content-language:subject:user-agent:mime-version:date:message-id
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=WiPjRg1/kjwO6K5zl232SDHPqYtmZOtFvHbsJXMq+7g=;
+ b=EVb4dZMSG0k8pG6R87ukq7oNxS25k3qBQp9ARPdXt6WdTCUZqAFvXfc2o/ICJz26xR
+ KYIs5xtPrqPIsCyx6Hawd+rHgO7p3vIXpKfXlD7K6RsT19H6qBcRpWW+ytumquGdHFkO
+ mNhYdOcvsb3RMxIpm9VJD9CIDuyrB6tz/DPQyxkP0MInwoMKaQXmARCo5XqazLTCJNYG
+ owzyt2NLquZdYlC9KNMtW4JKnG7s3MWTDSVXEj4n12MrJ36056mDAYwgxzkDWbbB9LZc
+ 5IdqBHYssxhvbvJ5EWdv8QYiHsnv/gZs6ietMJgvaZz+SpWpmMEGj7k4rTjhYqgtKCzm
+ gF/Q==
+X-Gm-Message-State: ABy/qLYCzKUpGRNUNKvZweb9mpLiSo7JiAqYwCKO0tgmVAqkEjKejxy4
+ IFMxGSM5kRMPqLAUxFQC93Wr4w==
+X-Google-Smtp-Source: APBJJlGwmdjot/rbtwF9nTotnOmqaOAtVmCVUqRrFxhkDx7eGx5gFUYRsJSjv9frk6zdjI0egP1lkA==
+X-Received: by 2002:a17:902:e891:b0:1b3:d4bb:3515 with SMTP id
+ w17-20020a170902e89100b001b3d4bb3515mr5854967plg.0.1690448141745; 
+ Thu, 27 Jul 2023 01:55:41 -0700 (PDT)
+Received: from [10.70.252.135] ([203.208.167.147])
  by smtp.gmail.com with ESMTPSA id
- j8-20020aa78d08000000b006828e49c04csm885872pfe.75.2023.07.27.01.08.28
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 27 Jul 2023 01:08:40 -0700 (PDT)
-From: Qi Zheng <zhengqi.arch@bytedance.com>
-To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
- vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
- brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu,
- steven.price@arm.com, cel@kernel.org, senozhatsky@chromium.org,
- yujie.liu@intel.com, gregkh@linuxfoundation.org, muchun.song@linux.dev
-Date: Thu, 27 Jul 2023 16:04:27 +0800
-Message-Id: <20230727080502.77895-15-zhengqi.arch@bytedance.com>
-In-Reply-To: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
-References: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
+ iy15-20020a170903130f00b001bbb1eec92esm1023927plb.281.2023.07.27.01.55.30
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Thu, 27 Jul 2023 01:55:41 -0700 (PDT)
+Message-ID: <56ee1d92-28ee-81cb-9c41-6ca7ea6556b0@bytedance.com>
+Date: Thu, 27 Jul 2023 16:55:27 +0800
 MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:102.0)
+ Gecko/20100101 Thunderbird/102.12.0
+To: Damien Le Moal <dlemoal@kernel.org>
+References: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
+ <20230727080502.77895-29-zhengqi.arch@bytedance.com>
+ <baaf7de4-9a0e-b953-2b6a-46e60c415614@kernel.org>
+From: Qi Zheng <zhengqi.arch@bytedance.com>
+In-Reply-To: <baaf7de4-9a0e-b953-2b6a-46e60c415614@kernel.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -100,10 +100,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mailman-Approved-At: Thu, 27 Jul 2023 17:54:53 +0000
-Subject: [dm-devel] [PATCH v3 14/49] NFSv4.2: dynamically allocate the
- nfs-xattr shrinkers
+Subject: Re: [dm-devel] [PATCH v3 28/49] dm zoned: dynamically allocate the
+ dm-zoned-meta shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -115,195 +115,141 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: kvm@vger.kernel.org, dri-devel@lists.freedesktop.org,
+Cc: kvm@vger.kernel.org, djwong@kernel.org, roman.gushchin@linux.dev,
+ david@fromorbit.com, dri-devel@lists.freedesktop.org,
  virtualization@lists.linux-foundation.org, linux-mm@kvack.org,
- dm-devel@redhat.com, linux-mtd@lists.infradead.org, x86@kernel.org,
- cluster-devel@redhat.com, xen-devel@lists.xenproject.org,
- linux-ext4@vger.kernel.org, linux-arm-msm@vger.kernel.org, rcu@vger.kernel.org,
- linux-bcache@vger.kernel.org, Qi Zheng <zhengqi.arch@bytedance.com>,
- Muchun Song <songmuchun@bytedance.com>, linux-raid@vger.kernel.org,
- linux-nfs@vger.kernel.org, netdev@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
- linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org
+ dm-devel@redhat.com, linux-mtd@lists.infradead.org, cel@kernel.org,
+ x86@kernel.org, steven.price@arm.com, cluster-devel@redhat.com,
+ xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org, paulmck@kernel.org,
+ linux-arm-msm@vger.kernel.org, brauner@kernel.org, rcu@vger.kernel.org,
+ linux-bcache@vger.kernel.org, Muchun Song <songmuchun@bytedance.com>,
+ yujie.liu@intel.com, vbabka@suse.cz, linux-raid@vger.kernel.org,
+ linux-nfs@vger.kernel.org, tytso@mit.edu, netdev@vger.kernel.org,
+ muchun.song@linux.dev, linux-kernel@vger.kernel.org,
+ linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
+ senozhatsky@chromium.org, gregkh@linuxfoundation.org,
+ linux-fsdevel@vger.kernel.org, akpm@linux-foundation.org,
+ linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org, tkhai@ya.ru
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: bytedance.com
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Use new APIs to dynamically allocate the nfs-xattr shrinkers.
+Hi,
 
-Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
-Reviewed-by: Muchun Song <songmuchun@bytedance.com>
----
- fs/nfs/nfs42xattr.c | 87 +++++++++++++++++++++++----------------------
- 1 file changed, 44 insertions(+), 43 deletions(-)
+On 2023/7/27 16:30, Damien Le Moal wrote:
+> On 7/27/23 17:04, Qi Zheng wrote:
+>> In preparation for implementing lockless slab shrink, use new APIs to
+>> dynamically allocate the dm-zoned-meta shrinker, so that it can be freed
+>> asynchronously using kfree_rcu(). Then it doesn't need to wait for RCU
+>> read-side critical section when releasing the struct dmz_metadata.
+>>
+>> Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
+>> Reviewed-by: Muchun Song <songmuchun@bytedance.com>
+>> ---
+>>   drivers/md/dm-zoned-metadata.c | 28 ++++++++++++++++------------
+>>   1 file changed, 16 insertions(+), 12 deletions(-)
+>>
+>> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+>> index 9d3cca8e3dc9..0bcb26a43578 100644
+>> --- a/drivers/md/dm-zoned-metadata.c
+>> +++ b/drivers/md/dm-zoned-metadata.c
+>> @@ -187,7 +187,7 @@ struct dmz_metadata {
+>>   	struct rb_root		mblk_rbtree;
+>>   	struct list_head	mblk_lru_list;
+>>   	struct list_head	mblk_dirty_list;
+>> -	struct shrinker		mblk_shrinker;
+>> +	struct shrinker		*mblk_shrinker;
+>>   
+>>   	/* Zone allocation management */
+>>   	struct mutex		map_lock;
+>> @@ -615,7 +615,7 @@ static unsigned long dmz_shrink_mblock_cache(struct dmz_metadata *zmd,
+>>   static unsigned long dmz_mblock_shrinker_count(struct shrinker *shrink,
+>>   					       struct shrink_control *sc)
+>>   {
+>> -	struct dmz_metadata *zmd = container_of(shrink, struct dmz_metadata, mblk_shrinker);
+>> +	struct dmz_metadata *zmd = shrink->private_data;
+>>   
+>>   	return atomic_read(&zmd->nr_mblks);
+>>   }
+>> @@ -626,7 +626,7 @@ static unsigned long dmz_mblock_shrinker_count(struct shrinker *shrink,
+>>   static unsigned long dmz_mblock_shrinker_scan(struct shrinker *shrink,
+>>   					      struct shrink_control *sc)
+>>   {
+>> -	struct dmz_metadata *zmd = container_of(shrink, struct dmz_metadata, mblk_shrinker);
+>> +	struct dmz_metadata *zmd = shrink->private_data;
+>>   	unsigned long count;
+>>   
+>>   	spin_lock(&zmd->mblk_lock);
+>> @@ -2936,19 +2936,23 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
+>>   	 */
+>>   	zmd->min_nr_mblks = 2 + zmd->nr_map_blocks + zmd->zone_nr_bitmap_blocks * 16;
+>>   	zmd->max_nr_mblks = zmd->min_nr_mblks + 512;
+>> -	zmd->mblk_shrinker.count_objects = dmz_mblock_shrinker_count;
+>> -	zmd->mblk_shrinker.scan_objects = dmz_mblock_shrinker_scan;
+>> -	zmd->mblk_shrinker.seeks = DEFAULT_SEEKS;
+>>   
+>>   	/* Metadata cache shrinker */
+>> -	ret = register_shrinker(&zmd->mblk_shrinker, "dm-zoned-meta:(%u:%u)",
+>> -				MAJOR(dev->bdev->bd_dev),
+>> -				MINOR(dev->bdev->bd_dev));
+>> -	if (ret) {
+>> -		dmz_zmd_err(zmd, "Register metadata cache shrinker failed");
+>> +	zmd->mblk_shrinker = shrinker_alloc(0,  "dm-zoned-meta:(%u:%u)",
+>> +					    MAJOR(dev->bdev->bd_dev),
+>> +					    MINOR(dev->bdev->bd_dev));
+>> +	if (!zmd->mblk_shrinker) {
+>> +		dmz_zmd_err(zmd, "Allocate metadata cache shrinker failed");
+> 
+> ret is not set here, so dmz_ctr_metadata() will return success. You need to add:
+> 		ret = -ENOMEM;
+> or something.
 
-diff --git a/fs/nfs/nfs42xattr.c b/fs/nfs/nfs42xattr.c
-index 911f634ba3da..2ad66a8922f4 100644
---- a/fs/nfs/nfs42xattr.c
-+++ b/fs/nfs/nfs42xattr.c
-@@ -796,28 +796,9 @@ static unsigned long nfs4_xattr_cache_scan(struct shrinker *shrink,
- static unsigned long nfs4_xattr_entry_scan(struct shrinker *shrink,
- 					   struct shrink_control *sc);
- 
--static struct shrinker nfs4_xattr_cache_shrinker = {
--	.count_objects	= nfs4_xattr_cache_count,
--	.scan_objects	= nfs4_xattr_cache_scan,
--	.seeks		= DEFAULT_SEEKS,
--	.flags		= SHRINKER_MEMCG_AWARE,
--};
--
--static struct shrinker nfs4_xattr_entry_shrinker = {
--	.count_objects	= nfs4_xattr_entry_count,
--	.scan_objects	= nfs4_xattr_entry_scan,
--	.seeks		= DEFAULT_SEEKS,
--	.batch		= 512,
--	.flags		= SHRINKER_MEMCG_AWARE,
--};
--
--static struct shrinker nfs4_xattr_large_entry_shrinker = {
--	.count_objects	= nfs4_xattr_entry_count,
--	.scan_objects	= nfs4_xattr_entry_scan,
--	.seeks		= 1,
--	.batch		= 512,
--	.flags		= SHRINKER_MEMCG_AWARE,
--};
-+static struct shrinker *nfs4_xattr_cache_shrinker;
-+static struct shrinker *nfs4_xattr_entry_shrinker;
-+static struct shrinker *nfs4_xattr_large_entry_shrinker;
- 
- static enum lru_status
- cache_lru_isolate(struct list_head *item,
-@@ -943,7 +924,7 @@ nfs4_xattr_entry_scan(struct shrinker *shrink, struct shrink_control *sc)
- 	struct nfs4_xattr_entry *entry;
- 	struct list_lru *lru;
- 
--	lru = (shrink == &nfs4_xattr_large_entry_shrinker) ?
-+	lru = (shrink == nfs4_xattr_large_entry_shrinker) ?
- 	    &nfs4_xattr_large_entry_lru : &nfs4_xattr_entry_lru;
- 
- 	freed = list_lru_shrink_walk(lru, sc, entry_lru_isolate, &dispose);
-@@ -971,7 +952,7 @@ nfs4_xattr_entry_count(struct shrinker *shrink, struct shrink_control *sc)
- 	unsigned long count;
- 	struct list_lru *lru;
- 
--	lru = (shrink == &nfs4_xattr_large_entry_shrinker) ?
-+	lru = (shrink == nfs4_xattr_large_entry_shrinker) ?
- 	    &nfs4_xattr_large_entry_lru : &nfs4_xattr_entry_lru;
- 
- 	count = list_lru_shrink_count(lru, sc);
-@@ -991,18 +972,34 @@ static void nfs4_xattr_cache_init_once(void *p)
- 	INIT_LIST_HEAD(&cache->dispose);
- }
- 
--static int nfs4_xattr_shrinker_init(struct shrinker *shrinker,
--				    struct list_lru *lru, const char *name)
-+typedef unsigned long (*count_objects_cb)(struct shrinker *s,
-+					  struct shrink_control *sc);
-+typedef unsigned long (*scan_objects_cb)(struct shrinker *s,
-+					 struct shrink_control *sc);
-+
-+static int __init nfs4_xattr_shrinker_init(struct shrinker **shrinker,
-+					   struct list_lru *lru, const char *name,
-+					   count_objects_cb count,
-+					   scan_objects_cb scan, long batch, int seeks)
- {
--	int ret = 0;
-+	int ret;
- 
--	ret = register_shrinker(shrinker, name);
--	if (ret)
-+	*shrinker = shrinker_alloc(SHRINKER_MEMCG_AWARE, name);
-+	if (!*shrinker)
-+		return -ENOMEM;
-+
-+	ret = list_lru_init_memcg(lru, *shrinker);
-+	if (ret) {
-+		shrinker_free(*shrinker);
- 		return ret;
-+	}
- 
--	ret = list_lru_init_memcg(lru, shrinker);
--	if (ret)
--		unregister_shrinker(shrinker);
-+	(*shrinker)->count_objects = count;
-+	(*shrinker)->scan_objects = scan;
-+	(*shrinker)->batch = batch;
-+	(*shrinker)->seeks = seeks;
-+
-+	shrinker_register(*shrinker);
- 
- 	return ret;
- }
-@@ -1010,7 +1007,7 @@ static int nfs4_xattr_shrinker_init(struct shrinker *shrinker,
- static void nfs4_xattr_shrinker_destroy(struct shrinker *shrinker,
- 					struct list_lru *lru)
- {
--	unregister_shrinker(shrinker);
-+	shrinker_free(shrinker);
- 	list_lru_destroy(lru);
- }
- 
-@@ -1026,27 +1023,31 @@ int __init nfs4_xattr_cache_init(void)
- 		return -ENOMEM;
- 
- 	ret = nfs4_xattr_shrinker_init(&nfs4_xattr_cache_shrinker,
--				       &nfs4_xattr_cache_lru,
--				       "nfs-xattr_cache");
-+				       &nfs4_xattr_cache_lru, "nfs-xattr_cache",
-+				       nfs4_xattr_cache_count,
-+				       nfs4_xattr_cache_scan, 0, DEFAULT_SEEKS);
- 	if (ret)
- 		goto out1;
- 
- 	ret = nfs4_xattr_shrinker_init(&nfs4_xattr_entry_shrinker,
--				       &nfs4_xattr_entry_lru,
--				       "nfs-xattr_entry");
-+				       &nfs4_xattr_entry_lru, "nfs-xattr_entry",
-+				       nfs4_xattr_entry_count,
-+				       nfs4_xattr_entry_scan, 512, DEFAULT_SEEKS);
- 	if (ret)
- 		goto out2;
- 
- 	ret = nfs4_xattr_shrinker_init(&nfs4_xattr_large_entry_shrinker,
- 				       &nfs4_xattr_large_entry_lru,
--				       "nfs-xattr_large_entry");
-+				       "nfs-xattr_large_entry",
-+				       nfs4_xattr_entry_count,
-+				       nfs4_xattr_entry_scan, 512, 1);
- 	if (!ret)
- 		return 0;
- 
--	nfs4_xattr_shrinker_destroy(&nfs4_xattr_entry_shrinker,
-+	nfs4_xattr_shrinker_destroy(nfs4_xattr_entry_shrinker,
- 				    &nfs4_xattr_entry_lru);
- out2:
--	nfs4_xattr_shrinker_destroy(&nfs4_xattr_cache_shrinker,
-+	nfs4_xattr_shrinker_destroy(nfs4_xattr_cache_shrinker,
- 				    &nfs4_xattr_cache_lru);
- out1:
- 	kmem_cache_destroy(nfs4_xattr_cache_cachep);
-@@ -1056,11 +1057,11 @@ int __init nfs4_xattr_cache_init(void)
- 
- void nfs4_xattr_cache_exit(void)
- {
--	nfs4_xattr_shrinker_destroy(&nfs4_xattr_large_entry_shrinker,
-+	nfs4_xattr_shrinker_destroy(nfs4_xattr_large_entry_shrinker,
- 				    &nfs4_xattr_large_entry_lru);
--	nfs4_xattr_shrinker_destroy(&nfs4_xattr_entry_shrinker,
-+	nfs4_xattr_shrinker_destroy(nfs4_xattr_entry_shrinker,
- 				    &nfs4_xattr_entry_lru);
--	nfs4_xattr_shrinker_destroy(&nfs4_xattr_cache_shrinker,
-+	nfs4_xattr_shrinker_destroy(nfs4_xattr_cache_shrinker,
- 				    &nfs4_xattr_cache_lru);
- 	kmem_cache_destroy(nfs4_xattr_cache_cachep);
- }
--- 
-2.30.2
+Indeed, will fix.
+
+>>   		goto err;
+>>   	}
+>>   
+>> +	zmd->mblk_shrinker->count_objects = dmz_mblock_shrinker_count;
+>> +	zmd->mblk_shrinker->scan_objects = dmz_mblock_shrinker_scan;
+>> +	zmd->mblk_shrinker->seeks = DEFAULT_SEEKS;
+>> +	zmd->mblk_shrinker->private_data = zmd;
+>> +
+>> +	shrinker_register(zmd->mblk_shrinker);
+> 
+> I fail to see how this new shrinker API is better... Why isn't there a
+> shrinker_alloc_and_register() function ? That would avoid adding all this code
+> all over the place as the new API call would be very similar to the current
+> shrinker_register() call with static allocation.
+
+In some registration scenarios, memory needs to be allocated in advance.
+So we continue to use the previous prealloc/register_prepared()
+algorithm. The shrinker_alloc_and_register() is just a helper function
+that combines the two, and this increases the number of APIs that
+shrinker exposes to the outside, so I choose not to add this helper.
+
+Thanks,
+Qi
+
+> 
+>> +
+>>   	dmz_zmd_info(zmd, "DM-Zoned metadata version %d", zmd->sb_version);
+>>   	for (i = 0; i < zmd->nr_devs; i++)
+>>   		dmz_print_dev(zmd, i);
+>> @@ -2995,7 +2999,7 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
+>>    */
+>>   void dmz_dtr_metadata(struct dmz_metadata *zmd)
+>>   {
+>> -	unregister_shrinker(&zmd->mblk_shrinker);
+>> +	shrinker_free(zmd->mblk_shrinker);
+>>   	dmz_cleanup_metadata(zmd);
+>>   	kfree(zmd);
+>>   }
+> 
 
 --
 dm-devel mailing list
