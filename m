@@ -4,8 +4,8 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 091D0C04A94
-	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 17:55:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 699BCC0729B
+	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 17:55:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1690480532;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
@@ -14,82 +14,82 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=P5O53JIShh90WaM7ybJhowxkn9q7XpiVFOXGzlMBpWQ=;
-	b=G6Vj3KKRBXY2WQmDvw6PmZioWzzx8mbud/IgAuGwT0MqWwVh3eYDZqIBkmBnlbOxWsNKWy
-	sGcTqMo0C+ND5lsWMDfmsrfJFvK4gZXmSKzXL5KwzLIL53r7iwHOC0GCYo2OFtgHv2EaNf
-	S3mYSIrEiAules+khtWOnxVJe3wf8+w=
+	bh=PildwDVO1vksOrEWFWLH8Lde16u71ajTWiTv7w4shCQ=;
+	b=dR6v0BIxsVwMbPMHCHaSQR39zmePxtKal/stAiviU4XNvgobbVouYiS8K1UQx9+0emsBqq
+	4uBy20ouwJ5pPW3U7eDAqJ6mIFXkp3ivTIdOt5UgVeiGpwAUgqYqd6x7UzMctj1YqGaCB2
+	N2uHw0BKX0Gi3vShR5ZlDkGbuYuwSLw=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-689-dMYLIBlNNJCDrtdoSuPAFQ-1; Thu, 27 Jul 2023 13:55:30 -0400
-X-MC-Unique: dMYLIBlNNJCDrtdoSuPAFQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-441-rAjQBf_bM-OKyjOmZ9y8yQ-1; Thu, 27 Jul 2023 13:55:30 -0400
+X-MC-Unique: rAjQBf_bM-OKyjOmZ9y8yQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D5C2C887158;
-	Thu, 27 Jul 2023 17:55:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CF0E688D542;
+	Thu, 27 Jul 2023 17:55:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C021CC57967;
-	Thu, 27 Jul 2023 17:55:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id BA71B40C206F;
+	Thu, 27 Jul 2023 17:55:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 98C6C19452C9;
-	Thu, 27 Jul 2023 17:54:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C16B119451C3;
+	Thu, 27 Jul 2023 17:55:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 618271946A6C
- for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 08:06:42 +0000 (UTC)
+ ESMTP id B0D551946A6C
+ for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 08:10:20 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3BC081120AC7; Thu, 27 Jul 2023 08:06:42 +0000 (UTC)
+ id 7F1854094DC1; Thu, 27 Jul 2023 08:10:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 3488B1121339
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:06:42 +0000 (UTC)
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 775B94094DC0
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:10:20 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0DF8B28040B0
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:06:42 +0000 (UTC)
-Received: from mail-pf1-f178.google.com (mail-pf1-f178.google.com
- [209.85.210.178]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 587241C0754B
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:10:20 +0000 (UTC)
+Received: from mail-pf1-f170.google.com (mail-pf1-f170.google.com
+ [209.85.210.170]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-66-e31rYV62MGOx1O2rkeX7eA-2; Thu, 27 Jul 2023 04:06:37 -0400
-X-MC-Unique: e31rYV62MGOx1O2rkeX7eA-2
-Received: by mail-pf1-f178.google.com with SMTP id
- d2e1a72fcca58-6862d4a1376so188281b3a.0
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 01:06:36 -0700 (PDT)
+ us-mta-387-eMJSzcQkMI6W_7R-WcFHyg-1; Thu, 27 Jul 2023 04:10:18 -0400
+X-MC-Unique: eMJSzcQkMI6W_7R-WcFHyg-1
+Received: by mail-pf1-f170.google.com with SMTP id
+ d2e1a72fcca58-66d6a9851f3so168110b3a.0
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 01:10:18 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1690445196; x=1691049996;
+ d=1e100.net; s=20221208; t=1690445417; x=1691050217;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=5ddhCZTkz2TFo7oGCFzg4uU7nrLecafIDKLLill2eh8=;
- b=M1YDito71gsYnBtL2ly0dV7eEuugVwD2c/X3gE4uVeABxIk7RyMgBDbFSVWQUlT4wU
- TnbkzSyQONvBR1rorw9+001VHiRSWmaALzUFToGI4sbBSdmK5zI5gKuMm6rXHoielxwV
- UI2+oXoVOqch1cG27hAV9np0XQfUKZexoKrjoRsdunic5oeh8KzZWZEmywrIEshov49h
- FAbDVyXPlfyxYEjaKesE0zphXJjHEFZXMejQdfph5g6bsZVT7RbxeCC8+PyliOpRjnht
- 0E1ay7+UsKOdMZB5t44zcOmo1OSVbbcSb5KkXqSJnvUxiQu/KX9kBgGPfuW9L2n8AKIb
- Uy/A==
-X-Gm-Message-State: ABy/qLYDswVLEca8bkOphe3SvsdhW/DbLcVdcVwC9bHUstyRTIeIz1jU
- uI9pLtmMs49D1SBeLVDtXeBD2Q==
-X-Google-Smtp-Source: APBJJlGC9GcjpF//RTfgHk/e3ibfMuX5WCzda5QO/QIZ+yDcAz1vV0DX9dFwhd70yzWPOAQ384luFQ==
-X-Received: by 2002:a05:6a21:6da1:b0:134:1671:6191 with SMTP id
- wl33-20020a056a216da100b0013416716191mr5882289pzb.0.1690445196605; 
- Thu, 27 Jul 2023 01:06:36 -0700 (PDT)
+ bh=PYuXWIGRd3SDQUNwBNnDU/RFUGkEJd0z6ud/pRWhp58=;
+ b=klYDqrRd5Faf9Dor+wuapdhju+7zKwS/zPlkjoL1w3S2O2hORst8DvaOfIY6jWTz5W
+ YdN2aFSXeYalw7aCIk8RUmwgQscF/84A9N47b3Ldo6jPI9McdMGDXlK2U3QLbG6byKBD
+ isFA6y5RBXeArGLwGXLkPDV2gpmm0jsOrBnNfvV64O/u/OHolRKTdo7PVDKZ9C6Vz7QW
+ JGC7xjdkaWmCpLHiDDmVvVWrTVVorW0F6kJljmfdfdo/pkiakN8v3rX7KCm4W7AqegL2
+ mtnD+ri9VUk69kzGDZSpFpYJ/kKRXjGoE40hc0xxzmaTLBljMiDeVO7DF3Gj3bom9+GO
+ YGtA==
+X-Gm-Message-State: ABy/qLYSlbQxvhEJffkGvpBPTPHr87q2nd87HZKjr7mYGzAZiinI4UKe
+ 0owivaPNDWJTxTEwhXLNd0dsAQ==
+X-Google-Smtp-Source: APBJJlFP1iLC566NPrkWwKL0iKI9L1P+4s+IlmNKaBmXVe5HE8WAAvDQ5uBELCFt4/l7YPuEeyQdfQ==
+X-Received: by 2002:a05:6a21:7882:b0:123:3ec2:360d with SMTP id
+ bf2-20020a056a21788200b001233ec2360dmr5970181pzc.5.1690445417252; 
+ Thu, 27 Jul 2023 01:10:17 -0700 (PDT)
 Received: from C02DW0BEMD6R.bytedance.net ([203.208.167.147])
  by smtp.gmail.com with ESMTPSA id
- j8-20020aa78d08000000b006828e49c04csm885872pfe.75.2023.07.27.01.06.24
+ j8-20020aa78d08000000b006828e49c04csm885872pfe.75.2023.07.27.01.10.05
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 27 Jul 2023 01:06:36 -0700 (PDT)
+ Thu, 27 Jul 2023 01:10:16 -0700 (PDT)
 From: Qi Zheng <zhengqi.arch@bytedance.com>
 To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
  vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
  brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu,
  steven.price@arm.com, cel@kernel.org, senozhatsky@chromium.org,
  yujie.liu@intel.com, gregkh@linuxfoundation.org, muchun.song@linux.dev
-Date: Thu, 27 Jul 2023 16:04:17 +0800
-Message-Id: <20230727080502.77895-5-zhengqi.arch@bytedance.com>
+Date: Thu, 27 Jul 2023 16:04:35 +0800
+Message-Id: <20230727080502.77895-23-zhengqi.arch@bytedance.com>
 In-Reply-To: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
 References: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
 MIME-Version: 1.0
@@ -100,10 +100,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mailman-Approved-At: Thu, 27 Jul 2023 17:54:53 +0000
-Subject: [dm-devel] [PATCH v3 04/49] mm: shrinker: remove redundant
- shrinker_rwsem in debugfs operations
+Subject: [dm-devel] [PATCH v3 22/49] sunrpc: dynamically allocate the
+ sunrpc_cred shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -128,76 +128,63 @@ Cc: kvm@vger.kernel.org, dri-devel@lists.freedesktop.org,
  linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: bytedance.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The debugfs_remove_recursive() will wait for debugfs_file_put() to return,
-so the shrinker will not be freed when doing debugfs operations (such as
-shrinker_debugfs_count_show() and shrinker_debugfs_scan_write()), so there
-is no need to hold shrinker_rwsem during debugfs operations.
+Use new APIs to dynamically allocate the sunrpc_cred shrinker.
 
 Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
 Reviewed-by: Muchun Song <songmuchun@bytedance.com>
 ---
- mm/shrinker_debug.c | 14 --------------
- 1 file changed, 14 deletions(-)
+ net/sunrpc/auth.c | 19 +++++++++++--------
+ 1 file changed, 11 insertions(+), 8 deletions(-)
 
-diff --git a/mm/shrinker_debug.c b/mm/shrinker_debug.c
-index 3ab53fad8876..f1becfd45853 100644
---- a/mm/shrinker_debug.c
-+++ b/mm/shrinker_debug.c
-@@ -55,11 +55,6 @@ static int shrinker_debugfs_count_show(struct seq_file *m, void *v)
- 	if (!count_per_node)
- 		return -ENOMEM;
+diff --git a/net/sunrpc/auth.c b/net/sunrpc/auth.c
+index 2f16f9d17966..6b898b1be6f5 100644
+--- a/net/sunrpc/auth.c
++++ b/net/sunrpc/auth.c
+@@ -861,11 +861,7 @@ rpcauth_uptodatecred(struct rpc_task *task)
+ 		test_bit(RPCAUTH_CRED_UPTODATE, &cred->cr_flags) != 0;
+ }
  
--	ret = down_read_killable(&shrinker_rwsem);
--	if (ret) {
--		kfree(count_per_node);
--		return ret;
--	}
- 	rcu_read_lock();
+-static struct shrinker rpc_cred_shrinker = {
+-	.count_objects = rpcauth_cache_shrink_count,
+-	.scan_objects = rpcauth_cache_shrink_scan,
+-	.seeks = DEFAULT_SEEKS,
+-};
++static struct shrinker *rpc_cred_shrinker;
  
- 	memcg_aware = shrinker->flags & SHRINKER_MEMCG_AWARE;
-@@ -92,7 +87,6 @@ static int shrinker_debugfs_count_show(struct seq_file *m, void *v)
- 	} while ((memcg = mem_cgroup_iter(NULL, memcg, NULL)) != NULL);
- 
- 	rcu_read_unlock();
--	up_read(&shrinker_rwsem);
- 
- 	kfree(count_per_node);
- 	return ret;
-@@ -117,7 +111,6 @@ static ssize_t shrinker_debugfs_scan_write(struct file *file,
- 	struct mem_cgroup *memcg = NULL;
- 	int nid;
- 	char kbuf[72];
--	ssize_t ret;
- 
- 	read_len = size < (sizeof(kbuf) - 1) ? size : (sizeof(kbuf) - 1);
- 	if (copy_from_user(kbuf, buf, read_len))
-@@ -146,12 +139,6 @@ static ssize_t shrinker_debugfs_scan_write(struct file *file,
- 		return -EINVAL;
- 	}
- 
--	ret = down_read_killable(&shrinker_rwsem);
--	if (ret) {
--		mem_cgroup_put(memcg);
--		return ret;
--	}
--
- 	sc.nid = nid;
- 	sc.memcg = memcg;
- 	sc.nr_to_scan = nr_to_scan;
-@@ -159,7 +146,6 @@ static ssize_t shrinker_debugfs_scan_write(struct file *file,
- 
- 	shrinker->scan_objects(shrinker, &sc);
- 
--	up_read(&shrinker_rwsem);
- 	mem_cgroup_put(memcg);
- 
- 	return size;
+ int __init rpcauth_init_module(void)
+ {
+@@ -874,9 +870,16 @@ int __init rpcauth_init_module(void)
+ 	err = rpc_init_authunix();
+ 	if (err < 0)
+ 		goto out1;
+-	err = register_shrinker(&rpc_cred_shrinker, "sunrpc_cred");
+-	if (err < 0)
++	rpc_cred_shrinker = shrinker_alloc(0, "sunrpc_cred");
++	if (!rpc_cred_shrinker)
+ 		goto out2;
++
++	rpc_cred_shrinker->count_objects = rpcauth_cache_shrink_count;
++	rpc_cred_shrinker->scan_objects = rpcauth_cache_shrink_scan;
++	rpc_cred_shrinker->seeks = DEFAULT_SEEKS;
++
++	shrinker_register(rpc_cred_shrinker);
++
+ 	return 0;
+ out2:
+ 	rpc_destroy_authunix();
+@@ -887,5 +890,5 @@ int __init rpcauth_init_module(void)
+ void rpcauth_remove_module(void)
+ {
+ 	rpc_destroy_authunix();
+-	unregister_shrinker(&rpc_cred_shrinker);
++	shrinker_free(rpc_cred_shrinker);
+ }
 -- 
 2.30.2
 
