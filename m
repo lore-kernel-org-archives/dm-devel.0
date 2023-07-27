@@ -1,95 +1,95 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 83EF2C04E69
-	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 17:55:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9E67DC05051
+	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 17:55:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690480528;
+	s=mimecast20190719; t=1690480529;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=JKjrIKMetTkra+CQoMfQdpLwk9KslmT6qnDQUSavNrE=;
-	b=QQb4zA9FfHsSD7Tp3C2gJ7GowyGnYv7Rsbiy6CeR0aUAqU6z98+BGv14Mk3+32sdwGBq0H
-	gs6EPTIjYAiRN1Xf3Fr3GT4E1Z1XBH289rMCHz3QvE6vu6CAc64sU/Wg3LSqthqOAkTlDh
-	Ovc9JC3gk7Joy5wPgBPV43HN9UTvbZo=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-312-8LotoDOaOsCHjfn07aIrzw-1; Thu, 27 Jul 2023 13:55:24 -0400
-X-MC-Unique: 8LotoDOaOsCHjfn07aIrzw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+	bh=N1dGEWhX/eoj252wr4ZBNgzsx5/mmmcDHNOcmsLzGzs=;
+	b=WDg8YeBtxnUDHsfv9vXvqiLO5hufY8fK0Y+d0GyqETfvFw7UuAf+v5tDrvt/12ldhidSVR
+	dSR+loRCweZhprJ5WFvEIXzmyQUlkVCrSU3xiRWh67ppYOtyLlelaCI8bMjUjThQU4B+4W
+	O8A8sfm5MWyu3KS4jM43wo7CbDOG5CE=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-223-yMGu4y-fMgmZ5EywqXhxfg-1; Thu, 27 Jul 2023 13:55:21 -0400
+X-MC-Unique: yMGu4y-fMgmZ5EywqXhxfg-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CCC27835059;
-	Thu, 27 Jul 2023 17:54:59 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 946001C09A67;
+	Thu, 27 Jul 2023 17:55:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B99571121330;
-	Thu, 27 Jul 2023 17:54:59 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8092DF7832;
+	Thu, 27 Jul 2023 17:55:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 700AC19543A4;
-	Thu, 27 Jul 2023 17:54:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7710E19451CA;
+	Thu, 27 Jul 2023 17:55:06 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7DDB31946A6C
- for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 08:15:54 +0000 (UTC)
+ ESMTP id 326731946A7C
+ for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 08:14:00 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1F62FF7825; Thu, 27 Jul 2023 08:15:54 +0000 (UTC)
+ id A0E5C1121339; Thu, 27 Jul 2023 08:14:00 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B02BAF6CD2
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:15:53 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 99FC91121330
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:14:00 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 89BDA3C0FC98
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:15:53 +0000 (UTC)
-Received: from mail-pf1-f179.google.com (mail-pf1-f179.google.com
- [209.85.210.179]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 79E851C0754B
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 08:14:00 +0000 (UTC)
+Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com
+ [209.85.210.169]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-249-1Lla9eHXNDqeZZwlzlNcOg-2; Thu, 27 Jul 2023 04:15:51 -0400
-X-MC-Unique: 1Lla9eHXNDqeZZwlzlNcOg-2
-Received: by mail-pf1-f179.google.com with SMTP id
- d2e1a72fcca58-686f6231bdeso114289b3a.1
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 01:15:51 -0700 (PDT)
+ us-mta-663-WU7OrZxxPv-GwGdLJeL0vw-1; Thu, 27 Jul 2023 04:13:58 -0400
+X-MC-Unique: WU7OrZxxPv-GwGdLJeL0vw-1
+Received: by mail-pf1-f169.google.com with SMTP id
+ d2e1a72fcca58-682eef7d752so204926b3a.0
+ for <dm-devel@redhat.com>; Thu, 27 Jul 2023 01:13:58 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1690445751; x=1691050551;
+ d=1e100.net; s=20221208; t=1690445637; x=1691050437;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=V+VUr/yqCBhRzWtIhjCO81y0MQsQ8/nBil0vz0xF6BE=;
- b=LtT43jJYT0HYyfrjilbwvVUnrxKBYYCowI9/NWU99lfB9mmssrDZQlmBXYhsluBRKI
- hftvnGUpccakSI5yeeIRyqyzv4Hxjjk/KFOksi5/GIHIcm3xywrvJVQA5ybV3dOFJuKk
- lwaiAoeJHhPMQdBSvjYmFVCGuAsvn2qn+CHS7reNJhP1OFLZh6uE7mB9e/mOc/bYx1e+
- uTX11QmNGvMtjIZmpK8PJYUbSdSLtzrTDtB3RIV1KcPis/9qARBbJRuSnLLt+EI+R5Lq
- smMfg4qi7BdhbxY+tG9ZylyU8gKiKlpKECwMx/ag85tYW6dVSosvsDMfhsw+NprLGN0l
- kEEQ==
-X-Gm-Message-State: ABy/qLZzxytFw0XbWAONGRkKRlCaSnEKd1bTP6o/Keskd50+BTUjU3uI
- 6H7/aFlrO/riiyWEkFZDh0ZuuA==
-X-Google-Smtp-Source: APBJJlEPnp3RDXXbUxyHg3EG2jnu2Scq2lS38vCuYEIB7nQxuybwzYpkjm+dcqMi61BwYttNjNAkLg==
-X-Received: by 2002:aa7:84d0:0:b0:686:bf43:60fa with SMTP id
- x16-20020aa784d0000000b00686bf4360famr5267613pfn.0.1690445746275; 
- Thu, 27 Jul 2023 01:15:46 -0700 (PDT)
+ bh=wkWZ9/xaCXa97bQ5JXnZc5xW9B3SNGrJMT1hKcCw6ws=;
+ b=ZJVpuzBqtFMsc/gnBFBZPPR2Y1rzcj8ZaFfKTtzmfrz3ZeYHQefsfhlyGVbOx+rj+o
+ o0iEfPO4CMtLeiDmHPFkdob0KyG2WsHoLGWYVtB1hPop5JW2ServDH0tHFc9yY5fAqV0
+ k5au2Uvu0Ea/xH+6QXmTAW42wQeq3wNwBhZBZ+ocGVreVQaV4fKnbVid0Or4PJgmz/Ju
+ T2YsrYHTChiT45EGrKC33K0K983E8iU0Cj36VpMnYbWVCCaISQb25y21BP/3ZvXX0yBH
+ 6W+l8seKhjT1imbSDfSu2j026BbouGUjjN/bdvmPpdLjEzCIWJMdJzRCQo8XCwTogK9/
+ QVNw==
+X-Gm-Message-State: ABy/qLZJfjyXdVJwH85gzvdDnHQKuHXgW3DYXI6j3WAAn+VTZ8QFNhdU
+ 0ekKvOw2d661gMHOGS/eZnl7hA==
+X-Google-Smtp-Source: APBJJlHv3kehM44VAWCca2syD2CKM7i434EcumRqZh5gO/U3rxv+9ZnIssQP5Ien17rj+O8gWl3H0Q==
+X-Received: by 2002:a05:6a00:1586:b0:67f:8ef5:2643 with SMTP id
+ u6-20020a056a00158600b0067f8ef52643mr5213351pfk.2.1690445637383; 
+ Thu, 27 Jul 2023 01:13:57 -0700 (PDT)
 Received: from C02DW0BEMD6R.bytedance.net ([203.208.167.147])
  by smtp.gmail.com with ESMTPSA id
- j8-20020aa78d08000000b006828e49c04csm885872pfe.75.2023.07.27.01.15.34
+ j8-20020aa78d08000000b006828e49c04csm885872pfe.75.2023.07.27.01.13.45
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 27 Jul 2023 01:15:45 -0700 (PDT)
+ Thu, 27 Jul 2023 01:13:57 -0700 (PDT)
 From: Qi Zheng <zhengqi.arch@bytedance.com>
 To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
  vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
  brauner@kernel.org, paulmck@kernel.org, tytso@mit.edu,
  steven.price@arm.com, cel@kernel.org, senozhatsky@chromium.org,
  yujie.liu@intel.com, gregkh@linuxfoundation.org, muchun.song@linux.dev
-Date: Thu, 27 Jul 2023 16:05:02 +0800
-Message-Id: <20230727080502.77895-50-zhengqi.arch@bytedance.com>
+Date: Thu, 27 Jul 2023 16:04:53 +0800
+Message-Id: <20230727080502.77895-41-zhengqi.arch@bytedance.com>
 In-Reply-To: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
 References: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
 MIME-Version: 1.0
@@ -100,10 +100,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mailman-Approved-At: Thu, 27 Jul 2023 17:54:53 +0000
-Subject: [dm-devel] [PATCH v3 49/49] mm: shrinker: convert shrinker_rwsem to
- mutex
+Subject: [dm-devel] [PATCH v3 40/49] xfs: dynamically allocate the xfs-qm
+ shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -121,247 +121,104 @@ Cc: kvm@vger.kernel.org, dri-devel@lists.freedesktop.org,
  cluster-devel@redhat.com, xen-devel@lists.xenproject.org,
  linux-ext4@vger.kernel.org, linux-arm-msm@vger.kernel.org, rcu@vger.kernel.org,
  linux-bcache@vger.kernel.org, Qi Zheng <zhengqi.arch@bytedance.com>,
- linux-raid@vger.kernel.org, linux-nfs@vger.kernel.org, netdev@vger.kernel.org,
+ Muchun Song <songmuchun@bytedance.com>, linux-raid@vger.kernel.org,
+ linux-nfs@vger.kernel.org, netdev@vger.kernel.org,
  linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
  linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
  linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: bytedance.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Now there are no readers of shrinker_rwsem, so we can simply replace it
-with mutex lock.
+In preparation for implementing lockless slab shrink, use new APIs to
+dynamically allocate the xfs-qm shrinker, so that it can be freed
+asynchronously using kfree_rcu(). Then it doesn't need to wait for RCU
+read-side critical section when releasing the struct xfs_quotainfo.
 
 Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
+Reviewed-by: Muchun Song <songmuchun@bytedance.com>
 ---
- drivers/md/dm-cache-metadata.c |  2 +-
- fs/super.c                     |  2 +-
- mm/shrinker.c                  | 28 ++++++++++++++--------------
- mm/shrinker_debug.c            | 14 +++++++-------
- 4 files changed, 23 insertions(+), 23 deletions(-)
+ fs/xfs/xfs_qm.c | 26 +++++++++++++-------------
+ fs/xfs/xfs_qm.h |  2 +-
+ 2 files changed, 14 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
-index acffed750e3e..9e0c69958587 100644
---- a/drivers/md/dm-cache-metadata.c
-+++ b/drivers/md/dm-cache-metadata.c
-@@ -1828,7 +1828,7 @@ int dm_cache_metadata_abort(struct dm_cache_metadata *cmd)
- 	 * Replacement block manager (new_bm) is created and old_bm destroyed outside of
- 	 * cmd root_lock to avoid ABBA deadlock that would result (due to life-cycle of
- 	 * shrinker associated with the block manager's bufio client vs cmd root_lock).
--	 * - must take shrinker_rwsem without holding cmd->root_lock
-+	 * - must take shrinker_mutex without holding cmd->root_lock
- 	 */
- 	new_bm = dm_block_manager_create(cmd->bdev, DM_CACHE_METADATA_BLOCK_SIZE << SECTOR_SHIFT,
- 					 CACHE_MAX_CONCURRENT_LOCKS);
-diff --git a/fs/super.c b/fs/super.c
-index 68b3877af941..fdde72e2a357 100644
---- a/fs/super.c
-+++ b/fs/super.c
-@@ -54,7 +54,7 @@ static char *sb_writers_name[SB_FREEZE_LEVELS] = {
-  * One thing we have to be careful of with a per-sb shrinker is that we don't
-  * drop the last active reference to the superblock from within the shrinker.
-  * If that happens we could trigger unregistering the shrinker from within the
-- * shrinker path and that leads to deadlock on the shrinker_rwsem. Hence we
-+ * shrinker path and that leads to deadlock on the shrinker_mutex. Hence we
-  * take a passive reference to the superblock to avoid this from occurring.
-  */
- static unsigned long super_cache_scan(struct shrinker *shrink,
-diff --git a/mm/shrinker.c b/mm/shrinker.c
-index a12dede5d21f..3d44a335ef3c 100644
---- a/mm/shrinker.c
-+++ b/mm/shrinker.c
-@@ -8,7 +8,7 @@
- #include "internal.h"
- 
- LIST_HEAD(shrinker_list);
--DECLARE_RWSEM(shrinker_rwsem);
-+DEFINE_MUTEX(shrinker_mutex);
- 
- #ifdef CONFIG_MEMCG
- static int shrinker_nr_max;
-@@ -80,7 +80,7 @@ int alloc_shrinker_info(struct mem_cgroup *memcg)
- 	int nid, ret = 0;
- 	int array_size = 0;
- 
--	down_write(&shrinker_rwsem);
-+	mutex_lock(&shrinker_mutex);
- 	array_size = shrinker_unit_size(shrinker_nr_max);
- 	for_each_node(nid) {
- 		info = kvzalloc_node(sizeof(*info) + array_size, GFP_KERNEL, nid);
-@@ -91,7 +91,7 @@ int alloc_shrinker_info(struct mem_cgroup *memcg)
- 			goto err;
- 		rcu_assign_pointer(memcg->nodeinfo[nid]->shrinker_info, info);
- 	}
--	up_write(&shrinker_rwsem);
-+	mutex_unlock(&shrinker_mutex);
- 
- 	return ret;
- 
-@@ -104,7 +104,7 @@ static struct shrinker_info *shrinker_info_protected(struct mem_cgroup *memcg,
- 						     int nid)
+diff --git a/fs/xfs/xfs_qm.c b/fs/xfs/xfs_qm.c
+index 6abcc34fafd8..032f0a208bd2 100644
+--- a/fs/xfs/xfs_qm.c
++++ b/fs/xfs/xfs_qm.c
+@@ -504,8 +504,7 @@ xfs_qm_shrink_scan(
+ 	struct shrinker		*shrink,
+ 	struct shrink_control	*sc)
  {
- 	return rcu_dereference_protected(memcg->nodeinfo[nid]->shrinker_info,
--					 lockdep_is_held(&shrinker_rwsem));
-+					 lockdep_is_held(&shrinker_mutex));
- }
- 
- static struct shrinker_info *shrinker_info_rcu(struct mem_cgroup *memcg,
-@@ -161,7 +161,7 @@ static int expand_shrinker_info(int new_id)
- 	if (!root_mem_cgroup)
- 		goto out;
- 
--	lockdep_assert_held(&shrinker_rwsem);
-+	lockdep_assert_held(&shrinker_mutex);
- 
- 	new_size = shrinker_unit_size(new_nr_max);
- 	old_size = shrinker_unit_size(shrinker_nr_max);
-@@ -224,7 +224,7 @@ static int shrinker_memcg_alloc(struct shrinker *shrinker)
- 	if (mem_cgroup_disabled())
- 		return -ENOSYS;
- 
--	down_write(&shrinker_rwsem);
-+	mutex_lock(&shrinker_mutex);
- 	id = idr_alloc(&shrinker_idr, shrinker, 0, 0, GFP_KERNEL);
- 	if (id < 0)
- 		goto unlock;
-@@ -238,7 +238,7 @@ static int shrinker_memcg_alloc(struct shrinker *shrinker)
- 	shrinker->id = id;
- 	ret = 0;
- unlock:
--	up_write(&shrinker_rwsem);
-+	mutex_unlock(&shrinker_mutex);
- 	return ret;
- }
- 
-@@ -248,7 +248,7 @@ static void shrinker_memcg_remove(struct shrinker *shrinker)
- 
- 	BUG_ON(id < 0);
- 
--	lockdep_assert_held(&shrinker_rwsem);
-+	lockdep_assert_held(&shrinker_mutex);
- 
- 	idr_remove(&shrinker_idr, id);
- }
-@@ -299,7 +299,7 @@ void reparent_shrinker_deferred(struct mem_cgroup *memcg)
- 		parent = root_mem_cgroup;
- 
- 	/* Prevent from concurrent shrinker_info expand */
--	down_write(&shrinker_rwsem);
-+	mutex_lock(&shrinker_mutex);
- 	for_each_node(nid) {
- 		child_info = shrinker_info_protected(memcg, nid);
- 		parent_info = shrinker_info_protected(parent, nid);
-@@ -312,7 +312,7 @@ void reparent_shrinker_deferred(struct mem_cgroup *memcg)
- 			}
- 		}
- 	}
--	up_write(&shrinker_rwsem);
-+	mutex_unlock(&shrinker_mutex);
- }
- #else
- static int shrinker_memcg_alloc(struct shrinker *shrinker)
-@@ -708,11 +708,11 @@ void shrinker_register(struct shrinker *shrinker)
- 		return;
- 	}
- 
--	down_write(&shrinker_rwsem);
-+	mutex_lock(&shrinker_mutex);
- 	list_add_tail_rcu(&shrinker->list, &shrinker_list);
- 	shrinker->flags |= SHRINKER_REGISTERED;
- 	shrinker_debugfs_add(shrinker);
--	up_write(&shrinker_rwsem);
-+	mutex_unlock(&shrinker_mutex);
- 
- 	init_completion(&shrinker->done);
- 	/*
-@@ -745,7 +745,7 @@ void shrinker_free(struct shrinker *shrinker)
- 		wait_for_completion(&shrinker->done);
- 	}
- 
--	down_write(&shrinker_rwsem);
-+	mutex_lock(&shrinker_mutex);
- 	if (shrinker->flags & SHRINKER_REGISTERED) {
- 		/*
- 		 * Lookups on the shrinker are over and will fail in the future,
-@@ -760,7 +760,7 @@ void shrinker_free(struct shrinker *shrinker)
- 
- 	if (shrinker->flags & SHRINKER_MEMCG_AWARE)
- 		shrinker_memcg_remove(shrinker);
--	up_write(&shrinker_rwsem);
-+	mutex_unlock(&shrinker_mutex);
- 
- 	if (debugfs_entry)
- 		shrinker_debugfs_remove(debugfs_entry, debugfs_id);
-diff --git a/mm/shrinker_debug.c b/mm/shrinker_debug.c
-index 506257585408..368fa0484a44 100644
---- a/mm/shrinker_debug.c
-+++ b/mm/shrinker_debug.c
-@@ -7,7 +7,7 @@
- #include <linux/memcontrol.h>
- 
- /* defined in vmscan.c */
--extern struct rw_semaphore shrinker_rwsem;
-+extern struct mutex shrinker_mutex;
- extern struct list_head shrinker_list;
- 
- static DEFINE_IDA(shrinker_debugfs_ida);
-@@ -163,7 +163,7 @@ int shrinker_debugfs_add(struct shrinker *shrinker)
- 	char buf[128];
- 	int id;
- 
--	lockdep_assert_held(&shrinker_rwsem);
-+	lockdep_assert_held(&shrinker_mutex);
- 
- 	/* debugfs isn't initialized yet, add debugfs entries later. */
- 	if (!shrinker_debugfs_root)
-@@ -220,7 +220,7 @@ int shrinker_debugfs_rename(struct shrinker *shrinker, const char *fmt, ...)
- 	if (!new)
- 		return -ENOMEM;
- 
--	down_write(&shrinker_rwsem);
-+	mutex_lock(&shrinker_mutex);
- 
- 	old = shrinker->name;
- 	shrinker->name = new;
-@@ -238,7 +238,7 @@ int shrinker_debugfs_rename(struct shrinker *shrinker, const char *fmt, ...)
- 			shrinker->debugfs_entry = entry;
- 	}
- 
--	up_write(&shrinker_rwsem);
-+	mutex_unlock(&shrinker_mutex);
- 
- 	kfree_const(old);
- 
-@@ -251,7 +251,7 @@ struct dentry *shrinker_debugfs_detach(struct shrinker *shrinker,
+-	struct xfs_quotainfo	*qi = container_of(shrink,
+-					struct xfs_quotainfo, qi_shrinker);
++	struct xfs_quotainfo	*qi = shrink->private_data;
+ 	struct xfs_qm_isolate	isol;
+ 	unsigned long		freed;
+ 	int			error;
+@@ -539,8 +538,7 @@ xfs_qm_shrink_count(
+ 	struct shrinker		*shrink,
+ 	struct shrink_control	*sc)
  {
- 	struct dentry *entry = shrinker->debugfs_entry;
+-	struct xfs_quotainfo	*qi = container_of(shrink,
+-					struct xfs_quotainfo, qi_shrinker);
++	struct xfs_quotainfo	*qi = shrink->private_data;
  
--	lockdep_assert_held(&shrinker_rwsem);
-+	lockdep_assert_held(&shrinker_mutex);
- 
- 	shrinker_debugfs_name_free(shrinker);
- 
-@@ -279,14 +279,14 @@ static int __init shrinker_debugfs_init(void)
- 	shrinker_debugfs_root = dentry;
- 
- 	/* Create debugfs entries for shrinkers registered at boot */
--	down_write(&shrinker_rwsem);
-+	mutex_lock(&shrinker_mutex);
- 	list_for_each_entry(shrinker, &shrinker_list, list)
- 		if (!shrinker->debugfs_entry) {
- 			ret = shrinker_debugfs_add(shrinker);
- 			if (ret)
- 				break;
- 		}
--	up_write(&shrinker_rwsem);
-+	mutex_unlock(&shrinker_mutex);
- 
- 	return ret;
+ 	return list_lru_shrink_count(&qi->qi_lru, sc);
  }
+@@ -680,16 +678,18 @@ xfs_qm_init_quotainfo(
+ 	if (XFS_IS_PQUOTA_ON(mp))
+ 		xfs_qm_set_defquota(mp, XFS_DQTYPE_PROJ, qinf);
+ 
+-	qinf->qi_shrinker.count_objects = xfs_qm_shrink_count;
+-	qinf->qi_shrinker.scan_objects = xfs_qm_shrink_scan;
+-	qinf->qi_shrinker.seeks = DEFAULT_SEEKS;
+-	qinf->qi_shrinker.flags = SHRINKER_NUMA_AWARE;
+-
+-	error = register_shrinker(&qinf->qi_shrinker, "xfs-qm:%s",
+-				  mp->m_super->s_id);
+-	if (error)
++	qinf->qi_shrinker = shrinker_alloc(SHRINKER_NUMA_AWARE, "xfs-qm:%s",
++					   mp->m_super->s_id);
++	if (!qinf->qi_shrinker)
+ 		goto out_free_inos;
+ 
++	qinf->qi_shrinker->count_objects = xfs_qm_shrink_count;
++	qinf->qi_shrinker->scan_objects = xfs_qm_shrink_scan;
++	qinf->qi_shrinker->seeks = DEFAULT_SEEKS;
++	qinf->qi_shrinker->private_data = qinf;
++
++	shrinker_register(qinf->qi_shrinker);
++
+ 	return 0;
+ 
+ out_free_inos:
+@@ -718,7 +718,7 @@ xfs_qm_destroy_quotainfo(
+ 	qi = mp->m_quotainfo;
+ 	ASSERT(qi != NULL);
+ 
+-	unregister_shrinker(&qi->qi_shrinker);
++	shrinker_free(qi->qi_shrinker);
+ 	list_lru_destroy(&qi->qi_lru);
+ 	xfs_qm_destroy_quotainos(qi);
+ 	mutex_destroy(&qi->qi_tree_lock);
+diff --git a/fs/xfs/xfs_qm.h b/fs/xfs/xfs_qm.h
+index 9683f0457d19..d5c9fc4ba591 100644
+--- a/fs/xfs/xfs_qm.h
++++ b/fs/xfs/xfs_qm.h
+@@ -63,7 +63,7 @@ struct xfs_quotainfo {
+ 	struct xfs_def_quota	qi_usr_default;
+ 	struct xfs_def_quota	qi_grp_default;
+ 	struct xfs_def_quota	qi_prj_default;
+-	struct shrinker		qi_shrinker;
++	struct shrinker		*qi_shrinker;
+ 
+ 	/* Minimum and maximum quota expiration timestamp values. */
+ 	time64_t		qi_expiry_min;
 -- 
 2.30.2
 
