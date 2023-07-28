@@ -1,10 +1,10 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 963D7C04A94
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C0CAEC001DF
 	for <dm-devel@archiver.kernel.org>; Mon, 31 Jul 2023 06:48:56 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1690786135;
@@ -14,119 +14,119 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=D376FSefm6eqcEZJTFirQi9ad90oweId7GGpWOCTb7o=;
-	b=FEOeQq3WrmoN5VBKzBQGXZ9fGj8xq9Zh6AIVYuNn3rZwQiUV9VVxoxIRM/1/Lg3cTh34/W
-	I4X2URHR6FyTUE3o2RbvZFDtNqaX7ZUD3607noTPRywTEfFwi3TU7ca2N3mNr2nVqOLZH8
-	geoTpzVBho0mAUdpzjuShqOTpywFYok=
-Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-610-3rMpCJ00N_2mh4IfbGrcVw-1; Mon, 31 Jul 2023 02:48:52 -0400
-X-MC-Unique: 3rMpCJ00N_2mh4IfbGrcVw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	bh=mHn/DoUQ+3slECNZW5ujJR4hFO1KzGRhs6HFo5pDKjw=;
+	b=JQ/pQ9q1A8fNiDei8IZGKRezmZqxpN3InrJotZBtV7W1GASodUodVhaYVUUSScAt9WFguo
+	MY8ylbEbVfQBIbaGdSeLpI9BSwXJ8EXR5oZiXt58EBksCALztf0QFPqcFYFPq8eIKWGDmH
+	5aMvnUNvC+m1isfxaHYGp7JDHbtUiNg=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-135-v1lCheSuMvOoxbwpHmar4g-1; Mon, 31 Jul 2023 02:48:52 -0400
+X-MC-Unique: v1lCheSuMvOoxbwpHmar4g-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 961E91C05EC1;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AE4C51044594;
 	Mon, 31 Jul 2023 06:48:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4D4DF20839E0;
-	Mon, 31 Jul 2023 06:48:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1656140D283A;
+	Mon, 31 Jul 2023 06:48:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1C861194658C;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 550971946A63;
 	Mon, 31 Jul 2023 06:48:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 352881946586
- for <dm-devel@listman.corp.redhat.com>; Fri, 28 Jul 2023 08:13:34 +0000 (UTC)
+ ESMTP id ED3F11946A6A
+ for <dm-devel@listman.corp.redhat.com>; Fri, 28 Jul 2023 12:17:43 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 127ED492CAC; Fri, 28 Jul 2023 08:13:34 +0000 (UTC)
+ id C3DAC4094DCA; Fri, 28 Jul 2023 12:17:43 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0A241492B03
- for <dm-devel@redhat.com>; Fri, 28 Jul 2023 08:13:34 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DE9A5185A78B
- for <dm-devel@redhat.com>; Fri, 28 Jul 2023 08:13:33 +0000 (UTC)
-Received: from NAM11-BN8-obe.outbound.protection.outlook.com
- (mail-bn8nam11on2100.outbound.protection.outlook.com [40.107.236.100]) by
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id BBC954094DC9
+ for <dm-devel@redhat.com>; Fri, 28 Jul 2023 12:17:43 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 91F698007CE
+ for <dm-devel@redhat.com>; Fri, 28 Jul 2023 12:17:43 +0000 (UTC)
+Received: from NAM10-MW2-obe.outbound.protection.outlook.com
+ (mail-mw2nam10on2135.outbound.protection.outlook.com [40.107.94.135]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-45-QjOEKK_bN0-dzYmkaz71XQ-1; Fri, 28 Jul 2023 04:13:30 -0400
-X-MC-Unique: QjOEKK_bN0-dzYmkaz71XQ-1
+ us-mta-494-QkRRKs8YO7Cl4_BQ_w6GSQ-1; Fri, 28 Jul 2023 08:17:39 -0400
+X-MC-Unique: QkRRKs8YO7Cl4_BQ_w6GSQ-1
 Received: from PH0PR13MB4842.namprd13.prod.outlook.com (2603:10b6:510:78::6)
- by SJ0PR13MB5269.namprd13.prod.outlook.com (2603:10b6:a03:3e1::9) with
+ by CO3PR13MB5752.namprd13.prod.outlook.com (2603:10b6:303:164::5) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6631.29; Fri, 28 Jul
- 2023 08:13:25 +0000
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6609.33; Fri, 28 Jul
+ 2023 12:17:35 +0000
 Received: from PH0PR13MB4842.namprd13.prod.outlook.com
  ([fe80::fde7:9821:f2d9:101d]) by PH0PR13MB4842.namprd13.prod.outlook.com
  ([fe80::fde7:9821:f2d9:101d%7]) with mapi id 15.20.6631.026; Fri, 28 Jul 2023
- 08:13:24 +0000
-Date: Fri, 28 Jul 2023 10:13:14 +0200
+ 12:17:35 +0000
+Date: Fri, 28 Jul 2023 14:17:23 +0200
 From: Simon Horman <simon.horman@corigine.com>
 To: Qi Zheng <zhengqi.arch@bytedance.com>
-Message-ID: <ZMN4mjsF1QEsvW7D@corigine.com>
+Message-ID: <ZMOx0y+wdHEATDho@corigine.com>
 References: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
- <20230727080502.77895-5-zhengqi.arch@bytedance.com>
-In-Reply-To: <20230727080502.77895-5-zhengqi.arch@bytedance.com>
-X-ClientProxiedBy: AM0PR02CA0114.eurprd02.prod.outlook.com
- (2603:10a6:20b:28c::11) To PH0PR13MB4842.namprd13.prod.outlook.com
+ <20230727080502.77895-6-zhengqi.arch@bytedance.com>
+In-Reply-To: <20230727080502.77895-6-zhengqi.arch@bytedance.com>
+X-ClientProxiedBy: AS4P190CA0065.EURP190.PROD.OUTLOOK.COM
+ (2603:10a6:20b:656::10) To PH0PR13MB4842.namprd13.prod.outlook.com
  (2603:10b6:510:78::6)
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: PH0PR13MB4842:EE_|SJ0PR13MB5269:EE_
-X-MS-Office365-Filtering-Correlation-Id: 8611e466-4b59-4307-f46d-08db8f4283c5
+X-MS-TrafficTypeDiagnostic: PH0PR13MB4842:EE_|CO3PR13MB5752:EE_
+X-MS-Office365-Filtering-Correlation-Id: 7fa1c089-2344-4b06-3624-08db8f649f2e
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: pwW465vo9hI5eC/8Ntm80OiPZIBHfs3VML+30ACZ6q1gKIiw07bi63fgQFFRLxhjeMOvYXvKDQCbhdJXvkJtuvlV+CXofrjYF/nUT4dPDX7q3opgHQdml0n1/4JWskU89OGJAciXmkpGNxgq9ry3pQOnhUiBe/rX017qs0avdKvOdhPtlbR+VQVKZn19geR1qa1unKg72RhRR53/MXIMsfQLudax4C3TSjl+Giz2dgx40XXbX34DzfbwIhH5bpBtGAGLaj3zSQAl3qvuVXHTkg909IcoX6oZGllYm2+Eps+5dhGhNgPCU1/7AU4O5pm4wOrjGhtYfZoZ9N02ekDRjKTQ4lquadIeum0uy/WYwMrctBR3EpkOJHSBHPG5+OYlhSGKYRuhxcaOuJyq9NPyXaRtIwoJbm2SQ2E3gbw5UzfYNh4+Zsdlyyf2fqz/nfuTulgnbDZUN06bw3dCKQlgorH/+ohWbaa1SQLbJzCxvKZOx/MJCh1pBm/F2VBIa/so2tKi49EA+ktn349EbCy+bMhrGONwPCzwf2MNJSruQNMUKPHUtE6Ber7adMWlIhvkRQnideoRjxmflS1kiPiAMuBzpM3AyXXbMb1u0RgXupI=
+X-Microsoft-Antispam-Message-Info: j0Mc3eF+DP2LxDOozLRyyeIKECVLGRQIlIrdEFb9GZyo19Z8jeFLDt/bCDbFSf8N0UgLcZ5nANCSfFPp9ph0OUTRm7F2bEGtxXu0ZMmYHB++UDEI/qt4sQIsHpj+LQqg6gGfURY4hT2IDCWGw6Ybqs5E7pgqpJs4J/nInIqn9VFU5CgQ+GK35/ZyTVoe6qWgCri0ck8ovO1iCvPMl6pQY1O5aEK2fI+4PMy9h3gUmAn1qC8GUFYKGFd4nIODUjceb9/B+WqmJi70ci7KBpycck/dYE/oE/fSNvWH87L2EN/RSEwJk4PFsx+XLA/x2ei5z3yj6T2zjDIjyD3Tat8vFp7m6b/5G97rY5DcrR5bpBvN1ryBFxovF049q1oBmHR1y7JP7MnntYWy7a2vGVlaH8cxiuhFvjFImRVlPHL7jFTnBxTs4DERfppx6DRLuWoyS8O4un5AQcw6WdKHT5UELpX36pMqwNA+j9Lbq5wh+3whyO46TZ2AhZlYvDlKlv7kTBixlXGW0fX6p3Xifb3vwnkvHoPd+UmsM9xZCOzMyPnlNSvXgvaF2p9+YayAMBmddGwNQoAsFRS9MKI4K1hSr40LZzFN4IAgjQ9J2S041xn/JxtQtD3rgjJxgmntTaofdMkuJGANvA4JO5mZkvQzhMrAXXqvJEOmaFoTF7J+yac=
 X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
  IPV:NLI; SFV:NSPM; H:PH0PR13MB4842.namprd13.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230028)(4636009)(396003)(39840400004)(136003)(376002)(346002)(366004)(451199021)(316002)(6486002)(6666004)(6512007)(38100700002)(66946007)(66476007)(66556008)(4326008)(6916009)(478600001)(83380400001)(44832011)(2616005)(36756003)(2906002)(86362001)(41300700001)(6506007)(186003)(7416002)(7406005)(8676002)(8936002)(5660300002);
+ SFS:(13230028)(4636009)(366004)(136003)(39840400004)(376002)(396003)(346002)(451199021)(6512007)(478600001)(38100700002)(66946007)(8936002)(5660300002)(8676002)(66476007)(4326008)(6916009)(2616005)(41300700001)(66556008)(316002)(186003)(83380400001)(6666004)(6486002)(6506007)(86362001)(2906002)(7416002)(44832011)(7406005)(36756003)(67856001);
  DIR:OUT; SFP:1102
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?EwJcBo/2mvzDAcZlwWvTX9INa/Cd4/lFcnamw+5KB2J69OYpKA3aGp5Wd/XF?=
- =?us-ascii?Q?Vjt1Q6FMtfkPT96kdcb4hxokRaLTkBreJ1T36jkKBbExivpNKSZ6veIvC/M4?=
- =?us-ascii?Q?jrCBhciqYx3+6CIDSXOzrvyFcFGYL2Yoe1VQGDJ7NdDD5l0XwHG+93LniBR0?=
- =?us-ascii?Q?AC3/KSBGGJTCJ06zamH3IV6dDULUlTJhzm/pIZUJ/EWtK7yxw+go6gb+7bsb?=
- =?us-ascii?Q?GNmIfq+OCxbfIvLSus5tHnhiHP5OesDtsNHLDznFWUW/G/Lmo/+J1OFJzmoH?=
- =?us-ascii?Q?RITysfiVBMj55kz7cS+ZPLvGIfm8kdkhOghNhMN3NBBLtXwtGwJo5omwrNVG?=
- =?us-ascii?Q?J1vTaUl7LcWFEq2X1SOaK8K4/6Ia3JWLxWKLRxy3Ww4uBVp7+2i/SZa9mFbj?=
- =?us-ascii?Q?frtZCGrY28gP1W0cOaS0pH73V5HmSCYk5cbij51ERGBgOpga0ADx0XHxbFwQ?=
- =?us-ascii?Q?O5taUvqZVD+YUBO09GBwkxw/rXt9bZ3p+tl0GkMzDw3rMPNo5Iiqs8Q7YLtl?=
- =?us-ascii?Q?QnIGVeXrT9dOvCPEFdcCjIdtTYbOTjdDHfbAbXIwEN2LEHFDx51xljpLnzoj?=
- =?us-ascii?Q?q6JlISd8nfmBNuAE82FX2Lfg9cjoTaEPWWoVPZG72vP0TPQGCo5rg+N5xg5+?=
- =?us-ascii?Q?RA9dMJEpTUcVArKtlxNThUjNr/lXLQD2djxQG4SygkFdNSbOIg+Py5fn4KMQ?=
- =?us-ascii?Q?VM6sDlWNOXcbgtJIHGGZNj7fiUlUPxTpownfc1c4LE42xLPnRHtGXEP9gqSA?=
- =?us-ascii?Q?snUmINmb3Px4hk0VdGXyakeqY6tNY5w5AGS+MUD7tSY9rFxMbnhmArg+UUZE?=
- =?us-ascii?Q?i73ij7qu7+jTmwf34+LrI95qmZ0ttNUbtvojB+anPSnSbsSmKyG6GOyDgdDj?=
- =?us-ascii?Q?1Q8qS+/Pk+qDjwjSV6oDR5KDVg31OLrvNp/zYuvlMlX0IhekWbiJFuhZcDzF?=
- =?us-ascii?Q?AQLPFRIatsy4f+ShA4r06BfxUfqS9AM3xlDQDA/TuaCkS65hHcKnjG7ssGxV?=
- =?us-ascii?Q?6wo/p/ORe67hNfAjMWhnJoVU5KB1cJ8ra6ei3E+v+SkG6SmMGtAv/0oPpPuU?=
- =?us-ascii?Q?fk42VugnI0lugCDN1EQawQHpI+ocrjKTtJgfvf65Gj0bxKANcxVQOqbjWLID?=
- =?us-ascii?Q?8oXHR6mTmC6ENdB5NHmG42BWQJwcowGxu+i9mU8n3S1/1JXFgKAEOfbrQd/5?=
- =?us-ascii?Q?Cs8GeKBlj4ogqJ9DEvux/7uYG9mSmkqZBCtfXbYeCmm8POr37MhzLWkvTMRO?=
- =?us-ascii?Q?TNw+7pHndTN8XIIottGRIXCDjsLjJkNK37QoW2iOVxgkXOaCDs4v/ZPvu2BS?=
- =?us-ascii?Q?yItjrzpQ7Wv/V/T0mShaQr35yWensUSLg8kwArBLTM+1TpeUjQvlRTRa2QEM?=
- =?us-ascii?Q?eBhHGQssV3+tngbS/tmYBR8K+ByZIKYtpZzqEUrHnOGBWuMmBorzNjocuLAI?=
- =?us-ascii?Q?0pmuEP2b4mk3PLcri7AeHoHgZmpbghkq4M/UOwzgrfPl8rOdOFcanX9cAkZ6?=
- =?us-ascii?Q?9QPpEusH9TeQH4ecp7Cjadc8dwuN5sJzzuVBs840pTrx8rCTXZtCWFBrdxH1?=
- =?us-ascii?Q?GQ8aV1bM3szxVEZWi1L9tiLEBSSbrR18uuwppQLJFRySYRV8eMAQc/EPvB84?=
- =?us-ascii?Q?YOmbXUzPIyQOL7toNCW5V83Ij8+QcxN+t1bzFJsRVsd7LA7EUFd9DTAbDPkv?=
- =?us-ascii?Q?1A2tGA=3D=3D?=
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?hPOsWUyNfuPgdO7KGPoxy8ksAiev8ZQ1mx/yK17hREAs80+Bp/61g+ypXcBT?=
+ =?us-ascii?Q?HRu9jj6Qg9t07l3KXDplFpMfQmItUDmp/Rl49c3/yUZM8HLSVEUOfoYJFdhK?=
+ =?us-ascii?Q?fSIgaNpvoQXryHYMgHOanbyxDsp2IMAM6Iww3QBkSbl730EEjBs5gxcDmCBb?=
+ =?us-ascii?Q?QU1V3uoMqgXFhC9JWnnqZp0aSbsHbu4zyZTUWyLGqTYI6pmieGdUW+8LkwcJ?=
+ =?us-ascii?Q?T0GkZ4g8qlRo4jk+l6xQ02skBq3BqXWvBLVBQRtkCmtFKTWh610fwMxsVkoM?=
+ =?us-ascii?Q?Gnf1thqRe/k1tAWbVMF/a2+G6R558nSRbYsvwdfjoHnDY28X/sYjDBssYr/q?=
+ =?us-ascii?Q?Fl6V7TlPdnX6ywkUx5QWinxcmi8lKgaJNWdDfDu8wspT9jG0cJH0gQIv8Cex?=
+ =?us-ascii?Q?cNhBeOU3ZulAAFO34xSBp6jb7eFge1AhhnnJZIBgJ9hh24EkK39dXWvylKlQ?=
+ =?us-ascii?Q?1ktLIUVF5yMuV2Vmvd4TziJI/G+7EgoKWYvFlDgX7ABke4nbRWeHbG1dmjGp?=
+ =?us-ascii?Q?7x5Zw8PVMIwKgAsHbCNrvEO06CmHCJ8AK/tIKMjp9T9xZi65K/IJ05WsKAuj?=
+ =?us-ascii?Q?Qxr+kkU/EkZ4MWrTGeAGpaQZQGgh0h8UttK3ddqpmeHbsrx7bDjMbskRnWJp?=
+ =?us-ascii?Q?rZ1C0HmN3hiOwYzCPuGdDiZMr7t98q9NV65gQ/SHiXGpM6OCy0OKTkSOSIH1?=
+ =?us-ascii?Q?V7Et5iOjOIWdAwR598SHY6uUul9gU5PLOnE30G/jnDxc7wFZUZJMBWyq8BLd?=
+ =?us-ascii?Q?rfdzv008lWuhfWDgCaiiB492XTgsC2nNrDNWe29D47eQpQ7OuJIdthMJCJZx?=
+ =?us-ascii?Q?l2b/Zb5/I6p5bjCx0Q4WanQW6fBtQG12r7Yr7GEf1W1aFoeQprvePdMpArft?=
+ =?us-ascii?Q?pdbQ0CR0h3XJO4+2uuuWmNajIA4qboVi0YBp+K7rQ8PLx6xS+mFQXOiI4Hoa?=
+ =?us-ascii?Q?v502tXURqyFypRcDKv6AIFRJQ6JhFLxbbuXNsFzLiWtdAx+kU4nwt6iqJ7Yn?=
+ =?us-ascii?Q?LhZkjIdd3zSfy/4HixYBTehrS52N44jF827Sh3vdaRtSQYMGr/Ezf8kqDUuG?=
+ =?us-ascii?Q?y8G3exbJVKS4cLtpL4Ae0oq2lWyJ6uZ3msnMmUROXYeb+8uClJ6zkgDbdoNR?=
+ =?us-ascii?Q?bWMHaZTumykYTjazZdHf8vwaUSWqjBfQYE3BA2HsxCns+aaaxAVro0VuntZB?=
+ =?us-ascii?Q?gDASa2H6OUzdubnVa+jZ6ZNxQZEkLclBxmbs3xg4jWiFrHt0nmYg+BCOrJTT?=
+ =?us-ascii?Q?B+X7yNNw5UizQNg6XjkKzmt3cUpuw7upYP9vz23zka7o2TO4MTsfcRopjPdM?=
+ =?us-ascii?Q?Kd2qtjL8Yj5ZTL6bJI+IEDTIgXkj6+W0ErfOvDGVyFIPud8PIhk2Vs9NCwbI?=
+ =?us-ascii?Q?jrHvmo7xrbGGkVITjitLJ15ofnoW7jlUEZMtIr45BECVNAskC2eroDIELfbh?=
+ =?us-ascii?Q?drKPUw6+OUS8C/sferQ8mAXHxjVFmphteP7aP7p50cbQF/4fiuKXqxV+BS5f?=
+ =?us-ascii?Q?HRsARsK+VfL9529UpcyCv5oQHYnC+JR6JGkWgnOGhw9GJX+T6zjmEhXAFSlG?=
+ =?us-ascii?Q?sjiaqZOwyEuD14aXMfYytHlpYjb63AL5QMCw/26rpqFaI0q0wW+Monr3okit?=
+ =?us-ascii?Q?gXo9kiB3+KBcH9Z/XZprsS/Ue0QmWLJ6Uegfo/4/Hd6o8wkg8oTMbd8yz3WX?=
+ =?us-ascii?Q?HVhI7w=3D=3D?=
 X-OriginatorOrg: corigine.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 8611e466-4b59-4307-f46d-08db8f4283c5
+X-MS-Exchange-CrossTenant-Network-Message-Id: 7fa1c089-2344-4b06-3624-08db8f649f2e
 X-MS-Exchange-CrossTenant-AuthSource: PH0PR13MB4842.namprd13.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 28 Jul 2023 08:13:24.7088 (UTC)
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 28 Jul 2023 12:17:35.2229 (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: fe128f2c-073b-4c20-818e-7246a585940c
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: ZO18g4iU6cCBfbXbdk05XK2h3U98gv1o0RvG8C19b61bZGM6zcodErQeQen1aIioiwU32nm1ls4To/v/MA7i5mi21rgU93wTSzMKCF+aMJ4=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SJ0PR13MB5269
+X-MS-Exchange-CrossTenant-UserPrincipalName: iZe55KImseJDEXyvSQcePinFJYyerifPEHQDYs0bVw2T5jNObZA26ORFCKwaaGDVoaLdpiLFCL17f5WTZYMy0/KrkxWVzjRme/VzT17S8OY=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: CO3PR13MB5752
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -134,10 +134,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mailman-Approved-At: Mon, 31 Jul 2023 06:48:47 +0000
-Subject: Re: [dm-devel] [PATCH v3 04/49] mm: shrinker: remove redundant
- shrinker_rwsem in debugfs operations
+Subject: Re: [dm-devel] [PATCH v3 05/49] mm: shrinker: add infrastructure
+ for dynamically allocating shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -156,92 +156,113 @@ Cc: kvm@vger.kernel.org, djwong@kernel.org, roman.gushchin@linux.dev,
  x86@kernel.org, steven.price@arm.com, cluster-devel@redhat.com,
  xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org, paulmck@kernel.org,
  linux-arm-msm@vger.kernel.org, linux-nfs@vger.kernel.org, rcu@vger.kernel.org,
- linux-bcache@vger.kernel.org, Muchun Song <songmuchun@bytedance.com>,
- yujie.liu@intel.com, vbabka@suse.cz, linux-raid@vger.kernel.org,
- brauner@kernel.org, tytso@mit.edu, gregkh@linuxfoundation.org,
- muchun.song@linux.dev, linux-kernel@vger.kernel.org,
- linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
- senozhatsky@chromium.org, netdev@vger.kernel.org,
+ linux-bcache@vger.kernel.org, yujie.liu@intel.com, vbabka@suse.cz,
+ linux-raid@vger.kernel.org, brauner@kernel.org, tytso@mit.edu,
+ gregkh@linuxfoundation.org, muchun.song@linux.dev,
+ linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
+ linux-xfs@vger.kernel.org, senozhatsky@chromium.org, netdev@vger.kernel.org,
  linux-fsdevel@vger.kernel.org, akpm@linux-foundation.org,
  linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org, tkhai@ya.ru
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: corigine.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Jul 27, 2023 at 04:04:17PM +0800, Qi Zheng wrote:
-> The debugfs_remove_recursive() will wait for debugfs_file_put() to return,
-> so the shrinker will not be freed when doing debugfs operations (such as
-> shrinker_debugfs_count_show() and shrinker_debugfs_scan_write()), so there
-> is no need to hold shrinker_rwsem during debugfs operations.
+On Thu, Jul 27, 2023 at 04:04:18PM +0800, Qi Zheng wrote:
+> Currently, the shrinker instances can be divided into the following three
+> types:
+> 
+> a) global shrinker instance statically defined in the kernel, such as
+>    workingset_shadow_shrinker.
+> 
+> b) global shrinker instance statically defined in the kernel modules, such
+>    as mmu_shrinker in x86.
+> 
+> c) shrinker instance embedded in other structures.
+> 
+> For case a, the memory of shrinker instance is never freed. For case b,
+> the memory of shrinker instance will be freed after synchronize_rcu() when
+> the module is unloaded. For case c, the memory of shrinker instance will
+> be freed along with the structure it is embedded in.
+> 
+> In preparation for implementing lockless slab shrink, we need to
+> dynamically allocate those shrinker instances in case c, then the memory
+> can be dynamically freed alone by calling kfree_rcu().
+> 
+> So this commit adds the following new APIs for dynamically allocating
+> shrinker, and add a private_data field to struct shrinker to record and
+> get the original embedded structure.
+> 
+> 1. shrinker_alloc()
+> 
+> Used to allocate shrinker instance itself and related memory, it will
+> return a pointer to the shrinker instance on success and NULL on failure.
+> 
+> 2. shrinker_register()
+> 
+> Used to register the shrinker instance, which is same as the current
+> register_shrinker_prepared().
+> 
+> 3. shrinker_free()
+> 
+> Used to unregister (if needed) and free the shrinker instance.
+> 
+> In order to simplify shrinker-related APIs and make shrinker more
+> independent of other kernel mechanisms, subsequent submissions will use
+> the above API to convert all shrinkers (including case a and b) to
+> dynamically allocated, and then remove all existing APIs.
+> 
+> This will also have another advantage mentioned by Dave Chinner:
+> 
+> ```
+> The other advantage of this is that it will break all the existing
+> out of tree code and third party modules using the old API and will
+> no longer work with a kernel using lockless slab shrinkers. They
+> need to break (both at the source and binary levels) to stop bad
+> things from happening due to using uncoverted shrinkers in the new
+
+nit: uncoverted -> unconverted
+
+> setup.
+> ```
 > 
 > Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
-> Reviewed-by: Muchun Song <songmuchun@bytedance.com>
-> ---
->  mm/shrinker_debug.c | 14 --------------
->  1 file changed, 14 deletions(-)
-> 
+
+...
+
 > diff --git a/mm/shrinker_debug.c b/mm/shrinker_debug.c
-> index 3ab53fad8876..f1becfd45853 100644
+> index f1becfd45853..506257585408 100644
 > --- a/mm/shrinker_debug.c
 > +++ b/mm/shrinker_debug.c
-> @@ -55,11 +55,6 @@ static int shrinker_debugfs_count_show(struct seq_file *m, void *v)
->  	if (!count_per_node)
->  		return -ENOMEM;
+> @@ -191,6 +191,20 @@ int shrinker_debugfs_add(struct shrinker *shrinker)
+>  	return 0;
+>  }
 >  
-> -	ret = down_read_killable(&shrinker_rwsem);
-> -	if (ret) {
-> -		kfree(count_per_node);
-> -		return ret;
-> -	}
->  	rcu_read_lock();
+> +int shrinker_debugfs_name_alloc(struct shrinker *shrinker, const char *fmt,
+> +				va_list ap)
+> +{
+> +	shrinker->name = kvasprintf_const(GFP_KERNEL, fmt, ap);
+> +
+> +	return shrinker->name ? 0 : -ENOMEM;
+> +}
+> +
+> +void shrinker_debugfs_name_free(struct shrinker *shrinker)
+> +{
+> +	kfree_const(shrinker->name);
+> +	shrinker->name = NULL;
+> +}
+> +
 
-Hi Qi Zheng,
+These functions have no prototype in this file,
+perhaps internal.h should be included?
 
-As can be seen in the next hunk, this function returns 'ret'.
-However, with this change 'ret' is uninitialised unless
-signal_pending() returns non-zero in the while loop below.
-
-This is flagged in a clan-16 W=1 build.
-
- mm/shrinker_debug.c:87:11: warning: variable 'ret' is used uninitialized whenever 'do' loop exits because its condition is false [-Wsometimes-uninitialized]
-         } while ((memcg = mem_cgroup_iter(NULL, memcg, NULL)) != NULL);
-                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- mm/shrinker_debug.c:92:9: note: uninitialized use occurs here
-         return ret;
-                ^~~
- mm/shrinker_debug.c:87:11: note: remove the condition if it is always true
-         } while ((memcg = mem_cgroup_iter(NULL, memcg, NULL)) != NULL);
-                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                  1
- mm/shrinker_debug.c:77:7: warning: variable 'ret' is used uninitialized whenever 'if' condition is true [-Wsometimes-uninitialized]
-                 if (!memcg_aware) {
-                     ^~~~~~~~~~~~
- mm/shrinker_debug.c:92:9: note: uninitialized use occurs here
-         return ret;
-                ^~~
- mm/shrinker_debug.c:77:3: note: remove the 'if' if its condition is always false
-                 if (!memcg_aware) {
-                 ^~~~~~~~~~~~~~~~~~~
- mm/shrinker_debug.c:52:9: note: initialize the variable 'ret' to silence this warning
-         int ret, nid;
-                ^
-                 = 0
-
->  
->  	memcg_aware = shrinker->flags & SHRINKER_MEMCG_AWARE;
-> @@ -92,7 +87,6 @@ static int shrinker_debugfs_count_show(struct seq_file *m, void *v)
->  	} while ((memcg = mem_cgroup_iter(NULL, memcg, NULL)) != NULL);
->  
->  	rcu_read_unlock();
-> -	up_read(&shrinker_rwsem);
->  
->  	kfree(count_per_node);
->  	return ret;
+>  int shrinker_debugfs_rename(struct shrinker *shrinker, const char *fmt, ...)
+>  {
+>  	struct dentry *entry;
 
 ...
 
