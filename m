@@ -1,94 +1,106 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DF323C00528
-	for <dm-devel@archiver.kernel.org>; Thu, 27 Jul 2023 23:48:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B100EC001DE
+	for <dm-devel@archiver.kernel.org>; Fri, 28 Jul 2023 08:29:11 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690501737;
+	s=mimecast20190719; t=1690532950;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=hlFKWwzd+apCNscqEeoR/iLw6BrwkMj0frNNdLepRLg=;
-	b=IVTw0TRyTGWNHSngXwIiXclUhYQTfjrZtsPhT8HxJNlzJ5Hd2qikpXRRuJRZFQ5x70EoAi
-	qGv6rfRjxFTRNH8oVb+XmW+R2IUbDmoE/QmzPefeSu1vf0teg4F4oN1CafATv9eszRY3SS
-	+WtTVqtOSBSy3tMgxJeqb8GRfCZUTc0=
+	bh=MbvXceu8qdVUH6uSMmYxG7VrY9N4BEY+icAREcEuJZs=;
+	b=TQGwqusiavNrGHeecuq+Apl68IrpU1fk+c2KoDscAYQWurM6xRxlQKwQE1GAr9jkHfUBNp
+	m9T4dmkybe462ZordqSayfO1OMB6AW+icj9wvKdGDFJWkwZWw24X2W7EK5B9vVITC8jaTY
+	pdzzjxKD4pp0ko7rgopqMVAlwvPHEbQ=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-169-7-WnzDKAP3SORkdymdkPWg-1; Thu, 27 Jul 2023 19:48:54 -0400
-X-MC-Unique: 7-WnzDKAP3SORkdymdkPWg-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-66-tPXEVQlGOHaHtj1BBFfS3Q-1; Fri, 28 Jul 2023 04:29:06 -0400
+X-MC-Unique: tPXEVQlGOHaHtj1BBFfS3Q-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DA841830EFF;
-	Thu, 27 Jul 2023 23:48:52 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 57BD7805C3F;
+	Fri, 28 Jul 2023 08:29:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 24703492B02;
-	Thu, 27 Jul 2023 23:48:52 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B2CAFC585A0;
+	Fri, 28 Jul 2023 08:28:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 009591946A6A;
-	Thu, 27 Jul 2023 23:48:52 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5E1EB1946A75;
+	Fri, 28 Jul 2023 08:28:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 52D7B1946586
- for <dm-devel@listman.corp.redhat.com>; Thu, 27 Jul 2023 23:48:51 +0000 (UTC)
+ ESMTP id F16111946586
+ for <dm-devel@listman.corp.redhat.com>; Fri, 28 Jul 2023 08:28:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id F1759F782A; Thu, 27 Jul 2023 23:48:50 +0000 (UTC)
+ id B39A72166B25; Fri, 28 Jul 2023 08:28:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id EA0C3F7825
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 23:48:50 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id AC6BB2166B26
+ for <dm-devel@redhat.com>; Fri, 28 Jul 2023 08:28:56 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CB6C5858F1E
- for <dm-devel@redhat.com>; Thu, 27 Jul 2023 23:48:50 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9016E856F67
+ for <dm-devel@redhat.com>; Fri, 28 Jul 2023 08:28:56 +0000 (UTC)
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-177-30PFEky1NSSRBWXQy0mdzg-1; Thu, 27 Jul 2023 19:48:46 -0400
-X-MC-Unique: 30PFEky1NSSRBWXQy0mdzg-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature RSA-PSS (2048 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id CA7BB61F8A;
- Thu, 27 Jul 2023 23:48:44 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6E5FDC433C7;
- Thu, 27 Jul 2023 23:48:39 +0000 (UTC)
-Message-ID: <217f3a7e-7681-0da6-aaa7-252a1451f7ba@kernel.org>
-Date: Fri, 28 Jul 2023 08:48:37 +0900
+ us-mta-633-U7_81ZWNNTufhuogDNgoeQ-1; Fri, 28 Jul 2023 04:28:54 -0400
+X-MC-Unique: U7_81ZWNNTufhuogDNgoeQ-1
+Received: by mail-qk1-f200.google.com with SMTP id
+ af79cd13be357-765ab532883so219300085a.0
+ for <dm-devel@redhat.com>; Fri, 28 Jul 2023 01:28:54 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1690532934; x=1691137734;
+ h=mime-version:user-agent:message-id:in-reply-to:date:references
+ :subject:cc:to:from:x-gm-message-state:from:to:cc:subject:date
+ :message-id:reply-to;
+ bh=leIkqAudEGz78/ipkbxeymQs0lqhSaqKZ/Eo5h7Uujg=;
+ b=RfuHHCQLOar0bJGXIGb8xYB4mLtf4qcUwHhOrDC7TcIpKkh6btkUmc87FvI9xvWMWf
+ 3OS4ZWWtAjsXmEJEfhj4JKsgfwEaRA7TfQeZ7H6jp8DlAijBmxE8C68jdAsY9KQJXf3J
+ PCu4vSQQElZIz5GdLieqPKqD/iefx0m72zOdm47kdo5BnvfnPJehGg22QMgfES7CfSna
+ 8SnaRKN2I7pswFskoj0kjOpuT8Ir9+nk0KPp826n2afrBHwAkV79obVh7DfncpQ71i6M
+ eVI7WlCkGOHXFPZi29mU1sttHnzq794evppML70b6l1Jc4pifbc9SQUq7y5OpkLzb/Tw
+ 7Sng==
+X-Gm-Message-State: ABy/qLYv+chjhTvQNH30vd9X6zJUtMN3EGOpnRNoEAqAKfaD2yJ+d8HM
+ zp2SGRoyH4w+ZlRLvqRRYVdLzqI78bfF5XeT8yaGeIcNda9G3czinvF1AFE359aFE74LLpWKiqU
+ HEpEKqSXb8/w3/Vg=
+X-Received: by 2002:a05:620a:4586:b0:767:f1f5:9986 with SMTP id
+ bp6-20020a05620a458600b00767f1f59986mr2165214qkb.24.1690532934366; 
+ Fri, 28 Jul 2023 01:28:54 -0700 (PDT)
+X-Google-Smtp-Source: APBJJlFJx/es0sujNTznp15UzhUi8RG+M8r9OGkm9Esn3oXJml0Fbp/KxtFMXuuT+zYZDctWoQQU4Q==
+X-Received: by 2002:a05:620a:4586:b0:767:f1f5:9986 with SMTP id
+ bp6-20020a05620a458600b00767f1f59986mr2165199qkb.24.1690532934021; 
+ Fri, 28 Jul 2023 01:28:54 -0700 (PDT)
+Received: from crash (c-24-218-80-208.hsd1.ma.comcast.net. [24.218.80.208])
+ by smtp.gmail.com with ESMTPSA id
+ 27-20020a05620a079b00b00767da9b6ae9sm975473qka.11.2023.07.28.01.28.53
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Fri, 28 Jul 2023 01:28:53 -0700 (PDT)
+From: Ken Raeburn <raeburn@redhat.com>
+To: Mike Snitzer <snitzer@kernel.org>
+References: <20230523214539.226387-1-corwin@redhat.com>
+ <ZLa086NuWiMkJKJE@redhat.com>
+ <CAK1Ur396ThV5AAZx2336uAW3FqSY+bHiiwEPofHB_Kwwr4ag5A@mail.gmail.com>
+ <87cz0e9rkn.fsf@redhat.com> <ZMKF24poWyKdeRHO@redhat.com>
+Date: Fri, 28 Jul 2023 04:28:52 -0400
+In-Reply-To: <ZMKF24poWyKdeRHO@redhat.com> (Mike Snitzer's message of "Thu, 27
+ Jul 2023 10:57:31 -0400")
+Message-ID: <874jloa18b.fsf@redhat.com>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/28.2 (gnu/linux)
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.13.0
-To: Dave Chinner <david@fromorbit.com>
-References: <20230727080502.77895-1-zhengqi.arch@bytedance.com>
- <20230727080502.77895-29-zhengqi.arch@bytedance.com>
- <baaf7de4-9a0e-b953-2b6a-46e60c415614@kernel.org>
- <56ee1d92-28ee-81cb-9c41-6ca7ea6556b0@bytedance.com>
- <ba0868b2-9f90-3d81-1c91-8810057fb3ce@kernel.org>
- <ZML22YJi5vPBDEDj@dread.disaster.area>
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <ZML22YJi5vPBDEDj@dread.disaster.area>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH v3 28/49] dm zoned: dynamically allocate the
- dm-zoned-meta shrinker
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH v2 00/39] Add the dm-vdo deduplication and
+ compression device mapper target.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -100,66 +112,90 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: kvm@vger.kernel.org, djwong@kernel.org, roman.gushchin@linux.dev,
- Qi Zheng <zhengqi.arch@bytedance.com>,
- virtualization@lists.linux-foundation.org, linux-mm@kvack.org,
- dm-devel@redhat.com, linux-mtd@lists.infradead.org, cel@kernel.org,
- x86@kernel.org, steven.price@arm.com, cluster-devel@redhat.com,
- xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org, paulmck@kernel.org,
- linux-arm-msm@vger.kernel.org, brauner@kernel.org, rcu@vger.kernel.org,
- linux-bcache@vger.kernel.org, dri-devel@lists.freedesktop.org,
- Muchun Song <songmuchun@bytedance.com>, yujie.liu@intel.com, vbabka@suse.cz,
- linux-raid@vger.kernel.org, linux-nfs@vger.kernel.org, tytso@mit.edu,
- netdev@vger.kernel.org, muchun.song@linux.dev, linux-kernel@vger.kernel.org,
- linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
- senozhatsky@chromium.org, gregkh@linuxfoundation.org,
- linux-fsdevel@vger.kernel.org, akpm@linux-foundation.org,
- linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org, tkhai@ya.ru
+Cc: linux-block@vger.kernel.org, vdo-devel@redhat.com, dm-devel@redhat.com,
+ ebiggers@kernel.org, tj@kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
-Content-Language: en-US
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gNy8yOC8yMyAwNzo1OSwgRGF2ZSBDaGlubmVyIHdyb3RlOgo+IE9uIFRodSwgSnVsIDI3LCAy
-MDIzIGF0IDA3OjIwOjQ2UE0gKzA5MDAsIERhbWllbiBMZSBNb2FsIHdyb3RlOgo+PiBPbiA3LzI3
-LzIzIDE3OjU1LCBRaSBaaGVuZyB3cm90ZToKPj4+Pj4gwqDCoMKgwqDCoMKgwqDCoMKgIGdvdG8g
-ZXJyOwo+Pj4+PiDCoMKgwqDCoMKgIH0KPj4+Pj4gwqAgK8KgwqDCoCB6bWQtPm1ibGtfc2hyaW5r
-ZXItPmNvdW50X29iamVjdHMgPSBkbXpfbWJsb2NrX3Nocmlua2VyX2NvdW50Owo+Pj4+PiArwqDC
-oMKgIHptZC0+bWJsa19zaHJpbmtlci0+c2Nhbl9vYmplY3RzID0gZG16X21ibG9ja19zaHJpbmtl
-cl9zY2FuOwo+Pj4+PiArwqDCoMKgIHptZC0+bWJsa19zaHJpbmtlci0+c2Vla3MgPSBERUZBVUxU
-X1NFRUtTOwo+Pj4+PiArwqDCoMKgIHptZC0+bWJsa19zaHJpbmtlci0+cHJpdmF0ZV9kYXRhID0g
-em1kOwo+Pj4+PiArCj4+Pj4+ICvCoMKgwqAgc2hyaW5rZXJfcmVnaXN0ZXIoem1kLT5tYmxrX3No
-cmlua2VyKTsKPj4+Pgo+Pj4+IEkgZmFpbCB0byBzZWUgaG93IHRoaXMgbmV3IHNocmlua2VyIEFQ
-SSBpcyBiZXR0ZXIuLi4gV2h5IGlzbid0IHRoZXJlIGEKPj4+PiBzaHJpbmtlcl9hbGxvY19hbmRf
-cmVnaXN0ZXIoKSBmdW5jdGlvbiA/IFRoYXQgd291bGQgYXZvaWQgYWRkaW5nIGFsbCB0aGlzIGNv
-ZGUKPj4+PiBhbGwgb3ZlciB0aGUgcGxhY2UgYXMgdGhlIG5ldyBBUEkgY2FsbCB3b3VsZCBiZSB2
-ZXJ5IHNpbWlsYXIgdG8gdGhlIGN1cnJlbnQKPj4+PiBzaHJpbmtlcl9yZWdpc3RlcigpIGNhbGwg
-d2l0aCBzdGF0aWMgYWxsb2NhdGlvbi4KPj4+Cj4+PiBJbiBzb21lIHJlZ2lzdHJhdGlvbiBzY2Vu
-YXJpb3MsIG1lbW9yeSBuZWVkcyB0byBiZSBhbGxvY2F0ZWQgaW4gYWR2YW5jZS4KPj4+IFNvIHdl
-IGNvbnRpbnVlIHRvIHVzZSB0aGUgcHJldmlvdXMgcHJlYWxsb2MvcmVnaXN0ZXJfcHJlcGFyZWQo
-KQo+Pj4gYWxnb3JpdGhtLiBUaGUgc2hyaW5rZXJfYWxsb2NfYW5kX3JlZ2lzdGVyKCkgaXMganVz
-dCBhIGhlbHBlciBmdW5jdGlvbgo+Pj4gdGhhdCBjb21iaW5lcyB0aGUgdHdvLCBhbmQgdGhpcyBp
-bmNyZWFzZXMgdGhlIG51bWJlciBvZiBBUElzIHRoYXQKPj4+IHNocmlua2VyIGV4cG9zZXMgdG8g
-dGhlIG91dHNpZGUsIHNvIEkgY2hvb3NlIG5vdCB0byBhZGQgdGhpcyBoZWxwZXIuCj4+Cj4+IEFu
-ZCB0aGF0IHJlc3VsdHMgaW4gbW9yZSBjb2RlIGluIG1hbnkgcGxhY2VzIGluc3RlYWQgb2YgbGVz
-cyBjb2RlICsgYSBzaW1wbGUKPj4gaW5saW5lIGhlbHBlciBpbiB0aGUgc2hyaW5rZXIgaGVhZGVy
-IGZpbGUuLi4KPiAKPiBJdCdzIG5vdCBqdXN0IGEgInNpbXBsZSBoZWxwZXIiIC0gaXQncyBhIGZ1
-bmN0aW9uIHRoYXQgaGFzIHRvIHRha2UgNgo+IG9yIDcgcGFyYW1ldGVycyB3aXRoIGEgcmV0dXJu
-IHZhbHVlIHRoYXQgbXVzdCBiZSBjaGVja2VkIGFuZAo+IGhhbmRsZWQuCj4gCj4gVGhpcyB3YXMg
-ZG9uZSBpbiB0aGUgZmlyc3QgdmVyc2lvbnMgb2YgdGhlIHBhdGNoIHNldCAtIHRoZSBhbW91bnQg
-b2YKPiBjb2RlIGluIGVhY2ggY2FsbGVyIGRvZXMgbm90IGdvIGRvd24gYW5kLCBJTU8sIHdhcyBt
-dWNoIGhhcmRlciB0bwo+IHJlYWQgYW5kIGRldGVybWluZSAidGhpcyBpcyBvYnZpb3VzbHkgY29y
-cmVjdCIgdGhhdCB3aGF0IHdlIGhhdmUKPiBub3cuCj4gCj4+IFNvIG5vdCBhZGRpbmcgdGhhdCBz
-dXBlciBzaW1wbGUKPj4gaGVscGVyIGlzIG5vdCBleGFjdGx5IHRoZSBiZXN0IGNob2ljZSBpbiBt
-eSBvcGluaW9uLgo+IAo+IEVhY2ggdG8gdGhlaXIgb3duIC0gSSBtdWNoIHByZWZlciB0aGUgZXhp
-c3Rpbmcgc3R5bGUvQVBJIG92ZXIgaGF2aW5nCj4gdG8gZ28gbG9vayB1cCBhIGhlbHBlciBmdW5j
-dGlvbiBldmVyeSB0aW1lIEkgd2FudCB0byBjaGVjayBzb21lCj4gcmFuZG9tIHNocmlua2VyIGhh
-cyBiZWVuIHNldCB1cCBjb3JyZWN0bHkuLi4uCgpPSy4gQWxsIGZhaXIgcG9pbnRzLgoKCi0tIApE
-YW1pZW4gTGUgTW9hbApXZXN0ZXJuIERpZ2l0YWwgUmVzZWFyY2gKCi0tCmRtLWRldmVsIG1haWxp
-bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
+
+Mike Snitzer <snitzer@kernel.org> writes:
+> Thanks for the extra context, but a _big_ elephant in the room for
+> this line of discussion is that: the Linux workqueue code has
+> basically always been only available for use by GPL'd code.  Given
+> VDO's historic non-GPL origins, it seems _to me_ that an alternative
+> to Linux's workqueues had to be created to allow VDO to drive its
+> work.  While understandable, I gave guidance 6 years ago that VDO
+> engineering should work to definitively reconcile if using Linux
+> workqueues viable now that VDO has been GPL'd.
+
+Yes, initially that was a significant reason.
+
+More recently, when we've tried switching, the performance loss made it
+appear not worth the change. Especially since we also needed to ship a
+usable version at the same time.
+
+> But it appears there wasn't much in the way of serious effort put to
+> completely converting to using Linux workqueues. That is a problem
+> because all of the work item strategy deployed by VDO is quite
+> bespoke.  I don't think the code lends itself to being properly
+> maintained by more than a 1 or 2 engineers (if we're lucky at this
+> point).
+
+By "work item strategy" are you referring to the lower level handling of
+queueing and executing the work items? Because I've done that. Well, the
+first 90%, by making the VDO work queues function as a shim on top of
+the kernel ones instead of creating their own threads. It would also
+need the kernel workqueues modified to support the SYSFS and ORDERED
+options together, because on NUMA systems the VDO performance really
+tanks without tweaking CPU affinity, and one or two other small
+additions. If we were to actually commit to that version there might be
+additional work like tweaking some data structures and eliding some shim
+functions if appropriate, but given the performance loss, we decided to
+stop there.
+
+Or do you mean the use of executing all actions affecting a data
+structure in a single thread/queue via message passing to serialize
+access to data structures instead of having a thread serially lock,
+modify, and unlock the various different data structures on behalf of a
+single I/O request, while another thread does the same for another I/O
+request? The model we use can certainly make things more difficult to
+follow. It reads like continuation-passing style code, not the
+straight-line code many of us are more accustomed to.
+
+"Converting to using Linux workqueues" really doesn't say the latter to
+me, it says the former. But I thought I'd already mentioned I'd tried
+the former out. (Perhaps not very clearly?)
+
+> I would like to see a patch crafted that allows branching between the
+> use of Linux and VDO workqueues. Initially have a dm-vdo modparam
+> (e.g. use_vdo_wq or vice-versa: use_linux_wq).  And have a wrapping
+> interface and associated data struct(s) that can bridge between work
+> being driven/coordinated by either (depending on disposition of
+> modparam).
+
+If we're talking about the lower level handling, I don't think it would
+be terribly hard.
+
+> This work isn't trivial, I get that. But it serves to clearly showcase
+> shortcomings, areas for improvement, while pivoting to more standard
+> Linux interfaces that really should've been used from VDO's inception.
+>
+> Is this work that you feel you could focus on with urgency?
+>
+> Thanks,
+> Mike
+
+I think so, once we're clear on exactly what we're talking about...
+
+Ken
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
