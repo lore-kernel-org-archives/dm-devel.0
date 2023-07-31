@@ -4,83 +4,73 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0B8DDC001DC
-	for <dm-devel@archiver.kernel.org>; Sat, 29 Jul 2023 10:40:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3FABCEB64DD
+	for <dm-devel@archiver.kernel.org>; Mon, 31 Jul 2023 02:02:54 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1690627215;
+	s=mimecast20190719; t=1690768973;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=KqThqixEL3F1MxMSrL6AZGwwxEN4tMlajuL2GrbuojI=;
-	b=bTcMRwKGHIeFfJFE9aBElQxN/gmZZgm852eS1HPPVgNX0iGEtl0P5DDYGfUrbWJ8OjW0bR
-	Dk9NHE4lWIrIi7NFgnCi8zLsDlYcMLEW6j6UWm9BhpZPgtL02CCsW1wqZM6q5bCyD8QTNe
-	nbDn+lug7s504mo7cEjYcBimy9UHoYs=
-Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-176-X7pmAefNOpePb9i9t8JH3w-1; Sat, 29 Jul 2023 06:40:11 -0400
-X-MC-Unique: X7pmAefNOpePb9i9t8JH3w-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+	bh=lCC1aP6dlR8X2PmxNiJa62jmEPTwv2XMLQAa6R2jdgk=;
+	b=avjOEq0SXs6QZZlXhQY3cCjWiFCynyx9Gn3hmSgJkr82S8NMGfBtfBXkebFS8sr33Tu2ku
+	K86x+cJ3y5a0NqN+qDGRBQnbtLvwJt47ES8fZanw0AX4SzGXsGOIBKn+5CfO1O4epclW6U
+	ZVoeWfOo19ajmhWZZofKBPnScu485ww=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-518-8R8e8xOKMJmEEuuZ65iIFg-1; Sun, 30 Jul 2023 22:02:49 -0400
+X-MC-Unique: 8R8e8xOKMJmEEuuZ65iIFg-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 829363806702;
-	Sat, 29 Jul 2023 10:40:09 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B0799104458F;
+	Mon, 31 Jul 2023 02:02:47 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6C247C57964;
-	Sat, 29 Jul 2023 10:40:04 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5BEB0492B03;
+	Mon, 31 Jul 2023 02:02:47 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 32C441946A6A;
-	Sat, 29 Jul 2023 10:40:04 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0BDCE194658C;
+	Mon, 31 Jul 2023 02:02:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 57ADD194658C
- for <dm-devel@listman.corp.redhat.com>; Sat, 29 Jul 2023 10:40:03 +0000 (UTC)
+ ESMTP id A11841946587
+ for <dm-devel@listman.corp.redhat.com>; Mon, 31 Jul 2023 02:02:46 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id EA2D2400F45; Sat, 29 Jul 2023 10:40:02 +0000 (UTC)
+ id 68B8F2014F88; Mon, 31 Jul 2023 02:02:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E2750400F36
- for <dm-devel@redhat.com>; Sat, 29 Jul 2023 10:40:02 +0000 (UTC)
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 61584200BA74
+ for <dm-devel@redhat.com>; Mon, 31 Jul 2023 02:02:46 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C361E1C05122
- for <dm-devel@redhat.com>; Sat, 29 Jul 2023 10:40:02 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 40F72895682
+ for <dm-devel@redhat.com>; Mon, 31 Jul 2023 02:02:46 +0000 (UTC)
 Received: from dfw.source.kernel.org (dfw.source.kernel.org
  [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-284-YO9R40c0NyCgcA904UEWgg-1; Sat, 29 Jul 2023 06:40:01 -0400
-X-MC-Unique: YO9R40c0NyCgcA904UEWgg-1
+ us-mta-483-jGR0yjIVOuKWTB7mTWLFzw-1; Sun, 30 Jul 2023 22:02:42 -0400
+X-MC-Unique: jGR0yjIVOuKWTB7mTWLFzw-1
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature RSA-PSS (2048 bits))
  (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 3F56A60B7A;
- Sat, 29 Jul 2023 10:33:05 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 98B2AC433C7;
- Sat, 29 Jul 2023 10:33:04 +0000 (UTC)
-Received: by mail-lf1-f44.google.com with SMTP id
- 2adb3069b0e04-4fe1c285690so3670598e87.3; 
- Sat, 29 Jul 2023 03:33:04 -0700 (PDT)
-X-Gm-Message-State: ABy/qLY7UZ2/UeWC1hyHQYv1KtC9KKIYeX2rIQLmRaha7w4brxli1WKQ
- qY+153zHeVfsv3VY1ClRUo1o4bVFwwKgUIRFPmQ=
-X-Google-Smtp-Source: APBJJlGeYb8hNy/oFr34uGXpmibjsARwkGDXhWuL5vf6q6/6EGpONGXt7KE18g1UWMPfQfNjEFd/fv4w/7as5tTqYDA=
-X-Received: by 2002:a05:6512:2391:b0:4f8:6e6e:4100 with SMTP id
- c17-20020a056512239100b004f86e6e4100mr4600338lfv.52.1690626782624; Sat, 29
- Jul 2023 03:33:02 -0700 (PDT)
+ by dfw.source.kernel.org (Postfix) with ESMTPS id ABE1560E15;
+ Mon, 31 Jul 2023 02:02:41 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7F88FC433C8;
+ Mon, 31 Jul 2023 02:02:40 +0000 (UTC)
+From: Sasha Levin <sashal@kernel.org>
+To: stable-commits@vger.kernel.org,
+	yukuai3@huawei.com
+Date: Sun, 30 Jul 2023 22:02:38 -0400
+Message-Id: <20230731020238.3804592-1-sashal@kernel.org>
 MIME-Version: 1.0
-References: <20230708092153.1418570-1-yukuai1@huaweicloud.com>
-In-Reply-To: <20230708092153.1418570-1-yukuai1@huaweicloud.com>
-From: Song Liu <song@kernel.org>
-Date: Sat, 29 Jul 2023 18:32:49 +0800
-X-Gmail-Original-Message-ID: <CAPhsuW5cBipY=JT8nRvJptyU9uePVYgqQ5ZaTtL7KnNO97K9BQ@mail.gmail.com>
-Message-ID: <CAPhsuW5cBipY=JT8nRvJptyU9uePVYgqQ5ZaTtL7KnNO97K9BQ@mail.gmail.com>
-To: Yu Kuai <yukuai1@huaweicloud.com>
+X-Patchwork-Hint: ignore
+X-stable: review
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -88,8 +78,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-Subject: Re: [dm-devel] [PATCH -next v2 0/3] dm-raid: minor fixes
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+Subject: [dm-devel] Patch "dm raid: clean up four equivalent goto tags in
+ raid_ctr()" has been added to the 6.4-stable tree
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -101,32 +92,125 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: pmenzel@molgen.mpg.de, yi.zhang@huawei.com, heinzm@redhat.com,
- yangerkun@huawei.com, snitzer@kernel.org, linux-kernel@vger.kernel.org,
- linux-raid@vger.kernel.org, dm-devel@redhat.com, yukuai3@huawei.com,
- agk@redhat.com
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
+ Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gU2F0LCBKdWwgOCwgMjAyMyBhdCA1OjIz4oCvUE0gWXUgS3VhaSA8eXVrdWFpMUBodWF3ZWlj
-bG91ZC5jb20+IHdyb3RlOgo+Cj4gRnJvbTogWXUgS3VhaSA8eXVrdWFpM0BodWF3ZWkuY29tPgo+
-Cj4gQ2hhbmdlcyBpbiB2MjoKPiAgLSBpbXByb3ZlIHRpdGxlIGFuZCBjb21taXQgbWVzc2FnZSBm
-b3IgcGF0Y2ggMgo+Cj4gVGhpcyBwYXRjaHNldCBmaXggdHdvIHN0cmFpZ2h0Zm9yd2FyZCBhbmQg
-ZWFzeSBwcm9ibGVtcyB0aGF0IGlzIGZvdW5kIGJ5Cj4gY29kZSByZXZpZXcsIHBsZWFzZSBjb25z
-aWRlciBpdCBmb3IgdGhlIG5leHQgbWVyZ2Ugd2luZG93Lgo+Cj4gWXUgS3VhaSAoMyk6Cj4gICBt
-ZC9kbS1yYWlkOiBmaXggdGhhdCAncmVjb25maWdfbXV0ZXgnIGlzIG5vdCByZWxlYXNlZCBmcm9t
-IGVycm9yIHBhdGgKPiAgICAgaW4gcmFpZF9jdHIoKQo+ICAgbWQvZG0tcmFpZDogY2xlYW4gdXAg
-bXVsdGlwbGUgZXF1aXZhbGVudCBnb3RvIHRhZ3MgZnJvbSByYWlkX2N0cigpCj4gICBtZC9kbS1y
-YWlkOiBwcm90ZWN0IG1kX3N0b3AoKSB3aXRoICdyZWNvbmZpZ19tdXRleCcKCkZvciB0aGUgc2V0
-OgoKUmV2aWV3ZWQtYnk6IFNvbmcgTGl1IDxzb25nQGtlcm5lbC5vcmc+Cgo+Cj4gIGRyaXZlcnMv
-bWQvZG0tcmFpZC5jIHwgMjAgKysrKysrKysrLS0tLS0tLS0tLS0KPiAgZHJpdmVycy9tZC9tZC5j
-ICAgICAgfCAgMiArKwo+ICAyIGZpbGVzIGNoYW5nZWQsIDExIGluc2VydGlvbnMoKyksIDExIGRl
-bGV0aW9ucygtKQo+Cj4gLS0KPiAyLjM5LjIKPgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
-LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
-aW5mby9kbS1kZXZlbAo=
+This is a note to let you know that I've just added the patch titled
+
+    dm raid: clean up four equivalent goto tags in raid_ctr()
+
+to the 6.4-stable tree which can be found at:
+    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
+
+The filename of the patch is:
+     dm-raid-clean-up-four-equivalent-goto-tags-in-raid_c.patch
+and it can be found in the queue-6.4 subdirectory.
+
+If you, or anyone else, feels it should not be added to the stable tree,
+please let <stable@vger.kernel.org> know about it.
+
+
+
+commit 240ca0dac958df3ef69b829bb3bc370edf1cc63e
+Author: Yu Kuai <yukuai3@huawei.com>
+Date:   Sat Jul 8 17:21:52 2023 +0800
+
+    dm raid: clean up four equivalent goto tags in raid_ctr()
+    
+    [ Upstream commit e74c874eabe2e9173a8fbdad616cd89c70eb8ffd ]
+    
+    There are four equivalent goto tags in raid_ctr(), clean them up to
+    use just one.
+    
+    There is no functional change and this is preparation to fix
+    raid_ctr()'s unprotected md_stop().
+    
+    Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+    Stable-dep-of: 7d5fff8982a2 ("dm raid: protect md_stop() with 'reconfig_mutex'")
+    Signed-off-by: Sasha Levin <sashal@kernel.org>
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 85221a94c2073..156d44f690096 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3251,8 +3251,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	r = md_start(&rs->md);
+ 	if (r) {
+ 		ti->error = "Failed to start raid array";
+-		mddev_unlock(&rs->md);
+-		goto bad_md_start;
++		goto bad_unlock;
+ 	}
+ 
+ 	/* If raid4/5/6 journal mode explicitly requested (only possible with journal dev) -> set it */
+@@ -3260,8 +3259,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		r = r5c_journal_mode_set(&rs->md, rs->journal_dev.mode);
+ 		if (r) {
+ 			ti->error = "Failed to set raid4/5/6 journal mode";
+-			mddev_unlock(&rs->md);
+-			goto bad_journal_mode_set;
++			goto bad_unlock;
+ 		}
+ 	}
+ 
+@@ -3271,19 +3269,15 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	/* Try to adjust the raid4/5/6 stripe cache size to the stripe size */
+ 	if (rs_is_raid456(rs)) {
+ 		r = rs_set_raid456_stripe_cache(rs);
+-		if (r) {
+-			mddev_unlock(&rs->md);
+-			goto bad_stripe_cache;
+-		}
++		if (r)
++			goto bad_unlock;
+ 	}
+ 
+ 	/* Now do an early reshape check */
+ 	if (test_bit(RT_FLAG_RESHAPE_RS, &rs->runtime_flags)) {
+ 		r = rs_check_reshape(rs);
+-		if (r) {
+-			mddev_unlock(&rs->md);
+-			goto bad_check_reshape;
+-		}
++		if (r)
++			goto bad_unlock;
+ 
+ 		/* Restore new, ctr requested layout to perform check */
+ 		rs_config_restore(rs, &rs_layout);
+@@ -3292,8 +3286,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 			r = rs->md.pers->check_reshape(&rs->md);
+ 			if (r) {
+ 				ti->error = "Reshape check failed";
+-				mddev_unlock(&rs->md);
+-				goto bad_check_reshape;
++				goto bad_unlock;
+ 			}
+ 		}
+ 	}
+@@ -3304,10 +3297,8 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	mddev_unlock(&rs->md);
+ 	return 0;
+ 
+-bad_md_start:
+-bad_journal_mode_set:
+-bad_stripe_cache:
+-bad_check_reshape:
++bad_unlock:
++	mddev_unlock(&rs->md);
+ 	md_stop(&rs->md);
+ bad:
+ 	raid_set_free(rs);
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
