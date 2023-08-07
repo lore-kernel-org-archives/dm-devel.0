@@ -4,84 +4,84 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7EB81C25B5C
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Aug 2023 06:53:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 243ADC10F00
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Aug 2023 06:53:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1691477632;
+	s=mimecast20190719; t=1691477631;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Vkq1y9E7RnfQein2AYcjfHG9/EEJU7ejBdaPWr7IZPE=;
-	b=HOkqvLmDLHyMkIGApxeq24XSB/3kGz6Ky4X/t5aFpOnaETnXFHR1mnaIehP2/5HrmFxAv4
-	KGLoknuNDXp9PRyDm+54iQrbOeJ6KDuCFauB8Gg02mUZbOwHXXXhEuSGulLyGmG5rbMEAZ
-	jhikrjJbsUA4riBFAJZMdPmbBgM+IyQ=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-634-IN5_Dc5YMp-PZN2fhVFrkA-1; Tue, 08 Aug 2023 02:53:49 -0400
-X-MC-Unique: IN5_Dc5YMp-PZN2fhVFrkA-1
+	bh=lRpgscDclZVArv4Oh1WmaUDH2okMzJB9b0NM0GPLx9Y=;
+	b=jJy+5mwsvHFr8Kz4C8nuFBl6BNAhK8biQCgxka8SKpiBb8lozEXdCv1oxCuhbNgnGHucr0
+	RmUu0BbshpGdq+2jro5aMygSH7zXPZUoz7KHqZGtpViJN3hZ3SLWATde6n5AqiOAPsosr6
+	s+bykVUykCL9+xMLpMGX2lhykwd0YZQ=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-558-RGvekTL7MFugUdQNzJWGcQ-1; Tue, 08 Aug 2023 02:53:45 -0400
+X-MC-Unique: RGvekTL7MFugUdQNzJWGcQ-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C468681DA5D;
-	Tue,  8 Aug 2023 06:53:37 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DC7F128040C9;
+	Tue,  8 Aug 2023 06:53:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id AC61F40D2844;
-	Tue,  8 Aug 2023 06:53:37 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C606E40C6E8A;
+	Tue,  8 Aug 2023 06:53:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6193B194723A;
-	Tue,  8 Aug 2023 06:53:34 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B54F81946A6C;
+	Tue,  8 Aug 2023 06:53:32 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
  [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 225D71946586
- for <dm-devel@listman.corp.redhat.com>; Mon,  7 Aug 2023 11:13:40 +0000 (UTC)
+ ESMTP id 134111946586
+ for <dm-devel@listman.corp.redhat.com>; Mon,  7 Aug 2023 11:17:29 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E7A01140E962; Mon,  7 Aug 2023 11:13:39 +0000 (UTC)
+ id E47C7140E963; Mon,  7 Aug 2023 11:17:28 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DF6BA140E950
- for <dm-devel@redhat.com>; Mon,  7 Aug 2023 11:13:39 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id DB489140E964
+ for <dm-devel@redhat.com>; Mon,  7 Aug 2023 11:17:28 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A6F6229AB3E8
- for <dm-devel@redhat.com>; Mon,  7 Aug 2023 11:13:39 +0000 (UTC)
-Received: from mail-pl1-f176.google.com (mail-pl1-f176.google.com
- [209.85.214.176]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B99FA80C909
+ for <dm-devel@redhat.com>; Mon,  7 Aug 2023 11:17:28 +0000 (UTC)
+Received: from mail-pg1-f169.google.com (mail-pg1-f169.google.com
+ [209.85.215.169]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-47-h5UyABLQMtCA6cpZ_EfAmw-1; Mon, 07 Aug 2023 07:13:37 -0400
-X-MC-Unique: h5UyABLQMtCA6cpZ_EfAmw-1
-Received: by mail-pl1-f176.google.com with SMTP id
- d9443c01a7336-1bc76cdf0cbso595295ad.1
- for <dm-devel@redhat.com>; Mon, 07 Aug 2023 04:13:37 -0700 (PDT)
+ us-mta-339-UnNltBboM923df6zvA4rdQ-1; Mon, 07 Aug 2023 07:17:27 -0400
+X-MC-Unique: UnNltBboM923df6zvA4rdQ-1
+Received: by mail-pg1-f169.google.com with SMTP id
+ 41be03b00d2f7-55b5a37acb6so362673a12.0
+ for <dm-devel@redhat.com>; Mon, 07 Aug 2023 04:17:26 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1691406816; x=1692011616;
+ d=1e100.net; s=20221208; t=1691407046; x=1692011846;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=et7oKjMo2RpAm9eGe6PO8KzXkO6yMET8jj6KuxhxE1o=;
- b=XRutl3dBhoWQWa2E+EEHBH4VxZr7AKwxH/9a1lSv5l1HalbTNse1CBSRBDs70kwhfq
- 8XfcJQSCIV7zP1l7z1Z7bneeEz+nCt+1E1ZzdJq2LIvMtSFm8TBua7AOE23MyhL3QdC7
- Z2fM4L7r3bhSsQiFYVRPltnChKFbfrj2YMTqZX2VnbL/21JEybSj3k+StvvQzQmgo8ry
- XpgiIYhPiplq0Vsk4exvRIS2G3w2+FzjAtgKS21FhhGuu4M7al43cRAvDle+1SDcDJ3H
- 49s3kDec9QyJfVbHXpQLapUFSLRTH40+hp6i0TsVRWDLRxy2QEzX2PKD6tLybiwv5lTp
- UNuQ==
-X-Gm-Message-State: ABy/qLbMT6rD4rZW2wfvUCfxw+bw678MZ2+culmQhrrYLN9uDmiPFSON
- kUAXzLQqjRkYC4e1N7lzu+bIRw==
-X-Google-Smtp-Source: APBJJlF9QaWRkA2HFZAXDPGIksSZq6NqNIS7MDluuBXjMUyGz8OacRKwa0/I1dCKrdRRT8VidP2X/g==
-X-Received: by 2002:a17:902:ea04:b0:1b8:a27d:f591 with SMTP id
- s4-20020a170902ea0400b001b8a27df591mr32781910plg.5.1691406816716; 
- Mon, 07 Aug 2023 04:13:36 -0700 (PDT)
+ bh=v5vYJ8kE3O6JXdLxdEEyUgUMjz4KJqSKKSB151wqkNo=;
+ b=TB6LaomxR5YisPQ6hY1Vm8ZcGQ5b1ctoxbqR67nkEY3rDwOhy5Qj3wV7+r4fGxpmhd
+ ZEvcuOzlRF8+7bQ65yOfQ7nhbTNaMxCGuuc0iKif+zrXIy8VILDd/Cfr3ZHsRvzfQTZr
+ DHSgXAEBAoudtg7BB6bawTQcHc2IA57lZEl87HWIMK0TmvrfOQNMal4cv7XyVbKqBlkK
+ rvWF4hO04A0lu5ZNFdCTKvJSo+UjwUSkEJ9qWL5oQblcSzQMoFbTaKkKp5XQiIK8YJBf
+ OMzrpr5B86HNJxghHRFgP6XLDEelxD/NP6dn5B8+RS9L0ewEtpazW42EHLSz7P9s/UVf
+ xpEg==
+X-Gm-Message-State: ABy/qLY3fyeo6Dh52nXqMw4wYu5dcoHV7plpMc5jG8QxSVi3+LU0rCdn
+ E6X+jozxyl6AK9f2RpJEM19AYQ==
+X-Google-Smtp-Source: APBJJlFyAF6s6JefOZNl/scuUGwKU5q0BmH7yK6Qf+JZ3E1mrAS2lh5NuGQm2RRGuEVfms4+14afyQ==
+X-Received: by 2002:a17:90a:3f08:b0:268:1e3b:14c9 with SMTP id
+ l8-20020a17090a3f0800b002681e3b14c9mr23486908pjc.2.1691407045970; 
+ Mon, 07 Aug 2023 04:17:25 -0700 (PDT)
 Received: from C02DW0BEMD6R.bytedance.net ([203.208.167.146])
  by smtp.gmail.com with ESMTPSA id
- y13-20020a17090aca8d00b0025be7b69d73sm5861191pjt.12.2023.08.07.04.13.24
+ y13-20020a17090aca8d00b0025be7b69d73sm5861191pjt.12.2023.08.07.04.17.13
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 07 Aug 2023 04:13:36 -0700 (PDT)
+ Mon, 07 Aug 2023 04:17:25 -0700 (PDT)
 From: Qi Zheng <zhengqi.arch@bytedance.com>
 To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
  vbabka@suse.cz, roman.gushchin@linux.dev, djwong@kernel.org,
@@ -89,8 +89,8 @@ To: akpm@linux-foundation.org, david@fromorbit.com, tkhai@ya.ru,
  steven.price@arm.com, cel@kernel.org, senozhatsky@chromium.org,
  yujie.liu@intel.com, gregkh@linuxfoundation.org, muchun.song@linux.dev,
  simon.horman@corigine.com, dlemoal@kernel.org
-Date: Mon,  7 Aug 2023 19:09:05 +0800
-Message-Id: <20230807110936.21819-18-zhengqi.arch@bytedance.com>
+Date: Mon,  7 Aug 2023 19:09:23 +0800
+Message-Id: <20230807110936.21819-36-zhengqi.arch@bytedance.com>
 In-Reply-To: <20230807110936.21819-1-zhengqi.arch@bytedance.com>
 References: <20230807110936.21819-1-zhengqi.arch@bytedance.com>
 MIME-Version: 1.0
@@ -103,8 +103,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mailman-Approved-At: Tue, 08 Aug 2023 06:53:24 +0000
-Subject: [dm-devel] [PATCH v4 17/48] ubifs: dynamically allocate the
- ubifs-slab shrinker
+Subject: [dm-devel] [PATCH v4 35/48] nfsd: dynamically allocate the
+ nfsd-client shrinker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -122,10 +122,10 @@ Cc: kvm@vger.kernel.org, dri-devel@lists.freedesktop.org,
  cluster-devel@redhat.com, xen-devel@lists.xenproject.org,
  linux-ext4@vger.kernel.org, linux-arm-msm@vger.kernel.org, rcu@vger.kernel.org,
  linux-bcache@vger.kernel.org, Qi Zheng <zhengqi.arch@bytedance.com>,
- Muchun Song <songmuchun@bytedance.com>, linux-raid@vger.kernel.org,
- linux-nfs@vger.kernel.org, netdev@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
- linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ linux-raid@vger.kernel.org, linux-nfs@vger.kernel.org, netdev@vger.kernel.org,
+ Jeff Layton <jlayton@kernel.org>, linux-kernel@vger.kernel.org,
+ linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
+ Chuck Lever <chuck.lever@oracle.com>, linux-fsdevel@vger.kernel.org,
  linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
@@ -135,77 +135,78 @@ X-Mimecast-Originator: bytedance.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use new APIs to dynamically allocate the ubifs-slab shrinker.
+In preparation for implementing lockless slab shrink, use new APIs to
+dynamically allocate the nfsd-client shrinker, so that it can be freed
+asynchronously using kfree_rcu(). Then it doesn't need to wait for RCU
+read-side critical section when releasing the struct nfsd_net.
 
 Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
-Reviewed-by: Muchun Song <songmuchun@bytedance.com>
+Acked-by: Chuck Lever <chuck.lever@oracle.com>
+Acked-by: Jeff Layton <jlayton@kernel.org>
 ---
- fs/ubifs/super.c | 22 ++++++++++++----------
- 1 file changed, 12 insertions(+), 10 deletions(-)
+ fs/nfsd/netns.h     |  2 +-
+ fs/nfsd/nfs4state.c | 20 ++++++++++++--------
+ 2 files changed, 13 insertions(+), 9 deletions(-)
 
-diff --git a/fs/ubifs/super.c b/fs/ubifs/super.c
-index b08fb28d16b5..c690782388a8 100644
---- a/fs/ubifs/super.c
-+++ b/fs/ubifs/super.c
-@@ -54,11 +54,7 @@ module_param_cb(default_version, &ubifs_default_version_ops, &ubifs_default_vers
- static struct kmem_cache *ubifs_inode_slab;
+diff --git a/fs/nfsd/netns.h b/fs/nfsd/netns.h
+index ec49b200b797..f669444d5336 100644
+--- a/fs/nfsd/netns.h
++++ b/fs/nfsd/netns.h
+@@ -195,7 +195,7 @@ struct nfsd_net {
+ 	int			nfs4_max_clients;
  
- /* UBIFS TNC shrinker description */
--static struct shrinker ubifs_shrinker_info = {
--	.scan_objects = ubifs_shrink_scan,
--	.count_objects = ubifs_shrink_count,
--	.seeks = DEFAULT_SEEKS,
--};
-+static struct shrinker *ubifs_shrinker_info;
+ 	atomic_t		nfsd_courtesy_clients;
+-	struct shrinker		nfsd_client_shrinker;
++	struct shrinker		*nfsd_client_shrinker;
+ 	struct work_struct	nfsd_shrinker_work;
+ };
  
- /**
-  * validate_inode - validate inode.
-@@ -2373,7 +2369,7 @@ static void inode_slab_ctor(void *obj)
- 
- static int __init ubifs_init(void)
+diff --git a/fs/nfsd/nfs4state.c b/fs/nfsd/nfs4state.c
+index 8534693eb6a4..9e401db8a6d2 100644
+--- a/fs/nfsd/nfs4state.c
++++ b/fs/nfsd/nfs4state.c
+@@ -4400,8 +4400,7 @@ static unsigned long
+ nfsd4_state_shrinker_count(struct shrinker *shrink, struct shrink_control *sc)
  {
--	int err;
-+	int err = -ENOMEM;
+ 	int count;
+-	struct nfsd_net *nn = container_of(shrink,
+-			struct nfsd_net, nfsd_client_shrinker);
++	struct nfsd_net *nn = shrink->private_data;
  
- 	BUILD_BUG_ON(sizeof(struct ubifs_ch) != 24);
+ 	count = atomic_read(&nn->nfsd_courtesy_clients);
+ 	if (!count)
+@@ -8149,12 +8148,17 @@ static int nfs4_state_create_net(struct net *net)
+ 	INIT_WORK(&nn->nfsd_shrinker_work, nfsd4_state_shrinker_worker);
+ 	get_net(net);
  
-@@ -2439,10 +2435,16 @@ static int __init ubifs_init(void)
- 	if (!ubifs_inode_slab)
- 		return -ENOMEM;
- 
--	err = register_shrinker(&ubifs_shrinker_info, "ubifs-slab");
--	if (err)
-+	ubifs_shrinker_info = shrinker_alloc(0, "ubifs-slab");
-+	if (!ubifs_shrinker_info)
- 		goto out_slab;
- 
-+	ubifs_shrinker_info->count_objects = ubifs_shrink_count;
-+	ubifs_shrinker_info->scan_objects = ubifs_shrink_scan;
-+	ubifs_shrinker_info->seeks = DEFAULT_SEEKS;
+-	nn->nfsd_client_shrinker.scan_objects = nfsd4_state_shrinker_scan;
+-	nn->nfsd_client_shrinker.count_objects = nfsd4_state_shrinker_count;
+-	nn->nfsd_client_shrinker.seeks = DEFAULT_SEEKS;
+-
+-	if (register_shrinker(&nn->nfsd_client_shrinker, "nfsd-client"))
++	nn->nfsd_client_shrinker = shrinker_alloc(0, "nfsd-client");
++	if (!nn->nfsd_client_shrinker)
+ 		goto err_shrinker;
 +
-+	shrinker_register(ubifs_shrinker_info);
++	nn->nfsd_client_shrinker->scan_objects = nfsd4_state_shrinker_scan;
++	nn->nfsd_client_shrinker->count_objects = nfsd4_state_shrinker_count;
++	nn->nfsd_client_shrinker->seeks = DEFAULT_SEEKS;
++	nn->nfsd_client_shrinker->private_data = nn;
 +
- 	err = ubifs_compressors_init();
- 	if (err)
- 		goto out_shrinker;
-@@ -2467,7 +2469,7 @@ static int __init ubifs_init(void)
- 	dbg_debugfs_exit();
- 	ubifs_compressors_exit();
- out_shrinker:
--	unregister_shrinker(&ubifs_shrinker_info);
-+	shrinker_free(ubifs_shrinker_info);
- out_slab:
- 	kmem_cache_destroy(ubifs_inode_slab);
- 	return err;
-@@ -2483,7 +2485,7 @@ static void __exit ubifs_exit(void)
- 	dbg_debugfs_exit();
- 	ubifs_sysfs_exit();
- 	ubifs_compressors_exit();
--	unregister_shrinker(&ubifs_shrinker_info);
-+	shrinker_free(ubifs_shrinker_info);
++	shrinker_register(nn->nfsd_client_shrinker);
++
+ 	return 0;
  
- 	/*
- 	 * Make sure all delayed rcu free inodes are flushed before we
+ err_shrinker:
+@@ -8252,7 +8256,7 @@ nfs4_state_shutdown_net(struct net *net)
+ 	struct list_head *pos, *next, reaplist;
+ 	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
+ 
+-	unregister_shrinker(&nn->nfsd_client_shrinker);
++	shrinker_free(nn->nfsd_client_shrinker);
+ 	cancel_work(&nn->nfsd_shrinker_work);
+ 	cancel_delayed_work_sync(&nn->laundromat_work);
+ 	locks_end_grace(&nn->nfsd4_manager);
 -- 
 2.30.2
 
