@@ -4,73 +4,89 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A88BCC0015E
-	for <dm-devel@archiver.kernel.org>; Fri, 11 Aug 2023 21:17:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7799AC001B0
+	for <dm-devel@archiver.kernel.org>; Fri, 11 Aug 2023 21:26:14 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1691788634;
+	s=mimecast20190719; t=1691789173;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=zWPfpdjLeygEwY/tf4tqQsi6o8nOnjyTqdISmj5y3S8=;
-	b=EgZG2Mthx30kd+oInV0oHaVA1wGU16XOFolyXkOWh9kklVrJJb3dqRFuonyY1DE3JPvKjH
-	ybV9OE6U4tvEk6mtXnKwDgpZw6xRxevCX1R5jay2wBCkcxyuseoJy8gLaVASdbjvaABqMc
-	GW8R1IwH7bBIHkR21xqkx96WRUgm5FQ=
+	bh=h/tiJl+AEHCzg1Dbi15ba9vi/N8c45WdMxEdsfsW30o=;
+	b=PemaC1PjWqP4W95m5Gtl8MWoUHmXDt6tqXhcarcTd/MJho5cBbfvlkWdChECpNPYMQzd/8
+	qNHTPUP0L2nH+SsqSB6Yq420uZ04DmksoNcUZ9BYh+JTWZ31fyH2meoCwarCGNExaeE+BD
+	SAMJDK6zOBkFInOyczFrsynVDBtRtHE=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-240-fA1-hBNUNg6mNUFVVYqmJg-1; Fri, 11 Aug 2023 17:17:11 -0400
-X-MC-Unique: fA1-hBNUNg6mNUFVVYqmJg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-556-TgwlL1DXPjW1WhKB1Wl76g-1; Fri, 11 Aug 2023 17:26:10 -0400
+X-MC-Unique: TgwlL1DXPjW1WhKB1Wl76g-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BA69F8DC66C;
-	Fri, 11 Aug 2023 21:17:09 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A2B108DC665;
+	Fri, 11 Aug 2023 21:26:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1E08B40C6F4E;
-	Fri, 11 Aug 2023 21:17:08 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2CA6E140E96D;
+	Fri, 11 Aug 2023 21:26:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C351B1946594;
-	Fri, 11 Aug 2023 21:17:07 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CB45B1946594;
+	Fri, 11 Aug 2023 21:26:05 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 595B6194658F
- for <dm-devel@listman.corp.redhat.com>; Fri, 11 Aug 2023 21:17:06 +0000 (UTC)
+ ESMTP id 13CDC194658F
+ for <dm-devel@listman.corp.redhat.com>; Fri, 11 Aug 2023 21:26:05 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0C64540C6F53; Fri, 11 Aug 2023 21:17:06 +0000 (UTC)
+ id E46DA1121315; Fri, 11 Aug 2023 21:26:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0417340C6F4E
- for <dm-devel@redhat.com>; Fri, 11 Aug 2023 21:17:05 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
- [207.211.31.120])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id DD2F01121314
+ for <dm-devel@redhat.com>; Fri, 11 Aug 2023 21:26:04 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C35D28007A4
- for <dm-devel@redhat.com>; Fri, 11 Aug 2023 21:17:05 +0000 (UTC)
-Received: from mgamail.intel.com (mgamail.intel.com [134.134.136.100]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-393-5wFQXjFJPFabQ0e5SewtnQ-1; Fri, 11 Aug 2023 17:17:03 -0400
-X-MC-Unique: 5wFQXjFJPFabQ0e5SewtnQ-1
-X-IronPort-AV: E=McAfee;i="6600,9927,10799"; a="438098272"
-X-IronPort-AV: E=Sophos;i="6.01,166,1684825200"; d="scan'208";a="438098272"
-Received: from fmsmga004.fm.intel.com ([10.253.24.48])
- by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
- 11 Aug 2023 14:15:58 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10799"; a="802817157"
-X-IronPort-AV: E=Sophos;i="6.01,166,1684825200"; d="scan'208";a="802817157"
-Received: from lkp-server01.sh.intel.com (HELO d1ccc7e87e8f) ([10.239.97.150])
- by fmsmga004.fm.intel.com with ESMTP; 11 Aug 2023 14:15:52 -0700
-Received: from kbuild by d1ccc7e87e8f with local (Exim 4.96)
- (envelope-from <lkp@intel.com>) id 1qUZU8-00082u-06;
- Fri, 11 Aug 2023 21:15:52 +0000
-Date: Sat, 12 Aug 2023 05:15:10 +0800
-From: kernel test robot <lkp@intel.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C00348015AA
+ for <dm-devel@redhat.com>; Fri, 11 Aug 2023 21:26:04 +0000 (UTC)
+Received: from mail-pf1-f171.google.com (mail-pf1-f171.google.com
+ [209.85.210.171]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-586-GZHzdCRLPOm0JqgtLYRAmw-1; Fri, 11 Aug 2023 17:26:02 -0400
+X-MC-Unique: GZHzdCRLPOm0JqgtLYRAmw-1
+Received: by mail-pf1-f171.google.com with SMTP id
+ d2e1a72fcca58-686f8614ce5so2212393b3a.3; 
+ Fri, 11 Aug 2023 14:26:02 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20221208; t=1691789161; x=1692393961;
+ h=content-transfer-encoding:in-reply-to:from:references:cc:to
+ :content-language:subject:user-agent:mime-version:date:message-id
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=jkael3S2pdg/VfM2aJEaWso36Tz2Khr7pAvSvEHl94s=;
+ b=F5HD8Pi/rPGdc1YC2CnSnxylv8C1Qy3h3n++5l38dEy91q39jYyhitYfNar5Jy85Cu
+ TJuRzcHmCIc1+o73MWyiOecvHR9HV29aHEtjw0dT5375dfmqXz0f3hWo92HeJNHObtFH
+ 9k3BqOlE4xW3+OGuu2jeAZkCsHSWhvTesm+/gs4Mw8de4XdflgILynIQ/V7wFR4QYmbS
+ 5B8NOyzpeN1lXmREljyl1LCRVFeddk1IraZvwMeqooFk5swo1oG280JJNJJmhb36TL8Q
+ s7/M/JzEThLBvdRuOUUfyvigdCe4a+GTFc6uji7htYpNgqFobtdBPH9X9FzP4KiKzLxc
+ hs4Q==
+X-Gm-Message-State: AOJu0YyjxgWp0bBrqRPDBD/BT5nHZ8vaB9x0LY/gtTtRKQEncLtAlxly
+ jEQa7Ttza5t7ohdJE6gc1xE=
+X-Google-Smtp-Source: AGHT+IGvgfv1o9rzwDcunf/qZS4YYopLpr1rFa2hIc4fQs8fXgSIMEA6km+8Z6cMKCMBJqWea0/OGQ==
+X-Received: by 2002:a17:90a:bd95:b0:26b:ab3:493a with SMTP id
+ z21-20020a17090abd9500b0026b0ab3493amr2567330pjr.16.1691789161399; 
+ Fri, 11 Aug 2023 14:26:01 -0700 (PDT)
+Received: from ?IPV6:2620:15c:211:201:cdd8:4c3:2f3c:adea?
+ ([2620:15c:211:201:cdd8:4c3:2f3c:adea])
+ by smtp.gmail.com with ESMTPSA id
+ e10-20020a170902b78a00b001bd41b70b60sm4386849pls.45.2023.08.11.14.25.59
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Fri, 11 Aug 2023 14:26:00 -0700 (PDT)
+Message-ID: <3b1da341-1c7f-e28f-d6aa-cecb83188f34@acm.org>
+Date: Fri, 11 Aug 2023 14:25:58 -0700
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.13.0
 To: Nitesh Shetty <nj.shetty@samsung.com>, Jens Axboe <axboe@kernel.dk>,
  Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
  Mike Snitzer <snitzer@kernel.org>, dm-devel@redhat.com,
@@ -78,10 +94,11 @@ To: Nitesh Shetty <nj.shetty@samsung.com>, Jens Axboe <axboe@kernel.dk>,
  Sagi Grimberg <sagi@grimberg.me>, Chaitanya Kulkarni <kch@nvidia.com>,
  Alexander Viro <viro@zeniv.linux.org.uk>,
  Christian Brauner <brauner@kernel.org>
-Message-ID: <202308120529.EW7DuUW7-lkp@intel.com>
-References: <20230811105300.15889-12-nj.shetty@samsung.com>
-MIME-Version: 1.0
-In-Reply-To: <20230811105300.15889-12-nj.shetty@samsung.com>
+References: <20230811105300.15889-1-nj.shetty@samsung.com>
+ <CGME20230811105648epcas5p3ae8b8f6ed341e2aa253e8b4de8920a4d@epcas5p3.samsung.com>
+ <20230811105300.15889-3-nj.shetty@samsung.com>
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20230811105300.15889-3-nj.shetty@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -89,9 +106,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH v14 11/11] null_blk: add support for copy
- offload
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH v14 02/11] Add infrastructure for copy
+ offload in block and request layer.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,58 +120,36 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Anuj Gupta <anuj20.g@samsung.com>, Vincent Fu <vincent.fu@samsung.com>,
- martin.petersen@oracle.com, linux-doc@vger.kernel.org, gost.dev@samsung.com,
- Damien Le Moal <damien.lemoal@opensource.wdc.com>, llvm@lists.linux.dev,
- linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
- linux-block@vger.kernel.org, mcgrof@kernel.org, dlemoal@kernel.org,
- oe-kbuild-all@lists.linux.dev, linux-fsdevel@vger.kernel.org,
- Nitesh Shetty <nj.shetty@samsung.com>
+Cc: martin.petersen@oracle.com, linux-doc@vger.kernel.org, gost.dev@samsung.com,
+ Anuj Gupta <anuj20.g@samsung.com>, linux-kernel@vger.kernel.org,
+ linux-nvme@lists.infradead.org, linux-block@vger.kernel.org, mcgrof@kernel.org,
+ dlemoal@kernel.org, linux-fsdevel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: intel.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
+X-Mimecast-Originator: acm.org
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Hi Nitesh,
+On 8/11/23 03:52, Nitesh Shetty wrote:
+> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+> index 0bad62cca3d0..de0ad7a0d571 100644
+> +static inline bool op_is_copy(blk_opf_t op)
+> +{
+> +	return ((op & REQ_OP_MASK) == REQ_OP_COPY_SRC ||
+> +		(op & REQ_OP_MASK) == REQ_OP_COPY_DST);
+> +}
+> +
 
-kernel test robot noticed the following build errors:
+The above function should be moved into include/linux/blk-mq.h below the
+definition of req_op() such that it can use req_op() instead of 
+open-coding it.
 
-[auto build test ERROR on f7dc24b3413851109c4047b22997bd0d95ed52a2]
+Thanks,
 
-url:    https://github.com/intel-lab-lkp/linux/commits/Nitesh-Shetty/block-Introduce-queue-limits-and-sysfs-for-copy-offload-support/20230811-192259
-base:   f7dc24b3413851109c4047b22997bd0d95ed52a2
-patch link:    https://lore.kernel.org/r/20230811105300.15889-12-nj.shetty%40samsung.com
-patch subject: [PATCH v14 11/11] null_blk: add support for copy offload
-config: hexagon-randconfig-r032-20230811 (https://download.01.org/0day-ci/archive/20230812/202308120529.EW7DuUW7-lkp@intel.com/config)
-compiler: clang version 17.0.0 (https://github.com/llvm/llvm-project.git 4a5ac14ee968ff0ad5d2cc1ffa0299048db4c88a)
-reproduce: (https://download.01.org/0day-ci/archive/20230812/202308120529.EW7DuUW7-lkp@intel.com/reproduce)
-
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202308120529.EW7DuUW7-lkp@intel.com/
-
-All errors (new ones prefixed by >>):
-
->> ld.lld: error: undefined symbol: __tracepoint_nullb_copy_op
-   >>> referenced by atomic-arch-fallback.h:444 (include/linux/atomic/atomic-arch-fallback.h:444)
-   >>>               drivers/block/null_blk/main.o:(null_process_cmd) in archive vmlinux.a
-   >>> referenced by atomic-arch-fallback.h:444 (include/linux/atomic/atomic-arch-fallback.h:444)
-   >>>               drivers/block/null_blk/main.o:(null_process_cmd) in archive vmlinux.a
---
->> ld.lld: error: undefined symbol: __traceiter_nullb_copy_op
-   >>> referenced by trace.h:71 (drivers/block/null_blk/trace.h:71)
-   >>>               drivers/block/null_blk/main.o:(null_process_cmd) in archive vmlinux.a
-   >>> referenced by trace.h:71 (drivers/block/null_blk/trace.h:71)
-   >>>               drivers/block/null_blk/main.o:(null_process_cmd) in archive vmlinux.a
-
--- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
+Bart.
 
 --
 dm-devel mailing list
