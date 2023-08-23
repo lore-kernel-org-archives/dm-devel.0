@@ -4,105 +4,95 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6AC8CECD643
-	for <dm-devel@archiver.kernel.org>; Fri, 18 Aug 2023 00:00:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8309DEE49A5
+	for <dm-devel@archiver.kernel.org>; Wed, 23 Aug 2023 03:00:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1692316815;
+	s=mimecast20190719; t=1692759609;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=qFrrvTaBGC3xNYDyE+4HeRTKuQ7A2lljxiAMQJ3qO4s=;
-	b=DBzAq8aBSNxKndq0cECIqV5KgPyE9y2wC2slxmQvgnhVAL0PE3s3rCPONwB6tgVFtif2lG
-	es9Q/CizAsofPs13OPreS5Xf1ZfTlLh68llw0N6K3Hnkoh+Ir8ZTDn/NCVyfqDcGER8FsB
-	pkZhQM/Powv84i/qRjaz7vn/dLqNEl0=
+	bh=wr0eF89bt0gvcAs4qP9Wv76YbPN1GHrocS6rk576Hok=;
+	b=CQvnYvjFWkoI/KvyfGulSAvLmEplUswmX2wS3+f1mjxYWtAD5QIi5t4mcaeDigEXGfvLL8
+	/TnYXmtN5ZT+A+9Jz0huV5Tnh5y9DbhgjRLfshhNwHY1JjXPk6r3/Ec8ozz6DeTTpJ5i7D
+	vsrlfzM4vkjiAmeFGLBTQrI9J2kc+c0=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-335-nMAkY7sXN3G7h0MjTkcwyg-1; Thu, 17 Aug 2023 20:00:11 -0400
-X-MC-Unique: nMAkY7sXN3G7h0MjTkcwyg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-619-xu3QHRScOIWDOw3fXgoAWw-1; Tue, 22 Aug 2023 23:00:06 -0400
+X-MC-Unique: xu3QHRScOIWDOw3fXgoAWw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EA559800270;
-	Fri, 18 Aug 2023 00:00:09 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4EEC3101A53C;
+	Wed, 23 Aug 2023 03:00:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D92BD40C207C;
-	Fri, 18 Aug 2023 00:00:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id BF0CE2026D76;
+	Wed, 23 Aug 2023 03:00:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8B5D71946588;
-	Fri, 18 Aug 2023 00:00:05 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6BD441946587;
+	Wed, 23 Aug 2023 03:00:00 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 44FEF1946587
- for <dm-devel@listman.corp.redhat.com>; Fri, 18 Aug 2023 00:00:04 +0000 (UTC)
+ ESMTP id CD6861946586
+ for <dm-devel@listman.corp.redhat.com>; Wed, 23 Aug 2023 02:59:52 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1C4AE1121318; Fri, 18 Aug 2023 00:00:04 +0000 (UTC)
+ id B34D1C15BB8; Wed, 23 Aug 2023 02:59:52 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1437C1121314
- for <dm-devel@redhat.com>; Fri, 18 Aug 2023 00:00:04 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EBD411C06EE0
- for <dm-devel@redhat.com>; Fri, 18 Aug 2023 00:00:03 +0000 (UTC)
-Received: from mail-pl1-f173.google.com (mail-pl1-f173.google.com
- [209.85.214.173]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id AB755C15BAE
+ for <dm-devel@redhat.com>; Wed, 23 Aug 2023 02:59:52 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 901AF8D40A1
+ for <dm-devel@redhat.com>; Wed, 23 Aug 2023 02:59:52 +0000 (UTC)
+Received: from mail-pl1-f178.google.com (mail-pl1-f178.google.com
+ [209.85.214.178]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-464-UIEVtwXtPXWuP_cN6NXEHw-1; Thu, 17 Aug 2023 19:59:59 -0400
-X-MC-Unique: UIEVtwXtPXWuP_cN6NXEHw-1
-Received: by mail-pl1-f173.google.com with SMTP id
- d9443c01a7336-1bbc87ded50so2971935ad.1
- for <dm-devel@redhat.com>; Thu, 17 Aug 2023 16:59:59 -0700 (PDT)
+ us-mta-169-OVBve7cPMnCaLHYh_PzhWQ-1; Tue, 22 Aug 2023 22:59:49 -0400
+X-MC-Unique: OVBve7cPMnCaLHYh_PzhWQ-1
+Received: by mail-pl1-f178.google.com with SMTP id
+ d9443c01a7336-1befe39630bso9174875ad.0
+ for <dm-devel@redhat.com>; Tue, 22 Aug 2023 19:59:49 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20221208; t=1692316799; x=1692921599;
- h=content-transfer-encoding:mime-version:message-id:date:subject:cc
- :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
- :reply-to;
- bh=FlZwTjULNXL0MSeceST2nTPY5dYfoFRLbfS9U1Zv9es=;
- b=GTCUXPT3nn0hhlJYmSCkcdlCHfB6bsT/WotmpwZVtkN8wWujqV+Qr2/bRQ2R3k6cic
- mDkqcCAeltzg98BUYegLNpVabZFKfByGMlG2tri7VJjm0nE5a/qBD6EkOHATvEizznv2
- uRyurTgLQpC1Jq7PyU4yanSDBMIkAyk9/phQ+Kzmfm5swPud33A6yrofawjplIFe8XBS
- jQUeyH5p7Ikdr+SFnsdrOsIFvhJyEXSa9xYSJuXO22ILv0aqAtaEDbcys7uTWnVuwR5t
- tsFZ4nBdtYG/t1FLOZa8RcLyPenKcAjfEj0rACM2NmzY8UfWOBMwuLa6QP6Sg6d6Zqik
- uhcw==
-X-Gm-Message-State: AOJu0Yygt3cWpArcG7QgkuiY1GMLkBsn6INaRnuO95DRyd4nd0j1FNX0
- WU5bVw7rM6JbZ0BYjEPbib24nA==
-X-Google-Smtp-Source: AGHT+IEZN0eiMgoFeTiDuL98J12BoFQXzUyH1iR9WfEu30+aZRIx+2aMlLrOvoBZVZz8HJbKs8MMbw==
-X-Received: by 2002:a17:903:247:b0:1bb:1523:b2d7 with SMTP id
- j7-20020a170903024700b001bb1523b2d7mr1064631plh.14.1692316798858; 
- Thu, 17 Aug 2023 16:59:58 -0700 (PDT)
-Received: from www.outflux.net (198-0-35-241-static.hfc.comcastbusiness.net.
- [198.0.35.241]) by smtp.gmail.com with ESMTPSA id
- b10-20020a170902bd4a00b001bba669a7eesm348680plx.52.2023.08.17.16.59.58
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 17 Aug 2023 16:59:58 -0700 (PDT)
-From: Kees Cook <keescook@chromium.org>
-To: linux-hardening@vger.kernel.org
-Date: Thu, 17 Aug 2023 16:59:56 -0700
-Message-Id: <20230817235955.never.762-kees@kernel.org>
+ d=1e100.net; s=20221208; t=1692759588; x=1693364388;
+ h=content-transfer-encoding:in-reply-to:cc:from:references:to
+ :content-language:subject:user-agent:mime-version:date:message-id
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=bhgEqLuvf9ApSnTvUwn1L76c2o2W1Ei/QD6yE6yt7Vo=;
+ b=Aw6Ac0Y5B4oNey7DhXZzEBDgVIajZf93Rs6Se36KSSTu0S0wbrWWmIj4TPxYF9Ak35
+ 97vubQVfbR3ZdmBtA6p6A+1ze3o7FmPviHD2A9PeBvV0mrjLIdOT0Sh2/3qnAeMRhCdg
+ ii+p6jdZ46gy9LHacv/mSNoHhWeJaV3pnA4bJ3yQHn0K9mM9Vs4jlj+3mI9QOa+GRnK9
+ VViY25P32mRkG2u8XtSuyEpCdxawO0yKJpkyOcnRFERAi6aVIVcW4VmowgPii531ToVt
+ ZcmVXm2kzJRcQd+Ypf1aMjVl0U8ed/mzI/CL5C5bGPO+MvPVeePF88tZ/p5/jY1RCnnE
+ 6/UQ==
+X-Gm-Message-State: AOJu0YzIdLxyA638ikRnCfQisk6FKojx/NwvjdmEXyLAO1Ar4KjOw2cO
+ m9Az5//rqRA+6jYAv1XHNeG1QQ==
+X-Google-Smtp-Source: AGHT+IEfrTZGJtg+pRH2EfLUkWhGiT4SJbELosEEcEbXeeoUMWHqtsVXqJsCto+j1ri8qfTaL4v/sQ==
+X-Received: by 2002:a17:90a:2f41:b0:26d:4ade:fcf0 with SMTP id
+ s59-20020a17090a2f4100b0026d4adefcf0mr10521410pjd.4.1692759588304; 
+ Tue, 22 Aug 2023 19:59:48 -0700 (PDT)
+Received: from ?IPV6:fdbd:ff1:ce00:1c25:884:3ed:e1db:b610?
+ ([2408:8000:b001:1:1f:58ff:f102:103])
+ by smtp.gmail.com with ESMTPSA id
+ z2-20020a17090a1fc200b00262ca945cecsm11045048pjz.54.2023.08.22.19.59.38
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Tue, 22 Aug 2023 19:59:47 -0700 (PDT)
+Message-ID: <63dc1d86-2a15-6b7e-f63a-63fccb25eae2@bytedance.com>
+Date: Wed, 23 Aug 2023 10:59:34 +0800
 MIME-Version: 1.0
-X-Developer-Signature: v=1; a=openpgp-sha256; l=2198; i=keescook@chromium.org; 
- h=from:subject:message-id;
- bh=TlZvULm9TYJxvzYvyHtGp79eQ9cs52J2eowJQXxaQlQ=; 
- b=owEBbQKS/ZANAwAKAYly9N/cbcAmAcsmYgBk3rR8Jpb6jYCE1H2Z7r1VdMRPlT4IoaSG9P+6O
- TraiYv2JDeJAjMEAAEKAB0WIQSlw/aPIp3WD3I+bhOJcvTf3G3AJgUCZN60fAAKCRCJcvTf3G3A
- JjIHD/44aHrnkkewA1A9a8OG6hGVMYANzESYfUGAA9dl8IaTcUf5hz6awlrlkNt19soLhhGXaxf
- 6zZZK3951OIkAIYfKrjp48XoTFOKI47ha4xWcryisDbf/lBUlQ6K2ALIFp2ZBobJko9KmWFRxEu
- r6rBph5S6FqVIJVZPG2xFFxsd4lYyuD2jXO/1O8xnS6ismHiTUMbYOUcRgg9nwR+iZmHYFYMDNa
- S2MZ/a7mqLSK3+rg8Ffsq0D8hTy0DP/fSQLLiZ73LWFe2Un8IvI78NYawzPNoBV6prHXxLdJphU
- DSjmWKtlrOmsJO7mEk9ipaIDkC0bnBkXv9TzXjvtwSpy0RrHgPmIr9VEou5TwHceriaF/OwIrc3
- aSGyVXXILMWSq7cvXiAiPkJFxpQgVmYN1aHl2rb4O2hlQ34EphuiDLTOJriwowTTCcd81btCfpg
- ue37gNf40o92kdqIkxIeg2BWmyuWCKVsCeH67+FgE3jIOFn8eqq31yhYwA1qy7+ZJz+UDJkWKrx
- r42QK0aS3ebKJ6Kt0oal+a0ZsPp6bhhU2ticTpo0kKWKmpsZZg5v9leTKD1TOciwblKRJCERaYC
- 2YuuoTR0bS+GC/8nQOg9/q76Mny1hU02LM69MiCaJwH1oNPqJGyCm95eW1Sm3G/ONjIa1Cks+BO
- UK26fPZ LQjP69ig==
-X-Developer-Key: i=keescook@chromium.org; a=openpgp;
- fpr=A5C3F68F229DD60F723E6E138972F4DFDC6DC026
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:102.0)
+ Gecko/20100101 Thunderbird/102.14.0
+To: daniel@ffwll.ch
+References: <20230807110936.21819-1-zhengqi.arch@bytedance.com>
+ <20230807110936.21819-44-zhengqi.arch@bytedance.com>
+ <ZOS+g51Yx9PsYkGU@phenom.ffwll.local>
+From: Qi Zheng <zhengqi.arch@bytedance.com>
+In-Reply-To: <ZOS+g51Yx9PsYkGU@phenom.ffwll.local>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -110,9 +100,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: [dm-devel] [PATCH] LoadPin: Annotate struct
- dm_verity_loadpin_trusted_root_digest with __counted_by
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH v4 43/48] drm/ttm: introduce pool_shrink_rwsem
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -124,82 +113,154 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-security-module@vger.kernel.org, Kees Cook <keescook@chromium.org>,
- Nick Desaulniers <ndesaulniers@google.com>, llvm@lists.linux.dev,
- Mike Snitzer <snitzer@kernel.org>, James Morris <jmorris@namei.org>,
- linux-kernel@vger.kernel.org, Nathan Chancellor <nathan@kernel.org>,
- dm-devel@redhat.com, Tom Rix <trix@redhat.com>,
- "Serge E. Hallyn" <serge@hallyn.com>, Alasdair Kergon <agk@redhat.com>,
- Paul Moore <paul@paul-moore.com>
+Cc: kvm@vger.kernel.org, djwong@kernel.org, roman.gushchin@linux.dev,
+ david@fromorbit.com, dri-devel@lists.freedesktop.org,
+ virtualization@lists.linux-foundation.org, linux-mm@kvack.org,
+ dm-devel@redhat.com, linux-mtd@lists.infradead.org, cel@kernel.org,
+ x86@kernel.org, steven.price@arm.com, cluster-devel@redhat.com,
+ simon.horman@corigine.com, xen-devel@lists.xenproject.org,
+ linux-ext4@vger.kernel.org, paulmck@kernel.org, linux-arm-msm@vger.kernel.org,
+ linux-nfs@vger.kernel.org, rcu@vger.kernel.org, linux-bcache@vger.kernel.org,
+ dlemoal@kernel.org, Muchun Song <songmuchun@bytedance.com>,
+ yujie.liu@intel.com, vbabka@suse.cz, linux-raid@vger.kernel.org,
+ brauner@kernel.org, tytso@mit.edu, gregkh@linuxfoundation.org,
+ daniel.vetter@ffwll.ch, muchun.song@linux.dev, linux-kernel@vger.kernel.org,
+ linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
+ senozhatsky@chromium.org, netdev@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org, akpm@linux-foundation.org,
+ linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org, tkhai@ya.ru
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: chromium.org
-Content-Type: text/plain; charset="us-ascii"
+X-Mimecast-Originator: bytedance.com
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Prepare for the coming implementation by GCC and Clang of the __counted_by
-attribute. Flexible array members annotated with __counted_by can have
-their accesses bounds-checked at run-time checking via CONFIG_UBSAN_BOUNDS
-(for array indexing) and CONFIG_FORTIFY_SOURCE (for strcpy/memcpy-family
-functions).
+Hi Daniel,
 
-As found with Coccinelle[1], add __counted_by for struct dm_verity_loadpin_trusted_root_digest.
-Additionally, since the element count member must be set before accessing
-the annotated flexible array member, move its initialization earlier.
+On 2023/8/22 21:56, Daniel Vetter wrote:
+> On Mon, Aug 07, 2023 at 07:09:31PM +0800, Qi Zheng wrote:
+>> Currently, the synchronize_shrinkers() is only used by TTM pool. It only
+>> requires that no shrinkers run in parallel.
+>>
+>> After we use RCU+refcount method to implement the lockless slab shrink,
+>> we can not use shrinker_rwsem or synchronize_rcu() to guarantee that all
+>> shrinker invocations have seen an update before freeing memory.
+>>
+>> So we introduce a new pool_shrink_rwsem to implement a private
+>> synchronize_shrinkers(), so as to achieve the same purpose.
+>>
+>> Signed-off-by: Qi Zheng <zhengqi.arch@bytedance.com>
+>> Reviewed-by: Muchun Song <songmuchun@bytedance.com>
+> 
+> On the 5 drm patches (I counted 2 ttm and 3 drivers) for merging through
+> some other tree (since I'm assuming that's how this will land):
 
-[1] https://github.com/kees/kernel-tools/blob/trunk/coccinelle/examples/counted_by.cocci
+Yeah, there are 5 drm patches: PATCH v4 07/48 23/48 24/48 25/48 43/48.
 
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@kernel.org>
-Cc: dm-devel@redhat.com
-Cc: Paul Moore <paul@paul-moore.com>
-Cc: James Morris <jmorris@namei.org>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: linux-security-module@vger.kernel.org
-Signed-off-by: Kees Cook <keescook@chromium.org>
----
- include/linux/dm-verity-loadpin.h | 2 +-
- security/loadpin/loadpin.c        | 3 +--
- 2 files changed, 2 insertions(+), 3 deletions(-)
+> 
+> Acked-by: Daniel Vetter <daniel.vetter@ffwll.ch>
 
-diff --git a/include/linux/dm-verity-loadpin.h b/include/linux/dm-verity-loadpin.h
-index 552b817ab102..3ac6dbaeaa37 100644
---- a/include/linux/dm-verity-loadpin.h
-+++ b/include/linux/dm-verity-loadpin.h
-@@ -12,7 +12,7 @@ extern struct list_head dm_verity_loadpin_trusted_root_digests;
- struct dm_verity_loadpin_trusted_root_digest {
- 	struct list_head node;
- 	unsigned int len;
--	u8 data[];
-+	u8 data[] __counted_by(len);
- };
- 
- #if IS_ENABLED(CONFIG_SECURITY_LOADPIN_VERITY)
-diff --git a/security/loadpin/loadpin.c b/security/loadpin/loadpin.c
-index ebae964f7cc9..a9d40456a064 100644
---- a/security/loadpin/loadpin.c
-+++ b/security/loadpin/loadpin.c
-@@ -336,6 +336,7 @@ static int read_trusted_verity_root_digests(unsigned int fd)
- 			rc = -ENOMEM;
- 			goto err;
- 		}
-+		trd->len = len;
- 
- 		if (hex2bin(trd->data, d, len)) {
- 			kfree(trd);
-@@ -343,8 +344,6 @@ static int read_trusted_verity_root_digests(unsigned int fd)
- 			goto err;
- 		}
- 
--		trd->len = len;
--
- 		list_add_tail(&trd->node, &dm_verity_loadpin_trusted_root_digests);
- 	}
- 
--- 
-2.34.1
+Thanks for your review!
+
+Qi
+
+> 
+>> ---
+>>   drivers/gpu/drm/ttm/ttm_pool.c | 15 +++++++++++++++
+>>   include/linux/shrinker.h       |  2 --
+>>   mm/shrinker.c                  | 15 ---------------
+>>   3 files changed, 15 insertions(+), 17 deletions(-)
+>>
+>> diff --git a/drivers/gpu/drm/ttm/ttm_pool.c b/drivers/gpu/drm/ttm/ttm_pool.c
+>> index c9c9618c0dce..38b4c280725c 100644
+>> --- a/drivers/gpu/drm/ttm/ttm_pool.c
+>> +++ b/drivers/gpu/drm/ttm/ttm_pool.c
+>> @@ -74,6 +74,7 @@ static struct ttm_pool_type global_dma32_uncached[MAX_ORDER + 1];
+>>   static spinlock_t shrinker_lock;
+>>   static struct list_head shrinker_list;
+>>   static struct shrinker *mm_shrinker;
+>> +static DECLARE_RWSEM(pool_shrink_rwsem);
+>>   
+>>   /* Allocate pages of size 1 << order with the given gfp_flags */
+>>   static struct page *ttm_pool_alloc_page(struct ttm_pool *pool, gfp_t gfp_flags,
+>> @@ -317,6 +318,7 @@ static unsigned int ttm_pool_shrink(void)
+>>   	unsigned int num_pages;
+>>   	struct page *p;
+>>   
+>> +	down_read(&pool_shrink_rwsem);
+>>   	spin_lock(&shrinker_lock);
+>>   	pt = list_first_entry(&shrinker_list, typeof(*pt), shrinker_list);
+>>   	list_move_tail(&pt->shrinker_list, &shrinker_list);
+>> @@ -329,6 +331,7 @@ static unsigned int ttm_pool_shrink(void)
+>>   	} else {
+>>   		num_pages = 0;
+>>   	}
+>> +	up_read(&pool_shrink_rwsem);
+>>   
+>>   	return num_pages;
+>>   }
+>> @@ -572,6 +575,18 @@ void ttm_pool_init(struct ttm_pool *pool, struct device *dev,
+>>   }
+>>   EXPORT_SYMBOL(ttm_pool_init);
+>>   
+>> +/**
+>> + * synchronize_shrinkers - Wait for all running shrinkers to complete.
+>> + *
+>> + * This is useful to guarantee that all shrinker invocations have seen an
+>> + * update, before freeing memory, similar to rcu.
+>> + */
+>> +static void synchronize_shrinkers(void)
+>> +{
+>> +	down_write(&pool_shrink_rwsem);
+>> +	up_write(&pool_shrink_rwsem);
+>> +}
+>> +
+>>   /**
+>>    * ttm_pool_fini - Cleanup a pool
+>>    *
+>> diff --git a/include/linux/shrinker.h b/include/linux/shrinker.h
+>> index c55c07c3f0cb..025c8070dd86 100644
+>> --- a/include/linux/shrinker.h
+>> +++ b/include/linux/shrinker.h
+>> @@ -103,8 +103,6 @@ struct shrinker *shrinker_alloc(unsigned int flags, const char *fmt, ...);
+>>   void shrinker_register(struct shrinker *shrinker);
+>>   void shrinker_free(struct shrinker *shrinker);
+>>   
+>> -extern void synchronize_shrinkers(void);
+>> -
+>>   #ifdef CONFIG_SHRINKER_DEBUG
+>>   extern int __printf(2, 3) shrinker_debugfs_rename(struct shrinker *shrinker,
+>>   						  const char *fmt, ...);
+>> diff --git a/mm/shrinker.c b/mm/shrinker.c
+>> index 3ab301ff122d..a27779ed3798 100644
+>> --- a/mm/shrinker.c
+>> +++ b/mm/shrinker.c
+>> @@ -650,18 +650,3 @@ void shrinker_free(struct shrinker *shrinker)
+>>   	kfree(shrinker);
+>>   }
+>>   EXPORT_SYMBOL_GPL(shrinker_free);
+>> -
+>> -/**
+>> - * synchronize_shrinkers - Wait for all running shrinkers to complete.
+>> - *
+>> - * This is equivalent to calling unregister_shrink() and register_shrinker(),
+>> - * but atomically and with less overhead. This is useful to guarantee that all
+>> - * shrinker invocations have seen an update, before freeing memory, similar to
+>> - * rcu.
+>> - */
+>> -void synchronize_shrinkers(void)
+>> -{
+>> -	down_write(&shrinker_rwsem);
+>> -	up_write(&shrinker_rwsem);
+>> -}
+>> -EXPORT_SYMBOL(synchronize_shrinkers);
+>> -- 
+>> 2.30.2
+>>
+> 
 
 --
 dm-devel mailing list
