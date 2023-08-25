@@ -1,70 +1,71 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AF0AFC88CB2
-	for <dm-devel@archiver.kernel.org>; Fri, 25 Aug 2023 02:23:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id F08EEC88CB2
+	for <dm-devel@archiver.kernel.org>; Fri, 25 Aug 2023 02:45:27 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1692930234;
+	s=mimecast20190719; t=1692931526;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=lCZM8LDgGNXgj51dfFEawtXA4hcpA6cdRTLHhf5yRF8=;
-	b=PRNdqT4NqJeePzK3Hdaq/RlKxd4+LVtsWdVfKLwXqZhGCUUNuziZiJOvceTtYbIznYqKWz
-	6EtnNhs0ftnwxaiuyQ19EsIBvA7m2fj05nNK1rD7fA09vDJk3JKMo0elCQwNq7vnDeEyQL
-	MUk8rJklIwH80GsCozAFJ31qKkzzeAc=
+	bh=n2uWQEWgWHy7Mf2g0Q7Eceo9+N3kI3C6qoDD3ukqi4A=;
+	b=apHsYQCQDKJiqY91wePClt1M3y/ECHK4GlKSTVnD16zfUlBJpQvHgO+Za7B+LVa1IneRtn
+	FulDeF6qgPImKeQt5HBHgWHys/tsZ2QlbJaj6qPr6pDGjj/+CmIXy8ASj4C7NrBpQ/RiR7
+	axh/m6gALpYwgsfjDlG2OH1sEPPOImE=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-466-yNJBuIBrOyS-8NHnXyT35Q-1; Thu, 24 Aug 2023 22:23:50 -0400
-X-MC-Unique: yNJBuIBrOyS-8NHnXyT35Q-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-321-Q6Ne-oXLMOiaYLpEbcV7MQ-1; Thu, 24 Aug 2023 22:45:23 -0400
+X-MC-Unique: Q6Ne-oXLMOiaYLpEbcV7MQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 06AB6858EED;
-	Fri, 25 Aug 2023 02:23:49 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 960A6803DBE;
+	Fri, 25 Aug 2023 02:45:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B29A62166B27;
-	Fri, 25 Aug 2023 02:23:45 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 47CF66B2B2;
+	Fri, 25 Aug 2023 02:45:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 558ED19465A3;
-	Fri, 25 Aug 2023 02:23:45 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2741119465A3;
+	Fri, 25 Aug 2023 02:45:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 876291946589
- for <dm-devel@listman.corp.redhat.com>; Fri, 25 Aug 2023 02:23:44 +0000 (UTC)
+ ESMTP id A90741946589
+ for <dm-devel@listman.corp.redhat.com>; Fri, 25 Aug 2023 02:45:19 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 388842166B27; Fri, 25 Aug 2023 02:23:44 +0000 (UTC)
+ id 926BC40C6F4E; Fri, 25 Aug 2023 02:45:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 30AC52166B28
- for <dm-devel@redhat.com>; Fri, 25 Aug 2023 02:23:44 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8B14F40C6F4C
+ for <dm-devel@redhat.com>; Fri, 25 Aug 2023 02:45:19 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F20071C068E8
- for <dm-devel@redhat.com>; Fri, 25 Aug 2023 02:23:43 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 628F11C0897D
+ for <dm-devel@redhat.com>; Fri, 25 Aug 2023 02:45:19 +0000 (UTC)
 Received: from zeniv.linux.org.uk (zeniv.linux.org.uk [62.89.141.173]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-487-B-kBE-DrMD2ZC59hXDNu4A-1; Thu,
- 24 Aug 2023 22:21:54 -0400
-X-MC-Unique: B-kBE-DrMD2ZC59hXDNu4A-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-638-_KRNsSXTN1GzbDZJ4Nk2kw-1; Thu,
+ 24 Aug 2023 22:45:16 -0400
+X-MC-Unique: _KRNsSXTN1GzbDZJ4Nk2kw-1
 Received: from viro by zeniv.linux.org.uk with local (Exim 4.96 #2 (Red Hat
- Linux)) id 1qZM5z-000dvR-0M; Fri, 25 Aug 2023 01:58:43 +0000
-Date: Fri, 25 Aug 2023 02:58:43 +0100
+ Linux)) id 1qZMoj-000edp-26; Fri, 25 Aug 2023 02:44:57 +0000
+Date: Fri, 25 Aug 2023 03:44:57 +0100
 From: Al Viro <viro@zeniv.linux.org.uk>
-To: Jan Kara <jack@suse.cz>
-Message-ID: <20230825015843.GB95084@ZenIV>
-References: <20230810171429.31759-1-jack@suse.cz>
+To: Christoph Hellwig <hch@lst.de>
+Message-ID: <20230825024457.GD95084@ZenIV>
+References: <20230608110258.189493-1-hch@lst.de>
+ <20230608110258.189493-2-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20230810171429.31759-1-jack@suse.cz>
+In-Reply-To: <20230608110258.189493-2-hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -72,9 +73,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH v2 0/29] block: Make blkdev_get_by_*() return
- handle
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] [PATCH 01/30] block: also call ->open for
+ incremental partition opens
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -86,80 +87,69 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
- "Darrick J. Wong" <djwong@kernel.org>, linux-nvme@lists.infradead.org,
- Joseph Qi <joseph.qi@linux.alibaba.com>, dm-devel@redhat.com,
- target-devel@vger.kernel.org, linux-mtd@lists.infradead.org,
- Jack Wang <jinpu.wang@ionos.com>, Alasdair Kergon <agk@redhat.com>,
- drbd-dev@lists.linbit.com, linux-s390@vger.kernel.org,
- linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org,
- Sergey Senozhatsky <senozhatsky@chromium.org>,
- Christoph Hellwig <hch@infradead.org>, xen-devel@lists.xenproject.org,
- Gao Xiang <xiang@kernel.org>,
- Christian Borntraeger <borntraeger@linux.ibm.com>,
- Kent Overstreet <kent.overstreet@gmail.com>,
- Sven Schnelle <svens@linux.ibm.com>, linux-pm@vger.kernel.org,
- Mike Snitzer <snitzer@kernel.org>, Chao Yu <chao@kernel.org>,
- Joern Engel <joern@lazybastard.org>, reiserfs-devel@vger.kernel.org,
+Cc: Vignesh Raghavendra <vigneshr@ti.com>,
+ "Rafael J. Wysocki" <rafael@kernel.org>, linux-nvme@lists.infradead.org,
+ Phillip Potter <phil@philpotter.co.uk>, Chris Mason <clm@fb.com>,
+ dm-devel@redhat.com, "Md. Haris Iqbal" <haris.iqbal@ionos.com>,
+ Pavel Machek <pavel@ucw.cz>, Miquel Raynal <miquel.raynal@bootlin.com>,
+ Jack Wang <jinpu.wang@ionos.com>, linux-nilfs@vger.kernel.org,
+ linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>,
+ linux-pm@vger.kernel.org, linux-um@lists.infradead.org,
+ Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>,
  linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
- David Sterba <dsterba@suse.com>, Jaegeuk Kim <jaegeuk@kernel.org>,
- Trond Myklebust <trond.myklebust@hammerspace.com>, linux-raid@vger.kernel.org,
- linux-nfs@vger.kernel.org, linux-ext4@vger.kernel.org, Ted Tso <tytso@mit.edu>,
- linux-mm@kvack.org, Song Liu <song@kernel.org>,
- linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
- Minchan Kim <minchan@kernel.org>, ocfs2-devel@oss.oracle.com,
- Anna Schumaker <anna@kernel.org>, linux-fsdevel@vger.kernel.org,
- "Md. Haris Iqbal" <haris.iqbal@ionos.com>,
- Andrew Morton <akpm@linux-foundation.org>, linux-erofs@lists.ozlabs.org,
- linux-btrfs@vger.kernel.org
+ David Sterba <dsterba@suse.com>, Jens Axboe <axboe@kernel.dk>,
+ Christian Brauner <brauner@kernel.org>,
+ "Martin K. Petersen" <martin.petersen@oracle.com>,
+ linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
+ linux-mtd@lists.infradead.org, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: zeniv.linux.org.uk
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Aug 11, 2023 at 01:04:31PM +0200, Jan Kara wrote:
-> Hello,
-> 
-> this is a v2 of the patch series which implements the idea of blkdev_get_by_*()
-> calls returning bdev_handle which is then passed to blkdev_put() [1]. This
-> makes the get and put calls for bdevs more obviously matching and allows us to
-> propagate context from get to put without having to modify all the users
-> (again!).  In particular I need to propagate used open flags to blkdev_put() to
-> be able count writeable opens and add support for blocking writes to mounted
-> block devices. I'll send that series separately.
-> 
-> The series is based on Christian's vfs tree as of yesterday as there is quite
-> some overlap. Patches have passed some reasonable testing - I've tested block
-> changes, md, dm, bcache, xfs, btrfs, ext4, swap. This obviously doesn't cover
-> everything so I'd like to ask respective maintainers to review / test their
-> changes. Thanks! I've pushed out the full branch to:
-> 
-> git://git.kernel.org/pub/scm/linux/kernel/git/jack/linux-fs.git bdev_handle
-> 
-> to ease review / testing.
+On Thu, Jun 08, 2023 at 01:02:29PM +0200, Christoph Hellwig wrote:
 
-Hmm...  Completely Insane Idea(tm): how about turning that thing inside out and
-having your bdev_open_by... return an actual opened struct file?
+> --- a/block/bdev.c
+> +++ b/block/bdev.c
+> @@ -683,9 +683,6 @@ static int blkdev_get_part(struct block_device *part, fmode_t mode)
+>  	struct gendisk *disk = part->bd_disk;
+>  	int ret;
+>  
+> -	if (atomic_read(&part->bd_openers))
+> -		goto done;
+> -
+>  	ret = blkdev_get_whole(bdev_whole(part), mode);
+>  	if (ret)
+>  		return ret;
+> @@ -694,9 +691,10 @@ static int blkdev_get_part(struct block_device *part, fmode_t mode)
+>  	if (!bdev_nr_sectors(part))
+>  		goto out_blkdev_put;
+>  
+> -	disk->open_partitions++;
+> -	set_init_blocksize(part);
+> -done:
+> +	if (!atomic_read(&part->bd_openers)) {
+> +		disk->open_partitions++;
+> +		set_init_blocksize(part);
+> +	}
 
-After all, we do that for sockets and pipes just fine and that's a whole lot
-hotter area.
+[with apologies for very late (and tangential) reply]
 
-Suppose we leave blkdev_open()/blkdev_release() as-is.  No need to mess with
-what we have for normal opened files for block devices.  And have block_open_by_dev()
-that would find bdev, etc., same yours does and shove it into anon file.
+That got me curious about the ->bd_openers - do we need it atomic?
+Most of the users (and all places that do modifications) are
+under ->open_mutex; the only exceptions are
+	* early sync logics in blkdev_put(); it's explicitly racy -
+see the comment there.
+	* callers of disk_openers() in loop and nbd (the ones in
+zram are under ->open_mutex).  There's driver-private exclusion
+around those, but in any case - READ_ONCE() is no worse than
+atomic_read() in those cases.
 
-Paired with plain fput() - no need to bother with new primitives for closing.
-With a helper returning I_BDEV(bdev_file_inode(file)) to get from those to bdev.
-
-NOTE: I'm not suggesting replacing ->s_bdev with struct file * if we do that -
-we want that value cached, obviously.  Just store both...
-
-Not saying it's a good idea, but... might be interesting to look into.
-Comments?
+Is there something subtle I'm missing here?
 
 --
 dm-devel mailing list
