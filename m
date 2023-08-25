@@ -1,94 +1,86 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A8468C3DA66
-	for <dm-devel@archiver.kernel.org>; Fri, 25 Aug 2023 03:15:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 00A82C3DA66
+	for <dm-devel@archiver.kernel.org>; Fri, 25 Aug 2023 06:41:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1692933346;
+	s=mimecast20190719; t=1692945672;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=g6BC3YYrOvNRM3QKl4XebbUQAxlN+5zrVbS+7Zs3+ZM=;
-	b=CtLwAB38rzZRY4RkOhQEFqd7ryWZ16bFUtgpa78lMsp8Rg8hXCwB7fkhdG62gWCYkJPOao
-	lPzUyDKOdLOAueIvFCSGpqbdYN5t49h7EDY4/Gwq/WDlbUtdqN3LGrSBJwH4PwYCmQ8LuO
-	BY8aFIw3DBbZc9ghZHkDqeBY2qGwaTE=
-Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-482-K_pLNnCRP-Whv1mfJFwd2Q-1; Thu, 24 Aug 2023 23:15:43 -0400
-X-MC-Unique: K_pLNnCRP-Whv1mfJFwd2Q-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+	bh=nBybB1ybhEnA4aJ/dy3JPplVlhCghUlbhR1y4MdtoeU=;
+	b=cmhT7QPtRags/w3dY5v5A/Al97QiYbSbPeQHkdwIhEh3QonX/msHy3i/lDRP9X1DYS1Ecb
+	tVtjPaPVuulm6ZPNvOOIsUsZI9C1nNujtDl6miGmIQvsgdVmL6B29g5dNIUxlwm8CzKobf
+	JpfhfslHSW2VtLriLcxZU81ZyCKeX9w=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-383-04j5iSHsNd2qE6vpJ25bow-1; Fri, 25 Aug 2023 02:41:08 -0400
+X-MC-Unique: 04j5iSHsNd2qE6vpJ25bow-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4E7111C06909;
-	Fri, 25 Aug 2023 03:15:41 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 10F0F1044560;
+	Fri, 25 Aug 2023 06:41:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3DD00492C14;
-	Fri, 25 Aug 2023 03:15:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1AAE540C6F4C;
+	Fri, 25 Aug 2023 06:41:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8117619465A3;
-	Fri, 25 Aug 2023 03:15:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AC4E819465A8;
+	Fri, 25 Aug 2023 06:41:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2F4E91946589
- for <dm-devel@listman.corp.redhat.com>; Fri, 25 Aug 2023 03:15:40 +0000 (UTC)
+ ESMTP id 99F261946589
+ for <dm-devel@listman.corp.redhat.com>; Fri, 25 Aug 2023 06:41:02 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1F1BAC0004A; Fri, 25 Aug 2023 03:15:40 +0000 (UTC)
+ id 5965B2166B27; Fri, 25 Aug 2023 06:41:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 17C81C1602B
- for <dm-devel@redhat.com>; Fri, 25 Aug 2023 03:15:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 50CF42166B26
+ for <dm-devel@redhat.com>; Fri, 25 Aug 2023 06:41:02 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
+ [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F0C5A857A84
- for <dm-devel@redhat.com>; Fri, 25 Aug 2023 03:15:39 +0000 (UTC)
-Received: from dggsgout11.his.huawei.com (hwsga01-in.huaweimarine.com
- [45.249.212.51]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3446785CBE0
+ for <dm-devel@redhat.com>; Fri, 25 Aug 2023 06:41:02 +0000 (UTC)
+Received: from dfw.source.kernel.org (dfw.source.kernel.org
+ [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-588-oUuEV0W6P3OtuoEHBF1aPQ-1; Thu, 24 Aug 2023 23:15:38 -0400
-X-MC-Unique: oUuEV0W6P3OtuoEHBF1aPQ-1
-Received: from mail02.huawei.com (unknown [172.30.67.169])
- by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4RX4mg6ZP6z4f3lVX;
- Fri, 25 Aug 2023 11:14:11 +0800 (CST)
-Received: from huaweicloud.com (unknown [10.175.104.67])
- by APP4 (Coremail) with SMTP id gCh0CgAnBah_HOhkveEWBg--.3212S7;
- Fri, 25 Aug 2023 11:14:13 +0800 (CST)
-From: Yu Kuai <yukuai1@huaweicloud.com>
-To: agk@redhat.com, snitzer@kernel.org, dm-devel@redhat.com, song@kernel.org,
- xni@redhat.com
-Date: Fri, 25 Aug 2023 11:09:52 +0800
-Message-Id: <20230825030956.1527023-4-yukuai1@huaweicloud.com>
-In-Reply-To: <20230825030956.1527023-1-yukuai1@huaweicloud.com>
-References: <20230825030956.1527023-1-yukuai1@huaweicloud.com>
+ us-mta-113-smP5BETGNDK0Kmap9W3Ltg-1; Fri, 25 Aug 2023 02:40:58 -0400
+X-MC-Unique: smP5BETGNDK0Kmap9W3Ltg-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature RSA-PSS (2048 bits))
+ (No client certificate requested)
+ by dfw.source.kernel.org (Postfix) with ESMTPS id 3FC9C6340B;
+ Fri, 25 Aug 2023 06:40:57 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A578DC433C9;
+ Fri, 25 Aug 2023 06:40:56 +0000 (UTC)
+Received: by mail-lf1-f54.google.com with SMTP id
+ 2adb3069b0e04-4ff9b389677so817226e87.3; 
+ Thu, 24 Aug 2023 23:40:56 -0700 (PDT)
+X-Gm-Message-State: AOJu0YySJXbOkEtNTbuh4NEjZ8cvCzlY9KEZTKdO72Z8rbydFxSMbtcj
+ Y8LghkAf6koMo7BBA8GKKtDPkw6wiP1JkQW6kLw=
+X-Google-Smtp-Source: AGHT+IGPD2aEMvFaklo3jAklk1fPCfCMIW5CcacHp0PxUv2igIzNHi2IlxZxuK4troY9ylLDd3v70bdKU+nHof0qYUU=
+X-Received: by 2002:a05:6512:3b0b:b0:500:a08e:2fd3 with SMTP id
+ f11-20020a0565123b0b00b00500a08e2fd3mr3250301lfv.21.1692945654672; Thu, 24
+ Aug 2023 23:40:54 -0700 (PDT)
 MIME-Version: 1.0
-X-CM-TRANSID: gCh0CgAnBah_HOhkveEWBg--.3212S7
-X-Coremail-Antispam: 1UD129KBjvdXoWrKFy8XFyDGr15urWkZr18Krg_yoWkZFgEgF
- s8u34DXr10vF9rKrn0qa1Fvry5KFn8WwsrZFyrCryftF95Jry0yF95Ww1Yqwn2yrZrJa4U
- tryUKr17Ars5XjkaLaAFLSUrUUUUUb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
- 9fnUUIcSsGvfJTRUUUb6kFF20E14v26rWj6s0DM7CY07I20VC2zVCF04k26cxKx2IYs7xG
- 6rWj6s0DM7CIcVAFz4kK6r1j6r18M28IrcIa0xkI8VA2jI8067AKxVWUWwA2048vs2IY02
- 0Ec7CjxVAFwI0_Xr0E3s1l8cAvFVAK0II2c7xJM28CjxkF64kEwVA0rcxSw2x7M28EF7xv
- wVC0I7IYx2IY67AKxVWDJVCq3wA2z4x0Y4vE2Ix0cI8IcVCY1x0267AKxVWxJr0_GcWl84
- ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_GcCE3s1le2I2
- 62IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E2Ix0cI8IcV
- AFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJVW8JwACjcxG
- 0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka0xkIwI
- 1l42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWU
- JVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r1q6r43MIIYrxkI7V
- AKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4j
- 6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42
- IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjfUojjgUUUUU
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
-X-CFilter-Loop: Reflected
+References: <20230825030956.1527023-1-yukuai1@huaweicloud.com>
+In-Reply-To: <20230825030956.1527023-1-yukuai1@huaweicloud.com>
+From: Song Liu <song@kernel.org>
+Date: Thu, 24 Aug 2023 23:40:42 -0700
+X-Gmail-Original-Message-ID: <CAPhsuW7dYaJYx8xa-CAG1YSwggZdGRfcQWqTBY0915=_UdL49Q@mail.gmail.com>
+Message-ID: <CAPhsuW7dYaJYx8xa-CAG1YSwggZdGRfcQWqTBY0915=_UdL49Q@mail.gmail.com>
+To: Yu Kuai <yukuai1@huaweicloud.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -96,9 +88,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: [dm-devel] [PATCH -next v2 3/7] md: don't rely on 'mddev->pers' to
- be set in mddev_suspend()
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH -next v2 0/7] md: initialize 'active_io'
+ while allocating mddev
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -110,51 +102,64 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: yi.zhang@huawei.com, yangerkun@huawei.com, linux-kernel@vger.kernel.org,
- linux-raid@vger.kernel.org, yukuai1@huaweicloud.com, yukuai3@huawei.com
+Cc: yi.zhang@huawei.com, yangerkun@huawei.com, snitzer@kernel.org,
+ xni@redhat.com, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
+ dm-devel@redhat.com, yukuai3@huawei.com, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: huaweicloud.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-From: Yu Kuai <yukuai3@huawei.com>
-
-'active_io' used to be initialized while the array is running, and
-'mddev->pers' is set while the array is running as well. Hence caller
-must hold 'reconfig_mutex' and guarantee 'mddev->pers' is set before
-calling mddev_suspend().
-
-Now that 'active_io' is initialized when mddev is allocated, such
-restriction doesn't exist anymore. In the meantime, follow up patches
-will refactor mddev_suspend(), hence add checking for 'mddev->pers' to
-prevent null-ptr-deref.
-
-Signed-off-by: Yu Kuai <yukuai3@huawei.com>
----
- drivers/md/md.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index e6faeb73172d..e787900d51d7 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -449,7 +449,7 @@ void mddev_suspend(struct mddev *mddev)
- 	set_bit(MD_ALLOW_SB_UPDATE, &mddev->flags);
- 	percpu_ref_kill(&mddev->active_io);
- 
--	if (mddev->pers->prepare_suspend)
-+	if (mddev->pers && mddev->pers->prepare_suspend)
- 		mddev->pers->prepare_suspend(mddev);
- 
- 	wait_event(mddev->sb_wait, percpu_ref_is_zero(&mddev->active_io));
--- 
-2.39.2
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gVGh1LCBBdWcgMjQsIDIwMjMgYXQgODoxNOKAr1BNIFl1IEt1YWkgPHl1a3VhaTFAaHVhd2Vp
+Y2xvdWQuY29tPiB3cm90ZToKPgo+IEZyb206IFl1IEt1YWkgPHl1a3VhaTNAaHVhd2VpLmNvbT4K
+Pgo+IENoYW5nZXMgaW4gdjI6Cj4gIC0gcmViYXNlIGZvciBtZC1uZXh0Owo+ICAtIHVwZGF0ZSBj
+b21taXQgbWVzc2FnZSBmb3IgcGF0Y2ggMzsKCkFwcGxpZWQgdjIgdG8gbWQtbmV4dC4gQnV0IHRo
+aXMgc2V0IHdvbid0IGdvIGludG8gNi42LgoKVGhhbmtzLApTb25nCgo+Cj4gVGhpcyBpcyB0aGUg
+NHRoIHBhdGNoc2V0IHRvIGRvIHNvbWUgcHJlcGFyYXRvcnkgd29yayB0byBzeW5jaHJvbml6ZQo+
+IGlvIHdpdGggYXJyYXkgcmVjb25maWd1cmF0aW9uLgo+Cj4gMSkgVGhlIGZpcnN0IHBhdGNoc2V0
+IHJlZmFjdG9yICdhY3RpdmVfaW8nLCBtYWtlIHN1cmUgdGhhdCBtZGRldl9zdXNwZW5kKCkKPiB3
+aWxsIHdhaXQgZm9yIGlvIHRvIGJlIGRvbmUuIFsxXQo+Cj4gMikgVGhlIHNlY29uZCBwYXRjaHNl
+dCByZW1vdmUgJ3F1aWVzY2UnIGNhbGxiYWNrIGZyb20gbWRkZXZfc3VzcGVuZCgpLCBzbwo+IHRo
+YXQgbWRkZXZfc3VzcGVuZCgpIGRvZXNuJ3QgcmVseSBvbiAncXVpZXNjZScgY2FsbGJhY2sgaXMg
+cmVnaXN0ZXJlZCwKPiBhbmQgY2FuIGJlIHVzZWQgZm9yIGFsbCBwZXJzb25hbGl0ZXM7IFsyXQo+
+Cj4gMykgTWFrZSBhcnJheSByZWNvbmZpZ3VyYXRpb24gaW5kZXBlbmRlbnQgZnJvbSBkYWVtb24g
+dGhyZWFkLAo+IGFuZCBzeW5jaHJvbml6ZSBpdCB3aXRoIGlvIHdpbGwgYmUgbXVjaCBlYXNpZXIg
+YmVjYXVzZSBpbyBtYXkgcmVseSBvbgo+IGRhZW1vbiB0aHJlYWQgdG8gYmUgZG9uZS4KPgo+IDQp
+IFRoaXMgcGF0Y2hzZXQgbW92ZSBpbml0aWFsaXphdGlvbiBvZiAnYWN0aXZlX2lvJyBmcm9tIG1k
+X3J1bigpIHRvCj4gbWRfYWxsb2MoKSwgc28gdGhhdCBtZGRldl9zdXNwZW5kKCkgd29uJ3QgcmVs
+eSBvbiBob2xkaW5nICdyZWNvbmZpZ19tdXRleCcKPiB0byBjaGVjayBpZiAnbWRkZXYtPnBlcnMn
+IGlzIHNldCwgYW5kIGl0IGNhbiBiZSBjYWxsZWQgYXQgYW55IHRpbWUgYWZ0ZXIKPiBtZGRldiBp
+cyBhbGxvY2F0ZWQuKERvbmUgYnkgcGF0Y2ggMSwgYW5kIG90aGVyIHBhdGNoZXMgYXJlIGNsZWFu
+dXApCj4KPiBZdSBLdWFpICg3KToKPiAgIG1kOiBpbml0aWFsaXplICdhY3RpdmVfaW8nIHdoaWxl
+IGFsbG9jYXRpbmcgbWRkZXYKPiAgIG1kOiBpbml0aWFsaXplICd3cml0ZXNfcGVuZGluZycgd2hp
+bGUgYWxsb2NhdGluZyBtZGRldgo+ICAgbWQ6IGRvbid0IHJlbHkgb24gJ21kZGV2LT5wZXJzJyB0
+byBiZSBzZXQgaW4gbWRkZXZfc3VzcGVuZCgpCj4gICBtZC1iaXRtYXA6IHJlbW92ZSB0aGUgY2hl
+Y2tpbmcgb2YgJ3BlcnMtPnF1aWVzY2UnIGZyb20KPiAgICAgbG9jYXRpb25fc3RvcmUoKQo+ICAg
+bWQtYml0bWFwOiBzdXNwZW5kIGFycmF5IGVhcmxpZXIgaW4gbG9jYXRpb25fc3RvcmUoKQo+ICAg
+bWQ6IGRvbid0IGNoZWNrICdtZGRldi0+cGVycycgZnJvbSBzdXNwZW5kX2hpX3N0b3JlKCkKPiAg
+IG1kOiBkb24ndCBjaGVjayAnbWRkZXYtPnBlcnMnIGFuZCAncGVycy0+cXVpZXNjZScgZnJvbQo+
+ICAgICBzdXNwZW5kX2xvX3N0b3JlKCkKPgo+IFsxXSBodHRwczovL2xvcmUua2VybmVsLm9yZy9h
+bGwvMjAyMzA2MjExNjUxMTAuMTQ5ODMxMy0xLXl1a3VhaTFAaHVhd2VpY2xvdWQuY29tLwo+IFsy
+XSBodHRwczovL2xvcmUua2VybmVsLm9yZy9hbGwvMjAyMzA2MjgwMTI5MzEuODg5MTEtMi15dWt1
+YWkxQGh1YXdlaWNsb3VkLmNvbS8KPgo+IFl1IEt1YWkgKDcpOgo+ICAgbWQ6IGluaXRpYWxpemUg
+J2FjdGl2ZV9pbycgd2hpbGUgYWxsb2NhdGluZyBtZGRldgo+ICAgbWQ6IGluaXRpYWxpemUgJ3dy
+aXRlc19wZW5kaW5nJyB3aGlsZSBhbGxvY2F0aW5nIG1kZGV2Cj4gICBtZDogZG9uJ3QgcmVseSBv
+biAnbWRkZXYtPnBlcnMnIHRvIGJlIHNldCBpbiBtZGRldl9zdXNwZW5kKCkKPiAgIG1kLWJpdG1h
+cDogcmVtb3ZlIHRoZSBjaGVja2luZyBvZiAncGVycy0+cXVpZXNjZScgZnJvbQo+ICAgICBsb2Nh
+dGlvbl9zdG9yZSgpCj4gICBtZC1iaXRtYXA6IHN1c3BlbmQgYXJyYXkgZWFybGllciBpbiBsb2Nh
+dGlvbl9zdG9yZSgpCj4gICBtZDogZG9uJ3QgY2hlY2sgJ21kZGV2LT5wZXJzJyBmcm9tIHN1c3Bl
+bmRfaGlfc3RvcmUoKQo+ICAgbWQ6IGRvbid0IGNoZWNrICdtZGRldi0+cGVycycgYW5kICdwZXJz
+LT5xdWllc2NlJyBmcm9tCj4gICAgIHN1c3BlbmRfbG9fc3RvcmUoKQo+Cj4gIGRyaXZlcnMvbWQv
+ZG0tcmFpZC5jICAgfCAgIDcgKystCj4gIGRyaXZlcnMvbWQvbWQtYml0bWFwLmMgfCAgNDcgKysr
+KysrKysrLS0tLS0tLS0tLQo+ICBkcml2ZXJzL21kL21kLmMgICAgICAgIHwgMTAwICsrKysrKysr
+KysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0tLS0tLS0tCj4gIGRyaXZlcnMvbWQvbWQuaCAgICAg
+ICAgfCAgIDQgKy0KPiAgZHJpdmVycy9tZC9yYWlkMS5jICAgICB8ICAgMyArLQo+ICBkcml2ZXJz
+L21kL3JhaWQxMC5jICAgIHwgICAzIC0tCj4gIGRyaXZlcnMvbWQvcmFpZDUuYyAgICAgfCAgIDMg
+LS0KPiAgNyBmaWxlcyBjaGFuZ2VkLCA3OCBpbnNlcnRpb25zKCspLCA4OSBkZWxldGlvbnMoLSkK
+Pgo+IC0tCj4gMi4zOS4yCj4KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
+YXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
+ZWwK
 
