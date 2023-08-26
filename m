@@ -1,73 +1,73 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 89402C83F13
-	for <dm-devel@archiver.kernel.org>; Sat, 26 Aug 2023 14:05:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 13255C83F11
+	for <dm-devel@archiver.kernel.org>; Sat, 26 Aug 2023 14:05:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1693058707;
+	s=mimecast20190719; t=1693058710;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=20H54AIdA5wmFyZUyTB5VPbHix3zZ7N4XcWzivQDpbA=;
-	b=Hp4KPUZQcQKi2Aw4J4gZAmoqn5ZIrXCSPFKy03sBmkhhlz7UU23XrohGdvFvR9wBmtW9Uw
-	I3J0XejtG4YKo3r10GVfyLP42LTkL/0hozj5otI93tKODYCklJi90rB+DGqQatXvFmjQt/
-	LhfThGoON7JMxL2eCdhrlUwn1qQNXdA=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-1-m-RKokBxPwORdBSe-FHulA-1; Sat, 26 Aug 2023 10:05:03 -0400
-X-MC-Unique: m-RKokBxPwORdBSe-FHulA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+	bh=Tj+NdUYl1ZDQ7feKneeyaD5gCZJRr5V8jfipx9X1dII=;
+	b=bORziOySWDDWExO0n+TIy/9p5at1Eb/Wgiwkhj3Cxpp+LMM3teE3BjDcmqJmJNy3mqO9Ky
+	AOO4ujuDOt5uyqUBUdFA4FfbVS3XKxB3YpOlNwsDKMW4jrHGM7TRf3TepmQsGfVVcScyA6
+	8lK8jaoDCZpOZpO7DDbjNIYDPQkhktY=
+Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-486-eqv0_xBbM2-VIw7lmXO7lA-1; Sat, 26 Aug 2023 10:05:05 -0400
+X-MC-Unique: eqv0_xBbM2-VIw7lmXO7lA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BB87F101A53C;
-	Sat, 26 Aug 2023 14:05:01 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0AD6D3C025B4;
+	Sat, 26 Aug 2023 14:05:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A88232166B26;
-	Sat, 26 Aug 2023 14:05:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EDFE663A63;
+	Sat, 26 Aug 2023 14:05:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 82B7219465B2;
-	Sat, 26 Aug 2023 14:05:01 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AAE7519465B2;
+	Sat, 26 Aug 2023 14:05:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3F9D219465A8
- for <dm-devel@listman.corp.redhat.com>; Sat, 26 Aug 2023 14:05:00 +0000 (UTC)
+ ESMTP id 2BFAE19465A8
+ for <dm-devel@listman.corp.redhat.com>; Sat, 26 Aug 2023 14:05:03 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 205E22166B27; Sat, 26 Aug 2023 14:05:00 +0000 (UTC)
+ id 0B696112131B; Sat, 26 Aug 2023 14:05:03 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 171602166B26
- for <dm-devel@redhat.com>; Sat, 26 Aug 2023 14:05:00 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 03EE31121319
+ for <dm-devel@redhat.com>; Sat, 26 Aug 2023 14:05:02 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
+ [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E9EBC8022E4
- for <dm-devel@redhat.com>; Sat, 26 Aug 2023 14:04:59 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DCD94823D5E
+ for <dm-devel@redhat.com>; Sat, 26 Aug 2023 14:05:02 +0000 (UTC)
 Received: from dfw.source.kernel.org (dfw.source.kernel.org
  [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-172-LzmS7iTAPySgvTzRxb_9yA-1; Sat, 26 Aug 2023 10:04:52 -0400
-X-MC-Unique: LzmS7iTAPySgvTzRxb_9yA-1
+ us-mta-349-3fBsIEylOUCfP-FhdZz1cA-1; Sat, 26 Aug 2023 10:04:55 -0400
+X-MC-Unique: 3fBsIEylOUCfP-FhdZz1cA-1
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature RSA-PSS (2048 bits))
  (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id CB3AD61F52;
- Sat, 26 Aug 2023 14:04:51 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9010FC433C7;
- Sat, 26 Aug 2023 14:04:50 +0000 (UTC)
+ by dfw.source.kernel.org (Postfix) with ESMTPS id DB4E261F4A;
+ Sat, 26 Aug 2023 14:04:54 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id B4E97C433C7;
+ Sat, 26 Aug 2023 14:04:53 +0000 (UTC)
 From: Sasha Levin <sashal@kernel.org>
 To: stable-commits@vger.kernel.org,
 	mpatocka@redhat.com
-Date: Sat, 26 Aug 2023 10:04:48 -0400
-Message-Id: <20230826140448.3868765-1-sashal@kernel.org>
+Date: Sat, 26 Aug 2023 10:04:51 -0400
+Message-Id: <20230826140451.3868803-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-Patchwork-Hint: ignore
 X-stable: review
@@ -78,9 +78,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: [dm-devel] Patch "dm integrity: increase RECALC_SECTORS to improve
- recalculate speed" has been added to the 4.19-stable tree
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: [dm-devel] Patch "dm integrity: reduce vmalloc space footprint on
+ 32-bit architectures" has been added to the 4.19-stable tree
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -96,7 +96,7 @@ Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
  Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
 Content-Type: text/plain; charset="us-ascii"
@@ -104,13 +104,13 @@ Content-Transfer-Encoding: 7bit
 
 This is a note to let you know that I've just added the patch titled
 
-    dm integrity: increase RECALC_SECTORS to improve recalculate speed
+    dm integrity: reduce vmalloc space footprint on 32-bit architectures
 
 to the 4.19-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
-     dm-integrity-increase-recalc_sectors-to-improve-reca.patch
+     dm-integrity-reduce-vmalloc-space-footprint-on-32-bi.patch
 and it can be found in the queue-4.19 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
@@ -118,32 +118,43 @@ please let <stable@vger.kernel.org> know about it.
 
 
 
-commit 1303f55dbef5d11a331f313d26a1595ef37955a4
+commit 8189e680756d054154df6e9edca772bc00213044
 Author: Mikulas Patocka <mpatocka@redhat.com>
-Date:   Tue Apr 27 11:57:43 2021 -0400
+Date:   Mon Jun 26 16:44:34 2023 +0200
 
-    dm integrity: increase RECALC_SECTORS to improve recalculate speed
+    dm integrity: reduce vmalloc space footprint on 32-bit architectures
     
-    [ Upstream commit b1a2b9332050c7ae32a22c2c74bc443e39f37b23 ]
+    [ Upstream commit 6d50eb4725934fd22f5eeccb401000687c790fd0 ]
     
-    Increase RECALC_SECTORS because it improves recalculate speed slightly
-    (from 390kiB/s to 410kiB/s).
+    It was reported that dm-integrity runs out of vmalloc space on 32-bit
+    architectures. On x86, there is only 128MiB vmalloc space and dm-integrity
+    consumes it quickly because it has a 64MiB journal and 8MiB recalculate
+    buffer.
     
+    Fix this by reducing the size of the journal to 4MiB and the size of
+    the recalculate buffer to 1MiB, so that multiple dm-integrity devices
+    can be created and activated on 32-bit architectures.
+    
+    Cc: stable@vger.kernel.org
     Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-    Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-    Stable-dep-of: 6d50eb472593 ("dm integrity: reduce vmalloc space footprint on 32-bit architectures")
+    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
     Signed-off-by: Sasha Levin <sashal@kernel.org>
 
 diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 0a4e440948f0d..eead731a1aeda 100644
+index eead731a1aeda..234464c1c050e 100644
 --- a/drivers/md/dm-integrity.c
 +++ b/drivers/md/dm-integrity.c
-@@ -33,7 +33,7 @@
+@@ -29,11 +29,11 @@
+ #define DEFAULT_BUFFER_SECTORS		128
+ #define DEFAULT_JOURNAL_WATERMARK	50
+ #define DEFAULT_SYNC_MSEC		10000
+-#define DEFAULT_MAX_JOURNAL_SECTORS	131072
++#define DEFAULT_MAX_JOURNAL_SECTORS	(IS_ENABLED(CONFIG_64BIT) ? 131072 : 8192)
  #define MIN_LOG2_INTERLEAVE_SECTORS	3
  #define MAX_LOG2_INTERLEAVE_SECTORS	31
  #define METADATA_WORKQUEUE_MAX_ACTIVE	16
--#define RECALC_SECTORS			8192
-+#define RECALC_SECTORS			32768
+-#define RECALC_SECTORS			32768
++#define RECALC_SECTORS			(IS_ENABLED(CONFIG_64BIT) ? 32768 : 2048)
  #define RECALC_WRITE_SUPER		16
  
  /*
