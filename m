@@ -1,66 +1,64 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0C5F3C83F01
-	for <dm-devel@archiver.kernel.org>; Wed, 30 Aug 2023 18:44:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B1504C83F2F
+	for <dm-devel@archiver.kernel.org>; Thu, 31 Aug 2023 21:57:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1693421078;
+	s=mimecast20190719; t=1693519052;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=q5hrSPGBs7DBVOKblhvyBxJ/OiPP/1OEe08Vit/io+0=;
-	b=QQ/iwxtpEaO2olo8JT/2G7Nj0i9ytgPZnNVVeF0WNmyMgDKe9mPOxF/HS71wOfhAM46PoN
-	lkXw0vpKJoEvXYtBxEuI5ij6P61AsBZduO/5cuRvSZGVo6tor7IcPsiREUPALsJcAs5vM1
-	ea6Tl0zQ5loO1F8dX5/+RQFnEF80k+U=
-Received: from mimecast-mx02.redhat.com (66.187.233.73 [66.187.233.73]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	bh=oMLaylnZqAsoefly35ByzdKcRhEzrwLZ8ItlFUYa3Ys=;
+	b=RZektghr+XsGSEB4ktPKj8vw+wvPz5I+tyQ3PGjfknhaBZ+79/cVa7QP6kckd7nS9Pg6CL
+	l79cfHn+wnDnWk4t/1/8BOhfpcK9STQduX2CshPV/+78KSpI9MuNYaz2oRdsIfqQox1Oqh
+	mFZ/PJnB8IxTVsNMLwjCzrA2TRy5WlM=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-368-ZQMlQRImNgyeMNOd1nR4Bg-1; Wed, 30 Aug 2023 14:44:34 -0400
-X-MC-Unique: ZQMlQRImNgyeMNOd1nR4Bg-1
+ us-mta-421-N09FOkqTO1C2BSkorrTmQA-1; Thu, 31 Aug 2023 17:57:29 -0400
+X-MC-Unique: N09FOkqTO1C2BSkorrTmQA-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5F05D1C06929;
-	Wed, 30 Aug 2023 18:44:31 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 588AD3C0E47A;
+	Thu, 31 Aug 2023 21:57:27 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C581E2026D35;
-	Wed, 30 Aug 2023 18:44:28 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B44CF2026D3E;
+	Thu, 31 Aug 2023 21:57:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8555C1946A43;
-	Wed, 30 Aug 2023 18:44:27 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 631E819465B2;
+	Thu, 31 Aug 2023 21:57:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E38C31946589
- for <dm-devel@listman.corp.redhat.com>; Wed, 30 Aug 2023 18:44:25 +0000 (UTC)
+ ESMTP id 5F8621946A48
+ for <dm-devel@listman.corp.redhat.com>; Thu, 31 Aug 2023 21:57:24 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9D363112131B; Wed, 30 Aug 2023 18:44:25 +0000 (UTC)
+ id 32524140E970; Thu, 31 Aug 2023 21:57:24 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 82E821121315;
- Wed, 30 Aug 2023 18:44:25 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 18DB8140E96F;
+ Thu, 31 Aug 2023 21:57:24 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 37UIiH4I022764;
- Wed, 30 Aug 2023 13:44:17 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 37VLvGMm030159;
+ Thu, 31 Aug 2023 16:57:16 -0500
 Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 37UIiHEG022763;
- Wed, 30 Aug 2023 13:44:17 -0500
-Date: Wed, 30 Aug 2023 13:44:16 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 37VLvFh4030158;
+ Thu, 31 Aug 2023 16:57:15 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Message-ID: <20230830184416.GI7412@octiron.msp.redhat.com>
-References: <1690571155-8283-1-git-send-email-bmarzins@redhat.com>
- <5d4d7dea45c20d758a35756f2d3cc1e4f7a0db26.camel@suse.com>
-MIME-Version: 1.0
-In-Reply-To: <5d4d7dea45c20d758a35756f2d3cc1e4f7a0db26.camel@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: Re: [dm-devel] [RFC PATCH 0/4] Make prio timeouts work like checkers
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Date: Thu, 31 Aug 2023 16:57:10 -0500
+Message-Id: <1693519032-30111-3-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1693519032-30111-1-git-send-email-bmarzins@redhat.com>
+References: <1693519032-30111-1-git-send-email-bmarzins@redhat.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Subject: [dm-devel] [PATCH v2 2/4] libmultipath: make checker_timeout a path
+ variable
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -72,83 +70,113 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>,
+ Martin Wilck <Martin.Wilck@suse.com>
+MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Tue, Aug 29, 2023 at 08:34:39PM +0000, Martin Wilck wrote:
-> On Fri, 2023-07-28 at 14:05 -0500, Benjamin Marzinski wrote:
-> > This patchset changes how prioritizers set their timeouts, to make
-> > them
-> > match how the checker functions work, and also cleans up some minor
-> > timeout issues. I did this to make out timeouts consistent, but if
-> > someone has a good reason to object to that, I don't feel
-> > strongly that it's necessary, and I can resend just the bugfixes.
-> >=20
->=20
-> I don't object the idea, quite the contrary. But I would prefer a
-> different solution.
->=20
-> IMO we should treat the "io_timeout" as a path property, and add a
-> field  in "struct path" for it. It would be initialized from=A0
-> conf->checker_timeout, or if that's unset, from sysfs, and finally,
-> DEF_TIMEOUT. By reading the sysfs value, we'd be able to accomodate
-> different properties for different devices, but we'd not re-read this
-> value repeatedly like we're doing now. IMO that would be more
-> consistent with what we do for other device properties.
->=20
-> We currently pass the timeout value down the call stack all the way
-> from pathinfo() like this (for alua):
->=20
-> pathinfo()
->   get_prio()
->      prio_getprio()
->        p->getprio()
->          get_alua_info()
->             get_target_port_group()
->                do_inquiry() (*)
->                  do_inquiry_sg()
->             get_asymmetric_access_state()
->                do_rtpg() (*)
->               =20
-> With the exception of the functions marked by (*), all these functions
-> obtain a "struct path" argument, too. IIUC, the main reason we're doing
-> this is to avoid stalled getprio() calls for paths that are down
-> (bb935d4 ("libmultipath: change failed path prio timeout")).
->=20
-> IMO it would make more sense to remove the "timeout" arguments from
-> these functions, and just determine the timeout where it's needed. I
-> don't think that's a layering violation; functions that receive a
-> "struct path" can also handle PATH_DOWN. Thus we could write
->=20
-> int get_prio_timeout_ms(const struct path *pp)=20
-> {
->       if (pp->state =3D=3D PATH_DOWN)
->             return 10;
->       else
->             return pp->io_timeout * 1000;
-> }
->=20
-> and use this function as far down the stack as we can.
->=20
-> Furthermore, to improve code readability and avoid issues like in 3/4
-> and 4, I think we should call all variables and fields that take
-> millisecond values "timeout_ms".
->=20
-> Thoughts?
+Factor the code to get the checker_timeout out of select_checker() into
+its own select_checker_timeout function, and use that to set a path
+variable. This variable will be used by future patches.
 
-Sure. I can rework this.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/propsel.c | 33 ++++++++++++++++++++-------------
+ libmultipath/structs.c |  1 +
+ libmultipath/structs.h |  1 +
+ 3 files changed, 22 insertions(+), 13 deletions(-)
 
--Ben
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index df10a68f..91a59880 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -628,6 +628,23 @@ out:
+ 	return 0;
+ }
+ 
++
++int select_checker_timeout(struct config *conf, struct path *pp)
++{
++	const char *origin;
++
++	pp_set_conf(checker_timeout);
++	if (sysfs_get_timeout(pp, &pp->checker_timeout) > 0) {
++		origin = "(setting: kernel sysfs)";
++		goto out;
++	}
++	pp_set_default(checker_timeout, DEF_TIMEOUT);
++out:
++	condlog(3, "%s checker timeout = %u s %s", pp->dev, pp->checker_timeout,
++		origin);
++	return 0;
++}
++
+ /*
+  * Current RDAC (NetApp E/EF Series) firmware relies
+  * on periodic REPORT TARGET PORT GROUPS for
+@@ -664,6 +681,8 @@ int select_checker(struct config *conf, struct path *pp)
+ 	char *ckr_name;
+ 	struct checker * c = &pp->checker;
+ 
++	if (!pp->checker_timeout)
++		select_checker_timeout(conf, pp);
+ 	if (pp->detect_checker == DETECT_CHECKER_ON) {
+ 		origin = autodetect_origin;
+ 		if (check_rdac(pp)) {
+@@ -684,19 +703,7 @@ out:
+ 	checker_get(c, ckr_name);
+ 	condlog(3, "%s: path_checker = %s %s", pp->dev,
+ 		checker_name(c), origin);
+-	if (conf->checker_timeout) {
+-		c->timeout = conf->checker_timeout;
+-		condlog(3, "%s: checker timeout = %u s %s",
+-			pp->dev, c->timeout, conf_origin);
+-	}
+-	else if (sysfs_get_timeout(pp, &c->timeout) > 0)
+-		condlog(3, "%s: checker timeout = %u s (setting: kernel sysfs)",
+-			pp->dev, c->timeout);
+-	else {
+-		c->timeout = DEF_TIMEOUT;
+-		condlog(3, "%s: checker timeout = %u s %s",
+-			pp->dev, c->timeout, default_origin);
+-	}
++	c->timeout = pp->checker_timeout;
+ 	return 0;
+ }
+ 
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index 39504dca..1b305fd1 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -147,6 +147,7 @@ uninitialize_path(struct path *pp)
+ 
+ 	pp->dmstate = PSTATE_UNDEF;
+ 	pp->uid_attribute = NULL;
++	pp->checker_timeout = 0;
+ 
+ 	if (checker_selected(&pp->checker))
+ 		checker_put(&pp->checker);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 97f9de5a..17e13ee7 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -383,6 +383,7 @@ struct path {
+ 	int eh_deadline;
+ 	bool is_checked;
+ 	bool can_use_env_uid;
++	unsigned int checker_timeout;
+ 	/* configlet pointers */
+ 	vector hwe;
+ 	struct gen_path generic_path;
+-- 
+2.17.2
 
->=20
-> Martin
 --
 dm-devel mailing list
 dm-devel@redhat.com
