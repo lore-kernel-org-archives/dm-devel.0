@@ -4,77 +4,78 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 00DA0CA0FF3
-	for <dm-devel@archiver.kernel.org>; Fri,  1 Sep 2023 18:03:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1B9B6CA0FF1
+	for <dm-devel@archiver.kernel.org>; Fri,  1 Sep 2023 18:03:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1693591410;
+	s=mimecast20190719; t=1693591412;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=fVTofy/GE26BoZ46iNBTKBO3MnFugZ8nRx62ktSN2Uw=;
-	b=Z3CtSobOTr72g0UWbQH8Ykdq3CcbJpZeyTI03izqHK9BTWNLJUoSgzCsM42tlJFVLenr3V
-	5K/YGtB2if0lbG280ZAnM7RBZPuhcdNcg46HxsJO/4jdyuStbD+S+qfznVG1Nc2dsp2cAm
-	bJbdw2Ztg0dbGl8y6V1vX4quu7Xqqhc=
+	bh=2fDgDawuyYtHr8NthhdK4720jrqPltdYvBNVzIBCol8=;
+	b=QtrLYBE71qjY+mcNBRyW4Tk3Spr9OQfTiKq5WhkFJVp9Q8ZS3DVLW5ysGgKXcNNuxlYxAy
+	Q0XAYqyNhghhqKF25EOf3F1NYAd173mrBWvkb/hRwUJCGhGdfIVuaes+JLEpfqAxo8qxbu
+	ZgW9JDhnZeexcZ7Ya5SBo2SQoF3E8oc=
 Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-630-wXCamYrVO3SaPS8QPHGBQg-1; Fri, 01 Sep 2023 14:03:26 -0400
-X-MC-Unique: wXCamYrVO3SaPS8QPHGBQg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-678-LKLA8k1LNpmyTGvoJ3rBrA-1; Fri, 01 Sep 2023 14:03:27 -0400
+X-MC-Unique: LKLA8k1LNpmyTGvoJ3rBrA-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 00E393C0EAB6;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C7ABC29ABA2B;
 	Fri,  1 Sep 2023 18:03:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E2AC7400E413;
-	Fri,  1 Sep 2023 18:03:22 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B293E4069775;
+	Fri,  1 Sep 2023 18:03:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B88A11946A46;
-	Fri,  1 Sep 2023 18:03:22 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9BF94194729A;
+	Fri,  1 Sep 2023 18:03:23 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8066219472AC
- for <dm-devel@listman.corp.redhat.com>; Fri,  1 Sep 2023 18:03:21 +0000 (UTC)
+ ESMTP id 4C8141947299
+ for <dm-devel@listman.corp.redhat.com>; Fri,  1 Sep 2023 18:03:23 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 70F27200A86A; Fri,  1 Sep 2023 18:03:21 +0000 (UTC)
+ id 3B40957783B; Fri,  1 Sep 2023 18:03:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 6A40321D4F3D
- for <dm-devel@redhat.com>; Fri,  1 Sep 2023 18:03:21 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 3343C493110
+ for <dm-devel@redhat.com>; Fri,  1 Sep 2023 18:03:23 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4D175897F6A
- for <dm-devel@redhat.com>; Fri,  1 Sep 2023 18:03:21 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1142A29ABA2E
+ for <dm-devel@redhat.com>; Fri,  1 Sep 2023 18:03:23 +0000 (UTC)
 Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-686-QlobgJM6NACM-2_GOoEwIA-1; Fri,
- 01 Sep 2023 14:03:18 -0400
-X-MC-Unique: QlobgJM6NACM-2_GOoEwIA-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-25-6W-K2raEPfSbYdJuiHzAPQ-1; Fri,
+ 01 Sep 2023 14:03:21 -0400
+X-MC-Unique: 6W-K2raEPfSbYdJuiHzAPQ-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 4C2BD1F45E;
- Fri,  1 Sep 2023 18:03:17 +0000 (UTC)
+ by smtp-out2.suse.de (Postfix) with ESMTPS id 95FF51F86C;
+ Fri,  1 Sep 2023 18:03:19 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 16C7113582;
- Fri,  1 Sep 2023 18:03:17 +0000 (UTC)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 2E3CA13582;
+ Fri,  1 Sep 2023 18:03:19 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id 4C2AA2Un8mTpRQAAMHmgww
- (envelope-from <mwilck@suse.com>); Fri, 01 Sep 2023 18:03:17 +0000
+ by imap2.suse-dmz.suse.de with ESMTPSA id yIa2CWcn8mTpRQAAMHmgww
+ (envelope-from <mwilck@suse.com>); Fri, 01 Sep 2023 18:03:19 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
  Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri,  1 Sep 2023 20:02:17 +0200
-Message-ID: <20230901180235.23980-5-mwilck@suse.com>
+Date: Fri,  1 Sep 2023 20:02:22 +0200
+Message-ID: <20230901180235.23980-10-mwilck@suse.com>
 In-Reply-To: <20230901180235.23980-1-mwilck@suse.com>
 References: <20230901180235.23980-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -85,9 +86,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: [dm-devel] [PATCH 04/21] libmultipath: never allocate an alias
- that's already taken
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+Subject: [dm-devel] [PATCH 09/21] multipath-tools tests: convert
+ mock_{failed, used}_alias to macros
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -99,11 +100,10 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>,
- David Bond <dbond@suse.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: suse.com
 Content-Type: text/plain; charset="us-ascii"
@@ -111,104 +111,271 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-If the bindings file is changed in a way that multipathd can't handle
-(e.g. by swapping the aliases of two maps), multipathd must not try
-to re-use an alias that is already used by another map. Creating
-or renaming a map with such an alias will fail. We already avoid
-this for some cases, but not for all. Fix it.
+This way we can further improve readability of the individual test
+cases.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
-Cc: David Bond <dbond@suse.com>
 ---
- libmultipath/alias.c | 36 +++++++++++++++++++++++++++++++-----
- tests/alias.c        |  2 +-
- 2 files changed, 32 insertions(+), 6 deletions(-)
+ tests/alias.c | 98 +++++++++++++++++++++++++--------------------------
+ 1 file changed, 49 insertions(+), 49 deletions(-)
 
-diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-index 9b9b789..f7834d1 100644
---- a/libmultipath/alias.c
-+++ b/libmultipath/alias.c
-@@ -120,7 +120,7 @@ static bool alias_already_taken(const char *alias, const char *map_wwid)
- 		if (dm_get_uuid(alias, wwid, sizeof(wwid)) == 0 &&
- 		    strncmp(map_wwid, wwid, sizeof(wwid)) == 0)
- 			return false;
--		condlog(3, "%s: alias '%s' already taken, but not in bindings file. reselecting alias",
-+		condlog(3, "%s: alias '%s' already taken, reselecting alias",
- 			map_wwid, alias);
- 		return true;
- 	}
-@@ -363,28 +363,54 @@ char *get_user_friendly_alias(const char *wwid, const char *file, const char *al
- 		 * allocated correctly
- 		 */
- 		if (strcmp(buff, wwid) == 0) {
--			alias = strdup(alias_old);
-+			if (!alias_already_taken(alias_old, wwid))
-+				alias = strdup(alias_old);
-+			else
-+				condlog(0, "ERROR: old alias [%s] for wwid [%s] is used by other map",
-+					alias_old, wwid);
- 			goto out;
-+
- 		} else {
- 			condlog(0, "alias %s already bound to wwid %s, cannot reuse",
- 				alias_old, buff);
--			goto new_alias;
-+			goto new_alias;		     ;
- 		}
- 	}
- 
-+	/*
-+	 * Look for an existing alias in the bindings file.
-+	 * Pass prefix = NULL, so lookup_binding() won't try to allocate a new id.
-+	 */
- 	id = lookup_binding(f, wwid, &alias, NULL, 0);
- 	if (alias) {
--		condlog(3, "Use existing binding [%s] for WWID [%s]",
--			alias, wwid);
-+		if (alias_already_taken(alias, wwid)) {
-+			free(alias);
-+			alias = NULL;
-+		} else
-+			condlog(3, "Use existing binding [%s] for WWID [%s]",
-+				alias, wwid);
- 		goto out;
- 	}
- 
- 	/* allocate the existing alias in the bindings file */
- 	id = scan_devname(alias_old, prefix);
-+	if (id > 0 && id_already_taken(id, prefix, wwid)) {
-+		condlog(0, "ERROR: old alias [%s] for wwid [%s] is used by other map",
-+			alias_old, wwid);
-+		goto out;
-+	}
- 
- new_alias:
- 	if (id <= 0) {
-+		/*
-+		 * no existing alias was provided, or allocating it
-+		 * failed. Try a new one.
-+		 */
- 		id = lookup_binding(f, wwid, &alias, prefix, 1);
-+		if (id == 0 && alias_already_taken(alias, wwid)) {
-+			free(alias);
-+			alias = NULL;
-+		}
- 		if (id <= 0)
- 			goto out;
- 		else
 diff --git a/tests/alias.c b/tests/alias.c
-index 3ca6c28..11f209e 100644
+index 1c9903c..cb6695b 100644
 --- a/tests/alias.c
 +++ b/tests/alias.c
-@@ -398,7 +398,7 @@ static void mock_self_alias(const char *alias, const char *wwid)
- 	will_return(__wrap_dm_get_uuid, wwid);
- }
+@@ -445,26 +445,26 @@ static void mock_self_alias(const char *alias, const char *wwid)
+ #define REUSE_STR(alias_str, wwid_str) ("alias " alias_str " already bound to wwid " wwid_str ", cannot reuse\n")
+ #define NOMORE_STR "no more available user_friendly_names\n"
  
--#define USED_STR(alias_str, wwid_str) wwid_str ": alias '" alias_str "' already taken, but not in bindings file. reselecting alias\n"
-+#define USED_STR(alias_str, wwid_str) wwid_str ": alias '" alias_str "' already taken, reselecting alias\n"
+-static void mock_failed_alias(const char *alias, char *msg)
+-{
+-	expect_string(__wrap_dm_map_present, str, alias);
+-	will_return(__wrap_dm_map_present, 1);
+-	expect_string(__wrap_dm_get_uuid, name, alias);
+-	expect_value(__wrap_dm_get_uuid, uuid_len, WWID_SIZE);
+-	will_return(__wrap_dm_get_uuid, 1);
+-	expect_condlog(3, msg);
+-}
++#define mock_failed_alias(alias, wwid)					\
++	do {								\
++		expect_string(__wrap_dm_map_present, str, alias);	\
++		will_return(__wrap_dm_map_present, 1);			\
++		expect_string(__wrap_dm_get_uuid, name, alias);		\
++		expect_value(__wrap_dm_get_uuid, uuid_len, WWID_SIZE);	\
++		will_return(__wrap_dm_get_uuid, 1);			\
++		expect_condlog(3, USED_STR(alias, wwid));		\
++	} while (0)
  
- static void mock_failed_alias(const char *alias, char *msg)
+-static void mock_used_alias(const char *alias, char *msg)
+-{
+-	expect_string(__wrap_dm_map_present, str, alias);
+-	will_return(__wrap_dm_map_present, 1);
+-	expect_string(__wrap_dm_get_uuid, name, alias);
+-	expect_value(__wrap_dm_get_uuid, uuid_len, WWID_SIZE);
+-	will_return(__wrap_dm_get_uuid, 0);
+-	will_return(__wrap_dm_get_uuid, "WWID_USED");
+-	expect_condlog(3, msg);
+-}
++#define mock_used_alias(alias, wwid)					\
++	do {								\
++		expect_string(__wrap_dm_map_present, str, alias);	\
++		will_return(__wrap_dm_map_present, 1);			\
++		expect_string(__wrap_dm_get_uuid, name, alias);		\
++		expect_value(__wrap_dm_get_uuid, uuid_len, WWID_SIZE);	\
++		will_return(__wrap_dm_get_uuid, 0);			\
++		will_return(__wrap_dm_get_uuid, "WWID_USED");		\
++		expect_condlog(3, USED_STR(alias, wwid));		\
++	} while(0)
+ 
+ static void mock_bindings_file(const char *content, int match_line)
  {
+@@ -516,7 +516,7 @@ static void lb_empty_failed(void **state)
+ 	char *alias;
+ 
+ 	will_return(__wrap_fgets, NULL);
+-	mock_failed_alias("MPATHa", USED_STR("MPATHa", "WWID0"));
++	mock_failed_alias("MPATHa", "WWID0");
+ 	mock_unused_alias("MPATHb");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+ 	rc = lookup_binding(NULL, "WWID0", &alias, "MPATH", 1);
+@@ -531,7 +531,7 @@ static void lb_empty_1_used(void **state)
+ 	char *alias;
+ 
+ 	will_return(__wrap_fgets, NULL);
+-	mock_used_alias("MPATHa", USED_STR("MPATHa", "WWID0"));
++	mock_used_alias("MPATHa", "WWID0");
+ 	mock_unused_alias("MPATHb");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+ 	rc = lookup_binding(NULL, "WWID0", &alias, "MPATH", 1);
+@@ -546,7 +546,7 @@ static void lb_empty_1_used_self(void **state)
+ 	char *alias;
+ 
+ 	will_return(__wrap_fgets, NULL);
+-	mock_used_alias("MPATHa", USED_STR("MPATHa", "WWID0"));
++	mock_used_alias("MPATHa", "WWID0");
+ 	mock_self_alias("MPATHb", "WWID0");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+ 	rc = lookup_binding(NULL, "WWID0", &alias, "MPATH", 1);
+@@ -616,10 +616,10 @@ static void lb_nomatch_a_3_used_failed_self(void **state)
+ 
+ 	will_return(__wrap_fgets, "MPATHa WWID0\n");
+ 	will_return(__wrap_fgets, NULL);
+-	mock_used_alias("MPATHb", USED_STR("MPATHb", "WWID1"));
+-	mock_used_alias("MPATHc", USED_STR("MPATHc", "WWID1"));
+-	mock_used_alias("MPATHd", USED_STR("MPATHd", "WWID1"));
+-	mock_failed_alias("MPATHe", USED_STR("MPATHe", "WWID1"));
++	mock_used_alias("MPATHb", "WWID1");
++	mock_used_alias("MPATHc", "WWID1");
++	mock_used_alias("MPATHd", "WWID1");
++	mock_failed_alias("MPATHe", "WWID1");
+ 	mock_self_alias("MPATHf", "WWID1");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID1"));
+ 	rc = lookup_binding(NULL, "WWID1", &alias, "MPATH", 1);
+@@ -689,7 +689,7 @@ static void lb_nomatch_a_d_1_used(void **state)
+ 	will_return(__wrap_fgets, "MPATHa WWID0\n");
+ 	will_return(__wrap_fgets, "MPATHd WWID1\n");
+ 	will_return(__wrap_fgets, NULL);
+-	mock_used_alias("MPATHb", USED_STR("MPATHb", "WWID2"));
++	mock_used_alias("MPATHb", "WWID2");
+ 	mock_unused_alias("MPATHc");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID2"));
+ 	rc = lookup_binding(NULL, "WWID2", &alias, "MPATH", 1);
+@@ -705,8 +705,8 @@ static void lb_nomatch_a_d_2_used(void **state)
+ 	will_return(__wrap_fgets, "MPATHa WWID0\n");
+ 	will_return(__wrap_fgets, "MPATHd WWID1\n");
+ 	will_return(__wrap_fgets, NULL);
+-	mock_used_alias("MPATHb", USED_STR("MPATHb", "WWID2"));
+-	mock_used_alias("MPATHc", USED_STR("MPATHc", "WWID2"));
++	mock_used_alias("MPATHb", "WWID2");
++	mock_used_alias("MPATHc", "WWID2");
+ 	mock_unused_alias("MPATHe");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID2"));
+ 	rc = lookup_binding(NULL, "WWID2", &alias, "MPATH", 1);
+@@ -722,9 +722,9 @@ static void lb_nomatch_a_d_3_used(void **state)
+ 	will_return(__wrap_fgets, "MPATHa WWID0\n");
+ 	will_return(__wrap_fgets, "MPATHd WWID1\n");
+ 	will_return(__wrap_fgets, NULL);
+-	mock_used_alias("MPATHb", USED_STR("MPATHb", "WWID2"));
+-	mock_used_alias("MPATHc", USED_STR("MPATHc", "WWID2"));
+-	mock_used_alias("MPATHe", USED_STR("MPATHe", "WWID2"));
++	mock_used_alias("MPATHb", "WWID2");
++	mock_used_alias("MPATHc", "WWID2");
++	mock_used_alias("MPATHe", "WWID2");
+ 	mock_unused_alias("MPATHf");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID2"));
+ 	rc = lookup_binding(NULL, "WWID2", &alias, "MPATH", 1);
+@@ -771,7 +771,7 @@ static void lb_nomatch_d_a_1_used(void **state)
+ 	will_return(__wrap_fgets, "MPATHa WWID0\n");
+ 	will_return(__wrap_fgets, "MPATHd WWID0\n");
+ 	will_return(__wrap_fgets, NULL);
+-	mock_used_alias("MPATHb", USED_STR("MPATHb", "WWID2"));
++	mock_used_alias("MPATHb", "WWID2");
+ 	mock_unused_alias("MPATHe");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID2"));
+ 	rc = lookup_binding(NULL, "WWID2", &alias, "MPATH", 1);
+@@ -851,9 +851,9 @@ static void lb_nomatch_b_a_3_used(void **state)
+ 	will_return(__wrap_fgets, "MPATHz WWID26\n");
+ 	will_return(__wrap_fgets, "MPATHa WWID0\n");
+ 	will_return(__wrap_fgets, NULL);
+-	mock_used_alias("MPATHaa", USED_STR("MPATHaa", "WWID2"));
+-	mock_used_alias("MPATHab", USED_STR("MPATHab", "WWID2"));
+-	mock_used_alias("MPATHac", USED_STR("MPATHac", "WWID2"));
++	mock_used_alias("MPATHaa", "WWID2");
++	mock_used_alias("MPATHab", "WWID2");
++	mock_used_alias("MPATHac", "WWID2");
+ 	mock_unused_alias("MPATHad");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID2"));
+ 	rc = lookup_binding(NULL, "WWID2", &alias, "MPATH", 1);
+@@ -895,7 +895,7 @@ static void lb_nomatch_int_max_used(void **state)
+ 	will_return(__wrap_fgets, "MPATHb WWID1\n");
+ 	will_return(__wrap_fgets, "MPATH" MPATH_ID_INT_MAX " WWIDMAX\n");
+ 	will_return(__wrap_fgets, NULL);
+-	mock_used_alias("MPATHa", USED_STR("MPATHa", "WWID2"));
++	mock_used_alias("MPATHa", "WWID2");
+ 	expect_condlog(0, NOMORE_STR);
+ 	rc = lookup_binding(NULL, "WWID2", &alias, "MPATH", 1);
+ 	assert_int_equal(rc, -1);
+@@ -926,7 +926,7 @@ static void lb_nomatch_int_max_m1_used(void **state)
+ 	will_return(__wrap_fgets, "MPATH" MPATH_ID_INT_MAX_m1 " WWIDMAX\n");
+ 	will_return(__wrap_fgets, "MPATHa WWID0\n");
+ 	will_return(__wrap_fgets, NULL);
+-	mock_used_alias("MPATH" MPATH_ID_INT_MAX, USED_STR("MPATH" MPATH_ID_INT_MAX, "WWID2"));
++	mock_used_alias("MPATH" MPATH_ID_INT_MAX, "WWID2");
+ 	expect_condlog(0, NOMORE_STR);
+ 	rc = lookup_binding(NULL, "WWID2", &alias, "MPATH", 1);
+ 	assert_int_equal(rc, -1);
+@@ -941,7 +941,7 @@ static void lb_nomatch_int_max_m1_1_used(void **state)
+ 	will_return(__wrap_fgets, "MPATHb WWID1\n");
+ 	will_return(__wrap_fgets, "MPATH" MPATH_ID_INT_MAX_m1 " WWIDMAX\n");
+ 	will_return(__wrap_fgets, NULL);
+-	mock_used_alias("MPATHa", USED_STR("MPATHa", "WWID2"));
++	mock_used_alias("MPATHa", "WWID2");
+ 	mock_unused_alias("MPATH" MPATH_ID_INT_MAX);
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID2"));
+ 	rc = lookup_binding(NULL, "WWID2", &alias, "MPATH", 1);
+@@ -957,8 +957,8 @@ static void lb_nomatch_int_max_m1_2_used(void **state)
+ 	will_return(__wrap_fgets, "MPATHb WWID1\n");
+ 	will_return(__wrap_fgets, "MPATH" MPATH_ID_INT_MAX_m1 " WWIDMAX\n");
+ 	will_return(__wrap_fgets, NULL);
+-	mock_used_alias("MPATHa", USED_STR("MPATHa", "WWID2"));
+-	mock_used_alias("MPATH" MPATH_ID_INT_MAX, USED_STR("MPATH" MPATH_ID_INT_MAX, "WWID2"));
++	mock_used_alias("MPATHa", "WWID2");
++	mock_used_alias("MPATH" MPATH_ID_INT_MAX, "WWID2");
+ 	expect_condlog(0, NOMORE_STR);
+ 	rc = lookup_binding(NULL, "WWID2", &alias, "MPATH", 1);
+ 	assert_int_equal(rc, -1);
+@@ -1291,7 +1291,7 @@ static void gufa_match_a_used(void **state) {
+ 
+ 	will_return(__wrap_fgets, BINDING_STR("MPATHa", "WWID0"));
+ 	expect_condlog(3, FOUND_STR("MPATHa", "WWID0"));
+-	mock_used_alias("MPATHa", USED_STR("MPATHa", "WWID0"));
++	mock_used_alias("MPATHa", "WWID0");
+ 
+ 	alias = get_user_friendly_alias("WWID0", "x", "", "MPATH", true);
+ 	assert_ptr_equal(alias, NULL);
+@@ -1355,7 +1355,7 @@ static void gufa_nomatch_c_b_used(void **state) {
+ 	mock_bindings_file("MPATHc WWID2\n"
+ 			   "MPATHb WWID1",
+ 			   -1);
+-	mock_used_alias("MPATHa", USED_STR("MPATHa", "WWID4"));
++	mock_used_alias("MPATHa", "WWID4");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID4"));
+ 	mock_unused_alias("MPATHd");
+ 
+@@ -1434,7 +1434,7 @@ static void gufa_old_empty_used(void **state) {
+ 
+ 	will_return(__wrap_fgets, NULL);
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+-	mock_used_alias("MPATHz", USED_STR("MPATHz", "WWID0"));
++	mock_used_alias("MPATHz", "WWID0");
+ 	expect_condlog(0, ERR_STR("MPATHz", "WWID0"));
+ 
+ 	alias = get_user_friendly_alias("WWID0", "x", "MPATHz", "MPATH", false);
+@@ -1475,7 +1475,7 @@ static void gufa_old_match_used(void **state) {
+ 
+ 	mock_bindings_file("MPATHz WWID0", 0);
+ 	expect_condlog(3, FOUND_ALIAS_STR("MPATHz", "WWID0"));
+-	mock_used_alias("MPATHz", USED_STR("MPATHz", "WWID0"));
++	mock_used_alias("MPATHz", "WWID0");
+ 	expect_condlog(0, ERR_STR("MPATHz", "WWID0"));
+ 
+ 	alias = get_user_friendly_alias("WWID0", "x", "MPATHz", "MPATH", false);
+@@ -1514,7 +1514,7 @@ static void gufa_old_match_other_used(void **state) {
+ 	expect_condlog(0, REUSE_STR("MPATHz", "WWID9"));
+ 
+ 	mock_bindings_file(bindings, -1);
+-	mock_used_alias("MPATHa", USED_STR("MPATHa", "WWID0"));
++	mock_used_alias("MPATHa", "WWID0");
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+ 	mock_unused_alias("MPATHb");
+ 
+@@ -1557,7 +1557,7 @@ static void gufa_old_match_other_wwidmatch_used(void **state) {
+ 
+ 	mock_bindings_file(bindings, 1);
+ 	expect_condlog(3, FOUND_STR("MPATHc", "WWID2"));
+-	mock_used_alias("MPATHc", USED_STR("MPATHc", "WWID2"));
++	mock_used_alias("MPATHc", "WWID2");
+ 
+ 	alias = get_user_friendly_alias("WWID2", "x", "MPATHz", "MPATH", false);
+ 	assert_ptr_equal(alias, NULL);
+@@ -1592,7 +1592,7 @@ static void gufa_old_nomatch_wwidmatch_used(void **state) {
+ 
+ 	mock_bindings_file(bindings, 0);
+ 	expect_condlog(3, FOUND_STR("MPATHa", "WWID0"));
+-	mock_used_alias("MPATHa", USED_STR("MPATHa", "WWID0"));
++	mock_used_alias("MPATHa", "WWID0");
+ 
+ 	alias = get_user_friendly_alias("WWID0", "x", "MPATHz", "MPATH", false);
+ 	assert_ptr_equal(alias, NULL);
+@@ -1632,7 +1632,7 @@ static void gufa_old_nomatch_nowwidmatch_used(void **state) {
+ 	mock_bindings_file(bindings, -1);
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID0"));
+ 
+-	mock_used_alias("MPATHz", USED_STR("MPATHz", "WWID0"));
++	mock_used_alias("MPATHz", "WWID0");
+ 	expect_condlog(0, ERR_STR("MPATHz", "WWID0"));
+ 
+ 	alias = get_user_friendly_alias("WWID0", "x", "MPATHz", "MPATH", false);
 -- 
 2.41.0
 
