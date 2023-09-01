@@ -1,81 +1,81 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 80F0FCA0FF2
-	for <dm-devel@archiver.kernel.org>; Fri,  1 Sep 2023 18:03:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5D540CA0FF4
+	for <dm-devel@archiver.kernel.org>; Fri,  1 Sep 2023 18:03:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1693591408;
+	s=mimecast20190719; t=1693591409;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=8QW8RLG0J+La7zuf7vvqt1JqJVoARX/f7jN3DA6EzTg=;
-	b=GwoNR/hHsWMauffORdKC+G1akbEKUHJD8PoDUt6sp2sxIb86nlwHTRiVX/T6D27SfbvoDo
-	Z6ga7IOFF/ZmcJVsDLIZ1mxRnHw5Glp/5WfIaV4ajW3L1zCF0qcjiCtzpAIcB8fTWBhUjr
-	sSzw6pexxeXfqo1zoCu9TjC4x0YkieM=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-621-AFF7DOUPO-W82D-jI7Mw2Q-1; Fri, 01 Sep 2023 14:03:25 -0400
-X-MC-Unique: AFF7DOUPO-W82D-jI7Mw2Q-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+	bh=YqradqieUeyyS36hjN+rqQ5NgWjmOnFaDspqtQv0WAc=;
+	b=fHV8qzVuq0u2oM/tN6OSuitKfzHKvSjjnpVEvbDSTVyKJUZaDRgdxSFeRLISa3FhFNbm0j
+	deVvvqhbolkQVNryeEK3oP04S0KphrtcJGlQPu9i1C7kWvB6vqnWphJHRm/20cT48tXq4t
+	KD/w2Qaw1XSxnoHINcqzHr3vwlUTOaw=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-516-7nAG2YmUNxeYhQaLKJn5tQ-1; Fri, 01 Sep 2023 14:03:26 -0400
+X-MC-Unique: 7nAG2YmUNxeYhQaLKJn5tQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9D28E917E7A;
-	Fri,  1 Sep 2023 18:03:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 42CC81C18C9B;
+	Fri,  1 Sep 2023 18:03:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8BDD5D47819;
-	Fri,  1 Sep 2023 18:03:22 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2AE3D20C3B2A;
+	Fri,  1 Sep 2023 18:03:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 71A621946A46;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E695C194729D;
 	Fri,  1 Sep 2023 18:03:22 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id CB53A19465B7
- for <dm-devel@listman.corp.redhat.com>; Fri,  1 Sep 2023 18:03:20 +0000 (UTC)
+ ESMTP id 8096219472AD
+ for <dm-devel@listman.corp.redhat.com>; Fri,  1 Sep 2023 18:03:21 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B9184D4781A; Fri,  1 Sep 2023 18:03:20 +0000 (UTC)
+ id 7021F1460FE7; Fri,  1 Sep 2023 18:03:21 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B1A7CD4781D
- for <dm-devel@redhat.com>; Fri,  1 Sep 2023 18:03:20 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
- [207.211.31.81])
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 699DC1402C0A
+ for <dm-devel@redhat.com>; Fri,  1 Sep 2023 18:03:21 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 94FCF8F99FC
- for <dm-devel@redhat.com>; Fri,  1 Sep 2023 18:03:20 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4DF7610264FA
+ for <dm-devel@redhat.com>; Fri,  1 Sep 2023 18:03:21 +0000 (UTC)
 Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-125-bs4UTZ3BNfiDdgp12CF9eQ-1; Fri,
- 01 Sep 2023 14:03:19 -0400
-X-MC-Unique: bs4UTZ3BNfiDdgp12CF9eQ-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-635-qLFsq1_sOKWx0zaV32HuhQ-1; Fri,
+ 01 Sep 2023 14:03:17 -0400
+X-MC-Unique: qLFsq1_sOKWx0zaV32HuhQ-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out1.suse.de (Postfix) with ESMTPS id D20502186E;
- Fri,  1 Sep 2023 18:03:17 +0000 (UTC)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id A0B2E21865;
+ Fri,  1 Sep 2023 18:03:16 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 55DA313582;
- Fri,  1 Sep 2023 18:03:17 +0000 (UTC)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 4304713582;
+ Fri,  1 Sep 2023 18:03:16 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id mHFqE2Un8mTpRQAAMHmgww
- (envelope-from <mwilck@suse.com>); Fri, 01 Sep 2023 18:03:17 +0000
+ by imap2.suse-dmz.suse.de with ESMTPSA id ANGeDWQn8mTpRQAAMHmgww
+ (envelope-from <mwilck@suse.com>); Fri, 01 Sep 2023 18:03:16 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
  Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri,  1 Sep 2023 20:02:18 +0200
-Message-ID: <20230901180235.23980-6-mwilck@suse.com>
+Date: Fri,  1 Sep 2023 20:02:15 +0200
+Message-ID: <20230901180235.23980-3-mwilck@suse.com>
 In-Reply-To: <20230901180235.23980-1-mwilck@suse.com>
 References: <20230901180235.23980-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -86,9 +86,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: [dm-devel] [PATCH 05/21] libmultipath: lookup_binding: add comment
- about the algorithm
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Subject: [dm-devel] [PATCH 02/21] libmultipath: add alias_already_taken()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -100,10 +99,11 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>,
+ David Bond <dbond@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: suse.com
 Content-Type: text/plain; charset="us-ascii"
@@ -111,60 +111,75 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-When I read this code, I always get confused. Adding comments to
-explain the algorithm.
+Factor out a trivial helper function.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
+Cc: David Bond <dbond@suse.com>
 ---
- libmultipath/alias.c | 35 +++++++++++++++++++++++++++++++++++
- 1 file changed, 35 insertions(+)
+ libmultipath/alias.c | 34 ++++++++++++++++++++--------------
+ 1 file changed, 20 insertions(+), 14 deletions(-)
 
 diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-index f7834d1..e61eb91 100644
+index c0139a2..abde08c 100644
 --- a/libmultipath/alias.c
 +++ b/libmultipath/alias.c
-@@ -172,6 +172,41 @@ lookup_binding(FILE *f, const char *map_wwid, char **map_alias,
- 		alias = strtok_r(buf, " \t", &saveptr);
- 		if (!alias) /* blank line */
- 			continue;
+@@ -8,6 +8,7 @@
+ #include <string.h>
+ #include <limits.h>
+ #include <stdio.h>
++#include <stdbool.h>
+ 
+ #include "debug.h"
+ #include "util.h"
+@@ -109,8 +110,24 @@ scan_devname(const char *alias, const char *prefix)
+ 	return n;
+ }
+ 
+-static int
+-id_already_taken(int id, const char *prefix, const char *map_wwid)
++static bool alias_already_taken(const char *alias, const char *map_wwid)
++{
 +
-+		/*
-+		 * Find an unused index - explanation of the algorithm
-+		 *
-+		 * ID: 1 = mpatha, 2 = mpathb, ...
-+		 *
-+		 * We assume the bindings are unsorted. The only constraint
-+		 * is that no ID occurs more than once. IDs that occur in the
-+		 * bindings are called "used".
-+		 *
-+		 * We call the list 1,2,3,..., exactly in this order, the list
-+		 * of "expected" IDs. The variable "id" always holds the next
-+		 * "expected" ID, IOW the last "expected" ID encountered plus 1.
-+		 * Thus all IDs below "id" are known to be used. However, at the
-+		 * end of the loop, the value of "id" isn't necessarily unused.
-+		 *
-+		 * "smallest_bigger_id" is the smallest used ID that was
-+		 * encountered while it was larger than the next "expected" ID
-+		 * at that iteration. Let X be some used ID. If all IDs below X
-+		 * are used and encountered in the right sequence before X, "id"
-+		 * will be > X when the loop ends. Otherwise, X was encountered
-+		 * "out of order", the condition (X > id) holds when X is
-+		 * encountered, and "smallest_bigger_id" will be set to X; i.e.
-+		 * it will be less or equal than X when the loop ends.
-+		 *
-+		 * At the end of the loop, (id < smallest_bigger_id) means that
-+		 * the value of "id" had been encountered neither in order nor
-+		 * out of order, and is thus unused. (id >= smallest_bigger_id)
-+		 * means that "id"'s value is in use. In this case, we play safe
-+		 * and use "biggest_id + 1" as the next value to try.
-+		 *
-+		 * biggest_id is always > smallest_bigger_id, except in the
-+		 * "perfectly ordered" case.
-+		 */
++	if (dm_map_present(alias)) {
++		char wwid[WWID_SIZE];
 +
- 		curr_id = scan_devname(alias, prefix);
- 		if (curr_id == id) {
- 			if (id < INT_MAX)
++		/* If both the name and the wwid match, then it's fine.*/
++		if (dm_get_uuid(alias, wwid, sizeof(wwid)) == 0 &&
++		    strncmp(map_wwid, wwid, sizeof(wwid)) == 0)
++			return false;
++		condlog(3, "%s: alias '%s' already taken, but not in bindings file. reselecting alias",
++			map_wwid, alias);
++		return true;
++	}
++	return false;
++}
++
++static bool id_already_taken(int id, const char *prefix, const char *map_wwid)
+ {
+ 	STRBUF_ON_STACK(buf);
+ 	const char *alias;
+@@ -120,20 +137,9 @@ id_already_taken(int id, const char *prefix, const char *map_wwid)
+ 		return 0;
+ 
+ 	alias = get_strbuf_str(&buf);
+-	if (dm_map_present(alias)) {
+-		char wwid[WWID_SIZE];
+-
+-		/* If both the name and the wwid match, then it's fine.*/
+-		if (dm_get_uuid(alias, wwid, sizeof(wwid)) == 0 &&
+-		    strncmp(map_wwid, wwid, sizeof(wwid)) == 0)
+-			return 0;
+-		condlog(3, "%s: alias '%s' already taken, but not in bindings file. reselecting alias", map_wwid, alias);
+-		return 1;
+-	}
+-	return 0;
++	return alias_already_taken(alias, map_wwid);
+ }
+ 
+-
+ /*
+  * Returns: 0   if matching entry in WWIDs file found
+  *         -1   if an error occurs
 -- 
 2.41.0
 
