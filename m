@@ -1,94 +1,66 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2BFC3C83F2C
-	for <dm-devel@archiver.kernel.org>; Tue,  5 Sep 2023 08:27:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 770E0CA1008
+	for <dm-devel@archiver.kernel.org>; Tue,  5 Sep 2023 21:44:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1693902453;
+	s=mimecast20190719; t=1693950272;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=VrIc2Qt6iH3jyHWHAxnZxPM7OM4A6Vx5sPw5IqBV43M=;
-	b=On3XAmjLxWLERYVKCtSxA5UgsAt3aVoAKf96B0B8gx/V1C6XIDd9K+4koQ+erg8sxtYdsi
-	TLaj1vMXADoq7izeKi8LuqcvtzsvCxJQ9lasQ7s/gCfRW1YLnb6P3Fa+Q78HuUXcWUsrcg
-	q3ZUzOUBBBa/mFmPOCSvAQGjObp7tA8=
+	bh=bbNtpy8S+PBWmMCoLc6WKxB9PLma+SAgh8Qw4ptUFsA=;
+	b=FMdMTWdLUBdiis7u/L5zG9tAOf/25h1zOW761aVYLoJlreucbvMC8S/ZrhY7GIwM53E1h/
+	3BetjWyR0wPnC+qOGR3ZUiiA4+F1mpQn8lPgKd0ZDAA5VAd/3Of4+qLND4ePoYAH4Do605
+	R9mEl8TlzrbYgcfWlaRLHauzW3dnXYg=
 Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-81-wnvERBipPvmUplTdWFs9DA-1; Tue, 05 Sep 2023 04:27:30 -0400
-X-MC-Unique: wnvERBipPvmUplTdWFs9DA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-220-B_o1f5m7Nuux7gwW0KiAqw-1; Tue, 05 Sep 2023 17:44:29 -0400
+X-MC-Unique: B_o1f5m7Nuux7gwW0KiAqw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3C6541C068EA;
-	Tue,  5 Sep 2023 08:27:29 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 715173C0DDBC;
+	Tue,  5 Sep 2023 21:44:27 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2AC872013570;
-	Tue,  5 Sep 2023 08:27:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5F9962026D4B;
+	Tue,  5 Sep 2023 21:44:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id ED09119465A3;
-	Tue,  5 Sep 2023 08:27:28 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 35130194658C;
+	Tue,  5 Sep 2023 21:44:23 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2A8F319465A2
- for <dm-devel@listman.corp.redhat.com>; Tue,  5 Sep 2023 08:27:28 +0000 (UTC)
+ ESMTP id 196001946589
+ for <dm-devel@listman.corp.redhat.com>; Tue,  5 Sep 2023 21:44:21 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id ED7B31121318; Tue,  5 Sep 2023 08:27:27 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E5A301121314
- for <dm-devel@redhat.com>; Tue,  5 Sep 2023 08:27:27 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CA30F9423C9
- for <dm-devel@redhat.com>; Tue,  5 Sep 2023 08:27:27 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-626-tE8KTU3XPXur0A4Zgsb_hA-1; Tue,
- 05 Sep 2023 04:27:26 -0400
-X-MC-Unique: tE8KTU3XPXur0A4Zgsb_hA-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 062271F74D;
- Tue,  5 Sep 2023 08:27:25 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id C5E8313499;
- Tue,  5 Sep 2023 08:27:24 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id kwWzLmzm9mQmDgAAMHmgww
- (envelope-from <mwilck@suse.com>); Tue, 05 Sep 2023 08:27:24 +0000
-Message-ID: <e4c9a98a8768c3952c134807169ddab6f154e0de.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Li Xiao Keng <lixiaokeng@huawei.com>, Christophe Varoqui
- <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>,
- dm-devel mailing list <dm-devel@redhat.com>
-Date: Tue, 05 Sep 2023 10:27:24 +0200
-In-Reply-To: <d2aa5abb-4d73-f733-fa3c-e52a9bbf4dfc@huawei.com>
-References: <d2aa5abb-4d73-f733-fa3c-e52a9bbf4dfc@huawei.com>
-User-Agent: Evolution 3.48.4
+ id CAB1F140E963; Tue,  5 Sep 2023 21:44:21 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B05BF140E950;
+ Tue,  5 Sep 2023 21:44:21 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 385LiD8C023444;
+ Tue, 5 Sep 2023 16:44:13 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 385LiCAW023443;
+ Tue, 5 Sep 2023 16:44:12 -0500
+Date: Tue, 5 Sep 2023 16:44:12 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Message-ID: <20230905214412.GK7412@octiron.msp.redhat.com>
+References: <20230901212439.11880-1-mwilck@suse.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: Re: [dm-devel] [QUESTION] Is there checker to detect PDL?
+In-Reply-To: <20230901212439.11880-1-mwilck@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Subject: Re: [dm-devel] [PATCH] Fix hwtable test after "libmultipath: don't
+ bother to recheck timeout"
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -100,52 +72,50 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: louhongxiang@huawei.com
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: suse.com
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-Hello Li Xiao Keng,
+On Fri, Sep 01, 2023 at 11:24:39PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> The previous patch  "libmultipath: don't bother to recheck timeout"
+> causes sysfs_get_timeout() to be called less frequently. Adapt the
+> tests.
+> 
+Oops.
 
-On Tue, 2023-09-05 at 16:06 +0800, Li Xiao Keng wrote:
-> Hello:
-> =A0=A0 Wmware has PDL test(https://kb.vmware.com/s/article/2004684).
-> Is there has same function in multipath-tools? If not, can the
-> same function be achieved?
-
-AFAICT, PDL is not a term from the SCSI specifications, it's a
-terminology that VMware uses for a certain set of sense codes and
-qualifiers, as summarized on the VMware KB page you referenced.
-The general concept of "PDL" doesn't exist in multipath-tools, or on
-Linux in general, to my knowledge. So the answer is "no". OTOH, both
-the kernel and multipath-tools do interpret the sense codes received
-from the devices and try to determine an optimal reaction on the host
-side.
-
-Fabric-level errors will often result in remote ports in offline state,
-which will be removed after a devloss timeout. As the SCSI device won't
-exist any more after that, this is roughly similar to "PDL".=A0
-
-But I don't think we have this for SCSI sense codes. I had a quick
-glance at the code and we don't seem to treat the ASC/ASCQ 0x25/0x0 and
-0x68/0x0 in a special way, neither in the kernel nor in multipath-
-tools.
-
-This means that the multipath-tools checker will treat such paths as
-DOWN and continue checking them until they are removed, which won't
-happen unless the bus is rescanned.
-
-Patches welcome ;-)
-
-Regards,
-Martin
-
-
-
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  tests/test-lib.c | 6 ------
+>  1 file changed, 6 deletions(-)
+> 
+> diff --git a/tests/test-lib.c b/tests/test-lib.c
+> index 0bc49d5..f75ea31 100644
+> --- a/tests/test-lib.c
+> +++ b/tests/test-lib.c
+> @@ -342,12 +342,6 @@ void mock_pathinfo(int mask, const struct mocked_path *mp)
+>  			    mp->wwid);
+>  	}
+>  
+> -	if (mask & DI_CHECKER) {
+> -		/* get_state -> sysfs_get_timeout  */
+> -		will_return(__wrap_udev_device_get_subsystem, "scsi");
+> -		will_return(__wrap_udev_device_get_sysattr_value, "180");
+> -	}
+> -
+>  	if (mask & DI_PRIO && mp->flags & NEED_SELECT_PRIO) {
+>  
+>  		/* sysfs_get_timeout, again (!?) */
+> -- 
+> 2.41.0
 --
 dm-devel mailing list
 dm-devel@redhat.com
