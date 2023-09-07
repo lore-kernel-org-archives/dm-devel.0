@@ -1,98 +1,68 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 47B06EC8733
-	for <dm-devel@archiver.kernel.org>; Thu,  7 Sep 2023 14:23:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B4056EC8750
+	for <dm-devel@archiver.kernel.org>; Thu,  7 Sep 2023 19:14:25 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694096602;
+	s=mimecast20190719; t=1694114064;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=dHpzaZm5/O5itcZYQ6cXLB3LVsjnb3UHOQq0Lbl1RBU=;
-	b=YfjMTsYo51EJstNCQPOeCuULXRF0dmON47OEDDzxCP6htfqP4rauQiBqBelnnGWAMgc62E
-	W84Og4RIlOIpyjPKxVAQwjk6IFUjFSFKSIJM83QSfIHj1bnxlRx1EtZoIPX7R4HvgS7dyp
-	sPhdsjVtdTLYf+LBGhDoJwN8Gh7ZpyY=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-287-Gh690YkIOxKXC_-j-E-hYg-1; Thu, 07 Sep 2023 10:23:18 -0400
-X-MC-Unique: Gh690YkIOxKXC_-j-E-hYg-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+	bh=ttQ2q+9KfBma5pj+caI+GxU5pfcgOQvDGAgBkOxxI5s=;
+	b=ZuqPXHvKxnAM3HXfLee4yQ/9/lW0xyzxJe+2DStY1gja9nNZrsxjs51wYIvCljCG3IZVms
+	UfIwcYXY4QU7LWWvb+D0vVkRK0GGEavxfczbvioM9HhrGCazJdLDxec2iAfe4a6IiNufJA
+	FfFsrReIDZ3dmwc2lN+lNI4IHB3trC8=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-454-Qou-i6JZNcW0DTF5BHRJ4Q-1; Thu, 07 Sep 2023 15:14:21 -0400
+X-MC-Unique: Qou-i6JZNcW0DTF5BHRJ4Q-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4CA4580523C;
-	Thu,  7 Sep 2023 14:23:16 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 27DD23C11A0C;
+	Thu,  7 Sep 2023 19:14:19 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D16F7493110;
-	Thu,  7 Sep 2023 14:23:15 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 203567B62;
+	Thu,  7 Sep 2023 19:14:16 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6D1D0194658F;
-	Thu,  7 Sep 2023 14:23:15 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C7B6B194658F;
+	Thu,  7 Sep 2023 19:14:15 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B5DAF194658C
- for <dm-devel@listman.corp.redhat.com>; Thu,  7 Sep 2023 14:23:13 +0000 (UTC)
+ ESMTP id 368A3194658C
+ for <dm-devel@listman.corp.redhat.com>; Thu,  7 Sep 2023 19:14:14 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A1CD421EE56B; Thu,  7 Sep 2023 14:23:13 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 9A1A921EE566
- for <dm-devel@redhat.com>; Thu,  7 Sep 2023 14:23:13 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 750F62820524
- for <dm-devel@redhat.com>; Thu,  7 Sep 2023 14:23:13 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-341-118LH9j7O6unfVJ_KZnz-Q-1; Thu,
- 07 Sep 2023 10:22:54 -0400
-X-MC-Unique: 118LH9j7O6unfVJ_KZnz-Q-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id CA7821F8AE;
- Thu,  7 Sep 2023 14:22:34 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 9B324138F9;
- Thu,  7 Sep 2023 14:22:34 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id HKQtJKrc+WTbWQAAMHmgww
- (envelope-from <mwilck@suse.com>); Thu, 07 Sep 2023 14:22:34 +0000
-Message-ID: <3660a822f53efbeab83dbdf19b035c6a40c86163.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Date: Thu, 07 Sep 2023 16:22:33 +0200
-In-Reply-To: <15ea4cca19b287bab47bd212218cb66bad0acdda.camel@suse.com>
+ id 12356C03295; Thu,  7 Sep 2023 19:14:14 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E145DC03293;
+ Thu,  7 Sep 2023 19:14:13 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 387JE5xv001550;
+ Thu, 7 Sep 2023 14:14:05 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 387JE5BZ001549;
+ Thu, 7 Sep 2023 14:14:05 -0500
+Date: Thu, 7 Sep 2023 14:14:04 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Message-ID: <20230907191404.GG7412@octiron.msp.redhat.com>
 References: <20230901180235.23980-1-mwilck@suse.com>
- <20230901180235.23980-5-mwilck@suse.com>
- <20230906224248.GO7412@octiron.msp.redhat.com>
- <9948d7855eba709714b5b487240e44a309288f07.camel@suse.com>
- <15ea4cca19b287bab47bd212218cb66bad0acdda.camel@suse.com>
-User-Agent: Evolution 3.48.4
+ <20230901180235.23980-19-mwilck@suse.com>
+ <20230906224708.GC7412@octiron.msp.redhat.com>
+ <5cef84987794cc449028055a63c522c1ea690738.camel@suse.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH 04/21] libmultipath: never allocate an alias
- that's already taken
+In-Reply-To: <5cef84987794cc449028055a63c522c1ea690738.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH 18/21] libmultipath: keep bindings in memory
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -104,63 +74,126 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, David Bond <dbond@suse.com>
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: suse.com
-Content-Type: text/plain; charset="iso-8859-15"
+X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
+Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2023-09-07 at 15:33 +0200, Martin Wilck wrote:
-> On Thu, 2023-09-07 at 09:24 +0200, Martin Wilck wrote:
-> > On Wed, 2023-09-06 at 17:42 -0500, Benjamin Marzinski wrote:
-> > > On Fri, Sep 01, 2023 at 08:02:17PM +0200, mwilck@suse.com=A0wrote:
+On Thu, Sep 07, 2023 at 12:30:53PM +0200, Martin Wilck wrote:
+> On Wed, 2023-09-06 at 17:47 -0500, Benjamin Marzinski wrote:
+> > On Fri, Sep 01, 2023 at 08:02:31PM +0200, mwilck@suse.com=A0wrote:
+> > > From: Martin Wilck <mwilck@suse.com>
 > > >=20
-> > >=20
-> > > Again, unless I'm overlooking something, I don't think we need to
-> > > check if the alias is already taken here. Since we know that a
-> > > device
-> > > already exists with alias_old and the correct WWID, as long as
-> > > alias_old
-> > > is a valid user_friendly_name we can just use it.
+
+> > > +=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot(bindings, bdg, i) {
+> > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0int curr_id =3D scan_de=
+vname(bdg->alias, prefix);
 > >=20
-> > Similar reasoning as above. We could perhaps remove these checks,
-> > but
-> > we'd need to replace them by comments explaining why this condition
-> > can't occur.
-> >=20
-> > We could (and maybe should) move the call to find_existing_alias()
-> > from
-> > add_map_with_path() to get_user_friendly_alias(), so that we have
-> > the
-> > entire alias logic in a single place. The mpp->alias_old field
-> > would
-> > then only be used for ACT_RENAME.
+> > If we know that the bindings will be sorted by alias order, we don't
+> > need to do all this. Something like this should work:
 >=20
-> Well, if we do this, we would need to pass vecs->mpvec to
-> get_user_friendly_alias(), which means that we could use it also for
-> the alias_already_taken() check. It's not exactly the same because in
-> one case we look at internal state and in the other case at kernel
-> state. OTOH, we do trust that the two are in agreement, right? And we
-> derive alias_old from the mpvec today, anyway.
+> That's true. Unfortunately, we can't ensure ordering "by alias order".
+> The reason is that our configuration allows using different alias
+> prefixes for different devices. The current sorting is simply
+> alphabetical. It detects duplicates, but it ensures "alias order" only
+> between "mpatha" and "mpathz".
+>=20
+> I've thought of just removing the "different aliases for different
+> devices" feature. I don't know if any users out there actually set
+> device-specific alias_prefix values in the devices section of
+> multipath.conf. I don't recall having seen such a configuration so far;
+> almost every config I have seen simply uses "mpath" everywhere. But I
+> recognize that it may feel tempting in some cases. One could use the
+> "NETAPP" prefix for some arrays and the "EMC" prefix for others, for
+> example, making it easier to see which is what. And we simply don't
+> know if we'd break existing user setups with such a change. So if at
+> all, we can't do it in a minor release without deprecating it first.
+>=20
+> When we add a binding in add_binding(), we don't know which
+> alias_prefix is configured for a given WWID, and we have no easy way to
+> figure it out. We know the alias, but we don't know which portion of it
+> is the prefix and which is the ID (it's not forbidden to use "aaaa" as
+> alias_prefix). I wouldn't want to start guessing.
+>=20
+> If you can think of a way to keep the bindings cleanly sorted, please
+> let me know.
 
-Ok, this doesn't work. The kernel device mapper mandates no naming
-conventions for map aliases / names, except that they're unique.
-The mpvec contains only aliases of multipath maps. But it's not
-forbidden that some non-multipath map be called "mpathc".
+Doh! You even mentioned this issue in your "fix alias tests" commit. I
+just didn't pay enough attention to it. But I believe there is a way to
+make sure that we are dealing with a correctly sorted list of potential
+bindings when calling get_free_id(), if we decide it's worth the extra
+work.
 
-OTOH, if we have positive evidence that a given WWID has an alias
-mpathX assigned, we do know that no other map can have this same name.
-It just comes down to whether we trust the mpvec to correctly represent
-kernel state, and I suppose we have to, anyway.
+The global_bindings isn't guaranteed to have all the bindings for our
+prefix correctly sorted, but they will all be in a group.  If we wanted,
+we could create a new vector that just included these bindings, and sort
+it using the current prefix and a comparison function to do alias-sytle
+sorting. the msort_r() function takes an extra argument to pass to the
+compar() function, which could be the prefix.
 
-Sorry for the spam. I'll just remove these these checks, and the
-corresponding test cases.
+It would be great if we could just sort part of the global_bindings
+vector in place, once we knew the prefix.  Unfortunately, that would
+only work if we could know that no prefix can ever match a starting
+substring of another prefix. Otherwise, sorting using one can make the
+other not be in a single continuous group.  For instance, if some device
+configs used "mpatha" as a prefix, they would expect "mpathaaa" to
+follow immediately after "mapthaz", but if the bindings file had already
+been sorted using the "mpath" prefix, then "mpathba" would follow
+"mpathaz", and "mpathaaa" would come much later. Keeping the global file
+alphabetically sorted guarantees that no matter the prefix that devices
+were added under, all device aliases that are valid with that prefix
+will be in a group together.
+=20
+So, is it worth it to make another vector, copy the alises which are
+valid with the current prefix into it, and then sort it? get_free_id()
+will be cleaner, and gap detection won't break down after you get past
+mpathaa, which it currently does with an alpahbetically sorted bindings
+list.
 
-Martin
+Alternatively, we could just decide that setting a prefix in a device
+config that matches the starting substring of a another prefix is a
+config error (obviously using the exact same prefix is fine), and ignore
+that prefix from the device config when we parse the configuration. Then
+we could read in the bindings alphabetically like we currently do, find
+the prefix groups in them, and sort them once, in-place. When allocating
+a binding, we would need to search backwards through the bindings till
+we found the end of the group matching our prefix (or an alias that
+comes alphabetically before our prefix). Then we would have to search
+backwards through our prefix group using the id, till we found a binding
+with a smaller id.
 
+Thoughts?
+
+-Ben
+
+> >=20
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (curr_id <=3D 0)
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0continue;
+> >=20
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0while (id < curr_id) {
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0if (!id_already_taken(id, prefix, map_wwid))
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0return id;
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0id++;
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (id =3D=3D INT_MAX)
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0break;
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0id++;
+> > =A0=A0=A0=A0=A0=A0=A0=A0}
+> > =A0=A0=A0=A0=A0=A0=A0=A0if (id =3D=3D INT_MAX)
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(0, "no more ava=
+ilable user_friendly_names");
+> > =A0=A0=A0=A0=A0=A0=A0=A0return id < INT_MAX ? id : -1;
+> > }
 --
 dm-devel mailing list
 dm-devel@redhat.com
