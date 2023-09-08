@@ -4,93 +4,68 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0FB11EE8015
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Sep 2023 16:59:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D7FD9EEB561
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Sep 2023 17:22:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694192369;
+	s=mimecast20190719; t=1694193751;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=b0HCGjr3y2EsYqskQo5e064+NpvFbGwLQY19P/CWKI4=;
-	b=dl3OTy92V/sFgb+1PQZO3GrFyPyMMQvVeP/ofZUcxYBIElNdAexBjHAm7yf2FBZUnCFo54
-	XHP2YD3k359uiWS8yCvlDBZ3Q33jqCkMH67APWHj3ywdLyIFgFFHxI4YtHRHnbNbb4Kq4o
-	PM8MzXD/IxnLdmIhpMz8lrDsOWrfyuc=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-551-BzQLm6ebPsm9Em3sZudRGA-1; Fri, 08 Sep 2023 12:59:25 -0400
-X-MC-Unique: BzQLm6ebPsm9Em3sZudRGA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	bh=nPLZn52S5IBClYjc5gJG+4k44IQcw1d6mkOMUlwQWko=;
+	b=hPguMe3UP/91fyBgSV2Qujx3C+8IcNLfUDI1eiboVEQ1os9mXocTK+p6y72zTscKiuOhJW
+	JIab9orBThwYDWHvP5251/mmyaa6nU7R2bpmUcuACTlVKklAZ5smsS8GP4RVB1/N/VEo6j
+	xNcn7GjcPty0CttgMNdalM9DxlqShE4=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-581-q1hppNtLM9mGEBHga8cZGw-1; Fri, 08 Sep 2023 13:22:28 -0400
+X-MC-Unique: q1hppNtLM9mGEBHga8cZGw-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D7F8F3C1ACDC;
-	Fri,  8 Sep 2023 16:59:23 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 25E50816525;
+	Fri,  8 Sep 2023 17:22:27 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 55017140E967;
-	Fri,  8 Sep 2023 16:59:22 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 95ADB493112;
+	Fri,  8 Sep 2023 17:22:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 035DD194658C;
-	Fri,  8 Sep 2023 16:59:22 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 48A61194658C;
+	Fri,  8 Sep 2023 17:22:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0BF1F1946586
- for <dm-devel@listman.corp.redhat.com>; Fri,  8 Sep 2023 16:59:21 +0000 (UTC)
+ ESMTP id 0E5E91946586
+ for <dm-devel@listman.corp.redhat.com>; Fri,  8 Sep 2023 17:22:25 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id EC502493112; Fri,  8 Sep 2023 16:59:20 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E4B89493110
- for <dm-devel@redhat.com>; Fri,  8 Sep 2023 16:59:20 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C52851C29784
- for <dm-devel@redhat.com>; Fri,  8 Sep 2023 16:59:20 +0000 (UTC)
-Received: from mail.stoffel.org (mail.stoffel.org [172.104.24.175]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-7-_2V9gLfVODmF0_Am_PHbJg-1; Fri,
- 08 Sep 2023 12:59:19 -0400
-X-MC-Unique: _2V9gLfVODmF0_Am_PHbJg-1
-Received: from quad.stoffel.org (097-095-183-072.res.spectrum.com
- [97.95.183.72])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
- (No client certificate requested)
- by mail.stoffel.org (Postfix) with ESMTPSA id 1BBD61E4FA;
- Fri,  8 Sep 2023 12:49:08 -0400 (EDT)
-Received: by quad.stoffel.org (Postfix, from userid 1000)
- id B999DA8915; Fri,  8 Sep 2023 12:49:07 -0400 (EDT)
+ id D4773C03299; Fri,  8 Sep 2023 17:22:24 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id AF21AC03296;
+ Fri,  8 Sep 2023 17:22:24 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 388HMGqD006937;
+ Fri, 8 Sep 2023 12:22:16 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 388HMFRa006936;
+ Fri, 8 Sep 2023 12:22:15 -0500
+Date: Fri, 8 Sep 2023 12:22:15 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Message-ID: <20230908172215.GI7412@octiron.msp.redhat.com>
+References: <20230901180235.23980-1-mwilck@suse.com>
+ <20230901180235.23980-19-mwilck@suse.com>
+ <20230906224708.GC7412@octiron.msp.redhat.com>
+ <5cef84987794cc449028055a63c522c1ea690738.camel@suse.com>
+ <20230907191404.GG7412@octiron.msp.redhat.com>
+ <20230907200257.GH7412@octiron.msp.redhat.com>
+ <97ae2fd39a6f927441ebb861bf62d2e1a3223b9b.camel@suse.com>
 MIME-Version: 1.0
-Message-ID: <25851.20611.732252.455034@quad.stoffel.home>
-Date: Fri, 8 Sep 2023 12:49:07 -0400
-From: "John Stoffel" <john@stoffel.org>
-To: Christian Brauner <brauner@kernel.org>
-In-Reply-To: <20230908-verflachen-neudefinition-4da649d673a9@brauner>
-References: <20230906-aufheben-hagel-9925501b7822@brauner>
- <60f244be-803b-fa70-665e-b5cba15212e@redhat.com>
- <20230906-aufkam-bareinlage-6e7d06d58e90@brauner>
- <818a3cc0-c17b-22c0-4413-252dfb579cca@redhat.com>
- <20230907094457.vcvmixi23dk3pzqe@quack3>
- <20230907-abgrenzen-achtung-b17e9a1ad136@brauner>
- <513f337e-d254-2454-6197-82df564ed5fc@redhat.com>
- <20230908073244.wyriwwxahd3im2rw@quack3>
- <86235d7a-a7ea-49da-968e-c5810cbf4a7b@redhat.com>
- <20230908102014.xgtcf5wth2l2cwup@quack3>
- <20230908-verflachen-neudefinition-4da649d673a9@brauner>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-Subject: Re: [dm-devel] [PATCH] fix writing to the filesystem after unmount
+In-Reply-To: <97ae2fd39a6f927441ebb861bf62d2e1a3223b9b.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH 18/21] libmultipath: keep bindings in memory
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -102,107 +77,208 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jan Kara <jack@suse.cz>, "Darrick J. Wong" <djwong@kernel.org>,
- linux-kernel@vger.kernel.org, dm-devel@redhat.com,
- Mikulas Patocka <mpatocka@redhat.com>,
- Alexander Viro <viro@zeniv.linux.org.uk>, Zdenek Kabelac <zkabelac@redhat.com>,
- linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: stoffel.org
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
->>>>> "Christian" == Christian Brauner <brauner@kernel.org> writes:
+On Thu, Sep 07, 2023 at 10:43:27PM +0200, Martin Wilck wrote:
+> On Thu, 2023-09-07 at 15:02 -0500, Benjamin Marzinski wrote:
+> > On Thu, Sep 07, 2023 at 02:14:04PM -0500, Benjamin Marzinski wrote:
+> > > On Thu, Sep 07, 2023 at 12:30:53PM +0200, Martin Wilck wrote:
+> > > > On Wed, 2023-09-06 at 17:47 -0500, Benjamin Marzinski wrote:
+> > > > > On Fri, Sep 01, 2023 at 08:02:31PM +0200,
+> > > > > mwilck@suse.com=A0wrote:
+> > > > > > From: Martin Wilck <mwilck@suse.com>
+> > > Doh! You even mentioned this issue in your "fix alias tests"
+> > > commit. I
+> > > just didn't pay enough attention to it. But I believe there is a
+> > > way to
+> > > make sure that we are dealing with a correctly sorted list of
+> > > potential
+> > > bindings when calling get_free_id(), if we decide it's worth the
+> > > extra
+> > > work.
+> > >=20
+> > > The global_bindings isn't guaranteed to have all the bindings for
+> > > our
+> > > prefix correctly sorted, but they will all be in a group.=A0 If we
+> > > wanted,
+> > > we could create a new vector that just included these bindings, and
+> > > sort
+> > > it using the current prefix and a comparison function to do alias-
+> > > sytle
+> > > sorting. the msort_r() function takes an extra argument to pass to
+> > > the
+> > > compar() function, which could be the prefix.
+> > >=20
+> > > It would be great if we could just sort part of the global_bindings
+> > > vector in place, once we knew the prefix.=A0 Unfortunately, that
+> > > would
+> > > only work if we could know that no prefix can ever match a starting
+> > > substring of another prefix. Otherwise, sorting using one can make
+> > > the
+> > > other not be in a single continuous group.=A0 For instance, if some
+> > > device
+> > > configs used "mpatha" as a prefix, they would expect "mpathaaa" to
+> > > follow immediately after "mapthaz", but if the bindings file had
+> > > already
+> > > been sorted using the "mpath" prefix, then "mpathba" would follow
+> > > "mpathaz", and "mpathaaa" would come much later. Keeping the global
+> > > file
+> > > alphabetically sorted guarantees that no matter the prefix that
+> > > devices
+> > > were added under, all device aliases that are valid with that
+> > > prefix
+> > > will be in a group together.
+> > > =A0
+> > > So, is it worth it to make another vector, copy the alises which
+> > > are
+> > > valid with the current prefix into it, and then sort it?
+> > > get_free_id()
+> > > will be cleaner, and gap detection won't break down after you get
+> > > past
+> > > mpathaa, which it currently does with an alpahbetically sorted
+> > > bindings
+> > > list.
+> > >=20
+> > > Alternatively, we could just decide that setting a prefix in a
+> > > device
+> > > config that matches the starting substring of a another prefix is a
+> > > config error (obviously using the exact same prefix is fine), and
+> > > ignore
+> > > that prefix from the device config when we parse the configuration.
+> > > Then
+> > > we could read in the bindings alphabetically like we currently do,
+> > > find
+> > > the prefix groups in them, and sort them once, in-place. When
+> > > allocating
+> > > a binding, we would need to search backwards through the bindings
+> > > till
+> > > we found the end of the group matching our prefix (or an alias that
+> > > comes alphabetically before our prefix). Then we would have to
+> > > search
+> > > backwards through our prefix group using the id, till we found a
+> > > binding
+> > > with a smaller id.
+> >=20
+> > So, thinking about this a little more, assuming we would be writing
+> > out
+> > the bindings file in full alias sorted order, it's stupid to sort it
+> > alphabetically, and then resort it back to alias order.=A0 We should
+> > obviously read it in using the same method as when allocating a
+> > binding.
+> > Where you search backwards till you find your prefix group, and then
+> > find the proper spot in the prefix group using alias sorting.=A0
+> > Aliases
+> > that aren't valid for any configured prefix (these could have been
+> > added
+> > by hand to the bindings file, or possibly they were created with a
+> > different multipath configuration) will just get sorted
+> > alphabetically
+> > into the bindings list, between the prefix groups.
+> >=20
+> > Also, it's not enough to just ignore any device config prefix that is
+> > a
+> > starting substring of another prefix. The device config prefixes also
+> > cannot be superstrings of the default prefix, so if the default
+> > prefix
+> > is "mpath", both of the device config prefixes "mp" and "mpathdev"
+> > would
+> > need to be ignored.
+>=20
+> I don't quite understand yet. Assume we read the bindings file and
+> encounter an alias "mpathab". Is this alias #28 with prefix "mpath", or
+> is it #2 with prefix "mpatha", or perhaps alias guess-what  (order
+> "thab") with prefix "mpa"? How would we know at this point in the code?
+> Are you suggesting that we create a list of all configured prefixes and
+> compare the bindings we read with each of them?
 
->> Well, currently you click some "Eject / safely remove / whatever" button
->> and then you get a "wait" dialog until everything is done after which
->> you're told the stick is safe to remove. What I imagine is that the "wait"
->> dialog needs to be there while there are any (or exclusive at minimum) openers
->> of the device. Not until umount(2) syscall has returned. And yes, the
+So, the crux of my idea is that we disallow setting the alias_prefix to
+conflicting values like this in the config. After we parse the
+configuration, we have to go through all the alias_prefix settings and
+sanitize them.  If there's a alias_prefix in the overrides section,
+there's nothing to do, since all devices will use the same prefix.
+Otherwise, we need to make sure that no prefixes in the devices section
+are either starting substrings or starting superstrings of the default
+alias prefix. Additionally, we need to make sure that no devices section
+alias prefixes are starting substrings of another devices section alias
+prefix. If there is an invalid devices section alias_prefix, we need to
+print an error message and ignore it.
 
-> Agreed. umount(2) doesn't give guarantees about a filesystem being
-> really gone once it has returned. And it really shouldn't. There's
-> too many cases where that doesn't work and it's not a commitment we
-> should make.
+For instance, say that the default prefix is "mpath". If there was a
+devices section prefix that was "mp" or "mpathdev", we would print a
+error and simply ignore that setting, since "mp" is a starting
+substring of the default prefix, and "mpathdev" is a staring superstring
+of the default prefix. Devices of that type would just use the default
+"mpath" prefix.  Similarly, if there were two separate device section
+configs that had alias prefixes of "emc" and "emcdev", we would ignore
+the "emc" prefix, since it is a staring substring of "emcdev" (or we
+could choose to ignore the superstring prefixes for conflicts between
+two device section configs, it doesn't really matter which one we
+ignore).
 
-So how the heck is someone supposed to know, from userspace, that a
-filesystem is unmounted?  Just wearing my SysAdmin hat, this strikes
-me as really potentially painful and annoying.  But then again, so are
-bind mounts from alot of views too.  
+I realize that this is a new limitiation we are adding to multipath.
+Users were previously able to have device specific alias prefixes of
+"mp", for instance. But I would argue that we don't need to support
+conflicting prefixes.  Obviously, distrubutions may want to avoid adding
+this change until they are able to safely make non-backwards compatible
+changs. But I have pretty strong doubts that this change would
+negatively effect anyone.=20
 
-Don't people remember how bad it can be when you are trying to
-shutdown and system and it hangs because a remote NFS server is down
-and not responding?  And your client system hangs completely?  
+After parsing the config file, we will have a list of valid prefixes
+that do not conflict. Thus if strncmp(bdg->alias, prefix,
+strlen(prefix)) matches for one of the prefixes, it will not match for
+any other. Armed with this list of valid prefixes, when we add bindings
+to our list, we are able to sort them in alias order.  Now, when we read
+the the bindings from the bindings file, it's possible that some of them
+will not match any of our valid prefixes, but that's fine. If an alias
+doesn't match a valid prefix, we won't sort it in alias order, because
+we can't.  But since we only give out aliases that use the valid
+prefixes, we will never need to search through those non-matching
+aliases to find a free one. So we don't care how they are ordered, just
+so long as they don't come in the middle of a valid prefix group.
 
-> And there are ways to wait until superblock shutdown that I've
-> mentioned before in other places where it somehow really
-> matters. inotify's IN_UMOUNT will notify about superblock
-> shutdown. IOW, when it really hits generic_shutdown_super() which
-> can only be hit after unfreezing as that requires active references.
+To add a new binding, we first figure out if its alias matches a valid
+prefix. If it doesn't, we simply scan backwards through our existing
+list of bindings till we find an alias that comes alphabetically before
+it, and add the binding after that. If it does match a valid prefix, we
+scan backwards looking for the first alias that matches the prefix or is
+before it alphabetically. If we find a binding whose alias comes before
+it, then there are no devices with this prefix, and we add the new
+binding after it. If we find a binding with an alias whose start matches
+this prefix, we found our prefix group. Then we start searching
+backwards by ID until we either find a binding with an ID smaller than
+ours or we find a binding whose alias doesn't match our prefix, and we
+add the binding after it.
 
-Can we maybe invert this discussion and think about it from the
-userspace side of things?  How does the user(space) mount/unmount
-devices cleanly and reliably?  
 
-> So this really can be used to wait for a filesystem to go away across
-> all namespaces, and across filesytem freezing and it's available to
-> unprivileged users. Simple example:
+=20
+> Our bindings list is now partially sorted, which is an improvement wrt
+> the previous situation. "missing the gap" is not really an awful
+> problem [*]. Perhaps we could postpone this for after this patch set,
+> and give it some more time to sink in?
 
-> # shell 1
-> sudo mount -t xfs /dev/sda /mnt
-> sudo mount --bind /mnt /opt
-> inotifywait -e unmount /mnt
+Yep. I'm fine with going ahead with this patchset as it is. Both sorting
+the bindings in alias order and updating the bindings if
+/etc/multipath/bindings has changed are things that can get looked at
+afterwards. And I'm fine with doing this work, if you want.
 
-> #shell 2
-> sudo umount /opt # nothing happens in shell 1
-> sudo umount /mnt # shell 1 gets woken
-
-So what makes this *useful* to anyone?  Why doesn't the bind mount
-A) lock /mnt into place, but B) give you some way of seeing that
-there's a bindmount in place?  
-
->> corner-cases. So does the current behavior, I agree, but improving
->> situation for one usecase while breaking another usecase isn't really a way
->> forward...
-
-> Agreed.
-
->> Well, the filesystem (struct superblock to be exact) is invisible
->> in /proc/mounts (or whatever), that is true. But it is still very
->> much associated with that block device and if you do 'mount
->> <device> <mntpoint>', you'll get it back. But yes, the filesystem
->> will not go away
-
-Then should it be unmountable in the first place?  I mean yes, we
-always need a way to force an unmount no matter what, even if that
-breaks some other process on the system, but for regular use,
-shouldn't it just give back an error like:
-
-	  /mnt in use by bind mount /opt
-
-or something like that?  Give the poor sysadmin some information on
-what's going on here. 
-
-> And now we at least have an api to detect that case and refuse to reuse
-> the superblock.
-
->> until all references to it are dropped and you cannot easily find
->> who holds those references and how to get rid of them.
-
-ding ding ding!!!!  I don't want to have to run 'lsof' or something
-like that.
-
-> Namespaces make this even messier. You have no easy way of knowing
-> whether the filesystem isn't pinned somewhere else through an
-> explicit bind-mount or when it was copied during mount namespace
-> creation.
-
-This is the biggest downside of namespaces and bind mounts in my
-mind.  The lack of traceability back to the source.  
-
+-Ben
+=20
+> Martin
+>=20
+> [*] I admit that with my patch, we _know_ now that the bindings list
+> will be sub-optimally sorted as soon as mpathaa is reached, whereas
+> before the ordering might be perfect even with a large number of
+> aliases, depending on the history of the bindings file. That's not a
+> change for the better; it will cause the gap to be missed in some
+> situations where we don't miss it now. I am not sure how bad this is.
 --
 dm-devel mailing list
 dm-devel@redhat.com
