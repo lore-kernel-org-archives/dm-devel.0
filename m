@@ -4,68 +4,88 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D7FD9EEB561
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Sep 2023 17:22:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D558AEEB589
+	for <dm-devel@archiver.kernel.org>; Sat,  9 Sep 2023 11:09:45 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694193751;
+	s=mimecast20190719; t=1694257784;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=nPLZn52S5IBClYjc5gJG+4k44IQcw1d6mkOMUlwQWko=;
-	b=hPguMe3UP/91fyBgSV2Qujx3C+8IcNLfUDI1eiboVEQ1os9mXocTK+p6y72zTscKiuOhJW
-	JIab9orBThwYDWHvP5251/mmyaa6nU7R2bpmUcuACTlVKklAZ5smsS8GP4RVB1/N/VEo6j
-	xNcn7GjcPty0CttgMNdalM9DxlqShE4=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-581-q1hppNtLM9mGEBHga8cZGw-1; Fri, 08 Sep 2023 13:22:28 -0400
-X-MC-Unique: q1hppNtLM9mGEBHga8cZGw-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+	bh=TX0wyM5VXTb9ybbjXU0WRohoDNIPUY2ajwplIEWbNoI=;
+	b=ImLkTSAyfe8D2pqGYkLtg0zQP3riAbUmPWJnM9sOWdIydXx0Una8eMzsLtX6r+Zf1B6LNO
+	UY13KSBG/trUWD1lXvLuq6XeE6KlsmDePP3swuRErOZVTHz9FfaA0teU0uphHGP8dmhqvF
+	LfPcMnfOABM15k8fdw9DReOVAtJ80Cs=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-377-E5vYZTcuPNKxzzlX0ryYng-1; Sat, 09 Sep 2023 07:09:41 -0400
+X-MC-Unique: E5vYZTcuPNKxzzlX0ryYng-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 25E50816525;
-	Fri,  8 Sep 2023 17:22:27 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2A5DB3C0E218;
+	Sat,  9 Sep 2023 11:09:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 95ADB493112;
-	Fri,  8 Sep 2023 17:22:26 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 21FC4140E967;
+	Sat,  9 Sep 2023 11:09:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 48A61194658C;
-	Fri,  8 Sep 2023 17:22:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B55BE1946588;
+	Sat,  9 Sep 2023 11:09:35 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0E5E91946586
- for <dm-devel@listman.corp.redhat.com>; Fri,  8 Sep 2023 17:22:25 +0000 (UTC)
+ ESMTP id 1ADFA1946586
+ for <dm-devel@listman.corp.redhat.com>; Sat,  9 Sep 2023 11:09:33 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D4773C03299; Fri,  8 Sep 2023 17:22:24 +0000 (UTC)
-Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id AF21AC03296;
- Fri,  8 Sep 2023 17:22:24 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 388HMGqD006937;
- Fri, 8 Sep 2023 12:22:16 -0500
-Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 388HMFRa006936;
- Fri, 8 Sep 2023 12:22:15 -0500
-Date: Fri, 8 Sep 2023 12:22:15 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <mwilck@suse.com>
-Message-ID: <20230908172215.GI7412@octiron.msp.redhat.com>
-References: <20230901180235.23980-1-mwilck@suse.com>
- <20230901180235.23980-19-mwilck@suse.com>
- <20230906224708.GC7412@octiron.msp.redhat.com>
- <5cef84987794cc449028055a63c522c1ea690738.camel@suse.com>
- <20230907191404.GG7412@octiron.msp.redhat.com>
- <20230907200257.GH7412@octiron.msp.redhat.com>
- <97ae2fd39a6f927441ebb861bf62d2e1a3223b9b.camel@suse.com>
+ id C7E7D1121318; Sat,  9 Sep 2023 11:09:33 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id BEAEA1121314
+ for <dm-devel@redhat.com>; Sat,  9 Sep 2023 11:09:33 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9F405181A6E0
+ for <dm-devel@redhat.com>; Sat,  9 Sep 2023 11:09:33 +0000 (UTC)
+Received: from szxga01-in.huawei.com (szxga01-in.huawei.com
+ [45.249.212.187]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-675-C_LF4aiWM7SxEoVzyH6STQ-1; Sat, 09 Sep 2023 07:09:30 -0400
+X-MC-Unique: C_LF4aiWM7SxEoVzyH6STQ-1
+Received: from dggpemm500011.china.huawei.com (unknown [172.30.72.57])
+ by szxga01-in.huawei.com (SkyGuard) with ESMTP id 4RjVWR2C0YztRXM;
+ Sat,  9 Sep 2023 19:05:23 +0800 (CST)
+Received: from [10.174.179.155] (10.174.179.155) by
+ dggpemm500011.china.huawei.com (7.185.36.110) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2507.31; Sat, 9 Sep 2023 19:09:25 +0800
+Message-ID: <dbbb7133-9796-6546-e227-5528a1bbd4e9@huawei.com>
+Date: Sat, 9 Sep 2023 19:09:24 +0800
 MIME-Version: 1.0
-In-Reply-To: <97ae2fd39a6f927441ebb861bf62d2e1a3223b9b.camel@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH 18/21] libmultipath: keep bindings in memory
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) Gecko/20100101
+ Thunderbird/104.0
+To: <dm-devel@redhat.com>
+References: <20230810064406.1672148-1-lilingfeng3@huawei.com>
+From: Li Lingfeng <lilingfeng3@huawei.com>
+In-Reply-To: <20230810064406.1672148-1-lilingfeng3@huawei.com>
+X-Originating-IP: [10.174.179.155]
+X-ClientProxiedBy: dggems702-chm.china.huawei.com (10.3.19.179) To
+ dggpemm500011.china.huawei.com (7.185.36.110)
+X-CFilter-Loop: Reflected
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH -next] dm snapshot: record cause of
+ invalidating snapshot
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -77,210 +97,128 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com
+Cc: yi.zhang@huawei.com, yangerkun@huawei.com, snitzer@kernel.org,
+ lilingfeng@huaweicloud.com, linan122@huawei.com, houtao1@huawei.com,
+ yukuai3@huawei.com, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+X-Mimecast-Originator: huawei.com
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-On Thu, Sep 07, 2023 at 10:43:27PM +0200, Martin Wilck wrote:
-> On Thu, 2023-09-07 at 15:02 -0500, Benjamin Marzinski wrote:
-> > On Thu, Sep 07, 2023 at 02:14:04PM -0500, Benjamin Marzinski wrote:
-> > > On Thu, Sep 07, 2023 at 12:30:53PM +0200, Martin Wilck wrote:
-> > > > On Wed, 2023-09-06 at 17:47 -0500, Benjamin Marzinski wrote:
-> > > > > On Fri, Sep 01, 2023 at 08:02:31PM +0200,
-> > > > > mwilck@suse.com=A0wrote:
-> > > > > > From: Martin Wilck <mwilck@suse.com>
-> > > Doh! You even mentioned this issue in your "fix alias tests"
-> > > commit. I
-> > > just didn't pay enough attention to it. But I believe there is a
-> > > way to
-> > > make sure that we are dealing with a correctly sorted list of
-> > > potential
-> > > bindings when calling get_free_id(), if we decide it's worth the
-> > > extra
-> > > work.
-> > >=20
-> > > The global_bindings isn't guaranteed to have all the bindings for
-> > > our
-> > > prefix correctly sorted, but they will all be in a group.=A0 If we
-> > > wanted,
-> > > we could create a new vector that just included these bindings, and
-> > > sort
-> > > it using the current prefix and a comparison function to do alias-
-> > > sytle
-> > > sorting. the msort_r() function takes an extra argument to pass to
-> > > the
-> > > compar() function, which could be the prefix.
-> > >=20
-> > > It would be great if we could just sort part of the global_bindings
-> > > vector in place, once we knew the prefix.=A0 Unfortunately, that
-> > > would
-> > > only work if we could know that no prefix can ever match a starting
-> > > substring of another prefix. Otherwise, sorting using one can make
-> > > the
-> > > other not be in a single continuous group.=A0 For instance, if some
-> > > device
-> > > configs used "mpatha" as a prefix, they would expect "mpathaaa" to
-> > > follow immediately after "mapthaz", but if the bindings file had
-> > > already
-> > > been sorted using the "mpath" prefix, then "mpathba" would follow
-> > > "mpathaz", and "mpathaaa" would come much later. Keeping the global
-> > > file
-> > > alphabetically sorted guarantees that no matter the prefix that
-> > > devices
-> > > were added under, all device aliases that are valid with that
-> > > prefix
-> > > will be in a group together.
-> > > =A0
-> > > So, is it worth it to make another vector, copy the alises which
-> > > are
-> > > valid with the current prefix into it, and then sort it?
-> > > get_free_id()
-> > > will be cleaner, and gap detection won't break down after you get
-> > > past
-> > > mpathaa, which it currently does with an alpahbetically sorted
-> > > bindings
-> > > list.
-> > >=20
-> > > Alternatively, we could just decide that setting a prefix in a
-> > > device
-> > > config that matches the starting substring of a another prefix is a
-> > > config error (obviously using the exact same prefix is fine), and
-> > > ignore
-> > > that prefix from the device config when we parse the configuration.
-> > > Then
-> > > we could read in the bindings alphabetically like we currently do,
-> > > find
-> > > the prefix groups in them, and sort them once, in-place. When
-> > > allocating
-> > > a binding, we would need to search backwards through the bindings
-> > > till
-> > > we found the end of the group matching our prefix (or an alias that
-> > > comes alphabetically before our prefix). Then we would have to
-> > > search
-> > > backwards through our prefix group using the id, till we found a
-> > > binding
-> > > with a smaller id.
-> >=20
-> > So, thinking about this a little more, assuming we would be writing
-> > out
-> > the bindings file in full alias sorted order, it's stupid to sort it
-> > alphabetically, and then resort it back to alias order.=A0 We should
-> > obviously read it in using the same method as when allocating a
-> > binding.
-> > Where you search backwards till you find your prefix group, and then
-> > find the proper spot in the prefix group using alias sorting.=A0
-> > Aliases
-> > that aren't valid for any configured prefix (these could have been
-> > added
-> > by hand to the bindings file, or possibly they were created with a
-> > different multipath configuration) will just get sorted
-> > alphabetically
-> > into the bindings list, between the prefix groups.
-> >=20
-> > Also, it's not enough to just ignore any device config prefix that is
-> > a
-> > starting substring of another prefix. The device config prefixes also
-> > cannot be superstrings of the default prefix, so if the default
-> > prefix
-> > is "mpath", both of the device config prefixes "mp" and "mpathdev"
-> > would
-> > need to be ignored.
->=20
-> I don't quite understand yet. Assume we read the bindings file and
-> encounter an alias "mpathab". Is this alias #28 with prefix "mpath", or
-> is it #2 with prefix "mpatha", or perhaps alias guess-what  (order
-> "thab") with prefix "mpa"? How would we know at this point in the code?
-> Are you suggesting that we create a list of all configured prefixes and
-> compare the bindings we read with each of them?
-
-So, the crux of my idea is that we disallow setting the alias_prefix to
-conflicting values like this in the config. After we parse the
-configuration, we have to go through all the alias_prefix settings and
-sanitize them.  If there's a alias_prefix in the overrides section,
-there's nothing to do, since all devices will use the same prefix.
-Otherwise, we need to make sure that no prefixes in the devices section
-are either starting substrings or starting superstrings of the default
-alias prefix. Additionally, we need to make sure that no devices section
-alias prefixes are starting substrings of another devices section alias
-prefix. If there is an invalid devices section alias_prefix, we need to
-print an error message and ignore it.
-
-For instance, say that the default prefix is "mpath". If there was a
-devices section prefix that was "mp" or "mpathdev", we would print a
-error and simply ignore that setting, since "mp" is a starting
-substring of the default prefix, and "mpathdev" is a staring superstring
-of the default prefix. Devices of that type would just use the default
-"mpath" prefix.  Similarly, if there were two separate device section
-configs that had alias prefixes of "emc" and "emcdev", we would ignore
-the "emc" prefix, since it is a staring substring of "emcdev" (or we
-could choose to ignore the superstring prefixes for conflicts between
-two device section configs, it doesn't really matter which one we
-ignore).
-
-I realize that this is a new limitiation we are adding to multipath.
-Users were previously able to have device specific alias prefixes of
-"mp", for instance. But I would argue that we don't need to support
-conflicting prefixes.  Obviously, distrubutions may want to avoid adding
-this change until they are able to safely make non-backwards compatible
-changs. But I have pretty strong doubts that this change would
-negatively effect anyone.=20
-
-After parsing the config file, we will have a list of valid prefixes
-that do not conflict. Thus if strncmp(bdg->alias, prefix,
-strlen(prefix)) matches for one of the prefixes, it will not match for
-any other. Armed with this list of valid prefixes, when we add bindings
-to our list, we are able to sort them in alias order.  Now, when we read
-the the bindings from the bindings file, it's possible that some of them
-will not match any of our valid prefixes, but that's fine. If an alias
-doesn't match a valid prefix, we won't sort it in alias order, because
-we can't.  But since we only give out aliases that use the valid
-prefixes, we will never need to search through those non-matching
-aliases to find a free one. So we don't care how they are ordered, just
-so long as they don't come in the middle of a valid prefix group.
-
-To add a new binding, we first figure out if its alias matches a valid
-prefix. If it doesn't, we simply scan backwards through our existing
-list of bindings till we find an alias that comes alphabetically before
-it, and add the binding after that. If it does match a valid prefix, we
-scan backwards looking for the first alias that matches the prefix or is
-before it alphabetically. If we find a binding whose alias comes before
-it, then there are no devices with this prefix, and we add the new
-binding after it. If we find a binding with an alias whose start matches
-this prefix, we found our prefix group. Then we start searching
-backwards by ID until we either find a binding with an ID smaller than
-ours or we find a binding whose alias doesn't match our prefix, and we
-add the binding after it.
-
-
-=20
-> Our bindings list is now partially sorted, which is an improvement wrt
-> the previous situation. "missing the gap" is not really an awful
-> problem [*]. Perhaps we could postpone this for after this patch set,
-> and give it some more time to sink in?
-
-Yep. I'm fine with going ahead with this patchset as it is. Both sorting
-the bindings in alias order and updating the bindings if
-/etc/multipath/bindings has changed are things that can get looked at
-afterwards. And I'm fine with doing this work, if you want.
-
--Ben
-=20
-> Martin
->=20
-> [*] I admit that with my patch, we _know_ now that the bindings list
-> will be sub-optimally sorted as soon as mpathaa is reached, whereas
-> before the ordering might be perfect even with a large number of
-> aliases, depending on the history of the bindings file. That's not a
-> change for the better; it will cause the gap to be missed in some
-> situations where we don't miss it now. I am not sure how bad this is.
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+RnJpZW5kbHkgcGluZyAuLi4KClRoYW5rcwoK5ZyoIDIwMjMvOC8xMCAxNDo0NCwgTGkgTGluZ2Zl
+bmcg5YaZ6YGTOgo+IFRoZSBjYXVzZSBvZiBpbnZhbGlkYXRpbmcgc25hcHNob3Qgd2lsbCBiZSBw
+cmludCBpbiBsb2cuIEhvd2V2ZXIsIGlmIHdlCj4gbG9zdCB0aGUgbG9nLCB3ZSB3aWxsIG5ldmVy
+IGdldCB0aGUgY2F1c2UuIFdoYXQgd2UgY2FuIGdldCBieSAiZG1zZXR1cAo+IHN0YXR1cyIgaXMg
+dGhlIHN0YXRlIG9mICJJbnZhbGlkIiB3aXRob3V0IHRoZSBjYXVzZS4KPgo+IFJlY29yZCBjYXVz
+ZSBvZiBpbnZhbGlkYXRpbmcgc25hcHNob3QgaW4gc25hcHNob3QtPnZhbGlkLCBzbyB0aGF0IHdl
+IGNhbgo+IHF1ZXJ5IHRoZSBjYXVzZSBieSAiZG1zZXR1cCBzdGF0dXMiLgo+Cj4gU2lnbmVkLW9m
+Zi1ieTogTGkgTGluZ2ZlbmcgPGxpbGluZ2ZlbmczQGh1YXdlaS5jb20+Cj4gLS0tCj4gICBkcml2
+ZXJzL21kL2RtLXNuYXAuYyB8IDYwICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0t
+LS0tLS0tLS0tCj4gICAxIGZpbGUgY2hhbmdlZCwgNDUgaW5zZXJ0aW9ucygrKSwgMTUgZGVsZXRp
+b25zKC0pCj4KPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS1zbmFwLmMgYi9kcml2ZXJzL21k
+L2RtLXNuYXAuYwo+IGluZGV4IDQxNzM1YTI1ZDUwYS4uNDg3ODg0MzFlN2JmIDEwMDY0NAo+IC0t
+LSBhL2RyaXZlcnMvbWQvZG0tc25hcC5jCj4gKysrIGIvZHJpdmVycy9tZC9kbS1zbmFwLmMKPiBA
+QCAtMzksNiArMzksMjggQEAgc3RhdGljIGNvbnN0IGNoYXIgZG1fc25hcHNob3RfbWVyZ2VfdGFy
+Z2V0X25hbWVbXSA9ICJzbmFwc2hvdC1tZXJnZSI7Cj4gICAjZGVmaW5lIERNX1RSQUNLRURfQ0hV
+TktfSEFTSCh4KQkoKHVuc2lnbmVkIGxvbmcpKHgpICYgXAo+ICAgCQkJCQkgKERNX1RSQUNLRURf
+Q0hVTktfSEFTSF9TSVpFIC0gMSkpCj4gICAKPiArI2RlZmluZSBJTlZBTElEX0NBVVNFX0JJVAkJ
+MTYKPiArI2RlZmluZSBETV9TTkFQU0hPVF9WQUxJRChzKQkJKHMtPnZhbGlkICYgXAo+ICsJCQkJ
+CSgoMSA8PCBJTlZBTElEX0NBVVNFX0JJVCkgLSAxKSkKPiArI2RlZmluZSBETV9TTkFQU0hPVF9J
+TlZBTElEX0NBVVNFKHMpCShzLT52YWxpZCA+PiBJTlZBTElEX0NBVVNFX0JJVCkKPiArI2RlZmlu
+ZSBTRVRfSU5WQUxJRF9DQVVTRShzLCBjYXVzZSkJKHMtPnZhbGlkID0gXAo+ICsJCQkJCShETV9T
+TkFQU0hPVF9WQUxJRChzKSB8IFwKPiArCQkJCQkoY2F1c2UgPDwgSU5WQUxJRF9DQVVTRV9CSVQp
+KSkKPiArCj4gK2VudW0gaW52YWxpZF9jYXVzZSB7Cj4gKwlJTlZBTElEX0JZX01FVEFEQVRBID0g
+MSwKPiArCUlOVkFMSURfQllfSEFORE9WRVIgPSAyLAo+ICsJSU5WQUxJRF9CWV9DQUNFTExJTkdf
+SEFORE9WRVIgPSAzLAo+ICsJSU5WQUxJRF9CWV9FSU8gPSA0LAo+ICsJSU5WQUxJRF9CWV9FTk9N
+RU0gPSA1Cj4gK307Cj4gKwo+ICtjaGFyICpkaXNwbGF5X2ludmFsaWRfY2F1c2VbXSA9IHsiYnkg
+TUVUQURBVEEiLAo+ICsJCQkJICJieSBIQU5ET1ZFUiIsCj4gKwkJCQkgImJ5IENBTkNFTExJTkcg
+SEFORE9WRVIiLAo+ICsJCQkJICJieSBFSU8iLAo+ICsJCQkJICJieSBFTk9NRU0ifTsKPiArCj4g
+ICBzdHJ1Y3QgZG1fZXhjZXB0aW9uX3RhYmxlIHsKPiAgIAl1aW50MzJfdCBoYXNoX21hc2s7Cj4g
+ICAJdW5zaWduZWQgaGFzaF9zaGlmdDsKPiBAQCAtMTA1NCw3ICsxMDc2LDcgQEAgc3RhdGljIHZv
+aWQgc25hcHNob3RfbWVyZ2VfbmV4dF9jaHVua3Moc3RydWN0IGRtX3NuYXBzaG90ICpzKQo+ICAg
+CS8qCj4gICAJICogdmFsaWQgZmxhZyBuZXZlciBjaGFuZ2VzIGR1cmluZyBtZXJnZSwgc28gbm8g
+bG9jayByZXF1aXJlZC4KPiAgIAkgKi8KPiAtCWlmICghcy0+dmFsaWQpIHsKPiArCWlmICghRE1f
+U05BUFNIT1RfVkFMSUQocykpIHsKPiAgIAkJRE1FUlIoIlNuYXBzaG90IGlzIGludmFsaWQ6IGNh
+bid0IG1lcmdlIik7Cj4gICAJCWdvdG8gc2h1dDsKPiAgIAl9Cj4gQEAgLTE0MDMsNiArMTQyNSw3
+IEBAIHN0YXRpYyBpbnQgc25hcHNob3RfY3RyKHN0cnVjdCBkbV90YXJnZXQgKnRpLCB1bnNpZ25l
+ZCBpbnQgYXJnYywgY2hhciAqKmFyZ3YpCj4gICAJCWdvdG8gYmFkX3JlYWRfbWV0YWRhdGE7Cj4g
+ICAJfSBlbHNlIGlmIChyID4gMCkgewo+ICAgCQlzLT52YWxpZCA9IDA7Cj4gKwkJU0VUX0lOVkFM
+SURfQ0FVU0UocywgSU5WQUxJRF9CWV9NRVRBREFUQSk7Cj4gICAJCURNV0FSTigiU25hcHNob3Qg
+aXMgbWFya2VkIGludmFsaWQuIik7Cj4gICAJfQo+ICAgCj4gQEAgLTE0ODAsNiArMTUwMyw3IEBA
+IHN0YXRpYyB2b2lkIF9faGFuZG92ZXJfZXhjZXB0aW9ucyhzdHJ1Y3QgZG1fc25hcHNob3QgKnNu
+YXBfc3JjLAo+ICAgCSAqIFNldCBzb3VyY2UgaW52YWxpZCB0byBlbnN1cmUgaXQgcmVjZWl2ZXMg
+bm8gZnVydGhlciBJL08uCj4gICAJICovCj4gICAJc25hcF9zcmMtPnZhbGlkID0gMDsKPiArCVNF
+VF9JTlZBTElEX0NBVVNFKHNuYXBfc3JjLCBJTlZBTElEX0JZX0hBTkRPVkVSKTsKPiAgIH0KPiAg
+IAo+ICAgc3RhdGljIHZvaWQgc25hcHNob3RfZHRyKHN0cnVjdCBkbV90YXJnZXQgKnRpKQo+IEBA
+IC0xNDk2LDYgKzE1MjAsNyBAQCBzdGF0aWMgdm9pZCBzbmFwc2hvdF9kdHIoc3RydWN0IGRtX3Rh
+cmdldCAqdGkpCj4gICAJaWYgKHNuYXBfc3JjICYmIHNuYXBfZGVzdCAmJiAocyA9PSBzbmFwX3Ny
+YykpIHsKPiAgIAkJZG93bl93cml0ZSgmc25hcF9kZXN0LT5sb2NrKTsKPiAgIAkJc25hcF9kZXN0
+LT52YWxpZCA9IDA7Cj4gKwkJU0VUX0lOVkFMSURfQ0FVU0Uoc25hcF9kZXN0LCBJTlZBTElEX0JZ
+X0hBTkRPVkVSKTsKPiAgIAkJdXBfd3JpdGUoJnNuYXBfZGVzdC0+bG9jayk7Cj4gICAJCURNRVJS
+KCJDYW5jZWxsaW5nIHNuYXBzaG90IGhhbmRvdmVyLiIpOwo+ICAgCX0KPiBAQCAtMTYzNSwxOCAr
+MTY2MCwyMSBAQCBzdGF0aWMgdm9pZCBlcnJvcl9iaW9zKHN0cnVjdCBiaW8gKmJpbykKPiAgIAo+
+ICAgc3RhdGljIHZvaWQgX19pbnZhbGlkYXRlX3NuYXBzaG90KHN0cnVjdCBkbV9zbmFwc2hvdCAq
+cywgaW50IGVycikKPiAgIHsKPiAtCWlmICghcy0+dmFsaWQpCj4gKwlpZiAoIURNX1NOQVBTSE9U
+X1ZBTElEKHMpKQo+ICAgCQlyZXR1cm47Cj4gICAKPiAtCWlmIChlcnIgPT0gLUVJTykKPiAtCQlE
+TUVSUigiSW52YWxpZGF0aW5nIHNuYXBzaG90OiBFcnJvciByZWFkaW5nL3dyaXRpbmcuIik7Cj4g
+LQllbHNlIGlmIChlcnIgPT0gLUVOT01FTSkKPiAtCQlETUVSUigiSW52YWxpZGF0aW5nIHNuYXBz
+aG90OiBVbmFibGUgdG8gYWxsb2NhdGUgZXhjZXB0aW9uLiIpOwo+IC0KPiAgIAlpZiAocy0+c3Rv
+cmUtPnR5cGUtPmRyb3Bfc25hcHNob3QpCj4gICAJCXMtPnN0b3JlLT50eXBlLT5kcm9wX3NuYXBz
+aG90KHMtPnN0b3JlKTsKPiAgIAo+ICAgCXMtPnZhbGlkID0gMDsKPiArCWlmIChlcnIgPT0gLUVJ
+Tykgewo+ICsJCVNFVF9JTlZBTElEX0NBVVNFKHMsIElOVkFMSURfQllfRUlPKTsKPiArCQlETUVS
+UigiSW52YWxpZGF0aW5nIHNuYXBzaG90OiBFcnJvciByZWFkaW5nL3dyaXRpbmcuIik7Cj4gKwl9
+IGVsc2UgaWYgKGVyciA9PSAtRU5PTUVNKSB7Cj4gKwkJU0VUX0lOVkFMSURfQ0FVU0UocywgSU5W
+QUxJRF9CWV9FTk9NRU0pOwo+ICsJCURNRVJSKCJJbnZhbGlkYXRpbmcgc25hcHNob3Q6IFVuYWJs
+ZSB0byBhbGxvY2F0ZSBleGNlcHRpb24uIik7Cj4gKwl9Cj4gKwo+ICAgCj4gICAJZG1fdGFibGVf
+ZXZlbnQocy0+dGktPnRhYmxlKTsKPiAgIH0KPiBAQCAtMTY5Miw3ICsxNzIwLDcgQEAgc3RhdGlj
+IHZvaWQgcGVuZGluZ19jb21wbGV0ZSh2b2lkICpjb250ZXh0LCBpbnQgc3VjY2VzcykKPiAgIAo+
+ICAgCWRvd25fcmVhZCgmcy0+bG9jayk7Cj4gICAJZG1fZXhjZXB0aW9uX3RhYmxlX2xvY2soJmxv
+Y2spOwo+IC0JaWYgKCFzLT52YWxpZCkgewo+ICsJaWYgKCFETV9TTkFQU0hPVF9WQUxJRChzKSkg
+ewo+ICAgCQl1cF9yZWFkKCZzLT5sb2NrKTsKPiAgIAkJZnJlZV9jb21wbGV0ZWRfZXhjZXB0aW9u
+KGUpOwo+ICAgCQllcnJvciA9IDE7Cj4gQEAgLTE5ODQsNyArMjAxMiw3IEBAIHN0YXRpYyBpbnQg
+c25hcHNob3RfbWFwKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBzdHJ1Y3QgYmlvICpiaW8pCj4gICAK
+PiAgIAkvKiBGdWxsIHNuYXBzaG90cyBhcmUgbm90IHVzYWJsZSAqLwo+ICAgCS8qIFRvIGdldCBo
+ZXJlIHRoZSB0YWJsZSBtdXN0IGJlIGxpdmUgc28gcy0+YWN0aXZlIGlzIGFsd2F5cyBzZXQuICov
+Cj4gLQlpZiAoIXMtPnZhbGlkKQo+ICsJaWYgKCFETV9TTkFQU0hPVF9WQUxJRChzKSkKPiAgIAkJ
+cmV0dXJuIERNX01BUElPX0tJTEw7Cj4gICAKPiAgIAlpZiAoYmlvX2RhdGFfZGlyKGJpbykgPT0g
+V1JJVEUpIHsKPiBAQCAtMTk5NSw3ICsyMDIzLDcgQEAgc3RhdGljIGludCBzbmFwc2hvdF9tYXAo
+c3RydWN0IGRtX3RhcmdldCAqdGksIHN0cnVjdCBiaW8gKmJpbykKPiAgIAlkb3duX3JlYWQoJnMt
+PmxvY2spOwo+ICAgCWRtX2V4Y2VwdGlvbl90YWJsZV9sb2NrKCZsb2NrKTsKPiAgIAo+IC0JaWYg
+KCFzLT52YWxpZCB8fCAodW5saWtlbHkocy0+c25hcHNob3Rfb3ZlcmZsb3dlZCkgJiYKPiArCWlm
+ICghRE1fU05BUFNIT1RfVkFMSUQocykgfHwgKHVubGlrZWx5KHMtPnNuYXBzaG90X292ZXJmbG93
+ZWQpICYmCj4gICAJICAgIGJpb19kYXRhX2RpcihiaW8pID09IFdSSVRFKSkgewo+ICAgCQlyID0g
+RE1fTUFQSU9fS0lMTDsKPiAgIAkJZ290byBvdXRfdW5sb2NrOwo+IEBAIC0yMDY4LDcgKzIwOTYs
+NyBAQCBzdGF0aWMgaW50IHNuYXBzaG90X21hcChzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgc3RydWN0
+IGJpbyAqYmlvKQo+ICAgCQkJCWRvd25fd3JpdGUoJnMtPmxvY2spOwo+ICAgCj4gICAJCQkJaWYg
+KHMtPnN0b3JlLT51c2Vyc3BhY2Vfc3VwcG9ydHNfb3ZlcmZsb3cpIHsKPiAtCQkJCQlpZiAocy0+
+dmFsaWQgJiYgIXMtPnNuYXBzaG90X292ZXJmbG93ZWQpIHsKPiArCQkJCQlpZiAoRE1fU05BUFNI
+T1RfVkFMSUQocykgJiYgIXMtPnNuYXBzaG90X292ZXJmbG93ZWQpIHsKPiAgIAkJCQkJCXMtPnNu
+YXBzaG90X292ZXJmbG93ZWQgPSAxOwo+ICAgCQkJCQkJRE1FUlIoIlNuYXBzaG90IG92ZXJmbG93
+ZWQ6IFVuYWJsZSB0byBhbGxvY2F0ZSBleGNlcHRpb24uIik7Cj4gICAJCQkJCX0KPiBAQCAtMjE1
+OSw3ICsyMTg3LDcgQEAgc3RhdGljIGludCBzbmFwc2hvdF9tZXJnZV9tYXAoc3RydWN0IGRtX3Rh
+cmdldCAqdGksIHN0cnVjdCBiaW8gKmJpbykKPiAgIAlkb3duX3dyaXRlKCZzLT5sb2NrKTsKPiAg
+IAo+ICAgCS8qIEZ1bGwgbWVyZ2luZyBzbmFwc2hvdHMgYXJlIHJlZGlyZWN0ZWQgdG8gdGhlIG9y
+aWdpbiAqLwo+IC0JaWYgKCFzLT52YWxpZCkKPiArCWlmICghRE1fU05BUFNIT1RfVkFMSUQocykp
+Cj4gICAJCWdvdG8gcmVkaXJlY3RfdG9fb3JpZ2luOwo+ICAgCj4gICAJLyogSWYgdGhlIGJsb2Nr
+IGlzIGFscmVhZHkgcmVtYXBwZWQgLSB1c2UgdGhhdCAqLwo+IEBAIC0yMzQ0LDggKzIzNzIsMTAg
+QEAgc3RhdGljIHZvaWQgc25hcHNob3Rfc3RhdHVzKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBzdGF0
+dXNfdHlwZV90IHR5cGUsCj4gICAKPiAgIAkJZG93bl93cml0ZSgmc25hcC0+bG9jayk7Cj4gICAK
+PiAtCQlpZiAoIXNuYXAtPnZhbGlkKQo+IC0JCQlETUVNSVQoIkludmFsaWQiKTsKPiArCQlpZiAo
+IURNX1NOQVBTSE9UX1ZBTElEKHNuYXApKQo+ICsJCQlETUVNSVQoIkludmFsaWQgJXMiLCBETV9T
+TkFQU0hPVF9JTlZBTElEX0NBVVNFKHNuYXApID8KPiArCQkJCQlkaXNwbGF5X2ludmFsaWRfY2F1
+c2VbRE1fU05BUFNIT1RfSU5WQUxJRF9DQVVTRShzbmFwKSAtIDFdIDoKPiArCQkJCQkiIik7Cj4g
+ICAJCWVsc2UgaWYgKHNuYXAtPm1lcmdlX2ZhaWxlZCkKPiAgIAkJCURNRU1JVCgiTWVyZ2UgZmFp
+bGVkIik7Cj4gICAJCWVsc2UgaWYgKHNuYXAtPnNuYXBzaG90X292ZXJmbG93ZWQpCj4gQEAgLTI0
+NzcsNyArMjUwNyw3IEBAIHN0YXRpYyBpbnQgX19vcmlnaW5fd3JpdGUoc3RydWN0IGxpc3RfaGVh
+ZCAqc25hcHNob3RzLCBzZWN0b3JfdCBzZWN0b3IsCj4gICAJCWRtX2V4Y2VwdGlvbl90YWJsZV9s
+b2NrKCZsb2NrKTsKPiAgIAo+ICAgCQkvKiBPbmx5IGRlYWwgd2l0aCB2YWxpZCBhbmQgYWN0aXZl
+IHNuYXBzaG90cyAqLwo+IC0JCWlmICghc25hcC0+dmFsaWQgfHwgIXNuYXAtPmFjdGl2ZSkKPiAr
+CQlpZiAoIURNX1NOQVBTSE9UX1ZBTElEKHNuYXApIHx8ICFzbmFwLT5hY3RpdmUpCj4gICAJCQln
+b3RvIG5leHRfc25hcHNob3Q7Cj4gICAKPiAgIAkJcGUgPSBfX2xvb2t1cF9wZW5kaW5nX2V4Y2Vw
+dGlvbihzbmFwLCBjaHVuayk7CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
+aGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
+dmVsCg==
 
