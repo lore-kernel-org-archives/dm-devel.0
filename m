@@ -4,142 +4,85 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A6ECEEE7FF4
-	for <dm-devel@archiver.kernel.org>; Mon, 11 Sep 2023 07:28:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7FCF5EE57DF
+	for <dm-devel@archiver.kernel.org>; Mon, 11 Sep 2023 07:39:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694417314;
+	s=mimecast20190719; t=1694417989;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=Foj38QThTDMLH3Y+vC2gOLJkCcAMcZ163nFXLc1k+dU=;
-	b=afMcJOeOwRt/Uq+JfbHSe3MYKeZQlfs2Y1TkFUv2ycwuEQ5XPSlc+qMKkgQ05s5FuuTaX1
-	eXc/O+NfJikeLFLv+t5edLsPu0bnCw3FfLqqkZep+lQeDF7rZUO8Z2+JPtSApQmu4+KOJV
-	t8QT0AWJmYB/qbYA5TZeX9alr5zRAe4=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-327-rl3-lxkaPOee8KMzzerGwg-1; Mon, 11 Sep 2023 03:28:26 -0400
-X-MC-Unique: rl3-lxkaPOee8KMzzerGwg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=HcUrLrvaEGF+Rl60C8mDsRVOwK0n37FcEQmynVVZnBw=;
+	b=Z+p0QqsRW4T5ykWJQq6s+Jr+37L7mokZfPnF96ZAd/B4n4JfgIpf6pwRJA7RD9SncD15K7
+	SDbGPkSkNwRQfbgTen5i8VICt8McMvPeyJOcaJq81Tf0mpoh7JmLeNrflrIeUp8eZsjiGC
+	Y+eXdTQLgl5q63tEayhA2UO9v2PsXQs=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-7-hRT9Nlw0Pqme5K0XC2WPKg-1; Mon, 11 Sep 2023 03:39:45 -0400
+X-MC-Unique: hRT9Nlw0Pqme5K0XC2WPKg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9D9608F40C0;
-	Mon, 11 Sep 2023 07:28:24 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B3DA129ABA0E;
+	Mon, 11 Sep 2023 07:39:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E3492215670B;
-	Mon, 11 Sep 2023 07:28:22 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 456BA1054FC1;
+	Mon, 11 Sep 2023 07:39:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A196319465A2;
-	Mon, 11 Sep 2023 07:28:22 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1A15719465A2;
+	Mon, 11 Sep 2023 07:39:43 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
  [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 003401946597
- for <dm-devel@listman.corp.redhat.com>; Mon, 11 Sep 2023 07:28:21 +0000 (UTC)
+ ESMTP id 2CFAB1946597
+ for <dm-devel@listman.corp.redhat.com>; Mon, 11 Sep 2023 07:39:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E2ACA422E0; Mon, 11 Sep 2023 07:28:21 +0000 (UTC)
+ id 125F92904; Mon, 11 Sep 2023 07:39:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D9678422DF
- for <dm-devel@redhat.com>; Mon, 11 Sep 2023 07:28:21 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0A9AF4402E
+ for <dm-devel@redhat.com>; Mon, 11 Sep 2023 07:39:42 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B71263C02B62
- for <dm-devel@redhat.com>; Mon, 11 Sep 2023 07:28:21 +0000 (UTC)
-Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-159-r_sXhdnmNPeIosCSwIHBzw-1; Mon, 11 Sep 2023 03:28:19 -0400
-X-MC-Unique: r_sXhdnmNPeIosCSwIHBzw-1
-Received: from epcas5p2.samsung.com (unknown [182.195.41.40])
- by mailout3.samsung.com (KnoxPortal) with ESMTP id
- 20230911072816epoutp033ef94e6de0605efd97c7a496fee70607~Dx420Tyqe0192801928epoutp03d
- for <dm-devel@redhat.com>; Mon, 11 Sep 2023 07:28:16 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com
- 20230911072816epoutp033ef94e6de0605efd97c7a496fee70607~Dx420Tyqe0192801928epoutp03d
-Received: from epsnrtp3.localdomain (unknown [182.195.42.164]) by
- epcas5p4.samsung.com (KnoxPortal) with ESMTP id
- 20230911072815epcas5p4e1db6037f39389ed18eed8c5dff8cf21~Dx42ZcxS72592325923epcas5p4V;
- Mon, 11 Sep 2023 07:28:15 +0000 (GMT)
-Received: from epsmges5p2new.samsung.com (unknown [182.195.38.174]) by
- epsnrtp3.localdomain (Postfix) with ESMTP id 4Rkdbx6sLDz4x9Q3; Mon, 11 Sep
- 2023 07:28:13 +0000 (GMT)
-Received: from epcas5p3.samsung.com ( [182.195.41.41]) by
- epsmges5p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
- 77.D8.09638.D81CEF46; Mon, 11 Sep 2023 16:28:13 +0900 (KST)
-Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
- epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
- 20230911071540epcas5p297dd9e968175a690230b83070db95297~Dxt212gQZ1723917239epcas5p2p;
- Mon, 11 Sep 2023 07:15:40 +0000 (GMT)
-Received: from epsmgms1p2new.samsung.com (unknown [182.195.42.42]) by
- epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
- 20230911071540epsmtrp100882cc832a2441441fad12d7d2e2b71~Dxt2yHsCa1482314823epsmtrp10;
- Mon, 11 Sep 2023 07:15:40 +0000 (GMT)
-X-AuditID: b6c32a4a-6d5ff700000025a6-27-64fec18d9268
-Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
- epsmgms1p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
- 88.D4.08788.C9EBEF46; Mon, 11 Sep 2023 16:15:40 +0900 (KST)
-Received: from green245 (unknown [107.99.41.245]) by epsmtip1.samsung.com
- (KnoxPortal) with ESMTPA id
- 20230911071535epsmtip19947303bee5f25ef26e583ff9e5e7a01~Dxtyjz6fl0330403304epsmtip1k;
- Mon, 11 Sep 2023 07:15:35 +0000 (GMT)
-Date: Mon, 11 Sep 2023 12:39:37 +0530
-From: Nitesh Shetty <nj.shetty@samsung.com>
-To: Hannes Reinecke <hare@suse.de>
-Message-ID: <20230911070937.GB28177@green245>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DD87329ABA11
+ for <dm-devel@redhat.com>; Mon, 11 Sep 2023 07:39:41 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-115-A-MiLUscP7GHSP7TAUpLiA-1; Mon,
+ 11 Sep 2023 03:39:40 -0400
+X-MC-Unique: A-MiLUscP7GHSP7TAUpLiA-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id 84077218E2;
+ Mon, 11 Sep 2023 07:39:38 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id EA7F6139CC;
+ Mon, 11 Sep 2023 07:39:37 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap2.suse-dmz.suse.de with ESMTPSA id e2KjNznE/mT1aAAAMHmgww
+ (envelope-from <hare@suse.de>); Mon, 11 Sep 2023 07:39:37 +0000
+Message-ID: <ec35111d-ba31-497b-ab01-b198d3feb814@suse.de>
+Date: Mon, 11 Sep 2023 09:39:37 +0200
 MIME-Version: 1.0
-In-Reply-To: <e6fc7e65-ad31-4ca2-8b1b-4d97ba32926e@suse.de>
-User-Agent: Mutt/1.9.4 (2018-02-28)
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Te0xTdxTH97ttby+PsruK7GcZCpfJVlyhZQVuFdBsul3nzIhjRsmSWts7
- YNDHelsfWxYQeTMeOpaNsiEbiPKISCE+KGysuFVQwhJTJmQgIDAVEewCy5yUUVoW//v8zvc8
- fuecHIzFL+YKsDSNgdZrFBkE6s2+1CMUikp+dqrEjnEp2dL3K4vMLl9ikU0jZSg50+MA5GR3
- PiC7HlVxyKHuqwjZ+cNphGxo+gUhT1sHATllNyFk1/AW8vu8OjbZ2dXLJm91fIuSZ+qnuOQ5
- mxMhb5dPAfLCzBybvD4cSN4tLgDkwJKNsyOAGhhtZVO3+o2UubEQpdrqMinLUBZK1ZZ+yaFK
- Tj5CqcdTw2xq7kc7SpW2NwKq7cZn1F/mjZR5chZJ5CWnx6XSChWtD6Y1Sq0qTZMST+x5X/6m
- PDpGLBFJZGQsEaxRqOl4Yue7iaK30jJWmiaCjygyjCumRAXDEJEJcXqt0UAHp2oZQzxB61QZ
- OqkuglGoGaMmJUJDG7ZKxOKo6BXHQ+mpF2tyuLpcv2PN18pZWeAnnyLghUFcCh1NNk4R8Mb4
- uAXAhamLqPvhANA5P+JRFgGsuONkr4Xk90+vMh/vAvDpqTC30zSA/darwCWw8c3w6dAiqwhg
- GIpvgTeWMZfZHyfg43wr1+XPwhs5cOTkKNclrMPj4Oz0TdTFPFwEzVYr180vwN7KydViXvg2
- aK6tXvVZj4fC7ks2xJUI4me8YFXBrOd3O2H1wD2Om9fBB7Z2rpsF8H5ZnoePwoaK86g7OAdA
- 0+8m4Ba2w9y+MpaLWXgqvFM04UkUBL/qu4C47X6w5N9JxG3nwSvVaxwKm1tqUDdvgIN/n/Aw
- BS2Ttz1znAfw4VgFKAebTM90Z3qmnptfgzUWB2pamR4LD4TnnJgbhbClI7IGcBrBBlrHqFNo
- JloXpaGP/r9ypVZtBqtXEf7OFTA+Nh9hBQgGrABiLMKfZ7Auqfg8leL4p7ReK9cbM2jGCqJX
- tnWKJViv1K6clcYgl0hlYmlMTIxU9nqMhHiRN5P7nYqPpygMdDpN62j9WhyCeQmykMokv1mh
- YPcJ7dZ9z+29l72A5RBPtoXtaViYC/+GKh3AgoQLpVVKi6Nk43lt2REw+Mm1kYlNoyHLxzpr
- E9TPd3z9SujLHwTUJzsXCWvSxxLmbdQmKMxMV6LKsn3Cjzbzencf9M7pkReMQ/7NcnNrvUx5
- eCjLu+dA+Be1r9ZdJo6L3nu4aGWcewsDDbt8xGfbn0TuMrPbkPsLzli7RZqsijIFRSaoQyce
- kIMv1TSn1yX5BmT+EeIl3M925BDJlWGVH8qEMrvP528ois/6/zmWi9Xvv26/fMjewhw8cLh/
- 1DcBGIcjGn6j74pad2T+k7cszxZ0RoREan37/Y2ZsaFJYwSbSVVIwll6RvEfTPzr9p4EAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA02RWUwTURiFvTPTYajWTIvLhYoPRR6oFgXUXBQVo5iRB2MgxKAYrHYoBiik
- ZRUTEaPgXms0ssSFpSqQGgtBpUBgUEGgIBIUmkDUFkQJi0qqUSjaotG3k/9855yHn8JFnYQX
- dVSVyqpV8kQJySdqWyQrZcWNDsW6avsi9KD9OY5ytbM4qhy8TKKxli8A2ZryAGqYKOKhgaYn
- GKov0WHofuUzDOm41wAN9xViqMGyGt05U0ag+oYXBOqtKybRLf2wG7rb6sBQv3YYIMPYJIHa
- LGJkPZ8PUPdsKy90GdM99JBges1pjLHiLMlUl51gTAM5JFN66SqPuXhqgmQ+D1sIZrKxj2Qu
- 1VQAprojm/lqXMkYbePYXsF+foiCTTyazqrXbj3Ej58evMpLebYwM7/xNJEDbrifA+4UpNfD
- PPMIcQ7wKRFtArDo+ZTbvOEJ9bNP8XntAe87PrjNQzYAOztaXBBB+8KZAftviKJIejXsmKOc
- 5yW0BH7O41w8Tht4cE7bzHMaHnQIHB/pJJ1aQMugkeP+lE4B2FNmAvOGEL4osBFOjdNS2O/4
- iDkHcFoM7zpcA+70ZmgsvenqWUr7wKbaVkwLhIX/pQv/Sxf+S98GeAXwZFM0ScokTUBKoIrN
- 8NfIkzRpKqX/keQkI3A9XCp9DOorpvw5gFGAA5DCJUsEqdysQiRQyLOOserkWHVaIqvhgJgi
- JMsF9rGLChGtlKeyCSybwqr/uhjl7pWD0ZFvNR9DagxDMTJd6ZXg5ME44SC7w2LHTj6hxmqb
- tHyJKfqRzdvfR1ZUfOFU+9z1KOzn4aAIY+ZknlAn3NTFPY7ZHjnXNuP2LnxNvtWqL2juj++q
- O1BeHjcdDDau0P1I9ii4N+q5ZdT3U7c451uM6HilYmL3my+j5g1hQVFxBnEaL9BDb7bvM18b
- XxA63cZ+r8kN7C7xVWcpX2burDPdiVjsl85Zq/jZYRa/H7my5jC/PTWbjySEey3qyrZ6zwxk
- 5I5G65+u2mZ4hUl7IqeDlDvSLbHZGcE2x/uDsZkLswSHvc/a34Rju0Lt7aqqKKusvK94lehy
- z6PUjmW95HYJoYmXB0hxtUb+CxdGZ7VfAwAA
-X-CMS-MailID: 20230911071540epcas5p297dd9e968175a690230b83070db95297
-X-Msg-Generator: CA
-X-Sendblock-Type: REQ_APPROVE
-CMS-TYPE: 105P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20230906164321epcas5p4dad5b1c64fcf85e2c4f9fc7ddb855ea7
+User-Agent: Mozilla Thunderbird
+To: Nitesh Shetty <nj.shetty@samsung.com>
 References: <20230906163844.18754-1-nj.shetty@samsung.com>
  <CGME20230906164321epcas5p4dad5b1c64fcf85e2c4f9fc7ddb855ea7@epcas5p4.samsung.com>
  <20230906163844.18754-5-nj.shetty@samsung.com>
  <e6fc7e65-ad31-4ca2-8b1b-4d97ba32926e@suse.de>
+ <20230911070937.GB28177@green245>
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <20230911070937.GB28177@green245>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -173,63 +116,58 @@ Cc: Jens Axboe <axboe@kernel.dk>, Vincent Fu <vincent.fu@samsung.com>,
  Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: samsung.com
-Content-Type: multipart/mixed;
- boundary="----EkYAGCX2vluH006HpQv8E927.wBqYttzOq6t00vxo_cq_k4p=_daaf4_"
+X-Mimecast-Originator: suse.de
+Content-Language: en-US
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-------EkYAGCX2vluH006HpQv8E927.wBqYttzOq6t00vxo_cq_k4p=_daaf4_
-Content-Type: text/plain; charset="us-ascii"
-Content-Disposition: inline
-
-On Fri, Sep 08, 2023 at 08:06:38AM +0200, Hannes Reinecke wrote:
-> On 9/6/23 18:38, Nitesh Shetty wrote:
-> > For the devices which does not support copy, copy emulation is added.
-> > It is required for in-kernel users like fabrics, where file descriptor is
-> > not available and hence they can't use copy_file_range.
-> > Copy-emulation is implemented by reading from source into memory and
-> > writing to the corresponding destination.
-> > Also emulation can be used, if copy offload fails or partially completes.
-> > At present in kernel user of emulation is NVMe fabrics.
-> > 
-> Leave out the last sentence; I really would like to see it enabled for SCSI,
-> too (we do have copy offload commands for SCSI ...).
-> 
-Sure, will do that
-
-> And it raises all the questions which have bogged us down right from the
-> start: where is the point in calling copy offload if copy offload is not
-> implemented or slower than copying it by hand?
-> And how can the caller differentiate whether copy offload bring a benefit to
-> him?
-> 
-> IOW: wouldn't it be better to return -EOPNOTSUPP if copy offload is not
-> available?
-
-Present approach treats copy as a background operation and the idea is to
-maximize the chances of achieving copy by falling back to emulation.
-Having said that, it should be possible to return -EOPNOTSUPP,
-in case of offload IO failure or device not supporting offload.
-We will update this in next version.
-
-Thank you,
-Nitesh Shetty
-
-------EkYAGCX2vluH006HpQv8E927.wBqYttzOq6t00vxo_cq_k4p=_daaf4_
-Content-Type: text/plain; charset="utf-8"
-
-
-------EkYAGCX2vluH006HpQv8E927.wBqYttzOq6t00vxo_cq_k4p=_daaf4_
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
-
-------EkYAGCX2vluH006HpQv8E927.wBqYttzOq6t00vxo_cq_k4p=_daaf4_--
+T24gOS8xMS8yMyAwOTowOSwgTml0ZXNoIFNoZXR0eSB3cm90ZToKPiBPbiBGcmksIFNlcCAwOCwg
+MjAyMyBhdCAwODowNjozOEFNICswMjAwLCBIYW5uZXMgUmVpbmVja2Ugd3JvdGU6Cj4+IE9uIDkv
+Ni8yMyAxODozOCwgTml0ZXNoIFNoZXR0eSB3cm90ZToKPj4+IEZvciB0aGUgZGV2aWNlcyB3aGlj
+aCBkb2VzIG5vdCBzdXBwb3J0IGNvcHksIGNvcHkgZW11bGF0aW9uIGlzIGFkZGVkLgo+Pj4gSXQg
+aXMgcmVxdWlyZWQgZm9yIGluLWtlcm5lbCB1c2VycyBsaWtlIGZhYnJpY3MsIHdoZXJlIGZpbGUg
+ZGVzY3JpcHRvciBpcwo+Pj4gbm90IGF2YWlsYWJsZSBhbmQgaGVuY2UgdGhleSBjYW4ndCB1c2Ug
+Y29weV9maWxlX3JhbmdlLgo+Pj4gQ29weS1lbXVsYXRpb24gaXMgaW1wbGVtZW50ZWQgYnkgcmVh
+ZGluZyBmcm9tIHNvdXJjZSBpbnRvIG1lbW9yeSBhbmQKPj4+IHdyaXRpbmcgdG8gdGhlIGNvcnJl
+c3BvbmRpbmcgZGVzdGluYXRpb24uCj4+PiBBbHNvIGVtdWxhdGlvbiBjYW4gYmUgdXNlZCwgaWYg
+Y29weSBvZmZsb2FkIGZhaWxzIG9yIHBhcnRpYWxseSBjb21wbGV0ZXMuCj4+PiBBdCBwcmVzZW50
+IGluIGtlcm5lbCB1c2VyIG9mIGVtdWxhdGlvbiBpcyBOVk1lIGZhYnJpY3MuCj4+Pgo+PiBMZWF2
+ZSBvdXQgdGhlIGxhc3Qgc2VudGVuY2U7IEkgcmVhbGx5IHdvdWxkIGxpa2UgdG8gc2VlIGl0IGVu
+YWJsZWQgZm9yIFNDU0ksCj4+IHRvbyAod2UgZG8gaGF2ZSBjb3B5IG9mZmxvYWQgY29tbWFuZHMg
+Zm9yIFNDU0kgLi4uKS4KPj4KPiBTdXJlLCB3aWxsIGRvIHRoYXQKPiAKPj4gQW5kIGl0IHJhaXNl
+cyBhbGwgdGhlIHF1ZXN0aW9ucyB3aGljaCBoYXZlIGJvZ2dlZCB1cyBkb3duIHJpZ2h0IGZyb20g
+dGhlCj4+IHN0YXJ0OiB3aGVyZSBpcyB0aGUgcG9pbnQgaW4gY2FsbGluZyBjb3B5IG9mZmxvYWQg
+aWYgY29weSBvZmZsb2FkIGlzIG5vdAo+PiBpbXBsZW1lbnRlZCBvciBzbG93ZXIgdGhhbiBjb3B5
+aW5nIGl0IGJ5IGhhbmQ/Cj4+IEFuZCBob3cgY2FuIHRoZSBjYWxsZXIgZGlmZmVyZW50aWF0ZSB3
+aGV0aGVyIGNvcHkgb2ZmbG9hZCBicmluZyBhIGJlbmVmaXQgdG8KPj4gaGltPwo+Pgo+PiBJT1c6
+IHdvdWxkbid0IGl0IGJlIGJldHRlciB0byByZXR1cm4gLUVPUE5PVFNVUFAgaWYgY29weSBvZmZs
+b2FkIGlzIG5vdAo+PiBhdmFpbGFibGU/Cj4gCj4gUHJlc2VudCBhcHByb2FjaCB0cmVhdHMgY29w
+eSBhcyBhIGJhY2tncm91bmQgb3BlcmF0aW9uIGFuZCB0aGUgaWRlYSBpcyB0bwo+IG1heGltaXpl
+IHRoZSBjaGFuY2VzIG9mIGFjaGlldmluZyBjb3B5IGJ5IGZhbGxpbmcgYmFjayB0byBlbXVsYXRp
+b24uCj4gSGF2aW5nIHNhaWQgdGhhdCwgaXQgc2hvdWxkIGJlIHBvc3NpYmxlIHRvIHJldHVybiAt
+RU9QTk9UU1VQUCwKPiBpbiBjYXNlIG9mIG9mZmxvYWQgSU8gZmFpbHVyZSBvciBkZXZpY2Ugbm90
+IHN1cHBvcnRpbmcgb2ZmbG9hZC4KPiBXZSB3aWxsIHVwZGF0ZSB0aGlzIGluIG5leHQgdmVyc2lv
+bi4KPiAKVGhhdCBpcyBhbHNvIHdoYXQgSSBtZWFudCB3aXRoIG15IGNvbW1lbnRzIHRvIHBhdGNo
+IDA5LzEyOiBJIGRvbid0IHNlZSAKaXQgYXMgYSBiZW5lZml0IHRvIF9hbHdheXNfIGZhbGwgYmFj
+ayB0byBhIGdlbmVyaWMgY29weS1vZmZsb2FkIAplbXVsYXRpb24uIEFmdGVyIGFsbCwgdGhhdCBo
+YXJkbHkgYnJpbmdzIGFueSBiZW5lZml0LgpXaGVyZSBJIGRvIHNlZSBhIGJlbmVmaXQgaXMgdG8g
+dGllIGluIHRoZSBnZW5lcmljIGNvcHktb2ZmbG9hZCAKX2luZnJhc3RydWN0dXJlXyB0byBleGlz
+dGluZyBtZWNoYW5pc21zIChsaWtlIGRtLWtjb3B5ZCkuCkJ1dCBpZiB0aGVyZSBpcyBubyBjb3B5
+LW9mZmxvYWQgaW5mcmFzdHJ1Y3R1cmUgYXZhaWxhYmxlIHRoZW4gd2UgcmVhbGx5IApzaG91bGQg
+cmV0dXJuIC1FT1BOT1RTVVBQIGFzIGl0IHJlYWxseSBpcyBub3Qgc3VwcG9ydGVkLgoKSW4gdGhl
+IGVuZCwgY29weSBvZmZsb2FkIGlzIG5vdCBhIGNvbW1hbmQgd2hpY2ggJ2Fsd2F5cyB3b3Jrcycu
+Ckl0J3MgYSBjb21tYW5kIHdoaWNoIF9taWdodF8gZGVsaXZlciBiZW5lZml0cyAoaWUgYmV0dGVy
+IHBlcmZvcm1hbmNlKSBpZiAKZGVkaWNhdGVkIGltcGxlbWVudGF0aW9ucyBhcmUgYXZhaWxhYmxl
+IGFuZCBjZXJ0YWluIHBhcmFtZXRlcnMgYXJlIG1ldC4gCklmIG5vdCB0aGVuIGNvcHkgb2ZmbG9h
+ZCBpcyBub3QgdGhlIGJlc3QgY2hvaWNlLCBhbmQgYXBwbGljYXRpb25zIHdpbGwgCm5lZWQgdG8g
+YmUgbWFkZSBhd2FyZSBvZiB0aGF0LgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJl
+aW5lY2tlICAgICAgICAgICAgICAgIEtlcm5lbCBTdG9yYWdlIEFyY2hpdGVjdApoYXJlQHN1c2Uu
+ZGUgICAgICAgICAgICAgICAgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIFNv
+ZnR3YXJlIFNvbHV0aW9ucyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKSFJC
+IDM2ODA5IChBRyBOw7xybmJlcmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogSXZvIFRvdGV2LCBBbmRy
+ZXcKTXllcnMsIEFuZHJldyBNY0RvbmFsZCwgTWFydGplIEJvdWRpZW4gTW9lcm1hbgoKLS0KZG0t
+ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJl
+ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
 
