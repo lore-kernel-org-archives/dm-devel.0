@@ -1,81 +1,81 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5EB4FEEB593
-	for <dm-devel@archiver.kernel.org>; Mon, 11 Sep 2023 16:39:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0C6EBEEB594
+	for <dm-devel@archiver.kernel.org>; Mon, 11 Sep 2023 16:39:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694450388;
+	s=mimecast20190719; t=1694450390;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=uMaLp2bGJcD4n0xRADksY2CZMvP1Wk3cL76FEYHZkX4=;
-	b=dNXHS+ufU4/ZwEd7XM2tM9Q+A67QqSINlicEMbpO4ClEN9hxiovNfAl3vSYuzpJLAsNddA
-	bgD+yAU8yyPr9Cb5vL+UzlDs05rRMHNQOvQHkSLt8sr75oYWz/qVmJMIfi0bL4YWBEZY3+
-	Z9euVc9Bxrv1xybH6JSDQYEABao++RQ=
+	bh=jOCEPfTe5Zk4eWC766lSbAiOwPjfVfM0j6JQTZ2eFPk=;
+	b=f2RjEQ45hvfMIC9o4mlYM8HpreQAHOfXVu8qJ3LO5tF4axSny92T1jsd+bIpzewfRhvqVr
+	1N3G6ZKXz8eBfslZp4xQ9c+dH/AfiyNNolz1ZnAOAssZHRe1hnTYVKrL8HuM7z5pJYYouo
+	vfh9yJk+qwF9B47u++C3IeWIkfQUi00=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-460-n5S0IV7dMamJ0dpHgkbl_A-1; Mon, 11 Sep 2023 12:39:40 -0400
-X-MC-Unique: n5S0IV7dMamJ0dpHgkbl_A-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-571-YV0jrDcrMzOJf5Eyrqw8TQ-1; Mon, 11 Sep 2023 12:39:45 -0400
+X-MC-Unique: YV0jrDcrMzOJf5Eyrqw8TQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EB588945E85;
-	Mon, 11 Sep 2023 16:39:26 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A250C181A707;
+	Mon, 11 Sep 2023 16:39:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D4A304405A;
-	Mon, 11 Sep 2023 16:39:26 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8C1E740C200A;
+	Mon, 11 Sep 2023 16:39:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7EA471946A45;
-	Mon, 11 Sep 2023 16:39:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5595E19465B6;
+	Mon, 11 Sep 2023 16:39:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id EA69D1946A5A
- for <dm-devel@listman.corp.redhat.com>; Mon, 11 Sep 2023 16:39:23 +0000 (UTC)
+ ESMTP id F1E021946597
+ for <dm-devel@listman.corp.redhat.com>; Mon, 11 Sep 2023 16:39:24 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id DC4594405A; Mon, 11 Sep 2023 16:39:23 +0000 (UTC)
+ id E33C740C2009; Mon, 11 Sep 2023 16:39:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D4F7A44029
- for <dm-devel@redhat.com>; Mon, 11 Sep 2023 16:39:23 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id DBA8740C200A
+ for <dm-devel@redhat.com>; Mon, 11 Sep 2023 16:39:24 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B815F3C00120
- for <dm-devel@redhat.com>; Mon, 11 Sep 2023 16:39:23 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BE7D1381494E
+ for <dm-devel@redhat.com>; Mon, 11 Sep 2023 16:39:24 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-321-zi-OsbWJOz6g8RArPkq85w-1; Mon,
- 11 Sep 2023 12:39:22 -0400
-X-MC-Unique: zi-OsbWJOz6g8RArPkq85w-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-103-rltqEK98N5OGy1OQhndMgw-1; Mon,
+ 11 Sep 2023 12:39:21 -0400
+X-MC-Unique: rltqEK98N5OGy1OQhndMgw-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out1.suse.de (Postfix) with ESMTPS id CA98C21858;
+ by smtp-out2.suse.de (Postfix) with ESMTPS id 924CC1F8B3;
  Mon, 11 Sep 2023 16:39:20 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 9D5C7139CC;
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 62596139CC;
  Mon, 11 Sep 2023 16:39:20 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id 4AfkJLhC/2RzEAAAMHmgww
+ by imap2.suse-dmz.suse.de with ESMTPSA id EJ9iFrhC/2RzEAAAMHmgww
  (envelope-from <mwilck@suse.com>); Mon, 11 Sep 2023 16:39:20 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
  Benjamin Marzinski <bmarzins@redhat.com>
-Date: Mon, 11 Sep 2023 18:38:33 +0200
-Message-ID: <20230911163846.27197-25-mwilck@suse.com>
+Date: Mon, 11 Sep 2023 18:38:32 +0200
+Message-ID: <20230911163846.27197-24-mwilck@suse.com>
 In-Reply-To: <20230911163846.27197-1-mwilck@suse.com>
 References: <20230911163846.27197-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -86,9 +86,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: [dm-devel] [PATCH v2 24/37] libmultipath: simplify get_free_id()
- assuming total ordering
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: [dm-devel] [PATCH v2 23/37] multipath-tools tests: fix alias test
+ after sort order change
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,7 +103,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: suse.com
 Content-Type: text/plain; charset="us-ascii"
@@ -111,120 +111,87 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-If we can assume that the bindings array is totally ordered for every
-prefix, which the previous patch guarantees, the search for a free ID can be
-simplified.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/alias.c | 87 ++++++++++----------------------------------
- 1 file changed, 19 insertions(+), 68 deletions(-)
+ tests/alias.c | 30 ++++++++++++------------------
+ 1 file changed, 12 insertions(+), 18 deletions(-)
 
-diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-index af6565b..66e34e3 100644
---- a/libmultipath/alias.c
-+++ b/libmultipath/alias.c
-@@ -356,83 +356,34 @@ int get_free_id(const Bindings *bindings, const char *prefix, const char *map_ww
+diff --git a/tests/alias.c b/tests/alias.c
+index d1cc487..8ed95d7 100644
+--- a/tests/alias.c
++++ b/tests/alias.c
+@@ -932,16 +932,15 @@ static void lb_nomatch_b_a_aa_zz(void **state)
+ 
+ 	/*
+ 	 * add_bindings() sorts alphabetically. ("a", "aa", "ab", "b", "c", ...)
+-	 * lookup_binding finds MPATHaaa as next free entry, because MPATHaa is
+-	 * found before MPATHb, and MPATHzz was in the bindings, too.
++	 * lookup_binding finds MPATHab as next free entry.
+ 	 */
+ 	fill_bindings(&buf, 0, 26);
+ 	print_strbuf(&buf, "MPATHzz WWID676\n");
+ 	mock_bindings_file(get_strbuf_str(&buf));
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWID703"));
+-	mock_unused_alias("MPATHaaa");
++	mock_unused_alias("MPATHab");
+ 	rc = lookup_binding(NULL, "WWID703", &alias, "MPATH", 1);
+-	assert_int_equal(rc, 703);
++	assert_int_equal(rc, 28);
+ 	assert_ptr_equal(alias, NULL);
+ }
+ 
+@@ -998,13 +997,8 @@ static void lb_nomatch_b_a_3_used(void **state)
+ 
+ #ifdef MPATH_ID_INT_MAX
+ /*
+- * The bindings will be sorted by alias, alphabetically, which is not
+- * the same as the "numeric" sort order for user-friendly aliases.
+- * get_free_id() selects the highest used ID + 1 if an unsorted entry
+- * is encountered in the bindings table and it's id is equal to the
+- * next "expected" id. This happens if all IDs from "a" to "aa" are
+- * in the table. If the INT_MAX entry is in the table, too, it will
+- * overflow.
++ * The bindings will be sorted by alias. Therefore we have no chance to
++ * simulate a "full" table.
+  */
+ static void lb_nomatch_int_max(void **state)
  {
- 	const struct binding *bdg;
- 	int i, id = 1;
--	int biggest_id = 1;
--	int smallest_bigger_id = INT_MAX;
+@@ -1016,9 +1010,9 @@ static void lb_nomatch_int_max(void **state)
+ 	print_strbuf(&buf, "MPATH%s WWIDMAX\n", MPATH_ID_INT_MAX);
+ 	mock_bindings_file(get_strbuf_str(&buf));
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWIDNOMORE"));
+-	expect_condlog(0, NOMORE_STR);
++	mock_unused_alias("MPATHab");
+ 	rc = lookup_binding(NULL, "WWIDNOMORE", &alias, "MPATH", 1);
+-	assert_int_equal(rc, -1);
++	assert_int_equal(rc, 28);
+ 	assert_ptr_equal(alias, NULL);
+ }
  
- 	vector_foreach_slot(bindings, bdg, i) {
- 		int curr_id = scan_devname(bdg->alias, prefix);
+@@ -1049,9 +1043,9 @@ static void lb_nomatch_int_max_m1(void **state)
+ 	print_strbuf(&buf, "MPATH%s WWIDMAXM1\n", MPATH_ID_INT_MAX_m1);
+ 	mock_bindings_file(get_strbuf_str(&buf));
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWIDMAX"));
+-	mock_unused_alias("MPATH" MPATH_ID_INT_MAX);
++	mock_unused_alias("MPATHab");
+ 	rc = lookup_binding(NULL, "WWIDMAX", &alias, "MPATH", 1);
+-	assert_int_equal(rc, INT_MAX);
++	assert_int_equal(rc, 28);
+ 	assert_ptr_equal(alias, NULL);
+ }
  
--		/*
--		 * Find an unused index - explanation of the algorithm
--		 *
--		 * ID: 1 = mpatha, 2 = mpathb, ...
--		 *
--		 * We assume the bindings are unsorted. The only constraint
--		 * is that no ID occurs more than once. IDs that occur in the
--		 * bindings are called "used".
--		 *
--		 * We call the list 1,2,3,..., exactly in this order, the list
--		 * of "expected" IDs. The variable "id" always holds the next
--		 * "expected" ID, IOW the last "expected" ID encountered plus 1.
--		 * Thus all IDs below "id" are known to be used. However, at the
--		 * end of the loop, the value of "id" isn't necessarily unused.
--		 *
--		 * "smallest_bigger_id" is the smallest used ID that was
--		 * encountered while it was larger than the next "expected" ID
--		 * at that iteration. Let X be some used ID. If all IDs below X
--		 * are used and encountered in the right sequence before X, "id"
--		 * will be > X when the loop ends. Otherwise, X was encountered
--		 * "out of order", the condition (X > id) holds when X is
--		 * encountered, and "smallest_bigger_id" will be set to X; i.e.
--		 * it will be less or equal than X when the loop ends.
--		 *
--		 * At the end of the loop, (id < smallest_bigger_id) means that
--		 * the value of "id" had been encountered neither in order nor
--		 * out of order, and is thus unused. (id >= smallest_bigger_id)
--		 * means that "id"'s value is in use. In this case, we play safe
--		 * and use "biggest_id + 1" as the next value to try.
--		 *
--		 * biggest_id is always > smallest_bigger_id, except in the
--		 * "perfectly ordered" case.
--		 */
--		if (curr_id == id) {
--			if (id < INT_MAX)
--				id++;
--			else {
--				id = -1;
--				break;
--			}
-+		if (curr_id == -1)
-+			continue;
-+		if (id > curr_id) {
-+			condlog(0, "%s: ERROR: bindings are not sorted", __func__);
-+			return -1;
- 		}
--		if (curr_id > biggest_id)
--			biggest_id = curr_id;
--
--		if (curr_id > id && curr_id < smallest_bigger_id)
--			smallest_bigger_id = curr_id;
--	}
--
--	if (id >= smallest_bigger_id)
--		id = biggest_id < INT_MAX ? biggest_id + 1 : -1;
--
--	if (id > 0) {
--		while(id_already_taken(id, prefix, map_wwid)) {
--			if (id == INT_MAX) {
--				id = -1;
--				break;
--			}
-+		while (id < curr_id && id_already_taken(id, prefix, map_wwid))
- 			id++;
--			if (id == smallest_bigger_id) {
--				if (biggest_id == INT_MAX) {
--					id = -1;
--					break;
--				}
--				if (biggest_id >= smallest_bigger_id)
--					id = biggest_id + 1;
--			}
--		}
-+		if (id < curr_id)
-+			return id;
-+		id++;
-+		if (id <= 0)
-+			break;
- 	}
- 
--	if (id < 0)
-+	for (; id > 0; id++) {
-+		if (!id_already_taken(id, prefix, map_wwid))
-+			break;
-+	}
-+
-+	if (id <= 0) {
-+		id = -1;
- 		condlog(0, "no more available user_friendly_names");
-+	}
- 	return id;
+@@ -1065,10 +1059,10 @@ static void lb_nomatch_int_max_m1_used(void **state)
+ 	print_strbuf(&buf, "MPATH%s WWIDMAXM1\n", MPATH_ID_INT_MAX_m1);
+ 	mock_bindings_file(get_strbuf_str(&buf));
+ 	expect_condlog(3, NOMATCH_WWID_STR("WWIDMAX"));
+-	mock_used_alias("MPATH" MPATH_ID_INT_MAX, "WWIDMAX");
+-	expect_condlog(0, NOMORE_STR);
++	mock_used_alias("MPATHab", "WWIDMAX");
++	mock_unused_alias("MPATHac");
+ 	rc = lookup_binding(NULL, "WWIDMAX", &alias, "MPATH", 1);
+-	assert_int_equal(rc, -1);
++	assert_int_equal(rc, 29);
+ 	assert_ptr_equal(alias, NULL);
  }
  
 -- 
