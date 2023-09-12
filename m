@@ -4,62 +4,62 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C41D5EE3F3F
-	for <dm-devel@archiver.kernel.org>; Tue, 12 Sep 2023 23:06:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 44DB8EE3F39
+	for <dm-devel@archiver.kernel.org>; Tue, 12 Sep 2023 23:20:49 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694559976;
+	s=mimecast20190719; t=1694560848;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=7fUSCEKog/8kitXGUNyRWcQrDC16jd1P1nsAIlg8xPE=;
-	b=Vyt86P4nUTvCD/0Mqtb2ZLxxE+DWdYQ9aDxnMIxmoDdbHgfdGvBs/YskpPurWUjlRYY+Br
-	IJdAAVA5k1wwDiXLsoTzaXJ4lAv3WVzefNYSMGEWmoRHgHgEiYoIEF/4KTtcyKsofYADDd
-	uW6hZ5rwF6vxDJ/JJ18XgMFZbD0/OMg=
+	bh=Q6W5vFUH6/Jf6nNOMAto0Do5bPTZd3VjwKg+8QDizVw=;
+	b=jC67W7DlCH/9T+eXs30iXFcAyLxrPiHf3ZcMsQ3IkTJUcKX1fHuI/niiEYfjHW9Q8+dAMk
+	etMvZsz4B6/VOVXo+XG4a4GagRbhftRVzCZdnDEj2wm2kv+OlmXjpTeOhSfDvzdaZ6jHnY
+	zRj1ASsLeQDCGpLhf0weMxlbT6w1NHw=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-164-3t7N53qSPbin_bao3s9Wjg-1; Tue, 12 Sep 2023 19:06:12 -0400
-X-MC-Unique: 3t7N53qSPbin_bao3s9Wjg-1
+ us-mta-620-9PqZW1jDNqCGXhnbXvu3kg-1; Tue, 12 Sep 2023 19:20:45 -0400
+X-MC-Unique: 9PqZW1jDNqCGXhnbXvu3kg-1
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6EB8F8015AA;
-	Tue, 12 Sep 2023 23:06:10 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 33AD5805BFB;
+	Tue, 12 Sep 2023 23:20:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B9A6210F1BE7;
-	Tue, 12 Sep 2023 23:06:08 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B595D10F1BE7;
+	Tue, 12 Sep 2023 23:20:42 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5718719465A8;
-	Tue, 12 Sep 2023 23:06:08 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 680BC19465A8;
+	Tue, 12 Sep 2023 23:20:42 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1EFFF194658D
- for <dm-devel@listman.corp.redhat.com>; Tue, 12 Sep 2023 23:06:06 +0000 (UTC)
+ ESMTP id C508A194658D
+ for <dm-devel@listman.corp.redhat.com>; Tue, 12 Sep 2023 23:20:23 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id CF83A40C200A; Tue, 12 Sep 2023 23:06:06 +0000 (UTC)
+ id 5878D40C6EC0; Tue, 12 Sep 2023 23:20:23 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id AF1AC40C2009;
- Tue, 12 Sep 2023 23:06:06 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 382DF40C6EA8;
+ Tue, 12 Sep 2023 23:20:23 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 38CN5wEe031222;
- Tue, 12 Sep 2023 18:05:58 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 38CNK4x8031257;
+ Tue, 12 Sep 2023 18:20:04 -0500
 Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 38CN5vJE031221;
- Tue, 12 Sep 2023 18:05:57 -0500
-Date: Tue, 12 Sep 2023 18:05:57 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 38CNK41R031256;
+ Tue, 12 Sep 2023 18:20:04 -0500
+Date: Tue, 12 Sep 2023 18:20:04 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: mwilck@suse.com
-Message-ID: <20230912230557.GU7412@octiron.msp.redhat.com>
+Message-ID: <20230912232004.GV7412@octiron.msp.redhat.com>
 References: <20230911163846.27197-1-mwilck@suse.com>
  <20230911163846.27197-27-mwilck@suse.com>
 MIME-Version: 1.0
 In-Reply-To: <20230911163846.27197-27-mwilck@suse.com>
 User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 Subject: Re: [dm-devel] [PATCH v2 26/37] multipath-tools tests: add test for
  ordering of bindings
 X-BeenThere: dm-devel@redhat.com
@@ -90,8 +90,8 @@ On Mon, Sep 11, 2023 at 06:38:35PM +0200, mwilck@suse.com wrote:
 > properly sorted, add some unit tests to make sure the sorting algorithm
 > works.
 
-Missing a Signed-off-by, but otherwise
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+On second thought...
+
 > ---
 >  tests/alias.c | 212 +++++++++++++++++++++++++++++++++++++++++++++++++-
 >  1 file changed, 209 insertions(+), 3 deletions(-)
@@ -274,6 +274,12 @@ Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > +static void order_01(void **state)
 > +{
 > +	struct random_aliases ra[] = {
+
+If you start at 0, fill_bindings_random() will get the WWID ending from
+random_numbers[-1].
+
+-Ben
+
 > +		{  0, 1000, "MPATH" },
 > +	};
 > +
