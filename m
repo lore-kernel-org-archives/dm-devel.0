@@ -1,83 +1,80 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DA498EEAA4F
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 14:53:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 329B9EEAA52
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 14:53:41 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694703213;
+	s=mimecast20190719; t=1694703220;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=hBBhp1hOv5rxag6HRlrKOufVgndHaZHU4kG7wCNvdfM=;
-	b=HHXFtG4IR4lq32D9AQRFAL195LAl+4g4TBtHoKtb0qJFH4J1FkmicutVjq/VQDL8b+4d4d
-	0fQrn3e6mk+Q+XuYIQ0cLnXOnjTD4WHjvCuIsOBdeAAhOmf2MfTOWWgShzIwzQw5wqAzII
-	dw5AR/cKMlFhksruoWWqKCKbyZzKork=
+	bh=AuEDGKiXOuX7yiiDdTo9Dzig/j1A4/rYULQs9JFTzpQ=;
+	b=JUl3Q6SXZU7bKnF0E5Q3gQjRhXtCH8KzMOf0IlRx5ZGg9lgTqLpII0JQc8LLhpWhUckK5N
+	JS4PoIYdOORtwSk/U463hydwYDjskF7wccFOkenNmKjMYka+tPtVek/ZMu86VUcfEQWITn
+	/5AA1dvjTyO3bCls/fV2YxNs5EaBF98=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-649-BOYsSMP9M1metmdC31PcKQ-1; Thu, 14 Sep 2023 10:53:29 -0400
-X-MC-Unique: BOYsSMP9M1metmdC31PcKQ-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-322-AqbigfDqN8Wsw9RS1XRa_g-1; Thu, 14 Sep 2023 10:53:36 -0400
+X-MC-Unique: AqbigfDqN8Wsw9RS1XRa_g-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 70BCE81D88A;
-	Thu, 14 Sep 2023 14:53:26 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 569BA102F230;
+	Thu, 14 Sep 2023 14:53:34 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D61E61054FC0;
-	Thu, 14 Sep 2023 14:53:22 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 44BC921B2413;
+	Thu, 14 Sep 2023 14:53:34 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5F2AE19465B8;
-	Thu, 14 Sep 2023 14:53:17 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 210C919466E8;
+	Thu, 14 Sep 2023 14:53:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4DB0C19465B7
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 14:53:11 +0000 (UTC)
+ ESMTP id 01FAC19466E7
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 14:53:18 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 05FCF1054FC3; Thu, 14 Sep 2023 14:53:11 +0000 (UTC)
+ id CA32A21B2419; Thu, 14 Sep 2023 14:53:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F22601054FC1
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 14:53:10 +0000 (UTC)
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C396521B2417
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 14:53:12 +0000 (UTC)
 Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-delivery-1.mimecast.com [207.211.31.120])
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CEF93185A79C
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 14:53:10 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A507C81D7A6
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 14:53:12 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-369-jtMbxX0uNLucP2B5yqTy7Q-1; Thu,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-169-NUmF7QRKMuySosrMLsLPOQ-1; Thu,
  14 Sep 2023 10:53:08 -0400
-X-MC-Unique: jtMbxX0uNLucP2B5yqTy7Q-1
+X-MC-Unique: NUmF7QRKMuySosrMLsLPOQ-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out1.suse.de (Postfix) with ESMTPS id 952EF21847;
+ by smtp-out2.suse.de (Postfix) with ESMTPS id 550EA1F88F;
  Thu, 14 Sep 2023 14:53:07 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 60A96139DB;
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 24480139DB;
  Thu, 14 Sep 2023 14:53:07 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id UIYYFlMeA2UHAgAAMHmgww
+ by imap2.suse-dmz.suse.de with ESMTPSA id OfsSB1MeA2UHAgAAMHmgww
  (envelope-from <mwilck@suse.com>); Thu, 14 Sep 2023 14:53:07 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
  Benjamin Marzinski <bmarzins@redhat.com>
-Date: Thu, 14 Sep 2023 16:51:29 +0200
-Message-ID: <20230914145131.15165-2-mwilck@suse.com>
-In-Reply-To: <20230914145131.15165-1-mwilck@suse.com>
-References: <20230914145131.15165-1-mwilck@suse.com>
+Date: Thu, 14 Sep 2023 16:51:28 +0200
+Message-ID: <20230914145131.15165-1-mwilck@suse.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -86,9 +83,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: [dm-devel] [PATCH v3 26/38] multipath-tools tests: add test for
- ordering of bindings
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: [dm-devel] [PATCH v3 00/38] multipath-tools: user-friendly names
+ rework
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,7 +100,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: suse.com
 Content-Type: text/plain; charset="us-ascii"
@@ -111,274 +108,160 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-As the assignment of free aliases now relies on the bindings being
-properly sorted, add some unit tests to make sure the sorting algorithm
-works.
+This patch set contains a two-step rework of the user-friendly
+names code. Patch 2-5 change the current code such that it (well, almost)
+never attempts to use an alias that is currently in use by another
+map. We already have some checks for this, but they don't cover all
+possible scenarios. Patch 6-10 add some units tests for
+get_user_friendly_alias(), and restructure the unit tests somewhat.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- tests/alias.c | 212 +++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 209 insertions(+), 3 deletions(-)
+In the second part of the set, Patch 11-18 restructure the alias code such
+that we don't read the bindings file every time an alias is
+requested. Instead, we just use a memory cache of the current bindings, and
+re-write the file only if a new binding is added.  This reduces the number of
+system calls and simplifies the code.
 
-diff --git a/tests/alias.c b/tests/alias.c
-index dff5f93..4d0adba 100644
---- a/tests/alias.c
-+++ b/tests/alias.c
-@@ -13,6 +13,9 @@
- #include "globals.c"
- #include "../libmultipath/alias.c"
- 
-+/* For verbose printing of all aliases in the ordering tests */
-+#define ALIAS_DEBUG 0
-+
- #if INT_MAX == 0x7fffffff
- /* user_friendly_name for map #INT_MAX */
- #define MPATH_ID_INT_MAX "fxshrxw"
-@@ -439,11 +442,12 @@ static void mock_self_alias(const char *alias, const char *wwid)
- 		expect_condlog(3, USED_STR(alias, wwid));		\
- 	} while(0)
- 
--static void __mock_bindings_file(const char *content)
-+static void __mock_bindings_file(const char *content, bool conflict_ok)
- {
- 	char *cnt __attribute__((cleanup(cleanup_charp))) = NULL;
- 	char *token, *savep = NULL;
- 	int i;
-+	uintmax_t values[] = { BINDING_ADDED, BINDING_CONFLICT };
- 
- 	cnt = strdup(content);
- 	assert_ptr_not_equal(cnt, NULL);
-@@ -459,12 +463,12 @@ static void __mock_bindings_file(const char *content)
- 			continue;
- 
- 		rc = add_binding(&global_bindings, alias, wwid);
--		assert_int_equal(rc, BINDING_ADDED);
-+		assert_in_set(rc, values, conflict_ok ? 2 : 1);
- 	}
- }
- 
- static void mock_bindings_file(const char *content) {
--	return __mock_bindings_file(content);
-+	return __mock_bindings_file(content, false);
- }
- 
- static int teardown_bindings(void **state)
-@@ -1744,6 +1748,207 @@ static int test_get_user_friendly_alias()
- 	return cmocka_run_group_tests(tests, NULL, NULL);
- }
- 
-+/* Numbers 1-1000, randomly shuffled */
-+static int random_numbers[1000] = {
-+	694, 977, 224, 178, 841, 818, 914, 549, 831, 942, 263, 834, 919, 800,
-+	111, 517, 719, 297, 988, 98, 332, 516, 754, 772, 495, 488, 331, 529,
-+	142, 747, 848, 618, 375, 624, 74, 753, 782, 944, 623, 468, 862, 997,
-+	417, 258, 298, 774, 673, 904, 883, 766, 867, 400, 11, 950, 14, 784,
-+	655, 155, 396, 9, 743, 93, 651, 245, 968, 306, 785, 581, 880, 486,
-+	168, 631, 203, 4, 663, 294, 702, 762, 619, 684, 48, 181, 21, 443, 643,
-+	863, 1000, 327, 26, 126, 382, 765, 586, 76, 49, 925, 319, 865, 797,
-+	876, 693, 334, 433, 243, 419, 901, 854, 326, 985, 347, 874, 527, 282,
-+	290, 380, 167, 95, 3, 257, 936, 60, 426, 227, 345, 577, 492, 467, 580,
-+	967, 422, 823, 718, 610, 64, 700, 412, 163, 288, 506, 828, 432, 51,
-+	356, 348, 539, 478, 17, 945, 602, 123, 450, 660, 429, 113, 310, 358,
-+	512, 758, 508, 19, 542, 304, 286, 446, 918, 723, 333, 603, 731, 978,
-+	230, 697, 109, 872, 175, 853, 947, 965, 121, 222, 101, 811, 117, 601,
-+	191, 752, 384, 415, 938, 278, 915, 715, 240, 552, 912, 838, 150, 840,
-+	627, 29, 636, 464, 861, 481, 992, 249, 934, 82, 368, 724, 807, 593,
-+	157, 147, 199, 637, 41, 62, 902, 505, 621, 342, 174, 260, 729, 961,
-+	219, 311, 629, 789, 81, 739, 860, 712, 223, 165, 741, 981, 485, 363,
-+	346, 709, 125, 369, 279, 634, 399, 162, 193, 769, 149, 314, 868, 612,
-+	524, 675, 341, 343, 476, 606, 388, 613, 850, 264, 903, 451, 908, 779,
-+	453, 148, 497, 46, 132, 43, 885, 955, 269, 395, 72, 128, 767, 989,
-+	929, 423, 742, 55, 13, 79, 924, 182, 295, 563, 668, 169, 974, 154,
-+	970, 54, 674, 52, 437, 570, 550, 531, 554, 793, 678, 218, 367, 105,
-+	197, 315, 958, 892, 86, 47, 284, 37, 561, 522, 198, 689, 817, 573,
-+	877, 201, 803, 501, 881, 546, 530, 523, 780, 579, 953, 135, 23, 620,
-+	84, 698, 303, 656, 357, 323, 494, 58, 131, 913, 995, 120, 70, 1, 195,
-+	365, 210, 25, 898, 173, 307, 239, 77, 418, 952, 963, 92, 455, 425, 12,
-+	536, 161, 328, 933, 401, 251, 735, 725, 362, 322, 557, 681, 302, 53,
-+	786, 801, 391, 946, 748, 133, 717, 851, 7, 372, 993, 387, 906, 373,
-+	667, 33, 670, 389, 209, 611, 896, 652, 69, 999, 344, 845, 633, 36,
-+	487, 192, 180, 45, 640, 427, 707, 805, 188, 152, 905, 217, 30, 252,
-+	386, 665, 299, 541, 410, 787, 5, 857, 751, 392, 44, 595, 146, 745,
-+	641, 957, 866, 773, 806, 815, 659, 102, 704, 430, 106, 296, 129, 847,
-+	130, 990, 669, 236, 225, 680, 159, 213, 438, 189, 447, 600, 232, 594,
-+	32, 56, 390, 647, 855, 428, 330, 714, 738, 706, 666, 461, 469, 482,
-+	558, 814, 559, 177, 575, 538, 309, 383, 261, 156, 420, 761, 630, 893,
-+	10, 116, 940, 844, 71, 377, 662, 312, 520, 244, 143, 759, 119, 186,
-+	592, 909, 864, 376, 768, 254, 265, 394, 511, 760, 574, 6, 436, 514,
-+	59, 226, 644, 956, 578, 825, 548, 145, 736, 597, 378, 821, 987, 897,
-+	354, 144, 722, 895, 589, 503, 826, 498, 543, 617, 763, 231, 808, 528,
-+	89, 479, 607, 737, 170, 404, 371, 65, 103, 340, 283, 141, 313, 858,
-+	289, 124, 971, 687, 954, 732, 39, 926, 176, 100, 267, 519, 890, 535,
-+	276, 448, 27, 457, 899, 385, 184, 275, 770, 544, 614, 449, 160, 658,
-+	259, 973, 108, 604, 24, 207, 562, 757, 744, 324, 444, 962, 591, 480,
-+	398, 409, 998, 253, 325, 445, 979, 8, 35, 118, 73, 683, 208, 85, 190,
-+	791, 408, 871, 657, 179, 18, 556, 496, 475, 20, 894, 484, 775, 889,
-+	463, 241, 730, 57, 907, 551, 859, 943, 185, 416, 870, 590, 435, 471,
-+	932, 268, 381, 626, 502, 565, 273, 534, 672, 778, 292, 473, 566, 104,
-+	172, 285, 832, 411, 329, 628, 397, 472, 271, 910, 711, 690, 969, 585,
-+	809, 941, 923, 555, 228, 685, 242, 94, 96, 211, 140, 61, 922, 795,
-+	869, 34, 255, 38, 984, 676, 15, 560, 632, 434, 921, 355, 582, 351,
-+	212, 200, 819, 960, 649, 852, 75, 771, 361, 996, 238, 316, 720, 671,
-+	462, 112, 569, 171, 664, 625, 588, 405, 553, 270, 533, 353, 842, 114,
-+	972, 83, 937, 63, 194, 237, 537, 980, 802, 916, 959, 688, 839, 350,
-+	917, 650, 545, 615, 151, 352, 686, 726, 266, 509, 439, 491, 935, 608,
-+	518, 653, 339, 609, 277, 635, 836, 88, 407, 440, 642, 927, 229, 727,
-+	360, 477, 846, 413, 454, 616, 28, 598, 567, 540, 790, 424, 247, 317,
-+	746, 911, 798, 321, 547, 248, 734, 829, 220, 138, 756, 500, 691, 196,
-+	740, 930, 843, 733, 221, 827, 50, 813, 949, 525, 349, 474, 134, 875,
-+	695, 513, 414, 515, 638, 99, 366, 490, 975, 246, 465, 206, 281, 583,
-+	256, 587, 749, 2, 951, 679, 215, 364, 458, 402, 646, 991, 335, 982,
-+	835, 300, 900, 703, 994, 983, 234, 888, 532, 804, 584, 305, 792, 442,
-+	291, 964, 158, 370, 452, 250, 521, 166, 948, 812, 794, 272, 699, 205,
-+	183, 507, 301, 920, 781, 233, 824, 137, 489, 833, 887, 966, 856, 78,
-+	830, 153, 359, 696, 526, 216, 66, 701, 403, 891, 849, 571, 308, 483,
-+	164, 293, 928, 677, 320, 837, 441, 639, 564, 510, 648, 274, 336, 661,
-+	878, 777, 816, 976, 493, 810, 67, 87, 91, 187, 882, 986, 80, 22, 499,
-+	90, 705, 139, 136, 122, 708, 716, 886, 572, 127, 40, 721, 764, 16,
-+	379, 692, 645, 456, 710, 460, 783, 97, 776, 713, 884, 115, 466, 596,
-+	374, 406, 110, 568, 68, 214, 622, 470, 107, 504, 682, 31, 421, 576,
-+	654, 605, 788, 799, 280, 338, 931, 873, 204, 287, 459, 755, 939, 599,
-+	431, 796, 235, 42, 750, 262, 318, 393, 202, 822, 879, 820, 728, 337,
-+};
-+
-+static void fill_bindings_random(struct strbuf *buf, int start, int end,
-+				 const char *prefix)
-+{
-+	int i;
-+
-+	for (i = start; i < end; i++) {
-+		print_strbuf(buf,  "%s", prefix);
-+		format_devname(buf, random_numbers[i]);
-+		print_strbuf(buf,  " WWID%d\n", random_numbers[i]);
-+	}
-+}
-+
-+struct random_aliases {
-+	int start;
-+	int end;
-+	const char *prefix;
-+};
-+
-+static void order_test(int n, struct random_aliases ra[], bool conflict_ok)
-+{
-+	STRBUF_ON_STACK(buf);
-+	int i, j, prev, curr, tmp;
-+	struct binding *bdg;
-+	Bindings *bindings = &global_bindings;
-+
-+	for (j = 0; j < n; j++)
-+		fill_bindings_random(&buf, ra[j].start, ra[j].end, ra[j].prefix);
-+	__mock_bindings_file(get_strbuf_str(&buf), conflict_ok);
-+
-+	for (j = 0; j < n; j++) {
-+		bdg = VECTOR_SLOT(bindings, 0);
-+		if (ALIAS_DEBUG && j == 0)
-+			printf("%d: %s\n", 0, bdg->alias);
-+		prev = scan_devname(bdg->alias, ra[j].prefix);
-+		i = 1;
-+		vector_foreach_slot_after(bindings, bdg, i) {
-+			if (ALIAS_DEBUG && j == 0)
-+				printf("%d: %s\n", i, bdg->alias);
-+			tmp = scan_devname(bdg->alias, ra[j].prefix);
-+			if (tmp == -1)
-+				continue;
-+			curr = tmp;
-+			if (prev > 0) {
-+				if (curr <= prev)
-+					printf("ERROR: %d (%s) %d >= %d\n",
-+					       i, bdg->alias, prev, curr);
-+				assert_true(curr > prev);
-+			}
-+			prev = curr;
-+		}
-+	}
-+}
-+
-+static void order_01(void **state)
-+{
-+	struct random_aliases ra[] = {
-+		{  0, 1000, "MPATH" },
-+	};
-+
-+	order_test(ARRAY_SIZE(ra), ra, false);
-+}
-+
-+static void order_02(void **state)
-+{
-+	struct random_aliases ra[] = {
-+		{   0, 500, "MPATH" },
-+		{ 200, 700, "mpath" },
-+	};
-+	order_test(ARRAY_SIZE(ra), ra, false);
-+}
-+
-+static void order_03(void **state)
-+{
-+	struct random_aliases ra[] = {
-+		{  500, 1000, "MPTH" },
-+		{    0,  500, "MPATH" },
-+	};
-+	order_test(ARRAY_SIZE(ra), ra, false);
-+}
-+
-+static void order_04(void **state)
-+{
-+	struct random_aliases ra[] = {
-+		{   0, 500, "mpa" },
-+		{ 250, 750, "mp" },
-+	};
-+	order_test(ARRAY_SIZE(ra), ra, true);
-+}
-+
-+static void order_05(void **state)
-+{
-+	struct random_aliases ra[] = {
-+		{  0, 100, "A" },
-+		{  0, 100, "B" },
-+		{  0, 100, "C" },
-+		{  0, 100, "D" },
-+	};
-+	order_test(ARRAY_SIZE(ra), ra, false);
-+}
-+
-+static void order_06(void **state)
-+{
-+	struct random_aliases ra[] = {
-+		{  0, 100, "" },
-+		{  0, 100, "a" },
-+		{  0, 100, "aa" },
-+		{  0, 100, "ab" },
-+		{  0, 100, "aaa" },
-+	};
-+	order_test(ARRAY_SIZE(ra), ra, true);
-+}
-+
-+static int test_bindings_order()
-+{
-+	const struct CMUnitTest tests[] = {
-+		cmocka_unit_test_teardown(order_01, teardown_bindings),
-+		cmocka_unit_test_teardown(order_02, teardown_bindings),
-+		cmocka_unit_test_teardown(order_03, teardown_bindings),
-+		cmocka_unit_test_teardown(order_04, teardown_bindings),
-+		cmocka_unit_test_teardown(order_05, teardown_bindings),
-+		cmocka_unit_test_teardown(order_06, teardown_bindings),
-+	};
-+
-+	return cmocka_run_group_tests(tests, NULL, NULL);
-+}
-+
- int main(void)
- {
- 	int ret = 0;
-@@ -1755,6 +1960,7 @@ int main(void)
- 	ret += test_rlookup_binding();
- 	ret += test_allocate_binding();
- 	ret += test_get_user_friendly_alias();
-+	ret += test_bindings_order();
- 
- 	return ret;
- }
+Patch 19 applies the changes to the unit tests that become
+necessary because of the previous patches. Patch 20/21 add another
+optimization for the alias_already_taken() test.
+
+Patch 22-23 introduce a solution for the problem discussed in the review
+of v1 of this patch set, the partial ordering of aliases in memory.
+By sorting first be string length, and then alphabetically, we obtain
+a total "numeric" ordering for every given alias prefix. This ordering
+allows simplifying the search for "gaps" in the list of aliases, which
+is done in patch 24-26.
+
+As discussed in the opening letter of the v1 patch series, the patch
+series has the effect that the bindings file is not re-read every time
+a new binding is attempted. Patch 28 and 29 introduce a notification
+mechanism for multipathd which causes the bindings to be re-read
+when the bindings file has been updated.
+
+Patch 30-36 are a series of minor fixes for the build system and the
+documentation. Most imporantly, the man pages will now show the correct
+paths for various built-in defaults.
+
+Finally, patch 37 (which is deliberately kept separate and at the end of the
+series, in order to allow downstream integrators to skip it) eventually
+deprecates the runtime configuration options for bindings_file, wwids_file,
+and prkeys_file.
+
+Patch 1 is a separate, independent fix.
+
+NOTE: my main test bed is currently unavailable, therefore this set has
+yet reveived less testing than usual. I have tested this to the extent
+I currently can, but further testing will be highly appreciated.
+
+To avoid spam, I'm not re-posting the patches that already got Ben's
+"Reviewed-by:" tag.
+
+Reviews and comments welcome.
+
+# Changes v1 -> v2:
+
+* Patch 03: skipped superfluous test for the case where a map already
+  has an alias (Ben Marzinski)
+* Patch 07: removed invalid tests for the case where the already assigned
+  alias of a given map is assigned to a different wwid (Ben Marzinski)
+* Patch 09/10: moved some macro-usage fixes from 10 to 09
+* Patch 18:
+  - skipped superfluous tests like in patch 03 (Ben Marzinski)
+  - fix bug in get_user_friendly_wwid() (Ben Marzinski)
+* Added patch 22 ff. (see above).
+
+# Changes v2 -> v3:
+
+* Patch 26: avoid negative array index (Ben Marzinski)
+* Patch 27:
+  - assign old_bindings under bindings_mutex (Ben Marzinski)
+  - move condlog after timestamp update in update_bindings_file() (Ben, me)
+  - add read_bindings_file() call in get_user_friendly_wwid() (Ben)
+  - fix return value check of fread() (Ben)
+  - remove superfluous test in _read_bindings_file() (Ben)
+  - avoid compilation error on Jessie for initialization of struct timespec (me)
+* Patch 38: added to fix a compilation error with gcc 12 and liburcu < 0.14
+
+Martin Wilck (38):
+  libmultipath: sysfs_set_scsi_tmo: do nothing for ACT_DRY_RUN
+  libmultipath: add alias_already_taken()
+  libmultipath: unify use_existing_alias() and get_user_friendly_alias()
+  libmultipath: never allocate an alias that's already taken
+  libmultipath: lookup_binding: add comment about the algorithm
+  multipath-tools test: simplify debugging for condlog mismatch
+  multipath-tools tests: add tests for get_user_friendly_alias()
+  multipath-tools test: consistent use of macros in alias test
+  multipath-tools tests: convert mock_{failed,used}_alias to macros
+  multipath-tools test: use mock_bindings_file() consistently
+  libmultipath: add global variable for current bindings
+  libmultipath: rename fix_bindings_file() to update_bindings_file()
+  libmultipath: alias.c: move bindings related code up
+  libmultipath: update_bindings_file: take filename argument
+  libmultipath: update_bindings_file: use a single write()
+  libmultipath: update_bindings_file: don't log temp file name
+  libmultipath: alias.c: factor out read_binding()
+  libmultipath: keep bindings in memory
+  multipath-tools tests: fix alias tests
+  libmultipath: dm_get_uuid(): return emtpy UUID for non-existing maps
+  libmultipath: adapt to new semantics of dm_get_uuid()
+  libmultipath: sort aliases by length and strcmp
+  multipath-tools tests: fix alias test after sort order change
+  libmultipath: simplify get_free_id() assuming total ordering
+  multipath-tools tests: adapt alias tests for total ordering
+  multipath-tools tests: add test for ordering of bindings
+  multipathd: watch bindings file with inotify + timestamp
+  multipath-tools tests: mock pthread_mutex_{lock,unlock}
+  multipath-tools Makefile: sanitize paths for configuration files
+  multipath-tools: add compile time configuration for "/etc/multipath"
+  multipath-tools man pages: generate with correct paths
+  libdmmp/Makefile: fix bug in install section
+  multipath-tools: README.md: improve documentation for compile-time
+    options
+  libmultipath: print built-in values for deprecated options
+  multipath: add a missing newline
+  multipath-tools: allow prefixes with and w/o trailing slash
+  libmultipath: deprecate bindings_file, wwids_file, prkeys_file
+  libmultipath: avoid -Warray-bounds error in uatomic operations
+
+ .gitignore                                    |    4 +
+ Makefile.inc                                  |   45 +-
+ README.md                                     |   38 +-
+ create-config.mk                              |    5 +
+ libdmmp/Makefile                              |    2 +-
+ libmultipath/alias.c                          | 1043 +++++++-----
+ libmultipath/alias.h                          |   14 +-
+ libmultipath/config.c                         |   18 -
+ libmultipath/config.h                         |    3 -
+ libmultipath/configure.c                      |    7 +-
+ libmultipath/defaults.h                       |    7 +-
+ libmultipath/devmapper.c                      |   10 +-
+ libmultipath/dict.c                           |   55 +-
+ libmultipath/discovery.c                      |    3 +
+ libmultipath/libmultipath.version             |    4 +-
+ libmultipath/lock.h                           |   23 +-
+ libmultipath/prkey.c                          |    7 +-
+ libmultipath/prkey.h                          |    7 +-
+ libmultipath/propsel.c                        |   20 +-
+ libmultipath/wwids.c                          |   18 +-
+ mpathpersist/Makefile                         |    5 +-
+ .../{mpathpersist.8 => mpathpersist.8.in}     |    2 +-
+ multipath/Makefile                            |   13 +-
+ multipath/main.c                              |    6 +-
+ multipath/{multipath.8 => multipath.8.in}     |   10 +-
+ .../{multipath.conf.5 => multipath.conf.5.in} |   44 +-
+ multipathd/Makefile                           |   11 +-
+ multipathd/main.c                             |    1 +
+ multipathd/{multipathd.8 => multipathd.8.in}  |    8 +-
+ multipathd/uxlsnr.c                           |   29 +-
+ tests/Makefile                                |    1 +
+ tests/alias.c                                 | 1491 +++++++++++++----
+ tests/test-log.c                              |    4 +-
+ 33 files changed, 1983 insertions(+), 975 deletions(-)
+ rename mpathpersist/{mpathpersist.8 => mpathpersist.8.in} (99%)
+ rename multipath/{multipath.8 => multipath.8.in} (97%)
+ rename multipath/{multipath.conf.5 => multipath.conf.5.in} (98%)
+ rename multipathd/{multipathd.8 => multipathd.8.in} (97%)
+
 -- 
 2.42.0
 
