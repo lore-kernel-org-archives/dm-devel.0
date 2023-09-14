@@ -4,94 +4,95 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 48A5EEEAA62
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:17:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D063AEEAA62
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:18:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694719077;
+	s=mimecast20190719; t=1694719086;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=VQFxFCIe0PJ4RUKk8gwA5IfyvRNpZkg2Ozl5EIgCYO4=;
-	b=Xs4eUgEYsxG5qzVKe3oklM/1hLImwVYGcH+kKRFMJ3BjcEUNptPavNtJ4xInZIq7Hw2Dim
-	Rg/IXdxOE3H8sxkQL8Xq8aZ5ADAEKni5dxvUe1usbQ+h5xnksHRvUv5TDKIXCf88gzNCtk
-	pWHwg2LZakIrzcJiI9e/k+g2buuup+4=
+	bh=o1sIwpvZmIF8xBT2WMb9bEn+nCiYloLTrizKKmimsWM=;
+	b=HMG7Ia+5/WZpz4M7Pc3tyu5ZiRx0EM3BCmrndfas6uvYlbJXpQDnSIruHLTNdw92OP+NS7
+	9bUhG6D/FUjH6OjafDapcV89S7wfsZbC4bacwqVi0RnWDdLqZOwnTyz/BJAcngB9kajRF9
+	RVrScfRDt/p9QLNXGpO8zIx5l9QcT1k=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-74-yy0KMdDMP6OaetxhaTNnwQ-1; Thu, 14 Sep 2023 15:17:54 -0400
-X-MC-Unique: yy0KMdDMP6OaetxhaTNnwQ-1
+ us-mta-650-nDg3ycd4MvyivZ2Jxuei_w-1; Thu, 14 Sep 2023 15:18:04 -0400
+X-MC-Unique: nDg3ycd4MvyivZ2Jxuei_w-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2E05C8057BF;
-	Thu, 14 Sep 2023 19:17:51 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C85D3101FAA6;
+	Thu, 14 Sep 2023 19:18:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 15B3B40C2070;
-	Thu, 14 Sep 2023 19:17:51 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id AFC0F40C2070;
+	Thu, 14 Sep 2023 19:18:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D510419452C5;
-	Thu, 14 Sep 2023 19:17:08 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D5F6519466F6;
+	Thu, 14 Sep 2023 19:17:16 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 783CE19465BB
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:17:07 +0000 (UTC)
+ ESMTP id 29C1719466EA
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:17:10 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4B9A61054FC1; Thu, 14 Sep 2023 19:17:02 +0000 (UTC)
+ id 0B5F340C6EC0; Thu, 14 Sep 2023 19:17:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4308C1054FC0
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:02 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 13AFE8021B1
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:02 +0000 (UTC)
-Received: from mail-qk1-f174.google.com (mail-qk1-f174.google.com
- [209.85.222.174]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0352640C6EBF
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:09 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-delivery-1.mimecast.com [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CC01E81B194
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:09 +0000 (UTC)
+Received: from mail-qt1-f179.google.com (mail-qt1-f179.google.com
+ [209.85.160.179]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-539-m7UxLzlSOMWvULZqG3d0Qg-2; Thu, 14 Sep 2023 15:16:59 -0400
-X-MC-Unique: m7UxLzlSOMWvULZqG3d0Qg-2
-Received: by mail-qk1-f174.google.com with SMTP id
- af79cd13be357-76dc77fd01fso86390485a.3
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:16:59 -0700 (PDT)
+ us-mta-48-y1BneAfVOm28WCtjGLxPlA-1; Thu, 14 Sep 2023 15:17:08 -0400
+X-MC-Unique: y1BneAfVOm28WCtjGLxPlA-1
+Received: by mail-qt1-f179.google.com with SMTP id
+ d75a77b69052e-4132c2cee1dso7792621cf.2
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:17:07 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1694719018; x=1695323818;
+ d=1e100.net; s=20230601; t=1694719027; x=1695323827;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=MqYkCIaiI00NFZYsDrNwKTUKcdQ4AHj1RzADQKPnGuY=;
- b=bNrPcpzuIo9laM7YPLg0Ncbesmux6biGD3bLuz9JQ5I3d0vSVPAfuh2VgeYySHrIwk
- tZwKM6mMuDo9sRVZzE3qCLNzE05pnHFH25iCt/dLivSHyfiglvLZsI1lCsEx9f89Cpw2
- Euf2ZEeI4dY8IGUcN/AsrWC4/UYsrp99zyLdqSHhzdNt+onRXv2c+KDb8y52hqkK82yX
- fSYH145EZaVIenvTC3WJss5KThVKkM5RrDOmBmYHl40JNFvej3Oa+I+qsS0DhHagTF/1
- ksz8YEqAbru+2k/fIxgFueptZmrbnC0BwT3wC4ABu1pWROpTkuuSJ+kai40r5c1igw/A
- GNSg==
-X-Gm-Message-State: AOJu0YzXGKn1m3cim08EtZQgh8z7Y5sc+BAmTi1ocVKJhDPXzpsjtzKy
- 0tCnuPfS2w+f5PP1R8UTmCwNhz51R6OAplkfvSFMJsYyiqg5tnKlTDqumgIhcUAB6RPuPLwWhXW
- Myxhi0edYGV/3ks+PFzztq8gpISHIxtjJloUinXERXxwzeQM24A5xqyhURLSivMGlMA2c8hr4
-X-Google-Smtp-Source: AGHT+IFLqbFrO7w56fJ93Y9HU1cv1oPZJrHyab7Wo4VG1nytpBGA/OASJnzOdB7OVUpnxZDgC6drwA==
-X-Received: by 2002:a05:620a:4586:b0:765:8204:dd64 with SMTP id
- bp6-20020a05620a458600b007658204dd64mr7544683qkb.7.1694719017891; 
- Thu, 14 Sep 2023 12:16:57 -0700 (PDT)
+ bh=E2jYuhwmcaQR+PYlnrUftnAAIWoe3ANYd1HwzHTY8L0=;
+ b=qaT7GnAPBmeGHCmTME5Nno8m3c0sXFp0I4XU0upE9ntEP5cJqsgKdRmhRjz9XN9Phz
+ iweiPkhcW37XkiT8gEd5XkhPzo/Eer+klrCBnL8U+G0fI4GbB9XOl35uqHlQbFjZCs64
+ /D7/C3Z8eP4pKhQiMDa09uWE0OZMpKtSbIdPok4fTJKBUJVywKLDD+gvxMbXSxmNV7iw
+ UiVg/SUTtXFq/Bb+VVSj79DtcfwlHnaoIPBRjg+TK1QSNwokbIUlCtuHAIh8AfCvEhQ1
+ SSYBTpkdHCYW8x9MOfHVqtR7mdfO/QDGO5L/b/O4VK0mbWacKwRV3TOSuUUwlRoADQrn
+ ukEw==
+X-Gm-Message-State: AOJu0YxZfRw511UAeR+Oz6mRhjcNVsPSbNMYFGDWyjSk/V19oR/vuWgM
+ wnc8hA/JXOSO7gjUllw+n7vGKVeZZZ3DQFGJWyIwgL/N3AcEapf/woFUO76FTv/CqcW5zFm2NpQ
+ zc8v7IMpK/sH8zGWrvXPRWPEagwgG6kgALIKKDI32JQfyGazccBEBt8fA8CkUWF/bjy2rybU1
+X-Google-Smtp-Source: AGHT+IEUxmD8B/5L6KbGg2fJuvkYol69+kOP+6XcRrGgKpjrwk3mfcrT2R70jx5RXhCZ5FtzNfxSyg==
+X-Received: by 2002:a05:622a:1825:b0:412:2d22:2a94 with SMTP id
+ t37-20020a05622a182500b004122d222a94mr6702429qtc.55.1694719025896; 
+ Thu, 14 Sep 2023 12:17:05 -0700 (PDT)
 Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net.
  [68.160.141.91]) by smtp.gmail.com with ESMTPSA id
- o14-20020ae9f50e000000b0076c8fd39407sm667134qkg.113.2023.09.14.12.16.55
+ d3-20020a05620a136300b0076da0f81baesm679314qkl.35.2023.09.14.12.17.05
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 14 Sep 2023 12:16:56 -0700 (PDT)
+ Thu, 14 Sep 2023 12:17:05 -0700 (PDT)
 From: Mike Snitzer <snitzer@kernel.org>
 To: dm-devel@redhat.com
-Date: Thu, 14 Sep 2023 15:16:06 -0400
-Message-Id: <20230914191635.39805-11-snitzer@kernel.org>
+Date: Thu, 14 Sep 2023 15:16:10 -0400
+Message-Id: <20230914191635.39805-15-snitzer@kernel.org>
 In-Reply-To: <20230914191635.39805-1-snitzer@kernel.org>
 References: <20230914191635.39805-1-snitzer@kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: [dm-devel] [PATCH v3 10/39] dm vdo: add deduplication index storage
- interface
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: [dm-devel] [PATCH v3 14/39] dm vdo: implement the chapter volume
+ store
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -114,17 +115,16 @@ Content-Transfer-Encoding: 7bit
 
 From: Matthew Sakai <msakai@redhat.com>
 
-Add infrastructure for managing reads and writes to the underlying
-storage layer for the deduplication index. The deduplication index
-uses dm-bufio for all of its reads and writes, so part of this
-infrastructure is managing the various dm-bufio clients required. It
-also adds the buffered reader and buffered writer abstractions, which
-simplify reading and writing metadata structures that span several
-blocks.
+The volume store structures manage the reading and writing of chapter
+pages. When a chapter is closed, it is packed into a read-only
+structure, split across several pages, and written to storage.
 
-Also include structures and utilities for encoding and decoding all of
-the deduplication index metadata, collectively called the index
-layout.
+The volume store also contains a cache and specialized queues that
+sort and batch requests by the page they need, in order to minimize
+latency and I/O requests when records have to be read from
+storage. The cache and queues also coordinate with the volume index to
+ensure that the volume does not waste resources reading pages that are
+no longer valid.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
@@ -137,597 +137,163 @@ Signed-off-by: John Wiele <jwiele@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-vdo/index-layout.c | 1775 ++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/index-layout.h |   42 +
- drivers/md/dm-vdo/io-factory.c   |  472 ++++++++
- drivers/md/dm-vdo/io-factory.h   |   66 ++
- drivers/md/dm-vdo/numeric.h      |   78 ++
- 5 files changed, 2433 insertions(+)
- create mode 100644 drivers/md/dm-vdo/index-layout.c
- create mode 100644 drivers/md/dm-vdo/index-layout.h
- create mode 100644 drivers/md/dm-vdo/io-factory.c
- create mode 100644 drivers/md/dm-vdo/io-factory.h
- create mode 100644 drivers/md/dm-vdo/numeric.h
+ drivers/md/dm-vdo/index-page-map.c |  181 +++
+ drivers/md/dm-vdo/index-page-map.h |   54 +
+ drivers/md/dm-vdo/radix-sort.c     |  349 ++++++
+ drivers/md/dm-vdo/radix-sort.h     |   28 +
+ drivers/md/dm-vdo/volume.c         | 1792 ++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/volume.h         |  174 +++
+ 6 files changed, 2578 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/index-page-map.c
+ create mode 100644 drivers/md/dm-vdo/index-page-map.h
+ create mode 100644 drivers/md/dm-vdo/radix-sort.c
+ create mode 100644 drivers/md/dm-vdo/radix-sort.h
+ create mode 100644 drivers/md/dm-vdo/volume.c
+ create mode 100644 drivers/md/dm-vdo/volume.h
 
-diff --git a/drivers/md/dm-vdo/index-layout.c b/drivers/md/dm-vdo/index-layout.c
+diff --git a/drivers/md/dm-vdo/index-page-map.c b/drivers/md/dm-vdo/index-page-map.c
 new file mode 100644
-index 000000000000..ead2dcbbd58e
+index 000000000000..592d5aff7c77
 --- /dev/null
-+++ b/drivers/md/dm-vdo/index-layout.c
-@@ -0,0 +1,1775 @@
++++ b/drivers/md/dm-vdo/index-page-map.c
+@@ -0,0 +1,181 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "index-layout.h"
++#include "index-page-map.h"
 +
-+#include <linux/random.h>
-+
-+#include "config.h"
++#include "errors.h"
++#include "hash-utils.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
-+#include "murmurhash3.h"
 +#include "numeric.h"
-+#include "open-chapter.h"
-+#include "time-utils.h"
-+#include "volume-index.h"
++#include "permassert.h"
++#include "string-utils.h"
++#include "uds-threads.h"
++#include "uds.h"
 +
 +/*
-+ * The UDS layout on storage media is divided into a number of fixed-size regions, the sizes of
-+ * which are computed when the index is created. Every header and region begins on 4K block
-+ * boundary. Save regions are further sub-divided into regions of their own.
-+ *
-+ * Each region has a kind and an instance number. Some kinds only have one instance and therefore
-+ * use RL_SOLE_INSTANCE (-1) as the instance number. The RL_KIND_INDEX used to use instances to
-+ * represent sub-indices; now, however there is only ever one sub-index and therefore one instance.
-+ * The RL_KIND_VOLUME_INDEX uses instances to record which zone is being saved.
-+ *
-+ * Every region header has a type and version.
-+ *
-+ *     +-+-+---------+--------+--------+-+
-+ *     | | |   I N D E X  0   101, 0   | |
-+ *     |H|C+---------+--------+--------+S|
-+ *     |D|f| Volume  | Save   | Save   |e|
-+ *     |R|g| Region  | Region | Region |a|
-+ *     | | | 201, -1 | 202, 0 | 202, 1 |l|
-+ *     +-+-+--------+---------+--------+-+
-+ *
-+ * The header contains the encoded region layout table as well as some index configuration data.
-+ * The sub-index region and its subdivisions are maintained in the same table.
-+ *
-+ * There are two save regions to preserve the old state in case saving the new state is incomplete.
-+ * They are used in alternation. Each save region is further divided into sub-regions.
-+ *
-+ *     +-+-----+------+------+-----+-----+
-+ *     |H| IPM | MI   | MI   |     | OC  |
-+ *     |D|     | zone | zone | ... |     |
-+ *     |R| 301 | 302  | 302  |     | 303 |
-+ *     | | -1  |  0   |  1   |     | -1  |
-+ *     +-+-----+------+------+-----+-----+
-+ *
-+ * The header contains the encoded region layout table as well as index state data for that save.
-+ * Each save also has a unique nonce.
++ * The index page map is conceptually a two-dimensional array indexed by chapter number and index
++ * page number within the chapter. Each entry contains the number of the last delta list on that
++ * index page. In order to save memory, the information for the last page in each chapter is not
++ * recorded, as it is known from the geometry.
 + */
 +
-+enum {
-+	MAGIC_SIZE = 32,
-+	NONCE_INFO_SIZE = 32,
-+	MAX_SAVES = 2,
-+};
-+
-+enum region_kind {
-+	RL_KIND_EMPTY = 0,
-+	RL_KIND_HEADER = 1,
-+	RL_KIND_CONFIG = 100,
-+	RL_KIND_INDEX = 101,
-+	RL_KIND_SEAL = 102,
-+	RL_KIND_VOLUME = 201,
-+	RL_KIND_SAVE = 202,
-+	RL_KIND_INDEX_PAGE_MAP = 301,
-+	RL_KIND_VOLUME_INDEX = 302,
-+	RL_KIND_OPEN_CHAPTER = 303,
-+};
-+
-+/* Some region types are historical and are no longer used. */
-+enum region_type {
-+	RH_TYPE_FREE = 0, /* unused */
-+	RH_TYPE_SUPER = 1,
-+	RH_TYPE_SAVE = 2,
-+	RH_TYPE_CHECKPOINT = 3, /* unused */
-+	RH_TYPE_UNSAVED = 4,
-+};
++static const u8 PAGE_MAP_MAGIC[] = "ALBIPM02";
 +
 +enum {
-+	RL_SOLE_INSTANCE = 65535,
++	PAGE_MAP_MAGIC_LENGTH = sizeof(PAGE_MAP_MAGIC) - 1,
 +};
 +
-+/*
-+ * Super block version 2 is the first released version.
-+ *
-+ * Super block version 3 is the normal version used from RHEL 8.2 onwards.
-+ *
-+ * Super block versions 4 through 6 were incremental development versions and
-+ * are not supported.
-+ *
-+ * Super block version 7 is used for volumes which have been reduced in size by one chapter in
-+ * order to make room to prepend LVM metadata to a volume originally created without lvm. This
-+ * allows the index to retain most its deduplication records.
-+ */
-+enum {
-+	SUPER_VERSION_MINIMUM = 3,
-+	SUPER_VERSION_CURRENT = 3,
-+	SUPER_VERSION_MAXIMUM = 7,
-+};
-+
-+static const u8 LAYOUT_MAGIC[MAGIC_SIZE] = "*ALBIREO*SINGLE*FILE*LAYOUT*001*";
-+static const u64 REGION_MAGIC = 0x416c6252676e3031; /* 'AlbRgn01' */
-+
-+struct region_header {
-+	u64 magic;
-+	u64 region_blocks;
-+	u16 type;
-+	/* Currently always version 1 */
-+	u16 version;
-+	u16 region_count;
-+	u16 payload;
-+};
-+
-+struct layout_region {
-+	u64 start_block;
-+	u64 block_count;
-+	u32 __unused;
-+	u16 kind;
-+	u16 instance;
-+};
-+
-+struct region_table {
-+	size_t encoded_size;
-+	struct region_header header;
-+	struct layout_region regions[];
-+};
-+
-+struct index_save_data {
-+	u64 timestamp;
-+	u64 nonce;
-+	/* Currently always version 1 */
-+	u32 version;
-+	u32 unused__;
-+};
-+
-+struct index_state_version {
-+	s32 signature;
-+	s32 version_id;
-+};
-+
-+static const struct index_state_version INDEX_STATE_VERSION_301 = {
-+	.signature  = -1,
-+	.version_id = 301,
-+};
-+
-+struct index_state_data301 {
-+	struct index_state_version version;
-+	u64 newest_chapter;
-+	u64 oldest_chapter;
-+	u64 last_save;
-+	u32 unused;
-+	u32 padding;
-+};
-+
-+struct index_save_layout {
-+	unsigned int zone_count;
-+	struct layout_region index_save;
-+	struct layout_region header;
-+	struct layout_region index_page_map;
-+	struct layout_region free_space;
-+	struct layout_region volume_index_zones[MAX_ZONES];
-+	struct layout_region open_chapter;
-+	struct index_save_data save_data;
-+	struct index_state_data301 state_data;
-+};
-+
-+struct sub_index_layout {
-+	u64 nonce;
-+	struct layout_region sub_index;
-+	struct layout_region volume;
-+	struct index_save_layout *saves;
-+};
-+
-+struct super_block_data {
-+	u8 magic_label[MAGIC_SIZE];
-+	u8 nonce_info[NONCE_INFO_SIZE];
-+	u64 nonce;
-+	u32 version;
-+	u32 block_size;
-+	u16 index_count;
-+	u16 max_saves;
-+	/* Padding reflects a blank field on permanent storage */
-+	u8 padding[4];
-+	u64 open_chapter_blocks;
-+	u64 page_map_blocks;
-+	u64 volume_offset;
-+	u64 start_offset;
-+};
-+
-+struct index_layout {
-+	struct io_factory *factory;
-+	size_t factory_size;
-+	off_t offset;
-+	struct super_block_data super;
-+	struct layout_region header;
-+	struct layout_region config;
-+	struct sub_index_layout index;
-+	struct layout_region seal;
-+	u64 total_blocks;
-+};
-+
-+struct save_layout_sizes {
-+	unsigned int save_count;
-+	size_t block_size;
-+	u64 volume_blocks;
-+	u64 volume_index_blocks;
-+	u64 page_map_blocks;
-+	u64 open_chapter_blocks;
-+	u64 save_blocks;
-+	u64 sub_index_blocks;
-+	u64 total_blocks;
-+	size_t total_size;
-+};
-+
-+static inline bool is_converted_super_block(struct super_block_data *super)
++static inline u32 get_entry_count(const struct geometry *geometry)
 +{
-+	return super->version == 7;
++	return geometry->chapters_per_volume * (geometry->index_pages_per_chapter - 1);
 +}
 +
-+static int __must_check compute_sizes(const struct configuration *config,
-+				      struct save_layout_sizes *sls)
++int uds_make_index_page_map(const struct geometry *geometry, struct index_page_map **map_ptr)
 +{
 +	int result;
-+	struct geometry *geometry = config->geometry;
++	struct index_page_map *map;
 +
-+	memset(sls, 0, sizeof(*sls));
-+	sls->save_count = MAX_SAVES;
-+	sls->block_size = UDS_BLOCK_SIZE;
-+	sls->volume_blocks = geometry->bytes_per_volume / sls->block_size;
-+
-+	result = uds_compute_volume_index_save_blocks(config,
-+						      sls->block_size,
-+						      &sls->volume_index_blocks);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "cannot compute index save size");
-+
-+	sls->page_map_blocks =
-+		DIV_ROUND_UP(uds_compute_index_page_map_save_size(geometry), sls->block_size);
-+	sls->open_chapter_blocks =
-+		DIV_ROUND_UP(uds_compute_saved_open_chapter_size(geometry), sls->block_size);
-+	sls->save_blocks =
-+		1 + (sls->volume_index_blocks + sls->page_map_blocks + sls->open_chapter_blocks);
-+	sls->sub_index_blocks = sls->volume_blocks + (sls->save_count * sls->save_blocks);
-+	sls->total_blocks = 3 + sls->sub_index_blocks;
-+	sls->total_size = sls->total_blocks * sls->block_size;
-+
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_compute_index_size(const struct uds_parameters *parameters, u64 *index_size)
-+{
-+	int result;
-+	struct configuration *index_config;
-+	struct save_layout_sizes sizes;
-+
-+	if (index_size == NULL) {
-+		uds_log_error("Missing output size pointer");
-+		return -EINVAL;
-+	}
-+
-+	result = uds_make_configuration(parameters, &index_config);
-+	if (result != UDS_SUCCESS) {
-+		uds_log_error_strerror(result, "cannot compute index size");
-+		return uds_map_to_system_error(result);
-+	}
-+
-+	result = compute_sizes(index_config, &sizes);
-+	uds_free_configuration(index_config);
-+	if (result != UDS_SUCCESS)
-+		return uds_map_to_system_error(result);
-+
-+	*index_size = sizes.total_size;
-+	return UDS_SUCCESS;
-+}
-+
-+/* Create unique data using the current time and a pseudorandom number. */
-+static void create_unique_nonce_data(u8 *buffer)
-+{
-+	ktime_t now = current_time_ns(CLOCK_REALTIME);
-+	u32 rand;
-+	size_t offset = 0;
-+
-+	get_random_bytes(&rand, sizeof(u32));
-+	memcpy(buffer + offset, &now, sizeof(now));
-+	offset += sizeof(now);
-+	memcpy(buffer + offset, &rand, sizeof(rand));
-+	offset += sizeof(rand);
-+	while (offset < NONCE_INFO_SIZE) {
-+		size_t len = min(NONCE_INFO_SIZE - offset, offset);
-+
-+		memcpy(buffer + offset, buffer, len);
-+		offset += len;
-+	}
-+}
-+
-+static u64 hash_stuff(u64 start, const void *data, size_t len)
-+{
-+	u32 seed = start ^ (start >> 27);
-+	u8 hash_buffer[16];
-+
-+	murmurhash3_128(data, len, seed, hash_buffer);
-+	return get_unaligned_le64(hash_buffer + 4);
-+}
-+
-+/* Generate a primary nonce from the provided data. */
-+static u64 generate_primary_nonce(const void *data, size_t len)
-+{
-+	return hash_stuff(0xa1b1e0fc, data, len);
-+}
-+
-+/*
-+ * Deterministically generate a secondary nonce from an existing nonce and some arbitrary data by
-+ * hashing the original nonce and the data to produce a new nonce.
-+ */
-+static u64 generate_secondary_nonce(u64 nonce, const void *data, size_t len)
-+{
-+	return hash_stuff(nonce + 1, data, len);
-+}
-+
-+static int __must_check open_layout_reader(struct index_layout *layout,
-+					   struct layout_region *lr,
-+					   off_t offset,
-+					   struct buffered_reader **reader_ptr)
-+{
-+	return uds_make_buffered_reader(layout->factory,
-+					lr->start_block + offset,
-+					lr->block_count,
-+					reader_ptr);
-+}
-+
-+static int open_region_reader(struct index_layout *layout,
-+			      struct layout_region *region,
-+			      struct buffered_reader **reader_ptr)
-+{
-+	return open_layout_reader(layout, region, -layout->super.start_offset, reader_ptr);
-+}
-+
-+static int __must_check open_layout_writer(struct index_layout *layout,
-+					   struct layout_region *lr,
-+					   off_t offset,
-+					   struct buffered_writer **writer_ptr)
-+{
-+	return uds_make_buffered_writer(layout->factory,
-+					lr->start_block + offset,
-+					lr->block_count,
-+					writer_ptr);
-+}
-+
-+static int open_region_writer(struct index_layout *layout,
-+			      struct layout_region *region,
-+			      struct buffered_writer **writer_ptr)
-+{
-+	return open_layout_writer(layout, region, -layout->super.start_offset, writer_ptr);
-+}
-+
-+static void
-+generate_super_block_data(struct save_layout_sizes *sls, struct super_block_data *super)
-+{
-+	memset(super, 0, sizeof(*super));
-+	memcpy(super->magic_label, LAYOUT_MAGIC, MAGIC_SIZE);
-+	create_unique_nonce_data(super->nonce_info);
-+
-+	super->nonce = generate_primary_nonce(super->nonce_info, sizeof(super->nonce_info));
-+	super->version = SUPER_VERSION_CURRENT;
-+	super->block_size = sls->block_size;
-+	super->index_count = 1;
-+	super->max_saves = sls->save_count;
-+	super->open_chapter_blocks = sls->open_chapter_blocks;
-+	super->page_map_blocks = sls->page_map_blocks;
-+	super->volume_offset = 0;
-+	super->start_offset = 0;
-+}
-+
-+static void define_sub_index_nonce(struct index_layout *layout)
-+{
-+	struct sub_index_nonce_data {
-+		u64 offset;
-+		u16 index_id;
-+	};
-+	struct sub_index_layout *sil = &layout->index;
-+	u64 primary_nonce = layout->super.nonce;
-+	u8 buffer[sizeof(struct sub_index_nonce_data)] = { 0 };
-+	size_t offset = 0;
-+
-+	encode_u64_le(buffer, &offset, sil->sub_index.start_block);
-+	encode_u16_le(buffer, &offset, 0);
-+	sil->nonce = generate_secondary_nonce(primary_nonce, buffer, sizeof(buffer));
-+	if (sil->nonce == 0)
-+		sil->nonce = generate_secondary_nonce(~primary_nonce + 1, buffer, sizeof(buffer));
-+}
-+
-+static void
-+setup_sub_index(struct index_layout *layout, u64 start_block, struct save_layout_sizes *sls)
-+{
-+	struct sub_index_layout *sil = &layout->index;
-+	u64 next_block = start_block;
-+	unsigned int i;
-+
-+	sil->sub_index = (struct layout_region) {
-+		.start_block = start_block,
-+		.block_count = sls->sub_index_blocks,
-+		.kind = RL_KIND_INDEX,
-+		.instance = 0,
-+	};
-+
-+	sil->volume = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = sls->volume_blocks,
-+		.kind = RL_KIND_VOLUME,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	next_block += sls->volume_blocks;
-+
-+	for (i = 0; i < sls->save_count; i++) {
-+		sil->saves[i].index_save = (struct layout_region) {
-+			.start_block = next_block,
-+			.block_count = sls->save_blocks,
-+			.kind = RL_KIND_SAVE,
-+			.instance = i,
-+		};
-+
-+		next_block += sls->save_blocks;
-+	}
-+
-+	define_sub_index_nonce(layout);
-+}
-+
-+static void initialize_layout(struct index_layout *layout, struct save_layout_sizes *sls)
-+{
-+	u64 next_block = layout->offset / sls->block_size;
-+
-+	layout->total_blocks = sls->total_blocks;
-+	generate_super_block_data(sls, &layout->super);
-+	layout->header = (struct layout_region) {
-+		.start_block = next_block++,
-+		.block_count = 1,
-+		.kind = RL_KIND_HEADER,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	layout->config = (struct layout_region) {
-+		.start_block = next_block++,
-+		.block_count = 1,
-+		.kind = RL_KIND_CONFIG,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	setup_sub_index(layout, next_block, sls);
-+	next_block += sls->sub_index_blocks;
-+
-+	layout->seal = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = 1,
-+		.kind = RL_KIND_SEAL,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+}
-+
-+static int __must_check
-+make_index_save_region_table(struct index_save_layout *isl, struct region_table **table_ptr)
-+{
-+	int result;
-+	unsigned int z;
-+	struct region_table *table;
-+	struct layout_region *lr;
-+	u16 region_count;
-+	size_t payload;
-+	size_t type;
-+
-+	if (isl->zone_count > 0) {
-+		/*
-+		 * Normal save regions: header, page map, volume index zones,
-+		 * open chapter, and possibly free space.
-+		 */
-+		region_count = 3 + isl->zone_count;
-+		if (isl->free_space.block_count > 0)
-+			region_count++;
-+
-+		payload = sizeof(isl->save_data) + sizeof(isl->state_data);
-+		type = RH_TYPE_SAVE;
-+	} else {
-+		/* Empty save regions: header, page map, free space. */
-+		region_count = 3;
-+		payload = sizeof(isl->save_data);
-+		type = RH_TYPE_UNSAVED;
-+	}
-+
-+	result = UDS_ALLOCATE_EXTENDED(struct region_table,
-+				       region_count,
-+				       struct layout_region,
-+				       "layout region table for ISL",
-+				       &table);
++	result = UDS_ALLOCATE(1, struct index_page_map, "page map", &map);
 +	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	lr = &table->regions[0];
-+	*lr++ = isl->header;
-+	*lr++ = isl->index_page_map;
-+	for (z = 0; z < isl->zone_count; z++)
-+		*lr++ = isl->volume_index_zones[z];
++	map->geometry = geometry;
++	map->entries_per_chapter = geometry->index_pages_per_chapter - 1;
++	result = UDS_ALLOCATE(get_entry_count(geometry),
++			      u16,
++			      "Index Page Map Entries",
++			      &map->entries);
++	if (result != UDS_SUCCESS) {
++		uds_free_index_page_map(map);
++		return result;
++	}
 +
-+	if (isl->zone_count > 0)
-+		*lr++ = isl->open_chapter;
-+
-+	if (isl->free_space.block_count > 0)
-+		*lr++ = isl->free_space;
-+
-+	table->header = (struct region_header) {
-+		.magic = REGION_MAGIC,
-+		.region_blocks = isl->index_save.block_count,
-+		.type = type,
-+		.version = 1,
-+		.region_count = region_count,
-+		.payload = payload,
-+	};
-+
-+	table->encoded_size = (sizeof(struct region_header) + payload +
-+			       region_count * sizeof(struct layout_region));
-+	*table_ptr = table;
++	*map_ptr = map;
 +	return UDS_SUCCESS;
 +}
 +
-+static void encode_region_table(u8 *buffer, size_t *offset, struct region_table *table)
++void uds_free_index_page_map(struct index_page_map *map)
 +{
-+	unsigned int i;
-+
-+	encode_u64_le(buffer, offset, REGION_MAGIC);
-+	encode_u64_le(buffer, offset, table->header.region_blocks);
-+	encode_u16_le(buffer, offset, table->header.type);
-+	encode_u16_le(buffer, offset, table->header.version);
-+	encode_u16_le(buffer, offset, table->header.region_count);
-+	encode_u16_le(buffer, offset, table->header.payload);
-+
-+	for (i = 0; i < table->header.region_count; i++) {
-+		encode_u64_le(buffer, offset, table->regions[i].start_block);
-+		encode_u64_le(buffer, offset, table->regions[i].block_count);
-+		encode_u32_le(buffer, offset, 0);
-+		encode_u16_le(buffer, offset, table->regions[i].kind);
-+		encode_u16_le(buffer, offset, table->regions[i].instance);
++	if (map != NULL) {
++		UDS_FREE(map->entries);
++		UDS_FREE(map);
 +	}
 +}
 +
-+static int __must_check write_index_save_header(struct index_save_layout *isl,
-+						struct region_table *table,
-+						struct buffered_writer *writer)
++void uds_update_index_page_map(struct index_page_map *map,
++			       u64 virtual_chapter_number,
++			       u32 chapter_number,
++			       u32 index_page_number,
++			       u32 delta_list_number)
++{
++	size_t slot;
++
++	map->last_update = virtual_chapter_number;
++	if (index_page_number == map->entries_per_chapter)
++		return;
++
++	slot = (chapter_number * map->entries_per_chapter) + index_page_number;
++	map->entries[slot] = delta_list_number;
++}
++
++u32 uds_find_index_page_number(const struct index_page_map *map,
++			       const struct uds_record_name *name,
++			       u32 chapter_number)
++{
++	u32 delta_list_number = uds_hash_to_chapter_delta_list(name, map->geometry);
++	u32 slot = chapter_number * map->entries_per_chapter;
++	u32 page;
++
++	for (page = 0; page < map->entries_per_chapter; page++) {
++		if (delta_list_number <= map->entries[slot + page])
++			break;
++	}
++
++	return page;
++}
++
++void uds_get_list_number_bounds(const struct index_page_map *map,
++				u32 chapter_number,
++				u32 index_page_number,
++				u32 *lowest_list,
++				u32 *highest_list)
++{
++	u32 slot = chapter_number * map->entries_per_chapter;
++
++	*lowest_list = ((index_page_number == 0) ?
++			0 :
++			map->entries[slot + index_page_number - 1] + 1);
++	*highest_list = ((index_page_number < map->entries_per_chapter) ?
++			 map->entries[slot + index_page_number] :
++			 map->geometry->delta_lists_per_chapter - 1);
++}
++
++u64 uds_compute_index_page_map_save_size(const struct geometry *geometry)
++{
++	return PAGE_MAP_MAGIC_LENGTH + sizeof(u64) + sizeof(u16) * get_entry_count(geometry);
++}
++
++int uds_write_index_page_map(struct index_page_map *map, struct buffered_writer *writer)
 +{
 +	int result;
 +	u8 *buffer;
 +	size_t offset = 0;
++	u64 saved_size = uds_compute_index_page_map_save_size(map->geometry);
++	u32 i;
 +
-+	result = UDS_ALLOCATE(table->encoded_size, u8, "index save data", &buffer);
++	result = UDS_ALLOCATE(saved_size, u8, "page map data", &buffer);
 +	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	encode_region_table(buffer, &offset, table);
-+	encode_u64_le(buffer, &offset, isl->save_data.timestamp);
-+	encode_u64_le(buffer, &offset, isl->save_data.nonce);
-+	encode_u32_le(buffer, &offset, isl->save_data.version);
-+	encode_u32_le(buffer, &offset, 0);
-+	if (isl->zone_count > 0) {
-+		encode_u32_le(buffer, &offset, INDEX_STATE_VERSION_301.signature);
-+		encode_u32_le(buffer, &offset, INDEX_STATE_VERSION_301.version_id);
-+		encode_u64_le(buffer, &offset, isl->state_data.newest_chapter);
-+		encode_u64_le(buffer, &offset, isl->state_data.oldest_chapter);
-+		encode_u64_le(buffer, &offset, isl->state_data.last_save);
-+		encode_u64_le(buffer, &offset, 0);
-+	}
++	memcpy(buffer, PAGE_MAP_MAGIC, PAGE_MAP_MAGIC_LENGTH);
++	offset += PAGE_MAP_MAGIC_LENGTH;
++	encode_u64_le(buffer, &offset, map->last_update);
++	for (i = 0; i < get_entry_count(map->geometry); i++)
++		encode_u16_le(buffer, &offset, map->entries[i]);
 +
 +	result = uds_write_to_buffered_writer(writer, buffer, offset);
 +	UDS_FREE(buffer);
@@ -737,1881 +303,2468 @@ index 000000000000..ead2dcbbd58e
 +	return uds_flush_buffered_writer(writer);
 +}
 +
-+static int write_index_save_layout(struct index_layout *layout, struct index_save_layout *isl)
++int uds_read_index_page_map(struct index_page_map *map, struct buffered_reader *reader)
 +{
 +	int result;
-+	struct region_table *table;
-+	struct buffered_writer *writer;
-+
-+	result = make_index_save_region_table(isl, &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = open_region_writer(layout, &isl->header, &writer);
-+	if (result != UDS_SUCCESS) {
-+		UDS_FREE(table);
-+		return result;
-+	}
-+
-+	result = write_index_save_header(isl, table, writer);
-+	UDS_FREE(table);
-+	uds_free_buffered_writer(writer);
-+
-+	return result;
-+}
-+
-+static void reset_index_save_layout(struct index_save_layout *isl, u64 page_map_blocks)
-+{
-+	u64 free_blocks;
-+	u64 next_block = isl->index_save.start_block;
-+
-+	isl->zone_count = 0;
-+	memset(&isl->save_data, 0, sizeof(isl->save_data));
-+
-+	isl->header = (struct layout_region) {
-+		.start_block = next_block++,
-+		.block_count = 1,
-+		.kind = RL_KIND_HEADER,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	isl->index_page_map = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = page_map_blocks,
-+		.kind = RL_KIND_INDEX_PAGE_MAP,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	next_block += page_map_blocks;
-+
-+	free_blocks = isl->index_save.block_count - page_map_blocks - 1;
-+	isl->free_space = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = free_blocks,
-+		.kind = RL_KIND_EMPTY,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+}
-+
-+static int __must_check
-+invalidate_old_save(struct index_layout *layout, struct index_save_layout *isl)
-+{
-+	reset_index_save_layout(isl, layout->super.page_map_blocks);
-+	return write_index_save_layout(layout, isl);
-+}
-+
-+static int discard_index_state_data(struct index_layout *layout)
-+{
-+	int result;
-+	int saved_result = UDS_SUCCESS;
-+	unsigned int i;
-+
-+	for (i = 0; i < layout->super.max_saves; i++) {
-+		result = invalidate_old_save(layout, &layout->index.saves[i]);
-+		if (result != UDS_SUCCESS)
-+			saved_result = result;
-+	}
-+
-+	if (saved_result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result,
-+					      "%s: cannot destroy all index saves",
-+					      __func__);
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check
-+make_layout_region_table(struct index_layout *layout, struct region_table **table_ptr)
-+{
-+	int result;
-+	unsigned int i;
-+	/* Regions: header, config, index, volume, saves, seal */
-+	u16 region_count = 5 + layout->super.max_saves;
-+	u16 payload;
-+	struct region_table *table;
-+	struct layout_region *lr;
-+
-+	result = UDS_ALLOCATE_EXTENDED(struct region_table,
-+				       region_count,
-+				       struct layout_region,
-+				       "layout region table",
-+				       &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	lr = &table->regions[0];
-+	*lr++ = layout->header;
-+	*lr++ = layout->config;
-+	*lr++ = layout->index.sub_index;
-+	*lr++ = layout->index.volume;
-+
-+	for (i = 0; i < layout->super.max_saves; i++)
-+		*lr++ = layout->index.saves[i].index_save;
-+
-+	*lr++ = layout->seal;
-+
-+	if (is_converted_super_block(&layout->super))
-+		payload = sizeof(struct super_block_data);
-+	else
-+		payload = (sizeof(struct super_block_data) -
-+			   sizeof(layout->super.volume_offset) -
-+			   sizeof(layout->super.start_offset));
-+
-+	table->header = (struct region_header) {
-+		.magic = REGION_MAGIC,
-+		.region_blocks = layout->total_blocks,
-+		.type = RH_TYPE_SUPER,
-+		.version = 1,
-+		.region_count = region_count,
-+		.payload = payload,
-+	};
-+
-+	table->encoded_size = (sizeof(struct region_header) + payload +
-+			       region_count * sizeof(struct layout_region));
-+	*table_ptr = table;
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check write_layout_header(struct index_layout *layout,
-+					    struct region_table *table,
-+					    struct buffered_writer *writer)
-+{
-+	int result;
++	u8 magic[PAGE_MAP_MAGIC_LENGTH];
 +	u8 *buffer;
 +	size_t offset = 0;
++	u64 saved_size = uds_compute_index_page_map_save_size(map->geometry);
++	u32 i;
 +
-+	result = UDS_ALLOCATE(table->encoded_size, u8, "layout data", &buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	encode_region_table(buffer, &offset, table);
-+	memcpy(buffer + offset, &layout->super.magic_label, MAGIC_SIZE);
-+	offset += MAGIC_SIZE;
-+	memcpy(buffer + offset, &layout->super.nonce_info, NONCE_INFO_SIZE);
-+	offset += NONCE_INFO_SIZE;
-+	encode_u64_le(buffer, &offset, layout->super.nonce);
-+	encode_u32_le(buffer, &offset, layout->super.version);
-+	encode_u32_le(buffer, &offset, layout->super.block_size);
-+	encode_u16_le(buffer, &offset, layout->super.index_count);
-+	encode_u16_le(buffer, &offset, layout->super.max_saves);
-+	encode_u32_le(buffer, &offset, 0);
-+	encode_u64_le(buffer, &offset, layout->super.open_chapter_blocks);
-+	encode_u64_le(buffer, &offset, layout->super.page_map_blocks);
-+
-+	if (is_converted_super_block(&layout->super)) {
-+		encode_u64_le(buffer, &offset, layout->super.volume_offset);
-+		encode_u64_le(buffer, &offset, layout->super.start_offset);
-+	}
-+
-+	result = uds_write_to_buffered_writer(writer, buffer, offset);
-+	UDS_FREE(buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return uds_flush_buffered_writer(writer);
-+}
-+
-+static int __must_check write_uds_index_config(struct index_layout *layout,
-+					       struct configuration *config,
-+					       off_t offset)
-+{
-+	int result;
-+	struct buffered_writer *writer = NULL;
-+
-+	result = open_layout_writer(layout, &layout->config, offset, &writer);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "failed to open config region");
-+
-+	result = uds_write_config_contents(writer, config, layout->super.version);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_buffered_writer(writer);
-+		return uds_log_error_strerror(result, "failed to write config region");
-+	}
-+
-+	result = uds_flush_buffered_writer(writer);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_buffered_writer(writer);
-+		return uds_log_error_strerror(result, "cannot flush config writer");
-+	}
-+
-+	uds_free_buffered_writer(writer);
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check save_layout(struct index_layout *layout, off_t offset)
-+{
-+	int result;
-+	struct buffered_writer *writer = NULL;
-+	struct region_table *table;
-+
-+	result = make_layout_region_table(layout, &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = open_layout_writer(layout, &layout->header, offset, &writer);
-+	if (result != UDS_SUCCESS) {
-+		UDS_FREE(table);
-+		return result;
-+	}
-+
-+	result = write_layout_header(layout, table, writer);
-+	UDS_FREE(table);
-+	uds_free_buffered_writer(writer);
-+
-+	return result;
-+}
-+
-+static int create_index_layout(struct index_layout *layout, struct configuration *config)
-+{
-+	int result;
-+	struct save_layout_sizes sizes;
-+
-+	result = compute_sizes(config, &sizes);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(sizes.save_count,
-+			      struct index_save_layout,
-+			      __func__,
-+			      &layout->index.saves);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	initialize_layout(layout, &sizes);
-+
-+	result = discard_index_state_data(layout);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = write_uds_index_config(layout, config, 0);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return save_layout(layout, 0);
-+}
-+
-+static u64 generate_index_save_nonce(u64 volume_nonce, struct index_save_layout *isl)
-+{
-+	struct save_nonce_data {
-+		struct index_save_data data;
-+		u64 offset;
-+	} nonce_data;
-+	u8 buffer[sizeof(nonce_data)];
-+	size_t offset = 0;
-+
-+	encode_u64_le(buffer, &offset, isl->save_data.timestamp);
-+	encode_u64_le(buffer, &offset, 0);
-+	encode_u32_le(buffer, &offset, isl->save_data.version);
-+	encode_u32_le(buffer, &offset, 0U);
-+	encode_u64_le(buffer, &offset, isl->index_save.start_block);
-+	ASSERT_LOG_ONLY(offset == sizeof(nonce_data),
-+			"%zu bytes encoded of %zu expected",
-+			offset,
-+			sizeof(nonce_data));
-+	return generate_secondary_nonce(volume_nonce, buffer, sizeof(buffer));
-+}
-+
-+static u64 validate_index_save_layout(struct index_save_layout *isl, u64 volume_nonce)
-+{
-+	if ((isl->zone_count == 0) || (isl->save_data.timestamp == 0))
-+		return 0;
-+
-+	if (isl->save_data.nonce != generate_index_save_nonce(volume_nonce, isl))
-+		return 0;
-+
-+	return isl->save_data.timestamp;
-+}
-+
-+static int
-+find_latest_uds_index_save_slot(struct index_layout *layout, struct index_save_layout **isl_ptr)
-+{
-+	struct index_save_layout *latest = NULL;
-+	struct index_save_layout *isl;
-+	unsigned int i;
-+	u64 save_time = 0;
-+	u64 latest_time = 0;
-+
-+	for (i = 0; i < layout->super.max_saves; i++) {
-+		isl = &layout->index.saves[i];
-+		save_time = validate_index_save_layout(isl, layout->index.nonce);
-+		if (save_time > latest_time) {
-+			latest = isl;
-+			latest_time = save_time;
-+		}
-+	}
-+
-+	if (latest == NULL) {
-+		uds_log_error("No valid index save found");
-+		return UDS_INDEX_NOT_SAVED_CLEANLY;
-+	}
-+
-+	*isl_ptr = latest;
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_discard_open_chapter(struct index_layout *layout)
-+{
-+	int result;
-+	struct index_save_layout *isl;
-+	struct buffered_writer *writer;
-+
-+	result = find_latest_uds_index_save_slot(layout, &isl);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = open_region_writer(layout, &isl->open_chapter, &writer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_write_to_buffered_writer(writer, NULL, UDS_BLOCK_SIZE);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_buffered_writer(writer);
-+		return result;
-+	}
-+
-+	result = uds_flush_buffered_writer(writer);
-+	uds_free_buffered_writer(writer);
-+	return result;
-+}
-+
-+int uds_load_index_state(struct index_layout *layout, struct uds_index *index)
-+{
-+	int result;
-+	unsigned int zone;
-+	struct index_save_layout *isl;
-+	struct buffered_reader *readers[MAX_ZONES];
-+
-+	result = find_latest_uds_index_save_slot(layout, &isl);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	index->newest_virtual_chapter = isl->state_data.newest_chapter;
-+	index->oldest_virtual_chapter = isl->state_data.oldest_chapter;
-+	index->last_save = isl->state_data.last_save;
-+
-+	result = open_region_reader(layout, &isl->open_chapter, &readers[0]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_load_open_chapter(index, readers[0]);
-+	uds_free_buffered_reader(readers[0]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	for (zone = 0; zone < isl->zone_count; zone++) {
-+		result = open_region_reader(layout,
-+					    &isl->volume_index_zones[zone],
-+					    &readers[zone]);
-+		if (result != UDS_SUCCESS) {
-+			for (; zone > 0; zone--)
-+				uds_free_buffered_reader(readers[zone - 1]);
-+
-+			return result;
-+		}
-+	}
-+
-+	result = uds_load_volume_index(index->volume_index, readers, isl->zone_count);
-+	for (zone = 0; zone < isl->zone_count; zone++)
-+		uds_free_buffered_reader(readers[zone]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = open_region_reader(layout, &isl->index_page_map, &readers[0]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_read_index_page_map(index->volume->index_page_map, readers[0]);
-+	uds_free_buffered_reader(readers[0]);
-+
-+	return result;
-+}
-+
-+static struct index_save_layout *select_oldest_index_save_layout(struct index_layout *layout)
-+{
-+	struct index_save_layout *oldest = NULL;
-+	struct index_save_layout *isl;
-+	unsigned int i;
-+	u64 save_time = 0;
-+	u64 oldest_time = 0;
-+
-+	for (i = 0; i < layout->super.max_saves; i++) {
-+		isl = &layout->index.saves[i];
-+		save_time = validate_index_save_layout(isl, layout->index.nonce);
-+		if (oldest == NULL || save_time < oldest_time) {
-+			oldest = isl;
-+			oldest_time = save_time;
-+		}
-+	}
-+
-+	return oldest;
-+}
-+
-+static void instantiate_index_save_layout(struct index_save_layout *isl,
-+					  struct super_block_data *super,
-+					  u64 volume_nonce,
-+					  unsigned int zone_count)
-+{
-+	unsigned int z;
-+	u64 next_block;
-+	u64 free_blocks;
-+	u64 volume_index_blocks;
-+
-+	isl->zone_count = zone_count;
-+	memset(&isl->save_data, 0, sizeof(isl->save_data));
-+	isl->save_data.timestamp = ktime_to_ms(current_time_ns(CLOCK_REALTIME));
-+	isl->save_data.version = 1;
-+	isl->save_data.nonce = generate_index_save_nonce(volume_nonce, isl);
-+
-+	next_block = isl->index_save.start_block;
-+	isl->header = (struct layout_region) {
-+		.start_block = next_block++,
-+		.block_count = 1,
-+		.kind = RL_KIND_HEADER,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	isl->index_page_map = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = super->page_map_blocks,
-+		.kind = RL_KIND_INDEX_PAGE_MAP,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+	next_block += super->page_map_blocks;
-+
-+	free_blocks = (isl->index_save.block_count - 1 -
-+		       super->page_map_blocks -
-+		       super->open_chapter_blocks);
-+	volume_index_blocks = free_blocks / isl->zone_count;
-+	for (z = 0; z < isl->zone_count; z++) {
-+		isl->volume_index_zones[z] = (struct layout_region) {
-+			.start_block = next_block,
-+			.block_count = volume_index_blocks,
-+			.kind = RL_KIND_VOLUME_INDEX,
-+			.instance = z,
-+		};
-+
-+		next_block += volume_index_blocks;
-+		free_blocks -= volume_index_blocks;
-+	}
-+
-+	isl->open_chapter = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = super->open_chapter_blocks,
-+		.kind = RL_KIND_OPEN_CHAPTER,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+
-+	next_block += super->open_chapter_blocks;
-+
-+	isl->free_space = (struct layout_region) {
-+		.start_block = next_block,
-+		.block_count = free_blocks,
-+		.kind = RL_KIND_EMPTY,
-+		.instance = RL_SOLE_INSTANCE,
-+	};
-+}
-+
-+static int setup_uds_index_save_slot(struct index_layout *layout,
-+				     unsigned int zone_count,
-+				     struct index_save_layout **isl_ptr)
-+{
-+	int result;
-+	struct index_save_layout *isl;
-+
-+	isl = select_oldest_index_save_layout(layout);
-+	result = invalidate_old_save(layout, isl);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	instantiate_index_save_layout(isl, &layout->super, layout->index.nonce, zone_count);
-+
-+	*isl_ptr = isl;
-+	return UDS_SUCCESS;
-+}
-+
-+static void cancel_uds_index_save(struct index_save_layout *isl)
-+{
-+	memset(&isl->save_data, 0, sizeof(isl->save_data));
-+	memset(&isl->state_data, 0, sizeof(isl->state_data));
-+	isl->zone_count = 0;
-+}
-+
-+int uds_save_index_state(struct index_layout *layout, struct uds_index *index)
-+{
-+	int result;
-+	unsigned int zone;
-+	struct index_save_layout *isl;
-+	struct buffered_writer *writers[MAX_ZONES];
-+
-+	result = setup_uds_index_save_slot(layout, index->zone_count, &isl);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	isl->state_data	= (struct index_state_data301) {
-+		.newest_chapter = index->newest_virtual_chapter,
-+		.oldest_chapter = index->oldest_virtual_chapter,
-+		.last_save = index->last_save,
-+	};
-+
-+	result = open_region_writer(layout, &isl->open_chapter, &writers[0]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	result = uds_save_open_chapter(index, writers[0]);
-+	uds_free_buffered_writer(writers[0]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	for (zone = 0; zone < index->zone_count; zone++) {
-+		result = open_region_writer(layout,
-+					    &isl->volume_index_zones[zone],
-+					    &writers[zone]);
-+		if (result != UDS_SUCCESS) {
-+			for (; zone > 0; zone--)
-+				uds_free_buffered_writer(writers[zone - 1]);
-+
-+			cancel_uds_index_save(isl);
-+			return result;
-+		}
-+	}
-+
-+	result = uds_save_volume_index(index->volume_index, writers, index->zone_count);
-+	for (zone = 0; zone < index->zone_count; zone++)
-+		uds_free_buffered_writer(writers[zone]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	result = open_region_writer(layout, &isl->index_page_map, &writers[0]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	result = uds_write_index_page_map(index->volume->index_page_map, writers[0]);
-+	uds_free_buffered_writer(writers[0]);
-+	if (result != UDS_SUCCESS) {
-+		cancel_uds_index_save(isl);
-+		return result;
-+	}
-+
-+	return write_index_save_layout(layout, isl);
-+}
-+
-+static int __must_check
-+load_region_table(struct buffered_reader *reader, struct region_table **table_ptr)
-+{
-+	int result;
-+	unsigned int i;
-+	struct region_header header;
-+	struct region_table *table;
-+	u8 buffer[sizeof(struct region_header)];
-+	size_t offset = 0;
-+
-+	result = uds_read_from_buffered_reader(reader, buffer, sizeof(buffer));
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "cannot read region table header");
-+
-+	decode_u64_le(buffer, &offset, &header.magic);
-+	decode_u64_le(buffer, &offset, &header.region_blocks);
-+	decode_u16_le(buffer, &offset, &header.type);
-+	decode_u16_le(buffer, &offset, &header.version);
-+	decode_u16_le(buffer, &offset, &header.region_count);
-+	decode_u16_le(buffer, &offset, &header.payload);
-+
-+	if (header.magic != REGION_MAGIC)
-+		return UDS_NO_INDEX;
-+
-+	if (header.version != 1)
-+		return uds_log_error_strerror(UDS_UNSUPPORTED_VERSION,
-+					      "unknown region table version %hu",
-+					      header.version);
-+
-+	result = UDS_ALLOCATE_EXTENDED(struct region_table,
-+				       header.region_count,
-+				       struct layout_region,
-+				       "single file layout region table",
-+				       &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	table->header = header;
-+	for (i = 0; i < header.region_count; i++) {
-+		u8 region_buffer[sizeof(struct layout_region)];
-+
-+		offset = 0;
-+		result = uds_read_from_buffered_reader(reader,
-+						       region_buffer,
-+						       sizeof(region_buffer));
-+		if (result != UDS_SUCCESS) {
-+			UDS_FREE(table);
-+			return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+						      "cannot read region table layouts");
-+		}
-+
-+		decode_u64_le(region_buffer, &offset, &table->regions[i].start_block);
-+		decode_u64_le(region_buffer, &offset, &table->regions[i].block_count);
-+		offset += sizeof(u32);
-+		decode_u16_le(region_buffer, &offset, &table->regions[i].kind);
-+		decode_u16_le(region_buffer, &offset, &table->regions[i].instance);
-+	}
-+
-+	*table_ptr = table;
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check read_super_block_data(struct buffered_reader *reader,
-+					      struct index_layout *layout,
-+					      size_t saved_size)
-+{
-+	int result;
-+	struct super_block_data *super = &layout->super;
-+	u8 *buffer;
-+	size_t offset = 0;
-+
-+	result = UDS_ALLOCATE(saved_size, u8, "super block data", &buffer);
++	result = UDS_ALLOCATE(saved_size, u8, "page map data", &buffer);
 +	if (result != UDS_SUCCESS)
 +		return result;
 +
 +	result = uds_read_from_buffered_reader(reader, buffer, saved_size);
 +	if (result != UDS_SUCCESS) {
 +		UDS_FREE(buffer);
-+		return uds_log_error_strerror(result, "cannot read region table header");
++		return result;
 +	}
 +
-+	memcpy(&super->magic_label, buffer, MAGIC_SIZE);
-+	offset += MAGIC_SIZE;
-+	memcpy(&super->nonce_info, buffer + offset, NONCE_INFO_SIZE);
-+	offset += NONCE_INFO_SIZE;
-+	decode_u64_le(buffer, &offset, &super->nonce);
-+	decode_u32_le(buffer, &offset, &super->version);
-+	decode_u32_le(buffer, &offset, &super->block_size);
-+	decode_u16_le(buffer, &offset, &super->index_count);
-+	decode_u16_le(buffer, &offset, &super->max_saves);
-+	offset += sizeof(u32);
-+	decode_u64_le(buffer, &offset, &super->open_chapter_blocks);
-+	decode_u64_le(buffer, &offset, &super->page_map_blocks);
-+
-+	if (is_converted_super_block(super)) {
-+		decode_u64_le(buffer, &offset, &super->volume_offset);
-+		decode_u64_le(buffer, &offset, &super->start_offset);
-+	} else {
-+		super->volume_offset = 0;
-+		super->start_offset = 0;
++	memcpy(&magic, buffer, PAGE_MAP_MAGIC_LENGTH);
++	offset += PAGE_MAP_MAGIC_LENGTH;
++	if (memcmp(magic, PAGE_MAP_MAGIC, PAGE_MAP_MAGIC_LENGTH) != 0) {
++		UDS_FREE(buffer);
++		return UDS_CORRUPT_DATA;
 +	}
++
++	decode_u64_le(buffer, &offset, &map->last_update);
++	for (i = 0; i < get_entry_count(map->geometry); i++)
++		decode_u16_le(buffer, &offset, &map->entries[i]);
 +
 +	UDS_FREE(buffer);
-+
-+	if (memcmp(super->magic_label, LAYOUT_MAGIC, MAGIC_SIZE) != 0)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA, "unknown superblock magic label");
-+
-+	if ((super->version < SUPER_VERSION_MINIMUM) ||
-+	    (super->version == 4) ||
-+	    (super->version == 5) ||
-+	    (super->version == 6) ||
-+	    (super->version > SUPER_VERSION_MAXIMUM))
-+		return uds_log_error_strerror(UDS_UNSUPPORTED_VERSION,
-+					      "unknown superblock version number %u",
-+					      super->version);
-+
-+	if (super->volume_offset < super->start_offset)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "inconsistent offsets (start %llu, volume %llu)",
-+					      (unsigned long long) super->start_offset,
-+					      (unsigned long long) super->volume_offset);
-+
-+	/* Sub-indexes are no longer used but the layout retains this field. */
-+	if (super->index_count != 1)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "invalid subindex count %u",
-+					      super->index_count);
-+
-+	if (generate_primary_nonce(super->nonce_info, sizeof(super->nonce_info)) != super->nonce)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "inconsistent superblock nonce");
-+
++	uds_log_debug("read index page map, last update %llu",
++		      (unsigned long long) map->last_update);
 +	return UDS_SUCCESS;
 +}
-+
-+static int __must_check verify_region(struct layout_region *lr,
-+				      u64 start_block,
-+				      enum region_kind kind,
-+				      unsigned int instance)
-+{
-+	if (lr->start_block != start_block)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA, "incorrect layout region offset");
-+
-+	if (lr->kind != kind)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA, "incorrect layout region kind");
-+
-+	if (lr->instance != instance)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "incorrect layout region instance");
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check
-+verify_sub_index(struct index_layout *layout, u64 start_block, struct region_table *table)
-+{
-+	int result;
-+	unsigned int i;
-+	struct sub_index_layout *sil = &layout->index;
-+	u64 next_block = start_block;
-+
-+	sil->sub_index = table->regions[2];
-+	result = verify_region(&sil->sub_index, next_block, RL_KIND_INDEX, 0);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	define_sub_index_nonce(layout);
-+
-+	sil->volume = table->regions[3];
-+	result = verify_region(&sil->volume, next_block, RL_KIND_VOLUME, RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += sil->volume.block_count + layout->super.volume_offset;
-+
-+	for (i = 0; i < layout->super.max_saves; i++) {
-+		sil->saves[i].index_save = table->regions[i + 4];
-+		result = verify_region(&sil->saves[i].index_save, next_block, RL_KIND_SAVE, i);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		next_block += sil->saves[i].index_save.block_count;
-+	}
-+
-+	next_block -= layout->super.volume_offset;
-+	if (next_block != start_block + sil->sub_index.block_count)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "sub index region does not span all saves");
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check
-+reconstitute_layout(struct index_layout *layout, struct region_table *table, u64 first_block)
-+{
-+	int result;
-+	u64 next_block = first_block;
-+
-+	result = UDS_ALLOCATE(layout->super.max_saves,
-+			      struct index_save_layout,
-+			      __func__,
-+			      &layout->index.saves);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	layout->total_blocks = table->header.region_blocks;
-+
-+	layout->header = table->regions[0];
-+	result = verify_region(&layout->header, next_block++, RL_KIND_HEADER, RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	layout->config = table->regions[1];
-+	result = verify_region(&layout->config, next_block++, RL_KIND_CONFIG, RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = verify_sub_index(layout, next_block, table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += layout->index.sub_index.block_count;
-+
-+	layout->seal = table->regions[table->header.region_count - 1];
-+	result = verify_region(&layout->seal,
-+			       next_block + layout->super.volume_offset,
-+			       RL_KIND_SEAL,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (++next_block != (first_block + layout->total_blocks))
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "layout table does not span total blocks");
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check load_super_block(struct index_layout *layout,
-+					 size_t block_size,
-+					 u64 first_block,
-+					 struct buffered_reader *reader)
-+{
-+	int result;
-+	struct region_table *table = NULL;
-+	struct super_block_data *super = &layout->super;
-+
-+	result = load_region_table(reader, &table);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (table->header.type != RH_TYPE_SUPER) {
-+		UDS_FREE(table);
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA, "not a superblock region table");
-+	}
-+
-+	result = read_super_block_data(reader, layout, table->header.payload);
-+	if (result != UDS_SUCCESS) {
-+		UDS_FREE(table);
-+		return uds_log_error_strerror(result, "unknown superblock format");
-+	}
-+
-+	if (super->block_size != block_size) {
-+		UDS_FREE(table);
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "superblock saved block_size %u differs from supplied block_size %zu",
-+					      super->block_size,
-+					      block_size);
-+	}
-+
-+	first_block -= (super->volume_offset - super->start_offset);
-+	result = reconstitute_layout(layout, table, first_block);
-+	UDS_FREE(table);
-+	return result;
-+}
-+
-+static int __must_check read_index_save_data(struct buffered_reader *reader,
-+					     struct index_save_layout *isl,
-+					     size_t saved_size)
-+{
-+	int result;
-+	struct index_state_version file_version;
-+	u8 buffer[sizeof(struct index_save_data) + sizeof(struct index_state_data301)];
-+	size_t offset = 0;
-+
-+	if (saved_size != sizeof(buffer))
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "unexpected index save data size %zu",
-+					      saved_size);
-+
-+	result = uds_read_from_buffered_reader(reader, buffer, sizeof(buffer));
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "cannot read index save data");
-+
-+	decode_u64_le(buffer, &offset, &isl->save_data.timestamp);
-+	decode_u64_le(buffer, &offset, &isl->save_data.nonce);
-+	decode_u32_le(buffer, &offset, &isl->save_data.version);
-+	offset += sizeof(u32);
-+
-+	if (isl->save_data.version > 1)
-+		return uds_log_error_strerror(UDS_UNSUPPORTED_VERSION,
-+					      "unknown index save version number %u",
-+					      isl->save_data.version);
-+
-+	decode_s32_le(buffer, &offset, &file_version.signature);
-+	decode_s32_le(buffer, &offset, &file_version.version_id);
-+
-+	if ((file_version.signature != INDEX_STATE_VERSION_301.signature) ||
-+	    (file_version.version_id != INDEX_STATE_VERSION_301.version_id))
-+		return uds_log_error_strerror(UDS_UNSUPPORTED_VERSION,
-+					      "index state version %d,%d is unsupported",
-+					      file_version.signature,
-+					      file_version.version_id);
-+
-+	decode_u64_le(buffer, &offset, &isl->state_data.newest_chapter);
-+	decode_u64_le(buffer, &offset, &isl->state_data.oldest_chapter);
-+	decode_u64_le(buffer, &offset, &isl->state_data.last_save);
-+	/* Skip past some historical fields that are now unused */
-+	offset += sizeof(u32) + sizeof(u32);
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check
-+reconstruct_index_save(struct index_save_layout *isl, struct region_table *table)
-+{
-+	int result;
-+	unsigned int z;
-+	struct layout_region *last_region;
-+	u64 next_block = isl->index_save.start_block;
-+	u64 last_block = next_block + isl->index_save.block_count;
-+
-+	isl->zone_count = table->header.region_count - 3;
-+
-+	last_region = &table->regions[table->header.region_count - 1];
-+	if (last_region->kind == RL_KIND_EMPTY) {
-+		isl->free_space = *last_region;
-+		isl->zone_count--;
-+	} else {
-+		isl->free_space = (struct layout_region) {
-+			.start_block = last_block,
-+			.block_count = 0,
-+			.kind = RL_KIND_EMPTY,
-+			.instance = RL_SOLE_INSTANCE,
-+		};
-+	}
-+
-+	isl->header = table->regions[0];
-+	result = verify_region(&isl->header, next_block++, RL_KIND_HEADER, RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	isl->index_page_map = table->regions[1];
-+	result = verify_region(&isl->index_page_map,
-+			       next_block,
-+			       RL_KIND_INDEX_PAGE_MAP,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += isl->index_page_map.block_count;
-+
-+	for (z = 0; z < isl->zone_count; z++) {
-+		isl->volume_index_zones[z] = table->regions[z + 2];
-+		result = verify_region(&isl->volume_index_zones[z],
-+				       next_block,
-+				       RL_KIND_VOLUME_INDEX,
-+				       z);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		next_block += isl->volume_index_zones[z].block_count;
-+	}
-+
-+	isl->open_chapter = table->regions[isl->zone_count + 2];
-+	result = verify_region(&isl->open_chapter,
-+			       next_block,
-+			       RL_KIND_OPEN_CHAPTER,
-+			       RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += isl->open_chapter.block_count;
-+
-+	result = verify_region(&isl->free_space, next_block, RL_KIND_EMPTY, RL_SOLE_INSTANCE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_block += isl->free_space.block_count;
-+	if (next_block != last_block)
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "index save layout table incomplete");
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check load_index_save(struct index_save_layout *isl,
-+					struct buffered_reader *reader,
-+					unsigned int instance)
-+{
-+	int result;
-+	struct region_table *table = NULL;
-+
-+	result = load_region_table(reader, &table);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result,
-+					      "cannot read index save %u header",
-+					      instance);
-+
-+	if (table->header.region_blocks != isl->index_save.block_count) {
-+		u64 region_blocks = table->header.region_blocks;
-+
-+		UDS_FREE(table);
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "unexpected index save %u region block count %llu",
-+					      instance,
-+					      (unsigned long long) region_blocks);
-+	}
-+
-+	if (table->header.type == RH_TYPE_UNSAVED) {
-+		UDS_FREE(table);
-+		reset_index_save_layout(isl, 0);
-+		return UDS_SUCCESS;
-+	}
-+
-+
-+	if (table->header.type != RH_TYPE_SAVE) {
-+		UDS_FREE(table);
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "unexpected index save %u header type %u",
-+					      instance,
-+					      table->header.type);
-+	}
-+
-+	result = read_index_save_data(reader, isl, table->header.payload);
-+	if (result != UDS_SUCCESS) {
-+		UDS_FREE(table);
-+		return uds_log_error_strerror(result,
-+					      "unknown index save %u data format",
-+					      instance);
-+	}
-+
-+	result = reconstruct_index_save(isl, table);
-+	UDS_FREE(table);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result,
-+					      "cannot reconstruct index save %u",
-+					      instance);
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check load_sub_index_regions(struct index_layout *layout)
-+{
-+	int result;
-+	unsigned int j;
-+	struct index_save_layout *isl;
-+	struct buffered_reader *reader;
-+
-+	for (j = 0; j < layout->super.max_saves; ++j) {
-+		isl = &layout->index.saves[j];
-+		result = open_region_reader(layout, &isl->index_save, &reader);
-+
-+		if (result != UDS_SUCCESS) {
-+			uds_log_error_strerror(result, "cannot get reader for index 0 save %u", j);
-+			return result;
-+		}
-+
-+		result = load_index_save(isl, reader, j);
-+		uds_free_buffered_reader(reader);
-+		if (result != UDS_SUCCESS) {
-+			/* Another save slot might be valid. */
-+			reset_index_save_layout(isl, 0);
-+			continue;
-+		}
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int __must_check
-+verify_uds_index_config(struct index_layout *layout, struct configuration *config)
-+{
-+	int result;
-+	struct buffered_reader *reader = NULL;
-+	u64 offset;
-+
-+	offset = layout->super.volume_offset - layout->super.start_offset;
-+	result = open_layout_reader(layout, &layout->config, offset, &reader);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "failed to open config reader");
-+
-+	result = uds_validate_config_contents(reader, config);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_buffered_reader(reader);
-+		return uds_log_error_strerror(result, "failed to read config region");
-+	}
-+
-+	uds_free_buffered_reader(reader);
-+	return UDS_SUCCESS;
-+}
-+
-+static int load_index_layout(struct index_layout *layout, struct configuration *config)
-+{
-+	int result;
-+	struct buffered_reader *reader;
-+
-+	result = uds_make_buffered_reader(layout->factory,
-+					  layout->offset / UDS_BLOCK_SIZE,
-+					  1,
-+					  &reader);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "unable to read superblock");
-+
-+	result = load_super_block(layout, UDS_BLOCK_SIZE, layout->offset / UDS_BLOCK_SIZE, reader);
-+	uds_free_buffered_reader(reader);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = verify_uds_index_config(layout, config);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return load_sub_index_regions(layout);
-+}
-+
-+static int create_layout_factory(struct index_layout *layout, const struct configuration *config)
-+{
-+	int result;
-+	size_t writable_size;
-+	struct io_factory *factory = NULL;
-+
-+	result = uds_make_io_factory(config->name, &factory);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	writable_size = uds_get_writable_size(factory) & -UDS_BLOCK_SIZE;
-+	if (writable_size < config->size + config->offset) {
-+		uds_put_io_factory(factory);
-+		uds_log_error("index storage (%zu) is smaller than the requested size %zu",
-+			      writable_size,
-+			      config->size + config->offset);
-+		return -ENOSPC;
-+	}
-+
-+	layout->factory = factory;
-+	layout->factory_size = (config->size > 0) ? config->size : writable_size;
-+	layout->offset = config->offset;
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_make_index_layout(struct configuration *config,
-+			  bool new_layout,
-+			  struct index_layout **layout_ptr)
-+{
-+	int result;
-+	struct index_layout *layout = NULL;
-+	struct save_layout_sizes sizes;
-+
-+	result = compute_sizes(config, &sizes);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(1, struct index_layout, __func__, &layout);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = create_layout_factory(layout, config);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_index_layout(layout);
-+		return result;
-+	}
-+
-+	if (layout->factory_size < sizes.total_size) {
-+		uds_log_error("index storage (%zu) is smaller than the required size %llu",
-+			      layout->factory_size,
-+			      (unsigned long long) sizes.total_size);
-+		uds_free_index_layout(layout);
-+		return -ENOSPC;
-+	}
-+
-+	if (new_layout)
-+		result = create_index_layout(layout, config);
-+	else
-+		result = load_index_layout(layout, config);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_index_layout(layout);
-+		return result;
-+	}
-+
-+	*layout_ptr = layout;
-+	return UDS_SUCCESS;
-+}
-+
-+void uds_free_index_layout(struct index_layout *layout)
-+{
-+	if (layout == NULL)
-+		return;
-+
-+	UDS_FREE(layout->index.saves);
-+	if (layout->factory != NULL)
-+		uds_put_io_factory(layout->factory);
-+
-+	UDS_FREE(layout);
-+}
-+
-+int uds_replace_index_layout_storage(struct index_layout *layout, const char *name)
-+{
-+	return uds_replace_storage(layout->factory, name);
-+}
-+
-+/* Obtain a dm_bufio_client for the volume region. */
-+int uds_open_volume_bufio(struct index_layout *layout,
-+			  size_t block_size,
-+			  unsigned int reserved_buffers,
-+			  struct dm_bufio_client **client_ptr)
-+{
-+	off_t offset = (layout->index.volume.start_block +
-+			layout->super.volume_offset -
-+			layout->super.start_offset);
-+
-+	return uds_make_bufio(layout->factory, offset, block_size, reserved_buffers, client_ptr);
-+}
-+
-+u64 uds_get_volume_nonce(struct index_layout *layout)
-+{
-+	return layout->index.nonce;
-+}
-diff --git a/drivers/md/dm-vdo/index-layout.h b/drivers/md/dm-vdo/index-layout.h
+diff --git a/drivers/md/dm-vdo/index-page-map.h b/drivers/md/dm-vdo/index-page-map.h
 new file mode 100644
-index 000000000000..2128e3826f78
+index 000000000000..14c84051af51
 --- /dev/null
-+++ b/drivers/md/dm-vdo/index-layout.h
-@@ -0,0 +1,42 @@
++++ b/drivers/md/dm-vdo/index-page-map.h
+@@ -0,0 +1,54 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_INDEX_LAYOUT_H
-+#define UDS_INDEX_LAYOUT_H
++#ifndef UDS_INDEX_PAGE_MAP_H
++#define UDS_INDEX_PAGE_MAP_H
 +
-+#include "config.h"
++#include "geometry.h"
 +#include "io-factory.h"
-+#include "uds.h"
 +
 +/*
-+ * The index layout describes the format of the index on the underlying storage, and is responsible
-+ * for creating those structures when the index is first created. It also validates the index data
-+ * when loading a saved index, and updates it when saving the index.
++ * The index maintains a page map which records how the chapter delta lists are distributed among
++ * the index pages for each chapter, allowing the volume to be efficient about reading only pages
++ * that it knows it will need.
 + */
 +
-+struct index_layout;
++struct index_page_map {
++	const struct geometry *geometry;
++	u64 last_update;
++	u32 entries_per_chapter;
++	u16 *entries;
++};
 +
-+int __must_check uds_make_index_layout(struct configuration *config,
-+				       bool new_layout,
-+				       struct index_layout **layout_ptr);
++int __must_check
++uds_make_index_page_map(const struct geometry *geometry, struct index_page_map **map_ptr);
 +
-+void uds_free_index_layout(struct index_layout *layout);
++void uds_free_index_page_map(struct index_page_map *map);
 +
-+int __must_check uds_replace_index_layout_storage(struct index_layout *layout, const char *name);
++int __must_check
++uds_read_index_page_map(struct index_page_map *map, struct buffered_reader *reader);
 +
-+int __must_check uds_load_index_state(struct index_layout *layout, struct uds_index *index);
++int __must_check
++uds_write_index_page_map(struct index_page_map *map, struct buffered_writer *writer);
 +
-+int __must_check uds_save_index_state(struct index_layout *layout, struct uds_index *index);
++void uds_update_index_page_map(struct index_page_map *map,
++			       u64 virtual_chapter_number,
++			       u32 chapter_number,
++			       u32 index_page_number,
++			       u32 delta_list_number);
 +
-+int __must_check uds_discard_open_chapter(struct index_layout *layout);
++u32 __must_check uds_find_index_page_number(const struct index_page_map *map,
++					    const struct uds_record_name *name,
++					    u32 chapter_number);
 +
-+u64 __must_check uds_get_volume_nonce(struct index_layout *layout);
++void uds_get_list_number_bounds(const struct index_page_map *map,
++				u32 chapter_number,
++				u32 index_page_number,
++				u32 *lowest_list,
++				u32 *highest_list);
 +
-+int __must_check uds_open_volume_bufio(struct index_layout *layout,
-+				       size_t block_size,
-+				       unsigned int reserved_buffers,
-+				       struct dm_bufio_client **client_ptr);
++u64 uds_compute_index_page_map_save_size(const struct geometry *geometry);
 +
-+#endif /* UDS_INDEX_LAYOUT_H */
-diff --git a/drivers/md/dm-vdo/io-factory.c b/drivers/md/dm-vdo/io-factory.c
++#endif /* UDS_INDEX_PAGE_MAP_H */
+diff --git a/drivers/md/dm-vdo/radix-sort.c b/drivers/md/dm-vdo/radix-sort.c
 new file mode 100644
-index 000000000000..4a550c90af9a
+index 000000000000..7eeb81a6deb6
 --- /dev/null
-+++ b/drivers/md/dm-vdo/io-factory.c
-@@ -0,0 +1,472 @@
++++ b/drivers/md/dm-vdo/radix-sort.c
+@@ -0,0 +1,349 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "io-factory.h"
++#include "radix-sort.h"
 +
-+#include <linux/atomic.h>
-+#include <linux/blkdev.h>
-+#include <linux/err.h>
-+#include <linux/mount.h>
++#include <linux/limits.h>
++#include <linux/types.h>
 +
-+#include "logger.h"
 +#include "memory-alloc.h"
-+#include "numeric.h"
-+
-+enum { BLK_FMODE = FMODE_READ | FMODE_WRITE };
++#include "string-utils.h"
 +
 +/*
-+ * The I/O factory object manages access to index storage, which is a contiguous range of blocks on
-+ * a block device.
-+ *
-+ * The factory holds the open device and is responsible for closing it. The factory has methods to
-+ * make helper structures that can be used to access sections of the index.
++ * This implementation allocates one large object to do the sorting, which can be reused as many
++ * times as desired. The amount of memory required is logarithmically proportional to the number of
++ * keys to be sorted.
 + */
-+struct io_factory {
-+	struct block_device *bdev;
-+	atomic_t ref_count;
++
++enum {
++	/* Piles smaller than this are handled with a simple insertion sort. */
++	INSERTION_SORT_THRESHOLD = 12,
 +};
 +
-+/* The buffered reader allows efficient I/O by reading page-sized segments into a buffer. */
-+struct buffered_reader {
-+	struct io_factory *factory;
-+	struct dm_bufio_client *client;
-+	struct dm_buffer *buffer;
-+	sector_t limit;
-+	sector_t block_number;
-+	u8 *start;
-+	u8 *end;
-+};
-+
-+enum { MAX_READ_AHEAD_BLOCKS = 4 };
++/* Sort keys are pointers to immutable fixed-length arrays of bytes. */
++typedef const u8 *sort_key_t;
 +
 +/*
-+ * The buffered writer allows efficient I/O by buffering writes and committing page-sized segments
-+ * to storage.
++ * The keys are separated into piles based on the byte in each keys at the current offset, so the
++ * number of keys with each byte must be counted.
 + */
-+struct buffered_writer {
-+	struct io_factory *factory;
-+	struct dm_bufio_client *client;
-+	struct dm_buffer *buffer;
-+	sector_t limit;
-+	sector_t block_number;
-+	u8 *start;
-+	u8 *end;
-+	int error;
++struct histogram {
++	/* The number of non-empty bins */
++	u16 used;
++	/* The index (key byte) of the first non-empty bin */
++	u16 first;
++	/* The index (key byte) of the last non-empty bin */
++	u16 last;
++	/* The number of occurrences of each specific byte */
++	u32 size[256];
 +};
 +
-+static void uds_get_io_factory(struct io_factory *factory)
++/*
++ * Sub-tasks are manually managed on a stack, both for performance and to put a logarithmic bound
++ * on the stack space needed.
++ */
++struct task {
++	/* Pointer to the first key to sort. */
++	sort_key_t *first_key;
++	/* Pointer to the last key to sort. */
++	sort_key_t *last_key;
++	/* The offset into the key at which to continue sorting. */
++	u16 offset;
++	/* The number of bytes remaining in the sort keys. */
++	u16 length;
++};
++
++struct radix_sorter {
++	unsigned int count;
++	struct histogram bins;
++	sort_key_t *pile[256];
++	struct task *end_of_stack;
++	struct task insertion_list[256];
++	struct task stack[];
++};
++
++/* Compare a segment of two fixed-length keys starting at an offset. */
++static inline int compare(sort_key_t key1, sort_key_t key2, u16 offset, u16 length)
 +{
-+	atomic_inc(&factory->ref_count);
++	return memcmp(&key1[offset], &key2[offset], length);
 +}
 +
-+static int get_block_device_from_name(const char *name, struct block_device **bdev)
++/* Insert the next unsorted key into an array of sorted keys. */
++static inline void insert_key(const struct task task, sort_key_t *next)
 +{
-+	dev_t device;
-+	unsigned int major, minor;
-+	char dummy;
-+	const struct blk_holder_ops hops = { NULL };
++	/* Pull the unsorted key out, freeing up the array slot. */
++	sort_key_t unsorted = *next;
 +
-+	/* Extract the major/minor numbers */
-+	if (sscanf(name, "%u:%u%c", &major, &minor, &dummy) == 2) {
-+		device = MKDEV(major, minor);
-+		if (MAJOR(device) != major || MINOR(device) != minor) {
-+			*bdev = NULL;
-+			return uds_log_error_strerror(UDS_INVALID_ARGUMENT,
-+						      "%s is not a valid block device",
-+						      name);
++	/* Compare the key to the preceding sorted entries, shifting down ones that are larger. */
++	while ((--next >= task.first_key) &&
++	       (compare(unsorted, next[0], task.offset, task.length) < 0))
++		next[1] = next[0];
++
++	/* Insert the key into the last slot that was cleared, sorting it. */
++	next[1] = unsorted;
++}
++
++/*
++ * Sort a range of key segments using an insertion sort. This simple sort is faster than the
++ * 256-way radix sort when the number of keys to sort is small.
++ */
++static inline void insertion_sort(const struct task task)
++{
++	sort_key_t *next;
++
++	for (next = task.first_key + 1; next <= task.last_key; next++)
++		insert_key(task, next);
++}
++
++/* Push a sorting task onto a task stack. */
++static inline void push_task(struct task **stack_pointer,
++			     sort_key_t *first_key,
++			     u32 count,
++			     u16 offset,
++			     u16 length)
++{
++	struct task *task = (*stack_pointer)++;
++
++	task->first_key = first_key;
++	task->last_key = &first_key[count - 1];
++	task->offset = offset;
++	task->length = length;
++}
++
++static inline void swap_keys(sort_key_t *a, sort_key_t *b)
++{
++	sort_key_t c = *a;
++	*a = *b;
++	*b = c;
++}
++
++/*
++ * Count the number of times each byte value appears in the arrays of keys to sort at the current
++ * offset, keeping track of the number of non-empty bins, and the index of the first and last
++ * non-empty bin.
++ */
++static inline void measure_bins(const struct task task, struct histogram *bins)
++{
++	sort_key_t *key_ptr;
++
++	/*
++	 * Subtle invariant: bins->used and bins->size[] are zero because the sorting code clears
++	 * it all out as it goes. Even though this structure is re-used, we don't need to pay to
++	 * zero it before starting a new tally.
++	 */
++	bins->first = U8_MAX;
++	bins->last = 0;
++
++	for (key_ptr = task.first_key; key_ptr <= task.last_key; key_ptr++) {
++		/* Increment the count for the byte in the key at the current offset. */
++		u8 bin = (*key_ptr)[task.offset];
++		u32 size = ++bins->size[bin];
++
++		/* Track non-empty bins. */
++		if (size == 1) {
++			bins->used += 1;
++			if (bin < bins->first)
++				bins->first = bin;
++
++			if (bin > bins->last)
++				bins->last = bin;
 +		}
-+		*bdev = blkdev_get_by_dev(device, BLK_FMODE, NULL, &hops);
-+	} else {
-+		*bdev = blkdev_get_by_path(name, BLK_FMODE, NULL, &hops);
 +	}
++}
 +
-+	if (IS_ERR(*bdev)) {
-+		uds_log_error_strerror(-PTR_ERR(*bdev), "%s is not a block device", name);
-+		*bdev = NULL;
-+		return UDS_INVALID_ARGUMENT;
++/*
++ * Convert the bin sizes to pointers to where each pile goes.
++ *
++ *   pile[0] = first_key + bin->size[0],
++ *   pile[1] = pile[0]  + bin->size[1], etc.
++ *
++ * After the keys are moved to the appropriate pile, we'll need to sort each of the piles by the
++ * next radix position. A new task is put on the stack for each pile containing lots of keys, or a
++ * new task is put on the list for each pile containing few keys.
++ *
++ * @stack: pointer the top of the stack
++ * @end_of_stack: the end of the stack
++ * @list: pointer the head of the list
++ * @pile: array for pointers to the end of each pile
++ * @bins: the histogram of the sizes of each pile
++ * @first_key: the first key of the stack
++ * @offset: the next radix position to sort by
++ * @length: the number of bytes remaining in the sort keys
++ *
++ * Return: UDS_SUCCESS or an error code
++ */
++static inline int push_bins(struct task **stack,
++			    struct task *end_of_stack,
++			    struct task **list,
++			    sort_key_t *pile[],
++			    struct histogram *bins,
++			    sort_key_t *first_key,
++			    u16 offset,
++			    u16 length)
++{
++	sort_key_t *pile_start = first_key;
++	int bin;
++
++	for (bin = bins->first; ; bin++) {
++		u32 size = bins->size[bin];
++
++		/* Skip empty piles. */
++		if (size == 0)
++			continue;
++
++		/* There's no need to sort empty keys. */
++		if (length > 0) {
++			if (size > INSERTION_SORT_THRESHOLD) {
++				if (*stack >= end_of_stack)
++					return UDS_BAD_STATE;
++
++				push_task(stack, pile_start, size, offset, length);
++			} else if (size > 1) {
++				push_task(list, pile_start, size, offset, length);
++			}
++		}
++
++		pile_start += size;
++		pile[bin] = pile_start;
++		if (--bins->used == 0)
++			break;
 +	}
 +
 +	return UDS_SUCCESS;
 +}
 +
-+int uds_make_io_factory(const char *path, struct io_factory **factory_ptr)
++int uds_make_radix_sorter(unsigned int count, struct radix_sorter **sorter)
 +{
 +	int result;
-+	struct block_device *bdev;
-+	struct io_factory *factory;
++	unsigned int stack_size = count / INSERTION_SORT_THRESHOLD;
++	struct radix_sorter *radix_sorter;
 +
-+	result = get_block_device_from_name(path, &bdev);
++	result = UDS_ALLOCATE_EXTENDED(struct radix_sorter,
++				       stack_size,
++				       struct task,
++				       __func__,
++				       &radix_sorter);
 +	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	result = UDS_ALLOCATE(1, struct io_factory, __func__, &factory);
-+	if (result != UDS_SUCCESS) {
-+		blkdev_put(bdev, NULL);
-+		return result;
-+	}
-+
-+	factory->bdev = bdev;
-+	atomic_set_release(&factory->ref_count, 1);
-+
-+	*factory_ptr = factory;
++	radix_sorter->count = count;
++	radix_sorter->end_of_stack = radix_sorter->stack + stack_size;
++	*sorter = radix_sorter;
 +	return UDS_SUCCESS;
 +}
 +
-+int uds_replace_storage(struct io_factory *factory, const char *path)
++void uds_free_radix_sorter(struct radix_sorter *sorter)
 +{
-+	int result;
-+	struct block_device *bdev;
-+
-+	result = get_block_device_from_name(path, &bdev);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	blkdev_put(factory->bdev, NULL);
-+	factory->bdev = bdev;
-+	return UDS_SUCCESS;
++	UDS_FREE(sorter);
 +}
 +
-+/* Free an I/O factory once all references have been released. */
-+void uds_put_io_factory(struct io_factory *factory)
++/*
++ * Sort pointers to fixed-length keys (arrays of bytes) using a radix sort. The sort implementation
++ * is unstable, so the relative ordering of equal keys is not preserved.
++ */
++int uds_radix_sort(struct radix_sorter *sorter,
++		   const unsigned char *keys[],
++		   unsigned int count,
++		   unsigned short length)
 +{
-+	if (atomic_add_return(-1, &factory->ref_count) <= 0) {
-+		blkdev_put(factory->bdev, NULL);
-+		UDS_FREE(factory);
-+	}
-+}
++	struct task start;
++	struct histogram *bins = &sorter->bins;
++	sort_key_t **pile = sorter->pile;
++	struct task *task_stack = sorter->stack;
 +
-+size_t uds_get_writable_size(struct io_factory *factory)
-+{
-+	return i_size_read(factory->bdev->bd_inode);
-+}
-+
-+/* Create a struct dm_bufio_client for an index region starting at offset. */
-+int uds_make_bufio(struct io_factory *factory,
-+		   off_t block_offset,
-+		   size_t block_size,
-+		   unsigned int reserved_buffers,
-+		   struct dm_bufio_client **client_ptr)
-+{
-+	struct dm_bufio_client *client;
-+
-+	client = dm_bufio_client_create(factory->bdev,
-+					block_size,
-+					reserved_buffers,
-+					0,
-+					NULL,
-+					NULL,
-+					0);
-+	if (IS_ERR(client))
-+		return -PTR_ERR(client);
-+
-+	dm_bufio_set_sector_offset(client, block_offset * SECTORS_PER_BLOCK);
-+	*client_ptr = client;
-+	return UDS_SUCCESS;
-+}
-+
-+static void read_ahead(struct buffered_reader *reader, sector_t block_number)
-+{
-+	if (block_number < reader->limit) {
-+		sector_t read_ahead =
-+			min((sector_t) MAX_READ_AHEAD_BLOCKS, reader->limit - block_number);
-+
-+		dm_bufio_prefetch(reader->client, block_number, read_ahead);
-+	}
-+}
-+
-+void uds_free_buffered_reader(struct buffered_reader *reader)
-+{
-+	if (reader == NULL)
-+		return;
-+
-+	if (reader->buffer != NULL)
-+		dm_bufio_release(reader->buffer);
-+
-+	dm_bufio_client_destroy(reader->client);
-+	uds_put_io_factory(reader->factory);
-+	UDS_FREE(reader);
-+}
-+
-+/* Create a buffered reader for an index region starting at offset. */
-+int uds_make_buffered_reader(struct io_factory *factory,
-+			     off_t offset,
-+			     u64 block_count,
-+			     struct buffered_reader **reader_ptr)
-+{
-+	int result;
-+	struct dm_bufio_client *client = NULL;
-+	struct buffered_reader *reader = NULL;
-+
-+	result = uds_make_bufio(factory, offset, UDS_BLOCK_SIZE, 1, &client);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(1, struct buffered_reader, "buffered reader", &reader);
-+	if (result != UDS_SUCCESS) {
-+		dm_bufio_client_destroy(client);
-+		return result;
-+	}
-+
-+	*reader = (struct buffered_reader) {
-+		.factory = factory,
-+		.client = client,
-+		.buffer = NULL,
-+		.limit = block_count,
-+		.block_number = 0,
-+		.start = NULL,
-+		.end = NULL,
-+	};
-+
-+	read_ahead(reader, 0);
-+	uds_get_io_factory(factory);
-+	*reader_ptr = reader;
-+	return UDS_SUCCESS;
-+}
-+
-+static int position_reader(struct buffered_reader *reader, sector_t block_number, off_t offset)
-+{
-+	struct dm_buffer *buffer = NULL;
-+	void *data;
-+
-+	if ((reader->end == NULL) || (block_number != reader->block_number)) {
-+		if (block_number >= reader->limit)
-+			return UDS_OUT_OF_RANGE;
-+
-+		if (reader->buffer != NULL)
-+			dm_bufio_release(UDS_FORGET(reader->buffer));
-+
-+		data = dm_bufio_read(reader->client, block_number, &buffer);
-+		if (IS_ERR(data))
-+			return -PTR_ERR(data);
-+
-+		reader->buffer = buffer;
-+		reader->start = data;
-+		if (block_number == reader->block_number + 1)
-+			read_ahead(reader, block_number + 1);
-+	}
-+
-+	reader->block_number = block_number;
-+	reader->end = reader->start + offset;
-+	return UDS_SUCCESS;
-+}
-+
-+static size_t bytes_remaining_in_read_buffer(struct buffered_reader *reader)
-+{
-+	return (reader->end == NULL) ? 0 : reader->start + UDS_BLOCK_SIZE - reader->end;
-+}
-+
-+static int reset_reader(struct buffered_reader *reader)
-+{
-+	sector_t block_number;
-+
-+	if (bytes_remaining_in_read_buffer(reader) > 0)
++	/* All zero-length keys are identical and therefore already sorted. */
++	if ((count == 0) || (length == 0))
 +		return UDS_SUCCESS;
 +
-+	block_number = reader->block_number;
-+	if (reader->end != NULL)
-+		++block_number;
++	/* The initial task is to sort the entire length of all the keys. */
++	start = (struct task) {
++		.first_key = keys,
++		.last_key = &keys[count - 1],
++		.offset = 0,
++		.length = length,
++	};
 +
-+	return position_reader(reader, block_number, 0);
++	if (count <= INSERTION_SORT_THRESHOLD) {
++		insertion_sort(start);
++		return UDS_SUCCESS;
++	}
++
++	if (count > sorter->count)
++		return UDS_INVALID_ARGUMENT;
++
++	/*
++	 * Repeatedly consume a sorting task from the stack and process it, pushing new sub-tasks
++	 * onto the stack for each radix-sorted pile. When all tasks and sub-tasks have been
++	 * processed, the stack will be empty and all the keys in the starting task will be fully
++	 * sorted.
++	 */
++	for (*task_stack = start; task_stack >= sorter->stack; task_stack--) {
++		const struct task task = *task_stack;
++		struct task *insertion_task_list;
++		int result;
++		sort_key_t *fence;
++		sort_key_t *end;
++
++		measure_bins(task, bins);
++
++		/*
++		 * Now that we know how large each bin is, generate pointers for each of the piles
++		 * and push a new task to sort each pile by the next radix byte.
++		 */
++		insertion_task_list = sorter->insertion_list;
++		result = push_bins(&task_stack,
++				   sorter->end_of_stack,
++				   &insertion_task_list,
++				   pile,
++				   bins,
++				   task.first_key,
++				   task.offset + 1,
++				   task.length - 1);
++		if (result != UDS_SUCCESS) {
++			memset(bins, 0, sizeof(*bins));
++			return result;
++		}
++
++		/* Now bins->used is zero again. */
++
++		/*
++		 * Don't bother processing the last pile: when piles 0..N-1 are all in place, then
++		 * pile N must also be in place.
++		 */
++		end = task.last_key - bins->size[bins->last];
++		bins->size[bins->last] = 0;
++
++		for (fence = task.first_key; fence <= end; ) {
++			u8 bin;
++			sort_key_t key = *fence;
++
++			/*
++			 * The radix byte of the key tells us which pile it belongs in. Swap it for
++			 * an unprocessed item just below that pile, and repeat.
++			 */
++			while (--pile[bin = key[task.offset]] > fence)
++				swap_keys(pile[bin], &key);
++
++			/*
++			 * The pile reached the fence. Put the key at the bottom of that pile,
++			 * completing it, and advance the fence to the next pile.
++			 */
++			*fence = key;
++			fence += bins->size[bin];
++			bins->size[bin] = 0;
++		}
++
++		/* Now bins->size[] is all zero again. */
++
++		/*
++		 * When the number of keys in a task gets small enough, it is faster to use an
++		 * insertion sort than to keep subdividing into tiny piles.
++		 */
++		while (--insertion_task_list >= sorter->insertion_list)
++			insertion_sort(*insertion_task_list);
++	}
++
++	return UDS_SUCCESS;
++}
+diff --git a/drivers/md/dm-vdo/radix-sort.h b/drivers/md/dm-vdo/radix-sort.h
+new file mode 100644
+index 000000000000..f6f0b62be0ee
+--- /dev/null
++++ b/drivers/md/dm-vdo/radix-sort.h
+@@ -0,0 +1,28 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_RADIX_SORT_H
++#define UDS_RADIX_SORT_H
++
++/*
++ * Radix sort is implemented using an American Flag sort, an unstable, in-place 8-bit radix
++ * exchange sort. This is adapted from the algorithm in the paper by Peter M. McIlroy, Keith
++ * Bostic, and M. Douglas McIlroy, "Engineering Radix Sort".
++ *
++ * http://www.usenix.org/publications/compsystems/1993/win_mcilroy.pdf
++ */
++
++struct radix_sorter;
++
++int __must_check uds_make_radix_sorter(unsigned int count, struct radix_sorter **sorter);
++
++void uds_free_radix_sorter(struct radix_sorter *sorter);
++
++int __must_check uds_radix_sort(struct radix_sorter *sorter,
++				const unsigned char *keys[],
++				unsigned int count,
++				unsigned short length);
++
++#endif /* UDS_RADIX_SORT_H */
+diff --git a/drivers/md/dm-vdo/volume.c b/drivers/md/dm-vdo/volume.c
+new file mode 100644
+index 000000000000..00dc217392b8
+--- /dev/null
++++ b/drivers/md/dm-vdo/volume.c
+@@ -0,0 +1,1792 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "volume.h"
++
++#include <linux/atomic.h>
++#include <linux/dm-bufio.h>
++#include <linux/err.h>
++
++#include "chapter-index.h"
++#include "config.h"
++#include "errors.h"
++#include "geometry.h"
++#include "hash-utils.h"
++#include "index.h"
++#include "logger.h"
++#include "memory-alloc.h"
++#include "permassert.h"
++#include "sparse-cache.h"
++#include "string-utils.h"
++#include "uds-threads.h"
++
++/*
++ * The first block of the volume layout is reserved for the volume header, which is no longer used.
++ * The remainder of the volume is divided into chapters consisting of several pages of records, and
++ * several pages of static index to use to find those records. The index pages are recorded first,
++ * followed by the record pages. The chapters are written in order as they are filled, so the
++ * volume storage acts as a circular log of the most recent chapters, with each new chapter
++ * overwriting the oldest saved one.
++ *
++ * When a new chapter is filled and closed, the records from that chapter are sorted and
++ * interleaved in approximate temporal order, and assigned to record pages. Then a static delta
++ * index is generated to store which record page contains each record. The in-memory index page map
++ * is also updated to indicate which delta lists fall on each chapter index page. This means that
++ * when a record is read, the volume only has to load a single index page and a single record page,
++ * rather than search the entire chapter. These index and record pages are written to storage, and
++ * the index pages are transferred to the page cache under the theory that the most recently
++ * written chapter is likely to be accessed again soon.
++ *
++ * When reading a record, the volume index will indicate which chapter should contain it. The
++ * volume uses the index page map to determine which chapter index page needs to be loaded, and
++ * then reads the relevant record page number from the chapter index. Both index and record pages
++ * are stored in a page cache when read for the common case that subsequent records need the same
++ * pages. The page cache evicts the least recently accessed entries when caching new pages. In
++ * addition, the volume uses dm-bufio to manage access to the storage, which may allow for
++ * additional caching depending on available system resources.
++ *
++ * Record requests are handled from cached pages when possible. If a page needs to be read, it is
++ * placed on a queue along with the request that wants to read it. Any requests for the same page
++ * that arrive while the read is pending are added to the queue entry. A separate reader thread
++ * handles the queued reads, adding the page to the cache and updating any requests queued with it
++ * so they can continue processing. This allows the index zone threads to continue processing new
++ * requests rather than wait for the storage reads.
++ *
++ * When an index rebuild is necessary, the volume reads each stored chapter to determine which
++ * range of chapters contain valid records, so that those records can be used to reconstruct the
++ * in-memory volume index.
++ */
++
++enum {
++	/* The maximum allowable number of contiguous bad chapters */
++	MAX_BAD_CHAPTERS = 100,
++	VOLUME_CACHE_MAX_ENTRIES = (U16_MAX >> 1),
++	VOLUME_CACHE_QUEUED_FLAG = (1 << 15),
++	VOLUME_CACHE_MAX_QUEUED_READS = 4096,
++};
++
++static const u64 BAD_CHAPTER = U64_MAX;
++
++/*
++ * The invalidate counter is two 32 bits fields stored together atomically. The low order 32 bits
++ * are the physical page number of the cached page being read. The high order 32 bits are a
++ * sequence number. This value is written when the zone that owns it begins or completes a cache
++ * search. Any other thread will only read the counter in wait_for_pending_searches() while waiting
++ * to update the cache contents.
++ */
++union invalidate_counter {
++	u64 value;
++	struct {
++		u32 page;
++		u32 counter;
++	};
++};
++
++static inline u32 map_to_page_number(struct geometry *geometry, u32 physical_page)
++{
++	return (physical_page - HEADER_PAGES_PER_VOLUME) % geometry->pages_per_chapter;
 +}
 +
-+int uds_read_from_buffered_reader(struct buffered_reader *reader, u8 *data, size_t length)
++static inline u32 map_to_chapter_number(struct geometry *geometry, u32 physical_page)
 +{
-+	int result = UDS_SUCCESS;
-+	size_t chunk_size;
++	return (physical_page - HEADER_PAGES_PER_VOLUME) / geometry->pages_per_chapter;
++}
 +
-+	while (length > 0) {
-+		result = reset_reader(reader);
++static inline bool is_record_page(struct geometry *geometry, u32 physical_page)
++{
++	return map_to_page_number(geometry, physical_page) >= geometry->index_pages_per_chapter;
++}
++
++static u32 map_to_physical_page(const struct geometry *geometry, u32 chapter, u32 page)
++{
++	/* Page zero is the header page, so the first chapter index page is page one. */
++	return HEADER_PAGES_PER_VOLUME + (geometry->pages_per_chapter * chapter) + page;
++}
++
++static inline union invalidate_counter
++get_invalidate_counter(struct page_cache *cache, unsigned int zone_number)
++{
++	return (union invalidate_counter) {
++		.value = READ_ONCE(cache->search_pending_counters[zone_number].atomic_value),
++	};
++}
++
++static inline void set_invalidate_counter(struct page_cache *cache,
++					  unsigned int zone_number,
++					  union invalidate_counter invalidate_counter)
++{
++	WRITE_ONCE(cache->search_pending_counters[zone_number].atomic_value,
++		   invalidate_counter.value);
++}
++
++static inline bool search_pending(union invalidate_counter invalidate_counter)
++{
++	return (invalidate_counter.counter & 1) != 0;
++}
++
++/* Lock the cache for a zone in order to search for a page. */
++static void
++begin_pending_search(struct page_cache *cache, u32 physical_page, unsigned int zone_number)
++{
++	union invalidate_counter invalidate_counter = get_invalidate_counter(cache, zone_number);
++
++	invalidate_counter.page = physical_page;
++	invalidate_counter.counter++;
++	set_invalidate_counter(cache, zone_number, invalidate_counter);
++	ASSERT_LOG_ONLY(search_pending(invalidate_counter),
++			"Search is pending for zone %u",
++			zone_number);
++	/*
++	 * This memory barrier ensures that the write to the invalidate counter is seen by other
++	 * threads before this thread accesses the cached page. The corresponding read memory
++	 * barrier is in wait_for_pending_searches().
++	 */
++	smp_mb();
++}
++
++/* Unlock the cache for a zone by clearing its invalidate counter. */
++static void end_pending_search(struct page_cache *cache, unsigned int zone_number)
++{
++	union invalidate_counter invalidate_counter;
++
++	/*
++	 * This memory barrier ensures that this thread completes reads of the
++	 * cached page before other threads see the write to the invalidate
++	 * counter.
++	 */
++	smp_mb();
++
++	invalidate_counter = get_invalidate_counter(cache, zone_number);
++	ASSERT_LOG_ONLY(search_pending(invalidate_counter),
++			"Search is pending for zone %u",
++			zone_number);
++	invalidate_counter.counter++;
++	set_invalidate_counter(cache, zone_number, invalidate_counter);
++}
++
++static void wait_for_pending_searches(struct page_cache *cache, u32 physical_page)
++{
++	union invalidate_counter initial_counters[MAX_ZONES];
++	unsigned int i;
++
++	/*
++	 * We hold the read_threads_mutex. We are waiting for threads that do not hold the
++	 * read_threads_mutex. Those threads have "locked" their targeted page by setting the
++	 * search_pending_counter. The corresponding write memory barrier is in
++	 * begin_pending_search().
++	 */
++	smp_mb();
++
++	for (i = 0; i < cache->zone_count; i++)
++		initial_counters[i] = get_invalidate_counter(cache, i);
++	for (i = 0; i < cache->zone_count; i++)
++		if (search_pending(initial_counters[i]) &&
++		    (initial_counters[i].page == physical_page))
++			/*
++			 * There is an active search using the physical page. We need to wait for
++			 * the search to finish.
++			 *
++			 * FIXME: Investigate using wait_event() to wait for the search to finish.
++			 */
++			while (initial_counters[i].value == get_invalidate_counter(cache, i).value)
++				cond_resched();
++}
++
++static void release_page_buffer(struct cached_page *page)
++{
++	if (page->buffer != NULL)
++		dm_bufio_release(UDS_FORGET(page->buffer));
++}
++
++static void clear_cache_page(struct page_cache *cache, struct cached_page *page)
++{
++	/* Do not clear read_pending because the read queue relies on it. */
++	release_page_buffer(page);
++	page->physical_page = cache->indexable_pages;
++	WRITE_ONCE(page->last_used, 0);
++}
++
++static void make_page_most_recent(struct page_cache *cache, struct cached_page *page)
++{
++	/*
++	 * ASSERTION: We are either a zone thread holding a search_pending_counter, or we are any
++	 * thread holding the read_threads_mutex.
++	 */
++	if (atomic64_read(&cache->clock) != READ_ONCE(page->last_used))
++		WRITE_ONCE(page->last_used, atomic64_inc_return(&cache->clock));
++}
++
++/* Select a page to remove from the cache to make space for a new entry. */
++static struct cached_page *select_victim_in_cache(struct page_cache *cache)
++{
++	struct cached_page *page;
++	int oldest_index = 0;
++	s64 oldest_time = S64_MAX;
++	s64 last_used;
++	u16 i;
++
++	/* Find the oldest unclaimed page. We hold the read_threads_mutex. */
++	for (i = 0; i < cache->cache_slots; i++) {
++		/* A page with a pending read must not be replaced. */
++		if (cache->cache[i].read_pending)
++			continue;
++
++		last_used = READ_ONCE(cache->cache[i].last_used);
++		if (last_used <= oldest_time) {
++			oldest_time = last_used;
++			oldest_index = i;
++		}
++	}
++
++	page = &cache->cache[oldest_index];
++	if (page->physical_page != cache->indexable_pages) {
++		WRITE_ONCE(cache->index[page->physical_page], cache->cache_slots);
++		wait_for_pending_searches(cache, page->physical_page);
++	}
++
++	page->read_pending = true;
++	clear_cache_page(cache, page);
++	return page;
++}
++
++/* Make a newly filled cache entry available to other threads. */
++static int
++put_page_in_cache(struct page_cache *cache, u32 physical_page, struct cached_page *page)
++{
++	int result;
++
++	/* We hold the read_threads_mutex. */
++	result = ASSERT((page->read_pending), "page to install has a pending read");
++	if (result != UDS_SUCCESS)
++		return result;
++
++	page->physical_page = physical_page;
++	make_page_most_recent(cache, page);
++	page->read_pending = false;
++
++	/*
++	 * We hold the read_threads_mutex, but we must have a write memory barrier before making
++	 * the cached_page available to the readers that do not hold the mutex. The corresponding
++	 * read memory barrier is in get_page_and_index().
++	 */
++	smp_wmb();
++
++	/* This assignment also clears the queued flag. */
++	WRITE_ONCE(cache->index[physical_page], page - cache->cache);
++	return UDS_SUCCESS;
++}
++
++static void cancel_page_in_cache(struct page_cache *cache,
++				 u32 physical_page,
++				 struct cached_page *page)
++{
++	int result;
++
++	/* We hold the read_threads_mutex. */
++	result = ASSERT((page->read_pending), "page to install has a pending read");
++	if (result != UDS_SUCCESS)
++		return;
++
++	clear_cache_page(cache, page);
++	page->read_pending = false;
++
++	/* Clear the mapping and the queued flag for the new page. */
++	WRITE_ONCE(cache->index[physical_page], cache->cache_slots);
++}
++
++static inline u16 next_queue_position(u16 position)
++{
++	return (position + 1) % VOLUME_CACHE_MAX_QUEUED_READS;
++}
++
++static inline void advance_queue_position(u16 *position)
++{
++	*position = next_queue_position(*position);
++}
++
++static inline bool read_queue_is_full(struct page_cache *cache)
++{
++	return cache->read_queue_first == next_queue_position(cache->read_queue_last);
++}
++
++static bool
++enqueue_read(struct page_cache *cache, struct uds_request *request, u32 physical_page)
++{
++	struct queued_read *queue_entry;
++	u16 last = cache->read_queue_last;
++	u16 read_queue_index;
++
++	/* We hold the read_threads_mutex. */
++	if ((cache->index[physical_page] & VOLUME_CACHE_QUEUED_FLAG) == 0) {
++		/* This page has no existing entry in the queue. */
++		if (read_queue_is_full(cache))
++			return false;
++
++		/* Fill in the read queue entry. */
++		cache->read_queue[last].physical_page = physical_page;
++		cache->read_queue[last].invalid = false;
++		cache->read_queue[last].first_request = NULL;
++		cache->read_queue[last].last_request = NULL;
++
++		/* Point the cache index to the read queue entry. */
++		read_queue_index = last;
++		WRITE_ONCE(cache->index[physical_page],
++			   read_queue_index | VOLUME_CACHE_QUEUED_FLAG);
++
++		advance_queue_position(&cache->read_queue_last);
++	} else {
++		/* It's already queued, so add this request to the existing entry. */
++		read_queue_index = cache->index[physical_page] & ~VOLUME_CACHE_QUEUED_FLAG;
++	}
++
++	request->next_request = NULL;
++	queue_entry = &cache->read_queue[read_queue_index];
++	if (queue_entry->first_request == NULL)
++		queue_entry->first_request = request;
++	else
++		queue_entry->last_request->next_request = request;
++	queue_entry->last_request = request;
++
++	return true;
++}
++
++static void
++enqueue_page_read(struct volume *volume, struct uds_request *request, u32 physical_page)
++{
++	/* Mark the page as queued, so that chapter invalidation knows to cancel a read. */
++	while (!enqueue_read(&volume->page_cache, request, physical_page)) {
++		uds_log_debug("Read queue full, waiting for reads to finish");
++		uds_wait_cond(&volume->read_threads_read_done_cond, &volume->read_threads_mutex);
++	}
++
++	uds_signal_cond(&volume->read_threads_cond);
++}
++
++/*
++ * Reserve the next read queue entry for processing, but do not actually remove it from the queue.
++ * Must be followed by release_queued_requests().
++ */
++static struct queued_read *reserve_read_queue_entry(struct page_cache *cache)
++{
++	/* We hold the read_threads_mutex. */
++	struct queued_read *entry;
++	u16 index_value;
++	bool queued;
++
++	/* No items to dequeue */
++	if (cache->read_queue_next_read == cache->read_queue_last)
++		return NULL;
++
++	entry = &cache->read_queue[cache->read_queue_next_read];
++	index_value = cache->index[entry->physical_page];
++	queued = (index_value & VOLUME_CACHE_QUEUED_FLAG) != 0;
++	/* Check to see if it's still queued before resetting. */
++	if (entry->invalid && queued)
++		WRITE_ONCE(cache->index[entry->physical_page], cache->cache_slots);
++
++	/*
++	 * If a synchronous read has taken this page, set invalid to true so it doesn't get
++	 * overwritten. Requests will just be requeued.
++	 */
++	if (!queued)
++		entry->invalid = true;
++
++	entry->reserved = true;
++	advance_queue_position(&cache->read_queue_next_read);
++	return entry;
++}
++
++static inline struct queued_read *wait_to_reserve_read_queue_entry(struct volume *volume)
++{
++	struct queued_read *queue_entry = NULL;
++
++	while (!volume->read_threads_exiting) {
++		queue_entry = reserve_read_queue_entry(&volume->page_cache);
++		if (queue_entry != NULL)
++			break;
++
++		uds_wait_cond(&volume->read_threads_cond, &volume->read_threads_mutex);
++	}
++
++	return queue_entry;
++}
++
++static int init_chapter_index_page(const struct volume *volume,
++				   u8 *index_page,
++				   u32 chapter,
++				   u32 index_page_number,
++				   struct delta_index_page *chapter_index_page)
++{
++	u64 ci_virtual;
++	u32 ci_chapter;
++	u32 lowest_list;
++	u32 highest_list;
++	struct geometry *geometry = volume->geometry;
++	int result;
++
++	result = uds_initialize_chapter_index_page(chapter_index_page,
++						   geometry,
++						   index_page,
++						   volume->nonce);
++	if (volume->lookup_mode == LOOKUP_FOR_REBUILD)
++		return result;
++
++	if (result != UDS_SUCCESS)
++		return uds_log_error_strerror(result,
++					      "Reading chapter index page for chapter %u page %u",
++					      chapter,
++					      index_page_number);
++
++	uds_get_list_number_bounds(volume->index_page_map,
++				   chapter,
++				   index_page_number,
++				   &lowest_list,
++				   &highest_list);
++	ci_virtual = chapter_index_page->virtual_chapter_number;
++	ci_chapter = uds_map_to_physical_chapter(geometry, ci_virtual);
++	if ((chapter == ci_chapter) &&
++	    (lowest_list == chapter_index_page->lowest_list_number) &&
++	    (highest_list == chapter_index_page->highest_list_number))
++		return UDS_SUCCESS;
++
++	uds_log_warning("Index page map updated to %llu",
++			(unsigned long long) volume->index_page_map->last_update);
++	uds_log_warning("Page map expects that chapter %u page %u has range %u to %u, but chapter index page has chapter %llu with range %u to %u",
++			chapter,
++			index_page_number,
++			lowest_list,
++			highest_list,
++			(unsigned long long) ci_virtual,
++			chapter_index_page->lowest_list_number,
++			chapter_index_page->highest_list_number);
++	return uds_log_error_strerror(UDS_CORRUPT_DATA,
++				      "index page map mismatch with chapter index");
++}
++
++static int initialize_index_page(const struct volume *volume,
++				 u32 physical_page,
++				 struct cached_page *page)
++{
++	u32 chapter = map_to_chapter_number(volume->geometry, physical_page);
++	u32 index_page_number = map_to_page_number(volume->geometry, physical_page);
++
++	return init_chapter_index_page(volume,
++				       dm_bufio_get_block_data(page->buffer),
++				       chapter,
++				       index_page_number,
++				       &page->index_page);
++}
++
++static bool
++search_record_page(const u8 record_page[],
++		   const struct uds_record_name *name,
++		   const struct geometry *geometry,
++		   struct uds_record_data *metadata)
++{
++	/*
++	 * The array of records is sorted by name and stored as a binary tree in heap order, so the
++	 * root of the tree is the first array element.
++	 */
++	u32 node = 0;
++	const struct uds_volume_record *records = (const struct uds_volume_record *) record_page;
++
++	while (node < geometry->records_per_page) {
++		int result;
++		const struct uds_volume_record *record = &records[node];
++
++		result = memcmp(name, &record->name, UDS_RECORD_NAME_SIZE);
++		if (result == 0) {
++			if (metadata != NULL)
++				*metadata = record->data;
++			return true;
++		}
++
++		/* The children of node N are at indexes 2N+1 and 2N+2. */
++		node = ((2 * node) + ((result < 0) ? 1 : 2));
++	}
++
++	return false;
++}
++
++/*
++ * If we've read in a record page, we're going to do an immediate search, to speed up processing by
++ * avoiding get_record_from_zone(), and to ensure that requests make progress even when queued. If
++ * we've read in an index page, we save the record page number so we don't have to resolve the
++ * index page again. We use the location, virtual_chapter, and old_metadata fields in the request
++ * to allow the index code to know where to begin processing the request again.
++ */
++static int search_page(struct cached_page *page,
++		       const struct volume *volume,
++		       struct uds_request *request,
++		       u32 physical_page)
++{
++	int result;
++	enum uds_index_region location;
++	u16 record_page_number;
++
++	if (is_record_page(volume->geometry, physical_page)) {
++		if (search_record_page(dm_bufio_get_block_data(page->buffer),
++				       &request->record_name,
++				       volume->geometry,
++				       &request->old_metadata))
++			location = UDS_LOCATION_RECORD_PAGE_LOOKUP;
++		else
++			location = UDS_LOCATION_UNAVAILABLE;
++	} else {
++		result = uds_search_chapter_index_page(&page->index_page,
++						       volume->geometry,
++						       &request->record_name,
++						       &record_page_number);
 +		if (result != UDS_SUCCESS)
 +			return result;
 +
-+		chunk_size = min(length, bytes_remaining_in_read_buffer(reader));
-+		memcpy(data, reader->end, chunk_size);
-+		length -= chunk_size;
-+		data += chunk_size;
-+		reader->end += chunk_size;
++		if (record_page_number == NO_CHAPTER_INDEX_ENTRY) {
++			location = UDS_LOCATION_UNAVAILABLE;
++		} else {
++			location = UDS_LOCATION_INDEX_PAGE_LOOKUP;
++			*((u16 *) &request->old_metadata) = record_page_number;
++		}
 +	}
 +
++	request->location = location;
++	request->found = false;
 +	return UDS_SUCCESS;
 +}
 +
-+/*
-+ * Verify that the next data on the reader matches the required value. If the value matches, the
-+ * matching contents are consumed. If the value does not match, the reader state is unchanged.
-+ */
-+int uds_verify_buffered_data(struct buffered_reader *reader, const u8 *value, size_t length)
++static int process_entry(struct volume *volume, struct queued_read *entry)
++{
++	u32 page_number = entry->physical_page;
++	struct uds_request *request;
++	struct cached_page *page = NULL;
++	u8 *page_data;
++	int result;
++
++	if (entry->invalid) {
++		uds_log_debug("Requeuing requests for invalid page");
++		return UDS_SUCCESS;
++	}
++
++	page = select_victim_in_cache(&volume->page_cache);
++
++	uds_unlock_mutex(&volume->read_threads_mutex);
++	page_data = dm_bufio_read(volume->client, page_number, &page->buffer);
++	if (IS_ERR(page_data)) {
++		result = -PTR_ERR(page_data);
++		uds_log_warning_strerror(result,
++					 "error reading physical page %u from volume",
++					 page_number);
++		cancel_page_in_cache(&volume->page_cache, page_number, page);
++		return result;
++	}
++	uds_lock_mutex(&volume->read_threads_mutex);
++
++	if (entry->invalid) {
++		uds_log_warning("Page %u invalidated after read", page_number);
++		cancel_page_in_cache(&volume->page_cache, page_number, page);
++		return UDS_SUCCESS;
++	}
++
++	if (!is_record_page(volume->geometry, page_number)) {
++		result = initialize_index_page(volume, page_number, page);
++		if (result != UDS_SUCCESS) {
++			uds_log_warning("Error initializing chapter index page");
++			cancel_page_in_cache(&volume->page_cache, page_number, page);
++			return result;
++		}
++	}
++
++	result = put_page_in_cache(&volume->page_cache, page_number, page);
++	if (result != UDS_SUCCESS) {
++		uds_log_warning("Error putting page %u in cache", page_number);
++		cancel_page_in_cache(&volume->page_cache, page_number, page);
++		return result;
++	}
++
++	request = entry->first_request;
++	while ((request != NULL) && (result == UDS_SUCCESS)) {
++		result = search_page(page, volume, request, page_number);
++		request = request->next_request;
++	}
++
++	return result;
++}
++
++static void release_queued_requests(struct volume *volume, struct queued_read *entry, int result)
++{
++	struct page_cache *cache = &volume->page_cache;
++	u16 next_read = cache->read_queue_next_read;
++	struct uds_request *request;
++	struct uds_request *next;
++
++	for (request = entry->first_request; request != NULL; request = next) {
++		next = request->next_request;
++		request->status = result;
++		request->requeued = true;
++		uds_enqueue_request(request, STAGE_INDEX);
++	}
++
++	entry->reserved = false;
++
++	/* Move the read_queue_first pointer as far as we can. */
++	while ((cache->read_queue_first != next_read) &&
++	       (!cache->read_queue[cache->read_queue_first].reserved))
++		advance_queue_position(&cache->read_queue_first);
++	uds_broadcast_cond(&volume->read_threads_read_done_cond);
++}
++
++static void read_thread_function(void *arg)
++{
++	struct volume *volume = arg;
++
++	uds_log_debug("reader starting");
++	uds_lock_mutex(&volume->read_threads_mutex);
++	while (true) {
++		struct queued_read *queue_entry;
++		int result;
++
++		queue_entry = wait_to_reserve_read_queue_entry(volume);
++		if (volume->read_threads_exiting)
++			break;
++
++		result = process_entry(volume, queue_entry);
++		release_queued_requests(volume, queue_entry, result);
++	}
++	uds_unlock_mutex(&volume->read_threads_mutex);
++	uds_log_debug("reader done");
++}
++
++static void get_page_and_index(struct page_cache *cache,
++			       u32 physical_page,
++			       int *queue_index,
++			       struct cached_page **page_ptr)
++{
++	u16 index_value;
++	u16 index;
++	bool queued;
++
++	/*
++	 * ASSERTION: We are either a zone thread holding a search_pending_counter, or we are any
++	 * thread holding the read_threads_mutex.
++	 *
++	 * Holding only a search_pending_counter is the most frequent case.
++	 */
++	/*
++	 * It would be unlikely for the compiler to turn the usage of index_value into two reads of
++	 * cache->index, but it would be possible and very bad if those reads did not return the
++	 * same bits.
++	 */
++	index_value = READ_ONCE(cache->index[physical_page]);
++	queued = (index_value & VOLUME_CACHE_QUEUED_FLAG) != 0;
++	index = index_value & ~VOLUME_CACHE_QUEUED_FLAG;
++
++	if (!queued && (index < cache->cache_slots)) {
++		*page_ptr = &cache->cache[index];
++		/*
++		 * We have acquired access to the cached page, but unless we hold the
++		 * read_threads_mutex, we need a read memory barrier now. The corresponding write
++		 * memory barrier is in put_page_in_cache().
++		 */
++		smp_rmb();
++	} else {
++		*page_ptr = NULL;
++	}
++
++	*queue_index = queued ? index : -1;
++}
++
++static void
++get_page_from_cache(struct page_cache *cache, u32 physical_page, struct cached_page **page)
++{
++	/*
++	 * ASSERTION: We are in a zone thread.
++	 * ASSERTION: We holding a search_pending_counter or the read_threads_mutex.
++	 */
++	int queue_index = -1;
++
++	get_page_and_index(cache, physical_page, &queue_index, page);
++}
++
++static int read_page_locked(struct volume *volume,
++			    u32 physical_page,
++			    struct cached_page **page_ptr)
 +{
 +	int result = UDS_SUCCESS;
-+	size_t chunk_size;
-+	sector_t start_block_number = reader->block_number;
-+	int start_offset = reader->end - reader->start;
++	struct cached_page *page = NULL;
++	u8 *page_data;
 +
-+	while (length > 0) {
-+		result = reset_reader(reader);
-+		if (result != UDS_SUCCESS) {
-+			result = UDS_CORRUPT_DATA;
-+			break;
-+		}
-+
-+		chunk_size = min(length, bytes_remaining_in_read_buffer(reader));
-+		if (memcmp(value, reader->end, chunk_size) != 0) {
-+			result = UDS_CORRUPT_DATA;
-+			break;
-+		}
-+
-+		length -= chunk_size;
-+		value += chunk_size;
-+		reader->end += chunk_size;
++	page = select_victim_in_cache(&volume->page_cache);
++	page_data = dm_bufio_read(volume->client, physical_page, &page->buffer);
++	if (IS_ERR(page_data)) {
++		result = -PTR_ERR(page_data);
++		uds_log_warning_strerror(result,
++					 "error reading physical page %u from volume",
++					 physical_page);
++		cancel_page_in_cache(&volume->page_cache, physical_page, page);
++		return result;
 +	}
 +
++	if (!is_record_page(volume->geometry, physical_page)) {
++		result = initialize_index_page(volume, physical_page, page);
++		if (result != UDS_SUCCESS) {
++			if (volume->lookup_mode != LOOKUP_FOR_REBUILD)
++				uds_log_warning("Corrupt index page %u", physical_page);
++			cancel_page_in_cache(&volume->page_cache, physical_page, page);
++			return result;
++		}
++	}
++
++	result = put_page_in_cache(&volume->page_cache, physical_page, page);
++	if (result != UDS_SUCCESS) {
++		uds_log_warning("Error putting page %u in cache", physical_page);
++		cancel_page_in_cache(&volume->page_cache, physical_page, page);
++		return result;
++	}
++
++	*page_ptr = page;
++	return UDS_SUCCESS;
++}
++
++/* Retrieve a page from the cache while holding the read threads mutex. */
++static int
++get_volume_page_locked(struct volume *volume, u32 physical_page, struct cached_page **page_ptr)
++{
++	int result;
++	struct cached_page *page = NULL;
++
++	get_page_from_cache(&volume->page_cache, physical_page, &page);
++	if (page == NULL) {
++		result = read_page_locked(volume, physical_page, &page);
++		if (result != UDS_SUCCESS)
++			return result;
++	} else {
++		make_page_most_recent(&volume->page_cache, page);
++	}
++
++	*page_ptr = page;
++	return UDS_SUCCESS;
++}
++
++/* Retrieve a page from the cache while holding a search_pending lock. */
++static int
++get_volume_page_protected(struct volume *volume,
++			  struct uds_request *request,
++			  u32 physical_page,
++			  struct cached_page **page_ptr)
++{
++	struct cached_page *page;
++
++	get_page_from_cache(&volume->page_cache, physical_page, &page);
++	if (page != NULL) {
++		if (request->zone_number == 0)
++			/* Only one zone is allowed to update the LRU. */
++			make_page_most_recent(&volume->page_cache, page);
++
++		*page_ptr = page;
++		return UDS_SUCCESS;
++	}
++
++	/* Prepare to enqueue a read for the page. */
++	end_pending_search(&volume->page_cache, request->zone_number);
++	uds_lock_mutex(&volume->read_threads_mutex);
++
++	/*
++	 * Do the lookup again while holding the read mutex (no longer the fast case so this should
++	 * be fine to repeat). We need to do this because a page may have been added to the cache
++	 * by a reader thread between the time we searched above and the time we went to actually
++	 * try to enqueue it below. This could result in us enqueuing another read for a page which
++	 * is already in the cache, which would mean we end up with two entries in the cache for
++	 * the same page.
++	 */
++	get_page_from_cache(&volume->page_cache, physical_page, &page);
++	if (page == NULL) {
++		enqueue_page_read(volume, request, physical_page);
++		/*
++		 * The performance gain from unlocking first, while "search pending" mode is off,
++		 * turns out to be significant in some cases. The page is not available yet so
++		 * the order does not matter for correctness as it does below.
++		 */
++		uds_unlock_mutex(&volume->read_threads_mutex);
++		begin_pending_search(&volume->page_cache, physical_page, request->zone_number);
++		return UDS_QUEUED;
++	}
++
++	/*
++	 * Now that the page is loaded, the volume needs to switch to "reader thread unlocked" and
++	 * "search pending" state in careful order so no other thread can mess with the data before
++	 * the caller gets to look at it.
++	 */
++	begin_pending_search(&volume->page_cache, physical_page, request->zone_number);
++	uds_unlock_mutex(&volume->read_threads_mutex);
++	*page_ptr = page;
++	return UDS_SUCCESS;
++}
++
++static int get_volume_page(struct volume *volume,
++			   u32 chapter,
++			   u32 page_number,
++			   struct cached_page **page_ptr)
++{
++	int result;
++	u32 physical_page = map_to_physical_page(volume->geometry, chapter, page_number);
++
++	uds_lock_mutex(&volume->read_threads_mutex);
++	result = get_volume_page_locked(volume, physical_page, page_ptr);
++	uds_unlock_mutex(&volume->read_threads_mutex);
++	return result;
++}
++
++int uds_get_volume_record_page(struct volume *volume, u32 chapter, u32 page_number, u8 **data_ptr)
++{
++	int result;
++	struct cached_page *page = NULL;
++
++	result = get_volume_page(volume, chapter, page_number, &page);
++	if (result == UDS_SUCCESS)
++		*data_ptr = dm_bufio_get_block_data(page->buffer);
++	return result;
++}
++
++int uds_get_volume_index_page(struct volume *volume,
++			      u32 chapter,
++			      u32 page_number,
++			      struct delta_index_page **index_page_ptr)
++{
++	int result;
++	struct cached_page *page = NULL;
++
++	result = get_volume_page(volume, chapter, page_number, &page);
++	if (result == UDS_SUCCESS)
++		*index_page_ptr = &page->index_page;
++	return result;
++}
++
++/*
++ * Find the record page associated with a name in a given index page. This will return UDS_QUEUED
++ * if the page in question must be read from storage.
++ */
++static int search_cached_index_page(struct volume *volume,
++				    struct uds_request *request,
++				    u32 chapter,
++				    u32 index_page_number,
++				    u16 *record_page_number)
++{
++	int result;
++	struct cached_page *page = NULL;
++	u32 physical_page = map_to_physical_page(volume->geometry, chapter, index_page_number);
++
++	/*
++	 * Make sure the invalidate counter is updated before we try and read the mapping. This
++	 * prevents this thread from reading a page in the cache which has already been marked for
++	 * invalidation by the reader thread, before the reader thread has noticed that the
++	 * invalidate_counter has been incremented.
++	 */
++	begin_pending_search(&volume->page_cache, physical_page, request->zone_number);
++
++	result = get_volume_page_protected(volume, request, physical_page, &page);
++	if (result != UDS_SUCCESS) {
++		end_pending_search(&volume->page_cache, request->zone_number);
++		return result;
++	}
++
++	result = uds_search_chapter_index_page(&page->index_page,
++					       volume->geometry,
++					       &request->record_name,
++					       record_page_number);
++	end_pending_search(&volume->page_cache, request->zone_number);
++	return result;
++}
++
++/*
++ * Find the metadata associated with a name in a given record page. This will return UDS_QUEUED if
++ * the page in question must be read from storage.
++ */
++int uds_search_cached_record_page(struct volume *volume,
++				  struct uds_request *request,
++				  u32 chapter,
++				  u16 record_page_number,
++				  bool *found)
++{
++	struct cached_page *record_page;
++	struct geometry *geometry = volume->geometry;
++	int result;
++	u32 physical_page, page_number;
++
++	*found = false;
++	if (record_page_number == NO_CHAPTER_INDEX_ENTRY)
++		return UDS_SUCCESS;
++
++	result = ASSERT(record_page_number < geometry->record_pages_per_chapter,
++			"0 <= %d < %u",
++			record_page_number,
++			geometry->record_pages_per_chapter);
 +	if (result != UDS_SUCCESS)
-+		position_reader(reader, start_block_number, start_offset);
++		return result;
++
++	page_number = geometry->index_pages_per_chapter + record_page_number;
++
++	physical_page = map_to_physical_page(volume->geometry, chapter, page_number);
++
++	/*
++	 * Make sure the invalidate counter is updated before we try and read the mapping. This
++	 * prevents this thread from reading a page in the cache which has already been marked for
++	 * invalidation by the reader thread, before the reader thread has noticed that the
++	 * invalidate_counter has been incremented.
++	 */
++	begin_pending_search(&volume->page_cache, physical_page, request->zone_number);
++
++	result = get_volume_page_protected(volume, request, physical_page, &record_page);
++	if (result != UDS_SUCCESS) {
++		end_pending_search(&volume->page_cache, request->zone_number);
++		return result;
++	}
++
++	if (search_record_page(dm_bufio_get_block_data(record_page->buffer),
++			       &request->record_name,
++			       geometry,
++			       &request->old_metadata))
++		*found = true;
++
++	end_pending_search(&volume->page_cache, request->zone_number);
++	return UDS_SUCCESS;
++}
++
++void uds_prefetch_volume_chapter(const struct volume *volume, u32 chapter)
++{
++	const struct geometry *geometry = volume->geometry;
++	u32 physical_page = map_to_physical_page(geometry, chapter, 0);
++
++	dm_bufio_prefetch(volume->client, physical_page, geometry->pages_per_chapter);
++}
++
++int uds_read_chapter_index_from_volume(const struct volume *volume,
++				       u64 virtual_chapter,
++				       struct dm_buffer *volume_buffers[],
++				       struct delta_index_page index_pages[])
++{
++	int result;
++	u32 i;
++	const struct geometry *geometry = volume->geometry;
++	u32 physical_chapter = uds_map_to_physical_chapter(geometry, virtual_chapter);
++	u32 physical_page = map_to_physical_page(geometry, physical_chapter, 0);
++
++	dm_bufio_prefetch(volume->client, physical_page, geometry->index_pages_per_chapter);
++	for (i = 0; i < geometry->index_pages_per_chapter; i++) {
++		u8 *index_page;
++
++		index_page = dm_bufio_read(volume->client, physical_page + i, &volume_buffers[i]);
++		if (IS_ERR(index_page)) {
++			result = -PTR_ERR(index_page);
++			uds_log_warning_strerror(result,
++						 "error reading physical page %u",
++						 physical_page);
++			return result;
++		}
++
++		result = init_chapter_index_page(volume,
++						 index_page,
++						 physical_chapter,
++						 i,
++						 &index_pages[i]);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
++	return UDS_SUCCESS;
++}
++
++int uds_search_volume_page_cache(struct volume *volume, struct uds_request *request, bool *found)
++{
++	int result;
++	u32 physical_chapter =
++		uds_map_to_physical_chapter(volume->geometry, request->virtual_chapter);
++	u32 index_page_number;
++	u16 record_page_number;
++
++	index_page_number = uds_find_index_page_number(volume->index_page_map,
++						       &request->record_name,
++						       physical_chapter);
++
++	if (request->location == UDS_LOCATION_INDEX_PAGE_LOOKUP) {
++		record_page_number = *((u16 *) &request->old_metadata);
++	} else {
++		result = search_cached_index_page(volume,
++						  request,
++						  physical_chapter,
++						  index_page_number,
++						  &record_page_number);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
++	return uds_search_cached_record_page(volume,
++					     request,
++					     physical_chapter,
++					     record_page_number,
++					     found);
++}
++
++int uds_search_volume_page_cache_for_rebuild(struct volume *volume,
++					     const struct uds_record_name *name,
++					     u64 virtual_chapter,
++					     bool *found)
++{
++	int result;
++	struct geometry *geometry = volume->geometry;
++	struct cached_page *page;
++	u32 physical_chapter = uds_map_to_physical_chapter(geometry, virtual_chapter);
++	u32 index_page_number;
++	u16 record_page_number;
++	u32 page_number;
++
++	*found = false;
++	index_page_number =
++		uds_find_index_page_number(volume->index_page_map, name, physical_chapter);
++	result = get_volume_page(volume, physical_chapter, index_page_number, &page);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = uds_search_chapter_index_page(&page->index_page,
++					       geometry,
++					       name,
++					       &record_page_number);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (record_page_number == NO_CHAPTER_INDEX_ENTRY)
++		return UDS_SUCCESS;
++
++	page_number = geometry->index_pages_per_chapter + record_page_number;
++	result = get_volume_page(volume, physical_chapter, page_number, &page);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	*found = search_record_page(dm_bufio_get_block_data(page->buffer), name, geometry, NULL);
++	return UDS_SUCCESS;
++}
++
++static void invalidate_page(struct page_cache *cache, u32 physical_page)
++{
++	struct cached_page *page;
++	int queue_index = -1;
++
++	/* We hold the read_threads_mutex. */
++	get_page_and_index(cache, physical_page, &queue_index, &page);
++	if (page != NULL) {
++		WRITE_ONCE(cache->index[page->physical_page], cache->cache_slots);
++		wait_for_pending_searches(cache, page->physical_page);
++		clear_cache_page(cache, page);
++	} else if (queue_index > -1) {
++		uds_log_debug("setting pending read to invalid");
++		cache->read_queue[queue_index].invalid = true;
++	}
++}
++
++void uds_forget_chapter(struct volume *volume, u64 virtual_chapter)
++{
++	u32 physical_chapter = uds_map_to_physical_chapter(volume->geometry, virtual_chapter);
++	u32 first_page = map_to_physical_page(volume->geometry, physical_chapter, 0);
++	u32 i;
++
++	uds_log_debug("forgetting chapter %llu", (unsigned long long) virtual_chapter);
++	uds_lock_mutex(&volume->read_threads_mutex);
++	for (i = 0; i < volume->geometry->pages_per_chapter; i++)
++		invalidate_page(&volume->page_cache, first_page + i);
++	uds_unlock_mutex(&volume->read_threads_mutex);
++}
++
++/*
++ * Donate an index pages from a newly written chapter to the page cache since it is likely to be
++ * used again soon. The caller must already hold the reader thread mutex.
++ */
++static int donate_index_page_locked(struct volume *volume,
++				    u32 physical_chapter,
++				    u32 index_page_number,
++				    struct dm_buffer *page_buffer)
++{
++	int result;
++	struct cached_page *page = NULL;
++	u32 physical_page =
++		map_to_physical_page(volume->geometry, physical_chapter, index_page_number);
++
++	page = select_victim_in_cache(&volume->page_cache);
++	page->buffer = page_buffer;
++	result = init_chapter_index_page(volume,
++					 dm_bufio_get_block_data(page_buffer),
++					 physical_chapter,
++					 index_page_number,
++					 &page->index_page);
++	if (result != UDS_SUCCESS) {
++		uds_log_warning("Error initialize chapter index page");
++		cancel_page_in_cache(&volume->page_cache, physical_page, page);
++		return result;
++	}
++
++	result = put_page_in_cache(&volume->page_cache, physical_page, page);
++	if (result != UDS_SUCCESS) {
++		uds_log_warning("Error putting page %u in cache", physical_page);
++		cancel_page_in_cache(&volume->page_cache, physical_page, page);
++		return result;
++	}
++
++	return UDS_SUCCESS;
++}
++
++static int write_index_pages(struct volume *volume,
++			     u32 physical_chapter_number,
++			     struct open_chapter_index *chapter_index)
++{
++	struct geometry *geometry = volume->geometry;
++	struct dm_buffer *page_buffer;
++	u32 first_index_page = map_to_physical_page(geometry, physical_chapter_number, 0);
++	u32 delta_list_number = 0;
++	u32 index_page_number;
++
++	for (index_page_number = 0;
++	     index_page_number < geometry->index_pages_per_chapter;
++	     index_page_number++) {
++		u8 *page_data;
++		u32 physical_page = first_index_page + index_page_number;
++		u32 lists_packed;
++		bool last_page;
++		int result;
++
++		page_data = dm_bufio_new(volume->client, physical_page, &page_buffer);
++		if (IS_ERR(page_data))
++			return uds_log_warning_strerror(-PTR_ERR(page_data),
++							"failed to prepare index page");
++
++		last_page = ((index_page_number + 1) == geometry->index_pages_per_chapter);
++		result = uds_pack_open_chapter_index_page(chapter_index,
++							  page_data,
++							  delta_list_number,
++							  last_page,
++							  &lists_packed);
++		if (result != UDS_SUCCESS) {
++			dm_bufio_release(page_buffer);
++			return uds_log_warning_strerror(result, "failed to pack index page");
++		}
++
++		dm_bufio_mark_buffer_dirty(page_buffer);
++
++		if (lists_packed == 0)
++			uds_log_debug("no delta lists packed on chapter %u page %u",
++				      physical_chapter_number,
++				      index_page_number);
++		else
++			delta_list_number += lists_packed;
++
++		uds_update_index_page_map(volume->index_page_map,
++					  chapter_index->virtual_chapter_number,
++					  physical_chapter_number,
++					  index_page_number,
++					  delta_list_number - 1);
++
++		uds_lock_mutex(&volume->read_threads_mutex);
++		result = donate_index_page_locked(volume,
++						  physical_chapter_number,
++						  index_page_number,
++						  page_buffer);
++		uds_unlock_mutex(&volume->read_threads_mutex);
++		if (result != UDS_SUCCESS) {
++			dm_bufio_release(page_buffer);
++			return result;
++		}
++	}
++
++	return UDS_SUCCESS;
++}
++
++static u32 encode_tree(u8 record_page[],
++		       const struct uds_volume_record *sorted_pointers[],
++		       u32 next_record,
++		       u32 node,
++		       u32 node_count)
++{
++	if (node < node_count) {
++		u32 child = (2 * node) + 1;
++
++		next_record = encode_tree(record_page,
++					  sorted_pointers,
++					  next_record,
++					  child,
++					  node_count);
++
++		/*
++		 * In-order traversal: copy the contents of the next record into the page at the
++		 * node offset.
++		 */
++		memcpy(&record_page[node * BYTES_PER_RECORD],
++		       sorted_pointers[next_record++],
++		       BYTES_PER_RECORD);
++
++		next_record = encode_tree(record_page,
++					  sorted_pointers,
++					  next_record,
++					  child + 1,
++					  node_count);
++	}
++
++	return next_record;
++}
++
++static int
++encode_record_page(const struct volume *volume,
++		   const struct uds_volume_record records[],
++		   u8 record_page[])
++{
++	int result;
++	u32 i;
++	u32 records_per_page = volume->geometry->records_per_page;
++	const struct uds_volume_record **record_pointers = volume->record_pointers;
++
++	for (i = 0; i < records_per_page; i++)
++		record_pointers[i] = &records[i];
++
++	/*
++	 * Sort the record pointers by using just the names in the records, which is less work than
++	 * sorting the entire record values.
++	 */
++	STATIC_ASSERT(offsetof(struct uds_volume_record, name) == 0);
++	result = uds_radix_sort(volume->radix_sorter,
++				(const u8 **) record_pointers,
++				records_per_page,
++				UDS_RECORD_NAME_SIZE);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	encode_tree(record_page, record_pointers, 0, 0, records_per_page);
++	return UDS_SUCCESS;
++}
++
++static int write_record_pages(struct volume *volume,
++			      u32 physical_chapter_number,
++			      const struct uds_volume_record *records)
++{
++	u32 record_page_number;
++	struct geometry *geometry = volume->geometry;
++	struct dm_buffer *page_buffer;
++	const struct uds_volume_record *next_record = records;
++	u32 first_record_page = map_to_physical_page(geometry,
++						     physical_chapter_number,
++						     geometry->index_pages_per_chapter);
++
++	for (record_page_number = 0;
++	     record_page_number < geometry->record_pages_per_chapter;
++	     record_page_number++) {
++		u8 *page_data;
++		u32 physical_page = first_record_page + record_page_number;
++		int result;
++
++		page_data = dm_bufio_new(volume->client, physical_page, &page_buffer);
++		if (IS_ERR(page_data))
++			return uds_log_warning_strerror(-PTR_ERR(page_data),
++							"failed to prepare record page");
++
++		result = encode_record_page(volume, next_record, page_data);
++		if (result != UDS_SUCCESS) {
++			dm_bufio_release(page_buffer);
++			return uds_log_warning_strerror(result,
++							"failed to encode record page %u",
++							record_page_number);
++		}
++
++		next_record += geometry->records_per_page;
++		dm_bufio_mark_buffer_dirty(page_buffer);
++		dm_bufio_release(page_buffer);
++	}
++
++	return UDS_SUCCESS;
++}
++
++int uds_write_chapter(struct volume *volume,
++		      struct open_chapter_index *chapter_index,
++		      const struct uds_volume_record *records)
++{
++	int result;
++	u32 physical_chapter_number =
++		uds_map_to_physical_chapter(volume->geometry,
++					    chapter_index->virtual_chapter_number);
++
++	result = write_index_pages(volume, physical_chapter_number, chapter_index);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = write_record_pages(volume, physical_chapter_number, records);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = -dm_bufio_write_dirty_buffers(volume->client);
++	if (result != UDS_SUCCESS)
++		uds_log_error_strerror(result, "cannot sync chapter to volume");
 +
 +	return result;
 +}
 +
-+/* Create a buffered writer for an index region starting at offset. */
-+int uds_make_buffered_writer(struct io_factory *factory,
-+			     off_t offset,
-+			     u64 block_count,
-+			     struct buffered_writer **writer_ptr)
++static void probe_chapter(struct volume *volume, u32 chapter_number, u64 *virtual_chapter_number)
++{
++	const struct geometry *geometry = volume->geometry;
++	u32 expected_list_number = 0;
++	u32 i;
++	u64 vcn = BAD_CHAPTER;
++
++	*virtual_chapter_number = BAD_CHAPTER;
++	dm_bufio_prefetch(volume->client,
++			  map_to_physical_page(geometry, chapter_number, 0),
++			  geometry->index_pages_per_chapter);
++
++	for (i = 0; i < geometry->index_pages_per_chapter; ++i) {
++		struct delta_index_page *page;
++		int result;
++
++		result = uds_get_volume_index_page(volume, chapter_number, i, &page);
++		if (result != UDS_SUCCESS)
++			return;
++
++		if (page->virtual_chapter_number == BAD_CHAPTER) {
++			uds_log_error("corrupt index page in chapter %u", chapter_number);
++			return;
++		}
++
++		if (vcn == BAD_CHAPTER) {
++			vcn = page->virtual_chapter_number;
++		} else if (page->virtual_chapter_number != vcn) {
++			uds_log_error("inconsistent chapter %u index page %u: expected vcn %llu, got vcn %llu",
++				      chapter_number,
++				      i,
++				      (unsigned long long) vcn,
++				      (unsigned long long) page->virtual_chapter_number);
++			return;
++		}
++
++		if (expected_list_number != page->lowest_list_number) {
++			uds_log_error("inconsistent chapter %u index page %u: expected list number %u, got list number %u",
++				      chapter_number,
++				      i,
++				      expected_list_number,
++				      page->lowest_list_number);
++			return;
++		}
++		expected_list_number = page->highest_list_number + 1;
++
++		result = uds_validate_chapter_index_page(page, geometry);
++		if (result != UDS_SUCCESS)
++			return;
++	}
++
++	if (chapter_number != uds_map_to_physical_chapter(geometry, vcn)) {
++		uds_log_error("chapter %u vcn %llu is out of phase (%u)",
++			      chapter_number,
++			      (unsigned long long) vcn,
++			      geometry->chapters_per_volume);
++		return;
++	}
++
++	*virtual_chapter_number = vcn;
++}
++
++/* Find the last valid physical chapter in the volume. */
++static void find_real_end_of_volume(struct volume *volume, u32 limit, u32 *limit_ptr)
++{
++	u32 span = 1;
++	u32 tries = 0;
++
++	while (limit > 0) {
++		u32 chapter = (span > limit) ? 0 : limit - span;
++		u64 vcn = 0;
++
++		probe_chapter(volume, chapter, &vcn);
++		if (vcn == BAD_CHAPTER) {
++			limit = chapter;
++			if (++tries > 1)
++				span *= 2;
++		} else {
++			if (span == 1)
++				break;
++			span /= 2;
++			tries = 0;
++		}
++	}
++
++	*limit_ptr = limit;
++}
++
++static int
++find_chapter_limits(struct volume *volume, u32 chapter_limit, u64 *lowest_vcn, u64 *highest_vcn)
++{
++	struct geometry *geometry = volume->geometry;
++	u64 zero_vcn;
++	u64 lowest = BAD_CHAPTER;
++	u64 highest = BAD_CHAPTER;
++	u64 moved_chapter = BAD_CHAPTER;
++	u32 left_chapter = 0;
++	u32 right_chapter = 0;
++	u32 bad_chapters = 0;
++
++	/*
++	 * This method assumes there is at most one run of contiguous bad chapters caused by
++	 * unflushed writes. Either the bad spot is at the beginning and end, or somewhere in the
++	 * middle. Wherever it is, the highest and lowest VCNs are adjacent to it. Otherwise the
++	 * volume is cleanly saved and somewhere in the middle of it the highest VCN immediately
++	 * precedes the lowest one.
++	 */
++
++	/* It doesn't matter if this results in a bad spot (BAD_CHAPTER). */
++	probe_chapter(volume, 0, &zero_vcn);
++
++	/*
++	 * Binary search for end of the discontinuity in the monotonically increasing virtual
++	 * chapter numbers; bad spots are treated as a span of BAD_CHAPTER values. In effect we're
++	 * searching for the index of the smallest value less than zero_vcn. In the case we go off
++	 * the end it means that chapter 0 has the lowest vcn.
++	 *
++	 * If a virtual chapter is out-of-order, it will be the one moved by conversion. Always
++	 * skip over the moved chapter when searching, adding it to the range at the end if
++	 * necessary.
++	 */
++	if (geometry->remapped_physical > 0) {
++		u64 remapped_vcn;
++
++		probe_chapter(volume, geometry->remapped_physical, &remapped_vcn);
++		if (remapped_vcn == geometry->remapped_virtual)
++			moved_chapter = geometry->remapped_physical;
++	}
++
++	left_chapter = 0;
++	right_chapter = chapter_limit;
++
++	while (left_chapter < right_chapter) {
++		u64 probe_vcn;
++		u32 chapter = (left_chapter + right_chapter) / 2;
++
++		if (chapter == moved_chapter)
++			chapter--;
++
++		probe_chapter(volume, chapter, &probe_vcn);
++		if (zero_vcn <= probe_vcn) {
++			left_chapter = chapter + 1;
++			if (left_chapter == moved_chapter)
++				left_chapter++;
++		} else {
++			right_chapter = chapter;
++		}
++	}
++
++	/* If left_chapter goes off the end, chapter 0 has the lowest virtual chapter number.*/
++	if (left_chapter >= chapter_limit)
++		left_chapter = 0;
++
++	/* At this point, left_chapter is the chapter with the lowest virtual chapter number. */
++	probe_chapter(volume, left_chapter, &lowest);
++
++	/* The moved chapter might be the lowest in the range. */
++	if ((moved_chapter != BAD_CHAPTER) && (lowest == geometry->remapped_virtual + 1))
++		lowest = geometry->remapped_virtual;
++
++	/*
++	 * Circularly scan backwards, moving over any bad chapters until encountering a good one,
++	 * which is the chapter with the highest vcn.
++	 */
++	while (highest == BAD_CHAPTER) {
++		right_chapter = (right_chapter + chapter_limit - 1) % chapter_limit;
++		if (right_chapter == moved_chapter)
++			continue;
++
++		probe_chapter(volume, right_chapter, &highest);
++		if (bad_chapters++ >= MAX_BAD_CHAPTERS) {
++			uds_log_error("too many bad chapters in volume: %u", bad_chapters);
++			return UDS_CORRUPT_DATA;
++		}
++	}
++
++	*lowest_vcn = lowest;
++	*highest_vcn = highest;
++	return UDS_SUCCESS;
++}
++
++/*
++ * Find the highest and lowest contiguous chapters present in the volume and determine their
++ * virtual chapter numbers. This is used by rebuild.
++ */
++int uds_find_volume_chapter_boundaries(struct volume *volume,
++				       u64 *lowest_vcn,
++				       u64 *highest_vcn,
++				       bool *is_empty)
++{
++	u32 chapter_limit = volume->geometry->chapters_per_volume;
++
++	find_real_end_of_volume(volume, chapter_limit, &chapter_limit);
++	if (chapter_limit == 0) {
++		*lowest_vcn = 0;
++		*highest_vcn = 0;
++		*is_empty = true;
++		return UDS_SUCCESS;
++	}
++
++	*is_empty = false;
++	return find_chapter_limits(volume, chapter_limit, lowest_vcn, highest_vcn);
++}
++
++int __must_check
++uds_replace_volume_storage(struct volume *volume, struct index_layout *layout, const char *name)
 +{
 +	int result;
-+	struct dm_bufio_client *client = NULL;
-+	struct buffered_writer *writer;
++	u32 i;
 +
-+	result = uds_make_bufio(factory, offset, UDS_BLOCK_SIZE, 1, &client);
++	result = uds_replace_index_layout_storage(layout, name);
 +	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	result = UDS_ALLOCATE(1, struct buffered_writer, "buffered writer", &writer);
++	/* Release all outstanding dm_bufio objects */
++	for (i = 0; i < volume->page_cache.indexable_pages; i++)
++		volume->page_cache.index[i] = volume->page_cache.cache_slots;
++	for (i = 0; i < volume->page_cache.cache_slots; i++)
++		clear_cache_page(&volume->page_cache, &volume->page_cache.cache[i]);
++	if (volume->sparse_cache != NULL)
++		uds_invalidate_sparse_cache(volume->sparse_cache);
++	if (volume->client != NULL)
++		dm_bufio_client_destroy(UDS_FORGET(volume->client));
++
++	return uds_open_volume_bufio(layout,
++				     volume->geometry->bytes_per_page,
++				     volume->reserved_buffers,
++				     &volume->client);
++}
++
++static int __must_check
++initialize_page_cache(struct page_cache *cache,
++		      const struct geometry *geometry,
++		      u32 chapters_in_cache,
++		      unsigned int zone_count)
++{
++	int result;
++	u32 i;
++
++	cache->indexable_pages = geometry->pages_per_volume + 1;
++	cache->cache_slots = chapters_in_cache * geometry->record_pages_per_chapter;
++	cache->zone_count = zone_count;
++	atomic64_set(&cache->clock, 1);
++
++	result = ASSERT((cache->cache_slots <= VOLUME_CACHE_MAX_ENTRIES),
++			"requested cache size, %u, within limit %u",
++			cache->cache_slots,
++			VOLUME_CACHE_MAX_ENTRIES);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = UDS_ALLOCATE(VOLUME_CACHE_MAX_QUEUED_READS,
++			      struct queued_read,
++			      "volume read queue",
++			      &cache->read_queue);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = UDS_ALLOCATE(cache->zone_count,
++			      struct search_pending_counter,
++			      "Volume Cache Zones",
++			      &cache->search_pending_counters);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = UDS_ALLOCATE(cache->indexable_pages, u16, "page cache index", &cache->index);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = UDS_ALLOCATE(cache->cache_slots,
++			      struct cached_page,
++			      "page cache cache",
++			      &cache->cache);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	/* Initialize index values to invalid values. */
++	for (i = 0; i < cache->indexable_pages; i++)
++		cache->index[i] = cache->cache_slots;
++
++	for (i = 0; i < cache->cache_slots; i++)
++		clear_cache_page(cache, &cache->cache[i]);
++
++	return UDS_SUCCESS;
++}
++
++int uds_make_volume(const struct configuration *config,
++		    struct index_layout *layout,
++		    struct volume **new_volume)
++{
++	unsigned int i;
++	struct volume *volume = NULL;
++	struct geometry *geometry;
++	unsigned int reserved_buffers;
++	int result;
++
++	result = UDS_ALLOCATE(1, struct volume, "volume", &volume);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	volume->nonce = uds_get_volume_nonce(layout);
++
++	result = uds_copy_geometry(config->geometry, &volume->geometry);
 +	if (result != UDS_SUCCESS) {
-+		dm_bufio_client_destroy(client);
++		uds_free_volume(volume);
++		return uds_log_warning_strerror(result, "failed to allocate geometry: error");
++	}
++	geometry = volume->geometry;
++
++	/*
++	 * Reserve a buffer for each entry in the page cache, one for the chapter writer, and one
++	 * for each entry in the sparse cache.
++	 */
++	reserved_buffers = config->cache_chapters * geometry->record_pages_per_chapter;
++	reserved_buffers += 1;
++	if (uds_is_sparse_geometry(geometry))
++		reserved_buffers += (config->cache_chapters * geometry->index_pages_per_chapter);
++	volume->reserved_buffers = reserved_buffers;
++	result = uds_open_volume_bufio(layout,
++				       geometry->bytes_per_page,
++				       volume->reserved_buffers,
++				       &volume->client);
++	if (result != UDS_SUCCESS) {
++		uds_free_volume(volume);
 +		return result;
 +	}
 +
-+	*writer = (struct buffered_writer) {
-+		.factory = factory,
-+		.client = client,
-+		.buffer = NULL,
-+		.limit = block_count,
-+		.start = NULL,
-+		.end = NULL,
-+		.block_number = 0,
-+		.error = UDS_SUCCESS,
-+	};
++	result = uds_make_radix_sorter(geometry->records_per_page, &volume->radix_sorter);
++	if (result != UDS_SUCCESS) {
++		uds_free_volume(volume);
++		return result;
++	}
 +
-+	uds_get_io_factory(factory);
-+	*writer_ptr = writer;
++	result = UDS_ALLOCATE(geometry->records_per_page,
++			      const struct uds_volume_record *,
++			      "record pointers",
++			      &volume->record_pointers);
++	if (result != UDS_SUCCESS) {
++		uds_free_volume(volume);
++		return result;
++	}
++
++	if (uds_is_sparse_geometry(geometry)) {
++		size_t page_size = sizeof(struct delta_index_page) + geometry->bytes_per_page;
++
++		result = uds_make_sparse_cache(geometry,
++					       config->cache_chapters,
++					       config->zone_count,
++					       &volume->sparse_cache);
++		if (result != UDS_SUCCESS) {
++			uds_free_volume(volume);
++			return result;
++		}
++
++		volume->cache_size =
++			page_size * geometry->index_pages_per_chapter * config->cache_chapters;
++	}
++
++	result = initialize_page_cache(&volume->page_cache,
++				       geometry,
++				       config->cache_chapters,
++				       config->zone_count);
++	if (result != UDS_SUCCESS) {
++		uds_free_volume(volume);
++		return result;
++	}
++
++	volume->cache_size += volume->page_cache.cache_slots * sizeof(struct delta_index_page);
++	result = uds_make_index_page_map(geometry, &volume->index_page_map);
++	if (result != UDS_SUCCESS) {
++		uds_free_volume(volume);
++		return result;
++	}
++
++	result = uds_init_mutex(&volume->read_threads_mutex);
++	if (result != UDS_SUCCESS) {
++		uds_free_volume(volume);
++		return result;
++	}
++
++	result = uds_init_cond(&volume->read_threads_read_done_cond);
++	if (result != UDS_SUCCESS) {
++		uds_free_volume(volume);
++		return result;
++	}
++
++	result = uds_init_cond(&volume->read_threads_cond);
++	if (result != UDS_SUCCESS) {
++		uds_free_volume(volume);
++		return result;
++	}
++
++	result = UDS_ALLOCATE(config->read_threads,
++			      struct thread *,
++			      "reader threads",
++			      &volume->reader_threads);
++	if (result != UDS_SUCCESS) {
++		uds_free_volume(volume);
++		return result;
++	}
++
++	for (i = 0; i < config->read_threads; i++) {
++		result = uds_create_thread(read_thread_function,
++					   (void *) volume,
++					   "reader",
++					   &volume->reader_threads[i]);
++		if (result != UDS_SUCCESS) {
++			uds_free_volume(volume);
++			return result;
++		}
++
++		volume->read_thread_count = i + 1;
++	}
++
++	*new_volume = volume;
 +	return UDS_SUCCESS;
 +}
 +
-+static size_t get_remaining_write_space(struct buffered_writer *writer)
++static void uninitialize_page_cache(struct page_cache *cache)
 +{
-+	return writer->start + UDS_BLOCK_SIZE - writer->end;
++	u16 i;
++
++	if (cache->cache != NULL) {
++		for (i = 0; i < cache->cache_slots; i++)
++			release_page_buffer(&cache->cache[i]);
++	}
++	UDS_FREE(cache->index);
++	UDS_FREE(cache->cache);
++	UDS_FREE(cache->search_pending_counters);
++	UDS_FREE(cache->read_queue);
 +}
 +
-+static int __must_check prepare_next_buffer(struct buffered_writer *writer)
++void uds_free_volume(struct volume *volume)
 +{
-+	struct dm_buffer *buffer = NULL;
-+	void *data;
-+
-+	if (writer->block_number >= writer->limit) {
-+		writer->error = UDS_OUT_OF_RANGE;
-+		return UDS_OUT_OF_RANGE;
-+	}
-+
-+	data = dm_bufio_new(writer->client, writer->block_number, &buffer);
-+	if (IS_ERR(data)) {
-+		writer->error = -PTR_ERR(data);
-+		return writer->error;
-+	}
-+
-+	writer->buffer = buffer;
-+	writer->start = data;
-+	writer->end = data;
-+	return UDS_SUCCESS;
-+}
-+
-+static int flush_previous_buffer(struct buffered_writer *writer)
-+{
-+	size_t available;
-+
-+	if (writer->buffer == NULL)
-+		return writer->error;
-+
-+	if (writer->error == UDS_SUCCESS) {
-+		available = get_remaining_write_space(writer);
-+
-+		if (available > 0)
-+			memset(writer->end, 0, available);
-+
-+		dm_bufio_mark_buffer_dirty(writer->buffer);
-+	}
-+
-+	dm_bufio_release(writer->buffer);
-+	writer->buffer = NULL;
-+	writer->start = NULL;
-+	writer->end = NULL;
-+	writer->block_number++;
-+	return writer->error;
-+}
-+
-+void uds_free_buffered_writer(struct buffered_writer *writer)
-+{
-+	int result;
-+
-+	if (writer == NULL)
++	if (volume == NULL)
 +		return;
 +
-+	flush_previous_buffer(writer);
-+	result = -dm_bufio_write_dirty_buffers(writer->client);
-+	if (result != UDS_SUCCESS)
-+		uds_log_warning_strerror(result, "%s: failed to sync storage", __func__);
++	if (volume->reader_threads != NULL) {
++		unsigned int i;
 +
-+	dm_bufio_client_destroy(writer->client);
-+	uds_put_io_factory(writer->factory);
-+	UDS_FREE(writer);
-+}
-+
-+/*
-+ * Append data to the buffer, writing as needed. If no data is provided, zeros are written instead.
-+ * If a write error occurs, it is recorded and returned on every subsequent write attempt.
-+ */
-+int uds_write_to_buffered_writer(struct buffered_writer *writer, const u8 *data, size_t length)
-+{
-+	int result = writer->error;
-+	size_t chunk_size;
-+
-+	while ((length > 0) && (result == UDS_SUCCESS)) {
-+		if (writer->buffer == NULL) {
-+			result = prepare_next_buffer(writer);
-+			continue;
-+		}
-+
-+		chunk_size = min(length, get_remaining_write_space(writer));
-+		if (data == NULL) {
-+			memset(writer->end, 0, chunk_size);
-+		} else {
-+			memcpy(writer->end, data, chunk_size);
-+			data += chunk_size;
-+		}
-+
-+		length -= chunk_size;
-+		writer->end += chunk_size;
-+
-+		if (get_remaining_write_space(writer) == 0)
-+			result = uds_flush_buffered_writer(writer);
++		/* This works even if some threads weren't started. */
++		uds_lock_mutex(&volume->read_threads_mutex);
++		volume->read_threads_exiting = true;
++		uds_broadcast_cond(&volume->read_threads_cond);
++		uds_unlock_mutex(&volume->read_threads_mutex);
++		for (i = 0; i < volume->read_thread_count; i++)
++			uds_join_threads(volume->reader_threads[i]);
++		UDS_FREE(volume->reader_threads);
++		volume->reader_threads = NULL;
 +	}
 +
-+	return result;
-+}
++	/* Must destroy the client AFTER freeing the cached pages. */
++	uninitialize_page_cache(&volume->page_cache);
++	uds_free_sparse_cache(volume->sparse_cache);
++	if (volume->client != NULL)
++		dm_bufio_client_destroy(UDS_FORGET(volume->client));
 +
-+int uds_flush_buffered_writer(struct buffered_writer *writer)
-+{
-+	if (writer->error != UDS_SUCCESS)
-+		return writer->error;
-+
-+	return flush_previous_buffer(writer);
++	uds_destroy_cond(&volume->read_threads_cond);
++	uds_destroy_cond(&volume->read_threads_read_done_cond);
++	uds_destroy_mutex(&volume->read_threads_mutex);
++	uds_free_index_page_map(volume->index_page_map);
++	uds_free_radix_sorter(volume->radix_sorter);
++	UDS_FREE(volume->geometry);
++	UDS_FREE(volume->record_pointers);
++	UDS_FREE(volume);
 +}
-diff --git a/drivers/md/dm-vdo/io-factory.h b/drivers/md/dm-vdo/io-factory.h
+diff --git a/drivers/md/dm-vdo/volume.h b/drivers/md/dm-vdo/volume.h
 new file mode 100644
-index 000000000000..41d8c7e9b10a
+index 000000000000..b01541814ed7
 --- /dev/null
-+++ b/drivers/md/dm-vdo/io-factory.h
-@@ -0,0 +1,66 @@
++++ b/drivers/md/dm-vdo/volume.h
+@@ -0,0 +1,174 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_IO_FACTORY_H
-+#define UDS_IO_FACTORY_H
++#ifndef UDS_VOLUME_H
++#define UDS_VOLUME_H
 +
++#include <linux/atomic.h>
++#include <linux/cache.h>
 +#include <linux/dm-bufio.h>
++#include <linux/limits.h>
++
++#include "chapter-index.h"
++#include "config.h"
++#include "geometry.h"
++#include "index-layout.h"
++#include "index-page-map.h"
++#include "permassert.h"
++#include "radix-sort.h"
++#include "sparse-cache.h"
++#include "uds.h"
++#include "uds-threads.h"
 +
 +/*
-+ * The I/O factory manages all low-level I/O operations to the underlying storage device. Its main
-+ * clients are the index layout and the volume. The buffered reader and buffered writer interfaces
-+ * are helpers for accessing data in a contiguous range of storage blocks.
++ * The volume manages deduplication records on permanent storage. The term "volume" can also refer
++ * to the region of permanent storage where the records (and the chapters containing them) are
++ * stored. The volume handles all I/O to this region by reading, caching, and writing chapter pages
++ * as necessary.
 + */
 +
-+struct buffered_reader;
-+struct buffered_writer;
-+
-+struct io_factory;
-+
-+enum {
-+	UDS_BLOCK_SIZE = 4096,
-+	SECTORS_PER_BLOCK = UDS_BLOCK_SIZE >> SECTOR_SHIFT,
++enum index_lookup_mode {
++	/* Always do lookups in all chapters normally */
++	LOOKUP_NORMAL,
++	/* Only do a subset of lookups needed when rebuilding an index */
++	LOOKUP_FOR_REBUILD,
 +};
 +
-+int __must_check uds_make_io_factory(const char *path, struct io_factory **factory_ptr);
++struct queued_read {
++	bool invalid;
++	bool reserved;
++	u32 physical_page;
++	struct uds_request *first_request;
++	struct uds_request *last_request;
++};
 +
-+int __must_check uds_replace_storage(struct io_factory *factory, const char *path);
++struct __aligned(L1_CACHE_BYTES) search_pending_counter {
++	u64 atomic_value;
++};
 +
-+void uds_put_io_factory(struct io_factory *factory);
++struct cached_page {
++	/* Whether this page is currently being read asynchronously */
++	bool read_pending;
++	/* The physical page stored in this cache entry */
++	u32 physical_page;
++	/* The value of the volume clock when this page was last used */
++	s64 last_used;
++	/* The cached page buffer */
++	struct dm_buffer *buffer;
++	/* The chapter index page, meaningless for record pages */
++	struct delta_index_page index_page;
++};
 +
-+size_t __must_check uds_get_writable_size(struct io_factory *factory);
++struct page_cache {
++	/* The number of zones */
++	unsigned int zone_count;
++	/* The number of volume pages that can be cached */
++	u32 indexable_pages;
++	/* The maximum number of simultaneously cached pages */
++	u16 cache_slots;
++	/* An index for each physical page noting where it is in the cache */
++	u16 *index;
++	/* The array of cached pages */
++	struct cached_page *cache;
++	/* A counter for each zone tracking if a search is occurring there */
++	struct search_pending_counter *search_pending_counters;
++	/* The read queue entries as a circular array */
++	struct queued_read *read_queue;
 +
-+int __must_check uds_make_bufio(struct io_factory *factory,
-+				off_t block_offset,
-+				size_t block_size,
-+				unsigned int reserved_buffers,
-+				struct dm_bufio_client **client_ptr);
++	/* All entries above this point are constant after initialization. */
 +
-+int __must_check uds_make_buffered_reader(struct io_factory *factory,
-+					  off_t offset,
-+					  u64 block_count,
-+					  struct buffered_reader **reader_ptr);
++	/*
++	 * These values are all indexes into the array of read queue entries. New entries in the
++	 * read queue are enqueued at read_queue_last. To dequeue entries, a reader thread gets the
++	 * lock and then claims the entry pointed to by read_queue_next_read and increments that
++	 * value. After the read is completed, the reader thread calls release_read_queue_entry(),
++	 * which increments read_queue_first until it points to a pending read, or is equal to
++	 * read_queue_next_read. This means that if multiple reads are outstanding,
++	 * read_queue_first might not advance until the last of the reads finishes.
++	 */
++	u16 read_queue_first;
++	u16 read_queue_next_read;
++	u16 read_queue_last;
 +
-+void uds_free_buffered_reader(struct buffered_reader *reader);
++	atomic64_t clock;
++};
++
++struct volume {
++	struct geometry *geometry;
++	struct dm_bufio_client *client;
++	u64 nonce;
++	size_t cache_size;
++
++	/* A single page worth of records, for sorting */
++	const struct uds_volume_record **record_pointers;
++	/* Sorter for sorting records within each page */
++	struct radix_sorter *radix_sorter;
++
++	struct sparse_cache *sparse_cache;
++	struct page_cache page_cache;
++	struct index_page_map *index_page_map;
++
++	struct mutex read_threads_mutex;
++	struct cond_var read_threads_cond;
++	struct cond_var read_threads_read_done_cond;
++	struct thread **reader_threads;
++	unsigned int read_thread_count;
++	bool read_threads_exiting;
++
++	enum index_lookup_mode lookup_mode;
++	unsigned int reserved_buffers;
++};
++
++int __must_check uds_make_volume(const struct configuration *config,
++				 struct index_layout *layout,
++				 struct volume **new_volume);
++
++void uds_free_volume(struct volume *volume);
 +
 +int __must_check
-+uds_read_from_buffered_reader(struct buffered_reader *reader, u8 *data, size_t length);
++uds_replace_volume_storage(struct volume *volume, struct index_layout *layout, const char *path);
++
++int __must_check uds_find_volume_chapter_boundaries(struct volume *volume,
++						    u64 *lowest_vcn,
++						    u64 *highest_vcn,
++						    bool *is_empty);
 +
 +int __must_check
-+uds_verify_buffered_data(struct buffered_reader *reader, const u8 *value, size_t length);
++uds_search_volume_page_cache(struct volume *volume, struct uds_request *request, bool *found);
 +
-+int __must_check uds_make_buffered_writer(struct io_factory *factory,
-+					  off_t offset,
-+					  u64 block_count,
-+					  struct buffered_writer **writer_ptr);
++int __must_check uds_search_volume_page_cache_for_rebuild(struct volume *volume,
++							  const struct uds_record_name *name,
++							  u64 virtual_chapter,
++							  bool *found);
 +
-+void uds_free_buffered_writer(struct buffered_writer *buffer);
++int __must_check uds_search_cached_record_page(struct volume *volume,
++					       struct uds_request *request,
++					       u32 chapter,
++					       u16 record_page_number,
++					       bool *found);
++
++void uds_forget_chapter(struct volume *volume, u64 chapter);
++
++int __must_check uds_write_chapter(struct volume *volume,
++				   struct open_chapter_index *chapter_index,
++				   const struct uds_volume_record records[]);
++
++void uds_prefetch_volume_chapter(const struct volume *volume, u32 chapter);
 +
 +int __must_check
-+uds_write_to_buffered_writer(struct buffered_writer *writer, const u8 *data, size_t length);
++uds_read_chapter_index_from_volume(const struct volume *volume,
++				   u64 virtual_chapter,
++				   struct dm_buffer *volume_buffers[],
++				   struct delta_index_page index_pages[]);
 +
-+int __must_check uds_flush_buffered_writer(struct buffered_writer *writer);
++int __must_check
++uds_get_volume_record_page(struct volume *volume, u32 chapter, u32 page_number, u8 **data_ptr);
 +
-+#endif /* UDS_IO_FACTORY_H */
-diff --git a/drivers/md/dm-vdo/numeric.h b/drivers/md/dm-vdo/numeric.h
-new file mode 100644
-index 000000000000..dc8c400b21d2
---- /dev/null
-+++ b/drivers/md/dm-vdo/numeric.h
-@@ -0,0 +1,78 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
++int __must_check uds_get_volume_index_page(struct volume *volume,
++					   u32 chapter,
++					   u32 page_number,
++					   struct delta_index_page **page_ptr);
 +
-+#ifndef UDS_NUMERIC_H
-+#define UDS_NUMERIC_H
-+
-+#include <asm/unaligned.h>
-+#include <linux/kernel.h>
-+#include <linux/types.h>
-+
-+/*
-+ * These utilities encode or decode a number from an offset in a larger data buffer and then
-+ * advance the offset pointer to the next field in the buffer.
-+ */
-+
-+static inline void decode_s64_le(const u8 *buffer, size_t *offset, s64 *decoded)
-+{
-+	*decoded = get_unaligned_le64(buffer + *offset);
-+	*offset += sizeof(s64);
-+}
-+
-+static inline void encode_s64_le(u8 *data, size_t *offset, s64 to_encode)
-+{
-+	put_unaligned_le64(to_encode, data + *offset);
-+	*offset += sizeof(s64);
-+}
-+
-+static inline void decode_u64_le(const u8 *buffer, size_t *offset, u64 *decoded)
-+{
-+	*decoded = get_unaligned_le64(buffer + *offset);
-+	*offset += sizeof(u64);
-+}
-+
-+static inline void encode_u64_le(u8 *data, size_t *offset, u64 to_encode)
-+{
-+	put_unaligned_le64(to_encode, data + *offset);
-+	*offset += sizeof(u64);
-+}
-+
-+static inline void decode_s32_le(const u8 *buffer, size_t *offset, s32 *decoded)
-+{
-+	*decoded = get_unaligned_le32(buffer + *offset);
-+	*offset += sizeof(s32);
-+}
-+
-+static inline void encode_s32_le(u8 *data, size_t *offset, s32 to_encode)
-+{
-+	put_unaligned_le32(to_encode, data + *offset);
-+	*offset += sizeof(s32);
-+}
-+
-+static inline void decode_u32_le(const u8 *buffer, size_t *offset, u32 *decoded)
-+{
-+	*decoded = get_unaligned_le32(buffer + *offset);
-+	*offset += sizeof(u32);
-+}
-+
-+static inline void encode_u32_le(u8 *data, size_t *offset, u32 to_encode)
-+{
-+	put_unaligned_le32(to_encode, data + *offset);
-+	*offset += sizeof(u32);
-+}
-+
-+static inline void decode_u16_le(const u8 *buffer, size_t *offset, u16 *decoded)
-+{
-+	*decoded = get_unaligned_le16(buffer + *offset);
-+	*offset += sizeof(u16);
-+}
-+
-+static inline void encode_u16_le(u8 *data, size_t *offset, u16 to_encode)
-+{
-+	put_unaligned_le16(to_encode, data + *offset);
-+	*offset += sizeof(u16);
-+}
-+
-+#endif /* UDS_NUMERIC_H */
++#endif /* UDS_VOLUME_H */
 -- 
 2.40.0
 
