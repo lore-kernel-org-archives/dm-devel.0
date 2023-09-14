@@ -1,97 +1,97 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 99ACBEEAA65
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:19:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6542AEEAA66
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:19:14 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694719148;
+	s=mimecast20190719; t=1694719153;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=GBlT040xiBO8MEs98tyei7GCbNcG1ooMMI9gMNoDUPk=;
-	b=bGcESQF9FL1Rk2aVPdQbx7qlvbF6rZ3F7ogXnj4S4Ih71gEngW8LddRLVlmcMSwb+52wTJ
-	Wn3fY8YVLE01apIpICUxXPxB0PgoEgruQBbtFs1aBbLqAP8cDq9yul5nsdchjNgrfJos9b
-	+wdWDm739Fq6z+hvslSNgGV/xdN92rU=
+	bh=p7cXCIDWCBo3NbsQ+2ghUj1hEnDz0x5uhLqUTpFRbFs=;
+	b=aTwINWpqdHZud32UDdf1DH2/EzR88wS4BfIS8dFmT1BKAiE+hmxZUuluUmwvsELaIuAFyt
+	PEtZh4arot0tTLQqx+lAPSbM5H2M0LwIagG34ppN2hYD3tzjuA2jAHyM8HgVZFtOchQvw8
+	BPuA01UHUIhH8oiLrav/zhVXkglzjYE=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-531-qTWaHLQUPGq9ol3l5YE2bg-1; Thu, 14 Sep 2023 15:19:05 -0400
-X-MC-Unique: qTWaHLQUPGq9ol3l5YE2bg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-266-tzJvTBkNOKunVMQSoL3SSA-1; Thu, 14 Sep 2023 15:19:10 -0400
+X-MC-Unique: tzJvTBkNOKunVMQSoL3SSA-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 36AA288B7AF;
-	Thu, 14 Sep 2023 19:19:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EAE311875052;
+	Thu, 14 Sep 2023 19:19:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1F8AE2026D76;
-	Thu, 14 Sep 2023 19:19:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D3932406AA66;
+	Thu, 14 Sep 2023 19:19:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9F1A519452C6;
-	Thu, 14 Sep 2023 19:17:59 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id ADA3919452C7;
+	Thu, 14 Sep 2023 19:18:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6C7B619452FE
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:17:36 +0000 (UTC)
+ ESMTP id 2C5791946A6B
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:17:38 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 599C310EA0; Thu, 14 Sep 2023 19:17:36 +0000 (UTC)
+ id 2819340C6ECA; Thu, 14 Sep 2023 19:17:38 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 511A07B62
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:36 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 202B040C6EBF
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:38 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 25028100F7FB
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:36 +0000 (UTC)
-Received: from mail-qk1-f178.google.com (mail-qk1-f178.google.com
- [209.85.222.178]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E806F100DEA7
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:37 +0000 (UTC)
+Received: from mail-qv1-f49.google.com (mail-qv1-f49.google.com
+ [209.85.219.49]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-532-Pr1BCF_hOnawoyyEsqgnmA-1; Thu, 14 Sep 2023 15:17:32 -0400
-X-MC-Unique: Pr1BCF_hOnawoyyEsqgnmA-1
-Received: by mail-qk1-f178.google.com with SMTP id
- af79cd13be357-76dc77fd01fso86417585a.3
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:17:32 -0700 (PDT)
+ us-mta-267-8-TuDkf0MWiF6i9WGqadNQ-2; Thu, 14 Sep 2023 15:17:35 -0400
+X-MC-Unique: 8-TuDkf0MWiF6i9WGqadNQ-2
+Received: by mail-qv1-f49.google.com with SMTP id
+ 6a1803df08f44-6561c09ead6so5949006d6.1
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:17:35 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1694719051; x=1695323851;
+ d=1e100.net; s=20230601; t=1694719055; x=1695323855;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=OY3kp6IT0Vnyvy/Uc5/+SDkex4hMA27vSxwsv40A6AE=;
- b=EmKwnW/+6sQTx0zldA0Sdg3WdIggsONeSWcES2GKQ6sRuPXlLXOjMiCz6KHIGeomw0
- ntGzDpBKpORPfevtT95Xf8zrMik+DZlgFccdH+YvcVfQ0lBGuEgw3LF7s91xGgQpwOj1
- K1xYAZqrGnqhRvjSYGqjcTS6Tm8A0LPwdRQl6fDlYkmNOd5VB7BptsL5AVmhcI22nbRs
- a6oBUOcHN0WO4uP5ZZMzTBDxZYT+elgA6ko3go0yoN3fDYDzFIlr/3R0W2jQqyB9Zh0A
- Zx9ORe6NonbnYKdBSyJeL61yd4/pgrBgY+BJAT/M+vDjkj26yHvyjdRIGzEHkPtopksi
- iyGg==
-X-Gm-Message-State: AOJu0YwxlpKeOBxjqK6xjQhPlDdMpWyOHkOlHtMHJn/oS/1lQLerHrIJ
- eV5G2gV8mGLhCHEGa0Mr5KfnxlC+Gfn7bJWSHJ3InleGkiYaJF2V8tdEz5H//XOD3lzAKDwv8WL
- xIoR0bMKPwSA/kJgmFVzN70FOM5JbzKYAVqpv2M64Rj7VJy13ZdjW9rRApQDcFzBtW/jNYWyq
-X-Google-Smtp-Source: AGHT+IHiYljuzj71z9fMWTOrgnMWEyA6VRE0X5AmXJ62xqJCAhrI85SkR0ihJsquNj/SyhloVYediA==
-X-Received: by 2002:a05:620a:44cd:b0:773:ad1b:2e10 with SMTP id
- y13-20020a05620a44cd00b00773ad1b2e10mr631477qkp.48.1694719050018; 
- Thu, 14 Sep 2023 12:17:30 -0700 (PDT)
+ bh=/w+A29WI/F4HifhjO9r+1fBt77FDtbgvNEYeEz+BfQY=;
+ b=ucNRUbzP07EYowJD1xcaeu2wtXF4v/NgSt9d8bOSvSC3z8ovcdFyQXGOTPeayg9v4x
+ 4ErP72xUVV1AHVJ8Tm8pcvn+s9+iX3CocprZP3tw50H8yf3vBdVhl2b/Gs6ptyBL+PL4
+ 8xmH4M7hHwz0mA3gwWFFdjxXVTba2ZnrUXxaPeyb1B8b8n5+OrWrtZW7hJEE4S5CrkgU
+ 1H25MWgr4BwwVO3pZTIPwJLaRaGi6cavk5BmRYc46tJPkXhlNx+McITsBg8SUBjdIEoR
+ mVa8e2uBFEqwBjXEIjyZ9lkOWvWj6xGPW4t5f/oBRJm1pHqgJsLSOrI4PSIPvfQwcHsi
+ tPNg==
+X-Gm-Message-State: AOJu0Yw5Gxmzi0Ec7L8K78HBcVz93yPFOkRbwmlAMdTR4hWtu5Oct3v2
+ dWRjJwgHE05f9wtHKW3vNjjxcUB5Mrx9lowMkp1X18sdgptqc53xunBgcSv7Le56Rnxjbn696di
+ gbhQaDSO+kivxo5JS/2V/0sx0Cz78xDl3LYbJ1DaktreBdSPs5qj5NjetdDdiNQVUdw+zLTuA
+X-Google-Smtp-Source: AGHT+IHuxZKNbPdOZ9xwr0feJPhdWCBMipvq658wgDS0Yw6/TXgJgFy2m60s6pWeW16Og5bas+A8qA==
+X-Received: by 2002:a0c:e2ce:0:b0:63c:ee64:8b98 with SMTP id
+ t14-20020a0ce2ce000000b0063cee648b98mr6925440qvl.13.1694719053612; 
+ Thu, 14 Sep 2023 12:17:33 -0700 (PDT)
 Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net.
  [68.160.141.91]) by smtp.gmail.com with ESMTPSA id
- a24-20020a05620a125800b0076f039d87c6sm674915qkl.82.2023.09.14.12.17.29
+ z11-20020a0cda8b000000b006516780a0a5sm672482qvj.117.2023.09.14.12.17.32
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 14 Sep 2023 12:17:29 -0700 (PDT)
+ Thu, 14 Sep 2023 12:17:33 -0700 (PDT)
 From: Mike Snitzer <snitzer@kernel.org>
 To: dm-devel@redhat.com
-Date: Thu, 14 Sep 2023 15:16:23 -0400
-Message-Id: <20230914191635.39805-28-snitzer@kernel.org>
+Date: Thu, 14 Sep 2023 15:16:25 -0400
+Message-Id: <20230914191635.39805-30-snitzer@kernel.org>
 In-Reply-To: <20230914191635.39805-1-snitzer@kernel.org>
 References: <20230914191635.39805-1-snitzer@kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: [dm-devel] [PATCH v3 27/39] dm vdo: add the block allocators and
- physical zones
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: [dm-devel] [PATCH v3 29/39] dm vdo: add the block map
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -106,7 +106,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: Matthew Sakai <msakai@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
 Content-Type: text/plain; charset="us-ascii"
@@ -114,10 +114,16 @@ Content-Transfer-Encoding: 7bit
 
 From: Matthew Sakai <msakai@redhat.com>
 
-Each slab is independent of every other. They are assigned to
-"physical zones" in round-robin fashion. If there are P physical
-zones, then slab n is assigned to zone n mod P. The set of slabs in
-each physical zone is managed by a block allocator.
+The block map contains the logical to physical mapping. It can be
+thought of as an array with one entry per logical address. Each entry
+is 5 bytes: 36 bits contain the physical block number which holds the
+data for the given logical address, and the remaining 4 bits are used
+to indicate the nature of the mapping. Of the 16 possible states, one
+represents a logical address which is unmapped (i.e. it has never been
+written, or has been discarded), one represents an uncompressed block,
+and the other 14 states are used to indicate that the mapped data is
+compressed, and which of the compression slots in the compressed block
+this logical address maps to.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
@@ -128,2460 +134,2401 @@ Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-vdo/physical-zone.c |  650 +++++++++++++
- drivers/md/dm-vdo/physical-zone.h |  115 +++
- drivers/md/dm-vdo/slab-depot.c    | 1462 +++++++++++++++++++++++++++++
- drivers/md/dm-vdo/slab-depot.h    |  146 +++
- 4 files changed, 2373 insertions(+)
- create mode 100644 drivers/md/dm-vdo/physical-zone.c
- create mode 100644 drivers/md/dm-vdo/physical-zone.h
+ drivers/md/dm-vdo/block-map.c | 2145 +++++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/block-map.h |  232 ++++
+ 2 files changed, 2377 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/block-map.c
+ create mode 100644 drivers/md/dm-vdo/block-map.h
 
-diff --git a/drivers/md/dm-vdo/physical-zone.c b/drivers/md/dm-vdo/physical-zone.c
+diff --git a/drivers/md/dm-vdo/block-map.c b/drivers/md/dm-vdo/block-map.c
 new file mode 100644
-index 000000000000..822da4e8f579
+index 000000000000..a4bf60cd2613
 --- /dev/null
-+++ b/drivers/md/dm-vdo/physical-zone.c
-@@ -0,0 +1,650 @@
++++ b/drivers/md/dm-vdo/block-map.c
+@@ -0,0 +1,2145 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "physical-zone.h"
++#include "block-map.h"
 +
-+#include <linux/list.h>
++#include <linux/bio.h>
++#include <linux/ratelimit.h>
 +
++#include "errors.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
 +#include "permassert.h"
 +
-+#include "block-map.h"
++#include "action-manager.h"
++#include "admin-state.h"
 +#include "completion.h"
 +#include "constants.h"
 +#include "data-vio.h"
-+#include "dedupe.h"
 +#include "encodings.h"
-+#include "flush.h"
-+#include "int-map.h"
++#include "io-submitter.h"
++#include "physical-zone.h"
++#include "recovery-journal.h"
 +#include "slab-depot.h"
 +#include "status-codes.h"
++#include "types.h"
 +#include "vdo.h"
++#include "vio.h"
++#include "wait-queue.h"
 +
-+enum {
-+	/* Each user data_vio needs a PBN read lock and write lock. */
-+	LOCK_POOL_CAPACITY = 2 * MAXIMUM_VDO_USER_VIOS,
++/**
++ * DOC: Block map eras
++ *
++ * The block map era, or maximum age, is used as follows:
++ *
++ * Each block map page, when dirty, records the earliest recovery journal block sequence number of
++ * the changes reflected in that dirty block. Sequence numbers are classified into eras: every
++ * @maximum_age sequence numbers, we switch to a new era. Block map pages are assigned to eras
++ * according to the sequence number they record.
++ *
++ * In the current (newest) era, block map pages are not written unless there is cache pressure. In
++ * the next oldest era, each time a new journal block is written 1/@maximum_age of the pages in
++ * this era are issued for write. In all older eras, pages are issued for write immediately.
++ */
++
++struct page_descriptor {
++	root_count_t root_index;
++	height_t height;
++	page_number_t page_index;
++	slot_number_t slot;
++} __packed;
++
++union page_key {
++	struct page_descriptor descriptor;
++	u64 key;
 +};
 +
-+struct pbn_lock_implementation {
-+	enum pbn_lock_type type;
-+	const char *name;
-+	const char *release_reason;
++struct write_if_not_dirtied_context {
++	struct block_map_zone *zone;
++	u8 generation;
 +};
 +
-+/* This array must have an entry for every pbn_lock_type value. */
-+static const struct pbn_lock_implementation LOCK_IMPLEMENTATIONS[] = {
-+	[VIO_READ_LOCK] = {
-+		.type = VIO_READ_LOCK,
-+		.name = "read",
-+		.release_reason = "candidate duplicate",
-+	},
-+	[VIO_WRITE_LOCK] = {
-+		.type = VIO_WRITE_LOCK,
-+		.name = "write",
-+		.release_reason = "newly allocated",
-+	},
-+	[VIO_BLOCK_MAP_WRITE_LOCK] = {
-+		.type = VIO_BLOCK_MAP_WRITE_LOCK,
-+		.name = "block map write",
-+		.release_reason = "block map write",
-+	},
++struct block_map_tree_segment {
++	struct tree_page *levels[VDO_BLOCK_MAP_TREE_HEIGHT];
 +};
 +
-+static inline bool has_lock_type(const struct pbn_lock *lock, enum pbn_lock_type type)
-+{
-+	return (lock->implementation == &LOCK_IMPLEMENTATIONS[type]);
-+}
++struct block_map_tree {
++	struct block_map_tree_segment *segments;
++} block_map_tree;
 +
-+/**
-+ * vdo_is_pbn_read_lock() - Check whether a pbn_lock is a read lock.
-+ * @lock: The lock to check.
-+ *
-+ * Return: true if the lock is a read lock.
-+ */
-+bool vdo_is_pbn_read_lock(const struct pbn_lock *lock)
-+{
-+	return has_lock_type(lock, VIO_READ_LOCK);
-+}
-+
-+static inline void set_pbn_lock_type(struct pbn_lock *lock, enum pbn_lock_type type)
-+{
-+	lock->implementation = &LOCK_IMPLEMENTATIONS[type];
-+}
-+
-+/**
-+ * vdo_downgrade_pbn_write_lock() - Downgrade a PBN write lock to a PBN read lock.
-+ * @lock: The PBN write lock to downgrade.
-+ *
-+ * The lock holder count is cleared and the caller is responsible for setting the new count.
-+ */
-+void vdo_downgrade_pbn_write_lock(struct pbn_lock *lock, bool compressed_write)
-+{
-+	ASSERT_LOG_ONLY(!vdo_is_pbn_read_lock(lock),
-+			"PBN lock must not already have been downgraded");
-+	ASSERT_LOG_ONLY(!has_lock_type(lock, VIO_BLOCK_MAP_WRITE_LOCK),
-+			"must not downgrade block map write locks");
-+	ASSERT_LOG_ONLY(lock->holder_count == 1,
-+			"PBN write lock should have one holder but has %u",
-+			lock->holder_count);
-+	/*
-+	 * data_vio write locks are downgraded in place--the writer retains the hold on the lock.
-+	 * If this was a compressed write, the holder has not yet journaled its own inc ref,
-+	 * otherwise, it has.
-+	 */
-+	lock->increment_limit =
-+		(compressed_write ? MAXIMUM_REFERENCE_COUNT : MAXIMUM_REFERENCE_COUNT - 1);
-+	set_pbn_lock_type(lock, VIO_READ_LOCK);
-+}
-+
-+/**
-+ * vdo_claim_pbn_lock_increment() - Try to claim one of the available reference count increments on
-+ *				    a read lock.
-+ * @lock: The PBN read lock from which to claim an increment.
-+ *
-+ * Claims may be attempted from any thread. A claim is only valid until the PBN lock is released.
-+ *
-+ * Return: true if the claim succeeded, guaranteeing one increment can be made without overflowing
-+ *	   the PBN's reference count.
-+ */
-+bool vdo_claim_pbn_lock_increment(struct pbn_lock *lock)
-+{
-+	/*
-+	 * Claim the next free reference atomically since hash locks from multiple hash zone
-+	 * threads might be concurrently deduplicating against a single PBN lock on compressed
-+	 * block. As long as hitting the increment limit will lead to the PBN lock being released
-+	 * in a sane time-frame, we won't overflow a 32-bit claim counter, allowing a simple add
-+	 * instead of a compare-and-swap.
-+	 */
-+	u32 claim_number = (u32) atomic_add_return(1, &lock->increments_claimed);
-+
-+	return (claim_number <= lock->increment_limit);
-+}
-+
-+/**
-+ * vdo_assign_pbn_lock_provisional_reference() - Inform a PBN lock that it is responsible for a
-+ *						 provisional reference.
-+ * @lock: The PBN lock.
-+ */
-+void vdo_assign_pbn_lock_provisional_reference(struct pbn_lock *lock)
-+{
-+	ASSERT_LOG_ONLY(!lock->has_provisional_reference,
-+			"lock does not have a provisional reference");
-+	lock->has_provisional_reference = true;
-+}
-+
-+/**
-+ * vdo_unassign_pbn_lock_provisional_reference() - Inform a PBN lock that it is no longer
-+ *						   responsible for a provisional reference.
-+ * @lock: The PBN lock.
-+ */
-+void vdo_unassign_pbn_lock_provisional_reference(struct pbn_lock *lock)
-+{
-+	lock->has_provisional_reference = false;
-+}
-+
-+/**
-+ * release_pbn_lock_provisional_reference() - If the lock is responsible for a provisional
-+ *					      reference, release that reference.
-+ * @lock: The lock.
-+ * @locked_pbn: The PBN covered by the lock.
-+ * @allocator: The block allocator from which to release the reference.
-+ *
-+ * This method is called when the lock is released.
-+ */
-+static void
-+release_pbn_lock_provisional_reference(struct pbn_lock *lock,
-+				       physical_block_number_t locked_pbn,
-+				       struct block_allocator *allocator)
-+{
-+	int result;
-+
-+	if (!vdo_pbn_lock_has_provisional_reference(lock))
-+		return;
-+
-+	result = vdo_release_block_reference(allocator, locked_pbn);
-+	if (result != VDO_SUCCESS)
-+		uds_log_error_strerror(result,
-+				       "Failed to release reference to %s physical block %llu",
-+				       lock->implementation->release_reason,
-+				       (unsigned long long) locked_pbn);
-+
-+	vdo_unassign_pbn_lock_provisional_reference(lock);
-+}
-+
-+/**
-+ * union idle_pbn_lock - PBN lock list entries.
-+ *
-+ * Unused (idle) PBN locks are kept in a list. Just like in a malloc implementation, the lock
-+ * structure is unused memory, so we can save a bit of space (and not pollute the lock structure
-+ * proper) by using a union to overlay the lock structure with the free list.
-+ */
-+typedef union {
-+	/** @entry: Only used while locks are in the pool. */
-+	struct list_head entry;
-+	/** @lock: Only used while locks are not in the pool. */
-+	struct pbn_lock lock;
-+} idle_pbn_lock;
-+
-+/**
-+ * struct pbn_lock_pool - list of PBN locks.
-+ *
-+ * The lock pool is little more than the memory allocated for the locks.
-+ */
-+struct pbn_lock_pool {
-+	/** @capacity: The number of locks allocated for the pool. */
-+	size_t capacity;
-+	/** @borrowed: The number of locks currently borrowed from the pool. */
-+	size_t borrowed;
-+	/** @idle_list: A list containing all idle PBN lock instances. */
-+	struct list_head idle_list;
-+	/** @locks: The memory for all the locks allocated by this pool. */
-+	idle_pbn_lock locks[];
++struct forest {
++	struct block_map *map;
++	size_t segments;
++	struct boundary *boundaries;
++	struct tree_page **pages;
++	struct block_map_tree trees[];
 +};
 +
-+/**
-+ * return_pbn_lock_to_pool() - Return a pbn lock to its pool.
-+ * @pool: The pool from which the lock was borrowed.
-+ * @lock: The last reference to the lock being returned.
-+ *
-+ * It must be the last live reference, as if the memory were being freed (the lock memory will
-+ * re-initialized or zeroed).
-+ */
-+static void return_pbn_lock_to_pool(struct pbn_lock_pool *pool, struct pbn_lock *lock)
-+{
-+	idle_pbn_lock *idle;
++struct cursor_level {
++	page_number_t page_index;
++	slot_number_t slot;
++};
 +
-+	/* A bit expensive, but will promptly catch some use-after-free errors. */
-+	memset(lock, 0, sizeof(*lock));
++struct cursors;
 +
-+	idle = container_of(lock, idle_pbn_lock, lock);
-+	INIT_LIST_HEAD(&idle->entry);
-+	list_add_tail(&idle->entry, &pool->idle_list);
++struct cursor {
++	struct waiter waiter;
++	struct block_map_tree *tree;
++	height_t height;
++	struct cursors *parent;
++	struct boundary boundary;
++	struct cursor_level levels[VDO_BLOCK_MAP_TREE_HEIGHT];
++	struct pooled_vio *vio;
++};
 +
-+	ASSERT_LOG_ONLY(pool->borrowed > 0, "shouldn't return more than borrowed");
-+	pool->borrowed -= 1;
-+}
++struct cursors {
++	struct block_map_zone *zone;
++	struct vio_pool *pool;
++	vdo_entry_callback *entry_callback;
++	struct vdo_completion *parent;
++	root_count_t active_roots;
++	struct cursor cursors[];
++};
 +
-+/**
-+ * make_pbn_lock_pool() - Create a new PBN lock pool and all the lock instances it can loan out.
-+ *
-+ * @capacity: The number of PBN locks to allocate for the pool.
-+ * @pool_ptr: A pointer to receive the new pool.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+static int make_pbn_lock_pool(size_t capacity, struct pbn_lock_pool **pool_ptr)
-+{
-+	size_t i;
-+	struct pbn_lock_pool *pool;
-+	int result;
-+
-+	result = UDS_ALLOCATE_EXTENDED(struct pbn_lock_pool,
-+				       capacity,
-+				       idle_pbn_lock,
-+				       __func__,
-+				       &pool);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	pool->capacity = capacity;
-+	pool->borrowed = capacity;
-+	INIT_LIST_HEAD(&pool->idle_list);
-+
-+	for (i = 0; i < capacity; i++)
-+		return_pbn_lock_to_pool(pool, &pool->locks[i].lock);
-+
-+	*pool_ptr = pool;
-+	return VDO_SUCCESS;
-+}
++/* Used to indicate that the page holding the location of a tree root has been "loaded". */
++const physical_block_number_t VDO_INVALID_PBN = 0xFFFFFFFFFFFFFFFF;
 +
 +/**
-+ * vdo_free_pbn_lock_pool() - Free a PBN lock pool.
-+ * @pool: The lock pool to free.
++ * get_tree_page_by_index() - Get the tree page for a given height and page index.
 + *
-+ * This also frees all the PBN locks it allocated, so the caller must ensure that all locks have
-+ * been returned to the pool.
++ * Return: The requested page.
 + */
-+static void free_pbn_lock_pool(struct pbn_lock_pool *pool)
++static struct tree_page * __must_check
++get_tree_page_by_index(struct forest *forest,
++		       root_count_t root_index,
++		       height_t height,
++		       page_number_t page_index)
 +{
-+	if (pool == NULL)
-+		return;
++	page_number_t offset = 0;
++	size_t segment;
 +
-+	ASSERT_LOG_ONLY(pool->borrowed == 0,
-+			"All PBN locks must be returned to the pool before it is freed, but %zu locks are still on loan",
-+			pool->borrowed);
-+	UDS_FREE(pool);
-+}
++	for (segment = 0; segment < forest->segments; segment++) {
++		page_number_t border = forest->boundaries[segment].levels[height - 1];
 +
-+/**
-+ * borrow_pbn_lock_from_pool() - Borrow a PBN lock from the pool and initialize it with the
-+ *				 provided type.
-+ * @pool: The pool from which to borrow.
-+ * @type: The type with which to initialize the lock.
-+ * @lock_ptr:  A pointer to receive the borrowed lock.
-+ *
-+ * Pools do not grow on demand or allocate memory, so this will fail if the pool is empty. Borrowed
-+ * locks are still associated with this pool and must be returned to only this pool.
-+ *
-+ * Return: VDO_SUCCESS, or VDO_LOCK_ERROR if the pool is empty.
-+ */
-+static int __must_check
-+borrow_pbn_lock_from_pool(struct pbn_lock_pool *pool,
-+			  enum pbn_lock_type type,
-+			  struct pbn_lock **lock_ptr)
-+{
-+	int result;
-+	struct list_head *idle_entry;
-+	idle_pbn_lock *idle;
++		if (page_index < border) {
++			struct block_map_tree *tree = &forest->trees[root_index];
 +
-+	if (pool->borrowed >= pool->capacity)
-+		return uds_log_error_strerror(VDO_LOCK_ERROR, "no free PBN locks left to borrow");
-+	pool->borrowed += 1;
-+
-+	result = ASSERT(!list_empty(&pool->idle_list),
-+			"idle list should not be empty if pool not at capacity");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	idle_entry = pool->idle_list.prev;
-+	list_del(idle_entry);
-+	memset(idle_entry, 0, sizeof(*idle_entry));
-+
-+	idle = list_entry(idle_entry, idle_pbn_lock, entry);
-+	idle->lock.holder_count = 0;
-+	set_pbn_lock_type(&idle->lock, type);
-+
-+	*lock_ptr = &idle->lock;
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * initialize_zone() - Initialize a physical zone.
-+ * @vdo: The vdo to which the zone will belong.
-+ * @zones: The physical_zones to which the zone being initialized belongs
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+static int initialize_zone(struct vdo *vdo, struct physical_zones *zones)
-+{
-+	int result;
-+	zone_count_t zone_number = zones->zone_count;
-+	struct physical_zone *zone = &zones->zones[zone_number];
-+
-+	result = vdo_make_int_map(VDO_LOCK_MAP_CAPACITY, 0, &zone->pbn_operations);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = make_pbn_lock_pool(LOCK_POOL_CAPACITY, &zone->lock_pool);
-+	if (result != VDO_SUCCESS) {
-+		vdo_free_int_map(zone->pbn_operations);
-+		return result;
-+	}
-+
-+	zone->zone_number = zone_number;
-+	zone->thread_id = vdo->thread_config.physical_threads[zone_number];
-+	zone->allocator = &vdo->depot->allocators[zone_number];
-+	zone->next = &zones->zones[(zone_number + 1) % vdo->thread_config.physical_zone_count];
-+	result = vdo_make_default_thread(vdo, zone->thread_id);
-+	if (result != VDO_SUCCESS) {
-+		free_pbn_lock_pool(UDS_FORGET(zone->lock_pool));
-+		vdo_free_int_map(zone->pbn_operations);
-+		return result;
-+	}
-+	return result;
-+}
-+
-+/**
-+ * vdo_make_physical_zones() - Make the physical zones for a vdo.
-+ * @vdo: The vdo being constructed
-+ * @zones_ptr: A pointer to hold the zones
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+int vdo_make_physical_zones(struct vdo *vdo, struct physical_zones **zones_ptr)
-+{
-+	struct physical_zones *zones;
-+	int result;
-+	zone_count_t zone_count = vdo->thread_config.physical_zone_count;
-+
-+	if (zone_count == 0)
-+		return VDO_SUCCESS;
-+
-+	result = UDS_ALLOCATE_EXTENDED(struct physical_zones,
-+				       zone_count,
-+				       struct physical_zone,
-+				       __func__,
-+				       &zones);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	for (zones->zone_count = 0; zones->zone_count < zone_count; zones->zone_count++) {
-+		result = initialize_zone(vdo, zones);
-+		if (result != VDO_SUCCESS) {
-+			vdo_free_physical_zones(zones);
-+			return result;
++			return &(tree->segments[segment].levels[height - 1][page_index - offset]);
 +		}
++		offset = border;
 +	}
 +
-+	*zones_ptr = zones;
-+	return VDO_SUCCESS;
++	return NULL;
 +}
 +
-+/**
-+ * vdo_free_physical_zones() - Destroy the physical zones.
-+ * @zones: The zones to free.
-+ */
-+void vdo_free_physical_zones(struct physical_zones *zones)
++/* Get the page referred to by the lock's tree slot at its current height. */
++static inline struct tree_page *
++get_tree_page(const struct block_map_zone *zone, const struct tree_lock *lock)
 +{
-+	zone_count_t index;
-+
-+	if (zones == NULL)
-+		return;
-+
-+	for (index = 0; index < zones->zone_count; index++) {
-+		struct physical_zone *zone = &zones->zones[index];
-+
-+		free_pbn_lock_pool(UDS_FORGET(zone->lock_pool));
-+		vdo_free_int_map(UDS_FORGET(zone->pbn_operations));
-+	}
-+
-+	UDS_FREE(zones);
++	return get_tree_page_by_index(zone->block_map->forest,
++				      lock->root_index,
++				      lock->height,
++				      lock->tree_slots[lock->height].page_index);
 +}
 +
-+/**
-+ * vdo_get_physical_zone_pbn_lock() - Get the lock on a PBN if one exists.
-+ * @zone: The physical zone responsible for the PBN.
-+ * @pbn: The physical block number whose lock is desired.
-+ *
-+ * Return: The lock or NULL if the PBN is not locked.
-+ */
-+struct pbn_lock *
-+vdo_get_physical_zone_pbn_lock(struct physical_zone *zone, physical_block_number_t pbn)
++/** vdo_copy_valid_page() - Validate and copy a buffer to a page. */
++bool vdo_copy_valid_page(char *buffer,
++			 nonce_t nonce,
++			 physical_block_number_t pbn,
++			 struct block_map_page *page)
 +{
-+	return ((zone == NULL) ? NULL : vdo_int_map_get(zone->pbn_operations, pbn));
-+}
++	struct block_map_page *loaded = (struct block_map_page *) buffer;
++	enum block_map_page_validity validity = vdo_validate_block_map_page(loaded, nonce, pbn);
 +
-+/**
-+ * vdo_attempt_physical_zone_pbn_lock() - Attempt to lock a physical block in the zone responsible
-+ *					  for it.
-+ * @zone: The physical zone responsible for the PBN.
-+ * @pbn: The physical block number to lock.
-+ * @type: The type with which to initialize a new lock.
-+ * @lock_ptr:  A pointer to receive the lock, existing or new.
-+ *
-+ * If the PBN is already locked, the existing lock will be returned. Otherwise, a new lock instance
-+ * will be borrowed from the pool, initialized, and returned. The lock owner will be NULL for a new
-+ * lock acquired by the caller, who is responsible for setting that field promptly. The lock owner
-+ * will be non-NULL when there is already an existing lock on the PBN.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+int vdo_attempt_physical_zone_pbn_lock(struct physical_zone *zone,
-+				       physical_block_number_t pbn,
-+				       enum pbn_lock_type type,
-+				       struct pbn_lock **lock_ptr)
-+{
-+	/*
-+	 * Borrow and prepare a lock from the pool so we don't have to do two int_map accesses in
-+	 * the common case of no lock contention.
-+	 */
-+	struct pbn_lock *lock, *new_lock = NULL;
-+	int result;
-+
-+	result = borrow_pbn_lock_from_pool(zone->lock_pool, type, &new_lock);
-+	if (result != VDO_SUCCESS) {
-+		ASSERT_LOG_ONLY(false, "must always be able to borrow a PBN lock");
-+		return result;
-+	}
-+
-+	result = vdo_int_map_put(zone->pbn_operations, pbn, new_lock, false, (void **) &lock);
-+	if (result != VDO_SUCCESS) {
-+		return_pbn_lock_to_pool(zone->lock_pool, new_lock);
-+		return result;
-+	}
-+
-+	if (lock != NULL) {
-+		/* The lock is already held, so we don't need the borrowed one. */
-+		return_pbn_lock_to_pool(zone->lock_pool, UDS_FORGET(new_lock));
-+		result = ASSERT(lock->holder_count > 0,
-+				"physical block %llu lock held",
-+				(unsigned long long) pbn);
-+		if (result != VDO_SUCCESS)
-+			return result;
-+		*lock_ptr = lock;
-+	} else {
-+		*lock_ptr = new_lock;
-+	}
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * allocate_and_lock_block() - Attempt to allocate a block from this zone.
-+ * @allocation: The struct allocation of the data_vio attempting to allocate.
-+ *
-+ * If a block is allocated, the recipient will also hold a lock on it.
-+ *
-+ * Return: VDO_SUCCESS if a block was allocated, or an error code.
-+ */
-+static int allocate_and_lock_block(struct allocation *allocation)
-+{
-+	int result;
-+	struct pbn_lock *lock;
-+
-+	ASSERT_LOG_ONLY(allocation->lock == NULL,
-+			"must not allocate a block while already holding a lock on one");
-+
-+	result = vdo_allocate_block(allocation->zone->allocator, &allocation->pbn);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = vdo_attempt_physical_zone_pbn_lock(allocation->zone,
-+						    allocation->pbn,
-+						    allocation->write_lock_type,
-+						    &lock);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	if (lock->holder_count > 0)
-+		/* This block is already locked, which should be impossible. */
-+		return uds_log_error_strerror(VDO_LOCK_ERROR,
-+					      "Newly allocated block %llu was spuriously locked (holder_count=%u)",
-+					      (unsigned long long) allocation->pbn,
-+					      lock->holder_count);
-+
-+	/* We've successfully acquired a new lock, so mark it as ours. */
-+	lock->holder_count += 1;
-+	allocation->lock = lock;
-+	vdo_assign_pbn_lock_provisional_reference(lock);
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * retry_allocation() - Retry allocating a block now that we're done waiting for scrubbing.
-+ * @waiter: The allocating_vio that was waiting to allocate.
-+ * @context: The context (unused).
-+ */
-+static void retry_allocation(struct waiter *waiter, void *context __always_unused)
-+{
-+	struct data_vio *data_vio = waiter_as_data_vio(waiter);
-+
-+	/* Now that some slab has scrubbed, restart the allocation process. */
-+	data_vio->allocation.wait_for_clean_slab = false;
-+	data_vio->allocation.first_allocation_zone = data_vio->allocation.zone->zone_number;
-+	continue_data_vio(data_vio);
-+}
-+
-+/**
-+ * continue_allocating() - Continue searching for an allocation by enqueuing to wait for scrubbing
-+ *			   or switching to the next zone.
-+ * @data_vio: The data_vio attempting to get an allocation.
-+ *
-+ * This method should only be called from the error handler set in data_vio_allocate_data_block.
-+ *
-+ * Return: true if the allocation process has continued in another zone.
-+ */
-+static bool continue_allocating(struct data_vio *data_vio)
-+{
-+	struct allocation *allocation = &data_vio->allocation;
-+	struct physical_zone *zone = allocation->zone;
-+	struct vdo_completion *completion = &data_vio->vio.completion;
-+	int result = VDO_SUCCESS;
-+	bool was_waiting = allocation->wait_for_clean_slab;
-+	bool tried_all = (allocation->first_allocation_zone == zone->next->zone_number);
-+
-+	vdo_reset_completion(completion);
-+
-+	if (tried_all && !was_waiting) {
-+		/*
-+		 * We've already looked in all the zones, and found nothing. So go through the
-+		 * zones again, and wait for each to scrub before trying to allocate.
-+		 */
-+		allocation->wait_for_clean_slab = true;
-+		allocation->first_allocation_zone = zone->zone_number;
-+	}
-+
-+	if (allocation->wait_for_clean_slab) {
-+		data_vio->waiter.callback = retry_allocation;
-+		result = vdo_enqueue_clean_slab_waiter(zone->allocator, &data_vio->waiter);
-+		if (result == VDO_SUCCESS)
-+			/* We've enqueued to wait for a slab to be scrubbed. */
-+			return true;
-+
-+		if ((result != VDO_NO_SPACE) || (was_waiting && tried_all)) {
-+			vdo_set_completion_result(completion, result);
-+			return false;
-+		}
-+	}
-+
-+	allocation->zone = zone->next;
-+	completion->callback_thread_id = allocation->zone->thread_id;
-+	vdo_launch_completion(completion);
-+	return true;
-+}
-+
-+/**
-+ * vdo_allocate_block_in_zone() - Attempt to allocate a block in the current physical zone, and if
-+ *				  that fails try the next if possible.
-+ * @data_vio: The data_vio needing an allocation.
-+ *
-+ * Return: true if a block was allocated, if not the data_vio will have been dispatched so the
-+ *         caller must not touch it.
-+ */
-+bool vdo_allocate_block_in_zone(struct data_vio *data_vio)
-+{
-+	int result = allocate_and_lock_block(&data_vio->allocation);
-+
-+	if (result == VDO_SUCCESS)
++	if (validity == VDO_BLOCK_MAP_PAGE_VALID) {
++		memcpy(page, loaded, VDO_BLOCK_SIZE);
 +		return true;
++	}
 +
-+	if ((result != VDO_NO_SPACE) || !continue_allocating(data_vio))
-+		continue_data_vio_with_error(data_vio, result);
++	if (validity == VDO_BLOCK_MAP_PAGE_BAD)
++		uds_log_error_strerror(VDO_BAD_PAGE,
++				       "Expected page %llu but got page %llu instead",
++				       (unsigned long long) pbn,
++				       (unsigned long long) vdo_get_block_map_page_pbn(loaded));
 +
 +	return false;
 +}
 +
 +/**
-+ * vdo_release_physical_zone_pbn_lock() - Release a physical block lock if it is held and return it
-+ *                                        to the lock pool.
-+ * @zone: The physical zone in which the lock was obtained.
-+ * @locked_pbn: The physical block number to unlock.
-+ * @lock: The lock being released.
++ * in_cyclic_range() - Check whether the given value is between the lower and upper bounds, within
++ *                     a cyclic range of values from 0 to (modulus - 1).
++ * @lower: The lowest value to accept.
++ * @value: The value to check.
++ * @upper: The highest value to accept.
++ * @modulus: The size of the cyclic space, no more than 2^15.
 + *
-+ * It must be the last live reference, as if the memory were being freed (the
-+ * lock memory will re-initialized or zeroed).
++ * The value and both bounds must be smaller than the modulus.
++ *
++ * Return: true if the value is in range.
 + */
-+void vdo_release_physical_zone_pbn_lock(struct physical_zone *zone,
-+					physical_block_number_t locked_pbn,
-+					struct pbn_lock *lock)
++static bool in_cyclic_range(u16 lower, u16 value, u16 upper, u16 modulus)
 +{
-+	struct pbn_lock *holder;
-+
-+	if (lock == NULL)
-+		return;
-+
-+	ASSERT_LOG_ONLY(lock->holder_count > 0, "should not be releasing a lock that is not held");
-+
-+	lock->holder_count -= 1;
-+	if (lock->holder_count > 0)
-+		/* The lock was shared and is still referenced, so don't release it yet. */
-+		return;
-+
-+	holder = vdo_int_map_remove(zone->pbn_operations, locked_pbn);
-+	ASSERT_LOG_ONLY((lock == holder),
-+			"physical block lock mismatch for block %llu",
-+			(unsigned long long) locked_pbn);
-+
-+	release_pbn_lock_provisional_reference(lock, locked_pbn, zone->allocator);
-+	return_pbn_lock_to_pool(zone->lock_pool, lock);
++	if (value < lower)
++		value += modulus;
++	if (upper < lower)
++		upper += modulus;
++	return (value <= upper);
 +}
 +
 +/**
-+ * vdo_dump_physical_zone() - Dump information about a physical zone to the log for debugging.
-+ * @zone: The zone to dump.
++ * is_not_older() - Check whether a generation is strictly older than some other generation in the
++ *                  context of a zone's current generation range.
++ * @zone: The zone in which to do the comparison.
++ * @a: The generation in question.
++ * @b: The generation to compare to.
++ *
++ * Return: true if generation @a is not strictly older than generation @b in the context of @zone
 + */
-+void vdo_dump_physical_zone(const struct physical_zone *zone)
++static bool __must_check is_not_older(struct block_map_zone *zone, u8 a, u8 b)
 +{
-+	vdo_dump_block_allocator(zone->allocator);
++	int result;
++
++	result = ASSERT((in_cyclic_range(zone->oldest_generation, a, zone->generation, 1 << 8) &&
++			 in_cyclic_range(zone->oldest_generation, b, zone->generation, 1 << 8)),
++			"generation(s) %u, %u are out of range [%u, %u]",
++			a, b, zone->oldest_generation, zone->generation);
++	if (result != VDO_SUCCESS) {
++		enter_zone_read_only_mode(zone, result);
++		return true;
++	}
++
++	return in_cyclic_range(b, a, zone->generation, 1 << 8);
 +}
-diff --git a/drivers/md/dm-vdo/physical-zone.h b/drivers/md/dm-vdo/physical-zone.h
++
++static void release_generation(struct block_map_zone *zone, u8 generation)
++{
++	int result;
++
++	result = ASSERT((zone->dirty_page_counts[generation] > 0),
++			"dirty page count underflow for generation %u",
++			generation);
++	if (result != VDO_SUCCESS) {
++		enter_zone_read_only_mode(zone, result);
++		return;
++	}
++
++	zone->dirty_page_counts[generation]--;
++	while ((zone->dirty_page_counts[zone->oldest_generation] == 0) &&
++	       (zone->oldest_generation != zone->generation))
++		zone->oldest_generation++;
++}
++
++static void
++set_generation(struct block_map_zone *zone, struct tree_page *page, u8 new_generation)
++{
++	u32 new_count;
++	int result;
++	bool decrement_old = vdo_is_waiting(&page->waiter);
++	u8 old_generation = page->generation;
++
++	if (decrement_old && (old_generation == new_generation))
++		return;
++
++	page->generation = new_generation;
++	new_count = ++zone->dirty_page_counts[new_generation];
++	result = ASSERT((new_count != 0),
++			"dirty page count overflow for generation %u",
++			new_generation);
++	if (result != VDO_SUCCESS) {
++		enter_zone_read_only_mode(zone, result);
++		return;
++	}
++
++	if (decrement_old)
++		release_generation(zone, old_generation);
++}
++
++static void write_page(struct tree_page *tree_page, struct pooled_vio *vio);
++
++/* Implements waiter_callback */
++static void write_page_callback(struct waiter *waiter, void *context)
++{
++	write_page(container_of(waiter, struct tree_page, waiter), (struct pooled_vio *) context);
++}
++
++static void acquire_vio(struct waiter *waiter, struct block_map_zone *zone)
++{
++	waiter->callback = write_page_callback;
++	acquire_vio_from_pool(zone->vio_pool, waiter);
++}
++
++/* Return: true if all possible generations were not already active */
++static bool attempt_increment(struct block_map_zone *zone)
++{
++	u8 generation = zone->generation + 1;
++
++	if (zone->oldest_generation == generation)
++		return false;
++
++	zone->generation = generation;
++	return true;
++}
++
++/* Launches a flush if one is not already in progress. */
++static void enqueue_page(struct tree_page *page, struct block_map_zone *zone)
++{
++	if ((zone->flusher == NULL) && attempt_increment(zone)) {
++		zone->flusher = page;
++		acquire_vio(&page->waiter, zone);
++		return;
++	}
++
++	vdo_enqueue_waiter(&zone->flush_waiters, &page->waiter);
++}
++
++static void write_page_if_not_dirtied(struct waiter *waiter, void *context)
++{
++	struct tree_page *page = container_of(waiter, struct tree_page, waiter);
++	struct write_if_not_dirtied_context *write_context = context;
++
++	if (page->generation == write_context->generation) {
++		acquire_vio(waiter, write_context->zone);
++		return;
++	}
++
++	enqueue_page(page, write_context->zone);
++}
++
++static void return_to_pool(struct block_map_zone *zone, struct pooled_vio *vio)
++{
++	return_vio_to_pool(zone->vio_pool, vio);
++	check_for_drain_complete(zone);
++}
++
++/* This callback is registered in write_initialized_page(). */
++static void finish_page_write(struct vdo_completion *completion)
++{
++	bool dirty;
++	struct vio *vio = as_vio(completion);
++	struct pooled_vio *pooled = container_of(vio, struct pooled_vio, vio);
++	struct tree_page *page = completion->parent;
++	struct block_map_zone *zone = pooled->context;
++
++	vdo_release_recovery_journal_block_reference(zone->block_map->journal,
++						     page->writing_recovery_lock,
++						     VDO_ZONE_TYPE_LOGICAL,
++						     zone->zone_number);
++
++	dirty = (page->writing_generation != page->generation);
++	release_generation(zone, page->writing_generation);
++	page->writing = false;
++
++	if (zone->flusher == page) {
++		struct write_if_not_dirtied_context context = {
++			.zone = zone,
++			.generation = page->writing_generation,
++		};
++
++		vdo_notify_all_waiters(&zone->flush_waiters, write_page_if_not_dirtied, &context);
++		if (dirty && attempt_increment(zone)) {
++			write_page(page, pooled);
++			return;
++		}
++
++		zone->flusher = NULL;
++	}
++
++	if (dirty) {
++		enqueue_page(page, zone);
++	} else if ((zone->flusher == NULL) &&
++		   vdo_has_waiters(&zone->flush_waiters) &&
++		   attempt_increment(zone)) {
++		zone->flusher = container_of(vdo_dequeue_next_waiter(&zone->flush_waiters),
++					     struct tree_page,
++					     waiter);
++		write_page(zone->flusher, pooled);
++		return;
++	}
++
++	return_to_pool(zone, pooled);
++}
++
++static void handle_write_error(struct vdo_completion *completion)
++{
++	int result = completion->result;
++	struct vio *vio = as_vio(completion);
++	struct pooled_vio *pooled = container_of(vio, struct pooled_vio, vio);
++	struct block_map_zone *zone = pooled->context;
++
++	vio_record_metadata_io_error(vio);
++	enter_zone_read_only_mode(zone, result);
++	return_to_pool(zone, pooled);
++}
++
++static void write_page_endio(struct bio *bio);
++
++static void write_initialized_page(struct vdo_completion *completion)
++{
++	struct vio *vio = as_vio(completion);
++	struct pooled_vio *pooled = container_of(vio, struct pooled_vio, vio);
++	struct block_map_zone *zone = pooled->context;
++	struct tree_page *tree_page = completion->parent;
++	struct block_map_page *page = (struct block_map_page *) vio->data;
++	unsigned int operation = REQ_OP_WRITE | REQ_PRIO;
++
++	/*
++	 * Now that we know the page has been written at least once, mark the copy we are writing
++	 * as initialized.
++	 */
++	page->header.initialized = true;
++
++	if (zone->flusher == tree_page)
++		operation |= REQ_PREFLUSH;
++
++	submit_metadata_vio(vio,
++			    vdo_get_block_map_page_pbn(page),
++			    write_page_endio,
++			    handle_write_error,
++			    operation);
++}
++
++static void write_page_endio(struct bio *bio)
++{
++	struct pooled_vio *vio = bio->bi_private;
++	struct block_map_zone *zone = vio->context;
++	struct block_map_page *page = (struct block_map_page *) vio->vio.data;
++
++	continue_vio_after_io(&vio->vio,
++			      (page->header.initialized ?
++			       finish_page_write :
++			       write_initialized_page),
++			      zone->thread_id);
++}
++
++static void write_page(struct tree_page *tree_page, struct pooled_vio *vio)
++{
++	struct vdo_completion *completion = &vio->vio.completion;
++	struct block_map_zone *zone = vio->context;
++	struct block_map_page *page = vdo_as_block_map_page(tree_page);
++
++	if ((zone->flusher != tree_page) &&
++	    is_not_older(zone, tree_page->generation, zone->generation)) {
++		/*
++		 * This page was re-dirtied after the last flush was issued, hence we need to do
++		 * another flush.
++		 */
++		enqueue_page(tree_page, zone);
++		return_to_pool(zone, vio);
++		return;
++	}
++
++	completion->parent = tree_page;
++	memcpy(vio->vio.data, tree_page->page_buffer, VDO_BLOCK_SIZE);
++	completion->callback_thread_id = zone->thread_id;
++
++	tree_page->writing = true;
++	tree_page->writing_generation = tree_page->generation;
++	tree_page->writing_recovery_lock = tree_page->recovery_lock;
++
++	/* Clear this now so that we know this page is not on any dirty list. */
++	tree_page->recovery_lock = 0;
++
++	/*
++	 * We've already copied the page into the vio which will write it, so if it was not yet
++	 * initialized, the first write will indicate that (for torn write protection). It is now
++	 * safe to mark it as initialized in memory since if the write fails, the in memory state
++	 * will become irrelevant.
++	 */
++	if (page->header.initialized) {
++		write_initialized_page(completion);
++		return;
++	}
++
++	page->header.initialized = true;
++	submit_metadata_vio(&vio->vio,
++			    vdo_get_block_map_page_pbn(page),
++			    write_page_endio,
++			    handle_write_error,
++			    REQ_OP_WRITE | REQ_PRIO);
++}
++
++/* Release a lock on a page which was being loaded or allocated. */
++static void release_page_lock(struct data_vio *data_vio, char *what)
++{
++	struct block_map_zone *zone;
++	struct tree_lock *lock_holder;
++	struct tree_lock *lock = &data_vio->tree_lock;
++
++	ASSERT_LOG_ONLY(lock->locked,
++			"release of unlocked block map page %s for key %llu in tree %u",
++			what, (unsigned long long) lock->key,
++			lock->root_index);
++
++	zone = data_vio->logical.zone->block_map_zone;
++	lock_holder = vdo_int_map_remove(zone->loading_pages, lock->key);
++	ASSERT_LOG_ONLY((lock_holder == lock),
++			"block map page %s mismatch for key %llu in tree %u",
++			what,
++			(unsigned long long) lock->key,
++			lock->root_index);
++	lock->locked = false;
++}
++
++static void finish_lookup(struct data_vio *data_vio, int result)
++{
++	data_vio->tree_lock.height = 0;
++
++	--data_vio->logical.zone->block_map_zone->active_lookups;
++
++	set_data_vio_logical_callback(data_vio, continue_data_vio_with_block_map_slot);
++	data_vio->vio.completion.error_handler = handle_data_vio_error;
++	continue_data_vio_with_error(data_vio, result);
++}
++
++static void abort_lookup_for_waiter(struct waiter *waiter, void *context)
++{
++	struct data_vio *data_vio = waiter_as_data_vio(waiter);
++	int result = *((int *) context);
++
++	if (!data_vio->write) {
++		if (result == VDO_NO_SPACE)
++			result = VDO_SUCCESS;
++	} else if (result != VDO_NO_SPACE) {
++		result = VDO_READ_ONLY;
++	}
++
++	finish_lookup(data_vio, result);
++}
++
++static void abort_lookup(struct data_vio *data_vio, int result, char *what)
++{
++	if (result != VDO_NO_SPACE)
++		enter_zone_read_only_mode(data_vio->logical.zone->block_map_zone, result);
++
++	if (data_vio->tree_lock.locked) {
++		release_page_lock(data_vio, what);
++		vdo_notify_all_waiters(&data_vio->tree_lock.waiters,
++				       abort_lookup_for_waiter,
++				       &result);
++	}
++
++	finish_lookup(data_vio, result);
++}
++
++static void abort_load(struct data_vio *data_vio, int result)
++{
++	abort_lookup(data_vio, result, "load");
++}
++
++static bool __must_check
++is_invalid_tree_entry(const struct vdo *vdo, const struct data_location *mapping, height_t height)
++{
++	if (!vdo_is_valid_location(mapping) ||
++	    vdo_is_state_compressed(mapping->state) ||
++	    (vdo_is_mapped_location(mapping) && (mapping->pbn == VDO_ZERO_BLOCK)))
++		return true;
++
++	/* Roots aren't physical data blocks, so we can't check their PBNs. */
++	if (height == VDO_BLOCK_MAP_TREE_HEIGHT)
++		return false;
++
++	return !vdo_is_physical_data_block(vdo->depot, mapping->pbn);
++}
++
++static void load_block_map_page(struct block_map_zone *zone, struct data_vio *data_vio);
++static void allocate_block_map_page(struct block_map_zone *zone, struct data_vio *data_vio);
++
++static void continue_with_loaded_page(struct data_vio *data_vio, struct block_map_page *page)
++{
++	struct tree_lock *lock = &data_vio->tree_lock;
++	struct block_map_tree_slot slot = lock->tree_slots[lock->height];
++	struct data_location mapping =
++		vdo_unpack_block_map_entry(&page->entries[slot.block_map_slot.slot]);
++
++	if (is_invalid_tree_entry(vdo_from_data_vio(data_vio), &mapping, lock->height)) {
++		uds_log_error_strerror(VDO_BAD_MAPPING,
++				       "Invalid block map tree PBN: %llu with state %u for page index %u at height %u",
++				       (unsigned long long) mapping.pbn,
++				       mapping.state,
++				       lock->tree_slots[lock->height - 1].page_index,
++				       lock->height - 1);
++		abort_load(data_vio, VDO_BAD_MAPPING);
++		return;
++	}
++
++	if (!vdo_is_mapped_location(&mapping)) {
++		/* The page we need is unallocated */
++		allocate_block_map_page(data_vio->logical.zone->block_map_zone, data_vio);
++		return;
++	}
++
++	lock->tree_slots[lock->height - 1].block_map_slot.pbn = mapping.pbn;
++	if (lock->height == 1) {
++		finish_lookup(data_vio, VDO_SUCCESS);
++		return;
++	}
++
++	/* We know what page we need to load next */
++	load_block_map_page(data_vio->logical.zone->block_map_zone, data_vio);
++}
++
++static void continue_load_for_waiter(struct waiter *waiter, void *context)
++{
++	struct data_vio *data_vio = waiter_as_data_vio(waiter);
++
++	data_vio->tree_lock.height--;
++	continue_with_loaded_page(data_vio, (struct block_map_page *) context);
++}
++
++static void finish_block_map_page_load(struct vdo_completion *completion)
++{
++	physical_block_number_t pbn;
++	struct tree_page *tree_page;
++	struct block_map_page *page;
++	nonce_t nonce;
++	struct vio *vio = as_vio(completion);
++	struct pooled_vio *pooled = vio_as_pooled_vio(vio);
++	struct data_vio *data_vio = completion->parent;
++	struct block_map_zone *zone = pooled->context;
++	struct tree_lock *tree_lock = &data_vio->tree_lock;
++
++	tree_lock->height--;
++	pbn = tree_lock->tree_slots[tree_lock->height].block_map_slot.pbn;
++	tree_page = get_tree_page(zone, tree_lock);
++	page = (struct block_map_page *) tree_page->page_buffer;
++	nonce = zone->block_map->nonce;
++
++	if (!vdo_copy_valid_page(vio->data, nonce, pbn, page))
++		vdo_format_block_map_page(page, nonce, pbn, false);
++	return_vio_to_pool(zone->vio_pool, pooled);
++
++	/* Release our claim to the load and wake any waiters */
++	release_page_lock(data_vio, "load");
++	vdo_notify_all_waiters(&tree_lock->waiters, continue_load_for_waiter, page);
++	continue_with_loaded_page(data_vio, page);
++}
++
++static void handle_io_error(struct vdo_completion *completion)
++{
++	int result = completion->result;
++	struct vio *vio = as_vio(completion);
++	struct pooled_vio *pooled = container_of(vio, struct pooled_vio, vio);
++	struct data_vio *data_vio = completion->parent;
++	struct block_map_zone *zone = pooled->context;
++
++	vio_record_metadata_io_error(vio);
++	return_vio_to_pool(zone->vio_pool, pooled);
++	abort_load(data_vio, result);
++}
++
++static void load_page_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct data_vio *data_vio = vio->completion.parent;
++
++	continue_vio_after_io(vio, finish_block_map_page_load, data_vio->logical.zone->thread_id);
++}
++
++static void load_page(struct waiter *waiter, void *context)
++{
++	struct pooled_vio *pooled = context;
++	struct data_vio *data_vio = waiter_as_data_vio(waiter);
++	struct tree_lock *lock = &data_vio->tree_lock;
++	physical_block_number_t pbn = lock->tree_slots[lock->height - 1].block_map_slot.pbn;
++
++	pooled->vio.completion.parent = data_vio;
++	submit_metadata_vio(&pooled->vio,
++			    pbn,
++			    load_page_endio,
++			    handle_io_error,
++			    REQ_OP_READ | REQ_PRIO);
++}
++
++/*
++ * If the page is already locked, queue up to wait for the lock to be released. If the lock is
++ * acquired, @data_vio->tree_lock.locked will be true.
++ */
++static int attempt_page_lock(struct block_map_zone *zone, struct data_vio *data_vio)
++{
++	int result;
++	struct tree_lock *lock_holder;
++	struct tree_lock *lock = &data_vio->tree_lock;
++	height_t height = lock->height;
++	struct block_map_tree_slot tree_slot = lock->tree_slots[height];
++	union page_key key;
++
++	key.descriptor = (struct page_descriptor) {
++		.root_index = lock->root_index,
++		.height = height,
++		.page_index = tree_slot.page_index,
++		.slot = tree_slot.block_map_slot.slot,
++	};
++	lock->key = key.key;
++
++	result = vdo_int_map_put(zone->loading_pages,
++				 lock->key,
++				 lock,
++				 false,
++				 (void **) &lock_holder);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	if (lock_holder == NULL) {
++		/* We got the lock */
++		data_vio->tree_lock.locked = true;
++		return VDO_SUCCESS;
++	}
++
++	/* Someone else is loading or allocating the page we need */
++	vdo_enqueue_waiter(&lock_holder->waiters, &data_vio->waiter);
++	return VDO_SUCCESS;
++}
++
++/* Load a block map tree page from disk, for the next level in the data vio tree lock. */
++static void load_block_map_page(struct block_map_zone *zone, struct data_vio *data_vio)
++{
++	int result;
++
++	result = attempt_page_lock(zone, data_vio);
++	if (result != VDO_SUCCESS) {
++		abort_load(data_vio, result);
++		return;
++	}
++
++	if (data_vio->tree_lock.locked) {
++		data_vio->waiter.callback = load_page;
++		acquire_vio_from_pool(zone->vio_pool, &data_vio->waiter);
++	}
++}
++
++static void allocation_failure(struct vdo_completion *completion)
++{
++	struct data_vio *data_vio = as_data_vio(completion);
++
++	if (vdo_requeue_completion_if_needed(completion, data_vio->logical.zone->thread_id))
++		return;
++
++	abort_lookup(data_vio, completion->result, "allocation");
++}
++
++static void continue_allocation_for_waiter(struct waiter *waiter, void *context)
++{
++	struct data_vio *data_vio = waiter_as_data_vio(waiter);
++	struct tree_lock *tree_lock = &data_vio->tree_lock;
++	physical_block_number_t pbn = *((physical_block_number_t *) context);
++
++	tree_lock->height--;
++	data_vio->tree_lock.tree_slots[tree_lock->height].block_map_slot.pbn = pbn;
++
++	if (tree_lock->height == 0) {
++		finish_lookup(data_vio, VDO_SUCCESS);
++		return;
++	}
++
++	allocate_block_map_page(data_vio->logical.zone->block_map_zone, data_vio);
++}
++
++/** expire_oldest_list() - Expire the oldest list. */
++static void expire_oldest_list(struct dirty_lists *dirty_lists)
++{
++	block_count_t i = dirty_lists->offset++;
++
++	dirty_lists->oldest_period++;
++	if (!list_empty(&dirty_lists->eras[i][VDO_TREE_PAGE]))
++		list_splice_tail_init(&dirty_lists->eras[i][VDO_TREE_PAGE],
++				      &dirty_lists->expired[VDO_TREE_PAGE]);
++	if (!list_empty(&dirty_lists->eras[i][VDO_CACHE_PAGE]))
++		list_splice_tail_init(&dirty_lists->eras[i][VDO_CACHE_PAGE],
++				      &dirty_lists->expired[VDO_CACHE_PAGE]);
++
++	if (dirty_lists->offset == dirty_lists->maximum_age)
++		dirty_lists->offset = 0;
++}
++
++
++/** update_period() - Update the dirty_lists period if necessary. */
++static void update_period(struct dirty_lists *dirty, sequence_number_t period)
++{
++	while (dirty->next_period <= period) {
++		if ((dirty->next_period - dirty->oldest_period) == dirty->maximum_age)
++			expire_oldest_list(dirty);
++		dirty->next_period++;
++	}
++}
++
++/** write_expired_elements() - Write out the expired list. */
++static void write_expired_elements(struct block_map_zone *zone)
++{
++	struct tree_page *page, *ttmp;
++	struct page_info *info, *ptmp;
++	struct list_head *expired;
++	u8 generation = zone->generation;
++
++	expired = &zone->dirty_lists->expired[VDO_TREE_PAGE];
++	list_for_each_entry_safe(page, ttmp, expired, entry) {
++		int result;
++
++		list_del_init(&page->entry);
++
++		result = ASSERT(!vdo_is_waiting(&page->waiter),
++				"Newly expired page not already waiting to write");
++		if (result != VDO_SUCCESS) {
++			enter_zone_read_only_mode(zone, result);
++			continue;
++		}
++
++		set_generation(zone, page, generation);
++		if (!page->writing)
++			enqueue_page(page, zone);
++	}
++
++	expired = &zone->dirty_lists->expired[VDO_CACHE_PAGE];
++	list_for_each_entry_safe(info, ptmp, expired, state_entry) {
++		list_del_init(&info->state_entry);
++		schedule_page_save(info);
++	}
++
++	save_pages(&zone->page_cache);
++}
++
++/**
++ * add_to_dirty_lists() - Add an element to the dirty lists.
++ * @zone: The zone in which we are operating.
++ * @entry: The list entry of the element to add.
++ * @type: The type of page.
++ * @old_period: The period in which the element was previously dirtied, or 0 if it was not dirty.
++ * @new_period: The period in which the element has now been dirtied, or 0 if it does not hold a
++ *              lock.
++ */
++static void
++add_to_dirty_lists(struct block_map_zone *zone,
++		   struct list_head *entry,
++		   enum block_map_page_type type,
++		   sequence_number_t old_period,
++		   sequence_number_t new_period)
++{
++	struct dirty_lists *dirty_lists = zone->dirty_lists;
++
++	if ((old_period == new_period) || ((old_period != 0) && (old_period < new_period)))
++		return;
++
++	if (new_period < dirty_lists->oldest_period) {
++		list_move_tail(entry, &dirty_lists->expired[type]);
++	} else {
++		update_period(dirty_lists, new_period);
++		list_move_tail(entry,
++			       &dirty_lists->eras[new_period % dirty_lists->maximum_age][type]);
++	}
++
++	write_expired_elements(zone);
++}
++
++/*
++ * Record the allocation in the tree and wake any waiters now that the write lock has been
++ * released.
++ */
++static void finish_block_map_allocation(struct vdo_completion *completion)
++{
++	physical_block_number_t pbn;
++	struct tree_page *tree_page;
++	struct block_map_page *page;
++	sequence_number_t old_lock;
++	struct data_vio *data_vio = as_data_vio(completion);
++	struct block_map_zone *zone = data_vio->logical.zone->block_map_zone;
++	struct tree_lock *tree_lock = &data_vio->tree_lock;
++	height_t height = tree_lock->height;
++
++	assert_data_vio_in_logical_zone(data_vio);
++
++	tree_page = get_tree_page(zone, tree_lock);
++	pbn = tree_lock->tree_slots[height - 1].block_map_slot.pbn;
++
++	/* Record the allocation. */
++	page = (struct block_map_page *) tree_page->page_buffer;
++	old_lock = tree_page->recovery_lock;
++	vdo_update_block_map_page(page,
++				  data_vio,
++				  pbn,
++				  VDO_MAPPING_STATE_UNCOMPRESSED,
++				  &tree_page->recovery_lock);
++
++	if (vdo_is_waiting(&tree_page->waiter)) {
++		/* This page is waiting to be written out. */
++		if (zone->flusher != tree_page)
++			/*
++			 * The outstanding flush won't cover the update we just made, so mark the
++			 * page as needing another flush.
++			 */
++			set_generation(zone, tree_page, zone->generation);
++	} else {
++		/* Put the page on a dirty list */
++		if (old_lock == 0)
++			INIT_LIST_HEAD(&tree_page->entry);
++		add_to_dirty_lists(zone,
++				   &tree_page->entry,
++				   VDO_TREE_PAGE,
++				   old_lock,
++				   tree_page->recovery_lock);
++	}
++
++	tree_lock->height--;
++	if (height > 1) {
++		/* Format the interior node we just allocated (in memory). */
++		tree_page = get_tree_page(zone, tree_lock);
++		vdo_format_block_map_page(tree_page->page_buffer,
++					  zone->block_map->nonce,
++					  pbn,
++					  false);
++	}
++
++	/* Release our claim to the allocation and wake any waiters */
++	release_page_lock(data_vio, "allocation");
++	vdo_notify_all_waiters(&tree_lock->waiters, continue_allocation_for_waiter, &pbn);
++	if (tree_lock->height == 0) {
++		finish_lookup(data_vio, VDO_SUCCESS);
++		return;
++	}
++
++	allocate_block_map_page(zone, data_vio);
++}
++
++static void release_block_map_write_lock(struct vdo_completion *completion)
++{
++	struct data_vio *data_vio = as_data_vio(completion);
++
++	assert_data_vio_in_allocated_zone(data_vio);
++
++	release_data_vio_allocation_lock(data_vio, true);
++	launch_data_vio_logical_callback(data_vio, finish_block_map_allocation);
++}
++
++/*
++ * Newly allocated block map pages are set to have to MAXIMUM_REFERENCES after they are journaled,
++ * to prevent deduplication against the block after we release the write lock on it, but before we
++ * write out the page.
++ */
++static void set_block_map_page_reference_count(struct vdo_completion *completion)
++{
++	struct data_vio *data_vio = as_data_vio(completion);
++
++	assert_data_vio_in_allocated_zone(data_vio);
++
++	completion->callback = release_block_map_write_lock;
++	vdo_modify_reference_count(completion, &data_vio->increment_updater);
++}
++
++static void journal_block_map_allocation(struct vdo_completion *completion)
++{
++	struct data_vio *data_vio = as_data_vio(completion);
++
++	assert_data_vio_in_journal_zone(data_vio);
++
++	set_data_vio_allocated_zone_callback(data_vio, set_block_map_page_reference_count);
++	vdo_add_recovery_journal_entry(completion->vdo->recovery_journal, data_vio);
++}
++
++static void allocate_block(struct vdo_completion *completion)
++{
++	struct data_vio *data_vio = as_data_vio(completion);
++	struct tree_lock *lock = &data_vio->tree_lock;
++	physical_block_number_t pbn;
++
++	assert_data_vio_in_allocated_zone(data_vio);
++
++	if (!vdo_allocate_block_in_zone(data_vio))
++		return;
++
++	pbn = data_vio->allocation.pbn;
++	lock->tree_slots[lock->height - 1].block_map_slot.pbn = pbn;
++	data_vio->increment_updater = (struct reference_updater) {
++		.operation = VDO_JOURNAL_BLOCK_MAP_REMAPPING,
++		.increment = true,
++		.zpbn = {
++			.pbn = pbn,
++			.state = VDO_MAPPING_STATE_UNCOMPRESSED,
++		},
++		.lock = data_vio->allocation.lock,
++	};
++
++	launch_data_vio_journal_callback(data_vio, journal_block_map_allocation);
++}
++
++static void allocate_block_map_page(struct block_map_zone *zone, struct data_vio *data_vio)
++{
++	int result;
++
++	if (!data_vio->write || data_vio->is_trim) {
++		/* This is a pure read or a trim, so there's nothing left to do here. */
++		finish_lookup(data_vio, VDO_SUCCESS);
++		return;
++	}
++
++	result = attempt_page_lock(zone, data_vio);
++	if (result != VDO_SUCCESS) {
++		abort_lookup(data_vio, result, "allocation");
++		return;
++	}
++
++	if (!data_vio->tree_lock.locked)
++		return;
++
++	data_vio_allocate_data_block(data_vio,
++				     VIO_BLOCK_MAP_WRITE_LOCK,
++				     allocate_block,
++				     allocation_failure);
++}
++
++/**
++ * vdo_find_block_map_slot() - Find the block map slot in which the block map entry for a data_vio
++ *                             resides and cache that result in the data_vio.
++ *
++ * All ancestors in the tree will be allocated or loaded, as needed.
++ */
++void vdo_find_block_map_slot(struct data_vio *data_vio)
++{
++	page_number_t page_index;
++	struct block_map_tree_slot tree_slot;
++	struct data_location mapping;
++	struct block_map_page *page = NULL;
++	struct tree_lock *lock = &data_vio->tree_lock;
++	struct block_map_zone *zone = data_vio->logical.zone->block_map_zone;
++
++	zone->active_lookups++;
++	if (vdo_is_state_draining(&zone->state)) {
++		finish_lookup(data_vio, VDO_SHUTTING_DOWN);
++		return;
++	}
++
++	lock->tree_slots[0].block_map_slot.slot =
++		data_vio->logical.lbn % VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
++	page_index = (lock->tree_slots[0].page_index / zone->block_map->root_count);
++	tree_slot = (struct block_map_tree_slot) {
++		.page_index = page_index / VDO_BLOCK_MAP_ENTRIES_PER_PAGE,
++		.block_map_slot = {
++			.pbn = 0,
++			.slot = page_index % VDO_BLOCK_MAP_ENTRIES_PER_PAGE,
++		},
++	};
++
++	for (lock->height = 1; lock->height <= VDO_BLOCK_MAP_TREE_HEIGHT; lock->height++) {
++		physical_block_number_t pbn;
++
++		lock->tree_slots[lock->height] = tree_slot;
++		page = (struct block_map_page *) (get_tree_page(zone, lock)->page_buffer);
++		pbn = vdo_get_block_map_page_pbn(page);
++		if (pbn != VDO_ZERO_BLOCK) {
++			lock->tree_slots[lock->height].block_map_slot.pbn = pbn;
++			break;
++		}
++
++		/* Calculate the index and slot for the next level. */
++		tree_slot.block_map_slot.slot =
++			tree_slot.page_index % VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
++		tree_slot.page_index = tree_slot.page_index / VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
++	}
++
++	/* The page at this height has been allocated and loaded. */
++	mapping = vdo_unpack_block_map_entry(&page->entries[tree_slot.block_map_slot.slot]);
++	if (is_invalid_tree_entry(vdo_from_data_vio(data_vio), &mapping, lock->height)) {
++		uds_log_error_strerror(VDO_BAD_MAPPING,
++				       "Invalid block map tree PBN: %llu with state %u for page index %u at height %u",
++				       (unsigned long long) mapping.pbn,
++				       mapping.state,
++				       lock->tree_slots[lock->height - 1].page_index,
++				       lock->height - 1);
++		abort_load(data_vio, VDO_BAD_MAPPING);
++		return;
++	}
++
++	if (!vdo_is_mapped_location(&mapping)) {
++		/* The page we want one level down has not been allocated, so allocate it. */
++		allocate_block_map_page(zone, data_vio);
++		return;
++	}
++
++	lock->tree_slots[lock->height - 1].block_map_slot.pbn = mapping.pbn;
++	if (lock->height == 1) {
++		/* This is the ultimate block map page, so we're done */
++		finish_lookup(data_vio, VDO_SUCCESS);
++		return;
++	}
++
++	/* We know what page we need to load. */
++	load_block_map_page(zone, data_vio);
++}
++
++/*
++ * Find the PBN of a leaf block map page. This method may only be used after all allocated tree
++ * pages have been loaded, otherwise, it may give the wrong answer (0).
++ */
++physical_block_number_t
++vdo_find_block_map_page_pbn(struct block_map *map, page_number_t page_number)
++{
++	struct data_location mapping;
++	struct tree_page *tree_page;
++	struct block_map_page *page;
++	root_count_t root_index = page_number % map->root_count;
++	page_number_t page_index = page_number / map->root_count;
++	slot_number_t slot = page_index % VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
++
++	page_index /= VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
++
++	tree_page = get_tree_page_by_index(map->forest, root_index, 1, page_index);
++	page = (struct block_map_page *) tree_page->page_buffer;
++	if (!page->header.initialized)
++		return VDO_ZERO_BLOCK;
++
++	mapping = vdo_unpack_block_map_entry(&page->entries[slot]);
++	if (!vdo_is_valid_location(&mapping) || vdo_is_state_compressed(mapping.state))
++		return VDO_ZERO_BLOCK;
++	return mapping.pbn;
++}
++
++/*
++ * Write a tree page or indicate that it has been re-dirtied if it is already being written. This
++ * method is used when correcting errors in the tree during read-only rebuild.
++ */
++void vdo_write_tree_page(struct tree_page *page, struct block_map_zone *zone)
++{
++	bool waiting = vdo_is_waiting(&page->waiter);
++
++	if (waiting && (zone->flusher == page))
++		return;
++
++	set_generation(zone, page, zone->generation);
++	if (waiting || page->writing)
++		return;
++
++	enqueue_page(page, zone);
++}
++
++static int make_segment(struct forest *old_forest,
++			block_count_t new_pages,
++			struct boundary *new_boundary,
++			struct forest *forest)
++{
++	size_t index = (old_forest == NULL) ? 0 : old_forest->segments;
++	struct tree_page *page_ptr;
++	page_count_t segment_sizes[VDO_BLOCK_MAP_TREE_HEIGHT];
++	height_t height;
++	root_count_t root;
++	int result;
++
++	forest->segments = index + 1;
++
++	result = UDS_ALLOCATE(forest->segments, struct boundary,
++			      "forest boundary array", &forest->boundaries);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	result = UDS_ALLOCATE(forest->segments,
++			      struct tree_page *,
++			      "forest page pointers",
++			      &forest->pages);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	result = UDS_ALLOCATE(new_pages,
++			      struct tree_page,
++			      "new forest pages",
++			      &forest->pages[index]);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	if (index > 0) {
++		memcpy(forest->boundaries,
++		       old_forest->boundaries,
++		       index * sizeof(struct boundary));
++		memcpy(forest->pages, old_forest->pages, index * sizeof(struct tree_page *));
++	}
++
++	memcpy(&(forest->boundaries[index]), new_boundary, sizeof(struct boundary));
++
++	for (height = 0; height < VDO_BLOCK_MAP_TREE_HEIGHT; height++) {
++		segment_sizes[height] = new_boundary->levels[height];
++		if (index > 0)
++			segment_sizes[height] -= old_forest->boundaries[index - 1].levels[height];
++	}
++
++	page_ptr = forest->pages[index];
++	for (root = 0; root < forest->map->root_count; root++) {
++		struct block_map_tree_segment *segment;
++		struct block_map_tree *tree = &(forest->trees[root]);
++		height_t height;
++
++		int result = UDS_ALLOCATE(forest->segments,
++					  struct block_map_tree_segment,
++					  "tree root segments",
++					  &tree->segments);
++		if (result != VDO_SUCCESS)
++			return result;
++
++		if (index > 0)
++			memcpy(tree->segments,
++			       old_forest->trees[root].segments,
++			       index * sizeof(struct block_map_tree_segment));
++
++		segment = &(tree->segments[index]);
++		for (height = 0; height < VDO_BLOCK_MAP_TREE_HEIGHT; height++) {
++			if (segment_sizes[height] == 0)
++				continue;
++
++			segment->levels[height] = page_ptr;
++			if (height == (VDO_BLOCK_MAP_TREE_HEIGHT - 1)) {
++				/* Record the root. */
++				struct block_map_page *page =
++					vdo_format_block_map_page(page_ptr->page_buffer,
++								  forest->map->nonce,
++								  VDO_INVALID_PBN,
++								  true);
++				page->entries[0] =
++					vdo_pack_block_map_entry(forest->map->root_origin + root,
++								 VDO_MAPPING_STATE_UNCOMPRESSED);
++			}
++			page_ptr += segment_sizes[height];
++		}
++	}
++
++	return VDO_SUCCESS;
++}
++
++static void deforest(struct forest *forest, size_t first_page_segment)
++{
++	root_count_t root;
++
++	if (forest->pages != NULL) {
++		size_t segment;
++
++		for (segment = first_page_segment; segment < forest->segments; segment++)
++			UDS_FREE(forest->pages[segment]);
++		UDS_FREE(forest->pages);
++	}
++
++	for (root = 0; root < forest->map->root_count; root++)
++		UDS_FREE(forest->trees[root].segments);
++
++	UDS_FREE(forest->boundaries);
++	UDS_FREE(forest);
++}
++
++/**
++ * make_forest() - Make a collection of trees for a block_map, expanding the existing forest if
++ *                 there is one.
++ * @entries: The number of entries the block map will hold.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int make_forest(struct block_map *map, block_count_t entries)
++{
++	struct forest *forest, *old_forest = map->forest;
++	struct boundary new_boundary, *old_boundary = NULL;
++	block_count_t new_pages;
++	int result;
++
++	if (old_forest != NULL)
++		old_boundary = &(old_forest->boundaries[old_forest->segments - 1]);
++
++	new_pages = vdo_compute_new_forest_pages(map->root_count, old_boundary,
++						 entries, &new_boundary);
++	if (new_pages == 0) {
++		map->next_entry_count = entries;
++		return VDO_SUCCESS;
++	}
++
++	result = UDS_ALLOCATE_EXTENDED(struct forest, map->root_count,
++				       struct block_map_tree, __func__,
++				       &forest);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	forest->map = map;
++	result = make_segment(old_forest, new_pages, &new_boundary, forest);
++	if (result != VDO_SUCCESS) {
++		deforest(forest, forest->segments - 1);
++		return result;
++	}
++
++	map->next_forest = forest;
++	map->next_entry_count = entries;
++	return VDO_SUCCESS;
++}
++
++/**
++ * replace_forest() - Replace a block_map's forest with the already-prepared larger forest.
++ */
++static void replace_forest(struct block_map *map)
++{
++	if (map->next_forest != NULL) {
++		if (map->forest != NULL)
++			deforest(map->forest, map->forest->segments);
++		map->forest = UDS_FORGET(map->next_forest);
++	}
++
++	map->entry_count = map->next_entry_count;
++	map->next_entry_count = 0;
++}
++
++/**
++ * finish_cursor() - Finish the traversal of a single tree. If it was the last cursor, finish the
++ *                   traversal.
++ */
++static void finish_cursor(struct cursor *cursor)
++{
++	struct cursors *cursors = cursor->parent;
++	struct vdo_completion *parent = cursors->parent;
++
++	return_vio_to_pool(cursors->pool, UDS_FORGET(cursor->vio));
++	if (--cursors->active_roots > 0)
++		return;
++
++	UDS_FREE(cursors);
++
++	vdo_finish_completion(parent);
++}
++
++static void traverse(struct cursor *cursor);
++
++/**
++ * continue_traversal() - Continue traversing a block map tree.
++ * @completion: The VIO doing a read or write.
++ */
++static void continue_traversal(struct vdo_completion *completion)
++{
++	vio_record_metadata_io_error(as_vio(completion));
++	traverse(completion->parent);
++}
++
++/**
++ * finish_traversal_load() - Continue traversing a block map tree now that a page has been loaded.
++ * @completion: The VIO doing the read.
++ */
++static void finish_traversal_load(struct vdo_completion *completion)
++{
++	struct cursor *cursor = completion->parent;
++	height_t height = cursor->height;
++	struct cursor_level *level = &cursor->levels[height];
++	struct tree_page *tree_page =
++		&(cursor->tree->segments[0].levels[height][level->page_index]);
++	struct block_map_page *page = (struct block_map_page *) tree_page->page_buffer;
++
++	vdo_copy_valid_page(cursor->vio->vio.data,
++			    cursor->parent->zone->block_map->nonce,
++			    pbn_from_vio_bio(cursor->vio->vio.bio),
++			    page);
++	traverse(cursor);
++}
++
++static void traversal_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct cursor *cursor = vio->completion.parent;
++
++	continue_vio_after_io(vio, finish_traversal_load, cursor->parent->zone->thread_id);
++}
++
++/**
++ * traverse() - Traverse a single block map tree.
++ *
++ * This is the recursive heart of the traversal process.
++ */
++static void traverse(struct cursor *cursor)
++{
++	for (; cursor->height < VDO_BLOCK_MAP_TREE_HEIGHT; cursor->height++) {
++		height_t height = cursor->height;
++		struct cursor_level *level = &cursor->levels[height];
++		struct tree_page *tree_page =
++			&(cursor->tree->segments[0].levels[height][level->page_index]);
++		struct block_map_page *page = (struct block_map_page *) tree_page->page_buffer;
++
++		if (!page->header.initialized)
++			continue;
++
++		for (; level->slot < VDO_BLOCK_MAP_ENTRIES_PER_PAGE; level->slot++) {
++			struct cursor_level *next_level;
++			page_number_t entry_index =
++				(VDO_BLOCK_MAP_ENTRIES_PER_PAGE * level->page_index) + level->slot;
++			struct data_location location =
++				vdo_unpack_block_map_entry(&page->entries[level->slot]);
++
++			if (!vdo_is_valid_location(&location)) {
++				/* This entry is invalid, so remove it from the page. */
++				page->entries[level->slot] = UNMAPPED_BLOCK_MAP_ENTRY;
++				vdo_write_tree_page(tree_page, cursor->parent->zone);
++				continue;
++			}
++
++			if (!vdo_is_mapped_location(&location))
++				continue;
++
++			/* Erase mapped entries past the end of the logical space. */
++			if (entry_index >= cursor->boundary.levels[height]) {
++				page->entries[level->slot] = UNMAPPED_BLOCK_MAP_ENTRY;
++				vdo_write_tree_page(tree_page, cursor->parent->zone);
++				continue;
++			}
++
++			if (cursor->height < VDO_BLOCK_MAP_TREE_HEIGHT - 1) {
++				int result =
++					cursor->parent->entry_callback(location.pbn,
++								       cursor->parent->parent);
++
++				if (result != VDO_SUCCESS) {
++					page->entries[level->slot] = UNMAPPED_BLOCK_MAP_ENTRY;
++					vdo_write_tree_page(tree_page, cursor->parent->zone);
++					continue;
++				}
++			}
++
++			if (cursor->height == 0)
++				continue;
++
++			cursor->height--;
++			next_level = &cursor->levels[cursor->height];
++			next_level->page_index = entry_index;
++			next_level->slot = 0;
++			level->slot++;
++			submit_metadata_vio(&cursor->vio->vio,
++					    location.pbn,
++					    traversal_endio,
++					    continue_traversal,
++					    REQ_OP_READ | REQ_PRIO);
++			return;
++		}
++	}
++
++	finish_cursor(cursor);
++}
++
++/**
++ * launch_cursor() - Start traversing a single block map tree now that the cursor has a VIO with
++ *                   which to load pages.
++ * @context: The pooled_vio just acquired.
++ *
++ * Implements waiter_callback.
++ */
++static void launch_cursor(struct waiter *waiter, void *context)
++{
++	struct cursor *cursor = container_of(waiter, struct cursor, waiter);
++	struct pooled_vio *pooled = context;
++
++	cursor->vio = pooled;
++	pooled->vio.completion.parent = cursor;
++	pooled->vio.completion.callback_thread_id = cursor->parent->zone->thread_id;
++	traverse(cursor);
++}
++
++/**
++ * compute_boundary() - Compute the number of pages used at each level of the given root's tree.
++ *
++ * Return: The list of page counts as a boundary structure.
++ */
++static struct boundary compute_boundary(struct block_map *map, root_count_t root_index)
++{
++	struct boundary boundary;
++	height_t height;
++	page_count_t leaf_pages = vdo_compute_block_map_page_count(map->entry_count);
++	/*
++	 * Compute the leaf pages for this root. If the number of leaf pages does not distribute
++	 * evenly, we must determine if this root gets an extra page. Extra pages are assigned to
++	 * roots starting from tree 0.
++	 */
++	page_count_t last_tree_root = (leaf_pages - 1) % map->root_count;
++	page_count_t level_pages = leaf_pages / map->root_count;
++
++	if (root_index <= last_tree_root)
++		level_pages++;
++
++	for (height = 0; height < VDO_BLOCK_MAP_TREE_HEIGHT - 1; height++) {
++		boundary.levels[height] = level_pages;
++		level_pages = DIV_ROUND_UP(level_pages, VDO_BLOCK_MAP_ENTRIES_PER_PAGE);
++	}
++
++	/* The root node always exists, even if the root is otherwise unused. */
++	boundary.levels[VDO_BLOCK_MAP_TREE_HEIGHT - 1] = 1;
++
++	return boundary;
++}
++
++/**
++ * vdo_traverse_forest() - Walk the entire forest of a block map.
++ * @callback: A function to call with the pbn of each allocated node in the forest.
++ * @parent: The completion to notify on each traversed PBN, and when the traversal is complete.
++ */
++void vdo_traverse_forest(struct block_map *map,
++			 vdo_entry_callback *callback,
++			 struct vdo_completion *parent)
++{
++	root_count_t root;
++	struct cursors *cursors;
++	int result;
++
++	result = UDS_ALLOCATE_EXTENDED(struct cursors,
++				       map->root_count,
++				       struct cursor,
++				       __func__,
++				       &cursors);
++	if (result != VDO_SUCCESS) {
++		vdo_fail_completion(parent, result);
++		return;
++	}
++
++	cursors->zone = &map->zones[0];
++	cursors->pool = cursors->zone->vio_pool;
++	cursors->entry_callback = callback;
++	cursors->parent = parent;
++	cursors->active_roots = map->root_count;
++	for (root = 0; root < map->root_count; root++) {
++		struct cursor *cursor = &cursors->cursors[root];
++
++		*cursor = (struct cursor) {
++			.tree = &map->forest->trees[root],
++			.height = VDO_BLOCK_MAP_TREE_HEIGHT - 1,
++			.parent = cursors,
++			.boundary = compute_boundary(map, root),
++		};
++
++		cursor->waiter.callback = launch_cursor;
++		acquire_vio_from_pool(cursors->pool, &cursor->waiter);
++	};
++}
++
++/**
++ * initialize_block_map_zone() - Initialize the per-zone portions of the block map.
++ * @maximum_age: The number of journal blocks before a dirtied page is considered old and must be
++ *               written out.
++ */
++static int __must_check initialize_block_map_zone(struct block_map *map,
++						  zone_count_t zone_number,
++						  struct vdo *vdo,
++						  page_count_t cache_size,
++						  block_count_t maximum_age)
++{
++	int result;
++	block_count_t i;
++	struct block_map_zone *zone = &map->zones[zone_number];
++
++	STATIC_ASSERT_SIZEOF(struct page_descriptor, sizeof(u64));
++
++	zone->zone_number = zone_number;
++	zone->thread_id = vdo->thread_config.logical_threads[zone_number];
++	zone->block_map = map;
++
++	result = UDS_ALLOCATE_EXTENDED(struct dirty_lists,
++				       maximum_age,
++				       dirty_era_t,
++				       __func__,
++				       &zone->dirty_lists);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	zone->dirty_lists->maximum_age = maximum_age;
++	INIT_LIST_HEAD(&zone->dirty_lists->expired[VDO_TREE_PAGE]);
++	INIT_LIST_HEAD(&zone->dirty_lists->expired[VDO_CACHE_PAGE]);
++
++	for (i = 0; i < maximum_age; i++) {
++		INIT_LIST_HEAD(&zone->dirty_lists->eras[i][VDO_TREE_PAGE]);
++		INIT_LIST_HEAD(&zone->dirty_lists->eras[i][VDO_CACHE_PAGE]);
++	}
++
++	result = vdo_make_int_map(VDO_LOCK_MAP_CAPACITY, 0, &zone->loading_pages);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	result = make_vio_pool(vdo,
++			       BLOCK_MAP_VIO_POOL_SIZE,
++			       zone->thread_id,
++			       VIO_TYPE_BLOCK_MAP_INTERIOR,
++			       VIO_PRIORITY_METADATA,
++			       zone,
++			       &zone->vio_pool);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	vdo_set_admin_state_code(&zone->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
++
++	zone->page_cache.zone = zone;
++	zone->page_cache.vdo = vdo;
++	zone->page_cache.page_count = cache_size / map->zone_count;
++	zone->page_cache.stats.free_pages = zone->page_cache.page_count;
++
++	result = allocate_cache_components(&zone->page_cache);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	/* initialize empty circular queues */
++	INIT_LIST_HEAD(&zone->page_cache.lru_list);
++	INIT_LIST_HEAD(&zone->page_cache.outgoing_list);
++
++	return VDO_SUCCESS;
++}
++
++/* Implements vdo_zone_thread_getter */
++static thread_id_t get_block_map_zone_thread_id(void *context, zone_count_t zone_number)
++{
++	struct block_map *map = context;
++
++	return map->zones[zone_number].thread_id;
++}
++
++/* Implements vdo_action_preamble */
++static void prepare_for_era_advance(void *context, struct vdo_completion *parent)
++{
++	struct block_map *map = context;
++
++	map->current_era_point = map->pending_era_point;
++	vdo_finish_completion(parent);
++}
++
++/* Implements vdo_zone_action */
++static void advance_block_map_zone_era(void *context,
++				       zone_count_t zone_number,
++				       struct vdo_completion *parent)
++{
++	struct block_map *map = context;
++	struct block_map_zone *zone = &map->zones[zone_number];
++
++	update_period(zone->dirty_lists, map->current_era_point);
++	write_expired_elements(zone);
++	vdo_finish_completion(parent);
++}
++
++/*
++ * Schedule an era advance if necessary. This method should not be called directly. Rather, call
++ * vdo_schedule_default_action() on the block map's action manager.
++ *
++ * Implements vdo_action_scheduler.
++ */
++static bool schedule_era_advance(void *context)
++{
++	struct block_map *map = context;
++
++	if (map->current_era_point == map->pending_era_point)
++		return false;
++
++	return vdo_schedule_action(map->action_manager,
++				   prepare_for_era_advance,
++				   advance_block_map_zone_era,
++				   NULL,
++				   NULL);
++}
++
++static void uninitialize_block_map_zone(struct block_map_zone *zone)
++{
++	struct vdo_page_cache *cache = &zone->page_cache;
++
++	UDS_FREE(UDS_FORGET(zone->dirty_lists));
++	free_vio_pool(UDS_FORGET(zone->vio_pool));
++	vdo_free_int_map(UDS_FORGET(zone->loading_pages));
++	if (cache->infos != NULL) {
++		struct page_info *info;
++
++		for (info = cache->infos; info < cache->infos + cache->page_count; ++info)
++			free_vio(UDS_FORGET(info->vio));
++	}
++
++	vdo_free_int_map(UDS_FORGET(cache->page_map));
++	UDS_FREE(UDS_FORGET(cache->infos));
++	UDS_FREE(UDS_FORGET(cache->pages));
++}
++
++void vdo_free_block_map(struct block_map *map)
++{
++	zone_count_t zone;
++
++	if (map == NULL)
++		return;
++
++	for (zone = 0; zone < map->zone_count; zone++)
++		uninitialize_block_map_zone(&map->zones[zone]);
++
++	vdo_abandon_block_map_growth(map);
++	if (map->forest != NULL)
++		deforest(UDS_FORGET(map->forest), 0);
++	UDS_FREE(UDS_FORGET(map->action_manager));
++	UDS_FREE(map);
++}
++
++/* @journal may be NULL. */
++int vdo_decode_block_map(struct block_map_state_2_0 state,
++			 block_count_t logical_blocks,
++			 struct vdo *vdo,
++			 struct recovery_journal *journal,
++			 nonce_t nonce,
++			 page_count_t cache_size,
++			 block_count_t maximum_age,
++			 struct block_map **map_ptr)
++{
++	struct block_map *map;
++	int result;
++	zone_count_t zone = 0;
++
++	STATIC_ASSERT(VDO_BLOCK_MAP_ENTRIES_PER_PAGE ==
++		      ((VDO_BLOCK_SIZE - sizeof(struct block_map_page)) /
++		       sizeof(struct block_map_entry)));
++	result = ASSERT(cache_size > 0, "block map cache size is specified");
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = UDS_ALLOCATE_EXTENDED(struct block_map,
++				       vdo->thread_config.logical_zone_count,
++				       struct block_map_zone,
++				       __func__,
++				       &map);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	map->vdo = vdo;
++	map->root_origin = state.root_origin;
++	map->root_count = state.root_count;
++	map->entry_count = logical_blocks;
++	map->journal = journal;
++	map->nonce = nonce;
++
++	result = make_forest(map, map->entry_count);
++	if (result != VDO_SUCCESS) {
++		vdo_free_block_map(map);
++		return result;
++	}
++
++	replace_forest(map);
++
++	map->zone_count = vdo->thread_config.logical_zone_count;
++	for (zone = 0; zone < map->zone_count; zone++) {
++		result = initialize_block_map_zone(map, zone, vdo, cache_size, maximum_age);
++		if (result != VDO_SUCCESS) {
++			vdo_free_block_map(map);
++			return result;
++		}
++	}
++
++	result = vdo_make_action_manager(map->zone_count,
++					 get_block_map_zone_thread_id,
++					 vdo_get_recovery_journal_thread_id(journal),
++					 map,
++					 schedule_era_advance,
++					 vdo,
++					 &map->action_manager);
++	if (result != VDO_SUCCESS) {
++		vdo_free_block_map(map);
++		return result;
++	}
++
++	*map_ptr = map;
++	return VDO_SUCCESS;
++}
++
++struct block_map_state_2_0 vdo_record_block_map(const struct block_map *map)
++{
++	return (struct block_map_state_2_0) {
++		.flat_page_origin = VDO_BLOCK_MAP_FLAT_PAGE_ORIGIN,
++		/* This is the flat page count, which has turned out to always be 0. */
++		.flat_page_count = 0,
++		.root_origin = map->root_origin,
++		.root_count = map->root_count,
++	};
++}
++
++/* The block map needs to know the journals' sequence number to initialize the eras. */
++void vdo_initialize_block_map_from_journal(struct block_map *map, struct recovery_journal *journal)
++{
++	zone_count_t z = 0;
++
++	map->current_era_point = vdo_get_recovery_journal_current_sequence_number(journal);
++	map->pending_era_point = map->current_era_point;
++
++	for (z = 0; z < map->zone_count; z++) {
++		struct dirty_lists *dirty_lists = map->zones[z].dirty_lists;
++
++		ASSERT_LOG_ONLY(dirty_lists->next_period == 0, "current period not set");
++		dirty_lists->oldest_period = map->current_era_point;
++		dirty_lists->next_period = map->current_era_point + 1;
++		dirty_lists->offset = map->current_era_point % dirty_lists->maximum_age;
++	}
++}
++
++/* Compute the logical zone for the LBN of a data vio. */
++zone_count_t vdo_compute_logical_zone(struct data_vio *data_vio)
++{
++	struct block_map *map = vdo_from_data_vio(data_vio)->block_map;
++	struct tree_lock *tree_lock = &data_vio->tree_lock;
++	page_number_t page_number = data_vio->logical.lbn / VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
++
++	tree_lock->tree_slots[0].page_index = page_number;
++	tree_lock->root_index = page_number % map->root_count;
++	return (tree_lock->root_index % map->zone_count);
++}
++
++void vdo_advance_block_map_era(struct block_map *map, sequence_number_t recovery_block_number)
++{
++	if (map == NULL)
++		return;
++
++	map->pending_era_point = recovery_block_number;
++	vdo_schedule_default_action(map->action_manager);
++}
++
++/* Implements vdo_admin_initiator */
++static void initiate_drain(struct admin_state *state)
++{
++	struct block_map_zone *zone = container_of(state, struct block_map_zone, state);
++
++	ASSERT_LOG_ONLY((zone->active_lookups == 0),
++			"%s() called with no active lookups",
++			__func__);
++
++	if (!vdo_is_state_suspending(state)) {
++		while (zone->dirty_lists->oldest_period < zone->dirty_lists->next_period)
++			expire_oldest_list(zone->dirty_lists);
++		write_expired_elements(zone);
++	}
++
++	check_for_drain_complete(zone);
++}
++
++/* Implements vdo_zone_action. */
++static void drain_zone(void *context, zone_count_t zone_number, struct vdo_completion *parent)
++{
++	struct block_map *map = context;
++	struct block_map_zone *zone = &map->zones[zone_number];
++
++	vdo_start_draining(&zone->state,
++			   vdo_get_current_manager_operation(map->action_manager),
++			   parent,
++			   initiate_drain);
++}
++
++void vdo_drain_block_map(struct block_map *map,
++			 const struct admin_state_code *operation,
++			 struct vdo_completion *parent)
++{
++	vdo_schedule_operation(map->action_manager, operation, NULL, drain_zone, NULL, parent);
++}
++
++/* Implements vdo_zone_action. */
++static void
++resume_block_map_zone(void *context, zone_count_t zone_number, struct vdo_completion *parent)
++{
++	struct block_map *map = context;
++	struct block_map_zone *zone = &map->zones[zone_number];
++
++	vdo_fail_completion(parent, vdo_resume_if_quiescent(&zone->state));
++}
++
++void vdo_resume_block_map(struct block_map *map, struct vdo_completion *parent)
++{
++	vdo_schedule_operation(map->action_manager,
++			       VDO_ADMIN_STATE_RESUMING,
++			       NULL,
++			       resume_block_map_zone,
++			       NULL,
++			       parent);
++}
++
++/* Allocate an expanded collection of trees, for a future growth. */
++int vdo_prepare_to_grow_block_map(struct block_map *map, block_count_t new_logical_blocks)
++{
++	if (map->next_entry_count == new_logical_blocks)
++		return VDO_SUCCESS;
++
++	if (map->next_entry_count > 0)
++		vdo_abandon_block_map_growth(map);
++
++	if (new_logical_blocks < map->entry_count) {
++		map->next_entry_count = map->entry_count;
++		return VDO_SUCCESS;
++	}
++
++	return make_forest(map, new_logical_blocks);
++}
++
++/* Implements vdo_action_preamble */
++static void grow_forest(void *context, struct vdo_completion *completion)
++{
++	replace_forest(context);
++	vdo_finish_completion(completion);
++}
++
++/* Requires vdo_prepare_to_grow_block_map() to have been previously called. */
++void vdo_grow_block_map(struct block_map *map, struct vdo_completion *parent)
++{
++	vdo_schedule_operation(map->action_manager,
++			       VDO_ADMIN_STATE_SUSPENDED_OPERATION,
++			       grow_forest,
++			       NULL,
++			       NULL,
++			       parent);
++}
++
++void vdo_abandon_block_map_growth(struct block_map *map)
++{
++	struct forest *forest = UDS_FORGET(map->next_forest);
++
++	if (forest != NULL)
++		deforest(forest, forest->segments - 1);
++
++	map->next_entry_count = 0;
++}
++
++/* Release the page completion and then continue the requester. */
++static inline void finish_processing_page(struct vdo_completion *completion, int result)
++{
++	struct vdo_completion *parent = completion->parent;
++
++	vdo_release_page_completion(completion);
++	vdo_continue_completion(parent, result);
++}
++
++static void handle_page_error(struct vdo_completion *completion)
++{
++	finish_processing_page(completion, completion->result);
++}
++
++/* Fetch the mapping page for a block map update, and call the provided handler when fetched. */
++static void fetch_mapping_page(struct data_vio *data_vio, bool modifiable, vdo_action *action)
++{
++	struct block_map_zone *zone = data_vio->logical.zone->block_map_zone;
++
++	if (vdo_is_state_draining(&zone->state)) {
++		continue_data_vio_with_error(data_vio, VDO_SHUTTING_DOWN);
++		return;
++	}
++
++	vdo_get_page(&data_vio->page_completion,
++		     zone,
++		     data_vio->tree_lock.tree_slots[0].block_map_slot.pbn,
++		     modifiable,
++		     &data_vio->vio.completion,
++		     action,
++		     handle_page_error,
++		     false);
++}
++
++/**
++ * clear_mapped_location() - Clear a data_vio's mapped block location, setting it to be unmapped.
++ *
++ * This indicates the block map entry for the logical block is either unmapped or corrupted.
++ */
++static void clear_mapped_location(struct data_vio *data_vio)
++{
++	data_vio->mapped = (struct zoned_pbn) {
++		.state = VDO_MAPPING_STATE_UNMAPPED,
++	};
++}
++
++/**
++ * set_mapped_location() - Decode and validate a block map entry, and set the mapped location of a
++ *                         data_vio.
++ *
++ * Return: VDO_SUCCESS or VDO_BAD_MAPPING if the map entry is invalid or an error code for any
++ *         other failure
++ */
++static int __must_check
++set_mapped_location(struct data_vio *data_vio, const struct block_map_entry *entry)
++{
++	/* Unpack the PBN for logging purposes even if the entry is invalid. */
++	struct data_location mapped = vdo_unpack_block_map_entry(entry);
++
++	if (vdo_is_valid_location(&mapped)) {
++		int result;
++
++		result = vdo_get_physical_zone(vdo_from_data_vio(data_vio),
++					       mapped.pbn,
++					       &data_vio->mapped.zone);
++		if (result == VDO_SUCCESS) {
++			data_vio->mapped.pbn = mapped.pbn;
++			data_vio->mapped.state = mapped.state;
++			return VDO_SUCCESS;
++		}
++
++		/*
++		 * Return all errors not specifically known to be errors from validating the
++		 * location.
++		 */
++		if ((result != VDO_OUT_OF_RANGE) && (result != VDO_BAD_MAPPING))
++			return result;
++	}
++
++	/*
++	 * Log the corruption even if we wind up ignoring it for write VIOs, converting all cases
++	 * to VDO_BAD_MAPPING.
++	 */
++	uds_log_error_strerror(VDO_BAD_MAPPING,
++			       "PBN %llu with state %u read from the block map was invalid",
++			       (unsigned long long) mapped.pbn,
++			       mapped.state);
++
++	/*
++	 * A read VIO has no option but to report the bad mapping--reading zeros would be hiding
++	 * known data loss.
++	 */
++	if (!data_vio->write)
++		return VDO_BAD_MAPPING;
++
++	/*
++	 * A write VIO only reads this mapping to decref the old block. Treat this as an unmapped
++	 * entry rather than fail the write.
++	 */
++	clear_mapped_location(data_vio);
++	return VDO_SUCCESS;
++}
++
++/* This callback is registered in vdo_get_mapped_block(). */
++static void get_mapping_from_fetched_page(struct vdo_completion *completion)
++{
++	int result;
++	struct vdo_page_completion *vpc = as_vdo_page_completion(completion);
++	const struct block_map_page *page;
++	const struct block_map_entry *entry;
++	struct data_vio *data_vio = as_data_vio(completion->parent);
++	struct block_map_tree_slot *tree_slot;
++
++	if (completion->result != VDO_SUCCESS) {
++		finish_processing_page(completion, completion->result);
++		return;
++	}
++
++	result = validate_completed_page(vpc, false);
++	if (result != VDO_SUCCESS) {
++		finish_processing_page(completion, result);
++		return;
++	}
++
++	page = (const struct block_map_page *) get_page_buffer(vpc->info);
++	tree_slot = &data_vio->tree_lock.tree_slots[0];
++	entry = &page->entries[tree_slot->block_map_slot.slot];
++
++	result = set_mapped_location(data_vio, entry);
++	finish_processing_page(completion, result);
++}
++
++void vdo_update_block_map_page(struct block_map_page *page,
++			       struct data_vio *data_vio,
++			       physical_block_number_t pbn,
++			       enum block_mapping_state mapping_state,
++			       sequence_number_t *recovery_lock)
++{
++	struct block_map_zone *zone = data_vio->logical.zone->block_map_zone;
++	struct block_map *block_map = zone->block_map;
++	struct recovery_journal *journal = block_map->journal;
++	sequence_number_t old_locked, new_locked;
++	struct tree_lock *tree_lock = &data_vio->tree_lock;
++
++	/* Encode the new mapping. */
++	page->entries[tree_lock->tree_slots[tree_lock->height].block_map_slot.slot] =
++		vdo_pack_block_map_entry(pbn, mapping_state);
++
++	/* Adjust references on the recovery journal blocks. */
++	old_locked = *recovery_lock;
++	new_locked = data_vio->recovery_sequence_number;
++
++	if ((old_locked == 0) || (old_locked > new_locked)) {
++		vdo_acquire_recovery_journal_block_reference(journal,
++							     new_locked,
++							     VDO_ZONE_TYPE_LOGICAL,
++							     zone->zone_number);
++
++		if (old_locked > 0)
++			vdo_release_recovery_journal_block_reference(journal,
++								     old_locked,
++								     VDO_ZONE_TYPE_LOGICAL,
++								     zone->zone_number);
++
++		*recovery_lock = new_locked;
++	}
++
++	/*
++	 * FIXME: explain this more
++	 * Release the transferred lock from the data_vio.
++	 */
++	vdo_release_journal_entry_lock(journal, new_locked);
++	data_vio->recovery_sequence_number = 0;
++}
++
++static void put_mapping_in_fetched_page(struct vdo_completion *completion)
++{
++	struct data_vio *data_vio = as_data_vio(completion->parent);
++	sequence_number_t old_lock;
++	struct vdo_page_completion *vpc;
++	struct page_info *info;
++	int result;
++
++	if (completion->result != VDO_SUCCESS) {
++		finish_processing_page(completion, completion->result);
++		return;
++	}
++
++	vpc = as_vdo_page_completion(completion);
++	result = validate_completed_page(vpc, true);
++	if (result != VDO_SUCCESS) {
++		finish_processing_page(completion, result);
++		return;
++	}
++
++	info = vpc->info;
++	old_lock = info->recovery_lock;
++	vdo_update_block_map_page((struct block_map_page *) get_page_buffer(info),
++				  data_vio,
++				  data_vio->new_mapped.pbn,
++				  data_vio->new_mapped.state,
++				  &info->recovery_lock);
++	set_info_state(info, PS_DIRTY);
++	add_to_dirty_lists(info->cache->zone,
++			   &info->state_entry,
++			   VDO_CACHE_PAGE,
++			   old_lock,
++			   info->recovery_lock);
++	finish_processing_page(completion, VDO_SUCCESS);
++}
++
++/* Read a stored block mapping into a data_vio. */
++void vdo_get_mapped_block(struct data_vio *data_vio)
++{
++	if (data_vio->tree_lock.tree_slots[0].block_map_slot.pbn == VDO_ZERO_BLOCK) {
++		/*
++		 * We know that the block map page for this LBN has not been allocated, so the
++		 * block must be unmapped.
++		 */
++		clear_mapped_location(data_vio);
++		continue_data_vio(data_vio);
++		return;
++	}
++
++	fetch_mapping_page(data_vio, false, get_mapping_from_fetched_page);
++}
++
++/* Update a stored block mapping to reflect a data_vio's new mapping. */
++void vdo_put_mapped_block(struct data_vio *data_vio)
++{
++	fetch_mapping_page(data_vio, true, put_mapping_in_fetched_page);
++}
++
++struct block_map_statistics vdo_get_block_map_statistics(struct block_map *map)
++{
++	zone_count_t zone = 0;
++	struct block_map_statistics totals;
++
++	memset(&totals, 0, sizeof(struct block_map_statistics));
++	for (zone = 0; zone < map->zone_count; zone++) {
++		const struct block_map_statistics *stats = &(map->zones[zone].page_cache.stats);
++
++		totals.dirty_pages += READ_ONCE(stats->dirty_pages);
++		totals.clean_pages += READ_ONCE(stats->clean_pages);
++		totals.free_pages += READ_ONCE(stats->free_pages);
++		totals.failed_pages += READ_ONCE(stats->failed_pages);
++		totals.incoming_pages += READ_ONCE(stats->incoming_pages);
++		totals.outgoing_pages += READ_ONCE(stats->outgoing_pages);
++		totals.cache_pressure += READ_ONCE(stats->cache_pressure);
++		totals.read_count += READ_ONCE(stats->read_count);
++		totals.write_count += READ_ONCE(stats->write_count);
++		totals.failed_reads += READ_ONCE(stats->failed_reads);
++		totals.failed_writes += READ_ONCE(stats->failed_writes);
++		totals.reclaimed += READ_ONCE(stats->reclaimed);
++		totals.read_outgoing += READ_ONCE(stats->read_outgoing);
++		totals.found_in_cache += READ_ONCE(stats->found_in_cache);
++		totals.discard_required += READ_ONCE(stats->discard_required);
++		totals.wait_for_page += READ_ONCE(stats->wait_for_page);
++		totals.fetch_required += READ_ONCE(stats->fetch_required);
++		totals.pages_loaded += READ_ONCE(stats->pages_loaded);
++		totals.pages_saved += READ_ONCE(stats->pages_saved);
++		totals.flush_count += READ_ONCE(stats->flush_count);
++	}
++
++	return totals;
++}
+diff --git a/drivers/md/dm-vdo/block-map.h b/drivers/md/dm-vdo/block-map.h
 new file mode 100644
-index 000000000000..ec693d54b488
+index 000000000000..2c4d40f21a69
 --- /dev/null
-+++ b/drivers/md/dm-vdo/physical-zone.h
-@@ -0,0 +1,115 @@
++++ b/drivers/md/dm-vdo/block-map.h
+@@ -0,0 +1,232 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef VDO_PHYSICAL_ZONE_H
-+#define VDO_PHYSICAL_ZONE_H
++#ifndef VDO_BLOCK_MAP_H
++#define VDO_BLOCK_MAP_H
 +
-+#include <linux/atomic.h>
++#include <linux/list.h>
 +
++#include "numeric.h"
++
++#include "admin-state.h"
++#include "completion.h"
++#include "encodings.h"
++#include "int-map.h"
++#include "statistics.h"
 +#include "types.h"
++#include "vio.h"
++#include "wait-queue.h"
 +
-+/*
-+ * The type of a PBN lock.
-+ */
-+enum pbn_lock_type {
-+	VIO_READ_LOCK,
-+	VIO_WRITE_LOCK,
-+	VIO_BLOCK_MAP_WRITE_LOCK,
++enum {
++	BLOCK_MAP_VIO_POOL_SIZE = 64,
 +};
 +
-+struct pbn_lock_implementation;
++/* Used to indicate that the page holding the location of a tree root has been "loaded". */
++extern const physical_block_number_t VDO_INVALID_PBN;
 +
 +/*
-+ * A PBN lock.
++ * Generation counter for page references.
 + */
-+struct pbn_lock {
-+	/* The implementation of the lock */
-+	const struct pbn_lock_implementation *implementation;
++typedef u32 vdo_page_generation;
 +
-+	/* The number of VIOs holding or sharing this lock */
-+	data_vio_count_t holder_count;
-+	/*
-+	 * The number of compressed block writers holding a share of this lock while they are
-+	 * acquiring a reference to the PBN.
-+	 */
-+	u8 fragment_locks;
++struct forest;
 +
-+	/* Whether the locked PBN has been provisionally referenced on behalf of the lock holder. */
-+	bool has_provisional_reference;
++struct tree_page {
++	struct waiter waiter;
 +
-+	/*
-+	 * For read locks, the number of references that were known to be available on the locked
-+	 * block at the time the lock was acquired.
-+	 */
-+	u8 increment_limit;
++	/* Dirty list entry */
++	struct list_head entry;
++
++	/* If dirty, the tree zone flush generation in which it was last dirtied. */
++	u8 generation;
++
++	/* Whether this page is an interior tree page being written out. */
++	bool writing;
++
++	/* If writing, the tree zone flush generation of the copy being written. */
++	u8 writing_generation;
 +
 +	/*
-+	 * For read locks, the number of data_vios that have tried to claim one of the available
-+	 * increments during the lifetime of the lock. Each claim will first increment this
-+	 * counter, so it can exceed the increment limit.
++	 * Sequence number of the earliest recovery journal block containing uncommitted updates to
++	 * this page
 +	 */
-+	atomic_t increments_claimed;
++	sequence_number_t recovery_lock;
++
++	/* The value of recovery_lock when the this page last started writing */
++	sequence_number_t writing_recovery_lock;
++
++	char page_buffer[VDO_BLOCK_SIZE];
 +};
 +
-+struct physical_zone {
-+	/* Which physical zone this is */
++enum block_map_page_type {
++	VDO_TREE_PAGE,
++	VDO_CACHE_PAGE,
++};
++
++typedef struct list_head dirty_era_t[2];
++
++struct dirty_lists {
++	/** The number of periods after which an element will be expired */
++	block_count_t maximum_age;
++	/** The oldest period which has unexpired elements */
++	sequence_number_t oldest_period;
++	/** One more than the current period */
++	sequence_number_t next_period;
++	/** The offset in the array of lists of the oldest period */
++	block_count_t offset;
++	/** Expired pages */
++	dirty_era_t expired;
++	/** The lists of dirty pages */
++	dirty_era_t eras[];
++};
++
++struct block_map_zone {
 +	zone_count_t zone_number;
-+	/* The thread ID for this zone */
 +	thread_id_t thread_id;
-+	/* In progress operations keyed by PBN */
-+	struct int_map *pbn_operations;
-+	/* Pool of unused pbn_lock instances */
-+	struct pbn_lock_pool *lock_pool;
-+	/* The block allocator for this zone */
-+	struct block_allocator *allocator;
-+	/* The next zone from which to attempt an allocation */
-+	struct physical_zone *next;
-+};
-+
-+struct physical_zones {
-+	/* The number of zones */
-+	zone_count_t zone_count;
-+	/* The physical zones themselves */
-+	struct physical_zone zones[];
-+};
-+
-+bool __must_check vdo_is_pbn_read_lock(const struct pbn_lock *lock);
-+void vdo_downgrade_pbn_write_lock(struct pbn_lock *lock, bool compressed_write);
-+bool __must_check vdo_claim_pbn_lock_increment(struct pbn_lock *lock);
-+
-+/**
-+ * vdo_pbn_lock_has_provisional_reference() - Check whether a PBN lock has a provisional reference.
-+ * @lock: The PBN lock.
-+ */
-+static inline bool vdo_pbn_lock_has_provisional_reference(struct pbn_lock *lock)
-+{
-+	return ((lock != NULL) && lock->has_provisional_reference);
-+}
-+
-+void vdo_assign_pbn_lock_provisional_reference(struct pbn_lock *lock);
-+void vdo_unassign_pbn_lock_provisional_reference(struct pbn_lock *lock);
-+
-+int __must_check vdo_make_physical_zones(struct vdo *vdo, struct physical_zones **zones_ptr);
-+
-+void vdo_free_physical_zones(struct physical_zones *zones);
-+
-+struct pbn_lock * __must_check
-+vdo_get_physical_zone_pbn_lock(struct physical_zone *zone, physical_block_number_t pbn);
-+
-+int __must_check
-+vdo_attempt_physical_zone_pbn_lock(struct physical_zone *zone,
-+				   physical_block_number_t pbn,
-+				   enum pbn_lock_type type,
-+				   struct pbn_lock **lock_ptr);
-+
-+bool __must_check vdo_allocate_block_in_zone(struct data_vio *data_vio);
-+
-+void vdo_release_physical_zone_pbn_lock(struct physical_zone *zone,
-+					physical_block_number_t locked_pbn,
-+					struct pbn_lock *lock);
-+
-+void vdo_dump_physical_zone(const struct physical_zone *zone);
-+
-+#endif /* VDO_PHYSICAL_ZONE_H */
-diff --git a/drivers/md/dm-vdo/slab-depot.c b/drivers/md/dm-vdo/slab-depot.c
-index e2270319513a..dbed9c3c8a62 100644
---- a/drivers/md/dm-vdo/slab-depot.c
-+++ b/drivers/md/dm-vdo/slab-depot.c
-@@ -37,6 +37,13 @@
- static const u64 BYTES_PER_WORD = sizeof(u64);
- static const bool NORMAL_OPERATION = true;
- 
-+struct slab_journal_eraser {
-+	struct vdo_completion *parent;
-+	struct dm_kcopyd_client *client;
-+	block_count_t blocks;
-+	struct slab_iterator slabs;
-+};
-+
- /**
-  * get_lock() - Get the lock object for a slab journal block by sequence number.
-  * @journal: vdo_slab journal to retrieve from.
-@@ -1972,6 +1979,44 @@ static bool advance_search_cursor(struct vdo_slab *slab)
- 	return true;
- }
- 
-+/**
-+ * vdo_adjust_reference_count_for_rebuild() - Adjust the reference count of a block during rebuild.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+int vdo_adjust_reference_count_for_rebuild(struct slab_depot *depot,
-+					   physical_block_number_t pbn,
-+					   enum journal_operation operation)
-+{
-+	int result;
-+	slab_block_number block_number;
-+	struct reference_block *block;
-+	struct vdo_slab *slab = vdo_get_slab(depot, pbn);
-+	struct reference_updater updater = {
-+		.operation = operation,
-+		.increment = true,
-+	};
-+
-+	result = slab_block_number_from_pbn(slab, pbn, &block_number);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	block = get_reference_block(slab, block_number);
-+	result = update_reference_count(slab,
-+					block,
-+					block_number,
-+					NULL,
-+					&updater,
-+					!NORMAL_OPERATION,
-+					false,
-+					NULL);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	dirty_block(block);
-+	return VDO_SUCCESS;
-+}
-+
- /**
-  * replay_reference_count_change() - Replay the reference count adjustment from a slab journal
-  *                                   entry into the reference count for a block.
-@@ -2529,6 +2574,1113 @@ static void load_slab_journal(struct vdo_slab *slab)
- 	acquire_vio_from_pool(slab->allocator->vio_pool, &journal->resource_waiter);
- }
- 
-+static void register_slab_for_scrubbing(struct vdo_slab *slab, bool high_priority)
-+{
-+	struct slab_scrubber *scrubber = &slab->allocator->scrubber;
-+
-+	ASSERT_LOG_ONLY((slab->status != VDO_SLAB_REBUILT), "slab to be scrubbed is unrecovered");
-+
-+	if (slab->status != VDO_SLAB_REQUIRES_SCRUBBING)
-+		return;
-+
-+	list_del_init(&slab->allocq_entry);
-+	if (!slab->was_queued_for_scrubbing) {
-+		WRITE_ONCE(scrubber->slab_count, scrubber->slab_count + 1);
-+		slab->was_queued_for_scrubbing = true;
-+	}
-+
-+	if (high_priority) {
-+		slab->status = VDO_SLAB_REQUIRES_HIGH_PRIORITY_SCRUBBING;
-+		list_add_tail(&slab->allocq_entry, &scrubber->high_priority_slabs);
-+		return;
-+	}
-+
-+	list_add_tail(&slab->allocq_entry, &scrubber->slabs);
-+}
-+
-+/* Queue a slab for allocation or scrubbing. */
-+static void queue_slab(struct vdo_slab *slab)
-+{
-+	struct block_allocator *allocator = slab->allocator;
-+	block_count_t free_blocks;
-+	int result;
-+
-+	ASSERT_LOG_ONLY(list_empty(&slab->allocq_entry),
-+			"a requeued slab must not already be on a ring");
-+
-+	if (vdo_is_read_only(allocator->depot->vdo))
-+		return;
-+
-+	free_blocks = slab->free_blocks;
-+	result = ASSERT((free_blocks <= allocator->depot->slab_config.data_blocks),
-+			"rebuilt slab %u must have a valid free block count (has %llu, expected maximum %llu)",
-+			slab->slab_number,
-+			(unsigned long long) free_blocks,
-+			(unsigned long long) allocator->depot->slab_config.data_blocks);
-+	if (result != VDO_SUCCESS) {
-+		vdo_enter_read_only_mode(allocator->depot->vdo, result);
-+		return;
-+	}
-+
-+	if (slab->status != VDO_SLAB_REBUILT) {
-+		register_slab_for_scrubbing(slab, false);
-+		return;
-+	}
-+
-+	if (!vdo_is_state_resuming(&slab->state)) {
-+		/*
-+		 * If the slab is resuming, we've already accounted for it here, so don't do it
-+		 * again.
-+		 * FIXME: under what situation would the slab be resuming here?
-+		 */
-+		WRITE_ONCE(allocator->allocated_blocks, allocator->allocated_blocks - free_blocks);
-+		if (!is_slab_journal_blank(slab))
-+			WRITE_ONCE(allocator->statistics.slabs_opened,
-+				   allocator->statistics.slabs_opened + 1);
-+	}
-+
-+	if (allocator->depot->vdo->suspend_type == VDO_ADMIN_STATE_SAVING)
-+		reopen_slab_journal(slab);
-+
-+	prioritize_slab(slab);
-+}
-+
-+/**
-+ * initiate_slab_action() - Initiate a slab action.
-+ *
-+ * Implements vdo_admin_initiator.
-+ */
-+static void initiate_slab_action(struct admin_state *state)
-+{
-+	struct vdo_slab *slab = container_of(state, struct vdo_slab, state);
-+
-+	if (vdo_is_state_draining(state)) {
-+		const struct admin_state_code *operation = vdo_get_admin_state_code(state);
-+
-+		if (operation == VDO_ADMIN_STATE_SCRUBBING)
-+			slab->status = VDO_SLAB_REBUILDING;
-+
-+		drain_slab(slab);
-+		check_if_slab_drained(slab);
-+		return;
-+	}
-+
-+	if (vdo_is_state_loading(state)) {
-+		load_slab_journal(slab);
-+		return;
-+	}
-+
-+	if (vdo_is_state_resuming(state)) {
-+		queue_slab(slab);
-+		vdo_finish_resuming(state);
-+		return;
-+	}
-+
-+	vdo_finish_operation(state, VDO_INVALID_ADMIN_STATE);
-+}
-+
-+/**
-+ * get_next_slab() - Get the next slab to scrub.
-+ * @scrubber: The slab scrubber.
-+ *
-+ * Return: The next slab to scrub or NULL if there are none.
-+ */
-+static struct vdo_slab *get_next_slab(struct slab_scrubber *scrubber)
-+{
-+	struct vdo_slab *slab;
-+
-+	slab = list_first_entry_or_null(&scrubber->high_priority_slabs,
-+					struct vdo_slab,
-+					allocq_entry);
-+	if (slab != NULL)
-+		return slab;
-+
-+	return list_first_entry_or_null(&scrubber->slabs, struct vdo_slab, allocq_entry);
-+}
-+
-+/**
-+ * has_slabs_to_scrub() - Check whether a scrubber has slabs to scrub.
-+ * @scrubber: The scrubber to check.
-+ *
-+ * Return: true if the scrubber has slabs to scrub.
-+ */
-+static bool __must_check has_slabs_to_scrub(struct slab_scrubber *scrubber)
-+{
-+	return (get_next_slab(scrubber) != NULL);
-+}
-+
-+/**
-+ * uninitialize_scrubber_vio() - Clean up the slab_scrubber's vio.
-+ * @scrubber: The scrubber.
-+ */
-+static void uninitialize_scrubber_vio(struct slab_scrubber *scrubber)
-+{
-+	UDS_FREE(UDS_FORGET(scrubber->vio.data));
-+	free_vio_components(&scrubber->vio);
-+}
-+
-+/**
-+ * finish_scrubbing() - Stop scrubbing, either because there are no more slabs to scrub or because
-+ *                      there's been an error.
-+ * @scrubber: The scrubber.
-+ */
-+static void finish_scrubbing(struct slab_scrubber *scrubber, int result)
-+{
-+	bool notify = vdo_has_waiters(&scrubber->waiters);
-+	bool done = !has_slabs_to_scrub(scrubber);
-+	struct block_allocator *allocator =
-+		container_of(scrubber, struct block_allocator, scrubber);
-+
-+	if (done)
-+		uninitialize_scrubber_vio(scrubber);
-+
-+	if (scrubber->high_priority_only) {
-+		scrubber->high_priority_only = false;
-+		vdo_fail_completion(UDS_FORGET(scrubber->vio.completion.parent), result);
-+	} else if (done && (atomic_add_return(-1, &allocator->depot->zones_to_scrub) == 0)) {
-+		/* All of our slabs were scrubbed, and we're the last allocator to finish. */
-+		enum vdo_state prior_state =
-+			atomic_cmpxchg(&allocator->depot->vdo->state, VDO_RECOVERING, VDO_DIRTY);
-+
-+		/*
-+		 * To be safe, even if the CAS failed, ensure anything that follows is ordered with
-+		 * respect to whatever state change did happen.
-+		 */
-+		smp_mb__after_atomic();
-+
-+		/*
-+		 * We must check the VDO state here and not the depot's read_only_notifier since
-+		 * the compare-swap-above could have failed due to a read-only entry which our own
-+		 * thread does not yet know about.
-+		 */
-+		if (prior_state == VDO_DIRTY)
-+			uds_log_info("VDO commencing normal operation");
-+		else if (prior_state == VDO_RECOVERING)
-+			uds_log_info("Exiting recovery mode");
-+	}
-+
-+	/*
-+	 * Note that the scrubber has stopped, and inform anyone who might be waiting for that to
-+	 * happen.
-+	 */
-+	if (!vdo_finish_draining(&scrubber->admin_state))
-+		WRITE_ONCE(scrubber->admin_state.current_state, VDO_ADMIN_STATE_SUSPENDED);
-+
-+	/*
-+	 * We can't notify waiters until after we've finished draining or they'll just requeue.
-+	 * Fortunately if there were waiters, we can't have been freed yet.
-+	 */
-+	if (notify)
-+		vdo_notify_all_waiters(&scrubber->waiters, NULL, NULL);
-+}
-+
-+static void scrub_next_slab(struct slab_scrubber *scrubber);
-+
-+/**
-+ * slab_scrubbed() - Notify the scrubber that a slab has been scrubbed.
-+ * @completion: The slab rebuild completion.
-+ *
-+ * This callback is registered in apply_journal_entries().
-+ */
-+static void slab_scrubbed(struct vdo_completion *completion)
-+{
-+	struct slab_scrubber *scrubber =
-+		container_of(as_vio(completion), struct slab_scrubber, vio);
-+	struct vdo_slab *slab = scrubber->slab;
-+
-+	slab->status = VDO_SLAB_REBUILT;
-+	queue_slab(slab);
-+	reopen_slab_journal(slab);
-+	WRITE_ONCE(scrubber->slab_count, scrubber->slab_count - 1);
-+	scrub_next_slab(scrubber);
-+}
-+
-+/**
-+ * abort_scrubbing() - Abort scrubbing due to an error.
-+ * @scrubber: The slab scrubber.
-+ * @result: The error.
-+ */
-+static void abort_scrubbing(struct slab_scrubber *scrubber, int result)
-+{
-+	vdo_enter_read_only_mode(scrubber->vio.completion.vdo, result);
-+	finish_scrubbing(scrubber, result);
-+}
-+
-+/**
-+ * handle_scrubber_error() - Handle errors while rebuilding a slab.
-+ * @completion: The slab rebuild completion.
-+ */
-+static void handle_scrubber_error(struct vdo_completion *completion)
-+{
-+	struct vio *vio = as_vio(completion);
-+
-+	vio_record_metadata_io_error(vio);
-+	abort_scrubbing(container_of(vio, struct slab_scrubber, vio), completion->result);
-+}
-+
-+/**
-+ * apply_block_entries() - Apply all the entries in a block to the reference counts.
-+ * @block: A block with entries to apply.
-+ * @entry_count: The number of entries to apply.
-+ * @block_number: The sequence number of the block.
-+ * @slab: The slab to apply the entries to.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+static int apply_block_entries(struct packed_slab_journal_block *block,
-+			       journal_entry_count_t entry_count,
-+			       sequence_number_t block_number,
-+			       struct vdo_slab *slab)
-+{
-+	struct journal_point entry_point = {
-+		.sequence_number = block_number,
-+		.entry_count = 0,
-+	};
-+	int result;
-+	slab_block_number max_sbn = slab->end - slab->start;
-+
-+	while (entry_point.entry_count < entry_count) {
-+		struct slab_journal_entry entry =
-+			vdo_decode_slab_journal_entry(block, entry_point.entry_count);
-+
-+		if (entry.sbn > max_sbn)
-+			/* This entry is out of bounds. */
-+			return uds_log_error_strerror(VDO_CORRUPT_JOURNAL,
-+						      "vdo_slab journal entry (%llu, %u) had invalid offset %u in slab (size %u blocks)",
-+						      (unsigned long long) block_number,
-+						      entry_point.entry_count,
-+						      entry.sbn,
-+						      max_sbn);
-+
-+		result = replay_reference_count_change(slab, &entry_point, entry);
-+		if (result != VDO_SUCCESS) {
-+			uds_log_error_strerror(result,
-+					       "vdo_slab journal entry (%llu, %u) (%s of offset %u) could not be applied in slab %u",
-+					       (unsigned long long) block_number,
-+					       entry_point.entry_count,
-+					       vdo_get_journal_operation_name(entry.operation),
-+					       entry.sbn,
-+					       slab->slab_number);
-+			return result;
-+		}
-+		entry_point.entry_count++;
-+	}
-+
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * apply_journal_entries() - Find the relevant vio of the slab journal and apply all valid entries.
-+ * @completion: The metadata read vio completion.
-+ *
-+ * This is a callback registered in start_scrubbing().
-+ */
-+static void apply_journal_entries(struct vdo_completion *completion)
-+{
-+	int result;
-+	struct slab_scrubber *scrubber
-+		= container_of(as_vio(completion), struct slab_scrubber, vio);
-+	struct vdo_slab *slab = scrubber->slab;
-+	struct slab_journal *journal = &slab->journal;
-+
-+	/* Find the boundaries of the useful part of the journal. */
-+	sequence_number_t tail = journal->tail;
-+	tail_block_offset_t end_index = (tail - 1) % journal->size;
-+	char *end_data = scrubber->vio.data + (end_index * VDO_BLOCK_SIZE);
-+	struct packed_slab_journal_block *end_block =
-+		(struct packed_slab_journal_block *) end_data;
-+
-+	sequence_number_t head = __le64_to_cpu(end_block->header.head);
-+	tail_block_offset_t head_index = head % journal->size;
-+	block_count_t index = head_index;
-+
-+	struct journal_point ref_counts_point = slab->slab_journal_point;
-+	struct journal_point last_entry_applied = ref_counts_point;
-+	sequence_number_t sequence;
-+
-+	for (sequence = head; sequence < tail; sequence++) {
-+		char *block_data = scrubber->vio.data + (index * VDO_BLOCK_SIZE);
-+		struct packed_slab_journal_block *block =
-+			(struct packed_slab_journal_block *) block_data;
-+		struct slab_journal_block_header header;
-+
-+		vdo_unpack_slab_journal_block_header(&block->header, &header);
-+
-+		if ((header.nonce != slab->allocator->nonce) ||
-+		    (header.metadata_type != VDO_METADATA_SLAB_JOURNAL) ||
-+		    (header.sequence_number != sequence) ||
-+		    (header.entry_count > journal->entries_per_block) ||
-+		    (header.has_block_map_increments &&
-+		     (header.entry_count > journal->full_entries_per_block))) {
-+			/* The block is not what we expect it to be. */
-+			uds_log_error("vdo_slab journal block for slab %u was invalid",
-+				      slab->slab_number);
-+			abort_scrubbing(scrubber, VDO_CORRUPT_JOURNAL);
-+			return;
-+		}
-+
-+		result = apply_block_entries(block, header.entry_count, sequence, slab);
-+		if (result != VDO_SUCCESS) {
-+			abort_scrubbing(scrubber, result);
-+			return;
-+		}
-+
-+		last_entry_applied.sequence_number = sequence;
-+		last_entry_applied.entry_count = header.entry_count - 1;
-+		index++;
-+		if (index == journal->size)
-+			index = 0;
-+	}
-+
-+	/*
-+	 * At the end of rebuild, the reference counters should be accurate to the end of the
-+	 * journal we just applied.
-+	 */
-+	result = ASSERT(!vdo_before_journal_point(&last_entry_applied, &ref_counts_point),
-+			"Refcounts are not more accurate than the slab journal");
-+	if (result != VDO_SUCCESS) {
-+		abort_scrubbing(scrubber, result);
-+		return;
-+	}
-+
-+	/* Save out the rebuilt reference blocks. */
-+	vdo_prepare_completion(completion,
-+			       slab_scrubbed,
-+			       handle_scrubber_error,
-+			       slab->allocator->thread_id,
-+			       completion->parent);
-+	vdo_start_operation_with_waiter(&slab->state,
-+					VDO_ADMIN_STATE_SAVE_FOR_SCRUBBING,
-+					completion,
-+					initiate_slab_action);
-+}
-+
-+static void read_slab_journal_endio(struct bio *bio)
-+{
-+	struct vio *vio = bio->bi_private;
-+	struct slab_scrubber *scrubber = container_of(vio, struct slab_scrubber, vio);
-+
-+	continue_vio_after_io(bio->bi_private,
-+			      apply_journal_entries,
-+			      scrubber->slab->allocator->thread_id);
-+}
-+
-+/**
-+ * start_scrubbing() - Read the current slab's journal from disk now that it has been flushed.
-+ * @completion: The scrubber's vio completion.
-+ *
-+ * This callback is registered in scrub_next_slab().
-+ */
-+static void start_scrubbing(struct vdo_completion *completion)
-+{
-+	struct slab_scrubber *scrubber =
-+		container_of(as_vio(completion), struct slab_scrubber, vio);
-+	struct vdo_slab *slab = scrubber->slab;
-+
-+	if (!slab->allocator->summary_entries[slab->slab_number].is_dirty) {
-+		slab_scrubbed(completion);
-+		return;
-+	}
-+
-+	submit_metadata_vio(&scrubber->vio,
-+			    slab->journal_origin,
-+			    read_slab_journal_endio,
-+			    handle_scrubber_error,
-+			    REQ_OP_READ);
-+}
-+
-+/**
-+ * scrub_next_slab() - Scrub the next slab if there is one.
-+ * @scrubber: The scrubber.
-+ */
-+static void scrub_next_slab(struct slab_scrubber *scrubber)
-+{
-+	struct vdo_completion *completion = &scrubber->vio.completion;
-+	struct vdo_slab *slab;
-+
-+	/*
-+	 * Note: this notify call is always safe only because scrubbing can only be started when
-+	 * the VDO is quiescent.
-+	 */
-+	vdo_notify_all_waiters(&scrubber->waiters, NULL, NULL);
-+
-+	if (vdo_is_read_only(completion->vdo)) {
-+		finish_scrubbing(scrubber, VDO_READ_ONLY);
-+		return;
-+	}
-+
-+	slab = get_next_slab(scrubber);
-+	if ((slab == NULL) ||
-+	    (scrubber->high_priority_only && list_empty(&scrubber->high_priority_slabs))) {
-+		finish_scrubbing(scrubber, VDO_SUCCESS);
-+		return;
-+	}
-+
-+	if (vdo_finish_draining(&scrubber->admin_state))
-+		return;
-+
-+	list_del_init(&slab->allocq_entry);
-+	scrubber->slab = slab;
-+	vdo_prepare_completion(completion,
-+			       start_scrubbing,
-+			       handle_scrubber_error,
-+			       slab->allocator->thread_id,
-+			       completion->parent);
-+	vdo_start_operation_with_waiter(&slab->state,
-+					VDO_ADMIN_STATE_SCRUBBING,
-+					completion,
-+					initiate_slab_action);
-+}
-+
-+/**
-+ * scrub_slabs() - Scrub all of an allocator's slabs that are eligible for scrubbing.
-+ * @allocator: The block_allocator to scrub.
-+ * @parent: The completion to notify when scrubbing is done, implies high_priority, may be NULL.
-+ */
-+static void scrub_slabs(struct block_allocator *allocator, struct vdo_completion *parent)
-+{
-+	struct slab_scrubber *scrubber = &allocator->scrubber;
-+
-+	scrubber->vio.completion.parent = parent;
-+	scrubber->high_priority_only = (parent != NULL);
-+	if (!has_slabs_to_scrub(scrubber)) {
-+		finish_scrubbing(scrubber, VDO_SUCCESS);
-+		return;
-+	}
-+
-+	if (scrubber->high_priority_only &&
-+	    vdo_is_priority_table_empty(allocator->prioritized_slabs) &&
-+	    list_empty(&scrubber->high_priority_slabs))
-+		register_slab_for_scrubbing(get_next_slab(scrubber), true);
-+
-+	vdo_resume_if_quiescent(&scrubber->admin_state);
-+	scrub_next_slab(scrubber);
-+}
-+
-+static inline void assert_on_allocator_thread(thread_id_t thread_id, const char *function_name)
-+{
-+	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == thread_id),
-+			"%s called on correct thread",
-+			function_name);
-+}
-+
-+static void register_slab_with_allocator(struct block_allocator *allocator, struct vdo_slab *slab)
-+{
-+	allocator->slab_count++;
-+	allocator->last_slab = slab->slab_number;
-+}
-+
-+static struct slab_iterator get_slab_iterator(const struct block_allocator *allocator)
-+{
-+	return get_depot_slab_iterator(allocator->depot,
-+				       allocator->last_slab,
-+				       allocator->zone_number,
-+				       allocator->depot->zone_count);
-+}
-+
-+/**
-+ * next_slab() - Get the next slab from a slab_iterator and advance the iterator
-+ * @iterator: The slab_iterator.
-+ *
-+ * Return: The next slab or NULL if the iterator is exhausted.
-+ */
-+static struct vdo_slab *next_slab(struct slab_iterator *iterator)
-+{
-+	struct vdo_slab *slab = iterator->next;
-+
-+	if ((slab == NULL) || (slab->slab_number < iterator->end + iterator->stride))
-+		iterator->next = NULL;
-+	else
-+		iterator->next = iterator->slabs[slab->slab_number - iterator->stride];
-+
-+	return slab;
-+}
-+
-+/**
-+ * abort_waiter() - Abort vios waiting to make journal entries when read-only.
-+ *
-+ * This callback is invoked on all vios waiting to make slab journal entries after the VDO has gone
-+ * into read-only mode. Implements waiter_callback.
-+ */
-+static void abort_waiter(struct waiter *waiter, void *context __always_unused)
-+{
-+	struct reference_updater *updater = container_of(waiter, struct reference_updater, waiter);
-+	struct data_vio *data_vio = data_vio_from_reference_updater(updater);
-+
-+	if (updater->increment) {
-+		continue_data_vio_with_error(data_vio, VDO_READ_ONLY);
-+		return;
-+	}
-+
-+	vdo_continue_completion(&data_vio->decrement_completion, VDO_READ_ONLY);
-+}
-+
-+/* Implements vdo_read_only_notification. */
-+static void notify_block_allocator_of_read_only_mode(void *listener, struct vdo_completion *parent)
-+{
-+	struct block_allocator *allocator = listener;
-+	struct slab_iterator iterator;
-+
-+	assert_on_allocator_thread(allocator->thread_id, __func__);
-+	iterator = get_slab_iterator(allocator);
-+	while (iterator.next != NULL) {
-+		struct vdo_slab *slab = next_slab(&iterator);
-+
-+		vdo_notify_all_waiters(&slab->journal.entry_waiters, abort_waiter, &slab->journal);
-+		check_if_slab_drained(slab);
-+	}
-+
-+	vdo_finish_completion(parent);
-+}
-+
-+/**
-+ * vdo_acquire_provisional_reference() - Acquire a provisional reference on behalf of a PBN lock if
-+ *                                       the block it locks is unreferenced.
-+ * @slab: The slab which contains the block.
-+ * @pbn: The physical block to reference.
-+ * @lock: The lock.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+int vdo_acquire_provisional_reference(struct vdo_slab *slab,
-+				      physical_block_number_t pbn,
-+				      struct pbn_lock *lock)
-+{
-+	slab_block_number block_number;
-+	int result;
-+
-+	if (vdo_pbn_lock_has_provisional_reference(lock))
-+		return VDO_SUCCESS;
-+
-+	if (!is_slab_open(slab))
-+		return VDO_INVALID_ADMIN_STATE;
-+
-+	result = slab_block_number_from_pbn(slab, pbn, &block_number);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	if (slab->counters[block_number] == EMPTY_REFERENCE_COUNT) {
-+		make_provisional_reference(slab, block_number);
-+		if (lock != NULL)
-+			vdo_assign_pbn_lock_provisional_reference(lock);
-+	}
-+
-+	if (vdo_pbn_lock_has_provisional_reference(lock))
-+		adjust_free_block_count(slab, false);
-+
-+	return VDO_SUCCESS;
-+}
-+
-+static int __must_check
-+allocate_slab_block(struct vdo_slab *slab, physical_block_number_t *block_number_ptr)
-+{
-+	slab_block_number free_index;
-+
-+	if (!is_slab_open(slab))
-+		return VDO_INVALID_ADMIN_STATE;
-+
-+	if (!search_reference_blocks(slab, &free_index))
-+		return VDO_NO_SPACE;
-+
-+	ASSERT_LOG_ONLY((slab->counters[free_index] == EMPTY_REFERENCE_COUNT),
-+			"free block must have ref count of zero");
-+	make_provisional_reference(slab, free_index);
-+	adjust_free_block_count(slab, false);
-+
-+	/*
-+	 * Update the search hint so the next search will start at the array index just past the
-+	 * free block we just found.
-+	 */
-+	slab->search_cursor.index = (free_index + 1);
-+
-+	*block_number_ptr = slab->start + free_index;
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * open_slab() - Prepare a slab to be allocated from.
-+ * @slab: The slab.
-+ */
-+static void open_slab(struct vdo_slab *slab)
-+{
-+	reset_search_cursor(slab);
-+	if (is_slab_journal_blank(slab)) {
-+		WRITE_ONCE(slab->allocator->statistics.slabs_opened,
-+			   slab->allocator->statistics.slabs_opened + 1);
-+		dirty_all_reference_blocks(slab);
-+	} else {
-+		WRITE_ONCE(slab->allocator->statistics.slabs_reopened,
-+			   slab->allocator->statistics.slabs_reopened + 1);
-+	}
-+
-+	slab->allocator->open_slab = slab;
-+}
-+
-+
-+/*
-+ * The block allocated will have a provisional reference and the reference must be either confirmed
-+ * with a subsequent increment or vacated with a subsequent decrement via
-+ * vdo_release_block_reference().
-+ */
-+int vdo_allocate_block(struct block_allocator *allocator,
-+		       physical_block_number_t *block_number_ptr)
-+{
-+	int result;
-+
-+	if (allocator->open_slab != NULL) {
-+		/* Try to allocate the next block in the currently open slab. */
-+		result = allocate_slab_block(allocator->open_slab, block_number_ptr);
-+		if ((result == VDO_SUCCESS) || (result != VDO_NO_SPACE))
-+			return result;
-+
-+		/* Put the exhausted open slab back into the priority table. */
-+		prioritize_slab(allocator->open_slab);
-+	}
-+
-+	/* Remove the highest priority slab from the priority table and make it the open slab. */
-+	open_slab(list_entry(vdo_priority_table_dequeue(allocator->prioritized_slabs),
-+			     struct vdo_slab,
-+			     allocq_entry));
-+
-+	/*
-+	 * Try allocating again. If we're out of space immediately after opening a slab, then every
-+	 * slab must be fully allocated.
-+	 */
-+	return allocate_slab_block(allocator->open_slab, block_number_ptr);
-+}
-+
-+/**
-+ * vdo_enqueue_clean_slab_waiter() - Wait for a clean slab.
-+ * @allocator: The block_allocator on which to wait.
-+ * @waiter: The waiter.
-+ *
-+ * Return: VDO_SUCCESS if the waiter was queued, VDO_NO_SPACE if there are no slabs to scrub, and
-+ *         some other error otherwise.
-+ */
-+int vdo_enqueue_clean_slab_waiter(struct block_allocator *allocator, struct waiter *waiter)
-+{
-+	if (vdo_is_read_only(allocator->depot->vdo))
-+		return VDO_READ_ONLY;
-+
-+	if (vdo_is_state_quiescent(&allocator->scrubber.admin_state))
-+		return VDO_NO_SPACE;
-+
-+	vdo_enqueue_waiter(&allocator->scrubber.waiters, waiter);
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * vdo_modify_reference_count() - Modify the reference count of a block by first making a slab
-+ *                                journal entry and then updating the reference counter.
-+ *
-+ * @data_vio: The data_vio for which to add the entry.
-+ * @updater: Which of the data_vio's reference updaters is being submitted.
-+ */
-+void vdo_modify_reference_count(struct vdo_completion *completion,
-+				struct reference_updater *updater)
-+{
-+	struct vdo_slab *slab = vdo_get_slab(completion->vdo->depot, updater->zpbn.pbn);
-+
-+	if (!is_slab_open(slab)) {
-+		vdo_continue_completion(completion, VDO_INVALID_ADMIN_STATE);
-+		return;
-+	}
-+
-+	if (vdo_is_read_only(completion->vdo)) {
-+		vdo_continue_completion(completion, VDO_READ_ONLY);
-+		return;
-+	}
-+
-+	vdo_enqueue_waiter(&slab->journal.entry_waiters, &updater->waiter);
-+	if ((slab->status != VDO_SLAB_REBUILT) && requires_reaping(&slab->journal))
-+		register_slab_for_scrubbing(slab, true);
-+
-+	add_entries(&slab->journal);
-+}
-+
-+/* Release an unused provisional reference. */
-+int vdo_release_block_reference(struct block_allocator *allocator, physical_block_number_t pbn)
-+{
-+	struct reference_updater updater;
-+
-+	if (pbn == VDO_ZERO_BLOCK)
-+		return VDO_SUCCESS;
-+
-+	updater = (struct reference_updater) {
-+		.operation = VDO_JOURNAL_DATA_REMAPPING,
-+		.increment = false,
-+		.zpbn = {
-+			.pbn = pbn,
-+		},
-+	};
-+
-+	return adjust_reference_count(vdo_get_slab(allocator->depot, pbn), &updater, NULL);
-+}
-+
-+/*
-+ * This is a min_heap callback function orders slab_status structures using the 'is_clean' field as
-+ * the primary key and the 'emptiness' field as the secondary key.
-+ *
-+ * Slabs need to be pushed onto the rings in the same order they are to be popped off. Popping
-+ * should always get the most empty first, so pushing should be from most empty to least empty.
-+ * Thus, the ordering is reversed from the usual sense since min_heap returns smaller elements
-+ * before larger ones.
-+ */
-+static bool slab_status_is_less_than(const void *item1, const void *item2)
-+{
-+	const struct slab_status *info1 = (const struct slab_status *) item1;
-+	const struct slab_status *info2 = (const struct slab_status *) item2;
-+
-+	if (info1->is_clean != info2->is_clean)
-+		return info1->is_clean;
-+	if (info1->emptiness != info2->emptiness)
-+		return info1->emptiness > info2->emptiness;
-+	return info1->slab_number < info2->slab_number;
-+}
-+
-+static void swap_slab_statuses(void *item1, void *item2)
-+{
-+	struct slab_status *info1 = item1;
-+	struct slab_status *info2 = item2;
-+
-+	swap(*info1, *info2);
-+}
-+
-+static const struct min_heap_callbacks slab_status_min_heap = {
-+	.elem_size = sizeof(struct slab_status),
-+	.less = slab_status_is_less_than,
-+	.swp = swap_slab_statuses,
-+};
-+
-+/* Inform the slab actor that a action has finished on some slab; used by apply_to_slabs(). */
-+static void slab_action_callback(struct vdo_completion *completion)
-+{
-+	struct block_allocator *allocator = vdo_as_block_allocator(completion);
-+	struct slab_actor *actor = &allocator->slab_actor;
-+
-+	if (--actor->slab_action_count == 0) {
-+		actor->callback(completion);
-+		return;
-+	}
-+
-+	vdo_reset_completion(completion);
-+}
-+
-+/* Preserve the error from part of an action and continue. */
-+static void handle_operation_error(struct vdo_completion *completion)
-+{
-+	struct block_allocator *allocator = vdo_as_block_allocator(completion);
-+
-+	if (allocator->state.waiter != NULL)
-+		vdo_set_completion_result(allocator->state.waiter, completion->result);
-+	completion->callback(completion);
-+}
-+
-+/* Perform an action on each of an allocator's slabs in parallel. */
-+static void apply_to_slabs(struct block_allocator *allocator, vdo_action *callback)
-+{
-+	struct slab_iterator iterator;
-+
-+	vdo_prepare_completion(&allocator->completion,
-+			       slab_action_callback,
-+			       handle_operation_error,
-+			       allocator->thread_id,
-+			       NULL);
-+	allocator->completion.requeue = false;
-+
-+	/*
-+	 * Since we are going to dequeue all of the slabs, the open slab will become invalid, so
-+	 * clear it.
-+	 */
-+	allocator->open_slab = NULL;
-+
-+	/* Ensure that we don't finish before we're done starting. */
-+	allocator->slab_actor = (struct slab_actor) {
-+		.slab_action_count = 1,
-+		.callback = callback,
-+	};
-+
-+	iterator = get_slab_iterator(allocator);
-+	while (iterator.next != NULL) {
-+		const struct admin_state_code *operation =
-+			vdo_get_admin_state_code(&allocator->state);
-+		struct vdo_slab *slab = next_slab(&iterator);
-+
-+		list_del_init(&slab->allocq_entry);
-+		allocator->slab_actor.slab_action_count++;
-+		vdo_start_operation_with_waiter(&slab->state,
-+						operation,
-+						&allocator->completion,
-+						initiate_slab_action);
-+	}
-+
-+	slab_action_callback(&allocator->completion);
-+}
-+
-+static void finish_loading_allocator(struct vdo_completion *completion)
-+{
-+	struct block_allocator *allocator = vdo_as_block_allocator(completion);
-+	const struct admin_state_code *operation = vdo_get_admin_state_code(&allocator->state);
-+
-+	if (allocator->eraser != NULL)
-+		dm_kcopyd_client_destroy(UDS_FORGET(allocator->eraser));
-+
-+	if (operation == VDO_ADMIN_STATE_LOADING_FOR_RECOVERY) {
-+		void *context = vdo_get_current_action_context(allocator->depot->action_manager);
-+
-+		vdo_replay_into_slab_journals(allocator, context);
-+		return;
-+	}
-+
-+	vdo_finish_loading(&allocator->state);
-+}
-+
-+static void erase_next_slab_journal(struct block_allocator *allocator);
-+
-+static void copy_callback(int read_err, unsigned long write_err, void *context)
-+{
-+	struct block_allocator *allocator = context;
-+	int result = (((read_err == 0) && (write_err == 0)) ? VDO_SUCCESS : -EIO);
-+
-+	if (result != VDO_SUCCESS) {
-+		vdo_fail_completion(&allocator->completion, result);
-+		return;
-+	}
-+
-+	erase_next_slab_journal(allocator);
-+}
-+
-+/* erase_next_slab_journal() - Erase the next slab journal. */
-+static void erase_next_slab_journal(struct block_allocator *allocator)
-+{
-+	struct vdo_slab *slab;
-+	physical_block_number_t pbn;
-+	struct dm_io_region regions[1];
-+	struct slab_depot *depot = allocator->depot;
-+	block_count_t blocks = depot->slab_config.slab_journal_blocks;
-+
-+	if (allocator->slabs_to_erase.next == NULL) {
-+		vdo_finish_completion(&allocator->completion);
-+		return;
-+	}
-+
-+	slab = next_slab(&allocator->slabs_to_erase);
-+	pbn = slab->journal_origin - depot->vdo->geometry.bio_offset;
-+	regions[0] = (struct dm_io_region) {
-+		.bdev = vdo_get_backing_device(depot->vdo),
-+		.sector = pbn * VDO_SECTORS_PER_BLOCK,
-+		.count = blocks * VDO_SECTORS_PER_BLOCK,
-+	};
-+	dm_kcopyd_zero(allocator->eraser, 1, regions, 0, copy_callback, allocator);
-+}
-+
-+/* Implements vdo_admin_initiator. */
-+static void initiate_load(struct admin_state *state)
-+{
-+	struct block_allocator *allocator = container_of(state, struct block_allocator, state);
-+	const struct admin_state_code *operation = vdo_get_admin_state_code(state);
-+
-+	if (operation == VDO_ADMIN_STATE_LOADING_FOR_REBUILD) {
-+		/*
-+		 * Must requeue because the kcopyd client cannot be freed in the same stack frame
-+		 * as the kcopyd callback, lest it deadlock.
-+		 */
-+		vdo_prepare_completion_for_requeue(&allocator->completion,
-+						   finish_loading_allocator,
-+						   handle_operation_error,
-+						   allocator->thread_id,
-+						   NULL);
-+		allocator->eraser = dm_kcopyd_client_create(NULL);
-+		if (allocator->eraser == NULL) {
-+			vdo_fail_completion(&allocator->completion, -ENOMEM);
-+			return;
-+		}
-+		allocator->slabs_to_erase = get_slab_iterator(allocator);
-+
-+		erase_next_slab_journal(allocator);
-+		return;
-+	}
-+
-+	apply_to_slabs(allocator, finish_loading_allocator);
-+}
-+
-+/**
-+ * vdo_notify_slab_journals_are_recovered() - Inform a block allocator that its slab journals have
-+ *                                            been recovered from the recovery journal.
-+ * @completion The allocator completion
-+ */
-+void vdo_notify_slab_journals_are_recovered(struct vdo_completion *completion)
-+{
-+	struct block_allocator *allocator = vdo_as_block_allocator(completion);
-+
-+	vdo_finish_loading_with_result(&allocator->state, completion->result);
-+}
-+
-+static int
-+get_slab_statuses(struct block_allocator *allocator, struct slab_status **statuses_ptr)
-+{
-+	int result;
-+	struct slab_status *statuses;
-+	struct slab_iterator iterator = get_slab_iterator(allocator);
-+
-+	result = UDS_ALLOCATE(allocator->slab_count, struct slab_status, __func__, &statuses);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	*statuses_ptr = statuses;
-+
-+	while (iterator.next != NULL)  {
-+		slab_count_t slab_number = next_slab(&iterator)->slab_number;
-+
-+		*statuses++ = (struct slab_status) {
-+			.slab_number = slab_number,
-+			.is_clean = !allocator->summary_entries[slab_number].is_dirty,
-+			.emptiness = allocator->summary_entries[slab_number].fullness_hint,
-+		};
-+	}
-+
-+	return VDO_SUCCESS;
-+}
-+
-+/* Prepare slabs for allocation or scrubbing. */
-+static int __must_check
-+vdo_prepare_slabs_for_allocation(struct block_allocator *allocator)
-+{
-+	struct slab_status current_slab_status;
-+	struct min_heap heap;
-+	int result;
-+	struct slab_status *slab_statuses;
-+	struct slab_depot *depot = allocator->depot;
-+
-+	WRITE_ONCE(allocator->allocated_blocks,
-+		   allocator->slab_count * depot->slab_config.data_blocks);
-+	result = get_slab_statuses(allocator, &slab_statuses);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	/* Sort the slabs by cleanliness, then by emptiness hint. */
-+	heap = (struct min_heap) {
-+		.data = slab_statuses,
-+		.nr = allocator->slab_count,
-+		.size = allocator->slab_count,
-+	};
-+	min_heapify_all(&heap, &slab_status_min_heap);
-+
-+	while (heap.nr > 0) {
-+		bool high_priority;
-+		struct vdo_slab *slab;
-+		struct slab_journal *journal;
-+
-+		current_slab_status = slab_statuses[0];
-+		min_heap_pop(&heap, &slab_status_min_heap);
-+		slab = depot->slabs[current_slab_status.slab_number];
-+
-+		if ((depot->load_type == VDO_SLAB_DEPOT_REBUILD_LOAD) ||
-+		    (!allocator->summary_entries[slab->slab_number].load_ref_counts &&
-+		     current_slab_status.is_clean)) {
-+			queue_slab(slab);
-+			continue;
-+		}
-+
-+		slab->status = VDO_SLAB_REQUIRES_SCRUBBING;
-+		journal = &slab->journal;
-+		high_priority = ((current_slab_status.is_clean &&
-+				 (depot->load_type == VDO_SLAB_DEPOT_NORMAL_LOAD)) ||
-+				 (journal_length(journal) >= journal->scrubbing_threshold));
-+		register_slab_for_scrubbing(slab, high_priority);
-+	}
-+
-+	UDS_FREE(slab_statuses);
-+	return VDO_SUCCESS;
-+}
-+
-+static const char *status_to_string(enum slab_rebuild_status status)
-+{
-+	switch (status) {
-+	case VDO_SLAB_REBUILT:
-+		return "REBUILT";
-+	case VDO_SLAB_REQUIRES_SCRUBBING:
-+		return "SCRUBBING";
-+	case VDO_SLAB_REQUIRES_HIGH_PRIORITY_SCRUBBING:
-+		return "PRIORITY_SCRUBBING";
-+	case VDO_SLAB_REBUILDING:
-+		return "REBUILDING";
-+	case VDO_SLAB_REPLAYING:
-+		return "REPLAYING";
-+	default:
-+		return "UNKNOWN";
-+	}
-+}
-+
-+void vdo_dump_block_allocator(const struct block_allocator *allocator)
-+{
-+	unsigned int pause_counter = 0;
-+	struct slab_iterator iterator = get_slab_iterator(allocator);
-+	const struct slab_scrubber *scrubber = &allocator->scrubber;
-+
-+	uds_log_info("block_allocator zone %u", allocator->zone_number);
-+	while (iterator.next != NULL) {
-+		struct vdo_slab *slab = next_slab(&iterator);
-+		struct slab_journal *journal = &slab->journal;
-+
-+		if (slab->reference_blocks != NULL)
-+			/* Terse because there are a lot of slabs to dump and syslog is lossy. */
-+			uds_log_info("slab %u: P%u, %llu free",
-+				     slab->slab_number,
-+				     slab->priority,
-+				     (unsigned long long) slab->free_blocks);
-+		else
-+			uds_log_info("slab %u: status %s",
-+				     slab->slab_number,
-+				     status_to_string(slab->status));
-+
-+		uds_log_info("  slab journal: entry_waiters=%zu waiting_to_commit=%s updating_slab_summary=%s head=%llu unreapable=%llu tail=%llu next_commit=%llu summarized=%llu last_summarized=%llu recovery_lock=%llu dirty=%s",
-+			     vdo_count_waiters(&journal->entry_waiters),
-+			     uds_bool_to_string(journal->waiting_to_commit),
-+			     uds_bool_to_string(journal->updating_slab_summary),
-+			     (unsigned long long) journal->head,
-+			     (unsigned long long) journal->unreapable,
-+			     (unsigned long long) journal->tail,
-+			     (unsigned long long) journal->next_commit,
-+			     (unsigned long long) journal->summarized,
-+			     (unsigned long long) journal->last_summarized,
-+			     (unsigned long long) journal->recovery_lock,
-+			     uds_bool_to_string(journal->recovery_lock != 0));
-+		/*
-+		 * Given the frequency with which the locks are just a tiny bit off, it might be
-+		 * worth dumping all the locks, but that might be too much logging.
-+		 */
-+
-+		if (slab->counters != NULL)
-+			/* Terse because there are a lot of slabs to dump and syslog is lossy. */
-+			uds_log_info("  slab: free=%u/%u blocks=%u dirty=%zu active=%zu journal@(%llu,%u)",
-+				     slab->free_blocks,
-+				     slab->block_count,
-+				     slab->reference_block_count,
-+				     vdo_count_waiters(&slab->dirty_blocks),
-+				     slab->active_count,
-+				     (unsigned long long) slab->slab_journal_point.sequence_number,
-+				     slab->slab_journal_point.entry_count);
-+		else
-+			uds_log_info("  no counters");
-+
-+		/*
-+		 * Wait for a while after each batch of 32 slabs dumped, an arbitrary number,
-+		 * allowing the kernel log a chance to be flushed instead of being overrun.
-+		 */
-+		if (pause_counter++ == 31) {
-+			pause_counter = 0;
-+			uds_pause_for_logger();
-+		}
-+	}
-+
-+	uds_log_info("slab_scrubber slab_count %u waiters %zu %s%s",
-+		     READ_ONCE(scrubber->slab_count),
-+		     vdo_count_waiters(&scrubber->waiters),
-+		     vdo_get_admin_state_code(&scrubber->admin_state)->name,
-+		     scrubber->high_priority_only ? ", high_priority_only " : "");
-+}
-+
- static void free_slab(struct vdo_slab *slab)
- {
- 	if (slab == NULL)
-@@ -2654,6 +3806,169 @@ make_slab(physical_block_number_t slab_origin,
- 	return VDO_SUCCESS;
- }
- 
-+/**
-+ * initialize_slab_scrubber() - Initialize an allocator's slab scrubber.
-+ * @allocator: The allocator being initialized
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+static int initialize_slab_scrubber(struct block_allocator *allocator)
-+{
-+	struct slab_scrubber *scrubber = &allocator->scrubber;
-+	block_count_t slab_journal_size = allocator->depot->slab_config.slab_journal_blocks;
-+	char *journal_data;
-+	int result;
-+
-+	result = UDS_ALLOCATE(VDO_BLOCK_SIZE * slab_journal_size, char, __func__, &journal_data);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = allocate_vio_components(allocator->completion.vdo,
-+					 VIO_TYPE_SLAB_JOURNAL,
-+					 VIO_PRIORITY_METADATA,
-+					 allocator,
-+					 slab_journal_size,
-+					 journal_data,
-+					 &scrubber->vio);
-+	if (result != VDO_SUCCESS) {
-+		UDS_FREE(journal_data);
-+		return result;
-+	}
-+
-+	INIT_LIST_HEAD(&scrubber->high_priority_slabs);
-+	INIT_LIST_HEAD(&scrubber->slabs);
-+	vdo_set_admin_state_code(&scrubber->admin_state, VDO_ADMIN_STATE_SUSPENDED);
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * initialize_slab_summary_block() - Initialize a slab_summary_block.
-+ * @allocator: The allocator which owns the block.
-+ * @index: The index of this block in its zone's summary.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+static int __must_check
-+initialize_slab_summary_block(struct block_allocator *allocator, block_count_t index)
-+{
-+	struct slab_summary_block *block = &allocator->summary_blocks[index];
-+	int result;
-+
-+	result = UDS_ALLOCATE(VDO_BLOCK_SIZE, char, __func__, &block->outgoing_entries);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = allocate_vio_components(allocator->depot->vdo,
-+					 VIO_TYPE_SLAB_SUMMARY,
-+					 VIO_PRIORITY_METADATA,
-+					 NULL,
-+					 1,
-+					 block->outgoing_entries,
-+					 &block->vio);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	block->allocator = allocator;
-+	block->entries = &allocator->summary_entries[VDO_SLAB_SUMMARY_ENTRIES_PER_BLOCK * index];
-+	block->index = index;
-+	return VDO_SUCCESS;
-+}
-+
-+static int __must_check initialize_block_allocator(struct slab_depot *depot, zone_count_t zone)
-+{
-+	int result;
-+	block_count_t i;
-+	struct block_allocator *allocator = &depot->allocators[zone];
-+	struct vdo *vdo = depot->vdo;
-+	block_count_t max_free_blocks = depot->slab_config.data_blocks;
-+	unsigned int max_priority = (2 + ilog2(max_free_blocks));
-+
-+	*allocator = (struct block_allocator) {
-+		.depot = depot,
-+		.zone_number = zone,
-+		.thread_id = vdo->thread_config.physical_threads[zone],
-+		.nonce = vdo->states.vdo.nonce,
-+	};
-+
-+	INIT_LIST_HEAD(&allocator->dirty_slab_journals);
-+	vdo_set_admin_state_code(&allocator->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
-+	result = vdo_register_read_only_listener(vdo,
-+						 allocator,
-+						 notify_block_allocator_of_read_only_mode,
-+						 allocator->thread_id);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	vdo_initialize_completion(&allocator->completion, vdo, VDO_BLOCK_ALLOCATOR_COMPLETION);
-+	result = make_vio_pool(vdo,
-+			       BLOCK_ALLOCATOR_VIO_POOL_SIZE,
-+			       allocator->thread_id,
-+			       VIO_TYPE_SLAB_JOURNAL,
-+			       VIO_PRIORITY_METADATA,
-+			       allocator,
-+			       &allocator->vio_pool);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = initialize_slab_scrubber(allocator);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = vdo_make_priority_table(max_priority, &allocator->prioritized_slabs);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(VDO_SLAB_SUMMARY_BLOCKS_PER_ZONE,
-+			      struct slab_summary_block,
-+			      __func__,
-+			      &allocator->summary_blocks);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	vdo_set_admin_state_code(&allocator->summary_state, VDO_ADMIN_STATE_NORMAL_OPERATION);
-+	allocator->summary_entries = depot->summary_entries + (MAX_VDO_SLABS * zone);
-+
-+	/* Initialize each summary block. */
-+	for (i = 0; i < VDO_SLAB_SUMMARY_BLOCKS_PER_ZONE; i++) {
-+		result = initialize_slab_summary_block(allocator, i);
-+		if (result != VDO_SUCCESS)
-+			return result;
-+	}
-+
-+	/*
-+	 * Performing well atop thin provisioned storage requires either that VDO discards freed
-+	 * blocks, or that the block allocator try to use slabs that already have allocated blocks
-+	 * in preference to slabs that have never been opened. For reasons we have not been able to
-+	 * fully understand, some SSD machines have been have been very sensitive (50% reduction in
-+	 * test throughput) to very slight differences in the timing and locality of block
-+	 * allocation. Assigning a low priority to unopened slabs (max_priority/2, say) would be
-+	 * ideal for the story, but anything less than a very high threshold (max_priority - 1)
-+	 * hurts on these machines.
-+	 *
-+	 * This sets the free block threshold for preferring to open an unopened slab to the binary
-+	 * floor of 3/4ths the total number of data blocks in a slab, which will generally evaluate
-+	 * to about half the slab size.
-+	 */
-+	allocator->unopened_slab_priority = (1 + ilog2((max_free_blocks * 3) / 4));
-+
-+	return VDO_SUCCESS;
-+}
-+
-+static void uninitialize_allocator_summary(struct block_allocator *allocator)
-+{
-+	block_count_t i;
-+
-+	if (allocator->summary_blocks == NULL)
-+		return;
-+
-+	for (i = 0; i < VDO_SLAB_SUMMARY_BLOCKS_PER_ZONE; i++) {
-+		free_vio_components(&allocator->summary_blocks[i].vio);
-+		UDS_FREE(UDS_FORGET(allocator->summary_blocks[i].outgoing_entries));
-+	}
-+
-+	UDS_FREE(UDS_FORGET(allocator->summary_blocks));
-+}
-+
- /**
-  * finish_combining_zones() - Clean up after saving out the combined slab summary.
-  * @completion: The vio which was used to write the summary data.
-@@ -2784,3 +4099,150 @@ static void load_slab_summary(void *context, struct vdo_completion *parent)
- 			    handle_combining_error,
- 			    REQ_OP_READ);
- }
-+
-+/**
-+ * stop_scrubbing() - Tell the scrubber to stop scrubbing after it finishes the slab it is
-+ *                    currently working on.
-+ * @scrubber: The scrubber to stop.
-+ * @parent: The completion to notify when scrubbing has stopped.
-+ */
-+static void stop_scrubbing(struct block_allocator *allocator)
-+{
-+	struct slab_scrubber *scrubber = &allocator->scrubber;
-+
-+	if (vdo_is_state_quiescent(&scrubber->admin_state))
-+		vdo_finish_completion(&allocator->completion);
-+	else
-+		vdo_start_draining(&scrubber->admin_state,
-+				   VDO_ADMIN_STATE_SUSPENDING,
-+				   &allocator->completion,
-+				   NULL);
-+}
-+
-+/* Implements vdo_admin_initiator. */
-+static void initiate_summary_drain(struct admin_state *state)
-+{
-+	check_summary_drain_complete(container_of(state, struct block_allocator, summary_state));
-+}
-+
-+static void do_drain_step(struct vdo_completion *completion)
-+{
-+	struct block_allocator *allocator = vdo_as_block_allocator(completion);
-+
-+	vdo_prepare_completion_for_requeue(&allocator->completion,
-+					   do_drain_step,
-+					   handle_operation_error,
-+					   allocator->thread_id,
-+					   NULL);
-+	switch (++allocator->drain_step) {
-+	case VDO_DRAIN_ALLOCATOR_STEP_SCRUBBER:
-+		stop_scrubbing(allocator);
-+		return;
-+
-+	case VDO_DRAIN_ALLOCATOR_STEP_SLABS:
-+		apply_to_slabs(allocator, do_drain_step);
-+		return;
-+
-+	case VDO_DRAIN_ALLOCATOR_STEP_SUMMARY:
-+		vdo_start_draining(&allocator->summary_state,
-+				   vdo_get_admin_state_code(&allocator->state),
-+				   completion,
-+				   initiate_summary_drain);
-+		return;
-+
-+	case VDO_DRAIN_ALLOCATOR_STEP_FINISHED:
-+		ASSERT_LOG_ONLY(!is_vio_pool_busy(allocator->vio_pool), "vio pool not busy");
-+		vdo_finish_draining_with_result(&allocator->state, completion->result);
-+		return;
-+
-+	default:
-+		vdo_finish_draining_with_result(&allocator->state, UDS_BAD_STATE);
-+	}
-+}
-+
-+/* Implements vdo_admin_initiator. */
-+static void initiate_drain(struct admin_state *state)
-+{
-+	struct block_allocator *allocator = container_of(state, struct block_allocator, state);
-+
-+	allocator->drain_step = VDO_DRAIN_ALLOCATOR_START;
-+	do_drain_step(&allocator->completion);
-+}
-+
-+/**
-+ * resume_scrubbing() - Tell the scrubber to resume scrubbing if it has been stopped.
-+ * @allocator: The allocator being resumed.
-+ */
-+static void resume_scrubbing(struct block_allocator *allocator)
-+{
-+	int result;
-+	struct slab_scrubber *scrubber = &allocator->scrubber;
-+
-+	if (!has_slabs_to_scrub(scrubber)) {
-+		vdo_finish_completion(&allocator->completion);
-+		return;
-+	}
-+
-+	result = vdo_resume_if_quiescent(&scrubber->admin_state);
-+	if (result != VDO_SUCCESS) {
-+		vdo_fail_completion(&allocator->completion, result);
-+		return;
-+	}
-+
-+	scrub_next_slab(scrubber);
-+	vdo_finish_completion(&allocator->completion);
-+}
-+
-+static void do_resume_step(struct vdo_completion *completion)
-+{
-+	struct block_allocator *allocator = vdo_as_block_allocator(completion);
-+
-+	vdo_prepare_completion_for_requeue(&allocator->completion,
-+					   do_resume_step,
-+					   handle_operation_error,
-+					   allocator->thread_id,
-+					   NULL);
-+	switch (--allocator->drain_step) {
-+	case VDO_DRAIN_ALLOCATOR_STEP_SUMMARY:
-+		vdo_fail_completion(completion,
-+				    vdo_resume_if_quiescent(&allocator->summary_state));
-+		return;
-+
-+	case VDO_DRAIN_ALLOCATOR_STEP_SLABS:
-+		apply_to_slabs(allocator, do_resume_step);
-+		return;
-+
-+	case VDO_DRAIN_ALLOCATOR_STEP_SCRUBBER:
-+		resume_scrubbing(allocator);
-+		return;
-+
-+	case VDO_DRAIN_ALLOCATOR_START:
-+		vdo_finish_resuming_with_result(&allocator->state, completion->result);
-+		return;
-+
-+	default:
-+		vdo_finish_resuming_with_result(&allocator->state, UDS_BAD_STATE);
-+	}
-+}
-+
-+/* Implements vdo_admin_initiator. */
-+static void initiate_resume(struct admin_state *state)
-+{
-+	struct block_allocator *allocator = container_of(state, struct block_allocator, state);
-+
-+	allocator->drain_step = VDO_DRAIN_ALLOCATOR_STEP_FINISHED;
-+	do_resume_step(&allocator->completion);
-+}
-+
-+/* Implements vdo_zone_action. */
-+static void resume_allocator(void *context,
-+			     zone_count_t zone_number,
-+			     struct vdo_completion *parent)
-+{
-+	struct slab_depot *depot = context;
-+
-+	vdo_start_resuming(&depot->allocators[zone_number].state,
-+			   vdo_get_current_manager_operation(depot->action_manager),
-+			   parent,
-+			   initiate_resume);
-+}
-diff --git a/drivers/md/dm-vdo/slab-depot.h b/drivers/md/dm-vdo/slab-depot.h
-index 5e06746c7e71..6ec4be7b5822 100644
---- a/drivers/md/dm-vdo/slab-depot.h
-+++ b/drivers/md/dm-vdo/slab-depot.h
-@@ -257,6 +257,54 @@ struct vdo_slab {
- 	struct reference_block *reference_blocks;
- };
- 
-+enum block_allocator_drain_step {
-+	VDO_DRAIN_ALLOCATOR_START,
-+	VDO_DRAIN_ALLOCATOR_STEP_SCRUBBER,
-+	VDO_DRAIN_ALLOCATOR_STEP_SLABS,
-+	VDO_DRAIN_ALLOCATOR_STEP_SUMMARY,
-+	VDO_DRAIN_ALLOCATOR_STEP_FINISHED,
-+};
-+
-+struct slab_scrubber {
-+	/* The queue of slabs to scrub first */
-+	struct list_head high_priority_slabs;
-+	/* The queue of slabs to scrub once there are no high_priority_slabs */
-+	struct list_head slabs;
-+	/* The queue of VIOs waiting for a slab to be scrubbed */
-+	struct wait_queue waiters;
-+
-+	/*
-+	 * The number of slabs that are unrecovered or being scrubbed. This field is modified by
-+	 * the physical zone thread, but is queried by other threads.
-+	 */
-+	slab_count_t slab_count;
-+
-+	/* The administrative state of the scrubber */
-+	struct admin_state admin_state;
-+	/* Whether to only scrub high-priority slabs */
-+	bool high_priority_only;
-+	/* The slab currently being scrubbed */
-+	struct vdo_slab *slab;
-+	/* The vio for loading slab journal blocks */
-+	struct vio vio;
-+};
-+
-+/* A sub-structure for applying actions in parallel to all an allocator's slabs. */
-+struct slab_actor {
-+	/* The number of slabs performing a slab action */
-+	slab_count_t slab_action_count;
-+	/* The method to call when a slab action has been completed by all slabs */
-+	vdo_action *callback;
-+};
-+
-+/* A slab_iterator is a structure for iterating over a set of slabs. */
-+struct slab_iterator {
-+	struct vdo_slab **slabs;
-+	struct vdo_slab *next;
-+	slab_count_t end;
-+	slab_count_t stride;
-+};
-+
- /*
-  * The slab_summary provides hints during load and recovery about the state of the slabs in order
-  * to avoid the need to read the slab journals in their entirety before a VDO can come online.
-@@ -314,6 +362,81 @@ struct atomic_slab_summary_statistics {
- 	atomic64_t blocks_written;
- };
- 
-+struct block_allocator {
-+	struct vdo_completion completion;
-+	/* The slab depot for this allocator */
-+	struct slab_depot *depot;
-+	/* The nonce of the VDO */
-+	nonce_t nonce;
-+	/* The physical zone number of this allocator */
-+	zone_count_t zone_number;
-+	/* The thread ID for this allocator's physical zone */
-+	thread_id_t thread_id;
-+	/* The number of slabs in this allocator */
-+	slab_count_t slab_count;
-+	/* The number of the last slab owned by this allocator */
-+	slab_count_t last_slab;
-+	/* The reduced priority level used to preserve unopened slabs */
-+	unsigned int unopened_slab_priority;
-+	/* The state of this allocator */
 +	struct admin_state state;
-+	/* The actor for applying an action to all slabs */
-+	struct slab_actor slab_actor;
-+
-+	/* The slab from which blocks are currently being allocated */
-+	struct vdo_slab *open_slab;
-+	/* A priority queue containing all slabs available for allocation */
-+	struct priority_table *prioritized_slabs;
-+	/* The slab scrubber */
-+	struct slab_scrubber scrubber;
-+	/* What phase of the close operation the allocator is to perform */
-+	enum block_allocator_drain_step drain_step;
-+
-+	/*
-+	 * These statistics are all mutated only by the physical zone thread, but are read by other
-+	 * threads when gathering statistics for the entire depot.
-+	 */
-+	/*
-+	 * The count of allocated blocks in this zone. Not in block_allocator_statistics for
-+	 * historical reasons.
-+	 */
-+	u64 allocated_blocks;
-+	/* Statistics for this block allocator */
-+	struct block_allocator_statistics statistics;
-+	/* Cumulative statistics for the slab journals in this zone */
-+	struct slab_journal_statistics slab_journal_statistics;
-+	/* Cumulative statistics for the reference counters in this zone */
-+	struct ref_counts_statistics ref_counts_statistics;
-+
-+	/*
-+	 * This is the head of a queue of slab journals which have entries in their tail blocks
-+	 * which have not yet started to commit. When the recovery journal is under space pressure,
-+	 * slab journals which have uncommitted entries holding a lock on the recovery journal head
-+	 * are forced to commit their blocks early. This list is kept in order, with the tail
-+	 * containing the slab journal holding the most recent recovery journal lock.
-+	 */
-+	struct list_head dirty_slab_journals;
-+
-+	/* The vio pool for reading and writing block allocator metadata */
++	struct block_map *block_map;
++	/* Dirty pages, by era*/
++	struct dirty_lists *dirty_lists;
++	struct vdo_page_cache page_cache;
++	data_vio_count_t active_lookups;
++	struct int_map *loading_pages;
 +	struct vio_pool *vio_pool;
-+	/* The dm_kcopyd client for erasing slab journals */
-+	struct dm_kcopyd_client *eraser;
-+	/* Iterator over the slabs to be erased */
-+	struct slab_iterator slabs_to_erase;
-+
-+	/* The portion of the slab summary managed by this allocator */
-+	/* The state of the slab summary */
-+	struct admin_state summary_state;
-+	/* The number of outstanding summary writes */
-+	block_count_t summary_write_count;
-+	/* The array (owned by the blocks) of all entries */
-+	struct slab_summary_entry *summary_entries;
-+	/* The array of slab_summary_blocks */
-+	struct slab_summary_block *summary_blocks;
++	/* The tree page which has issued or will be issuing a flush */
++	struct tree_page *flusher;
++	struct wait_queue flush_waiters;
++	/* The generation after the most recent flush */
++	u8 generation;
++	u8 oldest_generation;
++	/* The counts of dirty pages in each generation */
++	u32 dirty_page_counts[256];
 +};
 +
-+struct reference_updater;
++struct block_map {
++	struct vdo *vdo;
++	struct action_manager *action_manager;
++	/* The absolute PBN of the first root of the tree part of the block map */
++	physical_block_number_t root_origin;
++	block_count_t root_count;
 +
- bool __must_check
- vdo_attempt_replay_into_slab(struct vdo_slab *slab,
- 			     physical_block_number_t pbn,
-@@ -322,6 +445,29 @@ vdo_attempt_replay_into_slab(struct vdo_slab *slab,
- 			     struct journal_point *recovery_point,
- 			     struct vdo_completion *parent);
- 
-+static inline struct block_allocator *vdo_as_block_allocator(struct vdo_completion *completion)
++	/* The era point we are currently distributing to the zones */
++	sequence_number_t current_era_point;
++	/* The next era point */
++	sequence_number_t pending_era_point;
++
++	/* The number of entries in block map */
++	block_count_t entry_count;
++	nonce_t nonce;
++	struct recovery_journal *journal;
++
++	/* The trees for finding block map pages */
++	struct forest *forest;
++	/* The expanded trees awaiting growth */
++	struct forest *next_forest;
++	/* The number of entries after growth */
++	block_count_t next_entry_count;
++
++	zone_count_t zone_count;
++	struct block_map_zone zones[];
++};
++
++/**
++ * typedef vdo_entry_callback - A function to be called for each allocated PBN when traversing the
++ *                              forest.
++ * @pbn: A PBN of a tree node.
++ * @completion: The parent completion of the traversal.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++typedef int vdo_entry_callback(physical_block_number_t pbn, struct vdo_completion *completion);
++
++static inline struct block_map_page * __must_check
++vdo_as_block_map_page(struct tree_page *tree_page)
 +{
-+	vdo_assert_completion_type(completion, VDO_BLOCK_ALLOCATOR_COMPLETION);
-+	return container_of(completion, struct block_allocator, completion);
++	return (struct block_map_page *) tree_page->page_buffer;
 +}
 +
-+int __must_check vdo_acquire_provisional_reference(struct vdo_slab *slab,
-+						   physical_block_number_t pbn,
-+						   struct pbn_lock *lock);
++bool vdo_copy_valid_page(char *buffer,
++			 nonce_t nonce,
++			 physical_block_number_t pbn,
++			 struct block_map_page *page);
++
++void vdo_find_block_map_slot(struct data_vio *data_vio);
++
++physical_block_number_t
++vdo_find_block_map_page_pbn(struct block_map *map, page_number_t page_number);
++
++void vdo_write_tree_page(struct tree_page *page, struct block_map_zone *zone);
++
++void vdo_traverse_forest(struct block_map *map,
++			 vdo_entry_callback *callback,
++			 struct vdo_completion *parent);
++
++int __must_check vdo_decode_block_map(struct block_map_state_2_0 state,
++				      block_count_t logical_blocks,
++				      struct vdo *vdo,
++				      struct recovery_journal *journal,
++				      nonce_t nonce,
++				      page_count_t cache_size,
++				      block_count_t maximum_age,
++				      struct block_map **map_ptr);
++
++void vdo_drain_block_map(struct block_map *map,
++			 const struct admin_state_code *operation,
++			 struct vdo_completion *parent);
++
++void vdo_resume_block_map(struct block_map *map, struct vdo_completion *parent);
 +
 +int __must_check
-+vdo_allocate_block(struct block_allocator *allocator, physical_block_number_t *block_number_ptr);
++vdo_prepare_to_grow_block_map(struct block_map *map, block_count_t new_logical_blocks);
 +
-+int vdo_enqueue_clean_slab_waiter(struct block_allocator *allocator, struct waiter *waiter);
++void vdo_grow_block_map(struct block_map *map, struct vdo_completion *parent);
 +
-+void vdo_modify_reference_count(struct vdo_completion *completion,
-+				struct reference_updater *updater);
++void vdo_abandon_block_map_growth(struct block_map *map);
 +
-+int __must_check vdo_release_block_reference(struct block_allocator *allocator,
-+					     physical_block_number_t pbn);
++void vdo_free_block_map(struct block_map *map);
 +
- void vdo_notify_slab_journals_are_recovered(struct vdo_completion *completion);
- 
-+void vdo_dump_block_allocator(const struct block_allocator *allocator);
++struct block_map_state_2_0 __must_check
++vdo_record_block_map(const struct block_map *map);
 +
- #endif /* VDO_SLAB_DEPOT_H */
++void vdo_initialize_block_map_from_journal(struct block_map *map,
++					   struct recovery_journal *journal);
++
++zone_count_t vdo_compute_logical_zone(struct data_vio *data_vio);
++
++void vdo_advance_block_map_era(struct block_map *map, sequence_number_t recovery_block_number);
++
++void vdo_update_block_map_page(struct block_map_page *page,
++			       struct data_vio *data_vio,
++			       physical_block_number_t pbn,
++			       enum block_mapping_state mapping_state,
++			       sequence_number_t *recovery_lock);
++
++void vdo_get_mapped_block(struct data_vio *data_vio);
++
++void vdo_put_mapped_block(struct data_vio *data_vio);
++
++struct block_map_statistics __must_check vdo_get_block_map_statistics(struct block_map *map);
++
++/**
++ * vdo_convert_maximum_age() - Convert the maximum age to reflect the new recovery journal format
++ * @age: The configured maximum age
++ *
++ * Return: The converted age
++ *
++ * In the old recovery journal format, each journal block held 311 entries, and every write bio
++ * made two entries. The old maximum age was half the usable journal length. In the new format,
++ * each block holds only 217 entries, but each bio only makes one entry. We convert the configured
++ * age so that the number of writes in a block map era is the same in the old and new formats. This
++ * keeps the bound on the amount of work required to recover the block map from the recovery
++ * journal the same across the format change. It also keeps the amortization of block map page
++ * writes to write bios the same.
++ */
++static inline block_count_t vdo_convert_maximum_age(block_count_t age)
++{
++	return DIV_ROUND_UP(age * RECOVERY_JOURNAL_1_ENTRIES_PER_BLOCK,
++			    2 * RECOVERY_JOURNAL_ENTRIES_PER_BLOCK);
++}
++
++#endif /* VDO_BLOCK_MAP_H */
 -- 
 2.40.0
 
