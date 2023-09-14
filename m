@@ -4,94 +4,95 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 06C85EEAA65
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:17:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D7206EEAA62
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:17:51 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694719069;
+	s=mimecast20190719; t=1694719071;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=gxkszgp9P3+IA6vr6ONUJJfNVTTw8E5sTZXfypqm8bA=;
-	b=OEq0mnqW9Qzcv4TVPChaJWvu1RZjyS/M+j2JFdsdfovZiFwXUMAF3qZfzQ+ODhHzQeSRxJ
-	A8ZTKVWpgG1ZmTQ/oYnSHQpXIWcyRPYcd5lwV6BkrwpBg/mXFEWA5R19h7/Nm3HcNh3sGk
-	Nc9W46ss0i8Q5vkbT+YvPlBM9St39z4=
+	bh=olbhRiy6LBVVlPg/R4UHIHeSAgbNX7irICk6llqsNLs=;
+	b=gUPg8v322tWJ8hBj6h8v0wzwJjxBT4ZlTwGheuEotmZLNe1VAFJFNyb4yWpSECpGQkJrHw
+	WPwgVzdCMhMRngkxwwZJ8XvOcuSbeMuTEqGb55S8/6AqGLJGgD3Fm/fUtTmAqswd3D5Zgn
+	ISBLidJvka4tCenXJJ5H0m0KoDbTOBs=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-402-T4kvP67_NLapGfQDH2yCYg-1; Thu, 14 Sep 2023 15:17:45 -0400
-X-MC-Unique: T4kvP67_NLapGfQDH2yCYg-1
+ us-mta-10-FqEFxFIqMgm8u5nPbSG1_A-1; Thu, 14 Sep 2023 15:17:46 -0400
+X-MC-Unique: FqEFxFIqMgm8u5nPbSG1_A-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6B9861008AFF;
-	Thu, 14 Sep 2023 19:17:43 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3718688B7A6;
+	Thu, 14 Sep 2023 19:17:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 54BE69A;
-	Thu, 14 Sep 2023 19:17:43 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2181728AC;
+	Thu, 14 Sep 2023 19:17:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 54EC419466E9;
-	Thu, 14 Sep 2023 19:17:06 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 22EE119465B7;
+	Thu, 14 Sep 2023 19:17:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 277B119466E8
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:17:05 +0000 (UTC)
+ ESMTP id 1A2451946588
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:17:03 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 070E21054FC2; Thu, 14 Sep 2023 19:17:05 +0000 (UTC)
+ id E91917B62; Thu, 14 Sep 2023 19:16:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F26601054FC0
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:04 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.120])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E09ED28AC
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:16:57 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-inbound-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C6D0C185A79C
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:04 +0000 (UTC)
-Received: from mail-qv1-f54.google.com (mail-qv1-f54.google.com
- [209.85.219.54]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B1AA91875056
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:16:57 +0000 (UTC)
+Received: from mail-oa1-f43.google.com (mail-oa1-f43.google.com
+ [209.85.160.43]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-395-IstL0AapOGW42rhpBGcsTg-1; Thu, 14 Sep 2023 15:17:02 -0400
-X-MC-Unique: IstL0AapOGW42rhpBGcsTg-1
-Received: by mail-qv1-f54.google.com with SMTP id
- 6a1803df08f44-649c6ea6e72so7654566d6.2
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:17:02 -0700 (PDT)
+ us-mta-679-xjduZ2B9NQuryHTQu3on3g-2; Thu, 14 Sep 2023 15:16:54 -0400
+X-MC-Unique: xjduZ2B9NQuryHTQu3on3g-2
+Received: by mail-oa1-f43.google.com with SMTP id
+ 586e51a60fabf-1d65a7e5975so88806fac.0
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:16:54 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1694719021; x=1695323821;
+ d=1e100.net; s=20230601; t=1694719013; x=1695323813;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=9PXCMAvnmorHyJ+XtO5KRMwrGOJWU+SJ/UqFfmrd9kQ=;
- b=oCB8Kd+Zijxr47l1H6wSsTqKBi+SA2dCBmhPcyAqcgdLBrAe+jEh70fhK7nrcwYmuR
- n56Si9TvHDiYFcwJ2Wm3bSBnUfG8AkWRTpDBTIkB4MQwkDbyZgMeRKNIbQKDyWUOPEs9
- 50WHN0rUyzZDQKct+34qhPx04w4ZjHzNPSLnga/x4emiRkRCXaXN8epQhNmTWWKCs7q1
- MJu/EpWPctBClLGrHCFnBswfE1135bMoafLKZ/CYNcFuKjh2PuOz9/fB/B01Ajt+7pqi
- F1PuB9O9e8x2+lmuPAFBfVY6iXptaKUoU/dTYduxUuSRpyOjaYJGDm1Qe/SUbsxingdm
- odpQ==
-X-Gm-Message-State: AOJu0Yys1pJIg1h1+YlgI7OLucu67PQhpjimn2cJGYMfRrb2eC37e7FH
- DODGjYwGtDU45bhBoMBcV3RxmgEDB3yfpFfiFmLMdOtnGPVJgckV218WgfZn1IQSoO7QJHEj5f+
- BQC/vGeIQhUTjfKzH1VQiiPGlduBf2sS1FcdMPRvJvETmXSlBclHLJUg4FYX81UpT7JlBk9Bo
-X-Google-Smtp-Source: AGHT+IG5k7b5dffSoRYtOeTZR4H1SEzSrrJmDpfeLpwwWG7GTPYjWQTd4JuGNlvkuKOVfez1+mDAkw==
-X-Received: by 2002:a0c:ee4c:0:b0:64f:4ae5:7150 with SMTP id
- m12-20020a0cee4c000000b0064f4ae57150mr6202848qvs.1.1694719020029; 
- Thu, 14 Sep 2023 12:17:00 -0700 (PDT)
+ bh=dGxK3x9kift9G8+EmH8/iDJ1/fiyrmdgdxqkraCyL2Y=;
+ b=UQusJXJhIFNIdTe2wDEBSHjtghj+uC7DhxKF9fOPwckPn/MW0ZtuBN5MYvNImwrfup
+ admhtJMQ40p8ks9/RrPz5gyfeM5gt7jCPrTfr6f2ZQ1rxgQeQN2RM+Xc5q/OykpIsp2+
+ ckQtfpeUaRXN6PdAxqG4OkNB7WpgkzYklDYlsLHA+0yN85u8G0Wkj7c91m0eAd7/Qz/7
+ sYwpygzuwiSQfbAv6R7q4JC5si+kK8dAz2HzkJ9nwij/HtO+KN1QcAQZnoLRNMTE/kC0
+ gAoddHINBjRJIkheImFKBP6vo4ukgdfMB7LqWU6JrF8oHoEqJO0DbsKADqJHldLpy+7A
+ eG5w==
+X-Gm-Message-State: AOJu0Yznll/IspXrvomXCdqmoSAl+Cqtppywqj6cjnmQomuxws6JfmhS
+ YuHa1cMkax8MGhRKvmn5w0bLJNXEbVFzUUnhyVdP161INBKONkOIiqhIwlceqT1pcSLpVXvYWq8
+ DJnFaOm+8+CrGKKmt/c6BdyVdZGUz84URbBmP8xsyl/d75zZhIapDOy/xkTwfVsd6JuptIf8j
+X-Google-Smtp-Source: AGHT+IGksp2IM+1MwmpWORhB60cDHtrK3bKcqS99cq8oqhHR+5HkM3JnJ/hSs8C79dfJjkSHCDZE4Q==
+X-Received: by 2002:a05:6870:a9aa:b0:1bf:9fa2:bf8e with SMTP id
+ ep42-20020a056870a9aa00b001bf9fa2bf8emr6580674oab.1.1694719011135; 
+ Thu, 14 Sep 2023 12:16:51 -0700 (PDT)
 Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net.
  [68.160.141.91]) by smtp.gmail.com with ESMTPSA id
- i3-20020a0cf383000000b00655eb94348bsm668974qvk.79.2023.09.14.12.16.58
+ x6-20020ac87ec6000000b0041520d1a342sm637600qtj.19.2023.09.14.12.16.50
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 14 Sep 2023 12:16:59 -0700 (PDT)
+ Thu, 14 Sep 2023 12:16:50 -0700 (PDT)
 From: Mike Snitzer <snitzer@kernel.org>
 To: dm-devel@redhat.com
-Date: Thu, 14 Sep 2023 15:16:07 -0400
-Message-Id: <20230914191635.39805-12-snitzer@kernel.org>
+Date: Thu, 14 Sep 2023 15:16:03 -0400
+Message-Id: <20230914191635.39805-8-snitzer@kernel.org>
 In-Reply-To: <20230914191635.39805-1-snitzer@kernel.org>
 References: <20230914191635.39805-1-snitzer@kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: [dm-devel] [PATCH v3 11/39] dm vdo: implement the delta index
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: [dm-devel] [PATCH v3 07/39] dm vdo: add specialized request
+ queueing functionality
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -114,2431 +115,1758 @@ Content-Transfer-Encoding: 7bit
 
 From: Matthew Sakai <msakai@redhat.com>
 
-The delta index is a space and memory efficient alternative to a
-hashtable. Instead of storing the entire key for each entry, the
-entries are sorted by key and only the difference between adjacent
-keys (the delta) is stored. If the keys are evenly distributed, the
-size of the deltas follows an exponential distribution, and the deltas
-can use a Huffman code to take up even less space.
-
-This structure allows the index to use many fewer bytes per entry than
-a traditional hash table, but it is slightly more expensive to look up
-entries, because a request must read and sum every entry in a list of
-deltas in order to find a given record. The delta index reduces this
-lookup cost by splitting its key space into many sub-lists, each
-starting at a fixed key value, so that each individual list is short.
+Adds funnel_queue, a mostly lock-free multi-producer, single-consumer
+queue. It also adds the request queue used by the dm-vdo deduplication
+index, and the work_queue used by the dm-vdo data store. Both of these
+are built on top of funnel queue and are intended to support the
+dispatching of many short-running tasks. The work_queue also supports
+priorities. Finally, this commit adds vdo_completion, the structure
+which is enqueued on vdo's work_queues.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
-Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
-Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
+Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
+Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
+Co-developed-by: Ken Raeburn <raeburn@redhat.com>
+Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-vdo/delta-index.c | 2018 +++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/delta-index.h |  292 +++++
- drivers/md/dm-vdo/hash-utils.h  |   66 +
- 3 files changed, 2376 insertions(+)
- create mode 100644 drivers/md/dm-vdo/delta-index.c
- create mode 100644 drivers/md/dm-vdo/delta-index.h
- create mode 100644 drivers/md/dm-vdo/hash-utils.h
+ drivers/md/dm-vdo/completion.c    | 141 +++++++
+ drivers/md/dm-vdo/completion.h    | 155 +++++++
+ drivers/md/dm-vdo/cpu.h           |  58 +++
+ drivers/md/dm-vdo/funnel-queue.c  | 169 ++++++++
+ drivers/md/dm-vdo/funnel-queue.h  | 110 +++++
+ drivers/md/dm-vdo/request-queue.c | 284 +++++++++++++
+ drivers/md/dm-vdo/request-queue.h |  30 ++
+ drivers/md/dm-vdo/work-queue.c    | 659 ++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/work-queue.h    |  53 +++
+ 9 files changed, 1659 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/completion.c
+ create mode 100644 drivers/md/dm-vdo/completion.h
+ create mode 100644 drivers/md/dm-vdo/cpu.h
+ create mode 100644 drivers/md/dm-vdo/funnel-queue.c
+ create mode 100644 drivers/md/dm-vdo/funnel-queue.h
+ create mode 100644 drivers/md/dm-vdo/request-queue.c
+ create mode 100644 drivers/md/dm-vdo/request-queue.h
+ create mode 100644 drivers/md/dm-vdo/work-queue.c
+ create mode 100644 drivers/md/dm-vdo/work-queue.h
 
-diff --git a/drivers/md/dm-vdo/delta-index.c b/drivers/md/dm-vdo/delta-index.c
+diff --git a/drivers/md/dm-vdo/completion.c b/drivers/md/dm-vdo/completion.c
 new file mode 100644
-index 000000000000..2cdcd9d4ea27
+index 000000000000..e4b6ff74d098
 --- /dev/null
-+++ b/drivers/md/dm-vdo/delta-index.c
-@@ -0,0 +1,2018 @@
++++ b/drivers/md/dm-vdo/completion.c
+@@ -0,0 +1,141 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
-+#include "delta-index.h"
 +
-+#include <linux/bitops.h>
-+#include <linux/bits.h>
-+#include <linux/compiler.h>
-+#include <linux/limits.h>
-+#include <linux/log2.h>
++#include "completion.h"
 +
-+#include "config.h"
++#include <linux/kernel.h>
++
++#include "logger.h"
++#include "permassert.h"
++
++#include "status-codes.h"
++#include "types.h"
++#include "vio.h"
++#include "vdo.h"
++
++/**
++ * DOC: vdo completions.
++ *
++ * Most of vdo's data structures are lock free, each either belonging to a single "zone," or
++ * divided into a number of zones whose accesses to the structure do not overlap. During normal
++ * operation, at most one thread will be operating in any given zone. Each zone has a
++ * vdo_work_queue which holds vdo_completions that are to be run in that zone. A completion may
++ * only be enqueued on one queue or operating in a single zone at a time.
++ *
++ * At each step of a multi-threaded operation, the completion performing the operation is given a
++ * callback, error handler, and thread id for the next step. A completion is "run" when it is
++ * operating on the correct thread (as specified by its callback_thread_id). If the value of its
++ * "result" field is an error (i.e. not VDO_SUCCESS), the function in its "error_handler" will be
++ * invoked. If the error_handler is NULL, or there is no error, the function set as its "callback"
++ * will be invoked. Generally, a completion will not be run directly, but rather will be
++ * "launched." In this case, it will check whether it is operating on the correct thread. If it is,
++ * it will run immediately. Otherwise, it will be enqueue on the vdo_work_queue associated with the
++ * completion's "callback_thread_id". When it is dequeued, it will be on the correct thread, and
++ * will get run. In some cases, the completion should get queued instead of running immediately,
++ * even if it is being launched from the correct thread. This is usually in cases where there is a
++ * long chain of callbacks, all on the same thread, which could overflow the stack. In such cases,
++ * the completion's "requeue" field should be set to true. Doing so will skip the current thread
++ * check and simply enqueue the completion.
++ *
++ * A completion may be "finished," in which case its "complete" field will be set to true before it
++ * is next run. It is a bug to attempt to set the result or re-finish a finished completion.
++ * Because a completion's fields are not safe to examine from any thread other than the one on
++ * which the completion is currently operating, this field is used only to aid in detecting
++ * programming errors. It can not be used for cross-thread checking on the status of an operation.
++ * A completion must be "reset" before it can be reused after it has been finished. Resetting will
++ * also clear any error from the result field.
++ **/
++
++void vdo_initialize_completion(struct vdo_completion *completion,
++			       struct vdo *vdo,
++			       enum vdo_completion_type type)
++{
++	memset(completion, 0, sizeof(*completion));
++	completion->vdo = vdo;
++	completion->type = type;
++	vdo_reset_completion(completion);
++}
++
++static inline void assert_incomplete(struct vdo_completion *completion)
++{
++	ASSERT_LOG_ONLY(!completion->complete, "completion is not complete");
++}
++
++/**
++ * vdo_set_completion_result() - Set the result of a completion.
++ *
++ * Older errors will not be masked.
++ */
++void vdo_set_completion_result(struct vdo_completion *completion, int result)
++{
++	assert_incomplete(completion);
++	if (completion->result == VDO_SUCCESS)
++		completion->result = result;
++}
++
++/**
++ * vdo_launch_completion_with_priority() - Run or enqueue a completion.
++ * @priority: The priority at which to enqueue the completion.
++ *
++ * If called on the correct thread (i.e. the one specified in the completion's callback_thread_id
++ * field) and not marked for requeue, the completion will be run immediately. Otherwise, the
++ * completion will be enqueued on the specified thread.
++ */
++void vdo_launch_completion_with_priority(struct vdo_completion *completion,
++					 enum vdo_completion_priority priority)
++{
++	thread_id_t callback_thread = completion->callback_thread_id;
++
++	if (completion->requeue || (callback_thread != vdo_get_callback_thread_id())) {
++		vdo_enqueue_completion(completion, priority);
++		return;
++	}
++
++	vdo_run_completion(completion);
++}
++
++/** vdo_finish_completion() - Mark a completion as complete and then launch it. */
++void vdo_finish_completion(struct vdo_completion *completion)
++{
++	assert_incomplete(completion);
++	completion->complete = true;
++	if (completion->callback != NULL)
++		vdo_launch_completion(completion);
++}
++
++void vdo_enqueue_completion(struct vdo_completion *completion,
++			    enum vdo_completion_priority priority)
++{
++	struct vdo *vdo = completion->vdo;
++	thread_id_t thread_id = completion->callback_thread_id;
++
++	if (ASSERT(thread_id < vdo->thread_config.thread_count,
++		   "thread_id %u (completion type %d) is less than thread count %u",
++		   thread_id,
++		   completion->type,
++		   vdo->thread_config.thread_count) != UDS_SUCCESS)
++		BUG();
++
++	completion->requeue = false;
++	completion->priority = priority;
++	completion->my_queue = NULL;
++	vdo_enqueue_work_queue(vdo->threads[thread_id].queue, completion);
++}
++
++/**
++ * vdo_requeue_completion_if_needed() - Requeue a completion if not called on the specified thread.
++ *
++ * Return: True if the completion was requeued; callers may not access the completion in this case.
++ */
++bool vdo_requeue_completion_if_needed(struct vdo_completion *completion,
++				      thread_id_t callback_thread_id)
++{
++	if (vdo_get_callback_thread_id() == callback_thread_id)
++		return false;
++
++	completion->callback_thread_id = callback_thread_id;
++	vdo_enqueue_completion(completion, VDO_WORK_Q_DEFAULT_PRIORITY);
++	return true;
++}
+diff --git a/drivers/md/dm-vdo/completion.h b/drivers/md/dm-vdo/completion.h
+new file mode 100644
+index 000000000000..b81322aea253
+--- /dev/null
++++ b/drivers/md/dm-vdo/completion.h
+@@ -0,0 +1,155 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef VDO_COMPLETION_H
++#define VDO_COMPLETION_H
++
++#include "permassert.h"
++
++#include "status-codes.h"
++#include "types.h"
++
++/**
++ * vdo_run_completion() - Run a completion's callback or error handler on the current thread.
++ *
++ * Context: This function must be called from the correct callback thread.
++ */
++static inline void vdo_run_completion(struct vdo_completion *completion)
++{
++	if ((completion->result != VDO_SUCCESS) && (completion->error_handler != NULL)) {
++		completion->error_handler(completion);
++		return;
++	}
++
++	completion->callback(completion);
++}
++
++void vdo_set_completion_result(struct vdo_completion *completion, int result);
++
++void vdo_initialize_completion(struct vdo_completion *completion,
++			       struct vdo *vdo,
++			       enum vdo_completion_type type);
++
++/**
++ * vdo_reset_completion() - Reset a completion to a clean state, while keeping the type, vdo and
++ *                          parent information.
++ */
++static inline void vdo_reset_completion(struct vdo_completion *completion)
++{
++	completion->result = VDO_SUCCESS;
++	completion->complete = false;
++}
++
++void vdo_launch_completion_with_priority(struct vdo_completion *completion,
++					 enum vdo_completion_priority priority);
++
++/**
++ * vdo_launch_completion() - Launch a completion with default priority.
++ */
++static inline void vdo_launch_completion(struct vdo_completion *completion)
++{
++	vdo_launch_completion_with_priority(completion, VDO_WORK_Q_DEFAULT_PRIORITY);
++}
++
++/**
++ * vdo_continue_completion() - Continue processing a completion.
++ * @result: The current result (will not mask older errors).
++ *
++ * Continue processing a completion by setting the current result and calling
++ * vdo_launch_completion().
++ */
++static inline void vdo_continue_completion(struct vdo_completion *completion, int result)
++{
++	vdo_set_completion_result(completion, result);
++	vdo_launch_completion(completion);
++}
++
++void vdo_finish_completion(struct vdo_completion *completion);
++
++/**
++ * vdo_fail_completion() - Set the result of a completion if it does not already have an error,
++ *                         then finish it.
++ */
++static inline void vdo_fail_completion(struct vdo_completion *completion, int result)
++{
++	vdo_set_completion_result(completion, result);
++	vdo_finish_completion(completion);
++}
++
++/**
++ * vdo_assert_completion_type() - Assert that a completion is of the correct type.
++ *
++ * Return: VDO_SUCCESS or an error
++ */
++static inline int
++vdo_assert_completion_type(struct vdo_completion *completion, enum vdo_completion_type expected)
++{
++	return ASSERT(expected == completion->type,
++		      "completion type should be %u, not %u",
++		      expected,
++		      completion->type);
++}
++
++static inline void vdo_set_completion_callback(struct vdo_completion *completion,
++					       vdo_action *callback,
++					       thread_id_t callback_thread_id)
++{
++	completion->callback = callback;
++	completion->callback_thread_id = callback_thread_id;
++}
++
++/**
++ * vdo_launch_completion_callback() - Set the callback for a completion and launch it immediately.
++ */
++static inline void vdo_launch_completion_callback(struct vdo_completion *completion,
++						  vdo_action *callback,
++						  thread_id_t callback_thread_id)
++{
++	vdo_set_completion_callback(completion, callback, callback_thread_id);
++	vdo_launch_completion(completion);
++}
++
++/**
++ * vdo_prepare_completion() - Prepare a completion for launch.
++ *
++ * Resets the completion, and then sets its callback, error handler, callback thread, and parent.
++ */
++static inline void vdo_prepare_completion(struct vdo_completion *completion,
++					  vdo_action *callback,
++					  vdo_action *error_handler,
++					  thread_id_t callback_thread_id,
++					  void *parent)
++{
++	vdo_reset_completion(completion);
++	vdo_set_completion_callback(completion, callback, callback_thread_id);
++	completion->error_handler = error_handler;
++	completion->parent = parent;
++}
++
++/**
++ * vdo_prepare_completion_for_requeue() - Prepare a completion for launch ensuring that it will
++ *                                        always be requeued.
++ *
++ * Resets the completion, and then sets its callback, error handler, callback thread, and parent.
++ */
++static inline void
++vdo_prepare_completion_for_requeue(struct vdo_completion *completion,
++				   vdo_action *callback,
++				   vdo_action *error_handler,
++				   thread_id_t callback_thread_id,
++				   void *parent)
++{
++	vdo_prepare_completion(completion, callback, error_handler, callback_thread_id, parent);
++	completion->requeue = true;
++}
++
++void vdo_enqueue_completion(struct vdo_completion *completion,
++			    enum vdo_completion_priority priority);
++
++
++bool vdo_requeue_completion_if_needed(struct vdo_completion *completion,
++				      thread_id_t callback_thread_id);
++
++#endif /* VDO_COMPLETION_H */
+diff --git a/drivers/md/dm-vdo/cpu.h b/drivers/md/dm-vdo/cpu.h
+new file mode 100644
+index 000000000000..a538a4934e4b
+--- /dev/null
++++ b/drivers/md/dm-vdo/cpu.h
+@@ -0,0 +1,58 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_CPU_H
++#define UDS_CPU_H
++
++#include <linux/cache.h>
++
++/**
++ * uds_prefetch_address() - Minimize cache-miss latency by attempting to move data into a CPU cache
++ *                          before it is accessed.
++ *
++ * @address: the address to fetch (may be invalid)
++ * @for_write: must be constant at compile time--false if for reading, true if for writing
++ */
++static inline void uds_prefetch_address(const void *address, bool for_write)
++{
++	/*
++	 * for_write won't be a constant if we are compiled with optimization turned off, in which
++	 * case prefetching really doesn't matter. clang can't figure out that if for_write is a
++	 * constant, it can be passed as the second, mandatorily constant argument to prefetch(),
++	 * at least currently on llvm 12.
++	 */
++	if (__builtin_constant_p(for_write)) {
++		if (for_write)
++			__builtin_prefetch(address, true);
++		else
++			__builtin_prefetch(address, false);
++	}
++}
++
++/**
++ * uds_prefetch_range() - Minimize cache-miss latency by attempting to move a range of addresses
++ *                        into a CPU cache before they are accessed.
++ *
++ * @start: the starting address to fetch (may be invalid)
++ * @size: the number of bytes in the address range
++ * @for_write: must be constant at compile time--false if for reading, true if for writing
++ */
++static inline void uds_prefetch_range(const void *start, unsigned int size, bool for_write)
++{
++	/*
++	 * Count the number of cache lines to fetch, allowing for the address range to span an
++	 * extra cache line boundary due to address alignment.
++	 */
++	const char *address = (const char *) start;
++	unsigned int offset = ((uintptr_t) address % L1_CACHE_BYTES);
++	unsigned int cache_lines = (1 + ((size + offset) / L1_CACHE_BYTES));
++
++	while (cache_lines-- > 0) {
++		uds_prefetch_address(address, for_write);
++		address += L1_CACHE_BYTES;
++	}
++}
++
++#endif /* UDS_CPU_H */
+diff --git a/drivers/md/dm-vdo/funnel-queue.c b/drivers/md/dm-vdo/funnel-queue.c
+new file mode 100644
+index 000000000000..bf7f0d8bc04d
+--- /dev/null
++++ b/drivers/md/dm-vdo/funnel-queue.c
+@@ -0,0 +1,169 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "funnel-queue.h"
++
 +#include "cpu.h"
-+#include "errors.h"
++#include "memory-alloc.h"
++#include "permassert.h"
++#include "uds.h"
++
++int uds_make_funnel_queue(struct funnel_queue **queue_ptr)
++{
++	int result;
++	struct funnel_queue *queue;
++
++	result = UDS_ALLOCATE(1, struct funnel_queue, "funnel queue", &queue);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	/*
++	 * Initialize the stub entry and put it in the queue, establishing the invariant that
++	 * queue->newest and queue->oldest are never null.
++	 */
++	queue->stub.next = NULL;
++	queue->newest = &queue->stub;
++	queue->oldest = &queue->stub;
++
++	*queue_ptr = queue;
++	return UDS_SUCCESS;
++}
++
++void uds_free_funnel_queue(struct funnel_queue *queue)
++{
++	UDS_FREE(queue);
++}
++
++static struct funnel_queue_entry *get_oldest(struct funnel_queue *queue)
++{
++	/*
++	 * Barrier requirements: We need a read barrier between reading a "next" field pointer
++	 * value and reading anything it points to. There's an accompanying barrier in
++	 * uds_funnel_queue_put() between its caller setting up the entry and making it visible.
++	 */
++	struct funnel_queue_entry *oldest = queue->oldest;
++	struct funnel_queue_entry *next = READ_ONCE(oldest->next);
++
++	if (oldest == &queue->stub) {
++		/*
++		 * When the oldest entry is the stub and it has no successor, the queue is
++		 * logically empty.
++		 */
++		if (next == NULL)
++			return NULL;
++		/*
++		 * The stub entry has a successor, so the stub can be dequeued and ignored without
++		 * breaking the queue invariants.
++		 */
++		oldest = next;
++		queue->oldest = oldest;
++		next = READ_ONCE(oldest->next);
++	}
++
++	/*
++	 * We have a non-stub candidate to dequeue. If it lacks a successor, we'll need to put the
++	 * stub entry back on the queue first.
++	 */
++	if (next == NULL) {
++		struct funnel_queue_entry *newest = READ_ONCE(queue->newest);
++
++		if (oldest != newest)
++			/*
++			 * Another thread has already swung queue->newest atomically, but not yet
++			 * assigned previous->next. The queue is really still empty.
++			 */
++			return NULL;
++
++		/*
++		 * Put the stub entry back on the queue, ensuring a successor will eventually be
++		 * seen.
++		 */
++		uds_funnel_queue_put(queue, &queue->stub);
++
++		/* Check again for a successor. */
++		next = READ_ONCE(oldest->next);
++		if (next == NULL)
++			/*
++			 * We lost a race with a producer who swapped queue->newest before we did,
++			 * but who hasn't yet updated previous->next. Try again later.
++			 */
++			return NULL;
++	}
++
++	return oldest;
++}
++
++/*
++ * Poll a queue, removing the oldest entry if the queue is not empty. This function must only be
++ * called from a single consumer thread.
++ */
++struct funnel_queue_entry *uds_funnel_queue_poll(struct funnel_queue *queue)
++{
++	struct funnel_queue_entry *oldest = get_oldest(queue);
++
++	if (oldest == NULL)
++		return oldest;
++
++	/*
++	 * Dequeue the oldest entry and return it. Only one consumer thread may call this function,
++	 * so no locking, atomic operations, or fences are needed; queue->oldest is owned by the
++	 * consumer and oldest->next is never used by a producer thread after it is swung from NULL
++	 * to non-NULL.
++	 */
++	queue->oldest = READ_ONCE(oldest->next);
++	/*
++	 * Make sure the caller sees the proper stored data for this entry. Since we've already
++	 * fetched the entry pointer we stored in "queue->oldest", this also ensures that on entry
++	 * to the next call we'll properly see the dependent data.
++	 */
++	smp_rmb();
++	/*
++	 * If "oldest" is a very light-weight work item, we'll be looking for the next one very
++	 * soon, so prefetch it now.
++	 */
++	uds_prefetch_address(queue->oldest, true);
++	WRITE_ONCE(oldest->next, NULL);
++	return oldest;
++}
++
++/*
++ * Check whether the funnel queue is empty or not. If the queue is in a transition state with one
++ * or more entries being added such that the list view is incomplete, this function will report the
++ * queue as empty.
++ */
++bool uds_is_funnel_queue_empty(struct funnel_queue *queue)
++{
++	return get_oldest(queue) == NULL;
++}
++
++/*
++ * Check whether the funnel queue is idle or not. If the queue has entries available to be
++ * retrieved, it is not idle. If the queue is in a transition state with one or more entries being
++ * added such that the list view is incomplete, it may not be possible to retrieve an entry with
++ * the uds_funnel_queue_poll() function, but the queue will not be considered idle.
++ */
++bool uds_is_funnel_queue_idle(struct funnel_queue *queue)
++{
++	/*
++	 * Oldest is not the stub, so there's another entry, though if next is NULL we can't
++	 * retrieve it yet.
++	 */
++	if (queue->oldest != &queue->stub)
++		return false;
++
++	/*
++	 * Oldest is the stub, but newest has been updated by _put(); either there's another,
++	 * retrievable entry in the list, or the list is officially empty but in the intermediate
++	 * state of having an entry added.
++	 *
++	 * Whether anything is retrievable depends on whether stub.next has been updated and become
++	 * visible to us, but for idleness we don't care. And due to memory ordering in _put(), the
++	 * update to newest would be visible to us at the same time or sooner.
++	 */
++	if (READ_ONCE(queue->newest) != &queue->stub)
++		return false;
++
++	return true;
++}
+diff --git a/drivers/md/dm-vdo/funnel-queue.h b/drivers/md/dm-vdo/funnel-queue.h
+new file mode 100644
+index 000000000000..275dd4ac29a4
+--- /dev/null
++++ b/drivers/md/dm-vdo/funnel-queue.h
+@@ -0,0 +1,110 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_FUNNEL_QUEUE_H
++#define UDS_FUNNEL_QUEUE_H
++
++#include <linux/atomic.h>
++#include <linux/cache.h>
++
++/*
++ * A funnel queue is a simple (almost) lock-free queue that accepts entries from multiple threads
++ * (multi-producer) and delivers them to a single thread (single-consumer). "Funnel" is an attempt
++ * to evoke the image of requests from more than one producer being "funneled down" to a single
++ * consumer.
++ *
++ * This is an unsynchronized but thread-safe data structure when used as intended. There is no
++ * mechanism to ensure that only one thread is consuming from the queue. If more than one thread
++ * attempts to consume from the queue, the resulting behavior is undefined. Clients must not
++ * directly access or manipulate the internals of the queue, which are only exposed for the purpose
++ * of allowing the very simple enqueue operation to be inlined.
++ *
++ * The implementation requires that a funnel_queue_entry structure (a link pointer) is embedded in
++ * the queue entries, and pointers to those structures are used exclusively by the queue. No macros
++ * are defined to template the queue, so the offset of the funnel_queue_entry in the records placed
++ * in the queue must all be the same so the client can derive their structure pointer from the
++ * entry pointer returned by uds_funnel_queue_poll().
++ *
++ * Callers are wholly responsible for allocating and freeing the entries. Entries may be freed as
++ * soon as they are returned since this queue is not susceptible to the "ABA problem" present in
++ * many lock-free data structures. The queue is dynamically allocated to ensure cache-line
++ * alignment, but no other dynamic allocation is used.
++ *
++ * The algorithm is not actually 100% lock-free. There is a single point in uds_funnel_queue_put()
++ * at which a preempted producer will prevent the consumers from seeing items added to the queue by
++ * later producers, and only if the queue is short enough or the consumer fast enough for it to
++ * reach what was the end of the queue at the time of the preemption.
++ *
++ * The consumer function, uds_funnel_queue_poll(), will return NULL when the queue is empty. To
++ * wait for data to consume, spin (if safe) or combine the queue with a struct event_count to
++ * signal the presence of new entries.
++ */
++
++/* This queue link structure must be embedded in client entries. */
++struct funnel_queue_entry {
++	/* The next (newer) entry in the queue. */
++	struct funnel_queue_entry *next;
++};
++
++/*
++ * The dynamically allocated queue structure, which is allocated on a cache line boundary so the
++ * producer and consumer fields in the structure will land on separate cache lines. This should be
++ * consider opaque but it is exposed here so uds_funnel_queue_put() can be inlined.
++ */
++struct __aligned(L1_CACHE_BYTES) funnel_queue {
++	/*
++	 * The producers' end of the queue, an atomically exchanged pointer that will never be
++	 * NULL.
++	 */
++	struct funnel_queue_entry *newest;
++
++	/* The consumer's end of the queue, which is owned by the consumer and never NULL. */
++	struct funnel_queue_entry *oldest __aligned(L1_CACHE_BYTES);
++
++	/* A dummy entry used to provide the non-NULL invariants above. */
++	struct funnel_queue_entry stub;
++};
++
++int __must_check uds_make_funnel_queue(struct funnel_queue **queue_ptr);
++
++void uds_free_funnel_queue(struct funnel_queue *queue);
++
++/*
++ * Put an entry on the end of the queue.
++ *
++ * The entry pointer must be to the struct funnel_queue_entry embedded in the caller's data
++ * structure. The caller must be able to derive the address of the start of their data structure
++ * from the pointer that passed in here, so every entry in the queue must have the struct
++ * funnel_queue_entry at the same offset within the client's structure.
++ */
++static inline void
++uds_funnel_queue_put(struct funnel_queue *queue, struct funnel_queue_entry *entry)
++{
++	struct funnel_queue_entry *previous;
++
++	/*
++	 * Barrier requirements: All stores relating to the entry ("next" pointer, containing data
++	 * structure fields) must happen before the previous->next store making it visible to the
++	 * consumer. Also, the entry's "next" field initialization to NULL must happen before any
++	 * other producer threads can see the entry (the xchg) and try to update the "next" field.
++	 *
++	 * xchg implements a full barrier.
++	 */
++	WRITE_ONCE(entry->next, NULL);
++	previous = xchg(&queue->newest, entry);
++	/*
++	 * Preemptions between these two statements hide the rest of the queue from the consumer,
++	 * preventing consumption until the following assignment runs.
++	 */
++	WRITE_ONCE(previous->next, entry);
++}
++
++struct funnel_queue_entry *__must_check uds_funnel_queue_poll(struct funnel_queue *queue);
++
++bool __must_check uds_is_funnel_queue_empty(struct funnel_queue *queue);
++
++bool __must_check uds_is_funnel_queue_idle(struct funnel_queue *queue);
++
++#endif /* UDS_FUNNEL_QUEUE_H */
+diff --git a/drivers/md/dm-vdo/request-queue.c b/drivers/md/dm-vdo/request-queue.c
+new file mode 100644
+index 000000000000..1c60b09027a8
+--- /dev/null
++++ b/drivers/md/dm-vdo/request-queue.c
+@@ -0,0 +1,284 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "request-queue.h"
++
++#include <linux/atomic.h>
++#include <linux/compiler.h>
++#include <linux/wait.h>
++
++#include "funnel-queue.h"
++#include "logger.h"
++#include "memory-alloc.h"
++#include "uds-threads.h"
++
++/*
++ * This queue will attempt to handle requests in reasonably sized batches instead of reacting
++ * immediately to each new request. The wait time between batches is dynamically adjusted up or
++ * down to try to balance responsiveness against wasted thread run time.
++ *
++ * If the wait time becomes long enough, the queue will become dormant and must be explicitly
++ * awoken when a new request is enqueued. The enqueue operation updates "newest" in the funnel
++ * queue via xchg (which is a memory barrier), and later checks "dormant" to decide whether to do a
++ * wakeup of the worker thread.
++ *
++ * When deciding to go to sleep, the worker thread sets "dormant" and then examines "newest" to
++ * decide if the funnel queue is idle. In dormant mode, the last examination of "newest" before
++ * going to sleep is done inside the wait_event_interruptible() macro, after a point where one or
++ * more memory barriers have been issued. (Preparing to sleep uses spin locks.) Even if the funnel
++ * queue's "next" field update isn't visible yet to make the entry accessible, its existence will
++ * kick the worker thread out of dormant mode and back into timer-based mode.
++ *
++ * Unbatched requests are used to communicate between different zone threads and will also cause
++ * the queue to awaken immediately.
++ */
++
++enum {
++	NANOSECOND = 1,
++	MICROSECOND = 1000 * NANOSECOND,
++	MILLISECOND = 1000 * MICROSECOND,
++	DEFAULT_WAIT_TIME = 20 * MICROSECOND,
++	MINIMUM_WAIT_TIME = DEFAULT_WAIT_TIME / 2,
++	MAXIMUM_WAIT_TIME = MILLISECOND,
++	MINIMUM_BATCH = 32,
++	MAXIMUM_BATCH = 64,
++};
++
++struct uds_request_queue {
++	/* Wait queue for synchronizing producers and consumer */
++	struct wait_queue_head wait_head;
++	/* Function to process a request */
++	uds_request_queue_processor_t *processor;
++	/* Queue of new incoming requests */
++	struct funnel_queue *main_queue;
++	/* Queue of old requests to retry */
++	struct funnel_queue *retry_queue;
++	/* The thread id of the worker thread */
++	struct thread *thread;
++	/* True if the worker was started */
++	bool started;
++	/* When true, requests can be enqueued */
++	bool running;
++	/* A flag set when the worker is waiting without a timeout */
++	atomic_t dormant;
++};
++
++static inline struct uds_request *poll_queues(struct uds_request_queue *queue)
++{
++	struct funnel_queue_entry *entry;
++
++	entry = uds_funnel_queue_poll(queue->retry_queue);
++	if (entry != NULL)
++		return container_of(entry, struct uds_request, queue_link);
++
++	entry = uds_funnel_queue_poll(queue->main_queue);
++	if (entry != NULL)
++		return container_of(entry, struct uds_request, queue_link);
++
++	return NULL;
++}
++
++static inline bool are_queues_idle(struct uds_request_queue *queue)
++{
++	return uds_is_funnel_queue_idle(queue->retry_queue) &&
++	       uds_is_funnel_queue_idle(queue->main_queue);
++}
++
++/*
++ * Determine if there is a next request to process, and return it if there is. Also return flags
++ * indicating whether the worker thread can sleep (for the use of wait_event() macros) and whether
++ * the thread did sleep before returning a new request.
++ */
++static inline bool dequeue_request(struct uds_request_queue *queue,
++				   struct uds_request **request_ptr,
++				   bool *waited_ptr)
++{
++	struct uds_request *request = poll_queues(queue);
++
++	if (request != NULL) {
++		*request_ptr = request;
++		return true;
++	}
++
++	if (!READ_ONCE(queue->running)) {
++		/* Wake the worker thread so it can exit. */
++		*request_ptr = NULL;
++		return true;
++	}
++
++	*request_ptr = NULL;
++	*waited_ptr = true;
++	return false;
++}
++
++static void wait_for_request(struct uds_request_queue *queue,
++			     bool dormant,
++			     unsigned long timeout,
++			     struct uds_request **request,
++			     bool *waited)
++{
++	if (dormant) {
++		wait_event_interruptible(queue->wait_head,
++					 (dequeue_request(queue, request, waited) ||
++					  !are_queues_idle(queue)));
++		return;
++	}
++
++	wait_event_interruptible_hrtimeout(queue->wait_head,
++					   dequeue_request(queue, request, waited),
++					   ns_to_ktime(timeout));
++}
++
++static void request_queue_worker(void *arg)
++{
++	struct uds_request_queue *queue = (struct uds_request_queue *) arg;
++	struct uds_request *request = NULL;
++	unsigned long time_batch = DEFAULT_WAIT_TIME;
++	bool dormant = atomic_read(&queue->dormant);
++	bool waited = false;
++	long current_batch = 0;
++
++	for (;;) {
++		wait_for_request(queue, dormant, time_batch, &request, &waited);
++		if (likely(request != NULL)) {
++			current_batch++;
++			queue->processor(request);
++		} else if (!READ_ONCE(queue->running)) {
++			break;
++		}
++
++		if (dormant) {
++			/*
++			 * The queue has been roused from dormancy. Clear the flag so enqueuers can
++			 * stop broadcasting. No fence is needed for this transition.
++			 */
++			atomic_set(&queue->dormant, false);
++			dormant = false;
++			time_batch = DEFAULT_WAIT_TIME;
++		} else if (waited) {
++			/*
++			 * We waited for this request to show up. Adjust the wait time to smooth
++			 * out the batch size.
++			 */
++			if (current_batch < MINIMUM_BATCH) {
++				/*
++				 * If the last batch of requests was too small, increase the wait
++				 * time.
++				 */
++				time_batch += time_batch / 4;
++				if (time_batch >= MAXIMUM_WAIT_TIME) {
++					atomic_set(&queue->dormant, true);
++					dormant = true;
++				}
++			} else if (current_batch > MAXIMUM_BATCH) {
++				/*
++				 * If the last batch of requests was too large, decrease the wait
++				 * time.
++				 */
++				time_batch -= time_batch / 4;
++				if (time_batch < MINIMUM_WAIT_TIME)
++					time_batch = MINIMUM_WAIT_TIME;
++			}
++			current_batch = 0;
++		}
++	}
++
++	/*
++	 * Ensure that we process any remaining requests that were enqueued before trying to shut
++	 * down. The corresponding write barrier is in uds_request_queue_finish().
++	 */
++	smp_rmb();
++	while ((request = poll_queues(queue)) != NULL)
++		queue->processor(request);
++}
++
++int uds_make_request_queue(const char *queue_name,
++			   uds_request_queue_processor_t *processor,
++			   struct uds_request_queue **queue_ptr)
++{
++	int result;
++	struct uds_request_queue *queue;
++
++	result = UDS_ALLOCATE(1, struct uds_request_queue, __func__, &queue);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	queue->processor = processor;
++	queue->running = true;
++	atomic_set(&queue->dormant, false);
++	init_waitqueue_head(&queue->wait_head);
++
++	result = uds_make_funnel_queue(&queue->main_queue);
++	if (result != UDS_SUCCESS) {
++		uds_request_queue_finish(queue);
++		return result;
++	}
++
++	result = uds_make_funnel_queue(&queue->retry_queue);
++	if (result != UDS_SUCCESS) {
++		uds_request_queue_finish(queue);
++		return result;
++	}
++
++	result = uds_create_thread(request_queue_worker, queue, queue_name, &queue->thread);
++	if (result != UDS_SUCCESS) {
++		uds_request_queue_finish(queue);
++		return result;
++	}
++
++	queue->started = true;
++	*queue_ptr = queue;
++	return UDS_SUCCESS;
++}
++
++static inline void wake_up_worker(struct uds_request_queue *queue)
++{
++	if (wq_has_sleeper(&queue->wait_head))
++		wake_up(&queue->wait_head);
++}
++
++void uds_request_queue_enqueue(struct uds_request_queue *queue, struct uds_request *request)
++{
++	struct funnel_queue *sub_queue;
++	bool unbatched = request->unbatched;
++
++	sub_queue = request->requeued ? queue->retry_queue : queue->main_queue;
++	uds_funnel_queue_put(sub_queue, &request->queue_link);
++
++	/*
++	 * We must wake the worker thread when it is dormant. A read fence isn't needed here since
++	 * we know the queue operation acts as one.
++	 */
++	if (atomic_read(&queue->dormant) || unbatched)
++		wake_up_worker(queue);
++}
++
++void uds_request_queue_finish(struct uds_request_queue *queue)
++{
++	int result;
++
++	if (queue == NULL)
++		return;
++
++	/*
++	 * This memory barrier ensures that any requests we queued will be seen. The point is that
++	 * when dequeue_request() sees the following update to the running flag, it will also be
++	 * able to see any change we made to a next field in the funnel queue entry. The
++	 * corresponding read barrier is in request_queue_worker().
++	 */
++	smp_wmb();
++	WRITE_ONCE(queue->running, false);
++
++	if (queue->started) {
++		wake_up_worker(queue);
++		result = uds_join_threads(queue->thread);
++		if (result != UDS_SUCCESS)
++			uds_log_warning_strerror(result, "Failed to join worker thread");
++	}
++
++	uds_free_funnel_queue(queue->main_queue);
++	uds_free_funnel_queue(queue->retry_queue);
++	UDS_FREE(queue);
++}
+diff --git a/drivers/md/dm-vdo/request-queue.h b/drivers/md/dm-vdo/request-queue.h
+new file mode 100644
+index 000000000000..818cb14135fd
+--- /dev/null
++++ b/drivers/md/dm-vdo/request-queue.h
+@@ -0,0 +1,30 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_REQUEST_QUEUE_H
++#define UDS_REQUEST_QUEUE_H
++
++#include "uds.h"
++
++/*
++ * A simple request queue which will handle new requests in the order in which they are received,
++ * and will attempt to handle requeued requests before new ones. However, the nature of the
++ * implementation means that it cannot guarantee this ordering; the prioritization is merely a
++ * hint.
++ */
++
++struct uds_request_queue;
++
++typedef void uds_request_queue_processor_t(struct uds_request *);
++
++int __must_check uds_make_request_queue(const char *queue_name,
++					uds_request_queue_processor_t *processor,
++					struct uds_request_queue **queue_ptr);
++
++void uds_request_queue_enqueue(struct uds_request_queue *queue, struct uds_request *request);
++
++void uds_request_queue_finish(struct uds_request_queue *queue);
++
++#endif /* UDS_REQUEST_QUEUE_H */
+diff --git a/drivers/md/dm-vdo/work-queue.c b/drivers/md/dm-vdo/work-queue.c
+new file mode 100644
+index 000000000000..6adf07fc74e1
+--- /dev/null
++++ b/drivers/md/dm-vdo/work-queue.c
+@@ -0,0 +1,659 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "work-queue.h"
++
++#include <linux/atomic.h>
++#include <linux/cache.h>
++#include <linux/completion.h>
++#include <linux/err.h>
++#include <linux/kthread.h>
++#include <linux/percpu.h>
++
++#include "funnel-queue.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
 +#include "numeric.h"
 +#include "permassert.h"
 +#include "string-utils.h"
-+#include "time-utils.h"
-+#include "uds.h"
 +
-+/*
-+ * The entries in a delta index could be stored in a single delta list, but to reduce search times
-+ * and update costs it uses multiple delta lists. These lists are stored in a single chunk of
-+ * memory managed by the delta_zone structure. The delta_zone can move the data around within its
-+ * memory, so the location of each delta list is recorded as a bit offset into the memory. Because
-+ * the volume index can contain over a million delta lists, we want to be efficient with the size
-+ * of the delta list header information. This information is encoded into 16 bytes per list. The
-+ * volume index delta list memory can easily exceed 4 gigabits, so a 64 bit value is needed to
-+ * address the memory. The volume index delta lists average around 6 kilobits, so 16 bits are
-+ * sufficient to store the size of a delta list.
++#include "completion.h"
++#include "status-codes.h"
++
++static DEFINE_PER_CPU(unsigned int, service_queue_rotor);
++
++/**
++ * DOC: Work queue definition.
 + *
-+ * Each delta list is stored as a bit stream. Within the delta list encoding, bits and bytes are
-+ * numbered in little endian order. Within a byte, bit 0 is the least significant bit (0x1), and
-+ * bit 7 is the most significant bit (0x80). Within a bit stream, bit 7 is the most signficant bit
-+ * of byte 0, and bit 8 is the least significant bit of byte 1. Within a byte array, a byte's
-+ * number corresponds to its index in the array.
-+ *
-+ * A standard delta list entry is stored as a fixed length payload (the value) followed by a
-+ * variable length key (the delta). A collision entry is used when two block names have the same
-+ * delta list address. A collision entry always follows a standard entry for the hash with which it
-+ * collides, and is encoded with DELTA == 0 with an additional 256 bits field at the end,
-+ * containing the full block name. An entry with a delta of 0 at the beginning of a delta list
-+ * indicates a normal entry.
-+ *
-+ * The delta in each entry is encoded with a variable-length Huffman code to minimize the memory
-+ * used by small deltas. The Huffman code is specified by three parameters, which can be computed
-+ * from the desired mean delta when the index is full. (See compute_coding constants() for
-+ * details.)
-+ *
-+ * The bit field utilities used to read and write delta entries assume that it is possible to read
-+ * some bytes beyond the end of the bit field, so a delta_zone memory allocation is guarded by two
-+ * invalid delta lists to prevent reading outside the delta_zone memory. The valid delta lists are
-+ * numbered 1 to N, and the guard lists are numbered 0 and N+1. The function to decode the bit
-+ * stream include a step that skips over bits set to 0 until the first 1 bit is found. A corrupted
-+ * delta list could cause this step to run off the end of the delta_zone memory, so as extra
-+ * protection against this happening, the tail guard list is set to all ones.
-+ *
-+ * The delta_index supports two different forms. The mutable form is created by
-+ * uds_initialize_delta_index(), and is used for the volume index and for open chapter indexes. The
-+ * immutable form is created by uds_initialize_delta_index_page(), and is used for closed (and
-+ * cached) chapter index pages. The immutable form does not allocate delta list headers or
-+ * temporary offsets, and thus is somewhat more memory efficient.
++ * There are two types of work queues: simple, with one worker thread, and round-robin, which uses
++ * a group of the former to do the work, and assigns work to them in round-robin fashion (roughly).
++ * Externally, both are represented via the same common sub-structure, though there's actually not
++ * a great deal of overlap between the two types internally.
 + */
-+
-+/*
-+ * This is the largest field size supported by get_field() and set_field(). Any field that is
-+ * larger is not guaranteed to fit in a single byte-aligned u32.
-+ */
-+enum {
-+	MAX_FIELD_BITS = (sizeof(u32) - 1) * BITS_PER_BYTE + 1,
++struct vdo_work_queue {
++	/* Name of just the work queue (e.g., "cpuQ12") */
++	char *name;
++	bool round_robin_mode;
++	struct vdo_thread *owner;
++	/* Life cycle functions, etc */
++	const struct vdo_work_queue_type *type;
 +};
 +
-+/*
-+ * This is the largest field size supported by get_big_field() and set_big_field(). Any field that
-+ * is larger is not guaranteed to fit in a single byte-aligned u64.
-+ */
-+enum {
-+	MAX_BIG_FIELD_BITS = (sizeof(u64) - 1) * BITS_PER_BYTE + 1,
-+};
-+
-+/*
-+ * This is the number of guard bytes needed at the end of the memory byte array when using the bit
-+ * utilities. These utilities call get_big_field() and set_big_field(), which can access up to 7
-+ * bytes beyond the end of the desired field. The definition is written to make it clear how this
-+ * value is derived.
-+ */
-+enum {
-+	POST_FIELD_GUARD_BYTES = sizeof(u64) - 1,
-+};
-+
-+/* The number of guard bits that are needed in the tail guard list */
-+enum {
-+	GUARD_BITS = POST_FIELD_GUARD_BYTES * BITS_PER_BYTE
-+};
-+
-+/*
-+ * The maximum size of a single delta list in bytes. We count guard bytes in this value because a
-+ * buffer of this size can be used with move_bits().
-+ */
-+enum {
-+	DELTA_LIST_MAX_BYTE_COUNT =
-+		((U16_MAX + BITS_PER_BYTE) / BITS_PER_BYTE + POST_FIELD_GUARD_BYTES)
-+};
-+
-+/* The number of extra bytes and bits needed to store a collision entry */
-+enum {
-+	COLLISION_BYTES = UDS_RECORD_NAME_SIZE,
-+	COLLISION_BITS = COLLISION_BYTES * BITS_PER_BYTE
-+};
-+
-+/*
-+ * Immutable delta lists are packed into pages containing a header that encodes the delta list
-+ * information into 19 bits per list (64KB bit offset).
-+ */
-+
-+enum { IMMUTABLE_HEADER_SIZE = 19 };
-+
-+/*
-+ * Constants and structures for the saved delta index. "DI" is for delta_index, and -##### is a
-+ * number to increment when the format of the data changes.
-+ */
-+
-+enum {
-+	MAGIC_SIZE = 8,
-+};
-+
-+static const char DELTA_INDEX_MAGIC[] = "DI-00002";
-+
-+struct delta_index_header {
-+	char magic[MAGIC_SIZE];
-+	u32 zone_number;
-+	u32 zone_count;
-+	u32 first_list;
-+	u32 list_count;
-+	u64 record_count;
-+	u64 collision_count;
-+};
-+
-+/*
-+ * Header data used for immutable delta index pages. This data is followed by the delta list offset
-+ * table.
-+ */
-+struct delta_page_header {
-+	/* Externally-defined nonce */
-+	u64 nonce;
-+	/* The virtual chapter number */
-+	u64 virtual_chapter_number;
-+	/* Index of the first delta list on the page */
-+	u16 first_list;
-+	/* Number of delta lists on the page */
-+	u16 list_count;
-+} __packed;
-+
-+static inline u64 get_delta_list_byte_start(const struct delta_list *delta_list)
-+{
-+	return delta_list->start / BITS_PER_BYTE;
-+}
-+
-+static inline u16 get_delta_list_byte_size(const struct delta_list *delta_list)
-+{
-+	unsigned int bit_offset = delta_list->start % BITS_PER_BYTE;
-+
-+	return BITS_TO_BYTES(bit_offset + delta_list->size);
-+}
-+
-+static void rebalance_delta_zone(const struct delta_zone *delta_zone, u32 first, u32 last)
-+{
-+	struct delta_list *delta_list;
-+	u64 new_start;
-+
-+	if (first == last) {
-+		/* Only one list is moving, and we know there is space. */
-+		delta_list = &delta_zone->delta_lists[first];
-+		new_start = delta_zone->new_offsets[first];
-+		if (delta_list->start != new_start) {
-+			u64 source;
-+			u64 destination;
-+
-+			source = get_delta_list_byte_start(delta_list);
-+			delta_list->start = new_start;
-+			destination = get_delta_list_byte_start(delta_list);
-+			memmove(delta_zone->memory + destination,
-+				delta_zone->memory + source,
-+				get_delta_list_byte_size(delta_list));
-+		}
-+	} else {
-+		/*
-+		 * There is more than one list. Divide the problem in half, and use recursive calls
-+		 * to process each half. Note that after this computation, first <= middle, and
-+		 * middle < last.
-+		 */
-+		u32 middle = (first + last) / 2;
-+
-+		delta_list = &delta_zone->delta_lists[middle];
-+		new_start = delta_zone->new_offsets[middle];
-+
-+		/*
-+		 * The direction that our middle list is moving determines which half of the
-+		 * problem must be processed first.
-+		 */
-+		if (new_start > delta_list->start) {
-+			rebalance_delta_zone(delta_zone, middle + 1, last);
-+			rebalance_delta_zone(delta_zone, first, middle);
-+		} else {
-+			rebalance_delta_zone(delta_zone, first, middle);
-+			rebalance_delta_zone(delta_zone, middle + 1, last);
-+		}
-+	}
-+}
-+
-+static inline size_t get_zone_memory_size(unsigned int zone_count, size_t memory_size)
-+{
-+	/* Round up so that each zone is a multiple of 64K in size. */
-+	enum {
-+		ALLOC_BOUNDARY = 64 * 1024,
-+	};
-+
-+	return (memory_size / zone_count + ALLOC_BOUNDARY - 1) & -ALLOC_BOUNDARY;
-+}
-+
-+void uds_reset_delta_index(const struct delta_index *delta_index)
-+{
-+	unsigned int z;
++struct simple_work_queue {
++	struct vdo_work_queue common;
++	struct funnel_queue *priority_lists[VDO_WORK_Q_MAX_PRIORITY + 1];
++	void *private;
 +
 +	/*
-+	 * Initialize all delta lists to be empty. We keep 2 extra delta list descriptors, one
-+	 * before the first real entry and one after so that we don't need to bounds check the
-+	 * array access when calculating preceding and following gap sizes.
++	 * The fields above are unchanged after setup but often read, and are good candidates for
++	 * caching -- and if the max priority is 2, just fit in one x86-64 cache line if aligned.
++	 * The fields below are often modified as we sleep and wake, so we want a separate cache
++	 * line for performance.
 +	 */
-+	for (z = 0; z < delta_index->zone_count; z++) {
-+		u64 list_bits;
-+		u64 spacing;
-+		u64 offset;
-+		unsigned int i;
-+		struct delta_zone *zone = &delta_index->delta_zones[z];
-+		struct delta_list *delta_lists = zone->delta_lists;
 +
-+		/* Zeroing the delta list headers initializes the head guard list correctly. */
-+		memset(delta_lists, 0, (zone->list_count + 2) * sizeof(struct delta_list));
++	/* Any (0 or 1) worker threads waiting for new work to do */
++	wait_queue_head_t waiting_worker_threads ____cacheline_aligned;
++	/* Hack to reduce wakeup calls if the worker thread is running */
++	atomic_t idle;
 +
-+		/* Set all the bits in the end guard list. */
-+		list_bits = (u64) zone->size * BITS_PER_BYTE - GUARD_BITS;
-+		delta_lists[zone->list_count + 1].start = list_bits;
-+		delta_lists[zone->list_count + 1].size = GUARD_BITS;
-+		memset(zone->memory + (list_bits / BITS_PER_BYTE), ~0, POST_FIELD_GUARD_BYTES);
++	/* These are infrequently used so in terms of performance we don't care where they land. */
++	struct task_struct *thread;
++	/* Notify creator once worker has initialized */
++	struct completion *started;
++};
 +
-+		/* Evenly space out the real delta lists by setting regular offsets. */
-+		spacing = list_bits / zone->list_count;
-+		offset = spacing / 2;
-+		for (i = 1; i <= zone->list_count; i++) {
-+			delta_lists[i].start = offset;
-+			offset += spacing;
-+		}
++struct round_robin_work_queue {
++	struct vdo_work_queue common;
++	struct simple_work_queue **service_queues;
++	unsigned int num_service_queues;
++};
 +
-+		/* Update the statistics. */
-+		zone->discard_count += zone->record_count;
-+		zone->record_count = 0;
-+		zone->collision_count = 0;
-+	}
++static inline struct simple_work_queue *as_simple_work_queue(struct vdo_work_queue *queue)
++{
++	return ((queue == NULL) ? NULL : container_of(queue, struct simple_work_queue, common));
 +}
 +
-+/* Compute the Huffman coding parameters for the given mean delta. The Huffman code is specified by
-+ * three parameters:
++static inline struct round_robin_work_queue *
++as_round_robin_work_queue(struct vdo_work_queue *queue)
++{
++	return ((queue == NULL) ?
++		 NULL :
++		 container_of(queue, struct round_robin_work_queue, common));
++}
++
++/* Processing normal completions. */
++
++/*
++ * Dequeue and return the next waiting completion, if any.
 + *
-+ *  MINBITS   The number of bits in the smallest code
-+ *  BASE      The number of values coded using a code of length MINBITS
-+ *  INCR      The number of values coded by using one additional bit
-+ *
-+ * These parameters are related by this equation:
-+ *
-+ *	BASE + INCR == 1 << MINBITS
-+ *
-+ * The math for the Huffman code of an exponential distribution says that
-+ *
-+ *	INCR = log(2) * MEAN_DELTA
-+ *
-+ * Then use the smallest MINBITS value so that
-+ *
-+ *	(1 << MINBITS) > INCR
-+ *
-+ * And then
-+ *
-+ *	BASE = (1 << MINBITS) - INCR
-+ *
-+ * Now the index can generate a code such that
-+ * - The first BASE values code using MINBITS bits.
-+ * - The next INCR values code using MINBITS+1 bits.
-+ * - The next INCR values code using MINBITS+2 bits.
-+ * - (and so on).
++ * We scan the funnel queues from highest priority to lowest, once; there is therefore a race
++ * condition where a high-priority completion can be enqueued followed by a lower-priority one, and
++ * we'll grab the latter (but we'll catch the high-priority item on the next call). If strict
++ * enforcement of priorities becomes necessary, this function will need fixing.
 + */
-+static void compute_coding_constants(u32 mean_delta, u16 *min_bits, u32 *min_keys, u32 *incr_keys)
++static struct vdo_completion *poll_for_completion(struct simple_work_queue *queue)
 +{
-+	/*
-+	 * We want to compute the rounded value of log(2) * mean_delta. Since we cannot always use
-+	 * floating point, use a really good integer approximation.
-+	 */
-+	*incr_keys = (836158UL * mean_delta + 603160UL) / 1206321UL;
-+	*min_bits = bits_per(*incr_keys + 1);
-+	*min_keys = (1 << *min_bits) - *incr_keys;
++	int i;
++
++	for (i = queue->common.type->max_priority; i >= 0; i--) {
++		struct funnel_queue_entry *link = uds_funnel_queue_poll(queue->priority_lists[i]);
++
++		if (link != NULL)
++			return container_of(link, struct vdo_completion, work_queue_entry_link);
++	}
++
++	return NULL;
 +}
 +
-+void uds_uninitialize_delta_index(struct delta_index *delta_index)
++static void
++enqueue_work_queue_completion(struct simple_work_queue *queue, struct vdo_completion *completion)
 +{
-+	unsigned int z;
++	ASSERT_LOG_ONLY(completion->my_queue == NULL,
++			"completion %px (fn %px) to enqueue (%px) is not already queued (%px)",
++			completion,
++			completion->callback,
++			queue,
++			completion->my_queue);
++	if (completion->priority == VDO_WORK_Q_DEFAULT_PRIORITY)
++		completion->priority = queue->common.type->default_priority;
 +
-+	if (delta_index->delta_zones == NULL)
++	if (ASSERT(completion->priority <= queue->common.type->max_priority,
++		   "priority is in range for queue") != VDO_SUCCESS)
++		completion->priority = 0;
++
++	completion->my_queue = &queue->common;
++
++	/* Funnel queue handles the synchronization for the put. */
++	uds_funnel_queue_put(queue->priority_lists[completion->priority],
++			     &completion->work_queue_entry_link);
++
++	/*
++	 * Due to how funnel queue synchronization is handled (just atomic operations), the
++	 * simplest safe implementation here would be to wake-up any waiting threads after
++	 * enqueueing each item. Even if the funnel queue is not empty at the time of adding an
++	 * item to the queue, the consumer thread may not see this since it is not guaranteed to
++	 * have the same view of the queue as a producer thread.
++	 *
++	 * However, the above is wasteful so instead we attempt to minimize the number of thread
++	 * wakeups. Using an idle flag, and careful ordering using memory barriers, we should be
++	 * able to determine when the worker thread might be asleep or going to sleep. We use
++	 * cmpxchg to try to take ownership (vs other producer threads) of the responsibility for
++	 * waking the worker thread, so multiple wakeups aren't tried at once.
++	 *
++	 * This was tuned for some x86 boxes that were handy; it's untested whether doing the read
++	 * first is any better or worse for other platforms, even other x86 configurations.
++	 */
++	smp_mb();
++	if ((atomic_read(&queue->idle) != 1) || (atomic_cmpxchg(&queue->idle, 1, 0) != 1))
 +		return;
 +
-+	for (z = 0; z < delta_index->zone_count; z++) {
-+		UDS_FREE(UDS_FORGET(delta_index->delta_zones[z].new_offsets));
-+		UDS_FREE(UDS_FORGET(delta_index->delta_zones[z].delta_lists));
-+		UDS_FREE(UDS_FORGET(delta_index->delta_zones[z].memory));
++	/* There's a maximum of one thread in this list. */
++	wake_up(&queue->waiting_worker_threads);
++}
++
++static void run_start_hook(struct simple_work_queue *queue)
++{
++	if (queue->common.type->start != NULL)
++		queue->common.type->start(queue->private);
++}
++
++static void run_finish_hook(struct simple_work_queue *queue)
++{
++	if (queue->common.type->finish != NULL)
++		queue->common.type->finish(queue->private);
++}
++
++/*
++ * Wait for the next completion to process, or until kthread_should_stop indicates that it's time
++ * for us to shut down.
++ *
++ * If kthread_should_stop says it's time to stop but we have pending completions return a
++ * completion.
++ *
++ * Also update statistics relating to scheduler interactions.
++ */
++static struct vdo_completion *wait_for_next_completion(struct simple_work_queue *queue)
++{
++	struct vdo_completion *completion;
++	DEFINE_WAIT(wait);
++
++	while (true) {
++		prepare_to_wait(&queue->waiting_worker_threads, &wait, TASK_INTERRUPTIBLE);
++		/*
++		 * Don't set the idle flag until a wakeup will not be lost.
++		 *
++		 * Force synchronization between setting the idle flag and checking the funnel
++		 * queue; the producer side will do them in the reverse order. (There's still a
++		 * race condition we've chosen to allow, because we've got a timeout below that
++		 * unwedges us if we hit it, but this may narrow the window a little.)
++		 */
++		atomic_set(&queue->idle, 1);
++		smp_mb(); /* store-load barrier between "idle" and funnel queue */
++
++		completion = poll_for_completion(queue);
++		if (completion != NULL)
++			break;
++
++		/*
++		 * We need to check for thread-stop after setting TASK_INTERRUPTIBLE state up
++		 * above. Otherwise, schedule() will put the thread to sleep and might miss a
++		 * wakeup from kthread_stop() call in vdo_finish_work_queue().
++		 */
++		if (kthread_should_stop())
++			break;
++
++		schedule();
++
++		/*
++		 * Most of the time when we wake, it should be because there's work to do. If it
++		 * was a spurious wakeup, continue looping.
++		 */
++		completion = poll_for_completion(queue);
++		if (completion != NULL)
++			break;
 +	}
 +
-+	UDS_FREE(delta_index->delta_zones);
-+	memset(delta_index, 0, sizeof(struct delta_index));
++	finish_wait(&queue->waiting_worker_threads, &wait);
++	atomic_set(&queue->idle, 0);
++
++	return completion;
 +}
 +
-+static int initialize_delta_zone(struct delta_zone *delta_zone,
-+				 size_t size,
-+				 u32 first_list,
-+				 u32 list_count,
-+				 u32 mean_delta,
-+				 u32 payload_bits,
-+				 u8 tag)
++static void process_completion(struct simple_work_queue *queue, struct vdo_completion *completion)
 +{
-+	int result;
++	if (ASSERT(completion->my_queue == &queue->common,
++		   "completion %px from queue %px marked as being in this queue (%px)",
++		   completion,
++		   queue,
++		   completion->my_queue) == UDS_SUCCESS)
++		completion->my_queue = NULL;
 +
-+	result = UDS_ALLOCATE(size, u8, "delta list", &delta_zone->memory);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(list_count + 2, u64, "delta list temp", &delta_zone->new_offsets);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	/* Allocate the delta lists. */
-+	result = UDS_ALLOCATE(list_count + 2,
-+			      struct delta_list,
-+			      "delta lists",
-+			      &delta_zone->delta_lists);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	compute_coding_constants(mean_delta,
-+				 &delta_zone->min_bits,
-+				 &delta_zone->min_keys,
-+				 &delta_zone->incr_keys);
-+	delta_zone->value_bits = payload_bits;
-+	delta_zone->buffered_writer = NULL;
-+	delta_zone->size = size;
-+	delta_zone->rebalance_time = 0;
-+	delta_zone->rebalance_count = 0;
-+	delta_zone->record_count = 0;
-+	delta_zone->collision_count = 0;
-+	delta_zone->discard_count = 0;
-+	delta_zone->overflow_count = 0;
-+	delta_zone->first_list = first_list;
-+	delta_zone->list_count = list_count;
-+	delta_zone->tag = tag;
-+
-+	return UDS_SUCCESS;
++	vdo_run_completion(completion);
 +}
 +
-+int uds_initialize_delta_index(struct delta_index *delta_index,
-+			       unsigned int zone_count,
-+			       u32 list_count,
-+			       u32 mean_delta,
-+			       u32 payload_bits,
-+			       size_t memory_size,
-+			       u8 tag)
++static void service_work_queue(struct simple_work_queue *queue)
 +{
-+	int result;
-+	unsigned int z;
-+	size_t zone_memory;
++	run_start_hook(queue);
 +
-+	result = UDS_ALLOCATE(zone_count,
-+			      struct delta_zone,
-+			      "Delta Index Zones",
-+			      &delta_index->delta_zones);
-+	if (result != UDS_SUCCESS)
-+		return result;
++	while (true) {
++		struct vdo_completion *completion = poll_for_completion(queue);
 +
-+	delta_index->zone_count = zone_count;
-+	delta_index->list_count = list_count;
-+	delta_index->lists_per_zone = DIV_ROUND_UP(list_count, zone_count);
-+	delta_index->memory_size = 0;
-+	delta_index->mutable = true;
-+	delta_index->tag = tag;
++		if (completion == NULL)
++			completion = wait_for_next_completion(queue);
 +
-+	for (z = 0; z < zone_count; z++) {
-+		u32 lists_in_zone = delta_index->lists_per_zone;
-+		u32 first_list_in_zone = z * lists_in_zone;
++		if (completion == NULL)
++			/* No completions but kthread_should_stop() was triggered. */
++			break;
 +
-+		if (z == zone_count - 1) {
-+			/*
-+			 * The last zone gets fewer lists if zone_count doesn't evenly divide
-+			 * list_count. We'll have an underflow if the assertion below doesn't hold.
-+			 */
-+			if (delta_index->list_count <= first_list_in_zone) {
-+				uds_uninitialize_delta_index(delta_index);
-+				return uds_log_error_strerror(UDS_INVALID_ARGUMENT,
-+							      "%u delta lists not enough for %u zones",
-+							      list_count,
-+							      zone_count);
-+			}
-+			lists_in_zone = delta_index->list_count - first_list_in_zone;
-+		}
++		process_completion(queue, completion);
 +
-+		zone_memory = get_zone_memory_size(zone_count, memory_size);
-+		result = initialize_delta_zone(&delta_index->delta_zones[z],
-+					       zone_memory,
-+					       first_list_in_zone,
-+					       lists_in_zone,
-+					       mean_delta,
-+					       payload_bits,
-+					       tag);
-+		if (result != UDS_SUCCESS) {
-+			uds_uninitialize_delta_index(delta_index);
-+			return result;
-+		}
-+
-+		delta_index->memory_size +=
-+			(sizeof(struct delta_zone) + zone_memory +
-+			 (lists_in_zone + 2) * (sizeof(struct delta_list) + sizeof(u64)));
++		/*
++		 * Be friendly to a CPU that has other work to do, if the kernel has told us to.
++		 * This speeds up some performance tests; that "other work" might include other VDO
++		 * threads.
++		 */
++		if (need_resched())
++			cond_resched();
 +	}
 +
-+	uds_reset_delta_index(delta_index);
-+	return UDS_SUCCESS;
++	run_finish_hook(queue);
 +}
 +
-+/* Read a bit field from an arbitrary bit boundary. */
-+static inline u32 get_field(const u8 *memory, u64 offset, u8 size)
++static int work_queue_runner(void *ptr)
 +{
-+	const void *addr = memory + offset / BITS_PER_BYTE;
++	struct simple_work_queue *queue = ptr;
 +
-+	return (get_unaligned_le32(addr) >> (offset % BITS_PER_BYTE)) & ((1 << size) - 1);
++	complete(queue->started);
++	service_work_queue(queue);
++	return 0;
 +}
 +
-+/* Write a bit field to an arbitrary bit boundary. */
-+static inline void set_field(u32 value, u8 *memory, u64 offset, u8 size)
-+{
-+	void *addr = memory + offset / BITS_PER_BYTE;
-+	int shift = offset % BITS_PER_BYTE;
-+	u32 data = get_unaligned_le32(addr);
++/* Creation & teardown */
 +
-+	data &= ~(((1 << size) - 1) << shift);
-+	data |= value << shift;
-+	put_unaligned_le32(data, addr);
-+}
-+
-+/* Get the bit offset to the immutable delta list header. */
-+static inline u32 get_immutable_header_offset(u32 list_number)
-+{
-+	return sizeof(struct delta_page_header) * BITS_PER_BYTE +
-+		list_number * IMMUTABLE_HEADER_SIZE;
-+}
-+
-+/* Get the bit offset to the start of the immutable delta list bit stream. */
-+static inline u32 get_immutable_start(const u8 *memory, u32 list_number)
-+{
-+	return get_field(memory, get_immutable_header_offset(list_number), IMMUTABLE_HEADER_SIZE);
-+}
-+
-+/* Set the bit offset to the start of the immutable delta list bit stream. */
-+static inline void set_immutable_start(u8 *memory, u32 list_number, u32 start)
-+{
-+	set_field(start, memory, get_immutable_header_offset(list_number), IMMUTABLE_HEADER_SIZE);
-+}
-+
-+static bool verify_delta_index_page(u64 nonce,
-+				    u16 list_count,
-+				    u64 expected_nonce,
-+				    u8 *memory,
-+				    size_t memory_size)
++static void free_simple_work_queue(struct simple_work_queue *queue)
 +{
 +	unsigned int i;
 +
-+	/*
-+	 * Verify the nonce. A mismatch can happen here during rebuild if we haven't written the
-+	 * entire volume at least once.
-+	 */
-+	if (nonce != expected_nonce)
-+		return false;
-+
-+	/* Verify that the number of delta lists can fit in the page. */
-+	if (list_count > ((memory_size - sizeof(struct delta_page_header)) *
-+			  BITS_PER_BYTE / IMMUTABLE_HEADER_SIZE))
-+		return false;
-+
-+	/*
-+	 * Verify that the first delta list is immediately after the last delta
-+	 * list header.
-+	 */
-+	if (get_immutable_start(memory, 0) != get_immutable_header_offset(list_count + 1))
-+		return false;
-+
-+	/* Verify that the lists are in the correct order. */
-+	for (i = 0; i < list_count; i++)
-+		if (get_immutable_start(memory, i) > get_immutable_start(memory, i + 1))
-+			return false;
-+
-+	/*
-+	 * Verify that the last list ends on the page, and that there is room
-+	 * for the post-field guard bits.
-+	 */
-+	if (get_immutable_start(memory, list_count) >
-+	    (memory_size - POST_FIELD_GUARD_BYTES) * BITS_PER_BYTE)
-+		return false;
-+
-+	/* Verify that the guard bytes are correctly set to all ones. */
-+	for (i = 0; i < POST_FIELD_GUARD_BYTES; i++) {
-+		if (memory[memory_size - POST_FIELD_GUARD_BYTES + i] != (u8) ~0)
-+			return false;
-+	}
-+
-+	/* All verifications passed. */
-+	return true;
++	for (i = 0; i <= VDO_WORK_Q_MAX_PRIORITY; i++)
++		uds_free_funnel_queue(queue->priority_lists[i]);
++	UDS_FREE(queue->common.name);
++	UDS_FREE(queue);
 +}
 +
-+/* Initialize a delta index page to refer to a supplied page. */
-+int uds_initialize_delta_index_page(struct delta_index_page *delta_index_page,
-+				    u64 expected_nonce,
-+				    u32 mean_delta,
-+				    u32 payload_bits,
-+				    u8 *memory,
-+				    size_t memory_size)
++static void free_round_robin_work_queue(struct round_robin_work_queue *queue)
 +{
-+	u64 nonce;
-+	u64 vcn;
-+	u64 first_list;
-+	u64 list_count;
-+	struct delta_page_header *header = (struct delta_page_header *) memory;
-+	struct delta_zone *delta_zone = &delta_index_page->delta_zone;
-+	const u8 *nonce_addr = (const u8 *) &header->nonce;
-+	const u8 *vcn_addr = (const u8 *) &header->virtual_chapter_number;
-+	const u8 *first_list_addr = (const u8 *) &header->first_list;
-+	const u8 *list_count_addr = (const u8 *) &header->list_count;
++	struct simple_work_queue **queue_table = queue->service_queues;
++	unsigned int count = queue->num_service_queues;
++	unsigned int i;
 +
-+	/* First assume that the header is little endian. */
-+	nonce = get_unaligned_le64(nonce_addr);
-+	vcn = get_unaligned_le64(vcn_addr);
-+	first_list = get_unaligned_le16(first_list_addr);
-+	list_count = get_unaligned_le16(list_count_addr);
-+	if (!verify_delta_index_page(nonce, list_count, expected_nonce, memory, memory_size)) {
-+		/* If that fails, try big endian. */
-+		nonce = get_unaligned_be64(nonce_addr);
-+		vcn = get_unaligned_be64(vcn_addr);
-+		first_list = get_unaligned_be16(first_list_addr);
-+		list_count = get_unaligned_be16(list_count_addr);
-+		if (!verify_delta_index_page(nonce,
-+					     list_count,
-+					     expected_nonce,
-+					     memory,
-+					     memory_size))
-+			/*
-+			 * Both attempts failed. Do not log this as an error, because it can happen
-+			 * during a rebuild if we haven't written the entire volume at least once.
-+			 */
-+			return UDS_CORRUPT_DATA;
-+	}
++	queue->service_queues = NULL;
 +
-+	delta_index_page->delta_index.delta_zones = delta_zone;
-+	delta_index_page->delta_index.zone_count = 1;
-+	delta_index_page->delta_index.list_count = list_count;
-+	delta_index_page->delta_index.lists_per_zone = list_count;
-+	delta_index_page->delta_index.mutable = false;
-+	delta_index_page->delta_index.tag = 'p';
-+	delta_index_page->virtual_chapter_number = vcn;
-+	delta_index_page->lowest_list_number = first_list;
-+	delta_index_page->highest_list_number = first_list + list_count - 1;
-+
-+	compute_coding_constants(mean_delta,
-+				 &delta_zone->min_bits,
-+				 &delta_zone->min_keys,
-+				 &delta_zone->incr_keys);
-+	delta_zone->value_bits = payload_bits;
-+	delta_zone->memory = memory;
-+	delta_zone->delta_lists = NULL;
-+	delta_zone->new_offsets = NULL;
-+	delta_zone->buffered_writer = NULL;
-+	delta_zone->size = memory_size;
-+	delta_zone->rebalance_time = 0;
-+	delta_zone->rebalance_count = 0;
-+	delta_zone->record_count = 0;
-+	delta_zone->collision_count = 0;
-+	delta_zone->discard_count = 0;
-+	delta_zone->overflow_count = 0;
-+	delta_zone->first_list = 0;
-+	delta_zone->list_count = list_count;
-+	delta_zone->tag = 'p';
-+
-+	return UDS_SUCCESS;
++	for (i = 0; i < count; i++)
++		free_simple_work_queue(queue_table[i]);
++	UDS_FREE(queue_table);
++	UDS_FREE(queue->common.name);
++	UDS_FREE(queue);
 +}
 +
-+/* Read a large bit field from an arbitrary bit boundary. */
-+static inline u64 get_big_field(const u8 *memory, u64 offset, u8 size)
++void vdo_free_work_queue(struct vdo_work_queue *queue)
 +{
-+	const void *addr = memory + offset / BITS_PER_BYTE;
-+
-+	return (get_unaligned_le64(addr) >> (offset % BITS_PER_BYTE)) & ((1UL << size) - 1);
-+}
-+
-+/* Write a large bit field to an arbitrary bit boundary. */
-+static inline void set_big_field(u64 value, u8 *memory, u64 offset, u8 size)
-+{
-+	void *addr = memory + offset / BITS_PER_BYTE;
-+	u8 shift = offset % BITS_PER_BYTE;
-+	u64 data = get_unaligned_le64(addr);
-+
-+	data &= ~(((1UL << size) - 1) << shift);
-+	data |= value << shift;
-+	put_unaligned_le64(data, addr);
-+}
-+
-+/* Set a sequence of bits to all zeros. */
-+static inline void set_zero(u8 *memory, u64 offset, u32 size)
-+{
-+	if (size > 0) {
-+		u8 *addr = memory + offset / BITS_PER_BYTE;
-+		u8 shift = offset % BITS_PER_BYTE;
-+		u32 count = size + shift > BITS_PER_BYTE ? (u32) BITS_PER_BYTE - shift : size;
-+
-+		*addr++ &= ~(((1 << count) - 1) << shift);
-+		for (size -= count; size > BITS_PER_BYTE; size -= BITS_PER_BYTE)
-+			*addr++ = 0;
-+
-+		if (size > 0)
-+			*addr &= 0xFF << size;
-+	}
-+}
-+
-+/*
-+ * Move several bits from a higher to a lower address, moving the lower addressed bits first. The
-+ * size and memory offsets are measured in bits.
-+ */
-+static void move_bits_down(const u8 *from, u64 from_offset, u8 *to, u64 to_offset, u32 size)
-+{
-+	const u8 *source;
-+	u8 *destination;
-+	u8 offset;
-+	u8 count;
-+	u64 field;
-+
-+	/* Start by moving one field that ends on a to int boundary. */
-+	count = (MAX_BIG_FIELD_BITS - ((to_offset + MAX_BIG_FIELD_BITS) % BITS_PER_TYPE(u32)));
-+	field = get_big_field(from, from_offset, count);
-+	set_big_field(field, to, to_offset, count);
-+	from_offset += count;
-+	to_offset += count;
-+	size -= count;
-+
-+	/* Now do the main loop to copy 32 bit chunks that are int-aligned at the destination. */
-+	offset = from_offset % BITS_PER_TYPE(u32);
-+	source = from + (from_offset - offset) / BITS_PER_BYTE;
-+	destination = to + to_offset / BITS_PER_BYTE;
-+	while (size > MAX_BIG_FIELD_BITS) {
-+		put_unaligned_le32(get_unaligned_le64(source) >> offset, destination);
-+		source += sizeof(u32);
-+		destination += sizeof(u32);
-+		from_offset += BITS_PER_TYPE(u32);
-+		to_offset += BITS_PER_TYPE(u32);
-+		size -= BITS_PER_TYPE(u32);
-+	}
-+
-+	/* Finish up by moving any remaining bits. */
-+	if (size > 0) {
-+		field = get_big_field(from, from_offset, size);
-+		set_big_field(field, to, to_offset, size);
-+	}
-+}
-+
-+/*
-+ * Move several bits from a lower to a higher address, moving the higher addressed bits first. The
-+ * size and memory offsets are measured in bits.
-+ */
-+static void move_bits_up(const u8 *from, u64 from_offset, u8 *to, u64 to_offset, u32 size)
-+{
-+	const u8 *source;
-+	u8 *destination;
-+	u8 offset;
-+	u8 count;
-+	u64 field;
-+
-+	/* Start by moving one field that begins on a destination int boundary. */
-+	count = (to_offset + size) % BITS_PER_TYPE(u32);
-+	if (count > 0) {
-+		size -= count;
-+		field = get_big_field(from, from_offset + size, count);
-+		set_big_field(field, to, to_offset + size, count);
-+	}
-+
-+	/* Now do the main loop to copy 32 bit chunks that are int-aligned at the destination. */
-+	offset = (from_offset + size) % BITS_PER_TYPE(u32);
-+	source = from + (from_offset + size - offset) / BITS_PER_BYTE;
-+	destination = to + (to_offset + size) / BITS_PER_BYTE;
-+	while (size > MAX_BIG_FIELD_BITS) {
-+		source -= sizeof(u32);
-+		destination -= sizeof(u32);
-+		size -= BITS_PER_TYPE(u32);
-+		put_unaligned_le32(get_unaligned_le64(source) >> offset, destination);
-+	}
-+
-+	/* Finish up by moving any remaining bits. */
-+	if (size > 0) {
-+		field = get_big_field(from, from_offset, size);
-+		set_big_field(field, to, to_offset, size);
-+	}
-+}
-+
-+/*
-+ * Move bits from one field to another. When the fields overlap, behave as if we first move all the
-+ * bits from the source to a temporary value, and then move all the bits from the temporary value
-+ * to the destination. The size and memory offsets are measured in bits.
-+ */
-+static void move_bits(const u8 *from, u64 from_offset, u8 *to, u64 to_offset, u32 size)
-+{
-+	u64 field;
-+
-+	/* A small move doesn't require special handling. */
-+	if (size <= MAX_BIG_FIELD_BITS) {
-+		if (size > 0) {
-+			field = get_big_field(from, from_offset, size);
-+			set_big_field(field, to, to_offset, size);
-+		}
-+
++	if (queue == NULL)
 +		return;
-+	}
 +
-+	if (from_offset > to_offset)
-+		move_bits_down(from, from_offset, to, to_offset, size);
++	vdo_finish_work_queue(queue);
++
++	if (queue->round_robin_mode)
++		free_round_robin_work_queue(as_round_robin_work_queue(queue));
 +	else
-+		move_bits_up(from, from_offset, to, to_offset, size);
++		free_simple_work_queue(as_simple_work_queue(queue));
 +}
 +
-+/*
-+ * Pack delta lists from a mutable delta index into an immutable delta index page. A range of delta
-+ * lists (starting with a specified list index) is copied from the mutable delta index into a
-+ * memory page used in the immutable index. The number of lists copied onto the page is returned in
-+ * list_count.
-+ */
-+int uds_pack_delta_index_page(const struct delta_index *delta_index,
-+			      u64 header_nonce,
-+			      u8 *memory,
-+			      size_t memory_size,
-+			      u64 virtual_chapter_number,
-+			      u32 first_list,
-+			      u32 *list_count)
++static int make_simple_work_queue(const char *thread_name_prefix,
++				  const char *name,
++				  struct vdo_thread *owner,
++				  void *private,
++				  const struct vdo_work_queue_type *type,
++				  struct simple_work_queue **queue_ptr)
 +{
-+	const struct delta_zone *delta_zone;
-+	struct delta_list *delta_lists;
-+	u32 max_lists;
-+	u32 n_lists = 0;
-+	u32 offset;
-+	u32 i;
-+	int free_bits;
-+	int bits;
-+	struct delta_page_header *header;
-+
-+	delta_zone = &delta_index->delta_zones[0];
-+	delta_lists = &delta_zone->delta_lists[first_list + 1];
-+	max_lists = delta_index->list_count - first_list;
-+
-+	/*
-+	 * Compute how many lists will fit on the page. Subtract the size of the fixed header, one
-+	 * delta list offset, and the guard bytes from the page size to determine how much space is
-+	 * available for delta lists.
-+	 */
-+	free_bits = memory_size * BITS_PER_BYTE;
-+	free_bits -= get_immutable_header_offset(1);
-+	free_bits -= GUARD_BITS;
-+	if (free_bits < IMMUTABLE_HEADER_SIZE)
-+		/* This page is too small to store any delta lists. */
-+		return uds_log_error_strerror(UDS_OVERFLOW,
-+					      "Chapter Index Page of %zu bytes is too small",
-+					      memory_size);
-+
-+	while (n_lists < max_lists) {
-+		/* Each list requires a delta list offset and the list data. */
-+		bits = IMMUTABLE_HEADER_SIZE + delta_lists[n_lists].size;
-+		if (bits > free_bits)
-+			break;
-+
-+		n_lists++;
-+		free_bits -= bits;
-+	}
-+
-+	*list_count = n_lists;
-+
-+	header = (struct delta_page_header *) memory;
-+	put_unaligned_le64(header_nonce, (u8 *) &header->nonce);
-+	put_unaligned_le64(virtual_chapter_number, (u8 *) &header->virtual_chapter_number);
-+	put_unaligned_le16(first_list, (u8 *) &header->first_list);
-+	put_unaligned_le16(n_lists, (u8 *) &header->list_count);
-+
-+	/* Construct the delta list offset table. */
-+	offset = get_immutable_header_offset(n_lists + 1);
-+	set_immutable_start(memory, 0, offset);
-+	for (i = 0; i < n_lists; i++) {
-+		offset += delta_lists[i].size;
-+		set_immutable_start(memory, i + 1, offset);
-+	}
-+
-+	/* Copy the delta list data onto the memory page. */
-+	for (i = 0; i < n_lists; i++)
-+		move_bits(delta_zone->memory,
-+			  delta_lists[i].start,
-+			  memory,
-+			  get_immutable_start(memory, i),
-+			  delta_lists[i].size);
-+
-+	/* Set all the bits in the guard bytes. */
-+	memset(memory + memory_size - POST_FIELD_GUARD_BYTES, ~0, POST_FIELD_GUARD_BYTES);
-+	return UDS_SUCCESS;
-+}
-+
-+/* Compute the new offsets of the delta lists. */
-+static void compute_new_list_offsets(struct delta_zone *delta_zone,
-+				     u32 growing_index,
-+				     size_t growing_size,
-+				     size_t used_space)
-+{
-+	size_t spacing;
-+	u32 i;
-+	struct delta_list *delta_lists = delta_zone->delta_lists;
-+	u32 tail_guard_index = delta_zone->list_count + 1;
-+
-+	spacing = (delta_zone->size - used_space) / delta_zone->list_count;
-+	delta_zone->new_offsets[0] = 0;
-+	for (i = 0; i <= delta_zone->list_count; i++) {
-+		delta_zone->new_offsets[i + 1] =
-+			(delta_zone->new_offsets[i] +
-+			 get_delta_list_byte_size(&delta_lists[i]) + spacing);
-+		delta_zone->new_offsets[i] *= BITS_PER_BYTE;
-+		delta_zone->new_offsets[i] += delta_lists[i].start % BITS_PER_BYTE;
-+		if (i == 0)
-+			delta_zone->new_offsets[i + 1] -= spacing / 2;
-+		if (i + 1 == growing_index)
-+			delta_zone->new_offsets[i + 1] += growing_size;
-+	}
-+
-+	delta_zone->new_offsets[tail_guard_index] =
-+		(delta_zone->size * BITS_PER_BYTE - delta_lists[tail_guard_index].size);
-+}
-+
-+static void rebalance_lists(struct delta_zone *delta_zone)
-+{
-+	struct delta_list *delta_lists;
-+	u32 i;
-+	size_t used_space = 0;
-+
-+	/* Extend and balance memory to receive the delta lists */
-+	delta_lists = delta_zone->delta_lists;
-+	for (i = 0; i <= delta_zone->list_count + 1; i++)
-+		used_space += get_delta_list_byte_size(&delta_lists[i]);
-+
-+	compute_new_list_offsets(delta_zone, 0, 0, used_space);
-+	for (i = 1; i <= delta_zone->list_count + 1; i++)
-+		delta_lists[i].start = delta_zone->new_offsets[i];
-+}
-+
-+/* Start restoring a delta index from multiple input streams. */
-+int uds_start_restoring_delta_index(struct delta_index *delta_index,
-+				    struct buffered_reader **buffered_readers,
-+				    unsigned int reader_count)
-+{
++	DECLARE_COMPLETION_ONSTACK(started);
++	struct simple_work_queue *queue;
++	int i;
++	struct task_struct *thread = NULL;
 +	int result;
-+	unsigned int zone_count = reader_count;
-+	u64 record_count = 0;
-+	u64 collision_count = 0;
-+	u32 first_list[MAX_ZONES];
-+	u32 list_count[MAX_ZONES];
-+	unsigned int z;
-+	u32 list_next = 0;
-+	const struct delta_zone *delta_zone;
 +
-+	/* Read and validate each header. */
-+	for (z = 0; z < zone_count; z++) {
-+		struct delta_index_header header;
-+		u8 buffer[sizeof(struct delta_index_header)];
-+		size_t offset = 0;
++	ASSERT_LOG_ONLY((type->max_priority <= VDO_WORK_Q_MAX_PRIORITY),
++			"queue priority count %u within limit %u",
++			type->max_priority,
++			VDO_WORK_Q_MAX_PRIORITY);
 +
-+		result = uds_read_from_buffered_reader(buffered_readers[z],
-+						       buffer,
-+						       sizeof(buffer));
-+		if (result != UDS_SUCCESS)
-+			return uds_log_warning_strerror(result,
-+							"failed to read delta index header");
-+
-+		memcpy(&header.magic, buffer, MAGIC_SIZE);
-+		offset += MAGIC_SIZE;
-+		decode_u32_le(buffer, &offset, &header.zone_number);
-+		decode_u32_le(buffer, &offset, &header.zone_count);
-+		decode_u32_le(buffer, &offset, &header.first_list);
-+		decode_u32_le(buffer, &offset, &header.list_count);
-+		decode_u64_le(buffer, &offset, &header.record_count);
-+		decode_u64_le(buffer, &offset, &header.collision_count);
-+
-+		result = ASSERT(offset == sizeof(struct delta_index_header),
-+				"%zu bytes decoded of %zu expected",
-+				offset,
-+				sizeof(struct delta_index_header));
-+		if (result != UDS_SUCCESS)
-+			return uds_log_warning_strerror(result,
-+							"failed to read delta index header");
-+
-+		if (memcmp(header.magic, DELTA_INDEX_MAGIC, MAGIC_SIZE) != 0)
-+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+							"delta index file has bad magic number");
-+
-+		if (zone_count != header.zone_count)
-+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+							"delta index files contain mismatched zone counts (%u,%u)",
-+							zone_count,
-+							header.zone_count);
-+
-+		if (header.zone_number != z)
-+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+							"delta index zone %u found in slot %u",
-+							header.zone_number,
-+							z);
-+
-+		first_list[z] = header.first_list;
-+		list_count[z] = header.list_count;
-+		record_count += header.record_count;
-+		collision_count += header.collision_count;
-+
-+		if (first_list[z] != list_next)
-+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+							"delta index file for zone %u starts with list %u instead of list %u",
-+							z,
-+							first_list[z],
-+							list_next);
-+
-+		list_next += list_count[z];
-+	}
-+
-+	if (list_next != delta_index->list_count)
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						"delta index files contain %u delta lists instead of %u delta lists",
-+						list_next,
-+						delta_index->list_count);
-+
-+	if (collision_count > record_count)
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						"delta index files contain %llu collisions and %llu records",
-+						(unsigned long long) collision_count,
-+						(unsigned long long) record_count);
-+
-+	uds_reset_delta_index(delta_index);
-+	delta_index->delta_zones[0].record_count = record_count;
-+	delta_index->delta_zones[0].collision_count = collision_count;
-+
-+	/* Read the delta lists and distribute them to the proper zones. */
-+	for (z = 0; z < zone_count; z++) {
-+		u32 i;
-+
-+		delta_index->load_lists[z] = 0;
-+		for (i = 0; i < list_count[z]; i++) {
-+			u16 delta_list_size;
-+			u32 list_number;
-+			unsigned int zone_number;
-+			u8 size_data[sizeof(u16)];
-+
-+			result = uds_read_from_buffered_reader(buffered_readers[z],
-+							       size_data,
-+							       sizeof(size_data));
-+			if (result != UDS_SUCCESS)
-+				return uds_log_warning_strerror(result,
-+								"failed to read delta index size");
-+
-+			delta_list_size = get_unaligned_le16(size_data);
-+			if (delta_list_size > 0)
-+				delta_index->load_lists[z] += 1;
-+
-+			list_number = first_list[z] + i;
-+			zone_number = list_number / delta_index->lists_per_zone;
-+			delta_zone = &delta_index->delta_zones[zone_number];
-+			list_number -= delta_zone->first_list;
-+			delta_zone->delta_lists[list_number + 1].size = delta_list_size;
-+		}
-+	}
-+
-+	/* Prepare each zone to start receiving the delta list data. */
-+	for (z = 0; z < delta_index->zone_count; z++)
-+		rebalance_lists(&delta_index->delta_zones[z]);
-+	return UDS_SUCCESS;
-+}
-+
-+static int restore_delta_list_to_zone(struct delta_zone *delta_zone,
-+				      const struct delta_list_save_info *save_info,
-+				      const u8 *data)
-+{
-+	struct delta_list *delta_list;
-+	u16 bit_count;
-+	u16 byte_count;
-+	u32 list_number = save_info->index - delta_zone->first_list;
-+
-+	if (list_number >= delta_zone->list_count)
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						"invalid delta list number %u not in range [%u,%u)",
-+						save_info->index,
-+						delta_zone->first_list,
-+						delta_zone->first_list +
-+						delta_zone->list_count);
-+
-+	delta_list = &delta_zone->delta_lists[list_number + 1];
-+	if (delta_list->size == 0)
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						"unexpected delta list number %u",
-+						save_info->index);
-+
-+	bit_count = delta_list->size + save_info->bit_offset;
-+	byte_count = BITS_TO_BYTES(bit_count);
-+	if (save_info->byte_count != byte_count)
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						"unexpected delta list size %u != %u",
-+						save_info->byte_count,
-+						byte_count);
-+
-+	move_bits(data,
-+		  save_info->bit_offset,
-+		  delta_zone->memory,
-+		  delta_list->start,
-+		  delta_list->size);
-+	return UDS_SUCCESS;
-+}
-+
-+static int restore_delta_list_data(struct delta_index *delta_index,
-+				   unsigned int load_zone,
-+				   struct buffered_reader *buffered_reader,
-+				   u8 *data)
-+{
-+	int result;
-+	struct delta_list_save_info save_info;
-+	u8 buffer[sizeof(struct delta_list_save_info)];
-+	unsigned int new_zone;
-+
-+	result = uds_read_from_buffered_reader(buffered_reader, buffer, sizeof(buffer));
-+	if (result != UDS_SUCCESS)
-+		return uds_log_warning_strerror(result, "failed to read delta list data");
-+
-+	save_info = (struct delta_list_save_info) {
-+		.tag = buffer[0],
-+		.bit_offset = buffer[1],
-+		.byte_count = get_unaligned_le16(&buffer[2]),
-+		.index = get_unaligned_le32(&buffer[4]),
-+	};
-+
-+	if ((save_info.bit_offset >= BITS_PER_BYTE) ||
-+	    (save_info.byte_count > DELTA_LIST_MAX_BYTE_COUNT))
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA, "corrupt delta list data");
-+
-+	/* Make sure the data is intended for this delta index. */
-+	if (save_info.tag != delta_index->tag)
-+		return UDS_CORRUPT_DATA;
-+
-+	if (save_info.index >= delta_index->list_count)
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						"invalid delta list number %u of %u",
-+						save_info.index,
-+						delta_index->list_count);
-+
-+	result = uds_read_from_buffered_reader(buffered_reader, data, save_info.byte_count);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_warning_strerror(result,
-+						"failed to read delta list data");
-+
-+	delta_index->load_lists[load_zone] -= 1;
-+	new_zone = save_info.index / delta_index->lists_per_zone;
-+	return restore_delta_list_to_zone(&delta_index->delta_zones[new_zone], &save_info, data);
-+}
-+
-+/* Restore delta lists from saved data. */
-+int uds_finish_restoring_delta_index(struct delta_index *delta_index,
-+				     struct buffered_reader **buffered_readers,
-+				     unsigned int reader_count)
-+{
-+	int result;
-+	int saved_result = UDS_SUCCESS;
-+	unsigned int z;
-+	u8 *data;
-+
-+	result = UDS_ALLOCATE(DELTA_LIST_MAX_BYTE_COUNT, u8, __func__, &data);
++	result = UDS_ALLOCATE(1, struct simple_work_queue, "simple work queue", &queue);
 +	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	for (z = 0; z < reader_count; z++) {
-+		while (delta_index->load_lists[z] > 0) {
-+			result = restore_delta_list_data(delta_index,
-+							 z,
-+							 buffered_readers[z],
-+							 data);
-+			if (result != UDS_SUCCESS) {
-+				saved_result = result;
-+				break;
-+			}
++	queue->private = private;
++	queue->started = &started;
++	queue->common.type = type;
++	queue->common.owner = owner;
++	init_waitqueue_head(&queue->waiting_worker_threads);
++
++	result = uds_duplicate_string(name, "queue name", &queue->common.name);
++	if (result != VDO_SUCCESS) {
++		UDS_FREE(queue);
++		return -ENOMEM;
++	}
++
++	for (i = 0; i <= type->max_priority; i++) {
++		result = uds_make_funnel_queue(&queue->priority_lists[i]);
++		if (result != UDS_SUCCESS) {
++			free_simple_work_queue(queue);
++			return result;
 +		}
 +	}
 +
-+	UDS_FREE(data);
-+	return saved_result;
-+}
-+
-+int uds_check_guard_delta_lists(struct buffered_reader **buffered_readers,
-+				unsigned int reader_count)
-+{
-+	int result;
-+	unsigned int z;
-+	u8 buffer[sizeof(struct delta_list_save_info)];
-+
-+	for (z = 0; z < reader_count; z++) {
-+		result = uds_read_from_buffered_reader(buffered_readers[z],
-+						       buffer,
-+						       sizeof(buffer));
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		if (buffer[0] != 'z')
-+			return UDS_CORRUPT_DATA;
++	thread = kthread_run(work_queue_runner,
++			     queue,
++			     "%s:%s",
++			     thread_name_prefix,
++			     queue->common.name);
++	if (IS_ERR(thread)) {
++		free_simple_work_queue(queue);
++		return (int) PTR_ERR(thread);
 +	}
 +
++	queue->thread = thread;
++
++	/*
++	 * If we don't wait to ensure the thread is running VDO code, a quick kthread_stop (due to
++	 * errors elsewhere) could cause it to never get as far as running VDO, skipping the
++	 * cleanup code.
++	 *
++	 * Eventually we should just make that path safe too, and then we won't need this
++	 * synchronization.
++	 */
++	wait_for_completion(&started);
++
++	*queue_ptr = queue;
 +	return UDS_SUCCESS;
 +}
 +
-+static int flush_delta_list(struct delta_zone *zone, u32 flush_index)
++/**
++ * vdo_make_work_queue() - Create a work queue; if multiple threads are requested, completions will
++ *                         be distributed to them in round-robin fashion.
++ *
++ * Each queue is associated with a struct vdo_thread which has a single vdo thread id. Regardless
++ * of the actual number of queues and threads allocated here, code outside of the queue
++ * implementation will treat this as a single zone.
++ */
++int vdo_make_work_queue(const char *thread_name_prefix,
++			const char *name,
++			struct vdo_thread *owner,
++			const struct vdo_work_queue_type *type,
++			unsigned int thread_count,
++			void *thread_privates[],
++			struct vdo_work_queue **queue_ptr)
 +{
-+	struct delta_list *delta_list;
-+	u8 buffer[sizeof(struct delta_list_save_info)];
++	struct round_robin_work_queue *queue;
 +	int result;
++	char thread_name[TASK_COMM_LEN];
++	unsigned int i;
 +
-+	delta_list = &zone->delta_lists[flush_index + 1];
++	if (thread_count == 1) {
++		struct simple_work_queue *simple_queue;
++		void *context = ((thread_privates != NULL) ? thread_privates[0] : NULL);
 +
-+	buffer[0] = zone->tag;
-+	buffer[1] = delta_list->start % BITS_PER_BYTE;
-+	put_unaligned_le16(get_delta_list_byte_size(delta_list), &buffer[2]);
-+	put_unaligned_le32(zone->first_list + flush_index, &buffer[4]);
++		result = make_simple_work_queue(thread_name_prefix,
++						name,
++						owner,
++						context,
++						type,
++						&simple_queue);
++		if (result == VDO_SUCCESS)
++			*queue_ptr = &simple_queue->common;
++		return result;
++	}
 +
-+	result = uds_write_to_buffered_writer(zone->buffered_writer, buffer, sizeof(buffer));
++	result = UDS_ALLOCATE(1, struct round_robin_work_queue, "round-robin work queue", &queue);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = UDS_ALLOCATE(thread_count,
++			      struct simple_work_queue *,
++			      "subordinate work queues",
++			      &queue->service_queues);
 +	if (result != UDS_SUCCESS) {
-+		uds_log_warning_strerror(result, "failed to write delta list memory");
++		UDS_FREE(queue);
 +		return result;
 +	}
 +
-+	result = uds_write_to_buffered_writer(zone->buffered_writer,
-+					      zone->memory + get_delta_list_byte_start(delta_list),
-+					      get_delta_list_byte_size(delta_list));
-+	if (result != UDS_SUCCESS)
-+		uds_log_warning_strerror(result, "failed to write delta list memory");
++	queue->num_service_queues = thread_count;
++	queue->common.round_robin_mode = true;
++	queue->common.owner = owner;
 +
-+	return result;
-+}
-+
-+/* Start saving a delta index zone to a buffered output stream. */
-+int uds_start_saving_delta_index(const struct delta_index *delta_index,
-+				 unsigned int zone_number,
-+				 struct buffered_writer *buffered_writer)
-+{
-+	int result;
-+	u32 i;
-+	struct delta_zone *delta_zone;
-+	u8 buffer[sizeof(struct delta_index_header)];
-+	size_t offset = 0;
-+
-+	delta_zone = &delta_index->delta_zones[zone_number];
-+	memcpy(buffer, DELTA_INDEX_MAGIC, MAGIC_SIZE);
-+	offset += MAGIC_SIZE;
-+	encode_u32_le(buffer, &offset, zone_number);
-+	encode_u32_le(buffer, &offset, delta_index->zone_count);
-+	encode_u32_le(buffer, &offset, delta_zone->first_list);
-+	encode_u32_le(buffer, &offset, delta_zone->list_count);
-+	encode_u64_le(buffer, &offset, delta_zone->record_count);
-+	encode_u64_le(buffer, &offset, delta_zone->collision_count);
-+
-+	result = ASSERT(offset == sizeof(struct delta_index_header),
-+			"%zu bytes encoded of %zu expected",
-+			offset,
-+			sizeof(struct delta_index_header));
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_write_to_buffered_writer(buffered_writer, buffer, offset);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_warning_strerror(result, "failed to write delta index header");
-+
-+	for (i = 0; i < delta_zone->list_count; i++) {
-+		u8 data[sizeof(u16)];
-+		struct delta_list *delta_list;
-+
-+		delta_list = &delta_zone->delta_lists[i + 1];
-+		put_unaligned_le16(delta_list->size, data);
-+		result = uds_write_to_buffered_writer(buffered_writer, data, sizeof(data));
-+		if (result != UDS_SUCCESS)
-+			return uds_log_warning_strerror(result, "failed to write delta list size");
++	result = uds_duplicate_string(name, "queue name", &queue->common.name);
++	if (result != VDO_SUCCESS) {
++		UDS_FREE(queue->service_queues);
++		UDS_FREE(queue);
++		return -ENOMEM;
 +	}
 +
-+	delta_zone->buffered_writer = buffered_writer;
-+	return UDS_SUCCESS;
-+}
++	*queue_ptr = &queue->common;
 +
-+int uds_finish_saving_delta_index(const struct delta_index *delta_index, unsigned int zone_number)
-+{
-+	int result;
-+	int first_error = UDS_SUCCESS;
-+	u32 i;
-+	struct delta_zone *delta_zone;
-+	struct delta_list *delta_list;
++	for (i = 0; i < thread_count; i++) {
++		void *context = ((thread_privates != NULL) ? thread_privates[i] : NULL);
 +
-+	delta_zone = &delta_index->delta_zones[zone_number];
-+	for (i = 0; i < delta_zone->list_count; i++) {
-+		delta_list = &delta_zone->delta_lists[i + 1];
-+		if (delta_list->size > 0) {
-+			result = flush_delta_list(delta_zone, i);
-+			if ((result != UDS_SUCCESS) && (first_error == UDS_SUCCESS))
-+				first_error = result;
-+		}
-+	}
-+
-+	delta_zone->buffered_writer = NULL;
-+	return first_error;
-+}
-+
-+int uds_write_guard_delta_list(struct buffered_writer *buffered_writer)
-+{
-+	int result;
-+	u8 buffer[sizeof(struct delta_list_save_info)];
-+
-+	memset(buffer, 0, sizeof(struct delta_list_save_info));
-+	buffer[0] = 'z';
-+
-+	result = uds_write_to_buffered_writer(buffered_writer, buffer, sizeof(buffer));
-+	if (result != UDS_SUCCESS)
-+		uds_log_warning_strerror(result, "failed to write guard delta list");
-+
-+	return UDS_SUCCESS;
-+}
-+
-+size_t uds_compute_delta_index_save_bytes(u32 list_count, size_t memory_size)
-+{
-+	/* One zone will use at least as much memory as other zone counts. */
-+	return (sizeof(struct delta_index_header) +
-+		list_count * (sizeof(struct delta_list_save_info) + 1) +
-+		get_zone_memory_size(1, memory_size));
-+}
-+
-+static int assert_not_at_end(const struct delta_index_entry *delta_entry)
-+{
-+	int result = ASSERT(!delta_entry->at_end,
-+			    "operation is invalid because the list entry is at the end of the delta list");
-+	if (result != UDS_SUCCESS)
-+		result = UDS_BAD_STATE;
-+
-+	return result;
-+}
-+
-+/*
-+ * Prepare to search for an entry in the specified delta list.
-+ *
-+ * This is always the first function to be called when dealing with delta index entries. It is
-+ * always followed by calls to uds_next_delta_index_entry() to iterate through a delta list. The
-+ * fields of the delta_index_entry argument will be set up for iteration, but will not contain an
-+ * entry from the list.
-+ */
-+int uds_start_delta_index_search(const struct delta_index *delta_index,
-+				 u32 list_number,
-+				 u32 key,
-+				 struct delta_index_entry *delta_entry)
-+{
-+	int result;
-+	unsigned int zone_number;
-+	struct delta_zone *delta_zone;
-+	struct delta_list *delta_list;
-+
-+	result = ASSERT((list_number < delta_index->list_count),
-+			"Delta list number (%u) is out of range (%u)",
-+			list_number,
-+			delta_index->list_count);
-+	if (result != UDS_SUCCESS)
-+		return UDS_CORRUPT_DATA;
-+
-+	zone_number = list_number / delta_index->lists_per_zone;
-+	delta_zone = &delta_index->delta_zones[zone_number];
-+	list_number -= delta_zone->first_list;
-+	result = ASSERT((list_number < delta_zone->list_count),
-+			"Delta list number (%u) is out of range (%u) for zone (%u)",
-+			list_number,
-+			delta_zone->list_count,
-+			zone_number);
-+	if (result != UDS_SUCCESS)
-+		return UDS_CORRUPT_DATA;
-+
-+	if (delta_index->mutable) {
-+		delta_list = &delta_zone->delta_lists[list_number + 1];
-+	} else {
-+		u32 end_offset;
-+
-+		/*
-+		 * Translate the immutable delta list header into a temporary
-+		 * full delta list header.
-+		 */
-+		delta_list = &delta_entry->temp_delta_list;
-+		delta_list->start = get_immutable_start(delta_zone->memory, list_number);
-+		end_offset = get_immutable_start(delta_zone->memory, list_number + 1);
-+		delta_list->size = end_offset - delta_list->start;
-+		delta_list->save_key = 0;
-+		delta_list->save_offset = 0;
-+	}
-+
-+	if (key > delta_list->save_key) {
-+		delta_entry->key = delta_list->save_key;
-+		delta_entry->offset = delta_list->save_offset;
-+	} else {
-+		delta_entry->key = 0;
-+		delta_entry->offset = 0;
-+		if (key == 0)
-+			/*
-+			 * This usually means we're about to walk the entire delta list, so get all
-+			 * of it into the CPU cache.
-+			 */
-+			uds_prefetch_range(&delta_zone->memory[delta_list->start / BITS_PER_BYTE],
-+					   delta_list->size / BITS_PER_BYTE,
-+					   false);
-+	}
-+
-+	delta_entry->at_end = false;
-+	delta_entry->delta_zone = delta_zone;
-+	delta_entry->delta_list = delta_list;
-+	delta_entry->entry_bits = 0;
-+	delta_entry->is_collision = false;
-+	delta_entry->list_number = list_number;
-+	delta_entry->list_overflow = false;
-+	delta_entry->value_bits = delta_zone->value_bits;
-+	return UDS_SUCCESS;
-+}
-+
-+static inline u64 get_delta_entry_offset(const struct delta_index_entry *delta_entry)
-+{
-+	return delta_entry->delta_list->start + delta_entry->offset;
-+}
-+
-+/*
-+ * Decode a delta index entry delta value. The delta_index_entry basically describes the previous
-+ * list entry, and has had its offset field changed to point to the subsequent entry. We decode the
-+ * bit stream and update the delta_list_entry to describe the entry.
-+ */
-+static inline void decode_delta(struct delta_index_entry *delta_entry)
-+{
-+	int key_bits;
-+	u32 delta;
-+	const struct delta_zone *delta_zone = delta_entry->delta_zone;
-+	const u8 *memory = delta_zone->memory;
-+	u64 delta_offset = get_delta_entry_offset(delta_entry) + delta_entry->value_bits;
-+	const u8 *addr = memory + delta_offset / BITS_PER_BYTE;
-+	int offset = delta_offset % BITS_PER_BYTE;
-+	u32 data = get_unaligned_le32(addr) >> offset;
-+
-+	addr += sizeof(u32);
-+	key_bits = delta_zone->min_bits;
-+	delta = data & ((1 << key_bits) - 1);
-+	if (delta >= delta_zone->min_keys) {
-+		data >>= key_bits;
-+		if (data == 0) {
-+			key_bits = sizeof(u32) * BITS_PER_BYTE - offset;
-+			while ((data = get_unaligned_le32(addr)) == 0) {
-+				addr += sizeof(u32);
-+				key_bits += sizeof(u32) * BITS_PER_BYTE;
-+			}
-+		}
-+		key_bits += ffs(data);
-+		delta += ((key_bits - delta_zone->min_bits - 1) * delta_zone->incr_keys);
-+	}
-+	delta_entry->delta = delta;
-+	delta_entry->key += delta;
-+
-+	/* Check for a collision, a delta of zero after the start. */
-+	if (unlikely((delta == 0) && (delta_entry->offset > 0))) {
-+		delta_entry->is_collision = true;
-+		delta_entry->entry_bits = delta_entry->value_bits + key_bits + COLLISION_BITS;
-+	} else {
-+		delta_entry->is_collision = false;
-+		delta_entry->entry_bits = delta_entry->value_bits + key_bits;
-+	}
-+}
-+
-+noinline int uds_next_delta_index_entry(struct delta_index_entry *delta_entry)
-+{
-+	int result;
-+	const struct delta_list *delta_list;
-+	u32 next_offset;
-+	u16 size;
-+
-+	result = assert_not_at_end(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	delta_list = delta_entry->delta_list;
-+	delta_entry->offset += delta_entry->entry_bits;
-+	size = delta_list->size;
-+	if (unlikely(delta_entry->offset >= size)) {
-+		delta_entry->at_end = true;
-+		delta_entry->delta = 0;
-+		delta_entry->is_collision = false;
-+		result = ASSERT((delta_entry->offset == size),
-+				"next offset past end of delta list");
-+		if (result != UDS_SUCCESS)
-+			result = UDS_CORRUPT_DATA;
-+
-+		return result;
-+	}
-+
-+	decode_delta(delta_entry);
-+
-+	next_offset = delta_entry->offset + delta_entry->entry_bits;
-+	if (next_offset > size) {
-+		/*
-+		 * This is not an assertion because uds_validate_chapter_index_page() wants to
-+		 * handle this error.
-+		 */
-+		uds_log_warning("Decoded past the end of the delta list");
-+		return UDS_CORRUPT_DATA;
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_remember_delta_index_offset(const struct delta_index_entry *delta_entry)
-+{
-+	int result;
-+	struct delta_list *delta_list = delta_entry->delta_list;
-+
-+	result = ASSERT(!delta_entry->is_collision, "entry is not a collision");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	delta_list->save_key = delta_entry->key - delta_entry->delta;
-+	delta_list->save_offset = delta_entry->offset;
-+	return UDS_SUCCESS;
-+}
-+
-+static void set_delta(struct delta_index_entry *delta_entry, u32 delta)
-+{
-+	const struct delta_zone *delta_zone = delta_entry->delta_zone;
-+	u32 key_bits = (delta_zone->min_bits +
-+			((delta_zone->incr_keys -
-+			  delta_zone->min_keys + delta) /
-+			 delta_zone->incr_keys));
-+
-+	delta_entry->delta = delta;
-+	delta_entry->entry_bits = delta_entry->value_bits + key_bits;
-+}
-+
-+static void get_collision_name(const struct delta_index_entry *entry, u8 *name)
-+{
-+	u64 offset = get_delta_entry_offset(entry) + entry->entry_bits - COLLISION_BITS;
-+	const u8 *addr = entry->delta_zone->memory + offset / BITS_PER_BYTE;
-+	int size = COLLISION_BYTES;
-+	int shift = offset % BITS_PER_BYTE;
-+
-+	while (--size >= 0)
-+		*name++ = get_unaligned_le16(addr++) >> shift;
-+}
-+
-+static void set_collision_name(const struct delta_index_entry *entry, const u8 *name)
-+{
-+	u64 offset = get_delta_entry_offset(entry) + entry->entry_bits - COLLISION_BITS;
-+	u8 *addr = entry->delta_zone->memory + offset / BITS_PER_BYTE;
-+	int size = COLLISION_BYTES;
-+	int shift = offset % BITS_PER_BYTE;
-+	u16 mask = ~((u16) 0xFF << shift);
-+	u16 data;
-+
-+	while (--size >= 0) {
-+		data = (get_unaligned_le16(addr) & mask) | (*name++ << shift);
-+		put_unaligned_le16(data, addr++);
-+	}
-+}
-+
-+int uds_get_delta_index_entry(const struct delta_index *delta_index,
-+			      u32 list_number,
-+			      u32 key,
-+			      const u8 *name,
-+			      struct delta_index_entry *delta_entry)
-+{
-+	int result;
-+
-+	result = uds_start_delta_index_search(delta_index, list_number, key, delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	do {
-+		result = uds_next_delta_index_entry(delta_entry);
-+		if (result != UDS_SUCCESS)
++		snprintf(thread_name, sizeof(thread_name), "%s%u", name, i);
++		result = make_simple_work_queue(thread_name_prefix,
++						thread_name,
++						owner,
++						context,
++						type,
++						&queue->service_queues[i]);
++		if (result != VDO_SUCCESS) {
++			queue->num_service_queues = i;
++			/* Destroy previously created subordinates. */
++			vdo_free_work_queue(UDS_FORGET(*queue_ptr));
 +			return result;
-+	} while (!delta_entry->at_end && (key > delta_entry->key));
-+
-+	result = uds_remember_delta_index_offset(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (!delta_entry->at_end && (key == delta_entry->key)) {
-+		struct delta_index_entry collision_entry = *delta_entry;
-+
-+		for (;;) {
-+			u8 full_name[COLLISION_BYTES];
-+
-+			result = uds_next_delta_index_entry(&collision_entry);
-+			if (result != UDS_SUCCESS)
-+				return result;
-+
-+			if (collision_entry.at_end || !collision_entry.is_collision)
-+				break;
-+
-+			get_collision_name(&collision_entry, full_name);
-+			if (memcmp(full_name, name, COLLISION_BYTES) == 0) {
-+				*delta_entry = collision_entry;
-+				break;
-+			}
 +		}
 +	}
 +
-+	return UDS_SUCCESS;
++	return VDO_SUCCESS;
 +}
 +
-+int uds_get_delta_entry_collision(const struct delta_index_entry *delta_entry, u8 *name)
++static void finish_simple_work_queue(struct simple_work_queue *queue)
 +{
-+	int result;
-+
-+	result = assert_not_at_end(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = ASSERT(delta_entry->is_collision,
-+			"Cannot get full block name from a non-collision delta index entry");
-+	if (result != UDS_SUCCESS)
-+		return UDS_BAD_STATE;
-+
-+	get_collision_name(delta_entry, name);
-+	return UDS_SUCCESS;
-+}
-+
-+u32 uds_get_delta_entry_value(const struct delta_index_entry *delta_entry)
-+{
-+	return get_field(delta_entry->delta_zone->memory,
-+			 get_delta_entry_offset(delta_entry),
-+			 delta_entry->value_bits);
-+}
-+
-+static int assert_mutable_entry(const struct delta_index_entry *delta_entry)
-+{
-+	int result = ASSERT((delta_entry->delta_list != &delta_entry->temp_delta_list),
-+			    "delta index is mutable");
-+	if (result != UDS_SUCCESS)
-+		result = UDS_BAD_STATE;
-+
-+	return result;
-+}
-+
-+int uds_set_delta_entry_value(const struct delta_index_entry *delta_entry, u32 value)
-+{
-+	int result;
-+	u32 value_mask = (1 << delta_entry->value_bits) - 1;
-+
-+	result = assert_mutable_entry(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = assert_not_at_end(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = ASSERT((value & value_mask) == value,
-+			"Value (%u) being set in a delta index is too large (must fit in %u bits)",
-+			value,
-+			delta_entry->value_bits);
-+	if (result != UDS_SUCCESS)
-+		return UDS_INVALID_ARGUMENT;
-+
-+	set_field(value,
-+		  delta_entry->delta_zone->memory,
-+		  get_delta_entry_offset(delta_entry),
-+		  delta_entry->value_bits);
-+	return UDS_SUCCESS;
-+}
-+
-+/*
-+ * Extend the memory used by the delta lists by adding growing_size bytes before the list indicated
-+ * by growing_index, then rebalancing the lists in the new chunk.
-+ */
-+static int
-+extend_delta_zone(struct delta_zone *delta_zone, u32 growing_index, size_t growing_size)
-+{
-+	ktime_t start_time;
-+	ktime_t end_time;
-+	struct delta_list *delta_lists;
-+	u32 i;
-+	size_t used_space;
-+
-+
-+	/* Calculate the amount of space that is or will be in use. */
-+	start_time = current_time_ns(CLOCK_MONOTONIC);
-+	delta_lists = delta_zone->delta_lists;
-+	used_space = growing_size;
-+	for (i = 0; i <= delta_zone->list_count + 1; i++)
-+		used_space += get_delta_list_byte_size(&delta_lists[i]);
-+
-+	if (delta_zone->size < used_space)
-+		return UDS_OVERFLOW;
-+
-+	/* Compute the new offsets of the delta lists. */
-+	compute_new_list_offsets(delta_zone, growing_index, growing_size, used_space);
-+
-+	/*
-+	 * When we rebalance the delta list, we will include the end guard list in the rebalancing.
-+	 * It contains the end guard data, which must be copied.
-+	 */
-+	rebalance_delta_zone(delta_zone, 1, delta_zone->list_count + 1);
-+	end_time = current_time_ns(CLOCK_MONOTONIC);
-+	delta_zone->rebalance_count++;
-+	delta_zone->rebalance_time += ktime_sub(end_time, start_time);
-+	return UDS_SUCCESS;
-+}
-+
-+static int insert_bits(struct delta_index_entry *delta_entry, u16 size)
-+{
-+	u64 free_before;
-+	u64 free_after;
-+	u64 source;
-+	u64 destination;
-+	u32 count;
-+	bool before_flag;
-+	u8 *memory;
-+	struct delta_zone *delta_zone = delta_entry->delta_zone;
-+	struct delta_list *delta_list = delta_entry->delta_list;
-+	/* Compute bits in use before and after the inserted bits. */
-+	u32 total_size = delta_list->size;
-+	u32 before_size = delta_entry->offset;
-+	u32 after_size = total_size - delta_entry->offset;
-+
-+	if (total_size + size > U16_MAX) {
-+		delta_entry->list_overflow = true;
-+		delta_zone->overflow_count++;
-+		return UDS_OVERFLOW;
-+	}
-+
-+	/* Compute bits available before and after the delta list. */
-+	free_before = (delta_list[0].start - (delta_list[-1].start + delta_list[-1].size));
-+	free_after = (delta_list[1].start - (delta_list[0].start + delta_list[0].size));
-+
-+	if ((size <= free_before) && (size <= free_after)) {
-+		/*
-+		 * We have enough space to use either before or after the list. Select the smaller
-+		 * amount of data. If it is exactly the same, try to take from the larger amount of
-+		 * free space.
-+		 */
-+		if (before_size < after_size)
-+			before_flag = true;
-+		else if (after_size < before_size)
-+			before_flag = false;
-+		else
-+			before_flag = free_before > free_after;
-+	} else if (size <= free_before) {
-+		/* There is space before but not after. */
-+		before_flag = true;
-+	} else if (size <= free_after) {
-+		/* There is space after but not before. */
-+		before_flag = false;
-+	} else {
-+		/*
-+		 * Neither of the surrounding spaces is large enough for this request. Extend
-+		 * and/or rebalance the delta list memory choosing to move the least amount of
-+		 * data.
-+		 */
-+		int result;
-+		u32 growing_index = delta_entry->list_number + 1;
-+
-+		before_flag = before_size < after_size;
-+		if (!before_flag)
-+			growing_index++;
-+		result = extend_delta_zone(delta_zone, growing_index, BITS_TO_BYTES(size));
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	}
-+
-+	delta_list->size += size;
-+	if (before_flag) {
-+		source = delta_list->start;
-+		destination = source - size;
-+		delta_list->start -= size;
-+		count = before_size;
-+	} else {
-+		source = delta_list->start + delta_entry->offset;
-+		destination = source + size;
-+		count = after_size;
-+	}
-+
-+	memory = delta_zone->memory;
-+	move_bits(memory, source, memory, destination, count);
-+	return UDS_SUCCESS;
-+}
-+
-+static void encode_delta(const struct delta_index_entry *delta_entry)
-+{
-+	u32 temp;
-+	u32 t1;
-+	u32 t2;
-+	u64 offset;
-+	const struct delta_zone *delta_zone = delta_entry->delta_zone;
-+	u8 *memory = delta_zone->memory;
-+
-+	offset = get_delta_entry_offset(delta_entry) + delta_entry->value_bits;
-+	if (delta_entry->delta < delta_zone->min_keys) {
-+		set_field(delta_entry->delta, memory, offset, delta_zone->min_bits);
++	if (queue->thread == NULL)
 +		return;
-+	}
 +
-+	temp = delta_entry->delta - delta_zone->min_keys;
-+	t1 = (temp % delta_zone->incr_keys) + delta_zone->min_keys;
-+	t2 = temp / delta_zone->incr_keys;
-+	set_field(t1, memory, offset, delta_zone->min_bits);
-+	set_zero(memory, offset + delta_zone->min_bits, t2);
-+	set_field(1, memory, offset + delta_zone->min_bits + t2, 1);
++	/* Tells the worker thread to shut down and waits for it to exit. */
++	kthread_stop(queue->thread);
++	queue->thread = NULL;
 +}
 +
-+static void encode_entry(const struct delta_index_entry *delta_entry, u32 value, const u8 *name)
++static void finish_round_robin_work_queue(struct round_robin_work_queue *queue)
 +{
-+	u8 *memory = delta_entry->delta_zone->memory;
-+	u64 offset = get_delta_entry_offset(delta_entry);
++	struct simple_work_queue **queue_table = queue->service_queues;
++	unsigned int count = queue->num_service_queues;
++	unsigned int i;
 +
-+	set_field(value, memory, offset, delta_entry->value_bits);
-+	encode_delta(delta_entry);
-+	if (name != NULL)
-+		set_collision_name(delta_entry, name);
++	for (i = 0; i < count; i++)
++		finish_simple_work_queue(queue_table[i]);
++}
++
++/* No enqueueing of completions should be done once this function is called. */
++void vdo_finish_work_queue(struct vdo_work_queue *queue)
++{
++	if (queue == NULL)
++		return;
++
++	if (queue->round_robin_mode)
++		finish_round_robin_work_queue(as_round_robin_work_queue(queue));
++	else
++		finish_simple_work_queue(as_simple_work_queue(queue));
++}
++
++/* Debugging dumps */
++
++static void dump_simple_work_queue(struct simple_work_queue *queue)
++{
++	const char *thread_status = "no threads";
++	char task_state_report = '-';
++
++	if (queue->thread != NULL) {
++		task_state_report = task_state_to_char(queue->thread);
++		thread_status = atomic_read(&queue->idle) ? "idle" : "running";
++	}
++
++	uds_log_info("workQ %px (%s) %s (%c)",
++		     &queue->common,
++		     queue->common.name,
++		     thread_status,
++		     task_state_report);
++
++	/* ->waiting_worker_threads wait queue status? anyone waiting? */
 +}
 +
 +/*
-+ * Create a new entry in the delta index. If the entry is a collision, the full 256 bit name must
-+ * be provided.
++ * Write to the buffer some info about the completion, for logging. Since the common use case is
++ * dumping info about a lot of completions to syslog all at once, the format favors brevity over
++ * readability.
 + */
-+int uds_put_delta_index_entry(struct delta_index_entry *delta_entry,
-+			      u32 key,
-+			      u32 value,
-+			      const u8 *name)
++void vdo_dump_work_queue(struct vdo_work_queue *queue)
 +{
-+	int result;
-+	struct delta_zone *delta_zone;
++	if (queue->round_robin_mode) {
++		struct round_robin_work_queue *round_robin = as_round_robin_work_queue(queue);
++		unsigned int i;
 +
-+	result = assert_mutable_entry(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (delta_entry->is_collision)
-+		/*
-+		 * The caller wants us to insert a collision entry onto a collision entry. This
-+		 * happens when we find a collision and attempt to add the name again to the index.
-+		 * This is normally a fatal error unless we are replaying a closed chapter while we
-+		 * are rebuilding a volume index.
-+		 */
-+		return UDS_DUPLICATE_NAME;
-+
-+	if (delta_entry->offset < delta_entry->delta_list->save_offset) {
-+		/*
-+		 * The saved entry offset is after the new entry and will no longer be valid, so
-+		 * replace it with the insertion point.
-+		 */
-+		result = uds_remember_delta_index_offset(delta_entry);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	}
-+
-+	if (name != NULL) {
-+		/* Insert a collision entry which is placed after this entry. */
-+		result = assert_not_at_end(delta_entry);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		result = ASSERT((key == delta_entry->key), "incorrect key for collision entry");
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		delta_entry->offset += delta_entry->entry_bits;
-+		set_delta(delta_entry, 0);
-+		delta_entry->is_collision = true;
-+		delta_entry->entry_bits += COLLISION_BITS;
-+		result = insert_bits(delta_entry, delta_entry->entry_bits);
-+	} else if (delta_entry->at_end) {
-+		/* Insert a new entry at the end of the delta list. */
-+		result = ASSERT((key >= delta_entry->key), "key past end of list");
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		set_delta(delta_entry, key - delta_entry->key);
-+		delta_entry->key = key;
-+		delta_entry->at_end = false;
-+		result = insert_bits(delta_entry, delta_entry->entry_bits);
++		for (i = 0; i < round_robin->num_service_queues; i++)
++			dump_simple_work_queue(round_robin->service_queues[i]);
 +	} else {
-+		u16 old_entry_size;
-+		u16 additional_size;
-+		struct delta_index_entry next_entry;
-+		u32 next_value;
-+
-+		/*
-+		 * Insert a new entry which requires the delta in the following entry to be
-+		 * updated.
-+		 */
-+		result = ASSERT((key < delta_entry->key), "key precedes following entry");
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		result = ASSERT((key >= delta_entry->key - delta_entry->delta),
-+				"key effects following entry's delta");
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		old_entry_size = delta_entry->entry_bits;
-+		next_entry = *delta_entry;
-+		next_value = uds_get_delta_entry_value(&next_entry);
-+		set_delta(delta_entry, key - (delta_entry->key - delta_entry->delta));
-+		delta_entry->key = key;
-+		set_delta(&next_entry, next_entry.key - key);
-+		next_entry.offset += delta_entry->entry_bits;
-+		/* The two new entries are always bigger than the single entry being replaced. */
-+		additional_size = (delta_entry->entry_bits +
-+				   next_entry.entry_bits - old_entry_size);
-+		result = insert_bits(delta_entry, additional_size);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		encode_entry(&next_entry, next_value, NULL);
++		dump_simple_work_queue(as_simple_work_queue(queue));
 +	}
-+
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	encode_entry(delta_entry, value, name);
-+	delta_zone = delta_entry->delta_zone;
-+	delta_zone->record_count++;
-+	delta_zone->collision_count += delta_entry->is_collision ? 1 : 0;
-+	return UDS_SUCCESS;
 +}
 +
-+static void delete_bits(const struct delta_index_entry *delta_entry, int size)
++static void get_function_name(void *pointer, char *buffer, size_t buffer_length)
 +{
-+	u64 source;
-+	u64 destination;
-+	u32 count;
-+	bool before_flag;
-+	struct delta_list *delta_list = delta_entry->delta_list;
-+	u8 *memory = delta_entry->delta_zone->memory;
-+	/* Compute bits retained before and after the deleted bits. */
-+	u32 total_size = delta_list->size;
-+	u32 before_size = delta_entry->offset;
-+	u32 after_size = total_size - delta_entry->offset - size;
++	if (pointer == NULL) {
++		/*
++		 * Format "%ps" logs a null pointer as "(null)" with a bunch of leading spaces. We
++		 * sometimes use this when logging lots of data; don't be so verbose.
++		 */
++		strscpy(buffer, "-", buffer_length);
++	} else {
++		/*
++		 * Use a pragma to defeat gcc's format checking, which doesn't understand that
++		 * "%ps" actually does support a precision spec in Linux kernel code.
++		 */
++		char *space;
 +
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wformat"
++		snprintf(buffer, buffer_length, "%.*ps", buffer_length - 1, pointer);
++#pragma GCC diagnostic pop
++
++		space = strchr(buffer, ' ');
++		if (space != NULL)
++			*space = '\0';
++	}
++}
++
++void vdo_dump_completion_to_buffer(struct vdo_completion *completion, char *buffer, size_t length)
++{
++	size_t current_length =
++		scnprintf(buffer,
++			  length,
++			  "%.*s/",
++			  TASK_COMM_LEN,
++			  (completion->my_queue == NULL ? "-" : completion->my_queue->name));
++
++	if (current_length < length - 1)
++		get_function_name((void *) completion->callback,
++				  buffer + current_length,
++				  length - current_length);
++}
++
++/* Completion submission */
++/*
++ * If the completion has a timeout that has already passed, the timeout handler function may be
++ * invoked by this function.
++ */
++void vdo_enqueue_work_queue(struct vdo_work_queue *queue, struct vdo_completion *completion)
++{
 +	/*
-+	 * Determine whether to add to the available space either before or after the delta list.
-+	 * We prefer to move the least amount of data. If it is exactly the same, try to add to the
-+	 * smaller amount of free space.
++	 * Convert the provided generic vdo_work_queue to the simple_work_queue to actually queue
++	 * on.
 +	 */
-+	if (before_size < after_size) {
-+		before_flag = true;
-+	} else if (after_size < before_size) {
-+		before_flag = false;
++	struct simple_work_queue *simple_queue = NULL;
++
++	if (!queue->round_robin_mode) {
++		simple_queue = as_simple_work_queue(queue);
 +	} else {
-+		u64 free_before =
-+			(delta_list[0].start - (delta_list[-1].start + delta_list[-1].size));
-+		u64 free_after =
-+			(delta_list[1].start - (delta_list[0].start + delta_list[0].size));
++		struct round_robin_work_queue *round_robin = as_round_robin_work_queue(queue);
 +
-+		before_flag = (free_before < free_after);
++		/*
++		 * It shouldn't be a big deal if the same rotor gets used for multiple work queues.
++		 * Any patterns that might develop are likely to be disrupted by random ordering of
++		 * multiple completions and migration between cores, unless the load is so light as
++		 * to be regular in ordering of tasks and the threads are confined to individual
++		 * cores; with a load that light we won't care.
++		 */
++		unsigned int rotor = this_cpu_inc_return(service_queue_rotor);
++		unsigned int index = rotor % round_robin->num_service_queues;
++
++		simple_queue = round_robin->service_queues[index];
 +	}
 +
-+	delta_list->size -= size;
-+	if (before_flag) {
-+		source = delta_list->start;
-+		destination = source + size;
-+		delta_list->start += size;
-+		count = before_size;
-+	} else {
-+		destination = delta_list->start + delta_entry->offset;
-+		source = destination + size;
-+		count = after_size;
-+	}
-+
-+	move_bits(memory, source, memory, destination, count);
++	enqueue_work_queue_completion(simple_queue, completion);
 +}
 +
-+int uds_remove_delta_index_entry(struct delta_index_entry *delta_entry)
++/* Misc */
++
++/*
++ * Return the work queue pointer recorded at initialization time in the work-queue stack handle
++ * initialized on the stack of the current thread, if any.
++ */
++static struct simple_work_queue *get_current_thread_work_queue(void)
 +{
-+	int result;
-+	struct delta_index_entry next_entry;
-+	struct delta_zone *delta_zone;
-+	struct delta_list *delta_list;
-+
-+	result = assert_mutable_entry(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_entry = *delta_entry;
-+	result = uds_next_delta_index_entry(&next_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	delta_zone = delta_entry->delta_zone;
-+
-+	if (delta_entry->is_collision) {
-+		/* This is a collision entry, so just remove it. */
-+		delete_bits(delta_entry, delta_entry->entry_bits);
-+		next_entry.offset = delta_entry->offset;
-+		delta_zone->collision_count -= 1;
-+	} else if (next_entry.at_end) {
-+		/* This entry is at the end of the list, so just remove it. */
-+		delete_bits(delta_entry, delta_entry->entry_bits);
-+		next_entry.key -= delta_entry->delta;
-+		next_entry.offset = delta_entry->offset;
-+	} else {
-+		/* The delta in the next entry needs to be updated. */
-+		u32 next_value = uds_get_delta_entry_value(&next_entry);
-+		u16 old_size = delta_entry->entry_bits + next_entry.entry_bits;
-+
-+		if (next_entry.is_collision) {
-+			next_entry.is_collision = false;
-+			delta_zone->collision_count -= 1;
-+		}
-+
-+		set_delta(&next_entry, delta_entry->delta + next_entry.delta);
-+		next_entry.offset = delta_entry->offset;
-+		/* The one new entry is always smaller than the two entries being replaced. */
-+		delete_bits(delta_entry, old_size - next_entry.entry_bits);
-+		encode_entry(&next_entry, next_value, NULL);
-+	}
-+
-+	delta_zone->record_count--;
-+	delta_zone->discard_count++;
-+	*delta_entry = next_entry;
-+
-+	delta_list = delta_entry->delta_list;
-+	if (delta_entry->offset < delta_list->save_offset) {
-+		/* The saved entry offset is no longer valid. */
-+		delta_list->save_key = 0;
-+		delta_list->save_offset = 0;
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+void uds_get_delta_index_stats(const struct delta_index *delta_index,
-+			       struct delta_index_stats *stats)
-+{
-+	unsigned int z;
-+	const struct delta_zone *delta_zone;
-+
-+	memset(stats, 0, sizeof(struct delta_index_stats));
-+	for (z = 0; z < delta_index->zone_count; z++) {
-+		delta_zone = &delta_index->delta_zones[z];
-+		stats->rebalance_time += delta_zone->rebalance_time;
-+		stats->rebalance_count += delta_zone->rebalance_count;
-+		stats->record_count += delta_zone->record_count;
-+		stats->collision_count += delta_zone->collision_count;
-+		stats->discard_count += delta_zone->discard_count;
-+		stats->overflow_count += delta_zone->overflow_count;
-+		stats->list_count += delta_zone->list_count;
-+	}
-+}
-+
-+size_t uds_compute_delta_index_size(u32 entry_count, u32 mean_delta, u32 payload_bits)
-+{
-+	u16 min_bits;
-+	u32 incr_keys;
-+	u32 min_keys;
-+
-+	compute_coding_constants(mean_delta, &min_bits, &min_keys, &incr_keys);
-+	/* On average, each delta is encoded into about min_bits + 1.5 bits. */
-+	return entry_count * (payload_bits + min_bits + 1) + entry_count / 2;
-+}
-+
-+u32 uds_get_delta_index_page_count(u32 entry_count,
-+				   u32 list_count,
-+				   u32 mean_delta,
-+				   u32 payload_bits,
-+				   size_t bytes_per_page)
-+{
-+	unsigned int bits_per_delta_list;
-+	unsigned int bits_per_page;
-+	size_t bits_per_index;
-+
-+	/* Compute the expected number of bits needed for all the entries. */
-+	bits_per_index = uds_compute_delta_index_size(entry_count, mean_delta, payload_bits);
-+	bits_per_delta_list = bits_per_index / list_count;
-+
-+	/* Add in the immutable delta list headers. */
-+	bits_per_index += list_count * IMMUTABLE_HEADER_SIZE;
-+	/* Compute the number of usable bits on an immutable index page. */
-+	bits_per_page = ((bytes_per_page - sizeof(struct delta_page_header)) * BITS_PER_BYTE);
 +	/*
-+	 * Reduce the bits per page by one immutable delta list header and one delta list to
-+	 * account for internal fragmentation.
++	 * In interrupt context, if a vdo thread is what got interrupted, the calls below will find
++	 * the queue for the thread which was interrupted. However, the interrupted thread may have
++	 * been processing a completion, in which case starting to process another would violate
++	 * our concurrency assumptions.
 +	 */
-+	bits_per_page -= IMMUTABLE_HEADER_SIZE + bits_per_delta_list;
-+	/* Now compute the number of pages needed. */
-+	return DIV_ROUND_UP(bits_per_index, bits_per_page);
++	if (in_interrupt())
++		return NULL;
++	if (kthread_func(current) != work_queue_runner)
++		/* Not a VDO work queue thread. */
++		return NULL;
++	return kthread_data(current);
 +}
 +
-+void uds_log_delta_index_entry(struct delta_index_entry *delta_entry)
++struct vdo_work_queue *vdo_get_current_work_queue(void)
 +{
-+	uds_log_ratelimit(uds_log_info,
-+			  "List 0x%X Key 0x%X Offset 0x%X%s%s List_size 0x%X%s",
-+			  delta_entry->list_number,
-+			  delta_entry->key,
-+			  delta_entry->offset,
-+			  delta_entry->at_end ? " end" : "",
-+			  delta_entry->is_collision ? " collision" : "",
-+			  delta_entry->delta_list->size,
-+			  delta_entry->list_overflow ? " overflow" : "");
-+	delta_entry->list_overflow = false;
++	struct simple_work_queue *queue = get_current_thread_work_queue();
++
++	return (queue == NULL) ? NULL : &queue->common;
 +}
-diff --git a/drivers/md/dm-vdo/delta-index.h b/drivers/md/dm-vdo/delta-index.h
++
++struct vdo_thread *vdo_get_work_queue_owner(struct vdo_work_queue *queue)
++{
++	return queue->owner;
++}
++
++/**
++ * vdo_get_work_queue_private_data() - Returns the private data for the current thread's work
++ *                                     queue, or NULL if none or if the current thread is not a
++ *                                     work queue thread.
++ */
++void *vdo_get_work_queue_private_data(void)
++{
++	struct simple_work_queue *queue = get_current_thread_work_queue();
++
++	return (queue != NULL) ? queue->private : NULL;
++}
++
++bool vdo_work_queue_type_is(struct vdo_work_queue *queue, const struct vdo_work_queue_type *type)
++{
++	return (queue->type == type);
++}
+diff --git a/drivers/md/dm-vdo/work-queue.h b/drivers/md/dm-vdo/work-queue.h
 new file mode 100644
-index 000000000000..0b49b87a4c76
+index 000000000000..1d5aa9878b16
 --- /dev/null
-+++ b/drivers/md/dm-vdo/delta-index.h
-@@ -0,0 +1,292 @@
++++ b/drivers/md/dm-vdo/work-queue.h
+@@ -0,0 +1,53 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_DELTA_INDEX_H
-+#define UDS_DELTA_INDEX_H
++#ifndef VDO_WORK_QUEUE_H
++#define VDO_WORK_QUEUE_H
 +
-+#include <linux/cache.h>
++#include <linux/sched.h> /* for TASK_COMM_LEN */
 +
-+#include "config.h"
-+#include "io-factory.h"
-+#include "numeric.h"
-+#include "time-utils.h"
++#include "types.h"
 +
-+/*
-+ * A delta index is a key-value store, where each entry maps an address (the key) to a payload (the
-+ * value). The entries are sorted by address, and only the delta between successive addresses is
-+ * stored in the entry. The addresses are assumed to be uniformly distributed, and the deltas are
-+ * therefore exponentially distributed.
-+ *
-+ * A delta_index can either be mutable or immutable depending on its expected use. The immutable
-+ * form of a delta index is used for the indexes of closed chapters committed to the volume. The
-+ * mutable form of a delta index is used by the volume index, and also by the chapter index in an
-+ * open chapter. Like the index as a whole, each mutable delta index is divided into a number of
-+ * independent zones.
-+ */
-+
-+struct delta_list {
-+	/* The offset of the delta list start, in bits */
-+	u64 start;
-+	/* The number of bits in the delta list */
-+	u16 size;
-+	/* Where the last search "found" the key, in bits */
-+	u16 save_offset;
-+	/* The key for the record just before save_offset */
-+	u32 save_key;
-+};
-+
-+struct delta_zone {
-+	/* The delta list memory */
-+	u8 *memory;
-+	/* The delta list headers */
-+	struct delta_list *delta_lists;
-+	/* Temporary starts of delta lists */
-+	u64 *new_offsets;
-+	/* Buffered writer for saving an index */
-+	struct buffered_writer *buffered_writer;
-+	/* The size of delta list memory */
-+	size_t size;
-+	/* Nanoseconds spent rebalancing */
-+	ktime_t rebalance_time;
-+	/* Number of memory rebalances */
-+	u32 rebalance_count;
-+	/* The number of bits in a stored value */
-+	u8 value_bits;
-+	/* The number of bits in the minimal key code */
-+	u16 min_bits;
-+	/* The number of keys used in a minimal code */
-+	u32 min_keys;
-+	/* The number of keys used for another code bit */
-+	u32 incr_keys;
-+	/* The number of records in the index */
-+	u64 record_count;
-+	/* The number of collision records */
-+	u64 collision_count;
-+	/* The number of records removed */
-+	u64 discard_count;
-+	/* The number of UDS_OVERFLOW errors detected */
-+	u64 overflow_count;
-+	/* The index of the first delta list */
-+	u32 first_list;
-+	/* The number of delta lists */
-+	u32 list_count;
-+	/* Tag belonging to this delta index */
-+	u8 tag;
-+} __aligned(L1_CACHE_BYTES);
-+
-+struct delta_list_save_info {
-+	/* Tag identifying which delta index this list is in */
-+	u8 tag;
-+	/* Bit offset of the start of the list data */
-+	u8 bit_offset;
-+	/* Number of bytes of list data */
-+	u16 byte_count;
-+	/* The delta list number within the delta index */
-+	u32 index;
-+} __packed;
-+
-+struct delta_index {
-+	/* The zones */
-+	struct delta_zone *delta_zones;
-+	/* The number of zones */
-+	unsigned int zone_count;
-+	/* The number of delta lists */
-+	u32 list_count;
-+	/* Maximum lists per zone */
-+	u32 lists_per_zone;
-+	/* Total memory allocated to this index */
-+	size_t memory_size;
-+	/* The number of non-empty lists at load time per zone */
-+	u32 load_lists[MAX_ZONES];
-+	/* True if this index is mutable */
-+	bool mutable;
-+	/* Tag belonging to this delta index */
-+	u8 tag;
-+};
-+
-+/*
-+ * A delta_index_page describes a single page of a chapter index. The delta_index field allows the
-+ * page to be treated as an immutable delta_index. We use the delta_zone field to treat the chapter
-+ * index page as a single zone index, and without the need to do an additional memory allocation.
-+ */
-+struct delta_index_page {
-+	struct delta_index delta_index;
-+	/* These values are loaded from the DeltaPageHeader */
-+	u32 lowest_list_number;
-+	u32 highest_list_number;
-+	u64 virtual_chapter_number;
-+	/* This structure describes the single zone of a delta index page. */
-+	struct delta_zone delta_zone;
-+};
-+
-+/*
-+ * Notes on the delta_index_entries:
-+ *
-+ * The fields documented as "public" can be read by any code that uses a delta_index. The fields
-+ * documented as "private" carry information between delta_index method calls and should not be
-+ * used outside the delta_index module.
-+ *
-+ * (1) The delta_index_entry is used like an iterator when searching a delta list.
-+ *
-+ * (2) It is also the result of a successful search and can be used to refer to the element found
-+ *     by the search.
-+ *
-+ * (3) It is also the result of an unsuccessful search and can be used to refer to the insertion
-+ *     point for a new record.
-+ *
-+ * (4) If at_end is true, the delta_list entry can only be used as the insertion point for a new
-+ *     record at the end of the list.
-+ *
-+ * (5) If at_end is false and is_collision is true, the delta_list entry fields refer to a
-+ *     collision entry in the list, and the delta_list entry can be used a a reference to this
-+ *     entry.
-+ *
-+ * (6) If at_end is false and is_collision is false, the delta_list entry fields refer to a
-+ *     non-collision entry in the list. Such delta_list entries can be used as a reference to a
-+ *     found entry, or an insertion point for a non-collision entry before this entry, or an
-+ *     insertion point for a collision entry that collides with this entry.
-+ */
-+struct delta_index_entry {
-+	/* Public fields */
-+	/* The key for this entry */
-+	u32 key;
-+	/* We are after the last list entry */
-+	bool at_end;
-+	/* This record is a collision */
-+	bool is_collision;
-+
-+	/* Private fields */
-+	/* This delta list overflowed */
-+	bool list_overflow;
-+	/* The number of bits used for the value */
-+	u8 value_bits;
-+	/* The number of bits used for the entire entry */
-+	u16 entry_bits;
-+	/* The delta index zone */
-+	struct delta_zone *delta_zone;
-+	/* The delta list containing the entry */
-+	struct delta_list *delta_list;
-+	/* The delta list number */
-+	u32 list_number;
-+	/* Bit offset of this entry within the list */
-+	u16 offset;
-+	/* The delta between this and previous entry */
-+	u32 delta;
-+	/* Temporary delta list for immutable indices */
-+	struct delta_list temp_delta_list;
-+};
-+
-+struct delta_index_stats {
-+	/* Number of bytes allocated */
-+	size_t memory_allocated;
-+	/* Nanoseconds spent rebalancing */
-+	ktime_t rebalance_time;
-+	/* Number of memory rebalances */
-+	u32 rebalance_count;
-+	/* The number of records in the index */
-+	u64 record_count;
-+	/* The number of collision records */
-+	u64 collision_count;
-+	/* The number of records removed */
-+	u64 discard_count;
-+	/* The number of UDS_OVERFLOW errors detected */
-+	u64 overflow_count;
-+	/* The number of delta lists */
-+	u32 list_count;
-+};
-+
-+int __must_check uds_initialize_delta_index(struct delta_index *delta_index,
-+					    unsigned int zone_count,
-+					    u32 list_count,
-+					    u32 mean_delta,
-+					    u32 payload_bits,
-+					    size_t memory_size,
-+					    u8 tag);
-+
-+int __must_check uds_initialize_delta_index_page(struct delta_index_page *delta_index_page,
-+						 u64 expected_nonce,
-+						 u32 mean_delta,
-+						 u32 payload_bits,
-+						 u8 *memory,
-+						 size_t memory_size);
-+
-+void uds_uninitialize_delta_index(struct delta_index *delta_index);
-+
-+void uds_reset_delta_index(const struct delta_index *delta_index);
-+
-+int __must_check uds_pack_delta_index_page(const struct delta_index *delta_index,
-+					   u64 header_nonce,
-+					   u8 *memory,
-+					   size_t memory_size,
-+					   u64 virtual_chapter_number,
-+					   u32 first_list,
-+					   u32 *list_count);
-+
-+int __must_check uds_start_restoring_delta_index(struct delta_index *delta_index,
-+						 struct buffered_reader **buffered_readers,
-+						 unsigned int reader_count);
-+
-+int __must_check uds_finish_restoring_delta_index(struct delta_index *delta_index,
-+						  struct buffered_reader **buffered_readers,
-+						  unsigned int reader_count);
-+
-+int __must_check
-+uds_check_guard_delta_lists(struct buffered_reader **buffered_readers, unsigned int reader_count);
-+
-+int __must_check uds_start_saving_delta_index(const struct delta_index *delta_index,
-+					      unsigned int zone_number,
-+					      struct buffered_writer *buffered_writer);
-+
-+int __must_check
-+uds_finish_saving_delta_index(const struct delta_index *delta_index, unsigned int zone_number);
-+
-+int __must_check uds_write_guard_delta_list(struct buffered_writer *buffered_writer);
-+
-+size_t __must_check uds_compute_delta_index_save_bytes(u32 list_count, size_t memory_size);
-+
-+int __must_check uds_start_delta_index_search(const struct delta_index *delta_index,
-+					      u32 list_number,
-+					      u32 key,
-+					      struct delta_index_entry *iterator);
-+
-+int __must_check uds_next_delta_index_entry(struct delta_index_entry *delta_entry);
-+
-+int __must_check uds_remember_delta_index_offset(const struct delta_index_entry *delta_entry);
-+
-+int __must_check uds_get_delta_index_entry(const struct delta_index *delta_index,
-+					   u32 list_number,
-+					   u32 key,
-+					   const u8 *name,
-+					   struct delta_index_entry *delta_entry);
-+
-+int __must_check
-+uds_get_delta_entry_collision(const struct delta_index_entry *delta_entry, u8 *name);
-+
-+u32 __must_check uds_get_delta_entry_value(const struct delta_index_entry *delta_entry);
-+
-+int __must_check uds_set_delta_entry_value(const struct delta_index_entry *delta_entry, u32 value);
-+
-+int __must_check uds_put_delta_index_entry(struct delta_index_entry *delta_entry,
-+					   u32 key,
-+					   u32 value,
-+					   const u8 *name);
-+
-+int __must_check uds_remove_delta_index_entry(struct delta_index_entry *delta_entry);
-+
-+void uds_get_delta_index_stats(const struct delta_index *delta_index,
-+			       struct delta_index_stats *stats);
-+
-+size_t __must_check
-+uds_compute_delta_index_size(u32 entry_count, u32 mean_delta, u32 payload_bits);
-+
-+u32 uds_get_delta_index_page_count(u32 entry_count,
-+				   u32 list_count,
-+				   u32 mean_delta,
-+				   u32 payload_bits,
-+				   size_t bytes_per_page);
-+
-+void uds_log_delta_index_entry(struct delta_index_entry *delta_entry);
-+
-+#endif /* UDS_DELTA_INDEX_H */
-diff --git a/drivers/md/dm-vdo/hash-utils.h b/drivers/md/dm-vdo/hash-utils.h
-new file mode 100644
-index 000000000000..f371c7fd07bf
---- /dev/null
-+++ b/drivers/md/dm-vdo/hash-utils.h
-@@ -0,0 +1,66 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_HASH_UTILS_H
-+#define UDS_HASH_UTILS_H
-+
-+#include "geometry.h"
-+#include "numeric.h"
-+#include "uds.h"
-+
-+/* Utilities for extracting portions of a request name for various uses. */
-+
-+/* How various portions of a record name are apportioned. */
 +enum {
-+	VOLUME_INDEX_BYTES_OFFSET = 0,
-+	VOLUME_INDEX_BYTES_COUNT = 8,
-+	CHAPTER_INDEX_BYTES_OFFSET = 8,
-+	CHAPTER_INDEX_BYTES_COUNT = 6,
-+	SAMPLE_BYTES_OFFSET = 14,
-+	SAMPLE_BYTES_COUNT = 2,
++	MAX_VDO_WORK_QUEUE_NAME_LEN = TASK_COMM_LEN,
 +};
 +
-+static inline u64 uds_extract_chapter_index_bytes(const struct  uds_record_name *name)
-+{
-+	const u8 *chapter_bits = &name->name[CHAPTER_INDEX_BYTES_OFFSET];
-+	u64 bytes = (u64) get_unaligned_be16(chapter_bits) << 32;
++struct vdo_work_queue_type {
++	void (*start)(void *context);
++	void (*finish)(void *context);
++	enum vdo_completion_priority max_priority;
++	enum vdo_completion_priority default_priority;
++};
 +
-+	bytes |= get_unaligned_be32(chapter_bits + 2);
-+	return bytes;
-+}
++struct vdo_completion;
++struct vdo_thread;
++struct vdo_work_queue;
 +
-+static inline u64 uds_extract_volume_index_bytes(const struct uds_record_name *name)
-+{
-+	return get_unaligned_be64(&name->name[VOLUME_INDEX_BYTES_OFFSET]);
-+}
++int vdo_make_work_queue(const char *thread_name_prefix,
++			const char *name,
++			struct vdo_thread *owner,
++			const struct vdo_work_queue_type *type,
++			unsigned int thread_count,
++			void *thread_privates[],
++			struct vdo_work_queue **queue_ptr);
 +
-+static inline u32 uds_extract_sampling_bytes(const struct uds_record_name *name)
-+{
-+	return get_unaligned_be16(&name->name[SAMPLE_BYTES_OFFSET]);
-+}
++void vdo_enqueue_work_queue(struct vdo_work_queue *queue, struct vdo_completion *completion);
 +
-+/* Compute the chapter delta list for a given name. */
-+static inline u32
-+uds_hash_to_chapter_delta_list(const struct uds_record_name *name, const struct geometry *geometry)
-+{
-+	return ((uds_extract_chapter_index_bytes(name) >> geometry->chapter_address_bits) &
-+		((1 << geometry->chapter_delta_list_bits) - 1));
-+}
++void vdo_finish_work_queue(struct vdo_work_queue *queue);
 +
-+/* Compute the chapter delta address for a given name. */
-+static inline u32
-+uds_hash_to_chapter_delta_address(const struct uds_record_name *name,
-+				  const struct geometry *geometry)
-+{
-+	return uds_extract_chapter_index_bytes(name) & ((1 << geometry->chapter_address_bits) - 1);
-+}
++void vdo_free_work_queue(struct vdo_work_queue *queue);
 +
-+static inline unsigned int
-+uds_name_to_hash_slot(const struct uds_record_name *name, unsigned int slot_count)
-+{
-+	return (unsigned int) (uds_extract_chapter_index_bytes(name) % slot_count);
-+}
++void vdo_dump_work_queue(struct vdo_work_queue *queue);
 +
-+#endif /* UDS_HASH_UTILS_H */
++void vdo_dump_completion_to_buffer(struct vdo_completion *completion, char *buffer, size_t length);
++
++void *vdo_get_work_queue_private_data(void);
++struct vdo_work_queue *vdo_get_current_work_queue(void);
++struct vdo_thread *vdo_get_work_queue_owner(struct vdo_work_queue *queue);
++
++bool __must_check
++vdo_work_queue_type_is(struct vdo_work_queue *queue, const struct vdo_work_queue_type *type);
++
++#endif /* VDO_WORK_QUEUE_H */
 -- 
 2.40.0
 
