@@ -1,76 +1,83 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E1AB7EE021C
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Sep 2023 04:39:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5E58CEE3F2F
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Sep 2023 06:45:34 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694752753;
+	s=mimecast20190719; t=1694760333;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=9dLIXDFV9GHetyFkgmzQgEk9pXiNFSltlHhoUkDjF+U=;
-	b=Hob+VhkNA54Ac68cTPx0ala8Nv3+7bcwQ2ylJHC3lJKvSGPz7LPfv/5mSkzQAxwBU2ASDw
-	ZXTGyscAxW/cnuyQAqc4kEnVGZEPPG2MujHwHDYi2Dqcaie+yBeNN1YfMndTztbfpMGP4E
-	1ZlrwzMzOadHmOXwIjscbUd0zT2VoFg=
+	bh=qS/LqQSwtKITz1dz/xTw5Dw2KKOeexzy7FB/ey3S0VA=;
+	b=MHWMkzs5JXVVsYT4qMxAXKTBx0wj09vGfQ0Qed4CfkMFgB7eZJpgVpAZVP4RMCZgsF7sEw
+	+1JbHm2hhccP5eX+RkcJU2783j7HdeIv5uO4sLffs4X7nGOjirPQZqaGXyLkIEeacaheXW
+	79K8VJVkwWgGpaYOFo6cz5RRHDkprSE=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-526-qYbnOedtN3yLWIpwWlDcnA-1; Fri, 15 Sep 2023 00:39:09 -0400
-X-MC-Unique: qYbnOedtN3yLWIpwWlDcnA-1
+ us-mta-271-Pi5g6ObhNdeao8yHiEHcRw-1; Fri, 15 Sep 2023 02:45:29 -0400
+X-MC-Unique: Pi5g6ObhNdeao8yHiEHcRw-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9760D8678C1;
-	Fri, 15 Sep 2023 04:39:07 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2348A857A9A;
+	Fri, 15 Sep 2023 06:45:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 09AB72026D4B;
-	Fri, 15 Sep 2023 04:39:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 710502026D4B;
+	Fri, 15 Sep 2023 06:45:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 99B67194658C;
-	Fri, 15 Sep 2023 04:38:50 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B07EA19465BA;
+	Fri, 15 Sep 2023 06:44:53 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
  [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A6C4D1946588
- for <dm-devel@listman.corp.redhat.com>; Fri, 15 Sep 2023 04:38:49 +0000 (UTC)
+ ESMTP id 6E7CC19466F9
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 14:53:21 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5579C40C6EBF; Fri, 15 Sep 2023 04:38:39 +0000 (UTC)
+ id 5A3BE40C6EBF; Thu, 14 Sep 2023 14:53:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4E8AE40C6EA8
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 04:38:39 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 53BCA40C6EA8
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 14:53:11 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
+ [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 29E64102F23B
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 04:38:39 +0000 (UTC)
-Received: from mgamail.intel.com (mgamail.intel.com [134.134.136.31]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-530-W_XdN7rQOnWNnZv1DnZrgQ-1; Fri, 15 Sep 2023 00:38:34 -0400
-X-MC-Unique: W_XdN7rQOnWNnZv1DnZrgQ-1
-X-IronPort-AV: E=McAfee;i="6600,9927,10833"; a="443218052"
-X-IronPort-AV: E=Sophos;i="6.02,148,1688454000"; d="scan'208";a="443218052"
-Received: from fmsmga005.fm.intel.com ([10.253.24.32])
- by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
- 14 Sep 2023 21:33:38 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10833"; a="1075659774"
-X-IronPort-AV: E=Sophos;i="6.02,148,1688454000"; d="scan'208";a="1075659774"
-Received: from lkp-server02.sh.intel.com (HELO 9ef86b2655e5) ([10.239.97.151])
- by fmsmga005.fm.intel.com with ESMTP; 14 Sep 2023 21:33:36 -0700
-Received: from kbuild by 9ef86b2655e5 with local (Exim 4.96)
- (envelope-from <lkp@intel.com>) id 1qh0WK-0002R5-17;
- Fri, 15 Sep 2023 04:33:32 +0000
-Date: Fri, 15 Sep 2023 12:32:17 +0800
-From: kernel test robot <lkp@intel.com>
-To: Joe Thornber <ejt@redhat.com>
-Message-ID: <202309151251.TkVrLtEd-lkp@intel.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1662980418B
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 14:53:11 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-457-pQ8o0T0qOAewAFJi4ovRTA-1; Thu,
+ 14 Sep 2023 10:53:09 -0400
+X-MC-Unique: pQ8o0T0qOAewAFJi4ovRTA-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id DBBF02185F;
+ Thu, 14 Sep 2023 14:53:07 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id A25FA139DB;
+ Thu, 14 Sep 2023 14:53:07 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap2.suse-dmz.suse.de with ESMTPSA id wOYUJlMeA2UHAgAAMHmgww
+ (envelope-from <mwilck@suse.com>); Thu, 14 Sep 2023 14:53:07 +0000
+From: mwilck@suse.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>
+Date: Thu, 14 Sep 2023 16:51:30 +0200
+Message-ID: <20230914145131.15165-3-mwilck@suse.com>
+In-Reply-To: <20230914145131.15165-1-mwilck@suse.com>
+References: <20230914145131.15165-1-mwilck@suse.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -80,9 +87,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: [dm-devel] [device-mapper-dm:for-next 2/4]
- drivers/md/persistent-data/dm-extent-allocator.c:88: warning: Function
- parameter or member 'n' not described in '__free_node'
+X-Mailman-Approved-At: Fri, 15 Sep 2023 06:44:53 +0000
+Subject: [dm-devel] [PATCH v3 27/38] multipathd: watch bindings file with
+ inotify + timestamp
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -94,197 +101,615 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
- oe-kbuild-all@lists.linux.dev
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: intel.com
-Content-Disposition: inline
+X-Mimecast-Originator: suse.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
-head:   805d736ee48c10d8770f998127887795ffb0106f
-commit: 064fc5e0e09b49033693b07003c142d0be27a009 [2/4] dm persistent data: Introduce extent allocator
-config: riscv-defconfig (https://download.01.org/0day-ci/archive/20230915/202309151251.TkVrLtEd-lkp@intel.com/config)
-compiler: riscv64-linux-gcc (GCC) 13.2.0
-reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20230915/202309151251.TkVrLtEd-lkp@intel.com/reproduce)
+From: Martin Wilck <mwilck@suse.com>
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202309151251.TkVrLtEd-lkp@intel.com/
+Since "libmultipath: keep bindings in memory", we don't re-read the
+bindings file after every modification. Add a notification mechanism
+that makes multipathd aware of changes to the bindings file. Because
+multipathd itself will change the bindings file, it must compare
+timestamps in order to avoid reading the file repeatedly.
 
-All warnings (new ones prefixed by >>):
+Because select_alias() can be called from multiple thread contexts (uxlsnr,
+uevent handler), we need to add locking for the bindings file. The
+timestamp must also be protected by a lock, because it can't be read
+or written atomically.
 
->> drivers/md/persistent-data/dm-extent-allocator.c:88: warning: Function parameter or member 'n' not described in '__free_node'
->> drivers/md/persistent-data/dm-extent-allocator.c:88: warning: Excess function parameter 'node' description in '__free_node'
->> drivers/md/persistent-data/dm-extent-allocator.c:111: warning: Cannot understand  * @ea: Pointer to the extent allocator.
-    on line 111 - I thought it was a doc line
->> drivers/md/persistent-data/dm-extent-allocator.c:217: warning: Function parameter or member 'flags' not described in '__prealloc_nodes'
->> drivers/md/persistent-data/dm-extent-allocator.c:313: warning: Function parameter or member 'n' not described in '__split_leaf'
->> drivers/md/persistent-data/dm-extent-allocator.c:313: warning: Excess function parameter 'node' description in '__split_leaf'
+Note: The notification mechanism expects the bindings file to be
+atomically replaced by rename(2). Changes must be made in a temporary file and
+applied using rename(2), as in update_bindings_file(). The inotify
+mechanism deliberately does not listen to close-after-write events
+that would be generated by editing the bindings file directly. This
 
+Note also: new bindings will only be read from add_map_with_path(),
+i.e. either during reconfigure(), or when a new map is created during
+runtime. Existing maps will not be renamed if the binding file changes,
+unless the user runs "multipathd reconfigure". This is not a change
+wrt the previous code, but it should be mentioned anyway.
 
-vim +88 drivers/md/persistent-data/dm-extent-allocator.c
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 
-    81	
-    82	/**
-    83	 * __free_node - Frees a node in the extent allocator.
-    84	 * @ea: Pointer to the extent allocator.
-    85	 * @node: Node to free.
-    86	 */
-    87	static inline void __free_node(struct dm_extent_allocator *ea, struct node *n)
-  > 88	{
-    89		struct list_head *l = (struct list_head *)n;
-    90	
-    91		list_add(l, &ea->free_nodes);
-    92		ea->nr_free_nodes++;
-    93	}
-    94	
-    95	/**
-    96	 * __alloc_node - Allocates a node from the extent allocator.
-    97	 * @ea: Pointer to the extent allocator.
-    98	 */
-    99	static inline struct node *__alloc_node(struct dm_extent_allocator *ea)
-   100	{
-   101		struct list_head *l;
-   102	
-   103		l = ea->free_nodes.next;
-   104		list_del(l);
-   105		ea->nr_free_nodes--;
-   106	
-   107		return (struct node *) l;
-   108	}
-   109	
-   110	/**
- > 111	 * @ea: Pointer to the extent allocator.
-   112	 * @node: Index of the node to query.
-   113	 *
-   114	 * Returns: The number of free blocks in the node.
-   115	 */
-   116	static inline uint64_t __nr_free_blocks(struct node *n)
-   117	{
-   118		if (!n)
-   119			return 0;
-   120	
-   121		if (n->is_leaf)
-   122			return n->end - n->begin;
-   123		else
-   124			return n->u.internal.nr_free;
-   125	}
-   126	
-   127	/**
-   128	 * __free_tree - Frees all nodes in a tree.
-   129	 * @ea: Pointer to the extent allocator.
-   130	 * @n: Pointer to the root node of the tree to free.
-   131	 */
-   132	static void __free_tree(struct dm_extent_allocator *ea, struct node *n)
-   133	{
-   134		if (!n)
-   135			return;
-   136	
-   137		if (n->is_leaf)
-   138			__free_node(ea, n);
-   139		else {
-   140			__free_tree(ea, n->u.internal.left);
-   141			__free_tree(ea, n->u.internal.right);
-   142		}
-   143	}
-   144	
-   145	/**
-   146	 * __setup_initial_root - Sets up the initial root node for the extent allocator.
-   147	 * @ea: Pointer to the extent allocator.
-   148	 *
-   149	 * The root node is a leaf node that spans the entire device.
-   150	 */
-   151	static void __setup_initial_root(struct dm_extent_allocator *ea)
-   152	{
-   153		struct node *n;
-   154		struct leaf *l;
-   155	
-   156		n = ea->root = __alloc_node(ea);
-   157		n->is_left_child = true;
-   158		n->is_leaf = true;
-   159		n->nr_holders = 0;
-   160		n->begin = 0;
-   161		n->end = ea->nr_blocks;
-   162		n->parent = NULL;
-   163	
-   164		l = &n->u.leaf;
-   165		INIT_LIST_HEAD(&l->holders);
-   166	}
-   167	
-   168	/**
-   169	 * free_node_list - Frees a list of nodes.
-   170	 * @l: Pointer to the list head of the nodes to free.
-   171	 */
-   172	static void free_node_list(struct list_head *l)
-   173	{
-   174		struct list_head *e, *tmp;
-   175	
-   176		list_for_each_safe(e, tmp, l) {
-   177			list_del(e);
-   178			kfree(e);
-   179		}
-   180	}
-   181	
-   182	/**
-   183	 * alloc_node_list - Allocates a list of nodes.
-   184	 * @nr: Number of nodes to allocate.
-   185	 * @flags: Flags to pass to kmalloc.
-   186	 * @result: Pointer to the list head to store the allocated nodes.
-   187	 *
-   188	 * Used to initialise the free list of nodes.
-   189	 * Returns: 0 on success, or -ENOMEM if allocation failed.
-   190	 */
-   191	static int alloc_node_list(unsigned nr, int flags, struct list_head *result)
-   192	{
-   193		int i;
-   194	
-   195		INIT_LIST_HEAD(result);
-   196	
-   197		for (i = 0; i < nr; i++) {
-   198			struct node *n = kmalloc(sizeof(*n), flags);
-   199			struct list_head *l = (struct list_head *) n;
-   200			if (!n) {
-   201				free_node_list(result);
-   202				return -ENOMEM;
-   203			}
-   204	
-   205			list_add(l, result);
-   206		}
-   207	
-   208		return 0;
-   209	}
-   210	
-   211	/**
-   212	 * __prealloc_nodes - Preallocates nodes for allocation contexts.
-   213	 * @ea: Pointer to the extent allocator.
-   214	 * @nr: Number of nodes to preallocate.
-   215	 */
-   216	static void __prealloc_nodes(struct dm_extent_allocator *ea, unsigned nr, int flags)
- > 217	{
-   218		int r;
-   219		struct list_head new_nodes;
-   220	
-   221		r = alloc_node_list(nr, flags, &new_nodes);
-   222		if (!r) {
-   223			struct list_head *e, *tmp;
-   224			list_for_each_safe(e, tmp, &new_nodes) {
-   225				list_del(e);
-   226				__free_node(ea, (struct node *)e);
-   227			}
-   228			ea->nr_preallocated_nodes += nr;
-   229		}
-   230	}
-   231	
+libmultipath: protect global_bindings with a mutex
 
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+
+libmultipath: check timestamp of bindings file before reading it
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/alias.c              | 252 +++++++++++++++++++++++++-----
+ libmultipath/alias.h              |   3 +-
+ libmultipath/libmultipath.version |   5 +
+ multipathd/uxlsnr.c               |  36 ++++-
+ tests/alias.c                     |   3 +
+ 5 files changed, 254 insertions(+), 45 deletions(-)
+
+diff --git a/libmultipath/alias.c b/libmultipath/alias.c
+index 66e34e3..964b8a7 100644
+--- a/libmultipath/alias.c
++++ b/libmultipath/alias.c
+@@ -10,6 +10,7 @@
+ #include <stdio.h>
+ #include <stdbool.h>
+ #include <assert.h>
++#include <sys/inotify.h>
+ 
+ #include "debug.h"
+ #include "util.h"
+@@ -22,6 +23,7 @@
+ #include "config.h"
+ #include "devmapper.h"
+ #include "strbuf.h"
++#include "time-util.h"
+ 
+ /*
+  * significant parts of this file were taken from iscsi-bindings.c of the
+@@ -50,6 +52,12 @@
+ "# alias wwid\n" \
+ "#\n"
+ 
++/* uatomic access only */
++static int bindings_file_changed = 1;
++
++static pthread_mutex_t timestamp_mutex = PTHREAD_MUTEX_INITIALIZER;
++static struct timespec bindings_last_updated;
++
+ struct binding {
+ 	char *alias;
+ 	char *wwid;
+@@ -60,6 +68,9 @@ struct binding {
+  * an abstract type.
+  */
+ typedef struct _vector Bindings;
++
++/* Protect global_bindings */
++static pthread_mutex_t bindings_mutex = PTHREAD_MUTEX_INITIALIZER;
+ static Bindings global_bindings = { .allocated = 0 };
+ 
+ enum {
+@@ -78,6 +89,27 @@ static void _free_binding(struct binding *bdg)
+ 	free(bdg);
+ }
+ 
++static void free_bindings(Bindings *bindings)
++{
++	struct binding *bdg;
++	int i;
++
++	vector_foreach_slot(bindings, bdg, i)
++		_free_binding(bdg);
++	vector_reset(bindings);
++}
++
++static void set_global_bindings(Bindings *bindings)
++{
++	Bindings old_bindings;
++
++	pthread_mutex_lock(&bindings_mutex);
++	old_bindings = global_bindings;
++	global_bindings = *bindings;
++	pthread_mutex_unlock(&bindings_mutex);
++	free_bindings(&old_bindings);
++}
++
+ static const struct binding *get_binding_for_alias(const Bindings *bindings,
+ 						   const char *alias)
+ {
+@@ -199,7 +231,8 @@ static int delete_binding(Bindings *bindings, const char *wwid)
+ 	return BINDING_DELETED;
+ }
+ 
+-static int write_bindings_file(const Bindings *bindings, int fd)
++static int write_bindings_file(const Bindings *bindings, int fd,
++			       struct timespec *ts)
+ {
+ 	struct binding *bnd;
+ 	STRBUF_ON_STACK(content);
+@@ -227,9 +260,56 @@ static int write_bindings_file(const Bindings *bindings, int fd)
+ 		}
+ 		len -= n;
+ 	}
++	fsync(fd);
++	if (ts) {
++		struct stat st;
++
++		if (fstat(fd, &st) == 0)
++			*ts = st.st_mtim;
++		else
++			clock_gettime(CLOCK_REALTIME_COARSE, ts);
++	}
+ 	return 0;
+ }
+ 
++void handle_bindings_file_inotify(const struct inotify_event *event)
++{
++	struct config *conf;
++	const char *base;
++	bool changed = false;
++	struct stat st;
++	struct timespec ts = { 0, 0 };
++	int ret;
++
++	if (!(event->mask & IN_MOVED_TO))
++		return;
++
++	conf = get_multipath_config();
++	base = strrchr(conf->bindings_file, '/');
++	changed = base && base > conf->bindings_file &&
++		!strcmp(base + 1, event->name);
++	ret = stat(conf->bindings_file, &st);
++	put_multipath_config(conf);
++
++	if (!changed)
++		return;
++
++	pthread_mutex_lock(&timestamp_mutex);
++	if (ret == 0) {
++		ts = st.st_mtim;
++		changed = timespeccmp(&ts, &bindings_last_updated) > 0;
++	}
++	pthread_mutex_unlock(&timestamp_mutex);
++
++	if (changed) {
++		uatomic_xchg(&bindings_file_changed, 1);
++		condlog(3, "%s: bindings file must be re-read, new timestamp: %ld.%06ld",
++			__func__, (long)ts.tv_sec, (long)ts.tv_nsec / 1000);
++	} else
++		condlog(3, "%s: bindings file is up-to-date, timestamp: %ld.%06ld",
++			__func__, (long)ts.tv_sec, (long)ts.tv_nsec / 1000);
++}
++
+ static int update_bindings_file(const Bindings *bindings,
+ 				const char *bindings_file)
+ {
+@@ -237,6 +317,7 @@ static int update_bindings_file(const Bindings *bindings,
+ 	int fd = -1;
+ 	char tempname[PATH_MAX];
+ 	mode_t old_umask;
++	struct timespec ts;
+ 
+ 	if (safe_sprintf(tempname, "%s.XXXXXX", bindings_file))
+ 		return -1;
+@@ -248,7 +329,7 @@ static int update_bindings_file(const Bindings *bindings,
+ 	}
+ 	umask(old_umask);
+ 	pthread_cleanup_push(cleanup_fd_ptr, &fd);
+-	rc = write_bindings_file(bindings, fd);
++	rc = write_bindings_file(bindings, fd, &ts);
+ 	pthread_cleanup_pop(1);
+ 	if (rc == -1) {
+ 		condlog(1, "failed to write new bindings file");
+@@ -257,8 +338,12 @@ static int update_bindings_file(const Bindings *bindings,
+ 	}
+ 	if ((rc = rename(tempname, bindings_file)) == -1)
+ 		condlog(0, "%s: rename: %m", __func__);
+-	else
++	else {
++		pthread_mutex_lock(&timestamp_mutex);
++		bindings_last_updated = ts;
++		pthread_mutex_unlock(&timestamp_mutex);
+ 		condlog(1, "updated bindings file %s", bindings_file);
++	}
+ 	return rc;
+ }
+ 
+@@ -387,6 +472,7 @@ int get_free_id(const Bindings *bindings, const char *prefix, const char *map_ww
+ 	return id;
+ }
+ 
++/* Called with binding_mutex held */
+ static char *
+ allocate_binding(const char *filename, const char *wwid, int id, const char *prefix)
+ {
+@@ -423,6 +509,30 @@ allocate_binding(const char *filename, const char *wwid, int id, const char *pre
+ 	return alias;
+ }
+ 
++enum {
++	BINDINGS_FILE_UP2DATE,
++	BINDINGS_FILE_READ,
++	BINDINGS_FILE_ERROR,
++	BINDINGS_FILE_BAD,
++};
++
++static int _read_bindings_file(const struct config *conf, Bindings *bindings,
++			       bool force);
++
++static void read_bindings_file(void)
++{
++	struct config *conf;
++	Bindings bindings = {.allocated = 0, };
++	int rc;
++
++	conf = get_multipath_config();
++	pthread_cleanup_push(put_multipath_config, conf);
++	rc = _read_bindings_file(conf, &bindings, false);
++	pthread_cleanup_pop(1);
++	if (rc == BINDINGS_FILE_READ)
++		set_global_bindings(&bindings);
++}
++
+ /*
+  * get_user_friendly_alias() action table
+  *
+@@ -463,6 +573,11 @@ char *get_user_friendly_alias(const char *wwid, const char *file, const char *al
+ 	bool new_binding = false;
+ 	const struct binding *bdg;
+ 
++	read_bindings_file();
++
++	pthread_mutex_lock(&bindings_mutex);
++	pthread_cleanup_push(cleanup_mutex, &bindings_mutex);
++
+ 	if (!*alias_old)
+ 		goto new_alias;
+ 
+@@ -514,40 +629,40 @@ new_alias:
+ 			alias, wwid);
+ 
+ out:
++	/* unlock bindings_mutex */
++	pthread_cleanup_pop(1);
+ 	return alias;
+ }
+ 
+ int get_user_friendly_wwid(const char *alias, char *buff)
+ {
+ 	const struct binding *bdg;
++	int rc = -1;
+ 
+ 	if (!alias || *alias == '\0') {
+ 		condlog(3, "Cannot find binding for empty alias");
+ 		return -1;
+ 	}
+ 
++	read_bindings_file();
++
++	pthread_mutex_lock(&bindings_mutex);
++	pthread_cleanup_push(cleanup_mutex, &bindings_mutex);
+ 	bdg = get_binding_for_alias(&global_bindings, alias);
+-	if (!bdg) {
++	if (bdg) {
++		strlcpy(buff, bdg->wwid, WWID_SIZE);
++		rc = 0;
++	} else
+ 		*buff = '\0';
+-		return -1;
+-	}
+-	strlcpy(buff, bdg->wwid, WWID_SIZE);
+-	return 0;
+-}
+-
+-static void free_bindings(Bindings *bindings)
+-{
+-	struct binding *bdg;
+-	int i;
+-
+-	vector_foreach_slot(bindings, bdg, i)
+-		_free_binding(bdg);
+-	vector_reset(bindings);
++	pthread_cleanup_pop(1);
++	return rc;
+ }
+ 
+ void cleanup_bindings(void)
+ {
++	pthread_mutex_lock(&bindings_mutex);
+ 	free_bindings(&global_bindings);
++	pthread_mutex_unlock(&bindings_mutex);
+ }
+ 
+ enum {
+@@ -595,7 +710,20 @@ static int _check_bindings_file(const struct config *conf, FILE *file,
+ 	char *line = NULL;
+ 	size_t line_len = 0;
+ 	ssize_t n;
++	char header[sizeof(BINDINGS_FILE_HEADER)];
+ 
++	header[sizeof(BINDINGS_FILE_HEADER) - 1] = '\0';
++	if (fread(header, sizeof(BINDINGS_FILE_HEADER) - 1, 1, file) < 1) {
++		condlog(2, "%s: failed to read header from %s", __func__,
++			conf->bindings_file);
++		fseek(file, 0, SEEK_SET);
++		rc = -1;
++	} else if (strcmp(header, BINDINGS_FILE_HEADER)) {
++		condlog(2, "%s: invalid header in %s", __func__,
++			conf->bindings_file);
++		fseek(file, 0, SEEK_SET);
++		rc = -1;
++	}
+ 	pthread_cleanup_push(cleanup_free_ptr, &line);
+ 	while ((n = getline(&line, &line_len, file)) >= 0) {
+ 		char *alias, *wwid;
+@@ -643,6 +771,68 @@ static int mp_alias_compar(const void *p1, const void *p2)
+ 			    &((*(struct mpentry * const *)p2)->alias));
+ }
+ 
++static int _read_bindings_file(const struct config *conf, Bindings *bindings,
++			       bool force)
++{
++	int can_write;
++	int rc = 0, ret, fd;
++	FILE *file;
++	struct stat st;
++	int has_changed = uatomic_xchg(&bindings_file_changed, 0);
++
++	if (!force) {
++		if (!has_changed) {
++			condlog(4, "%s: bindings are unchanged", __func__);
++			return BINDINGS_FILE_UP2DATE;
++		}
++	}
++
++	fd = open_file(conf->bindings_file, &can_write, BINDINGS_FILE_HEADER);
++	if (fd == -1)
++		return BINDINGS_FILE_ERROR;
++
++	file = fdopen(fd, "r");
++	if (file != NULL) {
++		condlog(3, "%s: reading %s", __func__, conf->bindings_file);
++
++		pthread_cleanup_push(cleanup_fclose, file);
++		ret = _check_bindings_file(conf, file, bindings);
++		if (ret == 0) {
++			struct timespec ts;
++
++			rc = BINDINGS_FILE_READ;
++			ret = fstat(fd, &st);
++			if (ret == 0)
++				ts = st.st_mtim;
++			else {
++				condlog(1, "%s: fstat failed (%m), using current time", __func__);
++				clock_gettime(CLOCK_REALTIME_COARSE, &ts);
++			}
++			pthread_mutex_lock(&timestamp_mutex);
++			bindings_last_updated = ts;
++			pthread_mutex_unlock(&timestamp_mutex);
++		} else if (ret == -1 && can_write && !conf->bindings_read_only) {
++			ret = update_bindings_file(bindings, conf->bindings_file);
++			if (ret == 0)
++				rc = BINDINGS_FILE_READ;
++			else
++				rc = BINDINGS_FILE_BAD;
++		} else {
++			condlog(0, "ERROR: bad settings in read-only bindings file %s",
++				conf->bindings_file);
++			rc = BINDINGS_FILE_BAD;
++		}
++		pthread_cleanup_pop(1);
++	} else {
++		condlog(1, "failed to fdopen %s: %m",
++			conf->bindings_file);
++		close(fd);
++		rc = BINDINGS_FILE_ERROR;
++	}
++
++	return rc;
++}
++
+ /*
+  * check_alias_settings(): test for inconsistent alias configuration
+  *
+@@ -661,8 +851,7 @@ static int mp_alias_compar(const void *p1, const void *p2)
+  */
+ int check_alias_settings(const struct config *conf)
+ {
+-	int can_write;
+-	int rc = 0, i, fd;
++	int i, rc;
+ 	Bindings bindings = {.allocated = 0, };
+ 	vector mptable = NULL;
+ 	struct mpentry *mpe;
+@@ -695,27 +884,12 @@ int check_alias_settings(const struct config *conf)
+ 	pthread_cleanup_pop(1);
+ 	pthread_cleanup_pop(1);
+ 
+-	fd = open_file(conf->bindings_file, &can_write, BINDINGS_FILE_HEADER);
+-	if (fd != -1) {
+-		FILE *file = fdopen(fd, "r");
++	rc = _read_bindings_file(conf, &bindings, true);
+ 
+-		if (file != NULL) {
+-			pthread_cleanup_push(cleanup_fclose, file);
+-			rc = _check_bindings_file(conf, file, &bindings);
+-			pthread_cleanup_pop(1);
+-			if (rc == -1 && can_write && !conf->bindings_read_only)
+-				rc = update_bindings_file(&bindings, conf->bindings_file);
+-			else if (rc == -1)
+-				condlog(0, "ERROR: bad settings in read-only bindings file %s",
+-					conf->bindings_file);
+-		} else {
+-			condlog(1, "failed to fdopen %s: %m",
+-				conf->bindings_file);
+-			close(fd);
+-		}
++	if (rc == BINDINGS_FILE_READ) {
++		set_global_bindings(&bindings);
++		rc = 0;
+ 	}
+ 
+-	cleanup_bindings();
+-	global_bindings = bindings;
+ 	return rc;
+ }
+diff --git a/libmultipath/alias.h b/libmultipath/alias.h
+index 5ef6720..ca8911f 100644
+--- a/libmultipath/alias.h
++++ b/libmultipath/alias.h
+@@ -10,5 +10,6 @@ char *get_user_friendly_alias(const char *wwid, const char *file,
+ struct config;
+ int check_alias_settings(const struct config *);
+ void cleanup_bindings(void);
+-
++struct inotify_event;
++void handle_bindings_file_inotify(const struct inotify_event *event);
+ #endif /* _ALIAS_H */
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index ddd302f..57e50c1 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -238,3 +238,8 @@ global:
+ local:
+ 	*;
+ };
++
++LIBMULTIPATH_20.1.0 {
++global:
++	handle_bindings_file_inotify;
++};
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 02e89fb..d1f8f23 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -41,6 +41,7 @@
+ #include "cli.h"
+ #include "uxlsnr.h"
+ #include "strbuf.h"
++#include "alias.h"
+ 
+ /* state of client connection */
+ enum {
+@@ -190,6 +191,7 @@ void wakeup_cleanup(void *arg)
+ struct watch_descriptors {
+ 	int conf_wd;
+ 	int dir_wd;
++	int mp_wd; /* /etc/multipath; for bindings file */
+ };
+ 
+ /* failing to set the watch descriptor is o.k. we just miss a warning
+@@ -200,6 +202,8 @@ static void reset_watch(int notify_fd, struct watch_descriptors *wds,
+ 	struct config *conf;
+ 	int dir_reset = 0;
+ 	int conf_reset = 0;
++	int mp_reset = 0;
++	char *bindings_file __attribute__((cleanup(cleanup_charp))) = NULL;
+ 
+ 	if (notify_fd == -1)
+ 		return;
+@@ -214,7 +218,10 @@ static void reset_watch(int notify_fd, struct watch_descriptors *wds,
+ 			conf_reset = 1;
+ 		if (wds->dir_wd == -1)
+ 			dir_reset = 1;
++		if (wds->mp_wd == -1)
++			mp_reset = 1;
+ 	}
++	bindings_file = strdup(conf->bindings_file);
+ 	put_multipath_config(conf);
+ 
+ 	if (dir_reset) {
+@@ -235,7 +242,18 @@ static void reset_watch(int notify_fd, struct watch_descriptors *wds,
+ 		if (wds->conf_wd == -1)
+ 			condlog(3, "didn't set up notifications on /etc/multipath.conf: %m");
+ 	}
+-	return;
++	if (mp_reset && bindings_file) {
++		char *slash = strrchr(bindings_file, '/');
++
++		if (slash && slash > bindings_file) {
++			*slash = '\0';
++			wds->mp_wd = inotify_add_watch(notify_fd, bindings_file,
++						       IN_MOVED_TO|IN_ONLYDIR);
++			if (wds->mp_wd == -1)
++				condlog(3, "didn't set up notifications on %s: %m",
++					bindings_file);
++		}
++	}
+ }
+ 
+ static void handle_inotify(int fd, struct watch_descriptors *wds)
+@@ -256,12 +274,13 @@ static void handle_inotify(int fd, struct watch_descriptors *wds)
+ 					inotify_rm_watch(fd, wds->conf_wd);
+ 				if (wds->dir_wd != -1)
+ 					inotify_rm_watch(fd, wds->dir_wd);
+-				wds->conf_wd = wds->dir_wd = -1;
++				if (wds->mp_wd != -1)
++					inotify_rm_watch(fd, wds->mp_wd);
++				wds->conf_wd = wds->dir_wd = wds->mp_wd = -1;
+ 			}
+ 			break;
+ 		}
+ 
+-		got_notify = 1;
+ 		for (ptr = buff; ptr < buff + len;
+ 		     ptr += sizeof(struct inotify_event) + event->len) {
+ 			event = (const struct inotify_event *) ptr;
+@@ -273,7 +292,13 @@ static void handle_inotify(int fd, struct watch_descriptors *wds)
+ 					wds->conf_wd = inotify_add_watch(notify_fd, DEFAULT_CONFIGFILE, IN_CLOSE_WRITE);
+ 				else if (wds->dir_wd == event->wd)
+ 					wds->dir_wd = -1;
++				else if (wds->mp_wd == event->wd)
++					wds->mp_wd = -1;
+ 			}
++			if (wds->mp_wd != -1 && wds->mp_wd == event->wd)
++				handle_bindings_file_inotify(event);
++			else
++				got_notify = 1;
+ 		}
+ 	}
+ 	if (got_notify)
+@@ -599,7 +624,7 @@ void *uxsock_listen(long ux_sock, void *trigger_data)
+ 	int max_pfds = MIN_POLLS + POLLFDS_BASE;
+ 	/* conf->sequence_nr will be 1 when uxsock_listen is first called */
+ 	unsigned int sequence_nr = 0;
+-	struct watch_descriptors wds = { .conf_wd = -1, .dir_wd = -1 };
++	struct watch_descriptors wds = { .conf_wd = -1, .dir_wd = -1, .mp_wd = -1, };
+ 	struct vectors *vecs = trigger_data;
+ 
+ 	condlog(3, "uxsock: startup listener");
+@@ -666,7 +691,8 @@ void *uxsock_listen(long ux_sock, void *trigger_data)
+ 
+ 		reset_watch(notify_fd, &wds, &sequence_nr);
+ 		polls[POLLFD_NOTIFY].fd = notify_fd;
+-		if (notify_fd == -1 || (wds.conf_wd == -1 && wds.dir_wd == -1))
++		if (notify_fd == -1 || (wds.conf_wd == -1 && wds.dir_wd == -1
++					&& wds.mp_wd == -1))
+ 			polls[POLLFD_NOTIFY].events = 0;
+ 		else
+ 			polls[POLLFD_NOTIFY].events = POLLIN;
+diff --git a/tests/alias.c b/tests/alias.c
+index 4d0adba..d41d396 100644
+--- a/tests/alias.c
++++ b/tests/alias.c
+@@ -1954,6 +1954,9 @@ int main(void)
+ 	int ret = 0;
+ 	init_test_verbosity(3);
+ 
++	/* avoid open_file() call in _read_bindings_file */
++	bindings_file_changed = 0;
++
+ 	ret += test_format_devname();
+ 	ret += test_scan_devname();
+ 	ret += test_lookup_binding();
 -- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
+2.42.0
 
 --
 dm-devel mailing list
