@@ -1,67 +1,67 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 58297EEAA71
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 21:25:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B02F9EEAA7A
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 22:31:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694726757;
+	s=mimecast20190719; t=1694730706;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=TxAloisra0zPDp+jGlKnVcorzadkORXFBfvYJmDtpjg=;
-	b=Q8vGrN4ZRUdR4q8rIti90Kgz5GHe15u2+XXjqooN0pmvQP1+sLqnG/57xCM8zXVq/CwpaA
-	p8S3n4ahSNmoFkhip8b3RbKcs9FLgeAAuW6hpV1Jf/OwTj6EZ3qBTNBFOf+fXjJJdDg2KD
-	81APec+VSVtazezCUGzt70RgB4qeMy0=
+	bh=Mojpuf2aKmLUj7ETet2/HKn9tRxgzLSrL1sQw3xXROo=;
+	b=OjeOyS3QV0QwTuC1LyIHjjz/FJA92dDeBv9R9TUoUh5vfR0dea6pwyMVhjjcDZ8OpCEDdH
+	uo4Dt5oYHehubC7Ghfxqz2WnZFf2Rx/gdax0lCdjRVKY/vHsVhoAphY4S+KbQZxpscErWb
+	lWbnMnUYhvNUD5S5mAgXFqIT9RGkSt4=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-38-itSPO-2AMmCxPE2UZIhALA-1; Thu, 14 Sep 2023 17:25:53 -0400
-X-MC-Unique: itSPO-2AMmCxPE2UZIhALA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-695-15S6hAg7Nmqd_ydkweELzg-1; Thu, 14 Sep 2023 18:31:43 -0400
+X-MC-Unique: 15S6hAg7Nmqd_ydkweELzg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 151CD86A8C2;
-	Thu, 14 Sep 2023 21:25:52 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F0993101A550;
+	Thu, 14 Sep 2023 22:31:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 85DA428AC;
-	Thu, 14 Sep 2023 21:25:50 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5A94C40C6EA8;
+	Thu, 14 Sep 2023 22:31:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 227F6194658C;
-	Thu, 14 Sep 2023 21:25:45 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0A749194658C;
+	Thu, 14 Sep 2023 22:31:35 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 96C671946588
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 21:25:43 +0000 (UTC)
+ ESMTP id 179E61946588
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 22:31:33 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 761A740C6EBF; Thu, 14 Sep 2023 21:25:43 +0000 (UTC)
+ id C9B842156A27; Thu, 14 Sep 2023 22:31:33 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 3C8AF40C6EA8;
- Thu, 14 Sep 2023 21:25:43 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A488D21B2413;
+ Thu, 14 Sep 2023 22:31:33 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 38ELPY6p011269;
- Thu, 14 Sep 2023 16:25:34 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 38EMVP2h011522;
+ Thu, 14 Sep 2023 17:31:25 -0500
 Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 38ELPYIN011268;
- Thu, 14 Sep 2023 16:25:34 -0500
-Date: Thu, 14 Sep 2023 16:25:33 -0500
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 38EMVOTQ011521;
+ Thu, 14 Sep 2023 17:31:24 -0500
+Date: Thu, 14 Sep 2023 17:31:24 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: mwilck@suse.com
-Message-ID: <20230914212533.GL7412@octiron.msp.redhat.com>
+Message-ID: <20230914223124.GN7412@octiron.msp.redhat.com>
 References: <20230914145131.15165-1-mwilck@suse.com>
- <20230914145131.15165-2-mwilck@suse.com>
+ <20230914145131.15165-4-mwilck@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <20230914145131.15165-2-mwilck@suse.com>
+In-Reply-To: <20230914145131.15165-4-mwilck@suse.com>
 User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH v3 26/38] multipath-tools tests: add test for
- ordering of bindings
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH v3 38/38] libmultipath: avoid -Warray-bounds
+ error in uatomic operations
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -76,285 +76,170 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Sep 14, 2023 at 04:51:29PM +0200, mwilck@suse.com wrote:
+On Thu, Sep 14, 2023 at 04:51:31PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> As the assignment of free aliases now relies on the bindings being
-> properly sorted, add some unit tests to make sure the sorting algorithm
-> works.
+> The use of uatomic_xchg() in alias.c causes a -Warray-bounds error
+> on distributions using gcc 12, such as Fedora 37. This is a similar
+> error to 2534c4f ("libmultipath: avoid -Warray-bounds error with gcc
+> 12 and musl libc"). This happens only with liburcu 0.13 and earlier,
+> and only with certain gcc versions. See liburcu commit 835b9ab
+> ("Fix: x86 and s390 uatomic: __hp() macro warning with gcc 11").
+> 
+> Enhance the fix for 2534c4f by a adding a workaround for uatomic_xchg(),
+> and introduce the macro URCU_VERSION (originally only used for multipathd)
+> globally.
 > 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  tests/alias.c | 212 +++++++++++++++++++++++++++++++++++++++++++++++++-
->  1 file changed, 209 insertions(+), 3 deletions(-)
+>  Makefile.inc         |  2 +-
+>  create-config.mk     |  5 +++++
+>  libmultipath/alias.c |  5 +++--
+>  libmultipath/lock.h  | 23 ++++++++++++++---------
+>  multipathd/Makefile  |  2 --
+>  5 files changed, 23 insertions(+), 14 deletions(-)
 > 
-> diff --git a/tests/alias.c b/tests/alias.c
-> index dff5f93..4d0adba 100644
-> --- a/tests/alias.c
-> +++ b/tests/alias.c
-> @@ -13,6 +13,9 @@
->  #include "globals.c"
->  #include "../libmultipath/alias.c"
+> diff --git a/Makefile.inc b/Makefile.inc
+> index 6e384e6..04bfa56 100644
+> --- a/Makefile.inc
+> +++ b/Makefile.inc
+> @@ -95,7 +95,7 @@ OPTFLAGS	:= -O2 -g $(STACKPROT) --param=ssp-buffer-size=4
+>  WARNFLAGS	:= -Werror -Wall -Wextra -Wformat=2 $(WFORMATOVERFLOW) -Werror=implicit-int \
+>  		  -Werror=implicit-function-declaration -Werror=format-security \
+>  		  $(WNOCLOBBERED) -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) $(W_URCU_TYPE_LIMITS)
+> -CPPFLAGS	:= $(FORTIFY_OPT) $(CPPFLAGS) \
+> +CPPFLAGS	:= $(FORTIFY_OPT) $(CPPFLAGS) $(D_URCU_VERSION) \
+>  		   -DBIN_DIR=\"$(bindir)\" -DMULTIPATH_DIR=\"$(plugindir)\" \
+>  		   -DRUNTIME_DIR=\"$(runtimedir)\" -DCONFIG_DIR=\"$(configdir)\" \
+>  		   -DDEFAULT_CONFIGFILE=\"$(configfile)\" -DSTATE_DIR=\"$(statedir)\" \
+> diff --git a/create-config.mk b/create-config.mk
+> index d125597..4d318b9 100644
+> --- a/create-config.mk
+> +++ b/create-config.mk
+> @@ -73,6 +73,10 @@ TEST_URCU_TYPE_LIMITS = $(shell \
+>  		$(CC) -c -Werror=type-limits -o /dev/null -xc - 2>/dev/null  \
+>  	|| echo -Wno-type-limits )
 >  
-> +/* For verbose printing of all aliases in the ordering tests */
-> +#define ALIAS_DEBUG 0
+> +URCU_VERSION = $(shell \
+> +	$(PKG_CONFIG) --modversion liburcu 2>/dev/null | \
+> +			awk -F. '{ printf("-DURCU_VERSION=0x%06x", 256 * ( 256 * $$1 + $$2) + $$3); }')
 > +
->  #if INT_MAX == 0x7fffffff
->  /* user_friendly_name for map #INT_MAX */
->  #define MPATH_ID_INT_MAX "fxshrxw"
-> @@ -439,11 +442,12 @@ static void mock_self_alias(const char *alias, const char *wwid)
->  		expect_condlog(3, USED_STR(alias, wwid));		\
->  	} while(0)
+>  DEFINES :=
 >  
-> -static void __mock_bindings_file(const char *content)
-> +static void __mock_bindings_file(const char *content, bool conflict_ok)
+>  ifneq ($(call check_func,dm_task_no_flush,$(devmapper_incdir)/libdevmapper.h),0)
+> @@ -168,6 +172,7 @@ $(TOPDIR)/config.mk:	$(multipathdir)/autoconfig.h
+>  	@echo creating $@
+>  	@echo "FPIN_SUPPORT := $(FPIN_SUPPORT)" >$@
+>  	@echo "FORTIFY_OPT := $(FORTIFY_OPT)" >>$@
+> +	@echo "D_URCU_VERSION := $(call URCU_VERSION)" >>$@
+>  	@echo "SYSTEMD := $(SYSTEMD)" >>$@
+>  	@echo "ANA_SUPPORT := $(ANA_SUPPORT)" >>$@
+>  	@echo "STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)" >>$@
+> diff --git a/libmultipath/alias.c b/libmultipath/alias.c
+> index e5d3f15..74431f3 100644
+> --- a/libmultipath/alias.c
+> +++ b/libmultipath/alias.c
+> @@ -24,6 +24,7 @@
+>  #include "devmapper.h"
+>  #include "strbuf.h"
+>  #include "time-util.h"
+> +#include "lock.h"
+>  
+>  /*
+>   * significant parts of this file were taken from iscsi-bindings.c of the
+> @@ -300,7 +301,7 @@ void handle_bindings_file_inotify(const struct inotify_event *event)
+>  	pthread_mutex_unlock(&timestamp_mutex);
+>  
+>  	if (changed) {
+> -		uatomic_xchg(&bindings_file_changed, 1);
+> +		uatomic_xchg_int(&bindings_file_changed, 1);
+>  		condlog(3, "%s: bindings file must be re-read, new timestamp: %ld.%06ld",
+>  			__func__, (long)ts.tv_sec, (long)ts.tv_nsec / 1000);
+>  	} else
+> @@ -775,7 +776,7 @@ static int _read_bindings_file(const struct config *conf, Bindings *bindings,
+>  	int rc = 0, ret, fd;
+>  	FILE *file;
+>  	struct stat st;
+> -	int has_changed = uatomic_xchg(&bindings_file_changed, 0);
+> +	int has_changed = uatomic_xchg_int(&bindings_file_changed, 0);
+>  
+>  	if (!force) {
+>  		if (!has_changed) {
+> diff --git a/libmultipath/lock.h b/libmultipath/lock.h
+> index 9814be7..ac80d1d 100644
+> --- a/libmultipath/lock.h
+> +++ b/libmultipath/lock.h
+> @@ -13,17 +13,22 @@ struct mutex_lock {
+>  	int waiters; /* uatomic access only */
+>  };
+>  
+> -#if !defined(__GLIBC__) && defined(__GNUC__) && __GNUC__ == 12
+> -#pragma GCC diagnostic push
+> -#pragma GCC diagnostic ignored "-Warray-bounds"
+> -#endif
+> -
+>  static inline void init_lock(struct mutex_lock *a)
 >  {
->  	char *cnt __attribute__((cleanup(cleanup_charp))) = NULL;
->  	char *token, *savep = NULL;
->  	int i;
-> +	uintmax_t values[] = { BINDING_ADDED, BINDING_CONFLICT };
->  
->  	cnt = strdup(content);
->  	assert_ptr_not_equal(cnt, NULL);
-> @@ -459,12 +463,12 @@ static void __mock_bindings_file(const char *content)
->  			continue;
->  
->  		rc = add_binding(&global_bindings, alias, wwid);
-> -		assert_int_equal(rc, BINDING_ADDED);
-> +		assert_in_set(rc, values, conflict_ok ? 2 : 1);
->  	}
+>  	pthread_mutex_init(&a->mutex, NULL);
+>  	uatomic_set(&a->waiters, 0);
 >  }
 >  
->  static void mock_bindings_file(const char *content) {
-> -	return __mock_bindings_file(content);
-> +	return __mock_bindings_file(content, false);
->  }
->  
->  static int teardown_bindings(void **state)
-> @@ -1744,6 +1748,207 @@ static int test_get_user_friendly_alias()
->  	return cmocka_run_group_tests(tests, NULL, NULL);
->  }
->  
-> +/* Numbers 1-1000, randomly shuffled */
-> +static int random_numbers[1000] = {
-> +	694, 977, 224, 178, 841, 818, 914, 549, 831, 942, 263, 834, 919, 800,
-> +	111, 517, 719, 297, 988, 98, 332, 516, 754, 772, 495, 488, 331, 529,
-> +	142, 747, 848, 618, 375, 624, 74, 753, 782, 944, 623, 468, 862, 997,
-> +	417, 258, 298, 774, 673, 904, 883, 766, 867, 400, 11, 950, 14, 784,
-> +	655, 155, 396, 9, 743, 93, 651, 245, 968, 306, 785, 581, 880, 486,
-> +	168, 631, 203, 4, 663, 294, 702, 762, 619, 684, 48, 181, 21, 443, 643,
-> +	863, 1000, 327, 26, 126, 382, 765, 586, 76, 49, 925, 319, 865, 797,
-> +	876, 693, 334, 433, 243, 419, 901, 854, 326, 985, 347, 874, 527, 282,
-> +	290, 380, 167, 95, 3, 257, 936, 60, 426, 227, 345, 577, 492, 467, 580,
-> +	967, 422, 823, 718, 610, 64, 700, 412, 163, 288, 506, 828, 432, 51,
-> +	356, 348, 539, 478, 17, 945, 602, 123, 450, 660, 429, 113, 310, 358,
-> +	512, 758, 508, 19, 542, 304, 286, 446, 918, 723, 333, 603, 731, 978,
-> +	230, 697, 109, 872, 175, 853, 947, 965, 121, 222, 101, 811, 117, 601,
-> +	191, 752, 384, 415, 938, 278, 915, 715, 240, 552, 912, 838, 150, 840,
-> +	627, 29, 636, 464, 861, 481, 992, 249, 934, 82, 368, 724, 807, 593,
-> +	157, 147, 199, 637, 41, 62, 902, 505, 621, 342, 174, 260, 729, 961,
-> +	219, 311, 629, 789, 81, 739, 860, 712, 223, 165, 741, 981, 485, 363,
-> +	346, 709, 125, 369, 279, 634, 399, 162, 193, 769, 149, 314, 868, 612,
-> +	524, 675, 341, 343, 476, 606, 388, 613, 850, 264, 903, 451, 908, 779,
-> +	453, 148, 497, 46, 132, 43, 885, 955, 269, 395, 72, 128, 767, 989,
-> +	929, 423, 742, 55, 13, 79, 924, 182, 295, 563, 668, 169, 974, 154,
-> +	970, 54, 674, 52, 437, 570, 550, 531, 554, 793, 678, 218, 367, 105,
-> +	197, 315, 958, 892, 86, 47, 284, 37, 561, 522, 198, 689, 817, 573,
-> +	877, 201, 803, 501, 881, 546, 530, 523, 780, 579, 953, 135, 23, 620,
-> +	84, 698, 303, 656, 357, 323, 494, 58, 131, 913, 995, 120, 70, 1, 195,
-> +	365, 210, 25, 898, 173, 307, 239, 77, 418, 952, 963, 92, 455, 425, 12,
-> +	536, 161, 328, 933, 401, 251, 735, 725, 362, 322, 557, 681, 302, 53,
-> +	786, 801, 391, 946, 748, 133, 717, 851, 7, 372, 993, 387, 906, 373,
-> +	667, 33, 670, 389, 209, 611, 896, 652, 69, 999, 344, 845, 633, 36,
-> +	487, 192, 180, 45, 640, 427, 707, 805, 188, 152, 905, 217, 30, 252,
-> +	386, 665, 299, 541, 410, 787, 5, 857, 751, 392, 44, 595, 146, 745,
-> +	641, 957, 866, 773, 806, 815, 659, 102, 704, 430, 106, 296, 129, 847,
-> +	130, 990, 669, 236, 225, 680, 159, 213, 438, 189, 447, 600, 232, 594,
-> +	32, 56, 390, 647, 855, 428, 330, 714, 738, 706, 666, 461, 469, 482,
-> +	558, 814, 559, 177, 575, 538, 309, 383, 261, 156, 420, 761, 630, 893,
-> +	10, 116, 940, 844, 71, 377, 662, 312, 520, 244, 143, 759, 119, 186,
-> +	592, 909, 864, 376, 768, 254, 265, 394, 511, 760, 574, 6, 436, 514,
-> +	59, 226, 644, 956, 578, 825, 548, 145, 736, 597, 378, 821, 987, 897,
-> +	354, 144, 722, 895, 589, 503, 826, 498, 543, 617, 763, 231, 808, 528,
-> +	89, 479, 607, 737, 170, 404, 371, 65, 103, 340, 283, 141, 313, 858,
-> +	289, 124, 971, 687, 954, 732, 39, 926, 176, 100, 267, 519, 890, 535,
-> +	276, 448, 27, 457, 899, 385, 184, 275, 770, 544, 614, 449, 160, 658,
-> +	259, 973, 108, 604, 24, 207, 562, 757, 744, 324, 444, 962, 591, 480,
-> +	398, 409, 998, 253, 325, 445, 979, 8, 35, 118, 73, 683, 208, 85, 190,
-> +	791, 408, 871, 657, 179, 18, 556, 496, 475, 20, 894, 484, 775, 889,
-> +	463, 241, 730, 57, 907, 551, 859, 943, 185, 416, 870, 590, 435, 471,
-> +	932, 268, 381, 626, 502, 565, 273, 534, 672, 778, 292, 473, 566, 104,
-> +	172, 285, 832, 411, 329, 628, 397, 472, 271, 910, 711, 690, 969, 585,
-> +	809, 941, 923, 555, 228, 685, 242, 94, 96, 211, 140, 61, 922, 795,
-> +	869, 34, 255, 38, 984, 676, 15, 560, 632, 434, 921, 355, 582, 351,
-> +	212, 200, 819, 960, 649, 852, 75, 771, 361, 996, 238, 316, 720, 671,
-> +	462, 112, 569, 171, 664, 625, 588, 405, 553, 270, 533, 353, 842, 114,
-> +	972, 83, 937, 63, 194, 237, 537, 980, 802, 916, 959, 688, 839, 350,
-> +	917, 650, 545, 615, 151, 352, 686, 726, 266, 509, 439, 491, 935, 608,
-> +	518, 653, 339, 609, 277, 635, 836, 88, 407, 440, 642, 927, 229, 727,
-> +	360, 477, 846, 413, 454, 616, 28, 598, 567, 540, 790, 424, 247, 317,
-> +	746, 911, 798, 321, 547, 248, 734, 829, 220, 138, 756, 500, 691, 196,
-> +	740, 930, 843, 733, 221, 827, 50, 813, 949, 525, 349, 474, 134, 875,
-> +	695, 513, 414, 515, 638, 99, 366, 490, 975, 246, 465, 206, 281, 583,
-> +	256, 587, 749, 2, 951, 679, 215, 364, 458, 402, 646, 991, 335, 982,
-> +	835, 300, 900, 703, 994, 983, 234, 888, 532, 804, 584, 305, 792, 442,
-> +	291, 964, 158, 370, 452, 250, 521, 166, 948, 812, 794, 272, 699, 205,
-> +	183, 507, 301, 920, 781, 233, 824, 137, 489, 833, 887, 966, 856, 78,
-> +	830, 153, 359, 696, 526, 216, 66, 701, 403, 891, 849, 571, 308, 483,
-> +	164, 293, 928, 677, 320, 837, 441, 639, 564, 510, 648, 274, 336, 661,
-> +	878, 777, 816, 976, 493, 810, 67, 87, 91, 187, 882, 986, 80, 22, 499,
-> +	90, 705, 139, 136, 122, 708, 716, 886, 572, 127, 40, 721, 764, 16,
-> +	379, 692, 645, 456, 710, 460, 783, 97, 776, 713, 884, 115, 466, 596,
-> +	374, 406, 110, 568, 68, 214, 622, 470, 107, 504, 682, 31, 421, 576,
-> +	654, 605, 788, 799, 280, 338, 931, 873, 204, 287, 459, 755, 939, 599,
-> +	431, 796, 235, 42, 750, 262, 318, 393, 202, 822, 879, 820, 728, 337,
-> +};
+> +#if defined(__GNUC__) && __GNUC__ == 12 && URCU_VERSION < 0xe00
+> +#pragma GCC diagnostic push
+> +#pragma GCC diagnostic ignored "-Warray-bounds"
+> +#endif
 > +
-> +static void fill_bindings_random(struct strbuf *buf, int start, int end,
-> +				 const char *prefix)
+> +static inline int uatomic_xchg_int(int *ptr, int val)
 > +{
-> +	int i;
-> +
-> +	for (i = start; i < end; i++) {
-> +		print_strbuf(buf,  "%s", prefix);
-> +		format_devname(buf, random_numbers[i]);
-> +		print_strbuf(buf,  " WWID%d\n", random_numbers[i]);
-> +	}
+> +	return uatomic_xchg(ptr, val);
 > +}
 > +
-> +struct random_aliases {
-> +	int start;
-> +	int end;
-> +	const char *prefix;
-> +};
-> +
-> +static void order_test(int n, struct random_aliases ra[], bool conflict_ok)
-> +{
-> +	STRBUF_ON_STACK(buf);
-> +	int i, j, prev, curr, tmp;
-> +	struct binding *bdg;
-> +	Bindings *bindings = &global_bindings;
-> +
-> +	for (j = 0; j < n; j++)
-> +		fill_bindings_random(&buf, ra[j].start, ra[j].end, ra[j].prefix);
-> +	__mock_bindings_file(get_strbuf_str(&buf), conflict_ok);
-> +
-> +	for (j = 0; j < n; j++) {
-> +		bdg = VECTOR_SLOT(bindings, 0);
-> +		if (ALIAS_DEBUG && j == 0)
-> +			printf("%d: %s\n", 0, bdg->alias);
-> +		prev = scan_devname(bdg->alias, ra[j].prefix);
-> +		i = 1;
-> +		vector_foreach_slot_after(bindings, bdg, i) {
-> +			if (ALIAS_DEBUG && j == 0)
-> +				printf("%d: %s\n", i, bdg->alias);
-> +			tmp = scan_devname(bdg->alias, ra[j].prefix);
-> +			if (tmp == -1)
-> +				continue;
-> +			curr = tmp;
-> +			if (prev > 0) {
-> +				if (curr <= prev)
-> +					printf("ERROR: %d (%s) %d >= %d\n",
-> +					       i, bdg->alias, prev, curr);
-> +				assert_true(curr > prev);
-> +			}
-> +			prev = curr;
-> +		}
-> +	}
-> +}
-> +
-> +static void order_01(void **state)
-> +{
-> +	struct random_aliases ra[] = {
-> +		{  0, 1000, "MPATH" },
-> +	};
-> +
-> +	order_test(ARRAY_SIZE(ra), ra, false);
-> +}
-> +
-> +static void order_02(void **state)
-> +{
-> +	struct random_aliases ra[] = {
-> +		{   0, 500, "MPATH" },
-> +		{ 200, 700, "mpath" },
-> +	};
-> +	order_test(ARRAY_SIZE(ra), ra, false);
-> +}
-> +
-> +static void order_03(void **state)
-> +{
-> +	struct random_aliases ra[] = {
-> +		{  500, 1000, "MPTH" },
-> +		{    0,  500, "MPATH" },
-> +	};
-> +	order_test(ARRAY_SIZE(ra), ra, false);
-> +}
-> +
-> +static void order_04(void **state)
-> +{
-> +	struct random_aliases ra[] = {
-> +		{   0, 500, "mpa" },
-> +		{ 250, 750, "mp" },
-> +	};
-> +	order_test(ARRAY_SIZE(ra), ra, true);
-> +}
-> +
-> +static void order_05(void **state)
-> +{
-> +	struct random_aliases ra[] = {
-> +		{  0, 100, "A" },
-> +		{  0, 100, "B" },
-> +		{  0, 100, "C" },
-> +		{  0, 100, "D" },
-> +	};
-> +	order_test(ARRAY_SIZE(ra), ra, false);
-> +}
-> +
-> +static void order_06(void **state)
-> +{
-> +	struct random_aliases ra[] = {
-> +		{  0, 100, "" },
-> +		{  0, 100, "a" },
-> +		{  0, 100, "aa" },
-> +		{  0, 100, "ab" },
-> +		{  0, 100, "aaa" },
-> +	};
-> +	order_test(ARRAY_SIZE(ra), ra, true);
-> +}
-> +
-> +static int test_bindings_order()
-> +{
-> +	const struct CMUnitTest tests[] = {
-> +		cmocka_unit_test_teardown(order_01, teardown_bindings),
-> +		cmocka_unit_test_teardown(order_02, teardown_bindings),
-> +		cmocka_unit_test_teardown(order_03, teardown_bindings),
-> +		cmocka_unit_test_teardown(order_04, teardown_bindings),
-> +		cmocka_unit_test_teardown(order_05, teardown_bindings),
-> +		cmocka_unit_test_teardown(order_06, teardown_bindings),
-> +	};
-> +
-> +	return cmocka_run_group_tests(tests, NULL, NULL);
-> +}
-> +
->  int main(void)
+>  static inline void lock(struct mutex_lock *a)
 >  {
->  	int ret = 0;
-> @@ -1755,6 +1960,7 @@ int main(void)
->  	ret += test_rlookup_binding();
->  	ret += test_allocate_binding();
->  	ret += test_get_user_friendly_alias();
-> +	ret += test_bindings_order();
->  
->  	return ret;
+>  	uatomic_inc(&a->waiters);
+> @@ -31,6 +36,10 @@ static inline void lock(struct mutex_lock *a)
+>  	uatomic_dec(&a->waiters);
 >  }
+>  
+> +#if defined(__GNUC__) && __GNUC__ == 12 && URCU_VERSION < 0xe00
+> +#pragma GCC diagnostic pop
+> +#endif
+> +
+>  static inline int trylock(struct mutex_lock *a)
+>  {
+>  	return pthread_mutex_trylock(&a->mutex);
+> @@ -51,10 +60,6 @@ static inline bool lock_has_waiters(struct mutex_lock *a)
+>  	return (uatomic_read(&a->waiters) > 0);
+>  }
+>  
+> -#if !defined(__GLIBC__) && defined(__GNUC__) && __GNUC__ == 12
+> -#pragma GCC diagnostic pop
+> -#endif
+> -
+>  #define lock_cleanup_pop(a) pthread_cleanup_pop(1)
+>  
+>  void cleanup_lock (void * data);
+> diff --git a/multipathd/Makefile b/multipathd/Makefile
+> index cdba3db..0ba6ecb 100644
+> --- a/multipathd/Makefile
+> +++ b/multipathd/Makefile
+> @@ -5,8 +5,6 @@ CLI      := multipathc
+>  MANPAGES := multipathd.8
+>  
+>  CPPFLAGS += -I$(multipathdir) -I$(mpathutildir) -I$(mpathpersistdir) -I$(mpathcmddir) -I$(thirdpartydir) \
+> -	$(shell $(PKG_CONFIG) --modversion liburcu 2>/dev/null | \
+> -		awk -F. '{ printf("-DURCU_VERSION=0x%06x", 256 * ( 256 * $$1 + $$2) + $$3); }') \
+>  	-DBINDIR='"$(bindir)"' $(SYSTEMD_CPPFLAGS)
+>  
+>  #
 > -- 
 > 2.42.0
 --
