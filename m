@@ -4,95 +4,94 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 44A11EEAA62
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:18:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7C9E9EEAA62
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:19:02 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694719134;
+	s=mimecast20190719; t=1694719141;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=xZgiiCsVSqJovtbHvg0y/+OIPf5WTPWZlmVahMmiBK0=;
-	b=Qj9gYpYlncm3aNpqCrxYZBHI2I0/6VXQ0JHBhouQH5Fuf90lAdJTEpW/6o6o1DDCNoFNg+
-	VZyPEu2R8HlUd6o/Hq6U4aZ3oo8+F2ywQpEKXZ7pfcoHbiL9Dr8eSrVCZY+k+e6lX6JLDl
-	v+lK25R9sABHt/qYyXd+x8faNjlm1xY=
+	bh=jvrvvupGO9aVTm1bHvPyooryI4CfqhcIjF40CqRRIFA=;
+	b=JnQnIY0mjSF7L57pBiRBnML2nmwMBSzzVSq2Nnr8h4TIphJ2rMbirPOklWPxDx0Y3/AW39
+	0+dtOMIHVWmE2Kyh0K05zf8cHa59p+zi3Yg2kS+kNM++b2oAFNrgWelBWbwpSCupTgHa+m
+	zG55H2Obm1e1lbnChgAIvc6bdj2kBKc=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-483-asarOdhtNLClmqEbmaTIQA-1; Thu, 14 Sep 2023 15:18:51 -0400
-X-MC-Unique: asarOdhtNLClmqEbmaTIQA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-623-meXTn7dPNdmV46z1LfLfEg-1; Thu, 14 Sep 2023 15:18:59 -0400
+X-MC-Unique: meXTn7dPNdmV46z1LfLfEg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6521B805B36;
-	Thu, 14 Sep 2023 19:18:48 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B4F82185A79B;
+	Thu, 14 Sep 2023 19:18:56 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4FE7540C6EA8;
-	Thu, 14 Sep 2023 19:18:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A07251054FC0;
+	Thu, 14 Sep 2023 19:18:56 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A0AB91946A79;
-	Thu, 14 Sep 2023 19:17:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 27B731946A7B;
+	Thu, 14 Sep 2023 19:17:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7B3861946A4D
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:17:30 +0000 (UTC)
+ ESMTP id 65F6D1946A49
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:17:31 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 61F442027019; Thu, 14 Sep 2023 19:17:25 +0000 (UTC)
+ id 49136406AA68; Thu, 14 Sep 2023 19:17:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 59AA52027018
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:25 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 4210640C2070
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:31 +0000 (UTC)
 Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.81])
+ (us-smtp-delivery-1.mimecast.com [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 35A25185A79B
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:25 +0000 (UTC)
-Received: from mail-qk1-f172.google.com (mail-qk1-f172.google.com
- [209.85.222.172]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2287A101FAA5
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:31 +0000 (UTC)
+Received: from mail-qv1-f42.google.com (mail-qv1-f42.google.com
+ [209.85.219.42]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-241-Rikp2yk4N5aaK23PGbs6Cw-1; Thu, 14 Sep 2023 15:17:23 -0400
-X-MC-Unique: Rikp2yk4N5aaK23PGbs6Cw-1
-Received: by mail-qk1-f172.google.com with SMTP id
- af79cd13be357-76f14d80ea6so87382585a.2
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:17:23 -0700 (PDT)
+ us-mta-336-SHyr3r1NOJ2Rj8txQlqFuA-1; Thu, 14 Sep 2023 15:17:29 -0400
+X-MC-Unique: SHyr3r1NOJ2Rj8txQlqFuA-1
+Received: by mail-qv1-f42.google.com with SMTP id
+ 6a1803df08f44-6560eebe1ebso7260926d6.1
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:17:29 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1694719042; x=1695323842;
+ d=1e100.net; s=20230601; t=1694719048; x=1695323848;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=56JtQvQ8veG/obkRS8dhwk+laaO6xZi+iXutS3LqeV4=;
- b=Xbq0W1rnSE76DVK7jQRMWkK+uNKMkQ3HiMcuJOlz9qH//w975UnG6olclSFNhzTNgZ
- f4Oujf6xlfRGvZr1oNm6AraGDF9Ha+fFYAv4E4n7B7f/tBojEYj6s/R9kb/eb73Z40Nl
- aSHdrehjL9pBzD3Ukjq9DnaU4WPy7QiR0QG4dZNNcm8QVgeqUdjhehVHgZvK77cINjSl
- IrvljG17BOaNEd7Ymj+7w+W5AqdElpekaXtdgHGM1tB/KZgDRC4KIl7zJ8mmpfgMcPIH
- u+E7IfELUJ9F74o9uCgn66FqNoiK6HmtLjxgNXUbWi3Tc+8nrFQnrFedQYEThSzg7ApN
- A/kw==
-X-Gm-Message-State: AOJu0YzE+1VDyrZANWXc76WZFcZM454c776emWgJX31EwFWOA/0y4EkJ
- eirVo5SBYs8WeykfFi4DcOF1PNfXsOZjqnuzo9H2JdAAi3hDBFi9oaZ8L6KFI2qyVUgKFwVH5s0
- 5wIpE1kwRlgTwQH07n2LqZq2udb/H9K4G7CkXnJyDo478AjX1/RGGt8b07g9bxTyMEUl7gTMv
-X-Google-Smtp-Source: AGHT+IF22FxgKsFqlgP54N2O/Zf0TW5PgTeJjDX/FANlW+iPihkEAKhE90UOYhS+jEn5B68KzG3Y+A==
-X-Received: by 2002:a05:620a:b5d:b0:76d:93e1:99f4 with SMTP id
- x29-20020a05620a0b5d00b0076d93e199f4mr6129905qkg.8.1694719042314; 
- Thu, 14 Sep 2023 12:17:22 -0700 (PDT)
+ bh=wxG+dqIN1an0XP25r/5wfeiZjhzRzF3QxV3WCi0QIhk=;
+ b=QV/zqXrE4cqrn8sxcs5XlQ2aOdXGZ8OGySd7PKd74UlGSMc2imzE+85zfWJ/kalqDy
+ 8VZyG+mD4cd9VM3XYxr3Mw/bMTc3VTbL1RajVym/sYZVdIoWB0amrSUlmKLsclhU+6t4
+ btd0g3Q0OcceH+P4WJMarWZmP6DMJMBArSl9uhd661+eZU2tq1vzoRhllMIiA2HWSiy5
+ nfYczYLXnrQHqHyDNVqSKCPxqB31v3FnXOWWgYxdXgiviFgPsqeNtdZzPhtRh8iIKzJw
+ LwuT41O0aVCUrD/DlGXno1vlso4c/XTt51gAh9r9NeCla4CZSK3Y3LZnADNrUJFNHtW3
+ lC9g==
+X-Gm-Message-State: AOJu0YzuzEXKSbZ8CWwBZdGsfNq6dvSYwbqorwytvnNC/PGHvJJsOtvh
+ lfeHW/3Bmwsba6ud/oqTx0MAjQGoCZGkBCkENTDtNb0Q588nsXPy2ds9DakQF9THysrPtRQTILH
+ ce77/JSmozcRWxhfzP59tnhld4NCbWbjG6NeB64mYb/1toMMEYvUPzpxdxND4s56U6kj3ZbUt
+X-Google-Smtp-Source: AGHT+IGodqSmZaHOUwkIyZBXLLdOWEl/fJ67Y9m9sumYlAk//tAdCQvJ7V1wB2bzDU07Vzru8OcNMQ==
+X-Received: by 2002:a05:6214:4a04:b0:64f:5729:7994 with SMTP id
+ pg4-20020a0562144a0400b0064f57297994mr7729071qvb.30.1694719048205; 
+ Thu, 14 Sep 2023 12:17:28 -0700 (PDT)
 Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net.
  [68.160.141.91]) by smtp.gmail.com with ESMTPSA id
- x6-20020a05620a14a600b0076eed604793sm666974qkj.130.2023.09.14.12.17.21
+ b9-20020a0ccd09000000b0064f5d312babsm677836qvm.46.2023.09.14.12.17.27
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 14 Sep 2023 12:17:21 -0700 (PDT)
+ Thu, 14 Sep 2023 12:17:27 -0700 (PDT)
 From: Mike Snitzer <snitzer@kernel.org>
 To: dm-devel@redhat.com
-Date: Thu, 14 Sep 2023 15:16:19 -0400
-Message-Id: <20230914191635.39805-24-snitzer@kernel.org>
+Date: Thu, 14 Sep 2023 15:16:22 -0400
+Message-Id: <20230914191635.39805-27-snitzer@kernel.org>
 In-Reply-To: <20230914191635.39805-1-snitzer@kernel.org>
 References: <20230914191635.39805-1-snitzer@kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: [dm-devel] [PATCH v3 23/39] dm vdo: add use of the deduplication
- index in hash zones
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: [dm-devel] [PATCH v3 26/39] dm vdo: add the slab summary
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -107,7 +106,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: Matthew Sakai <msakai@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
 Content-Type: text/plain; charset="us-ascii"
@@ -115,8 +114,18 @@ Content-Transfer-Encoding: 7bit
 
 From: Matthew Sakai <msakai@redhat.com>
 
-Add the data and methods that manage queries to the deduplication
-index and the responses from the index.
+The slab depot maintains an additional small data structure, the "slab
+summary," which is used to reduce the amount of work needed to come
+back online after a crash. The slab summary maintains an entry for
+each slab indicating whether or not the slab has ever been used,
+whether it is clean (i.e. all of its reference count updates have been
+persisted to storage), and approximately how full it is. During
+recovery, each physical zone will attempt to recover at least one
+slab, stopping whenever it has recovered a slab which has some free
+blocks. Once each zone has some space (or has determined that none is
+available), the target can resume normal operation in a degraded
+mode. Read and write requests can be serviced, perhaps with degraded
+performance, while the remainder of the dirty slabs are recovered.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
@@ -124,711 +133,446 @@ Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
 Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
 Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-Co-developed-by: Bruce Johnston <bjohnsto@redhat.com>
-Signed-off-by: Bruce Johnston <bjohnsto@redhat.com>
-Co-developed-by: Ken Raeburn <raeburn@redhat.com>
-Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-vdo/dedupe.c | 623 +++++++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/dedupe.h |  26 ++
- 2 files changed, 649 insertions(+)
+ drivers/md/dm-vdo/slab-depot.c | 326 +++++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/slab-depot.h |  74 ++++++++
+ 2 files changed, 400 insertions(+)
 
-diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
-index 1d6774e8e546..cddfa3292306 100644
---- a/drivers/md/dm-vdo/dedupe.c
-+++ b/drivers/md/dm-vdo/dedupe.c
-@@ -143,6 +143,48 @@
- #include "vdo.h"
- #include "wait-queue.h"
- 
-+struct uds_attribute {
-+	struct attribute attr;
-+	const char *(*show_string)(struct hash_zones *hash_zones);
-+};
-+
-+enum timer_state {
-+	DEDUPE_QUERY_TIMER_IDLE,
-+	DEDUPE_QUERY_TIMER_RUNNING,
-+	DEDUPE_QUERY_TIMER_FIRED,
-+};
-+
-+enum dedupe_context_state {
-+	DEDUPE_CONTEXT_IDLE,
-+	DEDUPE_CONTEXT_PENDING,
-+	DEDUPE_CONTEXT_TIMED_OUT,
-+	DEDUPE_CONTEXT_COMPLETE,
-+	DEDUPE_CONTEXT_TIMED_OUT_COMPLETE,
-+};
-+
-+/* Possible index states: closed, opened, or transitioning between those two. */
-+enum index_state {
-+	IS_CLOSED,
-+	IS_CHANGING,
-+	IS_OPENED,
-+};
-+
-+static const char *CLOSED = "closed";
-+static const char *CLOSING = "closing";
-+static const char *ERROR = "error";
-+static const char *OFFLINE = "offline";
-+static const char *ONLINE = "online";
-+static const char *OPENING = "opening";
-+static const char *SUSPENDED = "suspended";
-+static const char *UNKNOWN = "unknown";
-+
-+/* Version 2 uses the kernel space UDS index and is limited to 16 bytes */
-+enum {
-+	UDS_ADVICE_VERSION = 2,
-+	/* version byte + state byte + 64-bit little-endian PBN */
-+	UDS_ADVICE_SIZE = 1 + 1 + sizeof(u64),
-+};
-+
- enum hash_lock_state {
- 	/* State for locks that are not in use or are being initialized. */
- 	VDO_HASH_LOCK_INITIALIZING,
-@@ -264,6 +306,13 @@ struct hash_zones {
- 	struct hash_zone zones[];
- };
- 
-+/* These are in milliseconds. */
-+unsigned int vdo_dedupe_index_timeout_interval = 5000;
-+unsigned int vdo_dedupe_index_min_timer_interval = 100;
-+/* Same two variables, in jiffies for easier consumption. */
-+static u64 vdo_dedupe_index_timeout_jiffies;
-+static u64 vdo_dedupe_index_min_timer_jiffies;
-+
- static inline struct hash_zone *as_hash_zone(struct vdo_completion *completion)
- {
- 	vdo_assert_completion_type(completion, VDO_HASH_ZONE_COMPLETION);
-@@ -283,6 +332,16 @@ static inline void assert_in_hash_zone(struct hash_zone *zone, const char *name)
- 			name);
+diff --git a/drivers/md/dm-vdo/slab-depot.c b/drivers/md/dm-vdo/slab-depot.c
+index 48adf297a394..e2270319513a 100644
+--- a/drivers/md/dm-vdo/slab-depot.c
++++ b/drivers/md/dm-vdo/slab-depot.c
+@@ -190,6 +190,201 @@ static void check_if_slab_drained(struct vdo_slab *slab)
+ 	vdo_finish_draining_with_result(&slab->state, (read_only ? VDO_READ_ONLY : VDO_SUCCESS));
  }
  
-+static inline bool change_context_state(struct dedupe_context *context, int old, int new)
++/* FULLNESS HINT COMPUTATION */
++
++/**
++ * compute_fullness_hint() - Translate a slab's free block count into a 'fullness hint' that can be
++ *                           stored in a slab_summary_entry's 7 bits that are dedicated to its free
++ *                           count.
++ * @depot: The depot whose summary being updated.
++ * @free_blocks: The number of free blocks.
++ *
++ * Note: the number of free blocks must be strictly less than 2^23 blocks, even though
++ * theoretically slabs could contain precisely 2^23 blocks; there is an assumption that at least
++ * one block is used by metadata. This assumption is necessary; otherwise, the fullness hint might
++ * overflow. The fullness hint formula is roughly (fullness >> 16) & 0x7f, but (2^23 >> 16) & 0x7f
++ * is 0, which would make it impossible to distinguish completely full from completely empty.
++ *
++ * Return: A fullness hint, which can be stored in 7 bits.
++ */
++static u8 __must_check compute_fullness_hint(struct slab_depot *depot, block_count_t free_blocks)
 +{
-+	return (atomic_cmpxchg(&context->state, old, new) == old);
++	block_count_t hint;
++
++	ASSERT_LOG_ONLY((free_blocks < (1 << 23)), "free blocks must be less than 2^23");
++
++	if (free_blocks == 0)
++		return 0;
++
++	hint = free_blocks >> depot->hint_shift;
++	return ((hint == 0) ? 1 : hint);
 +}
 +
-+static inline bool change_timer_state(struct hash_zone *zone, int old, int new)
++/**
++ * check_summary_drain_complete() - Check whether an allocators summary has finished draining.
++ */
++static void check_summary_drain_complete(struct block_allocator *allocator)
 +{
-+	return (atomic_cmpxchg(&zone->timer_state, old, new) == old);
++	struct vdo *vdo = allocator->depot->vdo;
++
++	if (!vdo_is_state_draining(&allocator->summary_state) ||
++	    (allocator->summary_write_count > 0))
++		return;
++
++	vdo_finish_operation(&allocator->summary_state,
++			     (vdo_is_read_only(vdo) ? VDO_READ_ONLY : VDO_SUCCESS));
++}
++
++/**
++ * notify_summary_waiters() - Wake all the waiters in a given queue.
++ * @allocator: The block allocator summary which owns the queue.
++ * @queue: The queue to notify.
++ */
++static void notify_summary_waiters(struct block_allocator *allocator, struct wait_queue *queue)
++{
++	int result = (vdo_is_read_only(allocator->depot->vdo) ? VDO_READ_ONLY : VDO_SUCCESS);
++
++	vdo_notify_all_waiters(queue, NULL, &result);
++}
++
++static void launch_write(struct slab_summary_block *summary_block);
++
++/**
++ * finish_updating_slab_summary_block() - Finish processing a block which attempted to write,
++ *                                        whether or not the attempt succeeded.
++ * @block: The block.
++ */
++static void finish_updating_slab_summary_block(struct slab_summary_block *block)
++{
++	notify_summary_waiters(block->allocator, &block->current_update_waiters);
++	block->writing = false;
++	block->allocator->summary_write_count--;
++	if (vdo_has_waiters(&block->next_update_waiters))
++		launch_write(block);
++	else
++		check_summary_drain_complete(block->allocator);
++}
++
++/**
++ * finish_update() - This is the callback for a successful summary block write.
++ * @completion: The write vio.
++ */
++static void finish_update(struct vdo_completion *completion)
++{
++	struct slab_summary_block *block =
++		container_of(as_vio(completion), struct slab_summary_block, vio);
++
++	atomic64_inc(&block->allocator->depot->summary_statistics.blocks_written);
++	finish_updating_slab_summary_block(block);
++}
++
++/**
++ * handle_write_error() - Handle an error writing a slab summary block.
++ * @completion: The write VIO.
++ */
++static void handle_write_error(struct vdo_completion *completion)
++{
++	struct slab_summary_block *block =
++		container_of(as_vio(completion), struct slab_summary_block, vio);
++
++	vio_record_metadata_io_error(as_vio(completion));
++	vdo_enter_read_only_mode(completion->vdo, completion->result);
++	finish_updating_slab_summary_block(block);
++}
++
++static void write_slab_summary_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct slab_summary_block *block = container_of(vio, struct slab_summary_block, vio);
++
++	continue_vio_after_io(vio, finish_update, block->allocator->thread_id);
++}
++
++/**
++ * launch_write() - Write a slab summary block unless it is currently out for writing.
++ * @block: The block that needs to be committed.
++ */
++static void launch_write(struct slab_summary_block *block)
++{
++	struct block_allocator *allocator = block->allocator;
++	struct slab_depot *depot = allocator->depot;
++	physical_block_number_t pbn;
++
++	if (block->writing)
++		return;
++
++	allocator->summary_write_count++;
++	vdo_transfer_all_waiters(&block->next_update_waiters, &block->current_update_waiters);
++	block->writing = true;
++
++	if (vdo_is_read_only(depot->vdo)) {
++		finish_updating_slab_summary_block(block);
++		return;
++	}
++
++	memcpy(block->outgoing_entries, block->entries, VDO_BLOCK_SIZE);
++
++	/*
++	 * Flush before writing to ensure that the slab journal tail blocks and reference updates
++	 * covered by this summary update are stable (VDO-2332).
++	 */
++	pbn = (depot->summary_origin +
++	       (VDO_SLAB_SUMMARY_BLOCKS_PER_ZONE * allocator->zone_number) +
++	       block->index);
++	submit_metadata_vio(&block->vio,
++			    pbn,
++			    write_slab_summary_endio,
++			    handle_write_error,
++			    REQ_OP_WRITE | REQ_PREFLUSH);
++}
++
++/**
++ * update_slab_summary_entry() - Update the entry for a slab.
++ * @slab: The slab whose entry is to be updated
++ * @waiter: The waiter that is updating the summary.
++ * @tail_block_offset: The offset of the slab journal's tail block.
++ * @load_ref_counts: Whether the reference counts must be loaded from disk on the vdo load.
++ * @is_clean: Whether the slab is clean.
++ * @free_blocks: The number of free blocks.
++ */
++static void
++update_slab_summary_entry(struct vdo_slab *slab,
++			  struct waiter *waiter,
++			  tail_block_offset_t tail_block_offset,
++			  bool load_ref_counts,
++			  bool is_clean,
++			  block_count_t free_blocks)
++{
++	u8 index = slab->slab_number / VDO_SLAB_SUMMARY_ENTRIES_PER_BLOCK;
++	struct block_allocator *allocator = slab->allocator;
++	struct slab_summary_block *block = &allocator->summary_blocks[index];
++	int result;
++	struct slab_summary_entry *entry;
++
++	if (vdo_is_read_only(block->vio.completion.vdo)) {
++		result = VDO_READ_ONLY;
++		waiter->callback(waiter, &result);
++		return;
++	}
++
++	if (vdo_is_state_draining(&allocator->summary_state) ||
++	    vdo_is_state_quiescent(&allocator->summary_state)) {
++		result = VDO_INVALID_ADMIN_STATE;
++		waiter->callback(waiter, &result);
++		return;
++	}
++
++	entry = &allocator->summary_entries[slab->slab_number];
++	*entry = (struct slab_summary_entry) {
++		.tail_block_offset = tail_block_offset,
++		.load_ref_counts = (entry->load_ref_counts || load_ref_counts),
++		.is_dirty = !is_clean,
++		.fullness_hint = compute_fullness_hint(allocator->depot, free_blocks),
++	};
++	vdo_enqueue_waiter(&block->next_update_waiters, waiter);
++	launch_write(block);
 +}
 +
  /**
-  * return_hash_lock_to_pool() - (Re)initialize a hash lock and return it to its pool.
-  * @zone: The zone from which the lock was borrowed.
-@@ -1955,6 +2014,376 @@ static u32 hash_key(const void *key)
- 	return get_unaligned_le32(&name->name[4]);
- }
- 
-+static void dedupe_kobj_release(struct kobject *directory)
-+{
-+	UDS_FREE(container_of(directory, struct hash_zones, dedupe_directory));
-+}
-+
-+static ssize_t dedupe_status_show(struct kobject *directory, struct attribute *attr, char *buf)
-+{
-+	struct uds_attribute *ua = container_of(attr, struct uds_attribute, attr);
-+	struct hash_zones *zones = container_of(directory, struct hash_zones, dedupe_directory);
-+
-+	if (ua->show_string != NULL)
-+		return sprintf(buf, "%s\n", ua->show_string(zones));
-+	else
-+		return -EINVAL;
-+}
-+
-+static ssize_t dedupe_status_store(struct kobject *kobj __always_unused,
-+				   struct attribute *attr __always_unused,
-+				   const char *buf __always_unused,
-+				   size_t length __always_unused)
-+{
-+	return -EINVAL;
-+}
-+
-+/*----------------------------------------------------------------------*/
-+
-+static const struct sysfs_ops dedupe_sysfs_ops = {
-+	.show = dedupe_status_show,
-+	.store = dedupe_status_store,
-+};
-+
-+static struct uds_attribute dedupe_status_attribute = {
-+	.attr = {.name = "status", .mode = 0444, },
-+	.show_string = vdo_get_dedupe_index_state_name,
-+};
-+
-+static struct attribute *dedupe_attrs[] = {
-+	&dedupe_status_attribute.attr,
-+	NULL,
-+};
-+ATTRIBUTE_GROUPS(dedupe);
-+
-+static const struct kobj_type dedupe_directory_type = {
-+	.release = dedupe_kobj_release,
-+	.sysfs_ops = &dedupe_sysfs_ops,
-+	.default_groups = dedupe_groups,
-+};
-+
-+static void start_uds_queue(void *ptr)
-+{
-+	/*
-+	 * Allow the UDS dedupe worker thread to do memory allocations. It will only do allocations
-+	 * during the UDS calls that open or close an index, but those allocations can safely sleep
-+	 * while reserving a large amount of memory. We could use an allocations_allowed boolean
-+	 * (like the base threads do), but it would be an unnecessary embellishment.
-+	 */
-+	struct vdo_thread *thread = vdo_get_work_queue_owner(vdo_get_current_work_queue());
-+
-+	uds_register_allocating_thread(&thread->allocating_thread, NULL);
-+}
-+
-+static void finish_uds_queue(void *ptr __always_unused)
-+{
-+	uds_unregister_allocating_thread();
-+}
-+
-+static void close_index(struct hash_zones *zones)
-+{
-+	int result;
-+
-+	/*
-+	 * Change the index state so that get_index_statistics() will not try to use the index
-+	 * session we are closing.
-+	 */
-+	zones->index_state = IS_CHANGING;
-+	/* Close the index session, while not holding the lock. */
-+	spin_unlock(&zones->lock);
-+	result = uds_close_index(zones->index_session);
-+
-+	if (result != UDS_SUCCESS)
-+		uds_log_error_strerror(result, "Error closing index");
-+	spin_lock(&zones->lock);
-+	zones->index_state = IS_CLOSED;
-+	zones->error_flag |= result != UDS_SUCCESS;
-+	/* ASSERTION: We leave in IS_CLOSED state. */
-+}
-+
-+static void open_index(struct hash_zones *zones)
-+{
-+	/* ASSERTION: We enter in IS_CLOSED state. */
-+	int result;
-+	bool create_flag = zones->create_flag;
-+
-+	zones->create_flag = false;
-+	/*
-+	 * Change the index state so that the it will be reported to the outside world as
-+	 * "opening".
-+	 */
-+	zones->index_state = IS_CHANGING;
-+	zones->error_flag = false;
-+
-+	/* Open the index session, while not holding the lock */
-+	spin_unlock(&zones->lock);
-+	result = uds_open_index(create_flag ? UDS_CREATE : UDS_LOAD,
-+				&zones->parameters,
-+				zones->index_session);
-+	if (result != UDS_SUCCESS)
-+		uds_log_error_strerror(result, "Error opening index");
-+
-+	spin_lock(&zones->lock);
-+	if (!create_flag) {
-+		switch (result) {
-+		case -ENOENT:
-+			/*
-+			 * Either there is no index, or there is no way we can recover the index.
-+			 * We will be called again and try to create a new index.
-+			 */
-+			zones->index_state = IS_CLOSED;
-+			zones->create_flag = true;
-+			return;
-+		default:
-+			break;
-+		}
-+	}
-+	if (result == UDS_SUCCESS) {
-+		zones->index_state = IS_OPENED;
-+	} else {
-+		zones->index_state = IS_CLOSED;
-+		zones->index_target = IS_CLOSED;
-+		zones->error_flag = true;
-+		spin_unlock(&zones->lock);
-+		uds_log_info("Setting UDS index target state to error");
-+		spin_lock(&zones->lock);
-+	}
-+	/*
-+	 * ASSERTION: On success, we leave in IS_OPENED state.
-+	 * ASSERTION: On failure, we leave in IS_CLOSED state.
-+	 */
-+}
-+
-+static void change_dedupe_state(struct vdo_completion *completion)
-+{
-+	struct hash_zones *zones = as_hash_zones(completion);
-+
-+	spin_lock(&zones->lock);
-+
-+	/* Loop until the index is in the target state and the create flag is clear. */
-+	while (vdo_is_state_normal(&zones->state) &&
-+	       ((zones->index_state != zones->index_target) || zones->create_flag)) {
-+		if (zones->index_state == IS_OPENED)
-+			close_index(zones);
-+		else
-+			open_index(zones);
-+	}
-+
-+	zones->changing = false;
-+	spin_unlock(&zones->lock);
-+}
-+
-+static void start_expiration_timer(struct dedupe_context *context)
-+{
-+	u64 start_time = context->submission_jiffies;
-+	u64 end_time;
-+
-+	if (!change_timer_state(context->zone,
-+				DEDUPE_QUERY_TIMER_IDLE,
-+				DEDUPE_QUERY_TIMER_RUNNING))
-+		return;
-+
-+	end_time = max(start_time + vdo_dedupe_index_timeout_jiffies,
-+		       jiffies + vdo_dedupe_index_min_timer_jiffies);
-+	mod_timer(&context->zone->timer, end_time);
-+}
-+
-+/**
-+ * report_dedupe_timeouts() - Record and eventually report that some dedupe requests reached their
-+ *                            expiration time without getting answers, so we timed them out.
-+ * @zones: the hash zones.
-+ * @timeouts: the number of newly timed out requests.
-+ */
-+static void report_dedupe_timeouts(struct hash_zones *zones, unsigned int timeouts)
-+{
-+	atomic64_add(timeouts, &zones->timeouts);
-+	spin_lock(&zones->lock);
-+	if (__ratelimit(&zones->ratelimiter)) {
-+		u64 unreported = atomic64_read(&zones->timeouts);
-+
-+		unreported -= zones->reported_timeouts;
-+		uds_log_debug("UDS index timeout on %llu requests",
-+			      (unsigned long long) unreported);
-+		zones->reported_timeouts += unreported;
-+	}
-+	spin_unlock(&zones->lock);
-+}
-+
-+static int initialize_index(struct vdo *vdo, struct hash_zones *zones)
-+{
-+	int result;
-+	off_t uds_offset;
-+	struct volume_geometry geometry = vdo->geometry;
-+	static const struct vdo_work_queue_type uds_queue_type = {
-+		.start = start_uds_queue,
-+		.finish = finish_uds_queue,
-+		.max_priority = UDS_Q_MAX_PRIORITY,
-+		.default_priority = UDS_Q_PRIORITY,
-+	};
-+
-+	vdo_set_dedupe_index_timeout_interval(vdo_dedupe_index_timeout_interval);
-+	vdo_set_dedupe_index_min_timer_interval(vdo_dedupe_index_min_timer_interval);
-+
-+	/*
-+	 * Since we will save up the timeouts that would have been reported but were ratelimited,
-+	 * we don't need to report ratelimiting.
-+	 */
-+	ratelimit_default_init(&zones->ratelimiter);
-+	ratelimit_set_flags(&zones->ratelimiter, RATELIMIT_MSG_ON_RELEASE);
-+	uds_offset = ((vdo_get_index_region_start(geometry) -
-+		       geometry.bio_offset) * VDO_BLOCK_SIZE);
-+	zones->parameters = (struct uds_parameters) {
-+		.name = vdo->device_config->parent_device_name,
-+		.offset = uds_offset,
-+		.size = (vdo_get_index_region_size(geometry) * VDO_BLOCK_SIZE),
-+		.memory_size = geometry.index_config.mem,
-+		.sparse = geometry.index_config.sparse,
-+		.nonce = (u64) geometry.nonce,
-+	};
-+
-+	result = uds_create_index_session(&zones->index_session);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = vdo_make_thread(vdo, vdo->thread_config.dedupe_thread, &uds_queue_type, 1, NULL);
-+	if (result != VDO_SUCCESS) {
-+		uds_destroy_index_session(UDS_FORGET(zones->index_session));
-+		uds_log_error("UDS index queue initialization failed (%d)", result);
-+		return result;
-+	}
-+
-+	vdo_initialize_completion(&zones->completion, vdo, VDO_HASH_ZONES_COMPLETION);
-+	vdo_set_completion_callback(&zones->completion,
-+				    change_dedupe_state,
-+				    vdo->thread_config.dedupe_thread);
-+	kobject_init(&zones->dedupe_directory, &dedupe_directory_type);
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * finish_index_operation() - This is the UDS callback for index queries.
-+ * @request: The uds request which has just completed.
-+ */
-+static void finish_index_operation(struct uds_request *request)
-+{
-+	struct dedupe_context *context = container_of(request, struct dedupe_context, request);
-+
-+	if (change_context_state(context, DEDUPE_CONTEXT_PENDING, DEDUPE_CONTEXT_COMPLETE)) {
-+		/*
-+		 * This query has not timed out, so send its data_vio back to its hash zone to
-+		 * process the results.
-+		 */
-+		continue_data_vio(context->requestor);
-+		return;
-+	}
-+
-+	/*
-+	 * This query has timed out, so try to mark it complete and hence eligible for reuse. Its
-+	 * data_vio has already moved on.
-+	 */
-+	if (!change_context_state(context,
-+				  DEDUPE_CONTEXT_TIMED_OUT,
-+				  DEDUPE_CONTEXT_TIMED_OUT_COMPLETE))
-+		ASSERT_LOG_ONLY(false,
-+				"uds request was timed out (state %d)",
-+				atomic_read(&context->state));
-+
-+	uds_funnel_queue_put(context->zone->timed_out_complete, &context->queue_entry);
-+}
-+
-+/**
-+ * check_for_drain_complete() - Check whether this zone has drained.
-+ * @zone: The zone to check.
-+ */
-+static void check_for_drain_complete(struct hash_zone *zone)
-+{
-+	data_vio_count_t recycled = 0;
-+
-+	if (!vdo_is_state_draining(&zone->state))
-+		return;
-+
-+	if ((atomic_read(&zone->timer_state) == DEDUPE_QUERY_TIMER_IDLE) ||
-+	    change_timer_state(zone, DEDUPE_QUERY_TIMER_RUNNING, DEDUPE_QUERY_TIMER_IDLE))
-+		del_timer_sync(&zone->timer);
-+	else
-+		/*
-+		 * There is an in flight time-out, which must get processed before we can continue.
-+		 */
-+		return;
-+
-+	for (;;) {
-+		struct dedupe_context *context;
-+		struct funnel_queue_entry *entry;
-+
-+		entry = uds_funnel_queue_poll(zone->timed_out_complete);
-+		if (entry == NULL)
-+			break;
-+
-+		context = container_of(entry, struct dedupe_context, queue_entry);
-+		atomic_set(&context->state, DEDUPE_CONTEXT_IDLE);
-+		list_add(&context->list_entry, &zone->available);
-+		recycled++;
-+	}
-+
-+	if (recycled > 0)
-+		WRITE_ONCE(zone->active, zone->active - recycled);
-+	ASSERT_LOG_ONLY(READ_ONCE(zone->active) == 0, "all contexts inactive");
-+	vdo_finish_draining(&zone->state);
-+}
-+
-+static void timeout_index_operations_callback(struct vdo_completion *completion)
-+{
-+	struct dedupe_context *context, *tmp;
-+	struct hash_zone *zone = as_hash_zone(completion);
-+	u64 timeout_jiffies = msecs_to_jiffies(vdo_dedupe_index_timeout_interval);
-+	unsigned long cutoff = jiffies - timeout_jiffies;
-+	unsigned int timed_out = 0;
-+
-+	atomic_set(&zone->timer_state, DEDUPE_QUERY_TIMER_IDLE);
-+	list_for_each_entry_safe(context, tmp, &zone->pending, list_entry) {
-+		if (cutoff <= context->submission_jiffies) {
-+			/*
-+			 * We have reached the oldest query which has not timed out yet, so restart
-+			 * the timer.
-+			 */
-+			start_expiration_timer(context);
-+			break;
-+		}
-+
-+		if (!change_context_state(context,
-+					  DEDUPE_CONTEXT_PENDING,
-+					  DEDUPE_CONTEXT_TIMED_OUT))
-+			/*
-+			 * This context completed between the time the timeout fired, and now. We
-+			 * can treat it as a a successful query, its requestor is already enqueued
-+			 * to process it.
-+			 */
-+			continue;
-+
-+		/*
-+		 * Remove this context from the pending list so we won't look at it again on a
-+		 * subsequent timeout. Once the index completes it, it will be reused. Meanwhile,
-+		 * send its requestor on its way.
-+		 */
-+		list_del_init(&context->list_entry);
-+		continue_data_vio(context->requestor);
-+		timed_out++;
-+	}
-+
-+	if (timed_out > 0)
-+		report_dedupe_timeouts(completion->vdo->hash_zones, timed_out);
-+
-+	check_for_drain_complete(zone);
-+}
-+
-+static void timeout_index_operations(struct timer_list *t)
-+{
-+	struct hash_zone *zone = from_timer(zone, t, timer);
-+
-+	if (change_timer_state(zone, DEDUPE_QUERY_TIMER_RUNNING, DEDUPE_QUERY_TIMER_FIRED))
-+		vdo_launch_completion(&zone->completion);
-+}
-+
- static int __must_check
- initialize_zone(struct vdo *vdo, struct hash_zones *zones, zone_count_t zone_number)
- {
-@@ -2448,3 +2877,197 @@ void vdo_dump_hash_zones(struct hash_zones *zones)
- 	for (zone = 0; zone < zones->zone_count; zone++)
- 		dump_hash_zone(&zones->zones[zone]);
+  * finish_reaping() - Actually advance the head of the journal now that any necessary flushes are
+  *                    complete.
+@@ -2458,3 +2653,134 @@ make_slab(physical_block_number_t slab_origin,
+ 	*slab_ptr = slab;
+ 	return VDO_SUCCESS;
  }
 +
-+void vdo_set_dedupe_index_timeout_interval(unsigned int value)
++/**
++ * finish_combining_zones() - Clean up after saving out the combined slab summary.
++ * @completion: The vio which was used to write the summary data.
++ */
++static void finish_combining_zones(struct vdo_completion *completion)
 +{
-+	u64 alb_jiffies;
++	int result = completion->result;
++	struct vdo_completion *parent = completion->parent;
 +
-+	/* Arbitrary maximum value is two minutes */
-+	if (value > 120000)
-+		value = 120000;
-+	/* Arbitrary minimum value is 2 jiffies */
-+	alb_jiffies = msecs_to_jiffies(value);
-+
-+	if (alb_jiffies < 2) {
-+		alb_jiffies = 2;
-+		value = jiffies_to_msecs(alb_jiffies);
-+	}
-+	vdo_dedupe_index_timeout_interval = value;
-+	vdo_dedupe_index_timeout_jiffies = alb_jiffies;
++	free_vio(as_vio(UDS_FORGET(completion)));
++	vdo_fail_completion(parent, result);
 +}
 +
-+void vdo_set_dedupe_index_min_timer_interval(unsigned int value)
++static void handle_combining_error(struct vdo_completion *completion)
 +{
-+	u64 min_jiffies;
++	vio_record_metadata_io_error(as_vio(completion));
++	finish_combining_zones(completion);
++}
 +
-+	/* Arbitrary maximum value is one second */
-+	if (value > 1000)
-+		value = 1000;
++static void write_summary_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct vdo *vdo = vio->completion.vdo;
 +
-+	/* Arbitrary minimum value is 2 jiffies */
-+	min_jiffies = msecs_to_jiffies(value);
-+
-+	if (min_jiffies < 2) {
-+		min_jiffies = 2;
-+		value = jiffies_to_msecs(min_jiffies);
-+	}
-+
-+	vdo_dedupe_index_min_timer_interval = value;
-+	vdo_dedupe_index_min_timer_jiffies = min_jiffies;
++	continue_vio_after_io(vio, finish_combining_zones, vdo->thread_config.admin_thread);
 +}
 +
 +/**
-+ * acquire_context() - Acquire a dedupe context from a hash_zone if any are available.
-+ * @zone: the hash zone
++ * combine_summaries() - Treating the current entries buffer as the on-disk value of all zones,
++ *                       update every zone to the correct values for every slab.
++ * @depot: The depot whose summary entries should be combined.
++ */
++static void combine_summaries(struct slab_depot *depot)
++{
++	/*
++	 * Combine all the old summary data into the portion of the buffer corresponding to the
++	 * first zone.
++	 */
++	zone_count_t zone = 0;
++	struct slab_summary_entry *entries = depot->summary_entries;
++
++	if (depot->old_zone_count > 1) {
++		slab_count_t entry_number;
++
++		for (entry_number = 0; entry_number < MAX_VDO_SLABS; entry_number++) {
++			if (zone != 0)
++				memcpy(entries + entry_number,
++				       entries + (zone * MAX_VDO_SLABS) + entry_number,
++				       sizeof(struct slab_summary_entry));
++			zone++;
++			if (zone == depot->old_zone_count)
++				zone = 0;
++		}
++	}
++
++	/* Copy the combined data to each zones's region of the buffer. */
++	for (zone = 1; zone < MAX_VDO_PHYSICAL_ZONES; zone++)
++		memcpy(entries + (zone * MAX_VDO_SLABS),
++		       entries,
++		       MAX_VDO_SLABS * sizeof(struct slab_summary_entry));
++}
++
++/**
++ * finish_loading_summary() - Finish loading slab summary data.
++ * @completion: The vio which was used to read the summary data.
 + *
-+ * Return: A dedupe_context or NULL if none are available
++ * Combines the slab summary data from all the previously written zones and copies the combined
++ * summary to each partition's data region. Then writes the combined summary back out to disk. This
++ * callback is registered in load_summary_endio().
 + */
-+static struct dedupe_context * __must_check acquire_context(struct hash_zone *zone)
++static void finish_loading_summary(struct vdo_completion *completion)
 +{
-+	struct dedupe_context *context;
-+	struct funnel_queue_entry *entry;
++	struct slab_depot *depot = completion->vdo->depot;
 +
-+	assert_in_hash_zone(zone, __func__);
++	/* Combine the summary from each zone so each zone is correct for all slabs. */
++	combine_summaries(depot);
 +
-+	if (!list_empty(&zone->available)) {
-+		WRITE_ONCE(zone->active, zone->active + 1);
-+		context = list_first_entry(&zone->available, struct dedupe_context, list_entry);
-+		list_del_init(&context->list_entry);
-+		return context;
-+	}
-+
-+	entry = uds_funnel_queue_poll(zone->timed_out_complete);
-+	return ((entry == NULL) ? NULL : container_of(entry, struct dedupe_context, queue_entry));
++	/* Write the combined summary back out. */
++	submit_metadata_vio(as_vio(completion),
++			    depot->summary_origin,
++			    write_summary_endio,
++			    handle_combining_error,
++			    REQ_OP_WRITE);
 +}
 +
-+static void prepare_uds_request(struct uds_request *request,
-+				struct data_vio *data_vio,
-+				enum uds_request_type operation)
++static void load_summary_endio(struct bio *bio)
 +{
-+	request->record_name = data_vio->record_name;
-+	request->type = operation;
-+	if ((operation == UDS_POST) || (operation == UDS_UPDATE)) {
-+		size_t offset = 0;
-+		struct uds_record_data *encoding = &request->new_metadata;
++	struct vio *vio = bio->bi_private;
++	struct vdo *vdo = vio->completion.vdo;
 +
-+		encoding->data[offset++] = UDS_ADVICE_VERSION;
-+		encoding->data[offset++] = data_vio->new_mapped.state;
-+		put_unaligned_le64(data_vio->new_mapped.pbn, &encoding->data[offset]);
-+		offset += sizeof(u64);
-+		BUG_ON(offset != UDS_ADVICE_SIZE);
-+	}
++	continue_vio_after_io(vio, finish_loading_summary, vdo->thread_config.admin_thread);
 +}
 +
-+/*
-+ * The index operation will inquire about data_vio.record_name, providing (if the operation is
-+ * appropriate) advice from the data_vio's new_mapped fields. The advice found in the index (or
-+ * NULL if none) will be returned via receive_data_vio_dedupe_advice(). dedupe_context.status is
-+ * set to the return status code of any asynchronous index processing.
++/**
++ * load_slab_summary() - The preamble of a load operation.
++ *
++ * Implements vdo_action_preamble.
 + */
-+static void query_index(struct data_vio *data_vio, enum uds_request_type operation)
++static void load_slab_summary(void *context, struct vdo_completion *parent)
 +{
 +	int result;
-+	struct dedupe_context *context;
-+	struct vdo *vdo = vdo_from_data_vio(data_vio);
-+	struct hash_zone *zone = data_vio->hash_zone;
++	struct vio *vio;
++	struct slab_depot *depot = context;
++	const struct admin_state_code *operation =
++		vdo_get_current_manager_operation(depot->action_manager);
 +
-+	assert_data_vio_in_hash_zone(data_vio);
-+
-+	if (!READ_ONCE(vdo->hash_zones->dedupe_flag)) {
-+		continue_data_vio(data_vio);
++	result = create_multi_block_metadata_vio(depot->vdo,
++						 VIO_TYPE_SLAB_SUMMARY,
++						 VIO_PRIORITY_METADATA,
++						 parent,
++						 VDO_SLAB_SUMMARY_BLOCKS,
++						 (char *) depot->summary_entries,
++						 &vio);
++	if (result != VDO_SUCCESS) {
++		vdo_fail_completion(parent, result);
 +		return;
 +	}
 +
-+	context = acquire_context(zone);
-+	if (context == NULL) {
-+		atomic64_inc(&vdo->hash_zones->dedupe_context_busy);
-+		continue_data_vio(data_vio);
++	if ((operation == VDO_ADMIN_STATE_FORMATTING) ||
++	    (operation == VDO_ADMIN_STATE_LOADING_FOR_REBUILD)) {
++		finish_loading_summary(&vio->completion);
 +		return;
 +	}
 +
-+	data_vio->dedupe_context = context;
-+	context->requestor = data_vio;
-+	context->submission_jiffies = jiffies;
-+	prepare_uds_request(&context->request, data_vio, operation);
-+	atomic_set(&context->state, DEDUPE_CONTEXT_PENDING);
-+	list_add_tail(&context->list_entry, &zone->pending);
-+	start_expiration_timer(context);
-+	result = uds_launch_request(&context->request);
-+	if (result != UDS_SUCCESS) {
-+		context->request.status = result;
-+		finish_index_operation(&context->request);
-+	}
++	submit_metadata_vio(vio,
++			    depot->summary_origin,
++			    load_summary_endio,
++			    handle_combining_error,
++			    REQ_OP_READ);
 +}
-+
-+static void set_target_state(struct hash_zones *zones,
-+			     enum index_state target,
-+			     bool change_dedupe,
-+			     bool dedupe,
-+			     bool set_create)
-+{
-+	const char *old_state, *new_state;
-+
-+	spin_lock(&zones->lock);
-+	old_state = index_state_to_string(zones, zones->index_target);
-+	if (change_dedupe)
-+		WRITE_ONCE(zones->dedupe_flag, dedupe);
-+
-+	if (set_create)
-+		zones->create_flag = true;
-+
-+	zones->index_target = target;
-+	launch_dedupe_state_change(zones);
-+	new_state = index_state_to_string(zones, zones->index_target);
-+	spin_unlock(&zones->lock);
-+
-+	if (old_state != new_state)
-+		uds_log_info("Setting UDS index target state to %s", new_state);
-+}
-+
-+const char *vdo_get_dedupe_index_state_name(struct hash_zones *zones)
-+{
-+	const char *state;
-+
-+	spin_lock(&zones->lock);
-+	state = index_state_to_string(zones, zones->index_state);
-+	spin_unlock(&zones->lock);
-+
-+	return state;
-+}
-+
-+/* Handle a dmsetup message relevant to the index. */
-+int vdo_message_dedupe_index(struct hash_zones *zones, const char *name)
-+{
-+	if (strcasecmp(name, "index-close") == 0) {
-+		set_target_state(zones, IS_CLOSED, false, false, false);
-+		return 0;
-+	} else if (strcasecmp(name, "index-create") == 0) {
-+		set_target_state(zones, IS_OPENED, false, false, true);
-+		return 0;
-+	} else if (strcasecmp(name, "index-disable") == 0) {
-+		set_target_state(zones, IS_OPENED, true, false, false);
-+		return 0;
-+	} else if (strcasecmp(name, "index-enable") == 0) {
-+		set_target_state(zones, IS_OPENED, true, true, false);
-+		return 0;
-+	}
-+	return -EINVAL;
-+}
-+
-+int vdo_add_dedupe_index_sysfs(struct hash_zones *zones)
-+{
-+	int result = kobject_add(&zones->dedupe_directory,
-+				 &zones->completion.vdo->vdo_directory,
-+				 "dedupe");
-+
-+	if (result == 0)
-+		vdo_set_admin_state_code(&zones->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
-+
-+	return result;
-+}
-+
-+/* If create_flag, create a new index without first attempting to load an existing index. */
-+void vdo_start_dedupe_index(struct hash_zones *zones, bool create_flag)
-+{
-+	set_target_state(zones, IS_OPENED, true, true, create_flag);
-+}
-diff --git a/drivers/md/dm-vdo/dedupe.h b/drivers/md/dm-vdo/dedupe.h
-index af329fb0fa68..01fdb9bc29c1 100644
---- a/drivers/md/dm-vdo/dedupe.h
-+++ b/drivers/md/dm-vdo/dedupe.h
-@@ -90,4 +90,30 @@ vdo_select_hash_zone(struct hash_zones *zones, const struct uds_record_name *nam
+diff --git a/drivers/md/dm-vdo/slab-depot.h b/drivers/md/dm-vdo/slab-depot.h
+index 12086d475d1a..5e06746c7e71 100644
+--- a/drivers/md/dm-vdo/slab-depot.h
++++ b/drivers/md/dm-vdo/slab-depot.h
+@@ -24,6 +24,23 @@
+ #include "vio.h"
+ #include "wait-queue.h"
  
- void vdo_dump_hash_zones(struct hash_zones *zones);
++/*
++ * A slab_depot is responsible for managing all of the slabs and block allocators of a VDO. It has
++ * a single array of slabs in order to eliminate the need for additional math in order to compute
++ * which physical zone a PBN is in. It also has a block_allocator per zone.
++ *
++ * Load operations are required to be performed on a single thread. Normal operations are assumed
++ * to be performed in the appropriate zone. Allocations and reference count updates must be done
++ * from the thread of their physical zone. Requests to commit slab journal tail blocks from the
++ * recovery journal must be done on the journal zone thread. Save operations are required to be
++ * launched from the same thread as the original load operation.
++ */
++
++enum {
++	/* The number of vios in the vio pool is proportional to the throughput of the VDO. */
++	BLOCK_ALLOCATOR_VIO_POOL_SIZE = 128,
++};
++
+ /*
+  * Represents the possible status of a block.
+  */
+@@ -240,6 +257,63 @@ struct vdo_slab {
+ 	struct reference_block *reference_blocks;
+ };
  
-+const char *vdo_get_dedupe_index_state_name(struct hash_zones *zones);
-+
-+u64 vdo_get_dedupe_index_timeout_count(struct hash_zones *zones);
-+
-+int vdo_message_dedupe_index(struct hash_zones *zones, const char *name);
-+
-+int vdo_add_dedupe_index_sysfs(struct hash_zones *zones);
-+
-+void vdo_start_dedupe_index(struct hash_zones *zones, bool create_flag);
-+
-+void vdo_resume_hash_zones(struct hash_zones *zones, struct vdo_completion *parent);
-+
-+void vdo_finish_dedupe_index(struct hash_zones *zones);
-+
-+/* Interval (in milliseconds) from submission until switching to fast path and skipping UDS. */
-+extern unsigned int vdo_dedupe_index_timeout_interval;
++/*
++ * The slab_summary provides hints during load and recovery about the state of the slabs in order
++ * to avoid the need to read the slab journals in their entirety before a VDO can come online.
++ *
++ * The information in the summary for each slab includes the rough number of free blocks (which is
++ * used to prioritize scrubbing), the cleanliness of a slab (so that clean slabs containing free
++ * space will be used on restart), and the location of the tail block of the slab's journal.
++ *
++ * The slab_summary has its own partition at the end of the volume which is sized to allow for a
++ * complete copy of the summary for each of up to 16 physical zones.
++ *
++ * During resize, the slab_summary moves its backing partition and is saved once moved; the
++ * slab_summary is not permitted to overwrite the previous recovery journal space.
++ *
++ * The slab_summary does not have its own version information, but relies on the VDO volume version
++ * number.
++ */
 +
 +/*
-+ * Minimum time interval (in milliseconds) between timer invocations to check for requests waiting
-+ * for UDS that should now time out.
++ * A slab status is a very small structure for use in determining the ordering of slabs in the
++ * scrubbing process.
 + */
-+extern unsigned int vdo_dedupe_index_min_timer_interval;
++struct slab_status {
++	slab_count_t slab_number;
++	bool is_clean;
++	u8 emptiness;
++};
 +
-+void vdo_set_dedupe_index_timeout_interval(unsigned int value);
-+void vdo_set_dedupe_index_min_timer_interval(unsigned int value);
++struct slab_summary_block {
++	/* The block_allocator to which this block belongs */
++	struct block_allocator *allocator;
++	/* The index of this block in its zone's summary */
++	block_count_t index;
++	/* Whether this block has a write outstanding */
++	bool writing;
++	/* Ring of updates waiting on the outstanding write */
++	struct wait_queue current_update_waiters;
++	/* Ring of updates waiting on the next write */
++	struct wait_queue next_update_waiters;
++	/* The active slab_summary_entry array for this block */
++	struct slab_summary_entry *entries;
++	/* The vio used to write this block */
++	struct vio vio;
++	/* The packed entries, one block long, backing the vio */
++	char *outgoing_entries;
++};
 +
- #endif /* VDO_DEDUPE_H */
++/*
++ * The statistics for all the slab summary zones owned by this slab summary. These fields are all
++ * mutated only by their physical zone threads, but are read by other threads when gathering
++ * statistics for the entire depot.
++ */
++struct atomic_slab_summary_statistics {
++	/* Number of blocks written */
++	atomic64_t blocks_written;
++};
++
+ bool __must_check
+ vdo_attempt_replay_into_slab(struct vdo_slab *slab,
+ 			     physical_block_number_t pbn,
 -- 
 2.40.0
 
