@@ -1,98 +1,97 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2EB0BEEAA65
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:18:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E4735EEAA66
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:18:40 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694719116;
+	s=mimecast20190719; t=1694719120;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=XVHJ/EiltYiH+t38QsLFRm7SayGYTnM+HkzydC4+ur4=;
-	b=MxdJ849OcuV7bPGRvkp2EgAErp2napjr4neXBZbppxe6l82ZmV3pPZxKi7xVwc+k47pRR1
-	u2Vpgla8WZiW8OLwZwP69AjIM1/IsQDvHlmI/N4mP27nt9u/pt1ZlVUbOCtrQIHFhxtoyD
-	2MHG3Fx0RGhlBrrkTVmFmSoH2xqEtDg=
+	bh=EwX05js8gnPs19Bqar1odhBSPxcnmV0A9DR9WM2LaC4=;
+	b=S41nQGU5mSp2km++hfmkI9DrsI9cqWRu7+l12RCCjfb2vJVd0f/1W0z4CHFbh/oCU2+MSl
+	4OSz4TSoxo8IhH6VaEq2YtQjs/9hEMLjwBgAO33OREAJmBE0DoN8SsjYj40czHt5ttt1HU
+	S3iiE6hhcPLYFo/9pziQfLT4nVSxCng=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-475-h3f2OaGAPEeT3ogUETKKZw-1; Thu, 14 Sep 2023 15:18:32 -0400
-X-MC-Unique: h3f2OaGAPEeT3ogUETKKZw-1
+ us-mta-48-wn1Vm2dbO169S2lU6pJA6w-1; Thu, 14 Sep 2023 15:18:37 -0400
+X-MC-Unique: wn1Vm2dbO169S2lU6pJA6w-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 383B3101A529;
-	Thu, 14 Sep 2023 19:18:29 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E6ED9101FAA1;
+	Thu, 14 Sep 2023 19:18:34 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 21E1340C2070;
-	Thu, 14 Sep 2023 19:18:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CF5B340C2070;
+	Thu, 14 Sep 2023 19:18:34 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DF8F31946A74;
-	Thu, 14 Sep 2023 19:17:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1A4221946A69;
+	Thu, 14 Sep 2023 19:17:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4AE9419466EE
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:17:19 +0000 (UTC)
+ ESMTP id 5044619466EF
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:17:25 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 375B41678B; Thu, 14 Sep 2023 19:17:19 +0000 (UTC)
+ id 2CA3A406AA68; Thu, 14 Sep 2023 19:17:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E3E410EA0
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:19 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
- [207.211.31.81])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2514840C2070
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:20 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-inbound-delivery-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F38EA88B7AD
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:18 +0000 (UTC)
-Received: from mail-qt1-f179.google.com (mail-qt1-f179.google.com
- [209.85.160.179]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 008EB88B7A1
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:20 +0000 (UTC)
+Received: from mail-qk1-f177.google.com (mail-qk1-f177.google.com
+ [209.85.222.177]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-479-qv52SlT5MtOZsiTqjB2NXA-2; Thu, 14 Sep 2023 15:17:17 -0400
-X-MC-Unique: qv52SlT5MtOZsiTqjB2NXA-2
-Received: by mail-qt1-f179.google.com with SMTP id
- d75a77b69052e-41206fd9717so7253241cf.3
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:17:17 -0700 (PDT)
+ us-mta-128-ZRAIqj_eM1W4qdLZDQVyEg-1; Thu, 14 Sep 2023 15:17:18 -0400
+X-MC-Unique: ZRAIqj_eM1W4qdLZDQVyEg-1
+Received: by mail-qk1-f177.google.com with SMTP id
+ af79cd13be357-76ef8b91a72so88604585a.0
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:17:18 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1694719036; x=1695323836;
+ d=1e100.net; s=20230601; t=1694719037; x=1695323837;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=uUv/nH0hzIirM8EfFZt9ONDpIj5M+zfYNBXLCEuf1eI=;
- b=juQgBw/u/uxOK3RQIo3j5sIYjrFnPBMJIgNuqM7HuvwtJ5eOak2qmwY1kk30is19FB
- xpaPRuJ3qoA3uCdhsrYV+AKynfMx69LE/Zim5PWkiREifSjGJb8fLBSmFCMN1dGTs6cA
- DQWkw3lJthQkows83Q5FFgBUcIjX1JwTwSL7PG6o14/yb74ZA5j9YQzCoWoTHB7Xvm71
- JWuu2bQOoDqMSEz00hJ7uG2SON4PwDI83ljDFOaH+TPVCZyhCPkDciiVQHweW7es/4HG
- 1FcVYqlP98SDYBuRgd+hkgC2vdJ4uJ4cj+eUIVdGoTQG5XsVbrlwBNcoocrkLR2a6pR7
- 1taw==
-X-Gm-Message-State: AOJu0YyPpSjRMolysoT9IYK2f6GPYToaLHrUUtbdnRSk/Ppvlgf5XnhQ
- Zq95aCXTIdD6XQ0r6MZh2+DstU0FzDNeHfb51dI64WKKxQGc1xHbLSwuuiCl/ciRLi6tdvae+YG
- ncc3cHVBl0HXNXcvLwr0Cl8RqOO5NwpWez0yJc3a+4cPG8HIrb7UZ0jhOMZSr4+S1PnEI9YpF
-X-Google-Smtp-Source: AGHT+IHbNl7Ih7RgqM9DRv9Y4Q+5tpd5igXtg0WXJs72H7ffOY0Pjk2WGFq7tosRPrFpVdy/AS2AWA==
-X-Received: by 2002:ac8:580f:0:b0:410:ca1:62b2 with SMTP id
- g15-20020ac8580f000000b004100ca162b2mr5792157qtg.60.1694719034889; 
- Thu, 14 Sep 2023 12:17:14 -0700 (PDT)
+ bh=6LBV0rsZmzx4Iwix4le4ehcDK7bqWKhstQE/979Xdh0=;
+ b=eEsMrO/aq7CkHLhkaAtDkytS3bZqkf43VdieydiB6+oLe8QnpLxgK9oD7XBW5gyAlV
+ 4PvYv60HlZW8SiOr6UisRYtbtXKW75zagKeCIxK3vkSe6MfDc4qm9Uo6TSwSvxmAENEV
+ zM7kmx/UrHL5g8x6ajv7cTiIhZ3ZNQDxGV3q3EIerU0Lqw96wczaX35cpMdRAoGqPvRD
+ vrXz5iYUSPRtcDAEfrzW5YD1x5PNijgeIo7LeEqyb44D6QsJ7QZNMNh3l4YWILoenKar
+ omtzoMtK2xFmbIcaloS51CJcEkbZqfnOcXm/PncC6zUgENaEdz5Z45Br2dG7xhbAI39i
+ J/+w==
+X-Gm-Message-State: AOJu0YwFzlZBDiryuCWOc8rVQAwgIBojWz9Wz/KtLavb2nbtPBl/MEvx
+ wTsfVpswTSdzm9vEu0XlZR2TR6kNCpGyBgD1/dOqiOAmiu9OgzbepYdewj81gYg+Mog35sqFwcv
+ v6RHINWua8cqASztiV76OFfbsgrw/Nz/CDAkh+Dc/iGkxSTN1v3OCkST+8I7BqdkpS9Dtvpn1
+X-Google-Smtp-Source: AGHT+IHYTAk5LZgUlLERfmaVnkYlLGd4Z5zzGYNyvwW0i7bgQuponDhLY1uvKuDhIIVWMflMvsYpoQ==
+X-Received: by 2002:a05:620a:4103:b0:767:f49c:1d67 with SMTP id
+ j3-20020a05620a410300b00767f49c1d67mr7240784qko.1.1694719036689; 
+ Thu, 14 Sep 2023 12:17:16 -0700 (PDT)
 Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net.
  [68.160.141.91]) by smtp.gmail.com with ESMTPSA id
- g16-20020ac870d0000000b0041061a16791sm633168qtp.67.2023.09.14.12.17.13
+ v5-20020ae9e305000000b0076d9e298928sm674918qkf.66.2023.09.14.12.17.15
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 14 Sep 2023 12:17:14 -0700 (PDT)
+ Thu, 14 Sep 2023 12:17:16 -0700 (PDT)
 From: Mike Snitzer <snitzer@kernel.org>
 To: dm-devel@redhat.com
-Date: Thu, 14 Sep 2023 15:16:15 -0400
-Message-Id: <20230914191635.39805-20-snitzer@kernel.org>
+Date: Thu, 14 Sep 2023 15:16:16 -0400
+Message-Id: <20230914191635.39805-21-snitzer@kernel.org>
 In-Reply-To: <20230914191635.39805-1-snitzer@kernel.org>
 References: <20230914191635.39805-1-snitzer@kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: [dm-devel] [PATCH v3 19/39] dm vdo: add data_vio,
- the request object which services incoming bios
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: [dm-devel] [PATCH v3 20/39] dm vdo: add flush support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -115,8 +114,19 @@ Content-Transfer-Encoding: 7bit
 
 From: Matthew Sakai <msakai@redhat.com>
 
-Add the data and methods that implement the data_vio object that
-handles user data bios as they are processed.
+Add support for handling incoming flush and/or FUA bios. Each such bio
+is assigned to a struct vdo_flush. These are allocated as needed, but
+there is always one kept in reserve in case allocations fail. In the
+event of an allocation failure, bios may need to wait for an
+outstanding flush to complete.
+
+The logical address space is partitioned into logical zones, each
+handled by its own thread. Each zone keeps a list of all data_vios
+handling write requests for logical addresses in that zone. When a
+flush bio is processed, each logical zone is informed of the
+flush. When all of the writes which are in progress at the time of the
+notification have completed in all zones, the flush bio is then
+allowed to complete.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
@@ -124,2790 +134,1115 @@ Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
 Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
 Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-Co-developed-by: Bruce Johnston <bjohnsto@redhat.com>
-Signed-off-by: Bruce Johnston <bjohnsto@redhat.com>
-Co-developed-by: Ken Raeburn <raeburn@redhat.com>
-Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-vdo/data-vio.c | 2076 ++++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/data-vio.h |  683 +++++++++++
- 2 files changed, 2759 insertions(+)
- create mode 100644 drivers/md/dm-vdo/data-vio.c
- create mode 100644 drivers/md/dm-vdo/data-vio.h
+ drivers/md/dm-vdo/flush.c        | 563 +++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/flush.h        |  44 +++
+ drivers/md/dm-vdo/logical-zone.c | 378 +++++++++++++++++++++
+ drivers/md/dm-vdo/logical-zone.h |  87 +++++
+ 4 files changed, 1072 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/flush.c
+ create mode 100644 drivers/md/dm-vdo/flush.h
+ create mode 100644 drivers/md/dm-vdo/logical-zone.c
+ create mode 100644 drivers/md/dm-vdo/logical-zone.h
 
-diff --git a/drivers/md/dm-vdo/data-vio.c b/drivers/md/dm-vdo/data-vio.c
+diff --git a/drivers/md/dm-vdo/flush.c b/drivers/md/dm-vdo/flush.c
 new file mode 100644
-index 000000000000..6f03b4fac569
+index 000000000000..8c77337e5262
 --- /dev/null
-+++ b/drivers/md/dm-vdo/data-vio.c
-@@ -0,0 +1,2076 @@
++++ b/drivers/md/dm-vdo/flush.c
+@@ -0,0 +1,563 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "data-vio.h"
++#include "flush.h"
 +
-+#include <linux/atomic.h>
-+#include <linux/bio.h>
-+#include <linux/blkdev.h>
-+#include <linux/delay.h>
-+#include <linux/device-mapper.h>
-+#include <linux/jiffies.h>
-+#include <linux/kernel.h>
-+#include <linux/list.h>
-+#include <linux/lz4.h>
-+#include <linux/minmax.h>
-+#include <linux/sched.h>
++#include <linux/mempool.h>
 +#include <linux/spinlock.h>
-+#include <linux/wait.h>
 +
 +#include "logger.h"
 +#include "memory-alloc.h"
-+#include "murmurhash3.h"
 +#include "permassert.h"
 +
-+#include "block-map.h"
-+#include "dump.h"
-+#include "encodings.h"
-+#include "int-map.h"
++#include "admin-state.h"
++#include "completion.h"
 +#include "io-submitter.h"
 +#include "logical-zone.h"
-+#include "packer.h"
-+#include "recovery-journal.h"
 +#include "slab-depot.h"
-+#include "status-codes.h"
 +#include "types.h"
 +#include "vdo.h"
-+#include "vio.h"
-+#include "wait-queue.h"
 +
-+/**
-+ * DOC: Bio flags.
-+ *
-+ * For certain flags set on user bios, if the user bio has not yet been acknowledged, setting those
-+ * flags on our own bio(s) for that request may help underlying layers better fulfill the user
-+ * bio's needs. This constant contains the aggregate of those flags; VDO strips all the other
-+ * flags, as they convey incorrect information.
-+ *
-+ * These flags are always irrelevant if we have already finished the user bio as they are only
-+ * hints on IO importance. If VDO has finished the user bio, any remaining IO done doesn't care how
-+ * important finishing the finished bio was.
-+ *
-+ * Note that bio.c contains the complete list of flags we believe may be set; the following list
-+ * explains the action taken with each of those flags VDO could receive:
-+ *
-+ * * REQ_SYNC: Passed down if the user bio is not yet completed, since it indicates the user bio
-+ *   completion is required for further work to be done by the issuer.
-+ * * REQ_META: Passed down if the user bio is not yet completed, since it may mean the lower layer
-+ *   treats it as more urgent, similar to REQ_SYNC.
-+ * * REQ_PRIO: Passed down if the user bio is not yet completed, since it indicates the user bio is
-+ *   important.
-+ * * REQ_NOMERGE: Set only if the incoming bio was split; irrelevant to VDO IO.
-+ * * REQ_IDLE: Set if the incoming bio had more IO quickly following; VDO's IO pattern doesn't
-+ *   match incoming IO, so this flag is incorrect for it.
-+ * * REQ_FUA: Handled separately, and irrelevant to VDO IO otherwise.
-+ * * REQ_RAHEAD: Passed down, as, for reads, it indicates trivial importance.
-+ * * REQ_BACKGROUND: Not passed down, as VIOs are a limited resource and VDO needs them recycled
-+ *   ASAP to service heavy load, which is the only place where REQ_BACKGROUND might aid in load
-+ *   prioritization.
-+ */
-+static unsigned int PASSTHROUGH_FLAGS = (REQ_PRIO | REQ_META | REQ_SYNC | REQ_RAHEAD);
-+
-+/**
-+ * DOC:
-+ *
-+ * The data_vio_pool maintains the pool of data_vios which a vdo uses to service incoming bios. For
-+ * correctness, and in order to avoid potentially expensive or blocking memory allocations during
-+ * normal operation, the number of concurrently active data_vios is capped. Furthermore, in order
-+ * to avoid starvation of reads and writes, at most 75% of the data_vios may be used for
-+ * discards. The data_vio_pool is responsible for enforcing these limits. Threads submitting bios
-+ * for which a data_vio or discard permit are not available will block until the necessary
-+ * resources are available. The pool is also responsible for distributing resources to blocked
-+ * threads and waking them. Finally, the pool attempts to batch the work of recycling data_vios by
-+ * performing the work of actually assigning resources to blocked threads or placing data_vios back
-+ * into the pool on a single cpu at a time.
-+ *
-+ * The pool contains two "limiters", one for tracking data_vios and one for tracking discard
-+ * permits. The limiters also provide safe cross-thread access to pool statistics without the need
-+ * to take the pool's lock. When a thread submits a bio to a vdo device, it will first attempt to
-+ * get a discard permit if it is a discard, and then to get a data_vio. If the necessary resources
-+ * are available, the incoming bio will be assigned to the acquired data_vio, and it will be
-+ * launched. However, if either of these are unavailable, the arrival time of the bio is recorded
-+ * in the bio's bi_private field, the bio and its submitter are both queued on the appropriate
-+ * limiter and the submitting thread will then put itself to sleep. (note that this mechanism will
-+ * break if jiffies are only 32 bits.)
-+ *
-+ * Whenever a data_vio has completed processing for the bio it was servicing, release_data_vio()
-+ * will be called on it. This function will add the data_vio to a funnel queue, and then check the
-+ * state of the pool. If the pool is not currently processing released data_vios, the pool's
-+ * completion will be enqueued on a cpu queue. This obviates the need for the releasing threads to
-+ * hold the pool's lock, and also batches release work while avoiding starvation of the cpu
-+ * threads.
-+ *
-+ * Whenever the pool's completion is run on a cpu thread, it calls process_release_callback() which
-+ * processes a batch of returned data_vios (currently at most 32) from the pool's funnel queue. For
-+ * each data_vio, it first checks whether that data_vio was processing a discard. If so, and there
-+ * is a blocked bio waiting for a discard permit, that permit is notionally transferred to the
-+ * eldest discard waiter, and that waiter is moved to the end of the list of discard bios waiting
-+ * for a data_vio. If there are no discard waiters, the discard permit is returned to the pool.
-+ * Next, the data_vio is assigned to the oldest blocked bio which either has a discard permit, or
-+ * doesn't need one and relaunched. If neither of these exist, the data_vio is returned to the
-+ * pool. Finally, if any waiting bios were launched, the threads which blocked trying to submit
-+ * them are awakened.
-+ */
-+
-+enum {
-+	DATA_VIO_RELEASE_BATCH_SIZE = 128,
-+};
-+
-+static const unsigned int VDO_SECTORS_PER_BLOCK_MASK = VDO_SECTORS_PER_BLOCK - 1;
-+static const u32 COMPRESSION_STATUS_MASK = 0xff;
-+static const u32 MAY_NOT_COMPRESS_MASK = 0x80000000;
-+
-+struct limiter;
-+typedef void assigner(struct limiter *limiter);
-+
-+/* Bookkeeping structure for a single type of resource. */
-+struct limiter {
-+	/* The data_vio_pool to which this limiter belongs */
-+	struct data_vio_pool *pool;
-+	/* The maximum number of data_vios available */
-+	data_vio_count_t limit;
-+	/* The number of resources in use */
-+	data_vio_count_t busy;
-+	/* The maximum number of resources ever simultaneously in use */
-+	data_vio_count_t max_busy;
-+	/* The number of resources to release */
-+	data_vio_count_t release_count;
-+	/* The number of waiters to wake */
-+	data_vio_count_t wake_count;
-+	/* The list of waiting bios which are known to process_release_callback() */
-+	struct bio_list waiters;
-+	/* The list of waiting bios which are not yet known to process_release_callback() */
-+	struct bio_list new_waiters;
-+	/* The list of waiters which have their permits */
-+	struct bio_list *permitted_waiters;
-+	/* The function for assigning a resource to a waiter */
-+	assigner *assigner;
-+	/* The queue of blocked threads */
-+	wait_queue_head_t blocked_threads;
-+	/* The arrival time of the eldest waiter */
-+	u64 arrival;
-+};
-+
-+/*
-+ * A data_vio_pool is a collection of preallocated data_vios which may be acquired from any thread,
-+ * and are released in batches.
-+ */
-+struct data_vio_pool {
-+	/* Completion for scheduling releases */
++struct flusher {
 +	struct vdo_completion completion;
-+	/* The administrative state of the pool */
++	/** The vdo to which this flusher belongs */
++	struct vdo *vdo;
++	/** The administrative state of the flusher */
 +	struct admin_state state;
-+	/* Lock protecting the pool */
++	/** The current flush generation of the vdo */
++	sequence_number_t flush_generation;
++	/** The first unacknowledged flush generation */
++	sequence_number_t first_unacknowledged_generation;
++	/** The queue of flush requests waiting to notify other threads */
++	struct wait_queue notifiers;
++	/** The queue of flush requests waiting for VIOs to complete */
++	struct wait_queue pending_flushes;
++	/** The flush generation for which notifications are being sent */
++	sequence_number_t notify_generation;
++	/** The logical zone to notify next */
++	struct logical_zone *logical_zone_to_notify;
++	/** The ID of the thread on which flush requests should be made */
++	thread_id_t thread_id;
++	/** The pool of flush requests */
++	mempool_t *flush_pool;
++	/** Bios waiting for a flush request to become available */
++	struct bio_list waiting_flush_bios;
++	/** The lock to protect the previous fields */
 +	spinlock_t lock;
-+	/* The main limiter controlling the total data_vios in the pool. */
-+	struct limiter limiter;
-+	/* The limiter controlling data_vios for discard */
-+	struct limiter discard_limiter;
-+	/* The list of bios which have discard permits but still need a data_vio */
-+	struct bio_list permitted_discards;
-+	/* The list of available data_vios */
-+	struct list_head available;
-+	/* The queue of data_vios waiting to be returned to the pool */
-+	struct funnel_queue *queue;
-+	/* Whether the pool is processing, or scheduled to process releases */
-+	atomic_t processing;
-+	/* The data vios in the pool */
-+	struct data_vio data_vios[];
++	/** The rotor for selecting the bio queue for submitting flush bios */
++	zone_count_t bio_queue_rotor;
++	/** The number of flushes submitted to the current bio queue */
++	int flush_count;
 +};
 +
-+static const char * const ASYNC_OPERATION_NAMES[] = {
-+	"launch",
-+	"acknowledge_write",
-+	"acquire_hash_lock",
-+	"attempt_logical_block_lock",
-+	"lock_duplicate_pbn",
-+	"check_for_duplication",
-+	"cleanup",
-+	"compress_data_vio",
-+	"find_block_map_slot",
-+	"get_mapped_block_for_read",
-+	"get_mapped_block_for_write",
-+	"hash_data_vio",
-+	"journal_remapping",
-+	"vdo_attempt_packing",
-+	"put_mapped_block",
-+	"read_data_vio",
-+	"update_dedupe_index",
-+	"update_reference_counts",
-+	"verify_duplication",
-+	"write_data_vio",
-+};
-+
-+/* The steps taken cleaning up a VIO, in the order they are performed. */
-+enum data_vio_cleanup_stage {
-+	VIO_CLEANUP_START,
-+	VIO_RELEASE_HASH_LOCK = VIO_CLEANUP_START,
-+	VIO_RELEASE_ALLOCATED,
-+	VIO_RELEASE_RECOVERY_LOCKS,
-+	VIO_RELEASE_LOGICAL,
-+	VIO_CLEANUP_DONE
-+};
-+
-+static inline struct data_vio_pool * __must_check
-+as_data_vio_pool(struct vdo_completion *completion)
-+{
-+	vdo_assert_completion_type(completion, VDO_DATA_VIO_POOL_COMPLETION);
-+	return container_of(completion, struct data_vio_pool, completion);
-+}
-+
-+static inline u64 get_arrival_time(struct bio *bio)
-+{
-+	return (u64) bio->bi_private;
-+}
-+
 +/**
-+ * check_for_drain_complete_locked() - Check whether a data_vio_pool has no outstanding data_vios
-+ *				       or waiters while holding the pool's lock.
++ * assert_on_flusher_thread() - Check that we are on the flusher thread.
++ * @flusher: The flusher.
++ * @caller: The function which is asserting.
 + */
-+static bool check_for_drain_complete_locked(struct data_vio_pool *pool)
++static inline void assert_on_flusher_thread(struct flusher *flusher, const char *caller)
 +{
-+	if (pool->limiter.busy > 0)
-+		return false;
-+
-+	ASSERT_LOG_ONLY((pool->discard_limiter.busy == 0), "no outstanding discard permits");
-+
-+	return (bio_list_empty(&pool->limiter.new_waiters) &&
-+		bio_list_empty(&pool->discard_limiter.new_waiters));
-+}
-+
-+static void initialize_lbn_lock(struct data_vio *data_vio, logical_block_number_t lbn)
-+{
-+	struct vdo *vdo = vdo_from_data_vio(data_vio);
-+	zone_count_t zone_number;
-+	struct lbn_lock *lock = &data_vio->logical;
-+
-+	lock->lbn = lbn;
-+	lock->locked = false;
-+	vdo_initialize_wait_queue(&lock->waiters);
-+	zone_number = vdo_compute_logical_zone(data_vio);
-+	lock->zone = &vdo->logical_zones->zones[zone_number];
-+}
-+
-+static void launch_locked_request(struct data_vio *data_vio)
-+{
-+	data_vio->logical.locked = true;
-+	if (data_vio->write) {
-+		struct vdo *vdo = vdo_from_data_vio(data_vio);
-+
-+		if (vdo_is_read_only(vdo)) {
-+			continue_data_vio_with_error(data_vio, VDO_READ_ONLY);
-+			return;
-+		}
-+	}
-+
-+	data_vio->last_async_operation = VIO_ASYNC_OP_FIND_BLOCK_MAP_SLOT;
-+	vdo_find_block_map_slot(data_vio);
-+}
-+
-+static void acknowledge_data_vio(struct data_vio *data_vio)
-+{
-+	struct vdo *vdo = vdo_from_data_vio(data_vio);
-+	struct bio *bio = data_vio->user_bio;
-+	int error = vdo_map_to_system_error(data_vio->vio.completion.result);
-+
-+	if (bio == NULL)
-+		return;
-+
-+	ASSERT_LOG_ONLY((data_vio->remaining_discard <=
-+			 (u32) (VDO_BLOCK_SIZE - data_vio->offset)),
-+			"data_vio to acknowledge is not an incomplete discard");
-+
-+	data_vio->user_bio = NULL;
-+	vdo_count_bios(&vdo->stats.bios_acknowledged, bio);
-+	if (data_vio->is_partial)
-+		vdo_count_bios(&vdo->stats.bios_acknowledged_partial, bio);
-+
-+	bio->bi_status = errno_to_blk_status(error);
-+	bio_endio(bio);
-+}
-+
-+static void copy_to_bio(struct bio *bio, char *data_ptr)
-+{
-+	struct bio_vec biovec;
-+	struct bvec_iter iter;
-+
-+	bio_for_each_segment(biovec, bio, iter) {
-+		memcpy_to_bvec(&biovec, data_ptr);
-+		data_ptr += biovec.bv_len;
-+	}
-+}
-+
-+struct data_vio_compression_status
-+get_data_vio_compression_status(struct data_vio *data_vio)
-+{
-+	u32 packed = atomic_read(&data_vio->compression.status);
-+
-+	/* pairs with cmpxchg in set_data_vio_compression_status */
-+	smp_rmb();
-+	return (struct data_vio_compression_status) {
-+		.stage = packed & COMPRESSION_STATUS_MASK,
-+		.may_not_compress = ((packed & MAY_NOT_COMPRESS_MASK) != 0),
-+	};
++	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == flusher->thread_id),
++			"%s() called from flusher thread",
++			caller);
 +}
 +
 +/**
-+ * pack_status() - Convert a data_vio_compression_status into a u32 which may be stored
-+ *                 atomically.
-+ * @status: The state to convert.
++ * as_flusher() - Convert a generic vdo_completion to a flusher.
++ * @completion: The completion to convert.
 + *
-+ * Return: The compression state packed into a u32.
++ * Return: The completion as a flusher.
 + */
-+static u32 __must_check pack_status(struct data_vio_compression_status status)
++static struct flusher *as_flusher(struct vdo_completion *completion)
 +{
-+	return status.stage | (status.may_not_compress ? MAY_NOT_COMPRESS_MASK : 0);
++	vdo_assert_completion_type(completion, VDO_FLUSH_NOTIFICATION_COMPLETION);
++	return container_of(completion, struct flusher, completion);
 +}
 +
 +/**
-+ * set_data_vio_compression_status() - Set the compression status of a data_vio.
-+ * @state: The expected current status of the data_vio.
-+ * @new_state: The status to set.
++ * completion_as_vdo_flush() - Convert a generic vdo_completion to a vdo_flush.
++ * @completion: The completion to convert.
 + *
-+ * Return: true if the new status was set, false if the data_vio's compression status did not
-+ *         match the expected state, and so was left unchanged.
++ * Return: The completion as a vdo_flush.
 + */
-+static bool __must_check
-+set_data_vio_compression_status(struct data_vio *data_vio,
-+				struct data_vio_compression_status status,
-+				struct data_vio_compression_status new_status)
++static inline struct vdo_flush *completion_as_vdo_flush(struct vdo_completion *completion)
 +{
-+	u32 actual;
-+	u32 expected = pack_status(status);
-+	u32 replacement = pack_status(new_status);
-+
-+	/*
-+	 * Extra barriers because this was original developed using a CAS operation that implicitly
-+	 * had them.
-+	 */
-+	smp_mb__before_atomic();
-+	actual = atomic_cmpxchg(&data_vio->compression.status, expected, replacement);
-+	/* same as before_atomic */
-+	smp_mb__after_atomic();
-+	return (expected == actual);
-+}
-+
-+struct data_vio_compression_status advance_data_vio_compression_stage(struct data_vio *data_vio)
-+{
-+	for (;;) {
-+		struct data_vio_compression_status status =
-+			get_data_vio_compression_status(data_vio);
-+		struct data_vio_compression_status new_status = status;
-+
-+		if (status.stage == DATA_VIO_POST_PACKER)
-+			/* We're already in the last stage. */
-+			return status;
-+
-+		if (status.may_not_compress)
-+			/*
-+			 * Compression has been dis-allowed for this VIO, so skip the rest of the
-+			 * path and go to the end.
-+			 */
-+			new_status.stage = DATA_VIO_POST_PACKER;
-+		else
-+			/* Go to the next state. */
-+			new_status.stage++;
-+
-+		if (set_data_vio_compression_status(data_vio, status, new_status))
-+			return new_status;
-+
-+		/* Another thread changed the status out from under us so try again. */
-+	}
++	vdo_assert_completion_type(completion, VDO_FLUSH_COMPLETION);
++	return container_of(completion, struct vdo_flush, completion);
 +}
 +
 +/**
-+ * cancel_data_vio_compression() - Prevent this data_vio from being compressed or packed.
++ * waiter_as_flush() - Convert a vdo_flush's generic wait queue entry back to the vdo_flush.
++ * @waiter: The wait queue entry to convert.
 + *
-+ * Return: true if the data_vio is in the packer and the caller was the first caller to cancel it.
++ * Return: The wait queue entry as a vdo_flush.
 + */
-+bool cancel_data_vio_compression(struct data_vio *data_vio)
++static struct vdo_flush *waiter_as_flush(struct waiter *waiter)
 +{
-+	struct data_vio_compression_status status, new_status;
-+
-+	for (;;) {
-+		status = get_data_vio_compression_status(data_vio);
-+		if (status.may_not_compress || (status.stage == DATA_VIO_POST_PACKER))
-+			/* This data_vio is already set up to not block in the packer. */
-+			break;
-+
-+		new_status.stage = status.stage;
-+		new_status.may_not_compress = true;
-+
-+		if (set_data_vio_compression_status(data_vio, status, new_status))
-+			break;
-+	}
-+
-+	return ((status.stage == DATA_VIO_PACKING) && !status.may_not_compress);
++	return container_of(waiter, struct vdo_flush, waiter);
 +}
 +
-+/**
-+ * attempt_logical_block_lock() - Attempt to acquire the lock on a logical block.
-+ * @completion: The data_vio for an external data request as a completion.
-+ *
-+ * This is the start of the path for all external requests. It is registered in launch_data_vio().
-+ */
-+static void attempt_logical_block_lock(struct vdo_completion *completion)
++static void *allocate_flush(gfp_t gfp_mask, void *pool_data)
 +{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+	struct lbn_lock *lock = &data_vio->logical;
-+	struct vdo *vdo = vdo_from_data_vio(data_vio);
-+	struct data_vio *lock_holder;
-+	int result;
++	struct vdo_flush *flush;
 +
-+	assert_data_vio_in_logical_zone(data_vio);
-+
-+	if (data_vio->logical.lbn >= vdo->states.vdo.config.logical_blocks) {
-+		continue_data_vio_with_error(data_vio, VDO_OUT_OF_RANGE);
-+		return;
-+	}
-+
-+	result = vdo_int_map_put(lock->zone->lbn_operations,
-+				 lock->lbn,
-+				 data_vio,
-+				 false,
-+				 (void **) &lock_holder);
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(data_vio, result);
-+		return;
-+	}
-+
-+	if (lock_holder == NULL) {
-+		/* We got the lock */
-+		launch_locked_request(data_vio);
-+		return;
-+	}
-+
-+	result = ASSERT(lock_holder->logical.locked, "logical block lock held");
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(data_vio, result);
-+		return;
-+	}
-+
-+	/*
-+	 * If the new request is a pure read request (not read-modify-write) and the lock_holder is
-+	 * writing and has received an allocation (VDO-2683), service the read request immediately
-+	 * by copying data from the lock_holder to avoid having to flush the write out of the
-+	 * packer just to prevent the read from waiting indefinitely. If the lock_holder does not
-+	 * yet have an allocation, prevent it from blocking in the packer and wait on it.
-+	 */
-+	if (!data_vio->write && READ_ONCE(lock_holder->allocation_succeeded)) {
-+		copy_to_bio(data_vio->user_bio, (lock_holder->vio.data + data_vio->offset));
-+		acknowledge_data_vio(data_vio);
-+		complete_data_vio(completion);
-+		return;
-+	}
-+
-+	data_vio->last_async_operation = VIO_ASYNC_OP_ATTEMPT_LOGICAL_BLOCK_LOCK;
-+	vdo_enqueue_waiter(&lock_holder->logical.waiters, &data_vio->waiter);
-+
-+	/*
-+	 * Prevent writes and read-modify-writes from blocking indefinitely on lock holders in the
-+	 * packer.
-+	 */
-+	if (lock_holder->write && cancel_data_vio_compression(lock_holder)) {
-+		data_vio->compression.lock_holder = lock_holder;
-+		launch_data_vio_packer_callback(data_vio, vdo_remove_lock_holder_from_packer);
-+	}
-+}
-+
-+/**
-+ * launch_data_vio() - (Re)initialize a data_vio to have a new logical block number, keeping the
-+ *		       same parent and other state and send it on its way.
-+ */
-+static void launch_data_vio(struct data_vio *data_vio, logical_block_number_t lbn)
-+{
-+	struct vdo_completion *completion = &data_vio->vio.completion;
-+
-+	/*
-+	 * Clearing the tree lock must happen before initializing the LBN lock, which also adds
-+	 * information to the tree lock.
-+	 */
-+	memset(&data_vio->tree_lock, 0, sizeof(data_vio->tree_lock));
-+	initialize_lbn_lock(data_vio, lbn);
-+	INIT_LIST_HEAD(&data_vio->hash_lock_entry);
-+	INIT_LIST_HEAD(&data_vio->write_entry);
-+
-+	memset(&data_vio->allocation, 0, sizeof(data_vio->allocation));
-+
-+	data_vio->is_duplicate = false;
-+
-+	memset(&data_vio->record_name, 0, sizeof(data_vio->record_name));
-+	memset(&data_vio->duplicate, 0, sizeof(data_vio->duplicate));
-+	vdo_reset_completion(completion);
-+	completion->error_handler = handle_data_vio_error;
-+	set_data_vio_logical_callback(data_vio, attempt_logical_block_lock);
-+	vdo_enqueue_completion(completion, VDO_DEFAULT_Q_MAP_BIO_PRIORITY);
-+}
-+
-+static bool is_zero_block(char *block)
-+{
-+	int i;
-+
-+	for (i = 0; i < VDO_BLOCK_SIZE; i += sizeof(u64))
-+		if (*((u64 *) &block[i]))
-+			return false;
-+	return true;
-+}
-+
-+static void copy_from_bio(struct bio *bio, char *data_ptr)
-+{
-+	struct bio_vec biovec;
-+	struct bvec_iter iter;
-+
-+	bio_for_each_segment(biovec, bio, iter) {
-+		memcpy_from_bvec(data_ptr, &biovec);
-+		data_ptr += biovec.bv_len;
-+	}
-+}
-+
-+static void launch_bio(struct vdo *vdo, struct data_vio *data_vio, struct bio *bio)
-+{
-+	logical_block_number_t lbn;
-+	/*
-+	 * Zero out the fields which don't need to be preserved (i.e. which are not pointers to
-+	 * separately allocated objects).
-+	 */
-+	memset(data_vio, 0, offsetof(struct data_vio, vio));
-+	memset(&data_vio->compression, 0, offsetof(struct compression_state, block));
-+
-+	data_vio->user_bio = bio;
-+	data_vio->offset = to_bytes(bio->bi_iter.bi_sector & VDO_SECTORS_PER_BLOCK_MASK);
-+	data_vio->is_partial = (bio->bi_iter.bi_size < VDO_BLOCK_SIZE) || (data_vio->offset != 0);
-+
-+	/*
-+	 * Discards behave very differently than other requests when coming in from device-mapper.
-+	 * We have to be able to handle any size discards and various sector offsets within a
-+	 * block.
-+	 */
-+	if (bio_op(bio) == REQ_OP_DISCARD) {
-+		data_vio->remaining_discard = bio->bi_iter.bi_size;
-+		data_vio->write = true;
-+		data_vio->is_trim = true;
-+		if (data_vio->is_partial) {
-+			vdo_count_bios(&vdo->stats.bios_in_partial, bio);
-+			data_vio->read = true;
-+		}
-+	} else if (data_vio->is_partial) {
-+		vdo_count_bios(&vdo->stats.bios_in_partial, bio);
-+		data_vio->read = true;
-+		if (bio_data_dir(bio) == WRITE)
-+			data_vio->write = true;
-+	} else if (bio_data_dir(bio) == READ) {
-+		data_vio->read = true;
++	if ((gfp_mask & GFP_NOWAIT) == GFP_NOWAIT) {
++		flush = UDS_ALLOCATE_NOWAIT(struct vdo_flush, __func__);
 +	} else {
-+		/*
-+		 * Copy the bio data to a char array so that we can continue to use the data after
-+		 * we acknowledge the bio.
-+		 */
-+		copy_from_bio(bio, data_vio->vio.data);
-+		data_vio->is_zero = is_zero_block(data_vio->vio.data);
-+		data_vio->write = true;
++		int result = UDS_ALLOCATE(1, struct vdo_flush, __func__, &flush);
++
++		if (result != VDO_SUCCESS)
++			uds_log_error_strerror(result, "failed to allocate spare flush");
 +	}
 +
-+	if (data_vio->user_bio->bi_opf & REQ_FUA)
-+		data_vio->fua = true;
++	if (flush != NULL) {
++		struct flusher *flusher = pool_data;
 +
-+	lbn = (bio->bi_iter.bi_sector - vdo->starting_sector_offset) / VDO_SECTORS_PER_BLOCK;
-+	launch_data_vio(data_vio, lbn);
-+}
-+
-+static void assign_data_vio(struct limiter *limiter, struct data_vio *data_vio)
-+{
-+	struct bio *bio = bio_list_pop(limiter->permitted_waiters);
-+
-+	launch_bio(limiter->pool->completion.vdo, data_vio, bio);
-+	limiter->wake_count++;
-+
-+	bio = bio_list_peek(limiter->permitted_waiters);
-+	limiter->arrival = ((bio == NULL) ? U64_MAX : get_arrival_time(bio));
-+}
-+
-+static void assign_discard_permit(struct limiter *limiter)
-+{
-+	struct bio *bio = bio_list_pop(&limiter->waiters);
-+
-+	if (limiter->arrival == U64_MAX)
-+		limiter->arrival = get_arrival_time(bio);
-+
-+	bio_list_add(limiter->permitted_waiters, bio);
-+}
-+
-+static void get_waiters(struct limiter *limiter)
-+{
-+	bio_list_merge(&limiter->waiters, &limiter->new_waiters);
-+	bio_list_init(&limiter->new_waiters);
-+}
-+
-+static inline
-+struct data_vio *get_available_data_vio(struct data_vio_pool *pool)
-+{
-+	struct data_vio *data_vio =
-+		list_first_entry(&pool->available, struct data_vio, pool_entry);
-+
-+	list_del_init(&data_vio->pool_entry);
-+	return data_vio;
-+}
-+
-+static void assign_data_vio_to_waiter(struct limiter *limiter)
-+{
-+	assign_data_vio(limiter, get_available_data_vio(limiter->pool));
-+}
-+
-+static void update_limiter(struct limiter *limiter)
-+{
-+	struct bio_list *waiters = &limiter->waiters;
-+	data_vio_count_t available = limiter->limit - limiter->busy;
-+
-+	ASSERT_LOG_ONLY((limiter->release_count <= limiter->busy),
-+			"Release count %u is not more than busy count %u",
-+			limiter->release_count,
-+			limiter->busy);
-+
-+	get_waiters(limiter);
-+	for (; (limiter->release_count > 0) && !bio_list_empty(waiters); limiter->release_count--)
-+		limiter->assigner(limiter);
-+
-+	if (limiter->release_count > 0) {
-+		WRITE_ONCE(limiter->busy, limiter->busy - limiter->release_count);
-+		limiter->release_count = 0;
-+		return;
++		vdo_initialize_completion(&flush->completion, flusher->vdo, VDO_FLUSH_COMPLETION);
 +	}
 +
-+	for (; (available > 0) && !bio_list_empty(waiters); available--)
-+		limiter->assigner(limiter);
++	return flush;
++}
 +
-+	WRITE_ONCE(limiter->busy, limiter->limit - available);
-+	if (limiter->max_busy < limiter->busy)
-+		WRITE_ONCE(limiter->max_busy, limiter->busy);
++static void free_flush(void *element, void *pool_data __always_unused)
++{
++	UDS_FREE(element);
 +}
 +
 +/**
-+ * schedule_releases() - Ensure that release processing is scheduled.
-+ *
-+ * If this call switches the state to processing, enqueue. Otherwise, some other thread has already
-+ * done so.
-+ */
-+static void schedule_releases(struct data_vio_pool *pool)
-+{
-+	/* Pairs with the barrier in process_release_callback(). */
-+	smp_mb__before_atomic();
-+	if (atomic_cmpxchg(&pool->processing, false, true))
-+		return;
-+
-+	pool->completion.requeue = true;
-+	vdo_launch_completion_with_priority(&pool->completion, CPU_Q_COMPLETE_VIO_PRIORITY);
-+}
-+
-+static void reuse_or_release_resources(struct data_vio_pool *pool,
-+				       struct data_vio *data_vio,
-+				       struct list_head *returned)
-+{
-+	if (data_vio->remaining_discard > 0) {
-+		if (bio_list_empty(&pool->discard_limiter.waiters))
-+			/* Return the data_vio's discard permit. */
-+			pool->discard_limiter.release_count++;
-+		else
-+			assign_discard_permit(&pool->discard_limiter);
-+	}
-+
-+	if (pool->limiter.arrival < pool->discard_limiter.arrival) {
-+		assign_data_vio(&pool->limiter, data_vio);
-+	} else if (pool->discard_limiter.arrival < U64_MAX) {
-+		assign_data_vio(&pool->discard_limiter, data_vio);
-+	} else {
-+		list_add(&data_vio->pool_entry, returned);
-+		pool->limiter.release_count++;
-+	}
-+}
-+
-+/**
-+ * process_release_callback() - Process a batch of data_vio releases.
-+ * @completion: The pool with data_vios to release.
-+ */
-+static void process_release_callback(struct vdo_completion *completion)
-+{
-+	struct data_vio_pool *pool = as_data_vio_pool(completion);
-+	bool reschedule;
-+	bool drained;
-+	data_vio_count_t processed;
-+	data_vio_count_t to_wake;
-+	data_vio_count_t discards_to_wake;
-+	LIST_HEAD(returned);
-+
-+	spin_lock(&pool->lock);
-+	get_waiters(&pool->discard_limiter);
-+	get_waiters(&pool->limiter);
-+	spin_unlock(&pool->lock);
-+
-+	if (pool->limiter.arrival == U64_MAX) {
-+		struct bio *bio = bio_list_peek(&pool->limiter.waiters);
-+
-+		if (bio != NULL)
-+			pool->limiter.arrival = get_arrival_time(bio);
-+	}
-+
-+	for (processed = 0; processed < DATA_VIO_RELEASE_BATCH_SIZE; processed++) {
-+		struct data_vio *data_vio;
-+		struct funnel_queue_entry *entry = uds_funnel_queue_poll(pool->queue);
-+
-+		if (entry == NULL)
-+			break;
-+
-+		data_vio = as_data_vio(container_of(entry,
-+						    struct vdo_completion,
-+						    work_queue_entry_link));
-+		acknowledge_data_vio(data_vio);
-+		reuse_or_release_resources(pool, data_vio, &returned);
-+	}
-+
-+	spin_lock(&pool->lock);
-+	/*
-+	 * There is a race where waiters could be added while we are in the unlocked section above.
-+	 * Those waiters could not see the resources we are now about to release, so we assign
-+	 * those resources now as we have no guarantee of being rescheduled. This is handled in
-+	 * update_limiter().
-+	 */
-+	update_limiter(&pool->discard_limiter);
-+	list_splice(&returned, &pool->available);
-+	update_limiter(&pool->limiter);
-+	to_wake = pool->limiter.wake_count;
-+	pool->limiter.wake_count = 0;
-+	discards_to_wake = pool->discard_limiter.wake_count;
-+	pool->discard_limiter.wake_count = 0;
-+
-+	atomic_set(&pool->processing, false);
-+	/* Pairs with the barrier in schedule_releases(). */
-+	smp_mb();
-+
-+	reschedule = !uds_is_funnel_queue_empty(pool->queue);
-+	drained = (!reschedule &&
-+		   vdo_is_state_draining(&pool->state) &&
-+		   check_for_drain_complete_locked(pool));
-+	spin_unlock(&pool->lock);
-+
-+	if (to_wake > 0)
-+		wake_up_nr(&pool->limiter.blocked_threads, to_wake);
-+
-+	if (discards_to_wake > 0)
-+		wake_up_nr(&pool->discard_limiter.blocked_threads,
-+			   discards_to_wake);
-+
-+	if (reschedule)
-+		schedule_releases(pool);
-+	else if (drained)
-+		vdo_finish_draining(&pool->state);
-+}
-+
-+static void initialize_limiter(struct limiter *limiter,
-+			       struct data_vio_pool *pool,
-+			       assigner *assigner,
-+			       data_vio_count_t limit)
-+{
-+	limiter->pool = pool;
-+	limiter->assigner = assigner;
-+	limiter->limit = limit;
-+	limiter->arrival = U64_MAX;
-+	init_waitqueue_head(&limiter->blocked_threads);
-+}
-+
-+/**
-+ * initialize_data_vio() - Allocate the components of a data_vio.
-+ *
-+ * The caller is responsible for cleaning up the data_vio on error.
++ * vdo_make_flusher() - Make a flusher for a vdo.
++ * @vdo: The vdo which owns the flusher.
 + *
 + * Return: VDO_SUCCESS or an error.
 + */
-+static int initialize_data_vio(struct data_vio *data_vio, struct vdo *vdo)
++int vdo_make_flusher(struct vdo *vdo)
 +{
-+	struct bio *bio;
-+	int result;
++	int result = UDS_ALLOCATE(1, struct flusher, __func__, &vdo->flusher);
 +
-+	STATIC_ASSERT(VDO_BLOCK_SIZE <= PAGE_SIZE);
-+	result = uds_allocate_memory(VDO_BLOCK_SIZE, 0, "data_vio data", &data_vio->vio.data);
 +	if (result != VDO_SUCCESS)
-+		return uds_log_error_strerror(result, "data_vio data allocation failure");
-+
-+	result = uds_allocate_memory(VDO_BLOCK_SIZE,
-+				     0,
-+				     "compressed block",
-+				     &data_vio->compression.block);
-+	if (result != VDO_SUCCESS)
-+		return uds_log_error_strerror(result,
-+					      "data_vio compressed block allocation failure");
-+
-+	result = uds_allocate_memory(VDO_BLOCK_SIZE, 0, "vio scratch", &data_vio->scratch_block);
-+	if (result != VDO_SUCCESS)
-+		return uds_log_error_strerror(result, "data_vio scratch allocation failure");
-+
-+	result = vdo_create_bio(&bio);
-+	if (result != VDO_SUCCESS)
-+		return uds_log_error_strerror(result, "data_vio data bio allocation failure");
-+
-+	vdo_initialize_completion(&data_vio->decrement_completion, vdo, VDO_DECREMENT_COMPLETION);
-+	initialize_vio(&data_vio->vio, bio, 1, VIO_TYPE_DATA, VIO_PRIORITY_DATA, vdo);
-+
-+	return VDO_SUCCESS;
-+}
-+
-+static void destroy_data_vio(struct data_vio *data_vio)
-+{
-+	if (data_vio == NULL)
-+		return;
-+
-+	vdo_free_bio(UDS_FORGET(data_vio->vio.bio));
-+	UDS_FREE(UDS_FORGET(data_vio->vio.data));
-+	UDS_FREE(UDS_FORGET(data_vio->compression.block));
-+	UDS_FREE(UDS_FORGET(data_vio->scratch_block));
-+}
-+
-+/**
-+ * make_data_vio_pool() - Initialize a data_vio pool.
-+ * @vdo: The vdo to which the pool will belong.
-+ * @pool_size: The number of data_vios in the pool.
-+ * @discard_limit: The maximum number of data_vios which may be used for discards.
-+ * @pool: A pointer to hold the newly allocated pool.
-+ */
-+int make_data_vio_pool(struct vdo *vdo,
-+		       data_vio_count_t pool_size,
-+		       data_vio_count_t discard_limit,
-+		       struct data_vio_pool **pool_ptr)
-+{
-+	int result;
-+	struct data_vio_pool *pool;
-+	data_vio_count_t i;
-+
-+	result = UDS_ALLOCATE_EXTENDED(struct data_vio_pool,
-+				       pool_size,
-+				       struct data_vio,
-+				       __func__,
-+				       &pool);
-+	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	ASSERT_LOG_ONLY((discard_limit <= pool_size), "discard limit does not exceed pool size");
-+	initialize_limiter(&pool->discard_limiter, pool, assign_discard_permit, discard_limit);
-+	pool->discard_limiter.permitted_waiters = &pool->permitted_discards;
-+	initialize_limiter(&pool->limiter, pool, assign_data_vio_to_waiter, pool_size);
-+	pool->limiter.permitted_waiters = &pool->limiter.waiters;
-+	INIT_LIST_HEAD(&pool->available);
-+	spin_lock_init(&pool->lock);
-+	vdo_set_admin_state_code(&pool->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
-+	vdo_initialize_completion(&pool->completion, vdo, VDO_DATA_VIO_POOL_COMPLETION);
-+	vdo_prepare_completion(&pool->completion,
-+			       process_release_callback,
-+			       process_release_callback,
-+			       vdo->thread_config.cpu_thread,
-+			       NULL);
++	vdo->flusher->vdo = vdo;
++	vdo->flusher->thread_id = vdo->thread_config.packer_thread;
++	vdo_set_admin_state_code(&vdo->flusher->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
++	vdo_initialize_completion(&vdo->flusher->completion, vdo,
++				  VDO_FLUSH_NOTIFICATION_COMPLETION);
 +
-+	result = uds_make_funnel_queue(&pool->queue);
-+	if (result != UDS_SUCCESS) {
-+		free_data_vio_pool(UDS_FORGET(pool));
-+		return result;
-+	}
-+
-+	for (i = 0; i < pool_size; i++) {
-+		struct data_vio *data_vio = &pool->data_vios[i];
-+
-+		result = initialize_data_vio(data_vio, vdo);
-+		if (result != VDO_SUCCESS) {
-+			destroy_data_vio(data_vio);
-+			free_data_vio_pool(pool);
-+			return result;
-+		}
-+
-+		list_add(&data_vio->pool_entry, &pool->available);
-+	}
-+
-+	*pool_ptr = pool;
-+	return VDO_SUCCESS;
++	spin_lock_init(&vdo->flusher->lock);
++	bio_list_init(&vdo->flusher->waiting_flush_bios);
++	vdo->flusher->flush_pool = mempool_create(1, allocate_flush, free_flush, vdo->flusher);
++	return ((vdo->flusher->flush_pool == NULL) ? -ENOMEM : VDO_SUCCESS);
 +}
 +
 +/**
-+ * free_data_vio_pool() - Free a data_vio_pool and the data_vios in it.
-+ *
-+ * All data_vios must be returned to the pool before calling this function.
++ * vdo_free_flusher() - Free a flusher.
++ * @flusher: The flusher to free.
 + */
-+void free_data_vio_pool(struct data_vio_pool *pool)
++void vdo_free_flusher(struct flusher *flusher)
 +{
-+	struct data_vio *data_vio, *tmp;
-+
-+	if (pool == NULL)
++	if (flusher == NULL)
 +		return;
 +
-+	/*
-+	 * Pairs with the barrier in process_release_callback(). Possibly not needed since it
-+	 * caters to an enqueue vs. free race.
-+	 */
-+	smp_mb();
-+	BUG_ON(atomic_read(&pool->processing));
-+
-+	spin_lock(&pool->lock);
-+	ASSERT_LOG_ONLY((pool->limiter.busy == 0),
-+			"data_vio pool must not have %u busy entries when being freed",
-+			pool->limiter.busy);
-+	ASSERT_LOG_ONLY((bio_list_empty(&pool->limiter.waiters) &&
-+			 bio_list_empty(&pool->limiter.new_waiters)),
-+			"data_vio pool must not have threads waiting to read or write when being freed");
-+	ASSERT_LOG_ONLY((bio_list_empty(&pool->discard_limiter.waiters) &&
-+			 bio_list_empty(&pool->discard_limiter.new_waiters)),
-+			"data_vio pool must not have threads waiting to discard when being freed");
-+	spin_unlock(&pool->lock);
-+
-+	list_for_each_entry_safe(data_vio, tmp, &pool->available, pool_entry) {
-+		list_del_init(&data_vio->pool_entry);
-+		destroy_data_vio(data_vio);
-+	}
-+
-+	uds_free_funnel_queue(UDS_FORGET(pool->queue));
-+	UDS_FREE(pool);
-+}
-+
-+static bool acquire_permit(struct limiter *limiter, struct bio *bio)
-+{
-+	if (limiter->busy >= limiter->limit) {
-+		DEFINE_WAIT(wait);
-+
-+		bio_list_add(&limiter->new_waiters, bio);
-+		prepare_to_wait_exclusive(&limiter->blocked_threads, &wait, TASK_UNINTERRUPTIBLE);
-+		spin_unlock(&limiter->pool->lock);
-+		io_schedule();
-+		finish_wait(&limiter->blocked_threads, &wait);
-+		return false;
-+	}
-+
-+	WRITE_ONCE(limiter->busy, limiter->busy + 1);
-+	if (limiter->max_busy < limiter->busy)
-+		WRITE_ONCE(limiter->max_busy, limiter->busy);
-+
-+	return true;
++	if (flusher->flush_pool != NULL)
++		mempool_destroy(UDS_FORGET(flusher->flush_pool));
++	UDS_FREE(flusher);
 +}
 +
 +/**
-+ * vdo_launch_bio() - Acquire a data_vio from the pool, assign the bio to it, and launch it.
++ * vdo_get_flusher_thread_id() - Get the ID of the thread on which flusher functions should be
++ *                               called.
++ * @flusher: The flusher to query.
 + *
-+ * This will block if data_vios or discard permits are not available.
++ * Return: The ID of the thread which handles the flusher.
 + */
-+void vdo_launch_bio(struct data_vio_pool *pool, struct bio *bio)
++thread_id_t vdo_get_flusher_thread_id(struct flusher *flusher)
 +{
-+	struct data_vio *data_vio;
-+
-+	ASSERT_LOG_ONLY(!vdo_is_state_quiescent(&pool->state),
-+			"data_vio_pool not quiescent on acquire");
-+
-+	bio->bi_private = (void *) jiffies;
-+	spin_lock(&pool->lock);
-+	if ((bio_op(bio) == REQ_OP_DISCARD) && !acquire_permit(&pool->discard_limiter, bio))
-+		return;
-+
-+	if (!acquire_permit(&pool->limiter, bio))
-+		return;
-+
-+	data_vio = get_available_data_vio(pool);
-+	spin_unlock(&pool->lock);
-+	launch_bio(pool->completion.vdo, data_vio, bio);
++	return flusher->thread_id;
 +}
 +
-+/* Implements vdo_admin_initiator. */
-+static void initiate_drain(struct admin_state *state)
++static void notify_flush(struct flusher *flusher);
++static void vdo_complete_flush(struct vdo_flush *flush);
++
++/**
++ * finish_notification() - Finish the notification process.
++ * @completion: The flusher completion.
++ *
++ * Finishes the notification process by checking if any flushes have completed and then starting
++ * the notification of the next flush request if one came in while the current notification was in
++ * progress. This callback is registered in flush_packer_callback().
++ */
++static void finish_notification(struct vdo_completion *completion)
++{
++	struct flusher *flusher = as_flusher(completion);
++
++	assert_on_flusher_thread(flusher, __func__);
++
++	vdo_enqueue_waiter(&flusher->pending_flushes,
++			   vdo_dequeue_next_waiter(&flusher->notifiers));
++	vdo_complete_flushes(flusher);
++	if (vdo_has_waiters(&flusher->notifiers))
++		notify_flush(flusher);
++}
++
++/**
++ * flush_packer_callback() - Flush the packer.
++ * @completion: The flusher completion.
++ *
++ * Flushes the packer now that all of the logical and physical zones have been notified of the new
++ * flush request. This callback is registered in increment_generation().
++ */
++static void flush_packer_callback(struct vdo_completion *completion)
++{
++	struct flusher *flusher = as_flusher(completion);
++
++	vdo_increment_packer_flush_generation(flusher->vdo->packer);
++	vdo_launch_completion_callback(completion, finish_notification, flusher->thread_id);
++}
++
++/**
++ * increment_generation() - Increment the flush generation in a logical zone.
++ * @completion: The flusher as a completion.
++ *
++ * If there are more logical zones, go on to the next one, otherwise, prepare the physical zones.
++ * This callback is registered both in notify_flush() and in itself.
++ */
++static void increment_generation(struct vdo_completion *completion)
++{
++	struct flusher *flusher = as_flusher(completion);
++	struct logical_zone *zone = flusher->logical_zone_to_notify;
++
++	vdo_increment_logical_zone_flush_generation(zone, flusher->notify_generation);
++	if (zone->next == NULL) {
++		vdo_launch_completion_callback(completion,
++					       flush_packer_callback,
++					       flusher->thread_id);
++		return;
++	}
++
++	flusher->logical_zone_to_notify = zone->next;
++	vdo_launch_completion_callback(completion,
++				       increment_generation,
++				       flusher->logical_zone_to_notify->thread_id);
++}
++
++/**
++ * notify_flush() - Launch a flush notification.
++ * @flusher: The flusher doing the notification.
++ */
++static void notify_flush(struct flusher *flusher)
++{
++	struct vdo_flush *flush = waiter_as_flush(vdo_get_first_waiter(&flusher->notifiers));
++
++	flusher->notify_generation = flush->flush_generation;
++	flusher->logical_zone_to_notify = &flusher->vdo->logical_zones->zones[0];
++	flusher->completion.requeue = true;
++	vdo_launch_completion_callback(&flusher->completion,
++				       increment_generation,
++				       flusher->logical_zone_to_notify->thread_id);
++}
++
++/**
++ * flush_vdo() - Start processing a flush request.
++ * @completion: A flush request (as a vdo_completion)
++ *
++ * This callback is registered in launch_flush().
++ */
++static void flush_vdo(struct vdo_completion *completion)
++{
++	struct vdo_flush *flush = completion_as_vdo_flush(completion);
++	struct flusher *flusher = completion->vdo->flusher;
++	bool may_notify;
++	int result;
++
++	assert_on_flusher_thread(flusher, __func__);
++	result = ASSERT(vdo_is_state_normal(&flusher->state), "flusher is in normal operation");
++	if (result != VDO_SUCCESS) {
++		vdo_enter_read_only_mode(flusher->vdo, result);
++		vdo_complete_flush(flush);
++		return;
++	}
++
++	flush->flush_generation = flusher->flush_generation++;
++	may_notify = !vdo_has_waiters(&flusher->notifiers);
++	vdo_enqueue_waiter(&flusher->notifiers, &flush->waiter);
++	if (may_notify)
++		notify_flush(flusher);
++}
++
++/**
++ * check_for_drain_complete() - Check whether the flusher has drained.
++ * @flusher: The flusher.
++ */
++static void check_for_drain_complete(struct flusher *flusher)
 +{
 +	bool drained;
-+	struct data_vio_pool *pool = container_of(state, struct data_vio_pool, state);
 +
-+	spin_lock(&pool->lock);
-+	drained = check_for_drain_complete_locked(pool);
-+	spin_unlock(&pool->lock);
++	if (!vdo_is_state_draining(&flusher->state) || vdo_has_waiters(&flusher->pending_flushes))
++		return;
++
++	spin_lock(&flusher->lock);
++	drained = bio_list_empty(&flusher->waiting_flush_bios);
++	spin_unlock(&flusher->lock);
 +
 +	if (drained)
-+		vdo_finish_draining(state);
-+}
-+
-+static void assert_on_vdo_cpu_thread(const struct vdo *vdo, const char *name)
-+{
-+	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == vdo->thread_config.cpu_thread),
-+			"%s called on cpu thread",
-+			name);
++		vdo_finish_draining(&flusher->state);
 +}
 +
 +/**
-+ * drain_data_vio_pool() - Wait asynchronously for all data_vios to be returned to the pool.
-+ * @completion: The completion to notify when the pool has drained.
++ * vdo_complete_flushes() - Attempt to complete any flushes which might have finished.
++ * @flusher: The flusher.
 + */
-+void drain_data_vio_pool(struct data_vio_pool *pool, struct vdo_completion *completion)
++void vdo_complete_flushes(struct flusher *flusher)
 +{
-+	assert_on_vdo_cpu_thread(completion->vdo, __func__);
-+	vdo_start_draining(&pool->state, VDO_ADMIN_STATE_SUSPENDING, completion, initiate_drain);
-+}
++	sequence_number_t oldest_active_generation = U64_MAX;
++	struct logical_zone *zone;
 +
-+/**
-+ * resume_data_vio_pool() - Resume a data_vio pool.
-+ * @completion: The completion to notify when the pool has resumed.
-+ */
-+void resume_data_vio_pool(struct data_vio_pool *pool, struct vdo_completion *completion)
-+{
-+	assert_on_vdo_cpu_thread(completion->vdo, __func__);
-+	vdo_continue_completion(completion, vdo_resume_if_quiescent(&pool->state));
-+}
++	assert_on_flusher_thread(flusher, __func__);
 +
-+static void dump_limiter(const char *name, struct limiter *limiter)
-+{
-+	uds_log_info("%s: %u of %u busy (max %u), %s",
-+		     name,
-+		     limiter->busy,
-+		     limiter->limit,
-+		     limiter->max_busy,
-+		     ((bio_list_empty(&limiter->waiters) &&
-+		       bio_list_empty(&limiter->new_waiters)) ? "no waiters" : "has waiters"));
-+}
++	for (zone = &flusher->vdo->logical_zones->zones[0]; zone != NULL; zone = zone->next)
++		oldest_active_generation =
++			min(oldest_active_generation, READ_ONCE(zone->oldest_active_generation));
 +
-+/**
-+ * dump_data_vio_pool() - Dump a data_vio pool to the log.
-+ * @dump_vios: Whether to dump the details of each busy data_vio as well.
-+ */
-+void dump_data_vio_pool(struct data_vio_pool *pool, bool dump_vios)
-+{
-+	/*
-+	 * In order that syslog can empty its buffer, sleep after 35 elements for 4ms (till the
-+	 * second clock tick).  These numbers were picked based on experiments with lab machines.
-+	 */
-+	enum { ELEMENTS_PER_BATCH = 35 };
-+	enum { SLEEP_FOR_SYSLOG = 4000 };
++	while (vdo_has_waiters(&flusher->pending_flushes)) {
++		struct vdo_flush *flush =
++			waiter_as_flush(vdo_get_first_waiter(&flusher->pending_flushes));
 +
-+	if (pool == NULL)
-+		return;
-+
-+	spin_lock(&pool->lock);
-+	dump_limiter("data_vios", &pool->limiter);
-+	dump_limiter("discard permits", &pool->discard_limiter);
-+	if (dump_vios) {
-+		int i;
-+		int dumped = 0;
-+
-+		for (i = 0; i < pool->limiter.limit; i++) {
-+			struct data_vio *data_vio = &pool->data_vios[i];
-+
-+			if (!list_empty(&data_vio->pool_entry))
-+				continue;
-+
-+			dump_data_vio(data_vio);
-+			if (++dumped >= ELEMENTS_PER_BATCH) {
-+				spin_unlock(&pool->lock);
-+				dumped = 0;
-+				fsleep(SLEEP_FOR_SYSLOG);
-+				spin_lock(&pool->lock);
-+			}
-+		}
-+	}
-+
-+	spin_unlock(&pool->lock);
-+}
-+
-+data_vio_count_t get_data_vio_pool_active_discards(struct data_vio_pool *pool)
-+{
-+	return READ_ONCE(pool->discard_limiter.busy);
-+}
-+
-+data_vio_count_t get_data_vio_pool_discard_limit(struct data_vio_pool *pool)
-+{
-+	return READ_ONCE(pool->discard_limiter.limit);
-+}
-+
-+data_vio_count_t get_data_vio_pool_maximum_discards(struct data_vio_pool *pool)
-+{
-+	return READ_ONCE(pool->discard_limiter.max_busy);
-+}
-+
-+int set_data_vio_pool_discard_limit(struct data_vio_pool *pool, data_vio_count_t limit)
-+{
-+	if (get_data_vio_pool_request_limit(pool) < limit)
-+		// The discard limit may not be higher than the data_vio limit.
-+		return -EINVAL;
-+
-+	spin_lock(&pool->lock);
-+	pool->discard_limiter.limit = limit;
-+	spin_unlock(&pool->lock);
-+
-+	return VDO_SUCCESS;
-+}
-+
-+data_vio_count_t get_data_vio_pool_active_requests(struct data_vio_pool *pool)
-+{
-+	return READ_ONCE(pool->limiter.busy);
-+}
-+
-+data_vio_count_t get_data_vio_pool_request_limit(struct data_vio_pool *pool)
-+{
-+	return READ_ONCE(pool->limiter.limit);
-+}
-+
-+data_vio_count_t get_data_vio_pool_maximum_requests(struct data_vio_pool *pool)
-+{
-+	return READ_ONCE(pool->limiter.max_busy);
-+}
-+
-+static void update_data_vio_error_stats(struct data_vio *data_vio)
-+{
-+	u8 index = 0;
-+	static const char * const operations[] = {
-+		[0] = "empty",
-+		[1] = "read",
-+		[2] = "write",
-+		[3] = "read-modify-write",
-+		[5] = "read+fua",
-+		[6] = "write+fua",
-+		[7] = "read-modify-write+fua",
-+	};
-+
-+	if (data_vio->read)
-+		index = 1;
-+
-+	if (data_vio->write)
-+		index += 2;
-+
-+	if (data_vio->fua)
-+		index += 4;
-+
-+	update_vio_error_stats(&data_vio->vio,
-+			       "Completing %s vio for LBN %llu with error after %s",
-+			       operations[index],
-+			       (unsigned long long) data_vio->logical.lbn,
-+			       get_data_vio_operation_name(data_vio));
-+}
-+
-+static void perform_cleanup_stage(struct data_vio *data_vio, enum data_vio_cleanup_stage stage);
-+
-+/**
-+ * release_allocated_lock() - Release the PBN lock and/or the reference on the allocated block at
-+ *			      the end of processing a data_vio.
-+ */
-+static void release_allocated_lock(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	assert_data_vio_in_allocated_zone(data_vio);
-+	release_data_vio_allocation_lock(data_vio, false);
-+	perform_cleanup_stage(data_vio, VIO_RELEASE_RECOVERY_LOCKS);
-+}
-+
-+/** release_lock() - Release an uncontended LBN lock. */
-+static void release_lock(struct data_vio *data_vio, struct lbn_lock *lock)
-+{
-+	struct int_map *lock_map = lock->zone->lbn_operations;
-+	struct data_vio *lock_holder;
-+
-+	if (!lock->locked) {
-+		/*  The lock is not locked, so it had better not be registered in the lock map. */
-+		struct data_vio *lock_holder = vdo_int_map_get(lock_map, lock->lbn);
-+
-+		ASSERT_LOG_ONLY((data_vio != lock_holder),
-+				"no logical block lock held for block %llu",
-+				(unsigned long long) lock->lbn);
-+		return;
-+	}
-+
-+	/* Release the lock by removing the lock from the map. */
-+	lock_holder = vdo_int_map_remove(lock_map, lock->lbn);
-+	ASSERT_LOG_ONLY((data_vio == lock_holder),
-+			"logical block lock mismatch for block %llu",
-+			(unsigned long long) lock->lbn);
-+	lock->locked = false;
-+}
-+
-+/** transfer_lock() - Transfer a contended LBN lock to the eldest waiter. */
-+static void transfer_lock(struct data_vio *data_vio, struct lbn_lock *lock)
-+{
-+	struct data_vio *lock_holder, *next_lock_holder;
-+	int result;
-+
-+	ASSERT_LOG_ONLY(lock->locked, "lbn_lock with waiters is not locked");
-+
-+	/* Another data_vio is waiting for the lock, transfer it in a single lock map operation. */
-+	next_lock_holder = waiter_as_data_vio(vdo_dequeue_next_waiter(&lock->waiters));
-+
-+	/* Transfer the remaining lock waiters to the next lock holder. */
-+	vdo_transfer_all_waiters(&lock->waiters, &next_lock_holder->logical.waiters);
-+
-+	result = vdo_int_map_put(lock->zone->lbn_operations,
-+				 lock->lbn,
-+				 next_lock_holder,
-+				 true,
-+				 (void **) &lock_holder);
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(next_lock_holder, result);
-+		return;
-+	}
-+
-+	ASSERT_LOG_ONLY((lock_holder == data_vio),
-+			"logical block lock mismatch for block %llu",
-+			(unsigned long long) lock->lbn);
-+	lock->locked = false;
-+
-+	/*
-+	 * If there are still waiters, other data_vios must be trying to get the lock we just
-+	 * transferred. We must ensure that the new lock holder doesn't block in the packer.
-+	 */
-+	if (vdo_has_waiters(&next_lock_holder->logical.waiters))
-+		cancel_data_vio_compression(next_lock_holder);
-+
-+	/*
-+	 * Avoid stack overflow on lock transfer.
-+	 * FIXME: this is only an issue in the 1 thread config.
-+	 */
-+	next_lock_holder->vio.completion.requeue = true;
-+	launch_locked_request(next_lock_holder);
-+}
-+
-+/**
-+ * release_logical_lock() - Release the logical block lock and flush generation lock at the end of
-+ *			    processing a data_vio.
-+ */
-+static void release_logical_lock(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+	struct lbn_lock *lock = &data_vio->logical;
-+
-+	assert_data_vio_in_logical_zone(data_vio);
-+
-+	if (vdo_has_waiters(&lock->waiters))
-+		transfer_lock(data_vio, lock);
-+	else
-+		release_lock(data_vio, lock);
-+
-+	vdo_release_flush_generation_lock(data_vio);
-+	perform_cleanup_stage(data_vio, VIO_CLEANUP_DONE);
-+}
-+
-+/** clean_hash_lock() - Release the hash lock at the end of processing a data_vio. */
-+static void clean_hash_lock(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	assert_data_vio_in_hash_zone(data_vio);
-+	if (completion->result != VDO_SUCCESS) {
-+		vdo_clean_failed_hash_lock(data_vio);
-+		return;
-+	}
-+
-+	vdo_release_hash_lock(data_vio);
-+	perform_cleanup_stage(data_vio, VIO_RELEASE_LOGICAL);
-+}
-+
-+/**
-+ * finish_cleanup() - Make some assertions about a data_vio which has finished cleaning up.
-+ *
-+ * If it is part of a multi-block discard, starts on the next block, otherwise, returns it to the
-+ * pool.
-+ */
-+static void finish_cleanup(struct data_vio *data_vio)
-+{
-+	struct vdo_completion *completion = &data_vio->vio.completion;
-+
-+	ASSERT_LOG_ONLY(data_vio->allocation.lock == NULL,
-+			"complete data_vio has no allocation lock");
-+	ASSERT_LOG_ONLY(data_vio->hash_lock == NULL, "complete data_vio has no hash lock");
-+	if ((data_vio->remaining_discard <= VDO_BLOCK_SIZE) ||
-+	    (completion->result != VDO_SUCCESS)) {
-+		struct data_vio_pool *pool = completion->vdo->data_vio_pool;
-+
-+		uds_funnel_queue_put(pool->queue, &completion->work_queue_entry_link);
-+		schedule_releases(pool);
-+		return;
-+	}
-+
-+	data_vio->remaining_discard -= min_t(u32,
-+					     data_vio->remaining_discard,
-+					     VDO_BLOCK_SIZE - data_vio->offset);
-+	data_vio->is_partial = (data_vio->remaining_discard < VDO_BLOCK_SIZE);
-+	data_vio->read = data_vio->is_partial;
-+	data_vio->offset = 0;
-+	completion->requeue = true;
-+	launch_data_vio(data_vio, data_vio->logical.lbn + 1);
-+}
-+
-+/** perform_cleanup_stage() - Perform the next step in the process of cleaning up a data_vio. */
-+static void perform_cleanup_stage(struct data_vio *data_vio, enum data_vio_cleanup_stage stage)
-+{
-+	struct vdo *vdo = vdo_from_data_vio(data_vio);
-+
-+	switch (stage) {
-+	case VIO_RELEASE_HASH_LOCK:
-+		if (data_vio->hash_lock != NULL) {
-+			launch_data_vio_hash_zone_callback(data_vio, clean_hash_lock);
++		if (flush->flush_generation >= oldest_active_generation)
 +			return;
-+		}
-+		fallthrough;
 +
-+	case VIO_RELEASE_ALLOCATED:
-+		if (data_vio_has_allocation(data_vio)) {
-+			launch_data_vio_allocated_zone_callback(data_vio, release_allocated_lock);
-+			return;
-+		}
-+		fallthrough;
-+
-+	case VIO_RELEASE_RECOVERY_LOCKS:
-+		if ((data_vio->recovery_sequence_number > 0) &&
-+		    (READ_ONCE(vdo->read_only_notifier.read_only_error) == VDO_SUCCESS) &&
-+		    (data_vio->vio.completion.result != VDO_READ_ONLY))
-+			uds_log_warning("VDO not read-only when cleaning data_vio with RJ lock");
-+		fallthrough;
-+
-+	case VIO_RELEASE_LOGICAL:
-+		launch_data_vio_logical_callback(data_vio, release_logical_lock);
-+		return;
-+
-+	default:
-+		finish_cleanup(data_vio);
-+	}
-+}
-+
-+void complete_data_vio(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	completion->error_handler = NULL;
-+	data_vio->last_async_operation = VIO_ASYNC_OP_CLEANUP;
-+	perform_cleanup_stage(data_vio,
-+			      (data_vio->write ? VIO_CLEANUP_START : VIO_RELEASE_LOGICAL));
-+}
-+
-+static void enter_read_only_mode(struct vdo_completion *completion)
-+{
-+	if (vdo_is_read_only(completion->vdo))
-+		return;
-+
-+	if (completion->result != VDO_READ_ONLY) {
-+		struct data_vio *data_vio = as_data_vio(completion);
-+
-+		uds_log_error_strerror(completion->result,
-+				       "Preparing to enter read-only mode: data_vio for LBN %llu (becoming mapped to %llu, previously mapped to %llu, allocated %llu) is completing with a fatal error after operation %s",
-+				       (unsigned long long) data_vio->logical.lbn,
-+				       (unsigned long long) data_vio->new_mapped.pbn,
-+				       (unsigned long long) data_vio->mapped.pbn,
-+				       (unsigned long long) data_vio->allocation.pbn,
-+				       get_data_vio_operation_name(data_vio));
++		ASSERT_LOG_ONLY((flush->flush_generation ==
++				 flusher->first_unacknowledged_generation),
++				"acknowledged next expected flush, %llu, was: %llu",
++				(unsigned long long) flusher->first_unacknowledged_generation,
++				(unsigned long long) flush->flush_generation);
++		vdo_dequeue_next_waiter(&flusher->pending_flushes);
++		vdo_complete_flush(flush);
++		flusher->first_unacknowledged_generation++;
 +	}
 +
-+	vdo_enter_read_only_mode(completion->vdo, completion->result);
-+}
-+
-+void handle_data_vio_error(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	if ((completion->result == VDO_READ_ONLY) || (data_vio->user_bio == NULL))
-+		enter_read_only_mode(completion);
-+
-+	update_data_vio_error_stats(data_vio);
-+	complete_data_vio(completion);
++	check_for_drain_complete(flusher);
 +}
 +
 +/**
-+ * get_data_vio_operation_name() - Get the name of the last asynchronous operation performed on a
-+ *				   data_vio.
++ * vdo_dump_flusher() - Dump the flusher, in a thread-unsafe fashion.
++ * @flusher: The flusher.
 + */
-+const char *get_data_vio_operation_name(struct data_vio *data_vio)
++void vdo_dump_flusher(const struct flusher *flusher)
 +{
-+	STATIC_ASSERT((MAX_VIO_ASYNC_OPERATION_NUMBER - MIN_VIO_ASYNC_OPERATION_NUMBER) ==
-+		      ARRAY_SIZE(ASYNC_OPERATION_NAMES));
-+
-+	return ((data_vio->last_async_operation < MAX_VIO_ASYNC_OPERATION_NUMBER) ?
-+		ASYNC_OPERATION_NAMES[data_vio->last_async_operation] :
-+		"unknown async operation");
++	uds_log_info("struct flusher");
++	uds_log_info("  flush_generation=%llu first_unacknowledged_generation=%llu",
++		     (unsigned long long) flusher->flush_generation,
++		     (unsigned long long) flusher->first_unacknowledged_generation);
++	uds_log_info("  notifiers queue is %s; pending_flushes queue is %s",
++		     (vdo_has_waiters(&flusher->notifiers) ? "not empty" : "empty"),
++		     (vdo_has_waiters(&flusher->pending_flushes) ? "not empty" : "empty"));
 +}
 +
 +/**
-+ * data_vio_allocate_data_block() - Allocate a data block.
++ * initialize_flush() - Initialize a vdo_flush structure.
++ * @flush: The flush to initialize.
++ * @vdo: The vdo being flushed.
 + *
-+ * @write_lock_type: The type of write lock to obtain on the block.
-+ * @callback: The callback which will attempt an allocation in the current zone and continue if it
-+ *	      succeeds.
-+ * @error_handler: The handler for errors while allocating.
++ * Initializes a vdo_flush structure, transferring all the bios in the flusher's waiting_flush_bios
++ * list to it. The caller MUST already hold the lock.
 + */
-+void data_vio_allocate_data_block(struct data_vio *data_vio,
-+				  enum pbn_lock_type write_lock_type,
-+				  vdo_action *callback,
-+				  vdo_action *error_handler)
++static void initialize_flush(struct vdo_flush *flush, struct vdo *vdo)
 +{
-+	struct allocation *allocation = &data_vio->allocation;
++	bio_list_init(&flush->bios);
++	bio_list_merge(&flush->bios, &vdo->flusher->waiting_flush_bios);
++	bio_list_init(&vdo->flusher->waiting_flush_bios);
++}
 +
-+	ASSERT_LOG_ONLY((allocation->pbn == VDO_ZERO_BLOCK),
-+			"data_vio does not have an allocation");
-+	allocation->write_lock_type = write_lock_type;
-+	allocation->zone = vdo_get_next_allocation_zone(data_vio->logical.zone);
-+	allocation->first_allocation_zone = allocation->zone->zone_number;
++static void launch_flush(struct vdo_flush *flush)
++{
++	struct vdo_completion *completion = &flush->completion;
 +
-+	data_vio->vio.completion.error_handler = error_handler;
-+	launch_data_vio_allocated_zone_callback(data_vio, callback);
++	vdo_prepare_completion(completion,
++			       flush_vdo,
++			       flush_vdo,
++			       completion->vdo->thread_config.packer_thread,
++			       NULL);
++	vdo_enqueue_completion(completion, VDO_DEFAULT_Q_FLUSH_PRIORITY);
 +}
 +
 +/**
-+ * release_data_vio_allocation_lock() - Release the PBN lock on a data_vio's allocated block.
-+ * @reset: If true, the allocation will be reset (i.e. any allocated pbn will be forgotten).
++ * vdo_launch_flush() - Function called to start processing a flush request.
++ * @vdo: The vdo.
++ * @bio: The bio containing an empty flush request.
 + *
-+ * If the reference to the locked block is still provisional, it will be released as well.
++ * This is called when we receive an empty flush bio from the block layer, and before acknowledging
++ * a non-empty bio with the FUA flag set.
 + */
-+void release_data_vio_allocation_lock(struct data_vio *data_vio, bool reset)
++void vdo_launch_flush(struct vdo *vdo, struct bio *bio)
 +{
-+	struct allocation *allocation = &data_vio->allocation;
-+	physical_block_number_t locked_pbn = allocation->pbn;
-+
-+	assert_data_vio_in_allocated_zone(data_vio);
-+
-+	if (reset || vdo_pbn_lock_has_provisional_reference(allocation->lock))
-+		allocation->pbn = VDO_ZERO_BLOCK;
-+
-+	vdo_release_physical_zone_pbn_lock(allocation->zone,
-+					   locked_pbn,
-+					   UDS_FORGET(allocation->lock));
-+}
-+
-+/**
-+ * uncompress_data_vio() - Uncompress the data a data_vio has just read.
-+ * @mapping_state: The mapping state indicating which fragment to decompress.
-+ * @buffer: The buffer to receive the uncompressed data.
-+ */
-+int uncompress_data_vio(struct data_vio *data_vio,
-+			enum block_mapping_state mapping_state,
-+			char *buffer)
-+{
-+	int size;
-+	u16 fragment_offset, fragment_size;
-+	struct compressed_block *block = data_vio->compression.block;
-+	int result = vdo_get_compressed_block_fragment(mapping_state,
-+						       block,
-+						       &fragment_offset,
-+						       &fragment_size);
-+
-+	if (result != VDO_SUCCESS) {
-+		uds_log_debug("%s: compressed fragment error %d", __func__, result);
-+		return result;
-+	}
-+
-+	size = LZ4_decompress_safe((block->data + fragment_offset),
-+				   buffer,
-+				   fragment_size,
-+				   VDO_BLOCK_SIZE);
-+	if (size != VDO_BLOCK_SIZE) {
-+		uds_log_debug("%s: lz4 error", __func__);
-+		return VDO_INVALID_FRAGMENT;
-+	}
-+
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * modify_for_partial_write() - Do the modify-write part of a read-modify-write cycle.
-+ * @completion: The data_vio which has just finished its read.
-+ *
-+ * This callback is registered in read_block().
-+ */
-+static void modify_for_partial_write(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+	char *data = data_vio->vio.data;
-+	struct bio *bio = data_vio->user_bio;
-+
-+	assert_data_vio_on_cpu_thread(data_vio);
-+
-+	if (bio_op(bio) == REQ_OP_DISCARD) {
-+		memset(data + data_vio->offset, '\0', min_t(u32,
-+							    data_vio->remaining_discard,
-+							    VDO_BLOCK_SIZE - data_vio->offset));
-+	} else {
-+		copy_from_bio(bio, data + data_vio->offset);
-+	}
-+
-+	data_vio->is_zero = is_zero_block(data);
-+	data_vio->read = false;
-+	launch_data_vio_logical_callback(data_vio, continue_data_vio_with_block_map_slot);
-+}
-+
-+static void complete_read(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+	char *data = data_vio->vio.data;
-+	bool compressed = vdo_is_state_compressed(data_vio->mapped.state);
-+
-+	assert_data_vio_on_cpu_thread(data_vio);
-+
-+	if (compressed) {
-+		int result = uncompress_data_vio(data_vio, data_vio->mapped.state, data);
-+
-+		if (result != VDO_SUCCESS) {
-+			continue_data_vio_with_error(data_vio, result);
-+			return;
-+		}
-+	}
-+
-+	if (data_vio->write) {
-+		modify_for_partial_write(completion);
-+		return;
-+	}
-+
-+	if (compressed || data_vio->is_partial)
-+		copy_to_bio(data_vio->user_bio, data + data_vio->offset);
-+
-+	acknowledge_data_vio(data_vio);
-+	complete_data_vio(completion);
-+}
-+
-+static void read_endio(struct bio *bio)
-+{
-+	struct data_vio *data_vio = vio_as_data_vio(bio->bi_private);
-+	int result = blk_status_to_errno(bio->bi_status);
-+
-+	vdo_count_completed_bios(bio);
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(data_vio, result);
-+		return;
-+	}
-+
-+	launch_data_vio_cpu_callback(data_vio, complete_read, CPU_Q_COMPLETE_READ_PRIORITY);
-+}
-+
-+static void complete_zero_read(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	assert_data_vio_on_cpu_thread(data_vio);
-+
-+	if (data_vio->is_partial) {
-+		memset(data_vio->vio.data, 0, VDO_BLOCK_SIZE);
-+		if (data_vio->write) {
-+			modify_for_partial_write(completion);
-+			return;
-+		}
-+	} else {
-+		zero_fill_bio(data_vio->user_bio);
-+	}
-+
-+	complete_read(completion);
-+}
-+
-+/**
-+ * read_block() - Read a block asynchronously.
-+ *
-+ * This is the callback registered in read_block_mapping().
-+ */
-+static void read_block(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+	struct vio *vio = as_vio(completion);
-+	int result = VDO_SUCCESS;
-+
-+	if (data_vio->mapped.pbn == VDO_ZERO_BLOCK) {
-+		launch_data_vio_cpu_callback(data_vio,
-+					     complete_zero_read,
-+					     CPU_Q_COMPLETE_VIO_PRIORITY);
-+		return;
-+	}
-+
-+	data_vio->last_async_operation = VIO_ASYNC_OP_READ_DATA_VIO;
-+	if (vdo_is_state_compressed(data_vio->mapped.state)) {
-+		result = vio_reset_bio(vio,
-+				       (char *) data_vio->compression.block,
-+				       read_endio,
-+				       REQ_OP_READ,
-+				       data_vio->mapped.pbn);
-+	} else {
-+		int opf = ((data_vio->user_bio->bi_opf & PASSTHROUGH_FLAGS) | REQ_OP_READ);
-+
-+		if (data_vio->is_partial) {
-+			result = vio_reset_bio(vio,
-+					       vio->data,
-+					       read_endio,
-+					       opf,
-+					       data_vio->mapped.pbn);
-+		} else {
-+			/* A full 4k read. Use the incoming bio to avoid having to copy the data */
-+			bio_reset(vio->bio, vio->bio->bi_bdev, opf);
-+			bio_init_clone(data_vio->user_bio->bi_bdev,
-+				       vio->bio,
-+				       data_vio->user_bio,
-+				       GFP_KERNEL);
-+
-+			/* Copy over the original bio iovec and opflags. */
-+			vdo_set_bio_properties(vio->bio,
-+					       vio,
-+					       read_endio,
-+					       opf,
-+					       data_vio->mapped.pbn);
-+		}
-+	}
-+
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(data_vio, result);
-+		return;
-+	}
-+
-+	submit_data_vio_io(data_vio);
-+}
-+
-+static inline struct data_vio *
-+reference_count_update_completion_as_data_vio(struct vdo_completion *completion)
-+{
-+	if (completion->type == VIO_COMPLETION)
-+		return as_data_vio(completion);
-+
-+	return container_of(completion, struct data_vio, decrement_completion);
-+}
-+
-+/**
-+ * update_block_map() - Rendezvous of the data_vio and decrement completions after each has
-+ *                      made its reference updates. Handle any error from either, or proceed
-+ *                      to updating the block map.
-+ * @completion: The completion of the write in progress.
-+ */
-+static void update_block_map(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = reference_count_update_completion_as_data_vio(completion);
-+
-+	assert_data_vio_in_logical_zone(data_vio);
-+
-+	if (!data_vio->first_reference_operation_complete) {
-+		/* Rendezvous, we're first */
-+		data_vio->first_reference_operation_complete = true;
-+		return;
-+	}
-+
-+	completion = &data_vio->vio.completion;
-+	vdo_set_completion_result(completion, data_vio->decrement_completion.result);
-+	if (completion->result != VDO_SUCCESS) {
-+		handle_data_vio_error(completion);
-+		return;
-+	}
-+
-+	completion->error_handler = handle_data_vio_error;
-+	if (data_vio->hash_lock != NULL)
-+		set_data_vio_hash_zone_callback(data_vio, vdo_continue_hash_lock);
-+	else
-+		completion->callback = complete_data_vio;
-+
-+	data_vio->last_async_operation = VIO_ASYNC_OP_PUT_MAPPED_BLOCK;
-+	vdo_put_mapped_block(data_vio);
-+}
-+
-+static void decrement_reference_count(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = container_of(completion,
-+						 struct data_vio,
-+						 decrement_completion);
-+
-+	assert_data_vio_in_mapped_zone(data_vio);
-+
-+	vdo_set_completion_callback(completion,
-+				    update_block_map,
-+				    data_vio->logical.zone->thread_id);
-+	completion->error_handler = update_block_map;
-+	vdo_modify_reference_count(completion, &data_vio->decrement_updater);
-+}
-+
-+static void increment_reference_count(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	assert_data_vio_in_new_mapped_zone(data_vio);
-+
-+	if (data_vio->downgrade_allocation_lock) {
-+		/*
-+		 * Now that the data has been written, it's safe to deduplicate against the
-+		 * block. Downgrade the allocation lock to a read lock so it can be used later by
-+		 * the hash lock. This is done here since it needs to happen sometime before we
-+		 * return to the hash zone, and we are currently on the correct thread. For
-+		 * compressed blocks, the downgrade will have already been done.
-+		 */
-+		vdo_downgrade_pbn_write_lock(data_vio->allocation.lock, false);
-+	}
-+
-+	set_data_vio_logical_callback(data_vio, update_block_map);
-+	completion->error_handler = update_block_map;
-+	vdo_modify_reference_count(completion, &data_vio->increment_updater);
-+}
-+
-+/** journal_remapping() - Add a recovery journal entry for a data remapping. */
-+static void journal_remapping(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	assert_data_vio_in_journal_zone(data_vio);
-+
-+	data_vio->decrement_updater.operation = VDO_JOURNAL_DATA_REMAPPING;
-+	data_vio->decrement_updater.zpbn = data_vio->mapped;
-+	if (data_vio->new_mapped.pbn == VDO_ZERO_BLOCK) {
-+		data_vio->first_reference_operation_complete = true;
-+		if (data_vio->mapped.pbn == VDO_ZERO_BLOCK)
-+			set_data_vio_logical_callback(data_vio, update_block_map);
-+	} else {
-+		set_data_vio_new_mapped_zone_callback(data_vio, increment_reference_count);
-+	}
-+
-+	if (data_vio->mapped.pbn == VDO_ZERO_BLOCK)
-+		data_vio->first_reference_operation_complete = true;
-+	else
-+		vdo_set_completion_callback(&data_vio->decrement_completion,
-+					    decrement_reference_count,
-+					    data_vio->mapped.zone->thread_id);
-+
-+	data_vio->last_async_operation = VIO_ASYNC_OP_JOURNAL_REMAPPING;
-+	vdo_add_recovery_journal_entry(completion->vdo->recovery_journal, data_vio);
-+}
-+
-+/**
-+ * read_old_block_mapping() - Get the previous PBN/LBN mapping of an in-progress write.
-+ *
-+ * Gets the previous PBN mapped to this LBN from the block map, so as to make an appropriate
-+ * journal entry referencing the removal of this LBN->PBN mapping.
-+ */
-+static void read_old_block_mapping(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	assert_data_vio_in_logical_zone(data_vio);
-+
-+	data_vio->last_async_operation = VIO_ASYNC_OP_GET_MAPPED_BLOCK_FOR_WRITE;
-+	set_data_vio_journal_callback(data_vio, journal_remapping);
-+	vdo_get_mapped_block(data_vio);
-+}
-+
-+void update_metadata_for_data_vio_write(struct data_vio *data_vio, struct pbn_lock *lock)
-+{
-+	data_vio->increment_updater = (struct reference_updater) {
-+		.operation = VDO_JOURNAL_DATA_REMAPPING,
-+		.increment = true,
-+		.zpbn = data_vio->new_mapped,
-+		.lock = lock,
-+	};
-+
-+	launch_data_vio_logical_callback(data_vio, read_old_block_mapping);
-+}
-+
-+/**
-+ * pack_compressed_data() - Attempt to pack the compressed data_vio into a block.
-+ *
-+ * This is the callback registered in launch_compress_data_vio().
-+ */
-+static void pack_compressed_data(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	assert_data_vio_in_packer_zone(data_vio);
-+
-+	if (!vdo_get_compressing(vdo_from_data_vio(data_vio)) ||
-+	    get_data_vio_compression_status(data_vio).may_not_compress) {
-+		write_data_vio(data_vio);
-+		return;
-+	}
-+
-+	data_vio->last_async_operation = VIO_ASYNC_OP_ATTEMPT_PACKING;
-+	vdo_attempt_packing(data_vio);
-+}
-+
-+/**
-+ * compress_data_vio() - Do the actual work of compressing the data on a CPU queue.
-+ *
-+ * This callback is registered in launch_compress_data_vio().
-+ */
-+static void compress_data_vio(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+	int size;
-+
-+	assert_data_vio_on_cpu_thread(data_vio);
-+
 +	/*
-+	 * By putting the compressed data at the start of the compressed block data field, we won't
-+	 * need to copy it if this data_vio becomes a compressed write agent.
++	 * Try to allocate a vdo_flush to represent the flush request. If the allocation fails,
++	 * we'll deal with it later.
 +	 */
-+	size = LZ4_compress_default(data_vio->vio.data,
-+				    data_vio->compression.block->data,
-+				    VDO_BLOCK_SIZE,
-+				    VDO_MAX_COMPRESSED_FRAGMENT_SIZE,
-+				    (char *) vdo_get_work_queue_private_data());
-+	if ((size > 0) && (size < VDO_COMPRESSED_BLOCK_DATA_SIZE)) {
-+		data_vio->compression.size = size;
-+		launch_data_vio_packer_callback(data_vio, pack_compressed_data);
++	struct vdo_flush *flush = mempool_alloc(vdo->flusher->flush_pool, GFP_NOWAIT);
++	struct flusher *flusher = vdo->flusher;
++	const struct admin_state_code *code = vdo_get_admin_state_code(&flusher->state);
++
++	ASSERT_LOG_ONLY(!code->quiescent, "Flushing not allowed in state %s", code->name);
++
++	spin_lock(&flusher->lock);
++
++	/* We have a new bio to start. Add it to the list. */
++	bio_list_add(&flusher->waiting_flush_bios, bio);
++
++	if (flush == NULL) {
++		spin_unlock(&flusher->lock);
 +		return;
 +	}
 +
-+	write_data_vio(data_vio);
++	/* We have flushes to start. Capture them in the vdo_flush structure. */
++	initialize_flush(flush, vdo);
++	spin_unlock(&flusher->lock);
++
++	/* Finish launching the flushes. */
++	launch_flush(flush);
 +}
 +
 +/**
-+ * launch_compress_data_vio() - Continue a write by attempting to compress the data.
++ * release_flush() - Release a vdo_flush structure that has completed its work.
++ * @flush: The completed flush structure to re-use or free.
 + *
-+ * This is a re-entry point to vio_write used by hash locks.
++ * If there are any pending flush requests whose vdo_flush allocation failed, they will be launched
++ * by immediately re-using the released vdo_flush. If there is no spare vdo_flush, the released
++ * structure will become the spare. Otherwise, the vdo_flush will be freed.
 + */
-+void launch_compress_data_vio(struct data_vio *data_vio)
++static void release_flush(struct vdo_flush *flush)
 +{
-+	ASSERT_LOG_ONLY(!data_vio->is_duplicate, "compressing a non-duplicate block");
-+	ASSERT_LOG_ONLY(data_vio->hash_lock != NULL, "data_vio to compress has a hash_lock");
-+	ASSERT_LOG_ONLY(data_vio_has_allocation(data_vio),
-+			"data_vio to compress has an allocation");
++	bool relaunch_flush;
++	struct flusher *flusher = flush->completion.vdo->flusher;
 +
-+	/*
-+	 * There are 4 reasons why a data_vio which has reached this point will not be eligible for
-+	 * compression:
-+	 *
-+	 * 1) Since data_vios can block indefinitely in the packer, it would be bad to do so if the
-+	 * write request also requests FUA.
-+	 *
-+	 * 2) A data_vio should not be compressed when compression is disabled for the vdo.
-+	 *
-+	 * 3) A data_vio could be doing a partial write on behalf of a larger discard which has not
-+	 * yet been acknowledged and hence blocking in the packer would be bad.
-+	 *
-+	 * 4) Some other data_vio may be waiting on this data_vio in which case blocking in the
-+	 * packer would also be bad.
-+	 */
-+	if (data_vio->fua ||
-+	    !vdo_get_compressing(vdo_from_data_vio(data_vio)) ||
-+	    ((data_vio->user_bio != NULL) && (bio_op(data_vio->user_bio) == REQ_OP_DISCARD)) ||
-+	    (advance_data_vio_compression_stage(data_vio).stage != DATA_VIO_COMPRESSING)) {
-+		write_data_vio(data_vio);
++	spin_lock(&flusher->lock);
++	if (bio_list_empty(&flusher->waiting_flush_bios)) {
++		relaunch_flush = false;
++	} else {
++		/* We have flushes to start. Capture them in a flush request. */
++		initialize_flush(flush, flusher->vdo);
++		relaunch_flush = true;
++	}
++	spin_unlock(&flusher->lock);
++
++	if (relaunch_flush) {
++		/* Finish launching the flushes. */
++		launch_flush(flush);
 +		return;
 +	}
 +
-+	data_vio->last_async_operation = VIO_ASYNC_OP_COMPRESS_DATA_VIO;
-+	launch_data_vio_cpu_callback(data_vio, compress_data_vio, CPU_Q_COMPRESS_BLOCK_PRIORITY);
++	mempool_free(flush, flusher->flush_pool);
 +}
 +
 +/**
-+ * hash_data_vio() - Hash the data in a data_vio and set the hash zone (which also flags the record
-+ *		     name as set).
-+
-+ * This callback is registered in prepare_for_dedupe().
++ * vdo_complete_flush_callback() - Function called to complete and free a flush request, registered
++ *                                 in vdo_complete_flush().
++ * @completion: The flush request.
 + */
-+static void hash_data_vio(struct vdo_completion *completion)
++static void vdo_complete_flush_callback(struct vdo_completion *completion)
 +{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	assert_data_vio_on_cpu_thread(data_vio);
-+	ASSERT_LOG_ONLY(!data_vio->is_zero, "zero blocks should not be hashed");
-+
-+	murmurhash3_128(data_vio->vio.data,
-+			VDO_BLOCK_SIZE,
-+			0x62ea60be,
-+			&data_vio->record_name);
-+
-+	data_vio->hash_zone = vdo_select_hash_zone(vdo_from_data_vio(data_vio)->hash_zones,
-+						   &data_vio->record_name);
-+	data_vio->last_async_operation = VIO_ASYNC_OP_ACQUIRE_VDO_HASH_LOCK;
-+	launch_data_vio_hash_zone_callback(data_vio, vdo_acquire_hash_lock);
-+}
-+
-+/** prepare_for_dedupe() - Prepare for the dedupe path after attempting to get an allocation. */
-+static void prepare_for_dedupe(struct data_vio *data_vio)
-+{
-+	/* We don't care what thread we are on. */
-+	ASSERT_LOG_ONLY(!data_vio->is_zero, "must not prepare to dedupe zero blocks");
-+
-+	/*
-+	 * Before we can dedupe, we need to know the record name, so the first
-+	 * step is to hash the block data.
-+	 */
-+	data_vio->last_async_operation = VIO_ASYNC_OP_HASH_DATA_VIO;
-+	launch_data_vio_cpu_callback(data_vio, hash_data_vio, CPU_Q_HASH_BLOCK_PRIORITY);
-+}
-+
-+/**
-+ * write_bio_finished() - This is the bio_end_io function registered in write_block() to be called
-+ *			  when a data_vio's write to the underlying storage has completed.
-+ */
-+static void write_bio_finished(struct bio *bio)
-+{
-+	struct data_vio *data_vio = vio_as_data_vio((struct vio *) bio->bi_private);
-+
-+	vdo_count_completed_bios(bio);
-+	vdo_set_completion_result(&data_vio->vio.completion, blk_status_to_errno(bio->bi_status));
-+	data_vio->downgrade_allocation_lock = true;
-+	update_metadata_for_data_vio_write(data_vio, data_vio->allocation.lock);
-+}
-+
-+/** write_data_vio() - Write a data block to storage without compression. */
-+void write_data_vio(struct data_vio *data_vio)
-+{
-+	struct data_vio_compression_status status, new_status;
-+	int result;
-+
-+	if (!data_vio_has_allocation(data_vio)) {
-+		/*
-+		 * There was no space to write this block and we failed to deduplicate or compress
-+		 * it.
-+		 */
-+		continue_data_vio_with_error(data_vio, VDO_NO_SPACE);
-+		return;
-+	}
-+
-+	new_status = (struct data_vio_compression_status) {
-+		.stage = DATA_VIO_POST_PACKER,
-+		.may_not_compress = true,
-+	};
-+
-+	do {
-+		status = get_data_vio_compression_status(data_vio);
-+	} while ((status.stage != DATA_VIO_POST_PACKER) &&
-+		 !set_data_vio_compression_status(data_vio, status, new_status));
-+
-+	/* Write the data from the data block buffer. */
-+	result = vio_reset_bio(&data_vio->vio,
-+			       data_vio->vio.data,
-+			       write_bio_finished,
-+			       REQ_OP_WRITE,
-+			       data_vio->allocation.pbn);
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(data_vio, result);
-+		return;
-+	}
-+
-+	data_vio->last_async_operation = VIO_ASYNC_OP_WRITE_DATA_VIO;
-+	submit_data_vio_io(data_vio);
-+}
-+
-+/**
-+ * acknowledge_write_callback() - Acknowledge a write to the requestor.
-+ *
-+ * This callback is registered in allocate_block() and continue_write_with_block_map_slot().
-+ */
-+static void acknowledge_write_callback(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
++	struct vdo_flush *flush = completion_as_vdo_flush(completion);
 +	struct vdo *vdo = completion->vdo;
++	struct bio *bio;
 +
-+	ASSERT_LOG_ONLY((!vdo_uses_bio_ack_queue(vdo) ||
-+			 (vdo_get_callback_thread_id() == vdo->thread_config.bio_ack_thread)),
-+			"%s() called on bio ack queue",
-+			__func__);
-+	ASSERT_LOG_ONLY(data_vio_has_flush_generation_lock(data_vio),
-+			"write VIO to be acknowledged has a flush generation lock");
-+	acknowledge_data_vio(data_vio);
-+	if (data_vio->new_mapped.pbn == VDO_ZERO_BLOCK) {
-+		/* This is a zero write or discard */
-+		update_metadata_for_data_vio_write(data_vio, NULL);
-+		return;
-+	}
-+
-+	prepare_for_dedupe(data_vio);
-+}
-+
-+/**
-+ * allocate_block() - Attempt to allocate a block in the current allocation zone.
-+ *
-+ * This callback is registered in continue_write_with_block_map_slot().
-+ */
-+static void allocate_block(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	assert_data_vio_in_allocated_zone(data_vio);
-+
-+	if (!vdo_allocate_block_in_zone(data_vio))
-+		return;
-+
-+	completion->error_handler = handle_data_vio_error;
-+	WRITE_ONCE(data_vio->allocation_succeeded, true);
-+	data_vio->new_mapped = (struct zoned_pbn) {
-+		.zone = data_vio->allocation.zone,
-+		.pbn = data_vio->allocation.pbn,
-+		.state = VDO_MAPPING_STATE_UNCOMPRESSED,
-+	};
-+
-+	if (data_vio->fua) {
-+		prepare_for_dedupe(data_vio);
-+		return;
-+	}
-+
-+	data_vio->last_async_operation = VIO_ASYNC_OP_ACKNOWLEDGE_WRITE;
-+	launch_data_vio_on_bio_ack_queue(data_vio, acknowledge_write_callback);
-+}
-+
-+/**
-+ * handle_allocation_error() - Handle an error attempting to allocate a block.
-+ *
-+ * This error handler is registered in continue_write_with_block_map_slot().
-+ */
-+static void handle_allocation_error(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	if (completion->result == VDO_NO_SPACE) {
-+		/* We failed to get an allocation, but we can try to dedupe. */
-+		vdo_reset_completion(completion);
-+		completion->error_handler = handle_data_vio_error;
-+		prepare_for_dedupe(data_vio);
-+		return;
-+	}
-+
-+	/* We got a "real" error, not just a failure to allocate, so fail the request. */
-+	handle_data_vio_error(completion);
-+}
-+
-+static int assert_is_trim(struct data_vio *data_vio)
-+{
-+	int result = ASSERT(data_vio->is_trim, "data_vio with no block map page is a trim");
-+
-+	return ((result == VDO_SUCCESS) ? result : VDO_READ_ONLY);
-+}
-+
-+/**
-+ * continue_data_vio_with_block_map_slot() - Read the data_vio's mapping from the block map.
-+ *
-+ * This callback is registered in launch_read_data_vio().
-+ */
-+void continue_data_vio_with_block_map_slot(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+
-+	assert_data_vio_in_logical_zone(data_vio);
-+	if (data_vio->read) {
-+		set_data_vio_logical_callback(data_vio, read_block);
-+		data_vio->last_async_operation = VIO_ASYNC_OP_GET_MAPPED_BLOCK_FOR_READ;
-+		vdo_get_mapped_block(data_vio);
-+		return;
-+	}
-+
-+	vdo_acquire_flush_generation_lock(data_vio);
-+
-+	if (data_vio->tree_lock.tree_slots[0].block_map_slot.pbn == VDO_ZERO_BLOCK) {
++	while ((bio = bio_list_pop(&flush->bios)) != NULL) {
 +		/*
-+		 * This is a trim for a block on a block map page which has not been allocated, so
-+		 * there's nothing more we need to do.
++		 * We're not acknowledging this bio now, but we'll never touch it again, so this is
++		 * the last chance to account for it.
 +		 */
-+		completion->callback = complete_data_vio;
-+		continue_data_vio_with_error(data_vio, assert_is_trim(data_vio));
-+		return;
-+	}
++		vdo_count_bios(&vdo->stats.bios_acknowledged, bio);
 +
-+	/*
-+	 * We need an allocation if this is neither a full-block trim nor a
-+	 * full-block zero write.
-+	 */
-+	if (!data_vio->is_zero && (!data_vio->is_trim || data_vio->is_partial)) {
-+		data_vio_allocate_data_block(data_vio,
-+					     VIO_WRITE_LOCK,
-+					     allocate_block,
-+					     handle_allocation_error);
-+		return;
++		/* Update the device, and send it on down... */
++		bio_set_dev(bio, vdo_get_backing_device(vdo));
++		atomic64_inc(&vdo->stats.flush_out);
++		submit_bio_noacct(bio);
 +	}
 +
 +
 +	/*
-+	 * We don't need to write any data, so skip allocation and just update the block map and
-+	 * reference counts (via the journal).
++	 * Release the flush structure, freeing it, re-using it as the spare, or using it to launch
++	 * any flushes that had to wait when allocations failed.
 +	 */
-+	data_vio->new_mapped.pbn = VDO_ZERO_BLOCK;
-+	if (data_vio->is_zero)
-+		data_vio->new_mapped.state = VDO_MAPPING_STATE_UNCOMPRESSED;
-+
-+	if (data_vio->remaining_discard > VDO_BLOCK_SIZE) {
-+		/* This is not the final block of a discard so we can't acknowledge it yet. */
-+		update_metadata_for_data_vio_write(data_vio, NULL);
-+		return;
-+	}
-+
-+	data_vio->last_async_operation = VIO_ASYNC_OP_ACKNOWLEDGE_WRITE;
-+	launch_data_vio_on_bio_ack_queue(data_vio, acknowledge_write_callback);
++	release_flush(flush);
 +}
-diff --git a/drivers/md/dm-vdo/data-vio.h b/drivers/md/dm-vdo/data-vio.h
++
++/**
++ * select_bio_queue() - Select the bio queue on which to finish a flush request.
++ * @flusher: The flusher finishing the request.
++ */
++static thread_id_t select_bio_queue(struct flusher *flusher)
++{
++	struct vdo *vdo = flusher->vdo;
++	zone_count_t bio_threads = flusher->vdo->thread_config.bio_thread_count;
++	int interval;
++
++	if (bio_threads == 1)
++		return vdo->thread_config.bio_threads[0];
++
++	interval = vdo->device_config->thread_counts.bio_rotation_interval;
++	if (flusher->flush_count == interval) {
++		flusher->flush_count = 1;
++		flusher->bio_queue_rotor = ((flusher->bio_queue_rotor + 1) % bio_threads);
++	} else {
++		flusher->flush_count++;
++	}
++
++	return vdo->thread_config.bio_threads[flusher->bio_queue_rotor];
++}
++
++/**
++ * vdo_complete_flush() - Complete and free a vdo flush request.
++ * @flush: The flush request.
++ */
++static void vdo_complete_flush(struct vdo_flush *flush)
++{
++	struct vdo_completion *completion = &flush->completion;
++
++	vdo_prepare_completion(completion,
++			       vdo_complete_flush_callback,
++			       vdo_complete_flush_callback,
++			       select_bio_queue(completion->vdo->flusher),
++			       NULL);
++	vdo_enqueue_completion(completion, BIO_Q_FLUSH_PRIORITY);
++}
++
++/**
++ * initiate_drain() - Initiate a drain.
++ *
++ * Implements vdo_admin_initiator.
++ */
++static void initiate_drain(struct admin_state *state)
++{
++	check_for_drain_complete(container_of(state, struct flusher, state));
++}
++
++/**
++ * vdo_drain_flusher() - Drain the flusher.
++ * @flusher: The flusher to drain.
++ * @completion: The completion to finish when the flusher has drained.
++ *
++ * Drains the flusher by preventing any more VIOs from entering the flusher and then flushing. The
++ * flusher will be left in the suspended state.
++ */
++void vdo_drain_flusher(struct flusher *flusher, struct vdo_completion *completion)
++{
++	assert_on_flusher_thread(flusher, __func__);
++	vdo_start_draining(&flusher->state,
++			   VDO_ADMIN_STATE_SUSPENDING,
++			   completion,
++			   initiate_drain);
++}
++
++/**
++ * vdo_resume_flusher() - Resume a flusher which has been suspended.
++ * @flusher: The flusher to resume.
++ * @parent: The completion to finish when the flusher has resumed.
++ */
++void vdo_resume_flusher(struct flusher *flusher, struct vdo_completion *parent)
++{
++	assert_on_flusher_thread(flusher, __func__);
++	vdo_continue_completion(parent, vdo_resume_if_quiescent(&flusher->state));
++}
+diff --git a/drivers/md/dm-vdo/flush.h b/drivers/md/dm-vdo/flush.h
 new file mode 100644
-index 000000000000..b6a6f9f9f498
+index 000000000000..f36231c493c5
 --- /dev/null
-+++ b/drivers/md/dm-vdo/data-vio.h
-@@ -0,0 +1,683 @@
++++ b/drivers/md/dm-vdo/flush.h
+@@ -0,0 +1,44 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef DATA_VIO_H
-+#define DATA_VIO_H
++#ifndef VDO_FLUSH_H
++#define VDO_FLUSH_H
 +
-+#include <linux/atomic.h>
-+#include <linux/bio.h>
-+#include <linux/list.h>
++#include "types.h"
++#include "vio.h"
++#include "wait-queue.h"
++#include "work-queue.h"
 +
++/* A marker for tracking which journal entries are affected by a flush request. */
++struct vdo_flush {
++	/* The completion for enqueueing this flush request. */
++	struct vdo_completion completion;
++	/* The flush bios covered by this request */
++	struct bio_list bios;
++	/* The wait queue entry for this flush */
++	struct waiter waiter;
++	/* Which flush this struct represents */
++	sequence_number_t flush_generation;
++};
++
++struct flusher;
++
++int __must_check vdo_make_flusher(struct vdo *vdo);
++
++void vdo_free_flusher(struct flusher *flusher);
++
++thread_id_t __must_check vdo_get_flusher_thread_id(struct flusher *flusher);
++
++void vdo_complete_flushes(struct flusher *flusher);
++
++void vdo_dump_flusher(const struct flusher *flusher);
++
++void vdo_launch_flush(struct vdo *vdo, struct bio *bio);
++
++void vdo_drain_flusher(struct flusher *flusher, struct vdo_completion *completion);
++
++void vdo_resume_flusher(struct flusher *flusher, struct vdo_completion *parent);
++
++#endif /* VDO_FLUSH_H */
+diff --git a/drivers/md/dm-vdo/logical-zone.c b/drivers/md/dm-vdo/logical-zone.c
+new file mode 100644
+index 000000000000..1cb2b39c64ed
+--- /dev/null
++++ b/drivers/md/dm-vdo/logical-zone.c
+@@ -0,0 +1,378 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "logical-zone.h"
++
++#include "logger.h"
++#include "memory-alloc.h"
 +#include "permassert.h"
-+#include "uds.h"
++#include "string-utils.h"
 +
++#include "action-manager.h"
++#include "admin-state.h"
 +#include "block-map.h"
 +#include "completion.h"
 +#include "constants.h"
-+#include "dedupe.h"
-+#include "encodings.h"
-+#include "logical-zone.h"
++#include "data-vio.h"
++#include "flush.h"
++#include "int-map.h"
 +#include "physical-zone.h"
-+#include "types.h"
 +#include "vdo.h"
-+#include "vio.h"
-+#include "wait-queue.h"
 +
-+/* Codes for describing the last asynchronous operation performed on a vio. */
-+enum async_operation_number {
-+	MIN_VIO_ASYNC_OPERATION_NUMBER,
-+	VIO_ASYNC_OP_LAUNCH = MIN_VIO_ASYNC_OPERATION_NUMBER,
-+	VIO_ASYNC_OP_ACKNOWLEDGE_WRITE,
-+	VIO_ASYNC_OP_ACQUIRE_VDO_HASH_LOCK,
-+	VIO_ASYNC_OP_ATTEMPT_LOGICAL_BLOCK_LOCK,
-+	VIO_ASYNC_OP_LOCK_DUPLICATE_PBN,
-+	VIO_ASYNC_OP_CHECK_FOR_DUPLICATION,
-+	VIO_ASYNC_OP_CLEANUP,
-+	VIO_ASYNC_OP_COMPRESS_DATA_VIO,
-+	VIO_ASYNC_OP_FIND_BLOCK_MAP_SLOT,
-+	VIO_ASYNC_OP_GET_MAPPED_BLOCK_FOR_READ,
-+	VIO_ASYNC_OP_GET_MAPPED_BLOCK_FOR_WRITE,
-+	VIO_ASYNC_OP_HASH_DATA_VIO,
-+	VIO_ASYNC_OP_JOURNAL_REMAPPING,
-+	VIO_ASYNC_OP_ATTEMPT_PACKING,
-+	VIO_ASYNC_OP_PUT_MAPPED_BLOCK,
-+	VIO_ASYNC_OP_READ_DATA_VIO,
-+	VIO_ASYNC_OP_UPDATE_DEDUPE_INDEX,
-+	VIO_ASYNC_OP_UPDATE_REFERENCE_COUNTS,
-+	VIO_ASYNC_OP_VERIFY_DUPLICATION,
-+	VIO_ASYNC_OP_WRITE_DATA_VIO,
-+	MAX_VIO_ASYNC_OPERATION_NUMBER,
-+} __packed;
-+
-+struct lbn_lock {
-+	logical_block_number_t lbn;
-+	bool locked;
-+	struct wait_queue waiters;
-+	struct logical_zone *zone;
++enum {
++	ALLOCATIONS_PER_ZONE = 128,
 +};
-+
-+/* A position in the arboreal block map at a specific level. */
-+struct block_map_tree_slot {
-+	page_number_t page_index;
-+	struct block_map_slot block_map_slot;
-+};
-+
-+/* Fields for using the arboreal block map. */
-+struct tree_lock {
-+	/* The current height at which this data_vio is operating */
-+	height_t height;
-+	/* The block map tree for this LBN */
-+	root_count_t root_index;
-+	/* Whether we hold a page lock */
-+	bool locked;
-+	/* The key for the lock map */
-+	u64 key;
-+	/* The queue of waiters for the page this vio is allocating or loading */
-+	struct wait_queue waiters;
-+	/* The block map tree slots for this LBN */
-+	struct block_map_tree_slot tree_slots[VDO_BLOCK_MAP_TREE_HEIGHT + 1];
-+};
-+
-+struct zoned_pbn {
-+	physical_block_number_t pbn;
-+	enum block_mapping_state state;
-+	struct physical_zone *zone;
-+};
-+
-+/*
-+ * Where a data_vio is on the compression path; advance_compression_stage() depends on the order of
-+ * this enum.
-+ */
-+enum data_vio_compression_stage {
-+	/* A data_vio which has not yet entered the compression path */
-+	DATA_VIO_PRE_COMPRESSOR,
-+	/* A data_vio which is in the compressor */
-+	DATA_VIO_COMPRESSING,
-+	/* A data_vio which is blocked in the packer */
-+	DATA_VIO_PACKING,
-+	/* A data_vio which is no longer on the compression path (and never will be) */
-+	DATA_VIO_POST_PACKER,
-+};
-+
-+struct data_vio_compression_status {
-+	enum data_vio_compression_stage stage;
-+	bool may_not_compress;
-+};
-+
-+struct compression_state {
-+	/*
-+	 * The current compression status of this data_vio. This field contains a value which
-+	 * consists of a data_vio_compression_stage and a flag indicating whether a request has
-+	 * been made to cancel (or prevent) compression for this data_vio.
-+	 *
-+	 * This field should be accessed through the get_data_vio_compression_status() and
-+	 * set_data_vio_compression_status() methods. It should not be accessed directly.
-+	 */
-+	atomic_t status;
-+
-+	/* The compressed size of this block */
-+	u16 size;
-+
-+	/* The packer input or output bin slot which holds the enclosing data_vio */
-+	slot_number_t slot;
-+
-+	/* The packer bin to which the enclosing data_vio has been assigned */
-+	struct packer_bin *bin;
-+
-+	/* A link in the chain of data_vios which have been packed together */
-+	struct data_vio *next_in_batch;
-+
-+	/* A vio which is blocked in the packer while holding a lock this vio needs. */
-+	struct data_vio *lock_holder;
-+
-+	/*
-+	 * The compressed block used to hold the compressed form of this block and that of any
-+	 * other blocks for which this data_vio is the compressed write agent.
-+	 */
-+	struct compressed_block *block;
-+};
-+
-+/* Fields supporting allocation of data blocks. */
-+struct allocation {
-+	/* The physical zone in which to allocate a physical block */
-+	struct physical_zone *zone;
-+
-+	/* The block allocated to this vio */
-+	physical_block_number_t pbn;
-+
-+	/*
-+	 * If non-NULL, the pooled PBN lock held on the allocated block. Must be a write lock until
-+	 * the block has been written, after which it will become a read lock.
-+	 */
-+	struct pbn_lock *lock;
-+
-+	/* The type of write lock to obtain on the allocated block */
-+	enum pbn_lock_type write_lock_type;
-+
-+	/* The zone which was the start of the current allocation cycle */
-+	zone_count_t first_allocation_zone;
-+
-+	/* Whether this vio should wait for a clean slab */
-+	bool wait_for_clean_slab;
-+};
-+
-+struct reference_updater {
-+	enum journal_operation operation;
-+	bool increment;
-+	struct zoned_pbn zpbn;
-+	struct pbn_lock *lock;
-+	struct waiter waiter;
-+};
-+
-+/* A vio for processing user data requests. */
-+struct data_vio {
-+	/* The wait_queue entry structure */
-+	struct waiter waiter;
-+
-+	/* The logical block of this request */
-+	struct lbn_lock logical;
-+
-+	/* The state for traversing the block map tree */
-+	struct tree_lock tree_lock;
-+
-+	/* The current partition address of this block */
-+	struct zoned_pbn mapped;
-+
-+	/* The hash of this vio (if not zero) */
-+	struct uds_record_name record_name;
-+
-+	/* Used for logging and debugging */
-+	enum async_operation_number last_async_operation;
-+
-+	/* The operations to record in the recovery and slab journals */
-+	struct reference_updater increment_updater;
-+	struct reference_updater decrement_updater;
-+
-+	u16 read : 1;
-+	u16 write : 1;
-+	u16 fua : 1;
-+	u16 is_zero : 1;
-+	u16 is_trim : 1;
-+	u16 is_partial : 1;
-+	u16 is_duplicate : 1;
-+	u16 first_reference_operation_complete : 1;
-+	u16 downgrade_allocation_lock : 1;
-+
-+	struct allocation allocation;
-+
-+	/*
-+	 * Whether this vio has received an allocation. This field is examined from threads not in
-+	 * the allocation zone.
-+	 */
-+	bool allocation_succeeded;
-+
-+	/* The new partition address of this block after the vio write completes */
-+	struct zoned_pbn new_mapped;
-+
-+	/* The hash zone responsible for the name (NULL if is_zero_block) */
-+	struct hash_zone *hash_zone;
-+
-+	/* The lock this vio holds or shares with other vios with the same data */
-+	struct hash_lock *hash_lock;
-+
-+	/* All data_vios sharing a hash lock are kept in a list linking these list entries */
-+	struct list_head hash_lock_entry;
-+
-+	/* The block number in the partition of the UDS deduplication advice */
-+	struct zoned_pbn duplicate;
-+
-+	/*
-+	 * The sequence number of the recovery journal block containing the increment entry for
-+	 * this vio.
-+	 */
-+	sequence_number_t recovery_sequence_number;
-+
-+	/* The point in the recovery journal where this write last made an entry */
-+	struct journal_point recovery_journal_point;
-+
-+	/* The list of vios in user initiated write requests */
-+	struct list_head write_entry;
-+
-+	/* The generation number of the VDO that this vio belongs to */
-+	sequence_number_t flush_generation;
-+
-+	/* The completion to use for fetching block map pages for this vio */
-+	struct vdo_page_completion page_completion;
-+
-+	/* The user bio that initiated this VIO */
-+	struct bio *user_bio;
-+
-+	/* partial block support */
-+	block_size_t offset;
-+
-+	/*
-+	 * The number of bytes to be discarded. For discards, this field will always be positive,
-+	 * whereas for non-discards it will always be 0. Hence it can be used to determine whether
-+	 * a data_vio is processing a discard, even after the user_bio has been acknowledged.
-+	 */
-+	u32 remaining_discard;
-+
-+	struct dedupe_context *dedupe_context;
-+
-+	/* Fields beyond this point will not be reset when a pooled data_vio is reused. */
-+
-+	struct vio vio;
-+
-+	/* The completion for making reference count decrements */
-+	struct vdo_completion decrement_completion;
-+
-+	/* All of the fields necessary for the compression path */
-+	struct compression_state compression;
-+
-+	/* A block used as output during compression or uncompression */
-+	char *scratch_block;
-+
-+	struct list_head pool_entry;
-+};
-+
-+static inline struct data_vio *vio_as_data_vio(struct vio *vio)
-+{
-+	ASSERT_LOG_ONLY((vio->type == VIO_TYPE_DATA), "vio is a data_vio");
-+	return container_of(vio, struct data_vio, vio);
-+}
-+
-+static inline struct data_vio *as_data_vio(struct vdo_completion *completion)
-+{
-+	return vio_as_data_vio(as_vio(completion));
-+}
-+
-+static inline struct data_vio *waiter_as_data_vio(struct waiter *waiter)
-+{
-+	if (waiter == NULL)
-+		return NULL;
-+
-+	return container_of(waiter, struct data_vio, waiter);
-+}
-+
-+static inline struct data_vio *
-+data_vio_from_reference_updater(struct reference_updater *updater)
-+{
-+	if (updater->increment)
-+		return container_of(updater, struct data_vio, increment_updater);
-+
-+	return container_of(updater, struct data_vio, decrement_updater);
-+}
-+
-+static inline bool data_vio_has_flush_generation_lock(struct data_vio *data_vio)
-+{
-+	return !list_empty(&data_vio->write_entry);
-+}
-+
-+static inline struct vdo *vdo_from_data_vio(struct data_vio *data_vio)
-+{
-+	return data_vio->vio.completion.vdo;
-+}
-+
-+static inline bool data_vio_has_allocation(struct data_vio *data_vio)
-+{
-+	return (data_vio->allocation.pbn != VDO_ZERO_BLOCK);
-+}
-+
-+struct data_vio_compression_status __must_check
-+advance_data_vio_compression_stage(struct data_vio *data_vio);
-+struct data_vio_compression_status __must_check
-+get_data_vio_compression_status(struct data_vio *data_vio);
-+bool cancel_data_vio_compression(struct data_vio *data_vio);
-+
-+struct data_vio_pool;
-+
-+int make_data_vio_pool(struct vdo *vdo,
-+		       data_vio_count_t pool_size,
-+		       data_vio_count_t discard_limit,
-+		       struct data_vio_pool **pool_ptr);
-+void free_data_vio_pool(struct data_vio_pool *pool);
-+void vdo_launch_bio(struct data_vio_pool *pool, struct bio *bio);
-+void drain_data_vio_pool(struct data_vio_pool *pool, struct vdo_completion *completion);
-+void resume_data_vio_pool(struct data_vio_pool *pool, struct vdo_completion *completion);
-+
-+void dump_data_vio_pool(struct data_vio_pool *pool, bool dump_vios);
-+data_vio_count_t get_data_vio_pool_active_discards(struct data_vio_pool *pool);
-+data_vio_count_t get_data_vio_pool_discard_limit(struct data_vio_pool *pool);
-+data_vio_count_t get_data_vio_pool_maximum_discards(struct data_vio_pool *pool);
-+int __must_check
-+set_data_vio_pool_discard_limit(struct data_vio_pool *pool, data_vio_count_t limit);
-+data_vio_count_t get_data_vio_pool_active_requests(struct data_vio_pool *pool);
-+data_vio_count_t get_data_vio_pool_request_limit(struct data_vio_pool *pool);
-+data_vio_count_t get_data_vio_pool_maximum_requests(struct data_vio_pool *pool);
-+
-+void complete_data_vio(struct vdo_completion *completion);
-+void handle_data_vio_error(struct vdo_completion *completion);
-+
-+static inline void continue_data_vio(struct data_vio *data_vio)
-+{
-+	vdo_launch_completion(&data_vio->vio.completion);
-+}
 +
 +/**
-+ * continue_data_vio_with_error() - Set an error code and then continue processing a data_vio.
++ * as_logical_zone() - Convert a generic vdo_completion to a logical_zone.
++ * @completion: The completion to convert.
 + *
-+ * This will not mask older errors. This function can be called with a success code, but it is more
-+ * efficient to call continue_data_vio() if the caller knows the result was a success.
++ * Return: The completion as a logical_zone.
 + */
-+static inline void continue_data_vio_with_error(struct data_vio *data_vio, int result)
++static struct logical_zone *as_logical_zone(struct vdo_completion *completion)
 +{
-+	vdo_continue_completion(&data_vio->vio.completion, result);
++	vdo_assert_completion_type(completion, VDO_GENERATION_FLUSHED_COMPLETION);
++	return container_of(completion, struct logical_zone, completion);
 +}
 +
-+const char * __must_check get_data_vio_operation_name(struct data_vio *data_vio);
-+
-+static inline void assert_data_vio_in_hash_zone(struct data_vio *data_vio)
++/* get_thread_id_for_zone() - Implements vdo_zone_thread_getter. */
++static thread_id_t get_thread_id_for_zone(void *context, zone_count_t zone_number)
 +{
-+	thread_id_t expected = data_vio->hash_zone->thread_id;
-+	thread_id_t thread_id = vdo_get_callback_thread_id();
-+	/*
-+	 * It's odd to use the LBN, but converting the record name to hex is a bit clunky for an
-+	 * inline, and the LBN better than nothing as an identifier.
-+	 */
-+	ASSERT_LOG_ONLY((expected == thread_id),
-+			"data_vio for logical block %llu on thread %u, should be on hash zone thread %u",
-+			(unsigned long long) data_vio->logical.lbn,
-+			thread_id,
-+			expected);
-+}
++	struct logical_zones *zones = context;
 +
-+static inline void set_data_vio_hash_zone_callback(struct data_vio *data_vio, vdo_action *callback)
-+{
-+	vdo_set_completion_callback(&data_vio->vio.completion,
-+				    callback,
-+				    data_vio->hash_zone->thread_id);
++	return zones->zones[zone_number].thread_id;
 +}
 +
 +/**
-+ * launch_data_vio_hash_zone_callback() - Set a callback as a hash zone operation and invoke it
-+ *					  immediately.
++ * initialize_zone() - Initialize a logical zone.
++ * @zones: The logical_zones to which this zone belongs.
++ * @zone_number: The logical_zone's index.
 + */
-+static inline void
-+launch_data_vio_hash_zone_callback(struct data_vio *data_vio, vdo_action *callback)
++static int initialize_zone(struct logical_zones *zones, zone_count_t zone_number)
 +{
-+	set_data_vio_hash_zone_callback(data_vio, callback);
-+	vdo_launch_completion(&data_vio->vio.completion);
-+}
++	int result;
++	struct vdo *vdo = zones->vdo;
++	struct logical_zone *zone = &zones->zones[zone_number];
++	zone_count_t allocation_zone_number;
 +
-+static inline void assert_data_vio_in_logical_zone(struct data_vio *data_vio)
-+{
-+	thread_id_t expected = data_vio->logical.zone->thread_id;
-+	thread_id_t thread_id = vdo_get_callback_thread_id();
++	result = vdo_make_int_map(VDO_LOCK_MAP_CAPACITY, 0, &zone->lbn_operations);
++	if (result != VDO_SUCCESS)
++		return result;
 +
-+	ASSERT_LOG_ONLY((expected == thread_id),
-+			"data_vio for logical block %llu on thread %u, should be on thread %u",
-+			(unsigned long long) data_vio->logical.lbn,
-+			thread_id,
-+			expected);
-+}
++	if (zone_number < vdo->thread_config.logical_zone_count - 1)
++		zone->next = &zones->zones[zone_number + 1];
 +
-+static inline void set_data_vio_logical_callback(struct data_vio *data_vio, vdo_action *callback)
-+{
-+	vdo_set_completion_callback(&data_vio->vio.completion,
-+				    callback,
-+				    data_vio->logical.zone->thread_id);
++	vdo_initialize_completion(&zone->completion, vdo, VDO_GENERATION_FLUSHED_COMPLETION);
++	zone->zones = zones;
++	zone->zone_number = zone_number;
++	zone->thread_id = vdo->thread_config.logical_threads[zone_number];
++	zone->block_map_zone = &vdo->block_map->zones[zone_number];
++	INIT_LIST_HEAD(&zone->write_vios);
++	vdo_set_admin_state_code(&zone->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
++
++	allocation_zone_number = zone->thread_id % vdo->thread_config.physical_zone_count;
++	zone->allocation_zone = &vdo->physical_zones->zones[allocation_zone_number];
++
++	return vdo_make_default_thread(vdo, zone->thread_id);
 +}
 +
 +/**
-+ * launch_data_vio_logical_callback() - Set a callback as a logical block operation and invoke it
-+ *					immediately.
++ * vdo_make_logical_zones() - Create a set of logical zones.
++ * @vdo: The vdo to which the zones will belong.
++ * @zones_ptr: A pointer to hold the new zones.
++ *
++ * Return: VDO_SUCCESS or an error code.
 + */
-+static inline void
-+launch_data_vio_logical_callback(struct data_vio *data_vio, vdo_action *callback)
++int vdo_make_logical_zones(struct vdo *vdo, struct logical_zones **zones_ptr)
 +{
-+	set_data_vio_logical_callback(data_vio, callback);
-+	vdo_launch_completion(&data_vio->vio.completion);
-+}
++	struct logical_zones *zones;
++	int result;
++	zone_count_t zone;
++	zone_count_t zone_count = vdo->thread_config.logical_zone_count;
 +
-+static inline void assert_data_vio_in_allocated_zone(struct data_vio *data_vio)
-+{
-+	thread_id_t expected = data_vio->allocation.zone->thread_id;
-+	thread_id_t thread_id = vdo_get_callback_thread_id();
++	if (zone_count == 0)
++		return VDO_SUCCESS;
 +
-+	ASSERT_LOG_ONLY((expected == thread_id),
-+			"struct data_vio for allocated physical block %llu on thread %u, should be on thread %u",
-+			(unsigned long long) data_vio->allocation.pbn,
-+			thread_id,
-+			expected);
-+}
++	result = UDS_ALLOCATE_EXTENDED(struct logical_zones, zone_count,
++				       struct logical_zone, __func__, &zones);
++	if (result != VDO_SUCCESS)
++		return result;
 +
-+static inline void
-+set_data_vio_allocated_zone_callback(struct data_vio *data_vio, vdo_action *callback)
-+{
-+	vdo_set_completion_callback(&data_vio->vio.completion,
-+				    callback,
-+				    data_vio->allocation.zone->thread_id);
++	zones->vdo = vdo;
++	zones->zone_count = zone_count;
++	for (zone = 0; zone < zone_count; zone++) {
++		result = initialize_zone(zones, zone);
++		if (result != VDO_SUCCESS) {
++			vdo_free_logical_zones(zones);
++			return result;
++		}
++	}
++
++	result = vdo_make_action_manager(zones->zone_count,
++					 get_thread_id_for_zone,
++					 vdo->thread_config.admin_thread,
++					 zones,
++					 NULL,
++					 vdo,
++					 &zones->manager);
++	if (result != VDO_SUCCESS) {
++		vdo_free_logical_zones(zones);
++		return result;
++	}
++
++	*zones_ptr = zones;
++	return VDO_SUCCESS;
 +}
 +
 +/**
-+ * launch_data_vio_allocated_zone_callback() - Set a callback as a physical block operation in a
-+ *					       data_vio's allocated zone and queue the data_vio and
-+ *					       invoke it immediately.
++ * vdo_free_logical_zones() - Free a set of logical zones.
++ * @zones: The set of zones to free.
 + */
-+static inline void
-+launch_data_vio_allocated_zone_callback(struct data_vio *data_vio, vdo_action *callback)
++void vdo_free_logical_zones(struct logical_zones *zones)
 +{
-+	set_data_vio_allocated_zone_callback(data_vio, callback);
-+	vdo_launch_completion(&data_vio->vio.completion);
++	zone_count_t index;
++
++	if (zones == NULL)
++		return;
++
++	UDS_FREE(UDS_FORGET(zones->manager));
++
++	for (index = 0; index < zones->zone_count; index++)
++		vdo_free_int_map(UDS_FORGET(zones->zones[index].lbn_operations));
++
++	UDS_FREE(zones);
 +}
 +
-+static inline void assert_data_vio_in_duplicate_zone(struct data_vio *data_vio)
++static inline void assert_on_zone_thread(struct logical_zone *zone, const char *what)
 +{
-+	thread_id_t expected = data_vio->duplicate.zone->thread_id;
-+	thread_id_t thread_id = vdo_get_callback_thread_id();
-+
-+	ASSERT_LOG_ONLY((expected == thread_id),
-+			"data_vio for duplicate physical block %llu on thread %u, should be on thread %u",
-+			(unsigned long long) data_vio->duplicate.pbn,
-+			thread_id,
-+			expected);
-+}
-+
-+static inline void
-+set_data_vio_duplicate_zone_callback(struct data_vio *data_vio, vdo_action *callback)
-+{
-+	vdo_set_completion_callback(&data_vio->vio.completion,
-+				    callback,
-+				    data_vio->duplicate.zone->thread_id);
++	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == zone->thread_id),
++			"%s() called on correct thread", what);
 +}
 +
 +/**
-+ * launch_data_vio_duplicate_zone_callback() - Set a callback as a physical block operation in a
-+ *					       data_vio's duplicate zone and queue the data_vio and
-+ *					       invoke it immediately.
++ * check_for_drain_complete() - Check whether this zone has drained.
++ * @zone: The zone to check.
 + */
-+static inline void
-+launch_data_vio_duplicate_zone_callback(struct data_vio *data_vio, vdo_action *callback)
++static void check_for_drain_complete(struct logical_zone *zone)
 +{
-+	set_data_vio_duplicate_zone_callback(data_vio, callback);
-+	vdo_launch_completion(&data_vio->vio.completion);
-+}
++	if (!vdo_is_state_draining(&zone->state) || zone->notifying ||
++	    !list_empty(&zone->write_vios))
++		return;
 +
-+static inline void assert_data_vio_in_mapped_zone(struct data_vio *data_vio)
-+{
-+	thread_id_t expected = data_vio->mapped.zone->thread_id;
-+	thread_id_t thread_id = vdo_get_callback_thread_id();
-+
-+	ASSERT_LOG_ONLY((expected == thread_id),
-+			"data_vio for mapped physical block %llu on thread %u, should be on thread %u",
-+			(unsigned long long) data_vio->mapped.pbn,
-+			thread_id,
-+			expected);
-+}
-+
-+static inline void
-+set_data_vio_mapped_zone_callback(struct data_vio *data_vio, vdo_action *callback)
-+{
-+	vdo_set_completion_callback(&data_vio->vio.completion,
-+				    callback,
-+				    data_vio->mapped.zone->thread_id);
-+}
-+
-+static inline void assert_data_vio_in_new_mapped_zone(struct data_vio *data_vio)
-+{
-+	thread_id_t expected = data_vio->new_mapped.zone->thread_id;
-+	thread_id_t thread_id = vdo_get_callback_thread_id();
-+
-+	ASSERT_LOG_ONLY((expected == thread_id),
-+			"data_vio for new_mapped physical block %llu on thread %u, should be on thread %u",
-+			(unsigned long long) data_vio->new_mapped.pbn,
-+			thread_id,
-+			expected);
-+}
-+
-+static inline void
-+set_data_vio_new_mapped_zone_callback(struct data_vio *data_vio, vdo_action *callback)
-+{
-+	vdo_set_completion_callback(&data_vio->vio.completion,
-+				    callback,
-+				    data_vio->new_mapped.zone->thread_id);
-+}
-+
-+static inline void assert_data_vio_in_journal_zone(struct data_vio *data_vio)
-+{
-+	thread_id_t journal_thread = vdo_from_data_vio(data_vio)->thread_config.journal_thread;
-+	thread_id_t thread_id = vdo_get_callback_thread_id();
-+
-+	ASSERT_LOG_ONLY((journal_thread == thread_id),
-+			"data_vio for logical block %llu on thread %u, should be on journal thread %u",
-+			(unsigned long long) data_vio->logical.lbn,
-+			thread_id,
-+			journal_thread);
-+}
-+
-+static inline void set_data_vio_journal_callback(struct data_vio *data_vio, vdo_action *callback)
-+{
-+	thread_id_t journal_thread = vdo_from_data_vio(data_vio)->thread_config.journal_thread;
-+
-+	vdo_set_completion_callback(&data_vio->vio.completion, callback, journal_thread);
++	vdo_finish_draining(&zone->state);
 +}
 +
 +/**
-+ * launch_data_vio_journal_callback() - Set a callback as a journal operation and invoke it
-+ *					immediately.
++ * initiate_drain() - Initiate a drain.
++ *
++ * Implements vdo_admin_initiator.
 + */
-+static inline void
-+launch_data_vio_journal_callback(struct data_vio *data_vio, vdo_action *callback)
++static void initiate_drain(struct admin_state *state)
 +{
-+	set_data_vio_journal_callback(data_vio, callback);
-+	vdo_launch_completion(&data_vio->vio.completion);
-+}
-+
-+static inline void assert_data_vio_in_packer_zone(struct data_vio *data_vio)
-+{
-+	thread_id_t packer_thread = vdo_from_data_vio(data_vio)->thread_config.packer_thread;
-+	thread_id_t thread_id = vdo_get_callback_thread_id();
-+
-+	ASSERT_LOG_ONLY((packer_thread == thread_id),
-+			"data_vio for logical block %llu on thread %u, should be on packer thread %u",
-+			(unsigned long long) data_vio->logical.lbn,
-+			thread_id,
-+			packer_thread);
-+}
-+
-+static inline void set_data_vio_packer_callback(struct data_vio *data_vio, vdo_action *callback)
-+{
-+	thread_id_t packer_thread = vdo_from_data_vio(data_vio)->thread_config.packer_thread;
-+
-+	vdo_set_completion_callback(&data_vio->vio.completion, callback, packer_thread);
++	check_for_drain_complete(container_of(state, struct logical_zone, state));
 +}
 +
 +/**
-+ * launch_data_vio_packer_callback() - Set a callback as a packer operation and invoke it
-+ *				       immediately.
++ * drain_logical_zone() - Drain a logical zone.
++ *
++ * Implements vdo_zone_action.
 + */
-+static inline void launch_data_vio_packer_callback(struct data_vio *data_vio, vdo_action *callback)
++static void
++drain_logical_zone(void *context, zone_count_t zone_number, struct vdo_completion *parent)
 +{
-+	set_data_vio_packer_callback(data_vio, callback);
-+	vdo_launch_completion(&data_vio->vio.completion);
++	struct logical_zones *zones = context;
++
++	vdo_start_draining(&zones->zones[zone_number].state,
++			   vdo_get_current_manager_operation(zones->manager),
++			   parent,
++			   initiate_drain);
 +}
 +
-+static inline void assert_data_vio_on_cpu_thread(struct data_vio *data_vio)
++void vdo_drain_logical_zones(struct logical_zones *zones,
++			     const struct admin_state_code *operation,
++			     struct vdo_completion *parent)
 +{
-+	thread_id_t cpu_thread = vdo_from_data_vio(data_vio)->thread_config.cpu_thread;
-+	thread_id_t thread_id = vdo_get_callback_thread_id();
-+
-+	ASSERT_LOG_ONLY((cpu_thread == thread_id),
-+			"data_vio for logical block %llu on thread %u, should be on cpu thread %u",
-+			(unsigned long long) data_vio->logical.lbn,
-+			thread_id,
-+			cpu_thread);
-+}
-+
-+static inline void set_data_vio_cpu_callback(struct data_vio *data_vio, vdo_action *callback)
-+{
-+	thread_id_t cpu_thread = vdo_from_data_vio(data_vio)->thread_config.cpu_thread;
-+
-+	vdo_set_completion_callback(&data_vio->vio.completion, callback, cpu_thread);
++	vdo_schedule_operation(zones->manager, operation, NULL, drain_logical_zone, NULL, parent);
 +}
 +
 +/**
-+ * launch_data_vio_cpu_callback() - Set a callback to run on the CPU queues and invoke it
-+ *				    immediately.
++ * resume_logical_zone() - Resume a logical zone.
++ *
++ * Implements vdo_zone_action.
 + */
-+static inline void
-+launch_data_vio_cpu_callback(struct data_vio *data_vio,
-+			     vdo_action *callback,
-+			     enum vdo_completion_priority priority)
++static void
++resume_logical_zone(void *context, zone_count_t zone_number, struct vdo_completion *parent)
 +{
-+	set_data_vio_cpu_callback(data_vio, callback);
-+	vdo_launch_completion_with_priority(&data_vio->vio.completion, priority);
-+}
++	struct logical_zone *zone = &(((struct logical_zones *) context)->zones[zone_number]);
 +
-+static inline void set_data_vio_bio_zone_callback(struct data_vio *data_vio, vdo_action *callback)
-+{
-+	vdo_set_completion_callback(&data_vio->vio.completion,
-+				    callback,
-+				    get_vio_bio_zone_thread_id(&data_vio->vio));
++	vdo_fail_completion(parent, vdo_resume_if_quiescent(&zone->state));
 +}
 +
 +/**
-+ * launch_data_vio_bio_zone_callback() - Set a callback as a bio zone operation and invoke it
-+ *					 immediately.
++ * vdo_resume_logical_zones() - Resume a set of logical zones.
++ * @zones: The logical zones to resume.
++ * @parent: The object to notify when the zones have resumed.
 + */
-+static inline void
-+launch_data_vio_bio_zone_callback(struct data_vio *data_vio, vdo_action *callback)
++void vdo_resume_logical_zones(struct logical_zones *zones, struct vdo_completion *parent)
 +{
-+	set_data_vio_bio_zone_callback(data_vio, callback);
-+	vdo_launch_completion_with_priority(&data_vio->vio.completion, BIO_Q_DATA_PRIORITY);
++	vdo_schedule_operation(zones->manager, VDO_ADMIN_STATE_RESUMING, NULL,
++			       resume_logical_zone, NULL, parent);
 +}
 +
 +/**
-+ * launch_data_vio_on_bio_ack_queue() - If the vdo uses a bio_ack queue, set a callback to run on
-+ *					it and invoke it immediately, otherwise, just run the
-+ *					callback on the current thread.
++ * update_oldest_active_generation() - Update the oldest active generation.
++ * @zone: The zone.
++ *
++ * Return: true if the oldest active generation has changed.
 + */
-+static inline void
-+launch_data_vio_on_bio_ack_queue(struct data_vio *data_vio, vdo_action *callback)
++static bool update_oldest_active_generation(struct logical_zone *zone)
 +{
-+	struct vdo_completion *completion = &data_vio->vio.completion;
-+	struct vdo *vdo = completion->vdo;
++	struct data_vio *data_vio =
++		list_first_entry_or_null(&zone->write_vios, struct data_vio, write_entry);
++	sequence_number_t oldest =
++		(data_vio == NULL) ? zone->flush_generation : data_vio->flush_generation;
 +
-+	if (!vdo_uses_bio_ack_queue(vdo)) {
-+		callback(completion);
++	if (oldest == zone->oldest_active_generation)
++		return false;
++
++	WRITE_ONCE(zone->oldest_active_generation, oldest);
++	return true;
++}
++
++/**
++ * vdo_increment_logical_zone_flush_generation() - Increment the flush generation in a logical
++ *                                                 zone.
++ * @zone: The logical zone.
++ * @expected_generation: The expected value of the flush generation before the increment.
++ */
++void vdo_increment_logical_zone_flush_generation(struct logical_zone *zone,
++						 sequence_number_t expected_generation)
++{
++	assert_on_zone_thread(zone, __func__);
++	ASSERT_LOG_ONLY((zone->flush_generation == expected_generation),
++			"logical zone %u flush generation %llu should be %llu before increment",
++			zone->zone_number,
++			(unsigned long long) zone->flush_generation,
++			(unsigned long long) expected_generation);
++
++	zone->flush_generation++;
++	zone->ios_in_flush_generation = 0;
++	update_oldest_active_generation(zone);
++}
++
++/**
++ * vdo_acquire_flush_generation_lock() - Acquire the shared lock on a flush generation by a write
++ *                                       data_vio.
++ * @data_vio: The data_vio.
++ */
++void vdo_acquire_flush_generation_lock(struct data_vio *data_vio)
++{
++	struct logical_zone *zone = data_vio->logical.zone;
++
++	assert_on_zone_thread(zone, __func__);
++	ASSERT_LOG_ONLY(vdo_is_state_normal(&zone->state), "vdo state is normal");
++
++	data_vio->flush_generation = zone->flush_generation;
++	list_add_tail(&data_vio->write_entry, &zone->write_vios);
++	zone->ios_in_flush_generation++;
++}
++
++static void attempt_generation_complete_notification(struct vdo_completion *completion);
++
++/**
++ * notify_flusher() - Notify the flush that at least one generation no longer has active VIOs.
++ * @completion: The zone completion.
++ *
++ * This callback is registered in attempt_generation_complete_notification().
++ */
++static void notify_flusher(struct vdo_completion *completion)
++{
++	struct logical_zone *zone = as_logical_zone(completion);
++
++	vdo_complete_flushes(zone->zones->vdo->flusher);
++	vdo_launch_completion_callback(completion,
++				       attempt_generation_complete_notification,
++				       zone->thread_id);
++}
++
++/**
++ * void attempt_generation_complete_notification() - Notify the flusher if some generation no
++ *                                                   longer has active VIOs.
++ * @completion: The zone completion.
++ */
++static void attempt_generation_complete_notification(struct vdo_completion *completion)
++{
++	struct logical_zone *zone = as_logical_zone(completion);
++
++	assert_on_zone_thread(zone, __func__);
++	if (zone->oldest_active_generation <= zone->notification_generation) {
++		zone->notifying = false;
++		check_for_drain_complete(zone);
 +		return;
 +	}
 +
-+	vdo_set_completion_callback(completion, callback, vdo->thread_config.bio_ack_thread);
-+	vdo_launch_completion_with_priority(completion, BIO_ACK_Q_ACK_PRIORITY);
++	zone->notifying = true;
++	zone->notification_generation = zone->oldest_active_generation;
++	vdo_launch_completion_callback(&zone->completion, notify_flusher,
++				       vdo_get_flusher_thread_id(zone->zones->vdo->flusher));
 +}
 +
-+void data_vio_allocate_data_block(struct data_vio *data_vio,
-+				  enum pbn_lock_type write_lock_type,
-+				  vdo_action *callback,
-+				  vdo_action *error_handler);
++/**
++ * vdo_release_flush_generation_lock() - Release the shared lock on a flush generation held by a
++ *                                       write data_vio.
++ * @data_vio: The data_vio whose lock is to be released.
++ *
++ * If there are pending flushes, and this data_vio completes the oldest generation active in this
++ * zone, an attempt will be made to finish any flushes which may now be complete.
++ */
++void vdo_release_flush_generation_lock(struct data_vio *data_vio)
++{
++	struct logical_zone *zone = data_vio->logical.zone;
 +
-+void release_data_vio_allocation_lock(struct data_vio *data_vio, bool reset);
++	assert_on_zone_thread(zone, __func__);
 +
-+int __must_check uncompress_data_vio(struct data_vio *data_vio,
-+				     enum block_mapping_state mapping_state,
-+				     char *buffer);
++	if (!data_vio_has_flush_generation_lock(data_vio))
++		return;
 +
-+void update_metadata_for_data_vio_write(struct data_vio *data_vio, struct pbn_lock *lock);
-+void write_data_vio(struct data_vio *data_vio);
-+void launch_compress_data_vio(struct data_vio *data_vio);
-+void continue_data_vio_with_block_map_slot(struct vdo_completion *completion);
++	list_del_init(&data_vio->write_entry);
++	ASSERT_LOG_ONLY((zone->oldest_active_generation <= data_vio->flush_generation),
++			"data_vio releasing lock on generation %llu is not older than oldest active generation %llu",
++			(unsigned long long) data_vio->flush_generation,
++			(unsigned long long) zone->oldest_active_generation);
 +
-+#endif /* DATA_VIO_H */
++	if (!update_oldest_active_generation(zone) || zone->notifying)
++		return;
++
++	attempt_generation_complete_notification(&zone->completion);
++}
++
++struct physical_zone *vdo_get_next_allocation_zone(struct logical_zone *zone)
++{
++	if (zone->allocation_count == ALLOCATIONS_PER_ZONE) {
++		zone->allocation_count = 0;
++		zone->allocation_zone = zone->allocation_zone->next;
++	}
++
++	zone->allocation_count++;
++	return zone->allocation_zone;
++}
++
++/**
++ * vdo_dump_logical_zone() - Dump information about a logical zone to the log for debugging.
++ * @zone: The zone to dump
++ *
++ * Context: the information is dumped in a thread-unsafe fashion.
++ *
++ */
++void vdo_dump_logical_zone(const struct logical_zone *zone)
++{
++	uds_log_info("logical_zone %u", zone->zone_number);
++	uds_log_info("  flush_generation=%llu oldest_active_generation=%llu notification_generation=%llu notifying=%s ios_in_flush_generation=%llu",
++		     (unsigned long long) READ_ONCE(zone->flush_generation),
++		     (unsigned long long) READ_ONCE(zone->oldest_active_generation),
++		     (unsigned long long) READ_ONCE(zone->notification_generation),
++		     uds_bool_to_string(READ_ONCE(zone->notifying)),
++		     (unsigned long long) READ_ONCE(zone->ios_in_flush_generation));
++}
+diff --git a/drivers/md/dm-vdo/logical-zone.h b/drivers/md/dm-vdo/logical-zone.h
+new file mode 100644
+index 000000000000..82afe4cc661e
+--- /dev/null
++++ b/drivers/md/dm-vdo/logical-zone.h
+@@ -0,0 +1,87 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef VDO_LOGICAL_ZONE_H
++#define VDO_LOGICAL_ZONE_H
++
++#include <linux/list.h>
++
++#include "admin-state.h"
++#include "int-map.h"
++#include "types.h"
++
++struct physical_zone;
++
++struct logical_zone {
++	/* The completion for flush notifications */
++	struct vdo_completion completion;
++	/* The owner of this zone */
++	struct logical_zones *zones;
++	/* Which logical zone this is */
++	zone_count_t zone_number;
++	/* The thread id for this zone */
++	thread_id_t thread_id;
++	/* In progress operations keyed by LBN */
++	struct int_map *lbn_operations;
++	/* The logical to physical map */
++	struct block_map_zone *block_map_zone;
++	/* The current flush generation */
++	sequence_number_t flush_generation;
++	/*
++	 * The oldest active generation in this zone. This is mutated only on the logical zone
++	 * thread but is queried from the flusher thread.
++	 */
++	sequence_number_t oldest_active_generation;
++	/* The number of IOs in the current flush generation */
++	block_count_t ios_in_flush_generation;
++	/* The youngest generation of the current notification */
++	sequence_number_t notification_generation;
++	/* Whether a notification is in progress */
++	bool notifying;
++	/* The queue of active data write VIOs */
++	struct list_head write_vios;
++	/* The administrative state of the zone */
++	struct admin_state state;
++	/* The physical zone from which to allocate */
++	struct physical_zone *allocation_zone;
++	/* The number of allocations done from the current allocation_zone */
++	block_count_t allocation_count;
++	/* The next zone */
++	struct logical_zone *next;
++};
++
++struct logical_zones {
++	/* The vdo whose zones these are */
++	struct vdo *vdo;
++	/* The manager for administrative actions */
++	struct action_manager *manager;
++	/* The number of zones */
++	zone_count_t zone_count;
++	/* The logical zones themselves */
++	struct logical_zone zones[];
++};
++
++int __must_check vdo_make_logical_zones(struct vdo *vdo, struct logical_zones **zones_ptr);
++
++void vdo_free_logical_zones(struct logical_zones *zones);
++
++void vdo_drain_logical_zones(struct logical_zones *zones,
++			     const struct admin_state_code *operation,
++			     struct vdo_completion *completion);
++
++void vdo_resume_logical_zones(struct logical_zones *zones, struct vdo_completion *parent);
++
++void vdo_increment_logical_zone_flush_generation(struct logical_zone *zone,
++						 sequence_number_t expected_generation);
++
++void vdo_acquire_flush_generation_lock(struct data_vio *data_vio);
++
++void vdo_release_flush_generation_lock(struct data_vio *data_vio);
++
++struct physical_zone * __must_check vdo_get_next_allocation_zone(struct logical_zone *zone);
++
++void vdo_dump_logical_zone(const struct logical_zone *zone);
++
++#endif /* VDO_LOGICAL_ZONE_H */
 -- 
 2.40.0
 
