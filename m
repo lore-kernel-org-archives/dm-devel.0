@@ -1,98 +1,67 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6D86EEEAA65
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:23:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 58297EEAA71
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 21:25:58 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694719404;
+	s=mimecast20190719; t=1694726757;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=6rxWdzCJRn9qZ+p9HmBpdZ9wvTX3iZ/kcqpUPYHHvXI=;
-	b=U4UikbSi7XCe/iL9TkrBTSriKZ3SSxW+dr9UdWooWZcTolDIT/vdDvqPYA2s+Xub2XSD2F
-	bMN8Jkoti5iW9AlroNV/MEDxtfAuqckkLSy4G62QE3W/F6OYBd0zq3lQc6qFMjSfhTg90+
-	46DatrFb1IBfpNyQ7eY77dENRO6LtHg=
+	bh=TxAloisra0zPDp+jGlKnVcorzadkORXFBfvYJmDtpjg=;
+	b=Q8vGrN4ZRUdR4q8rIti90Kgz5GHe15u2+XXjqooN0pmvQP1+sLqnG/57xCM8zXVq/CwpaA
+	p8S3n4ahSNmoFkhip8b3RbKcs9FLgeAAuW6hpV1Jf/OwTj6EZ3qBTNBFOf+fXjJJdDg2KD
+	81APec+VSVtazezCUGzt70RgB4qeMy0=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-17-sud6ZIS3NeW7NEjLZb3O5w-1; Thu, 14 Sep 2023 15:19:22 -0400
-X-MC-Unique: sud6ZIS3NeW7NEjLZb3O5w-1
+ us-mta-38-itSPO-2AMmCxPE2UZIhALA-1; Thu, 14 Sep 2023 17:25:53 -0400
+X-MC-Unique: itSPO-2AMmCxPE2UZIhALA-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DE125805578;
-	Thu, 14 Sep 2023 19:19:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 151CD86A8C2;
+	Thu, 14 Sep 2023 21:25:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CA70A10EA0;
-	Thu, 14 Sep 2023 19:19:00 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 85DA428AC;
+	Thu, 14 Sep 2023 21:25:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5A0A619452CA;
-	Thu, 14 Sep 2023 19:17:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 227F6194658C;
+	Thu, 14 Sep 2023 21:25:45 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 558271946A49
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:17:32 +0000 (UTC)
+ ESMTP id 96C671946588
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 21:25:43 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 31BEA1054FC1; Thu, 14 Sep 2023 19:17:27 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 29CD81054FC3
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:27 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
- [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0142C856A50
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:27 +0000 (UTC)
-Received: from mail-qv1-f46.google.com (mail-qv1-f46.google.com
- [209.85.219.46]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-414-JZjGVglbNPiAOxHdCupV3Q-1; Thu, 14 Sep 2023 15:17:25 -0400
-X-MC-Unique: JZjGVglbNPiAOxHdCupV3Q-1
-Received: by mail-qv1-f46.google.com with SMTP id
- 6a1803df08f44-64c2e2572f7so7924826d6.1
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:17:25 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1694719044; x=1695323844;
- h=content-transfer-encoding:mime-version:references:in-reply-to
- :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=ClaYQkaavi8xTc53G0Qmv7LXKFeMMIYf//1fM4lz8Bg=;
- b=DQ+uOsknQRSlMBvl0ggYVFYkISylTZLrTzo2wWv9/HHJRE73gWLZmymxHcDsi+AOzM
- 2upVoJJeZ/FapWf9uK5byti3q+5QLnHAPWUF+HEsOOSJuOtjE5D8BL4nI8RRcshP4i7n
- W8UnNRfptgHdx5869l5UvuUfpKILIhGktluatqUNq9DyuyysGAAYZwVhGTPd6sObiIfQ
- EU7WyugzwL0X54iBViydSe/ZDmeCCXBMbX2pUumOX6p4aijudH+bENdjClDbL3w4uGcF
- I4dbX3MZscMffHUlJbfdD80htZv88D1MzSqGJYsq2HBWaTjK3iG4zK8MDa/bNvmxsr3m
- HuAA==
-X-Gm-Message-State: AOJu0YzFbjsdULxFuOW36v0reDyfqtlT4WZ3wGDqANx+QdbyapdUuqDp
- agT1ROeApa77jO+f+e4VS9DN2BCrHbcIuDJ6Bclm1kPxa8A99o5SyM5ogXIZzKT0exEv7dSFxe7
- juppH9UDo7+ZpydSXZMI1rF2NBzYPqw7ozpY17YUpP4Nqjbki0ttXSQXk8RZQiQSTR1vAo1Xg
-X-Google-Smtp-Source: AGHT+IEzlka4UZS1KehJy4Rn9dmAOVUJYBULLTa7+QwBrGfXF6LuSoaM1JoMMUW+hoKJG9kyp84xNw==
-X-Received: by 2002:a05:6214:11a7:b0:63c:fbdd:4592 with SMTP id
- u7-20020a05621411a700b0063cfbdd4592mr7471603qvv.31.1694719044024; 
- Thu, 14 Sep 2023 12:17:24 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net.
- [68.160.141.91]) by smtp.gmail.com with ESMTPSA id
- c20-20020a05620a11b400b0076f13783743sm673584qkk.92.2023.09.14.12.17.23
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 14 Sep 2023 12:17:23 -0700 (PDT)
-From: Mike Snitzer <snitzer@kernel.org>
-To: dm-devel@redhat.com
-Date: Thu, 14 Sep 2023 15:16:20 -0400
-Message-Id: <20230914191635.39805-25-snitzer@kernel.org>
-In-Reply-To: <20230914191635.39805-1-snitzer@kernel.org>
-References: <20230914191635.39805-1-snitzer@kernel.org>
+ id 761A740C6EBF; Thu, 14 Sep 2023 21:25:43 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 3C8AF40C6EA8;
+ Thu, 14 Sep 2023 21:25:43 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 38ELPY6p011269;
+ Thu, 14 Sep 2023 16:25:34 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 38ELPYIN011268;
+ Thu, 14 Sep 2023 16:25:34 -0500
+Date: Thu, 14 Sep 2023 16:25:33 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Message-ID: <20230914212533.GL7412@octiron.msp.redhat.com>
+References: <20230914145131.15165-1-mwilck@suse.com>
+ <20230914145131.15165-2-mwilck@suse.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
-Subject: [dm-devel] [PATCH v3 24/39] dm vdo: add the compressed block bin
- packer
+In-Reply-To: <20230914145131.15165-2-mwilck@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: Re: [dm-devel] [PATCH v3 26/38] multipath-tools tests: add test for
+ ordering of bindings
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -104,970 +73,290 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Matthew Sakai <msakai@redhat.com>
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
+X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Matthew Sakai <msakai@redhat.com>
-
-When blocks do not deduplicate, vdo will attempt to compress them. Up
-to 14 compressed blocks may be packed into a single data block (this
-limitation is imposed by the block map). The packer implements a
-simple best-fit packing algorithm and also manages the formatting and
-writing of compressed blocks when bins fill.
-
-Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
-Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
-Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
-Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
-Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-Signed-off-by: Matthew Sakai <msakai@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@kernel.org>
----
- drivers/md/dm-vdo/packer.c | 794 +++++++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/packer.h | 123 ++++++
- 2 files changed, 917 insertions(+)
- create mode 100644 drivers/md/dm-vdo/packer.c
- create mode 100644 drivers/md/dm-vdo/packer.h
-
-diff --git a/drivers/md/dm-vdo/packer.c b/drivers/md/dm-vdo/packer.c
-new file mode 100644
-index 000000000000..03d2c77931b2
---- /dev/null
-+++ b/drivers/md/dm-vdo/packer.c
-@@ -0,0 +1,794 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "packer.h"
-+
-+#include <linux/atomic.h>
-+#include <linux/blkdev.h>
-+
-+#include "logger.h"
-+#include "memory-alloc.h"
-+#include "permassert.h"
-+#include "string-utils.h"
-+
-+#include "admin-state.h"
-+#include "completion.h"
-+#include "constants.h"
-+#include "data-vio.h"
-+#include "dedupe.h"
-+#include "encodings.h"
-+#include "io-submitter.h"
-+#include "physical-zone.h"
-+#include "status-codes.h"
-+#include "vdo.h"
-+#include "vio.h"
-+
-+static const struct version_number COMPRESSED_BLOCK_1_0 = {
-+	.major_version = 1,
-+	.minor_version = 0,
-+};
-+
-+enum {
-+	COMPRESSED_BLOCK_1_0_SIZE = 4 + 4 + (2 * VDO_MAX_COMPRESSION_SLOTS),
-+};
-+
-+/**
-+ * vdo_get_compressed_block_fragment() - Get a reference to a compressed fragment from a compressed
-+ *                                       block.
-+ * @mapping_state [in] The mapping state for the look up.
-+ * @compressed_block [in] The compressed block that was read from disk.
-+ * @fragment_offset [out] The offset of the fragment within a compressed block.
-+ * @fragment_size [out] The size of the fragment.
-+ *
-+ * Return: If a valid compressed fragment is found, VDO_SUCCESS; otherwise, VDO_INVALID_FRAGMENT if
-+ *         the fragment is invalid.
-+ */
-+int vdo_get_compressed_block_fragment(enum block_mapping_state mapping_state,
-+				      struct compressed_block *block,
-+				      u16 *fragment_offset,
-+				      u16 *fragment_size)
-+{
-+	u16 compressed_size;
-+	u16 offset = 0;
-+	unsigned int i;
-+	u8 slot;
-+	struct version_number version;
-+
-+	if (!vdo_is_state_compressed(mapping_state))
-+		return VDO_INVALID_FRAGMENT;
-+
-+	version = vdo_unpack_version_number(block->header.version);
-+	if (!vdo_are_same_version(version, COMPRESSED_BLOCK_1_0))
-+		return VDO_INVALID_FRAGMENT;
-+
-+	slot = mapping_state - VDO_MAPPING_STATE_COMPRESSED_BASE;
-+	if (slot >= VDO_MAX_COMPRESSION_SLOTS)
-+		return VDO_INVALID_FRAGMENT;
-+
-+	compressed_size = __le16_to_cpu(block->header.sizes[slot]);
-+	for (i = 0; i < slot; i++) {
-+		offset += __le16_to_cpu(block->header.sizes[i]);
-+		if (offset >= VDO_COMPRESSED_BLOCK_DATA_SIZE)
-+			return VDO_INVALID_FRAGMENT;
-+	}
-+
-+	if ((offset + compressed_size) > VDO_COMPRESSED_BLOCK_DATA_SIZE)
-+		return VDO_INVALID_FRAGMENT;
-+
-+	*fragment_offset = offset;
-+	*fragment_size = compressed_size;
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * assert_on_packer_thread() - Check that we are on the packer thread.
-+ * @packer: The packer.
-+ * @caller: The function which is asserting.
-+ */
-+static inline void assert_on_packer_thread(struct packer *packer, const char *caller)
-+{
-+	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == packer->thread_id),
-+			"%s() called from packer thread", caller);
-+}
-+
-+/**
-+ * insert_in_sorted_list() - Insert a bin to the list.
-+ * @packer: The packer.
-+ * @bin: The bin to move to its sorted position.
-+ *
-+ * The list is in ascending order of free space. Since all bins are already in the list, this
-+ * actually moves the bin to the correct position in the list.
-+ */
-+static void insert_in_sorted_list(struct packer *packer, struct packer_bin *bin)
-+{
-+	struct packer_bin *active_bin;
-+
-+	list_for_each_entry(active_bin, &packer->bins, list)
-+		if (active_bin->free_space > bin->free_space) {
-+			list_move_tail(&bin->list, &active_bin->list);
-+			return;
-+		}
-+
-+	list_move_tail(&bin->list, &packer->bins);
-+}
-+
-+/**
-+ * make_bin() - Allocate a bin and put it into the packer's list.
-+ * @packer: The packer.
-+ */
-+static int __must_check make_bin(struct packer *packer)
-+{
-+	struct packer_bin *bin;
-+	int result;
-+
-+	result = UDS_ALLOCATE_EXTENDED(struct packer_bin,
-+				       VDO_MAX_COMPRESSION_SLOTS,
-+				       struct vio *,
-+				       __func__,
-+				       &bin);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	bin->free_space = VDO_COMPRESSED_BLOCK_DATA_SIZE;
-+	INIT_LIST_HEAD(&bin->list);
-+	list_add_tail(&bin->list, &packer->bins);
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * vdo_make_packer() - Make a new block packer.
-+ *
-+ * @vdo: The vdo to which this packer belongs.
-+ * @bin_count: The number of partial bins to keep in memory.
-+ * @packer_ptr: A pointer to hold the new packer.
-+ *
-+ * Return: VDO_SUCCESS or an error
-+ */
-+int vdo_make_packer(struct vdo *vdo, block_count_t bin_count, struct packer **packer_ptr)
-+{
-+	struct packer *packer;
-+	block_count_t i;
-+	int result;
-+
-+	result = UDS_ALLOCATE(1, struct packer, __func__, &packer);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	packer->thread_id = vdo->thread_config.packer_thread;
-+	packer->size = bin_count;
-+	INIT_LIST_HEAD(&packer->bins);
-+	vdo_set_admin_state_code(&packer->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
-+
-+	for (i = 0; i < bin_count; i++) {
-+		result = make_bin(packer);
-+		if (result != VDO_SUCCESS) {
-+			vdo_free_packer(packer);
-+			return result;
-+		}
-+	}
-+
-+	/*
-+	 * The canceled bin can hold up to half the number of user vios. Every canceled vio in the
-+	 * bin must have a canceler for which it is waiting, and any canceler will only have
-+	 * canceled one lock holder at a time.
-+	 */
-+	result = UDS_ALLOCATE_EXTENDED(struct packer_bin,
-+				       MAXIMUM_VDO_USER_VIOS / 2,
-+				       struct vio *, __func__,
-+				       &packer->canceled_bin);
-+	if (result != VDO_SUCCESS) {
-+		vdo_free_packer(packer);
-+		return result;
-+	}
-+
-+	result = vdo_make_default_thread(vdo, packer->thread_id);
-+	if (result != VDO_SUCCESS) {
-+		vdo_free_packer(packer);
-+		return result;
-+	}
-+
-+	*packer_ptr = packer;
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * vdo_free_packer() - Free a block packer.
-+ * @packer: The packer to free.
-+ */
-+void vdo_free_packer(struct packer *packer)
-+{
-+	struct packer_bin *bin, *tmp;
-+
-+	if (packer == NULL)
-+		return;
-+
-+	list_for_each_entry_safe(bin, tmp, &packer->bins, list) {
-+		list_del_init(&bin->list);
-+		UDS_FREE(bin);
-+	}
-+
-+	UDS_FREE(UDS_FORGET(packer->canceled_bin));
-+	UDS_FREE(packer);
-+}
-+
-+/**
-+ * get_packer_from_data_vio() - Get the packer from a data_vio.
-+ * @data_vio: The data_vio.
-+ *
-+ * Return: The packer from the VDO to which the data_vio belongs.
-+ */
-+static inline struct packer *get_packer_from_data_vio(struct data_vio *data_vio)
-+{
-+	return vdo_from_data_vio(data_vio)->packer;
-+}
-+
-+/**
-+ * vdo_get_packer_statistics() - Get the current statistics from the packer.
-+ * @packer: The packer to query.
-+ *
-+ * Return: a copy of the current statistics for the packer.
-+ */
-+struct packer_statistics vdo_get_packer_statistics(const struct packer *packer)
-+{
-+	const struct packer_statistics *stats = &packer->statistics;
-+
-+	return (struct packer_statistics) {
-+		.compressed_fragments_written = READ_ONCE(stats->compressed_fragments_written),
-+		.compressed_blocks_written = READ_ONCE(stats->compressed_blocks_written),
-+		.compressed_fragments_in_packer = READ_ONCE(stats->compressed_fragments_in_packer),
-+	};
-+}
-+
-+/**
-+ * abort_packing() - Abort packing a data_vio.
-+ * @data_vio: The data_vio to abort.
-+ */
-+static void abort_packing(struct data_vio *data_vio)
-+{
-+	struct packer *packer = get_packer_from_data_vio(data_vio);
-+
-+	WRITE_ONCE(packer->statistics.compressed_fragments_in_packer,
-+		   packer->statistics.compressed_fragments_in_packer - 1);
-+
-+	write_data_vio(data_vio);
-+}
-+
-+/**
-+ * release_compressed_write_waiter() - Update a data_vio for which a successful compressed write
-+ *                                     has completed and send it on its way.
-+
-+ * @data_vio: The data_vio to release.
-+ * @allocation: The allocation to which the compressed block was written.
-+ */
-+static void
-+release_compressed_write_waiter(struct data_vio *data_vio, struct allocation *allocation)
-+{
-+	data_vio->new_mapped = (struct zoned_pbn) {
-+		.pbn = allocation->pbn,
-+		.zone = allocation->zone,
-+		.state = data_vio->compression.slot + VDO_MAPPING_STATE_COMPRESSED_BASE,
-+	};
-+
-+	vdo_share_compressed_write_lock(data_vio, allocation->lock);
-+	update_metadata_for_data_vio_write(data_vio, allocation->lock);
-+}
-+
-+/**
-+ * finish_compressed_write() - Finish a compressed block write.
-+ * @completion: The compressed write completion.
-+ *
-+ * This callback is registered in continue_after_allocation().
-+ */
-+static void finish_compressed_write(struct vdo_completion *completion)
-+{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct data_vio *client, *next;
-+
-+	assert_data_vio_in_allocated_zone(agent);
-+
-+	/*
-+	 * Process all the non-agent waiters first to ensure that the pbn lock can not be released
-+	 * until all of them have had a chance to journal their increfs.
-+	 */
-+	for (client = agent->compression.next_in_batch; client != NULL; client = next) {
-+		next = client->compression.next_in_batch;
-+		release_compressed_write_waiter(client, &agent->allocation);
-+	}
-+
-+	completion->error_handler = handle_data_vio_error;
-+	release_compressed_write_waiter(agent, &agent->allocation);
-+}
-+
-+static void handle_compressed_write_error(struct vdo_completion *completion)
-+{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct allocation *allocation = &agent->allocation;
-+	struct data_vio *client, *next;
-+
-+	if (vdo_requeue_completion_if_needed(completion, allocation->zone->thread_id))
-+		return;
-+
-+	update_vio_error_stats(as_vio(completion),
-+			       "Completing compressed write vio for physical block %llu with error",
-+			       (unsigned long long) allocation->pbn);
-+
-+	for (client = agent->compression.next_in_batch; client != NULL; client = next) {
-+		next = client->compression.next_in_batch;
-+		write_data_vio(client);
-+	}
-+
-+	/* Now that we've released the batch from the packer, forget the error and continue on. */
-+	vdo_reset_completion(completion);
-+	completion->error_handler = handle_data_vio_error;
-+	write_data_vio(agent);
-+}
-+
-+/**
-+ * add_to_bin() - Put a data_vio in a specific packer_bin in which it will definitely fit.
-+ * @bin: The bin in which to put the data_vio.
-+ * @data_vio: The data_vio to add.
-+ */
-+static void add_to_bin(struct packer_bin *bin, struct data_vio *data_vio)
-+{
-+	data_vio->compression.bin = bin;
-+	data_vio->compression.slot = bin->slots_used;
-+	bin->incoming[bin->slots_used++] = data_vio;
-+}
-+
-+/**
-+ * remove_from_bin() - Get the next data_vio whose compression has not been canceled from a bin.
-+ * @packer: The packer.
-+ * @bin: The bin from which to get a data_vio.
-+ *
-+ * Any canceled data_vios will be moved to the canceled bin.
-+ * Return: An uncanceled data_vio from the bin or NULL if there are none.
-+ */
-+static struct data_vio *remove_from_bin(struct packer *packer, struct packer_bin *bin)
-+{
-+	while (bin->slots_used > 0) {
-+		struct data_vio *data_vio = bin->incoming[--bin->slots_used];
-+
-+		if (!advance_data_vio_compression_stage(data_vio).may_not_compress) {
-+			data_vio->compression.bin = NULL;
-+			return data_vio;
-+		}
-+
-+		add_to_bin(packer->canceled_bin, data_vio);
-+	}
-+
-+	/* The bin is now empty. */
-+	bin->free_space = VDO_COMPRESSED_BLOCK_DATA_SIZE;
-+	return NULL;
-+}
-+
-+/**
-+ * initialize_compressed_block() - Initialize a compressed block.
-+ * @block: The compressed block to initialize.
-+ * @size: The size of the agent's fragment.
-+ *
-+ * This method initializes the compressed block in the compressed write agent. Because the
-+ * compressor already put the agent's compressed fragment at the start of the compressed block's
-+ * data field, it needn't be copied. So all we need do is initialize the header and set the size of
-+ * the agent's fragment.
-+ */
-+static void initialize_compressed_block(struct compressed_block *block, u16 size)
-+{
-+	/*
-+	 * Make sure the block layout isn't accidentally changed by changing the length of the
-+	 * block header.
-+	 */
-+	STATIC_ASSERT_SIZEOF(struct compressed_block_header, COMPRESSED_BLOCK_1_0_SIZE);
-+
-+	block->header.version = vdo_pack_version_number(COMPRESSED_BLOCK_1_0);
-+	block->header.sizes[0] = __cpu_to_le16(size);
-+}
-+
-+/**
-+ * pack_fragment() - Pack a data_vio's fragment into the compressed block in which it is already
-+ *                   known to fit.
-+ * @compression: The agent's compression_state to pack in to.
-+ * @data_vio: The data_vio to pack.
-+ * @offset: The offset into the compressed block at which to pack the fragment.
-+ * @compressed_block: The compressed block which will be written out when batch is fully packed.
-+ *
-+ * Return: The new amount of space used.
-+ */
-+static block_size_t __must_check
-+pack_fragment(struct compression_state *compression,
-+	      struct data_vio *data_vio,
-+	      block_size_t offset,
-+	      slot_number_t slot,
-+	      struct compressed_block *block)
-+{
-+	struct compression_state *to_pack = &data_vio->compression;
-+	char *fragment = to_pack->block->data;
-+
-+	to_pack->next_in_batch = compression->next_in_batch;
-+	compression->next_in_batch = data_vio;
-+	to_pack->slot = slot;
-+	block->header.sizes[slot] = __cpu_to_le16(to_pack->size);
-+	memcpy(&block->data[offset], fragment, to_pack->size);
-+	return (offset + to_pack->size);
-+}
-+
-+/**
-+ * compressed_write_end_io() - The bio_end_io for a compressed block write.
-+ * @bio: The bio for the compressed write.
-+ */
-+static void compressed_write_end_io(struct bio *bio)
-+{
-+	struct data_vio *data_vio = vio_as_data_vio(bio->bi_private);
-+
-+	vdo_count_completed_bios(bio);
-+	set_data_vio_allocated_zone_callback(data_vio, finish_compressed_write);
-+	continue_data_vio_with_error(data_vio, blk_status_to_errno(bio->bi_status));
-+}
-+
-+/**
-+ * write_bin() - Write out a bin.
-+ * @packer: The packer.
-+ * @bin: The bin to write.
-+ */
-+static void write_bin(struct packer *packer, struct packer_bin *bin)
-+{
-+	int result;
-+	block_size_t offset;
-+	slot_number_t slot = 1;
-+	struct compression_state *compression;
-+	struct compressed_block *block;
-+	struct data_vio *agent = remove_from_bin(packer, bin);
-+	struct data_vio *client;
-+	struct packer_statistics *stats;
-+
-+	if (agent == NULL)
-+		return;
-+
-+	compression = &agent->compression;
-+	compression->slot = 0;
-+	block = compression->block;
-+	initialize_compressed_block(block, compression->size);
-+	offset = compression->size;
-+
-+	while ((client = remove_from_bin(packer, bin)) != NULL)
-+		offset = pack_fragment(compression, client, offset, slot++, block);
-+
-+	/*
-+	 * If the batch contains only a single vio, then we save nothing by saving the compressed
-+	 * form. Continue processing the single vio in the batch.
-+	 */
-+	if (slot == 1) {
-+		abort_packing(agent);
-+		return;
-+	}
-+
-+	if (slot < VDO_MAX_COMPRESSION_SLOTS)
-+		/* Clear out the sizes of the unused slots */
-+		memset(&block->header.sizes[slot],
-+		       0,
-+		       (VDO_MAX_COMPRESSION_SLOTS - slot) * sizeof(__le16));
-+
-+	agent->vio.completion.error_handler = handle_compressed_write_error;
-+	if (vdo_is_read_only(vdo_from_data_vio(agent))) {
-+		continue_data_vio_with_error(agent, VDO_READ_ONLY);
-+		return;
-+	}
-+
-+	result = vio_reset_bio(&agent->vio,
-+			       (char *) block,
-+			       compressed_write_end_io,
-+			       REQ_OP_WRITE,
-+			       agent->allocation.pbn);
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(agent, result);
-+		return;
-+	}
-+
-+	/*
-+	 * Once the compressed write is submitted, the fragments are no longer in the packer, so
-+	 * update stats now.
-+	 */
-+	stats = &packer->statistics;
-+	WRITE_ONCE(stats->compressed_fragments_in_packer,
-+		   (stats->compressed_fragments_in_packer - slot));
-+	WRITE_ONCE(stats->compressed_fragments_written,
-+		   (stats->compressed_fragments_written + slot));
-+	WRITE_ONCE(stats->compressed_blocks_written, stats->compressed_blocks_written + 1);
-+
-+	submit_data_vio_io(agent);
-+}
-+
-+/**
-+ * add_data_vio_to_packer_bin() - Add a data_vio to a bin's incoming queue
-+ * @packer: The packer.
-+ * @bin: The bin to which to add the data_vio.
-+ * @data_vio: The data_vio to add to the bin's queue.
-+ *
-+ * Adds a data_vio to a bin's incoming queue, handles logical space change, and calls physical
-+ * space processor.
-+ */
-+static void add_data_vio_to_packer_bin(struct packer *packer,
-+				       struct packer_bin *bin,
-+				       struct data_vio *data_vio)
-+{
-+	/* If the selected bin doesn't have room, start a new batch to make room. */
-+	if (bin->free_space < data_vio->compression.size)
-+		write_bin(packer, bin);
-+
-+	add_to_bin(bin, data_vio);
-+	bin->free_space -= data_vio->compression.size;
-+
-+	/* If we happen to exactly fill the bin, start a new batch. */
-+	if ((bin->slots_used == VDO_MAX_COMPRESSION_SLOTS) ||
-+	    (bin->free_space == 0))
-+		write_bin(packer, bin);
-+
-+	/* Now that we've finished changing the free space, restore the sort order. */
-+	insert_in_sorted_list(packer, bin);
-+}
-+
-+/**
-+ * select_bin() - Select the bin that should be used to pack the compressed data in a data_vio with
-+ *                other data_vios.
-+ * @packer: The packer.
-+ * @data_vio: The data_vio.
-+ */
-+static struct packer_bin * __must_check
-+select_bin(struct packer *packer, struct data_vio *data_vio)
-+{
-+	/*
-+	 * First best fit: select the bin with the least free space that has enough room for the
-+	 * compressed data in the data_vio.
-+	 */
-+	struct packer_bin *bin, *fullest_bin;
-+
-+	list_for_each_entry(bin, &packer->bins, list)
-+		if (bin->free_space >= data_vio->compression.size)
-+			return bin;
-+
-+	/*
-+	 * None of the bins have enough space for the data_vio. We're not allowed to create new
-+	 * bins, so we have to overflow one of the existing bins. It's pretty intuitive to select
-+	 * the fullest bin, since that "wastes" the least amount of free space in the compressed
-+	 * block. But if the space currently used in the fullest bin is smaller than the compressed
-+	 * size of the incoming block, it seems wrong to force that bin to write when giving up on
-+	 * compressing the incoming data_vio would likewise "waste" the least amount of free space.
-+	 */
-+	fullest_bin = list_first_entry(&packer->bins, struct packer_bin, list);
-+	if (data_vio->compression.size >=
-+	    (VDO_COMPRESSED_BLOCK_DATA_SIZE - fullest_bin->free_space))
-+		return NULL;
-+
-+	/*
-+	 * The fullest bin doesn't have room, but writing it out and starting a new batch with the
-+	 * incoming data_vio will increase the packer's free space.
-+	 */
-+	return fullest_bin;
-+}
-+
-+/**
-+ * vdo_attempt_packing() - Attempt to rewrite the data in this data_vio as part of a compressed
-+ *                         block.
-+ * @data_vio: The data_vio to pack.
-+ */
-+void vdo_attempt_packing(struct data_vio *data_vio)
-+{
-+	int result;
-+	struct packer_bin *bin;
-+	struct data_vio_compression_status status = get_data_vio_compression_status(data_vio);
-+	struct packer *packer = get_packer_from_data_vio(data_vio);
-+
-+	assert_on_packer_thread(packer, __func__);
-+
-+	result = ASSERT((status.stage == DATA_VIO_COMPRESSING),
-+			"attempt to pack data_vio not ready for packing, stage: %u",
-+			status.stage);
-+	if (result != VDO_SUCCESS)
-+		return;
-+
-+	/*
-+	 * Increment whether or not this data_vio will be packed or not since abort_packing()
-+	 * always decrements the counter.
-+	 */
-+	WRITE_ONCE(packer->statistics.compressed_fragments_in_packer,
-+		   packer->statistics.compressed_fragments_in_packer + 1);
-+
-+	/*
-+	 * If packing of this data_vio is disallowed for administrative reasons, give up before
-+	 * making any state changes.
-+	 */
-+	if (!vdo_is_state_normal(&packer->state) ||
-+	    (data_vio->flush_generation < packer->flush_generation)) {
-+		abort_packing(data_vio);
-+		return;
-+	}
-+
-+	/*
-+	 * The check of may_vio_block_in_packer() here will set the data_vio's compression state to
-+	 * VIO_PACKING if the data_vio is allowed to be compressed (if it has already been
-+	 * canceled, we'll fall out here). Once the data_vio is in the VIO_PACKING state, it must
-+	 * be guaranteed to be put in a bin before any more requests can be processed by the packer
-+	 * thread. Otherwise, a canceling data_vio could attempt to remove the canceled data_vio
-+	 * from the packer and fail to rendezvous with it (VDO-2809). We must also make sure that
-+	 * we will actually bin the data_vio and not give up on it as being larger than the space
-+	 * used in the fullest bin. Hence we must call select_bin() before calling
-+	 * may_vio_block_in_packer() (VDO-2826).
-+	 */
-+	bin = select_bin(packer, data_vio);
-+	if ((bin == NULL) ||
-+	    (advance_data_vio_compression_stage(data_vio).stage != DATA_VIO_PACKING)) {
-+		abort_packing(data_vio);
-+		return;
-+	}
-+
-+	add_data_vio_to_packer_bin(packer, bin, data_vio);
-+}
-+
-+/**
-+ * check_for_drain_complete() - Check whether the packer has drained.
-+ * @packer: The packer.
-+ */
-+static void check_for_drain_complete(struct packer *packer)
-+{
-+	if (vdo_is_state_draining(&packer->state) && (packer->canceled_bin->slots_used == 0))
-+		vdo_finish_draining(&packer->state);
-+}
-+
-+/**
-+ * write_all_non_empty_bins() - Write out all non-empty bins on behalf of a flush or suspend.
-+ * @packer: The packer being flushed.
-+ */
-+static void write_all_non_empty_bins(struct packer *packer)
-+{
-+	struct packer_bin *bin;
-+
-+	list_for_each_entry(bin, &packer->bins, list)
-+		write_bin(packer, bin);
-+		/*
-+		 * We don't need to re-sort the bin here since this loop will make every bin have
-+		 * the same amount of free space, so every ordering is sorted.
-+		 */
-+
-+	check_for_drain_complete(packer);
-+}
-+
-+/**
-+ * vdo_flush_packer() - Request that the packer flush asynchronously.
-+ * @packer: The packer to flush.
-+ *
-+ * All bins with at least two compressed data blocks will be written out, and any solitary pending
-+ * VIOs will be released from the packer. While flushing is in progress, any VIOs submitted to
-+ * vdo_attempt_packing() will be continued immediately without attempting to pack them.
-+ */
-+void vdo_flush_packer(struct packer *packer)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	if (vdo_is_state_normal(&packer->state))
-+		write_all_non_empty_bins(packer);
-+}
-+
-+/**
-+ * vdo_remove_lock_holder_from_packer() - Remove a lock holder from the packer.
-+ * @completion: The data_vio which needs a lock held by a data_vio in the packer. The data_vio's
-+ *              compression.lock_holder field will point to the data_vio to remove.
-+ */
-+void vdo_remove_lock_holder_from_packer(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+	struct packer *packer = get_packer_from_data_vio(data_vio);
-+	struct data_vio *lock_holder;
-+	struct packer_bin *bin;
-+	slot_number_t slot;
-+
-+	assert_data_vio_in_packer_zone(data_vio);
-+
-+	lock_holder = UDS_FORGET(data_vio->compression.lock_holder);
-+	bin = lock_holder->compression.bin;
-+	ASSERT_LOG_ONLY((bin != NULL), "data_vio in packer has a bin");
-+
-+	slot = lock_holder->compression.slot;
-+	bin->slots_used--;
-+	if (slot < bin->slots_used) {
-+		bin->incoming[slot] = bin->incoming[bin->slots_used];
-+		bin->incoming[slot]->compression.slot = slot;
-+	}
-+
-+	lock_holder->compression.bin = NULL;
-+	lock_holder->compression.slot = 0;
-+
-+	if (bin != packer->canceled_bin) {
-+		bin->free_space += lock_holder->compression.size;
-+		insert_in_sorted_list(packer, bin);
-+	}
-+
-+	abort_packing(lock_holder);
-+	check_for_drain_complete(packer);
-+}
-+
-+/**
-+ * vdo_increment_packer_flush_generation() - Increment the flush generation in the packer.
-+ * @packer: The packer.
-+ *
-+ * This will also cause the packer to flush so that any VIOs from previous generations will exit
-+ * the packer.
-+ */
-+void vdo_increment_packer_flush_generation(struct packer *packer)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	packer->flush_generation++;
-+	vdo_flush_packer(packer);
-+}
-+
-+/**
-+ * initiate_drain() - Initiate a drain.
-+ *
-+ * Implements vdo_admin_initiator.
-+ */
-+static void initiate_drain(struct admin_state *state)
-+{
-+	struct packer *packer = container_of(state, struct packer, state);
-+
-+	write_all_non_empty_bins(packer);
-+}
-+
-+/**
-+ * vdo_drain_packer() - Drain the packer by preventing any more VIOs from entering the packer and
-+ *                      then flushing.
-+ * @packer: The packer to drain.
-+ * @completion: The completion to finish when the packer has drained.
-+ */
-+void vdo_drain_packer(struct packer *packer, struct vdo_completion *completion)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	vdo_start_draining(&packer->state, VDO_ADMIN_STATE_SUSPENDING, completion, initiate_drain);
-+}
-+
-+/**
-+ * vdo_resume_packer() - Resume a packer which has been suspended.
-+ * @packer: The packer to resume.
-+ * @parent: The completion to finish when the packer has resumed.
-+ */
-+void vdo_resume_packer(struct packer *packer, struct vdo_completion *parent)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	vdo_continue_completion(parent, vdo_resume_if_quiescent(&packer->state));
-+}
-+
-+static void dump_packer_bin(const struct packer_bin *bin, bool canceled)
-+{
-+	if (bin->slots_used == 0)
-+		/* Don't dump empty bins. */
-+		return;
-+
-+	uds_log_info("	  %sBin slots_used=%u free_space=%zu",
-+		     (canceled ? "Canceled" : ""), bin->slots_used,
-+		     bin->free_space);
-+
-+	/*
-+	 * FIXME: dump vios in bin->incoming? The vios should have been dumped from the vio pool.
-+	 * Maybe just dump their addresses so it's clear they're here?
-+	 */
-+}
-+
-+/**
-+ * vdo_dump_packer() - Dump the packer.
-+ * @packer: The packer.
-+ *
-+ * Context: dumps in a thread-unsafe fashion.
-+ */
-+void vdo_dump_packer(const struct packer *packer)
-+{
-+	struct packer_bin *bin;
-+
-+	uds_log_info("packer");
-+	uds_log_info("	flushGeneration=%llu state %s  packer_bin_count=%llu",
-+		     (unsigned long long) packer->flush_generation,
-+		     vdo_get_admin_state_code(&packer->state)->name,
-+		     (unsigned long long) packer->size);
-+
-+	list_for_each_entry(bin, &packer->bins, list)
-+		dump_packer_bin(bin, false);
-+
-+	dump_packer_bin(packer->canceled_bin, true);
-+}
-diff --git a/drivers/md/dm-vdo/packer.h b/drivers/md/dm-vdo/packer.h
-new file mode 100644
-index 000000000000..6bf6822398ef
---- /dev/null
-+++ b/drivers/md/dm-vdo/packer.h
-@@ -0,0 +1,123 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef VDO_PACKER_H
-+#define VDO_PACKER_H
-+
-+#include <linux/list.h>
-+
-+#include "admin-state.h"
-+#include "constants.h"
-+#include "encodings.h"
-+#include "statistics.h"
-+#include "types.h"
-+#include "wait-queue.h"
-+
-+enum {
-+	DEFAULT_PACKER_BINS = 16,
-+};
-+
-+/* The header of a compressed block. */
-+struct compressed_block_header {
-+	/* Unsigned 32-bit major and minor versions, little-endian */
-+	struct packed_version_number version;
-+
-+	/* List of unsigned 16-bit compressed block sizes, little-endian */
-+	__le16 sizes[VDO_MAX_COMPRESSION_SLOTS];
-+} __packed;
-+
-+enum {
-+	VDO_COMPRESSED_BLOCK_DATA_SIZE = VDO_BLOCK_SIZE - sizeof(struct compressed_block_header),
-+
-+	/*
-+	 * A compressed block is only written if we can pack at least two fragments into it, so a
-+	 * fragment which fills the entire data portion of a compressed block is too big.
-+	 */
-+	VDO_MAX_COMPRESSED_FRAGMENT_SIZE = VDO_COMPRESSED_BLOCK_DATA_SIZE - 1,
-+};
-+
-+/* * The compressed block overlay. */
-+struct compressed_block {
-+	struct compressed_block_header header;
-+	char data[VDO_COMPRESSED_BLOCK_DATA_SIZE];
-+} __packed;
-+
-+/*
-+ * Each packer_bin holds an incomplete batch of data_vios that only partially fill a compressed
-+ * block. The bins are kept in a ring sorted by the amount of unused space so the first bin with
-+ * enough space to hold a newly-compressed data_vio can easily be found. When the bin fills up or
-+ * is flushed, the first uncanceled data_vio in the bin is selected to be the agent for that bin.
-+ * Upon entering the packer, each data_vio already has its compressed data in the first slot of the
-+ * data_vio's compressed_block (overlaid on the data_vio's scratch_block). So the agent's fragment
-+ * is already in place. The fragments for the other uncanceled data_vios in the bin are packed into
-+ * the agent's compressed block. The agent then writes out the compressed block. If the write is
-+ * successful, the agent shares its pbn lock which each of the other data_vios in its compressed
-+ * block and sends each on its way. Finally the agent itself continues on the write path as before.
-+ *
-+ * There is one special bin which is used to hold data_vios which have been canceled and removed
-+ * from their bin by the packer. These data_vios need to wait for the canceller to rendezvous with
-+ * them (VDO-2809) and so they sit in this special bin.
-+ */
-+struct packer_bin {
-+	/* List links for packer.packer_bins */
-+	struct list_head list;
-+	/* The number of items in the bin */
-+	slot_number_t slots_used;
-+	/* The number of compressed block bytes remaining in the current batch */
-+	size_t free_space;
-+	/* The current partial batch of data_vios, waiting for more */
-+	struct data_vio *incoming[];
-+};
-+
-+struct packer {
-+	/* The ID of the packer's callback thread */
-+	thread_id_t thread_id;
-+	/* The number of bins */
-+	block_count_t size;
-+	/* A list of all packer_bins, kept sorted by free_space */
-+	struct list_head bins;
-+	/*
-+	 * A bin to hold data_vios which were canceled out of the packer and are waiting to
-+	 * rendezvous with the canceling data_vio.
-+	 */
-+	struct packer_bin *canceled_bin;
-+
-+	/* The current flush generation */
-+	sequence_number_t flush_generation;
-+
-+	/* The administrative state of the packer */
-+	struct admin_state state;
-+
-+	/* Statistics are only updated on the packer thread, but are accessed from other threads */
-+	struct packer_statistics statistics;
-+};
-+
-+int vdo_get_compressed_block_fragment(enum block_mapping_state mapping_state,
-+				      struct compressed_block *block,
-+				      u16 *fragment_offset,
-+				      u16 *fragment_size);
-+
-+int __must_check
-+vdo_make_packer(struct vdo *vdo, block_count_t bin_count, struct packer **packer_ptr);
-+
-+void vdo_free_packer(struct packer *packer);
-+
-+struct packer_statistics __must_check vdo_get_packer_statistics(const struct packer *packer);
-+
-+void vdo_attempt_packing(struct data_vio *data_vio);
-+
-+void vdo_flush_packer(struct packer *packer);
-+
-+void vdo_remove_lock_holder_from_packer(struct vdo_completion *completion);
-+
-+void vdo_increment_packer_flush_generation(struct packer *packer);
-+
-+void vdo_drain_packer(struct packer *packer, struct vdo_completion *completion);
-+
-+void vdo_resume_packer(struct packer *packer, struct vdo_completion *parent);
-+
-+void vdo_dump_packer(const struct packer *packer);
-+
-+#endif /* VDO_PACKER_H */
--- 
-2.40.0
-
+On Thu, Sep 14, 2023 at 04:51:29PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> As the assignment of free aliases now relies on the bindings being
+> properly sorted, add some unit tests to make sure the sorting algorithm
+> works.
+> 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  tests/alias.c | 212 +++++++++++++++++++++++++++++++++++++++++++++++++-
+>  1 file changed, 209 insertions(+), 3 deletions(-)
+> 
+> diff --git a/tests/alias.c b/tests/alias.c
+> index dff5f93..4d0adba 100644
+> --- a/tests/alias.c
+> +++ b/tests/alias.c
+> @@ -13,6 +13,9 @@
+>  #include "globals.c"
+>  #include "../libmultipath/alias.c"
+>  
+> +/* For verbose printing of all aliases in the ordering tests */
+> +#define ALIAS_DEBUG 0
+> +
+>  #if INT_MAX == 0x7fffffff
+>  /* user_friendly_name for map #INT_MAX */
+>  #define MPATH_ID_INT_MAX "fxshrxw"
+> @@ -439,11 +442,12 @@ static void mock_self_alias(const char *alias, const char *wwid)
+>  		expect_condlog(3, USED_STR(alias, wwid));		\
+>  	} while(0)
+>  
+> -static void __mock_bindings_file(const char *content)
+> +static void __mock_bindings_file(const char *content, bool conflict_ok)
+>  {
+>  	char *cnt __attribute__((cleanup(cleanup_charp))) = NULL;
+>  	char *token, *savep = NULL;
+>  	int i;
+> +	uintmax_t values[] = { BINDING_ADDED, BINDING_CONFLICT };
+>  
+>  	cnt = strdup(content);
+>  	assert_ptr_not_equal(cnt, NULL);
+> @@ -459,12 +463,12 @@ static void __mock_bindings_file(const char *content)
+>  			continue;
+>  
+>  		rc = add_binding(&global_bindings, alias, wwid);
+> -		assert_int_equal(rc, BINDING_ADDED);
+> +		assert_in_set(rc, values, conflict_ok ? 2 : 1);
+>  	}
+>  }
+>  
+>  static void mock_bindings_file(const char *content) {
+> -	return __mock_bindings_file(content);
+> +	return __mock_bindings_file(content, false);
+>  }
+>  
+>  static int teardown_bindings(void **state)
+> @@ -1744,6 +1748,207 @@ static int test_get_user_friendly_alias()
+>  	return cmocka_run_group_tests(tests, NULL, NULL);
+>  }
+>  
+> +/* Numbers 1-1000, randomly shuffled */
+> +static int random_numbers[1000] = {
+> +	694, 977, 224, 178, 841, 818, 914, 549, 831, 942, 263, 834, 919, 800,
+> +	111, 517, 719, 297, 988, 98, 332, 516, 754, 772, 495, 488, 331, 529,
+> +	142, 747, 848, 618, 375, 624, 74, 753, 782, 944, 623, 468, 862, 997,
+> +	417, 258, 298, 774, 673, 904, 883, 766, 867, 400, 11, 950, 14, 784,
+> +	655, 155, 396, 9, 743, 93, 651, 245, 968, 306, 785, 581, 880, 486,
+> +	168, 631, 203, 4, 663, 294, 702, 762, 619, 684, 48, 181, 21, 443, 643,
+> +	863, 1000, 327, 26, 126, 382, 765, 586, 76, 49, 925, 319, 865, 797,
+> +	876, 693, 334, 433, 243, 419, 901, 854, 326, 985, 347, 874, 527, 282,
+> +	290, 380, 167, 95, 3, 257, 936, 60, 426, 227, 345, 577, 492, 467, 580,
+> +	967, 422, 823, 718, 610, 64, 700, 412, 163, 288, 506, 828, 432, 51,
+> +	356, 348, 539, 478, 17, 945, 602, 123, 450, 660, 429, 113, 310, 358,
+> +	512, 758, 508, 19, 542, 304, 286, 446, 918, 723, 333, 603, 731, 978,
+> +	230, 697, 109, 872, 175, 853, 947, 965, 121, 222, 101, 811, 117, 601,
+> +	191, 752, 384, 415, 938, 278, 915, 715, 240, 552, 912, 838, 150, 840,
+> +	627, 29, 636, 464, 861, 481, 992, 249, 934, 82, 368, 724, 807, 593,
+> +	157, 147, 199, 637, 41, 62, 902, 505, 621, 342, 174, 260, 729, 961,
+> +	219, 311, 629, 789, 81, 739, 860, 712, 223, 165, 741, 981, 485, 363,
+> +	346, 709, 125, 369, 279, 634, 399, 162, 193, 769, 149, 314, 868, 612,
+> +	524, 675, 341, 343, 476, 606, 388, 613, 850, 264, 903, 451, 908, 779,
+> +	453, 148, 497, 46, 132, 43, 885, 955, 269, 395, 72, 128, 767, 989,
+> +	929, 423, 742, 55, 13, 79, 924, 182, 295, 563, 668, 169, 974, 154,
+> +	970, 54, 674, 52, 437, 570, 550, 531, 554, 793, 678, 218, 367, 105,
+> +	197, 315, 958, 892, 86, 47, 284, 37, 561, 522, 198, 689, 817, 573,
+> +	877, 201, 803, 501, 881, 546, 530, 523, 780, 579, 953, 135, 23, 620,
+> +	84, 698, 303, 656, 357, 323, 494, 58, 131, 913, 995, 120, 70, 1, 195,
+> +	365, 210, 25, 898, 173, 307, 239, 77, 418, 952, 963, 92, 455, 425, 12,
+> +	536, 161, 328, 933, 401, 251, 735, 725, 362, 322, 557, 681, 302, 53,
+> +	786, 801, 391, 946, 748, 133, 717, 851, 7, 372, 993, 387, 906, 373,
+> +	667, 33, 670, 389, 209, 611, 896, 652, 69, 999, 344, 845, 633, 36,
+> +	487, 192, 180, 45, 640, 427, 707, 805, 188, 152, 905, 217, 30, 252,
+> +	386, 665, 299, 541, 410, 787, 5, 857, 751, 392, 44, 595, 146, 745,
+> +	641, 957, 866, 773, 806, 815, 659, 102, 704, 430, 106, 296, 129, 847,
+> +	130, 990, 669, 236, 225, 680, 159, 213, 438, 189, 447, 600, 232, 594,
+> +	32, 56, 390, 647, 855, 428, 330, 714, 738, 706, 666, 461, 469, 482,
+> +	558, 814, 559, 177, 575, 538, 309, 383, 261, 156, 420, 761, 630, 893,
+> +	10, 116, 940, 844, 71, 377, 662, 312, 520, 244, 143, 759, 119, 186,
+> +	592, 909, 864, 376, 768, 254, 265, 394, 511, 760, 574, 6, 436, 514,
+> +	59, 226, 644, 956, 578, 825, 548, 145, 736, 597, 378, 821, 987, 897,
+> +	354, 144, 722, 895, 589, 503, 826, 498, 543, 617, 763, 231, 808, 528,
+> +	89, 479, 607, 737, 170, 404, 371, 65, 103, 340, 283, 141, 313, 858,
+> +	289, 124, 971, 687, 954, 732, 39, 926, 176, 100, 267, 519, 890, 535,
+> +	276, 448, 27, 457, 899, 385, 184, 275, 770, 544, 614, 449, 160, 658,
+> +	259, 973, 108, 604, 24, 207, 562, 757, 744, 324, 444, 962, 591, 480,
+> +	398, 409, 998, 253, 325, 445, 979, 8, 35, 118, 73, 683, 208, 85, 190,
+> +	791, 408, 871, 657, 179, 18, 556, 496, 475, 20, 894, 484, 775, 889,
+> +	463, 241, 730, 57, 907, 551, 859, 943, 185, 416, 870, 590, 435, 471,
+> +	932, 268, 381, 626, 502, 565, 273, 534, 672, 778, 292, 473, 566, 104,
+> +	172, 285, 832, 411, 329, 628, 397, 472, 271, 910, 711, 690, 969, 585,
+> +	809, 941, 923, 555, 228, 685, 242, 94, 96, 211, 140, 61, 922, 795,
+> +	869, 34, 255, 38, 984, 676, 15, 560, 632, 434, 921, 355, 582, 351,
+> +	212, 200, 819, 960, 649, 852, 75, 771, 361, 996, 238, 316, 720, 671,
+> +	462, 112, 569, 171, 664, 625, 588, 405, 553, 270, 533, 353, 842, 114,
+> +	972, 83, 937, 63, 194, 237, 537, 980, 802, 916, 959, 688, 839, 350,
+> +	917, 650, 545, 615, 151, 352, 686, 726, 266, 509, 439, 491, 935, 608,
+> +	518, 653, 339, 609, 277, 635, 836, 88, 407, 440, 642, 927, 229, 727,
+> +	360, 477, 846, 413, 454, 616, 28, 598, 567, 540, 790, 424, 247, 317,
+> +	746, 911, 798, 321, 547, 248, 734, 829, 220, 138, 756, 500, 691, 196,
+> +	740, 930, 843, 733, 221, 827, 50, 813, 949, 525, 349, 474, 134, 875,
+> +	695, 513, 414, 515, 638, 99, 366, 490, 975, 246, 465, 206, 281, 583,
+> +	256, 587, 749, 2, 951, 679, 215, 364, 458, 402, 646, 991, 335, 982,
+> +	835, 300, 900, 703, 994, 983, 234, 888, 532, 804, 584, 305, 792, 442,
+> +	291, 964, 158, 370, 452, 250, 521, 166, 948, 812, 794, 272, 699, 205,
+> +	183, 507, 301, 920, 781, 233, 824, 137, 489, 833, 887, 966, 856, 78,
+> +	830, 153, 359, 696, 526, 216, 66, 701, 403, 891, 849, 571, 308, 483,
+> +	164, 293, 928, 677, 320, 837, 441, 639, 564, 510, 648, 274, 336, 661,
+> +	878, 777, 816, 976, 493, 810, 67, 87, 91, 187, 882, 986, 80, 22, 499,
+> +	90, 705, 139, 136, 122, 708, 716, 886, 572, 127, 40, 721, 764, 16,
+> +	379, 692, 645, 456, 710, 460, 783, 97, 776, 713, 884, 115, 466, 596,
+> +	374, 406, 110, 568, 68, 214, 622, 470, 107, 504, 682, 31, 421, 576,
+> +	654, 605, 788, 799, 280, 338, 931, 873, 204, 287, 459, 755, 939, 599,
+> +	431, 796, 235, 42, 750, 262, 318, 393, 202, 822, 879, 820, 728, 337,
+> +};
+> +
+> +static void fill_bindings_random(struct strbuf *buf, int start, int end,
+> +				 const char *prefix)
+> +{
+> +	int i;
+> +
+> +	for (i = start; i < end; i++) {
+> +		print_strbuf(buf,  "%s", prefix);
+> +		format_devname(buf, random_numbers[i]);
+> +		print_strbuf(buf,  " WWID%d\n", random_numbers[i]);
+> +	}
+> +}
+> +
+> +struct random_aliases {
+> +	int start;
+> +	int end;
+> +	const char *prefix;
+> +};
+> +
+> +static void order_test(int n, struct random_aliases ra[], bool conflict_ok)
+> +{
+> +	STRBUF_ON_STACK(buf);
+> +	int i, j, prev, curr, tmp;
+> +	struct binding *bdg;
+> +	Bindings *bindings = &global_bindings;
+> +
+> +	for (j = 0; j < n; j++)
+> +		fill_bindings_random(&buf, ra[j].start, ra[j].end, ra[j].prefix);
+> +	__mock_bindings_file(get_strbuf_str(&buf), conflict_ok);
+> +
+> +	for (j = 0; j < n; j++) {
+> +		bdg = VECTOR_SLOT(bindings, 0);
+> +		if (ALIAS_DEBUG && j == 0)
+> +			printf("%d: %s\n", 0, bdg->alias);
+> +		prev = scan_devname(bdg->alias, ra[j].prefix);
+> +		i = 1;
+> +		vector_foreach_slot_after(bindings, bdg, i) {
+> +			if (ALIAS_DEBUG && j == 0)
+> +				printf("%d: %s\n", i, bdg->alias);
+> +			tmp = scan_devname(bdg->alias, ra[j].prefix);
+> +			if (tmp == -1)
+> +				continue;
+> +			curr = tmp;
+> +			if (prev > 0) {
+> +				if (curr <= prev)
+> +					printf("ERROR: %d (%s) %d >= %d\n",
+> +					       i, bdg->alias, prev, curr);
+> +				assert_true(curr > prev);
+> +			}
+> +			prev = curr;
+> +		}
+> +	}
+> +}
+> +
+> +static void order_01(void **state)
+> +{
+> +	struct random_aliases ra[] = {
+> +		{  0, 1000, "MPATH" },
+> +	};
+> +
+> +	order_test(ARRAY_SIZE(ra), ra, false);
+> +}
+> +
+> +static void order_02(void **state)
+> +{
+> +	struct random_aliases ra[] = {
+> +		{   0, 500, "MPATH" },
+> +		{ 200, 700, "mpath" },
+> +	};
+> +	order_test(ARRAY_SIZE(ra), ra, false);
+> +}
+> +
+> +static void order_03(void **state)
+> +{
+> +	struct random_aliases ra[] = {
+> +		{  500, 1000, "MPTH" },
+> +		{    0,  500, "MPATH" },
+> +	};
+> +	order_test(ARRAY_SIZE(ra), ra, false);
+> +}
+> +
+> +static void order_04(void **state)
+> +{
+> +	struct random_aliases ra[] = {
+> +		{   0, 500, "mpa" },
+> +		{ 250, 750, "mp" },
+> +	};
+> +	order_test(ARRAY_SIZE(ra), ra, true);
+> +}
+> +
+> +static void order_05(void **state)
+> +{
+> +	struct random_aliases ra[] = {
+> +		{  0, 100, "A" },
+> +		{  0, 100, "B" },
+> +		{  0, 100, "C" },
+> +		{  0, 100, "D" },
+> +	};
+> +	order_test(ARRAY_SIZE(ra), ra, false);
+> +}
+> +
+> +static void order_06(void **state)
+> +{
+> +	struct random_aliases ra[] = {
+> +		{  0, 100, "" },
+> +		{  0, 100, "a" },
+> +		{  0, 100, "aa" },
+> +		{  0, 100, "ab" },
+> +		{  0, 100, "aaa" },
+> +	};
+> +	order_test(ARRAY_SIZE(ra), ra, true);
+> +}
+> +
+> +static int test_bindings_order()
+> +{
+> +	const struct CMUnitTest tests[] = {
+> +		cmocka_unit_test_teardown(order_01, teardown_bindings),
+> +		cmocka_unit_test_teardown(order_02, teardown_bindings),
+> +		cmocka_unit_test_teardown(order_03, teardown_bindings),
+> +		cmocka_unit_test_teardown(order_04, teardown_bindings),
+> +		cmocka_unit_test_teardown(order_05, teardown_bindings),
+> +		cmocka_unit_test_teardown(order_06, teardown_bindings),
+> +	};
+> +
+> +	return cmocka_run_group_tests(tests, NULL, NULL);
+> +}
+> +
+>  int main(void)
+>  {
+>  	int ret = 0;
+> @@ -1755,6 +1960,7 @@ int main(void)
+>  	ret += test_rlookup_binding();
+>  	ret += test_allocate_binding();
+>  	ret += test_get_user_friendly_alias();
+> +	ret += test_bindings_order();
+>  
+>  	return ret;
+>  }
+> -- 
+> 2.42.0
 --
 dm-devel mailing list
 dm-devel@redhat.com
