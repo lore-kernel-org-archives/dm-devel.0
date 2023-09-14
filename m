@@ -1,80 +1,83 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 329B9EEAA52
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 14:53:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B95EAEEAA4E
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 14:53:53 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694703220;
+	s=mimecast20190719; t=1694703232;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=AuEDGKiXOuX7yiiDdTo9Dzig/j1A4/rYULQs9JFTzpQ=;
-	b=JUl3Q6SXZU7bKnF0E5Q3gQjRhXtCH8KzMOf0IlRx5ZGg9lgTqLpII0JQc8LLhpWhUckK5N
-	JS4PoIYdOORtwSk/U463hydwYDjskF7wccFOkenNmKjMYka+tPtVek/ZMu86VUcfEQWITn
-	/5AA1dvjTyO3bCls/fV2YxNs5EaBF98=
+	bh=yhsJu3k9rBZ4WFmqbUhG9moC0n1mhUyTkCJqcNWOOU4=;
+	b=RXNBUlQz+kpgnFfMQAFsQ+DY97mSsxibUzuZNNM6MpwGTnYBmlKmmFwWReF/czPVftm1FX
+	rBG9p1bHaZjZKugm7PbO60MZ4ArskZXxzSnpTXQdtBGALvRVLd7KcnqFD/J7t7nQ3dKp3b
+	KluO0qnDtSsWQ11KowQqEzpSmXMtdL8=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-322-AqbigfDqN8Wsw9RS1XRa_g-1; Thu, 14 Sep 2023 10:53:36 -0400
-X-MC-Unique: AqbigfDqN8Wsw9RS1XRa_g-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-401-Z-_Rvn5eNOK4RUjyCoX0iQ-1; Thu, 14 Sep 2023 10:53:49 -0400
+X-MC-Unique: Z-_Rvn5eNOK4RUjyCoX0iQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 569BA102F230;
-	Thu, 14 Sep 2023 14:53:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3DA8B185A78E;
+	Thu, 14 Sep 2023 14:53:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 44BC921B2413;
-	Thu, 14 Sep 2023 14:53:34 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id ECA9E1678B;
+	Thu, 14 Sep 2023 14:53:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 210C919466E8;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4D81A19466F1;
 	Thu, 14 Sep 2023 14:53:19 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 01FAC19466E7
+ ESMTP id 8FFEE19466E7
  for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 14:53:18 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id CA32A21B2419; Thu, 14 Sep 2023 14:53:12 +0000 (UTC)
+ id 78ADF28AC; Thu, 14 Sep 2023 14:53:13 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C396521B2417
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 14:53:12 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 711947B62
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 14:53:13 +0000 (UTC)
 Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.81])
+ (us-smtp-delivery-1.mimecast.com [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A507C81D7A6
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 14:53:12 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5308A81D88E
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 14:53:13 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-169-NUmF7QRKMuySosrMLsLPOQ-1; Thu,
- 14 Sep 2023 10:53:08 -0400
-X-MC-Unique: NUmF7QRKMuySosrMLsLPOQ-1
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-186-83iudY09OtGOqYO-xqH5dg-1; Thu,
+ 14 Sep 2023 10:53:09 -0400
+X-MC-Unique: 83iudY09OtGOqYO-xqH5dg-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 550EA1F88F;
- Thu, 14 Sep 2023 14:53:07 +0000 (UTC)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id 2B3C721862;
+ Thu, 14 Sep 2023 14:53:08 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 24480139DB;
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id E73F1139DB;
  Thu, 14 Sep 2023 14:53:07 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id OfsSB1MeA2UHAgAAMHmgww
+ by imap2.suse-dmz.suse.de with ESMTPSA id gCa0NlMeA2UHAgAAMHmgww
  (envelope-from <mwilck@suse.com>); Thu, 14 Sep 2023 14:53:07 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
  Benjamin Marzinski <bmarzins@redhat.com>
-Date: Thu, 14 Sep 2023 16:51:28 +0200
-Message-ID: <20230914145131.15165-1-mwilck@suse.com>
+Date: Thu, 14 Sep 2023 16:51:31 +0200
+Message-ID: <20230914145131.15165-4-mwilck@suse.com>
+In-Reply-To: <20230914145131.15165-1-mwilck@suse.com>
+References: <20230914145131.15165-1-mwilck@suse.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -83,9 +86,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: [dm-devel] [PATCH v3 00/38] multipath-tools: user-friendly names
- rework
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: [dm-devel] [PATCH v3 38/38] libmultipath: avoid -Warray-bounds
+ error in uatomic operations
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -100,7 +103,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: suse.com
 Content-Type: text/plain; charset="us-ascii"
@@ -108,160 +111,159 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-This patch set contains a two-step rework of the user-friendly
-names code. Patch 2-5 change the current code such that it (well, almost)
-never attempts to use an alias that is currently in use by another
-map. We already have some checks for this, but they don't cover all
-possible scenarios. Patch 6-10 add some units tests for
-get_user_friendly_alias(), and restructure the unit tests somewhat.
+The use of uatomic_xchg() in alias.c causes a -Warray-bounds error
+on distributions using gcc 12, such as Fedora 37. This is a similar
+error to 2534c4f ("libmultipath: avoid -Warray-bounds error with gcc
+12 and musl libc"). This happens only with liburcu 0.13 and earlier,
+and only with certain gcc versions. See liburcu commit 835b9ab
+("Fix: x86 and s390 uatomic: __hp() macro warning with gcc 11").
 
-In the second part of the set, Patch 11-18 restructure the alias code such
-that we don't read the bindings file every time an alias is
-requested. Instead, we just use a memory cache of the current bindings, and
-re-write the file only if a new binding is added.  This reduces the number of
-system calls and simplifies the code.
+Enhance the fix for 2534c4f by a adding a workaround for uatomic_xchg(),
+and introduce the macro URCU_VERSION (originally only used for multipathd)
+globally.
 
-Patch 19 applies the changes to the unit tests that become
-necessary because of the previous patches. Patch 20/21 add another
-optimization for the alias_already_taken() test.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ Makefile.inc         |  2 +-
+ create-config.mk     |  5 +++++
+ libmultipath/alias.c |  5 +++--
+ libmultipath/lock.h  | 23 ++++++++++++++---------
+ multipathd/Makefile  |  2 --
+ 5 files changed, 23 insertions(+), 14 deletions(-)
 
-Patch 22-23 introduce a solution for the problem discussed in the review
-of v1 of this patch set, the partial ordering of aliases in memory.
-By sorting first be string length, and then alphabetically, we obtain
-a total "numeric" ordering for every given alias prefix. This ordering
-allows simplifying the search for "gaps" in the list of aliases, which
-is done in patch 24-26.
-
-As discussed in the opening letter of the v1 patch series, the patch
-series has the effect that the bindings file is not re-read every time
-a new binding is attempted. Patch 28 and 29 introduce a notification
-mechanism for multipathd which causes the bindings to be re-read
-when the bindings file has been updated.
-
-Patch 30-36 are a series of minor fixes for the build system and the
-documentation. Most imporantly, the man pages will now show the correct
-paths for various built-in defaults.
-
-Finally, patch 37 (which is deliberately kept separate and at the end of the
-series, in order to allow downstream integrators to skip it) eventually
-deprecates the runtime configuration options for bindings_file, wwids_file,
-and prkeys_file.
-
-Patch 1 is a separate, independent fix.
-
-NOTE: my main test bed is currently unavailable, therefore this set has
-yet reveived less testing than usual. I have tested this to the extent
-I currently can, but further testing will be highly appreciated.
-
-To avoid spam, I'm not re-posting the patches that already got Ben's
-"Reviewed-by:" tag.
-
-Reviews and comments welcome.
-
-# Changes v1 -> v2:
-
-* Patch 03: skipped superfluous test for the case where a map already
-  has an alias (Ben Marzinski)
-* Patch 07: removed invalid tests for the case where the already assigned
-  alias of a given map is assigned to a different wwid (Ben Marzinski)
-* Patch 09/10: moved some macro-usage fixes from 10 to 09
-* Patch 18:
-  - skipped superfluous tests like in patch 03 (Ben Marzinski)
-  - fix bug in get_user_friendly_wwid() (Ben Marzinski)
-* Added patch 22 ff. (see above).
-
-# Changes v2 -> v3:
-
-* Patch 26: avoid negative array index (Ben Marzinski)
-* Patch 27:
-  - assign old_bindings under bindings_mutex (Ben Marzinski)
-  - move condlog after timestamp update in update_bindings_file() (Ben, me)
-  - add read_bindings_file() call in get_user_friendly_wwid() (Ben)
-  - fix return value check of fread() (Ben)
-  - remove superfluous test in _read_bindings_file() (Ben)
-  - avoid compilation error on Jessie for initialization of struct timespec (me)
-* Patch 38: added to fix a compilation error with gcc 12 and liburcu < 0.14
-
-Martin Wilck (38):
-  libmultipath: sysfs_set_scsi_tmo: do nothing for ACT_DRY_RUN
-  libmultipath: add alias_already_taken()
-  libmultipath: unify use_existing_alias() and get_user_friendly_alias()
-  libmultipath: never allocate an alias that's already taken
-  libmultipath: lookup_binding: add comment about the algorithm
-  multipath-tools test: simplify debugging for condlog mismatch
-  multipath-tools tests: add tests for get_user_friendly_alias()
-  multipath-tools test: consistent use of macros in alias test
-  multipath-tools tests: convert mock_{failed,used}_alias to macros
-  multipath-tools test: use mock_bindings_file() consistently
-  libmultipath: add global variable for current bindings
-  libmultipath: rename fix_bindings_file() to update_bindings_file()
-  libmultipath: alias.c: move bindings related code up
-  libmultipath: update_bindings_file: take filename argument
-  libmultipath: update_bindings_file: use a single write()
-  libmultipath: update_bindings_file: don't log temp file name
-  libmultipath: alias.c: factor out read_binding()
-  libmultipath: keep bindings in memory
-  multipath-tools tests: fix alias tests
-  libmultipath: dm_get_uuid(): return emtpy UUID for non-existing maps
-  libmultipath: adapt to new semantics of dm_get_uuid()
-  libmultipath: sort aliases by length and strcmp
-  multipath-tools tests: fix alias test after sort order change
-  libmultipath: simplify get_free_id() assuming total ordering
-  multipath-tools tests: adapt alias tests for total ordering
-  multipath-tools tests: add test for ordering of bindings
-  multipathd: watch bindings file with inotify + timestamp
-  multipath-tools tests: mock pthread_mutex_{lock,unlock}
-  multipath-tools Makefile: sanitize paths for configuration files
-  multipath-tools: add compile time configuration for "/etc/multipath"
-  multipath-tools man pages: generate with correct paths
-  libdmmp/Makefile: fix bug in install section
-  multipath-tools: README.md: improve documentation for compile-time
-    options
-  libmultipath: print built-in values for deprecated options
-  multipath: add a missing newline
-  multipath-tools: allow prefixes with and w/o trailing slash
-  libmultipath: deprecate bindings_file, wwids_file, prkeys_file
-  libmultipath: avoid -Warray-bounds error in uatomic operations
-
- .gitignore                                    |    4 +
- Makefile.inc                                  |   45 +-
- README.md                                     |   38 +-
- create-config.mk                              |    5 +
- libdmmp/Makefile                              |    2 +-
- libmultipath/alias.c                          | 1043 +++++++-----
- libmultipath/alias.h                          |   14 +-
- libmultipath/config.c                         |   18 -
- libmultipath/config.h                         |    3 -
- libmultipath/configure.c                      |    7 +-
- libmultipath/defaults.h                       |    7 +-
- libmultipath/devmapper.c                      |   10 +-
- libmultipath/dict.c                           |   55 +-
- libmultipath/discovery.c                      |    3 +
- libmultipath/libmultipath.version             |    4 +-
- libmultipath/lock.h                           |   23 +-
- libmultipath/prkey.c                          |    7 +-
- libmultipath/prkey.h                          |    7 +-
- libmultipath/propsel.c                        |   20 +-
- libmultipath/wwids.c                          |   18 +-
- mpathpersist/Makefile                         |    5 +-
- .../{mpathpersist.8 => mpathpersist.8.in}     |    2 +-
- multipath/Makefile                            |   13 +-
- multipath/main.c                              |    6 +-
- multipath/{multipath.8 => multipath.8.in}     |   10 +-
- .../{multipath.conf.5 => multipath.conf.5.in} |   44 +-
- multipathd/Makefile                           |   11 +-
- multipathd/main.c                             |    1 +
- multipathd/{multipathd.8 => multipathd.8.in}  |    8 +-
- multipathd/uxlsnr.c                           |   29 +-
- tests/Makefile                                |    1 +
- tests/alias.c                                 | 1491 +++++++++++++----
- tests/test-log.c                              |    4 +-
- 33 files changed, 1983 insertions(+), 975 deletions(-)
- rename mpathpersist/{mpathpersist.8 => mpathpersist.8.in} (99%)
- rename multipath/{multipath.8 => multipath.8.in} (97%)
- rename multipath/{multipath.conf.5 => multipath.conf.5.in} (98%)
- rename multipathd/{multipathd.8 => multipathd.8.in} (97%)
-
+diff --git a/Makefile.inc b/Makefile.inc
+index 6e384e6..04bfa56 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -95,7 +95,7 @@ OPTFLAGS	:= -O2 -g $(STACKPROT) --param=ssp-buffer-size=4
+ WARNFLAGS	:= -Werror -Wall -Wextra -Wformat=2 $(WFORMATOVERFLOW) -Werror=implicit-int \
+ 		  -Werror=implicit-function-declaration -Werror=format-security \
+ 		  $(WNOCLOBBERED) -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS) $(W_URCU_TYPE_LIMITS)
+-CPPFLAGS	:= $(FORTIFY_OPT) $(CPPFLAGS) \
++CPPFLAGS	:= $(FORTIFY_OPT) $(CPPFLAGS) $(D_URCU_VERSION) \
+ 		   -DBIN_DIR=\"$(bindir)\" -DMULTIPATH_DIR=\"$(plugindir)\" \
+ 		   -DRUNTIME_DIR=\"$(runtimedir)\" -DCONFIG_DIR=\"$(configdir)\" \
+ 		   -DDEFAULT_CONFIGFILE=\"$(configfile)\" -DSTATE_DIR=\"$(statedir)\" \
+diff --git a/create-config.mk b/create-config.mk
+index d125597..4d318b9 100644
+--- a/create-config.mk
++++ b/create-config.mk
+@@ -73,6 +73,10 @@ TEST_URCU_TYPE_LIMITS = $(shell \
+ 		$(CC) -c -Werror=type-limits -o /dev/null -xc - 2>/dev/null  \
+ 	|| echo -Wno-type-limits )
+ 
++URCU_VERSION = $(shell \
++	$(PKG_CONFIG) --modversion liburcu 2>/dev/null | \
++			awk -F. '{ printf("-DURCU_VERSION=0x%06x", 256 * ( 256 * $$1 + $$2) + $$3); }')
++
+ DEFINES :=
+ 
+ ifneq ($(call check_func,dm_task_no_flush,$(devmapper_incdir)/libdevmapper.h),0)
+@@ -168,6 +172,7 @@ $(TOPDIR)/config.mk:	$(multipathdir)/autoconfig.h
+ 	@echo creating $@
+ 	@echo "FPIN_SUPPORT := $(FPIN_SUPPORT)" >$@
+ 	@echo "FORTIFY_OPT := $(FORTIFY_OPT)" >>$@
++	@echo "D_URCU_VERSION := $(call URCU_VERSION)" >>$@
+ 	@echo "SYSTEMD := $(SYSTEMD)" >>$@
+ 	@echo "ANA_SUPPORT := $(ANA_SUPPORT)" >>$@
+ 	@echo "STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)" >>$@
+diff --git a/libmultipath/alias.c b/libmultipath/alias.c
+index e5d3f15..74431f3 100644
+--- a/libmultipath/alias.c
++++ b/libmultipath/alias.c
+@@ -24,6 +24,7 @@
+ #include "devmapper.h"
+ #include "strbuf.h"
+ #include "time-util.h"
++#include "lock.h"
+ 
+ /*
+  * significant parts of this file were taken from iscsi-bindings.c of the
+@@ -300,7 +301,7 @@ void handle_bindings_file_inotify(const struct inotify_event *event)
+ 	pthread_mutex_unlock(&timestamp_mutex);
+ 
+ 	if (changed) {
+-		uatomic_xchg(&bindings_file_changed, 1);
++		uatomic_xchg_int(&bindings_file_changed, 1);
+ 		condlog(3, "%s: bindings file must be re-read, new timestamp: %ld.%06ld",
+ 			__func__, (long)ts.tv_sec, (long)ts.tv_nsec / 1000);
+ 	} else
+@@ -775,7 +776,7 @@ static int _read_bindings_file(const struct config *conf, Bindings *bindings,
+ 	int rc = 0, ret, fd;
+ 	FILE *file;
+ 	struct stat st;
+-	int has_changed = uatomic_xchg(&bindings_file_changed, 0);
++	int has_changed = uatomic_xchg_int(&bindings_file_changed, 0);
+ 
+ 	if (!force) {
+ 		if (!has_changed) {
+diff --git a/libmultipath/lock.h b/libmultipath/lock.h
+index 9814be7..ac80d1d 100644
+--- a/libmultipath/lock.h
++++ b/libmultipath/lock.h
+@@ -13,17 +13,22 @@ struct mutex_lock {
+ 	int waiters; /* uatomic access only */
+ };
+ 
+-#if !defined(__GLIBC__) && defined(__GNUC__) && __GNUC__ == 12
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Warray-bounds"
+-#endif
+-
+ static inline void init_lock(struct mutex_lock *a)
+ {
+ 	pthread_mutex_init(&a->mutex, NULL);
+ 	uatomic_set(&a->waiters, 0);
+ }
+ 
++#if defined(__GNUC__) && __GNUC__ == 12 && URCU_VERSION < 0xe00
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Warray-bounds"
++#endif
++
++static inline int uatomic_xchg_int(int *ptr, int val)
++{
++	return uatomic_xchg(ptr, val);
++}
++
+ static inline void lock(struct mutex_lock *a)
+ {
+ 	uatomic_inc(&a->waiters);
+@@ -31,6 +36,10 @@ static inline void lock(struct mutex_lock *a)
+ 	uatomic_dec(&a->waiters);
+ }
+ 
++#if defined(__GNUC__) && __GNUC__ == 12 && URCU_VERSION < 0xe00
++#pragma GCC diagnostic pop
++#endif
++
+ static inline int trylock(struct mutex_lock *a)
+ {
+ 	return pthread_mutex_trylock(&a->mutex);
+@@ -51,10 +60,6 @@ static inline bool lock_has_waiters(struct mutex_lock *a)
+ 	return (uatomic_read(&a->waiters) > 0);
+ }
+ 
+-#if !defined(__GLIBC__) && defined(__GNUC__) && __GNUC__ == 12
+-#pragma GCC diagnostic pop
+-#endif
+-
+ #define lock_cleanup_pop(a) pthread_cleanup_pop(1)
+ 
+ void cleanup_lock (void * data);
+diff --git a/multipathd/Makefile b/multipathd/Makefile
+index cdba3db..0ba6ecb 100644
+--- a/multipathd/Makefile
++++ b/multipathd/Makefile
+@@ -5,8 +5,6 @@ CLI      := multipathc
+ MANPAGES := multipathd.8
+ 
+ CPPFLAGS += -I$(multipathdir) -I$(mpathutildir) -I$(mpathpersistdir) -I$(mpathcmddir) -I$(thirdpartydir) \
+-	$(shell $(PKG_CONFIG) --modversion liburcu 2>/dev/null | \
+-		awk -F. '{ printf("-DURCU_VERSION=0x%06x", 256 * ( 256 * $$1 + $$2) + $$3); }') \
+ 	-DBINDIR='"$(bindir)"' $(SYSTEMD_CPPFLAGS)
+ 
+ #
 -- 
 2.42.0
 
