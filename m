@@ -1,96 +1,98 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B4855EEAA65
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:20:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6D86EEEAA65
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:23:25 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694719212;
+	s=mimecast20190719; t=1694719404;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=x8LOPTPkmbxHJLdzlXTlGP2PLEHWzPLwXse1QO+Dquw=;
-	b=gIiTsasX4WEZonguKvL9PdxOkbI5eB1BfyfpIdeDbm07P7h9hqFT8qXkUg+RefjVNBcZxq
-	WJew8fE8JeftBGbzdjVUV/HOmgxC/6IvmOqAo5Qt/2UPMPFMsStV9KmwIVnN4ENidme1Ps
-	Ty1h29VI+3IPwCHWrwPAwoQE2eX2BFQ=
+	bh=6rxWdzCJRn9qZ+p9HmBpdZ9wvTX3iZ/kcqpUPYHHvXI=;
+	b=U4UikbSi7XCe/iL9TkrBTSriKZ3SSxW+dr9UdWooWZcTolDIT/vdDvqPYA2s+Xub2XSD2F
+	bMN8Jkoti5iW9AlroNV/MEDxtfAuqckkLSy4G62QE3W/F6OYBd0zq3lQc6qFMjSfhTg90+
+	46DatrFb1IBfpNyQ7eY77dENRO6LtHg=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-628-OK0NNBPkOaGE4IqtiaOmhw-1; Thu, 14 Sep 2023 15:20:09 -0400
-X-MC-Unique: OK0NNBPkOaGE4IqtiaOmhw-1
+ us-mta-17-sud6ZIS3NeW7NEjLZb3O5w-1; Thu, 14 Sep 2023 15:19:22 -0400
+X-MC-Unique: sud6ZIS3NeW7NEjLZb3O5w-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8DB408057BF;
-	Thu, 14 Sep 2023 19:20:06 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DE125805578;
+	Thu, 14 Sep 2023 19:19:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6D5E210EA0;
-	Thu, 14 Sep 2023 19:20:06 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CA70A10EA0;
+	Thu, 14 Sep 2023 19:19:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D418E19451D1;
-	Thu, 14 Sep 2023 19:19:05 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5A0A619452CA;
+	Thu, 14 Sep 2023 19:17:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id EAF3B19451F3
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:18:02 +0000 (UTC)
+ ESMTP id 558271946A49
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:17:32 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id CBD6D9A; Thu, 14 Sep 2023 19:17:57 +0000 (UTC)
+ id 31BEA1054FC1; Thu, 14 Sep 2023 19:17:27 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C2BFD10EA0
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:57 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 932B1800B23
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:57 +0000 (UTC)
-Received: from mail-qv1-f52.google.com (mail-qv1-f52.google.com
- [209.85.219.52]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 29CD81054FC3
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:27 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
+ [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0142C856A50
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:17:27 +0000 (UTC)
+Received: from mail-qv1-f46.google.com (mail-qv1-f46.google.com
+ [209.85.219.46]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-553-ZanKmhQ4On2MOX8ems_2kg-1; Thu, 14 Sep 2023 15:17:55 -0400
-X-MC-Unique: ZanKmhQ4On2MOX8ems_2kg-1
-Received: by mail-qv1-f52.google.com with SMTP id
- 6a1803df08f44-6561fc267dbso5358916d6.2
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:17:55 -0700 (PDT)
+ us-mta-414-JZjGVglbNPiAOxHdCupV3Q-1; Thu, 14 Sep 2023 15:17:25 -0400
+X-MC-Unique: JZjGVglbNPiAOxHdCupV3Q-1
+Received: by mail-qv1-f46.google.com with SMTP id
+ 6a1803df08f44-64c2e2572f7so7924826d6.1
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:17:25 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1694719074; x=1695323874;
+ d=1e100.net; s=20230601; t=1694719044; x=1695323844;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=P14fRy5JyxBtNn7KYalA3yuce8srVTARuO/kvI3SeNY=;
- b=LYGEo++nnaZWxFhSRFUeBItfb6JICPABsmOfjI3vjp/jUbkmFZpjfC8QDpeiaj6BQx
- PNcrPgI3p8BFMeJ79/stXD5qn8gbze9juTvjxIn4W5kD9YSckpNo+wvr/ea8p6ZZaWoz
- xYgswxj4n7H4jyjNIB0EzowVmnSAKONxIFn4z3acfzcZ2BF4UFNGoxWXSf8pHzUj+0W9
- Ao1+b51qhAxdTex6UXiiParJBBxMVIvNaaiFKarCTqhz+enu9cRuf4a/DqPGITtPKzy8
- 9DjIY3FMb1C42de3xknIT5yOy48cB9eKi+xofAjvtyJroZqEODhGo4r92GR2S99XKBEW
- d64w==
-X-Gm-Message-State: AOJu0YwqJLrrvxTYQov7DIYuJBPjly0IYFEEO+NM/GuZTnoTtrplVAwP
- 9Veg3kiGy5IGEUGHdCx5zm4vkHJW43vVwz9Q94dD8b+0iUmffeeAi30a1mJVb233syeTNqw5SX7
- csTOv9nhnm+SCZPpdEI44954VzVGXNAZ1BfPwTgnE7OinUQJCMbisl8qhhOdV3YGNqt6I20QE
-X-Google-Smtp-Source: AGHT+IGx5wdmuyW9xpJuqINZVOfI6mQ5K8rslVPn/7tQTVn067wvUA49CZtU5fMcjIDxh11lOFY2LQ==
-X-Received: by 2002:a0c:b399:0:b0:63f:7aef:84e8 with SMTP id
- t25-20020a0cb399000000b0063f7aef84e8mr5645176qve.30.1694719073106; 
- Thu, 14 Sep 2023 12:17:53 -0700 (PDT)
+ bh=ClaYQkaavi8xTc53G0Qmv7LXKFeMMIYf//1fM4lz8Bg=;
+ b=DQ+uOsknQRSlMBvl0ggYVFYkISylTZLrTzo2wWv9/HHJRE73gWLZmymxHcDsi+AOzM
+ 2upVoJJeZ/FapWf9uK5byti3q+5QLnHAPWUF+HEsOOSJuOtjE5D8BL4nI8RRcshP4i7n
+ W8UnNRfptgHdx5869l5UvuUfpKILIhGktluatqUNq9DyuyysGAAYZwVhGTPd6sObiIfQ
+ EU7WyugzwL0X54iBViydSe/ZDmeCCXBMbX2pUumOX6p4aijudH+bENdjClDbL3w4uGcF
+ I4dbX3MZscMffHUlJbfdD80htZv88D1MzSqGJYsq2HBWaTjK3iG4zK8MDa/bNvmxsr3m
+ HuAA==
+X-Gm-Message-State: AOJu0YzFbjsdULxFuOW36v0reDyfqtlT4WZ3wGDqANx+QdbyapdUuqDp
+ agT1ROeApa77jO+f+e4VS9DN2BCrHbcIuDJ6Bclm1kPxa8A99o5SyM5ogXIZzKT0exEv7dSFxe7
+ juppH9UDo7+ZpydSXZMI1rF2NBzYPqw7ozpY17YUpP4Nqjbki0ttXSQXk8RZQiQSTR1vAo1Xg
+X-Google-Smtp-Source: AGHT+IEzlka4UZS1KehJy4Rn9dmAOVUJYBULLTa7+QwBrGfXF6LuSoaM1JoMMUW+hoKJG9kyp84xNw==
+X-Received: by 2002:a05:6214:11a7:b0:63c:fbdd:4592 with SMTP id
+ u7-20020a05621411a700b0063cfbdd4592mr7471603qvv.31.1694719044024; 
+ Thu, 14 Sep 2023 12:17:24 -0700 (PDT)
 Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net.
  [68.160.141.91]) by smtp.gmail.com with ESMTPSA id
- r19-20020a0ccc13000000b0064f91d410b9sm666327qvk.128.2023.09.14.12.17.51
+ c20-20020a05620a11b400b0076f13783743sm673584qkk.92.2023.09.14.12.17.23
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 14 Sep 2023 12:17:52 -0700 (PDT)
+ Thu, 14 Sep 2023 12:17:23 -0700 (PDT)
 From: Mike Snitzer <snitzer@kernel.org>
 To: dm-devel@redhat.com
-Date: Thu, 14 Sep 2023 15:16:34 -0400
-Message-Id: <20230914191635.39805-39-snitzer@kernel.org>
+Date: Thu, 14 Sep 2023 15:16:20 -0400
+Message-Id: <20230914191635.39805-25-snitzer@kernel.org>
 In-Reply-To: <20230914191635.39805-1-snitzer@kernel.org>
 References: <20230914191635.39805-1-snitzer@kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: [dm-devel] [PATCH v3 38/39] dm vdo: add the top-level DM target
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: [dm-devel] [PATCH v3 24/39] dm vdo: add the compressed block bin
+ packer
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -113,12 +115,11 @@ Content-Transfer-Encoding: 7bit
 
 From: Matthew Sakai <msakai@redhat.com>
 
-The dm-vdo target provides inline deduplication, compression,
-zero-block elimination, and thin provisioning. By layering it with
-other device mapper targets, it can add these features to any storage
-stack. It can also provide a common deduplication pool for groups of
-targets. The vdo target does not protect against data corruption,
-relying instead on integrity protection of the storage below it.
+When blocks do not deduplicate, vdo will attempt to compress them. Up
+to 14 compressed blocks may be packed into a single data block (this
+limitation is imposed by the block map). The packer implements a
+simple best-fit packing algorithm and also manages the formatting and
+writing of compressed blocks when bins fill.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
@@ -126,3005 +127,944 @@ Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
 Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
 Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-Co-developed-by: Bruce Johnston <bjohnsto@redhat.com>
-Signed-off-by: Bruce Johnston <bjohnsto@redhat.com>
-Co-developed-by: Ken Raeburn <raeburn@redhat.com>
-Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-vdo-target.c | 2982 ++++++++++++++++++++++++++++++++++++
- 1 file changed, 2982 insertions(+)
- create mode 100644 drivers/md/dm-vdo-target.c
+ drivers/md/dm-vdo/packer.c | 794 +++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/packer.h | 123 ++++++
+ 2 files changed, 917 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/packer.c
+ create mode 100644 drivers/md/dm-vdo/packer.h
 
-diff --git a/drivers/md/dm-vdo-target.c b/drivers/md/dm-vdo-target.c
+diff --git a/drivers/md/dm-vdo/packer.c b/drivers/md/dm-vdo/packer.c
 new file mode 100644
-index 000000000000..6b66542779d3
+index 000000000000..03d2c77931b2
 --- /dev/null
-+++ b/drivers/md/dm-vdo-target.c
-@@ -0,0 +1,2982 @@
++++ b/drivers/md/dm-vdo/packer.c
+@@ -0,0 +1,794 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
++#include "packer.h"
++
 +#include <linux/atomic.h>
-+#include <linux/bitops.h>
-+#include <linux/completion.h>
-+#include <linux/delay.h>
-+#include <linux/device-mapper.h>
-+#include <linux/module.h>
-+#include <linux/mutex.h>
-+#include <linux/spinlock.h>
++#include <linux/blkdev.h>
 +
-+#include "dm-vdo/admin-state.h"
-+#include "dm-vdo/block-map.h"
-+#include "dm-vdo/completion.h"
-+#include "dm-vdo/constants.h"
-+#include "dm-vdo/data-vio.h"
-+#include "dm-vdo/dedupe.h"
-+#include "dm-vdo/dump.h"
-+#include "dm-vdo/encodings.h"
-+#include "dm-vdo/errors.h"
-+#include "dm-vdo/flush.h"
-+#include "dm-vdo/io-submitter.h"
-+#include "dm-vdo/logger.h"
-+#include "dm-vdo/memory-alloc.h"
-+#include "dm-vdo/message-stats.h"
-+#include "dm-vdo/pool-sysfs.h"
-+#include "dm-vdo/recovery-journal.h"
-+#include "dm-vdo/repair.h"
-+#include "dm-vdo/slab-depot.h"
-+#include "dm-vdo/status-codes.h"
-+#include "dm-vdo/string-utils.h"
-+#include "dm-vdo/thread-device.h"
-+#include "dm-vdo/thread-registry.h"
-+#include "dm-vdo/types.h"
-+#include "dm-vdo/uds-sysfs.h"
-+#include "dm-vdo/vdo.h"
-+#include "dm-vdo/vio.h"
++#include "logger.h"
++#include "memory-alloc.h"
++#include "permassert.h"
++#include "string-utils.h"
 +
-+#define	CURRENT_VERSION "8.3.0.64"
++#include "admin-state.h"
++#include "completion.h"
++#include "constants.h"
++#include "data-vio.h"
++#include "dedupe.h"
++#include "encodings.h"
++#include "io-submitter.h"
++#include "physical-zone.h"
++#include "status-codes.h"
++#include "vdo.h"
++#include "vio.h"
 +
-+enum {
-+	GROW_LOGICAL_PHASE_START,
-+	GROW_LOGICAL_PHASE_GROW_BLOCK_MAP,
-+	GROW_LOGICAL_PHASE_END,
-+	GROW_LOGICAL_PHASE_ERROR,
-+	GROW_PHYSICAL_PHASE_START,
-+	GROW_PHYSICAL_PHASE_COPY_SUMMARY,
-+	GROW_PHYSICAL_PHASE_UPDATE_COMPONENTS,
-+	GROW_PHYSICAL_PHASE_USE_NEW_SLABS,
-+	GROW_PHYSICAL_PHASE_END,
-+	GROW_PHYSICAL_PHASE_ERROR,
-+	LOAD_PHASE_START,
-+	LOAD_PHASE_STATS,
-+	LOAD_PHASE_LOAD_DEPOT,
-+	LOAD_PHASE_MAKE_DIRTY,
-+	LOAD_PHASE_PREPARE_TO_ALLOCATE,
-+	LOAD_PHASE_SCRUB_SLABS,
-+	LOAD_PHASE_DATA_REDUCTION,
-+	LOAD_PHASE_FINISHED,
-+	LOAD_PHASE_DRAIN_JOURNAL,
-+	LOAD_PHASE_WAIT_FOR_READ_ONLY,
-+	PRE_LOAD_PHASE_START,
-+	PRE_LOAD_PHASE_LOAD_COMPONENTS,
-+	PRE_LOAD_PHASE_END,
-+	PREPARE_GROW_PHYSICAL_PHASE_START,
-+	RESUME_PHASE_START,
-+	RESUME_PHASE_ALLOW_READ_ONLY_MODE,
-+	RESUME_PHASE_DEDUPE,
-+	RESUME_PHASE_DEPOT,
-+	RESUME_PHASE_JOURNAL,
-+	RESUME_PHASE_BLOCK_MAP,
-+	RESUME_PHASE_LOGICAL_ZONES,
-+	RESUME_PHASE_PACKER,
-+	RESUME_PHASE_FLUSHER,
-+	RESUME_PHASE_DATA_VIOS,
-+	RESUME_PHASE_END,
-+	SUSPEND_PHASE_START,
-+	SUSPEND_PHASE_PACKER,
-+	SUSPEND_PHASE_DATA_VIOS,
-+	SUSPEND_PHASE_DEDUPE,
-+	SUSPEND_PHASE_FLUSHES,
-+	SUSPEND_PHASE_LOGICAL_ZONES,
-+	SUSPEND_PHASE_BLOCK_MAP,
-+	SUSPEND_PHASE_JOURNAL,
-+	SUSPEND_PHASE_DEPOT,
-+	SUSPEND_PHASE_READ_ONLY_WAIT,
-+	SUSPEND_PHASE_WRITE_SUPER_BLOCK,
-+	SUSPEND_PHASE_END,
-+};
-+
-+static const char * const ADMIN_PHASE_NAMES[] = {
-+	"GROW_LOGICAL_PHASE_START",
-+	"GROW_LOGICAL_PHASE_GROW_BLOCK_MAP",
-+	"GROW_LOGICAL_PHASE_END",
-+	"GROW_LOGICAL_PHASE_ERROR",
-+	"GROW_PHYSICAL_PHASE_START",
-+	"GROW_PHYSICAL_PHASE_COPY_SUMMARY",
-+	"GROW_PHYSICAL_PHASE_UPDATE_COMPONENTS",
-+	"GROW_PHYSICAL_PHASE_USE_NEW_SLABS",
-+	"GROW_PHYSICAL_PHASE_END",
-+	"GROW_PHYSICAL_PHASE_ERROR",
-+	"LOAD_PHASE_START",
-+	"LOAD_PHASE_STATS",
-+	"LOAD_PHASE_LOAD_DEPOT",
-+	"LOAD_PHASE_MAKE_DIRTY",
-+	"LOAD_PHASE_PREPARE_TO_ALLOCATE",
-+	"LOAD_PHASE_SCRUB_SLABS",
-+	"LOAD_PHASE_DATA_REDUCTION",
-+	"LOAD_PHASE_FINISHED",
-+	"LOAD_PHASE_DRAIN_JOURNAL",
-+	"LOAD_PHASE_WAIT_FOR_READ_ONLY",
-+	"PRE_LOAD_PHASE_START",
-+	"PRE_LOAD_PHASE_LOAD_COMPONENTS",
-+	"PRE_LOAD_PHASE_END",
-+	"PREPARE_GROW_PHYSICAL_PHASE_START",
-+	"RESUME_PHASE_START",
-+	"RESUME_PHASE_ALLOW_READ_ONLY_MODE",
-+	"RESUME_PHASE_DEDUPE",
-+	"RESUME_PHASE_DEPOT",
-+	"RESUME_PHASE_JOURNAL",
-+	"RESUME_PHASE_BLOCK_MAP",
-+	"RESUME_PHASE_LOGICAL_ZONES",
-+	"RESUME_PHASE_PACKER",
-+	"RESUME_PHASE_FLUSHER",
-+	"RESUME_PHASE_DATA_VIOS",
-+	"RESUME_PHASE_END",
-+	"SUSPEND_PHASE_START",
-+	"SUSPEND_PHASE_PACKER",
-+	"SUSPEND_PHASE_DATA_VIOS",
-+	"SUSPEND_PHASE_DEDUPE",
-+	"SUSPEND_PHASE_FLUSHES",
-+	"SUSPEND_PHASE_LOGICAL_ZONES",
-+	"SUSPEND_PHASE_BLOCK_MAP",
-+	"SUSPEND_PHASE_JOURNAL",
-+	"SUSPEND_PHASE_DEPOT",
-+	"SUSPEND_PHASE_READ_ONLY_WAIT",
-+	"SUSPEND_PHASE_WRITE_SUPER_BLOCK",
-+	"SUSPEND_PHASE_END",
++static const struct version_number COMPRESSED_BLOCK_1_0 = {
++	.major_version = 1,
++	.minor_version = 0,
 +};
 +
 +enum {
-+	/* If we bump this, update the arrays below */
-+	TABLE_VERSION = 4,
++	COMPRESSED_BLOCK_1_0_SIZE = 4 + 4 + (2 * VDO_MAX_COMPRESSION_SLOTS),
 +};
-+
-+/* arrays for handling different table versions */
-+static const u8 REQUIRED_ARGC[] = { 10, 12, 9, 7, 6 };
-+/* pool name no longer used. only here for verification of older versions */
-+static const u8 POOL_NAME_ARG_INDEX[] = { 8, 10, 8 };
-+
-+/*
-+ * Track in-use instance numbers using a flat bit array.
-+ *
-+ * O(n) run time isn't ideal, but if we have 1000 VDO devices in use simultaneously we still only
-+ * need to scan 16 words, so it's not likely to be a big deal compared to other resource usage.
-+ */
-+
-+enum {
-+	/*
-+	 * This minimum size for the bit array creates a numbering space of 0-999, which allows
-+	 * successive starts of the same volume to have different instance numbers in any
-+	 * reasonably-sized test. Changing instances on restart allows vdoMonReport to detect that
-+	 * the ephemeral stats have reset to zero.
-+	 */
-+	BIT_COUNT_MINIMUM = 1000,
-+	/** Grow the bit array by this many bits when needed */
-+	BIT_COUNT_INCREMENT = 100,
-+};
-+
-+struct instance_tracker {
-+	unsigned int bit_count;
-+	unsigned long *words;
-+	unsigned int count;
-+	unsigned int next;
-+};
-+
-+static DEFINE_MUTEX(instances_lock);
-+static struct instance_tracker instances;
 +
 +/**
-+ * free_device_config() - Free a device config created by parse_device_config().
-+ * @config: The config to free.
-+ */
-+static void free_device_config(struct device_config *config)
-+{
-+	if (config == NULL)
-+		return;
-+
-+	if (config->owned_device != NULL)
-+		dm_put_device(config->owning_target, config->owned_device);
-+
-+	UDS_FREE(config->parent_device_name);
-+	UDS_FREE(config->original_string);
-+
-+	/* Reduce the chance a use-after-free (as in BZ 1669960) happens to work. */
-+	memset(config, 0, sizeof(*config));
-+	UDS_FREE(config);
-+}
-+
-+/**
-+ * get_version_number() - Decide the version number from argv.
++ * vdo_get_compressed_block_fragment() - Get a reference to a compressed fragment from a compressed
++ *                                       block.
++ * @mapping_state [in] The mapping state for the look up.
++ * @compressed_block [in] The compressed block that was read from disk.
++ * @fragment_offset [out] The offset of the fragment within a compressed block.
++ * @fragment_size [out] The size of the fragment.
 + *
-+ * @argc: The number of table values.
-+ * @argv: The array of table values.
-+ * @error_ptr: A pointer to return a error string in.
-+ * @version_ptr: A pointer to return the version.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
++ * Return: If a valid compressed fragment is found, VDO_SUCCESS; otherwise, VDO_INVALID_FRAGMENT if
++ *         the fragment is invalid.
 + */
-+static int get_version_number(int argc, char **argv, char **error_ptr, unsigned int *version_ptr)
++int vdo_get_compressed_block_fragment(enum block_mapping_state mapping_state,
++				      struct compressed_block *block,
++				      u16 *fragment_offset,
++				      u16 *fragment_size)
 +{
-+	/* version, if it exists, is in a form of V<n> */
-+	if (sscanf(argv[0], "V%u", version_ptr) == 1) {
-+		if (*version_ptr < 1 || *version_ptr > TABLE_VERSION) {
-+			*error_ptr = "Unknown version number detected";
-+			return VDO_BAD_CONFIGURATION;
-+		}
-+	} else {
-+		/* V0 actually has no version number in the table string */
-+		*version_ptr = 0;
++	u16 compressed_size;
++	u16 offset = 0;
++	unsigned int i;
++	u8 slot;
++	struct version_number version;
++
++	if (!vdo_is_state_compressed(mapping_state))
++		return VDO_INVALID_FRAGMENT;
++
++	version = vdo_unpack_version_number(block->header.version);
++	if (!vdo_are_same_version(version, COMPRESSED_BLOCK_1_0))
++		return VDO_INVALID_FRAGMENT;
++
++	slot = mapping_state - VDO_MAPPING_STATE_COMPRESSED_BASE;
++	if (slot >= VDO_MAX_COMPRESSION_SLOTS)
++		return VDO_INVALID_FRAGMENT;
++
++	compressed_size = __le16_to_cpu(block->header.sizes[slot]);
++	for (i = 0; i < slot; i++) {
++		offset += __le16_to_cpu(block->header.sizes[i]);
++		if (offset >= VDO_COMPRESSED_BLOCK_DATA_SIZE)
++			return VDO_INVALID_FRAGMENT;
 +	}
 +
-+	/*
-+	 * V0 and V1 have no optional parameters. There will always be a parameter for thread
-+	 * config, even if it's a "." to show it's an empty list.
-+	 */
-+	if (*version_ptr <= 1) {
-+		if (argc != REQUIRED_ARGC[*version_ptr]) {
-+			*error_ptr = "Incorrect number of arguments for version";
-+			return VDO_BAD_CONFIGURATION;
-+		}
-+	} else if (argc < REQUIRED_ARGC[*version_ptr]) {
-+		*error_ptr = "Incorrect number of arguments for version";
-+		return VDO_BAD_CONFIGURATION;
-+	}
++	if ((offset + compressed_size) > VDO_COMPRESSED_BLOCK_DATA_SIZE)
++		return VDO_INVALID_FRAGMENT;
 +
-+	if (*version_ptr != TABLE_VERSION) {
-+		uds_log_warning("Detected version mismatch between kernel module and tools kernel: %d, tool: %d",
-+				TABLE_VERSION,
-+				*version_ptr);
-+		uds_log_warning("Please consider upgrading management tools to match kernel.");
-+	}
++	*fragment_offset = offset;
++	*fragment_size = compressed_size;
 +	return VDO_SUCCESS;
 +}
 +
-+/* Free a list of non-NULL string pointers, and then the list itself. */
-+static void free_string_array(char **string_array)
++/**
++ * assert_on_packer_thread() - Check that we are on the packer thread.
++ * @packer: The packer.
++ * @caller: The function which is asserting.
++ */
++static inline void assert_on_packer_thread(struct packer *packer, const char *caller)
 +{
-+	unsigned int offset;
-+
-+	for (offset = 0; string_array[offset] != NULL; offset++)
-+		UDS_FREE(string_array[offset]);
-+	UDS_FREE(string_array);
++	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == packer->thread_id),
++			"%s() called from packer thread", caller);
 +}
 +
-+/*
-+ * Split the input string into substrings, separated at occurrences of the indicated character,
-+ * returning a null-terminated list of string pointers.
++/**
++ * insert_in_sorted_list() - Insert a bin to the list.
++ * @packer: The packer.
++ * @bin: The bin to move to its sorted position.
 + *
-+ * The string pointers and the pointer array itself should both be freed with UDS_FREE() when no
-+ * longer needed. This can be done with vdo_free_string_array (below) if the pointers in the array
-+ * are not changed. Since the array and copied strings are allocated by this function, it may only
-+ * be used in contexts where allocation is permitted.
-+ *
-+ * Empty substrings are not ignored; that is, returned substrings may be empty strings if the
-+ * separator occurs twice in a row.
++ * The list is in ascending order of free space. Since all bins are already in the list, this
++ * actually moves the bin to the correct position in the list.
 + */
-+static int split_string(const char *string, char separator, char ***substring_array_ptr)
++static void insert_in_sorted_list(struct packer *packer, struct packer_bin *bin)
 +{
-+	unsigned int current_substring = 0, substring_count = 1;
-+	const char *s;
-+	char **substrings;
-+	int result;
-+	ptrdiff_t length;
++	struct packer_bin *active_bin;
 +
-+	for (s = string; *s != 0; s++)
-+		if (*s == separator)
-+			substring_count++;
-+
-+	result = UDS_ALLOCATE(substring_count + 1, char *, "string-splitting array", &substrings);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	for (s = string; *s != 0; s++) {
-+		if (*s == separator) {
-+			ptrdiff_t length = s - string;
-+
-+			result = UDS_ALLOCATE(length + 1,
-+					      char,
-+					      "split string",
-+					      &substrings[current_substring]);
-+			if (result != UDS_SUCCESS) {
-+				free_string_array(substrings);
-+				return result;
-+			}
-+			/*
-+			 * Trailing NUL is already in place after allocation; deal with the zero or
-+			 * more non-NUL bytes in the string.
-+			 */
-+			if (length > 0)
-+				memcpy(substrings[current_substring], string, length);
-+			string = s + 1;
-+			current_substring++;
-+			BUG_ON(current_substring >= substring_count);
++	list_for_each_entry(active_bin, &packer->bins, list)
++		if (active_bin->free_space > bin->free_space) {
++			list_move_tail(&bin->list, &active_bin->list);
++			return;
 +		}
-+	}
-+	/* Process final string, with no trailing separator. */
-+	BUG_ON(current_substring != (substring_count - 1));
-+	length = strlen(string);
 +
-+	result = UDS_ALLOCATE(length + 1, char, "split string", &substrings[current_substring]);
-+	if (result != UDS_SUCCESS) {
-+		free_string_array(substrings);
-+		return result;
-+	}
-+	memcpy(substrings[current_substring], string, length);
-+	current_substring++;
-+	/* substrings[current_substring] is NULL already */
-+	*substring_array_ptr = substrings;
-+	return UDS_SUCCESS;
++	list_move_tail(&bin->list, &packer->bins);
 +}
 +
-+/*
-+ * Join the input substrings into one string, joined with the indicated character, returning a
-+ * string. array_length is a bound on the number of valid elements in substring_array, in case it
-+ * is not NULL-terminated.
++/**
++ * make_bin() - Allocate a bin and put it into the packer's list.
++ * @packer: The packer.
 + */
-+static int
-+join_strings(char **substring_array, size_t array_length, char separator, char **string_ptr)
++static int __must_check make_bin(struct packer *packer)
 +{
-+	size_t string_length = 0;
-+	size_t i;
++	struct packer_bin *bin;
 +	int result;
-+	char *output, *current_position;
 +
-+	for (i = 0; (i < array_length) && (substring_array[i] != NULL); i++)
-+		string_length += strlen(substring_array[i]) + 1;
-+
-+	result = UDS_ALLOCATE(string_length, char, __func__, &output);
++	result = UDS_ALLOCATE_EXTENDED(struct packer_bin,
++				       VDO_MAX_COMPRESSION_SLOTS,
++				       struct vio *,
++				       __func__,
++				       &bin);
 +	if (result != VDO_SUCCESS)
 +		return result;
 +
-+	current_position = &output[0];
-+
-+	for (i = 0; (i < array_length) && (substring_array[i] != NULL); i++) {
-+		current_position = uds_append_to_buffer(current_position,
-+							output + string_length,
-+							"%s",
-+							substring_array[i]);
-+		*current_position = separator;
-+		current_position++;
-+	}
-+
-+	/* We output one too many separators; replace the last with a zero byte. */
-+	if (current_position != output)
-+		*(current_position - 1) = '\0';
-+
-+	*string_ptr = output;
-+	return UDS_SUCCESS;
-+}
-+
-+/**
-+ * parse_bool() - Parse a two-valued option into a bool.
-+ * @bool_str: The string value to convert to a bool.
-+ * @true_str: The string value which should be converted to true.
-+ * @false_str: The string value which should be converted to false.
-+ * @bool_ptr: A pointer to return the bool value in.
-+ *
-+ * Return: VDO_SUCCESS or an error if bool_str is neither true_str nor false_str.
-+ */
-+static inline int __must_check
-+parse_bool(const char *bool_str, const char *true_str, const char *false_str, bool *bool_ptr)
-+{
-+	bool value = false;
-+
-+	if (strcmp(bool_str, true_str) == 0)
-+		value = true;
-+	else if (strcmp(bool_str, false_str) == 0)
-+		value = false;
-+	else
-+		return VDO_BAD_CONFIGURATION;
-+
-+	*bool_ptr = value;
++	bin->free_space = VDO_COMPRESSED_BLOCK_DATA_SIZE;
++	INIT_LIST_HEAD(&bin->list);
++	list_add_tail(&bin->list, &packer->bins);
 +	return VDO_SUCCESS;
 +}
 +
 +/**
-+ * process_one_thread_config_spec() - Process one component of a thread parameter configuration
-+ *				      string and update the configuration data structure.
-+ * @thread_param_type: The type of thread specified.
-+ * @count: The thread count requested.
-+ * @config: The configuration data structure to update.
++ * vdo_make_packer() - Make a new block packer.
 + *
-+ * If the thread count requested is invalid, a message is logged and -EINVAL returned. If the
-+ * thread name is unknown, a message is logged but no error is returned.
++ * @vdo: The vdo to which this packer belongs.
++ * @bin_count: The number of partial bins to keep in memory.
++ * @packer_ptr: A pointer to hold the new packer.
 + *
-+ * Return: VDO_SUCCESS or -EINVAL
++ * Return: VDO_SUCCESS or an error
 + */
-+static int process_one_thread_config_spec(const char *thread_param_type,
-+					  unsigned int count,
-+					  struct thread_count_config *config)
++int vdo_make_packer(struct vdo *vdo, block_count_t bin_count, struct packer **packer_ptr)
 +{
-+	/* Handle limited thread parameters */
-+	if (strcmp(thread_param_type, "bioRotationInterval") == 0) {
-+		if (count == 0) {
-+			uds_log_error("thread config string error:  'bioRotationInterval' of at least 1 is required");
-+			return -EINVAL;
-+		} else if (count > VDO_BIO_ROTATION_INTERVAL_LIMIT) {
-+			uds_log_error("thread config string error: 'bioRotationInterval' cannot be higher than %d",
-+				      VDO_BIO_ROTATION_INTERVAL_LIMIT);
-+			return -EINVAL;
++	struct packer *packer;
++	block_count_t i;
++	int result;
++
++	result = UDS_ALLOCATE(1, struct packer, __func__, &packer);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	packer->thread_id = vdo->thread_config.packer_thread;
++	packer->size = bin_count;
++	INIT_LIST_HEAD(&packer->bins);
++	vdo_set_admin_state_code(&packer->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
++
++	for (i = 0; i < bin_count; i++) {
++		result = make_bin(packer);
++		if (result != VDO_SUCCESS) {
++			vdo_free_packer(packer);
++			return result;
 +		}
-+		config->bio_rotation_interval = count;
-+		return VDO_SUCCESS;
-+	}
-+	if (strcmp(thread_param_type, "logical") == 0) {
-+		if (count > MAX_VDO_LOGICAL_ZONES) {
-+			uds_log_error("thread config string error: at most %d 'logical' threads are allowed",
-+				      MAX_VDO_LOGICAL_ZONES);
-+			return -EINVAL;
-+		}
-+		config->logical_zones = count;
-+		return VDO_SUCCESS;
-+	}
-+	if (strcmp(thread_param_type, "physical") == 0) {
-+		if (count > MAX_VDO_PHYSICAL_ZONES) {
-+			uds_log_error("thread config string error: at most %d 'physical' threads are allowed",
-+				      MAX_VDO_PHYSICAL_ZONES);
-+			return -EINVAL;
-+		}
-+		config->physical_zones = count;
-+		return VDO_SUCCESS;
-+	}
-+	/* Handle other thread count parameters */
-+	if (count > MAXIMUM_VDO_THREADS) {
-+		uds_log_error("thread config string error: at most %d '%s' threads are allowed",
-+			      MAXIMUM_VDO_THREADS,
-+			      thread_param_type);
-+		return -EINVAL;
-+	}
-+	if (strcmp(thread_param_type, "hash") == 0) {
-+		config->hash_zones = count;
-+		return VDO_SUCCESS;
-+	}
-+	if (strcmp(thread_param_type, "cpu") == 0) {
-+		if (count == 0) {
-+			uds_log_error("thread config string error: at least one 'cpu' thread required");
-+			return -EINVAL;
-+		}
-+		config->cpu_threads = count;
-+		return VDO_SUCCESS;
-+	}
-+	if (strcmp(thread_param_type, "ack") == 0) {
-+		config->bio_ack_threads = count;
-+		return VDO_SUCCESS;
-+	}
-+	if (strcmp(thread_param_type, "bio") == 0) {
-+		if (count == 0) {
-+			uds_log_error("thread config string error: at least one 'bio' thread required");
-+			return -EINVAL;
-+		}
-+		config->bio_threads = count;
-+		return VDO_SUCCESS;
 +	}
 +
 +	/*
-+	 * Don't fail, just log. This will handle version mismatches between user mode tools and
-+	 * kernel.
++	 * The canceled bin can hold up to half the number of user vios. Every canceled vio in the
++	 * bin must have a canceler for which it is waiting, and any canceler will only have
++	 * canceled one lock holder at a time.
 +	 */
-+	uds_log_info("unknown thread parameter type \"%s\"", thread_param_type);
++	result = UDS_ALLOCATE_EXTENDED(struct packer_bin,
++				       MAXIMUM_VDO_USER_VIOS / 2,
++				       struct vio *, __func__,
++				       &packer->canceled_bin);
++	if (result != VDO_SUCCESS) {
++		vdo_free_packer(packer);
++		return result;
++	}
++
++	result = vdo_make_default_thread(vdo, packer->thread_id);
++	if (result != VDO_SUCCESS) {
++		vdo_free_packer(packer);
++		return result;
++	}
++
++	*packer_ptr = packer;
 +	return VDO_SUCCESS;
 +}
 +
 +/**
-+ * parse_one_thread_config_spec() - Parse one component of a thread parameter configuration string
-+ *				    and update the configuration data structure.
-+ * @spec: The thread parameter specification string.
-+ * @config: The configuration data to be updated.
++ * vdo_free_packer() - Free a block packer.
++ * @packer: The packer to free.
 + */
-+static int parse_one_thread_config_spec(const char *spec, struct thread_count_config *config)
++void vdo_free_packer(struct packer *packer)
 +{
-+	unsigned int count;
-+	char **fields;
-+	int result;
++	struct packer_bin *bin, *tmp;
 +
-+	result = split_string(spec, '=', &fields);
-+	if (result != UDS_SUCCESS)
-+		return result;
++	if (packer == NULL)
++		return;
 +
-+	if ((fields[0] == NULL) || (fields[1] == NULL) || (fields[2] != NULL)) {
-+		uds_log_error("thread config string error: expected thread parameter assignment, saw \"%s\"",
-+			      spec);
-+		free_string_array(fields);
-+		return -EINVAL;
++	list_for_each_entry_safe(bin, tmp, &packer->bins, list) {
++		list_del_init(&bin->list);
++		UDS_FREE(bin);
 +	}
 +
-+	result = kstrtouint(fields[1], 10, &count);
-+	if (result != UDS_SUCCESS) {
-+		uds_log_error("thread config string error: integer value needed, found \"%s\"",
-+			      fields[1]);
-+		free_string_array(fields);
-+		return result;
-+	}
-+
-+	result = process_one_thread_config_spec(fields[0], count, config);
-+	free_string_array(fields);
-+	return result;
++	UDS_FREE(UDS_FORGET(packer->canceled_bin));
++	UDS_FREE(packer);
 +}
 +
 +/**
-+ * parse_thread_config_string() - Parse the configuration string passed and update the specified
-+ *				  counts and other parameters of various types of threads to be
-+ *				  created.
-+ * @string: Thread parameter configuration string.
-+ * @config: The thread configuration data to update.
++ * get_packer_from_data_vio() - Get the packer from a data_vio.
++ * @data_vio: The data_vio.
 + *
-+ * The configuration string should contain one or more comma-separated specs of the form
-+ * "typename=number"; the supported type names are "cpu", "ack", "bio", "bioRotationInterval",
-+ * "logical", "physical", and "hash".
-+ *
-+ * If an error occurs during parsing of a single key/value pair, we deem it serious enough to stop
-+ * further parsing.
-+ *
-+ * This function can't set the "reason" value the caller wants to pass back, because we'd want to
-+ * format it to say which field was invalid, and we can't allocate the "reason" strings
-+ * dynamically. So if an error occurs, we'll log the details and pass back an error.
-+ *
-+ * Return: VDO_SUCCESS or -EINVAL or -ENOMEM
++ * Return: The packer from the VDO to which the data_vio belongs.
 + */
-+static int parse_thread_config_string(const char *string, struct thread_count_config *config)
++static inline struct packer *get_packer_from_data_vio(struct data_vio *data_vio)
 +{
-+	int result = VDO_SUCCESS;
-+	char **specs;
-+
-+	if (strcmp(".", string) != 0) {
-+		unsigned int i;
-+
-+		result = split_string(string, ',', &specs);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		for (i = 0; specs[i] != NULL; i++) {
-+			result = parse_one_thread_config_spec(specs[i], config);
-+			if (result != VDO_SUCCESS)
-+				break;
-+		}
-+		free_string_array(specs);
-+	}
-+	return result;
++	return vdo_from_data_vio(data_vio)->packer;
 +}
 +
 +/**
-+ * process_one_key_value_pair() - Process one component of an optional parameter string and update
-+ *				  the configuration data structure.
-+ * @key: The optional parameter key name.
-+ * @value: The optional parameter value.
-+ * @config: The configuration data structure to update.
++ * vdo_get_packer_statistics() - Get the current statistics from the packer.
++ * @packer: The packer to query.
 + *
-+ * If the value requested is invalid, a message is logged and -EINVAL returned. If the key is
-+ * unknown, a message is logged but no error is returned.
-+ *
-+ * Return: VDO_SUCCESS or -EINVAL
++ * Return: a copy of the current statistics for the packer.
 + */
-+static int
-+process_one_key_value_pair(const char *key, unsigned int value, struct device_config *config)
++struct packer_statistics vdo_get_packer_statistics(const struct packer *packer)
 +{
-+	/* Non thread optional parameters */
-+	if (strcmp(key, "maxDiscard") == 0) {
-+		if (value == 0) {
-+			uds_log_error("optional parameter error: at least one max discard block required");
-+			return -EINVAL;
-+		}
-+		/* Max discard sectors in blkdev_issue_discard is UINT_MAX >> 9 */
-+		if (value > (UINT_MAX / VDO_BLOCK_SIZE)) {
-+			uds_log_error("optional parameter error: at most %d max discard	 blocks are allowed",
-+				      UINT_MAX / VDO_BLOCK_SIZE);
-+			return -EINVAL;
-+		}
-+		config->max_discard_blocks = value;
-+		return VDO_SUCCESS;
-+	}
-+	/* Handles unknown key names */
-+	return process_one_thread_config_spec(key, value, &config->thread_counts);
-+}
++	const struct packer_statistics *stats = &packer->statistics;
 +
-+/**
-+ * parse_one_key_value_pair() - Parse one key/value pair and update the configuration data
-+ *				structure.
-+ * @key: The optional key name.
-+ * @value: The optional value.
-+ * @config: The configuration data to be updated.
-+ *
-+ * Return: VDO_SUCCESS or error.
-+ */
-+static int
-+parse_one_key_value_pair(const char *key, const char *value, struct device_config *config)
-+{
-+	unsigned int count;
-+	int result;
-+
-+	if (strcmp(key, "deduplication") == 0)
-+		return parse_bool(value, "on", "off", &config->deduplication);
-+
-+	if (strcmp(key, "compression") == 0)
-+		return parse_bool(value, "on", "off", &config->compression);
-+
-+	/* The remaining arguments must have integral values. */
-+	result = kstrtouint(value, 10, &count);
-+	if (result != UDS_SUCCESS) {
-+		uds_log_error("optional config string error: integer value needed, found \"%s\"",
-+			      value);
-+		return result;
-+	}
-+	return process_one_key_value_pair(key, count, config);
-+}
-+
-+/**
-+ * parse_key_value_pairs() - Parse all key/value pairs from a list of arguments.
-+ * @argc: The total number of arguments in list.
-+ * @argv: The list of key/value pairs.
-+ * @config: The device configuration data to update.
-+ *
-+ * If an error occurs during parsing of a single key/value pair, we deem it serious enough to stop
-+ * further parsing.
-+ *
-+ * This function can't set the "reason" value the caller wants to pass back, because we'd want to
-+ * format it to say which field was invalid, and we can't allocate the "reason" strings
-+ * dynamically. So if an error occurs, we'll log the details and return the error.
-+ *
-+ * Return: VDO_SUCCESS or error
-+ */
-+static int parse_key_value_pairs(int argc, char **argv, struct device_config *config)
-+{
-+	int result = VDO_SUCCESS;
-+
-+	while (argc) {
-+		result = parse_one_key_value_pair(argv[0], argv[1], config);
-+		if (result != VDO_SUCCESS)
-+			break;
-+
-+		argc -= 2;
-+		argv += 2;
-+	}
-+
-+	return result;
-+}
-+
-+/**
-+ * parse_optional_arguments() - Parse the configuration string passed in for optional arguments.
-+ * @arg_set: The structure holding the arguments to parse.
-+ * @error_ptr: Pointer to a buffer to hold the error string.
-+ * @config: Pointer to device configuration data to update.
-+ *
-+ * For V0/V1 configurations, there will only be one optional parameter; the thread configuration.
-+ * The configuration string should contain one or more comma-separated specs of the form
-+ * "typename=number"; the supported type names are "cpu", "ack", "bio", "bioRotationInterval",
-+ * "logical", "physical", and "hash".
-+ *
-+ * For V2 configurations and beyond, there could be any number of arguments. They should contain
-+ * one or more key/value pairs separated by a space.
-+ *
-+ * Return: VDO_SUCCESS or error
-+ */
-+static int parse_optional_arguments(struct dm_arg_set *arg_set,
-+				    char **error_ptr,
-+				    struct device_config *config)
-+{
-+	int result = VDO_SUCCESS;
-+
-+	if (config->version == 0 || config->version == 1) {
-+		result = parse_thread_config_string(arg_set->argv[0], &config->thread_counts);
-+		if (result != VDO_SUCCESS) {
-+			*error_ptr = "Invalid thread-count configuration";
-+			return VDO_BAD_CONFIGURATION;
-+		}
-+	} else {
-+		if ((arg_set->argc % 2) != 0) {
-+			*error_ptr = "Odd number of optional arguments given but they should be <key> <value> pairs";
-+			return VDO_BAD_CONFIGURATION;
-+		}
-+		result = parse_key_value_pairs(arg_set->argc, arg_set->argv, config);
-+		if (result != VDO_SUCCESS) {
-+			*error_ptr = "Invalid optional argument configuration";
-+			return VDO_BAD_CONFIGURATION;
-+		}
-+	}
-+	return result;
-+}
-+
-+/**
-+ * handle_parse_error() - Handle a parsing error.
-+ * @config: The config to free.
-+ * @error_ptr: A place to store a constant string about the error.
-+ * @error_str: A constant string to store in error_ptr.
-+ */
-+static void handle_parse_error(struct device_config *config, char **error_ptr, char *error_str)
-+{
-+	free_device_config(config);
-+	*error_ptr = error_str;
-+}
-+
-+/**
-+ * parse_device_config() - Convert the dmsetup table into a struct device_config.
-+ * @argc: The number of table values.
-+ * @argv: The array of table values.
-+ * @ti: The target structure for this table.
-+ * @config_ptr: A pointer to return the allocated config.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+static int parse_device_config(int argc,
-+			       char **argv,
-+			       struct dm_target *ti,
-+			       struct device_config **config_ptr)
-+{
-+	bool enable_512e;
-+	size_t logical_bytes = to_bytes(ti->len);
-+	struct dm_arg_set arg_set;
-+	char **error_ptr = &ti->error;
-+	struct device_config *config = NULL;
-+	int result;
-+
-+	if ((logical_bytes % VDO_BLOCK_SIZE) != 0) {
-+		handle_parse_error(config, error_ptr, "Logical size must be a multiple of 4096");
-+		return VDO_BAD_CONFIGURATION;
-+	}
-+
-+	if (argc == 0) {
-+		handle_parse_error(config, error_ptr, "Incorrect number of arguments");
-+		return VDO_BAD_CONFIGURATION;
-+	}
-+
-+	result = UDS_ALLOCATE(1, struct device_config, "device_config", &config);
-+	if (result != VDO_SUCCESS) {
-+		handle_parse_error(config, error_ptr, "Could not allocate config structure");
-+		return VDO_BAD_CONFIGURATION;
-+	}
-+
-+	config->owning_target = ti;
-+	config->logical_blocks = logical_bytes / VDO_BLOCK_SIZE;
-+	INIT_LIST_HEAD(&config->config_list);
-+
-+	/* Save the original string. */
-+	result = join_strings(argv, argc, ' ', &config->original_string);
-+	if (result != VDO_SUCCESS) {
-+		handle_parse_error(config, error_ptr, "Could not populate string");
-+		return VDO_BAD_CONFIGURATION;
-+	}
-+
-+	uds_log_info("table line: %s", config->original_string);
-+
-+	config->thread_counts = (struct thread_count_config) {
-+		.bio_ack_threads = 1,
-+		.bio_threads = DEFAULT_VDO_BIO_SUBMIT_QUEUE_COUNT,
-+		.bio_rotation_interval = DEFAULT_VDO_BIO_SUBMIT_QUEUE_ROTATE_INTERVAL,
-+		.cpu_threads = 1,
-+		.logical_zones = 0,
-+		.physical_zones = 0,
-+		.hash_zones = 0,
++	return (struct packer_statistics) {
++		.compressed_fragments_written = READ_ONCE(stats->compressed_fragments_written),
++		.compressed_blocks_written = READ_ONCE(stats->compressed_blocks_written),
++		.compressed_fragments_in_packer = READ_ONCE(stats->compressed_fragments_in_packer),
 +	};
-+	config->max_discard_blocks = 1;
-+	config->deduplication = true;
-+	config->compression = false;
-+
-+	arg_set.argc = argc;
-+	arg_set.argv = argv;
-+
-+	result = get_version_number(argc, argv, error_ptr, &config->version);
-+	if (result != VDO_SUCCESS) {
-+		/* get_version_number sets error_ptr itself. */
-+		handle_parse_error(config, error_ptr, *error_ptr);
-+		return result;
-+	}
-+	/* Move the arg pointer forward only if the argument was there. */
-+	if (config->version >= 1)
-+		dm_shift_arg(&arg_set);
-+
-+	result = uds_duplicate_string(dm_shift_arg(&arg_set),
-+				      "parent device name",
-+				      &config->parent_device_name);
-+	if (result != VDO_SUCCESS) {
-+		handle_parse_error(config, error_ptr, "Could not copy parent device name");
-+		return VDO_BAD_CONFIGURATION;
-+	}
-+
-+	/* Get the physical blocks, if known. */
-+	if (config->version >= 1) {
-+		result = kstrtoull(dm_shift_arg(&arg_set), 10, &config->physical_blocks);
-+		if (result != VDO_SUCCESS) {
-+			handle_parse_error(config, error_ptr, "Invalid physical block count");
-+			return VDO_BAD_CONFIGURATION;
-+		}
-+	}
-+
-+	/* Get the logical block size and validate */
-+	result = parse_bool(dm_shift_arg(&arg_set), "512", "4096", &enable_512e);
-+	if (result != VDO_SUCCESS) {
-+		handle_parse_error(config, error_ptr, "Invalid logical block size");
-+		return VDO_BAD_CONFIGURATION;
-+	}
-+	config->logical_block_size = (enable_512e ? 512 : 4096);
-+
-+	/* Skip past the two no longer used read cache options. */
-+	if (config->version <= 1)
-+		dm_consume_args(&arg_set, 2);
-+
-+	/* Get the page cache size. */
-+	result = kstrtouint(dm_shift_arg(&arg_set), 10, &config->cache_size);
-+	if (result != VDO_SUCCESS) {
-+		handle_parse_error(config, error_ptr, "Invalid block map page cache size");
-+		return VDO_BAD_CONFIGURATION;
-+	}
-+
-+	/* Get the block map era length. */
-+	result = kstrtouint(dm_shift_arg(&arg_set), 10, &config->block_map_maximum_age);
-+	if (result != VDO_SUCCESS) {
-+		handle_parse_error(config, error_ptr, "Invalid block map maximum age");
-+		return VDO_BAD_CONFIGURATION;
-+	}
-+
-+	/* Skip past the no longer used MD RAID5 optimization mode */
-+	if (config->version <= 2)
-+		dm_consume_args(&arg_set, 1);
-+
-+	/* Skip past the no longer used write policy setting */
-+	if (config->version <= 3)
-+		dm_consume_args(&arg_set, 1);
-+
-+	/* Skip past the no longer used pool name for older table lines */
-+	if (config->version <= 2) {
-+		/*
-+		 * Make sure the enum to get the pool name from argv directly is still in sync with
-+		 * the parsing of the table line.
-+		 */
-+		if (&arg_set.argv[0] != &argv[POOL_NAME_ARG_INDEX[config->version]]) {
-+			handle_parse_error(config, error_ptr, "Pool name not in expected location");
-+			return VDO_BAD_CONFIGURATION;
-+		}
-+		dm_shift_arg(&arg_set);
-+	}
-+
-+	/* Get the optional arguments and validate. */
-+	result = parse_optional_arguments(&arg_set, error_ptr, config);
-+	if (result != VDO_SUCCESS) {
-+		/* parse_optional_arguments sets error_ptr itself. */
-+		handle_parse_error(config, error_ptr, *error_ptr);
-+		return result;
-+	}
-+
-+	/*
-+	 * Logical, physical, and hash zone counts can all be zero; then we get one thread doing
-+	 * everything, our older configuration. If any zone count is non-zero, the others must be
-+	 * as well.
-+	 */
-+	if (((config->thread_counts.logical_zones == 0) !=
-+	     (config->thread_counts.physical_zones == 0)) ||
-+	    ((config->thread_counts.physical_zones == 0) !=
-+	     (config->thread_counts.hash_zones == 0))) {
-+		handle_parse_error(config,
-+				   error_ptr,
-+				   "Logical, physical, and hash zones counts must all be zero or all non-zero");
-+		return VDO_BAD_CONFIGURATION;
-+	}
-+
-+	if (config->cache_size <
-+	    (2 * MAXIMUM_VDO_USER_VIOS * config->thread_counts.logical_zones)) {
-+		handle_parse_error(config,
-+				   error_ptr,
-+				   "Insufficient block map cache for logical zones");
-+		return VDO_BAD_CONFIGURATION;
-+	}
-+
-+	result = dm_get_device(ti,
-+			       config->parent_device_name,
-+			       dm_table_get_mode(ti->table),
-+			       &config->owned_device);
-+	if (result != 0) {
-+		uds_log_error("couldn't open device \"%s\": error %d",
-+			      config->parent_device_name,
-+			      result);
-+		handle_parse_error(config, error_ptr, "Unable to open storage device");
-+		return VDO_BAD_CONFIGURATION;
-+	}
-+
-+	if (config->version == 0) {
-+		u64 device_size = i_size_read(config->owned_device->bdev->bd_inode);
-+
-+		config->physical_blocks = device_size / VDO_BLOCK_SIZE;
-+	}
-+
-+	*config_ptr = config;
-+	return result;
-+}
-+
-+static struct vdo *get_vdo_for_target(struct dm_target *ti)
-+{
-+	return ((struct device_config *) ti->private)->vdo;
-+}
-+
-+
-+static int vdo_map_bio(struct dm_target *ti, struct bio *bio)
-+{
-+	struct vdo *vdo = get_vdo_for_target(ti);
-+	struct vdo_work_queue *current_work_queue;
-+	const struct admin_state_code *code = vdo_get_admin_state_code(&vdo->admin.state);
-+
-+	ASSERT_LOG_ONLY(code->normal, "vdo should not receive bios while in state %s", code->name);
-+
-+	/* Count all incoming bios. */
-+	vdo_count_bios(&vdo->stats.bios_in, bio);
-+
-+
-+	/* Handle empty bios.  Empty flush bios are not associated with a vio. */
-+	if ((bio_op(bio) == REQ_OP_FLUSH) || ((bio->bi_opf & REQ_PREFLUSH) != 0)) {
-+		vdo_launch_flush(vdo, bio);
-+		return DM_MAPIO_SUBMITTED;
-+	}
-+
-+	/* This could deadlock, */
-+	current_work_queue = vdo_get_current_work_queue();
-+	BUG_ON((current_work_queue != NULL) &&
-+	       (vdo == vdo_get_work_queue_owner(current_work_queue)->vdo));
-+	vdo_launch_bio(vdo->data_vio_pool, bio);
-+	return DM_MAPIO_SUBMITTED;
-+}
-+
-+static void vdo_io_hints(struct dm_target *ti, struct queue_limits *limits)
-+{
-+	struct vdo *vdo = get_vdo_for_target(ti);
-+
-+	limits->logical_block_size = vdo->device_config->logical_block_size;
-+	limits->physical_block_size = VDO_BLOCK_SIZE;
-+
-+	/* The minimum io size for random io */
-+	blk_limits_io_min(limits, VDO_BLOCK_SIZE);
-+	/* The optimal io size for streamed/sequential io */
-+	blk_limits_io_opt(limits, VDO_BLOCK_SIZE);
-+
-+	/*
-+	 * Sets the maximum discard size that will be passed into VDO. This value comes from a
-+	 * table line value passed in during dmsetup create.
-+	 *
-+	 * The value 1024 is the largest usable value on HD systems.  A 2048 sector discard on a
-+	 * busy HD system takes 31 seconds.  We should use a value no higher than 1024, which takes
-+	 * 15 to 16 seconds on a busy HD system.
-+	 *
-+	 * But using large values results in 120 second blocked task warnings in /var/log/kern.log.
-+	 * In order to avoid these warnings, we choose to use the smallest reasonable value.  See
-+	 * VDO-3062 and VDO-3087.
-+	 *
-+	 * The value is displayed in sysfs, and also used by dm-thin to determine whether to pass
-+	 * down discards. The block layer splits large discards on this boundary when this is set.
-+	 */
-+	limits->max_discard_sectors =
-+		(vdo->device_config->max_discard_blocks * VDO_SECTORS_PER_BLOCK);
-+
-+	/*
-+	 * Force discards to not begin or end with a partial block by stating the granularity is
-+	 * 4k.
-+	 */
-+	limits->discard_granularity = VDO_BLOCK_SIZE;
-+}
-+
-+static int vdo_iterate_devices(struct dm_target *ti, iterate_devices_callout_fn fn, void *data)
-+{
-+	struct device_config *config = get_vdo_for_target(ti)->device_config;
-+
-+	return fn(ti,
-+		  config->owned_device,
-+		  0,
-+		  config->physical_blocks * VDO_SECTORS_PER_BLOCK,
-+		  data);
-+}
-+
-+/*
-+ * Status line is:
-+ *    <device> <operating mode> <in recovery> <index state> <compression state>
-+ *    <used physical blocks> <total physical blocks>
-+ */
-+
-+static void vdo_status(struct dm_target *ti,
-+		       status_type_t status_type,
-+		       unsigned int status_flags,
-+		       char *result,
-+		       unsigned int maxlen)
-+{
-+	struct vdo *vdo = get_vdo_for_target(ti);
-+	struct vdo_statistics *stats;
-+	struct device_config *device_config;
-+	/* N.B.: The DMEMIT macro uses the variables named "sz", "result", "maxlen". */
-+	int sz = 0;
-+
-+	switch (status_type) {
-+	case STATUSTYPE_INFO:
-+		/* Report info for dmsetup status */
-+		mutex_lock(&vdo->stats_mutex);
-+		vdo_fetch_statistics(vdo, &vdo->stats_buffer);
-+		stats = &vdo->stats_buffer;
-+
-+		DMEMIT("/dev/%pg %s %s %s %s %llu %llu",
-+		       vdo_get_backing_device(vdo),
-+		       stats->mode,
-+		       stats->in_recovery_mode ? "recovering" : "-",
-+		       vdo_get_dedupe_index_state_name(vdo->hash_zones),
-+		       vdo_get_compressing(vdo) ? "online" : "offline",
-+		       stats->data_blocks_used + stats->overhead_blocks_used,
-+		       stats->physical_blocks);
-+		mutex_unlock(&vdo->stats_mutex);
-+		break;
-+
-+	case STATUSTYPE_TABLE:
-+		/* Report the string actually specified in the beginning. */
-+		device_config = (struct device_config *) ti->private;
-+		DMEMIT("%s", device_config->original_string);
-+		break;
-+
-+	case STATUSTYPE_IMA:
-+		/* FIXME: We ought to be more detailed here, but this is what thin does. */
-+		*result = '\0';
-+		break;
-+	}
-+}
-+
-+static block_count_t __must_check get_underlying_device_block_count(const struct vdo *vdo)
-+{
-+	return i_size_read(vdo_get_backing_device(vdo)->bd_inode) / VDO_BLOCK_SIZE;
-+}
-+
-+static int __must_check process_vdo_message_locked(struct vdo *vdo, unsigned int argc, char **argv)
-+{
-+	if ((argc == 2) && (strcasecmp(argv[0], "compression") == 0)) {
-+		if (strcasecmp(argv[1], "on") == 0) {
-+			vdo_set_compressing(vdo, true);
-+			return 0;
-+		}
-+
-+		if (strcasecmp(argv[1], "off") == 0) {
-+			vdo_set_compressing(vdo, false);
-+			return 0;
-+		}
-+
-+		uds_log_warning("invalid argument '%s' to dmsetup compression message", argv[1]);
-+		return -EINVAL;
-+	}
-+
-+	uds_log_warning("unrecognized dmsetup message '%s' received", argv[0]);
-+	return -EINVAL;
-+}
-+
-+/*
-+ * If the message is a dump, just do it. Otherwise, check that no other message is being processed,
-+ * and only proceed if so.
-+ * Returns -EBUSY if another message is being processed
-+ */
-+static int __must_check process_vdo_message(struct vdo *vdo, unsigned int argc, char **argv)
-+{
-+	int result;
-+
-+	/*
-+	 * All messages which may be processed in parallel with other messages should be handled
-+	 * here before the atomic check below. Messages which should be exclusive should be
-+	 * processed in process_vdo_message_locked().
-+	 */
-+
-+	/* Dump messages should always be processed */
-+	if (strcasecmp(argv[0], "dump") == 0)
-+		return vdo_dump(vdo, argc, argv, "dmsetup message");
-+
-+	if (argc == 1) {
-+		if (strcasecmp(argv[0], "dump-on-shutdown") == 0) {
-+			vdo->dump_on_shutdown = true;
-+			return 0;
-+		}
-+
-+		/* Index messages should always be processed */
-+		if ((strcasecmp(argv[0], "index-close") == 0) ||
-+		    (strcasecmp(argv[0], "index-create") == 0) ||
-+		    (strcasecmp(argv[0], "index-disable") == 0) ||
-+		    (strcasecmp(argv[0], "index-enable") == 0))
-+			return vdo_message_dedupe_index(vdo->hash_zones, argv[0]);
-+	}
-+
-+	if (atomic_cmpxchg(&vdo->processing_message, 0, 1) != 0)
-+		return -EBUSY;
-+
-+	result = process_vdo_message_locked(vdo, argc, argv);
-+
-+	/* Pairs with the implicit barrier in cmpxchg just above */
-+	smp_wmb();
-+	atomic_set(&vdo->processing_message, 0);
-+	return result;
-+}
-+
-+static int vdo_message(struct dm_target *ti,
-+		       unsigned int argc,
-+		       char **argv,
-+		       char *result_buffer,
-+		       unsigned int maxlen)
-+{
-+	struct registered_thread allocating_thread, instance_thread;
-+	struct vdo *vdo;
-+	int result;
-+
-+	if (argc == 0) {
-+		uds_log_warning("unspecified dmsetup message");
-+		return -EINVAL;
-+	}
-+
-+	vdo = get_vdo_for_target(ti);
-+	uds_register_allocating_thread(&allocating_thread, NULL);
-+	uds_register_thread_device_id(&instance_thread, &vdo->instance);
-+
-+	/*
-+	 * Must be done here so we don't map return codes. The code in dm-ioctl expects a 1 for a
-+	 * return code to look at the buffer and see if it is full or not.
-+	 */
-+	if ((argc == 1) && (strcasecmp(argv[0], "stats") == 0)) {
-+		vdo_write_stats(vdo, result_buffer, maxlen);
-+		result = 1;
-+	} else {
-+		result = vdo_map_to_system_error(process_vdo_message(vdo, argc, argv));
-+	}
-+
-+	uds_unregister_thread_device_id();
-+	uds_unregister_allocating_thread();
-+	return result;
-+}
-+
-+static void configure_target_capabilities(struct dm_target *ti)
-+{
-+	ti->discards_supported = 1;
-+	ti->flush_supported = true;
-+	ti->num_discard_bios = 1;
-+	ti->num_flush_bios = 1;
-+
-+	/*
-+	 * If this value changes, please make sure to update the value for max_discard_sectors
-+	 * accordingly.
-+	 */
-+	BUG_ON(dm_set_target_max_io_len(ti, VDO_SECTORS_PER_BLOCK) != 0);
-+}
-+
-+/*
-+ * Implements vdo_filter_t.
-+ */
-+static bool vdo_uses_device(struct vdo *vdo, const void *context)
-+{
-+	const struct device_config *config = context;
-+
-+	return vdo_get_backing_device(vdo)->bd_dev == config->owned_device->bdev->bd_dev;
 +}
 +
 +/**
-+ * get_thread_id_for_phase() - Get the thread id for the current phase of the admin operation in
-+ *                             progress.
++ * abort_packing() - Abort packing a data_vio.
++ * @data_vio: The data_vio to abort.
 + */
-+static thread_id_t __must_check
-+get_thread_id_for_phase(struct vdo *vdo)
++static void abort_packing(struct data_vio *data_vio)
 +{
-+	switch (vdo->admin.phase) {
-+	case RESUME_PHASE_PACKER:
-+	case RESUME_PHASE_FLUSHER:
-+	case SUSPEND_PHASE_PACKER:
-+	case SUSPEND_PHASE_FLUSHES:
-+		return vdo->thread_config.packer_thread;
++	struct packer *packer = get_packer_from_data_vio(data_vio);
 +
-+	case RESUME_PHASE_DATA_VIOS:
-+	case SUSPEND_PHASE_DATA_VIOS:
-+		return vdo->thread_config.cpu_thread;
++	WRITE_ONCE(packer->statistics.compressed_fragments_in_packer,
++		   packer->statistics.compressed_fragments_in_packer - 1);
 +
-+	case LOAD_PHASE_DRAIN_JOURNAL:
-+	case RESUME_PHASE_JOURNAL:
-+	case SUSPEND_PHASE_JOURNAL:
-+		return vdo->thread_config.journal_thread;
-+
-+	default:
-+		return vdo->thread_config.admin_thread;
-+	}
-+}
-+
-+static struct vdo_completion *prepare_admin_completion(struct vdo *vdo,
-+						       vdo_action *callback,
-+						       vdo_action *error_handler)
-+{
-+	struct vdo_completion *completion = &vdo->admin.completion;
-+
-+	/*
-+	 * We can't use vdo_prepare_completion_for_requeue() here because we don't want to reset
-+	 * any error in the completion.
-+	 */
-+	completion->callback = callback;
-+	completion->error_handler = error_handler;
-+	completion->callback_thread_id = get_thread_id_for_phase(vdo);
-+	completion->requeue = true;
-+	return completion;
++	write_data_vio(data_vio);
 +}
 +
 +/**
-+ * advance_phase() - Increment the phase of the current admin operation and prepare the admin
-+ *                   completion to run on the thread for the next phase.
-+ * @vdo: The on which an admin operation is being performed
-+ *
-+ * Return: The current phase
++ * release_compressed_write_waiter() - Update a data_vio for which a successful compressed write
++ *                                     has completed and send it on its way.
++
++ * @data_vio: The data_vio to release.
++ * @allocation: The allocation to which the compressed block was written.
 + */
-+static u32 advance_phase(struct vdo *vdo)
-+{
-+	u32 phase = vdo->admin.phase++;
-+
-+	vdo->admin.completion.callback_thread_id = get_thread_id_for_phase(vdo);
-+	vdo->admin.completion.requeue = true;
-+	return phase;
-+}
-+
-+/*
-+ * Perform an administrative operation (load, suspend, grow logical, or grow physical). This method
-+ * should not be called from vdo threads.
-+ */
-+static int perform_admin_operation(struct vdo *vdo,
-+				   u32 starting_phase,
-+				   vdo_action *callback,
-+				   vdo_action *error_handler,
-+				   const char *type)
-+{
-+	int result;
-+	struct vdo_administrator *admin = &vdo->admin;
-+
-+	if (atomic_cmpxchg(&admin->busy, 0, 1) != 0)
-+		return uds_log_error_strerror(VDO_COMPONENT_BUSY,
-+					      "Can't start %s operation, another operation is already in progress",
-+					      type);
-+
-+	admin->phase = starting_phase;
-+	reinit_completion(&admin->callback_sync);
-+	vdo_reset_completion(&admin->completion);
-+	vdo_launch_completion(prepare_admin_completion(vdo, callback, error_handler));
-+
-+	/*
-+	 * Using the "interruptible" interface means that Linux will not log a message when we wait
-+	 * for more than 120 seconds.
-+	 */
-+	while (wait_for_completion_interruptible(&admin->callback_sync) != 0)
-+		/* * However, if we get a signal in a user-mode process, we could spin... */
-+		fsleep(1000);
-+
-+	result = admin->completion.result;
-+	/* pairs with implicit barrier in cmpxchg above */
-+	smp_wmb();
-+	atomic_set(&admin->busy, 0);
-+	return result;
-+}
-+
-+/* Assert that we are operating on the correct thread for the current phase. */
-+static void assert_admin_phase_thread(struct vdo *vdo, const char *what)
-+{
-+	ASSERT_LOG_ONLY(vdo_get_callback_thread_id() == get_thread_id_for_phase(vdo),
-+			"%s on correct thread for %s",
-+			what,
-+			ADMIN_PHASE_NAMES[vdo->admin.phase]);
-+}
-+
-+/**
-+ * finish_operation_callback() - Callback to finish an admin operation.
-+ * @completion: The admin_completion.
-+ */
-+static void finish_operation_callback(struct vdo_completion *completion)
-+{
-+	struct vdo_administrator *admin = &completion->vdo->admin;
-+
-+	vdo_finish_operation(&admin->state, completion->result);
-+	complete(&admin->callback_sync);
-+}
-+
-+/**
-+ * decode_from_super_block() - Decode the VDO state from the super block and validate that it is
-+ *                             correct.
-+ * @vdo: The vdo being loaded.
-+ *
-+ * On error from this method, the component states must be destroyed explicitly. If this method
-+ * returns successfully, the component states must not be destroyed.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+static int __must_check decode_from_super_block(struct vdo *vdo)
-+{
-+	const struct device_config *config = vdo->device_config;
-+	int result;
-+
-+	result = vdo_decode_component_states(vdo->super_block.buffer,
-+					     &vdo->geometry,
-+					     &vdo->states);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	vdo_set_state(vdo, vdo->states.vdo.state);
-+	vdo->load_state = vdo->states.vdo.state;
-+
-+	/*
-+	 * If the device config specifies a larger logical size than was recorded in the super
-+	 * block, just accept it.
-+	 */
-+	if (vdo->states.vdo.config.logical_blocks < config->logical_blocks) {
-+		uds_log_warning("Growing logical size: a logical size of %llu blocks was specified, but that differs from the %llu blocks configured in the vdo super block",
-+				(unsigned long long) config->logical_blocks,
-+				(unsigned long long) vdo->states.vdo.config.logical_blocks);
-+		vdo->states.vdo.config.logical_blocks = config->logical_blocks;
-+	}
-+
-+	result = vdo_validate_component_states(&vdo->states,
-+					       vdo->geometry.nonce,
-+					       config->physical_blocks,
-+					       config->logical_blocks);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	vdo->layout = vdo->states.layout;
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * decode_vdo() - Decode the component data portion of a super block and fill in the corresponding
-+ *                portions of the vdo being loaded.
-+ * @vdo: The vdo being loaded.
-+ *
-+ * This will also allocate the recovery journal and slab depot. If this method is called with an
-+ * asynchronous layer (i.e. a thread config which specifies at least one base thread), the block
-+ * map and packer will be constructed as well.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+static int __must_check decode_vdo(struct vdo *vdo)
-+{
-+	block_count_t maximum_age, journal_length;
-+	struct partition *partition;
-+	int result;
-+
-+	result = decode_from_super_block(vdo);
-+	if (result != VDO_SUCCESS) {
-+		vdo_destroy_component_states(&vdo->states);
-+		return result;
-+	}
-+
-+	maximum_age = vdo_convert_maximum_age(vdo->device_config->block_map_maximum_age);
-+	journal_length =
-+		vdo_get_recovery_journal_length(vdo->states.vdo.config.recovery_journal_size);
-+	if (maximum_age > (journal_length / 2))
-+		return uds_log_error_strerror(VDO_BAD_CONFIGURATION,
-+					      "maximum age: %llu exceeds limit %llu",
-+					      (unsigned long long) maximum_age,
-+					      (unsigned long long) (journal_length / 2));
-+
-+	if (maximum_age == 0)
-+		return uds_log_error_strerror(VDO_BAD_CONFIGURATION,
-+					      "maximum age must be greater than 0");
-+
-+	result = vdo_enable_read_only_entry(vdo);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	partition = vdo_get_known_partition(&vdo->layout, VDO_RECOVERY_JOURNAL_PARTITION);
-+	result = vdo_decode_recovery_journal(vdo->states.recovery_journal,
-+					     vdo->states.vdo.nonce,
-+					     vdo,
-+					     partition,
-+					     vdo->states.vdo.complete_recoveries,
-+					     vdo->states.vdo.config.recovery_journal_size,
-+					     &vdo->recovery_journal);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	partition = vdo_get_known_partition(&vdo->layout, VDO_SLAB_SUMMARY_PARTITION);
-+	result = vdo_decode_slab_depot(vdo->states.slab_depot,
-+				       vdo,
-+				       partition,
-+				       &vdo->depot);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = vdo_decode_block_map(vdo->states.block_map,
-+				      vdo->states.vdo.config.logical_blocks,
-+				      vdo,
-+				      vdo->recovery_journal,
-+				      vdo->states.vdo.nonce,
-+				      vdo->device_config->cache_size,
-+				      maximum_age,
-+				      &vdo->block_map);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = vdo_make_physical_zones(vdo, &vdo->physical_zones);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	/* The logical zones depend on the physical zones already existing. */
-+	result = vdo_make_logical_zones(vdo, &vdo->logical_zones);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	return vdo_make_hash_zones(vdo, &vdo->hash_zones);
-+}
-+
-+/**
-+ * pre_load_callback() - Callback to initiate a pre-load, registered in vdo_initialize().
-+ * @completion: The admin completion.
-+ */
-+static void pre_load_callback(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+	int result;
-+
-+	assert_admin_phase_thread(vdo, __func__);
-+
-+	switch (advance_phase(vdo)) {
-+	case PRE_LOAD_PHASE_START:
-+		result = vdo_start_operation(&vdo->admin.state, VDO_ADMIN_STATE_PRE_LOADING);
-+		if (result != VDO_SUCCESS) {
-+			vdo_continue_completion(completion, result);
-+			return;
-+		}
-+
-+		vdo_load_super_block(vdo, completion);
-+		return;
-+
-+	case PRE_LOAD_PHASE_LOAD_COMPONENTS:
-+		vdo_continue_completion(completion, decode_vdo(vdo));
-+		return;
-+
-+	case PRE_LOAD_PHASE_END:
-+		break;
-+
-+	default:
-+		vdo_set_completion_result(completion, UDS_BAD_STATE);
-+	}
-+
-+	finish_operation_callback(completion);
-+}
-+
-+static void release_instance(unsigned int instance)
-+{
-+	mutex_lock(&instances_lock);
-+	if (instance >= instances.bit_count) {
-+		ASSERT_LOG_ONLY(false,
-+				"instance number %u must be less than bit count %u",
-+				instance,
-+				instances.bit_count);
-+	} else if (test_bit(instance, instances.words) == 0) {
-+		ASSERT_LOG_ONLY(false, "instance number %u must be allocated", instance);
-+	} else {
-+		__clear_bit(instance, instances.words);
-+		instances.count -= 1;
-+	}
-+	mutex_unlock(&instances_lock);
-+}
-+
-+static void set_device_config(struct dm_target *ti, struct vdo *vdo, struct device_config *config)
-+{
-+	list_del_init(&config->config_list);
-+	list_add_tail(&config->config_list, &vdo->device_config_list);
-+	config->vdo = vdo;
-+	ti->private = config;
-+	configure_target_capabilities(ti);
-+}
-+
-+static int
-+vdo_initialize(struct dm_target *ti, unsigned int instance, struct device_config *config)
-+{
-+	struct vdo *vdo;
-+	int result;
-+	u64 block_size = VDO_BLOCK_SIZE;
-+	u64 logical_size = to_bytes(ti->len);
-+	block_count_t logical_blocks = logical_size / block_size;
-+
-+	uds_log_info("loading device '%s'", vdo_get_device_name(ti));
-+	uds_log_debug("Logical block size     = %llu", (u64) config->logical_block_size);
-+	uds_log_debug("Logical blocks         = %llu", logical_blocks);
-+	uds_log_debug("Physical block size    = %llu", (u64) block_size);
-+	uds_log_debug("Physical blocks        = %llu", config->physical_blocks);
-+	uds_log_debug("Block map cache blocks = %u", config->cache_size);
-+	uds_log_debug("Block map maximum age  = %u", config->block_map_maximum_age);
-+	uds_log_debug("Deduplication          = %s", (config->deduplication ? "on" : "off"));
-+	uds_log_debug("Compression            = %s", (config->compression ? "on" : "off"));
-+
-+	vdo = vdo_find_matching(vdo_uses_device, config);
-+	if (vdo != NULL) {
-+		uds_log_error("Existing vdo already uses device %s",
-+			      vdo->device_config->parent_device_name);
-+		ti->error = "Cannot share storage device with already-running VDO";
-+		return VDO_BAD_CONFIGURATION;
-+	}
-+
-+	result = vdo_make(instance, config, &ti->error, &vdo);
-+	if (result != VDO_SUCCESS) {
-+		uds_log_error("Could not create VDO device. (VDO error %d, message %s)",
-+			      result,
-+			      ti->error);
-+		vdo_destroy(vdo);
-+		return result;
-+	}
-+
-+	result = perform_admin_operation(vdo,
-+					 PRE_LOAD_PHASE_START,
-+					 pre_load_callback,
-+					 finish_operation_callback,
-+					 "pre-load");
-+	if (result != VDO_SUCCESS) {
-+		ti->error = ((result == VDO_INVALID_ADMIN_STATE) ?
-+			     "Pre-load is only valid immediately after initialization" :
-+			     "Cannot load metadata from device");
-+		uds_log_error("Could not start VDO device. (VDO error %d, message %s)",
-+			      result,
-+			      ti->error);
-+		vdo_destroy(vdo);
-+		return result;
-+	}
-+
-+	set_device_config(ti, vdo, config);
-+	vdo->device_config = config;
-+	return VDO_SUCCESS;
-+}
-+
-+/* Implements vdo_filter_t. */
-+static bool __must_check vdo_is_named(struct vdo *vdo, const void *context)
-+{
-+	struct dm_target *ti = vdo->device_config->owning_target;
-+	const char *device_name = vdo_get_device_name(ti);
-+
-+	return strcmp(device_name, (const char *) context) == 0;
-+}
-+
-+/**
-+ * get_bit_array_size() - Return the number of bytes needed to store a bit array of the specified
-+ *                        capacity in an array of unsigned longs.
-+ * @bit_count: The number of bits the array must hold.
-+ *
-+ * Return: the number of bytes needed for the array representation.
-+ */
-+static size_t get_bit_array_size(unsigned int bit_count)
-+{
-+	/* Round up to a multiple of the word size and convert to a byte count. */
-+	return (BITS_TO_LONGS(bit_count) * sizeof(unsigned long));
-+}
-+
-+/**
-+ * grow_bit_array() - Re-allocate the bitmap word array so there will more instance numbers that
-+ *                    can be allocated.
-+ *
-+ * Since the array is initially NULL, this also initializes the array the first time we allocate an
-+ * instance number.
-+ *
-+ * Return: UDS_SUCCESS or an error code from the allocation
-+ */
-+static int grow_bit_array(void)
-+{
-+	unsigned int new_count =
-+		max(instances.bit_count + BIT_COUNT_INCREMENT, (unsigned int) BIT_COUNT_MINIMUM);
-+	unsigned long *new_words;
-+	int result;
-+
-+	result = uds_reallocate_memory(instances.words,
-+				       get_bit_array_size(instances.bit_count),
-+				       get_bit_array_size(new_count),
-+				       "instance number bit array",
-+				       &new_words);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	instances.bit_count = new_count;
-+	instances.words = new_words;
-+	return UDS_SUCCESS;
-+}
-+
-+/**
-+ * allocate_instance() - Allocate an instance number.
-+ * @instance_ptr: A point to hold the instance number
-+ *
-+ * Return: UDS_SUCCESS or an error code
-+ *
-+ * This function must be called while holding the instances lock.
-+ */
-+static int allocate_instance(unsigned int *instance_ptr)
-+{
-+	unsigned int instance;
-+	int result;
-+
-+	/* If there are no unallocated instances, grow the bit array. */
-+	if (instances.count >= instances.bit_count) {
-+		result = grow_bit_array();
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	}
-+
-+	/*
-+	 * There must be a zero bit somewhere now. Find it, starting just after the last instance
-+	 * allocated.
-+	 */
-+	instance = find_next_zero_bit(instances.words,
-+				      instances.bit_count,
-+				      instances.next);
-+	if (instance >= instances.bit_count) {
-+		/* Nothing free after next, so wrap around to instance zero. */
-+		instance = find_first_zero_bit(instances.words, instances.bit_count);
-+		result = ASSERT(instance < instances.bit_count, "impossibly, no zero bit found");
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	}
-+
-+	__set_bit(instance, instances.words);
-+	instances.count++;
-+	instances.next = instance + 1;
-+	*instance_ptr = instance;
-+	return UDS_SUCCESS;
-+}
-+
-+static int construct_new_vdo_registered(struct dm_target *ti,
-+					unsigned int argc,
-+					char **argv,
-+					unsigned int instance)
-+{
-+	int result;
-+	struct device_config *config;
-+
-+	result = parse_device_config(argc, argv, ti, &config);
-+	if (result != VDO_SUCCESS) {
-+		uds_log_error_strerror(result, "parsing failed: %s", ti->error);
-+		release_instance(instance);
-+		return -EINVAL;
-+	}
-+
-+	/* Beyond this point, the instance number will be cleaned up for us if needed */
-+	result = vdo_initialize(ti, instance, config);
-+	if (result != VDO_SUCCESS) {
-+		release_instance(instance);
-+		free_device_config(config);
-+		return vdo_map_to_system_error(result);
-+	}
-+
-+	return VDO_SUCCESS;
-+}
-+
-+static int construct_new_vdo(struct dm_target *ti, unsigned int argc, char **argv)
-+{
-+	int result;
-+	unsigned int instance;
-+	struct registered_thread instance_thread;
-+
-+	mutex_lock(&instances_lock);
-+	result = allocate_instance(&instance);
-+	mutex_unlock(&instances_lock);
-+	if (result != VDO_SUCCESS)
-+		return -ENOMEM;
-+
-+	uds_register_thread_device_id(&instance_thread, &instance);
-+	result = construct_new_vdo_registered(ti, argc, argv, instance);
-+	uds_unregister_thread_device_id();
-+	return result;
-+}
-+
-+/**
-+ * check_may_grow_physical() - Callback to check that we're not in recovery mode, used in
-+ *                             vdo_prepare_to_grow_physical().
-+ * @completion: The admin completion.
-+ */
-+static void check_may_grow_physical(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+
-+	assert_admin_phase_thread(vdo, __func__);
-+
-+	/* These checks can only be done from a vdo thread. */
-+	if (vdo_is_read_only(vdo))
-+		vdo_set_completion_result(completion, VDO_READ_ONLY);
-+
-+	if (vdo_in_recovery_mode(vdo))
-+		vdo_set_completion_result(completion, VDO_RETRY_AFTER_REBUILD);
-+
-+	finish_operation_callback(completion);
-+}
-+
-+static block_count_t get_partition_size(struct layout *layout, enum partition_id id)
-+{
-+	return vdo_get_known_partition(layout, id)->count;
-+}
-+
-+/**
-+ * grow_layout() - Make the layout for growing a vdo.
-+ * @vdo: The vdo preparing to grow.
-+ * @old_size: The current size of the vdo.
-+ * @new_size: The size to which the vdo will be grown.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+static int grow_layout(struct vdo *vdo, block_count_t old_size, block_count_t new_size)
-+{
-+	int result;
-+	block_count_t min_new_size;
-+
-+	if (vdo->next_layout.size == new_size)
-+		/* We are already prepared to grow to the new size, so we're done. */
-+		return VDO_SUCCESS;
-+
-+	/* Make a copy completion if there isn't one */
-+	if (vdo->partition_copier == NULL) {
-+		vdo->partition_copier = dm_kcopyd_client_create(NULL);
-+		if (vdo->partition_copier == NULL)
-+			return -ENOMEM;
-+	}
-+
-+	/* Free any unused preparation. */
-+	vdo_uninitialize_layout(&vdo->next_layout);
-+
-+	/*
-+	 * Make a new layout with the existing partition sizes for everything but the slab depot
-+	 * partition.
-+	 */
-+	result = vdo_initialize_layout(new_size,
-+				       vdo->layout.start,
-+				       get_partition_size(&vdo->layout, VDO_BLOCK_MAP_PARTITION),
-+				       get_partition_size(&vdo->layout,
-+							  VDO_RECOVERY_JOURNAL_PARTITION),
-+				       get_partition_size(&vdo->layout,
-+							  VDO_SLAB_SUMMARY_PARTITION),
-+				       &vdo->next_layout);
-+	if (result != VDO_SUCCESS) {
-+		dm_kcopyd_client_destroy(UDS_FORGET(vdo->partition_copier));
-+		return result;
-+	}
-+
-+	/* Ensure the new journal and summary are entirely within the added blocks. */
-+	min_new_size = (old_size +
-+			get_partition_size(&vdo->next_layout, VDO_SLAB_SUMMARY_PARTITION) +
-+			get_partition_size(&vdo->next_layout, VDO_RECOVERY_JOURNAL_PARTITION));
-+	if (min_new_size > new_size) {
-+		/* Copying the journal and summary would destroy some old metadata. */
-+		vdo_uninitialize_layout(&vdo->next_layout);
-+		dm_kcopyd_client_destroy(UDS_FORGET(vdo->partition_copier));
-+		return VDO_INCREMENT_TOO_SMALL;
-+	}
-+
-+	return VDO_SUCCESS;
-+}
-+
-+static int prepare_to_grow_physical(struct vdo *vdo, block_count_t new_physical_blocks)
-+{
-+	int result;
-+	block_count_t current_physical_blocks = vdo->states.vdo.config.physical_blocks;
-+
-+	uds_log_info("Preparing to resize physical to %llu",
-+		     (unsigned long long) new_physical_blocks);
-+	ASSERT_LOG_ONLY((new_physical_blocks > current_physical_blocks),
-+			"New physical size is larger than current physical size");
-+	result = perform_admin_operation(vdo,
-+					 PREPARE_GROW_PHYSICAL_PHASE_START,
-+					 check_may_grow_physical,
-+					 finish_operation_callback,
-+					 "prepare grow-physical");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = grow_layout(vdo, current_physical_blocks, new_physical_blocks);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	result = vdo_prepare_to_grow_slab_depot(vdo->depot,
-+						vdo_get_known_partition(&vdo->next_layout,
-+									VDO_SLAB_DEPOT_PARTITION));
-+	if (result != VDO_SUCCESS) {
-+		vdo_uninitialize_layout(&vdo->next_layout);
-+		return result;
-+	}
-+
-+	uds_log_info("Done preparing to resize physical");
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * validate_new_device_config() - Check whether a new device config represents a valid modification
-+ *				  to an existing config.
-+ * @to_validate: The new config to validate.
-+ * @config: The existing config.
-+ * @may_grow: Set to true if growing the logical and physical size of the vdo is currently
-+ *	      permitted.
-+ * @error_ptr: A pointer to hold the reason for any error.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+static int validate_new_device_config(struct device_config *to_validate,
-+				      struct device_config *config,
-+				      bool may_grow,
-+				      char **error_ptr)
-+{
-+	if (to_validate->owning_target->begin != config->owning_target->begin) {
-+		*error_ptr = "Starting sector cannot change";
-+		return VDO_PARAMETER_MISMATCH;
-+	}
-+
-+	if (to_validate->logical_block_size != config->logical_block_size) {
-+		*error_ptr = "Logical block size cannot change";
-+		return VDO_PARAMETER_MISMATCH;
-+	}
-+
-+	if (to_validate->logical_blocks < config->logical_blocks) {
-+		*error_ptr = "Can't shrink VDO logical size";
-+		return VDO_PARAMETER_MISMATCH;
-+	}
-+
-+	if (to_validate->cache_size != config->cache_size) {
-+		*error_ptr = "Block map cache size cannot change";
-+		return VDO_PARAMETER_MISMATCH;
-+	}
-+
-+	if (to_validate->block_map_maximum_age != config->block_map_maximum_age) {
-+		*error_ptr = "Block map maximum age cannot change";
-+		return VDO_PARAMETER_MISMATCH;
-+	}
-+
-+	if (memcmp(&to_validate->thread_counts,
-+		   &config->thread_counts,
-+		   sizeof(struct thread_count_config)) != 0) {
-+		*error_ptr = "Thread configuration cannot change";
-+		return VDO_PARAMETER_MISMATCH;
-+	}
-+
-+	if (to_validate->physical_blocks < config->physical_blocks) {
-+		*error_ptr = "Removing physical storage from a VDO is not supported";
-+		return VDO_NOT_IMPLEMENTED;
-+	}
-+
-+	if (!may_grow && (to_validate->physical_blocks > config->physical_blocks)) {
-+		*error_ptr = "VDO physical size may not grow in current state";
-+		return VDO_NOT_IMPLEMENTED;
-+	}
-+
-+	return VDO_SUCCESS;
-+}
-+
-+static int prepare_to_modify(struct dm_target *ti, struct device_config *config, struct vdo *vdo)
-+{
-+	int result;
-+	bool may_grow = (vdo_get_admin_state(vdo) != VDO_ADMIN_STATE_PRE_LOADED);
-+
-+	result = validate_new_device_config(config, vdo->device_config, may_grow, &ti->error);
-+	if (result != VDO_SUCCESS)
-+		return -EINVAL;
-+
-+	if (config->logical_blocks > vdo->device_config->logical_blocks) {
-+		block_count_t logical_blocks = vdo->states.vdo.config.logical_blocks;
-+
-+		uds_log_info("Preparing to resize logical to %llu",
-+			     (unsigned long long) config->logical_blocks);
-+		ASSERT_LOG_ONLY((config->logical_blocks > logical_blocks),
-+				"New logical size is larger than current size");
-+
-+		result = vdo_prepare_to_grow_block_map(vdo->block_map, config->logical_blocks);
-+		if (result != VDO_SUCCESS) {
-+			ti->error = "Device vdo_prepare_to_grow_logical failed";
-+			return result;
-+		}
-+
-+		uds_log_info("Done preparing to resize logical");
-+	}
-+
-+	if (config->physical_blocks > vdo->device_config->physical_blocks) {
-+		result = prepare_to_grow_physical(vdo, config->physical_blocks);
-+		if (result != VDO_SUCCESS) {
-+			if (result == VDO_PARAMETER_MISMATCH)
-+				/*
-+				 * If we don't trap this case, vdo_map_to_system_error() will remap
-+				 * it to -EIO, which is misleading and ahistorical.
-+				 */
-+				result = -EINVAL;
-+
-+			if (result == VDO_TOO_MANY_SLABS)
-+				ti->error = "Device vdo_prepare_to_grow_physical failed (specified physical size too big based on formatted slab size)";
-+			else
-+				ti->error = "Device vdo_prepare_to_grow_physical failed";
-+
-+			return result;
-+		}
-+	}
-+
-+	if (strcmp(config->parent_device_name, vdo->device_config->parent_device_name) != 0) {
-+		const char *device_name = vdo_get_device_name(config->owning_target);
-+
-+		uds_log_info("Updating backing device of %s from %s to %s",
-+			     device_name,
-+			     vdo->device_config->parent_device_name,
-+			     config->parent_device_name);
-+	}
-+
-+	return VDO_SUCCESS;
-+}
-+
-+static int update_existing_vdo(const char *device_name,
-+			       struct dm_target *ti,
-+			       unsigned int argc,
-+			       char **argv,
-+			       struct vdo *vdo)
-+{
-+	int result;
-+	struct device_config *config;
-+
-+	result = parse_device_config(argc, argv, ti, &config);
-+	if (result != VDO_SUCCESS)
-+		return -EINVAL;
-+
-+	uds_log_info("preparing to modify device '%s'", device_name);
-+	result = prepare_to_modify(ti, config, vdo);
-+	if (result != VDO_SUCCESS) {
-+		free_device_config(config);
-+		return vdo_map_to_system_error(result);
-+	}
-+
-+	set_device_config(ti, vdo, config);
-+	return VDO_SUCCESS;
-+}
-+
-+static int vdo_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-+{
-+	int result;
-+	struct registered_thread allocating_thread, instance_thread;
-+	const char *device_name;
-+	struct vdo *vdo;
-+
-+	uds_register_allocating_thread(&allocating_thread, NULL);
-+	device_name = vdo_get_device_name(ti);
-+	vdo = vdo_find_matching(vdo_is_named, (const void *) device_name);
-+	if (vdo == NULL) {
-+		result = construct_new_vdo(ti, argc, argv);
-+	} else {
-+		uds_register_thread_device_id(&instance_thread, &vdo->instance);
-+		result = update_existing_vdo(device_name, ti, argc, argv, vdo);
-+		uds_unregister_thread_device_id();
-+	}
-+
-+	uds_unregister_allocating_thread();
-+	return result;
-+}
-+
-+static void vdo_dtr(struct dm_target *ti)
-+{
-+	struct device_config *config = ti->private;
-+	struct vdo *vdo = UDS_FORGET(config->vdo);
-+
-+	list_del_init(&config->config_list);
-+	if (list_empty(&vdo->device_config_list)) {
-+		const char *device_name;
-+
-+		/* This was the last config referencing the VDO. Free it. */
-+		unsigned int instance = vdo->instance;
-+		struct registered_thread allocating_thread, instance_thread;
-+
-+		uds_register_thread_device_id(&instance_thread, &instance);
-+		uds_register_allocating_thread(&allocating_thread, NULL);
-+
-+		device_name = vdo_get_device_name(ti);
-+		uds_log_info("stopping device '%s'", device_name);
-+		if (vdo->dump_on_shutdown)
-+			vdo_dump_all(vdo, "device shutdown");
-+
-+		vdo_destroy(UDS_FORGET(vdo));
-+		uds_log_info("device '%s' stopped", device_name);
-+		uds_unregister_thread_device_id();
-+		uds_unregister_allocating_thread();
-+		release_instance(instance);
-+	} else if (config == vdo->device_config) {
-+		/*
-+		 * The VDO still references this config. Give it a reference to a config that isn't
-+		 * being destroyed.
-+		 */
-+		vdo->device_config = list_first_entry(&vdo->device_config_list,
-+						      struct device_config,
-+						      config_list);
-+	}
-+
-+	free_device_config(config);
-+	ti->private = NULL;
-+}
-+
-+static void vdo_presuspend(struct dm_target *ti)
-+{
-+	get_vdo_for_target(ti)->suspend_type =
-+		(dm_noflush_suspending(ti) ? VDO_ADMIN_STATE_SUSPENDING : VDO_ADMIN_STATE_SAVING);
-+}
-+
-+/**
-+ * write_super_block_for_suspend() - Update the VDO state and save the super block.
-+ * @completion: The admin completion
-+ */
-+static void write_super_block_for_suspend(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+
-+	switch (vdo_get_state(vdo)) {
-+	case VDO_DIRTY:
-+	case VDO_NEW:
-+		vdo_set_state(vdo, VDO_CLEAN);
-+		break;
-+
-+	case VDO_CLEAN:
-+	case VDO_READ_ONLY_MODE:
-+	case VDO_FORCE_REBUILD:
-+	case VDO_RECOVERING:
-+	case VDO_REBUILD_FOR_UPGRADE:
-+		break;
-+
-+	case VDO_REPLAYING:
-+	default:
-+		vdo_continue_completion(completion, UDS_BAD_STATE);
-+		return;
-+	}
-+
-+	vdo_save_components(vdo, completion);
-+}
-+
-+/**
-+ * suspend_callback() - Callback to initiate a suspend, registered in vdo_postsuspend().
-+ * @completion: The sub-task completion.
-+ */
-+static void suspend_callback(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+	struct admin_state *state = &vdo->admin.state;
-+	int result;
-+
-+	assert_admin_phase_thread(vdo, __func__);
-+
-+	switch (advance_phase(vdo)) {
-+	case SUSPEND_PHASE_START:
-+		if (vdo_get_admin_state_code(state)->quiescent)
-+			/* Already suspended */
-+			break;
-+
-+		vdo_continue_completion(completion, vdo_start_operation(state, vdo->suspend_type));
-+		return;
-+
-+	case SUSPEND_PHASE_PACKER:
-+		/*
-+		 * If the VDO was already resumed from a prior suspend while read-only, some of the
-+		 * components may not have been resumed. By setting a read-only error here, we
-+		 * guarantee that the result of this suspend will be VDO_READ_ONLY and not
-+		 * VDO_INVALID_ADMIN_STATE in that case.
-+		 */
-+		if (vdo_in_read_only_mode(vdo))
-+			vdo_set_completion_result(completion, VDO_READ_ONLY);
-+
-+		vdo_drain_packer(vdo->packer, completion);
-+		return;
-+
-+	case SUSPEND_PHASE_DATA_VIOS:
-+		drain_data_vio_pool(vdo->data_vio_pool, completion);
-+		return;
-+
-+	case SUSPEND_PHASE_DEDUPE:
-+		vdo_drain_hash_zones(vdo->hash_zones, completion);
-+		return;
-+
-+	case SUSPEND_PHASE_FLUSHES:
-+		vdo_drain_flusher(vdo->flusher, completion);
-+		return;
-+
-+	case SUSPEND_PHASE_LOGICAL_ZONES:
-+		/*
-+		 * Attempt to flush all I/O before completing post suspend work. We believe a
-+		 * suspended device is expected to have persisted all data written before the
-+		 * suspend, even if it hasn't been flushed yet.
-+		 */
-+		result = vdo_synchronous_flush(vdo);
-+		if (result != VDO_SUCCESS)
-+			vdo_enter_read_only_mode(vdo, result);
-+
-+		vdo_drain_logical_zones(vdo->logical_zones,
-+					vdo_get_admin_state_code(state),
-+					completion);
-+		return;
-+
-+	case SUSPEND_PHASE_BLOCK_MAP:
-+		vdo_drain_block_map(vdo->block_map,
-+				    vdo_get_admin_state_code(state),
-+				    completion);
-+		return;
-+
-+	case SUSPEND_PHASE_JOURNAL:
-+		vdo_drain_recovery_journal(vdo->recovery_journal,
-+					   vdo_get_admin_state_code(state),
-+					   completion);
-+		return;
-+
-+	case SUSPEND_PHASE_DEPOT:
-+		vdo_drain_slab_depot(vdo->depot,
-+				     vdo_get_admin_state_code(state),
-+				     completion);
-+		return;
-+
-+	case SUSPEND_PHASE_READ_ONLY_WAIT:
-+		vdo_wait_until_not_entering_read_only_mode(completion);
-+		return;
-+
-+	case SUSPEND_PHASE_WRITE_SUPER_BLOCK:
-+		if (vdo_is_state_suspending(state) || (completion->result != VDO_SUCCESS))
-+			/* If we didn't save the VDO or there was an error, we're done. */
-+			break;
-+
-+		write_super_block_for_suspend(completion);
-+		return;
-+
-+	case SUSPEND_PHASE_END:
-+		break;
-+
-+	default:
-+		vdo_set_completion_result(completion, UDS_BAD_STATE);
-+	}
-+
-+	finish_operation_callback(completion);
-+}
-+
-+static void vdo_postsuspend(struct dm_target *ti)
-+{
-+	struct vdo *vdo = get_vdo_for_target(ti);
-+	struct registered_thread instance_thread;
-+	const char *device_name;
-+	int result;
-+
-+	uds_register_thread_device_id(&instance_thread, &vdo->instance);
-+	device_name = vdo_get_device_name(vdo->device_config->owning_target);
-+	uds_log_info("suspending device '%s'", device_name);
-+
-+	/*
-+	 * It's important to note any error here does not actually stop device-mapper from
-+	 * suspending the device. All this work is done post suspend.
-+	 */
-+	result = perform_admin_operation(vdo,
-+					 SUSPEND_PHASE_START,
-+					 suspend_callback,
-+					 suspend_callback,
-+					 "suspend");
-+
-+	if ((result == VDO_SUCCESS) || (result == VDO_READ_ONLY)) {
-+		/*
-+		 * Treat VDO_READ_ONLY as a success since a read-only suspension still leaves the
-+		 * VDO suspended.
-+		 */
-+		uds_log_info("device '%s' suspended", device_name);
-+	} else if (result == VDO_INVALID_ADMIN_STATE) {
-+		uds_log_error("Suspend invoked while in unexpected state: %s",
-+			      vdo_get_admin_state(vdo)->name);
-+	} else {
-+		uds_log_error_strerror(result, "Suspend of device '%s' failed", device_name);
-+	}
-+
-+	uds_unregister_thread_device_id();
-+}
-+
-+/**
-+ * was_new() - Check whether the vdo was new when it was loaded.
-+ * @vdo: The vdo to query.
-+ *
-+ * Return: true if the vdo was new.
-+ */
-+static bool was_new(const struct vdo *vdo)
-+{
-+	return (vdo->load_state == VDO_NEW);
-+}
-+
-+/**
-+ * requires_repair() - Check whether a vdo requires recovery or rebuild.
-+ * @vdo: The vdo to query.
-+ *
-+ * Return: true if the vdo must be repaired.
-+ */
-+static bool __must_check requires_repair(const struct vdo *vdo)
-+{
-+	switch (vdo_get_state(vdo)) {
-+	case VDO_DIRTY:
-+	case VDO_FORCE_REBUILD:
-+	case VDO_REPLAYING:
-+	case VDO_REBUILD_FOR_UPGRADE:
-+		return true;
-+
-+	default:
-+		return false;
-+	}
-+}
-+
-+/**
-+ * get_load_type() - Determine how the slab depot was loaded.
-+ * @vdo: The vdo.
-+ *
-+ * Return: How the depot was loaded.
-+ */
-+static enum slab_depot_load_type get_load_type(struct vdo *vdo)
-+{
-+	if (vdo_state_requires_read_only_rebuild(vdo->load_state))
-+		return VDO_SLAB_DEPOT_REBUILD_LOAD;
-+
-+	if (vdo_state_requires_recovery(vdo->load_state))
-+		return VDO_SLAB_DEPOT_RECOVERY_LOAD;
-+
-+	return VDO_SLAB_DEPOT_NORMAL_LOAD;
-+}
-+
-+/**
-+ * vdo_initialize_kobjects() - Initialize the vdo sysfs directory.
-+ * @vdo: The vdo being initialized.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+static int vdo_initialize_kobjects(struct vdo *vdo)
-+{
-+	int result;
-+	struct dm_target *target = vdo->device_config->owning_target;
-+	struct mapped_device *md = dm_table_get_md(target->table);
-+
-+	kobject_init(&vdo->vdo_directory, &vdo_directory_type);
-+	vdo->sysfs_added = true;
-+	result = kobject_add(&vdo->vdo_directory, &disk_to_dev(dm_disk(md))->kobj, "vdo");
-+	if (result != 0)
-+		return VDO_CANT_ADD_SYSFS_NODE;
-+
-+	result = vdo_add_dedupe_index_sysfs(vdo->hash_zones);
-+	if (result != 0)
-+		return VDO_CANT_ADD_SYSFS_NODE;
-+
-+	return vdo_add_sysfs_stats_dir(vdo);
-+}
-+
-+/**
-+ * load_callback() - Callback to do the destructive parts of loading a VDO.
-+ * @completion: The sub-task completion.
-+ */
-+static void load_callback(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+	int result;
-+
-+	assert_admin_phase_thread(vdo, __func__);
-+
-+	switch (advance_phase(vdo)) {
-+	case LOAD_PHASE_START:
-+		result = vdo_start_operation(&vdo->admin.state, VDO_ADMIN_STATE_LOADING);
-+		if (result != VDO_SUCCESS) {
-+			vdo_continue_completion(completion, result);
-+			return;
-+		}
-+
-+		/* Prepare the recovery journal for new entries. */
-+		vdo_open_recovery_journal(vdo->recovery_journal, vdo->depot, vdo->block_map);
-+		vdo_allow_read_only_mode_entry(completion);
-+		return;
-+
-+	case LOAD_PHASE_STATS:
-+		vdo_continue_completion(completion, vdo_initialize_kobjects(vdo));
-+		return;
-+
-+	case LOAD_PHASE_LOAD_DEPOT:
-+		if (vdo_is_read_only(vdo)) {
-+			/*
-+			 * In read-only mode we don't use the allocator and it may not even be
-+			 * readable, so don't bother trying to load it.
-+			 */
-+			vdo_set_completion_result(completion, VDO_READ_ONLY);
-+			break;
-+		}
-+
-+		if (requires_repair(vdo)) {
-+			vdo_repair(completion);
-+			return;
-+		}
-+
-+		vdo_load_slab_depot(vdo->depot,
-+				    (was_new(vdo) ?
-+				     VDO_ADMIN_STATE_FORMATTING :
-+				     VDO_ADMIN_STATE_LOADING),
-+				    completion,
-+				    NULL);
-+		return;
-+
-+	case LOAD_PHASE_MAKE_DIRTY:
-+		vdo_set_state(vdo, VDO_DIRTY);
-+		vdo_save_components(vdo, completion);
-+		return;
-+
-+	case LOAD_PHASE_PREPARE_TO_ALLOCATE:
-+		vdo_initialize_block_map_from_journal(vdo->block_map, vdo->recovery_journal);
-+		vdo_prepare_slab_depot_to_allocate(vdo->depot, get_load_type(vdo), completion);
-+		return;
-+
-+	case LOAD_PHASE_SCRUB_SLABS:
-+		if (vdo_state_requires_recovery(vdo->load_state))
-+			vdo_enter_recovery_mode(vdo);
-+
-+		vdo_scrub_all_unrecovered_slabs(vdo->depot, completion);
-+		return;
-+
-+	case LOAD_PHASE_DATA_REDUCTION:
-+		WRITE_ONCE(vdo->compressing, vdo->device_config->compression);
-+		if (vdo->device_config->deduplication)
-+			/*
-+			 * Don't try to load or rebuild the index first (and log scary error
-+			 * messages) if this is known to be a newly-formatted volume.
-+			 */
-+			vdo_start_dedupe_index(vdo->hash_zones, was_new(vdo));
-+
-+		vdo->allocations_allowed = false;
-+		fallthrough;
-+
-+	case LOAD_PHASE_FINISHED:
-+		break;
-+
-+	case LOAD_PHASE_DRAIN_JOURNAL:
-+		vdo_drain_recovery_journal(vdo->recovery_journal,
-+					   VDO_ADMIN_STATE_SAVING,
-+					   completion);
-+		return;
-+
-+	case LOAD_PHASE_WAIT_FOR_READ_ONLY:
-+		/* Avoid an infinite loop */
-+		completion->error_handler = NULL;
-+		vdo->admin.phase = LOAD_PHASE_FINISHED;
-+		vdo_wait_until_not_entering_read_only_mode(completion);
-+		return;
-+
-+	default:
-+		vdo_set_completion_result(completion, UDS_BAD_STATE);
-+	}
-+
-+	finish_operation_callback(completion);
-+}
-+
-+/**
-+ * handle_load_error() - Handle an error during the load operation.
-+ * @completion: The admin completion.
-+ *
-+ * If at all possible, brings the vdo online in read-only mode. This handler is registered in
-+ * vdo_preresume_registered().
-+ */
-+static void handle_load_error(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+
-+	if (vdo_requeue_completion_if_needed(completion, vdo->thread_config.admin_thread))
-+		return;
-+
-+	if (vdo_state_requires_read_only_rebuild(vdo->load_state) &&
-+	    (vdo->admin.phase == LOAD_PHASE_MAKE_DIRTY)) {
-+		uds_log_error_strerror(completion->result, "aborting load");
-+		vdo->admin.phase = LOAD_PHASE_DRAIN_JOURNAL;
-+		load_callback(UDS_FORGET(completion));
-+		return;
-+	}
-+
-+	uds_log_error_strerror(completion->result, "Entering read-only mode due to load error");
-+	vdo->admin.phase = LOAD_PHASE_WAIT_FOR_READ_ONLY;
-+	vdo_enter_read_only_mode(vdo, completion->result);
-+	completion->result = VDO_READ_ONLY;
-+	load_callback(completion);
-+}
-+
-+/**
-+ * write_super_block_for_resume() - Update the VDO state and save the super block.
-+ * @completion: The admin completion
-+ */
-+static void write_super_block_for_resume(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+
-+	switch (vdo_get_state(vdo)) {
-+	case VDO_CLEAN:
-+	case VDO_NEW:
-+		vdo_set_state(vdo, VDO_DIRTY);
-+		vdo_save_components(vdo, completion);
-+		return;
-+
-+	case VDO_DIRTY:
-+	case VDO_READ_ONLY_MODE:
-+	case VDO_FORCE_REBUILD:
-+	case VDO_RECOVERING:
-+	case VDO_REBUILD_FOR_UPGRADE:
-+		/* No need to write the super block in these cases */
-+		vdo_launch_completion(completion);
-+		return;
-+
-+	case VDO_REPLAYING:
-+	default:
-+		vdo_continue_completion(completion, UDS_BAD_STATE);
-+	}
-+}
-+
-+/**
-+ * resume_callback() - Callback to resume a VDO.
-+ * @completion: The admin completion.
-+ */
-+static void resume_callback(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+	int result;
-+
-+	assert_admin_phase_thread(vdo, __func__);
-+
-+	switch (advance_phase(vdo)) {
-+	case RESUME_PHASE_START:
-+		result = vdo_start_operation(&vdo->admin.state, VDO_ADMIN_STATE_RESUMING);
-+		if (result != VDO_SUCCESS) {
-+			vdo_continue_completion(completion, result);
-+			return;
-+		}
-+
-+		write_super_block_for_resume(completion);
-+		return;
-+
-+	case RESUME_PHASE_ALLOW_READ_ONLY_MODE:
-+		vdo_allow_read_only_mode_entry(completion);
-+		return;
-+
-+	case RESUME_PHASE_DEDUPE:
-+		vdo_resume_hash_zones(vdo->hash_zones, completion);
-+		return;
-+
-+	case RESUME_PHASE_DEPOT:
-+		vdo_resume_slab_depot(vdo->depot, completion);
-+		return;
-+
-+	case RESUME_PHASE_JOURNAL:
-+		vdo_resume_recovery_journal(vdo->recovery_journal, completion);
-+		return;
-+
-+	case RESUME_PHASE_BLOCK_MAP:
-+		vdo_resume_block_map(vdo->block_map, completion);
-+		return;
-+
-+	case RESUME_PHASE_LOGICAL_ZONES:
-+		vdo_resume_logical_zones(vdo->logical_zones, completion);
-+		return;
-+
-+	case RESUME_PHASE_PACKER:
-+	{
-+		bool was_enabled = vdo_get_compressing(vdo);
-+		bool enable = vdo->device_config->compression;
-+
-+		if (enable != was_enabled)
-+			WRITE_ONCE(vdo->compressing, enable);
-+		uds_log_info("compression is %s", (enable ? "enabled" : "disabled"));
-+
-+		vdo_resume_packer(vdo->packer, completion);
-+		return;
-+	}
-+
-+	case RESUME_PHASE_FLUSHER:
-+		vdo_resume_flusher(vdo->flusher, completion);
-+		return;
-+
-+	case RESUME_PHASE_DATA_VIOS:
-+		resume_data_vio_pool(vdo->data_vio_pool, completion);
-+		return;
-+
-+	case RESUME_PHASE_END:
-+		break;
-+
-+	default:
-+		vdo_set_completion_result(completion, UDS_BAD_STATE);
-+	}
-+
-+	finish_operation_callback(completion);
-+}
-+
-+/**
-+ * grow_logical_callback() - Callback to initiate a grow logical.
-+ * @completion: The admin completion.
-+ *
-+ * Registered in perform_grow_logical().
-+ */
-+static void grow_logical_callback(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+	int result;
-+
-+	assert_admin_phase_thread(vdo, __func__);
-+
-+	switch (advance_phase(vdo)) {
-+	case GROW_LOGICAL_PHASE_START:
-+		if (vdo_is_read_only(vdo)) {
-+			uds_log_error_strerror(VDO_READ_ONLY,
-+					       "Can't grow logical size of a read-only VDO");
-+			vdo_set_completion_result(completion, VDO_READ_ONLY);
-+			break;
-+		}
-+
-+		result = vdo_start_operation(&vdo->admin.state,
-+					     VDO_ADMIN_STATE_SUSPENDED_OPERATION);
-+		if (result != VDO_SUCCESS) {
-+			vdo_continue_completion(completion, result);
-+			return;
-+		}
-+
-+		vdo->states.vdo.config.logical_blocks = vdo->block_map->next_entry_count;
-+		vdo_save_components(vdo, completion);
-+		return;
-+
-+	case GROW_LOGICAL_PHASE_GROW_BLOCK_MAP:
-+		vdo_grow_block_map(vdo->block_map, completion);
-+		return;
-+
-+	case GROW_LOGICAL_PHASE_END:
-+		break;
-+
-+	case GROW_LOGICAL_PHASE_ERROR:
-+		vdo_enter_read_only_mode(vdo, completion->result);
-+		break;
-+
-+	default:
-+		vdo_set_completion_result(completion, UDS_BAD_STATE);
-+	}
-+
-+	finish_operation_callback(completion);
-+}
-+
-+/**
-+ * handle_logical_growth_error() - Handle an error during the grow physical process.
-+ * @completion: The admin completion.
-+ */
-+static void handle_logical_growth_error(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+
-+	if (vdo->admin.phase == GROW_LOGICAL_PHASE_GROW_BLOCK_MAP) {
-+		/*
-+		 * We've failed to write the new size in the super block, so set our in memory
-+		 * config back to the old size.
-+		 */
-+		vdo->states.vdo.config.logical_blocks = vdo->block_map->entry_count;
-+		vdo_abandon_block_map_growth(vdo->block_map);
-+	}
-+
-+	vdo->admin.phase = GROW_LOGICAL_PHASE_ERROR;
-+	grow_logical_callback(completion);
-+}
-+
-+/**
-+ * perform_grow_logical() - Grow the logical size of the vdo.
-+ * @vdo: The vdo to grow.
-+ * @new_logical_blocks: The size to which the vdo should be grown.
-+ *
-+ * Context: This method may only be called when the vdo has been suspended and must not be called
-+ * from a base thread.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+static int perform_grow_logical(struct vdo *vdo, block_count_t new_logical_blocks)
-+{
-+	int result;
-+
-+	if (vdo->device_config->logical_blocks == new_logical_blocks) {
-+		/*
-+		 * A table was loaded for which we prepared to grow, but a table without that
-+		 * growth was what we are resuming with.
-+		 */
-+		vdo_abandon_block_map_growth(vdo->block_map);
-+		return VDO_SUCCESS;
-+	}
-+
-+	uds_log_info("Resizing logical to %llu", (unsigned long long) new_logical_blocks);
-+	if (vdo->block_map->next_entry_count != new_logical_blocks)
-+		return VDO_PARAMETER_MISMATCH;
-+
-+	result = perform_admin_operation(vdo,
-+					 GROW_LOGICAL_PHASE_START,
-+					 grow_logical_callback,
-+					 handle_logical_growth_error,
-+					 "grow logical");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	uds_log_info("Logical blocks now %llu", (unsigned long long) new_logical_blocks);
-+	return VDO_SUCCESS;
-+}
-+
-+static void copy_callback(int read_err, unsigned long write_err, void *context)
-+{
-+	struct vdo_completion *completion = context;
-+	int result = (((read_err == 0) && (write_err == 0)) ? VDO_SUCCESS : -EIO);
-+
-+	vdo_continue_completion(completion, result);
-+}
-+
 +static void
-+partition_to_region(struct partition *partition, struct vdo *vdo, struct dm_io_region *region)
++release_compressed_write_waiter(struct data_vio *data_vio, struct allocation *allocation)
 +{
-+	physical_block_number_t pbn = partition->offset - vdo->geometry.bio_offset;
-+
-+	*region = (struct dm_io_region) {
-+		.bdev = vdo_get_backing_device(vdo),
-+		.sector = pbn * VDO_SECTORS_PER_BLOCK,
-+		.count = partition->count * VDO_SECTORS_PER_BLOCK,
++	data_vio->new_mapped = (struct zoned_pbn) {
++		.pbn = allocation->pbn,
++		.zone = allocation->zone,
++		.state = data_vio->compression.slot + VDO_MAPPING_STATE_COMPRESSED_BASE,
 +	};
++
++	vdo_share_compressed_write_lock(data_vio, allocation->lock);
++	update_metadata_for_data_vio_write(data_vio, allocation->lock);
 +}
 +
 +/**
-+ * copy_partition() - Copy a partition from the location specified in the current layout to that in
-+ *                    the next layout.
-+ * @vdo: The vdo preparing to grow.
-+ * @id: The ID of the partition to copy.
-+ * @parent: The completion to notify when the copy is complete.
++ * finish_compressed_write() - Finish a compressed block write.
++ * @completion: The compressed write completion.
++ *
++ * This callback is registered in continue_after_allocation().
 + */
-+static void copy_partition(struct vdo *vdo, enum partition_id id, struct vdo_completion *parent)
++static void finish_compressed_write(struct vdo_completion *completion)
 +{
-+	struct dm_io_region read_region, write_regions[1];
-+	struct partition *from = vdo_get_known_partition(&vdo->layout, id);
-+	struct partition *to = vdo_get_known_partition(&vdo->next_layout, id);
++	struct data_vio *agent = as_data_vio(completion);
++	struct data_vio *client, *next;
 +
-+	partition_to_region(from, vdo, &read_region);
-+	partition_to_region(to, vdo, &write_regions[0]);
-+	dm_kcopyd_copy(vdo->partition_copier,
-+		       &read_region,
-+		       1,
-+		       write_regions,
++	assert_data_vio_in_allocated_zone(agent);
++
++	/*
++	 * Process all the non-agent waiters first to ensure that the pbn lock can not be released
++	 * until all of them have had a chance to journal their increfs.
++	 */
++	for (client = agent->compression.next_in_batch; client != NULL; client = next) {
++		next = client->compression.next_in_batch;
++		release_compressed_write_waiter(client, &agent->allocation);
++	}
++
++	completion->error_handler = handle_data_vio_error;
++	release_compressed_write_waiter(agent, &agent->allocation);
++}
++
++static void handle_compressed_write_error(struct vdo_completion *completion)
++{
++	struct data_vio *agent = as_data_vio(completion);
++	struct allocation *allocation = &agent->allocation;
++	struct data_vio *client, *next;
++
++	if (vdo_requeue_completion_if_needed(completion, allocation->zone->thread_id))
++		return;
++
++	update_vio_error_stats(as_vio(completion),
++			       "Completing compressed write vio for physical block %llu with error",
++			       (unsigned long long) allocation->pbn);
++
++	for (client = agent->compression.next_in_batch; client != NULL; client = next) {
++		next = client->compression.next_in_batch;
++		write_data_vio(client);
++	}
++
++	/* Now that we've released the batch from the packer, forget the error and continue on. */
++	vdo_reset_completion(completion);
++	completion->error_handler = handle_data_vio_error;
++	write_data_vio(agent);
++}
++
++/**
++ * add_to_bin() - Put a data_vio in a specific packer_bin in which it will definitely fit.
++ * @bin: The bin in which to put the data_vio.
++ * @data_vio: The data_vio to add.
++ */
++static void add_to_bin(struct packer_bin *bin, struct data_vio *data_vio)
++{
++	data_vio->compression.bin = bin;
++	data_vio->compression.slot = bin->slots_used;
++	bin->incoming[bin->slots_used++] = data_vio;
++}
++
++/**
++ * remove_from_bin() - Get the next data_vio whose compression has not been canceled from a bin.
++ * @packer: The packer.
++ * @bin: The bin from which to get a data_vio.
++ *
++ * Any canceled data_vios will be moved to the canceled bin.
++ * Return: An uncanceled data_vio from the bin or NULL if there are none.
++ */
++static struct data_vio *remove_from_bin(struct packer *packer, struct packer_bin *bin)
++{
++	while (bin->slots_used > 0) {
++		struct data_vio *data_vio = bin->incoming[--bin->slots_used];
++
++		if (!advance_data_vio_compression_stage(data_vio).may_not_compress) {
++			data_vio->compression.bin = NULL;
++			return data_vio;
++		}
++
++		add_to_bin(packer->canceled_bin, data_vio);
++	}
++
++	/* The bin is now empty. */
++	bin->free_space = VDO_COMPRESSED_BLOCK_DATA_SIZE;
++	return NULL;
++}
++
++/**
++ * initialize_compressed_block() - Initialize a compressed block.
++ * @block: The compressed block to initialize.
++ * @size: The size of the agent's fragment.
++ *
++ * This method initializes the compressed block in the compressed write agent. Because the
++ * compressor already put the agent's compressed fragment at the start of the compressed block's
++ * data field, it needn't be copied. So all we need do is initialize the header and set the size of
++ * the agent's fragment.
++ */
++static void initialize_compressed_block(struct compressed_block *block, u16 size)
++{
++	/*
++	 * Make sure the block layout isn't accidentally changed by changing the length of the
++	 * block header.
++	 */
++	STATIC_ASSERT_SIZEOF(struct compressed_block_header, COMPRESSED_BLOCK_1_0_SIZE);
++
++	block->header.version = vdo_pack_version_number(COMPRESSED_BLOCK_1_0);
++	block->header.sizes[0] = __cpu_to_le16(size);
++}
++
++/**
++ * pack_fragment() - Pack a data_vio's fragment into the compressed block in which it is already
++ *                   known to fit.
++ * @compression: The agent's compression_state to pack in to.
++ * @data_vio: The data_vio to pack.
++ * @offset: The offset into the compressed block at which to pack the fragment.
++ * @compressed_block: The compressed block which will be written out when batch is fully packed.
++ *
++ * Return: The new amount of space used.
++ */
++static block_size_t __must_check
++pack_fragment(struct compression_state *compression,
++	      struct data_vio *data_vio,
++	      block_size_t offset,
++	      slot_number_t slot,
++	      struct compressed_block *block)
++{
++	struct compression_state *to_pack = &data_vio->compression;
++	char *fragment = to_pack->block->data;
++
++	to_pack->next_in_batch = compression->next_in_batch;
++	compression->next_in_batch = data_vio;
++	to_pack->slot = slot;
++	block->header.sizes[slot] = __cpu_to_le16(to_pack->size);
++	memcpy(&block->data[offset], fragment, to_pack->size);
++	return (offset + to_pack->size);
++}
++
++/**
++ * compressed_write_end_io() - The bio_end_io for a compressed block write.
++ * @bio: The bio for the compressed write.
++ */
++static void compressed_write_end_io(struct bio *bio)
++{
++	struct data_vio *data_vio = vio_as_data_vio(bio->bi_private);
++
++	vdo_count_completed_bios(bio);
++	set_data_vio_allocated_zone_callback(data_vio, finish_compressed_write);
++	continue_data_vio_with_error(data_vio, blk_status_to_errno(bio->bi_status));
++}
++
++/**
++ * write_bin() - Write out a bin.
++ * @packer: The packer.
++ * @bin: The bin to write.
++ */
++static void write_bin(struct packer *packer, struct packer_bin *bin)
++{
++	int result;
++	block_size_t offset;
++	slot_number_t slot = 1;
++	struct compression_state *compression;
++	struct compressed_block *block;
++	struct data_vio *agent = remove_from_bin(packer, bin);
++	struct data_vio *client;
++	struct packer_statistics *stats;
++
++	if (agent == NULL)
++		return;
++
++	compression = &agent->compression;
++	compression->slot = 0;
++	block = compression->block;
++	initialize_compressed_block(block, compression->size);
++	offset = compression->size;
++
++	while ((client = remove_from_bin(packer, bin)) != NULL)
++		offset = pack_fragment(compression, client, offset, slot++, block);
++
++	/*
++	 * If the batch contains only a single vio, then we save nothing by saving the compressed
++	 * form. Continue processing the single vio in the batch.
++	 */
++	if (slot == 1) {
++		abort_packing(agent);
++		return;
++	}
++
++	if (slot < VDO_MAX_COMPRESSION_SLOTS)
++		/* Clear out the sizes of the unused slots */
++		memset(&block->header.sizes[slot],
 +		       0,
-+		       copy_callback,
-+		       parent);
-+}
++		       (VDO_MAX_COMPRESSION_SLOTS - slot) * sizeof(__le16));
 +
-+/**
-+ * grow_physical_callback() - Callback to initiate a grow physical.
-+ * @completion: The admin completion.
-+ *
-+ * Registered in perform_grow_physical().
-+ */
-+static void grow_physical_callback(struct vdo_completion *completion)
-+{
-+	struct vdo *vdo = completion->vdo;
-+	int result;
-+
-+	assert_admin_phase_thread(vdo, __func__);
-+
-+	switch (advance_phase(vdo)) {
-+	case GROW_PHYSICAL_PHASE_START:
-+		if (vdo_is_read_only(vdo)) {
-+			uds_log_error_strerror(VDO_READ_ONLY,
-+					       "Can't grow physical size of a read-only VDO");
-+			vdo_set_completion_result(completion, VDO_READ_ONLY);
-+			break;
-+		}
-+
-+		result = vdo_start_operation(&vdo->admin.state,
-+					     VDO_ADMIN_STATE_SUSPENDED_OPERATION);
-+		if (result != VDO_SUCCESS) {
-+			vdo_continue_completion(completion, result);
-+			return;
-+		}
-+
-+		/* Copy the journal into the new layout. */
-+		copy_partition(vdo, VDO_RECOVERY_JOURNAL_PARTITION, completion);
++	agent->vio.completion.error_handler = handle_compressed_write_error;
++	if (vdo_is_read_only(vdo_from_data_vio(agent))) {
++		continue_data_vio_with_error(agent, VDO_READ_ONLY);
 +		return;
-+
-+	case GROW_PHYSICAL_PHASE_COPY_SUMMARY:
-+		copy_partition(vdo, VDO_SLAB_SUMMARY_PARTITION, completion);
-+		return;
-+
-+	case GROW_PHYSICAL_PHASE_UPDATE_COMPONENTS:
-+		vdo_uninitialize_layout(&vdo->layout);
-+		vdo->layout = vdo->next_layout;
-+		UDS_FORGET(vdo->next_layout.head);
-+		vdo->states.vdo.config.physical_blocks = vdo->layout.size;
-+		vdo_update_slab_depot_size(vdo->depot);
-+		vdo_save_components(vdo, completion);
-+		return;
-+
-+	case GROW_PHYSICAL_PHASE_USE_NEW_SLABS:
-+		vdo_use_new_slabs(vdo->depot, completion);
-+		return;
-+
-+	case GROW_PHYSICAL_PHASE_END:
-+		vdo->depot->summary_origin =
-+			vdo_get_known_partition(&vdo->layout, VDO_SLAB_SUMMARY_PARTITION)->offset;
-+		vdo->recovery_journal->origin =
-+			vdo_get_known_partition(&vdo->layout,
-+						VDO_RECOVERY_JOURNAL_PARTITION)->offset;
-+		break;
-+
-+	case GROW_PHYSICAL_PHASE_ERROR:
-+		vdo_enter_read_only_mode(vdo, completion->result);
-+		break;
-+
-+	default:
-+		vdo_set_completion_result(completion, UDS_BAD_STATE);
 +	}
 +
-+	vdo_uninitialize_layout(&vdo->next_layout);
-+	finish_operation_callback(completion);
++	result = vio_reset_bio(&agent->vio,
++			       (char *) block,
++			       compressed_write_end_io,
++			       REQ_OP_WRITE,
++			       agent->allocation.pbn);
++	if (result != VDO_SUCCESS) {
++		continue_data_vio_with_error(agent, result);
++		return;
++	}
++
++	/*
++	 * Once the compressed write is submitted, the fragments are no longer in the packer, so
++	 * update stats now.
++	 */
++	stats = &packer->statistics;
++	WRITE_ONCE(stats->compressed_fragments_in_packer,
++		   (stats->compressed_fragments_in_packer - slot));
++	WRITE_ONCE(stats->compressed_fragments_written,
++		   (stats->compressed_fragments_written + slot));
++	WRITE_ONCE(stats->compressed_blocks_written, stats->compressed_blocks_written + 1);
++
++	submit_data_vio_io(agent);
 +}
 +
 +/**
-+ * handle_physical_growth_error() - Handle an error during the grow physical process.
-+ * @completion: The sub-task completion.
++ * add_data_vio_to_packer_bin() - Add a data_vio to a bin's incoming queue
++ * @packer: The packer.
++ * @bin: The bin to which to add the data_vio.
++ * @data_vio: The data_vio to add to the bin's queue.
++ *
++ * Adds a data_vio to a bin's incoming queue, handles logical space change, and calls physical
++ * space processor.
 + */
-+static void handle_physical_growth_error(struct vdo_completion *completion)
++static void add_data_vio_to_packer_bin(struct packer *packer,
++				       struct packer_bin *bin,
++				       struct data_vio *data_vio)
 +{
-+	completion->vdo->admin.phase = GROW_PHYSICAL_PHASE_ERROR;
-+	grow_physical_callback(completion);
++	/* If the selected bin doesn't have room, start a new batch to make room. */
++	if (bin->free_space < data_vio->compression.size)
++		write_bin(packer, bin);
++
++	add_to_bin(bin, data_vio);
++	bin->free_space -= data_vio->compression.size;
++
++	/* If we happen to exactly fill the bin, start a new batch. */
++	if ((bin->slots_used == VDO_MAX_COMPRESSION_SLOTS) ||
++	    (bin->free_space == 0))
++		write_bin(packer, bin);
++
++	/* Now that we've finished changing the free space, restore the sort order. */
++	insert_in_sorted_list(packer, bin);
 +}
 +
 +/**
-+ * perform_grow_physical() - Grow the physical size of the vdo.
-+ * @vdo: The vdo to resize.
-+ * @new_physical_blocks: The new physical size in blocks.
-+ *
-+ * Context: This method may only be called when the vdo has been suspended and must not be called
-+ * from a base thread.
-+ *
-+ * Return: VDO_SUCCESS or an error.
++ * select_bin() - Select the bin that should be used to pack the compressed data in a data_vio with
++ *                other data_vios.
++ * @packer: The packer.
++ * @data_vio: The data_vio.
 + */
-+static int perform_grow_physical(struct vdo *vdo, block_count_t new_physical_blocks)
++static struct packer_bin * __must_check
++select_bin(struct packer *packer, struct data_vio *data_vio)
++{
++	/*
++	 * First best fit: select the bin with the least free space that has enough room for the
++	 * compressed data in the data_vio.
++	 */
++	struct packer_bin *bin, *fullest_bin;
++
++	list_for_each_entry(bin, &packer->bins, list)
++		if (bin->free_space >= data_vio->compression.size)
++			return bin;
++
++	/*
++	 * None of the bins have enough space for the data_vio. We're not allowed to create new
++	 * bins, so we have to overflow one of the existing bins. It's pretty intuitive to select
++	 * the fullest bin, since that "wastes" the least amount of free space in the compressed
++	 * block. But if the space currently used in the fullest bin is smaller than the compressed
++	 * size of the incoming block, it seems wrong to force that bin to write when giving up on
++	 * compressing the incoming data_vio would likewise "waste" the least amount of free space.
++	 */
++	fullest_bin = list_first_entry(&packer->bins, struct packer_bin, list);
++	if (data_vio->compression.size >=
++	    (VDO_COMPRESSED_BLOCK_DATA_SIZE - fullest_bin->free_space))
++		return NULL;
++
++	/*
++	 * The fullest bin doesn't have room, but writing it out and starting a new batch with the
++	 * incoming data_vio will increase the packer's free space.
++	 */
++	return fullest_bin;
++}
++
++/**
++ * vdo_attempt_packing() - Attempt to rewrite the data in this data_vio as part of a compressed
++ *                         block.
++ * @data_vio: The data_vio to pack.
++ */
++void vdo_attempt_packing(struct data_vio *data_vio)
 +{
 +	int result;
-+	block_count_t new_depot_size, prepared_depot_size;
-+	block_count_t old_physical_blocks = vdo->states.vdo.config.physical_blocks;
++	struct packer_bin *bin;
++	struct data_vio_compression_status status = get_data_vio_compression_status(data_vio);
++	struct packer *packer = get_packer_from_data_vio(data_vio);
 +
-+	/* Skip any noop grows. */
-+	if (old_physical_blocks == new_physical_blocks)
-+		return VDO_SUCCESS;
++	assert_on_packer_thread(packer, __func__);
 +
-+	if (new_physical_blocks != vdo->next_layout.size) {
++	result = ASSERT((status.stage == DATA_VIO_COMPRESSING),
++			"attempt to pack data_vio not ready for packing, stage: %u",
++			status.stage);
++	if (result != VDO_SUCCESS)
++		return;
++
++	/*
++	 * Increment whether or not this data_vio will be packed or not since abort_packing()
++	 * always decrements the counter.
++	 */
++	WRITE_ONCE(packer->statistics.compressed_fragments_in_packer,
++		   packer->statistics.compressed_fragments_in_packer + 1);
++
++	/*
++	 * If packing of this data_vio is disallowed for administrative reasons, give up before
++	 * making any state changes.
++	 */
++	if (!vdo_is_state_normal(&packer->state) ||
++	    (data_vio->flush_generation < packer->flush_generation)) {
++		abort_packing(data_vio);
++		return;
++	}
++
++	/*
++	 * The check of may_vio_block_in_packer() here will set the data_vio's compression state to
++	 * VIO_PACKING if the data_vio is allowed to be compressed (if it has already been
++	 * canceled, we'll fall out here). Once the data_vio is in the VIO_PACKING state, it must
++	 * be guaranteed to be put in a bin before any more requests can be processed by the packer
++	 * thread. Otherwise, a canceling data_vio could attempt to remove the canceled data_vio
++	 * from the packer and fail to rendezvous with it (VDO-2809). We must also make sure that
++	 * we will actually bin the data_vio and not give up on it as being larger than the space
++	 * used in the fullest bin. Hence we must call select_bin() before calling
++	 * may_vio_block_in_packer() (VDO-2826).
++	 */
++	bin = select_bin(packer, data_vio);
++	if ((bin == NULL) ||
++	    (advance_data_vio_compression_stage(data_vio).stage != DATA_VIO_PACKING)) {
++		abort_packing(data_vio);
++		return;
++	}
++
++	add_data_vio_to_packer_bin(packer, bin, data_vio);
++}
++
++/**
++ * check_for_drain_complete() - Check whether the packer has drained.
++ * @packer: The packer.
++ */
++static void check_for_drain_complete(struct packer *packer)
++{
++	if (vdo_is_state_draining(&packer->state) && (packer->canceled_bin->slots_used == 0))
++		vdo_finish_draining(&packer->state);
++}
++
++/**
++ * write_all_non_empty_bins() - Write out all non-empty bins on behalf of a flush or suspend.
++ * @packer: The packer being flushed.
++ */
++static void write_all_non_empty_bins(struct packer *packer)
++{
++	struct packer_bin *bin;
++
++	list_for_each_entry(bin, &packer->bins, list)
++		write_bin(packer, bin);
 +		/*
-+		 * Either the VDO isn't prepared to grow, or it was prepared to grow to a different
-+		 * size. Doing this check here relies on the fact that the call to this method is
-+		 * done under the dmsetup message lock.
++		 * We don't need to re-sort the bin here since this loop will make every bin have
++		 * the same amount of free space, so every ordering is sorted.
 +		 */
-+		vdo_uninitialize_layout(&vdo->next_layout);
-+		vdo_abandon_new_slabs(vdo->depot);
-+		return VDO_PARAMETER_MISMATCH;
-+	}
 +
-+	/* Validate that we are prepared to grow appropriately. */
-+	new_depot_size =
-+		vdo_get_known_partition(&vdo->next_layout, VDO_SLAB_DEPOT_PARTITION)->count;
-+	prepared_depot_size = (vdo->depot->new_slabs == NULL) ? 0 : vdo->depot->new_size;
-+	if (prepared_depot_size != new_depot_size)
-+		return VDO_PARAMETER_MISMATCH;
-+
-+	result = perform_admin_operation(vdo,
-+					 GROW_PHYSICAL_PHASE_START,
-+					 grow_physical_callback,
-+					 handle_physical_growth_error,
-+					 "grow physical");
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	uds_log_info("Physical block count was %llu, now %llu",
-+		     (unsigned long long) old_physical_blocks,
-+		     (unsigned long long) new_physical_blocks);
-+	return VDO_SUCCESS;
++	check_for_drain_complete(packer);
 +}
 +
 +/**
-+ * apply_new_vdo_configuration() - Attempt to make any configuration changes from the table being
-+ *                                 resumed.
-+ * @vdo: The vdo being resumed.
-+ * @config: The new device configuration derived from the table with which the vdo is being
-+ *          resumed.
++ * vdo_flush_packer() - Request that the packer flush asynchronously.
++ * @packer: The packer to flush.
 + *
-+ * Return: VDO_SUCCESS or an error.
++ * All bins with at least two compressed data blocks will be written out, and any solitary pending
++ * VIOs will be released from the packer. While flushing is in progress, any VIOs submitted to
++ * vdo_attempt_packing() will be continued immediately without attempting to pack them.
 + */
-+static int __must_check apply_new_vdo_configuration(struct vdo *vdo, struct device_config *config)
++void vdo_flush_packer(struct packer *packer)
 +{
-+	int result;
-+
-+	result = perform_grow_logical(vdo, config->logical_blocks);
-+	if (result != VDO_SUCCESS) {
-+		uds_log_error("grow logical operation failed, result = %d", result);
-+		return result;
-+	}
-+
-+	result = perform_grow_physical(vdo, config->physical_blocks);
-+	if (result != VDO_SUCCESS)
-+		uds_log_error("resize operation failed, result = %d", result);
-+
-+	return result;
++	assert_on_packer_thread(packer, __func__);
++	if (vdo_is_state_normal(&packer->state))
++		write_all_non_empty_bins(packer);
 +}
 +
-+static int vdo_preresume_registered(struct dm_target *ti, struct vdo *vdo)
++/**
++ * vdo_remove_lock_holder_from_packer() - Remove a lock holder from the packer.
++ * @completion: The data_vio which needs a lock held by a data_vio in the packer. The data_vio's
++ *              compression.lock_holder field will point to the data_vio to remove.
++ */
++void vdo_remove_lock_holder_from_packer(struct vdo_completion *completion)
 +{
-+	struct device_config *config = ti->private;
-+	const char *device_name = vdo_get_device_name(ti);
-+	block_count_t backing_blocks;
-+	int result;
++	struct data_vio *data_vio = as_data_vio(completion);
++	struct packer *packer = get_packer_from_data_vio(data_vio);
++	struct data_vio *lock_holder;
++	struct packer_bin *bin;
++	slot_number_t slot;
 +
-+	backing_blocks = get_underlying_device_block_count(vdo);
-+	if (backing_blocks < config->physical_blocks) {
-+		/* FIXME: can this still happen? */
-+		uds_log_error("resume of device '%s' failed: backing device has %llu blocks but VDO physical size is %llu blocks",
-+			      device_name,
-+			      (unsigned long long) backing_blocks,
-+			      (unsigned long long) config->physical_blocks);
-+		return -EINVAL;
++	assert_data_vio_in_packer_zone(data_vio);
++
++	lock_holder = UDS_FORGET(data_vio->compression.lock_holder);
++	bin = lock_holder->compression.bin;
++	ASSERT_LOG_ONLY((bin != NULL), "data_vio in packer has a bin");
++
++	slot = lock_holder->compression.slot;
++	bin->slots_used--;
++	if (slot < bin->slots_used) {
++		bin->incoming[slot] = bin->incoming[bin->slots_used];
++		bin->incoming[slot]->compression.slot = slot;
 +	}
 +
-+	if (vdo_get_admin_state(vdo) == VDO_ADMIN_STATE_PRE_LOADED) {
-+		uds_log_info("starting device '%s'", device_name);
-+		result = perform_admin_operation(vdo,
-+						 LOAD_PHASE_START,
-+						 load_callback,
-+						 handle_load_error,
-+						 "load");
-+		if ((result != VDO_SUCCESS) && (result != VDO_READ_ONLY)) {
-+			/*
-+			 * Something has gone very wrong. Make sure everything has drained and
-+			 * leave the device in an unresumable state.
-+			 */
-+			uds_log_error_strerror(result,
-+					       "Start failed, could not load VDO metadata");
-+			vdo->suspend_type = VDO_ADMIN_STATE_STOPPING;
-+			perform_admin_operation(vdo,
-+						SUSPEND_PHASE_START,
-+						suspend_callback,
-+						suspend_callback,
-+						"suspend");
-+			return result;
-+		}
++	lock_holder->compression.bin = NULL;
++	lock_holder->compression.slot = 0;
 +
-+		/* Even if the VDO is read-only, it is now able to handle read requests. */
-+		uds_log_info("device '%s' started", device_name);
++	if (bin != packer->canceled_bin) {
++		bin->free_space += lock_holder->compression.size;
++		insert_in_sorted_list(packer, bin);
 +	}
 +
-+	uds_log_info("resuming device '%s'", device_name);
++	abort_packing(lock_holder);
++	check_for_drain_complete(packer);
++}
 +
-+	/* If this fails, the VDO was not in a state to be resumed. This should never happen. */
-+	result = apply_new_vdo_configuration(vdo, config);
-+	BUG_ON(result == VDO_INVALID_ADMIN_STATE);
++/**
++ * vdo_increment_packer_flush_generation() - Increment the flush generation in the packer.
++ * @packer: The packer.
++ *
++ * This will also cause the packer to flush so that any VIOs from previous generations will exit
++ * the packer.
++ */
++void vdo_increment_packer_flush_generation(struct packer *packer)
++{
++	assert_on_packer_thread(packer, __func__);
++	packer->flush_generation++;
++	vdo_flush_packer(packer);
++}
++
++/**
++ * initiate_drain() - Initiate a drain.
++ *
++ * Implements vdo_admin_initiator.
++ */
++static void initiate_drain(struct admin_state *state)
++{
++	struct packer *packer = container_of(state, struct packer, state);
++
++	write_all_non_empty_bins(packer);
++}
++
++/**
++ * vdo_drain_packer() - Drain the packer by preventing any more VIOs from entering the packer and
++ *                      then flushing.
++ * @packer: The packer to drain.
++ * @completion: The completion to finish when the packer has drained.
++ */
++void vdo_drain_packer(struct packer *packer, struct vdo_completion *completion)
++{
++	assert_on_packer_thread(packer, __func__);
++	vdo_start_draining(&packer->state, VDO_ADMIN_STATE_SUSPENDING, completion, initiate_drain);
++}
++
++/**
++ * vdo_resume_packer() - Resume a packer which has been suspended.
++ * @packer: The packer to resume.
++ * @parent: The completion to finish when the packer has resumed.
++ */
++void vdo_resume_packer(struct packer *packer, struct vdo_completion *parent)
++{
++	assert_on_packer_thread(packer, __func__);
++	vdo_continue_completion(parent, vdo_resume_if_quiescent(&packer->state));
++}
++
++static void dump_packer_bin(const struct packer_bin *bin, bool canceled)
++{
++	if (bin->slots_used == 0)
++		/* Don't dump empty bins. */
++		return;
++
++	uds_log_info("	  %sBin slots_used=%u free_space=%zu",
++		     (canceled ? "Canceled" : ""), bin->slots_used,
++		     bin->free_space);
 +
 +	/*
-+	 * Now that we've tried to modify the vdo, the new config *is* the config, whether the
-+	 * modifications worked or not.
++	 * FIXME: dump vios in bin->incoming? The vios should have been dumped from the vio pool.
++	 * Maybe just dump their addresses so it's clear they're here?
 +	 */
-+	vdo->device_config = config;
-+
-+	/*
-+	 * Any error here is highly unexpected and the state of the vdo is questionable, so we mark
-+	 * it read-only in memory. Because we are suspended, the read-only state will not be
-+	 * written to disk.
-+	 */
-+	if (result != VDO_SUCCESS) {
-+		uds_log_error_strerror(result,
-+				       "Commit of modifications to device '%s' failed",
-+				       device_name);
-+		vdo_enter_read_only_mode(vdo, result);
-+		return result;
-+	}
-+
-+	if (vdo_get_admin_state(vdo)->normal)
-+		/* The VDO was just started, so we don't need to resume it. */
-+		return VDO_SUCCESS;
-+
-+	result = perform_admin_operation(vdo,
-+					 RESUME_PHASE_START,
-+					 resume_callback,
-+					 resume_callback,
-+					 "resume");
-+	BUG_ON(result == VDO_INVALID_ADMIN_STATE);
-+	if (result == VDO_READ_ONLY)
-+		/* Even if the vdo is read-only, it has still resumed. */
-+		result = VDO_SUCCESS;
-+
-+	if (result != VDO_SUCCESS)
-+		uds_log_error("resume of device '%s' failed with error: %d", device_name, result);
-+
-+	return result;
 +}
 +
-+static int vdo_preresume(struct dm_target *ti)
++/**
++ * vdo_dump_packer() - Dump the packer.
++ * @packer: The packer.
++ *
++ * Context: dumps in a thread-unsafe fashion.
++ */
++void vdo_dump_packer(const struct packer *packer)
 +{
-+	struct registered_thread instance_thread;
-+	struct vdo *vdo = get_vdo_for_target(ti);
-+	int result;
++	struct packer_bin *bin;
 +
-+	uds_register_thread_device_id(&instance_thread, &vdo->instance);
-+	result = vdo_preresume_registered(ti, vdo);
-+	if ((result == VDO_PARAMETER_MISMATCH) || (result == VDO_INVALID_ADMIN_STATE))
-+		result = -EINVAL;
-+	uds_unregister_thread_device_id();
-+	return vdo_map_to_system_error(result);
++	uds_log_info("packer");
++	uds_log_info("	flushGeneration=%llu state %s  packer_bin_count=%llu",
++		     (unsigned long long) packer->flush_generation,
++		     vdo_get_admin_state_code(&packer->state)->name,
++		     (unsigned long long) packer->size);
++
++	list_for_each_entry(bin, &packer->bins, list)
++		dump_packer_bin(bin, false);
++
++	dump_packer_bin(packer->canceled_bin, true);
 +}
-+
-+static void vdo_resume(struct dm_target *ti)
-+{
-+	struct registered_thread instance_thread;
-+
-+	uds_register_thread_device_id(&instance_thread, &get_vdo_for_target(ti)->instance);
-+	uds_log_info("device '%s' resumed", vdo_get_device_name(ti));
-+	uds_unregister_thread_device_id();
-+}
-+
+diff --git a/drivers/md/dm-vdo/packer.h b/drivers/md/dm-vdo/packer.h
+new file mode 100644
+index 000000000000..6bf6822398ef
+--- /dev/null
++++ b/drivers/md/dm-vdo/packer.h
+@@ -0,0 +1,123 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
-+ * If anything changes that affects how user tools will interact with vdo, update the version
-+ * number and make sure documentation about the change is complete so tools can properly update
-+ * their management code.
++ * Copyright 2023 Red Hat
 + */
-+static struct target_type vdo_target_bio = {
-+	.features = DM_TARGET_SINGLETON,
-+	.name = "vdo",
-+	.version = { 8, 2, 0 },
-+	.module = THIS_MODULE,
-+	.ctr = vdo_ctr,
-+	.dtr = vdo_dtr,
-+	.io_hints = vdo_io_hints,
-+	.iterate_devices = vdo_iterate_devices,
-+	.map = vdo_map_bio,
-+	.message = vdo_message,
-+	.status = vdo_status,
-+	.presuspend = vdo_presuspend,
-+	.postsuspend = vdo_postsuspend,
-+	.preresume = vdo_preresume,
-+	.resume = vdo_resume,
++
++#ifndef VDO_PACKER_H
++#define VDO_PACKER_H
++
++#include <linux/list.h>
++
++#include "admin-state.h"
++#include "constants.h"
++#include "encodings.h"
++#include "statistics.h"
++#include "types.h"
++#include "wait-queue.h"
++
++enum {
++	DEFAULT_PACKER_BINS = 16,
 +};
 +
-+static bool dm_registered;
++/* The header of a compressed block. */
++struct compressed_block_header {
++	/* Unsigned 32-bit major and minor versions, little-endian */
++	struct packed_version_number version;
 +
-+static void vdo_module_destroy(void)
-+{
-+	uds_log_debug("unloading");
++	/* List of unsigned 16-bit compressed block sizes, little-endian */
++	__le16 sizes[VDO_MAX_COMPRESSION_SLOTS];
++} __packed;
 +
-+	if (dm_registered)
-+		dm_unregister_target(&vdo_target_bio);
-+
-+	ASSERT_LOG_ONLY(instances.count == 0,
-+			"should have no instance numbers still in use, but have %u",
-+			instances.count);
-+	UDS_FREE(instances.words);
-+	memset(&instances, 0, sizeof(struct instance_tracker));
-+
-+	uds_log_info("unloaded version %s", CURRENT_VERSION);
-+}
-+
-+static int __init vdo_init(void)
-+{
-+	int result = 0;
++enum {
++	VDO_COMPRESSED_BLOCK_DATA_SIZE = VDO_BLOCK_SIZE - sizeof(struct compressed_block_header),
 +
 +	/*
-+	 * UDS module level initialization must be done first, as VDO initialization depends on it
++	 * A compressed block is only written if we can pack at least two fragments into it, so a
++	 * fragment which fills the entire data portion of a compressed block is too big.
 +	 */
-+	uds_initialize_thread_device_registry();
-+	uds_memory_init();
-+	uds_init_sysfs();
++	VDO_MAX_COMPRESSED_FRAGMENT_SIZE = VDO_COMPRESSED_BLOCK_DATA_SIZE - 1,
++};
 +
-+	vdo_initialize_device_registry_once();
-+	uds_log_info("loaded version %s", CURRENT_VERSION);
++/* * The compressed block overlay. */
++struct compressed_block {
++	struct compressed_block_header header;
++	char data[VDO_COMPRESSED_BLOCK_DATA_SIZE];
++} __packed;
 +
-+	/* Add VDO errors to the already existing set of errors in UDS. */
-+	result = vdo_register_status_codes();
-+	if (result != UDS_SUCCESS) {
-+		uds_log_error("vdo_register_status_codes failed %d", result);
-+		vdo_module_destroy();
-+		return result;
-+	}
++/*
++ * Each packer_bin holds an incomplete batch of data_vios that only partially fill a compressed
++ * block. The bins are kept in a ring sorted by the amount of unused space so the first bin with
++ * enough space to hold a newly-compressed data_vio can easily be found. When the bin fills up or
++ * is flushed, the first uncanceled data_vio in the bin is selected to be the agent for that bin.
++ * Upon entering the packer, each data_vio already has its compressed data in the first slot of the
++ * data_vio's compressed_block (overlaid on the data_vio's scratch_block). So the agent's fragment
++ * is already in place. The fragments for the other uncanceled data_vios in the bin are packed into
++ * the agent's compressed block. The agent then writes out the compressed block. If the write is
++ * successful, the agent shares its pbn lock which each of the other data_vios in its compressed
++ * block and sends each on its way. Finally the agent itself continues on the write path as before.
++ *
++ * There is one special bin which is used to hold data_vios which have been canceled and removed
++ * from their bin by the packer. These data_vios need to wait for the canceller to rendezvous with
++ * them (VDO-2809) and so they sit in this special bin.
++ */
++struct packer_bin {
++	/* List links for packer.packer_bins */
++	struct list_head list;
++	/* The number of items in the bin */
++	slot_number_t slots_used;
++	/* The number of compressed block bytes remaining in the current batch */
++	size_t free_space;
++	/* The current partial batch of data_vios, waiting for more */
++	struct data_vio *incoming[];
++};
 +
-+	result = dm_register_target(&vdo_target_bio);
-+	if (result < 0) {
-+		uds_log_error("dm_register_target failed %d", result);
-+		vdo_module_destroy();
-+		return result;
-+	}
-+	dm_registered = true;
-+
-+	return result;
-+}
-+
-+static void __exit vdo_exit(void)
-+{
-+	vdo_module_destroy();
++struct packer {
++	/* The ID of the packer's callback thread */
++	thread_id_t thread_id;
++	/* The number of bins */
++	block_count_t size;
++	/* A list of all packer_bins, kept sorted by free_space */
++	struct list_head bins;
 +	/*
-+	 * UDS module level exit processing must be done after all VDO module exit processing is
-+	 * complete.
++	 * A bin to hold data_vios which were canceled out of the packer and are waiting to
++	 * rendezvous with the canceling data_vio.
 +	 */
-+	uds_put_sysfs();
-+	uds_memory_exit();
-+}
++	struct packer_bin *canceled_bin;
 +
-+module_init(vdo_init);
-+module_exit(vdo_exit);
++	/* The current flush generation */
++	sequence_number_t flush_generation;
 +
-+MODULE_DESCRIPTION(DM_NAME " target for transparent deduplication");
-+MODULE_AUTHOR("Red Hat, Inc.");
-+MODULE_LICENSE("GPL");
++	/* The administrative state of the packer */
++	struct admin_state state;
++
++	/* Statistics are only updated on the packer thread, but are accessed from other threads */
++	struct packer_statistics statistics;
++};
++
++int vdo_get_compressed_block_fragment(enum block_mapping_state mapping_state,
++				      struct compressed_block *block,
++				      u16 *fragment_offset,
++				      u16 *fragment_size);
++
++int __must_check
++vdo_make_packer(struct vdo *vdo, block_count_t bin_count, struct packer **packer_ptr);
++
++void vdo_free_packer(struct packer *packer);
++
++struct packer_statistics __must_check vdo_get_packer_statistics(const struct packer *packer);
++
++void vdo_attempt_packing(struct data_vio *data_vio);
++
++void vdo_flush_packer(struct packer *packer);
++
++void vdo_remove_lock_holder_from_packer(struct vdo_completion *completion);
++
++void vdo_increment_packer_flush_generation(struct packer *packer);
++
++void vdo_drain_packer(struct packer *packer, struct vdo_completion *completion);
++
++void vdo_resume_packer(struct packer *packer, struct vdo_completion *parent);
++
++void vdo_dump_packer(const struct packer *packer);
++
++#endif /* VDO_PACKER_H */
 -- 
 2.40.0
 
