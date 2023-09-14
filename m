@@ -4,95 +4,95 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 118C6EEAA6A
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:17:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2A9EEEEAA66
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:17:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694719039;
+	s=mimecast20190719; t=1694719041;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Clyn+ueJtCTLFN5/W2FzAvgLRejse81IT0znrVEN1KE=;
-	b=cmCEHU15O5p4dQ1HV8HPBjKpScZ520xrFY23t8Vp6FDrYNul+U+fJ5v0vDf/Vd6QCl9k51
-	S0pbfGv3IlbG9hkyXncDWrxJE8HFRRZ/xh9dy919aRdKckcDgC6coiWe9Bz/m+73kcuFVI
-	J54MabHk8QTzSv8O6l+h/264LM9Nup4=
+	bh=bP1iHjCYhjj8a8WcFAeo6cUf8TfoXt1bjcYCGCAO8ew=;
+	b=IcVnXZfVomZSssxwB26H5o0ODvmFg6mS7ng695CMmXxYAzLv8d2sBixYfMpsu0qcYD8Lg2
+	2JaA/yoaTbQ8R+6lYEfYhkxE5ebS/elBrDU3O7W8f2Lfm2E6nxV49Mmh+0By/9QzjV79ik
+	rj0pzl0ad5TtW6p8lOyoX+IxEuvf+cg=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-380-I-7wpt4-NY-YB3lKOeZMyA-1; Thu, 14 Sep 2023 15:17:16 -0400
-X-MC-Unique: I-7wpt4-NY-YB3lKOeZMyA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-542-BWh30E2sMpuV1wVoA9MYfA-1; Thu, 14 Sep 2023 15:17:17 -0400
+X-MC-Unique: BWh30E2sMpuV1wVoA9MYfA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D996A805578;
-	Thu, 14 Sep 2023 19:17:12 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A65ED88B7AD;
+	Thu, 14 Sep 2023 19:17:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C39291686D;
-	Thu, 14 Sep 2023 19:17:12 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9093521B2413;
+	Thu, 14 Sep 2023 19:17:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 46B2119466F0;
-	Thu, 14 Sep 2023 19:16:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 47CA61946A43;
+	Thu, 14 Sep 2023 19:16:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2F0F219466E5
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:16:51 +0000 (UTC)
+ ESMTP id CA3571946588
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:16:50 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0EB2440C6EC0; Thu, 14 Sep 2023 19:16:51 +0000 (UTC)
+ id 9CDD421C64C6; Thu, 14 Sep 2023 19:16:50 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0667B40C6EA8
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:16:51 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 9531C21B2F5D
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:16:50 +0000 (UTC)
 Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-delivery-1.mimecast.com [205.139.110.120])
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D5FA9857A9C
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6BB80856A50
  for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:16:50 +0000 (UTC)
-Received: from mail-qv1-f48.google.com (mail-qv1-f48.google.com
- [209.85.219.48]) by relay.mimecast.com with ESMTP with STARTTLS
+Received: from mail-qk1-f181.google.com (mail-qk1-f181.google.com
+ [209.85.222.181]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-434-OLeRqznHPxGyoP4lMfn0PQ-1; Thu, 14 Sep 2023 15:16:46 -0400
-X-MC-Unique: OLeRqznHPxGyoP4lMfn0PQ-1
-Received: by mail-qv1-f48.google.com with SMTP id
- 6a1803df08f44-64a70194fbeso7768236d6.0
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:16:46 -0700 (PDT)
+ us-mta-259-913sAzDtO7uWbNMDQK6IKg-1; Thu, 14 Sep 2023 15:16:49 -0400
+X-MC-Unique: 913sAzDtO7uWbNMDQK6IKg-1
+Received: by mail-qk1-f181.google.com with SMTP id
+ af79cd13be357-770ef353b8fso87876585a.0
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:16:48 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1694719006; x=1695323806;
+ d=1e100.net; s=20230601; t=1694719008; x=1695323808;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=RTMhgWePbo6lWnKmPuEXBdgD+rqCqH/O7a8jW9ca6VY=;
- b=dKgb+biJRb1s0YpwAvrjtp38/++q2UPz1GRQzcEjYPjhKzgXh6jqgLl2B0xtMoS1io
- VjEFrp49GQ5s/ZNI+J91EBXXr19SIKP7LRyzFiAS2JXoO1YeDP55mZu6WYwnI6KlN1i2
- In5XsE2FT4nzo6jXvwaXiOZqzD1GEGECPcvj5HLr4wef8PXWQB9b1Ku1cKRyj4z3u0E5
- NoJEZtaEqmYI4WgdQtuKlC4H2X09jzUHFGT0VyQ8icyMpaKLdshyK9QZRRux/9aGZ95M
- Y5eGlQWpqarWcvPogxabyO7Mv/UAjAZwh2nA8PBlfW9DLGtUt7d+ODj6qBBnTUOc2o10
- //RA==
-X-Gm-Message-State: AOJu0YyTRUdRC8UMB9JFso39QYhCgDR7N6HA/nFWQ33dcOScz2KBHJZG
- ehv2AaeJmZ1DXqoHAT9LvVHCckd9PDpWdcnBXvyEkASbnCxoJvrGGMSGGwUXgm8rg7olGr21BEr
- ebvIn8Wt/vMyH80lqmMxlGYDua4e40vJBxezemNdaONR1NFUSGRj4lVo7wq9iNb7yvC7a7wA/
-X-Google-Smtp-Source: AGHT+IEwRbFeXm8J97lgcXpnyVP7EClM24zrkeUInay4h2Xz8BSR+Jc8ea0gUpajOCuULqj6ppxW/g==
-X-Received: by 2002:ad4:50ce:0:b0:64f:6d49:9e4 with SMTP id
- e14-20020ad450ce000000b0064f6d4909e4mr6972158qvq.44.1694719005511; 
- Thu, 14 Sep 2023 12:16:45 -0700 (PDT)
+ bh=bqkx8nd8i3sURkU7BYTxvLJEehNI2X6BNciNnu3ixNs=;
+ b=wqLh8vE/TqE6TGp7OFd2jZbzoRlyLp2S71oawd0no/juU6sopMDNaJiM8jixg6JMIZ
+ zU4xwV83rfduFge4DPoC39v02OeBp4pNv0jh0XuLrgtn85j+ZHzJPIlK55iLSWWJLKR4
+ 2/gaSYfYHUvF+iu1K7h9Trr3WghsTSfsAcBJi2/bH7XkfBRwuiMWnqA/9lQwXTY1IyMt
+ 9msp3pti6JdUj56K2qbYOyV+XOUYP6pDYi6zgD68QVzmVxdf4wHjbXWhqe++N0LbjicY
+ P/yGxb8Syb5M3vPxtLY+6CT1XzO3ISWRV8F3zHWbv9mIjtL3oS03ftKapNGVD6RQaA3F
+ qjBg==
+X-Gm-Message-State: AOJu0Yxy9bltk7nafsSE+JtC6kJ583I8MMjNOWLhoCuH2OpvJ45ef4tx
+ w5bbQ1hMWs8c7PYcsPj944YT1wNjdM4PdsbOIRaVOGSAbRKSl5bK6/h+XcA/6qomJvVnfmkxD/l
+ F+fqqBTtc66/pStNfLAC2ngJaqC7xEicAgGBTAZbX+jPyBbyBgnf9AUmDv8A9jfcHLKhxdk7/
+X-Google-Smtp-Source: AGHT+IGcn0S15YCI/jmLjxMERbn+ua2FbvOVd0kUQi8sI/Pgscvaj6xglzK3wdXHBAeHl6CYZGlyJw==
+X-Received: by 2002:a05:620a:2a12:b0:773:aa18:f57e with SMTP id
+ o18-20020a05620a2a1200b00773aa18f57emr1670825qkp.2.1694719007551; 
+ Thu, 14 Sep 2023 12:16:47 -0700 (PDT)
 Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net.
  [68.160.141.91]) by smtp.gmail.com with ESMTPSA id
- z4-20020a0cf244000000b0063f78bd525asm655058qvl.144.2023.09.14.12.16.44
+ i16-20020a05620a145000b00767721aebc0sm678193qkl.32.2023.09.14.12.16.46
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 14 Sep 2023 12:16:44 -0700 (PDT)
+ Thu, 14 Sep 2023 12:16:46 -0700 (PDT)
 From: Mike Snitzer <snitzer@kernel.org>
 To: dm-devel@redhat.com
-Date: Thu, 14 Sep 2023 15:16:00 -0400
-Message-Id: <20230914191635.39805-5-snitzer@kernel.org>
+Date: Thu, 14 Sep 2023 15:16:01 -0400
+Message-Id: <20230914191635.39805-6-snitzer@kernel.org>
 In-Reply-To: <20230914191635.39805-1-snitzer@kernel.org>
 References: <20230914191635.39805-1-snitzer@kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: [dm-devel] [PATCH v3 04/39] dm vdo: add basic logging and support
- utilities
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: [dm-devel] [PATCH v3 05/39] dm vdo: add type declarations, constants,
+ and simple data structures
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -107,7 +107,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: Matthew Sakai <msakai@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
 Content-Type: text/plain; charset="us-ascii"
@@ -115,308 +115,293 @@ Content-Transfer-Encoding: 7bit
 
 From: Matthew Sakai <msakai@redhat.com>
 
-Add various support utilities for the vdo target and deduplication
-index, including logging utilities, string and time management, and
-index-specific error codes.
+Add definitions of constants defining the fixed parameters of a VDO
+volume, and the default and maximum values of configurable or dynamic
+parameters.
+
+Add definitions of internal status codes used for internal
+communication within the module and for logging.
+
+Add definitions of types and structs used to manage the processing of
+an I/O operation.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
-Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
-Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
-Co-developed-by: Ken Raeburn <raeburn@redhat.com>
-Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-vdo/errors.c       | 316 +++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/errors.h       |  83 ++++++++
- drivers/md/dm-vdo/logger.c       | 304 +++++++++++++++++++++++++++++
- drivers/md/dm-vdo/logger.h       | 112 +++++++++++
- drivers/md/dm-vdo/permassert.c   |  35 ++++
- drivers/md/dm-vdo/permassert.h   |  65 +++++++
- drivers/md/dm-vdo/string-utils.c |  28 +++
- drivers/md/dm-vdo/string-utils.h |  23 +++
- drivers/md/dm-vdo/time-utils.h   |  28 +++
- 9 files changed, 994 insertions(+)
- create mode 100644 drivers/md/dm-vdo/errors.c
- create mode 100644 drivers/md/dm-vdo/errors.h
- create mode 100644 drivers/md/dm-vdo/logger.c
- create mode 100644 drivers/md/dm-vdo/logger.h
- create mode 100644 drivers/md/dm-vdo/permassert.c
- create mode 100644 drivers/md/dm-vdo/permassert.h
- create mode 100644 drivers/md/dm-vdo/string-utils.c
- create mode 100644 drivers/md/dm-vdo/string-utils.h
- create mode 100644 drivers/md/dm-vdo/time-utils.h
+ drivers/md/dm-vdo/constants.c    |  15 ++
+ drivers/md/dm-vdo/constants.h    | 102 ++++++++
+ drivers/md/dm-vdo/status-codes.c | 126 ++++++++++
+ drivers/md/dm-vdo/status-codes.h | 112 +++++++++
+ drivers/md/dm-vdo/types.h        | 393 +++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/wait-queue.c   | 223 ++++++++++++++++++
+ drivers/md/dm-vdo/wait-queue.h   | 129 ++++++++++
+ 7 files changed, 1100 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/constants.c
+ create mode 100644 drivers/md/dm-vdo/constants.h
+ create mode 100644 drivers/md/dm-vdo/status-codes.c
+ create mode 100644 drivers/md/dm-vdo/status-codes.h
+ create mode 100644 drivers/md/dm-vdo/types.h
+ create mode 100644 drivers/md/dm-vdo/wait-queue.c
+ create mode 100644 drivers/md/dm-vdo/wait-queue.h
 
-diff --git a/drivers/md/dm-vdo/errors.c b/drivers/md/dm-vdo/errors.c
+diff --git a/drivers/md/dm-vdo/constants.c b/drivers/md/dm-vdo/constants.c
 new file mode 100644
-index 000000000000..223eca020ff4
+index 000000000000..14ac047101f8
 --- /dev/null
-+++ b/drivers/md/dm-vdo/errors.c
-@@ -0,0 +1,316 @@
++++ b/drivers/md/dm-vdo/constants.c
+@@ -0,0 +1,15 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "errors.h"
++#include "types.h"
 +
-+#include <linux/compiler.h>
-+#include <linux/errno.h>
++/* The maximum logical space is 4 petabytes, which is 1 terablock. */
++const block_count_t MAXIMUM_VDO_LOGICAL_BLOCKS = 1024ULL * 1024 * 1024 * 1024;
 +
-+#include "logger.h"
-+#include "permassert.h"
-+#include "string-utils.h"
++/* The maximum physical space is 256 terabytes, which is 64 gigablocks. */
++const block_count_t MAXIMUM_VDO_PHYSICAL_BLOCKS = 1024ULL * 1024 * 1024 * 64;
 +
-+static const struct error_info successful = { "UDS_SUCCESS", "Success" };
++/* unit test minimum */
++const block_count_t MINIMUM_VDO_SLAB_JOURNAL_BLOCKS = 2;
+diff --git a/drivers/md/dm-vdo/constants.h b/drivers/md/dm-vdo/constants.h
+new file mode 100644
+index 000000000000..9ae3917d00de
+--- /dev/null
++++ b/drivers/md/dm-vdo/constants.h
+@@ -0,0 +1,102 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
 +
-+static const char *const message_table[] = {
-+	[EPERM] = "Operation not permitted",
-+	[ENOENT] = "No such file or directory",
-+	[ESRCH] = "No such process",
-+	[EINTR] = "Interrupted system call",
-+	[EIO] = "Input/output error",
-+	[ENXIO] = "No such device or address",
-+	[E2BIG] = "Argument list too long",
-+	[ENOEXEC] = "Exec format error",
-+	[EBADF] = "Bad file descriptor",
-+	[ECHILD] = "No child processes",
-+	[EAGAIN] = "Resource temporarily unavailable",
-+	[ENOMEM] = "Cannot allocate memory",
-+	[EACCES] = "Permission denied",
-+	[EFAULT] = "Bad address",
-+	[ENOTBLK] = "Block device required",
-+	[EBUSY] = "Device or resource busy",
-+	[EEXIST] = "File exists",
-+	[EXDEV] = "Invalid cross-device link",
-+	[ENODEV] = "No such device",
-+	[ENOTDIR] = "Not a directory",
-+	[EISDIR] = "Is a directory",
-+	[EINVAL] = "Invalid argument",
-+	[ENFILE] = "Too many open files in system",
-+	[EMFILE] = "Too many open files",
-+	[ENOTTY] = "Inappropriate ioctl for device",
-+	[ETXTBSY] = "Text file busy",
-+	[EFBIG] = "File too large",
-+	[ENOSPC] = "No space left on device",
-+	[ESPIPE] = "Illegal seek",
-+	[EROFS] = "Read-only file system",
-+	[EMLINK] = "Too many links",
-+	[EPIPE] = "Broken pipe",
-+	[EDOM] = "Numerical argument out of domain",
-+	[ERANGE] = "Numerical result out of range"
-+};
++#ifndef VDO_CONSTANTS_H
++#define VDO_CONSTANTS_H
 +
-+static const struct error_info error_list[] = {
-+	{ "UDS_OVERFLOW", "Index overflow" },
-+	{ "UDS_INVALID_ARGUMENT", "Invalid argument passed to internal routine" },
-+	{ "UDS_BAD_STATE", "UDS data structures are in an invalid state" },
-+	{ "UDS_DUPLICATE_NAME", "Attempt to enter the same name into a delta index twice" },
-+	{ "UDS_ASSERTION_FAILED", "Assertion failed" },
-+	{ "UDS_QUEUED", "Request queued" },
-+	{ "UDS_BUFFER_ERROR", "Buffer error" },
-+	{ "UDS_NO_DIRECTORY", "Expected directory is missing" },
-+	{ "UDS_ALREADY_REGISTERED", "Error range already registered" },
-+	{ "UDS_OUT_OF_RANGE", "Cannot access data outside specified limits" },
-+	{ "UDS_EMODULE_LOAD", "Could not load modules" },
-+	{ "UDS_DISABLED", "UDS library context is disabled" },
-+	{ "UDS_UNKNOWN_ERROR", "Unknown error" },
-+	{ "UDS_UNSUPPORTED_VERSION", "Unsupported version" },
-+	{ "UDS_CORRUPT_DATA", "Some index structure is corrupt" },
-+	{ "UDS_NO_INDEX", "No index found" },
-+	{ "UDS_INDEX_NOT_SAVED_CLEANLY", "Index not saved cleanly" },
-+};
++#include <linux/blkdev.h>
 +
-+struct error_block {
-+	const char *name;
-+	int base;
-+	int last;
-+	int max;
-+	const struct error_info *infos;
-+};
++#include "types.h"
 +
 +enum {
-+	MAX_ERROR_BLOCKS = 6,
++	/*
++	 * The maximum number of contiguous PBNs which will go to a single bio submission queue,
++	 * assuming there is more than one queue.
++	 */
++	VDO_BIO_ROTATION_INTERVAL_LIMIT = 1024,
++
++	/** The number of entries on a block map page */
++	VDO_BLOCK_MAP_ENTRIES_PER_PAGE = 812,
++
++	/** The origin of the flat portion of the block map */
++	VDO_BLOCK_MAP_FLAT_PAGE_ORIGIN = 1,
++
++	/*
++	 * The height of a block map tree. Assuming a root count of 60 and 812 entries per page,
++	 * this is big enough to represent almost 95 PB of logical space.
++	 */
++	VDO_BLOCK_MAP_TREE_HEIGHT = 5,
++
++	/** The default number of bio submission queues. */
++	DEFAULT_VDO_BIO_SUBMIT_QUEUE_COUNT = 4,
++
++	/** The number of contiguous PBNs to be submitted to a single bio queue. */
++	DEFAULT_VDO_BIO_SUBMIT_QUEUE_ROTATE_INTERVAL = 64,
++
++	/** The number of trees in the arboreal block map */
++	DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT = 60,
++
++	/** The default size of the recovery journal, in blocks */
++	DEFAULT_VDO_RECOVERY_JOURNAL_SIZE = 32 * 1024,
++
++	/** The default size of each slab journal, in blocks */
++	DEFAULT_VDO_SLAB_JOURNAL_SIZE = 224,
++
++	/*
++	 * The initial size of lbn_operations and pbn_operations, which is based upon the expected
++	 * maximum number of outstanding VIOs. This value was chosen to make it highly unlikely
++	 * that the maps would need to be resized.
++	 */
++	VDO_LOCK_MAP_CAPACITY = 10000,
++
++	/** The maximum number of logical zones */
++	MAX_VDO_LOGICAL_ZONES = 60,
++
++	/** The maximum number of physical zones */
++	MAX_VDO_PHYSICAL_ZONES = 16,
++
++	/** The base-2 logarithm of the maximum blocks in one slab */
++	MAX_VDO_SLAB_BITS = 23,
++
++	/** The maximum number of slabs the slab depot supports */
++	MAX_VDO_SLABS = 8192,
++
++	/*
++	 * The maximum number of block map pages to load simultaneously during recovery or rebuild.
++	 */
++	MAXIMUM_SIMULTANEOUS_VDO_BLOCK_MAP_RESTORATION_READS = 1024,
++
++	/** The maximum number of entries in the slab summary */
++	MAXIMUM_VDO_SLAB_SUMMARY_ENTRIES = MAX_VDO_SLABS * MAX_VDO_PHYSICAL_ZONES,
++
++	/** The maximum number of total threads in a VDO thread configuration. */
++	MAXIMUM_VDO_THREADS = 100,
++
++	/** The maximum number of VIOs in the system at once */
++	MAXIMUM_VDO_USER_VIOS = 2048,
++
++	/** The only physical block size supported by VDO */
++	VDO_BLOCK_SIZE = 4096,
++
++	/** The number of sectors per block */
++	VDO_SECTORS_PER_BLOCK = (VDO_BLOCK_SIZE >> SECTOR_SHIFT),
++
++	/** The size of a sector that will not be torn */
++	VDO_SECTOR_SIZE = 512,
++
++	/** The physical block number reserved for storing the zero block */
++	VDO_ZERO_BLOCK = 0,
 +};
 +
-+static struct {
-+	int allocated;
-+	int count;
-+	struct error_block blocks[MAX_ERROR_BLOCKS];
-+} registered_errors = {
-+	.allocated = MAX_ERROR_BLOCKS,
-+	.count = 1,
-+	.blocks = { {
-+			.name = "UDS Error",
-+			.base = UDS_ERROR_CODE_BASE,
-+			.last = UDS_ERROR_CODE_LAST,
-+			.max = UDS_ERROR_CODE_BLOCK_END,
-+			.infos = error_list,
-+		  } },
-+};
++/** The maximum logical space is 4 petabytes, which is 1 terablock. */
++extern const block_count_t MAXIMUM_VDO_LOGICAL_BLOCKS;
 +
-+/* Get the error info for an error number. Also returns the name of the error block, if known. */
-+static const char *get_error_info(int errnum, const struct error_info **info_ptr)
-+{
-+	struct error_block *block;
++/** The maximum physical space is 256 terabytes, which is 64 gigablocks. */
++extern const block_count_t MAXIMUM_VDO_PHYSICAL_BLOCKS;
 +
-+	if (errnum == UDS_SUCCESS) {
-+		*info_ptr = &successful;
-+		return NULL;
-+	}
++/** unit test minimum */
++extern const block_count_t MINIMUM_VDO_SLAB_JOURNAL_BLOCKS;
 +
-+	for (block = registered_errors.blocks;
-+	     block < registered_errors.blocks + registered_errors.count;
-+	     ++block) {
-+		if ((errnum >= block->base) && (errnum < block->last)) {
-+			*info_ptr = block->infos + (errnum - block->base);
-+			return block->name;
-+		} else if ((errnum >= block->last) && (errnum < block->max)) {
-+			*info_ptr = NULL;
-+			return block->name;
-+		}
-+	}
-+
-+	return NULL;
-+}
-+
-+/* Return a string describing a system error message. */
-+static const char *system_string_error(int errnum, char *buf, size_t buflen)
-+{
-+	size_t len;
-+	const char *error_string = NULL;
-+
-+	if ((errnum > 0) && (errnum < ARRAY_SIZE(message_table)))
-+		error_string = message_table[errnum];
-+
-+	len = ((error_string == NULL) ?
-+		 snprintf(buf, buflen, "Unknown error %d", errnum) :
-+		 snprintf(buf, buflen, "%s", error_string));
-+	if (len < buflen)
-+		return buf;
-+
-+	buf[0] = '\0';
-+	return "System error";
-+}
-+
-+/* Convert an error code to a descriptive string. */
-+const char *uds_string_error(int errnum, char *buf, size_t buflen)
-+{
-+	char *buffer = buf;
-+	char *buf_end = buf + buflen;
-+	const struct error_info *info = NULL;
-+	const char *block_name;
-+
-+	if (buf == NULL)
-+		return NULL;
-+
-+	if (errnum < 0)
-+		errnum = -errnum;
-+
-+	block_name = get_error_info(errnum, &info);
-+	if (block_name != NULL) {
-+		if (info != NULL)
-+			buffer = uds_append_to_buffer(buffer,
-+						      buf_end,
-+						      "%s: %s",
-+						      block_name,
-+						      info->message);
-+		else
-+			buffer = uds_append_to_buffer(buffer,
-+						      buf_end,
-+						      "Unknown %s %d",
-+						      block_name,
-+						      errnum);
-+	} else if (info != NULL) {
-+		buffer = uds_append_to_buffer(buffer, buf_end, "%s", info->message);
-+	} else {
-+		const char *tmp = system_string_error(errnum, buffer, buf_end - buffer);
-+
-+		if (tmp != buffer)
-+			buffer = uds_append_to_buffer(buffer, buf_end, "%s", tmp);
-+		else
-+			buffer += strlen(tmp);
-+	}
-+	return buf;
-+}
-+
-+/* Convert an error code to its name. */
-+const char *uds_string_error_name(int errnum, char *buf, size_t buflen)
-+{
-+	char *buffer = buf;
-+	char *buf_end = buf + buflen;
-+	const struct error_info *info = NULL;
-+	const char *block_name;
-+
-+	if (errnum < 0)
-+		errnum = -errnum;
-+
-+	block_name = get_error_info(errnum, &info);
-+	if (block_name != NULL) {
-+		if (info != NULL)
-+			buffer = uds_append_to_buffer(buffer, buf_end, "%s", info->name);
-+		else
-+			buffer = uds_append_to_buffer(buffer,
-+						      buf_end,
-+						      "%s %d",
-+						      block_name,
-+						      errnum);
-+	} else if (info != NULL) {
-+		buffer = uds_append_to_buffer(buffer, buf_end, "%s", info->name);
-+	} else {
-+		const char *tmp;
-+
-+		tmp = system_string_error(errnum, buffer, buf_end - buffer);
-+		if (tmp != buffer)
-+			buffer = uds_append_to_buffer(buffer, buf_end, "%s", tmp);
-+		else
-+			buffer += strlen(tmp);
-+	}
-+	return buf;
-+}
-+
++#endif /* VDO_CONSTANTS_H */
+diff --git a/drivers/md/dm-vdo/status-codes.c b/drivers/md/dm-vdo/status-codes.c
+new file mode 100644
+index 000000000000..2e886597e995
+--- /dev/null
++++ b/drivers/md/dm-vdo/status-codes.c
+@@ -0,0 +1,126 @@
++// SPDX-License-Identifier: GPL-2.0-only
 +/*
-+ * Translate an error code into a value acceptable to the kernel. The input error code may be a
-+ * system-generated value (such as -EIO), or an internal UDS status code. The result will be a
-+ * negative errno value.
++ * Copyright 2023 Red Hat
 + */
-+int uds_map_to_system_error(int error)
++
++#include "status-codes.h"
++
++#include "errors.h"
++#include "logger.h"
++#include "permassert.h"
++#include "uds-threads.h"
++
++const struct error_info vdo_status_list[] = {
++	{ "VDO_NOT_IMPLEMENTED", "Not implemented" },
++	{ "VDO_OUT_OF_RANGE", "Out of range" },
++	{ "VDO_REF_COUNT_INVALID", "Reference count would become invalid" },
++	{ "VDO_NO_SPACE", "Out of space" },
++	{ "VDO_UNEXPECTED_EOF", "Unexpected EOF on block read" },
++	{ "VDO_BAD_CONFIGURATION", "Bad configuration option" },
++	{ "VDO_SOCKET_ERROR", "Socket error" },
++	{ "VDO_BAD_ALIGNMENT", "Mis-aligned block reference" },
++	{ "VDO_COMPONENT_BUSY", "Prior operation still in progress" },
++	{ "VDO_BAD_PAGE", "Corrupt or incorrect page" },
++	{ "VDO_UNSUPPORTED_VERSION", "Unsupported component version" },
++	{ "VDO_INCORRECT_COMPONENT", "Component id mismatch in decoder" },
++	{ "VDO_PARAMETER_MISMATCH", "Parameters have conflicting values" },
++	{ "VDO_BLOCK_SIZE_TOO_SMALL", "The block size is too small" },
++	{ "VDO_UNKNOWN_PARTITION", "No partition exists with a given id" },
++	{ "VDO_PARTITION_EXISTS", "A partition already exists with a given id" },
++	{ "VDO_NOT_READ_ONLY", "The device is not in read-only mode" },
++	{ "VDO_INCREMENT_TOO_SMALL", "Physical block growth of too few blocks" },
++	{ "VDO_CHECKSUM_MISMATCH", "Incorrect checksum" },
++	{ "VDO_RECOVERY_JOURNAL_FULL", "The recovery journal is full" },
++	{ "VDO_LOCK_ERROR", "A lock is held incorrectly" },
++	{ "VDO_READ_ONLY", "The device is in read-only mode" },
++	{ "VDO_SHUTTING_DOWN", "The device is shutting down" },
++	{ "VDO_CORRUPT_JOURNAL", "Recovery journal entries corrupted" },
++	{ "VDO_TOO_MANY_SLABS", "Exceeds maximum number of slabs supported" },
++	{ "VDO_INVALID_FRAGMENT", "Compressed block fragment is invalid" },
++	{ "VDO_RETRY_AFTER_REBUILD", "Retry operation after rebuilding finishes" },
++	{ "VDO_UNKNOWN_COMMAND", "The extended command is not known" },
++	{ "VDO_COMMAND_ERROR", "Bad extended command parameters" },
++	{ "VDO_CANNOT_DETERMINE_SIZE", "Cannot determine config sizes to fit" },
++	{ "VDO_BAD_MAPPING", "Invalid page mapping" },
++	{ "VDO_READ_CACHE_BUSY", "Read cache has no free slots" },
++	{ "VDO_BIO_CREATION_FAILED", "Bio creation failed" },
++	{ "VDO_BAD_MAGIC", "Bad magic number" },
++	{ "VDO_BAD_NONCE", "Bad nonce" },
++	{ "VDO_JOURNAL_OVERFLOW", "Journal sequence number overflow" },
++	{ "VDO_INVALID_ADMIN_STATE", "Invalid operation for current state" },
++	{ "VDO_CANT_ADD_SYSFS_NODE", "Failed to add sysfs node" },
++};
++
++static atomic_t vdo_status_codes_registered = ATOMIC_INIT(0);
++static int status_code_registration_result;
++
++static void do_status_code_registration(void)
++{
++	int result;
++
++	STATIC_ASSERT((VDO_STATUS_CODE_LAST - VDO_STATUS_CODE_BASE) ==
++		      ARRAY_SIZE(vdo_status_list));
++
++	result = uds_register_error_block("VDO Status",
++					  VDO_STATUS_CODE_BASE,
++					  VDO_STATUS_CODE_BLOCK_END,
++					  vdo_status_list,
++					  sizeof(vdo_status_list));
++	/*
++	 * The following test handles cases where libvdo is statically linked against both the test
++	 * modules and the test driver (because multiple instances of this module call their own
++	 * copy of this function once each, resulting in multiple calls to register_error_block
++	 * which is shared in libuds).
++	 */
++	if (result == UDS_DUPLICATE_NAME)
++		result = UDS_SUCCESS;
++
++	status_code_registration_result = (result == UDS_SUCCESS) ? VDO_SUCCESS : result;
++}
++
++/**
++ * vdo_register_status_codes() - Register the VDO status codes if needed.
++ * Return: A success or error code.
++ */
++int vdo_register_status_codes(void)
++{
++	uds_perform_once(&vdo_status_codes_registered, do_status_code_registration);
++	return status_code_registration_result;
++}
++
++/**
++ * vdo_map_to_system_error() - Given an error code, return a value we can return to the OS.
++ * @error: The error code to convert.
++ *
++ * The input error code may be a system-generated value (such as -EIO), an errno macro used in our
++ * code (such as EIO), or a UDS or VDO status code; the result must be something the rest of the OS
++ * can consume (negative errno values such as -EIO, in the case of the kernel).
++ *
++ * Return: A system error code value.
++ */
++int vdo_map_to_system_error(int error)
 +{
 +	char error_name[UDS_MAX_ERROR_NAME_SIZE];
 +	char error_message[UDS_MAX_ERROR_MESSAGE_SIZE];
 +
-+	/* 0 is success, and negative values are already system error codes. */
++	/* 0 is success, negative a system error code */
 +	if (likely(error <= 0))
 +		return error;
-+
 +	if (error < 1024)
-+		/* This is probably an errno from userspace. */
 +		return -error;
 +
-+	/* Internal UDS errors */
++	/* VDO or UDS error */
 +	switch (error) {
-+	case UDS_NO_INDEX:
-+	case UDS_CORRUPT_DATA:
-+		/* The index doesn't exist or can't be recovered. */
-+		return -ENOENT;
-+
-+	case UDS_INDEX_NOT_SAVED_CLEANLY:
-+	case UDS_UNSUPPORTED_VERSION:
-+		/*
-+		 * The index exists, but can't be loaded. Tell the client it exists so they don't
-+		 * destroy it inadvertently.
-+		 */
-+		return -EEXIST;
-+
-+	case UDS_DISABLED:
-+		/* The session is unusable; only returned by requests. */
++	case VDO_NO_SPACE:
++		return -ENOSPC;
++	case VDO_READ_ONLY:
 +		return -EIO;
-+
 +	default:
-+		/* Translate an unexpected error into something generic. */
-+		uds_log_info("%s: mapping status code %d (%s: %s) to -EIO",
++		uds_log_info("%s: mapping internal status code %d (%s: %s) to EIO",
 +			     __func__,
 +			     error,
 +			     uds_string_error_name(error, error_name, sizeof(error_name)),
@@ -424,780 +409,887 @@ index 000000000000..223eca020ff4
 +		return -EIO;
 +	}
 +}
-+
-+/*
-+ * Register a block of error codes.
-+ *
-+ * @block_name: the name of the block of error codes
-+ * @first_error: the first error code in the block
-+ * @next_free_error: one past the highest possible error in the block
-+ * @infos: a pointer to the error info array for the block
-+ * @info_size: the size of the error info array
-+ */
-+int uds_register_error_block(const char *block_name,
-+			     int first_error,
-+			     int next_free_error,
-+			     const struct error_info *infos,
-+			     size_t info_size)
-+{
-+	int result;
-+	struct error_block *block;
-+	struct error_block new_block = {
-+		.name = block_name,
-+		.base = first_error,
-+		.last = first_error + (info_size / sizeof(struct error_info)),
-+		.max = next_free_error,
-+		.infos = infos,
-+	};
-+
-+	result = ASSERT(first_error < next_free_error, "well-defined error block range");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (registered_errors.count == registered_errors.allocated)
-+		/* This should never happen. */
-+		return UDS_OVERFLOW;
-+
-+	for (block = registered_errors.blocks;
-+	     block < registered_errors.blocks + registered_errors.count;
-+	     ++block) {
-+		if (strcmp(block_name, block->name) == 0)
-+			return UDS_DUPLICATE_NAME;
-+
-+		/* Ensure error ranges do not overlap. */
-+		if ((first_error < block->max) && (next_free_error > block->base))
-+			return UDS_ALREADY_REGISTERED;
-+	}
-+
-+	registered_errors.blocks[registered_errors.count++] = new_block;
-+	return UDS_SUCCESS;
-+}
-diff --git a/drivers/md/dm-vdo/errors.h b/drivers/md/dm-vdo/errors.h
+diff --git a/drivers/md/dm-vdo/status-codes.h b/drivers/md/dm-vdo/status-codes.h
 new file mode 100644
-index 000000000000..43e0c33bec65
+index 000000000000..c5da37ec8b55
 --- /dev/null
-+++ b/drivers/md/dm-vdo/errors.h
-@@ -0,0 +1,83 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_ERRORS_H
-+#define UDS_ERRORS_H
-+
-+#include <linux/compiler.h>
-+#include <linux/types.h>
-+
-+/* Custom error codes and error-related utilities for UDS */
-+
-+/* Valid status codes for internal UDS functions. */
-+enum uds_status_codes {
-+	/* Successful return */
-+	UDS_SUCCESS = 0,
-+
-+	/* Used as a base value for reporting internal errors */
-+	UDS_ERROR_CODE_BASE = 1024,
-+	/* Index overflow */
-+	UDS_OVERFLOW = UDS_ERROR_CODE_BASE + 0,
-+	/* Invalid argument passed to internal routine */
-+	UDS_INVALID_ARGUMENT = UDS_ERROR_CODE_BASE + 1,
-+	/* UDS data structures are in an invalid state */
-+	UDS_BAD_STATE = UDS_ERROR_CODE_BASE + 2,
-+	/* Attempt to enter the same name into an internal structure twice */
-+	UDS_DUPLICATE_NAME = UDS_ERROR_CODE_BASE + 3,
-+	/* An assertion failed */
-+	UDS_ASSERTION_FAILED = UDS_ERROR_CODE_BASE + 4,
-+	/* A request has been queued for later processing (not an error) */
-+	UDS_QUEUED = UDS_ERROR_CODE_BASE + 5,
-+	/* A problem has occurred with a buffer */
-+	UDS_BUFFER_ERROR = UDS_ERROR_CODE_BASE + 6,
-+	/* No directory was found where one was expected */
-+	UDS_NO_DIRECTORY = UDS_ERROR_CODE_BASE + 7,
-+	/* This error range has already been registered */
-+	UDS_ALREADY_REGISTERED = UDS_ERROR_CODE_BASE + 8,
-+	/* Attempt to read or write data outside the valid range */
-+	UDS_OUT_OF_RANGE = UDS_ERROR_CODE_BASE + 9,
-+	/* Could not load modules */
-+	UDS_EMODULE_LOAD = UDS_ERROR_CODE_BASE + 10,
-+	/* The index session is disabled */
-+	UDS_DISABLED = UDS_ERROR_CODE_BASE + 11,
-+	/* Unknown error */
-+	UDS_UNKNOWN_ERROR = UDS_ERROR_CODE_BASE + 12,
-+	/* The index configuration or volume format is no longer supported */
-+	UDS_UNSUPPORTED_VERSION = UDS_ERROR_CODE_BASE + 13,
-+	/* Some index structure is corrupt */
-+	UDS_CORRUPT_DATA = UDS_ERROR_CODE_BASE + 14,
-+	/* No index state found */
-+	UDS_NO_INDEX = UDS_ERROR_CODE_BASE + 15,
-+	/* Attempt to access incomplete index save data */
-+	UDS_INDEX_NOT_SAVED_CLEANLY = UDS_ERROR_CODE_BASE + 16,
-+	/* One more than the last UDS_INTERNAL error code */
-+	UDS_ERROR_CODE_LAST,
-+	/* One more than the last error this block will ever use */
-+	UDS_ERROR_CODE_BLOCK_END = UDS_ERROR_CODE_BASE + 440,
-+};
-+
-+enum {
-+	UDS_MAX_ERROR_NAME_SIZE = 80,
-+	UDS_MAX_ERROR_MESSAGE_SIZE = 128,
-+};
-+
-+struct error_info {
-+	const char *name;
-+	const char *message;
-+};
-+
-+const char * __must_check uds_string_error(int errnum, char *buf, size_t buflen);
-+
-+const char *uds_string_error_name(int errnum, char *buf, size_t buflen);
-+
-+int uds_map_to_system_error(int error);
-+
-+int uds_register_error_block(const char *block_name,
-+			     int first_error,
-+			     int last_reserved_error,
-+			     const struct error_info *infos,
-+			     size_t info_size);
-+
-+#endif /* UDS_ERRORS_H */
-diff --git a/drivers/md/dm-vdo/logger.c b/drivers/md/dm-vdo/logger.c
-new file mode 100644
-index 000000000000..00acac8affbd
---- /dev/null
-+++ b/drivers/md/dm-vdo/logger.c
-@@ -0,0 +1,304 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "logger.h"
-+
-+#include <linux/delay.h>
-+#include <linux/hardirq.h>
-+#include <linux/module.h>
-+#include <linux/printk.h>
-+#include <linux/sched.h>
-+
-+#include "thread-device.h"
-+#include "uds-threads.h"
-+
-+struct priority_name {
-+	const char *name;
-+	const int priority;
-+};
-+
-+static const struct priority_name PRIORITIES[] = {
-+	{ "ALERT", UDS_LOG_ALERT },
-+	{ "CRITICAL", UDS_LOG_CRIT },
-+	{ "CRIT", UDS_LOG_CRIT },
-+	{ "DEBUG", UDS_LOG_DEBUG },
-+	{ "EMERGENCY", UDS_LOG_EMERG },
-+	{ "EMERG", UDS_LOG_EMERG },
-+	{ "ERROR", UDS_LOG_ERR },
-+	{ "ERR", UDS_LOG_ERR },
-+	{ "INFO", UDS_LOG_INFO },
-+	{ "NOTICE", UDS_LOG_NOTICE },
-+	{ "PANIC", UDS_LOG_EMERG },
-+	{ "WARN", UDS_LOG_WARNING },
-+	{ "WARNING", UDS_LOG_WARNING },
-+	{ NULL, -1 },
-+};
-+
-+static const char *const PRIORITY_STRINGS[] = {
-+	"EMERGENCY",
-+	"ALERT",
-+	"CRITICAL",
-+	"ERROR",
-+	"WARN",
-+	"NOTICE",
-+	"INFO",
-+	"DEBUG",
-+};
-+
-+static int log_level = UDS_LOG_INFO;
-+
-+int uds_get_log_level(void)
-+{
-+	return log_level;
-+}
-+
-+void uds_set_log_level(int new_log_level)
-+{
-+	log_level = new_log_level;
-+}
-+
-+int uds_log_string_to_priority(const char *string)
-+{
-+	int i;
-+
-+	for (i = 0; PRIORITIES[i].name != NULL; i++)
-+		if (strcasecmp(string, PRIORITIES[i].name) == 0)
-+			return PRIORITIES[i].priority;
-+	return UDS_LOG_INFO;
-+}
-+
-+const char *uds_log_priority_to_string(int priority)
-+{
-+	if ((priority < 0) || (priority >= (int) ARRAY_SIZE(PRIORITY_STRINGS)))
-+		return "unknown";
-+	return PRIORITY_STRINGS[priority];
-+}
-+
-+static const char *get_current_interrupt_type(void)
-+{
-+	if (in_nmi())
-+		return "NMI";
-+	if (in_irq())
-+		return "HI";
-+	if (in_softirq())
-+		return "SI";
-+	return "INTR";
-+}
-+
-+/**
-+ * emit_log_message_to_kernel() - Emit a log message to the kernel at the specified priority.
-+ *
-+ * @priority: The priority at which to log the message
-+ * @fmt: The format string of the message
-+ */
-+static void emit_log_message_to_kernel(int priority, const char *fmt, ...)
-+{
-+	va_list args;
-+	struct va_format vaf;
-+
-+	if (priority > uds_get_log_level())
-+		return;
-+
-+	va_start(args, fmt);
-+	vaf.fmt = fmt;
-+	vaf.va = &args;
-+
-+	switch (priority) {
-+	case UDS_LOG_EMERG:
-+	case UDS_LOG_ALERT:
-+	case UDS_LOG_CRIT:
-+		printk(KERN_CRIT "%pV", &vaf);
-+		break;
-+	case UDS_LOG_ERR:
-+		printk(KERN_ERR "%pV", &vaf);
-+		break;
-+	case UDS_LOG_WARNING:
-+		printk(KERN_WARNING "%pV", &vaf);
-+		break;
-+	case UDS_LOG_NOTICE:
-+		printk(KERN_NOTICE "%pV", &vaf);
-+		break;
-+	case UDS_LOG_INFO:
-+		printk(KERN_INFO "%pV", &vaf);
-+		break;
-+	case UDS_LOG_DEBUG:
-+		printk(KERN_DEBUG "%pV", &vaf);
-+		break;
-+	default:
-+		printk(KERN_DEFAULT "%pV", &vaf);
-+		break;
-+	}
-+
-+	va_end(args);
-+}
-+
-+/**
-+ * emit_log_message() - Emit a log message to the kernel log in a format suited to the current
-+ *                      thread context.
-+ *
-+ * Context info formats:
-+ *
-+ * interrupt:           uds[NMI]: blah
-+ * kvdo thread:         kvdo12:foobarQ: blah
-+ * thread w/device id:  kvdo12:myprog: blah
-+ * other thread:        uds: myprog: blah
-+ *
-+ * Fields: module name, interrupt level, process name, device ID.
-+ *
-+ * @priority: the priority at which to log the message
-+ * @module: The name of the module doing the logging
-+ * @prefix: The prefix of the log message
-+ * @vaf1: The first message format descriptor
-+ * @vaf2: The second message format descriptor
-+ */
-+static void emit_log_message(int priority,
-+			     const char *module,
-+			     const char *prefix,
-+			     const struct va_format *vaf1,
-+			     const struct va_format *vaf2)
-+{
-+	int device_instance;
-+
-+	/*
-+	 * In interrupt context, identify the interrupt type and module. Ignore the process/thread
-+	 * since it could be anything.
-+	 */
-+	if (in_interrupt()) {
-+		const char *type = get_current_interrupt_type();
-+
-+		emit_log_message_to_kernel(priority,
-+					   "%s[%s]: %s%pV%pV\n",
-+					   module, type, prefix, vaf1, vaf2);
-+		return;
-+	}
-+
-+	/* Not at interrupt level; we have a process we can look at, and might have a device ID. */
-+	device_instance = uds_get_thread_device_id();
-+	if (device_instance >= 0) {
-+		emit_log_message_to_kernel(priority,
-+					   "%s%u:%s: %s%pV%pV\n",
-+					   module, device_instance,
-+					   current->comm, prefix, vaf1, vaf2);
-+		return;
-+	}
-+
-+	/*
-+	 * If it's a kernel thread and the module name is a prefix of its name, assume it is ours
-+	 * and only identify the thread.
-+	 */
-+	if (((current->flags & PF_KTHREAD) != 0) &&
-+	    (strncmp(module, current->comm, strlen(module)) == 0)) {
-+		emit_log_message_to_kernel(priority,
-+					   "%s: %s%pV%pV\n",
-+					   current->comm, prefix, vaf1, vaf2);
-+		return;
-+	}
-+
-+	/* Identify the module and the process. */
-+	emit_log_message_to_kernel(priority,
-+				   "%s: %s: %s%pV%pV\n",
-+				   module, current->comm, prefix, vaf1, vaf2);
-+}
-+
-+/*
-+ * uds_log_embedded_message() - Log a message embedded within another message.
-+ * @priority: the priority at which to log the message
-+ * @module: the name of the module doing the logging
-+ * @prefix: optional string prefix to message, may be NULL
-+ * @fmt1: format of message first part (required)
-+ * @args1: arguments for message first part (required)
-+ * @fmt2: format of message second part
-+ */
-+void uds_log_embedded_message(int priority,
-+			      const char *module,
-+			      const char *prefix,
-+			      const char *fmt1,
-+			      va_list args1,
-+			      const char *fmt2,
-+			      ...)
-+{
-+	va_list args1_copy;
-+	va_list args2;
-+	struct va_format vaf1, vaf2;
-+
-+	va_start(args2, fmt2);
-+
-+	if (module == NULL)
-+		module = UDS_LOGGING_MODULE_NAME;
-+	if (prefix == NULL)
-+		prefix = "";
-+
-+	/*
-+	 * It is implementation dependent whether va_list is defined as an array type that decays
-+	 * to a pointer when passed as an argument. Copy args1 and args2 with va_copy so that vaf1
-+	 * and vaf2 get proper va_list pointers irrespective of how va_list is defined.
-+	 */
-+	va_copy(args1_copy, args1);
-+	vaf1.fmt = fmt1;
-+	vaf1.va = &args1_copy;
-+
-+	vaf2.fmt = fmt2;
-+	vaf2.va = &args2;
-+
-+	emit_log_message(priority, module, prefix, &vaf1, &vaf2);
-+
-+	va_end(args1_copy);
-+	va_end(args2);
-+}
-+
-+int uds_vlog_strerror(int priority,
-+		      int errnum,
-+		      const char *module,
-+		      const char *format,
-+		      va_list args)
-+{
-+	char errbuf[UDS_MAX_ERROR_MESSAGE_SIZE];
-+	const char *message = uds_string_error(errnum, errbuf, sizeof(errbuf));
-+
-+	uds_log_embedded_message(priority,
-+				 module,
-+				 NULL,
-+				 format,
-+				 args,
-+				 ": %s (%d)",
-+				 message,
-+				 errnum);
-+	return errnum;
-+}
-+
-+int __uds_log_strerror(int priority, int errnum, const char *module, const char *format, ...)
-+{
-+	va_list args;
-+
-+	va_start(args, format);
-+	uds_vlog_strerror(priority, errnum, module, format, args);
-+	va_end(args);
-+	return errnum;
-+}
-+
-+void uds_log_backtrace(int priority)
-+{
-+	if (priority > uds_get_log_level())
-+		return;
-+	dump_stack();
-+}
-+
-+void __uds_log_message(int priority, const char *module, const char *format, ...)
-+{
-+	va_list args;
-+
-+	va_start(args, format);
-+	uds_log_embedded_message(priority, module, NULL, format, args, "%s", "");
-+	va_end(args);
-+}
-+
-+/*
-+ * Sleep or delay a few milliseconds in an attempt to allow the log buffers to be flushed lest they
-+ * be overrun.
-+ */
-+void uds_pause_for_logger(void)
-+{
-+	fsleep(4000);
-+}
-diff --git a/drivers/md/dm-vdo/logger.h b/drivers/md/dm-vdo/logger.h
-new file mode 100644
-index 000000000000..7a0ee3ca85ec
---- /dev/null
-+++ b/drivers/md/dm-vdo/logger.h
++++ b/drivers/md/dm-vdo/status-codes.h
 @@ -0,0 +1,112 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_LOGGER_H
-+#define UDS_LOGGER_H
-+
-+#include <linux/module.h>
-+#include <linux/ratelimit.h>
-+
-+/* Custom logging utilities for UDS */
-+
-+#define UDS_LOG_EMERG 0
-+#define UDS_LOG_ALERT 1
-+#define UDS_LOG_CRIT 2
-+#define UDS_LOG_ERR 3
-+#define UDS_LOG_WARNING 4
-+#define UDS_LOG_NOTICE 5
-+#define UDS_LOG_INFO 6
-+#define UDS_LOG_DEBUG 7
-+
-+#if defined(MODULE)
-+#define UDS_LOGGING_MODULE_NAME THIS_MODULE->name
-+#else /* compiled into the kernel */
-+#define UDS_LOGGING_MODULE_NAME "vdo"
-+#endif
-+
-+/* Apply a rate limiter to a log method call. */
-+#define uds_log_ratelimit(log_fn, ...)                                    \
-+	do {                                                              \
-+		static DEFINE_RATELIMIT_STATE(_rs,                        \
-+					      DEFAULT_RATELIMIT_INTERVAL, \
-+					      DEFAULT_RATELIMIT_BURST);   \
-+		if (__ratelimit(&_rs)) {                                  \
-+			log_fn(__VA_ARGS__);                              \
-+		}                                                         \
-+	} while (0)
-+
-+int uds_get_log_level(void);
-+
-+void uds_set_log_level(int new_log_level);
-+
-+int uds_log_string_to_priority(const char *string);
-+
-+const char *uds_log_priority_to_string(int priority);
-+
-+void uds_log_embedded_message(int priority,
-+			      const char *module,
-+			      const char *prefix,
-+			      const char *fmt1,
-+			      va_list args1,
-+			      const char *fmt2,
-+			      ...)
-+	__printf(4, 0) __printf(6, 7);
-+
-+void uds_log_backtrace(int priority);
-+
-+/* All log functions will preserve the caller's value of errno. */
-+
-+#define uds_log_strerror(priority, errnum, ...) \
-+	__uds_log_strerror(priority, errnum, UDS_LOGGING_MODULE_NAME, __VA_ARGS__)
-+
-+int __uds_log_strerror(int priority, int errnum, const char *module, const char *format, ...)
-+	__printf(4, 5);
-+
-+int uds_vlog_strerror(int priority,
-+		      int errnum,
-+		      const char *module,
-+		      const char *format,
-+		      va_list args)
-+	__printf(4, 0);
-+
-+/* Log an error prefixed with the string associated with the errnum. */
-+#define uds_log_error_strerror(errnum, ...) \
-+	uds_log_strerror(UDS_LOG_ERR, errnum, __VA_ARGS__)
-+
-+#define uds_log_debug_strerror(errnum, ...) \
-+	uds_log_strerror(UDS_LOG_DEBUG, errnum, __VA_ARGS__)
-+
-+#define uds_log_info_strerror(errnum, ...) \
-+	uds_log_strerror(UDS_LOG_INFO, errnum, __VA_ARGS__)
-+
-+#define uds_log_notice_strerror(errnum, ...) \
-+	uds_log_strerror(UDS_LOG_NOTICE, errnum, __VA_ARGS__)
-+
-+#define uds_log_warning_strerror(errnum, ...) \
-+	uds_log_strerror(UDS_LOG_WARNING, errnum, __VA_ARGS__)
-+
-+#define uds_log_fatal_strerror(errnum, ...) \
-+	uds_log_strerror(UDS_LOG_CRIT, errnum, __VA_ARGS__)
-+
-+#define uds_log_message(priority, ...) \
-+	__uds_log_message(priority, UDS_LOGGING_MODULE_NAME, __VA_ARGS__)
-+
-+void __uds_log_message(int priority, const char *module, const char *format, ...)
-+	__printf(3, 4);
-+
-+#define uds_log_debug(...) uds_log_message(UDS_LOG_DEBUG, __VA_ARGS__)
-+
-+#define uds_log_info(...) uds_log_message(UDS_LOG_INFO, __VA_ARGS__)
-+
-+#define uds_log_notice(...) uds_log_message(UDS_LOG_NOTICE, __VA_ARGS__)
-+
-+#define uds_log_warning(...) uds_log_message(UDS_LOG_WARNING, __VA_ARGS__)
-+
-+#define uds_log_error(...) uds_log_message(UDS_LOG_ERR, __VA_ARGS__)
-+
-+#define uds_log_fatal(...) uds_log_message(UDS_LOG_CRIT, __VA_ARGS__)
-+
-+void uds_pause_for_logger(void);
-+#endif /* UDS_LOGGER_H */
-diff --git a/drivers/md/dm-vdo/permassert.c b/drivers/md/dm-vdo/permassert.c
-new file mode 100644
-index 000000000000..94ab785c8a0a
---- /dev/null
-+++ b/drivers/md/dm-vdo/permassert.c
-@@ -0,0 +1,35 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "permassert.h"
++#ifndef VDO_STATUS_CODES_H
++#define VDO_STATUS_CODES_H
 +
 +#include "errors.h"
-+#include "logger.h"
 +
-+int uds_assertion_failed(const char *expression_string,
-+			 const char *file_name,
-+			 int line_number,
-+			 const char *format,
-+			 ...)
-+{
-+	va_list args;
++enum {
++	UDS_BLOCK_SIZE = UDS_ERROR_CODE_BLOCK_END - UDS_ERROR_CODE_BASE,
++	VDO_BLOCK_START = UDS_ERROR_CODE_BLOCK_END,
++	VDO_BLOCK_END = VDO_BLOCK_START + UDS_BLOCK_SIZE,
++	PRP_BLOCK_START = VDO_BLOCK_END,
++	PRP_BLOCK_END = PRP_BLOCK_START + UDS_BLOCK_SIZE,
++};
 +
-+	va_start(args, format);
++/* VDO-specific status codes. */
++enum vdo_status_codes {
++	/* successful result */
++	VDO_SUCCESS,
++	/* base of all VDO errors */
++	VDO_STATUS_CODE_BASE = VDO_BLOCK_START,
++	/* we haven't written this yet */
++	VDO_NOT_IMPLEMENTED = VDO_STATUS_CODE_BASE,
++	/* input out of range */
++	VDO_OUT_OF_RANGE,
++	/* an invalid reference count would result */
++	VDO_REF_COUNT_INVALID,
++	/* a free block could not be allocated */
++	VDO_NO_SPACE,
++	/* unexpected EOF on block read */
++	VDO_UNEXPECTED_EOF,
++	/* improper or missing configuration option */
++	VDO_BAD_CONFIGURATION,
++	/* socket opening or binding problem */
++	VDO_SOCKET_ERROR,
++	/* read or write on non-aligned offset */
++	VDO_BAD_ALIGNMENT,
++	/* prior operation still in progress */
++	VDO_COMPONENT_BUSY,
++	/* page contents incorrect or corrupt data */
++	VDO_BAD_PAGE,
++	/* unsupported version of some component */
++	VDO_UNSUPPORTED_VERSION,
++	/* component id mismatch in decoder */
++	VDO_INCORRECT_COMPONENT,
++	/* parameters have conflicting values */
++	VDO_PARAMETER_MISMATCH,
++	/* the block size is too small */
++	VDO_BLOCK_SIZE_TOO_SMALL,
++	/* no partition exists with a given id */
++	VDO_UNKNOWN_PARTITION,
++	/* a partition already exists with a given id */
++	VDO_PARTITION_EXISTS,
++	/* the VDO is not in read-only mode */
++	VDO_NOT_READ_ONLY,
++	/* physical block growth of too few blocks */
++	VDO_INCREMENT_TOO_SMALL,
++	/* incorrect checksum */
++	VDO_CHECKSUM_MISMATCH,
++	/* the recovery journal is full */
++	VDO_RECOVERY_JOURNAL_FULL,
++	/* a lock is held incorrectly */
++	VDO_LOCK_ERROR,
++	/* the VDO is in read-only mode */
++	VDO_READ_ONLY,
++	/* the VDO is shutting down */
++	VDO_SHUTTING_DOWN,
++	/* the recovery journal has corrupt entries */
++	VDO_CORRUPT_JOURNAL,
++	/* exceeds maximum number of slabs supported */
++	VDO_TOO_MANY_SLABS,
++	/* a compressed block fragment is invalid */
++	VDO_INVALID_FRAGMENT,
++	/* action is unsupported while rebuilding */
++	VDO_RETRY_AFTER_REBUILD,
++	/* the extended command is not known */
++	VDO_UNKNOWN_COMMAND,
++	/* bad extended command parameters */
++	VDO_COMMAND_ERROR,
++	/* cannot determine sizes to fit */
++	VDO_CANNOT_DETERMINE_SIZE,
++	/* a block map entry is invalid */
++	VDO_BAD_MAPPING,
++	/* read cache has no free slots */
++	VDO_READ_CACHE_BUSY,
++	/* bio_add_page failed */
++	VDO_BIO_CREATION_FAILED,
++	/* bad magic number */
++	VDO_BAD_MAGIC,
++	/* bad nonce */
++	VDO_BAD_NONCE,
++	/* sequence number overflow */
++	VDO_JOURNAL_OVERFLOW,
++	/* the VDO is not in a state to perform an admin operation */
++	VDO_INVALID_ADMIN_STATE,
++	/* failure adding a sysfs node */
++	VDO_CANT_ADD_SYSFS_NODE,
++	/* one more than last error code */
++	VDO_STATUS_CODE_LAST,
++	VDO_STATUS_CODE_BLOCK_END = VDO_BLOCK_END
++};
 +
-+	uds_log_embedded_message(UDS_LOG_ERR,
-+				 UDS_LOGGING_MODULE_NAME,
-+				 "assertion \"",
-+				 format,
-+				 args,
-+				 "\" (%s) failed at %s:%d",
-+				 expression_string,
-+				 file_name,
-+				 line_number);
-+	uds_log_backtrace(UDS_LOG_ERR);
++extern const struct error_info vdo_status_list[];
 +
-+	va_end(args);
++int vdo_register_status_codes(void);
 +
-+	return UDS_ASSERTION_FAILED;
-+}
-diff --git a/drivers/md/dm-vdo/permassert.h b/drivers/md/dm-vdo/permassert.h
++int vdo_map_to_system_error(int error);
++
++#endif /* VDO_STATUS_CODES_H */
+diff --git a/drivers/md/dm-vdo/types.h b/drivers/md/dm-vdo/types.h
 new file mode 100644
-index 000000000000..bc0db0b187b6
+index 000000000000..f2dcce92c796
 --- /dev/null
-+++ b/drivers/md/dm-vdo/permassert.h
-@@ -0,0 +1,65 @@
++++ b/drivers/md/dm-vdo/types.h
+@@ -0,0 +1,393 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef PERMASSERT_H
-+#define PERMASSERT_H
++#ifndef VDO_TYPES_H
++#define VDO_TYPES_H
 +
-+#include <linux/compiler.h>
-+
-+#include "errors.h"
-+
-+/* Utilities for asserting that certain conditions are met */
-+
-+#define STRINGIFY(X) #X
-+#define STRINGIFY_VALUE(X) STRINGIFY(X)
-+
-+/*
-+ * A hack to apply the "warn if unused" attribute to an integral expression.
-+ *
-+ * Since GCC doesn't propagate the warn_unused_result attribute to conditional expressions
-+ * incorporating calls to functions with that attribute, this function can be used to wrap such an
-+ * expression. With optimization enabled, this function contributes no additional instructions, but
-+ * the warn_unused_result attribute still applies to the code calling it.
-+ */
-+static inline int __must_check uds_must_use(int value)
-+{
-+	return value;
-+}
-+
-+/* Assert that an expression is true and return an error if it is not. */
-+#define ASSERT(expr, ...) uds_must_use(__UDS_ASSERT(expr, __VA_ARGS__))
-+
-+/* Log a message if the expression is not true. */
-+#define ASSERT_LOG_ONLY(expr, ...) __UDS_ASSERT(expr, __VA_ARGS__)
-+
-+#define __UDS_ASSERT(expr, ...)				      \
-+	(likely(expr) ? UDS_SUCCESS			      \
-+		      : uds_assertion_failed(STRINGIFY(expr), __FILE__, __LINE__, __VA_ARGS__))
-+
-+/* Log an assertion failure message. */
-+int uds_assertion_failed(const char *expression_string,
-+			 const char *file_name,
-+			 int line_number,
-+			 const char *format,
-+			 ...)
-+	__printf(4, 5);
-+
-+#define STATIC_ASSERT(expr)	     \
-+	do {			     \
-+		switch (0) {	     \
-+		case 0:		     \
-+			;	     \
-+			fallthrough; \
-+		case expr:	     \
-+			;	     \
-+			fallthrough; \
-+		default:	     \
-+			break;	     \
-+		}		     \
-+	} while (0)
-+
-+#define STATIC_ASSERT_SIZEOF(type, expected_size) STATIC_ASSERT(sizeof(type) == (expected_size))
-+
-+#endif /* PERMASSERT_H */
-diff --git a/drivers/md/dm-vdo/string-utils.c b/drivers/md/dm-vdo/string-utils.c
-new file mode 100644
-index 000000000000..a584b37bb70c
---- /dev/null
-+++ b/drivers/md/dm-vdo/string-utils.c
-@@ -0,0 +1,28 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "string-utils.h"
-+
-+#include "errors.h"
-+#include "logger.h"
-+#include "memory-alloc.h"
-+#include "permassert.h"
-+#include "uds.h"
-+
-+char *uds_append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
-+{
-+	va_list args;
-+	size_t n;
-+
-+	va_start(args, fmt);
-+	n = vsnprintf(buffer, buf_end - buffer, fmt, args);
-+	if (n >= (size_t) (buf_end - buffer))
-+		buffer = buf_end;
-+	else
-+		buffer += n;
-+	va_end(args);
-+
-+	return buffer;
-+}
-diff --git a/drivers/md/dm-vdo/string-utils.h b/drivers/md/dm-vdo/string-utils.h
-new file mode 100644
-index 000000000000..8275af582cf7
---- /dev/null
-+++ b/drivers/md/dm-vdo/string-utils.h
-@@ -0,0 +1,23 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_STRING_UTILS_H
-+#define UDS_STRING_UTILS_H
-+
-+#include <linux/kernel.h>
-+#include <linux/string.h>
-+
-+/* Utilities related to string manipulation */
-+
-+static inline const char *uds_bool_to_string(bool value)
-+{
-+	return value ? "true" : "false";
-+}
-+
-+/* Append a formatted string to the end of a buffer. */
-+char *uds_append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
-+	__printf(3, 4);
-+
-+#endif /* UDS_STRING_UTILS_H */
-diff --git a/drivers/md/dm-vdo/time-utils.h b/drivers/md/dm-vdo/time-utils.h
-new file mode 100644
-index 000000000000..5f1e850fd826
---- /dev/null
-+++ b/drivers/md/dm-vdo/time-utils.h
-@@ -0,0 +1,28 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_TIME_UTILS_H
-+#define UDS_TIME_UTILS_H
-+
-+#include <linux/ktime.h>
-+#include <linux/time.h>
++#include <linux/bio.h>
++#include <linux/blkdev.h>
++#include <linux/device-mapper.h>
++#include <linux/list.h>
++#include <linux/compiler_attributes.h>
 +#include <linux/types.h>
 +
-+static inline s64 ktime_to_seconds(ktime_t reltime)
++#include "funnel-queue.h"
++
++/* A size type in blocks. */
++typedef u64 block_count_t;
++
++/* The size of a block. */
++typedef u16 block_size_t;
++
++/* A counter for data_vios */
++typedef u16 data_vio_count_t;
++
++/* A height within a tree. */
++typedef u8 height_t;
++
++/* The logical block number as used by the consumer. */
++typedef u64 logical_block_number_t;
++
++/* The type of the nonce used to identify instances of VDO. */
++typedef u64 nonce_t;
++
++/* A size in pages. */
++typedef u32 page_count_t;
++
++/* A page number. */
++typedef u32 page_number_t;
++
++/*
++ * The physical (well, less logical) block number at which the block is found on the underlying
++ * device.
++ */
++typedef u64 physical_block_number_t;
++
++/* A count of tree roots. */
++typedef u8 root_count_t;
++
++/* A number of sectors. */
++typedef u8 sector_count_t;
++
++/* A sequence number. */
++typedef u64 sequence_number_t;
++
++/* The offset of a block within a slab. */
++typedef u32 slab_block_number;
++
++/* A size type in slabs. */
++typedef u16 slab_count_t;
++
++/* A slot in a bin or block map page. */
++typedef u16 slot_number_t;
++
++/* typedef thread_count_t - A thread counter. */
++typedef u8 thread_count_t;
++
++/* typedef thread_id_t - A thread ID, vdo threads are numbered sequentially from 0. */
++typedef u8 thread_id_t;
++
++/* A zone counter */
++typedef u8 zone_count_t;
++
++/* The following enums are persisted on storage, so the values must be preserved. */
++
++/* The current operating mode of the VDO. */
++enum vdo_state {
++	VDO_DIRTY = 0,
++	VDO_NEW = 1,
++	VDO_CLEAN = 2,
++	VDO_READ_ONLY_MODE = 3,
++	VDO_FORCE_REBUILD = 4,
++	VDO_RECOVERING = 5,
++	VDO_REPLAYING = 6, /* VDO_REPLAYING is never set anymore, but retained for upgrade */
++	VDO_REBUILD_FOR_UPGRADE = 7,
++
++	/* Keep VDO_STATE_COUNT at the bottom. */
++	VDO_STATE_COUNT
++};
++
++/**
++ * vdo_state_requires_read_only_rebuild() - Check whether a vdo_state indicates
++ * that a read-only rebuild is required.
++ * @state: The vdo_state to check.
++ *
++ * Return: true if the state indicates a rebuild is required
++ */
++static inline bool __must_check vdo_state_requires_read_only_rebuild(enum vdo_state state)
 +{
-+	return reltime / NSEC_PER_SEC;
++	return ((state == VDO_FORCE_REBUILD) || (state == VDO_REBUILD_FOR_UPGRADE));
 +}
 +
-+static inline ktime_t current_time_ns(clockid_t clock)
++/**
++ * vdo_state_requires_recovery() - Check whether a vdo state indicates that recovery is needed.
++ * @state: The state to check.
++ *
++ * Return: true if the state indicates a recovery is required
++ */
++static inline bool __must_check vdo_state_requires_recovery(enum vdo_state state)
 +{
-+	return clock == CLOCK_MONOTONIC ? ktime_get_ns() : ktime_get_real_ns();
++	return ((state == VDO_DIRTY) || (state == VDO_REPLAYING) || (state == VDO_RECOVERING));
 +}
 +
-+static inline ktime_t current_time_us(void)
++/*
++ * The current operation on a physical block (from the point of view of the recovery journal, slab
++ * journals, and reference counts.
++ */
++enum journal_operation {
++	VDO_JOURNAL_DATA_REMAPPING = 0,
++	VDO_JOURNAL_BLOCK_MAP_REMAPPING = 1,
++} __packed;
++
++/* Partition IDs encoded in the volume layout in the super block. */
++enum partition_id {
++	VDO_BLOCK_MAP_PARTITION = 0,
++	VDO_SLAB_DEPOT_PARTITION = 1,
++	VDO_RECOVERY_JOURNAL_PARTITION = 2,
++	VDO_SLAB_SUMMARY_PARTITION = 3,
++} __packed;
++
++/* Metadata types for the vdo. */
++enum vdo_metadata_type {
++	VDO_METADATA_RECOVERY_JOURNAL = 1,
++	VDO_METADATA_SLAB_JOURNAL = 2,
++	VDO_METADATA_RECOVERY_JOURNAL_2 = 3,
++} __packed;
++
++/* A position in the block map where a block map entry is stored. */
++struct block_map_slot {
++	physical_block_number_t pbn;
++	slot_number_t slot;
++};
++
++/*
++ * Four bits of each five-byte block map entry contain a mapping state value used to distinguish
++ * unmapped or trimmed logical blocks (which are treated as mapped to the zero block) from entries
++ * that have been mapped to a physical block, including the zero block.
++ *
++ * FIXME: these should maybe be defines.
++ */
++enum block_mapping_state {
++	VDO_MAPPING_STATE_UNMAPPED = 0, /* Must be zero to be the default value */
++	VDO_MAPPING_STATE_UNCOMPRESSED = 1, /* A normal (uncompressed) block */
++	VDO_MAPPING_STATE_COMPRESSED_BASE = 2, /* Compressed in slot 0 */
++	VDO_MAPPING_STATE_COMPRESSED_MAX = 15, /* Compressed in slot 13 */
++};
++
++enum {
++	VDO_MAX_COMPRESSION_SLOTS =
++		(VDO_MAPPING_STATE_COMPRESSED_MAX - VDO_MAPPING_STATE_COMPRESSED_BASE + 1),
++};
++
++
++struct data_location {
++	physical_block_number_t pbn;
++	enum block_mapping_state state;
++};
++
++/* The configuration of a single slab derived from the configured block size and slab size. */
++struct slab_config {
++	/* total number of blocks in the slab */
++	block_count_t slab_blocks;
++	/* number of blocks available for data */
++	block_count_t data_blocks;
++	/* number of blocks for reference counts */
++	block_count_t reference_count_blocks;
++	/* number of blocks for the slab journal */
++	block_count_t slab_journal_blocks;
++	/*
++	 * Number of blocks after which the slab journal starts pushing out a reference_block for
++	 * each new entry it receives.
++	 */
++	block_count_t slab_journal_flushing_threshold;
++	/*
++	 * Number of blocks after which the slab journal pushes out all reference_blocks and makes
++	 * all vios wait.
++	 */
++	block_count_t slab_journal_blocking_threshold;
++	/* Number of blocks after which the slab must be scrubbed before coming online. */
++	block_count_t slab_journal_scrubbing_threshold;
++} __packed;
++
++/*
++ * This structure is memcmp'd for equality. Keep it packed and don't add any fields that are not
++ * properly set in both extant and parsed configs.
++ */
++struct thread_count_config {
++	unsigned int bio_ack_threads;
++	unsigned int bio_threads;
++	unsigned int bio_rotation_interval;
++	unsigned int cpu_threads;
++	unsigned int logical_zones;
++	unsigned int physical_zones;
++	unsigned int hash_zones;
++} __packed;
++
++struct device_config {
++	struct dm_target *owning_target;
++	struct dm_dev *owned_device;
++	struct vdo *vdo;
++	/* All configs referencing a layer are kept on a list in the layer */
++	struct list_head config_list;
++	char *original_string;
++	unsigned int version;
++	char *parent_device_name;
++	block_count_t physical_blocks;
++	/*
++	 * This is the number of logical blocks from VDO's internal point of view. It is the number
++	 * of 4K blocks regardless of the value of the logical_block_size parameter below.
++	 */
++	block_count_t logical_blocks;
++	unsigned int logical_block_size;
++	unsigned int cache_size;
++	unsigned int block_map_maximum_age;
++	bool deduplication;
++	bool compression;
++	struct thread_count_config thread_counts;
++	block_count_t max_discard_blocks;
++};
++
++enum vdo_completion_type {
++	/* Keep VDO_UNSET_COMPLETION_TYPE at the top. */
++	VDO_UNSET_COMPLETION_TYPE,
++	VDO_ACTION_COMPLETION,
++	VDO_ADMIN_COMPLETION,
++	VDO_BLOCK_ALLOCATOR_COMPLETION,
++	VDO_DATA_VIO_POOL_COMPLETION,
++	VDO_DECREMENT_COMPLETION,
++	VDO_FLUSH_COMPLETION,
++	VDO_FLUSH_NOTIFICATION_COMPLETION,
++	VDO_GENERATION_FLUSHED_COMPLETION,
++	VDO_HASH_ZONE_COMPLETION,
++	VDO_HASH_ZONES_COMPLETION,
++	VDO_LOCK_COUNTER_COMPLETION,
++	VDO_PAGE_COMPLETION,
++	VDO_READ_ONLY_MODE_COMPLETION,
++	VDO_REPAIR_COMPLETION,
++	VDO_SYNC_COMPLETION,
++	VIO_COMPLETION,
++} __packed;
++
++struct vdo_completion;
++
++/**
++ * typedef vdo_action - An asynchronous VDO operation.
++ * @completion: The completion of the operation.
++ */
++typedef void vdo_action(struct vdo_completion *completion);
++
++enum vdo_completion_priority {
++	BIO_ACK_Q_ACK_PRIORITY = 0,
++	BIO_ACK_Q_MAX_PRIORITY = 0,
++	BIO_Q_COMPRESSED_DATA_PRIORITY = 0,
++	BIO_Q_DATA_PRIORITY = 0,
++	BIO_Q_FLUSH_PRIORITY = 2,
++	BIO_Q_HIGH_PRIORITY = 2,
++	BIO_Q_METADATA_PRIORITY = 1,
++	BIO_Q_VERIFY_PRIORITY = 1,
++	BIO_Q_MAX_PRIORITY = 2,
++	CPU_Q_COMPLETE_VIO_PRIORITY = 0,
++	CPU_Q_COMPLETE_READ_PRIORITY = 0,
++	CPU_Q_COMPRESS_BLOCK_PRIORITY = 0,
++	CPU_Q_EVENT_REPORTER_PRIORITY = 0,
++	CPU_Q_HASH_BLOCK_PRIORITY = 0,
++	CPU_Q_MAX_PRIORITY = 0,
++	UDS_Q_PRIORITY = 0,
++	UDS_Q_MAX_PRIORITY = 0,
++	VDO_DEFAULT_Q_COMPLETION_PRIORITY = 1,
++	VDO_DEFAULT_Q_FLUSH_PRIORITY = 2,
++	VDO_DEFAULT_Q_MAP_BIO_PRIORITY = 0,
++	VDO_DEFAULT_Q_SYNC_PRIORITY = 2,
++	VDO_DEFAULT_Q_VIO_CALLBACK_PRIORITY = 1,
++	VDO_DEFAULT_Q_MAX_PRIORITY = 2,
++	/* The maximum allowable priority */
++	VDO_WORK_Q_MAX_PRIORITY = 2,
++	/* A value which must be out of range for a valid priority */
++	VDO_WORK_Q_DEFAULT_PRIORITY = VDO_WORK_Q_MAX_PRIORITY + 1,
++};
++
++struct vdo_completion {
++	/* The type of completion this is */
++	enum vdo_completion_type type;
++
++	/*
++	 * <code>true</code> once the processing of the operation is complete. This flag should not
++	 * be used by waiters external to the VDO base as it is used to gate calling the callback.
++	 */
++	bool complete;
++
++	/*
++	 * If true, queue this completion on the next callback invocation, even if it is already
++	 * running on the correct thread.
++	 */
++	bool requeue;
++
++	/* The ID of the thread which should run the next callback */
++	thread_id_t callback_thread_id;
++
++	/* The result of the operation */
++	int result;
++
++	/* The VDO on which this completion operates */
++	struct vdo *vdo;
++
++	/* The callback which will be called once the operation is complete */
++	vdo_action *callback;
++
++	/* Callback which, if set, will be called if an error result is set */
++	vdo_action *error_handler;
++
++	/* The parent object, if any, that spawned this completion */
++	void *parent;
++
++	/* Entry link for lock-free work queue */
++	struct funnel_queue_entry work_queue_entry_link;
++	enum vdo_completion_priority priority;
++	struct vdo_work_queue *my_queue;
++};
++
++struct block_allocator;
++struct data_vio;
++struct vdo;
++struct vdo_config;
++
++/* vio types for statistics and instrumentation. */
++enum vio_type {
++	VIO_TYPE_UNINITIALIZED = 0,
++	VIO_TYPE_DATA,
++	VIO_TYPE_BLOCK_ALLOCATOR,
++	VIO_TYPE_BLOCK_MAP,
++	VIO_TYPE_BLOCK_MAP_INTERIOR,
++	VIO_TYPE_GEOMETRY,
++	VIO_TYPE_PARTITION_COPY,
++	VIO_TYPE_RECOVERY_JOURNAL,
++	VIO_TYPE_SLAB_JOURNAL,
++	VIO_TYPE_SLAB_SUMMARY,
++	VIO_TYPE_SUPER_BLOCK,
++} __packed;
++
++/* Priority levels for asynchronous I/O operations performed on a vio. */
++enum vio_priority {
++	VIO_PRIORITY_LOW = 0,
++	VIO_PRIORITY_DATA = VIO_PRIORITY_LOW,
++	VIO_PRIORITY_COMPRESSED_DATA = VIO_PRIORITY_DATA,
++	VIO_PRIORITY_METADATA,
++	VIO_PRIORITY_HIGH,
++} __packed;
++
++/*
++ * A wrapper for a bio. All I/O to the storage below a vdo is conducted via vios.
++ */
++struct vio {
++	/* The completion for this vio */
++	struct vdo_completion completion;
++
++	/* The bio zone in which I/O should be processed */
++	zone_count_t bio_zone;
++
++	/* The queueing priority of the vio operation */
++	enum vio_priority priority;
++
++	/* The vio type is used for statistics and instrumentation. */
++	enum vio_type type;
++
++	/* The size of this vio in blocks */
++	unsigned int block_count;
++
++	/* The data being read or written. */
++	char *data;
++
++	/* The VDO-owned bio to use for all IO for this vio */
++	struct bio *bio;
++
++	/*
++	 * A list of enqueued bios with consecutive block numbers, stored by vdo_submit_bio() under
++	 * the first-enqueued vio. The other vios are found via their bio entries in this list, and
++	 * are not added to the work queue as separate completions.
++	 */
++	struct bio_list bios_merged;
++};
++
++#endif /* VDO_TYPES_H */
+diff --git a/drivers/md/dm-vdo/wait-queue.c b/drivers/md/dm-vdo/wait-queue.c
+new file mode 100644
+index 000000000000..2f889bc32cd4
+--- /dev/null
++++ b/drivers/md/dm-vdo/wait-queue.c
+@@ -0,0 +1,223 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "wait-queue.h"
++
++#include <linux/device-mapper.h>
++
++#include "permassert.h"
++
++#include "status-codes.h"
++
++/**
++ * vdo_enqueue_waiter() - Add a waiter to the tail end of a wait queue.
++ * @queue: The queue to which to add the waiter.
++ * @waiter: The waiter to add to the queue.
++ *
++ * The waiter must not already be waiting in a queue.
++ *
++ * Return: VDO_SUCCESS or an error code.
++ */
++void vdo_enqueue_waiter(struct wait_queue *queue, struct waiter *waiter)
 +{
-+	return current_time_ns(CLOCK_REALTIME) / NSEC_PER_USEC;
++	BUG_ON(waiter->next_waiter != NULL);
++
++	if (queue->last_waiter == NULL) {
++		/*
++		 * The queue is empty, so form the initial circular list by self-linking the
++		 * initial waiter.
++		 */
++		waiter->next_waiter = waiter;
++	} else {
++		/* Splice the new waiter in at the end of the queue. */
++		waiter->next_waiter = queue->last_waiter->next_waiter;
++		queue->last_waiter->next_waiter = waiter;
++	}
++
++	/* In both cases, the waiter we added to the ring becomes the last waiter. */
++	queue->last_waiter = waiter;
++	queue->queue_length += 1;
 +}
 +
-+#endif /* UDS_TIME_UTILS_H */
++/**
++ * vdo_transfer_all_waiters() - Transfer all waiters from one wait queue to a second queue,
++ *                              emptying the first queue.
++ * @from_queue: The queue containing the waiters to move.
++ * @to_queue: The queue that will receive the waiters from the first queue.
++ */
++void vdo_transfer_all_waiters(struct wait_queue *from_queue, struct wait_queue *to_queue)
++{
++	/* If the source queue is empty, there's nothing to do. */
++	if (!vdo_has_waiters(from_queue))
++		return;
++
++	if (vdo_has_waiters(to_queue)) {
++		/*
++		 * Both queues are non-empty. Splice the two circular lists together by swapping
++		 * the next (head) pointers in the list tails.
++		 */
++		struct waiter *from_head = from_queue->last_waiter->next_waiter;
++		struct waiter *to_head = to_queue->last_waiter->next_waiter;
++
++		to_queue->last_waiter->next_waiter = from_head;
++		from_queue->last_waiter->next_waiter = to_head;
++	}
++
++	to_queue->last_waiter = from_queue->last_waiter;
++	to_queue->queue_length += from_queue->queue_length;
++	vdo_initialize_wait_queue(from_queue);
++}
++
++/**
++ * vdo_notify_all_waiters() - Notify all the entries waiting in a queue.
++ * @queue: The wait queue containing the waiters to notify.
++ * @callback: The function to call to notify each waiter, or NULL to invoke the callback field
++ *            registered in each waiter.
++ * @context: The context to pass to the callback function.
++ *
++ * Notifies all the entries waiting in a queue to continue execution by invoking a callback
++ * function on each of them in turn. The queue is copied and emptied before invoking any callbacks,
++ * and only the waiters that were in the queue at the start of the call will be notified.
++ */
++void vdo_notify_all_waiters(struct wait_queue *queue, waiter_callback *callback, void *context)
++{
++	/*
++	 * Copy and empty the queue first, avoiding the possibility of an infinite loop if entries
++	 * are returned to the queue by the callback function.
++	 */
++	struct wait_queue waiters;
++
++	vdo_initialize_wait_queue(&waiters);
++	vdo_transfer_all_waiters(queue, &waiters);
++
++	/* Drain the copied queue, invoking the callback on every entry. */
++	while (vdo_notify_next_waiter(&waiters, callback, context))
++		/* All the work is done by the loop condition. */
++		;
++}
++
++/**
++ * vdo_get_first_waiter() - Return the waiter that is at the head end of a wait queue.
++ * @queue: The queue from which to get the first waiter.
++ *
++ * Return: The first (oldest) waiter in the queue, or NULL if the queue is empty.
++ */
++struct waiter *vdo_get_first_waiter(const struct wait_queue *queue)
++{
++	struct waiter *last_waiter = queue->last_waiter;
++
++	if (last_waiter == NULL)
++		/* There are no waiters, so we're done. */
++		return NULL;
++
++	/* The queue is circular, so the last entry links to the head of the queue. */
++	return last_waiter->next_waiter;
++}
++
++/**
++ * vdo_dequeue_matching_waiters() - Remove all waiters that match based on the specified matching
++ *                                  method and append them to a wait_queue.
++ * @queue: The wait queue to process.
++ * @match_method: The method to determine matching.
++ * @match_context: Contextual info for the match method.
++ * @matched_queue: A wait_queue to store matches.
++ */
++void vdo_dequeue_matching_waiters(struct wait_queue *queue,
++				  waiter_match *match_method,
++				  void *match_context,
++				  struct wait_queue *matched_queue)
++{
++	struct wait_queue matched_waiters, iteration_queue;
++
++	vdo_initialize_wait_queue(&matched_waiters);
++
++	vdo_initialize_wait_queue(&iteration_queue);
++	vdo_transfer_all_waiters(queue, &iteration_queue);
++	while (vdo_has_waiters(&iteration_queue)) {
++		struct waiter *waiter = vdo_dequeue_next_waiter(&iteration_queue);
++
++		vdo_enqueue_waiter((match_method(waiter, match_context) ?
++				    &matched_waiters :
++				    queue),
++				   waiter);
++	}
++
++	vdo_transfer_all_waiters(&matched_waiters, matched_queue);
++}
++
++/**
++ * vdo_dequeue_next_waiter() - Remove the first waiter from the head end of a wait queue.
++ * @queue: The wait queue from which to remove the first entry.
++ *
++ * The caller will be responsible for waking the waiter by invoking the correct callback function
++ * to resume its execution.
++ *
++ * Return: The first (oldest) waiter in the queue, or NULL if the queue is empty.
++ */
++struct waiter *vdo_dequeue_next_waiter(struct wait_queue *queue)
++{
++	struct waiter *first_waiter = vdo_get_first_waiter(queue);
++	struct waiter *last_waiter = queue->last_waiter;
++
++	if (first_waiter == NULL)
++		return NULL;
++
++	if (first_waiter == last_waiter)
++		/* The queue has a single entry, so just empty it out by nulling the tail. */
++		queue->last_waiter = NULL;
++	else
++		/*
++		 * The queue has more than one entry, so splice the first waiter out of the
++		 * circular queue.
++		 */
++		last_waiter->next_waiter = first_waiter->next_waiter;
++
++	/* The waiter is no longer in a wait queue. */
++	first_waiter->next_waiter = NULL;
++	queue->queue_length -= 1;
++	return first_waiter;
++}
++
++/**
++ * vdo_notify_next_waiter() - Notify the next entry waiting in a queue.
++ * @queue: The wait queue containing the waiter to notify.
++ * @callback: The function to call to notify the waiter, or NULL to invoke the callback field
++ *            registered in the waiter.
++ * @context: The context to pass to the callback function.
++ *
++ * Notifies the next entry waiting in a queue to continue execution by invoking a callback function
++ * on it after removing it from the queue.
++ *
++ * Return: true if there was a waiter in the queue.
++ */
++bool vdo_notify_next_waiter(struct wait_queue *queue, waiter_callback *callback, void *context)
++{
++	struct waiter *waiter = vdo_dequeue_next_waiter(queue);
++
++	if (waiter == NULL)
++		return false;
++
++	if (callback == NULL)
++		callback = waiter->callback;
++	(*callback)(waiter, context);
++	return true;
++}
++
++/**
++ * vdo_get_next_waiter() - Get the waiter after this one, for debug iteration.
++ * @queue: The wait queue.
++ * @waiter: A waiter.
++ *
++ * Return: The next waiter, or NULL.
++ */
++const struct waiter *
++vdo_get_next_waiter(const struct wait_queue *queue, const struct waiter *waiter)
++{
++	struct waiter *first_waiter = vdo_get_first_waiter(queue);
++
++	if (waiter == NULL)
++		return first_waiter;
++	return ((waiter->next_waiter != first_waiter) ? waiter->next_waiter : NULL);
++}
+diff --git a/drivers/md/dm-vdo/wait-queue.h b/drivers/md/dm-vdo/wait-queue.h
+new file mode 100644
+index 000000000000..8620fe9dd28a
+--- /dev/null
++++ b/drivers/md/dm-vdo/wait-queue.h
+@@ -0,0 +1,129 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef VDO_WAIT_QUEUE_H
++#define VDO_WAIT_QUEUE_H
++
++#include <linux/compiler.h>
++#include <linux/types.h>
++
++/**
++ * DOC: Wait queues.
++ *
++ * A wait queue is a circular list of entries waiting to be notified of a change in a condition.
++ * Keeping a circular list allows the queue structure to simply be a pointer to the tail (newest)
++ * entry in the queue, supporting constant-time enqueue and dequeue operations. A null pointer is
++ * an empty queue.
++ *
++ *   An empty queue:
++ *     queue0.last_waiter -> NULL
++ *
++ *   A singleton queue:
++ *     queue1.last_waiter -> entry1 -> entry1 -> [...]
++ *
++ *   A three-element queue:
++ *     queue2.last_waiter -> entry3 -> entry1 -> entry2 -> entry3 -> [...]
++ */
++
++struct waiter;
++
++struct wait_queue {
++	/* The tail of the queue, the last (most recently added) entry */
++	struct waiter *last_waiter;
++	/* The number of waiters currently in the queue */
++	size_t queue_length;
++};
++
++/**
++ * typedef waiter_callback - Callback type for functions which will be called to resume processing
++ *                           of a waiter after it has been removed from its wait queue.
++ */
++typedef void waiter_callback(struct waiter *waiter, void *context);
++
++/**
++ * typedef waiter_match - Method type for waiter matching methods.
++ *
++ * A waiter_match method returns false if the waiter does not match.
++ */
++typedef bool waiter_match(struct waiter *waiter, void *context);
++
++/* The queue entry structure for entries in a wait_queue. */
++struct waiter {
++	/*
++	 * The next waiter in the queue. If this entry is the last waiter, then this is actually a
++	 * pointer back to the head of the queue.
++	 */
++	struct waiter *next_waiter;
++
++	/* Optional waiter-specific callback to invoke when waking this waiter. */
++	waiter_callback *callback;
++};
++
++/**
++ * is_waiting() - Check whether a waiter is waiting.
++ * @waiter: The waiter to check.
++ *
++ * Return: true if the waiter is on some wait_queue.
++ */
++static inline bool vdo_is_waiting(struct waiter *waiter)
++{
++	return (waiter->next_waiter != NULL);
++}
++
++/**
++ * initialize_wait_queue() - Initialize a wait queue.
++ * @queue: The queue to initialize.
++ */
++static inline void vdo_initialize_wait_queue(struct wait_queue *queue)
++{
++	*queue = (struct wait_queue) {
++		.last_waiter = NULL,
++		.queue_length = 0,
++	};
++}
++
++/**
++ * has_waiters() - Check whether a wait queue has any entries waiting in it.
++ * @queue: The queue to query.
++ *
++ * Return: true if there are any waiters in the queue.
++ */
++static inline bool __must_check vdo_has_waiters(const struct wait_queue *queue)
++{
++	return (queue->last_waiter != NULL);
++}
++
++void vdo_enqueue_waiter(struct wait_queue *queue, struct waiter *waiter);
++
++void vdo_notify_all_waiters(struct wait_queue *queue, waiter_callback *callback, void *context);
++
++bool vdo_notify_next_waiter(struct wait_queue *queue, waiter_callback *callback, void *context);
++
++void vdo_transfer_all_waiters(struct wait_queue *from_queue, struct wait_queue *to_queue);
++
++struct waiter *vdo_get_first_waiter(const struct wait_queue *queue);
++
++void vdo_dequeue_matching_waiters(struct wait_queue *queue,
++				  waiter_match *match_method,
++				  void *match_context,
++				  struct wait_queue *matched_queue);
++
++struct waiter *vdo_dequeue_next_waiter(struct wait_queue *queue);
++
++/**
++ * count_waiters() - Count the number of waiters in a wait queue.
++ * @queue: The wait queue to query.
++ *
++ * Return: The number of waiters in the queue.
++ */
++static inline size_t __must_check vdo_count_waiters(const struct wait_queue *queue)
++{
++	return queue->queue_length;
++}
++
++const struct waiter * __must_check
++vdo_get_next_waiter(const struct wait_queue *queue, const struct waiter *waiter);
++
++#endif /* VDO_WAIT_QUEUE_H */
 -- 
 2.40.0
 
