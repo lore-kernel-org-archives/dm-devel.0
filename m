@@ -1,98 +1,97 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AE948EEAA66
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:17:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7DA98EEAA65
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Sep 2023 19:17:44 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694719059;
+	s=mimecast20190719; t=1694719063;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=laiqlsQzfjh0aMDXHWuMU2f+FDUBiv1gaRnvBjX0Xjk=;
-	b=Yanm2QNtddFuPwsEdVKFHr/bCyur6NmCjxyGL7ZvuEg/YFCvSwDaS6NnZP14G9irN0ObkB
-	wvBxhnAkVdfq7+ZKH/hAI1NO4kKxVBkvBgmc/gayK3ZXd3DhKM193SI7LfUY6iwTJ0X2yx
-	tDOTsO6pL2muzK8XgyR6VpCybOXYhkg=
+	bh=MzLIRKIbGX9pGAy+j4SMKnZFjEG27pONRdOhi5ngOXo=;
+	b=K5V3S3EYR0xjC+ENHvJ0i0FMD6ZXniHWLvkcEnLtGX8Kfv6qywW2fo0tuZC8LUqyZeEHfE
+	VscYmjxhaoyboV5AGzJ2nr0FEsGu/4kaSHBO3A937HspHrBAT3xkOwVyLzhuLUUYUX+ieD
+	3Ams+hwR56e/P79ufbPdqb0A97yXw+8=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-672-BlduBiTUPOyse2vPfHDotA-1; Thu, 14 Sep 2023 15:17:36 -0400
-X-MC-Unique: BlduBiTUPOyse2vPfHDotA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-179-cgp1JNA3P-6mqWWadGIGWQ-1; Thu, 14 Sep 2023 15:17:41 -0400
+X-MC-Unique: cgp1JNA3P-6mqWWadGIGWQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 19EBD8279AA;
-	Thu, 14 Sep 2023 19:17:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C46BB88B7A8;
+	Thu, 14 Sep 2023 19:17:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0185321CAC76;
-	Thu, 14 Sep 2023 19:17:34 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id AE2AA2026D4B;
+	Thu, 14 Sep 2023 19:17:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EAB111946A70;
-	Thu, 14 Sep 2023 19:17:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BF7281946A67;
+	Thu, 14 Sep 2023 19:16:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6CAF31946A50
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:16:58 +0000 (UTC)
+ ESMTP id 2D82D19466ED
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Sep 2023 19:16:52 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5ADD51678B; Thu, 14 Sep 2023 19:16:58 +0000 (UTC)
+ id 02A4A40C6EBF; Thu, 14 Sep 2023 19:16:47 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 52D4E9A
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:16:58 +0000 (UTC)
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id EE89140C6EA8
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:16:46 +0000 (UTC)
 Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-inbound-delivery-1.mimecast.com [205.139.110.61])
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1837680523C
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:16:58 +0000 (UTC)
-Received: from mail-vs1-f42.google.com (mail-vs1-f42.google.com
- [209.85.217.42]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AEED5185A79B
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 19:16:46 +0000 (UTC)
+Received: from mail-qk1-f178.google.com (mail-qk1-f178.google.com
+ [209.85.222.178]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-98-5m66bVlmNPOM5HKynucwMw-1; Thu, 14 Sep 2023 15:16:56 -0400
-X-MC-Unique: 5m66bVlmNPOM5HKynucwMw-1
-Received: by mail-vs1-f42.google.com with SMTP id
- ada2fe7eead31-44d3e4ad403so717546137.0
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:16:56 -0700 (PDT)
+ us-mta-355-eRHt0bMAOQWW7hLyt1_dLA-1; Thu, 14 Sep 2023 15:16:44 -0400
+X-MC-Unique: eRHt0bMAOQWW7hLyt1_dLA-1
+Received: by mail-qk1-f178.google.com with SMTP id
+ af79cd13be357-76ef80a503fso87954485a.1
+ for <dm-devel@redhat.com>; Thu, 14 Sep 2023 12:16:44 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1694719015; x=1695323815;
+ d=1e100.net; s=20230601; t=1694719004; x=1695323804;
  h=content-transfer-encoding:mime-version:references:in-reply-to
  :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
  :subject:date:message-id:reply-to;
- bh=dplNHtAzBZCWAcYeHYrzbxV169LKHR8neqyh1wH475Q=;
- b=iqJenr0BlQqCk9wybNY5GQou8LFk2dxfdoocbdeJfcpW3PhTKBAtPzvcKuVhuzerRv
- jWNEoY5H7qOAukgCb0AzXM3mH2RoqcodyJBzqL2uXFkmXMhVoVXdGyOS24AXXEbw2rEq
- ISXJWVKn255aR9ZNMFgfvw90hLOxfLYBWmX9Lpoeoh4fYIoxgGV+gs7fbfcNCClwn3L0
- /3OvGW3bcy06poU1v+D3oQwTlxjktCa2wEPQuL/IuxYksXi4iOWHXieC0K196DfIAoOw
- fI2KSL7mxoePexRhF4xzioDjcHzmieY4oOK3tVEXzdPtRKHyfUeisbceoIpxUOAb+ymk
- IRUw==
-X-Gm-Message-State: AOJu0YwNCrWtWhRvh5Pv3L7+uG/lThfEGKDBBds1bRtCYuQUb6c46LFh
- cTGkR120mBNpeUfttJ81swrj7OBgJrZjFc1dMhqI3c84oK9XbpcW8bLnJSUxPwA4tFFDoHtJKJg
- lyG+hAtYyTPmfgAEQKrDpf2kRVnWWacthbRk4+sSrkCCIupJ6sAO5bQkagGd1X2Tr3GwSQ3+A
-X-Google-Smtp-Source: AGHT+IEFSVLk4qzRFpzYXHNTM6z6QE9MarAZLUYb3sqhXRft72nYXEbs1zCSJTj3dDXjTH31JNPl+A==
-X-Received: by 2002:a67:f883:0:b0:44d:5a92:ec43 with SMTP id
- h3-20020a67f883000000b0044d5a92ec43mr6169485vso.24.1694719014803; 
- Thu, 14 Sep 2023 12:16:54 -0700 (PDT)
+ bh=dGbAHgWskUv+qGtUxqzSNJHZhIYUG5afMlMQqTNURFs=;
+ b=WNfM1iQY6phY78ULDIrhfv0QtI5RWTNTDFCg+jRXqld2gRyOdWzO4q8DoCTcxp5Nlg
+ 2MK4qU8g7QQRv3UqWBKzCflbE2MQ0kgBnVkubGRZZ1vYte1i1y5gBpR05ln42dXA5yZm
+ jCDLY+Cz+PN7HiTT+PEU2sc0wQw5mhvrZ2HbUg2c8moyK6Uwc40PtF6LXmUy4tA6MoKL
+ azpcXEpAVPAjVcuHaFxGk7Lpk1Pj6H1Ogqw8xdDMgIgcUjmbM9WnKgjQzF36oEbnbG82
+ LR7GAxo5jUI+NJck+kc3AjRFotgshED6mbBDNXdYR1MgnAjPglPyXskOu3Z4REB0NAyK
+ yX+g==
+X-Gm-Message-State: AOJu0YzbJ4fk6EWpnMaTAyAsMcpyhN9FsgI+wfQb3J+ZkDfpPkCTOKfh
+ zBOkyfWaFPJopYNYc2AdOIUe7IPCOvasnhZPc4+piodIDgFQzqFWkQL0LT84MwoJ9rnyyjNKdl8
+ oTxEkYQlASzdILLC80ccjFX1TGgU8afq7dpCNj1+imKaQm76Sh7BFVa7cYqASV0pUgLLPEaSZ
+X-Google-Smtp-Source: AGHT+IFen3eFpHWbSdTGqocLUgxbxQtRHz7DoSiKdzoSGinlk8w53ajVHe0nZzOMtIajpwO5wE4blQ==
+X-Received: by 2002:a0c:ca03:0:b0:655:de6d:f0b2 with SMTP id
+ c3-20020a0cca03000000b00655de6df0b2mr6509066qvk.61.1694719003529; 
+ Thu, 14 Sep 2023 12:16:43 -0700 (PDT)
 Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net.
  [68.160.141.91]) by smtp.gmail.com with ESMTPSA id
- p17-20020a0ce191000000b0064f4d3bc78csm663446qvl.61.2023.09.14.12.16.53
+ a5-20020a0ce385000000b0064f46918737sm663678qvl.91.2023.09.14.12.16.42
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 14 Sep 2023 12:16:54 -0700 (PDT)
+ Thu, 14 Sep 2023 12:16:42 -0700 (PDT)
 From: Mike Snitzer <snitzer@kernel.org>
 To: dm-devel@redhat.com
-Date: Thu, 14 Sep 2023 15:16:05 -0400
-Message-Id: <20230914191635.39805-10-snitzer@kernel.org>
+Date: Thu, 14 Sep 2023 15:15:59 -0400
+Message-Id: <20230914191635.39805-4-snitzer@kernel.org>
 In-Reply-To: <20230914191635.39805-1-snitzer@kernel.org>
 References: <20230914191635.39805-1-snitzer@kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: [dm-devel] [PATCH v3 09/39] dm vdo: add deduplication configuration
- structures
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: [dm-devel] [PATCH v3 03/39] dm vdo: add memory allocation utilities
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -107,7 +106,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: Matthew Sakai <msakai@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
 Content-Type: text/plain; charset="us-ascii"
@@ -115,9 +114,13 @@ Content-Transfer-Encoding: 7bit
 
 From: Matthew Sakai <msakai@redhat.com>
 
-Add structures which record the configuration of various deduplication
-index parameters. This also includes facilities for saving and loading
-the configuration and validating its integrity.
+Add standardized allocation macros and memory tracking tools to track
+and report any allocated memory that is not freed. This makes it
+easier to ensure that the vdo target does not leak memory.
+
+Also adds utilities for controlling whether certain threads are
+allowed to allocate memory, since memory allocation during certain
+critical code sections can cause the vdo target to deadlock.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
@@ -125,901 +128,657 @@ Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
 Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
 Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
-Co-developed-by: John Wiele <jwiele@redhat.com>
-Signed-off-by: John Wiele <jwiele@redhat.com>
+Co-developed-by: Ken Raeburn <raeburn@redhat.com>
+Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-vdo/config.c   | 389 +++++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/config.h   | 125 +++++++++++
- drivers/md/dm-vdo/geometry.c | 205 ++++++++++++++++++
- drivers/md/dm-vdo/geometry.h | 137 ++++++++++++
- 4 files changed, 856 insertions(+)
- create mode 100644 drivers/md/dm-vdo/config.c
- create mode 100644 drivers/md/dm-vdo/config.h
- create mode 100644 drivers/md/dm-vdo/geometry.c
- create mode 100644 drivers/md/dm-vdo/geometry.h
+ drivers/md/dm-vdo/memory-alloc.c | 447 +++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/memory-alloc.h | 181 +++++++++++++
+ 2 files changed, 628 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/memory-alloc.c
+ create mode 100644 drivers/md/dm-vdo/memory-alloc.h
 
-diff --git a/drivers/md/dm-vdo/config.c b/drivers/md/dm-vdo/config.c
+diff --git a/drivers/md/dm-vdo/memory-alloc.c b/drivers/md/dm-vdo/memory-alloc.c
 new file mode 100644
-index 000000000000..18ec44faf0b0
+index 000000000000..41b15f7a7ba6
 --- /dev/null
-+++ b/drivers/md/dm-vdo/config.c
-@@ -0,0 +1,389 @@
++++ b/drivers/md/dm-vdo/memory-alloc.c
+@@ -0,0 +1,447 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "config.h"
++#include <linux/delay.h>
++#include <linux/mm.h>
++#include <linux/sched/mm.h>
++#include <linux/slab.h>
++#include <linux/vmalloc.h>
 +
-+#include "logger.h"
-+#include "memory-alloc.h"
-+#include "numeric.h"
-+#include "string-utils.h"
-+#include "uds-threads.h"
-+
-+static const u8 INDEX_CONFIG_MAGIC[] = "ALBIC";
-+static const u8 INDEX_CONFIG_VERSION_6_02[] = "06.02";
-+static const u8 INDEX_CONFIG_VERSION_8_02[] = "08.02";
-+
-+enum {
-+	DEFAULT_VOLUME_READ_THREADS = 2,
-+	MAX_VOLUME_READ_THREADS = 16,
-+	INDEX_CONFIG_MAGIC_LENGTH = sizeof(INDEX_CONFIG_MAGIC) - 1,
-+	INDEX_CONFIG_VERSION_LENGTH = sizeof(INDEX_CONFIG_VERSION_6_02) - 1,
-+};
-+
-+static bool is_version(const u8 *version, u8 *buffer)
-+{
-+	return memcmp(version, buffer, INDEX_CONFIG_VERSION_LENGTH) == 0;
-+}
-+
-+static bool are_matching_configurations(struct configuration *saved_config,
-+					struct geometry *saved_geometry,
-+					struct configuration *user)
-+{
-+	struct geometry *geometry = user->geometry;
-+	bool result = true;
-+
-+	if (saved_geometry->record_pages_per_chapter != geometry->record_pages_per_chapter) {
-+		uds_log_error("Record pages per chapter (%u) does not match (%u)",
-+			      saved_geometry->record_pages_per_chapter,
-+			      geometry->record_pages_per_chapter);
-+		result = false;
-+	}
-+
-+	if (saved_geometry->chapters_per_volume != geometry->chapters_per_volume) {
-+		uds_log_error("Chapter count (%u) does not match (%u)",
-+			      saved_geometry->chapters_per_volume,
-+			      geometry->chapters_per_volume);
-+		result = false;
-+	}
-+
-+	if (saved_geometry->sparse_chapters_per_volume != geometry->sparse_chapters_per_volume) {
-+		uds_log_error("Sparse chapter count (%u) does not match (%u)",
-+			      saved_geometry->sparse_chapters_per_volume,
-+			      geometry->sparse_chapters_per_volume);
-+		result = false;
-+	}
-+
-+	if (saved_config->cache_chapters != user->cache_chapters) {
-+		uds_log_error("Cache size (%u) does not match (%u)",
-+			      saved_config->cache_chapters,
-+			      user->cache_chapters);
-+		result = false;
-+	}
-+
-+	if (saved_config->volume_index_mean_delta != user->volume_index_mean_delta) {
-+		uds_log_error("Volume index mean delta (%u) does not match (%u)",
-+			      saved_config->volume_index_mean_delta,
-+			      user->volume_index_mean_delta);
-+		result = false;
-+	}
-+
-+	if (saved_geometry->bytes_per_page != geometry->bytes_per_page) {
-+		uds_log_error("Bytes per page value (%zu) does not match (%zu)",
-+			      saved_geometry->bytes_per_page,
-+			      geometry->bytes_per_page);
-+		result = false;
-+	}
-+
-+	if (saved_config->sparse_sample_rate != user->sparse_sample_rate) {
-+		uds_log_error("Sparse sample rate (%u) does not match (%u)",
-+			      saved_config->sparse_sample_rate,
-+			      user->sparse_sample_rate);
-+		result = false;
-+	}
-+
-+	if (saved_config->nonce != user->nonce) {
-+		uds_log_error("Nonce (%llu) does not match (%llu)",
-+			      (unsigned long long) saved_config->nonce,
-+			      (unsigned long long) user->nonce);
-+		result = false;
-+	}
-+
-+	return result;
-+}
-+
-+/* Read the configuration and validate it against the provided one. */
-+int uds_validate_config_contents(struct buffered_reader *reader, struct configuration *user_config)
-+{
-+	int result;
-+	struct configuration config;
-+	struct geometry geometry;
-+	u8 version_buffer[INDEX_CONFIG_VERSION_LENGTH];
-+	u32 bytes_per_page;
-+	u8 buffer[sizeof(struct uds_configuration_6_02)];
-+	size_t offset = 0;
-+
-+	result = uds_verify_buffered_data(reader, INDEX_CONFIG_MAGIC, INDEX_CONFIG_MAGIC_LENGTH);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_read_from_buffered_reader(reader,
-+					       version_buffer,
-+					       INDEX_CONFIG_VERSION_LENGTH);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "cannot read index config version");
-+
-+	if (!is_version(INDEX_CONFIG_VERSION_6_02, version_buffer) &&
-+	    !is_version(INDEX_CONFIG_VERSION_8_02, version_buffer)) {
-+		return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "unsupported configuration version: '%.*s'",
-+					      INDEX_CONFIG_VERSION_LENGTH,
-+					      version_buffer);
-+	}
-+
-+	result = uds_read_from_buffered_reader(reader, buffer, sizeof(buffer));
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result, "cannot read config data");
-+
-+	decode_u32_le(buffer, &offset, &geometry.record_pages_per_chapter);
-+	decode_u32_le(buffer, &offset, &geometry.chapters_per_volume);
-+	decode_u32_le(buffer, &offset, &geometry.sparse_chapters_per_volume);
-+	decode_u32_le(buffer, &offset, &config.cache_chapters);
-+	offset += sizeof(u32);
-+	decode_u32_le(buffer, &offset, &config.volume_index_mean_delta);
-+	decode_u32_le(buffer, &offset, &bytes_per_page);
-+	geometry.bytes_per_page = bytes_per_page;
-+	decode_u32_le(buffer, &offset, &config.sparse_sample_rate);
-+	decode_u64_le(buffer, &offset, &config.nonce);
-+
-+	result = ASSERT(offset == sizeof(struct uds_configuration_6_02),
-+			"%zu bytes read but not decoded",
-+			sizeof(struct uds_configuration_6_02) - offset);
-+	if (result != UDS_SUCCESS)
-+		return UDS_CORRUPT_DATA;
-+
-+	if (is_version(INDEX_CONFIG_VERSION_6_02, version_buffer)) {
-+		user_config->geometry->remapped_virtual = 0;
-+		user_config->geometry->remapped_physical = 0;
-+	} else {
-+		u8 remapping[sizeof(u64) + sizeof(u64)];
-+
-+		result = uds_read_from_buffered_reader(reader, remapping, sizeof(remapping));
-+		if (result != UDS_SUCCESS)
-+			return uds_log_error_strerror(result, "cannot read converted config");
-+
-+		offset = 0;
-+		decode_u64_le(remapping, &offset, &user_config->geometry->remapped_virtual);
-+		decode_u64_le(remapping, &offset, &user_config->geometry->remapped_physical);
-+	}
-+
-+	if (!are_matching_configurations(&config, &geometry, user_config)) {
-+		uds_log_warning("Supplied configuration does not match save");
-+		return UDS_NO_INDEX;
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+/*
-+ * Write the configuration to stable storage. If the superblock version is < 4, write the 6.02
-+ * version; otherwise write the 8.02 version, indicating the configuration is for an index that has
-+ * been reduced by one chapter.
-+ */
-+int uds_write_config_contents(struct buffered_writer *writer,
-+			      struct configuration *config,
-+			      u32 version)
-+{
-+	int result;
-+	struct geometry *geometry = config->geometry;
-+	u8 buffer[sizeof(struct uds_configuration_8_02)];
-+	size_t offset = 0;
-+
-+	result = uds_write_to_buffered_writer(writer,
-+					      INDEX_CONFIG_MAGIC,
-+					      INDEX_CONFIG_MAGIC_LENGTH);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	/*
-+	 * If version is < 4, the index has not been reduced by a chapter so it must be written out
-+	 * as version 6.02 so that it is still compatible with older versions of UDS.
-+	 */
-+	if (version >= 4) {
-+		result = uds_write_to_buffered_writer(writer,
-+						      INDEX_CONFIG_VERSION_8_02,
-+						      INDEX_CONFIG_VERSION_LENGTH);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	} else {
-+		result = uds_write_to_buffered_writer(writer,
-+						      INDEX_CONFIG_VERSION_6_02,
-+						      INDEX_CONFIG_VERSION_LENGTH);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	}
-+
-+	encode_u32_le(buffer, &offset, geometry->record_pages_per_chapter);
-+	encode_u32_le(buffer, &offset, geometry->chapters_per_volume);
-+	encode_u32_le(buffer, &offset, geometry->sparse_chapters_per_volume);
-+	encode_u32_le(buffer, &offset, config->cache_chapters);
-+	encode_u32_le(buffer, &offset, 0);
-+	encode_u32_le(buffer, &offset, config->volume_index_mean_delta);
-+	encode_u32_le(buffer, &offset, geometry->bytes_per_page);
-+	encode_u32_le(buffer, &offset, config->sparse_sample_rate);
-+	encode_u64_le(buffer, &offset, config->nonce);
-+
-+	result = ASSERT(offset == sizeof(struct uds_configuration_6_02),
-+			"%zu bytes encoded, of %zu expected",
-+			offset,
-+			sizeof(struct uds_configuration_6_02));
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (version >= 4) {
-+		encode_u64_le(buffer, &offset, geometry->remapped_virtual);
-+		encode_u64_le(buffer, &offset, geometry->remapped_physical);
-+	}
-+
-+	return uds_write_to_buffered_writer(writer, buffer, offset);
-+}
-+
-+/* Compute configuration parameters that depend on memory size. */
-+static int compute_memory_sizes(uds_memory_config_size_t mem_gb,
-+				bool sparse,
-+				u32 *chapters_per_volume,
-+				u32 *record_pages_per_chapter,
-+				u32 *sparse_chapters_per_volume)
-+{
-+	u32 reduced_chapters = 0;
-+	u32 base_chapters;
-+
-+	if (mem_gb == UDS_MEMORY_CONFIG_256MB) {
-+		base_chapters = DEFAULT_CHAPTERS_PER_VOLUME;
-+		*record_pages_per_chapter = SMALL_RECORD_PAGES_PER_CHAPTER;
-+	} else if (mem_gb == UDS_MEMORY_CONFIG_512MB) {
-+		base_chapters = DEFAULT_CHAPTERS_PER_VOLUME;
-+		*record_pages_per_chapter = 2 * SMALL_RECORD_PAGES_PER_CHAPTER;
-+	} else if (mem_gb == UDS_MEMORY_CONFIG_768MB) {
-+		base_chapters = DEFAULT_CHAPTERS_PER_VOLUME;
-+		*record_pages_per_chapter = 3 * SMALL_RECORD_PAGES_PER_CHAPTER;
-+	} else if ((mem_gb >= 1) && (mem_gb <= UDS_MEMORY_CONFIG_MAX)) {
-+		base_chapters = mem_gb * DEFAULT_CHAPTERS_PER_VOLUME;
-+		*record_pages_per_chapter = DEFAULT_RECORD_PAGES_PER_CHAPTER;
-+	} else if (mem_gb == UDS_MEMORY_CONFIG_REDUCED_256MB) {
-+		reduced_chapters = 1;
-+		base_chapters = DEFAULT_CHAPTERS_PER_VOLUME;
-+		*record_pages_per_chapter = SMALL_RECORD_PAGES_PER_CHAPTER;
-+	} else if (mem_gb == UDS_MEMORY_CONFIG_REDUCED_512MB) {
-+		reduced_chapters = 1;
-+		base_chapters = DEFAULT_CHAPTERS_PER_VOLUME;
-+		*record_pages_per_chapter = 2 * SMALL_RECORD_PAGES_PER_CHAPTER;
-+	} else if (mem_gb == UDS_MEMORY_CONFIG_REDUCED_768MB) {
-+		reduced_chapters = 1;
-+		base_chapters = DEFAULT_CHAPTERS_PER_VOLUME;
-+		*record_pages_per_chapter = 3 * SMALL_RECORD_PAGES_PER_CHAPTER;
-+	} else if ((mem_gb >= 1 + UDS_MEMORY_CONFIG_REDUCED) &&
-+		   (mem_gb <= UDS_MEMORY_CONFIG_REDUCED_MAX)) {
-+		reduced_chapters = 1;
-+		base_chapters = ((mem_gb - UDS_MEMORY_CONFIG_REDUCED) *
-+				 DEFAULT_CHAPTERS_PER_VOLUME);
-+		*record_pages_per_chapter = DEFAULT_RECORD_PAGES_PER_CHAPTER;
-+	} else {
-+		uds_log_error("received invalid memory size");
-+		return -EINVAL;
-+	}
-+
-+	if (sparse) {
-+		/* Make 95% of chapters sparse, allowing 10x more records. */
-+		*sparse_chapters_per_volume = (19 * base_chapters) / 2;
-+		base_chapters *= 10;
-+	} else {
-+		*sparse_chapters_per_volume = 0;
-+	}
-+
-+	*chapters_per_volume = base_chapters - reduced_chapters;
-+	return UDS_SUCCESS;
-+}
-+
-+static unsigned int __must_check normalize_zone_count(unsigned int requested)
-+{
-+	unsigned int zone_count = requested;
-+
-+	if (zone_count == 0)
-+		zone_count = num_online_cpus() / 2;
-+
-+	if (zone_count < 1)
-+		zone_count = 1;
-+
-+	if (zone_count > MAX_ZONES)
-+		zone_count = MAX_ZONES;
-+
-+	uds_log_info("Using %u indexing zone%s for concurrency.",
-+		     zone_count,
-+		     zone_count == 1 ? "" : "s");
-+	return zone_count;
-+}
-+
-+static unsigned int __must_check normalize_read_threads(unsigned int requested)
-+{
-+	unsigned int read_threads = requested;
-+
-+	if (read_threads < 1)
-+		read_threads = DEFAULT_VOLUME_READ_THREADS;
-+
-+	if (read_threads > MAX_VOLUME_READ_THREADS)
-+		read_threads = MAX_VOLUME_READ_THREADS;
-+
-+	return read_threads;
-+}
-+
-+int uds_make_configuration(const struct uds_parameters *params, struct configuration **config_ptr)
-+{
-+	struct configuration *config;
-+	u32 chapters_per_volume = 0;
-+	u32 record_pages_per_chapter = 0;
-+	u32 sparse_chapters_per_volume = 0;
-+	int result;
-+
-+	result = compute_memory_sizes(params->memory_size,
-+				      params->sparse,
-+				      &chapters_per_volume,
-+				      &record_pages_per_chapter,
-+				      &sparse_chapters_per_volume);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(1, struct configuration, __func__, &config);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_make_geometry(DEFAULT_BYTES_PER_PAGE,
-+				   record_pages_per_chapter,
-+				   chapters_per_volume,
-+				   sparse_chapters_per_volume,
-+				   0,
-+				   0,
-+				   &config->geometry);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_configuration(config);
-+		return result;
-+	}
-+
-+	config->zone_count = normalize_zone_count(params->zone_count);
-+	config->read_threads = normalize_read_threads(params->read_threads);
-+
-+	config->cache_chapters = DEFAULT_CACHE_CHAPTERS;
-+	config->volume_index_mean_delta = DEFAULT_VOLUME_INDEX_MEAN_DELTA;
-+	config->sparse_sample_rate = (params->sparse ? DEFAULT_SPARSE_SAMPLE_RATE : 0);
-+	config->nonce = params->nonce;
-+	config->name = params->name;
-+	config->offset = params->offset;
-+	config->size = params->size;
-+
-+	*config_ptr = config;
-+	return UDS_SUCCESS;
-+}
-+
-+void uds_free_configuration(struct configuration *config)
-+{
-+	if (config != NULL) {
-+		uds_free_geometry(config->geometry);
-+		UDS_FREE(config);
-+	}
-+}
-+
-+void uds_log_configuration(struct configuration *config)
-+{
-+	struct geometry *geometry = config->geometry;
-+
-+	uds_log_debug("Configuration:");
-+	uds_log_debug("  Record pages per chapter:   %10u", geometry->record_pages_per_chapter);
-+	uds_log_debug("  Chapters per volume:        %10u", geometry->chapters_per_volume);
-+	uds_log_debug("  Sparse chapters per volume: %10u", geometry->sparse_chapters_per_volume);
-+	uds_log_debug("  Cache size (chapters):      %10u", config->cache_chapters);
-+	uds_log_debug("  Volume index mean delta:    %10u", config->volume_index_mean_delta);
-+	uds_log_debug("  Bytes per page:             %10zu", geometry->bytes_per_page);
-+	uds_log_debug("  Sparse sample rate:         %10u", config->sparse_sample_rate);
-+	uds_log_debug("  Nonce:                      %llu", (unsigned long long) config->nonce);
-+}
-diff --git a/drivers/md/dm-vdo/config.h b/drivers/md/dm-vdo/config.h
-new file mode 100644
-index 000000000000..d5120412b885
---- /dev/null
-+++ b/drivers/md/dm-vdo/config.h
-@@ -0,0 +1,125 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_CONFIG_H
-+#define UDS_CONFIG_H
-+
-+#include "geometry.h"
-+#include "io-factory.h"
-+#include "uds.h"
-+
-+/*
-+ * The configuration records a variety of parameters used to configure a new UDS index. Some
-+ * parameters are provided by the client, while others are fixed or derived from user-supplied
-+ * values. It is created when an index is created, and it is recorded in the index metadata.
-+ */
-+
-+enum {
-+	DEFAULT_VOLUME_INDEX_MEAN_DELTA = 4096,
-+	DEFAULT_CACHE_CHAPTERS = 7,
-+	DEFAULT_SPARSE_SAMPLE_RATE = 32,
-+	MAX_ZONES = 16,
-+};
-+
-+/* A set of configuration parameters for the indexer. */
-+struct configuration {
-+	/* String describing the storage device */
-+	const char *name;
-+
-+	/* The maximum allowable size of the index */
-+	size_t size;
-+
-+	/* The offset where the index should start */
-+	off_t offset;
-+
-+	/* Parameters for the volume */
-+
-+	/* The volume layout */
-+	struct geometry *geometry;
-+
-+	/* Index owner's nonce */
-+	u64 nonce;
-+
-+	/* The number of threads used to process index requests */
-+	unsigned int zone_count;
-+
-+	/* The number of threads used to read volume pages */
-+	unsigned int read_threads;
-+
-+	/* Size of the page cache and sparse chapter index cache in chapters */
-+	u32 cache_chapters;
-+
-+	/* Parameters for the volume index */
-+
-+	/* The mean delta for the volume index */
-+	u32 volume_index_mean_delta;
-+
-+	/* Sampling rate for sparse indexing */
-+	u32 sparse_sample_rate;
-+};
-+
-+/* On-disk structure of data for a version 8.02 index. */
-+struct uds_configuration_8_02 {
-+	/* Smaller (16), Small (64) or large (256) indices */
-+	u32 record_pages_per_chapter;
-+	/* Total number of chapters per volume */
-+	u32 chapters_per_volume;
-+	/* Number of sparse chapters per volume */
-+	u32 sparse_chapters_per_volume;
-+	/* Size of the page cache, in chapters */
-+	u32 cache_chapters;
-+	/* Unused field */
-+	u32 unused;
-+	/* The volume index mean delta to use */
-+	u32 volume_index_mean_delta;
-+	/* Size of a page, used for both record pages and index pages */
-+	u32 bytes_per_page;
-+	/* Sampling rate for sparse indexing */
-+	u32 sparse_sample_rate;
-+	/* Index owner's nonce */
-+	u64 nonce;
-+	/* Virtual chapter remapped from physical chapter 0 */
-+	u64 remapped_virtual;
-+	/* New physical chapter which remapped chapter was moved to */
-+	u64 remapped_physical;
-+} __packed;
-+
-+/* On-disk structure of data for a version 6.02 index. */
-+struct uds_configuration_6_02 {
-+	/* Smaller (16), Small (64) or large (256) indices */
-+	u32 record_pages_per_chapter;
-+	/* Total number of chapters per volume */
-+	u32 chapters_per_volume;
-+	/* Number of sparse chapters per volume */
-+	u32 sparse_chapters_per_volume;
-+	/* Size of the page cache, in chapters */
-+	u32 cache_chapters;
-+	/* Unused field */
-+	u32 unused;
-+	/* The volume index mean delta to use */
-+	u32 volume_index_mean_delta;
-+	/* Size of a page, used for both record pages and index pages */
-+	u32 bytes_per_page;
-+	/* Sampling rate for sparse indexing */
-+	u32 sparse_sample_rate;
-+	/* Index owner's nonce */
-+	u64 nonce;
-+} __packed;
-+
-+int __must_check
-+uds_make_configuration(const struct uds_parameters *params, struct configuration **config_ptr);
-+
-+void uds_free_configuration(struct configuration *config);
-+
-+int __must_check
-+uds_validate_config_contents(struct buffered_reader *reader, struct configuration *config);
-+
-+int __must_check uds_write_config_contents(struct buffered_writer *writer,
-+					   struct configuration *config,
-+					   u32 version);
-+
-+void uds_log_configuration(struct configuration *config);
-+
-+#endif /* UDS_CONFIG_H */
-diff --git a/drivers/md/dm-vdo/geometry.c b/drivers/md/dm-vdo/geometry.c
-new file mode 100644
-index 000000000000..f4a4bcee5b73
---- /dev/null
-+++ b/drivers/md/dm-vdo/geometry.c
-@@ -0,0 +1,205 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "geometry.h"
-+
-+#include <linux/compiler.h>
-+#include <linux/log2.h>
-+
-+#include "delta-index.h"
-+#include "errors.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
 +#include "permassert.h"
-+#include "uds.h"
 +
 +/*
-+ * An index volume is divided into a fixed number of fixed-size chapters, each consisting of a
-+ * fixed number of fixed-size pages. The volume layout is defined by two constants and four
-+ * parameters. The constants are that index records are 32 bytes long (16-byte block name plus
-+ * 16-byte metadata) and that open chapter index hash slots are one byte long. The four parameters
-+ * are the number of bytes in a page, the number of record pages in a chapter, the number of
-+ * chapters in a volume, and the number of chapters that are sparse. From these parameters, we can
-+ * derive the rest of the layout and other index properties.
++ * UDS and VDO keep track of which threads are allowed to allocate memory freely, and which threads
++ * must be careful to not do a memory allocation that does an I/O request. The allocating_threads
++ * threads_registry and its associated methods implement this tracking.
++ */
++static struct thread_registry allocating_threads;
++
++static bool allocations_allowed(void)
++{
++	const bool *pointer = uds_lookup_thread(&allocating_threads);
++
++	return (pointer != NULL) ? *pointer : false;
++}
++
++/*
++ * Register the current thread as an allocating thread.
 + *
-+ * The index volume is sized by its maximum memory footprint. For a dense index, the persistent
-+ * storage is about 10 times the size of the memory footprint. For a sparse index, the persistent
-+ * storage is about 100 times the size of the memory footprint.
++ * An optional flag location can be supplied indicating whether, at any given point in time, the
++ * threads associated with that flag should be allocating storage. If the flag is false, a message
++ * will be logged.
 + *
-+ * For a small index with a memory footprint less than 1GB, there are three possible memory
-+ * configurations: 0.25GB, 0.5GB and 0.75GB. The default geometry for each is 1024 index records
-+ * per 32 KB page, 1024 chapters per volume, and either 64, 128, or 192 record pages per chapter
-+ * (resulting in 6, 13, or 20 index pages per chapter) depending on the memory configuration. For
-+ * the VDO default of a 0.25 GB index, this yields a deduplication window of 256 GB using about 2.5
-+ * GB for the persistent storage and 256 MB of RAM.
++ * If no flag is supplied, the thread is always allowed to allocate storage without complaint.
 + *
-+ * For a larger index with a memory footprint that is a multiple of 1 GB, the geometry is 1024
-+ * index records per 32 KB page, 256 record pages per chapter, 26 index pages per chapter, and 1024
-+ * chapters for every GB of memory footprint. For a 1 GB volume, this yields a deduplication window
-+ * of 1 TB using about 9GB of persistent storage and 1 GB of RAM.
++ * @new_thread: registered_thread structure to use for the current thread
++ * @flag_ptr: Location of the allocation-allowed flag
++ */
++void uds_register_allocating_thread(struct registered_thread *new_thread, const bool *flag_ptr)
++{
++	if (flag_ptr == NULL) {
++		static const bool allocation_always_allowed = true;
++
++		flag_ptr = &allocation_always_allowed;
++	}
++
++	uds_register_thread(&allocating_threads, new_thread, flag_ptr);
++}
++
++/* Unregister the current thread as an allocating thread. */
++void uds_unregister_allocating_thread(void)
++{
++	uds_unregister_thread(&allocating_threads);
++}
++
++/*
++ * We track how much memory has been allocated and freed. When we unload the module, we log an
++ * error if we have not freed all the memory that we allocated. Nearly all memory allocation and
++ * freeing is done using this module.
 + *
-+ * The above numbers hold for volumes which have no sparse chapters. A sparse volume has 10 times
-+ * as many chapters as the corresponding non-sparse volume, which provides 10 times the
-+ * deduplication window while using 10 times as much persistent storage as the equivalent
-+ * non-sparse volume with the same memory footprint.
++ * We do not use kernel functions like the kvasprintf() method, which allocate memory indirectly
++ * using kmalloc.
 + *
-+ * If the volume has been converted from a non-lvm format to an lvm volume, the number of chapters
-+ * per volume will have been reduced by one by eliminating physical chapter 0, and the virtual
-+ * chapter that formerly mapped to physical chapter 0 may be remapped to another physical chapter.
-+ * This remapping is expressed by storing which virtual chapter was remapped, and which physical
-+ * chapter it was moved to.
++ * These data structures and methods are used to track the amount of memory used.
 + */
 +
-+int uds_make_geometry(size_t bytes_per_page,
-+		      u32 record_pages_per_chapter,
-+		      u32 chapters_per_volume,
-+		      u32 sparse_chapters_per_volume,
-+		      u64 remapped_virtual,
-+		      u64 remapped_physical,
-+		      struct geometry **geometry_ptr)
++/*
++ * We allocate very few large objects, and allocation/deallocation isn't done in a
++ * performance-critical stage for us, so a linked list should be fine.
++ */
++struct vmalloc_block_info {
++	void *ptr;
++	size_t size;
++	struct vmalloc_block_info *next;
++};
++
++static struct {
++	spinlock_t lock;
++	size_t kmalloc_blocks;
++	size_t kmalloc_bytes;
++	size_t vmalloc_blocks;
++	size_t vmalloc_bytes;
++	size_t peak_bytes;
++	struct vmalloc_block_info *vmalloc_list;
++} memory_stats __cacheline_aligned;
++
++static void update_peak_usage(void)
 +{
-+	int result;
-+	struct geometry *geometry;
++	size_t total_bytes = memory_stats.kmalloc_bytes + memory_stats.vmalloc_bytes;
 +
-+	result = UDS_ALLOCATE(1, struct geometry, "geometry", &geometry);
-+	if (result != UDS_SUCCESS)
-+		return result;
++	if (total_bytes > memory_stats.peak_bytes)
++		memory_stats.peak_bytes = total_bytes;
++}
 +
-+	geometry->bytes_per_page = bytes_per_page;
-+	geometry->record_pages_per_chapter = record_pages_per_chapter;
-+	geometry->chapters_per_volume = chapters_per_volume;
-+	geometry->sparse_chapters_per_volume = sparse_chapters_per_volume;
-+	geometry->dense_chapters_per_volume = chapters_per_volume - sparse_chapters_per_volume;
-+	geometry->remapped_virtual = remapped_virtual;
-+	geometry->remapped_physical = remapped_physical;
++static void add_kmalloc_block(size_t size)
++{
++	unsigned long flags;
 +
-+	geometry->records_per_page = bytes_per_page / BYTES_PER_RECORD;
-+	geometry->records_per_chapter = geometry->records_per_page * record_pages_per_chapter;
-+	geometry->records_per_volume = (u64) geometry->records_per_chapter * chapters_per_volume;
++	spin_lock_irqsave(&memory_stats.lock, flags);
++	memory_stats.kmalloc_blocks++;
++	memory_stats.kmalloc_bytes += size;
++	update_peak_usage();
++	spin_unlock_irqrestore(&memory_stats.lock, flags);
++}
 +
-+	geometry->chapter_mean_delta = 1 << DEFAULT_CHAPTER_MEAN_DELTA_BITS;
-+	geometry->chapter_payload_bits = bits_per(record_pages_per_chapter - 1);
++static void remove_kmalloc_block(size_t size)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&memory_stats.lock, flags);
++	memory_stats.kmalloc_blocks--;
++	memory_stats.kmalloc_bytes -= size;
++	spin_unlock_irqrestore(&memory_stats.lock, flags);
++}
++
++static void add_vmalloc_block(struct vmalloc_block_info *block)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&memory_stats.lock, flags);
++	block->next = memory_stats.vmalloc_list;
++	memory_stats.vmalloc_list = block;
++	memory_stats.vmalloc_blocks++;
++	memory_stats.vmalloc_bytes += block->size;
++	update_peak_usage();
++	spin_unlock_irqrestore(&memory_stats.lock, flags);
++}
++
++static void remove_vmalloc_block(void *ptr)
++{
++	struct vmalloc_block_info *block;
++	struct vmalloc_block_info **block_ptr;
++	unsigned long flags;
++
++	spin_lock_irqsave(&memory_stats.lock, flags);
++	for (block_ptr = &memory_stats.vmalloc_list;
++	     (block = *block_ptr) != NULL;
++	     block_ptr = &block->next) {
++		if (block->ptr == ptr) {
++			*block_ptr = block->next;
++			memory_stats.vmalloc_blocks--;
++			memory_stats.vmalloc_bytes -= block->size;
++			break;
++		}
++	}
++
++	spin_unlock_irqrestore(&memory_stats.lock, flags);
++	if (block != NULL)
++		UDS_FREE(block);
++	else
++		uds_log_info("attempting to remove ptr %px not found in vmalloc list", ptr);
++}
++
++/*
++ * Determine whether allocating a memory block should use kmalloc or __vmalloc.
++ *
++ * vmalloc can allocate any integral number of pages.
++ *
++ * kmalloc can allocate any number of bytes up to a configured limit, which defaults to 8 megabytes
++ * on some systems. kmalloc is especially good when memory is being both allocated and freed, and
++ * it does this efficiently in a multi CPU environment.
++ *
++ * kmalloc usually rounds the size of the block up to the next power of two, so when the requested
++ * block is bigger than PAGE_SIZE / 2 bytes, kmalloc will never give you less space than the
++ * corresponding vmalloc allocation. Sometimes vmalloc will use less overhead than kmalloc.
++ *
++ * The advantages of kmalloc do not help out UDS or VDO, because we allocate all our memory up
++ * front and do not free and reallocate it. Sometimes we have problems using kmalloc, because the
++ * Linux memory page map can become so fragmented that kmalloc will not give us a 32KB chunk. We
++ * have used vmalloc as a backup to kmalloc in the past, and a follow-up vmalloc of 32KB will work.
++ * But there is no strong case to be made for using kmalloc over vmalloc for these size chunks.
++ *
++ * The kmalloc/vmalloc boundary is set at 4KB, and kmalloc gets the 4KB requests. There is no
++ * strong reason for favoring either kmalloc or vmalloc for 4KB requests, except that tracking
++ * vmalloc statistics uses a linked list implementation. Using a simple test, this choice of
++ * boundary results in 132 vmalloc calls. Using vmalloc for requests of exactly 4KB results in an
++ * additional 6374 vmalloc calls, which is much less efficient for tracking.
++ *
++ * @size: How many bytes to allocate
++ */
++static inline bool use_kmalloc(size_t size)
++{
++	return size <= PAGE_SIZE;
++}
++
++/*
++ * Allocate storage based on memory size and alignment, logging an error if the allocation fails.
++ * The memory will be zeroed.
++ *
++ * @size: The size of an object
++ * @align: The required alignment
++ * @what: What is being allocated (for error logging)
++ * @ptr: A pointer to hold the allocated memory
++ *
++ * Return: UDS_SUCCESS or an error code
++ */
++int uds_allocate_memory(size_t size, size_t align, const char *what, void *ptr)
++{
 +	/*
-+	 * We want 1 delta list for every 64 records in the chapter.
-+	 * The "| 077" ensures that the chapter_delta_list_bits computation
-+	 * does not underflow.
++	 * The __GFP_RETRY_MAYFAIL flag means the VM implementation will retry memory reclaim
++	 * procedures that have previously failed if there is some indication that progress has
++	 * been made elsewhere. It can wait for other tasks to attempt high level approaches to
++	 * freeing memory such as compaction (which removes fragmentation) and page-out. There is
++	 * still a definite limit to the number of retries, but it is a larger limit than with
++	 * __GFP_NORETRY. Allocations with this flag may fail, but only when there is genuinely
++	 * little unused memory. While these allocations do not directly trigger the OOM killer,
++	 * their failure indicates that the system is likely to need to use the OOM killer soon.
++	 * The caller must handle failure, but can reasonably do so by failing a higher-level
++	 * request, or completing it only in a much less efficient manner.
 +	 */
-+	geometry->chapter_delta_list_bits =
-+		bits_per((geometry->records_per_chapter - 1) | 077) - 6;
-+	geometry->delta_lists_per_chapter = 1 << geometry->chapter_delta_list_bits;
-+	/* We need enough address bits to achieve the desired mean delta. */
-+	geometry->chapter_address_bits =
-+		(DEFAULT_CHAPTER_MEAN_DELTA_BITS -
-+		 geometry->chapter_delta_list_bits +
-+		 bits_per(geometry->records_per_chapter - 1));
-+	geometry->index_pages_per_chapter =
-+		uds_get_delta_index_page_count(geometry->records_per_chapter,
-+					       geometry->delta_lists_per_chapter,
-+					       geometry->chapter_mean_delta,
-+					       geometry->chapter_payload_bits,
-+					       bytes_per_page);
++	const gfp_t gfp_flags = GFP_KERNEL | __GFP_ZERO | __GFP_RETRY_MAYFAIL;
++	unsigned int noio_flags;
++	bool allocations_restricted = !allocations_allowed();
++	unsigned long start_time;
++	void *p = NULL;
 +
-+	geometry->pages_per_chapter = geometry->index_pages_per_chapter + record_pages_per_chapter;
-+	geometry->pages_per_volume = geometry->pages_per_chapter * chapters_per_volume;
-+	geometry->bytes_per_volume =
-+		bytes_per_page * (geometry->pages_per_volume + HEADER_PAGES_PER_VOLUME);
++	if (ptr == NULL)
++		return UDS_INVALID_ARGUMENT;
 +
-+	*geometry_ptr = geometry;
++	if (size == 0) {
++		*((void **) ptr) = NULL;
++		return UDS_SUCCESS;
++	}
++
++	if (allocations_restricted)
++		noio_flags = memalloc_noio_save();
++
++	start_time = jiffies;
++	if (use_kmalloc(size) && (align < PAGE_SIZE)) {
++		p = kmalloc(size, gfp_flags | __GFP_NOWARN);
++		if (p == NULL) {
++			/*
++			 * It is possible for kmalloc to fail to allocate memory because there is
++			 * no page available (see VDO-3688). A short sleep may allow the page
++			 * reclaimer to free a page.
++			 */
++			fsleep(1000);
++			p = kmalloc(size, gfp_flags);
++		}
++
++		if (p != NULL)
++			add_kmalloc_block(ksize(p));
++	} else {
++		struct vmalloc_block_info *block;
++
++		if (UDS_ALLOCATE(1, struct vmalloc_block_info, __func__, &block) ==
++		    UDS_SUCCESS) {
++			/*
++			 * It is possible for __vmalloc to fail to allocate memory because there
++			 * are no pages available (see VDO-3661). A short sleep may allow the page
++			 * reclaimer to free enough pages for a small allocation.
++			 *
++			 * For larger allocations, the page_alloc code is racing against the page
++			 * reclaimer. If the page reclaimer can stay ahead of page_alloc, the
++			 * __vmalloc will succeed. But if page_alloc overtakes the page reclaimer,
++			 * the allocation fails. It is possible that more retries will succeed.
++			 */
++			for (;;) {
++				p = __vmalloc(size, gfp_flags | __GFP_NOWARN);
++
++				if (p != NULL)
++					break;
++
++				if (jiffies_to_msecs(jiffies - start_time) > 1000) {
++					/* Try one more time, logging a failure for this call. */
++					p = __vmalloc(size, gfp_flags);
++					break;
++				}
++
++				fsleep(1000);
++			}
++
++			if (p == NULL) {
++				UDS_FREE(block);
++			} else {
++				block->ptr = p;
++				block->size = PAGE_ALIGN(size);
++				add_vmalloc_block(block);
++			}
++		}
++	}
++
++	if (allocations_restricted)
++		memalloc_noio_restore(noio_flags);
++
++	if (p == NULL) {
++		unsigned int duration = jiffies_to_msecs(jiffies - start_time);
++
++		uds_log_error("Could not allocate %zu bytes for %s in %u msecs",
++			      size,
++			      what,
++			      duration);
++		return -ENOMEM;
++	}
++
++	*((void **) ptr) = p;
 +	return UDS_SUCCESS;
 +}
 +
-+int uds_copy_geometry(struct geometry *source, struct geometry **geometry_ptr)
++/*
++ * Allocate storage based on memory size, failing immediately if the required memory is not
++ * available. The memory will be zeroed.
++ *
++ * @size: The size of an object.
++ * @what: What is being allocated (for error logging)
++ *
++ * Return: pointer to the allocated memory, or NULL if the required space is not available.
++ */
++void *uds_allocate_memory_nowait(size_t size, const char *what __maybe_unused)
 +{
-+	return uds_make_geometry(source->bytes_per_page,
-+				 source->record_pages_per_chapter,
-+				 source->chapters_per_volume,
-+				 source->sparse_chapters_per_volume,
-+				 source->remapped_virtual,
-+				 source->remapped_physical,
-+				 geometry_ptr);
++	void *p = kmalloc(size, GFP_NOWAIT | __GFP_ZERO);
++
++	if (p != NULL)
++		add_kmalloc_block(ksize(p));
++
++	return p;
 +}
 +
-+void uds_free_geometry(struct geometry *geometry)
++void uds_free_memory(void *ptr)
 +{
-+	UDS_FREE(geometry);
++	if (ptr != NULL) {
++		if (is_vmalloc_addr(ptr)) {
++			remove_vmalloc_block(ptr);
++			vfree(ptr);
++		} else {
++			remove_kmalloc_block(ksize(ptr));
++			kfree(ptr);
++		}
++	}
 +}
 +
-+u32 __must_check uds_map_to_physical_chapter(const struct geometry *geometry, u64 virtual_chapter)
++/*
++ * Reallocate dynamically allocated memory. There are no alignment guarantees for the reallocated
++ * memory. If the new memory is larger than the old memory, the new space will be zeroed.
++ *
++ * @ptr: The memory to reallocate.
++ * @old_size: The old size of the memory
++ * @size: The new size to allocate
++ * @what: What is being allocated (for error logging)
++ * @new_ptr: A pointer to hold the reallocated pointer
++ *
++ * Return: UDS_SUCCESS or an error code
++ */
++int uds_reallocate_memory(void *ptr, size_t old_size, size_t size, const char *what, void *new_ptr)
 +{
-+	u64 delta;
++	int result;
 +
-+	if (!uds_is_reduced_geometry(geometry))
-+		return virtual_chapter % geometry->chapters_per_volume;
-+
-+	if (likely(virtual_chapter > geometry->remapped_virtual)) {
-+		delta = virtual_chapter - geometry->remapped_virtual;
-+		if (likely(delta > geometry->remapped_physical))
-+			return delta % geometry->chapters_per_volume;
-+		else
-+			return delta - 1;
++	if (size == 0) {
++		UDS_FREE(ptr);
++		*(void **) new_ptr = NULL;
++		return UDS_SUCCESS;
 +	}
 +
-+	if (virtual_chapter == geometry->remapped_virtual)
-+		return geometry->remapped_physical;
++	result = UDS_ALLOCATE(size, char, what, new_ptr);
++	if (result != UDS_SUCCESS)
++		return result;
 +
-+	delta = geometry->remapped_virtual - virtual_chapter;
-+	if (delta < geometry->chapters_per_volume)
-+		return geometry->chapters_per_volume - delta;
++	if (ptr != NULL) {
++		if (old_size < size)
++			size = old_size;
 +
-+	/* This chapter is so old the answer doesn't matter. */
-+	return 0;
-+}
-+
-+/* Check whether any sparse chapters are in use. */
-+bool uds_has_sparse_chapters(const struct geometry *geometry,
-+			     u64 oldest_virtual_chapter,
-+			     u64 newest_virtual_chapter)
-+{
-+	return uds_is_sparse_geometry(geometry) &&
-+	       ((newest_virtual_chapter - oldest_virtual_chapter + 1) >
-+		geometry->dense_chapters_per_volume);
-+}
-+
-+bool uds_is_chapter_sparse(const struct geometry *geometry,
-+			   u64 oldest_virtual_chapter,
-+			   u64 newest_virtual_chapter,
-+			   u64 virtual_chapter_number)
-+{
-+	return uds_has_sparse_chapters(geometry,
-+				       oldest_virtual_chapter,
-+				       newest_virtual_chapter) &&
-+	       ((virtual_chapter_number + geometry->dense_chapters_per_volume) <=
-+		newest_virtual_chapter);
-+}
-+
-+/* Calculate how many chapters to expire after opening the newest chapter. */
-+u32 uds_chapters_to_expire(const struct geometry *geometry, u64 newest_chapter)
-+{
-+	/* If the index isn't full yet, don't expire anything. */
-+	if (newest_chapter < geometry->chapters_per_volume)
-+		return 0;
-+
-+	/* If a chapter is out of order... */
-+	if (geometry->remapped_physical > 0) {
-+		u64 oldest_chapter = newest_chapter - geometry->chapters_per_volume;
-+
-+		/*
-+		 * ... expire an extra chapter when expiring the moved chapter to free physical
-+		 * space for the new chapter ...
-+		 */
-+		if (oldest_chapter == geometry->remapped_virtual)
-+			return 2;
-+
-+		/*
-+		 * ... but don't expire anything when the new chapter will use the physical chapter
-+		 * freed by expiring the moved chapter.
-+		 */
-+		if (oldest_chapter == (geometry->remapped_virtual + geometry->remapped_physical))
-+			return 0;
++		memcpy(*((void **) new_ptr), ptr, size);
++		UDS_FREE(ptr);
 +	}
 +
-+	/* Normally, just expire one. */
-+	return 1;
++	return UDS_SUCCESS;
 +}
-diff --git a/drivers/md/dm-vdo/geometry.h b/drivers/md/dm-vdo/geometry.h
++
++int uds_duplicate_string(const char *string, const char *what, char **new_string)
++{
++	int result;
++	u8 *dup;
++
++	result = UDS_ALLOCATE(strlen(string) + 1, u8, what, &dup);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	memcpy(dup, string, strlen(string) + 1);
++	*new_string = dup;
++	return UDS_SUCCESS;
++}
++
++void uds_memory_init(void)
++{
++	spin_lock_init(&memory_stats.lock);
++	uds_initialize_thread_registry(&allocating_threads);
++}
++
++void uds_memory_exit(void)
++{
++	ASSERT_LOG_ONLY(memory_stats.kmalloc_bytes == 0,
++			"kmalloc memory used (%zd bytes in %zd blocks) is returned to the kernel",
++			memory_stats.kmalloc_bytes,
++			memory_stats.kmalloc_blocks);
++	ASSERT_LOG_ONLY(memory_stats.vmalloc_bytes == 0,
++			"vmalloc memory used (%zd bytes in %zd blocks) is returned to the kernel",
++			memory_stats.vmalloc_bytes,
++			memory_stats.vmalloc_blocks);
++	uds_log_debug("peak usage %zd bytes", memory_stats.peak_bytes);
++}
++
++void uds_get_memory_stats(u64 *bytes_used, u64 *peak_bytes_used)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&memory_stats.lock, flags);
++	*bytes_used = memory_stats.kmalloc_bytes + memory_stats.vmalloc_bytes;
++	*peak_bytes_used = memory_stats.peak_bytes;
++	spin_unlock_irqrestore(&memory_stats.lock, flags);
++}
++
++/*
++ * Report stats on any allocated memory that we're tracking. Not all allocation types are
++ * guaranteed to be tracked in bytes (e.g., bios).
++ */
++void uds_report_memory_usage(void)
++{
++	unsigned long flags;
++	u64 kmalloc_blocks;
++	u64 kmalloc_bytes;
++	u64 vmalloc_blocks;
++	u64 vmalloc_bytes;
++	u64 peak_usage;
++	u64 total_bytes;
++
++	spin_lock_irqsave(&memory_stats.lock, flags);
++	kmalloc_blocks = memory_stats.kmalloc_blocks;
++	kmalloc_bytes = memory_stats.kmalloc_bytes;
++	vmalloc_blocks = memory_stats.vmalloc_blocks;
++	vmalloc_bytes = memory_stats.vmalloc_bytes;
++	peak_usage = memory_stats.peak_bytes;
++	spin_unlock_irqrestore(&memory_stats.lock, flags);
++	total_bytes = kmalloc_bytes + vmalloc_bytes;
++	uds_log_info("current module memory tracking (actual allocation sizes, not requested):");
++	uds_log_info("  %llu bytes in %llu kmalloc blocks",
++		     (unsigned long long) kmalloc_bytes,
++		     (unsigned long long) kmalloc_blocks);
++	uds_log_info("  %llu bytes in %llu vmalloc blocks",
++		     (unsigned long long) vmalloc_bytes,
++		     (unsigned long long) vmalloc_blocks);
++	uds_log_info("  total %llu bytes, peak usage %llu bytes",
++		     (unsigned long long) total_bytes,
++		     (unsigned long long) peak_usage);
++}
+diff --git a/drivers/md/dm-vdo/memory-alloc.h b/drivers/md/dm-vdo/memory-alloc.h
 new file mode 100644
-index 000000000000..963dc7629c92
+index 000000000000..3fc495afdaea
 --- /dev/null
-+++ b/drivers/md/dm-vdo/geometry.h
-@@ -0,0 +1,137 @@
++++ b/drivers/md/dm-vdo/memory-alloc.h
+@@ -0,0 +1,181 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_GEOMETRY_H
-+#define UDS_GEOMETRY_H
++#ifndef UDS_MEMORY_ALLOC_H
++#define UDS_MEMORY_ALLOC_H
 +
-+#include "uds.h"
++#include <linux/cache.h>
++#include <linux/io.h> /* for PAGE_SIZE */
 +
-+/*
-+ * The geometry records parameters that define the layout of a UDS index volume, and the size and
-+ * shape of various index structures. It is created when the index is created, and is referenced by
-+ * many index sub-components.
-+ */
++#include "permassert.h"
++#include "thread-registry.h"
 +
-+struct geometry {
-+	/* Size of a chapter page, in bytes */
-+	size_t bytes_per_page;
-+	/* Number of record pages in a chapter */
-+	u32 record_pages_per_chapter;
-+	/* Total number of chapters in a volume */
-+	u32 chapters_per_volume;
-+	/* Number of sparsely-indexed chapters in a volume */
-+	u32 sparse_chapters_per_volume;
-+	/* Number of bits used to determine delta list numbers */
-+	u8 chapter_delta_list_bits;
-+	/* Virtual chapter remapped from physical chapter 0 */
-+	u64 remapped_virtual;
-+	/* New physical chapter where the remapped chapter can be found */
-+	u64 remapped_physical;
++/* Custom memory allocation functions for UDS that track memory usage */
 +
-+	/*
-+	 * The following properties are derived from the ones above, but they are computed and
-+	 * recorded as fields for convenience.
-+	 */
-+	/* Total number of pages in a volume, excluding the header */
-+	u32 pages_per_volume;
-+	/* Total number of bytes in a volume, including the header */
-+	size_t bytes_per_volume;
-+	/* Number of pages in a chapter */
-+	u32 pages_per_chapter;
-+	/* Number of index pages in a chapter index */
-+	u32 index_pages_per_chapter;
-+	/* Number of records that fit on a page */
-+	u32 records_per_page;
-+	/* Number of records that fit in a chapter */
-+	u32 records_per_chapter;
-+	/* Number of records that fit in a volume */
-+	u64 records_per_volume;
-+	/* Number of delta lists per chapter index */
-+	u32 delta_lists_per_chapter;
-+	/* Mean delta for chapter indexes */
-+	u32 chapter_mean_delta;
-+	/* Number of bits needed for record page numbers */
-+	u8 chapter_payload_bits;
-+	/* Number of bits used to compute addresses for chapter delta lists */
-+	u8 chapter_address_bits;
-+	/* Number of densely-indexed chapters in a volume */
-+	u32 dense_chapters_per_volume;
-+};
++int __must_check uds_allocate_memory(size_t size, size_t align, const char *what, void *ptr);
 +
-+enum {
-+	/* The number of bytes in a record (name + metadata) */
-+	BYTES_PER_RECORD = (UDS_RECORD_NAME_SIZE + UDS_RECORD_DATA_SIZE),
++void uds_free_memory(void *ptr);
 +
-+	/* The default length of a page in a chapter, in bytes */
-+	DEFAULT_BYTES_PER_PAGE = 1024 * BYTES_PER_RECORD,
++/* Free memory allocated with UDS_ALLOCATE(). */
++#define UDS_FREE(PTR) uds_free_memory(PTR)
 +
-+	/* The default maximum number of records per page */
-+	DEFAULT_RECORDS_PER_PAGE = DEFAULT_BYTES_PER_PAGE / BYTES_PER_RECORD,
-+
-+	/* The default number of record pages in a chapter */
-+	DEFAULT_RECORD_PAGES_PER_CHAPTER = 256,
-+
-+	/* The default number of record pages in a chapter for a small index */
-+	SMALL_RECORD_PAGES_PER_CHAPTER = 64,
-+
-+	/* The default number of chapters in a volume */
-+	DEFAULT_CHAPTERS_PER_VOLUME = 1024,
-+
-+	/* The default number of sparsely-indexed chapters in a volume */
-+	DEFAULT_SPARSE_CHAPTERS_PER_VOLUME = 0,
-+
-+	/* The log2 of the default mean delta */
-+	DEFAULT_CHAPTER_MEAN_DELTA_BITS = 16,
-+
-+	/* The log2 of the number of delta lists in a large chapter */
-+	DEFAULT_CHAPTER_DELTA_LIST_BITS = 12,
-+
-+	/* The log2 of the number of delta lists in a small chapter */
-+	SMALL_CHAPTER_DELTA_LIST_BITS = 10,
-+
-+	/* The number of header pages per volume */
-+	HEADER_PAGES_PER_VOLUME = 1,
-+};
-+
-+int __must_check uds_make_geometry(size_t bytes_per_page,
-+				   u32 record_pages_per_chapter,
-+				   u32 chapters_per_volume,
-+				   u32 sparse_chapters_per_volume,
-+				   u64 remapped_virtual,
-+				   u64 remapped_physical,
-+				   struct geometry **geometry_ptr);
-+
-+int __must_check uds_copy_geometry(struct geometry *source, struct geometry **geometry_ptr);
-+
-+void uds_free_geometry(struct geometry *geometry);
-+
-+u32 __must_check uds_map_to_physical_chapter(const struct geometry *geometry, u64 virtual_chapter);
-+
-+/*
-+ * Check whether this geometry is reduced by a chapter. This will only be true if the volume was
-+ * converted from a non-lvm volume to an lvm volume.
-+ */
-+static inline bool __must_check uds_is_reduced_geometry(const struct geometry *geometry)
++static inline void *uds_forget(void **ptr_ptr)
 +{
-+	return !!(geometry->chapters_per_volume & 1);
++	void *ptr = *ptr_ptr;
++
++	*ptr_ptr = NULL;
++	return ptr;
 +}
 +
-+static inline bool __must_check uds_is_sparse_geometry(const struct geometry *geometry)
++/*
++ * Null out a pointer and return a copy to it. This macro should be used when passing a pointer to
++ * a function for which it is not safe to access the pointer once the function returns.
++ */
++#define UDS_FORGET(ptr) uds_forget((void **) &(ptr))
++
++/*
++ * Allocate storage based on element counts, sizes, and alignment.
++ *
++ * This is a generalized form of our allocation use case: It allocates an array of objects,
++ * optionally preceded by one object of another type (i.e., a struct with trailing variable-length
++ * array), with the alignment indicated.
++ *
++ * Why is this inline? The sizes and alignment will always be constant, when invoked through the
++ * macros below, and often the count will be a compile-time constant 1 or the number of extra bytes
++ * will be a compile-time constant 0. So at least some of the arithmetic can usually be optimized
++ * away, and the run-time selection between allocation functions always can. In many cases, it'll
++ * boil down to just a function call with a constant size.
++ *
++ * @count: The number of objects to allocate
++ * @size: The size of an object
++ * @extra: The number of additional bytes to allocate
++ * @align: The required alignment
++ * @what: What is being allocated (for error logging)
++ * @ptr: A pointer to hold the allocated memory
++ *
++ * Return: UDS_SUCCESS or an error code
++ */
++static inline int uds_do_allocation(size_t count,
++				    size_t size,
++				    size_t extra,
++				    size_t align,
++				    const char *what,
++				    void *ptr)
 +{
-+	return geometry->sparse_chapters_per_volume > 0;
++	size_t total_size = count * size + extra;
++
++	/* Overflow check: */
++	if ((size > 0) && (count > ((SIZE_MAX - extra) / size)))
++		/*
++		 * This is kind of a hack: We rely on the fact that SIZE_MAX would cover the entire
++		 * address space (minus one byte) and thus the system can never allocate that much
++		 * and the call will always fail. So we can report an overflow as "out of memory"
++		 * by asking for "merely" SIZE_MAX bytes.
++		 */
++		total_size = SIZE_MAX;
++
++	return uds_allocate_memory(total_size, align, what, ptr);
 +}
 +
-+bool __must_check uds_has_sparse_chapters(const struct geometry *geometry,
-+					  u64 oldest_virtual_chapter,
-+					  u64 newest_virtual_chapter);
++int __must_check uds_reallocate_memory(void *ptr,
++				       size_t old_size,
++				       size_t size,
++				       const char *what,
++				       void *new_ptr);
 +
-+bool __must_check uds_is_chapter_sparse(const struct geometry *geometry,
-+					u64 oldest_virtual_chapter,
-+					u64 newest_virtual_chapter,
-+					u64 virtual_chapter_number);
++/*
++ * Allocate one or more elements of the indicated type, logging an error if the allocation fails.
++ * The memory will be zeroed.
++ *
++ * @COUNT: The number of objects to allocate
++ * @TYPE: The type of objects to allocate. This type determines the alignment of the allocation.
++ * @WHAT: What is being allocated (for error logging)
++ * @PTR: A pointer to hold the allocated memory
++ *
++ * Return: UDS_SUCCESS or an error code
++ */
++#define UDS_ALLOCATE(COUNT, TYPE, WHAT, PTR) \
++	uds_do_allocation(COUNT, sizeof(TYPE), 0, __alignof__(TYPE), WHAT, PTR)
 +
-+u32 __must_check uds_chapters_to_expire(const struct geometry *geometry, u64 newest_chapter);
++/*
++ * Allocate one object of an indicated type, followed by one or more elements of a second type,
++ * logging an error if the allocation fails. The memory will be zeroed.
++ *
++ * @TYPE1: The type of the primary object to allocate. This type determines the alignment of the
++ *         allocated memory.
++ * @COUNT: The number of objects to allocate
++ * @TYPE2: The type of array objects to allocate
++ * @WHAT: What is being allocated (for error logging)
++ * @PTR: A pointer to hold the allocated memory
++ *
++ * Return: UDS_SUCCESS or an error code
++ */
++#define UDS_ALLOCATE_EXTENDED(TYPE1, COUNT, TYPE2, WHAT, PTR)            \
++	__extension__({                                                  \
++		int _result;						 \
++		TYPE1 **_ptr = (PTR);                                    \
++		STATIC_ASSERT(__alignof__(TYPE1) >= __alignof__(TYPE2)); \
++		_result = uds_do_allocation(COUNT,                       \
++					    sizeof(TYPE2),               \
++					    sizeof(TYPE1),               \
++					    __alignof__(TYPE1),          \
++					    WHAT,                        \
++					    _ptr);                       \
++		_result;                                                 \
++	})
 +
-+#endif /* UDS_GEOMETRY_H */
++/*
++ * Allocate memory starting on a cache line boundary, logging an error if the allocation fails. The
++ * memory will be zeroed.
++ *
++ * @size: The number of bytes to allocate
++ * @what: What is being allocated (for error logging)
++ * @ptr: A pointer to hold the allocated memory
++ *
++ * Return: UDS_SUCCESS or an error code
++ */
++static inline int __must_check uds_allocate_cache_aligned(size_t size, const char *what, void *ptr)
++{
++	return uds_allocate_memory(size, L1_CACHE_BYTES, what, ptr);
++}
++
++void *__must_check uds_allocate_memory_nowait(size_t size, const char *what);
++
++/*
++ * Allocate one element of the indicated type immediately, failing if the required memory is not
++ * immediately available.
++ *
++ * @TYPE: The type of objects to allocate
++ * @WHAT: What is being allocated (for error logging)
++ *
++ * Return: pointer to the memory, or NULL if the memory is not available.
++ */
++#define UDS_ALLOCATE_NOWAIT(TYPE, WHAT) uds_allocate_memory_nowait(sizeof(TYPE), WHAT)
++
++int __must_check uds_duplicate_string(const char *string, const char *what, char **new_string);
++
++/* Wrapper which permits freeing a const pointer. */
++static inline void uds_free_const(const void *pointer)
++{
++	union {
++		const void *const_p;
++		void *not_const;
++	} u = { .const_p = pointer };
++	UDS_FREE(u.not_const);
++}
++
++void uds_memory_exit(void);
++
++void uds_memory_init(void);
++
++void uds_register_allocating_thread(struct registered_thread *new_thread, const bool *flag_ptr);
++
++void uds_unregister_allocating_thread(void);
++
++void uds_get_memory_stats(u64 *bytes_used, u64 *peak_bytes_used);
++
++void uds_report_memory_usage(void);
++
++#endif /* UDS_MEMORY_ALLOC_H */
 -- 
 2.40.0
 
