@@ -4,85 +4,85 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AE993CD37A9
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Sep 2023 20:31:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 33D23CD37AA
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Sep 2023 20:33:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694809904;
+	s=mimecast20190719; t=1694810001;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=WvryvWoCbt0M//YKUDtgZKLdOlajO14SefoqOoS/svk=;
-	b=BipgXbphmFjSqvFdv2I53p+NhUUPUHb3hML4bkGtB1je99wnuE7vm1KjpWfd44hmM7eVQz
-	1adlbuxRVPFsJ28JjYWbc2732L1Q1mTurcHjfBXlSyC6x6UUl03uljmGRRPnVp4eHdGCex
-	KmVm5iw+7/zha3KFl2IEX8vJG4MzCW0=
+	bh=96rdHvAFEZjiiU60i1c+h6ry8cw47nrtU0IRguvIL94=;
+	b=QZkNa7eLpw8Oe4281d5FbPv/i2Wuy0xC71UtVeUQV7QUIbDSa8lKTi276OW3Zn6Co7l2bH
+	wms88KYSX01kviSOdeFdUnr6cnQ3QRISt3brFbMQlx/8y0ATAgaGdJNFj+Xt34q6l0+uw+
+	m9JK4ix1RggBFTnvkjd1vJakcsIYdDA=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-499-OpVlcEqvPVGYXexq54BvGA-1; Fri, 15 Sep 2023 16:31:42 -0400
-X-MC-Unique: OpVlcEqvPVGYXexq54BvGA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-163-HkzXmawcP1yezIaM54iF_g-1; Fri, 15 Sep 2023 16:33:18 -0400
+X-MC-Unique: HkzXmawcP1yezIaM54iF_g-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 117A3101B04A;
-	Fri, 15 Sep 2023 20:31:41 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BC56C949A02;
+	Fri, 15 Sep 2023 20:33:13 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F151A40F2D26;
-	Fri, 15 Sep 2023 20:31:40 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A95D51CBC8;
+	Fri, 15 Sep 2023 20:33:13 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B02D8194658C;
-	Fri, 15 Sep 2023 20:31:40 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5E4DD194658C;
+	Fri, 15 Sep 2023 20:33:13 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
  [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 9FB831946588
- for <dm-devel@listman.corp.redhat.com>; Fri, 15 Sep 2023 20:31:39 +0000 (UTC)
+ ESMTP id C40221946588
+ for <dm-devel@listman.corp.redhat.com>; Fri, 15 Sep 2023 20:32:51 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 80AF240F2D2C; Fri, 15 Sep 2023 20:31:39 +0000 (UTC)
+ id 8E18D40F2D2A; Fri, 15 Sep 2023 20:32:51 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 793BF40F2D26
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 20:31:39 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
- [205.139.110.61])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8558E40F2D26
+ for <dm-devel@redhat.com>; Fri, 15 Sep 2023 20:32:51 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DAB7101B04B
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 20:31:39 +0000 (UTC)
-Received: from omta034.useast.a.cloudfilter.net
- (omta034.useast.a.cloudfilter.net [44.202.169.33]) by relay.mimecast.com
- with ESMTP with STARTTLS (version=TLSv1.2,
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4FC5581B03C
+ for <dm-devel@redhat.com>; Fri, 15 Sep 2023 20:32:51 +0000 (UTC)
+Received: from omta36.uswest2.a.cloudfilter.net
+ (omta36.uswest2.a.cloudfilter.net [35.89.44.35]) by relay.mimecast.com with
+ ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-240-EE_2xhDEPKSnRk89J1zC8A-1; Fri, 15 Sep 2023 16:31:37 -0400
-X-MC-Unique: EE_2xhDEPKSnRk89J1zC8A-1
-Received: from eig-obgw-5001a.ext.cloudfilter.net ([10.0.29.139])
+ us-mta-435-dtRrFf14NqSkYHnzRhcPYQ-2; Fri, 15 Sep 2023 16:32:49 -0400
+X-MC-Unique: dtRrFf14NqSkYHnzRhcPYQ-2
+Received: from eig-obgw-5009a.ext.cloudfilter.net ([10.0.29.176])
  by cmsmtp with ESMTP
- id hEuSqd9f0ez0ChFT8qBqNh; Fri, 15 Sep 2023 20:31:14 +0000
+ id hCX4qLRwqEoVshFT2qHr9C; Fri, 15 Sep 2023 20:31:08 +0000
 Received: from gator4166.hostgator.com ([108.167.133.22]) by cmsmtp with ESMTPS
- id hFTTq9lFnqs1vhFTUqTy6z; Fri, 15 Sep 2023 20:31:36 +0000
-X-Authority-Analysis: v=2.4 cv=OO40YAWB c=1 sm=1 tr=0 ts=6504bf28
+ id hFT1qD6E6r4o2hFT1qik1y; Fri, 15 Sep 2023 20:31:07 +0000
+X-Authority-Analysis: v=2.4 cv=KIpJsXJo c=1 sm=1 tr=0 ts=6504bf0b
  a=1YbLdUo/zbTtOZ3uB5T3HA==:117 a=WzbPXH4gqzPVN0x6HrNMNA==:17
  a=OWjo9vPv0XrRhIrVQ50Ab3nP57M=:19 a=dLZJa+xiwSxG16/P+YVxDGlgEgI=:19
  a=IkcTkHD0fZMA:10 a=zNV7Rl7Rt7sA:10 a=wYkD_t78qR0A:10 a=NEAV23lmAAAA:8
- a=20KFwNOVAAAA:8 a=VwQbUJbxAAAA:8 a=cm27Pg_UAAAA:8 a=YoX3If6DFWHe0apXbcEA:9
+ a=20KFwNOVAAAA:8 a=VwQbUJbxAAAA:8 a=cm27Pg_UAAAA:8 a=1rGUjaHSoLxGkM6IGjIA:9
  a=QEXdDO2ut3YA:10 a=AjGcO6oz07-iQ99wixmX:22 a=xmb-EsYY8bH0VWELuYED:22
-Received: from 187-162-21-192.static.axtel.net ([187.162.21.192]:56308
+Received: from 187-162-21-192.static.axtel.net ([187.162.21.192]:47108
  helo=[192.168.15.8])
  by gator4166.hostgator.com with esmtpsa (TLS1.2) tls
  TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 (Exim 4.96)
- (envelope-from <gustavo@embeddedor.com>) id 1qhFTS-002NUI-34;
- Fri, 15 Sep 2023 15:31:35 -0500
-Message-ID: <6f1ff9ac-e0cb-68f0-fa2f-91780a3eedb7@embeddedor.com>
-Date: Fri, 15 Sep 2023 14:32:31 -0600
+ (envelope-from <gustavo@embeddedor.com>) id 1qhFT0-002MyN-0C;
+ Fri, 15 Sep 2023 15:31:06 -0500
+Message-ID: <7f1577d3-a3f4-3c5a-3761-f56a85eb9c8e@embeddedor.com>
+Date: Fri, 15 Sep 2023 14:32:02 -0600
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
  Thunderbird/102.13.0
 To: Kees Cook <keescook@chromium.org>, Alasdair Kergon <agk@redhat.com>
-References: <20230915200407.never.611-kees@kernel.org>
+References: <20230915200352.never.118-kees@kernel.org>
 From: "Gustavo A. R. Silva" <gustavo@embeddedor.com>
-In-Reply-To: <20230915200407.never.611-kees@kernel.org>
+In-Reply-To: <20230915200352.never.118-kees@kernel.org>
 X-AntiAbuse: This header was added to track abuse,
  please include it with any abuse report
 X-AntiAbuse: Primary Hostname - gator4166.hostgator.com
@@ -92,19 +92,19 @@ X-AntiAbuse: Sender Address Domain - embeddedor.com
 X-BWhitelist: no
 X-Source-IP: 187.162.21.192
 X-Source-L: No
-X-Exim-ID: 1qhFTS-002NUI-34
+X-Exim-ID: 1qhFT0-002MyN-0C
 X-Source: 
 X-Source-Args: 
 X-Source-Dir: 
 X-Source-Sender: 187-162-21-192.static.axtel.net ([192.168.15.8])
- [187.162.21.192]:56308
+ [187.162.21.192]:47108
 X-Source-Auth: gustavo@embeddedor.com
-X-Email-Count: 121
+X-Email-Count: 101
 X-Org: HG=hgshared;ORG=hostgator
 X-Source-Cap: Z3V6aWRpbmU7Z3V6aWRpbmU7Z2F0b3I0MTY2Lmhvc3RnYXRvci5jb20=
 X-Local-Domain: yes
-X-CMAE-Envelope: MS4xfNfIlpm902X8RJBBLa6ex5zHI6KyyAh7h3qV2pPFQcdL7uS/ZquZiE1wIGO6gfEuVkXmdTA2+yzQAutZb6Nb2wohygOMUav3QtidQeq87W4X0wdNSgPm
- EVYhEeyD9WkRB09RX6TEkAH5xLqmkerFNXVsjgoXHOAoEkGVAN9IOC4HBjNhZK2eRlEoL4TAb0asLSD7tb0PereJsEOJkc/MFZ0=
+X-CMAE-Envelope: MS4xfLcsVSLNFuxoLtq1G3scZ/iNbXIU7C1/M9yza+mnlLBmVmcMQczOKPgkJVcIm5jqKWagP5rrKN9CjWS9L6fPr1DbVTgE64Vgk1mT29l+20eANsu5EaDU
+ QDN1+IHHRcjRMzUWEqyjGCJDH10qyXntM0fuvHKETfzRG+rjMZzVLFHJcwHJm5myIs9nr3v9/xEs6UBJanUzgtc5rMBD2ZfYH2k=
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -113,7 +113,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH] dm: Annotate struct dm_bio_prison with
+Subject: Re: [dm-devel] [PATCH] dm: Annotate struct stripe_c with
  __counted_by
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -132,7 +132,7 @@ Cc: Mike Snitzer <snitzer@kernel.org>, llvm@lists.linux.dev,
  linux-hardening@vger.kernel.org, Tom Rix <trix@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: embeddedor.com
 Content-Language: en-US
@@ -141,14 +141,14 @@ Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
 
 
-On 9/15/23 14:04, Kees Cook wrote:
+On 9/15/23 14:03, Kees Cook wrote:
 > Prepare for the coming implementation by GCC and Clang of the __counted_by
 > attribute. Flexible array members annotated with __counted_by can have
 > their accesses bounds-checked at run-time checking via CONFIG_UBSAN_BOUNDS
 > (for array indexing) and CONFIG_FORTIFY_SOURCE (for strcpy/memcpy-family
 > functions).
 > 
-> As found with Coccinelle[1], add __counted_by for struct dm_bio_prison.
+> As found with Coccinelle[1], add __counted_by for struct stripe_c.
 > 
 > [1] https://github.com/kees/kernel-tools/blob/trunk/coccinelle/examples/counted_by.cocci
 > 
@@ -164,22 +164,22 @@ Thanks
 Gustavo
 
 > ---
->   drivers/md/dm-bio-prison-v1.c | 2 +-
+>   drivers/md/dm-stripe.c | 2 +-
 >   1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> diff --git a/drivers/md/dm-bio-prison-v1.c b/drivers/md/dm-bio-prison-v1.c
-> index 92afdca760ae..9ab32abe5ed4 100644
-> --- a/drivers/md/dm-bio-prison-v1.c
-> +++ b/drivers/md/dm-bio-prison-v1.c
-> @@ -26,7 +26,7 @@ struct prison_region {
->   struct dm_bio_prison {
->   	mempool_t cell_pool;
->   	unsigned int num_locks;
-> -	struct prison_region regions[];
-> +	struct prison_region regions[] __counted_by(num_locks);
+> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+> index e2854a3cbd28..5e70f5ae394d 100644
+> --- a/drivers/md/dm-stripe.c
+> +++ b/drivers/md/dm-stripe.c
+> @@ -44,7 +44,7 @@ struct stripe_c {
+>   	/* Work struct used for triggering events*/
+>   	struct work_struct trigger_event;
+>   
+> -	struct stripe stripe[];
+> +	struct stripe stripe[] __counted_by(stripes);
 >   };
 >   
->   static struct kmem_cache *_cell_cache;
+>   /*
 
 --
 dm-devel mailing list
