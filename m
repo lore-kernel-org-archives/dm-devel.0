@@ -1,69 +1,72 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8491ACD37AE
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Sep 2023 22:44:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3B45ACD37AD
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Sep 2023 22:44:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694817845;
+	s=mimecast20190719; t=1694817848;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=NOT+WM+9qBdm0H59RiMOyHXlGZPrTg2NxDvDKHRnw1o=;
-	b=Q6CW/SSwnKQISwV3qM5/P3jwnHgZTMuKdoWZS+Rz0W75cQUpFhlOwnUbROE+QuwqhEd24N
-	ErHzofD0ztNfEaQ/5r2lxd1s9y5mIqyEdsBQ99cWryD7DmG9S+OjqGUicT/vG2ibUtJgtQ
-	bOKA/R27YzReW+mwd0Q4kMBabkF0GNY=
+	bh=Z3kGkkFNBP5QisPLoWSIq0SBPLMci++cSKDje8gMss0=;
+	b=LZoSB2Dm4JEN9S90/P5DwijM/8EhUwMpEYd7vju7ysM1/c96K2/R2+djWIa70zeralUiRK
+	Cw+g+K4U4w+0YHg50U+aC9Dll/ZJ+O9ANwOTiWtkki9FozgF7BFEUnAa11ZHGtmpcNbbvV
+	U1kcewe79R7GioEQ4/oarKVRnOMZAlI=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-510-Lm4e1tgPNzuU8ryfzW9xmA-1; Fri, 15 Sep 2023 18:44:04 -0400
-X-MC-Unique: Lm4e1tgPNzuU8ryfzW9xmA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-133-TnSe8ul4OIeCYYAUZmnGBw-1; Fri, 15 Sep 2023 18:44:04 -0400
+X-MC-Unique: TnSe8ul4OIeCYYAUZmnGBw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0EEF482A698;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6900C82A6C0;
 	Fri, 15 Sep 2023 22:44:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EE3B62156A27;
-	Fri, 15 Sep 2023 22:44:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 54E481054FC3;
+	Fri, 15 Sep 2023 22:44:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A7B93194658C;
-	Fri, 15 Sep 2023 22:43:56 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3FD64194658F;
+	Fri, 15 Sep 2023 22:44:02 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
  [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 9277C194658F
+ ESMTP id 863AC1946588
  for <dm-devel@listman.corp.redhat.com>; Fri, 15 Sep 2023 22:43:55 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 82D7F1D0AF; Fri, 15 Sep 2023 22:43:55 +0000 (UTC)
+ id 59ACB1CBC1; Fri, 15 Sep 2023 22:43:50 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7ABFC176C3
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 22:43:55 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 51933176C3
+ for <dm-devel@redhat.com>; Fri, 15 Sep 2023 22:43:50 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5CE1382A68B
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 22:43:55 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1C3EA817053
+ for <dm-devel@redhat.com>; Fri, 15 Sep 2023 22:43:50 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-487-nUmSHJEgOgGNnFexKH6COg-1; Fri, 15 Sep 2023 18:43:53 -0400
-X-MC-Unique: nUmSHJEgOgGNnFexKH6COg-1
+ us-mta-149-3ezBNUmDOk28NJx_VREwTQ-1; Fri, 15 Sep 2023 18:43:47 -0400
+X-MC-Unique: 3ezBNUmDOk28NJx_VREwTQ-1
 Received: from mcgrof by bombadil.infradead.org with local (Exim 4.96 #2 (Red
- Hat Linux)) id 1qhHXM-00BUtK-2O; Fri, 15 Sep 2023 22:43:44 +0000
+ Hat Linux)) id 1qhHXM-00BUtM-2g; Fri, 15 Sep 2023 22:43:44 +0000
 From: Luis Chamberlain <mcgrof@kernel.org>
 To: axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org,
  philipp.reisner@linbit.com, lars.ellenberg@linbit.com,
  christoph.boehmwalder@linbit.com, hch@infradead.org, djwong@kernel.org,
  minchan@kernel.org, senozhatsky@chromium.org
-Date: Fri, 15 Sep 2023 15:43:39 -0700
-Message-Id: <20230915224343.2740317-1-mcgrof@kernel.org>
+Date: Fri, 15 Sep 2023 15:43:40 -0700
+Message-Id: <20230915224343.2740317-2-mcgrof@kernel.org>
+In-Reply-To: <20230915224343.2740317-1-mcgrof@kernel.org>
+References: <20230915224343.2740317-1-mcgrof@kernel.org>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -73,7 +76,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-Subject: [dm-devel] [PATCH v3 0/4] block: simplify with PAGE_SECTORS_SHIFT
+Subject: [dm-devel] [PATCH v3 1/4] drbd: use PAGE_SECTORS_SHIFT and
+ PAGE_SECTORS
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -88,51 +92,43 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: p.raghav@samsung.com, linux-xfs@vger.kernel.org, rohan.puri@samsung.com,
  da.gomez@samsung.com, mcgrof@kernel.org, patches@lists.linux.dev,
  willy@infradead.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
- linux-mm@kvack.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org,
+ linux-mm@kvack.org, dm-devel@redhat.com,
+ Johannes Thumshirn <johannes.thumshirn@wdc.com>, linux-fsdevel@vger.kernel.org,
  rpuri.linux@gmail.com, kbusch@kernel.org, drbd-dev@lists.linbit.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: kernel.org
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-Just spinning these low hanging fruit patches I forgot about.
-
-Changes on v3:
-
- o Add tags for Reviews/acks
- o rebase onto next-20230914
- o Fixes as suggested by Johannes Thumshirn:
-   - drop not-needed parens on dm bufio
-   - use SECTOR_MASK instead of PAGE_SECTORS - 1 for the zram driver
- o Drop shmem patches as they are already merged / modified
-
-Changes on v2:
-                                                                                                                                                                                              
- o keep iomap math visibly simple                                                                                                                                                             
- o Add tags for Reviews/acks                                                                                                                                                                  
- o rebase onto next-20230525 
-
-Luis Chamberlain (4):
-  drbd: use PAGE_SECTORS_SHIFT and PAGE_SECTORS
-  iomap: simplify iomap_init() with PAGE_SECTORS
-  dm bufio: simplify by using PAGE_SECTORS_SHIFT
-  zram: use generic PAGE_SECTORS and PAGE_SECTORS_SHIFT
-
- drivers/block/drbd/drbd_bitmap.c |  4 ++--
- drivers/block/zram/zram_drv.c    | 15 ++++++---------
- drivers/block/zram/zram_drv.h    |  2 --
- drivers/md/dm-bufio.c            |  4 ++--
- fs/iomap/buffered-io.c           |  2 +-
- 5 files changed, 11 insertions(+), 16 deletions(-)
-
--- 
-2.39.2
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+UmVwbGFjZSBjb21tb24gY29uc3RhbnRzIHdpdGggZ2VuZXJpYyB2ZXJzaW9ucy4KVGhpcyBwcm9k
+dWNlcyBubyBmdW5jdGlvbmFsIGNoYW5nZXMuCgpBY2tlZC1ieTogQ2hyaXN0b3BoIELDtmhtd2Fs
+ZGVyIDxjaHJpc3RvcGguYm9laG13YWxkZXJAbGluYml0LmNvbT4KUmV2aWV3ZWQtYnk6IEpvaGFu
+bmVzIFRodW1zaGlybiA8am9oYW5uZXMudGh1bXNoaXJuQHdkYy5jb20+ClNpZ25lZC1vZmYtYnk6
+IEx1aXMgQ2hhbWJlcmxhaW4gPG1jZ3JvZkBrZXJuZWwub3JnPgotLS0KIGRyaXZlcnMvYmxvY2sv
+ZHJiZC9kcmJkX2JpdG1hcC5jIHwgNCArKy0tCiAxIGZpbGUgY2hhbmdlZCwgMiBpbnNlcnRpb25z
+KCspLCAyIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvYmxvY2svZHJiZC9kcmJk
+X2JpdG1hcC5jIGIvZHJpdmVycy9ibG9jay9kcmJkL2RyYmRfYml0bWFwLmMKaW5kZXggODVjYTAw
+MGEwNTY0Li4xYTE3ODJmNTVlNjEgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvYmxvY2svZHJiZC9kcmJk
+X2JpdG1hcC5jCisrKyBiL2RyaXZlcnMvYmxvY2svZHJiZC9kcmJkX2JpdG1hcC5jCkBAIC0xMDAw
+LDcgKzEwMDAsNyBAQCBzdGF0aWMgdm9pZCBibV9wYWdlX2lvX2FzeW5jKHN0cnVjdCBkcmJkX2Jt
+X2Fpb19jdHggKmN0eCwgaW50IHBhZ2VfbnIpIF9fbXVzdF9obwogCXVuc2lnbmVkIGludCBsZW47
+CiAKIAlmaXJzdF9ibV9zZWN0ID0gZGV2aWNlLT5sZGV2LT5tZC5tZF9vZmZzZXQgKyBkZXZpY2Ut
+PmxkZXYtPm1kLmJtX29mZnNldDsKLQlvbl9kaXNrX3NlY3RvciA9IGZpcnN0X2JtX3NlY3QgKyAo
+KChzZWN0b3JfdClwYWdlX25yKSA8PCAoUEFHRV9TSElGVC1TRUNUT1JfU0hJRlQpKTsKKwlvbl9k
+aXNrX3NlY3RvciA9IGZpcnN0X2JtX3NlY3QgKyAoKChzZWN0b3JfdClwYWdlX25yKSA8PCBQQUdF
+X1NFQ1RPUlNfU0hJRlQpOwogCiAJLyogdGhpcyBtaWdodCBoYXBwZW4gd2l0aCB2ZXJ5IHNtYWxs
+CiAJICogZmxleGlibGUgZXh0ZXJuYWwgbWV0YSBkYXRhIGRldmljZSwKQEAgLTEwMDgsNyArMTAw
+OCw3IEBAIHN0YXRpYyB2b2lkIGJtX3BhZ2VfaW9fYXN5bmMoc3RydWN0IGRyYmRfYm1fYWlvX2N0
+eCAqY3R4LCBpbnQgcGFnZV9ucikgX19tdXN0X2hvCiAJbGFzdF9ibV9zZWN0ID0gZHJiZF9tZF9s
+YXN0X2JpdG1hcF9zZWN0b3IoZGV2aWNlLT5sZGV2KTsKIAlpZiAoZmlyc3RfYm1fc2VjdCA8PSBv
+bl9kaXNrX3NlY3RvciAmJiBsYXN0X2JtX3NlY3QgPj0gb25fZGlza19zZWN0b3IpIHsKIAkJc2Vj
+dG9yX3QgbGVuX3NlY3QgPSBsYXN0X2JtX3NlY3QgLSBvbl9kaXNrX3NlY3RvciArIDE7Ci0JCWlm
+IChsZW5fc2VjdCA8IFBBR0VfU0laRS9TRUNUT1JfU0laRSkKKwkJaWYgKGxlbl9zZWN0IDwgUEFH
+RV9TRUNUT1JTKQogCQkJbGVuID0gKHVuc2lnbmVkIGludClsZW5fc2VjdCpTRUNUT1JfU0laRTsK
+IAkJZWxzZQogCQkJbGVuID0gUEFHRV9TSVpFOwotLSAKMi4zOS4yCgotLQpkbS1kZXZlbCBtYWls
+aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9t
+YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
 
