@@ -1,88 +1,88 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 178FFCD379F
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Sep 2023 20:29:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D8281CD379F
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Sep 2023 20:31:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694809774;
+	s=mimecast20190719; t=1694809867;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=rEUiEN0Pl7ogqbgx0u6pBDeJCZzkv7JsRR1CjHuM0WA=;
-	b=Dn+d8o9XNf5qJPxmC5peqX2/2m6GrLXcJ0HMj4HULVf1/2w0DeTYBfNAIAuiJsiQGWb23Z
-	iOfdqJbHzY9Nvoc/pJMqwjOQJV8dJMeeKoaDP7Ij7b40+T3CRh6TBVcBVTjrNtSYMW/B0F
-	EQ+XFZBIgAwRr/MqsplTOzmpQxHYKP0=
+	bh=f7lbfKeN0TFsvbUgidKg2va2tzUldlQzOdyKimmpOlg=;
+	b=dst61gdwC9pqb2eWJj3DmrdYxVhbgDKsnP0l2mSqIocUDj+UpQmQN99gx7q9BWjpLz0U6W
+	r2ssjBq+AS6A/UrE0t1EEkoZBBHChNPhWq50dds0HKTRNS6q+UjNFyqpDUZnPqSgLwOSHc
+	LPkWCjclgY19APyrfmQY8iGzmDfrdIY=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-82-IlcXZOaGM2WdN3x2pynBJQ-1; Fri, 15 Sep 2023 16:29:31 -0400
-X-MC-Unique: IlcXZOaGM2WdN3x2pynBJQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-629-ygiYWLZBMjip6bXrMx67jQ-1; Fri, 15 Sep 2023 16:31:03 -0400
+X-MC-Unique: ygiYWLZBMjip6bXrMx67jQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7AAED101B047;
-	Fri, 15 Sep 2023 20:29:29 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 61E62185A739;
+	Fri, 15 Sep 2023 20:31:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1101A40F2D4B;
-	Fri, 15 Sep 2023 20:29:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4E7DA1D0B0;
+	Fri, 15 Sep 2023 20:31:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9387F194658C;
-	Fri, 15 Sep 2023 20:29:23 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0EB67194658C;
+	Fri, 15 Sep 2023 20:30:56 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
  [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 525BF1946588
- for <dm-devel@listman.corp.redhat.com>; Fri, 15 Sep 2023 20:29:22 +0000 (UTC)
+ ESMTP id 974FF1946588
+ for <dm-devel@listman.corp.redhat.com>; Fri, 15 Sep 2023 20:30:54 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2BEAD40F2D2A; Fri, 15 Sep 2023 20:29:22 +0000 (UTC)
+ id 510BB40F2D2A; Fri, 15 Sep 2023 20:30:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2479540F2D26
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 20:29:22 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 496AD40F2D26
+ for <dm-devel@redhat.com>; Fri, 15 Sep 2023 20:30:54 +0000 (UTC)
 Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-delivery-1.mimecast.com [205.139.110.120])
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 047E7811E8D
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 20:29:22 +0000 (UTC)
-Received: from omta038.useast.a.cloudfilter.net
- (omta038.useast.a.cloudfilter.net [44.202.169.37]) by relay.mimecast.com
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 283C1101A590
+ for <dm-devel@redhat.com>; Fri, 15 Sep 2023 20:30:54 +0000 (UTC)
+Received: from omta040.useast.a.cloudfilter.net
+ (omta040.useast.a.cloudfilter.net [44.202.169.39]) by relay.mimecast.com
  with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-520-6dDfyq2kOeK6lIbJYOFnZw-7; Fri, 15 Sep 2023 16:29:20 -0400
-X-MC-Unique: 6dDfyq2kOeK6lIbJYOFnZw-7
-Received: from eig-obgw-6005a.ext.cloudfilter.net ([10.0.30.201])
+ us-mta-411-jqKYq0cBPxaNvf8m5jl3Lw-4; Fri, 15 Sep 2023 16:30:52 -0400
+X-MC-Unique: jqKYq0cBPxaNvf8m5jl3Lw-4
+Received: from eig-obgw-5001a.ext.cloudfilter.net ([10.0.29.139])
  by cmsmtp with ESMTP
- id hAPcqOleYWU1chFPqqTYLS; Fri, 15 Sep 2023 20:27:50 +0000
+ id hAJpqXcTjyYOwhFSmq0oLL; Fri, 15 Sep 2023 20:30:52 +0000
 Received: from gator4166.hostgator.com ([108.167.133.22]) by cmsmtp with ESMTPS
- id hFPpqkBrDxtb5hFPqqfLYy; Fri, 15 Sep 2023 20:27:50 +0000
-X-Authority-Analysis: v=2.4 cv=IOERtyjG c=1 sm=1 tr=0 ts=6504be46
+ id hFSlq9kjTqs1vhFSlqTxdH; Fri, 15 Sep 2023 20:30:52 +0000
+X-Authority-Analysis: v=2.4 cv=OO40YAWB c=1 sm=1 tr=0 ts=6504befc
  a=1YbLdUo/zbTtOZ3uB5T3HA==:117 a=WzbPXH4gqzPVN0x6HrNMNA==:17
  a=OWjo9vPv0XrRhIrVQ50Ab3nP57M=:19 a=dLZJa+xiwSxG16/P+YVxDGlgEgI=:19
  a=IkcTkHD0fZMA:10 a=zNV7Rl7Rt7sA:10 a=wYkD_t78qR0A:10 a=NEAV23lmAAAA:8
  a=20KFwNOVAAAA:8 a=VwQbUJbxAAAA:8 a=cm27Pg_UAAAA:8 a=1rGUjaHSoLxGkM6IGjIA:9
  a=QEXdDO2ut3YA:10 a=AjGcO6oz07-iQ99wixmX:22 a=xmb-EsYY8bH0VWELuYED:22
-Received: from 187-162-21-192.static.axtel.net ([187.162.21.192]:51030
+Received: from 187-162-21-192.static.axtel.net ([187.162.21.192]:55922
  helo=[192.168.15.8])
  by gator4166.hostgator.com with esmtpsa (TLS1.2) tls
  TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 (Exim 4.96)
- (envelope-from <gustavo@embeddedor.com>) id 1qhFPo-002Jct-1H;
- Fri, 15 Sep 2023 15:27:48 -0500
-Message-ID: <6bf23c7f-9f7f-1d9e-9aa0-e163608447ae@embeddedor.com>
-Date: Fri, 15 Sep 2023 14:28:44 -0600
+ (envelope-from <gustavo@embeddedor.com>) id 1qhFSk-002MlD-1G;
+ Fri, 15 Sep 2023 15:30:50 -0500
+Message-ID: <030807ff-5fc0-3461-565e-be06bf0906dd@embeddedor.com>
+Date: Fri, 15 Sep 2023 14:31:46 -0600
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
  Thunderbird/102.13.0
 To: Kees Cook <keescook@chromium.org>, Alasdair Kergon <agk@redhat.com>
-References: <20230915200335.never.098-kees@kernel.org>
+References: <20230915200344.never.272-kees@kernel.org>
 From: "Gustavo A. R. Silva" <gustavo@embeddedor.com>
-In-Reply-To: <20230915200335.never.098-kees@kernel.org>
+In-Reply-To: <20230915200344.never.272-kees@kernel.org>
 X-AntiAbuse: This header was added to track abuse,
  please include it with any abuse report
 X-AntiAbuse: Primary Hostname - gator4166.hostgator.com
@@ -92,19 +92,19 @@ X-AntiAbuse: Sender Address Domain - embeddedor.com
 X-BWhitelist: no
 X-Source-IP: 187.162.21.192
 X-Source-L: No
-X-Exim-ID: 1qhFPo-002Jct-1H
+X-Exim-ID: 1qhFSk-002MlD-1G
 X-Source: 
 X-Source-Args: 
 X-Source-Dir: 
 X-Source-Sender: 187-162-21-192.static.axtel.net ([192.168.15.8])
- [187.162.21.192]:51030
+ [187.162.21.192]:55922
 X-Source-Auth: gustavo@embeddedor.com
-X-Email-Count: 81
+X-Email-Count: 91
 X-Org: HG=hgshared;ORG=hostgator
 X-Source-Cap: Z3V6aWRpbmU7Z3V6aWRpbmU7Z2F0b3I0MTY2Lmhvc3RnYXRvci5jb20=
 X-Local-Domain: yes
-X-CMAE-Envelope: MS4xfFT82+bAQcKRgb47UPtlxrdgiUOktdZfyBixs8Tyjp/geYUf7RkgVAkQYqugqdLHPIXUXzw1sZwJsXdhvGaZyIwXRr8VmvzE3BJiJEaljOa2rztd77Ge
- 43IFSAu3G/fxoK9ZJyfEN8m5qGX5cQOdZ0T5sTXi28gXsXpNPXpI6RuUod/hyXyrNSA+bJIGLNgDSsp8or3duM0no6Oj9m1AaXY=
+X-CMAE-Envelope: MS4xfI7i4ij9JyumCtc8ItSBk8ypxMqZj9VPjveA00osMgz5WVJubNhL1NK2MMheqzebjMxhb3+jsP+OzQsngibvE9u4AyU2w2vH/vsGLh29yP+0GxGKoZDG
+ PWvUrXZFuKMXXMNz0FOC32f7fPokoaIYyXmhOUKYuQspHeWJPCKMxgH5xtvvdHbaINzTwZyEodN4r6wCGOfB4kd1zPqY2wdqnWQ=
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -113,7 +113,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH] dm raid: Annotate struct raid_set with
+Subject: Re: [dm-devel] [PATCH] dm crypt: Annotate struct crypt_config with
  __counted_by
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -132,7 +132,7 @@ Cc: Mike Snitzer <snitzer@kernel.org>, llvm@lists.linux.dev,
  linux-hardening@vger.kernel.org, Tom Rix <trix@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: embeddedor.com
 Content-Language: en-US
@@ -148,7 +148,7 @@ On 9/15/23 14:03, Kees Cook wrote:
 > (for array indexing) and CONFIG_FORTIFY_SOURCE (for strcpy/memcpy-family
 > functions).
 > 
-> As found with Coccinelle[1], add __counted_by for struct raid_set.
+> As found with Coccinelle[1], add __counted_by for struct crypt_config.
 > 
 > [1] https://github.com/kees/kernel-tools/blob/trunk/coccinelle/examples/counted_by.cocci
 > 
@@ -164,22 +164,22 @@ Thanks
 Gustavo
 
 > ---
->   drivers/md/dm-raid.c | 2 +-
+>   drivers/md/dm-crypt.c | 2 +-
 >   1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> index 5f9991765f27..9755788e8b78 100644
-> --- a/drivers/md/dm-raid.c
-> +++ b/drivers/md/dm-raid.c
-> @@ -254,7 +254,7 @@ struct raid_set {
->   		int mode;
->   	} journal_dev;
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index f2662c21a6df..f276e9460feb 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -224,7 +224,7 @@ struct crypt_config {
+>   	struct mutex bio_alloc_lock;
 >   
-> -	struct raid_dev dev[];
-> +	struct raid_dev dev[] __counted_by(raid_disks);
+>   	u8 *authenc_key; /* space for keys in authenc() format (if used) */
+> -	u8 key[];
+> +	u8 key[] __counted_by(key_size);
 >   };
 >   
->   static void rs_config_backup(struct raid_set *rs, struct rs_layout *l)
+>   #define MIN_IOS		64
 
 --
 dm-devel mailing list
