@@ -4,94 +4,85 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 15A40EEAA42
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Sep 2023 03:34:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E1AB7EE021C
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Sep 2023 04:39:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694748856;
+	s=mimecast20190719; t=1694752753;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=+oKTd2fx3I05+CSZSAzPIohYh69k8dEB6vV1HWr1+cQ=;
-	b=gXJ/L2nJN38XY7vhnInRALlQC5GH+L4eUa+s8R55/RCItzFC9QhF/LWnwE8q+SV3+juDiz
-	G+/iXoA7VKuqvQPwcLkdtjp19EPClWa6SA0EQNQ8HChuH7/QUqo1vEFL6HBTI/Afuh73KT
-	IbVLGwzzqBAgDuIFaxpqxSBsXZ5gptM=
+	bh=9dLIXDFV9GHetyFkgmzQgEk9pXiNFSltlHhoUkDjF+U=;
+	b=Hob+VhkNA54Ac68cTPx0ala8Nv3+7bcwQ2ylJHC3lJKvSGPz7LPfv/5mSkzQAxwBU2ASDw
+	ZXTGyscAxW/cnuyQAqc4kEnVGZEPPG2MujHwHDYi2Dqcaie+yBeNN1YfMndTztbfpMGP4E
+	1ZlrwzMzOadHmOXwIjscbUd0zT2VoFg=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-578-4TQLOpxnP56RSVNHVdzUhQ-1; Thu, 14 Sep 2023 23:34:13 -0400
-X-MC-Unique: 4TQLOpxnP56RSVNHVdzUhQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-526-qYbnOedtN3yLWIpwWlDcnA-1; Fri, 15 Sep 2023 00:39:09 -0400
+X-MC-Unique: qYbnOedtN3yLWIpwWlDcnA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A4ECE90636A;
-	Fri, 15 Sep 2023 03:34:11 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9760D8678C1;
+	Fri, 15 Sep 2023 04:39:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1291B40C6EA8;
-	Fri, 15 Sep 2023 03:34:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 09AB72026D4B;
+	Fri, 15 Sep 2023 04:39:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A7DC0194658C;
-	Fri, 15 Sep 2023 03:34:06 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 99B67194658C;
+	Fri, 15 Sep 2023 04:38:50 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 114621946588
- for <dm-devel@listman.corp.redhat.com>; Fri, 15 Sep 2023 03:34:05 +0000 (UTC)
+ ESMTP id A6C4D1946588
+ for <dm-devel@listman.corp.redhat.com>; Fri, 15 Sep 2023 04:38:49 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id F17112026D68; Fri, 15 Sep 2023 03:34:04 +0000 (UTC)
+ id 5579C40C6EBF; Fri, 15 Sep 2023 04:38:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E9F172026D4B
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 03:34:04 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CACF288B7A1
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 03:34:04 +0000 (UTC)
-Received: from mail-qv1-f45.google.com (mail-qv1-f45.google.com
- [209.85.219.45]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-629-EtBW6rP7NmyXceqv4pZ6pw-1; Thu, 14 Sep 2023 23:34:02 -0400
-X-MC-Unique: EtBW6rP7NmyXceqv4pZ6pw-1
-Received: by mail-qv1-f45.google.com with SMTP id
- 6a1803df08f44-65627d499e1so5678106d6.0
- for <dm-devel@redhat.com>; Thu, 14 Sep 2023 20:34:02 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1694748842; x=1695353642;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
- :message-id:reply-to;
- bh=iaRpWeQBHF9xrScwEaYmj1hDO7gFWhFOcR6aMt6yIR4=;
- b=vAx97C9LAy9Yiv7n1Zu8EyMNmsjr95oRB17roh7sO4X2IkYz4C1xhPPNuOsZdkNWU7
- sHaS143MVF65UsQu1Mt6VeqBL8EyxaaXx4XzNclItZ9Be3GVZ6YGktddmJRnhQS+Lvtt
- bc2wVnfxvNtfiCrfR0qzpYnr/7GBl42MBxBVBxDU0Wp2SUUsEEXLNt1lWPO84jDR0xbW
- tsSpuw8It6LWZvOkbAeCWmITYkEdiCbqzBzKmOg8GEWSSXeDxKR4y0AWOmljaXdozpKw
- 389kVfmuVxtE2E69JiCVyj8hwfaOOrqTIscM8mvKbCPzymQqz5sjcxl3cSz4rYEPXqWG
- mRsQ==
-X-Gm-Message-State: AOJu0YyfZeA1j3xBhhN1QjUF1eT7dHQixA4Cyujz0vDY7+unqoi4dcGq
- 5cCfHpaR2YXy8MNRZ/922G3AbmI=
-X-Google-Smtp-Source: AGHT+IEBEYKRA2Zo7KXzkVVYdgYjkcKhhHD3gv62cQKEjoTRsB89tTRb5JOZnctFnGbpqENER6tIsg==
-X-Received: by 2002:a0c:b4c9:0:b0:635:f899:660b with SMTP id
- h9-20020a0cb4c9000000b00635f899660bmr523466qvf.36.1694748842373; 
- Thu, 14 Sep 2023 20:34:02 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net.
- [68.160.141.91]) by smtp.gmail.com with ESMTPSA id
- e3-20020ad44183000000b0063d30c10f1esm781581qvp.70.2023.09.14.20.34.01
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 14 Sep 2023 20:34:01 -0700 (PDT)
-Date: Thu, 14 Sep 2023 23:34:00 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: kernel test robot <lkp@intel.com>
-Message-ID: <ZQPQqCzlu3AUtumF@redhat.com>
-References: <202309151023.QPBCNoCN-lkp@intel.com>
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 4E8AE40C6EA8
+ for <dm-devel@redhat.com>; Fri, 15 Sep 2023 04:38:39 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 29E64102F23B
+ for <dm-devel@redhat.com>; Fri, 15 Sep 2023 04:38:39 +0000 (UTC)
+Received: from mgamail.intel.com (mgamail.intel.com [134.134.136.31]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-530-W_XdN7rQOnWNnZv1DnZrgQ-1; Fri, 15 Sep 2023 00:38:34 -0400
+X-MC-Unique: W_XdN7rQOnWNnZv1DnZrgQ-1
+X-IronPort-AV: E=McAfee;i="6600,9927,10833"; a="443218052"
+X-IronPort-AV: E=Sophos;i="6.02,148,1688454000"; d="scan'208";a="443218052"
+Received: from fmsmga005.fm.intel.com ([10.253.24.32])
+ by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 14 Sep 2023 21:33:38 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10833"; a="1075659774"
+X-IronPort-AV: E=Sophos;i="6.02,148,1688454000"; d="scan'208";a="1075659774"
+Received: from lkp-server02.sh.intel.com (HELO 9ef86b2655e5) ([10.239.97.151])
+ by fmsmga005.fm.intel.com with ESMTP; 14 Sep 2023 21:33:36 -0700
+Received: from kbuild by 9ef86b2655e5 with local (Exim 4.96)
+ (envelope-from <lkp@intel.com>) id 1qh0WK-0002R5-17;
+ Fri, 15 Sep 2023 04:33:32 +0000
+Date: Fri, 15 Sep 2023 12:32:17 +0800
+From: kernel test robot <lkp@intel.com>
+To: Joe Thornber <ejt@redhat.com>
+Message-ID: <202309151251.TkVrLtEd-lkp@intel.com>
 MIME-Version: 1.0
-In-Reply-To: <202309151023.QPBCNoCN-lkp@intel.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: Re: [dm-devel] [device-mapper-dm:for-next 2/4]
- drivers/md/persistent-data/dm-extent-allocator.c:530:24: error: expected ';
- ' after expression
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+Subject: [dm-devel] [device-mapper-dm:for-next 2/4]
+ drivers/md/persistent-data/dm-extent-allocator.c:88: warning: Function
+ parameter or member 'n' not described in '__free_node'
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,46 +94,197 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Joe Thornber <ejt@redhat.com>, llvm@lists.linux.dev, dm-devel@redhat.com,
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
  oe-kbuild-all@lists.linux.dev
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
+X-Mimecast-Originator: intel.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Sep 14 2023 at 10:54P -0400,
-kernel test robot <lkp@intel.com> wrote:
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
+head:   805d736ee48c10d8770f998127887795ffb0106f
+commit: 064fc5e0e09b49033693b07003c142d0be27a009 [2/4] dm persistent data: Introduce extent allocator
+config: riscv-defconfig (https://download.01.org/0day-ci/archive/20230915/202309151251.TkVrLtEd-lkp@intel.com/config)
+compiler: riscv64-linux-gcc (GCC) 13.2.0
+reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20230915/202309151251.TkVrLtEd-lkp@intel.com/reproduce)
 
-> tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
-> head:   edcabec81f12dfc9b86b05084bba3232efdc5e4e
-> commit: 59d814674dd66fc64ba229605174bfe0b8e566d5 [2/4] dm persistent data: Introduce extent allocator
-> config: x86_64-rhel-8.3-rust (https://download.01.org/0day-ci/archive/20230915/202309151023.QPBCNoCN-lkp@intel.com/config)
-> compiler: clang version 16.0.4 (https://github.com/llvm/llvm-project.git ae42196bc493ffe877a7e3dff8be32035dea4d07)
-> reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20230915/202309151023.QPBCNoCN-lkp@intel.com/reproduce)
-> 
-> If you fix the issue in a separate patch/commit (i.e. not just a new version of
-> the same patch/commit), kindly add following tags
-> | Reported-by: kernel test robot <lkp@intel.com>
-> | Closes: https://lore.kernel.org/oe-kbuild-all/202309151023.QPBCNoCN-lkp@intel.com/
-> 
-> All errors (new ones prefixed by >>):
-> 
-> >> drivers/md/persistent-data/dm-extent-allocator.c:530:24: error: expected ';' after expression
->            spin_unlock(&ea->lock)
->                                  ^
->                                  ;
->    drivers/md/persistent-data/dm-extent-allocator.c:544:24: error: expected ';' after expression
->            spin_unlock(&ea->lock)
->                                  ^
->                                  ;
->    2 errors generated.
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Reported-by: kernel test robot <lkp@intel.com>
+| Closes: https://lore.kernel.org/oe-kbuild-all/202309151251.TkVrLtEd-lkp@intel.com/
+
+All warnings (new ones prefixed by >>):
+
+>> drivers/md/persistent-data/dm-extent-allocator.c:88: warning: Function parameter or member 'n' not described in '__free_node'
+>> drivers/md/persistent-data/dm-extent-allocator.c:88: warning: Excess function parameter 'node' description in '__free_node'
+>> drivers/md/persistent-data/dm-extent-allocator.c:111: warning: Cannot understand  * @ea: Pointer to the extent allocator.
+    on line 111 - I thought it was a doc line
+>> drivers/md/persistent-data/dm-extent-allocator.c:217: warning: Function parameter or member 'flags' not described in '__prealloc_nodes'
+>> drivers/md/persistent-data/dm-extent-allocator.c:313: warning: Function parameter or member 'n' not described in '__split_leaf'
+>> drivers/md/persistent-data/dm-extent-allocator.c:313: warning: Excess function parameter 'node' description in '__split_leaf'
 
 
-These were my fault.. Fixed, sorry about the noise.
+vim +88 drivers/md/persistent-data/dm-extent-allocator.c
+
+    81	
+    82	/**
+    83	 * __free_node - Frees a node in the extent allocator.
+    84	 * @ea: Pointer to the extent allocator.
+    85	 * @node: Node to free.
+    86	 */
+    87	static inline void __free_node(struct dm_extent_allocator *ea, struct node *n)
+  > 88	{
+    89		struct list_head *l = (struct list_head *)n;
+    90	
+    91		list_add(l, &ea->free_nodes);
+    92		ea->nr_free_nodes++;
+    93	}
+    94	
+    95	/**
+    96	 * __alloc_node - Allocates a node from the extent allocator.
+    97	 * @ea: Pointer to the extent allocator.
+    98	 */
+    99	static inline struct node *__alloc_node(struct dm_extent_allocator *ea)
+   100	{
+   101		struct list_head *l;
+   102	
+   103		l = ea->free_nodes.next;
+   104		list_del(l);
+   105		ea->nr_free_nodes--;
+   106	
+   107		return (struct node *) l;
+   108	}
+   109	
+   110	/**
+ > 111	 * @ea: Pointer to the extent allocator.
+   112	 * @node: Index of the node to query.
+   113	 *
+   114	 * Returns: The number of free blocks in the node.
+   115	 */
+   116	static inline uint64_t __nr_free_blocks(struct node *n)
+   117	{
+   118		if (!n)
+   119			return 0;
+   120	
+   121		if (n->is_leaf)
+   122			return n->end - n->begin;
+   123		else
+   124			return n->u.internal.nr_free;
+   125	}
+   126	
+   127	/**
+   128	 * __free_tree - Frees all nodes in a tree.
+   129	 * @ea: Pointer to the extent allocator.
+   130	 * @n: Pointer to the root node of the tree to free.
+   131	 */
+   132	static void __free_tree(struct dm_extent_allocator *ea, struct node *n)
+   133	{
+   134		if (!n)
+   135			return;
+   136	
+   137		if (n->is_leaf)
+   138			__free_node(ea, n);
+   139		else {
+   140			__free_tree(ea, n->u.internal.left);
+   141			__free_tree(ea, n->u.internal.right);
+   142		}
+   143	}
+   144	
+   145	/**
+   146	 * __setup_initial_root - Sets up the initial root node for the extent allocator.
+   147	 * @ea: Pointer to the extent allocator.
+   148	 *
+   149	 * The root node is a leaf node that spans the entire device.
+   150	 */
+   151	static void __setup_initial_root(struct dm_extent_allocator *ea)
+   152	{
+   153		struct node *n;
+   154		struct leaf *l;
+   155	
+   156		n = ea->root = __alloc_node(ea);
+   157		n->is_left_child = true;
+   158		n->is_leaf = true;
+   159		n->nr_holders = 0;
+   160		n->begin = 0;
+   161		n->end = ea->nr_blocks;
+   162		n->parent = NULL;
+   163	
+   164		l = &n->u.leaf;
+   165		INIT_LIST_HEAD(&l->holders);
+   166	}
+   167	
+   168	/**
+   169	 * free_node_list - Frees a list of nodes.
+   170	 * @l: Pointer to the list head of the nodes to free.
+   171	 */
+   172	static void free_node_list(struct list_head *l)
+   173	{
+   174		struct list_head *e, *tmp;
+   175	
+   176		list_for_each_safe(e, tmp, l) {
+   177			list_del(e);
+   178			kfree(e);
+   179		}
+   180	}
+   181	
+   182	/**
+   183	 * alloc_node_list - Allocates a list of nodes.
+   184	 * @nr: Number of nodes to allocate.
+   185	 * @flags: Flags to pass to kmalloc.
+   186	 * @result: Pointer to the list head to store the allocated nodes.
+   187	 *
+   188	 * Used to initialise the free list of nodes.
+   189	 * Returns: 0 on success, or -ENOMEM if allocation failed.
+   190	 */
+   191	static int alloc_node_list(unsigned nr, int flags, struct list_head *result)
+   192	{
+   193		int i;
+   194	
+   195		INIT_LIST_HEAD(result);
+   196	
+   197		for (i = 0; i < nr; i++) {
+   198			struct node *n = kmalloc(sizeof(*n), flags);
+   199			struct list_head *l = (struct list_head *) n;
+   200			if (!n) {
+   201				free_node_list(result);
+   202				return -ENOMEM;
+   203			}
+   204	
+   205			list_add(l, result);
+   206		}
+   207	
+   208		return 0;
+   209	}
+   210	
+   211	/**
+   212	 * __prealloc_nodes - Preallocates nodes for allocation contexts.
+   213	 * @ea: Pointer to the extent allocator.
+   214	 * @nr: Number of nodes to preallocate.
+   215	 */
+   216	static void __prealloc_nodes(struct dm_extent_allocator *ea, unsigned nr, int flags)
+ > 217	{
+   218		int r;
+   219		struct list_head new_nodes;
+   220	
+   221		r = alloc_node_list(nr, flags, &new_nodes);
+   222		if (!r) {
+   223			struct list_head *e, *tmp;
+   224			list_for_each_safe(e, tmp, &new_nodes) {
+   225				list_del(e);
+   226				__free_node(ea, (struct node *)e);
+   227			}
+   228			ea->nr_preallocated_nodes += nr;
+   229		}
+   230	}
+   231	
+
+-- 
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
 
 --
 dm-devel mailing list
