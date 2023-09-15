@@ -1,106 +1,106 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 95A08CD379F
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Sep 2023 20:04:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4253CCD37A7
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Sep 2023 20:04:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1694808244;
+	s=mimecast20190719; t=1694808245;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=rdDc7RzwDt1mM76D+ew8+mMX/drvHZYF5P7gVTKxvIo=;
-	b=ZHb9UHOfpbFqz54tyDGkX+MUk272hplTq8xyj1J/CCwJ9b8sh2dEzwCS+RkWDRGOwYy9+b
-	+FiQC4g3pvwuoQrssBsDVWwrTgUglyFOanneKcvm+lSSqHEYwiWPH8urYArOj2tpsMLxJW
-	pI9G6/9aNeNTZ+ptQZojxGyAI+wZE08=
+	bh=PM1lVnbiQMvPMcvrDSbUQinfcHgD+tfdtUfLcQd9eGo=;
+	b=WjHrreKKHl/FLhqqGWh/gYs6ii58s3CLQHIFeLoGZ3+RSSCE9hoo+yawFJ0Vt64am2Szso
+	ussfxz8q5hK9PhiEUU15T/GfKd4c7eDPeMD6/ZA6RkyyobbpXGVp96X0GTvgfExnHgrYlB
+	Ne1bNAJcKzI9OKY3wIdvzrJTEwthfzM=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-101-JIvn2Y4rOPWL77xfD-hyNg-1; Fri, 15 Sep 2023 16:04:02 -0400
-X-MC-Unique: JIvn2Y4rOPWL77xfD-hyNg-1
+ us-mta-500-_IIgFgNrO7KHe1AMJToC2g-1; Fri, 15 Sep 2023 16:04:02 -0400
+X-MC-Unique: _IIgFgNrO7KHe1AMJToC2g-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8E4F981707A;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8E4BB1875045;
 	Fri, 15 Sep 2023 20:04:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6F5CD21B2413;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 51C6C21B20B1;
 	Fri, 15 Sep 2023 20:03:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 47931194658F;
-	Fri, 15 Sep 2023 20:03:59 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 19EAE194658C;
+	Fri, 15 Sep 2023 20:03:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3C4241946588
- for <dm-devel@listman.corp.redhat.com>; Fri, 15 Sep 2023 20:03:58 +0000 (UTC)
+ ESMTP id 8787F1946588
+ for <dm-devel@listman.corp.redhat.com>; Fri, 15 Sep 2023 20:03:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 04EB821CAC6B; Fri, 15 Sep 2023 20:03:53 +0000 (UTC)
+ id 61FFF1054F83; Fri, 15 Sep 2023 20:03:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F292A21CAC76
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 20:03:52 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-delivery-1.mimecast.com [205.139.110.120])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 5A2821054F81
+ for <dm-devel@redhat.com>; Fri, 15 Sep 2023 20:03:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D36CF810BDB
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 20:03:52 +0000 (UTC)
-Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com
- [209.85.214.182]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AE172811E88
+ for <dm-devel@redhat.com>; Fri, 15 Sep 2023 20:03:41 +0000 (UTC)
+Received: from mail-pf1-f173.google.com (mail-pf1-f173.google.com
+ [209.85.210.173]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-140-Nvn4xExuODq1mnv4TTaBEA-1; Fri, 15 Sep 2023 16:03:48 -0400
-X-MC-Unique: Nvn4xExuODq1mnv4TTaBEA-1
-Received: by mail-pl1-f182.google.com with SMTP id
- d9443c01a7336-1c4194f7635so14194205ad.0
- for <dm-devel@redhat.com>; Fri, 15 Sep 2023 13:03:48 -0700 (PDT)
+ us-mta-628-zHhumgEHMWi0RcDh7Ufx2w-1; Fri, 15 Sep 2023 16:03:39 -0400
+X-MC-Unique: zHhumgEHMWi0RcDh7Ufx2w-1
+Received: by mail-pf1-f173.google.com with SMTP id
+ d2e1a72fcca58-68fbbea0dfeso2136591b3a.0
+ for <dm-devel@redhat.com>; Fri, 15 Sep 2023 13:03:38 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1694808227; x=1695413027;
+ d=1e100.net; s=20230601; t=1694808218; x=1695413018;
  h=content-transfer-encoding:mime-version:message-id:date:subject:cc
  :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
  :reply-to;
- bh=585ELGKH6mcU0nuyAJeZCpFUeKhNPgDgSqqVI53K3fs=;
- b=kZRpO18OZ3x0z6bDZVsvGyE0Xx+ZxmQ4HrPbtdMvDnrx9qE8lOSQw2VRfL/PxnvtJ5
- mR8OqN7UteMC7SX75sV9Ot6xuqFcK6Dmjdp/2HMwacg9hWFoHsnRBuAv3qa5UIdOp6lL
- M3tXQzEBw/QIhV31vmaPdXiMkh6nIMfzFVizMRhLv6ksJhkKEK+ojkJDYO8IQy9Ag8hf
- TveVdnHugORTZWi8xJU8WHQUytijkh21QeQdiFH7dIjLSwblK29KrsUgBLrdZIZ9gJlU
- ry4B6CMeytubxuusPktGN+VMlVXGnQMr4gvhp3pTAh0nGrlj8IaL2C1yJMLm/FEUCmEM
- Sr1g==
-X-Gm-Message-State: AOJu0YzYoSeeki7pF2PDmYNnBWcDBgAiasWs4GxhqaqmbqZHMVfBFOAK
- 4nP2EeuHr0Ys8Pv1NioIFKY3+w==
-X-Google-Smtp-Source: AGHT+IGxirG4c1+wNpjD+C0ivacitJE7me+i97dg7mLg1+2Am2AXQTOZsLaZMKFyejKoHm2lSiLWUg==
-X-Received: by 2002:a17:903:2311:b0:1c3:81b7:2385 with SMTP id
- d17-20020a170903231100b001c381b72385mr4018353plh.11.1694808227690; 
- Fri, 15 Sep 2023 13:03:47 -0700 (PDT)
+ bh=3EcXc4p/OZvjhpZjniZGrlHnagHBjkD/G1KmRx4RQEY=;
+ b=j6hWeF5XtHO2GxZcCwAQUvh9AX5gDbMklHeTWKshAZ2Cp27cHs6l0PkbraUOtrnmHU
+ Y4gNHWTBwJAdsayF5zxSxgM2V7lltkjlLXhauRcevKGXdyu9harI2b2MHlA0WUjxEGa0
+ Oi40k4kppcKEsroC/Xg9Iy6TkCkIkDCgR7yR3YRkD2MN4nTRpEXcC5ymgwBqOxDKZhld
+ RczupVLk/hejR9rKu7MFTHF+1TnxrB+js3gFqyQnYcEZme68YQ4yDirZzcogIB/xuKNH
+ 3AyL70pl64rYfJk4+sbZBJf0Za56dRjvx8b9KbkkzUyn2YcTXA62B5ho1HOcXnVQreQo
+ KHSQ==
+X-Gm-Message-State: AOJu0YwCV7dWP6Hde/NiO0X0Si8i4KBBGm0T6Ki6FhvmNNhsCykYFJaW
+ gA8V1qgc8ar0hJV/Ta5/YyRefw==
+X-Google-Smtp-Source: AGHT+IHzIIRXAsC49F/G94cgVOd9c2WBf+CMYStzd0rWb8+BhqsZLM2DtQPyl2+9IiDNZBy2vC9pbA==
+X-Received: by 2002:a05:6a00:c90:b0:68f:e0f0:85f4 with SMTP id
+ a16-20020a056a000c9000b0068fe0f085f4mr2391932pfv.25.1694808218030; 
+ Fri, 15 Sep 2023 13:03:38 -0700 (PDT)
 Received: from www.outflux.net (198-0-35-241-static.hfc.comcastbusiness.net.
  [198.0.35.241]) by smtp.gmail.com with ESMTPSA id
- je20-20020a170903265400b001bf044dc1a6sm3488624plb.39.2023.09.15.13.03.47
+ q15-20020a62e10f000000b00682c1db7551sm3307074pfh.49.2023.09.15.13.03.37
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 15 Sep 2023 13:03:47 -0700 (PDT)
+ Fri, 15 Sep 2023 13:03:37 -0700 (PDT)
 From: Kees Cook <keescook@chromium.org>
 To: Alasdair Kergon <agk@redhat.com>
-Date: Fri, 15 Sep 2023 13:03:45 -0700
-Message-Id: <20230915200344.never.272-kees@kernel.org>
+Date: Fri, 15 Sep 2023 13:03:36 -0700
+Message-Id: <20230915200335.never.098-kees@kernel.org>
 MIME-Version: 1.0
-X-Developer-Signature: v=1; a=openpgp-sha256; l=1117; i=keescook@chromium.org; 
+X-Developer-Signature: v=1; a=openpgp-sha256; l=1112; i=keescook@chromium.org; 
  h=from:subject:message-id;
- bh=2J6fBiPdZIR8mGnEk0bNvAHhXLvKbIZhyM289hn91M0=; 
- b=owEBbQKS/ZANAwAKAYly9N/cbcAmAcsmYgBlBLihfwsK6T3HOV1j4wnd25zaVLF5WQpYGwyS+
- 5kE88zkP0eJAjMEAAEKAB0WIQSlw/aPIp3WD3I+bhOJcvTf3G3AJgUCZQS4oQAKCRCJcvTf3G3A
- JtSpD/9zzSwBgu0DciTVR5Kuff9eIrmBXAQb1lB9CqCovFopZkSEQY5tNgaZ78xwjchx+SUL0+w
- U596UPQfpyHBDuBCDdrWmn59UUrEv7daZ8bnNYszDjqEEloDL9evqkm1heUI+1NZHp3hBGJMY1I
- EPN/1/SnJZemS9I2Ehsn50giqtGvagxkRx4RTYc43lLCi8lyzkQpyy4aWuunQZ9b/jooQ29YCRu
- 0qTTTLUZM2YFI0C6XmnedeWXMaxGCHs/UC/+f2Pa/lnMg3D8cahgzy1Meee+78H4cJCjFKRM8e8
- WfB0QQeYwFx3HGHCcMgtArJ8KYAFzMHtm7MqCvqz8smhDz+Tt6gYqVOgFvC1LUHK9dwlsPEVjg1
- mGDPElivAoJ2+o2BHgDTbzDcWqqQLoENNm2VzQWQfKmprPY/mlLkzPP8x1RWz72qpmm0qWLp/ep
- 1Gf+h0kU5Mxb/1lfNNO7kryPvP1ucJ42ibtEOAszDV/9sy4qkmCInNjCBni+HPeRYChSAwjwQV5
- Giq8/cHs+mSSMRPvoBCFcwfHVqQY+zPw8VuhEnjXYnAGtAHiW6nz91S5ysEHuXjmdIZbWNmHbLT
- h55IMoKtjCzJ3T/HKqcJCJ61XbHGSK92I6vRuEyJip7zWe6rUlExh+M8SUVR6nsQ5lM9wIdus/R
- Dbhko43 8ezYT+5g==
+ bh=3ZvYiEsZZa56aKWu6y0PnTbRMpo38Aw/L94IEjhb4Tc=; 
+ b=owEBbQKS/ZANAwAKAYly9N/cbcAmAcsmYgBlBLiYTyy1xh5VON0ySJo9kFErTAbQFWQI95vz1
+ 9vW2hZ7e5yJAjMEAAEKAB0WIQSlw/aPIp3WD3I+bhOJcvTf3G3AJgUCZQS4mAAKCRCJcvTf3G3A
+ JplJD/9wyOg+Xy09KCd38SWSRoERMIlg+91bNOk9bfpY2aBh3lv91ulrX53nyRunUA02GCG0EfT
+ KAEZKI/2vR7K3DBBGzndXE8/eZki/GOdVUVAeIotscDIQCswSFeVrPWcOV3gTKNHmwDOJNqOhae
+ PXNwG5Fgv7FNEY68jEyyJq4BJdATKz4lEL2woZ62IGNRNGGyUT3Q6evSPpB9naGIxdq7i7gJLHa
+ gmgONPB6bRaS7U+Q5O3fAbI/UjYhNV6MUMaAZ/6yxpkewG6Hb5yTuQ2/YXGsq+XrBOs39PS5vNe
+ CQHDFiZIzLg+vEWzFlW91THnSxrlYY2q6TLb0Me7nkxnaPKsKFuFzwL9rq25nET6JP8hINETJqP
+ sKfWeuhy321LLzTGS0XNBrP4VFsDkLPcCtHrp7CfWyeiXBKQrr42xZF+wKEuBTjbW0PEgo7bQjl
+ bT6fQJjM95fDf2EJQOHoz5ttA5z/PHK5QF973oyfgK6eq7AzwKyj9oFFf4Y4GF9wu+Z/PNq04hS
+ D2n58sWCRuH4/7eJMNIl5O5bAZATtf3lObXLRtL5OJXZq58zG/uMp1o40da7W/RtbTMPq3Hc2uT
+ XGJPSvkjpqXA3X/A86g6vAHjsFuoJZce8yvX4diqSLCWDA+NivlRwzcXDgEyaPnbMxxonfsAsaT
+ K5u/Ioo p9oiGWzQ==
 X-Developer-Key: i=keescook@chromium.org; a=openpgp;
  fpr=A5C3F68F229DD60F723E6E138972F4DFDC6DC026
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -110,8 +110,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: [dm-devel] [PATCH] dm crypt: Annotate struct crypt_config with
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: [dm-devel] [PATCH] dm raid: Annotate struct raid_set with
  __counted_by
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -143,7 +143,7 @@ their accesses bounds-checked at run-time checking via CONFIG_UBSAN_BOUNDS
 (for array indexing) and CONFIG_FORTIFY_SOURCE (for strcpy/memcpy-family
 functions).
 
-As found with Coccinelle[1], add __counted_by for struct crypt_config.
+As found with Coccinelle[1], add __counted_by for struct raid_set.
 
 [1] https://github.com/kees/kernel-tools/blob/trunk/coccinelle/examples/counted_by.cocci
 
@@ -152,22 +152,22 @@ Cc: Mike Snitzer <snitzer@kernel.org>
 Cc: dm-devel@redhat.com
 Signed-off-by: Kees Cook <keescook@chromium.org>
 ---
- drivers/md/dm-crypt.c | 2 +-
+ drivers/md/dm-raid.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index f2662c21a6df..f276e9460feb 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -224,7 +224,7 @@ struct crypt_config {
- 	struct mutex bio_alloc_lock;
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 5f9991765f27..9755788e8b78 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -254,7 +254,7 @@ struct raid_set {
+ 		int mode;
+ 	} journal_dev;
  
- 	u8 *authenc_key; /* space for keys in authenc() format (if used) */
--	u8 key[];
-+	u8 key[] __counted_by(key_size);
+-	struct raid_dev dev[];
++	struct raid_dev dev[] __counted_by(raid_disks);
  };
  
- #define MIN_IOS		64
+ static void rs_config_backup(struct raid_set *rs, struct rs_layout *l)
 -- 
 2.34.1
 
