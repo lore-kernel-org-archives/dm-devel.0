@@ -4,99 +4,94 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4F095CE79AE
-	for <dm-devel@archiver.kernel.org>; Wed, 20 Sep 2023 07:27:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 54C16CE79AC
+	for <dm-devel@archiver.kernel.org>; Wed, 20 Sep 2023 08:53:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1695194837;
+	s=mimecast20190719; t=1695199983;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=RWQ4IP3rNCYTZOQ3YbfUpXoRtHisKOUdAACemhnVjsc=;
-	b=d7138tl/liB8jGtEaEhd5RP+FapiHmA/lUWzJsRVbhvFfr1eDV1u+d1WtXUD5E3mTbDRym
-	eqbuqG3xW29EgGGzJM9rPTGBknDf+fcz2TsJzxlvz46uZpn28IVgLEIH42zeZAFewzTDI7
-	fLylHECnBGBFeCkONO0BmBLzh+hmOXE=
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=xbEyqNQ5+dgciOkl3n+pq9DOo8rTIZIxCoMQCOrk8EM=;
+	b=WtLXFHD6iwluXPmkBodlOk9DY6pezb51R9OQ4xrPzUHK3b8zA62o2bMkH6yDkJf4AT6Qz3
+	qWebfIVnvUDm0ZrvdQ9hSYe7HpE1H2ILc4R6JYueg8G3nyxFAHSCtHv+ixjlSirCUC42gR
+	pF9q9iWt04m3CzrlVMpoLH7Hfox3MK4=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-201-z6gY769QO16e3JigNMIqvQ-1; Wed, 20 Sep 2023 03:27:08 -0400
-X-MC-Unique: z6gY769QO16e3JigNMIqvQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-265-6dZPqgcLPmesgf71SE7mPg-1; Wed, 20 Sep 2023 04:52:59 -0400
+X-MC-Unique: 6dZPqgcLPmesgf71SE7mPg-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2D2221875048;
-	Wed, 20 Sep 2023 07:27:06 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 07039101B047;
+	Wed, 20 Sep 2023 08:52:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 502E720268C8;
-	Wed, 20 Sep 2023 07:27:04 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EA766492B16;
+	Wed, 20 Sep 2023 08:52:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0E3B9194658F;
-	Wed, 20 Sep 2023 07:27:04 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 814FB194658D;
+	Wed, 20 Sep 2023 08:52:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2B620194658D
- for <dm-devel@listman.corp.redhat.com>; Wed, 20 Sep 2023 05:07:19 +0000 (UTC)
+ ESMTP id DBC59194658D
+ for <dm-devel@listman.corp.redhat.com>; Wed, 20 Sep 2023 08:46:57 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 04B81140E962; Wed, 20 Sep 2023 05:07:19 +0000 (UTC)
+ id 8A54E492B05; Wed, 20 Sep 2023 08:46:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F1072140E950
- for <dm-devel@redhat.com>; Wed, 20 Sep 2023 05:07:18 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 82FAB492C37
+ for <dm-devel@redhat.com>; Wed, 20 Sep 2023 08:46:41 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CA632802D35
- for <dm-devel@redhat.com>; Wed, 20 Sep 2023 05:07:18 +0000 (UTC)
-Received: from mail-pf1-f174.google.com (mail-pf1-f174.google.com
- [209.85.210.174]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9E75A185A79B
+ for <dm-devel@redhat.com>; Wed, 20 Sep 2023 08:46:57 +0000 (UTC)
+Received: from mail-pf1-f199.google.com (mail-pf1-f199.google.com
+ [209.85.210.199]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-37-A_IE10xoOfyf4sjk6q3KbA-1; Wed, 20 Sep 2023 01:07:13 -0400
-X-MC-Unique: A_IE10xoOfyf4sjk6q3KbA-1
-Received: by mail-pf1-f174.google.com with SMTP id
- d2e1a72fcca58-690ba63891dso1725913b3a.2
- for <dm-devel@redhat.com>; Tue, 19 Sep 2023 22:07:12 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=broadcom.com; s=google; t=1695186432; x=1695791232; darn=redhat.com;
- h=cc:to:subject:message-id:date:thread-index:mime-version:in-reply-to
- :references:from:from:to:cc:subject:date:message-id:reply-to;
- bh=S+ZgL1NFMc0E7k5YU69gOk6saC2YzaTRhl55Gi7YmDQ=;
- b=EtoEQYePNdfD+2zXZL4sM7azT83c+xeYx2ci5cGtXbQ7zwf+lDNHcfA/nPkSfXtzXs
- 9SU5joQXR0JF90F0iftR2/Qn7hdlb2XtvtaVuYbglm4Y0ljVwUBK5D2KE8471YhTLxNB
- 6KKAi8guDQV1HvxX4jRwMbTEEqvrgcFOuJQRI=
+ us-mta-647-bAp-_i-SOv2AaDuVW96LJQ-1; Wed, 20 Sep 2023 04:46:55 -0400
+X-MC-Unique: bAp-_i-SOv2AaDuVW96LJQ-1
+Received: by mail-pf1-f199.google.com with SMTP id
+ d2e1a72fcca58-690a0eedb24so2260904b3a.1
+ for <dm-devel@redhat.com>; Wed, 20 Sep 2023 01:46:55 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1695186432; x=1695791232;
- h=cc:to:subject:message-id:date:thread-index:mime-version:in-reply-to
- :references:from:x-gm-message-state:from:to:cc:subject:date
- :message-id:reply-to;
- bh=S+ZgL1NFMc0E7k5YU69gOk6saC2YzaTRhl55Gi7YmDQ=;
- b=ppfdKNwDOSkG5KM7kDrAsLVqWUsYeDvrwsvRpZCjrsR2r3+J2hCPcFcNAN63iUDrQY
- ka38QtvITVNPFAELG0yfErLyC2P1p5zexK71AFnI72qjvs7IjymsJ+DyAt5RLBejvlN0
- UcMEsFuPleIp+inXM+nW5eFidA/zXozkQE4tmcJlJJJvBGi0qplPBjlWlHqDmBxZMN8U
- y2HLOH0HtumOIbULP/M/veIRSxR4peLAnRwaMt4hy3ac46s0iHOaNNxifYrIsPhoYrTA
- iz6U7xLh/oteWBUYa6WCGzdm7BBkj44HAkGRWTOhzpwh3Z/yXnwW8ocjt2FniqxIWDL0
- vfyA==
-X-Gm-Message-State: AOJu0Yww0ABFfFWILfYFhwB9EcuQbtRlNBqo35MJuMHRzQ0bGTpxyZmH
- JOJrqsy3D87KmLIiIj+QB62A/4gvbACgJdri6Qf77cd/Lq3P/ppY+63DsTzTMciu7MuHMf5FXWr
- buA/mCxY94yDQhNsnTnZRaFZlYZ0WCA==
-X-Google-Smtp-Source: AGHT+IGVdVXb3B22ZjyohUYdubgRUpqcqcnPXIJtXpfDkgL19Zr+49VWSETHA2YwRv3Qnt82E2YzA0hR9839CPjvwAY=
-X-Received: by 2002:a05:6a20:4323:b0:14e:b4d5:782d with SMTP id
- h35-20020a056a20432300b0014eb4d5782dmr1688764pzk.2.1695186431939; Tue, 19 Sep
- 2023 22:07:11 -0700 (PDT)
-From: Muneendra Kumar M <muneendra.kumar@broadcom.com>
-References: <20230914215546.2875790-1-muneendra.kumar@broadcom.com>
- <3e3992fede771bd4ac30ab3aa8d061fce3d80486.camel@suse.com>
-In-Reply-To: <3e3992fede771bd4ac30ab3aa8d061fce3d80486.camel@suse.com>
+ d=1e100.net; s=20230601; t=1695199615; x=1695804415;
+ h=content-transfer-encoding:cc:to:subject:message-id:date:from
+ :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=14VM4X1q7LDh2tjcesU2z1sSQLPjnF+BKTQYi/I+DZ8=;
+ b=Hkkwfdmb2FUu/zT7XlklJt9asWC2/PHEZ9AlGlbqgCzOl8sYtxf3aT3JDosaAsdmd5
+ 6DdRRYiiLTS/b9b3+WuyUqwibE0u4LZZwp3xY0fJmnLkuyUF8kqDDevMCGiDMaDs3zFa
+ jt2tuiOWfBRJfMJAdIqEUCV88t9iONBM2iX9JQ7MMF/i5Afio8L7UJe6fIiEjSta8ji/
+ kfPxgr9gxHynOPaDYaW7MqR2FBaLX2lTXxIPGZoopF41rqD710UsTwe8VyvmOd6dgB6J
+ AVZ7yUgDFL7N5uN5mLTMRmtsIqyTmmnMmmOf/6O3YCEIvDVoN4/MQMUa6UdXpM/z+N9R
+ NUeA==
+X-Gm-Message-State: AOJu0YyQjdYPuTcPjyYDAF8Pj/H9n+d7HET+oz1No79xddnh1kC/reJK
+ mEUAvFyIyceru80w/g2IEnsKJ4lTUwun6aCiWsVSZUHOL6RsRlBv9IOl0htusiUKbA/QkAKdkvG
+ z0ZBlQvI9pl1TKe5W3tRcTwGIfWj0Wzc=
+X-Received: by 2002:a05:6a20:7f9d:b0:13d:df16:cf29 with SMTP id
+ d29-20020a056a207f9d00b0013ddf16cf29mr2570683pzj.15.1695199614995; 
+ Wed, 20 Sep 2023 01:46:54 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFQli6HeenG+HwcwmKNeEDbJ29I1E4luWIpovCpMd3Ahw3uOsfer9qoclzc94KX8UwaBMSafHxbTeav+Z1H7aY=
+X-Received: by 2002:a05:6a20:7f9d:b0:13d:df16:cf29 with SMTP id
+ d29-20020a056a207f9d00b0013ddf16cf29mr2570673pzj.15.1695199614768; Wed, 20
+ Sep 2023 01:46:54 -0700 (PDT)
 MIME-Version: 1.0
-Thread-Index: AQJDwK8C4Wyc/KcI9Y8LixUH89+uZQIgbXQQrz57CkA=
-Date: Wed, 20 Sep 2023 10:37:08 +0530
-Message-ID: <1b0b2db9765da00d92ba132b9abaf520@mail.gmail.com>
-To: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com, bmarzins@redhat.com
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-X-Mailman-Approved-At: Wed, 20 Sep 2023 07:19:02 +0000
-Subject: Re: [dm-devel] [PATCH] multipathd: Added support to handle FPIN-Li
- events for FC-NVMe
+References: <20230828020021.2489641-1-yukuai1@huaweicloud.com>
+ <20230828020021.2489641-3-yukuai1@huaweicloud.com>
+In-Reply-To: <20230828020021.2489641-3-yukuai1@huaweicloud.com>
+From: Xiao Ni <xni@redhat.com>
+Date: Wed, 20 Sep 2023 16:46:42 +0800
+Message-ID: <CALTww29iHX_GHogGFEfzdaDjohBr8ycfiz2=E_ru4JYvmrTYdA@mail.gmail.com>
+To: Yu Kuai <yukuai1@huaweicloud.com>
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+Subject: Re: [dm-devel] [PATCH -next v2 02/28] md: use 'mddev->suspended'
+ for is_md_suspended()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,319 +103,51 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: mkumar@redhat.com
-Content-Type: multipart/mixed; boundary="===============8379118528477717270=="
+Cc: yi.zhang@huawei.com, yangerkun@huawei.com, snitzer@kernel.org,
+ linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, song@kernel.org,
+ dm-devel@redhat.com, yukuai3@huawei.com, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-
---===============8379118528477717270==
-Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256;
-	boundary="0000000000001fa8a50605c3592e"
-
---0000000000001fa8a50605c3592e
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-
-Hi Martin,
-Thanks for the review.
-I will incorporate your review comments and will post the v2 soon.
-
-Regards,
-Muneendra.
-
------Original Message-----
-From: Martin Wilck <mwilck@suse.com>
-Sent: Friday, September 15, 2023 5:14 PM
-To: Muneendra Kumar <muneendra.kumar@broadcom.com>; dm-devel@redhat.com;
-bmarzins@redhat.com
-Cc: mkumar@redhat.com
-Subject: Re: [PATCH] multipathd: Added support to handle FPIN-Li events
-for FC-NVMe
-
-Hello Muneendra,
-
-On Thu, 2023-09-14 at 14:55 -0700, Muneendra Kumar wrote:
-> From: Muneendra <muneendra.kumar@broadcom.com>
->
-> This patch adds the support to handle FPIN-Li for FC-NVMe.
-> On receiving the FPIN-Li events this patch moves the devices paths
-> which are affected due to link integrity to marginal path groups.
-> The paths which are set to marginal path group will be unset on
-> receiving the RSCN events
->
-> Signed-off-by: Muneendra <muneendra.kumar@broadcom.com>
-
-Thanks! This looks mostly good to me, some comments below.
-
-
-> ---
-> =C2=A0multipathd/fpin_handlers.c | 177 ++++++++++++++++++++++++++++------=
--
-> --
-> =C2=A01 file changed, 136 insertions(+), 41 deletions(-)
->
-> diff --git a/multipathd/fpin_handlers.c b/multipathd/fpin_handlers.c
-> index aa0f63c9..94f390ec 100644
-> --- a/multipathd/fpin_handlers.c
-> +++ b/multipathd/fpin_handlers.c
-> @@ -203,61 +203,153 @@ fpin_add_marginal_dev_info(uint32_t host_num,
-> char *devname)
-> =C2=A0}
->
-> =C2=A0/*
-> - * This function goes through the vecs->pathvec, and for
-> - * each path, check that the host=C2=A0 number,
-> - * the target WWPN associated with the path matches
-> - * with the els wwpn and sets the path and port state to
-> + * This function compares Transport Address Controller Port pn,
-> + * Host Transport Address Controller Port pn with the els wwpn
-> ,attached_wwpn
-> + * and return 0 on success
-> + */
-> +static int=C2=A0 extract_nvme_addresses_chk_path_pwwn(const char
-> *address,
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0uint64_t els_wwpn, uint64_t els_attached_wwpn)
-> +
-> +{
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0uint64_t traddr;
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0uint64_t host_traddr;
-> +
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0/*
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 *=C2=A0 Find the position of =
-"traddr=3D" and "host_traddr=3D"
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 *=C2=A0 and the address will =
-be in the below format
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 *=C2=A0 "traddr=3Dnn-0x200400=
-110dff9400:pn-0x200400110dff9400,
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 *=C2=A0 host_traddr=3Dnn-0x20=
-0400110dff9400:pn-0x200400110dff9400"
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 */
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0const char *traddr_start =3D s=
-trstr(address, "traddr=3D");
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0const char *host_traddr_start =
-=3D strstr(address,
-> "host_traddr=3D");
-> +
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0if (!traddr_start || !host_tra=
-ddr_start)
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0return -EINVAL;
-> +
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0/* Extract traddr pn */
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0if (sscanf(traddr_start, "trad=
-dr=3Dnn-%*[^:]:pn-%" SCNx64,
-> &traddr) !=3D 1)
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0return -EINVAL;
-> +
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0/* Extract host_traddr pn*/
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0if (sscanf(host_traddr_start, =
-"host_traddr=3Dnn-%*[^:]:pn-%"
-> SCNx64,
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0&host_traddr) !=3D 1)
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0return -EINVAL;
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0condlog(4, "traddr 0x%lx hostt=
-raddr 0x%lx els_wwpn 0x%lx
-> els_host_traddr 0x%lx",
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0traddr, h=
-ost_traddr,
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0els_wwpn,=
- els_attached_wwpn);
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0if ((host_traddr =3D=3D els_at=
-tached_wwpn) && (traddr =3D=3D
-> els_wwpn))
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0return 0;
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0return -EINVAL;
-
-Please don't return -EINVAL to indicate that the addresses don't match.
-The function should return 1 (match) or 0 (no match) or a negative error
-code if something is actually wrong.
-
-
-> +}
-> +
-> +/*
-> + * This function check that the Transport Address Controller Port
-> pn,
-> + * Host Transport Address Controller Port pn associated with the
-> path matches
-> + * with the els wwpn ,attached_wwpn and sets the path state to
-> =C2=A0 * Marginal
-> =C2=A0 */
-> -static int=C2=A0 fpin_chk_wwn_setpath_marginal(uint16_t host_num,=C2=A0 =
-struct
-> vectors *vecs,
-> +static void fpin_check_set_nvme_path_marginal(uint16_t host_num,
-> struct path *pp,
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0uint64_t els_wwpn, uint64_t attached_wwpn) {
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0struct udev_device *ctl =3D NU=
-LL;
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0const char *address =3D NULL;
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0int ret =3D 0;
-> +
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0ctl =3D udev_device_get_parent=
-_with_subsystem_devtype(pp->udev,
-> "nvme", NULL);
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0if (ctl =3D=3D NULL) {
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0condlog(2, "%s: No parent device for ", pp->dev);
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0return;
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0}
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0address =3D udev_device_get_sy=
-sattr_value(ctl, "address");
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0if (!address) {
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0condlog(2, "%s: unable to get the address ", pp-
-> >dev);
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0return;
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0}
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0condlog(4, "\n address %s: dev=
- :%s\n", address, pp->dev);
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0ret =3D extract_nvme_addresses=
-_chk_path_pwwn(address, els_wwpn,
-> attached_wwpn);
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0if (ret < 0)
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0return;
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0ret =3D fpin_path_setmarginal(=
-pp);
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0if (ret < 0)
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0return;
-> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0fpin_add_marginal_dev_info(hos=
-t_num, pp->dev);
-
-I think that you should call fpin_add_marginal_dev_info() first, and only
-set the path to marginal state if it has succeeded.
-I realize the same applies to the SCSI code flow.
-
-Regards,
-Martin
-
---=20
-This electronic communication and the information and any files transmitted=
-=20
-with it, or attached to it, are confidential and are intended solely for=20
-the use of the individual or entity to whom it is addressed and may contain=
-=20
-information that is confidential, legally privileged, protected by privacy=
-=20
-laws, or otherwise restricted from disclosure to anyone else. If you are=20
-not the intended recipient or the person responsible for delivering the=20
-e-mail to the intended recipient, you are hereby notified that any use,=20
-copying, distributing, dissemination, forwarding, printing, or copying of=
-=20
-this e-mail is strictly prohibited. If you received this e-mail in error,=
-=20
-please return the e-mail to the sender, delete it from your computer, and=
-=20
-destroy any printed copy of it.
-
---0000000000001fa8a50605c3592e
-Content-Type: application/pkcs7-signature; name="smime.p7s"
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-Content-Description: S/MIME Cryptographic Signature
 
-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
-ys9fYL+GlV3PS9wS3h0MI90cAfs5ZQjER5eWqMBARhfrW70fFVMSdZzBpXljqRjD+GOJm711FgvN
-RsH9iq2Ndn7XY7jpnxND6cwSKympBXWuvQ54YyFDLr0m9eC6BNU5bQIDAQABo4IB3TCCAdkwDgYD
-VR0PAQH/BAQDAgWgMIGjBggrBgEFBQcBAQSBljCBkzBOBggrBgEFBQcwAoZCaHR0cDovL3NlY3Vy
-ZS5nbG9iYWxzaWduLmNvbS9jYWNlcnQvZ3NnY2NyM3BlcnNvbmFsc2lnbjJjYTIwMjAuY3J0MEEG
-CCsGAQUFBzABhjVodHRwOi8vb2NzcC5nbG9iYWxzaWduLmNvbS9nc2djY3IzcGVyc29uYWxzaWdu
-MmNhMjAyMDBNBgNVHSAERjBEMEIGCisGAQQBoDIBKAowNDAyBggrBgEFBQcCARYmaHR0cHM6Ly93
-d3cuZ2xvYmFsc2lnbi5jb20vcmVwb3NpdG9yeS8wCQYDVR0TBAIwADBJBgNVHR8EQjBAMD6gPKA6
-hjhodHRwOi8vY3JsLmdsb2JhbHNpZ24uY29tL2dzZ2NjcjNwZXJzb25hbHNpZ24yY2EyMDIwLmNy
-bDAnBgNVHREEIDAegRxtdW5lZW5kcmEua3VtYXJAYnJvYWRjb20uY29tMBMGA1UdJQQMMAoGCCsG
-AQUFBwMEMB8GA1UdIwQYMBaAFJYz0eZYF1s0dYqBVmTVvkjeoY/PMB0GA1UdDgQWBBTJvvnIS4Qf
-Z+gEeC51xAB2l3lqOzANBgkqhkiG9w0BAQsFAAOCAQEAE6G8pLIpwrdO0Dmi603StqsNLN3t3i5m
-SU/J+ZHnSeVNQFmfJjYSlZHSeAYrw+nsLEw08xiT4N2dPLbnowDKw0cVDRV5hL6+Uis2nqNkp9Kk
-dXMVNlGeqGqBo98QRdRdzLgc/3FBQp3XIGUo2VDOMYW/RPbI1muHQOBKaVx4q8jqitNbqThvZkt/
-t8KBiojEq4d7/scDRRtEsaL6Hl7cAYNMrS5EpijZrYjNYercaQNHcHP38l/XM9n36jllylt12koc
-Dfj3D142STRRnexoNURmkc9EAKyZPRv/JRGz6YP0i2y1JqgpjF8CggD2osV3pA9e8ecXWQ7/ZJly
-zHlFgjGCAm0wggJpAgEBMGswWzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
-c2ExMTAvBgNVBAMTKEdsb2JhbFNpZ24gR0NDIFIzIFBlcnNvbmFsU2lnbiAyIENBIDIwMjACDEnR
-Sel9Ku9INR0BhDANBglghkgBZQMEAgEFAKCB1DAvBgkqhkiG9w0BCQQxIgQg4MmvxXSqYk5WbM7S
-kx5jyuKxh19Do+T8NShGszux8pMwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0B
-CQUxDxcNMjMwOTIwMDUwNzEyWjBpBgkqhkiG9w0BCQ8xXDBaMAsGCWCGSAFlAwQBKjALBglghkgB
-ZQMEARYwCwYJYIZIAWUDBAECMAoGCCqGSIb3DQMHMAsGCSqGSIb3DQEBCjALBgkqhkiG9w0BAQcw
-CwYJYIZIAWUDBAIBMA0GCSqGSIb3DQEBAQUABIIBAGsSimTY7Cy+V6vP5w/GodoI0v7fe47eeAa0
-w0lepmBRVC6ue4wQpdmXiyVqgAAtllFMEK66btUtH43u4K281eW2y3ntqLc2mdtNELn4plOxKMab
-lzHItgRKp5io3yBtUNrretv1fUXMq3li1b3hr4WeH8r65OFOysEy3pMaVm7Tbrylin7aj1o3+RSz
-Ag2LSv0m3bZQEoY5t/Z5HuW44t5tT//hJNEBOuowdy706y/HxSH8Lt/uBENYTI9Iu4T0tikuTi9v
-VMCW/6bsoEFRc10KdpSFqnkem1D0DRqDdCxoTYE/7Ev0Mkn19/mfHCTvE5CJcB9LhE1DVxTH/yIL
-N4g=
---0000000000001fa8a50605c3592e--
-
-
---===============8379118528477717270==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
-
---===============8379118528477717270==--
+T24gTW9uLCBBdWcgMjgsIDIwMjMgYXQgMTA6MDTigK9BTSBZdSBLdWFpIDx5dWt1YWkxQGh1YXdl
+aWNsb3VkLmNvbT4gd3JvdGU6Cj4KPiBGcm9tOiBZdSBLdWFpIDx5dWt1YWkzQGh1YXdlaS5jb20+
+Cj4KPiAncGVycy0+cHJlcGFyZV9zdXNwZW5kJyBpcyBpbnRyb2R1Y2VkIHRvIHByZXZlbnQgYSBk
+ZWFkbG9jayBmb3IgcmFpZDQ1NiwKPiB0aGlzIGNoYW5nZSBwcmVwYXJlcyB0byBjbGVhbiB0aGlz
+IHVwIGluIGxhdGVyIHBhdGNoZXMgd2hpbGUgcmVmYWN0b3JpbmcKPiBtZGRldl9zdXNwZW5kKCku
+IFNwZWNpZmljYWxseSBhbGxvdyByZXNoYXBlIHRvIG1ha2UgcHJvZ3Jlc3Mgd2hpbGUKPiB3YWl0
+aW5nIGZvciAnYWN0aXZlX2lvJyB0byBiZSAwLgoKSGkgS3VhaQoKRnJvbSBteSBzaWRlLCBJIGNh
+bid0IHVuZGVyc3RhbmQgdGhlIGNvbW1lbnRzLiBUaGUgY2hhbmdlIGhhcwpyZWxhdGlvbnNoaXAg
+d2l0aCBwZXJzLT5wcmVwYXJlX3N1c3BlbmQ/IEFuZCB3aHkgdGhpcyBjaGFuZ2UgY2FuCmFmZmVj
+dCByZXNoYXBlPyBJZiB0aGlzIGNoYW5nZSBpbmRlZWQgY2FuIGFmZmVjdCB0aGVzZSB0d28gdGhp
+bmdzLCBjYW4KeW91IGV4cGxhaW4gbW9yZT8KCj4KPiBTaWduZWQtb2ZmLWJ5OiBZdSBLdWFpIDx5
+dWt1YWkzQGh1YXdlaS5jb20+Cj4gLS0tCj4gIGRyaXZlcnMvbWQvbWQuYyB8IDIgKy0KPiAgZHJp
+dmVycy9tZC9tZC5oIHwgMiArLQo+ICAyIGZpbGVzIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKSwg
+MiBkZWxldGlvbnMoLSkKPgo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL21kLmMgYi9kcml2ZXJz
+L21kL21kLmMKPiBpbmRleCA5ZDhkZmY5ZDkyM2MuLjdmYTMxMWExNDMxNyAxMDA2NDQKPiAtLS0g
+YS9kcml2ZXJzL21kL21kLmMKPiArKysgYi9kcml2ZXJzL21kL21kLmMKPiBAQCAtMzU1LDcgKzM1
+NSw3IEBAIHN0YXRpYyBERUZJTkVfU1BJTkxPQ0soYWxsX21kZGV2c19sb2NrKTsKPiAgICovCj4g
+IHN0YXRpYyBib29sIGlzX3N1c3BlbmRlZChzdHJ1Y3QgbWRkZXYgKm1kZGV2LCBzdHJ1Y3QgYmlv
+ICpiaW8pCj4gIHsKPiAtICAgICAgIGlmIChpc19tZF9zdXNwZW5kZWQobWRkZXYpKQo+ICsgICAg
+ICAgaWYgKGlzX21kX3N1c3BlbmRlZChtZGRldikgfHwgcGVyY3B1X3JlZl9pc19keWluZygmbWRk
+ZXYtPmFjdGl2ZV9pbykpCgpJZiB3ZSB1c2UgbWRkZXYtPnN1c3BlbmRlZCB0byBqdWRnZSBpZiB0
+aGUgcmFpZCBpcyBzdXNwZW5kZWQsIGl0CnNob3VsZCBiZSBlbm91Z2g/IEJlY2F1c2UgbWRkZXYt
+PnN1c3BlbmRlZCBtdXN0IGJlIHRydWUgd2hlbiBhY3RpdmVfaW8KaXMgZHlpbmcuCgpCZXN0IFJl
+Z2FyZHMKWGlhbwo+ICAgICAgICAgICAgICAgICByZXR1cm4gdHJ1ZTsKPiAgICAgICAgIGlmIChi
+aW9fZGF0YV9kaXIoYmlvKSAhPSBXUklURSkKPiAgICAgICAgICAgICAgICAgcmV0dXJuIGZhbHNl
+Owo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL21kLmggYi9kcml2ZXJzL21kL21kLmgKPiBpbmRl
+eCBiNjI4YzI5MjUwNmUuLmZiM2IxMjNmMTZkZCAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL21kL21k
+LmgKPiArKysgYi9kcml2ZXJzL21kL21kLmgKPiBAQCAtNTg0LDcgKzU4NCw3IEBAIHN0YXRpYyBp
+bmxpbmUgYm9vbCBtZF9pc19yZHdyKHN0cnVjdCBtZGRldiAqbWRkZXYpCj4KPiAgc3RhdGljIGlu
+bGluZSBib29sIGlzX21kX3N1c3BlbmRlZChzdHJ1Y3QgbWRkZXYgKm1kZGV2KQo+ICB7Cj4gLSAg
+ICAgICByZXR1cm4gcGVyY3B1X3JlZl9pc19keWluZygmbWRkZXYtPmFjdGl2ZV9pbyk7Cj4gKyAg
+ICAgICByZXR1cm4gUkVBRF9PTkNFKG1kZGV2LT5zdXNwZW5kZWQpOwo+ICB9Cj4KPiAgc3RhdGlj
+IGlubGluZSBpbnQgX19tdXN0X2NoZWNrIG1kZGV2X2xvY2soc3RydWN0IG1kZGV2ICptZGRldikK
+PiAtLQo+IDIuMzkuMgo+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
+LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Cg==
 
