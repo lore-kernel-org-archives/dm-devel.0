@@ -4,72 +4,82 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1B3B4C04FEC
-	for <dm-devel@archiver.kernel.org>; Wed, 20 Sep 2023 19:05:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 05ABDE71072
+	for <dm-devel@archiver.kernel.org>; Thu, 21 Sep 2023 14:12:57 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1695236739;
+	s=mimecast20190719; t=1695305577;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=f2OACdHLf6NpWaCAOq/dYsHnx0amRgIgQGFN1YCrTYo=;
-	b=hRTdPPfo0VR4IU5TUjLgZqgacgq2cCp/m1X3qjVoVZeFQgBjU9qa84qQbRe3s99RyWbNkj
-	YAh1TzCOH9jtvSBwxq/vXsEO8vi967OEDa8SEgK/deki6DRAYNhu7C5wh0ZDecS6wpnp92
-	s+eS4m7EY+nPEAHAFCjvmBMhDkrW6Xw=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-564-82CSlUULM3mlFDC9P581wA-1; Wed, 20 Sep 2023 15:05:35 -0400
-X-MC-Unique: 82CSlUULM3mlFDC9P581wA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+	bh=zyd2o44ndzI1hpqCOUXMQigbpA+B8Y+nouUOb05r4Z8=;
+	b=BqjbTn0fIUpoe1/+f/+dUa7m1S3RY9TR9JTAKJ+HAmD1fqlN2o1eyREWRxIAHwZSkr2NZx
+	9x5nHuK6HODoyZSKWQEkw1LK3VNZ4iM0PY2RRQnTPLA8fBg89YEYASlQhVRnzEcY6AlAwu
+	mi8uKkFv2o68MzTcqZvmzgQpqJoK5qY=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-518-NdzdqGusM22gEJcTGIn6Mw-1; Thu, 21 Sep 2023 10:12:51 -0400
+X-MC-Unique: NdzdqGusM22gEJcTGIn6Mw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0B7923814582;
-	Wed, 20 Sep 2023 19:05:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8E741185A790;
+	Thu, 21 Sep 2023 14:12:48 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9AB0F40C6EC1;
-	Wed, 20 Sep 2023 19:05:32 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4BA84C158BA;
+	Thu, 21 Sep 2023 14:12:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 32B7E1946594;
-	Wed, 20 Sep 2023 19:05:17 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 01DA11946595;
+	Thu, 21 Sep 2023 14:12:34 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 860F51946595
- for <dm-devel@listman.corp.redhat.com>; Wed, 20 Sep 2023 18:56:41 +0000 (UTC)
+ ESMTP id 2212D1946586
+ for <dm-devel@listman.corp.redhat.com>; Thu, 21 Sep 2023 14:09:21 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D4D9EC15BB8; Wed, 20 Sep 2023 18:56:41 +0000 (UTC)
+ id F3AE910F1BE8; Thu, 21 Sep 2023 14:09:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id CE0FDC154CA
- for <dm-devel@redhat.com>; Wed, 20 Sep 2023 18:56:41 +0000 (UTC)
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id EBD5210F1BE7
+ for <dm-devel@redhat.com>; Thu, 21 Sep 2023 14:09:20 +0000 (UTC)
 Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-delivery-1.mimecast.com [205.139.110.120])
+ (us-smtp-inbound-delivery-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8A7CB1C0171F
- for <dm-devel@redhat.com>; Wed, 20 Sep 2023 18:56:41 +0000 (UTC)
-Received: from mail.ispras.ru (mail.ispras.ru [83.149.199.84]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-300-wx-5nk-6MUa1knvly3PWlA-1; Wed, 20 Sep 2023 14:56:39 -0400
-X-MC-Unique: wx-5nk-6MUa1knvly3PWlA-1
-Received: from localhost (unknown [46.242.14.200])
- by mail.ispras.ru (Postfix) with ESMTPSA id 32A5E40F1DFB;
- Wed, 20 Sep 2023 18:56:37 +0000 (UTC)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mail.ispras.ru 32A5E40F1DFB
-Date: Wed, 20 Sep 2023 21:56:36 +0300
-From: Fedor Pchelkin <pchelkin@ispras.ru>
-To: Mike Snitzer <snitzer@kernel.org>
-Message-ID: <i62wc7w6akvi6g3sg4ji6hughqlj4aiagug2paebv5w3fa7e55@oimtmdzjcfdp>
-References: <20230920105119.21276-1-pchelkin@ispras.ru>
- <c7818967-1fea-45da-9713-20de4bcb1c44@suse.de>
- <vdtvo2av3upya6mugjyiqo2hfnn6q4dpofoku6rvrtgmycgbrp@scpcnu3ta7ch>
- <ZQsxvY12z+/yYcR6@redhat.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C7BF4803DBD
+ for <dm-devel@redhat.com>; Thu, 21 Sep 2023 14:09:20 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-32-HTEhYpCwNbCx6pvzA2gQuw-1; Thu,
+ 21 Sep 2023 10:09:17 -0400
+X-MC-Unique: HTEhYpCwNbCx6pvzA2gQuw-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id 6FCF7338AC;
+ Thu, 21 Sep 2023 14:09:15 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 3DDFF13513;
+ Thu, 21 Sep 2023 14:09:15 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap2.suse-dmz.suse.de with ESMTPSA id TohKDYtODGX0TQAAMHmgww
+ (envelope-from <mwilck@suse.com>); Thu, 21 Sep 2023 14:09:15 +0000
+Message-ID: <a628e5d3a414f0675ba3604f30e2545f5c392c20.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+To: Muneendra Kumar <muneendra.kumar@broadcom.com>, dm-devel@redhat.com, 
+ bmarzins@redhat.com
+Date: Thu, 21 Sep 2023 16:09:14 +0200
+In-Reply-To: <20230921034115.3118511-1-muneendra.kumar@broadcom.com>
+References: <20230921034115.3118511-1-muneendra.kumar@broadcom.com>
+User-Agent: Evolution 3.48.4
 MIME-Version: 1.0
-In-Reply-To: <ZQsxvY12z+/yYcR6@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -77,9 +87,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
-Subject: Re: [dm-devel] dm-zoned: free dmz->ddev array in
- dmz_put_zoned_device
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH v2] multipathd: Added support to handle
+ FPIN-Li events for FC-NVMe
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,86 +101,32 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: lvc-project@linuxtesting.org, linux-kernel@vger.kernel.org,
- stable@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>,
- Alexey Khoroshilov <khoroshilov@ispras.ru>
+Cc: mkumar@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: ispras.ru
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: suse.com
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-On 23/09/20 01:54PM, Mike Snitzer wrote:
-> On Wed, Sep 20 2023 at 10:35P -0400,
-> Fedor Pchelkin <pchelkin@ispras.ru> wrote:
-> 
-> > On 23/09/20 04:06PM, Hannes Reinecke wrote:
-> > > On 9/20/23 12:51, Fedor Pchelkin wrote:
-> > > > Commit 4dba12881f88 ("dm zoned: support arbitrary number of devices")
-> > > > made the pointers to additional zoned devices to be stored in a
-> > > > dynamically allocated dmz->ddev array. However, this array is not freed.
-> > > > 
-> > > > Free it when cleaning up zoned device information inside
-> > > > dmz_put_zoned_device(). Assigning NULL to dmz->ddev elements doesn't make
-> > > > sense there as they are not supposed to be reused later and the whole dmz
-> > > > target structure is being cleaned anyway.
-> > > > 
-> > > > Found by Linux Verification Center (linuxtesting.org).
-> > > > 
-> > > > Fixes: 4dba12881f88 ("dm zoned: support arbitrary number of devices")
-> > > > Cc: stable@vger.kernel.org
-> > > > Signed-off-by: Fedor Pchelkin <pchelkin@ispras.ru>
-> > > > ---
-> > > >   drivers/md/dm-zoned-target.c | 8 +++-----
-> > > >   1 file changed, 3 insertions(+), 5 deletions(-)
-> > > > 
-> > > > diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-> > > > index ad8e670a2f9b..e25cd9db6275 100644
-> > > > --- a/drivers/md/dm-zoned-target.c
-> > > > +++ b/drivers/md/dm-zoned-target.c
-> > > > @@ -753,12 +753,10 @@ static void dmz_put_zoned_device(struct dm_target *ti)
-> > > >   	struct dmz_target *dmz = ti->private;
-> > > >   	int i;
-> > > > -	for (i = 0; i < dmz->nr_ddevs; i++) {
-> > > > -		if (dmz->ddev[i]) {
-> > > > +	for (i = 0; i < dmz->nr_ddevs; i++)
-> > > > +		if (dmz->ddev[i])
-> > > >   			dm_put_device(ti, dmz->ddev[i]);
-> > > > -			dmz->ddev[i] = NULL;
-> > > > -		}
-> > > > -	}
-> > > > +	kfree(dmz->ddev);
-> > > >   }
-> > > >   static int dmz_fixup_devices(struct dm_target *ti)
-> > > 
-> > > Hmm. I'm not that happy with it; dmz_put_zoned_device() is using dm_target
-> > > as an argument, whereas all of the functions surrounding the call sites is
-> > > using the dmz_target directly.
-> > > 
-> > > Mind to modify the function to use 'struct dmz_target' as an argument?
-> > 
-> > dm_target is required inside dmz_put_zoned_device() for dm_put_device()
-> > calls. I can't see a way for referencing it via dmz_target. Do you mean
-> > passing additional second argument like
-> >   dmz_put_zoned_device(struct dmz_target *dmz, struct dm_target *ti) ?
-> 
-> No, what you did is fine.  Not sure what Hannes is saying given only
-> passing dm_target has symmetry with dm_get_zoned_device (and
-> dmz_fixup_devices).
-> 
-> > BTW, I also think it can be renamed to dmz_put_zoned_devices().
-> 
-> I've renamed like you suggested and added a newline to
-> dmz_put_zoned_devices() and staged this fix in linux-next for
-> upstream inclusion before 6.6 final releases.
-> 
+On Wed, 2023-09-20 at 20:41 -0700, Muneendra Kumar wrote:
+> From: Muneendra <muneendra.kumar@broadcom.com>
+>=20
+> =A0=A0=A0 This patch adds the support to handle FPIN-Li for FC-NVMe.
+> =A0=A0=A0 On receiving the FPIN-Li events this patch moves the devices
+> paths
+> =A0=A0=A0 which are affected due to link integrity to marginal path group=
+s.
+> =A0=A0=A0 The paths which are set to marginal path group will be unset
+> =A0=A0=A0 on receiving the RSCN events
+>=20
+> Signed-off-by: Muneendra <muneendra.kumar@broadcom.com>
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Okay, thanks.
 
-> Mike
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+
 
 --
 dm-devel mailing list
