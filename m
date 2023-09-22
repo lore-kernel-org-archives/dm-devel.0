@@ -1,66 +1,95 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 47CCDCD4843
-	for <dm-devel@archiver.kernel.org>; Fri, 22 Sep 2023 16:34:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0FF45CE7A81
+	for <dm-devel@archiver.kernel.org>; Fri, 22 Sep 2023 23:18:48 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1695400469;
+	s=mimecast20190719; t=1695424728;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=gYA0pNlKyghLoE+rL42U21k+/V+5ZwYtp9+R1s+6S+c=;
-	b=Sg+DJKz+rH5cZumddXQvKCZbRSq2+WuCdPTDHYuwfbhjtLjWTyYK8eY7BMojdsnXqH9U3m
-	V0preDf0OvUXTGp9Yiu6REVIRSxObDaHL67LUPBVACFq/0syGblJIh0GswPj3+5d6eYlvF
-	f+0XwqeMA2ZMokZ89KZEgSxBzYPlMXs=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-681-ctAQWpgdOnSNKZ5ElqDbPg-1; Fri, 22 Sep 2023 12:34:26 -0400
-X-MC-Unique: ctAQWpgdOnSNKZ5ElqDbPg-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	bh=uZLgqc5k5mBI1N7Z1xlCHC6u+0vFXGWiP7khVS79AHk=;
+	b=gesThvPRabF4yHszKnhvm4XGKzzRux53//d2vDFVQ9VSNtNBJwDBkSfHMLJ3CLECCNil2r
+	L2hwjm9Rfqw2M/ZtmdfScUW3x5FJQAgqGzJ7nltAJ86vaL9VdqMHUOGpyLIMV1kTSP5hVq
+	yUcsAV8wcJRMbpquoj9ACyDRqrApZi4=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-166-2qDquR56MbusZY7Le4hJdQ-1; Fri, 22 Sep 2023 19:18:44 -0400
+X-MC-Unique: 2qDquR56MbusZY7Le4hJdQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5C0B5101A597;
-	Fri, 22 Sep 2023 16:34:24 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0A4421C068D9;
+	Fri, 22 Sep 2023 23:18:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E6E7549BB9A;
-	Fri, 22 Sep 2023 16:34:23 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EE6E8140E950;
+	Fri, 22 Sep 2023 23:18:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 96FC619465B8;
-	Fri, 22 Sep 2023 16:34:23 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A7D8819465B8;
+	Fri, 22 Sep 2023 23:18:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8BC751946586
- for <dm-devel@listman.corp.redhat.com>; Fri, 22 Sep 2023 16:34:17 +0000 (UTC)
+ ESMTP id 98A581946586
+ for <dm-devel@listman.corp.redhat.com>; Fri, 22 Sep 2023 23:18:39 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5575D20268D8; Fri, 22 Sep 2023 16:34:17 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown
- [10.11.5.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E784720268D6;
- Fri, 22 Sep 2023 16:34:16 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix,
- from userid 12668)
- id CF52130C1C0A; Fri, 22 Sep 2023 16:34:16 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
- by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id
- CA2403FB77; Fri, 22 Sep 2023 18:34:16 +0200 (CEST)
-Date: Fri, 22 Sep 2023 18:34:16 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Giovanni Cabiddu <giovanni.cabiddu@intel.com>
-In-Reply-To: <ZQ2vJNs/7ZzY44z1@gcabiddu-mobl1.ger.corp.intel.com>
-Message-ID: <ed935382-98ee-6f5d-2f-7c6badfd3abb@redhat.com>
-References: <af9581e2-58f9-cc19-428f-6f18f1f83d54@redhat.com>
- <ZQ2vJNs/7ZzY44z1@gcabiddu-mobl1.ger.corp.intel.com>
+ id 84B4328FD; Fri, 22 Sep 2023 23:18:39 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7D32451E3
+ for <dm-devel@redhat.com>; Fri, 22 Sep 2023 23:18:39 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 52E643C0DDA8
+ for <dm-devel@redhat.com>; Fri, 22 Sep 2023 23:18:39 +0000 (UTC)
+Received: from sin.source.kernel.org (sin.source.kernel.org [145.40.73.55])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-597-uFq-6jClMX6ZvmSs6vcz7Q-1; Fri,
+ 22 Sep 2023 19:18:37 -0400
+X-MC-Unique: uFq-6jClMX6ZvmSs6vcz7Q-1
+Received: from smtp.kernel.org (transwarp.subspace.kernel.org [100.75.92.58])
+ by sin.source.kernel.org (Postfix) with ESMTP id 88701CE2487;
+ Fri, 22 Sep 2023 23:09:06 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C8BDEC433CC;
+ Fri, 22 Sep 2023 23:09:05 +0000 (UTC)
+Received: by mail-lf1-f43.google.com with SMTP id
+ 2adb3069b0e04-503065c4b25so4620962e87.1; 
+ Fri, 22 Sep 2023 16:09:05 -0700 (PDT)
+X-Gm-Message-State: AOJu0Yxxwu+NZl3RbS8Wlt9ZfTqn3dF1P2GsiuypsW6urEanxw+lYeQ4
+ sxL4gGkLt6GH75beQAi9vwyNEbA3j1KfZUoV38w=
+X-Google-Smtp-Source: AGHT+IEAb+xDxRN3HgexXJCyA3Nj9nD7JJYeVV5OIEdt78KHSlk6j9bbQtcn8PWQQkwDhlhYDV8R+2xAkkzxyA2TeGY=
+X-Received: by 2002:a05:6512:3446:b0:4fb:9f93:365f with SMTP id
+ j6-20020a056512344600b004fb9f93365fmr676218lfr.38.1695424143960; Fri, 22 Sep
+ 2023 16:09:03 -0700 (PDT)
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: [dm-devel] [PATCH v2] qat: fix deadlock in backlog processing
+References: <0e15b760-2d5f-f639-0fc7-eed67f8c385c@ultracoder.org>
+ <ZQy5dClooWaZoS/N@redhat.com> <20230922030340.2eaa46bc@nvm>
+ <b8f8cc10-8081-afe4-738b-376a1248ec05@ultracoder.org>
+In-Reply-To: <b8f8cc10-8081-afe4-738b-376a1248ec05@ultracoder.org>
+From: Song Liu <song@kernel.org>
+Date: Fri, 22 Sep 2023 16:08:51 -0700
+X-Gmail-Original-Message-ID: <CAPhsuW5Dvk4cgfqju=Oz1wdHeXtYdW--fbSq8r8xqQSsCpf81A@mail.gmail.com>
+Message-ID: <CAPhsuW5Dvk4cgfqju=Oz1wdHeXtYdW--fbSq8r8xqQSsCpf81A@mail.gmail.com>
+To: Kirill Kirilenko <kirill@ultracoder.org>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: Re: [dm-devel] fstrim on raid1 LV with writemostly PV leads to
+ system freeze
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -72,253 +101,34 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>,
- Michael Hrivnak <mhrivnak@redhat.com>, qat-linux@intel.com,
- dm-devel@redhat.com, linux-crypto@vger.kernel.org,
- "David S. Miller" <davem@davemloft.net>, Eric Garver <egarver@redhat.com>
+Cc: heinzm@redhat.com, Mike Snitzer <snitzer@kernel.org>,
+ Roman Mamedov <rm@romanrm.net>, linux-raid@vger.kernel.org,
+ dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+X-Mimecast-Originator: kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-Hi
-
-
-On Fri, 22 Sep 2023, Giovanni Cabiddu wrote:
-
-> Hi Mikulas,
-> 
-> many thanks for reporting this issue and finding a solution.
-> 
-> On Thu, Sep 21, 2023 at 10:53:55PM +0200, Mikulas Patocka wrote:
-> > I was evaluating whether it is feasible to use QAT with dm-crypt (the 
-> > answer is that it is not - QAT is slower than AES-NI for this type of 
-> > workload; QAT starts to be benefical for encryption requests longer than 
-> > 64k).
-> Correct. Is there anything that we can do to batch requests in a single
-> call?
-
-Ask Herbert Xu. I think it would complicate the design of crypto API.
-
-> Sometime ago there was some work done to build a geniv template cipher
-> and optimize dm-crypt to encrypt larger block sizes in a single call,
-> see [1][2]. Don't know if that work was completed.
->
-> >And I got some deadlocks.
-> Ouch!
-> 
-> > The reason for the deadlocks is this: suppose that one of the "if"
-> > conditions in "qat_alg_send_message_maybacklog" is true and we jump to the
-> > "enqueue" label. At this point, an interrupt comes in and clears all
-> > pending messages. Now, the interrupt returns, we grab backlog->lock, add
-> > the message to the backlog, drop backlog->lock - and there is no one to
-> > remove the backlogged message out of the list and submit it.
-> Makes sense. In my testing I wasn't able to reproduce this condition.
-
-I reproduced it with this:
-Use a system with two Intel(R) Xeon(R) Gold 5420+ processors
-Use a kernel 6.6-rc2
-Patch the kernel, so that dm-crypt uses QAT - that is, in 
-	drivers/md/dm-crypt.c, replace all strings 
-	"CRYPTO_ALG_ALLOCATES_MEMORY" with "0"
-Use .config from RHEL-9.4 beta and compile the kernel
-On the system, disable hyperthreading with
-	"echo off >/sys/devices/system/cpu/smt/control"
-Activate dm-crypt on the top of nvme:
-	"cryptsetup create cr /dev/nvme3n1 --sector-size=4096"
-Run fio in a loop:
-	"while true; do
-		fio --ioengine=psync --iodepth=1 --rw=randwrite --direct=1 
-		--end_fsync=1 --bs=64k --numjobs=56 --time_based 
-		--runtime=10 --group_reporting --name=job 
-		--filename=/dev/mapper/cr
-	done"
-
-With this setup, I get a deadlock in a few iterations of fio.
-
-> > I fixed it with this patch - with this patch, the test passes and there
-> > are no longer any deadlocks. I didn't want to add a spinlock to the hot
-> > path, so I take it only if some of the condition suggests that queuing may
-> > be required.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Cc: stable@vger.kernel.org
-> The commit message requires a bit of rework to describe the change.
-
-I improved the message and I send a second version of the patch.
-
-> Also, deserves a fixes tag.
-
-"Fixes" tag is for something that worked and that was broken in some 
-previous commit. A quick search through git shows that QAT backlogging was 
-broken since the introduction of QAT.
-
-> > 
-> > ---
-> >  drivers/crypto/intel/qat/qat_common/qat_algs_send.c |   31 ++++++++++++--------
-> >  1 file changed, 20 insertions(+), 11 deletions(-)
-> > 
-> > Index: linux-2.6/drivers/crypto/intel/qat/qat_common/qat_algs_send.c
-> > ===================================================================
-> > --- linux-2.6.orig/drivers/crypto/intel/qat/qat_common/qat_algs_send.c
-> > +++ linux-2.6/drivers/crypto/intel/qat/qat_common/qat_algs_send.c
-> > @@ -40,16 +40,6 @@ void qat_alg_send_backlog(struct qat_ins
-> >  	spin_unlock_bh(&backlog->lock);
-> >  }
-> >  
-> > -static void qat_alg_backlog_req(struct qat_alg_req *req,
-> > -				struct qat_instance_backlog *backlog)
-> > -{
-> > -	INIT_LIST_HEAD(&req->list);
-> Is the initialization of an element no longer needed?
-
-It was never needed. list_add_tail calls __list_add and __list_add 
-overwrites new->next and new->prev without reading them. So, there's no 
-need to initialize them.
-
-> > -
-> > -	spin_lock_bh(&backlog->lock);
-> > -	list_add_tail(&req->list, &backlog->list);
-> > -	spin_unlock_bh(&backlog->lock);
-> > -}
-> > -
-> >  static int qat_alg_send_message_maybacklog(struct qat_alg_req *req)
-> >  {
-> >  	struct qat_instance_backlog *backlog = req->backlog;
-> > @@ -71,8 +61,27 @@ static int qat_alg_send_message_maybackl
-> >  	return -EINPROGRESS;
-> >  
-> >  enqueue:
-> > -	qat_alg_backlog_req(req, backlog);
-> > +	spin_lock_bh(&backlog->lock);
-> > +
-> > +	/* If any request is already backlogged, then add to backlog list */
-> > +	if (!list_empty(&backlog->list))
-> > +		goto enqueue2;
-> >  
-> > +	/* If ring is nearly full, then add to backlog list */
-> > +	if (adf_ring_nearly_full(tx_ring))
-> > +		goto enqueue2;
-> > +
-> > +	/* If adding request to HW ring fails, then add to backlog list */
-> > +	if (adf_send_message(tx_ring, fw_req))
-> > +		goto enqueue2;
-> In a nutshell, you are re-doing the same steps taking the backlog lock.
-> 
-> It should be possible to re-write it so that there is a function that
-> attempts enqueuing and if it fails, then the same is called again taking
-> the lock.
-> If you want I can rework it and resubmit.
-
-Yes, if you prefer it this way, I reworked the patch so that we execute 
-the same code with or without the spinlock held.
-
-> > +
-> > +	spin_unlock_bh(&backlog->lock);
-> > +	return -EINPROGRESS;
-> > +
-> > +enqueue2:
-> > +	list_add_tail(&req->list, &backlog->list);
-> > +
-> > +	spin_unlock_bh(&backlog->lock);
-> >  	return -EBUSY;
-> >  }
-> 
-> [1] https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1276510.html
-> [2] https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1428293.html
-> 
-> Regards,
-> 
-> -- 
-> Giovanni
-> 
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] qat: fix deadlock in backlog processing
-
-I was testing QAT with dm-crypt and I got some deadlocks.
-
-The reason for the deadlocks is this: suppose that one of the "if"
-conditions in "qat_alg_send_message_maybacklog" is true and we jump to the
-"enqueue" label. At this point, an interrupt comes in and clears all
-pending messages. Now, the interrupt returns, we grab backlog->lock, add
-the message to the backlog, drop backlog->lock - and there is no one to
-remove the backlogged message out of the list and submit it.
-
-In order to fix the bug, we must hold the spinlock backlog->lock when we 
-perform test for free space in the ring - so that the test for free space 
-and adding the request to a backlog is atomic and can't be interrupted by 
-an interrupt. Every completion interrupt calls qat_alg_send_backlog which 
-grabs backlog->lock, so holding this spinlock is sufficient to synchronize 
-with interrupts.
-
-I didn't want to add a spinlock unconditionally to the hot path for 
-performance reasons, so I take it only if some of the condition suggests 
-that queuing may be required.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-
----
- drivers/crypto/intel/qat/qat_common/qat_algs_send.c |   23 ++++++++++----------
- 1 file changed, 12 insertions(+), 11 deletions(-)
-
-Index: linux-2.6/drivers/crypto/intel/qat/qat_common/qat_algs_send.c
-===================================================================
---- linux-2.6.orig/drivers/crypto/intel/qat/qat_common/qat_algs_send.c
-+++ linux-2.6/drivers/crypto/intel/qat/qat_common/qat_algs_send.c
-@@ -40,22 +40,14 @@ void qat_alg_send_backlog(struct qat_ins
- 	spin_unlock_bh(&backlog->lock);
- }
- 
--static void qat_alg_backlog_req(struct qat_alg_req *req,
--				struct qat_instance_backlog *backlog)
--{
--	INIT_LIST_HEAD(&req->list);
--
--	spin_lock_bh(&backlog->lock);
--	list_add_tail(&req->list, &backlog->list);
--	spin_unlock_bh(&backlog->lock);
--}
--
- static int qat_alg_send_message_maybacklog(struct qat_alg_req *req)
- {
- 	struct qat_instance_backlog *backlog = req->backlog;
- 	struct adf_etr_ring_data *tx_ring = req->tx_ring;
- 	u32 *fw_req = req->fw_req;
-+	bool locked = false;
- 
-+repeat:
- 	/* If any request is already backlogged, then add to backlog list */
- 	if (!list_empty(&backlog->list))
- 		goto enqueue;
-@@ -68,11 +60,20 @@ static int qat_alg_send_message_maybackl
- 	if (adf_send_message(tx_ring, fw_req))
- 		goto enqueue;
- 
-+	if (unlikely(locked))
-+		spin_unlock_bh(&backlog->lock);
- 	return -EINPROGRESS;
- 
- enqueue:
--	qat_alg_backlog_req(req, backlog);
-+	if (!locked) {
-+		spin_lock_bh(&backlog->lock);
-+		locked = true;
-+		goto repeat;
-+	}
-+
-+	list_add_tail(&req->list, &backlog->list);
- 
-+	spin_unlock_bh(&backlog->lock);
- 	return -EBUSY;
- }
- 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+SGkgZm9sa3MsCgpUaGFua3MgZm9yIHRoZSByZXBvcnQuIEkgd2lsbCB0cnkgdG8gcmVwcm9kdWNl
+IHRoaXMgaXNzdWUgbmV4dCB3ZWVrLgoKU29uZwoKT24gRnJpLCBTZXAgMjIsIDIwMjMgYXQgOToy
+NeKAr0FNIEtpcmlsbCBLaXJpbGVua28gPGtpcmlsbEB1bHRyYWNvZGVyLm9yZz4gd3JvdGU6Cj4K
+PiBPbiAyMi4wOS4yMDIzIDAwOjQ1ICswMzAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6Cj4gPiBHaXZl
+biB5b3VyIHVzZSBvZiAnd3JpdGVtb3N0bHknIEknbSBpbmZlcnJpbmcgeW91J3JlIHVzaW5nIGx2
+bTIncwo+ID4gcmFpZDEgdGhhdCB1c2VzIE1EIHJhaWQxIGNvZGUgaW4gdGVybXMgb2YgdGhlIGRt
+LXJhaWQgdGFyZ2V0Lgo+Cj4gWWVzLCBleGFjdGx5Lgo+Cj4gT24gMjIuMDkuMjAyMyAwMDo0NSAr
+MDMwMCwgTWlrZSBTbml0emVyIHdyb3RlOgo+ID4gQWxsIHNhaWQ6IGhvcGVmdWxseSBzb21lb25l
+IG1vcmUgTUQgb3JpZW50ZWQgY2FuIHJldmlldyB5b3VyIHJlcG9ydAo+ID4gYW5kIGhlbHAgeW91
+IGZ1cnRoZXIuCj4gVGhhbmsgeW91LiBJIGRvbid0IG5lZWQgdG8gc2VuZCBhIG5ldyByZXBvcnQg
+dG8gTUQgbWFpbnRhaW5lcnMsIGRvIEk/Cj4KPiBPbiAyMi4wOS4yMDIzIDAxOjAzICswMzAwLCBS
+b21hbiBNYW1lZG92IHdyb3RlOgo+ID4gTWF5YmUgeW91ciBzeXN0ZW0gaGFzbid0IGZyb3plbiB0
+b28sIGp1c3QgdGFraW5nIGl0cyB0aW1lIGluIHByb2Nlc3NpbmcgYWxsCj4gPiB0aGUgdGlueSBz
+cGxpdCByZXF1ZXN0cy4KPiBJIGRvbid0IHRoaW5rIHNvLCBiZWNhdXNlIHRoZSBkaXNrIGFjdGl2
+aXR5IGxpZ2h0IGlzIG9mZi4gTGV0IG1lIGNsYXJpZnk6Cj4gaWYgbXVzaWMgd2FzIHBsYXlpbmcg
+d2hlbiB0aGUgc3lzdGVtIGZyb3plLCB0aGUgbGFzdCBzb3VuZCBidWZmZXIgYmVnaW5zCj4gdG8g
+cGxheSBjeWNsaWNhbGx5LgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
+dC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
+bAo=
 
