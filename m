@@ -1,74 +1,68 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CD45BE7F124
-	for <dm-devel@archiver.kernel.org>; Tue, 26 Sep 2023 20:31:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E271EE7F143
+	for <dm-devel@archiver.kernel.org>; Tue, 26 Sep 2023 22:57:44 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1695760309;
+	s=mimecast20190719; t=1695769063;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=eJ9GQyd1uO3/WDyMFJnMvEBrUqVB9avbA+u8e94eww0=;
-	b=fT8v+fGWYyzM5rFC+MDyHPS8mBUlGjLsyRl0Z8Zfow4RGs9+zzRRX3L1ygBza7oa/XOpYj
-	X8RLQsmQ739EoMEqRAmgq5q4r1yH/Zf/wr0sDl0N3RDOVJ02Z7DQINVfuNWiDcIw4b3aNJ
-	fLw2OIqCG6zYzy3eD7C9Ho9zmPZSMDw=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-553-rUvmDHwHNUqK8AFPQs8sng-1; Tue, 26 Sep 2023 16:31:46 -0400
-X-MC-Unique: rUvmDHwHNUqK8AFPQs8sng-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	bh=M+kQZz8lFikClzDfS2vKurKFd5yVyYryN/EuRg9/M5A=;
+	b=epPBgPBdY9IEZwdmpJHQeWpxEj/wZD8RkSdrm4375X2FFkr9bAbqan2gAZsRaFB/vT4U/1
+	Q+EBA9s0SSPGEdWuHWKMQZ4shJJ2gfKxYXCKix20ltI4dyMzT4iRe7OCSSWKGLrBJUCVLo
+	QQPA7/wqh5trKMQQDBgHqj02nPjFzU8=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-618-fgnTXSLpM8yRWM4igf-PEw-1; Tue, 26 Sep 2023 18:57:40 -0400
+X-MC-Unique: fgnTXSLpM8yRWM4igf-PEw-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5B1B93816D91;
-	Tue, 26 Sep 2023 20:31:44 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B562C811E7E;
+	Tue, 26 Sep 2023 22:57:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5EB46492C37;
-	Tue, 26 Sep 2023 20:31:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2E5549A;
+	Tue, 26 Sep 2023 22:57:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0F7D71946594;
-	Tue, 26 Sep 2023 20:31:37 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 65B9C194658D;
+	Tue, 26 Sep 2023 22:57:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 5F9B7194658D
- for <dm-devel@listman.corp.redhat.com>; Tue, 26 Sep 2023 20:27:55 +0000 (UTC)
+ ESMTP id BBE811946588
+ for <dm-devel@listman.corp.redhat.com>; Tue, 26 Sep 2023 22:30:35 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 50DD340C6E76; Tue, 26 Sep 2023 20:27:55 +0000 (UTC)
+ id 7861640C2070; Tue, 26 Sep 2023 22:30:35 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 499BB40C6EA8
- for <dm-devel@redhat.com>; Tue, 26 Sep 2023 20:27:55 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
- [205.139.110.61])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 70DC440C2064
+ for <dm-devel@redhat.com>; Tue, 26 Sep 2023 22:30:35 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-inbound-delivery-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 21A8F8007A4
- for <dm-devel@redhat.com>; Tue, 26 Sep 2023 20:27:55 +0000 (UTC)
-Received: from mail.ultracoder.org (188.227.94.15.ptspb.net [188.227.94.15])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-616-7VnMhtu8OCqaqMUeFkl_NA-1; Tue,
- 26 Sep 2023 16:27:52 -0400
-X-MC-Unique: 7VnMhtu8OCqaqMUeFkl_NA-1
-Message-ID: <7c0bc9ff-767c-c1a7-49ab-37312a0fe803@ultracoder.org>
-Date: Tue, 26 Sep 2023 23:27:50 +0300
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 535D8811E7B
+ for <dm-devel@redhat.com>; Tue, 26 Sep 2023 22:30:35 +0000 (UTC)
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-434-MOJvEQcYN3q5gdBaHMRBHQ-1; Tue,
+ 26 Sep 2023 18:30:33 -0400
+X-MC-Unique: MOJvEQcYN3q5gdBaHMRBHQ-1
+Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red
+ Hat Linux)) id 1qlGDv-00A6KY-L1; Tue, 26 Sep 2023 22:08:07 +0000
+Date: Tue, 26 Sep 2023 23:08:07 +0100
+From: Matthew Wilcox <willy@infradead.org>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@redhat.com
+Message-ID: <ZRNWRyc7xPY17fvt@casper.infradead.org>
 MIME-Version: 1.0
-To: Yu Kuai <yukuai1@huaweicloud.com>
-References: <0e15b760-2d5f-f639-0fc7-eed67f8c385c@ultracoder.org>
- <ZQy5dClooWaZoS/N@redhat.com> <20230922030340.2eaa46bc@nvm>
- <6b7c6377-c4be-a1bc-d05d-37680175f84c@huaweicloud.com>
- <6a1165f7-c792-c054-b8f0-1ad4f7b8ae01@ultracoder.org>
- <d45ffbcd-cf55-f07c-c406-0cf762a4b4ec@huaweicloud.com>
- <a4d3f9b0-15d5-4a90-f2c1-cad633badbbf@ultracoder.org>
- <3bc0af74-95cd-e175-830c-6030a768e64f@huaweicloud.com>
-From: Kirill Kirilenko <kirill@ultracoder.org>
-In-Reply-To: <3bc0af74-95cd-e175-830c-6030a768e64f@huaweicloud.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -76,9 +70,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
-Subject: Re: [dm-devel] fstrim on raid1 LV with writemostly PV leads to
- system freeze
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Subject: [dm-devel] Sleeping function called from invalid context
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -90,49 +83,127 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-raid@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com,
- "yukuai \(C\)" <yukuai3@huawei.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: ultracoder.org
-Content-Language: ru-RU, en-US
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+X-Mimecast-Originator: infradead.org
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gMjYuMDkuMjAyMyAxNjoyMSArMDMwMCwgWXUgS3VhaSB3cm90ZToKPiBUaGlzIG1lYW5zIGNw
-dSBpcyBidXN5IHdpdGggc29tZXRoaW5nLCBpbiB0aGlzIGNhc2UgeW91IG11c3QgdXNlIHRvcCBv
-cgo+IHBlcmYgdG8gZmlndXJlIG91dCB3aGF0IGFsbCB5b3VyIGNwdXMgYXJlIGRvaW5nLCBwcm9i
-YWJseSBpc3N1ZSBpbyBhbmQKPiBoYW5kbGUgaW8gaW50ZXJydXB0LgoKT0ssIGhlcmUgaXMgdGhl
-IGxhc3Qgb3V0cHV0IG9mICdwZXJmIHRvcCAtZCAxJyBiZWZvcmUgc3lzdGVtIGZyb3plOgoKNC4w
-MCXCoCBba2VybmVsXcKgIGxlZHRyaWdfZGlza19hY3Rpdml0eQozLjg2JcKgIFtrZXJuZWxdwqAg
-bGVkX3RyaWdnZXJfYmxpbmtfb25lc2hvdAoxLjkzJcKgIFtrZXJuZWxdwqAgcmVhZF90c2MKMS42
-OCXCoCBwZXJmwqDCoMKgwqDCoCBoaXN0X2VudHJ5X19zb3J0CjEuNjIlwqAgW2tlcm5lbF3CoCBt
-ZW51X3NlbGVjdAoxLjU3JcKgIFtrZXJuZWxdwqAgcHNpX2dyb3VwX2NoYW5nZQoxLjE5JcKgIFtr
-ZXJuZWxdwqAgbmF0aXZlX3NjaGVkX2Nsb2NrCjAuOTYlwqAgW2tlcm5lbF3CoCBzY3NpX2NvbXBs
-ZXRlCjAuOTQlwqAgW2tlcm5lbF3CoCBfX3Jhd19zcGluX2xvY2tfaXJxc2F2ZQowLjgwJcKgIHBl
-cmbCoMKgwqDCoMKgIHBlcmZfaHBwX19pc19keW5hbWljX2VudHJ5Ci4uLgoKQW5kIGhlcmUgaXMg
-dGhlIGxhc3Qgb3V0cHV0IG9mICd0b3AnOgoKbG9hZCBhdmVyYWdlOiAxLjQ4LCAwLjkwLCAwLjM4
-CiVDcHUocyk6IDAuMSB1cywgMC4xIHN5LCAwLjAgbmksIDkzLjUgaWQsIDYuMyB3YSwgMC4wIGhp
-LCAwLjEgc2ksIDAuMCBzdApNaUIgTWVtOsKgIDMyMDA1LjMgdG90YWwsIDI5MTM4LjMgZnJlZSwg
-MTMyNy4wIHVzZWQswqDCoCAxNTQwLjAgYnVmZi9jYWNoZQpNaUIgU3dhcDogMTYzODIuMCB0b3Rh
-bCwgMTYzODIuMCBmcmVlLMKgwqDCoCAwLjAgdXNlZC7CoCAzMDI0NC41IGF2YWlsIE1lbQpTICVD
-UFUgQ09NTUFORApTIDAuN8KgIFttZFhfcmFpZDFdClMgMC43wqAgY2lubmFtb24gLS1yZXBsYWNl
-CkkgMC4zwqAgW2t3b3JrZXIvdTY0OjItZXZlbnRzX3VuYm91bmRdCkkgMC4zwqAgW2t3b3JrZXIv
-dTY0OjYtZXZlbnRzX2ZyZWV6YWJsZV9wb3dlcl9dClMgMC4zwqAgW2dmeF9sb3ddClMgMC4zwqAg
-L3Vzci9iaW4vY29udGFpbmVyZApTIDAuM8KgIC91c3IvbGliL3hvcmcvWG9yZyAtY29yZSA6MCAu
-Li4KUyAwLjPCoCAvdXNyL2xpYmV4ZWMvZ25vbWUtdGVybWluYWwtc2VydmVyClIgMC4zwqAgdG9w
-CkQgMC4zwqAgZnN0cmltIC9ob21lCi4uLgoKSSB0aGluaywgdGhlcmUgYXJlIG9ubHkgdHdvIHBv
-c3NpYmlsaXRpZXM6IGVpdGhlciBDUFUgaXMgbm90IHRoYXQgYnVzeSwKb3IgaXQgZ2V0cyBidXN5
-IHZlcnkgcXVpY2tseSwgc28gd2UgY2FuIG5vdCBzZWUgaXQgbGlrZSB0aGF0LiBJIGhhdmUgbm8K
-ZXhwZXJpZW5jZSBpbiBrZXJuZWwgZGVidWdnaW5nLiBNYXliZSBzb21lb25lIGtub3dzLCBob3cg
-SSBjYW4gZ2V0Cm1vcmUgYWNjdXJhdGUgZGF0YSB3aGVuIHN5c3RlbSBmcmVlemVzPwoKT24gMjYu
-MDkuMjAyMyAxNjoyMSArMDMwMCwgWXUgS3VhaSB3cm90ZToKPiBJJ20gbm90IHN1cmUgd2hhdCAn
-ZGlzayBhY3Rpdml0eSBpbmRpY2F0b3IgZ29lcyBvZmYnIG1lYW5zCgpJdCBtZWFucywgdGhlIExF
-RCBvbiBteSBjb21wdXRlciBjYXNlLCBpbmRpY2F0aW5nIGRpc2sgYWN0aXZpdHksIGdvZXMgb2Zm
-LgpBY2NvcmRpbmcgdG8gJ3BlcmYnIG91dHB1dCwgTEVEIGNvbnRyb2wgaXMgdGhlIGxhcmdlc3Qg
-Y29udHJpYnV0b3IgdG8KQ1BVIGxvYWQuIDopCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVsCg==
+Got this in linux-next 20230926, and I don't think it's due to my
+patches on top (it may be, will verify):
+
+04178 generic/347       run fstests generic/347 at 2023-09-26 17:24:55
+04178 XFS (sdb): Mounting V5 Filesystem c0c11e6a-170c-48e4-84c5-42b46d6d5197
+04178 XFS (sdb): Ending clean mount
+04179 BUG: sleeping function called from invalid context at kernel/locking/rwsem.c:1525
+04179 in_atomic(): 1, irqs_disabled(): 0, non_block: 0, pid: 1096408, name: kworker/u16:32
+04179 preempt_count: 1, expected: 0
+04179 RCU nest depth: 0, expected: 0
+04179 4 locks held by kworker/u16:32/1096408:
+04179  #0: ffff88800ac6ff38 ((wq_completion)dm-thin){+.+.}-{0:0}, at: process_one_work+0x17b/0x4a0
+04179  #1: ffff88800800be48 ((work_completion)(&pool->worker)){+.+.}-{0:0}, at: process_one_work+0x17b/0x4a0
+04179  #2: ffff88804d8715d0 (&pmd->root_lock){++++}-{3:3}, at: dm_thin_alloc_data_block+0x26/0xb0
+04179  #3: ffff88800db2fe98 (&ea->lock){+.+.}-{2:2}, at: dm_ea_context_alloc+0x2a/0x380
+04179 Preemption disabled at:
+04179 [<ffffffff81878cba>] dm_ea_context_alloc+0x2a/0x380
+04179 CPU: 6 PID: 1096408 Comm: kworker/u16:32 Kdump: loaded Not tainted 6.6.0-rc3-next-20230926-00005-geb8b46fa6084-dirty #289
+04179 Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.2-debian-1.16.2-1 04/01/2014
+04179 Workqueue: dm-thin do_worker
+04179 Call Trace:
+04179  <TASK>
+04179  dump_stack_lvl+0x69/0x80
+04179  dump_stack+0x10/0x20
+04179  __might_resched+0x1a8/0x2c0
+04179  __might_sleep+0x3d/0x70
+04179  down_read+0x19/0x180
+04179  cache_get+0x46/0xc0
+04179  new_read+0x44/0x180
+04179  dm_bufio_read+0x24/0x30
+04179  dm_bm_read_lock+0x21/0x70
+04179  dm_tm_read_lock+0x24/0xa0
+04179  sm_ll_find_free_block+0xa1/0x190
+04179  sm_ll_find_common_free_block+0x2e/0x80
+04179  sm_disk_new_block_in_range+0x2f/0x70
+04179  sm_alloc_extent+0xe/0x10
+04179  dm_ea_context_alloc+0x4e/0x380
+04179  dm_thin_alloc_data_block+0x4f/0xb0
+04179  alloc_data_block+0x51/0x190
+04179  process_cell+0x34b/0x620
+04179  ? _raw_spin_unlock_irq+0x22/0x50
+04179  do_worker+0x275/0xa00
+04179  process_one_work+0x1d8/0x4a0
+04179  ? process_one_work+0x17b/0x4a0
+04179  worker_thread+0x1d9/0x3d0
+04179  ? rescuer_thread+0x370/0x370
+04179  kthread+0x109/0x140
+04179  ? kthread_complete_and_exit+0x20/0x20
+04179  ret_from_fork+0x31/0x50
+04179  ? kthread_complete_and_exit+0x20/0x20
+04179  ret_from_fork_asm+0x11/0x20
+04179  </TASK>
+04179 
+04179 =============================
+04179 [ BUG: Invalid wait context ]
+04179 6.6.0-rc3-next-20230926-00005-geb8b46fa6084-dirty #289 Tainted: G        W         
+04179 -----------------------------
+04179 kworker/u16:32/1096408 is trying to lock:
+04179 ffff88803d8c02f0 (&bc->trees[i].lock){++++}-{3:3}, at: cache_get+0x46/0xc0
+04179 other info that might help us debug this:
+04179 context-{4:4}
+04179 4 locks held by kworker/u16:32/1096408:
+04179  #0: ffff88800ac6ff38 ((wq_completion)dm-thin){+.+.}-{0:0}, at: process_one_work+0x17b/0x4a0
+04179  #1: ffff88800800be48 ((work_completion)(&pool->worker)){+.+.}-{0:0}, at: process_one_work+0x17b/0x4a0
+04179  #2: ffff88804d8715d0 (&pmd->root_lock){++++}-{3:3}, at: dm_thin_alloc_data_block+0x26/0xb0
+04179  #3: ffff88800db2fe98 (&ea->lock){+.+.}-{2:2}, at: dm_ea_context_alloc+0x2a/0x380
+04179 stack backtrace:
+04179 CPU: 6 PID: 1096408 Comm: kworker/u16:32 Kdump: loaded Tainted: G        W          6.6.0-rc3-next-20230926-00005-geb8b46fa6084-dirty #289
+04179 Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.2-debian-1.16.2-1 04/01/2014
+04179 Workqueue: dm-thin do_worker
+04179 Call Trace:
+04179  <TASK>
+04179  dump_stack_lvl+0x4a/0x80
+04179  dump_stack+0x10/0x20
+04179  __lock_acquire+0x9c9/0x26d0
+04179  ? dump_stack_lvl+0x73/0x80
+04179  lock_acquire+0xb8/0x280
+04179  ? cache_get+0x46/0xc0
+04179  ? __might_resched+0x1b4/0x2c0
+04179  down_read+0x3c/0x180
+04179  ? cache_get+0x46/0xc0
+04179  cache_get+0x46/0xc0
+04179  new_read+0x44/0x180
+04179  dm_bufio_read+0x24/0x30
+04179  dm_bm_read_lock+0x21/0x70
+04179  dm_tm_read_lock+0x24/0xa0
+04179  sm_ll_find_free_block+0xa1/0x190
+04179  sm_ll_find_common_free_block+0x2e/0x80
+04179  sm_disk_new_block_in_range+0x2f/0x70
+04179  sm_alloc_extent+0xe/0x10
+04179  dm_ea_context_alloc+0x4e/0x380
+04179  ? save_sm_roots+0x70/0x70
+04179  dm_thin_alloc_data_block+0x4f/0xb0
+04179  alloc_data_block+0x51/0x190
+04179  process_cell+0x34b/0x620
+04179  ? _raw_spin_unlock_irq+0x22/0x50
+04179  do_worker+0x275/0xa00
+04179  process_one_work+0x1d8/0x4a0
+04179  ? process_one_work+0x17b/0x4a0
+04179  worker_thread+0x1d9/0x3d0
+04179  ? rescuer_thread+0x370/0x370
+04179  kthread+0x109/0x140
+04179  ? kthread_complete_and_exit+0x20/0x20
+04179  ret_from_fork+0x31/0x50
+04179  ? kthread_complete_and_exit+0x20/0x20
+04179  ret_from_fork_asm+0x11/0x20
+04179  </TASK>
+
+I have a few more of these, but I don't see any new information in them.
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
