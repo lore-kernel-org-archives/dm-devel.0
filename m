@@ -4,144 +4,97 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CE41FE7D27F
-	for <dm-devel@archiver.kernel.org>; Tue, 26 Sep 2023 11:07:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B5942E7E635
+	for <dm-devel@archiver.kernel.org>; Tue, 26 Sep 2023 14:12:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1695726447;
+	s=mimecast20190719; t=1695737535;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=jS8WZUkKixiXyE46Umcbnja7Ww2uEMOi5x7Zosfv6CY=;
-	b=T5yawwqNm0jKxdIjnqF1CO7D2w7ynOiWd2Q+njt436N9AMfdHdEx0Qj8olwQ9fYOHvyBCX
-	utcSywDBTXfPI3HtvCgI1AqItIjw8FFCT4AiZvEah0IZoKxRsyS2utM8cgOntSC6aWdyfb
-	OKL37EhOZlj2isIiNF1/pqyJ+PflhA0=
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=o4K3OldTU/5G/+xDnmvOp/CJg2RRWWB9fkls6rbRE9U=;
+	b=afZeRD7xLLjyZvPGTHsB+5dkQQkf8/9FLvy8zGCpQdI2F7Ukowu2wRbhvIgzaxsEUgN6TU
+	NiswWTteUpjytGZMnmXxnZqWk3VjBLwZficBCpeJ6HoFrRAbPSMYOLj7Mc+wQg5E69pLus
+	x8qhQYo2pidkRh9L7KMxeXwEoU6+FxU=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-224-t4u6oRjtPtqU3m41qP1yGQ-1; Tue, 26 Sep 2023 07:07:18 -0400
-X-MC-Unique: t4u6oRjtPtqU3m41qP1yGQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-508-Q7L0n3Y7Pvqgt0mrK81fIg-1; Tue, 26 Sep 2023 10:12:09 -0400
+X-MC-Unique: Q7L0n3Y7Pvqgt0mrK81fIg-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EF1DA85A5BA;
-	Tue, 26 Sep 2023 11:07:16 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AA9D0858F19;
+	Tue, 26 Sep 2023 14:12:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CD35E2156702;
-	Tue, 26 Sep 2023 11:07:15 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5A4B151E3;
+	Tue, 26 Sep 2023 14:12:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A6836194658D;
-	Tue, 26 Sep 2023 11:07:15 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 21C6C19465A8;
+	Tue, 26 Sep 2023 14:11:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id F31E1194658C
- for <dm-devel@listman.corp.redhat.com>; Tue, 26 Sep 2023 10:58:39 +0000 (UTC)
+ ESMTP id B6453194658C
+ for <dm-devel@listman.corp.redhat.com>; Tue, 26 Sep 2023 13:21:14 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9B6D72026D68; Tue, 26 Sep 2023 10:58:39 +0000 (UTC)
+ id 91FFF28FD; Tue, 26 Sep 2023 13:21:14 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 935042026D4B
- for <dm-devel@redhat.com>; Tue, 26 Sep 2023 10:58:39 +0000 (UTC)
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8AF4051E3
+ for <dm-devel@redhat.com>; Tue, 26 Sep 2023 13:21:14 +0000 (UTC)
 Received: from us-smtp-inbound-delivery-1.mimecast.com
  (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 73021185A78E
- for <dm-devel@redhat.com>; Tue, 26 Sep 2023 10:58:39 +0000 (UTC)
-Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-567-hN2AQC2LMuytNvpT75kXJw-1; Tue, 26 Sep 2023 06:58:37 -0400
-X-MC-Unique: hN2AQC2LMuytNvpT75kXJw-1
-Received: from epcas5p4.samsung.com (unknown [182.195.41.42])
- by mailout3.samsung.com (KnoxPortal) with ESMTP id
- 20230926105833epoutp038212d50d1c969fb58080c6c4c445fefd~IbbwEZGIH1866118661epoutp03O
- for <dm-devel@redhat.com>; Tue, 26 Sep 2023 10:58:33 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com
- 20230926105833epoutp038212d50d1c969fb58080c6c4c445fefd~IbbwEZGIH1866118661epoutp03O
-Received: from epsnrtp1.localdomain (unknown [182.195.42.162]) by
- epcas5p3.samsung.com (KnoxPortal) with ESMTP id
- 20230926105833epcas5p39c4d5952102ceb27176b612d9882d254~Ibbvg8Iu21175911759epcas5p3X;
- Tue, 26 Sep 2023 10:58:33 +0000 (GMT)
-Received: from epsmgec5p1new.samsung.com (unknown [182.195.38.175]) by
- epsnrtp1.localdomain (Postfix) with ESMTP id 4RvxYg4YLfz4x9Pp; Tue, 26 Sep
- 2023 10:58:31 +0000 (GMT)
-Received: from epcas5p2.samsung.com ( [182.195.41.40]) by
- epsmgec5p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
- EC.4A.09023.759B2156; Tue, 26 Sep 2023 19:58:31 +0900 (KST)
-Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
- epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
- 20230926101329epcas5p2008e3144f177f1c88aeb2302a22488e8~Ia0Y6vcOg1077010770epcas5p2Y;
- Tue, 26 Sep 2023 10:13:29 +0000 (GMT)
-Received: from epsmgmcp1.samsung.com (unknown [182.195.42.82]) by
- epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
- 20230926101329epsmtrp25d97cb68c034b365e2834f3b78c445c2~Ia0Y5ebse0140601406epsmtrp2x;
- Tue, 26 Sep 2023 10:13:29 +0000 (GMT)
-X-AuditID: b6c32a44-c7ffa7000000233f-4e-6512b957578e
-Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
- epsmgmcp1.samsung.com (Symantec Messaging Gateway) with SMTP id
- 7C.7E.18916.8CEA2156; Tue, 26 Sep 2023 19:13:28 +0900 (KST)
-Received: from green245 (unknown [107.99.41.245]) by epsmtip2.samsung.com
- (KnoxPortal) with ESMTPA id
- 20230926101325epsmtip2cfcf64a0696d90208e1d465522eeae77~Ia0VrCoTp2661926619epsmtip2q;
- Tue, 26 Sep 2023 10:13:25 +0000 (GMT)
-Date: Tue, 26 Sep 2023 15:37:18 +0530
-From: Nitesh Jagadeesh Shetty <nj.shetty@samsung.com>
-To: Jinyoung Choi <j-young.choi@samsung.com>
-Message-ID: <20230926100718.wcptispc2zhfi5eh@green245>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 66EA8382136B
+ for <dm-devel@redhat.com>; Tue, 26 Sep 2023 13:21:14 +0000 (UTC)
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com
+ [45.249.212.56]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-185-OOqwKZNpMHOslBS1HmKyeQ-1; Tue, 26 Sep 2023 09:21:11 -0400
+X-MC-Unique: OOqwKZNpMHOslBS1HmKyeQ-1
+Received: from mail02.huawei.com (unknown [172.30.67.143])
+ by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4Rw0k61tVxz4f3jsD
+ for <dm-devel@redhat.com>; Tue, 26 Sep 2023 21:21:02 +0800 (CST)
+Received: from [10.174.176.73] (unknown [10.174.176.73])
+ by APP4 (Coremail) with SMTP id gCh0CgAnt9bB2hJlZK7GBQ--.35476S3;
+ Tue, 26 Sep 2023 21:21:06 +0800 (CST)
+To: Kirill Kirilenko <kirill@ultracoder.org>, Yu Kuai <yukuai1@huaweicloud.com>
+References: <0e15b760-2d5f-f639-0fc7-eed67f8c385c@ultracoder.org>
+ <ZQy5dClooWaZoS/N@redhat.com> <20230922030340.2eaa46bc@nvm>
+ <6b7c6377-c4be-a1bc-d05d-37680175f84c@huaweicloud.com>
+ <6a1165f7-c792-c054-b8f0-1ad4f7b8ae01@ultracoder.org>
+ <d45ffbcd-cf55-f07c-c406-0cf762a4b4ec@huaweicloud.com>
+ <a4d3f9b0-15d5-4a90-f2c1-cad633badbbf@ultracoder.org>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <3bc0af74-95cd-e175-830c-6030a768e64f@huaweicloud.com>
+Date: Tue, 26 Sep 2023 21:21:05 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 MIME-Version: 1.0
-In-Reply-To: <20230922130815epcms2p631fc5fc5ebe634cc948fef1992f83a38@epcms2p6>
-User-Agent: NeoMutt/20171215
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Tf0xTVxTHvX2P18JWffJjXH5sNCUmw43SOlouBKYbiG9KGJuZJssWeNIX
- SiiltEVk2SaUMX4NC4iIZRswfglO0CqGH5YREFGcA0P41YwtSqkGIiBCTEDYWgrG/z7nm+85
- 555z7+Vgzga2JydRoWFUClrOJ5zwG31+7/of73BmhHmjPqh18DaGnq2s4UhbvI6hS1M6As31
- LQFk7skFyDhf6YAmezpYqOlSPwsV6doIVNo7BtDMqJ6FjKb3UM2PdTi6abyLo5HOnwlU1TDD
- RoXj7QRqHNhgoYniGYDazVkAtcwt4OiOyQtNF+YBNLQ+4HDAg+rQT7GpoX+u4tTI/TTK0JxP
- UNfqTlNdk5kEVXvmrANVlD1PUM9mTDi10D1KUGeuNwPqueEdymB+yorhfpkUKmNoKaPiMYr4
- FGmiIiGMf+RobHisWCIU+YuCURCfp6CTmTB+RFSMf2Si3LoEPu8kLU+zSjG0Ws0P+DBUlZKm
- YXiyFLUmjM8opXJloFKgppPVaYoEgYLRhIiEwn1iqzEuSfbkfBemnN916uG5HnYmWH2zADhy
- IBkIH/3WiBcAJ44z2QXg3GMLYQ+WADw/u8p+FSzeXgDbKTOdVVuuDgC1SyNbgQXA6juTbJsL
- J/fA5db/cBsTpBh2Xc22MofjSr4Pc5p9bX6MrObA7vHLm1V3kPuhYdCw6XchQ2Gb7ibb5ueS
- Eph1y8Umc8nd8O4F86bFkYyGL2uLCBu7kd6won4Fs9WE5F+O0PTn5a2TRsDSyUmWnV3g7MB1
- tp094fN5I2HndNhUdpGwJ/8AoH5cv5W8H+YM6jAbY6QMDuZpcbv+Njw32MKy6zth0Zp5qwEX
- tv+6zb7w99bqrQYecOxFFmEbBpIUzL7ytX1ZLwBsWKwAxYCnf204/Wvt7BwC8xe1Dnb2gdlt
- lZjeWgojvWDjBseOfrC1M6AaEM3Ag1GqkxOYeLFSpGDSX72E+JRkA9j8PHsj2sFE1YagF7A4
- oBdADsZ35a5adjLOXCmd8Q2jSolVpckZdS8QW++wBPN0i0+x/j6FJlYUGCwMlEgkgcEfSER8
- d+5czi9SZzKB1jBJDKNkVNt5LI6jZybLYjpUl1p6xPuCJFdOJziZSm598tgpIH1p2OfQk28/
- DqYulrP27DTum1+WZXlMxVe6X5nr1ZoeYILhlZVOJmhAW3bYuHsy5DB6OEa/LAGP1u753+uv
- r9Hsarj/hv5f43dnJZ7XnAbzYhOjDNEwKLTz0/b6qMVUS7NefkITzv+sKtK84C70WZeqvhju
- T8gUYHGuT9mp47N9otMnE3O+51EbuqaDVMGJsgcDx8SkpU9mKTwA3JZrjFVffS7THfP33dES
- R9JN/WErSx7mGMn6jQz3Cqib/kMQzB9am/b7W8nxrT0e/ZE0OfxUt69Xfu5PR2MmMiLdyrve
- Chvz1rS0NZTzcbWMFu3FVGr6f5m9k7TFBAAA
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFvrNIsWRmVeSWpSXmKPExsWy7bCSvO6JdUKpBj3PrCzWnzrGbPHx628W
- i6YJf5ktVt/tZ7N4ffgTo8WTA+2MFnvfzWa1uHlgJ5PFytVHmSx6+7eyWUw6dI3R4unVWUwW
- e29pWyxsW8JisWfvSRaLy7vmsFnMX/aU3aL7+g42i+XH/zFZ3JjwlNFix5NGRot1r9+zWJy4
- JW3xuLuD0eL83+OsDpIeO2fdZfc4f28ji8fls6Uem1Z1snlsXlLvsftmA5vH4r7JrB69ze/Y
- PD4+vcXi8X7fVTaPvi2rGD0+b5Lz2PTkLVMAbxSXTUpqTmZZapG+XQJXxpLDF5kK/vNU/Js1
- h6mBcQVXFyMnh4SAicTTXfPZuhi5OIQEtjNKzHvUxgaRkJRY9vcIM4QtLLHy33N2iKInjBJn
- /lxkBEmwCKhKfFn/nwXEZhMwldi9sRnI5uAQEdCRaF2lDFLPLLCCQ2Lhoh9gNQwC9hKbTm0C
- s4UFbCS29u9hB6nnFTCTaDwiDDH/O6NEz8IlYDW8AoISJ2c+AbOZgWrmbX7IDFLPLCAtsfwf
- B0RYXqJ562ywOzkF/CT+LO4Fu19UQEZixtKvzBMYhWchmTQLyaRZCJNmIZm0gJFlFaNoakFx
- bnpucoGhXnFibnFpXrpecn7uJkZw+tAK2sG4bP1fvUOMTByMhxglOJiVRHh/PeNLFeJNSays
- Si3Kjy8qzUktPsQozcGiJM6rnNOZIiSQnliSmp2aWpBaBJNl4uCUamByOCGwwpBBocPW5HPP
- rjkiNfdviSx9vG158ucZaxwihD45Vhq6FMWntsiHxxrPYP6dZ/lJwvm0qXSuZEm9x0Opji+f
- PrLUcoXv/nPi6/PibbWv4r1XvPy89M9WRb+JFV5PeasLqsNvvj2lzn7GaPrjfA/BZ9p23Bqc
- FjM1Xew9zQPUDpifu//8WcrHDQGn5FLqlKy3nWKffaK1TtXhlG+2T7Ditkbpn7kVSVOeFwnG
- P5q8xLUo0dD27YNQJ/mQ0723v85tO8HL5r84Yw1PYvUWRutlUkW6OoEr81aej+/mVwwI5biw
- tY7haqqjSf3HGW/Uj/1OaC+Y+d7kQx3jxD/2WrcuZ3CUrfqlus2FSYmlOCPRUIu5qDgRAGGm
- ZFGOAwAA
-X-CMS-MailID: 20230926101329epcas5p2008e3144f177f1c88aeb2302a22488e8
-X-Msg-Generator: CA
-X-Sendblock-Type: REQ_APPROVE
-CMS-TYPE: 105P
-DLP-Filter: Pass
+In-Reply-To: <a4d3f9b0-15d5-4a90-f2c1-cad633badbbf@ultracoder.org>
+X-CM-TRANSID: gCh0CgAnt9bB2hJlZK7GBQ--.35476S3
+X-Coremail-Antispam: 1UD129KBjvJXoWrZryxZrW7Cw4fJryftF1UJrb_yoW8Jr1fpF
+ yDJa13Cw4qqF92v34DA3ZrWFWFvws8Ar13Gr1kWrWav3WqgFyfJr4Ik3yruryjqF48Ww1q
+ qanrX34fuFZ7A3DanT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+ 9KBjDU0xBIdaVrnRJUUUkK14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+ rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+ 1l84ACjcxK6xIIjxv20xvE14v26r4j6ryUM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
+ 6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+ Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+ I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
+ 4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwCYjI0SjxkI62AI1cAE67vI
+ Y487MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAFwI
+ 0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVWUAVWUtwCIc40Y
+ 0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AKxV
+ WUJVW8JwCI42IY6xAIw20EY4v20xvaj40_Wr1j6rW3Jr1lIxAIcVC2z280aVAFwI0_Jr0_
+ Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7VUbXdbU
+ UUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20230920081458epcas5p3a3e12d8b5661b5d6f4420316630b02e1
-References: <20230920080756.11919-5-nj.shetty@samsung.com>
- <20230920080756.11919-1-nj.shetty@samsung.com>
- <CGME20230920081458epcas5p3a3e12d8b5661b5d6f4420316630b02e1@epcms2p6>
- <20230922130815epcms2p631fc5fc5ebe634cc948fef1992f83a38@epcms2p6>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -149,8 +102,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: Re: [dm-devel] [PATCH v16 04/12] block: add emulation for copy
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: Re: [dm-devel] fstrim on raid1 LV with writemostly PV leads to
+ system freeze
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -162,104 +116,38 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Vincent Kang Fu <vincent.fu@samsung.com>,
- "anuj1072538@gmail.com" <anuj1072538@gmail.com>,
- "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
- "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>,
- Alasdair Kergon <agk@redhat.com>, Sagi Grimberg <sagi@grimberg.me>,
- "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
- Jonathan Corbet <corbet@lwn.net>, SSDR Gost Dev <gost.dev@samsung.com>,
- "nitheshshetty@gmail.com" <nitheshshetty@gmail.com>,
- Chaitanya Kulkarni <kch@nvidia.com>, Anuj Gupta <anuj20.g@samsung.com>,
- Mike Snitzer <snitzer@kernel.org>,
- "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
- Alexander Viro <viro@zeniv.linux.org.uk>, Keith Busch <kbusch@kernel.org>,
- Jens Axboe <axboe@kernel.dk>, Christian Brauner <brauner@kernel.org>,
- "martin.petersen@oracle.com" <martin.petersen@oracle.com>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "mcgrof@kernel.org" <mcgrof@kernel.org>,
- "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+Cc: linux-raid@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com,
+ Roman Mamedov <rm@romanrm.net>, "yukuai \(C\)" <yukuai3@huawei.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: samsung.com
-Content-Type: multipart/mixed;
- boundary="----LAXCzQHOdZ.PJY8ISgkP8Kui-li3V03FA_f8OYW0UVQARYhI=_21324_"
+X-Mimecast-Originator: huaweicloud.com
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-------LAXCzQHOdZ.PJY8ISgkP8Kui-li3V03FA_f8OYW0UVQARYhI=_21324_
-Content-Type: text/plain; charset="utf-8"; format="flowed"
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
->> +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 write_bio->bi_i=
-ter.bi_size =3D chunk;
->> +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ret =3D submit_=
-bio_wait(write_bio);
->> +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 kfree(write_bio=
-);
->
->blk_mq_map_bio_put(write_bio) ?
->or bio_uninit(write_bio); kfree(write_bio)?
->
->hmm...
->It continuously allocates and releases memory for bio,
->Why don't you just allocate and reuse bio outside the loop?
->
-
-Agree, we will update this in next version.
-
->> +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ret)
->> +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 break;
->> +
->> +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pos_in +=3D chu=
-nk;
->> +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pos_out +=3D ch=
-unk;
->> +=C2=A0 =C2=A0 =C2=A0 =C2=A0 }
->> +=C2=A0 =C2=A0 =C2=A0 =C2=A0 cio->status =3D ret;
->> +=C2=A0 =C2=A0 =C2=A0 =C2=A0 kvfree(emulation_io->buf);
->> +=C2=A0 =C2=A0 =C2=A0 =C2=A0 kfree(emulation_io);
->
->I have not usually seen an implementation that releases memory for
->itself while performing a worker. ( I don't know what's right. :) )
->
-The worker is already executing at this point.
-We think releasing the reference after it starts executing should not
-be an issue, and it didn't come-up in any of our testing too.
-
->Since blkdev_copy_emulation() allocates memory for the emulation
->and waits for it to be completed, wouldn't it be better to proceed
->with the memory release for it in the same context?
->
->That is, IMO, wouldn't it be better to free the memory related to
->emulation in blkdev_copy_wait_io_completion()?
->
-
-Above mentioned design works for synchronous IOs. But for asynchronous
-IOs emulation job is punted to worker and submitter task returns.
-Submitter doesn't wait for emulation to complete and memory is freed
-later by worker.
-
-Thank you,
-Nitesh Shetty
-
-------LAXCzQHOdZ.PJY8ISgkP8Kui-li3V03FA_f8OYW0UVQARYhI=_21324_
-Content-Type: text/plain; charset="utf-8"
-
-
-------LAXCzQHOdZ.PJY8ISgkP8Kui-li3V03FA_f8OYW0UVQARYhI=_21324_
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
-
-------LAXCzQHOdZ.PJY8ISgkP8Kui-li3V03FA_f8OYW0UVQARYhI=_21324_--
+SGksCgrlnKggMjAyMy8wOS8yNiAyMToxMiwgS2lyaWxsIEtpcmlsZW5rbyDlhpnpgZM6Cj4gT24g
+MjYuMDkuMjAyMyAwNjoyOCArMDMwMCwgWXUgS3VhaSB3cm90ZToKPj4gSSBzdGlsbCBkb24ndCBx
+dWl0ZSB1bmRlcnN0YW5kIHdoYXQgeW91IG1lYW4gJ2tlcm5lbCBmcmVlemUnLCB0aGlzIHBhdGNo
+Cj4+IGluZGVlZCBmaXggYSBwcm9ibGVtIHRoYXQgZGlza2NhcmQgYmlvIGlzIHRyZWF0ZWQgYXMg
+bm9ybWFsIHdyaXRlIGJpbwo+PiBhbmQgaXQncyBzcGxpdHRlZC4KPj4KPj4gQ2FuIHlvdSBleHBs
+YWluIG1vcmUgYnkgaG93IGRvIHlvdSBqdWRnZSAna2VybmVsIGZyZWV6ZSc/IEluIHRoZQo+PiBt
+ZWFudGltZSBkb3NlICdpb3N0YXQgLWRteCAxJyBzaG93cyB0aGF0IGRpc2sgaXMgaWRsZSBhbmQg
+bm8gZGljYXJkIGlvCj4+IGlzIGhhbmRsZWQ/Cj4gCj4gSSBtZWFuLCBrZXlib2FyZCBhbmQgbW91
+c2Ugc3RvcCB3b3JraW5nLCBzY3JlZW4gc3RvcHMgdXBkYXRpbmcsCj4gc291bmQgY2FyZCBzdGFy
+dHMgcGxheWluZyBsYXN0IGF1ZGlvIGJ1ZmZlciBlbmRsZXNzbHkuIEF0IHRoZSBzYW1lIHRpbWUs
+Cj4gdGhlIGRpc2sgYWN0aXZpdHkgaW5kaWNhdG9yIGdvZXMgb2ZmLgoKVGhpcyBtZWFucyBjcHUg
+aXMgYnVzeSB3aXRoIHNvbWV0aGluZywgaW4gdGhpcyBjYXNlIHlvdSBtdXN0IHVzZSB0b3Agb3IK
+cGVyZiB0byBmaWd1cmUgb3V0IHdoYXQgYWxsIHlvdXIgY3B1cyBhcmUgZG9pbmcsIHByb2JhYmx5
+IGlzc3VlIGlvIGFuZApoYW5kbGUgaW8gaW50ZXJydXB0LgoKPiAKPiBJJ3ZlIGF0dGFjaGVkIHRo
+ZSBsYXN0IG91dHB1dCBvZiAnaW9zdGF0IC1kbXggMScuIE15IFJBSUQxIExWIGlzICdkbS00JywK
+PiB0aGUgdW5kZXJseWluZyBQVnMgYXJlICdudm1lMG4xJyBhbmQgJ3NkYScuIEJ1dCB0aGUgdXBk
+YXRlIGludGVydmFsCj4gaXMgMSBzZWNvbmQsIG1heSBiZSBhdCB0aGUgbW9tZW50IG9mIGZyZWV6
+aW5nIGFsbCBkaXNjYXJkcyBoYXZlIGFscmVhZHkKPiBiZWVuIGNvbXBsZXRlZC4KCmlvc3RhdCBz
+aG93cyB0aGF0IGRpc2sgaXMgaGFuZGxpbmcgYWJvdXQgNjAwIHdyaXRlLCAxMjAwIGRpc2NhcmQg
+YW5kIDkwMApmbHVzaCBlYWNoIHNlY29uZC4gSSdtIG5vdCBzdXJlIHdoYXQgJ2Rpc2sgYWN0aXZp
+dHkgaW5kaWNhdG9yIGdvZXMgb2ZmJwptZWFucywgYnV0IHlvdXIgZGlzayBpcyByZWFsbHkgYnVz
+eSB3aXRoIGhhbmRsaW5nIGFsbCB0aGVzZSBpby4KClRoYW5rcywKS3VhaQoKPiAKCi0tCmRtLWRl
+dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRo
+YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
 
