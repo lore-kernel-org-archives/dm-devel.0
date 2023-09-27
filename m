@@ -4,68 +4,90 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CBA9DE80A82
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Sep 2023 04:48:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5483EE810AD
+	for <dm-devel@archiver.kernel.org>; Wed, 27 Sep 2023 09:35:27 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1695790133;
+	s=mimecast20190719; t=1695807326;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=tNZnjfmz/aSffhcSaC1RfoYZeflH2hyP4E5R10MJ3+o=;
-	b=eA2gfoOVPEdTT7nJoOKy/Uy1AOU/amW5Cd7fNfTgbTscC7gDi3lip/K8h6vqYt6OnvaKM8
-	L/lyEBDpfD9ZQTudZ9yiqbNwvMlfZptPIkdHUsGrZwPFyvh8W01RTL3M6nrrPuHr97noLK
-	jf9xJm5ev42gr1T5fBVY25L8H9M4Tg4=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-80-UBZ9lLlJOGeA5ZWYgjdAig-1; Wed, 27 Sep 2023 00:48:50 -0400
-X-MC-Unique: UBZ9lLlJOGeA5ZWYgjdAig-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	bh=cUFqM7spE/eHhziRgN7cnpYV+K92/wyYGdQ72rt9PV4=;
+	b=RuBlCD6PV9mLZ3yRBARX3y53+B2DeZiPsxy++oEdOkPTr5vW/kuAGMP5EjrFsMIJktb3Yu
+	kj4+dim9nqNjU3beltexBx925Yu8VzY28ESDrf5sMoICAWgEVyPYA2SZ5iWr/bUi4PDj3E
+	gWZs6AYAYlOdqfvxeBqGY7Q0JfB5dqY=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-82-aU8ymPy9OsiYUnXGU1KGag-1; Wed, 27 Sep 2023 05:35:22 -0400
+X-MC-Unique: aU8ymPy9OsiYUnXGU1KGag-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A89A3811E7E;
-	Wed, 27 Sep 2023 04:48:48 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D34A41E441DC;
+	Wed, 27 Sep 2023 09:35:20 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 74C07492C37;
-	Wed, 27 Sep 2023 04:48:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E4B3C2026D17;
+	Wed, 27 Sep 2023 09:35:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 11A341946589;
-	Wed, 27 Sep 2023 04:48:41 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9DC241946589;
+	Wed, 27 Sep 2023 09:35:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id BE8081946588
- for <dm-devel@listman.corp.redhat.com>; Wed, 27 Sep 2023 04:42:24 +0000 (UTC)
+ ESMTP id 0FE931946588
+ for <dm-devel@listman.corp.redhat.com>; Wed, 27 Sep 2023 09:34:47 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id AD64F2156A27; Wed, 27 Sep 2023 04:42:24 +0000 (UTC)
+ id C1997C154CA; Wed, 27 Sep 2023 09:34:47 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A5AF82156702
- for <dm-devel@redhat.com>; Wed, 27 Sep 2023 04:42:24 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id BA146C15BB8
+ for <dm-devel@redhat.com>; Wed, 27 Sep 2023 09:34:47 +0000 (UTC)
 Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-delivery-1.mimecast.com [205.139.110.120])
+ (us-smtp-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 86D87185A790
- for <dm-devel@redhat.com>; Wed, 27 Sep 2023 04:42:24 +0000 (UTC)
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34]) by
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 96EE0101A53B
+ for <dm-devel@redhat.com>; Wed, 27 Sep 2023 09:34:47 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-488-9DmI9wqLPhmAqzOmvQUGDg-1; Wed,
- 27 Sep 2023 00:42:20 -0400
-X-MC-Unique: 9DmI9wqLPhmAqzOmvQUGDg-1
-Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red
- Hat Linux)) id 1qlMNO-00BoS6-Az; Wed, 27 Sep 2023 04:42:18 +0000
-Date: Wed, 27 Sep 2023 05:42:18 +0100
-From: Matthew Wilcox <willy@infradead.org>
-To: Joe Thornber <ejt@redhat.com>, dm-devel@redhat.com
-Message-ID: <ZROyqtbB6OuMOqci@casper.infradead.org>
-References: <ZRNWRyc7xPY17fvt@casper.infradead.org>
- <ZRNg7ctL4cx75RVh@casper.infradead.org>
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-471-AqN_eioSPIm4fy2IuoA3-A-1; Wed,
+ 27 Sep 2023 05:34:45 -0400
+X-MC-Unique: AqN_eioSPIm4fy2IuoA3-A-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by smtp-out2.suse.de (Postfix) with ESMTPS id 967601FD5E;
+ Wed, 27 Sep 2023 09:34:43 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 779CF13A74;
+ Wed, 27 Sep 2023 09:34:43 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap2.suse-dmz.suse.de with ESMTPSA id YqW3HDP3E2X+EgAAMHmgww
+ (envelope-from <jack@suse.cz>); Wed, 27 Sep 2023 09:34:43 +0000
+Received: by quack3.suse.cz (Postfix, from userid 1000)
+ id DAA33A07C9; Wed, 27 Sep 2023 11:34:42 +0200 (CEST)
+From: Jan Kara <jack@suse.cz>
+To: Christian Brauner <brauner@kernel.org>
+Date: Wed, 27 Sep 2023 11:34:06 +0200
+Message-ID: <20230818123232.2269-1-jack@suse.cz>
 MIME-Version: 1.0
-In-Reply-To: <ZRNg7ctL4cx75RVh@casper.infradead.org>
+X-Developer-Signature: v=1; a=openpgp-sha256; l=3761; i=jack@suse.cz;
+ h=from:subject:message-id; bh=szriGynEGZ/XhMNms+k06ASpRGig2ulDzrbrydRWx/Q=;
+ b=owEBbQGS/pANAwAIAZydqgc/ZEDZAcsmYgBlE/cIrHCVKGuvNFZzgT9xiRfuRKr6Es2Qs4om7G7p
+ jp8k2rmJATMEAAEIAB0WIQSrWdEr1p4yirVVKBycnaoHP2RA2QUCZRP3CAAKCRCcnaoHP2RA2XGWB/
+ 4+O+K19fPnUyIouL+A+izJvDBxQbTCWLdn5TEMu5YdIMbi0dvnwAfknt+NWIhJaTQX2oqlgt3Z+UIT
+ peMYb+jQZabj8X4xHMMy3Sfq64tRwodJHlZby5Ux9AfTZe49zDp4M4B3yxQqarEhmz6e4FJUGDaSej
+ vcJmLz6AuSnYuAh4QK/3jCXQrEElZRTjarZjfbunWocM/2dQ7CB+rOSwKJcRMoDpqntU8QyArxca4l
+ q6I2pBMNjnYMgjtG+ABGSBtTrj87TuJSTB3V8qtI38sfCYjMVVEoQiJKuUm1GMh2sPOFelwVMXMCJH
+ mKs8UbSjcFd3wsbJXc8EOKLxzYparl
+X-Developer-Key: i=jack@suse.cz; a=openpgp;
+ fpr=93C6099A142276A28BBE35D815BC833443038D8C
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -73,8 +95,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: Re: [dm-devel] Sleeping function called from invalid context
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+Subject: [dm-devel] [PATCH v4 0/29] block: Make blkdev_get_by_*() return
+ handle
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -86,160 +109,134 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Mike Snitzer <snitzer@kernel.org>, Alasdair Kergon <agk@redhat.com>
+Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
+ Jan Kara <jack@suse.cz>, "Darrick J. Wong" <djwong@kernel.org>,
+ linux-nvme@lists.infradead.org, Joseph Qi <joseph.qi@linux.alibaba.com>,
+ dm-devel@redhat.com, target-devel@vger.kernel.org,
+ linux-mtd@lists.infradead.org, Jack Wang <jinpu.wang@ionos.com>,
+ Alasdair Kergon <agk@redhat.com>, drbd-dev@lists.linbit.com,
+ linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org,
+ linux-scsi@vger.kernel.org, Sergey Senozhatsky <senozhatsky@chromium.org>,
+ Christoph Hellwig <hch@infradead.org>, xen-devel@lists.xenproject.org,
+ Gao Xiang <xiang@kernel.org>,
+ Christian Borntraeger <borntraeger@linux.ibm.com>,
+ Kent Overstreet <kent.overstreet@gmail.com>,
+ Sven Schnelle <svens@linux.ibm.com>, linux-pm@vger.kernel.org,
+ Mike Snitzer <snitzer@kernel.org>, Chao Yu <chao@kernel.org>,
+ Joern Engel <joern@lazybastard.org>, reiserfs-devel@vger.kernel.org,
+ linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
+ David Sterba <dsterba@suse.com>, Jaegeuk Kim <jaegeuk@kernel.org>,
+ Trond Myklebust <trond.myklebust@hammerspace.com>, linux-raid@vger.kernel.org,
+ linux-nfs@vger.kernel.org, linux-ext4@vger.kernel.org, Ted Tso <tytso@mit.edu>,
+ linux-mm@kvack.org, Song Liu <song@kernel.org>,
+ linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
+ Minchan Kim <minchan@kernel.org>, ocfs2-devel@oss.oracle.com,
+ Anna Schumaker <anna@kernel.org>, linux-fsdevel@vger.kernel.org,
+ "Md. Haris Iqbal" <haris.iqbal@ionos.com>,
+ Andrew Morton <akpm@linux-foundation.org>, linux-erofs@lists.ozlabs.org,
+ linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: infradead.org
-Content-Disposition: inline
+X-Mimecast-Originator: suse.cz
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+Message-ID: <20230927093406.MQUEIbJk4q5S0m5rtMNdzIrEbGhkFhPYMniRJrBPIyM@z>
 
-On Tue, Sep 26, 2023 at 11:53:33PM +0100, Matthew Wilcox wrote:
-> I'm going to sleep now instead of running the last 10 steps of the
-> bisect.  If nobody's found this when I wake up, I'll finish it then.
+Hello,
 
-Bisection found it.  I confirmed by hand; checking out this commit
-yields a failed test, and then reverting it leads to a success.
+this is a v3 of the patch series which implements the idea of blkdev_get_by_*()
+calls returning bdev_handle which is then passed to blkdev_put() [1]. This
+makes the get and put calls for bdevs more obviously matching and allows us to
+propagate context from get to put without having to modify all the users
+(again!). In particular I need to propagate used open flags to blkdev_put() to
+be able count writeable opens and add support for blocking writes to mounted
+block devices. I'll send that series separately.
 
-commit 026e4728c276cdf3ec618a71a38181864596027b
-Author: Joe Thornber <ejt@redhat.com>
-Date:   Wed Sep 13 10:39:09 2023 +0100
+The series is based on Btrfs tree's for-next branch [2] as of today as the
+series depends on Christoph's changes to btrfs device handling.  Patches have
+passed some reasonable testing - I've tested block changes, md, dm, bcache,
+xfs, btrfs, ext4, swap. More testing or review is always welcome. Thanks! I've
+pushed out the full branch to:
 
-    dm thin: Use the extent allocator for data blocks
+git://git.kernel.org/pub/scm/linux/kernel/git/jack/linux-fs.git bdev_handle
 
-    The thin_pool object now contains an extent-allocator, and each thin
-    device contains an allocation-context from this.  The allocation
-    context is used to guide data block allocations.  The actual
-    allocation book-keeping is still done by the space-map.
+to ease review / testing. Christian, can you pull the patches to your tree
+to get some exposure in linux-next as well? Thanks!
 
-    2 new specific unit tests were added to dm-unit:
+Changes since v3:
+* Rebased on top on btrfs tree
 
-       /thinp/fragmentation/thins
-       /thinp/fragmentation/snapshots
+Changes since v2:
+* Rebased on top of current vfs tree
+* Added some acks
+* Reflected minor nits from Christoph
+* Added missing conversion of blkdev_put() calls in cramfs and erofs
+* Fixed possible leak of bdev handle in xfs if logdev is the same as fs dev
 
-       https://github.com/jthornber/dm-unit/blob/main/src/tests/thinp.rs
+Changes since v1:
+* Rebased on top of current vfs tree
+* Renamed final functions to bdev_open_by_*() and bdev_release()
+* Fixed detection of exclusive open in blkdev_ioctl() and blkdev_fallocate()
+* Fixed swap conversion to properly reinitialize swap_info->bdev_handle
+* Fixed xfs conversion to not oops with rtdev without logdev
+* Couple other minor fixups
 
-    Signed-off-by: Joe Thornber <ejt@redhat.com>
-    Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+								Honza
 
-Joe, in case you missed the earlier splat:
+[1] https://lore.kernel.org/all/ZJGNsVDhZx0Xgs2H@infradead.org
+[2] git://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git for-next
 
-00009 generic/347       run fstests generic/347 at 2023-09-27 04:07:02
-00010 BUG: sleeping function called from invalid context at kernel/locking/rwsem.c:1519
-00010 in_atomic(): 1, irqs_disabled(): 0, non_block: 0, pid: 79, name: kworker/u16:3
-00010 preempt_count: 1, expected: 0
-00010 RCU nest depth: 0, expected: 0
-00010 4 locks held by kworker/u16:3/79:
-00010  #0: ffff888008a22138 ((wq_completion)dm-thin){+.+.}-{0:0}, at: process_one_work+0x17b/0x4a0
-00010  #1: ffff888004fb7e48 ((work_completion)(&pool->worker)){+.+.}-{0:0}, at: process_one_work+0x17b/0x4a0
-00010  #2: ffff88800cb1c1d0 (&pmd->root_lock){++++}-{3:3}, at: dm_thin_alloc_data_block+0x26/0xb0
-00010  #3: ffff888008b77298 (&ea->lock){+.+.}-{2:2}, at: dm_ea_context_alloc+0x2a/0x380
-00010 Preemption disabled at:
-00010 [<ffffffff8186f6ca>] dm_ea_context_alloc+0x2a/0x380
-00010 CPU: 5 PID: 79 Comm: kworker/u16:3 Kdump: loaded Not tainted 6.6.0-rc2-00004-g026e4728c276 #306
-00010 Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.2-debian-1.16.2-1 04/01/2014
-00010 Workqueue: dm-thin do_worker
-00010 Call Trace:
-00010  <TASK>
-00010  dump_stack_lvl+0x69/0x80
-00010  dump_stack+0x10/0x20
-00010  __might_resched+0x1a8/0x2c0
-00010  __might_sleep+0x3d/0x70
-00010  down_read+0x19/0x180
-00010  cache_get+0x46/0xc0
-00010  new_read+0x44/0x180
-00010  dm_bufio_read+0x24/0x30
-00010  dm_bm_read_lock+0x21/0x70
-00010  dm_tm_read_lock+0x24/0xa0
-00010  sm_ll_find_free_block+0xa1/0x190
-00010  sm_ll_find_common_free_block+0x2e/0x80
-00010  sm_disk_new_block_in_range+0x2f/0x70
-00010  sm_alloc_extent+0xe/0x10
-00010  dm_ea_context_alloc+0x4e/0x380
-00010  ? save_sm_roots+0x70/0x70
-00010  dm_thin_alloc_data_block+0x4f/0xb0
-00010  alloc_data_block+0x51/0x190
-00010  process_cell+0x34b/0x620
-00010  ? _raw_spin_unlock_irq+0x22/0x50
-00010  do_worker+0x275/0xa00
-00010  process_one_work+0x1d8/0x4a0
-00010  ? process_one_work+0x17b/0x4a0
-00010  worker_thread+0x1d9/0x3d0
-00010  ? wq_sysfs_prep_attrs+0x90/0x90
-00010  kthread+0x109/0x140
-00010  ? kthread_complete_and_exit+0x20/0x20
-00010  ret_from_fork+0x31/0x50
-00010  ? kthread_complete_and_exit+0x20/0x20
-00010  ret_from_fork_asm+0x11/0x20
-00010  </TASK>
-00010
-00010 =============================
-00010 [ BUG: Invalid wait context ]
-00010 6.6.0-rc2-00004-g026e4728c276 #306 Tainted: G        W
-00010 -----------------------------
-00010 kworker/u16:3/79 is trying to lock:
-00010 ffff88800cda7330 (&bc->trees[i].lock){++++}-{3:3}, at: cache_get+0x46/0xc0
-00010 other info that might help us debug this:
-00010 context-{4:4}
-00010 4 locks held by kworker/u16:3/79:
-00010  #0: ffff888008a22138 ((wq_completion)dm-thin){+.+.}-{0:0}, at: process_one_work+0x17b/0x4a0
-00010  #1: ffff888004fb7e48 ((work_completion)(&pool->worker)){+.+.}-{0:0}, at: process_one_work+0x17b/0x4a0
-00010  #2: ffff88800cb1c1d0 (&pmd->root_lock){++++}-{3:3}, at: dm_thin_alloc_data_block+0x26/0xb0
-00010  #3: ffff888008b77298 (&ea->lock){+.+.}-{2:2}, at: dm_ea_context_alloc+0x2a/0x380
-00010 stack backtrace:
-00010 CPU: 5 PID: 79 Comm: kworker/u16:3 Kdump: loaded Tainted: G        W          6.6.0-rc2-00004-g026e4728c276 #306
-00010 Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.2-debian-1.16.2-1 04/01/2014
-00010 Workqueue: dm-thin do_worker
-00010 Call Trace:
-00010  <TASK>
-00010  dump_stack_lvl+0x4a/0x80
-00010  dump_stack+0x10/0x20
-00010  __lock_acquire+0x9c9/0x26d0
-00010  ? dump_stack_lvl+0x73/0x80
-00010  lock_acquire+0xb8/0x280
-00010  ? cache_get+0x46/0xc0
-00010  ? __might_resched+0x1b4/0x2c0
-00010  down_read+0x3c/0x180
-00010  ? cache_get+0x46/0xc0
-00010  cache_get+0x46/0xc0
-00010  new_read+0x44/0x180
-00010  dm_bufio_read+0x24/0x30
-00010  dm_bm_read_lock+0x21/0x70
-00010  dm_tm_read_lock+0x24/0xa0
-00010  sm_ll_find_free_block+0xa1/0x190
-00010  sm_ll_find_common_free_block+0x2e/0x80
-00010  sm_disk_new_block_in_range+0x2f/0x70
-00010  sm_alloc_extent+0xe/0x10
-00010  dm_ea_context_alloc+0x4e/0x380
-00010  ? save_sm_roots+0x70/0x70
-00010  dm_thin_alloc_data_block+0x4f/0xb0
-00010  alloc_data_block+0x51/0x190
-00010  process_cell+0x34b/0x620
-00010  ? _raw_spin_unlock_irq+0x22/0x50
-00010  do_worker+0x275/0xa00
-00010  process_one_work+0x1d8/0x4a0
-00010  ? process_one_work+0x17b/0x4a0
-00010  worker_thread+0x1d9/0x3d0
-00010  ? wq_sysfs_prep_attrs+0x90/0x90
-00010  kthread+0x109/0x140
-00010  ? kthread_complete_and_exit+0x20/0x20
-00010  ret_from_fork+0x31/0x50
-00010  ? kthread_complete_and_exit+0x20/0x20
-00010  ret_from_fork_asm+0x11/0x20
-00010  </TASK>
+CC: Alasdair Kergon <agk@redhat.com>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Anna Schumaker <anna@kernel.org>
+CC: Chao Yu <chao@kernel.org>
+CC: Christian Borntraeger <borntraeger@linux.ibm.com>
+CC: Coly Li <colyli@suse.de
+CC: "Darrick J. Wong" <djwong@kernel.org>
+CC: Dave Kleikamp <shaggy@kernel.org>
+CC: David Sterba <dsterba@suse.com>
+CC: dm-devel@redhat.com
+CC: drbd-dev@lists.linbit.com
+CC: Gao Xiang <xiang@kernel.org>
+CC: Jack Wang <jinpu.wang@ionos.com>
+CC: Jaegeuk Kim <jaegeuk@kernel.org>
+CC: jfs-discussion@lists.sourceforge.net
+CC: Joern Engel <joern@lazybastard.org>
+CC: Joseph Qi <joseph.qi@linux.alibaba.com>
+CC: Kent Overstreet <kent.overstreet@gmail.com>
+CC: linux-bcache@vger.kernel.org
+CC: linux-btrfs@vger.kernel.org
+CC: linux-erofs@lists.ozlabs.org
+CC: <linux-ext4@vger.kernel.org>
+CC: linux-f2fs-devel@lists.sourceforge.net
+CC: linux-mm@kvack.org
+CC: linux-mtd@lists.infradead.org
+CC: linux-nfs@vger.kernel.org
+CC: linux-nilfs@vger.kernel.org
+CC: linux-nvme@lists.infradead.org
+CC: linux-pm@vger.kernel.org
+CC: linux-raid@vger.kernel.org
+CC: linux-s390@vger.kernel.org
+CC: linux-scsi@vger.kernel.org
+CC: linux-xfs@vger.kernel.org
+CC: "Md. Haris Iqbal" <haris.iqbal@ionos.com>
+CC: Mike Snitzer <snitzer@kernel.org>
+CC: Minchan Kim <minchan@kernel.org>
+CC: ocfs2-devel@oss.oracle.com
+CC: reiserfs-devel@vger.kernel.org
+CC: Sergey Senozhatsky <senozhatsky@chromium.org>
+CC: Song Liu <song@kernel.org>
+CC: Sven Schnelle <svens@linux.ibm.com>
+CC: target-devel@vger.kernel.org
+CC: Ted Tso <tytso@mit.edu>
+CC: Trond Myklebust <trond.myklebust@hammerspace.com>
+CC: xen-devel@lists.xenproject.org
 
-
-This seems fairly clear to me; there's a spin_lock() around the call to
-__alloc() in dm_ea_context_alloc(), which then calls all the way down
-that stack until you get to cache_get(), which takes a semaphore and
-the locking validation quite reasonably says "You can't do that".
-
-I'm sure you don't need my help coming up with a fix.  Although I might
-ask that you turn on at least some basic locking checks in future while
-developing your code, even if not full lockdep.  I think this particular
-warning comes out of CONFIG_DEBUG_ATOMIC_SLEEP=y.
+Previous versions:
+Link: http://lore.kernel.org/r/20230629165206.383-1-jack@suse.cz # v1
+Link: http://lore.kernel.org/r/20230810171429.31759-1-jack@suse.cz # v2
 
 --
 dm-devel mailing list
