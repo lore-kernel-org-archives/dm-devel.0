@@ -4,104 +4,102 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B0E48E82CB7
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Sep 2023 17:34:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7B5B4CE7AFD
+	for <dm-devel@archiver.kernel.org>; Thu, 28 Sep 2023 06:23:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1695836063;
+	s=mimecast20190719; t=1695882212;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=DAG9t+HaLKeqfEWh16glpFV8tbWg6qpPSqzs+ceiG30=;
-	b=d67BFbiTf6jZEyXt885l0g5ReSDmQ0s+wFhk2FWZLIhWkZUEjLleGNAi/gWOwCWExmC43M
-	2fNS33yO9W5f1/hN5JiY5muZX/8NBbROhMYe7LW3WCAc92/j54E8kAp/sucJA9cRzgvAA7
-	MBP/khYzz0yfUPFtE8i+FQtNrMCKEzQ=
+	bh=kMGTXHHPcE4uBNmxPX2TBEdCNqANDDC1LEtrXlSx7LU=;
+	b=RMFG2DTMGAOVCBoS1rdxY7xRCQrmEiOfIbMdwkF/Pwmf1l4w09se5PI/B2sJS4ePEKg9CP
+	l12Y0r1irqwS9eZJ11h6H03l6wzzV98dKWciHFwAmkD/jF90E4HUgiCjxAAZ48n577A1h3
+	3bk33GX4uq0fbkBukXPWbDVFCpevPHU=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-13-SZJONaJ_MzCR5q63blJEVA-1; Wed, 27 Sep 2023 13:34:20 -0400
-X-MC-Unique: SZJONaJ_MzCR5q63blJEVA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-295-9y8qmQ78PwaqrYS63qOIrQ-1; Thu, 28 Sep 2023 02:23:28 -0400
+X-MC-Unique: 9y8qmQ78PwaqrYS63qOIrQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 593E3811E8E;
-	Wed, 27 Sep 2023 17:34:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 369EE811E7E;
+	Thu, 28 Sep 2023 06:23:27 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E1E2F2026D4B;
-	Wed, 27 Sep 2023 17:34:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5A808492B16;
+	Thu, 28 Sep 2023 06:23:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9B0E81946588;
-	Wed, 27 Sep 2023 17:34:12 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0BC351946588;
+	Thu, 28 Sep 2023 06:23:25 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
  [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3BB1A194658F
- for <dm-devel@listman.corp.redhat.com>; Wed, 27 Sep 2023 17:11:48 +0000 (UTC)
+ ESMTP id 91F961946587
+ for <dm-devel@listman.corp.redhat.com>; Thu, 28 Sep 2023 06:22:16 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 16B6F14027BB; Wed, 27 Sep 2023 17:11:48 +0000 (UTC)
+ id 86C27140273E; Thu, 28 Sep 2023 06:22:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0E41114027B9
- for <dm-devel@redhat.com>; Wed, 27 Sep 2023 17:11:48 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7F3E4140273D
+ for <dm-devel@redhat.com>; Thu, 28 Sep 2023 06:22:16 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-delivery-1.mimecast.com [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E1CEB3C0D184
- for <dm-devel@redhat.com>; Wed, 27 Sep 2023 17:11:47 +0000 (UTC)
-Received: from mail-lf1-f72.google.com (mail-lf1-f72.google.com
- [209.85.167.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 63A2D2801591
+ for <dm-devel@redhat.com>; Thu, 28 Sep 2023 06:22:16 +0000 (UTC)
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com
+ [45.249.212.51]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-111-1fDgPCyRMZuTN-ZYF6wH2A-1; Wed, 27 Sep 2023 13:11:45 -0400
-X-MC-Unique: 1fDgPCyRMZuTN-ZYF6wH2A-1
-Received: by mail-lf1-f72.google.com with SMTP id
- 2adb3069b0e04-504319087d9so16491574e87.1
- for <dm-devel@redhat.com>; Wed, 27 Sep 2023 10:11:45 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1695834704; x=1696439504;
- h=content-transfer-encoding:in-reply-to:from:references:cc:to
- :content-language:subject:user-agent:mime-version:date:message-id
- :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=26ZECuIzAzrHSPBpB0H3QfUZnnLT0zZT0ILMAOLj/qo=;
- b=m4K11Xmv2xbrW2bJ9+1TuhcQIqW5Rc9zCRSXofMI5XG08ucNSDR4dZJkMvmT3khaoU
- u8RfZ3EyM4PAOH9Kz6M+3L2QRyFUHXeOyQpadnF46MicsQ2LTZC1smLyV9V2LwtvlUEy
- ELQwrmOwP4c4HDD/lWjHi6C/In0SLYa6nnf/bzYAAcLvNnamJUtisNsddmntuE7YQuMO
- qeuaENW5yjiY9R9AcuWUG7Vabt4+UjvGHYWlbguBOjIBWgaIALYtUDO4/I/f/hl5h0T7
- AzM0q2GaeuoNHSN7fvMmffOKanebIJFyoqjL3K8k2arTf27Y+f6BBCS+OyEGdFyaHHLs
- /5uA==
-X-Gm-Message-State: AOJu0YyXZtmPLWhES2B8CtyEcuYregaYcxsrGiu4bBMrrD4QXA752+Yt
- KyBnl/PrbYxLAYsp7C35Z7CUfj0wqgRixVgc4yNn0/dNwztDAXWLQiXDIHkStErXYoGY0Wu4b7L
- NUt5B2xGjVfJzF7g=
-X-Received: by 2002:a05:6512:2350:b0:502:fe11:a694 with SMTP id
- p16-20020a056512235000b00502fe11a694mr2554996lfu.45.1695834704177; 
- Wed, 27 Sep 2023 10:11:44 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IHLwBPlXrmnb4AHD26hUp4ZPo2eKW8J8eyw+zBWId4dlPqrr3HlDYhpvIRYNLY7H1Jl/xXg5g==
-X-Received: by 2002:a05:6512:2350:b0:502:fe11:a694 with SMTP id
- p16-20020a056512235000b00502fe11a694mr2554982lfu.45.1695834703656; 
- Wed, 27 Sep 2023 10:11:43 -0700 (PDT)
-Received: from ?IPV6:2001:b07:6468:f312:9af8:e5f5:7516:fa89?
- ([2001:b07:6468:f312:9af8:e5f5:7516:fa89])
- by smtp.googlemail.com with ESMTPSA id
- ck15-20020a0564021c0f00b005342fa19070sm3665635edb.89.2023.09.27.10.11.41
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Wed, 27 Sep 2023 10:11:42 -0700 (PDT)
-Message-ID: <3c25ec6f-cd33-9445-a76f-6ec2c30755f5@redhat.com>
-Date: Wed, 27 Sep 2023 19:11:37 +0200
+ us-mta-252-MyZI17GANq2xphh2tXK-rw-1; Thu, 28 Sep 2023 02:22:10 -0400
+X-MC-Unique: MyZI17GANq2xphh2tXK-rw-1
+Received: from mail02.huawei.com (unknown [172.30.67.143])
+ by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4Rx3Kn4v2pz4f3k6C;
+ Thu, 28 Sep 2023 14:22:05 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+ by APP4 (Coremail) with SMTP id gCh0CgAnvdyCGxVl3v1WBg--.22861S27;
+ Thu, 28 Sep 2023 14:22:06 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: xni@redhat.com, agk@redhat.com, snitzer@kernel.org, dm-devel@redhat.com,
+ song@kernel.org
+Date: Thu, 28 Sep 2023 14:15:41 +0800
+Message-Id: <20230928061543.1845742-24-yukuai1@huaweicloud.com>
+In-Reply-To: <20230928061543.1845742-1-yukuai1@huaweicloud.com>
+References: <20230928061543.1845742-1-yukuai1@huaweicloud.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.13.0
-To: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>,
- Andrew Morton <akpm@linux-foundation.org>, Mel Gorman <mgorman@suse.de>,
- Vlastimil Babka <vbabka@suse.cz>, David Hildenbrand <david@redhat.com>,
- quic_jhugo@quicinc.com, snitzer@kernel.org, dm <dm-devel@redhat.com>,
- Mikulas Patocka <mpatocka@redhat.com>
-References: <20230315113133.11326-1-kirill.shutemov@linux.intel.com>
-From: Paolo Bonzini <pbonzini@redhat.com>
-In-Reply-To: <20230315113133.11326-1-kirill.shutemov@linux.intel.com>
+X-CM-TRANSID: gCh0CgAnvdyCGxVl3v1WBg--.22861S27
+X-Coremail-Antispam: 1UD129KBjvJXoW7AF13ZryrJw1rur47Gr47CFg_yoW8WF45pF
+ 4SyF93Cr4UXayfZ3yUW3Z5uFy5Jw10grZFyFW7uas5Z3Z3trnrGr13ur1DZrWkKa4ftF90
+ qws0q3WUAr1UKw7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+ 9KBjDU0xBIdaVrnRJUUUP214x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+ rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
+ kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
+ z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Cr1j6r
+ xdM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v26rxl6s0D
+ M2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMcIj6xIIjx
+ v20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_Jr0_Gr1l
+ F7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I0E8cxan2
+ IY04v7MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAF
+ wI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVWUtVW8ZwCIc4
+ 0Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26ryj6F1UMIIF0xvE2Ix0cI8IcVCY1x0267AK
+ xVW8Jr0_Cr1UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVW8JV
+ WxJwCI42IY6I8E87Iv6xkF7I0E14v26r4UJVWxJrUvcSsGvfC2KfnxnUUI43ZEXa7VUbmZ
+ X7UUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+X-CFilter-Loop: Reflected
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH 00/10] Fix confusion around MAX_ORDER
+Subject: [dm-devel] [PATCH -next v3 23/25] md: suspend array in
+ md_start_sync() if array need reconfiguration
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -113,136 +111,66 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-arch@vger.kernel.org, linux-mm@kvack.org,
- linux-kernel@vger.kernel.org
+Cc: yi.zhang@huawei.com, yangerkun@huawei.com, linux-kernel@vger.kernel.org,
+ linux-raid@vger.kernel.org, yukuai1@huaweicloud.com, yukuai3@huawei.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+X-Mimecast-Originator: huaweicloud.com
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 3/15/23 12:31, Kirill A. Shutemov wrote:
-> MAX_ORDER currently defined as number of orders page allocator supports:
-> user can ask buddy allocator for page order between 0 and MAX_ORDER-1.
-> 
-> This definition is counter-intuitive and lead to number of bugs all over
-> the kernel.
-> 
-> Fix the bugs and then change the definition of MAX_ORDER to be
-> inclusive: the range of orders user can ask from buddy allocator is
-> 0..MAX_ORDER now.
+From: Yu Kuai <yukuai3@huawei.com>
 
-Looks like this crossed with three changes that introduced new
-uses of MAX_ORDER:
+So that io won't concurrent with array reconfiguration, and it's safe to
+suspend the array directly because normal io won't rely on
+md_start_sync().
 
-drivers/accel/qaic/qaic_data.c:         max_order = min(MAX_ORDER - 1, get_order(size));
-drivers/md/dm-crypt.c:  unsigned int order = MAX_ORDER - 1;
-drivers/md/dm-flakey.c: order = MAX_ORDER - 1;
+Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+---
+ drivers/md/md.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
 
-The bugs are all benign, MAX_ORDER - 1 can simply be changed
-to MAX_ORDER to be consistent with the new world order.
-
-CCing relevant maintainers...
-
-Paolo
-
-> Kirill A. Shutemov (10):
->    sparc/mm: Fix MAX_ORDER usage in tsb_grow()
->    um: Fix MAX_ORDER usage in linux_main()
->    floppy: Fix MAX_ORDER usage
->    drm/i915: Fix MAX_ORDER usage in i915_gem_object_get_pages_internal()
->    genwqe: Fix MAX_ORDER usage
->    perf/core: Fix MAX_ORDER usage in rb_alloc_aux_page()
->    mm/page_reporting: Fix MAX_ORDER usage in page_reporting_register()
->    mm/slub: Fix MAX_ORDER usage in calculate_order()
->    iommu: Fix MAX_ORDER usage in __iommu_dma_alloc_pages()
->    mm, treewide: Redefine MAX_ORDER sanely
-> 
->   .../admin-guide/kdump/vmcoreinfo.rst          |  2 +-
->   .../admin-guide/kernel-parameters.txt         |  2 +-
->   arch/arc/Kconfig                              |  4 +-
->   arch/arm/Kconfig                              |  9 ++---
->   arch/arm/configs/imx_v6_v7_defconfig          |  2 +-
->   arch/arm/configs/milbeaut_m10v_defconfig      |  2 +-
->   arch/arm/configs/oxnas_v6_defconfig           |  2 +-
->   arch/arm/configs/pxa_defconfig                |  2 +-
->   arch/arm/configs/sama7_defconfig              |  2 +-
->   arch/arm/configs/sp7021_defconfig             |  2 +-
->   arch/arm64/Kconfig                            | 27 ++++++-------
->   arch/arm64/include/asm/sparsemem.h            |  2 +-
->   arch/arm64/kvm/hyp/include/nvhe/gfp.h         |  2 +-
->   arch/arm64/kvm/hyp/nvhe/page_alloc.c          | 10 ++---
->   arch/csky/Kconfig                             |  2 +-
->   arch/ia64/Kconfig                             |  8 ++--
->   arch/ia64/include/asm/sparsemem.h             |  4 +-
->   arch/ia64/mm/hugetlbpage.c                    |  2 +-
->   arch/loongarch/Kconfig                        | 15 +++-----
->   arch/m68k/Kconfig.cpu                         |  5 +--
->   arch/mips/Kconfig                             | 19 ++++------
->   arch/nios2/Kconfig                            |  7 +---
->   arch/powerpc/Kconfig                          | 27 ++++++-------
->   arch/powerpc/configs/85xx/ge_imp3a_defconfig  |  2 +-
->   arch/powerpc/configs/fsl-emb-nonhw.config     |  2 +-
->   arch/powerpc/mm/book3s64/iommu_api.c          |  2 +-
->   arch/powerpc/mm/hugetlbpage.c                 |  2 +-
->   arch/powerpc/platforms/powernv/pci-ioda.c     |  2 +-
->   arch/sh/configs/ecovec24_defconfig            |  2 +-
->   arch/sh/mm/Kconfig                            | 17 ++++-----
->   arch/sparc/Kconfig                            |  5 +--
->   arch/sparc/kernel/pci_sun4v.c                 |  2 +-
->   arch/sparc/kernel/traps_64.c                  |  2 +-
->   arch/sparc/mm/tsb.c                           |  4 +-
->   arch/xtensa/Kconfig                           |  5 +--
->   drivers/base/regmap/regmap-debugfs.c          |  8 ++--
->   drivers/block/floppy.c                        |  2 +-
->   drivers/crypto/ccp/sev-dev.c                  |  2 +-
->   drivers/crypto/hisilicon/sgl.c                |  6 +--
->   .../gpu/drm/i915/gem/selftests/huge_pages.c   |  2 +-
->   drivers/gpu/drm/ttm/ttm_pool.c                | 22 +++++------
->   drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.h   |  2 +-
->   drivers/iommu/dma-iommu.c                     |  4 +-
->   drivers/irqchip/irq-gic-v3-its.c              |  4 +-
->   drivers/md/dm-bufio.c                         |  2 +-
->   drivers/misc/genwqe/card_utils.c              |  2 +-
->   .../net/ethernet/hisilicon/hns3/hns3_enet.c   |  2 +-
->   drivers/net/ethernet/ibm/ibmvnic.h            |  2 +-
->   drivers/video/fbdev/hyperv_fb.c               |  4 +-
->   drivers/video/fbdev/vermilion/vermilion.c     |  2 +-
->   drivers/virtio/virtio_balloon.c               |  2 +-
->   drivers/virtio/virtio_mem.c                   | 12 +++---
->   fs/ramfs/file-nommu.c                         |  2 +-
->   include/drm/ttm/ttm_pool.h                    |  2 +-
->   include/linux/hugetlb.h                       |  2 +-
->   include/linux/mmzone.h                        | 10 ++---
->   include/linux/pageblock-flags.h               |  4 +-
->   include/linux/slab.h                          |  6 +--
->   kernel/crash_core.c                           |  2 +-
->   kernel/dma/pool.c                             |  6 +--
->   mm/Kconfig                                    |  6 +--
->   mm/compaction.c                               |  8 ++--
->   mm/debug_vm_pgtable.c                         |  4 +-
->   mm/huge_memory.c                              |  2 +-
->   mm/hugetlb.c                                  |  4 +-
->   mm/kmsan/init.c                               |  6 +--
->   mm/memblock.c                                 |  2 +-
->   mm/memory_hotplug.c                           |  4 +-
->   mm/page_alloc.c                               | 38 +++++++++----------
->   mm/page_isolation.c                           | 12 +++---
->   mm/page_owner.c                               |  6 +--
->   mm/page_reporting.c                           |  4 +-
->   mm/shuffle.h                                  |  2 +-
->   mm/slab.c                                     |  2 +-
->   mm/slub.c                                     |  4 +-
->   mm/vmscan.c                                   |  2 +-
->   mm/vmstat.c                                   | 14 +++----
->   net/smc/smc_ib.c                              |  2 +-
->   security/integrity/ima/ima_crypto.c           |  2 +-
->   tools/testing/memblock/linux/mmzone.h         |  6 +--
->   80 files changed, 210 insertions(+), 240 deletions(-)
-> 
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index c3a51d309063..a3b62c6c5332 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -9414,8 +9414,13 @@ static void md_start_sync(struct work_struct *ws)
+ {
+ 	struct mddev *mddev = container_of(ws, struct mddev, sync_work);
+ 	int spares = 0;
++	bool suspend = false;
+ 
+-	mddev_lock_nointr(mddev);
++	if (md_spares_need_change(mddev))
++		suspend = true;
++
++	suspend ? mddev_suspend_and_lock_nointr(mddev) :
++		  mddev_lock_nointr(mddev);
+ 
+ 	if (!md_is_rdwr(mddev)) {
+ 		/*
+@@ -9451,7 +9456,7 @@ static void md_start_sync(struct work_struct *ws)
+ 		goto not_running;
+ 	}
+ 
+-	mddev_unlock(mddev);
++	suspend ? mddev_unlock_and_resume(mddev) : mddev_unlock(mddev);
+ 	md_wakeup_thread(mddev->sync_thread);
+ 	sysfs_notify_dirent_safe(mddev->sysfs_action);
+ 	md_new_event();
+@@ -9463,7 +9468,7 @@ static void md_start_sync(struct work_struct *ws)
+ 	clear_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
+ 	clear_bit(MD_RECOVERY_CHECK, &mddev->recovery);
+ 	clear_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
+-	mddev_unlock(mddev);
++	suspend ? mddev_unlock_and_resume(mddev) : mddev_unlock(mddev);
+ 
+ 	wake_up(&resync_wait);
+ 	if (test_and_clear_bit(MD_RECOVERY_RECOVER, &mddev->recovery) &&
+-- 
+2.39.2
 
 --
 dm-devel mailing list
