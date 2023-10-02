@@ -4,83 +4,134 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A4D57E7849A
-	for <dm-devel@archiver.kernel.org>; Mon,  2 Oct 2023 07:58:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D32CDE7849A
+	for <dm-devel@archiver.kernel.org>; Mon,  2 Oct 2023 08:10:12 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696233491;
+	s=mimecast20190719; t=1696234211;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=dYfC30ISkiYkZ0IoDfW8YRW0Y0qcSCzlyRrfE8LfTrc=;
-	b=Zzv+9wOGTRKTrm4datOtKT3HC+SCpwgQxzTLUYbZ1QIhJ/oRoSs5v3qqkOFix30bKKozw4
-	po3KCmB5XXbkLBQSnaQbGBXl1ZHArC1thKxTzOVC2JtT7Z67+y0Lv4ZH/y17KMw4dgmRf+
-	XCs4ENdOMW6+4tCTC0jF3V8G+RVY8Kc=
+	bh=QvzLY27RHzUH618JZNnt0XTr/VN2eq9ndzq2TMTCf4s=;
+	b=b6TWyJNsICqc4YV64npwxfs3Ed2cD2c/KEduEITtEUg+nbydSmHym4ZW/pPw7bcdHtAoYy
+	JZPiFER9Zjf/GJqowJ3WQuGj2sGH0yzLj2GGMFN2/Xd2kfm8hC2jM8Mn3CCVphke9VWR7V
+	7ZNmfzJY23t+YSzjx7QIPmZt7qq5Up4=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-178-Xt5AP1gaNGOUldetZkVFpQ-1; Mon, 02 Oct 2023 03:58:08 -0400
-X-MC-Unique: Xt5AP1gaNGOUldetZkVFpQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-108-UqIkrdxNODyLXhhFStu_Pg-1; Mon, 02 Oct 2023 04:10:08 -0400
+X-MC-Unique: UqIkrdxNODyLXhhFStu_Pg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BB370185A797;
-	Mon,  2 Oct 2023 07:58:06 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 22246811E7B;
+	Mon,  2 Oct 2023 08:10:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EAFFD2156701;
-	Mon,  2 Oct 2023 07:58:04 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6A749140E950;
+	Mon,  2 Oct 2023 08:10:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B87D01946597;
-	Mon,  2 Oct 2023 07:58:04 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 14EE01946597;
+	Mon,  2 Oct 2023 08:10:05 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D7CAB1946595
- for <dm-devel@listman.corp.redhat.com>; Mon,  2 Oct 2023 07:58:03 +0000 (UTC)
+ ESMTP id 8BE881946595
+ for <dm-devel@listman.corp.redhat.com>; Mon,  2 Oct 2023 08:10:04 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A7AF4400E89; Mon,  2 Oct 2023 07:58:03 +0000 (UTC)
+ id 6DB982156702; Mon,  2 Oct 2023 08:10:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A0AF8492B16
- for <dm-devel@redhat.com>; Mon,  2 Oct 2023 07:58:03 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
- [207.211.31.81])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 659842156701
+ for <dm-devel@redhat.com>; Mon,  2 Oct 2023 08:10:04 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-delivery-1.mimecast.com [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E3AFE805BA7
- for <dm-devel@redhat.com>; Mon,  2 Oct 2023 07:58:02 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-445-RFnzRq-bO36lpeGUWru7tg-1; Mon,
- 02 Oct 2023 03:57:34 -0400
-X-MC-Unique: RFnzRq-bO36lpeGUWru7tg-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id AB8121F459;
- Mon,  2 Oct 2023 07:57:32 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 83FA513434;
- Mon,  2 Oct 2023 07:57:32 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id JLsgIOx3GmUuEgAAMHmgww
- (envelope-from <jack@suse.cz>); Mon, 02 Oct 2023 07:57:32 +0000
-Received: by quack3.suse.cz (Postfix, from userid 1000)
- id 27D44A07C9; Mon,  2 Oct 2023 09:57:32 +0200 (CEST)
-Date: Mon, 2 Oct 2023 09:57:32 +0200
-From: Jan Kara <jack@suse.cz>
-To: Christian Brauner <brauner@kernel.org>
-Message-ID: <20231002075732.4c5oslpabrmw3niz@quack3>
-References: <20230818123232.2269-1-jack@suse.cz>
- <20230927-prahlen-reintreten-93706074e58d@brauner>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 33F9629AB400
+ for <dm-devel@redhat.com>; Mon,  2 Oct 2023 08:10:04 +0000 (UTC)
+Received: from esa1.hgst.iphmx.com (esa1.hgst.iphmx.com [68.232.141.245]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-284-rLNclpd3MxamGt6Z6j5PJg-1; Mon, 02 Oct 2023 04:09:57 -0400
+X-MC-Unique: rLNclpd3MxamGt6Z6j5PJg-1
+X-CSE-ConnectionGUID: F+bpKlgITZibjSSTuShkNA==
+X-CSE-MsgGUID: rkvo9P6RRjS12jueBsPQGg==
+X-IronPort-AV: E=Sophos;i="6.03,193,1694707200"; d="scan'208";a="357542375"
+Received: from mail-dm6nam12lp2174.outbound.protection.outlook.com (HELO
+ NAM12-DM6-obe.outbound.protection.outlook.com) ([104.47.59.174])
+ by ob1.hgst.iphmx.com with ESMTP; 02 Oct 2023 16:08:53 +0800
+Received: from DM8PR04MB8037.namprd04.prod.outlook.com (2603:10b6:8:f::6) by
+ CYYPR04MB8790.namprd04.prod.outlook.com (2603:10b6:930:c0::12) with Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.6838.25; Mon, 2 Oct 2023 08:08:23 +0000
+Received: from DM8PR04MB8037.namprd04.prod.outlook.com
+ ([fe80::2256:4ad2:cd2b:dc9e]) by DM8PR04MB8037.namprd04.prod.outlook.com
+ ([fe80::2256:4ad2:cd2b:dc9e%3]) with mapi id 15.20.6838.016; Mon, 2 Oct 2023
+ 08:08:23 +0000
+From: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+To: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>
+Thread-Topic: [bug report] dm-crypt setup failure with next-20230929 kernel
+Thread-Index: AQHZ9QedZs2zex8je02tGiGJaFS5rw==
+Date: Mon, 2 Oct 2023 08:08:23 +0000
+Message-ID: <4u6ffcrzr5xg6tzoczkfnuqy7v2e3w6243oxdsu3g4uughh6go@6owks5linnxi>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: DM8PR04MB8037:EE_|CYYPR04MB8790:EE_
+x-ms-office365-filtering-correlation-id: 35ce2a7f-e616-480d-410f-08dbc31ebfcc
+wdcipoutbound: EOP-TRUE
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: guKNu6ecK3+tqOinjz2eJbRKXeLas9l2u39SrILwYwthORBWpHAqZaN0OCvldVRGtovnhi/ySDMfBzHSsNwMPbXZiMXnAncAc3vk4hT3Djid8IPawXjQEybG3gUxSgmh10ctcghtfwwznhUNns2Wrjw9KfoyKzRvVKdcJuDFkFWAA5uZG9nEWIrhRtN7kA8v32orwEYs06BT5c0TAtHtF5uz9x15QplKKLQgVE96WUYVvx/jfeX3KE4xjqFy+RrupqSTK4ljD+Rc4Wo41OfuGIM6fQrJkRi9ylVjlJ8av0pGmeT5Ub5PrJfMCVDfeUMDk0h9biB3jvw5/XbYP10qc12RtJf5JBITYy4lsmEAEdW1gWcDuXkULQYGZhKAIfP1sFi1q8pLAw5mB9XbejGLnmrBZ1C6gfXgNw9UJpFEwgO7HEgOJLuhV9xlMW+yN17jWJuo4qHApCUB9A5v+Jmm8nOJhO6JSFTUEgt9RBeUhRxdutZzoJowrujS8ytBywus4ss8mQaw84FbMPOJ6ao/60Y+XIoz9VqyC5WyUarkfNLnpdAv1r7/88hS9GhLsBYPs+D0BIEmAPnmURX/ePX/m6wVV5ft/pyBGSsfnFMyNyWUQ0knxc5fQ2d5BNVjv1Rt
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:DM8PR04MB8037.namprd04.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230031)(7916004)(376002)(366004)(396003)(136003)(346002)(39860400002)(230922051799003)(64100799003)(1800799009)(451199024)(186009)(83380400001)(26005)(66556008)(86362001)(38070700005)(38100700002)(76116006)(122000001)(66476007)(66446008)(91956017)(82960400001)(64756008)(6916009)(316002)(54906003)(41300700001)(66946007)(5660300002)(33716001)(8936002)(44832011)(4326008)(8676002)(2906002)(9686003)(6506007)(478600001)(6486002)(6512007)(71200400001);
+ DIR:OUT; SFP:1102
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?nh+f3HWSxUVYPEkXe9RKRp0M/AneFZ+pmHC6nCctPuo3MlelrE0odudzqoHp?=
+ =?us-ascii?Q?TCxIFfu1hOLNxbCNnSBi9bpHN2J16Mji7UTAz9RDP/zQ0PelFAQMkK0drckW?=
+ =?us-ascii?Q?BVTQx61yrhC62cEzVHfvQCvI4G29RW1J3j1xVBMwLHdj3kRKULk5gOfZF2DO?=
+ =?us-ascii?Q?Te9LR09t05FFlRZ41v8OnglWF6cvvfo/LalCHq+CgVjxicjwGCQfk4g8aBFm?=
+ =?us-ascii?Q?nQKs/2/BXHTtG1Fve89BcbQTVj4SzsgHQZkLLX5P21cIq1EvXvTDDVA91SkA?=
+ =?us-ascii?Q?h4JDPs0hHvEpV6O1e0wRis+YLIoiysPhof88kFFKpJqNl0jVmTWiayKH6jui?=
+ =?us-ascii?Q?hNHRLHizOWHtlV9OVAijtr3W9S1HuF9bStaPaJcpCs3omJ7iVaG1Ktuxtx0x?=
+ =?us-ascii?Q?phxPSXBYypXZkSPM/baH3thWqRycnt8/87FAt52axCYxe4gjQNdPPjsxrilA?=
+ =?us-ascii?Q?Pu5fBK9ea7Gp9MyCkGH40uq9ytti3D4FYqYQ08v1bbgwklPpGVufagTqWpnw?=
+ =?us-ascii?Q?qoUKlmu0VYvwo0/UxAH/3X2+1nWvzPZ757gXBX4MFQ2njhIJr/mpJCHAGX2p?=
+ =?us-ascii?Q?Tit7bltZcdPwRfcpYanW2gkx62fCfGxwaRWzYOSFMQ/feUOfuGAEBGYGAocq?=
+ =?us-ascii?Q?W3T9ypNJ8nlEpxRBh5Y+wYQcAwVg+oKC1igsaXJ00GNlFRQKvmQw4FwntgY8?=
+ =?us-ascii?Q?6RHarP9znuWIksJfBipPc9vCfFXI0aXHumAdjjsIUqsshBUI6foYXtOcT4Hq?=
+ =?us-ascii?Q?4RWoNbj8zQL5xKQcvJXkJMcyAFkRKCVFg8Cp12HsYQyz/ntTrMwwHOi8aWf1?=
+ =?us-ascii?Q?pglOTUchDQcG+0RR5L9ABePvzC58aAYBtP1TqhsG5QGNNHOSbhEY6d7AjprK?=
+ =?us-ascii?Q?FIrb4QKRpbj5GAStgiPYnfoL2lb6Zv0UJMmWFIl8b9LXZZ59sJ/8tFEa5sMv?=
+ =?us-ascii?Q?YTapDdsFWJFwMVL93H4gfCFaUl52XctGzRQk2qQFJBXuVM139GNVmt6IZ2Pk?=
+ =?us-ascii?Q?GFVC7C9HZXojTKHyKfpY/urYIOmp3WNQSaj7UUwmU2429nWf0flSWlCZEBtX?=
+ =?us-ascii?Q?44TIu8vrXuErSHs5RZv6YAafPraRn5QS/ELW+5sXXR89NDWf+9HJ5qvOhUiV?=
+ =?us-ascii?Q?ElwA7KCVRXyO2WlCYuZ7WufKEtnUCds0GU3Wm2OPZzoGJZIWWu2cipzUsa1p?=
+ =?us-ascii?Q?owNrMGhgDJPGefyL3vVpp5G9omMkKXYmUJOjuH6/auUmnRNPvQaW7xDA6wBy?=
+ =?us-ascii?Q?F0TNHuH2DsAUg9fgDFu2/jcdA+WVnEdNSbkUZBzRhOWIy6DEV2g4f+b7+tjx?=
+ =?us-ascii?Q?ezkUoTp43riV808XDjeXmoqK2BPzoxRdfWZqhGlWkFfsHGeABa3FKuAyE+RB?=
+ =?us-ascii?Q?N8V+IKgN2YObXXaTGyx+Zl0FcGJah4MKb/OW9PZAJbEmehlEM10Zu/rN+H/3?=
+ =?us-ascii?Q?41jntC+WMf6strHHBsBISUm3L5SfHtXtZomVnL0QwYpgB+hp5qyq8LaRmBdj?=
+ =?us-ascii?Q?bBmhWS6lumgX9yyCW7yDAeSCrD6cOxLmtwYvqYs5iVNLASCHgByyRiUM71sJ?=
+ =?us-ascii?Q?xWDgu+8q1/EVpORmABbcAYH6K+FUGjSlSb2CRwa1O0JPLAd1hgcVQJ5e7FaA?=
+ =?us-ascii?Q?0620++glY1vQSe74S6wAr2Q=3D?=
 MIME-Version: 1.0
-In-Reply-To: <20230927-prahlen-reintreten-93706074e58d@brauner>
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0: +FJAoHKtiSb834WESd4PlbNDn+YIkYESf5D6GnB9APP4qeCd0opAK51ZRMzB0s0g/d7zeINIjGd8nD/zprcNUs445SlhDE1fV1IYle6xn+qTqo1P8LeiZfar+YlEK5YEbhxZ9wnjyVyM7u8iGhY1pcU+FtTUTxYBwSB0QUobIympZcAmM5dMArSaTc5zAVg7VDZnQHWu3qjPIAsLJKy6zCKgmGFb5tsQZKxH4/DrCX0PHffrAagcX5SA+CJw1ef3UtjaRdItBNyXqbEqKFdy5BRrQ7yYIh4AGJO1fBZosgiux3va/L7nvDb2B1juRQ+hCnEwgkKi6z5BQIk/eU1mqWMf7KNm7lfv9+Hsfko9datszy8tyAi5RMCp4KYe3iHYxjyUfkJZagvoCR7dbbdGich2IIpuzN4aNVyDhZX6Id5HAySH/NwTgiaY0tFlslYB/KXiI0cbn+tzuFpWgYdZ4QzEUmQE7ZgbvpK2iDCFzpsDTc1V1YysmehsGVxV3N/k6/O4XAkH/k5PtgOvQEp2Y49ev3Pz/FoVGBVCQ9vT3zVoJ//3ZVHlrKtn9EbWKQh1neTMprnCKgRylWcmH+otewyMIFfqPN9xRavdQUVhaPzNZ8P2EuoDzDdzEUjVjMu8YWKxvMfqWUjj8S8f+xzzqEtjAvLt3PJZsLKLmsC5WQgt3eAgRKBj0PGAqxq7bWySZseWA6pezFju14IpKSc3Lz6QG6272kFNTC3I2XeOSgV/dfUBWKgOhnIusF+8ieCxHlysSvVjQESzzG+a3DTrrYqpVGYrHLKw8sKrcENDMnySHBP8zeUg0nCVKh1pDxq3X/X0vufkvHPn378e4j/uHYVmJaIilKgQkIsjCq8/Euw=
+X-OriginatorOrg: wdc.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DM8PR04MB8037.namprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 35ce2a7f-e616-480d-410f-08dbc31ebfcc
+X-MS-Exchange-CrossTenant-originalarrivaltime: 02 Oct 2023 08:08:23.7298 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: FdVEWIpYOJq6Nz+x6yecFZcYGdd99ZxpGVMKfY91L6K10oBNf/m5VYgEUx8cMu1FsXRs9JpDyQQpJ6dEvYl1Ssm6vSdRTWfC1oBbDk6gNTA=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: CYYPR04MB8790
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -88,9 +139,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
-Subject: Re: [dm-devel] [PATCH v4 0/29] block: Make blkdev_get_by_*() return
- handle
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: [dm-devel] [bug report] dm-crypt setup failure with next-20230929
+ kernel
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -102,143 +153,44 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
- Jan Kara <jack@suse.cz>, "Darrick J. Wong" <djwong@kernel.org>,
- linux-nvme@lists.infradead.org, Joseph Qi <joseph.qi@linux.alibaba.com>,
- dm-devel@redhat.com, target-devel@vger.kernel.org,
- linux-mtd@lists.infradead.org, Jack Wang <jinpu.wang@ionos.com>,
- Alasdair Kergon <agk@redhat.com>, drbd-dev@lists.linbit.com,
- linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org,
- linux-scsi@vger.kernel.org, Sergey Senozhatsky <senozhatsky@chromium.org>,
- Christoph Hellwig <hch@infradead.org>, xen-devel@lists.xenproject.org,
- Gao Xiang <xiang@kernel.org>,
- Christian Borntraeger <borntraeger@linux.ibm.com>,
- Kent Overstreet <kent.overstreet@gmail.com>,
- Sven Schnelle <svens@linux.ibm.com>, linux-pm@vger.kernel.org,
- Mike Snitzer <snitzer@kernel.org>, Chao Yu <chao@kernel.org>,
- Joern Engel <joern@lazybastard.org>, reiserfs-devel@vger.kernel.org,
- linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
- David Sterba <dsterba@suse.com>, Jaegeuk Kim <jaegeuk@kernel.org>,
- Trond Myklebust <trond.myklebust@hammerspace.com>, linux-raid@vger.kernel.org,
- linux-nfs@vger.kernel.org, linux-ext4@vger.kernel.org, Ted Tso <tytso@mit.edu>,
- linux-mm@kvack.org, Song Liu <song@kernel.org>,
- linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
- Minchan Kim <minchan@kernel.org>, ocfs2-devel@oss.oracle.com,
- Anna Schumaker <anna@kernel.org>, linux-fsdevel@vger.kernel.org,
- "Md. Haris Iqbal" <haris.iqbal@ionos.com>,
- Andrew Morton <akpm@linux-foundation.org>, linux-erofs@lists.ozlabs.org,
- linux-btrfs@vger.kernel.org
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ Herbert Xu <herbert@gondor.apana.org.au>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: suse.cz
-Content-Disposition: inline
+X-Mimecast-Originator: wdc.com
+Content-Language: en-US
+Content-ID: <5F892623868AAF48A4445EB676955CFD@namprd04.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed 27-09-23 18:21:19, Christian Brauner wrote:
-> On Wed, 27 Sep 2023 11:34:07 +0200, Jan Kara wrote:
-> > Create struct bdev_handle that contains all parameters that need to be
-> > passed to blkdev_put() and provide bdev_open_* functions that return
-> > this structure instead of plain bdev pointer. This will eventually allow
-> > us to pass one more argument to blkdev_put() (renamed to bdev_release())
-> > without too much hassle.
-> > 
-> > 
-> > [...]
-> 
-> > to ease review / testing. Christian, can you pull the patches to your tree
-> > to get some exposure in linux-next as well? Thanks!
-> 
-> Yep. So I did it slighly differently. I pulled in the btrfs prereqs and
-> then applied your series on top of it so we get all the Link: tags right.
-> I'm running tests right now. Please double-check.
+Hello there,
 
-Thanks for picking patches up! I've checked the branch and it looks good to
-me. 
+I ran the command below on top of linux-next kernel with the tag next-20230929,
+and observed dm-crypt setup failed.
 
-								Honza
+  $ sudo cryptsetup open --type=plain --key-file=/dev/zero /dev/nullb0 test
+  device-mapper: reload ioctl on test (253:0) failed: No such file or directory
 
-> 
-> ---
-> 
-> Applied to the vfs.super branch of the vfs/vfs.git tree.
-> Patches in the vfs.super branch should appear in linux-next soon.
-> 
-> Please report any outstanding bugs that were missed during review in a
-> new review to the original patch series allowing us to drop it.
-> 
-> It's encouraged to provide Acked-bys and Reviewed-bys even though the
-> patch has now been applied. If possible patch trailers will be updated.
-> 
-> Note that commit hashes shown below are subject to change due to rebase,
-> trailer updates or similar. If in doubt, please check the listed branch.
-> 
-> tree:   https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git
-> branch: vfs.super
-> 
-> [01/29] block: Provide bdev_open_* functions
->        https://git.kernel.org/vfs/vfs/c/b7c828aa0b3c
-> [02/29] block: Use bdev_open_by_dev() in blkdev_open()
->         https://git.kernel.org/vfs/vfs/c/d4e36f27b45a
-> [03/29] block: Use bdev_open_by_dev() in disk_scan_partitions() and blkdev_bszset()
->         https://git.kernel.org/vfs/vfs/c/5f9bd6764c7a
-> [04/29] drdb: Convert to use bdev_open_by_path()
->         https://git.kernel.org/vfs/vfs/c/0220ca8e443d
-> [05/29] pktcdvd: Convert to bdev_open_by_dev()
->         https://git.kernel.org/vfs/vfs/c/7af10b889789
-> [06/29] rnbd-srv: Convert to use bdev_open_by_path()
->         https://git.kernel.org/vfs/vfs/c/3d27892a4be7
-> [07/29] xen/blkback: Convert to bdev_open_by_dev()
->         https://git.kernel.org/vfs/vfs/c/26afb0ed10b3
-> [08/29] zram: Convert to use bdev_open_by_dev()
->         https://git.kernel.org/vfs/vfs/c/efc8e3f4c6dc
-> [09/29] bcache: Convert to bdev_open_by_path()
->         https://git.kernel.org/vfs/vfs/c/dc893f51d24a
-> [10/29] dm: Convert to bdev_open_by_dev()
->         https://git.kernel.org/vfs/vfs/c/80c2267c6d07
-> [11/29] md: Convert to bdev_open_by_dev()
->         https://git.kernel.org/vfs/vfs/c/15db36126ca6
-> [12/29] mtd: block2mtd: Convert to bdev_open_by_dev/path()
->         https://git.kernel.org/vfs/vfs/c/4c27234bf3ce
-> [13/29] nvmet: Convert to bdev_open_by_path()
->         https://git.kernel.org/vfs/vfs/c/70cffddcc300
-> [14/29] s390/dasd: Convert to bdev_open_by_path()
->         https://git.kernel.org/vfs/vfs/c/5581d03457f8
-> [15/29] scsi: target: Convert to bdev_open_by_path()
->         https://git.kernel.org/vfs/vfs/c/43de7d844d47
-> [16/29] PM: hibernate: Convert to bdev_open_by_dev()
->         https://git.kernel.org/vfs/vfs/c/105ea4a2fd18
-> [17/29] PM: hibernate: Drop unused snapshot_test argument
->         https://git.kernel.org/vfs/vfs/c/b589a66e3688
-> [18/29] mm/swap: Convert to use bdev_open_by_dev()
->         https://git.kernel.org/vfs/vfs/c/615af8e29233
-> [19/29] fs: Convert to bdev_open_by_dev()
->         https://git.kernel.org/vfs/vfs/c/5173192bcfe6
-> [20/29] btrfs: Convert to bdev_open_by_path()
->         https://git.kernel.org/vfs/vfs/c/8cf64782764f
-> [21/29] erofs: Convert to use bdev_open_by_path()
->         https://git.kernel.org/vfs/vfs/c/4d41880bf249
-> [22/29] ext4: Convert to bdev_open_by_dev()
->         https://git.kernel.org/vfs/vfs/c/f7507612395e
-> [23/29] f2fs: Convert to bdev_open_by_dev/path()
->         https://git.kernel.org/vfs/vfs/c/d9ff8e3b6498
-> [24/29] jfs: Convert to bdev_open_by_dev()
->         https://git.kernel.org/vfs/vfs/c/459dc6376338
-> [25/29] nfs/blocklayout: Convert to use bdev_open_by_dev/path()
->         https://git.kernel.org/vfs/vfs/c/5b1df9a40929
-> [26/29] ocfs2: Convert to use bdev_open_by_dev()
->         https://git.kernel.org/vfs/vfs/c/b6b95acbd943
-> [27/29] reiserfs: Convert to bdev_open_by_dev/path()
->         https://git.kernel.org/vfs/vfs/c/7e3615ff6119
-> [28/29] xfs: Convert to bdev_open_by_path()
->         https://git.kernel.org/vfs/vfs/c/176ccb99e207
-> [29/29] block: Remove blkdev_get_by_*() functions
->         https://git.kernel.org/vfs/vfs/c/953863a5a2ff
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+Kernel reported an error related to crypto.
+
+  device-mapper: table: 253:0: crypt: Error allocating crypto tfm (-ENOENT)
+  device-mapper: ioctl: error adding target to table
+
+The failure was observed with null_blk and SATA HDD. It looks independent of
+block device type.
+
+I bisected and found that the commit 31865c4c4db2 ("crypto: skcipher - Add
+lskcipher") is the trigger. I reverted the commit from next-20230929 together
+with other four dependent commits below, and observed the failure disappears.
+
+  705b52fef3c7 ("crypto: cbc - Convert from skcipher to lskcipher")
+  32a8dc4afcfb ("crypto: ecb - Convert from skcipher to lskcipher")
+  3dfe8786b11a ("crypto: testmgr - Add support for lskcipher algorithms")
+  8aee5d4ebd11 ("crypto: lskcipher - Add compatibility wrapper around ECB")
+
+Is this a known issue?
 
 --
 dm-devel mailing list
