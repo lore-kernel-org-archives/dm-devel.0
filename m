@@ -1,69 +1,69 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8B02AE936ED
-	for <dm-devel@archiver.kernel.org>; Wed,  4 Oct 2023 22:15:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 79660E936EE
+	for <dm-devel@archiver.kernel.org>; Wed,  4 Oct 2023 22:15:23 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696457719;
+	s=mimecast20190719; t=1696457722;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=VeAAxTVkuftgv8+SNwmbnLZA1zF5BBCjkA/zKrrMGlw=;
-	b=O/udjOx3nWP1y/DCNR9+msb4vr/Si0HdD2Bm9bdhOWZ0vENPwcW1O/KTzdK87MfDH3oj/B
-	+8woC5xJlGP+WSEU/0RqcZiJJ7j7WZe6o2TnjyFisZGk1yIxGiAD4n++aQSHDvJDGc5IH8
-	VwsjtPgpv7hlXI49HtCL2u2hIF3e1r0=
+	bh=zTtwWWldDN/AmmwjSPAnozi/FKOYY7/WwhE0inZkyfA=;
+	b=jDVt2aCac5xcEq1qUCcq78Pymmga2E9uvk3sqrXiAm+u2uW8tqE79R06Cxk2QxdhYKvl8n
+	fIyqJM4JVqUtapNUrNQUmcbnuqFPt2zawqxdmPQ5b3yg258NQRNHOSxtXhKMj7YobQujfl
+	3JKEND8U8SNnwFy5dr7zBGQyfnVHR7I=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-518-JYuC_PKxPoizq1M2QeT35Q-1; Wed, 04 Oct 2023 18:15:17 -0400
-X-MC-Unique: JYuC_PKxPoizq1M2QeT35Q-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-397-NCh8TcunOwmRfF5qE59VGA-1; Wed, 04 Oct 2023 18:15:19 -0400
+X-MC-Unique: NCh8TcunOwmRfF5qE59VGA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B9ED21875054;
-	Wed,  4 Oct 2023 22:15:14 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 31B0D811E98;
+	Wed,  4 Oct 2023 22:15:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A559B63F46;
-	Wed,  4 Oct 2023 22:15:14 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1D968C15BB8;
+	Wed,  4 Oct 2023 22:15:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2751219466F5;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 51E9F1946597;
 	Wed,  4 Oct 2023 22:15:14 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id AA389194658F
- for <dm-devel@listman.corp.redhat.com>; Wed,  4 Oct 2023 22:15:12 +0000 (UTC)
+ ESMTP id C01CC19465A3
+ for <dm-devel@listman.corp.redhat.com>; Wed,  4 Oct 2023 22:15:13 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8A0FE140E962; Wed,  4 Oct 2023 22:15:12 +0000 (UTC)
+ id A27E5215671F; Wed,  4 Oct 2023 22:15:13 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 82612140E953
- for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:12 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-delivery-1.mimecast.com [205.139.110.120])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 99CE42156711
+ for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:13 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
+ [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F2F98185A790
- for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:11 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 78BD281D785
+ for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:13 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-144-SFAvjMbMOsaVBZQko9DtPw-1; Wed,
- 04 Oct 2023 18:15:09 -0400
-X-MC-Unique: SFAvjMbMOsaVBZQko9DtPw-1
+ relay.mimecast.com with ESMTP id us-mta-623-EFZKE5zrPFqsX8r3DA2EdQ-3; Wed,
+ 04 Oct 2023 18:15:10 -0400
+X-MC-Unique: EFZKE5zrPFqsX8r3DA2EdQ-3
 Received: by linux.microsoft.com (Postfix, from userid 1052)
- id 0C17720B74DE; Wed,  4 Oct 2023 15:09:50 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 0C17720B74DE
+ id 5E46A20B74C8; Wed,  4 Oct 2023 15:09:50 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 5E46A20B74C8
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
  tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
  snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
-Date: Wed,  4 Oct 2023 15:09:42 -0700
-Message-Id: <1696457386-3010-16-git-send-email-wufan@linux.microsoft.com>
+Date: Wed,  4 Oct 2023 15:09:31 -0700
+Message-Id: <1696457386-3010-5-git-send-email-wufan@linux.microsoft.com>
 In-Reply-To: <1696457386-3010-1-git-send-email-wufan@linux.microsoft.com>
 References: <1696457386-3010-1-git-send-email-wufan@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -73,9 +73,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
-Subject: [dm-devel] [RFC PATCH v11 15/19] fsverity: consume builtin
- signature via LSM hook
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: [dm-devel] [RFC PATCH v11 04/19] ipe: add LSM hooks on execution
+ and kernel read
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -96,149 +96,385 @@ Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: linux.microsoft.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-fsverity represents a mechanism to support both integrity and
-authenticity protection of a file, supporting both signed and unsigned
-digests.
+From: Deven Bowers <deven.desai@linux.microsoft.com>
 
-An LSM which controls access to a resource based on authenticity and
-integrity of said resource, can then use this data to make an informed
-decision on the authorization (provided by the LSM's policy) of said
-claim.
-
-This effectively allows the extension of a policy enforcement layer in
-LSM for fsverity, allowing for more granular control of how a
-particular authenticity claim can be used. For example, "all (built-in)
-signed fsverity files should be allowed to execute, but only these
-hashes are allowed to be loaded as kernel modules".
-
-This enforcement must be done in kernel space, as a userspace only
-solution would fail a simple litmus test: Download a self-contained
-malicious binary that never touches the userspace stack. This
-binary would still be able to execute.
+IPE's initial goal is to control both execution and the loading of
+kernel modules based on the system's definition of trust. It
+accomplishes this by plugging into the security hooks for
+bprm_check_security, file_mprotect, mmap_file, kernel_load_data,
+and kernel_read_data.
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 ---
-v1-v6:
-  + Not present
+v2:
+  + Split evaluation loop, access control hooks,
+    and evaluation loop from policy parser and userspace
+    interface to pass mailing list character limit
+
+v3:
+  + Move ipe_load_properties to patch 04.
+  + Remove useless 0-initializations
+  + Prefix extern variables with ipe_
+  + Remove kernel module parameters, as these are
+    exposed through sysctls.
+  + Add more prose to the IPE base config option
+    help text.
+  + Use GFP_KERNEL for audit_log_start.
+  + Remove unnecessary caching system.
+  + Remove comments from headers
+  + Use rcu_access_pointer for rcu-pointer null check
+  + Remove usage of reqprot; use prot only.
+  + Move policy load and activation audit event to 03/12
+
+v4:
+  + Remove sysctls in favor of securityfs nodes
+  + Re-add kernel module parameters, as these are now
+    exposed through securityfs.
+  + Refactor property audit loop to a separate function.
+
+v5:
+  + fix minor grammatical errors
+  + do not group rule by curly-brace in audit record,
+    reconstruct the exact rule.
+
+v6:
+  + No changes
 
 v7:
-  Introduced
+  + Further split lsm creation, the audit system, the evaluation loop
+    and access control hooks into separate commits.
 
 v8:
-  + Split fs/verity/ changes and security/ changes into separate patches
-  + Change signature of fsverity_create_info to accept non-const inode
-  + Change signature of fsverity_verify_signature to accept non-const inode
-  + Don't cast-away const from inode.
-  + Digest functionality dropped in favor of:
-    ("fs-verity: define a function to return the integrity protected
-      file digest")
-  + Reworded commit description and title to match changes.
-  + Fix a bug wherein no LSM implements the particular fsverity @name
-    (or LSM is disabled), and returns -EOPNOTSUPP, causing errors.
+  + Rename hook functions to follow the lsmname_hook_name convention
+  + Remove ipe_hook enumeration, can be derived from correlation with
+    syscall audit record.
 
 v9:
-  + No changes
+  + Minor changes for adapting to the new parser
 
 v10:
-  + Rename the signature blob key
-  + Cleanup redundant code
-  + Make the hook call depends on CONFIG_FS_VERITY_BUILTIN_SIGNATURES
+  + Remove @reqprot part
 
 v11:
-  + No changes
+  + Fix code style issues
 ---
- fs/verity/fsverity_private.h |  2 +-
- fs/verity/open.c             | 26 +++++++++++++++++++++++++-
- include/linux/fsverity.h     |  2 ++
- 3 files changed, 28 insertions(+), 2 deletions(-)
+ security/ipe/Makefile |   1 +
+ security/ipe/eval.c   |  14 ++++
+ security/ipe/eval.h   |   3 +
+ security/ipe/hooks.c  | 183 ++++++++++++++++++++++++++++++++++++++++++
+ security/ipe/hooks.h  |  25 ++++++
+ security/ipe/ipe.c    |   6 ++
+ 6 files changed, 232 insertions(+)
+ create mode 100644 security/ipe/hooks.c
+ create mode 100644 security/ipe/hooks.h
 
-diff --git a/fs/verity/fsverity_private.h b/fs/verity/fsverity_private.h
-index d071a6e32581..4a82716e852f 100644
---- a/fs/verity/fsverity_private.h
-+++ b/fs/verity/fsverity_private.h
-@@ -108,7 +108,7 @@ int fsverity_init_merkle_tree_params(struct merkle_tree_params *params,
- 				     unsigned int log_blocksize,
- 				     const u8 *salt, size_t salt_size);
+diff --git a/security/ipe/Makefile b/security/ipe/Makefile
+index 57fe922cf1fc..d7f2870d7c09 100644
+--- a/security/ipe/Makefile
++++ b/security/ipe/Makefile
+@@ -7,6 +7,7 @@
  
--struct fsverity_info *fsverity_create_info(const struct inode *inode,
-+struct fsverity_info *fsverity_create_info(struct inode *inode,
- 					   struct fsverity_descriptor *desc);
+ obj-$(CONFIG_SECURITY_IPE) += \
+ 	eval.o \
++	hooks.o \
+ 	ipe.o \
+ 	policy.o \
+ 	policy_parser.o \
+diff --git a/security/ipe/eval.c b/security/ipe/eval.c
+index 5533c359bbeb..8a8bcc5c7d7f 100644
+--- a/security/ipe/eval.c
++++ b/security/ipe/eval.c
+@@ -16,6 +16,20 @@
  
- void fsverity_set_info(struct inode *inode, struct fsverity_info *vi);
-diff --git a/fs/verity/open.c b/fs/verity/open.c
-index 6c31a871b84b..5b48e2c39086 100644
---- a/fs/verity/open.c
-+++ b/fs/verity/open.c
-@@ -8,6 +8,7 @@
- #include "fsverity_private.h"
+ struct ipe_policy __rcu *ipe_active_policy;
  
- #include <linux/mm.h>
-+#include <linux/security.h>
- #include <linux/slab.h>
- 
- static struct kmem_cache *fsverity_info_cachep;
-@@ -172,12 +173,28 @@ static int compute_file_digest(const struct fsverity_hash_alg *hash_alg,
- 	return err;
- }
- 
-+#ifdef CONFIG_FS_VERITY_BUILTIN_SIGNATURES
-+static int fsverity_inode_setsecurity(struct inode *inode,
-+				      struct fsverity_descriptor *desc)
++/**
++ * build_eval_ctx - Build an evaluation context.
++ * @ctx: Supplies a pointer to the context to be populdated.
++ * @file: Supplies a pointer to the file to associated with the evaluation.
++ * @op: Supplies the IPE policy operation associated with the evaluation.
++ */
++void build_eval_ctx(struct ipe_eval_ctx *ctx,
++		    const struct file *file,
++		    enum ipe_op_type op)
 +{
-+	return security_inode_setsecurity(inode, FS_VERITY_INODE_SEC_NAME,
-+					  desc->signature,
-+					  le32_to_cpu(desc->sig_size), 0);
++	ctx->file = file;
++	ctx->op = op;
 +}
-+#else
-+static inline int fsverity_inode_setsecurity(struct inode *inode,
-+					     struct fsverity_descriptor *desc)
++
+ /**
+  * evaluate_property - Analyze @ctx against a property.
+  * @ctx: Supplies a pointer to the context to be evaluated.
+diff --git a/security/ipe/eval.h b/security/ipe/eval.h
+index 6b434515968f..cfdf3c8dfe8a 100644
+--- a/security/ipe/eval.h
++++ b/security/ipe/eval.h
+@@ -11,6 +11,8 @@
+ 
+ #include "policy.h"
+ 
++#define IPE_EVAL_CTX_INIT ((struct ipe_eval_ctx){ 0 })
++
+ extern struct ipe_policy __rcu *ipe_active_policy;
+ 
+ struct ipe_eval_ctx {
+@@ -19,6 +21,7 @@ struct ipe_eval_ctx {
+ 	const struct file *file;
+ };
+ 
++void build_eval_ctx(struct ipe_eval_ctx *ctx, const struct file *file, enum ipe_op_type op);
+ int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx);
+ 
+ #endif /* _IPE_EVAL_H */
+diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
+new file mode 100644
+index 000000000000..6164a9b53361
+--- /dev/null
++++ b/security/ipe/hooks.c
+@@ -0,0 +1,183 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
++
++#include <linux/fs.h>
++#include <linux/types.h>
++#include <linux/binfmts.h>
++#include <linux/mman.h>
++
++#include "ipe.h"
++#include "hooks.h"
++#include "eval.h"
++
++/**
++ * ipe_bprm_check_security - ipe security hook function for bprm check.
++ * @bprm: Supplies a pointer to a linux_binprm structure to source the file
++ *	  being evaluated.
++ *
++ * This LSM hook is called when a binary is loaded through the exec
++ * family of system calls.
++ * Return:
++ * *0	- OK
++ * *!0	- Error
++ */
++int ipe_bprm_check_security(struct linux_binprm *bprm)
 +{
++	struct ipe_eval_ctx ctx = IPE_EVAL_CTX_INIT;
++
++	build_eval_ctx(&ctx, bprm->file, IPE_OP_EXEC);
++	return ipe_evaluate_event(&ctx);
++}
++
++/**
++ * ipe_mmap_file - ipe security hook function for mmap check.
++ * @f: File being mmap'd. Can be NULL in the case of anonymous memory.
++ * @reqprot: The requested protection on the mmap, passed from usermode.
++ * @prot: The effective protection on the mmap, resolved from reqprot and
++ *	  system configuration.
++ * @flags: Unused.
++ *
++ * This hook is called when a file is loaded through the mmap
++ * family of system calls.
++ *
++ * Return:
++ * * 0	- OK
++ * * !0	- Error
++ */
++int ipe_mmap_file(struct file *f, unsigned long reqprot __always_unused,
++		  unsigned long prot, unsigned long flags)
++{
++	struct ipe_eval_ctx ctx = IPE_EVAL_CTX_INIT;
++
++	if (prot & PROT_EXEC) {
++		build_eval_ctx(&ctx, f, IPE_OP_EXEC);
++		return ipe_evaluate_event(&ctx);
++	}
++
 +	return 0;
 +}
-+#endif /* CONFIG_IPE_PROP_FS_VERITY*/
 +
- /*
-  * Create a new fsverity_info from the given fsverity_descriptor (with optional
-  * appended builtin signature), and check the signature if present.  The
-  * fsverity_descriptor must have already undergone basic validation.
++/**
++ * ipe_file_mprotect - ipe security hook function for mprotect check.
++ * @vma: Existing virtual memory area created by mmap or similar.
++ * @reqprot: The requested protection on the mmap, passed from usermode.
++ * @prot: The effective protection on the mmap, resolved from reqprot and
++ *	  system configuration.
++ *
++ * This LSM hook is called when a mmap'd region of memory is changing
++ * its protections via mprotect.
++ *
++ * Return:
++ * * 0	- OK
++ * * !0	- Error
++ */
++int ipe_file_mprotect(struct vm_area_struct *vma,
++		      unsigned long reqprot __always_unused,
++		      unsigned long prot)
++{
++	struct ipe_eval_ctx ctx = IPE_EVAL_CTX_INIT;
++
++	/* Already Executable */
++	if (vma->vm_flags & VM_EXEC)
++		return 0;
++
++	if (prot & PROT_EXEC) {
++		build_eval_ctx(&ctx, vma->vm_file, IPE_OP_EXEC);
++		return ipe_evaluate_event(&ctx);
++	}
++
++	return 0;
++}
++
++/**
++ * ipe_kernel_read_file - ipe security hook function for kernel read.
++ * @file: Supplies a pointer to the file structure being read in from disk.
++ * @id: Supplies the enumeration identifying the purpose of the read.
++ * @contents: Unused.
++ *
++ * This LSM hook is called when a file is being read in from disk from
++ * the kernel.
++ *
++ * Return:
++ * 0 - OK
++ * !0 - Error
++ */
++int ipe_kernel_read_file(struct file *file, enum kernel_read_file_id id,
++			 bool contents)
++{
++	enum ipe_op_type op;
++	struct ipe_eval_ctx ctx = IPE_EVAL_CTX_INIT;
++
++	switch (id) {
++	case READING_FIRMWARE:
++		op = IPE_OP_FIRMWARE;
++		break;
++	case READING_MODULE:
++		op = IPE_OP_KERNEL_MODULE;
++		break;
++	case READING_KEXEC_INITRAMFS:
++		op = IPE_OP_KEXEC_INITRAMFS;
++		break;
++	case READING_KEXEC_IMAGE:
++		op = IPE_OP_KEXEC_IMAGE;
++		break;
++	case READING_POLICY:
++		op = IPE_OP_IMA_POLICY;
++		break;
++	case READING_X509_CERTIFICATE:
++		op = IPE_OP_IMA_X509;
++		break;
++	default:
++		op = IPE_OP_INVALID;
++		WARN(op == IPE_OP_INVALID, "no rule setup for enum %d", id);
++	}
++
++	build_eval_ctx(&ctx, file, op);
++	return ipe_evaluate_event(&ctx);
++}
++
++/**
++ * ipe_kernel_load_data - ipe security hook function for kernel load data.
++ * @id: Supplies the enumeration identifying the purpose of the read.
++ * @contents: Unused.
++ *
++ * This LSM hook is called when a buffer is being read in from disk.
++ *
++ * Return:
++ * * 0	- OK
++ * * !0	- Error
++ */
++int ipe_kernel_load_data(enum kernel_load_data_id id, bool contents)
++{
++	enum ipe_op_type op;
++	struct ipe_eval_ctx ctx = IPE_EVAL_CTX_INIT;
++
++	switch (id) {
++	case LOADING_FIRMWARE:
++		op = IPE_OP_FIRMWARE;
++		break;
++	case LOADING_MODULE:
++		op = IPE_OP_KERNEL_MODULE;
++		break;
++	case LOADING_KEXEC_INITRAMFS:
++		op = IPE_OP_KEXEC_INITRAMFS;
++		break;
++	case LOADING_KEXEC_IMAGE:
++		op = IPE_OP_KEXEC_IMAGE;
++		break;
++	case LOADING_POLICY:
++		op = IPE_OP_IMA_POLICY;
++		break;
++	case LOADING_X509_CERTIFICATE:
++		op = IPE_OP_IMA_X509;
++		break;
++	default:
++		op = IPE_OP_INVALID;
++		WARN(op == IPE_OP_INVALID, "no rule setup for enum %d", id);
++	}
++
++	build_eval_ctx(&ctx, NULL, op);
++	return ipe_evaluate_event(&ctx);
++}
+diff --git a/security/ipe/hooks.h b/security/ipe/hooks.h
+new file mode 100644
+index 000000000000..23205452f758
+--- /dev/null
++++ b/security/ipe/hooks.h
+@@ -0,0 +1,25 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
++#ifndef _IPE_HOOKS_H
++#define _IPE_HOOKS_H
++
++#include <linux/fs.h>
++#include <linux/binfmts.h>
++#include <linux/security.h>
++
++int ipe_bprm_check_security(struct linux_binprm *bprm);
++
++int ipe_mmap_file(struct file *f, unsigned long reqprot, unsigned long prot,
++		  unsigned long flags);
++
++int ipe_file_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
++		      unsigned long prot);
++
++int ipe_kernel_read_file(struct file *file, enum kernel_read_file_id id,
++			 bool contents);
++
++int ipe_kernel_load_data(enum kernel_load_data_id id, bool contents);
++
++#endif /* _IPE_HOOKS_H */
+diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
+index ba5526f9d527..77c950459810 100644
+--- a/security/ipe/ipe.c
++++ b/security/ipe/ipe.c
+@@ -4,11 +4,17 @@
   */
--struct fsverity_info *fsverity_create_info(const struct inode *inode,
-+struct fsverity_info *fsverity_create_info(struct inode *inode,
- 					   struct fsverity_descriptor *desc)
- {
- 	struct fsverity_info *vi;
-@@ -242,6 +259,13 @@ struct fsverity_info *fsverity_create_info(const struct inode *inode,
- 		spin_lock_init(&vi->hash_page_init_lock);
- 	}
  
-+	err = fsverity_inode_setsecurity(inode, desc);
-+	if (err == -EOPNOTSUPP)
-+		err = 0;
-+
-+	if (err)
-+		goto fail;
-+
- 	return vi;
+ #include "ipe.h"
++#include "hooks.h"
  
- fail:
-diff --git a/include/linux/fsverity.h b/include/linux/fsverity.h
-index 1eb7eae580be..9666721baf15 100644
---- a/include/linux/fsverity.h
-+++ b/include/linux/fsverity.h
-@@ -319,4 +319,6 @@ static inline int fsverity_prepare_setattr(struct dentry *dentry,
- 	return 0;
- }
+ static struct lsm_blob_sizes ipe_blobs __ro_after_init = {
+ };
  
-+#define FS_VERITY_INODE_SEC_NAME "fsverity.builtin-sig"
-+
- #endif	/* _LINUX_FSVERITY_H */
+ static struct security_hook_list ipe_hooks[] __ro_after_init = {
++	LSM_HOOK_INIT(bprm_check_security, ipe_bprm_check_security),
++	LSM_HOOK_INIT(mmap_file, ipe_mmap_file),
++	LSM_HOOK_INIT(file_mprotect, ipe_file_mprotect),
++	LSM_HOOK_INIT(kernel_read_file, ipe_kernel_read_file),
++	LSM_HOOK_INIT(kernel_load_data, ipe_kernel_load_data),
+ };
+ 
+ /**
 -- 
 2.25.1
 
