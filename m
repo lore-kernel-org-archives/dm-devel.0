@@ -1,69 +1,69 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 63B13E936EA
-	for <dm-devel@archiver.kernel.org>; Wed,  4 Oct 2023 22:15:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7DF1BE936F2
+	for <dm-devel@archiver.kernel.org>; Wed,  4 Oct 2023 22:15:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696457732;
+	s=mimecast20190719; t=1696457731;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Pjxwa8trdr8fWrGgHfYvezewsFS9YCFTGmtWItZjANs=;
-	b=Inkz7jMtWMw9S/pMJTGPcIKcE7lm9b6HPyFRVwfpN3lPx2K9VfrupQFBedqaKODYpMr2aN
-	Dz1vXL3dtJHrMnFfpoDY/RLCJtrtO9P3Mjqakqz+69bSpyqj8oMcUdUnLqXRzvo8/p5YH+
-	4cBIvGAIQygwzYZlUhkwb6LK1pBSE64=
+	bh=kLSD3yo059zkYu9P4KI9PbV1ylqT6jn8eHB3D3TZ4GE=;
+	b=bzMcIDKdEfL9yvFq9j+MUGusqQRMtr3pttC2kJ72sH1qscMm++GdW0522+I/0ppV0VP2zZ
+	FRoeVVr7rLDevxL0Di+W4qAYqOjHR759ct9O96Jzu72MnifIFfPz0ZBbzTVirl8f0tx0Ur
+	/AJtJVFl22ygNX5ykF8EnGjcMs/KT6c=
 Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-522-qfE61BThOzSm51IHMG2v5A-1; Wed, 04 Oct 2023 18:15:19 -0400
-X-MC-Unique: qfE61BThOzSm51IHMG2v5A-1
+ us-mta-487-gObX9EyiMzyvSDSh5FmKPA-1; Wed, 04 Oct 2023 18:15:27 -0400
+X-MC-Unique: gObX9EyiMzyvSDSh5FmKPA-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5662C3C14787;
-	Wed,  4 Oct 2023 22:15:15 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A9B01C0419B;
+	Wed,  4 Oct 2023 22:15:16 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3F0AAC0FE2E;
-	Wed,  4 Oct 2023 22:15:15 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 87AC2C185EE;
+	Wed,  4 Oct 2023 22:15:16 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 28D94194658F;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B7E9819466E8;
 	Wed,  4 Oct 2023 22:15:15 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6D02B194658F
- for <dm-devel@listman.corp.redhat.com>; Wed,  4 Oct 2023 22:15:13 +0000 (UTC)
+ ESMTP id 4709019465BB
+ for <dm-devel@listman.corp.redhat.com>; Wed,  4 Oct 2023 22:15:15 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5C5734A9B0A; Wed,  4 Oct 2023 22:15:13 +0000 (UTC)
+ id 297FA215671F; Wed,  4 Oct 2023 22:15:15 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 5523440104E
- for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:13 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
- [205.139.110.61])
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2258B2156711
+ for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:15 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
+ [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1A64F185A79B
- for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:13 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F3F203C14763
+ for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:14 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-154-LxhyYNFVOOGpu70c3StELQ-1; Wed,
- 04 Oct 2023 18:15:09 -0400
-X-MC-Unique: LxhyYNFVOOGpu70c3StELQ-1
+ relay.mimecast.com with ESMTP id us-mta-443-vp-sdyhMOCqo6z6N4QEcCg-3; Wed,
+ 04 Oct 2023 18:15:10 -0400
+X-MC-Unique: vp-sdyhMOCqo6z6N4QEcCg-3
 Received: by linux.microsoft.com (Postfix, from userid 1052)
- id B6FA020B74D4; Wed,  4 Oct 2023 15:09:50 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com B6FA020B74D4
+ id 3F86A20B74C4; Wed,  4 Oct 2023 15:09:50 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 3F86A20B74C4
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
  tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
  snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
-Date: Wed,  4 Oct 2023 15:09:37 -0700
-Message-Id: <1696457386-3010-11-git-send-email-wufan@linux.microsoft.com>
+Date: Wed,  4 Oct 2023 15:09:29 -0700
+Message-Id: <1696457386-3010-3-git-send-email-wufan@linux.microsoft.com>
 In-Reply-To: <1696457386-3010-1-git-send-email-wufan@linux.microsoft.com>
 References: <1696457386-3010-1-git-send-email-wufan@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -73,9 +73,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-Subject: [dm-devel] [RFC PATCH v11 10/19] block|security: add LSM blob to
- block_device
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: [dm-devel] [RFC PATCH v11 02/19] ipe: add policy parser
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -104,336 +103,808 @@ Content-Transfer-Encoding: 7bit
 
 From: Deven Bowers <deven.desai@linux.microsoft.com>
 
-Some block devices have valuable security properties that is only
-accessible during the creation time.
+IPE's interpretation of the what the user trusts is accomplished through
+its policy. IPE's design is to not provide support for a single trust
+provider, but to support multiple providers to enable the end-user to
+choose the best one to seek their needs.
 
-For example, when creating a dm-verity block device, the dm-verity's
-roothash and roothash signature, which are extreme important security
-metadata, are passed to the kernel. However, the roothash will be saved
-privately in dm-verity, which prevents the seucrity subsystem to easily
-access that information. Worse, the roothash signature will be discarded
-after the verification, making it impossible to utilize the roothash
-signature by the security subsystem.
-
-With this patch, an LSM blob is added to the block_device structure.
-This enables the security subsystem to store security-sensitive data
-related to block devices within the security blob. For example, LSM can
-use the new LSM blob to save the roothash signature of a dm-verity,
-and LSM can make access decision based on the data inside the signature,
-like the signer ceritificate.
-
-The implementation follows the same approach used for security blobs in
-other structures like struct file, struct inode, and struct superblock.
-The initialization of the security blob occurs after the creation of the
-struct block_device, performed by the security subsystem. Similarly, the
-security blob is freed by the security subsystem before the struct
-block_device is deallocated or freed.
+This requires the policy to be rather flexible and modular so that
+integrity providers, like fs-verity, dm-verity, dm-integrity, or
+some other system, can plug into the policy with minimal code changes.
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
-Reviewed-by: Casey Schaufler <casey@schaufler-ca.com>
+
 ---
 v2:
-  + No Changes
+  + Split evaluation loop, access control hooks,
+    and evaluation loop from policy parser and userspace
+    interface to pass mailing list character limit
 
 v3:
-  + Minor style changes from checkpatch --strict
+  + Move policy load and activation audit event to 03/12
+  + Fix a potential panic when a policy failed to load.
+  + use pr_warn for a failure to parse instead of an
+    audit record
+  + Remove comments from headers
+  + Add lockdep assertions to ipe_update_active_policy and
+    ipe_activate_policy
+  + Fix up warnings with checkpatch --strict
+  + Use file_ns_capable for CAP_MAC_ADMIN for securityfs
+    nodes.
+  + Use memdup_user instead of kzalloc+simple_write_to_buffer.
+  + Remove strict_parse command line parameter, as it is added
+    by the sysctl command line.
+  + Prefix extern variables with ipe_
 
 v4:
-  + No Changes
+  + Remove securityfs to reverse-dependency
+  + Add SHA1 reverse dependency.
+  + Add versioning scheme for IPE properties, and associated
+    interface to query the versioning scheme.
+  + Cause a parser to always return an error on unknown syntax.
+  + Remove strict_parse option
+  + Change active_policy interface from sysctl, to securityfs,
+    and change scheme.
 
 v5:
-  + Allow multiple callers to call security_bdev_setsecurity
+  + Cause an error if a default action is not defined for each
+    operation.
+  + Minor function renames
 
 v6:
-  + Simplify security_bdev_setsecurity break condition
+  + No changes
 
 v7:
-  + Squash all dm-verity related patches to two patches,
-    the additions to dm-verity/fs, and the consumption of
-    the additions.
+  + Further split parser and userspace interface into two
+    separate commits, for easier review.
+  + Refactor policy parser to make code cleaner via introducing a
+    more modular design, for easier extension of policy, and
+    easier review.
 
 v8:
-  + Split dm-verity related patches squashed in v7 to 3 commits based on
-    topic:
-      + New LSM hook
-      + Consumption of hook outside LSM
-      + Consumption of hook inside LSM.
-
-  + change return of security_bdev_alloc / security_bdev_setsecurity
-    to LSM_RET_DEFAULT instead of 0.
-
-  + Change return code to -EOPNOTSUPP, bring inline with other
-    setsecurity hooks.
+  + remove unnecessary pr_info emission on parser loading
+  + add explicit newline to the pr_err emitted when a parser
+    fails to load.
 
 v9:
-  + Add Reviewed-by: Casey Schaufler <casey@schaufler-ca.com>
-  + Remove unlikely when calling LSM hook
-  + Make the security field dependent on CONFIG_SECURITY
+  + switch to match table to parse policy
+  + remove quote syntax and KERNEL_READ operation
 
 v10:
-  + No changes
+  + Fix memory leaks in parser
+  + Fix typos and change code styles
 
 v11:
-  + No changes
+  + Fix code style issues
 ---
- block/bdev.c                  |  7 +++
- include/linux/blk_types.h     |  3 ++
- include/linux/lsm_hook_defs.h |  5 ++
- include/linux/lsm_hooks.h     |  1 +
- include/linux/security.h      | 22 ++++++++
- security/security.c           | 99 +++++++++++++++++++++++++++++++++++
- 6 files changed, 137 insertions(+)
+ security/ipe/Makefile        |   2 +
+ security/ipe/policy.c        | 101 ++++++++
+ security/ipe/policy.h        |  83 ++++++
+ security/ipe/policy_parser.c | 487 +++++++++++++++++++++++++++++++++++
+ security/ipe/policy_parser.h |  11 +
+ 5 files changed, 684 insertions(+)
+ create mode 100644 security/ipe/policy.c
+ create mode 100644 security/ipe/policy.h
+ create mode 100644 security/ipe/policy_parser.c
+ create mode 100644 security/ipe/policy_parser.h
 
-diff --git a/block/bdev.c b/block/bdev.c
-index f3b13aa1b7d4..b4b34275bba7 100644
---- a/block/bdev.c
-+++ b/block/bdev.c
-@@ -24,6 +24,7 @@
- #include <linux/pseudo_fs.h>
- #include <linux/uio.h>
- #include <linux/namei.h>
-+#include <linux/security.h>
- #include <linux/part_stat.h>
- #include <linux/uaccess.h>
- #include <linux/stat.h>
-@@ -301,6 +302,11 @@ static struct inode *bdev_alloc_inode(struct super_block *sb)
- 	if (!ei)
- 		return NULL;
- 	memset(&ei->bdev, 0, sizeof(ei->bdev));
-+
-+	if (security_bdev_alloc(&ei->bdev)) {
-+		kmem_cache_free(bdev_cachep, ei);
-+		return NULL;
-+	}
- 	return &ei->vfs_inode;
- }
+diff --git a/security/ipe/Makefile b/security/ipe/Makefile
+index f7a80d0f18f8..c09aec4904f2 100644
+--- a/security/ipe/Makefile
++++ b/security/ipe/Makefile
+@@ -7,3 +7,5 @@
  
-@@ -310,6 +316,7 @@ static void bdev_free_inode(struct inode *inode)
- 
- 	free_percpu(bdev->bd_stats);
- 	kfree(bdev->bd_meta_info);
-+	security_bdev_free(bdev);
- 
- 	if (!bdev_is_partition(bdev)) {
- 		if (bdev->bd_disk && bdev->bd_disk->bdi)
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index d5c5e59ddbd2..71034e45f3d9 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -68,6 +68,9 @@ struct block_device {
- 	struct partition_meta_info *bd_meta_info;
- #ifdef CONFIG_FAIL_MAKE_REQUEST
- 	bool			bd_make_it_fail;
-+#endif
-+#ifdef CONFIG_SECURITY
-+	void			*security;
- #endif
- 	/*
- 	 * keep this out-of-line as it's both big and not needed in the fast
-diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
-index ac962c4cb44b..00c283180b55 100644
---- a/include/linux/lsm_hook_defs.h
-+++ b/include/linux/lsm_hook_defs.h
-@@ -419,3 +419,8 @@ LSM_HOOK(int, 0, uring_override_creds, const struct cred *new)
- LSM_HOOK(int, 0, uring_sqpoll, void)
- LSM_HOOK(int, 0, uring_cmd, struct io_uring_cmd *ioucmd)
- #endif /* CONFIG_IO_URING */
-+
-+LSM_HOOK(int, 0, bdev_alloc_security, struct block_device *bdev)
-+LSM_HOOK(void, LSM_RET_VOID, bdev_free_security, struct block_device *bdev)
-+LSM_HOOK(int, 0, bdev_setsecurity, struct block_device *bdev, const char *name,
-+	 const void *value, size_t size)
-diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-index dcb5e5b5eb13..5e8c859f5c6c 100644
---- a/include/linux/lsm_hooks.h
-+++ b/include/linux/lsm_hooks.h
-@@ -65,6 +65,7 @@ struct lsm_blob_sizes {
- 	int	lbs_msg_msg;
- 	int	lbs_task;
- 	int	lbs_xattr_count; /* number of xattr slots in new_xattrs array */
-+	int	lbs_bdev;
- };
- 
- /**
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 8fa3bab9fa10..8b85eeb80425 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -484,6 +484,11 @@ int security_inode_notifysecctx(struct inode *inode, void *ctx, u32 ctxlen);
- int security_inode_setsecctx(struct dentry *dentry, void *ctx, u32 ctxlen);
- int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen);
- int security_locked_down(enum lockdown_reason what);
-+int security_bdev_alloc(struct block_device *bdev);
-+void security_bdev_free(struct block_device *bdev);
-+int security_bdev_setsecurity(struct block_device *bdev,
-+			      const char *name, const void *value,
-+			      size_t size);
- #else /* CONFIG_SECURITY */
- 
- static inline int call_blocking_lsm_notifier(enum lsm_event event, void *data)
-@@ -1395,6 +1400,23 @@ static inline int security_locked_down(enum lockdown_reason what)
- {
- 	return 0;
- }
-+
-+static inline int security_bdev_alloc(struct block_device *bdev)
-+{
-+	return 0;
-+}
-+
-+static inline void security_bdev_free(struct block_device *bdev)
-+{
-+}
-+
-+static inline int security_bdev_setsecurity(struct block_device *bdev,
-+					    const char *name,
-+					    const void *value, size_t size)
-+{
-+	return 0;
-+}
-+
- #endif	/* CONFIG_SECURITY */
- 
- #if defined(CONFIG_SECURITY) && defined(CONFIG_WATCH_QUEUE)
-diff --git a/security/security.c b/security/security.c
-index 23b129d482a7..9275126660c0 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -30,6 +30,7 @@
- #include <linux/string.h>
- #include <linux/msg.h>
- #include <net/flow.h>
-+#include <linux/fs.h>
- 
- /* How many LSMs were built into the kernel? */
- #define LSM_COUNT (__end_lsm_info - __start_lsm_info)
-@@ -212,6 +213,7 @@ static void __init lsm_set_blob_sizes(struct lsm_blob_sizes *needed)
- 	lsm_set_blob_size(&needed->lbs_task, &blob_sizes.lbs_task);
- 	lsm_set_blob_size(&needed->lbs_xattr_count,
- 			  &blob_sizes.lbs_xattr_count);
-+	lsm_set_blob_size(&needed->lbs_bdev, &blob_sizes.lbs_bdev);
- }
- 
- /* Prepare LSM for initialization. */
-@@ -379,6 +381,7 @@ static void __init ordered_lsm_init(void)
- 	init_debug("superblock blob size = %d\n", blob_sizes.lbs_superblock);
- 	init_debug("task blob size       = %d\n", blob_sizes.lbs_task);
- 	init_debug("xattr slots          = %d\n", blob_sizes.lbs_xattr_count);
-+	init_debug("bdev blob size       = %d\n", blob_sizes.lbs_bdev);
- 
- 	/*
- 	 * Create any kmem_caches needed for blobs
-@@ -699,6 +702,28 @@ static int lsm_msg_msg_alloc(struct msg_msg *mp)
- 	return 0;
- }
- 
-+/**
-+ * lsm_bdev_alloc - allocate a composite block_device blob
-+ * @bdev: the block_device that needs a blob
-+ *
-+ * Allocate the block_device blob for all the modules
-+ *
-+ * Returns 0, or -ENOMEM if memory can't be allocated.
+ obj-$(CONFIG_SECURITY_IPE) += \
+ 	ipe.o \
++	policy.o \
++	policy_parser.o \
+diff --git a/security/ipe/policy.c b/security/ipe/policy.c
+new file mode 100644
+index 000000000000..3a529c7950a1
+--- /dev/null
++++ b/security/ipe/policy.c
+@@ -0,0 +1,101 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
 + */
-+static int lsm_bdev_alloc(struct block_device *bdev)
-+{
-+	if (blob_sizes.lbs_bdev == 0) {
-+		bdev->security = NULL;
-+		return 0;
-+	}
 +
-+	bdev->security = kzalloc(blob_sizes.lbs_bdev, GFP_KERNEL);
-+	if (!bdev->security)
-+		return -ENOMEM;
++#include <linux/errno.h>
++#include <linux/verification.h>
 +
-+	return 0;
-+}
-+
- /**
-  * lsm_early_task - during initialization allocate a composite task blob
-  * @task: the task that needs a blob
-@@ -5230,6 +5255,80 @@ int security_locked_down(enum lockdown_reason what)
- }
- EXPORT_SYMBOL(security_locked_down);
- 
-+/**
-+ * security_bdev_alloc() - Allocate a block device LSM blob
-+ * @bdev: block device
-+ *
-+ * Allocate and attach a security structure to @bdev->security.  The
-+ * security field is initialized to NULL when the bdev structure is
-+ * allocated.
-+ *
-+ * Return: Return 0 if operation was successful.
-+ */
-+int security_bdev_alloc(struct block_device *bdev)
-+{
-+	int rc = 0;
-+
-+	rc = lsm_bdev_alloc(bdev);
-+	if (unlikely(rc))
-+		return rc;
-+
-+	rc = call_int_hook(bdev_alloc_security, 0, bdev);
-+	if (unlikely(rc))
-+		security_bdev_free(bdev);
-+
-+	return LSM_RET_DEFAULT(bdev_alloc_security);
-+}
-+EXPORT_SYMBOL(security_bdev_alloc);
++#include "ipe.h"
++#include "policy.h"
++#include "policy_parser.h"
 +
 +/**
-+ * security_bdev_free() - Free a block device's LSM blob
-+ * @bdev: block device
++ * ipe_free_policy - Deallocate a given IPE policy.
++ * @p: Supplies the policy to free.
 + *
-+ * Deallocate the bdev security structure and set @bdev->security to NULL.
++ * Safe to call on IS_ERR/NULL.
 + */
-+void security_bdev_free(struct block_device *bdev)
++void ipe_free_policy(struct ipe_policy *p)
 +{
-+	if (!bdev->security)
++	if (IS_ERR_OR_NULL(p))
 +		return;
 +
-+	call_void_hook(bdev_free_security, bdev);
-+
-+	kfree(bdev->security);
-+	bdev->security = NULL;
++	free_parsed_policy(p->parsed);
++	/*
++	 * p->text is allocated only when p->pkcs7 is not NULL
++	 * otherwise it points to the plaintext data inside the pkcs7
++	 */
++	if (!p->pkcs7)
++		kfree(p->text);
++	kfree(p->pkcs7);
++	kfree(p);
 +}
-+EXPORT_SYMBOL(security_bdev_free);
++
++static int set_pkcs7_data(void *ctx, const void *data, size_t len,
++			  size_t asn1hdrlen)
++{
++	struct ipe_policy *p = ctx;
++
++	p->text = (const char *)data;
++	p->textlen = len;
++
++	return 0;
++}
 +
 +/**
-+ * security_bdev_setsecurity() - Set a security property of a block device
-+ * @bdev: block device
-+ * @name: security property name
-+ * @value: security property value
-+ * @size: length of the property value
++ * ipe_new_policy - Allocate and parse an ipe_policy structure.
 + *
-+ * Set the security property associated with @name for @bdev from the security
-+ * property value @value. @size indicates the size of the @value in bytes.
-+ * If a @name is not implemented for a hook, it should return -EOPNOTSUPP.
++ * @text: Supplies a pointer to the plain-text policy to parse.
++ * @textlen: Supplies the length of @text.
++ * @pkcs7: Supplies a pointer to a pkcs7-signed IPE policy.
++ * @pkcs7len: Supplies the length of @pkcs7.
 + *
-+ * Return: Returns 0 on success.
++ * @text/@textlen Should be NULL/0 if @pkcs7/@pkcs7len is set.
++ *
++ * Return:
++ * * !IS_ERR	- Success
++ * * -EBADMSG	- Policy is invalid
++ * * -ENOMEM	- Out of memory
 + */
-+int security_bdev_setsecurity(struct block_device *bdev,
-+			      const char *name, const void *value,
-+			      size_t size)
++struct ipe_policy *ipe_new_policy(const char *text, size_t textlen,
++				  const char *pkcs7, size_t pkcs7len)
 +{
 +	int rc = 0;
-+	struct security_hook_list *p;
++	struct ipe_policy *new = NULL;
 +
-+	hlist_for_each_entry(p, &security_hook_heads.bdev_setsecurity, list) {
-+		rc = p->hook.bdev_setsecurity(bdev, name, value, size);
-+		if (rc && rc != -EOPNOTSUPP)
-+			return rc;
++	new = kzalloc(sizeof(*new), GFP_KERNEL);
++	if (!new)
++		return ERR_PTR(-ENOMEM);
++
++	if (!text) {
++		new->pkcs7len = pkcs7len;
++		new->pkcs7 = kmemdup(pkcs7, pkcs7len, GFP_KERNEL);
++		if (!new->pkcs7) {
++			rc = -ENOMEM;
++			goto err;
++		}
++
++		rc = verify_pkcs7_signature(NULL, 0, new->pkcs7, pkcs7len, NULL,
++					    VERIFYING_UNSPECIFIED_SIGNATURE,
++					    set_pkcs7_data, new);
++		if (rc)
++			goto err;
++	} else {
++		new->textlen = textlen;
++		new->text = kstrdup(text, GFP_KERNEL);
++		if (!new->text) {
++			rc = -ENOMEM;
++			goto err;
++		}
 +	}
 +
-+	return LSM_RET_DEFAULT(bdev_setsecurity);
-+}
-+EXPORT_SYMBOL(security_bdev_setsecurity);
++	rc = parse_policy(new);
++	if (rc)
++		goto err;
 +
- #ifdef CONFIG_PERF_EVENTS
- /**
-  * security_perf_event_open() - Check if a perf event open is allowed
++	return new;
++err:
++	ipe_free_policy(new);
++	return ERR_PTR(rc);
++}
+diff --git a/security/ipe/policy.h b/security/ipe/policy.h
+new file mode 100644
+index 000000000000..77aa91f2b953
+--- /dev/null
++++ b/security/ipe/policy.h
+@@ -0,0 +1,83 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
++#ifndef _IPE_POLICY_H
++#define _IPE_POLICY_H
++
++#include <linux/list.h>
++#include <linux/types.h>
++
++enum ipe_op_type {
++	IPE_OP_EXEC = 0,
++	IPE_OP_FIRMWARE,
++	IPE_OP_KERNEL_MODULE,
++	IPE_OP_KEXEC_IMAGE,
++	IPE_OP_KEXEC_INITRAMFS,
++	IPE_OP_IMA_POLICY,
++	IPE_OP_IMA_X509,
++	__IPE_OP_MAX
++};
++
++#define IPE_OP_INVALID __IPE_OP_MAX
++
++enum ipe_action_type {
++	IPE_ACTION_ALLOW = 0,
++	IPE_ACTION_DENY,
++	__IPE_ACTION_MAX
++};
++
++#define IPE_ACTION_INVALID __IPE_ACTION_MAX
++
++enum ipe_prop_type {
++	__IPE_PROP_MAX
++};
++
++#define IPE_PROP_INVALID __IPE_PROP_MAX
++
++struct ipe_prop {
++	struct list_head next;
++	enum ipe_prop_type type;
++	void *value;
++};
++
++struct ipe_rule {
++	enum ipe_op_type op;
++	enum ipe_action_type action;
++	struct list_head props;
++	struct list_head next;
++};
++
++struct ipe_op_table {
++	struct list_head rules;
++	enum ipe_action_type default_action;
++};
++
++struct ipe_parsed_policy {
++	const char *name;
++	struct {
++		u16 major;
++		u16 minor;
++		u16 rev;
++	} version;
++
++	enum ipe_action_type global_default_action;
++
++	struct ipe_op_table rules[__IPE_OP_MAX];
++};
++
++struct ipe_policy {
++	const char *pkcs7;
++	size_t pkcs7len;
++
++	const char *text;
++	size_t textlen;
++
++	struct ipe_parsed_policy *parsed;
++};
++
++struct ipe_policy *ipe_new_policy(const char *text, size_t textlen,
++				  const char *pkcs7, size_t pkcs7len);
++void ipe_free_policy(struct ipe_policy *pol);
++
++#endif /* _IPE_POLICY_H */
+diff --git a/security/ipe/policy_parser.c b/security/ipe/policy_parser.c
+new file mode 100644
+index 000000000000..c09458bd348d
+--- /dev/null
++++ b/security/ipe/policy_parser.c
+@@ -0,0 +1,487 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
++
++#include <linux/err.h>
++#include <linux/slab.h>
++#include <linux/parser.h>
++#include <linux/types.h>
++
++#include "policy.h"
++#include "policy_parser.h"
++
++#define START_COMMENT	'#'
++#define IPE_POLICY_DELIM " \t"
++#define IPE_LINE_DELIM "\n\r"
++
++/**
++ * new_parsed_policy - Allocate and initialize a parsed policy.
++ *
++ * Return:
++ * * !IS_ERR	- OK
++ * * -ENOMEM	- Out of memory
++ */
++static struct ipe_parsed_policy *new_parsed_policy(void)
++{
++	size_t i = 0;
++	struct ipe_parsed_policy *p = NULL;
++	struct ipe_op_table *t = NULL;
++
++	p = kzalloc(sizeof(*p), GFP_KERNEL);
++	if (!p)
++		return ERR_PTR(-ENOMEM);
++
++	p->global_default_action = IPE_ACTION_INVALID;
++
++	for (i = 0; i < ARRAY_SIZE(p->rules); ++i) {
++		t = &p->rules[i];
++
++		t->default_action = IPE_ACTION_INVALID;
++		INIT_LIST_HEAD(&t->rules);
++	}
++
++	return p;
++}
++
++/**
++ * remove_comment - Truncate all chars following START_COMMENT in a string.
++ *
++ * @line: Supplies a poilcy line string for preprocessing.
++ */
++static void remove_comment(char *line)
++{
++	line = strchr(line, START_COMMENT);
++
++	if (line)
++		*line = '\0';
++}
++
++/**
++ * remove_trailing_spaces - Truncate all trailing spaces in a string.
++ *
++ * @line: Supplies a poilcy line string for preprocessing.
++ *
++ * Return: The length of truncated string.
++ */
++static size_t remove_trailing_spaces(char *line)
++{
++	size_t i = 0;
++
++	for (i = strlen(line); i > 0 && (line[i - 1] == ' ' || line[i - 1] == '\t'); --i)
++		;
++
++	line[i] = '\0';
++
++	return i;
++}
++
++/**
++ * parse_version - Parse policy version.
++ * @ver: Supplies a version string to be parsed.
++ * @p: Supplies the partial parsed policy.
++ *
++ * Return:
++ * * 0	- OK
++ * * !0	- Standard errno
++ */
++static int parse_version(char *ver, struct ipe_parsed_policy *p)
++{
++	int rc = 0;
++	size_t sep_count = 0;
++	char *token;
++	u16 *const cv[] = { &p->version.major, &p->version.minor, &p->version.rev };
++
++	while ((token = strsep(&ver, ".")) != NULL) {
++		/* prevent overflow */
++		if (sep_count >= ARRAY_SIZE(cv))
++			return -EBADMSG;
++
++		rc = kstrtou16(token, 10, cv[sep_count]);
++		if (rc)
++			return rc;
++
++		++sep_count;
++	}
++
++	/* prevent underflow */
++	if (sep_count != ARRAY_SIZE(cv))
++		rc = -EBADMSG;
++
++	return rc;
++}
++
++enum header_opt {
++	IPE_HEADER_POLICY_NAME = 0,
++	IPE_HEADER_POLICY_VERSION,
++	__IPE_HEADER_MAX
++};
++
++static const match_table_t header_tokens = {
++	{IPE_HEADER_POLICY_NAME,	"policy_name=%s"},
++	{IPE_HEADER_POLICY_VERSION,	"policy_version=%s"},
++	{__IPE_HEADER_MAX,		NULL}
++};
++
++/**
++ * parse_header - Parse policy header information.
++ * @line: Supplies header line to be parsed.
++ * @p: Supplies the partial parsed policy.
++ *
++ * Return:
++ * * 0	- OK
++ * * !0	- Standard errno
++ */
++static int parse_header(char *line, struct ipe_parsed_policy *p)
++{
++	int rc = 0;
++	char *t, *ver = NULL;
++	substring_t args[MAX_OPT_ARGS];
++	size_t idx = 0;
++
++	while ((t = strsep(&line, IPE_POLICY_DELIM)) != NULL) {
++		int token;
++
++		if (*t == '\0')
++			continue;
++		if (idx >= __IPE_HEADER_MAX) {
++			rc = -EBADMSG;
++			goto out;
++		}
++
++		token = match_token(t, header_tokens, args);
++		if (token != idx) {
++			rc = -EBADMSG;
++			goto out;
++		}
++
++		switch (token) {
++		case IPE_HEADER_POLICY_NAME:
++			p->name = match_strdup(&args[0]);
++			if (!p->name)
++				rc = -ENOMEM;
++			break;
++		case IPE_HEADER_POLICY_VERSION:
++			ver = match_strdup(&args[0]);
++			if (!ver) {
++				rc = -ENOMEM;
++				break;
++			}
++			rc = parse_version(ver, p);
++			break;
++		default:
++			rc = -EBADMSG;
++		}
++		if (rc)
++			goto out;
++		++idx;
++	}
++
++	if (idx != __IPE_HEADER_MAX) {
++		rc = -EBADMSG;
++		goto out;
++	}
++
++out:
++	kfree(ver);
++	return rc;
++}
++
++/**
++ * token_default - Determine if the given token is "DEFAULT".
++ * @token: Supplies the token string to be compared.
++ *
++ * Return:
++ * * 0	- The token is not "DEFAULT"
++ * * !0	- The token is "DEFAULT"
++ */
++static bool token_default(char *token)
++{
++	return !strcmp(token, "DEFAULT");
++}
++
++/**
++ * free_rule - Free the supplied ipe_rule struct.
++ * @r: Supplies the ipe_rule struct to be freed.
++ *
++ * Free a ipe_rule struct @r. Note @r must be removed from any lists before
++ * calling this function.
++ */
++static void free_rule(struct ipe_rule *r)
++{
++	struct ipe_prop *p, *t;
++
++	if (IS_ERR_OR_NULL(r))
++		return;
++
++	list_for_each_entry_safe(p, t, &r->props, next) {
++		list_del(&p->next);
++		kfree(p);
++	}
++
++	kfree(r);
++}
++
++static const match_table_t operation_tokens = {
++	{IPE_OP_EXEC,			"op=EXECUTE"},
++	{IPE_OP_FIRMWARE,		"op=FIRMWARE"},
++	{IPE_OP_KERNEL_MODULE,	"op=KMODULE"},
++	{IPE_OP_KEXEC_IMAGE,		"op=KEXEC_IMAGE"},
++	{IPE_OP_KEXEC_INITRAMFS,	"op=KEXEC_INITRAMFS"},
++	{IPE_OP_IMA_POLICY,		"op=IMA_POLICY"},
++	{IPE_OP_IMA_X509,		"op=IMA_X509_CERT"},
++	{IPE_OP_INVALID,		NULL}
++};
++
++/**
++ * parse_operation - Parse the operation type given a token string.
++ * @t: Supplies the token string to be parsed.
++ *
++ * Return: The parsed operation type.
++ */
++static enum ipe_op_type parse_operation(char *t)
++{
++	substring_t args[MAX_OPT_ARGS];
++
++	return match_token(t, operation_tokens, args);
++}
++
++static const match_table_t action_tokens = {
++	{IPE_ACTION_ALLOW,	"action=ALLOW"},
++	{IPE_ACTION_DENY,	"action=DENY"},
++	{IPE_ACTION_INVALID,	NULL}
++};
++
++/**
++ * parse_action - Parse the action type given a token string.
++ * @t: Supplies the token string to be parsed.
++ *
++ * Return: The parsed action type.
++ */
++static enum ipe_action_type parse_action(char *t)
++{
++	substring_t args[MAX_OPT_ARGS];
++
++	return match_token(t, action_tokens, args);
++}
++
++/**
++ * parse_property - Parse the property type given a token string.
++ * @t: Supplies the token string to be parsed.
++ * @r: Supplies the ipe_rule the parsed property will be associated with.
++ *
++ * Return:
++ * * !IS_ERR	- OK
++ * * -ENOMEM	- Out of memory
++ * * -EBADMSG	- The supplied token cannot be parsed
++ */
++static int parse_property(char *t, struct ipe_rule *r)
++{
++	return -EBADMSG;
++}
++
++/**
++ * parse_rule - parse a policy rule line.
++ * @line: Supplies rule line to be parsed.
++ * @p: Supplies the partial parsed policy.
++ *
++ * Return:
++ * * !IS_ERR	- OK
++ * * -ENOMEM	- Out of memory
++ * * -EBADMSG	- Policy syntax error
++ */
++static int parse_rule(char *line, struct ipe_parsed_policy *p)
++{
++	int rc = 0;
++	bool first_token = true, is_default_rule = false;
++	bool op_parsed = false;
++	enum ipe_op_type op = IPE_OP_INVALID;
++	enum ipe_action_type action = IPE_ACTION_INVALID;
++	struct ipe_rule *r = NULL;
++	char *t;
++
++	r = kzalloc(sizeof(*r), GFP_KERNEL);
++	if (!r)
++		return -ENOMEM;
++
++	INIT_LIST_HEAD(&r->next);
++	INIT_LIST_HEAD(&r->props);
++
++	while (t = strsep(&line, IPE_POLICY_DELIM), line) {
++		if (*t == '\0')
++			continue;
++		if (first_token && token_default(t)) {
++			is_default_rule = true;
++		} else {
++			if (!op_parsed) {
++				op = parse_operation(t);
++				if (op == IPE_OP_INVALID)
++					rc = -EBADMSG;
++				else
++					op_parsed = true;
++			} else {
++				rc = parse_property(t, r);
++			}
++		}
++
++		if (rc)
++			goto err;
++		first_token = false;
++	}
++
++	action = parse_action(t);
++	if (action == IPE_ACTION_INVALID) {
++		rc = -EBADMSG;
++		goto err;
++	}
++
++	if (is_default_rule) {
++		if (!list_empty(&r->props)) {
++			rc = -EBADMSG;
++		} else if (op == IPE_OP_INVALID) {
++			if (p->global_default_action != IPE_ACTION_INVALID)
++				rc = -EBADMSG;
++			else
++				p->global_default_action = action;
++		} else {
++			if (p->rules[op].default_action != IPE_ACTION_INVALID)
++				rc = -EBADMSG;
++			else
++				p->rules[op].default_action = action;
++		}
++	} else if (op != IPE_OP_INVALID && action != IPE_ACTION_INVALID) {
++		r->op = op;
++		r->action = action;
++	} else {
++		rc = -EBADMSG;
++	}
++
++	if (rc)
++		goto err;
++	if (!is_default_rule)
++		list_add_tail(&r->next, &p->rules[op].rules);
++	else
++		free_rule(r);
++
++	return rc;
++err:
++	free_rule(r);
++	return rc;
++}
++
++/**
++ * free_parsed_policy - free a parsed policy structure.
++ * @p: Supplies the parsed policy.
++ */
++void free_parsed_policy(struct ipe_parsed_policy *p)
++{
++	size_t i = 0;
++	struct ipe_rule *pp, *t;
++
++	if (IS_ERR_OR_NULL(p))
++		return;
++
++	for (i = 0; i < ARRAY_SIZE(p->rules); ++i)
++		list_for_each_entry_safe(pp, t, &p->rules[i].rules, next) {
++			list_del(&pp->next);
++			free_rule(pp);
++		}
++
++	kfree(p->name);
++	kfree(p);
++}
++
++/**
++ * validate_policy - validate a parsed policy.
++ * @p: Supplies the fully parsed policy.
++ *
++ * Given a policy structure that was just parsed, validate that all
++ * necessary fields are present, initialized correctly.
++ *
++ * A parsed policy can be in an invalid state for use (a default was
++ * undefined) by just parsing the policy.
++ *
++ * Return:
++ * * 0		- OK
++ * * -EBADMSG	- Policy is invalid
++ */
++static int validate_policy(const struct ipe_parsed_policy *p)
++{
++	size_t i = 0;
++
++	if (p->global_default_action != IPE_ACTION_INVALID)
++		return 0;
++
++	for (i = 0; i < ARRAY_SIZE(p->rules); ++i) {
++		if (p->rules[i].default_action == IPE_ACTION_INVALID)
++			return -EBADMSG;
++	}
++
++	return 0;
++}
++
++/**
++ * parse_policy - Given a string, parse the string into an IPE policy.
++ * @p: partially filled ipe_policy structure to populate with the result.
++ *     it must have text and textlen set.
++ *
++ * Return:
++ * * 0		- OK
++ * * -EBADMSG	- Policy is invalid
++ * * -ENOMEM	- Out of Memory
++ */
++int parse_policy(struct ipe_policy *p)
++{
++	int rc = 0;
++	size_t len;
++	char *policy = NULL, *dup = NULL;
++	char *line = NULL;
++	bool header_parsed = false;
++	struct ipe_parsed_policy *pp = NULL;
++
++	if (!p->textlen)
++		return -EBADMSG;
++
++	policy = kmemdup_nul(p->text, p->textlen, GFP_KERNEL);
++	if (!policy)
++		return -ENOMEM;
++	dup = policy;
++
++	pp = new_parsed_policy();
++	if (IS_ERR(pp)) {
++		rc = PTR_ERR(pp);
++		goto out;
++	}
++
++	while ((line = strsep(&policy, IPE_LINE_DELIM)) != NULL) {
++		remove_comment(line);
++		len = remove_trailing_spaces(line);
++		if (!len)
++			continue;
++
++		if (!header_parsed) {
++			rc = parse_header(line, pp);
++			if (rc)
++				goto err;
++			header_parsed = true;
++		} else {
++			rc = parse_rule(line, pp);
++			if (rc)
++				goto err;
++		}
++	}
++
++	if (!header_parsed || validate_policy(pp)) {
++		rc = -EBADMSG;
++		goto err;
++	}
++
++	p->parsed = pp;
++
++out:
++	kfree(dup);
++	return rc;
++err:
++	free_parsed_policy(pp);
++	goto out;
++}
+diff --git a/security/ipe/policy_parser.h b/security/ipe/policy_parser.h
+new file mode 100644
+index 000000000000..2b744103d06a
+--- /dev/null
++++ b/security/ipe/policy_parser.h
+@@ -0,0 +1,11 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
++#ifndef _IPE_POLICY_PARSER_H
++#define _IPE_POLICY_PARSER_H
++
++int parse_policy(struct ipe_policy *p);
++void free_parsed_policy(struct ipe_parsed_policy *p);
++
++#endif /* _IPE_POLICY_PARSER_H */
 -- 
 2.25.1
 
