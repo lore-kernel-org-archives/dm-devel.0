@@ -1,69 +1,69 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2BE1EE936EB
-	for <dm-devel@archiver.kernel.org>; Wed,  4 Oct 2023 22:15:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8B02AE936ED
+	for <dm-devel@archiver.kernel.org>; Wed,  4 Oct 2023 22:15:20 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696457718;
+	s=mimecast20190719; t=1696457719;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=v77wPISNUS6mzdVv2DkH7aOIff7yJqqF52/dQVImXlQ=;
-	b=AdDiuHdH7kQ8X6SabbBb76B78x6lyQauyMnSki/Tb4kQfue1GFrfyavdqgz0jAWP/bwFAs
-	pViEG2F3DTgKJK3r4QnboodhQwfrJ5L5HSyoyYlbY4/olC+7ARZCyG7uWYOZYuCc9wNaEf
-	n1RtWDggYyc6gWWzUZqfDaU7A1QW/j4=
+	bh=VeAAxTVkuftgv8+SNwmbnLZA1zF5BBCjkA/zKrrMGlw=;
+	b=O/udjOx3nWP1y/DCNR9+msb4vr/Si0HdD2Bm9bdhOWZ0vENPwcW1O/KTzdK87MfDH3oj/B
+	+8woC5xJlGP+WSEU/0RqcZiJJ7j7WZe6o2TnjyFisZGk1yIxGiAD4n++aQSHDvJDGc5IH8
+	VwsjtPgpv7hlXI49HtCL2u2hIF3e1r0=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-277-FITg1ZDnMGeL_ad5LhWtGA-1; Wed, 04 Oct 2023 18:15:15 -0400
-X-MC-Unique: FITg1ZDnMGeL_ad5LhWtGA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-518-JYuC_PKxPoizq1M2QeT35Q-1; Wed, 04 Oct 2023 18:15:17 -0400
+X-MC-Unique: JYuC_PKxPoizq1M2QeT35Q-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B119F81D784;
-	Wed,  4 Oct 2023 22:15:13 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B9ED21875054;
+	Wed,  4 Oct 2023 22:15:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id AC27740C6EA8;
-	Wed,  4 Oct 2023 22:15:12 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A559B63F46;
+	Wed,  4 Oct 2023 22:15:14 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9669319465BB;
-	Wed,  4 Oct 2023 22:15:11 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2751219466F5;
+	Wed,  4 Oct 2023 22:15:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 08097194658F
- for <dm-devel@listman.corp.redhat.com>; Wed,  4 Oct 2023 22:15:11 +0000 (UTC)
+ ESMTP id AA389194658F
+ for <dm-devel@listman.corp.redhat.com>; Wed,  4 Oct 2023 22:15:12 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id DB756401E6A; Wed,  4 Oct 2023 22:15:10 +0000 (UTC)
+ id 8A0FE140E962; Wed,  4 Oct 2023 22:15:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D3665493113
- for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:10 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 82612140E953
+ for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:12 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-delivery-1.mimecast.com [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A421B8007A4
- for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:10 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F2F98185A790
+ for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:11 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-623-H3L7Jn2EMvSjJ08kz83m1g-1; Wed,
+ relay.mimecast.com with ESMTP id us-mta-144-SFAvjMbMOsaVBZQko9DtPw-1; Wed,
  04 Oct 2023 18:15:09 -0400
-X-MC-Unique: H3L7Jn2EMvSjJ08kz83m1g-1
+X-MC-Unique: SFAvjMbMOsaVBZQko9DtPw-1
 Received: by linux.microsoft.com (Postfix, from userid 1052)
- id 7C6A520B74CC; Wed,  4 Oct 2023 15:09:50 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 7C6A520B74CC
+ id 0C17720B74DE; Wed,  4 Oct 2023 15:09:50 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 0C17720B74DE
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
  tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
  snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
-Date: Wed,  4 Oct 2023 15:09:33 -0700
-Message-Id: <1696457386-3010-7-git-send-email-wufan@linux.microsoft.com>
+Date: Wed,  4 Oct 2023 15:09:42 -0700
+Message-Id: <1696457386-3010-16-git-send-email-wufan@linux.microsoft.com>
 In-Reply-To: <1696457386-3010-1-git-send-email-wufan@linux.microsoft.com>
 References: <1696457386-3010-1-git-send-email-wufan@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -73,9 +73,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-Subject: [dm-devel] [RFC PATCH v11 06/19] security: add new securityfs
- delete function
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Subject: [dm-devel] [RFC PATCH v11 15/19] fsverity: consume builtin
+ signature via LSM hook
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -87,7 +87,8 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org, roberto.sassu@huawei.com,
+Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
+ Deven Bowers <deven.desai@linux.microsoft.com>, roberto.sassu@huawei.com,
  linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org,
  linux-block@vger.kernel.org, audit@vger.kernel.org,
  linux-fscrypt@vger.kernel.org, Fan Wu <wufan@linux.microsoft.com>,
@@ -95,89 +96,149 @@ Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org, roberto.sassu@huawei.com,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: linux.microsoft.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-When deleting a directory in the security file system, the existing
-securityfs_remove requires the directory to be empty, otherwise
-it will do nothing. This leads to a potential risk that the security
-file system might be in an unclean state when the intentded deletion
-did not happen.
+fsverity represents a mechanism to support both integrity and
+authenticity protection of a file, supporting both signed and unsigned
+digests.
 
-This commit introduces a new function securityfs_recursive_remove
-to recursively delete a directory without leaving an unclean state.
+An LSM which controls access to a resource based on authenticity and
+integrity of said resource, can then use this data to make an informed
+decision on the authorization (provided by the LSM's policy) of said
+claim.
 
-Co-developed-by: Christian Brauner (Microsoft) <brauner@kernel.org>
+This effectively allows the extension of a policy enforcement layer in
+LSM for fsverity, allowing for more granular control of how a
+particular authenticity claim can be used. For example, "all (built-in)
+signed fsverity files should be allowed to execute, but only these
+hashes are allowed to be loaded as kernel modules".
+
+This enforcement must be done in kernel space, as a userspace only
+solution would fail a simple litmus test: Download a self-contained
+malicious binary that never touches the userspace stack. This
+binary would still be able to execute.
+
+Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
-
 ---
-v1-v8:
+v1-v6:
   + Not present
 
-v9:
-  + Introduced
+v7:
+  Introduced
 
-v10:
+v8:
+  + Split fs/verity/ changes and security/ changes into separate patches
+  + Change signature of fsverity_create_info to accept non-const inode
+  + Change signature of fsverity_verify_signature to accept non-const inode
+  + Don't cast-away const from inode.
+  + Digest functionality dropped in favor of:
+    ("fs-verity: define a function to return the integrity protected
+      file digest")
+  + Reworded commit description and title to match changes.
+  + Fix a bug wherein no LSM implements the particular fsverity @name
+    (or LSM is disabled), and returns -EOPNOTSUPP, causing errors.
+
+v9:
   + No changes
 
-v11:
-  + Fix code style issues
----
- include/linux/security.h |  1 +
- security/inode.c         | 25 +++++++++++++++++++++++++
- 2 files changed, 26 insertions(+)
+v10:
+  + Rename the signature blob key
+  + Cleanup redundant code
+  + Make the hook call depends on CONFIG_FS_VERITY_BUILTIN_SIGNATURES
 
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 5f16eecde00b..8fa3bab9fa10 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -1985,6 +1985,7 @@ struct dentry *securityfs_create_symlink(const char *name,
- 					 const char *target,
- 					 const struct inode_operations *iops);
- extern void securityfs_remove(struct dentry *dentry);
-+extern void securityfs_recursive_remove(struct dentry *dentry);
+v11:
+  + No changes
+---
+ fs/verity/fsverity_private.h |  2 +-
+ fs/verity/open.c             | 26 +++++++++++++++++++++++++-
+ include/linux/fsverity.h     |  2 ++
+ 3 files changed, 28 insertions(+), 2 deletions(-)
+
+diff --git a/fs/verity/fsverity_private.h b/fs/verity/fsverity_private.h
+index d071a6e32581..4a82716e852f 100644
+--- a/fs/verity/fsverity_private.h
++++ b/fs/verity/fsverity_private.h
+@@ -108,7 +108,7 @@ int fsverity_init_merkle_tree_params(struct merkle_tree_params *params,
+ 				     unsigned int log_blocksize,
+ 				     const u8 *salt, size_t salt_size);
  
- #else /* CONFIG_SECURITYFS */
+-struct fsverity_info *fsverity_create_info(const struct inode *inode,
++struct fsverity_info *fsverity_create_info(struct inode *inode,
+ 					   struct fsverity_descriptor *desc);
  
-diff --git a/security/inode.c b/security/inode.c
-index 3aa75fffa8c9..e0585c2946c5 100644
---- a/security/inode.c
-+++ b/security/inode.c
-@@ -313,6 +313,31 @@ void securityfs_remove(struct dentry *dentry)
+ void fsverity_set_info(struct inode *inode, struct fsverity_info *vi);
+diff --git a/fs/verity/open.c b/fs/verity/open.c
+index 6c31a871b84b..5b48e2c39086 100644
+--- a/fs/verity/open.c
++++ b/fs/verity/open.c
+@@ -8,6 +8,7 @@
+ #include "fsverity_private.h"
+ 
+ #include <linux/mm.h>
++#include <linux/security.h>
+ #include <linux/slab.h>
+ 
+ static struct kmem_cache *fsverity_info_cachep;
+@@ -172,12 +173,28 @@ static int compute_file_digest(const struct fsverity_hash_alg *hash_alg,
+ 	return err;
  }
- EXPORT_SYMBOL_GPL(securityfs_remove);
  
-+static void remove_one(struct dentry *victim)
++#ifdef CONFIG_FS_VERITY_BUILTIN_SIGNATURES
++static int fsverity_inode_setsecurity(struct inode *inode,
++				      struct fsverity_descriptor *desc)
 +{
-+	simple_release_fs(&mount, &mount_count);
++	return security_inode_setsecurity(inode, FS_VERITY_INODE_SEC_NAME,
++					  desc->signature,
++					  le32_to_cpu(desc->sig_size), 0);
 +}
-+
-+/**
-+ * securityfs_recursive_remove - recursively removes a file or directory
-+ *
-+ * @dentry: a pointer to a the dentry of the file or directory to be removed.
-+ *
-+ * This function recursively removes a file or directory in securityfs that was
-+ * previously created with a call to another securityfs function (like
-+ * securityfs_create_file() or variants thereof.)
-+ */
-+void securityfs_recursive_remove(struct dentry *dentry)
++#else
++static inline int fsverity_inode_setsecurity(struct inode *inode,
++					     struct fsverity_descriptor *desc)
 +{
-+	if (IS_ERR_OR_NULL(dentry))
-+		return;
-+
-+	simple_pin_fs(&fs_type, &mount, &mount_count);
-+	simple_recursive_removal(dentry, remove_one);
-+	simple_release_fs(&mount, &mount_count);
++	return 0;
 +}
-+EXPORT_SYMBOL_GPL(securityfs_recursive_remove);
++#endif /* CONFIG_IPE_PROP_FS_VERITY*/
 +
- #ifdef CONFIG_SECURITY
- static struct dentry *lsm_dentry;
- static ssize_t lsm_read(struct file *filp, char __user *buf, size_t count,
+ /*
+  * Create a new fsverity_info from the given fsverity_descriptor (with optional
+  * appended builtin signature), and check the signature if present.  The
+  * fsverity_descriptor must have already undergone basic validation.
+  */
+-struct fsverity_info *fsverity_create_info(const struct inode *inode,
++struct fsverity_info *fsverity_create_info(struct inode *inode,
+ 					   struct fsverity_descriptor *desc)
+ {
+ 	struct fsverity_info *vi;
+@@ -242,6 +259,13 @@ struct fsverity_info *fsverity_create_info(const struct inode *inode,
+ 		spin_lock_init(&vi->hash_page_init_lock);
+ 	}
+ 
++	err = fsverity_inode_setsecurity(inode, desc);
++	if (err == -EOPNOTSUPP)
++		err = 0;
++
++	if (err)
++		goto fail;
++
+ 	return vi;
+ 
+ fail:
+diff --git a/include/linux/fsverity.h b/include/linux/fsverity.h
+index 1eb7eae580be..9666721baf15 100644
+--- a/include/linux/fsverity.h
++++ b/include/linux/fsverity.h
+@@ -319,4 +319,6 @@ static inline int fsverity_prepare_setattr(struct dentry *dentry,
+ 	return 0;
+ }
+ 
++#define FS_VERITY_INODE_SEC_NAME "fsverity.builtin-sig"
++
+ #endif	/* _LINUX_FSVERITY_H */
 -- 
 2.25.1
 
