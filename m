@@ -4,66 +4,66 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8616CE936EB
-	for <dm-devel@archiver.kernel.org>; Wed,  4 Oct 2023 22:15:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4AD5EE936EE
+	for <dm-devel@archiver.kernel.org>; Wed,  4 Oct 2023 22:15:41 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696457738;
+	s=mimecast20190719; t=1696457740;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=OE8W0JjGoena533Eu4eDXTvxj1oN474zkTZMMZuC8nc=;
-	b=EMVmvX4jQo96zsPhNx5f1p18MY3dtLGmLg+JlyyyK56SSVTDp6OJdjx8UEJksUEpC0ks1N
-	pdOP/OmG8SZavlx0CNxyYqfgeYh/GXYEzgQLdNfd8D4fQhKKTPZATNRXFY3wvdh8l6nx9N
-	BAyI3NZgd9MkEtIaYIzgmVyWWpp7NCM=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-151-WRMyms7wPdC1E22UmwojPg-1; Wed, 04 Oct 2023 18:15:26 -0400
-X-MC-Unique: WRMyms7wPdC1E22UmwojPg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	bh=LGcsYF9xszbMKaD7OwPoapooPFCWvlQPcSoUsBDpLKU=;
+	b=a8PQ64g8r2ZzQBhbxANxiU4HH7b/3+gw4VNsTd5nka5SEgEAQuh784kTDnW97WokCFnLeW
+	Lm2PVC5bml1pHOUG1fQr27CK5mkIiGG/4xbKYZTeKecnjJqupS2ck7UIenu/VaS47ulN7e
+	w/UwdupRmrCv52y1+ubd4BYTeIe+fyw=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-587-VCHzgIjQMJOGhMxvxotsMA-1; Wed, 04 Oct 2023 18:15:27 -0400
+X-MC-Unique: VCHzgIjQMJOGhMxvxotsMA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 24A4B1C041AC;
-	Wed,  4 Oct 2023 22:15:17 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ACBF2101B04D;
+	Wed,  4 Oct 2023 22:15:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 133FA140E953;
-	Wed,  4 Oct 2023 22:15:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9813663F20;
+	Wed,  4 Oct 2023 22:15:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EAB291946597;
-	Wed,  4 Oct 2023 22:15:16 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7B6AF19465A2;
+	Wed,  4 Oct 2023 22:15:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8FD56194658F
- for <dm-devel@listman.corp.redhat.com>; Wed,  4 Oct 2023 22:15:15 +0000 (UTC)
+ ESMTP id 674931946597
+ for <dm-devel@listman.corp.redhat.com>; Wed,  4 Oct 2023 22:15:20 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 72F804A9B0A; Wed,  4 Oct 2023 22:15:15 +0000 (UTC)
+ id 5842E215670B; Wed,  4 Oct 2023 22:15:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 6AFC4493113
- for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:15 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
- [205.139.110.61])
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 51B4D21CAC7A
+ for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:20 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-delivery-1.mimecast.com [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 40B003C1477D
- for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:15 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 351203801BC2
+ for <dm-devel@redhat.com>; Wed,  4 Oct 2023 22:15:20 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-144-53tHRsxFN0yIetmCAGlz4g-3; Wed,
- 04 Oct 2023 18:15:10 -0400
-X-MC-Unique: 53tHRsxFN0yIetmCAGlz4g-3
+ relay.mimecast.com with ESMTP id us-mta-536-xX1VAlZEObW_aFjYhYB1qw-1; Wed,
+ 04 Oct 2023 18:15:08 -0400
+X-MC-Unique: xX1VAlZEObW_aFjYhYB1qw-1
 Received: by linux.microsoft.com (Postfix, from userid 1052)
- id E1DCC20B74DA; Wed,  4 Oct 2023 15:09:50 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com E1DCC20B74DA
+ id 4ECF020B74C6; Wed,  4 Oct 2023 15:09:50 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 4ECF020B74C6
 From: Fan Wu <wufan@linux.microsoft.com>
 To: corbet@lwn.net, zohar@linux.ibm.com, jmorris@namei.org, serge@hallyn.com,
  tytso@mit.edu, ebiggers@kernel.org, axboe@kernel.dk, agk@redhat.com,
  snitzer@kernel.org, eparis@redhat.com, paul@paul-moore.com
-Date: Wed,  4 Oct 2023 15:09:40 -0700
-Message-Id: <1696457386-3010-14-git-send-email-wufan@linux.microsoft.com>
+Date: Wed,  4 Oct 2023 15:09:30 -0700
+Message-Id: <1696457386-3010-4-git-send-email-wufan@linux.microsoft.com>
 In-Reply-To: <1696457386-3010-1-git-send-email-wufan@linux.microsoft.com>
 References: <1696457386-3010-1-git-send-email-wufan@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -73,9 +73,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-Subject: [dm-devel] [RFC PATCH v11 13/19] dm verity: consume root hash
- digest and signature data via LSM hook
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
+Subject: [dm-devel] [RFC PATCH v11 03/19] ipe: add evaluation loop
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -96,7 +95,7 @@ Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: linux.microsoft.com
 Content-Type: text/plain; charset="us-ascii"
@@ -104,261 +103,209 @@ Content-Transfer-Encoding: 7bit
 
 From: Deven Bowers <deven.desai@linux.microsoft.com>
 
-dm-verity provides a strong guarantee of a block device's integrity. As
-a generic way to check the integrity of a block device, it provides
-those integrity guarantees to its higher layers, including the filesystem
-level.
-
-An LSM that control access to a resource on the system based on the
-available integrity claims can use this transitive property of
-dm-verity, by querying the underlying block_device of a particular
-file.
-
-The digest and signature information need to be stored in the block
-device to fulfill the next requirement of authorization via LSM policy.
-This will enable the LSM to perform revocation of devices that are still
-mounted, prohibiting execution of files that are no longer authorized
-by the LSM in question.
-
-This patch added two security hook calls in dm-verity to save the
-dm-verity roothash and the roothash signature to the block device's
-LSM blobs.
+IPE must have a centralized function to evaluate incoming callers
+against IPE's policy. This iteration of the policy for against the rules
+for that specific caller is known as the evaluation loop.
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+
 ---
 v2:
-  + No Changes
++ Split evaluation loop, access control hooks, and evaluation loop from policy parser and userspace interface to pass mailing list character limit
 
 v3:
-  + No changes
++ Move ipe_load_properties to patch 04.
++ Remove useless 0-initializations Prefix extern variables with ipe_
++ Remove kernel module parameters, as these are exposed through sysctls.
++ Add more prose to the IPE base config option help text.
++ Use GFP_KERNEL for audit_log_start.
++ Remove unnecessary caching system.
++ Remove comments from headers
++ Use rcu_access_pointer for rcu-pointer null check
++ Remove usage of reqprot; use prot only.
++Move policy load and activation audit event to 03/12
 
 v4:
-  + No changes
++ Remove sysctls in favor of securityfs nodes
++ Re-add kernel module parameters, as these are now exposed through securityfs.
++ Refactor property audit loop to a separate function.
 
 v5:
-  + No changes
++ fix minor grammatical errors
++ do not group rule by curly-brace in audit record,
++ reconstruct the exact rule.
 
 v6:
-  + Fix an improper cleanup that can result in
-    a leak
++ No changes
 
 v7:
-  + Squash patch 08/12, 10/12 to [11/16]
-  + Use part0 for block_device, to retrieve the block_device, when
-    calling security_bdev_setsecurity
++ Further split lsm creation into a separate commit from the evaluation loop and audit system, for easier review.
++ Propagating changes to support the new ipe_context structure in the evaluation loop.
 
 v8:
-  + Undo squash of 08/12, 10/12 - separating drivers/md/ from
-    security/ & block/
-  + Use common-audit function for dmverity_signature.
-  + Change implementation for storing the dm-verity digest to use the
-    newly introduced dm_verity_digest structure introduced in patch
-    14/20.
-  + Create new structure, dm_verity_digest, containing digest algorithm,
-    size, and digest itself to pass to the LSM layer. V7 was missing the
-    algorithm.
-  + Create an associated public header containing this new structure and
-    the key values for the LSM hook, specific to dm-verity.
-  + Additional information added to commit, discussing the layering of
-    the changes and how the information passed will be used.
++ Remove ipe_hook enumeration; hooks can be correlated via syscall record.
 
 v9:
-  + No changes
++ Remove ipe_context related code and simplify the evaluation loop.
 
 v10:
-  + No changes
++ Split eval part and boot_verified part
 
 v11:
-  + Add an optional field to save signature
-  + Move the security hook call to the new finalize hook
++ Fix code style issues
 ---
- drivers/md/dm-verity-target.c | 71 +++++++++++++++++++++++++++++++++++
- drivers/md/dm-verity.h        |  6 +++
- include/linux/dm-verity.h     | 19 ++++++++++
- 3 files changed, 96 insertions(+)
- create mode 100644 include/linux/dm-verity.h
+ security/ipe/Makefile |  1 +
+ security/ipe/eval.c   | 96 +++++++++++++++++++++++++++++++++++++++++++
+ security/ipe/eval.h   | 24 +++++++++++
+ 3 files changed, 121 insertions(+)
+ create mode 100644 security/ipe/eval.c
+ create mode 100644 security/ipe/eval.h
 
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 80673b66c194..db58b53649e3 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -13,6 +13,7 @@
-  * access behavior.
-  */
+diff --git a/security/ipe/Makefile b/security/ipe/Makefile
+index c09aec4904f2..57fe922cf1fc 100644
+--- a/security/ipe/Makefile
++++ b/security/ipe/Makefile
+@@ -6,6 +6,7 @@
+ #
  
-+#include "dm-core.h"
- #include "dm-verity.h"
- #include "dm-verity-fec.h"
- #include "dm-verity-verify-sig.h"
-@@ -22,6 +23,9 @@
- #include <linux/scatterlist.h>
- #include <linux/string.h>
- #include <linux/jump_label.h>
-+#include <linux/security.h>
-+#include <linux/dm-verity.h>
-+#include <crypto/hash_info.h>
- 
- #define DM_MSG_PREFIX			"verity"
- 
-@@ -952,6 +956,17 @@ static void verity_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 	blk_limits_io_min(limits, limits->logical_block_size);
- }
- 
-+#ifdef CONFIG_IPE_PROP_DM_VERITY
-+static void verity_free_sig(struct dm_verity *v)
-+{
-+	kfree(v->root_digest_sig);
-+}
-+#else
-+static inline void verity_free_sig(struct dm_verity *v)
-+{
-+}
-+#endif /* CONFIG_IPE_PROP_DM_VERITY */
+ obj-$(CONFIG_SECURITY_IPE) += \
++	eval.o \
+ 	ipe.o \
+ 	policy.o \
+ 	policy_parser.o \
+diff --git a/security/ipe/eval.c b/security/ipe/eval.c
+new file mode 100644
+index 000000000000..5533c359bbeb
+--- /dev/null
++++ b/security/ipe/eval.c
+@@ -0,0 +1,96 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
 +
- static void verity_dtr(struct dm_target *ti)
- {
- 	struct dm_verity *v = ti->private;
-@@ -966,6 +981,7 @@ static void verity_dtr(struct dm_target *ti)
- 	kfree(v->salt);
- 	kfree(v->root_digest);
- 	kfree(v->zero_digest);
-+	verity_free_sig(v);
- 
- 	if (v->tfm)
- 		crypto_free_ahash(v->tfm);
-@@ -1157,6 +1173,25 @@ static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
- 	return r;
- }
- 
-+#ifdef CONFIG_IPE_PROP_DM_VERITY
-+static int verity_init_sig(struct dm_verity *v, const void *sig,
-+			   size_t sig_size)
++#include <linux/fs.h>
++#include <linux/types.h>
++#include <linux/slab.h>
++#include <linux/file.h>
++#include <linux/sched.h>
++#include <linux/rcupdate.h>
++
++#include "ipe.h"
++#include "eval.h"
++#include "policy.h"
++
++struct ipe_policy __rcu *ipe_active_policy;
++
++/**
++ * evaluate_property - Analyze @ctx against a property.
++ * @ctx: Supplies a pointer to the context to be evaluated.
++ * @p: Supplies a pointer to the property to be evaluated.
++ *
++ * Return:
++ * * true	- The current @ctx match the @p
++ * * false	- The current @ctx doesn't match the @p
++ */
++static bool evaluate_property(const struct ipe_eval_ctx *const ctx,
++			      struct ipe_prop *p)
 +{
-+	v->sig_size = sig_size;
-+	v->root_digest_sig = kmalloc(v->sig_size, GFP_KERNEL);
-+	if (!v->root_digest)
-+		return -ENOMEM;
-+
-+	return 0;
++	return false;
 +}
-+#else
-+static inline int verity_init_sig(struct dm_verity *v, const void *sig,
-+				  size_t sig_size)
++
++/**
++ * ipe_evaluate_event - Analyze @ctx against the current active policy.
++ * @ctx: Supplies a pointer to the context to be evaluated.
++ *
++ * This is the loop where all policy evaluation happens against IPE policy.
++ *
++ * Return:
++ * * 0		- OK
++ * * -EACCES	- @ctx did not pass evaluation.
++ * * !0		- Error
++ */
++int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
 +{
-+	return 0;
-+}
-+#endif /* CONFIG_IPE_PROP_DM_VERITY */
++	bool match = false;
++	enum ipe_action_type action;
++	struct ipe_policy *pol = NULL;
++	const struct ipe_rule *rule = NULL;
++	const struct ipe_op_table *rules = NULL;
++	struct ipe_prop *prop = NULL;
 +
- /*
-  * Target parameters:
-  *	<version>	The current format is version 1.
-@@ -1365,6 +1400,13 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		ti->error = "Root hash verification failed";
- 		goto bad;
- 	}
++	rcu_read_lock();
 +
-+	r = verity_init_sig(v, verify_args.sig, verify_args.sig_size);
-+	if (r < 0) {
-+		ti->error = "Cannot allocate root digest signature";
-+		goto bad;
++	pol = rcu_dereference(ipe_active_policy);
++	if (!pol) {
++		rcu_read_unlock();
++		return 0;
 +	}
 +
- 	v->hash_per_block_bits =
- 		__fls((1 << v->hash_dev_block_bits) / v->digest_size);
- 
-@@ -1501,6 +1543,32 @@ int dm_verity_get_root_digest(struct dm_target *ti, u8 **root_digest, unsigned i
- 	return 0;
- }
- 
-+#ifdef CONFIG_IPE_PROP_DM_VERITY
-+static int verity_finalize(struct dm_target *ti)
-+{
-+	struct block_device *bdev;
-+	struct dm_verity_digest root_digest;
-+	struct dm_verity *v;
-+	int r;
++	if (ctx->op == IPE_OP_INVALID) {
++		rcu_read_unlock();
++		if (pol->parsed->global_default_action == IPE_ACTION_DENY)
++			return -EACCES;
++		return 0;
++	}
 +
-+	v = ti->private;
-+	bdev = dm_table_get_md(ti->table)->disk->part0;
-+	root_digest.digest = v->root_digest;
-+	root_digest.digest_len = v->digest_size;
-+	root_digest.algo = v->alg_name;
++	rules = &pol->parsed->rules[ctx->op];
 +
-+	r = security_bdev_setsecurity(bdev, DM_VERITY_ROOTHASH_SEC_NAME, &root_digest,
-+				      sizeof(root_digest));
-+	if (r)
-+		return r;
++	list_for_each_entry(rule, &rules->rules, next) {
++		match = true;
 +
-+	return security_bdev_setsecurity(bdev,
-+					 DM_VERITY_SIGNATURE_SEC_NAME,
-+					 v->root_digest_sig,
-+					 v->sig_size);
++		list_for_each_entry(prop, &rule->props, next) {
++			match = match && evaluate_property(ctx, prop);
++			if (!match)
++				break;
++		}
++
++		if (match)
++			break;
++	}
++
++	if (match)
++		action = rule->action;
++	else if (rules->default_action != IPE_ACTION_INVALID)
++		action = rules->default_action;
++	else
++		action = pol->parsed->global_default_action;
++
++	rcu_read_unlock();
++	if (action == IPE_ACTION_DENY)
++		return -EACCES;
++
++	return 0;
 +}
-+#endif /* CONFIG_IPE_PROP_DM_VERITY */
-+
- static struct target_type verity_target = {
- 	.name		= "verity",
- 	.features	= DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE,
-@@ -1513,6 +1581,9 @@ static struct target_type verity_target = {
- 	.prepare_ioctl	= verity_prepare_ioctl,
- 	.iterate_devices = verity_iterate_devices,
- 	.io_hints	= verity_io_hints,
-+#ifdef CONFIG_IPE_PROP_DM_VERITY
-+	.finalize	= verity_finalize,
-+#endif /* CONFIG_IPE_PROP_DM_VERITY */
- };
- module_dm(verity);
- 
-diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index 2f555b420367..a093d4a54615 100644
---- a/drivers/md/dm-verity.h
-+++ b/drivers/md/dm-verity.h
-@@ -42,6 +42,9 @@ struct dm_verity {
- 	u8 *root_digest;	/* digest of the root block */
- 	u8 *salt;		/* salt: its size is salt_size */
- 	u8 *zero_digest;	/* digest for a zero block */
-+#ifdef CONFIG_IPE_PROP_DM_VERITY
-+	u8 *root_digest_sig;	/* digest signature of the root block */
-+#endif /* CONFIG_IPE_PROP_DM_VERITY */
- 	unsigned int salt_size;
- 	sector_t data_start;	/* data offset in 512-byte sectors */
- 	sector_t hash_start;	/* hash start in blocks */
-@@ -55,6 +58,9 @@ struct dm_verity {
- 	bool hash_failed:1;	/* set if hash of any block failed */
- 	bool use_tasklet:1;	/* try to verify in tasklet before work-queue */
- 	unsigned int digest_size;	/* digest size for the current hash algorithm */
-+#ifdef CONFIG_IPE_PROP_DM_VERITY
-+	unsigned int sig_size;	/* digest signature size */
-+#endif /* CONFIG_IPE_PROP_DM_VERITY */
- 	unsigned int ahash_reqsize;/* the size of temporary space for crypto */
- 	enum verity_mode mode;	/* mode for handling verification errors */
- 	unsigned int corrupted_errs;/* Number of errors for corrupted blocks */
-diff --git a/include/linux/dm-verity.h b/include/linux/dm-verity.h
+diff --git a/security/ipe/eval.h b/security/ipe/eval.h
 new file mode 100644
-index 000000000000..bb0413d55d72
+index 000000000000..6b434515968f
 --- /dev/null
-+++ b/include/linux/dm-verity.h
-@@ -0,0 +1,19 @@
++++ b/security/ipe/eval.h
+@@ -0,0 +1,24 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (C) Microsoft Corporation. All rights reserved.
++ */
 +
-+#ifndef _LINUX_DM_VERITY_H
-+#define _LINUX_DM_VERITY_H
++#ifndef _IPE_EVAL_H
++#define _IPE_EVAL_H
 +
++#include <linux/file.h>
 +#include <linux/types.h>
-+#include <crypto/hash_info.h>
-+#include <linux/device-mapper.h>
 +
-+struct dm_verity_digest {
-+	const char *algo;
-+	const u8 *digest;
-+	size_t digest_len;
++#include "policy.h"
++
++extern struct ipe_policy __rcu *ipe_active_policy;
++
++struct ipe_eval_ctx {
++	enum ipe_op_type op;
++
++	const struct file *file;
 +};
 +
-+#define DM_VERITY_SIGNATURE_SEC_NAME DM_NAME	".verity-signature"
-+#define DM_VERITY_ROOTHASH_SEC_NAME  DM_NAME	".verity-roothash"
++int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx);
 +
-+#endif /* _LINUX_DM_VERITY_H */
++#endif /* _IPE_EVAL_H */
 -- 
 2.25.1
 
