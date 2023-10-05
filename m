@@ -4,106 +4,91 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 07232E92FF1
-	for <dm-devel@archiver.kernel.org>; Fri,  6 Oct 2023 06:59:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5E215E92FF1
+	for <dm-devel@archiver.kernel.org>; Fri,  6 Oct 2023 06:59:43 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696575572;
+	s=mimecast20190719; t=1696575582;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=U0vOmeN5lxU7dAdisORN5j91pGWWo4vYuSJDXYBeQQA=;
-	b=gxppXDdhaMqZWk+q3/c62CX/IEPCpBUhAzm46c/rj+xZmaiZqoYewI14kERRm1xe1E7q2C
-	TzuygQAIzZBD8chIuc9/fk2FmQmPICjWtFNM43cJ9nqvU99k46nLZ3QS1a1n6fBmBAS7hb
-	uCG94x9ZK3J8BGdKaloyfJhROJlH/qE=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-631-MjHMMdM5PXqiO9cN5361cQ-1; Fri, 06 Oct 2023 02:59:29 -0400
-X-MC-Unique: MjHMMdM5PXqiO9cN5361cQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	 content-type:content-type:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=0KS0inKX6Qt44j3k785JVgTpvwYVg9HAWF0DqHrVe2E=;
+	b=RH2X5Chckja2PTOQi/K94WQBwA4yzkwavUuDwy6NqQc8y++kGz5pIVxvAfqKRFPO/Jur2c
+	GIix7Gi1zbWJd7m7Cj8K0G7rYEEXnCQ6mUoJCzpY+gB8rbck8EjdmCQr/ASh/TntcLjItu
+	tzdutnXncyN3SezWAIG0mmJV3QJ5ksM=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-119-paIk6NVmMFSVVS-jLkmSkA-1; Fri, 06 Oct 2023 02:59:29 -0400
+X-MC-Unique: paIk6NVmMFSVVS-jLkmSkA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 368CC8007A4;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 372541C05EB5;
 	Fri,  6 Oct 2023 06:59:27 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B1C2B2027046;
-	Fri,  6 Oct 2023 06:59:26 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B7BCB19465B3;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id AA9E410EE859;
 	Fri,  6 Oct 2023 06:59:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 66E7A1946588;
+	Fri,  6 Oct 2023 06:59:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id ED7B0194658F
- for <dm-devel@listman.corp.redhat.com>; Fri,  6 Oct 2023 01:04:41 +0000 (UTC)
+ ESMTP id CBA2E194658F
+ for <dm-devel@listman.corp.redhat.com>; Thu,  5 Oct 2023 16:52:36 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B61DB42485F; Fri,  6 Oct 2023 01:04:41 +0000 (UTC)
+ id AD7B2C158BA; Thu,  5 Oct 2023 16:52:36 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id AE339442CB1
- for <dm-devel@redhat.com>; Fri,  6 Oct 2023 01:04:41 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A57F6C15BB8
+ for <dm-devel@redhat.com>; Thu,  5 Oct 2023 16:52:36 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8E0C33C0ED4A
- for <dm-devel@redhat.com>; Fri,  6 Oct 2023 01:04:41 +0000 (UTC)
-Received: from mail-oi1-f170.google.com (mail-oi1-f170.google.com
- [209.85.167.170]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 836533C1477D
+ for <dm-devel@redhat.com>; Thu,  5 Oct 2023 16:52:36 +0000 (UTC)
+Received: from mail-ed1-f41.google.com (mail-ed1-f41.google.com
+ [209.85.208.41]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-553-Xbca4E_oNKOvK86Glrj9mg-1; Thu, 05 Oct 2023 21:04:23 -0400
-X-MC-Unique: Xbca4E_oNKOvK86Glrj9mg-1
-Received: by mail-oi1-f170.google.com with SMTP id
- 5614622812f47-3af86819ba9so999635b6e.3; 
- Thu, 05 Oct 2023 18:04:23 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=gmail.com; s=20230601; t=1696554263; x=1697159063; darn=redhat.com;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
- bh=xbWXVkPufIc/8Du+zQCnrHClPnWAOU4FcdQfVWLhTPM=;
- b=lRAbk5MWCbfQZR8rIKd+mm8sA/WLDu4YzxHM2nvWMi6RppqgTJTleL/36biVtFGkM2
- 7pR+NhYXCu/U5baxXA7QtZWC8jOGsI0pUZUVBCyUcbpx4jhAZ6aguMXEoI0du5KriRMK
- fve6ScPbWHMKw5qpc+J95mn0xgU1Qyit/BPZ7Fs9yxAXC9yi2MyealWi7BXfZCbtyT+f
- E4wjvVBGFy8v+amFVZijj0JIUpa2KWK9fWCtBG9EmkbxLARXeKy8KE/6ETWPBORDQyso
- ik9qF0d6thnWZjv+kh1vLmbm54wDA9g7E0E0DxJYpdMX7OfBhJPvtvAPjyitHWshn84u
- sEqA==
+ us-mta-649-kUSOKLq4P3em_0XQucxO3A-1; Thu, 05 Oct 2023 12:52:33 -0400
+X-MC-Unique: kUSOKLq4P3em_0XQucxO3A-1
+Received: by mail-ed1-f41.google.com with SMTP id
+ 4fb4d7f45d1cf-533d31a8523so2240155a12.1
+ for <dm-devel@redhat.com>; Thu, 05 Oct 2023 09:52:33 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1696554263; x=1697159063;
- h=in-reply-to:content-disposition:mime-version:references:message-id
- :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
- :message-id:reply-to;
- bh=xbWXVkPufIc/8Du+zQCnrHClPnWAOU4FcdQfVWLhTPM=;
- b=dixxYzmv2upOEv2paL46X0eTC+a0UcVPBrOxXOMAT6ROVDISEPFQEUW0M+tIwGeg+U
- JPxNFdTrbMiOgMo6dT5wNejPCZIJGHU7JOYJBN9XUhfaGAW0ZTu/n0s/RHsj8ZYO0vDg
- qOd0IEkMwJaetddZJ9nQYtUhaDBs99xdn6m5pp2xjitjboA8PwMHfwhTiErPQlZuJzRK
- cwcZl4pXta2QEVBpKY0BDg8FkhiUlgh3L7zlNdzxaDsFjcv/8gRvcsshwqAKpDzO7wi4
- DxlM6yGgr8/zw1AmggoSQLgibTWfd+scJ1GibyMh0xcZfTBf1Z8RJMy7zafXDDUy6Zuo
- 6JnQ==
-X-Gm-Message-State: AOJu0Yx6IfS7YhRwefzV7B/VhzlRmQDpsY0Gdfm1XmPjP7R+/eNb0/Zj
- j9PDpCG40MLgdkfjdR+BVRo=
-X-Google-Smtp-Source: AGHT+IFh2w6zzhV5IY1apER8J1+pgvye6XXqvRnnMvh23W1RQguKILS+24Zm9m4xUzHHHEty7//QLg==
-X-Received: by 2002:a05:6808:138a:b0:3a7:1d15:28fe with SMTP id
- c10-20020a056808138a00b003a71d1528femr7789531oiw.56.1696554262692; 
- Thu, 05 Oct 2023 18:04:22 -0700 (PDT)
-Received: from debian.me ([103.131.18.64]) by smtp.gmail.com with ESMTPSA id
- g2-20020a63ad02000000b00584d035c08asm2083377pgf.24.2023.10.05.18.04.21
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Thu, 05 Oct 2023 18:04:22 -0700 (PDT)
-Received: by debian.me (Postfix, from userid 1000)
- id 777638209CB9; Fri,  6 Oct 2023 08:04:18 +0700 (WIB)
-Date: Fri, 6 Oct 2023 08:04:18 +0700
-From: Bagas Sanjaya <bagasdotme@gmail.com>
-To: Tatu =?utf-8?B?SGVpa2tpbMOk?= <tatu.heikkila@gmail.com>,
- Herbert Xu <herbert@gondor.apana.org.au>
-Message-ID: <ZR9dEiXhQv-wBVA2@debian.me>
-References: <f1b8d8f5-2079-537e-9d0f-d58da166fe50@gmail.com>
+ d=1e100.net; s=20230601; t=1696524752; x=1697129552;
+ h=cc:to:subject:message-id:date:from:mime-version:x-gm-message-state
+ :from:to:cc:subject:date:message-id:reply-to;
+ bh=KgPjpEGZr/ya+b1nA2HCszMwvAMwNqInhlT0jMBJh64=;
+ b=FaPfnkuxor3aHMFbxHn9qIOnaV40oLesf6fgwI5HemkbkN4IJ4rwYZ4wnD+SzR8BX/
+ zVrkzTzU5O8vFhk7JKqK+jXPpnRKXmIyjLBWvBwJOqrE19MRWPd0eh9MMZvs4C6pAdT3
+ vqwSi+fLz7aA9p3wwG7tZ+bCdAnNV62WPz4iLjiR5/kJHbm6ZoltvC8oJDXgTUWLwCtS
+ 0M98TSE3ANjzLTKJy+Y1PlSewudoZCfT5Q6XElk7D8gePl+XCM8bkpAf32rDEcpnRkyA
+ OS/L1uqmv9fFYCBXaKy8aAlfxYEDngjXW128HZV5FqAACNolKOTlgwofSedGcC4gYXMQ
+ eKXw==
+X-Gm-Message-State: AOJu0YxHvB8AqHJwrCFSxfCHtLe3JGNMoKuIPRh4uBL43QmYxpecv15p
+ tEj9ut+hBl3iarOHxvHm9g7qtpgdnO4dR+gyJ6eEwl9p9fXXMQ==
+X-Google-Smtp-Source: AGHT+IHUdjSZPWJc/GtaQzDWd+qTxCU7FAzn248Y2q0eBBwUw2devV8AHVVO3jWYSfzXDGl6bctbQujvSIUMz9U8Ez8=
+X-Received: by 2002:a17:906:30d2:b0:9ae:695f:f938 with SMTP id
+ b18-20020a17090630d200b009ae695ff938mr5298058ejb.56.1696524751938; Thu, 05
+ Oct 2023 09:52:31 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <f1b8d8f5-2079-537e-9d0f-d58da166fe50@gmail.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+From: =?UTF-8?Q?Tatu_Heikkil=C3=A4?= <tatu.heikkila@gmail.com>
+Date: Thu, 5 Oct 2023 19:52:20 +0300
+Message-ID: <CA+=rEQxtadQufFF4m1Ry3dy1BxoKZFXarKUTUqi+FK0XzyaBTQ@mail.gmail.com>
+To: herbert@gondor.apana.org.au
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mailman-Approved-At: Fri, 06 Oct 2023 06:59:25 +0000
-Subject: Re: [dm-devel] (Bisected) Accessing opened Bitlocker partition
- leads to memory fault and kernel panic on Imac8, 1
+Subject: [dm-devel] (Bisected) Accessing opened Bitlocker partition leads to
+ memory fault and kernel panic on Imac8, 1
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -115,111 +100,121 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Linux Device Mapper <dm-devel@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>,
- Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
- Alasdair Kergon <agk@redhat.com>,
- Linux Regressions <regressions@lists.linux.dev>
-Content-Type: multipart/mixed; boundary="===============5521025675137748195=="
+Cc: dm-devel@redhat.com, snitzer@kernel.org, linux-kernel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: gmail.com
+Content-Type: multipart/mixed; boundary="===============2636068583275327903=="
 
+--===============2636068583275327903==
+Content-Type: multipart/alternative; boundary="0000000000003127080606faf360"
 
---===============5521025675137748195==
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="Jb5IqaSpz/f9tNpy"
-Content-Disposition: inline
-
-
---Jb5IqaSpz/f9tNpy
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+--0000000000003127080606faf360
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Oct 05, 2023 at 08:15:43PM +0300, Tatu Heikkil=C3=A4 wrote:
-> Hello,
-> I think you and the lists are right recipients, forgive me if not, I've
-> never reported kernel bugs before. Naively this seems a crypto issue and
-> Herbert Xu from crypto maintainers made the buggy commit, but it edits
-> drivers/md/dm_crypt.c maintained by dm-devel people per MAINTAINERS, so I=
-'m
-> going by that.
->=20
-> At the center of the issue is my Imac8,1 and an external 2TB SSD with 5
-> partitions: an EFI+MBR portable Arch Linux install with LUKS encrypted ex=
-t4
-> /home, and a 1.7TB exFAT encrypted with Bitlocker.
->=20
-> Mounting the LUKS partition works fine on all my 4 computers (Imac8,1,
-> Imac12,2, two generic Intels; Fedora's GNOME gvfs volume monitor often
-> crashes on mount using this drive), and mounting the Bitlocker partition
-> works on all other computers, but my Imac8,1. On my other computers, I can
-> boot into the portable install which automounts the Bitlocker partition
-> fine. However, on my Imac8,1, regardless if I boot into the external driv=
-e's
-> portable Arch Linux install, or use the Imac's own internal Debian testing
-> install, any post-6.4 kernel reliably panics (50+ times so far, 100% of t=
-he
-> time) when accessing the unlocked Bitlocker volume:
->=20
-> # cryptsetup open /dev/sdb5 --type bitlk crucial
-> Enter passphrase for /dev/sdb5:
-> # mount /dev/mapper/crucial temp [kernel immediately panics if I try to
-> tab-complete the mount point, making the shell also access the decrypted
-> device I assume, or try to run the command]
->=20
-> I originally ran into this when mounting using XFCE's Thunar implementati=
-on.
-> Using it, the mount fails with "Operation was cancelled" and the system
-> crashes within a minute.
->=20
-> Git bisect lead me to:
-> # first bad commit: [e3023094dffb41540330fb0c74cd3a019cd525c2] dm crypt:
-> Avoid using MAX_CIPHER_BLOCKSIZE
->=20
-> If I git revert e3023094dffb41540330fb0c74cd3a019cd525c2 on current Linus'
-> git master, the issue goes away. So I'm personally not all that affected
-> anymore (if I'm ready to compile my kernels from now on), and I understand
-> that you have no clear way to reproduce this as it seems strongly bound to
-> hardware, but seems like this could point to a potentially serious securi=
-ty
-> issue since it involves both crypto and undefined behaviour.
->=20
-> Kdump dmesg logs (the error output is not completely consistent between
-> panics) & .config can be found in a dummy Bugzilla report
-> https://bugzilla.kernel.org/show_bug.cgi?id=3D217982
->=20
-> Please let me know if I can help you in any way. I don't mind using this =
-as
-> a gateway to learn more about kernel debugging etc.
->=20
+Hello,
+I think you and the lists are right recipients, forgive me if not, I've
+never reported kernel bugs before. Naively this seems a crypto issue and
+Herbert Xu from crypto maintainers made the buggy commit, but it edits
+drivers/md/dm_crypt.c maintained by dm-devel people per MAINTAINERS, so I'm
+going by that.
 
-Thanks for the regression report. I'm adding it to regzbot:
+At the center of the issue is my Imac8,1 and an external 2TB SSD with 5
+partitions: an EFI+MBR portable Arch Linux install with LUKS encrypted ext4
+/home, and a 1.7TB exFAT encrypted with Bitlocker.
 
-#regzbot ^introduced: e3023094dffb41
-#regzbot title: kernel panic when accessing opened bitlocker partition due =
-to avoiding MAX_CIPHER_BLOCKSIZE
-#regzbot link: https://bugzilla.kernel.org/show_bug.cgi?id=3D217982
+Mounting the LUKS partition works fine on all my 4 computers (Imac8,1,
+Imac12,2, two generic Intels; Fedora's GNOME gvfs volume monitor often
+crashes on mount using this drive), and mounting the Bitlocker partition
+works on all other computers, but my Imac8,1. On my other computers, I can
+boot into the portable install which automounts the Bitlocker partition
+fine. However, on my Imac8,1, regardless if I boot into the external
+drive's portable Arch Linux install, or use the Imac's own internal Debian
+testing install, any post-6.4 kernel reliably panics (50+ times so far,
+100% of the time) when accessing the unlocked Bitlocker volume:
 
---=20
-An old man doll... just what I always wanted! - Clara
+# cryptsetup open /dev/sdb5 --type bitlk crucial
+Enter passphrase for /dev/sdb5:
+# mount /dev/mapper/crucial temp [kernel immediately panics if I try to
+tab-complete the mount point, making the shell also access the decrypted
+device I assume, or try to run the command]
 
---Jb5IqaSpz/f9tNpy
-Content-Type: application/pgp-signature; name="signature.asc"
+I originally ran into this when mounting using XFCE's Thunar
+implementation. Using it, the mount fails with "Operation was cancelled"
+and the system crashes within a minute.
 
------BEGIN PGP SIGNATURE-----
+Git bisect lead me to:
+# first bad commit: [e3023094dffb41540330fb0c74cd3a019cd525c2] dm crypt:
+Avoid using MAX_CIPHER_BLOCKSIZE
 
-iHUEABYKAB0WIQSSYQ6Cy7oyFNCHrUH2uYlJVVFOowUCZR9dDAAKCRD2uYlJVVFO
-oz5dAQCMP/K95ZXJESKmwYJsaJzV2PzQpaGweREO01xriKlshQD9FfLS/rj+AhM0
-sYS2+qls+vEXoyzp5laVX3fWeL1l1Ao=
-=7sAU
------END PGP SIGNATURE-----
+If I git revert e3023094dffb41540330fb0c74cd3a019cd525c2 on current Linus'
+git master, the issue goes away. So I'm personally not all that affected
+anymore (if I'm ready to compile my kernels from now on), and I understand
+that you have no clear way to reproduce this as it seems strongly bound to
+hardware, but seems like this could point to a potentially serious security
+issue since it involves both crypto and undefined behaviour.
 
---Jb5IqaSpz/f9tNpy--
+Kdump dmesg logs (the error output is not completely consistent between
+panics) & .config can be found in a dummy Bugzilla report
+https://bugzilla.kernel.org/show_bug.cgi?id=3D217982
 
+Please let me know if I can help you in any way. I don't mind using this as
+a gateway to learn more about kernel debugging etc.
 
---===============5521025675137748195==
+Best regards,
+Tatu Heikkil=C3=A4
+
+--0000000000003127080606faf360
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>Hello,</div><div>I think you and the lists are right =
+recipients, forgive me if not, I&#39;ve never reported kernel bugs before. =
+Naively this seems a crypto issue and Herbert Xu from crypto maintainers ma=
+de the buggy commit, but it edits drivers/md/dm_crypt.c maintained by dm-de=
+vel people per MAINTAINERS, so I&#39;m going by that.<br></div><div><br></d=
+iv><div>At the center of the issue is my Imac8,1 and an external 2TB SSD wi=
+th 5 partitions: an EFI+MBR portable Arch Linux install with LUKS encrypted=
+ ext4 /home, and a 1.7TB exFAT encrypted with Bitlocker.=C2=A0</div><div><b=
+r></div><div>Mounting the LUKS partition works fine on all my 4 computers (=
+Imac8,1, Imac12,2, two generic Intels; Fedora&#39;s GNOME gvfs volume monit=
+or often crashes on mount using this drive), and mounting the Bitlocker par=
+tition works on all other computers, but my Imac8,1. On my other computers,=
+ I can boot into the portable install which automounts the Bitlocker partit=
+ion fine. However, on my Imac8,1, regardless if I boot into the external dr=
+ive&#39;s portable Arch Linux install, or use the Imac&#39;s own internal D=
+ebian testing install, any post-6.4 kernel reliably panics (50+ times so fa=
+r, 100% of the time) when accessing the unlocked Bitlocker volume:</div><di=
+v><br></div><div># cryptsetup open /dev/sdb5 --type bitlk crucial</div><div=
+>Enter passphrase for /dev/sdb5: </div><div># mount /dev/mapper/crucial tem=
+p [kernel immediately panics if I try to tab-complete the mount point, maki=
+ng the shell also access the decrypted device I assume, or try to run the c=
+ommand]</div><div><br></div><div>I originally ran into this when mounting u=
+sing XFCE&#39;s Thunar implementation. Using it, the mount fails with &quot=
+;Operation was cancelled&quot; and the system crashes within a minute.<br><=
+/div><div><br></div><div>Git bisect lead me to:<br></div><div># first bad c=
+ommit: [e3023094dffb41540330fb0c74cd3a019cd525c2] dm crypt: Avoid using MAX=
+_CIPHER_BLOCKSIZE</div><div><br></div><div>If I git revert e3023094dffb4154=
+0330fb0c74cd3a019cd525c2 on current Linus&#39; git master, the issue goes a=
+way. So I&#39;m personally not all that affected anymore (if I&#39;m ready =
+to compile my kernels from now on), and I understand that you have no clear=
+ way to reproduce this as it seems strongly bound to hardware, but seems li=
+ke this could point to a potentially serious security issue since it involv=
+es both crypto and undefined behaviour.</div><div><br></div><div>Kdump dmes=
+g logs (the error output is not completely consistent between panics) &amp;=
+ .config can be found in a dummy Bugzilla report <a href=3D"https://bugzill=
+a.kernel.org/show_bug.cgi?id=3D217982">https://bugzilla.kernel.org/show_bug=
+.cgi?id=3D217982</a><br></div><div><br></div><div>Please let me know if I c=
+an help you in any way. I don&#39;t mind using this as a gateway to learn m=
+ore about kernel debugging etc.</div><div><br></div><div>Best regards,</div=
+><div>Tatu Heikkil=C3=A4<br></div><div><br></div></div>
+
+--0000000000003127080606faf360--
+
+--===============2636068583275327903==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -230,5 +225,5 @@ dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
 
---===============5521025675137748195==--
+--===============2636068583275327903==--
 
