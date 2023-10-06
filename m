@@ -1,89 +1,92 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C8B4FE94134
-	for <dm-devel@archiver.kernel.org>; Fri,  6 Oct 2023 21:57:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 80732E94139
+	for <dm-devel@archiver.kernel.org>; Fri,  6 Oct 2023 23:16:46 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696629437;
-	h=from:from:sender:sender:reply-to:reply-to:subject:subject:date:date:
+	s=mimecast20190719; t=1696634205;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=pU7ihj/4uI+129a53I8uavXWX6ApTdLx2599tDD0BcI=;
-	b=QyPh89UV8u+IqtuJ1aQZ1Hf6fxs2F3OInDC8vl94xjWjSEi604IbZ29PPb3sq/ONLFjT6k
-	TCWMGVIwdU2RRCrsgUxSPR/MNOf4FP9zoUETojoW76RlajIzvmjIwoCwe6xrvPsEJL1GhJ
-	KxNrt+mWo/ryO/AeXnT4IqMKROlCUrU=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-82-BKBszUIBMLmYBJgtm2XTgw-1; Fri, 06 Oct 2023 17:57:14 -0400
-X-MC-Unique: BKBszUIBMLmYBJgtm2XTgw-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	bh=mYdks41lOg0RwLakXG17eWbo1qt6P+rf5AbZZ3gyEVs=;
+	b=JJyjckXxyFr5ZEbmWvhONogHtjZ6SftSX9AbqkZSUtMog57LFS1zCqjB6xdJLayToSVjqR
+	UTGAXOAzNyJnrWQ6LKr7+OoVhIm6buhZnlzt+pl15FKxzjqIDlSamsrM3wXmvImkpWNhZF
+	Rvmg3h8WjG4anQTImDojtD8S0r57xW0=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-651-eNO681uHNBauVZiYps7o2w-1; Fri, 06 Oct 2023 19:16:42 -0400
+X-MC-Unique: eNO681uHNBauVZiYps7o2w-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 77D173C0F23D;
-	Fri,  6 Oct 2023 21:57:12 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9B75B803470;
+	Fri,  6 Oct 2023 23:16:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 12CEF492C37;
-	Fri,  6 Oct 2023 21:57:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5F16640D1EA;
+	Fri,  6 Oct 2023 23:16:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AFE001946589;
-	Fri,  6 Oct 2023 21:57:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 176021946589;
+	Fri,  6 Oct 2023 23:16:39 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id EFF191946586
- for <dm-devel@listman.corp.redhat.com>; Fri,  6 Oct 2023 08:39:31 +0000 (UTC)
+ ESMTP id A6B6A1946588
+ for <dm-devel@listman.corp.redhat.com>; Fri,  6 Oct 2023 23:16:37 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C1A5E492B05; Fri,  6 Oct 2023 08:39:31 +0000 (UTC)
+ id 694335CC01; Fri,  6 Oct 2023 23:16:37 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B9B4B492C37
- for <dm-devel@redhat.com>; Fri,  6 Oct 2023 08:39:31 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
- [205.139.110.61])
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 61441170E9
+ for <dm-devel@redhat.com>; Fri,  6 Oct 2023 23:16:37 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4DCA93821360
- for <dm-devel@redhat.com>; Fri,  6 Oct 2023 08:39:31 +0000 (UTC)
-Received: from wp530.webpack.hosteurope.de (wp530.webpack.hosteurope.de
- [80.237.130.52]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 382E329A9D4F
+ for <dm-devel@redhat.com>; Fri,  6 Oct 2023 23:16:37 +0000 (UTC)
+Received: from mail-qt1-f169.google.com (mail-qt1-f169.google.com
+ [209.85.160.169]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-56-h7gbq-nYOKugrDxEUq4Pag-1; Fri, 06 Oct 2023 04:39:29 -0400
-X-MC-Unique: h7gbq-nYOKugrDxEUq4Pag-1
-Received: from [2a02:8108:8980:2478:8cde:aa2c:f324:937e]; authenticated
- by wp530.webpack.hosteurope.de running ExIM with esmtpsa
- (TLS1.3:ECDHE_RSA_AES_128_GCM_SHA256:128)
- id 1qog4t-0006XM-43; Fri, 06 Oct 2023 10:20:55 +0200
-Message-ID: <9ffdce44-c1ca-4587-bcae-4bd1ebb52f61@leemhuis.info>
-Date: Fri, 6 Oct 2023 10:20:54 +0200
+ us-mta-489-Ak5cP7TiOZ-ZChzzMLMH7A-1; Fri, 06 Oct 2023 19:16:35 -0400
+X-MC-Unique: Ak5cP7TiOZ-ZChzzMLMH7A-1
+Received: by mail-qt1-f169.google.com with SMTP id
+ d75a77b69052e-4181f8d82b9so16408111cf.0
+ for <dm-devel@redhat.com>; Fri, 06 Oct 2023 16:16:35 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20230601; t=1696634195; x=1697238995;
+ h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+ :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+ bh=Q5zVupE3z01tc2sxIrPY9/eebBvlEDweRwNBcoJ4yvQ=;
+ b=dygsSplCUxS70ZAfcod3FrFrC3pQfHyP/3norEp/4y4HfOC8HQ2VUpDGIouc9eoDUL
+ A9aKpsAw+iNapnZKyY14njK4QD1EpRGnYzum3DaiBS2ILliNQAmo8cVAdUmrYl3fB0Uc
+ GQ0BoctgqBNzxzWgTBiZdj70g9O4pxhjphl7HgDZQM8kCCMNJE+TssNn9zHCGQl1BzBS
+ zxaZ/hxIhBBCVWmp4ZLuDm39PbIoXFqSExUraartt+6qtYqh5n36YcIu7GSiFo/4ZCz2
+ s0EMqQtn2tE76uWbsCrjMb9mZrPwNr4U0Pk+Z5vbfck5dRaWk3RCj131jev5OQShHsdg
+ rr2Q==
+X-Gm-Message-State: AOJu0YwGK3yjnGcnyvoSsQ5k2YL+6y8xpJYwmQKqMnqyjvgqslzG9bTH
+ lbf5Z6ZtHsxmcrzJ4EdF6VsiK6A=
+X-Google-Smtp-Source: AGHT+IFy98nmR7XCkLtFSm2p1Dvn7gdJND9vRLfNV51HKET4h69aObyHD+LOxRGaJ3avJvaBBrB6Ng==
+X-Received: by 2002:ac8:5a0a:0:b0:418:76c7:52ab with SMTP id
+ n10-20020ac85a0a000000b0041876c752abmr10101943qta.52.1696634195277; 
+ Fri, 06 Oct 2023 16:16:35 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net.
+ [68.160.141.91]) by smtp.gmail.com with ESMTPSA id
+ g10-20020ac84b6a000000b00417dd1dd0adsm1625036qts.87.2023.10.06.16.16.34
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Fri, 06 Oct 2023 16:16:34 -0700 (PDT)
+Date: Fri, 6 Oct 2023 19:16:33 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <ZSCVUa3D4BAKGsLL@redhat.com>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-To: Herbert Xu <herbert@gondor.apana.org.au>, Mike Snitzer <snitzer@kernel.org>
-References: <f1b8d8f5-2079-537e-9d0f-d58da166fe50@gmail.com>
- <ZR9dEiXhQv-wBVA2@debian.me> <ZR9l446ndB4n1Xl4@gondor.apana.org.au>
- <ZR9wRq7Rkz+LocDX@redhat.com> <ZR9x6ifhd6axh5Ki@gondor.apana.org.au>
-From: "Linux regression tracking (Thorsten Leemhuis)"
- <regressions@leemhuis.info>
-In-Reply-To: <ZR9x6ifhd6axh5Ki@gondor.apana.org.au>
-X-bounce-key: webpack.hosteurope.de; regressions@leemhuis.info; 1696581569;
- 3d56b62a
-X-HE-SMSGID: 1qog4t-0006XM-43
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
-X-Mailman-Approved-At: Fri, 06 Oct 2023 21:57:07 +0000
-Subject: Re: [dm-devel] dm crypt: Fix reqsize in crypt_iv_eboiv_gen
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: [dm-devel] [git pull] device mapper fixes for 6.6-rc5
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -95,45 +98,60 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Reply-To: Linux regressions mailing list <regressions@lists.linux.dev>
-Cc: Linux Regressions <regressions@lists.linux.dev>,
- =?UTF-8?Q?Tatu_Heikkil=C3=A4?= <tatu.heikkila@gmail.com>,
- Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
- Linux Device Mapper <dm-devel@redhat.com>,
- Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
- Bagas Sanjaya <bagasdotme@gmail.com>, Alasdair Kergon <agk@redhat.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Alasdair G Kergon <agk@redhat.com>, Fedor Pchelkin <pchelkin@ispras.ru>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: leemhuis.info
-Content-Language: en-US, de-DE
+X-Mimecast-Originator: kernel.org
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 06.10.23 04:33, Herbert Xu wrote:
-> On Thu, Oct 05, 2023 at 10:26:14PM -0400, Mike Snitzer wrote:
+Hi Linus,
 
-BTW, Herbert, thx for taking care of this quickly!
+The following changes since commit ce9ecca0238b140b88f43859b211c9fdfd8e5b70:
 
->> Sure, please do.  Shouldn't your header Cc: stable given that the
->> Fixes commit implies v6.5 needs this fix?
-> 
-> Sure I'll add it although it will be picked up automatically due
-> to the Fixes header.
+  Linux 6.6-rc2 (2023-09-17 14:40:24 -0700)
 
-FWIW, as some people don't know this: that might be the case, but there
-is no guarantee, hence it's better to add it:
+are available in the Git repository at:
 
-https://lore.kernel.org/all/2023060703-colony-shakily-3514@gregkh/
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.6/dm-fixes-2
 
->  I'll also fix the reporter's name.
+for you to fetch changes up to 3da5d2de92387a8322965c7fb1365f7cae690e5a:
 
-Side note: a Link: or Closes: tag to the report
-(https://lore.kernel.org/all/f1b8d8f5-2079-537e-9d0f-d58da166fe50@gmail.com/
-) would be nice as well.
+  MAINTAINERS: update the dm-devel mailing list (2023-10-06 19:05:57 -0400)
 
-Thx again. Ciao, Thorsten
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+- Fix memory leak when freeing dm zoned target device
+
+- Update dm-devel mailing list address in MAINTAINERS
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEJfWUX4UqZ4x1O2wixSPxCi2dA1oFAmUglFMACgkQxSPxCi2d
+A1rOswf/T5nqpzFrbrzYj80DpRIQZj+nvTvPTId8X2kWQZ6uJqOpXSA1QP8DHeQj
+ycn88TEK8sbXn+wvXXWoPuMrh6FVJoZASvdlhq5QhnwpCT0riwRrnh7XQIrl3Ktn
+EQNmAoiKPMF/pZe653BalW/SnRJEa6603RhjHFBuGLKVS7i38oWrmbfcVEdQ+/nf
+Pq7gIWoFHtL9LgvhfCLHDg/EYO+brNTJtCnqt5t67iILkK6A//BO9y3O6f2QIj8C
+9Y5wGduZyaZ0uOj+LuU3sEqMfr8S6q+0vbJn4yQPDhSM0msLfB20hnYN1Nl2TGIx
+B0k3YBScNq6u+pmPjKZMcnRXJnKPaA==
+=p6BS
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Fedor Pchelkin (1):
+      dm zoned: free dmz->ddev array in dmz_put_zoned_devices
+
+Mike Snitzer (1):
+      MAINTAINERS: update the dm-devel mailing list
+
+ MAINTAINERS                  |  4 ++--
+ drivers/md/dm-zoned-target.c | 15 +++++++--------
+ 2 files changed, 9 insertions(+), 10 deletions(-)
 
 --
 dm-devel mailing list
