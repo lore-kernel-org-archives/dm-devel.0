@@ -1,61 +1,78 @@
-Received: from mail-lj1-f178.google.com (mail-lj1-f178.google.com [209.85.208.178])
+Received: from mail-qk1-f182.google.com (mail-qk1-f182.google.com [209.85.222.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E57792E65A
-	for <dm-devel@lists.linux.dev>; Thu,  5 Oct 2023 15:41:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=contractor.linuxfoundation.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=contractor.linuxfoundation.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=contractor.linuxfoundation.org header.i=@contractor.linuxfoundation.org header.b="k4bWI/cM"
-Received: by mail-lj1-f178.google.com with SMTP id 38308e7fff4ca-2bfed7c4e6dso12931871fa.1
-        for <dm-devel@lists.linux.dev>; Thu, 05 Oct 2023 08:41:22 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=contractor.linuxfoundation.org; s=google; t=1696520480; x=1697125280; darn=lists.linux.dev;
-        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=C42k84GzffZqTOnO/uP1ga9lJ/Xg9YHVbpgAbKdjwc0=;
-        b=k4bWI/cM0XznJ7ZIeAnLUFRhd9hnBpzSkh227C01zr9vFoGEHtqyUz3FpBKxMJQfAy
-         xR+4j2j85gVFQzZOADZsNLV0F9zbzmPUfpaFRnG9sO4Eau4XV9aQsS76ukEJ3XSUxCQr
-         xeDbtZOYoSKeYVw8AcZHMnU8VY7Xvode9PixIYE/+OBZoz2Nq05Rb03hfLiJIH6FUQr7
-         zM3ISkPb4YQ+UCRrBt+BO4J0A+By1Z02zrjJLjJhrWTYuG94RWx6Xh3o4clLNzZBsgp4
-         vKKHMuvgwP/dV6WAunuKqWHB+jfjm9HxVnrhmM1bc6PaG9GH8zcOMOhPOWHiTJWhGAJD
-         63/w==
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 68DECED5
+	for <dm-devel@lists.linux.dev>; Fri,  6 Oct 2023 23:29:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; dkim=none
+Received: by mail-qk1-f182.google.com with SMTP id af79cd13be357-774141bb415so158865485a.3
+        for <dm-devel@lists.linux.dev>; Fri, 06 Oct 2023 16:29:16 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1696520480; x=1697125280;
-        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=C42k84GzffZqTOnO/uP1ga9lJ/Xg9YHVbpgAbKdjwc0=;
-        b=CyUArsg6f8IffnsTpkIUdj337X/CZ8fcjWj4Zb/jKLC5wEAwHt481i22MS6479KU2R
-         Vvs2ld0bqNky5PMN65ySd8r1Pqpmo9sWVFcjoONHhX8/wUlIE1dFJblfkgdeATZDwf9L
-         IIbwULhwMZv5XhaJxYgq+9yYwVko6wXP+iguiUUPuVb/2Kz337ggyS4+uJwB2wBhu5qm
-         83SbpiTpYui1x63pQgBIhbrHbYSFDuj9ygjLxDpBVLKNo9zIkerk3Kerix3BupVh8M0I
-         yeQl/cld4moEdkOhji8CBLLzYsuawRxHRSpphgpSPrTPyNtxoS0dxW0nhEGOuhwnyDNS
-         dMqg==
-X-Gm-Message-State: AOJu0YzBeRUKH31PAn3gahvtkxyA+W4q4Ro/N6asmhZC3slcnXja7UBU
-	IxIM/TWK/2bJBVUjqyRjIqscDKey58+bC0/JxAu9D2MbA0C6XsBaoiQ=
-X-Google-Smtp-Source: AGHT+IHNCYEDyEM7vFwQ3VvGDT/AmNgTpHveljP0IHnIzRF+0M4Pppgd5hxW7e26iugDQo6+MUrCS6BAXhdsJkV59b0=
-X-Received: by 2002:a05:6512:238f:b0:500:a002:292a with SMTP id
- c15-20020a056512238f00b00500a002292amr6861940lfv.29.1696520480469; Thu, 05
- Oct 2023 08:41:20 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1696634955; x=1697239755;
+        h=content-disposition:mime-version:message-id:subject:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=HfUJzt+n01J/+6OZ0d7b2+6T1BhByIZ5iv/QJkJu/Qc=;
+        b=TuTcfJ55serGP2Q9d3lPD67dNyx878DZzdSzeuRhc8xBkEHmp6nHrRvU3J3V5sgKAr
+         9bH+HxLgRo5EpixPh0IYACTOP01ylXC31+M2p2NlBljWQF/e1tPA6lalTK2aszlrRbyo
+         DvNo8a7Vb8J/8kQwfCdG+0PDJNFZWvAvRW3L0TJGQtHywfAmx4Z35/WBC6ewVDkGPbVr
+         CeaBItLJaguN+MKPvgLVMX9wNTaLionVBJFQ/m37Hfa8LL5iVtowCJTufnyeQlrhO7ve
+         sSIT5i2wtq9l+LVn2gWLA/ZKhMzHn4swqtl8FkoMgnEqakcECWNnRw8A7s4B4UKvxuga
+         4WSQ==
+X-Gm-Message-State: AOJu0YxWp6Vb2j8Vx2zyPvbz9gT9NUqsEKjxMNcEBDZRnh87I3y3BRt5
+	BNs8zbrkIK6OfXGPdokuGAl3oEOMxpWwgfMV50Qf9teno1x7Go/0tQ2ZxWnfHdetMzMR4+Cd6iU
+	HP9IqOqVIyapW/+hEF8AIZ/fYg74j3XORBmNwndPfEKbL5P+sZ1hgc6wWsjmqSQDPrNgKUDCiRu
+	9W
+X-Google-Smtp-Source: AGHT+IHjMjdsAj9tzuE7yqH0Q0PA8p2Gr8RbHmcmY/DwLJirIC62E4QOrUqFmQX9Fb8S0QfU+6wWUA==
+X-Received: by 2002:a05:620a:2408:b0:777:3c2:31da with SMTP id d8-20020a05620a240800b0077703c231damr326396qkn.5.1696634954706;
+        Fri, 06 Oct 2023 16:29:14 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id m11-20020ae9e00b000000b0076f124abe4dsm1651312qkk.77.2023.10.06.16.29.13
+        for <dm-devel@lists.linux.dev>
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 06 Oct 2023 16:29:14 -0700 (PDT)
+Date: Fri, 6 Oct 2023 19:29:12 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: dm-devel@lists.linux.dev
+Subject: dm-devel has migrated to lists.linux.dev
+Message-ID: <ZSCYSO8wlg4keAmY@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-From: Shyam Kumar <skachukattu@contractor.linuxfoundation.org>
-Date: Thu, 5 Oct 2023 21:11:09 +0530
-Message-ID: <CAH=dH9-GgQNqPizaAhYcDFYbs9gof_wtFztTFuFYTEvCFrom1w@mail.gmail.com>
-Subject: test mail
-To: dm-devel@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Hello:
+Hi,
 
- This is a test message to test successful delivery and start the
- archive for the list. Please ignore
+As a dm-devel@redhat.com subscriber, you have been silently subscribed
+to the new mailing list: dm-devel@lists.linux.dev.
 
--- 
-Regards
-Shyam Kumar
-The Linux Foundation Core Projects
+Effective immediately, all dm-devel email should be addressed to:
+dm-devel@lists.linux.dev
+
+(I say this but my "git pull" request that I just sent to Linus, to
+update the MAINTAINERS file accordingly, cc'd dm-devel@redhat.com --
+dm-devel@redhat.com will still function as it has, but nobody should
+use it moving forward).
+
+If you do send email to dm-devel@redhat.com you will get this
+auto-response: 
+
+  As of 2023.10.06: dm-devel@redhat.com has migrated to
+  dm-devel@lists.linux.dev
+
+  If you were a dm-devel@redhat.com subscriber you have been silently
+  subscribed to dm-devel@lists.linux.dev
+
+  NOTE: If you were a dm-devel@redhat.com subscriber but you disabled
+  mail delivery: then you must subscribe to dm-devel@lists.linux.dev.
+  To do so please send email to: dm-devel+subscribe@lists.linux.dev
+
+  To unsubscribe from dm-devel@lists.linux.dev please send email to:
+  dm-devel+unsubscribe@lists.linux.dev
+
+Thanks,
+Mike
