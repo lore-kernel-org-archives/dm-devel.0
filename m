@@ -4,89 +4,92 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 92F28E94139
-	for <dm-devel@archiver.kernel.org>; Sat,  7 Oct 2023 01:28:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 85D3EE94139
+	for <dm-devel@archiver.kernel.org>; Sat,  7 Oct 2023 01:28:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696642115;
+	s=mimecast20190719; t=1696642126;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=f4Na23RSFh5LdjabTh5b4JuFdj4jndKZ9mBqNqGnsb8=;
-	b=N/V4cE/RuV0BKScZq2WlONEBoIyTvsyGLRR7hPGEi9Muhz/LjgNrRjBJRzm3eMF20sSgIm
-	Ucns5KDR62R6erSysF6oE57y8oWiCztBuw2fXXamXu2ZqfivQ9dbMeKxaEZSnT1HAvBMsf
-	c1yXMAgQvOtc+HV72LUs5xIiZyaluFk=
+	bh=AaPMh4m6x27/LWAxttKwK4aO4v1YcZQBrbOGomkl1TY=;
+	b=FIUeYuo+ap36I85gnkT2lccB4a7EqeKhnmQ5x74Cv/oU1TIDJmgJtKeiBMp7NH6VGZLMFx
+	TAFkxfukqbtQdkgVFzXXd1swIkQtfUKOJkvX21oMB1Pmmm/mBsWsXDwGdmwCczSyI3SOoV
+	IaVzuiN5gzCCNuShY8GssMY6engtbEM=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-517-spWbYRsvNFuo_OxWDLxGNg-1; Fri, 06 Oct 2023 21:28:32 -0400
-X-MC-Unique: spWbYRsvNFuo_OxWDLxGNg-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-83-xT0njwcEOOWeMnUUGgXRKw-1; Fri, 06 Oct 2023 21:28:43 -0400
+X-MC-Unique: xT0njwcEOOWeMnUUGgXRKw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3AF12811E7B;
-	Sat,  7 Oct 2023 01:28:30 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 85DFF8039CB;
+	Sat,  7 Oct 2023 01:28:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 878A610F1BEA;
-	Sat,  7 Oct 2023 01:28:28 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7365FC15BB8;
+	Sat,  7 Oct 2023 01:28:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 53CD41946589;
-	Sat,  7 Oct 2023 01:28:28 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3C2EE1946589;
+	Sat,  7 Oct 2023 01:28:41 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
  [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A73881946588
- for <dm-devel@listman.corp.redhat.com>; Sat,  7 Oct 2023 01:28:27 +0000 (UTC)
+ ESMTP id 269E01946588
+ for <dm-devel@listman.corp.redhat.com>; Sat,  7 Oct 2023 01:28:39 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 857DF2027046; Sat,  7 Oct 2023 01:28:27 +0000 (UTC)
+ id 068882027046; Sat,  7 Oct 2023 01:28:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7E0B82027045
- for <dm-devel@redhat.com>; Sat,  7 Oct 2023 01:28:27 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-delivery-1.mimecast.com [205.139.110.120])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id F29982027045
+ for <dm-devel@redhat.com>; Sat,  7 Oct 2023 01:28:38 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
+ [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5F9CF3C0E678
- for <dm-devel@redhat.com>; Sat,  7 Oct 2023 01:28:27 +0000 (UTC)
-Received: from mail-pl1-f169.google.com (mail-pl1-f169.google.com
- [209.85.214.169]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D475C8007A4
+ for <dm-devel@redhat.com>; Sat,  7 Oct 2023 01:28:38 +0000 (UTC)
+Received: from mail-pg1-f182.google.com (mail-pg1-f182.google.com
+ [209.85.215.182]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-670-e3ntOigrO3GJkvZnbKdtVQ-1; Fri, 06 Oct 2023 21:28:25 -0400
-X-MC-Unique: e3ntOigrO3GJkvZnbKdtVQ-1
-Received: by mail-pl1-f169.google.com with SMTP id
- d9443c01a7336-1c874b43123so23046975ad.2
- for <dm-devel@redhat.com>; Fri, 06 Oct 2023 18:28:25 -0700 (PDT)
+ us-mta-471-KzwEYFeNPfWpjEQir4W_8w-1; Fri, 06 Oct 2023 21:28:32 -0400
+X-MC-Unique: KzwEYFeNPfWpjEQir4W_8w-1
+Received: by mail-pg1-f182.google.com with SMTP id
+ 41be03b00d2f7-564af0ac494so1959853a12.0
+ for <dm-devel@redhat.com>; Fri, 06 Oct 2023 18:28:32 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1696642104; x=1697246904;
- h=content-transfer-encoding:mime-version:message-id:date:subject:cc
- :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
- :reply-to;
- bh=sPAOchZ3lviZQWz7F/yVzJ/5u6K9fS7pELXL8VtCc9c=;
- b=mgsQQMIN5XL9gprQ7/ki91HM85+OqE0QiUXfpB0xQ4royKkXqvTk3DDsbfeMidJ4xr
- ybpomM9x/zBhPKE07GpkEv7yJxfCsn5sqcsakQmxWB1KhjTWlc1Ixvy+VrvLO6pCZctS
- fOLki55QG5s42ZuGrk/dK6+uPNsMy9rmHzblE0BBapNKi2U05z2FfSLc0S7fQwPxxJbP
- WQ4j8JiSITJRMt1Twcici1qli0Q0AN4R2Xij+VyBhhDZqszsEaYXpN36SoZ7X5/zb19f
- v061tjSO+bsH0WeiTs8qtkCPIQPu20FYj8npWxWY3TFHA9C8sZewifdeCbg5rVFXmckZ
- JPww==
-X-Gm-Message-State: AOJu0YzRxixLngD2UjS8qQYTf/dtd7M5ofmBLlXMwaidTtxQEePS/7IY
- 9mszWjYvZDm52irr2COClbDi5iwum3y2GIQ9uWE=
-X-Google-Smtp-Source: AGHT+IF35TNd+fTvsxdLu9WMjvVSs/iB8sRAO30572Xwc92tYnfHc95l4aq5f8nH5De0gpWJSaCjww==
-X-Received: by 2002:a17:903:228f:b0:1c7:66a4:27ba with SMTP id
- b15-20020a170903228f00b001c766a427bamr11470478plh.48.1696642104031; 
- Fri, 06 Oct 2023 18:28:24 -0700 (PDT)
+ d=1e100.net; s=20230601; t=1696642111; x=1697246911;
+ h=content-transfer-encoding:mime-version:references:in-reply-to
+ :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=qwbLxQP2MlVOvPJLqOZgvAlqQEss4gZRIzs/TWsm4fw=;
+ b=JT4dvHELb6uHzxu8GSArPFUgi63unmxII/WUI+NBzd3N4eAcquWctrbY1oYKp2JqlO
+ l5lIvIXtdnOY5To+nr34QfR6V9lkZgcC07oEK1YS02z75WYj2chTQtaq1YugH2Tz4d9u
+ bVrU9dZa9xYVZyBhs1y8RGWOF84Q5ghSMFdQIw3AqWoqINDlahiw5Hfd5EtAiq1HQdQW
+ Jz3yJKlUSFHWZ982hE2Md7WrDSl2m2J051tTHVESPEvH+Y5LTh+Y9UsyZ0Lxy5vl7A+C
+ bJkwPLHxx2lP4xVNeQAELn+9XNE9GmPLoLhRUPm7BVljtpukQsbfxchUyqXtgCZgwTmE
+ Xg9g==
+X-Gm-Message-State: AOJu0Yzx/sKgHItSXp89WVZ9KUJFGLtzukF9KNHmxteDltLvTfMDDAsr
+ jNia07Lg71esTzTOS1H3ApXH9fx4ufeRZq++7xA=
+X-Google-Smtp-Source: AGHT+IF+irPpdEsFSzOYVv3XaMow6Yl8idZjKB2cup9iOgYxOd9Vuvg5EJUKwvZgFUUl2r+4ILiQzw==
+X-Received: by 2002:a17:903:25c3:b0:1c5:76b6:d4f7 with SMTP id
+ jc3-20020a17090325c300b001c576b6d4f7mr8553824plb.36.1696642110765; 
+ Fri, 06 Oct 2023 18:28:30 -0700 (PDT)
 Received: from localhost ([2620:15c:9d:2:138c:8976:eb4a:a91c])
  by smtp.gmail.com with UTF8SMTPSA id
- q13-20020a170902dacd00b001b8b2a6c4a4sm4575373plx.172.2023.10.06.18.28.22
+ o18-20020a170902d4d200b001c73fb506aesm4524873plg.128.2023.10.06.18.28.29
  (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Fri, 06 Oct 2023 18:28:23 -0700 (PDT)
+ Fri, 06 Oct 2023 18:28:30 -0700 (PDT)
 From: Sarthak Kukreti <sarthakkukreti@chromium.org>
 To: dm-devel@redhat.com, linux-block@vger.kernel.org,
  linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org,
  linux-fsdevel@vger.kernel.org
-Date: Fri,  6 Oct 2023 18:28:12 -0700
-Message-ID: <20231007012817.3052558-1-sarthakkukreti@chromium.org>
+Date: Fri,  6 Oct 2023 18:28:15 -0700
+Message-ID: <20231007012817.3052558-4-sarthakkukreti@chromium.org>
+In-Reply-To: <20231007012817.3052558-1-sarthakkukreti@chromium.org>
+References: <20231007012817.3052558-1-sarthakkukreti@chromium.org>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -96,7 +99,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: [dm-devel] [PATCH v8 0/5] Introduce provisioning primitives
+Subject: [dm-devel] [PATCH v8 3/5] loop: Add support for provision requests
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -117,65 +120,113 @@ Cc: Jens Axboe <axboe@kernel.dk>, Dave Chinner <david@fromorbit.com>,
  Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: chromium.org
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi,
+Add support for provision requests to loopback devices.
+Loop devices will configure provision support based on
+whether the underlying block device/file can support
+the provision request and upon receiving a provision bio,
+will map it to the backing device/storage. For loop devices
+over files, a REQ_OP_PROVISION request will translate to
+an fallocate mode 0 call on the backing file.
 
-This patch series is version 8 of the patch series to introduce
-block-level provisioning mechanism (original [1]), which is useful for provisioning
-space across thinly provisioned storage architectures (loop devices
-backed by sparse files, dm-thin devices, virtio-blk). This series has
-minimal changes over v7[2].
+Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
+Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+---
+ drivers/block/loop.c | 34 +++++++++++++++++++++++++++++++---
+ 1 file changed, 31 insertions(+), 3 deletions(-)
 
-This patch series is rebased from the linux-dm/dm-6.5-provision-support [1] on to
-(cac405a3bfa2 Merge tag 'for-6.6-rc3-tag'). In addition, there's an
-additional patch to allow passing through an unshare intent via REQ_OP_PROVISION
-(suggested by Darrick in [4]).
-
-[1] Original: https://lore.kernel.org/lkml/20220915164826.1396245-1-sarthakkukreti@google.com/
-[2] v7 (last series): https://lore.kernel.org/linux-fsdevel/20230518223326.18744-1-sarthakkukreti@chromium.org/
-[3] linux-dm/dm-6.5-provision-suppport tree:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-6.5-provision-support
-(with the last two WIP patches for dm-thinpool dropped as per discussion with
-maintainers).
-[4] https://lore.kernel.org/linux-fsdevel/20230522163710.GA11607@frogsfrogsfrogs/
-
-Changes from v7:
-- Drop dm-thinpool (will be independently developed with snapshot
-  support) and dm-snapshot (will not be supported) from the series.
-- (By snitzer@kernel.org) Fixes for block device provision limits.
-- (Suggested by djwong@kernel.org) Add mechanism to pass unshare intent
-  via REQ_OP_PROVISION
-
-Sarthak Kukreti (5):
-  block: Don't invalidate pagecache for invalid falloc modes
-  block: Introduce provisioning primitives
-  loop: Add support for provision requests
-  dm: Add block provisioning support
-  block: Pass unshare intent via REQ_OP_PROVISION
-
- block/blk-core.c              |  5 +++
- block/blk-lib.c               | 55 ++++++++++++++++++++++++++++++++
- block/blk-merge.c             | 18 +++++++++++
- block/blk-settings.c          | 19 +++++++++++
- block/blk-sysfs.c             |  9 ++++++
- block/bounce.c                |  1 +
- block/fops.c                  | 33 ++++++++++++++++----
- drivers/block/loop.c          | 59 ++++++++++++++++++++++++++++++++---
- drivers/md/dm-crypt.c         |  4 ++-
- drivers/md/dm-linear.c        |  1 +
- drivers/md/dm-table.c         | 23 ++++++++++++++
- drivers/md/dm.c               |  7 +++++
- include/linux/bio.h           |  6 ++--
- include/linux/blk_types.h     |  8 ++++-
- include/linux/blkdev.h        | 17 ++++++++++
- include/linux/device-mapper.h | 17 ++++++++++
- 16 files changed, 268 insertions(+), 14 deletions(-)
-
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index 9f2d412fc560..abb4dddbd4fd 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -311,16 +311,20 @@ static int lo_fallocate(struct loop_device *lo, struct request *rq, loff_t pos,
+ {
+ 	/*
+ 	 * We use fallocate to manipulate the space mappings used by the image
+-	 * a.k.a. discard/zerorange.
++	 * a.k.a. discard/provision/zerorange.
+ 	 */
+ 	struct file *file = lo->lo_backing_file;
+ 	int ret;
+ 
+-	mode |= FALLOC_FL_KEEP_SIZE;
++	if (mode & (FALLOC_FL_PUNCH_HOLE | FALLOC_FL_ZERO_RANGE) &&
++	    !bdev_max_discard_sectors(lo->lo_device))
++		return -EOPNOTSUPP;
+ 
+-	if (!bdev_max_discard_sectors(lo->lo_device))
++	if (mode == 0 && !bdev_max_provision_sectors(lo->lo_device))
+ 		return -EOPNOTSUPP;
+ 
++	mode |= FALLOC_FL_KEEP_SIZE;
++
+ 	ret = file->f_op->fallocate(file, mode, pos, blk_rq_bytes(rq));
+ 	if (unlikely(ret && ret != -EINVAL && ret != -EOPNOTSUPP))
+ 		return -EIO;
+@@ -488,6 +492,8 @@ static int do_req_filebacked(struct loop_device *lo, struct request *rq)
+ 				FALLOC_FL_PUNCH_HOLE);
+ 	case REQ_OP_DISCARD:
+ 		return lo_fallocate(lo, rq, pos, FALLOC_FL_PUNCH_HOLE);
++	case REQ_OP_PROVISION:
++		return lo_fallocate(lo, rq, pos, 0);
+ 	case REQ_OP_WRITE:
+ 		if (cmd->use_aio)
+ 			return lo_rw_aio(lo, cmd, pos, ITER_SOURCE);
+@@ -754,6 +760,25 @@ static void loop_sysfs_exit(struct loop_device *lo)
+ 				   &loop_attribute_group);
+ }
+ 
++static void loop_config_provision(struct loop_device *lo)
++{
++	struct file *file = lo->lo_backing_file;
++	struct inode *inode = file->f_mapping->host;
++
++	/*
++	 * If the backing device is a block device, mirror its provisioning
++	 * capability.
++	 */
++	if (S_ISBLK(inode->i_mode)) {
++		blk_queue_max_provision_sectors(lo->lo_queue,
++			bdev_max_provision_sectors(I_BDEV(inode)));
++	} else if (file->f_op->fallocate) {
++		blk_queue_max_provision_sectors(lo->lo_queue, UINT_MAX >> 9);
++	} else {
++		blk_queue_max_provision_sectors(lo->lo_queue, 0);
++	}
++}
++
+ static void loop_config_discard(struct loop_device *lo)
+ {
+ 	struct file *file = lo->lo_backing_file;
+@@ -1092,6 +1117,7 @@ static int loop_configure(struct loop_device *lo, blk_mode_t mode,
+ 	blk_queue_io_min(lo->lo_queue, bsize);
+ 
+ 	loop_config_discard(lo);
++	loop_config_provision(lo);
+ 	loop_update_rotational(lo);
+ 	loop_update_dio(lo);
+ 	loop_sysfs_init(lo);
+@@ -1304,6 +1330,7 @@ loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
+ 	}
+ 
+ 	loop_config_discard(lo);
++	loop_config_provision(lo);
+ 
+ 	/* update dio if lo_offset or transfer is changed */
+ 	__loop_update_dio(lo, lo->use_dio);
+@@ -1857,6 +1884,7 @@ static blk_status_t loop_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 	case REQ_OP_FLUSH:
+ 	case REQ_OP_DISCARD:
+ 	case REQ_OP_WRITE_ZEROES:
++	case REQ_OP_PROVISION:
+ 		cmd->use_aio = false;
+ 		break;
+ 	default:
 -- 
 2.42.0.609.gbb76f46606-goog
 
