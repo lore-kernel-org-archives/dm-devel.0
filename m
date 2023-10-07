@@ -4,94 +4,89 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 83C2BE9413E
-	for <dm-devel@archiver.kernel.org>; Sat,  7 Oct 2023 01:30:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E78A7E94139
+	for <dm-devel@archiver.kernel.org>; Sat,  7 Oct 2023 01:33:38 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1696642241;
+	s=mimecast20190719; t=1696642417;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=eY1NVUVRMuQ9ejggDjrLuI8Pr/DenZIr8bGIF7FcDLM=;
-	b=eiF/682fGKmASqKkCRVMz5migD6sG1naLpr/R4tFgSaAr/OQFi3sre3ul6+ZQRWW5h0Hek
-	oqLdtWJIt73bLhr2QiIVFkVlbdDkiEgtKFnzEimI61zoSj7FLLoai2uf5glV5PSZ3tLPP1
-	ZMxowxmEnhiJOtxMxJCBqgOb61UIm0k=
+	bh=/Pzk0ctB50pw36VpBzLGnggzkfODpDOJrGKe23nNR+I=;
+	b=XIHBz/edX3xp0E+41NS6f5vsJobbYKzJF8sgOENio6ywSMx19J1ZBBQ+BWAxrA3LMdOPBQ
+	wfytj+GqmMQjyFDG0aqpxaseNQXH91AIkS8oodZdXt0JIK7VUnunebrcRA5Abb8SRzTjnr
+	EUWXcQItzaCW0ItZskYM3Be+pCC4FCc=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-237-4lJufVyZMaSZhKsOsVzM4A-1; Fri, 06 Oct 2023 21:30:39 -0400
-X-MC-Unique: 4lJufVyZMaSZhKsOsVzM4A-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-563-K5mYx_jCM0-09Zx2IayWQg-1; Fri, 06 Oct 2023 21:33:24 -0400
+X-MC-Unique: K5mYx_jCM0-09Zx2IayWQg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C784581163A;
-	Sat,  7 Oct 2023 01:30:37 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D98FD8001EA;
+	Sat,  7 Oct 2023 01:33:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B3E84C15BB8;
-	Sat,  7 Oct 2023 01:30:37 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C357640C6EA8;
+	Sat,  7 Oct 2023 01:33:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8212F1946589;
-	Sat,  7 Oct 2023 01:30:37 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6577C1946589;
+	Sat,  7 Oct 2023 01:33:22 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 270891946588
- for <dm-devel@listman.corp.redhat.com>; Sat,  7 Oct 2023 01:30:37 +0000 (UTC)
+ ESMTP id B2FA51946588
+ for <dm-devel@listman.corp.redhat.com>; Sat,  7 Oct 2023 01:33:21 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id EF4C82027019; Sat,  7 Oct 2023 01:30:36 +0000 (UTC)
+ id 9918E5CC01; Sat,  7 Oct 2023 01:33:21 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E73802026D37
- for <dm-devel@redhat.com>; Sat,  7 Oct 2023 01:30:36 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
- [207.211.31.81])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 91960170E9
+ for <dm-devel@redhat.com>; Sat,  7 Oct 2023 01:33:21 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BC226803D6A
- for <dm-devel@redhat.com>; Sat,  7 Oct 2023 01:30:36 +0000 (UTC)
-Received: from mail-ej1-f49.google.com (mail-ej1-f49.google.com
- [209.85.218.49]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6EB5E185A78E
+ for <dm-devel@redhat.com>; Sat,  7 Oct 2023 01:33:21 +0000 (UTC)
+Received: from mail-pl1-f175.google.com (mail-pl1-f175.google.com
+ [209.85.214.175]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-407-OUjMhzizOx-e9DLdjvs3nw-1; Fri, 06 Oct 2023 21:30:34 -0400
-X-MC-Unique: OUjMhzizOx-e9DLdjvs3nw-1
-Received: by mail-ej1-f49.google.com with SMTP id
- a640c23a62f3a-9b1ebc80d0aso475051166b.0
- for <dm-devel@redhat.com>; Fri, 06 Oct 2023 18:30:34 -0700 (PDT)
+ us-mta-675-vB9WJe7ENouST0H32rVi9Q-1; Fri, 06 Oct 2023 21:33:19 -0400
+X-MC-Unique: vB9WJe7ENouST0H32rVi9Q-1
+Received: by mail-pl1-f175.google.com with SMTP id
+ d9443c01a7336-1c737d61a00so21938715ad.3
+ for <dm-devel@redhat.com>; Fri, 06 Oct 2023 18:33:19 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1696642233; x=1697247033;
- h=content-transfer-encoding:cc:to:subject:message-id:date:from
- :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
- :subject:date:message-id:reply-to;
- bh=IF4QfWNaA43XRLFWp4IMKch1uhvVZ0qlp9xdhdkNJ44=;
- b=Cy1al/PlpUhqOIvbFJv6Oi2ujYyBfA9mAg4cawh8bW4+Vc4DcykxYc2MJ41+ktWrJP
- 9IK3LOTQJjr1lc1HZwECk1n24/m5v/m68dp4HFLvZLSmCEqUNd0aqxYDLo8B6WkbeWJF
- Ai8Duki6IWRsMd0Svimhf48+2GwVftL89p06bOTz8QpbBm+7eWoNjAHuHHKQWp5HjN0i
- rBcX3y7PGabNrjVp5maI9uPeJBzp4lkNziEvDeMVrJBpJMSfoO68fFNgJtK8MvuAvyxQ
- SRV8yGQx1dFhHxE3QAoJGBTal+eFql3dKyUg6WtdZN8GLAhm98kLZIx6Sw1pLFK3FKcw
- +n0w==
-X-Gm-Message-State: AOJu0Yxt2xThhPOj4aPwPk8culfy7e9w8KfI05WzlwIm0UlBDRlhq+r8
- uIwWUhBcb3uSuZMmEveedp7yyXrQvLjcLK0U3LPRBQ==
-X-Google-Smtp-Source: AGHT+IGkSJj0mtqaOVe5wcCfMcCmFe6Tgpzeqmz0eI2dsh3Q9Ib7QP0au+a6EA1F28rIWShFnSAVw+4uLntty8zEul4=
-X-Received: by 2002:a17:907:2704:b0:9ae:961a:de81 with SMTP id
- w4-20020a170907270400b009ae961ade81mr7780096ejk.27.1696642233743; Fri, 06 Oct
- 2023 18:30:33 -0700 (PDT)
-MIME-Version: 1.0
-References: <ZHFEfngPyUOqlthr@dread.disaster.area>
- <CAJ0trDZJQwvAzngZLBJ1hB0XkQ1HRHQOdNQNTw9nK-U5i-0bLA@mail.gmail.com>
- <ZHYB/6l5Wi+xwkbQ@redhat.com>
- <CAJ0trDaUOevfiEpXasOESrLHTCcr=oz28ywJU+s+YOiuh7iWow@mail.gmail.com>
- <ZHYWAGmKhwwmTjW/@redhat.com>
- <CAG9=OMMnDfN++-bJP3jLmUD6O=Q_ApV5Dr392_5GqsPAi_dDkg@mail.gmail.com>
- <ZHqOvq3ORETQB31m@dread.disaster.area> <ZHti/MLnX5xGw9b7@redhat.com>
- <CAG9=OMNv80fOyVixEY01XESnOFzYyfj9j8etHMq_Ap52z4UWNQ@mail.gmail.com>
- <ZIESXNF5anyvJEjm@redhat.com> <ZIOMLfMjugGf4C2T@redhat.com>
-In-Reply-To: <ZIOMLfMjugGf4C2T@redhat.com>
+ d=1e100.net; s=20230601; t=1696642398; x=1697247198;
+ h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+ :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+ :reply-to;
+ bh=bw0i5BjLD5HynkaIMHaDuDywPDJie/n4JgfUzvkLhH0=;
+ b=Y8zs5lUcN4yQXZdBN3C1AM2xPeBMgFyRQVVcwPK+vtSNljIqsl2jtBq39UjXg/N1O0
+ QMCcPG7Rsx+MRTmE89HRGpsp1X9QJSJg4sO1fr4KReSiMF6jf0xe+09O4MWkqgkQbhfm
+ s2rbK7Vt8x4NJVqamyAZZTWBPsfilgUiA1k+v9CMTSqSH18iGjgIhOY6omx1FwdR9DJF
+ KVbuhx7QYYr3b9fdbiuvTwgFkDTX5aXrXg1SOPjaH3i0fdJ1in60WJeTp9Ol1tDMu+9e
+ +R+vEu5vJv5MN3xdKjQilcS6vHm4Rlq1x5l+953rB6kU83ENl6gGRopI714yKxqkOKYe
+ /u8w==
+X-Gm-Message-State: AOJu0YxpQMXqUt/BvhuVGvWpqJI7zQM/Caqy3oDcS5cjafLY7wQd4Lx4
+ wbdnNKoG5ih7PXFmN+iPUb4N45Xvlr4BedfSq2o=
+X-Google-Smtp-Source: AGHT+IGgiVE2knzBQevrIgQbdtL+0MzY7MwORkEoTxB4XYaM0iaoUXW5Ll8AxYMc4d8Fn2LTbmKHtg==
+X-Received: by 2002:a17:902:ced2:b0:1be:f45c:bc38 with SMTP id
+ d18-20020a170902ced200b001bef45cbc38mr11726592plg.2.1696642397723; 
+ Fri, 06 Oct 2023 18:33:17 -0700 (PDT)
+Received: from localhost ([2620:15c:9d:2:138c:8976:eb4a:a91c])
+ by smtp.gmail.com with UTF8SMTPSA id
+ iz2-20020a170902ef8200b001c71ec1866fsm4600121plb.258.2023.10.06.18.33.16
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Fri, 06 Oct 2023 18:33:17 -0700 (PDT)
 From: Sarthak Kukreti <sarthakkukreti@chromium.org>
-Date: Fri, 6 Oct 2023 18:30:22 -0700
-Message-ID: <CAG9=OMPqGmX75ZmK=Fc7DNE7dcxS+t-UPkjtCVDF+dPN+xkrNg@mail.gmail.com>
-To: Mike Snitzer <snitzer@redhat.com>
+To: dm-devel@redhat.com,
+	linux-kernel@vger.kernel.org
+Date: Fri,  6 Oct 2023 18:33:14 -0700
+Message-ID: <20231007013314.3055426-1-sarthakkukreti@chromium.org>
+MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -99,8 +94,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
-Subject: Re: [dm-devel] [PATCH v7 0/5] Introduce provisioning primitives
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+Subject: [dm-devel] [PATCH RFC] dm thin: Add support for online trim to
+ dm-thinpool
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -112,75 +108,443 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
- Joe Thornber <thornber@redhat.com>, dm-devel@redhat.com,
- "Michael S. Tsirkin" <mst@redhat.com>, "Darrick J. Wong" <djwong@kernel.org>,
- Jason Wang <jasowang@redhat.com>, Bart Van Assche <bvanassche@google.com>,
- Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org,
- Christoph Hellwig <hch@infradead.org>, Joe Thornber <ejt@redhat.com>,
- Andreas Dilger <adilger.kernel@dilger.ca>,
- Stefan Hajnoczi <stefanha@redhat.com>, linux-fsdevel@vger.kernel.org,
- Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org,
- Brian Foster <bfoster@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@kernel.org>,
+ Sarthak Kukreti <sarthakkukreti@chromium.org>,
+ Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.2
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: chromium.org
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gRnJpLCBKdW4gOSwgMjAyMyBhdCAxOjMx4oCvUE0gTWlrZSBTbml0emVyIDxzbml0emVyQHJl
-ZGhhdC5jb20+IHdyb3RlOgo+Cj4gT24gV2VkLCBKdW4gMDcgMjAyMyBhdCAgNzoyN1AgLTA0MDAs
-Cj4gTWlrZSBTbml0emVyIDxzbml0emVyQGtlcm5lbC5vcmc+IHdyb3RlOgo+Cj4gPiBPbiBNb24s
-IEp1biAwNSAyMDIzIGF0ICA1OjE0UCAtMDQwMCwKPiA+IFNhcnRoYWsgS3VrcmV0aSA8c2FydGhh
-a2t1a3JldGlAY2hyb21pdW0ub3JnPiB3cm90ZToKPiA+Cj4gPiA+IE9uIFNhdCwgSnVuIDMsIDIw
-MjMgYXQgODo1N+KAr0FNIE1pa2UgU25pdHplciA8c25pdHplckBrZXJuZWwub3JnPiB3cm90ZToK
-PiA+ID4gPgo+ID4gPiA+IFdlIGFsbCBqdXN0IG5lZWQgdG8gZm9jdXMgb24geW91ciBwcm9wb3Nh
-bCBhbmQgSm9lJ3MgZG0tdGhpbgo+ID4gPiA+IHJlc2VydmF0aW9uIGRlc2lnbi4uLgo+ID4gPiA+
-Cj4gPiA+ID4gW1NhcnRoYWs6IEZZSSwgdGhpcyBpbXBsaWVzIHRoYXQgaXQgZG9lc24ndCByZWFs
-bHkgbWFrZSBzZW5zZSB0byBhZGQKPiA+ID4gPiBkbS10aGlucCBzdXBwb3J0IGJlZm9yZSBKb2Un
-cyBkZXNpZ24gaXMgaW1wbGVtZW50ZWQuICBPdGhlcndpc2Ugd2UnbGwKPiA+ID4gPiBoYXZlIDIg
-ZGlmZmVyZW50IHJlc3BvbnNlcyB0byBSRVFfT1BfUFJPVklTSU9OLiAgVGhlIG9uZSB0aGF0IGlz
-Cj4gPiA+ID4gY2FwdHVyZWQgaW4geW91ciBwYXRjaHNldCBpc24ndCBhZGVxdWF0ZSB0byBwcm9w
-ZXJseSBoYW5kbGUgZW5zdXJpbmcKPiA+ID4gPiB1cHBlciBsYXllciAobGlrZSBYRlMpIGNhbiBk
-ZXBlbmQgb24gdGhlIHNwYWNlIGJlaW5nIGF2YWlsYWJsZSBhY3Jvc3MKPiA+ID4gPiBzbmFwc2hv
-dCBib3VuZGFyaWVzLl0KPiA+ID4gPgo+ID4gPiBBY2suIFdvdWxkIGl0IGJlIHByZW1hdHVyZSBm
-b3IgdGhlIHJlc3Qgb2YgdGhlIHNlcmllcyB0byBnbyB0aHJvdWdoCj4gPiA+IChSRVFfT1BfUFJP
-VklTSU9OICsgc3VwcG9ydCBmb3IgbG9vcCBhbmQgbm9uLWRtLXRoaW5wIGRldmljZS1tYXBwZXIK
-PiA+ID4gdGFyZ2V0cyk/IEknZCBsaWtlIHRvIHN0YXJ0IHVzaW5nIHRoaXMgYXMgYSByZWZlcmVu
-Y2UgdG8gc3VnZ2VzdAo+ID4gPiBhZGRpdGlvbnMgdG8gdGhlIHZpcnRpby1zcGVjIGZvciB2aXJ0
-aW8tYmxrIHN1cHBvcnQgYW5kIHN0YXJ0IGxvb2tpbmcKPiA+ID4gYXQgd2hhdCBhbiBleHQ0IGlt
-cGxlbWVudGF0aW9uIHdvdWxkIGxvb2sgbGlrZS4KPiA+Cj4gPiBQbGVhc2UgZHJvcCB0aGUgZG0t
-dGhpbi5jIGFuZCBkbS1zbmFwLmMgY2hhbmdlcy4gIGRtLXNuYXAuYyB3b3VsZCBuZWVkCj4gPiBt
-b3JlIHdvcmsgdG8gcHJvdmlkZSB0aGUgdHlwZSBvZiBndWFyYW50ZWUgWEZTIHJlcXVpcmVzIGFj
-cm9zcwo+ID4gc25hcHNob3QgYm91bmRhcmllcy4gSSdtIGluY2xpbmVkIHRvIF9ub3RfIGFkZCBk
-bS1zbmFwLmMgc3VwcG9ydAo+ID4gYmVjYXVzZSBpdCBpcyBiZXN0IHRvIGp1c3QgdXNlIGRtLXRo
-aW4uCj4gPgo+ID4gQW5kIEZZSSBldmVuIHlvdXIgZG0tdGhpbiBwYXRjaCB3aWxsIGJlIHRoZSBz
-dGFydGluZyBwb2ludCBmb3IgdGhlCj4gPiBkbS10aGluIHN1cHBvcnQgKHdlJ2xsIGtlZXAgYXR0
-cmlidXRpb24gdG8geW91IGZvciBhbGwgdGhlIGNvZGUgaW4gYQo+ID4gc2VwYXJhdGUgcGF0Y2gp
-Lgo+ID4KPiA+ID4gRmFpciBwb2ludHMsIEkgY2VydGFpbmx5IGRvbid0IHdhbnQgdG8gZGVyYWls
-IHRoaXMgY29udmVyc2F0aW9uOyBJJ2QKPiA+ID4gYmUgaGFwcHkgdG8gc2VlIHRoaXMgd29yayBt
-ZXJnZWQgc29vbmVyIHJhdGhlciB0aGFuIGxhdGVyLgo+ID4KPiA+IE9uY2UgdGhvc2UgZG0gdGFy
-Z2V0IGNoYW5nZXMgYXJlIGRyb3BwZWQgSSB0aGluayB0aGUgcmVzdCBvZiB0aGUKPiA+IHNlcmll
-cyBpcyBmaW5lIHRvIGdvIHVwc3RyZWFtIG5vdy4gIEZlZWwgZnJlZSB0byBwb3N0IGEgdjguCj4K
-PiBGWUksIEkndmUgbWFkZSBteSBsYXRlc3QgY29kZSBhdmFpbGFibGUgaW4gdGhpcwo+ICdkbS02
-LjUtcHJvdmlzaW9uLXN1cHBvcnQnIGJyYW5jaCAoYmFzZWQgb24gJ2RtLTYuNScpOgo+IGh0dHBz
-Oi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3NjbS9saW51eC9rZXJuZWwvZ2l0L2RldmljZS1tYXBwZXIv
-bGludXgtZG0uZ2l0L2xvZy8/aD1kbS02LjUtcHJvdmlzaW9uLXN1cHBvcnQKPgo+IEl0J3Mgd2hh
-dCB2OCBzaG91bGQgYmUgcGx1cyB0aGUgMiBkbS10aGluIHBhdGNoZXMgKHRoYXQgSSBkb24ndCB0
-aGluawo+IHNob3VsZCBnbyB1cHN0cmVhbSB5ZXQsIGJ1dCBhcmUgdGhlb3JldGljYWxseSB1c2Vm
-dWwgZm9yIERhdmUgYW5kCj4gSm9lKS4KPgpDaGVlcnMhIEFwb2xvZ2llcyBmb3IgZHJvcHBpbmcg
-dGhlIGJhbGwgb24gdGhpcywgSSBqdXN0IHNlbnQgb3V0IHY4CndpdGggdGhlIGRtLXRoaW4gcGF0
-Y2hlcyBkcm9wcGVkLgoKCi0gU2FydGhhawoKPiBUaGUgImRtIHRoaW46IGNvbXBsZXRlIGludGVy
-ZmFjZSBmb3IgUkVRX09QX1BST1ZJU0lPTiBzdXBwb3J0IiBjb21taXQKPiBlc3RhYmxpc2hlcyBh
-bGwgdGhlIGRtLXRoaW4gaW50ZXJmYWNlIEkgdGhpbmsgaXMgbmVlZGVkLiAgVGhlIEZJWE1FIGlu
-Cj4gcHJvY2Vzc19wcm92aXNpb25fYmlvKCkgKGFuZCB0aGUgcGF0Y2ggaGVhZGVyKSBjYXV0aW9u
-cyBhZ2FpbnN0IHVwcGVyCj4gbGF5ZXJzIGxpa2UgWEZTIHVzaW5nIHRoaXMgZG0tdGhpbnAgc3Vw
-cG9ydCBxdWl0ZSB5ZXQuCj4KPiBPdGhlcndpc2Ugd2UnbGwgaGF2ZSB0aGUgaXNzdWUgd2hlcmUg
-ZG0tdGhpbnAncyBSRVFfT1BfUFJPVklTSU9OCj4gc3VwcG9ydCBpbml0aWFsbHkgZG9lc24ndCBw
-cm92aWRlIHRoZSBndWFyYW50ZWUgdGhhdCBYRlMgbmVlZHMgYWNyb3NzCj4gc25hcHNob3RzICh3
-aGljaCBpczogc25hcHNob3RzIGluaGVyaXQgYWxsIHByZXZpb3VzIFJFUV9PUF9QUk9WSVNJT04p
-Lgo+Cj4gTWlrZQo+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNv
-bQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
+Currently, dm-thinpool only supports offline trim: there is
+a userspace tool called `thin_trim` (part of `thin-provisioning-tools`),
+that will look up all the unmapped regions within the thinpool
+and issue discards to these regions. However, this can take up a lot of
+time, specially on larger storage devices.
+
+This patch augments dm-thinpool's no passdown mode with a message
+mechanism that allows userspace to issue 'trim' messages to regions
+of the thinpool. In turn, dm-thinpool re-uses the existing discard
+mechanism to issue a discard bio to only send discards to regions in
+the data device that are currently not mapped on other dm-thin devices.
+
+This patch is intended as an RFC with the following open questions
+(assuming that the approach is even viable):
+
+- Most of the patch is modifying current discard functions to work
+  without an attached dm-thin context (tc). Would it be preferrable to
+  keep this path independent of the thin volume discard path?
+
+- Current RFC patch doesn't protect against userspace attempting to
+  discard large ranges of extents in the thinpool (which puts the
+  thinpool in read-only mode). What would the optimal way to prevent
+  trim from locking up the space in the thinpool (chunking requests?)?
+
+- The patch currently only sets up the 'trim' capability if no passdown
+  is enabled: the reasoning behind that is if passdown is enabled,
+  thin_trim doesn't necessarily need the trim capability iff all the
+  dm-thin devices can passdown requests from the filesystem already.
+  Would it be preferrable to have this capability across all discard
+  modes?
+
+Signed-off-by: Sarthak Kukreti <sarthakkukreti@chromium.org>
+---
+ drivers/md/dm-thin.c | 156 +++++++++++++++++++++++++++++++++----------
+ 1 file changed, 121 insertions(+), 35 deletions(-)
+
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 07c7f9795b10..9a8eeebd9f49 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -280,6 +280,7 @@ struct pool {
+ 
+ 	process_mapping_fn process_prepared_mapping;
+ 	process_mapping_fn process_prepared_discard;
++	process_mapping_fn process_prepared_trim;
+ 	process_mapping_fn process_prepared_discard_pt2;
+ 
+ 	struct dm_bio_prison_cell **cell_sort_array;
+@@ -379,17 +380,17 @@ static sector_t block_to_sectors(struct pool *pool, dm_block_t b)
+ /*----------------------------------------------------------------*/
+ 
+ struct discard_op {
+-	struct thin_c *tc;
++	struct pool *pool;
+ 	struct blk_plug plug;
+ 	struct bio *parent_bio;
+ 	struct bio *bio;
+ };
+ 
+-static void begin_discard(struct discard_op *op, struct thin_c *tc, struct bio *parent)
++static void begin_discard(struct discard_op *op, struct pool *pool, struct bio *parent)
+ {
+ 	BUG_ON(!parent);
+ 
+-	op->tc = tc;
++	op->pool = pool;
+ 	blk_start_plug(&op->plug);
+ 	op->parent_bio = parent;
+ 	op->bio = NULL;
+@@ -397,11 +398,11 @@ static void begin_discard(struct discard_op *op, struct thin_c *tc, struct bio *
+ 
+ static int issue_discard(struct discard_op *op, dm_block_t data_b, dm_block_t data_e)
+ {
+-	struct thin_c *tc = op->tc;
+-	sector_t s = block_to_sectors(tc->pool, data_b);
+-	sector_t len = block_to_sectors(tc->pool, data_e - data_b);
++	struct pool *pool = op->pool;
++	sector_t s = block_to_sectors(pool, data_b);
++	sector_t len = block_to_sectors(pool, data_e - data_b);
+ 
+-	return __blkdev_issue_discard(tc->pool_dev->bdev, s, len, GFP_NOIO, &op->bio);
++	return __blkdev_issue_discard(pool->data_dev, s, len, GFP_NOIO, &op->bio);
+ }
+ 
+ static void end_discard(struct discard_op *op, int r)
+@@ -813,6 +814,7 @@ struct dm_thin_new_mapping {
+ 
+ 	blk_status_t status;
+ 	struct thin_c *tc;
++	struct pool *pool;
+ 	dm_block_t virt_begin, virt_end;
+ 	dm_block_t data_block;
+ 	struct dm_bio_prison_cell *cell;
+@@ -829,7 +831,7 @@ struct dm_thin_new_mapping {
+ 
+ static void __complete_mapping_preparation(struct dm_thin_new_mapping *m)
+ {
+-	struct pool *pool = m->tc->pool;
++	struct pool *pool = m->pool;
+ 
+ 	if (atomic_dec_and_test(&m->prepare_actions)) {
+ 		list_add_tail(&m->list, &pool->prepared_mappings);
+@@ -840,7 +842,7 @@ static void __complete_mapping_preparation(struct dm_thin_new_mapping *m)
+ static void complete_mapping_preparation(struct dm_thin_new_mapping *m)
+ {
+ 	unsigned long flags;
+-	struct pool *pool = m->tc->pool;
++	struct pool *pool = m->pool;
+ 
+ 	spin_lock_irqsave(&pool->lock, flags);
+ 	__complete_mapping_preparation(m);
+@@ -955,9 +957,9 @@ static void inc_remap_and_issue_cell(struct thin_c *tc,
+ 
+ static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
+ {
+-	cell_error(m->tc->pool, m->cell);
++	cell_error(m->pool, m->cell);
+ 	list_del(&m->list);
+-	mempool_free(m, &m->tc->pool->mapping_pool);
++	mempool_free(m, &m->pool->mapping_pool);
+ }
+ 
+ static void complete_overwrite_bio(struct thin_c *tc, struct bio *bio)
+@@ -995,7 +997,7 @@ static void complete_overwrite_bio(struct thin_c *tc, struct bio *bio)
+ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
+ {
+ 	struct thin_c *tc = m->tc;
+-	struct pool *pool = tc->pool;
++	struct pool *pool = m->pool;
+ 	struct bio *bio = m->bio;
+ 	int r;
+ 
+@@ -1041,10 +1043,11 @@ static void process_prepared_mapping(struct dm_thin_new_mapping *m)
+ static void free_discard_mapping(struct dm_thin_new_mapping *m)
+ {
+ 	struct thin_c *tc = m->tc;
++	struct pool *pool = m->pool;
+ 
+-	if (m->cell)
++	if (m->cell && tc)
+ 		cell_defer_no_holder(tc, m->cell);
+-	mempool_free(m, &tc->pool->mapping_pool);
++	mempool_free(m, &pool->mapping_pool);
+ }
+ 
+ static void process_prepared_discard_fail(struct dm_thin_new_mapping *m)
+@@ -1066,13 +1069,13 @@ static void process_prepared_discard_no_passdown(struct dm_thin_new_mapping *m)
+ 
+ 	r = dm_thin_remove_range(tc->td, m->cell->key.block_begin, m->cell->key.block_end);
+ 	if (r) {
+-		metadata_operation_failed(tc->pool, "dm_thin_remove_range", r);
++		metadata_operation_failed(m->pool, "dm_thin_remove_range", r);
+ 		bio_io_error(m->bio);
+ 	} else
+ 		bio_endio(m->bio);
+ 
+ 	cell_defer_no_holder(tc, m->cell);
+-	mempool_free(m, &tc->pool->mapping_pool);
++	mempool_free(m, &m->pool->mapping_pool);
+ }
+ 
+ /*----------------------------------------------------------------*/
+@@ -1086,12 +1089,11 @@ static void passdown_double_checking_shared_status(struct dm_thin_new_mapping *m
+ 	 */
+ 	int r = 0;
+ 	bool shared = true;
+-	struct thin_c *tc = m->tc;
+-	struct pool *pool = tc->pool;
++	struct pool *pool = m->pool;
+ 	dm_block_t b = m->data_block, e, end = m->data_block + m->virt_end - m->virt_begin;
+ 	struct discard_op op;
+ 
+-	begin_discard(&op, tc, discard_parent);
++	begin_discard(&op, pool, discard_parent);
+ 	while (b != end) {
+ 		/* find start of unmapped run */
+ 		for (; b < end; b++) {
+@@ -1129,7 +1131,7 @@ static void passdown_double_checking_shared_status(struct dm_thin_new_mapping *m
+ static void queue_passdown_pt2(struct dm_thin_new_mapping *m)
+ {
+ 	unsigned long flags;
+-	struct pool *pool = m->tc->pool;
++	struct pool *pool = m->pool;
+ 
+ 	spin_lock_irqsave(&pool->lock, flags);
+ 	list_add_tail(&m->list, &pool->prepared_discards_pt2);
+@@ -1151,7 +1153,7 @@ static void process_prepared_discard_passdown_pt1(struct dm_thin_new_mapping *m)
+ {
+ 	int r;
+ 	struct thin_c *tc = m->tc;
+-	struct pool *pool = tc->pool;
++	struct pool *pool = m->pool;
+ 	struct bio *discard_parent;
+ 	dm_block_t data_end = m->data_block + (m->virt_end - m->virt_begin);
+ 
+@@ -1160,13 +1162,15 @@ static void process_prepared_discard_passdown_pt1(struct dm_thin_new_mapping *m)
+ 	 * newly unmapped blocks will not be allocated before the end of
+ 	 * the function.
+ 	 */
+-	r = dm_thin_remove_range(tc->td, m->virt_begin, m->virt_end);
+-	if (r) {
+-		metadata_operation_failed(pool, "dm_thin_remove_range", r);
+-		bio_io_error(m->bio);
+-		cell_defer_no_holder(tc, m->cell);
+-		mempool_free(m, &pool->mapping_pool);
+-		return;
++	if (tc) {
++		r = dm_thin_remove_range(tc->td, m->virt_begin, m->virt_end);
++		if (r) {
++			metadata_operation_failed(pool, "dm_thin_remove_range", r);
++			bio_io_error(m->bio);
++			cell_defer_no_holder(tc, m->cell);
++			mempool_free(m, &pool->mapping_pool);
++			return;
++		}
+ 	}
+ 
+ 	/*
+@@ -1176,8 +1180,10 @@ static void process_prepared_discard_passdown_pt1(struct dm_thin_new_mapping *m)
+ 	r = dm_pool_inc_data_range(pool->pmd, m->data_block, data_end);
+ 	if (r) {
+ 		metadata_operation_failed(pool, "dm_pool_inc_data_range", r);
+-		bio_io_error(m->bio);
+-		cell_defer_no_holder(tc, m->cell);
++		if (m->bio)
++			bio_io_error(m->bio);
++		if (tc)
++			cell_defer_no_holder(tc, m->cell);
+ 		mempool_free(m, &pool->mapping_pool);
+ 		return;
+ 	}
+@@ -1190,7 +1196,7 @@ static void process_prepared_discard_passdown_pt1(struct dm_thin_new_mapping *m)
+ 	else {
+ 		struct discard_op op;
+ 
+-		begin_discard(&op, tc, discard_parent);
++		begin_discard(&op, pool, discard_parent);
+ 		r = issue_discard(&op, m->data_block, data_end);
+ 		end_discard(&op, r);
+ 	}
+@@ -1200,7 +1206,7 @@ static void process_prepared_discard_passdown_pt2(struct dm_thin_new_mapping *m)
+ {
+ 	int r;
+ 	struct thin_c *tc = m->tc;
+-	struct pool *pool = tc->pool;
++	struct pool *pool = m->pool;
+ 
+ 	/*
+ 	 * The passdown has completed, so now we can decrement all those
+@@ -1210,11 +1216,14 @@ static void process_prepared_discard_passdown_pt2(struct dm_thin_new_mapping *m)
+ 				   m->data_block + (m->virt_end - m->virt_begin));
+ 	if (r) {
+ 		metadata_operation_failed(pool, "dm_pool_dec_data_range", r);
+-		bio_io_error(m->bio);
++		if (m->bio)
++			bio_io_error(m->bio);
+ 	} else
+-		bio_endio(m->bio);
++		if (m->bio)
++			bio_endio(m->bio);
+ 
+-	cell_defer_no_holder(tc, m->cell);
++	if (tc)
++		cell_defer_no_holder(tc, m->cell);
+ 	mempool_free(m, &pool->mapping_pool);
+ }
+ 
+@@ -1319,6 +1328,7 @@ static void schedule_copy(struct thin_c *tc, dm_block_t virt_block,
+ 	struct dm_thin_new_mapping *m = get_next_mapping(pool);
+ 
+ 	m->tc = tc;
++	m->pool = pool;
+ 	m->virt_begin = virt_block;
+ 	m->virt_end = virt_block + 1u;
+ 	m->data_block = data_dest;
+@@ -1388,6 +1398,7 @@ static void schedule_zero(struct thin_c *tc, dm_block_t virt_block,
+ 
+ 	atomic_set(&m->prepare_actions, 1); /* no need to quiesce */
+ 	m->tc = tc;
++	m->pool = pool;
+ 	m->virt_begin = virt_block;
+ 	m->virt_end = virt_block + 1u;
+ 	m->data_block = data_block;
+@@ -1656,6 +1667,7 @@ static void process_discard_cell_no_passdown(struct thin_c *tc,
+ 	 * passdown.  We only lock data blocks for allocation and breaking sharing.
+ 	 */
+ 	m->tc = tc;
++	m->pool = pool;
+ 	m->virt_begin = virt_cell->key.block_begin;
+ 	m->virt_end = virt_cell->key.block_end;
+ 	m->cell = virt_cell;
+@@ -1717,6 +1729,7 @@ static void break_up_discard_bio(struct thin_c *tc, dm_block_t begin, dm_block_t
+ 			 */
+ 			m = get_next_mapping(pool);
+ 			m->tc = tc;
++			m->pool = pool;
+ 			m->maybe_shared = maybe_shared;
+ 			m->virt_begin = virt_begin;
+ 			m->virt_end = virt_begin + len;
+@@ -1828,6 +1841,27 @@ static void break_sharing(struct thin_c *tc, struct bio *bio, dm_block_t block,
+ 	}
+ }
+ 
++static void process_trim(struct pool *pool, dm_block_t begin, dm_block_t end)
++{
++	int r;
++	struct dm_thin_new_mapping *m;
++
++
++	r = ensure_next_mapping(pool);
++	if (r)
++		return;
++
++	m = get_next_mapping(pool);
++
++	m->pool = pool;
++	m->maybe_shared = true;
++	m->virt_begin = 0;
++	m->virt_end = end;
++	m->data_block = begin;
++
++	pool->process_prepared_trim(m);
++}
++
+ static void __remap_and_issue_shared_cell(void *context,
+ 					  struct dm_bio_prison_cell *cell)
+ {
+@@ -2538,6 +2572,8 @@ static void set_discard_callbacks(struct pool *pool)
+ 	} else {
+ 		pool->process_discard_cell = process_discard_cell_no_passdown;
+ 		pool->process_prepared_discard = process_prepared_discard_no_passdown;
++		pool->process_prepared_trim = process_prepared_discard_passdown_pt1;
++		pool->process_prepared_discard_pt2 = process_prepared_discard_passdown_pt2;
+ 	}
+ }
+ 
+@@ -2577,6 +2613,7 @@ static void set_pool_mode(struct pool *pool, enum pool_mode new_mode)
+ 		pool->process_discard_cell = process_cell_fail;
+ 		pool->process_prepared_mapping = process_prepared_mapping_fail;
+ 		pool->process_prepared_discard = process_prepared_discard_fail;
++		pool->process_prepared_trim = process_prepared_discard_fail;
+ 
+ 		error_retry_list(pool);
+ 		break;
+@@ -2590,6 +2627,7 @@ static void set_pool_mode(struct pool *pool, enum pool_mode new_mode)
+ 		pool->process_discard_cell = process_cell_success;
+ 		pool->process_prepared_mapping = process_prepared_mapping_fail;
+ 		pool->process_prepared_discard = process_prepared_discard_success;
++		pool->process_prepared_trim = process_prepared_discard_success;
+ 
+ 		error_retry_list(pool);
+ 		break;
+@@ -3834,6 +3872,50 @@ static int process_release_metadata_snap_mesg(unsigned int argc, char **argv, st
+ 	return r;
+ }
+ 
++static int process_trim_mesg(unsigned int argc, char **argv, struct pool *pool)
++{
++	uint64_t begin, end;
++	int r;
++
++	/* Allow trim only in no_passdown mode */
++	if (!pool->pf.discard_enabled || pool->pf.discard_passdown)
++		return -EINVAL;
++
++	r = check_arg_count(argc, 3);
++	if (r)
++		return r;
++
++	if (kstrtoull(argv[1], 10, (unsigned long long *)&begin)) {
++		DMWARN("trim message: invalid 'begin' %s", argv[1]);
++		return -EINVAL;
++	}
++
++	if (kstrtoull(argv[2], 10, (unsigned long long *)&end)) {
++		DMWARN("trim message: invalid 'end' %s", argv[2]);
++		return -EINVAL;
++	}
++
++	sector_t b = begin >> SECTOR_SHIFT;
++	sector_t e = end >> SECTOR_SHIFT;
++
++	b += pool->sectors_per_block - 1ull; /* so we round up */
++
++	if (block_size_is_power_of_two(pool)) {
++		b >>= pool->sectors_per_block_shift;
++		e >>= pool->sectors_per_block_shift;
++	} else {
++		(void) sector_div(b, pool->sectors_per_block);
++		(void) sector_div(e, pool->sectors_per_block);
++	}
++
++	if (e < b)
++		e = b;
++
++	process_trim(pool, b, e);
++
++	return 0;
++}
++
+ /*
+  * Messages supported:
+  *   create_thin	<dev_id>
+@@ -3842,6 +3924,7 @@ static int process_release_metadata_snap_mesg(unsigned int argc, char **argv, st
+  *   set_transaction_id <current_trans_id> <new_trans_id>
+  *   reserve_metadata_snap
+  *   release_metadata_snap
++ *   trim <start> <end>
+  */
+ static int pool_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 			char *result, unsigned int maxlen)
+@@ -3874,6 +3957,9 @@ static int pool_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 	else if (!strcasecmp(argv[0], "release_metadata_snap"))
+ 		r = process_release_metadata_snap_mesg(argc, argv, pool);
+ 
++	else if (!strcasecmp(argv[0], "trim"))
++		r = process_trim_mesg(argc, argv, pool);
++
+ 	else
+ 		DMWARN("Unrecognised thin pool target message received: %s", argv[0]);
+ 
+-- 
+2.42.0.609.gbb76f46606-goog
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
