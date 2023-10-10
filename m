@@ -1,24 +1,49 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B8D8253BE
-	for <dm-devel@lists.linux.dev>; Tue, 10 Oct 2023 06:53:04 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E8DD9467
+	for <dm-devel@lists.linux.dev>; Tue, 10 Oct 2023 07:15:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="olP5mxD2"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 98791C433C7;
-	Tue, 10 Oct 2023 06:53:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1696920784;
-	bh=28Gt9rHpjiybbQqzfC/TssjmpK2KLgJdrJpyWDkk0XU=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=olP5mxD26AqSm32DEAoyAzHEIAkp3qDWvr6cvLz3o1RRLSwobIoghFsHD7xekXguZ
-	 x8IQRiofc9oAViDUkNXRgL9Xm23wbvkQIxXvCpjwXgeZL9MVn3f1hUPZ1H+MX667TF
-	 8RFa/chQyZXjbGVeyK27yPrFBcWUSzGmxs7dCFuw+Q39kbJKuOd2Bqxp+LK7y4MyPV
-	 c7LukS48IALXDTHZQpRDGm031W8O1Iu/98R3EDymRedwYizCVOCZxEjVDT2AYammUE
-	 dlGo4GfqqUWNsafR/fgkP7VscIZ+faeOAA0skZAsdpFs0781PQ1E0G+9PXGlNZv/nc
-	 2+dBFbImxgbEw==
-Message-ID: <61581185-65e8-41d2-b9e1-b22a00f52ea9@kernel.org>
-Date: Tue, 10 Oct 2023 15:53:02 +0900
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="2WFYvjLz";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="M3z0zNYK"
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id EA6871F749;
+	Tue, 10 Oct 2023 07:15:46 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1696922146; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Kwu44p3NR8YFNGpTWdoY9ZO7KQu8C9cZhOrewu4r+x0=;
+	b=2WFYvjLztjGtK55WHfgE99XkFvnp3c34FAJ0FfizypHMl6CPfH9sNF0SUKQgfWd/Oy6HW/
+	iV0B9AS/fEOeitd9p/UkyYZHXAe6H0vnfHJS5iqKPmQlFejiFXpeJ73dYyo1BQusaRpPlb
+	uvcNVnCqRaGHknRnK+JHCOMZZdYIguI=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1696922146;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Kwu44p3NR8YFNGpTWdoY9ZO7KQu8C9cZhOrewu4r+x0=;
+	b=M3z0zNYK35esMPdGyR6nZ82VjDcDdDUIip+AcQ20Bn5cJFTZipPoGld0s60Ufo7RzYDk2/
+	3nBabJp4fy2mjrCg==
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+	(No client certificate requested)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id C81701358F;
+	Tue, 10 Oct 2023 07:15:46 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+	by imap2.suse-dmz.suse.de with ESMTPSA
+	id W+GELyL6JGWUNAAAMHmgww
+	(envelope-from <hare@suse.de>); Tue, 10 Oct 2023 07:15:46 +0000
+Message-ID: <a06b762d-32b9-448b-96cf-a2957ab1a425@suse.de>
+Date: Tue, 10 Oct 2023 09:15:46 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -28,92 +53,61 @@ MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
 Subject: Re: Feature Request: Device Manager Fake Trim / Zero Trim
 Content-Language: en-US
-To: charlesfdotz@tutanota.com, Mikulas Patocka <mpatocka@redhat.com>
-Cc: Hannes Reinecke <hare@suse.de>, Dm Devel <dm-devel@lists.linux.dev>
+To: Damien Le Moal <dlemoal@kernel.org>, charlesfdotz@tutanota.com,
+ Dm Devel <dm-devel@lists.linux.dev>,
+ "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 References: <NgGvkdW--3-9@tutanota.com>
  <6276b986-fe9a-4ac4-9662-a0abf7dc68b4@suse.de>
- <12c1c045-7b52-8c7c-161c-599ceaadf48@redhat.com> <NgK6QGI--3-9@tutanota.com>
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <NgK6QGI--3-9@tutanota.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+ <dc7c0122-8077-4aa5-87e6-87404f48a4ce@kernel.org>
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <dc7c0122-8077-4aa5-87e6-87404f48a4ce@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-On 10/10/23 01:25, charlesfdotz@tutanota.com wrote:
+On 10/10/23 08:48, Damien Le Moal wrote:
+> On 10/9/23 15:15, Hannes Reinecke wrote:
+>> On 10/9/23 02:56, charlesfdotz@tutanota.com wrote:
+>>> Hello,
+>>>
+>>> I would like to request a new device manager layer be added that accepts
+>>> trim requests for sectors and instead writes zeros to those sectors.
+>>>
+>>> This would be useful to deal with SMR (shingled magnetic recording) drives
+>>> that do not support trim. Currently after an SMR drive has had enough data
+>>> written to it the performance drops dramatically because the disk must
+>>> shuffle around data as if it were full and without trim support there is no
+>>> way to inform the disk which sectors are no longer used. Currently there's
+>>> no way to "fix" or reset this without doing an ATA secure erase despite
+>>> many of these disk being sold without informing customers that they were
+>>> SMR drives (western digital was sued for selling SMR drives as NAS
+>>> drives).
+>>>
+>> Gosh, no, please don't. SMR drives have a write pointer, and if the zone
+>> needs to be reset you just reset the write pointer. Writing zeroes will
+>> result in the opposite; the zone continues to be full, and no writes can
+>> happen there.
 > 
-> Oct 9, 2023, 09:43 by mpatocka@redhat.com:
+> Yes. And zone reset *is* a trim also since after a zone reset, the sectors in
+> the zone cannot be read.
 > 
->> 
->> 
->> On Mon, 9 Oct 2023, Hannes Reinecke wrote:
->> 
->>> On 10/9/23 02:56, charlesfdotz@tutanota.com wrote:
->>>> Hello,
->>>> 
->>>> I would like to request a new device manager layer be added that
->>>> accepts trim requests for sectors and instead writes zeros to those
->>>> sectors.
->>>> 
->>>> This would be useful to deal with SMR (shingled magnetic recording)
->>>> drives that do not support trim. Currently after an SMR drive has had
->>>> enough data written to it the performance drops dramatically because
->>>> the disk must shuffle around data as if it were full and without trim
->>>> support there is no way to inform the disk which sectors are no longer
->>>> used. Currently there's no way to "fix" or reset this without doing an
->>>> ATA secure erase despite many of these disk being sold without
->>>> informing customers that they were SMR drives (western digital was
->>>> sued for selling SMR drives as NAS drives).
->>>> 
->>> Gosh, no, please don't. SMR drives have a write pointer, and if the zone
->>> needs to be reset you just reset the write pointer. Writing zeroes will
->>> result in the opposite; the zone continues to be full, and no writes can
->>> happen there.
->>> 
->>> Which drive is this?
->>> 
->>> Cheers,
->>> 
->>> Hannes
->>> 
-> The drive in the link is a ST8000DM004-2CX188 according to the poster. To be
-> clear I'm talking about device managed SMR drives that don't support trim and
-> do not report being SMR *not* host aware drives. The DM-SMR drives work fine
-> until you've written their total capacity once then the write performance
-> craters permanently because the drive thinks all the data on it is important
-> and has to reshuffle it constantly during writes. We are talking sub-1MiB/s
-> and hangs waiting on the controller to move things around that can be several
-> minutes. WD was recently sued for selling some of these as "WD Red NAS"
-> drives.
-> 
-> I'm not sure why writing zeros appears to work so this just speculation on my
-> part but I was thinking the drive might be smart enough to mark sectors full
-> of zeros as unused and then return any request for an unused sector as zeros.
+On the same vein: why didn't we hook up 'wp reset' to trim/unmap?
+The code says:
 
-If the drive does not even support trim/discard, thinking it has such
-intelligence is a long shot... I would not bet on it :)
+         if (sd_is_zoned(sdkp)) {
+                 sd_config_discard(sdkp, SD_LBP_DISABLE);
+                 return count;
+         }
 
-> 
->> 
->> BTW. what about converting trims to zone reset? If the trim spans a whole 
->> zone, the kernel could convert it to REQ_OP_ZONE_RESET on host-aware zoned 
->> devices.
->> 
->> Mikulas
->> 
-> This particular request was to try and make (some) device managed SMR drives
-> that don't report to the host that they are SMR more usable. I was thinking
-> if they are a model where zero sectors appear to "trim" one could just put
-> this "fake-trim" device mapper layer over it and then it would act like a
-> device managed SMR drive that supports trim.
+I distinctly remember to enable discards via 'wp reset' in the
+original code; what happened to it?
 
-Check /sys/block/sdX/device/scsi_disk/xxxx/zoned_cap. Does it say "drive-managed" ?
+Cheers,
 
-I do not think that writing zeroes will help in any way. Drives do not generally
-(as far as I know) look at the data they are reading/writing to try to be smart.
-Writing zeroes is the same as writing random bytes. For a good reason: sometimes
-initializing sectors to contain zeroes *is* important !
-
+Hannes
 -- 
-Damien Le Moal
-Western Digital Research
+Dr. Hannes Reinecke                Kernel Storage Architect
+hare@suse.de                              +49 911 74053 688
+SUSE Software Solutions GmbH, Maxfeldstr. 5, 90409 Nürnberg
+HRB 36809 (AG Nürnberg), Geschäftsführer: Ivo Totev, Andrew
+Myers, Andrew McDonald, Martje Boudien Moerman
 
