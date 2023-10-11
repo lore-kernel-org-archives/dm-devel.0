@@ -1,83 +1,103 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E1C90CD98F5
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Oct 2023 07:17:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 22A9ECD6E7B
+	for <dm-devel@archiver.kernel.org>; Wed, 11 Oct 2023 14:35:53 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1697008670;
+	s=mimecast20190719; t=1697034953;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=eFZgr1ZRvxAytv9gmd7NEpcQDoUC7eHXw9p+FnUj/TM=;
-	b=bCxC8qxa9JYYDJQAGcVsx4cGbDEftXBXiUEmoyNYmiiYew4/foX3Y58m3pnJNjk00OPirz
-	O7hdXcf/Pg585E8Uko7KvoYv5kt4hPr9bs6xY5Dr4NugeUQTYStMfRnwfjxyu6UHmLFJ4h
-	kA3CXblqlnBCyGjBnNDsIifQ0okF1Bk=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-190-nXP-h3d3NxCwBuMmfoP24w-1; Wed, 11 Oct 2023 03:17:49 -0400
-X-MC-Unique: nXP-h3d3NxCwBuMmfoP24w-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+	bh=ZEvTgeCDFdMGw6A50WhOWqTriE0SWmBO1lf8rorHcy8=;
+	b=ZdPaDqQGg6ZUOD27/0gLagDM+TGZuBsmPRBbCbPSxhoVA1x2d7gGW2fYtqDGC9ebS9rQUL
+	G38EZ5YA28MC3DK+hxl+pHy9/Ppc79qhqP4Tqj+gdwuuZUyu4fLF83m7EOHfUDqtYCApJd
+	Tb9CwNJA77Fxqft1xMJpD90EUJyBU84=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-407-GDqlW05dPDOMKPGkkI7Y4w-1; Wed, 11 Oct 2023 10:35:51 -0400
+X-MC-Unique: GDqlW05dPDOMKPGkkI7Y4w-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9DA491C0BB57;
-	Wed, 11 Oct 2023 07:17:47 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 573FB803499;
+	Wed, 11 Oct 2023 14:35:51 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F2229492B04;
-	Wed, 11 Oct 2023 07:17:45 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4F664111CD23;
+	Wed, 11 Oct 2023 14:35:51 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9F40319465B8;
-	Wed, 11 Oct 2023 07:17:45 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 072AD1946594;
+	Wed, 11 Oct 2023 14:35:51 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id F08151946597
- for <dm-devel@listman.corp.redhat.com>; Wed, 11 Oct 2023 07:02:03 +0000 (UTC)
+ ESMTP id 4FBD91946586
+ for <dm-devel@listman.corp.redhat.com>; Wed, 11 Oct 2023 14:35:49 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A5BF521CAC76; Wed, 11 Oct 2023 07:02:03 +0000 (UTC)
+ id 28FE01C060B0; Wed, 11 Oct 2023 14:35:49 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 9DF4B21CAC6B
- for <dm-devel@redhat.com>; Wed, 11 Oct 2023 07:02:03 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
- [205.139.110.61])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 21D9A1C060AE
+ for <dm-devel@redhat.com>; Wed, 11 Oct 2023 14:35:49 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8524D185A7B2
- for <dm-devel@redhat.com>; Wed, 11 Oct 2023 07:02:03 +0000 (UTC)
-Received: from bombadil.infradead.org (bombadil.infradead.org
- [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EE713858F1C
+ for <dm-devel@redhat.com>; Wed, 11 Oct 2023 14:35:48 +0000 (UTC)
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+ [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-38-SavkhFVqPoWnXjL-89S_uw-1; Wed, 11 Oct 2023 03:02:01 -0400
-X-MC-Unique: SavkhFVqPoWnXjL-89S_uw-1
-Received: from hch by bombadil.infradead.org with local (Exim 4.96 #2 (Red Hat
- Linux)) id 1qqSGB-00EsqK-13; Wed, 11 Oct 2023 05:59:55 +0000
-Date: Tue, 10 Oct 2023 22:59:55 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Sarthak Kukreti <sarthakkukreti@chromium.org>
-Message-ID: <ZSY526AePuS4jZX8@infradead.org>
-References: <20231007012817.3052558-1-sarthakkukreti@chromium.org>
- <20231007012817.3052558-2-sarthakkukreti@chromium.org>
+ us-mta-277-Yo56ojyXMLeITwoTrMxvEQ-1; Wed, 11 Oct 2023 10:35:47 -0400
+X-MC-Unique: Yo56ojyXMLeITwoTrMxvEQ-1
+Received: by mail-qk1-f199.google.com with SMTP id
+ af79cd13be357-774105f6fb1so783766985a.3
+ for <dm-devel@redhat.com>; Wed, 11 Oct 2023 07:35:47 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20230601; t=1697034946; x=1697639746;
+ h=in-reply-to:content-disposition:mime-version:references:message-id
+ :subject:to:from:date:x-gm-message-state:from:to:cc:subject:date
+ :message-id:reply-to;
+ bh=suZXtWbw9LqCFo9bsOvlZKKzvc10pN0XIH30lhxmVtc=;
+ b=azuoiaW6Y3JWXTsCJHvmDiKZFdlVAd0LEW2lNMDWdMxXAQQKQm69tDp5rkfdCMKo4y
+ okcNUrchVWppGkk8LxcPdmVmE3IWePOuzR8g0eyPBLzgTqtmpqNv94haRwZwiGtflQ0Y
+ UrVRrVe/ExiStfno8ObWqTEKyqPxBlq45UmaIgErR6MlF8WSWvyejCmvydyvMi8CP2gW
+ 3n2rWrHRSRRYD49W3ml80mqpVeJk96D8bC+n/sM8tFDniT/1L5GOiwVNtr2fI+gJdfr5
+ H8qBGCm6jbNk/Qydvar8xbYuWN6y80cF8eUMdi2DNUZ2+sxSLSOeIvTb8qgnDcBfpmJj
+ pVzQ==
+X-Gm-Message-State: AOJu0YxFDpdpzqr+4K7hSnlm4fcNUq5MDT4E1IxRwcbRYUMu4Rwyv1Or
+ /i55FhjUV66uo3G0hYd9ndYfMRpKn0jMMOOCey/kFZsEPgBZ4RxC6nESSHQ32UPRa8V/525ZbNf
+ QPCPhHo6ul2pAvCrySNitNI1Oa6CvTZtw4QfrzUmecSZoFAkIE1IEcMM5xqJYUzRTNGWqPsdbgQ
+ ==
+X-Received: by 2002:a05:620a:2add:b0:775:c0e4:aea4 with SMTP id
+ bn29-20020a05620a2add00b00775c0e4aea4mr21787706qkb.66.1697034946279; 
+ Wed, 11 Oct 2023 07:35:46 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGQOYIkU+KVuceQArkUCfrQ5BDZ/ee7/VEJy6prTPNi66WB2kjTbeApii+SCFwFEGVDig+8GQ==
+X-Received: by 2002:a05:620a:2add:b0:775:c0e4:aea4 with SMTP id
+ bn29-20020a05620a2add00b00775c0e4aea4mr21787682qkb.66.1697034945773; 
+ Wed, 11 Oct 2023 07:35:45 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net.
+ [68.160.141.91]) by smtp.gmail.com with ESMTPSA id
+ m19-20020ae9e013000000b00767dcf6f4adsm5229797qkk.51.2023.10.11.07.35.45
+ for <dm-devel@redhat.com>
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 11 Oct 2023 07:35:45 -0700 (PDT)
+Date: Wed, 11 Oct 2023 10:35:44 -0400
+From: Mike Snitzer <snitzer@redhat.com>
+To: dm-devel@redhat.com
+Subject: Re: dm-devel has migrated to lists.linux.dev
+Message-ID: <ZSaywDd8r9VacOB4@redhat.com>
+References: <ZSCYSO8wlg4keAmY@redhat.com>
+ <ZSCbqvX0f9LOXByf@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <20231007012817.3052558-2-sarthakkukreti@chromium.org>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
- bombadil.infradead.org. See http://www.infradead.org/rpr.html
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH v8 1/5] block: Don't invalidate pagecache for
- invalid falloc modes
+In-Reply-To: <ZSCbqvX0f9LOXByf@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -89,25 +109,73 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
- Dave Chinner <david@fromorbit.com>, Theodore Ts'o <tytso@mit.edu>,
- "Darrick J. Wong" <djwong@kernel.org>, Brian Foster <bfoster@redhat.com>,
- Bart Van Assche <bvanassche@google.com>, Mike Snitzer <snitzer@kernel.org>,
- linux-kernel@vger.kernel.org, stable@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- Andreas Dilger <adilger.kernel@dilger.ca>, linux-fsdevel@vger.kernel.org,
- linux-ext4@vger.kernel.org, Christoph Hellwig <hch@lst.de>,
- Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: infradead.org
+X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Can yu please send this as a separate fix?
+On Fri, Oct 06 2023 at  7:43P -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
+
+> On Fri, Oct 06 2023 at  7:29P -0400,
+> Mike Snitzer <snitzer@kernel.org> wrote:
+> 
+> > Hi,
+> > 
+> > As a dm-devel@redhat.com subscriber, you have been silently subscribed
+> > to the new mailing list: dm-devel@lists.linux.dev.
+> > 
+> > Effective immediately, all dm-devel email should be addressed to:
+> > dm-devel@lists.linux.dev
+> > 
+> > (I say this but my "git pull" request that I just sent to Linus, to
+> > update the MAINTAINERS file accordingly, cc'd dm-devel@redhat.com --
+> > dm-devel@redhat.com will still function as it has, but nobody should
+> > use it moving forward).
+> > 
+> > If you do send email to dm-devel@redhat.com you will get this
+> > auto-response: 
+> > 
+> >   As of 2023.10.06: dm-devel@redhat.com has migrated to
+> >   dm-devel@lists.linux.dev
+> > 
+> >   If you were a dm-devel@redhat.com subscriber you have been silently
+> >   subscribed to dm-devel@lists.linux.dev
+> > 
+> >   NOTE: If you were a dm-devel@redhat.com subscriber but you disabled
+> >   mail delivery: then you must subscribe to dm-devel@lists.linux.dev.
+> >   To do so please send email to: dm-devel+subscribe@lists.linux.dev
+> > 
+> >   To unsubscribe from dm-devel@lists.linux.dev please send email to:
+> >   dm-devel+unsubscribe@lists.linux.dev
+> 
+> 
+> Additional useful info:
+> 
+> Please be sure to update any dm-devel mail filter you may have to look
+> for this in mail headers:
+> List-Id: <dm-devel.lists.linux.dev>
+> 
+> Also, we will be backfilling "[dm-devel]" prefix for all list messages.
+
+We cannot backfill the "[dm-devel]" prefix because that practice
+breaks DKIM/DMARC.
+
+Also, FYI: mail delivery has been disabled for all subscribers to
+dm-devel@redhat.com, but the new list is subscribed and will relay any
+mail sent to dm-devel@redhat.com to dm-devel@lists.linux.dev
+(I've purposely sent this mail to dm-devel@redhat.com to test this
+relay)
+
+If/when you send mail to dm-devel@redhat.com you will still get an
+autoresponse directing you to send future mail to
+dm-devel@lists.linux.dev
+
+Mike
 
 --
 dm-devel mailing list
