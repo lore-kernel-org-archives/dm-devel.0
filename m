@@ -1,63 +1,41 @@
-Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.7])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ot1-f41.google.com (mail-ot1-f41.google.com [209.85.210.41])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90A3532C68;
-	Thu, 19 Oct 2023 16:40:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="LhvilC3Q"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1697733633; x=1729269633;
-  h=date:from:to:cc:subject:message-id:references:
-   mime-version:in-reply-to;
-  bh=B68lb5bc3nlqxKW2HoQvNAzdwFIr+BMgv0ZP+rlvfxo=;
-  b=LhvilC3Qg9AxwrA9+1Yqeoirpjyhe/Fmc27Ug9GaQZ41neAjF517lXPf
-   opcViqgh/0TXAyb+qJc/+cgnZPEHphDBPkGlEyrMNnWSJdP5QZ9tmqGmu
-   M8c4IVDGmqGdWnDx2D+I8rkwyyDXw1XfP8r+DFI0kt75BxSfiX8CuXPek
-   l9ibuUaYm8nFJjwtg6o2fml6dWszX4jz38LsjqI+sSuRv+RvftfeMX5pX
-   8tFeaiqoc/B835QueXDypu/2VMD0gis0A73JfG1fpO1zFMPlJ0z16Uewg
-   2BqwtB2OsmO9oBEw4PKxyJne2Pm750TKfqj1F/OgCkiNYDokUXkPE7PAi
-   w==;
-X-IronPort-AV: E=McAfee;i="6600,9927,10868"; a="7864211"
-X-IronPort-AV: E=Sophos;i="6.03,237,1694761200"; 
-   d="scan'208";a="7864211"
-Received: from orsmga003.jf.intel.com ([10.7.209.27])
-  by fmvoesa101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Oct 2023 09:36:23 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10868"; a="706900365"
-X-IronPort-AV: E=Sophos;i="6.03,237,1694761200"; 
-   d="scan'208";a="706900365"
-Received: from lkp-server01.sh.intel.com (HELO 8917679a5d3e) ([10.239.97.150])
-  by orsmga003.jf.intel.com with ESMTP; 19 Oct 2023 09:36:16 -0700
-Received: from kbuild by 8917679a5d3e with local (Exim 4.96)
-	(envelope-from <lkp@intel.com>)
-	id 1qtW0L-0002GE-2M;
-	Thu, 19 Oct 2023 16:36:13 +0000
-Date: Fri, 20 Oct 2023 00:35:56 +0800
-From: kernel test robot <lkp@intel.com>
-To: Nitesh Shetty <nj.shetty@samsung.com>, Jens Axboe <axboe@kernel.dk>,
-	Jonathan Corbet <corbet@lwn.net>, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
-	Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>,
-	Sagi Grimberg <sagi@grimberg.me>,
-	Chaitanya Kulkarni <kch@nvidia.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Christian Brauner <brauner@kernel.org>
-Cc: oe-kbuild-all@lists.linux.dev, martin.petersen@oracle.com,
-	linux-scsi@vger.kernel.org, nitheshshetty@gmail.com,
-	anuj1072538@gmail.com, gost.dev@samsung.com, mcgrof@kernel.org,
-	Nitesh Shetty <nj.shetty@samsung.com>,
-	Hannes Reinecke <hare@suse.de>,
-	Damien Le Moal <damien.lemoal@opensource.wdc.com>,
-	Anuj Gupta <anuj20.g@samsung.com>,
-	Vincent Fu <vincent.fu@samsung.com>, linux-block@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org
-Subject: Re: [PATCH v17 12/12] null_blk: add support for copy offload
-Message-ID: <202310200001.UU0bBx9w-lkp@intel.com>
-References: <20231019110147.31672-13-nj.shetty@samsung.com>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BCE9D2EAFF
+	for <dm-devel@lists.linux.dev>; Thu, 19 Oct 2023 19:51:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; dkim=none
+Received: by mail-ot1-f41.google.com with SMTP id 46e09a7af769-6cd1918afb2so65644a34.0
+        for <dm-devel@lists.linux.dev>; Thu, 19 Oct 2023 12:51:46 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1697745106; x=1698349906;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=7U6r7VG/hlgzvJUkfJxMrrqAEusd3ue24ZBPwfHMmPs=;
+        b=IRYRkN27OtHc3YH5L6om10IpGZYSsMV5qdhanwTJKTKQGReDowidytPRWYxCpqRii+
+         Zoj0QiNOXjaW3Fejx4OeS5uDbzunCcW6ku8BDndhGWpdAKO2y7K6ZqYTBAlJ0mx/OEfv
+         SElfuUgHl4WPWCp6bK+xxsiVUWQbl0etXl1cjUn1pZBDX/P6FsS+7zRi1EfYP6NRcLuC
+         kMhAsm9X8umyHysNxk6DKczxDiSuNsrLe53Ex9EJTGc+He9+1K7ok5Ix0ECcw+/fV6Ct
+         qR9gEmR0jJ5OXzyMyyV4ZQslBZVK261yERwGTa8r1yZW4RJMTGINmpkPv+IoQuvLJ6Nv
+         Q77g==
+X-Gm-Message-State: AOJu0Yx0UYeoc7ISsmMtzQDtakPCJfISu81PnPFSsViQN6hsrKaH21PB
+	GIhkgf4TE7ZS8Z3JxaXE6Wk5
+X-Google-Smtp-Source: AGHT+IGqu3XCBNSXWx1rb5do25rd30Uzw7WzImufME+8fw0H9AfKD11QEb3PPFg58B5Ib+Vce2nB6w==
+X-Received: by 2002:a05:6830:902:b0:6b8:f588:2c79 with SMTP id v2-20020a056830090200b006b8f5882c79mr4483730ott.1.1697745105671;
+        Thu, 19 Oct 2023 12:51:45 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id h18-20020a0cab12000000b0065afe284b3csm98823qvb.125.2023.10.19.12.51.44
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 19 Oct 2023 12:51:45 -0700 (PDT)
+Date: Thu, 19 Oct 2023 15:51:43 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Christian Loehle <christian.loehle@arm.com>
+Cc: agk@redhat.com, dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+Subject: Re: dm: delay: use kthread instead of timers and wq
+Message-ID: <ZTGIz/erjb8N6AHc@redhat.com>
+References: <d90adee6-0b7f-4658-8eb3-84ad38d6ab93@arm.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -66,86 +44,262 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20231019110147.31672-13-nj.shetty@samsung.com>
+In-Reply-To: <d90adee6-0b7f-4658-8eb3-84ad38d6ab93@arm.com>
 
-Hi Nitesh,
+On Thu, Oct 19 2023 at  7:21P -0400,
+Christian Loehle <christian.loehle@arm.com> wrote:
 
-kernel test robot noticed the following build warnings:
+> The current design of timers and wq to realize the delays
+> is insufficient especially for delays below ~50ms.
+> The design is replaced with a kthread to flush the expired delays,
+> trading some CPU time (in some cases) for better delay accuracy and
+> delays closer to what the user requested for smaller delays.
+> 
+> Since bios can't be completed in interrupt context using a kthread
+> is probably the most reasonable way to approach this.
 
-[auto build test WARNING on 213f891525c222e8ed145ce1ce7ae1f47921cb9c]
+Thanks for working on this.  The tradeoff to burn cpu to poll for bios
+that hit their expire time is reasonable for very short delays (which
+is the focus of your improvement) _but_ for longer delays it is
+definitely wasteful.
 
-url:    https://github.com/intel-lab-lkp/linux/commits/Nitesh-Shetty/block-Introduce-queue-limits-and-sysfs-for-copy-offload-support/20231019-200658
-base:   213f891525c222e8ed145ce1ce7ae1f47921cb9c
-patch link:    https://lore.kernel.org/r/20231019110147.31672-13-nj.shetty%40samsung.com
-patch subject: [PATCH v17 12/12] null_blk: add support for copy offload
-config: parisc-allyesconfig (https://download.01.org/0day-ci/archive/20231020/202310200001.UU0bBx9w-lkp@intel.com/config)
-compiler: hppa-linux-gcc (GCC) 13.2.0
-reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20231020/202310200001.UU0bBx9w-lkp@intel.com/reproduce)
+Your benchmarks (below) don't quantify the cpu time difference.
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202310200001.UU0bBx9w-lkp@intel.com/
+Might you use a hybrid aproach where over a certain delay threshold it
+does make sense to avoid waking the polling thread?  Otherwise if
+delay is below the threshold the busy loop is queued immediately?
 
-All warnings (new ones prefixed by >>):
+Basically: still use workqueue, but bypass jitter associated with
+using timer when appropriate (delay is short).
 
-   In file included from include/trace/define_trace.h:102,
-                    from drivers/block/null_blk/trace.h:104,
-                    from drivers/block/null_blk/main.c:15:
-   drivers/block/null_blk/./trace.h: In function 'trace_raw_output_nullb_copy_op':
->> drivers/block/null_blk/./trace.h:91:27: warning: format '%lu' expects argument of type 'long unsigned int', but argument 7 has type 'size_t' {aka 'unsigned int'} [-Wformat=]
-      91 |                 TP_printk("%s req=%-15s: dst=%llu, src=%llu, len=%lu",
-         |                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   include/trace/trace_events.h:203:34: note: in definition of macro 'DECLARE_EVENT_CLASS'
-     203 |         trace_event_printf(iter, print);                                \
-         |                                  ^~~~~
-   include/trace/trace_events.h:45:30: note: in expansion of macro 'PARAMS'
-      45 |                              PARAMS(print));                   \
-         |                              ^~~~~~
-   drivers/block/null_blk/./trace.h:73:1: note: in expansion of macro 'TRACE_EVENT'
-      73 | TRACE_EVENT(nullb_copy_op,
-         | ^~~~~~~~~~~
-   drivers/block/null_blk/./trace.h:91:17: note: in expansion of macro 'TP_printk'
-      91 |                 TP_printk("%s req=%-15s: dst=%llu, src=%llu, len=%lu",
-         |                 ^~~~~~~~~
-   In file included from include/trace/trace_events.h:237:
-   drivers/block/null_blk/./trace.h:91:68: note: format string is defined here
-      91 |                 TP_printk("%s req=%-15s: dst=%llu, src=%llu, len=%lu",
-         |                                                                  ~~^
-         |                                                                    |
-         |                                                                    long unsigned int
-         |                                                                  %u
+There are some inline comments below on your patch.
 
+Thanks,
+Mike
 
-vim +91 drivers/block/null_blk/./trace.h
+> Testing with
+> echo "0 2097152 zero" | dmsetup create dm-zeros
+> for i in $(seq 0 20);
+> do
+>   echo "0 2097152 delay /dev/mapper/dm-zeros 0 $i" | dmsetup create dm-delay-${i}ms;
+> done
+> 
+> Some performance numbers for comparison
+> beaglebone black (single core) CONFIG_HZ_1000=y:
+> fio --name=1msread --rw=randread --bs=4k --runtime=60 --time_based --filename=/dev/mapper/dm-delay-1ms
+> Theoretical maximum: 1000 IOPS
+> Previous: 250 IOPS
+> Kthread: 500 IOPS
+> fio --name=10msread --rw=randread --bs=4k --runtime=60 --time_based --filename=/dev/mapper/dm-delay-10ms
+> Theoretical maximum: 1000 IOPS
+> Previous: 45 IOPS
+> Kthread: 50 IOPS
+> fio --name=1mswrite --rw=randwrite --direct=1 --bs=4k --runtime=60 --time_based --filename=/dev/mapper/dm-delay-1ms
+> Theoretical maximum: 1000 IOPS
+> Previous: 498 IOPS
+> Kthread: 1000 IOPS
+> fio --name=10mswrite --rw=randwrite --direct=1 --bs=4k --runtime=60 --time_based --filename=/dev/mapper/dm-delay-10ms
+> Theoretical maximum: 100 IOPS
+> Previous: 90 IOPS
+> Kthread: 100 IOPS
+> fio --name=10mswriteasync --rw=randwrite --direct=1 --bs=4k --runtime=60 --time_based --filename=/dev/mapper/dm-delay-10ms --numjobs=32 --iodepth=64 --ioengine=libaio --group_reporting
+> Previous: 13.3k IOPS
+> Kthread: 13.3k IOPS
+> (This one is just to prove the new design isn't impacting throughput,
+> not really about delays)
+> 
+> Signed-off-by: Christian Loehle <christian.loehle@arm.com>
+> ---
+>  drivers/md/dm-delay.c | 83 ++++++++++++-------------------------------
+>  1 file changed, 22 insertions(+), 61 deletions(-)
+> 
+> diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
+> index 7433525e5985..a37f28294f7e 100644
+> --- a/drivers/md/dm-delay.c
+> +++ b/drivers/md/dm-delay.c
+> @@ -13,6 +13,7 @@
+>  #include <linux/blkdev.h>
+>  #include <linux/bio.h>
+>  #include <linux/slab.h>
+> +#include <linux/kthread.h>
+>  
+>  #include <linux/device-mapper.h>
+>  
+> @@ -26,11 +27,9 @@ struct delay_class {
+>  };
+>  
+>  struct delay_c {
+> -	struct timer_list delay_timer;
+> -	struct mutex timer_lock;
+> -	struct workqueue_struct *kdelayd_wq;
+>  	struct work_struct flush_expired_bios;
+>  	struct list_head delayed_bios;
+> +	struct task_struct *worker;
+>  	atomic_t may_delay;
+>  
+>  	struct delay_class read;
+> @@ -48,42 +47,25 @@ struct dm_delay_info {
+>  };
+>  
+>  static DEFINE_MUTEX(delayed_bios_lock);
+> +static void flush_delayed_bios(struct delay_c *dc, int flush_all);
+>  
+> -static void handle_delayed_timer(struct timer_list *t)
+> +static int flush_worker_fn(void *data)
+>  {
+> -	struct delay_c *dc = from_timer(dc, t, delay_timer);
+> +	struct delay_c *dc = (struct delay_c *)data;
 
-    72	
-    73	TRACE_EVENT(nullb_copy_op,
-    74			TP_PROTO(struct request *req,
-    75				 sector_t dst, sector_t src, size_t len),
-    76			TP_ARGS(req, dst, src, len),
-    77			TP_STRUCT__entry(
-    78					 __array(char, disk, DISK_NAME_LEN)
-    79					 __field(enum req_op, op)
-    80					 __field(sector_t, dst)
-    81					 __field(sector_t, src)
-    82					 __field(size_t, len)
-    83			),
-    84			TP_fast_assign(
-    85				       __entry->op = req_op(req);
-    86				       __assign_disk_name(__entry->disk, req->q->disk);
-    87				       __entry->dst = dst;
-    88				       __entry->src = src;
-    89				       __entry->len = len;
-    90			),
-  > 91			TP_printk("%s req=%-15s: dst=%llu, src=%llu, len=%lu",
-    92				  __print_disk_name(__entry->disk),
-    93				  blk_op_str(__entry->op),
-    94				  __entry->dst, __entry->src, __entry->len)
-    95	);
-    96	#endif /* _TRACE_NULLB_H */
-    97	
+Cast shouldn't be needed.
 
--- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
+> -	queue_work(dc->kdelayd_wq, &dc->flush_expired_bios);
+> -}
+> -
+> -static void queue_timeout(struct delay_c *dc, unsigned long expires)
+> -{
+> -	mutex_lock(&dc->timer_lock);
+> -
+> -	if (!timer_pending(&dc->delay_timer) || expires < dc->delay_timer.expires)
+> -		mod_timer(&dc->delay_timer, expires);
+> -
+> -	mutex_unlock(&dc->timer_lock);
+> -}
+> -
+> -static void flush_bios(struct bio *bio)
+> -{
+> -	struct bio *n;
+> -
+> -	while (bio) {
+> -		n = bio->bi_next;
+> -		bio->bi_next = NULL;
+> -		dm_submit_bio_remap(bio, NULL);
+> -		bio = n;
+> +	while (1) {
+> +		flush_delayed_bios(dc, 0);
+> +		if (unlikely(list_empty(&dc->delayed_bios)))
+> +			set_current_state(TASK_INTERRUPTIBLE);
+> +		schedule();
+
+cond_resched() likely better?
+
+>  	}
+> +
+> +	return 0;
+>  }
+>  
+> -static struct bio *flush_delayed_bios(struct delay_c *dc, int flush_all)
+> +static void flush_delayed_bios(struct delay_c *dc, int flush_all)
+
+Feel free to switch flush_all to a bool.
+
+>  {
+>  	struct dm_delay_info *delayed, *next;
+> -	unsigned long next_expires = 0;
+> -	unsigned long start_timer = 0;
+> -	struct bio_list flush_bios = { };
+>  
+>  	mutex_lock(&delayed_bios_lock);
+>  	list_for_each_entry_safe(delayed, next, &dc->delayed_bios, list) {
+> @@ -91,23 +73,12 @@ static struct bio *flush_delayed_bios(struct delay_c *dc, int flush_all)
+>  			struct bio *bio = dm_bio_from_per_bio_data(delayed,
+>  						sizeof(struct dm_delay_info));
+>  			list_del(&delayed->list);
+> -			bio_list_add(&flush_bios, bio);
+> +			dm_submit_bio_remap(bio, NULL);
+>  			delayed->class->ops--;
+> -			continue;
+>  		}
+> -
+> -		if (!start_timer) {
+> -			start_timer = 1;
+> -			next_expires = delayed->expires;
+> -		} else
+> -			next_expires = min(next_expires, delayed->expires);
+>  	}
+>  	mutex_unlock(&delayed_bios_lock);
+>  
+> -	if (start_timer)
+> -		queue_timeout(dc, next_expires);
+> -
+> -	return bio_list_get(&flush_bios);
+>  }
+>  
+>  static void flush_expired_bios(struct work_struct *work)
+> @@ -115,24 +86,21 @@ static void flush_expired_bios(struct work_struct *work)
+>  	struct delay_c *dc;
+>  
+>  	dc = container_of(work, struct delay_c, flush_expired_bios);
+> -	flush_bios(flush_delayed_bios(dc, 0));
+> +	flush_delayed_bios(dc, 0);
+>  }
+>  
+>  static void delay_dtr(struct dm_target *ti)
+>  {
+>  	struct delay_c *dc = ti->private;
+>  
+> -	if (dc->kdelayd_wq)
+> -		destroy_workqueue(dc->kdelayd_wq);
+> -
+>  	if (dc->read.dev)
+>  		dm_put_device(ti, dc->read.dev);
+>  	if (dc->write.dev)
+>  		dm_put_device(ti, dc->write.dev);
+>  	if (dc->flush.dev)
+>  		dm_put_device(ti, dc->flush.dev);
+> -
+> -	mutex_destroy(&dc->timer_lock);
+> +	if (dc->worker)
+> +		kthread_stop(dc->worker);
+>  
+>  	kfree(dc);
+>  }
+> @@ -188,10 +156,11 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>  	}
+>  
+>  	ti->private = dc;
+> -	timer_setup(&dc->delay_timer, handle_delayed_timer, 0);
+>  	INIT_WORK(&dc->flush_expired_bios, flush_expired_bios);
+>  	INIT_LIST_HEAD(&dc->delayed_bios);
+> -	mutex_init(&dc->timer_lock);
+> +	dc->worker = kthread_create(&flush_worker_fn, dc, "dm-delay-flush-worker");
+> +	if (!dc->worker)
+> +		goto bad;
+>  	atomic_set(&dc->may_delay, 1);
+>  	dc->argc = argc;
+>  
+> @@ -224,13 +193,6 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>  		goto bad;
+>  
+>  out:
+> -	dc->kdelayd_wq = alloc_workqueue("kdelayd", WQ_MEM_RECLAIM, 0);
+> -	if (!dc->kdelayd_wq) {
+> -		ret = -EINVAL;
+> -		DMERR("Couldn't start kdelayd");
+> -		goto bad;
+> -	}
+> -
+>  	ti->num_flush_bios = 1;
+>  	ti->num_discard_bios = 1;
+>  	ti->accounts_remapped_io = true;
+> @@ -260,7 +222,7 @@ static int delay_bio(struct delay_c *dc, struct delay_class *c, struct bio *bio)
+>  	list_add_tail(&delayed->list, &dc->delayed_bios);
+>  	mutex_unlock(&delayed_bios_lock);
+>  
+> -	queue_timeout(dc, expires);
+> +	wake_up_process(dc->worker);
+>  
+>  	return DM_MAPIO_SUBMITTED;
+>  }
+> @@ -270,8 +232,7 @@ static void delay_presuspend(struct dm_target *ti)
+>  	struct delay_c *dc = ti->private;
+>  
+>  	atomic_set(&dc->may_delay, 0);
+> -	del_timer_sync(&dc->delay_timer);
+> -	flush_bios(flush_delayed_bios(dc, 1));
+> +	flush_delayed_bios(dc, 1);
+>  }
+>  
+>  static void delay_resume(struct dm_target *ti)
+> -- 
+> 2.34.1
+> 
