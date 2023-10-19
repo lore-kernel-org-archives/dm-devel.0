@@ -1,49 +1,49 @@
-Received: from mailout4.samsung.com (mailout4.samsung.com [203.254.224.34])
+Received: from mailout2.samsung.com (mailout2.samsung.com [203.254.224.25])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 237ED225B8
-	for <dm-devel@lists.linux.dev>; Thu, 19 Oct 2023 12:04:40 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CAF951EB51
+	for <dm-devel@lists.linux.dev>; Thu, 19 Oct 2023 12:10:40 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="bi8CLoPC"
-Received: from epcas5p2.samsung.com (unknown [182.195.41.40])
-	by mailout4.samsung.com (KnoxPortal) with ESMTP id 20231019120432epoutp0425e7cac704ef0bbd8d6ce7d2839dac83~PgK7PhpSv1483514835epoutp04K
-	for <dm-devel@lists.linux.dev>; Thu, 19 Oct 2023 12:04:32 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout4.samsung.com 20231019120432epoutp0425e7cac704ef0bbd8d6ce7d2839dac83~PgK7PhpSv1483514835epoutp04K
+	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="l9kXyZA0"
+Received: from epcas5p3.samsung.com (unknown [182.195.41.41])
+	by mailout2.samsung.com (KnoxPortal) with ESMTP id 20231019120412epoutp02d4670d91efe8a22b5e4d54db99f4508a~PgKogBclf2727627276epoutp02l
+	for <dm-devel@lists.linux.dev>; Thu, 19 Oct 2023 12:04:12 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.samsung.com 20231019120412epoutp02d4670d91efe8a22b5e4d54db99f4508a~PgKogBclf2727627276epoutp02l
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
-	s=mail20170921; t=1697717072;
-	bh=OJzVFQCb3WofjpZljeXnGBqYi+B32Cvdl/hefyKURJs=;
+	s=mail20170921; t=1697717052;
+	bh=WRb5UebBvbY1xsMYZIZvAmNJpBcvY4g9cTSXPzDv7NY=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=bi8CLoPCBUmwkFvI/JVM4HyjYompNST0RPr4v+pEa4iOAJpzqflbnS3PLdfmS00jH
-	 pRxadRjgOzlKgeRCJ//8cDRHLV0oPmW5Fh4d27nBbbDljV6Mec9a/8QQMCfC/DaJLJ
-	 3evzsc1yY3IVK/bJE1geQygBVy7z3E0cnA7IEKPE=
+	b=l9kXyZA01NEQvEoLklbSfUIHi58bUKSEbX0gp+bGFNT+eUfW7xwQmEfYDQd1aaFaT
+	 gPJi/vnX/aoyyhxbEt+NsIejN4FzgRAp3Ed0i/lCBDBfqvPWZQByedk6Is8KM2QuGk
+	 +K2MrMtCMpMxmNymAOqSSonPYm0rdJKOciCLx2oU=
 Received: from epsnrtp1.localdomain (unknown [182.195.42.162]) by
-	epcas5p3.samsung.com (KnoxPortal) with ESMTP id
-	20231019120432epcas5p358fff75117ff942f9f13e08d787f00c3~PgK6pE52f1178011780epcas5p3f;
-	Thu, 19 Oct 2023 12:04:32 +0000 (GMT)
-Received: from epsmges5p3new.samsung.com (unknown [182.195.38.182]) by
-	epsnrtp1.localdomain (Postfix) with ESMTP id 4SB5xC01K8z4x9Pr; Thu, 19 Oct
-	2023 12:04:31 +0000 (GMT)
+	epcas5p2.samsung.com (KnoxPortal) with ESMTP id
+	20231019120411epcas5p22ef9512956a82b118280209dff7c334c~PgKn1cIU20651406514epcas5p2x;
+	Thu, 19 Oct 2023 12:04:11 +0000 (GMT)
+Received: from epsmges5p2new.samsung.com (unknown [182.195.38.180]) by
+	epsnrtp1.localdomain (Postfix) with ESMTP id 4SB5wp34jmz4x9Ps; Thu, 19 Oct
+	2023 12:04:10 +0000 (GMT)
 Received: from epcas5p1.samsung.com ( [182.195.41.39]) by
-	epsmges5p3new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	55.42.09672.E4B11356; Thu, 19 Oct 2023 21:04:30 +0900 (KST)
-Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
-	epcas5p4.samsung.com (KnoxPortal) with ESMTPA id
-	20231019111014epcas5p461d1c994f489b9c71a6baf18922146b5~PfbhDQAmH2188221882epcas5p45;
-	Thu, 19 Oct 2023 11:10:14 +0000 (GMT)
-Received: from epsmgmc1p1new.samsung.com (unknown [182.195.42.40]) by
-	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
-	20231019111014epsmtrp206f0641b0b89b0ccb652fcd40d91ffb5~PfbhA7aMl1629616296epsmtrp2T;
-	Thu, 19 Oct 2023 11:10:14 +0000 (GMT)
-X-AuditID: b6c32a4b-60bfd700000025c8-e8-65311b4e2145
+	epsmges5p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	23.88.10009.A3B11356; Thu, 19 Oct 2023 21:04:10 +0900 (KST)
+Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
+	epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
+	20231019110914epcas5p2ce15c70c6f443895bb458dfbdcc50e3b~PfaoryLJd0518805188epcas5p24;
+	Thu, 19 Oct 2023 11:09:14 +0000 (GMT)
+Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
+	epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
+	20231019110914epsmtrp15aa5ab9511ae4a9c05a6e2716dbfecb7~PfaopVnvm2693626936epsmtrp1E;
+	Thu, 19 Oct 2023 11:09:14 +0000 (GMT)
+X-AuditID: b6c32a4a-ff1ff70000002719-2d-65311b3a36a3
 Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
-	epsmgmc1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	11.77.07368.69E01356; Thu, 19 Oct 2023 20:10:14 +0900 (KST)
+	epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	EE.C9.08755.A5E01356; Thu, 19 Oct 2023 20:09:14 +0900 (KST)
 Received: from green245.sa.corp.samsungelectronics.net (unknown
 	[107.99.41.245]) by epsmtip1.samsung.com (KnoxPortal) with ESMTPA id
-	20231019111011epsmtip107621e0d42a07c717dbe65573354f61f~Pfbdemp6B2869028690epsmtip1R;
-	Thu, 19 Oct 2023 11:10:10 +0000 (GMT)
+	20231019110910epsmtip1f1eb25b3163831303f673e11c1294f9e~PfalPVO2s2856028560epsmtip1M;
+	Thu, 19 Oct 2023 11:09:10 +0000 (GMT)
 From: Nitesh Shetty <nj.shetty@samsung.com>
 To: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, Alasdair
 	Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
@@ -54,14 +54,14 @@ To: Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>, Alasdair
 Cc: martin.petersen@oracle.com, linux-scsi@vger.kernel.org,
 	nitheshshetty@gmail.com, anuj1072538@gmail.com, gost.dev@samsung.com,
 	mcgrof@kernel.org, Nitesh Shetty <nj.shetty@samsung.com>, Hannes Reinecke
-	<hare@suse.de>, Damien Le Moal <damien.lemoal@opensource.wdc.com>, Anuj
-	Gupta <anuj20.g@samsung.com>, Vincent Fu <vincent.fu@samsung.com>,
+	<hare@suse.de>, Anuj Gupta <anuj20.g@samsung.com>,
 	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
 	linux-doc@vger.kernel.org, linux-nvme@lists.infradead.org,
 	linux-fsdevel@vger.kernel.org
-Subject: [PATCH v17 12/12] null_blk: add support for copy offload
-Date: Thu, 19 Oct 2023 16:31:40 +0530
-Message-Id: <20231019110147.31672-13-nj.shetty@samsung.com>
+Subject: [PATCH v17 06/12] fs, block: copy_file_range for def_blk_ops for
+ direct block device
+Date: Thu, 19 Oct 2023 16:31:34 +0530
+Message-Id: <20231019110147.31672-7-nj.shetty@samsung.com>
 X-Mailer: git-send-email 2.35.1.500.gb896f729e2
 In-Reply-To: <20231019110147.31672-1-nj.shetty@samsung.com>
 Precedence: bulk
@@ -71,301 +71,109 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Brightmail-Tracker: H4sIAAAAAAAAA01TbVBUZRSe9967l4WJvHxNL8uEzKqZEOyusPhiUKDkXNMJZsqZ6M+6sNcF
-	gWXbjwDLAmFDIAElKheVDwkUkoXlI1D5GBAWsYVZyQWZELNdP9qCwDJHINp1sfz3nOec5zzv
-	Oe8cNu7Z4MJhp8hUjEImTuOSbkTn4JbNwe/4CRh+YV8o0o0O42jhryUCHSlbwVHTTCmJbIOL
-	AFn6CwBaMo7jqLr2NIFu9ndj6HLtCQydbxrC0IkBM0DWG1oM9UwHoZrP6wh0uecqgSYuniJR
-	Vb3VBRVPdpGowfAPhqbKrAB1WXIB6lyqwlGzbZ5AI9N+6JfiowCNrxhY0X50t3bGhR6/1UrQ
-	E0Y1rW8sJOm2us/o+20nAX3pZg5Jny0pZ9HH8uZIulszy6IXrNMEPd97g6RL2hsB3XbtY/qh
-	3p/WW37H4qkPUiOTGbGEUQQwsqQMSYpMGsXd865op0gYzhcECyLQNm6ATJzORHFj98YH70pJ
-	sy+HG/CROE1tp+LFSiWX90akIkOtYgKSM5SqKC4jl6TJw+QhSnG6Ui2ThsgY1XYBn79VaC/c
-	n5pc8cUIITftyrrbYmLlgObtRcCVDakwuDTVRRYBN7YndQnAtvvzLGewCGCNuQFzBo8ALG4v
-	xZ9JVsqHCGeiB8ALvUOYI+FJaTDY9OPGIsBmk1QQvLbKdtR4Uxoc9v30G3AEOPUYh2cNBtIh
-	8KJi4JQ5z8WBCWoTbDp+9yl2p16HhZYrpKMRpHiwdNbDQbva6ZbiWtxZ4gGvnrQQDoxT62Fe
-	RyXu6A+pMVdoXjiHOV8aC2tyO1hO7AV/NbS7ODEHPpzrIZ04E57/8hzpFOcDqJ3UAmfiTagZ
-	dYzMtjtsgbqLPCf9MqwYbcacxi/CY0uWNS932HXmGd4Av9NVr/X3hea/c9cwDU2mxbWVlgCo
-	X60ny0CA9rmBtM8NpP3fuhrgjcCXkSvTpYxSKA+VMZn/fXNSRroePL2YwD1d4M7tP0IGAMYG
-	AwCyca63+yaaz3i6S8TZhxhFhkihTmOUA0BoX/hxnOOTlGE/OZlKJAiL4IeFh4eHRYSGC7gv
-	uds0pyWelFSsYlIZRs4onukwtisnB+t4oe2eRzOsM7klzM3mShNmDSmdB4J5DzQ+VdetXnHq
-	3qwn/tm5K8O7XaMLloPlWW+59WGc+kPKVV39EXmm0WNkK9xdWSeKPfjDQtKrIaOFbx8c09Ua
-	W0FLyUxUXfnt/IqIQlHTt7q9R7N38OAGo+7Kvo3VWduGFyYkhxNjIj+13fqq/5uvo5fNOxPG
-	7vF6Dj9ZFyka7eeRRX/qP4xkkZs5gdP++z9pQ9b56xfivs9dlyxcHzC23Fpw5v2QoJZHjw8A
-	AeP7ikGaH4UWw8fjbYuDeOVrO4zcTJ+8GJ/35r2iY7xL7tgE2sLOlLjE3vGpfRXZiYOTp4qF
-	D7KY7p8jTEEKLqFMFgsCcYVS/C/00qlQugQAAA==
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrLIsWRmVeSWpSXmKPExsWy7bCSnO40PsNUg637tSzWnzrGbPHx628W
-	i6YJf5ktVt/tZ7N4ffgTo8WTA+2MFr/Pnme2WLBoLovFzQM7mSz2LJrEZLFy9VEmi0mHrjFa
-	PL06i8li7y1ti4VtS1gs9uw9yWJxedccNov5y56yW3Rf38Fmsfz4PyaLGxOeMlrseNLIaLHt
-	93xmi3Wv37NYnLglbfG4u4PR4vzf46wO0h47Z91l9zh/byOLx+WzpR6bVnWyeWxeUu/xYvNM
-	Ro/dNxvYPBb3TWb16G1+x+axs/U+q8fHp7dYPN7vu8rm0bdlFaPH5tPVHp83yXlsevKWKUAg
-	issmJTUnsyy1SN8ugStjas8JloKLbhXPNlxkbWBcZ9XFyMkhIWAi8XfyUZYuRi4OIYHdjBIf
-	7l1hgkhISiz7e4QZwhaWWPnvOTtEUTOTxKmGdqAiDg42AW2J0/85QOIiAv3MEu/+TmcCcZgF
-	OlgkLmzbyw7SLSzgKHHjWjOYzSKgKrF64jMwm1fAWqLzyRE2kEESAvoS/fcFQcKcQOEN3YvA
-	FgsJWEk8WPAYqlxQ4uTMJywgNrOAvETz1tnMExgFZiFJzUKSWsDItIpRMrWgODc9N9mwwDAv
-	tVyvODG3uDQvXS85P3cTIzgFaGnsYLw3/5/eIUYmDsZDjBIczEoivKoeBqlCvCmJlVWpRfnx
-	RaU5qcWHGKU5WJTEeQ1nzE4REkhPLEnNTk0tSC2CyTJxcEo1MHEfmLBVP128dcb8Nd5Z4sw7
-	b/w4cLp9mn79k+1yRrNXle/1+Jqt/7Hw013ddxU8Sb80TN/WTV36eaK+//ant6UFcybc2GGk
-	GfvrbzPvIpkle+eEvjhxqky+PbfOrPC3XJ3x/V+y10/+nz4zyPqp7VSTnb+1197YvKmshf20
-	1dqtCUeKw79daFNeu2db7qLKd6fmSh7JrRI7PjsoxeO3/JeuFa9LmkJ5DLXU8wWuLnFZUXPN
-	xuTT1FaekqPBZ0V0rI2Vn77KX7lG48tdjxaelDNMc1nuiTQfXnm47YXd9s2bZj1/H3Bgy5N5
-	1fd2q749t6P6uN3y01dydksIrfuofeL9G84Pi9Xe5zTp+Hfv4IgIVmIpzkg01GIuKk4EAPOw
-	tuxwAwAA
-X-CMS-MailID: 20231019111014epcas5p461d1c994f489b9c71a6baf18922146b5
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Tf1DTZRzH7/l+v3wZHOQXlHiAIlpRhwZsMsYDiRYQfQ/JozjupK5ba3xv
+	EGPb7Ye/OGskg4L4kSLlEuRXJSBMQHT8Ug4OECiX4RAQlGhUxgLFUytC2tgo/3s97+f9fH49
+	92Hhnl86+7IypCpGIRVK2KQrcb4/6MXgKD8uw8kZ8UL6kUEc3b2/QqCPS1dx1DhTQqKF/mWA
+	zL35AFXVVBBosrcDQ901RzFU3ziAoaN94wDNm3QY6pnahqrz6gjU3TNMoLHOkyQ69c28Myq8
+	biDRt0OPMDRROg+QwZwD0PmVUzhqXlgi0OUpP2RcHXJ6xYfu0M0408abLQQ99r2abm34lKTb
+	6j6if2s7AeiuSQ1J1xYfc6KLjiyS9N35KYJeumgi6eJzDYBuG82m77X6063mP7CkTW9n7khn
+	hGmMIoCRimRpGVJxNHt3siBWEM7ncIO5kSiCHSAVZjHR7LjEpOD4DIl1GuyAfUKJ2iolCZVK
+	dujOHQqZWsUEpMuUqmg2I0+TyHnyEKUwS6mWikOkjCqKy+FsD7ca38tM79CXEvKuTQfG+yec
+	NGDIrQC4sCDFg7MtuaAAuLI8qS4ANYYBzH5YBrC1vNFx8wBAY3GT88aTqa9LHK4eq6t+wuHS
+	YrBurcCpALBYJLUNjq6xbPoWSovDS9OWdRNOVeKwbW4Is4XaTAngvbnadSaoQHj56jhuY3cq
+	Cl57aCZtgSAVCktuedhkF+pleLawxmHxgMMnzISNceoZeKT9K9xend4Flk+52zkOrhqPk3be
+	DH8fOufowBfeLslz8H5YX3aatNUGqVwAddd1wH6xC2pHSnBbDTgVBPWdoXb5aXh8pBmz530C
+	Fq2YMbvuDg2VG/wcPKOvcuT1geMPcxxMw/zuWtw+rGIAqyt+dCoFAbrH+tE91o/u/9RVAG8A
+	PoxcmSVmlOHy7VJm/3/fLJJltYL1FdmaYAA/zd4J6QMYC/QByMLZW9wDaQ7j6Z4mPHiIUcgE
+	CrWEUfaBcOu8P8d9vUQy645JVQIuL5LD4/P5vMgwPpft7b6grUjzpMRCFZPJMHJGsfEOY7n4
+	arDA+wq/l3im1JQ/E7Wu7YpiZWZ+P2HInTi0WzOWGfbPjZUEy8+E5P2K9Gn1a4NxM+bUFBn/
+	+SZvPPuNZJk68DOT56x3UPThH67yjW5k+YctB/19nuL9agram31peizwwgeFu8QxX9Qslp9+
+	fbLmTm/UDRD1i9xkaXoQvT9OoP/EjI1yJpdl1c/GJ1fs3JNS5t+8p/dVkQb6BlfclKfGuzat
+	RqyFXbl1MvH2cNSZ2PIn+zhBktQX/l4pU3U3Dx6WLl57dzHmkXhfzlmvY5YDosV3EpKuRFiM
+	xMBFUV/LtPjNTh/GQwR7aFGMUIH2trtJ5zrGv5uojC3S/rWUx3kr74JlpoZNKNOF3K24Qin8
+	F0tvCoSrBAAA
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Rf0yMcRzHfZ/nueee4vR0Ud9kzOGPfrvV1ndqYWP7zkz+YCw/T/f0Y666
+	3an8mo4sXHQpOneVcgkdI3c5/VD6gVIahlMtMV2JViQUdsV1s/Xfe+/X6/P+58OQwg5qAZOQ
+	tJ9TJElkItqVsjSLFgVGzxVzK/pKBeh222MSjf74Q6HjOXYS3XirodFQ8zeAbA0nASoxFFGo
+	q6GaQPcNuQQqv/GIQLlNVoD6X+sJVNftjy5nXqHQ/bonFHpZU0ij4qv9fJT1popG11omCdSZ
+	0w9Qle0YQJY/xSS6NfSFQq3dPuiZvYW32htX69/y8bPeOxR+2ZGCTcbTNDZfSceDZh3AtV0q
+	Gpdm5/Hw2YwRGo/2d1P4S/1rGmdXGgE2tx/GY6ZF2GQbJja5RbtGSDlZQiqnCI7c4xpffTuH
+	kte6HbA2d/JUoGWOGrgwkA2F3WUaQg1cGSFbC+DP5jLCCbzhVftD0pk9YPnkR75TyiBgQ/kr
+	Sg0Yhmb9YfsU4+jnsRoSjti108cke5OElUUCR/Zgd0KtTk87MsUuh60vrNOjAnYlfDVuox07
+	kA2GmnfujtqFDYcVWYZpRfhPeV/Sx3fq7vCJzkY55xfDjLsFZA5g9TOQfgYqAYQReHNyZWJc
+	olIsFydxaUFKSaIyJSkuKCY50QSmP+7nWwXuGb8GNQGCAU0AMqRonmA5XsEJBVLJwUOcInm3
+	IkXGKZuAD0OJvAReg2elQjZOsp/bx3FyTvGfEozLAhXhNuI1NejzaX4NSzTamJDUcfGP0dKb
+	wQb+0EDMwajaUE+eprBodo1w9oFrq7OnNvd9t2SZQ3SPCqKLZe6B9b5hPbzWM1FHOn1jFqdd
+	Prr3xZ6QwPW9po7Y4g3Lkj/4fmoHlp6e86q1wgo7E65VrGLurnsw4RkwFpL5OW/8QSTlucYD
+	k5Fbon5fP9VaCEXb3KwXWe1zz7S8tfk/F3ZIpem/s0+MqFPFlnMXvubPN3g3cuqA6qW/rBvb
+	XM5N+OsEk70V28K045mz8hsrP8/dWmD3T9hQEGEuO2luM3/bnb5lSay8bGBX0NPJdONA5PPH
+	YadllyRLJ4ZptH2H34l420fVXhGljJeI/UiFUvIXeN3BjGADAAA=
+X-CMS-MailID: 20231019110914epcas5p2ce15c70c6f443895bb458dfbdcc50e3b
 X-Msg-Generator: CA
 Content-Type: text/plain; charset="utf-8"
 X-Sendblock-Type: REQ_APPROVE
 CMS-TYPE: 105P
 DLP-Filter: Pass
 X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20231019111014epcas5p461d1c994f489b9c71a6baf18922146b5
+X-CMS-RootMailID: 20231019110914epcas5p2ce15c70c6f443895bb458dfbdcc50e3b
 References: <20231019110147.31672-1-nj.shetty@samsung.com>
-	<CGME20231019111014epcas5p461d1c994f489b9c71a6baf18922146b5@epcas5p4.samsung.com>
+	<CGME20231019110914epcas5p2ce15c70c6f443895bb458dfbdcc50e3b@epcas5p2.samsung.com>
 
-Implementation is based on existing read and write infrastructure.
-copy_max_bytes: A new configfs and module parameter is introduced, which
-can be used to set hardware/driver supported maximum copy limit.
-Only request based queue mode will support for copy offload.
-Added tracefs support to copy IO tracing.
+For direct block device opened with O_DIRECT, use copy_file_range to
+issue device copy offload, or use generic_copy_file_range in case
+device copy offload capability is absent or the device files are not open
+with O_DIRECT.
 
 Reviewed-by: Hannes Reinecke <hare@suse.de>
-Suggested-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
 Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
-Signed-off-by: Vincent Fu <vincent.fu@samsung.com>
 ---
- Documentation/block/null_blk.rst  |  5 ++
- drivers/block/null_blk/main.c     | 97 ++++++++++++++++++++++++++++++-
- drivers/block/null_blk/null_blk.h |  1 +
- drivers/block/null_blk/trace.h    | 23 ++++++++
- 4 files changed, 123 insertions(+), 3 deletions(-)
+ block/fops.c | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
 
-diff --git a/Documentation/block/null_blk.rst b/Documentation/block/null_blk.rst
-index 4dd78f24d10a..6153e02fcf13 100644
---- a/Documentation/block/null_blk.rst
-+++ b/Documentation/block/null_blk.rst
-@@ -149,3 +149,8 @@ zone_size=[MB]: Default: 256
- zone_nr_conv=[nr_conv]: Default: 0
-   The number of conventional zones to create when block device is zoned.  If
-   zone_nr_conv >= nr_zones, it will be reduced to nr_zones - 1.
-+
-+copy_max_bytes=[size in bytes]: Default: COPY_MAX_BYTES
-+  A module and configfs parameter which can be used to set hardware/driver
-+  supported maximum copy offload limit.
-+  COPY_MAX_BYTES(=128MB at present) is defined in fs.h
-diff --git a/drivers/block/null_blk/main.c b/drivers/block/null_blk/main.c
-index c56bef0edc5e..22361f4d5f71 100644
---- a/drivers/block/null_blk/main.c
-+++ b/drivers/block/null_blk/main.c
-@@ -160,6 +160,10 @@ static int g_max_sectors;
- module_param_named(max_sectors, g_max_sectors, int, 0444);
- MODULE_PARM_DESC(max_sectors, "Maximum size of a command (in 512B sectors)");
- 
-+static unsigned long g_copy_max_bytes = BLK_COPY_MAX_BYTES;
-+module_param_named(copy_max_bytes, g_copy_max_bytes, ulong, 0444);
-+MODULE_PARM_DESC(copy_max_bytes, "Maximum size of a copy command (in bytes)");
-+
- static unsigned int nr_devices = 1;
- module_param(nr_devices, uint, 0444);
- MODULE_PARM_DESC(nr_devices, "Number of devices to register");
-@@ -412,6 +416,7 @@ NULLB_DEVICE_ATTR(home_node, uint, NULL);
- NULLB_DEVICE_ATTR(queue_mode, uint, NULL);
- NULLB_DEVICE_ATTR(blocksize, uint, NULL);
- NULLB_DEVICE_ATTR(max_sectors, uint, NULL);
-+NULLB_DEVICE_ATTR(copy_max_bytes, uint, NULL);
- NULLB_DEVICE_ATTR(irqmode, uint, NULL);
- NULLB_DEVICE_ATTR(hw_queue_depth, uint, NULL);
- NULLB_DEVICE_ATTR(index, uint, NULL);
-@@ -553,6 +558,7 @@ static struct configfs_attribute *nullb_device_attrs[] = {
- 	&nullb_device_attr_queue_mode,
- 	&nullb_device_attr_blocksize,
- 	&nullb_device_attr_max_sectors,
-+	&nullb_device_attr_copy_max_bytes,
- 	&nullb_device_attr_irqmode,
- 	&nullb_device_attr_hw_queue_depth,
- 	&nullb_device_attr_index,
-@@ -659,7 +665,8 @@ static ssize_t memb_group_features_show(struct config_item *item, char *page)
- 			"poll_queues,power,queue_mode,shared_tag_bitmap,size,"
- 			"submit_queues,use_per_node_hctx,virt_boundary,zoned,"
- 			"zone_capacity,zone_max_active,zone_max_open,"
--			"zone_nr_conv,zone_offline,zone_readonly,zone_size\n");
-+			"zone_nr_conv,zone_offline,zone_readonly,zone_size,"
-+			"copy_max_bytes\n");
+diff --git a/block/fops.c b/block/fops.c
+index 73e42742543f..662d36a251a3 100644
+--- a/block/fops.c
++++ b/block/fops.c
+@@ -735,6 +735,30 @@ static ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
+ 	return ret;
  }
  
- CONFIGFS_ATTR_RO(memb_group_, features);
-@@ -725,6 +732,7 @@ static struct nullb_device *null_alloc_dev(void)
- 	dev->queue_mode = g_queue_mode;
- 	dev->blocksize = g_bs;
- 	dev->max_sectors = g_max_sectors;
-+	dev->copy_max_bytes = g_copy_max_bytes;
- 	dev->irqmode = g_irqmode;
- 	dev->hw_queue_depth = g_hw_queue_depth;
- 	dev->blocking = g_blocking;
-@@ -1274,6 +1282,81 @@ static int null_transfer(struct nullb *nullb, struct page *page,
- 	return err;
- }
- 
-+static inline int nullb_setup_copy(struct nullb *nullb, struct request *req,
-+				   bool is_fua)
++static ssize_t blkdev_copy_file_range(struct file *file_in, loff_t pos_in,
++				      struct file *file_out, loff_t pos_out,
++				      size_t len, unsigned int flags)
 +{
-+	sector_t sector_in = 0, sector_out = 0;
-+	loff_t offset_in, offset_out;
-+	void *in, *out;
-+	ssize_t chunk, rem = 0;
-+	struct bio *bio;
-+	struct nullb_page *t_page_in, *t_page_out;
-+	u16 seg = 1;
-+	int status = -EIO;
++	struct block_device *in_bdev = I_BDEV(bdev_file_inode(file_in));
++	struct block_device *out_bdev = I_BDEV(bdev_file_inode(file_out));
++	ssize_t copied = 0;
 +
-+	if (blk_rq_nr_phys_segments(req) != BLK_COPY_MAX_SEGMENTS)
-+		return status;
-+
-+	/*
-+	 * First bio contains information about source and last bio contains
-+	 * information about destination.
-+	 */
-+	__rq_for_each_bio(bio, req) {
-+		if (seg == blk_rq_nr_phys_segments(req)) {
-+			sector_out = bio->bi_iter.bi_sector;
-+			if (rem != bio->bi_iter.bi_size)
-+				return status;
-+		} else {
-+			sector_in = bio->bi_iter.bi_sector;
-+			rem = bio->bi_iter.bi_size;
-+		}
-+		seg++;
++	if ((in_bdev == out_bdev) && bdev_max_copy_sectors(in_bdev) &&
++	    (file_in->f_iocb_flags & IOCB_DIRECT) &&
++	    (file_out->f_iocb_flags & IOCB_DIRECT)) {
++		copied = blkdev_copy_offload(in_bdev, pos_in, pos_out, len,
++					     NULL, NULL, GFP_KERNEL);
++		if (copied < 0)
++			copied = 0;
++	} else {
++		copied = generic_copy_file_range(file_in, pos_in + copied,
++						 file_out, pos_out + copied,
++						 len - copied, flags);
 +	}
 +
-+	trace_nullb_copy_op(req, sector_out << SECTOR_SHIFT,
-+			    sector_in << SECTOR_SHIFT, rem);
-+
-+	spin_lock_irq(&nullb->lock);
-+	while (rem > 0) {
-+		chunk = min_t(size_t, nullb->dev->blocksize, rem);
-+		offset_in = (sector_in & SECTOR_MASK) << SECTOR_SHIFT;
-+		offset_out = (sector_out & SECTOR_MASK) << SECTOR_SHIFT;
-+
-+		if (null_cache_active(nullb) && !is_fua)
-+			null_make_cache_space(nullb, PAGE_SIZE);
-+
-+		t_page_in = null_lookup_page(nullb, sector_in, false,
-+					     !null_cache_active(nullb));
-+		if (!t_page_in)
-+			goto err;
-+		t_page_out = null_insert_page(nullb, sector_out,
-+					      !null_cache_active(nullb) ||
-+					      is_fua);
-+		if (!t_page_out)
-+			goto err;
-+
-+		in = kmap_local_page(t_page_in->page);
-+		out = kmap_local_page(t_page_out->page);
-+
-+		memcpy(out + offset_out, in + offset_in, chunk);
-+		kunmap_local(out);
-+		kunmap_local(in);
-+		__set_bit(sector_out & SECTOR_MASK, t_page_out->bitmap);
-+
-+		if (is_fua)
-+			null_free_sector(nullb, sector_out, true);
-+
-+		rem -= chunk;
-+		sector_in += chunk >> SECTOR_SHIFT;
-+		sector_out += chunk >> SECTOR_SHIFT;
-+	}
-+
-+	status = 0;
-+err:
-+	spin_unlock_irq(&nullb->lock);
-+	return status;
++	return copied;
 +}
 +
- static int null_handle_rq(struct nullb_cmd *cmd)
- {
- 	struct request *rq = cmd->rq;
-@@ -1283,13 +1366,16 @@ static int null_handle_rq(struct nullb_cmd *cmd)
- 	sector_t sector = blk_rq_pos(rq);
- 	struct req_iterator iter;
- 	struct bio_vec bvec;
-+	bool fua = rq->cmd_flags & REQ_FUA;
-+
-+	if (op_is_copy(req_op(rq)))
-+		return nullb_setup_copy(nullb, rq, fua);
+ #define	BLKDEV_FALLOC_FL_SUPPORTED					\
+ 		(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |		\
+ 		 FALLOC_FL_ZERO_RANGE | FALLOC_FL_NO_HIDE_STALE)
+@@ -839,6 +863,7 @@ const struct file_operations def_blk_fops = {
+ 	.splice_read	= filemap_splice_read,
+ 	.splice_write	= iter_file_splice_write,
+ 	.fallocate	= blkdev_fallocate,
++	.copy_file_range = blkdev_copy_file_range,
+ };
  
- 	spin_lock_irq(&nullb->lock);
- 	rq_for_each_segment(bvec, rq, iter) {
- 		len = bvec.bv_len;
- 		err = null_transfer(nullb, bvec.bv_page, len, bvec.bv_offset,
--				     op_is_write(req_op(rq)), sector,
--				     rq->cmd_flags & REQ_FUA);
-+				    op_is_write(req_op(rq)), sector, fua);
- 		if (err) {
- 			spin_unlock_irq(&nullb->lock);
- 			return err;
-@@ -2053,6 +2139,9 @@ static int null_validate_conf(struct nullb_device *dev)
- 		return -EINVAL;
- 	}
- 
-+	if (dev->queue_mode == NULL_Q_BIO)
-+		dev->copy_max_bytes = 0;
-+
- 	return 0;
- }
- 
-@@ -2172,6 +2261,8 @@ static int null_add_dev(struct nullb_device *dev)
- 		dev->max_sectors = queue_max_hw_sectors(nullb->q);
- 	dev->max_sectors = min(dev->max_sectors, BLK_DEF_MAX_SECTORS);
- 	blk_queue_max_hw_sectors(nullb->q, dev->max_sectors);
-+	blk_queue_max_copy_hw_sectors(nullb->q,
-+				      dev->copy_max_bytes >> SECTOR_SHIFT);
- 
- 	if (dev->virt_boundary)
- 		blk_queue_virt_boundary(nullb->q, PAGE_SIZE - 1);
-diff --git a/drivers/block/null_blk/null_blk.h b/drivers/block/null_blk/null_blk.h
-index 929f659dd255..e82e53a2e2df 100644
---- a/drivers/block/null_blk/null_blk.h
-+++ b/drivers/block/null_blk/null_blk.h
-@@ -107,6 +107,7 @@ struct nullb_device {
- 	unsigned int queue_mode; /* block interface */
- 	unsigned int blocksize; /* block size */
- 	unsigned int max_sectors; /* Max sectors per command */
-+	unsigned long copy_max_bytes; /* Max copy offload length in bytes */
- 	unsigned int irqmode; /* IRQ completion handler */
- 	unsigned int hw_queue_depth; /* queue depth */
- 	unsigned int index; /* index of the disk, only valid with a disk */
-diff --git a/drivers/block/null_blk/trace.h b/drivers/block/null_blk/trace.h
-index 91446c34eac2..2f2c1d1c2b48 100644
---- a/drivers/block/null_blk/trace.h
-+++ b/drivers/block/null_blk/trace.h
-@@ -70,6 +70,29 @@ TRACE_EVENT(nullb_report_zones,
- );
- #endif /* CONFIG_BLK_DEV_ZONED */
- 
-+TRACE_EVENT(nullb_copy_op,
-+		TP_PROTO(struct request *req,
-+			 sector_t dst, sector_t src, size_t len),
-+		TP_ARGS(req, dst, src, len),
-+		TP_STRUCT__entry(
-+				 __array(char, disk, DISK_NAME_LEN)
-+				 __field(enum req_op, op)
-+				 __field(sector_t, dst)
-+				 __field(sector_t, src)
-+				 __field(size_t, len)
-+		),
-+		TP_fast_assign(
-+			       __entry->op = req_op(req);
-+			       __assign_disk_name(__entry->disk, req->q->disk);
-+			       __entry->dst = dst;
-+			       __entry->src = src;
-+			       __entry->len = len;
-+		),
-+		TP_printk("%s req=%-15s: dst=%llu, src=%llu, len=%lu",
-+			  __print_disk_name(__entry->disk),
-+			  blk_op_str(__entry->op),
-+			  __entry->dst, __entry->src, __entry->len)
-+);
- #endif /* _TRACE_NULLB_H */
- 
- #undef TRACE_INCLUDE_PATH
+ static __init int blkdev_init(void)
 -- 
 2.35.1.500.gb896f729e2
 
