@@ -1,95 +1,95 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D6B9C749E
-	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:33 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B467F514
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:37 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="erRTmWkT"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HuKfC4Gg"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698119552;
+	s=mimecast20190719; t=1698119556;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=tJ6cgsoW7aQH5On83YMhoiBwYYPuRYMOz8kgYTAfm70=;
-	b=erRTmWkTL0oayCqD00wFKVy82Q0hfjmjCYWGKMlZo5up/mGWxOf3MrU65SUKSpAlUbIZA9
-	6FoJXgGjv7oqD+k8H4+jyrgZvB7q+snNURuLN942Yvj/BMGttcJZdl/9xBNHcevlw0+9QH
-	S5cusu1s5JLk5Njg8avaDIeN8454XVg=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-470-FlgynP_mMzmpd0XXZ25gQQ-1; Mon, 23 Oct 2023 23:52:29 -0400
-X-MC-Unique: FlgynP_mMzmpd0XXZ25gQQ-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+	bh=GnPZt7wTu5bHl+yZIdMyk9dSEtxPVy94lr+8pKkfEn4=;
+	b=HuKfC4Gg904qWbW3iSmBv75PM1Y2PMSrw14bftPSvQKmAoMaa2vmD5GRD/rIarz+wxd7dc
+	yIV379K9XUzjP8D6XqthKPInnx16CN9UdHoGtU1z4XqRy0iBciKGM8dBATSGXxBzBzyUyB
+	Lh4ES+ohOIO6aMjV3Wlim+N23er8CD8=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-56-DPR9q69QMw6d_zAphWY85g-1; Mon,
+ 23 Oct 2023 23:52:35 -0400
+X-MC-Unique: DPR9q69QMw6d_zAphWY85g-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D567980171C
-	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:28 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F25B61C05198
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:34 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CCFED492BD9
-	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:28 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EAAC61121318
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:34 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B81561946589
-	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:28 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B89211946589
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:34 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E5EF71946588
- for <dm-devel@listman.corp.redhat.com>; Tue, 24 Oct 2023 03:52:26 +0000 (UTC)
+ ESMTP id D4CE5194658C
+ for <dm-devel@listman.corp.redhat.com>; Tue, 24 Oct 2023 03:52:33 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C96FDC1596D; Tue, 24 Oct 2023 03:52:26 +0000 (UTC)
+ id AFA60492BE1; Tue, 24 Oct 2023 03:52:33 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C20A6C15BB8
- for <dm-devel@redhat.com>; Tue, 24 Oct 2023 03:52:26 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.120])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A820F492BD9
+ for <dm-devel@redhat.com>; Tue, 24 Oct 2023 03:52:33 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
+ [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9D17D38143A4
- for <dm-devel@redhat.com>; Tue, 24 Oct 2023 03:52:26 +0000 (UTC)
-Received: from mail-qv1-f48.google.com (mail-qv1-f48.google.com
- [209.85.219.48]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 842323C0F42A
+ for <dm-devel@redhat.com>; Tue, 24 Oct 2023 03:52:33 +0000 (UTC)
+Received: from mail-qk1-f182.google.com (mail-qk1-f182.google.com
+ [209.85.222.182]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-465-W4dOShJMMv2P_DTooEMp-w-1; Mon, 23 Oct 2023 23:52:24 -0400
-X-MC-Unique: W4dOShJMMv2P_DTooEMp-w-1
-Received: by mail-qv1-f48.google.com with SMTP id
- 6a1803df08f44-66d0ceba445so22204316d6.0
- for <dm-devel@redhat.com>; Mon, 23 Oct 2023 20:52:24 -0700 (PDT)
+ us-mta-652-viYbBMYdPZC9FZGHs1dzdw-1; Mon, 23 Oct 2023 23:52:26 -0400
+X-MC-Unique: viYbBMYdPZC9FZGHs1dzdw-1
+Received: by mail-qk1-f182.google.com with SMTP id
+ af79cd13be357-7741b18a06aso313386585a.1
+ for <dm-devel@redhat.com>; Mon, 23 Oct 2023 20:52:26 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1698119544; x=1698724344;
+ d=1e100.net; s=20230601; t=1698119546; x=1698724346;
  h=in-reply-to:references:subject:cc:to:from:message-id:date
  :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=tJ6cgsoW7aQH5On83YMhoiBwYYPuRYMOz8kgYTAfm70=;
- b=tzexUV9pQg0YVoNtxxER2FlLX76dScNXkH01pnRjLnHf4bAFB4fWWL2T1U9gmDNf4J
- 8n32oxdNulhWJ2EDFqt3nb0SbH5LDszl4UjayUiU68HkXYNnOe9rHEP4cnXfCeiO6DJk
- wuQHs2CaN8D9HoIUSn9tnEPxRe7hzYYXq/iRzf0G9NoA51nvlXs7KfUaAEEbZydtwGe8
- Ge+nRpkS+UCnV27Q0A98qRWo8CZS3dMuISTakRimId596UKV8MM3cjd2dnx8y0EFekK7
- zGKh4MKZTznCNPGEoAnZnIFzg+eK6Zbajj38xOQLVIg/tIrEoWz3QkmPe0IWQaFxhI9N
- FAvg==
-X-Gm-Message-State: AOJu0YxbrdP2ZSovIZfEAD/lJzzjs1VVPadQ9Y1ny9HfEuiwndRRUt/J
- Z22s35JSLKItSLwuoHgPWwOo
-X-Google-Smtp-Source: AGHT+IEGJExcEmKWOA+GK4RiJy1dG9NUrijjKZKzwgQx3WaST0PHhoK9sXJHymPxgN5Fyv3kt+Yfmg==
-X-Received: by 2002:ad4:5cc2:0:b0:66d:169a:d41c with SMTP id
- iu2-20020ad45cc2000000b0066d169ad41cmr11857101qvb.19.1698119543857; 
- Mon, 23 Oct 2023 20:52:23 -0700 (PDT)
+ bh=GnPZt7wTu5bHl+yZIdMyk9dSEtxPVy94lr+8pKkfEn4=;
+ b=oAhozPHVdi268wCU/9k0DSen7ReH49nqY8qCIG9FEe4Tc5jHRHm4c3JKf3PyZDXsC9
+ mC8HMFuLfhtNEDvqms093Se+pOhlB6rfzSFMLwwOLLk8quftjMfplKjEk0YFxm0KqJtK
+ 9SOu/HIXSZcfx4zEBCIeoBo1kBskuLn82k6MEXw5YecUeASSZT/kOJXDFcmjoj4t7h/z
+ 70cXR2e39qUquIQI5m4a0XoC7untCYSnu740TzaKpCYadP113WeOb9fLuOYk4rMKnxkm
+ S6f+PNN/ViVeHwnANU0JAUTLUKxErI5t0gVOSoXHMppXkB8VBjgrIqeZ0TVqI8d3O62Q
+ pmhA==
+X-Gm-Message-State: AOJu0YzNgkxV1H+Hpq7tEzEu+z6R+c02AoXBKaYip5lQaOgkH6sAffqC
+ tekMMyDXoQBrOlGCZNBB2FAi
+X-Google-Smtp-Source: AGHT+IFvSV+EXgEeBKXX2Mm2c4Pu+xlgfjLQsVDGRnKVVxJUbzV3yBw9uUXEzF2i2rsqjzOaeFEfJQ==
+X-Received: by 2002:a05:620a:4049:b0:778:9232:a564 with SMTP id
+ i9-20020a05620a404900b007789232a564mr13553158qko.47.1698119546060; 
+ Mon, 23 Oct 2023 20:52:26 -0700 (PDT)
 Received: from localhost ([70.22.175.108]) by smtp.gmail.com with ESMTPSA id
- i7-20020a37c207000000b0076db5b792basm3162304qkm.75.2023.10.23.20.52.23
+ w12-20020ae9e50c000000b0077407e3d68asm3162408qkf.111.2023.10.23.20.52.25
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 23 Oct 2023 20:52:23 -0700 (PDT)
-Date: Mon, 23 Oct 2023 23:52:22 -0400
-Message-ID: <aa226bdcba26d74304f6c10c290db840.paul@paul-moore.com>
+ Mon, 23 Oct 2023 20:52:25 -0700 (PDT)
+Date: Mon, 23 Oct 2023 23:52:25 -0400
+Message-ID: <c53599e9d278fc55be30e3bac9411328.paul@paul-moore.com>
 From: Paul Moore <paul@paul-moore.com>
 To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
  jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
  axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com
-Subject: Re: [PATCH RFC v11 3/19] ipe: add evaluation loop
-References: <1696457386-3010-4-git-send-email-wufan@linux.microsoft.com>
-In-Reply-To: <1696457386-3010-4-git-send-email-wufan@linux.microsoft.com>
+Subject: Re: [PATCH RFC v11 5/19] ipe: introduce 'boot_verified' as a trust
+ provider
+References: <1696457386-3010-6-git-send-email-wufan@linux.microsoft.com>
+In-Reply-To: <1696457386-3010-6-git-send-email-wufan@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -97,7 +97,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -117,7 +117,7 @@ Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
  linux-integrity@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 2
 X-Mimecast-Originator: paul-moore.com
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
@@ -129,175 +129,132 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
 On Oct  4, 2023 Fan Wu <wufan@linux.microsoft.com> wrote:
 > 
-> IPE must have a centralized function to evaluate incoming callers
-> against IPE's policy. This iteration of the policy for against the rules
-> for that specific caller is known as the evaluation loop.
+> IPE is designed to provide system level trust guarantees, this usually
+> implies that trust starts from bootup with a hardware root of trust,
+> which validates the bootloader. After this, the bootloader verifies the
+> kernel and the initramfs.
 > 
+> As there's no currently supported integrity method for initramfs, and
+> it's typically already verified by the bootloader, introduce a property
+> that causes the first superblock to have an execution to be "pinned",
+> which is typically initramfs.
+> 
+> When the "pinned" device is unmounted, it will be "unpinned" and
+> `boot_verified` property will always evaluate to false afterward.
+> 
+> We use a pointer with a spin_lock to "pin" the device instead of rcu
+> because rcu synchronization may sleep, which is not allowed when
+> unmounting a device.
+>
 > Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 > ---
 > v2:
-> + Split evaluation loop, access control hooks, and evaluation loop from policy parser and userspace interface to pass mailing list character limit
+>   +No Changes
 > 
 > v3:
-> + Move ipe_load_properties to patch 04.
-> + Remove useless 0-initializations Prefix extern variables with ipe_
-> + Remove kernel module parameters, as these are exposed through sysctls.
-> + Add more prose to the IPE base config option help text.
-> + Use GFP_KERNEL for audit_log_start.
-> + Remove unnecessary caching system.
-> + Remove comments from headers
-> + Use rcu_access_pointer for rcu-pointer null check
-> + Remove usage of reqprot; use prot only.
-> +Move policy load and activation audit event to 03/12
+>   + Remove useless caching system
+>   + Move ipe_load_properties to this match
+>   + Minor changes from checkpatch --strict warnings
 > 
 > v4:
-> + Remove sysctls in favor of securityfs nodes
-> + Re-add kernel module parameters, as these are now exposed through securityfs.
-> + Refactor property audit loop to a separate function.
+>   + Remove comments from headers that was missed previously.
+>   + Grammatical corrections.
 > 
 > v5:
-> + fix minor grammatical errors
-> + do not group rule by curly-brace in audit record,
-> + reconstruct the exact rule.
+>   + No significant changes
 > 
 > v6:
-> + No changes
+>   + No changes
 > 
 > v7:
-> + Further split lsm creation into a separate commit from the evaluation loop and audit system, for easier review.
-> + Propagating changes to support the new ipe_context structure in the evaluation loop.
+>   + Reword and refactor patch 04/12 to [09/16], based on changes in the underlying system.
+>   + Add common audit function for boolean values
+>   + Use common audit function as implementation.
 > 
 > v8:
-> + Remove ipe_hook enumeration; hooks can be correlated via syscall record.
+>   + No changes
 > 
 > v9:
-> + Remove ipe_context related code and simplify the evaluation loop.
+>   + No changes
 > 
 > v10:
-> + Split eval part and boot_verified part
+>   + Replace struct file with struct super_block
 > 
 > v11:
-> + Fix code style issues
+>   + Fix code style issues
 > ---
->  security/ipe/Makefile |  1 +
->  security/ipe/eval.c   | 96 +++++++++++++++++++++++++++++++++++++++++++
->  security/ipe/eval.h   | 24 +++++++++++
->  3 files changed, 121 insertions(+)
->  create mode 100644 security/ipe/eval.c
->  create mode 100644 security/ipe/eval.h
-
-...
-
+>  security/ipe/eval.c          | 72 +++++++++++++++++++++++++++++++++++-
+>  security/ipe/eval.h          |  2 +
+>  security/ipe/hooks.c         | 12 ++++++
+>  security/ipe/hooks.h         |  2 +
+>  security/ipe/ipe.c           |  1 +
+>  security/ipe/policy.h        |  2 +
+>  security/ipe/policy_parser.c | 35 +++++++++++++++++-
+>  7 files changed, 124 insertions(+), 2 deletions(-)
+> 
 > diff --git a/security/ipe/eval.c b/security/ipe/eval.c
-> new file mode 100644
-> index 000000000000..5533c359bbeb
-> --- /dev/null
+> index 8a8bcc5c7d7f..bdac4abc0ddb 100644
+> --- a/security/ipe/eval.c
 > +++ b/security/ipe/eval.c
-> @@ -0,0 +1,96 @@
-> +// SPDX-License-Identifier: GPL-2.0
-> +/*
-> + * Copyright (C) Microsoft Corporation. All rights reserved.
-> + */
-> +
-> +#include <linux/fs.h>
-> +#include <linux/types.h>
-> +#include <linux/slab.h>
-> +#include <linux/file.h>
-> +#include <linux/sched.h>
-> +#include <linux/rcupdate.h>
-> +
-> +#include "ipe.h"
-> +#include "eval.h"
-> +#include "policy.h"
-> +
-> +struct ipe_policy __rcu *ipe_active_policy;
+> @@ -9,6 +9,7 @@
+>  #include <linux/file.h>
+>  #include <linux/sched.h>
+>  #include <linux/rcupdate.h>
+> +#include <linux/spinlock.h>
+>  
+>  #include "ipe.h"
+>  #include "eval.h"
+> @@ -16,6 +17,44 @@
+>  
+>  struct ipe_policy __rcu *ipe_active_policy;
+>  
+> +static const struct super_block *pinned_sb;
+> +static DEFINE_SPINLOCK(pin_lock);
+> +#define FILE_SUPERBLOCK(f) ((f)->f_path.mnt->mnt_sb)
 > +
 > +/**
-> + * evaluate_property - Analyze @ctx against a property.
-> + * @ctx: Supplies a pointer to the context to be evaluated.
-> + * @p: Supplies a pointer to the property to be evaluated.
-> + *
-> + * Return:
-> + * * true	- The current @ctx match the @p
-> + * * false	- The current @ctx doesn't match the @p
+> + * pin_sb - Pin the underlying superblock of @f, marking it as trusted.
+> + * @sb: Supplies a super_block structure to be pinned.
 > + */
-> +static bool evaluate_property(const struct ipe_eval_ctx *const ctx,
-> +			      struct ipe_prop *p)
+> +static void pin_sb(const struct super_block *sb)
 > +{
-> +	return false;
+> +	if (!sb)
+> +		return;
+> +	spin_lock(&pin_lock);
+> +	if (!pinned_sb)
+> +		pinned_sb = sb;
+> +	spin_unlock(&pin_lock);
 > +}
 > +
 > +/**
-> + * ipe_evaluate_event - Analyze @ctx against the current active policy.
-> + * @ctx: Supplies a pointer to the context to be evaluated.
-> + *
-> + * This is the loop where all policy evaluation happens against IPE policy.
+> + * from_pinned - Determine whether @sb is the pinned super_block.
+> + * @sb: Supplies a super_block to check against the pinned super_block.
 > + *
 > + * Return:
-> + * * 0		- OK
-> + * * -EACCES	- @ctx did not pass evaluation.
-> + * * !0		- Error
+> + * * true	- @sb is the pinned super_block
+> + * * false	- @sb is not the pinned super_block
 > + */
-> +int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
+> +static bool from_pinned(const struct super_block *sb)
 > +{
-> +	bool match = false;
-> +	enum ipe_action_type action;
-> +	struct ipe_policy *pol = NULL;
-> +	const struct ipe_rule *rule = NULL;
-> +	const struct ipe_op_table *rules = NULL;
-> +	struct ipe_prop *prop = NULL;
+> +	bool rv;
 > +
-> +	rcu_read_lock();
-> +
-> +	pol = rcu_dereference(ipe_active_policy);
-> +	if (!pol) {
-> +		rcu_read_unlock();
-> +		return 0;
-> +	}
-> +
-> +	if (ctx->op == IPE_OP_INVALID) {
-> +		rcu_read_unlock();
-> +		if (pol->parsed->global_default_action == IPE_ACTION_DENY)
-> +			return -EACCES;
+> +	if (!sb)
+> +		return false;
+> +	spin_lock(&pin_lock);
+> +	rv = !IS_ERR_OR_NULL(pinned_sb) && pinned_sb == sb;
+> +	spin_unlock(&pin_lock);
 
-Assuming that the RCU lock protects @pol, shouldn't it be held until
-after the global_default_action comparison?
+It's okay for an initial version, but I still think you need to get
+away from this spinlock in from_pinned() as quickly as possible.
+Maybe I'm wrong, but this looks like a major source of lock contention.
 
-> +		return 0;
-> +	}
-> +
-> +	rules = &pol->parsed->rules[ctx->op];
-> +
-> +	list_for_each_entry(rule, &rules->rules, next) {
-> +		match = true;
-> +
-> +		list_for_each_entry(prop, &rule->props, next) {
-> +			match = match && evaluate_property(ctx, prop);
+I understand the issue around RCU and the potential for matching on
+a reused buffer/address, but if you modified IPE to have its own LSM
+security blob in super_block::security you could mark the superblock
+when it was mounted and do a lockless lookup here in from_pinned().
 
-The @match variable will always be true on the right side above, or am
-I missing something?
-
-> +			if (!match)
-> +				break;
-> +		}
-> +
-> +		if (match)
-> +			break;
-> +	}
-> +
-> +	if (match)
-> +		action = rule->action;
-> +	else if (rules->default_action != IPE_ACTION_INVALID)
-> +		action = rules->default_action;
-> +	else
-> +		action = pol->parsed->global_default_action;
-> +
-> +	rcu_read_unlock();
-> +	if (action == IPE_ACTION_DENY)
-> +		return -EACCES;
-> +
-> +	return 0;
+> +	return rv;
 > +}
 
 --
