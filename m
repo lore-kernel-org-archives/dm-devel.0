@@ -1,154 +1,157 @@
-Received: from mail-vk1-f174.google.com (mail-vk1-f174.google.com [209.85.221.174])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3CD822E625
-	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 19:32:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B9B513E49B
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 21:19:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=chromium.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; dkim=none
-Received: by mail-vk1-f174.google.com with SMTP id 71dfb90a1353d-49d0a704ac7so1954322e0c.1
-        for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 12:32:48 -0700 (PDT)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="N8utzBky"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1698182358;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=0bKh+O/PANGlG/qak+LU04NiuPPv63eV7oLEVO+FPPs=;
+	b=N8utzBkyNRZIaKKexarqJq3gbZm0wYA94Z5MUIaDaGybo0j3OCkIyDsnxQBOIgEZX2UDvz
+	aqmkCEEdv6fcUAyz+CAXZ5FVUkXZNboLgnMAswB8sh6js6pcZT4bypieXkCL0ZRvz7RaD8
+	lv2/x5d6XJ0ByVIbboiZx3fXy4UmWqI=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-3-XrTSwKZLPTuzLLB_42Oeeg-1; Tue,
+ 24 Oct 2023 17:19:17 -0400
+X-MC-Unique: XrTSwKZLPTuzLLB_42Oeeg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4019528088A3
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 21:19:17 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 360C425C0
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 21:19:17 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 068F91946595
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 21:19:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
+ by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
+ ESMTP id 845A31946586
+ for <dm-devel@listman.corp.redhat.com>; Tue, 24 Oct 2023 21:19:16 +0000 (UTC)
+Received: by smtp.corp.redhat.com (Postfix)
+ id 726E7C15BBC; Tue, 24 Oct 2023 21:19:16 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6B065C15BB8
+ for <dm-devel@redhat.com>; Tue, 24 Oct 2023 21:19:16 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-inbound-delivery-1.mimecast.com [207.211.31.81])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4ADEA101A590
+ for <dm-devel@redhat.com>; Tue, 24 Oct 2023 21:19:16 +0000 (UTC)
+Received: from mail-pf1-f179.google.com (mail-pf1-f179.google.com
+ [209.85.210.179]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-235-3cWeeKLKNWazHkT_e7rYLA-1; Tue, 24 Oct 2023 17:19:09 -0400
+X-MC-Unique: 3cWeeKLKNWazHkT_e7rYLA-1
+Received: by mail-pf1-f179.google.com with SMTP id
+ d2e1a72fcca58-6bd32d1a040so4913873b3a.3
+ for <dm-devel@redhat.com>; Tue, 24 Oct 2023 14:19:09 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1698175968; x=1698780768;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=p4d/wdjrBU4iBQl0Krvv4V/aUJPtOrENbOsxzLG2hnU=;
-        b=w/AyncBtu1nTLHCvE4lX+4K+BZwqJpf2JiiA9txkhvo4/qYRN+aanYOe8jgQ5+kVQ/
-         Kls7hisgM+jLSjClHsxWo4Hqxof/pNGRDAXbzXzGfKA6gXgQU3sN2YCXzGPtiAqNNANF
-         4nVF9qVyR6XPItD9X7AMoU+6JS94POpHRXyfwTTuWCMOFiMdBMo0zm/QsbGmwewNjfK/
-         aZc39JajACJH2/p4zmbMVXE9Qd9OAtgMFclhMimjKkvm8wF/HnGFc8EOCirwAHk+vXSm
-         uxxVecXHA/h8/34s45H+FFi0BdSEPNSi9V4jQMXZ7hLMQLkZ9MM0fQcBWF/uszsZtNuE
-         Yp4w==
-X-Gm-Message-State: AOJu0Yz4b1TiWwsw+IIfdXXuot/rf/DelvrxLzTEfJATDrgSI18ZDpQa
-	CGaj7HYQPh2yzjZpYpmPgq9t
-X-Google-Smtp-Source: AGHT+IHpT46Nea/R6DQGkaAmCmglP5T/IJM1EVz0+VmMUXFnJuAvM6r8MxaqLZMK4I+/u578/+ahWQ==
-X-Received: by 2002:a1f:a701:0:b0:49b:289a:cc4a with SMTP id q1-20020a1fa701000000b0049b289acc4amr11026335vke.3.1698175967988;
-        Tue, 24 Oct 2023 12:32:47 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id m26-20020ae9e01a000000b007726002d69esm3658244qkk.10.2023.10.24.12.32.47
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 24 Oct 2023 12:32:47 -0700 (PDT)
-Date: Tue, 24 Oct 2023 15:32:46 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Ming Lei <ming.lei@redhat.com>, dm-devel@lists.linux.dev,
-	linux-block@vger.kernel.org, axboe@kernel.dk
-Subject: Re: dm: Respect REQ_NOWAIT bios
-Message-ID: <ZTgb3lkNmEUIYpsl@redhat.com>
-References: <15ca26cc-174a-d4e8-9780-d09f8e5a6ea5@redhat.com>
- <ZTgFtseG3m3WPWn/@redhat.com>
- <e796de8-bac1-8f7a-c6eb-74d39aad8a2b@redhat.com>
+ d=1e100.net; s=20230601; t=1698182348; x=1698787148;
+ h=content-transfer-encoding:mime-version:references:in-reply-to
+ :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+ :subject:date:message-id:reply-to;
+ bh=0bKh+O/PANGlG/qak+LU04NiuPPv63eV7oLEVO+FPPs=;
+ b=Wnw7Aw1OfsKu5/MH2drg6IxMcFP6j8yylwH3/dG+ESo1SXg27W/WtbDlYAKGmkYdso
+ GvEbDhRwQWfpGUuCvhSVZLa7aaIw0D6KXF09j/LLqBvpiO4bm2jUs3v0jjS7khjOoK8S
+ 7xFHQzZqs2OlB5rPJDKh/favjkWGwoQWc/nlJfFfB9eRTXH/NZR56yKW4aNUkcubV9mr
+ mkmxUhzBv7ZSh8g3j3IIOTgLJqe3uuWIzwUZHca0tZgENxJv1JKJPXBtOW9SoNc+Qli3
+ vnQs7g9hp3eIqIonPMpjGPKU78nPpAcOM/LDmUVooou+F0ZEF/NMrzYoGhEnX41Du2ND
+ dKtg==
+X-Gm-Message-State: AOJu0YxXx7I2qShngrYZ4jyVvZijVD0SKFpdZhmdfOAus5dbPhV7we2N
+ 97Hwbt+alkWvfP5r9Aazxhr5Yg==
+X-Google-Smtp-Source: AGHT+IHGLGRzlzjxbgpZEoNG6Q70od6GIZtk0kPFMN0s5WSitO5/SXqI8s8n50J7L7IYCLKn2sbH3Q==
+X-Received: by 2002:a05:6a20:3951:b0:16b:79b3:2285 with SMTP id
+ r17-20020a056a20395100b0016b79b32285mr4216060pzg.56.1698182348320; 
+ Tue, 24 Oct 2023 14:19:08 -0700 (PDT)
+Received: from www.outflux.net (198-0-35-241-static.hfc.comcastbusiness.net.
+ [198.0.35.241]) by smtp.gmail.com with ESMTPSA id
+ g12-20020aa79dcc000000b006b24b99afd4sm8349691pfq.176.2023.10.24.14.19.04
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Tue, 24 Oct 2023 14:19:04 -0700 (PDT)
+From: Kees Cook <keescook@chromium.org>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@redhat.com, Justin Stitt <justinstitt@google.com>
+Subject: Re: [PATCH] dm ioctl: replace deprecated strncpy with strscpy_pad
+Date: Tue, 24 Oct 2023 14:18:51 -0700
+Message-Id: <169818232969.2100071.3919289615593947459.b4-ty@chromium.org>
+In-Reply-To: <20230925-strncpy-drivers-md-dm-ioctl-c-v1-1-f0bfa093ef14@google.com>
+References: <20230925-strncpy-drivers-md-dm-ioctl-c-v1-1-f0bfa093ef14@google.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <e796de8-bac1-8f7a-c6eb-74d39aad8a2b@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
+X-BeenThere: dm-devel@redhat.com
+X-Mailman-Version: 2.1.29
+Precedence: list
+List-Id: device-mapper development <dm-devel.redhat.com>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
+ <mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/dm-devel/>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
+ <mailto:dm-devel-request@redhat.com?subject=subscribe>
+Cc: linux-hardening@vger.kernel.org, Kees Cook <keescook@chromium.org>,
+ linux-kernel@vger.kernel.org
+Errors-To: dm-devel-bounces@redhat.com
+Sender: "dm-devel" <dm-devel-bounces@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: chromium.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
 
-On Tue, Oct 24 2023 at  3:18P -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
-
+On Mon, 25 Sep 2023 06:54:51 +0000, Justin Stitt wrote:
+> `strncpy` is deprecated for use on NUL-terminated destination strings
+> [1] and as such we should prefer more robust and less ambiguous string
+> interfaces.
 > 
+> We expect `spec->target_type` to be NUL-terminated based on its use with
+> a format string after `dm_table_add_target()` is called
+> | 	r = dm_table_add_target(table, spec->target_type,
+> | 				(sector_t) spec->sector_start,
+> | 				(sector_t) spec->length,
+> | 				target_params);
+> ... wherein `spec->target_type` is passed as parameter `type` and later
+> printed with DMERR:
+> |       DMERR("%s: %s: unknown target type", dm_device_name(t->md), type);
 > 
-> On Tue, 24 Oct 2023, Mike Snitzer wrote:
-> 
-> > For the benefit of others, since this patch was posted to the old
-> > dm-devel list, here is the original patch proposal:
-> > https://patchwork.kernel.org/project/dm-devel/patch/15ca26cc-174a-d4e8-9780-d09f8e5a6ea5@redhat.com/
-> > 
-> > On Tue, Oct 03 2023 at 11:30P -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> > > Hi
-> > > 
-> > > Here I'm sending that patch for REQ_NOWAIT for review.
-> > > 
-> > > It is not tested, except for some trivial tests that involve logical 
-> > > volume activation.
-> > 
-> > At a minimum we need to test with the simple test code Jens provided
-> > in commit a9ce385344f9 ("dm: don't attempt to queue IO under RCU protection")
-> 
-> The question is - how do we simulate the memory allocation failures? Do we 
-> need to add some test harness that will randomly return NULL to these 
-> allocations? Or will we use the kernel fault-injection framework?
+> [...]
 
-Will think about it (and do research).  Maybe others have suggestions?
+Applied to for-next/hardening, thanks!
 
-> > Below you'll see I insulated dm_split_and_process_bio() from ever
-> > checking ci.nowait_failed -- prefer methods like __send_empty_flush
-> > that are called from dm_split_and_process_bio() return blk_status_t
-> > (like __process_abnormal_io and __split_and_process_bio do).
-> > 
-> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > index d6fbbaa7600b..2a9ff269c28b 100644
-> > --- a/drivers/md/dm.c
-> > +++ b/drivers/md/dm.c
-> > @@ -572,18 +572,16 @@ static void dm_end_io_acct(struct dm_io *io)
-> >  	dm_io_acct(io, true);
-> >  }
-> >  
-> > -static struct dm_io *alloc_io(struct clone_info *ci, struct mapped_device *md, struct bio *bio)
-> > +static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
-> >  {
-> >  	struct dm_io *io;
-> >  	struct dm_target_io *tio;
-> >  	struct bio *clone;
-> >  
-> > -	if (unlikely(ci->is_nowait)) {
-> > +	if (unlikely(bio->bi_opf & REQ_NOWAIT)) {
-> >  		clone = bio_alloc_clone(NULL, bio, GFP_NOWAIT, &md->mempools->io_bs);
-> > -		if (!clone) {
-> > -			ci->nowait_failed = true;
-> > -			return NULL;
-> > -		}
-> > +		if (!clone)
-> > +			return PTR_ERR(-EAGAIN);
-> 
-> :s/PTR_ERR/ERR_PTR/
+[1/1] dm ioctl: replace deprecated strncpy with strscpy_pad
+      https://git.kernel.org/kees/c/0f3f34ea3798
 
-Ha, not sure how I inverted it.. but thanks.
+Take care,
 
-> If -EAGAIN is the only possible error code, should we return NULL instead?
+-- 
+Kees Cook
 
-Yeah, thought about that.  Think returning NULL is fine and if/when
-other reasons for failure possible we can extend as needed.
-
-> > @@ -1813,17 +1815,17 @@ static void dm_split_and_process_bio(struct mapped_device *md,
-> >  			return;
-> >  	}
-> >  
-> > -	init_clone_info(&ci, md, map, bio, is_abnormal);
-> > -	if (unlikely(ci.nowait_failed)) {
-> > -		error = BLK_STS_AGAIN;
-> > -		goto out;
-> > +	io = alloc_io(md, bio);
-> > +	if (unlikely(IS_ERR(io) && ERR_PTR(io) == -EAGAIN)) {
-> :s/ERR_PTR/PTR_ERR/
-
-Yes.
-
-> > +		/* Unable to do anything without dm_io. */
-> > +		bio_wouldblock_error(bio);
-> > +		return;
-> 
-> I would use "if (unlikely(IS_ERR(io)) {
-> 		bio->bi_status = errno_to_blk_status(PTR_ERR(io));
-> 		bio_set_flag(bio, BIO_QUIET);
-> 		bio_endio(bio);
-> 		return;",
-> so that all possible error codes (that could be added in the future) are 
-> propageted.
-> 
-> Or, if you change alloc_io to return NULL, you can leave 
-> bio_wouldblock_error here.
-
-Yeah, will just return NULL and stick with bio_wouldblock_error() for
-now.
-
-Thanks,
-Mike
