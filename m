@@ -1,96 +1,95 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 40F0C101E3
-	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:41 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 802FA5396
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:47 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AYRtXJk8"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZtNkRKSY"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698119560;
+	s=mimecast20190719; t=1698119566;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=55ZRJ15k5rlJjmFui052IxveaRjJKA9VJGl0uzNotB8=;
-	b=AYRtXJk8AUxxg+m7dpD4sDn23RpJUSLjwNkWnRtYbUJJqo0y74hQ3DhdEzKo6qoPyz60l3
-	z7RDRIuoGiGbAcOrFqpjlqea3Qh1OHIpnSoVSqFXLjRijutpnpIqn15snB/4CBO3/26tt2
-	t1U7GU4rn7b9MsPNlEvAOT+LS2Y/998=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-94-LdVciSaiPtGqTjZTBnyAqQ-1; Mon, 23 Oct 2023 23:52:39 -0400
-X-MC-Unique: LdVciSaiPtGqTjZTBnyAqQ-1
+	bh=rmddIeGleB+CvcksXIlwUEw0FkwTQo8xqUcvDqbnLkY=;
+	b=ZtNkRKSYWU/m5fyjcnwoz9DqRVzeqwAabTuJRKGuXI8Bly8F/DTVqHU9xOYpVFl5TCo2XT
+	TKd8EnQ3h3FQLOAzh1W+n7fBXiJMa9MQi6x3MySO1UyIMNBxvsc4ndEhERtetj+K+nrn2q
+	i7rrT5f7RWx9RMMtznZNYqnJiaeqI9o=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-403-9MTY7KpNOM6LbpIgRZ2tDg-1; Mon,
+ 23 Oct 2023 23:52:45 -0400
+X-MC-Unique: 9MTY7KpNOM6LbpIgRZ2tDg-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F1473857CF6
-	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0053238143A8
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:45 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EA7E48C0B
-	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EC7988C0B
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CC43C1946589
-	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D36A01946589
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 47C651946588
- for <dm-devel@listman.corp.redhat.com>; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
+ ESMTP id BB3E71946588
+ for <dm-devel@listman.corp.redhat.com>; Tue, 24 Oct 2023 03:52:39 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2A75C492BFC; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
+ id ABF071121320; Tue, 24 Oct 2023 03:52:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 22F81492BFB
- for <dm-devel@redhat.com>; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
- [207.211.31.81])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A41E11121318
+ for <dm-devel@redhat.com>; Tue, 24 Oct 2023 03:52:39 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com
+ (us-smtp-delivery-1.mimecast.com [207.211.31.120])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 023A880F8F6
- for <dm-devel@redhat.com>; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
-Received: from mail-qk1-f175.google.com (mail-qk1-f175.google.com
- [209.85.222.175]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8350980187C
+ for <dm-devel@redhat.com>; Tue, 24 Oct 2023 03:52:39 +0000 (UTC)
+Received: from mail-qk1-f171.google.com (mail-qk1-f171.google.com
+ [209.85.222.171]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-695-AZStu4RVNLuKdBB075gOcQ-2; Mon, 23 Oct 2023 23:52:36 -0400
-X-MC-Unique: AZStu4RVNLuKdBB075gOcQ-2
-Received: by mail-qk1-f175.google.com with SMTP id
- af79cd13be357-7788fb06997so282735585a.0
- for <dm-devel@redhat.com>; Mon, 23 Oct 2023 20:52:35 -0700 (PDT)
+ us-mta-231-lsl4RHqiN-ahAGvzZm7W-g-1; Mon, 23 Oct 2023 23:52:37 -0400
+X-MC-Unique: lsl4RHqiN-ahAGvzZm7W-g-1
+Received: by mail-qk1-f171.google.com with SMTP id
+ af79cd13be357-778ac9c898dso193823685a.0
+ for <dm-devel@redhat.com>; Mon, 23 Oct 2023 20:52:37 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1698119555; x=1698724355;
+ d=1e100.net; s=20230601; t=1698119556; x=1698724356;
  h=in-reply-to:references:subject:cc:to:from:message-id:date
  :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=55ZRJ15k5rlJjmFui052IxveaRjJKA9VJGl0uzNotB8=;
- b=DvmPCvz9zIYEEo2JLdNjw6slo8YJJpedBj6x6+s293+tLmailv40lA7uvG/Tdb5wFr
- 9BTW+b5GvxWM+Xxwaj/KDYd+oSCUIRB3fMJWjlFqI4COG08I5LnDrLjkqcCZEncMDlXz
- kn7lVyuTEgAkL+rISI9rXEpL4IOSLTmmSpSpYlcY5jDV0TphRaD2vguTaglvUniyrPJo
- 3GoXA+DjskmSz+UHT2/N+hGOb0256IQT9P12REKJM7MWIjBHvW6XTsx8s+6nqfD/sQ5t
- I3nFHqD3mMWyFJaC6zuVlJkzL3jdZuFR8F04IvdilMBci3tEbGdwpbWmM/LwfA4mrJgC
- kdSg==
-X-Gm-Message-State: AOJu0Yyb771gC5yM77cgh8d6rXXv7pmbd9I8U2jq883cCCyTCqv/VVjk
- n3vGs9lolLffpMRjiA9s6odA
-X-Google-Smtp-Source: AGHT+IFhehT5SBIN3u4k21hQKcqd9tt3cVRe5RSL6o1ZuOBt7dfMcEzUGFp3iEoi8dzbbuQJKBLFmg==
-X-Received: by 2002:a05:6214:626:b0:66d:5dec:6099 with SMTP id
- a6-20020a056214062600b0066d5dec6099mr11383093qvx.41.1698119555528; 
- Mon, 23 Oct 2023 20:52:35 -0700 (PDT)
+ bh=rmddIeGleB+CvcksXIlwUEw0FkwTQo8xqUcvDqbnLkY=;
+ b=fbxLtq0tjy/5Dl1rxbXYc6GLj8hgGQEPx0rs4Rewc4C0PNMZ+ixVYyDc7MoEB8vfEz
+ hJQxxuWtGMQjMLZdY6/oBHIknFsTZbptkg8vveSdqvPgubX6EPkfIlhVlSO76n68J4zG
+ XY8ohRuCFMxqKCKHSGHuaTcUkwai4oGrk4M7k89pNbEjqpen7+S2VO96+tdYWNeCkExU
+ /1JDkZKJNnXIkD5RBzadeQ9xQTgR+iIuJUz9rsZ8DvgDGpOdl75yUYIiD+tXSGkBbk8r
+ 4Do1K2yNU1Kk5fuWFRuuUSV7dq7hB6ckfnj6fgMEA2awm98MrUnmdmmvdTbjbuhFi264
+ lrCg==
+X-Gm-Message-State: AOJu0YxJQLIXq53oufZzUa/8WEXlhYLPvAEXIUHhAT1MvAIxuYl4v0/T
+ POxZ+jr0I2NISVH0fxJGWc1o
+X-Google-Smtp-Source: AGHT+IFa4kcq1x8534opliGWAomlb7YsXdOWGv2jKnIrbHP0ah0tMcnkxxPdDx5NrEcrjlcEEcKHZw==
+X-Received: by 2002:a05:620a:172a:b0:775:9c22:e901 with SMTP id
+ az42-20020a05620a172a00b007759c22e901mr12880926qkb.15.1698119556628; 
+ Mon, 23 Oct 2023 20:52:36 -0700 (PDT)
 Received: from localhost ([70.22.175.108]) by smtp.gmail.com with ESMTPSA id
- ee3-20020a0562140a4300b0065b260eafd9sm3357598qvb.87.2023.10.23.20.52.34
+ t14-20020a05620a0b0e00b007757fefea79sm3144655qkg.130.2023.10.23.20.52.36
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 23 Oct 2023 20:52:34 -0700 (PDT)
-Date: Mon, 23 Oct 2023 23:52:34 -0400
-Message-ID: <c2a88a9292a6ce1e301ec2244657f385.paul@paul-moore.com>
+ Mon, 23 Oct 2023 20:52:36 -0700 (PDT)
+Date: Mon, 23 Oct 2023 23:52:35 -0400
+Message-ID: <0c3ac562e5b8ea82d962478459bc7047.paul@paul-moore.com>
 From: Paul Moore <paul@paul-moore.com>
 To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
  jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
  axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com
-Subject: Re: [PATCH RFC v11 16/19] ipe: enable support for fs-verity as a
- trust provider
-References: <1696457386-3010-17-git-send-email-wufan@linux.microsoft.com>
-In-Reply-To: <1696457386-3010-17-git-send-email-wufan@linux.microsoft.com>
+Subject: Re: [PATCH RFC v11 17/19] scripts: add boot policy generation program
+References: <1696457386-3010-18-git-send-email-wufan@linux.microsoft.com>
+In-Reply-To: <1696457386-3010-18-git-send-email-wufan@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -98,7 +97,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.3
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -130,159 +129,158 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
 On Oct  4, 2023 Fan Wu <wufan@linux.microsoft.com> wrote:
 > 
-> Enable IPE policy authors to indicate trust for a singular fsverity
-> file, identified by the digest information, through "fsverity_digest"
-> and all files using fsverity's builtin signatures via
-> "fsverity_signature".
-> 
-> This enables file-level integrity claims to be expressed in IPE,
-> allowing individual files to be authorized, giving some flexibility
-> for policy authors. Such file-level claims are important to be expressed
-> for enforcing the integrity of packages, as well as address some of the
-> scalability issues in a sole dm-verity based solution (# of loop back
-> devices, etc).
-> 
-> This solution cannot be done in userspace as the minimum threat that
-> IPE should mitigate is an attacker downloads malicious payload with
-> all required dependencies. These dependencies can lack the userspace
-> check, bypassing the protection entirely. A similar attack succeeds if
-> the userspace component is replaced with a version that does not
-> perform the check. As a result, this can only be done in the common
-> entry point - the kernel.
+> Enables an IPE policy to be enforced from kernel start, enabling access
+> control based on trust from kernel startup. This is accomplished by
+> transforming an IPE policy indicated by CONFIG_IPE_BOOT_POLICY into a
+> c-string literal that is parsed at kernel startup as an unsigned policy.
 > 
 > Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 > ---
-> v1-v6:
->   + Not present
+> v2:
+>   + No Changes
+> 
+> v3:
+>   + No Changes
+> 
+> v4:
+>   + No Changes
+> 
+> v5:
+>   + No Changes
+> 
+> v6:
+>   + No Changes
 > 
 > v7:
->   Introduced
+>   + Move from 01/11 to 14/16
+>   + Don't return errno directly.
+>   + Make output of script more user-friendly
+>   + Add escaping for tab and '?'
+>   + Mark argv pointer const
+>   + Invert return code check in the boot policy parsing code path.
 > 
 > v8:
->   * Undo squash of 08/12, 10/12 - separating drivers/md/ from security/
->   * Use common-audit function for fsverity_signature.
->   + Change fsverity implementation to use fsverity_get_digest
->   + prevent unnecessary copy of fs-verity signature data, instead
->     just check for presence of signature data.
->   + Remove free_inode_security hook, as the digest is now acquired
->     at runtime instead of via LSM blob.
+>   + No significant changes.
 > 
 > v9:
->   + Adapt to the new parser
+>   + No changes
 > 
 > v10:
->   + Update the fsverity get digest call
+>   + Update the init part code for rcu changes in the eval loop patch
 > 
 > v11:
->   + No changes
+>   + Fix code style issues
 > ---
->  security/ipe/Kconfig         |  13 +++++
->  security/ipe/audit.c         |  23 ++++++++
->  security/ipe/eval.c          | 110 +++++++++++++++++++++++++++++++++++
->  security/ipe/eval.h          |  10 ++++
->  security/ipe/hooks.c         |  30 ++++++++++
->  security/ipe/hooks.h         |   7 +++
->  security/ipe/ipe.c           |  13 +++++
->  security/ipe/ipe.h           |   3 +
->  security/ipe/policy.h        |   3 +
->  security/ipe/policy_parser.c |   8 +++
->  10 files changed, 220 insertions(+)
+>  MAINTAINERS                   |   1 +
+>  scripts/Makefile              |   1 +
+>  scripts/ipe/Makefile          |   2 +
+>  scripts/ipe/polgen/.gitignore |   1 +
+>  scripts/ipe/polgen/Makefile   |   6 ++
+>  scripts/ipe/polgen/polgen.c   | 145 ++++++++++++++++++++++++++++++++++
+>  security/ipe/.gitignore       |   1 +
+>  security/ipe/Kconfig          |  10 +++
+>  security/ipe/Makefile         |  11 +++
+>  security/ipe/fs.c             |   8 ++
+>  security/ipe/ipe.c            |  12 +++
+>  11 files changed, 198 insertions(+)
+>  create mode 100644 scripts/ipe/Makefile
+>  create mode 100644 scripts/ipe/polgen/.gitignore
+>  create mode 100644 scripts/ipe/polgen/Makefile
+>  create mode 100644 scripts/ipe/polgen/polgen.c
+>  create mode 100644 security/ipe/.gitignore
 
 ...
 
-> diff --git a/security/ipe/audit.c b/security/ipe/audit.c
-> index b5c58655ac74..e3a8552a76a4 100644
-> --- a/security/ipe/audit.c
-> +++ b/security/ipe/audit.c
-> @@ -79,6 +100,8 @@ static void audit_rule(struct audit_buffer *ab, const struct ipe_rule *r)
->  		audit_log_format(ab, "%s", audit_prop_names[ptr->type]);
->  		if (ptr->type == IPE_PROP_DMV_ROOTHASH)
->  			audit_dmv_roothash(ab, ptr->value);
-> +		if (ptr->type == IPE_PROP_FSV_DIGEST)
-> +			audit_fsv_digest(ab, ptr->value);
+> diff --git a/scripts/ipe/polgen/polgen.c b/scripts/ipe/polgen/polgen.c
+> new file mode 100644
+> index 000000000000..40b6fe07f47b
+> --- /dev/null
+> +++ b/scripts/ipe/polgen/polgen.c
+> @@ -0,0 +1,145 @@
 
-My comments on audit_dmv_roothash() also apply here.
+...
 
->  		audit_log_format(ab, " ");
->  	}
-> diff --git a/security/ipe/eval.c b/security/ipe/eval.c
-> index 82ad48d7aa3d..f0194b0ca2ff 100644
-> --- a/security/ipe/eval.c
-> +++ b/security/ipe/eval.c
-> @@ -172,6 +191,91 @@ static bool evaluate_dmv_sig_true(const struct ipe_eval_ctx *const ctx,
->  }
->  #endif /* CONFIG_IPE_PROP_DM_VERITY */
->  
-> +#ifdef CONFIG_IPE_PROP_FS_VERITY
-> +/**
-> + * evaluate_fsv_digest - Analyze @ctx against a fsv digest property.
-> + * @ctx: Supplies a pointer to the context being evaluated.
-> + * @p: Supplies a pointer to the property being evaluated.
-> + *
-> + * Return:
-> + * * true	- The current @ctx match the @p
-> + * * false	- The current @ctx doesn't match the @p
-> + */
-> +static bool evaluate_fsv_digest(const struct ipe_eval_ctx *const ctx,
-> +				struct ipe_prop *p)
+> +static int write_boot_policy(const char *pathname, const char *buf, size_t size)
 > +{
-> +	enum hash_algo alg;
-> +	u8 digest[FS_VERITY_MAX_DIGEST_SIZE];
+> +	int rc = 0;
+> +	FILE *fd;
+> +	size_t i;
 > +
-> +	if (!ctx->ino)
-> +		return false;
-> +	if (!fsverity_get_digest((struct inode *)ctx->ino,
-> +				 digest,
-> +				 NULL,
-> +				 &alg))
-> +		return false;
+> +	fd = fopen(pathname, "w");
+> +	if (!fd) {
+> +		rc = errno;
+> +		goto err;
+> +	}
 > +
-> +	return ipe_digest_eval(p->value,
-> +			       digest,
-> +			       hash_digest_size[alg],
-> +			       hash_algo_name[alg]);
-> +}
+> +	fprintf(fd, "/* This file is automatically generated.");
+> +	fprintf(fd, " Do not edit. */\n");
+> +	fprintf(fd, "#include <linux/stddef.h>\n");
+> +	fprintf(fd, "\nextern const char *const ipe_boot_policy;\n\n");
+> +	fprintf(fd, "const char *const ipe_boot_policy =\n");
 > +
-> +/**
-> + * evaluate_fsv_sig_false - Analyze @ctx against a fsv sig false property.
-> + * @ctx: Supplies a pointer to the context being evaluated.
-> + * @p: Supplies a pointer to the property being evaluated.
-> + *
-> + * Return:
-> + * * true	- The current @ctx match the @p
-> + * * false	- The current @ctx doesn't match the @p
-> + */
-> +static bool evaluate_fsv_sig_false(const struct ipe_eval_ctx *const ctx,
-> +				   struct ipe_prop *p)
-> +{
-> +	return !ctx->ino ||
-> +	       !IS_VERITY(ctx->ino) ||
-> +	       !ctx->ipe_inode ||
-> +	       !ctx->ipe_inode->fs_verity_signed;
-> +}
+> +	if (!buf || size == 0) {
+> +		fprintf(fd, "\tNULL;\n");
+> +		fclose(fd);
+> +		return 0;
+> +	}
 > +
-> +/**
-> + * evaluate_fsv_sig_true - Analyze @ctx against a fsv sig true property.
-> + * @ctx: Supplies a pointer to the context being evaluated.
-> + * @p: Supplies a pointer to the property being evaluated.
-> + *
-> + * Return:
-> + * * true - The current @ctx match the @p
-> + * * false - The current @ctx doesn't match the @p
-> + */
-> +static bool evaluate_fsv_sig_true(const struct ipe_eval_ctx *const ctx,
-> +				  struct ipe_prop *p)
-> +{
-> +	return ctx->ino &&
-> +	       IS_VERITY(ctx->ino) &&
-> +	       ctx->ipe_inode &&
-> +	       ctx->ipe_inode->fs_verity_signed;
+> +	fprintf(fd, "\t\"");
+> +
+> +	for (i = 0; i < size; ++i) {
+> +		switch (buf[i]) {
+> +		case '"':
+> +			fprintf(fd, "\\\"");
+> +			break;
+> +		case '\'':
+> +			fprintf(fd, "'");
+> +			break;
+
+The revision of IPE proposed in this patchset doesn't support parsing
+single or double quotes, yes?
+
+> +		case '\n':
+> +			fprintf(fd, "\\n\"\n\t\"");
+> +			break;
+> +		case '\\':
+> +			fprintf(fd, "\\\\");
+> +			break;
+> +		case '\t':
+> +			fprintf(fd, "\\t");
+> +			break;
+> +		case '\?':
+> +			fprintf(fd, "\\?");
+> +			break;
+
+Similar, are question marks supported by the parser?
+
+> +		default:
+> +			fprintf(fd, "%c", buf[i]);
+> +		}
+> +	}
+> +	fprintf(fd, "\";\n");
+> +	fclose(fd);
+> +
+> +	return 0;
+> +
+> +err:
+> +	if (fd)
+> +		fclose(fd);
+> +	return rc;
 > +}
 
-See my previous comments about the false/true functions.
+...
 
-> +#else
+> diff --git a/security/ipe/.gitignore b/security/ipe/.gitignore
+> new file mode 100644
+> index 000000000000..eca22ad5ed22
+> --- /dev/null
+> +++ b/security/ipe/.gitignore
+> @@ -0,0 +1 @@
+> +boot-policy.c
+> \ No newline at end of file
+
+Add a newline please.
 
 --
 paul-moore.com
