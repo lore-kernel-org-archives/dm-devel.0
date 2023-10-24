@@ -1,95 +1,96 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E26EDF9CE
-	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:40 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 40F0C101E3
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:41 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=paul-moore.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Zj3pPBRA"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AYRtXJk8"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698119559;
+	s=mimecast20190719; t=1698119560;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=qf06v0uPyEibN6HVL4g78GrmaDMN+Y6zqErrL4AHRpg=;
-	b=Zj3pPBRApfwwtn/8suAzSdXeRzsb1nDLJ6aYZXGrOssmUE7JpYOzkm8/ejYjPl4wg62dNK
-	OJsznrChj3TcPzmOXNJokaLCpOs1kTVSMwof+LYtFWacJKy7C8taBpz9B66NzZMJDJXFvC
-	wUpyrFb+rnifqNcqUhBADQ6WKePQCpc=
+	bh=55ZRJ15k5rlJjmFui052IxveaRjJKA9VJGl0uzNotB8=;
+	b=AYRtXJk8AUxxg+m7dpD4sDn23RpJUSLjwNkWnRtYbUJJqo0y74hQ3DhdEzKo6qoPyz60l3
+	z7RDRIuoGiGbAcOrFqpjlqea3Qh1OHIpnSoVSqFXLjRijutpnpIqn15snB/4CBO3/26tt2
+	t1U7GU4rn7b9MsPNlEvAOT+LS2Y/998=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-115-H36s25oSNZOpGOnXbjYSkA-1; Mon, 23 Oct 2023 23:52:38 -0400
-X-MC-Unique: H36s25oSNZOpGOnXbjYSkA-1
+ us-mta-94-LdVciSaiPtGqTjZTBnyAqQ-1; Mon, 23 Oct 2023 23:52:39 -0400
+X-MC-Unique: LdVciSaiPtGqTjZTBnyAqQ-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 18FA580F8F7
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F1473857CF6
 	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 11E5C8C0B
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EA7E48C0B
 	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C81171946589
-	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:37 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CC43C1946589
+	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 250B61946588
- for <dm-devel@listman.corp.redhat.com>; Tue, 24 Oct 2023 03:52:36 +0000 (UTC)
+ ESMTP id 47C651946588
+ for <dm-devel@listman.corp.redhat.com>; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 14B282166B28; Tue, 24 Oct 2023 03:52:36 +0000 (UTC)
+ id 2A75C492BFC; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0D1F32166B27
- for <dm-devel@redhat.com>; Tue, 24 Oct 2023 03:52:36 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-inbound-delivery-1.mimecast.com [205.139.110.61])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 22F81492BFB
+ for <dm-devel@redhat.com>; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
+ [207.211.31.81])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DEB3780F8F3
- for <dm-devel@redhat.com>; Tue, 24 Oct 2023 03:52:35 +0000 (UTC)
-Received: from mail-qv1-f44.google.com (mail-qv1-f44.google.com
- [209.85.219.44]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 023A880F8F6
+ for <dm-devel@redhat.com>; Tue, 24 Oct 2023 03:52:38 +0000 (UTC)
+Received: from mail-qk1-f175.google.com (mail-qk1-f175.google.com
+ [209.85.222.175]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-614-u_2MX3UxP6akvMf4xiOtfg-1; Mon, 23 Oct 2023 23:52:32 -0400
-X-MC-Unique: u_2MX3UxP6akvMf4xiOtfg-1
-Received: by mail-qv1-f44.google.com with SMTP id
- 6a1803df08f44-66cfef11a25so22055776d6.3
- for <dm-devel@redhat.com>; Mon, 23 Oct 2023 20:52:32 -0700 (PDT)
+ us-mta-695-AZStu4RVNLuKdBB075gOcQ-2; Mon, 23 Oct 2023 23:52:36 -0400
+X-MC-Unique: AZStu4RVNLuKdBB075gOcQ-2
+Received: by mail-qk1-f175.google.com with SMTP id
+ af79cd13be357-7788fb06997so282735585a.0
+ for <dm-devel@redhat.com>; Mon, 23 Oct 2023 20:52:35 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20230601; t=1698119551; x=1698724351;
+ d=1e100.net; s=20230601; t=1698119555; x=1698724355;
  h=in-reply-to:references:subject:cc:to:from:message-id:date
  :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
- bh=qf06v0uPyEibN6HVL4g78GrmaDMN+Y6zqErrL4AHRpg=;
- b=Tg599IpN6je3Mcpnx1W/uZEfahwIbah12nXBE8Tn1rn7dQvgkDZL7HUt3Rp8QulBLE
- NBGN8n/bc3j7E3RhxnLEg104KEOhk9e4Iq0rPSJc3shpbWR8sjUgwgaFuPhWLnWmTWR6
- igbnm7JAY0/ayj015o41TNuU+HYjdsqKrzVDsiMFxNqcODL6og0Mdh6XTPfQI2YKaQT5
- uGoTziz5nLd4NIJ77M0HnWCu7EZLpQlF+y+psGzuTEWN/F9nZIvmkkMW30stpoeLsHC+
- QVOMrYVBD5y6SruB0ozwaKP+HbGk+oXt+ClA12jYJeq4BtsCXklSl8ORC2uYYrR6A5CM
- dkTw==
-X-Gm-Message-State: AOJu0YzP/lo24YAILbKthrLrbKZTjWSxbZ3wPAjv6bPj9cj8i9LAzGZS
- skWinNZRW80NOGF4GLG2uSOL
-X-Google-Smtp-Source: AGHT+IGouATwOYXmK2YwrFbZyHQ9JLHk3FA04Mh6g6shppq2ZH5U7Zjd9ZU0vWlK7itlmdw9ByftTg==
-X-Received: by 2002:a0c:aa11:0:b0:66d:63ff:80ab with SMTP id
- d17-20020a0caa11000000b0066d63ff80abmr7949580qvb.7.1698119551260; 
- Mon, 23 Oct 2023 20:52:31 -0700 (PDT)
+ bh=55ZRJ15k5rlJjmFui052IxveaRjJKA9VJGl0uzNotB8=;
+ b=DvmPCvz9zIYEEo2JLdNjw6slo8YJJpedBj6x6+s293+tLmailv40lA7uvG/Tdb5wFr
+ 9BTW+b5GvxWM+Xxwaj/KDYd+oSCUIRB3fMJWjlFqI4COG08I5LnDrLjkqcCZEncMDlXz
+ kn7lVyuTEgAkL+rISI9rXEpL4IOSLTmmSpSpYlcY5jDV0TphRaD2vguTaglvUniyrPJo
+ 3GoXA+DjskmSz+UHT2/N+hGOb0256IQT9P12REKJM7MWIjBHvW6XTsx8s+6nqfD/sQ5t
+ I3nFHqD3mMWyFJaC6zuVlJkzL3jdZuFR8F04IvdilMBci3tEbGdwpbWmM/LwfA4mrJgC
+ kdSg==
+X-Gm-Message-State: AOJu0Yyb771gC5yM77cgh8d6rXXv7pmbd9I8U2jq883cCCyTCqv/VVjk
+ n3vGs9lolLffpMRjiA9s6odA
+X-Google-Smtp-Source: AGHT+IFhehT5SBIN3u4k21hQKcqd9tt3cVRe5RSL6o1ZuOBt7dfMcEzUGFp3iEoi8dzbbuQJKBLFmg==
+X-Received: by 2002:a05:6214:626:b0:66d:5dec:6099 with SMTP id
+ a6-20020a056214062600b0066d5dec6099mr11383093qvx.41.1698119555528; 
+ Mon, 23 Oct 2023 20:52:35 -0700 (PDT)
 Received: from localhost ([70.22.175.108]) by smtp.gmail.com with ESMTPSA id
- lg8-20020a056214548800b0066d05ed3778sm3363056qvb.56.2023.10.23.20.52.30
+ ee3-20020a0562140a4300b0065b260eafd9sm3357598qvb.87.2023.10.23.20.52.34
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 23 Oct 2023 20:52:30 -0700 (PDT)
-Date: Mon, 23 Oct 2023 23:52:30 -0400
-Message-ID: <2121d9724f32ea5926574f9aba806b69.paul@paul-moore.com>
+ Mon, 23 Oct 2023 20:52:34 -0700 (PDT)
+Date: Mon, 23 Oct 2023 23:52:34 -0400
+Message-ID: <c2a88a9292a6ce1e301ec2244657f385.paul@paul-moore.com>
 From: Paul Moore <paul@paul-moore.com>
 To: Fan Wu <wufan@linux.microsoft.com>, corbet@lwn.net, zohar@linux.ibm.com,
  jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
  axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com
-Subject: Re: [PATCH RFC v11 12/19] dm: add finalize hook to target_type
-References: <1696457386-3010-13-git-send-email-wufan@linux.microsoft.com>
-In-Reply-To: <1696457386-3010-13-git-send-email-wufan@linux.microsoft.com>
+Subject: Re: [PATCH RFC v11 16/19] ipe: enable support for fs-verity as a
+ trust provider
+References: <1696457386-3010-17-git-send-email-wufan@linux.microsoft.com>
+In-Reply-To: <1696457386-3010-17-git-send-email-wufan@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -97,7 +98,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -109,7 +110,8 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org, roberto.sassu@huawei.com,
+Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
+ Deven Bowers <deven.desai@linux.microsoft.com>, roberto.sassu@huawei.com,
  linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org,
  linux-block@vger.kernel.org, audit@vger.kernel.org,
  linux-fscrypt@vger.kernel.org, Fan Wu <wufan@linux.microsoft.com>,
@@ -128,76 +130,159 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 
 On Oct  4, 2023 Fan Wu <wufan@linux.microsoft.com> wrote:
 > 
-> This patch adds a target finalize hook.
+> Enable IPE policy authors to indicate trust for a singular fsverity
+> file, identified by the digest information, through "fsverity_digest"
+> and all files using fsverity's builtin signatures via
+> "fsverity_signature".
 > 
-> The hook is triggered just before activating an inactive table of a
-> mapped device. If it returns an error the __bind get cancelled.
+> This enables file-level integrity claims to be expressed in IPE,
+> allowing individual files to be authorized, giving some flexibility
+> for policy authors. Such file-level claims are important to be expressed
+> for enforcing the integrity of packages, as well as address some of the
+> scalability issues in a sole dm-verity based solution (# of loop back
+> devices, etc).
 > 
-> The dm-verity target will use this hook to attach the dm-verity's
-> roothash metadata to the block_device struct of the mapped device.
+> This solution cannot be done in userspace as the minimum threat that
+> IPE should mitigate is an attacker downloads malicious payload with
+> all required dependencies. These dependencies can lack the userspace
+> check, bypassing the protection entirely. A similar attack succeeds if
+> the userspace component is replaced with a version that does not
+> perform the check. As a result, this can only be done in the common
+> entry point - the kernel.
 > 
+> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 > Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
 > ---
-> v1-v10:
+> v1-v6:
 >   + Not present
+> 
+> v7:
+>   Introduced
+> 
+> v8:
+>   * Undo squash of 08/12, 10/12 - separating drivers/md/ from security/
+>   * Use common-audit function for fsverity_signature.
+>   + Change fsverity implementation to use fsverity_get_digest
+>   + prevent unnecessary copy of fs-verity signature data, instead
+>     just check for presence of signature data.
+>   + Remove free_inode_security hook, as the digest is now acquired
+>     at runtime instead of via LSM blob.
+> 
+> v9:
+>   + Adapt to the new parser
+> 
+> v10:
+>   + Update the fsverity get digest call
+> 
+> v11:
+>   + No changes
 > ---
->  drivers/md/dm.c               | 12 ++++++++++++
->  include/linux/device-mapper.h |  7 +++++++
->  2 files changed, 19 insertions(+)
+>  security/ipe/Kconfig         |  13 +++++
+>  security/ipe/audit.c         |  23 ++++++++
+>  security/ipe/eval.c          | 110 +++++++++++++++++++++++++++++++++++
+>  security/ipe/eval.h          |  10 ++++
+>  security/ipe/hooks.c         |  30 ++++++++++
+>  security/ipe/hooks.h         |   7 +++
+>  security/ipe/ipe.c           |  13 +++++
+>  security/ipe/ipe.h           |   3 +
+>  security/ipe/policy.h        |   3 +
+>  security/ipe/policy_parser.c |   8 +++
+>  10 files changed, 220 insertions(+)
 
-We need an ACK and confirmation from Alasdair and/or Mike that this
-is the right approach.
+...
 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 64a1f306c96c..3be9cc35306d 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -2239,6 +2239,18 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
->  		goto out;
+> diff --git a/security/ipe/audit.c b/security/ipe/audit.c
+> index b5c58655ac74..e3a8552a76a4 100644
+> --- a/security/ipe/audit.c
+> +++ b/security/ipe/audit.c
+> @@ -79,6 +100,8 @@ static void audit_rule(struct audit_buffer *ab, const struct ipe_rule *r)
+>  		audit_log_format(ab, "%s", audit_prop_names[ptr->type]);
+>  		if (ptr->type == IPE_PROP_DMV_ROOTHASH)
+>  			audit_dmv_roothash(ab, ptr->value);
+> +		if (ptr->type == IPE_PROP_FSV_DIGEST)
+> +			audit_fsv_digest(ab, ptr->value);
+
+My comments on audit_dmv_roothash() also apply here.
+
+>  		audit_log_format(ab, " ");
 >  	}
+> diff --git a/security/ipe/eval.c b/security/ipe/eval.c
+> index 82ad48d7aa3d..f0194b0ca2ff 100644
+> --- a/security/ipe/eval.c
+> +++ b/security/ipe/eval.c
+> @@ -172,6 +191,91 @@ static bool evaluate_dmv_sig_true(const struct ipe_eval_ctx *const ctx,
+>  }
+>  #endif /* CONFIG_IPE_PROP_DM_VERITY */
 >  
-> +	for (unsigned int i = 0; i < t->num_targets; i++) {
-> +		struct dm_target *ti = dm_table_get_target(t, i);
-> +
-> +		if (ti->type->finalize) {
-> +			ret = ti->type->finalize(ti);
-> +			if (ret) {
-> +				old_map = ERR_PTR(ret);
-> +				goto out;
-> +			}
-> +		}
-> +	}
-> +
->  	old_map = rcu_dereference_protected(md->map, lockdep_is_held(&md->suspend_lock));
->  	rcu_assign_pointer(md->map, (void *)t);
->  	md->immutable_target_type = dm_table_get_immutable_target_type(t);
-> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-> index 69d0435c7ebb..4040e84a8ec7 100644
-> --- a/include/linux/device-mapper.h
-> +++ b/include/linux/device-mapper.h
-> @@ -160,6 +160,12 @@ typedef int (*dm_dax_zero_page_range_fn)(struct dm_target *ti, pgoff_t pgoff,
->   */
->  typedef size_t (*dm_dax_recovery_write_fn)(struct dm_target *ti, pgoff_t pgoff,
->  		void *addr, size_t bytes, struct iov_iter *i);
-> +/*
-> + * Returns:
-> + *  < 0 : error
-> + *  = 0 : success
+> +#ifdef CONFIG_IPE_PROP_FS_VERITY
+> +/**
+> + * evaluate_fsv_digest - Analyze @ctx against a fsv digest property.
+> + * @ctx: Supplies a pointer to the context being evaluated.
+> + * @p: Supplies a pointer to the property being evaluated.
+> + *
+> + * Return:
+> + * * true	- The current @ctx match the @p
+> + * * false	- The current @ctx doesn't match the @p
 > + */
-> +typedef int (*dm_finalize_fn) (struct dm_target *target);
->  
->  void dm_error(const char *message);
->  
-> @@ -209,6 +215,7 @@ struct target_type {
->  	dm_dax_direct_access_fn direct_access;
->  	dm_dax_zero_page_range_fn dax_zero_page_range;
->  	dm_dax_recovery_write_fn dax_recovery_write;
-> +	dm_finalize_fn finalize;
->  
->  	/* For internal device-mapper use. */
->  	struct list_head list;
-> -- 
-> 2.25.1
+> +static bool evaluate_fsv_digest(const struct ipe_eval_ctx *const ctx,
+> +				struct ipe_prop *p)
+> +{
+> +	enum hash_algo alg;
+> +	u8 digest[FS_VERITY_MAX_DIGEST_SIZE];
+> +
+> +	if (!ctx->ino)
+> +		return false;
+> +	if (!fsverity_get_digest((struct inode *)ctx->ino,
+> +				 digest,
+> +				 NULL,
+> +				 &alg))
+> +		return false;
+> +
+> +	return ipe_digest_eval(p->value,
+> +			       digest,
+> +			       hash_digest_size[alg],
+> +			       hash_algo_name[alg]);
+> +}
+> +
+> +/**
+> + * evaluate_fsv_sig_false - Analyze @ctx against a fsv sig false property.
+> + * @ctx: Supplies a pointer to the context being evaluated.
+> + * @p: Supplies a pointer to the property being evaluated.
+> + *
+> + * Return:
+> + * * true	- The current @ctx match the @p
+> + * * false	- The current @ctx doesn't match the @p
+> + */
+> +static bool evaluate_fsv_sig_false(const struct ipe_eval_ctx *const ctx,
+> +				   struct ipe_prop *p)
+> +{
+> +	return !ctx->ino ||
+> +	       !IS_VERITY(ctx->ino) ||
+> +	       !ctx->ipe_inode ||
+> +	       !ctx->ipe_inode->fs_verity_signed;
+> +}
+> +
+> +/**
+> + * evaluate_fsv_sig_true - Analyze @ctx against a fsv sig true property.
+> + * @ctx: Supplies a pointer to the context being evaluated.
+> + * @p: Supplies a pointer to the property being evaluated.
+> + *
+> + * Return:
+> + * * true - The current @ctx match the @p
+> + * * false - The current @ctx doesn't match the @p
+> + */
+> +static bool evaluate_fsv_sig_true(const struct ipe_eval_ctx *const ctx,
+> +				  struct ipe_prop *p)
+> +{
+> +	return ctx->ino &&
+> +	       IS_VERITY(ctx->ino) &&
+> +	       ctx->ipe_inode &&
+> +	       ctx->ipe_inode->fs_verity_signed;
+> +}
+
+See my previous comments about the false/true functions.
+
+> +#else
 
 --
 paul-moore.com
