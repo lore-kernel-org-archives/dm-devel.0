@@ -1,24 +1,69 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5E13734191
-	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 21:34:40 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F6B827EFF
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 22:46:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="c3++nJQZ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 28479C433C8;
-	Wed, 25 Oct 2023 21:34:38 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1698269679;
-	bh=GrAk39kzBDIKr4nySxBvnGBj/guxxuD/a2vrSB14bpA=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=c3++nJQZzCAwtkzBId/qlR/uYaytprNCVbAWlx2XcDEzD5BKwIOh3RrIYbURB3fK7
-	 rUj5yLsMVjduYcO5RAOYSkKp9zYW6vgPAfBPvyzjhqvlus6ptMi+I84Ktp2WejcmC6
-	 Qf43mAZYbCzK6RmMFTWOWAjRfDHJr6NLP79MqSntwJdewzANm8IygnVAFC8YUXHW9U
-	 iOQHqyPHxYzfcex69ClerE6He6njAnd0O99mV2P5B+wCrkpQ9sGaSqK6+ZjoQ0DtWe
-	 IYulKhGPnY4kCJhWq9YLuPqoQ/9nzhBKJS1CGQL/bmLpZ13iL7d1+xrohzR9etO/cQ
-	 XA3fXbYYaGbww==
-Message-ID: <b2aeab69-169b-4ccb-b7b3-39ebe3c6c733@kernel.org>
-Date: Thu, 26 Oct 2023 06:34:38 +0900
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="V8y6ehUQ"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1698273998;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=dm0CpobQbsS7czPRbypssTTQ8Y+D288bv9BFBEkdSMg=;
+	b=V8y6ehUQhwA6dZ6yFOLCZj1iU8xKKDTLNBmHBgs6rel+QtOwWseksuNykBhWw9fAcSsVkW
+	5fXQMx3h/iH2smUcM0WNZkwi3NvIugU+OkApXm9xTNUMRiF9HJpbgUb5PWO6XZ3zumblpJ
+	yJ2Y4c9H7hLgGTHGHrs8sVLYP/ZxkpE=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-553-8Y6TQKtmMaO1CULiPIhr3Q-1; Wed, 25 Oct 2023 18:46:35 -0400
+X-MC-Unique: 8Y6TQKtmMaO1CULiPIhr3Q-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A8FF1101A53B
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 22:46:30 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9FC23C15983
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 22:46:30 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 27C491946595
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 22:46:30 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
+ by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
+ ESMTP id 9B28F194658C
+ for <dm-devel@listman.corp.redhat.com>; Wed, 25 Oct 2023 22:46:28 +0000 (UTC)
+Received: by smtp.corp.redhat.com (Postfix)
+ id 4178B502B; Wed, 25 Oct 2023 22:46:28 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 39DEC502A
+ for <dm-devel@redhat.com>; Wed, 25 Oct 2023 22:46:28 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
+ [207.211.31.81])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 104362825E82
+ for <dm-devel@redhat.com>; Wed, 25 Oct 2023 22:46:28 +0000 (UTC)
+Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
+ relay.mimecast.com with ESMTP id us-mta-205-ARuZaNb-NFOXNdbQcHT9eA-1; Wed,
+ 25 Oct 2023 18:46:25 -0400
+X-MC-Unique: ARuZaNb-NFOXNdbQcHT9eA-1
+Received: from [10.137.106.151] (unknown [131.107.159.23])
+ by linux.microsoft.com (Postfix) with ESMTPSA id 02F9D20B74C0;
+ Wed, 25 Oct 2023 15:46:24 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 02F9D20B74C0
+Message-ID: <594923f6-6942-4b4b-8ca1-b9dcf74c9c1c@linux.microsoft.com>
+Date: Wed, 25 Oct 2023 15:45:37 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -26,182 +71,451 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2] dm: error: Add support for zoned block devices
+Subject: Re: [PATCH RFC v11 2/19] ipe: add policy parser
+To: Paul Moore <paul@paul-moore.com>, corbet@lwn.net, zohar@linux.ibm.com,
+ jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
+ axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com
+References: <1696457386-3010-3-git-send-email-wufan@linux.microsoft.com>
+ <7c8c2a158c628a642078f746e5c42f2f.paul@paul-moore.com>
+From: Fan Wu <wufan@linux.microsoft.com>
+In-Reply-To: <7c8c2a158c628a642078f746e5c42f2f.paul@paul-moore.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
+X-BeenThere: dm-devel@redhat.com
+X-Mailman-Version: 2.1.29
+Precedence: list
+List-Id: device-mapper development <dm-devel.redhat.com>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
+ <mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/dm-devel/>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
+ <mailto:dm-devel-request@redhat.com?subject=subscribe>
+Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
+ Deven Bowers <deven.desai@linux.microsoft.com>, roberto.sassu@huawei.com,
+ linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-block@vger.kernel.org, audit@vger.kernel.org,
+ linux-fscrypt@vger.kernel.org, linux-integrity@vger.kernel.org
+Errors-To: dm-devel-bounces@redhat.com
+Sender: "dm-devel" <dm-devel-bounces@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: linux.microsoft.com
 Content-Language: en-US
-To: Mike Snitzer <snitzer@kernel.org>
-Cc: dm-devel@lists.linux.dev, Christoph Hellwig <hch@lst.de>,
- Johannes Thumshirn <johannes.thumshirn@wdc.com>,
- Naohiro Aota <naohiro.aota@wdc.com>
-References: <20231025072332.465595-1-dlemoal@kernel.org>
- <ZTkuXgLR1skoEOCc@redhat.com>
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <ZTkuXgLR1skoEOCc@redhat.com>
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-On 10/26/23 00:03, Mike Snitzer wrote:
-> On Wed, Oct 25 2023 at  3:23P -0400,
-> Damien Le Moal <dlemoal@kernel.org> wrote:
-> 
->> dm-error is used in several test cases in the xfstests test suite to
->> check the handling of IO errors in file systems. However, with several
->> file systems getting native support for zoned block devices (e.g. btrfs
->> and f2fs), dm-error lack of zoned block device support creates problems
->> as the file system attempt executing zone commands (e.g. a zone append
->> operation) against a dm-error non-zoned block device, which causes
->> various issues in the block layer (e.g. WARN_ON triggers).
+
+
+On 10/23/2023 8:52 PM, Paul Moore wrote:
+> On Oct  4, 2023 Fan Wu <wufan@linux.microsoft.com> wrote:
 >>
->> This patch adds supports for zoned block devices to dm-error, allowing
->> an error table to be exposed as a zoned block device. This is done by
->> relying on the first argument passed to dmsetup when creating the device
->> table: if that first argument is a path to a backing block device, the
->> dm-error device is created by copying the limits of the backing device,
->> thus also copying its zone model. This is consistent with how xfstests
->> creates dm-error devices (always passing the path to the backing device
->> as the first argument).
+>> IPE's interpretation of the what the user trusts is accomplished through
+>> its policy. IPE's design is to not provide support for a single trust
+>> provider, but to support multiple providers to enable the end-user to
+>> choose the best one to seek their needs.
 >>
->> The zone support for dm-error requires the definition of the
->> report_zones target type method, which is done by introducing the
->> function io_err_report_zones(). Given that this function fails report
->> zones operations (similarly to any other command issued to the dm-error
->> device), dm_set_zones_restrictions() is tweaked to do nothing for a
->> wildcard target to avoid failing zone revalidation. As the dm-error
->> target does not implement the iterate_devices method,
->> dm_table_supports_zoned_model() is also changed to return true.
+>> This requires the policy to be rather flexible and modular so that
+>> integrity providers, like fs-verity, dm-verity, dm-integrity, or
+>> some other system, can plug into the policy with minimal code changes.
 >>
->> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
->> Reviewed-by: Christoph Hellwig <hch@lst.de>
->> Tested-by: Christoph Hellwig <hch@lst.de>
->> Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+>> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
+>> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
+...
 >> ---
->> Changes from v1:
->>  - Improved comment in io_err_ctr() about error from dm_get_device()
->>    being ignored
->>  - Fixed typos in the commit message
->>  - Added review and tested-by tags
+>>   security/ipe/Makefile        |   2 +
+>>   security/ipe/policy.c        | 101 ++++++++
+>>   security/ipe/policy.h        |  83 ++++++
+>>   security/ipe/policy_parser.c | 487 +++++++++++++++++++++++++++++++++++
+>>   security/ipe/policy_parser.h |  11 +
+>>   5 files changed, 684 insertions(+)
+>>   create mode 100644 security/ipe/policy.c
+>>   create mode 100644 security/ipe/policy.h
+>>   create mode 100644 security/ipe/policy_parser.c
+>>   create mode 100644 security/ipe/policy_parser.h
 > 
-> Thanks for the improvements. But likely a v3 is worthwhile.
+> ...
 > 
-> Comment inlined below.
+>> diff --git a/security/ipe/policy.c b/security/ipe/policy.c
+>> new file mode 100644
+>> index 000000000000..3a529c7950a1
+>> --- /dev/null
+>> +++ b/security/ipe/policy.c
+>> @@ -0,0 +1,101 @@
+>> +// SPDX-License-Identifier: GPL-2.0
+>> +/*
+>> + * Copyright (C) Microsoft Corporation. All rights reserved.
+>> + */
 > 
->>
->>  drivers/md/dm-table.c  |  3 +++
->>  drivers/md/dm-target.c | 45 ++++++++++++++++++++++++++++++++++++++++--
->>  drivers/md/dm-zone.c   |  9 +++++++++
->>  3 files changed, 55 insertions(+), 2 deletions(-)
->>
->> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
->> index 37b48f63ae6a..5e4d887063d3 100644
->> --- a/drivers/md/dm-table.c
->> +++ b/drivers/md/dm-table.c
->> @@ -1600,6 +1600,9 @@ static bool dm_table_supports_zoned_model(struct dm_table *t,
->>  	for (unsigned int i = 0; i < t->num_targets; i++) {
->>  		struct dm_target *ti = dm_table_get_target(t, i);
->>  
->> +		if (dm_target_is_wildcard(ti->type))
->> +			continue;
->> +
->>  		if (dm_target_supports_zoned_hm(ti->type)) {
->>  			if (!ti->type->iterate_devices ||
->>  			    ti->type->iterate_devices(ti, device_not_zoned_model,
->> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
->> index 27e2992ff249..fcb2ba2bffa2 100644
->> --- a/drivers/md/dm-target.c
->> +++ b/drivers/md/dm-target.c
->> @@ -118,6 +118,24 @@ EXPORT_SYMBOL(dm_unregister_target);
->>   */
->>  static int io_err_ctr(struct dm_target *tt, unsigned int argc, char **args)
->>  {
->> +	struct dm_dev *ddev;
->> +	int ret;
->> +
->> +	/*
->> +	 * If we have an argument, assume it is the path to the backing
->> +	 * block device that we are replacing. In this case, get the device
->> +	 * so that we can copy its limits in io_err_io_hints(). If getting the
->> +	 * device fails (e.g. because the user did not specify a device file
->> +	 * path), ignore the error to be compatible with the normal use case
->> +	 * without any argument specified.
->> +	 */
->> +	if (argc) {
->> +		ret = dm_get_device(tt, args[0], dm_table_get_mode(tt->table),
->> +				    &ddev);
->> +		if (ret == 0)
->> +			tt->private = ddev;
->> +	}
->> +
->>  	/*
->>  	 * Return error for discards instead of -EOPNOTSUPP
->>  	 */
->>
->> @@ -129,7 +147,10 @@ static int io_err_ctr(struct dm_target *tt, unsigned int argc, char **args)
->>  
->>  static void io_err_dtr(struct dm_target *tt)
->>  {
->> -	/* empty */
->> +	struct dm_dev *ddev = tt->private;
->> +
->> +	if (ddev)
->> +		dm_put_device(tt, ddev);
->>  }
->>  
->>  static int io_err_map(struct dm_target *tt, struct bio *bio)
->> @@ -149,8 +170,27 @@ static void io_err_release_clone_rq(struct request *clone,
->>  {
->>  }
->>  
->> +#ifdef CONFIG_BLK_DEV_ZONED
->> +static int io_err_report_zones(struct dm_target *ti,
->> +		struct dm_report_zones_args *args, unsigned int nr_zones)
+> ...
+> 
+>> +static int set_pkcs7_data(void *ctx, const void *data, size_t len,
+>> +			  size_t asn1hdrlen)
 >> +{
->> +	return -EIO;
+>> +	struct ipe_policy *p = ctx;
+>> +
+>> +	p->text = (const char *)data;
+>> +	p->textlen = len;
+>> +
+>> +	return 0;
 >> +}
->> +#else
->> +#define io_err_report_zones NULL
->> +#endif
+> 
+> The @asn1hdrlen parameter isn't used in this function, at least at this
+> point in the patchset, so you really should remove it.  If it is needed
+> later in the patchset you can always update the function.
+>
+Although the @asn1hdrlen is not used, it's a required parameter for the 
+pkcs7 callback. I guess adding a __always_unused might be the right 
+solution?
+
+>> diff --git a/security/ipe/policy_parser.c b/security/ipe/policy_parser.c
+>> new file mode 100644
+>> index 000000000000..c09458bd348d
+>> --- /dev/null
+>> +++ b/security/ipe/policy_parser.c
+>> @@ -0,0 +1,487 @@
+>> +// SPDX-License-Identifier: GPL-2.0
+>> +/*
+>> + * Copyright (C) Microsoft Corporation. All rights reserved.
+>> + */
+> 
+> ...
+> 
+>> +/**
+>> + * remove_trailing_spaces - Truncate all trailing spaces in a string.
+>> + *
+>> + * @line: Supplies a poilcy line string for preprocessing.
+>> + *
+>> + * Return: The length of truncated string.
+>> + */
+>> +static size_t remove_trailing_spaces(char *line)
+>> +{
+>> +	size_t i = 0;
 >> +
->>  static void io_err_io_hints(struct dm_target *ti, struct queue_limits *limits)
->>  {
->> +	struct dm_dev *ddev = ti->private;
+>> +	for (i = strlen(line); i > 0 && (line[i - 1] == ' ' || line[i - 1] == '\t'); --i)
+>> +		;
+> 
+> Maybe I've asked this before, I can't remember: could you use the
+> isspace() macro here instead of explicitly checking for ' ' and '\t'?
+> Yes, isspace() works here. I will update this part.
+
+>    i = strlen(line);
+>    while (i > 0 && isspace(line[i - 1]))
+>      i--;
+>    line[i] = '\0';
+> 
+>> +	line[i] = '\0';
 >> +
->> +	/* If we have a target device, copy its limits */
->> +	if (ddev) {
->> +		struct request_queue *q = bdev_get_queue(ddev->bdev);
+>> +	return i;
+>> +}
 >> +
->> +		memcpy(limits, &q->limits, sizeof(*limits));
+>> +/**
+>> + * parse_version - Parse policy version.
+>> + * @ver: Supplies a version string to be parsed.
+>> + * @p: Supplies the partial parsed policy.
+>> + *
+>> + * Return:
+>> + * * 0	- OK
+>> + * * !0	- Standard errno
+>> + */
+>> +static int parse_version(char *ver, struct ipe_parsed_policy *p)
+>> +{
+>> +	int rc = 0;
+>> +	size_t sep_count = 0;
+>> +	char *token;
+>> +	u16 *const cv[] = { &p->version.major, &p->version.minor, &p->version.rev };
+>> +
+>> +	while ((token = strsep(&ver, ".")) != NULL) {
+>> +		/* prevent overflow */
+>> +		if (sep_count >= ARRAY_SIZE(cv))
+>> +			return -EBADMSG;
+>> +
+>> +		rc = kstrtou16(token, 10, cv[sep_count]);
+>> +		if (rc)
+>> +			return rc;
+>> +
+>> +		++sep_count;
 >> +	}
 >> +
->>  	limits->max_discard_sectors = UINT_MAX;
->>  	limits->max_hw_discard_sectors = UINT_MAX;
->>  	limits->discard_granularity = 512;
+>> +	/* prevent underflow */
+>> +	if (sep_count != ARRAY_SIZE(cv))
+>> +		rc = -EBADMSG;
 > 
+> You could always just 'return -EBADMSG' here and 'return 0' below to
+> simplify things a little.
 > 
-> You don't need to explicitly copy the queue_limits, DM core
-> (dm-table.c:dm_calculate_queue_limits) will stack up the underlying
-> device's queue_limits as long as you implement io_err_iterate_devices
-> (like dm-linear.c:linear_iterate_devices).
-> 
-> With io_err_iterate_devices you shouldn't need to change
-> io_err_io_hints -- but actually I could see there being a need to wrap
-> setting the above no-device defaults only if (!ddev).. or:
-> 	if (ddev)
-> 		return;
+I agree, this part is kind of unnecessary. I will update accordingly.
 
-Works for me, but I do not see how iterate_devices would work if there is no
-backing device specified (current default). Am I missing something ? Also,
-doesn't adding the iterate_devices method allow combining dm-error with other dm
-targets in the same table, something that is not possible currently ? So that
-would change dm-error usage. OK with me, but I want to make sure.
-But it may be that I am missing something because of the wildcard flag. Is do
-not fully understand how that one impacts anything. Is that flag responsible for
-preventing dm-error to be combined with other targets ?
-
+>> +	return rc;
+>> +}
+>> +
+>> +enum header_opt {
+>> +	IPE_HEADER_POLICY_NAME = 0,
+>> +	IPE_HEADER_POLICY_VERSION,
+>> +	__IPE_HEADER_MAX
+>> +};
+>> +
+>> +static const match_table_t header_tokens = {
+>> +	{IPE_HEADER_POLICY_NAME,	"policy_name=%s"},
+>> +	{IPE_HEADER_POLICY_VERSION,	"policy_version=%s"},
+>> +	{__IPE_HEADER_MAX,		NULL}
+>> +};
+>> +
+>> +/**
+>> + * parse_header - Parse policy header information.
+>> + * @line: Supplies header line to be parsed.
+>> + * @p: Supplies the partial parsed policy.
+>> + *
+>> + * Return:
+>> + * * 0	- OK
+>> + * * !0	- Standard errno
+>> + */
+>> +static int parse_header(char *line, struct ipe_parsed_policy *p)
+>> +{
+>> +	int rc = 0;
+>> +	char *t, *ver = NULL;
+>> +	substring_t args[MAX_OPT_ARGS];
+>> +	size_t idx = 0;
+>> +
+>> +	while ((t = strsep(&line, IPE_POLICY_DELIM)) != NULL) {
+>> +		int token;
+>> +
+>> +		if (*t == '\0')
+>> +			continue;
+>> +		if (idx >= __IPE_HEADER_MAX) {
+>> +			rc = -EBADMSG;
+>> +			goto out;
+>> +		}
+>> +
+>> +		token = match_token(t, header_tokens, args);
+>> +		if (token != idx) {
+>> +			rc = -EBADMSG;
+>> +			goto out;
+>> +		}
+>> +
+>> +		switch (token) {
+>> +		case IPE_HEADER_POLICY_NAME:
+>> +			p->name = match_strdup(&args[0]);
+>> +			if (!p->name)
+>> +				rc = -ENOMEM;
+>> +			break;
+>> +		case IPE_HEADER_POLICY_VERSION:
+>> +			ver = match_strdup(&args[0]);
+>> +			if (!ver) {
+>> +				rc = -ENOMEM;
+>> +				break;
+>> +			}
+>> +			rc = parse_version(ver, p);
+>> +			break;
+>> +		default:
+>> +			rc = -EBADMSG;
+>> +		}
+>> +		if (rc)
+>> +			goto out;
+>> +		++idx;
+>> +	}
+>> +
+>> +	if (idx != __IPE_HEADER_MAX) {
+>> +		rc = -EBADMSG;
+>> +		goto out;
 > 
-> Mike
-> 
+> You probably don't need to 'goto out' here.
+>
+Yes it's unnecessary, thanks for pointing that out.
 
--- 
-Damien Le Moal
-Western Digital Research
+>> +	}
+>> +
+>> +out:
+>> +	kfree(ver);
+>> +	return rc;
+>> +}
+> 
+> ...
+> 
+>> +/**
+>> + * parse_rule - parse a policy rule line.
+>> + * @line: Supplies rule line to be parsed.
+>> + * @p: Supplies the partial parsed policy.
+>> + *
+>> + * Return:
+>> + * * !IS_ERR	- OK
+>> + * * -ENOMEM	- Out of memory
+>> + * * -EBADMSG	- Policy syntax error
+>> + */
+>> +static int parse_rule(char *line, struct ipe_parsed_policy *p)
+>> +{
+>> +	int rc = 0;
+>> +	bool first_token = true, is_default_rule = false;
+>> +	bool op_parsed = false;
+>> +	enum ipe_op_type op = IPE_OP_INVALID;
+>> +	enum ipe_action_type action = IPE_ACTION_INVALID;
+>> +	struct ipe_rule *r = NULL;
+>> +	char *t;
+>> +
+>> +	r = kzalloc(sizeof(*r), GFP_KERNEL);
+>> +	if (!r)
+>> +		return -ENOMEM;
+>> +
+>> +	INIT_LIST_HEAD(&r->next);
+>> +	INIT_LIST_HEAD(&r->props);
+>> +
+>> +	while (t = strsep(&line, IPE_POLICY_DELIM), line) {
+>> +		if (*t == '\0')
+>> +			continue;
+>> +		if (first_token && token_default(t)) {
+>> +			is_default_rule = true;
+>> +		} else {
+>> +			if (!op_parsed) {
+>> +				op = parse_operation(t);
+>> +				if (op == IPE_OP_INVALID)
+>> +					rc = -EBADMSG;
+>> +				else
+>> +					op_parsed = true;
+>> +			} else {
+>> +				rc = parse_property(t, r);
+>> +			}
+>> +		}
+>> +
+>> +		if (rc)
+>> +			goto err;
+>> +		first_token = false;
+>> +	}
+>> +
+>> +	action = parse_action(t);
+>> +	if (action == IPE_ACTION_INVALID) {
+>> +		rc = -EBADMSG;
+>> +		goto err;
+>> +	}
+>> +
+>> +	if (is_default_rule) {
+>> +		if (!list_empty(&r->props)) {
+>> +			rc = -EBADMSG;
+>> +		} else if (op == IPE_OP_INVALID) {
+>> +			if (p->global_default_action != IPE_ACTION_INVALID)
+>> +				rc = -EBADMSG;
+>> +			else
+>> +				p->global_default_action = action;
+>> +		} else {
+>> +			if (p->rules[op].default_action != IPE_ACTION_INVALID)
+>> +				rc = -EBADMSG;
+>> +			else
+>> +				p->rules[op].default_action = action;
+>> +		}
+>> +	} else if (op != IPE_OP_INVALID && action != IPE_ACTION_INVALID) {
+>> +		r->op = op;
+>> +		r->action = action;
+>> +	} else {
+>> +		rc = -EBADMSG;
+>> +	}
+> 
+> I might be missing something important in the policy syntac, but could
+> this function, and perhaps the ipe_parsed_policy struct, be simplified
+> if the default action was an explicit rule?
+> 
+>   "op=DEFAULT action=ALLOW"
+>
+The complexity here arises from our need for two types of default rules: 
+one for global settings and another for operation-specific settings.
+
+To illustrate the flexibility of operation-specific default rules, users 
+can set their policy to have a default rule of 'DENY' for execution, 
+meaning all execution actions are prohibited by default. This let users 
+to create an allow-list for execution. At the same time, the default 
+rule for read can be set to 'ALLOW'.  This let users to create an 
+deny-list for read.
+
+Adding explicit default rules can simplify ipe_parsed_policy struct, but 
+that impose a burden on users that requires users always add the default 
+rules the end of the policy. In contrast, our current design allows 
+users to place the default rule anywhere in the policy. In practice, we 
+often position the default rule at the beginning of the policy, which 
+makes it more convenient for users to add new rules.
+
+>> +	if (rc)
+>> +		goto err;
+>> +	if (!is_default_rule)
+>> +		list_add_tail(&r->next, &p->rules[op].rules);
+>> +	else
+>> +		free_rule(r);
+>> +
+>> +	return rc;
+>> +err:
+>> +	free_rule(r);
+>> +	return rc;
+>> +}
+>> +
+>> +/**
+>> + * free_parsed_policy - free a parsed policy structure.
+>> + * @p: Supplies the parsed policy.
+>> + */
+>> +void free_parsed_policy(struct ipe_parsed_policy *p)
+>> +{
+>> +	size_t i = 0;
+>> +	struct ipe_rule *pp, *t;
+>> +
+>> +	if (IS_ERR_OR_NULL(p))
+>> +		return;
+>> +
+>> +	for (i = 0; i < ARRAY_SIZE(p->rules); ++i)
+>> +		list_for_each_entry_safe(pp, t, &p->rules[i].rules, next) {
+>> +			list_del(&pp->next);
+>> +			free_rule(pp);
+>> +		}
+>> +
+>> +	kfree(p->name);
+>> +	kfree(p);
+>> +}
+>> +
+>> +/**
+>> + * validate_policy - validate a parsed policy.
+>> + * @p: Supplies the fully parsed policy.
+>> + *
+>> + * Given a policy structure that was just parsed, validate that all
+>> + * necessary fields are present, initialized correctly.
+>> + *
+>> + * A parsed policy can be in an invalid state for use (a default was
+>> + * undefined) by just parsing the policy.
+>> + *
+>> + * Return:
+>> + * * 0		- OK
+>> + * * -EBADMSG	- Policy is invalid
+>> + */
+>> +static int validate_policy(const struct ipe_parsed_policy *p)
+>> +{
+>> +	size_t i = 0;
+>> +
+>> +	if (p->global_default_action != IPE_ACTION_INVALID)
+>> +		return 0;
+> 
+> Should the if conditional above be "==" and not "!="?
+>No, "!=" is the correct one.
+
+The purpose of validation is to ensure that we have enough default rules 
+to cover all cases. If the global default action not invalid, it means 
+we have a global default rule in the policy to cover all cases, thus we 
+simply return 0.
+
+However, if there is no global default rule, then we need to ensure that 
+for each operation, there is a operation specific default rule, this is 
+validated in the for loop below.
+
+-Fan
+
+>> +	for (i = 0; i < ARRAY_SIZE(p->rules); ++i) {
+>> +		if (p->rules[i].default_action == IPE_ACTION_INVALID)
+>> +			return -EBADMSG;
+>> +	}
+>> +
+>> +	return 0;
+>> +}
+> 
+> --
+> paul-moore.com
 
