@@ -1,275 +1,207 @@
-Received: from mail-qk1-f175.google.com (mail-qk1-f175.google.com [209.85.222.175])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF19A20B00
-	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 19:55:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; dkim=none
-Received: by mail-qk1-f175.google.com with SMTP id af79cd13be357-77896da2118so11364885a.1
-        for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 12:55:10 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1698263709; x=1698868509;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=4ekPau7DZNUdzR+f7zD17FyTym1sI9YNJQ3q9QYnQIM=;
-        b=qzXPqlD2EZsI80DLutD/89ZAN599fuWQOZxIAI0lK89ko0oCXzXgtS23to4rNByaR/
-         tbv8omACTZwRIFCfR0noPeK7GvITrsqiKF9EN1BXtGjxgJSPXXP4XiqXKFhzW6ZmozTq
-         CssZIi3uOZtJu+t8+kYtDZaOF5UdHgCJoEhsZ1LDvyDJAS/CSg4Fz/7tM2gh/5X3QW+K
-         dyCQQo4DxbYx+6vstdKh2uOAehxFHfL9tKWxAaBAED16FIIMx1cUNoeQZXvqhYBTHazP
-         TXyQEIA3u0z+EePENQahW1oCKQ8d0dyyySdHZmO4bSoCSiFfbTrGDwbb7FB4epBB/I/l
-         y5YQ==
-X-Gm-Message-State: AOJu0YwRblOPB3x2isWZr5WkBv/UhFrdUZ3DHY+qMSXdxIJ+wbtihzev
-	l5nSX3ttVjJ823yS91o6CEAG
-X-Google-Smtp-Source: AGHT+IEkASxtyJZ8inRHyoVuE+e18cb050FhVzmJbHpRVoEA6mwD77zUMN5FoX/TnBj6qvuOHfqZbw==
-X-Received: by 2002:a05:620a:2910:b0:779:9b67:811 with SMTP id m16-20020a05620a291000b007799b670811mr13729243qkp.52.1698263709581;
-        Wed, 25 Oct 2023 12:55:09 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id s23-20020a05620a16b700b0077891d2d12dsm4445370qkj.43.2023.10.25.12.55.08
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 25 Oct 2023 12:55:09 -0700 (PDT)
-Date: Wed, 25 Oct 2023 15:55:07 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Ming Lei <ming.lei@redhat.com>, dm-devel@lists.linux.dev,
-	linux-block@vger.kernel.org, axboe@kernel.dk
-Subject: Re: [PATCH v2] dm: respect REQ_NOWAIT flag in bios issued to DM
-Message-ID: <ZTlym/9lyUZmApSY@redhat.com>
-References: <15ca26cc-174a-d4e8-9780-d09f8e5a6ea5@redhat.com>
- <ZTgFtseG3m3WPWn/@redhat.com>
- <e796de8-bac1-8f7a-c6eb-74d39aad8a2b@redhat.com>
- <ZTgb3lkNmEUIYpsl@redhat.com>
- <ZTlt0HPbVZf0gYcI@redhat.com>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5E13734191
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 21:34:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="c3++nJQZ"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 28479C433C8;
+	Wed, 25 Oct 2023 21:34:38 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1698269679;
+	bh=GrAk39kzBDIKr4nySxBvnGBj/guxxuD/a2vrSB14bpA=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=c3++nJQZzCAwtkzBId/qlR/uYaytprNCVbAWlx2XcDEzD5BKwIOh3RrIYbURB3fK7
+	 rUj5yLsMVjduYcO5RAOYSkKp9zYW6vgPAfBPvyzjhqvlus6ptMi+I84Ktp2WejcmC6
+	 Qf43mAZYbCzK6RmMFTWOWAjRfDHJr6NLP79MqSntwJdewzANm8IygnVAFC8YUXHW9U
+	 iOQHqyPHxYzfcex69ClerE6He6njAnd0O99mV2P5B+wCrkpQ9sGaSqK6+ZjoQ0DtWe
+	 IYulKhGPnY4kCJhWq9YLuPqoQ/9nzhBKJS1CGQL/bmLpZ13iL7d1+xrohzR9etO/cQ
+	 XA3fXbYYaGbww==
+Message-ID: <b2aeab69-169b-4ccb-b7b3-39ebe3c6c733@kernel.org>
+Date: Thu, 26 Oct 2023 06:34:38 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <ZTlt0HPbVZf0gYcI@redhat.com>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2] dm: error: Add support for zoned block devices
+Content-Language: en-US
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: dm-devel@lists.linux.dev, Christoph Hellwig <hch@lst.de>,
+ Johannes Thumshirn <johannes.thumshirn@wdc.com>,
+ Naohiro Aota <naohiro.aota@wdc.com>
+References: <20231025072332.465595-1-dlemoal@kernel.org>
+ <ZTkuXgLR1skoEOCc@redhat.com>
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <ZTkuXgLR1skoEOCc@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Wed, Oct 25 2023 at  3:34P -0400,
-Mike Snitzer <snitzer@kernel.org> wrote:
-
-> From: Mikulas Patocka <mpatocka@redhat.com>
+On 10/26/23 00:03, Mike Snitzer wrote:
+> On Wed, Oct 25 2023 at  3:23P -0400,
+> Damien Le Moal <dlemoal@kernel.org> wrote:
 > 
-> Update DM core's IO submission to allocate required memory using
-> GFP_NOWAIT if REQ_NOWAIT is set.  Lone exception is in the error path
-> where DM's requeue support needs to allocate a clone bio in
-> dm_io_rewind() to allow the IO to be resubmitted: GFP_NOWAIT is used
-> first but if it fails GFP_NOIO is used as a last resort.
+>> dm-error is used in several test cases in the xfstests test suite to
+>> check the handling of IO errors in file systems. However, with several
+>> file systems getting native support for zoned block devices (e.g. btrfs
+>> and f2fs), dm-error lack of zoned block device support creates problems
+>> as the file system attempt executing zone commands (e.g. a zone append
+>> operation) against a dm-error non-zoned block device, which causes
+>> various issues in the block layer (e.g. WARN_ON triggers).
+>>
+>> This patch adds supports for zoned block devices to dm-error, allowing
+>> an error table to be exposed as a zoned block device. This is done by
+>> relying on the first argument passed to dmsetup when creating the device
+>> table: if that first argument is a path to a backing block device, the
+>> dm-error device is created by copying the limits of the backing device,
+>> thus also copying its zone model. This is consistent with how xfstests
+>> creates dm-error devices (always passing the path to the backing device
+>> as the first argument).
+>>
+>> The zone support for dm-error requires the definition of the
+>> report_zones target type method, which is done by introducing the
+>> function io_err_report_zones(). Given that this function fails report
+>> zones operations (similarly to any other command issued to the dm-error
+>> device), dm_set_zones_restrictions() is tweaked to do nothing for a
+>> wildcard target to avoid failing zone revalidation. As the dm-error
+>> target does not implement the iterate_devices method,
+>> dm_table_supports_zoned_model() is also changed to return true.
+>>
+>> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+>> Reviewed-by: Christoph Hellwig <hch@lst.de>
+>> Tested-by: Christoph Hellwig <hch@lst.de>
+>> Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+>> ---
+>> Changes from v1:
+>>  - Improved comment in io_err_ctr() about error from dm_get_device()
+>>    being ignored
+>>  - Fixed typos in the commit message
+>>  - Added review and tested-by tags
 > 
-> Tested with simple test provided in commit a9ce385344f916 ("dm: don't
-> attempt to queue IO under RCU protection") that was enhanced to check
-> error codes.  Also tested using fio's pvsync2 with nowait=1.
+> Thanks for the improvements. But likely a v3 is worthwhile.
 > 
-> But testing with induced GFP_NOWAIT allocation failures wasn't
-> performed.
+> Comment inlined below.
 > 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Co-developed-by: Mike Snitzer <snitzer@kernel.org>
-> Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-> ---
->  drivers/md/dm-io-rewind.c | 13 ++++++--
->  drivers/md/dm.c           | 66 ++++++++++++++++++++++++++++++++-------
->  2 files changed, 65 insertions(+), 14 deletions(-)
+>>
+>>  drivers/md/dm-table.c  |  3 +++
+>>  drivers/md/dm-target.c | 45 ++++++++++++++++++++++++++++++++++++++++--
+>>  drivers/md/dm-zone.c   |  9 +++++++++
+>>  3 files changed, 55 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+>> index 37b48f63ae6a..5e4d887063d3 100644
+>> --- a/drivers/md/dm-table.c
+>> +++ b/drivers/md/dm-table.c
+>> @@ -1600,6 +1600,9 @@ static bool dm_table_supports_zoned_model(struct dm_table *t,
+>>  	for (unsigned int i = 0; i < t->num_targets; i++) {
+>>  		struct dm_target *ti = dm_table_get_target(t, i);
+>>  
+>> +		if (dm_target_is_wildcard(ti->type))
+>> +			continue;
+>> +
+>>  		if (dm_target_supports_zoned_hm(ti->type)) {
+>>  			if (!ti->type->iterate_devices ||
+>>  			    ti->type->iterate_devices(ti, device_not_zoned_model,
+>> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
+>> index 27e2992ff249..fcb2ba2bffa2 100644
+>> --- a/drivers/md/dm-target.c
+>> +++ b/drivers/md/dm-target.c
+>> @@ -118,6 +118,24 @@ EXPORT_SYMBOL(dm_unregister_target);
+>>   */
+>>  static int io_err_ctr(struct dm_target *tt, unsigned int argc, char **args)
+>>  {
+>> +	struct dm_dev *ddev;
+>> +	int ret;
+>> +
+>> +	/*
+>> +	 * If we have an argument, assume it is the path to the backing
+>> +	 * block device that we are replacing. In this case, get the device
+>> +	 * so that we can copy its limits in io_err_io_hints(). If getting the
+>> +	 * device fails (e.g. because the user did not specify a device file
+>> +	 * path), ignore the error to be compatible with the normal use case
+>> +	 * without any argument specified.
+>> +	 */
+>> +	if (argc) {
+>> +		ret = dm_get_device(tt, args[0], dm_table_get_mode(tt->table),
+>> +				    &ddev);
+>> +		if (ret == 0)
+>> +			tt->private = ddev;
+>> +	}
+>> +
+>>  	/*
+>>  	 * Return error for discards instead of -EOPNOTSUPP
+>>  	 */
+>>
+>> @@ -129,7 +147,10 @@ static int io_err_ctr(struct dm_target *tt, unsigned int argc, char **args)
+>>  
+>>  static void io_err_dtr(struct dm_target *tt)
+>>  {
+>> -	/* empty */
+>> +	struct dm_dev *ddev = tt->private;
+>> +
+>> +	if (ddev)
+>> +		dm_put_device(tt, ddev);
+>>  }
+>>  
+>>  static int io_err_map(struct dm_target *tt, struct bio *bio)
+>> @@ -149,8 +170,27 @@ static void io_err_release_clone_rq(struct request *clone,
+>>  {
+>>  }
+>>  
+>> +#ifdef CONFIG_BLK_DEV_ZONED
+>> +static int io_err_report_zones(struct dm_target *ti,
+>> +		struct dm_report_zones_args *args, unsigned int nr_zones)
+>> +{
+>> +	return -EIO;
+>> +}
+>> +#else
+>> +#define io_err_report_zones NULL
+>> +#endif
+>> +
+>>  static void io_err_io_hints(struct dm_target *ti, struct queue_limits *limits)
+>>  {
+>> +	struct dm_dev *ddev = ti->private;
+>> +
+>> +	/* If we have a target device, copy its limits */
+>> +	if (ddev) {
+>> +		struct request_queue *q = bdev_get_queue(ddev->bdev);
+>> +
+>> +		memcpy(limits, &q->limits, sizeof(*limits));
+>> +	}
+>> +
+>>  	limits->max_discard_sectors = UINT_MAX;
+>>  	limits->max_hw_discard_sectors = UINT_MAX;
+>>  	limits->discard_granularity = 512;
+> 
+> 
+> You don't need to explicitly copy the queue_limits, DM core
+> (dm-table.c:dm_calculate_queue_limits) will stack up the underlying
+> device's queue_limits as long as you implement io_err_iterate_devices
+> (like dm-linear.c:linear_iterate_devices).
+> 
+> With io_err_iterate_devices you shouldn't need to change
+> io_err_io_hints -- but actually I could see there being a need to wrap
+> setting the above no-device defaults only if (!ddev).. or:
+> 	if (ddev)
+> 		return;
 
-Backfilling some comments on this v2:
-
-1) I'm not completely clear if REQ_NOWAIT not ever sleeping (waiting
-   on IO) is a hint vs a hard requirement
-   -- so the dm_io_rewind() change to try GFP_NOWAIT and failback to
-      GFP_NOIO might be bogus...
-
-2) What is a good way to reliably simulate low memory allocations such
-   that mempool backed GFP_NOWAIT allocations fail?
-
-Thanks for any review/feedback.
-
-Mike
+Works for me, but I do not see how iterate_devices would work if there is no
+backing device specified (current default). Am I missing something ? Also,
+doesn't adding the iterate_devices method allow combining dm-error with other dm
+targets in the same table, something that is not possible currently ? So that
+would change dm-error usage. OK with me, but I want to make sure.
+But it may be that I am missing something because of the wildcard flag. Is do
+not fully understand how that one impacts anything. Is that flag responsible for
+preventing dm-error to be combined with other targets ?
 
 > 
-> diff --git a/drivers/md/dm-io-rewind.c b/drivers/md/dm-io-rewind.c
-> index 6155b0117c9d..bde5a53e2d88 100644
-> --- a/drivers/md/dm-io-rewind.c
-> +++ b/drivers/md/dm-io-rewind.c
-> @@ -143,8 +143,17 @@ static void dm_bio_rewind(struct bio *bio, unsigned int bytes)
->  void dm_io_rewind(struct dm_io *io, struct bio_set *bs)
->  {
->  	struct bio *orig = io->orig_bio;
-> -	struct bio *new_orig = bio_alloc_clone(orig->bi_bdev, orig,
-> -					       GFP_NOIO, bs);
-> +	struct bio *new_orig;
-> +
-> +	new_orig = bio_alloc_clone(orig->bi_bdev, orig, GFP_NOWAIT, bs);
-> +	if (unlikely(!new_orig)) {
-> +		/*
-> +		 * Returning early and failing rewind isn't an option, even
-> +		 * if orig has REQ_NOWAIT set, so retry alloc with GFP_NOIO.
-> +		 */
-> +		new_orig = bio_alloc_clone(orig->bi_bdev, orig, GFP_NOIO, bs);
-> +	}
-> +
->  	/*
->  	 * dm_bio_rewind can restore to previous position since the
->  	 * end sector is fixed for original bio, but we still need
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 1113a8da3c47..b0e1425af475 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -87,6 +87,8 @@ struct clone_info {
->  	unsigned int sector_count;
->  	bool is_abnormal_io:1;
->  	bool submit_as_polled:1;
-> +	bool is_nowait:1;
-> +	bool nowait_failed:1;
->  };
->  
->  static inline struct dm_target_io *clone_to_tio(struct bio *clone)
-> @@ -576,7 +578,13 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
->  	struct dm_target_io *tio;
->  	struct bio *clone;
->  
-> -	clone = bio_alloc_clone(NULL, bio, GFP_NOIO, &md->mempools->io_bs);
-> +	if (unlikely(bio->bi_opf & REQ_NOWAIT)) {
-> +		clone = bio_alloc_clone(NULL, bio, GFP_NOWAIT, &md->mempools->io_bs);
-> +		if (!clone)
-> +			return NULL;
-> +	} else {
-> +		clone = bio_alloc_clone(NULL, bio, GFP_NOIO, &md->mempools->io_bs);
-> +	}
->  	tio = clone_to_tio(clone);
->  	tio->flags = 0;
->  	dm_tio_set_flag(tio, DM_TIO_INSIDE_DM_IO);
-> @@ -1500,9 +1508,17 @@ static void alloc_multiple_bios(struct bio_list *blist, struct clone_info *ci,
->  			mutex_unlock(&ci->io->md->table_devices_lock);
->  		if (bio_nr == num_bios)
->  			return;
-> -
-> +		/*
-> +		 * Failed to allocate all bios, all or nothing, so rewind partial
-> +		 * allocations and short-circuit retry with GFP_NOIO if 'is_nowait'
-> +		 */
->  		while ((bio = bio_list_pop(blist)))
->  			free_tio(bio);
-> +
-> +		if (ci->is_nowait) {
-> +			ci->nowait_failed = true;
-> +			return;
-> +		}
->  	}
->  }
->  
-> @@ -1519,7 +1535,15 @@ static unsigned int __send_duplicate_bios(struct clone_info *ci, struct dm_targe
->  	case 1:
->  		if (len)
->  			setup_split_accounting(ci, *len);
-> -		clone = alloc_tio(ci, ti, 0, len, GFP_NOIO);
-> +		if (unlikely(ci->is_nowait)) {
-> +			clone = alloc_tio(ci, ti, 0, len, GFP_NOWAIT);
-> +			if (!clone) {
-> +				ci->nowait_failed = true;
-> +				return 0;
-> +			}
-> +		} else {
-> +			clone = alloc_tio(ci, ti, 0, len, GFP_NOIO);
-> +		}
->  		__map_bio(clone);
->  		ret = 1;
->  		break;
-> @@ -1539,7 +1563,7 @@ static unsigned int __send_duplicate_bios(struct clone_info *ci, struct dm_targe
->  	return ret;
->  }
->  
-> -static void __send_empty_flush(struct clone_info *ci)
-> +static blk_status_t __send_empty_flush(struct clone_info *ci)
->  {
->  	struct dm_table *t = ci->map;
->  	struct bio flush_bio;
-> @@ -1572,6 +1596,8 @@ static void __send_empty_flush(struct clone_info *ci)
->  	atomic_sub(1, &ci->io->io_count);
->  
->  	bio_uninit(ci->bio);
-> +
-> +	return likely(!ci->nowait_failed) ? BLK_STS_OK : BLK_STS_AGAIN;
->  }
->  
->  static void __send_changing_extent_only(struct clone_info *ci, struct dm_target *ti,
-> @@ -1656,7 +1682,7 @@ static blk_status_t __process_abnormal_io(struct clone_info *ci,
->  
->  	__send_changing_extent_only(ci, ti, num_bios,
->  				    max_granularity, max_sectors);
-> -	return BLK_STS_OK;
-> +	return likely(!ci->nowait_failed) ? BLK_STS_OK : BLK_STS_AGAIN;
->  }
->  
->  /*
-> @@ -1714,7 +1740,7 @@ static blk_status_t __split_and_process_bio(struct clone_info *ci)
->  	if (unlikely(!ti))
->  		return BLK_STS_IOERR;
->  
-> -	if (unlikely((ci->bio->bi_opf & REQ_NOWAIT) != 0) &&
-> +	if (unlikely(ci->is_nowait) &&
->  	    unlikely(!dm_target_supports_nowait(ti->type)))
->  		return BLK_STS_NOTSUPP;
->  
-> @@ -1729,7 +1755,15 @@ static blk_status_t __split_and_process_bio(struct clone_info *ci)
->  
->  	len = min_t(sector_t, max_io_len(ti, ci->sector), ci->sector_count);
->  	setup_split_accounting(ci, len);
-> -	clone = alloc_tio(ci, ti, 0, &len, GFP_NOIO);
-> +	if (unlikely(ci->is_nowait)) {
-> +		clone = alloc_tio(ci, ti, 0, &len, GFP_NOWAIT);
-> +		if (unlikely(!clone)) {
-> +			ci->nowait_failed = true; /* unchecked, set for consistency */
-> +			return BLK_STS_AGAIN;
-> +		}
-> +	} else {
-> +		clone = alloc_tio(ci, ti, 0, &len, GFP_NOIO);
-> +	}
->  	__map_bio(clone);
->  
->  	ci->sector += len;
-> @@ -1738,11 +1772,13 @@ static blk_status_t __split_and_process_bio(struct clone_info *ci)
->  	return BLK_STS_OK;
->  }
->  
-> -static void init_clone_info(struct clone_info *ci, struct mapped_device *md,
-> +static void init_clone_info(struct clone_info *ci, struct dm_io *io,
->  			    struct dm_table *map, struct bio *bio, bool is_abnormal)
->  {
-> +	ci->is_nowait = !!(bio->bi_opf & REQ_NOWAIT);
-> +	ci->nowait_failed = false;
->  	ci->map = map;
-> -	ci->io = alloc_io(md, bio);
-> +	ci->io = io;
->  	ci->bio = bio;
->  	ci->is_abnormal_io = is_abnormal;
->  	ci->submit_as_polled = false;
-> @@ -1777,11 +1813,17 @@ static void dm_split_and_process_bio(struct mapped_device *md,
->  			return;
->  	}
->  
-> -	init_clone_info(&ci, md, map, bio, is_abnormal);
-> -	io = ci.io;
-> +	io = alloc_io(md, bio);
-> +	if (!io) {
-> +		/* Unable to do anything without dm_io. */
-> +		bio_wouldblock_error(bio);
-> +		return;
-> +	}
-> +
-> +	init_clone_info(&ci, io, map, bio, is_abnormal);
->  
->  	if (bio->bi_opf & REQ_PREFLUSH) {
-> -		__send_empty_flush(&ci);
-> +		error = __send_empty_flush(&ci);
->  		/* dm_io_complete submits any data associated with flush */
->  		goto out;
->  	}
-> -- 
-> 2.40.0
+> Mike
 > 
+
+-- 
+Damien Le Moal
+Western Digital Research
+
