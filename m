@@ -1,54 +1,67 @@
-Received: from mail-pl1-f171.google.com (mail-pl1-f171.google.com [209.85.214.171])
+Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF66A14ABB
-	for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 21:35:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=chromium.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=chromium.org
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1FC181840
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 04:45:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="DweB8J30"
-Received: by mail-pl1-f171.google.com with SMTP id d9443c01a7336-1c9c5a1b87bso32671165ad.3
-        for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 14:35:05 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="fY+mrSR8"
+Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-40842752c6eso41207595e9.1
+        for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 21:45:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google; t=1698183305; x=1698788105; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=NHsb4Ex0pB6bm1QiWPhIzbrZDkhX+OINEs8BrrsAL2I=;
-        b=DweB8J30HSahbQ+FREohMAqds4GeiWDFRTu1EQe+e95XTGpxynZM2jQlFADUZW8h5f
-         GQbd4o7Utj4+LyvNzucgO6QltRGA03TTgZDv1rSFrvAeIWdDC+E0QHUjofktgmpvC/WQ
-         GR40pY+sV097uHST7VvXD8z6irjT5pV1rvyzk=
+        d=linaro.org; s=google; t=1698209109; x=1698813909; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:message-id:subject:cc
+         :to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=C2eQlkrHXsb01SkD0r5lPH6teOpnFeXQ1oyHS+DlKI4=;
+        b=fY+mrSR8p1VUj3eXHVG7GqZUP5ZYUW70yFoy/Kg9Z9ipXnkOME7ywURE35ytwtcNFX
+         Tsc5sEqGLgrO5pp78qAW4DNOLdHhuTWhiKzbjcCnkMwYD4QEoWEIWYa8/pbebkG3ZHAQ
+         VJ6jyYSOMm/mkGlygmEakxyPqBST2ZIF1PpUfeyEqDaJcEsdjxHHTb3+3dMcsrnHZDbf
+         PyWfZB97JE/B7ghrEOzW1eRDU67Emwiq+QPY+I+OfqGAcrkmV+aEq/BGyNeO3SgH2+EU
+         qRuuncBwM2yaLhclfK6HpOK3usGu32+z3GQwCo8J/i5vbojgwBNdiWMYLPpEuayeZoLM
+         HGaA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1698183305; x=1698788105;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=NHsb4Ex0pB6bm1QiWPhIzbrZDkhX+OINEs8BrrsAL2I=;
-        b=nl+iCTnWvcH41lps7j68fz1e1YEjk3sjWdIFw0myXUxOpdYE0k6xselClTHK00Vard
-         5eNmf5cDyYGpnlFkR8kZZ0pRQvroamamnGi3b7Qk2J20kh+NzCviY51H4LhB83bRBHKS
-         yadY9Lbhi21NGF4uuPiCJhKjuHs39x0OJt7PTnbOqoAb1Y75d8c5U1vkAFIPh4rey2Wh
-         6xCCeYIe58rXhiTwGWtJnGyaU9eGlnJgjo22L0ypxsXuFSdHC5wDakXhD97ZA3ZU2DM0
-         FlLqYL2ioiGy3JjWzQbnqzYZFeWcKSJ4ybj+8/1gA8MXN40VlEl8T1krx4wkDkIEiOe5
-         h9pQ==
-X-Gm-Message-State: AOJu0Yyf+1t0ry7osNTZggxly7lzecWyQhDFnFYu3zNW6KiQWSYzDvUC
-	EN6ATM+TaZtGXxW4/EA2cIEeOA==
-X-Google-Smtp-Source: AGHT+IH8PaF/n/DrhVjd3Tfui8Frjxc0yy2UwijaAjvCygeAOMkANgQntYz5ozjGkte9ZI6XbWx9OA==
-X-Received: by 2002:a17:902:ec8e:b0:1c6:d70:144d with SMTP id x14-20020a170902ec8e00b001c60d70144dmr14848663plg.34.1698183305222;
-        Tue, 24 Oct 2023 14:35:05 -0700 (PDT)
-Received: from www.outflux.net (198-0-35-241-static.hfc.comcastbusiness.net. [198.0.35.241])
-        by smtp.gmail.com with ESMTPSA id i13-20020a170902eb4d00b001c9b384731esm7865117pli.270.2023.10.24.14.35.04
+        d=1e100.net; s=20230601; t=1698209109; x=1698813909;
+        h=in-reply-to:content-disposition:mime-version:message-id:subject:cc
+         :to:from:date:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=C2eQlkrHXsb01SkD0r5lPH6teOpnFeXQ1oyHS+DlKI4=;
+        b=NNxRFt45kvmSzLM1BqHcl8gI54mugUMe9xD3KV5QL9lPVndtM9eUrVEExtupuLQUFY
+         NcoEJle5ARWiJATc8q8aiQGTK8zJe0DtNwJ6mRvVfYGqUW6U6K3tl4LBf9eQrnA2NeQU
+         VzfJO133970lDdGC8mnxgfrti5CtG8fmhS6B/Gn/HOmNc672Ps2y3goEd+Hf4KCKT7RL
+         vDG6JWtgYQSzDxjcLgmpnXzD88Myn2DqXRuUiKu77UC678vA+SgP2ZinKlXmpwDCg62f
+         IvlVJNHuSafDBm/ozGhMrdFXg4v9qEVbfznVSkQqM/IwZDMIr5NvaNrMRVh3MMSBnkwh
+         mQ4Q==
+X-Gm-Message-State: AOJu0Yz+aEuHRK0Nu/YUgkFTyT0Xa5Zc1rDMSfdWuj8V4uFq+R3Hn4LH
+	amx9MqCbAqTdrAiqeSsdtWEuKQ==
+X-Google-Smtp-Source: AGHT+IH5u+VrhTrLq4ZQUG00msn+IStTkp3E/NHGTSlHLwWSz3OReR5BpJ0FFZ2Ie1ciq6NwvNCJcA==
+X-Received: by 2002:a05:600c:1ca6:b0:408:386b:1916 with SMTP id k38-20020a05600c1ca600b00408386b1916mr10835678wms.8.1698209109293;
+        Tue, 24 Oct 2023 21:45:09 -0700 (PDT)
+Received: from localhost ([102.36.222.112])
+        by smtp.gmail.com with ESMTPSA id x10-20020a05600c21ca00b003feea62440bsm13254454wmj.43.2023.10.24.21.45.08
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 24 Oct 2023 14:35:04 -0700 (PDT)
-Date: Tue, 24 Oct 2023 14:35:04 -0700
-From: Kees Cook <keescook@chromium.org>
-To: Mike Snitzer <snitzer@kernel.org>
-Cc: Alasdair Kergon <agk@redhat.com>, dm-devel@lists.linux.dev,
-	Justin Stitt <justinstitt@google.com>,
-	linux-hardening@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: dm crypt: replace open-coded kmemdup_nul
-Message-ID: <202310241434.54EF4068@keescook>
-References: <20230925-strncpy-drivers-md-dm-crypt-c-v1-1-eef875e4f9b2@google.com>
- <169818232968.2100071.5806064081646325604.b4-ty@chromium.org>
- <ZTg4GA005km7mmgC@redhat.com>
+        Tue, 24 Oct 2023 21:45:08 -0700 (PDT)
+Date: Wed, 25 Oct 2023 07:45:04 +0300
+From: Dan Carpenter <dan.carpenter@linaro.org>
+To: oe-kbuild@lists.linux.dev, Nitesh Shetty <nj.shetty@samsung.com>,
+	Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	dm-devel@lists.linux.dev, Keith Busch <kbusch@kernel.org>,
+	Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
+	Chaitanya Kulkarni <kch@nvidia.com>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Christian Brauner <brauner@kernel.org>
+Cc: lkp@intel.com, oe-kbuild-all@lists.linux.dev,
+	martin.petersen@oracle.com, linux-scsi@vger.kernel.org,
+	nitheshshetty@gmail.com, anuj1072538@gmail.com,
+	gost.dev@samsung.com, mcgrof@kernel.org,
+	Nitesh Shetty <nj.shetty@samsung.com>,
+	Hannes Reinecke <hare@suse.de>, Anuj Gupta <anuj20.g@samsung.com>,
+	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-doc@vger.kernel.org, linux-nvme@lists.infradead.org,
+	linux-fsdevel@vger.kernel.org
+Subject: Re: [PATCH v17 03/12] block: add copy offload support
+Message-ID: <4c126ecc-ac29-46a5-8cd2-1149d37886c7@kadam.mountain>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -57,37 +70,133 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ZTg4GA005km7mmgC@redhat.com>
+In-Reply-To: <20231019110147.31672-4-nj.shetty@samsung.com>
 
-On Tue, Oct 24, 2023 at 05:33:12PM -0400, Mike Snitzer wrote:
-> On Tue, Oct 24 2023 at  5:18P -0400,
-> Kees Cook <keescook@chromium.org> wrote:
-> 
-> > On Mon, 25 Sep 2023 06:35:54 +0000, Justin Stitt wrote:
-> > > kzalloc() followed by strncpy() on an expected NUL-terminated string is
-> > > just kmemdup_nul(). Let's simplify this code (while also dropping a
-> > > deprecated strncpy() call [1]).
-> > > 
-> > > 
-> > 
-> > Applied to for-next/hardening, thanks!
-> > 
-> > [1/1] dm crypt: replace open-coded kmemdup_nul
-> >       https://git.kernel.org/kees/c/17348b0a6a6d
-> > 
-> > Take care,
-> > 
-> > -- 
-> > Kees Cook
-> > 
-> 
-> I had picked up this patch and the 3 others in my local tree
-> yesterday, was going to push shortly... do you still want them to go
-> through your hardening tree?
+Hi Nitesh,
 
-Oh! Great; thank you! I'll drop them from my tree. :)
+kernel test robot noticed the following build warnings:
 
--Kees
+url:    https://github.com/intel-lab-lkp/linux/commits/Nitesh-Shetty/block-Introduce-queue-limits-and-sysfs-for-copy-offload-support/20231019-200658
+base:   213f891525c222e8ed145ce1ce7ae1f47921cb9c
+patch link:    https://lore.kernel.org/r/20231019110147.31672-4-nj.shetty%40samsung.com
+patch subject: [PATCH v17 03/12] block: add copy offload support
+config: i386-randconfig-141-20231022 (https://download.01.org/0day-ci/archive/20231025/202310251059.GiTmwLYx-lkp@intel.com/config)
+compiler: gcc-12 (Debian 12.2.0-14) 12.2.0
+reproduce: (https://download.01.org/0day-ci/archive/20231025/202310251059.GiTmwLYx-lkp@intel.com/reproduce)
+
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Reported-by: kernel test robot <lkp@intel.com>
+| Reported-by: Dan Carpenter <dan.carpenter@linaro.org>
+| Closes: https://lore.kernel.org/r/202310251059.GiTmwLYx-lkp@intel.com/
+
+New smatch warnings:
+block/blk-lib.c:248 blkdev_copy_offload() warn: use 'gfp' here instead of GFP_KERNEL?
+
+Old smatch warnings:
+block/blk-lib.c:264 blkdev_copy_offload() warn: use 'gfp' here instead of GFP_KERNEL?
+
+vim +/gfp +248 block/blk-lib.c
+
+391929a15e2c18 Nitesh Shetty 2023-10-19  228  ssize_t blkdev_copy_offload(struct block_device *bdev, loff_t pos_in,
+391929a15e2c18 Nitesh Shetty 2023-10-19  229  			    loff_t pos_out, size_t len,
+391929a15e2c18 Nitesh Shetty 2023-10-19  230  			    void (*endio)(void *, int, ssize_t),
+391929a15e2c18 Nitesh Shetty 2023-10-19  231  			    void *private, gfp_t gfp)
+391929a15e2c18 Nitesh Shetty 2023-10-19  232  {
+391929a15e2c18 Nitesh Shetty 2023-10-19  233  	struct blkdev_copy_io *cio;
+391929a15e2c18 Nitesh Shetty 2023-10-19  234  	struct blkdev_copy_offload_io *offload_io;
+391929a15e2c18 Nitesh Shetty 2023-10-19  235  	struct bio *src_bio, *dst_bio;
+391929a15e2c18 Nitesh Shetty 2023-10-19  236  	size_t rem, chunk;
+391929a15e2c18 Nitesh Shetty 2023-10-19  237  	size_t max_copy_bytes = bdev_max_copy_sectors(bdev) << SECTOR_SHIFT;
+391929a15e2c18 Nitesh Shetty 2023-10-19  238  	ssize_t ret;
+391929a15e2c18 Nitesh Shetty 2023-10-19  239  	struct blk_plug plug;
+391929a15e2c18 Nitesh Shetty 2023-10-19  240  
+391929a15e2c18 Nitesh Shetty 2023-10-19  241  	if (!max_copy_bytes)
+391929a15e2c18 Nitesh Shetty 2023-10-19  242  		return -EOPNOTSUPP;
+391929a15e2c18 Nitesh Shetty 2023-10-19  243  
+391929a15e2c18 Nitesh Shetty 2023-10-19  244  	ret = blkdev_copy_sanity_check(bdev, pos_in, bdev, pos_out, len);
+391929a15e2c18 Nitesh Shetty 2023-10-19  245  	if (ret)
+391929a15e2c18 Nitesh Shetty 2023-10-19  246  		return ret;
+391929a15e2c18 Nitesh Shetty 2023-10-19  247  
+391929a15e2c18 Nitesh Shetty 2023-10-19 @248  	cio = kzalloc(sizeof(*cio), GFP_KERNEL);
+
+Should this be: cio = kzalloc(sizeof(*cio), gfp);?  It's not totally
+clear from the context honestly.  (I haven't looked at the code outside
+what is in this automated email).
+
+391929a15e2c18 Nitesh Shetty 2023-10-19  249  	if (!cio)
+391929a15e2c18 Nitesh Shetty 2023-10-19  250  		return -ENOMEM;
+391929a15e2c18 Nitesh Shetty 2023-10-19  251  	atomic_set(&cio->refcount, 1);
+391929a15e2c18 Nitesh Shetty 2023-10-19  252  	cio->waiter = current;
+391929a15e2c18 Nitesh Shetty 2023-10-19  253  	cio->endio = endio;
+391929a15e2c18 Nitesh Shetty 2023-10-19  254  	cio->private = private;
+391929a15e2c18 Nitesh Shetty 2023-10-19  255  
+391929a15e2c18 Nitesh Shetty 2023-10-19  256  	/*
+391929a15e2c18 Nitesh Shetty 2023-10-19  257  	 * If there is a error, copied will be set to least successfully
+391929a15e2c18 Nitesh Shetty 2023-10-19  258  	 * completed copied length
+391929a15e2c18 Nitesh Shetty 2023-10-19  259  	 */
+391929a15e2c18 Nitesh Shetty 2023-10-19  260  	cio->copied = len;
+391929a15e2c18 Nitesh Shetty 2023-10-19  261  	for (rem = len; rem > 0; rem -= chunk) {
+391929a15e2c18 Nitesh Shetty 2023-10-19  262  		chunk = min(rem, max_copy_bytes);
+391929a15e2c18 Nitesh Shetty 2023-10-19  263  
+391929a15e2c18 Nitesh Shetty 2023-10-19  264  		offload_io = kzalloc(sizeof(*offload_io), GFP_KERNEL);
+391929a15e2c18 Nitesh Shetty 2023-10-19  265  		if (!offload_io)
+391929a15e2c18 Nitesh Shetty 2023-10-19  266  			goto err_free_cio;
+391929a15e2c18 Nitesh Shetty 2023-10-19  267  		offload_io->cio = cio;
+391929a15e2c18 Nitesh Shetty 2023-10-19  268  		/*
+391929a15e2c18 Nitesh Shetty 2023-10-19  269  		 * For partial completion, we use offload_io->offset to truncate
+391929a15e2c18 Nitesh Shetty 2023-10-19  270  		 * successful copy length
+391929a15e2c18 Nitesh Shetty 2023-10-19  271  		 */
+391929a15e2c18 Nitesh Shetty 2023-10-19  272  		offload_io->offset = len - rem;
+391929a15e2c18 Nitesh Shetty 2023-10-19  273  
+391929a15e2c18 Nitesh Shetty 2023-10-19  274  		src_bio = bio_alloc(bdev, 0, REQ_OP_COPY_SRC, gfp);
+391929a15e2c18 Nitesh Shetty 2023-10-19  275  		if (!src_bio)
+391929a15e2c18 Nitesh Shetty 2023-10-19  276  			goto err_free_offload_io;
+391929a15e2c18 Nitesh Shetty 2023-10-19  277  		src_bio->bi_iter.bi_size = chunk;
+391929a15e2c18 Nitesh Shetty 2023-10-19  278  		src_bio->bi_iter.bi_sector = pos_in >> SECTOR_SHIFT;
+391929a15e2c18 Nitesh Shetty 2023-10-19  279  
+391929a15e2c18 Nitesh Shetty 2023-10-19  280  		blk_start_plug(&plug);
+391929a15e2c18 Nitesh Shetty 2023-10-19  281  		dst_bio = blk_next_bio(src_bio, bdev, 0, REQ_OP_COPY_DST, gfp);
+391929a15e2c18 Nitesh Shetty 2023-10-19  282  		if (!dst_bio)
+391929a15e2c18 Nitesh Shetty 2023-10-19  283  			goto err_free_src_bio;
+391929a15e2c18 Nitesh Shetty 2023-10-19  284  		dst_bio->bi_iter.bi_size = chunk;
+391929a15e2c18 Nitesh Shetty 2023-10-19  285  		dst_bio->bi_iter.bi_sector = pos_out >> SECTOR_SHIFT;
+391929a15e2c18 Nitesh Shetty 2023-10-19  286  		dst_bio->bi_end_io = blkdev_copy_offload_dst_endio;
+391929a15e2c18 Nitesh Shetty 2023-10-19  287  		dst_bio->bi_private = offload_io;
+391929a15e2c18 Nitesh Shetty 2023-10-19  288  
+391929a15e2c18 Nitesh Shetty 2023-10-19  289  		atomic_inc(&cio->refcount);
+391929a15e2c18 Nitesh Shetty 2023-10-19  290  		submit_bio(dst_bio);
+391929a15e2c18 Nitesh Shetty 2023-10-19  291  		blk_finish_plug(&plug);
+391929a15e2c18 Nitesh Shetty 2023-10-19  292  		pos_in += chunk;
+391929a15e2c18 Nitesh Shetty 2023-10-19  293  		pos_out += chunk;
+391929a15e2c18 Nitesh Shetty 2023-10-19  294  	}
+391929a15e2c18 Nitesh Shetty 2023-10-19  295  
+391929a15e2c18 Nitesh Shetty 2023-10-19  296  	if (atomic_dec_and_test(&cio->refcount))
+391929a15e2c18 Nitesh Shetty 2023-10-19  297  		blkdev_copy_endio(cio);
+391929a15e2c18 Nitesh Shetty 2023-10-19  298  	if (endio)
+391929a15e2c18 Nitesh Shetty 2023-10-19  299  		return -EIOCBQUEUED;
+391929a15e2c18 Nitesh Shetty 2023-10-19  300  
+391929a15e2c18 Nitesh Shetty 2023-10-19  301  	return blkdev_copy_wait_for_completion_io(cio);
+391929a15e2c18 Nitesh Shetty 2023-10-19  302  
+391929a15e2c18 Nitesh Shetty 2023-10-19  303  err_free_src_bio:
+391929a15e2c18 Nitesh Shetty 2023-10-19  304  	bio_put(src_bio);
+391929a15e2c18 Nitesh Shetty 2023-10-19  305  err_free_offload_io:
+391929a15e2c18 Nitesh Shetty 2023-10-19  306  	kfree(offload_io);
+391929a15e2c18 Nitesh Shetty 2023-10-19  307  err_free_cio:
+391929a15e2c18 Nitesh Shetty 2023-10-19  308  	cio->copied = min_t(ssize_t, cio->copied, (len - rem));
+391929a15e2c18 Nitesh Shetty 2023-10-19  309  	cio->status = -ENOMEM;
+391929a15e2c18 Nitesh Shetty 2023-10-19  310  	if (rem == len) {
+391929a15e2c18 Nitesh Shetty 2023-10-19  311  		ret = cio->status;
+391929a15e2c18 Nitesh Shetty 2023-10-19  312  		kfree(cio);
+391929a15e2c18 Nitesh Shetty 2023-10-19  313  		return ret;
+391929a15e2c18 Nitesh Shetty 2023-10-19  314  	}
+391929a15e2c18 Nitesh Shetty 2023-10-19  315  	if (cio->endio)
+391929a15e2c18 Nitesh Shetty 2023-10-19  316  		return cio->status;
+391929a15e2c18 Nitesh Shetty 2023-10-19  317  
+391929a15e2c18 Nitesh Shetty 2023-10-19  318  	return blkdev_copy_wait_for_completion_io(cio);
+391929a15e2c18 Nitesh Shetty 2023-10-19  319  }
 
 -- 
-Kees Cook
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
+
