@@ -1,202 +1,222 @@
-Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1FC181840
-	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 04:45:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8669D14283
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 05:59:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="fY+mrSR8"
-Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-40842752c6eso41207595e9.1
-        for <dm-devel@lists.linux.dev>; Tue, 24 Oct 2023 21:45:10 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google; t=1698209109; x=1698813909; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:message-id:subject:cc
-         :to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=C2eQlkrHXsb01SkD0r5lPH6teOpnFeXQ1oyHS+DlKI4=;
-        b=fY+mrSR8p1VUj3eXHVG7GqZUP5ZYUW70yFoy/Kg9Z9ipXnkOME7ywURE35ytwtcNFX
-         Tsc5sEqGLgrO5pp78qAW4DNOLdHhuTWhiKzbjcCnkMwYD4QEoWEIWYa8/pbebkG3ZHAQ
-         VJ6jyYSOMm/mkGlygmEakxyPqBST2ZIF1PpUfeyEqDaJcEsdjxHHTb3+3dMcsrnHZDbf
-         PyWfZB97JE/B7ghrEOzW1eRDU67Emwiq+QPY+I+OfqGAcrkmV+aEq/BGyNeO3SgH2+EU
-         qRuuncBwM2yaLhclfK6HpOK3usGu32+z3GQwCo8J/i5vbojgwBNdiWMYLPpEuayeZoLM
-         HGaA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1698209109; x=1698813909;
-        h=in-reply-to:content-disposition:mime-version:message-id:subject:cc
-         :to:from:date:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=C2eQlkrHXsb01SkD0r5lPH6teOpnFeXQ1oyHS+DlKI4=;
-        b=NNxRFt45kvmSzLM1BqHcl8gI54mugUMe9xD3KV5QL9lPVndtM9eUrVEExtupuLQUFY
-         NcoEJle5ARWiJATc8q8aiQGTK8zJe0DtNwJ6mRvVfYGqUW6U6K3tl4LBf9eQrnA2NeQU
-         VzfJO133970lDdGC8mnxgfrti5CtG8fmhS6B/Gn/HOmNc672Ps2y3goEd+Hf4KCKT7RL
-         vDG6JWtgYQSzDxjcLgmpnXzD88Myn2DqXRuUiKu77UC678vA+SgP2ZinKlXmpwDCg62f
-         IvlVJNHuSafDBm/ozGhMrdFXg4v9qEVbfznVSkQqM/IwZDMIr5NvaNrMRVh3MMSBnkwh
-         mQ4Q==
-X-Gm-Message-State: AOJu0Yz+aEuHRK0Nu/YUgkFTyT0Xa5Zc1rDMSfdWuj8V4uFq+R3Hn4LH
-	amx9MqCbAqTdrAiqeSsdtWEuKQ==
-X-Google-Smtp-Source: AGHT+IH5u+VrhTrLq4ZQUG00msn+IStTkp3E/NHGTSlHLwWSz3OReR5BpJ0FFZ2Ie1ciq6NwvNCJcA==
-X-Received: by 2002:a05:600c:1ca6:b0:408:386b:1916 with SMTP id k38-20020a05600c1ca600b00408386b1916mr10835678wms.8.1698209109293;
-        Tue, 24 Oct 2023 21:45:09 -0700 (PDT)
-Received: from localhost ([102.36.222.112])
-        by smtp.gmail.com with ESMTPSA id x10-20020a05600c21ca00b003feea62440bsm13254454wmj.43.2023.10.24.21.45.08
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 24 Oct 2023 21:45:08 -0700 (PDT)
-Date: Wed, 25 Oct 2023 07:45:04 +0300
-From: Dan Carpenter <dan.carpenter@linaro.org>
-To: oe-kbuild@lists.linux.dev, Nitesh Shetty <nj.shetty@samsung.com>,
-	Jens Axboe <axboe@kernel.dk>, Jonathan Corbet <corbet@lwn.net>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	dm-devel@lists.linux.dev, Keith Busch <kbusch@kernel.org>,
-	Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
-	Chaitanya Kulkarni <kch@nvidia.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Christian Brauner <brauner@kernel.org>
-Cc: lkp@intel.com, oe-kbuild-all@lists.linux.dev,
-	martin.petersen@oracle.com, linux-scsi@vger.kernel.org,
-	nitheshshetty@gmail.com, anuj1072538@gmail.com,
-	gost.dev@samsung.com, mcgrof@kernel.org,
-	Nitesh Shetty <nj.shetty@samsung.com>,
-	Hannes Reinecke <hare@suse.de>, Anuj Gupta <anuj20.g@samsung.com>,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-doc@vger.kernel.org, linux-nvme@lists.infradead.org,
-	linux-fsdevel@vger.kernel.org
-Subject: Re: [PATCH v17 03/12] block: add copy offload support
-Message-ID: <4c126ecc-ac29-46a5-8cd2-1149d37886c7@kadam.mountain>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Nwg7EnAL"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1698213591;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=0STYB4Yoo5keZThXadV78HY3PlmY6HeiVDCnsZ5+p2k=;
+	b=Nwg7EnALTo47WiLAS17FNIbVYkfRGR+8nWzVghqOIvZXbx3uMhddHiQpXRcEkI/kToCkYc
+	IXpm9pNP2Ean9GcCl2jYem8UbF+LiSxJDWsn/1PtibTNzrTyx/gCpkq66/lxolNdwKayDD
+	6V3nhk+KlI+leXc6xyXDA3z+MHYCtcE=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-659-rQz8eEjrMH-k52gJUXjhUQ-1; Wed, 25 Oct 2023 01:59:49 -0400
+X-MC-Unique: rQz8eEjrMH-k52gJUXjhUQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ACE7580E868
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 05:59:49 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A4819492BD9
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 05:59:49 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3DEB4194658C
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 05:59:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
+ by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
+ ESMTP id D48761946586
+ for <dm-devel@listman.corp.redhat.com>; Wed, 25 Oct 2023 05:59:47 +0000 (UTC)
+Received: by smtp.corp.redhat.com (Postfix)
+ id 8467B492BE2; Wed, 25 Oct 2023 05:59:47 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7C4C9492BD9
+ for <dm-devel@redhat.com>; Wed, 25 Oct 2023 05:59:47 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-2.mimecast.com
+ [205.139.110.61])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 549192824764
+ for <dm-devel@redhat.com>; Wed, 25 Oct 2023 05:59:47 +0000 (UTC)
+Received: from sin.source.kernel.org (sin.source.kernel.org [145.40.73.55])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-340--n5CzteCMPyC9yjQT78dTg-1; Wed,
+ 25 Oct 2023 01:59:43 -0400
+X-MC-Unique: -n5CzteCMPyC9yjQT78dTg-1
+Received: from smtp.kernel.org (transwarp.subspace.kernel.org [100.75.92.58])
+ by sin.source.kernel.org (Postfix) with ESMTP id DCD2BCE2A78;
+ Wed, 25 Oct 2023 05:53:19 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5F856C433C7;
+ Wed, 25 Oct 2023 05:53:18 +0000 (UTC)
+Message-ID: <8410daaa-8f6e-46bd-ae4a-c9c362156b77@kernel.org>
+Date: Wed, 25 Oct 2023 14:53:17 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20231019110147.31672-4-nj.shetty@samsung.com>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] dm: error: Add support for zoned block devices
+To: Naohiro Aota <Naohiro.Aota@wdc.com>
+References: <20231023224513.344380-1-dlemoal@kernel.org>
+ <fuyglwmrwyvrx6w3vwi2zlkpxqc5mafnf5cehill5vovnwfhmh@ddzacow35ki5>
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <fuyglwmrwyvrx6w3vwi2zlkpxqc5mafnf5cehill5vovnwfhmh@ddzacow35ki5>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
+X-BeenThere: dm-devel@redhat.com
+X-Mailman-Version: 2.1.29
+Precedence: list
+List-Id: device-mapper development <dm-devel.redhat.com>
+List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
+ <mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://listman.redhat.com/archives/dm-devel/>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
+ <mailto:dm-devel-request@redhat.com?subject=subscribe>
+Cc: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>,
+ "dm-devel@redhat.com" <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>,
+ Mike Snitzer <snitzer@redhat.com>
+Errors-To: dm-devel-bounces@redhat.com
+Sender: "dm-devel" <dm-devel-bounces@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: kernel.org
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Hi Nitesh,
+On 10/25/23 14:22, Naohiro Aota wrote:
+> On Tue, Oct 24, 2023 at 07:45:13AM +0900, Damien Le Moal wrote:
+>> dm-error is used in several test cases in the xfstests test suite to
+>> check the handling of IO errors in file syatems. However, with several
+>                                           ^ systems
+> 
+>> file systems getting native support for zoned block devices (e.g. btrfs
+>> and f2fs), dm-error lack of zoned block device support creates problems
+>> as the file system attempt executing zone commands (e.g. a zone append
+>> operation) against a dm-error non-zoned block device, which causes
+>> various issues in the block layer (e.g. WARN_ON triggers).
+>>
+>> This patch adds supports for zoned block devices to dm-error, allowing
+>> an error table to be exposed as a zoned block device. This is done by
+>> relying on the first argument passed to dmsetup when creating the device
+>> table: if that first argument is a path to a backing block device, the
+>> dm-error device is created by copying the limits of the backing device,
+>> thus also copying its zone model. This is consistent with how xfstests
+>> creates dm-error devices (always passing the path to the backing device
+>> as the first argument).
+>>
+>> The zone support for dm-error requires the definition of the
+>> report_zones target type method, which is done by introducing the
+>> function io_err_report_zones(). Given that this function fails report
+>> zones operations (similarly to any other command issued to the dm-error
+>> device), dm_set_zones_restrictions() is tweaked to do nothing for a
+>> wildcard target to avoid failing zone revalidation. As the dm-error
+>> target does not implemt the iterate_devices method,
+>                   ^implement
 
-kernel test robot noticed the following build warnings:
+Thanks. Will fix that.
 
-url:    https://github.com/intel-lab-lkp/linux/commits/Nitesh-Shetty/block-Introduce-queue-limits-and-sysfs-for-copy-offload-support/20231019-200658
-base:   213f891525c222e8ed145ce1ce7ae1f47921cb9c
-patch link:    https://lore.kernel.org/r/20231019110147.31672-4-nj.shetty%40samsung.com
-patch subject: [PATCH v17 03/12] block: add copy offload support
-config: i386-randconfig-141-20231022 (https://download.01.org/0day-ci/archive/20231025/202310251059.GiTmwLYx-lkp@intel.com/config)
-compiler: gcc-12 (Debian 12.2.0-14) 12.2.0
-reproduce: (https://download.01.org/0day-ci/archive/20231025/202310251059.GiTmwLYx-lkp@intel.com/reproduce)
+> 
+>> dm_table_supports_zoned_model() is also changed to return true.
+>>
+>> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+>> ---
+>>  drivers/md/dm-table.c  |  3 +++
+>>  drivers/md/dm-target.c | 42 ++++++++++++++++++++++++++++++++++++++++--
+>>  drivers/md/dm-zone.c   |  9 +++++++++
+>>  3 files changed, 52 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+>> index 37b48f63ae6a..5e4d887063d3 100644
+>> --- a/drivers/md/dm-table.c
+>> +++ b/drivers/md/dm-table.c
+>> @@ -1600,6 +1600,9 @@ static bool dm_table_supports_zoned_model(struct dm_table *t,
+>>  	for (unsigned int i = 0; i < t->num_targets; i++) {
+>>  		struct dm_target *ti = dm_table_get_target(t, i);
+>>  
+>> +		if (dm_target_is_wildcard(ti->type))
+>> +			continue;
+>> +
+> 
+> This seems tricky to me. Currently, dm-error is the only dm target having
+> DM_TARGET_WILDCARD. But, can we expect that will be so forever?
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Reported-by: Dan Carpenter <dan.carpenter@linaro.org>
-| Closes: https://lore.kernel.org/r/202310251059.GiTmwLYx-lkp@intel.com/
+Yes, I saw that. Not sure. Mike ?
 
-New smatch warnings:
-block/blk-lib.c:248 blkdev_copy_offload() warn: use 'gfp' here instead of GFP_KERNEL?
+> Also, I considered what happens if the backing device is non-zoned
+> one. dm_table_supports_zoned_model() returns true in that case. But, it is
+> still reported as non-zoned as we copy non-zoned queue limits. So, it is
+> OK ... but it is a bit tricky.
 
-Old smatch warnings:
-block/blk-lib.c:264 blkdev_copy_offload() warn: use 'gfp' here instead of GFP_KERNEL?
+Returning true for dm_table_supports_zoned_model() is not an issue. As the name
+of the function says, this checks that the device table is OK with zoned device
+but does not force the dm device to be zoned.
 
-vim +/gfp +248 block/blk-lib.c
+> Instead, how about implementing the .iterate_devices just like
+> linear_iterate_devices?
 
-391929a15e2c18 Nitesh Shetty 2023-10-19  228  ssize_t blkdev_copy_offload(struct block_device *bdev, loff_t pos_in,
-391929a15e2c18 Nitesh Shetty 2023-10-19  229  			    loff_t pos_out, size_t len,
-391929a15e2c18 Nitesh Shetty 2023-10-19  230  			    void (*endio)(void *, int, ssize_t),
-391929a15e2c18 Nitesh Shetty 2023-10-19  231  			    void *private, gfp_t gfp)
-391929a15e2c18 Nitesh Shetty 2023-10-19  232  {
-391929a15e2c18 Nitesh Shetty 2023-10-19  233  	struct blkdev_copy_io *cio;
-391929a15e2c18 Nitesh Shetty 2023-10-19  234  	struct blkdev_copy_offload_io *offload_io;
-391929a15e2c18 Nitesh Shetty 2023-10-19  235  	struct bio *src_bio, *dst_bio;
-391929a15e2c18 Nitesh Shetty 2023-10-19  236  	size_t rem, chunk;
-391929a15e2c18 Nitesh Shetty 2023-10-19  237  	size_t max_copy_bytes = bdev_max_copy_sectors(bdev) << SECTOR_SHIFT;
-391929a15e2c18 Nitesh Shetty 2023-10-19  238  	ssize_t ret;
-391929a15e2c18 Nitesh Shetty 2023-10-19  239  	struct blk_plug plug;
-391929a15e2c18 Nitesh Shetty 2023-10-19  240  
-391929a15e2c18 Nitesh Shetty 2023-10-19  241  	if (!max_copy_bytes)
-391929a15e2c18 Nitesh Shetty 2023-10-19  242  		return -EOPNOTSUPP;
-391929a15e2c18 Nitesh Shetty 2023-10-19  243  
-391929a15e2c18 Nitesh Shetty 2023-10-19  244  	ret = blkdev_copy_sanity_check(bdev, pos_in, bdev, pos_out, len);
-391929a15e2c18 Nitesh Shetty 2023-10-19  245  	if (ret)
-391929a15e2c18 Nitesh Shetty 2023-10-19  246  		return ret;
-391929a15e2c18 Nitesh Shetty 2023-10-19  247  
-391929a15e2c18 Nitesh Shetty 2023-10-19 @248  	cio = kzalloc(sizeof(*cio), GFP_KERNEL);
+Because that would change how dm-error needs to be setup. Currently, there are
+no arguments needed for the table entry for dm-error. If we define the
+->iterate_devices operation, we'll need a backing device and mapping start
+sector. Changing the dmsetup command line for all users is probably not the best
+approach... Unless I am missing something...
 
-Should this be: cio = kzalloc(sizeof(*cio), gfp);?  It's not totally
-clear from the context honestly.  (I haven't looked at the code outside
-what is in this automated email).
+>> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
+>> index 27e2992ff249..1bf4ecda3012 100644
+>> --- a/drivers/md/dm-target.c
+>> +++ b/drivers/md/dm-target.c
+>> @@ -118,6 +118,21 @@ EXPORT_SYMBOL(dm_unregister_target);
+>>   */
+>>  static int io_err_ctr(struct dm_target *tt, unsigned int argc, char **args)
+>>  {
+>> +	struct dm_dev *ddev;
+>> +	int ret;
+>> +
+>> +	/*
+>> +	 * If we have an argument, assume it is the path to the target
+>> +	 * block device we are replacing. In this case, get the device
+>> +	 * so that we can copy its limits in io_err_io_hints().
+>> +	 */
+>> +	if (argc) {
+>> +		ret = dm_get_device(tt, args[0], dm_table_get_mode(tt->table),
+>> +				    &ddev);
+>> +		if (ret == 0)
+>> +			tt->private = ddev;
+> 
+> No need to handle an error case here? Or, I guess it ignores an error for
+> compatibility when non-device argument is specified. Then, I'd like to add
+> a note here.
 
-391929a15e2c18 Nitesh Shetty 2023-10-19  249  	if (!cio)
-391929a15e2c18 Nitesh Shetty 2023-10-19  250  		return -ENOMEM;
-391929a15e2c18 Nitesh Shetty 2023-10-19  251  	atomic_set(&cio->refcount, 1);
-391929a15e2c18 Nitesh Shetty 2023-10-19  252  	cio->waiter = current;
-391929a15e2c18 Nitesh Shetty 2023-10-19  253  	cio->endio = endio;
-391929a15e2c18 Nitesh Shetty 2023-10-19  254  	cio->private = private;
-391929a15e2c18 Nitesh Shetty 2023-10-19  255  
-391929a15e2c18 Nitesh Shetty 2023-10-19  256  	/*
-391929a15e2c18 Nitesh Shetty 2023-10-19  257  	 * If there is a error, copied will be set to least successfully
-391929a15e2c18 Nitesh Shetty 2023-10-19  258  	 * completed copied length
-391929a15e2c18 Nitesh Shetty 2023-10-19  259  	 */
-391929a15e2c18 Nitesh Shetty 2023-10-19  260  	cio->copied = len;
-391929a15e2c18 Nitesh Shetty 2023-10-19  261  	for (rem = len; rem > 0; rem -= chunk) {
-391929a15e2c18 Nitesh Shetty 2023-10-19  262  		chunk = min(rem, max_copy_bytes);
-391929a15e2c18 Nitesh Shetty 2023-10-19  263  
-391929a15e2c18 Nitesh Shetty 2023-10-19  264  		offload_io = kzalloc(sizeof(*offload_io), GFP_KERNEL);
-391929a15e2c18 Nitesh Shetty 2023-10-19  265  		if (!offload_io)
-391929a15e2c18 Nitesh Shetty 2023-10-19  266  			goto err_free_cio;
-391929a15e2c18 Nitesh Shetty 2023-10-19  267  		offload_io->cio = cio;
-391929a15e2c18 Nitesh Shetty 2023-10-19  268  		/*
-391929a15e2c18 Nitesh Shetty 2023-10-19  269  		 * For partial completion, we use offload_io->offset to truncate
-391929a15e2c18 Nitesh Shetty 2023-10-19  270  		 * successful copy length
-391929a15e2c18 Nitesh Shetty 2023-10-19  271  		 */
-391929a15e2c18 Nitesh Shetty 2023-10-19  272  		offload_io->offset = len - rem;
-391929a15e2c18 Nitesh Shetty 2023-10-19  273  
-391929a15e2c18 Nitesh Shetty 2023-10-19  274  		src_bio = bio_alloc(bdev, 0, REQ_OP_COPY_SRC, gfp);
-391929a15e2c18 Nitesh Shetty 2023-10-19  275  		if (!src_bio)
-391929a15e2c18 Nitesh Shetty 2023-10-19  276  			goto err_free_offload_io;
-391929a15e2c18 Nitesh Shetty 2023-10-19  277  		src_bio->bi_iter.bi_size = chunk;
-391929a15e2c18 Nitesh Shetty 2023-10-19  278  		src_bio->bi_iter.bi_sector = pos_in >> SECTOR_SHIFT;
-391929a15e2c18 Nitesh Shetty 2023-10-19  279  
-391929a15e2c18 Nitesh Shetty 2023-10-19  280  		blk_start_plug(&plug);
-391929a15e2c18 Nitesh Shetty 2023-10-19  281  		dst_bio = blk_next_bio(src_bio, bdev, 0, REQ_OP_COPY_DST, gfp);
-391929a15e2c18 Nitesh Shetty 2023-10-19  282  		if (!dst_bio)
-391929a15e2c18 Nitesh Shetty 2023-10-19  283  			goto err_free_src_bio;
-391929a15e2c18 Nitesh Shetty 2023-10-19  284  		dst_bio->bi_iter.bi_size = chunk;
-391929a15e2c18 Nitesh Shetty 2023-10-19  285  		dst_bio->bi_iter.bi_sector = pos_out >> SECTOR_SHIFT;
-391929a15e2c18 Nitesh Shetty 2023-10-19  286  		dst_bio->bi_end_io = blkdev_copy_offload_dst_endio;
-391929a15e2c18 Nitesh Shetty 2023-10-19  287  		dst_bio->bi_private = offload_io;
-391929a15e2c18 Nitesh Shetty 2023-10-19  288  
-391929a15e2c18 Nitesh Shetty 2023-10-19  289  		atomic_inc(&cio->refcount);
-391929a15e2c18 Nitesh Shetty 2023-10-19  290  		submit_bio(dst_bio);
-391929a15e2c18 Nitesh Shetty 2023-10-19  291  		blk_finish_plug(&plug);
-391929a15e2c18 Nitesh Shetty 2023-10-19  292  		pos_in += chunk;
-391929a15e2c18 Nitesh Shetty 2023-10-19  293  		pos_out += chunk;
-391929a15e2c18 Nitesh Shetty 2023-10-19  294  	}
-391929a15e2c18 Nitesh Shetty 2023-10-19  295  
-391929a15e2c18 Nitesh Shetty 2023-10-19  296  	if (atomic_dec_and_test(&cio->refcount))
-391929a15e2c18 Nitesh Shetty 2023-10-19  297  		blkdev_copy_endio(cio);
-391929a15e2c18 Nitesh Shetty 2023-10-19  298  	if (endio)
-391929a15e2c18 Nitesh Shetty 2023-10-19  299  		return -EIOCBQUEUED;
-391929a15e2c18 Nitesh Shetty 2023-10-19  300  
-391929a15e2c18 Nitesh Shetty 2023-10-19  301  	return blkdev_copy_wait_for_completion_io(cio);
-391929a15e2c18 Nitesh Shetty 2023-10-19  302  
-391929a15e2c18 Nitesh Shetty 2023-10-19  303  err_free_src_bio:
-391929a15e2c18 Nitesh Shetty 2023-10-19  304  	bio_put(src_bio);
-391929a15e2c18 Nitesh Shetty 2023-10-19  305  err_free_offload_io:
-391929a15e2c18 Nitesh Shetty 2023-10-19  306  	kfree(offload_io);
-391929a15e2c18 Nitesh Shetty 2023-10-19  307  err_free_cio:
-391929a15e2c18 Nitesh Shetty 2023-10-19  308  	cio->copied = min_t(ssize_t, cio->copied, (len - rem));
-391929a15e2c18 Nitesh Shetty 2023-10-19  309  	cio->status = -ENOMEM;
-391929a15e2c18 Nitesh Shetty 2023-10-19  310  	if (rem == len) {
-391929a15e2c18 Nitesh Shetty 2023-10-19  311  		ret = cio->status;
-391929a15e2c18 Nitesh Shetty 2023-10-19  312  		kfree(cio);
-391929a15e2c18 Nitesh Shetty 2023-10-19  313  		return ret;
-391929a15e2c18 Nitesh Shetty 2023-10-19  314  	}
-391929a15e2c18 Nitesh Shetty 2023-10-19  315  	if (cio->endio)
-391929a15e2c18 Nitesh Shetty 2023-10-19  316  		return cio->status;
-391929a15e2c18 Nitesh Shetty 2023-10-19  317  
-391929a15e2c18 Nitesh Shetty 2023-10-19  318  	return blkdev_copy_wait_for_completion_io(cio);
-391929a15e2c18 Nitesh Shetty 2023-10-19  319  }
+Yes, exactly. Before the change, arguments were ignored. I will add a comment.
 
 -- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
+Damien Le Moal
+Western Digital Research
 
