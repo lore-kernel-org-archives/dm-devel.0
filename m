@@ -1,132 +1,159 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC9735392
-	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 06:43:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=invisiblethingslab.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 017361549B
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 06:43:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=wdc.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YArISp8V";
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=invisiblethingslab.com header.i=@invisiblethingslab.com header.b="DoNCWCUv";
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="RtflNafu"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KYoNM8AY"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698216216;
+	s=mimecast20190719; t=1698216224;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=daZKb3wOFq4uIRSSlW67XBA117GE0Ly/vssUUSW3CJs=;
-	b=YArISp8VzpYOjZPV6vgT63SASqpcRAibB+606ZCjKDkRpso9VJn2wcvZuKZbQtQzLWcijH
-	+L9m9+LQf8LZdNcAzTIjmqEQdlhRD/0RogzYznYmyr8zA5PThXj9e2/pU/U0R8jaMmSWpn
-	nCwO12Kk2vEdWJK8r3HL5NavNqX10cM=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-176-RJWmakXyNze14tO_7oaQSQ-1; Wed,
- 25 Oct 2023 02:43:33 -0400
-X-MC-Unique: RJWmakXyNze14tO_7oaQSQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=Rr5gzBivXWqOwgYgSBSgZ9Vw04ZmNk/yARVnWzBY1LE=;
+	b=KYoNM8AYCoJKcceWvJad5LFsSB2PA9ZJMNMmxnGoCaCSpZjQkuqNt1ObawNL42qqrdVJ6a
+	pfWMmCGBy/9/lCUloPMEdGdTE5b2MAhedBSHgbqNRUZ9MAcnDov22iwam9HEbV+qMXWArg
+	DZYG9Nt+cCjZ/G33z0/COChHCTGsGV4=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-591-9IGSV2QQPfKrZPj0jza6bA-1; Wed, 25 Oct 2023 02:43:33 -0400
+X-MC-Unique: 9IGSV2QQPfKrZPj0jza6bA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4ED6838143A2
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7D938185A785
 	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 06:43:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 447812026D4C
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7383740C6F79
 	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 06:43:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D4F6C194658C
-	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 06:43:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0537F19465A0
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 06:43:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D991C1946586
- for <dm-devel@listman.corp.redhat.com>; Wed, 25 Oct 2023 03:20:50 +0000 (UTC)
+ ESMTP id C698A1946586
+ for <dm-devel@listman.corp.redhat.com>; Wed, 25 Oct 2023 05:24:10 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9FDF12026D66; Wed, 25 Oct 2023 03:20:50 +0000 (UTC)
+ id B3EEE2166B27; Wed, 25 Oct 2023 05:24:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 985D82026D4C
- for <dm-devel@redhat.com>; Wed, 25 Oct 2023 03:20:50 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-delivery-1.mimecast.com [205.139.110.120])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id AB7AE2166B26
+ for <dm-devel@redhat.com>; Wed, 25 Oct 2023 05:24:10 +0000 (UTC)
+Received: from us-smtp-inbound-delivery-1.mimecast.com (us-smtp-1.mimecast.com
+ [207.211.31.81])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6D8E1892241
- for <dm-devel@redhat.com>; Wed, 25 Oct 2023 03:20:50 +0000 (UTC)
-Received: from out2-smtp.messagingengine.com (out2-smtp.messagingengine.com
- [66.111.4.26]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-454-Lrw5sYhLP9OkMNYnYj10pw-1; Tue, 24 Oct 2023 23:20:49 -0400
-X-MC-Unique: Lrw5sYhLP9OkMNYnYj10pw-1
-Received: from compute6.internal (compute6.nyi.internal [10.202.2.47])
- by mailout.nyi.internal (Postfix) with ESMTP id 3296B5C0184;
- Tue, 24 Oct 2023 23:11:00 -0400 (EDT)
-Received: from mailfrontend2 ([10.202.2.163])
- by compute6.internal (MEProxy); Tue, 24 Oct 2023 23:11:00 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
- invisiblethingslab.com; h=cc:cc:content-type:content-type:date
- :date:from:from:in-reply-to:in-reply-to:message-id:mime-version
- :references:reply-to:sender:subject:subject:to:to; s=fm3; t=
- 1698203460; x=1698289860; bh=daZKb3wOFq4uIRSSlW67XBA117GE0Ly/vss
- UUSW3CJs=; b=DoNCWCUv35aNBUM0O+cLbBN7zLmudw7d3AEUIlCyEqM20Le/K8Y
- RvokMMKuKosRQMwuWf99XZQnsCiAhNWEv7uOiy6D0b/fXNcwAknzsdLriwoiJc+v
- nPHvAsSAujWR8/qKDAFmLbqDLGiTvvee6yJRJQkpYAhNslHEbM9R1u3IwY+75ng5
- aF1TVkoB+ENLlryDj+sqpHwnXl8i351Bzs38I7PjMtO4x/H+0mPEYYMzO/fw2vRB
- IF8qruYK7U2hCGnngkEaNCXEt7YSw7RU41DmvdAx0+1+7AS/MZMHT1YW3KQcdCsB
- Pk8hpl1DTRa3eiGlVjFt3FG/xITrJnr6Ysg==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
- messagingengine.com; h=cc:cc:content-type:content-type:date:date
- :feedback-id:feedback-id:from:from:in-reply-to:in-reply-to
- :message-id:mime-version:references:reply-to:sender:subject
- :subject:to:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender
- :x-sasl-enc; s=fm3; t=1698203460; x=1698289860; bh=daZKb3wOFq4uI
- RSSlW67XBA117GE0Ly/vssUUSW3CJs=; b=RtflNafu9rLv8VKVuDGh7GUlKNB1c
- kZfORZd8kgXecbhPwelMnTDdutGS6Po/z+Zw3K9WbrHYE7vUZIsbeBfniqIHB3+z
- mbZEPxm4liWet4v0GVM1AdZPFXvJfdRL/fwPFs9in4eGAsjLuLijf/cYUS0aStPw
- JdAQdfEA2LMxSccM+V1C8vtnYJRT3eKKlbVD00N+NEIR55UmFXPAyqR0Alun8mhD
- uUoUFJme6N6FXmroEC/0yDfErgOi3Ho/I5uZBo35wJIZrbpE0xbWgLD7k5LzmfAn
- daSXUuaVwwnNJOHTtVry1AahR9FKjTSTJG6OUS0awg7/w9Y7OnZg23Fmg==
-X-ME-Sender: <xms:RIc4ZSoEDmkxyejqyWISARhXs7srxbxn0nfqzwiatPItCqOi8YN0jQ>
- <xme:RIc4ZQqeY90zQNMsFnbADjMuYMJMLcfGEotJvtEmjSLptTgVVsQ2GwGWlZ-FAj4JW
- PAqyrPATt1tnA>
-X-ME-Received: <xmr:RIc4ZXOe_xdZEDf8XdjZhfRvgLEPH6tXZXXfiy1dCwASWlC4yLtWJamBhJgP4tj8A_YNqnJz7PoABmchpEzq394UyYrao2C0XFI>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvkedrkeelgdeijecutefuodetggdotefrodftvf
- curfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfghnecu
- uegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmdenuc
- fjughrpeffhffvvefukfhfgggtuggjsehgtderredttdejnecuhfhrohhmpeforghrvghk
- ucforghrtgiihihkohifshhkihdqifpkrhgvtghkihcuoehmrghrmhgrrhgvkhesihhnvh
- hishhisghlvghthhhinhhgshhlrggsrdgtohhmqeenucggtffrrghtthgvrhhnpeevieel
- tdelheeiueelvdfgleekledvhfefueetveeiffetgeejudevfeeigfffgfenucffohhmrg
- hinheprhgvughhrghtrdgtohhmpdhgihhthhhusgdrtghomhenucevlhhushhtvghrufhi
- iigvpedtnecurfgrrhgrmhepmhgrihhlfhhrohhmpehmrghrmhgrrhgvkhesihhnvhhish
- hisghlvghthhhinhhgshhlrggsrdgtohhm
-X-ME-Proxy: <xmx:RIc4ZR41GfEoEprYNqshXBFRUcGklsVodjjkcs_r_2Rnhh3NEV-f0A>
- <xmx:RIc4ZR5WYIU2cSdysfdSwU0LimQtQPZe69Z8Y3QgJ0M0DyPq5BusoA>
- <xmx:RIc4ZRg78j9ZR2Zs2bO2dYiFAKhoxWTxyKhe4TIww0-vwykQnKGlSw>
- <xmx:RIc4ZbnrDQkqlt_T3v9GFD9a5Q4TkAeViak0pReOZ6fojeRqsVwlVg>
-Feedback-ID: i1568416f:Fastmail
-Received: by mail.messagingengine.com (Postfix) with ESMTPA; Tue,
- 24 Oct 2023 23:10:58 -0400 (EDT)
-Date: Wed, 25 Oct 2023 05:10:56 +0200
-From: Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?=
- <marmarek@invisiblethingslab.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Intermittent storage (dm-crypt?) freeze - regression 6.4->6.5
-Message-ID: <ZTiHQDY54E7WAld+@mail-itl>
-References: <ZTNH0qtmint/zLJZ@mail-itl>
- <e427823c-e869-86a2-3549-61b3fdf29537@redhat.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8144C88CC46
+ for <dm-devel@redhat.com>; Wed, 25 Oct 2023 05:24:10 +0000 (UTC)
+Received: from esa5.hgst.iphmx.com (esa5.hgst.iphmx.com [216.71.153.144]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-7-QUTFIOQdPqe4h1VfvfRf-w-1; Wed, 25 Oct 2023 01:24:01 -0400
+X-MC-Unique: QUTFIOQdPqe4h1VfvfRf-w-1
+X-CSE-ConnectionGUID: ZcMXhr28SZ+CqOiv41H4+Q==
+X-CSE-MsgGUID: gezDhtTGR8qj1Xw36E166g==
+X-IronPort-AV: E=Sophos;i="6.03,249,1694707200"; 
+   d="scan'208";a="594797"
+Received: from mail-bn8nam11lp2168.outbound.protection.outlook.com (HELO
+ NAM11-BN8-obe.outbound.protection.outlook.com) ([104.47.58.168])
+ by ob1.hgst.iphmx.com with ESMTP; 25 Oct 2023 13:22:56 +0800
+Received: from SJ0PR04MB7776.namprd04.prod.outlook.com (2603:10b6:a03:300::11)
+ by SJ0PR04MB7744.namprd04.prod.outlook.com (2603:10b6:a03:32e::10)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6907.33; Wed, 25 Oct
+ 2023 05:22:54 +0000
+Received: from SJ0PR04MB7776.namprd04.prod.outlook.com
+ ([fe80::9511:64b5:654e:7a8a]) by SJ0PR04MB7776.namprd04.prod.outlook.com
+ ([fe80::9511:64b5:654e:7a8a%4]) with mapi id 15.20.6933.019; Wed, 25 Oct 2023
+ 05:22:54 +0000
+From: Naohiro Aota <Naohiro.Aota@wdc.com>
+To: Damien Le Moal <dlemoal@kernel.org>
+Subject: Re: [PATCH] dm: error: Add support for zoned block devices
+Thread-Topic: [PATCH] dm: error: Add support for zoned block devices
+Thread-Index: AQHaBgKcGh2JZw05Xkaaw3gCOyIHMLBZ+paA
+Date: Wed, 25 Oct 2023 05:22:53 +0000
+Message-ID: <fuyglwmrwyvrx6w3vwi2zlkpxqc5mafnf5cehill5vovnwfhmh@ddzacow35ki5>
+References: <20231023224513.344380-1-dlemoal@kernel.org>
+In-Reply-To: <20231023224513.344380-1-dlemoal@kernel.org>
+Accept-Language: ja-JP, en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: SJ0PR04MB7776:EE_|SJ0PR04MB7744:EE_
+x-ms-office365-filtering-correlation-id: 92456322-3c50-4f81-3849-08dbd51a70b6
+wdcipoutbound: EOP-TRUE
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: ymTy+PaM48J+aEhdbQwBK+vUH4eSHkYgMJZnW6QX1kMiBAi1vOwDe13sopED8QvxL3pIsMyffIcd8p2M0qwbakfDXibrKYo2eQfFEGwjxzW5NuKsZG5HugG8qYIYuAmj1sUcs3gTchKnqUq2NrwF3LpghI1qt0J71i8JxqNHVaq91xVg1AJubxd4OHUJS1TEySFk5jcRZ8zEt459cz656lVGWk3BlcFEkZbt2WTGG1sHLirarxqszgYMBrq5yVjmrQW8UBvXdS87/1/Wc1WrR09dcwSpJpy0jABnZYUApuykWUxFCjbAHPUl6G8YaitZWb8NNa44qAnq8SGf+NhHr5/SGvq3BPg+qkw87/4WNvfKSjyQ4T8cxPVFWiL2QO7WOtR8hyDHDXJNMvQYS4QHW9XZitKDMXZ4v+WQRBtFyH1cNIrKecv5TovZCwvmlE/QUTpBeI2GCmgNF8BNhH4wHvk4KFCUP49oLMnYF/p3Y7ZULVcps4VPQkfsSNbQ90+IgyfSvWEmFbQERfxDYOrp3QiVTJ8i+boBlJaIUIpew2DsEEVgtXV7T5hp6dFSZGeG0J22jN2Mcgz5THcguuUtrlfI4OibCZ6GlMopVMrOwYFDyaNm3IJ++4bLEvQE57RG
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:SJ0PR04MB7776.namprd04.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230031)(7916004)(366004)(39860400002)(396003)(376002)(346002)(136003)(230922051799003)(1800799009)(64100799003)(186009)(451199024)(54906003)(2906002)(66556008)(64756008)(66946007)(38100700002)(66476007)(91956017)(122000001)(71200400001)(6916009)(6506007)(478600001)(316002)(6486002)(9686003)(6512007)(82960400001)(66446008)(83380400001)(41300700001)(5660300002)(86362001)(4326008)(8676002)(8936002)(76116006)(38070700009)(26005)(33716001);
+ DIR:OUT; SFP:1102
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?fz1xpx+UcGak+EYmy3jrJ3fZYA7937ALI0fPLG1UelGeEL18nqRcY6Cah26p?=
+ =?us-ascii?Q?5XaesT4OpJJ2DE94wBCIayKyXI+dhYE/26FP+psWx8bwKsV5jOHa0Vkyy/lH?=
+ =?us-ascii?Q?zOe2D0kp15aG5u22eySgzEQVjb4rcyhR6d2RqzbDLwQW9vbDU8OcPiik1sDu?=
+ =?us-ascii?Q?nwxmOZh0OFN9d4lCihwO3z3F4q4fny7usiz+OMAKq/OorO8+/OZSs2GL58BR?=
+ =?us-ascii?Q?ZJeEJbTUFKaNmf/eQdu2bXb4JyBrTQgPu457AAdQcoI5qt7tNT9IzB1P3f0H?=
+ =?us-ascii?Q?QxAQvAHrgk/rySfsbbAYbUiyMG+Wu6qf6eYFJwkTrK9v4K0twg+88773fdz/?=
+ =?us-ascii?Q?AqP6HXHVkywA5udtffodi4/QE/p8SywgwDZq80sui8UzogZs8Ekt2lrFtUZ2?=
+ =?us-ascii?Q?GH6MHLevIcC21j2rPSzlW18+4UVJ27ZoYHmTTAf1m7J0NOB2+2wMZ8ly5QaN?=
+ =?us-ascii?Q?azen0BbordAbSqH9L3QEuPAt7cGe+8+jfmJ4BmC41a+C1x7ez/6ghPej+5vi?=
+ =?us-ascii?Q?mt8UAbsGQtRvyTJVEitPbyKkxBgsH5L04tp3i149sJvF7bsa4sbsR2bCoKUo?=
+ =?us-ascii?Q?A3tl9LxsDYHpSnWZU2CkXYVAKVbg9ST+1bcUGvR8r5bdViXNuwQZbGOlv5ml?=
+ =?us-ascii?Q?sQIfpjWlR7wksDPMe24snPRDR26pPceJBp2bgg87Y14n6IST5T5SQwudtAfo?=
+ =?us-ascii?Q?ZJVFcFWv9jjZoy7JJYzjLBpURkvMRXIKcfURCehunI3Sf03UC+J+cLAa1/fr?=
+ =?us-ascii?Q?xtCl7wCmr4UahNxxljMPOuhzsvvMeo2zay74RSY3lulloTNyLFs86ThO9emS?=
+ =?us-ascii?Q?n7UzFUXkvk9DnOGHm642OQAPFunAC0vTKCzIXuPUoREQWs85a9axIPSvVIRO?=
+ =?us-ascii?Q?7tFyPYeWIJCWUYKuk1gdnHeW1fWJXJXzaBhUrAG72AGNlabUjQpTttL9aa2E?=
+ =?us-ascii?Q?CYCI1xPe2nsMe0J3RkQ3dKBI4NxZwqeyBrIHYgm6SkhJF6iCE6hvurojdocY?=
+ =?us-ascii?Q?tRykNDQQ25mB95/FEyR3Ld60r/LCKGe3juUSvu9rxaJpCf+4j89vhfvJcEiB?=
+ =?us-ascii?Q?OqFqJOE+sh6UgL/Pb/K1Tav1NEC35RzycAeAcfV46IZQfFkLiqqYQPuIKw0p?=
+ =?us-ascii?Q?kxFNtEXtBWZpypGppL5arj6O+j8k5/Gavi6sP/NuA5VLsgP9lM/njdaZYyiJ?=
+ =?us-ascii?Q?5lJLrOjbVOlJjDy6vIfF3gVmnwcymVXV8exWAKa3yJuboSL+rKU0UMt+U+Fj?=
+ =?us-ascii?Q?TLgoTwXd2XB2IE6Oq84ctCWqvLiqF9rCxuxRcUt9UrIcKEeV4RcN8qpo04Tu?=
+ =?us-ascii?Q?Py1sRnNwt5l6T5iT0omKl9ripP52J0WTqXtrPhL7F/+jkaJLkCjKLLXJ1L3p?=
+ =?us-ascii?Q?H2tWyAKIKyS51zCPqvUWh8yq7i8RuIMFEdAS5XqEaVWP30SiBHJQV7ZUTR/l?=
+ =?us-ascii?Q?l7K4Rek8rzlvEXqOEbkGyq+CvaQ5/EkPXo0G6qqgfQodn7iDIMFdtDYl9PYg?=
+ =?us-ascii?Q?CgVQpaJh6CuyDsXihBcanDlmVrcSoaNoC9gX6xa6VAt4o7rmEeUMaaAHoWux?=
+ =?us-ascii?Q?tX6LGvfy7nXqLgj4UhRQjpRVC7s6Lo7mZbGGJyx1sG5Gut2f12qjirHezyTi?=
+ =?us-ascii?Q?wQ=3D=3D?=
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature"; boundary="hltvpIfBBg1Gsh+Q"
-Content-Disposition: inline
-In-Reply-To: <e427823c-e869-86a2-3549-61b3fdf29537@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0: gf13tHNh0PKsEnbsF36/gvt59xCbYlwQokZdtA37Gw+pkteWXc3OGJtQtmifoNPrkjF4C3EDDZfzmQWLi6yARoc+DK8W1yXiK7/CJv5CsPGvIfsr11s9iPRprUo3YeTDar1hqaEBBc768+ddlNcN1wMJ4PPDTBcEz9FMPIfFJTKSmX/fmaoU+CRRzxoBAM7H4MQyCh9S5GDf15JQKDuYXA1bHsRVmt/WzAakQQ96DRfbCYhlkLlfskA+eYl32NAeM8nQ5L+BMOwEgXbmhCMurIVrkiWZaFQETtg32Ep8uceFhoN9Q9vcaAvHiWekYbjZE7rDuB7n2vdaUvz+ki0GEf12OpoiiFKAK9FYuVgKQ47jnZURCk9uKAiXLRygg8v9kEHJk7jmCj7/M4r+Eno1Qw8iGHvoRz7AB4AmvYwQMbx3y3UHgc8dg72Sbk4nB1LW3dMerRfKmXxyTKSgftdwc9QvocXogFXFU2c6yTQ+f+RRjj862I+FIABWeC1xui7KUJtgtVTypwiX3Wa7OXmgiT8Xsu3dF0d8Ta5z7nFXOf+ftvfTZlu9ZIyE+Bqf8/+aqsf16niWS6RcD7Bu8T9S/jZSsHHtRcnBZb5bzouJrnSfJvXyZWF733yMEdelifd3vpdFFTsj/Y2H1NWIuNbgDCYtknA+6puaZRyQRXVmLLqJ7CgELLGKvbjfDKHsnIKOxRF4FyjRGG0re50kZvZ/tH3EYlB9tvbIWeIQt6qD7kuODQJBWYZma1ykjogNyV7qk8N/L1stPa8yjdAka1221LNYLmWSG1T7CMSoJzoRTv78Z/PhpBvorGh1FZEuVMV0
+X-OriginatorOrg: wdc.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: SJ0PR04MB7776.namprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 92456322-3c50-4f81-3849-08dbd51a70b6
+X-MS-Exchange-CrossTenant-originalarrivaltime: 25 Oct 2023 05:22:53.9404 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: Sxjuo/7/Q5ZWxRPWwTNOgG9hwxLRMbE4ssJ2u/CZ1V/50M6VRl1DryVq9z3F6VpUyhDGW5pjbUUwHikMtex4zw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SJ0PR04MB7744
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.6
 X-Mailman-Approved-At: Wed, 25 Oct 2023 06:43:31 +0000
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -139,289 +166,199 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>, regressions@lists.linux.dev,
- stable@vger.kernel.org
+Cc: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>,
+ "dm-devel@redhat.com" <dm-devel@redhat.com>, Christoph Hellwig <hch@lst.de>,
+ Mike Snitzer <snitzer@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
-
-
---hltvpIfBBg1Gsh+Q
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: wdc.com
+Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
+Content-ID: <9ECCC9759010374D946C9B910744EE04@namprd04.prod.outlook.com>
 Content-Transfer-Encoding: quoted-printable
-Date: Wed, 25 Oct 2023 05:10:56 +0200
-From: Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?= <marmarek@invisiblethingslab.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org, regressions@lists.linux.dev,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	dm-devel@redhat.com
-Subject: Re: Intermittent storage (dm-crypt?) freeze - regression 6.4->6.5
 
-On Mon, Oct 23, 2023 at 10:59:40PM +0200, Mikulas Patocka wrote:
-> Hi
+On Tue, Oct 24, 2023 at 07:45:13AM +0900, Damien Le Moal wrote:
+> dm-error is used in several test cases in the xfstests test suite to
+> check the handling of IO errors in file syatems. However, with several
+                                          ^ systems
+
+> file systems getting native support for zoned block devices (e.g. btrfs
+> and f2fs), dm-error lack of zoned block device support creates problems
+> as the file system attempt executing zone commands (e.g. a zone append
+> operation) against a dm-error non-zoned block device, which causes
+> various issues in the block layer (e.g. WARN_ON triggers).
 >=20
-> It's hard to say what causes this. Perhaps dm-crypt exhausts all the=20
-> higher-order pages and some subsystem stalls because of it.
+> This patch adds supports for zoned block devices to dm-error, allowing
+> an error table to be exposed as a zoned block device. This is done by
+> relying on the first argument passed to dmsetup when creating the device
+> table: if that first argument is a path to a backing block device, the
+> dm-error device is created by copying the limits of the backing device,
+> thus also copying its zone model. This is consistent with how xfstests
+> creates dm-error devices (always passing the path to the backing device
+> as the first argument).
 >=20
-> In drivers/md/dm-crypt.c in function crypt_alloc_buffer there is
-> "unsigned int order =3D MAX_ORDER - 1"
+> The zone support for dm-error requires the definition of the
+> report_zones target type method, which is done by introducing the
+> function io_err_report_zones(). Given that this function fails report
+> zones operations (similarly to any other command issued to the dm-error
+> device), dm_set_zones_restrictions() is tweaked to do nothing for a
+> wildcard target to avoid failing zone revalidation. As the dm-error
+> target does not implemt the iterate_devices method,
+                  ^implement
+
+> dm_table_supports_zoned_model() is also changed to return true.
 >=20
-> What happens if you set the "order" variable to some small value, like 1,=
-=20
-> 2 or 3. Does the problem go away? Could you find a threshold value=20
-> (something between 0 and MAX_ORDER-1) where the bug starts to appear?
-
-With 3 and lower it seems to work, with 4 it freezes. My test is not
-100% reproducible, but I've repeated it a few times and got rather
-consistent results on this system (i3-1315U, NVMe).
-
-BTW, when trying on a much older system (Thinkpad P52 with i7-8750H) I
-couldn't reproduce the issue at all. But OTOH, I hit it once on a system
-with i7-7600U and otherwise similar specs but much different workload
-(several more VMs accessing the data). I'm not sure if that info helps
-at all...
-
+> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+> ---
+>  drivers/md/dm-table.c  |  3 +++
+>  drivers/md/dm-target.c | 42 ++++++++++++++++++++++++++++++++++++++++--
+>  drivers/md/dm-zone.c   |  9 +++++++++
+>  3 files changed, 52 insertions(+), 2 deletions(-)
 >=20
-> What happens if you replace
-> "pages =3D alloc_pages(gfp_mask"
-> with
-> "pages =3D alloc_pages((gfp_mask & ~__GFP_KSWAPD_RECLAIM)"
-> ? Does the bug go away?
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 37b48f63ae6a..5e4d887063d3 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -1600,6 +1600,9 @@ static bool dm_table_supports_zoned_model(struct dm=
+_table *t,
+>  =09for (unsigned int i =3D 0; i < t->num_targets; i++) {
+>  =09=09struct dm_target *ti =3D dm_table_get_target(t, i);
+> =20
+> +=09=09if (dm_target_is_wildcard(ti->type))
+> +=09=09=09continue;
+> +
 
-In a limited test, with order restored to MAX_ORDER - 1, no, still got
-the issue, and got this via sysrq (just one task listed):
+This seems tricky to me. Currently, dm-error is the only dm target having
+DM_TARGET_WILDCARD. But, can we expect that will be so forever?
 
-[  516.375254] sysrq: Show Blocked State
-[  516.375461] task:dd              state:D stack:13072 pid:4385  ppid:4371=
-   flags:0x00004002
-[  516.375496] Call Trace:
-[  516.375507]  <TASK>
-[  516.375518]  __schedule+0x30e/0x8b0
-[  516.375549]  schedule+0x59/0xb0
-[  516.375566]  io_schedule+0x41/0x70
-[  516.375582]  folio_wait_bit_common+0x12c/0x300
-[  516.375603]  ? __pfx_wake_page_function+0x10/0x10
-[  516.375623]  folio_wait_writeback+0x27/0x80
-[  516.375639]  __filemap_fdatawait_range+0x7b/0xe0
-[  516.375656]  file_write_and_wait_range+0x86/0xb0
-[  516.375672]  blkdev_fsync+0x33/0x60
-[  516.375693]  __x64_sys_fdatasync+0x4a/0x90
-[  516.375713]  do_syscall_64+0x3c/0x90
-[  516.375729]  entry_SYSCALL_64_after_hwframe+0x6e/0xd8
-[  516.375751] RIP: 0033:0x7fd718562da4
-[  516.375764] RSP: 002b:00007ffea3815278 EFLAGS: 00000202 ORIG_RAX: 000000=
-000000004b
-[  516.375784] RAX: ffffffffffffffda RBX: 0000000000015200 RCX: 00007fd7185=
-62da4
-[  516.375801] RDX: 0000000000028000 RSI: 0000000000000000 RDI: 00000000000=
-00001
-[  516.375817] RBP: 00007fd71845e6c0 R08: 00000000ffffffff R09: 00000000000=
-00000
-[  516.375833] R10: 0000000000000022 R11: 0000000000000202 R12: 00000000000=
-00000
-[  516.375848] R13: 0000000000000000 R14: 0000000000028000 R15: 00000000000=
-00000
-[  516.375865]  </TASK>
+Also, I considered what happens if the backing device is non-zoned
+one. dm_table_supports_zoned_model() returns true in that case. But, it is
+still reported as non-zoned as we copy non-zoned queue limits. So, it is
+OK ... but it is a bit tricky.
 
-(it is dd writing to LVM thin volume, where PV is on dm-crypt)
+Instead, how about implementing the .iterate_devices just like
+linear_iterate_devices?
 
+>  =09=09if (dm_target_supports_zoned_hm(ti->type)) {
+>  =09=09=09if (!ti->type->iterate_devices ||
+>  =09=09=09    ti->type->iterate_devices(ti, device_not_zoned_model,
+> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
+> index 27e2992ff249..1bf4ecda3012 100644
+> --- a/drivers/md/dm-target.c
+> +++ b/drivers/md/dm-target.c
+> @@ -118,6 +118,21 @@ EXPORT_SYMBOL(dm_unregister_target);
+>   */
+>  static int io_err_ctr(struct dm_target *tt, unsigned int argc, char **ar=
+gs)
+>  {
+> +=09struct dm_dev *ddev;
+> +=09int ret;
+> +
+> +=09/*
+> +=09 * If we have an argument, assume it is the path to the target
+> +=09 * block device we are replacing. In this case, get the device
+> +=09 * so that we can copy its limits in io_err_io_hints().
+> +=09 */
+> +=09if (argc) {
+> +=09=09ret =3D dm_get_device(tt, args[0], dm_table_get_mode(tt->table),
+> +=09=09=09=09    &ddev);
+> +=09=09if (ret =3D=3D 0)
+> +=09=09=09tt->private =3D ddev;
+
+No need to handle an error case here? Or, I guess it ignores an error for
+compatibility when non-device argument is specified. Then, I'd like to add
+a note here.
+
+> +=09}
+> +
+>  =09/*
+>  =09 * Return error for discards instead of -EOPNOTSUPP
+>  =09 */
+> @@ -129,7 +144,10 @@ static int io_err_ctr(struct dm_target *tt, unsigned=
+ int argc, char **args)
+> =20
+>  static void io_err_dtr(struct dm_target *tt)
+>  {
+> -=09/* empty */
+> +=09struct dm_dev *ddev =3D tt->private;
+> +
+> +=09if (ddev)
+> +=09=09dm_put_device(tt, ddev);
+>  }
+> =20
+>  static int io_err_map(struct dm_target *tt, struct bio *bio)
+> @@ -149,8 +167,27 @@ static void io_err_release_clone_rq(struct request *=
+clone,
+>  {
+>  }
+> =20
+> +#ifdef CONFIG_BLK_DEV_ZONED
+> +static int io_err_report_zones(struct dm_target *ti,
+> +=09=09struct dm_report_zones_args *args, unsigned int nr_zones)
+> +{
+> +=09return -EIO;
+> +}
+> +#else
+> +#define io_err_report_zones NULL
+> +#endif
+> +
+>  static void io_err_io_hints(struct dm_target *ti, struct queue_limits *l=
+imits)
+>  {
+> +=09struct dm_dev *ddev =3D ti->private;
+> +
+> +=09/* If we have a target device, copy its limits */
+> +=09if (ddev) {
+> +=09=09struct request_queue *q =3D bdev_get_queue(ddev->bdev);
+> +
+> +=09=09memcpy(limits, &q->limits, sizeof(*limits));
+> +=09}
+> +
+>  =09limits->max_discard_sectors =3D UINT_MAX;
+>  =09limits->max_hw_discard_sectors =3D UINT_MAX;
+>  =09limits->discard_granularity =3D 512;
+> @@ -166,7 +203,7 @@ static long io_err_dax_direct_access(struct dm_target=
+ *ti, pgoff_t pgoff,
+>  static struct target_type error_target =3D {
+>  =09.name =3D "error",
+>  =09.version =3D {1, 6, 0},
+> -=09.features =3D DM_TARGET_WILDCARD,
+> +=09.features =3D DM_TARGET_WILDCARD | DM_TARGET_ZONED_HM,
+>  =09.ctr  =3D io_err_ctr,
+>  =09.dtr  =3D io_err_dtr,
+>  =09.map  =3D io_err_map,
+> @@ -174,6 +211,7 @@ static struct target_type error_target =3D {
+>  =09.release_clone_rq =3D io_err_release_clone_rq,
+>  =09.io_hints =3D io_err_io_hints,
+>  =09.direct_access =3D io_err_dax_direct_access,
+> +=09.report_zones =3D io_err_report_zones,
+>  };
+> =20
+>  int __init dm_target_init(void)
+> diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
+> index eb9832b22b14..9b77ee05e8dd 100644
+> --- a/drivers/md/dm-zone.c
+> +++ b/drivers/md/dm-zone.c
+> @@ -297,6 +297,15 @@ int dm_set_zones_restrictions(struct dm_table *t, st=
+ruct request_queue *q)
+>  =09WARN_ON_ONCE(queue_is_mq(q));
+>  =09md->disk->nr_zones =3D bdev_nr_zones(md->disk->part0);
+> =20
+> +=09/*
+> +=09 * With dm-error (wildcard target), report zones will fail, so do
+> +=09 * nothing. dm-error will copy the zones limits itself.
+> +=09 */
+> +=09if (dm_table_get_wildcard_target(t)) {
+> +=09=09md->nr_zones =3D md->disk->nr_zones;
+> +=09=09return 0;
+> +=09}
+> +
+>  =09/* Check if zone append is natively supported */
+>  =09if (dm_table_supports_zone_append(t)) {
+>  =09=09clear_bit(DMF_EMULATE_ZONE_APPEND, &md->flags);
+> --=20
+> 2.41.0
 >=20
-> Mikulas
->=20
->=20
-> On Sat, 21 Oct 2023, Marek Marczykowski-G=C3=B3recki wrote:
->=20
-> > Hi,
-> >=20
-> > Since updating from 6.4.13 to 6.5.5 occasionally I hit a storage
-> > subsystem freeze - any I/O ends up frozen. I'm not sure what exactly
-> > triggers the issue, but often it happens when doing some LVM operations
-> > (lvremove, lvrename etc) on a dm-thin volume together with bulk data
-> > copy to/from another LVM thin volume with ext4 fs.
-> >=20
-> > The storage stack I use is:
-> >   nvme -> dm-crypt (LUKS) -> dm-thin (LVM thin pool) -> ext4
-> >=20
-> > And this whole thing running in a (PV) dom0 under Xen, on Qubes OS 4.2 =
-to be
-> > specific.
-> >=20
-> > I can reproduce the issue on at least 3 different machines. I did tried
-> > also 6.5.6 and the issue is still there. I haven't checked newer
-> > versions, but briefly reviewed git log and haven't found anything
-> > suggesting a fix to similar issue.
-> >=20
-> > I managed to bisect it down to this commit:
-> >=20
-> >     commit 5054e778fcd9cd29ddaa8109077cd235527e4f94
-> >     Author: Mikulas Patocka <mpatocka@redhat.com>
-> >     Date:   Mon May 1 09:19:17 2023 -0400
-> >=20
-> >     dm crypt: allocate compound pages if possible
-> >    =20
-> >     It was reported that allocating pages for the write buffer in dm-cr=
-ypt
-> >     causes measurable overhead [1].
-> >    =20
-> >     Change dm-crypt to allocate compound pages if they are available. If
-> >     not, fall back to the mempool.
-> >    =20
-> >     [1] https://listman.redhat.com/archives/dm-devel/2023-February/0532=
-84.html
-> >    =20
-> >     Suggested-by: Matthew Wilcox <willy@infradead.org>
-> >     Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> >     Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-> >=20
-> > TBH, I'm not sure if the bug is in this commit, or maybe in some
-> > functions it uses (I don't see dm-crypt functions directly involved in
-> > the stack traces I collected). But reverting this commit on top of 6.5.6
-> > seems to fix the issue.
-> >=20
-> > I tried also CONFIG_PROVE_LOCKING, but it didn't show any issue.
-> >=20
-> > I managed to collect "blocked tasks" dump via sysrq below. Few more can
-> > be found at https://github.com/QubesOS/qubes-issues/issues/8575
-> >=20
-> >     [ 4246.558313] sysrq: Show Blocked State
-> >     [ 4246.558388] task:journal-offline state:D stack:0     pid:8098  p=
-pid:1      flags:0x00000002
-> >     [ 4246.558407] Call Trace:
-> >     [ 4246.558414]  <TASK>
-> >     [ 4246.558422]  __schedule+0x23d/0x670
-> >     [ 4246.558440]  schedule+0x5e/0xd0
-> >     [ 4246.558450]  io_schedule+0x46/0x70
-> >     [ 4246.558461]  folio_wait_bit_common+0x13d/0x350
-> >     [ 4246.558475]  ? __pfx_wake_page_function+0x10/0x10
-> >     [ 4246.558488]  folio_wait_writeback+0x2c/0x90
-> >     [ 4246.558498]  mpage_prepare_extent_to_map+0x15c/0x4d0
-> >     [ 4246.558512]  ext4_do_writepages+0x25f/0x770
-> >     [ 4246.558523]  ext4_writepages+0xad/0x180
-> >     [ 4246.558533]  do_writepages+0xcf/0x1e0
-> >     [ 4246.558543]  ? __seccomp_filter+0x32a/0x4f0
-> >     [ 4246.558554]  filemap_fdatawrite_wbc+0x63/0x90
-> >     [ 4246.558567]  __filemap_fdatawrite_range+0x5c/0x80
-> >     [ 4246.558578]  file_write_and_wait_range+0x4a/0xb0
-> >     [ 4246.558588]  ext4_sync_file+0x88/0x380
-> >     [ 4246.558598]  __x64_sys_fsync+0x3b/0x70
-> >     [ 4246.558609]  do_syscall_64+0x5c/0x90
-> >     [ 4246.558621]  ? exit_to_user_mode_prepare+0xb2/0xd0
-> >     [ 4246.558632]  entry_SYSCALL_64_after_hwframe+0x6e/0xd8
-> >     [ 4246.558644] RIP: 0033:0x7710cf124d0a
-> >     [ 4246.558654] RSP: 002b:00007710ccdfda40 EFLAGS: 00000293 ORIG_RAX=
-: 000000000000004a
-> >     [ 4246.558668] RAX: ffffffffffffffda RBX: 000064bb92f67e60 RCX: 000=
-07710cf124d0a
-> >     [ 4246.558679] RDX: 0000000000000000 RSI: 0000000000000000 RDI: 000=
-0000000000028
-> >     [ 4246.558691] RBP: 000064bb92f72670 R08: 0000000000000000 R09: 000=
-07710ccdfe6c0
-> >     [ 4246.558702] R10: 00007710cf0adfee R11: 0000000000000293 R12: 000=
-064bb92505940
-> >     [ 4246.558713] R13: 0000000000000002 R14: 00007ffc05649500 R15: 000=
-07710cc5fe000
-> >     [ 4246.558728]  </TASK>
-> >     [ 4246.558836] task:lvm             state:D stack:0     pid:7835  p=
-pid:5665   flags:0x00004006
-> >     [ 4246.558852] Call Trace:
-> >     [ 4246.558857]  <TASK>
-> >     [ 4246.558863]  __schedule+0x23d/0x670
-> >     [ 4246.558874]  schedule+0x5e/0xd0
-> >     [ 4246.558884]  io_schedule+0x46/0x70
-> >     [ 4246.558894]  dm_wait_for_bios_completion+0xfc/0x110
-> >     [ 4246.558909]  ? __pfx_autoremove_wake_function+0x10/0x10
-> >     [ 4246.558922]  __dm_suspend+0x7e/0x1b0
-> >     [ 4246.558932]  dm_internal_suspend_noflush+0x5c/0x80
-> >     [ 4246.558946]  pool_presuspend+0xcc/0x130 [dm_thin_pool]
-> >     [ 4246.558968]  dm_table_presuspend_targets+0x3f/0x60
-> >     [ 4246.558980]  __dm_suspend+0x41/0x1b0
-> >     [ 4246.558991]  dm_suspend+0xc0/0xe0
-> >     [ 4246.559001]  dev_suspend+0xa5/0xd0
-> >     [ 4246.559011]  ctl_ioctl+0x26e/0x350
-> >     [ 4246.559020]  ? __pfx_dev_suspend+0x10/0x10
-> >     [ 4246.559032]  dm_ctl_ioctl+0xe/0x20
-> >     [ 4246.559041]  __x64_sys_ioctl+0x94/0xd0
-> >     [ 4246.559052]  do_syscall_64+0x5c/0x90
-> >     [ 4246.559062]  ? do_syscall_64+0x6b/0x90
-> >     [ 4246.559072]  ? do_syscall_64+0x6b/0x90
-> >     [ 4246.559081]  ? xen_pv_evtchn_do_upcall+0x54/0xb0
-> >     [ 4246.559093]  entry_SYSCALL_64_after_hwframe+0x6e/0xd8
-> >     [ 4246.559104] RIP: 0033:0x7f1cb77cfe0f
-> >     [ 4246.559112] RSP: 002b:00007fff870f2560 EFLAGS: 00000246 ORIG_RAX=
-: 0000000000000010
-> >     [ 4246.559141] RAX: ffffffffffffffda RBX: 00005b8d13c16580 RCX: 000=
-07f1cb77cfe0f
-> >     [ 4246.559152] RDX: 00005b8d144a2180 RSI: 00000000c138fd06 RDI: 000=
-0000000000003
-> >     [ 4246.559164] RBP: 00005b8d144a2180 R08: 00005b8d132b1190 R09: 000=
-07fff870f2420
-> >     [ 4246.559175] R10: 0000000000000000 R11: 0000000000000246 R12: 000=
-000000000000c
-> >     [ 4246.559186] R13: 00005b8d132aacf0 R14: 00005b8d1324414d R15: 000=
-05b8d144a21b0
-> >     [ 4246.559199]  </TASK>
-> >     [ 4246.559207] task:kworker/u8:3    state:D stack:0     pid:8033  p=
-pid:2      flags:0x00004000
-> >     [ 4246.559222] Workqueue: writeback wb_workfn (flush-253:4)
-> >     [ 4246.559238] Call Trace:
-> >     [ 4246.559244]  <TASK>
-> >     [ 4246.559249]  __schedule+0x23d/0x670
-> >     [ 4246.559260]  schedule+0x5e/0xd0
-> >     [ 4246.559270]  io_schedule+0x46/0x70
-> >     [ 4246.559280]  folio_wait_bit_common+0x13d/0x350
-> >     [ 4246.559290]  ? __pfx_wake_page_function+0x10/0x10
-> >     [ 4246.559302]  mpage_prepare_extent_to_map+0x309/0x4d0
-> >     [ 4246.559314]  ext4_do_writepages+0x25f/0x770
-> >     [ 4246.559324]  ext4_writepages+0xad/0x180
-> >     [ 4246.559334]  do_writepages+0xcf/0x1e0
-> >     [ 4246.559344]  ? find_busiest_group+0x42/0x1a0
-> >     [ 4246.559354]  __writeback_single_inode+0x3d/0x280
-> >     [ 4246.559368]  writeback_sb_inodes+0x1ed/0x4a0
-> >     [ 4246.559381]  __writeback_inodes_wb+0x4c/0xf0
-> >     [ 4246.559393]  wb_writeback+0x298/0x310
-> >     [ 4246.559403]  wb_do_writeback+0x230/0x2b0
-> >     [ 4246.559414]  wb_workfn+0x5f/0x260
-> >     [ 4246.559424]  ? _raw_spin_unlock+0xe/0x30
-> >     [ 4246.559434]  ? finish_task_switch.isra.0+0x95/0x2b0
-> >     [ 4246.559447]  ? __schedule+0x245/0x670
-> >     [ 4246.559457]  process_one_work+0x1df/0x3e0
-> >     [ 4246.559466]  worker_thread+0x51/0x390
-> >     [ 4246.559475]  ? __pfx_worker_thread+0x10/0x10
-> >     [ 4246.559484]  kthread+0xe5/0x120
-> >     [ 4246.559495]  ? __pfx_kthread+0x10/0x10
-> >     [ 4246.559504]  ret_from_fork+0x31/0x50
-> >     [ 4246.559514]  ? __pfx_kthread+0x10/0x10
-> >     [ 4246.559523]  ret_from_fork_asm+0x1b/0x30
-> >     [ 4246.559536]  </TASK>
-> >=20
-> > --=20
-> > Best Regards,
-> > Marek Marczykowski-G=C3=B3recki
-> > Invisible Things Lab
-> >=20
-
-
---=20
-Best Regards,
-Marek Marczykowski-G=C3=B3recki
-Invisible Things Lab
-
---hltvpIfBBg1Gsh+Q
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAEBCAAdFiEEhrpukzGPukRmQqkK24/THMrX1ywFAmU4h0AACgkQ24/THMrX
-1ywdGwf/ZG2JbB1yjkffjZ6fh1HyQuKj0JYHAjcC4GwTLOmQ3xj1ZIYBMmU4TrrG
-6QCKGmOXa1hRj0EKUY0OnXHwZJBFKr+5kzSbdbFd8P87pCSMh5ct2USEBrRpVt+m
-c7TcLx/MrhOr8fPY4ZT7BX10HGteOQtwvsXhlzWlNwh/Dr792HKCA6x58GZaWw6a
-kc09VY8N1PCLZT8zR4mtzkk4zO2uYYkE7eUT0JAbPKej4m4OpPCtYlyxo2mOGQz9
-nQbRCDGu6icq5aInB4N+TKz14kgea1t8uoWP8qMAuxODnvbFOzVsuP+NCwyyqmPq
-/Ai6WStmj95jFc6fXGrl4mSuPKQCKg==
-=neUi
------END PGP SIGNATURE-----
-
---hltvpIfBBg1Gsh+Q--
 
