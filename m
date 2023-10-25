@@ -1,234 +1,322 @@
-Received: from mail-qt1-f172.google.com (mail-qt1-f172.google.com [209.85.160.172])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7721733E3
-	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 23:50:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9AA1033E3
+	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 23:58:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; dkim=none
-Received: by mail-qt1-f172.google.com with SMTP id d75a77b69052e-41dd8fd947cso2068201cf.1
-        for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 16:50:15 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1698277814; x=1698882614;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=7wc4/uK4nJbTZ4Ew+SxtdAmYu5V+eUSfb96T42QilOU=;
-        b=RdoOLof5ihdsqtCrAPh0pjtXLE0gDkP3PwE5Idjv+IOKt4REofzl7rFUBOd8lH9UEu
-         U3mfuOvsqwtPippCbC/59qBdr31g1KXoG77P1mAjobFJ/h+XNuXy8XR1hTrrQpb8sDbT
-         OYshZDCTa1ccPda0CV3q8N2RhOfN9mofVjEXbgZLTwU5IJOQ2ypFbiw+WwgVKrlkW9hk
-         9RrtVmsGecg2OJ/1c5K95hX+N9HPgM8oTWLN1DWvl0W4UzyIns/qzOS00xvLt2qAvZZB
-         OeodWCKgB5Jf+yE0YMTg/NmZ0H1oO3Zggt3C9G+Vd3cRLJWOFDzVkrCCmEbP9JNng04M
-         n8AQ==
-X-Gm-Message-State: AOJu0YwjurhoBNiqcXxijAVHmYkOS9JA6keMJCrUCtxt0cutSbO0gIIl
-	noe8VHT1O8p/pTR7qc1eccF0
-X-Google-Smtp-Source: AGHT+IEkn0P2kU6YvqIsxF2FmSoUx5gN9Ws/JMj9wiQcLnZonx4TUFCn4IvsB3uunSB1LbOOcZ7klA==
-X-Received: by 2002:ac8:574f:0:b0:41e:1a89:2534 with SMTP id 15-20020ac8574f000000b0041e1a892534mr14653467qtx.53.1698277814263;
-        Wed, 25 Oct 2023 16:50:14 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id fu8-20020a05622a5d8800b004181138e0c0sm4618361qtb.31.2023.10.25.16.50.13
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 25 Oct 2023 16:50:13 -0700 (PDT)
-Date: Wed, 25 Oct 2023 19:50:12 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: dm-devel@lists.linux.dev, Christoph Hellwig <hch@lst.de>,
-	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
-	Naohiro Aota <naohiro.aota@wdc.com>
-Subject: Re: [PATCH v2] dm: error: Add support for zoned block devices
-Message-ID: <ZTmptAmDe+mMekV/@redhat.com>
-References: <20231025072332.465595-1-dlemoal@kernel.org>
- <ZTkuXgLR1skoEOCc@redhat.com>
- <b2aeab69-169b-4ccb-b7b3-39ebe3c6c733@kernel.org>
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="huPaplkW"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1698278309;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=663EeRew+0LTZfB+4SAmO4g8inceViRGln5/ydSE0DU=;
+	b=huPaplkWxBrwkU4OnwABSmT2lo+79fd3ZFV15QIBHYgRxbwV/BC5gtqRSTsE1PIh8cMYpK
+	xbx6vnFKcvAQA1a3H/3l4f4VGKXgLBgIjaPjaUhBCPXiu71GR6Ka7KWKrFO/hFoY+tO62Z
+	oI4o+jeC9mWeVFrsXHzq/8dbhDwqQ68=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-580-557pW1SJNeqJPDSdEmav2w-1; Wed,
+ 25 Oct 2023 19:58:26 -0400
+X-MC-Unique: 557pW1SJNeqJPDSdEmav2w-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 878092806056;
+	Wed, 25 Oct 2023 23:58:25 +0000 (UTC)
+Received: from bmarzins-01.fast.rdu2.eng.redhat.com (bmarzins-01.fast.rdu2.eng.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6A7B7C1596D;
+	Wed, 25 Oct 2023 23:58:25 +0000 (UTC)
+Received: from bmarzins-01.fast.rdu2.eng.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1) with ESMTPS id 39PNwPxu032420
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 25 Oct 2023 19:58:25 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1/Submit) id 39PNwORu032419;
+	Wed, 25 Oct 2023 19:58:24 -0400
+Date: Wed, 25 Oct 2023 19:58:24 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev, Miao Guanqin <miaoguanqin@huawei.com>,
+        Li Xiao Keng <lixiaokeng@huawei.com>
+Subject: Re: [PATCH 6/6] libmpathutil: remove systemd_service_enabled()
+Message-ID: <ZTmroA3eU3vLgOLl@bmarzins-01.fast.rdu2.eng.redhat.com>
+References: <20231024164937.14684-1-mwilck@suse.com>
+ <20231024164937.14684-7-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <20231024164937.14684-7-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <b2aeab69-169b-4ccb-b7b3-39ebe3c6c733@kernel.org>
 
-On Wed, Oct 25 2023 at  5:34P -0400,
-Damien Le Moal <dlemoal@kernel.org> wrote:
-
-> On 10/26/23 00:03, Mike Snitzer wrote:
-> > On Wed, Oct 25 2023 at  3:23P -0400,
-> > Damien Le Moal <dlemoal@kernel.org> wrote:
-> > 
-> >> dm-error is used in several test cases in the xfstests test suite to
-> >> check the handling of IO errors in file systems. However, with several
-> >> file systems getting native support for zoned block devices (e.g. btrfs
-> >> and f2fs), dm-error lack of zoned block device support creates problems
-> >> as the file system attempt executing zone commands (e.g. a zone append
-> >> operation) against a dm-error non-zoned block device, which causes
-> >> various issues in the block layer (e.g. WARN_ON triggers).
-> >>
-> >> This patch adds supports for zoned block devices to dm-error, allowing
-> >> an error table to be exposed as a zoned block device. This is done by
-> >> relying on the first argument passed to dmsetup when creating the device
-> >> table: if that first argument is a path to a backing block device, the
-> >> dm-error device is created by copying the limits of the backing device,
-> >> thus also copying its zone model. This is consistent with how xfstests
-> >> creates dm-error devices (always passing the path to the backing device
-> >> as the first argument).
-> >>
-> >> The zone support for dm-error requires the definition of the
-> >> report_zones target type method, which is done by introducing the
-> >> function io_err_report_zones(). Given that this function fails report
-> >> zones operations (similarly to any other command issued to the dm-error
-> >> device), dm_set_zones_restrictions() is tweaked to do nothing for a
-> >> wildcard target to avoid failing zone revalidation. As the dm-error
-> >> target does not implement the iterate_devices method,
-> >> dm_table_supports_zoned_model() is also changed to return true.
-> >>
-> >> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
-> >> Reviewed-by: Christoph Hellwig <hch@lst.de>
-> >> Tested-by: Christoph Hellwig <hch@lst.de>
-> >> Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-> >> ---
-> >> Changes from v1:
-> >>  - Improved comment in io_err_ctr() about error from dm_get_device()
-> >>    being ignored
-> >>  - Fixed typos in the commit message
-> >>  - Added review and tested-by tags
-> > 
-> > Thanks for the improvements. But likely a v3 is worthwhile.
-> > 
-> > Comment inlined below.
-> > 
-> >>
-> >>  drivers/md/dm-table.c  |  3 +++
-> >>  drivers/md/dm-target.c | 45 ++++++++++++++++++++++++++++++++++++++++--
-> >>  drivers/md/dm-zone.c   |  9 +++++++++
-> >>  3 files changed, 55 insertions(+), 2 deletions(-)
-> >>
-> >> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> >> index 37b48f63ae6a..5e4d887063d3 100644
-> >> --- a/drivers/md/dm-table.c
-> >> +++ b/drivers/md/dm-table.c
-> >> @@ -1600,6 +1600,9 @@ static bool dm_table_supports_zoned_model(struct dm_table *t,
-> >>  	for (unsigned int i = 0; i < t->num_targets; i++) {
-> >>  		struct dm_target *ti = dm_table_get_target(t, i);
-> >>  
-> >> +		if (dm_target_is_wildcard(ti->type))
-> >> +			continue;
-> >> +
-> >>  		if (dm_target_supports_zoned_hm(ti->type)) {
-> >>  			if (!ti->type->iterate_devices ||
-> >>  			    ti->type->iterate_devices(ti, device_not_zoned_model,
-> >> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-> >> index 27e2992ff249..fcb2ba2bffa2 100644
-> >> --- a/drivers/md/dm-target.c
-> >> +++ b/drivers/md/dm-target.c
-> >> @@ -118,6 +118,24 @@ EXPORT_SYMBOL(dm_unregister_target);
-> >>   */
-> >>  static int io_err_ctr(struct dm_target *tt, unsigned int argc, char **args)
-> >>  {
-> >> +	struct dm_dev *ddev;
-> >> +	int ret;
-> >> +
-> >> +	/*
-> >> +	 * If we have an argument, assume it is the path to the backing
-> >> +	 * block device that we are replacing. In this case, get the device
-> >> +	 * so that we can copy its limits in io_err_io_hints(). If getting the
-> >> +	 * device fails (e.g. because the user did not specify a device file
-> >> +	 * path), ignore the error to be compatible with the normal use case
-> >> +	 * without any argument specified.
-> >> +	 */
-> >> +	if (argc) {
-> >> +		ret = dm_get_device(tt, args[0], dm_table_get_mode(tt->table),
-> >> +				    &ddev);
-> >> +		if (ret == 0)
-> >> +			tt->private = ddev;
-> >> +	}
-> >> +
-> >>  	/*
-> >>  	 * Return error for discards instead of -EOPNOTSUPP
-> >>  	 */
-> >>
-> >> @@ -129,7 +147,10 @@ static int io_err_ctr(struct dm_target *tt, unsigned int argc, char **args)
-> >>  
-> >>  static void io_err_dtr(struct dm_target *tt)
-> >>  {
-> >> -	/* empty */
-> >> +	struct dm_dev *ddev = tt->private;
-> >> +
-> >> +	if (ddev)
-> >> +		dm_put_device(tt, ddev);
-> >>  }
-> >>  
-> >>  static int io_err_map(struct dm_target *tt, struct bio *bio)
-> >> @@ -149,8 +170,27 @@ static void io_err_release_clone_rq(struct request *clone,
-> >>  {
-> >>  }
-> >>  
-> >> +#ifdef CONFIG_BLK_DEV_ZONED
-> >> +static int io_err_report_zones(struct dm_target *ti,
-> >> +		struct dm_report_zones_args *args, unsigned int nr_zones)
-> >> +{
-> >> +	return -EIO;
-> >> +}
-> >> +#else
-> >> +#define io_err_report_zones NULL
-> >> +#endif
-> >> +
-> >>  static void io_err_io_hints(struct dm_target *ti, struct queue_limits *limits)
-> >>  {
-> >> +	struct dm_dev *ddev = ti->private;
-> >> +
-> >> +	/* If we have a target device, copy its limits */
-> >> +	if (ddev) {
-> >> +		struct request_queue *q = bdev_get_queue(ddev->bdev);
-> >> +
-> >> +		memcpy(limits, &q->limits, sizeof(*limits));
-> >> +	}
-> >> +
-> >>  	limits->max_discard_sectors = UINT_MAX;
-> >>  	limits->max_hw_discard_sectors = UINT_MAX;
-> >>  	limits->discard_granularity = 512;
-> > 
-> > 
-> > You don't need to explicitly copy the queue_limits, DM core
-> > (dm-table.c:dm_calculate_queue_limits) will stack up the underlying
-> > device's queue_limits as long as you implement io_err_iterate_devices
-> > (like dm-linear.c:linear_iterate_devices).
-> > 
-> > With io_err_iterate_devices you shouldn't need to change
-> > io_err_io_hints -- but actually I could see there being a need to wrap
-> > setting the above no-device defaults only if (!ddev).. or:
-> > 	if (ddev)
-> > 		return;
+On Tue, Oct 24, 2023 at 06:49:37PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
 > 
-> Works for me, but I do not see how iterate_devices would work if there is no
-> backing device specified (current default). Am I missing something ?
+> Since  c203929 ("multipathd.service: add dependency on
+> systemd-udevd-kernel.socket"), multipathd will start early during boot.
+> Moreover, we recommend using socket activation for multipathd,
+> and if multipathd.socket is enabled, the __mpath_connect()
+> check will succeed anyway.
+> 
+> The systemd_service_enabled() test was just "good enough" for
+> standard situations but never robust; it checked for multipathd.wants in
+> "some" directory, which might or might not be the current target,
+> and it would return true even of multipathd.service was masked.
+> 
+> Remove this test.
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
 
-You don't call 'fn' if the ddev (ti->private) is NULL.
+I'd be lying if I said I had no worries at all about this. Removing this
+check means that if someone isn't using socket activation, and
+multipathd is temporarily down, and a new device appears, it will always
+be marked as not claimed by multipath. This could cause the device to be
+grabbed by LVM, and not multipathed. This is probably just may paranoia
+talking, since the chance of this happening in the real world seems
+pretty low. So,
 
-> Also,
-> doesn't adding the iterate_devices method allow combining dm-error with other dm
-> targets in the same table, something that is not possible currently ? So that
-> would change dm-error usage. OK with me, but I want to make sure.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-No, iterate_devices is purely for iterating within a given target's
-devices to call the provide 'fn'.
+> ---
+>  libmpathutil/libmpathutil.version | 17 +++------
+>  libmpathutil/util.c               | 58 -------------------------------
+>  libmpathutil/util.h               |  1 -
+>  libmultipath/valid.c              | 16 ++-------
+>  tests/valid.c                     | 24 ++-----------
+>  5 files changed, 9 insertions(+), 107 deletions(-)
+> 
+> diff --git a/libmpathutil/libmpathutil.version b/libmpathutil/libmpathutil.version
+> index 6ebb718..15ff467 100644
+> --- a/libmpathutil/libmpathutil.version
+> +++ b/libmpathutil/libmpathutil.version
+> @@ -93,12 +93,15 @@ local:
+>  };
+>  
+>  /* symbols referenced internally by libmultipath */
+> -LIBMPATHUTIL_1.0 {
+> +LIBMPATHUTIL_2.0 {
+>  	alloc_bitfield;
+>  	__append_strbuf_str;
+>  	append_strbuf_quoted;
+>  	basenamecpy;
+> +	cleanup_fd_ptr;
+>  	cleanup_free_ptr;
+> +	cleanup_vector_free;
+> +	cleanup_fclose;
+>  	filepresent;
+>  	find_keyword;
+>  	free_keywords;
+> @@ -120,21 +123,9 @@ LIBMPATHUTIL_1.0 {
+>  	snprint_keyword;
+>  	steal_strbuf_str;
+>  	strlcat;
+> -	systemd_service_enabled;
+>  	validate_config_strvec;
+>  	vector_find_or_add_slot;
+>  	vector_insert_slot;
+>  	vector_move_up;
+>  	vector_sort;
+>  };
+> -
+> -LIBMPATHUTIL_1.1 {
+> -global:
+> -	cleanup_fd_ptr;
+> -} LIBMPATHUTIL_1.0;
+> -
+> -LIBMPATHUTIL_1.2 {
+> -global:
+> -	cleanup_vector_free;
+> -	cleanup_fclose;
+> -} LIBMPATHUTIL_1.0;
+> diff --git a/libmpathutil/util.c b/libmpathutil/util.c
+> index 92f25a5..9d147fc 100644
+> --- a/libmpathutil/util.c
+> +++ b/libmpathutil/util.c
+> @@ -213,64 +213,6 @@ setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
+>  	}
+>  }
+>  
+> -int systemd_service_enabled_in(const char *dev, const char *prefix)
+> -{
+> -	static const char service[] = "multipathd.service";
+> -	char path[PATH_MAX], file[PATH_MAX];
+> -	DIR *dirfd;
+> -	struct dirent *d;
+> -	int found = 0;
+> -
+> -	if (safe_sprintf(path, "%s/systemd/system", prefix))
+> -		return 0;
+> -
+> -	condlog(3, "%s: checking for %s in %s", dev, service, path);
+> -
+> -	dirfd = opendir(path);
+> -	if (dirfd == NULL)
+> -		return 0;
+> -
+> -	while ((d = readdir(dirfd)) != NULL) {
+> -		char *p;
+> -		struct stat stbuf;
+> -
+> -		if ((strcmp(d->d_name,".") == 0) ||
+> -		    (strcmp(d->d_name,"..") == 0))
+> -			continue;
+> -
+> -		if (strlen(d->d_name) < 6)
+> -			continue;
+> -
+> -		p = d->d_name + strlen(d->d_name) - 6;
+> -		if (strcmp(p, ".wants"))
+> -			continue;
+> -		if (!safe_sprintf(file, "%s/%s/%s",
+> -				  path, d->d_name, service)
+> -		    && stat(file, &stbuf) == 0) {
+> -			condlog(3, "%s: found %s", dev, file);
+> -			found++;
+> -			break;
+> -		}
+> -	}
+> -	closedir(dirfd);
+> -
+> -	return found;
+> -}
+> -
+> -int systemd_service_enabled(const char *dev)
+> -{
+> -	int found = 0;
+> -
+> -	found = systemd_service_enabled_in(dev, "/etc");
+> -	if (!found)
+> -		found = systemd_service_enabled_in(dev, "/usr/lib");
+> -	if (!found)
+> -		found = systemd_service_enabled_in(dev, "/lib");
+> -	if (!found)
+> -		found = systemd_service_enabled_in(dev, "/run");
+> -	return found;
+> -}
+> -
+>  static int _linux_version_code;
+>  static pthread_once_t _lvc_initialized = PTHREAD_ONCE_INIT;
+>  
+> diff --git a/libmpathutil/util.h b/libmpathutil/util.h
+> index 99a471d..de9fcfd 100644
+> --- a/libmpathutil/util.h
+> +++ b/libmpathutil/util.h
+> @@ -21,7 +21,6 @@ size_t strlcat(char * restrict dst, const char * restrict src, size_t size);
+>  dev_t parse_devt(const char *dev_t);
+>  char *convert_dev(char *dev, int is_path_device);
+>  void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
+> -int systemd_service_enabled(const char *dev);
+>  int get_linux_version_code(void);
+>  int safe_write(int fd, const void *buf, size_t count);
+>  void set_max_fds(rlim_t max_fds);
+> diff --git a/libmultipath/valid.c b/libmultipath/valid.c
+> index d4dae3e..f223778 100644
+> --- a/libmultipath/valid.c
+> +++ b/libmultipath/valid.c
+> @@ -314,23 +314,11 @@ is_path_valid(const char *name, struct config *conf, struct path *pp,
+>  		return PATH_IS_VALID_NO_CHECK;
+>  	}
+>  
+> -	/*
+> -	 * "multipath -u" may be run before the daemon is started. In this
+> -	 * case, systemd might own the socket but might delay multipathd
+> -	 * startup until some other unit (udev settle!)  has finished
+> -	 * starting. With many LUNs, the listen backlog may be exceeded, which
+> -	 * would cause connect() to block. This causes udev workers calling
+> -	 * "multipath -u" to hang, and thus creates a deadlock, until "udev
+> -	 * settle" times out.  To avoid this, call connect() in non-blocking
+> -	 * mode here, and take EAGAIN as indication for a filled-up systemd
+> -	 * backlog.
+> -	 */
+> -
+>  	if (check_multipathd) {
+>  		fd = __mpath_connect(1);
+>  		if (fd < 0) {
+> -			if (errno != EAGAIN && !systemd_service_enabled(name)) {
+> -				condlog(3, "multipathd not running or enabled");
+> +			if (errno != EAGAIN) {
+> +				condlog(3, "multipathd not running");
+>  				return PATH_IS_NOT_VALID;
+>  			}
+>  		} else
+> diff --git a/tests/valid.c b/tests/valid.c
+> index 7032932..18a5a7b 100644
+> --- a/tests/valid.c
+> +++ b/tests/valid.c
+> @@ -62,11 +62,6 @@ int __wrap___mpath_connect(int nonblocking)
+>  	return -1;
+>  }
+>  
+> -int __wrap_systemd_service_enabled(const char *dev)
+> -{
+> -	return (int)mock_type(bool);
+> -}
+> -
+>  /* There's no point in checking the return value here */
+>  int __wrap_mpath_disconnect(int fd)
+>  {
+> @@ -216,7 +211,6 @@ enum {
+>  enum {
+>  	CHECK_MPATHD_RUNNING,
+>  	CHECK_MPATHD_EAGAIN,
+> -	CHECK_MPATHD_ENABLED,
+>  	CHECK_MPATHD_SKIP,
+>  };
+>  
+> @@ -232,11 +226,8 @@ static void setup_passing(char *name, char *wwid, unsigned int check_multipathd,
+>  	else if (check_multipathd == CHECK_MPATHD_EAGAIN) {
+>  		will_return(__wrap___mpath_connect, false);
+>  		will_return(__wrap___mpath_connect, EAGAIN);
+> -	} else if (check_multipathd == CHECK_MPATHD_ENABLED) {
+> -		will_return(__wrap___mpath_connect, false);
+> -		will_return(__wrap___mpath_connect, ECONNREFUSED);
+> -		will_return(__wrap_systemd_service_enabled, true);
+>  	}
+> +
+>  	/* nothing for CHECK_MPATHD_SKIP */
+>  	if (stage == STAGE_CHECK_MULTIPATHD)
+>  		return;
+> @@ -342,19 +333,10 @@ static void test_check_multipathd(void **state)
+>  	will_return(__wrap_sysfs_is_multipathed, false);
+>  	will_return(__wrap___mpath_connect, false);
+>  	will_return(__wrap___mpath_connect, ECONNREFUSED);
+> -	will_return(__wrap_systemd_service_enabled, false);
+> +
+>  	assert_int_equal(is_path_valid(name, &conf, &pp, true),
+>  			 PATH_IS_NOT_VALID);
+>  	assert_string_equal(pp.dev, name);
+> -	/* test pass because service is enabled. fail getting udev */
+> -	memset(&pp, 0, sizeof(pp));
+> -	setup_passing(name, NULL, CHECK_MPATHD_ENABLED, STAGE_CHECK_MULTIPATHD);
+> -	will_return(__wrap_udev_device_new_from_subsystem_sysname, false);
+> -	will_return(__wrap_udev_device_new_from_subsystem_sysname,
+> -		    name);
+> -	assert_int_equal(is_path_valid(name, &conf, &pp, true),
+> -			 PATH_IS_ERROR);
+> -	assert_string_equal(pp.dev, name);
+>  	/* test pass because connect returned EAGAIN. fail getting udev */
+>  	setup_passing(name, NULL, CHECK_MPATHD_EAGAIN, STAGE_CHECK_MULTIPATHD);
+>  	will_return(__wrap_udev_device_new_from_subsystem_sysname, false);
+> @@ -533,7 +515,7 @@ static void test_check_uuid_present(void **state)
+>  
+>  	memset(&pp, 0, sizeof(pp));
+>  	conf.find_multipaths = FIND_MULTIPATHS_STRICT;
+> -	setup_passing(name, wwid, CHECK_MPATHD_ENABLED, STAGE_CHECK_WWIDS);
+> +	setup_passing(name, wwid, CHECK_MPATHD_RUNNING, STAGE_CHECK_WWIDS);
+>  	will_return(__wrap_dm_map_present_by_uuid, 1);
+>  	will_return(__wrap_dm_map_present_by_uuid, wwid);
+>  	assert_int_equal(is_path_valid(name, &conf, &pp, true),
+> -- 
+> 2.42.0
 
-What I suggested doesn't change combining dm-error with other targets
-in the same table.  But we do allow that, think of a table with
-multiple linear targets and a subset that is the error target.
-
-> But it may be that I am missing something because of the wildcard flag. Is do
-> not fully understand how that one impacts anything. Is that flag responsible for
-> preventing dm-error to be combined with other targets ?
-
-/*
- * Indicates that a target may replace any target; even immutable targets.
- * .map, .map_rq, .clone_and_map_rq and .release_clone_rq are all defined.
- */
-#define DM_TARGET_WILDCARD              0x00000008
-
-Just means that the error target can replace all types of DM targets
-(its the only DM target that sets the DM_TARGET_WILDCARD flag).
-
-Mike
