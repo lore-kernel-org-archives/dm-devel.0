@@ -1,45 +1,45 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 516743E463
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 580283D99D
 	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:43 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iSEikwjh"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JIYozmx7"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698356503;
+	s=mimecast20190719; t=1698356502;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Fyv+qkUNIE1dYhEw0bAkLYwL70dlXQcZ7ntf/CeeDEQ=;
-	b=iSEikwjh8AVMD7FZN4S+4esOFByUGVMYqvWXWWtNN7hjKx8HiQf7PzIA/1lou216cWVgDP
-	+DE7aC92J4ncztSy3ilE0Ae8dRJ5hSmWbbN66S0b2nyD70DZXzr2jglugWOH4BiGtcgC58
-	gjHRGUa2tivvkNNIUpDU7n6iPZZiNrI=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-155-_e7USfzANpmOIPzP7h5yjQ-1; Thu, 26 Oct 2023 17:41:41 -0400
-X-MC-Unique: _e7USfzANpmOIPzP7h5yjQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	bh=qTVr2bEL2nhED7bKq6qyOh8riwxZ6zyxIqcZ+ZdPwu0=;
+	b=JIYozmx7R8jXjeNAF3/dvB616hmChygTC0VMgh7ho62X9N8QXl6UXUOJMGYZrujhKlL/oW
+	sCLKpA3XkJBMbHl1/Yf0R3n4o7PVbkWlJ5SI7aGRu1J8SNf9ajbjs+32yhwHxTDfbRPOg1
+	YYOPw56d4FXRlS5/qG4H4AOmGqy39Qg=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-689-mjMNYASXM2WtAoI9povrpg-1; Thu,
+ 26 Oct 2023 17:41:38 -0400
+X-MC-Unique: mjMNYASXM2WtAoI9povrpg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1E97E185A784;
-	Thu, 26 Oct 2023 21:41:41 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 64BEF1C04B41;
+	Thu, 26 Oct 2023 21:41:38 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0A5A81C060AE;
-	Thu, 26 Oct 2023 21:41:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 49E7DC15984;
+	Thu, 26 Oct 2023 21:41:38 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id B56803003B; Thu, 26 Oct 2023 17:41:40 -0400 (EDT)
+	id 00BF93003E; Thu, 26 Oct 2023 17:41:37 -0400 (EDT)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v4 23/39] dm vdo: add use of deduplication index in hash zones
-Date: Thu, 26 Oct 2023 17:41:20 -0400
-Message-Id: <20231026214136.1067410-24-msakai@redhat.com>
+Subject: [PATCH v4 07/39] dm vdo: add specialized request queueing functionality
+Date: Thu, 26 Oct 2023 17:41:04 -0400
+Message-Id: <20231026214136.1067410-8-msakai@redhat.com>
 In-Reply-To: <20231026214136.1067410-1-msakai@redhat.com>
 References: <20231026214136.1067410-1-msakai@redhat.com>
 Precedence: bulk
@@ -49,10 +49,15 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
 
-Add the data and methods that manage queries to the deduplication
-index and the responses from the index.
+This patch adds funnel_queue, a mostly lock-free multi-producer,
+single-consumer queue. It also adds the request queue used by the dm-vdo
+deduplication index, and the work_queue used by the dm-vdo data store. Both
+of these are built on top of funnel queue and are intended to support the
+dispatching of many short-running tasks. The work_queue also supports
+priorities. Finally, this patch adds vdo_completion, the structure which is
+enqueued on work_queues.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
@@ -60,710 +65,1743 @@ Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
 Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
 Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-Co-developed-by: Bruce Johnston <bjohnsto@redhat.com>
-Signed-off-by: Bruce Johnston <bjohnsto@redhat.com>
 Co-developed-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/dedupe.c | 623 +++++++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/dedupe.h |  26 ++
- 2 files changed, 649 insertions(+)
+ drivers/md/dm-vdo/completion.c    | 141 +++++++
+ drivers/md/dm-vdo/completion.h    | 155 +++++++
+ drivers/md/dm-vdo/cpu.h           |  58 +++
+ drivers/md/dm-vdo/funnel-queue.c  | 169 ++++++++
+ drivers/md/dm-vdo/funnel-queue.h  | 110 +++++
+ drivers/md/dm-vdo/request-queue.c | 284 +++++++++++++
+ drivers/md/dm-vdo/request-queue.h |  30 ++
+ drivers/md/dm-vdo/work-queue.c    | 659 ++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/work-queue.h    |  53 +++
+ 9 files changed, 1659 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/completion.c
+ create mode 100644 drivers/md/dm-vdo/completion.h
+ create mode 100644 drivers/md/dm-vdo/cpu.h
+ create mode 100644 drivers/md/dm-vdo/funnel-queue.c
+ create mode 100644 drivers/md/dm-vdo/funnel-queue.h
+ create mode 100644 drivers/md/dm-vdo/request-queue.c
+ create mode 100644 drivers/md/dm-vdo/request-queue.h
+ create mode 100644 drivers/md/dm-vdo/work-queue.c
+ create mode 100644 drivers/md/dm-vdo/work-queue.h
 
-diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
-index cf0fbdc30ca5..a6546a903120 100644
---- a/drivers/md/dm-vdo/dedupe.c
-+++ b/drivers/md/dm-vdo/dedupe.c
-@@ -143,6 +143,48 @@
- #include "vdo.h"
- #include "wait-queue.h"
- 
-+struct uds_attribute {
-+	struct attribute attr;
-+	const char *(*show_string)(struct hash_zones *hash_zones);
-+};
+diff --git a/drivers/md/dm-vdo/completion.c b/drivers/md/dm-vdo/completion.c
+new file mode 100644
+index 000000000000..e4b6ff74d098
+--- /dev/null
++++ b/drivers/md/dm-vdo/completion.c
+@@ -0,0 +1,141 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
 +
-+enum timer_state {
-+	DEDUPE_QUERY_TIMER_IDLE,
-+	DEDUPE_QUERY_TIMER_RUNNING,
-+	DEDUPE_QUERY_TIMER_FIRED,
-+};
++#include "completion.h"
 +
-+enum dedupe_context_state {
-+	DEDUPE_CONTEXT_IDLE,
-+	DEDUPE_CONTEXT_PENDING,
-+	DEDUPE_CONTEXT_TIMED_OUT,
-+	DEDUPE_CONTEXT_COMPLETE,
-+	DEDUPE_CONTEXT_TIMED_OUT_COMPLETE,
-+};
++#include <linux/kernel.h>
 +
-+/* Possible index states: closed, opened, or transitioning between those two. */
-+enum index_state {
-+	IS_CLOSED,
-+	IS_CHANGING,
-+	IS_OPENED,
-+};
++#include "logger.h"
++#include "permassert.h"
 +
-+static const char *CLOSED = "closed";
-+static const char *CLOSING = "closing";
-+static const char *ERROR = "error";
-+static const char *OFFLINE = "offline";
-+static const char *ONLINE = "online";
-+static const char *OPENING = "opening";
-+static const char *SUSPENDED = "suspended";
-+static const char *UNKNOWN = "unknown";
++#include "status-codes.h"
++#include "types.h"
++#include "vio.h"
++#include "vdo.h"
 +
-+/* Version 2 uses the kernel space UDS index and is limited to 16 bytes */
-+enum {
-+	UDS_ADVICE_VERSION = 2,
-+	/* version byte + state byte + 64-bit little-endian PBN */
-+	UDS_ADVICE_SIZE = 1 + 1 + sizeof(u64),
-+};
++/**
++ * DOC: vdo completions.
++ *
++ * Most of vdo's data structures are lock free, each either belonging to a single "zone," or
++ * divided into a number of zones whose accesses to the structure do not overlap. During normal
++ * operation, at most one thread will be operating in any given zone. Each zone has a
++ * vdo_work_queue which holds vdo_completions that are to be run in that zone. A completion may
++ * only be enqueued on one queue or operating in a single zone at a time.
++ *
++ * At each step of a multi-threaded operation, the completion performing the operation is given a
++ * callback, error handler, and thread id for the next step. A completion is "run" when it is
++ * operating on the correct thread (as specified by its callback_thread_id). If the value of its
++ * "result" field is an error (i.e. not VDO_SUCCESS), the function in its "error_handler" will be
++ * invoked. If the error_handler is NULL, or there is no error, the function set as its "callback"
++ * will be invoked. Generally, a completion will not be run directly, but rather will be
++ * "launched." In this case, it will check whether it is operating on the correct thread. If it is,
++ * it will run immediately. Otherwise, it will be enqueue on the vdo_work_queue associated with the
++ * completion's "callback_thread_id". When it is dequeued, it will be on the correct thread, and
++ * will get run. In some cases, the completion should get queued instead of running immediately,
++ * even if it is being launched from the correct thread. This is usually in cases where there is a
++ * long chain of callbacks, all on the same thread, which could overflow the stack. In such cases,
++ * the completion's "requeue" field should be set to true. Doing so will skip the current thread
++ * check and simply enqueue the completion.
++ *
++ * A completion may be "finished," in which case its "complete" field will be set to true before it
++ * is next run. It is a bug to attempt to set the result or re-finish a finished completion.
++ * Because a completion's fields are not safe to examine from any thread other than the one on
++ * which the completion is currently operating, this field is used only to aid in detecting
++ * programming errors. It can not be used for cross-thread checking on the status of an operation.
++ * A completion must be "reset" before it can be reused after it has been finished. Resetting will
++ * also clear any error from the result field.
++ **/
 +
- enum hash_lock_state {
- 	/* State for locks that are not in use or are being initialized. */
- 	VDO_HASH_LOCK_INITIALIZING,
-@@ -264,6 +306,13 @@ struct hash_zones {
- 	struct hash_zone zones[];
- };
- 
-+/* These are in milliseconds. */
-+unsigned int vdo_dedupe_index_timeout_interval = 5000;
-+unsigned int vdo_dedupe_index_min_timer_interval = 100;
-+/* Same two variables, in jiffies for easier consumption. */
-+static u64 vdo_dedupe_index_timeout_jiffies;
-+static u64 vdo_dedupe_index_min_timer_jiffies;
-+
- static inline struct hash_zone *as_hash_zone(struct vdo_completion *completion)
- {
- 	vdo_assert_completion_type(completion, VDO_HASH_ZONE_COMPLETION);
-@@ -283,6 +332,16 @@ static inline void assert_in_hash_zone(struct hash_zone *zone, const char *name)
- 			name);
- }
- 
-+static inline bool change_context_state(struct dedupe_context *context, int old, int new)
++void vdo_initialize_completion(struct vdo_completion *completion,
++			       struct vdo *vdo,
++			       enum vdo_completion_type type)
 +{
-+	return (atomic_cmpxchg(&context->state, old, new) == old);
++	memset(completion, 0, sizeof(*completion));
++	completion->vdo = vdo;
++	completion->type = type;
++	vdo_reset_completion(completion);
 +}
 +
-+static inline bool change_timer_state(struct hash_zone *zone, int old, int new)
++static inline void assert_incomplete(struct vdo_completion *completion)
 +{
-+	return (atomic_cmpxchg(&zone->timer_state, old, new) == old);
-+}
-+
- /**
-  * return_hash_lock_to_pool() - (Re)initialize a hash lock and return it to its pool.
-  * @zone: The zone from which the lock was borrowed.
-@@ -1955,6 +2014,376 @@ static u32 hash_key(const void *key)
- 	return get_unaligned_le32(&name->name[4]);
- }
- 
-+static void dedupe_kobj_release(struct kobject *directory)
-+{
-+	UDS_FREE(container_of(directory, struct hash_zones, dedupe_directory));
-+}
-+
-+static ssize_t dedupe_status_show(struct kobject *directory, struct attribute *attr, char *buf)
-+{
-+	struct uds_attribute *ua = container_of(attr, struct uds_attribute, attr);
-+	struct hash_zones *zones = container_of(directory, struct hash_zones, dedupe_directory);
-+
-+	if (ua->show_string != NULL)
-+		return sprintf(buf, "%s\n", ua->show_string(zones));
-+	else
-+		return -EINVAL;
-+}
-+
-+static ssize_t dedupe_status_store(struct kobject *kobj __always_unused,
-+				   struct attribute *attr __always_unused,
-+				   const char *buf __always_unused,
-+				   size_t length __always_unused)
-+{
-+	return -EINVAL;
-+}
-+
-+/*----------------------------------------------------------------------*/
-+
-+static const struct sysfs_ops dedupe_sysfs_ops = {
-+	.show = dedupe_status_show,
-+	.store = dedupe_status_store,
-+};
-+
-+static struct uds_attribute dedupe_status_attribute = {
-+	.attr = {.name = "status", .mode = 0444, },
-+	.show_string = vdo_get_dedupe_index_state_name,
-+};
-+
-+static struct attribute *dedupe_attrs[] = {
-+	&dedupe_status_attribute.attr,
-+	NULL,
-+};
-+ATTRIBUTE_GROUPS(dedupe);
-+
-+static const struct kobj_type dedupe_directory_type = {
-+	.release = dedupe_kobj_release,
-+	.sysfs_ops = &dedupe_sysfs_ops,
-+	.default_groups = dedupe_groups,
-+};
-+
-+static void start_uds_queue(void *ptr)
-+{
-+	/*
-+	 * Allow the UDS dedupe worker thread to do memory allocations. It will only do allocations
-+	 * during the UDS calls that open or close an index, but those allocations can safely sleep
-+	 * while reserving a large amount of memory. We could use an allocations_allowed boolean
-+	 * (like the base threads do), but it would be an unnecessary embellishment.
-+	 */
-+	struct vdo_thread *thread = vdo_get_work_queue_owner(vdo_get_current_work_queue());
-+
-+	uds_register_allocating_thread(&thread->allocating_thread, NULL);
-+}
-+
-+static void finish_uds_queue(void *ptr __always_unused)
-+{
-+	uds_unregister_allocating_thread();
-+}
-+
-+static void close_index(struct hash_zones *zones)
-+{
-+	int result;
-+
-+	/*
-+	 * Change the index state so that get_index_statistics() will not try to use the index
-+	 * session we are closing.
-+	 */
-+	zones->index_state = IS_CHANGING;
-+	/* Close the index session, while not holding the lock. */
-+	spin_unlock(&zones->lock);
-+	result = uds_close_index(zones->index_session);
-+
-+	if (result != UDS_SUCCESS)
-+		uds_log_error_strerror(result, "Error closing index");
-+	spin_lock(&zones->lock);
-+	zones->index_state = IS_CLOSED;
-+	zones->error_flag |= result != UDS_SUCCESS;
-+	/* ASSERTION: We leave in IS_CLOSED state. */
-+}
-+
-+static void open_index(struct hash_zones *zones)
-+{
-+	/* ASSERTION: We enter in IS_CLOSED state. */
-+	int result;
-+	bool create_flag = zones->create_flag;
-+
-+	zones->create_flag = false;
-+	/*
-+	 * Change the index state so that the it will be reported to the outside world as
-+	 * "opening".
-+	 */
-+	zones->index_state = IS_CHANGING;
-+	zones->error_flag = false;
-+
-+	/* Open the index session, while not holding the lock */
-+	spin_unlock(&zones->lock);
-+	result = uds_open_index(create_flag ? UDS_CREATE : UDS_LOAD,
-+				&zones->parameters,
-+				zones->index_session);
-+	if (result != UDS_SUCCESS)
-+		uds_log_error_strerror(result, "Error opening index");
-+
-+	spin_lock(&zones->lock);
-+	if (!create_flag) {
-+		switch (result) {
-+		case -ENOENT:
-+			/*
-+			 * Either there is no index, or there is no way we can recover the index.
-+			 * We will be called again and try to create a new index.
-+			 */
-+			zones->index_state = IS_CLOSED;
-+			zones->create_flag = true;
-+			return;
-+		default:
-+			break;
-+		}
-+	}
-+	if (result == UDS_SUCCESS) {
-+		zones->index_state = IS_OPENED;
-+	} else {
-+		zones->index_state = IS_CLOSED;
-+		zones->index_target = IS_CLOSED;
-+		zones->error_flag = true;
-+		spin_unlock(&zones->lock);
-+		uds_log_info("Setting UDS index target state to error");
-+		spin_lock(&zones->lock);
-+	}
-+	/*
-+	 * ASSERTION: On success, we leave in IS_OPENED state.
-+	 * ASSERTION: On failure, we leave in IS_CLOSED state.
-+	 */
-+}
-+
-+static void change_dedupe_state(struct vdo_completion *completion)
-+{
-+	struct hash_zones *zones = as_hash_zones(completion);
-+
-+	spin_lock(&zones->lock);
-+
-+	/* Loop until the index is in the target state and the create flag is clear. */
-+	while (vdo_is_state_normal(&zones->state) &&
-+	       ((zones->index_state != zones->index_target) || zones->create_flag)) {
-+		if (zones->index_state == IS_OPENED)
-+			close_index(zones);
-+		else
-+			open_index(zones);
-+	}
-+
-+	zones->changing = false;
-+	spin_unlock(&zones->lock);
-+}
-+
-+static void start_expiration_timer(struct dedupe_context *context)
-+{
-+	u64 start_time = context->submission_jiffies;
-+	u64 end_time;
-+
-+	if (!change_timer_state(context->zone,
-+				DEDUPE_QUERY_TIMER_IDLE,
-+				DEDUPE_QUERY_TIMER_RUNNING))
-+		return;
-+
-+	end_time = max(start_time + vdo_dedupe_index_timeout_jiffies,
-+		       jiffies + vdo_dedupe_index_min_timer_jiffies);
-+	mod_timer(&context->zone->timer, end_time);
++	ASSERT_LOG_ONLY(!completion->complete, "completion is not complete");
 +}
 +
 +/**
-+ * report_dedupe_timeouts() - Record and eventually report that some dedupe requests reached their
-+ *                            expiration time without getting answers, so we timed them out.
-+ * @zones: the hash zones.
-+ * @timeouts: the number of newly timed out requests.
++ * vdo_set_completion_result() - Set the result of a completion.
++ *
++ * Older errors will not be masked.
 + */
-+static void report_dedupe_timeouts(struct hash_zones *zones, unsigned int timeouts)
++void vdo_set_completion_result(struct vdo_completion *completion, int result)
 +{
-+	atomic64_add(timeouts, &zones->timeouts);
-+	spin_lock(&zones->lock);
-+	if (__ratelimit(&zones->ratelimiter)) {
-+		u64 unreported = atomic64_read(&zones->timeouts);
-+
-+		unreported -= zones->reported_timeouts;
-+		uds_log_debug("UDS index timeout on %llu requests",
-+			      (unsigned long long) unreported);
-+		zones->reported_timeouts += unreported;
-+	}
-+	spin_unlock(&zones->lock);
++	assert_incomplete(completion);
++	if (completion->result == VDO_SUCCESS)
++		completion->result = result;
 +}
 +
-+static int initialize_index(struct vdo *vdo, struct hash_zones *zones)
++/**
++ * vdo_launch_completion_with_priority() - Run or enqueue a completion.
++ * @priority: The priority at which to enqueue the completion.
++ *
++ * If called on the correct thread (i.e. the one specified in the completion's callback_thread_id
++ * field) and not marked for requeue, the completion will be run immediately. Otherwise, the
++ * completion will be enqueued on the specified thread.
++ */
++void vdo_launch_completion_with_priority(struct vdo_completion *completion,
++					 enum vdo_completion_priority priority)
++{
++	thread_id_t callback_thread = completion->callback_thread_id;
++
++	if (completion->requeue || (callback_thread != vdo_get_callback_thread_id())) {
++		vdo_enqueue_completion(completion, priority);
++		return;
++	}
++
++	vdo_run_completion(completion);
++}
++
++/** vdo_finish_completion() - Mark a completion as complete and then launch it. */
++void vdo_finish_completion(struct vdo_completion *completion)
++{
++	assert_incomplete(completion);
++	completion->complete = true;
++	if (completion->callback != NULL)
++		vdo_launch_completion(completion);
++}
++
++void vdo_enqueue_completion(struct vdo_completion *completion,
++			    enum vdo_completion_priority priority)
++{
++	struct vdo *vdo = completion->vdo;
++	thread_id_t thread_id = completion->callback_thread_id;
++
++	if (ASSERT(thread_id < vdo->thread_config.thread_count,
++		   "thread_id %u (completion type %d) is less than thread count %u",
++		   thread_id,
++		   completion->type,
++		   vdo->thread_config.thread_count) != UDS_SUCCESS)
++		BUG();
++
++	completion->requeue = false;
++	completion->priority = priority;
++	completion->my_queue = NULL;
++	vdo_enqueue_work_queue(vdo->threads[thread_id].queue, completion);
++}
++
++/**
++ * vdo_requeue_completion_if_needed() - Requeue a completion if not called on the specified thread.
++ *
++ * Return: True if the completion was requeued; callers may not access the completion in this case.
++ */
++bool vdo_requeue_completion_if_needed(struct vdo_completion *completion,
++				      thread_id_t callback_thread_id)
++{
++	if (vdo_get_callback_thread_id() == callback_thread_id)
++		return false;
++
++	completion->callback_thread_id = callback_thread_id;
++	vdo_enqueue_completion(completion, VDO_WORK_Q_DEFAULT_PRIORITY);
++	return true;
++}
+diff --git a/drivers/md/dm-vdo/completion.h b/drivers/md/dm-vdo/completion.h
+new file mode 100644
+index 000000000000..b81322aea253
+--- /dev/null
++++ b/drivers/md/dm-vdo/completion.h
+@@ -0,0 +1,155 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef VDO_COMPLETION_H
++#define VDO_COMPLETION_H
++
++#include "permassert.h"
++
++#include "status-codes.h"
++#include "types.h"
++
++/**
++ * vdo_run_completion() - Run a completion's callback or error handler on the current thread.
++ *
++ * Context: This function must be called from the correct callback thread.
++ */
++static inline void vdo_run_completion(struct vdo_completion *completion)
++{
++	if ((completion->result != VDO_SUCCESS) && (completion->error_handler != NULL)) {
++		completion->error_handler(completion);
++		return;
++	}
++
++	completion->callback(completion);
++}
++
++void vdo_set_completion_result(struct vdo_completion *completion, int result);
++
++void vdo_initialize_completion(struct vdo_completion *completion,
++			       struct vdo *vdo,
++			       enum vdo_completion_type type);
++
++/**
++ * vdo_reset_completion() - Reset a completion to a clean state, while keeping the type, vdo and
++ *                          parent information.
++ */
++static inline void vdo_reset_completion(struct vdo_completion *completion)
++{
++	completion->result = VDO_SUCCESS;
++	completion->complete = false;
++}
++
++void vdo_launch_completion_with_priority(struct vdo_completion *completion,
++					 enum vdo_completion_priority priority);
++
++/**
++ * vdo_launch_completion() - Launch a completion with default priority.
++ */
++static inline void vdo_launch_completion(struct vdo_completion *completion)
++{
++	vdo_launch_completion_with_priority(completion, VDO_WORK_Q_DEFAULT_PRIORITY);
++}
++
++/**
++ * vdo_continue_completion() - Continue processing a completion.
++ * @result: The current result (will not mask older errors).
++ *
++ * Continue processing a completion by setting the current result and calling
++ * vdo_launch_completion().
++ */
++static inline void vdo_continue_completion(struct vdo_completion *completion, int result)
++{
++	vdo_set_completion_result(completion, result);
++	vdo_launch_completion(completion);
++}
++
++void vdo_finish_completion(struct vdo_completion *completion);
++
++/**
++ * vdo_fail_completion() - Set the result of a completion if it does not already have an error,
++ *                         then finish it.
++ */
++static inline void vdo_fail_completion(struct vdo_completion *completion, int result)
++{
++	vdo_set_completion_result(completion, result);
++	vdo_finish_completion(completion);
++}
++
++/**
++ * vdo_assert_completion_type() - Assert that a completion is of the correct type.
++ *
++ * Return: VDO_SUCCESS or an error
++ */
++static inline int
++vdo_assert_completion_type(struct vdo_completion *completion, enum vdo_completion_type expected)
++{
++	return ASSERT(expected == completion->type,
++		      "completion type should be %u, not %u",
++		      expected,
++		      completion->type);
++}
++
++static inline void vdo_set_completion_callback(struct vdo_completion *completion,
++					       vdo_action *callback,
++					       thread_id_t callback_thread_id)
++{
++	completion->callback = callback;
++	completion->callback_thread_id = callback_thread_id;
++}
++
++/**
++ * vdo_launch_completion_callback() - Set the callback for a completion and launch it immediately.
++ */
++static inline void vdo_launch_completion_callback(struct vdo_completion *completion,
++						  vdo_action *callback,
++						  thread_id_t callback_thread_id)
++{
++	vdo_set_completion_callback(completion, callback, callback_thread_id);
++	vdo_launch_completion(completion);
++}
++
++/**
++ * vdo_prepare_completion() - Prepare a completion for launch.
++ *
++ * Resets the completion, and then sets its callback, error handler, callback thread, and parent.
++ */
++static inline void vdo_prepare_completion(struct vdo_completion *completion,
++					  vdo_action *callback,
++					  vdo_action *error_handler,
++					  thread_id_t callback_thread_id,
++					  void *parent)
++{
++	vdo_reset_completion(completion);
++	vdo_set_completion_callback(completion, callback, callback_thread_id);
++	completion->error_handler = error_handler;
++	completion->parent = parent;
++}
++
++/**
++ * vdo_prepare_completion_for_requeue() - Prepare a completion for launch ensuring that it will
++ *                                        always be requeued.
++ *
++ * Resets the completion, and then sets its callback, error handler, callback thread, and parent.
++ */
++static inline void
++vdo_prepare_completion_for_requeue(struct vdo_completion *completion,
++				   vdo_action *callback,
++				   vdo_action *error_handler,
++				   thread_id_t callback_thread_id,
++				   void *parent)
++{
++	vdo_prepare_completion(completion, callback, error_handler, callback_thread_id, parent);
++	completion->requeue = true;
++}
++
++void vdo_enqueue_completion(struct vdo_completion *completion,
++			    enum vdo_completion_priority priority);
++
++
++bool vdo_requeue_completion_if_needed(struct vdo_completion *completion,
++				      thread_id_t callback_thread_id);
++
++#endif /* VDO_COMPLETION_H */
+diff --git a/drivers/md/dm-vdo/cpu.h b/drivers/md/dm-vdo/cpu.h
+new file mode 100644
+index 000000000000..a538a4934e4b
+--- /dev/null
++++ b/drivers/md/dm-vdo/cpu.h
+@@ -0,0 +1,58 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_CPU_H
++#define UDS_CPU_H
++
++#include <linux/cache.h>
++
++/**
++ * uds_prefetch_address() - Minimize cache-miss latency by attempting to move data into a CPU cache
++ *                          before it is accessed.
++ *
++ * @address: the address to fetch (may be invalid)
++ * @for_write: must be constant at compile time--false if for reading, true if for writing
++ */
++static inline void uds_prefetch_address(const void *address, bool for_write)
++{
++	/*
++	 * for_write won't be a constant if we are compiled with optimization turned off, in which
++	 * case prefetching really doesn't matter. clang can't figure out that if for_write is a
++	 * constant, it can be passed as the second, mandatorily constant argument to prefetch(),
++	 * at least currently on llvm 12.
++	 */
++	if (__builtin_constant_p(for_write)) {
++		if (for_write)
++			__builtin_prefetch(address, true);
++		else
++			__builtin_prefetch(address, false);
++	}
++}
++
++/**
++ * uds_prefetch_range() - Minimize cache-miss latency by attempting to move a range of addresses
++ *                        into a CPU cache before they are accessed.
++ *
++ * @start: the starting address to fetch (may be invalid)
++ * @size: the number of bytes in the address range
++ * @for_write: must be constant at compile time--false if for reading, true if for writing
++ */
++static inline void uds_prefetch_range(const void *start, unsigned int size, bool for_write)
++{
++	/*
++	 * Count the number of cache lines to fetch, allowing for the address range to span an
++	 * extra cache line boundary due to address alignment.
++	 */
++	const char *address = (const char *) start;
++	unsigned int offset = ((uintptr_t) address % L1_CACHE_BYTES);
++	unsigned int cache_lines = (1 + ((size + offset) / L1_CACHE_BYTES));
++
++	while (cache_lines-- > 0) {
++		uds_prefetch_address(address, for_write);
++		address += L1_CACHE_BYTES;
++	}
++}
++
++#endif /* UDS_CPU_H */
+diff --git a/drivers/md/dm-vdo/funnel-queue.c b/drivers/md/dm-vdo/funnel-queue.c
+new file mode 100644
+index 000000000000..bf7f0d8bc04d
+--- /dev/null
++++ b/drivers/md/dm-vdo/funnel-queue.c
+@@ -0,0 +1,169 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "funnel-queue.h"
++
++#include "cpu.h"
++#include "memory-alloc.h"
++#include "permassert.h"
++#include "uds.h"
++
++int uds_make_funnel_queue(struct funnel_queue **queue_ptr)
 +{
 +	int result;
-+	off_t uds_offset;
-+	struct volume_geometry geometry = vdo->geometry;
-+	static const struct vdo_work_queue_type uds_queue_type = {
-+		.start = start_uds_queue,
-+		.finish = finish_uds_queue,
-+		.max_priority = UDS_Q_MAX_PRIORITY,
-+		.default_priority = UDS_Q_PRIORITY,
-+	};
++	struct funnel_queue *queue;
 +
-+	vdo_set_dedupe_index_timeout_interval(vdo_dedupe_index_timeout_interval);
-+	vdo_set_dedupe_index_min_timer_interval(vdo_dedupe_index_min_timer_interval);
-+
-+	/*
-+	 * Since we will save up the timeouts that would have been reported but were ratelimited,
-+	 * we don't need to report ratelimiting.
-+	 */
-+	ratelimit_default_init(&zones->ratelimiter);
-+	ratelimit_set_flags(&zones->ratelimiter, RATELIMIT_MSG_ON_RELEASE);
-+	uds_offset = ((vdo_get_index_region_start(geometry) -
-+		       geometry.bio_offset) * VDO_BLOCK_SIZE);
-+	zones->parameters = (struct uds_parameters) {
-+		.bdev = vdo->device_config->owned_device->bdev,
-+		.offset = uds_offset,
-+		.size = (vdo_get_index_region_size(geometry) * VDO_BLOCK_SIZE),
-+		.memory_size = geometry.index_config.mem,
-+		.sparse = geometry.index_config.sparse,
-+		.nonce = (u64) geometry.nonce,
-+	};
-+
-+	result = uds_create_index_session(&zones->index_session);
++	result = UDS_ALLOCATE(1, struct funnel_queue, "funnel queue", &queue);
 +	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	result = vdo_make_thread(vdo, vdo->thread_config.dedupe_thread, &uds_queue_type, 1, NULL);
-+	if (result != VDO_SUCCESS) {
-+		uds_destroy_index_session(UDS_FORGET(zones->index_session));
-+		uds_log_error("UDS index queue initialization failed (%d)", result);
++	/*
++	 * Initialize the stub entry and put it in the queue, establishing the invariant that
++	 * queue->newest and queue->oldest are never null.
++	 */
++	queue->stub.next = NULL;
++	queue->newest = &queue->stub;
++	queue->oldest = &queue->stub;
++
++	*queue_ptr = queue;
++	return UDS_SUCCESS;
++}
++
++void uds_free_funnel_queue(struct funnel_queue *queue)
++{
++	UDS_FREE(queue);
++}
++
++static struct funnel_queue_entry *get_oldest(struct funnel_queue *queue)
++{
++	/*
++	 * Barrier requirements: We need a read barrier between reading a "next" field pointer
++	 * value and reading anything it points to. There's an accompanying barrier in
++	 * uds_funnel_queue_put() between its caller setting up the entry and making it visible.
++	 */
++	struct funnel_queue_entry *oldest = queue->oldest;
++	struct funnel_queue_entry *next = READ_ONCE(oldest->next);
++
++	if (oldest == &queue->stub) {
++		/*
++		 * When the oldest entry is the stub and it has no successor, the queue is
++		 * logically empty.
++		 */
++		if (next == NULL)
++			return NULL;
++		/*
++		 * The stub entry has a successor, so the stub can be dequeued and ignored without
++		 * breaking the queue invariants.
++		 */
++		oldest = next;
++		queue->oldest = oldest;
++		next = READ_ONCE(oldest->next);
++	}
++
++	/*
++	 * We have a non-stub candidate to dequeue. If it lacks a successor, we'll need to put the
++	 * stub entry back on the queue first.
++	 */
++	if (next == NULL) {
++		struct funnel_queue_entry *newest = READ_ONCE(queue->newest);
++
++		if (oldest != newest)
++			/*
++			 * Another thread has already swung queue->newest atomically, but not yet
++			 * assigned previous->next. The queue is really still empty.
++			 */
++			return NULL;
++
++		/*
++		 * Put the stub entry back on the queue, ensuring a successor will eventually be
++		 * seen.
++		 */
++		uds_funnel_queue_put(queue, &queue->stub);
++
++		/* Check again for a successor. */
++		next = READ_ONCE(oldest->next);
++		if (next == NULL)
++			/*
++			 * We lost a race with a producer who swapped queue->newest before we did,
++			 * but who hasn't yet updated previous->next. Try again later.
++			 */
++			return NULL;
++	}
++
++	return oldest;
++}
++
++/*
++ * Poll a queue, removing the oldest entry if the queue is not empty. This function must only be
++ * called from a single consumer thread.
++ */
++struct funnel_queue_entry *uds_funnel_queue_poll(struct funnel_queue *queue)
++{
++	struct funnel_queue_entry *oldest = get_oldest(queue);
++
++	if (oldest == NULL)
++		return oldest;
++
++	/*
++	 * Dequeue the oldest entry and return it. Only one consumer thread may call this function,
++	 * so no locking, atomic operations, or fences are needed; queue->oldest is owned by the
++	 * consumer and oldest->next is never used by a producer thread after it is swung from NULL
++	 * to non-NULL.
++	 */
++	queue->oldest = READ_ONCE(oldest->next);
++	/*
++	 * Make sure the caller sees the proper stored data for this entry. Since we've already
++	 * fetched the entry pointer we stored in "queue->oldest", this also ensures that on entry
++	 * to the next call we'll properly see the dependent data.
++	 */
++	smp_rmb();
++	/*
++	 * If "oldest" is a very light-weight work item, we'll be looking for the next one very
++	 * soon, so prefetch it now.
++	 */
++	uds_prefetch_address(queue->oldest, true);
++	WRITE_ONCE(oldest->next, NULL);
++	return oldest;
++}
++
++/*
++ * Check whether the funnel queue is empty or not. If the queue is in a transition state with one
++ * or more entries being added such that the list view is incomplete, this function will report the
++ * queue as empty.
++ */
++bool uds_is_funnel_queue_empty(struct funnel_queue *queue)
++{
++	return get_oldest(queue) == NULL;
++}
++
++/*
++ * Check whether the funnel queue is idle or not. If the queue has entries available to be
++ * retrieved, it is not idle. If the queue is in a transition state with one or more entries being
++ * added such that the list view is incomplete, it may not be possible to retrieve an entry with
++ * the uds_funnel_queue_poll() function, but the queue will not be considered idle.
++ */
++bool uds_is_funnel_queue_idle(struct funnel_queue *queue)
++{
++	/*
++	 * Oldest is not the stub, so there's another entry, though if next is NULL we can't
++	 * retrieve it yet.
++	 */
++	if (queue->oldest != &queue->stub)
++		return false;
++
++	/*
++	 * Oldest is the stub, but newest has been updated by _put(); either there's another,
++	 * retrievable entry in the list, or the list is officially empty but in the intermediate
++	 * state of having an entry added.
++	 *
++	 * Whether anything is retrievable depends on whether stub.next has been updated and become
++	 * visible to us, but for idleness we don't care. And due to memory ordering in _put(), the
++	 * update to newest would be visible to us at the same time or sooner.
++	 */
++	if (READ_ONCE(queue->newest) != &queue->stub)
++		return false;
++
++	return true;
++}
+diff --git a/drivers/md/dm-vdo/funnel-queue.h b/drivers/md/dm-vdo/funnel-queue.h
+new file mode 100644
+index 000000000000..275dd4ac29a4
+--- /dev/null
++++ b/drivers/md/dm-vdo/funnel-queue.h
+@@ -0,0 +1,110 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_FUNNEL_QUEUE_H
++#define UDS_FUNNEL_QUEUE_H
++
++#include <linux/atomic.h>
++#include <linux/cache.h>
++
++/*
++ * A funnel queue is a simple (almost) lock-free queue that accepts entries from multiple threads
++ * (multi-producer) and delivers them to a single thread (single-consumer). "Funnel" is an attempt
++ * to evoke the image of requests from more than one producer being "funneled down" to a single
++ * consumer.
++ *
++ * This is an unsynchronized but thread-safe data structure when used as intended. There is no
++ * mechanism to ensure that only one thread is consuming from the queue. If more than one thread
++ * attempts to consume from the queue, the resulting behavior is undefined. Clients must not
++ * directly access or manipulate the internals of the queue, which are only exposed for the purpose
++ * of allowing the very simple enqueue operation to be inlined.
++ *
++ * The implementation requires that a funnel_queue_entry structure (a link pointer) is embedded in
++ * the queue entries, and pointers to those structures are used exclusively by the queue. No macros
++ * are defined to template the queue, so the offset of the funnel_queue_entry in the records placed
++ * in the queue must all be the same so the client can derive their structure pointer from the
++ * entry pointer returned by uds_funnel_queue_poll().
++ *
++ * Callers are wholly responsible for allocating and freeing the entries. Entries may be freed as
++ * soon as they are returned since this queue is not susceptible to the "ABA problem" present in
++ * many lock-free data structures. The queue is dynamically allocated to ensure cache-line
++ * alignment, but no other dynamic allocation is used.
++ *
++ * The algorithm is not actually 100% lock-free. There is a single point in uds_funnel_queue_put()
++ * at which a preempted producer will prevent the consumers from seeing items added to the queue by
++ * later producers, and only if the queue is short enough or the consumer fast enough for it to
++ * reach what was the end of the queue at the time of the preemption.
++ *
++ * The consumer function, uds_funnel_queue_poll(), will return NULL when the queue is empty. To
++ * wait for data to consume, spin (if safe) or combine the queue with a struct event_count to
++ * signal the presence of new entries.
++ */
++
++/* This queue link structure must be embedded in client entries. */
++struct funnel_queue_entry {
++	/* The next (newer) entry in the queue. */
++	struct funnel_queue_entry *next;
++};
++
++/*
++ * The dynamically allocated queue structure, which is allocated on a cache line boundary so the
++ * producer and consumer fields in the structure will land on separate cache lines. This should be
++ * consider opaque but it is exposed here so uds_funnel_queue_put() can be inlined.
++ */
++struct __aligned(L1_CACHE_BYTES) funnel_queue {
++	/*
++	 * The producers' end of the queue, an atomically exchanged pointer that will never be
++	 * NULL.
++	 */
++	struct funnel_queue_entry *newest;
++
++	/* The consumer's end of the queue, which is owned by the consumer and never NULL. */
++	struct funnel_queue_entry *oldest __aligned(L1_CACHE_BYTES);
++
++	/* A dummy entry used to provide the non-NULL invariants above. */
++	struct funnel_queue_entry stub;
++};
++
++int __must_check uds_make_funnel_queue(struct funnel_queue **queue_ptr);
++
++void uds_free_funnel_queue(struct funnel_queue *queue);
++
++/*
++ * Put an entry on the end of the queue.
++ *
++ * The entry pointer must be to the struct funnel_queue_entry embedded in the caller's data
++ * structure. The caller must be able to derive the address of the start of their data structure
++ * from the pointer that passed in here, so every entry in the queue must have the struct
++ * funnel_queue_entry at the same offset within the client's structure.
++ */
++static inline void
++uds_funnel_queue_put(struct funnel_queue *queue, struct funnel_queue_entry *entry)
++{
++	struct funnel_queue_entry *previous;
++
++	/*
++	 * Barrier requirements: All stores relating to the entry ("next" pointer, containing data
++	 * structure fields) must happen before the previous->next store making it visible to the
++	 * consumer. Also, the entry's "next" field initialization to NULL must happen before any
++	 * other producer threads can see the entry (the xchg) and try to update the "next" field.
++	 *
++	 * xchg implements a full barrier.
++	 */
++	WRITE_ONCE(entry->next, NULL);
++	previous = xchg(&queue->newest, entry);
++	/*
++	 * Preemptions between these two statements hide the rest of the queue from the consumer,
++	 * preventing consumption until the following assignment runs.
++	 */
++	WRITE_ONCE(previous->next, entry);
++}
++
++struct funnel_queue_entry *__must_check uds_funnel_queue_poll(struct funnel_queue *queue);
++
++bool __must_check uds_is_funnel_queue_empty(struct funnel_queue *queue);
++
++bool __must_check uds_is_funnel_queue_idle(struct funnel_queue *queue);
++
++#endif /* UDS_FUNNEL_QUEUE_H */
+diff --git a/drivers/md/dm-vdo/request-queue.c b/drivers/md/dm-vdo/request-queue.c
+new file mode 100644
+index 000000000000..1c60b09027a8
+--- /dev/null
++++ b/drivers/md/dm-vdo/request-queue.c
+@@ -0,0 +1,284 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "request-queue.h"
++
++#include <linux/atomic.h>
++#include <linux/compiler.h>
++#include <linux/wait.h>
++
++#include "funnel-queue.h"
++#include "logger.h"
++#include "memory-alloc.h"
++#include "uds-threads.h"
++
++/*
++ * This queue will attempt to handle requests in reasonably sized batches instead of reacting
++ * immediately to each new request. The wait time between batches is dynamically adjusted up or
++ * down to try to balance responsiveness against wasted thread run time.
++ *
++ * If the wait time becomes long enough, the queue will become dormant and must be explicitly
++ * awoken when a new request is enqueued. The enqueue operation updates "newest" in the funnel
++ * queue via xchg (which is a memory barrier), and later checks "dormant" to decide whether to do a
++ * wakeup of the worker thread.
++ *
++ * When deciding to go to sleep, the worker thread sets "dormant" and then examines "newest" to
++ * decide if the funnel queue is idle. In dormant mode, the last examination of "newest" before
++ * going to sleep is done inside the wait_event_interruptible() macro, after a point where one or
++ * more memory barriers have been issued. (Preparing to sleep uses spin locks.) Even if the funnel
++ * queue's "next" field update isn't visible yet to make the entry accessible, its existence will
++ * kick the worker thread out of dormant mode and back into timer-based mode.
++ *
++ * Unbatched requests are used to communicate between different zone threads and will also cause
++ * the queue to awaken immediately.
++ */
++
++enum {
++	NANOSECOND = 1,
++	MICROSECOND = 1000 * NANOSECOND,
++	MILLISECOND = 1000 * MICROSECOND,
++	DEFAULT_WAIT_TIME = 20 * MICROSECOND,
++	MINIMUM_WAIT_TIME = DEFAULT_WAIT_TIME / 2,
++	MAXIMUM_WAIT_TIME = MILLISECOND,
++	MINIMUM_BATCH = 32,
++	MAXIMUM_BATCH = 64,
++};
++
++struct uds_request_queue {
++	/* Wait queue for synchronizing producers and consumer */
++	struct wait_queue_head wait_head;
++	/* Function to process a request */
++	uds_request_queue_processor_t *processor;
++	/* Queue of new incoming requests */
++	struct funnel_queue *main_queue;
++	/* Queue of old requests to retry */
++	struct funnel_queue *retry_queue;
++	/* The thread id of the worker thread */
++	struct thread *thread;
++	/* True if the worker was started */
++	bool started;
++	/* When true, requests can be enqueued */
++	bool running;
++	/* A flag set when the worker is waiting without a timeout */
++	atomic_t dormant;
++};
++
++static inline struct uds_request *poll_queues(struct uds_request_queue *queue)
++{
++	struct funnel_queue_entry *entry;
++
++	entry = uds_funnel_queue_poll(queue->retry_queue);
++	if (entry != NULL)
++		return container_of(entry, struct uds_request, queue_link);
++
++	entry = uds_funnel_queue_poll(queue->main_queue);
++	if (entry != NULL)
++		return container_of(entry, struct uds_request, queue_link);
++
++	return NULL;
++}
++
++static inline bool are_queues_idle(struct uds_request_queue *queue)
++{
++	return uds_is_funnel_queue_idle(queue->retry_queue) &&
++	       uds_is_funnel_queue_idle(queue->main_queue);
++}
++
++/*
++ * Determine if there is a next request to process, and return it if there is. Also return flags
++ * indicating whether the worker thread can sleep (for the use of wait_event() macros) and whether
++ * the thread did sleep before returning a new request.
++ */
++static inline bool dequeue_request(struct uds_request_queue *queue,
++				   struct uds_request **request_ptr,
++				   bool *waited_ptr)
++{
++	struct uds_request *request = poll_queues(queue);
++
++	if (request != NULL) {
++		*request_ptr = request;
++		return true;
++	}
++
++	if (!READ_ONCE(queue->running)) {
++		/* Wake the worker thread so it can exit. */
++		*request_ptr = NULL;
++		return true;
++	}
++
++	*request_ptr = NULL;
++	*waited_ptr = true;
++	return false;
++}
++
++static void wait_for_request(struct uds_request_queue *queue,
++			     bool dormant,
++			     unsigned long timeout,
++			     struct uds_request **request,
++			     bool *waited)
++{
++	if (dormant) {
++		wait_event_interruptible(queue->wait_head,
++					 (dequeue_request(queue, request, waited) ||
++					  !are_queues_idle(queue)));
++		return;
++	}
++
++	wait_event_interruptible_hrtimeout(queue->wait_head,
++					   dequeue_request(queue, request, waited),
++					   ns_to_ktime(timeout));
++}
++
++static void request_queue_worker(void *arg)
++{
++	struct uds_request_queue *queue = (struct uds_request_queue *) arg;
++	struct uds_request *request = NULL;
++	unsigned long time_batch = DEFAULT_WAIT_TIME;
++	bool dormant = atomic_read(&queue->dormant);
++	bool waited = false;
++	long current_batch = 0;
++
++	for (;;) {
++		wait_for_request(queue, dormant, time_batch, &request, &waited);
++		if (likely(request != NULL)) {
++			current_batch++;
++			queue->processor(request);
++		} else if (!READ_ONCE(queue->running)) {
++			break;
++		}
++
++		if (dormant) {
++			/*
++			 * The queue has been roused from dormancy. Clear the flag so enqueuers can
++			 * stop broadcasting. No fence is needed for this transition.
++			 */
++			atomic_set(&queue->dormant, false);
++			dormant = false;
++			time_batch = DEFAULT_WAIT_TIME;
++		} else if (waited) {
++			/*
++			 * We waited for this request to show up. Adjust the wait time to smooth
++			 * out the batch size.
++			 */
++			if (current_batch < MINIMUM_BATCH) {
++				/*
++				 * If the last batch of requests was too small, increase the wait
++				 * time.
++				 */
++				time_batch += time_batch / 4;
++				if (time_batch >= MAXIMUM_WAIT_TIME) {
++					atomic_set(&queue->dormant, true);
++					dormant = true;
++				}
++			} else if (current_batch > MAXIMUM_BATCH) {
++				/*
++				 * If the last batch of requests was too large, decrease the wait
++				 * time.
++				 */
++				time_batch -= time_batch / 4;
++				if (time_batch < MINIMUM_WAIT_TIME)
++					time_batch = MINIMUM_WAIT_TIME;
++			}
++			current_batch = 0;
++		}
++	}
++
++	/*
++	 * Ensure that we process any remaining requests that were enqueued before trying to shut
++	 * down. The corresponding write barrier is in uds_request_queue_finish().
++	 */
++	smp_rmb();
++	while ((request = poll_queues(queue)) != NULL)
++		queue->processor(request);
++}
++
++int uds_make_request_queue(const char *queue_name,
++			   uds_request_queue_processor_t *processor,
++			   struct uds_request_queue **queue_ptr)
++{
++	int result;
++	struct uds_request_queue *queue;
++
++	result = UDS_ALLOCATE(1, struct uds_request_queue, __func__, &queue);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	queue->processor = processor;
++	queue->running = true;
++	atomic_set(&queue->dormant, false);
++	init_waitqueue_head(&queue->wait_head);
++
++	result = uds_make_funnel_queue(&queue->main_queue);
++	if (result != UDS_SUCCESS) {
++		uds_request_queue_finish(queue);
 +		return result;
 +	}
 +
-+	vdo_initialize_completion(&zones->completion, vdo, VDO_HASH_ZONES_COMPLETION);
-+	vdo_set_completion_callback(&zones->completion,
-+				    change_dedupe_state,
-+				    vdo->thread_config.dedupe_thread);
-+	kobject_init(&zones->dedupe_directory, &dedupe_directory_type);
++	result = uds_make_funnel_queue(&queue->retry_queue);
++	if (result != UDS_SUCCESS) {
++		uds_request_queue_finish(queue);
++		return result;
++	}
++
++	result = uds_create_thread(request_queue_worker, queue, queue_name, &queue->thread);
++	if (result != UDS_SUCCESS) {
++		uds_request_queue_finish(queue);
++		return result;
++	}
++
++	queue->started = true;
++	*queue_ptr = queue;
++	return UDS_SUCCESS;
++}
++
++static inline void wake_up_worker(struct uds_request_queue *queue)
++{
++	if (wq_has_sleeper(&queue->wait_head))
++		wake_up(&queue->wait_head);
++}
++
++void uds_request_queue_enqueue(struct uds_request_queue *queue, struct uds_request *request)
++{
++	struct funnel_queue *sub_queue;
++	bool unbatched = request->unbatched;
++
++	sub_queue = request->requeued ? queue->retry_queue : queue->main_queue;
++	uds_funnel_queue_put(sub_queue, &request->queue_link);
++
++	/*
++	 * We must wake the worker thread when it is dormant. A read fence isn't needed here since
++	 * we know the queue operation acts as one.
++	 */
++	if (atomic_read(&queue->dormant) || unbatched)
++		wake_up_worker(queue);
++}
++
++void uds_request_queue_finish(struct uds_request_queue *queue)
++{
++	int result;
++
++	if (queue == NULL)
++		return;
++
++	/*
++	 * This memory barrier ensures that any requests we queued will be seen. The point is that
++	 * when dequeue_request() sees the following update to the running flag, it will also be
++	 * able to see any change we made to a next field in the funnel queue entry. The
++	 * corresponding read barrier is in request_queue_worker().
++	 */
++	smp_wmb();
++	WRITE_ONCE(queue->running, false);
++
++	if (queue->started) {
++		wake_up_worker(queue);
++		result = uds_join_threads(queue->thread);
++		if (result != UDS_SUCCESS)
++			uds_log_warning_strerror(result, "Failed to join worker thread");
++	}
++
++	uds_free_funnel_queue(queue->main_queue);
++	uds_free_funnel_queue(queue->retry_queue);
++	UDS_FREE(queue);
++}
+diff --git a/drivers/md/dm-vdo/request-queue.h b/drivers/md/dm-vdo/request-queue.h
+new file mode 100644
+index 000000000000..818cb14135fd
+--- /dev/null
++++ b/drivers/md/dm-vdo/request-queue.h
+@@ -0,0 +1,30 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_REQUEST_QUEUE_H
++#define UDS_REQUEST_QUEUE_H
++
++#include "uds.h"
++
++/*
++ * A simple request queue which will handle new requests in the order in which they are received,
++ * and will attempt to handle requeued requests before new ones. However, the nature of the
++ * implementation means that it cannot guarantee this ordering; the prioritization is merely a
++ * hint.
++ */
++
++struct uds_request_queue;
++
++typedef void uds_request_queue_processor_t(struct uds_request *);
++
++int __must_check uds_make_request_queue(const char *queue_name,
++					uds_request_queue_processor_t *processor,
++					struct uds_request_queue **queue_ptr);
++
++void uds_request_queue_enqueue(struct uds_request_queue *queue, struct uds_request *request);
++
++void uds_request_queue_finish(struct uds_request_queue *queue);
++
++#endif /* UDS_REQUEST_QUEUE_H */
+diff --git a/drivers/md/dm-vdo/work-queue.c b/drivers/md/dm-vdo/work-queue.c
+new file mode 100644
+index 000000000000..6adf07fc74e1
+--- /dev/null
++++ b/drivers/md/dm-vdo/work-queue.c
+@@ -0,0 +1,659 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "work-queue.h"
++
++#include <linux/atomic.h>
++#include <linux/cache.h>
++#include <linux/completion.h>
++#include <linux/err.h>
++#include <linux/kthread.h>
++#include <linux/percpu.h>
++
++#include "funnel-queue.h"
++#include "logger.h"
++#include "memory-alloc.h"
++#include "numeric.h"
++#include "permassert.h"
++#include "string-utils.h"
++
++#include "completion.h"
++#include "status-codes.h"
++
++static DEFINE_PER_CPU(unsigned int, service_queue_rotor);
++
++/**
++ * DOC: Work queue definition.
++ *
++ * There are two types of work queues: simple, with one worker thread, and round-robin, which uses
++ * a group of the former to do the work, and assigns work to them in round-robin fashion (roughly).
++ * Externally, both are represented via the same common sub-structure, though there's actually not
++ * a great deal of overlap between the two types internally.
++ */
++struct vdo_work_queue {
++	/* Name of just the work queue (e.g., "cpuQ12") */
++	char *name;
++	bool round_robin_mode;
++	struct vdo_thread *owner;
++	/* Life cycle functions, etc */
++	const struct vdo_work_queue_type *type;
++};
++
++struct simple_work_queue {
++	struct vdo_work_queue common;
++	struct funnel_queue *priority_lists[VDO_WORK_Q_MAX_PRIORITY + 1];
++	void *private;
++
++	/*
++	 * The fields above are unchanged after setup but often read, and are good candidates for
++	 * caching -- and if the max priority is 2, just fit in one x86-64 cache line if aligned.
++	 * The fields below are often modified as we sleep and wake, so we want a separate cache
++	 * line for performance.
++	 */
++
++	/* Any (0 or 1) worker threads waiting for new work to do */
++	wait_queue_head_t waiting_worker_threads ____cacheline_aligned;
++	/* Hack to reduce wakeup calls if the worker thread is running */
++	atomic_t idle;
++
++	/* These are infrequently used so in terms of performance we don't care where they land. */
++	struct task_struct *thread;
++	/* Notify creator once worker has initialized */
++	struct completion *started;
++};
++
++struct round_robin_work_queue {
++	struct vdo_work_queue common;
++	struct simple_work_queue **service_queues;
++	unsigned int num_service_queues;
++};
++
++static inline struct simple_work_queue *as_simple_work_queue(struct vdo_work_queue *queue)
++{
++	return ((queue == NULL) ? NULL : container_of(queue, struct simple_work_queue, common));
++}
++
++static inline struct round_robin_work_queue *
++as_round_robin_work_queue(struct vdo_work_queue *queue)
++{
++	return ((queue == NULL) ?
++		 NULL :
++		 container_of(queue, struct round_robin_work_queue, common));
++}
++
++/* Processing normal completions. */
++
++/*
++ * Dequeue and return the next waiting completion, if any.
++ *
++ * We scan the funnel queues from highest priority to lowest, once; there is therefore a race
++ * condition where a high-priority completion can be enqueued followed by a lower-priority one, and
++ * we'll grab the latter (but we'll catch the high-priority item on the next call). If strict
++ * enforcement of priorities becomes necessary, this function will need fixing.
++ */
++static struct vdo_completion *poll_for_completion(struct simple_work_queue *queue)
++{
++	int i;
++
++	for (i = queue->common.type->max_priority; i >= 0; i--) {
++		struct funnel_queue_entry *link = uds_funnel_queue_poll(queue->priority_lists[i]);
++
++		if (link != NULL)
++			return container_of(link, struct vdo_completion, work_queue_entry_link);
++	}
++
++	return NULL;
++}
++
++static void
++enqueue_work_queue_completion(struct simple_work_queue *queue, struct vdo_completion *completion)
++{
++	ASSERT_LOG_ONLY(completion->my_queue == NULL,
++			"completion %px (fn %px) to enqueue (%px) is not already queued (%px)",
++			completion,
++			completion->callback,
++			queue,
++			completion->my_queue);
++	if (completion->priority == VDO_WORK_Q_DEFAULT_PRIORITY)
++		completion->priority = queue->common.type->default_priority;
++
++	if (ASSERT(completion->priority <= queue->common.type->max_priority,
++		   "priority is in range for queue") != VDO_SUCCESS)
++		completion->priority = 0;
++
++	completion->my_queue = &queue->common;
++
++	/* Funnel queue handles the synchronization for the put. */
++	uds_funnel_queue_put(queue->priority_lists[completion->priority],
++			     &completion->work_queue_entry_link);
++
++	/*
++	 * Due to how funnel queue synchronization is handled (just atomic operations), the
++	 * simplest safe implementation here would be to wake-up any waiting threads after
++	 * enqueueing each item. Even if the funnel queue is not empty at the time of adding an
++	 * item to the queue, the consumer thread may not see this since it is not guaranteed to
++	 * have the same view of the queue as a producer thread.
++	 *
++	 * However, the above is wasteful so instead we attempt to minimize the number of thread
++	 * wakeups. Using an idle flag, and careful ordering using memory barriers, we should be
++	 * able to determine when the worker thread might be asleep or going to sleep. We use
++	 * cmpxchg to try to take ownership (vs other producer threads) of the responsibility for
++	 * waking the worker thread, so multiple wakeups aren't tried at once.
++	 *
++	 * This was tuned for some x86 boxes that were handy; it's untested whether doing the read
++	 * first is any better or worse for other platforms, even other x86 configurations.
++	 */
++	smp_mb();
++	if ((atomic_read(&queue->idle) != 1) || (atomic_cmpxchg(&queue->idle, 1, 0) != 1))
++		return;
++
++	/* There's a maximum of one thread in this list. */
++	wake_up(&queue->waiting_worker_threads);
++}
++
++static void run_start_hook(struct simple_work_queue *queue)
++{
++	if (queue->common.type->start != NULL)
++		queue->common.type->start(queue->private);
++}
++
++static void run_finish_hook(struct simple_work_queue *queue)
++{
++	if (queue->common.type->finish != NULL)
++		queue->common.type->finish(queue->private);
++}
++
++/*
++ * Wait for the next completion to process, or until kthread_should_stop indicates that it's time
++ * for us to shut down.
++ *
++ * If kthread_should_stop says it's time to stop but we have pending completions return a
++ * completion.
++ *
++ * Also update statistics relating to scheduler interactions.
++ */
++static struct vdo_completion *wait_for_next_completion(struct simple_work_queue *queue)
++{
++	struct vdo_completion *completion;
++	DEFINE_WAIT(wait);
++
++	while (true) {
++		prepare_to_wait(&queue->waiting_worker_threads, &wait, TASK_INTERRUPTIBLE);
++		/*
++		 * Don't set the idle flag until a wakeup will not be lost.
++		 *
++		 * Force synchronization between setting the idle flag and checking the funnel
++		 * queue; the producer side will do them in the reverse order. (There's still a
++		 * race condition we've chosen to allow, because we've got a timeout below that
++		 * unwedges us if we hit it, but this may narrow the window a little.)
++		 */
++		atomic_set(&queue->idle, 1);
++		smp_mb(); /* store-load barrier between "idle" and funnel queue */
++
++		completion = poll_for_completion(queue);
++		if (completion != NULL)
++			break;
++
++		/*
++		 * We need to check for thread-stop after setting TASK_INTERRUPTIBLE state up
++		 * above. Otherwise, schedule() will put the thread to sleep and might miss a
++		 * wakeup from kthread_stop() call in vdo_finish_work_queue().
++		 */
++		if (kthread_should_stop())
++			break;
++
++		schedule();
++
++		/*
++		 * Most of the time when we wake, it should be because there's work to do. If it
++		 * was a spurious wakeup, continue looping.
++		 */
++		completion = poll_for_completion(queue);
++		if (completion != NULL)
++			break;
++	}
++
++	finish_wait(&queue->waiting_worker_threads, &wait);
++	atomic_set(&queue->idle, 0);
++
++	return completion;
++}
++
++static void process_completion(struct simple_work_queue *queue, struct vdo_completion *completion)
++{
++	if (ASSERT(completion->my_queue == &queue->common,
++		   "completion %px from queue %px marked as being in this queue (%px)",
++		   completion,
++		   queue,
++		   completion->my_queue) == UDS_SUCCESS)
++		completion->my_queue = NULL;
++
++	vdo_run_completion(completion);
++}
++
++static void service_work_queue(struct simple_work_queue *queue)
++{
++	run_start_hook(queue);
++
++	while (true) {
++		struct vdo_completion *completion = poll_for_completion(queue);
++
++		if (completion == NULL)
++			completion = wait_for_next_completion(queue);
++
++		if (completion == NULL)
++			/* No completions but kthread_should_stop() was triggered. */
++			break;
++
++		process_completion(queue, completion);
++
++		/*
++		 * Be friendly to a CPU that has other work to do, if the kernel has told us to.
++		 * This speeds up some performance tests; that "other work" might include other VDO
++		 * threads.
++		 */
++		if (need_resched())
++			cond_resched();
++	}
++
++	run_finish_hook(queue);
++}
++
++static int work_queue_runner(void *ptr)
++{
++	struct simple_work_queue *queue = ptr;
++
++	complete(queue->started);
++	service_work_queue(queue);
++	return 0;
++}
++
++/* Creation & teardown */
++
++static void free_simple_work_queue(struct simple_work_queue *queue)
++{
++	unsigned int i;
++
++	for (i = 0; i <= VDO_WORK_Q_MAX_PRIORITY; i++)
++		uds_free_funnel_queue(queue->priority_lists[i]);
++	UDS_FREE(queue->common.name);
++	UDS_FREE(queue);
++}
++
++static void free_round_robin_work_queue(struct round_robin_work_queue *queue)
++{
++	struct simple_work_queue **queue_table = queue->service_queues;
++	unsigned int count = queue->num_service_queues;
++	unsigned int i;
++
++	queue->service_queues = NULL;
++
++	for (i = 0; i < count; i++)
++		free_simple_work_queue(queue_table[i]);
++	UDS_FREE(queue_table);
++	UDS_FREE(queue->common.name);
++	UDS_FREE(queue);
++}
++
++void vdo_free_work_queue(struct vdo_work_queue *queue)
++{
++	if (queue == NULL)
++		return;
++
++	vdo_finish_work_queue(queue);
++
++	if (queue->round_robin_mode)
++		free_round_robin_work_queue(as_round_robin_work_queue(queue));
++	else
++		free_simple_work_queue(as_simple_work_queue(queue));
++}
++
++static int make_simple_work_queue(const char *thread_name_prefix,
++				  const char *name,
++				  struct vdo_thread *owner,
++				  void *private,
++				  const struct vdo_work_queue_type *type,
++				  struct simple_work_queue **queue_ptr)
++{
++	DECLARE_COMPLETION_ONSTACK(started);
++	struct simple_work_queue *queue;
++	int i;
++	struct task_struct *thread = NULL;
++	int result;
++
++	ASSERT_LOG_ONLY((type->max_priority <= VDO_WORK_Q_MAX_PRIORITY),
++			"queue priority count %u within limit %u",
++			type->max_priority,
++			VDO_WORK_Q_MAX_PRIORITY);
++
++	result = UDS_ALLOCATE(1, struct simple_work_queue, "simple work queue", &queue);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	queue->private = private;
++	queue->started = &started;
++	queue->common.type = type;
++	queue->common.owner = owner;
++	init_waitqueue_head(&queue->waiting_worker_threads);
++
++	result = uds_duplicate_string(name, "queue name", &queue->common.name);
++	if (result != VDO_SUCCESS) {
++		UDS_FREE(queue);
++		return -ENOMEM;
++	}
++
++	for (i = 0; i <= type->max_priority; i++) {
++		result = uds_make_funnel_queue(&queue->priority_lists[i]);
++		if (result != UDS_SUCCESS) {
++			free_simple_work_queue(queue);
++			return result;
++		}
++	}
++
++	thread = kthread_run(work_queue_runner,
++			     queue,
++			     "%s:%s",
++			     thread_name_prefix,
++			     queue->common.name);
++	if (IS_ERR(thread)) {
++		free_simple_work_queue(queue);
++		return (int) PTR_ERR(thread);
++	}
++
++	queue->thread = thread;
++
++	/*
++	 * If we don't wait to ensure the thread is running VDO code, a quick kthread_stop (due to
++	 * errors elsewhere) could cause it to never get as far as running VDO, skipping the
++	 * cleanup code.
++	 *
++	 * Eventually we should just make that path safe too, and then we won't need this
++	 * synchronization.
++	 */
++	wait_for_completion(&started);
++
++	*queue_ptr = queue;
++	return UDS_SUCCESS;
++}
++
++/**
++ * vdo_make_work_queue() - Create a work queue; if multiple threads are requested, completions will
++ *                         be distributed to them in round-robin fashion.
++ *
++ * Each queue is associated with a struct vdo_thread which has a single vdo thread id. Regardless
++ * of the actual number of queues and threads allocated here, code outside of the queue
++ * implementation will treat this as a single zone.
++ */
++int vdo_make_work_queue(const char *thread_name_prefix,
++			const char *name,
++			struct vdo_thread *owner,
++			const struct vdo_work_queue_type *type,
++			unsigned int thread_count,
++			void *thread_privates[],
++			struct vdo_work_queue **queue_ptr)
++{
++	struct round_robin_work_queue *queue;
++	int result;
++	char thread_name[TASK_COMM_LEN];
++	unsigned int i;
++
++	if (thread_count == 1) {
++		struct simple_work_queue *simple_queue;
++		void *context = ((thread_privates != NULL) ? thread_privates[0] : NULL);
++
++		result = make_simple_work_queue(thread_name_prefix,
++						name,
++						owner,
++						context,
++						type,
++						&simple_queue);
++		if (result == VDO_SUCCESS)
++			*queue_ptr = &simple_queue->common;
++		return result;
++	}
++
++	result = UDS_ALLOCATE(1, struct round_robin_work_queue, "round-robin work queue", &queue);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = UDS_ALLOCATE(thread_count,
++			      struct simple_work_queue *,
++			      "subordinate work queues",
++			      &queue->service_queues);
++	if (result != UDS_SUCCESS) {
++		UDS_FREE(queue);
++		return result;
++	}
++
++	queue->num_service_queues = thread_count;
++	queue->common.round_robin_mode = true;
++	queue->common.owner = owner;
++
++	result = uds_duplicate_string(name, "queue name", &queue->common.name);
++	if (result != VDO_SUCCESS) {
++		UDS_FREE(queue->service_queues);
++		UDS_FREE(queue);
++		return -ENOMEM;
++	}
++
++	*queue_ptr = &queue->common;
++
++	for (i = 0; i < thread_count; i++) {
++		void *context = ((thread_privates != NULL) ? thread_privates[i] : NULL);
++
++		snprintf(thread_name, sizeof(thread_name), "%s%u", name, i);
++		result = make_simple_work_queue(thread_name_prefix,
++						thread_name,
++						owner,
++						context,
++						type,
++						&queue->service_queues[i]);
++		if (result != VDO_SUCCESS) {
++			queue->num_service_queues = i;
++			/* Destroy previously created subordinates. */
++			vdo_free_work_queue(UDS_FORGET(*queue_ptr));
++			return result;
++		}
++	}
++
 +	return VDO_SUCCESS;
 +}
 +
-+/**
-+ * finish_index_operation() - This is the UDS callback for index queries.
-+ * @request: The uds request which has just completed.
-+ */
-+static void finish_index_operation(struct uds_request *request)
++static void finish_simple_work_queue(struct simple_work_queue *queue)
 +{
-+	struct dedupe_context *context = container_of(request, struct dedupe_context, request);
-+
-+	if (change_context_state(context, DEDUPE_CONTEXT_PENDING, DEDUPE_CONTEXT_COMPLETE)) {
-+		/*
-+		 * This query has not timed out, so send its data_vio back to its hash zone to
-+		 * process the results.
-+		 */
-+		continue_data_vio(context->requestor);
++	if (queue->thread == NULL)
 +		return;
-+	}
 +
-+	/*
-+	 * This query has timed out, so try to mark it complete and hence eligible for reuse. Its
-+	 * data_vio has already moved on.
-+	 */
-+	if (!change_context_state(context,
-+				  DEDUPE_CONTEXT_TIMED_OUT,
-+				  DEDUPE_CONTEXT_TIMED_OUT_COMPLETE))
-+		ASSERT_LOG_ONLY(false,
-+				"uds request was timed out (state %d)",
-+				atomic_read(&context->state));
-+
-+	uds_funnel_queue_put(context->zone->timed_out_complete, &context->queue_entry);
++	/* Tells the worker thread to shut down and waits for it to exit. */
++	kthread_stop(queue->thread);
++	queue->thread = NULL;
 +}
 +
-+/**
-+ * check_for_drain_complete() - Check whether this zone has drained.
-+ * @zone: The zone to check.
-+ */
-+static void check_for_drain_complete(struct hash_zone *zone)
++static void finish_round_robin_work_queue(struct round_robin_work_queue *queue)
 +{
-+	data_vio_count_t recycled = 0;
++	struct simple_work_queue **queue_table = queue->service_queues;
++	unsigned int count = queue->num_service_queues;
++	unsigned int i;
 +
-+	if (!vdo_is_state_draining(&zone->state))
++	for (i = 0; i < count; i++)
++		finish_simple_work_queue(queue_table[i]);
++}
++
++/* No enqueueing of completions should be done once this function is called. */
++void vdo_finish_work_queue(struct vdo_work_queue *queue)
++{
++	if (queue == NULL)
 +		return;
 +
-+	if ((atomic_read(&zone->timer_state) == DEDUPE_QUERY_TIMER_IDLE) ||
-+	    change_timer_state(zone, DEDUPE_QUERY_TIMER_RUNNING, DEDUPE_QUERY_TIMER_IDLE))
-+		del_timer_sync(&zone->timer);
++	if (queue->round_robin_mode)
++		finish_round_robin_work_queue(as_round_robin_work_queue(queue));
 +	else
++		finish_simple_work_queue(as_simple_work_queue(queue));
++}
++
++/* Debugging dumps */
++
++static void dump_simple_work_queue(struct simple_work_queue *queue)
++{
++	const char *thread_status = "no threads";
++	char task_state_report = '-';
++
++	if (queue->thread != NULL) {
++		task_state_report = task_state_to_char(queue->thread);
++		thread_status = atomic_read(&queue->idle) ? "idle" : "running";
++	}
++
++	uds_log_info("workQ %px (%s) %s (%c)",
++		     &queue->common,
++		     queue->common.name,
++		     thread_status,
++		     task_state_report);
++
++	/* ->waiting_worker_threads wait queue status? anyone waiting? */
++}
++
++/*
++ * Write to the buffer some info about the completion, for logging. Since the common use case is
++ * dumping info about a lot of completions to syslog all at once, the format favors brevity over
++ * readability.
++ */
++void vdo_dump_work_queue(struct vdo_work_queue *queue)
++{
++	if (queue->round_robin_mode) {
++		struct round_robin_work_queue *round_robin = as_round_robin_work_queue(queue);
++		unsigned int i;
++
++		for (i = 0; i < round_robin->num_service_queues; i++)
++			dump_simple_work_queue(round_robin->service_queues[i]);
++	} else {
++		dump_simple_work_queue(as_simple_work_queue(queue));
++	}
++}
++
++static void get_function_name(void *pointer, char *buffer, size_t buffer_length)
++{
++	if (pointer == NULL) {
 +		/*
-+		 * There is an in flight time-out, which must get processed before we can continue.
++		 * Format "%ps" logs a null pointer as "(null)" with a bunch of leading spaces. We
++		 * sometimes use this when logging lots of data; don't be so verbose.
 +		 */
-+		return;
++		strscpy(buffer, "-", buffer_length);
++	} else {
++		/*
++		 * Use a pragma to defeat gcc's format checking, which doesn't understand that
++		 * "%ps" actually does support a precision spec in Linux kernel code.
++		 */
++		char *space;
 +
-+	for (;;) {
-+		struct dedupe_context *context;
-+		struct funnel_queue_entry *entry;
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wformat"
++		snprintf(buffer, buffer_length, "%.*ps", buffer_length - 1, pointer);
++#pragma GCC diagnostic pop
 +
-+		entry = uds_funnel_queue_poll(zone->timed_out_complete);
-+		if (entry == NULL)
-+			break;
-+
-+		context = container_of(entry, struct dedupe_context, queue_entry);
-+		atomic_set(&context->state, DEDUPE_CONTEXT_IDLE);
-+		list_add(&context->list_entry, &zone->available);
-+		recycled++;
++		space = strchr(buffer, ' ');
++		if (space != NULL)
++			*space = '\0';
 +	}
-+
-+	if (recycled > 0)
-+		WRITE_ONCE(zone->active, zone->active - recycled);
-+	ASSERT_LOG_ONLY(READ_ONCE(zone->active) == 0, "all contexts inactive");
-+	vdo_finish_draining(&zone->state);
 +}
 +
-+static void timeout_index_operations_callback(struct vdo_completion *completion)
++void vdo_dump_completion_to_buffer(struct vdo_completion *completion, char *buffer, size_t length)
 +{
-+	struct dedupe_context *context, *tmp;
-+	struct hash_zone *zone = as_hash_zone(completion);
-+	u64 timeout_jiffies = msecs_to_jiffies(vdo_dedupe_index_timeout_interval);
-+	unsigned long cutoff = jiffies - timeout_jiffies;
-+	unsigned int timed_out = 0;
++	size_t current_length =
++		scnprintf(buffer,
++			  length,
++			  "%.*s/",
++			  TASK_COMM_LEN,
++			  (completion->my_queue == NULL ? "-" : completion->my_queue->name));
 +
-+	atomic_set(&zone->timer_state, DEDUPE_QUERY_TIMER_IDLE);
-+	list_for_each_entry_safe(context, tmp, &zone->pending, list_entry) {
-+		if (cutoff <= context->submission_jiffies) {
-+			/*
-+			 * We have reached the oldest query which has not timed out yet, so restart
-+			 * the timer.
-+			 */
-+			start_expiration_timer(context);
-+			break;
-+		}
++	if (current_length < length - 1)
++		get_function_name((void *) completion->callback,
++				  buffer + current_length,
++				  length - current_length);
++}
 +
-+		if (!change_context_state(context,
-+					  DEDUPE_CONTEXT_PENDING,
-+					  DEDUPE_CONTEXT_TIMED_OUT))
-+			/*
-+			 * This context completed between the time the timeout fired, and now. We
-+			 * can treat it as a a successful query, its requestor is already enqueued
-+			 * to process it.
-+			 */
-+			continue;
++/* Completion submission */
++/*
++ * If the completion has a timeout that has already passed, the timeout handler function may be
++ * invoked by this function.
++ */
++void vdo_enqueue_work_queue(struct vdo_work_queue *queue, struct vdo_completion *completion)
++{
++	/*
++	 * Convert the provided generic vdo_work_queue to the simple_work_queue to actually queue
++	 * on.
++	 */
++	struct simple_work_queue *simple_queue = NULL;
++
++	if (!queue->round_robin_mode) {
++		simple_queue = as_simple_work_queue(queue);
++	} else {
++		struct round_robin_work_queue *round_robin = as_round_robin_work_queue(queue);
 +
 +		/*
-+		 * Remove this context from the pending list so we won't look at it again on a
-+		 * subsequent timeout. Once the index completes it, it will be reused. Meanwhile,
-+		 * send its requestor on its way.
++		 * It shouldn't be a big deal if the same rotor gets used for multiple work queues.
++		 * Any patterns that might develop are likely to be disrupted by random ordering of
++		 * multiple completions and migration between cores, unless the load is so light as
++		 * to be regular in ordering of tasks and the threads are confined to individual
++		 * cores; with a load that light we won't care.
 +		 */
-+		list_del_init(&context->list_entry);
-+		continue_data_vio(context->requestor);
-+		timed_out++;
++		unsigned int rotor = this_cpu_inc_return(service_queue_rotor);
++		unsigned int index = rotor % round_robin->num_service_queues;
++
++		simple_queue = round_robin->service_queues[index];
 +	}
 +
-+	if (timed_out > 0)
-+		report_dedupe_timeouts(completion->vdo->hash_zones, timed_out);
-+
-+	check_for_drain_complete(zone);
++	enqueue_work_queue_completion(simple_queue, completion);
 +}
 +
-+static void timeout_index_operations(struct timer_list *t)
-+{
-+	struct hash_zone *zone = from_timer(zone, t, timer);
++/* Misc */
 +
-+	if (change_timer_state(zone, DEDUPE_QUERY_TIMER_RUNNING, DEDUPE_QUERY_TIMER_FIRED))
-+		vdo_launch_completion(&zone->completion);
++/*
++ * Return the work queue pointer recorded at initialization time in the work-queue stack handle
++ * initialized on the stack of the current thread, if any.
++ */
++static struct simple_work_queue *get_current_thread_work_queue(void)
++{
++	/*
++	 * In interrupt context, if a vdo thread is what got interrupted, the calls below will find
++	 * the queue for the thread which was interrupted. However, the interrupted thread may have
++	 * been processing a completion, in which case starting to process another would violate
++	 * our concurrency assumptions.
++	 */
++	if (in_interrupt())
++		return NULL;
++	if (kthread_func(current) != work_queue_runner)
++		/* Not a VDO work queue thread. */
++		return NULL;
++	return kthread_data(current);
 +}
 +
- static int __must_check
- initialize_zone(struct vdo *vdo, struct hash_zones *zones, zone_count_t zone_number)
- {
-@@ -2448,3 +2877,197 @@ void vdo_dump_hash_zones(struct hash_zones *zones)
- 	for (zone = 0; zone < zones->zone_count; zone++)
- 		dump_hash_zone(&zones->zones[zone]);
- }
-+
-+void vdo_set_dedupe_index_timeout_interval(unsigned int value)
++struct vdo_work_queue *vdo_get_current_work_queue(void)
 +{
-+	u64 alb_jiffies;
++	struct simple_work_queue *queue = get_current_thread_work_queue();
 +
-+	/* Arbitrary maximum value is two minutes */
-+	if (value > 120000)
-+		value = 120000;
-+	/* Arbitrary minimum value is 2 jiffies */
-+	alb_jiffies = msecs_to_jiffies(value);
-+
-+	if (alb_jiffies < 2) {
-+		alb_jiffies = 2;
-+		value = jiffies_to_msecs(alb_jiffies);
-+	}
-+	vdo_dedupe_index_timeout_interval = value;
-+	vdo_dedupe_index_timeout_jiffies = alb_jiffies;
++	return (queue == NULL) ? NULL : &queue->common;
 +}
 +
-+void vdo_set_dedupe_index_min_timer_interval(unsigned int value)
++struct vdo_thread *vdo_get_work_queue_owner(struct vdo_work_queue *queue)
 +{
-+	u64 min_jiffies;
-+
-+	/* Arbitrary maximum value is one second */
-+	if (value > 1000)
-+		value = 1000;
-+
-+	/* Arbitrary minimum value is 2 jiffies */
-+	min_jiffies = msecs_to_jiffies(value);
-+
-+	if (min_jiffies < 2) {
-+		min_jiffies = 2;
-+		value = jiffies_to_msecs(min_jiffies);
-+	}
-+
-+	vdo_dedupe_index_min_timer_interval = value;
-+	vdo_dedupe_index_min_timer_jiffies = min_jiffies;
++	return queue->owner;
 +}
 +
 +/**
-+ * acquire_context() - Acquire a dedupe context from a hash_zone if any are available.
-+ * @zone: the hash zone
-+ *
-+ * Return: A dedupe_context or NULL if none are available
++ * vdo_get_work_queue_private_data() - Returns the private data for the current thread's work
++ *                                     queue, or NULL if none or if the current thread is not a
++ *                                     work queue thread.
 + */
-+static struct dedupe_context * __must_check acquire_context(struct hash_zone *zone)
++void *vdo_get_work_queue_private_data(void)
 +{
-+	struct dedupe_context *context;
-+	struct funnel_queue_entry *entry;
++	struct simple_work_queue *queue = get_current_thread_work_queue();
 +
-+	assert_in_hash_zone(zone, __func__);
-+
-+	if (!list_empty(&zone->available)) {
-+		WRITE_ONCE(zone->active, zone->active + 1);
-+		context = list_first_entry(&zone->available, struct dedupe_context, list_entry);
-+		list_del_init(&context->list_entry);
-+		return context;
-+	}
-+
-+	entry = uds_funnel_queue_poll(zone->timed_out_complete);
-+	return ((entry == NULL) ? NULL : container_of(entry, struct dedupe_context, queue_entry));
++	return (queue != NULL) ? queue->private : NULL;
 +}
 +
-+static void prepare_uds_request(struct uds_request *request,
-+				struct data_vio *data_vio,
-+				enum uds_request_type operation)
++bool vdo_work_queue_type_is(struct vdo_work_queue *queue, const struct vdo_work_queue_type *type)
 +{
-+	request->record_name = data_vio->record_name;
-+	request->type = operation;
-+	if ((operation == UDS_POST) || (operation == UDS_UPDATE)) {
-+		size_t offset = 0;
-+		struct uds_record_data *encoding = &request->new_metadata;
-+
-+		encoding->data[offset++] = UDS_ADVICE_VERSION;
-+		encoding->data[offset++] = data_vio->new_mapped.state;
-+		put_unaligned_le64(data_vio->new_mapped.pbn, &encoding->data[offset]);
-+		offset += sizeof(u64);
-+		BUG_ON(offset != UDS_ADVICE_SIZE);
-+	}
++	return (queue->type == type);
 +}
-+
+diff --git a/drivers/md/dm-vdo/work-queue.h b/drivers/md/dm-vdo/work-queue.h
+new file mode 100644
+index 000000000000..1d5aa9878b16
+--- /dev/null
++++ b/drivers/md/dm-vdo/work-queue.h
+@@ -0,0 +1,53 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
-+ * The index operation will inquire about data_vio.record_name, providing (if the operation is
-+ * appropriate) advice from the data_vio's new_mapped fields. The advice found in the index (or
-+ * NULL if none) will be returned via receive_data_vio_dedupe_advice(). dedupe_context.status is
-+ * set to the return status code of any asynchronous index processing.
++ * Copyright 2023 Red Hat
 + */
-+static void query_index(struct data_vio *data_vio, enum uds_request_type operation)
-+{
-+	int result;
-+	struct dedupe_context *context;
-+	struct vdo *vdo = vdo_from_data_vio(data_vio);
-+	struct hash_zone *zone = data_vio->hash_zone;
 +
-+	assert_data_vio_in_hash_zone(data_vio);
++#ifndef VDO_WORK_QUEUE_H
++#define VDO_WORK_QUEUE_H
 +
-+	if (!READ_ONCE(vdo->hash_zones->dedupe_flag)) {
-+		continue_data_vio(data_vio);
-+		return;
-+	}
++#include <linux/sched.h> /* for TASK_COMM_LEN */
 +
-+	context = acquire_context(zone);
-+	if (context == NULL) {
-+		atomic64_inc(&vdo->hash_zones->dedupe_context_busy);
-+		continue_data_vio(data_vio);
-+		return;
-+	}
++#include "types.h"
 +
-+	data_vio->dedupe_context = context;
-+	context->requestor = data_vio;
-+	context->submission_jiffies = jiffies;
-+	prepare_uds_request(&context->request, data_vio, operation);
-+	atomic_set(&context->state, DEDUPE_CONTEXT_PENDING);
-+	list_add_tail(&context->list_entry, &zone->pending);
-+	start_expiration_timer(context);
-+	result = uds_launch_request(&context->request);
-+	if (result != UDS_SUCCESS) {
-+		context->request.status = result;
-+		finish_index_operation(&context->request);
-+	}
-+}
++enum {
++	MAX_VDO_WORK_QUEUE_NAME_LEN = TASK_COMM_LEN,
++};
 +
-+static void set_target_state(struct hash_zones *zones,
-+			     enum index_state target,
-+			     bool change_dedupe,
-+			     bool dedupe,
-+			     bool set_create)
-+{
-+	const char *old_state, *new_state;
++struct vdo_work_queue_type {
++	void (*start)(void *context);
++	void (*finish)(void *context);
++	enum vdo_completion_priority max_priority;
++	enum vdo_completion_priority default_priority;
++};
 +
-+	spin_lock(&zones->lock);
-+	old_state = index_state_to_string(zones, zones->index_target);
-+	if (change_dedupe)
-+		WRITE_ONCE(zones->dedupe_flag, dedupe);
++struct vdo_completion;
++struct vdo_thread;
++struct vdo_work_queue;
 +
-+	if (set_create)
-+		zones->create_flag = true;
++int vdo_make_work_queue(const char *thread_name_prefix,
++			const char *name,
++			struct vdo_thread *owner,
++			const struct vdo_work_queue_type *type,
++			unsigned int thread_count,
++			void *thread_privates[],
++			struct vdo_work_queue **queue_ptr);
 +
-+	zones->index_target = target;
-+	launch_dedupe_state_change(zones);
-+	new_state = index_state_to_string(zones, zones->index_target);
-+	spin_unlock(&zones->lock);
++void vdo_enqueue_work_queue(struct vdo_work_queue *queue, struct vdo_completion *completion);
 +
-+	if (old_state != new_state)
-+		uds_log_info("Setting UDS index target state to %s", new_state);
-+}
++void vdo_finish_work_queue(struct vdo_work_queue *queue);
 +
-+const char *vdo_get_dedupe_index_state_name(struct hash_zones *zones)
-+{
-+	const char *state;
++void vdo_free_work_queue(struct vdo_work_queue *queue);
 +
-+	spin_lock(&zones->lock);
-+	state = index_state_to_string(zones, zones->index_state);
-+	spin_unlock(&zones->lock);
++void vdo_dump_work_queue(struct vdo_work_queue *queue);
 +
-+	return state;
-+}
++void vdo_dump_completion_to_buffer(struct vdo_completion *completion, char *buffer, size_t length);
 +
-+/* Handle a dmsetup message relevant to the index. */
-+int vdo_message_dedupe_index(struct hash_zones *zones, const char *name)
-+{
-+	if (strcasecmp(name, "index-close") == 0) {
-+		set_target_state(zones, IS_CLOSED, false, false, false);
-+		return 0;
-+	} else if (strcasecmp(name, "index-create") == 0) {
-+		set_target_state(zones, IS_OPENED, false, false, true);
-+		return 0;
-+	} else if (strcasecmp(name, "index-disable") == 0) {
-+		set_target_state(zones, IS_OPENED, true, false, false);
-+		return 0;
-+	} else if (strcasecmp(name, "index-enable") == 0) {
-+		set_target_state(zones, IS_OPENED, true, true, false);
-+		return 0;
-+	}
-+	return -EINVAL;
-+}
++void *vdo_get_work_queue_private_data(void);
++struct vdo_work_queue *vdo_get_current_work_queue(void);
++struct vdo_thread *vdo_get_work_queue_owner(struct vdo_work_queue *queue);
 +
-+int vdo_add_dedupe_index_sysfs(struct hash_zones *zones)
-+{
-+	int result = kobject_add(&zones->dedupe_directory,
-+				 &zones->completion.vdo->vdo_directory,
-+				 "dedupe");
++bool __must_check
++vdo_work_queue_type_is(struct vdo_work_queue *queue, const struct vdo_work_queue_type *type);
 +
-+	if (result == 0)
-+		vdo_set_admin_state_code(&zones->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
-+
-+	return result;
-+}
-+
-+/* If create_flag, create a new index without first attempting to load an existing index. */
-+void vdo_start_dedupe_index(struct hash_zones *zones, bool create_flag)
-+{
-+	set_target_state(zones, IS_OPENED, true, true, create_flag);
-+}
-diff --git a/drivers/md/dm-vdo/dedupe.h b/drivers/md/dm-vdo/dedupe.h
-index af329fb0fa68..01fdb9bc29c1 100644
---- a/drivers/md/dm-vdo/dedupe.h
-+++ b/drivers/md/dm-vdo/dedupe.h
-@@ -90,4 +90,30 @@ vdo_select_hash_zone(struct hash_zones *zones, const struct uds_record_name *nam
- 
- void vdo_dump_hash_zones(struct hash_zones *zones);
- 
-+const char *vdo_get_dedupe_index_state_name(struct hash_zones *zones);
-+
-+u64 vdo_get_dedupe_index_timeout_count(struct hash_zones *zones);
-+
-+int vdo_message_dedupe_index(struct hash_zones *zones, const char *name);
-+
-+int vdo_add_dedupe_index_sysfs(struct hash_zones *zones);
-+
-+void vdo_start_dedupe_index(struct hash_zones *zones, bool create_flag);
-+
-+void vdo_resume_hash_zones(struct hash_zones *zones, struct vdo_completion *parent);
-+
-+void vdo_finish_dedupe_index(struct hash_zones *zones);
-+
-+/* Interval (in milliseconds) from submission until switching to fast path and skipping UDS. */
-+extern unsigned int vdo_dedupe_index_timeout_interval;
-+
-+/*
-+ * Minimum time interval (in milliseconds) between timer invocations to check for requests waiting
-+ * for UDS that should now time out.
-+ */
-+extern unsigned int vdo_dedupe_index_min_timer_interval;
-+
-+void vdo_set_dedupe_index_timeout_interval(unsigned int value);
-+void vdo_set_dedupe_index_min_timer_interval(unsigned int value);
-+
- #endif /* VDO_DEDUPE_H */
++#endif /* VDO_WORK_QUEUE_H */
 -- 
 2.40.0
 
