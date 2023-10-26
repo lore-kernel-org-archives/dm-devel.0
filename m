@@ -1,45 +1,45 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DAD503E46A
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 65EAB3E473
 	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:44 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZHE7u9Ms"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="L1ts6MvK"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698356503;
+	s=mimecast20190719; t=1698356504;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=ODKufA3yy+JagkMbOskLqCtKGFaENxn//G1r0LhRZ1o=;
-	b=ZHE7u9Msp2ngataF8PiZrIpTbh2fbhXSGNceQPIzolAPsReZYaeRU/tIpzjjAUcK7KiloT
-	Lipy98w72mB5BjtZT+9hbqDCM+O1tUzip60MF+kTRBEWOz7tYtkHa1ATCLvsZoSZFzudAP
-	QKpyNvJE+iUaov/msPWBX2Q1ivXle3k=
+	bh=r6LRWmr2icS5jnOcuwPWBxMt8CIdZmzqcRONcHqSLZ4=;
+	b=L1ts6MvK9rV6L/z4aTW65Vjch3ITjU8uQ1VL9eUFL9l/3ANiPEgY4IDkkD2xbXax24BipZ
+	6/eZqwWhDkwzblqPr83/1wnPLtE9P4Y9RLNyfKr/Hw4l7bdN0M5EGSYyYzq1TDeQDMUUKO
+	8rhuJtZhJPerhKz2ubed+ebKqjzUnSk=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-692-iLxlmcG5NviEPrfXxPyMFg-1; Thu, 26 Oct 2023 17:41:39 -0400
-X-MC-Unique: iLxlmcG5NviEPrfXxPyMFg-1
+ us-mta-634-zWM1SzR6OvOKnkX2Il0A6Q-1; Thu, 26 Oct 2023 17:41:41 -0400
+X-MC-Unique: zWM1SzR6OvOKnkX2Il0A6Q-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6D9B788D184;
-	Thu, 26 Oct 2023 21:41:39 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9575B1019C86;
+	Thu, 26 Oct 2023 21:41:41 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 50E4140C6F79;
-	Thu, 26 Oct 2023 21:41:39 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7241D40C6F79;
+	Thu, 26 Oct 2023 21:41:41 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id 309CF3003C; Thu, 26 Oct 2023 17:41:39 -0400 (EDT)
+	id 174F33003C; Thu, 26 Oct 2023 17:41:41 -0400 (EDT)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v4 14/39] dm vdo: implement the chapter volume store
-Date: Thu, 26 Oct 2023 17:41:11 -0400
-Message-Id: <20231026214136.1067410-15-msakai@redhat.com>
+Subject: [PATCH v4 25/39] dm vdo: add slab structure, slab journal and reference counters
+Date: Thu, 26 Oct 2023 17:41:22 -0400
+Message-Id: <20231026214136.1067410-26-msakai@redhat.com>
 In-Reply-To: <20231026214136.1067410-1-msakai@redhat.com>
 References: <20231026214136.1067410-1-msakai@redhat.com>
 Precedence: bulk
@@ -51,2656 +51,2762 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
 
-The volume store structures manage the reading and writing of chapter
-pages. When a chapter is closed, it is packed into a read-only structure,
-split across several pages, and written to storage.
+Most of the vdo volume belongs to the slab depot. The depot contains a
+collection of slabs. The slabs can be up to 32GB, and are divided into
+three sections. Most of a slab consists of a linear sequence of 4K blocks.
+These blocks are used either to store data, or to hold portions of the
+block map (see subsequent patches). In addition to the data blocks, each
+slab has a set of reference counters, using 1 byte for each data block.
+Finally each slab has a journal. Reference updates are written to the slab
+journal, which is written out one block at a time as each block fills. A
+copy of the reference counters is kept in memory, and are written out a
+block at a time, in oldest-dirtied-order whenever there is a need to
+reclaim slab journal space. The journal is used both to ensure that the
+main recovery journal (see subsequent patches) can regularly free up space,
+and also to amortize the cost of updating individual reference blocks.
 
-The volume store also contains a cache and specialized queues that sort and
-batch requests by the page they need, in order to minimize latency and I/O
-requests when records have to be read from storage. The cache and queues
-also coordinate with the volume index to ensure that the volume does not
-waste resources reading pages that are no longer valid.
+This patch adds the slab structure as well as the slab journal and
+reference counters.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
-Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
-Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
-Co-developed-by: John Wiele <jwiele@redhat.com>
-Signed-off-by: John Wiele <jwiele@redhat.com>
+Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
+Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/index-page-map.c |  181 +++
- drivers/md/dm-vdo/index-page-map.h |   54 +
- drivers/md/dm-vdo/radix-sort.c     |  349 ++++++
- drivers/md/dm-vdo/radix-sort.h     |   28 +
- drivers/md/dm-vdo/volume.c         | 1793 ++++++++++++++++++++++++++++
- drivers/md/dm-vdo/volume.h         |  175 +++
- 6 files changed, 2580 insertions(+)
- create mode 100644 drivers/md/dm-vdo/index-page-map.c
- create mode 100644 drivers/md/dm-vdo/index-page-map.h
- create mode 100644 drivers/md/dm-vdo/radix-sort.c
- create mode 100644 drivers/md/dm-vdo/radix-sort.h
- create mode 100644 drivers/md/dm-vdo/volume.c
- create mode 100644 drivers/md/dm-vdo/volume.h
+ drivers/md/dm-vdo/slab-depot.c | 2460 ++++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/slab-depot.h |  253 ++++
+ 2 files changed, 2713 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/slab-depot.c
+ create mode 100644 drivers/md/dm-vdo/slab-depot.h
 
-diff --git a/drivers/md/dm-vdo/index-page-map.c b/drivers/md/dm-vdo/index-page-map.c
+diff --git a/drivers/md/dm-vdo/slab-depot.c b/drivers/md/dm-vdo/slab-depot.c
 new file mode 100644
-index 000000000000..592d5aff7c77
+index 000000000000..48adf297a394
 --- /dev/null
-+++ b/drivers/md/dm-vdo/index-page-map.c
-@@ -0,0 +1,181 @@
++++ b/drivers/md/dm-vdo/slab-depot.c
+@@ -0,0 +1,2460 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "index-page-map.h"
++#include "slab-depot.h"
 +
-+#include "errors.h"
-+#include "hash-utils.h"
++#include <linux/atomic.h>
++#include <linux/bio.h>
++#include <linux/log2.h>
++#include <linux/min_heap.h>
++#include <linux/minmax.h>
++
 +#include "logger.h"
 +#include "memory-alloc.h"
 +#include "numeric.h"
 +#include "permassert.h"
 +#include "string-utils.h"
-+#include "uds-threads.h"
-+#include "uds.h"
 +
-+/*
-+ * The index page map is conceptually a two-dimensional array indexed by chapter number and index
-+ * page number within the chapter. Each entry contains the number of the last delta list on that
-+ * index page. In order to save memory, the information for the last page in each chapter is not
-+ * recorded, as it is known from the geometry.
++#include "action-manager.h"
++#include "admin-state.h"
++#include "completion.h"
++#include "constants.h"
++#include "data-vio.h"
++#include "encodings.h"
++#include "io-submitter.h"
++#include "physical-zone.h"
++#include "priority-table.h"
++#include "recovery-journal.h"
++#include "repair.h"
++#include "status-codes.h"
++#include "types.h"
++#include "vdo.h"
++#include "vio.h"
++#include "wait-queue.h"
++
++static const u64 BYTES_PER_WORD = sizeof(u64);
++static const bool NORMAL_OPERATION = true;
++
++/**
++ * get_lock() - Get the lock object for a slab journal block by sequence number.
++ * @journal: vdo_slab journal to retrieve from.
++ * @sequence_number: Sequence number of the block.
++ *
++ * Return: The lock object for the given sequence number.
 + */
-+
-+static const u8 PAGE_MAP_MAGIC[] = "ALBIPM02";
-+
-+enum {
-+	PAGE_MAP_MAGIC_LENGTH = sizeof(PAGE_MAP_MAGIC) - 1,
-+};
-+
-+static inline u32 get_entry_count(const struct geometry *geometry)
++static inline struct journal_lock * __must_check
++get_lock(struct slab_journal *journal, sequence_number_t sequence_number)
 +{
-+	return geometry->chapters_per_volume * (geometry->index_pages_per_chapter - 1);
++	return &journal->locks[sequence_number % journal->size];
 +}
 +
-+int uds_make_index_page_map(const struct geometry *geometry, struct index_page_map **map_ptr)
++static bool is_slab_open(struct vdo_slab *slab)
 +{
-+	int result;
-+	struct index_page_map *map;
++	return (!vdo_is_state_quiescing(&slab->state) && !vdo_is_state_quiescent(&slab->state));
++}
 +
-+	result = UDS_ALLOCATE(1, struct index_page_map, "page map", &map);
-+	if (result != UDS_SUCCESS)
-+		return result;
++/**
++ * must_make_entries_to_flush() - Check whether there are entry waiters which should delay a flush.
++ * @journal: The journal to check.
++ *
++ * Return: true if there are no entry waiters, or if the slab is unrecovered.
++ */
++static inline bool __must_check must_make_entries_to_flush(struct slab_journal *journal)
++{
++	return ((journal->slab->status != VDO_SLAB_REBUILDING) &&
++		vdo_has_waiters(&journal->entry_waiters));
++}
 +
-+	map->geometry = geometry;
-+	map->entries_per_chapter = geometry->index_pages_per_chapter - 1;
-+	result = UDS_ALLOCATE(get_entry_count(geometry),
-+			      u16,
-+			      "Index Page Map Entries",
-+			      &map->entries);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_index_page_map(map);
-+		return result;
++/**
++ * is_reaping() - Check whether a reap is currently in progress.
++ * @journal: The journal which may be reaping.
++ *
++ * Return: true if the journal is reaping.
++ */
++static inline bool __must_check is_reaping(struct slab_journal *journal)
++{
++	return (journal->head != journal->unreapable);
++}
++
++/**
++ * initialize_tail_block() - Initialize tail block as a new block.
++ * @journal: The journal whose tail block is being initialized.
++ */
++static void initialize_tail_block(struct slab_journal *journal)
++{
++	struct slab_journal_block_header *header = &journal->tail_header;
++
++	header->sequence_number = journal->tail;
++	header->entry_count = 0;
++	header->has_block_map_increments = false;
++}
++
++/**
++ * initialize_journal_state() - Set all journal fields appropriately to start journaling.
++ * @journal: The journal to be reset, based on its tail sequence number.
++ */
++static void initialize_journal_state(struct slab_journal *journal)
++{
++	journal->unreapable = journal->head;
++	journal->reap_lock = get_lock(journal, journal->unreapable);
++	journal->next_commit = journal->tail;
++	journal->summarized = journal->last_summarized = journal->tail;
++	initialize_tail_block(journal);
++}
++
++/**
++ * block_is_full() - Check whether a journal block is full.
++ * @journal: The slab journal for the block.
++ *
++ * Return: true if the tail block is full.
++ */
++static bool __must_check block_is_full(struct slab_journal *journal)
++{
++	journal_entry_count_t count = journal->tail_header.entry_count;
++
++	return (journal->tail_header.has_block_map_increments ?
++		(journal->full_entries_per_block == count) :
++		(journal->entries_per_block == count));
++}
++
++static void add_entries(struct slab_journal *journal);
++static void update_tail_block_location(struct slab_journal *journal);
++static void release_journal_locks(struct waiter *waiter, void *context);
++
++/**
++ * is_slab_journal_blank() - Check whether a slab's journal is blank.
++ *
++ * A slab journal is blank if it has never had any entries recorded in it.
++ *
++ * Return: true if the slab's journal has never been modified.
++ */
++static bool is_slab_journal_blank(const struct vdo_slab *slab)
++{
++	return ((slab->journal.tail == 1) && (slab->journal.tail_header.entry_count == 0));
++}
++
++/**
++ * mark_slab_journal_dirty() - Put a slab journal on the dirty ring of its allocator in the correct
++ *                             order.
++ * @journal: The journal to be marked dirty.
++ * @lock: The recovery journal lock held by the slab journal.
++ */
++static void mark_slab_journal_dirty(struct slab_journal *journal, sequence_number_t lock)
++{
++	struct slab_journal *dirty_journal;
++	struct list_head *dirty_list = &journal->slab->allocator->dirty_slab_journals;
++
++	ASSERT_LOG_ONLY(journal->recovery_lock == 0, "slab journal was clean");
++
++	journal->recovery_lock = lock;
++	list_for_each_entry_reverse(dirty_journal, dirty_list, dirty_entry) {
++		if (dirty_journal->recovery_lock <= journal->recovery_lock)
++			break;
 +	}
 +
-+	*map_ptr = map;
-+	return UDS_SUCCESS;
++	list_move_tail(&journal->dirty_entry, dirty_journal->dirty_entry.next);
 +}
 +
-+void uds_free_index_page_map(struct index_page_map *map)
++static void mark_slab_journal_clean(struct slab_journal *journal)
 +{
-+	if (map != NULL) {
-+		UDS_FREE(map->entries);
-+		UDS_FREE(map);
-+	}
++	journal->recovery_lock = 0;
++	list_del_init(&journal->dirty_entry);
 +}
 +
-+void uds_update_index_page_map(struct index_page_map *map,
-+			       u64 virtual_chapter_number,
-+			       u32 chapter_number,
-+			       u32 index_page_number,
-+			       u32 delta_list_number)
++static void check_if_slab_drained(struct vdo_slab *slab)
 +{
-+	size_t slot;
++	bool read_only;
++	struct slab_journal *journal = &slab->journal;
++	const struct admin_state_code *code;
 +
-+	map->last_update = virtual_chapter_number;
-+	if (index_page_number == map->entries_per_chapter)
++	if (!vdo_is_state_draining(&slab->state) ||
++	    must_make_entries_to_flush(journal) ||
++	    is_reaping(journal) ||
++	    journal->waiting_to_commit ||
++	    !list_empty(&journal->uncommitted_blocks) ||
++	    journal->updating_slab_summary ||
++	    (slab->active_count > 0))
 +		return;
 +
-+	slot = (chapter_number * map->entries_per_chapter) + index_page_number;
-+	map->entries[slot] = delta_list_number;
++	/* When not suspending or recovering, the slab must be clean. */
++	code = vdo_get_admin_state_code(&slab->state);
++	read_only = vdo_is_read_only(slab->allocator->depot->vdo);
++	if (!read_only &&
++	    vdo_has_waiters(&slab->dirty_blocks) &&
++	    (code != VDO_ADMIN_STATE_SUSPENDING) &&
++	    (code != VDO_ADMIN_STATE_RECOVERING))
++		return;
++
++	vdo_finish_draining_with_result(&slab->state, (read_only ? VDO_READ_ONLY : VDO_SUCCESS));
 +}
 +
-+u32 uds_find_index_page_number(const struct index_page_map *map,
-+			       const struct uds_record_name *name,
-+			       u32 chapter_number)
-+{
-+	u32 delta_list_number = uds_hash_to_chapter_delta_list(name, map->geometry);
-+	u32 slot = chapter_number * map->entries_per_chapter;
-+	u32 page;
-+
-+	for (page = 0; page < map->entries_per_chapter; page++) {
-+		if (delta_list_number <= map->entries[slot + page])
-+			break;
-+	}
-+
-+	return page;
-+}
-+
-+void uds_get_list_number_bounds(const struct index_page_map *map,
-+				u32 chapter_number,
-+				u32 index_page_number,
-+				u32 *lowest_list,
-+				u32 *highest_list)
-+{
-+	u32 slot = chapter_number * map->entries_per_chapter;
-+
-+	*lowest_list = ((index_page_number == 0) ?
-+			0 :
-+			map->entries[slot + index_page_number - 1] + 1);
-+	*highest_list = ((index_page_number < map->entries_per_chapter) ?
-+			 map->entries[slot + index_page_number] :
-+			 map->geometry->delta_lists_per_chapter - 1);
-+}
-+
-+u64 uds_compute_index_page_map_save_size(const struct geometry *geometry)
-+{
-+	return PAGE_MAP_MAGIC_LENGTH + sizeof(u64) + sizeof(u16) * get_entry_count(geometry);
-+}
-+
-+int uds_write_index_page_map(struct index_page_map *map, struct buffered_writer *writer)
-+{
-+	int result;
-+	u8 *buffer;
-+	size_t offset = 0;
-+	u64 saved_size = uds_compute_index_page_map_save_size(map->geometry);
-+	u32 i;
-+
-+	result = UDS_ALLOCATE(saved_size, u8, "page map data", &buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	memcpy(buffer, PAGE_MAP_MAGIC, PAGE_MAP_MAGIC_LENGTH);
-+	offset += PAGE_MAP_MAGIC_LENGTH;
-+	encode_u64_le(buffer, &offset, map->last_update);
-+	for (i = 0; i < get_entry_count(map->geometry); i++)
-+		encode_u16_le(buffer, &offset, map->entries[i]);
-+
-+	result = uds_write_to_buffered_writer(writer, buffer, offset);
-+	UDS_FREE(buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return uds_flush_buffered_writer(writer);
-+}
-+
-+int uds_read_index_page_map(struct index_page_map *map, struct buffered_reader *reader)
-+{
-+	int result;
-+	u8 magic[PAGE_MAP_MAGIC_LENGTH];
-+	u8 *buffer;
-+	size_t offset = 0;
-+	u64 saved_size = uds_compute_index_page_map_save_size(map->geometry);
-+	u32 i;
-+
-+	result = UDS_ALLOCATE(saved_size, u8, "page map data", &buffer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_read_from_buffered_reader(reader, buffer, saved_size);
-+	if (result != UDS_SUCCESS) {
-+		UDS_FREE(buffer);
-+		return result;
-+	}
-+
-+	memcpy(&magic, buffer, PAGE_MAP_MAGIC_LENGTH);
-+	offset += PAGE_MAP_MAGIC_LENGTH;
-+	if (memcmp(magic, PAGE_MAP_MAGIC, PAGE_MAP_MAGIC_LENGTH) != 0) {
-+		UDS_FREE(buffer);
-+		return UDS_CORRUPT_DATA;
-+	}
-+
-+	decode_u64_le(buffer, &offset, &map->last_update);
-+	for (i = 0; i < get_entry_count(map->geometry); i++)
-+		decode_u16_le(buffer, &offset, &map->entries[i]);
-+
-+	UDS_FREE(buffer);
-+	uds_log_debug("read index page map, last update %llu",
-+		      (unsigned long long) map->last_update);
-+	return UDS_SUCCESS;
-+}
-diff --git a/drivers/md/dm-vdo/index-page-map.h b/drivers/md/dm-vdo/index-page-map.h
-new file mode 100644
-index 000000000000..14c84051af51
---- /dev/null
-+++ b/drivers/md/dm-vdo/index-page-map.h
-@@ -0,0 +1,54 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
++/**
++ * finish_reaping() - Actually advance the head of the journal now that any necessary flushes are
++ *                    complete.
++ * @journal: The journal to be reaped.
 + */
-+
-+#ifndef UDS_INDEX_PAGE_MAP_H
-+#define UDS_INDEX_PAGE_MAP_H
-+
-+#include "geometry.h"
-+#include "io-factory.h"
-+
-+/*
-+ * The index maintains a page map which records how the chapter delta lists are distributed among
-+ * the index pages for each chapter, allowing the volume to be efficient about reading only pages
-+ * that it knows it will need.
-+ */
-+
-+struct index_page_map {
-+	const struct geometry *geometry;
-+	u64 last_update;
-+	u32 entries_per_chapter;
-+	u16 *entries;
-+};
-+
-+int __must_check
-+uds_make_index_page_map(const struct geometry *geometry, struct index_page_map **map_ptr);
-+
-+void uds_free_index_page_map(struct index_page_map *map);
-+
-+int __must_check
-+uds_read_index_page_map(struct index_page_map *map, struct buffered_reader *reader);
-+
-+int __must_check
-+uds_write_index_page_map(struct index_page_map *map, struct buffered_writer *writer);
-+
-+void uds_update_index_page_map(struct index_page_map *map,
-+			       u64 virtual_chapter_number,
-+			       u32 chapter_number,
-+			       u32 index_page_number,
-+			       u32 delta_list_number);
-+
-+u32 __must_check uds_find_index_page_number(const struct index_page_map *map,
-+					    const struct uds_record_name *name,
-+					    u32 chapter_number);
-+
-+void uds_get_list_number_bounds(const struct index_page_map *map,
-+				u32 chapter_number,
-+				u32 index_page_number,
-+				u32 *lowest_list,
-+				u32 *highest_list);
-+
-+u64 uds_compute_index_page_map_save_size(const struct geometry *geometry);
-+
-+#endif /* UDS_INDEX_PAGE_MAP_H */
-diff --git a/drivers/md/dm-vdo/radix-sort.c b/drivers/md/dm-vdo/radix-sort.c
-new file mode 100644
-index 000000000000..7eeb81a6deb6
---- /dev/null
-+++ b/drivers/md/dm-vdo/radix-sort.c
-@@ -0,0 +1,349 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "radix-sort.h"
-+
-+#include <linux/limits.h>
-+#include <linux/types.h>
-+
-+#include "memory-alloc.h"
-+#include "string-utils.h"
-+
-+/*
-+ * This implementation allocates one large object to do the sorting, which can be reused as many
-+ * times as desired. The amount of memory required is logarithmically proportional to the number of
-+ * keys to be sorted.
-+ */
-+
-+enum {
-+	/* Piles smaller than this are handled with a simple insertion sort. */
-+	INSERTION_SORT_THRESHOLD = 12,
-+};
-+
-+/* Sort keys are pointers to immutable fixed-length arrays of bytes. */
-+typedef const u8 *sort_key_t;
-+
-+/*
-+ * The keys are separated into piles based on the byte in each keys at the current offset, so the
-+ * number of keys with each byte must be counted.
-+ */
-+struct histogram {
-+	/* The number of non-empty bins */
-+	u16 used;
-+	/* The index (key byte) of the first non-empty bin */
-+	u16 first;
-+	/* The index (key byte) of the last non-empty bin */
-+	u16 last;
-+	/* The number of occurrences of each specific byte */
-+	u32 size[256];
-+};
-+
-+/*
-+ * Sub-tasks are manually managed on a stack, both for performance and to put a logarithmic bound
-+ * on the stack space needed.
-+ */
-+struct task {
-+	/* Pointer to the first key to sort. */
-+	sort_key_t *first_key;
-+	/* Pointer to the last key to sort. */
-+	sort_key_t *last_key;
-+	/* The offset into the key at which to continue sorting. */
-+	u16 offset;
-+	/* The number of bytes remaining in the sort keys. */
-+	u16 length;
-+};
-+
-+struct radix_sorter {
-+	unsigned int count;
-+	struct histogram bins;
-+	sort_key_t *pile[256];
-+	struct task *end_of_stack;
-+	struct task insertion_list[256];
-+	struct task stack[];
-+};
-+
-+/* Compare a segment of two fixed-length keys starting at an offset. */
-+static inline int compare(sort_key_t key1, sort_key_t key2, u16 offset, u16 length)
++static void finish_reaping(struct slab_journal *journal)
 +{
-+	return memcmp(&key1[offset], &key2[offset], length);
++	journal->head = journal->unreapable;
++	add_entries(journal);
++	check_if_slab_drained(journal->slab);
 +}
 +
-+/* Insert the next unsorted key into an array of sorted keys. */
-+static inline void insert_key(const struct task task, sort_key_t *next)
-+{
-+	/* Pull the unsorted key out, freeing up the array slot. */
-+	sort_key_t unsorted = *next;
++static void reap_slab_journal(struct slab_journal *journal);
 +
-+	/* Compare the key to the preceding sorted entries, shifting down ones that are larger. */
-+	while ((--next >= task.first_key) &&
-+	       (compare(unsorted, next[0], task.offset, task.length) < 0))
-+		next[1] = next[0];
-+
-+	/* Insert the key into the last slot that was cleared, sorting it. */
-+	next[1] = unsorted;
-+}
-+
-+/*
-+ * Sort a range of key segments using an insertion sort. This simple sort is faster than the
-+ * 256-way radix sort when the number of keys to sort is small.
++/**
++ * complete_reaping() - Finish reaping now that we have flushed the lower layer and then try
++ *                      reaping again in case we deferred reaping due to an outstanding vio.
++ * @completion: The flush vio.
 + */
-+static inline void insertion_sort(const struct task task)
++static void complete_reaping(struct vdo_completion *completion)
 +{
-+	sort_key_t *next;
++	struct slab_journal *journal = completion->parent;
 +
-+	for (next = task.first_key + 1; next <= task.last_key; next++)
-+		insert_key(task, next);
++	return_vio_to_pool(journal->slab->allocator->vio_pool,
++			   vio_as_pooled_vio(as_vio(UDS_FORGET(completion))));
++	finish_reaping(journal);
++	reap_slab_journal(journal);
 +}
 +
-+/* Push a sorting task onto a task stack. */
-+static inline void push_task(struct task **stack_pointer,
-+			     sort_key_t *first_key,
-+			     u32 count,
-+			     u16 offset,
-+			     u16 length)
-+{
-+	struct task *task = (*stack_pointer)++;
-+
-+	task->first_key = first_key;
-+	task->last_key = &first_key[count - 1];
-+	task->offset = offset;
-+	task->length = length;
-+}
-+
-+static inline void swap_keys(sort_key_t *a, sort_key_t *b)
-+{
-+	sort_key_t c = *a;
-+	*a = *b;
-+	*b = c;
-+}
-+
-+/*
-+ * Count the number of times each byte value appears in the arrays of keys to sort at the current
-+ * offset, keeping track of the number of non-empty bins, and the index of the first and last
-+ * non-empty bin.
++/**
++ * handle_flush_error() - Handle an error flushing the lower layer.
++ * @completion: The flush vio.
 + */
-+static inline void measure_bins(const struct task task, struct histogram *bins)
++static void handle_flush_error(struct vdo_completion *completion)
 +{
-+	sort_key_t *key_ptr;
++	vio_record_metadata_io_error(as_vio(completion));
++	vdo_enter_read_only_mode(completion->vdo, completion->result);
++	complete_reaping(completion);
++}
++
++static void flush_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct slab_journal *journal = vio->completion.parent;
++
++	continue_vio_after_io(vio,
++			      complete_reaping,
++			      journal->slab->allocator->thread_id);
++}
++
++/**
++ * flush_for_reaping() - A waiter callback for getting a vio with which to flush the lower layer
++ *                       prior to reaping.
++ * @waiter: The journal as a flush waiter.
++ * @context: The newly acquired flush vio.
++ */
++static void flush_for_reaping(struct waiter *waiter, void *context)
++{
++	struct slab_journal *journal = container_of(waiter, struct slab_journal, flush_waiter);
++	struct pooled_vio *pooled = context;
++	struct vio *vio = &pooled->vio;
++
++	vio->completion.parent = journal;
++	submit_flush_vio(vio, flush_endio, handle_flush_error);
++}
++
++/**
++ * reap_slab_journal() - Conduct a reap on a slab journal to reclaim unreferenced blocks.
++ * @journal: The slab journal.
++ */
++static void reap_slab_journal(struct slab_journal *journal)
++{
++	bool reaped = false;
++
++	if (is_reaping(journal))
++		/* We already have a reap in progress so wait for it to finish. */
++		return;
++
++	if ((journal->slab->status != VDO_SLAB_REBUILT) ||
++	    !vdo_is_state_normal(&journal->slab->state) ||
++	    vdo_is_read_only(journal->slab->allocator->depot->vdo))
++		/*
++		 * We must not reap in the first two cases, and there's no point in read-only mode.
++		 */
++		return;
 +
 +	/*
-+	 * Subtle invariant: bins->used and bins->size[] are zero because the sorting code clears
-+	 * it all out as it goes. Even though this structure is re-used, we don't need to pay to
-+	 * zero it before starting a new tally.
++	 * Start reclaiming blocks only when the journal head has no references. Then stop when a
++	 * block is referenced or reap reaches the most recently written block, referenced by the
++	 * slab summary, which has the sequence number just before the tail.
 +	 */
-+	bins->first = U8_MAX;
-+	bins->last = 0;
-+
-+	for (key_ptr = task.first_key; key_ptr <= task.last_key; key_ptr++) {
-+		/* Increment the count for the byte in the key at the current offset. */
-+		u8 bin = (*key_ptr)[task.offset];
-+		u32 size = ++bins->size[bin];
-+
-+		/* Track non-empty bins. */
-+		if (size == 1) {
-+			bins->used += 1;
-+			if (bin < bins->first)
-+				bins->first = bin;
-+
-+			if (bin > bins->last)
-+				bins->last = bin;
-+		}
-+	}
-+}
-+
-+/*
-+ * Convert the bin sizes to pointers to where each pile goes.
-+ *
-+ *   pile[0] = first_key + bin->size[0],
-+ *   pile[1] = pile[0]  + bin->size[1], etc.
-+ *
-+ * After the keys are moved to the appropriate pile, we'll need to sort each of the piles by the
-+ * next radix position. A new task is put on the stack for each pile containing lots of keys, or a
-+ * new task is put on the list for each pile containing few keys.
-+ *
-+ * @stack: pointer the top of the stack
-+ * @end_of_stack: the end of the stack
-+ * @list: pointer the head of the list
-+ * @pile: array for pointers to the end of each pile
-+ * @bins: the histogram of the sizes of each pile
-+ * @first_key: the first key of the stack
-+ * @offset: the next radix position to sort by
-+ * @length: the number of bytes remaining in the sort keys
-+ *
-+ * Return: UDS_SUCCESS or an error code
-+ */
-+static inline int push_bins(struct task **stack,
-+			    struct task *end_of_stack,
-+			    struct task **list,
-+			    sort_key_t *pile[],
-+			    struct histogram *bins,
-+			    sort_key_t *first_key,
-+			    u16 offset,
-+			    u16 length)
-+{
-+	sort_key_t *pile_start = first_key;
-+	int bin;
-+
-+	for (bin = bins->first; ; bin++) {
-+		u32 size = bins->size[bin];
-+
-+		/* Skip empty piles. */
-+		if (size == 0)
-+			continue;
-+
-+		/* There's no need to sort empty keys. */
-+		if (length > 0) {
-+			if (size > INSERTION_SORT_THRESHOLD) {
-+				if (*stack >= end_of_stack)
-+					return UDS_BAD_STATE;
-+
-+				push_task(stack, pile_start, size, offset, length);
-+			} else if (size > 1) {
-+				push_task(list, pile_start, size, offset, length);
-+			}
-+		}
-+
-+		pile_start += size;
-+		pile[bin] = pile_start;
-+		if (--bins->used == 0)
-+			break;
++	while ((journal->unreapable < journal->tail) && (journal->reap_lock->count == 0)) {
++		reaped = true;
++		journal->unreapable++;
++		journal->reap_lock++;
++		if (journal->reap_lock == &journal->locks[journal->size])
++			journal->reap_lock = &journal->locks[0];
 +	}
 +
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_make_radix_sorter(unsigned int count, struct radix_sorter **sorter)
-+{
-+	int result;
-+	unsigned int stack_size = count / INSERTION_SORT_THRESHOLD;
-+	struct radix_sorter *radix_sorter;
-+
-+	result = UDS_ALLOCATE_EXTENDED(struct radix_sorter,
-+				       stack_size,
-+				       struct task,
-+				       __func__,
-+				       &radix_sorter);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	radix_sorter->count = count;
-+	radix_sorter->end_of_stack = radix_sorter->stack + stack_size;
-+	*sorter = radix_sorter;
-+	return UDS_SUCCESS;
-+}
-+
-+void uds_free_radix_sorter(struct radix_sorter *sorter)
-+{
-+	UDS_FREE(sorter);
-+}
-+
-+/*
-+ * Sort pointers to fixed-length keys (arrays of bytes) using a radix sort. The sort implementation
-+ * is unstable, so the relative ordering of equal keys is not preserved.
-+ */
-+int uds_radix_sort(struct radix_sorter *sorter,
-+		   const unsigned char *keys[],
-+		   unsigned int count,
-+		   unsigned short length)
-+{
-+	struct task start;
-+	struct histogram *bins = &sorter->bins;
-+	sort_key_t **pile = sorter->pile;
-+	struct task *task_stack = sorter->stack;
-+
-+	/* All zero-length keys are identical and therefore already sorted. */
-+	if ((count == 0) || (length == 0))
-+		return UDS_SUCCESS;
-+
-+	/* The initial task is to sort the entire length of all the keys. */
-+	start = (struct task) {
-+		.first_key = keys,
-+		.last_key = &keys[count - 1],
-+		.offset = 0,
-+		.length = length,
-+	};
-+
-+	if (count <= INSERTION_SORT_THRESHOLD) {
-+		insertion_sort(start);
-+		return UDS_SUCCESS;
-+	}
-+
-+	if (count > sorter->count)
-+		return UDS_INVALID_ARGUMENT;
++	if (!reaped)
++		return;
 +
 +	/*
-+	 * Repeatedly consume a sorting task from the stack and process it, pushing new sub-tasks
-+	 * onto the stack for each radix-sorted pile. When all tasks and sub-tasks have been
-+	 * processed, the stack will be empty and all the keys in the starting task will be fully
-+	 * sorted.
++	 * It is never safe to reap a slab journal block without first issuing a flush, regardless
++	 * of whether a user flush has been received or not. In the absence of the flush, the
++	 * reference block write which released the locks allowing the slab journal to reap may not
++	 * be persisted. Although slab summary writes will eventually issue flushes, multiple slab
++	 * journal block writes can be issued while previous slab summary updates have not yet been
++	 * made. Even though those slab journal block writes will be ignored if the slab summary
++	 * update is not persisted, they may still overwrite the to-be-reaped slab journal block
++	 * resulting in a loss of reference count updates (VDO-2912).
 +	 */
-+	for (*task_stack = start; task_stack >= sorter->stack; task_stack--) {
-+		const struct task task = *task_stack;
-+		struct task *insertion_task_list;
-+		int result;
-+		sort_key_t *fence;
-+		sort_key_t *end;
-+
-+		measure_bins(task, bins);
-+
-+		/*
-+		 * Now that we know how large each bin is, generate pointers for each of the piles
-+		 * and push a new task to sort each pile by the next radix byte.
-+		 */
-+		insertion_task_list = sorter->insertion_list;
-+		result = push_bins(&task_stack,
-+				   sorter->end_of_stack,
-+				   &insertion_task_list,
-+				   pile,
-+				   bins,
-+				   task.first_key,
-+				   task.offset + 1,
-+				   task.length - 1);
-+		if (result != UDS_SUCCESS) {
-+			memset(bins, 0, sizeof(*bins));
-+			return result;
-+		}
-+
-+		/* Now bins->used is zero again. */
-+
-+		/*
-+		 * Don't bother processing the last pile: when piles 0..N-1 are all in place, then
-+		 * pile N must also be in place.
-+		 */
-+		end = task.last_key - bins->size[bins->last];
-+		bins->size[bins->last] = 0;
-+
-+		for (fence = task.first_key; fence <= end; ) {
-+			u8 bin;
-+			sort_key_t key = *fence;
-+
-+			/*
-+			 * The radix byte of the key tells us which pile it belongs in. Swap it for
-+			 * an unprocessed item just below that pile, and repeat.
-+			 */
-+			while (--pile[bin = key[task.offset]] > fence)
-+				swap_keys(pile[bin], &key);
-+
-+			/*
-+			 * The pile reached the fence. Put the key at the bottom of that pile,
-+			 * completing it, and advance the fence to the next pile.
-+			 */
-+			*fence = key;
-+			fence += bins->size[bin];
-+			bins->size[bin] = 0;
-+		}
-+
-+		/* Now bins->size[] is all zero again. */
-+
-+		/*
-+		 * When the number of keys in a task gets small enough, it is faster to use an
-+		 * insertion sort than to keep subdividing into tiny piles.
-+		 */
-+		while (--insertion_task_list >= sorter->insertion_list)
-+			insertion_sort(*insertion_task_list);
-+	}
-+
-+	return UDS_SUCCESS;
++	journal->flush_waiter.callback = flush_for_reaping;
++	acquire_vio_from_pool(journal->slab->allocator->vio_pool, &journal->flush_waiter);
 +}
-diff --git a/drivers/md/dm-vdo/radix-sort.h b/drivers/md/dm-vdo/radix-sort.h
-new file mode 100644
-index 000000000000..f6f0b62be0ee
---- /dev/null
-+++ b/drivers/md/dm-vdo/radix-sort.h
-@@ -0,0 +1,28 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
 +
-+#ifndef UDS_RADIX_SORT_H
-+#define UDS_RADIX_SORT_H
-+
-+/*
-+ * Radix sort is implemented using an American Flag sort, an unstable, in-place 8-bit radix
-+ * exchange sort. This is adapted from the algorithm in the paper by Peter M. McIlroy, Keith
-+ * Bostic, and M. Douglas McIlroy, "Engineering Radix Sort".
++/**
++ * adjust_slab_journal_block_reference() - Adjust the reference count for a slab journal block.
++ * @journal: The slab journal.
++ * @sequence_number: The journal sequence number of the referenced block.
++ * @adjustment: Amount to adjust the reference counter.
 + *
-+ * http://www.usenix.org/publications/compsystems/1993/win_mcilroy.pdf
++ * Note that when the adjustment is negative, the slab journal will be reaped.
 + */
-+
-+struct radix_sorter;
-+
-+int __must_check uds_make_radix_sorter(unsigned int count, struct radix_sorter **sorter);
-+
-+void uds_free_radix_sorter(struct radix_sorter *sorter);
-+
-+int __must_check uds_radix_sort(struct radix_sorter *sorter,
-+				const unsigned char *keys[],
-+				unsigned int count,
-+				unsigned short length);
-+
-+#endif /* UDS_RADIX_SORT_H */
-diff --git a/drivers/md/dm-vdo/volume.c b/drivers/md/dm-vdo/volume.c
-new file mode 100644
-index 000000000000..fef5c25248db
---- /dev/null
-+++ b/drivers/md/dm-vdo/volume.c
-@@ -0,0 +1,1793 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "volume.h"
-+
-+#include <linux/atomic.h>
-+#include <linux/dm-bufio.h>
-+#include <linux/err.h>
-+
-+#include "chapter-index.h"
-+#include "config.h"
-+#include "errors.h"
-+#include "geometry.h"
-+#include "hash-utils.h"
-+#include "index.h"
-+#include "logger.h"
-+#include "memory-alloc.h"
-+#include "permassert.h"
-+#include "sparse-cache.h"
-+#include "string-utils.h"
-+#include "uds-threads.h"
-+
-+/*
-+ * The first block of the volume layout is reserved for the volume header, which is no longer used.
-+ * The remainder of the volume is divided into chapters consisting of several pages of records, and
-+ * several pages of static index to use to find those records. The index pages are recorded first,
-+ * followed by the record pages. The chapters are written in order as they are filled, so the
-+ * volume storage acts as a circular log of the most recent chapters, with each new chapter
-+ * overwriting the oldest saved one.
-+ *
-+ * When a new chapter is filled and closed, the records from that chapter are sorted and
-+ * interleaved in approximate temporal order, and assigned to record pages. Then a static delta
-+ * index is generated to store which record page contains each record. The in-memory index page map
-+ * is also updated to indicate which delta lists fall on each chapter index page. This means that
-+ * when a record is read, the volume only has to load a single index page and a single record page,
-+ * rather than search the entire chapter. These index and record pages are written to storage, and
-+ * the index pages are transferred to the page cache under the theory that the most recently
-+ * written chapter is likely to be accessed again soon.
-+ *
-+ * When reading a record, the volume index will indicate which chapter should contain it. The
-+ * volume uses the index page map to determine which chapter index page needs to be loaded, and
-+ * then reads the relevant record page number from the chapter index. Both index and record pages
-+ * are stored in a page cache when read for the common case that subsequent records need the same
-+ * pages. The page cache evicts the least recently accessed entries when caching new pages. In
-+ * addition, the volume uses dm-bufio to manage access to the storage, which may allow for
-+ * additional caching depending on available system resources.
-+ *
-+ * Record requests are handled from cached pages when possible. If a page needs to be read, it is
-+ * placed on a queue along with the request that wants to read it. Any requests for the same page
-+ * that arrive while the read is pending are added to the queue entry. A separate reader thread
-+ * handles the queued reads, adding the page to the cache and updating any requests queued with it
-+ * so they can continue processing. This allows the index zone threads to continue processing new
-+ * requests rather than wait for the storage reads.
-+ *
-+ * When an index rebuild is necessary, the volume reads each stored chapter to determine which
-+ * range of chapters contain valid records, so that those records can be used to reconstruct the
-+ * in-memory volume index.
-+ */
-+
-+enum {
-+	/* The maximum allowable number of contiguous bad chapters */
-+	MAX_BAD_CHAPTERS = 100,
-+	VOLUME_CACHE_MAX_ENTRIES = (U16_MAX >> 1),
-+	VOLUME_CACHE_QUEUED_FLAG = (1 << 15),
-+	VOLUME_CACHE_MAX_QUEUED_READS = 4096,
-+};
-+
-+static const u64 BAD_CHAPTER = U64_MAX;
-+
-+/*
-+ * The invalidate counter is two 32 bits fields stored together atomically. The low order 32 bits
-+ * are the physical page number of the cached page being read. The high order 32 bits are a
-+ * sequence number. This value is written when the zone that owns it begins or completes a cache
-+ * search. Any other thread will only read the counter in wait_for_pending_searches() while waiting
-+ * to update the cache contents.
-+ */
-+union invalidate_counter {
-+	u64 value;
-+	struct {
-+		u32 page;
-+		u32 counter;
-+	};
-+};
-+
-+static inline u32 map_to_page_number(struct geometry *geometry, u32 physical_page)
-+{
-+	return (physical_page - HEADER_PAGES_PER_VOLUME) % geometry->pages_per_chapter;
-+}
-+
-+static inline u32 map_to_chapter_number(struct geometry *geometry, u32 physical_page)
-+{
-+	return (physical_page - HEADER_PAGES_PER_VOLUME) / geometry->pages_per_chapter;
-+}
-+
-+static inline bool is_record_page(struct geometry *geometry, u32 physical_page)
-+{
-+	return map_to_page_number(geometry, physical_page) >= geometry->index_pages_per_chapter;
-+}
-+
-+static u32 map_to_physical_page(const struct geometry *geometry, u32 chapter, u32 page)
-+{
-+	/* Page zero is the header page, so the first chapter index page is page one. */
-+	return HEADER_PAGES_PER_VOLUME + (geometry->pages_per_chapter * chapter) + page;
-+}
-+
-+static inline union invalidate_counter
-+get_invalidate_counter(struct page_cache *cache, unsigned int zone_number)
-+{
-+	return (union invalidate_counter) {
-+		.value = READ_ONCE(cache->search_pending_counters[zone_number].atomic_value),
-+	};
-+}
-+
-+static inline void set_invalidate_counter(struct page_cache *cache,
-+					  unsigned int zone_number,
-+					  union invalidate_counter invalidate_counter)
-+{
-+	WRITE_ONCE(cache->search_pending_counters[zone_number].atomic_value,
-+		   invalidate_counter.value);
-+}
-+
-+static inline bool search_pending(union invalidate_counter invalidate_counter)
-+{
-+	return (invalidate_counter.counter & 1) != 0;
-+}
-+
-+/* Lock the cache for a zone in order to search for a page. */
 +static void
-+begin_pending_search(struct page_cache *cache, u32 physical_page, unsigned int zone_number)
++adjust_slab_journal_block_reference(struct slab_journal *journal,
++				    sequence_number_t sequence_number,
++				    int adjustment)
 +{
-+	union invalidate_counter invalidate_counter = get_invalidate_counter(cache, zone_number);
++	struct journal_lock *lock;
 +
-+	invalidate_counter.page = physical_page;
-+	invalidate_counter.counter++;
-+	set_invalidate_counter(cache, zone_number, invalidate_counter);
-+	ASSERT_LOG_ONLY(search_pending(invalidate_counter),
-+			"Search is pending for zone %u",
-+			zone_number);
-+	/*
-+	 * This memory barrier ensures that the write to the invalidate counter is seen by other
-+	 * threads before this thread accesses the cached page. The corresponding read memory
-+	 * barrier is in wait_for_pending_searches().
-+	 */
-+	smp_mb();
++	if (sequence_number == 0)
++		return;
++
++	if (journal->slab->status == VDO_SLAB_REPLAYING)
++		/* Locks should not be used during offline replay. */
++		return;
++
++	ASSERT_LOG_ONLY((adjustment != 0), "adjustment must be non-zero");
++	lock = get_lock(journal, sequence_number);
++	if (adjustment < 0)
++		ASSERT_LOG_ONLY((-adjustment <= lock->count),
++				"adjustment %d of lock count %u for slab journal block %llu must not underflow",
++				adjustment,
++				lock->count,
++				(unsigned long long) sequence_number);
++
++	lock->count += adjustment;
++	if (lock->count == 0)
++		reap_slab_journal(journal);
 +}
 +
-+/* Unlock the cache for a zone by clearing its invalidate counter. */
-+static void end_pending_search(struct page_cache *cache, unsigned int zone_number)
++/**
++ * release_journal_locks() - Callback invoked after a slab summary update completes.
++ * @waiter: The slab summary waiter that has just been notified.
++ * @context: The result code of the update.
++ *
++ * Registered in the constructor on behalf of update_tail_block_location().
++ *
++ * Implements waiter_callback.
++ */
++static void release_journal_locks(struct waiter *waiter, void *context)
 +{
-+	union invalidate_counter invalidate_counter;
++	sequence_number_t first, i;
++	struct slab_journal *journal =
++		container_of(waiter, struct slab_journal, slab_summary_waiter);
++	int result = *((int *)context);
 +
-+	/*
-+	 * This memory barrier ensures that this thread completes reads of the
-+	 * cached page before other threads see the write to the invalidate
-+	 * counter.
-+	 */
-+	smp_mb();
-+
-+	invalidate_counter = get_invalidate_counter(cache, zone_number);
-+	ASSERT_LOG_ONLY(search_pending(invalidate_counter),
-+			"Search is pending for zone %u",
-+			zone_number);
-+	invalidate_counter.counter++;
-+	set_invalidate_counter(cache, zone_number, invalidate_counter);
-+}
-+
-+static void wait_for_pending_searches(struct page_cache *cache, u32 physical_page)
-+{
-+	union invalidate_counter initial_counters[MAX_ZONES];
-+	unsigned int i;
-+
-+	/*
-+	 * We hold the read_threads_mutex. We are waiting for threads that do not hold the
-+	 * read_threads_mutex. Those threads have "locked" their targeted page by setting the
-+	 * search_pending_counter. The corresponding write memory barrier is in
-+	 * begin_pending_search().
-+	 */
-+	smp_mb();
-+
-+	for (i = 0; i < cache->zone_count; i++)
-+		initial_counters[i] = get_invalidate_counter(cache, i);
-+	for (i = 0; i < cache->zone_count; i++)
-+		if (search_pending(initial_counters[i]) &&
-+		    (initial_counters[i].page == physical_page))
++	if (result != VDO_SUCCESS) {
++		if (result != VDO_READ_ONLY)
 +			/*
-+			 * There is an active search using the physical page. We need to wait for
-+			 * the search to finish.
-+			 *
-+			 * FIXME: Investigate using wait_event() to wait for the search to finish.
++			 * Don't bother logging what might be lots of errors if we are already in
++			 * read-only mode.
 +			 */
-+			while (initial_counters[i].value == get_invalidate_counter(cache, i).value)
-+				cond_resched();
++			uds_log_error_strerror(result,
++					       "failed slab summary update %llu",
++					       (unsigned long long) journal->summarized);
++
++		journal->updating_slab_summary = false;
++		vdo_enter_read_only_mode(journal->slab->allocator->depot->vdo, result);
++		check_if_slab_drained(journal->slab);
++		return;
++	}
++
++	if (journal->partial_write_in_progress && (journal->summarized == journal->tail)) {
++		journal->partial_write_in_progress = false;
++		add_entries(journal);
++	}
++
++	first = journal->last_summarized;
++	journal->last_summarized = journal->summarized;
++	for (i = journal->summarized - 1; i >= first; i--) {
++		/*
++		 * Release the lock the summarized block held on the recovery journal. (During
++		 * replay, recovery_start will always be 0.)
++		 */
++		if (journal->recovery_journal != NULL) {
++			zone_count_t zone_number = journal->slab->allocator->zone_number;
++			struct journal_lock *lock = get_lock(journal, i);
++
++			vdo_release_recovery_journal_block_reference(journal->recovery_journal,
++								     lock->recovery_start,
++								     VDO_ZONE_TYPE_PHYSICAL,
++								     zone_number);
++		}
++
++		/*
++		 * Release our own lock against reaping for blocks that are committed. (This
++		 * function will not change locks during replay.)
++		 */
++		adjust_slab_journal_block_reference(journal, i, -1);
++	}
++
++	journal->updating_slab_summary = false;
++
++	reap_slab_journal(journal);
++
++	/* Check if the slab summary needs to be updated again. */
++	update_tail_block_location(journal);
 +}
 +
-+static void release_page_buffer(struct cached_page *page)
++/**
++ * update_tail_block_location() - Update the tail block location in the slab summary, if necessary.
++ * @journal: The slab journal that is updating its tail block location.
++ */
++static void update_tail_block_location(struct slab_journal *journal)
 +{
-+	if (page->buffer != NULL)
-+		dm_bufio_release(UDS_FORGET(page->buffer));
-+}
++	block_count_t free_block_count;
++	struct vdo_slab *slab = journal->slab;
 +
-+static void clear_cache_page(struct page_cache *cache, struct cached_page *page)
-+{
-+	/* Do not clear read_pending because the read queue relies on it. */
-+	release_page_buffer(page);
-+	page->physical_page = cache->indexable_pages;
-+	WRITE_ONCE(page->last_used, 0);
-+}
++	if (journal->updating_slab_summary ||
++	    vdo_is_read_only(journal->slab->allocator->depot->vdo) ||
++	    (journal->last_summarized >= journal->next_commit)) {
++		check_if_slab_drained(slab);
++		return;
++	}
 +
-+static void make_page_most_recent(struct page_cache *cache, struct cached_page *page)
-+{
++	if (slab->status != VDO_SLAB_REBUILT) {
++		u8 hint = slab->allocator->summary_entries[slab->slab_number].fullness_hint;
++
++		free_block_count = ((block_count_t) hint) << slab->allocator->depot->hint_shift;
++	} else {
++		free_block_count = slab->free_blocks;
++	}
++
++	journal->summarized = journal->next_commit;
++	journal->updating_slab_summary = true;
++
 +	/*
-+	 * ASSERTION: We are either a zone thread holding a search_pending_counter, or we are any
-+	 * thread holding the read_threads_mutex.
++	 * Update slab summary as dirty.
++	 * vdo_slab journal can only reap past sequence number 1 when all the ref counts for this
++	 * slab have been written to the layer. Therefore, indicate that the ref counts must be
++	 * loaded when the journal head has reaped past sequence number 1.
 +	 */
-+	if (atomic64_read(&cache->clock) != READ_ONCE(page->last_used))
-+		WRITE_ONCE(page->last_used, atomic64_inc_return(&cache->clock));
++	update_slab_summary_entry(slab,
++				  &journal->slab_summary_waiter,
++				  journal->summarized % journal->size,
++				  (journal->head > 1),
++				  false,
++				  free_block_count);
 +}
 +
-+/* Select a page to remove from the cache to make space for a new entry. */
-+static struct cached_page *select_victim_in_cache(struct page_cache *cache)
++/**
++ * reopen_slab_journal() - Reopen a slab's journal by emptying it and then adding pending entries.
++ */
++static void reopen_slab_journal(struct vdo_slab *slab)
 +{
-+	struct cached_page *page;
-+	int oldest_index = 0;
-+	s64 oldest_time = S64_MAX;
-+	s64 last_used;
-+	u16 i;
++	struct slab_journal *journal = &slab->journal;
++	sequence_number_t block;
 +
-+	/* Find the oldest unclaimed page. We hold the read_threads_mutex. */
-+	for (i = 0; i < cache->cache_slots; i++) {
-+		/* A page with a pending read must not be replaced. */
-+		if (cache->cache[i].read_pending)
-+			continue;
++	ASSERT_LOG_ONLY(journal->tail_header.entry_count == 0,
++			"vdo_slab journal's active block empty before reopening");
++	journal->head = journal->tail;
++	initialize_journal_state(journal);
 +
-+		last_used = READ_ONCE(cache->cache[i].last_used);
-+		if (last_used <= oldest_time) {
-+			oldest_time = last_used;
-+			oldest_index = i;
++	/* Ensure no locks are spuriously held on an empty journal. */
++	for (block = 1; block <= journal->size; block++)
++		ASSERT_LOG_ONLY((get_lock(journal, block)->count == 0),
++				"Scrubbed journal's block %llu is not locked",
++				(unsigned long long) block);
++
++	add_entries(journal);
++}
++
++static sequence_number_t get_committing_sequence_number(const struct pooled_vio *vio)
++{
++	const struct packed_slab_journal_block *block =
++		(const struct packed_slab_journal_block *) vio->vio.data;
++
++	return __le64_to_cpu(block->header.sequence_number);
++}
++
++/**
++ * complete_write() - Handle post-commit processing.
++ * @completion: The write vio as a completion.
++ *
++ * This is the callback registered by write_slab_journal_block().
++ */
++static void complete_write(struct vdo_completion *completion)
++{
++	int result = completion->result;
++	struct pooled_vio *pooled = vio_as_pooled_vio(as_vio(completion));
++	struct slab_journal *journal = completion->parent;
++	sequence_number_t committed = get_committing_sequence_number(pooled);
++
++	list_del_init(&pooled->list_entry);
++	return_vio_to_pool(journal->slab->allocator->vio_pool, UDS_FORGET(pooled));
++
++	if (result != VDO_SUCCESS) {
++		vio_record_metadata_io_error(as_vio(completion));
++		uds_log_error_strerror(result,
++				       "cannot write slab journal block %llu",
++				       (unsigned long long) committed);
++		vdo_enter_read_only_mode(journal->slab->allocator->depot->vdo, result);
++		check_if_slab_drained(journal->slab);
++		return;
++	}
++
++	WRITE_ONCE(journal->events->blocks_written, journal->events->blocks_written + 1);
++
++	if (list_empty(&journal->uncommitted_blocks)) {
++		/* If no blocks are outstanding, then the commit point is at the tail. */
++		journal->next_commit = journal->tail;
++	} else {
++		/* The commit point is always the beginning of the oldest incomplete block. */
++		pooled = container_of(journal->uncommitted_blocks.next,
++				      struct pooled_vio,
++				      list_entry);
++		journal->next_commit = get_committing_sequence_number(pooled);
++	}
++
++	update_tail_block_location(journal);
++}
++
++static void write_slab_journal_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct slab_journal *journal = vio->completion.parent;
++
++	continue_vio_after_io(vio, complete_write, journal->slab->allocator->thread_id);
++}
++
++/**
++ * write_slab_journal_block() - Write a slab journal block.
++ * @waiter: The vio pool waiter which was just notified.
++ * @context: The vio pool entry for the write.
++ *
++ * Callback from acquire_vio_from_pool() registered in commit_tail().
++ */
++static void write_slab_journal_block(struct waiter *waiter, void *context)
++{
++	struct pooled_vio *pooled = context;
++	struct vio *vio = &pooled->vio;
++	struct slab_journal *journal = container_of(waiter, struct slab_journal, resource_waiter);
++	struct slab_journal_block_header *header = &journal->tail_header;
++	int unused_entries = journal->entries_per_block - header->entry_count;
++	physical_block_number_t block_number;
++	const struct admin_state_code *operation;
++
++	header->head = journal->head;
++	list_add_tail(&pooled->list_entry, &journal->uncommitted_blocks);
++	vdo_pack_slab_journal_block_header(header, &journal->block->header);
++
++	/* Copy the tail block into the vio. */
++	memcpy(pooled->vio.data, journal->block, VDO_BLOCK_SIZE);
++
++	ASSERT_LOG_ONLY(unused_entries >= 0, "vdo_slab journal block is not overfull");
++	if (unused_entries > 0) {
++		/*
++		 * Release the per-entry locks for any unused entries in the block we are about to
++		 * write.
++		 */
++		adjust_slab_journal_block_reference(journal,
++						    header->sequence_number,
++						    -unused_entries);
++		journal->partial_write_in_progress = !block_is_full(journal);
++	}
++
++	block_number = journal->slab->journal_origin + (header->sequence_number % journal->size);
++	vio->completion.parent = journal;
++
++	/*
++	 * This block won't be read in recovery until the slab summary is updated to refer to it.
++	 * The slab summary update does a flush which is sufficient to protect us from VDO-2331.
++	 */
++	submit_metadata_vio(UDS_FORGET(vio),
++			    block_number,
++			    write_slab_journal_endio,
++			    complete_write,
++			    REQ_OP_WRITE);
++
++	/* Since the write is submitted, the tail block structure can be reused. */
++	journal->tail++;
++	initialize_tail_block(journal);
++	journal->waiting_to_commit = false;
++
++	operation = vdo_get_admin_state_code(&journal->slab->state);
++	if (operation == VDO_ADMIN_STATE_WAITING_FOR_RECOVERY) {
++		vdo_finish_operation(&journal->slab->state,
++				     (vdo_is_read_only(journal->slab->allocator->depot->vdo) ?
++				      VDO_READ_ONLY :
++				      VDO_SUCCESS));
++		return;
++	}
++
++	add_entries(journal);
++}
++
++/**
++ * commit_tail() - Commit the tail block of the slab journal.
++ * @journal: The journal whose tail block should be committed.
++ */
++static void commit_tail(struct slab_journal *journal)
++{
++	if ((journal->tail_header.entry_count == 0) && must_make_entries_to_flush(journal))
++		/*
++		 * There are no entries at the moment, but there are some waiters, so defer
++		 * initiating the flush until those entries are ready to write.
++		 */
++		return;
++
++	if (vdo_is_read_only(journal->slab->allocator->depot->vdo) ||
++	    journal->waiting_to_commit ||
++	    (journal->tail_header.entry_count == 0))
++		/*
++		 * There is nothing to do since the tail block is empty, or writing, or the journal
++		 * is in read-only mode.
++		 */
++		return;
++
++	/*
++	 * Since we are about to commit the tail block, this journal no longer needs to be on the
++	 * ring of journals which the recovery journal might ask to commit.
++	 */
++	mark_slab_journal_clean(journal);
++
++	journal->waiting_to_commit = true;
++
++	journal->resource_waiter.callback = write_slab_journal_block;
++	acquire_vio_from_pool(journal->slab->allocator->vio_pool, &journal->resource_waiter);
++}
++
++/**
++ * encode_slab_journal_entry() - Encode a slab journal entry.
++ * @tail_header: The unpacked header for the block.
++ * @payload: The journal block payload to hold the entry.
++ * @sbn: The slab block number of the entry to encode.
++ * @operation: The type of the entry.
++ * @increment: True if this is an increment.
++ *
++ * Exposed for unit tests.
++ */
++static void
++encode_slab_journal_entry(struct slab_journal_block_header *tail_header,
++			  slab_journal_payload *payload,
++			  slab_block_number sbn,
++			  enum journal_operation operation,
++			  bool increment)
++{
++	journal_entry_count_t entry_number = tail_header->entry_count++;
++
++	if (operation == VDO_JOURNAL_BLOCK_MAP_REMAPPING) {
++		if (!tail_header->has_block_map_increments) {
++			memset(payload->full_entries.entry_types,
++			       0,
++			       VDO_SLAB_JOURNAL_ENTRY_TYPES_SIZE);
++			tail_header->has_block_map_increments = true;
++		}
++
++		payload->full_entries.entry_types[entry_number / 8] |=
++			((u8)1 << (entry_number % 8));
++	}
++
++	vdo_pack_slab_journal_entry(&payload->entries[entry_number], sbn, increment);
++}
++
++/**
++ * expand_journal_point() - Convert a recovery journal journal_point which refers to both an
++ *                          increment and a decrement to a single point which refers to one or the
++ *                          other.
++ * @recovery_point: The journal point to convert.
++ * @increment: Whether the current entry is an increment.
++ *
++ * Return: The expanded journal point
++ *
++ * Because each data_vio has but a single recovery journal point, but may need to make both
++ * increment and decrement entries in the same slab journal. In order to distinguish the two
++ * entries, the entry count of the expanded journal point is twice the actual recovery journal
++ * entry count for increments, and one more than that for decrements.
++ */
++static struct journal_point
++expand_journal_point(struct journal_point recovery_point, bool increment)
++{
++	recovery_point.entry_count *= 2;
++	if (!increment)
++		recovery_point.entry_count++;
++
++	return recovery_point;
++}
++
++/**
++ * add_entry() - Actually add an entry to the slab journal, potentially firing off a write if a
++ *               block becomes full.
++ * @journal: The slab journal to append to.
++ * @pbn: The pbn being adjusted.
++ * @operation: The type of entry to make.
++ * @increment: True if this is an increment.
++ * @recovery_point: The expanded recovery point.
++ *
++ * This function is synchronous.
++ */
++static void add_entry(struct slab_journal *journal,
++		      physical_block_number_t pbn,
++		      enum journal_operation operation,
++		      bool increment,
++		      struct journal_point recovery_point)
++{
++	struct packed_slab_journal_block *block = journal->block;
++	int result;
++
++	result = ASSERT(vdo_before_journal_point(&journal->tail_header.recovery_point,
++						 &recovery_point),
++			"recovery journal point is monotonically increasing, recovery point: %llu.%u, block recovery point: %llu.%u",
++			(unsigned long long) recovery_point.sequence_number,
++			recovery_point.entry_count,
++			(unsigned long long) journal->tail_header.recovery_point.sequence_number,
++			journal->tail_header.recovery_point.entry_count);
++	if (result != VDO_SUCCESS) {
++		vdo_enter_read_only_mode(journal->slab->allocator->depot->vdo, result);
++		return;
++	}
++
++	if (operation == VDO_JOURNAL_BLOCK_MAP_REMAPPING) {
++		result = ASSERT((journal->tail_header.entry_count <
++				 journal->full_entries_per_block),
++				"block has room for full entries");
++		if (result != VDO_SUCCESS) {
++			vdo_enter_read_only_mode(journal->slab->allocator->depot->vdo, result);
++			return;
 +		}
 +	}
 +
-+	page = &cache->cache[oldest_index];
-+	if (page->physical_page != cache->indexable_pages) {
-+		WRITE_ONCE(cache->index[page->physical_page], cache->cache_slots);
-+		wait_for_pending_searches(cache, page->physical_page);
++	encode_slab_journal_entry(&journal->tail_header,
++				  &block->payload,
++				  pbn - journal->slab->start,
++				  operation,
++				  increment);
++	journal->tail_header.recovery_point = recovery_point;
++	if (block_is_full(journal))
++		commit_tail(journal);
++}
++
++static inline block_count_t journal_length(const struct slab_journal *journal)
++{
++	return journal->tail - journal->head;
++}
++
++/**
++ * vdo_attempt_replay_into_slab() - Replay a recovery journal entry into a slab's journal.
++ * @slab: The slab to play into.
++ * @pbn: The PBN for the entry.
++ * @operation: The type of entry to add.
++ * @increment: True if this entry is an increment.
++ * @recovery_point: The recovery journal point corresponding to this entry.
++ * @parent: The completion to notify when there is space to add the entry if the entry could not be
++ *          added immediately.
++ *
++ * Return: true if the entry was added immediately.
++ */
++bool vdo_attempt_replay_into_slab(struct vdo_slab *slab,
++				  physical_block_number_t pbn,
++				  enum journal_operation operation,
++				  bool increment,
++				  struct journal_point *recovery_point,
++				  struct vdo_completion *parent)
++{
++	struct slab_journal *journal = &slab->journal;
++	struct slab_journal_block_header *header = &journal->tail_header;
++	struct journal_point expanded = expand_journal_point(*recovery_point, increment);
++
++	/* Only accept entries after the current recovery point. */
++	if (!vdo_before_journal_point(&journal->tail_header.recovery_point, &expanded))
++		return true;
++
++	if ((header->entry_count >= journal->full_entries_per_block) &&
++	    (header->has_block_map_increments || (operation == VDO_JOURNAL_BLOCK_MAP_REMAPPING)))
++		/*
++		 * The tail block does not have room for the entry we are attempting to add so
++		 * commit the tail block now.
++		 */
++		commit_tail(journal);
++
++	if (journal->waiting_to_commit) {
++		vdo_start_operation_with_waiter(&journal->slab->state,
++						VDO_ADMIN_STATE_WAITING_FOR_RECOVERY,
++						parent,
++						NULL);
++		return false;
 +	}
 +
-+	page->read_pending = true;
-+	clear_cache_page(cache, page);
-+	return page;
-+}
-+
-+/* Make a newly filled cache entry available to other threads. */
-+static int
-+put_page_in_cache(struct page_cache *cache, u32 physical_page, struct cached_page *page)
-+{
-+	int result;
-+
-+	/* We hold the read_threads_mutex. */
-+	result = ASSERT((page->read_pending), "page to install has a pending read");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	page->physical_page = physical_page;
-+	make_page_most_recent(cache, page);
-+	page->read_pending = false;
-+
-+	/*
-+	 * We hold the read_threads_mutex, but we must have a write memory barrier before making
-+	 * the cached_page available to the readers that do not hold the mutex. The corresponding
-+	 * read memory barrier is in get_page_and_index().
-+	 */
-+	smp_wmb();
-+
-+	/* This assignment also clears the queued flag. */
-+	WRITE_ONCE(cache->index[physical_page], page - cache->cache);
-+	return UDS_SUCCESS;
-+}
-+
-+static void cancel_page_in_cache(struct page_cache *cache,
-+				 u32 physical_page,
-+				 struct cached_page *page)
-+{
-+	int result;
-+
-+	/* We hold the read_threads_mutex. */
-+	result = ASSERT((page->read_pending), "page to install has a pending read");
-+	if (result != UDS_SUCCESS)
-+		return;
-+
-+	clear_cache_page(cache, page);
-+	page->read_pending = false;
-+
-+	/* Clear the mapping and the queued flag for the new page. */
-+	WRITE_ONCE(cache->index[physical_page], cache->cache_slots);
-+}
-+
-+static inline u16 next_queue_position(u16 position)
-+{
-+	return (position + 1) % VOLUME_CACHE_MAX_QUEUED_READS;
-+}
-+
-+static inline void advance_queue_position(u16 *position)
-+{
-+	*position = next_queue_position(*position);
-+}
-+
-+static inline bool read_queue_is_full(struct page_cache *cache)
-+{
-+	return cache->read_queue_first == next_queue_position(cache->read_queue_last);
-+}
-+
-+static bool
-+enqueue_read(struct page_cache *cache, struct uds_request *request, u32 physical_page)
-+{
-+	struct queued_read *queue_entry;
-+	u16 last = cache->read_queue_last;
-+	u16 read_queue_index;
-+
-+	/* We hold the read_threads_mutex. */
-+	if ((cache->index[physical_page] & VOLUME_CACHE_QUEUED_FLAG) == 0) {
-+		/* This page has no existing entry in the queue. */
-+		if (read_queue_is_full(cache))
-+			return false;
-+
-+		/* Fill in the read queue entry. */
-+		cache->read_queue[last].physical_page = physical_page;
-+		cache->read_queue[last].invalid = false;
-+		cache->read_queue[last].first_request = NULL;
-+		cache->read_queue[last].last_request = NULL;
-+
-+		/* Point the cache index to the read queue entry. */
-+		read_queue_index = last;
-+		WRITE_ONCE(cache->index[physical_page],
-+			   read_queue_index | VOLUME_CACHE_QUEUED_FLAG);
-+
-+		advance_queue_position(&cache->read_queue_last);
-+	} else {
-+		/* It's already queued, so add this request to the existing entry. */
-+		read_queue_index = cache->index[physical_page] & ~VOLUME_CACHE_QUEUED_FLAG;
++	if (journal_length(journal) >= journal->size) {
++		/*
++		 * We must have reaped the current head before the crash, since the blocked
++		 * threshold keeps us from having more entries than fit in a slab journal; hence we
++		 * can just advance the head (and unreapable block), as needed.
++		 */
++		journal->head++;
++		journal->unreapable++;
 +	}
 +
-+	request->next_request = NULL;
-+	queue_entry = &cache->read_queue[read_queue_index];
-+	if (queue_entry->first_request == NULL)
-+		queue_entry->first_request = request;
-+	else
-+		queue_entry->last_request->next_request = request;
-+	queue_entry->last_request = request;
++	if (journal->slab->status == VDO_SLAB_REBUILT)
++		journal->slab->status = VDO_SLAB_REPLAYING;
 +
++	add_entry(journal, pbn, operation, increment, expanded);
 +	return true;
 +}
 +
-+static void
-+enqueue_page_read(struct volume *volume, struct uds_request *request, u32 physical_page)
++/**
++ * requires_reaping() - Check whether the journal must be reaped before adding new entries.
++ * @journal: The journal to check.
++ *
++ * Return: true if the journal must be reaped.
++ */
++static bool requires_reaping(const struct slab_journal *journal)
 +{
-+	/* Mark the page as queued, so that chapter invalidation knows to cancel a read. */
-+	while (!enqueue_read(&volume->page_cache, request, physical_page)) {
-+		uds_log_debug("Read queue full, waiting for reads to finish");
-+		uds_wait_cond(&volume->read_threads_read_done_cond, &volume->read_threads_mutex);
++	return (journal_length(journal) >= journal->blocking_threshold);
++}
++
++/** finish_summary_update() - A waiter callback that resets the writing state of a slab. */
++static void finish_summary_update(struct waiter *waiter, void *context)
++{
++	struct vdo_slab *slab = container_of(waiter, struct vdo_slab, summary_waiter);
++	int result = *((int *) context);
++
++	slab->active_count--;
++
++	if ((result != VDO_SUCCESS) && (result != VDO_READ_ONLY)) {
++		uds_log_error_strerror(result, "failed to update slab summary");
++		vdo_enter_read_only_mode(slab->allocator->depot->vdo, result);
 +	}
 +
-+	uds_signal_cond(&volume->read_threads_cond);
++	check_if_slab_drained(slab);
++}
++
++static void write_reference_block(struct waiter *waiter, void *context);
++
++/**
++ * launch_reference_block_write() - Launch the write of a dirty reference block by first acquiring
++ *                                  a VIO for it from the pool.
++ * @waiter: The waiter of the block which is starting to write.
++ * @context: The parent slab of the block.
++ *
++ * This can be asynchronous since the writer will have to wait if all VIOs in the pool are
++ * currently in use.
++ */
++static void launch_reference_block_write(struct waiter *waiter, void *context)
++{
++	struct vdo_slab *slab = context;
++
++	if (vdo_is_read_only(slab->allocator->depot->vdo))
++		return;
++
++	slab->active_count++;
++	container_of(waiter, struct reference_block, waiter)->is_writing = true;
++	waiter->callback = write_reference_block;
++	acquire_vio_from_pool(slab->allocator->vio_pool, waiter);
++}
++
++static void save_dirty_reference_blocks(struct vdo_slab *slab)
++{
++	vdo_notify_all_waiters(&slab->dirty_blocks, launch_reference_block_write, slab);
++	check_if_slab_drained(slab);
++}
++
++/**
++ * finish_reference_block_write() - After a reference block has written, clean it, release its
++ *                                  locks, and return its VIO to the pool.
++ * @completion: The VIO that just finished writing.
++ */
++static void finish_reference_block_write(struct vdo_completion *completion)
++{
++	struct vio *vio = as_vio(completion);
++	struct pooled_vio *pooled = vio_as_pooled_vio(vio);
++	struct reference_block *block = completion->parent;
++	struct vdo_slab *slab = block->slab;
++	tail_block_offset_t offset;
++
++	slab->active_count--;
++
++	/* Release the slab journal lock. */
++	adjust_slab_journal_block_reference(&slab->journal,
++					    block->slab_journal_lock_to_release,
++					    -1);
++	return_vio_to_pool(slab->allocator->vio_pool, pooled);
++
++	/*
++	 * We can't clear the is_writing flag earlier as releasing the slab journal lock may cause
++	 * us to be dirtied again, but we don't want to double enqueue.
++	 */
++	block->is_writing = false;
++
++	if (vdo_is_read_only(completion->vdo)) {
++		check_if_slab_drained(slab);
++		return;
++	}
++
++	/* Re-queue the block if it was re-dirtied while it was writing. */
++	if (block->is_dirty) {
++		vdo_enqueue_waiter(&block->slab->dirty_blocks, &block->waiter);
++		if (vdo_is_state_draining(&slab->state))
++			/* We must be saving, and this block will otherwise not be relaunched. */
++			save_dirty_reference_blocks(slab);
++
++		return;
++	}
++
++	/*
++	 * Mark the slab as clean in the slab summary if there are no dirty or writing blocks
++	 * and no summary update in progress.
++	 */
++	if ((slab->active_count > 0) || vdo_has_waiters(&slab->dirty_blocks)) {
++		check_if_slab_drained(slab);
++		return;
++	}
++
++	offset = slab->allocator->summary_entries[slab->slab_number].tail_block_offset;
++	slab->active_count++;
++	slab->summary_waiter.callback = finish_summary_update;
++	update_slab_summary_entry(slab,
++				  &slab->summary_waiter,
++				  offset,
++				  true,
++				  true,
++				  slab->free_blocks);
++}
++
++/**
++ * get_reference_counters_for_block() - Find the reference counters for a given block.
++ * @block: The reference_block in question.
++ *
++ * Return: A pointer to the reference counters for this block.
++ */
++static vdo_refcount_t * __must_check
++get_reference_counters_for_block(struct reference_block *block)
++{
++	size_t block_index = block - block->slab->reference_blocks;
++
++	return &block->slab->counters[block_index * COUNTS_PER_BLOCK];
++}
++
++/**
++ * pack_reference_block() - Copy data from a reference block to a buffer ready to be written out.
++ * @block: The block to copy.
++ * @buffer: The char buffer to fill with the packed block.
++ */
++static void pack_reference_block(struct reference_block *block, void *buffer)
++{
++	struct packed_reference_block *packed = buffer;
++	vdo_refcount_t *counters = get_reference_counters_for_block(block);
++	sector_count_t i;
++	struct packed_journal_point commit_point;
++
++	vdo_pack_journal_point(&block->slab->slab_journal_point, &commit_point);
++
++	for (i = 0; i < VDO_SECTORS_PER_BLOCK; i++) {
++		packed->sectors[i].commit_point = commit_point;
++		memcpy(packed->sectors[i].counts,
++		       counters + (i * COUNTS_PER_SECTOR),
++		       (sizeof(vdo_refcount_t) * COUNTS_PER_SECTOR));
++	}
++}
++
++static void write_reference_block_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct reference_block *block = vio->completion.parent;
++	thread_id_t thread_id = block->slab->allocator->thread_id;
++
++	continue_vio_after_io(vio, finish_reference_block_write, thread_id);
++}
++
++/**
++ * handle_io_error() - Handle an I/O error reading or writing a reference count block.
++ * @completion: The VIO doing the I/O as a completion.
++ */
++static void handle_io_error(struct vdo_completion *completion)
++{
++	int result = completion->result;
++	struct vio *vio = as_vio(completion);
++	struct vdo_slab *slab = ((struct reference_block *) completion->parent)->slab;
++
++	vio_record_metadata_io_error(vio);
++	return_vio_to_pool(slab->allocator->vio_pool, vio_as_pooled_vio(vio));
++	slab->active_count--;
++	vdo_enter_read_only_mode(slab->allocator->depot->vdo, result);
++	check_if_slab_drained(slab);
++}
++
++/**
++ * write_reference_block() - After a dirty block waiter has gotten a VIO from the VIO pool, copy
++ *                           its counters and associated data into the VIO, and launch the write.
++ * @waiter: The waiter of the dirty block.
++ * @context: The VIO returned by the pool.
++ */
++static void write_reference_block(struct waiter *waiter, void *context)
++{
++	size_t block_offset;
++	physical_block_number_t pbn;
++	struct pooled_vio *pooled = context;
++	struct vdo_completion *completion = &pooled->vio.completion;
++	struct reference_block *block = container_of(waiter, struct reference_block, waiter);
++
++	pack_reference_block(block, pooled->vio.data);
++	block_offset = (block - block->slab->reference_blocks);
++	pbn = (block->slab->ref_counts_origin + block_offset);
++	block->slab_journal_lock_to_release = block->slab_journal_lock;
++	completion->parent = block;
++
++	/*
++	 * Mark the block as clean, since we won't be committing any updates that happen after this
++	 * moment. As long as VIO order is preserved, two VIOs updating this block at once will not
++	 * cause complications.
++	 */
++	block->is_dirty = false;
++
++	/*
++	 * Flush before writing to ensure that the recovery journal and slab journal entries which
++	 * cover this reference update are stable (VDO-2331).
++	 */
++	WRITE_ONCE(block->slab->allocator->ref_counts_statistics.blocks_written,
++		   block->slab->allocator->ref_counts_statistics.blocks_written + 1);
++
++	completion->callback_thread_id = ((struct block_allocator *) pooled->context)->thread_id;
++	submit_metadata_vio(&pooled->vio,
++			    pbn,
++			    write_reference_block_endio,
++			    handle_io_error,
++			    REQ_OP_WRITE | REQ_PREFLUSH);
++}
++
++static void reclaim_journal_space(struct slab_journal *journal)
++{
++	block_count_t length = journal_length(journal);
++	struct vdo_slab *slab = journal->slab;
++	block_count_t write_count = vdo_count_waiters(&slab->dirty_blocks);
++	block_count_t written;
++
++	if ((length < journal->flushing_threshold) || (write_count == 0))
++		return;
++
++	/* The slab journal is over the first threshold, schedule some reference block writes. */
++	WRITE_ONCE(journal->events->flush_count, journal->events->flush_count + 1);
++	if (length < journal->flushing_deadline)
++		/* Schedule more writes the closer to the deadline we get. */
++		write_count = max_t(block_count_t,
++				    write_count / (journal->flushing_deadline - length + 1),
++				    1);
++
++	for (written = 0; written < write_count; written++)
++		vdo_notify_next_waiter(&slab->dirty_blocks, launch_reference_block_write, slab);
++}
++
++/**
++ * reference_count_to_status() - Convert a reference count to a reference status.
++ * @count: The count to convert.
++ *
++ * Return: The appropriate reference status.
++ */
++static enum reference_status __must_check
++reference_count_to_status(vdo_refcount_t count)
++{
++	if (count == EMPTY_REFERENCE_COUNT)
++		return RS_FREE;
++	else if (count == 1)
++		return RS_SINGLE;
++	else if (count == PROVISIONAL_REFERENCE_COUNT)
++		return RS_PROVISIONAL;
++	else
++		return RS_SHARED;
++}
++
++/**
++ * dirty_block() - Mark a reference count block as dirty, potentially adding it to the dirty queue
++ *                 if it wasn't already dirty.
++ * @block: The reference block to mark as dirty.
++ */
++static void dirty_block(struct reference_block *block)
++{
++	if (block->is_dirty)
++		return;
++
++	block->is_dirty = true;
++	if (!block->is_writing)
++		vdo_enqueue_waiter(&block->slab->dirty_blocks, &block->waiter);
++}
++
++/**
++ * get_reference_block() - Get the reference block that covers the given block index.
++ */
++static struct reference_block * __must_check
++get_reference_block(struct vdo_slab *slab, slab_block_number index)
++{
++	return &slab->reference_blocks[index / COUNTS_PER_BLOCK];
++}
++
++/**
++ * slab_block_number_from_pbn() - Determine the index within the slab of a particular physical
++ *                                block number.
++ * @slab: The slab.
++ * @physical_block_number: The physical block number.
++ * @slab_block_number_ptr: A pointer to the slab block number.
++ *
++ * Return: VDO_SUCCESS or an error code.
++ */
++static int __must_check
++slab_block_number_from_pbn(struct vdo_slab *slab,
++			   physical_block_number_t physical_block_number,
++			   slab_block_number *slab_block_number_ptr)
++{
++	u64 slab_block_number;
++
++	if (physical_block_number < slab->start)
++		return VDO_OUT_OF_RANGE;
++
++	slab_block_number = physical_block_number - slab->start;
++	if (slab_block_number >= slab->allocator->depot->slab_config.data_blocks)
++		return VDO_OUT_OF_RANGE;
++
++	*slab_block_number_ptr = slab_block_number;
++	return VDO_SUCCESS;
++}
++
++/**
++ * get_reference_counter() - Get the reference counter that covers the given physical block number.
++ * @slab: The slab to query.
++ * @pbn: The physical block number.
++ * @counter_ptr: A pointer to the reference counter.
++ */
++static int __must_check
++get_reference_counter(struct vdo_slab *slab,
++		      physical_block_number_t pbn,
++		      vdo_refcount_t **counter_ptr)
++{
++	slab_block_number index;
++	int result = slab_block_number_from_pbn(slab, pbn, &index);
++
++	if (result != VDO_SUCCESS)
++		return result;
++
++	*counter_ptr = &slab->counters[index];
++
++	return VDO_SUCCESS;
++}
++
++static unsigned int calculate_slab_priority(struct vdo_slab *slab)
++{
++	block_count_t free_blocks = slab->free_blocks;
++	unsigned int unopened_slab_priority = slab->allocator->unopened_slab_priority;
++	unsigned int priority;
++
++	/*
++	 * Wholly full slabs must be the only ones with lowest priority, 0.
++	 *
++	 * Slabs that have never been opened (empty, newly initialized, and never been written to)
++	 * have lower priority than previously opened slabs that have a significant number of free
++	 * blocks. This ranking causes VDO to avoid writing physical blocks for the first time
++	 * unless there are very few free blocks that have been previously written to.
++	 *
++	 * Since VDO doesn't discard blocks currently, reusing previously written blocks makes VDO
++	 * a better client of any underlying storage that is thinly-provisioned (though discarding
++	 * would be better).
++	 *
++	 * For all other slabs, the priority is derived from the logarithm of the number of free
++	 * blocks. Slabs with the same order of magnitude of free blocks have the same priority.
++	 * With 2^23 blocks, the priority will range from 1 to 25. The reserved
++	 * unopened_slab_priority divides the range and is skipped by the logarithmic mapping.
++	 */
++
++	if (free_blocks == 0)
++		return 0;
++
++	if (is_slab_journal_blank(slab))
++		return unopened_slab_priority;
++
++	priority = (1 + ilog2(free_blocks));
++	return ((priority < unopened_slab_priority) ? priority : priority + 1);
 +}
 +
 +/*
-+ * Reserve the next read queue entry for processing, but do not actually remove it from the queue.
-+ * Must be followed by release_queued_requests().
++ * Slabs are essentially prioritized by an approximation of the number of free blocks in the slab
++ * so slabs with lots of free blocks with be opened for allocation before slabs that have few free
++ * blocks.
 + */
-+static struct queued_read *reserve_read_queue_entry(struct page_cache *cache)
++static void prioritize_slab(struct vdo_slab *slab)
 +{
-+	/* We hold the read_threads_mutex. */
-+	struct queued_read *entry;
-+	u16 index_value;
-+	bool queued;
-+
-+	/* No items to dequeue */
-+	if (cache->read_queue_next_read == cache->read_queue_last)
-+		return NULL;
-+
-+	entry = &cache->read_queue[cache->read_queue_next_read];
-+	index_value = cache->index[entry->physical_page];
-+	queued = (index_value & VOLUME_CACHE_QUEUED_FLAG) != 0;
-+	/* Check to see if it's still queued before resetting. */
-+	if (entry->invalid && queued)
-+		WRITE_ONCE(cache->index[entry->physical_page], cache->cache_slots);
-+
-+	/*
-+	 * If a synchronous read has taken this page, set invalid to true so it doesn't get
-+	 * overwritten. Requests will just be requeued.
-+	 */
-+	if (!queued)
-+		entry->invalid = true;
-+
-+	entry->reserved = true;
-+	advance_queue_position(&cache->read_queue_next_read);
-+	return entry;
++	ASSERT_LOG_ONLY(list_empty(&slab->allocq_entry),
++			"a slab must not already be on a ring when prioritizing");
++	slab->priority = calculate_slab_priority(slab);
++	vdo_priority_table_enqueue(slab->allocator->prioritized_slabs,
++				   slab->priority,
++				   &slab->allocq_entry);
 +}
 +
-+static inline struct queued_read *wait_to_reserve_read_queue_entry(struct volume *volume)
++/**
++ * adjust_free_block_count() - Adjust the free block count and (if needed) reprioritize the slab.
++ * @increment: should be true if the free block count went up.
++ */
++static void adjust_free_block_count(struct vdo_slab *slab, bool increment)
 +{
-+	struct queued_read *queue_entry = NULL;
++	struct block_allocator *allocator = slab->allocator;
 +
-+	while (!volume->read_threads_exiting) {
-+		queue_entry = reserve_read_queue_entry(&volume->page_cache);
-+		if (queue_entry != NULL)
-+			break;
++	WRITE_ONCE(allocator->allocated_blocks,
++		   allocator->allocated_blocks + (increment ? -1 : 1));
 +
-+		uds_wait_cond(&volume->read_threads_cond, &volume->read_threads_mutex);
++	/* The open slab doesn't need to be reprioritized until it is closed. */
++	if (slab == allocator->open_slab)
++		return;
++
++	/* Don't bother adjusting the priority table if unneeded. */
++	if (slab->priority == calculate_slab_priority(slab))
++		return;
++
++	/*
++	 * Reprioritize the slab to reflect the new free block count by removing it from the table
++	 * and re-enqueuing it with the new priority.
++	 */
++	vdo_priority_table_remove(allocator->prioritized_slabs, &slab->allocq_entry);
++	prioritize_slab(slab);
++}
++
++/**
++ * increment_for_data() - Increment the reference count for a data block.
++ * @slab: The slab which owns the block.
++ * @block: The reference block which contains the block being updated.
++ * @block_number: The block to update.
++ * @old_status: The reference status of the data block before this increment.
++ * @lock: The pbn_lock associated with this increment (may be NULL).
++ * @counter_ptr: A pointer to the count for the data block (in, out).
++ * @adjust_block_count: Whether to update the allocator's free block count.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int increment_for_data(struct vdo_slab *slab,
++			      struct reference_block *block,
++			      slab_block_number block_number,
++			      enum reference_status old_status,
++			      struct pbn_lock *lock,
++			      vdo_refcount_t *counter_ptr,
++			      bool adjust_block_count)
++{
++	switch (old_status) {
++	case RS_FREE:
++		*counter_ptr = 1;
++		block->allocated_count++;
++		slab->free_blocks--;
++		if (adjust_block_count)
++			adjust_free_block_count(slab, false);
++
++		break;
++
++	case RS_PROVISIONAL:
++		*counter_ptr = 1;
++		break;
++
++	default:
++		/* Single or shared */
++		if (*counter_ptr >= MAXIMUM_REFERENCE_COUNT)
++			return uds_log_error_strerror(VDO_REF_COUNT_INVALID,
++						      "Incrementing a block already having 254 references (slab %u, offset %u)",
++						      slab->slab_number,
++						      block_number);
++		(*counter_ptr)++;
 +	}
 +
-+	return queue_entry;
++	if (lock != NULL)
++		vdo_unassign_pbn_lock_provisional_reference(lock);
++	return VDO_SUCCESS;
 +}
 +
-+static int init_chapter_index_page(const struct volume *volume,
-+				   u8 *index_page,
-+				   u32 chapter,
-+				   u32 index_page_number,
-+				   struct delta_index_page *chapter_index_page)
++/**
++ * decrement_for_data() - Decrement the reference count for a data block.
++ * @slab: The slab which owns the block.
++ * @block: The reference block which contains the block being updated.
++ * @block_number: The block to update.
++ * @old_status: The reference status of the data block before this decrement.
++ * @updater: The reference updater doing this operation in case we need to look up the pbn lock.
++ * @lock: The pbn_lock associated with the block being decremented (may be NULL).
++ * @counter_ptr: A pointer to the count for the data block (in, out).
++ * @adjust_block_count: Whether to update the allocator's free block count.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int decrement_for_data(struct vdo_slab *slab,
++			      struct reference_block *block,
++			      slab_block_number block_number,
++			      enum reference_status old_status,
++			      struct reference_updater *updater,
++			      vdo_refcount_t *counter_ptr,
++			      bool adjust_block_count)
 +{
-+	u64 ci_virtual;
-+	u32 ci_chapter;
-+	u32 lowest_list;
-+	u32 highest_list;
-+	struct geometry *geometry = volume->geometry;
++	switch (old_status) {
++	case RS_FREE:
++		return uds_log_error_strerror(VDO_REF_COUNT_INVALID,
++					      "Decrementing free block at offset %u in slab %u",
++					      block_number,
++					      slab->slab_number);
++
++	case RS_PROVISIONAL:
++	case RS_SINGLE:
++		if (updater->zpbn.zone != NULL) {
++			struct pbn_lock *lock = vdo_get_physical_zone_pbn_lock(updater->zpbn.zone,
++									       updater->zpbn.pbn);
++
++			if (lock != NULL) {
++				/*
++				 * There is a read lock on this block, so the block must not become
++				 * unreferenced.
++				 */
++				*counter_ptr = PROVISIONAL_REFERENCE_COUNT;
++				vdo_assign_pbn_lock_provisional_reference(lock);
++				break;
++			}
++		}
++
++		*counter_ptr = EMPTY_REFERENCE_COUNT;
++		block->allocated_count--;
++		slab->free_blocks++;
++		if (adjust_block_count)
++			adjust_free_block_count(slab, true);
++
++		break;
++
++	default:
++		/* Shared */
++		(*counter_ptr)--;
++	}
++
++	return VDO_SUCCESS;
++}
++
++/**
++ * increment_for_block_map() - Increment the reference count for a block map page.
++ * @slab: The slab which owns the block.
++ * @block: The reference block which contains the block being updated.
++ * @block_number: The block to update.
++ * @old_status: The reference status of the block before this increment.
++ * @lock: The pbn_lock associated with this increment (may be NULL).
++ * @normal_operation: Whether we are in normal operation vs. recovery or rebuild.
++ * @counter_ptr: A pointer to the count for the block (in, out).
++ * @adjust_block_count: Whether to update the allocator's free block count.
++ *
++ * All block map increments should be from provisional to MAXIMUM_REFERENCE_COUNT. Since block map
++ * blocks never dedupe they should never be adjusted from any other state. The adjustment always
++ * results in MAXIMUM_REFERENCE_COUNT as this value is used to prevent dedupe against block map
++ * blocks.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int increment_for_block_map(struct vdo_slab *slab,
++				   struct reference_block *block,
++				   slab_block_number block_number,
++				   enum reference_status old_status,
++				   struct pbn_lock *lock,
++				   bool normal_operation,
++				   vdo_refcount_t *counter_ptr,
++				   bool adjust_block_count)
++{
++	switch (old_status) {
++	case RS_FREE:
++		if (normal_operation)
++			return uds_log_error_strerror(VDO_REF_COUNT_INVALID,
++						      "Incrementing unallocated block map block (slab %u, offset %u)",
++						      slab->slab_number,
++						      block_number);
++
++		*counter_ptr = MAXIMUM_REFERENCE_COUNT;
++		block->allocated_count++;
++		slab->free_blocks--;
++		if (adjust_block_count)
++			adjust_free_block_count(slab, false);
++
++		return VDO_SUCCESS;
++
++	case RS_PROVISIONAL:
++		if (!normal_operation)
++			return uds_log_error_strerror(VDO_REF_COUNT_INVALID,
++						      "Block map block had provisional reference during replay (slab %u, offset %u)",
++						      slab->slab_number,
++						      block_number);
++
++		*counter_ptr = MAXIMUM_REFERENCE_COUNT;
++		if (lock != NULL)
++			vdo_unassign_pbn_lock_provisional_reference(lock);
++		return VDO_SUCCESS;
++
++	default:
++		return uds_log_error_strerror(VDO_REF_COUNT_INVALID,
++					      "Incrementing a block map block which is already referenced %u times (slab %u, offset %u)",
++					      *counter_ptr,
++					      slab->slab_number,
++					      block_number);
++	}
++}
++
++static bool __must_check is_valid_journal_point(const struct journal_point *point)
++{
++	return ((point != NULL) && (point->sequence_number > 0));
++}
++
++/**
++ * update_reference_count() - Update the reference count of a block.
++ * @slab: The slab which owns the block.
++ * @block: The reference block which contains the block being updated.
++ * @block_number: The block to update.
++ * @slab_journal_point: The slab journal point at which this update is journaled.
++ * @updater: The reference updater.
++ * @normal_operation: Whether we are in normal operation vs. recovery or rebuild.
++ * @adjust_block_count: Whether to update the slab's free block count.
++ * @provisional_decrement_ptr: A pointer which will be set to true if this update was a decrement
++ *                             of a provisional reference.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int
++update_reference_count(struct vdo_slab *slab,
++		       struct reference_block *block,
++		       slab_block_number block_number,
++		       const struct journal_point *slab_journal_point,
++		       struct reference_updater *updater,
++		       bool normal_operation,
++		       bool adjust_block_count,
++		       bool *provisional_decrement_ptr)
++{
++	vdo_refcount_t *counter_ptr = &slab->counters[block_number];
++	enum reference_status old_status = reference_count_to_status(*counter_ptr);
 +	int result;
 +
-+	result = uds_initialize_chapter_index_page(chapter_index_page,
-+						   geometry,
-+						   index_page,
-+						   volume->nonce);
-+	if (volume->lookup_mode == LOOKUP_FOR_REBUILD)
++	if (!updater->increment) {
++		result = decrement_for_data(slab,
++					    block,
++					    block_number,
++					    old_status,
++					    updater,
++					    counter_ptr,
++					    adjust_block_count);
++		if ((result == VDO_SUCCESS) && (old_status == RS_PROVISIONAL)) {
++			if (provisional_decrement_ptr != NULL)
++				*provisional_decrement_ptr = true;
++			return VDO_SUCCESS;
++		}
++	} else if (updater->operation == VDO_JOURNAL_DATA_REMAPPING) {
++		result = increment_for_data(slab,
++					    block,
++					    block_number,
++					    old_status,
++					    updater->lock,
++					    counter_ptr,
++					    adjust_block_count);
++	} else {
++		result = increment_for_block_map(slab,
++						 block,
++						 block_number,
++						 old_status,
++						 updater->lock,
++						 normal_operation,
++						 counter_ptr,
++						 adjust_block_count);
++	}
++
++	if (result != VDO_SUCCESS)
 +		return result;
 +
-+	if (result != UDS_SUCCESS)
-+		return uds_log_error_strerror(result,
-+					      "Reading chapter index page for chapter %u page %u",
-+					      chapter,
-+					      index_page_number);
++	if (is_valid_journal_point(slab_journal_point))
++		slab->slab_journal_point = *slab_journal_point;
 +
-+	uds_get_list_number_bounds(volume->index_page_map,
-+				   chapter,
-+				   index_page_number,
-+				   &lowest_list,
-+				   &highest_list);
-+	ci_virtual = chapter_index_page->virtual_chapter_number;
-+	ci_chapter = uds_map_to_physical_chapter(geometry, ci_virtual);
-+	if ((chapter == ci_chapter) &&
-+	    (lowest_list == chapter_index_page->lowest_list_number) &&
-+	    (highest_list == chapter_index_page->highest_list_number))
-+		return UDS_SUCCESS;
-+
-+	uds_log_warning("Index page map updated to %llu",
-+			(unsigned long long) volume->index_page_map->last_update);
-+	uds_log_warning("Page map expects that chapter %u page %u has range %u to %u, but chapter index page has chapter %llu with range %u to %u",
-+			chapter,
-+			index_page_number,
-+			lowest_list,
-+			highest_list,
-+			(unsigned long long) ci_virtual,
-+			chapter_index_page->lowest_list_number,
-+			chapter_index_page->highest_list_number);
-+	return uds_log_error_strerror(UDS_CORRUPT_DATA,
-+				      "index page map mismatch with chapter index");
++	return VDO_SUCCESS;
 +}
 +
-+static int initialize_index_page(const struct volume *volume,
-+				 u32 physical_page,
-+				 struct cached_page *page)
++static int __must_check
++adjust_reference_count(struct vdo_slab *slab,
++		       struct reference_updater *updater,
++		       const struct journal_point *slab_journal_point)
 +{
-+	u32 chapter = map_to_chapter_number(volume->geometry, physical_page);
-+	u32 index_page_number = map_to_page_number(volume->geometry, physical_page);
++	slab_block_number block_number;
++	int result;
++	struct reference_block *block;
++	bool provisional_decrement = false;
 +
-+	return init_chapter_index_page(volume,
-+				       dm_bufio_get_block_data(page->buffer),
-+				       chapter,
-+				       index_page_number,
-+				       &page->index_page);
-+}
++	if (!is_slab_open(slab))
++		return VDO_INVALID_ADMIN_STATE;
 +
-+static bool
-+search_record_page(const u8 record_page[],
-+		   const struct uds_record_name *name,
-+		   const struct geometry *geometry,
-+		   struct uds_record_data *metadata)
-+{
++	result = slab_block_number_from_pbn(slab, updater->zpbn.pbn, &block_number);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	block = get_reference_block(slab, block_number);
++	result = update_reference_count(slab,
++					block,
++					block_number,
++					slab_journal_point,
++					updater,
++					NORMAL_OPERATION,
++					true,
++					&provisional_decrement);
++	if ((result != VDO_SUCCESS) || provisional_decrement)
++		return result;
++
++	if (block->is_dirty && (block->slab_journal_lock > 0)) {
++		sequence_number_t entry_lock = slab_journal_point->sequence_number;
++		/*
++		 * This block is already dirty and a slab journal entry has been made for it since
++		 * the last time it was clean. We must release the per-entry slab journal lock for
++		 * the entry associated with the update we are now doing.
++		 */
++		result = ASSERT(is_valid_journal_point(slab_journal_point),
++				"Reference count adjustments need slab journal points.");
++		if (result != VDO_SUCCESS)
++			return result;
++
++		adjust_slab_journal_block_reference(&slab->journal, entry_lock, -1);
++		return VDO_SUCCESS;
++	}
++
 +	/*
-+	 * The array of records is sorted by name and stored as a binary tree in heap order, so the
-+	 * root of the tree is the first array element.
++	 * This may be the first time we are applying an update for which there is a slab journal
++	 * entry to this block since the block was cleaned. Therefore, we convert the per-entry
++	 * slab journal lock to an uncommitted reference block lock, if there is a per-entry lock.
 +	 */
-+	u32 node = 0;
-+	const struct uds_volume_record *records = (const struct uds_volume_record *) record_page;
++	if (is_valid_journal_point(slab_journal_point))
++		block->slab_journal_lock = slab_journal_point->sequence_number;
++	else
++		block->slab_journal_lock = 0;
 +
-+	while (node < geometry->records_per_page) {
-+		int result;
-+		const struct uds_volume_record *record = &records[node];
++	dirty_block(block);
++	return VDO_SUCCESS;
++}
 +
-+		result = memcmp(name, &record->name, UDS_RECORD_NAME_SIZE);
-+		if (result == 0) {
-+			if (metadata != NULL)
-+				*metadata = record->data;
++/**
++ * add_entry_from_waiter() - Add an entry to the slab journal.
++ * @waiter: The vio which should make an entry now.
++ * @context: The slab journal to make an entry in.
++ *
++ * This callback is invoked by add_entries() once it has determined that we are ready to make
++ * another entry in the slab journal. Implements waiter_callback.
++ */
++static void add_entry_from_waiter(struct waiter *waiter, void *context)
++{
++	int result;
++	struct reference_updater *updater = container_of(waiter, struct reference_updater, waiter);
++	struct data_vio *data_vio = data_vio_from_reference_updater(updater);
++	struct slab_journal *journal = context;
++	struct slab_journal_block_header *header = &journal->tail_header;
++	struct journal_point slab_journal_point = {
++		.sequence_number = header->sequence_number,
++		.entry_count = header->entry_count,
++	};
++	sequence_number_t recovery_block = data_vio->recovery_journal_point.sequence_number;
++
++	if (header->entry_count == 0) {
++		/*
++		 * This is the first entry in the current tail block, so get a lock on the recovery
++		 * journal which we will hold until this tail block is committed.
++		 */
++		get_lock(journal, header->sequence_number)->recovery_start = recovery_block;
++		if (journal->recovery_journal != NULL) {
++			zone_count_t zone_number = journal->slab->allocator->zone_number;
++
++			vdo_acquire_recovery_journal_block_reference(journal->recovery_journal,
++								     recovery_block,
++								     VDO_ZONE_TYPE_PHYSICAL,
++								     zone_number);
++		}
++
++		mark_slab_journal_dirty(journal, recovery_block);
++		reclaim_journal_space(journal);
++	}
++
++	add_entry(journal,
++		  updater->zpbn.pbn,
++		  updater->operation,
++		  updater->increment,
++		  expand_journal_point(data_vio->recovery_journal_point, updater->increment));
++
++	if (journal->slab->status != VDO_SLAB_REBUILT) {
++		/*
++		 * If the slab is unrecovered, scrubbing will take care of the count since the
++		 * update is now recorded in the journal.
++		 */
++		adjust_slab_journal_block_reference(journal,
++						    slab_journal_point.sequence_number,
++						    -1);
++		result = VDO_SUCCESS;
++	} else {
++		/* Now that an entry has been made in the slab journal, update the counter. */
++		result = adjust_reference_count(journal->slab, updater, &slab_journal_point);
++	}
++
++	if (updater->increment)
++		continue_data_vio_with_error(data_vio, result);
++	else
++		vdo_continue_completion(&data_vio->decrement_completion, result);
++}
++
++/**
++ * is_next_entry_a_block_map_increment() - Check whether the next entry to be made is a block map
++ *                                         increment.
++ * @journal: The journal.
++ *
++ * Return: true if the first entry waiter's operation is a block map increment.
++ */
++static inline bool is_next_entry_a_block_map_increment(struct slab_journal *journal)
++{
++	struct waiter *waiter = vdo_get_first_waiter(&journal->entry_waiters);
++	struct reference_updater *updater = container_of(waiter, struct reference_updater, waiter);
++
++	return (updater->operation == VDO_JOURNAL_BLOCK_MAP_REMAPPING);
++}
++
++/**
++ * add_entries() - Add as many entries as possible from the queue of vios waiting to make entries.
++ * @journal: The journal to which entries may be added.
++ *
++ * By processing the queue in order, we ensure that slab journal entries are made in the same order
++ * as recovery journal entries for the same increment or decrement.
++ */
++static void add_entries(struct slab_journal *journal)
++{
++	if (journal->adding_entries)
++		/* Protect against re-entrancy. */
++		return;
++
++	journal->adding_entries = true;
++	while (vdo_has_waiters(&journal->entry_waiters)) {
++		struct slab_journal_block_header *header = &journal->tail_header;
++
++		if (journal->partial_write_in_progress ||
++		    (journal->slab->status == VDO_SLAB_REBUILDING))
++			/*
++			 * Don't add entries while rebuilding or while a partial write is
++			 * outstanding (VDO-2399).
++			 */
++			break;
++
++		if (journal->waiting_to_commit) {
++			/*
++			 * If we are waiting for resources to write the tail block, and the tail
++			 * block is full, we can't make another entry.
++			 */
++			WRITE_ONCE(journal->events->tail_busy_count,
++				   journal->events->tail_busy_count + 1);
++			break;
++		} else if (is_next_entry_a_block_map_increment(journal) &&
++			   (header->entry_count >= journal->full_entries_per_block)) {
++			/*
++			 * The tail block does not have room for a block map increment, so commit
++			 * it now.
++			 */
++			commit_tail(journal);
++			if (journal->waiting_to_commit) {
++				WRITE_ONCE(journal->events->tail_busy_count,
++					   journal->events->tail_busy_count + 1);
++				break;
++			}
++		}
++
++		/* If the slab is over the blocking threshold, make the vio wait. */
++		if (requires_reaping(journal)) {
++			WRITE_ONCE(journal->events->blocked_count,
++				   journal->events->blocked_count + 1);
++			save_dirty_reference_blocks(journal->slab);
++			break;
++		}
++
++		if (header->entry_count == 0) {
++			struct journal_lock *lock = get_lock(journal, header->sequence_number);
++
++			/*
++			 * Check if the on disk slab journal is full. Because of the blocking and
++			 * scrubbing thresholds, this should never happen.
++			 */
++			if (lock->count > 0) {
++				ASSERT_LOG_ONLY((journal->head + journal->size) == journal->tail,
++						"New block has locks, but journal is not full");
++
++				/*
++				 * The blocking threshold must let the journal fill up if the new
++				 * block has locks; if the blocking threshold is smaller than the
++				 * journal size, the new block cannot possibly have locks already.
++				 */
++				ASSERT_LOG_ONLY((journal->blocking_threshold >= journal->size),
++						"New block can have locks already iff blocking threshold is at the end of the journal");
++
++				WRITE_ONCE(journal->events->disk_full_count,
++					   journal->events->disk_full_count + 1);
++				save_dirty_reference_blocks(journal->slab);
++				break;
++			}
++
++			/*
++			 * Don't allow the new block to be reaped until all of the reference count
++			 * blocks are written and the journal block has been fully committed as
++			 * well.
++			 */
++			lock->count = journal->entries_per_block + 1;
++
++			if (header->sequence_number == 1) {
++				struct vdo_slab *slab = journal->slab;
++				block_count_t i;
++
++				/*
++				 * This is the first entry in this slab journal, ever. Dirty all of
++				 * the reference count blocks. Each will acquire a lock on the tail
++				 * block so that the journal won't be reaped until the reference
++				 * counts are initialized. The lock acquisition must be done by the
++				 * ref_counts since here we don't know how many reference blocks
++				 * the ref_counts has.
++				 */
++				for (i = 0; i < slab->reference_block_count; i++) {
++					slab->reference_blocks[i].slab_journal_lock = 1;
++					dirty_block(&slab->reference_blocks[i]);
++				}
++
++				adjust_slab_journal_block_reference(journal,
++								    1,
++								    slab->reference_block_count);
++			}
++		}
++
++		vdo_notify_next_waiter(&journal->entry_waiters, add_entry_from_waiter, journal);
++	}
++
++	journal->adding_entries = false;
++
++	/* If there are no waiters, and we are flushing or saving, commit the tail block. */
++	if (vdo_is_state_draining(&journal->slab->state) &&
++	    !vdo_is_state_suspending(&journal->slab->state) &&
++	    !vdo_has_waiters(&journal->entry_waiters))
++		commit_tail(journal);
++}
++
++/**
++ * reset_search_cursor() - Reset the free block search back to the first reference counter in the
++ *                         first reference block of a slab.
++ */
++static void reset_search_cursor(struct vdo_slab *slab)
++{
++	struct search_cursor *cursor = &slab->search_cursor;
++
++	cursor->block = cursor->first_block;
++	cursor->index = 0;
++	/* Unit tests have slabs with only one reference block (and it's a runt). */
++	cursor->end_index = min_t(u32, COUNTS_PER_BLOCK, slab->block_count);
++}
++
++/**
++ * advance_search_cursor() - Advance the search cursor to the start of the next reference block in
++ *                           a slab,
++ *
++ * Wraps around to the first reference block if the current block is the last reference block.
++ *
++ * Return: true unless the cursor was at the last reference block.
++ */
++static bool advance_search_cursor(struct vdo_slab *slab)
++{
++	struct search_cursor *cursor = &slab->search_cursor;
++
++	/*
++	 * If we just finished searching the last reference block, then wrap back around to the
++	 * start of the array.
++	 */
++	if (cursor->block == cursor->last_block) {
++		reset_search_cursor(slab);
++		return false;
++	}
++
++	/* We're not already at the end, so advance to cursor to the next block. */
++	cursor->block++;
++	cursor->index = cursor->end_index;
++
++	if (cursor->block == cursor->last_block)
++		/* The last reference block will usually be a runt. */
++		cursor->end_index = slab->block_count;
++	else
++		cursor->end_index += COUNTS_PER_BLOCK;
++	return true;
++}
++
++/**
++ * replay_reference_count_change() - Replay the reference count adjustment from a slab journal
++ *                                   entry into the reference count for a block.
++ * @slab: The slab.
++ * @entry_point: The slab journal point for the entry.
++ * @entry: The slab journal entry being replayed.
++ *
++ * The adjustment will be ignored if it was already recorded in the reference count.
++ *
++ * Return: VDO_SUCCESS or an error code.
++ */
++static int
++replay_reference_count_change(struct vdo_slab *slab,
++			      const struct journal_point *entry_point,
++			      struct slab_journal_entry entry)
++{
++	int result;
++	struct reference_block *block = get_reference_block(slab, entry.sbn);
++	sector_count_t sector = (entry.sbn % COUNTS_PER_BLOCK) / COUNTS_PER_SECTOR;
++	struct reference_updater updater = {
++		.operation = entry.operation,
++		.increment = entry.increment,
++	};
++
++	if (!vdo_before_journal_point(&block->commit_points[sector], entry_point))
++		/* This entry is already reflected in the existing counts, so do nothing. */
++		return VDO_SUCCESS;
++
++	/* This entry is not yet counted in the reference counts. */
++	result = update_reference_count(slab,
++					block,
++					entry.sbn,
++					entry_point,
++					&updater,
++					!NORMAL_OPERATION,
++					false,
++					NULL);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	dirty_block(block);
++	return VDO_SUCCESS;
++}
++
++/**
++ * find_zero_byte_in_word() - Find the array index of the first zero byte in word-sized range of
++ *                            reference counters.
++ * @word_ptr: A pointer to the eight counter bytes to check.
++ * @start_index: The array index corresponding to word_ptr[0].
++ * @fail_index: The array index to return if no zero byte is found.
++ *
++ * The search does no bounds checking; the function relies on the array being sufficiently padded.
++ *
++ * Return: The array index of the first zero byte in the word, or the value passed as fail_index if
++ *         no zero byte was found.
++ */
++static inline slab_block_number
++find_zero_byte_in_word(const u8 *word_ptr,
++		       slab_block_number start_index,
++		       slab_block_number fail_index)
++{
++	u64 word = get_unaligned_le64(word_ptr);
++
++	/* This looks like a loop, but GCC will unroll the eight iterations for us. */
++	unsigned int offset;
++
++	for (offset = 0; offset < BYTES_PER_WORD; offset++) {
++		/* Assumes little-endian byte order, which we have on X86. */
++		if ((word & 0xFF) == 0)
++			return (start_index + offset);
++		word >>= 8;
++	}
++
++	return fail_index;
++}
++
++/**
++ * vdo_find_free_block() - Find the first block with a reference count of zero in the specified
++ *                         range of reference counter indexes.
++ * @slab: The slab counters to scan.
++ * @index_ptr: A pointer to hold the array index of the free block.
++ *
++ * Exposed for unit testing.
++ *
++ * Return: true if a free block was found in the specified range.
++ */
++static bool
++find_free_block(const struct vdo_slab *slab, slab_block_number *index_ptr)
++{
++	slab_block_number zero_index;
++	slab_block_number next_index = slab->search_cursor.index;
++	slab_block_number end_index = slab->search_cursor.end_index;
++	u8 *next_counter = &slab->counters[next_index];
++	u8 *end_counter = &slab->counters[end_index];
++
++	/*
++	 * Search every byte of the first unaligned word. (Array is padded so reading past end is
++	 * safe.)
++	 */
++	zero_index = find_zero_byte_in_word(next_counter, next_index, end_index);
++	if (zero_index < end_index) {
++		*index_ptr = zero_index;
++		return true;
++	}
++
++	/*
++	 * On architectures where unaligned word access is expensive, this would be a good place to
++	 * advance to an alignment boundary.
++	 */
++	next_index += BYTES_PER_WORD;
++	next_counter += BYTES_PER_WORD;
++
++	/*
++	 * Now we're word-aligned; check an word at a time until we find a word containing a zero.
++	 * (Array is padded so reading past end is safe.)
++	 */
++	while (next_counter < end_counter) {
++		/*
++		 * The following code is currently an exact copy of the code preceding the loop,
++		 * but if you try to merge them by using a do loop, it runs slower because a jump
++		 * instruction gets added at the start of the iteration.
++		 */
++		zero_index = find_zero_byte_in_word(next_counter, next_index, end_index);
++		if (zero_index < end_index) {
++			*index_ptr = zero_index;
 +			return true;
 +		}
 +
-+		/* The children of node N are at indexes 2N+1 and 2N+2. */
-+		node = ((2 * node) + ((result < 0) ? 1 : 2));
++		next_index += BYTES_PER_WORD;
++		next_counter += BYTES_PER_WORD;
 +	}
 +
 +	return false;
 +}
 +
-+/*
-+ * If we've read in a record page, we're going to do an immediate search, to speed up processing by
-+ * avoiding get_record_from_zone(), and to ensure that requests make progress even when queued. If
-+ * we've read in an index page, we save the record page number so we don't have to resolve the
-+ * index page again. We use the location, virtual_chapter, and old_metadata fields in the request
-+ * to allow the index code to know where to begin processing the request again.
++/**
++ * search_current_reference_block() - Search the reference block currently saved in the search
++ *                                    cursor for a reference count of zero, starting at the saved
++ *                                    counter index.
++ * @slab: The slab to search.
++ * @free_index_ptr: A pointer to receive the array index of the zero reference count.
++ *
++ * Return: true if an unreferenced counter was found.
 + */
-+static int search_page(struct cached_page *page,
-+		       const struct volume *volume,
-+		       struct uds_request *request,
-+		       u32 physical_page)
++static bool search_current_reference_block(const struct vdo_slab *slab,
++					   slab_block_number *free_index_ptr)
 +{
-+	int result;
-+	enum uds_index_region location;
-+	u16 record_page_number;
-+
-+	if (is_record_page(volume->geometry, physical_page)) {
-+		if (search_record_page(dm_bufio_get_block_data(page->buffer),
-+				       &request->record_name,
-+				       volume->geometry,
-+				       &request->old_metadata))
-+			location = UDS_LOCATION_RECORD_PAGE_LOOKUP;
-+		else
-+			location = UDS_LOCATION_UNAVAILABLE;
-+	} else {
-+		result = uds_search_chapter_index_page(&page->index_page,
-+						       volume->geometry,
-+						       &request->record_name,
-+						       &record_page_number);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		if (record_page_number == NO_CHAPTER_INDEX_ENTRY) {
-+			location = UDS_LOCATION_UNAVAILABLE;
-+		} else {
-+			location = UDS_LOCATION_INDEX_PAGE_LOOKUP;
-+			*((u16 *) &request->old_metadata) = record_page_number;
-+		}
-+	}
-+
-+	request->location = location;
-+	request->found = false;
-+	return UDS_SUCCESS;
++	/* Don't bother searching if the current block is known to be full. */
++	return ((slab->search_cursor.block->allocated_count < COUNTS_PER_BLOCK) &&
++		find_free_block(slab, free_index_ptr));
 +}
 +
-+static int process_entry(struct volume *volume, struct queued_read *entry)
++/**
++ * search_reference_blocks() - Search each reference block for a reference count of zero.
++ * @slab: The slab to search.
++ * @free_index_ptr: A pointer to receive the array index of the zero reference count.
++ *
++ * Searches each reference block for a reference count of zero, starting at the reference block and
++ * counter index saved in the search cursor and searching up to the end of the last reference
++ * block. The search does not wrap.
++ *
++ * Return: true if an unreferenced counter was found.
++ */
++static bool
++search_reference_blocks(struct vdo_slab *slab, slab_block_number *free_index_ptr)
 +{
-+	u32 page_number = entry->physical_page;
-+	struct uds_request *request;
-+	struct cached_page *page = NULL;
-+	u8 *page_data;
-+	int result;
++	/* Start searching at the saved search position in the current block. */
++	if (search_current_reference_block(slab, free_index_ptr))
++		return true;
 +
-+	if (entry->invalid) {
-+		uds_log_debug("Requeuing requests for invalid page");
-+		return UDS_SUCCESS;
-+	}
++	/* Search each reference block up to the end of the slab. */
++	while (advance_search_cursor(slab))
++		if (search_current_reference_block(slab, free_index_ptr))
++			return true;
 +
-+	page = select_victim_in_cache(&volume->page_cache);
-+
-+	uds_unlock_mutex(&volume->read_threads_mutex);
-+	page_data = dm_bufio_read(volume->client, page_number, &page->buffer);
-+	if (IS_ERR(page_data)) {
-+		result = -PTR_ERR(page_data);
-+		uds_log_warning_strerror(result,
-+					 "error reading physical page %u from volume",
-+					 page_number);
-+		cancel_page_in_cache(&volume->page_cache, page_number, page);
-+		return result;
-+	}
-+	uds_lock_mutex(&volume->read_threads_mutex);
-+
-+	if (entry->invalid) {
-+		uds_log_warning("Page %u invalidated after read", page_number);
-+		cancel_page_in_cache(&volume->page_cache, page_number, page);
-+		return UDS_SUCCESS;
-+	}
-+
-+	if (!is_record_page(volume->geometry, page_number)) {
-+		result = initialize_index_page(volume, page_number, page);
-+		if (result != UDS_SUCCESS) {
-+			uds_log_warning("Error initializing chapter index page");
-+			cancel_page_in_cache(&volume->page_cache, page_number, page);
-+			return result;
-+		}
-+	}
-+
-+	result = put_page_in_cache(&volume->page_cache, page_number, page);
-+	if (result != UDS_SUCCESS) {
-+		uds_log_warning("Error putting page %u in cache", page_number);
-+		cancel_page_in_cache(&volume->page_cache, page_number, page);
-+		return result;
-+	}
-+
-+	request = entry->first_request;
-+	while ((request != NULL) && (result == UDS_SUCCESS)) {
-+		result = search_page(page, volume, request, page_number);
-+		request = request->next_request;
-+	}
-+
-+	return result;
++	return false;
 +}
 +
-+static void release_queued_requests(struct volume *volume, struct queued_read *entry, int result)
-+{
-+	struct page_cache *cache = &volume->page_cache;
-+	u16 next_read = cache->read_queue_next_read;
-+	struct uds_request *request;
-+	struct uds_request *next;
-+
-+	for (request = entry->first_request; request != NULL; request = next) {
-+		next = request->next_request;
-+		request->status = result;
-+		request->requeued = true;
-+		uds_enqueue_request(request, STAGE_INDEX);
-+	}
-+
-+	entry->reserved = false;
-+
-+	/* Move the read_queue_first pointer as far as we can. */
-+	while ((cache->read_queue_first != next_read) &&
-+	       (!cache->read_queue[cache->read_queue_first].reserved))
-+		advance_queue_position(&cache->read_queue_first);
-+	uds_broadcast_cond(&volume->read_threads_read_done_cond);
-+}
-+
-+static void read_thread_function(void *arg)
-+{
-+	struct volume *volume = arg;
-+
-+	uds_log_debug("reader starting");
-+	uds_lock_mutex(&volume->read_threads_mutex);
-+	while (true) {
-+		struct queued_read *queue_entry;
-+		int result;
-+
-+		queue_entry = wait_to_reserve_read_queue_entry(volume);
-+		if (volume->read_threads_exiting)
-+			break;
-+
-+		result = process_entry(volume, queue_entry);
-+		release_queued_requests(volume, queue_entry, result);
-+	}
-+	uds_unlock_mutex(&volume->read_threads_mutex);
-+	uds_log_debug("reader done");
-+}
-+
-+static void get_page_and_index(struct page_cache *cache,
-+			       u32 physical_page,
-+			       int *queue_index,
-+			       struct cached_page **page_ptr)
-+{
-+	u16 index_value;
-+	u16 index;
-+	bool queued;
-+
-+	/*
-+	 * ASSERTION: We are either a zone thread holding a search_pending_counter, or we are any
-+	 * thread holding the read_threads_mutex.
-+	 *
-+	 * Holding only a search_pending_counter is the most frequent case.
-+	 */
-+	/*
-+	 * It would be unlikely for the compiler to turn the usage of index_value into two reads of
-+	 * cache->index, but it would be possible and very bad if those reads did not return the
-+	 * same bits.
-+	 */
-+	index_value = READ_ONCE(cache->index[physical_page]);
-+	queued = (index_value & VOLUME_CACHE_QUEUED_FLAG) != 0;
-+	index = index_value & ~VOLUME_CACHE_QUEUED_FLAG;
-+
-+	if (!queued && (index < cache->cache_slots)) {
-+		*page_ptr = &cache->cache[index];
-+		/*
-+		 * We have acquired access to the cached page, but unless we hold the
-+		 * read_threads_mutex, we need a read memory barrier now. The corresponding write
-+		 * memory barrier is in put_page_in_cache().
-+		 */
-+		smp_rmb();
-+	} else {
-+		*page_ptr = NULL;
-+	}
-+
-+	*queue_index = queued ? index : -1;
-+}
-+
++/**
++ * make_provisional_reference() - Do the bookkeeping for making a provisional reference.
++ */
 +static void
-+get_page_from_cache(struct page_cache *cache, u32 physical_page, struct cached_page **page)
++make_provisional_reference(struct vdo_slab *slab, slab_block_number block_number)
 +{
-+	/*
-+	 * ASSERTION: We are in a zone thread.
-+	 * ASSERTION: We holding a search_pending_counter or the read_threads_mutex.
-+	 */
-+	int queue_index = -1;
++	struct reference_block *block = get_reference_block(slab, block_number);
 +
-+	get_page_and_index(cache, physical_page, &queue_index, page);
++	/*
++	 * Make the initial transition from an unreferenced block to a
++	 * provisionally allocated block.
++	 */
++	slab->counters[block_number] = PROVISIONAL_REFERENCE_COUNT;
++
++	/* Account for the allocation. */
++	block->allocated_count++;
++	slab->free_blocks--;
 +}
 +
-+static int read_page_locked(struct volume *volume,
-+			    u32 physical_page,
-+			    struct cached_page **page_ptr)
++/**
++ * dirty_all_reference_blocks() - Mark all reference count blocks in a slab as dirty.
++ */
++static void dirty_all_reference_blocks(struct vdo_slab *slab)
 +{
-+	int result = UDS_SUCCESS;
-+	struct cached_page *page = NULL;
-+	u8 *page_data;
++	block_count_t i;
 +
-+	page = select_victim_in_cache(&volume->page_cache);
-+	page_data = dm_bufio_read(volume->client, physical_page, &page->buffer);
-+	if (IS_ERR(page_data)) {
-+		result = -PTR_ERR(page_data);
-+		uds_log_warning_strerror(result,
-+					 "error reading physical page %u from volume",
-+					 physical_page);
-+		cancel_page_in_cache(&volume->page_cache, physical_page, page);
-+		return result;
++	for (i = 0; i < slab->reference_block_count; i++)
++		dirty_block(&slab->reference_blocks[i]);
++}
++
++/**
++ * clear_provisional_references() - Clear the provisional reference counts from a reference block.
++ * @block: The block to clear.
++ */
++static void clear_provisional_references(struct reference_block *block)
++{
++	vdo_refcount_t *counters = get_reference_counters_for_block(block);
++	block_count_t j;
++
++	for (j = 0; j < COUNTS_PER_BLOCK; j++) {
++		if (counters[j] == PROVISIONAL_REFERENCE_COUNT) {
++			counters[j] = EMPTY_REFERENCE_COUNT;
++			block->allocated_count--;
++		}
 +	}
++}
 +
-+	if (!is_record_page(volume->geometry, physical_page)) {
-+		result = initialize_index_page(volume, physical_page, page);
-+		if (result != UDS_SUCCESS) {
-+			if (volume->lookup_mode != LOOKUP_FOR_REBUILD)
-+				uds_log_warning("Corrupt index page %u", physical_page);
-+			cancel_page_in_cache(&volume->page_cache, physical_page, page);
-+			return result;
++static inline bool journal_points_equal(struct journal_point first, struct journal_point second)
++{
++	return ((first.sequence_number == second.sequence_number) &&
++		(first.entry_count == second.entry_count));
++}
++
++/**
++ * unpack_reference_block() - Unpack reference counts blocks into the internal memory structure.
++ * @packed: The written reference block to be unpacked.
++ * @block: The internal reference block to be loaded.
++ */
++static void
++unpack_reference_block(struct packed_reference_block *packed, struct reference_block *block)
++{
++	block_count_t index;
++	sector_count_t i;
++	struct vdo_slab *slab = block->slab;
++	vdo_refcount_t *counters = get_reference_counters_for_block(block);
++
++	for (i = 0; i < VDO_SECTORS_PER_BLOCK; i++) {
++		struct packed_reference_sector *sector = &packed->sectors[i];
++
++		vdo_unpack_journal_point(&sector->commit_point, &block->commit_points[i]);
++		memcpy(counters + (i * COUNTS_PER_SECTOR),
++		       sector->counts,
++		       (sizeof(vdo_refcount_t) * COUNTS_PER_SECTOR));
++		/* The slab_journal_point must be the latest point found in any sector. */
++		if (vdo_before_journal_point(&slab->slab_journal_point, &block->commit_points[i]))
++			slab->slab_journal_point = block->commit_points[i];
++
++		if ((i > 0) &&
++		    !journal_points_equal(block->commit_points[0], block->commit_points[i])) {
++			size_t block_index = block - block->slab->reference_blocks;
++
++			uds_log_warning("Torn write detected in sector %u of reference block %zu of slab %u",
++					i,
++					block_index,
++					block->slab->slab_number);
 +		}
 +	}
 +
-+	result = put_page_in_cache(&volume->page_cache, physical_page, page);
-+	if (result != UDS_SUCCESS) {
-+		uds_log_warning("Error putting page %u in cache", physical_page);
-+		cancel_page_in_cache(&volume->page_cache, physical_page, page);
-+		return result;
-+	}
-+
-+	*page_ptr = page;
-+	return UDS_SUCCESS;
++	block->allocated_count = 0;
++	for (index = 0; index < COUNTS_PER_BLOCK; index++)
++		if (counters[index] != EMPTY_REFERENCE_COUNT)
++			block->allocated_count++;
 +}
 +
-+/* Retrieve a page from the cache while holding the read threads mutex. */
-+static int
-+get_volume_page_locked(struct volume *volume, u32 physical_page, struct cached_page **page_ptr)
++/**
++ * finish_reference_block_load() - After a reference block has been read, unpack it.
++ * @completion: The VIO that just finished reading.
++ */
++static void finish_reference_block_load(struct vdo_completion *completion)
 +{
-+	int result;
-+	struct cached_page *page = NULL;
++	struct vio *vio = as_vio(completion);
++	struct pooled_vio *pooled = vio_as_pooled_vio(vio);
++	struct reference_block *block = completion->parent;
++	struct vdo_slab *slab = block->slab;
 +
-+	get_page_from_cache(&volume->page_cache, physical_page, &page);
-+	if (page == NULL) {
-+		result = read_page_locked(volume, physical_page, &page);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	} else {
-+		make_page_most_recent(&volume->page_cache, page);
-+	}
++	unpack_reference_block((struct packed_reference_block *) vio->data, block);
++	return_vio_to_pool(slab->allocator->vio_pool, pooled);
++	slab->active_count--;
++	clear_provisional_references(block);
 +
-+	*page_ptr = page;
-+	return UDS_SUCCESS;
++	slab->free_blocks -= block->allocated_count;
++	check_if_slab_drained(slab);
 +}
 +
-+/* Retrieve a page from the cache while holding a search_pending lock. */
-+static int
-+get_volume_page_protected(struct volume *volume,
-+			  struct uds_request *request,
-+			  u32 physical_page,
-+			  struct cached_page **page_ptr)
++static void load_reference_block_endio(struct bio *bio)
 +{
-+	struct cached_page *page;
++	struct vio *vio = bio->bi_private;
++	struct reference_block *block = vio->completion.parent;
 +
-+	get_page_from_cache(&volume->page_cache, physical_page, &page);
-+	if (page != NULL) {
-+		if (request->zone_number == 0)
-+			/* Only one zone is allowed to update the LRU. */
-+			make_page_most_recent(&volume->page_cache, page);
++	continue_vio_after_io(vio, finish_reference_block_load, block->slab->allocator->thread_id);
++}
 +
-+		*page_ptr = page;
-+		return UDS_SUCCESS;
++/**
++ * load_reference_block() - After a block waiter has gotten a VIO from the VIO pool, load the
++ *                          block.
++ * @waiter: The waiter of the block to load.
++ * @context: The VIO returned by the pool.
++ */
++static void load_reference_block(struct waiter *waiter, void *context)
++{
++	struct pooled_vio *pooled = context;
++	struct vio *vio = &pooled->vio;
++	struct reference_block *block = container_of(waiter, struct reference_block, waiter);
++	size_t block_offset = (block - block->slab->reference_blocks);
++
++	vio->completion.parent = block;
++	submit_metadata_vio(vio,
++			    block->slab->ref_counts_origin + block_offset,
++			    load_reference_block_endio,
++			    handle_io_error,
++			    REQ_OP_READ);
++}
++
++/**
++ * load_reference_blocks() - Load a slab's reference blocks from the underlying storage into a
++ *                           pre-allocated reference counter.
++ */
++static void load_reference_blocks(struct vdo_slab *slab)
++{
++	block_count_t i;
++
++	slab->free_blocks = slab->block_count;
++	slab->active_count = slab->reference_block_count;
++	for (i = 0; i < slab->reference_block_count; i++) {
++		struct waiter *waiter = &slab->reference_blocks[i].waiter;
++
++		waiter->callback = load_reference_block;
++		acquire_vio_from_pool(slab->allocator->vio_pool, waiter);
 +	}
++}
 +
-+	/* Prepare to enqueue a read for the page. */
-+	end_pending_search(&volume->page_cache, request->zone_number);
-+	uds_lock_mutex(&volume->read_threads_mutex);
++/**
++ * drain_slab() - Drain all reference count I/O.
++ *
++ * Depending upon the type of drain being performed (as recorded in the ref_count's vdo_slab), the
++ * reference blocks may be loaded from disk or dirty reference blocks may be written out.
++ */
++static void drain_slab(struct vdo_slab *slab)
++{
++	bool save;
++	bool load;
++	const struct admin_state_code *state = vdo_get_admin_state_code(&slab->state);
 +
-+	/*
-+	 * Do the lookup again while holding the read mutex (no longer the fast case so this should
-+	 * be fine to repeat). We need to do this because a page may have been added to the cache
-+	 * by a reader thread between the time we searched above and the time we went to actually
-+	 * try to enqueue it below. This could result in us enqueuing another read for a page which
-+	 * is already in the cache, which would mean we end up with two entries in the cache for
-+	 * the same page.
-+	 */
-+	get_page_from_cache(&volume->page_cache, physical_page, &page);
-+	if (page == NULL) {
-+		enqueue_page_read(volume, request, physical_page);
++	if (state == VDO_ADMIN_STATE_SUSPENDING)
++		return;
++
++	if ((state != VDO_ADMIN_STATE_REBUILDING) && (state != VDO_ADMIN_STATE_SAVE_FOR_SCRUBBING))
++		commit_tail(&slab->journal);
++
++	if ((state == VDO_ADMIN_STATE_RECOVERING) || (slab->counters == NULL))
++		return;
++
++	save = false;
++	load = slab->allocator->summary_entries[slab->slab_number].load_ref_counts;
++	if (state == VDO_ADMIN_STATE_SCRUBBING) {
++		if (load) {
++			load_reference_blocks(slab);
++			return;
++		}
++	} else if (state == VDO_ADMIN_STATE_SAVE_FOR_SCRUBBING) {
++		if (!load)
++			/* These reference counts were never written, so mark them all dirty. */
++			dirty_all_reference_blocks(slab);
++
++		save = true;
++	} else if (state == VDO_ADMIN_STATE_REBUILDING) {
 +		/*
-+		 * The performance gain from unlocking first, while "search pending" mode is off,
-+		 * turns out to be significant in some cases. The page is not available yet so
-+		 * the order does not matter for correctness as it does below.
++		 * Write out the counters if the slab has written them before, or it has any
++		 * non-zero reference counts, or there are any slab journal blocks.
 +		 */
-+		uds_unlock_mutex(&volume->read_threads_mutex);
-+		begin_pending_search(&volume->page_cache, physical_page, request->zone_number);
-+		return UDS_QUEUED;
-+	}
++		block_count_t data_blocks = slab->allocator->depot->slab_config.data_blocks;
 +
-+	/*
-+	 * Now that the page is loaded, the volume needs to switch to "reader thread unlocked" and
-+	 * "search pending" state in careful order so no other thread can mess with the data before
-+	 * the caller gets to look at it.
-+	 */
-+	begin_pending_search(&volume->page_cache, physical_page, request->zone_number);
-+	uds_unlock_mutex(&volume->read_threads_mutex);
-+	*page_ptr = page;
-+	return UDS_SUCCESS;
-+}
-+
-+static int get_volume_page(struct volume *volume,
-+			   u32 chapter,
-+			   u32 page_number,
-+			   struct cached_page **page_ptr)
-+{
-+	int result;
-+	u32 physical_page = map_to_physical_page(volume->geometry, chapter, page_number);
-+
-+	uds_lock_mutex(&volume->read_threads_mutex);
-+	result = get_volume_page_locked(volume, physical_page, page_ptr);
-+	uds_unlock_mutex(&volume->read_threads_mutex);
-+	return result;
-+}
-+
-+int uds_get_volume_record_page(struct volume *volume, u32 chapter, u32 page_number, u8 **data_ptr)
-+{
-+	int result;
-+	struct cached_page *page = NULL;
-+
-+	result = get_volume_page(volume, chapter, page_number, &page);
-+	if (result == UDS_SUCCESS)
-+		*data_ptr = dm_bufio_get_block_data(page->buffer);
-+	return result;
-+}
-+
-+int uds_get_volume_index_page(struct volume *volume,
-+			      u32 chapter,
-+			      u32 page_number,
-+			      struct delta_index_page **index_page_ptr)
-+{
-+	int result;
-+	struct cached_page *page = NULL;
-+
-+	result = get_volume_page(volume, chapter, page_number, &page);
-+	if (result == UDS_SUCCESS)
-+		*index_page_ptr = &page->index_page;
-+	return result;
-+}
-+
-+/*
-+ * Find the record page associated with a name in a given index page. This will return UDS_QUEUED
-+ * if the page in question must be read from storage.
-+ */
-+static int search_cached_index_page(struct volume *volume,
-+				    struct uds_request *request,
-+				    u32 chapter,
-+				    u32 index_page_number,
-+				    u16 *record_page_number)
-+{
-+	int result;
-+	struct cached_page *page = NULL;
-+	u32 physical_page = map_to_physical_page(volume->geometry, chapter, index_page_number);
-+
-+	/*
-+	 * Make sure the invalidate counter is updated before we try and read the mapping. This
-+	 * prevents this thread from reading a page in the cache which has already been marked for
-+	 * invalidation by the reader thread, before the reader thread has noticed that the
-+	 * invalidate_counter has been incremented.
-+	 */
-+	begin_pending_search(&volume->page_cache, physical_page, request->zone_number);
-+
-+	result = get_volume_page_protected(volume, request, physical_page, &page);
-+	if (result != UDS_SUCCESS) {
-+		end_pending_search(&volume->page_cache, request->zone_number);
-+		return result;
-+	}
-+
-+	result = uds_search_chapter_index_page(&page->index_page,
-+					       volume->geometry,
-+					       &request->record_name,
-+					       record_page_number);
-+	end_pending_search(&volume->page_cache, request->zone_number);
-+	return result;
-+}
-+
-+/*
-+ * Find the metadata associated with a name in a given record page. This will return UDS_QUEUED if
-+ * the page in question must be read from storage.
-+ */
-+int uds_search_cached_record_page(struct volume *volume,
-+				  struct uds_request *request,
-+				  u32 chapter,
-+				  u16 record_page_number,
-+				  bool *found)
-+{
-+	struct cached_page *record_page;
-+	struct geometry *geometry = volume->geometry;
-+	int result;
-+	u32 physical_page, page_number;
-+
-+	*found = false;
-+	if (record_page_number == NO_CHAPTER_INDEX_ENTRY)
-+		return UDS_SUCCESS;
-+
-+	result = ASSERT(record_page_number < geometry->record_pages_per_chapter,
-+			"0 <= %d < %u",
-+			record_page_number,
-+			geometry->record_pages_per_chapter);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	page_number = geometry->index_pages_per_chapter + record_page_number;
-+
-+	physical_page = map_to_physical_page(volume->geometry, chapter, page_number);
-+
-+	/*
-+	 * Make sure the invalidate counter is updated before we try and read the mapping. This
-+	 * prevents this thread from reading a page in the cache which has already been marked for
-+	 * invalidation by the reader thread, before the reader thread has noticed that the
-+	 * invalidate_counter has been incremented.
-+	 */
-+	begin_pending_search(&volume->page_cache, physical_page, request->zone_number);
-+
-+	result = get_volume_page_protected(volume, request, physical_page, &record_page);
-+	if (result != UDS_SUCCESS) {
-+		end_pending_search(&volume->page_cache, request->zone_number);
-+		return result;
-+	}
-+
-+	if (search_record_page(dm_bufio_get_block_data(record_page->buffer),
-+			       &request->record_name,
-+			       geometry,
-+			       &request->old_metadata))
-+		*found = true;
-+
-+	end_pending_search(&volume->page_cache, request->zone_number);
-+	return UDS_SUCCESS;
-+}
-+
-+void uds_prefetch_volume_chapter(const struct volume *volume, u32 chapter)
-+{
-+	const struct geometry *geometry = volume->geometry;
-+	u32 physical_page = map_to_physical_page(geometry, chapter, 0);
-+
-+	dm_bufio_prefetch(volume->client, physical_page, geometry->pages_per_chapter);
-+}
-+
-+int uds_read_chapter_index_from_volume(const struct volume *volume,
-+				       u64 virtual_chapter,
-+				       struct dm_buffer *volume_buffers[],
-+				       struct delta_index_page index_pages[])
-+{
-+	int result;
-+	u32 i;
-+	const struct geometry *geometry = volume->geometry;
-+	u32 physical_chapter = uds_map_to_physical_chapter(geometry, virtual_chapter);
-+	u32 physical_page = map_to_physical_page(geometry, physical_chapter, 0);
-+
-+	dm_bufio_prefetch(volume->client, physical_page, geometry->index_pages_per_chapter);
-+	for (i = 0; i < geometry->index_pages_per_chapter; i++) {
-+		u8 *index_page;
-+
-+		index_page = dm_bufio_read(volume->client, physical_page + i, &volume_buffers[i]);
-+		if (IS_ERR(index_page)) {
-+			result = -PTR_ERR(index_page);
-+			uds_log_warning_strerror(result,
-+						 "error reading physical page %u",
-+						 physical_page);
-+			return result;
++		if (load ||
++		    (slab->free_blocks != data_blocks) ||
++		    !is_slab_journal_blank(slab)) {
++			dirty_all_reference_blocks(slab);
++			save = true;
 +		}
-+
-+		result = init_chapter_index_page(volume,
-+						 index_page,
-+						 physical_chapter,
-+						 i,
-+						 &index_pages[i]);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_search_volume_page_cache(struct volume *volume, struct uds_request *request, bool *found)
-+{
-+	int result;
-+	u32 physical_chapter =
-+		uds_map_to_physical_chapter(volume->geometry, request->virtual_chapter);
-+	u32 index_page_number;
-+	u16 record_page_number;
-+
-+	index_page_number = uds_find_index_page_number(volume->index_page_map,
-+						       &request->record_name,
-+						       physical_chapter);
-+
-+	if (request->location == UDS_LOCATION_INDEX_PAGE_LOOKUP) {
-+		record_page_number = *((u16 *) &request->old_metadata);
++	} else if (state == VDO_ADMIN_STATE_SAVING) {
++		save = (slab->status == VDO_SLAB_REBUILT);
 +	} else {
-+		result = search_cached_index_page(volume,
-+						  request,
-+						  physical_chapter,
-+						  index_page_number,
-+						  &record_page_number);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	}
-+
-+	return uds_search_cached_record_page(volume,
-+					     request,
-+					     physical_chapter,
-+					     record_page_number,
-+					     found);
-+}
-+
-+int uds_search_volume_page_cache_for_rebuild(struct volume *volume,
-+					     const struct uds_record_name *name,
-+					     u64 virtual_chapter,
-+					     bool *found)
-+{
-+	int result;
-+	struct geometry *geometry = volume->geometry;
-+	struct cached_page *page;
-+	u32 physical_chapter = uds_map_to_physical_chapter(geometry, virtual_chapter);
-+	u32 index_page_number;
-+	u16 record_page_number;
-+	u32 page_number;
-+
-+	*found = false;
-+	index_page_number =
-+		uds_find_index_page_number(volume->index_page_map, name, physical_chapter);
-+	result = get_volume_page(volume, physical_chapter, index_page_number, &page);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_search_chapter_index_page(&page->index_page,
-+					       geometry,
-+					       name,
-+					       &record_page_number);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (record_page_number == NO_CHAPTER_INDEX_ENTRY)
-+		return UDS_SUCCESS;
-+
-+	page_number = geometry->index_pages_per_chapter + record_page_number;
-+	result = get_volume_page(volume, physical_chapter, page_number, &page);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	*found = search_record_page(dm_bufio_get_block_data(page->buffer), name, geometry, NULL);
-+	return UDS_SUCCESS;
-+}
-+
-+static void invalidate_page(struct page_cache *cache, u32 physical_page)
-+{
-+	struct cached_page *page;
-+	int queue_index = -1;
-+
-+	/* We hold the read_threads_mutex. */
-+	get_page_and_index(cache, physical_page, &queue_index, &page);
-+	if (page != NULL) {
-+		WRITE_ONCE(cache->index[page->physical_page], cache->cache_slots);
-+		wait_for_pending_searches(cache, page->physical_page);
-+		clear_cache_page(cache, page);
-+	} else if (queue_index > -1) {
-+		uds_log_debug("setting pending read to invalid");
-+		cache->read_queue[queue_index].invalid = true;
-+	}
-+}
-+
-+void uds_forget_chapter(struct volume *volume, u64 virtual_chapter)
-+{
-+	u32 physical_chapter = uds_map_to_physical_chapter(volume->geometry, virtual_chapter);
-+	u32 first_page = map_to_physical_page(volume->geometry, physical_chapter, 0);
-+	u32 i;
-+
-+	uds_log_debug("forgetting chapter %llu", (unsigned long long) virtual_chapter);
-+	uds_lock_mutex(&volume->read_threads_mutex);
-+	for (i = 0; i < volume->geometry->pages_per_chapter; i++)
-+		invalidate_page(&volume->page_cache, first_page + i);
-+	uds_unlock_mutex(&volume->read_threads_mutex);
-+}
-+
-+/*
-+ * Donate an index pages from a newly written chapter to the page cache since it is likely to be
-+ * used again soon. The caller must already hold the reader thread mutex.
-+ */
-+static int donate_index_page_locked(struct volume *volume,
-+				    u32 physical_chapter,
-+				    u32 index_page_number,
-+				    struct dm_buffer *page_buffer)
-+{
-+	int result;
-+	struct cached_page *page = NULL;
-+	u32 physical_page =
-+		map_to_physical_page(volume->geometry, physical_chapter, index_page_number);
-+
-+	page = select_victim_in_cache(&volume->page_cache);
-+	page->buffer = page_buffer;
-+	result = init_chapter_index_page(volume,
-+					 dm_bufio_get_block_data(page_buffer),
-+					 physical_chapter,
-+					 index_page_number,
-+					 &page->index_page);
-+	if (result != UDS_SUCCESS) {
-+		uds_log_warning("Error initialize chapter index page");
-+		cancel_page_in_cache(&volume->page_cache, physical_page, page);
-+		return result;
-+	}
-+
-+	result = put_page_in_cache(&volume->page_cache, physical_page, page);
-+	if (result != UDS_SUCCESS) {
-+		uds_log_warning("Error putting page %u in cache", physical_page);
-+		cancel_page_in_cache(&volume->page_cache, physical_page, page);
-+		return result;
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int write_index_pages(struct volume *volume,
-+			     u32 physical_chapter_number,
-+			     struct open_chapter_index *chapter_index)
-+{
-+	struct geometry *geometry = volume->geometry;
-+	struct dm_buffer *page_buffer;
-+	u32 first_index_page = map_to_physical_page(geometry, physical_chapter_number, 0);
-+	u32 delta_list_number = 0;
-+	u32 index_page_number;
-+
-+	for (index_page_number = 0;
-+	     index_page_number < geometry->index_pages_per_chapter;
-+	     index_page_number++) {
-+		u8 *page_data;
-+		u32 physical_page = first_index_page + index_page_number;
-+		u32 lists_packed;
-+		bool last_page;
-+		int result;
-+
-+		page_data = dm_bufio_new(volume->client, physical_page, &page_buffer);
-+		if (IS_ERR(page_data))
-+			return uds_log_warning_strerror(-PTR_ERR(page_data),
-+							"failed to prepare index page");
-+
-+		last_page = ((index_page_number + 1) == geometry->index_pages_per_chapter);
-+		result = uds_pack_open_chapter_index_page(chapter_index,
-+							  page_data,
-+							  delta_list_number,
-+							  last_page,
-+							  &lists_packed);
-+		if (result != UDS_SUCCESS) {
-+			dm_bufio_release(page_buffer);
-+			return uds_log_warning_strerror(result, "failed to pack index page");
-+		}
-+
-+		dm_bufio_mark_buffer_dirty(page_buffer);
-+
-+		if (lists_packed == 0)
-+			uds_log_debug("no delta lists packed on chapter %u page %u",
-+				      physical_chapter_number,
-+				      index_page_number);
-+		else
-+			delta_list_number += lists_packed;
-+
-+		uds_update_index_page_map(volume->index_page_map,
-+					  chapter_index->virtual_chapter_number,
-+					  physical_chapter_number,
-+					  index_page_number,
-+					  delta_list_number - 1);
-+
-+		uds_lock_mutex(&volume->read_threads_mutex);
-+		result = donate_index_page_locked(volume,
-+						  physical_chapter_number,
-+						  index_page_number,
-+						  page_buffer);
-+		uds_unlock_mutex(&volume->read_threads_mutex);
-+		if (result != UDS_SUCCESS) {
-+			dm_bufio_release(page_buffer);
-+			return result;
-+		}
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static u32 encode_tree(u8 record_page[],
-+		       const struct uds_volume_record *sorted_pointers[],
-+		       u32 next_record,
-+		       u32 node,
-+		       u32 node_count)
-+{
-+	if (node < node_count) {
-+		u32 child = (2 * node) + 1;
-+
-+		next_record = encode_tree(record_page,
-+					  sorted_pointers,
-+					  next_record,
-+					  child,
-+					  node_count);
-+
-+		/*
-+		 * In-order traversal: copy the contents of the next record into the page at the
-+		 * node offset.
-+		 */
-+		memcpy(&record_page[node * BYTES_PER_RECORD],
-+		       sorted_pointers[next_record++],
-+		       BYTES_PER_RECORD);
-+
-+		next_record = encode_tree(record_page,
-+					  sorted_pointers,
-+					  next_record,
-+					  child + 1,
-+					  node_count);
-+	}
-+
-+	return next_record;
-+}
-+
-+static int
-+encode_record_page(const struct volume *volume,
-+		   const struct uds_volume_record records[],
-+		   u8 record_page[])
-+{
-+	int result;
-+	u32 i;
-+	u32 records_per_page = volume->geometry->records_per_page;
-+	const struct uds_volume_record **record_pointers = volume->record_pointers;
-+
-+	for (i = 0; i < records_per_page; i++)
-+		record_pointers[i] = &records[i];
-+
-+	/*
-+	 * Sort the record pointers by using just the names in the records, which is less work than
-+	 * sorting the entire record values.
-+	 */
-+	STATIC_ASSERT(offsetof(struct uds_volume_record, name) == 0);
-+	result = uds_radix_sort(volume->radix_sorter,
-+				(const u8 **) record_pointers,
-+				records_per_page,
-+				UDS_RECORD_NAME_SIZE);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	encode_tree(record_page, record_pointers, 0, 0, records_per_page);
-+	return UDS_SUCCESS;
-+}
-+
-+static int write_record_pages(struct volume *volume,
-+			      u32 physical_chapter_number,
-+			      const struct uds_volume_record *records)
-+{
-+	u32 record_page_number;
-+	struct geometry *geometry = volume->geometry;
-+	struct dm_buffer *page_buffer;
-+	const struct uds_volume_record *next_record = records;
-+	u32 first_record_page = map_to_physical_page(geometry,
-+						     physical_chapter_number,
-+						     geometry->index_pages_per_chapter);
-+
-+	for (record_page_number = 0;
-+	     record_page_number < geometry->record_pages_per_chapter;
-+	     record_page_number++) {
-+		u8 *page_data;
-+		u32 physical_page = first_record_page + record_page_number;
-+		int result;
-+
-+		page_data = dm_bufio_new(volume->client, physical_page, &page_buffer);
-+		if (IS_ERR(page_data))
-+			return uds_log_warning_strerror(-PTR_ERR(page_data),
-+							"failed to prepare record page");
-+
-+		result = encode_record_page(volume, next_record, page_data);
-+		if (result != UDS_SUCCESS) {
-+			dm_bufio_release(page_buffer);
-+			return uds_log_warning_strerror(result,
-+							"failed to encode record page %u",
-+							record_page_number);
-+		}
-+
-+		next_record += geometry->records_per_page;
-+		dm_bufio_mark_buffer_dirty(page_buffer);
-+		dm_bufio_release(page_buffer);
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_write_chapter(struct volume *volume,
-+		      struct open_chapter_index *chapter_index,
-+		      const struct uds_volume_record *records)
-+{
-+	int result;
-+	u32 physical_chapter_number =
-+		uds_map_to_physical_chapter(volume->geometry,
-+					    chapter_index->virtual_chapter_number);
-+
-+	result = write_index_pages(volume, physical_chapter_number, chapter_index);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = write_record_pages(volume, physical_chapter_number, records);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = -dm_bufio_write_dirty_buffers(volume->client);
-+	if (result != UDS_SUCCESS)
-+		uds_log_error_strerror(result, "cannot sync chapter to volume");
-+
-+	return result;
-+}
-+
-+static void probe_chapter(struct volume *volume, u32 chapter_number, u64 *virtual_chapter_number)
-+{
-+	const struct geometry *geometry = volume->geometry;
-+	u32 expected_list_number = 0;
-+	u32 i;
-+	u64 vcn = BAD_CHAPTER;
-+
-+	*virtual_chapter_number = BAD_CHAPTER;
-+	dm_bufio_prefetch(volume->client,
-+			  map_to_physical_page(geometry, chapter_number, 0),
-+			  geometry->index_pages_per_chapter);
-+
-+	for (i = 0; i < geometry->index_pages_per_chapter; ++i) {
-+		struct delta_index_page *page;
-+		int result;
-+
-+		result = uds_get_volume_index_page(volume, chapter_number, i, &page);
-+		if (result != UDS_SUCCESS)
-+			return;
-+
-+		if (page->virtual_chapter_number == BAD_CHAPTER) {
-+			uds_log_error("corrupt index page in chapter %u", chapter_number);
-+			return;
-+		}
-+
-+		if (vcn == BAD_CHAPTER) {
-+			vcn = page->virtual_chapter_number;
-+		} else if (page->virtual_chapter_number != vcn) {
-+			uds_log_error("inconsistent chapter %u index page %u: expected vcn %llu, got vcn %llu",
-+				      chapter_number,
-+				      i,
-+				      (unsigned long long) vcn,
-+				      (unsigned long long) page->virtual_chapter_number);
-+			return;
-+		}
-+
-+		if (expected_list_number != page->lowest_list_number) {
-+			uds_log_error("inconsistent chapter %u index page %u: expected list number %u, got list number %u",
-+				      chapter_number,
-+				      i,
-+				      expected_list_number,
-+				      page->lowest_list_number);
-+			return;
-+		}
-+		expected_list_number = page->highest_list_number + 1;
-+
-+		result = uds_validate_chapter_index_page(page, geometry);
-+		if (result != UDS_SUCCESS)
-+			return;
-+	}
-+
-+	if (chapter_number != uds_map_to_physical_chapter(geometry, vcn)) {
-+		uds_log_error("chapter %u vcn %llu is out of phase (%u)",
-+			      chapter_number,
-+			      (unsigned long long) vcn,
-+			      geometry->chapters_per_volume);
++		vdo_finish_draining_with_result(&slab->state, VDO_SUCCESS);
 +		return;
 +	}
 +
-+	*virtual_chapter_number = vcn;
++	if (save)
++		save_dirty_reference_blocks(slab);
 +}
 +
-+/* Find the last valid physical chapter in the volume. */
-+static void find_real_end_of_volume(struct volume *volume, u32 limit, u32 *limit_ptr)
-+{
-+	u32 span = 1;
-+	u32 tries = 0;
-+
-+	while (limit > 0) {
-+		u32 chapter = (span > limit) ? 0 : limit - span;
-+		u64 vcn = 0;
-+
-+		probe_chapter(volume, chapter, &vcn);
-+		if (vcn == BAD_CHAPTER) {
-+			limit = chapter;
-+			if (++tries > 1)
-+				span *= 2;
-+		} else {
-+			if (span == 1)
-+				break;
-+			span /= 2;
-+			tries = 0;
-+		}
-+	}
-+
-+	*limit_ptr = limit;
-+}
-+
-+static int
-+find_chapter_limits(struct volume *volume, u32 chapter_limit, u64 *lowest_vcn, u64 *highest_vcn)
-+{
-+	struct geometry *geometry = volume->geometry;
-+	u64 zero_vcn;
-+	u64 lowest = BAD_CHAPTER;
-+	u64 highest = BAD_CHAPTER;
-+	u64 moved_chapter = BAD_CHAPTER;
-+	u32 left_chapter = 0;
-+	u32 right_chapter = 0;
-+	u32 bad_chapters = 0;
-+
-+	/*
-+	 * This method assumes there is at most one run of contiguous bad chapters caused by
-+	 * unflushed writes. Either the bad spot is at the beginning and end, or somewhere in the
-+	 * middle. Wherever it is, the highest and lowest VCNs are adjacent to it. Otherwise the
-+	 * volume is cleanly saved and somewhere in the middle of it the highest VCN immediately
-+	 * precedes the lowest one.
-+	 */
-+
-+	/* It doesn't matter if this results in a bad spot (BAD_CHAPTER). */
-+	probe_chapter(volume, 0, &zero_vcn);
-+
-+	/*
-+	 * Binary search for end of the discontinuity in the monotonically increasing virtual
-+	 * chapter numbers; bad spots are treated as a span of BAD_CHAPTER values. In effect we're
-+	 * searching for the index of the smallest value less than zero_vcn. In the case we go off
-+	 * the end it means that chapter 0 has the lowest vcn.
-+	 *
-+	 * If a virtual chapter is out-of-order, it will be the one moved by conversion. Always
-+	 * skip over the moved chapter when searching, adding it to the range at the end if
-+	 * necessary.
-+	 */
-+	if (geometry->remapped_physical > 0) {
-+		u64 remapped_vcn;
-+
-+		probe_chapter(volume, geometry->remapped_physical, &remapped_vcn);
-+		if (remapped_vcn == geometry->remapped_virtual)
-+			moved_chapter = geometry->remapped_physical;
-+	}
-+
-+	left_chapter = 0;
-+	right_chapter = chapter_limit;
-+
-+	while (left_chapter < right_chapter) {
-+		u64 probe_vcn;
-+		u32 chapter = (left_chapter + right_chapter) / 2;
-+
-+		if (chapter == moved_chapter)
-+			chapter--;
-+
-+		probe_chapter(volume, chapter, &probe_vcn);
-+		if (zero_vcn <= probe_vcn) {
-+			left_chapter = chapter + 1;
-+			if (left_chapter == moved_chapter)
-+				left_chapter++;
-+		} else {
-+			right_chapter = chapter;
-+		}
-+	}
-+
-+	/* If left_chapter goes off the end, chapter 0 has the lowest virtual chapter number.*/
-+	if (left_chapter >= chapter_limit)
-+		left_chapter = 0;
-+
-+	/* At this point, left_chapter is the chapter with the lowest virtual chapter number. */
-+	probe_chapter(volume, left_chapter, &lowest);
-+
-+	/* The moved chapter might be the lowest in the range. */
-+	if ((moved_chapter != BAD_CHAPTER) && (lowest == geometry->remapped_virtual + 1))
-+		lowest = geometry->remapped_virtual;
-+
-+	/*
-+	 * Circularly scan backwards, moving over any bad chapters until encountering a good one,
-+	 * which is the chapter with the highest vcn.
-+	 */
-+	while (highest == BAD_CHAPTER) {
-+		right_chapter = (right_chapter + chapter_limit - 1) % chapter_limit;
-+		if (right_chapter == moved_chapter)
-+			continue;
-+
-+		probe_chapter(volume, right_chapter, &highest);
-+		if (bad_chapters++ >= MAX_BAD_CHAPTERS) {
-+			uds_log_error("too many bad chapters in volume: %u", bad_chapters);
-+			return UDS_CORRUPT_DATA;
-+		}
-+	}
-+
-+	*lowest_vcn = lowest;
-+	*highest_vcn = highest;
-+	return UDS_SUCCESS;
-+}
-+
-+/*
-+ * Find the highest and lowest contiguous chapters present in the volume and determine their
-+ * virtual chapter numbers. This is used by rebuild.
-+ */
-+int uds_find_volume_chapter_boundaries(struct volume *volume,
-+				       u64 *lowest_vcn,
-+				       u64 *highest_vcn,
-+				       bool *is_empty)
-+{
-+	u32 chapter_limit = volume->geometry->chapters_per_volume;
-+
-+	find_real_end_of_volume(volume, chapter_limit, &chapter_limit);
-+	if (chapter_limit == 0) {
-+		*lowest_vcn = 0;
-+		*highest_vcn = 0;
-+		*is_empty = true;
-+		return UDS_SUCCESS;
-+	}
-+
-+	*is_empty = false;
-+	return find_chapter_limits(volume, chapter_limit, lowest_vcn, highest_vcn);
-+}
-+
-+int __must_check uds_replace_volume_storage(struct volume *volume,
-+					    struct index_layout *layout,
-+					    struct block_device *bdev)
++static int allocate_slab_counters(struct vdo_slab *slab)
 +{
 +	int result;
-+	u32 i;
++	size_t index, bytes;
 +
-+	result = uds_replace_index_layout_storage(layout, bdev);
-+	if (result != UDS_SUCCESS)
++	result = ASSERT(slab->reference_blocks == NULL,
++			"vdo_slab %u doesn't allocate refcounts twice",
++			slab->slab_number);
++	if (result != VDO_SUCCESS)
 +		return result;
 +
-+	/* Release all outstanding dm_bufio objects */
-+	for (i = 0; i < volume->page_cache.indexable_pages; i++)
-+		volume->page_cache.index[i] = volume->page_cache.cache_slots;
-+	for (i = 0; i < volume->page_cache.cache_slots; i++)
-+		clear_cache_page(&volume->page_cache, &volume->page_cache.cache[i]);
-+	if (volume->sparse_cache != NULL)
-+		uds_invalidate_sparse_cache(volume->sparse_cache);
-+	if (volume->client != NULL)
-+		dm_bufio_client_destroy(UDS_FORGET(volume->client));
++	result = UDS_ALLOCATE(slab->reference_block_count,
++			      struct reference_block,
++			      __func__,
++			      &slab->reference_blocks);
++	if (result != VDO_SUCCESS)
++		return result;
 +
-+	return uds_open_volume_bufio(layout,
-+				     volume->geometry->bytes_per_page,
-+				     volume->reserved_buffers,
-+				     &volume->client);
++	/*
++	 * Allocate such that the runt slab has a full-length memory array, plus a little padding
++	 * so we can word-search even at the very end.
++	 */
++	bytes = (slab->reference_block_count * COUNTS_PER_BLOCK) + (2 * BYTES_PER_WORD);
++	result = UDS_ALLOCATE(bytes, vdo_refcount_t, "ref counts array", &slab->counters);
++	if (result != UDS_SUCCESS) {
++		UDS_FREE(UDS_FORGET(slab->reference_blocks));
++		return result;
++	}
++
++	slab->search_cursor.first_block = slab->reference_blocks;
++	slab->search_cursor.last_block = &slab->reference_blocks[slab->reference_block_count - 1];
++	reset_search_cursor(slab);
++
++	for (index = 0; index < slab->reference_block_count; index++) {
++		slab->reference_blocks[index] = (struct reference_block) {
++			.slab = slab,
++		};
++	}
++
++	return VDO_SUCCESS;
 +}
 +
++static int allocate_counters_if_clean(struct vdo_slab *slab)
++{
++	if (vdo_is_state_clean_load(&slab->state))
++		return allocate_slab_counters(slab);
++
++	return VDO_SUCCESS;
++}
++
++static void finish_loading_journal(struct vdo_completion *completion)
++{
++	struct vio *vio = as_vio(completion);
++	struct slab_journal *journal = completion->parent;
++	struct vdo_slab *slab = journal->slab;
++	struct packed_slab_journal_block *block = (struct packed_slab_journal_block *) vio->data;
++	struct slab_journal_block_header header;
++
++	vdo_unpack_slab_journal_block_header(&block->header, &header);
++
++	/* FIXME: should it be an error if the following conditional fails? */
++	if ((header.metadata_type == VDO_METADATA_SLAB_JOURNAL) &&
++	    (header.nonce == slab->allocator->nonce)) {
++		journal->tail = header.sequence_number + 1;
++
++		/*
++		 * If the slab is clean, this implies the slab journal is empty, so advance the
++		 * head appropriately.
++		 */
++		journal->head = (slab->allocator->summary_entries[slab->slab_number].is_dirty ?
++				 header.head :
++				 journal->tail);
++		journal->tail_header = header;
++		initialize_journal_state(journal);
++	}
++
++	return_vio_to_pool(slab->allocator->vio_pool, vio_as_pooled_vio(vio));
++	vdo_finish_loading_with_result(&slab->state, allocate_counters_if_clean(slab));
++}
++
++static void read_slab_journal_tail_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct slab_journal *journal = vio->completion.parent;
++
++	continue_vio_after_io(vio, finish_loading_journal, journal->slab->allocator->thread_id);
++}
++
++static void handle_load_error(struct vdo_completion *completion)
++{
++	int result = completion->result;
++	struct slab_journal *journal = completion->parent;
++	struct vio *vio = as_vio(completion);
++
++	vio_record_metadata_io_error(vio);
++	return_vio_to_pool(journal->slab->allocator->vio_pool, vio_as_pooled_vio(vio));
++	vdo_finish_loading_with_result(&journal->slab->state, result);
++}
++
++/**
++ * read_slab_journal_tail() - Read the slab journal tail block by using a vio acquired from the vio
++ *                            pool.
++ * @waiter: The vio pool waiter which has just been notified.
++ * @context: The vio pool entry given to the waiter.
++ *
++ * This is the success callback from acquire_vio_from_pool() when loading a slab journal.
++ */
++static void read_slab_journal_tail(struct waiter *waiter, void *context)
++{
++	struct slab_journal *journal = container_of(waiter, struct slab_journal, resource_waiter);
++	struct vdo_slab *slab = journal->slab;
++	struct pooled_vio *pooled = context;
++	struct vio *vio = &pooled->vio;
++	tail_block_offset_t last_commit_point =
++		slab->allocator->summary_entries[slab->slab_number].tail_block_offset;
++
++	/*
++	 * Slab summary keeps the commit point offset, so the tail block is the block before that.
++	 * Calculation supports small journals in unit tests.
++	 */
++	tail_block_offset_t tail_block = ((last_commit_point == 0) ?
++					  (tail_block_offset_t)(journal->size - 1) :
++					  (last_commit_point - 1));
++
++	vio->completion.parent = journal;
++	vio->completion.callback_thread_id = slab->allocator->thread_id;
++	submit_metadata_vio(vio,
++			    slab->journal_origin + tail_block,
++			    read_slab_journal_tail_endio,
++			    handle_load_error,
++			    REQ_OP_READ);
++}
++
++/**
++ * load_slab_journal() - Load a slab's journal by reading the journal's tail.
++ */
++static void load_slab_journal(struct vdo_slab *slab)
++{
++	struct slab_journal *journal = &slab->journal;
++	tail_block_offset_t last_commit_point;
++
++	last_commit_point = slab->allocator->summary_entries[slab->slab_number].tail_block_offset;
++	if ((last_commit_point == 0) &&
++	    !slab->allocator->summary_entries[slab->slab_number].load_ref_counts) {
++		/*
++		 * This slab claims that it has a tail block at (journal->size - 1), but a head of
++		 * 1. This is impossible, due to the scrubbing threshold, on a real system, so
++		 * don't bother reading the (bogus) data off disk.
++		 */
++		ASSERT_LOG_ONLY(((journal->size < 16) ||
++				 (journal->scrubbing_threshold < (journal->size - 1))),
++				"Scrubbing threshold protects against reads of unwritten slab journal blocks");
++		vdo_finish_loading_with_result(&slab->state, allocate_counters_if_clean(slab));
++		return;
++	}
++
++	journal->resource_waiter.callback = read_slab_journal_tail;
++	acquire_vio_from_pool(slab->allocator->vio_pool, &journal->resource_waiter);
++}
++
++static void free_slab(struct vdo_slab *slab)
++{
++	if (slab == NULL)
++		return;
++
++	list_del(&slab->allocq_entry);
++	UDS_FREE(UDS_FORGET(slab->journal.block));
++	UDS_FREE(UDS_FORGET(slab->journal.locks));
++	UDS_FREE(UDS_FORGET(slab->counters));
++	UDS_FREE(UDS_FORGET(slab->reference_blocks));
++	UDS_FREE(slab);
++}
++
++static int initialize_slab_journal(struct vdo_slab *slab)
++{
++	struct slab_journal *journal = &slab->journal;
++	const struct slab_config *slab_config = &slab->allocator->depot->slab_config;
++	int result;
++
++	result = UDS_ALLOCATE(slab_config->slab_journal_blocks,
++			      struct journal_lock,
++			      __func__,
++			      &journal->locks);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	result = UDS_ALLOCATE(VDO_BLOCK_SIZE,
++			      char,
++			      "struct packed_slab_journal_block",
++			      (char **) &journal->block);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	journal->slab = slab;
++	journal->size = slab_config->slab_journal_blocks;
++	journal->flushing_threshold = slab_config->slab_journal_flushing_threshold;
++	journal->blocking_threshold = slab_config->slab_journal_blocking_threshold;
++	journal->scrubbing_threshold = slab_config->slab_journal_scrubbing_threshold;
++	journal->entries_per_block = VDO_SLAB_JOURNAL_ENTRIES_PER_BLOCK;
++	journal->full_entries_per_block = VDO_SLAB_JOURNAL_FULL_ENTRIES_PER_BLOCK;
++	journal->events = &slab->allocator->slab_journal_statistics;
++	journal->recovery_journal = slab->allocator->depot->vdo->recovery_journal;
++	journal->tail = 1;
++	journal->head = 1;
++
++	journal->flushing_deadline = journal->flushing_threshold;
++	/*
++	 * Set there to be some time between the deadline and the blocking threshold, so that
++	 * hopefully all are done before blocking.
++	 */
++	if ((journal->blocking_threshold - journal->flushing_threshold) > 5)
++		journal->flushing_deadline = journal->blocking_threshold - 5;
++
++	journal->slab_summary_waiter.callback = release_journal_locks;
++
++	INIT_LIST_HEAD(&journal->dirty_entry);
++	INIT_LIST_HEAD(&journal->uncommitted_blocks);
++
++	journal->tail_header.nonce = slab->allocator->nonce;
++	journal->tail_header.metadata_type = VDO_METADATA_SLAB_JOURNAL;
++	initialize_journal_state(journal);
++	return VDO_SUCCESS;
++}
++
++/**
++ * make_slab() - Construct a new, empty slab.
++ * @slab_origin: The physical block number within the block allocator partition of the first block
++ *               in the slab.
++ * @allocator: The block allocator to which the slab belongs.
++ * @slab_number: The slab number of the slab.
++ * @is_new: true if this slab is being allocated as part of a resize.
++ * @slab_ptr: A pointer to receive the new slab.
++ *
++ * Return: VDO_SUCCESS or an error code.
++ */
 +static int __must_check
-+initialize_page_cache(struct page_cache *cache,
-+		      const struct geometry *geometry,
-+		      u32 chapters_in_cache,
-+		      unsigned int zone_count)
++make_slab(physical_block_number_t slab_origin,
++	  struct block_allocator *allocator,
++	  slab_count_t slab_number,
++	  bool is_new,
++	  struct vdo_slab **slab_ptr)
 +{
-+	int result;
-+	u32 i;
-+
-+	cache->indexable_pages = geometry->pages_per_volume + 1;
-+	cache->cache_slots = chapters_in_cache * geometry->record_pages_per_chapter;
-+	cache->zone_count = zone_count;
-+	atomic64_set(&cache->clock, 1);
-+
-+	result = ASSERT((cache->cache_slots <= VOLUME_CACHE_MAX_ENTRIES),
-+			"requested cache size, %u, within limit %u",
-+			cache->cache_slots,
-+			VOLUME_CACHE_MAX_ENTRIES);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(VOLUME_CACHE_MAX_QUEUED_READS,
-+			      struct queued_read,
-+			      "volume read queue",
-+			      &cache->read_queue);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(cache->zone_count,
-+			      struct search_pending_counter,
-+			      "Volume Cache Zones",
-+			      &cache->search_pending_counters);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(cache->indexable_pages, u16, "page cache index", &cache->index);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(cache->cache_slots,
-+			      struct cached_page,
-+			      "page cache cache",
-+			      &cache->cache);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	/* Initialize index values to invalid values. */
-+	for (i = 0; i < cache->indexable_pages; i++)
-+		cache->index[i] = cache->cache_slots;
-+
-+	for (i = 0; i < cache->cache_slots; i++)
-+		clear_cache_page(cache, &cache->cache[i]);
-+
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_make_volume(const struct configuration *config,
-+		    struct index_layout *layout,
-+		    struct volume **new_volume)
-+{
-+	unsigned int i;
-+	struct volume *volume = NULL;
-+	struct geometry *geometry;
-+	unsigned int reserved_buffers;
++	const struct slab_config *slab_config = &allocator->depot->slab_config;
++	struct vdo_slab *slab;
 +	int result;
 +
-+	result = UDS_ALLOCATE(1, struct volume, "volume", &volume);
-+	if (result != UDS_SUCCESS)
++	result = UDS_ALLOCATE(1, struct vdo_slab, __func__, &slab);
++	if (result != VDO_SUCCESS)
 +		return result;
 +
-+	volume->nonce = uds_get_volume_nonce(layout);
++	*slab = (struct vdo_slab) {
++		.allocator = allocator,
++		.start = slab_origin,
++		.end = slab_origin + slab_config->slab_blocks,
++		.slab_number = slab_number,
++		.ref_counts_origin = slab_origin + slab_config->data_blocks,
++		.journal_origin = vdo_get_slab_journal_start_block(slab_config, slab_origin),
++		.block_count = slab_config->data_blocks,
++		.free_blocks = slab_config->data_blocks,
++		.reference_block_count =
++			vdo_get_saved_reference_count_size(slab_config->data_blocks),
++	};
++	INIT_LIST_HEAD(&slab->allocq_entry);
 +
-+	result = uds_copy_geometry(config->geometry, &volume->geometry);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume(volume);
-+		return uds_log_warning_strerror(result, "failed to allocate geometry: error");
-+	}
-+	geometry = volume->geometry;
-+
-+	/*
-+	 * Reserve a buffer for each entry in the page cache, one for the chapter writer, and one
-+	 * for each entry in the sparse cache.
-+	 */
-+	reserved_buffers = config->cache_chapters * geometry->record_pages_per_chapter;
-+	reserved_buffers += 1;
-+	if (uds_is_sparse_geometry(geometry))
-+		reserved_buffers += (config->cache_chapters * geometry->index_pages_per_chapter);
-+	volume->reserved_buffers = reserved_buffers;
-+	result = uds_open_volume_bufio(layout,
-+				       geometry->bytes_per_page,
-+				       volume->reserved_buffers,
-+				       &volume->client);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume(volume);
++	result = initialize_slab_journal(slab);
++	if (result != VDO_SUCCESS) {
++		free_slab(slab);
 +		return result;
 +	}
 +
-+	result = uds_make_radix_sorter(geometry->records_per_page, &volume->radix_sorter);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume(volume);
-+		return result;
-+	}
-+
-+	result = UDS_ALLOCATE(geometry->records_per_page,
-+			      const struct uds_volume_record *,
-+			      "record pointers",
-+			      &volume->record_pointers);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume(volume);
-+		return result;
-+	}
-+
-+	if (uds_is_sparse_geometry(geometry)) {
-+		size_t page_size = sizeof(struct delta_index_page) + geometry->bytes_per_page;
-+
-+		result = uds_make_sparse_cache(geometry,
-+					       config->cache_chapters,
-+					       config->zone_count,
-+					       &volume->sparse_cache);
-+		if (result != UDS_SUCCESS) {
-+			uds_free_volume(volume);
++	if (is_new) {
++		vdo_set_admin_state_code(&slab->state, VDO_ADMIN_STATE_NEW);
++		result = allocate_slab_counters(slab);
++		if (result != VDO_SUCCESS) {
++			free_slab(slab);
 +			return result;
 +		}
-+
-+		volume->cache_size =
-+			page_size * geometry->index_pages_per_chapter * config->cache_chapters;
++	} else {
++		vdo_set_admin_state_code(&slab->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
 +	}
 +
-+	result = initialize_page_cache(&volume->page_cache,
-+				       geometry,
-+				       config->cache_chapters,
-+				       config->zone_count);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume(volume);
-+		return result;
-+	}
-+
-+	volume->cache_size += volume->page_cache.cache_slots * sizeof(struct delta_index_page);
-+	result = uds_make_index_page_map(geometry, &volume->index_page_map);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume(volume);
-+		return result;
-+	}
-+
-+	result = uds_init_mutex(&volume->read_threads_mutex);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume(volume);
-+		return result;
-+	}
-+
-+	result = uds_init_cond(&volume->read_threads_read_done_cond);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume(volume);
-+		return result;
-+	}
-+
-+	result = uds_init_cond(&volume->read_threads_cond);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume(volume);
-+		return result;
-+	}
-+
-+	result = UDS_ALLOCATE(config->read_threads,
-+			      struct thread *,
-+			      "reader threads",
-+			      &volume->reader_threads);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume(volume);
-+		return result;
-+	}
-+
-+	for (i = 0; i < config->read_threads; i++) {
-+		result = uds_create_thread(read_thread_function,
-+					   (void *) volume,
-+					   "reader",
-+					   &volume->reader_threads[i]);
-+		if (result != UDS_SUCCESS) {
-+			uds_free_volume(volume);
-+			return result;
-+		}
-+
-+		volume->read_thread_count = i + 1;
-+	}
-+
-+	*new_volume = volume;
-+	return UDS_SUCCESS;
++	*slab_ptr = slab;
++	return VDO_SUCCESS;
 +}
-+
-+static void uninitialize_page_cache(struct page_cache *cache)
-+{
-+	u16 i;
-+
-+	if (cache->cache != NULL) {
-+		for (i = 0; i < cache->cache_slots; i++)
-+			release_page_buffer(&cache->cache[i]);
-+	}
-+	UDS_FREE(cache->index);
-+	UDS_FREE(cache->cache);
-+	UDS_FREE(cache->search_pending_counters);
-+	UDS_FREE(cache->read_queue);
-+}
-+
-+void uds_free_volume(struct volume *volume)
-+{
-+	if (volume == NULL)
-+		return;
-+
-+	if (volume->reader_threads != NULL) {
-+		unsigned int i;
-+
-+		/* This works even if some threads weren't started. */
-+		uds_lock_mutex(&volume->read_threads_mutex);
-+		volume->read_threads_exiting = true;
-+		uds_broadcast_cond(&volume->read_threads_cond);
-+		uds_unlock_mutex(&volume->read_threads_mutex);
-+		for (i = 0; i < volume->read_thread_count; i++)
-+			uds_join_threads(volume->reader_threads[i]);
-+		UDS_FREE(volume->reader_threads);
-+		volume->reader_threads = NULL;
-+	}
-+
-+	/* Must destroy the client AFTER freeing the cached pages. */
-+	uninitialize_page_cache(&volume->page_cache);
-+	uds_free_sparse_cache(volume->sparse_cache);
-+	if (volume->client != NULL)
-+		dm_bufio_client_destroy(UDS_FORGET(volume->client));
-+
-+	uds_destroy_cond(&volume->read_threads_cond);
-+	uds_destroy_cond(&volume->read_threads_read_done_cond);
-+	uds_destroy_mutex(&volume->read_threads_mutex);
-+	uds_free_index_page_map(volume->index_page_map);
-+	uds_free_radix_sorter(volume->radix_sorter);
-+	UDS_FREE(volume->geometry);
-+	UDS_FREE(volume->record_pointers);
-+	UDS_FREE(volume);
-+}
-diff --git a/drivers/md/dm-vdo/volume.h b/drivers/md/dm-vdo/volume.h
+diff --git a/drivers/md/dm-vdo/slab-depot.h b/drivers/md/dm-vdo/slab-depot.h
 new file mode 100644
-index 000000000000..4991f41fe5c3
+index 000000000000..12086d475d1a
 --- /dev/null
-+++ b/drivers/md/dm-vdo/volume.h
-@@ -0,0 +1,175 @@
++++ b/drivers/md/dm-vdo/slab-depot.h
+@@ -0,0 +1,253 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_VOLUME_H
-+#define UDS_VOLUME_H
++#ifndef VDO_SLAB_DEPOT_H
++#define VDO_SLAB_DEPOT_H
 +
 +#include <linux/atomic.h>
-+#include <linux/cache.h>
-+#include <linux/dm-bufio.h>
-+#include <linux/limits.h>
++#include <linux/dm-kcopyd.h>
++#include <linux/list.h>
 +
-+#include "chapter-index.h"
-+#include "config.h"
-+#include "geometry.h"
-+#include "index-layout.h"
-+#include "index-page-map.h"
-+#include "permassert.h"
-+#include "radix-sort.h"
-+#include "sparse-cache.h"
-+#include "uds.h"
-+#include "uds-threads.h"
++#include "numeric.h"
++
++#include "admin-state.h"
++#include "completion.h"
++#include "data-vio.h"
++#include "encodings.h"
++#include "physical-zone.h"
++#include "priority-table.h"
++#include "recovery-journal.h"
++#include "statistics.h"
++#include "types.h"
++#include "vio.h"
++#include "wait-queue.h"
 +
 +/*
-+ * The volume manages deduplication records on permanent storage. The term "volume" can also refer
-+ * to the region of permanent storage where the records (and the chapters containing them) are
-+ * stored. The volume handles all I/O to this region by reading, caching, and writing chapter pages
-+ * as necessary.
++ * Represents the possible status of a block.
 + */
-+
-+enum index_lookup_mode {
-+	/* Always do lookups in all chapters normally */
-+	LOOKUP_NORMAL,
-+	/* Only do a subset of lookups needed when rebuilding an index */
-+	LOOKUP_FOR_REBUILD,
++enum reference_status {
++	RS_FREE, /* this block is free */
++	RS_SINGLE, /* this block is singly-referenced */
++	RS_SHARED, /* this block is shared */
++	RS_PROVISIONAL /* this block is provisionally allocated */
 +};
 +
-+struct queued_read {
-+	bool invalid;
-+	bool reserved;
-+	u32 physical_page;
-+	struct uds_request *first_request;
-+	struct uds_request *last_request;
++struct vdo_slab;
++
++struct journal_lock {
++	u16 count;
++	sequence_number_t recovery_start;
 +};
 +
-+struct __aligned(L1_CACHE_BYTES) search_pending_counter {
-+	u64 atomic_value;
-+};
++struct slab_journal {
++	/* A waiter object for getting a VIO pool entry */
++	struct waiter resource_waiter;
++	/* A waiter object for updating the slab summary */
++	struct waiter slab_summary_waiter;
++	/* A waiter object for getting a vio with which to flush */
++	struct waiter flush_waiter;
++	/* The queue of VIOs waiting to make an entry */
++	struct wait_queue entry_waiters;
++	/* The parent slab reference of this journal */
++	struct vdo_slab *slab;
 +
-+struct cached_page {
-+	/* Whether this page is currently being read asynchronously */
-+	bool read_pending;
-+	/* The physical page stored in this cache entry */
-+	u32 physical_page;
-+	/* The value of the volume clock when this page was last used */
-+	s64 last_used;
-+	/* The cached page buffer */
-+	struct dm_buffer *buffer;
-+	/* The chapter index page, meaningless for record pages */
-+	struct delta_index_page index_page;
-+};
++	/* Whether a tail block commit is pending */
++	bool waiting_to_commit;
++	/* Whether the journal is updating the slab summary */
++	bool updating_slab_summary;
++	/* Whether the journal is adding entries from the entry_waiters queue */
++	bool adding_entries;
++	/* Whether a partial write is in progress */
++	bool partial_write_in_progress;
 +
-+struct page_cache {
-+	/* The number of zones */
-+	unsigned int zone_count;
-+	/* The number of volume pages that can be cached */
-+	u32 indexable_pages;
-+	/* The maximum number of simultaneously cached pages */
-+	u16 cache_slots;
-+	/* An index for each physical page noting where it is in the cache */
-+	u16 *index;
-+	/* The array of cached pages */
-+	struct cached_page *cache;
-+	/* A counter for each zone tracking if a search is occurring there */
-+	struct search_pending_counter *search_pending_counters;
-+	/* The read queue entries as a circular array */
-+	struct queued_read *read_queue;
++	/* The oldest block in the journal on disk */
++	sequence_number_t head;
++	/* The oldest block in the journal which may not be reaped */
++	sequence_number_t unreapable;
++	/* The end of the half-open interval of the active journal */
++	sequence_number_t tail;
++	/* The next journal block to be committed */
++	sequence_number_t next_commit;
++	/* The tail sequence number that is written in the slab summary */
++	sequence_number_t summarized;
++	/* The tail sequence number that was last summarized in slab summary */
++	sequence_number_t last_summarized;
 +
-+	/* All entries above this point are constant after initialization. */
++	/* The sequence number of the recovery journal lock */
++	sequence_number_t recovery_lock;
 +
 +	/*
-+	 * These values are all indexes into the array of read queue entries. New entries in the
-+	 * read queue are enqueued at read_queue_last. To dequeue entries, a reader thread gets the
-+	 * lock and then claims the entry pointed to by read_queue_next_read and increments that
-+	 * value. After the read is completed, the reader thread calls release_read_queue_entry(),
-+	 * which increments read_queue_first until it points to a pending read, or is equal to
-+	 * read_queue_next_read. This means that if multiple reads are outstanding,
-+	 * read_queue_first might not advance until the last of the reads finishes.
++	 * The number of entries which fit in a single block. Can't use the constant because unit
++	 * tests change this number.
 +	 */
-+	u16 read_queue_first;
-+	u16 read_queue_next_read;
-+	u16 read_queue_last;
++	journal_entry_count_t entries_per_block;
++	/*
++	 * The number of full entries which fit in a single block. Can't use the constant because
++	 * unit tests change this number.
++	 */
++	journal_entry_count_t full_entries_per_block;
 +
-+	atomic64_t clock;
++	/* The recovery journal of the VDO (slab journal holds locks on it) */
++	struct recovery_journal *recovery_journal;
++
++	/* The statistics shared by all slab journals in our physical zone */
++	struct slab_journal_statistics *events;
++	/* A list of the VIO pool entries for outstanding journal block writes */
++	struct list_head uncommitted_blocks;
++
++	/*
++	 * The current tail block header state. This will be packed into the block just before it
++	 * is written.
++	 */
++	struct slab_journal_block_header tail_header;
++	/* A pointer to a block-sized buffer holding the packed block data */
++	struct packed_slab_journal_block *block;
++
++	/* The number of blocks in the on-disk journal */
++	block_count_t size;
++	/* The number of blocks at which to start pushing reference blocks */
++	block_count_t flushing_threshold;
++	/* The number of blocks at which all reference blocks should be writing */
++	block_count_t flushing_deadline;
++	/* The number of blocks at which to wait for reference blocks to write */
++	block_count_t blocking_threshold;
++	/* The number of blocks at which to scrub the slab before coming online */
++	block_count_t scrubbing_threshold;
++
++	/* This list entry is for block_allocator to keep a queue of dirty journals */
++	struct list_head dirty_entry;
++
++	/* The lock for the oldest unreaped block of the journal */
++	struct journal_lock *reap_lock;
++	/* The locks for each on disk block */
++	struct journal_lock *locks;
 +};
 +
-+struct volume {
-+	struct geometry *geometry;
-+	struct dm_bufio_client *client;
-+	u64 nonce;
-+	size_t cache_size;
-+
-+	/* A single page worth of records, for sorting */
-+	const struct uds_volume_record **record_pointers;
-+	/* Sorter for sorting records within each page */
-+	struct radix_sorter *radix_sorter;
-+
-+	struct sparse_cache *sparse_cache;
-+	struct page_cache page_cache;
-+	struct index_page_map *index_page_map;
-+
-+	struct mutex read_threads_mutex;
-+	struct cond_var read_threads_cond;
-+	struct cond_var read_threads_read_done_cond;
-+	struct thread **reader_threads;
-+	unsigned int read_thread_count;
-+	bool read_threads_exiting;
-+
-+	enum index_lookup_mode lookup_mode;
-+	unsigned int reserved_buffers;
++/*
++ * Reference_block structure
++ *
++ * Blocks are used as a proxy, permitting saves of partial refcounts.
++ */
++struct reference_block {
++	/* This block waits on the ref_counts to tell it to write */
++	struct waiter waiter;
++	/* The slab to which this reference_block belongs */
++	struct vdo_slab *slab;
++	/* The number of references in this block that represent allocations */
++	block_size_t allocated_count;
++	/* The slab journal block on which this block must hold a lock */
++	sequence_number_t slab_journal_lock;
++	/* The slab journal block which should be released when this block is committed */
++	sequence_number_t slab_journal_lock_to_release;
++	/* The point up to which each sector is accurate on disk */
++	struct journal_point commit_points[VDO_SECTORS_PER_BLOCK];
++	/* Whether this block has been modified since it was written to disk */
++	bool is_dirty;
++	/* Whether this block is currently writing */
++	bool is_writing;
 +};
 +
-+int __must_check uds_make_volume(const struct configuration *config,
-+				 struct index_layout *layout,
-+				 struct volume **new_volume);
++/* The search_cursor represents the saved position of a free block search. */
++struct search_cursor {
++	/* The reference block containing the current search index */
++	struct reference_block *block;
++	/* The position at which to start searching for the next free counter */
++	slab_block_number index;
++	/* The position just past the last valid counter in the current block */
++	slab_block_number end_index;
 +
-+void uds_free_volume(struct volume *volume);
++	/* A pointer to the first reference block in the slab */
++	struct reference_block *first_block;
++	/* A pointer to the last reference block in the slab */
++	struct reference_block *last_block;
++};
 +
-+int __must_check uds_replace_volume_storage(struct volume *volume,
-+					    struct index_layout *layout,
-+					    struct block_device *bdev);
++enum slab_rebuild_status {
++	VDO_SLAB_REBUILT,
++	VDO_SLAB_REPLAYING,
++	VDO_SLAB_REQUIRES_SCRUBBING,
++	VDO_SLAB_REQUIRES_HIGH_PRIORITY_SCRUBBING,
++	VDO_SLAB_REBUILDING,
++};
 +
-+int __must_check uds_find_volume_chapter_boundaries(struct volume *volume,
-+						    u64 *lowest_vcn,
-+						    u64 *highest_vcn,
-+						    bool *is_empty);
++/*
++ * This is the type declaration for the vdo_slab type. A vdo_slab currently consists of a run of
++ * 2^23 data blocks, but that will soon change to dedicate a small number of those blocks for
++ * metadata storage for the reference counts and slab journal for the slab.
++ *
++ * A reference count is maintained for each physical block number. The vast majority of blocks have
++ * a very small reference count (usually 0 or 1). For references less than or equal to MAXIMUM_REFS
++ * (254) the reference count is stored in counters[pbn].
++ */
++struct vdo_slab {
++	/* A list entry to queue this slab in a block_allocator list */
++	struct list_head allocq_entry;
 +
-+int __must_check
-+uds_search_volume_page_cache(struct volume *volume, struct uds_request *request, bool *found);
++	/* The struct block_allocator that owns this slab */
++	struct block_allocator *allocator;
 +
-+int __must_check uds_search_volume_page_cache_for_rebuild(struct volume *volume,
-+							  const struct uds_record_name *name,
-+							  u64 virtual_chapter,
-+							  bool *found);
++	/* The journal for this slab */
++	struct slab_journal journal;
 +
-+int __must_check uds_search_cached_record_page(struct volume *volume,
-+					       struct uds_request *request,
-+					       u32 chapter,
-+					       u16 record_page_number,
-+					       bool *found);
++	/* The slab number of this slab */
++	slab_count_t slab_number;
++	/* The offset in the allocator partition of the first block in this slab */
++	physical_block_number_t start;
++	/* The offset of the first block past the end of this slab */
++	physical_block_number_t end;
++	/* The starting translated PBN of the slab journal */
++	physical_block_number_t journal_origin;
++	/* The starting translated PBN of the reference counts */
++	physical_block_number_t ref_counts_origin;
 +
-+void uds_forget_chapter(struct volume *volume, u64 chapter);
++	/* The administrative state of the slab */
++	struct admin_state state;
++	/* The status of the slab */
++	enum slab_rebuild_status status;
++	/* Whether the slab was ever queued for scrubbing */
++	bool was_queued_for_scrubbing;
 +
-+int __must_check uds_write_chapter(struct volume *volume,
-+				   struct open_chapter_index *chapter_index,
-+				   const struct uds_volume_record records[]);
++	/* The priority at which this slab has been queued for allocation */
++	u8 priority;
 +
-+void uds_prefetch_volume_chapter(const struct volume *volume, u32 chapter);
++	/* Fields beyond this point are the reference counts for the data blocks in this slab. */
++	/* The size of the counters array */
++	u32 block_count;
++	/* The number of free blocks */
++	u32 free_blocks;
++	/* The array of reference counts */
++	vdo_refcount_t *counters; /* use UDS_ALLOCATE to align data ptr */
 +
-+int __must_check
-+uds_read_chapter_index_from_volume(const struct volume *volume,
-+				   u64 virtual_chapter,
-+				   struct dm_buffer *volume_buffers[],
-+				   struct delta_index_page index_pages[]);
++	/* The saved block pointer and array indexes for the free block search */
++	struct search_cursor search_cursor;
 +
-+int __must_check
-+uds_get_volume_record_page(struct volume *volume, u32 chapter, u32 page_number, u8 **data_ptr);
++	/* A list of the dirty blocks waiting to be written out */
++	struct wait_queue dirty_blocks;
++	/* The number of blocks which are currently writing */
++	size_t active_count;
 +
-+int __must_check uds_get_volume_index_page(struct volume *volume,
-+					   u32 chapter,
-+					   u32 page_number,
-+					   struct delta_index_page **page_ptr);
++	/* A waiter object for updating the slab summary */
++	struct waiter summary_waiter;
 +
-+#endif /* UDS_VOLUME_H */
++	/* The latest slab journal for which there has been a reference count update */
++	struct journal_point slab_journal_point;
++
++	/* The number of reference count blocks */
++	u32 reference_block_count;
++	/* reference count block array */
++	struct reference_block *reference_blocks;
++};
++
++bool __must_check
++vdo_attempt_replay_into_slab(struct vdo_slab *slab,
++			     physical_block_number_t pbn,
++			     enum journal_operation operation,
++			     bool increment,
++			     struct journal_point *recovery_point,
++			     struct vdo_completion *parent);
++
++void vdo_notify_slab_journals_are_recovered(struct vdo_completion *completion);
++
++#endif /* VDO_SLAB_DEPOT_H */
 -- 
 2.40.0
 
