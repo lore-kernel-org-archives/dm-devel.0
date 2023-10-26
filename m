@@ -1,45 +1,45 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D51203E460
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F52A3E01E
 	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:43 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TLdY/U+j"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VM0B6apa"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1698356502;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=JL29HXBSdYE+EMxOpRxxI1rqpTvivAzV1rrrVQSyP9E=;
-	b=TLdY/U+jCmqrNJyY7G1KZ2Dk7zpuNBrvEiqeYPSieAP8ULqtavcOSRKpBI5I0I+RyKmaNG
-	++ue6rb425+DWu1rRlfAQv1140yNFpWydV2HCjfPh6q+B2EfBDfmuj7TJ4JUxckDV0/C+2
-	F5HtsKgc2SgqUWK/7P6P8xmfDpMRJhI=
+	bh=ZMxVCYoLfbc+fV0heDgTWWxLG3arUYk2eoet8M+OQ4k=;
+	b=VM0B6apadTvLzHCLgrXRGtT9IjPPzGHsSVL15+Zzb61be4z2pvRGRwcL1AmuI+q0HsoIOz
+	Rbp/Vy5sDXR7TqeKVhhAwRIyBkDSZEGfNJ42sfIOSqNa9DYysjIADRGqT18koe+fsGu72y
+	53EN8MHyFjGSDq+sKaDTE3RXMqSAIcA=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-681-yGD2oWGxNLe4Uk897XwhVw-1; Thu, 26 Oct 2023 17:41:41 -0400
-X-MC-Unique: yGD2oWGxNLe4Uk897XwhVw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-625-i8IqB_xOO8--74czHundhg-1; Thu, 26 Oct 2023 17:41:39 -0400
+X-MC-Unique: i8IqB_xOO8--74czHundhg-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3C78A81101F;
-	Thu, 26 Oct 2023 21:41:41 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AA3ED811E8F;
+	Thu, 26 Oct 2023 21:41:39 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2D5612949;
-	Thu, 26 Oct 2023 21:41:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 51710492BFA;
+	Thu, 26 Oct 2023 21:41:39 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id DE3C43003D; Thu, 26 Oct 2023 17:41:40 -0400 (EDT)
+	id 0604A3003E; Thu, 26 Oct 2023 17:41:38 -0400 (EDT)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v4 24/39] dm vdo: add the compressed block bin packer
-Date: Thu, 26 Oct 2023 17:41:21 -0400
-Message-Id: <20231026214136.1067410-25-msakai@redhat.com>
+Subject: [PATCH v4 13/39] dm vdo: implement the open chapter and chapter indexes
+Date: Thu, 26 Oct 2023 17:41:10 -0400
+Message-Id: <20231026214136.1067410-14-msakai@redhat.com>
 In-Reply-To: <20231026214136.1067410-1-msakai@redhat.com>
 References: <20231026214136.1067410-1-msakai@redhat.com>
 Precedence: bulk
@@ -49,957 +49,942 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
 
-When blocks do not deduplicate, vdo will attempt to compress them. Up to 14
-compressed blocks may be packed into a single data block (this limitation
-is imposed by the block map). The packer implements a simple best-fit
-packing algorithm and also manages the formatting and writing of compressed
-blocks when bins fill.
+Deduplication records are stored in groups called chapters. New records are
+collected in a structure called the open chapter, which is optimized for
+adding, removing, and sorting records.
+
+When a chapter fills, it is packed into a read-only structure called a
+closed chapter, which is optimized for searching and reading. The closed
+chapter includes a delta index, called the chapter index, which maps each
+record name to the record page containing the record and allows the index
+to read at most one record page when looking up a record.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
-Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
+Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
+Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/packer.c | 794 +++++++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/packer.h | 123 ++++++
- 2 files changed, 917 insertions(+)
- create mode 100644 drivers/md/dm-vdo/packer.c
- create mode 100644 drivers/md/dm-vdo/packer.h
+ drivers/md/dm-vdo/chapter-index.c | 304 +++++++++++++++++++++
+ drivers/md/dm-vdo/chapter-index.h |  66 +++++
+ drivers/md/dm-vdo/open-chapter.c  | 433 ++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/open-chapter.h  |  79 ++++++
+ 4 files changed, 882 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/chapter-index.c
+ create mode 100644 drivers/md/dm-vdo/chapter-index.h
+ create mode 100644 drivers/md/dm-vdo/open-chapter.c
+ create mode 100644 drivers/md/dm-vdo/open-chapter.h
 
-diff --git a/drivers/md/dm-vdo/packer.c b/drivers/md/dm-vdo/packer.c
+diff --git a/drivers/md/dm-vdo/chapter-index.c b/drivers/md/dm-vdo/chapter-index.c
 new file mode 100644
-index 000000000000..03d2c77931b2
+index 000000000000..29eb7fb8b4fe
 --- /dev/null
-+++ b/drivers/md/dm-vdo/packer.c
-@@ -0,0 +1,794 @@
++++ b/drivers/md/dm-vdo/chapter-index.c
+@@ -0,0 +1,304 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "packer.h"
++#include "chapter-index.h"
 +
-+#include <linux/atomic.h>
-+#include <linux/blkdev.h>
-+
++#include "errors.h"
++#include "hash-utils.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
 +#include "permassert.h"
-+#include "string-utils.h"
++#include "uds.h"
 +
-+#include "admin-state.h"
-+#include "completion.h"
-+#include "constants.h"
-+#include "data-vio.h"
-+#include "dedupe.h"
-+#include "encodings.h"
-+#include "io-submitter.h"
-+#include "physical-zone.h"
-+#include "status-codes.h"
-+#include "vdo.h"
-+#include "vio.h"
-+
-+static const struct version_number COMPRESSED_BLOCK_1_0 = {
-+	.major_version = 1,
-+	.minor_version = 0,
-+};
-+
-+enum {
-+	COMPRESSED_BLOCK_1_0_SIZE = 4 + 4 + (2 * VDO_MAX_COMPRESSION_SLOTS),
-+};
-+
-+/**
-+ * vdo_get_compressed_block_fragment() - Get a reference to a compressed fragment from a compressed
-+ *                                       block.
-+ * @mapping_state [in] The mapping state for the look up.
-+ * @compressed_block [in] The compressed block that was read from disk.
-+ * @fragment_offset [out] The offset of the fragment within a compressed block.
-+ * @fragment_size [out] The size of the fragment.
-+ *
-+ * Return: If a valid compressed fragment is found, VDO_SUCCESS; otherwise, VDO_INVALID_FRAGMENT if
-+ *         the fragment is invalid.
-+ */
-+int vdo_get_compressed_block_fragment(enum block_mapping_state mapping_state,
-+				      struct compressed_block *block,
-+				      u16 *fragment_offset,
-+				      u16 *fragment_size)
++int uds_make_open_chapter_index(struct open_chapter_index **chapter_index,
++				const struct geometry *geometry,
++				u64 volume_nonce)
 +{
-+	u16 compressed_size;
-+	u16 offset = 0;
-+	unsigned int i;
-+	u8 slot;
-+	struct version_number version;
++	int result;
++	size_t memory_size;
++	struct open_chapter_index *index;
 +
-+	if (!vdo_is_state_compressed(mapping_state))
-+		return VDO_INVALID_FRAGMENT;
++	result = UDS_ALLOCATE(1, struct open_chapter_index, "open chapter index", &index);
++	if (result != UDS_SUCCESS)
++		return result;
 +
-+	version = vdo_unpack_version_number(block->header.version);
-+	if (!vdo_are_same_version(version, COMPRESSED_BLOCK_1_0))
-+		return VDO_INVALID_FRAGMENT;
-+
-+	slot = mapping_state - VDO_MAPPING_STATE_COMPRESSED_BASE;
-+	if (slot >= VDO_MAX_COMPRESSION_SLOTS)
-+		return VDO_INVALID_FRAGMENT;
-+
-+	compressed_size = __le16_to_cpu(block->header.sizes[slot]);
-+	for (i = 0; i < slot; i++) {
-+		offset += __le16_to_cpu(block->header.sizes[i]);
-+		if (offset >= VDO_COMPRESSED_BLOCK_DATA_SIZE)
-+			return VDO_INVALID_FRAGMENT;
++	/*
++	 * The delta index will rebalance delta lists when memory gets tight,
++	 * so give the chapter index one extra page.
++	 */
++	memory_size = ((geometry->index_pages_per_chapter + 1) * geometry->bytes_per_page);
++	index->geometry = geometry;
++	index->volume_nonce = volume_nonce;
++	result = uds_initialize_delta_index(&index->delta_index,
++					    1,
++					    geometry->delta_lists_per_chapter,
++					    geometry->chapter_mean_delta,
++					    geometry->chapter_payload_bits,
++					    memory_size,
++					    'm');
++	if (result != UDS_SUCCESS) {
++		UDS_FREE(index);
++		return result;
 +	}
 +
-+	if ((offset + compressed_size) > VDO_COMPRESSED_BLOCK_DATA_SIZE)
-+		return VDO_INVALID_FRAGMENT;
-+
-+	*fragment_offset = offset;
-+	*fragment_size = compressed_size;
-+	return VDO_SUCCESS;
++	index->memory_size = index->delta_index.memory_size + sizeof(struct open_chapter_index);
++	*chapter_index = index;
++	return UDS_SUCCESS;
 +}
 +
-+/**
-+ * assert_on_packer_thread() - Check that we are on the packer thread.
-+ * @packer: The packer.
-+ * @caller: The function which is asserting.
-+ */
-+static inline void assert_on_packer_thread(struct packer *packer, const char *caller)
++void uds_free_open_chapter_index(struct open_chapter_index *chapter_index)
 +{
-+	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == packer->thread_id),
-+			"%s() called from packer thread", caller);
++	if (chapter_index == NULL)
++		return;
++
++	uds_uninitialize_delta_index(&chapter_index->delta_index);
++	UDS_FREE(chapter_index);
 +}
 +
-+/**
-+ * insert_in_sorted_list() - Insert a bin to the list.
-+ * @packer: The packer.
-+ * @bin: The bin to move to its sorted position.
-+ *
-+ * The list is in ascending order of free space. Since all bins are already in the list, this
-+ * actually moves the bin to the correct position in the list.
-+ */
-+static void insert_in_sorted_list(struct packer *packer, struct packer_bin *bin)
++/* Re-initialize an open chapter index for a new chapter. */
++void uds_empty_open_chapter_index(struct open_chapter_index *chapter_index,
++				  u64 virtual_chapter_number)
 +{
-+	struct packer_bin *active_bin;
-+
-+	list_for_each_entry(active_bin, &packer->bins, list)
-+		if (active_bin->free_space > bin->free_space) {
-+			list_move_tail(&bin->list, &active_bin->list);
-+			return;
-+		}
-+
-+	list_move_tail(&bin->list, &packer->bins);
++	uds_reset_delta_index(&chapter_index->delta_index);
++	chapter_index->virtual_chapter_number = virtual_chapter_number;
 +}
 +
-+/**
-+ * make_bin() - Allocate a bin and put it into the packer's list.
-+ * @packer: The packer.
-+ */
-+static int __must_check make_bin(struct packer *packer)
++static inline bool was_entry_found(const struct delta_index_entry *entry, u32 address)
 +{
-+	struct packer_bin *bin;
++	return (!entry->at_end) && (entry->key == address);
++}
++
++/* Associate a record name with the record page containing its metadata. */
++int uds_put_open_chapter_index_record(struct open_chapter_index *chapter_index,
++				      const struct uds_record_name *name,
++				      u32 page_number)
++{
 +	int result;
++	struct delta_index_entry entry;
++	u32 address;
++	u32 list_number;
++	const u8 *found_name;
++	bool found;
++	const struct geometry *geometry = chapter_index->geometry;
++	u64 chapter_number = chapter_index->virtual_chapter_number;
++	u32 record_pages = geometry->record_pages_per_chapter;
 +
-+	result = UDS_ALLOCATE_EXTENDED(struct packer_bin,
-+				       VDO_MAX_COMPRESSION_SLOTS,
-+				       struct vio *,
-+				       __func__,
-+				       &bin);
-+	if (result != VDO_SUCCESS)
++	result = ASSERT(page_number < record_pages,
++			"Page number within chapter (%u) exceeds the maximum value %u",
++			page_number,
++			record_pages);
++	if (result != UDS_SUCCESS)
++		return UDS_INVALID_ARGUMENT;
++
++	address = uds_hash_to_chapter_delta_address(name, geometry);
++	list_number = uds_hash_to_chapter_delta_list(name, geometry);
++	result = uds_get_delta_index_entry(&chapter_index->delta_index,
++					   list_number,
++					   address,
++					   name->name,
++					   &entry);
++	if (result != UDS_SUCCESS)
 +		return result;
 +
-+	bin->free_space = VDO_COMPRESSED_BLOCK_DATA_SIZE;
-+	INIT_LIST_HEAD(&bin->list);
-+	list_add_tail(&bin->list, &packer->bins);
-+	return VDO_SUCCESS;
++	found = was_entry_found(&entry, address);
++	result = ASSERT(!(found && entry.is_collision),
++			"Chunk appears more than once in chapter %llu",
++			(unsigned long long) chapter_number);
++	if (result != UDS_SUCCESS)
++		return UDS_BAD_STATE;
++
++	found_name = (found ? name->name : NULL);
++	return uds_put_delta_index_entry(&entry, address, page_number, found_name);
 +}
 +
-+/**
-+ * vdo_make_packer() - Make a new block packer.
++/*
++ * Pack a section of an open chapter index into a chapter index page. A range of delta lists
++ * (starting with a specified list index) is copied from the open chapter index into a memory page.
++ * The number of lists copied onto the page is returned to the caller on success.
 + *
-+ * @vdo: The vdo to which this packer belongs.
-+ * @bin_count: The number of partial bins to keep in memory.
-+ * @packer_ptr: A pointer to hold the new packer.
-+ *
-+ * Return: VDO_SUCCESS or an error
++ * @chapter_index: The open chapter index
++ * @memory: The memory page to use
++ * @first_list: The first delta list number to be copied
++ * @last_page: If true, this is the last page of the chapter index and all the remaining lists must
++ *             be packed onto this page
++ * @lists_packed: The number of delta lists that were packed onto this page
 + */
-+int vdo_make_packer(struct vdo *vdo, block_count_t bin_count, struct packer **packer_ptr)
++int uds_pack_open_chapter_index_page(struct open_chapter_index *chapter_index,
++				     u8 *memory,
++				     u32 first_list,
++				     bool last_page,
++				     u32 *lists_packed)
 +{
-+	struct packer *packer;
-+	block_count_t i;
 +	int result;
++	struct delta_index *delta_index = &chapter_index->delta_index;
++	struct delta_index_stats stats;
++	u64 nonce = chapter_index->volume_nonce;
++	u64 chapter_number = chapter_index->virtual_chapter_number;
++	const struct geometry *geometry = chapter_index->geometry;
++	u32 list_count = geometry->delta_lists_per_chapter;
++	unsigned int removals = 0;
++	struct delta_index_entry entry;
++	u32 next_list;
++	s32 list_number;
 +
-+	result = UDS_ALLOCATE(1, struct packer, __func__, &packer);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	packer->thread_id = vdo->thread_config.packer_thread;
-+	packer->size = bin_count;
-+	INIT_LIST_HEAD(&packer->bins);
-+	vdo_set_admin_state_code(&packer->state, VDO_ADMIN_STATE_NORMAL_OPERATION);
-+
-+	for (i = 0; i < bin_count; i++) {
-+		result = make_bin(packer);
-+		if (result != VDO_SUCCESS) {
-+			vdo_free_packer(packer);
++	for (;;) {
++		result = uds_pack_delta_index_page(delta_index,
++						   nonce,
++						   memory,
++						   geometry->bytes_per_page,
++						   chapter_number,
++						   first_list,
++						   lists_packed);
++		if (result != UDS_SUCCESS)
 +			return result;
-+		}
-+	}
-+
-+	/*
-+	 * The canceled bin can hold up to half the number of user vios. Every canceled vio in the
-+	 * bin must have a canceler for which it is waiting, and any canceler will only have
-+	 * canceled one lock holder at a time.
-+	 */
-+	result = UDS_ALLOCATE_EXTENDED(struct packer_bin,
-+				       MAXIMUM_VDO_USER_VIOS / 2,
-+				       struct vio *, __func__,
-+				       &packer->canceled_bin);
-+	if (result != VDO_SUCCESS) {
-+		vdo_free_packer(packer);
-+		return result;
-+	}
-+
-+	result = vdo_make_default_thread(vdo, packer->thread_id);
-+	if (result != VDO_SUCCESS) {
-+		vdo_free_packer(packer);
-+		return result;
-+	}
-+
-+	*packer_ptr = packer;
-+	return VDO_SUCCESS;
-+}
-+
-+/**
-+ * vdo_free_packer() - Free a block packer.
-+ * @packer: The packer to free.
-+ */
-+void vdo_free_packer(struct packer *packer)
-+{
-+	struct packer_bin *bin, *tmp;
-+
-+	if (packer == NULL)
-+		return;
-+
-+	list_for_each_entry_safe(bin, tmp, &packer->bins, list) {
-+		list_del_init(&bin->list);
-+		UDS_FREE(bin);
-+	}
-+
-+	UDS_FREE(UDS_FORGET(packer->canceled_bin));
-+	UDS_FREE(packer);
-+}
-+
-+/**
-+ * get_packer_from_data_vio() - Get the packer from a data_vio.
-+ * @data_vio: The data_vio.
-+ *
-+ * Return: The packer from the VDO to which the data_vio belongs.
-+ */
-+static inline struct packer *get_packer_from_data_vio(struct data_vio *data_vio)
-+{
-+	return vdo_from_data_vio(data_vio)->packer;
-+}
-+
-+/**
-+ * vdo_get_packer_statistics() - Get the current statistics from the packer.
-+ * @packer: The packer to query.
-+ *
-+ * Return: a copy of the current statistics for the packer.
-+ */
-+struct packer_statistics vdo_get_packer_statistics(const struct packer *packer)
-+{
-+	const struct packer_statistics *stats = &packer->statistics;
-+
-+	return (struct packer_statistics) {
-+		.compressed_fragments_written = READ_ONCE(stats->compressed_fragments_written),
-+		.compressed_blocks_written = READ_ONCE(stats->compressed_blocks_written),
-+		.compressed_fragments_in_packer = READ_ONCE(stats->compressed_fragments_in_packer),
-+	};
-+}
-+
-+/**
-+ * abort_packing() - Abort packing a data_vio.
-+ * @data_vio: The data_vio to abort.
-+ */
-+static void abort_packing(struct data_vio *data_vio)
-+{
-+	struct packer *packer = get_packer_from_data_vio(data_vio);
-+
-+	WRITE_ONCE(packer->statistics.compressed_fragments_in_packer,
-+		   packer->statistics.compressed_fragments_in_packer - 1);
-+
-+	write_data_vio(data_vio);
-+}
-+
-+/**
-+ * release_compressed_write_waiter() - Update a data_vio for which a successful compressed write
-+ *                                     has completed and send it on its way.
-+
-+ * @data_vio: The data_vio to release.
-+ * @allocation: The allocation to which the compressed block was written.
-+ */
-+static void
-+release_compressed_write_waiter(struct data_vio *data_vio, struct allocation *allocation)
-+{
-+	data_vio->new_mapped = (struct zoned_pbn) {
-+		.pbn = allocation->pbn,
-+		.zone = allocation->zone,
-+		.state = data_vio->compression.slot + VDO_MAPPING_STATE_COMPRESSED_BASE,
-+	};
-+
-+	vdo_share_compressed_write_lock(data_vio, allocation->lock);
-+	update_metadata_for_data_vio_write(data_vio, allocation->lock);
-+}
-+
-+/**
-+ * finish_compressed_write() - Finish a compressed block write.
-+ * @completion: The compressed write completion.
-+ *
-+ * This callback is registered in continue_after_allocation().
-+ */
-+static void finish_compressed_write(struct vdo_completion *completion)
-+{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct data_vio *client, *next;
-+
-+	assert_data_vio_in_allocated_zone(agent);
-+
-+	/*
-+	 * Process all the non-agent waiters first to ensure that the pbn lock can not be released
-+	 * until all of them have had a chance to journal their increfs.
-+	 */
-+	for (client = agent->compression.next_in_batch; client != NULL; client = next) {
-+		next = client->compression.next_in_batch;
-+		release_compressed_write_waiter(client, &agent->allocation);
-+	}
-+
-+	completion->error_handler = handle_data_vio_error;
-+	release_compressed_write_waiter(agent, &agent->allocation);
-+}
-+
-+static void handle_compressed_write_error(struct vdo_completion *completion)
-+{
-+	struct data_vio *agent = as_data_vio(completion);
-+	struct allocation *allocation = &agent->allocation;
-+	struct data_vio *client, *next;
-+
-+	if (vdo_requeue_completion_if_needed(completion, allocation->zone->thread_id))
-+		return;
-+
-+	update_vio_error_stats(as_vio(completion),
-+			       "Completing compressed write vio for physical block %llu with error",
-+			       (unsigned long long) allocation->pbn);
-+
-+	for (client = agent->compression.next_in_batch; client != NULL; client = next) {
-+		next = client->compression.next_in_batch;
-+		write_data_vio(client);
-+	}
-+
-+	/* Now that we've released the batch from the packer, forget the error and continue on. */
-+	vdo_reset_completion(completion);
-+	completion->error_handler = handle_data_vio_error;
-+	write_data_vio(agent);
-+}
-+
-+/**
-+ * add_to_bin() - Put a data_vio in a specific packer_bin in which it will definitely fit.
-+ * @bin: The bin in which to put the data_vio.
-+ * @data_vio: The data_vio to add.
-+ */
-+static void add_to_bin(struct packer_bin *bin, struct data_vio *data_vio)
-+{
-+	data_vio->compression.bin = bin;
-+	data_vio->compression.slot = bin->slots_used;
-+	bin->incoming[bin->slots_used++] = data_vio;
-+}
-+
-+/**
-+ * remove_from_bin() - Get the next data_vio whose compression has not been canceled from a bin.
-+ * @packer: The packer.
-+ * @bin: The bin from which to get a data_vio.
-+ *
-+ * Any canceled data_vios will be moved to the canceled bin.
-+ * Return: An uncanceled data_vio from the bin or NULL if there are none.
-+ */
-+static struct data_vio *remove_from_bin(struct packer *packer, struct packer_bin *bin)
-+{
-+	while (bin->slots_used > 0) {
-+		struct data_vio *data_vio = bin->incoming[--bin->slots_used];
-+
-+		if (!advance_data_vio_compression_stage(data_vio).may_not_compress) {
-+			data_vio->compression.bin = NULL;
-+			return data_vio;
++		if ((first_list + *lists_packed) == list_count)
++			/* All lists are packed. */
++			break;
++		else if (*lists_packed == 0) {
++			/*
++			 * The next delta list does not fit on a page. This delta list will be
++			 * removed.
++			 */
++		} else if (last_page) {
++			/*
++			 * This is the last page and there are lists left unpacked, but all of the
++			 * remaining lists must fit on the page. Find a list that contains entries
++			 * and remove the entire list. Try the first list that does not fit. If it
++			 * is empty, we will select the last list that already fits and has any
++			 * entries.
++			 */
++		} else {
++			/* This page is done. */
++			break;
 +		}
 +
-+		add_to_bin(packer->canceled_bin, data_vio);
++		if (removals == 0) {
++			uds_get_delta_index_stats(delta_index, &stats);
++			uds_log_warning("The chapter index for chapter %llu contains %llu entries with %llu collisions",
++					(unsigned long long) chapter_number,
++					(unsigned long long) stats.record_count,
++					(unsigned long long) stats.collision_count);
++		}
++
++		list_number = *lists_packed;
++		do {
++			if (list_number < 0)
++				return UDS_OVERFLOW;
++
++			next_list = first_list + list_number--,
++			result = uds_start_delta_index_search(delta_index, next_list, 0, &entry);
++			if (result != UDS_SUCCESS)
++				return result;
++
++			result = uds_next_delta_index_entry(&entry);
++			if (result != UDS_SUCCESS)
++				return result;
++		} while (entry.at_end);
++
++		do {
++			result = uds_remove_delta_index_entry(&entry);
++			if (result != UDS_SUCCESS)
++				return result;
++			removals++;
++		} while (!entry.at_end);
 +	}
 +
-+	/* The bin is now empty. */
-+	bin->free_space = VDO_COMPRESSED_BLOCK_DATA_SIZE;
-+	return NULL;
++	if (removals > 0)
++		uds_log_warning("To avoid chapter index page overflow in chapter %llu, %u entries were removed from the chapter index",
++				(unsigned long long) chapter_number,
++				removals);
++
++	return UDS_SUCCESS;
 +}
 +
-+/**
-+ * initialize_compressed_block() - Initialize a compressed block.
-+ * @block: The compressed block to initialize.
-+ * @size: The size of the agent's fragment.
-+ *
-+ * This method initializes the compressed block in the compressed write agent. Because the
-+ * compressor already put the agent's compressed fragment at the start of the compressed block's
-+ * data field, it needn't be copied. So all we need do is initialize the header and set the size of
-+ * the agent's fragment.
-+ */
-+static void initialize_compressed_block(struct compressed_block *block, u16 size)
++/* Make a new chapter index page, initializing it with the data from a given index_page buffer. */
++int uds_initialize_chapter_index_page(struct delta_index_page *index_page,
++				      const struct geometry *geometry,
++				      u8 *page_buffer,
++				      u64 volume_nonce)
 +{
-+	/*
-+	 * Make sure the block layout isn't accidentally changed by changing the length of the
-+	 * block header.
-+	 */
-+	STATIC_ASSERT_SIZEOF(struct compressed_block_header, COMPRESSED_BLOCK_1_0_SIZE);
-+
-+	block->header.version = vdo_pack_version_number(COMPRESSED_BLOCK_1_0);
-+	block->header.sizes[0] = __cpu_to_le16(size);
++	return uds_initialize_delta_index_page(index_page,
++					       volume_nonce,
++					       geometry->chapter_mean_delta,
++					       geometry->chapter_payload_bits,
++					       page_buffer,
++					       geometry->bytes_per_page);
 +}
 +
-+/**
-+ * pack_fragment() - Pack a data_vio's fragment into the compressed block in which it is already
-+ *                   known to fit.
-+ * @compression: The agent's compression_state to pack in to.
-+ * @data_vio: The data_vio to pack.
-+ * @offset: The offset into the compressed block at which to pack the fragment.
-+ * @compressed_block: The compressed block which will be written out when batch is fully packed.
-+ *
-+ * Return: The new amount of space used.
-+ */
-+static block_size_t __must_check
-+pack_fragment(struct compression_state *compression,
-+	      struct data_vio *data_vio,
-+	      block_size_t offset,
-+	      slot_number_t slot,
-+	      struct compressed_block *block)
-+{
-+	struct compression_state *to_pack = &data_vio->compression;
-+	char *fragment = to_pack->block->data;
-+
-+	to_pack->next_in_batch = compression->next_in_batch;
-+	compression->next_in_batch = data_vio;
-+	to_pack->slot = slot;
-+	block->header.sizes[slot] = __cpu_to_le16(to_pack->size);
-+	memcpy(&block->data[offset], fragment, to_pack->size);
-+	return (offset + to_pack->size);
-+}
-+
-+/**
-+ * compressed_write_end_io() - The bio_end_io for a compressed block write.
-+ * @bio: The bio for the compressed write.
-+ */
-+static void compressed_write_end_io(struct bio *bio)
-+{
-+	struct data_vio *data_vio = vio_as_data_vio(bio->bi_private);
-+
-+	vdo_count_completed_bios(bio);
-+	set_data_vio_allocated_zone_callback(data_vio, finish_compressed_write);
-+	continue_data_vio_with_error(data_vio, blk_status_to_errno(bio->bi_status));
-+}
-+
-+/**
-+ * write_bin() - Write out a bin.
-+ * @packer: The packer.
-+ * @bin: The bin to write.
-+ */
-+static void write_bin(struct packer *packer, struct packer_bin *bin)
++/* Validate a chapter index page read during rebuild. */
++int uds_validate_chapter_index_page(const struct delta_index_page *index_page,
++				    const struct geometry *geometry)
 +{
 +	int result;
-+	block_size_t offset;
-+	slot_number_t slot = 1;
-+	struct compression_state *compression;
-+	struct compressed_block *block;
-+	struct data_vio *agent = remove_from_bin(packer, bin);
-+	struct data_vio *client;
-+	struct packer_statistics *stats;
++	const struct delta_index *delta_index = &index_page->delta_index;
++	u32 first = index_page->lowest_list_number;
++	u32 last = index_page->highest_list_number;
++	u32 list_number;
 +
-+	if (agent == NULL)
-+		return;
++	/* We walk every delta list from start to finish. */
++	for (list_number = first; list_number <= last; list_number++) {
++		struct delta_index_entry entry;
 +
-+	compression = &agent->compression;
-+	compression->slot = 0;
-+	block = compression->block;
-+	initialize_compressed_block(block, compression->size);
-+	offset = compression->size;
++		result = uds_start_delta_index_search(delta_index, list_number - first, 0, &entry);
++		if (result != UDS_SUCCESS)
++			return result;
 +
-+	while ((client = remove_from_bin(packer, bin)) != NULL)
-+		offset = pack_fragment(compression, client, offset, slot++, block);
++		for (;;) {
++			result = uds_next_delta_index_entry(&entry);
++			if (result != UDS_SUCCESS)
++				/*
++				 * A random bit stream is highly likely to arrive here when we go
++				 * past the end of the delta list.
++				 */
++				return result;
 +
-+	/*
-+	 * If the batch contains only a single vio, then we save nothing by saving the compressed
-+	 * form. Continue processing the single vio in the batch.
-+	 */
-+	if (slot == 1) {
-+		abort_packing(agent);
-+		return;
++			if (entry.at_end)
++				break;
++
++			/* Also make sure that the record page field contains a plausible value. */
++			if (uds_get_delta_entry_value(&entry) >=
++			    geometry->record_pages_per_chapter)
++				/*
++				 * Do not log this as an error. It happens in normal operation when
++				 * we are doing a rebuild but haven't written the entire volume
++				 * once.
++				 */
++				return UDS_CORRUPT_DATA;
++		}
 +	}
-+
-+	if (slot < VDO_MAX_COMPRESSION_SLOTS)
-+		/* Clear out the sizes of the unused slots */
-+		memset(&block->header.sizes[slot],
-+		       0,
-+		       (VDO_MAX_COMPRESSION_SLOTS - slot) * sizeof(__le16));
-+
-+	agent->vio.completion.error_handler = handle_compressed_write_error;
-+	if (vdo_is_read_only(vdo_from_data_vio(agent))) {
-+		continue_data_vio_with_error(agent, VDO_READ_ONLY);
-+		return;
-+	}
-+
-+	result = vio_reset_bio(&agent->vio,
-+			       (char *) block,
-+			       compressed_write_end_io,
-+			       REQ_OP_WRITE,
-+			       agent->allocation.pbn);
-+	if (result != VDO_SUCCESS) {
-+		continue_data_vio_with_error(agent, result);
-+		return;
-+	}
-+
-+	/*
-+	 * Once the compressed write is submitted, the fragments are no longer in the packer, so
-+	 * update stats now.
-+	 */
-+	stats = &packer->statistics;
-+	WRITE_ONCE(stats->compressed_fragments_in_packer,
-+		   (stats->compressed_fragments_in_packer - slot));
-+	WRITE_ONCE(stats->compressed_fragments_written,
-+		   (stats->compressed_fragments_written + slot));
-+	WRITE_ONCE(stats->compressed_blocks_written, stats->compressed_blocks_written + 1);
-+
-+	submit_data_vio_io(agent);
++	return UDS_SUCCESS;
 +}
 +
-+/**
-+ * add_data_vio_to_packer_bin() - Add a data_vio to a bin's incoming queue
-+ * @packer: The packer.
-+ * @bin: The bin to which to add the data_vio.
-+ * @data_vio: The data_vio to add to the bin's queue.
-+ *
-+ * Adds a data_vio to a bin's incoming queue, handles logical space change, and calls physical
-+ * space processor.
++/*
++ * Search a chapter index page for a record name, returning the record page number that may contain
++ * the name.
 + */
-+static void add_data_vio_to_packer_bin(struct packer *packer,
-+				       struct packer_bin *bin,
-+				       struct data_vio *data_vio)
-+{
-+	/* If the selected bin doesn't have room, start a new batch to make room. */
-+	if (bin->free_space < data_vio->compression.size)
-+		write_bin(packer, bin);
-+
-+	add_to_bin(bin, data_vio);
-+	bin->free_space -= data_vio->compression.size;
-+
-+	/* If we happen to exactly fill the bin, start a new batch. */
-+	if ((bin->slots_used == VDO_MAX_COMPRESSION_SLOTS) ||
-+	    (bin->free_space == 0))
-+		write_bin(packer, bin);
-+
-+	/* Now that we've finished changing the free space, restore the sort order. */
-+	insert_in_sorted_list(packer, bin);
-+}
-+
-+/**
-+ * select_bin() - Select the bin that should be used to pack the compressed data in a data_vio with
-+ *                other data_vios.
-+ * @packer: The packer.
-+ * @data_vio: The data_vio.
-+ */
-+static struct packer_bin * __must_check
-+select_bin(struct packer *packer, struct data_vio *data_vio)
-+{
-+	/*
-+	 * First best fit: select the bin with the least free space that has enough room for the
-+	 * compressed data in the data_vio.
-+	 */
-+	struct packer_bin *bin, *fullest_bin;
-+
-+	list_for_each_entry(bin, &packer->bins, list)
-+		if (bin->free_space >= data_vio->compression.size)
-+			return bin;
-+
-+	/*
-+	 * None of the bins have enough space for the data_vio. We're not allowed to create new
-+	 * bins, so we have to overflow one of the existing bins. It's pretty intuitive to select
-+	 * the fullest bin, since that "wastes" the least amount of free space in the compressed
-+	 * block. But if the space currently used in the fullest bin is smaller than the compressed
-+	 * size of the incoming block, it seems wrong to force that bin to write when giving up on
-+	 * compressing the incoming data_vio would likewise "waste" the least amount of free space.
-+	 */
-+	fullest_bin = list_first_entry(&packer->bins, struct packer_bin, list);
-+	if (data_vio->compression.size >=
-+	    (VDO_COMPRESSED_BLOCK_DATA_SIZE - fullest_bin->free_space))
-+		return NULL;
-+
-+	/*
-+	 * The fullest bin doesn't have room, but writing it out and starting a new batch with the
-+	 * incoming data_vio will increase the packer's free space.
-+	 */
-+	return fullest_bin;
-+}
-+
-+/**
-+ * vdo_attempt_packing() - Attempt to rewrite the data in this data_vio as part of a compressed
-+ *                         block.
-+ * @data_vio: The data_vio to pack.
-+ */
-+void vdo_attempt_packing(struct data_vio *data_vio)
++int uds_search_chapter_index_page(struct delta_index_page *index_page,
++				  const struct geometry *geometry,
++				  const struct uds_record_name *name,
++				  u16 *record_page_ptr)
 +{
 +	int result;
-+	struct packer_bin *bin;
-+	struct data_vio_compression_status status = get_data_vio_compression_status(data_vio);
-+	struct packer *packer = get_packer_from_data_vio(data_vio);
++	struct delta_index *delta_index = &index_page->delta_index;
++	u32 address = uds_hash_to_chapter_delta_address(name, geometry);
++	u32 delta_list_number = uds_hash_to_chapter_delta_list(name, geometry);
++	u32 sub_list_number = delta_list_number - index_page->lowest_list_number;
++	struct delta_index_entry entry;
 +
-+	assert_on_packer_thread(packer, __func__);
++	result = uds_get_delta_index_entry(delta_index,
++					   sub_list_number,
++					   address,
++					   name->name,
++					   &entry);
++	if (result != UDS_SUCCESS)
++		return result;
 +
-+	result = ASSERT((status.stage == DATA_VIO_COMPRESSING),
-+			"attempt to pack data_vio not ready for packing, stage: %u",
-+			status.stage);
-+	if (result != VDO_SUCCESS)
-+		return;
++	if (was_entry_found(&entry, address))
++		*record_page_ptr = uds_get_delta_entry_value(&entry);
++	else
++		*record_page_ptr = NO_CHAPTER_INDEX_ENTRY;
 +
-+	/*
-+	 * Increment whether or not this data_vio will be packed or not since abort_packing()
-+	 * always decrements the counter.
-+	 */
-+	WRITE_ONCE(packer->statistics.compressed_fragments_in_packer,
-+		   packer->statistics.compressed_fragments_in_packer + 1);
-+
-+	/*
-+	 * If packing of this data_vio is disallowed for administrative reasons, give up before
-+	 * making any state changes.
-+	 */
-+	if (!vdo_is_state_normal(&packer->state) ||
-+	    (data_vio->flush_generation < packer->flush_generation)) {
-+		abort_packing(data_vio);
-+		return;
-+	}
-+
-+	/*
-+	 * The check of may_vio_block_in_packer() here will set the data_vio's compression state to
-+	 * VIO_PACKING if the data_vio is allowed to be compressed (if it has already been
-+	 * canceled, we'll fall out here). Once the data_vio is in the VIO_PACKING state, it must
-+	 * be guaranteed to be put in a bin before any more requests can be processed by the packer
-+	 * thread. Otherwise, a canceling data_vio could attempt to remove the canceled data_vio
-+	 * from the packer and fail to rendezvous with it (VDO-2809). We must also make sure that
-+	 * we will actually bin the data_vio and not give up on it as being larger than the space
-+	 * used in the fullest bin. Hence we must call select_bin() before calling
-+	 * may_vio_block_in_packer() (VDO-2826).
-+	 */
-+	bin = select_bin(packer, data_vio);
-+	if ((bin == NULL) ||
-+	    (advance_data_vio_compression_stage(data_vio).stage != DATA_VIO_PACKING)) {
-+		abort_packing(data_vio);
-+		return;
-+	}
-+
-+	add_data_vio_to_packer_bin(packer, bin, data_vio);
++	return UDS_SUCCESS;
 +}
-+
-+/**
-+ * check_for_drain_complete() - Check whether the packer has drained.
-+ * @packer: The packer.
-+ */
-+static void check_for_drain_complete(struct packer *packer)
-+{
-+	if (vdo_is_state_draining(&packer->state) && (packer->canceled_bin->slots_used == 0))
-+		vdo_finish_draining(&packer->state);
-+}
-+
-+/**
-+ * write_all_non_empty_bins() - Write out all non-empty bins on behalf of a flush or suspend.
-+ * @packer: The packer being flushed.
-+ */
-+static void write_all_non_empty_bins(struct packer *packer)
-+{
-+	struct packer_bin *bin;
-+
-+	list_for_each_entry(bin, &packer->bins, list)
-+		write_bin(packer, bin);
-+		/*
-+		 * We don't need to re-sort the bin here since this loop will make every bin have
-+		 * the same amount of free space, so every ordering is sorted.
-+		 */
-+
-+	check_for_drain_complete(packer);
-+}
-+
-+/**
-+ * vdo_flush_packer() - Request that the packer flush asynchronously.
-+ * @packer: The packer to flush.
-+ *
-+ * All bins with at least two compressed data blocks will be written out, and any solitary pending
-+ * VIOs will be released from the packer. While flushing is in progress, any VIOs submitted to
-+ * vdo_attempt_packing() will be continued immediately without attempting to pack them.
-+ */
-+void vdo_flush_packer(struct packer *packer)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	if (vdo_is_state_normal(&packer->state))
-+		write_all_non_empty_bins(packer);
-+}
-+
-+/**
-+ * vdo_remove_lock_holder_from_packer() - Remove a lock holder from the packer.
-+ * @completion: The data_vio which needs a lock held by a data_vio in the packer. The data_vio's
-+ *              compression.lock_holder field will point to the data_vio to remove.
-+ */
-+void vdo_remove_lock_holder_from_packer(struct vdo_completion *completion)
-+{
-+	struct data_vio *data_vio = as_data_vio(completion);
-+	struct packer *packer = get_packer_from_data_vio(data_vio);
-+	struct data_vio *lock_holder;
-+	struct packer_bin *bin;
-+	slot_number_t slot;
-+
-+	assert_data_vio_in_packer_zone(data_vio);
-+
-+	lock_holder = UDS_FORGET(data_vio->compression.lock_holder);
-+	bin = lock_holder->compression.bin;
-+	ASSERT_LOG_ONLY((bin != NULL), "data_vio in packer has a bin");
-+
-+	slot = lock_holder->compression.slot;
-+	bin->slots_used--;
-+	if (slot < bin->slots_used) {
-+		bin->incoming[slot] = bin->incoming[bin->slots_used];
-+		bin->incoming[slot]->compression.slot = slot;
-+	}
-+
-+	lock_holder->compression.bin = NULL;
-+	lock_holder->compression.slot = 0;
-+
-+	if (bin != packer->canceled_bin) {
-+		bin->free_space += lock_holder->compression.size;
-+		insert_in_sorted_list(packer, bin);
-+	}
-+
-+	abort_packing(lock_holder);
-+	check_for_drain_complete(packer);
-+}
-+
-+/**
-+ * vdo_increment_packer_flush_generation() - Increment the flush generation in the packer.
-+ * @packer: The packer.
-+ *
-+ * This will also cause the packer to flush so that any VIOs from previous generations will exit
-+ * the packer.
-+ */
-+void vdo_increment_packer_flush_generation(struct packer *packer)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	packer->flush_generation++;
-+	vdo_flush_packer(packer);
-+}
-+
-+/**
-+ * initiate_drain() - Initiate a drain.
-+ *
-+ * Implements vdo_admin_initiator.
-+ */
-+static void initiate_drain(struct admin_state *state)
-+{
-+	struct packer *packer = container_of(state, struct packer, state);
-+
-+	write_all_non_empty_bins(packer);
-+}
-+
-+/**
-+ * vdo_drain_packer() - Drain the packer by preventing any more VIOs from entering the packer and
-+ *                      then flushing.
-+ * @packer: The packer to drain.
-+ * @completion: The completion to finish when the packer has drained.
-+ */
-+void vdo_drain_packer(struct packer *packer, struct vdo_completion *completion)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	vdo_start_draining(&packer->state, VDO_ADMIN_STATE_SUSPENDING, completion, initiate_drain);
-+}
-+
-+/**
-+ * vdo_resume_packer() - Resume a packer which has been suspended.
-+ * @packer: The packer to resume.
-+ * @parent: The completion to finish when the packer has resumed.
-+ */
-+void vdo_resume_packer(struct packer *packer, struct vdo_completion *parent)
-+{
-+	assert_on_packer_thread(packer, __func__);
-+	vdo_continue_completion(parent, vdo_resume_if_quiescent(&packer->state));
-+}
-+
-+static void dump_packer_bin(const struct packer_bin *bin, bool canceled)
-+{
-+	if (bin->slots_used == 0)
-+		/* Don't dump empty bins. */
-+		return;
-+
-+	uds_log_info("	  %sBin slots_used=%u free_space=%zu",
-+		     (canceled ? "Canceled" : ""), bin->slots_used,
-+		     bin->free_space);
-+
-+	/*
-+	 * FIXME: dump vios in bin->incoming? The vios should have been dumped from the vio pool.
-+	 * Maybe just dump their addresses so it's clear they're here?
-+	 */
-+}
-+
-+/**
-+ * vdo_dump_packer() - Dump the packer.
-+ * @packer: The packer.
-+ *
-+ * Context: dumps in a thread-unsafe fashion.
-+ */
-+void vdo_dump_packer(const struct packer *packer)
-+{
-+	struct packer_bin *bin;
-+
-+	uds_log_info("packer");
-+	uds_log_info("	flushGeneration=%llu state %s  packer_bin_count=%llu",
-+		     (unsigned long long) packer->flush_generation,
-+		     vdo_get_admin_state_code(&packer->state)->name,
-+		     (unsigned long long) packer->size);
-+
-+	list_for_each_entry(bin, &packer->bins, list)
-+		dump_packer_bin(bin, false);
-+
-+	dump_packer_bin(packer->canceled_bin, true);
-+}
-diff --git a/drivers/md/dm-vdo/packer.h b/drivers/md/dm-vdo/packer.h
+diff --git a/drivers/md/dm-vdo/chapter-index.h b/drivers/md/dm-vdo/chapter-index.h
 new file mode 100644
-index 000000000000..6bf6822398ef
+index 000000000000..0a9992e5e347
 --- /dev/null
-+++ b/drivers/md/dm-vdo/packer.h
-@@ -0,0 +1,123 @@
++++ b/drivers/md/dm-vdo/chapter-index.h
+@@ -0,0 +1,66 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef VDO_PACKER_H
-+#define VDO_PACKER_H
++#ifndef UDS_CHAPTER_INDEX_H
++#define UDS_CHAPTER_INDEX_H
 +
-+#include <linux/list.h>
++#include <linux/limits.h>
 +
-+#include "admin-state.h"
-+#include "constants.h"
-+#include "encodings.h"
-+#include "statistics.h"
-+#include "types.h"
-+#include "wait-queue.h"
-+
-+enum {
-+	DEFAULT_PACKER_BINS = 16,
-+};
-+
-+/* The header of a compressed block. */
-+struct compressed_block_header {
-+	/* Unsigned 32-bit major and minor versions, little-endian */
-+	struct packed_version_number version;
-+
-+	/* List of unsigned 16-bit compressed block sizes, little-endian */
-+	__le16 sizes[VDO_MAX_COMPRESSION_SLOTS];
-+} __packed;
-+
-+enum {
-+	VDO_COMPRESSED_BLOCK_DATA_SIZE = VDO_BLOCK_SIZE - sizeof(struct compressed_block_header),
-+
-+	/*
-+	 * A compressed block is only written if we can pack at least two fragments into it, so a
-+	 * fragment which fills the entire data portion of a compressed block is too big.
-+	 */
-+	VDO_MAX_COMPRESSED_FRAGMENT_SIZE = VDO_COMPRESSED_BLOCK_DATA_SIZE - 1,
-+};
-+
-+/* * The compressed block overlay. */
-+struct compressed_block {
-+	struct compressed_block_header header;
-+	char data[VDO_COMPRESSED_BLOCK_DATA_SIZE];
-+} __packed;
++#include "delta-index.h"
++#include "geometry.h"
 +
 +/*
-+ * Each packer_bin holds an incomplete batch of data_vios that only partially fill a compressed
-+ * block. The bins are kept in a ring sorted by the amount of unused space so the first bin with
-+ * enough space to hold a newly-compressed data_vio can easily be found. When the bin fills up or
-+ * is flushed, the first uncanceled data_vio in the bin is selected to be the agent for that bin.
-+ * Upon entering the packer, each data_vio already has its compressed data in the first slot of the
-+ * data_vio's compressed_block (overlaid on the data_vio's scratch_block). So the agent's fragment
-+ * is already in place. The fragments for the other uncanceled data_vios in the bin are packed into
-+ * the agent's compressed block. The agent then writes out the compressed block. If the write is
-+ * successful, the agent shares its pbn lock which each of the other data_vios in its compressed
-+ * block and sends each on its way. Finally the agent itself continues on the write path as before.
-+ *
-+ * There is one special bin which is used to hold data_vios which have been canceled and removed
-+ * from their bin by the packer. These data_vios need to wait for the canceller to rendezvous with
-+ * them (VDO-2809) and so they sit in this special bin.
++ * A chapter index for an open chapter is a mutable structure that tracks all the records that have
++ * been added to the chapter. A chapter index for a closed chapter is similar except that it is
++ * immutable because the contents of a closed chapter can never change, and the immutable structure
++ * is more efficient. Both types of chapter index are implemented with a delta index.
 + */
-+struct packer_bin {
-+	/* List links for packer.packer_bins */
-+	struct list_head list;
-+	/* The number of items in the bin */
-+	slot_number_t slots_used;
-+	/* The number of compressed block bytes remaining in the current batch */
-+	size_t free_space;
-+	/* The current partial batch of data_vios, waiting for more */
-+	struct data_vio *incoming[];
++
++enum {
++	/* The value returned when no entry is found in the chapter index. */
++	NO_CHAPTER_INDEX_ENTRY = U16_MAX,
 +};
 +
-+struct packer {
-+	/* The ID of the packer's callback thread */
-+	thread_id_t thread_id;
-+	/* The number of bins */
-+	block_count_t size;
-+	/* A list of all packer_bins, kept sorted by free_space */
-+	struct list_head bins;
++struct open_chapter_index {
++	const struct geometry *geometry;
++	struct delta_index delta_index;
++	u64 virtual_chapter_number;
++	u64 volume_nonce;
++	size_t memory_size;
++};
++
++int __must_check uds_make_open_chapter_index(struct open_chapter_index **chapter_index,
++					     const struct geometry *geometry,
++					     u64 volume_nonce);
++
++void uds_free_open_chapter_index(struct open_chapter_index *chapter_index);
++
++void uds_empty_open_chapter_index(struct open_chapter_index *chapter_index,
++				  u64 virtual_chapter_number);
++
++int __must_check uds_put_open_chapter_index_record(struct open_chapter_index *chapter_index,
++						   const struct uds_record_name *name,
++						   u32 page_number);
++
++int __must_check uds_pack_open_chapter_index_page(struct open_chapter_index *chapter_index,
++						  u8 *memory,
++						  u32 first_list,
++						  bool last_page,
++						  u32 *lists_packed);
++
++int __must_check uds_initialize_chapter_index_page(struct delta_index_page *index_page,
++						   const struct geometry *geometry,
++						   u8 *page_buffer,
++						   u64 volume_nonce);
++
++int __must_check uds_validate_chapter_index_page(const struct delta_index_page *index_page,
++						 const struct geometry *geometry);
++
++int __must_check uds_search_chapter_index_page(struct delta_index_page *index_page,
++					       const struct geometry *geometry,
++					       const struct uds_record_name *name,
++					       u16 *record_page_ptr);
++
++#endif /* UDS_CHAPTER_INDEX_H */
+diff --git a/drivers/md/dm-vdo/open-chapter.c b/drivers/md/dm-vdo/open-chapter.c
+new file mode 100644
+index 000000000000..d54c8fb6f118
+--- /dev/null
++++ b/drivers/md/dm-vdo/open-chapter.c
+@@ -0,0 +1,433 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "open-chapter.h"
++
++#include <linux/log2.h>
++
++#include "config.h"
++#include "hash-utils.h"
++#include "logger.h"
++#include "memory-alloc.h"
++#include "numeric.h"
++#include "permassert.h"
++
++/*
++ * Each index zone has a dedicated open chapter zone structure which gets an equal share of the
++ * open chapter space. Records are assigned to zones based on their record name. Within each zone,
++ * records are stored in an array in the order they arrive. Additionally, a reference to each
++ * record is stored in a hash table to help determine if a new record duplicates an existing one.
++ * If new metadata for an existing name arrives, the record is altered in place. The array of
++ * records is 1-based so that record number 0 can be used to indicate an unused hash slot.
++ *
++ * Deleted records are marked with a flag rather than actually removed to simplify hash table
++ * management. The array of deleted flags overlays the array of hash slots, but the flags are
++ * indexed by record number instead of by record name. The number of hash slots will always be a
++ * power of two that is greater than the number of records to be indexed, guaranteeing that hash
++ * insertion cannot fail, and that there are sufficient flags for all records.
++ *
++ * Once any open chapter zone fills its available space, the chapter is closed. The records from
++ * each zone are interleaved to attempt to preserve temporal locality and assigned to record pages.
++ * Empty or deleted records are replaced by copies of a valid record so that the record pages only
++ * contain valid records. The chapter then constructs a delta index which maps each record name to
++ * the record page on which that record can be found, which is split into index pages. These
++ * structures are then passed to the volume to be recorded on storage.
++ *
++ * When the index is saved, the open chapter records are saved in a single array, once again
++ * interleaved to attempt to preserve temporal locality. When the index is reloaded, there may be a
++ * different number of zones than previously, so the records must be parcelled out to their new
++ * zones. In addition, depending on the distribution of record names, a new zone may have more
++ * records than it has space. In this case, the latest records for that zone will be discarded.
++ */
++
++static const u8 OPEN_CHAPTER_MAGIC[] = "ALBOC";
++static const u8 OPEN_CHAPTER_VERSION[] = "02.00";
++
++enum {
++	OPEN_CHAPTER_MAGIC_LENGTH = sizeof(OPEN_CHAPTER_MAGIC) - 1,
++	OPEN_CHAPTER_VERSION_LENGTH = sizeof(OPEN_CHAPTER_VERSION) - 1,
++	LOAD_RATIO = 2,
++};
++
++static inline size_t records_size(const struct open_chapter_zone *open_chapter)
++{
++	return sizeof(struct uds_volume_record) * (1 + open_chapter->capacity);
++}
++
++static inline size_t slots_size(size_t slot_count)
++{
++	return sizeof(struct open_chapter_zone_slot) * slot_count;
++}
++
++int uds_make_open_chapter(const struct geometry *geometry,
++			  unsigned int zone_count,
++			  struct open_chapter_zone **open_chapter_ptr)
++{
++	int result;
++	struct open_chapter_zone *open_chapter;
++	size_t capacity = geometry->records_per_chapter / zone_count;
++	size_t slot_count = (1 << bits_per(capacity * LOAD_RATIO));
++
++	result = UDS_ALLOCATE_EXTENDED(struct open_chapter_zone,
++				       slot_count,
++				       struct open_chapter_zone_slot,
++				       "open chapter",
++				       &open_chapter);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	open_chapter->slot_count = slot_count;
++	open_chapter->capacity = capacity;
++	result = uds_allocate_cache_aligned(records_size(open_chapter),
++					    "record pages",
++					    &open_chapter->records);
++	if (result != UDS_SUCCESS) {
++		uds_free_open_chapter(open_chapter);
++		return result;
++	}
++
++	*open_chapter_ptr = open_chapter;
++	return UDS_SUCCESS;
++}
++
++void uds_reset_open_chapter(struct open_chapter_zone *open_chapter)
++{
++	open_chapter->size = 0;
++	open_chapter->deletions = 0;
++
++	memset(open_chapter->records, 0, records_size(open_chapter));
++	memset(open_chapter->slots, 0, slots_size(open_chapter->slot_count));
++}
++
++static unsigned int
++probe_chapter_slots(struct open_chapter_zone *open_chapter, const struct uds_record_name *name)
++{
++	struct uds_volume_record *record;
++	unsigned int slot_count = open_chapter->slot_count;
++	unsigned int slot = uds_name_to_hash_slot(name, slot_count);
++	unsigned int record_number;
++	unsigned int attempts = 1;
++
++	while (true) {
++		record_number = open_chapter->slots[slot].record_number;
++
++		/*
++		 * If the hash slot is empty, we've reached the end of a chain without finding the
++		 * record and should terminate the search.
++		 */
++		if (record_number == 0)
++			return slot;
++
++		/*
++		 * If the name of the record referenced by the slot matches and has not been
++		 * deleted, then we've found the requested name.
++		 */
++		record = &open_chapter->records[record_number];
++		if ((memcmp(&record->name, name, UDS_RECORD_NAME_SIZE) == 0) &&
++		    !open_chapter->slots[record_number].deleted)
++			return slot;
++
++		/*
++		 * Quadratic probing: advance the probe by 1, 2, 3, etc. and try again. This
++		 * performs better than linear probing and works best for 2^N slots.
++		 */
++		slot = (slot + attempts++) % slot_count;
++	}
++}
++
++void uds_search_open_chapter(struct open_chapter_zone *open_chapter,
++			     const struct uds_record_name *name,
++			     struct uds_record_data *metadata,
++			     bool *found)
++{
++	unsigned int slot;
++	unsigned int record_number;
++
++	slot = probe_chapter_slots(open_chapter, name);
++	record_number = open_chapter->slots[slot].record_number;
++	if (record_number == 0) {
++		*found = false;
++	} else {
++		*found = true;
++		*metadata = open_chapter->records[record_number].data;
++	}
++}
++
++/* Add a record to the open chapter zone and return the remaining space. */
++int uds_put_open_chapter(struct open_chapter_zone *open_chapter,
++			 const struct uds_record_name *name,
++			 const struct uds_record_data *metadata)
++{
++	unsigned int slot;
++	unsigned int record_number;
++	struct uds_volume_record *record;
++
++	if (open_chapter->size >= open_chapter->capacity)
++		return 0;
++
++	slot = probe_chapter_slots(open_chapter, name);
++	record_number = open_chapter->slots[slot].record_number;
++
++	if (record_number == 0) {
++		record_number = ++open_chapter->size;
++		open_chapter->slots[slot].record_number = record_number;
++	}
++
++	record = &open_chapter->records[record_number];
++	record->name = *name;
++	record->data = *metadata;
++
++	return open_chapter->capacity - open_chapter->size;
++}
++
++void uds_remove_from_open_chapter(struct open_chapter_zone *open_chapter,
++				  const struct uds_record_name *name)
++{
++	unsigned int slot;
++	unsigned int record_number;
++
++	slot = probe_chapter_slots(open_chapter, name);
++	record_number = open_chapter->slots[slot].record_number;
++
++	if (record_number > 0) {
++		open_chapter->slots[record_number].deleted = true;
++		open_chapter->deletions += 1;
++	}
++}
++
++void uds_free_open_chapter(struct open_chapter_zone *open_chapter)
++{
++	if (open_chapter != NULL) {
++		UDS_FREE(open_chapter->records);
++		UDS_FREE(open_chapter);
++	}
++}
++
++/* Map each record name to its record page number in the delta chapter index. */
++static int fill_delta_chapter_index(struct open_chapter_zone **chapter_zones,
++				    unsigned int zone_count,
++				    struct open_chapter_index *index,
++				    struct uds_volume_record *collated_records)
++{
++	int result;
++	unsigned int records_per_chapter;
++	unsigned int records_per_page;
++	unsigned int record_index;
++	unsigned int records = 0;
++	u32 page_number;
++	unsigned int z;
++	int overflow_count = 0;
++	struct uds_volume_record *fill_record = NULL;
++
 +	/*
-+	 * A bin to hold data_vios which were canceled out of the packer and are waiting to
-+	 * rendezvous with the canceling data_vio.
++	 * The record pages should not have any empty space, so find a record with which to fill
++	 * the chapter zone if it was closed early, and also to replace any deleted records. The
++	 * last record in any filled zone is guaranteed to not have been deleted, so use one of
++	 * those.
 +	 */
-+	struct packer_bin *canceled_bin;
++	for (z = 0; z < zone_count; z++) {
++		struct open_chapter_zone *zone = chapter_zones[z];
 +
-+	/* The current flush generation */
-+	sequence_number_t flush_generation;
++		if (zone->size == zone->capacity) {
++			fill_record = &zone->records[zone->size];
++			break;
++		}
++	}
 +
-+	/* The administrative state of the packer */
-+	struct admin_state state;
++	records_per_chapter = index->geometry->records_per_chapter;
++	records_per_page = index->geometry->records_per_page;
 +
-+	/* Statistics are only updated on the packer thread, but are accessed from other threads */
-+	struct packer_statistics statistics;
++	for (records = 0; records < records_per_chapter; records++) {
++		struct uds_volume_record *record = &collated_records[records];
++		struct open_chapter_zone *open_chapter;
++
++		/* The record arrays in the zones are 1-based. */
++		record_index = 1 + (records / zone_count);
++		page_number = records / records_per_page;
++		open_chapter = chapter_zones[records % zone_count];
++
++		/* Use the fill record in place of an unused record. */
++		if (record_index > open_chapter->size ||
++		    open_chapter->slots[record_index].deleted) {
++			*record = *fill_record;
++			continue;
++		}
++
++		*record = open_chapter->records[record_index];
++		result = uds_put_open_chapter_index_record(index, &record->name, page_number);
++		switch (result) {
++		case UDS_SUCCESS:
++			break;
++		case UDS_OVERFLOW:
++			overflow_count++;
++			break;
++		default:
++			uds_log_error_strerror(result, "failed to build open chapter index");
++			return result;
++		}
++	}
++
++	if (overflow_count > 0)
++		uds_log_warning("Failed to add %d entries to chapter index", overflow_count);
++
++	return UDS_SUCCESS;
++}
++
++int uds_close_open_chapter(struct open_chapter_zone **chapter_zones,
++			   unsigned int zone_count,
++			   struct volume *volume,
++			   struct open_chapter_index *chapter_index,
++			   struct uds_volume_record *collated_records,
++			   u64 virtual_chapter_number)
++{
++	int result;
++
++	uds_empty_open_chapter_index(chapter_index, virtual_chapter_number);
++	result = fill_delta_chapter_index(chapter_zones,
++					  zone_count,
++					  chapter_index,
++					  collated_records);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	return uds_write_chapter(volume, chapter_index, collated_records);
++}
++
++int uds_save_open_chapter(struct uds_index *index, struct buffered_writer *writer)
++{
++	int result;
++	struct open_chapter_zone *open_chapter;
++	struct uds_volume_record *record;
++	u8 record_count_data[sizeof(u32)];
++	u32 record_count = 0;
++	unsigned int record_index;
++	unsigned int z;
++
++	result = uds_write_to_buffered_writer(writer,
++					      OPEN_CHAPTER_MAGIC,
++					      OPEN_CHAPTER_MAGIC_LENGTH);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = uds_write_to_buffered_writer(writer,
++					      OPEN_CHAPTER_VERSION,
++					      OPEN_CHAPTER_VERSION_LENGTH);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	for (z = 0; z < index->zone_count; z++) {
++		open_chapter = index->zones[z]->open_chapter;
++		record_count += open_chapter->size - open_chapter->deletions;
++	}
++
++	put_unaligned_le32(record_count, record_count_data);
++	result = uds_write_to_buffered_writer(writer,
++					      record_count_data,
++					      sizeof(record_count_data));
++	if (result != UDS_SUCCESS)
++		return result;
++
++	record_index = 1;
++	while (record_count > 0) {
++		for (z = 0; z < index->zone_count; z++) {
++			open_chapter = index->zones[z]->open_chapter;
++			if (record_index > open_chapter->size)
++				continue;
++
++			if (open_chapter->slots[record_index].deleted)
++				continue;
++
++			record = &open_chapter->records[record_index];
++			result = uds_write_to_buffered_writer(writer,
++							      (u8 *) record,
++							      sizeof(*record));
++			if (result != UDS_SUCCESS)
++				return result;
++
++			record_count--;
++		}
++
++		record_index++;
++	}
++
++	return uds_flush_buffered_writer(writer);
++}
++
++u64 uds_compute_saved_open_chapter_size(struct geometry *geometry)
++{
++	unsigned int records_per_chapter = geometry->records_per_chapter;
++
++	return OPEN_CHAPTER_MAGIC_LENGTH + OPEN_CHAPTER_VERSION_LENGTH + sizeof(u32) +
++		records_per_chapter * sizeof(struct uds_volume_record);
++}
++
++static int load_version20(struct uds_index *index, struct buffered_reader *reader)
++{
++	int result;
++	u32 record_count;
++	u8 record_count_data[sizeof(u32)];
++	struct uds_volume_record record;
++
++	/*
++	 * Track which zones cannot accept any more records. If the open chapter had a different
++	 * number of zones previously, some new zones may have more records than they have space
++	 * for. These overflow records will be discarded.
++	 */
++	bool full_flags[MAX_ZONES] = {
++		false,
++	};
++
++	result = uds_read_from_buffered_reader(reader,
++					       (u8 *) &record_count_data,
++					       sizeof(record_count_data));
++	if (result != UDS_SUCCESS)
++		return result;
++
++	record_count = get_unaligned_le32(record_count_data);
++	while (record_count-- > 0) {
++		unsigned int zone = 0;
++
++		result = uds_read_from_buffered_reader(reader, (u8 *) &record, sizeof(record));
++		if (result != UDS_SUCCESS)
++			return result;
++
++		if (index->zone_count > 1)
++			zone = uds_get_volume_index_zone(index->volume_index, &record.name);
++
++		if (!full_flags[zone]) {
++			struct open_chapter_zone *open_chapter;
++			unsigned int remaining;
++
++			open_chapter = index->zones[zone]->open_chapter;
++			remaining = uds_put_open_chapter(open_chapter, &record.name, &record.data);
++			/* Do not allow any zone to fill completely. */
++			full_flags[zone] = (remaining <= 1);
++		}
++	}
++
++	return UDS_SUCCESS;
++}
++
++int uds_load_open_chapter(struct uds_index *index, struct buffered_reader *reader)
++{
++	u8 version[OPEN_CHAPTER_VERSION_LENGTH];
++	int result;
++
++	result = uds_verify_buffered_data(reader, OPEN_CHAPTER_MAGIC, OPEN_CHAPTER_MAGIC_LENGTH);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = uds_read_from_buffered_reader(reader, version, sizeof(version));
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (memcmp(OPEN_CHAPTER_VERSION, version, sizeof(version)) != 0)
++		return uds_log_error_strerror(UDS_CORRUPT_DATA,
++					      "Invalid open chapter version: %.*s",
++					      (int) sizeof(version),
++					      version);
++
++	return load_version20(index, reader);
++}
+diff --git a/drivers/md/dm-vdo/open-chapter.h b/drivers/md/dm-vdo/open-chapter.h
+new file mode 100644
+index 000000000000..1fc575d2789a
+--- /dev/null
++++ b/drivers/md/dm-vdo/open-chapter.h
+@@ -0,0 +1,79 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_OPEN_CHAPTER_H
++#define UDS_OPEN_CHAPTER_H
++
++#include "chapter-index.h"
++#include "geometry.h"
++#include "index.h"
++#include "volume.h"
++
++/*
++ * The open chapter tracks the newest records in memory. Like the index as a whole, each open
++ * chapter is divided into a number of independent zones which are interleaved when the chapter is
++ * committed to the volume.
++ */
++
++enum {
++	OPEN_CHAPTER_RECORD_NUMBER_BITS = 23,
 +};
 +
-+int vdo_get_compressed_block_fragment(enum block_mapping_state mapping_state,
-+				      struct compressed_block *block,
-+				      u16 *fragment_offset,
-+				      u16 *fragment_size);
++struct open_chapter_zone_slot {
++	/* If non-zero, the record number addressed by this hash slot */
++	unsigned int record_number : OPEN_CHAPTER_RECORD_NUMBER_BITS;
++	/* If true, the record at the index of this hash slot was deleted */
++	bool deleted : 1;
++} __packed;
 +
-+int __must_check
-+vdo_make_packer(struct vdo *vdo, block_count_t bin_count, struct packer **packer_ptr);
++struct open_chapter_zone {
++	/* The maximum number of records that can be stored */
++	unsigned int capacity;
++	/* The number of records stored */
++	unsigned int size;
++	/* The number of deleted records */
++	unsigned int deletions;
++	/* Array of chunk records, 1-based */
++	struct uds_volume_record *records;
++	/* The number of slots in the hash table */
++	unsigned int slot_count;
++	/* The hash table slots, referencing virtual record numbers */
++	struct open_chapter_zone_slot slots[];
++};
 +
-+void vdo_free_packer(struct packer *packer);
++int __must_check uds_make_open_chapter(const struct geometry *geometry,
++				       unsigned int zone_count,
++				       struct open_chapter_zone **open_chapter_ptr);
 +
-+struct packer_statistics __must_check vdo_get_packer_statistics(const struct packer *packer);
++void uds_reset_open_chapter(struct open_chapter_zone *open_chapter);
 +
-+void vdo_attempt_packing(struct data_vio *data_vio);
++void uds_search_open_chapter(struct open_chapter_zone *open_chapter,
++			     const struct uds_record_name *name,
++			     struct uds_record_data *metadata,
++			     bool *found);
 +
-+void vdo_flush_packer(struct packer *packer);
++int __must_check uds_put_open_chapter(struct open_chapter_zone *open_chapter,
++				      const struct uds_record_name *name,
++				      const struct uds_record_data *metadata);
 +
-+void vdo_remove_lock_holder_from_packer(struct vdo_completion *completion);
++void uds_remove_from_open_chapter(struct open_chapter_zone *open_chapter,
++				  const struct uds_record_name *name);
 +
-+void vdo_increment_packer_flush_generation(struct packer *packer);
++void uds_free_open_chapter(struct open_chapter_zone *open_chapter);
 +
-+void vdo_drain_packer(struct packer *packer, struct vdo_completion *completion);
++int __must_check uds_close_open_chapter(struct open_chapter_zone **chapter_zones,
++					unsigned int zone_count,
++					struct volume *volume,
++					struct open_chapter_index *chapter_index,
++					struct uds_volume_record *collated_records,
++					u64 virtual_chapter_number);
 +
-+void vdo_resume_packer(struct packer *packer, struct vdo_completion *parent);
++int __must_check uds_save_open_chapter(struct uds_index *index, struct buffered_writer *writer);
 +
-+void vdo_dump_packer(const struct packer *packer);
++int __must_check uds_load_open_chapter(struct uds_index *index, struct buffered_reader *reader);
 +
-+#endif /* VDO_PACKER_H */
++u64 uds_compute_saved_open_chapter_size(struct geometry *geometry);
++
++#endif /* UDS_OPEN_CHAPTER_H */
 -- 
 2.40.0
 
