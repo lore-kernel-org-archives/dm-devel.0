@@ -1,49 +1,50 @@
 Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 251051A59E
-	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 08:42:17 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ABDB42CA9
+	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 08:44:10 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="tySDExkn"
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="BJ5xRmRq"
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
 	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 4C6CF1FE2A;
-	Thu, 26 Oct 2023 08:42:16 +0000 (UTC)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id EC7C21FE17;
+	Thu, 26 Oct 2023 08:44:08 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1698309736; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1698309848; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=XOBTt59sfbBkCre4gRdxOIZu3SXUbDjcjRmq8ucSf+o=;
-	b=tySDExknfzB1PXih8TqOVt/RxcD5pqWm+PjbyFw6L4VdfFLnOcGqMW9lJZ5my/V/eZZqqQ
-	tKt0Y72CFvNdiw8t+sAHTWrqDSS2iEygi/TpADnP/fE6pPNFFU+Ze8HcNg6d8Ll0RtiYVK
-	JWa7R/0cgbgUPJBdPd9RIoRPCEEh2R4=
+	bh=Sxu6YLj3ZmmOeSbhqwTbkC3Lt7RR/28BI/TaHqdiAeI=;
+	b=BJ5xRmRqzWAZsfdkDjMtnZBaGflFxMrMVwGQ9DkipNGR85XApph6RZ0575JcTn3/f9QykM
+	nEehuZjiWcCTg+RH+ZuPX7uKCR7tG/7uDxaGaySpMIYAE5y0+yzR/v8eU0SKiiQWz1+bdT
+	9TK6kBODoBVwdGyj/zgvN0wHO8hm/dc=
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
 	(No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 15C87133F5;
-	Thu, 26 Oct 2023 08:42:16 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id B71FA133F5;
+	Thu, 26 Oct 2023 08:44:08 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
 	by imap2.suse-dmz.suse.de with ESMTPSA
-	id fVA8A2gmOmXXEwAAMHmgww
-	(envelope-from <mwilck@suse.com>); Thu, 26 Oct 2023 08:42:16 +0000
-Message-ID: <4a5bc62d156845d93f2a890b940d9a11706973df.camel@suse.com>
-Subject: Re: [PATCH 6/6] libmpathutil: remove systemd_service_enabled()
+	id mRUDK9gmOmUEFQAAMHmgww
+	(envelope-from <mwilck@suse.com>); Thu, 26 Oct 2023 08:44:08 +0000
+Message-ID: <d6d92713c4147d9956342bd9de1063daf7e9ce01.camel@suse.com>
+Subject: Re: [PATCH 5/6] multipath-tools: systemd: require
+ modprobe@dm_multipath.service
 From: Martin Wilck <mwilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
  dm-devel@lists.linux.dev, Miao Guanqin <miaoguanqin@huawei.com>, Li Xiao
  Keng <lixiaokeng@huawei.com>
-Date: Thu, 26 Oct 2023 10:42:15 +0200
-In-Reply-To: <ZTmroA3eU3vLgOLl@bmarzins-01.fast.rdu2.eng.redhat.com>
+Date: Thu, 26 Oct 2023 10:44:08 +0200
+In-Reply-To: <ZTmoGcvnggb5EGxv@bmarzins-01.fast.rdu2.eng.redhat.com>
 References: <20231024164937.14684-1-mwilck@suse.com>
-	 <20231024164937.14684-7-mwilck@suse.com>
-	 <ZTmroA3eU3vLgOLl@bmarzins-01.fast.rdu2.eng.redhat.com>
+	 <20231024164937.14684-6-mwilck@suse.com>
+	 <ZTmoGcvnggb5EGxv@bmarzins-01.fast.rdu2.eng.redhat.com>
 Autocrypt: addr=mwilck@suse.com; prefer-encrypt=mutual;
  keydata=mQINBF3mxsYBEACmOnQxWBCxCkTb3D4N8VAT8yNtIBZrmvomY7RLddBIT1yh2X7roOoJQ5KlmyjMmzrPr111poqmw8v4dUqc1SVqQoKHXv97BzlVIEKC5G2W29gse0oXhx3dhie0Z6ytkHVOY29VLsLhVXEz+p5xL71KYgIy3lmM/NaWvoqwwaXiv1TmLG96Uoitvj1vdXqqTv/R6/MBye+xQUacXpM8FA5k7OpmzCFjl4NVtGmo0VhIfXM/ldmyEJpg8a5LrZ4t5Qi32BWQjUHGmS8OXjUJ/n0QxLkymbcbY1KepP9UnLGPT+TmKJm1QlMDj69+WPKgMsif3iz4hZPoQ0Knp11ThYzBh7+AiRxE9FG2hTtZeKimkpjR12bytF4Y0aIM/HeLMHRvwykJuh5JxT9A68xF7hmqQZ7rsx/GoRBOA792kFgr5KdCZ1YoeVUkrohT1nfh/Y/Xfeq4E69mktE0R0Yxg/4CSiB7sLSzry8dyqk2sbGs+W/Ol7D7VOG45aZ5iTB08R2ji2xKArcH+Dmy48nwqIvdrppZG2tZEe+wtGPTzahE4OJdpZ3vS4ujdChynS47DVWa5JtBxfqopr0rPGoCyxmyvzJzHAUjlp7iSXpDZqfdu7F4HAC13mS41IVk/yHTXE28AKrZ4O+efZ6qgw5zJV9lAbWM7JjfdrTd+ofOc+GurQARAQABtCRNYXJ0aW4gV2lsY2sgPG1hcnRpbi53aWxja0BzdXNlLmNvbT6JAlEEEwEIADsCGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AWIQR1Dq1LLt6xpUXU9fRnxYbmhVaXVAUCXebHhgIZAQAKCRBnxYbmhVaXVJ6+EACa5mbuH1dy2bKldy+bybUe4jFpJxflAPSrdpIlwkIfD/SgQRWUUm+BLLJMGJFSKiVC6oAHH6/mo3gdWAqBJ0LAOQDDR2BW31ERYqQQ7m01INQIvMlg+PXQ8HbWd
 	CNF1SOgjxiIs04DlB+u+DD5pgPtxKFN/jaJSx9oZ+GZpSd+eJeull3a+U/1+QpYmLbH34bxYZ16+cXfarkH3QQC65DH/iIZwcpxp+v/zrQVXnsZ81XmmbLD1vMkFCIU0ircIcaJoqloNJOA46P4mj9ETwC5OiSTs7vlyHP4Ni/86kmjmr41d/baY1cAXpAbtOGYd5K72B6qSP5EJI+Ci6rSbWInQaYzKuAOrDDyhW7ODd+hOtBcmUIH5GpKvzRjdfxEP/zlyecBszxycz7lOYNx86QWsyyRWITKzHzhdqKVZ9kvjVozTtcpb1RSqsj43qqMEQjcp1uXhbmwVmbzsWaPqmCx4xsIQoXfIzzffvw+nOiPLkxzGczprwNJasDUM1hcyEPv+5VzZpE4YjlDw/mtTayehb2EGzt2RfZIuPCBr88KlWUh2+nu9RfBJNdJ2vZ13Aun8NbqPKR2vfsE+BUJY14Ak9ZIzcyruHBHQ78dxD0J+HSC1bm9e4UOnW0PBbZwuPTRwyO3aXoExPabGgig6gcY34bsXvW9SDwOu+pzXMnVvbQeTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+iQJOBBMBCAA4FiEEdQ6tSy7esaVF1PX0Z8WG5oVWl1QFAl3mxz0CGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQZ8WG5oVWl1TdsA/6A0DZmGwreygUic5csLSLUm2ahdat3rRKfQVdlOdl0aWa/vS90PqpuDNGzXVzS/s4YXRjWesnYEdwQGSc4PnBYCitLKUwenII39RCyZLU3J95luWG2eOagFaerK+HvuNEH6RpYkqPpaDEwpblfi30xNNYLIR4HK0GTYwhbmBTrYgaKATNiplU08ZUvC23s00t2i7SBGmOue/0dIPMhO3EDYPP0RaDnKvHAOAywkI1J9Ey0xEslG9AFylOihcdaq9/7MlMWU8oNHK7EVE5OOZ2NiJv1sWSgM
@@ -63,51 +64,33 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
-On Wed, 2023-10-25 at 19:58 -0400, Benjamin Marzinski wrote:
-> On Tue, Oct 24, 2023 at 06:49:37PM +0200, mwilck@suse.com=A0wrote:
+On Wed, 2023-10-25 at 19:43 -0400, Benjamin Marzinski wrote:
+> On Tue, Oct 24, 2023 at 06:49:36PM +0200, mwilck@suse.com=A0wrote:
 > > From: Martin Wilck <mwilck@suse.com>
 > >=20
-> > Since=A0 c203929 ("multipathd.service: add dependency on
-> > systemd-udevd-kernel.socket"), multipathd will start early during
-> > boot.
-> > Moreover, we recommend using socket activation for multipathd,
-> > and if multipathd.socket is enabled, the __mpath_connect()
-> > check will succeed anyway.
+> > Since 92f0893 ("multipath-tools: install modules-
+> > load.d/multipath.conf"), we
+> > use modules-load.d to load the dm-multipath module early on. That
+> > isn't
+> > optimal, because the module will always be loaded, even if
+> > multipathd is
+> > not running.
 > >=20
-> > The systemd_service_enabled() test was just "good enough" for
-> > standard situations but never robust; it checked for
-> > multipathd.wants in
-> > "some" directory, which might or might not be the current target,
-> > and it would return true even of multipathd.service was masked.
-> >=20
-> > Remove this test.
+> > Use systemd's "modprobe@.service" instead to make sure the module
+> > is loaded
+> > before multipathd starts. If "multipath -u" is invoked from udev
+> > rules
+> > before multipathd.service has been started, it will access the
+> > socket,
+> > which will autostart multipathd via socket activation and cause the
+> > dm-multipath module to be loaded.
 > >=20
 > > Signed-off-by: Martin Wilck <mwilck@suse.com>
->=20
-> I'd be lying if I said I had no worries at all about this. Removing
-> this
-> check means that if someone isn't using socket activation, and
-> multipathd is temporarily down, and a new device appears, it will
-> always
-> be marked as not claimed by multipath. This could cause the device to
-> be
-> grabbed by LVM, and not multipathed. This is probably just may
-> paranoia
-> talking, since the chance of this happening in the real world seems
-> pretty low. So,
->=20
 > Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Thanks.=A0I had the same doubts, but I came to the conclusion that
-there's no need to be afraid.
-
-I would put your argument a bit differently: If socket activation is
-not used and multipathd is not running, we are in a situation where
-multipath can't seriously claim any device. Whether multipathd is
-enabled in some (apparently inactive) systemd target doesn't really
-matter in such a situation. Note that we never checked  _which_ systemd
-unit lists multipathd under its ".wants". It could be
-"shutdown.target".
+I just realized that modprobe@.service has only be available since
+systemd v245 (2020). I should make this change conditional on the
+systemd version.
 
 Martin
 
