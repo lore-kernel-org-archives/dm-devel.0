@@ -1,45 +1,45 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 580283D99D
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C3863D99E
 	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:43 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JIYozmx7"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Fg7p8VZ2"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1698356502;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=qTVr2bEL2nhED7bKq6qyOh8riwxZ6zyxIqcZ+ZdPwu0=;
-	b=JIYozmx7R8jXjeNAF3/dvB616hmChygTC0VMgh7ho62X9N8QXl6UXUOJMGYZrujhKlL/oW
-	sCLKpA3XkJBMbHl1/Yf0R3n4o7PVbkWlJ5SI7aGRu1J8SNf9ajbjs+32yhwHxTDfbRPOg1
-	YYOPw56d4FXRlS5/qG4H4AOmGqy39Qg=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-689-mjMNYASXM2WtAoI9povrpg-1; Thu,
- 26 Oct 2023 17:41:38 -0400
-X-MC-Unique: mjMNYASXM2WtAoI9povrpg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+	bh=4ojwaNJQWqHBpOxOjCr2b/F6Gy0NjzxULvzU5h3SImM=;
+	b=Fg7p8VZ2ep1CXk1yxRkFJUYZZ6akL9C0ni1trTiVPNTMQJ4go+bG6woHiiXPMe7F573ipf
+	cSpzaA/ecE3sOQ6+slC1F6STDD1xIJHPbJyouaRioeiHPy8/59GPhGTVns+YE7uC6y1RDV
+	wV8i4tXyIu4c/b0hPmPwT2J5DYLiLzI=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-625-nrttTHMnOKug6PkFa-JExA-1; Thu, 26 Oct 2023 17:41:40 -0400
+X-MC-Unique: nrttTHMnOKug6PkFa-JExA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 64BEF1C04B41;
-	Thu, 26 Oct 2023 21:41:38 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1E1F1185A780;
+	Thu, 26 Oct 2023 21:41:40 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 49E7DC15984;
-	Thu, 26 Oct 2023 21:41:38 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 04BFD2026D4C;
+	Thu, 26 Oct 2023 21:41:40 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id 00BF93003E; Thu, 26 Oct 2023 17:41:37 -0400 (EDT)
+	id ADEA53003B; Thu, 26 Oct 2023 17:41:39 -0400 (EDT)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v4 07/39] dm vdo: add specialized request queueing functionality
-Date: Thu, 26 Oct 2023 17:41:04 -0400
-Message-Id: <20231026214136.1067410-8-msakai@redhat.com>
+Subject: [PATCH v4 17/39] dm vdo: add administrative state and action manager
+Date: Thu, 26 Oct 2023 17:41:14 -0400
+Message-Id: <20231026214136.1067410-18-msakai@redhat.com>
 In-Reply-To: <20231026214136.1067410-1-msakai@redhat.com>
 References: <20231026214136.1067410-1-msakai@redhat.com>
 Precedence: bulk
@@ -49,1759 +49,1270 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
 
-This patch adds funnel_queue, a mostly lock-free multi-producer,
-single-consumer queue. It also adds the request queue used by the dm-vdo
-deduplication index, and the work_queue used by the dm-vdo data store. Both
-of these are built on top of funnel queue and are intended to support the
-dispatching of many short-running tasks. The work_queue also supports
-priorities. Finally, this patch adds vdo_completion, the structure which is
-enqueued on work_queues.
+This patch adds the admin_state structures which are used to track the
+states of individual vdo components for handling of operations like suspend
+and resume. It also adds the action manager which is used to schedule and
+manage cross-thread administrative and internal operations.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
-Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
-Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
-Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
-Co-developed-by: Ken Raeburn <raeburn@redhat.com>
-Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/completion.c    | 141 +++++++
- drivers/md/dm-vdo/completion.h    | 155 +++++++
- drivers/md/dm-vdo/cpu.h           |  58 +++
- drivers/md/dm-vdo/funnel-queue.c  | 169 ++++++++
- drivers/md/dm-vdo/funnel-queue.h  | 110 +++++
- drivers/md/dm-vdo/request-queue.c | 284 +++++++++++++
- drivers/md/dm-vdo/request-queue.h |  30 ++
- drivers/md/dm-vdo/work-queue.c    | 659 ++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/work-queue.h    |  53 +++
- 9 files changed, 1659 insertions(+)
- create mode 100644 drivers/md/dm-vdo/completion.c
- create mode 100644 drivers/md/dm-vdo/completion.h
- create mode 100644 drivers/md/dm-vdo/cpu.h
- create mode 100644 drivers/md/dm-vdo/funnel-queue.c
- create mode 100644 drivers/md/dm-vdo/funnel-queue.h
- create mode 100644 drivers/md/dm-vdo/request-queue.c
- create mode 100644 drivers/md/dm-vdo/request-queue.h
- create mode 100644 drivers/md/dm-vdo/work-queue.c
- create mode 100644 drivers/md/dm-vdo/work-queue.h
+ drivers/md/dm-vdo/action-manager.c | 410 +++++++++++++++++++++++
+ drivers/md/dm-vdo/action-manager.h | 117 +++++++
+ drivers/md/dm-vdo/admin-state.c    | 512 +++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/admin-state.h    | 180 ++++++++++
+ 4 files changed, 1219 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/action-manager.c
+ create mode 100644 drivers/md/dm-vdo/action-manager.h
+ create mode 100644 drivers/md/dm-vdo/admin-state.c
+ create mode 100644 drivers/md/dm-vdo/admin-state.h
 
-diff --git a/drivers/md/dm-vdo/completion.c b/drivers/md/dm-vdo/completion.c
+diff --git a/drivers/md/dm-vdo/action-manager.c b/drivers/md/dm-vdo/action-manager.c
 new file mode 100644
-index 000000000000..e4b6ff74d098
+index 000000000000..fb3586a4140c
 --- /dev/null
-+++ b/drivers/md/dm-vdo/completion.c
-@@ -0,0 +1,141 @@
++++ b/drivers/md/dm-vdo/action-manager.c
+@@ -0,0 +1,410 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "completion.h"
++#include "action-manager.h"
 +
-+#include <linux/kernel.h>
-+
-+#include "logger.h"
++#include "memory-alloc.h"
 +#include "permassert.h"
 +
++#include "admin-state.h"
++#include "completion.h"
 +#include "status-codes.h"
 +#include "types.h"
-+#include "vio.h"
 +#include "vdo.h"
 +
 +/**
-+ * DOC: vdo completions.
-+ *
-+ * Most of vdo's data structures are lock free, each either belonging to a single "zone," or
-+ * divided into a number of zones whose accesses to the structure do not overlap. During normal
-+ * operation, at most one thread will be operating in any given zone. Each zone has a
-+ * vdo_work_queue which holds vdo_completions that are to be run in that zone. A completion may
-+ * only be enqueued on one queue or operating in a single zone at a time.
-+ *
-+ * At each step of a multi-threaded operation, the completion performing the operation is given a
-+ * callback, error handler, and thread id for the next step. A completion is "run" when it is
-+ * operating on the correct thread (as specified by its callback_thread_id). If the value of its
-+ * "result" field is an error (i.e. not VDO_SUCCESS), the function in its "error_handler" will be
-+ * invoked. If the error_handler is NULL, or there is no error, the function set as its "callback"
-+ * will be invoked. Generally, a completion will not be run directly, but rather will be
-+ * "launched." In this case, it will check whether it is operating on the correct thread. If it is,
-+ * it will run immediately. Otherwise, it will be enqueue on the vdo_work_queue associated with the
-+ * completion's "callback_thread_id". When it is dequeued, it will be on the correct thread, and
-+ * will get run. In some cases, the completion should get queued instead of running immediately,
-+ * even if it is being launched from the correct thread. This is usually in cases where there is a
-+ * long chain of callbacks, all on the same thread, which could overflow the stack. In such cases,
-+ * the completion's "requeue" field should be set to true. Doing so will skip the current thread
-+ * check and simply enqueue the completion.
-+ *
-+ * A completion may be "finished," in which case its "complete" field will be set to true before it
-+ * is next run. It is a bug to attempt to set the result or re-finish a finished completion.
-+ * Because a completion's fields are not safe to examine from any thread other than the one on
-+ * which the completion is currently operating, this field is used only to aid in detecting
-+ * programming errors. It can not be used for cross-thread checking on the status of an operation.
-+ * A completion must be "reset" before it can be reused after it has been finished. Resetting will
-+ * also clear any error from the result field.
-+ **/
-+
-+void vdo_initialize_completion(struct vdo_completion *completion,
-+			       struct vdo *vdo,
-+			       enum vdo_completion_type type)
-+{
-+	memset(completion, 0, sizeof(*completion));
-+	completion->vdo = vdo;
-+	completion->type = type;
-+	vdo_reset_completion(completion);
-+}
-+
-+static inline void assert_incomplete(struct vdo_completion *completion)
-+{
-+	ASSERT_LOG_ONLY(!completion->complete, "completion is not complete");
-+}
-+
-+/**
-+ * vdo_set_completion_result() - Set the result of a completion.
-+ *
-+ * Older errors will not be masked.
++ * struct action - An action to be performed in each of a set of zones.
++ * @in_use: Whether this structure is in use.
++ * @operation: The admin operation associated with this action.
++ * @preamble: The method to run on the initiator thread before the action is applied to each zone.
++ * @zone_action: The action to be performed in each zone.
++ * @conclusion: The method to run on the initiator thread after the action is applied to each zone.
++ * @parent: The object to notify when the action is complete.
++ * @context: The action specific context.
++ * @next: The action to perform after this one.
 + */
-+void vdo_set_completion_result(struct vdo_completion *completion, int result)
-+{
-+	assert_incomplete(completion);
-+	if (completion->result == VDO_SUCCESS)
-+		completion->result = result;
-+}
-+
-+/**
-+ * vdo_launch_completion_with_priority() - Run or enqueue a completion.
-+ * @priority: The priority at which to enqueue the completion.
-+ *
-+ * If called on the correct thread (i.e. the one specified in the completion's callback_thread_id
-+ * field) and not marked for requeue, the completion will be run immediately. Otherwise, the
-+ * completion will be enqueued on the specified thread.
-+ */
-+void vdo_launch_completion_with_priority(struct vdo_completion *completion,
-+					 enum vdo_completion_priority priority)
-+{
-+	thread_id_t callback_thread = completion->callback_thread_id;
-+
-+	if (completion->requeue || (callback_thread != vdo_get_callback_thread_id())) {
-+		vdo_enqueue_completion(completion, priority);
-+		return;
-+	}
-+
-+	vdo_run_completion(completion);
-+}
-+
-+/** vdo_finish_completion() - Mark a completion as complete and then launch it. */
-+void vdo_finish_completion(struct vdo_completion *completion)
-+{
-+	assert_incomplete(completion);
-+	completion->complete = true;
-+	if (completion->callback != NULL)
-+		vdo_launch_completion(completion);
-+}
-+
-+void vdo_enqueue_completion(struct vdo_completion *completion,
-+			    enum vdo_completion_priority priority)
-+{
-+	struct vdo *vdo = completion->vdo;
-+	thread_id_t thread_id = completion->callback_thread_id;
-+
-+	if (ASSERT(thread_id < vdo->thread_config.thread_count,
-+		   "thread_id %u (completion type %d) is less than thread count %u",
-+		   thread_id,
-+		   completion->type,
-+		   vdo->thread_config.thread_count) != UDS_SUCCESS)
-+		BUG();
-+
-+	completion->requeue = false;
-+	completion->priority = priority;
-+	completion->my_queue = NULL;
-+	vdo_enqueue_work_queue(vdo->threads[thread_id].queue, completion);
-+}
-+
-+/**
-+ * vdo_requeue_completion_if_needed() - Requeue a completion if not called on the specified thread.
-+ *
-+ * Return: True if the completion was requeued; callers may not access the completion in this case.
-+ */
-+bool vdo_requeue_completion_if_needed(struct vdo_completion *completion,
-+				      thread_id_t callback_thread_id)
-+{
-+	if (vdo_get_callback_thread_id() == callback_thread_id)
-+		return false;
-+
-+	completion->callback_thread_id = callback_thread_id;
-+	vdo_enqueue_completion(completion, VDO_WORK_Q_DEFAULT_PRIORITY);
-+	return true;
-+}
-diff --git a/drivers/md/dm-vdo/completion.h b/drivers/md/dm-vdo/completion.h
-new file mode 100644
-index 000000000000..b81322aea253
---- /dev/null
-+++ b/drivers/md/dm-vdo/completion.h
-@@ -0,0 +1,155 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef VDO_COMPLETION_H
-+#define VDO_COMPLETION_H
-+
-+#include "permassert.h"
-+
-+#include "status-codes.h"
-+#include "types.h"
-+
-+/**
-+ * vdo_run_completion() - Run a completion's callback or error handler on the current thread.
-+ *
-+ * Context: This function must be called from the correct callback thread.
-+ */
-+static inline void vdo_run_completion(struct vdo_completion *completion)
-+{
-+	if ((completion->result != VDO_SUCCESS) && (completion->error_handler != NULL)) {
-+		completion->error_handler(completion);
-+		return;
-+	}
-+
-+	completion->callback(completion);
-+}
-+
-+void vdo_set_completion_result(struct vdo_completion *completion, int result);
-+
-+void vdo_initialize_completion(struct vdo_completion *completion,
-+			       struct vdo *vdo,
-+			       enum vdo_completion_type type);
-+
-+/**
-+ * vdo_reset_completion() - Reset a completion to a clean state, while keeping the type, vdo and
-+ *                          parent information.
-+ */
-+static inline void vdo_reset_completion(struct vdo_completion *completion)
-+{
-+	completion->result = VDO_SUCCESS;
-+	completion->complete = false;
-+}
-+
-+void vdo_launch_completion_with_priority(struct vdo_completion *completion,
-+					 enum vdo_completion_priority priority);
-+
-+/**
-+ * vdo_launch_completion() - Launch a completion with default priority.
-+ */
-+static inline void vdo_launch_completion(struct vdo_completion *completion)
-+{
-+	vdo_launch_completion_with_priority(completion, VDO_WORK_Q_DEFAULT_PRIORITY);
-+}
-+
-+/**
-+ * vdo_continue_completion() - Continue processing a completion.
-+ * @result: The current result (will not mask older errors).
-+ *
-+ * Continue processing a completion by setting the current result and calling
-+ * vdo_launch_completion().
-+ */
-+static inline void vdo_continue_completion(struct vdo_completion *completion, int result)
-+{
-+	vdo_set_completion_result(completion, result);
-+	vdo_launch_completion(completion);
-+}
-+
-+void vdo_finish_completion(struct vdo_completion *completion);
-+
-+/**
-+ * vdo_fail_completion() - Set the result of a completion if it does not already have an error,
-+ *                         then finish it.
-+ */
-+static inline void vdo_fail_completion(struct vdo_completion *completion, int result)
-+{
-+	vdo_set_completion_result(completion, result);
-+	vdo_finish_completion(completion);
-+}
-+
-+/**
-+ * vdo_assert_completion_type() - Assert that a completion is of the correct type.
-+ *
-+ * Return: VDO_SUCCESS or an error
-+ */
-+static inline int
-+vdo_assert_completion_type(struct vdo_completion *completion, enum vdo_completion_type expected)
-+{
-+	return ASSERT(expected == completion->type,
-+		      "completion type should be %u, not %u",
-+		      expected,
-+		      completion->type);
-+}
-+
-+static inline void vdo_set_completion_callback(struct vdo_completion *completion,
-+					       vdo_action *callback,
-+					       thread_id_t callback_thread_id)
-+{
-+	completion->callback = callback;
-+	completion->callback_thread_id = callback_thread_id;
-+}
-+
-+/**
-+ * vdo_launch_completion_callback() - Set the callback for a completion and launch it immediately.
-+ */
-+static inline void vdo_launch_completion_callback(struct vdo_completion *completion,
-+						  vdo_action *callback,
-+						  thread_id_t callback_thread_id)
-+{
-+	vdo_set_completion_callback(completion, callback, callback_thread_id);
-+	vdo_launch_completion(completion);
-+}
-+
-+/**
-+ * vdo_prepare_completion() - Prepare a completion for launch.
-+ *
-+ * Resets the completion, and then sets its callback, error handler, callback thread, and parent.
-+ */
-+static inline void vdo_prepare_completion(struct vdo_completion *completion,
-+					  vdo_action *callback,
-+					  vdo_action *error_handler,
-+					  thread_id_t callback_thread_id,
-+					  void *parent)
-+{
-+	vdo_reset_completion(completion);
-+	vdo_set_completion_callback(completion, callback, callback_thread_id);
-+	completion->error_handler = error_handler;
-+	completion->parent = parent;
-+}
-+
-+/**
-+ * vdo_prepare_completion_for_requeue() - Prepare a completion for launch ensuring that it will
-+ *                                        always be requeued.
-+ *
-+ * Resets the completion, and then sets its callback, error handler, callback thread, and parent.
-+ */
-+static inline void
-+vdo_prepare_completion_for_requeue(struct vdo_completion *completion,
-+				   vdo_action *callback,
-+				   vdo_action *error_handler,
-+				   thread_id_t callback_thread_id,
-+				   void *parent)
-+{
-+	vdo_prepare_completion(completion, callback, error_handler, callback_thread_id, parent);
-+	completion->requeue = true;
-+}
-+
-+void vdo_enqueue_completion(struct vdo_completion *completion,
-+			    enum vdo_completion_priority priority);
-+
-+
-+bool vdo_requeue_completion_if_needed(struct vdo_completion *completion,
-+				      thread_id_t callback_thread_id);
-+
-+#endif /* VDO_COMPLETION_H */
-diff --git a/drivers/md/dm-vdo/cpu.h b/drivers/md/dm-vdo/cpu.h
-new file mode 100644
-index 000000000000..a538a4934e4b
---- /dev/null
-+++ b/drivers/md/dm-vdo/cpu.h
-@@ -0,0 +1,58 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_CPU_H
-+#define UDS_CPU_H
-+
-+#include <linux/cache.h>
-+
-+/**
-+ * uds_prefetch_address() - Minimize cache-miss latency by attempting to move data into a CPU cache
-+ *                          before it is accessed.
-+ *
-+ * @address: the address to fetch (may be invalid)
-+ * @for_write: must be constant at compile time--false if for reading, true if for writing
-+ */
-+static inline void uds_prefetch_address(const void *address, bool for_write)
-+{
-+	/*
-+	 * for_write won't be a constant if we are compiled with optimization turned off, in which
-+	 * case prefetching really doesn't matter. clang can't figure out that if for_write is a
-+	 * constant, it can be passed as the second, mandatorily constant argument to prefetch(),
-+	 * at least currently on llvm 12.
-+	 */
-+	if (__builtin_constant_p(for_write)) {
-+		if (for_write)
-+			__builtin_prefetch(address, true);
-+		else
-+			__builtin_prefetch(address, false);
-+	}
-+}
-+
-+/**
-+ * uds_prefetch_range() - Minimize cache-miss latency by attempting to move a range of addresses
-+ *                        into a CPU cache before they are accessed.
-+ *
-+ * @start: the starting address to fetch (may be invalid)
-+ * @size: the number of bytes in the address range
-+ * @for_write: must be constant at compile time--false if for reading, true if for writing
-+ */
-+static inline void uds_prefetch_range(const void *start, unsigned int size, bool for_write)
-+{
-+	/*
-+	 * Count the number of cache lines to fetch, allowing for the address range to span an
-+	 * extra cache line boundary due to address alignment.
-+	 */
-+	const char *address = (const char *) start;
-+	unsigned int offset = ((uintptr_t) address % L1_CACHE_BYTES);
-+	unsigned int cache_lines = (1 + ((size + offset) / L1_CACHE_BYTES));
-+
-+	while (cache_lines-- > 0) {
-+		uds_prefetch_address(address, for_write);
-+		address += L1_CACHE_BYTES;
-+	}
-+}
-+
-+#endif /* UDS_CPU_H */
-diff --git a/drivers/md/dm-vdo/funnel-queue.c b/drivers/md/dm-vdo/funnel-queue.c
-new file mode 100644
-index 000000000000..bf7f0d8bc04d
---- /dev/null
-+++ b/drivers/md/dm-vdo/funnel-queue.c
-@@ -0,0 +1,169 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "funnel-queue.h"
-+
-+#include "cpu.h"
-+#include "memory-alloc.h"
-+#include "permassert.h"
-+#include "uds.h"
-+
-+int uds_make_funnel_queue(struct funnel_queue **queue_ptr)
-+{
-+	int result;
-+	struct funnel_queue *queue;
-+
-+	result = UDS_ALLOCATE(1, struct funnel_queue, "funnel queue", &queue);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	/*
-+	 * Initialize the stub entry and put it in the queue, establishing the invariant that
-+	 * queue->newest and queue->oldest are never null.
-+	 */
-+	queue->stub.next = NULL;
-+	queue->newest = &queue->stub;
-+	queue->oldest = &queue->stub;
-+
-+	*queue_ptr = queue;
-+	return UDS_SUCCESS;
-+}
-+
-+void uds_free_funnel_queue(struct funnel_queue *queue)
-+{
-+	UDS_FREE(queue);
-+}
-+
-+static struct funnel_queue_entry *get_oldest(struct funnel_queue *queue)
-+{
-+	/*
-+	 * Barrier requirements: We need a read barrier between reading a "next" field pointer
-+	 * value and reading anything it points to. There's an accompanying barrier in
-+	 * uds_funnel_queue_put() between its caller setting up the entry and making it visible.
-+	 */
-+	struct funnel_queue_entry *oldest = queue->oldest;
-+	struct funnel_queue_entry *next = READ_ONCE(oldest->next);
-+
-+	if (oldest == &queue->stub) {
-+		/*
-+		 * When the oldest entry is the stub and it has no successor, the queue is
-+		 * logically empty.
-+		 */
-+		if (next == NULL)
-+			return NULL;
-+		/*
-+		 * The stub entry has a successor, so the stub can be dequeued and ignored without
-+		 * breaking the queue invariants.
-+		 */
-+		oldest = next;
-+		queue->oldest = oldest;
-+		next = READ_ONCE(oldest->next);
-+	}
-+
-+	/*
-+	 * We have a non-stub candidate to dequeue. If it lacks a successor, we'll need to put the
-+	 * stub entry back on the queue first.
-+	 */
-+	if (next == NULL) {
-+		struct funnel_queue_entry *newest = READ_ONCE(queue->newest);
-+
-+		if (oldest != newest)
-+			/*
-+			 * Another thread has already swung queue->newest atomically, but not yet
-+			 * assigned previous->next. The queue is really still empty.
-+			 */
-+			return NULL;
-+
-+		/*
-+		 * Put the stub entry back on the queue, ensuring a successor will eventually be
-+		 * seen.
-+		 */
-+		uds_funnel_queue_put(queue, &queue->stub);
-+
-+		/* Check again for a successor. */
-+		next = READ_ONCE(oldest->next);
-+		if (next == NULL)
-+			/*
-+			 * We lost a race with a producer who swapped queue->newest before we did,
-+			 * but who hasn't yet updated previous->next. Try again later.
-+			 */
-+			return NULL;
-+	}
-+
-+	return oldest;
-+}
-+
-+/*
-+ * Poll a queue, removing the oldest entry if the queue is not empty. This function must only be
-+ * called from a single consumer thread.
-+ */
-+struct funnel_queue_entry *uds_funnel_queue_poll(struct funnel_queue *queue)
-+{
-+	struct funnel_queue_entry *oldest = get_oldest(queue);
-+
-+	if (oldest == NULL)
-+		return oldest;
-+
-+	/*
-+	 * Dequeue the oldest entry and return it. Only one consumer thread may call this function,
-+	 * so no locking, atomic operations, or fences are needed; queue->oldest is owned by the
-+	 * consumer and oldest->next is never used by a producer thread after it is swung from NULL
-+	 * to non-NULL.
-+	 */
-+	queue->oldest = READ_ONCE(oldest->next);
-+	/*
-+	 * Make sure the caller sees the proper stored data for this entry. Since we've already
-+	 * fetched the entry pointer we stored in "queue->oldest", this also ensures that on entry
-+	 * to the next call we'll properly see the dependent data.
-+	 */
-+	smp_rmb();
-+	/*
-+	 * If "oldest" is a very light-weight work item, we'll be looking for the next one very
-+	 * soon, so prefetch it now.
-+	 */
-+	uds_prefetch_address(queue->oldest, true);
-+	WRITE_ONCE(oldest->next, NULL);
-+	return oldest;
-+}
-+
-+/*
-+ * Check whether the funnel queue is empty or not. If the queue is in a transition state with one
-+ * or more entries being added such that the list view is incomplete, this function will report the
-+ * queue as empty.
-+ */
-+bool uds_is_funnel_queue_empty(struct funnel_queue *queue)
-+{
-+	return get_oldest(queue) == NULL;
-+}
-+
-+/*
-+ * Check whether the funnel queue is idle or not. If the queue has entries available to be
-+ * retrieved, it is not idle. If the queue is in a transition state with one or more entries being
-+ * added such that the list view is incomplete, it may not be possible to retrieve an entry with
-+ * the uds_funnel_queue_poll() function, but the queue will not be considered idle.
-+ */
-+bool uds_is_funnel_queue_idle(struct funnel_queue *queue)
-+{
-+	/*
-+	 * Oldest is not the stub, so there's another entry, though if next is NULL we can't
-+	 * retrieve it yet.
-+	 */
-+	if (queue->oldest != &queue->stub)
-+		return false;
-+
-+	/*
-+	 * Oldest is the stub, but newest has been updated by _put(); either there's another,
-+	 * retrievable entry in the list, or the list is officially empty but in the intermediate
-+	 * state of having an entry added.
-+	 *
-+	 * Whether anything is retrievable depends on whether stub.next has been updated and become
-+	 * visible to us, but for idleness we don't care. And due to memory ordering in _put(), the
-+	 * update to newest would be visible to us at the same time or sooner.
-+	 */
-+	if (READ_ONCE(queue->newest) != &queue->stub)
-+		return false;
-+
-+	return true;
-+}
-diff --git a/drivers/md/dm-vdo/funnel-queue.h b/drivers/md/dm-vdo/funnel-queue.h
-new file mode 100644
-index 000000000000..275dd4ac29a4
---- /dev/null
-+++ b/drivers/md/dm-vdo/funnel-queue.h
-@@ -0,0 +1,110 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef UDS_FUNNEL_QUEUE_H
-+#define UDS_FUNNEL_QUEUE_H
-+
-+#include <linux/atomic.h>
-+#include <linux/cache.h>
-+
-+/*
-+ * A funnel queue is a simple (almost) lock-free queue that accepts entries from multiple threads
-+ * (multi-producer) and delivers them to a single thread (single-consumer). "Funnel" is an attempt
-+ * to evoke the image of requests from more than one producer being "funneled down" to a single
-+ * consumer.
-+ *
-+ * This is an unsynchronized but thread-safe data structure when used as intended. There is no
-+ * mechanism to ensure that only one thread is consuming from the queue. If more than one thread
-+ * attempts to consume from the queue, the resulting behavior is undefined. Clients must not
-+ * directly access or manipulate the internals of the queue, which are only exposed for the purpose
-+ * of allowing the very simple enqueue operation to be inlined.
-+ *
-+ * The implementation requires that a funnel_queue_entry structure (a link pointer) is embedded in
-+ * the queue entries, and pointers to those structures are used exclusively by the queue. No macros
-+ * are defined to template the queue, so the offset of the funnel_queue_entry in the records placed
-+ * in the queue must all be the same so the client can derive their structure pointer from the
-+ * entry pointer returned by uds_funnel_queue_poll().
-+ *
-+ * Callers are wholly responsible for allocating and freeing the entries. Entries may be freed as
-+ * soon as they are returned since this queue is not susceptible to the "ABA problem" present in
-+ * many lock-free data structures. The queue is dynamically allocated to ensure cache-line
-+ * alignment, but no other dynamic allocation is used.
-+ *
-+ * The algorithm is not actually 100% lock-free. There is a single point in uds_funnel_queue_put()
-+ * at which a preempted producer will prevent the consumers from seeing items added to the queue by
-+ * later producers, and only if the queue is short enough or the consumer fast enough for it to
-+ * reach what was the end of the queue at the time of the preemption.
-+ *
-+ * The consumer function, uds_funnel_queue_poll(), will return NULL when the queue is empty. To
-+ * wait for data to consume, spin (if safe) or combine the queue with a struct event_count to
-+ * signal the presence of new entries.
-+ */
-+
-+/* This queue link structure must be embedded in client entries. */
-+struct funnel_queue_entry {
-+	/* The next (newer) entry in the queue. */
-+	struct funnel_queue_entry *next;
++struct action {
++	bool in_use;
++	const struct admin_state_code *operation;
++	vdo_action_preamble *preamble;
++	vdo_zone_action *zone_action;
++	vdo_action_conclusion *conclusion;
++	struct vdo_completion *parent;
++	void *context;
++	struct action *next;
 +};
 +
-+/*
-+ * The dynamically allocated queue structure, which is allocated on a cache line boundary so the
-+ * producer and consumer fields in the structure will land on separate cache lines. This should be
-+ * consider opaque but it is exposed here so uds_funnel_queue_put() can be inlined.
++/**
++ * struct action_manager - Definition of an action manager.
++ * @completion: The completion for performing actions.
++ * @state: The state of this action manager.
++ * @actions: The two action slots.
++ * @current_action: The current action slot.
++ * @zones: The number of zones in which an action is to be applied.
++ * @Scheduler: A function to schedule a default next action.
++ * @get_zone_thread_id: A function to get the id of the thread on which to apply an action to a
++ *                      zone.
++ * @initiator_thread_id: The ID of the thread on which actions may be initiated.
++ * @context: Opaque data associated with this action manager.
++ * @acting_zone: The zone currently being acted upon.
 + */
-+struct __aligned(L1_CACHE_BYTES) funnel_queue {
-+	/*
-+	 * The producers' end of the queue, an atomically exchanged pointer that will never be
-+	 * NULL.
-+	 */
-+	struct funnel_queue_entry *newest;
-+
-+	/* The consumer's end of the queue, which is owned by the consumer and never NULL. */
-+	struct funnel_queue_entry *oldest __aligned(L1_CACHE_BYTES);
-+
-+	/* A dummy entry used to provide the non-NULL invariants above. */
-+	struct funnel_queue_entry stub;
++struct action_manager {
++	struct vdo_completion completion;
++	struct admin_state state;
++	struct action actions[2];
++	struct action *current_action;
++	zone_count_t zones;
++	vdo_action_scheduler *scheduler;
++	vdo_zone_thread_getter *get_zone_thread_id;
++	thread_id_t initiator_thread_id;
++	void *context;
++	zone_count_t acting_zone;
 +};
 +
-+int __must_check uds_make_funnel_queue(struct funnel_queue **queue_ptr);
-+
-+void uds_free_funnel_queue(struct funnel_queue *queue);
-+
-+/*
-+ * Put an entry on the end of the queue.
-+ *
-+ * The entry pointer must be to the struct funnel_queue_entry embedded in the caller's data
-+ * structure. The caller must be able to derive the address of the start of their data structure
-+ * from the pointer that passed in here, so every entry in the queue must have the struct
-+ * funnel_queue_entry at the same offset within the client's structure.
-+ */
-+static inline void
-+uds_funnel_queue_put(struct funnel_queue *queue, struct funnel_queue_entry *entry)
++static inline struct action_manager *as_action_manager(struct vdo_completion *completion)
 +{
-+	struct funnel_queue_entry *previous;
-+
-+	/*
-+	 * Barrier requirements: All stores relating to the entry ("next" pointer, containing data
-+	 * structure fields) must happen before the previous->next store making it visible to the
-+	 * consumer. Also, the entry's "next" field initialization to NULL must happen before any
-+	 * other producer threads can see the entry (the xchg) and try to update the "next" field.
-+	 *
-+	 * xchg implements a full barrier.
-+	 */
-+	WRITE_ONCE(entry->next, NULL);
-+	previous = xchg(&queue->newest, entry);
-+	/*
-+	 * Preemptions between these two statements hide the rest of the queue from the consumer,
-+	 * preventing consumption until the following assignment runs.
-+	 */
-+	WRITE_ONCE(previous->next, entry);
++	vdo_assert_completion_type(completion, VDO_ACTION_COMPLETION);
++	return container_of(completion, struct action_manager, completion);
 +}
 +
-+struct funnel_queue_entry *__must_check uds_funnel_queue_poll(struct funnel_queue *queue);
-+
-+bool __must_check uds_is_funnel_queue_empty(struct funnel_queue *queue);
-+
-+bool __must_check uds_is_funnel_queue_idle(struct funnel_queue *queue);
-+
-+#endif /* UDS_FUNNEL_QUEUE_H */
-diff --git a/drivers/md/dm-vdo/request-queue.c b/drivers/md/dm-vdo/request-queue.c
-new file mode 100644
-index 000000000000..1c60b09027a8
---- /dev/null
-+++ b/drivers/md/dm-vdo/request-queue.c
-@@ -0,0 +1,284 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "request-queue.h"
-+
-+#include <linux/atomic.h>
-+#include <linux/compiler.h>
-+#include <linux/wait.h>
-+
-+#include "funnel-queue.h"
-+#include "logger.h"
-+#include "memory-alloc.h"
-+#include "uds-threads.h"
-+
-+/*
-+ * This queue will attempt to handle requests in reasonably sized batches instead of reacting
-+ * immediately to each new request. The wait time between batches is dynamically adjusted up or
-+ * down to try to balance responsiveness against wasted thread run time.
-+ *
-+ * If the wait time becomes long enough, the queue will become dormant and must be explicitly
-+ * awoken when a new request is enqueued. The enqueue operation updates "newest" in the funnel
-+ * queue via xchg (which is a memory barrier), and later checks "dormant" to decide whether to do a
-+ * wakeup of the worker thread.
-+ *
-+ * When deciding to go to sleep, the worker thread sets "dormant" and then examines "newest" to
-+ * decide if the funnel queue is idle. In dormant mode, the last examination of "newest" before
-+ * going to sleep is done inside the wait_event_interruptible() macro, after a point where one or
-+ * more memory barriers have been issued. (Preparing to sleep uses spin locks.) Even if the funnel
-+ * queue's "next" field update isn't visible yet to make the entry accessible, its existence will
-+ * kick the worker thread out of dormant mode and back into timer-based mode.
-+ *
-+ * Unbatched requests are used to communicate between different zone threads and will also cause
-+ * the queue to awaken immediately.
-+ */
-+
-+enum {
-+	NANOSECOND = 1,
-+	MICROSECOND = 1000 * NANOSECOND,
-+	MILLISECOND = 1000 * MICROSECOND,
-+	DEFAULT_WAIT_TIME = 20 * MICROSECOND,
-+	MINIMUM_WAIT_TIME = DEFAULT_WAIT_TIME / 2,
-+	MAXIMUM_WAIT_TIME = MILLISECOND,
-+	MINIMUM_BATCH = 32,
-+	MAXIMUM_BATCH = 64,
-+};
-+
-+struct uds_request_queue {
-+	/* Wait queue for synchronizing producers and consumer */
-+	struct wait_queue_head wait_head;
-+	/* Function to process a request */
-+	uds_request_queue_processor_t *processor;
-+	/* Queue of new incoming requests */
-+	struct funnel_queue *main_queue;
-+	/* Queue of old requests to retry */
-+	struct funnel_queue *retry_queue;
-+	/* The thread id of the worker thread */
-+	struct thread *thread;
-+	/* True if the worker was started */
-+	bool started;
-+	/* When true, requests can be enqueued */
-+	bool running;
-+	/* A flag set when the worker is waiting without a timeout */
-+	atomic_t dormant;
-+};
-+
-+static inline struct uds_request *poll_queues(struct uds_request_queue *queue)
++/* Implements vdo_action_scheduler. */
++static bool no_default_action(void *context __always_unused)
 +{
-+	struct funnel_queue_entry *entry;
-+
-+	entry = uds_funnel_queue_poll(queue->retry_queue);
-+	if (entry != NULL)
-+		return container_of(entry, struct uds_request, queue_link);
-+
-+	entry = uds_funnel_queue_poll(queue->main_queue);
-+	if (entry != NULL)
-+		return container_of(entry, struct uds_request, queue_link);
-+
-+	return NULL;
-+}
-+
-+static inline bool are_queues_idle(struct uds_request_queue *queue)
-+{
-+	return uds_is_funnel_queue_idle(queue->retry_queue) &&
-+	       uds_is_funnel_queue_idle(queue->main_queue);
-+}
-+
-+/*
-+ * Determine if there is a next request to process, and return it if there is. Also return flags
-+ * indicating whether the worker thread can sleep (for the use of wait_event() macros) and whether
-+ * the thread did sleep before returning a new request.
-+ */
-+static inline bool dequeue_request(struct uds_request_queue *queue,
-+				   struct uds_request **request_ptr,
-+				   bool *waited_ptr)
-+{
-+	struct uds_request *request = poll_queues(queue);
-+
-+	if (request != NULL) {
-+		*request_ptr = request;
-+		return true;
-+	}
-+
-+	if (!READ_ONCE(queue->running)) {
-+		/* Wake the worker thread so it can exit. */
-+		*request_ptr = NULL;
-+		return true;
-+	}
-+
-+	*request_ptr = NULL;
-+	*waited_ptr = true;
 +	return false;
 +}
 +
-+static void wait_for_request(struct uds_request_queue *queue,
-+			     bool dormant,
-+			     unsigned long timeout,
-+			     struct uds_request **request,
-+			     bool *waited)
++/* Implements vdo_action_preamble. */
++static void no_preamble(void *context __always_unused,
++			struct vdo_completion *completion)
 +{
-+	if (dormant) {
-+		wait_event_interruptible(queue->wait_head,
-+					 (dequeue_request(queue, request, waited) ||
-+					  !are_queues_idle(queue)));
++	vdo_finish_completion(completion);
++}
++
++/* Implements vdo_action_conclusion. */
++static int no_conclusion(void *context __always_unused)
++{
++	return VDO_SUCCESS;
++}
++
++/**
++ * vdo_make_action_manager() - Make an action manager.
++ * @zones: The number of zones to which actions will be applied.
++ * @get_zone_thread_id: A function to get the thread id associated with a zone.
++ * @initiator_thread_id: The thread on which actions may initiated.
++ * @context: The object which holds the per-zone context for the action.
++ * @scheduler: A function to schedule a next action after an action concludes if there is no
++ *             pending action (may be NULL).
++ * @vdo: The vdo used to initialize completions.
++ * @manager_ptr: A pointer to hold the new action manager.
++ *
++ * Return: VDO_SUCCESS or an error code.
++ */
++int vdo_make_action_manager(zone_count_t zones,
++			    vdo_zone_thread_getter *get_zone_thread_id,
++			    thread_id_t initiator_thread_id,
++			    void *context,
++			    vdo_action_scheduler *scheduler,
++			    struct vdo *vdo,
++			    struct action_manager **manager_ptr)
++{
++	struct action_manager *manager;
++	int result = UDS_ALLOCATE(1, struct action_manager, __func__, &manager);
++
++	if (result != VDO_SUCCESS)
++		return result;
++
++	*manager = (struct action_manager) {
++		.zones = zones,
++		.scheduler =
++			((scheduler == NULL) ? no_default_action : scheduler),
++		.get_zone_thread_id = get_zone_thread_id,
++		.initiator_thread_id = initiator_thread_id,
++		.context = context,
++	};
++
++	manager->actions[0].next = &manager->actions[1];
++	manager->current_action = manager->actions[1].next =
++		&manager->actions[0];
++	vdo_set_admin_state_code(&manager->state,
++				 VDO_ADMIN_STATE_NORMAL_OPERATION);
++	vdo_initialize_completion(&manager->completion, vdo,
++				  VDO_ACTION_COMPLETION);
++	*manager_ptr = manager;
++	return VDO_SUCCESS;
++}
++
++const struct admin_state_code *vdo_get_current_manager_operation(struct action_manager *manager)
++{
++	return vdo_get_admin_state_code(&manager->state);
++}
++
++void *vdo_get_current_action_context(struct action_manager *manager)
++{
++	return manager->current_action->in_use ? manager->current_action->context : NULL;
++}
++
++static void finish_action_callback(struct vdo_completion *completion);
++static void apply_to_zone(struct vdo_completion *completion);
++
++static thread_id_t get_acting_zone_thread_id(struct action_manager *manager)
++{
++	return manager->get_zone_thread_id(manager->context, manager->acting_zone);
++}
++
++static void preserve_error(struct vdo_completion *completion)
++{
++	if (completion->parent != NULL)
++		vdo_set_completion_result(completion->parent, completion->result);
++
++	vdo_reset_completion(completion);
++	vdo_run_completion(completion);
++}
++
++static void prepare_for_next_zone(struct action_manager *manager)
++{
++	vdo_prepare_completion_for_requeue(&manager->completion,
++					   apply_to_zone,
++					   preserve_error,
++					   get_acting_zone_thread_id(manager),
++					   manager->current_action->parent);
++}
++
++static void prepare_for_conclusion(struct action_manager *manager)
++{
++	vdo_prepare_completion_for_requeue(&manager->completion,
++					   finish_action_callback,
++					   preserve_error,
++					   manager->initiator_thread_id,
++					   manager->current_action->parent);
++}
++
++static void apply_to_zone(struct vdo_completion *completion)
++{
++	zone_count_t zone;
++	struct action_manager *manager = as_action_manager(completion);
++
++	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == get_acting_zone_thread_id(manager)),
++			"%s() called on acting zones's thread",
++			__func__);
++
++	zone = manager->acting_zone++;
++	if (manager->acting_zone == manager->zones)
++		/*
++		 * We are about to apply to the last zone. Once that is finished, we're done, so go
++		 * back to the initiator thread and finish up.
++		 */
++		prepare_for_conclusion(manager);
++	else
++		/* Prepare to come back on the next zone */
++		prepare_for_next_zone(manager);
++
++	manager->current_action->zone_action(manager->context, zone, completion);
++}
++
++static void handle_preamble_error(struct vdo_completion *completion)
++{
++	/* Skip the zone actions since the preamble failed. */
++	completion->callback = finish_action_callback;
++	preserve_error(completion);
++}
++
++static void launch_current_action(struct action_manager *manager)
++{
++	struct action *action = manager->current_action;
++	int result = vdo_start_operation(&manager->state, action->operation);
++
++	if (result != VDO_SUCCESS) {
++		if (action->parent != NULL)
++			vdo_set_completion_result(action->parent, result);
++
++		/* We aren't going to run the preamble, so don't run the conclusion */
++		action->conclusion = no_conclusion;
++		finish_action_callback(&manager->completion);
 +		return;
 +	}
 +
-+	wait_event_interruptible_hrtimeout(queue->wait_head,
-+					   dequeue_request(queue, request, waited),
-+					   ns_to_ktime(timeout));
-+}
-+
-+static void request_queue_worker(void *arg)
-+{
-+	struct uds_request_queue *queue = (struct uds_request_queue *) arg;
-+	struct uds_request *request = NULL;
-+	unsigned long time_batch = DEFAULT_WAIT_TIME;
-+	bool dormant = atomic_read(&queue->dormant);
-+	bool waited = false;
-+	long current_batch = 0;
-+
-+	for (;;) {
-+		wait_for_request(queue, dormant, time_batch, &request, &waited);
-+		if (likely(request != NULL)) {
-+			current_batch++;
-+			queue->processor(request);
-+		} else if (!READ_ONCE(queue->running)) {
-+			break;
-+		}
-+
-+		if (dormant) {
-+			/*
-+			 * The queue has been roused from dormancy. Clear the flag so enqueuers can
-+			 * stop broadcasting. No fence is needed for this transition.
-+			 */
-+			atomic_set(&queue->dormant, false);
-+			dormant = false;
-+			time_batch = DEFAULT_WAIT_TIME;
-+		} else if (waited) {
-+			/*
-+			 * We waited for this request to show up. Adjust the wait time to smooth
-+			 * out the batch size.
-+			 */
-+			if (current_batch < MINIMUM_BATCH) {
-+				/*
-+				 * If the last batch of requests was too small, increase the wait
-+				 * time.
-+				 */
-+				time_batch += time_batch / 4;
-+				if (time_batch >= MAXIMUM_WAIT_TIME) {
-+					atomic_set(&queue->dormant, true);
-+					dormant = true;
-+				}
-+			} else if (current_batch > MAXIMUM_BATCH) {
-+				/*
-+				 * If the last batch of requests was too large, decrease the wait
-+				 * time.
-+				 */
-+				time_batch -= time_batch / 4;
-+				if (time_batch < MINIMUM_WAIT_TIME)
-+					time_batch = MINIMUM_WAIT_TIME;
-+			}
-+			current_batch = 0;
-+		}
++	if (action->zone_action == NULL) {
++		prepare_for_conclusion(manager);
++	} else {
++		manager->acting_zone = 0;
++		vdo_prepare_completion_for_requeue(&manager->completion,
++						   apply_to_zone,
++						   handle_preamble_error,
++						   get_acting_zone_thread_id(manager),
++						   manager->current_action->parent);
 +	}
 +
-+	/*
-+	 * Ensure that we process any remaining requests that were enqueued before trying to shut
-+	 * down. The corresponding write barrier is in uds_request_queue_finish().
-+	 */
-+	smp_rmb();
-+	while ((request = poll_queues(queue)) != NULL)
-+		queue->processor(request);
++	action->preamble(manager->context, &manager->completion);
 +}
 +
-+int uds_make_request_queue(const char *queue_name,
-+			   uds_request_queue_processor_t *processor,
-+			   struct uds_request_queue **queue_ptr)
++/**
++ * vdo_schedule_default_action() - Attempt to schedule the default action.
++ * @manager: The action manager.
++ *
++ * If the manager is not operating normally, the action will not be scheduled.
++ *
++ * Return: true if an action was scheduled.
++ */
++bool vdo_schedule_default_action(struct action_manager *manager)
 +{
++	/* Don't schedule a default action if we are operating or not in normal operation. */
++	const struct admin_state_code *code = vdo_get_current_manager_operation(manager);
++
++	return ((code == VDO_ADMIN_STATE_NORMAL_OPERATION) &&
++		manager->scheduler(manager->context));
++}
++
++static void finish_action_callback(struct vdo_completion *completion)
++{
++	bool has_next_action;
 +	int result;
-+	struct uds_request_queue *queue;
++	struct action_manager *manager = as_action_manager(completion);
++	struct action action = *(manager->current_action);
 +
-+	result = UDS_ALLOCATE(1, struct uds_request_queue, __func__, &queue);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	queue->processor = processor;
-+	queue->running = true;
-+	atomic_set(&queue->dormant, false);
-+	init_waitqueue_head(&queue->wait_head);
-+
-+	result = uds_make_funnel_queue(&queue->main_queue);
-+	if (result != UDS_SUCCESS) {
-+		uds_request_queue_finish(queue);
-+		return result;
-+	}
-+
-+	result = uds_make_funnel_queue(&queue->retry_queue);
-+	if (result != UDS_SUCCESS) {
-+		uds_request_queue_finish(queue);
-+		return result;
-+	}
-+
-+	result = uds_create_thread(request_queue_worker, queue, queue_name, &queue->thread);
-+	if (result != UDS_SUCCESS) {
-+		uds_request_queue_finish(queue);
-+		return result;
-+	}
-+
-+	queue->started = true;
-+	*queue_ptr = queue;
-+	return UDS_SUCCESS;
-+}
-+
-+static inline void wake_up_worker(struct uds_request_queue *queue)
-+{
-+	if (wq_has_sleeper(&queue->wait_head))
-+		wake_up(&queue->wait_head);
-+}
-+
-+void uds_request_queue_enqueue(struct uds_request_queue *queue, struct uds_request *request)
-+{
-+	struct funnel_queue *sub_queue;
-+	bool unbatched = request->unbatched;
-+
-+	sub_queue = request->requeued ? queue->retry_queue : queue->main_queue;
-+	uds_funnel_queue_put(sub_queue, &request->queue_link);
++	manager->current_action->in_use = false;
++	manager->current_action = manager->current_action->next;
 +
 +	/*
-+	 * We must wake the worker thread when it is dormant. A read fence isn't needed here since
-+	 * we know the queue operation acts as one.
++	 * We need to check this now to avoid use-after-free issues if running the conclusion or
++	 * notifying the parent results in the manager being freed.
 +	 */
-+	if (atomic_read(&queue->dormant) || unbatched)
-+		wake_up_worker(queue);
++	has_next_action =
++		(manager->current_action->in_use || vdo_schedule_default_action(manager));
++	result = action.conclusion(manager->context);
++	vdo_finish_operation(&manager->state, VDO_SUCCESS);
++	if (action.parent != NULL)
++		vdo_continue_completion(action.parent, result);
++
++	if (has_next_action)
++		launch_current_action(manager);
 +}
 +
-+void uds_request_queue_finish(struct uds_request_queue *queue)
++/**
++ * vdo_schedule_action() - Schedule an action to be applied to all zones.
++ * @manager: The action manager to schedule the action on.
++ * @preamble: A method to be invoked on the initiator thread once this action is started but before
++ *            applying to each zone; may be NULL.
++ * @action: The action to apply to each zone; may be NULL.
++ * @conclusion: A method to be invoked back on the initiator thread once the action has been
++ *              applied to all zones; may be NULL.
++ * @parent: The object to notify once the action is complete or if the action can not be scheduled;
++ *          may be NULL.
++ *
++ * The action will be launched immediately if there is no current action, or as soon as the current
++ * action completes. If there is already a pending action, this action will not be scheduled, and,
++ * if it has a parent, that parent will be notified. At least one of the preamble, action, or
++ * conclusion must not be NULL.
++ *
++ * Return: true if the action was scheduled.
++ */
++bool vdo_schedule_action(struct action_manager *manager,
++			 vdo_action_preamble *preamble,
++			 vdo_zone_action *action,
++			 vdo_action_conclusion *conclusion,
++			 struct vdo_completion *parent)
 +{
-+	int result;
++	return vdo_schedule_operation(manager,
++				      VDO_ADMIN_STATE_OPERATING,
++				      preamble,
++				      action,
++				      conclusion,
++				      parent);
++}
 +
-+	if (queue == NULL)
-+		return;
++/**
++ * vdo_schedule_operation() - Schedule an operation to be applied to all zones.
++ * @manager: The action manager to schedule the action on.
++ * @operation: The operation this action will perform
++ * @preamble: A method to be invoked on the initiator thread once this action is started but before
++ *            applying to each zone; may be NULL.
++ * @action: The action to apply to each zone; may be NULL.
++ * @conclusion: A method to be invoked back on the initiator thread once the action has been
++ *              applied to all zones; may be NULL.
++ * @parent: The object to notify once the action is complete or if the action can not be scheduled;
++ *          may be NULL.
++ *
++ * The operation's action will be launched immediately if there is no current action, or as soon as
++ * the current action completes. If there is already a pending action, this operation will not be
++ * scheduled, and, if it has a parent, that parent will be notified. At least one of the preamble,
++ * action, or conclusion must not be NULL.
++ *
++ * Return: true if the action was scheduled.
++ */
++bool vdo_schedule_operation(struct action_manager *manager,
++			    const struct admin_state_code *operation,
++			    vdo_action_preamble *preamble,
++			    vdo_zone_action *action,
++			    vdo_action_conclusion *conclusion,
++			    struct vdo_completion *parent)
++{
++	return vdo_schedule_operation_with_context(manager,
++						   operation,
++						   preamble,
++						   action,
++						   conclusion,
++						   NULL,
++						   parent);
++}
 +
-+	/*
-+	 * This memory barrier ensures that any requests we queued will be seen. The point is that
-+	 * when dequeue_request() sees the following update to the running flag, it will also be
-+	 * able to see any change we made to a next field in the funnel queue entry. The
-+	 * corresponding read barrier is in request_queue_worker().
-+	 */
-+	smp_wmb();
-+	WRITE_ONCE(queue->running, false);
++/**
++ * vdo_schedule_operation_with_context() - Schedule an operation on all zones.
++ * @manager: The action manager to schedule the action on.
++ * @operation: The operation this action will perform.
++ * @preamble: A method to be invoked on the initiator thread once this action is started but before
++ *            applying to each zone; may be NULL.
++ * @action: The action to apply to each zone; may be NULL.
++ * @conclusion: A method to be invoked back on the initiator thread once the action has been
++ *              applied to all zones; may be NULL.
++ * @context: An action-specific context which may be retrieved via
++ *           vdo_get_current_action_context(); may be NULL.
++ * @parent: The object to notify once the action is complete or if the action can not be scheduled;
++ *          may be NULL.
++ *
++ * The operation's action will be launched immediately if there is no current action, or as soon as
++ * the current action completes. If there is already a pending action, this operation will not be
++ * scheduled, and, if it has a parent, that parent will be notified. At least one of the preamble,
++ * action, or conclusion must not be NULL.
++ *
++ * Return: true if the action was scheduled
++ */
++bool vdo_schedule_operation_with_context(struct action_manager *manager,
++					 const struct admin_state_code *operation,
++					 vdo_action_preamble *preamble,
++					 vdo_zone_action *action,
++					 vdo_action_conclusion *conclusion,
++					 void *context,
++					 struct vdo_completion *parent)
++{
++	struct action *current_action;
 +
-+	if (queue->started) {
-+		wake_up_worker(queue);
-+		result = uds_join_threads(queue->thread);
-+		if (result != UDS_SUCCESS)
-+			uds_log_warning_strerror(result, "Failed to join worker thread");
++	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == manager->initiator_thread_id),
++			"action initiated from correct thread");
++	if (!manager->current_action->in_use) {
++		current_action = manager->current_action;
++	} else if (!manager->current_action->next->in_use) {
++		current_action = manager->current_action->next;
++	} else {
++		if (parent != NULL)
++			vdo_continue_completion(parent, VDO_COMPONENT_BUSY);
++
++		return false;
 +	}
 +
-+	uds_free_funnel_queue(queue->main_queue);
-+	uds_free_funnel_queue(queue->retry_queue);
-+	UDS_FREE(queue);
++	*current_action = (struct action) {
++		.in_use = true,
++		.operation = operation,
++		.preamble = (preamble == NULL) ? no_preamble : preamble,
++		.zone_action = action,
++		.conclusion = (conclusion == NULL) ? no_conclusion : conclusion,
++		.context = context,
++		.parent = parent,
++		.next = current_action->next,
++	};
++
++	if (current_action == manager->current_action)
++		launch_current_action(manager);
++
++	return true;
 +}
-diff --git a/drivers/md/dm-vdo/request-queue.h b/drivers/md/dm-vdo/request-queue.h
+diff --git a/drivers/md/dm-vdo/action-manager.h b/drivers/md/dm-vdo/action-manager.h
 new file mode 100644
-index 000000000000..818cb14135fd
+index 000000000000..b97bb2eec145
 --- /dev/null
-+++ b/drivers/md/dm-vdo/request-queue.h
-@@ -0,0 +1,30 @@
++++ b/drivers/md/dm-vdo/action-manager.h
+@@ -0,0 +1,117 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_REQUEST_QUEUE_H
-+#define UDS_REQUEST_QUEUE_H
++#ifndef VDO_ACTION_MANAGER_H
++#define VDO_ACTION_MANAGER_H
 +
-+#include "uds.h"
++#include "admin-state.h"
++#include "types.h"
 +
 +/*
-+ * A simple request queue which will handle new requests in the order in which they are received,
-+ * and will attempt to handle requeued requests before new ones. However, the nature of the
-+ * implementation means that it cannot guarantee this ordering; the prioritization is merely a
-+ * hint.
++ * An action_manager provides a generic mechanism for applying actions to multi-zone entities (such
++ * as the block map or slab depot). Each action manager is tied to a specific context for which it
++ * manages actions. The manager ensures that only one action is active on that context at a time,
++ * and supports at most one pending action. Calls to schedule an action when there is already a
++ * pending action will result in VDO_COMPONENT_BUSY errors. Actions may only be submitted to the
++ * action manager from a single thread (which thread is determined when the action manager is
++ * constructed).
++ *
++ * A scheduled action consists of four components:
++ *
++ *   preamble
++ *     an optional method to be run on the initiator thread before applying the action to all zones
++ *   zone_action
++ *     an optional method to be applied to each of the zones
++ *   conclusion
++ *     an optional method to be run on the initiator thread once the per-zone method has been
++ *     applied to all zones
++ *   parent
++ *     an optional completion to be finished once the conclusion is done
++ *
++ * At least one of the three methods must be provided.
 + */
 +
-+struct uds_request_queue;
++/*
++ * A function which is to be applied asynchronously to a set of zones.
++ * @context: The object which holds the per-zone context for the action
++ * @zone_number: The number of zone to which the action is being applied
++ * @parent: The object to notify when the action is complete
++ */
++typedef void vdo_zone_action(void *context,
++			     zone_count_t zone_number,
++			     struct vdo_completion *parent);
 +
-+typedef void uds_request_queue_processor_t(struct uds_request *);
++/*
++ * A function which is to be applied asynchronously on an action manager's initiator thread as the
++ * preamble of an action.
++ * @context: The object which holds the per-zone context for the action
++ * @parent: The object to notify when the action is complete
++ */
++typedef void vdo_action_preamble(void *context, struct vdo_completion *parent);
 +
-+int __must_check uds_make_request_queue(const char *queue_name,
-+					uds_request_queue_processor_t *processor,
-+					struct uds_request_queue **queue_ptr);
++/*
++ * A function which will run on the action manager's initiator thread as the conclusion of an
++ * action.
++ * @context: The object which holds the per-zone context for the action
++ *
++ * Return: VDO_SUCCESS or an error
++ */
++typedef int vdo_action_conclusion(void *context);
 +
-+void uds_request_queue_enqueue(struct uds_request_queue *queue, struct uds_request *request);
++/*
++ * A function to schedule an action.
++ * @context: The object which holds the per-zone context for the action
++ *
++ * Return: true if an action was scheduled
++ */
++typedef bool vdo_action_scheduler(void *context);
 +
-+void uds_request_queue_finish(struct uds_request_queue *queue);
++/*
++ * A function to get the id of the thread associated with a given zone.
++ * @context: The action context
++ * @zone_number: The number of the zone for which the thread ID is desired
++ */
++typedef thread_id_t vdo_zone_thread_getter(void *context, zone_count_t zone_number);
 +
-+#endif /* UDS_REQUEST_QUEUE_H */
-diff --git a/drivers/md/dm-vdo/work-queue.c b/drivers/md/dm-vdo/work-queue.c
++struct action_manager;
++
++int __must_check
++vdo_make_action_manager(zone_count_t zones,
++			vdo_zone_thread_getter *get_zone_thread_id,
++			thread_id_t initiator_thread_id,
++			void *context,
++			vdo_action_scheduler *scheduler,
++			struct vdo *vdo,
++			struct action_manager **manager_ptr);
++
++const struct admin_state_code *__must_check
++vdo_get_current_manager_operation(struct action_manager *manager);
++
++void * __must_check vdo_get_current_action_context(struct action_manager *manager);
++
++bool vdo_schedule_default_action(struct action_manager *manager);
++
++bool vdo_schedule_action(struct action_manager *manager,
++			 vdo_action_preamble *preamble,
++			 vdo_zone_action *action,
++			 vdo_action_conclusion *conclusion,
++			 struct vdo_completion *parent);
++
++bool vdo_schedule_operation(struct action_manager *manager,
++			    const struct admin_state_code *operation,
++			    vdo_action_preamble *preamble,
++			    vdo_zone_action *action,
++			    vdo_action_conclusion *conclusion,
++			    struct vdo_completion *parent);
++
++bool vdo_schedule_operation_with_context(struct action_manager *manager,
++					 const struct admin_state_code *operation,
++					 vdo_action_preamble *preamble,
++					 vdo_zone_action *action,
++					 vdo_action_conclusion *conclusion,
++					 void *context,
++					 struct vdo_completion *parent);
++
++#endif /* VDO_ACTION_MANAGER_H */
+diff --git a/drivers/md/dm-vdo/admin-state.c b/drivers/md/dm-vdo/admin-state.c
 new file mode 100644
-index 000000000000..6adf07fc74e1
+index 000000000000..e2ba354508b2
 --- /dev/null
-+++ b/drivers/md/dm-vdo/work-queue.c
-@@ -0,0 +1,659 @@
++++ b/drivers/md/dm-vdo/admin-state.c
+@@ -0,0 +1,512 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "work-queue.h"
++#include "admin-state.h"
 +
-+#include <linux/atomic.h>
-+#include <linux/cache.h>
-+#include <linux/completion.h>
-+#include <linux/err.h>
-+#include <linux/kthread.h>
-+#include <linux/percpu.h>
-+
-+#include "funnel-queue.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
-+#include "numeric.h"
 +#include "permassert.h"
-+#include "string-utils.h"
 +
 +#include "completion.h"
-+#include "status-codes.h"
++#include "types.h"
 +
-+static DEFINE_PER_CPU(unsigned int, service_queue_rotor);
++static const struct admin_state_code VDO_CODE_NORMAL_OPERATION = {
++	.name = "VDO_ADMIN_STATE_NORMAL_OPERATION",
++	.normal = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_NORMAL_OPERATION = &VDO_CODE_NORMAL_OPERATION;
++static const struct admin_state_code VDO_CODE_OPERATING = {
++	.name = "VDO_ADMIN_STATE_OPERATING",
++	.normal = true,
++	.operating = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_OPERATING = &VDO_CODE_OPERATING;
++static const struct admin_state_code VDO_CODE_FORMATTING = {
++	.name = "VDO_ADMIN_STATE_FORMATTING",
++	.operating = true,
++	.loading = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_FORMATTING = &VDO_CODE_FORMATTING;
++static const struct admin_state_code VDO_CODE_PRE_LOADING = {
++	.name = "VDO_ADMIN_STATE_PRE_LOADING",
++	.operating = true,
++	.loading = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_PRE_LOADING = &VDO_CODE_PRE_LOADING;
++static const struct admin_state_code VDO_CODE_PRE_LOADED = {
++	.name = "VDO_ADMIN_STATE_PRE_LOADED",
++};
++const struct admin_state_code *VDO_ADMIN_STATE_PRE_LOADED = &VDO_CODE_PRE_LOADED;
++static const struct admin_state_code VDO_CODE_LOADING = {
++	.name = "VDO_ADMIN_STATE_LOADING",
++	.normal = true,
++	.operating = true,
++	.loading = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_LOADING = &VDO_CODE_LOADING;
++static const struct admin_state_code VDO_CODE_LOADING_FOR_RECOVERY = {
++	.name = "VDO_ADMIN_STATE_LOADING_FOR_RECOVERY",
++	.operating = true,
++	.loading = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_LOADING_FOR_RECOVERY =
++	&VDO_CODE_LOADING_FOR_RECOVERY;
++static const struct admin_state_code VDO_CODE_LOADING_FOR_REBUILD = {
++	.name = "VDO_ADMIN_STATE_LOADING_FOR_REBUILD",
++	.operating = true,
++	.loading = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_LOADING_FOR_REBUILD = &VDO_CODE_LOADING_FOR_REBUILD;
++static const struct admin_state_code VDO_CODE_WAITING_FOR_RECOVERY = {
++	.name = "VDO_ADMIN_STATE_WAITING_FOR_RECOVERY",
++	.operating = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_WAITING_FOR_RECOVERY =
++	&VDO_CODE_WAITING_FOR_RECOVERY;
++static const struct admin_state_code VDO_CODE_NEW = {
++	.name = "VDO_ADMIN_STATE_NEW",
++	.quiescent = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_NEW = &VDO_CODE_NEW;
++static const struct admin_state_code VDO_CODE_INITIALIZED = {
++	.name = "VDO_ADMIN_STATE_INITIALIZED",
++};
++const struct admin_state_code *VDO_ADMIN_STATE_INITIALIZED = &VDO_CODE_INITIALIZED;
++static const struct admin_state_code VDO_CODE_RECOVERING = {
++	.name = "VDO_ADMIN_STATE_RECOVERING",
++	.draining = true,
++	.operating = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_RECOVERING = &VDO_CODE_RECOVERING;
++static const struct admin_state_code VDO_CODE_REBUILDING = {
++	.name = "VDO_ADMIN_STATE_REBUILDING",
++	.draining = true,
++	.operating = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_REBUILDING = &VDO_CODE_REBUILDING;
++static const struct admin_state_code VDO_CODE_SAVING = {
++	.name = "VDO_ADMIN_STATE_SAVING",
++	.draining = true,
++	.quiescing = true,
++	.operating = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_SAVING = &VDO_CODE_SAVING;
++static const struct admin_state_code VDO_CODE_SAVED = {
++	.name = "VDO_ADMIN_STATE_SAVED",
++	.quiescent = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_SAVED = &VDO_CODE_SAVED;
++static const struct admin_state_code VDO_CODE_SCRUBBING = {
++	.name = "VDO_ADMIN_STATE_SCRUBBING",
++	.draining = true,
++	.loading = true,
++	.operating = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_SCRUBBING = &VDO_CODE_SCRUBBING;
++static const struct admin_state_code VDO_CODE_SAVE_FOR_SCRUBBING = {
++	.name = "VDO_ADMIN_STATE_SAVE_FOR_SCRUBBING",
++	.draining = true,
++	.operating = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_SAVE_FOR_SCRUBBING = &VDO_CODE_SAVE_FOR_SCRUBBING;
++static const struct admin_state_code VDO_CODE_STOPPING = {
++	.name = "VDO_ADMIN_STATE_STOPPING",
++	.draining = true,
++	.quiescing = true,
++	.operating = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_STOPPING = &VDO_CODE_STOPPING;
++static const struct admin_state_code VDO_CODE_STOPPED = {
++	.name = "VDO_ADMIN_STATE_STOPPED",
++	.quiescent = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_STOPPED = &VDO_CODE_STOPPED;
++static const struct admin_state_code VDO_CODE_SUSPENDING = {
++	.name = "VDO_ADMIN_STATE_SUSPENDING",
++	.draining = true,
++	.quiescing = true,
++	.operating = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_SUSPENDING = &VDO_CODE_SUSPENDING;
++static const struct admin_state_code VDO_CODE_SUSPENDED = {
++	.name = "VDO_ADMIN_STATE_SUSPENDED",
++	.quiescent = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_SUSPENDED = &VDO_CODE_SUSPENDED;
++static const struct admin_state_code VDO_CODE_SUSPENDED_OPERATION = {
++	.name = "VDO_ADMIN_STATE_SUSPENDED_OPERATION",
++	.operating = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_SUSPENDED_OPERATION = &VDO_CODE_SUSPENDED_OPERATION;
++static const struct admin_state_code VDO_CODE_RESUMING = {
++	.name = "VDO_ADMIN_STATE_RESUMING",
++	.operating = true,
++};
++const struct admin_state_code *VDO_ADMIN_STATE_RESUMING = &VDO_CODE_RESUMING;
 +
 +/**
-+ * DOC: Work queue definition.
++ * get_next_state() - Determine the state which should be set after a given operation completes
++ *                    based on the operation and the current state.
++ * @operation The operation to be started.
 + *
-+ * There are two types of work queues: simple, with one worker thread, and round-robin, which uses
-+ * a group of the former to do the work, and assigns work to them in round-robin fashion (roughly).
-+ * Externally, both are represented via the same common sub-structure, though there's actually not
-+ * a great deal of overlap between the two types internally.
++ * Return: The state to set when the operation completes or NULL if the operation can not be
++ *         started in the current state.
 + */
-+struct vdo_work_queue {
-+	/* Name of just the work queue (e.g., "cpuQ12") */
-+	char *name;
-+	bool round_robin_mode;
-+	struct vdo_thread *owner;
-+	/* Life cycle functions, etc */
-+	const struct vdo_work_queue_type *type;
-+};
-+
-+struct simple_work_queue {
-+	struct vdo_work_queue common;
-+	struct funnel_queue *priority_lists[VDO_WORK_Q_MAX_PRIORITY + 1];
-+	void *private;
-+
-+	/*
-+	 * The fields above are unchanged after setup but often read, and are good candidates for
-+	 * caching -- and if the max priority is 2, just fit in one x86-64 cache line if aligned.
-+	 * The fields below are often modified as we sleep and wake, so we want a separate cache
-+	 * line for performance.
-+	 */
-+
-+	/* Any (0 or 1) worker threads waiting for new work to do */
-+	wait_queue_head_t waiting_worker_threads ____cacheline_aligned;
-+	/* Hack to reduce wakeup calls if the worker thread is running */
-+	atomic_t idle;
-+
-+	/* These are infrequently used so in terms of performance we don't care where they land. */
-+	struct task_struct *thread;
-+	/* Notify creator once worker has initialized */
-+	struct completion *started;
-+};
-+
-+struct round_robin_work_queue {
-+	struct vdo_work_queue common;
-+	struct simple_work_queue **service_queues;
-+	unsigned int num_service_queues;
-+};
-+
-+static inline struct simple_work_queue *as_simple_work_queue(struct vdo_work_queue *queue)
++static const struct admin_state_code *
++get_next_state(const struct admin_state *state, const struct admin_state_code *operation)
 +{
-+	return ((queue == NULL) ? NULL : container_of(queue, struct simple_work_queue, common));
-+}
++	const struct admin_state_code *code = vdo_get_admin_state_code(state);
 +
-+static inline struct round_robin_work_queue *
-+as_round_robin_work_queue(struct vdo_work_queue *queue)
-+{
-+	return ((queue == NULL) ?
-+		 NULL :
-+		 container_of(queue, struct round_robin_work_queue, common));
-+}
++	if (code->operating)
++		return NULL;
 +
-+/* Processing normal completions. */
++	if (operation == VDO_ADMIN_STATE_SAVING)
++		return (code == VDO_ADMIN_STATE_NORMAL_OPERATION ? VDO_ADMIN_STATE_SAVED : NULL);
 +
-+/*
-+ * Dequeue and return the next waiting completion, if any.
-+ *
-+ * We scan the funnel queues from highest priority to lowest, once; there is therefore a race
-+ * condition where a high-priority completion can be enqueued followed by a lower-priority one, and
-+ * we'll grab the latter (but we'll catch the high-priority item on the next call). If strict
-+ * enforcement of priorities becomes necessary, this function will need fixing.
-+ */
-+static struct vdo_completion *poll_for_completion(struct simple_work_queue *queue)
-+{
-+	int i;
++	if (operation == VDO_ADMIN_STATE_SUSPENDING)
++		return (code == VDO_ADMIN_STATE_NORMAL_OPERATION
++			? VDO_ADMIN_STATE_SUSPENDED
++			: NULL);
 +
-+	for (i = queue->common.type->max_priority; i >= 0; i--) {
-+		struct funnel_queue_entry *link = uds_funnel_queue_poll(queue->priority_lists[i]);
++	if (operation == VDO_ADMIN_STATE_STOPPING)
++		return (code == VDO_ADMIN_STATE_NORMAL_OPERATION ? VDO_ADMIN_STATE_STOPPED : NULL);
 +
-+		if (link != NULL)
-+			return container_of(link, struct vdo_completion, work_queue_entry_link);
-+	}
++	if (operation == VDO_ADMIN_STATE_PRE_LOADING)
++		return (code == VDO_ADMIN_STATE_INITIALIZED ? VDO_ADMIN_STATE_PRE_LOADED : NULL);
 +
-+	return NULL;
-+}
++	if (operation == VDO_ADMIN_STATE_SUSPENDED_OPERATION)
++		return (((code == VDO_ADMIN_STATE_SUSPENDED) ||
++			 (code == VDO_ADMIN_STATE_SAVED)) ? code : NULL);
 +
-+static void
-+enqueue_work_queue_completion(struct simple_work_queue *queue, struct vdo_completion *completion)
-+{
-+	ASSERT_LOG_ONLY(completion->my_queue == NULL,
-+			"completion %px (fn %px) to enqueue (%px) is not already queued (%px)",
-+			completion,
-+			completion->callback,
-+			queue,
-+			completion->my_queue);
-+	if (completion->priority == VDO_WORK_Q_DEFAULT_PRIORITY)
-+		completion->priority = queue->common.type->default_priority;
-+
-+	if (ASSERT(completion->priority <= queue->common.type->max_priority,
-+		   "priority is in range for queue") != VDO_SUCCESS)
-+		completion->priority = 0;
-+
-+	completion->my_queue = &queue->common;
-+
-+	/* Funnel queue handles the synchronization for the put. */
-+	uds_funnel_queue_put(queue->priority_lists[completion->priority],
-+			     &completion->work_queue_entry_link);
-+
-+	/*
-+	 * Due to how funnel queue synchronization is handled (just atomic operations), the
-+	 * simplest safe implementation here would be to wake-up any waiting threads after
-+	 * enqueueing each item. Even if the funnel queue is not empty at the time of adding an
-+	 * item to the queue, the consumer thread may not see this since it is not guaranteed to
-+	 * have the same view of the queue as a producer thread.
-+	 *
-+	 * However, the above is wasteful so instead we attempt to minimize the number of thread
-+	 * wakeups. Using an idle flag, and careful ordering using memory barriers, we should be
-+	 * able to determine when the worker thread might be asleep or going to sleep. We use
-+	 * cmpxchg to try to take ownership (vs other producer threads) of the responsibility for
-+	 * waking the worker thread, so multiple wakeups aren't tried at once.
-+	 *
-+	 * This was tuned for some x86 boxes that were handy; it's untested whether doing the read
-+	 * first is any better or worse for other platforms, even other x86 configurations.
-+	 */
-+	smp_mb();
-+	if ((atomic_read(&queue->idle) != 1) || (atomic_cmpxchg(&queue->idle, 1, 0) != 1))
-+		return;
-+
-+	/* There's a maximum of one thread in this list. */
-+	wake_up(&queue->waiting_worker_threads);
-+}
-+
-+static void run_start_hook(struct simple_work_queue *queue)
-+{
-+	if (queue->common.type->start != NULL)
-+		queue->common.type->start(queue->private);
-+}
-+
-+static void run_finish_hook(struct simple_work_queue *queue)
-+{
-+	if (queue->common.type->finish != NULL)
-+		queue->common.type->finish(queue->private);
-+}
-+
-+/*
-+ * Wait for the next completion to process, or until kthread_should_stop indicates that it's time
-+ * for us to shut down.
-+ *
-+ * If kthread_should_stop says it's time to stop but we have pending completions return a
-+ * completion.
-+ *
-+ * Also update statistics relating to scheduler interactions.
-+ */
-+static struct vdo_completion *wait_for_next_completion(struct simple_work_queue *queue)
-+{
-+	struct vdo_completion *completion;
-+	DEFINE_WAIT(wait);
-+
-+	while (true) {
-+		prepare_to_wait(&queue->waiting_worker_threads, &wait, TASK_INTERRUPTIBLE);
-+		/*
-+		 * Don't set the idle flag until a wakeup will not be lost.
-+		 *
-+		 * Force synchronization between setting the idle flag and checking the funnel
-+		 * queue; the producer side will do them in the reverse order. (There's still a
-+		 * race condition we've chosen to allow, because we've got a timeout below that
-+		 * unwedges us if we hit it, but this may narrow the window a little.)
-+		 */
-+		atomic_set(&queue->idle, 1);
-+		smp_mb(); /* store-load barrier between "idle" and funnel queue */
-+
-+		completion = poll_for_completion(queue);
-+		if (completion != NULL)
-+			break;
-+
-+		/*
-+		 * We need to check for thread-stop after setting TASK_INTERRUPTIBLE state up
-+		 * above. Otherwise, schedule() will put the thread to sleep and might miss a
-+		 * wakeup from kthread_stop() call in vdo_finish_work_queue().
-+		 */
-+		if (kthread_should_stop())
-+			break;
-+
-+		schedule();
-+
-+		/*
-+		 * Most of the time when we wake, it should be because there's work to do. If it
-+		 * was a spurious wakeup, continue looping.
-+		 */
-+		completion = poll_for_completion(queue);
-+		if (completion != NULL)
-+			break;
-+	}
-+
-+	finish_wait(&queue->waiting_worker_threads, &wait);
-+	atomic_set(&queue->idle, 0);
-+
-+	return completion;
-+}
-+
-+static void process_completion(struct simple_work_queue *queue, struct vdo_completion *completion)
-+{
-+	if (ASSERT(completion->my_queue == &queue->common,
-+		   "completion %px from queue %px marked as being in this queue (%px)",
-+		   completion,
-+		   queue,
-+		   completion->my_queue) == UDS_SUCCESS)
-+		completion->my_queue = NULL;
-+
-+	vdo_run_completion(completion);
-+}
-+
-+static void service_work_queue(struct simple_work_queue *queue)
-+{
-+	run_start_hook(queue);
-+
-+	while (true) {
-+		struct vdo_completion *completion = poll_for_completion(queue);
-+
-+		if (completion == NULL)
-+			completion = wait_for_next_completion(queue);
-+
-+		if (completion == NULL)
-+			/* No completions but kthread_should_stop() was triggered. */
-+			break;
-+
-+		process_completion(queue, completion);
-+
-+		/*
-+		 * Be friendly to a CPU that has other work to do, if the kernel has told us to.
-+		 * This speeds up some performance tests; that "other work" might include other VDO
-+		 * threads.
-+		 */
-+		if (need_resched())
-+			cond_resched();
-+	}
-+
-+	run_finish_hook(queue);
-+}
-+
-+static int work_queue_runner(void *ptr)
-+{
-+	struct simple_work_queue *queue = ptr;
-+
-+	complete(queue->started);
-+	service_work_queue(queue);
-+	return 0;
-+}
-+
-+/* Creation & teardown */
-+
-+static void free_simple_work_queue(struct simple_work_queue *queue)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i <= VDO_WORK_Q_MAX_PRIORITY; i++)
-+		uds_free_funnel_queue(queue->priority_lists[i]);
-+	UDS_FREE(queue->common.name);
-+	UDS_FREE(queue);
-+}
-+
-+static void free_round_robin_work_queue(struct round_robin_work_queue *queue)
-+{
-+	struct simple_work_queue **queue_table = queue->service_queues;
-+	unsigned int count = queue->num_service_queues;
-+	unsigned int i;
-+
-+	queue->service_queues = NULL;
-+
-+	for (i = 0; i < count; i++)
-+		free_simple_work_queue(queue_table[i]);
-+	UDS_FREE(queue_table);
-+	UDS_FREE(queue->common.name);
-+	UDS_FREE(queue);
-+}
-+
-+void vdo_free_work_queue(struct vdo_work_queue *queue)
-+{
-+	if (queue == NULL)
-+		return;
-+
-+	vdo_finish_work_queue(queue);
-+
-+	if (queue->round_robin_mode)
-+		free_round_robin_work_queue(as_round_robin_work_queue(queue));
-+	else
-+		free_simple_work_queue(as_simple_work_queue(queue));
-+}
-+
-+static int make_simple_work_queue(const char *thread_name_prefix,
-+				  const char *name,
-+				  struct vdo_thread *owner,
-+				  void *private,
-+				  const struct vdo_work_queue_type *type,
-+				  struct simple_work_queue **queue_ptr)
-+{
-+	DECLARE_COMPLETION_ONSTACK(started);
-+	struct simple_work_queue *queue;
-+	int i;
-+	struct task_struct *thread = NULL;
-+	int result;
-+
-+	ASSERT_LOG_ONLY((type->max_priority <= VDO_WORK_Q_MAX_PRIORITY),
-+			"queue priority count %u within limit %u",
-+			type->max_priority,
-+			VDO_WORK_Q_MAX_PRIORITY);
-+
-+	result = UDS_ALLOCATE(1, struct simple_work_queue, "simple work queue", &queue);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	queue->private = private;
-+	queue->started = &started;
-+	queue->common.type = type;
-+	queue->common.owner = owner;
-+	init_waitqueue_head(&queue->waiting_worker_threads);
-+
-+	result = uds_duplicate_string(name, "queue name", &queue->common.name);
-+	if (result != VDO_SUCCESS) {
-+		UDS_FREE(queue);
-+		return -ENOMEM;
-+	}
-+
-+	for (i = 0; i <= type->max_priority; i++) {
-+		result = uds_make_funnel_queue(&queue->priority_lists[i]);
-+		if (result != UDS_SUCCESS) {
-+			free_simple_work_queue(queue);
-+			return result;
-+		}
-+	}
-+
-+	thread = kthread_run(work_queue_runner,
-+			     queue,
-+			     "%s:%s",
-+			     thread_name_prefix,
-+			     queue->common.name);
-+	if (IS_ERR(thread)) {
-+		free_simple_work_queue(queue);
-+		return (int) PTR_ERR(thread);
-+	}
-+
-+	queue->thread = thread;
-+
-+	/*
-+	 * If we don't wait to ensure the thread is running VDO code, a quick kthread_stop (due to
-+	 * errors elsewhere) could cause it to never get as far as running VDO, skipping the
-+	 * cleanup code.
-+	 *
-+	 * Eventually we should just make that path safe too, and then we won't need this
-+	 * synchronization.
-+	 */
-+	wait_for_completion(&started);
-+
-+	*queue_ptr = queue;
-+	return UDS_SUCCESS;
++	return VDO_ADMIN_STATE_NORMAL_OPERATION;
 +}
 +
 +/**
-+ * vdo_make_work_queue() - Create a work queue; if multiple threads are requested, completions will
-+ *                         be distributed to them in round-robin fashion.
++ * vdo_finish_operation() - Finish the current operation.
 + *
-+ * Each queue is associated with a struct vdo_thread which has a single vdo thread id. Regardless
-+ * of the actual number of queues and threads allocated here, code outside of the queue
-+ * implementation will treat this as a single zone.
++ * Will notify the operation waiter if there is one. This method should be used for operations
++ * started with vdo_start_operation(). For operations which were started with vdo_start_draining(),
++ * use vdo_finish_draining() instead.
++ *
++ * Return: true if there was an operation to finish.
 + */
-+int vdo_make_work_queue(const char *thread_name_prefix,
-+			const char *name,
-+			struct vdo_thread *owner,
-+			const struct vdo_work_queue_type *type,
-+			unsigned int thread_count,
-+			void *thread_privates[],
-+			struct vdo_work_queue **queue_ptr)
++bool vdo_finish_operation(struct admin_state *state, int result)
 +{
-+	struct round_robin_work_queue *queue;
++	if (!vdo_get_admin_state_code(state)->operating)
++		return false;
++
++	state->complete = state->starting;
++	if (state->waiter != NULL)
++		vdo_set_completion_result(state->waiter, result);
++
++	if (!state->starting) {
++		vdo_set_admin_state_code(state, state->next_state);
++		if (state->waiter != NULL)
++			vdo_launch_completion(UDS_FORGET(state->waiter));
++	}
++
++	return true;
++}
++
++/**
++ * begin_operation() - Begin an operation if it may be started given the current state.
++ * @waiter A completion to notify when the operation is complete; may be NULL.
++ * @initiator The vdo_admin_initiator to call if the operation may begin; may be NULL.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int __must_check begin_operation(struct admin_state *state,
++					const struct admin_state_code *operation,
++					struct vdo_completion *waiter,
++					vdo_admin_initiator *initiator)
++{
 +	int result;
-+	char thread_name[TASK_COMM_LEN];
-+	unsigned int i;
++	const struct admin_state_code *next_state = get_next_state(state, operation);
 +
-+	if (thread_count == 1) {
-+		struct simple_work_queue *simple_queue;
-+		void *context = ((thread_privates != NULL) ? thread_privates[0] : NULL);
-+
-+		result = make_simple_work_queue(thread_name_prefix,
-+						name,
-+						owner,
-+						context,
-+						type,
-+						&simple_queue);
-+		if (result == VDO_SUCCESS)
-+			*queue_ptr = &simple_queue->common;
-+		return result;
-+	}
-+
-+	result = UDS_ALLOCATE(1, struct round_robin_work_queue, "round-robin work queue", &queue);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(thread_count,
-+			      struct simple_work_queue *,
-+			      "subordinate work queues",
-+			      &queue->service_queues);
-+	if (result != UDS_SUCCESS) {
-+		UDS_FREE(queue);
-+		return result;
-+	}
-+
-+	queue->num_service_queues = thread_count;
-+	queue->common.round_robin_mode = true;
-+	queue->common.owner = owner;
-+
-+	result = uds_duplicate_string(name, "queue name", &queue->common.name);
-+	if (result != VDO_SUCCESS) {
-+		UDS_FREE(queue->service_queues);
-+		UDS_FREE(queue);
-+		return -ENOMEM;
-+	}
-+
-+	*queue_ptr = &queue->common;
-+
-+	for (i = 0; i < thread_count; i++) {
-+		void *context = ((thread_privates != NULL) ? thread_privates[i] : NULL);
-+
-+		snprintf(thread_name, sizeof(thread_name), "%s%u", name, i);
-+		result = make_simple_work_queue(thread_name_prefix,
-+						thread_name,
-+						owner,
-+						context,
-+						type,
-+						&queue->service_queues[i]);
-+		if (result != VDO_SUCCESS) {
-+			queue->num_service_queues = i;
-+			/* Destroy previously created subordinates. */
-+			vdo_free_work_queue(UDS_FORGET(*queue_ptr));
-+			return result;
++	if (next_state == NULL) {
++		result = uds_log_error_strerror(VDO_INVALID_ADMIN_STATE,
++						"Can't start %s from %s",
++						operation->name,
++						vdo_get_admin_state_code(state)->name);
++	} else if (state->waiter != NULL) {
++		result = uds_log_error_strerror(VDO_COMPONENT_BUSY,
++						"Can't start %s with extant waiter",
++						operation->name);
++	} else {
++		state->waiter = waiter;
++		state->next_state = next_state;
++		vdo_set_admin_state_code(state, operation);
++		if (initiator != NULL) {
++			state->starting = true;
++			initiator(state);
++			state->starting = false;
++			if (state->complete)
++				vdo_finish_operation(state, VDO_SUCCESS);
 +		}
++
++		return VDO_SUCCESS;
 +	}
 +
++	if (waiter != NULL)
++		vdo_continue_completion(waiter, result);
++
++	return result;
++}
++
++/**
++ * start_operation() - Start an operation if it may be started given the current state.
++ * @waiter     A completion to notify when the operation is complete.
++ * @initiator The vdo_admin_initiator to call if the operation may begin; may be NULL.
++ *
++ * Return: true if the operation was started.
++ */
++static inline bool __must_check start_operation(struct admin_state *state,
++						const struct admin_state_code *operation,
++						struct vdo_completion *waiter,
++						vdo_admin_initiator *initiator)
++{
++	return (begin_operation(state, operation, waiter, initiator) == VDO_SUCCESS);
++}
++
++/**
++ * check_code() - Check the result of a state validation.
++ * @valid true if the code is of an appropriate type.
++ * @code The code which failed to be of the correct type.
++ * @what What the code failed to be, for logging.
++ * @waiter The completion to notify of the error; may be NULL.
++ *
++ * If the result failed, log an invalid state error and, if there is a waiter, notify it.
++ *
++ * Return: The result of the check.
++ */
++static bool check_code(bool valid,
++		       const struct admin_state_code *code,
++		       const char *what,
++		       struct vdo_completion *waiter)
++{
++	int result;
++
++	if (valid)
++		return true;
++
++	result = uds_log_error_strerror(VDO_INVALID_ADMIN_STATE,
++					"%s is not a %s", code->name, what);
++	if (waiter != NULL)
++		vdo_continue_completion(waiter, result);
++
++	return false;
++}
++
++/**
++ * vdo_drain_operation() - Check that an operation is a drain.
++ * @waiter The completion to finish with an error if the operation is not a drain.
++ *
++ * Return: true if the specified operation is a drain.
++ */
++static bool __must_check
++assert_vdo_drain_operation(const struct admin_state_code *operation, struct vdo_completion *waiter)
++{
++	return check_code(operation->draining, operation, "drain operation", waiter);
++}
++
++/**
++ * vdo_start_draining() - Initiate a drain operation if the current state permits it.
++ * @operation The type of drain to initiate.
++ * @waiter The completion to notify when the drain is complete.
++ * @initiator The vdo_admin_initiator to call if the operation may begin; may be NULL.
++ *
++ * Return: true if the drain was initiated, if not the waiter will be notified.
++ */
++bool vdo_start_draining(struct admin_state *state,
++			const struct admin_state_code *operation,
++			struct vdo_completion *waiter,
++			vdo_admin_initiator *initiator)
++{
++	const struct admin_state_code *code = vdo_get_admin_state_code(state);
++
++	if (!assert_vdo_drain_operation(operation, waiter))
++		return false;
++
++	if (code->quiescent) {
++		vdo_launch_completion(waiter);
++		return false;
++	}
++
++	if (!code->normal) {
++		uds_log_error_strerror(VDO_INVALID_ADMIN_STATE,
++				       "can't start %s from %s",
++				       operation->name,
++				       code->name);
++		vdo_continue_completion(waiter, VDO_INVALID_ADMIN_STATE);
++		return false;
++	}
++
++	return start_operation(state, operation, waiter, initiator);
++}
++
++/**
++ * vdo_finish_draining() - Finish a drain operation if one was in progress.
++ *
++ * Return: true if the state was draining; will notify the waiter if so.
++ */
++bool vdo_finish_draining(struct admin_state *state)
++{
++	return vdo_finish_draining_with_result(state, VDO_SUCCESS);
++}
++
++/**
++ * vdo_finish_draining_with_result() - Finish a drain operation with a status code.
++ *
++ * Return: true if the state was draining; will notify the waiter if so.
++ */
++bool vdo_finish_draining_with_result(struct admin_state *state, int result)
++{
++	return (vdo_is_state_draining(state) && vdo_finish_operation(state, result));
++}
++
++/**
++ * vdo_assert_load_operation() - Check that an operation is a load.
++ * @waiter The completion to finish with an error if the operation is not a load.
++ *
++ * Return: true if the specified operation is a load.
++ */
++bool vdo_assert_load_operation(const struct admin_state_code *operation,
++			       struct vdo_completion *waiter)
++{
++	return check_code(operation->loading, operation, "load operation", waiter);
++}
++
++/**
++ * vdo_start_loading() - Initiate a load operation if the current state permits it.
++ * @operation The type of load to initiate.
++ * @waiter The completion to notify when the load is complete (may be NULL).
++ * @initiator The vdo_admin_initiator to call if the operation may begin; may be NULL.
++ *
++ * Return: true if the load was initiated, if not the waiter will be notified.
++ */
++bool vdo_start_loading(struct admin_state *state,
++		       const struct admin_state_code *operation,
++		       struct vdo_completion *waiter,
++		       vdo_admin_initiator *initiator)
++{
++	return (vdo_assert_load_operation(operation, waiter) &&
++		start_operation(state, operation, waiter, initiator));
++}
++
++/**
++ * vdo_finish_loading() - Finish a load operation if one was in progress.
++ *
++ * Return: true if the state was loading; will notify the waiter if so.
++ */
++bool vdo_finish_loading(struct admin_state *state)
++{
++	return vdo_finish_loading_with_result(state, VDO_SUCCESS);
++}
++
++/**
++ * vdo_finish_loading_with_result() - Finish a load operation with a status code.
++ * @result The result of the load operation.
++ *
++ * Return: true if the state was loading; will notify the waiter if so.
++ */
++bool vdo_finish_loading_with_result(struct admin_state *state, int result)
++{
++	return (vdo_is_state_loading(state) && vdo_finish_operation(state, result));
++}
++
++/**
++ * assert_vdo_resume_operation() - Check whether an admin_state_code is a resume operation.
++ * @waiter The completion to notify if the operation is not a resume operation; may be NULL.
++ *
++ * Return: true if the code is a resume operation.
++ */
++static bool __must_check assert_vdo_resume_operation(const struct admin_state_code *operation,
++						     struct vdo_completion *waiter)
++{
++	return check_code(operation == VDO_ADMIN_STATE_RESUMING,
++			  operation,
++			  "resume operation",
++			  waiter);
++}
++
++/**
++ * vdo_start_resuming() - Initiate a resume operation if the current state permits it.
++ * @operation The type of resume to start.
++ * @waiter The completion to notify when the resume is complete (may be NULL).
++ * @initiator The vdo_admin_initiator to call if the operation may begin; may be NULL.
++ *
++ * Return: true if the resume was initiated, if not the waiter will be notified.
++ */
++bool vdo_start_resuming(struct admin_state *state,
++			const struct admin_state_code *operation,
++			struct vdo_completion *waiter,
++			vdo_admin_initiator *initiator)
++{
++	return (assert_vdo_resume_operation(operation, waiter) &&
++		start_operation(state, operation, waiter, initiator));
++}
++
++/**
++ * vdo_finish_resuming() - Finish a resume operation if one was in progress.
++ *
++ * Return: true if the state was resuming; will notify the waiter if so.
++ */
++bool vdo_finish_resuming(struct admin_state *state)
++{
++	return vdo_finish_resuming_with_result(state, VDO_SUCCESS);
++}
++
++/**
++ * vdo_finish_resuming_with_result() - Finish a resume operation with a status code.
++ * @result The result of the resume operation.
++ *
++ * Return: true if the state was resuming; will notify the waiter if so.
++ */
++bool vdo_finish_resuming_with_result(struct admin_state *state, int result)
++{
++	return (vdo_is_state_resuming(state) && vdo_finish_operation(state, result));
++}
++
++/**
++ * vdo_resume_if_quiescent() - Change the state to normal operation if the current state is
++ *                             quiescent.
++ *
++ * Return: VDO_SUCCESS if the state resumed, VDO_INVALID_ADMIN_STATE otherwise.
++ */
++int vdo_resume_if_quiescent(struct admin_state *state)
++{
++	if (!vdo_is_state_quiescent(state))
++		return VDO_INVALID_ADMIN_STATE;
++
++	vdo_set_admin_state_code(state, VDO_ADMIN_STATE_NORMAL_OPERATION);
 +	return VDO_SUCCESS;
 +}
 +
-+static void finish_simple_work_queue(struct simple_work_queue *queue)
-+{
-+	if (queue->thread == NULL)
-+		return;
-+
-+	/* Tells the worker thread to shut down and waits for it to exit. */
-+	kthread_stop(queue->thread);
-+	queue->thread = NULL;
-+}
-+
-+static void finish_round_robin_work_queue(struct round_robin_work_queue *queue)
-+{
-+	struct simple_work_queue **queue_table = queue->service_queues;
-+	unsigned int count = queue->num_service_queues;
-+	unsigned int i;
-+
-+	for (i = 0; i < count; i++)
-+		finish_simple_work_queue(queue_table[i]);
-+}
-+
-+/* No enqueueing of completions should be done once this function is called. */
-+void vdo_finish_work_queue(struct vdo_work_queue *queue)
-+{
-+	if (queue == NULL)
-+		return;
-+
-+	if (queue->round_robin_mode)
-+		finish_round_robin_work_queue(as_round_robin_work_queue(queue));
-+	else
-+		finish_simple_work_queue(as_simple_work_queue(queue));
-+}
-+
-+/* Debugging dumps */
-+
-+static void dump_simple_work_queue(struct simple_work_queue *queue)
-+{
-+	const char *thread_status = "no threads";
-+	char task_state_report = '-';
-+
-+	if (queue->thread != NULL) {
-+		task_state_report = task_state_to_char(queue->thread);
-+		thread_status = atomic_read(&queue->idle) ? "idle" : "running";
-+	}
-+
-+	uds_log_info("workQ %px (%s) %s (%c)",
-+		     &queue->common,
-+		     queue->common.name,
-+		     thread_status,
-+		     task_state_report);
-+
-+	/* ->waiting_worker_threads wait queue status? anyone waiting? */
-+}
-+
-+/*
-+ * Write to the buffer some info about the completion, for logging. Since the common use case is
-+ * dumping info about a lot of completions to syslog all at once, the format favors brevity over
-+ * readability.
++/**
++ * vdo_start_operation() - Attempt to start an operation.
++ *
++ * Return: VDO_SUCCESS if the operation was started, VDO_INVALID_ADMIN_STATE if not
 + */
-+void vdo_dump_work_queue(struct vdo_work_queue *queue)
++int vdo_start_operation(struct admin_state *state, const struct admin_state_code *operation)
 +{
-+	if (queue->round_robin_mode) {
-+		struct round_robin_work_queue *round_robin = as_round_robin_work_queue(queue);
-+		unsigned int i;
-+
-+		for (i = 0; i < round_robin->num_service_queues; i++)
-+			dump_simple_work_queue(round_robin->service_queues[i]);
-+	} else {
-+		dump_simple_work_queue(as_simple_work_queue(queue));
-+	}
-+}
-+
-+static void get_function_name(void *pointer, char *buffer, size_t buffer_length)
-+{
-+	if (pointer == NULL) {
-+		/*
-+		 * Format "%ps" logs a null pointer as "(null)" with a bunch of leading spaces. We
-+		 * sometimes use this when logging lots of data; don't be so verbose.
-+		 */
-+		strscpy(buffer, "-", buffer_length);
-+	} else {
-+		/*
-+		 * Use a pragma to defeat gcc's format checking, which doesn't understand that
-+		 * "%ps" actually does support a precision spec in Linux kernel code.
-+		 */
-+		char *space;
-+
-+#pragma GCC diagnostic push
-+#pragma GCC diagnostic ignored "-Wformat"
-+		snprintf(buffer, buffer_length, "%.*ps", buffer_length - 1, pointer);
-+#pragma GCC diagnostic pop
-+
-+		space = strchr(buffer, ' ');
-+		if (space != NULL)
-+			*space = '\0';
-+	}
-+}
-+
-+void vdo_dump_completion_to_buffer(struct vdo_completion *completion, char *buffer, size_t length)
-+{
-+	size_t current_length =
-+		scnprintf(buffer,
-+			  length,
-+			  "%.*s/",
-+			  TASK_COMM_LEN,
-+			  (completion->my_queue == NULL ? "-" : completion->my_queue->name));
-+
-+	if (current_length < length - 1)
-+		get_function_name((void *) completion->callback,
-+				  buffer + current_length,
-+				  length - current_length);
-+}
-+
-+/* Completion submission */
-+/*
-+ * If the completion has a timeout that has already passed, the timeout handler function may be
-+ * invoked by this function.
-+ */
-+void vdo_enqueue_work_queue(struct vdo_work_queue *queue, struct vdo_completion *completion)
-+{
-+	/*
-+	 * Convert the provided generic vdo_work_queue to the simple_work_queue to actually queue
-+	 * on.
-+	 */
-+	struct simple_work_queue *simple_queue = NULL;
-+
-+	if (!queue->round_robin_mode) {
-+		simple_queue = as_simple_work_queue(queue);
-+	} else {
-+		struct round_robin_work_queue *round_robin = as_round_robin_work_queue(queue);
-+
-+		/*
-+		 * It shouldn't be a big deal if the same rotor gets used for multiple work queues.
-+		 * Any patterns that might develop are likely to be disrupted by random ordering of
-+		 * multiple completions and migration between cores, unless the load is so light as
-+		 * to be regular in ordering of tasks and the threads are confined to individual
-+		 * cores; with a load that light we won't care.
-+		 */
-+		unsigned int rotor = this_cpu_inc_return(service_queue_rotor);
-+		unsigned int index = rotor % round_robin->num_service_queues;
-+
-+		simple_queue = round_robin->service_queues[index];
-+	}
-+
-+	enqueue_work_queue_completion(simple_queue, completion);
-+}
-+
-+/* Misc */
-+
-+/*
-+ * Return the work queue pointer recorded at initialization time in the work-queue stack handle
-+ * initialized on the stack of the current thread, if any.
-+ */
-+static struct simple_work_queue *get_current_thread_work_queue(void)
-+{
-+	/*
-+	 * In interrupt context, if a vdo thread is what got interrupted, the calls below will find
-+	 * the queue for the thread which was interrupted. However, the interrupted thread may have
-+	 * been processing a completion, in which case starting to process another would violate
-+	 * our concurrency assumptions.
-+	 */
-+	if (in_interrupt())
-+		return NULL;
-+	if (kthread_func(current) != work_queue_runner)
-+		/* Not a VDO work queue thread. */
-+		return NULL;
-+	return kthread_data(current);
-+}
-+
-+struct vdo_work_queue *vdo_get_current_work_queue(void)
-+{
-+	struct simple_work_queue *queue = get_current_thread_work_queue();
-+
-+	return (queue == NULL) ? NULL : &queue->common;
-+}
-+
-+struct vdo_thread *vdo_get_work_queue_owner(struct vdo_work_queue *queue)
-+{
-+	return queue->owner;
++	return vdo_start_operation_with_waiter(state, operation, NULL, NULL);
 +}
 +
 +/**
-+ * vdo_get_work_queue_private_data() - Returns the private data for the current thread's work
-+ *                                     queue, or NULL if none or if the current thread is not a
-+ *                                     work queue thread.
++ * vdo_start_operation_with_waiter() - Attempt to start an operation.
++ * @waiter the completion to notify when the operation completes or fails to start; may be NULL.
++ * @initiator The vdo_admin_initiator to call if the operation may begin; may be NULL.
++ *
++ * Return: VDO_SUCCESS if the operation was started, VDO_INVALID_ADMIN_STATE if not
 + */
-+void *vdo_get_work_queue_private_data(void)
++int vdo_start_operation_with_waiter(struct admin_state *state,
++				    const struct admin_state_code *operation,
++				    struct vdo_completion *waiter,
++				    vdo_admin_initiator *initiator)
 +{
-+	struct simple_work_queue *queue = get_current_thread_work_queue();
-+
-+	return (queue != NULL) ? queue->private : NULL;
++	return (check_code(operation->operating, operation, "operation", waiter) ?
++		begin_operation(state, operation, waiter, initiator) :
++		VDO_INVALID_ADMIN_STATE);
 +}
-+
-+bool vdo_work_queue_type_is(struct vdo_work_queue *queue, const struct vdo_work_queue_type *type)
-+{
-+	return (queue->type == type);
-+}
-diff --git a/drivers/md/dm-vdo/work-queue.h b/drivers/md/dm-vdo/work-queue.h
+diff --git a/drivers/md/dm-vdo/admin-state.h b/drivers/md/dm-vdo/admin-state.h
 new file mode 100644
-index 000000000000..1d5aa9878b16
+index 000000000000..550e9084662d
 --- /dev/null
-+++ b/drivers/md/dm-vdo/work-queue.h
-@@ -0,0 +1,53 @@
++++ b/drivers/md/dm-vdo/admin-state.h
+@@ -0,0 +1,180 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef VDO_WORK_QUEUE_H
-+#define VDO_WORK_QUEUE_H
++#ifndef VDO_ADMIN_STATE_H
++#define VDO_ADMIN_STATE_H
 +
-+#include <linux/sched.h> /* for TASK_COMM_LEN */
-+
++#include "completion.h"
 +#include "types.h"
 +
-+enum {
-+	MAX_VDO_WORK_QUEUE_NAME_LEN = TASK_COMM_LEN,
++struct admin_state_code {
++	const char *name;
++	/* Normal operation, data_vios may be active */
++	bool normal;
++	/* I/O is draining, new requests should not start */
++	bool draining;
++	/* This is a startup time operation */
++	bool loading;
++	/* The next state will be quiescent */
++	bool quiescing;
++	/* The VDO is quiescent, there should be no I/O */
++	bool quiescent;
++	/* Whether an operation is in progress and so no other operation may be started */
++	bool operating;
 +};
 +
-+struct vdo_work_queue_type {
-+	void (*start)(void *context);
-+	void (*finish)(void *context);
-+	enum vdo_completion_priority max_priority;
-+	enum vdo_completion_priority default_priority;
++extern const struct admin_state_code *VDO_ADMIN_STATE_NORMAL_OPERATION;
++extern const struct admin_state_code *VDO_ADMIN_STATE_OPERATING;
++extern const struct admin_state_code *VDO_ADMIN_STATE_FORMATTING;
++extern const struct admin_state_code *VDO_ADMIN_STATE_PRE_LOADING;
++extern const struct admin_state_code *VDO_ADMIN_STATE_PRE_LOADED;
++extern const struct admin_state_code *VDO_ADMIN_STATE_LOADING;
++extern const struct admin_state_code *VDO_ADMIN_STATE_LOADING_FOR_RECOVERY;
++extern const struct admin_state_code *VDO_ADMIN_STATE_LOADING_FOR_REBUILD;
++extern const struct admin_state_code *VDO_ADMIN_STATE_WAITING_FOR_RECOVERY;
++extern const struct admin_state_code *VDO_ADMIN_STATE_NEW;
++extern const struct admin_state_code *VDO_ADMIN_STATE_INITIALIZED;
++extern const struct admin_state_code *VDO_ADMIN_STATE_RECOVERING;
++extern const struct admin_state_code *VDO_ADMIN_STATE_REBUILDING;
++extern const struct admin_state_code *VDO_ADMIN_STATE_SAVING;
++extern const struct admin_state_code *VDO_ADMIN_STATE_SAVED;
++extern const struct admin_state_code *VDO_ADMIN_STATE_SCRUBBING;
++extern const struct admin_state_code *VDO_ADMIN_STATE_SAVE_FOR_SCRUBBING;
++extern const struct admin_state_code *VDO_ADMIN_STATE_STOPPING;
++extern const struct admin_state_code *VDO_ADMIN_STATE_STOPPED;
++extern const struct admin_state_code *VDO_ADMIN_STATE_SUSPENDING;
++extern const struct admin_state_code *VDO_ADMIN_STATE_SUSPENDED;
++extern const struct admin_state_code *VDO_ADMIN_STATE_SUSPENDED_OPERATION;
++extern const struct admin_state_code *VDO_ADMIN_STATE_RESUMING;
++
++struct admin_state {
++	const struct admin_state_code *current_state;
++	/* The next administrative state (when the current operation finishes) */
++	const struct admin_state_code *next_state;
++	/* A completion waiting on a state change */
++	struct vdo_completion *waiter;
++	/* Whether an operation is being initiated */
++	bool starting;
++	/* Whether an operation has completed in the initiator */
++	bool complete;
 +};
 +
-+struct vdo_completion;
-+struct vdo_thread;
-+struct vdo_work_queue;
++/**
++ * typedef vdo_admin_initiator - A method to be called once an admin operation may be initiated.
++ */
++typedef void vdo_admin_initiator(struct admin_state *state);
 +
-+int vdo_make_work_queue(const char *thread_name_prefix,
-+			const char *name,
-+			struct vdo_thread *owner,
-+			const struct vdo_work_queue_type *type,
-+			unsigned int thread_count,
-+			void *thread_privates[],
-+			struct vdo_work_queue **queue_ptr);
++static inline const struct admin_state_code * __must_check
++vdo_get_admin_state_code(const struct admin_state *state)
++{
++	return READ_ONCE(state->current_state);
++}
 +
-+void vdo_enqueue_work_queue(struct vdo_work_queue *queue, struct vdo_completion *completion);
++/**
++ * vdo_set_admin_state_code() - Set the current admin state code.
++ *
++ * This function should be used primarily for initialization and by adminState internals. Most uses
++ * should go through the operation interfaces.
++ */
++static inline void
++vdo_set_admin_state_code(struct admin_state *state, const struct admin_state_code *code)
++{
++	WRITE_ONCE(state->current_state, code);
++}
 +
-+void vdo_finish_work_queue(struct vdo_work_queue *queue);
++static inline bool __must_check vdo_is_state_normal(const struct admin_state *state)
++{
++	return vdo_get_admin_state_code(state)->normal;
++}
 +
-+void vdo_free_work_queue(struct vdo_work_queue *queue);
++static inline bool __must_check vdo_is_state_suspending(const struct admin_state *state)
++{
++	return (vdo_get_admin_state_code(state) == VDO_ADMIN_STATE_SUSPENDING);
++}
 +
-+void vdo_dump_work_queue(struct vdo_work_queue *queue);
++static inline bool __must_check vdo_is_state_saving(const struct admin_state *state)
++{
++	return (vdo_get_admin_state_code(state) == VDO_ADMIN_STATE_SAVING);
++}
 +
-+void vdo_dump_completion_to_buffer(struct vdo_completion *completion, char *buffer, size_t length);
++static inline bool __must_check vdo_is_state_saved(const struct admin_state *state)
++{
++	return (vdo_get_admin_state_code(state) == VDO_ADMIN_STATE_SAVED);
++}
 +
-+void *vdo_get_work_queue_private_data(void);
-+struct vdo_work_queue *vdo_get_current_work_queue(void);
-+struct vdo_thread *vdo_get_work_queue_owner(struct vdo_work_queue *queue);
++static inline bool __must_check vdo_is_state_draining(const struct admin_state *state)
++{
++	return vdo_get_admin_state_code(state)->draining;
++}
++
++static inline bool __must_check vdo_is_state_loading(const struct admin_state *state)
++{
++	return vdo_get_admin_state_code(state)->loading;
++}
++
++static inline bool __must_check vdo_is_state_resuming(const struct admin_state *state)
++{
++	return (vdo_get_admin_state_code(state) == VDO_ADMIN_STATE_RESUMING);
++}
++
++static inline bool __must_check vdo_is_state_clean_load(const struct admin_state *state)
++{
++	const struct admin_state_code *code = vdo_get_admin_state_code(state);
++
++	return ((code == VDO_ADMIN_STATE_FORMATTING) || (code == VDO_ADMIN_STATE_LOADING));
++}
++
++static inline bool __must_check vdo_is_state_quiescing(const struct admin_state *state)
++{
++	return vdo_get_admin_state_code(state)->quiescing;
++}
++
++static inline bool __must_check vdo_is_state_quiescent(const struct admin_state *state)
++{
++	return vdo_get_admin_state_code(state)->quiescent;
++}
 +
 +bool __must_check
-+vdo_work_queue_type_is(struct vdo_work_queue *queue, const struct vdo_work_queue_type *type);
++vdo_assert_load_operation(const struct admin_state_code *operation, struct vdo_completion *waiter);
 +
-+#endif /* VDO_WORK_QUEUE_H */
++bool vdo_start_loading(struct admin_state *state,
++		       const struct admin_state_code *operation,
++		       struct vdo_completion *waiter,
++		       vdo_admin_initiator *initiator);
++
++bool vdo_finish_loading(struct admin_state *state);
++
++bool vdo_finish_loading_with_result(struct admin_state *state, int result);
++
++bool vdo_start_resuming(struct admin_state *state,
++			const struct admin_state_code *operation,
++			struct vdo_completion *waiter,
++			vdo_admin_initiator *initiator);
++
++bool vdo_finish_resuming(struct admin_state *state);
++
++bool vdo_finish_resuming_with_result(struct admin_state *state, int result);
++
++int vdo_resume_if_quiescent(struct admin_state *state);
++
++bool vdo_start_draining(struct admin_state *state,
++			const struct admin_state_code *operation,
++			struct vdo_completion *waiter,
++			vdo_admin_initiator *initiator);
++
++bool vdo_finish_draining(struct admin_state *state);
++
++bool vdo_finish_draining_with_result(struct admin_state *state, int result);
++
++int vdo_start_operation(struct admin_state *state, const struct admin_state_code *operation);
++
++int vdo_start_operation_with_waiter(struct admin_state *state,
++				    const struct admin_state_code *operation,
++				    struct vdo_completion *waiter,
++				    vdo_admin_initiator *initiator);
++
++bool vdo_finish_operation(struct admin_state *state, int result);
++
++#endif /* VDO_ADMIN_STATE_H */
 -- 
 2.40.0
 
