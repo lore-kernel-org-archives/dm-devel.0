@@ -1,69 +1,24 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F46E163
-	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 00:15:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F25758F47
+	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 02:14:19 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="evoYnH2L"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698279332;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=Ayg5mamt8HCVNY+t4GHPswTJfJb2ciVUg3Q8qdqL6WE=;
-	b=evoYnH2L4qvXdfmRJsY1lu0xF+4cBJOT+Vbn3g+tju3NDm3XLUjwmh4hcOn2TRxwnO/Q7Y
-	bJTdg6DXyWUolBn7ehaphSTYjKVi37IMLKfQU2UaYMldhRWdKwq2niOtiYCjXUWKg71Ns8
-	mrYuSOp4hjH/YY1J89UDzxmA59tkXsc=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-397-ZTUgufQdONSspqH4lY3m_Q-1; Wed, 25 Oct 2023 20:15:31 -0400
-X-MC-Unique: ZTUgufQdONSspqH4lY3m_Q-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 18140862DC3
-	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 00:15:31 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 119D140C6F79
-	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 00:15:31 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BED751946595
-	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 00:15:30 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
- by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id AB1F3194658C
- for <dm-devel@listman.corp.redhat.com>; Thu, 26 Oct 2023 00:15:29 +0000 (UTC)
-Received: by smtp.corp.redhat.com (Postfix)
- id 748802026D66; Thu, 26 Oct 2023 00:15:29 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 6C63E2026D4C
- for <dm-devel@redhat.com>; Thu, 26 Oct 2023 00:15:29 +0000 (UTC)
-Received: from us-smtp-inbound-delivery-1.mimecast.com
- (us-smtp-inbound-delivery-1.mimecast.com [205.139.110.61])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature RSA-PSS (2048 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 36609185A782
- for <dm-devel@redhat.com>; Thu, 26 Oct 2023 00:15:29 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-462-houZlifWNE6owhlpKepPhg-1; Wed,
- 25 Oct 2023 20:15:27 -0400
-X-MC-Unique: houZlifWNE6owhlpKepPhg-1
-Received: from [10.137.106.151] (unknown [131.107.159.23])
- by linux.microsoft.com (Postfix) with ESMTPSA id DC7A120B74C0;
- Wed, 25 Oct 2023 17:15:25 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com DC7A120B74C0
-Message-ID: <84f25e00-3a3a-419f-baea-50d64a1d5575@linux.microsoft.com>
-Date: Wed, 25 Oct 2023 17:15:25 -0700
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="G9idvVih"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 562A9C433C7;
+	Thu, 26 Oct 2023 02:14:18 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1698286458;
+	bh=qUC+7dmVjcgO7tA/NP59V8q50Ym3IVs5USDvM5m8Z/U=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=G9idvVihiNAwowfl6YaLBp/mlqoHb3aRFoPIYsM7co7HALSIdSstL0lONAAGe+SCM
+	 KhVoT/Ssc42/pi7uIvUearbVJS6wc6xim8cnLxknKhaSIZfRSABrZ4Hot3PQVJNZE3
+	 68fmARqF52396lHC+/819UkcAlfHAfg2Ek+p1zzwe3MZw1v2859qfzway28KoLr+Ud
+	 gSytusUFBwALXjvacbT8CCbOPSYIGTXaHUIP5rg+tmiQpLu1NEOxTVrZxWTsF5F0AM
+	 svB6oku+Ks4UraatxgGcB+J+JK1vXa28c/acA5zEm3IHBbWbvuQrsLSw7hu+hPg/vo
+	 itsYF2/OUWw+Q==
+Message-ID: <bf3b7a61-40b1-477e-ada0-fa680c335057@kernel.org>
+Date: Thu, 26 Oct 2023 11:14:17 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -71,186 +26,217 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH RFC v11 3/19] ipe: add evaluation loop
-To: Paul Moore <paul@paul-moore.com>, corbet@lwn.net, zohar@linux.ibm.com,
- jmorris@namei.org, serge@hallyn.com, tytso@mit.edu, ebiggers@kernel.org,
- axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, eparis@redhat.com
-References: <1696457386-3010-4-git-send-email-wufan@linux.microsoft.com>
- <aa226bdcba26d74304f6c10c290db840.paul@paul-moore.com>
-From: Fan Wu <wufan@linux.microsoft.com>
-In-Reply-To: <aa226bdcba26d74304f6c10c290db840.paul@paul-moore.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
-X-BeenThere: dm-devel@redhat.com
-X-Mailman-Version: 2.1.29
-Precedence: list
-List-Id: device-mapper development <dm-devel.redhat.com>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
- <mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/dm-devel/>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
- <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org,
- Deven Bowers <deven.desai@linux.microsoft.com>, roberto.sassu@huawei.com,
- linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, audit@vger.kernel.org,
- linux-fscrypt@vger.kernel.org, linux-integrity@vger.kernel.org
-Errors-To: dm-devel-bounces@redhat.com
-Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: linux.microsoft.com
+Subject: Re: [PATCH v2] dm: error: Add support for zoned block devices
 Content-Language: en-US
-Content-Type: text/plain; charset=UTF-8; format=flowed
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: dm-devel@lists.linux.dev, Christoph Hellwig <hch@lst.de>,
+ Johannes Thumshirn <johannes.thumshirn@wdc.com>,
+ Naohiro Aota <naohiro.aota@wdc.com>
+References: <20231025072332.465595-1-dlemoal@kernel.org>
+ <ZTkuXgLR1skoEOCc@redhat.com>
+ <b2aeab69-169b-4ccb-b7b3-39ebe3c6c733@kernel.org>
+ <ZTmptAmDe+mMekV/@redhat.com>
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <ZTmptAmDe+mMekV/@redhat.com>
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 
-
-
-On 10/23/2023 8:52 PM, Paul Moore wrote:
-> On Oct  4, 2023 Fan Wu <wufan@linux.microsoft.com> wrote:
+On 10/26/23 08:50, Mike Snitzer wrote:
+> On Wed, Oct 25 2023 at  5:34P -0400,
+> Damien Le Moal <dlemoal@kernel.org> wrote:
+> 
+>> On 10/26/23 00:03, Mike Snitzer wrote:
+>>> On Wed, Oct 25 2023 at  3:23P -0400,
+>>> Damien Le Moal <dlemoal@kernel.org> wrote:
+>>>
+>>>> dm-error is used in several test cases in the xfstests test suite to
+>>>> check the handling of IO errors in file systems. However, with several
+>>>> file systems getting native support for zoned block devices (e.g. btrfs
+>>>> and f2fs), dm-error lack of zoned block device support creates problems
+>>>> as the file system attempt executing zone commands (e.g. a zone append
+>>>> operation) against a dm-error non-zoned block device, which causes
+>>>> various issues in the block layer (e.g. WARN_ON triggers).
+>>>>
+>>>> This patch adds supports for zoned block devices to dm-error, allowing
+>>>> an error table to be exposed as a zoned block device. This is done by
+>>>> relying on the first argument passed to dmsetup when creating the device
+>>>> table: if that first argument is a path to a backing block device, the
+>>>> dm-error device is created by copying the limits of the backing device,
+>>>> thus also copying its zone model. This is consistent with how xfstests
+>>>> creates dm-error devices (always passing the path to the backing device
+>>>> as the first argument).
+>>>>
+>>>> The zone support for dm-error requires the definition of the
+>>>> report_zones target type method, which is done by introducing the
+>>>> function io_err_report_zones(). Given that this function fails report
+>>>> zones operations (similarly to any other command issued to the dm-error
+>>>> device), dm_set_zones_restrictions() is tweaked to do nothing for a
+>>>> wildcard target to avoid failing zone revalidation. As the dm-error
+>>>> target does not implement the iterate_devices method,
+>>>> dm_table_supports_zoned_model() is also changed to return true.
+>>>>
+>>>> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+>>>> Reviewed-by: Christoph Hellwig <hch@lst.de>
+>>>> Tested-by: Christoph Hellwig <hch@lst.de>
+>>>> Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+>>>> ---
+>>>> Changes from v1:
+>>>>  - Improved comment in io_err_ctr() about error from dm_get_device()
+>>>>    being ignored
+>>>>  - Fixed typos in the commit message
+>>>>  - Added review and tested-by tags
+>>>
+>>> Thanks for the improvements. But likely a v3 is worthwhile.
+>>>
+>>> Comment inlined below.
+>>>
+>>>>
+>>>>  drivers/md/dm-table.c  |  3 +++
+>>>>  drivers/md/dm-target.c | 45 ++++++++++++++++++++++++++++++++++++++++--
+>>>>  drivers/md/dm-zone.c   |  9 +++++++++
+>>>>  3 files changed, 55 insertions(+), 2 deletions(-)
+>>>>
+>>>> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+>>>> index 37b48f63ae6a..5e4d887063d3 100644
+>>>> --- a/drivers/md/dm-table.c
+>>>> +++ b/drivers/md/dm-table.c
+>>>> @@ -1600,6 +1600,9 @@ static bool dm_table_supports_zoned_model(struct dm_table *t,
+>>>>  	for (unsigned int i = 0; i < t->num_targets; i++) {
+>>>>  		struct dm_target *ti = dm_table_get_target(t, i);
+>>>>  
+>>>> +		if (dm_target_is_wildcard(ti->type))
+>>>> +			continue;
+>>>> +
+>>>>  		if (dm_target_supports_zoned_hm(ti->type)) {
+>>>>  			if (!ti->type->iterate_devices ||
+>>>>  			    ti->type->iterate_devices(ti, device_not_zoned_model,
+>>>> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
+>>>> index 27e2992ff249..fcb2ba2bffa2 100644
+>>>> --- a/drivers/md/dm-target.c
+>>>> +++ b/drivers/md/dm-target.c
+>>>> @@ -118,6 +118,24 @@ EXPORT_SYMBOL(dm_unregister_target);
+>>>>   */
+>>>>  static int io_err_ctr(struct dm_target *tt, unsigned int argc, char **args)
+>>>>  {
+>>>> +	struct dm_dev *ddev;
+>>>> +	int ret;
+>>>> +
+>>>> +	/*
+>>>> +	 * If we have an argument, assume it is the path to the backing
+>>>> +	 * block device that we are replacing. In this case, get the device
+>>>> +	 * so that we can copy its limits in io_err_io_hints(). If getting the
+>>>> +	 * device fails (e.g. because the user did not specify a device file
+>>>> +	 * path), ignore the error to be compatible with the normal use case
+>>>> +	 * without any argument specified.
+>>>> +	 */
+>>>> +	if (argc) {
+>>>> +		ret = dm_get_device(tt, args[0], dm_table_get_mode(tt->table),
+>>>> +				    &ddev);
+>>>> +		if (ret == 0)
+>>>> +			tt->private = ddev;
+>>>> +	}
+>>>> +
+>>>>  	/*
+>>>>  	 * Return error for discards instead of -EOPNOTSUPP
+>>>>  	 */
+>>>>
+>>>> @@ -129,7 +147,10 @@ static int io_err_ctr(struct dm_target *tt, unsigned int argc, char **args)
+>>>>  
+>>>>  static void io_err_dtr(struct dm_target *tt)
+>>>>  {
+>>>> -	/* empty */
+>>>> +	struct dm_dev *ddev = tt->private;
+>>>> +
+>>>> +	if (ddev)
+>>>> +		dm_put_device(tt, ddev);
+>>>>  }
+>>>>  
+>>>>  static int io_err_map(struct dm_target *tt, struct bio *bio)
+>>>> @@ -149,8 +170,27 @@ static void io_err_release_clone_rq(struct request *clone,
+>>>>  {
+>>>>  }
+>>>>  
+>>>> +#ifdef CONFIG_BLK_DEV_ZONED
+>>>> +static int io_err_report_zones(struct dm_target *ti,
+>>>> +		struct dm_report_zones_args *args, unsigned int nr_zones)
+>>>> +{
+>>>> +	return -EIO;
+>>>> +}
+>>>> +#else
+>>>> +#define io_err_report_zones NULL
+>>>> +#endif
+>>>> +
+>>>>  static void io_err_io_hints(struct dm_target *ti, struct queue_limits *limits)
+>>>>  {
+>>>> +	struct dm_dev *ddev = ti->private;
+>>>> +
+>>>> +	/* If we have a target device, copy its limits */
+>>>> +	if (ddev) {
+>>>> +		struct request_queue *q = bdev_get_queue(ddev->bdev);
+>>>> +
+>>>> +		memcpy(limits, &q->limits, sizeof(*limits));
+>>>> +	}
+>>>> +
+>>>>  	limits->max_discard_sectors = UINT_MAX;
+>>>>  	limits->max_hw_discard_sectors = UINT_MAX;
+>>>>  	limits->discard_granularity = 512;
+>>>
+>>>
+>>> You don't need to explicitly copy the queue_limits, DM core
+>>> (dm-table.c:dm_calculate_queue_limits) will stack up the underlying
+>>> device's queue_limits as long as you implement io_err_iterate_devices
+>>> (like dm-linear.c:linear_iterate_devices).
+>>>
+>>> With io_err_iterate_devices you shouldn't need to change
+>>> io_err_io_hints -- but actually I could see there being a need to wrap
+>>> setting the above no-device defaults only if (!ddev).. or:
+>>> 	if (ddev)
+>>> 		return;
 >>
->> IPE must have a centralized function to evaluate incoming callers
->> against IPE's policy. This iteration of the policy for against the rules
->> for that specific caller is known as the evaluation loop.
->>
->> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
->> Signed-off-by: Fan Wu <wufan@linux.microsoft.com>
-...
->> ---
->>   security/ipe/Makefile |  1 +
->>   security/ipe/eval.c   | 96 +++++++++++++++++++++++++++++++++++++++++++
->>   security/ipe/eval.h   | 24 +++++++++++
->>   3 files changed, 121 insertions(+)
->>   create mode 100644 security/ipe/eval.c
->>   create mode 100644 security/ipe/eval.h
+>> Works for me, but I do not see how iterate_devices would work if there is no
+>> backing device specified (current default). Am I missing something ?
 > 
-> ...
+> You don't call 'fn' if the ddev (ti->private) is NULL.
 > 
->> diff --git a/security/ipe/eval.c b/security/ipe/eval.c
->> new file mode 100644
->> index 000000000000..5533c359bbeb
->> --- /dev/null
->> +++ b/security/ipe/eval.c
->> @@ -0,0 +1,96 @@
->> +// SPDX-License-Identifier: GPL-2.0
->> +/*
->> + * Copyright (C) Microsoft Corporation. All rights reserved.
->> + */
->> +
->> +#include <linux/fs.h>
->> +#include <linux/types.h>
->> +#include <linux/slab.h>
->> +#include <linux/file.h>
->> +#include <linux/sched.h>
->> +#include <linux/rcupdate.h>
->> +
->> +#include "ipe.h"
->> +#include "eval.h"
->> +#include "policy.h"
->> +
->> +struct ipe_policy __rcu *ipe_active_policy;
->> +
->> +/**
->> + * evaluate_property - Analyze @ctx against a property.
->> + * @ctx: Supplies a pointer to the context to be evaluated.
->> + * @p: Supplies a pointer to the property to be evaluated.
->> + *
->> + * Return:
->> + * * true	- The current @ctx match the @p
->> + * * false	- The current @ctx doesn't match the @p
->> + */
->> +static bool evaluate_property(const struct ipe_eval_ctx *const ctx,
->> +			      struct ipe_prop *p)
->> +{
->> +	return false;
->> +}
->> +
->> +/**
->> + * ipe_evaluate_event - Analyze @ctx against the current active policy.
->> + * @ctx: Supplies a pointer to the context to be evaluated.
->> + *
->> + * This is the loop where all policy evaluation happens against IPE policy.
->> + *
->> + * Return:
->> + * * 0		- OK
->> + * * -EACCES	- @ctx did not pass evaluation.
->> + * * !0		- Error
->> + */
->> +int ipe_evaluate_event(const struct ipe_eval_ctx *const ctx)
->> +{
->> +	bool match = false;
->> +	enum ipe_action_type action;
->> +	struct ipe_policy *pol = NULL;
->> +	const struct ipe_rule *rule = NULL;
->> +	const struct ipe_op_table *rules = NULL;
->> +	struct ipe_prop *prop = NULL;
->> +
->> +	rcu_read_lock();
->> +
->> +	pol = rcu_dereference(ipe_active_policy);
->> +	if (!pol) {
->> +		rcu_read_unlock();
->> +		return 0;
->> +	}
->> +
->> +	if (ctx->op == IPE_OP_INVALID) {
->> +		rcu_read_unlock();
->> +		if (pol->parsed->global_default_action == IPE_ACTION_DENY)
->> +			return -EACCES;
+>> Also,
+>> doesn't adding the iterate_devices method allow combining dm-error with other dm
+>> targets in the same table, something that is not possible currently ? So that
+>> would change dm-error usage. OK with me, but I want to make sure.
 > 
-> Assuming that the RCU lock protects @pol, shouldn't it be held until
-> after the global_default_action comparison?
+> No, iterate_devices is purely for iterating within a given target's
+> devices to call the provide 'fn'.
 > 
-Yes for this part the unlock should be moved after the comparison. 
-Thanks for spotting this.
+> What I suggested doesn't change combining dm-error with other targets
+> in the same table.  But we do allow that, think of a table with
+> multiple linear targets and a subset that is the error target.
 
->> +		return 0;
->> +	}
->> +
->> +	rules = &pol->parsed->rules[ctx->op];
->> +
->> +	list_for_each_entry(rule, &rules->rules, next) {
->> +		match = true;
->> +
->> +		list_for_each_entry(prop, &rule->props, next) {
->> +			match = match && evaluate_property(ctx, prop);
-> 
-> The @match variable will always be true on the right side above, or am
-> I missing something?
-> 
-Yes the "match &&" are completely unnecessary. I will remove them.
+I was confused about that because my test script had a problem and was failing
+to setup a dm-linear+dm-error combination. I now have that working and I can
+check the combination.
 
--Fan
->> +			if (!match)
->> +				break;
->> +		}
->> +
->> +		if (match)
->> +			break;
->> +	}
->> +
->> +	if (match)
->> +		action = rule->action;
->> +	else if (rules->default_action != IPE_ACTION_INVALID)
->> +		action = rules->default_action;
->> +	else
->> +		action = pol->parsed->global_default_action;
->> +
->> +	rcu_read_unlock();
->> +	if (action == IPE_ACTION_DENY)
->> +		return -EACCES;
->> +
->> +	return 0;
->> +}
+So adding the iterate device now makes sense for the zone stuff. Will do that.
+
+Thanks for the details. Sending a v3.
+
 > 
-> --
-> paul-moore.com
+>> But it may be that I am missing something because of the wildcard flag. Is do
+>> not fully understand how that one impacts anything. Is that flag responsible for
+>> preventing dm-error to be combined with other targets ?
+> 
+> /*
+>  * Indicates that a target may replace any target; even immutable targets.
+>  * .map, .map_rq, .clone_and_map_rq and .release_clone_rq are all defined.
+>  */
+> #define DM_TARGET_WILDCARD              0x00000008
+> 
+> Just means that the error target can replace all types of DM targets
+> (its the only DM target that sets the DM_TARGET_WILDCARD flag).
+> 
+> Mike
+> 
+
+-- 
+Damien Le Moal
+Western Digital Research
 
