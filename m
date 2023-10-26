@@ -1,50 +1,50 @@
 Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ABDB42CA9
-	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 08:44:10 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F2E3262B1
+	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 09:12:46 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="BJ5xRmRq"
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="UW/7/nu4"
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
 	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id EC7C21FE17;
-	Thu, 26 Oct 2023 08:44:08 +0000 (UTC)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id D06B41FE17;
+	Thu, 26 Oct 2023 09:12:44 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1698309848; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1698311564; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=Sxu6YLj3ZmmOeSbhqwTbkC3Lt7RR/28BI/TaHqdiAeI=;
-	b=BJ5xRmRqzWAZsfdkDjMtnZBaGflFxMrMVwGQ9DkipNGR85XApph6RZ0575JcTn3/f9QykM
-	nEehuZjiWcCTg+RH+ZuPX7uKCR7tG/7uDxaGaySpMIYAE5y0+yzR/v8eU0SKiiQWz1+bdT
-	9TK6kBODoBVwdGyj/zgvN0wHO8hm/dc=
+	bh=WVRag2D80J+IvtVEXlzq3gq+GKTuYz8g/8LC6FdwBQc=;
+	b=UW/7/nu4GqY4octQ2QN0q7hveKVxgTeLzK568maHUk60m9XLwl4BHASPYTtyQvMKF0IOb4
+	E6HCCzHbCeDkOryqPzjr8NJ5VGaTezMmJTUqYuL/BX/cEotNobKQE161GS8GLSR2h7lxAf
+	fRO0kOedaTtKb+eh80iEpXGyVwhvYvg=
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
 	(No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id B71FA133F5;
-	Thu, 26 Oct 2023 08:44:08 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 93A0F133F5;
+	Thu, 26 Oct 2023 09:12:44 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
 	by imap2.suse-dmz.suse.de with ESMTPSA
-	id mRUDK9gmOmUEFQAAMHmgww
-	(envelope-from <mwilck@suse.com>); Thu, 26 Oct 2023 08:44:08 +0000
-Message-ID: <d6d92713c4147d9956342bd9de1063daf7e9ce01.camel@suse.com>
-Subject: Re: [PATCH 5/6] multipath-tools: systemd: require
- modprobe@dm_multipath.service
+	id UHZoIowtOmU5JgAAMHmgww
+	(envelope-from <mwilck@suse.com>); Thu, 26 Oct 2023 09:12:44 +0000
+Message-ID: <2841b374d6c8cd2906cdd22410bd83d3ce56c520.camel@suse.com>
+Subject: Re: [PATCH 3/6] libmultipath: io_err_stat: don't free aio memory
+ before completion
 From: Martin Wilck <mwilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
  dm-devel@lists.linux.dev, Miao Guanqin <miaoguanqin@huawei.com>, Li Xiao
- Keng <lixiaokeng@huawei.com>
-Date: Thu, 26 Oct 2023 10:44:08 +0200
-In-Reply-To: <ZTmoGcvnggb5EGxv@bmarzins-01.fast.rdu2.eng.redhat.com>
+ Keng <lixiaokeng@huawei.com>, Guan Junxiong <guanjunxiong@huawei.com>
+Date: Thu, 26 Oct 2023 11:12:43 +0200
+In-Reply-To: <ZTmlwx5VYxwexaVd@bmarzins-01.fast.rdu2.eng.redhat.com>
 References: <20231024164937.14684-1-mwilck@suse.com>
-	 <20231024164937.14684-6-mwilck@suse.com>
-	 <ZTmoGcvnggb5EGxv@bmarzins-01.fast.rdu2.eng.redhat.com>
+	 <20231024164937.14684-4-mwilck@suse.com>
+	 <ZTmlwx5VYxwexaVd@bmarzins-01.fast.rdu2.eng.redhat.com>
 Autocrypt: addr=mwilck@suse.com; prefer-encrypt=mutual;
  keydata=mQINBF3mxsYBEACmOnQxWBCxCkTb3D4N8VAT8yNtIBZrmvomY7RLddBIT1yh2X7roOoJQ5KlmyjMmzrPr111poqmw8v4dUqc1SVqQoKHXv97BzlVIEKC5G2W29gse0oXhx3dhie0Z6ytkHVOY29VLsLhVXEz+p5xL71KYgIy3lmM/NaWvoqwwaXiv1TmLG96Uoitvj1vdXqqTv/R6/MBye+xQUacXpM8FA5k7OpmzCFjl4NVtGmo0VhIfXM/ldmyEJpg8a5LrZ4t5Qi32BWQjUHGmS8OXjUJ/n0QxLkymbcbY1KepP9UnLGPT+TmKJm1QlMDj69+WPKgMsif3iz4hZPoQ0Knp11ThYzBh7+AiRxE9FG2hTtZeKimkpjR12bytF4Y0aIM/HeLMHRvwykJuh5JxT9A68xF7hmqQZ7rsx/GoRBOA792kFgr5KdCZ1YoeVUkrohT1nfh/Y/Xfeq4E69mktE0R0Yxg/4CSiB7sLSzry8dyqk2sbGs+W/Ol7D7VOG45aZ5iTB08R2ji2xKArcH+Dmy48nwqIvdrppZG2tZEe+wtGPTzahE4OJdpZ3vS4ujdChynS47DVWa5JtBxfqopr0rPGoCyxmyvzJzHAUjlp7iSXpDZqfdu7F4HAC13mS41IVk/yHTXE28AKrZ4O+efZ6qgw5zJV9lAbWM7JjfdrTd+ofOc+GurQARAQABtCRNYXJ0aW4gV2lsY2sgPG1hcnRpbi53aWxja0BzdXNlLmNvbT6JAlEEEwEIADsCGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AWIQR1Dq1LLt6xpUXU9fRnxYbmhVaXVAUCXebHhgIZAQAKCRBnxYbmhVaXVJ6+EACa5mbuH1dy2bKldy+bybUe4jFpJxflAPSrdpIlwkIfD/SgQRWUUm+BLLJMGJFSKiVC6oAHH6/mo3gdWAqBJ0LAOQDDR2BW31ERYqQQ7m01INQIvMlg+PXQ8HbWd
 	CNF1SOgjxiIs04DlB+u+DD5pgPtxKFN/jaJSx9oZ+GZpSd+eJeull3a+U/1+QpYmLbH34bxYZ16+cXfarkH3QQC65DH/iIZwcpxp+v/zrQVXnsZ81XmmbLD1vMkFCIU0ircIcaJoqloNJOA46P4mj9ETwC5OiSTs7vlyHP4Ni/86kmjmr41d/baY1cAXpAbtOGYd5K72B6qSP5EJI+Ci6rSbWInQaYzKuAOrDDyhW7ODd+hOtBcmUIH5GpKvzRjdfxEP/zlyecBszxycz7lOYNx86QWsyyRWITKzHzhdqKVZ9kvjVozTtcpb1RSqsj43qqMEQjcp1uXhbmwVmbzsWaPqmCx4xsIQoXfIzzffvw+nOiPLkxzGczprwNJasDUM1hcyEPv+5VzZpE4YjlDw/mtTayehb2EGzt2RfZIuPCBr88KlWUh2+nu9RfBJNdJ2vZ13Aun8NbqPKR2vfsE+BUJY14Ak9ZIzcyruHBHQ78dxD0J+HSC1bm9e4UOnW0PBbZwuPTRwyO3aXoExPabGgig6gcY34bsXvW9SDwOu+pzXMnVvbQeTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+iQJOBBMBCAA4FiEEdQ6tSy7esaVF1PX0Z8WG5oVWl1QFAl3mxz0CGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQZ8WG5oVWl1TdsA/6A0DZmGwreygUic5csLSLUm2ahdat3rRKfQVdlOdl0aWa/vS90PqpuDNGzXVzS/s4YXRjWesnYEdwQGSc4PnBYCitLKUwenII39RCyZLU3J95luWG2eOagFaerK+HvuNEH6RpYkqPpaDEwpblfi30xNNYLIR4HK0GTYwhbmBTrYgaKATNiplU08ZUvC23s00t2i7SBGmOue/0dIPMhO3EDYPP0RaDnKvHAOAywkI1J9Ey0xEslG9AFylOihcdaq9/7MlMWU8oNHK7EVE5OOZ2NiJv1sWSgM
@@ -63,34 +63,128 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Authentication-Results: smtp-out2.suse.de;
+	none
+X-Spam-Level: 
+X-Spam-Score: -7.10
+X-Spamd-Result: default: False [-7.10 / 50.00];
+	 ARC_NA(0.00)[];
+	 RCVD_VIA_SMTP_AUTH(0.00)[];
+	 BAYES_HAM(-3.00)[100.00%];
+	 FROM_HAS_DN(0.00)[];
+	 TO_DN_SOME(0.00)[];
+	 TO_MATCH_ENVRCPT_ALL(0.00)[];
+	 NEURAL_HAM_LONG(-3.00)[-1.000];
+	 MIME_GOOD(-0.10)[text/plain];
+	 RCPT_COUNT_FIVE(0.00)[6];
+	 DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	 NEURAL_HAM_SHORT(-1.00)[-1.000];
+	 FROM_EQ_ENVFROM(0.00)[];
+	 MIME_TRACE(0.00)[0:+];
+	 RCVD_COUNT_TWO(0.00)[2];
+	 RCVD_TLS_ALL(0.00)[];
+	 MID_RHS_MATCH_FROM(0.00)[]
+X-Spam-Flag: NO
 
-On Wed, 2023-10-25 at 19:43 -0400, Benjamin Marzinski wrote:
-> On Tue, Oct 24, 2023 at 06:49:36PM +0200, mwilck@suse.com=A0wrote:
+On Wed, 2023-10-25 at 19:33 -0400, Benjamin Marzinski wrote:
+> On Tue, Oct 24, 2023 at 06:49:34PM +0200, mwilck@suse.com=A0wrote:
 > > From: Martin Wilck <mwilck@suse.com>
 > >=20
-> > Since 92f0893 ("multipath-tools: install modules-
-> > load.d/multipath.conf"), we
-> > use modules-load.d to load the dm-multipath module early on. That
-> > isn't
-> > optimal, because the module will always be loaded, even if
-> > multipathd is
-> > not running.
-> >=20
-> > Use systemd's "modprobe@.service" instead to make sure the module
-> > is loaded
-> > before multipathd starts. If "multipath -u" is invoked from udev
-> > rules
-> > before multipathd.service has been started, it will access the
-> > socket,
-> > which will autostart multipathd via socket activation and cause the
-> > dm-multipath module to be loaded.
+> > It is wrong to assume that aio data structures can be reused or
+> > freed
+> > after io_cancel(). io_cancel() will almost always return -
+> > EINPROGRESS,
+> > anyway. Use the io_starttime field to indicate whether an io event
+> > has been completed by the kernel. Make sure no in-flight buffers
+> > are freed.
+>=20
+> There's a minor issue I mention below, but the bigger issue I noticed
+> isn't related to your fix.=A0 It's that, unless I'm missing something,
+> we're not using libaio correctly in this code.=A0 We call io_setup() to
+> allow CONCUR_NR_EVENT concurrent requests. But we could have up to
+> CONCUR_NR_EVENT * number_of_delayed_paths concurrent requests. The
+> easiest fix is to create an ioctx per delayed path. However this
+> would
+> mean calling io_destroy() after each round of testings, which could
+> potentially stall this thread.
+
+Right. I suppose what's going to happen is that io_submit() will simply
+fail with -EAGAIN. Note that the code logs io_submit() errors only at
+log level 5. I guess if all goes well, the aio requests will terminate
+quickly, and the algorithm will still "work", sort of. But if timeouts
+happen (which is what this code was written for), the iocbs will be
+quickly exhausted, possibly with IOs from just a single path, and
+other=A0paths won't be checked at all.
+
+Btw, it's kind of odd to send 32 identical requests (all for block 0)
+to the same device basically at the same time. I would think that with
+very high probability, all IOs will either succeed or fail. The IO has
+no FUA bit set, so even if it's direct IO, I assume that the device
+will answer all but the first request from cache. I understand that
+this is supposed to detect marginal paths, but it would make more sense
+to send these IOs in random intervals than all at once. But maybe I
+misunderstand something.
+
+I've added Guan Junxiong, the original author, to the recipients list
+of this email. As a first remedy against the iocb starvation, I suggest
+to simply allocate a significantly larger ioctx, and increase the
+loglevel of the message indicating io_submit() errors. I'll add a patch
+to this set.
+
+> =A0
+> > Fixes https://github.com/opensvc/multipath-tools/issues/73.
 > >=20
 > > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > Cc: Li Xiao Keng <lixiaokeng@huawei.com>
+> > Cc: Miao Guanqin <miaoguanqin@huawei.com>
+> > ---
+> > =A0libmultipath/io_err_stat.c | 26 ++++++++++++++++----------
+> > =A01 file changed, 16 insertions(+), 10 deletions(-)
+> >=20
+> > diff --git a/libmultipath/io_err_stat.c
+> > b/libmultipath/io_err_stat.c
+> > index dc1c252..c474c34 100644
+> > --- a/libmultipath/io_err_stat.c
+> > +++ b/libmultipath/io_err_stat.c
+> > @@ -111,10 +111,14 @@ static int init_each_dio_ctx(struct dio_ctx
+> > *ct, int blksize,
+> > =A0	return 0;
+> > =A0}
+> > =A0
+> > -static void deinit_each_dio_ctx(struct dio_ctx *ct)
+> > +static int deinit_each_dio_ctx(struct dio_ctx *ct)
+> > =A0{
+> > -	if (ct->buf)
+> > -		free(ct->buf);
+> > +	if (!ct->buf)
+> > +		return 0;
+> > +	if (ct->io_starttime.tv_sec !=3D 0 || ct-
+> > >io_starttime.tv_nsec !=3D 0)
+> > +		return 1;
+> > +	free(ct->buf);
+> > +	return 0;
+> > =A0}
+> > =A0
+> > =A0static int setup_directio_ctx(struct io_err_stat_path *p)
+> > @@ -164,6 +168,7 @@ fail_close:
+> > =A0static void free_io_err_stat_path(struct io_err_stat_path *p)
+> > =A0{
+> > =A0	int i;
+> > +	int inflight =3D 0;
+> > =A0
+> > =A0	if (!p)
+> > =A0		return;
+> > @@ -173,8 +178,13 @@ static void free_io_err_stat_path(struct
+> > io_err_stat_path *p)
+> > =A0	cancel_inflight_io(p);
+>=20
+> There's not much point in calling cancel_inflight_io() here, since
+> since
+> we don't try to handle the done events afterwards, is there? If there
+> are unhandled ones, they will remain unhandled, and we will end up
+> leaking memory regardless of whether or not they're cancelled.
 
-I just realized that modprobe@.service has only be available since
-systemd v245 (2020). I should make this change conditional on the
-systemd version.
+You're right. I'll have a closer look.
 
 Martin
 
