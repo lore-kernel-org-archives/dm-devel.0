@@ -1,45 +1,45 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2039C3D994
-	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:41 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F7DA3E475
+	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:44 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EHV3Ri2p"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="G+9QPTsv"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698356501;
+	s=mimecast20190719; t=1698356503;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=tOGv6osDhIgSNg7zbZ8buxOix8n1KX4PVNYrFT3SimQ=;
-	b=EHV3Ri2pmlB7yN03B7jTSpGXw3E4pQTC74r904J6t1zqbQgeEWVu3HRQIjYXwotlwYuRA2
-	BHxV43080jCtIBqW2AcLAOr8CcNiq9iUa9C9aMGrcADUmdATbiHDoqzulpGgyw8OdUxW0v
-	XakRgpVoSvorq4DoV0Ug6y7p8cSglvo=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-381-sjC-VDiLPkSAlyVaFcC1kg-1; Thu,
- 26 Oct 2023 17:41:39 -0400
-X-MC-Unique: sjC-VDiLPkSAlyVaFcC1kg-1
+	bh=TtgQkQLH9r9KRy/YlnSEmRWxtT9bMdPOjAKm9E7/2sk=;
+	b=G+9QPTsvUiLRzAXpBCZn5MXj/sFmuv8KYmp+rxYDtGdwVRNGsG4wdySDTu5rmDYyFh1TJ8
+	MvSgBRt4A55bKUNeY4txsGOHPwbCoyAabM+n05BSbOuzvCShJWSJTwd85mNy5MQw/VYORm
+	Hqo4pdbnZwWD7aJQlAa/fwOmtufeMGI=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-584-dj-EVN06MiKJYWvUDZ6KGw-1; Thu, 26 Oct 2023 17:41:39 -0400
+X-MC-Unique: dj-EVN06MiKJYWvUDZ6KGw-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1BEE71C04B73;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AAB6E8021B1;
 	Thu, 26 Oct 2023 21:41:39 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F150B2949;
-	Thu, 26 Oct 2023 21:41:38 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9A9132949;
+	Thu, 26 Oct 2023 21:41:39 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id A6DF43003B; Thu, 26 Oct 2023 17:41:38 -0400 (EDT)
+	id 5B42D3003B; Thu, 26 Oct 2023 17:41:39 -0400 (EDT)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v4 11/39] dm vdo: implement the delta index
-Date: Thu, 26 Oct 2023 17:41:08 -0400
-Message-Id: <20231026214136.1067410-12-msakai@redhat.com>
+Subject: [PATCH v4 15/39] dm vdo: implement top-level deduplication index
+Date: Thu, 26 Oct 2023 17:41:12 -0400
+Message-Id: <20231026214136.1067410-16-msakai@redhat.com>
 In-Reply-To: <20231026214136.1067410-1-msakai@redhat.com>
 References: <20231026214136.1067410-1-msakai@redhat.com>
 Precedence: bulk
@@ -51,19 +51,16 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
 
-The delta index is a space and memory efficient alternative to a hashtable.
-Instead of storing the entire key for each entry, the entries are sorted by
-key and only the difference between adjacent keys (the delta) is stored.
-If the keys are evenly distributed, the size of the deltas follows an
-exponential distribution, and the deltas can use a Huffman code to take up
-even less space.
+The top-level deduplication index brings all the earlier components
+together. The top-level index creates the separate zone structures that
+enable the index to handle several requests in parallel, handles
+dispatching requests to the right zones and components, and coordinates
+metadata to ensure that it remain consistent. It also coordinates recovery
+in the event of an unexpected index failure.
 
-This structure allows the index to use many fewer bytes per entry than a
-traditional hash table, but it is slightly more expensive to look up
-entries, because a request must read and sum every entry in a list of
-deltas in order to find a given record. The delta index reduces this lookup
-cost by splitting its key space into many sub-lists, each starting at a
-fixed key value, so that each individual list is short.
+If sparse caching is enabled, the top-level index also handles the
+coordination required by the sparse chapter index cache, which (unlike most
+index structures) is shared among all zones.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
@@ -71,2410 +68,2175 @@ Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
 Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
 Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
+Co-developed-by: Bruce Johnston <bjohnsto@redhat.com>
+Signed-off-by: Bruce Johnston <bjohnsto@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/delta-index.c | 2018 +++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/delta-index.h |  292 +++++
- drivers/md/dm-vdo/hash-utils.h  |   66 +
- 3 files changed, 2376 insertions(+)
- create mode 100644 drivers/md/dm-vdo/delta-index.c
- create mode 100644 drivers/md/dm-vdo/delta-index.h
- create mode 100644 drivers/md/dm-vdo/hash-utils.h
+ drivers/md/dm-vdo/index.c        | 1403 ++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/index.h        |   84 ++
+ drivers/md/dm-vdo/sparse-cache.c |  595 +++++++++++++
+ drivers/md/dm-vdo/sparse-cache.h |   49 ++
+ 4 files changed, 2131 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/index.c
+ create mode 100644 drivers/md/dm-vdo/index.h
+ create mode 100644 drivers/md/dm-vdo/sparse-cache.c
+ create mode 100644 drivers/md/dm-vdo/sparse-cache.h
 
-diff --git a/drivers/md/dm-vdo/delta-index.c b/drivers/md/dm-vdo/delta-index.c
+diff --git a/drivers/md/dm-vdo/index.c b/drivers/md/dm-vdo/index.c
 new file mode 100644
-index 000000000000..2cdcd9d4ea27
+index 000000000000..e8859cee2b93
 --- /dev/null
-+++ b/drivers/md/dm-vdo/delta-index.c
-@@ -0,0 +1,2018 @@
++++ b/drivers/md/dm-vdo/index.c
+@@ -0,0 +1,1403 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
-+#include "delta-index.h"
 +
-+#include <linux/bitops.h>
-+#include <linux/bits.h>
-+#include <linux/compiler.h>
-+#include <linux/limits.h>
-+#include <linux/log2.h>
 +
-+#include "config.h"
-+#include "cpu.h"
-+#include "errors.h"
++#include "index.h"
++
++#include "hash-utils.h"
 +#include "logger.h"
 +#include "memory-alloc.h"
-+#include "numeric.h"
-+#include "permassert.h"
-+#include "string-utils.h"
-+#include "time-utils.h"
-+#include "uds.h"
++#include "request-queue.h"
++#include "sparse-cache.h"
++
++static const u64 NO_LAST_SAVE = U64_MAX;
 +
 +/*
-+ * The entries in a delta index could be stored in a single delta list, but to reduce search times
-+ * and update costs it uses multiple delta lists. These lists are stored in a single chunk of
-+ * memory managed by the delta_zone structure. The delta_zone can move the data around within its
-+ * memory, so the location of each delta list is recorded as a bit offset into the memory. Because
-+ * the volume index can contain over a million delta lists, we want to be efficient with the size
-+ * of the delta list header information. This information is encoded into 16 bytes per list. The
-+ * volume index delta list memory can easily exceed 4 gigabits, so a 64 bit value is needed to
-+ * address the memory. The volume index delta lists average around 6 kilobits, so 16 bits are
-+ * sufficient to store the size of a delta list.
++ * When searching for deduplication records, the index first searches the volume index, and then
++ * searches the chapter index for the relevant chapter. If the chapter has been fully committed to
++ * storage, the chapter pages are loaded into the page cache. If the chapter has not yet been
++ * committed (either the open chapter or a recently closed one), the index searches the in-memory
++ * representation of the chapter. Finally, if the volume index does not find a record and the index
++ * is sparse, the index will search the sparse cache.
 + *
-+ * Each delta list is stored as a bit stream. Within the delta list encoding, bits and bytes are
-+ * numbered in little endian order. Within a byte, bit 0 is the least significant bit (0x1), and
-+ * bit 7 is the most significant bit (0x80). Within a bit stream, bit 7 is the most signficant bit
-+ * of byte 0, and bit 8 is the least significant bit of byte 1. Within a byte array, a byte's
-+ * number corresponds to its index in the array.
++ * The index send two kinds of messages to coordinate between zones: chapter close messages for the
++ * chapter writer, and sparse cache barrier messages for the sparse cache.
 + *
-+ * A standard delta list entry is stored as a fixed length payload (the value) followed by a
-+ * variable length key (the delta). A collision entry is used when two block names have the same
-+ * delta list address. A collision entry always follows a standard entry for the hash with which it
-+ * collides, and is encoded with DELTA == 0 with an additional 256 bits field at the end,
-+ * containing the full block name. An entry with a delta of 0 at the beginning of a delta list
-+ * indicates a normal entry.
++ * The chapter writer is responsible for committing chapters of records to storage. Since zones can
++ * get different numbers of records, some zones may fall behind others. Each time a zone fills up
++ * its available space in a chapter, it informs the chapter writer that the chapter is complete,
++ * and also informs all other zones that it has closed the chapter. Each other zone will then close
++ * the chapter immediately, regardless of how full it is, in order to minimize skew between zones.
++ * Once every zone has closed the chapter, the chapter writer will commit that chapter to storage.
 + *
-+ * The delta in each entry is encoded with a variable-length Huffman code to minimize the memory
-+ * used by small deltas. The Huffman code is specified by three parameters, which can be computed
-+ * from the desired mean delta when the index is full. (See compute_coding constants() for
-+ * details.)
++ * The last zone to close the chapter also removes the oldest chapter from the volume index.
++ * Although that chapter is invalid for zones that have moved on, the existence of the open chapter
++ * means that those zones will never ask the volume index about it. No zone is allowed to get more
++ * than one chapter ahead of any other. If a zone is so far ahead that it tries to close another
++ * chapter before the previous one has been closed by all zones, it is forced to wait.
 + *
-+ * The bit field utilities used to read and write delta entries assume that it is possible to read
-+ * some bytes beyond the end of the bit field, so a delta_zone memory allocation is guarded by two
-+ * invalid delta lists to prevent reading outside the delta_zone memory. The valid delta lists are
-+ * numbered 1 to N, and the guard lists are numbered 0 and N+1. The function to decode the bit
-+ * stream include a step that skips over bits set to 0 until the first 1 bit is found. A corrupted
-+ * delta list could cause this step to run off the end of the delta_zone memory, so as extra
-+ * protection against this happening, the tail guard list is set to all ones.
++ * The sparse cache relies on having the same set of chapter indexes available to all zones. When a
++ * request wants to add a chapter to the sparse cache, it sends a barrier message to each zone
++ * during the triage stage that acts as a rendezvous. Once every zone has reached the barrier and
++ * paused its operations, the cache membership is changed and each zone is then informed that it
++ * can proceed. More details can be found in the sparse cache documentation.
 + *
-+ * The delta_index supports two different forms. The mutable form is created by
-+ * uds_initialize_delta_index(), and is used for the volume index and for open chapter indexes. The
-+ * immutable form is created by uds_initialize_delta_index_page(), and is used for closed (and
-+ * cached) chapter index pages. The immutable form does not allocate delta list headers or
-+ * temporary offsets, and thus is somewhat more memory efficient.
++ * If a sparse cache has only one zone, it will not create a triage queue, but it still needs the
++ * barrier message to change the sparse cache membership, so the index simulates the message by
++ * invoking the handler directly.
 + */
 +
-+/*
-+ * This is the largest field size supported by get_field() and set_field(). Any field that is
-+ * larger is not guaranteed to fit in a single byte-aligned u32.
-+ */
-+enum {
-+	MAX_FIELD_BITS = (sizeof(u32) - 1) * BITS_PER_BYTE + 1,
++struct chapter_writer {
++	/* The index to which we belong */
++	struct uds_index *index;
++	/* The thread to do the writing */
++	struct thread *thread;
++	/* The lock protecting the following fields */
++	struct mutex mutex;
++	/* The condition signalled on state changes */
++	struct cond_var cond;
++	/* Set to true to stop the thread */
++	bool stop;
++	/* The result from the most recent write */
++	int result;
++	/* The number of bytes allocated by the chapter writer */
++	size_t memory_size;
++	/* The number of zones which have submitted a chapter for writing */
++	unsigned int zones_to_write;
++	/* Open chapter index used by uds_close_open_chapter() */
++	struct open_chapter_index *open_chapter_index;
++	/* Collated records used by uds_close_open_chapter() */
++	struct uds_volume_record *collated_records;
++	/* The chapters to write (one per zone) */
++	struct open_chapter_zone *chapters[];
 +};
 +
-+/*
-+ * This is the largest field size supported by get_big_field() and set_big_field(). Any field that
-+ * is larger is not guaranteed to fit in a single byte-aligned u64.
-+ */
-+enum {
-+	MAX_BIG_FIELD_BITS = (sizeof(u64) - 1) * BITS_PER_BYTE + 1,
-+};
-+
-+/*
-+ * This is the number of guard bytes needed at the end of the memory byte array when using the bit
-+ * utilities. These utilities call get_big_field() and set_big_field(), which can access up to 7
-+ * bytes beyond the end of the desired field. The definition is written to make it clear how this
-+ * value is derived.
-+ */
-+enum {
-+	POST_FIELD_GUARD_BYTES = sizeof(u64) - 1,
-+};
-+
-+/* The number of guard bits that are needed in the tail guard list */
-+enum {
-+	GUARD_BITS = POST_FIELD_GUARD_BYTES * BITS_PER_BYTE
-+};
-+
-+/*
-+ * The maximum size of a single delta list in bytes. We count guard bytes in this value because a
-+ * buffer of this size can be used with move_bits().
-+ */
-+enum {
-+	DELTA_LIST_MAX_BYTE_COUNT =
-+		((U16_MAX + BITS_PER_BYTE) / BITS_PER_BYTE + POST_FIELD_GUARD_BYTES)
-+};
-+
-+/* The number of extra bytes and bits needed to store a collision entry */
-+enum {
-+	COLLISION_BYTES = UDS_RECORD_NAME_SIZE,
-+	COLLISION_BITS = COLLISION_BYTES * BITS_PER_BYTE
-+};
-+
-+/*
-+ * Immutable delta lists are packed into pages containing a header that encodes the delta list
-+ * information into 19 bits per list (64KB bit offset).
-+ */
-+
-+enum { IMMUTABLE_HEADER_SIZE = 19 };
-+
-+/*
-+ * Constants and structures for the saved delta index. "DI" is for delta_index, and -##### is a
-+ * number to increment when the format of the data changes.
-+ */
-+
-+enum {
-+	MAGIC_SIZE = 8,
-+};
-+
-+static const char DELTA_INDEX_MAGIC[] = "DI-00002";
-+
-+struct delta_index_header {
-+	char magic[MAGIC_SIZE];
-+	u32 zone_number;
-+	u32 zone_count;
-+	u32 first_list;
-+	u32 list_count;
-+	u64 record_count;
-+	u64 collision_count;
-+};
-+
-+/*
-+ * Header data used for immutable delta index pages. This data is followed by the delta list offset
-+ * table.
-+ */
-+struct delta_page_header {
-+	/* Externally-defined nonce */
-+	u64 nonce;
-+	/* The virtual chapter number */
-+	u64 virtual_chapter_number;
-+	/* Index of the first delta list on the page */
-+	u16 first_list;
-+	/* Number of delta lists on the page */
-+	u16 list_count;
-+} __packed;
-+
-+static inline u64 get_delta_list_byte_start(const struct delta_list *delta_list)
++static bool is_zone_chapter_sparse(const struct index_zone *zone, u64 virtual_chapter)
 +{
-+	return delta_list->start / BITS_PER_BYTE;
++	return uds_is_chapter_sparse(zone->index->volume->geometry,
++				     zone->oldest_virtual_chapter,
++				     zone->newest_virtual_chapter,
++				     virtual_chapter);
 +}
 +
-+static inline u16 get_delta_list_byte_size(const struct delta_list *delta_list)
++static int
++launch_zone_message(struct uds_zone_message message, unsigned int zone, struct uds_index *index)
 +{
-+	unsigned int bit_offset = delta_list->start % BITS_PER_BYTE;
++	int result;
++	struct uds_request *request;
 +
-+	return BITS_TO_BYTES(bit_offset + delta_list->size);
++	result = UDS_ALLOCATE(1, struct uds_request, __func__, &request);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	request->index = index;
++	request->unbatched = true;
++	request->zone_number = zone;
++	request->zone_message = message;
++
++	uds_enqueue_request(request, STAGE_MESSAGE);
++	return UDS_SUCCESS;
 +}
 +
-+static void rebalance_delta_zone(const struct delta_zone *delta_zone, u32 first, u32 last)
++static void enqueue_barrier_messages(struct uds_index *index, u64 virtual_chapter)
 +{
-+	struct delta_list *delta_list;
-+	u64 new_start;
++	struct uds_zone_message message = {
++		.type = UDS_MESSAGE_SPARSE_CACHE_BARRIER,
++		.virtual_chapter = virtual_chapter,
++	};
++	unsigned int zone;
 +
-+	if (first == last) {
-+		/* Only one list is moving, and we know there is space. */
-+		delta_list = &delta_zone->delta_lists[first];
-+		new_start = delta_zone->new_offsets[first];
-+		if (delta_list->start != new_start) {
-+			u64 source;
-+			u64 destination;
++	for (zone = 0; zone < index->zone_count; zone++) {
++		int result = launch_zone_message(message, zone, index);
 +
-+			source = get_delta_list_byte_start(delta_list);
-+			delta_list->start = new_start;
-+			destination = get_delta_list_byte_start(delta_list);
-+			memmove(delta_zone->memory + destination,
-+				delta_zone->memory + source,
-+				get_delta_list_byte_size(delta_list));
-+		}
-+	} else {
-+		/*
-+		 * There is more than one list. Divide the problem in half, and use recursive calls
-+		 * to process each half. Note that after this computation, first <= middle, and
-+		 * middle < last.
-+		 */
-+		u32 middle = (first + last) / 2;
-+
-+		delta_list = &delta_zone->delta_lists[middle];
-+		new_start = delta_zone->new_offsets[middle];
-+
-+		/*
-+		 * The direction that our middle list is moving determines which half of the
-+		 * problem must be processed first.
-+		 */
-+		if (new_start > delta_list->start) {
-+			rebalance_delta_zone(delta_zone, middle + 1, last);
-+			rebalance_delta_zone(delta_zone, first, middle);
-+		} else {
-+			rebalance_delta_zone(delta_zone, first, middle);
-+			rebalance_delta_zone(delta_zone, middle + 1, last);
-+		}
++		ASSERT_LOG_ONLY((result == UDS_SUCCESS), "barrier message allocation");
 +	}
 +}
 +
-+static inline size_t get_zone_memory_size(unsigned int zone_count, size_t memory_size)
++/*
++ * Determine whether this request should trigger a sparse cache barrier message to change the
++ * membership of the sparse cache. If a change in membership is desired, the function returns the
++ * chapter number to add.
++ */
++static u64 triage_index_request(struct uds_index *index, struct uds_request *request)
 +{
-+	/* Round up so that each zone is a multiple of 64K in size. */
-+	enum {
-+		ALLOC_BOUNDARY = 64 * 1024,
++	u64 virtual_chapter;
++	struct index_zone *zone;
++
++	virtual_chapter = uds_lookup_volume_index_name(index->volume_index, &request->record_name);
++	if (virtual_chapter == NO_CHAPTER)
++		return NO_CHAPTER;
++
++	zone = index->zones[request->zone_number];
++	if (!is_zone_chapter_sparse(zone, virtual_chapter))
++		return NO_CHAPTER;
++
++	/*
++	 * FIXME: Optimize for a common case by remembering the chapter from the most recent
++	 * barrier message and skipping this chapter if is it the same.
++	 */
++
++	return virtual_chapter;
++}
++
++/*
++ * Simulate a message to change the sparse cache membership for a single-zone sparse index. This
++ * allows us to forgo the complicated locking required by a multi-zone sparse index. Any other kind
++ * of index does nothing here.
++ */
++static int
++simulate_index_zone_barrier_message(struct index_zone *zone, struct uds_request *request)
++{
++	u64 sparse_virtual_chapter;
++
++	if ((zone->index->zone_count > 1) ||
++	    !uds_is_sparse_geometry(zone->index->volume->geometry))
++		return UDS_SUCCESS;
++
++	sparse_virtual_chapter = triage_index_request(zone->index, request);
++	if (sparse_virtual_chapter == NO_CHAPTER)
++		return UDS_SUCCESS;
++
++	return uds_update_sparse_cache(zone, sparse_virtual_chapter);
++}
++
++/* This is the request processing function for the triage queue. */
++static void triage_request(struct uds_request *request)
++{
++	struct uds_index *index = request->index;
++	u64 sparse_virtual_chapter = triage_index_request(index, request);
++
++	if (sparse_virtual_chapter != NO_CHAPTER)
++		enqueue_barrier_messages(index, sparse_virtual_chapter);
++
++	uds_enqueue_request(request, STAGE_INDEX);
++}
++
++static int finish_previous_chapter(struct uds_index *index, u64 current_chapter_number)
++{
++	int result;
++	struct chapter_writer *writer = index->chapter_writer;
++
++	uds_lock_mutex(&writer->mutex);
++	while (index->newest_virtual_chapter < current_chapter_number)
++		uds_wait_cond(&writer->cond, &writer->mutex);
++	result = writer->result;
++	uds_unlock_mutex(&writer->mutex);
++
++	if (result != UDS_SUCCESS)
++		return uds_log_error_strerror(result, "Writing of previous open chapter failed");
++
++	return UDS_SUCCESS;
++}
++
++static int swap_open_chapter(struct index_zone *zone)
++{
++	int result;
++	struct open_chapter_zone *temporary_chapter;
++
++	result = finish_previous_chapter(zone->index, zone->newest_virtual_chapter);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	temporary_chapter = zone->open_chapter;
++	zone->open_chapter = zone->writing_chapter;
++	zone->writing_chapter = temporary_chapter;
++	return UDS_SUCCESS;
++}
++
++/*
++ * Inform the chapter writer that this zone is done with this chapter. The chapter won't start
++ * writing until all zones have closed it.
++ */
++static unsigned int start_closing_chapter(struct uds_index *index,
++					  unsigned int zone_number,
++					  struct open_chapter_zone *chapter)
++{
++	unsigned int finished_zones;
++	struct chapter_writer *writer = index->chapter_writer;
++
++	uds_lock_mutex(&writer->mutex);
++	finished_zones = ++writer->zones_to_write;
++	writer->chapters[zone_number] = chapter;
++	uds_broadcast_cond(&writer->cond);
++	uds_unlock_mutex(&writer->mutex);
++
++	return finished_zones;
++}
++
++static int announce_chapter_closed(struct index_zone *zone, u64 closed_chapter)
++{
++	int result;
++	unsigned int i;
++	struct uds_zone_message zone_message = {
++		.type = UDS_MESSAGE_ANNOUNCE_CHAPTER_CLOSED,
++		.virtual_chapter = closed_chapter,
 +	};
 +
-+	return (memory_size / zone_count + ALLOC_BOUNDARY - 1) & -ALLOC_BOUNDARY;
++	for (i = 0; i < zone->index->zone_count; i++) {
++		if (zone->id == i)
++			continue;
++
++		result = launch_zone_message(zone_message, i, zone->index);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
++	return UDS_SUCCESS;
 +}
 +
-+void uds_reset_delta_index(const struct delta_index *delta_index)
++static int open_next_chapter(struct index_zone *zone)
 +{
-+	unsigned int z;
++	int result;
++	u64 closed_chapter;
++	u64 expiring;
++	unsigned int finished_zones;
++	u32 expire_chapters;
 +
-+	/*
-+	 * Initialize all delta lists to be empty. We keep 2 extra delta list descriptors, one
-+	 * before the first real entry and one after so that we don't need to bounds check the
-+	 * array access when calculating preceding and following gap sizes.
-+	 */
-+	for (z = 0; z < delta_index->zone_count; z++) {
-+		u64 list_bits;
-+		u64 spacing;
-+		u64 offset;
-+		unsigned int i;
-+		struct delta_zone *zone = &delta_index->delta_zones[z];
-+		struct delta_list *delta_lists = zone->delta_lists;
++	uds_log_debug("closing chapter %llu of zone %u after %u entries (%u short)",
++		      (unsigned long long) zone->newest_virtual_chapter,
++		      zone->id,
++		      zone->open_chapter->size,
++		      zone->open_chapter->capacity - zone->open_chapter->size);
 +
-+		/* Zeroing the delta list headers initializes the head guard list correctly. */
-+		memset(delta_lists, 0, (zone->list_count + 2) * sizeof(struct delta_list));
++	result = swap_open_chapter(zone);
++	if (result != UDS_SUCCESS)
++		return result;
 +
-+		/* Set all the bits in the end guard list. */
-+		list_bits = (u64) zone->size * BITS_PER_BYTE - GUARD_BITS;
-+		delta_lists[zone->list_count + 1].start = list_bits;
-+		delta_lists[zone->list_count + 1].size = GUARD_BITS;
-+		memset(zone->memory + (list_bits / BITS_PER_BYTE), ~0, POST_FIELD_GUARD_BYTES);
++	closed_chapter = zone->newest_virtual_chapter++;
++	uds_set_volume_index_zone_open_chapter(zone->index->volume_index,
++					       zone->id,
++					       zone->newest_virtual_chapter);
++	uds_reset_open_chapter(zone->open_chapter);
 +
-+		/* Evenly space out the real delta lists by setting regular offsets. */
-+		spacing = list_bits / zone->list_count;
-+		offset = spacing / 2;
-+		for (i = 1; i <= zone->list_count; i++) {
-+			delta_lists[i].start = offset;
-+			offset += spacing;
-+		}
++	finished_zones = start_closing_chapter(zone->index, zone->id, zone->writing_chapter);
++	if ((finished_zones == 1) && (zone->index->zone_count > 1)) {
++		result = announce_chapter_closed(zone, closed_chapter);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
 +
-+		/* Update the statistics. */
-+		zone->discard_count += zone->record_count;
-+		zone->record_count = 0;
-+		zone->collision_count = 0;
++	expiring = zone->oldest_virtual_chapter;
++	expire_chapters = uds_chapters_to_expire(zone->index->volume->geometry,
++						 zone->newest_virtual_chapter);
++	zone->oldest_virtual_chapter += expire_chapters;
++
++	if (finished_zones < zone->index->zone_count)
++		return UDS_SUCCESS;
++
++	while (expire_chapters-- > 0)
++		uds_forget_chapter(zone->index->volume, expiring++);
++
++	return UDS_SUCCESS;
++}
++
++static int handle_chapter_closed(struct index_zone *zone, u64 virtual_chapter)
++{
++	if (zone->newest_virtual_chapter == virtual_chapter)
++		return open_next_chapter(zone);
++
++	return UDS_SUCCESS;
++}
++
++static int dispatch_index_zone_control_request(struct uds_request *request)
++{
++	struct uds_zone_message *message = &request->zone_message;
++	struct index_zone *zone = request->index->zones[request->zone_number];
++
++	switch (message->type) {
++	case UDS_MESSAGE_SPARSE_CACHE_BARRIER:
++		return uds_update_sparse_cache(zone, message->virtual_chapter);
++
++	case UDS_MESSAGE_ANNOUNCE_CHAPTER_CLOSED:
++		return handle_chapter_closed(zone, message->virtual_chapter);
++
++	default:
++		uds_log_error("invalid message type: %d", message->type);
++		return UDS_INVALID_ARGUMENT;
 +	}
 +}
 +
-+/* Compute the Huffman coding parameters for the given mean delta. The Huffman code is specified by
-+ * three parameters:
-+ *
-+ *  MINBITS   The number of bits in the smallest code
-+ *  BASE      The number of values coded using a code of length MINBITS
-+ *  INCR      The number of values coded by using one additional bit
-+ *
-+ * These parameters are related by this equation:
-+ *
-+ *	BASE + INCR == 1 << MINBITS
-+ *
-+ * The math for the Huffman code of an exponential distribution says that
-+ *
-+ *	INCR = log(2) * MEAN_DELTA
-+ *
-+ * Then use the smallest MINBITS value so that
-+ *
-+ *	(1 << MINBITS) > INCR
-+ *
-+ * And then
-+ *
-+ *	BASE = (1 << MINBITS) - INCR
-+ *
-+ * Now the index can generate a code such that
-+ * - The first BASE values code using MINBITS bits.
-+ * - The next INCR values code using MINBITS+1 bits.
-+ * - The next INCR values code using MINBITS+2 bits.
-+ * - (and so on).
-+ */
-+static void compute_coding_constants(u32 mean_delta, u16 *min_bits, u32 *min_keys, u32 *incr_keys)
++static void set_request_location(struct uds_request *request, enum uds_index_region new_location)
 +{
-+	/*
-+	 * We want to compute the rounded value of log(2) * mean_delta. Since we cannot always use
-+	 * floating point, use a really good integer approximation.
-+	 */
-+	*incr_keys = (836158UL * mean_delta + 603160UL) / 1206321UL;
-+	*min_bits = bits_per(*incr_keys + 1);
-+	*min_keys = (1 << *min_bits) - *incr_keys;
++	request->location = new_location;
++	request->found = ((new_location == UDS_LOCATION_IN_OPEN_CHAPTER) ||
++			  (new_location == UDS_LOCATION_IN_DENSE) ||
++			  (new_location == UDS_LOCATION_IN_SPARSE));
 +}
 +
-+void uds_uninitialize_delta_index(struct delta_index *delta_index)
++static void set_chapter_location(struct uds_request *request,
++				 const struct index_zone *zone,
++				 u64 virtual_chapter)
 +{
-+	unsigned int z;
++	request->found = true;
++	if (virtual_chapter == zone->newest_virtual_chapter)
++		request->location = UDS_LOCATION_IN_OPEN_CHAPTER;
++	else if (is_zone_chapter_sparse(zone, virtual_chapter))
++		request->location = UDS_LOCATION_IN_SPARSE;
++	else
++		request->location = UDS_LOCATION_IN_DENSE;
++}
 +
-+	if (delta_index->delta_zones == NULL)
++static int search_sparse_cache_in_zone(struct index_zone *zone,
++				       struct uds_request *request,
++				       u64 virtual_chapter,
++				       bool *found)
++{
++	int result;
++	struct volume *volume;
++	u16 record_page_number;
++	u32 chapter;
++
++	result = uds_search_sparse_cache(zone,
++					 &request->record_name,
++					 &virtual_chapter,
++					 &record_page_number);
++	if ((result != UDS_SUCCESS) || (virtual_chapter == NO_CHAPTER))
++		return result;
++
++	request->virtual_chapter = virtual_chapter;
++	volume = zone->index->volume;
++	chapter = uds_map_to_physical_chapter(volume->geometry, virtual_chapter);
++	return uds_search_cached_record_page(volume, request, chapter, record_page_number, found);
++}
++
++static int get_record_from_zone(struct index_zone *zone, struct uds_request *request, bool *found)
++{
++	struct volume *volume;
++
++	if (request->location == UDS_LOCATION_RECORD_PAGE_LOOKUP) {
++		*found = true;
++		return UDS_SUCCESS;
++	} else if (request->location == UDS_LOCATION_UNAVAILABLE) {
++		*found = false;
++		return UDS_SUCCESS;
++	}
++
++	if (request->virtual_chapter == zone->newest_virtual_chapter) {
++		uds_search_open_chapter(zone->open_chapter,
++					&request->record_name,
++					&request->old_metadata,
++					found);
++		return UDS_SUCCESS;
++	}
++
++	if ((zone->newest_virtual_chapter > 0) &&
++	    (request->virtual_chapter == (zone->newest_virtual_chapter - 1)) &&
++	    (zone->writing_chapter->size > 0)) {
++		uds_search_open_chapter(zone->writing_chapter,
++					&request->record_name,
++					&request->old_metadata,
++					found);
++		return UDS_SUCCESS;
++	}
++
++	volume = zone->index->volume;
++	if (is_zone_chapter_sparse(zone, request->virtual_chapter) &&
++	    uds_sparse_cache_contains(volume->sparse_cache,
++				      request->virtual_chapter,
++				      request->zone_number))
++		return search_sparse_cache_in_zone(zone, request, request->virtual_chapter, found);
++
++	return uds_search_volume_page_cache(volume, request, found);
++}
++
++static int put_record_in_zone(struct index_zone *zone,
++			      struct uds_request *request,
++			      const struct uds_record_data *metadata)
++{
++	unsigned int remaining;
++
++	remaining = uds_put_open_chapter(zone->open_chapter, &request->record_name, metadata);
++	if (remaining == 0)
++		return open_next_chapter(zone);
++
++	return UDS_SUCCESS;
++}
++
++static int search_index_zone(struct index_zone *zone, struct uds_request *request)
++{
++	int result;
++	struct volume_index_record record;
++	bool overflow_record, found = false;
++	struct uds_record_data *metadata;
++	u64 chapter;
++
++	result = uds_get_volume_index_record(zone->index->volume_index,
++					     &request->record_name,
++					     &record);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (record.is_found) {
++		if (request->requeued && request->virtual_chapter != record.virtual_chapter)
++			set_request_location(request, UDS_LOCATION_UNKNOWN);
++
++		request->virtual_chapter = record.virtual_chapter;
++		result = get_record_from_zone(zone, request, &found);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
++	if (found)
++		set_chapter_location(request, zone, record.virtual_chapter);
++
++	/*
++	 * If a record has overflowed a chapter index in more than one chapter (or overflowed in
++	 * one chapter and collided with an existing record), it will exist as a collision record
++	 * in the volume index, but we won't find it in the volume. This case needs special
++	 * handling.
++	 */
++	overflow_record = (record.is_found && record.is_collision && !found);
++	chapter = zone->newest_virtual_chapter;
++	if (found || overflow_record) {
++		if ((request->type == UDS_QUERY_NO_UPDATE) ||
++		    ((request->type == UDS_QUERY) && overflow_record))
++			/* There is nothing left to do. */
++			return UDS_SUCCESS;
++
++		if (record.virtual_chapter != chapter)
++			/*
++			 * Update the volume index to reference the new chapter for the block. If
++			 * the record had been deleted or dropped from the chapter index, it will
++			 * be back.
++			 */
++			result = uds_set_volume_index_record_chapter(&record, chapter);
++		else if (request->type != UDS_UPDATE)
++			/* The record is already in the open chapter. */
++			return UDS_SUCCESS;
++	} else {
++		/*
++		 * The record wasn't in the volume index, so check whether the
++		 * name is in a cached sparse chapter. If we found the name on
++		 * a previous search, use that result instead.
++		 */
++		if (request->location == UDS_LOCATION_RECORD_PAGE_LOOKUP) {
++			found = true;
++		} else if (request->location == UDS_LOCATION_UNAVAILABLE) {
++			found = false;
++		} else if (uds_is_sparse_geometry(zone->index->volume->geometry) &&
++			   !uds_is_volume_index_sample(zone->index->volume_index,
++						       &request->record_name)) {
++			result = search_sparse_cache_in_zone(zone, request, NO_CHAPTER, &found);
++			if (result != UDS_SUCCESS)
++				return result;
++		}
++
++		if (found)
++			set_request_location(request, UDS_LOCATION_IN_SPARSE);
++
++		if ((request->type == UDS_QUERY_NO_UPDATE) ||
++		    ((request->type == UDS_QUERY) && !found))
++			/* There is nothing left to do. */
++			return UDS_SUCCESS;
++
++		/*
++		 * Add a new entry to the volume index referencing the open chapter. This needs to
++		 * be done both for new records, and for records from cached sparse chapters.
++		 */
++		result = uds_put_volume_index_record(&record, chapter);
++	}
++
++	if (result == UDS_OVERFLOW)
++		/*
++		 * The volume index encountered a delta list overflow. The condition was already
++		 * logged. We will go on without adding the record to the open chapter.
++		 */
++		return UDS_SUCCESS;
++
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (!found || (request->type == UDS_UPDATE))
++		/* This is a new record or we're updating an existing record. */
++		metadata = &request->new_metadata;
++	else
++		/* Move the existing record to the open chapter. */
++		metadata = &request->old_metadata;
++
++	return put_record_in_zone(zone, request, metadata);
++}
++
++static int remove_from_index_zone(struct index_zone *zone, struct uds_request *request)
++{
++	int result;
++	struct volume_index_record record;
++
++	result = uds_get_volume_index_record(zone->index->volume_index,
++					     &request->record_name,
++					     &record);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (!record.is_found)
++		return UDS_SUCCESS;
++
++	/* If the request was requeued, check whether the saved state is still valid. */
++
++	if (record.is_collision) {
++		set_chapter_location(request, zone, record.virtual_chapter);
++	} else {
++		/* Non-collision records are hints, so resolve the name in the chapter. */
++		bool found;
++
++		if (request->requeued && request->virtual_chapter != record.virtual_chapter)
++			set_request_location(request, UDS_LOCATION_UNKNOWN);
++
++		request->virtual_chapter = record.virtual_chapter;
++		result = get_record_from_zone(zone, request, &found);
++		if (result != UDS_SUCCESS)
++			return result;
++
++		if (!found)
++			/* There is no record to remove. */
++			return UDS_SUCCESS;
++	}
++
++	set_chapter_location(request, zone, record.virtual_chapter);
++
++	/*
++	 * Delete the volume index entry for the named record only. Note that a later search might
++	 * later return stale advice if there is a colliding name in the same chapter, but it's a
++	 * very rare case (1 in 2^21).
++	 */
++	result = uds_remove_volume_index_record(&record);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	/*
++	 * If the record is in the open chapter, we must remove it or mark it deleted to avoid
++	 * trouble if the record is added again later.
++	 */
++	if (request->location == UDS_LOCATION_IN_OPEN_CHAPTER)
++		uds_remove_from_open_chapter(zone->open_chapter, &request->record_name);
++
++	return UDS_SUCCESS;
++}
++
++static int dispatch_index_request(struct uds_index *index, struct uds_request *request)
++{
++	int result;
++	struct index_zone *zone = index->zones[request->zone_number];
++
++	if (!request->requeued) {
++		result = simulate_index_zone_barrier_message(zone, request);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
++	switch (request->type) {
++	case UDS_POST:
++	case UDS_UPDATE:
++	case UDS_QUERY:
++	case UDS_QUERY_NO_UPDATE:
++		result = search_index_zone(zone, request);
++		break;
++
++	case UDS_DELETE:
++		result = remove_from_index_zone(zone, request);
++		break;
++
++	default:
++		result = uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
++						  "invalid request type: %d",
++						  request->type);
++		break;
++	}
++
++	return result;
++}
++
++/* This is the request processing function invoked by each zone's thread. */
++static void execute_zone_request(struct uds_request *request)
++{
++	int result;
++	struct uds_index *index = request->index;
++
++	if (request->zone_message.type != UDS_MESSAGE_NONE) {
++		result = dispatch_index_zone_control_request(request);
++		if (result != UDS_SUCCESS)
++			uds_log_error_strerror(result,
++					       "error executing message: %d",
++					       request->zone_message.type);
++
++		/* Once the message is processed it can be freed. */
++		UDS_FREE(UDS_FORGET(request));
++		return;
++	}
++
++	index->need_to_save = true;
++	if (request->requeued && (request->status != UDS_SUCCESS)) {
++		set_request_location(request, UDS_LOCATION_UNAVAILABLE);
++		index->callback(request);
++		return;
++	}
++
++	result = dispatch_index_request(index, request);
++	if (result == UDS_QUEUED)
++		/* The request has been requeued so don't let it complete. */
 +		return;
 +
-+	for (z = 0; z < delta_index->zone_count; z++) {
-+		UDS_FREE(UDS_FORGET(delta_index->delta_zones[z].new_offsets));
-+		UDS_FREE(UDS_FORGET(delta_index->delta_zones[z].delta_lists));
-+		UDS_FREE(UDS_FORGET(delta_index->delta_zones[z].memory));
-+	}
++	if (!request->found)
++		set_request_location(request, UDS_LOCATION_UNAVAILABLE);
 +
-+	UDS_FREE(delta_index->delta_zones);
-+	memset(delta_index, 0, sizeof(struct delta_index));
++	request->status = result;
++	index->callback(request);
 +}
 +
-+static int initialize_delta_zone(struct delta_zone *delta_zone,
-+				 size_t size,
-+				 u32 first_list,
-+				 u32 list_count,
-+				 u32 mean_delta,
-+				 u32 payload_bits,
-+				 u8 tag)
++static int initialize_index_queues(struct uds_index *index, const struct geometry *geometry)
 +{
 +	int result;
++	unsigned int i;
 +
-+	result = UDS_ALLOCATE(size, u8, "delta list", &delta_zone->memory);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = UDS_ALLOCATE(list_count + 2, u64, "delta list temp", &delta_zone->new_offsets);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	/* Allocate the delta lists. */
-+	result = UDS_ALLOCATE(list_count + 2,
-+			      struct delta_list,
-+			      "delta lists",
-+			      &delta_zone->delta_lists);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	compute_coding_constants(mean_delta,
-+				 &delta_zone->min_bits,
-+				 &delta_zone->min_keys,
-+				 &delta_zone->incr_keys);
-+	delta_zone->value_bits = payload_bits;
-+	delta_zone->buffered_writer = NULL;
-+	delta_zone->size = size;
-+	delta_zone->rebalance_time = 0;
-+	delta_zone->rebalance_count = 0;
-+	delta_zone->record_count = 0;
-+	delta_zone->collision_count = 0;
-+	delta_zone->discard_count = 0;
-+	delta_zone->overflow_count = 0;
-+	delta_zone->first_list = first_list;
-+	delta_zone->list_count = list_count;
-+	delta_zone->tag = tag;
-+
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_initialize_delta_index(struct delta_index *delta_index,
-+			       unsigned int zone_count,
-+			       u32 list_count,
-+			       u32 mean_delta,
-+			       u32 payload_bits,
-+			       size_t memory_size,
-+			       u8 tag)
-+{
-+	int result;
-+	unsigned int z;
-+	size_t zone_memory;
-+
-+	result = UDS_ALLOCATE(zone_count,
-+			      struct delta_zone,
-+			      "Delta Index Zones",
-+			      &delta_index->delta_zones);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	delta_index->zone_count = zone_count;
-+	delta_index->list_count = list_count;
-+	delta_index->lists_per_zone = DIV_ROUND_UP(list_count, zone_count);
-+	delta_index->memory_size = 0;
-+	delta_index->mutable = true;
-+	delta_index->tag = tag;
-+
-+	for (z = 0; z < zone_count; z++) {
-+		u32 lists_in_zone = delta_index->lists_per_zone;
-+		u32 first_list_in_zone = z * lists_in_zone;
-+
-+		if (z == zone_count - 1) {
-+			/*
-+			 * The last zone gets fewer lists if zone_count doesn't evenly divide
-+			 * list_count. We'll have an underflow if the assertion below doesn't hold.
-+			 */
-+			if (delta_index->list_count <= first_list_in_zone) {
-+				uds_uninitialize_delta_index(delta_index);
-+				return uds_log_error_strerror(UDS_INVALID_ARGUMENT,
-+							      "%u delta lists not enough for %u zones",
-+							      list_count,
-+							      zone_count);
-+			}
-+			lists_in_zone = delta_index->list_count - first_list_in_zone;
-+		}
-+
-+		zone_memory = get_zone_memory_size(zone_count, memory_size);
-+		result = initialize_delta_zone(&delta_index->delta_zones[z],
-+					       zone_memory,
-+					       first_list_in_zone,
-+					       lists_in_zone,
-+					       mean_delta,
-+					       payload_bits,
-+					       tag);
-+		if (result != UDS_SUCCESS) {
-+			uds_uninitialize_delta_index(delta_index);
++	for (i = 0; i < index->zone_count; i++) {
++		result = uds_make_request_queue("indexW",
++						&execute_zone_request,
++						&index->zone_queues[i]);
++		if (result != UDS_SUCCESS)
 +			return result;
-+		}
-+
-+		delta_index->memory_size +=
-+			(sizeof(struct delta_zone) + zone_memory +
-+			 (lists_in_zone + 2) * (sizeof(struct delta_list) + sizeof(u64)));
 +	}
 +
-+	uds_reset_delta_index(delta_index);
++	/* The triage queue is only needed for sparse multi-zone indexes. */
++	if ((index->zone_count > 1) && uds_is_sparse_geometry(geometry)) {
++		result = uds_make_request_queue("triageW", &triage_request, &index->triage_queue);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
 +	return UDS_SUCCESS;
 +}
 +
-+/* Read a bit field from an arbitrary bit boundary. */
-+static inline u32 get_field(const u8 *memory, u64 offset, u8 size)
++/* This is the driver function for the chapter writer thread. */
++static void close_chapters(void *arg)
 +{
-+	const void *addr = memory + offset / BITS_PER_BYTE;
++	int result;
++	struct chapter_writer *writer = arg;
++	struct uds_index *index = writer->index;
 +
-+	return (get_unaligned_le32(addr) >> (offset % BITS_PER_BYTE)) & ((1 << size) - 1);
++	uds_log_debug("chapter writer starting");
++	uds_lock_mutex(&writer->mutex);
++	for (;;) {
++		while (writer->zones_to_write < index->zone_count) {
++			if (writer->stop && (writer->zones_to_write == 0)) {
++				/*
++				 * We've been told to stop, and all of the zones are in the same
++				 * open chapter, so we can exit now.
++				 */
++				uds_unlock_mutex(&writer->mutex);
++				uds_log_debug("chapter writer stopping");
++				return;
++			}
++			uds_wait_cond(&writer->cond, &writer->mutex);
++		}
++
++		/*
++		 * Release the lock while closing a chapter. We probably don't need to do this, but
++		 * it seems safer in principle. It's OK to access the chapter and chapter_number
++		 * fields without the lock since those aren't allowed to change until we're done.
++		 */
++		uds_unlock_mutex(&writer->mutex);
++
++		if (index->has_saved_open_chapter) {
++			/*
++			 * Remove the saved open chapter the first time we close an open chapter
++			 * after loading from a clean shutdown, or after doing a clean save. The
++			 * lack of the saved open chapter will indicate that a recovery is
++			 * necessary.
++			 */
++			index->has_saved_open_chapter = false;
++			result = uds_discard_open_chapter(index->layout);
++			if (result == UDS_SUCCESS)
++				uds_log_debug("Discarding saved open chapter");
++		}
++
++		result = uds_close_open_chapter(writer->chapters,
++						index->zone_count,
++						index->volume,
++						writer->open_chapter_index,
++						writer->collated_records,
++						index->newest_virtual_chapter);
++
++		uds_lock_mutex(&writer->mutex);
++		index->newest_virtual_chapter++;
++		index->oldest_virtual_chapter +=
++			uds_chapters_to_expire(index->volume->geometry,
++					       index->newest_virtual_chapter);
++		writer->result = result;
++		writer->zones_to_write = 0;
++		uds_broadcast_cond(&writer->cond);
++	}
 +}
 +
-+/* Write a bit field to an arbitrary bit boundary. */
-+static inline void set_field(u32 value, u8 *memory, u64 offset, u8 size)
++static void stop_chapter_writer(struct chapter_writer *writer)
 +{
-+	void *addr = memory + offset / BITS_PER_BYTE;
-+	int shift = offset % BITS_PER_BYTE;
-+	u32 data = get_unaligned_le32(addr);
++	struct thread *writer_thread = 0;
 +
-+	data &= ~(((1 << size) - 1) << shift);
-+	data |= value << shift;
-+	put_unaligned_le32(data, addr);
++	uds_lock_mutex(&writer->mutex);
++	if (writer->thread != 0) {
++		writer_thread = writer->thread;
++		writer->thread = 0;
++		writer->stop = true;
++		uds_broadcast_cond(&writer->cond);
++	}
++	uds_unlock_mutex(&writer->mutex);
++
++	if (writer_thread != 0)
++		uds_join_threads(writer_thread);
 +}
 +
-+/* Get the bit offset to the immutable delta list header. */
-+static inline u32 get_immutable_header_offset(u32 list_number)
++static void free_chapter_writer(struct chapter_writer *writer)
 +{
-+	return sizeof(struct delta_page_header) * BITS_PER_BYTE +
-+		list_number * IMMUTABLE_HEADER_SIZE;
++	if (writer == NULL)
++		return;
++
++	stop_chapter_writer(writer);
++	uds_destroy_mutex(&writer->mutex);
++	uds_destroy_cond(&writer->cond);
++	uds_free_open_chapter_index(writer->open_chapter_index);
++	UDS_FREE(writer->collated_records);
++	UDS_FREE(writer);
 +}
 +
-+/* Get the bit offset to the start of the immutable delta list bit stream. */
-+static inline u32 get_immutable_start(const u8 *memory, u32 list_number)
++static int make_chapter_writer(struct uds_index *index, struct chapter_writer **writer_ptr)
 +{
-+	return get_field(memory, get_immutable_header_offset(list_number), IMMUTABLE_HEADER_SIZE);
++	int result;
++	struct chapter_writer *writer;
++	size_t collated_records_size =
++		(sizeof(struct uds_volume_record) * index->volume->geometry->records_per_chapter);
++
++	result = UDS_ALLOCATE_EXTENDED(struct chapter_writer,
++				       index->zone_count,
++				       struct open_chapter_zone *,
++				       "Chapter Writer",
++				       &writer);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	writer->index = index;
++	result = uds_init_mutex(&writer->mutex);
++	if (result != UDS_SUCCESS) {
++		UDS_FREE(writer);
++		return result;
++	}
++
++	result = uds_init_cond(&writer->cond);
++	if (result != UDS_SUCCESS) {
++		uds_destroy_mutex(&writer->mutex);
++		UDS_FREE(writer);
++		return result;
++	}
++
++	result = uds_allocate_cache_aligned(collated_records_size,
++					    "collated records",
++					    &writer->collated_records);
++	if (result != UDS_SUCCESS) {
++		free_chapter_writer(writer);
++		return result;
++	}
++
++	result = uds_make_open_chapter_index(&writer->open_chapter_index,
++					     index->volume->geometry,
++					     index->volume->nonce);
++	if (result != UDS_SUCCESS) {
++		free_chapter_writer(writer);
++		return result;
++	}
++
++	writer->memory_size = (sizeof(struct chapter_writer) +
++			       index->zone_count * sizeof(struct open_chapter_zone *) +
++			       collated_records_size +
++			       writer->open_chapter_index->memory_size);
++
++	result = uds_create_thread(close_chapters, writer, "writer", &writer->thread);
++	if (result != UDS_SUCCESS) {
++		free_chapter_writer(writer);
++		return result;
++	}
++
++	*writer_ptr = writer;
++	return UDS_SUCCESS;
 +}
 +
-+/* Set the bit offset to the start of the immutable delta list bit stream. */
-+static inline void set_immutable_start(u8 *memory, u32 list_number, u32 start)
++static int load_index(struct uds_index *index)
 +{
-+	set_field(start, memory, get_immutable_header_offset(list_number), IMMUTABLE_HEADER_SIZE);
++	int result;
++	u64 last_save_chapter;
++
++	result = uds_load_index_state(index->layout, index);
++	if (result != UDS_SUCCESS)
++		return UDS_INDEX_NOT_SAVED_CLEANLY;
++
++	last_save_chapter = ((index->last_save != NO_LAST_SAVE) ? index->last_save : 0);
++
++	uds_log_info("loaded index from chapter %llu through chapter %llu",
++		     (unsigned long long) index->oldest_virtual_chapter,
++		     (unsigned long long) last_save_chapter);
++
++	return UDS_SUCCESS;
 +}
 +
-+static bool verify_delta_index_page(u64 nonce,
-+				    u16 list_count,
-+				    u64 expected_nonce,
-+				    u8 *memory,
-+				    size_t memory_size)
++static int rebuild_index_page_map(struct uds_index *index, u64 vcn)
++{
++	int result;
++	struct delta_index_page *chapter_index_page;
++	struct geometry *geometry = index->volume->geometry;
++	u32 chapter = uds_map_to_physical_chapter(geometry, vcn);
++	u32 expected_list_number = 0;
++	u32 index_page_number;
++	u32 lowest_delta_list;
++	u32 highest_delta_list;
++
++	for (index_page_number = 0;
++	     index_page_number < geometry->index_pages_per_chapter;
++	     index_page_number++) {
++		result = uds_get_volume_index_page(index->volume,
++						   chapter,
++						   index_page_number,
++						   &chapter_index_page);
++		if (result != UDS_SUCCESS)
++			return uds_log_error_strerror(result,
++						      "failed to read index page %u in chapter %u",
++						      index_page_number,
++						      chapter);
++
++		lowest_delta_list = chapter_index_page->lowest_list_number;
++		highest_delta_list = chapter_index_page->highest_list_number;
++		if (lowest_delta_list != expected_list_number)
++			return uds_log_error_strerror(UDS_CORRUPT_DATA,
++						      "chapter %u index page %u is corrupt",
++						      chapter,
++						      index_page_number);
++
++		uds_update_index_page_map(index->volume->index_page_map,
++					  vcn,
++					  chapter,
++					  index_page_number,
++					  highest_delta_list);
++		expected_list_number = highest_delta_list + 1;
++	}
++
++	return UDS_SUCCESS;
++}
++
++static int replay_record(struct uds_index *index,
++			 const struct uds_record_name *name,
++			 u64 virtual_chapter,
++			 bool will_be_sparse_chapter)
++{
++	int result;
++	struct volume_index_record record;
++	bool update_record;
++
++	if (will_be_sparse_chapter && !uds_is_volume_index_sample(index->volume_index, name))
++		/*
++		 * This entry will be in a sparse chapter after the rebuild completes, and it is
++		 * not a sample, so just skip over it.
++		 */
++		return UDS_SUCCESS;
++
++	result = uds_get_volume_index_record(index->volume_index, name, &record);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	if (record.is_found) {
++		if (record.is_collision) {
++			if (record.virtual_chapter == virtual_chapter)
++				/* The record is already correct. */
++				return UDS_SUCCESS;
++
++			update_record = true;
++		} else if (record.virtual_chapter == virtual_chapter) {
++			/*
++			 * There is a volume index entry pointing to the current chapter, but we
++			 * don't know if it is for the same name as the one we are currently
++			 * working on or not. For now, we're just going to assume that it isn't.
++			 * This will create one extra collision record if there was a deleted
++			 * record in the current chapter.
++			 */
++			update_record = false;
++		} else {
++			/*
++			 * If we're rebuilding, we don't normally want to go to disk to see if the
++			 * record exists, since we will likely have just read the record from disk
++			 * (i.e. we know it's there). The exception to this is when we find an
++			 * entry in the volume index that has a different chapter. In this case, we
++			 * need to search that chapter to determine if the volume index entry was
++			 * for the same record or a different one.
++			 */
++			result = uds_search_volume_page_cache_for_rebuild(index->volume,
++									  name,
++									  record.virtual_chapter,
++									  &update_record);
++			if (result != UDS_SUCCESS)
++				return result;
++			}
++	} else {
++		update_record = false;
++	}
++
++	if (update_record)
++		/*
++		 * Update the volume index to reference the new chapter for the block. If the
++		 * record had been deleted or dropped from the chapter index, it will be back.
++		 */
++		result = uds_set_volume_index_record_chapter(&record, virtual_chapter);
++	else
++		/*
++		 * Add a new entry to the volume index referencing the open chapter. This should be
++		 * done regardless of whether we are a brand new record or a sparse record, i.e.
++		 * one that doesn't exist in the index but does on disk, since for a sparse record,
++		 * we would want to un-sparsify if it did exist.
++		 */
++		result = uds_put_volume_index_record(&record, virtual_chapter);
++
++	if ((result == UDS_DUPLICATE_NAME) || (result == UDS_OVERFLOW))
++		/* The rebuilt index will lose these records. */
++		return UDS_SUCCESS;
++
++	return result;
++}
++
++static bool check_for_suspend(struct uds_index *index)
++{
++	bool closing;
++
++	if (index->load_context == NULL)
++		return false;
++
++	uds_lock_mutex(&index->load_context->mutex);
++	if (index->load_context->status != INDEX_SUSPENDING) {
++		uds_unlock_mutex(&index->load_context->mutex);
++		return false;
++	}
++
++	/* Notify that we are suspended and wait for the resume. */
++	index->load_context->status = INDEX_SUSPENDED;
++	uds_broadcast_cond(&index->load_context->cond);
++
++	while ((index->load_context->status != INDEX_OPENING) &&
++	       (index->load_context->status != INDEX_FREEING))
++		uds_wait_cond(&index->load_context->cond, &index->load_context->mutex);
++
++	closing = (index->load_context->status == INDEX_FREEING);
++	uds_unlock_mutex(&index->load_context->mutex);
++	return closing;
++}
++
++static int replay_chapter(struct uds_index *index, u64 virtual, bool sparse)
++{
++	int result;
++	u32 i;
++	u32 j;
++	const struct geometry *geometry;
++	u32 physical_chapter;
++
++	if (check_for_suspend(index)) {
++		uds_log_info("Replay interrupted by index shutdown at chapter %llu",
++			     (unsigned long long) virtual);
++		return -EBUSY;
++	}
++
++	geometry = index->volume->geometry;
++	physical_chapter = uds_map_to_physical_chapter(geometry, virtual);
++	uds_prefetch_volume_chapter(index->volume, physical_chapter);
++	uds_set_volume_index_open_chapter(index->volume_index, virtual);
++
++	result = rebuild_index_page_map(index, virtual);
++	if (result != UDS_SUCCESS)
++		return uds_log_error_strerror(result,
++					      "could not rebuild index page map for chapter %u",
++					      physical_chapter);
++
++	for (i = 0; i < geometry->record_pages_per_chapter; i++) {
++		u8 *record_page;
++		u32 record_page_number;
++
++		record_page_number = geometry->index_pages_per_chapter + i;
++		result = uds_get_volume_record_page(index->volume,
++						    physical_chapter,
++						    record_page_number,
++						    &record_page);
++		if (result != UDS_SUCCESS)
++			return uds_log_error_strerror(result,
++						      "could not get page %d",
++						      record_page_number);
++
++		for (j = 0; j < geometry->records_per_page; j++) {
++			const u8 *name_bytes;
++			struct uds_record_name name;
++
++			name_bytes = record_page + (j * BYTES_PER_RECORD);
++			memcpy(&name.name, name_bytes, UDS_RECORD_NAME_SIZE);
++			result = replay_record(index, &name, virtual, sparse);
++			if (result != UDS_SUCCESS)
++				return result;
++		}
++	}
++
++	return UDS_SUCCESS;
++}
++
++static int replay_volume(struct uds_index *index)
++{
++	int result;
++	u64 old_map_update;
++	u64 new_map_update;
++	u64 virtual;
++	u64 from_virtual = index->oldest_virtual_chapter;
++	u64 upto_virtual = index->newest_virtual_chapter;
++	bool will_be_sparse;
++
++	uds_log_info("Replaying volume from chapter %llu through chapter %llu",
++		     (unsigned long long) from_virtual,
++		     (unsigned long long) upto_virtual);
++
++	/*
++	 * The index failed to load, so the volume index is empty. Add records to the volume index
++	 * in order, skipping non-hooks in chapters which will be sparse to save time.
++	 *
++	 * Go through each record page of each chapter and add the records back to the volume
++	 * index. This should not cause anything to be written to either the open chapter or the
++	 * on-disk volume. Also skip the on-disk chapter corresponding to upto_virtual, as this
++	 * would have already been purged from the volume index when the chapter was opened.
++	 *
++	 * Also, go through each index page for each chapter and rebuild the index page map.
++	 */
++	old_map_update = index->volume->index_page_map->last_update;
++	for (virtual = from_virtual; virtual < upto_virtual; ++virtual) {
++		will_be_sparse = uds_is_chapter_sparse(index->volume->geometry,
++						       from_virtual,
++						       upto_virtual,
++						       virtual);
++		result = replay_chapter(index, virtual, will_be_sparse);
++		if (result != UDS_SUCCESS)
++			return result;
++	}
++
++	/* Also reap the chapter being replaced by the open chapter. */
++	uds_set_volume_index_open_chapter(index->volume_index, upto_virtual);
++
++	new_map_update = index->volume->index_page_map->last_update;
++	if (new_map_update != old_map_update)
++		uds_log_info("replay changed index page map update from %llu to %llu",
++			     (unsigned long long) old_map_update,
++			     (unsigned long long) new_map_update);
++
++	return UDS_SUCCESS;
++}
++
++static int rebuild_index(struct uds_index *index)
++{
++	int result;
++	u64 lowest;
++	u64 highest;
++	bool is_empty = false;
++	u32 chapters_per_volume = index->volume->geometry->chapters_per_volume;
++
++	index->volume->lookup_mode = LOOKUP_FOR_REBUILD;
++	result = uds_find_volume_chapter_boundaries(index->volume, &lowest, &highest, &is_empty);
++	if (result != UDS_SUCCESS)
++		return uds_log_fatal_strerror(result,
++					      "cannot rebuild index: unknown volume chapter boundaries");
++
++	if (is_empty) {
++		index->newest_virtual_chapter = 0;
++		index->oldest_virtual_chapter = 0;
++		index->volume->lookup_mode = LOOKUP_NORMAL;
++		return UDS_SUCCESS;
++	}
++
++	index->newest_virtual_chapter = highest + 1;
++	index->oldest_virtual_chapter = lowest;
++	if (index->newest_virtual_chapter == (index->oldest_virtual_chapter + chapters_per_volume))
++		/* Skip the chapter shadowed by the open chapter. */
++		index->oldest_virtual_chapter++;
++
++	result = replay_volume(index);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	index->volume->lookup_mode = LOOKUP_NORMAL;
++	return UDS_SUCCESS;
++}
++
++static void free_index_zone(struct index_zone *zone)
++{
++	if (zone == NULL)
++		return;
++
++	uds_free_open_chapter(zone->open_chapter);
++	uds_free_open_chapter(zone->writing_chapter);
++	UDS_FREE(zone);
++}
++
++static int make_index_zone(struct uds_index *index, unsigned int zone_number)
++{
++	int result;
++	struct index_zone *zone;
++
++	result = UDS_ALLOCATE(1, struct index_zone, "index zone", &zone);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = uds_make_open_chapter(index->volume->geometry,
++				       index->zone_count,
++				       &zone->open_chapter);
++	if (result != UDS_SUCCESS) {
++		free_index_zone(zone);
++		return result;
++	}
++
++	result = uds_make_open_chapter(index->volume->geometry,
++				       index->zone_count,
++				       &zone->writing_chapter);
++	if (result != UDS_SUCCESS) {
++		free_index_zone(zone);
++		return result;
++	}
++
++	zone->index = index;
++	zone->id = zone_number;
++	index->zones[zone_number] = zone;
++
++	return UDS_SUCCESS;
++}
++
++int uds_make_index(struct configuration *config,
++		   enum uds_open_index_type open_type,
++		   struct index_load_context *load_context,
++		   index_callback_t callback,
++		   struct uds_index **new_index)
++{
++	int result;
++	bool loaded = false;
++	bool new = (open_type == UDS_CREATE);
++	struct uds_index *index = NULL;
++	struct index_zone *zone;
++	u64 nonce;
++	unsigned int z;
++
++	result = UDS_ALLOCATE_EXTENDED(struct uds_index,
++				       config->zone_count,
++				       struct uds_request_queue *,
++				       "index",
++				       &index);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	index->zone_count = config->zone_count;
++
++	result = uds_make_index_layout(config, new, &index->layout);
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return result;
++	}
++
++	result = UDS_ALLOCATE(index->zone_count, struct index_zone *, "zones", &index->zones);
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return result;
++	}
++
++	result = uds_make_volume(config, index->layout, &index->volume);
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return result;
++	}
++
++	index->volume->lookup_mode = LOOKUP_NORMAL;
++	for (z = 0; z < index->zone_count; z++) {
++		result = make_index_zone(index, z);
++		if (result != UDS_SUCCESS) {
++			uds_free_index(index);
++			return uds_log_error_strerror(result, "Could not create index zone");
++		}
++	}
++
++	nonce = uds_get_volume_nonce(index->layout);
++	result = uds_make_volume_index(config, nonce, &index->volume_index);
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return uds_log_error_strerror(result, "could not make volume index");
++	}
++
++	index->load_context = load_context;
++	index->callback = callback;
++
++	result = initialize_index_queues(index, config->geometry);
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return result;
++	}
++
++	result = make_chapter_writer(index, &index->chapter_writer);
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return result;
++	}
++
++	if (!new) {
++		result = load_index(index);
++		switch (result) {
++		case UDS_SUCCESS:
++			loaded = true;
++			break;
++		case -ENOMEM:
++			/* We should not try a rebuild for this error. */
++			uds_log_error_strerror(result, "index could not be loaded");
++			break;
++		default:
++			uds_log_error_strerror(result, "index could not be loaded");
++			if (open_type == UDS_LOAD) {
++				result = rebuild_index(index);
++				if (result != UDS_SUCCESS)
++					uds_log_error_strerror(result,
++							       "index could not be rebuilt");
++			}
++			break;
++		}
++	}
++
++	if (result != UDS_SUCCESS) {
++		uds_free_index(index);
++		return uds_log_error_strerror(result, "fatal error in %s()", __func__);
++	}
++
++	for (z = 0; z < index->zone_count; z++) {
++		zone = index->zones[z];
++		zone->oldest_virtual_chapter = index->oldest_virtual_chapter;
++		zone->newest_virtual_chapter = index->newest_virtual_chapter;
++	}
++
++	if (index->load_context != NULL) {
++		uds_lock_mutex(&index->load_context->mutex);
++		index->load_context->status = INDEX_READY;
++		/*
++		 * If we get here, suspend is meaningless, but notify any thread trying to suspend
++		 * us so it doesn't hang.
++		 */
++		uds_broadcast_cond(&index->load_context->cond);
++		uds_unlock_mutex(&index->load_context->mutex);
++	}
++
++	index->has_saved_open_chapter = loaded;
++	index->need_to_save = !loaded;
++	*new_index = index;
++	return UDS_SUCCESS;
++}
++
++void uds_free_index(struct uds_index *index)
 +{
 +	unsigned int i;
 +
-+	/*
-+	 * Verify the nonce. A mismatch can happen here during rebuild if we haven't written the
-+	 * entire volume at least once.
-+	 */
-+	if (nonce != expected_nonce)
-+		return false;
-+
-+	/* Verify that the number of delta lists can fit in the page. */
-+	if (list_count > ((memory_size - sizeof(struct delta_page_header)) *
-+			  BITS_PER_BYTE / IMMUTABLE_HEADER_SIZE))
-+		return false;
-+
-+	/*
-+	 * Verify that the first delta list is immediately after the last delta
-+	 * list header.
-+	 */
-+	if (get_immutable_start(memory, 0) != get_immutable_header_offset(list_count + 1))
-+		return false;
-+
-+	/* Verify that the lists are in the correct order. */
-+	for (i = 0; i < list_count; i++)
-+		if (get_immutable_start(memory, i) > get_immutable_start(memory, i + 1))
-+			return false;
-+
-+	/*
-+	 * Verify that the last list ends on the page, and that there is room
-+	 * for the post-field guard bits.
-+	 */
-+	if (get_immutable_start(memory, list_count) >
-+	    (memory_size - POST_FIELD_GUARD_BYTES) * BITS_PER_BYTE)
-+		return false;
-+
-+	/* Verify that the guard bytes are correctly set to all ones. */
-+	for (i = 0; i < POST_FIELD_GUARD_BYTES; i++) {
-+		if (memory[memory_size - POST_FIELD_GUARD_BYTES + i] != (u8) ~0)
-+			return false;
-+	}
-+
-+	/* All verifications passed. */
-+	return true;
-+}
-+
-+/* Initialize a delta index page to refer to a supplied page. */
-+int uds_initialize_delta_index_page(struct delta_index_page *delta_index_page,
-+				    u64 expected_nonce,
-+				    u32 mean_delta,
-+				    u32 payload_bits,
-+				    u8 *memory,
-+				    size_t memory_size)
-+{
-+	u64 nonce;
-+	u64 vcn;
-+	u64 first_list;
-+	u64 list_count;
-+	struct delta_page_header *header = (struct delta_page_header *) memory;
-+	struct delta_zone *delta_zone = &delta_index_page->delta_zone;
-+	const u8 *nonce_addr = (const u8 *) &header->nonce;
-+	const u8 *vcn_addr = (const u8 *) &header->virtual_chapter_number;
-+	const u8 *first_list_addr = (const u8 *) &header->first_list;
-+	const u8 *list_count_addr = (const u8 *) &header->list_count;
-+
-+	/* First assume that the header is little endian. */
-+	nonce = get_unaligned_le64(nonce_addr);
-+	vcn = get_unaligned_le64(vcn_addr);
-+	first_list = get_unaligned_le16(first_list_addr);
-+	list_count = get_unaligned_le16(list_count_addr);
-+	if (!verify_delta_index_page(nonce, list_count, expected_nonce, memory, memory_size)) {
-+		/* If that fails, try big endian. */
-+		nonce = get_unaligned_be64(nonce_addr);
-+		vcn = get_unaligned_be64(vcn_addr);
-+		first_list = get_unaligned_be16(first_list_addr);
-+		list_count = get_unaligned_be16(list_count_addr);
-+		if (!verify_delta_index_page(nonce,
-+					     list_count,
-+					     expected_nonce,
-+					     memory,
-+					     memory_size))
-+			/*
-+			 * Both attempts failed. Do not log this as an error, because it can happen
-+			 * during a rebuild if we haven't written the entire volume at least once.
-+			 */
-+			return UDS_CORRUPT_DATA;
-+	}
-+
-+	delta_index_page->delta_index.delta_zones = delta_zone;
-+	delta_index_page->delta_index.zone_count = 1;
-+	delta_index_page->delta_index.list_count = list_count;
-+	delta_index_page->delta_index.lists_per_zone = list_count;
-+	delta_index_page->delta_index.mutable = false;
-+	delta_index_page->delta_index.tag = 'p';
-+	delta_index_page->virtual_chapter_number = vcn;
-+	delta_index_page->lowest_list_number = first_list;
-+	delta_index_page->highest_list_number = first_list + list_count - 1;
-+
-+	compute_coding_constants(mean_delta,
-+				 &delta_zone->min_bits,
-+				 &delta_zone->min_keys,
-+				 &delta_zone->incr_keys);
-+	delta_zone->value_bits = payload_bits;
-+	delta_zone->memory = memory;
-+	delta_zone->delta_lists = NULL;
-+	delta_zone->new_offsets = NULL;
-+	delta_zone->buffered_writer = NULL;
-+	delta_zone->size = memory_size;
-+	delta_zone->rebalance_time = 0;
-+	delta_zone->rebalance_count = 0;
-+	delta_zone->record_count = 0;
-+	delta_zone->collision_count = 0;
-+	delta_zone->discard_count = 0;
-+	delta_zone->overflow_count = 0;
-+	delta_zone->first_list = 0;
-+	delta_zone->list_count = list_count;
-+	delta_zone->tag = 'p';
-+
-+	return UDS_SUCCESS;
-+}
-+
-+/* Read a large bit field from an arbitrary bit boundary. */
-+static inline u64 get_big_field(const u8 *memory, u64 offset, u8 size)
-+{
-+	const void *addr = memory + offset / BITS_PER_BYTE;
-+
-+	return (get_unaligned_le64(addr) >> (offset % BITS_PER_BYTE)) & ((1UL << size) - 1);
-+}
-+
-+/* Write a large bit field to an arbitrary bit boundary. */
-+static inline void set_big_field(u64 value, u8 *memory, u64 offset, u8 size)
-+{
-+	void *addr = memory + offset / BITS_PER_BYTE;
-+	u8 shift = offset % BITS_PER_BYTE;
-+	u64 data = get_unaligned_le64(addr);
-+
-+	data &= ~(((1UL << size) - 1) << shift);
-+	data |= value << shift;
-+	put_unaligned_le64(data, addr);
-+}
-+
-+/* Set a sequence of bits to all zeros. */
-+static inline void set_zero(u8 *memory, u64 offset, u32 size)
-+{
-+	if (size > 0) {
-+		u8 *addr = memory + offset / BITS_PER_BYTE;
-+		u8 shift = offset % BITS_PER_BYTE;
-+		u32 count = size + shift > BITS_PER_BYTE ? (u32) BITS_PER_BYTE - shift : size;
-+
-+		*addr++ &= ~(((1 << count) - 1) << shift);
-+		for (size -= count; size > BITS_PER_BYTE; size -= BITS_PER_BYTE)
-+			*addr++ = 0;
-+
-+		if (size > 0)
-+			*addr &= 0xFF << size;
-+	}
-+}
-+
-+/*
-+ * Move several bits from a higher to a lower address, moving the lower addressed bits first. The
-+ * size and memory offsets are measured in bits.
-+ */
-+static void move_bits_down(const u8 *from, u64 from_offset, u8 *to, u64 to_offset, u32 size)
-+{
-+	const u8 *source;
-+	u8 *destination;
-+	u8 offset;
-+	u8 count;
-+	u64 field;
-+
-+	/* Start by moving one field that ends on a to int boundary. */
-+	count = (MAX_BIG_FIELD_BITS - ((to_offset + MAX_BIG_FIELD_BITS) % BITS_PER_TYPE(u32)));
-+	field = get_big_field(from, from_offset, count);
-+	set_big_field(field, to, to_offset, count);
-+	from_offset += count;
-+	to_offset += count;
-+	size -= count;
-+
-+	/* Now do the main loop to copy 32 bit chunks that are int-aligned at the destination. */
-+	offset = from_offset % BITS_PER_TYPE(u32);
-+	source = from + (from_offset - offset) / BITS_PER_BYTE;
-+	destination = to + to_offset / BITS_PER_BYTE;
-+	while (size > MAX_BIG_FIELD_BITS) {
-+		put_unaligned_le32(get_unaligned_le64(source) >> offset, destination);
-+		source += sizeof(u32);
-+		destination += sizeof(u32);
-+		from_offset += BITS_PER_TYPE(u32);
-+		to_offset += BITS_PER_TYPE(u32);
-+		size -= BITS_PER_TYPE(u32);
-+	}
-+
-+	/* Finish up by moving any remaining bits. */
-+	if (size > 0) {
-+		field = get_big_field(from, from_offset, size);
-+		set_big_field(field, to, to_offset, size);
-+	}
-+}
-+
-+/*
-+ * Move several bits from a lower to a higher address, moving the higher addressed bits first. The
-+ * size and memory offsets are measured in bits.
-+ */
-+static void move_bits_up(const u8 *from, u64 from_offset, u8 *to, u64 to_offset, u32 size)
-+{
-+	const u8 *source;
-+	u8 *destination;
-+	u8 offset;
-+	u8 count;
-+	u64 field;
-+
-+	/* Start by moving one field that begins on a destination int boundary. */
-+	count = (to_offset + size) % BITS_PER_TYPE(u32);
-+	if (count > 0) {
-+		size -= count;
-+		field = get_big_field(from, from_offset + size, count);
-+		set_big_field(field, to, to_offset + size, count);
-+	}
-+
-+	/* Now do the main loop to copy 32 bit chunks that are int-aligned at the destination. */
-+	offset = (from_offset + size) % BITS_PER_TYPE(u32);
-+	source = from + (from_offset + size - offset) / BITS_PER_BYTE;
-+	destination = to + (to_offset + size) / BITS_PER_BYTE;
-+	while (size > MAX_BIG_FIELD_BITS) {
-+		source -= sizeof(u32);
-+		destination -= sizeof(u32);
-+		size -= BITS_PER_TYPE(u32);
-+		put_unaligned_le32(get_unaligned_le64(source) >> offset, destination);
-+	}
-+
-+	/* Finish up by moving any remaining bits. */
-+	if (size > 0) {
-+		field = get_big_field(from, from_offset, size);
-+		set_big_field(field, to, to_offset, size);
-+	}
-+}
-+
-+/*
-+ * Move bits from one field to another. When the fields overlap, behave as if we first move all the
-+ * bits from the source to a temporary value, and then move all the bits from the temporary value
-+ * to the destination. The size and memory offsets are measured in bits.
-+ */
-+static void move_bits(const u8 *from, u64 from_offset, u8 *to, u64 to_offset, u32 size)
-+{
-+	u64 field;
-+
-+	/* A small move doesn't require special handling. */
-+	if (size <= MAX_BIG_FIELD_BITS) {
-+		if (size > 0) {
-+			field = get_big_field(from, from_offset, size);
-+			set_big_field(field, to, to_offset, size);
-+		}
-+
++	if (index == NULL)
 +		return;
++
++	uds_request_queue_finish(index->triage_queue);
++	for (i = 0; i < index->zone_count; i++)
++		uds_request_queue_finish(index->zone_queues[i]);
++
++	free_chapter_writer(index->chapter_writer);
++
++	uds_free_volume_index(index->volume_index);
++	if (index->zones != NULL) {
++		for (i = 0; i < index->zone_count; i++)
++			free_index_zone(index->zones[i]);
++		UDS_FREE(index->zones);
 +	}
 +
-+	if (from_offset > to_offset)
-+		move_bits_down(from, from_offset, to, to_offset, size);
-+	else
-+		move_bits_up(from, from_offset, to, to_offset, size);
++	uds_free_volume(index->volume);
++	uds_free_index_layout(UDS_FORGET(index->layout));
++	UDS_FREE(index);
 +}
 +
-+/*
-+ * Pack delta lists from a mutable delta index into an immutable delta index page. A range of delta
-+ * lists (starting with a specified list index) is copied from the mutable delta index into a
-+ * memory page used in the immutable index. The number of lists copied onto the page is returned in
-+ * list_count.
-+ */
-+int uds_pack_delta_index_page(const struct delta_index *delta_index,
-+			      u64 header_nonce,
-+			      u8 *memory,
-+			      size_t memory_size,
-+			      u64 virtual_chapter_number,
-+			      u32 first_list,
-+			      u32 *list_count)
++/* Wait for the chapter writer to complete any outstanding writes. */
++void uds_wait_for_idle_index(struct uds_index *index)
 +{
-+	const struct delta_zone *delta_zone;
-+	struct delta_list *delta_lists;
-+	u32 max_lists;
-+	u32 n_lists = 0;
-+	u32 offset;
-+	u32 i;
-+	int free_bits;
-+	int bits;
-+	struct delta_page_header *header;
++	struct chapter_writer *writer = index->chapter_writer;
 +
-+	delta_zone = &delta_index->delta_zones[0];
-+	delta_lists = &delta_zone->delta_lists[first_list + 1];
-+	max_lists = delta_index->list_count - first_list;
-+
-+	/*
-+	 * Compute how many lists will fit on the page. Subtract the size of the fixed header, one
-+	 * delta list offset, and the guard bytes from the page size to determine how much space is
-+	 * available for delta lists.
-+	 */
-+	free_bits = memory_size * BITS_PER_BYTE;
-+	free_bits -= get_immutable_header_offset(1);
-+	free_bits -= GUARD_BITS;
-+	if (free_bits < IMMUTABLE_HEADER_SIZE)
-+		/* This page is too small to store any delta lists. */
-+		return uds_log_error_strerror(UDS_OVERFLOW,
-+					      "Chapter Index Page of %zu bytes is too small",
-+					      memory_size);
-+
-+	while (n_lists < max_lists) {
-+		/* Each list requires a delta list offset and the list data. */
-+		bits = IMMUTABLE_HEADER_SIZE + delta_lists[n_lists].size;
-+		if (bits > free_bits)
-+			break;
-+
-+		n_lists++;
-+		free_bits -= bits;
-+	}
-+
-+	*list_count = n_lists;
-+
-+	header = (struct delta_page_header *) memory;
-+	put_unaligned_le64(header_nonce, (u8 *) &header->nonce);
-+	put_unaligned_le64(virtual_chapter_number, (u8 *) &header->virtual_chapter_number);
-+	put_unaligned_le16(first_list, (u8 *) &header->first_list);
-+	put_unaligned_le16(n_lists, (u8 *) &header->list_count);
-+
-+	/* Construct the delta list offset table. */
-+	offset = get_immutable_header_offset(n_lists + 1);
-+	set_immutable_start(memory, 0, offset);
-+	for (i = 0; i < n_lists; i++) {
-+		offset += delta_lists[i].size;
-+		set_immutable_start(memory, i + 1, offset);
-+	}
-+
-+	/* Copy the delta list data onto the memory page. */
-+	for (i = 0; i < n_lists; i++)
-+		move_bits(delta_zone->memory,
-+			  delta_lists[i].start,
-+			  memory,
-+			  get_immutable_start(memory, i),
-+			  delta_lists[i].size);
-+
-+	/* Set all the bits in the guard bytes. */
-+	memset(memory + memory_size - POST_FIELD_GUARD_BYTES, ~0, POST_FIELD_GUARD_BYTES);
-+	return UDS_SUCCESS;
++	uds_lock_mutex(&writer->mutex);
++	while (writer->zones_to_write > 0)
++		uds_wait_cond(&writer->cond, &writer->mutex);
++	uds_unlock_mutex(&writer->mutex);
 +}
 +
-+/* Compute the new offsets of the delta lists. */
-+static void compute_new_list_offsets(struct delta_zone *delta_zone,
-+				     u32 growing_index,
-+				     size_t growing_size,
-+				     size_t used_space)
-+{
-+	size_t spacing;
-+	u32 i;
-+	struct delta_list *delta_lists = delta_zone->delta_lists;
-+	u32 tail_guard_index = delta_zone->list_count + 1;
-+
-+	spacing = (delta_zone->size - used_space) / delta_zone->list_count;
-+	delta_zone->new_offsets[0] = 0;
-+	for (i = 0; i <= delta_zone->list_count; i++) {
-+		delta_zone->new_offsets[i + 1] =
-+			(delta_zone->new_offsets[i] +
-+			 get_delta_list_byte_size(&delta_lists[i]) + spacing);
-+		delta_zone->new_offsets[i] *= BITS_PER_BYTE;
-+		delta_zone->new_offsets[i] += delta_lists[i].start % BITS_PER_BYTE;
-+		if (i == 0)
-+			delta_zone->new_offsets[i + 1] -= spacing / 2;
-+		if (i + 1 == growing_index)
-+			delta_zone->new_offsets[i + 1] += growing_size;
-+	}
-+
-+	delta_zone->new_offsets[tail_guard_index] =
-+		(delta_zone->size * BITS_PER_BYTE - delta_lists[tail_guard_index].size);
-+}
-+
-+static void rebalance_lists(struct delta_zone *delta_zone)
-+{
-+	struct delta_list *delta_lists;
-+	u32 i;
-+	size_t used_space = 0;
-+
-+	/* Extend and balance memory to receive the delta lists */
-+	delta_lists = delta_zone->delta_lists;
-+	for (i = 0; i <= delta_zone->list_count + 1; i++)
-+		used_space += get_delta_list_byte_size(&delta_lists[i]);
-+
-+	compute_new_list_offsets(delta_zone, 0, 0, used_space);
-+	for (i = 1; i <= delta_zone->list_count + 1; i++)
-+		delta_lists[i].start = delta_zone->new_offsets[i];
-+}
-+
-+/* Start restoring a delta index from multiple input streams. */
-+int uds_start_restoring_delta_index(struct delta_index *delta_index,
-+				    struct buffered_reader **buffered_readers,
-+				    unsigned int reader_count)
++/* This function assumes that all requests have been drained. */
++int uds_save_index(struct uds_index *index)
 +{
 +	int result;
-+	unsigned int zone_count = reader_count;
-+	u64 record_count = 0;
-+	u64 collision_count = 0;
-+	u32 first_list[MAX_ZONES];
-+	u32 list_count[MAX_ZONES];
-+	unsigned int z;
-+	u32 list_next = 0;
-+	const struct delta_zone *delta_zone;
 +
-+	/* Read and validate each header. */
-+	for (z = 0; z < zone_count; z++) {
-+		struct delta_index_header header;
-+		u8 buffer[sizeof(struct delta_index_header)];
-+		size_t offset = 0;
++	if (!index->need_to_save)
++		return UDS_SUCCESS;
 +
-+		result = uds_read_from_buffered_reader(buffered_readers[z],
-+						       buffer,
-+						       sizeof(buffer));
-+		if (result != UDS_SUCCESS)
-+			return uds_log_warning_strerror(result,
-+							"failed to read delta index header");
++	uds_wait_for_idle_index(index);
++	index->prev_save = index->last_save;
++	index->last_save = ((index->newest_virtual_chapter == 0) ?
++			    NO_LAST_SAVE :
++			    index->newest_virtual_chapter - 1);
++	uds_log_info("beginning save (vcn %llu)", (unsigned long long) index->last_save);
 +
-+		memcpy(&header.magic, buffer, MAGIC_SIZE);
-+		offset += MAGIC_SIZE;
-+		decode_u32_le(buffer, &offset, &header.zone_number);
-+		decode_u32_le(buffer, &offset, &header.zone_count);
-+		decode_u32_le(buffer, &offset, &header.first_list);
-+		decode_u32_le(buffer, &offset, &header.list_count);
-+		decode_u64_le(buffer, &offset, &header.record_count);
-+		decode_u64_le(buffer, &offset, &header.collision_count);
-+
-+		result = ASSERT(offset == sizeof(struct delta_index_header),
-+				"%zu bytes decoded of %zu expected",
-+				offset,
-+				sizeof(struct delta_index_header));
-+		if (result != UDS_SUCCESS)
-+			return uds_log_warning_strerror(result,
-+							"failed to read delta index header");
-+
-+		if (memcmp(header.magic, DELTA_INDEX_MAGIC, MAGIC_SIZE) != 0)
-+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+							"delta index file has bad magic number");
-+
-+		if (zone_count != header.zone_count)
-+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+							"delta index files contain mismatched zone counts (%u,%u)",
-+							zone_count,
-+							header.zone_count);
-+
-+		if (header.zone_number != z)
-+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+							"delta index zone %u found in slot %u",
-+							header.zone_number,
-+							z);
-+
-+		first_list[z] = header.first_list;
-+		list_count[z] = header.list_count;
-+		record_count += header.record_count;
-+		collision_count += header.collision_count;
-+
-+		if (first_list[z] != list_next)
-+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+							"delta index file for zone %u starts with list %u instead of list %u",
-+							z,
-+							first_list[z],
-+							list_next);
-+
-+		list_next += list_count[z];
-+	}
-+
-+	if (list_next != delta_index->list_count)
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						"delta index files contain %u delta lists instead of %u delta lists",
-+						list_next,
-+						delta_index->list_count);
-+
-+	if (collision_count > record_count)
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						"delta index files contain %llu collisions and %llu records",
-+						(unsigned long long) collision_count,
-+						(unsigned long long) record_count);
-+
-+	uds_reset_delta_index(delta_index);
-+	delta_index->delta_zones[0].record_count = record_count;
-+	delta_index->delta_zones[0].collision_count = collision_count;
-+
-+	/* Read the delta lists and distribute them to the proper zones. */
-+	for (z = 0; z < zone_count; z++) {
-+		u32 i;
-+
-+		delta_index->load_lists[z] = 0;
-+		for (i = 0; i < list_count[z]; i++) {
-+			u16 delta_list_size;
-+			u32 list_number;
-+			unsigned int zone_number;
-+			u8 size_data[sizeof(u16)];
-+
-+			result = uds_read_from_buffered_reader(buffered_readers[z],
-+							       size_data,
-+							       sizeof(size_data));
-+			if (result != UDS_SUCCESS)
-+				return uds_log_warning_strerror(result,
-+								"failed to read delta index size");
-+
-+			delta_list_size = get_unaligned_le16(size_data);
-+			if (delta_list_size > 0)
-+				delta_index->load_lists[z] += 1;
-+
-+			list_number = first_list[z] + i;
-+			zone_number = list_number / delta_index->lists_per_zone;
-+			delta_zone = &delta_index->delta_zones[zone_number];
-+			list_number -= delta_zone->first_list;
-+			delta_zone->delta_lists[list_number + 1].size = delta_list_size;
-+		}
-+	}
-+
-+	/* Prepare each zone to start receiving the delta list data. */
-+	for (z = 0; z < delta_index->zone_count; z++)
-+		rebalance_lists(&delta_index->delta_zones[z]);
-+	return UDS_SUCCESS;
-+}
-+
-+static int restore_delta_list_to_zone(struct delta_zone *delta_zone,
-+				      const struct delta_list_save_info *save_info,
-+				      const u8 *data)
-+{
-+	struct delta_list *delta_list;
-+	u16 bit_count;
-+	u16 byte_count;
-+	u32 list_number = save_info->index - delta_zone->first_list;
-+
-+	if (list_number >= delta_zone->list_count)
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						"invalid delta list number %u not in range [%u,%u)",
-+						save_info->index,
-+						delta_zone->first_list,
-+						delta_zone->first_list +
-+						delta_zone->list_count);
-+
-+	delta_list = &delta_zone->delta_lists[list_number + 1];
-+	if (delta_list->size == 0)
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						"unexpected delta list number %u",
-+						save_info->index);
-+
-+	bit_count = delta_list->size + save_info->bit_offset;
-+	byte_count = BITS_TO_BYTES(bit_count);
-+	if (save_info->byte_count != byte_count)
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						"unexpected delta list size %u != %u",
-+						save_info->byte_count,
-+						byte_count);
-+
-+	move_bits(data,
-+		  save_info->bit_offset,
-+		  delta_zone->memory,
-+		  delta_list->start,
-+		  delta_list->size);
-+	return UDS_SUCCESS;
-+}
-+
-+static int restore_delta_list_data(struct delta_index *delta_index,
-+				   unsigned int load_zone,
-+				   struct buffered_reader *buffered_reader,
-+				   u8 *data)
-+{
-+	int result;
-+	struct delta_list_save_info save_info;
-+	u8 buffer[sizeof(struct delta_list_save_info)];
-+	unsigned int new_zone;
-+
-+	result = uds_read_from_buffered_reader(buffered_reader, buffer, sizeof(buffer));
-+	if (result != UDS_SUCCESS)
-+		return uds_log_warning_strerror(result, "failed to read delta list data");
-+
-+	save_info = (struct delta_list_save_info) {
-+		.tag = buffer[0],
-+		.bit_offset = buffer[1],
-+		.byte_count = get_unaligned_le16(&buffer[2]),
-+		.index = get_unaligned_le32(&buffer[4]),
-+	};
-+
-+	if ((save_info.bit_offset >= BITS_PER_BYTE) ||
-+	    (save_info.byte_count > DELTA_LIST_MAX_BYTE_COUNT))
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA, "corrupt delta list data");
-+
-+	/* Make sure the data is intended for this delta index. */
-+	if (save_info.tag != delta_index->tag)
-+		return UDS_CORRUPT_DATA;
-+
-+	if (save_info.index >= delta_index->list_count)
-+		return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						"invalid delta list number %u of %u",
-+						save_info.index,
-+						delta_index->list_count);
-+
-+	result = uds_read_from_buffered_reader(buffered_reader, data, save_info.byte_count);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_warning_strerror(result,
-+						"failed to read delta list data");
-+
-+	delta_index->load_lists[load_zone] -= 1;
-+	new_zone = save_info.index / delta_index->lists_per_zone;
-+	return restore_delta_list_to_zone(&delta_index->delta_zones[new_zone], &save_info, data);
-+}
-+
-+/* Restore delta lists from saved data. */
-+int uds_finish_restoring_delta_index(struct delta_index *delta_index,
-+				     struct buffered_reader **buffered_readers,
-+				     unsigned int reader_count)
-+{
-+	int result;
-+	int saved_result = UDS_SUCCESS;
-+	unsigned int z;
-+	u8 *data;
-+
-+	result = UDS_ALLOCATE(DELTA_LIST_MAX_BYTE_COUNT, u8, __func__, &data);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	for (z = 0; z < reader_count; z++) {
-+		while (delta_index->load_lists[z] > 0) {
-+			result = restore_delta_list_data(delta_index,
-+							 z,
-+							 buffered_readers[z],
-+							 data);
-+			if (result != UDS_SUCCESS) {
-+				saved_result = result;
-+				break;
-+			}
-+		}
-+	}
-+
-+	UDS_FREE(data);
-+	return saved_result;
-+}
-+
-+int uds_check_guard_delta_lists(struct buffered_reader **buffered_readers,
-+				unsigned int reader_count)
-+{
-+	int result;
-+	unsigned int z;
-+	u8 buffer[sizeof(struct delta_list_save_info)];
-+
-+	for (z = 0; z < reader_count; z++) {
-+		result = uds_read_from_buffered_reader(buffered_readers[z],
-+						       buffer,
-+						       sizeof(buffer));
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		if (buffer[0] != 'z')
-+			return UDS_CORRUPT_DATA;
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int flush_delta_list(struct delta_zone *zone, u32 flush_index)
-+{
-+	struct delta_list *delta_list;
-+	u8 buffer[sizeof(struct delta_list_save_info)];
-+	int result;
-+
-+	delta_list = &zone->delta_lists[flush_index + 1];
-+
-+	buffer[0] = zone->tag;
-+	buffer[1] = delta_list->start % BITS_PER_BYTE;
-+	put_unaligned_le16(get_delta_list_byte_size(delta_list), &buffer[2]);
-+	put_unaligned_le32(zone->first_list + flush_index, &buffer[4]);
-+
-+	result = uds_write_to_buffered_writer(zone->buffered_writer, buffer, sizeof(buffer));
++	result = uds_save_index_state(index->layout, index);
 +	if (result != UDS_SUCCESS) {
-+		uds_log_warning_strerror(result, "failed to write delta list memory");
-+		return result;
++		uds_log_info("save index failed");
++		index->last_save = index->prev_save;
++	} else {
++		index->has_saved_open_chapter = true;
++		index->need_to_save = false;
++		uds_log_info("finished save (vcn %llu)", (unsigned long long) index->last_save);
 +	}
-+
-+	result = uds_write_to_buffered_writer(zone->buffered_writer,
-+					      zone->memory + get_delta_list_byte_start(delta_list),
-+					      get_delta_list_byte_size(delta_list));
-+	if (result != UDS_SUCCESS)
-+		uds_log_warning_strerror(result, "failed to write delta list memory");
 +
 +	return result;
 +}
 +
-+/* Start saving a delta index zone to a buffered output stream. */
-+int uds_start_saving_delta_index(const struct delta_index *delta_index,
-+				 unsigned int zone_number,
-+				 struct buffered_writer *buffered_writer)
++int uds_replace_index_storage(struct uds_index *index, struct block_device *bdev)
 +{
-+	int result;
-+	u32 i;
-+	struct delta_zone *delta_zone;
-+	u8 buffer[sizeof(struct delta_index_header)];
-+	size_t offset = 0;
-+
-+	delta_zone = &delta_index->delta_zones[zone_number];
-+	memcpy(buffer, DELTA_INDEX_MAGIC, MAGIC_SIZE);
-+	offset += MAGIC_SIZE;
-+	encode_u32_le(buffer, &offset, zone_number);
-+	encode_u32_le(buffer, &offset, delta_index->zone_count);
-+	encode_u32_le(buffer, &offset, delta_zone->first_list);
-+	encode_u32_le(buffer, &offset, delta_zone->list_count);
-+	encode_u64_le(buffer, &offset, delta_zone->record_count);
-+	encode_u64_le(buffer, &offset, delta_zone->collision_count);
-+
-+	result = ASSERT(offset == sizeof(struct delta_index_header),
-+			"%zu bytes encoded of %zu expected",
-+			offset,
-+			sizeof(struct delta_index_header));
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_write_to_buffered_writer(buffered_writer, buffer, offset);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_warning_strerror(result, "failed to write delta index header");
-+
-+	for (i = 0; i < delta_zone->list_count; i++) {
-+		u8 data[sizeof(u16)];
-+		struct delta_list *delta_list;
-+
-+		delta_list = &delta_zone->delta_lists[i + 1];
-+		put_unaligned_le16(delta_list->size, data);
-+		result = uds_write_to_buffered_writer(buffered_writer, data, sizeof(data));
-+		if (result != UDS_SUCCESS)
-+			return uds_log_warning_strerror(result, "failed to write delta list size");
-+	}
-+
-+	delta_zone->buffered_writer = buffered_writer;
-+	return UDS_SUCCESS;
++	return uds_replace_volume_storage(index->volume, index->layout, bdev);
 +}
 +
-+int uds_finish_saving_delta_index(const struct delta_index *delta_index, unsigned int zone_number)
++/* Accessing statistics should be safe from any thread. */
++void uds_get_index_stats(struct uds_index *index, struct uds_index_stats *counters)
 +{
-+	int result;
-+	int first_error = UDS_SUCCESS;
-+	u32 i;
-+	struct delta_zone *delta_zone;
-+	struct delta_list *delta_list;
++	struct volume_index_stats stats;
 +
-+	delta_zone = &delta_index->delta_zones[zone_number];
-+	for (i = 0; i < delta_zone->list_count; i++) {
-+		delta_list = &delta_zone->delta_lists[i + 1];
-+		if (delta_list->size > 0) {
-+			result = flush_delta_list(delta_zone, i);
-+			if ((result != UDS_SUCCESS) && (first_error == UDS_SUCCESS))
-+				first_error = result;
++	uds_get_volume_index_stats(index->volume_index, &stats);
++	counters->entries_indexed = stats.record_count;
++	counters->collisions = stats.collision_count;
++	counters->entries_discarded = stats.discard_count;
++
++	counters->memory_used = (index->volume_index->memory_size +
++				 index->volume->cache_size +
++				 index->chapter_writer->memory_size);
++}
++
++void uds_enqueue_request(struct uds_request *request, enum request_stage stage)
++{
++	struct uds_index *index = request->index;
++	struct uds_request_queue *queue;
++
++	switch (stage) {
++	case STAGE_TRIAGE:
++		if (index->triage_queue != NULL) {
++			queue = index->triage_queue;
++			break;
 +		}
-+	}
 +
-+	delta_zone->buffered_writer = NULL;
-+	return first_error;
-+}
++		fallthrough;
 +
-+int uds_write_guard_delta_list(struct buffered_writer *buffered_writer)
-+{
-+	int result;
-+	u8 buffer[sizeof(struct delta_list_save_info)];
++	case STAGE_INDEX:
++		request->zone_number =
++			uds_get_volume_index_zone(index->volume_index, &request->record_name);
++		fallthrough;
 +
-+	memset(buffer, 0, sizeof(struct delta_list_save_info));
-+	buffer[0] = 'z';
++	case STAGE_MESSAGE:
++		queue = index->zone_queues[request->zone_number];
++		break;
 +
-+	result = uds_write_to_buffered_writer(buffered_writer, buffer, sizeof(buffer));
-+	if (result != UDS_SUCCESS)
-+		uds_log_warning_strerror(result, "failed to write guard delta list");
-+
-+	return UDS_SUCCESS;
-+}
-+
-+size_t uds_compute_delta_index_save_bytes(u32 list_count, size_t memory_size)
-+{
-+	/* One zone will use at least as much memory as other zone counts. */
-+	return (sizeof(struct delta_index_header) +
-+		list_count * (sizeof(struct delta_list_save_info) + 1) +
-+		get_zone_memory_size(1, memory_size));
-+}
-+
-+static int assert_not_at_end(const struct delta_index_entry *delta_entry)
-+{
-+	int result = ASSERT(!delta_entry->at_end,
-+			    "operation is invalid because the list entry is at the end of the delta list");
-+	if (result != UDS_SUCCESS)
-+		result = UDS_BAD_STATE;
-+
-+	return result;
-+}
-+
-+/*
-+ * Prepare to search for an entry in the specified delta list.
-+ *
-+ * This is always the first function to be called when dealing with delta index entries. It is
-+ * always followed by calls to uds_next_delta_index_entry() to iterate through a delta list. The
-+ * fields of the delta_index_entry argument will be set up for iteration, but will not contain an
-+ * entry from the list.
-+ */
-+int uds_start_delta_index_search(const struct delta_index *delta_index,
-+				 u32 list_number,
-+				 u32 key,
-+				 struct delta_index_entry *delta_entry)
-+{
-+	int result;
-+	unsigned int zone_number;
-+	struct delta_zone *delta_zone;
-+	struct delta_list *delta_list;
-+
-+	result = ASSERT((list_number < delta_index->list_count),
-+			"Delta list number (%u) is out of range (%u)",
-+			list_number,
-+			delta_index->list_count);
-+	if (result != UDS_SUCCESS)
-+		return UDS_CORRUPT_DATA;
-+
-+	zone_number = list_number / delta_index->lists_per_zone;
-+	delta_zone = &delta_index->delta_zones[zone_number];
-+	list_number -= delta_zone->first_list;
-+	result = ASSERT((list_number < delta_zone->list_count),
-+			"Delta list number (%u) is out of range (%u) for zone (%u)",
-+			list_number,
-+			delta_zone->list_count,
-+			zone_number);
-+	if (result != UDS_SUCCESS)
-+		return UDS_CORRUPT_DATA;
-+
-+	if (delta_index->mutable) {
-+		delta_list = &delta_zone->delta_lists[list_number + 1];
-+	} else {
-+		u32 end_offset;
-+
-+		/*
-+		 * Translate the immutable delta list header into a temporary
-+		 * full delta list header.
-+		 */
-+		delta_list = &delta_entry->temp_delta_list;
-+		delta_list->start = get_immutable_start(delta_zone->memory, list_number);
-+		end_offset = get_immutable_start(delta_zone->memory, list_number + 1);
-+		delta_list->size = end_offset - delta_list->start;
-+		delta_list->save_key = 0;
-+		delta_list->save_offset = 0;
-+	}
-+
-+	if (key > delta_list->save_key) {
-+		delta_entry->key = delta_list->save_key;
-+		delta_entry->offset = delta_list->save_offset;
-+	} else {
-+		delta_entry->key = 0;
-+		delta_entry->offset = 0;
-+		if (key == 0)
-+			/*
-+			 * This usually means we're about to walk the entire delta list, so get all
-+			 * of it into the CPU cache.
-+			 */
-+			uds_prefetch_range(&delta_zone->memory[delta_list->start / BITS_PER_BYTE],
-+					   delta_list->size / BITS_PER_BYTE,
-+					   false);
-+	}
-+
-+	delta_entry->at_end = false;
-+	delta_entry->delta_zone = delta_zone;
-+	delta_entry->delta_list = delta_list;
-+	delta_entry->entry_bits = 0;
-+	delta_entry->is_collision = false;
-+	delta_entry->list_number = list_number;
-+	delta_entry->list_overflow = false;
-+	delta_entry->value_bits = delta_zone->value_bits;
-+	return UDS_SUCCESS;
-+}
-+
-+static inline u64 get_delta_entry_offset(const struct delta_index_entry *delta_entry)
-+{
-+	return delta_entry->delta_list->start + delta_entry->offset;
-+}
-+
-+/*
-+ * Decode a delta index entry delta value. The delta_index_entry basically describes the previous
-+ * list entry, and has had its offset field changed to point to the subsequent entry. We decode the
-+ * bit stream and update the delta_list_entry to describe the entry.
-+ */
-+static inline void decode_delta(struct delta_index_entry *delta_entry)
-+{
-+	int key_bits;
-+	u32 delta;
-+	const struct delta_zone *delta_zone = delta_entry->delta_zone;
-+	const u8 *memory = delta_zone->memory;
-+	u64 delta_offset = get_delta_entry_offset(delta_entry) + delta_entry->value_bits;
-+	const u8 *addr = memory + delta_offset / BITS_PER_BYTE;
-+	int offset = delta_offset % BITS_PER_BYTE;
-+	u32 data = get_unaligned_le32(addr) >> offset;
-+
-+	addr += sizeof(u32);
-+	key_bits = delta_zone->min_bits;
-+	delta = data & ((1 << key_bits) - 1);
-+	if (delta >= delta_zone->min_keys) {
-+		data >>= key_bits;
-+		if (data == 0) {
-+			key_bits = sizeof(u32) * BITS_PER_BYTE - offset;
-+			while ((data = get_unaligned_le32(addr)) == 0) {
-+				addr += sizeof(u32);
-+				key_bits += sizeof(u32) * BITS_PER_BYTE;
-+			}
-+		}
-+		key_bits += ffs(data);
-+		delta += ((key_bits - delta_zone->min_bits - 1) * delta_zone->incr_keys);
-+	}
-+	delta_entry->delta = delta;
-+	delta_entry->key += delta;
-+
-+	/* Check for a collision, a delta of zero after the start. */
-+	if (unlikely((delta == 0) && (delta_entry->offset > 0))) {
-+		delta_entry->is_collision = true;
-+		delta_entry->entry_bits = delta_entry->value_bits + key_bits + COLLISION_BITS;
-+	} else {
-+		delta_entry->is_collision = false;
-+		delta_entry->entry_bits = delta_entry->value_bits + key_bits;
-+	}
-+}
-+
-+noinline int uds_next_delta_index_entry(struct delta_index_entry *delta_entry)
-+{
-+	int result;
-+	const struct delta_list *delta_list;
-+	u32 next_offset;
-+	u16 size;
-+
-+	result = assert_not_at_end(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	delta_list = delta_entry->delta_list;
-+	delta_entry->offset += delta_entry->entry_bits;
-+	size = delta_list->size;
-+	if (unlikely(delta_entry->offset >= size)) {
-+		delta_entry->at_end = true;
-+		delta_entry->delta = 0;
-+		delta_entry->is_collision = false;
-+		result = ASSERT((delta_entry->offset == size),
-+				"next offset past end of delta list");
-+		if (result != UDS_SUCCESS)
-+			result = UDS_CORRUPT_DATA;
-+
-+		return result;
-+	}
-+
-+	decode_delta(delta_entry);
-+
-+	next_offset = delta_entry->offset + delta_entry->entry_bits;
-+	if (next_offset > size) {
-+		/*
-+		 * This is not an assertion because uds_validate_chapter_index_page() wants to
-+		 * handle this error.
-+		 */
-+		uds_log_warning("Decoded past the end of the delta list");
-+		return UDS_CORRUPT_DATA;
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_remember_delta_index_offset(const struct delta_index_entry *delta_entry)
-+{
-+	int result;
-+	struct delta_list *delta_list = delta_entry->delta_list;
-+
-+	result = ASSERT(!delta_entry->is_collision, "entry is not a collision");
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	delta_list->save_key = delta_entry->key - delta_entry->delta;
-+	delta_list->save_offset = delta_entry->offset;
-+	return UDS_SUCCESS;
-+}
-+
-+static void set_delta(struct delta_index_entry *delta_entry, u32 delta)
-+{
-+	const struct delta_zone *delta_zone = delta_entry->delta_zone;
-+	u32 key_bits = (delta_zone->min_bits +
-+			((delta_zone->incr_keys -
-+			  delta_zone->min_keys + delta) /
-+			 delta_zone->incr_keys));
-+
-+	delta_entry->delta = delta;
-+	delta_entry->entry_bits = delta_entry->value_bits + key_bits;
-+}
-+
-+static void get_collision_name(const struct delta_index_entry *entry, u8 *name)
-+{
-+	u64 offset = get_delta_entry_offset(entry) + entry->entry_bits - COLLISION_BITS;
-+	const u8 *addr = entry->delta_zone->memory + offset / BITS_PER_BYTE;
-+	int size = COLLISION_BYTES;
-+	int shift = offset % BITS_PER_BYTE;
-+
-+	while (--size >= 0)
-+		*name++ = get_unaligned_le16(addr++) >> shift;
-+}
-+
-+static void set_collision_name(const struct delta_index_entry *entry, const u8 *name)
-+{
-+	u64 offset = get_delta_entry_offset(entry) + entry->entry_bits - COLLISION_BITS;
-+	u8 *addr = entry->delta_zone->memory + offset / BITS_PER_BYTE;
-+	int size = COLLISION_BYTES;
-+	int shift = offset % BITS_PER_BYTE;
-+	u16 mask = ~((u16) 0xFF << shift);
-+	u16 data;
-+
-+	while (--size >= 0) {
-+		data = (get_unaligned_le16(addr) & mask) | (*name++ << shift);
-+		put_unaligned_le16(data, addr++);
-+	}
-+}
-+
-+int uds_get_delta_index_entry(const struct delta_index *delta_index,
-+			      u32 list_number,
-+			      u32 key,
-+			      const u8 *name,
-+			      struct delta_index_entry *delta_entry)
-+{
-+	int result;
-+
-+	result = uds_start_delta_index_search(delta_index, list_number, key, delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	do {
-+		result = uds_next_delta_index_entry(delta_entry);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	} while (!delta_entry->at_end && (key > delta_entry->key));
-+
-+	result = uds_remember_delta_index_offset(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (!delta_entry->at_end && (key == delta_entry->key)) {
-+		struct delta_index_entry collision_entry = *delta_entry;
-+
-+		for (;;) {
-+			u8 full_name[COLLISION_BYTES];
-+
-+			result = uds_next_delta_index_entry(&collision_entry);
-+			if (result != UDS_SUCCESS)
-+				return result;
-+
-+			if (collision_entry.at_end || !collision_entry.is_collision)
-+				break;
-+
-+			get_collision_name(&collision_entry, full_name);
-+			if (memcmp(full_name, name, COLLISION_BYTES) == 0) {
-+				*delta_entry = collision_entry;
-+				break;
-+			}
-+		}
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_get_delta_entry_collision(const struct delta_index_entry *delta_entry, u8 *name)
-+{
-+	int result;
-+
-+	result = assert_not_at_end(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = ASSERT(delta_entry->is_collision,
-+			"Cannot get full block name from a non-collision delta index entry");
-+	if (result != UDS_SUCCESS)
-+		return UDS_BAD_STATE;
-+
-+	get_collision_name(delta_entry, name);
-+	return UDS_SUCCESS;
-+}
-+
-+u32 uds_get_delta_entry_value(const struct delta_index_entry *delta_entry)
-+{
-+	return get_field(delta_entry->delta_zone->memory,
-+			 get_delta_entry_offset(delta_entry),
-+			 delta_entry->value_bits);
-+}
-+
-+static int assert_mutable_entry(const struct delta_index_entry *delta_entry)
-+{
-+	int result = ASSERT((delta_entry->delta_list != &delta_entry->temp_delta_list),
-+			    "delta index is mutable");
-+	if (result != UDS_SUCCESS)
-+		result = UDS_BAD_STATE;
-+
-+	return result;
-+}
-+
-+int uds_set_delta_entry_value(const struct delta_index_entry *delta_entry, u32 value)
-+{
-+	int result;
-+	u32 value_mask = (1 << delta_entry->value_bits) - 1;
-+
-+	result = assert_mutable_entry(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = assert_not_at_end(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = ASSERT((value & value_mask) == value,
-+			"Value (%u) being set in a delta index is too large (must fit in %u bits)",
-+			value,
-+			delta_entry->value_bits);
-+	if (result != UDS_SUCCESS)
-+		return UDS_INVALID_ARGUMENT;
-+
-+	set_field(value,
-+		  delta_entry->delta_zone->memory,
-+		  get_delta_entry_offset(delta_entry),
-+		  delta_entry->value_bits);
-+	return UDS_SUCCESS;
-+}
-+
-+/*
-+ * Extend the memory used by the delta lists by adding growing_size bytes before the list indicated
-+ * by growing_index, then rebalancing the lists in the new chunk.
-+ */
-+static int
-+extend_delta_zone(struct delta_zone *delta_zone, u32 growing_index, size_t growing_size)
-+{
-+	ktime_t start_time;
-+	ktime_t end_time;
-+	struct delta_list *delta_lists;
-+	u32 i;
-+	size_t used_space;
-+
-+
-+	/* Calculate the amount of space that is or will be in use. */
-+	start_time = current_time_ns(CLOCK_MONOTONIC);
-+	delta_lists = delta_zone->delta_lists;
-+	used_space = growing_size;
-+	for (i = 0; i <= delta_zone->list_count + 1; i++)
-+		used_space += get_delta_list_byte_size(&delta_lists[i]);
-+
-+	if (delta_zone->size < used_space)
-+		return UDS_OVERFLOW;
-+
-+	/* Compute the new offsets of the delta lists. */
-+	compute_new_list_offsets(delta_zone, growing_index, growing_size, used_space);
-+
-+	/*
-+	 * When we rebalance the delta list, we will include the end guard list in the rebalancing.
-+	 * It contains the end guard data, which must be copied.
-+	 */
-+	rebalance_delta_zone(delta_zone, 1, delta_zone->list_count + 1);
-+	end_time = current_time_ns(CLOCK_MONOTONIC);
-+	delta_zone->rebalance_count++;
-+	delta_zone->rebalance_time += ktime_sub(end_time, start_time);
-+	return UDS_SUCCESS;
-+}
-+
-+static int insert_bits(struct delta_index_entry *delta_entry, u16 size)
-+{
-+	u64 free_before;
-+	u64 free_after;
-+	u64 source;
-+	u64 destination;
-+	u32 count;
-+	bool before_flag;
-+	u8 *memory;
-+	struct delta_zone *delta_zone = delta_entry->delta_zone;
-+	struct delta_list *delta_list = delta_entry->delta_list;
-+	/* Compute bits in use before and after the inserted bits. */
-+	u32 total_size = delta_list->size;
-+	u32 before_size = delta_entry->offset;
-+	u32 after_size = total_size - delta_entry->offset;
-+
-+	if (total_size + size > U16_MAX) {
-+		delta_entry->list_overflow = true;
-+		delta_zone->overflow_count++;
-+		return UDS_OVERFLOW;
-+	}
-+
-+	/* Compute bits available before and after the delta list. */
-+	free_before = (delta_list[0].start - (delta_list[-1].start + delta_list[-1].size));
-+	free_after = (delta_list[1].start - (delta_list[0].start + delta_list[0].size));
-+
-+	if ((size <= free_before) && (size <= free_after)) {
-+		/*
-+		 * We have enough space to use either before or after the list. Select the smaller
-+		 * amount of data. If it is exactly the same, try to take from the larger amount of
-+		 * free space.
-+		 */
-+		if (before_size < after_size)
-+			before_flag = true;
-+		else if (after_size < before_size)
-+			before_flag = false;
-+		else
-+			before_flag = free_before > free_after;
-+	} else if (size <= free_before) {
-+		/* There is space before but not after. */
-+		before_flag = true;
-+	} else if (size <= free_after) {
-+		/* There is space after but not before. */
-+		before_flag = false;
-+	} else {
-+		/*
-+		 * Neither of the surrounding spaces is large enough for this request. Extend
-+		 * and/or rebalance the delta list memory choosing to move the least amount of
-+		 * data.
-+		 */
-+		int result;
-+		u32 growing_index = delta_entry->list_number + 1;
-+
-+		before_flag = before_size < after_size;
-+		if (!before_flag)
-+			growing_index++;
-+		result = extend_delta_zone(delta_zone, growing_index, BITS_TO_BYTES(size));
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	}
-+
-+	delta_list->size += size;
-+	if (before_flag) {
-+		source = delta_list->start;
-+		destination = source - size;
-+		delta_list->start -= size;
-+		count = before_size;
-+	} else {
-+		source = delta_list->start + delta_entry->offset;
-+		destination = source + size;
-+		count = after_size;
-+	}
-+
-+	memory = delta_zone->memory;
-+	move_bits(memory, source, memory, destination, count);
-+	return UDS_SUCCESS;
-+}
-+
-+static void encode_delta(const struct delta_index_entry *delta_entry)
-+{
-+	u32 temp;
-+	u32 t1;
-+	u32 t2;
-+	u64 offset;
-+	const struct delta_zone *delta_zone = delta_entry->delta_zone;
-+	u8 *memory = delta_zone->memory;
-+
-+	offset = get_delta_entry_offset(delta_entry) + delta_entry->value_bits;
-+	if (delta_entry->delta < delta_zone->min_keys) {
-+		set_field(delta_entry->delta, memory, offset, delta_zone->min_bits);
++	default:
++		ASSERT_LOG_ONLY(false, "invalid index stage: %d", stage);
 +		return;
 +	}
 +
-+	temp = delta_entry->delta - delta_zone->min_keys;
-+	t1 = (temp % delta_zone->incr_keys) + delta_zone->min_keys;
-+	t2 = temp / delta_zone->incr_keys;
-+	set_field(t1, memory, offset, delta_zone->min_bits);
-+	set_zero(memory, offset + delta_zone->min_bits, t2);
-+	set_field(1, memory, offset + delta_zone->min_bits + t2, 1);
++	uds_request_queue_enqueue(queue, request);
 +}
-+
-+static void encode_entry(const struct delta_index_entry *delta_entry, u32 value, const u8 *name)
-+{
-+	u8 *memory = delta_entry->delta_zone->memory;
-+	u64 offset = get_delta_entry_offset(delta_entry);
-+
-+	set_field(value, memory, offset, delta_entry->value_bits);
-+	encode_delta(delta_entry);
-+	if (name != NULL)
-+		set_collision_name(delta_entry, name);
-+}
-+
-+/*
-+ * Create a new entry in the delta index. If the entry is a collision, the full 256 bit name must
-+ * be provided.
-+ */
-+int uds_put_delta_index_entry(struct delta_index_entry *delta_entry,
-+			      u32 key,
-+			      u32 value,
-+			      const u8 *name)
-+{
-+	int result;
-+	struct delta_zone *delta_zone;
-+
-+	result = assert_mutable_entry(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (delta_entry->is_collision)
-+		/*
-+		 * The caller wants us to insert a collision entry onto a collision entry. This
-+		 * happens when we find a collision and attempt to add the name again to the index.
-+		 * This is normally a fatal error unless we are replaying a closed chapter while we
-+		 * are rebuilding a volume index.
-+		 */
-+		return UDS_DUPLICATE_NAME;
-+
-+	if (delta_entry->offset < delta_entry->delta_list->save_offset) {
-+		/*
-+		 * The saved entry offset is after the new entry and will no longer be valid, so
-+		 * replace it with the insertion point.
-+		 */
-+		result = uds_remember_delta_index_offset(delta_entry);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	}
-+
-+	if (name != NULL) {
-+		/* Insert a collision entry which is placed after this entry. */
-+		result = assert_not_at_end(delta_entry);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		result = ASSERT((key == delta_entry->key), "incorrect key for collision entry");
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		delta_entry->offset += delta_entry->entry_bits;
-+		set_delta(delta_entry, 0);
-+		delta_entry->is_collision = true;
-+		delta_entry->entry_bits += COLLISION_BITS;
-+		result = insert_bits(delta_entry, delta_entry->entry_bits);
-+	} else if (delta_entry->at_end) {
-+		/* Insert a new entry at the end of the delta list. */
-+		result = ASSERT((key >= delta_entry->key), "key past end of list");
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		set_delta(delta_entry, key - delta_entry->key);
-+		delta_entry->key = key;
-+		delta_entry->at_end = false;
-+		result = insert_bits(delta_entry, delta_entry->entry_bits);
-+	} else {
-+		u16 old_entry_size;
-+		u16 additional_size;
-+		struct delta_index_entry next_entry;
-+		u32 next_value;
-+
-+		/*
-+		 * Insert a new entry which requires the delta in the following entry to be
-+		 * updated.
-+		 */
-+		result = ASSERT((key < delta_entry->key), "key precedes following entry");
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		result = ASSERT((key >= delta_entry->key - delta_entry->delta),
-+				"key effects following entry's delta");
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		old_entry_size = delta_entry->entry_bits;
-+		next_entry = *delta_entry;
-+		next_value = uds_get_delta_entry_value(&next_entry);
-+		set_delta(delta_entry, key - (delta_entry->key - delta_entry->delta));
-+		delta_entry->key = key;
-+		set_delta(&next_entry, next_entry.key - key);
-+		next_entry.offset += delta_entry->entry_bits;
-+		/* The two new entries are always bigger than the single entry being replaced. */
-+		additional_size = (delta_entry->entry_bits +
-+				   next_entry.entry_bits - old_entry_size);
-+		result = insert_bits(delta_entry, additional_size);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+
-+		encode_entry(&next_entry, next_value, NULL);
-+	}
-+
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	encode_entry(delta_entry, value, name);
-+	delta_zone = delta_entry->delta_zone;
-+	delta_zone->record_count++;
-+	delta_zone->collision_count += delta_entry->is_collision ? 1 : 0;
-+	return UDS_SUCCESS;
-+}
-+
-+static void delete_bits(const struct delta_index_entry *delta_entry, int size)
-+{
-+	u64 source;
-+	u64 destination;
-+	u32 count;
-+	bool before_flag;
-+	struct delta_list *delta_list = delta_entry->delta_list;
-+	u8 *memory = delta_entry->delta_zone->memory;
-+	/* Compute bits retained before and after the deleted bits. */
-+	u32 total_size = delta_list->size;
-+	u32 before_size = delta_entry->offset;
-+	u32 after_size = total_size - delta_entry->offset - size;
-+
-+	/*
-+	 * Determine whether to add to the available space either before or after the delta list.
-+	 * We prefer to move the least amount of data. If it is exactly the same, try to add to the
-+	 * smaller amount of free space.
-+	 */
-+	if (before_size < after_size) {
-+		before_flag = true;
-+	} else if (after_size < before_size) {
-+		before_flag = false;
-+	} else {
-+		u64 free_before =
-+			(delta_list[0].start - (delta_list[-1].start + delta_list[-1].size));
-+		u64 free_after =
-+			(delta_list[1].start - (delta_list[0].start + delta_list[0].size));
-+
-+		before_flag = (free_before < free_after);
-+	}
-+
-+	delta_list->size -= size;
-+	if (before_flag) {
-+		source = delta_list->start;
-+		destination = source + size;
-+		delta_list->start += size;
-+		count = before_size;
-+	} else {
-+		destination = delta_list->start + delta_entry->offset;
-+		source = destination + size;
-+		count = after_size;
-+	}
-+
-+	move_bits(memory, source, memory, destination, count);
-+}
-+
-+int uds_remove_delta_index_entry(struct delta_index_entry *delta_entry)
-+{
-+	int result;
-+	struct delta_index_entry next_entry;
-+	struct delta_zone *delta_zone;
-+	struct delta_list *delta_list;
-+
-+	result = assert_mutable_entry(delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	next_entry = *delta_entry;
-+	result = uds_next_delta_index_entry(&next_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	delta_zone = delta_entry->delta_zone;
-+
-+	if (delta_entry->is_collision) {
-+		/* This is a collision entry, so just remove it. */
-+		delete_bits(delta_entry, delta_entry->entry_bits);
-+		next_entry.offset = delta_entry->offset;
-+		delta_zone->collision_count -= 1;
-+	} else if (next_entry.at_end) {
-+		/* This entry is at the end of the list, so just remove it. */
-+		delete_bits(delta_entry, delta_entry->entry_bits);
-+		next_entry.key -= delta_entry->delta;
-+		next_entry.offset = delta_entry->offset;
-+	} else {
-+		/* The delta in the next entry needs to be updated. */
-+		u32 next_value = uds_get_delta_entry_value(&next_entry);
-+		u16 old_size = delta_entry->entry_bits + next_entry.entry_bits;
-+
-+		if (next_entry.is_collision) {
-+			next_entry.is_collision = false;
-+			delta_zone->collision_count -= 1;
-+		}
-+
-+		set_delta(&next_entry, delta_entry->delta + next_entry.delta);
-+		next_entry.offset = delta_entry->offset;
-+		/* The one new entry is always smaller than the two entries being replaced. */
-+		delete_bits(delta_entry, old_size - next_entry.entry_bits);
-+		encode_entry(&next_entry, next_value, NULL);
-+	}
-+
-+	delta_zone->record_count--;
-+	delta_zone->discard_count++;
-+	*delta_entry = next_entry;
-+
-+	delta_list = delta_entry->delta_list;
-+	if (delta_entry->offset < delta_list->save_offset) {
-+		/* The saved entry offset is no longer valid. */
-+		delta_list->save_key = 0;
-+		delta_list->save_offset = 0;
-+	}
-+
-+	return UDS_SUCCESS;
-+}
-+
-+void uds_get_delta_index_stats(const struct delta_index *delta_index,
-+			       struct delta_index_stats *stats)
-+{
-+	unsigned int z;
-+	const struct delta_zone *delta_zone;
-+
-+	memset(stats, 0, sizeof(struct delta_index_stats));
-+	for (z = 0; z < delta_index->zone_count; z++) {
-+		delta_zone = &delta_index->delta_zones[z];
-+		stats->rebalance_time += delta_zone->rebalance_time;
-+		stats->rebalance_count += delta_zone->rebalance_count;
-+		stats->record_count += delta_zone->record_count;
-+		stats->collision_count += delta_zone->collision_count;
-+		stats->discard_count += delta_zone->discard_count;
-+		stats->overflow_count += delta_zone->overflow_count;
-+		stats->list_count += delta_zone->list_count;
-+	}
-+}
-+
-+size_t uds_compute_delta_index_size(u32 entry_count, u32 mean_delta, u32 payload_bits)
-+{
-+	u16 min_bits;
-+	u32 incr_keys;
-+	u32 min_keys;
-+
-+	compute_coding_constants(mean_delta, &min_bits, &min_keys, &incr_keys);
-+	/* On average, each delta is encoded into about min_bits + 1.5 bits. */
-+	return entry_count * (payload_bits + min_bits + 1) + entry_count / 2;
-+}
-+
-+u32 uds_get_delta_index_page_count(u32 entry_count,
-+				   u32 list_count,
-+				   u32 mean_delta,
-+				   u32 payload_bits,
-+				   size_t bytes_per_page)
-+{
-+	unsigned int bits_per_delta_list;
-+	unsigned int bits_per_page;
-+	size_t bits_per_index;
-+
-+	/* Compute the expected number of bits needed for all the entries. */
-+	bits_per_index = uds_compute_delta_index_size(entry_count, mean_delta, payload_bits);
-+	bits_per_delta_list = bits_per_index / list_count;
-+
-+	/* Add in the immutable delta list headers. */
-+	bits_per_index += list_count * IMMUTABLE_HEADER_SIZE;
-+	/* Compute the number of usable bits on an immutable index page. */
-+	bits_per_page = ((bytes_per_page - sizeof(struct delta_page_header)) * BITS_PER_BYTE);
-+	/*
-+	 * Reduce the bits per page by one immutable delta list header and one delta list to
-+	 * account for internal fragmentation.
-+	 */
-+	bits_per_page -= IMMUTABLE_HEADER_SIZE + bits_per_delta_list;
-+	/* Now compute the number of pages needed. */
-+	return DIV_ROUND_UP(bits_per_index, bits_per_page);
-+}
-+
-+void uds_log_delta_index_entry(struct delta_index_entry *delta_entry)
-+{
-+	uds_log_ratelimit(uds_log_info,
-+			  "List 0x%X Key 0x%X Offset 0x%X%s%s List_size 0x%X%s",
-+			  delta_entry->list_number,
-+			  delta_entry->key,
-+			  delta_entry->offset,
-+			  delta_entry->at_end ? " end" : "",
-+			  delta_entry->is_collision ? " collision" : "",
-+			  delta_entry->delta_list->size,
-+			  delta_entry->list_overflow ? " overflow" : "");
-+	delta_entry->list_overflow = false;
-+}
-diff --git a/drivers/md/dm-vdo/delta-index.h b/drivers/md/dm-vdo/delta-index.h
+diff --git a/drivers/md/dm-vdo/index.h b/drivers/md/dm-vdo/index.h
 new file mode 100644
-index 000000000000..0b49b87a4c76
+index 000000000000..aca61cabc433
 --- /dev/null
-+++ b/drivers/md/dm-vdo/delta-index.h
-@@ -0,0 +1,292 @@
++++ b/drivers/md/dm-vdo/index.h
+@@ -0,0 +1,84 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_DELTA_INDEX_H
-+#define UDS_DELTA_INDEX_H
++#ifndef UDS_INDEX_H
++#define UDS_INDEX_H
++
++#include "index-layout.h"
++#include "index-session.h"
++#include "open-chapter.h"
++#include "volume.h"
++#include "volume-index.h"
++
++/*
++ * The index is a high-level structure which represents the totality of the UDS index. It manages
++ * the queues for incoming requests and dispatches them to the appropriate sub-components like the
++ * volume or the volume index. It also manages administrative tasks such as saving and loading the
++ * index.
++ *
++ * The index is divided into a number of independent zones and assigns each request to a zone based
++ * on its name. Most sub-components are similarly divided into zones as well so that requests in
++ * each zone usually operate without interference or coordination between zones.
++ */
++
++typedef void (*index_callback_t)(struct uds_request *request);
++
++struct index_zone {
++	struct uds_index *index;
++	struct open_chapter_zone *open_chapter;
++	struct open_chapter_zone *writing_chapter;
++	u64 oldest_virtual_chapter;
++	u64 newest_virtual_chapter;
++	unsigned int id;
++};
++
++struct uds_index {
++	bool has_saved_open_chapter;
++	bool need_to_save;
++	struct index_load_context *load_context;
++	struct index_layout *layout;
++	struct volume_index *volume_index;
++	struct volume *volume;
++	unsigned int zone_count;
++	struct index_zone **zones;
++
++	u64 oldest_virtual_chapter;
++	u64 newest_virtual_chapter;
++
++	u64 last_save;
++	u64 prev_save;
++	struct chapter_writer *chapter_writer;
++
++	index_callback_t callback;
++	struct uds_request_queue *triage_queue;
++	struct uds_request_queue *zone_queues[];
++};
++
++enum request_stage {
++	STAGE_TRIAGE,
++	STAGE_INDEX,
++	STAGE_MESSAGE,
++};
++
++int __must_check uds_make_index(struct configuration *config,
++				enum uds_open_index_type open_type,
++				struct index_load_context *load_context,
++				index_callback_t callback,
++				struct uds_index **new_index);
++
++int __must_check uds_save_index(struct uds_index *index);
++
++void uds_free_index(struct uds_index *index);
++
++int __must_check uds_replace_index_storage(struct uds_index *index,
++					   struct block_device *bdev);
++
++void uds_get_index_stats(struct uds_index *index, struct uds_index_stats *counters);
++
++void uds_enqueue_request(struct uds_request *request, enum request_stage stage);
++
++void uds_wait_for_idle_index(struct uds_index *index);
++
++#endif /* UDS_INDEX_H */
+diff --git a/drivers/md/dm-vdo/sparse-cache.c b/drivers/md/dm-vdo/sparse-cache.c
+new file mode 100644
+index 000000000000..b13aaa61e3f6
+--- /dev/null
++++ b/drivers/md/dm-vdo/sparse-cache.c
+@@ -0,0 +1,595 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "sparse-cache.h"
 +
 +#include <linux/cache.h>
++#include <linux/dm-bufio.h>
 +
++#include "chapter-index.h"
 +#include "config.h"
-+#include "io-factory.h"
-+#include "numeric.h"
-+#include "time-utils.h"
++#include "index.h"
++#include "logger.h"
++#include "memory-alloc.h"
++#include "permassert.h"
++#include "uds-threads.h"
 +
 +/*
-+ * A delta index is a key-value store, where each entry maps an address (the key) to a payload (the
-+ * value). The entries are sorted by address, and only the delta between successive addresses is
-+ * stored in the entry. The addresses are assumed to be uniformly distributed, and the deltas are
-+ * therefore exponentially distributed.
++ * Since the cache is small, it is implemented as a simple array of cache entries. Searching for a
++ * specific virtual chapter is implemented as a linear search. The cache replacement policy is
++ * least-recently-used (LRU). Again, the small size of the cache allows the LRU order to be
++ * maintained by shifting entries in an array list.
 + *
-+ * A delta_index can either be mutable or immutable depending on its expected use. The immutable
-+ * form of a delta index is used for the indexes of closed chapters committed to the volume. The
-+ * mutable form of a delta index is used by the volume index, and also by the chapter index in an
-+ * open chapter. Like the index as a whole, each mutable delta index is divided into a number of
-+ * independent zones.
++ * Changing the contents of the cache requires the coordinated participation of all zone threads
++ * via the careful use of barrier messages sent to all the index zones by the triage queue worker
++ * thread. The critical invariant for coordination is that the cache membership must not change
++ * between updates, so that all calls to uds_sparse_cache_contains() from the zone threads must all
++ * receive the same results for every virtual chapter number. To ensure that critical invariant,
++ * state changes such as "that virtual chapter is no longer in the volume" and "skip searching that
++ * chapter because it has had too many cache misses" are represented separately from the cache
++ * membership information (the virtual chapter number).
++ *
++ * As a result of this invariant, we have the guarantee that every zone thread will call
++ * uds_update_sparse_cache() once and exactly once to request a chapter that is not in the cache,
++ * and the serialization of the barrier requests from the triage queue ensures they will all
++ * request the same chapter number. This means the only synchronization we need can be provided by
++ * a pair of thread barriers used only in the uds_update_sparse_cache() call, providing a critical
++ * section where a single zone thread can drive the cache update while all the other zone threads
++ * are known to be blocked, waiting in the second barrier. Outside that critical section, all the
++ * zone threads implicitly hold a shared lock. Inside it, the thread for zone zero holds an
++ * exclusive lock. No other threads may access or modify the cache entries.
++ *
++ * Chapter statistics must only be modified by a single thread, which is also the zone zero thread.
++ * All fields that might be frequently updated by that thread are kept in separate cache-aligned
++ * structures so they will not cause cache contention via "false sharing" with the fields that are
++ * frequently accessed by all of the zone threads.
++ *
++ * The LRU order is managed independently by each zone thread, and each zone uses its own list for
++ * searching and cache membership queries. The zone zero list is used to decide which chapter to
++ * evict when the cache is updated, and its search list is copied to the other threads at that
++ * time.
++ *
++ * The virtual chapter number field of the cache entry is the single field indicating whether a
++ * chapter is a member of the cache or not. The value NO_CHAPTER is used to represent a null or
++ * undefined chapter number. When present in the virtual chapter number field of a
++ * cached_chapter_index, it indicates that the cache entry is dead, and all the other fields of
++ * that entry (other than immutable pointers to cache memory) are undefined and irrelevant. Any
++ * cache entry that is not marked as dead is fully defined and a member of the cache, and
++ * uds_sparse_cache_contains() will always return true for any virtual chapter number that appears
++ * in any of the cache entries.
++ *
++ * A chapter index that is a member of the cache may be excluded from searches between calls to
++ * uds_update_sparse_cache() in two different ways. First, when a chapter falls off the end of the
++ * volume, its virtual chapter number will be less that the oldest virtual chapter number. Since
++ * that chapter is no longer part of the volume, there's no point in continuing to search that
++ * chapter index. Once invalidated, that virtual chapter will still be considered a member of the
++ * cache, but it will no longer be searched for matching names.
++ *
++ * The second mechanism is a heuristic based on keeping track of the number of consecutive search
++ * misses in a given chapter index. Once that count exceeds a threshold, the skip_search flag will
++ * be set to true, causing the chapter to be skipped when searching the entire cache, but still
++ * allowing it to be found when searching for a hook in that specific chapter. Finding a hook will
++ * clear the skip_search flag, once again allowing the non-hook searches to use that cache entry.
++ * Again, regardless of the state of the skip_search flag, the virtual chapter must still
++ * considered to be a member of the cache for uds_sparse_cache_contains().
 + */
 +
-+struct delta_list {
-+	/* The offset of the delta list start, in bits */
-+	u64 start;
-+	/* The number of bits in the delta list */
-+	u16 size;
-+	/* Where the last search "found" the key, in bits */
-+	u16 save_offset;
-+	/* The key for the record just before save_offset */
-+	u32 save_key;
++enum {
++	SKIP_SEARCH_THRESHOLD = 20000,
++	ZONE_ZERO = 0,
 +};
 +
-+struct delta_zone {
-+	/* The delta list memory */
-+	u8 *memory;
-+	/* The delta list headers */
-+	struct delta_list *delta_lists;
-+	/* Temporary starts of delta lists */
-+	u64 *new_offsets;
-+	/* Buffered writer for saving an index */
-+	struct buffered_writer *buffered_writer;
-+	/* The size of delta list memory */
-+	size_t size;
-+	/* Nanoseconds spent rebalancing */
-+	ktime_t rebalance_time;
-+	/* Number of memory rebalances */
-+	u32 rebalance_count;
-+	/* The number of bits in a stored value */
-+	u8 value_bits;
-+	/* The number of bits in the minimal key code */
-+	u16 min_bits;
-+	/* The number of keys used in a minimal code */
-+	u32 min_keys;
-+	/* The number of keys used for another code bit */
-+	u32 incr_keys;
-+	/* The number of records in the index */
-+	u64 record_count;
-+	/* The number of collision records */
-+	u64 collision_count;
-+	/* The number of records removed */
-+	u64 discard_count;
-+	/* The number of UDS_OVERFLOW errors detected */
-+	u64 overflow_count;
-+	/* The index of the first delta list */
-+	u32 first_list;
-+	/* The number of delta lists */
-+	u32 list_count;
-+	/* Tag belonging to this delta index */
-+	u8 tag;
-+} __aligned(L1_CACHE_BYTES);
++/*
++ * These counters are essentially fields of the struct cached_chapter_index, but are segregated
++ * into this structure because they are frequently modified. They are grouped and aligned to keep
++ * them on different cache lines from the chapter fields that are accessed far more often than they
++ * are updated.
++ */
++struct __aligned(L1_CACHE_BYTES) cached_index_counters {
++	u64 consecutive_misses;
++};
 +
-+struct delta_list_save_info {
-+	/* Tag identifying which delta index this list is in */
-+	u8 tag;
-+	/* Bit offset of the start of the list data */
-+	u8 bit_offset;
-+	/* Number of bytes of list data */
-+	u16 byte_count;
-+	/* The delta list number within the delta index */
-+	u32 index;
-+} __packed;
++struct __aligned(L1_CACHE_BYTES) cached_chapter_index {
++	/*
++	 * The virtual chapter number of the cached chapter index. NO_CHAPTER means this cache
++	 * entry is unused. This field must only be modified in the critical section in
++	 * uds_update_sparse_cache().
++	 */
++	u64 virtual_chapter;
 +
-+struct delta_index {
-+	/* The zones */
-+	struct delta_zone *delta_zones;
-+	/* The number of zones */
++	u32 index_pages_count;
++
++	/*
++	 * These pointers are immutable during the life of the cache. The contents of the arrays
++	 * change when the cache entry is replaced.
++	 */
++	struct delta_index_page *index_pages;
++	struct dm_buffer **page_buffers;
++
++	/*
++	 * If set, skip the chapter when searching the entire cache. This flag is just a
++	 * performance optimization. This flag is mutable between cache updates, but it rarely
++	 * changes and is frequently accessed, so it groups with the immutable fields.
++	 */
++	bool skip_search;
++
++	/*
++	 * The cache-aligned counters change often and are placed at the end of the structure to
++	 * prevent false sharing with the more stable fields above.
++	 */
++	struct cached_index_counters counters;
++};
++
++/*
++ * A search_list represents an ordering of the sparse chapter index cache entry array, from most
++ * recently accessed to least recently accessed, which is the order in which the indexes should be
++ * searched and the reverse order in which they should be evicted from the cache.
++ *
++ * Cache entries that are dead or empty are kept at the end of the list, avoiding the need to even
++ * iterate over them to search, and ensuring that dead entries are replaced before any live entries
++ * are evicted.
++ *
++ * The search list is instantiated for each zone thread, avoiding any need for synchronization. The
++ * structure is allocated on a cache boundary to avoid false sharing of memory cache lines between
++ * zone threads.
++ */
++struct search_list {
++	u8 capacity;
++	u8 first_dead_entry;
++	struct cached_chapter_index *entries[];
++};
++
++struct sparse_cache {
++	const struct geometry *geometry;
++	unsigned int capacity;
 +	unsigned int zone_count;
-+	/* The number of delta lists */
-+	u32 list_count;
-+	/* Maximum lists per zone */
-+	u32 lists_per_zone;
-+	/* Total memory allocated to this index */
-+	size_t memory_size;
-+	/* The number of non-empty lists at load time per zone */
-+	u32 load_lists[MAX_ZONES];
-+	/* True if this index is mutable */
-+	bool mutable;
-+	/* Tag belonging to this delta index */
-+	u8 tag;
++
++	unsigned int skip_threshold;
++	struct search_list *search_lists[MAX_ZONES];
++	struct cached_chapter_index **scratch_entries;
++
++	struct barrier begin_update_barrier;
++	struct barrier end_update_barrier;
++
++	struct cached_chapter_index chapters[];
 +};
++
++static int __must_check
++initialize_cached_chapter_index(struct cached_chapter_index *chapter,
++				const struct geometry *geometry)
++{
++	int result;
++
++	chapter->virtual_chapter = NO_CHAPTER;
++	chapter->index_pages_count = geometry->index_pages_per_chapter;
++
++	result = UDS_ALLOCATE(chapter->index_pages_count,
++			      struct delta_index_page,
++			      __func__,
++			      &chapter->index_pages);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	return UDS_ALLOCATE(chapter->index_pages_count,
++			    struct dm_buffer *,
++			    "sparse index volume pages",
++			    &chapter->page_buffers);
++}
++
++static int __must_check make_search_list(struct sparse_cache *cache, struct search_list **list_ptr)
++{
++	struct search_list *list;
++	unsigned int bytes;
++	u8 i;
++	int result;
++
++	bytes = (sizeof(struct search_list) +
++		 (cache->capacity * sizeof(struct cached_chapter_index *)));
++	result = uds_allocate_cache_aligned(bytes, "search list", &list);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	list->capacity = cache->capacity;
++	list->first_dead_entry = 0;
++
++	for (i = 0; i < list->capacity; i++)
++		list->entries[i] = &cache->chapters[i];
++
++	*list_ptr = list;
++	return UDS_SUCCESS;
++}
++
++int uds_make_sparse_cache(const struct geometry *geometry,
++			  unsigned int capacity,
++			  unsigned int zone_count,
++			  struct sparse_cache **cache_ptr)
++{
++	int result;
++	unsigned int i;
++	struct sparse_cache *cache;
++	unsigned int bytes;
++
++	bytes = (sizeof(struct sparse_cache) + (capacity * sizeof(struct cached_chapter_index)));
++	result = uds_allocate_cache_aligned(bytes, "sparse cache", &cache);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	cache->geometry = geometry;
++	cache->capacity = capacity;
++	cache->zone_count = zone_count;
++
++	/*
++	 * Scale down the skip threshold since the cache only counts cache misses in zone zero, but
++	 * requests are being handled in all zones.
++	 */
++	cache->skip_threshold = (SKIP_SEARCH_THRESHOLD / zone_count);
++
++	result = uds_initialize_barrier(&cache->begin_update_barrier, zone_count);
++	if (result != UDS_SUCCESS) {
++		uds_free_sparse_cache(cache);
++		return result;
++	}
++
++	result = uds_initialize_barrier(&cache->end_update_barrier, zone_count);
++	if (result != UDS_SUCCESS) {
++		uds_free_sparse_cache(cache);
++		return result;
++	}
++
++	for (i = 0; i < capacity; i++) {
++		result = initialize_cached_chapter_index(&cache->chapters[i], geometry);
++		if (result != UDS_SUCCESS) {
++			uds_free_sparse_cache(cache);
++			return result;
++		}
++	}
++
++	for (i = 0; i < zone_count; i++) {
++		result = make_search_list(cache, &cache->search_lists[i]);
++		if (result != UDS_SUCCESS) {
++			uds_free_sparse_cache(cache);
++			return result;
++		}
++	}
++
++	/* purge_search_list() needs some temporary lists for sorting. */
++	result = UDS_ALLOCATE(capacity * 2,
++			      struct cached_chapter_index *,
++			      "scratch entries",
++			      &cache->scratch_entries);
++	if (result != UDS_SUCCESS) {
++		uds_free_sparse_cache(cache);
++		return result;
++	}
++
++	*cache_ptr = cache;
++	return UDS_SUCCESS;
++}
++
++static inline void set_skip_search(struct cached_chapter_index *chapter, bool skip_search)
++{
++	/* Check before setting to reduce cache line contention. */
++	if (READ_ONCE(chapter->skip_search) != skip_search)
++		WRITE_ONCE(chapter->skip_search, skip_search);
++}
++
++static void score_search_hit(struct cached_chapter_index *chapter)
++{
++	chapter->counters.consecutive_misses = 0;
++	set_skip_search(chapter, false);
++}
++
++static void score_search_miss(struct sparse_cache *cache, struct cached_chapter_index *chapter)
++{
++	chapter->counters.consecutive_misses++;
++	if (chapter->counters.consecutive_misses > cache->skip_threshold)
++		set_skip_search(chapter, true);
++}
++
++static void release_cached_chapter_index(struct cached_chapter_index *chapter)
++{
++	unsigned int i;
++
++	chapter->virtual_chapter = NO_CHAPTER;
++	if (chapter->page_buffers == NULL)
++		return;
++
++	for (i = 0; i < chapter->index_pages_count; i++)
++		if (chapter->page_buffers[i] != NULL)
++			dm_bufio_release(UDS_FORGET(chapter->page_buffers[i]));
++}
++
++void uds_free_sparse_cache(struct sparse_cache *cache)
++{
++	unsigned int i;
++
++	if (cache == NULL)
++		return;
++
++	UDS_FREE(cache->scratch_entries);
++
++	for (i = 0; i < cache->zone_count; i++)
++		UDS_FREE(cache->search_lists[i]);
++
++	for (i = 0; i < cache->capacity; i++) {
++		release_cached_chapter_index(&cache->chapters[i]);
++		UDS_FREE(cache->chapters[i].index_pages);
++		UDS_FREE(cache->chapters[i].page_buffers);
++	}
++
++	uds_destroy_barrier(&cache->begin_update_barrier);
++	uds_destroy_barrier(&cache->end_update_barrier);
++	UDS_FREE(cache);
++}
 +
 +/*
-+ * A delta_index_page describes a single page of a chapter index. The delta_index field allows the
-+ * page to be treated as an immutable delta_index. We use the delta_zone field to treat the chapter
-+ * index page as a single zone index, and without the need to do an additional memory allocation.
++ * Take the indicated element of the search list and move it to the start, pushing the pointers
++ * previously before it back down the list.
 + */
-+struct delta_index_page {
-+	struct delta_index delta_index;
-+	/* These values are loaded from the DeltaPageHeader */
-+	u32 lowest_list_number;
-+	u32 highest_list_number;
-+	u64 virtual_chapter_number;
-+	/* This structure describes the single zone of a delta index page. */
-+	struct delta_zone delta_zone;
-+};
++static inline void set_newest_entry(struct search_list *search_list, u8 index)
++{
++	struct cached_chapter_index *newest;
++
++	if (index > 0) {
++		newest = search_list->entries[index];
++		memmove(&search_list->entries[1],
++			&search_list->entries[0],
++			index * sizeof(struct cached_chapter_index *));
++		search_list->entries[0] = newest;
++	}
++
++	/*
++	 * This function may have moved a dead chapter to the front of the list for reuse, in which
++	 * case the set of dead chapters becomes smaller.
++	 */
++	if (search_list->first_dead_entry <= index)
++		search_list->first_dead_entry++;
++}
++
++bool uds_sparse_cache_contains(struct sparse_cache *cache,
++			       u64 virtual_chapter,
++			       unsigned int zone_number)
++{
++	struct search_list *search_list;
++	struct cached_chapter_index *chapter;
++	u8 i;
++
++	/*
++	 * The correctness of the barriers depends on the invariant that between calls to
++	 * uds_update_sparse_cache(), the answers this function returns must never vary: the result
++	 * for a given chapter must be identical across zones. That invariant must be maintained
++	 * even if the chapter falls off the end of the volume, or if searching it is disabled
++	 * because of too many search misses.
++	 */
++	search_list = cache->search_lists[zone_number];
++	for (i = 0; i < search_list->first_dead_entry; i++) {
++		chapter = search_list->entries[i];
++
++		if (virtual_chapter == chapter->virtual_chapter) {
++			if (zone_number == ZONE_ZERO)
++				score_search_hit(chapter);
++
++			set_newest_entry(search_list, i);
++			return true;
++		}
++	}
++
++	return false;
++}
 +
 +/*
-+ * Notes on the delta_index_entries:
-+ *
-+ * The fields documented as "public" can be read by any code that uses a delta_index. The fields
-+ * documented as "private" carry information between delta_index method calls and should not be
-+ * used outside the delta_index module.
-+ *
-+ * (1) The delta_index_entry is used like an iterator when searching a delta list.
-+ *
-+ * (2) It is also the result of a successful search and can be used to refer to the element found
-+ *     by the search.
-+ *
-+ * (3) It is also the result of an unsuccessful search and can be used to refer to the insertion
-+ *     point for a new record.
-+ *
-+ * (4) If at_end is true, the delta_list entry can only be used as the insertion point for a new
-+ *     record at the end of the list.
-+ *
-+ * (5) If at_end is false and is_collision is true, the delta_list entry fields refer to a
-+ *     collision entry in the list, and the delta_list entry can be used a a reference to this
-+ *     entry.
-+ *
-+ * (6) If at_end is false and is_collision is false, the delta_list entry fields refer to a
-+ *     non-collision entry in the list. Such delta_list entries can be used as a reference to a
-+ *     found entry, or an insertion point for a non-collision entry before this entry, or an
-+ *     insertion point for a collision entry that collides with this entry.
++ * Re-sort cache entries into three sets (active, skippable, and dead) while maintaining the LRU
++ * ordering that already existed. This operation must only be called during the critical section in
++ * uds_update_sparse_cache().
 + */
-+struct delta_index_entry {
-+	/* Public fields */
-+	/* The key for this entry */
-+	u32 key;
-+	/* We are after the last list entry */
-+	bool at_end;
-+	/* This record is a collision */
-+	bool is_collision;
++static void purge_search_list(struct search_list *search_list,
++			      struct sparse_cache *cache,
++			      u64 oldest_virtual_chapter)
++{
++	struct cached_chapter_index **entries;
++	struct cached_chapter_index **skipped;
++	struct cached_chapter_index **dead;
++	struct cached_chapter_index *chapter;
++	unsigned int next_alive = 0;
++	unsigned int next_skipped = 0;
++	unsigned int next_dead = 0;
++	unsigned int i;
 +
-+	/* Private fields */
-+	/* This delta list overflowed */
-+	bool list_overflow;
-+	/* The number of bits used for the value */
-+	u8 value_bits;
-+	/* The number of bits used for the entire entry */
-+	u16 entry_bits;
-+	/* The delta index zone */
-+	struct delta_zone *delta_zone;
-+	/* The delta list containing the entry */
-+	struct delta_list *delta_list;
-+	/* The delta list number */
-+	u32 list_number;
-+	/* Bit offset of this entry within the list */
-+	u16 offset;
-+	/* The delta between this and previous entry */
-+	u32 delta;
-+	/* Temporary delta list for immutable indices */
-+	struct delta_list temp_delta_list;
-+};
++	entries = &search_list->entries[0];
++	skipped = &cache->scratch_entries[0];
++	dead = &cache->scratch_entries[search_list->capacity];
 +
-+struct delta_index_stats {
-+	/* Number of bytes allocated */
-+	size_t memory_allocated;
-+	/* Nanoseconds spent rebalancing */
-+	ktime_t rebalance_time;
-+	/* Number of memory rebalances */
-+	u32 rebalance_count;
-+	/* The number of records in the index */
-+	u64 record_count;
-+	/* The number of collision records */
-+	u64 collision_count;
-+	/* The number of records removed */
-+	u64 discard_count;
-+	/* The number of UDS_OVERFLOW errors detected */
-+	u64 overflow_count;
-+	/* The number of delta lists */
-+	u32 list_count;
-+};
++	for (i = 0; i < search_list->first_dead_entry; i++) {
++		chapter = search_list->entries[i];
++		if ((chapter->virtual_chapter < oldest_virtual_chapter) ||
++		    (chapter->virtual_chapter == NO_CHAPTER))
++			dead[next_dead++] = chapter;
++		else if (chapter->skip_search)
++			skipped[next_skipped++] = chapter;
++		else
++			entries[next_alive++] = chapter;
++	}
 +
-+int __must_check uds_initialize_delta_index(struct delta_index *delta_index,
-+					    unsigned int zone_count,
-+					    u32 list_count,
-+					    u32 mean_delta,
-+					    u32 payload_bits,
-+					    size_t memory_size,
-+					    u8 tag);
++	memcpy(&entries[next_alive],
++	       skipped,
++	       next_skipped * sizeof(struct cached_chapter_index *));
++	memcpy(&entries[next_alive + next_skipped],
++	       dead,
++	       next_dead * sizeof(struct cached_chapter_index *));
++	search_list->first_dead_entry = next_alive + next_skipped;
++}
 +
-+int __must_check uds_initialize_delta_index_page(struct delta_index_page *delta_index_page,
-+						 u64 expected_nonce,
-+						 u32 mean_delta,
-+						 u32 payload_bits,
-+						 u8 *memory,
-+						 size_t memory_size);
++static int __must_check cache_chapter_index(struct cached_chapter_index *chapter,
++					    u64 virtual_chapter,
++					    const struct volume *volume)
++{
++	int result;
 +
-+void uds_uninitialize_delta_index(struct delta_index *delta_index);
++	release_cached_chapter_index(chapter);
 +
-+void uds_reset_delta_index(const struct delta_index *delta_index);
++	result = uds_read_chapter_index_from_volume(volume,
++						    virtual_chapter,
++						    chapter->page_buffers,
++						    chapter->index_pages);
++	if (result != UDS_SUCCESS)
++		return result;
 +
-+int __must_check uds_pack_delta_index_page(const struct delta_index *delta_index,
-+					   u64 header_nonce,
-+					   u8 *memory,
-+					   size_t memory_size,
-+					   u64 virtual_chapter_number,
-+					   u32 first_list,
-+					   u32 *list_count);
++	chapter->counters.consecutive_misses = 0;
++	chapter->virtual_chapter = virtual_chapter;
++	chapter->skip_search = false;
 +
-+int __must_check uds_start_restoring_delta_index(struct delta_index *delta_index,
-+						 struct buffered_reader **buffered_readers,
-+						 unsigned int reader_count);
++	return UDS_SUCCESS;
++}
 +
-+int __must_check uds_finish_restoring_delta_index(struct delta_index *delta_index,
-+						  struct buffered_reader **buffered_readers,
-+						  unsigned int reader_count);
++static inline void copy_search_list(const struct search_list *source, struct search_list *target)
++{
++	*target = *source;
++	memcpy(target->entries,
++	       source->entries,
++	       source->capacity * sizeof(struct cached_chapter_index *));
++}
 +
-+int __must_check
-+uds_check_guard_delta_lists(struct buffered_reader **buffered_readers, unsigned int reader_count);
++/*
++ * Update the sparse cache to contain a chapter index. This function must be called by all the zone
++ * threads with the same chapter number to correctly enter the thread barriers used to synchronize
++ * the cache updates.
++ */
++int uds_update_sparse_cache(struct index_zone *zone, u64 virtual_chapter)
++{
++	int result = UDS_SUCCESS;
++	const struct uds_index *index = zone->index;
++	struct sparse_cache *cache = index->volume->sparse_cache;
 +
-+int __must_check uds_start_saving_delta_index(const struct delta_index *delta_index,
-+					      unsigned int zone_number,
-+					      struct buffered_writer *buffered_writer);
++	if (uds_sparse_cache_contains(cache, virtual_chapter, zone->id))
++		return UDS_SUCCESS;
 +
-+int __must_check
-+uds_finish_saving_delta_index(const struct delta_index *delta_index, unsigned int zone_number);
++	/*
++	 * Wait for every zone thread to reach its corresponding barrier request and invoke this
++	 * function before starting to modify the cache.
++	 */
++	uds_enter_barrier(&cache->begin_update_barrier);
 +
-+int __must_check uds_write_guard_delta_list(struct buffered_writer *buffered_writer);
++	/*
++	 * This is the start of the critical section: the zone zero thread is captain, effectively
++	 * holding an exclusive lock on the sparse cache. All the other zone threads must do
++	 * nothing between the two barriers. They will wait at the end_update_barrier again for the
++	 * captain to finish the update.
++	 */
 +
-+size_t __must_check uds_compute_delta_index_save_bytes(u32 list_count, size_t memory_size);
++	if (zone->id == ZONE_ZERO) {
++		unsigned int z;
++		struct search_list *list = cache->search_lists[ZONE_ZERO];
 +
-+int __must_check uds_start_delta_index_search(const struct delta_index *delta_index,
-+					      u32 list_number,
-+					      u32 key,
-+					      struct delta_index_entry *iterator);
++		purge_search_list(list, cache, zone->oldest_virtual_chapter);
 +
-+int __must_check uds_next_delta_index_entry(struct delta_index_entry *delta_entry);
++		if (virtual_chapter >= index->oldest_virtual_chapter) {
++			set_newest_entry(list, list->capacity - 1);
++			result = cache_chapter_index(list->entries[0],
++						     virtual_chapter,
++						     index->volume);
++		}
 +
-+int __must_check uds_remember_delta_index_offset(const struct delta_index_entry *delta_entry);
++		for (z = 1; z < cache->zone_count; z++)
++			copy_search_list(list, cache->search_lists[z]);
++	}
 +
-+int __must_check uds_get_delta_index_entry(const struct delta_index *delta_index,
-+					   u32 list_number,
-+					   u32 key,
-+					   const u8 *name,
-+					   struct delta_index_entry *delta_entry);
++	/*
++	 * This is the end of the critical section. All cache invariants must have been restored.
++	 */
++	uds_enter_barrier(&cache->end_update_barrier);
++	return result;
++}
 +
-+int __must_check
-+uds_get_delta_entry_collision(const struct delta_index_entry *delta_entry, u8 *name);
++void uds_invalidate_sparse_cache(struct sparse_cache *cache)
++{
++	unsigned int i;
 +
-+u32 __must_check uds_get_delta_entry_value(const struct delta_index_entry *delta_entry);
++	for (i = 0; i < cache->capacity; i++)
++		release_cached_chapter_index(&cache->chapters[i]);
++}
 +
-+int __must_check uds_set_delta_entry_value(const struct delta_index_entry *delta_entry, u32 value);
++static inline bool should_skip_chapter(struct cached_chapter_index *chapter,
++				       u64 oldest_chapter,
++				       u64 requested_chapter)
++{
++	if ((chapter->virtual_chapter == NO_CHAPTER) ||
++	    (chapter->virtual_chapter < oldest_chapter))
++		return true;
 +
-+int __must_check uds_put_delta_index_entry(struct delta_index_entry *delta_entry,
-+					   u32 key,
-+					   u32 value,
-+					   const u8 *name);
++	if (requested_chapter != NO_CHAPTER)
++		return requested_chapter != chapter->virtual_chapter;
++	else
++		return READ_ONCE(chapter->skip_search);
++}
 +
-+int __must_check uds_remove_delta_index_entry(struct delta_index_entry *delta_entry);
++static int __must_check
++search_cached_chapter_index(struct cached_chapter_index *chapter,
++			    const struct geometry *geometry,
++			    const struct index_page_map *index_page_map,
++			    const struct uds_record_name *name,
++			    u16 *record_page_ptr)
++{
++	u32 physical_chapter = uds_map_to_physical_chapter(geometry, chapter->virtual_chapter);
++	u32 index_page_number = uds_find_index_page_number(index_page_map, name, physical_chapter);
++	struct delta_index_page *index_page = &chapter->index_pages[index_page_number];
 +
-+void uds_get_delta_index_stats(const struct delta_index *delta_index,
-+			       struct delta_index_stats *stats);
++	return uds_search_chapter_index_page(index_page, geometry, name, record_page_ptr);
++}
 +
-+size_t __must_check
-+uds_compute_delta_index_size(u32 entry_count, u32 mean_delta, u32 payload_bits);
++int uds_search_sparse_cache(struct index_zone *zone,
++			    const struct uds_record_name *name,
++			    u64 *virtual_chapter_ptr,
++			    u16 *record_page_ptr)
++{
++	int result;
++	struct volume *volume = zone->index->volume;
++	struct sparse_cache *cache = volume->sparse_cache;
++	struct cached_chapter_index *chapter;
++	struct search_list *search_list;
++	u8 i;
++	/* Search the entire cache unless a specific chapter was requested. */
++	bool search_one = (*virtual_chapter_ptr != NO_CHAPTER);
 +
-+u32 uds_get_delta_index_page_count(u32 entry_count,
-+				   u32 list_count,
-+				   u32 mean_delta,
-+				   u32 payload_bits,
-+				   size_t bytes_per_page);
++	*record_page_ptr = NO_CHAPTER_INDEX_ENTRY;
++	search_list = cache->search_lists[zone->id];
++	for (i = 0; i < search_list->first_dead_entry; i++) {
++		chapter = search_list->entries[i];
 +
-+void uds_log_delta_index_entry(struct delta_index_entry *delta_entry);
++		if (should_skip_chapter(chapter,
++					zone->oldest_virtual_chapter,
++					*virtual_chapter_ptr))
++			continue;
 +
-+#endif /* UDS_DELTA_INDEX_H */
-diff --git a/drivers/md/dm-vdo/hash-utils.h b/drivers/md/dm-vdo/hash-utils.h
++		result = search_cached_chapter_index(chapter,
++						     cache->geometry,
++						     volume->index_page_map,
++						     name,
++						     record_page_ptr);
++		if (result != UDS_SUCCESS)
++			return result;
++
++		if (*record_page_ptr != NO_CHAPTER_INDEX_ENTRY) {
++			/*
++			 * In theory, this might be a false match while a true match exists in
++			 * another chapter, but that's a very rare case and not worth the extra
++			 * search complexity.
++			 */
++			set_newest_entry(search_list, i);
++			if (zone->id == ZONE_ZERO)
++				score_search_hit(chapter);
++
++			*virtual_chapter_ptr = chapter->virtual_chapter;
++			return UDS_SUCCESS;
++		}
++
++		if (zone->id == ZONE_ZERO)
++			score_search_miss(cache, chapter);
++
++		if (search_one)
++			break;
++	}
++
++	return UDS_SUCCESS;
++}
+diff --git a/drivers/md/dm-vdo/sparse-cache.h b/drivers/md/dm-vdo/sparse-cache.h
 new file mode 100644
-index 000000000000..f371c7fd07bf
+index 000000000000..891175de762c
 --- /dev/null
-+++ b/drivers/md/dm-vdo/hash-utils.h
-@@ -0,0 +1,66 @@
++++ b/drivers/md/dm-vdo/sparse-cache.h
+@@ -0,0 +1,49 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_HASH_UTILS_H
-+#define UDS_HASH_UTILS_H
++#ifndef UDS_SPARSE_CACHE_H
++#define UDS_SPARSE_CACHE_H
 +
 +#include "geometry.h"
-+#include "numeric.h"
 +#include "uds.h"
 +
-+/* Utilities for extracting portions of a request name for various uses. */
++/*
++ * The sparse cache is a cache of entire chapter indexes from sparse chapters used for searching
++ * for names after all other search paths have failed. It contains only complete chapter indexes;
++ * record pages from sparse chapters and single index pages used for resolving hooks are kept in
++ * the regular page cache in the volume.
++ *
++ * The most important property of this cache is the absence of synchronization for read operations.
++ * Safe concurrent access to the cache by the zone threads is controlled by the triage queue and
++ * the barrier requests it issues to the zone queues. The set of cached chapters does not and must
++ * not change between the carefully coordinated calls to uds_update_sparse_cache() from the zone
++ * threads. Outside of updates, every zone will get the same result when calling
++ * uds_sparse_cache_contains() as every other zone.
++ */
 +
-+/* How various portions of a record name are apportioned. */
-+enum {
-+	VOLUME_INDEX_BYTES_OFFSET = 0,
-+	VOLUME_INDEX_BYTES_COUNT = 8,
-+	CHAPTER_INDEX_BYTES_OFFSET = 8,
-+	CHAPTER_INDEX_BYTES_COUNT = 6,
-+	SAMPLE_BYTES_OFFSET = 14,
-+	SAMPLE_BYTES_COUNT = 2,
-+};
++struct index_zone;
++struct sparse_cache;
 +
-+static inline u64 uds_extract_chapter_index_bytes(const struct  uds_record_name *name)
-+{
-+	const u8 *chapter_bits = &name->name[CHAPTER_INDEX_BYTES_OFFSET];
-+	u64 bytes = (u64) get_unaligned_be16(chapter_bits) << 32;
++int __must_check uds_make_sparse_cache(const struct geometry *geometry,
++				       unsigned int capacity,
++				       unsigned int zone_count,
++				       struct sparse_cache **cache_ptr);
 +
-+	bytes |= get_unaligned_be32(chapter_bits + 2);
-+	return bytes;
-+}
++void uds_free_sparse_cache(struct sparse_cache *cache);
 +
-+static inline u64 uds_extract_volume_index_bytes(const struct uds_record_name *name)
-+{
-+	return get_unaligned_be64(&name->name[VOLUME_INDEX_BYTES_OFFSET]);
-+}
++bool uds_sparse_cache_contains(struct sparse_cache *cache,
++			       u64 virtual_chapter,
++			       unsigned int zone_number);
 +
-+static inline u32 uds_extract_sampling_bytes(const struct uds_record_name *name)
-+{
-+	return get_unaligned_be16(&name->name[SAMPLE_BYTES_OFFSET]);
-+}
++int __must_check uds_update_sparse_cache(struct index_zone *zone, u64 virtual_chapter);
 +
-+/* Compute the chapter delta list for a given name. */
-+static inline u32
-+uds_hash_to_chapter_delta_list(const struct uds_record_name *name, const struct geometry *geometry)
-+{
-+	return ((uds_extract_chapter_index_bytes(name) >> geometry->chapter_address_bits) &
-+		((1 << geometry->chapter_delta_list_bits) - 1));
-+}
++void uds_invalidate_sparse_cache(struct sparse_cache *cache);
 +
-+/* Compute the chapter delta address for a given name. */
-+static inline u32
-+uds_hash_to_chapter_delta_address(const struct uds_record_name *name,
-+				  const struct geometry *geometry)
-+{
-+	return uds_extract_chapter_index_bytes(name) & ((1 << geometry->chapter_address_bits) - 1);
-+}
++int __must_check uds_search_sparse_cache(struct index_zone *zone,
++					 const struct uds_record_name *name,
++					 u64 *virtual_chapter_ptr,
++					 u16 *record_page_ptr);
 +
-+static inline unsigned int
-+uds_name_to_hash_slot(const struct uds_record_name *name, unsigned int slot_count)
-+{
-+	return (unsigned int) (uds_extract_chapter_index_bytes(name) % slot_count);
-+}
-+
-+#endif /* UDS_HASH_UTILS_H */
++#endif /* UDS_SPARSE_CACHE_H */
 -- 
 2.40.0
 
