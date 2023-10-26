@@ -1,45 +1,45 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E4B153F4BC
-	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:51 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 80E493E489
+	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:46 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TX0GFFVL"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Wt8SEFGI"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698356510;
+	s=mimecast20190719; t=1698356505;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=payuzbiSCsa5GeWGRuB9Zq2l2VcFyo+AMJMii6kgC0I=;
-	b=TX0GFFVLSxq1Pnjsw0GoirWuLhA/gNsxtoMP5HCOghoo1MRaJ/u3kHvDD28booC2FXrcIN
-	wp//V267H4RWoyuZrQg549SHdXYc7huIi9Cr8yjOkI6q4ne6LnZD5r6VUJ2St5G6d2L4FS
-	I38/65E29lZvwNaY+u93hfR8R5x7qzI=
+	bh=BbJB2yij4eneO6j8G/VsGLsB8aznACfTOUh/fqF9zq8=;
+	b=Wt8SEFGIKXOLjZTokmuP21QEYiGKTGxG0EAXBr764SNZSFpn8RoCHchn7cju3EMU3mEAAP
+	WcSSa+3cIWgHvNsgKm6n0+ShgBF6A4PWuc82jJYpFi6fsEniEKixykxaaewBQnRffzl/5L
+	o1PbQwroqPXVk9nrNPihM3KdJnmIMC0=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-271-nANN7grsNKiJIgY5KkTZHw-1; Thu, 26 Oct 2023 17:41:43 -0400
-X-MC-Unique: nANN7grsNKiJIgY5KkTZHw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-228-w6a2Z7dyOUS1poTitKVI_A-1; Thu, 26 Oct 2023 17:41:43 -0400
+X-MC-Unique: w6a2Z7dyOUS1poTitKVI_A-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BF49F88D185;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D960E80F922;
 	Thu, 26 Oct 2023 21:41:42 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A571C1121320;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C54402949;
 	Thu, 26 Oct 2023 21:41:42 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id 5BA1A3003C; Thu, 26 Oct 2023 17:41:42 -0400 (EDT)
+	id 850933003B; Thu, 26 Oct 2023 17:41:42 -0400 (EDT)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v4 32/39] dm vdo: add repair of damaged vdo volumes
-Date: Thu, 26 Oct 2023 17:41:29 -0400
-Message-Id: <20231026214136.1067410-33-msakai@redhat.com>
+Subject: [PATCH v4 33/39] dm vdo: add the primary vdo structure
+Date: Thu, 26 Oct 2023 17:41:30 -0400
+Message-Id: <20231026214136.1067410-34-msakai@redhat.com>
 In-Reply-To: <20231026214136.1067410-1-msakai@redhat.com>
 References: <20231026214136.1067410-1-msakai@redhat.com>
 Precedence: bulk
@@ -49,16 +49,11 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.3
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
 
-When a vdo is restarted after a crash, it will automatically attempt to
-recover from its journals.
-
-If a vdo encounters an unrecoverable error, it will enter read-only mode.
-This mode indicates that some previously acknowledged data may have been
-lost. The vdo may be instructed to rebuild as best it can in order to
-return to a writable state. Although some data may be lost, this process
-will ensure that the vdo's own metadata is self-consistent.
+Add the data and methods that manage the dm-vdo target itself. This
+includes the overall state of the target and its threads, the state of
+the logical volumes, startup, shutdown, and statistics.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
@@ -68,1813 +63,2250 @@ Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
 Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/repair.c | 1775 ++++++++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/repair.h |   14 +
- 2 files changed, 1789 insertions(+)
- create mode 100644 drivers/md/dm-vdo/repair.c
- create mode 100644 drivers/md/dm-vdo/repair.h
+ drivers/md/dm-vdo/vdo.c | 1845 +++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/vdo.h |  381 ++++++++
+ 2 files changed, 2226 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/vdo.c
+ create mode 100644 drivers/md/dm-vdo/vdo.h
 
-diff --git a/drivers/md/dm-vdo/repair.c b/drivers/md/dm-vdo/repair.c
+diff --git a/drivers/md/dm-vdo/vdo.c b/drivers/md/dm-vdo/vdo.c
 new file mode 100644
-index 000000000000..3f4aa570befc
+index 000000000000..72cbe6921893
 --- /dev/null
-+++ b/drivers/md/dm-vdo/repair.c
-@@ -0,0 +1,1775 @@
++++ b/drivers/md/dm-vdo/vdo.c
+@@ -0,0 +1,1845 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "repair.h"
++/*
++ * This file contains the main entry points for normal operations on a vdo as well as functions for
++ * constructing and destroying vdo instances (in memory).
++ */
 +
-+#include <linux/min_heap.h>
-+#include <linux/minmax.h>
++/**
++ * DOC:
++ *
++ * A read_only_notifier has a single completion which is used to perform read-only notifications,
++ * however, vdo_enter_read_only_mode() may be called from any thread. A pair of fields, protected
++ * by a spinlock, are used to control the read-only mode entry process. The first field holds the
++ * read-only error. The second is the state field, which may hold any of the four special values
++ * enumerated here.
++ *
++ * When vdo_enter_read_only_mode() is called from some vdo thread, if the read_only_error field
++ * already contains an error (i.e. its value is not VDO_SUCCESS), then some other error has already
++ * initiated the read-only process, and nothing more is done. Otherwise, the new error is stored in
++ * the read_only_error field, and the state field is consulted. If the state is MAY_NOTIFY, it is
++ * set to NOTIFYING, and the notification process begins. If the state is MAY_NOT_NOTIFY, then
++ * notifications are currently disallowed, generally due to the vdo being suspended. In this case,
++ * the nothing more will be done until the vdo is resumed, at which point the notification will be
++ * performed. In any other case, the vdo is already read-only, and there is nothing more to do.
++ */
++
++#include "vdo.h"
++
++#include <linux/completion.h>
++#include <linux/device-mapper.h>
++#include <linux/kernel.h>
++#include <linux/lz4.h>
++#include <linux/module.h>
++#include <linux/mutex.h>
++#include <linux/spinlock.h>
++#include <linux/types.h>
 +
 +#include "logger.h"
 +#include "memory-alloc.h"
 +#include "permassert.h"
++#include "string-utils.h"
 +
 +#include "block-map.h"
 +#include "completion.h"
-+#include "constants.h"
++#include "data-vio.h"
++#include "dedupe.h"
 +#include "encodings.h"
-+#include "int-map.h"
 +#include "io-submitter.h"
++#include "logical-zone.h"
++#include "packer.h"
++#include "physical-zone.h"
++#include "pool-sysfs.h"
 +#include "recovery-journal.h"
 +#include "slab-depot.h"
-+#include "types.h"
-+#include "vdo.h"
-+#include "wait-queue.h"
++#include "statistics.h"
++#include "status-codes.h"
++#include "vio.h"
++#include "work-queue.h"
 +
-+/*
-+ * An explicitly numbered block mapping. Numbering the mappings allows them to be sorted by logical
-+ * block number during repair while still preserving the relative order of journal entries with
-+ * the same logical block number.
-+ */
-+struct numbered_block_mapping {
-+	struct block_map_slot block_map_slot;
-+	struct block_map_entry block_map_entry;
-+	/* A serial number to use during replay */
-+	u32 number;
-+} __packed;
 +
-+/*
-+ * The absolute position of an entry in the recovery journal, including the sector number and the
-+ * entry number within the sector.
-+ */
-+struct recovery_point {
-+	/* Block sequence number */
-+	sequence_number_t sequence_number;
-+	/* Sector number */
-+	u8 sector_count;
-+	/* Entry number */
-+	journal_entry_count_t entry_count;
-+	/* Whether or not the increment portion of the current entry has been applied */
-+	bool increment_applied;
-+};
++enum { PARANOID_THREAD_CONSISTENCY_CHECKS = 0 };
 +
-+struct repair_completion {
-+	/* The completion header */
-+	struct vdo_completion completion;
-+
-+	/* A buffer to hold the data read off disk */
-+	char *journal_data;
-+
-+	/* For loading the journal */
-+	data_vio_count_t vio_count;
-+	data_vio_count_t vios_complete;
-+	struct vio *vios;
-+
-+	/* The number of entries to be applied to the block map */
-+	size_t block_map_entry_count;
-+	/* The sequence number of the first valid block for block map recovery */
-+	sequence_number_t block_map_head;
-+	/* The sequence number of the first valid block for slab journal replay */
-+	sequence_number_t slab_journal_head;
-+	/* The sequence number of the last valid block of the journal (if known) */
-+	sequence_number_t tail;
-+	/*
-+	 * The highest sequence number of the journal. During recovery (vs read-only rebuild), not
-+	 * the same as the tail, since the tail ignores blocks after the first hole.
-+	 */
-+	sequence_number_t highest_tail;
-+
-+	/* The number of logical blocks currently known to be in use */
-+	block_count_t logical_blocks_used;
-+	/* The number of block map data blocks known to be allocated */
-+	block_count_t block_map_data_blocks;
-+
-+	/* These fields are for playing the journal into the block map */
-+	/* The entry data for the block map recovery */
-+	struct numbered_block_mapping *entries;
-+	/* The number of entries in the entry array */
-+	size_t entry_count;
-+	/* number of pending (non-ready) requests*/
-+	page_count_t outstanding;
-+	/* number of page completions */
-+	page_count_t page_count;
-+	bool launching;
-+	/*
-+	 * a heap wrapping journal_entries. It re-orders and sorts journal entries in ascending LBN
-+	 * order, then original journal order. This permits efficient iteration over the journal
-+	 * entries in order.
-+	 */
-+	struct min_heap replay_heap;
-+	/* Fields tracking progress through the journal entries. */
-+	struct numbered_block_mapping *current_entry;
-+	struct numbered_block_mapping *current_unfetched_entry;
-+	/* Current requested page's PBN */
-+	physical_block_number_t pbn;
-+
-+	/* These fields are only used during recovery. */
-+	/* A location just beyond the last valid entry of the journal */
-+	struct recovery_point tail_recovery_point;
-+	/* The location of the next recovery journal entry to apply */
-+	struct recovery_point next_recovery_point;
-+	/* The journal point to give to the next synthesized decref */
-+	struct journal_point next_journal_point;
-+	/* The number of entries played into slab journals */
-+	size_t entries_added_to_slab_journals;
-+
-+	/* These fields are only used during read-only rebuild */
-+	page_count_t page_to_fetch;
-+	/* the number of leaf pages in the block map */
-+	page_count_t leaf_pages;
-+	/* the last slot of the block map */
-+	struct block_map_slot last_slot;
-+
-+	/*
-+	 * The page completions used for playing the journal into the block map, and, during
-+	 * read-only rebuild, for rebuilding the reference counts from the block map.
-+	 */
-+	struct vdo_page_completion page_completions[];
++struct sync_completion {
++	struct vdo_completion vdo_completion;
++	struct completion completion;
 +};
 +
 +/*
-+ * This is a min_heap callback function that orders numbered_block_mappings using the
-+ * 'block_map_slot' field as the primary key and the mapping 'number' field as the secondary key.
-+ * Using the mapping number preserves the journal order of entries for the same slot, allowing us
-+ * to sort by slot while still ensuring we replay all entries with the same slot in the exact order
-+ * as they appeared in the journal.
++ * We don't expect this set to ever get really large, so a linked list is adequate. We can use a
++ * pointer_map if we need to later.
 + */
-+static bool mapping_is_less_than(const void *item1, const void *item2)
-+{
-+	const struct numbered_block_mapping *mapping1 =
-+		(const struct numbered_block_mapping *) item1;
-+	const struct numbered_block_mapping *mapping2 =
-+		(const struct numbered_block_mapping *) item2;
-+
-+	if (mapping1->block_map_slot.pbn != mapping2->block_map_slot.pbn)
-+		return mapping1->block_map_slot.pbn < mapping2->block_map_slot.pbn;
-+
-+	if (mapping1->block_map_slot.slot != mapping2->block_map_slot.slot)
-+		return mapping1->block_map_slot.slot < mapping2->block_map_slot.slot;
-+
-+	if (mapping1->number != mapping2->number)
-+		return mapping1->number < mapping2->number;
-+
-+	return 0;
-+}
-+
-+static void swap_mappings(void *item1, void *item2)
-+{
-+	struct numbered_block_mapping *mapping1 = item1;
-+	struct numbered_block_mapping *mapping2 = item2;
-+
-+	swap(*mapping1, *mapping2);
-+}
-+
-+static const struct min_heap_callbacks repair_min_heap = {
-+	.elem_size = sizeof(struct numbered_block_mapping),
-+	.less = mapping_is_less_than,
-+	.swp = swap_mappings,
++struct device_registry {
++	struct list_head links;
++	/* TODO: Convert to rcu per kernel recommendation. */
++	rwlock_t lock;
 +};
 +
-+static struct numbered_block_mapping *
-+sort_next_heap_element(struct repair_completion *repair)
++static struct device_registry registry;
++
++/**
++ * vdo_initialize_device_registry_once() - Initialize the necessary structures for the device
++ *                                         registry.
++ */
++void vdo_initialize_device_registry_once(void)
 +{
-+	struct min_heap *heap = &repair->replay_heap;
-+	struct numbered_block_mapping *last;
++	INIT_LIST_HEAD(&registry.links);
++	rwlock_init(&registry.lock);
++}
 +
-+	if (heap->nr == 0)
-+		return NULL;
-+
-+	/*
-+	 * Swap the next heap element with the last one on the heap, popping it off the heap,
-+	 * restore the heap invariant, and return a pointer to the popped element.
-+	 */
-+	last = &repair->entries[--heap->nr];
-+	swap_mappings(heap->data, last);
-+	min_heapify(heap, 0, &repair_min_heap);
-+	return last;
++/** vdo_is_equal() - Implements vdo_filter_t. */
++static bool vdo_is_equal(struct vdo *vdo, const void *context)
++{
++	return ((void *) vdo == context);
 +}
 +
 +/**
-+ * as_repair_completion() - Convert a generic completion to a repair_completion.
-+ * @completion: The completion to convert.
++ * filter_vdos_locked() - Find a vdo in the registry if it exists there.
++ * @filter: The filter function to apply to devices.
++ * @context: A bit of context to provide the filter.
 + *
-+ * Return: The repair_completion.
-+ */
-+static inline struct repair_completion * __must_check
-+as_repair_completion(struct vdo_completion *completion)
-+{
-+	vdo_assert_completion_type(completion, VDO_REPAIR_COMPLETION);
-+	return container_of(completion, struct repair_completion, completion);
-+}
-+
-+static void prepare_repair_completion(struct repair_completion *repair,
-+				      vdo_action *callback,
-+				      enum vdo_zone_type zone_type)
-+{
-+	struct vdo_completion *completion = &repair->completion;
-+	const struct thread_config *thread_config = &completion->vdo->thread_config;
-+	thread_id_t thread_id;
-+
-+	/* All blockmap access is done on single thread, so use logical zone 0. */
-+	thread_id = ((zone_type == VDO_ZONE_TYPE_LOGICAL) ?
-+		     thread_config->logical_threads[0] :
-+		     thread_config->admin_thread);
-+	vdo_reset_completion(completion);
-+	vdo_set_completion_callback(completion, callback, thread_id);
-+}
-+
-+static void launch_repair_completion(struct repair_completion *repair,
-+				     vdo_action *callback,
-+				     enum vdo_zone_type zone_type)
-+{
-+	prepare_repair_completion(repair, callback, zone_type);
-+	vdo_launch_completion(&repair->completion);
-+}
-+
-+static void uninitialize_vios(struct repair_completion *repair)
-+{
-+	while (repair->vio_count > 0)
-+		free_vio_components(&repair->vios[--repair->vio_count]);
-+
-+	UDS_FREE(UDS_FORGET(repair->vios));
-+}
-+
-+static void free_repair_completion(struct repair_completion *repair)
-+{
-+	if (repair == NULL)
-+		return;
-+
-+	/*
-+	 * We do this here because this function is the only common bottleneck for all clean up
-+	 * paths.
-+	 */
-+	repair->completion.vdo->block_map->zones[0].page_cache.rebuilding = false;
-+
-+	uninitialize_vios(repair);
-+	UDS_FREE(UDS_FORGET(repair->journal_data));
-+	UDS_FREE(UDS_FORGET(repair->entries));
-+	UDS_FREE(repair);
-+}
-+
-+static void finish_repair(struct vdo_completion *completion)
-+{
-+	struct vdo_completion *parent = completion->parent;
-+	struct vdo *vdo = completion->vdo;
-+	struct repair_completion *repair = as_repair_completion(completion);
-+
-+	vdo_assert_on_admin_thread(vdo, __func__);
-+
-+	if (vdo->load_state != VDO_REBUILD_FOR_UPGRADE)
-+		vdo->states.vdo.complete_recoveries++;
-+
-+	vdo_initialize_recovery_journal_post_repair(vdo->recovery_journal,
-+						    vdo->states.vdo.complete_recoveries,
-+						    repair->highest_tail,
-+						    repair->logical_blocks_used,
-+						    repair->block_map_data_blocks);
-+	free_repair_completion(UDS_FORGET(repair));
-+
-+	if (vdo_state_requires_read_only_rebuild(vdo->load_state)) {
-+		uds_log_info("Read-only rebuild complete");
-+		vdo_launch_completion(parent);
-+		return;
-+	}
-+
-+	/* FIXME: shouldn't this say either "recovery" or "repair"? */
-+	uds_log_info("Rebuild complete");
-+
-+	/*
-+	 * Now that we've freed the repair completion and its vast array of journal entries, we
-+	 * can allocate refcounts.
-+	 */
-+	vdo_continue_completion(parent, vdo_allocate_reference_counters(vdo->depot));
-+}
-+
-+/**
-+ * abort_repair() - Handle a repair error.
-+ * @completion: The repair completion.
-+ */
-+static void abort_repair(struct vdo_completion *completion)
-+{
-+	struct vdo_completion *parent = completion->parent;
-+	int result = completion->result;
-+	struct repair_completion *repair = as_repair_completion(completion);
-+
-+	if (vdo_state_requires_read_only_rebuild(completion->vdo->load_state))
-+		uds_log_info("Read-only rebuild aborted");
-+	else
-+		uds_log_warning("Recovery aborted");
-+
-+	free_repair_completion(UDS_FORGET(repair));
-+	vdo_continue_completion(parent, result);
-+}
-+
-+/**
-+ * abort_on_error() - Abort a repair if there is an error.
-+ * @result: The result to check.
-+ * @repair: The repair completion.
++ * Context: Must be called holding the lock.
 + *
-+ * Return: true if the result was an error.
++ * Return: the vdo object found, if any.
 + */
-+static bool __must_check abort_on_error(int result, struct repair_completion *repair)
++static struct vdo * __must_check filter_vdos_locked(vdo_filter_t *filter, const void *context)
 +{
-+	if (result == VDO_SUCCESS)
-+		return false;
++	struct vdo *vdo;
 +
-+	vdo_fail_completion(&repair->completion, result);
-+	return true;
++	list_for_each_entry(vdo, &registry.links, registration)
++		if (filter(vdo, context))
++			return vdo;
++
++	return NULL;
 +}
 +
 +/**
-+ * drain_slab_depot() - Flush out all dirty refcounts blocks now that they have been rebuilt or
-+ *                      recovered.
++ * vdo_find_matching() - Find and return the first (if any) vdo matching a given filter function.
++ * @filter: The filter function to apply to vdos.
++ * @context: A bit of context to provide the filter.
 + */
-+static void drain_slab_depot(struct vdo_completion *completion)
++struct vdo *vdo_find_matching(vdo_filter_t *filter, const void *context)
 +{
-+	struct vdo *vdo = completion->vdo;
-+	struct repair_completion *repair = as_repair_completion(completion);
-+	const struct admin_state_code *operation;
++	struct vdo *vdo;
 +
-+	vdo_assert_on_admin_thread(vdo, __func__);
-+
-+	prepare_repair_completion(repair, finish_repair, VDO_ZONE_TYPE_ADMIN);
-+	if (vdo_state_requires_read_only_rebuild(vdo->load_state)) {
-+		uds_log_info("Saving rebuilt state");
-+		operation = VDO_ADMIN_STATE_REBUILDING;
-+	} else {
-+		uds_log_info("Replayed %zu journal entries into slab journals",
-+			     repair->entries_added_to_slab_journals);
-+		operation = VDO_ADMIN_STATE_RECOVERING;
-+	}
-+
-+	vdo_drain_slab_depot(vdo->depot, operation, completion);
++	read_lock(&registry.lock);
++	vdo = filter_vdos_locked(filter, context);
++	read_unlock(&registry.lock);
++	return vdo;
 +}
 +
-+/**
-+ * flush_block_map_updates() - Flush the block map now that all the reference counts are rebuilt.
-+ * @completion: The repair completion.
-+ *
-+ * This callback is registered in finish_if_done().
-+ */
-+static void flush_block_map_updates(struct vdo_completion *completion)
++static void start_vdo_request_queue(void *ptr)
 +{
-+	vdo_assert_on_admin_thread(completion->vdo, __func__);
++	struct vdo_thread *thread = vdo_get_work_queue_owner(vdo_get_current_work_queue());
 +
-+	uds_log_info("Flushing block map changes");
-+	prepare_repair_completion(as_repair_completion(completion),
-+				  drain_slab_depot,
-+				  VDO_ZONE_TYPE_ADMIN);
-+	vdo_drain_block_map(completion->vdo->block_map, VDO_ADMIN_STATE_RECOVERING, completion);
++	uds_register_allocating_thread(&thread->allocating_thread,
++				       &thread->vdo->allocations_allowed);
 +}
 +
-+static bool fetch_page(struct repair_completion *repair, struct vdo_completion *completion);
-+
-+/**
-+ * handle_page_load_error() - Handle an error loading a page.
-+ * @completion: The vdo_page_completion.
-+ */
-+static void handle_page_load_error(struct vdo_completion *completion)
++static void finish_vdo_request_queue(void *ptr)
 +{
-+	struct repair_completion *repair = completion->parent;
-+
-+	repair->outstanding--;
-+	vdo_set_completion_result(&repair->completion, completion->result);
-+	vdo_release_page_completion(completion);
-+	fetch_page(repair, completion);
++	uds_unregister_allocating_thread();
 +}
 +
-+/**
-+ * unmap_entry() - Unmap an invalid entry and indicate that its page must be written out.
-+ * @page: The page containing the entries
-+ * @completion: The page_completion for writing the page
-+ * @slot: The slot to unmap
-+ */
++#ifdef MODULE
++#define MODULE_NAME THIS_MODULE->name
++#else
++#define MODULE_NAME "dm-vdo"
++#endif  /* MODULE */
++
++static const struct vdo_work_queue_type default_queue_type = {
++	.start = start_vdo_request_queue,
++	.finish = finish_vdo_request_queue,
++	.max_priority = VDO_DEFAULT_Q_MAX_PRIORITY,
++	.default_priority = VDO_DEFAULT_Q_COMPLETION_PRIORITY,
++};
++
++static const struct vdo_work_queue_type bio_ack_q_type = {
++	.start = NULL,
++	.finish = NULL,
++	.max_priority = BIO_ACK_Q_MAX_PRIORITY,
++	.default_priority = BIO_ACK_Q_ACK_PRIORITY,
++};
++
++static const struct vdo_work_queue_type cpu_q_type = {
++	.start = NULL,
++	.finish = NULL,
++	.max_priority = CPU_Q_MAX_PRIORITY,
++	.default_priority = CPU_Q_MAX_PRIORITY,
++};
++
++static void uninitialize_thread_config(struct thread_config *config)
++{
++	UDS_FREE(UDS_FORGET(config->logical_threads));
++	UDS_FREE(UDS_FORGET(config->physical_threads));
++	UDS_FREE(UDS_FORGET(config->hash_zone_threads));
++	UDS_FREE(UDS_FORGET(config->bio_threads));
++	memset(config, 0, sizeof(struct thread_config));
++}
++
 +static void
-+unmap_entry(struct block_map_page *page, struct vdo_completion *completion, slot_number_t slot)
++assign_thread_ids(struct thread_config *config, thread_id_t thread_ids[], zone_count_t count)
 +{
-+	page->entries[slot] = UNMAPPED_BLOCK_MAP_ENTRY;
-+	vdo_request_page_write(completion);
++	zone_count_t zone;
++
++	for (zone = 0; zone < count; zone++)
++		thread_ids[zone] = config->thread_count++;
 +}
 +
 +/**
-+ * remove_out_of_bounds_entries() - Unmap entries which outside the logical space.
-+ * @page: The page containing the entries
-+ * @completion: The page_completion for writing the page
-+ * @start: The first slot to check
-+ */
-+static void remove_out_of_bounds_entries(struct block_map_page *page,
-+					 struct vdo_completion *completion,
-+					 slot_number_t start)
-+{
-+	slot_number_t slot;
-+
-+	for (slot = start; slot < VDO_BLOCK_MAP_ENTRIES_PER_PAGE; slot++) {
-+		struct data_location mapping = vdo_unpack_block_map_entry(&page->entries[slot]);
-+
-+		if (vdo_is_mapped_location(&mapping))
-+			unmap_entry(page, completion, slot);
-+	}
-+}
-+
-+/**
-+ * process_slot() - Update the reference counts for a single entry.
-+ * @page: The page containing the entries
-+ * @completion: The page_completion for writing the page
-+ * @slot: The slot to check
++ * initialize_thread_config() - Initialize the thread mapping
 + *
-+ * Return: true if the entry was a valid mapping
++ * If the logical, physical, and hash zone counts are all 0, a single thread will be shared by all
++ * three plus the packer and recovery journal. Otherwise, there must be at least one of each type,
++ * and each will have its own thread, as will the packer and recovery journal.
++ *
++ * Return: VDO_SUCCESS or an error.
 + */
-+static bool
-+process_slot(struct block_map_page *page, struct vdo_completion *completion, slot_number_t slot)
++static int __must_check
++initialize_thread_config(struct thread_count_config counts, struct thread_config *config)
 +{
-+	struct slab_depot *depot = completion->vdo->depot;
 +	int result;
-+	struct data_location mapping = vdo_unpack_block_map_entry(&page->entries[slot]);
++	bool single = ((counts.logical_zones + counts.physical_zones + counts.hash_zones) == 0);
 +
-+	if (!vdo_is_valid_location(&mapping)) {
-+		/* This entry is invalid, so remove it from the page. */
-+		unmap_entry(page, completion, slot);
-+		return false;
++	config->bio_thread_count = counts.bio_threads;
++	if (single) {
++		config->logical_zone_count = 1;
++		config->physical_zone_count = 1;
++		config->hash_zone_count = 1;
++	} else {
++		config->logical_zone_count = counts.logical_zones;
++		config->physical_zone_count = counts.physical_zones;
++		config->hash_zone_count = counts.hash_zones;
 +	}
 +
-+	if (!vdo_is_mapped_location(&mapping))
-+		return false;
-+
-+
-+	if (mapping.pbn == VDO_ZERO_BLOCK)
-+		return true;
-+
-+	if (!vdo_is_physical_data_block(depot, mapping.pbn)) {
-+		/*
-+		 * This is a nonsense mapping. Remove it from the map so we're at least consistent
-+		 * and mark the page dirty.
-+		 */
-+		unmap_entry(page, completion, slot);
-+		return false;
++	result = UDS_ALLOCATE(config->logical_zone_count,
++			      thread_id_t,
++			      "logical thread array",
++			      &config->logical_threads);
++	if (result != VDO_SUCCESS) {
++		uninitialize_thread_config(config);
++		return result;
 +	}
 +
-+	result = vdo_adjust_reference_count_for_rebuild(depot,
-+							mapping.pbn,
-+							VDO_JOURNAL_DATA_REMAPPING);
-+	if (result == VDO_SUCCESS)
-+		return true;
++	result = UDS_ALLOCATE(config->physical_zone_count,
++			      thread_id_t,
++			      "physical thread array",
++			      &config->physical_threads);
++	if (result != VDO_SUCCESS) {
++		uninitialize_thread_config(config);
++		return result;
++	}
 +
-+	uds_log_error_strerror(result,
-+			       "Could not adjust reference count for PBN %llu, slot %u mapped to PBN %llu",
-+			       (unsigned long long) vdo_get_block_map_page_pbn(page),
-+			       slot,
-+			       (unsigned long long) mapping.pbn);
-+	unmap_entry(page, completion, slot);
++	result = UDS_ALLOCATE(config->hash_zone_count,
++			      thread_id_t,
++			      "hash thread array",
++			      &config->hash_zone_threads);
++	if (result != VDO_SUCCESS) {
++		uninitialize_thread_config(config);
++		return result;
++	}
++
++	result = UDS_ALLOCATE(config->bio_thread_count,
++			      thread_id_t,
++			      "bio thread array",
++			      &config->bio_threads);
++	if (result != VDO_SUCCESS) {
++		uninitialize_thread_config(config);
++		return result;
++	}
++
++	if (single) {
++		config->logical_threads[0] = config->thread_count;
++		config->physical_threads[0] = config->thread_count;
++		config->hash_zone_threads[0] = config->thread_count++;
++	} else {
++		config->admin_thread = config->thread_count;
++		config->journal_thread = config->thread_count++;
++		config->packer_thread = config->thread_count++;
++		assign_thread_ids(config, config->logical_threads, counts.logical_zones);
++		assign_thread_ids(config, config->physical_threads, counts.physical_zones);
++		assign_thread_ids(config, config->hash_zone_threads, counts.hash_zones);
++	}
++
++	config->dedupe_thread = config->thread_count++;
++	config->bio_ack_thread =
++		((counts.bio_ack_threads > 0) ? config->thread_count++ : VDO_INVALID_THREAD_ID);
++	config->cpu_thread = config->thread_count++;
++	assign_thread_ids(config, config->bio_threads, counts.bio_threads);
++	return VDO_SUCCESS;
++}
++
++/**
++ * vdo_read_geometry_block() - Synchronously read the geometry block from a vdo's underlying block
++ *                             device.
++ * @vdo: The vdo whose geometry is to be read.
++ *
++ * Return: VDO_SUCCESS or an error code.
++ */
++static int __must_check read_geometry_block(struct vdo *vdo)
++{
++	struct vio *vio;
++	char *block;
++	int result;
++
++	result = UDS_ALLOCATE(VDO_BLOCK_SIZE, u8, __func__, &block);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	result = create_metadata_vio(vdo, VIO_TYPE_GEOMETRY, VIO_PRIORITY_HIGH, NULL, block, &vio);
++	if (result != VDO_SUCCESS) {
++		UDS_FREE(block);
++		return result;
++	}
++
++	/*
++	 * This is only safe because, having not already loaded the geometry, the vdo's geometry's
++	 * bio_offset field is 0, so the fact that vio_reset_bio() will subtract that offset from
++	 * the supplied pbn is not a problem.
++	 */
++	result = vio_reset_bio(vio, block, NULL, REQ_OP_READ, VDO_GEOMETRY_BLOCK_LOCATION);
++	if (result != VDO_SUCCESS) {
++		free_vio(UDS_FORGET(vio));
++		UDS_FREE(block);
++		return result;
++	}
++
++	bio_set_dev(vio->bio, vdo_get_backing_device(vdo));
++	submit_bio_wait(vio->bio);
++	result = blk_status_to_errno(vio->bio->bi_status);
++	free_vio(UDS_FORGET(vio));
++	if (result != 0) {
++		uds_log_error_strerror(result, "synchronous read failed");
++		UDS_FREE(block);
++		return -EIO;
++	}
++
++	result = vdo_parse_geometry_block((u8 *) block, &vdo->geometry);
++	UDS_FREE(block);
++	return result;
++}
++
++static bool get_zone_thread_name(const thread_id_t thread_ids[],
++				 zone_count_t count,
++				 thread_id_t id,
++				 const char *prefix,
++				 char *buffer,
++				 size_t buffer_length)
++{
++	if (id >= thread_ids[0]) {
++		thread_id_t index = id - thread_ids[0];
++
++		if (index < count) {
++			snprintf(buffer, buffer_length, "%s%d", prefix, index);
++			return true;
++		}
++	}
 +	return false;
 +}
 +
 +/**
-+ * rebuild_reference_counts_from_page() - Rebuild reference counts from a block map page.
-+ * @repair: The repair completion.
-+ * @completion: The page completion holding the page.
-+ */
-+static void rebuild_reference_counts_from_page(struct repair_completion *repair,
-+					       struct vdo_completion *completion)
-+{
-+	slot_number_t slot, last_slot;
-+	struct block_map_page *page;
-+	int result;
-+
-+	result = vdo_get_cached_page(completion, &page);
-+	if (result != VDO_SUCCESS) {
-+		vdo_set_completion_result(&repair->completion, result);
-+		return;
-+	}
-+
-+	if (!page->header.initialized)
-+		return;
-+
-+	/* Remove any bogus entries which exist beyond the end of the logical space. */
-+	if (vdo_get_block_map_page_pbn(page) == repair->last_slot.pbn) {
-+		last_slot = repair->last_slot.slot;
-+		remove_out_of_bounds_entries(page, completion, last_slot);
-+	} else {
-+		last_slot = VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
-+	}
-+
-+	/* Inform the slab depot of all entries on this page. */
-+	for (slot = 0; slot < last_slot; slot++) {
-+		if (process_slot(page, completion, slot))
-+			repair->logical_blocks_used++;
-+	}
-+}
-+
-+/**
-+ * page_loaded() - Process a page which has just been loaded.
-+ * @completion: The vdo_page_completion for the fetched page.
++ * get_thread_name() - Format the name of the worker thread desired to support a given work queue.
++ * @thread_config: The thread configuration.
++ * @thread_id: The thread id.
++ * @buffer: Where to put the formatted name.
++ * @buffer_length: Size of the output buffer.
 + *
-+ * This callback is registered by fetch_page().
-+ */
-+static void page_loaded(struct vdo_completion *completion)
-+{
-+	struct repair_completion *repair = completion->parent;
-+
-+	repair->outstanding--;
-+	rebuild_reference_counts_from_page(repair, completion);
-+	vdo_release_page_completion(completion);
-+
-+	/* Advance progress to the next page, and fetch the next page we haven't yet requested. */
-+	fetch_page(repair, completion);
-+}
-+
-+static physical_block_number_t
-+get_pbn_to_fetch(struct repair_completion *repair, struct block_map *block_map)
-+{
-+	physical_block_number_t pbn = VDO_ZERO_BLOCK;
-+
-+	if (repair->completion.result != VDO_SUCCESS)
-+		return VDO_ZERO_BLOCK;
-+
-+	while ((pbn == VDO_ZERO_BLOCK) && (repair->page_to_fetch < repair->leaf_pages))
-+		pbn = vdo_find_block_map_page_pbn(block_map, repair->page_to_fetch++);
-+
-+	if (vdo_is_physical_data_block(repair->completion.vdo->depot, pbn))
-+		return pbn;
-+
-+	vdo_set_completion_result(&repair->completion, VDO_BAD_MAPPING);
-+	return VDO_ZERO_BLOCK;
-+}
-+
-+/**
-+ * fetch_page() - Fetch a page from the block map.
-+ * @repair: The repair_completion.
-+ * @completion: The page completion to use.
-+ *
-+ * Return true if the rebuild is complete
-+ */
-+static bool fetch_page(struct repair_completion *repair, struct vdo_completion *completion)
-+{
-+	struct vdo_page_completion *page_completion = (struct vdo_page_completion *) completion;
-+	struct block_map *block_map = repair->completion.vdo->block_map;
-+	physical_block_number_t pbn = get_pbn_to_fetch(repair, block_map);
-+
-+	if (pbn != VDO_ZERO_BLOCK) {
-+		repair->outstanding++;
-+		/*
-+		 * We must set the requeue flag here to ensure that we don't blow the stack if all
-+		 * the requested pages are already in the cache or get load errors.
-+		 */
-+		vdo_get_page(page_completion,
-+			     &block_map->zones[0],
-+			     pbn,
-+			     true,
-+			     repair,
-+			     page_loaded,
-+			     handle_page_load_error,
-+			     true);
-+	}
-+
-+	if (repair->outstanding > 0)
-+		return false;
-+
-+	launch_repair_completion(repair, flush_block_map_updates, VDO_ZONE_TYPE_ADMIN);
-+	return true;
-+}
-+
-+/**
-+ * rebuild_from_leaves() - Rebuild reference counts from the leaf block map pages.
-+ * @completion: The repair completion.
-+ *
-+ * Rebuilds reference counts from the leaf block map pages now that reference counts have been
-+ * rebuilt from the interior tree pages (which have been loaded in the process). This callback is
-+ * registered in rebuild_reference_counts().
-+ */
-+static void rebuild_from_leaves(struct vdo_completion *completion)
-+{
-+	page_count_t i;
-+	struct repair_completion *repair = as_repair_completion(completion);
-+	struct block_map *map = completion->vdo->block_map;
-+
-+	repair->logical_blocks_used = 0;
-+
-+	/*
-+	 * The PBN calculation doesn't work until the tree pages have been loaded, so we can't set
-+	 * this value at the start of repair.
-+	 */
-+	repair->leaf_pages = vdo_compute_block_map_page_count(map->entry_count);
-+	repair->last_slot = (struct block_map_slot) {
-+		.slot = map->entry_count % VDO_BLOCK_MAP_ENTRIES_PER_PAGE,
-+		.pbn = vdo_find_block_map_page_pbn(map, repair->leaf_pages - 1),
-+	};
-+	if (repair->last_slot.slot == 0)
-+		repair->last_slot.slot = VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
-+
-+	for (i = 0; i < repair->page_count; i++) {
-+		if (fetch_page(repair, &repair->page_completions[i].completion))
-+			/*
-+			 * The rebuild has already moved on, so it isn't safe nor is there a need
-+			 * to launch any more fetches.
-+			 */
-+			return;
-+	}
-+}
-+
-+/**
-+ * process_entry() - Process a single entry from the block map tree.
-+ * @pbn: A pbn which holds a block map tree page.
-+ * @completion: The parent completion of the traversal.
-+ *
-+ * Implements vdo_entry_callback.
-+ *
-+ * Return: VDO_SUCCESS or an error.
-+ */
-+static int process_entry(physical_block_number_t pbn, struct vdo_completion *completion)
-+{
-+	struct repair_completion *repair = as_repair_completion(completion);
-+	struct slab_depot *depot = completion->vdo->depot;
-+	int result;
-+
-+	if ((pbn == VDO_ZERO_BLOCK) || !vdo_is_physical_data_block(depot, pbn))
-+		return uds_log_error_strerror(VDO_BAD_CONFIGURATION,
-+					      "PBN %llu out of range",
-+					      (unsigned long long) pbn);
-+
-+	result = vdo_adjust_reference_count_for_rebuild(depot,
-+							pbn,
-+							VDO_JOURNAL_BLOCK_MAP_REMAPPING);
-+	if (result != VDO_SUCCESS)
-+		return uds_log_error_strerror(result,
-+					      "Could not adjust reference count for block map tree PBN %llu",
-+					      (unsigned long long) pbn);
-+
-+	repair->block_map_data_blocks++;
-+	return VDO_SUCCESS;
-+}
-+
-+static void rebuild_reference_counts(struct vdo_completion *completion)
-+{
-+	struct repair_completion *repair = as_repair_completion(completion);
-+	struct vdo *vdo = completion->vdo;
-+	struct vdo_page_cache *cache = &vdo->block_map->zones[0].page_cache;
-+
-+	/* We must allocate ref_counts before we can rebuild them. */
-+	if (abort_on_error(vdo_allocate_reference_counters(vdo->depot), repair))
-+		return;
-+
-+	/*
-+	 * Completion chaining from page cache hits can lead to stack overflow during the rebuild,
-+	 * so clear out the cache before this rebuild phase.
-+	 */
-+	if (abort_on_error(vdo_invalidate_page_cache(cache), repair))
-+		return;
-+
-+	prepare_repair_completion(repair, rebuild_from_leaves, VDO_ZONE_TYPE_LOGICAL);
-+	vdo_traverse_forest(vdo->block_map, process_entry, completion);
-+}
-+
-+/**
-+ * increment_recovery_point() - Move the given recovery point forward by one entry.
-+ */
-+static void increment_recovery_point(struct recovery_point *point)
-+{
-+	if (++point->entry_count < RECOVERY_JOURNAL_ENTRIES_PER_SECTOR)
-+		return;
-+
-+	point->entry_count = 0;
-+	if (point->sector_count < (VDO_SECTORS_PER_BLOCK - 1)) {
-+		point->sector_count++;
-+		return;
-+	}
-+
-+	point->sequence_number++;
-+	point->sector_count = 1;
-+}
-+
-+/**
-+ * advance_points() - Advance the current recovery and journal points.
-+ * @repair: The repair_completion whose points are to be advanced.
-+ * @entries_per_block: The number of entries in a recovery journal block.
++ * The physical layer may add a prefix identifying the product; the output from this function
++ * should just identify the thread.
 + */
 +static void
-+advance_points(struct repair_completion *repair, journal_entry_count_t entries_per_block)
++get_thread_name(const struct thread_config *thread_config,
++		thread_id_t thread_id,
++		char *buffer,
++		size_t buffer_length)
 +{
-+	if (!repair->next_recovery_point.increment_applied) {
-+		repair->next_recovery_point.increment_applied	= true;
++	if (thread_id == thread_config->journal_thread) {
++		if (thread_config->packer_thread == thread_id) {
++			/*
++			 * This is the "single thread" config where one thread is used for the
++			 * journal, packer, logical, physical, and hash zones. In that case, it is
++			 * known as the "request queue."
++			 */
++			snprintf(buffer, buffer_length, "reqQ");
++			return;
++		}
++
++		snprintf(buffer, buffer_length, "journalQ");
++		return;
++	} else if (thread_id == thread_config->admin_thread) {
++		/* Theoretically this could be different from the journal thread. */
++		snprintf(buffer, buffer_length, "adminQ");
++		return;
++	} else if (thread_id == thread_config->packer_thread) {
++		snprintf(buffer, buffer_length, "packerQ");
++		return;
++	} else if (thread_id == thread_config->dedupe_thread) {
++		snprintf(buffer, buffer_length, "dedupeQ");
++		return;
++	} else if (thread_id == thread_config->bio_ack_thread) {
++		snprintf(buffer, buffer_length, "ackQ");
++		return;
++	} else if (thread_id == thread_config->cpu_thread) {
++		snprintf(buffer, buffer_length, "cpuQ");
 +		return;
 +	}
 +
-+	increment_recovery_point(&repair->next_recovery_point);
-+	vdo_advance_journal_point(&repair->next_journal_point, entries_per_block);
-+	repair->next_recovery_point.increment_applied	= false;
++	if (get_zone_thread_name(thread_config->logical_threads,
++				 thread_config->logical_zone_count,
++				 thread_id,
++				 "logQ",
++				 buffer,
++				 buffer_length))
++		return;
++
++	if (get_zone_thread_name(thread_config->physical_threads,
++				 thread_config->physical_zone_count,
++				 thread_id,
++				 "physQ",
++				 buffer,
++				 buffer_length))
++		return;
++
++	if (get_zone_thread_name(thread_config->hash_zone_threads,
++				 thread_config->hash_zone_count,
++				 thread_id,
++				 "hashQ",
++				 buffer,
++				 buffer_length))
++		return;
++
++	if (get_zone_thread_name(thread_config->bio_threads,
++				 thread_config->bio_thread_count,
++				 thread_id,
++				 "bioQ",
++				 buffer,
++				 buffer_length))
++		return;
++
++	/* Some sort of misconfiguration? */
++	snprintf(buffer, buffer_length, "reqQ%d", thread_id);
 +}
 +
 +/**
-+ * before_recovery_point() - Check whether the first point precedes the second point.
-+ * @first: The first recovery point.
-+ * @second: The second recovery point.
++ * vdo_make_thread() - Construct a single vdo work_queue and its associated thread (or threads for
++ *                     round-robin queues).
++ * @vdo: The vdo which owns the thread.
++ * @thread_id: The id of the thread to create (as determined by the thread_config).
++ * @type: The description of the work queue for this thread.
++ * @queue_count: The number of actual threads/queues contained in the "thread".
++ * @contexts: An array of queue_count contexts, one for each individual queue; may be NULL.
 + *
-+ * Return: true if the first point precedes the second point.
-+ */
-+static bool __must_check
-+before_recovery_point(const struct recovery_point *first, const struct recovery_point *second)
-+{
-+	if (first->sequence_number < second->sequence_number)
-+		return true;
-+
-+	if (first->sequence_number > second->sequence_number)
-+		return false;
-+
-+	if (first->sector_count < second->sector_count)
-+		return true;
-+
-+	return ((first->sector_count == second->sector_count) &&
-+		(first->entry_count < second->entry_count));
-+}
-+
-+static struct packed_journal_sector * __must_check
-+get_sector(struct recovery_journal *journal,
-+	   char *journal_data,
-+	   sequence_number_t sequence,
-+	   u8 sector_number)
-+{
-+	off_t offset;
-+
-+	offset = ((vdo_get_recovery_journal_block_number(journal, sequence) * VDO_BLOCK_SIZE) +
-+		  (VDO_SECTOR_SIZE * sector_number));
-+	return (struct packed_journal_sector *) (journal_data + offset);
-+}
-+
-+/**
-+ * get_entry() - Unpack the recovery journal entry associated with the given recovery point.
-+ * @repair: The repair completion.
-+ * @point: The recovery point.
-+ *
-+ * Return: The unpacked contents of the matching recovery journal entry.
-+ */
-+static struct recovery_journal_entry
-+get_entry(const struct repair_completion *repair, const struct recovery_point *point)
-+{
-+	struct packed_journal_sector *sector;
-+
-+	sector = get_sector(repair->completion.vdo->recovery_journal,
-+			    repair->journal_data,
-+			    point->sequence_number,
-+			    point->sector_count);
-+	return vdo_unpack_recovery_journal_entry(&sector->entries[point->entry_count]);
-+}
-+
-+/**
-+ * validate_recovery_journal_entry() - Validate a recovery journal entry.
-+ * @vdo: The vdo.
-+ * @entry: The entry to validate.
++ * Each "thread" constructed by this method is represented by a unique thread id in the thread
++ * config, and completions can be enqueued to the queue and run on the threads comprising this
++ * entity.
 + *
 + * Return: VDO_SUCCESS or an error.
 + */
-+static int
-+validate_recovery_journal_entry(const struct vdo *vdo, const struct recovery_journal_entry *entry)
++int vdo_make_thread(struct vdo *vdo,
++		    thread_id_t thread_id,
++		    const struct vdo_work_queue_type *type,
++		    unsigned int queue_count,
++		    void *contexts[])
 +{
-+	if ((entry->slot.pbn >= vdo->states.vdo.config.physical_blocks) ||
-+	    (entry->slot.slot >= VDO_BLOCK_MAP_ENTRIES_PER_PAGE) ||
-+	    !vdo_is_valid_location(&entry->mapping) ||
-+	    !vdo_is_valid_location(&entry->unmapping) ||
-+	    !vdo_is_physical_data_block(vdo->depot, entry->mapping.pbn) ||
-+	    !vdo_is_physical_data_block(vdo->depot, entry->unmapping.pbn))
-+		return uds_log_error_strerror(VDO_CORRUPT_JOURNAL,
-+					      "Invalid entry: %s (%llu, %u) from %llu to %llu is not within bounds",
-+					      vdo_get_journal_operation_name(entry->operation),
-+					      (unsigned long long) entry->slot.pbn,
-+					      entry->slot.slot,
-+					      (unsigned long long) entry->unmapping.pbn,
-+					      (unsigned long long) entry->mapping.pbn);
++	struct vdo_thread *thread = &vdo->threads[thread_id];
++	char queue_name[MAX_VDO_WORK_QUEUE_NAME_LEN];
 +
-+	if ((entry->operation == VDO_JOURNAL_BLOCK_MAP_REMAPPING) &&
-+	    (vdo_is_state_compressed(entry->mapping.state) ||
-+	     (entry->mapping.pbn == VDO_ZERO_BLOCK) ||
-+	     (entry->unmapping.state != VDO_MAPPING_STATE_UNMAPPED) ||
-+	     (entry->unmapping.pbn != VDO_ZERO_BLOCK)))
-+		return uds_log_error_strerror(VDO_CORRUPT_JOURNAL,
-+					      "Invalid entry: %s (%llu, %u) from %llu to %llu is not a valid tree mapping",
-+					      vdo_get_journal_operation_name(entry->operation),
-+					      (unsigned long long) entry->slot.pbn,
-+					      entry->slot.slot,
-+					      (unsigned long long) entry->unmapping.pbn,
-+					      (unsigned long long) entry->mapping.pbn);
++	if (type == NULL)
++		type = &default_queue_type;
 +
-+	return VDO_SUCCESS;
++	if (thread->queue != NULL)
++		return ASSERT(vdo_work_queue_type_is(thread->queue, type),
++			      "already constructed vdo thread %u is of the correct type",
++			      thread_id);
++
++	thread->vdo = vdo;
++	thread->thread_id = thread_id;
++	get_thread_name(&vdo->thread_config, thread_id, queue_name, sizeof(queue_name));
++	return vdo_make_work_queue(vdo->thread_name_prefix,
++				   queue_name,
++				   thread,
++				   type,
++				   queue_count,
++				   contexts,
++				   &thread->queue);
 +}
 +
 +/**
-+ * add_slab_journal_entries() - Replay recovery journal entries into the slab journals of the
-+ *                              allocator currently being recovered.
-+ * @completion: The allocator completion.
++ * register_vdo() - Register a VDO; it must not already be registered.
++ * @vdo: The vdo to register.
 + *
-+ * Waits for slab journal tailblock space when necessary. This method is its own callback.
++ * Return: VDO_SUCCESS or an error.
 + */
-+static void add_slab_journal_entries(struct vdo_completion *completion)
-+{
-+	struct recovery_point *recovery_point;
-+	struct repair_completion *repair = completion->parent;
-+	struct vdo *vdo = completion->vdo;
-+	struct recovery_journal *journal = vdo->recovery_journal;
-+	struct block_allocator *allocator = vdo_as_block_allocator(completion);
-+
-+	/* Get ready in case we need to enqueue again. */
-+	vdo_prepare_completion(completion,
-+			       add_slab_journal_entries,
-+			       vdo_notify_slab_journals_are_recovered,
-+			       completion->callback_thread_id,
-+			       repair);
-+	for (recovery_point = &repair->next_recovery_point;
-+	     before_recovery_point(recovery_point, &repair->tail_recovery_point);
-+	     advance_points(repair, journal->entries_per_block)) {
-+		int result;
-+		physical_block_number_t pbn;
-+		struct vdo_slab *slab;
-+		struct recovery_journal_entry entry = get_entry(repair, recovery_point);
-+		bool increment = !repair->next_recovery_point.increment_applied;
-+
-+		if (increment) {
-+			result = validate_recovery_journal_entry(vdo, &entry);
-+			if (result != VDO_SUCCESS) {
-+				vdo_enter_read_only_mode(vdo, result);
-+				vdo_fail_completion(completion, result);
-+				return;
-+			}
-+
-+			pbn = entry.mapping.pbn;
-+		} else {
-+			pbn = entry.unmapping.pbn;
-+		}
-+
-+		if (pbn == VDO_ZERO_BLOCK)
-+			continue;
-+
-+		slab = vdo_get_slab(vdo->depot, pbn);
-+		if (slab->allocator != allocator)
-+			continue;
-+
-+		if (!vdo_attempt_replay_into_slab(slab,
-+						  pbn,
-+						  entry.operation,
-+						  increment,
-+						  &repair->next_journal_point,
-+						  completion))
-+			return;
-+
-+		repair->entries_added_to_slab_journals++;
-+	}
-+
-+	vdo_notify_slab_journals_are_recovered(completion);
-+}
-+
-+/**
-+ * vdo_replay_into_slab_journals() - Replay recovery journal entries in the slab journals of slabs
-+ *                                   owned by a given block_allocator.
-+ * @allocator: The allocator whose slab journals are to be recovered.
-+ * @context: The slab depot load context supplied by a recovery when it loads the depot.
-+ */
-+void vdo_replay_into_slab_journals(struct block_allocator *allocator, void *context)
-+{
-+	struct vdo_completion *completion = &allocator->completion;
-+	struct repair_completion *repair = context;
-+	struct vdo *vdo = completion->vdo;
-+
-+	vdo_assert_on_physical_zone_thread(vdo, allocator->zone_number, __func__);
-+	if (repair->entry_count == 0) {
-+		/* there's nothing to replay */
-+		repair->logical_blocks_used = vdo->recovery_journal->logical_blocks_used;
-+		repair->block_map_data_blocks = vdo->recovery_journal->block_map_data_blocks;
-+		vdo_notify_slab_journals_are_recovered(completion);
-+		return;
-+	}
-+
-+	repair->next_recovery_point = (struct recovery_point) {
-+		.sequence_number = repair->slab_journal_head,
-+		.sector_count = 1,
-+		.entry_count = 0,
-+	};
-+
-+	repair->next_journal_point = (struct journal_point) {
-+		.sequence_number = repair->slab_journal_head,
-+		.entry_count = 0,
-+	};
-+
-+	uds_log_info("Replaying entries into slab journals for zone %u", allocator->zone_number);
-+	completion->parent = repair;
-+	add_slab_journal_entries(completion);
-+}
-+
-+static void load_slab_depot(struct vdo_completion *completion)
-+{
-+	struct repair_completion *repair = as_repair_completion(completion);
-+	const struct admin_state_code *operation;
-+
-+	vdo_assert_on_admin_thread(completion->vdo, __func__);
-+
-+	if (vdo_state_requires_read_only_rebuild(completion->vdo->load_state)) {
-+		prepare_repair_completion(repair, rebuild_reference_counts, VDO_ZONE_TYPE_LOGICAL);
-+		operation = VDO_ADMIN_STATE_LOADING_FOR_REBUILD;
-+	} else {
-+		prepare_repair_completion(repair, drain_slab_depot, VDO_ZONE_TYPE_ADMIN);
-+		operation = VDO_ADMIN_STATE_LOADING_FOR_RECOVERY;
-+	}
-+
-+	vdo_load_slab_depot(completion->vdo->depot, operation, completion, repair);
-+}
-+
-+static void flush_block_map(struct vdo_completion *completion)
-+{
-+	struct repair_completion *repair = as_repair_completion(completion);
-+	const struct admin_state_code *operation;
-+
-+	vdo_assert_on_admin_thread(completion->vdo, __func__);
-+
-+	uds_log_info("Flushing block map changes");
-+	prepare_repair_completion(repair, load_slab_depot, VDO_ZONE_TYPE_ADMIN);
-+	operation = (vdo_state_requires_read_only_rebuild(completion->vdo->load_state) ?
-+		     VDO_ADMIN_STATE_REBUILDING :
-+		     VDO_ADMIN_STATE_RECOVERING);
-+	vdo_drain_block_map(completion->vdo->block_map, operation, completion);
-+}
-+
-+static bool finish_if_done(struct repair_completion *repair)
-+{
-+	/* Pages are still being launched or there is still work to do */
-+	if (repair->launching || (repair->outstanding > 0))
-+		return false;
-+
-+	if (repair->completion.result != VDO_SUCCESS) {
-+		page_count_t i;
-+
-+		for (i = 0; i < repair->page_count; i++) {
-+			struct vdo_page_completion *page_completion =
-+				&repair->page_completions[i];
-+
-+			if (page_completion->ready)
-+				vdo_release_page_completion(&page_completion->completion);
-+		}
-+
-+		vdo_launch_completion(&repair->completion);
-+		return true;
-+	}
-+
-+	if (repair->current_entry >= repair->entries)
-+		return false;
-+
-+	launch_repair_completion(repair, flush_block_map, VDO_ZONE_TYPE_ADMIN);
-+	return true;
-+}
-+
-+static void abort_block_map_recovery(struct repair_completion *repair, int result)
-+{
-+	vdo_set_completion_result(&repair->completion, result);
-+	finish_if_done(repair);
-+}
-+
-+/**
-+ * find_entry_starting_next_page() - Find the first journal entry after a given entry which is not
-+ *                                   on the same block map page.
-+ * @current_entry: The entry to search from.
-+ * @needs_sort: Whether sorting is needed to proceed.
-+ *
-+ * Return: Pointer to the first later journal entry on a different block map page, or a pointer to
-+ *         just before the journal entries if no subsequent entry is on a different block map page.
-+ */
-+static struct numbered_block_mapping *
-+find_entry_starting_next_page(struct repair_completion *repair,
-+			      struct numbered_block_mapping *current_entry,
-+			      bool needs_sort)
-+{
-+	size_t current_page;
-+
-+	/* If current_entry is invalid, return immediately. */
-+	if (current_entry < repair->entries)
-+		return current_entry;
-+
-+	current_page = current_entry->block_map_slot.pbn;
-+
-+	/* Decrement current_entry until it's out of bounds or on a different page. */
-+	while ((current_entry >= repair->entries) &&
-+	       (current_entry->block_map_slot.pbn == current_page)) {
-+		if (needs_sort) {
-+			struct numbered_block_mapping *just_sorted_entry =
-+				sort_next_heap_element(repair);
-+			ASSERT_LOG_ONLY(just_sorted_entry < current_entry,
-+					"heap is returning elements in an unexpected order");
-+		}
-+
-+		current_entry--;
-+	}
-+
-+	return current_entry;
-+}
-+
-+/*
-+ * Apply a range of journal entries [starting_entry, ending_entry) journal
-+ * entries to a block map page.
-+ */
-+static void apply_journal_entries_to_page(struct block_map_page *page,
-+					  struct numbered_block_mapping *starting_entry,
-+					  struct numbered_block_mapping *ending_entry)
-+{
-+	struct numbered_block_mapping *current_entry = starting_entry;
-+
-+	while (current_entry != ending_entry) {
-+		page->entries[current_entry->block_map_slot.slot] = current_entry->block_map_entry;
-+		current_entry--;
-+	}
-+}
-+
-+static void recover_ready_pages(struct repair_completion *repair,
-+				struct vdo_completion *completion);
-+
-+static void block_map_page_loaded(struct vdo_completion *completion)
-+{
-+	struct repair_completion *repair = as_repair_completion(completion->parent);
-+
-+	repair->outstanding--;
-+	if (!repair->launching)
-+		recover_ready_pages(repair, completion);
-+}
-+
-+static void handle_block_map_page_load_error(struct vdo_completion *completion)
-+{
-+	struct repair_completion *repair = as_repair_completion(completion->parent);
-+
-+	repair->outstanding--;
-+	abort_block_map_recovery(repair, completion->result);
-+}
-+
-+static void fetch_block_map_page(struct repair_completion *repair,
-+				 struct vdo_completion *completion)
-+{
-+	physical_block_number_t pbn;
-+
-+	if (repair->current_unfetched_entry < repair->entries)
-+		/* Nothing left to fetch. */
-+		return;
-+
-+	/* Fetch the next page we haven't yet requested. */
-+	pbn = repair->current_unfetched_entry->block_map_slot.pbn;
-+	repair->current_unfetched_entry =
-+		find_entry_starting_next_page(repair, repair->current_unfetched_entry, true);
-+	repair->outstanding++;
-+	vdo_get_page(((struct vdo_page_completion *) completion),
-+		     &repair->completion.vdo->block_map->zones[0],
-+		     pbn,
-+		     true,
-+		     &repair->completion,
-+		     block_map_page_loaded,
-+		     handle_block_map_page_load_error,
-+		     false);
-+}
-+
-+static struct vdo_page_completion *
-+get_next_page_completion(struct repair_completion *repair, struct vdo_page_completion *completion)
-+{
-+	completion++;
-+	if (completion == (&repair->page_completions[repair->page_count]))
-+		completion = &repair->page_completions[0];
-+	return completion;
-+}
-+
-+static void recover_ready_pages(struct repair_completion *repair,
-+				struct vdo_completion *completion)
-+{
-+	struct vdo_page_completion *page_completion = (struct vdo_page_completion *) completion;
-+
-+	if (finish_if_done(repair))
-+		return;
-+
-+	if (repair->pbn != page_completion->pbn)
-+		return;
-+
-+	while (page_completion->ready) {
-+		struct numbered_block_mapping *start_of_next_page;
-+		struct block_map_page *page;
-+		int result;
-+
-+		result = vdo_get_cached_page(completion, &page);
-+		if (result != VDO_SUCCESS) {
-+			abort_block_map_recovery(repair, result);
-+			return;
-+		}
-+
-+		start_of_next_page =
-+			find_entry_starting_next_page(repair, repair->current_entry, false);
-+		apply_journal_entries_to_page(page, repair->current_entry, start_of_next_page);
-+		repair->current_entry = start_of_next_page;
-+		vdo_request_page_write(completion);
-+		vdo_release_page_completion(completion);
-+
-+		if (finish_if_done(repair))
-+			return;
-+
-+		repair->pbn = repair->current_entry->block_map_slot.pbn;
-+		fetch_block_map_page(repair, completion);
-+		page_completion = get_next_page_completion(repair, page_completion);
-+		completion = &page_completion->completion;
-+	}
-+}
-+
-+static void recover_block_map(struct vdo_completion *completion)
-+{
-+	struct repair_completion *repair = as_repair_completion(completion);
-+	struct vdo *vdo = completion->vdo;
-+	struct numbered_block_mapping *first_sorted_entry;
-+	page_count_t i;
-+
-+	vdo_assert_on_logical_zone_thread(vdo, 0, __func__);
-+
-+	/* Suppress block map errors. */
-+	vdo->block_map->zones[0].page_cache.rebuilding =
-+		vdo_state_requires_read_only_rebuild(vdo->load_state);
-+
-+	if (repair->block_map_entry_count == 0) {
-+		uds_log_info("Replaying 0 recovery entries into block map");
-+		UDS_FREE(UDS_FORGET(repair->journal_data));
-+		launch_repair_completion(repair, load_slab_depot, VDO_ZONE_TYPE_ADMIN);
-+		return;
-+	}
-+
-+	/*
-+	 * Organize the journal entries into a binary heap so we can iterate over them in sorted
-+	 * order incrementally, avoiding an expensive sort call.
-+	 */
-+	repair->replay_heap = (struct min_heap) {
-+		.data = repair->entries,
-+		.nr = repair->block_map_entry_count,
-+		.size = repair->block_map_entry_count,
-+	};
-+	min_heapify_all(&repair->replay_heap, &repair_min_heap);
-+
-+	uds_log_info("Replaying %zu recovery entries into block map",
-+		     repair->block_map_entry_count);
-+
-+	repair->current_entry = &repair->entries[repair->block_map_entry_count - 1];
-+	first_sorted_entry = sort_next_heap_element(repair);
-+	ASSERT_LOG_ONLY(first_sorted_entry == repair->current_entry,
-+			"heap is returning elements in an unexpected order");
-+
-+	/* Prevent any page from being processed until all pages have been launched. */
-+	repair->launching = true;
-+	repair->pbn = repair->current_entry->block_map_slot.pbn;
-+	repair->current_unfetched_entry = repair->current_entry;
-+	for (i = 0; i < repair->page_count; i++) {
-+		if (repair->current_unfetched_entry < repair->entries)
-+			break;
-+
-+		fetch_block_map_page(repair, &repair->page_completions[i].completion);
-+	}
-+	repair->launching = false;
-+
-+	/* Process any ready pages. */
-+	recover_ready_pages(repair, &repair->page_completions[0].completion);
-+}
-+
-+/**
-+ * get_recovery_journal_block_header() - Get the block header for a block at a position in the
-+ *                                       journal data and unpack it.
-+ * @journal: The recovery journal.
-+ * @data: The recovery journal data.
-+ * @sequence: The sequence number.
-+ *
-+ * Return: The unpacked header.
-+ */
-+static struct recovery_block_header __must_check
-+get_recovery_journal_block_header(struct recovery_journal *journal,
-+				  char *data,
-+				  sequence_number_t sequence)
-+{
-+	physical_block_number_t pbn = vdo_get_recovery_journal_block_number(journal, sequence);
-+	char *header = &data[pbn * VDO_BLOCK_SIZE];
-+
-+	return vdo_unpack_recovery_block_header((struct packed_journal_header *) header);
-+}
-+
-+/**
-+ * is_valid_recovery_journal_block() - Determine whether the given header describes a valid block
-+ *                                     for the given journal.
-+ * @journal: The journal to use.
-+ * @header: The unpacked block header to check.
-+ * @old_ok: Whether an old format header is valid.
-+ *
-+ * A block is not valid if it is unformatted, or if it is older than the last successful recovery
-+ * or reformat.
-+ *
-+ * Return: True if the header is valid.
-+ */
-+static bool __must_check
-+is_valid_recovery_journal_block(const struct recovery_journal *journal,
-+				const struct recovery_block_header *header,
-+				bool old_ok)
-+{
-+	if ((header->nonce != journal->nonce) ||
-+	    (header->recovery_count != journal->recovery_count))
-+		return false;
-+
-+	if (header->metadata_type == VDO_METADATA_RECOVERY_JOURNAL_2)
-+		return (header->entry_count <= journal->entries_per_block);
-+
-+	return (old_ok &&
-+		(header->metadata_type == VDO_METADATA_RECOVERY_JOURNAL) &&
-+		(header->entry_count <= RECOVERY_JOURNAL_1_ENTRIES_PER_BLOCK));
-+}
-+
-+/**
-+ * is_exact_recovery_journal_block() - Determine whether the given header describes the exact block
-+ *                                     indicated.
-+ * @journal: The journal to use.
-+ * @header: The unpacked block header to check.
-+ * @sequence: The expected sequence number.
-+ * @type: The expected metadata type.
-+ *
-+ * Return: True if the block matches.
-+ */
-+static bool __must_check
-+is_exact_recovery_journal_block(const struct recovery_journal *journal,
-+				const struct recovery_block_header *header,
-+				sequence_number_t sequence,
-+				enum vdo_metadata_type type)
-+{
-+	return ((header->metadata_type == type) &&
-+		(header->sequence_number == sequence) &&
-+		(is_valid_recovery_journal_block(journal, header, true)));
-+}
-+
-+/**
-+ * find_recovery_journal_head_and_tail() - Find the tail and head of the journal.
-+ *
-+ * Return: True if there were valid journal blocks.
-+ */
-+static bool find_recovery_journal_head_and_tail(struct repair_completion *repair)
-+{
-+	struct recovery_journal *journal = repair->completion.vdo->recovery_journal;
-+	bool found_entries = false;
-+	physical_block_number_t i;
-+
-+	/*
-+	 * Ensure that we don't replay old entries since we know the tail recorded in the super
-+	 * block must be a lower bound. Not doing so can result in extra data loss by setting the
-+	 * tail too early.
-+	 */
-+	repair->highest_tail = journal->tail;
-+	for (i = 0; i < journal->size; i++) {
-+		struct recovery_block_header header =
-+			get_recovery_journal_block_header(journal, repair->journal_data, i);
-+
-+		if (!is_valid_recovery_journal_block(journal, &header, true))
-+			/* This block is old or incorrectly formatted */
-+			continue;
-+
-+		if (vdo_get_recovery_journal_block_number(journal, header.sequence_number) != i)
-+			/* This block is in the wrong location */
-+			continue;
-+
-+		if (header.sequence_number >= repair->highest_tail) {
-+			found_entries = true;
-+			repair->highest_tail = header.sequence_number;
-+		}
-+
-+		if (!found_entries)
-+			continue;
-+
-+		if (header.block_map_head > repair->block_map_head)
-+			repair->block_map_head = header.block_map_head;
-+
-+		if (header.slab_journal_head > repair->slab_journal_head)
-+			repair->slab_journal_head = header.slab_journal_head;
-+	}
-+
-+	return found_entries;
-+}
-+
-+/**
-+ * unpack_entry() - Unpack a recovery journal entry in either format.
-+ * @vdo: The vdo.
-+ * @packed: The entry to unpack.
-+ * @format: The expected format of the entry.
-+ * @entry: The unpacked entry.
-+ *
-+ * Return: true if the entry should be applied.3
-+ */
-+static bool unpack_entry(struct vdo *vdo,
-+			 char *packed,
-+			 enum vdo_metadata_type format,
-+			 struct recovery_journal_entry *entry)
-+{
-+	if (format == VDO_METADATA_RECOVERY_JOURNAL_2) {
-+		struct packed_recovery_journal_entry *packed_entry =
-+			(struct packed_recovery_journal_entry *) packed;
-+
-+		*entry = vdo_unpack_recovery_journal_entry(packed_entry);
-+	} else {
-+		physical_block_number_t low32, high4;
-+
-+		struct packed_recovery_journal_entry_1 *packed_entry =
-+			(struct packed_recovery_journal_entry_1 *) packed;
-+
-+		if (packed_entry->operation == VDO_JOURNAL_DATA_INCREMENT)
-+			entry->operation = VDO_JOURNAL_DATA_REMAPPING;
-+		else if (packed_entry->operation == VDO_JOURNAL_BLOCK_MAP_INCREMENT)
-+			entry->operation = VDO_JOURNAL_BLOCK_MAP_REMAPPING;
-+		else
-+			return false;
-+
-+		low32 = __le32_to_cpu(packed_entry->pbn_low_word);
-+		high4 = packed_entry->pbn_high_nibble;
-+		entry->slot = (struct block_map_slot) {
-+			.pbn = ((high4 << 32) | low32),
-+			.slot = (packed_entry->slot_low | (packed_entry->slot_high << 6)),
-+		};
-+		entry->mapping = vdo_unpack_block_map_entry(&packed_entry->block_map_entry);
-+		entry->unmapping = (struct data_location) {
-+			.pbn = VDO_ZERO_BLOCK,
-+			.state = VDO_MAPPING_STATE_UNMAPPED,
-+		};
-+	}
-+
-+	return (validate_recovery_journal_entry(vdo, entry) == VDO_SUCCESS);
-+}
-+
-+/**
-+ * append_sector_entries() - Append an array of recovery journal entries from a journal block
-+ *                           sector to the array of numbered mappings in the repair completion,
-+ *                           numbering each entry in the order they are appended.
-+ * @repair: The repair completion.
-+ * @entries: The entries in the sector.
-+ * @format: The format of the sector.
-+ * @entry_count: The number of entries to append.
-+ */
-+static void append_sector_entries(struct repair_completion *repair,
-+				  char *entries,
-+				  enum vdo_metadata_type format,
-+				  journal_entry_count_t entry_count)
-+{
-+	journal_entry_count_t i;
-+	struct vdo *vdo = repair->completion.vdo;
-+	off_t increment = ((format == VDO_METADATA_RECOVERY_JOURNAL_2)
-+			   ? sizeof(struct packed_recovery_journal_entry)
-+			   : sizeof(struct packed_recovery_journal_entry_1));
-+
-+	for (i = 0; i < entry_count; i++, entries += increment) {
-+		struct recovery_journal_entry entry;
-+
-+		if (!unpack_entry(vdo, entries, format, &entry))
-+			/* When recovering from read-only mode, ignore damaged entries. */
-+			continue;
-+
-+		repair->entries[repair->block_map_entry_count] =
-+			(struct numbered_block_mapping) {
-+			.block_map_slot = entry.slot,
-+			.block_map_entry = vdo_pack_block_map_entry(entry.mapping.pbn,
-+								    entry.mapping.state),
-+			.number = repair->block_map_entry_count,
-+		};
-+		repair->block_map_entry_count++;
-+	}
-+}
-+
-+static journal_entry_count_t entries_per_sector(enum vdo_metadata_type format, u8 sector_number)
-+{
-+	if (format == VDO_METADATA_RECOVERY_JOURNAL_2)
-+		return RECOVERY_JOURNAL_ENTRIES_PER_SECTOR;
-+
-+	return ((sector_number == (VDO_SECTORS_PER_BLOCK - 1))
-+		? RECOVERY_JOURNAL_1_ENTRIES_IN_LAST_SECTOR
-+		: RECOVERY_JOURNAL_1_ENTRIES_PER_SECTOR);
-+}
-+
-+static void extract_entries_from_block(struct repair_completion *repair,
-+				       struct recovery_journal *journal,
-+				       sequence_number_t sequence,
-+				       enum vdo_metadata_type format,
-+				       journal_entry_count_t entries)
-+{
-+	sector_count_t i;
-+	struct recovery_block_header header =
-+		get_recovery_journal_block_header(journal, repair->journal_data, sequence);
-+
-+	if (!is_exact_recovery_journal_block(journal, &header, sequence, format))
-+		/* This block is invalid, so skip it. */
-+		return;
-+
-+	entries = min(entries, header.entry_count);
-+	for (i = 1; i < VDO_SECTORS_PER_BLOCK; i++) {
-+		struct packed_journal_sector *sector =
-+			get_sector(journal, repair->journal_data, sequence, i);
-+		journal_entry_count_t sector_entries = min(entries, entries_per_sector(format, i));
-+
-+		if (vdo_is_valid_recovery_journal_sector(&header, sector, i)) {
-+			/* Only extract as many as the block header calls for. */
-+			append_sector_entries(repair,
-+					      (char *) sector->entries,
-+					      format,
-+					      min_t(journal_entry_count_t,
-+						    sector->entry_count,
-+						    sector_entries));
-+		}
-+
-+		/*
-+		 * Even if the sector wasn't full, count it as full when counting up to the
-+		 * entry count the block header claims.
-+		 */
-+		entries -= sector_entries;
-+	}
-+}
-+
-+static int parse_journal_for_rebuild(struct repair_completion *repair)
++static int register_vdo(struct vdo *vdo)
 +{
 +	int result;
-+	sequence_number_t i;
-+	block_count_t count;
-+	enum vdo_metadata_type format;
-+	struct vdo *vdo = repair->completion.vdo;
-+	struct recovery_journal *journal = vdo->recovery_journal;
-+	journal_entry_count_t entries_per_block = journal->entries_per_block;
 +
-+	format = get_recovery_journal_block_header(journal,
-+						   repair->journal_data,
-+						   repair->highest_tail).metadata_type;
-+	if (format == VDO_METADATA_RECOVERY_JOURNAL)
-+		entries_per_block = RECOVERY_JOURNAL_1_ENTRIES_PER_BLOCK;
-+
-+	/*
-+	 * Allocate an array of numbered_block_mapping structures large enough to transcribe every
-+	 * packed_recovery_journal_entry from every valid journal block.
-+	 */
-+	count = ((repair->highest_tail - repair->block_map_head + 1) * entries_per_block);
-+	result = UDS_ALLOCATE(count, struct numbered_block_mapping, __func__, &repair->entries);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	for (i = repair->block_map_head; i <= repair->highest_tail; i++)
-+		extract_entries_from_block(repair, journal, i, format, entries_per_block);
-+
-+	return VDO_SUCCESS;
-+}
-+
-+static int validate_heads(struct repair_completion *repair)
-+{
-+	/* Both reap heads must be behind the tail. */
-+	if ((repair->block_map_head <= repair->tail) &&
-+	    (repair->slab_journal_head <= repair->tail))
-+		return VDO_SUCCESS;
-+
-+
-+	return uds_log_error_strerror(VDO_CORRUPT_JOURNAL,
-+				      "Journal tail too early. block map head: %llu, slab journal head: %llu, tail: %llu",
-+				      (unsigned long long) repair->block_map_head,
-+				      (unsigned long long) repair->slab_journal_head,
-+				      (unsigned long long) repair->tail);
-+}
-+
-+/**
-+ * extract_new_mappings() - Find all valid new mappings to be applied to the block map.
-+ *
-+ * The mappings are extracted from the journal and stored in a sortable array so that all of the
-+ * mappings to be applied to a given block map page can be done in a single page fetch.
-+ */
-+static int extract_new_mappings(struct repair_completion *repair)
-+{
-+	int result;
-+	struct vdo *vdo = repair->completion.vdo;
-+	struct recovery_point recovery_point = {
-+		.sequence_number = repair->block_map_head,
-+		.sector_count = 1,
-+		.entry_count = 0,
-+	};
-+
-+	/*
-+	 * Allocate an array of numbered_block_mapping structs just large enough to transcribe
-+	 * every packed_recovery_journal_entry from every valid journal block.
-+	 */
-+	result = UDS_ALLOCATE(repair->entry_count,
-+			      struct numbered_block_mapping,
-+			      __func__,
-+			      &repair->entries);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	for (; before_recovery_point(&recovery_point, &repair->tail_recovery_point);
-+	     increment_recovery_point(&recovery_point)) {
-+		struct recovery_journal_entry entry = get_entry(repair, &recovery_point);
-+
-+		result = validate_recovery_journal_entry(vdo, &entry);
-+		if (result != VDO_SUCCESS) {
-+			vdo_enter_read_only_mode(vdo, result);
-+			return result;
-+		}
-+
-+		repair->entries[repair->block_map_entry_count] =
-+			(struct numbered_block_mapping) {
-+			.block_map_slot = entry.slot,
-+			.block_map_entry = vdo_pack_block_map_entry(entry.mapping.pbn,
-+								    entry.mapping.state),
-+			.number = repair->block_map_entry_count,
-+		};
-+		repair->block_map_entry_count++;
++	write_lock(&registry.lock);
++	result = ASSERT(filter_vdos_locked(vdo_is_equal, vdo) == NULL,
++			"VDO not already registered");
++	if (result == VDO_SUCCESS) {
++		INIT_LIST_HEAD(&vdo->registration);
++		list_add_tail(&vdo->registration, &registry.links);
 +	}
-+
-+	result = ASSERT((repair->block_map_entry_count <= repair->entry_count),
-+			"approximate entry count is an upper bound");
-+	if (result != VDO_SUCCESS)
-+		vdo_enter_read_only_mode(vdo, result);
++	write_unlock(&registry.lock);
 +
 +	return result;
 +}
 +
 +/**
-+ * compute_usages() - Compute the lbns in use and block map data blocks counts from the tail of
-+ *                    the journal.
++ * initialize_vdo() - Do the portion of initializing a vdo which will clean up after itself on
++ *                    error.
++ * @vdo: The vdo being initialized
++ * @config: The configuration of the vdo
++ * @instance: The instance number of the vdo
++ * @reason: The buffer to hold the failure reason on error
 + */
-+static noinline int compute_usages(struct repair_completion *repair)
++static int
++initialize_vdo(struct vdo *vdo, struct device_config *config, unsigned int instance, char **reason)
 +{
-+	/*
-+	 * VDO-5182: function is declared noinline to avoid what is likely a spurious valgrind
-+	 * error about this structure being uninitialized.
-+	 */
-+	struct recovery_point recovery_point = {
-+		.sequence_number = repair->tail,
-+		.sector_count = 1,
-+		.entry_count = 0,
-+	};
++	int result;
++	zone_count_t i;
 +
-+	struct vdo *vdo = repair->completion.vdo;
-+	struct recovery_journal *journal = vdo->recovery_journal;
-+	struct recovery_block_header header =
-+		get_recovery_journal_block_header(journal, repair->journal_data, repair->tail);
++	vdo->device_config = config;
++	vdo->starting_sector_offset = config->owning_target->begin;
++	vdo->instance = instance;
++	vdo->allocations_allowed = true;
++	vdo_set_admin_state_code(&vdo->admin.state, VDO_ADMIN_STATE_NEW);
++	INIT_LIST_HEAD(&vdo->device_config_list);
++	vdo_initialize_completion(&vdo->admin.completion, vdo, VDO_ADMIN_COMPLETION);
++	init_completion(&vdo->admin.callback_sync);
++	mutex_init(&vdo->stats_mutex);
++	result = read_geometry_block(vdo);
++	if (result != VDO_SUCCESS) {
++		*reason = "Could not load geometry block";
++		return result;
++	}
 +
-+	repair->logical_blocks_used = header.logical_blocks_used;
-+	repair->block_map_data_blocks = header.block_map_data_blocks;
++	result = initialize_thread_config(config->thread_counts, &vdo->thread_config);
++	if (result != VDO_SUCCESS) {
++		*reason = "Cannot create thread configuration";
++		return result;
++	}
 +
-+	for (; before_recovery_point(&recovery_point, &repair->tail_recovery_point);
-+	     increment_recovery_point(&recovery_point)) {
-+		struct recovery_journal_entry entry = get_entry(repair, &recovery_point);
-+		int result;
++	uds_log_info("zones: %d logical, %d physical, %d hash; total threads: %d",
++		     config->thread_counts.logical_zones,
++		     config->thread_counts.physical_zones,
++		     config->thread_counts.hash_zones,
++		     vdo->thread_config.thread_count);
 +
-+		result = validate_recovery_journal_entry(vdo, &entry);
++	/* Compression context storage */
++	result = UDS_ALLOCATE(config->thread_counts.cpu_threads,
++			      char *,
++			      "LZ4 context",
++			      &vdo->compression_context);
++	if (result != VDO_SUCCESS) {
++		*reason = "cannot allocate LZ4 context";
++		return result;
++	}
++
++	for (i = 0; i < config->thread_counts.cpu_threads; i++) {
++		result = UDS_ALLOCATE(LZ4_MEM_COMPRESS,
++				      char,
++				      "LZ4 context",
++				      &vdo->compression_context[i]);
 +		if (result != VDO_SUCCESS) {
-+			vdo_enter_read_only_mode(vdo, result);
++			*reason = "cannot allocate LZ4 context";
 +			return result;
 +		}
++	}
 +
-+		if (entry.operation == VDO_JOURNAL_BLOCK_MAP_REMAPPING) {
-+			repair->block_map_data_blocks++;
-+			continue;
++	result = register_vdo(vdo);
++	if (result != VDO_SUCCESS) {
++		*reason = "Cannot add VDO to device registry";
++		return result;
++	}
++
++	vdo_set_admin_state_code(&vdo->admin.state, VDO_ADMIN_STATE_INITIALIZED);
++	return result;
++}
++
++/**
++ * vdo_make() - Allocate and initialize a vdo.
++ * @instance: Device instantiation counter.
++ * @config: The device configuration.
++ * @reason: The reason for any failure during this call.
++ * @vdo_ptr: A pointer to hold the created vdo.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++int vdo_make(unsigned int instance,
++	     struct device_config *config,
++	     char **reason,
++	     struct vdo **vdo_ptr)
++{
++	int result;
++	struct vdo *vdo;
++
++	/* VDO-3769 - Set a generic reason so we don't ever return garbage. */
++	*reason = "Unspecified error";
++
++	result = UDS_ALLOCATE(1, struct vdo, __func__, &vdo);
++	if (result != UDS_SUCCESS) {
++		*reason = "Cannot allocate VDO";
++		return result;
++	}
++
++	result = initialize_vdo(vdo, config, instance, reason);
++	if (result != VDO_SUCCESS) {
++		vdo_destroy(vdo);
++		return result;
++	}
++
++	/* From here on, the caller will clean up if there is an error. */
++	*vdo_ptr = vdo;
++
++	snprintf(vdo->thread_name_prefix,
++		 sizeof(vdo->thread_name_prefix),
++		 "%s%u",
++		 MODULE_NAME,
++		 instance);
++	BUG_ON(vdo->thread_name_prefix[0] == '\0');
++	result = UDS_ALLOCATE(vdo->thread_config.thread_count,
++			      struct vdo_thread,
++			      __func__,
++			      &vdo->threads);
++	if (result != VDO_SUCCESS) {
++		*reason = "Cannot allocate thread structures";
++		return result;
++	}
++
++	result = vdo_make_thread(vdo,
++				 vdo->thread_config.admin_thread,
++				 &default_queue_type,
++				 1,
++				 NULL);
++	if (result != VDO_SUCCESS) {
++		*reason = "Cannot make admin thread";
++		return result;
++	}
++
++	result = vdo_make_flusher(vdo);
++	if (result != VDO_SUCCESS) {
++		*reason = "Cannot make flusher zones";
++		return result;
++	}
++
++	result = vdo_make_packer(vdo, DEFAULT_PACKER_BINS, &vdo->packer);
++	if (result != VDO_SUCCESS) {
++		*reason = "Cannot make packer zones";
++		return result;
++	}
++
++	BUG_ON(vdo->device_config->logical_block_size <= 0);
++	BUG_ON(vdo->device_config->owned_device == NULL);
++	result = make_data_vio_pool(vdo,
++				    MAXIMUM_VDO_USER_VIOS,
++				    MAXIMUM_VDO_USER_VIOS * 3 / 4,
++				    &vdo->data_vio_pool);
++	if (result != VDO_SUCCESS) {
++		*reason = "Cannot allocate data_vio pool";
++		return result;
++	}
++
++	result = vdo_make_io_submitter(config->thread_counts.bio_threads,
++				       config->thread_counts.bio_rotation_interval,
++				       get_data_vio_pool_request_limit(vdo->data_vio_pool),
++				       vdo,
++				       &vdo->io_submitter);
++	if (result != VDO_SUCCESS) {
++		*reason = "bio submission initialization failed";
++		return result;
++	}
++
++	if (vdo_uses_bio_ack_queue(vdo)) {
++		result = vdo_make_thread(vdo,
++					 vdo->thread_config.bio_ack_thread,
++					 &bio_ack_q_type,
++					 config->thread_counts.bio_ack_threads,
++					 NULL);
++		if (result != VDO_SUCCESS) {
++			*reason = "bio ack queue initialization failed";
++			return result;
 +		}
++	}
 +
-+		if (vdo_is_mapped_location(&entry.mapping))
-+			repair->logical_blocks_used++;
-+
-+		if (vdo_is_mapped_location(&entry.unmapping))
-+			repair->logical_blocks_used--;
++	result = vdo_make_thread(vdo,
++				 vdo->thread_config.cpu_thread,
++				 &cpu_q_type,
++				 config->thread_counts.cpu_threads,
++				 (void **) vdo->compression_context);
++	if (result != VDO_SUCCESS) {
++		*reason = "CPU queue initialization failed";
++		return result;
 +	}
 +
 +	return VDO_SUCCESS;
 +}
 +
-+static int parse_journal_for_recovery(struct repair_completion *repair)
++static void finish_vdo(struct vdo *vdo)
 +{
-+	int result;
-+	sequence_number_t i, head;
-+	bool found_entries = false;
-+	struct recovery_journal *journal = repair->completion.vdo->recovery_journal;
++	int i;
 +
-+	head = min(repair->block_map_head, repair->slab_journal_head);
-+	for (i = head; i <= repair->highest_tail; i++) {
-+		struct recovery_block_header header;
-+		journal_entry_count_t block_entries;
-+		u8 j;
-+
-+		repair->tail = i;
-+		repair->tail_recovery_point = (struct recovery_point) {
-+			.sequence_number = i,
-+			.sector_count = 0,
-+			.entry_count = 0,
-+		};
-+
-+		header = get_recovery_journal_block_header(journal, repair->journal_data, i);
-+		if (header.metadata_type == VDO_METADATA_RECOVERY_JOURNAL) {
-+			/* This is an old format block, so we need to upgrade */
-+			uds_log_error_strerror(VDO_UNSUPPORTED_VERSION,
-+					       "Recovery journal is in the old format, a read-only rebuild is required.");
-+			vdo_enter_read_only_mode(repair->completion.vdo, VDO_UNSUPPORTED_VERSION);
-+			return VDO_UNSUPPORTED_VERSION;
-+		}
-+
-+		if (!is_exact_recovery_journal_block(journal,
-+						     &header,
-+						     i,
-+						     VDO_METADATA_RECOVERY_JOURNAL_2))
-+			/* A bad block header was found so this must be the end of the journal. */
-+			break;
-+
-+		block_entries = header.entry_count;
-+
-+		/* Examine each sector in turn to determine the last valid sector. */
-+		for (j = 1; j < VDO_SECTORS_PER_BLOCK; j++) {
-+			struct packed_journal_sector *sector =
-+				get_sector(journal, repair->journal_data, i, j);
-+			journal_entry_count_t sector_entries =
-+				min_t(journal_entry_count_t, sector->entry_count, block_entries);
-+
-+			/* A bad sector means that this block was torn. */
-+			if (!vdo_is_valid_recovery_journal_sector(&header, sector, j))
-+				break;
-+
-+			if (sector_entries > 0) {
-+				found_entries = true;
-+				repair->tail_recovery_point.sector_count++;
-+				repair->tail_recovery_point.entry_count = sector_entries;
-+				block_entries -= sector_entries;
-+				repair->entry_count += sector_entries;
-+			}
-+
-+			/* If this sector is short, the later sectors can't matter. */
-+			if ((sector_entries < RECOVERY_JOURNAL_ENTRIES_PER_SECTOR) ||
-+			    (block_entries == 0))
-+				break;
-+		}
-+
-+		/* If this block was not filled, or if it tore, no later block can matter. */
-+		if ((header.entry_count != journal->entries_per_block) || (block_entries > 0))
-+			break;
-+	}
-+
-+	if (!found_entries)
-+		return validate_heads(repair);
-+
-+	/* Set the tail to the last valid tail block, if there is one. */
-+	if (repair->tail_recovery_point.sector_count == 0)
-+		repair->tail--;
-+
-+	result = validate_heads(repair);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	uds_log_info("Highest-numbered recovery journal block has sequence number %llu, and the highest-numbered usable block is %llu",
-+		     (unsigned long long) repair->highest_tail,
-+		     (unsigned long long) repair->tail);
-+
-+	result = extract_new_mappings(repair);
-+	if (result != VDO_SUCCESS)
-+		return result;
-+
-+	return compute_usages(repair);
-+}
-+
-+static int parse_journal(struct repair_completion *repair)
-+{
-+	if (!find_recovery_journal_head_and_tail(repair))
-+		return VDO_SUCCESS;
-+
-+	return (vdo_state_requires_read_only_rebuild(repair->completion.vdo->load_state) ?
-+		parse_journal_for_rebuild(repair) :
-+		parse_journal_for_recovery(repair));
-+}
-+
-+static void finish_journal_load(struct vdo_completion *completion)
-+{
-+	struct repair_completion *repair = completion->parent;
-+
-+	if (++repair->vios_complete != repair->vio_count)
++	if (vdo->threads == NULL)
 +		return;
 +
-+	uds_log_info("Finished reading recovery journal");
-+	uninitialize_vios(repair);
-+	prepare_repair_completion(repair, recover_block_map, VDO_ZONE_TYPE_LOGICAL);
-+	vdo_continue_completion(&repair->completion, parse_journal(repair));
-+}
++	vdo_cleanup_io_submitter(vdo->io_submitter);
++	vdo_finish_dedupe_index(vdo->hash_zones);
 +
-+static void handle_journal_load_error(struct vdo_completion *completion)
-+{
-+	struct repair_completion *repair = completion->parent;
-+
-+	/* Preserve the error */
-+	vdo_set_completion_result(&repair->completion, completion->result);
-+	vio_record_metadata_io_error(as_vio(completion));
-+	completion->callback(completion);
-+}
-+
-+static void read_journal_endio(struct bio *bio)
-+{
-+	struct vio *vio = bio->bi_private;
-+	struct vdo *vdo = vio->completion.vdo;
-+
-+	continue_vio_after_io(vio, finish_journal_load, vdo->thread_config.admin_thread);
++	for (i = 0; i < vdo->thread_config.thread_count; i++)
++		vdo_finish_work_queue(vdo->threads[i].queue);
 +}
 +
 +/**
-+ * vdo_repair() - Load the recovery journal and then recover or rebuild a vdo.
-+ * @parent: The completion to notify when the operation is complete
++ * free_listeners() - Free the list of read-only listeners associated with a thread.
++ * @thread_data: The thread holding the list to free.
 + */
-+void vdo_repair(struct vdo_completion *parent)
++static void free_listeners(struct vdo_thread *thread)
++{
++	struct read_only_listener *listener, *next;
++
++	for (listener = UDS_FORGET(thread->listeners); listener != NULL; listener = next) {
++		next = UDS_FORGET(listener->next);
++		UDS_FREE(listener);
++	}
++}
++
++static void uninitialize_super_block(struct vdo_super_block *super_block)
++{
++	free_vio_components(&super_block->vio);
++	UDS_FREE(super_block->buffer);
++}
++
++/**
++ * unregister_vdo() - Remove a vdo from the device registry.
++ * @vdo: The vdo to remove.
++ */
++static void unregister_vdo(struct vdo *vdo)
++{
++	write_lock(&registry.lock);
++	if (filter_vdos_locked(vdo_is_equal, vdo) == vdo)
++		list_del_init(&vdo->registration);
++
++	write_unlock(&registry.lock);
++}
++
++/**
++ * vdo_destroy() - Destroy a vdo instance.
++ * @vdo: The vdo to destroy (may be NULL).
++ */
++void vdo_destroy(struct vdo *vdo)
++{
++	unsigned int i;
++
++	if (vdo == NULL)
++		return;
++
++	/* A running VDO should never be destroyed without suspending first. */
++	BUG_ON(vdo_get_admin_state(vdo)->normal);
++
++	vdo->allocations_allowed = true;
++
++	/* Stop services that need to gather VDO statistics from the worker threads. */
++	if (vdo->sysfs_added) {
++		init_completion(&vdo->stats_shutdown);
++		kobject_put(&vdo->stats_directory);
++		wait_for_completion(&vdo->stats_shutdown);
++	}
++
++	finish_vdo(vdo);
++	unregister_vdo(vdo);
++	free_data_vio_pool(vdo->data_vio_pool);
++	vdo_free_io_submitter(UDS_FORGET(vdo->io_submitter));
++	vdo_free_flusher(UDS_FORGET(vdo->flusher));
++	vdo_free_packer(UDS_FORGET(vdo->packer));
++	vdo_free_recovery_journal(UDS_FORGET(vdo->recovery_journal));
++	vdo_free_slab_depot(UDS_FORGET(vdo->depot));
++	vdo_uninitialize_layout(&vdo->layout);
++	vdo_uninitialize_layout(&vdo->next_layout);
++	if (vdo->partition_copier)
++		dm_kcopyd_client_destroy(UDS_FORGET(vdo->partition_copier));
++	uninitialize_super_block(&vdo->super_block);
++	vdo_free_block_map(UDS_FORGET(vdo->block_map));
++	vdo_free_hash_zones(UDS_FORGET(vdo->hash_zones));
++	vdo_free_physical_zones(UDS_FORGET(vdo->physical_zones));
++	vdo_free_logical_zones(UDS_FORGET(vdo->logical_zones));
++
++	if (vdo->threads != NULL) {
++		for (i = 0; i < vdo->thread_config.thread_count; i++) {
++			free_listeners(&vdo->threads[i]);
++			vdo_free_work_queue(UDS_FORGET(vdo->threads[i].queue));
++		}
++		UDS_FREE(UDS_FORGET(vdo->threads));
++	}
++
++	uninitialize_thread_config(&vdo->thread_config);
++
++	if (vdo->compression_context != NULL) {
++		for (i = 0; i < vdo->device_config->thread_counts.cpu_threads; i++)
++			UDS_FREE(UDS_FORGET(vdo->compression_context[i]));
++
++		UDS_FREE(UDS_FORGET(vdo->compression_context));
++	}
++
++	/*
++	 * The call to kobject_put on the kobj sysfs node will decrement its reference count; when
++	 * the count goes to zero the VDO object will be freed as a side effect.
++	 */
++	if (!vdo->sysfs_added)
++		UDS_FREE(vdo);
++	else
++		kobject_put(&vdo->vdo_directory);
++}
++
++static int initialize_super_block(struct vdo *vdo, struct vdo_super_block *super_block)
 +{
 +	int result;
-+	char *ptr;
-+	struct repair_completion *repair;
++
++	result = UDS_ALLOCATE(VDO_BLOCK_SIZE,
++			      char,
++			      "encoded super block",
++			      (char **) &vdo->super_block.buffer);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	return allocate_vio_components(vdo,
++				       VIO_TYPE_SUPER_BLOCK,
++				       VIO_PRIORITY_METADATA,
++				       NULL,
++				       1,
++				       (char *) super_block->buffer,
++				       &vdo->super_block.vio);
++}
++
++/**
++ * finish_reading_super_block() - Continue after loading the super block.
++ * @completion: The super block vio.
++ *
++ * This callback is registered in vdo_load_super_block().
++ */
++static void finish_reading_super_block(struct vdo_completion *completion)
++{
++	struct vdo_super_block *super_block =
++		container_of(as_vio(completion), struct vdo_super_block, vio);
++
++	vdo_continue_completion(UDS_FORGET(completion->parent),
++				vdo_decode_super_block(super_block->buffer));
++}
++
++/**
++ * handle_super_block_read_error() - Handle an error reading the super block.
++ * @completion: The super block vio.
++ *
++ * This error handler is registered in vdo_load_super_block().
++ */
++static void handle_super_block_read_error(struct vdo_completion *completion)
++{
++	vio_record_metadata_io_error(as_vio(completion));
++	finish_reading_super_block(completion);
++}
++
++static void read_super_block_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct vdo_completion *parent = vio->completion.parent;
++
++	continue_vio_after_io(vio, finish_reading_super_block, parent->callback_thread_id);
++}
++
++/**
++ * vdo_load_super_block() - Allocate a super block and read its contents from storage.
++ * @vdo: The vdo containing the super block on disk.
++ * @parent: The completion to notify after loading the super block.
++ */
++void vdo_load_super_block(struct vdo *vdo, struct vdo_completion *parent)
++{
++	int result;
++
++	result = initialize_super_block(vdo, &vdo->super_block);
++	if (result != VDO_SUCCESS) {
++		vdo_continue_completion(parent, result);
++		return;
++	}
++
++	vdo->super_block.vio.completion.parent = parent;
++	submit_metadata_vio(&vdo->super_block.vio,
++			    vdo_get_data_region_start(vdo->geometry),
++			    read_super_block_endio,
++			    handle_super_block_read_error,
++			    REQ_OP_READ);
++}
++
++/**
++ * pool_stats_release() - Signal that sysfs stats have been shut down.
++ * @directory: The vdo stats directory.
++ */
++static void pool_stats_release(struct kobject *directory)
++{
++	struct vdo *vdo = container_of(directory, struct vdo, stats_directory);
++
++	complete(&vdo->stats_shutdown);
++}
++
++ATTRIBUTE_GROUPS(vdo_pool_stats);
++static const struct kobj_type stats_directory_type = {
++	.release = pool_stats_release,
++	.sysfs_ops = &vdo_pool_stats_sysfs_ops,
++	.default_groups = vdo_pool_stats_groups,
++};
++
++/**
++ * vdo_add_sysfs_stats_dir() - Add the stats directory to the vdo sysfs directory.
++ * @vdo: The vdo.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++int vdo_add_sysfs_stats_dir(struct vdo *vdo)
++{
++	int result;
++
++	kobject_init(&vdo->stats_directory, &stats_directory_type);
++	result = kobject_add(&vdo->stats_directory, &vdo->vdo_directory, "statistics");
++	if (result != 0)
++		return VDO_CANT_ADD_SYSFS_NODE;
++
++	return VDO_SUCCESS;
++}
++
++/**
++ * vdo_get_backing_device() - Get the block device object underlying a vdo.
++ * @vdo: The vdo.
++ *
++ * Return: The vdo's current block device.
++ */
++struct block_device *vdo_get_backing_device(const struct vdo *vdo)
++{
++	return vdo->device_config->owned_device->bdev;
++}
++
++/**
++ * vdo_get_device_name() - Get the device name associated with the vdo target.
++ * @target: The target device interface.
++ *
++ * Return: The block device name.
++ */
++const char *vdo_get_device_name(const struct dm_target *target)
++{
++	return dm_device_name(dm_table_get_md(target->table));
++}
++
++/**
++ * vdo_synchronous_flush() - Issue a flush request and wait for it to complete.
++ * @vdo: The vdo.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++int vdo_synchronous_flush(struct vdo *vdo)
++{
++	int result;
++	struct bio bio;
++
++	bio_init(&bio, vdo_get_backing_device(vdo), 0, 0,
++		 REQ_OP_WRITE | REQ_PREFLUSH);
++	submit_bio_wait(&bio);
++	result = blk_status_to_errno(bio.bi_status);
++
++	atomic64_inc(&vdo->stats.flush_out);
++	if (result != 0) {
++		uds_log_error_strerror(result, "synchronous flush failed");
++		result = -EIO;
++	}
++
++	bio_uninit(&bio);
++	return result;
++}
++
++/**
++ * vdo_get_state() - Get the current state of the vdo.
++ * @vdo: The vdo.
++
++ * Context: This method may be called from any thread.
++ *
++ * Return: The current state of the vdo.
++ */
++enum vdo_state vdo_get_state(const struct vdo *vdo)
++{
++	enum vdo_state state = atomic_read(&vdo->state);
++
++	/* pairs with barriers where state field is changed */
++	smp_rmb();
++	return state;
++}
++
++/**
++ * vdo_set_state() - Set the current state of the vdo.
++ * @vdo: The vdo whose state is to be set.
++ * @state: The new state of the vdo.
++ *
++ * Context: This method may be called from any thread.
++ */
++void vdo_set_state(struct vdo *vdo, enum vdo_state state)
++{
++	/* pairs with barrier in vdo_get_state */
++	smp_wmb();
++	atomic_set(&vdo->state, state);
++}
++
++/**
++ * vdo_get_admin_state() - Get the admin state of the vdo.
++ * @vdo: The vdo.
++ *
++ * Return: The code for the vdo's current admin state.
++ */
++const struct admin_state_code *vdo_get_admin_state(const struct vdo *vdo)
++{
++	return vdo_get_admin_state_code(&vdo->admin.state);
++}
++
++/**
++ * record_vdo() - Record the state of the VDO for encoding in the super block.
++ */
++static void record_vdo(struct vdo *vdo)
++{
++	/* This is for backwards compatibility. */
++	vdo->states.unused = vdo->geometry.unused;
++	vdo->states.vdo.state = vdo_get_state(vdo);
++	vdo->states.block_map = vdo_record_block_map(vdo->block_map);
++	vdo->states.recovery_journal = vdo_record_recovery_journal(vdo->recovery_journal);
++	vdo->states.slab_depot = vdo_record_slab_depot(vdo->depot);
++	vdo->states.layout = vdo->layout;
++}
++
++/**
++ * continue_super_block_parent() - Continue the parent of a super block save operation.
++ * @completion: The super block vio.
++ *
++ * This callback is registered in vdo_save_components().
++ */
++static void continue_super_block_parent(struct vdo_completion *completion)
++{
++	vdo_continue_completion(UDS_FORGET(completion->parent), completion->result);
++}
++
++/**
++ * handle_save_error() - Log a super block save error.
++ * @completion: The super block vio.
++ *
++ * This error handler is registered in vdo_save_components().
++ */
++static void handle_save_error(struct vdo_completion *completion)
++{
++	struct vdo_super_block *super_block =
++		container_of(as_vio(completion), struct vdo_super_block, vio);
++
++	vio_record_metadata_io_error(&super_block->vio);
++	uds_log_error_strerror(completion->result, "super block save failed");
++	/*
++	 * Mark the super block as unwritable so that we won't attempt to write it again. This
++	 * avoids the case where a growth attempt fails writing the super block with the new size,
++	 * but the subsequent attempt to write out the read-only state succeeds. In this case,
++	 * writes which happened just before the suspend would not be visible if the VDO is
++	 * restarted without rebuilding, but, after a read-only rebuild, the effects of those
++	 * writes would reappear.
++	 */
++	super_block->unwritable = true;
++	completion->callback(completion);
++}
++
++static void super_block_write_endio(struct bio *bio)
++{
++	struct vio *vio = bio->bi_private;
++	struct vdo_completion *parent = vio->completion.parent;
++
++	continue_vio_after_io(vio, continue_super_block_parent, parent->callback_thread_id);
++}
++
++/**
++ * vdo_save_components() - Encode the vdo and save the super block asynchronously.
++ * @vdo: The vdo whose state is being saved.
++ * @parent: The completion to notify when the save is complete.
++ */
++void vdo_save_components(struct vdo *vdo, struct vdo_completion *parent)
++{
++	struct vdo_super_block *super_block = &vdo->super_block;
++
++	if (super_block->unwritable) {
++		vdo_continue_completion(parent, VDO_READ_ONLY);
++		return;
++	}
++
++	if (super_block->vio.completion.parent != NULL) {
++		vdo_continue_completion(parent, VDO_COMPONENT_BUSY);
++		return;
++	}
++
++	record_vdo(vdo);
++
++	vdo_encode_super_block(super_block->buffer, &vdo->states);
++	super_block->vio.completion.parent = parent;
++	super_block->vio.completion.callback_thread_id = parent->callback_thread_id;
++	submit_metadata_vio(&super_block->vio,
++			    vdo_get_data_region_start(vdo->geometry),
++			    super_block_write_endio,
++			    handle_save_error,
++			    REQ_OP_WRITE | REQ_PREFLUSH | REQ_FUA);
++}
++
++/**
++ * vdo_register_read_only_listener() - Register a listener to be notified when the VDO goes
++ *                                     read-only.
++ * @vdo: The vdo to register with.
++ * @listener: The object to notify.
++ * @notification: The function to call to send the notification.
++ * @thread_id: The id of the thread on which to send the notification.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++int vdo_register_read_only_listener(struct vdo *vdo,
++				    void *listener,
++				    vdo_read_only_notification *notification,
++				    thread_id_t thread_id)
++{
++	struct vdo_thread *thread = &vdo->threads[thread_id];
++	struct read_only_listener *read_only_listener;
++	int result;
++
++	result = ASSERT(thread_id != vdo->thread_config.dedupe_thread,
++			"read only listener not registered on dedupe thread");
++	if (result != VDO_SUCCESS)
++		return result;
++
++	result = UDS_ALLOCATE(1, struct read_only_listener, __func__, &read_only_listener);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	*read_only_listener = (struct read_only_listener) {
++		.listener = listener,
++		.notify = notification,
++		.next = thread->listeners,
++	};
++
++	thread->listeners = read_only_listener;
++	return VDO_SUCCESS;
++}
++
++/**
++ * notify_vdo_of_read_only_mode() - Notify a vdo that it is going read-only.
++ * @listener: The vdo.
++ * @parent: The completion to notify in order to acknowledge the notification.
++ *
++ * This will save the read-only state to the super block.
++ *
++ * Implements vdo_read_only_notification.
++ */
++static void notify_vdo_of_read_only_mode(void *listener, struct vdo_completion *parent)
++{
++	struct vdo *vdo = listener;
++
++	if (vdo_in_read_only_mode(vdo))
++		vdo_finish_completion(parent);
++
++	vdo_set_state(vdo, VDO_READ_ONLY_MODE);
++	vdo_save_components(vdo, parent);
++}
++
++/**
++ * vdo_enable_read_only_entry() - Enable a vdo to enter read-only mode on errors.
++ * @vdo: The vdo to enable.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++int vdo_enable_read_only_entry(struct vdo *vdo)
++{
++	thread_id_t id;
++	bool is_read_only = vdo_in_read_only_mode(vdo);
++	struct read_only_notifier *notifier = &vdo->read_only_notifier;
++
++	if (is_read_only) {
++		notifier->read_only_error = VDO_READ_ONLY;
++		notifier->state = NOTIFIED;
++	} else {
++		notifier->state = MAY_NOT_NOTIFY;
++	}
++
++	spin_lock_init(&notifier->lock);
++	vdo_initialize_completion(&notifier->completion, vdo, VDO_READ_ONLY_MODE_COMPLETION);
++
++	for (id = 0; id < vdo->thread_config.thread_count; id++)
++		vdo->threads[id].is_read_only = is_read_only;
++
++	return vdo_register_read_only_listener(vdo,
++					       vdo,
++					       notify_vdo_of_read_only_mode,
++					       vdo->thread_config.admin_thread);
++}
++
++/**
++ * vdo_wait_until_not_entering_read_only_mode() - Wait until no read-only notifications are in
++ *                                                progress and prevent any subsequent
++ *                                                notifications.
++ * @parent: The completion to notify when no threads are entering read-only mode.
++ *
++ * Notifications may be re-enabled by calling vdo_allow_read_only_mode_entry().
++ */
++void vdo_wait_until_not_entering_read_only_mode(struct vdo_completion *parent)
++{
 +	struct vdo *vdo = parent->vdo;
-+	struct recovery_journal *journal = vdo->recovery_journal;
-+	physical_block_number_t pbn = journal->origin;
-+	block_count_t remaining = journal->size;
-+	block_count_t vio_count = DIV_ROUND_UP(remaining, MAX_BLOCKS_PER_VIO);
-+	page_count_t page_count = min_t(page_count_t,
-+					vdo->device_config->cache_size >> 1,
-+					MAXIMUM_SIMULTANEOUS_VDO_BLOCK_MAP_RESTORATION_READS);
++	struct read_only_notifier *notifier = &vdo->read_only_notifier;
 +
 +	vdo_assert_on_admin_thread(vdo, __func__);
 +
-+	if (vdo->load_state == VDO_FORCE_REBUILD) {
-+		uds_log_warning("Rebuilding reference counts to clear read-only mode");
-+		vdo->states.vdo.read_only_recoveries++;
-+	} else if (vdo->load_state == VDO_REBUILD_FOR_UPGRADE) {
-+		uds_log_warning("Rebuilding reference counts for upgrade");
++	if (notifier->waiter != NULL) {
++		vdo_continue_completion(parent, VDO_COMPONENT_BUSY);
++		return;
++	}
++
++	spin_lock(&notifier->lock);
++	if (notifier->state == NOTIFYING)
++		notifier->waiter = parent;
++	else if (notifier->state == MAY_NOTIFY)
++		notifier->state = MAY_NOT_NOTIFY;
++	spin_unlock(&notifier->lock);
++
++	if (notifier->waiter == NULL) {
++		/*
++		 * A notification was not in progress, and now they are
++		 * disallowed.
++		 */
++		vdo_launch_completion(parent);
++		return;
++	}
++}
++
++/**
++ * as_notifier() - Convert a generic vdo_completion to a read_only_notifier.
++ * @completion: The completion to convert.
++ *
++ * Return: The completion as a read_only_notifier.
++ */
++static inline struct read_only_notifier *as_notifier(struct vdo_completion *completion)
++{
++	vdo_assert_completion_type(completion, VDO_READ_ONLY_MODE_COMPLETION);
++	return container_of(completion, struct read_only_notifier, completion);
++}
++
++/**
++ * finish_entering_read_only_mode() - Complete the process of entering read only mode.
++ * @completion: The read-only mode completion.
++ */
++static void finish_entering_read_only_mode(struct vdo_completion *completion)
++{
++	struct read_only_notifier *notifier = as_notifier(completion);
++
++	vdo_assert_on_admin_thread(completion->vdo, __func__);
++
++	spin_lock(&notifier->lock);
++	notifier->state = NOTIFIED;
++	spin_unlock(&notifier->lock);
++
++	if (notifier->waiter != NULL)
++		vdo_continue_completion(UDS_FORGET(notifier->waiter), completion->result);
++}
++
++/**
++ * make_thread_read_only() - Inform each thread that the VDO is in read-only mode.
++ * @completion: The read-only mode completion.
++ */
++static void make_thread_read_only(struct vdo_completion *completion)
++{
++	struct vdo *vdo = completion->vdo;
++	thread_id_t thread_id = completion->callback_thread_id;
++	struct read_only_notifier *notifier = as_notifier(completion);
++	struct read_only_listener *listener = completion->parent;
++
++	if (listener == NULL) {
++		/* This is the first call on this thread */
++		struct vdo_thread *thread = &vdo->threads[thread_id];
++
++		thread->is_read_only = true;
++		listener = thread->listeners;
++		if (thread_id == 0)
++			uds_log_error_strerror(READ_ONCE(notifier->read_only_error),
++					       "Unrecoverable error, entering read-only mode");
 +	} else {
-+		uds_log_warning("Device was dirty, rebuilding reference counts");
++		/* We've just finished notifying a listener */
++		listener = listener->next;
 +	}
 +
-+	result = UDS_ALLOCATE_EXTENDED(struct repair_completion,
-+				       page_count,
-+				       struct vdo_page_completion,
-+				       __func__,
-+				       &repair);
-+	if (result != VDO_SUCCESS) {
-+		vdo_fail_completion(parent, result);
++	if (listener != NULL) {
++		/* We have a listener to notify */
++		vdo_prepare_completion(completion,
++				       make_thread_read_only,
++				       make_thread_read_only,
++				       thread_id,
++				       listener);
++		listener->notify(listener->listener, completion);
 +		return;
 +	}
 +
-+	vdo_initialize_completion(&repair->completion, vdo, VDO_REPAIR_COMPLETION);
-+	repair->completion.error_handler = abort_repair;
-+	repair->completion.parent = parent;
-+	prepare_repair_completion(repair, finish_repair, VDO_ZONE_TYPE_ADMIN);
-+	repair->page_count = page_count;
++	/* We're done with this thread */
++	if (++thread_id == vdo->thread_config.dedupe_thread)
++		/*
++		 * We don't want to notify the dedupe thread since it may be
++		 * blocked rebuilding the index.
++		 */
++		++thread_id;
 +
-+	result = UDS_ALLOCATE(remaining * VDO_BLOCK_SIZE, char, __func__, &repair->journal_data);
-+	if (abort_on_error(result, repair))
++	if (thread_id >= vdo->thread_config.thread_count)
++		/* There are no more threads */
++		vdo_prepare_completion(completion,
++				       finish_entering_read_only_mode,
++				       finish_entering_read_only_mode,
++				       vdo->thread_config.admin_thread,
++				       NULL);
++	else
++		vdo_prepare_completion(completion,
++				       make_thread_read_only,
++				       make_thread_read_only,
++				       thread_id,
++				       NULL);
++
++	vdo_launch_completion(completion);
++}
++
++/**
++ * vdo_allow_read_only_mode_entry() - Allow the notifier to put the VDO into read-only mode,
++ *                                    reversing the effects of
++ *                                    vdo_wait_until_not_entering_read_only_mode().
++ * @parent: The object to notify once the operation is complete.
++ *
++ * If some thread tried to put the vdo into read-only mode while notifications were disallowed, it
++ * will be done when this method is called. If that happens, the parent will not be notified until
++ * the vdo has actually entered read-only mode and attempted to save the super block.
++ *
++ * Context: This method may only be called from the admin thread.
++ */
++void vdo_allow_read_only_mode_entry(struct vdo_completion *parent)
++{
++	struct vdo *vdo = parent->vdo;
++	struct read_only_notifier *notifier = &vdo->read_only_notifier;
++
++	vdo_assert_on_admin_thread(vdo, __func__);
++
++	if (notifier->waiter != NULL) {
++		vdo_continue_completion(parent, VDO_COMPONENT_BUSY);
 +		return;
++	}
 +
-+	result = UDS_ALLOCATE(vio_count, struct vio, __func__, &repair->vios);
-+	if (abort_on_error(result, repair))
++	spin_lock(&notifier->lock);
++	if (notifier->state == MAY_NOT_NOTIFY) {
++		if (notifier->read_only_error == VDO_SUCCESS) {
++			notifier->state = MAY_NOTIFY;
++		} else {
++			notifier->state = NOTIFYING;
++			notifier->waiter = parent;
++		}
++	}
++	spin_unlock(&notifier->lock);
++
++	if (notifier->waiter == NULL) {
++		/* We're done */
++		vdo_launch_completion(parent);
 +		return;
++	}
 +
-+	ptr = repair->journal_data;
-+	for (repair->vio_count = 0; repair->vio_count < vio_count; repair->vio_count++) {
-+		block_count_t blocks = min_t(block_count_t, remaining, MAX_BLOCKS_PER_VIO);
++	/* Do the pending notification. */
++	make_thread_read_only(&notifier->completion);
++}
 +
-+		result = allocate_vio_components(vdo,
-+						 VIO_TYPE_RECOVERY_JOURNAL,
-+						 VIO_PRIORITY_METADATA,
-+						 repair,
-+						 blocks,
-+						 ptr,
-+						 &repair->vios[repair->vio_count]);
-+		if (abort_on_error(result, repair))
++/**
++ * vdo_enter_read_only_mode() - Put a VDO into read-only mode and save the read-only state in the
++ *                              super block.
++ * @vdo: The vdo.
++ * @error_code: The error which caused the VDO to enter read-only mode.
++ *
++ * This method is a no-op if the VDO is already read-only.
++ */
++void vdo_enter_read_only_mode(struct vdo *vdo, int error_code)
++{
++	bool notify = false;
++	thread_id_t thread_id = vdo_get_callback_thread_id();
++	struct read_only_notifier *notifier = &vdo->read_only_notifier;
++	struct vdo_thread *thread;
++
++	if (thread_id != VDO_INVALID_THREAD_ID) {
++		thread = &vdo->threads[thread_id];
++		if (thread->is_read_only)
++			/* This thread has already gone read-only. */
 +			return;
 +
-+		ptr += (blocks * VDO_BLOCK_SIZE);
-+		remaining -= blocks;
++		/* Record for this thread that the VDO is read-only. */
++		thread->is_read_only = true;
 +	}
 +
-+	for (vio_count = 0;
-+	     vio_count < repair->vio_count;
-+	     vio_count++, pbn += MAX_BLOCKS_PER_VIO)
-+		submit_metadata_vio(&repair->vios[vio_count],
-+				    pbn,
-+				    read_journal_endio,
-+				    handle_journal_load_error,
-+				    REQ_OP_READ);
++	spin_lock(&notifier->lock);
++	if (notifier->read_only_error == VDO_SUCCESS) {
++		WRITE_ONCE(notifier->read_only_error, error_code);
++		if (notifier->state == MAY_NOTIFY) {
++			notifier->state = NOTIFYING;
++			notify = true;
++		}
++	}
++	spin_unlock(&notifier->lock);
++
++	if (!notify)
++		/* The notifier is already aware of a read-only error */
++		return;
++
++	/* Initiate a notification starting on the lowest numbered thread. */
++	vdo_launch_completion_callback(&notifier->completion, make_thread_read_only, 0);
 +}
-diff --git a/drivers/md/dm-vdo/repair.h b/drivers/md/dm-vdo/repair.h
++
++/**
++ * vdo_is_read_only() - Check whether the VDO is read-only.
++ * @vdo: The vdo.
++ *
++ * Return: true if the vdo is read-only.
++ *
++ * This method may be called from any thread, as opposed to examining the VDO's state field which
++ * is only safe to check from the admin thread.
++ */
++bool vdo_is_read_only(struct vdo *vdo)
++{
++	return vdo->threads[vdo_get_callback_thread_id()].is_read_only;
++}
++
++/**
++ * vdo_in_read_only_mode() - Check whether a vdo is in read-only mode.
++ * @vdo: The vdo to query.
++ *
++ * Return: true if the vdo is in read-only mode.
++ */
++bool vdo_in_read_only_mode(const struct vdo *vdo)
++{
++	return (vdo_get_state(vdo) == VDO_READ_ONLY_MODE);
++}
++
++/**
++ * vdo_in_recovery_mode() - Check whether the vdo is in recovery mode.
++ * @vdo: The vdo to query.
++ *
++ * Return: true if the vdo is in recovery mode.
++ */
++bool vdo_in_recovery_mode(const struct vdo *vdo)
++{
++	return (vdo_get_state(vdo) == VDO_RECOVERING);
++}
++
++/**
++ * vdo_enter_recovery_mode() - Put the vdo into recovery mode.
++ * @vdo: The vdo.
++ */
++void vdo_enter_recovery_mode(struct vdo *vdo)
++{
++	vdo_assert_on_admin_thread(vdo, __func__);
++
++	if (vdo_in_read_only_mode(vdo))
++		return;
++
++	uds_log_info("Entering recovery mode");
++	vdo_set_state(vdo, VDO_RECOVERING);
++}
++
++/**
++ * complete_synchronous_action() - Signal the waiting thread that a synchronous action is complete.
++ * @completion: The sync completion.
++ */
++static void complete_synchronous_action(struct vdo_completion *completion)
++{
++	vdo_assert_completion_type(completion, VDO_SYNC_COMPLETION);
++	complete(&(container_of(completion, struct sync_completion, vdo_completion)->completion));
++}
++
++/**
++ * perform_synchronous_action() - Launch an action on a VDO thread and wait for it to complete.
++ * @vdo: The vdo.
++ * @action: The callback to launch.
++ * @thread_id: The thread on which to run the action.
++ * @parent: The parent of the sync completion (may be NULL).
++ */
++static int perform_synchronous_action(struct vdo *vdo,
++				      vdo_action *action,
++				      thread_id_t thread_id,
++				      void *parent)
++{
++	struct sync_completion sync;
++
++	vdo_initialize_completion(&sync.vdo_completion, vdo, VDO_SYNC_COMPLETION);
++	init_completion(&sync.completion);
++	sync.vdo_completion.parent = parent;
++	vdo_launch_completion_callback(&sync.vdo_completion, action, thread_id);
++	wait_for_completion(&sync.completion);
++	return sync.vdo_completion.result;
++}
++
++/**
++ * set_compression_callback() - Callback to turn compression on or off.
++ * @completion: The completion.
++ */
++static void set_compression_callback(struct vdo_completion *completion)
++{
++	struct vdo *vdo = completion->vdo;
++	bool *enable = completion->parent;
++	bool was_enabled = vdo_get_compressing(vdo);
++
++	if (*enable != was_enabled) {
++		WRITE_ONCE(vdo->compressing, *enable);
++		if (was_enabled)
++			/* Signal the packer to flush since compression has been disabled. */
++			vdo_flush_packer(vdo->packer);
++	}
++
++	uds_log_info("compression is %s", (*enable ? "enabled" : "disabled"));
++	*enable = was_enabled;
++	complete_synchronous_action(completion);
++}
++
++/**
++ * vdo_set_compressing() - Turn compression on or off.
++ * @vdo: The vdo.
++ * @enable: Whether to enable or disable compression.
++ *
++ * Return: Whether compression was previously on or off.
++ */
++bool vdo_set_compressing(struct vdo *vdo, bool enable)
++{
++	perform_synchronous_action(vdo,
++				   set_compression_callback,
++				   vdo->thread_config.packer_thread,
++				   &enable);
++	return enable;
++}
++
++/**
++ * vdo_get_compressing() - Get whether compression is enabled in a vdo.
++ * @vdo: The vdo.
++ *
++ * Return: State of compression.
++ */
++bool vdo_get_compressing(struct vdo *vdo)
++{
++	return READ_ONCE(vdo->compressing);
++}
++
++static size_t get_block_map_cache_size(const struct vdo *vdo)
++{
++	return ((size_t) vdo->device_config->cache_size) * VDO_BLOCK_SIZE;
++}
++
++static struct error_statistics __must_check get_vdo_error_statistics(const struct vdo *vdo)
++{
++	/*
++	 * The error counts can be incremented from arbitrary threads and so must be incremented
++	 * atomically, but they are just statistics with no semantics that could rely on memory
++	 * order, so unfenced reads are sufficient.
++	 */
++	const struct atomic_statistics *atoms = &vdo->stats;
++
++	return (struct error_statistics) {
++		.invalid_advice_pbn_count = atomic64_read(&atoms->invalid_advice_pbn_count),
++		.no_space_error_count = atomic64_read(&atoms->no_space_error_count),
++		.read_only_error_count = atomic64_read(&atoms->read_only_error_count),
++	};
++}
++
++static void copy_bio_stat(struct bio_stats *b, const struct atomic_bio_stats *a)
++{
++	b->read = atomic64_read(&a->read);
++	b->write = atomic64_read(&a->write);
++	b->discard = atomic64_read(&a->discard);
++	b->flush = atomic64_read(&a->flush);
++	b->empty_flush = atomic64_read(&a->empty_flush);
++	b->fua = atomic64_read(&a->fua);
++}
++
++static struct bio_stats subtract_bio_stats(struct bio_stats minuend, struct bio_stats subtrahend)
++{
++	return (struct bio_stats) {
++		.read = minuend.read - subtrahend.read,
++		.write = minuend.write - subtrahend.write,
++		.discard = minuend.discard - subtrahend.discard,
++		.flush = minuend.flush - subtrahend.flush,
++		.empty_flush = minuend.empty_flush - subtrahend.empty_flush,
++		.fua = minuend.fua - subtrahend.fua,
++	};
++}
++
++/**
++ * vdo_get_physical_blocks_allocated() - Get the number of physical blocks in use by user data.
++ * @vdo: The vdo.
++ *
++ * Return: The number of blocks allocated for user data.
++ */
++static block_count_t __must_check vdo_get_physical_blocks_allocated(const struct vdo *vdo)
++{
++	return (vdo_get_slab_depot_allocated_blocks(vdo->depot) -
++		vdo_get_journal_block_map_data_blocks_used(vdo->recovery_journal));
++}
++
++/**
++ * vdo_get_physical_blocks_overhead() - Get the number of physical blocks used by vdo metadata.
++ * @vdo: The vdo.
++ *
++ * Return: The number of overhead blocks.
++ */
++static block_count_t __must_check vdo_get_physical_blocks_overhead(const struct vdo *vdo)
++{
++	/*
++	 * config.physical_blocks is mutated during resize and is in a packed structure,
++	 * but resize runs on admin thread.
++	 * TODO: Verify that this is always safe.
++	 */
++	return (vdo->states.vdo.config.physical_blocks -
++		vdo_get_slab_depot_data_blocks(vdo->depot) +
++		vdo_get_journal_block_map_data_blocks_used(vdo->recovery_journal));
++}
++
++static const char *vdo_describe_state(enum vdo_state state)
++{
++	/* These strings should all fit in the 15 chars of VDOStatistics.mode. */
++	switch (state) {
++	case VDO_RECOVERING:
++		return "recovering";
++
++	case VDO_READ_ONLY_MODE:
++		return "read-only";
++
++	default:
++		return "normal";
++	}
++}
++
++/**
++ * get_vdo_statistics() - Populate a vdo_statistics structure on the admin thread.
++ * @vdo: The vdo.
++ * @stats: The statistics structure to populate.
++ */
++static void get_vdo_statistics(const struct vdo *vdo, struct vdo_statistics *stats)
++{
++	struct recovery_journal *journal = vdo->recovery_journal;
++	enum vdo_state state = vdo_get_state(vdo);
++
++	vdo_assert_on_admin_thread(vdo, __func__);
++
++	/* start with a clean slate */
++	memset(stats, 0, sizeof(struct vdo_statistics));
++
++	/*
++	 * These are immutable properties of the vdo object, so it is safe to query them from any
++	 * thread.
++	 */
++	stats->version = STATISTICS_VERSION;
++	stats->logical_blocks = vdo->states.vdo.config.logical_blocks;
++	/*
++	 * config.physical_blocks is mutated during resize and is in a packed structure, but resize
++	 * runs on the admin thread.
++	 * TODO: verify that this is always safe
++	 */
++	stats->physical_blocks = vdo->states.vdo.config.physical_blocks;
++	stats->block_size = VDO_BLOCK_SIZE;
++	stats->complete_recoveries = vdo->states.vdo.complete_recoveries;
++	stats->read_only_recoveries = vdo->states.vdo.read_only_recoveries;
++	stats->block_map_cache_size = get_block_map_cache_size(vdo);
++
++	/* The callees are responsible for thread-safety. */
++	stats->data_blocks_used = vdo_get_physical_blocks_allocated(vdo);
++	stats->overhead_blocks_used = vdo_get_physical_blocks_overhead(vdo);
++	stats->logical_blocks_used = vdo_get_recovery_journal_logical_blocks_used(journal);
++	vdo_get_slab_depot_statistics(vdo->depot, stats);
++	stats->journal = vdo_get_recovery_journal_statistics(journal);
++	stats->packer = vdo_get_packer_statistics(vdo->packer);
++	stats->block_map = vdo_get_block_map_statistics(vdo->block_map);
++	vdo_get_dedupe_statistics(vdo->hash_zones, stats);
++	stats->errors = get_vdo_error_statistics(vdo);
++	stats->in_recovery_mode = (state == VDO_RECOVERING);
++	snprintf(stats->mode, sizeof(stats->mode), "%s", vdo_describe_state(state));
++
++	stats->instance = vdo->instance;
++	stats->current_vios_in_progress = get_data_vio_pool_active_requests(vdo->data_vio_pool);
++	stats->max_vios = get_data_vio_pool_maximum_requests(vdo->data_vio_pool);
++
++	stats->flush_out = atomic64_read(&vdo->stats.flush_out);
++	stats->logical_block_size = vdo->device_config->logical_block_size;
++	copy_bio_stat(&stats->bios_in, &vdo->stats.bios_in);
++	copy_bio_stat(&stats->bios_in_partial, &vdo->stats.bios_in_partial);
++	copy_bio_stat(&stats->bios_out, &vdo->stats.bios_out);
++	copy_bio_stat(&stats->bios_meta, &vdo->stats.bios_meta);
++	copy_bio_stat(&stats->bios_journal, &vdo->stats.bios_journal);
++	copy_bio_stat(&stats->bios_page_cache, &vdo->stats.bios_page_cache);
++	copy_bio_stat(&stats->bios_out_completed, &vdo->stats.bios_out_completed);
++	copy_bio_stat(&stats->bios_meta_completed, &vdo->stats.bios_meta_completed);
++	copy_bio_stat(&stats->bios_journal_completed, &vdo->stats.bios_journal_completed);
++	copy_bio_stat(&stats->bios_page_cache_completed, &vdo->stats.bios_page_cache_completed);
++	copy_bio_stat(&stats->bios_acknowledged, &vdo->stats.bios_acknowledged);
++	copy_bio_stat(&stats->bios_acknowledged_partial, &vdo->stats.bios_acknowledged_partial);
++	stats->bios_in_progress = subtract_bio_stats(stats->bios_in, stats->bios_acknowledged);
++	uds_get_memory_stats(&stats->memory_usage.bytes_used,
++			     &stats->memory_usage.peak_bytes_used);
++}
++
++/**
++ * vdo_fetch_statistics_callback() - Action to populate a vdo_statistics
++ *                                   structure on the admin thread.
++ * @completion: The completion.
++ *
++ * This callback is registered in vdo_fetch_statistics().
++ */
++static void vdo_fetch_statistics_callback(struct vdo_completion *completion)
++{
++	get_vdo_statistics(completion->vdo, completion->parent);
++	complete_synchronous_action(completion);
++}
++
++/**
++ * vdo_fetch_statistics() - Fetch statistics on the correct thread.
++ * @vdo: The vdo.
++ * @stats: The vdo statistics are returned here.
++ */
++void vdo_fetch_statistics(struct vdo *vdo, struct vdo_statistics *stats)
++{
++	perform_synchronous_action(vdo,
++				   vdo_fetch_statistics_callback,
++				   vdo->thread_config.admin_thread,
++				   stats);
++}
++
++/**
++ * vdo_get_callback_thread_id() - Get the id of the callback thread on which a completion is
++ *                                currently running.
++ *
++ * Return: The current thread ID, or -1 if no such thread.
++ */
++thread_id_t vdo_get_callback_thread_id(void)
++{
++	struct vdo_work_queue *queue = vdo_get_current_work_queue();
++	struct vdo_thread *thread;
++	thread_id_t thread_id;
++
++	if (queue == NULL)
++		return VDO_INVALID_THREAD_ID;
++
++	thread = vdo_get_work_queue_owner(queue);
++	thread_id = thread->thread_id;
++
++	if (PARANOID_THREAD_CONSISTENCY_CHECKS) {
++		BUG_ON(thread_id >= thread->vdo->thread_config.thread_count);
++		BUG_ON(thread != &thread->vdo->threads[thread_id]);
++	}
++
++	return thread_id;
++}
++
++/**
++ * vdo_dump_status() - Dump status information about a vdo to the log for debugging.
++ * @vdo: The vdo to dump.
++ */
++void vdo_dump_status(const struct vdo *vdo)
++{
++	zone_count_t zone;
++
++	vdo_dump_flusher(vdo->flusher);
++	vdo_dump_recovery_journal_statistics(vdo->recovery_journal);
++	vdo_dump_packer(vdo->packer);
++	vdo_dump_slab_depot(vdo->depot);
++
++	for (zone = 0; zone < vdo->thread_config.logical_zone_count; zone++)
++		vdo_dump_logical_zone(&vdo->logical_zones->zones[zone]);
++
++	for (zone = 0; zone < vdo->thread_config.physical_zone_count; zone++)
++		vdo_dump_physical_zone(&vdo->physical_zones->zones[zone]);
++
++	vdo_dump_hash_zones(vdo->hash_zones);
++}
++
++/**
++ * vdo_assert_on_admin_thread() - Assert that we are running on the admin thread.
++ * @vdo: The vdo.
++ * @name: The name of the function which should be running on the admin thread (for logging).
++ */
++void vdo_assert_on_admin_thread(const struct vdo *vdo, const char *name)
++{
++	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() == vdo->thread_config.admin_thread),
++			"%s called on admin thread",
++			name);
++}
++
++/**
++ * vdo_assert_on_logical_zone_thread() - Assert that this function was called on the specified
++ *                                       logical zone thread.
++ * @vdo: The vdo.
++ * @logical_zone: The number of the logical zone.
++ * @name: The name of the calling function.
++ */
++void vdo_assert_on_logical_zone_thread(const struct vdo *vdo,
++				       zone_count_t logical_zone,
++				       const char *name)
++{
++	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() ==
++			 vdo->thread_config.logical_threads[logical_zone]),
++			"%s called on logical thread",
++			name);
++}
++
++/**
++ * vdo_assert_on_physical_zone_thread() - Assert that this function was called on the specified
++ *                                        physical zone thread.
++ * @vdo: The vdo.
++ * @physical_zone: The number of the physical zone.
++ * @name: The name of the calling function.
++ */
++void vdo_assert_on_physical_zone_thread(const struct vdo *vdo,
++					zone_count_t physical_zone,
++					const char *name)
++{
++	ASSERT_LOG_ONLY((vdo_get_callback_thread_id() ==
++			 vdo->thread_config.physical_threads[physical_zone]),
++			"%s called on physical thread",
++			name);
++}
++
++/**
++ * vdo_get_physical_zone() - Get the physical zone responsible for a given physical block number.
++ * @vdo: The vdo containing the physical zones.
++ * @pbn: The PBN of the data block.
++ * @zone_ptr: A pointer to return the physical zone.
++ *
++ * Gets the physical zone responsible for a given physical block number of a data block in this vdo
++ * instance, or of the zero block (for which a NULL zone is returned). For any other block number
++ * that is not in the range of valid data block numbers in any slab, an error will be returned.
++ * This function is safe to call on invalid block numbers; it will not put the vdo into read-only
++ * mode.
++ *
++ * Return: VDO_SUCCESS or VDO_OUT_OF_RANGE if the block number is invalid or an error code for any
++ *         other failure.
++ */
++int vdo_get_physical_zone(const struct vdo *vdo,
++			  physical_block_number_t pbn,
++			  struct physical_zone **zone_ptr)
++{
++	struct vdo_slab *slab;
++	int result;
++
++	if (pbn == VDO_ZERO_BLOCK) {
++		*zone_ptr = NULL;
++		return VDO_SUCCESS;
++	}
++
++	/*
++	 * Used because it does a more restrictive bounds check than vdo_get_slab(), and done first
++	 * because it won't trigger read-only mode on an invalid PBN.
++	 */
++	if (!vdo_is_physical_data_block(vdo->depot, pbn))
++		return VDO_OUT_OF_RANGE;
++
++	/* With the PBN already checked, we should always succeed in finding a slab. */
++	slab = vdo_get_slab(vdo->depot, pbn);
++	result = ASSERT(slab != NULL, "vdo_get_slab must succeed on all valid PBNs");
++	if (result != VDO_SUCCESS)
++		return result;
++
++	*zone_ptr = &vdo->physical_zones->zones[slab->allocator->zone_number];
++	return VDO_SUCCESS;
++}
+diff --git a/drivers/md/dm-vdo/vdo.h b/drivers/md/dm-vdo/vdo.h
 new file mode 100644
-index 000000000000..ff255cf41486
+index 000000000000..a2caf54221c8
 --- /dev/null
-+++ b/drivers/md/dm-vdo/repair.h
-@@ -0,0 +1,14 @@
++++ b/drivers/md/dm-vdo/vdo.h
+@@ -0,0 +1,381 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef VDO_REPAIR_H
-+#define VDO_REPAIR_H
++#ifndef VDO_H
++#define VDO_H
 +
++#include <linux/atomic.h>
++#include <linux/blk_types.h>
++#include <linux/completion.h>
++#include <linux/dm-kcopyd.h>
++#include <linux/kobject.h>
++#include <linux/list.h>
++#include <linux/spinlock.h>
++
++#include "admin-state.h"
++#include "encodings.h"
++#include "packer.h"
++#include "physical-zone.h"
++#include "statistics.h"
++#include "thread-registry.h"
 +#include "types.h"
++#include "uds.h"
++#include "work-queue.h"
 +
-+void vdo_replay_into_slab_journals(struct block_allocator *allocator, void *context);
-+void vdo_repair(struct vdo_completion *parent);
++enum notifier_state {
++	/** Notifications are allowed but not in progress */
++	MAY_NOTIFY,
++	/** A notification is in progress */
++	NOTIFYING,
++	/** Notifications are not allowed */
++	MAY_NOT_NOTIFY,
++	/** A notification has completed */
++	NOTIFIED,
++};
 +
-+#endif /* VDO_REPAIR_H */
++/**
++ * typedef vdo_read_only_notification - A function to notify a listener that the VDO has gone
++ *                                      read-only.
++ * @listener: The object to notify.
++ * @parent: The completion to notify in order to acknowledge the notification.
++ */
++typedef void vdo_read_only_notification(void *listener, struct vdo_completion *parent);
++
++/*
++ * An object to be notified when the VDO enters read-only mode
++ */
++struct read_only_listener {
++	/* The listener */
++	void *listener;
++	/* The method to call to notify the listener */
++	vdo_read_only_notification *notify;
++	/* A pointer to the next listener */
++	struct read_only_listener *next;
++};
++
++struct vdo_thread {
++	struct vdo *vdo;
++	thread_id_t thread_id;
++	struct vdo_work_queue *queue;
++	/*
++	 * Each thread maintains its own notion of whether the VDO is read-only so that the
++	 * read-only state can be checked from any base thread without worrying about
++	 * synchronization or thread safety. This does mean that knowledge of the VDO going
++	 * read-only does not occur simultaneously across the VDO's threads, but that does not seem
++	 * to cause any problems.
++	 */
++	bool is_read_only;
++	/*
++	 * A list of objects waiting to be notified on this thread that the VDO has entered
++	 * read-only mode.
++	 */
++	struct read_only_listener *listeners;
++	struct registered_thread allocating_thread;
++};
++
++/* Keep struct bio statistics atomically */
++struct atomic_bio_stats {
++	atomic64_t read; /* Number of not REQ_WRITE bios */
++	atomic64_t write; /* Number of REQ_WRITE bios */
++	atomic64_t discard; /* Number of REQ_DISCARD bios */
++	atomic64_t flush; /* Number of REQ_FLUSH bios */
++	atomic64_t empty_flush; /* Number of REQ_PREFLUSH bios without data */
++	atomic64_t fua; /* Number of REQ_FUA bios */
++};
++
++/* Counters are atomic since updates can arrive concurrently from arbitrary threads. */
++struct atomic_statistics {
++	atomic64_t bios_submitted;
++	atomic64_t bios_completed;
++	atomic64_t flush_out;
++	atomic64_t invalid_advice_pbn_count;
++	atomic64_t no_space_error_count;
++	atomic64_t read_only_error_count;
++	struct atomic_bio_stats bios_in;
++	struct atomic_bio_stats bios_in_partial;
++	struct atomic_bio_stats bios_out;
++	struct atomic_bio_stats bios_out_completed;
++	struct atomic_bio_stats bios_acknowledged;
++	struct atomic_bio_stats bios_acknowledged_partial;
++	struct atomic_bio_stats bios_meta;
++	struct atomic_bio_stats bios_meta_completed;
++	struct atomic_bio_stats bios_journal;
++	struct atomic_bio_stats bios_journal_completed;
++	struct atomic_bio_stats bios_page_cache;
++	struct atomic_bio_stats bios_page_cache_completed;
++};
++
++struct read_only_notifier {
++	/* The completion for entering read-only mode */
++	struct vdo_completion completion;
++	/* A completion waiting for notifications to be drained or enabled */
++	struct vdo_completion *waiter;
++	/* Lock to protect the next two fields */
++	spinlock_t lock;
++	/* The code of the error which put the VDO into read-only mode */
++	int read_only_error;
++	/* The current state of the notifier (values described above) */
++	enum notifier_state state;
++};
++
++/*
++ * The thread ID returned when the current thread is not a vdo thread, or can not be determined
++ * (usually due to being at interrupt context).
++ */
++#define VDO_INVALID_THREAD_ID ((thread_id_t) -1)
++
++struct thread_config {
++	zone_count_t logical_zone_count;
++	zone_count_t physical_zone_count;
++	zone_count_t hash_zone_count;
++	thread_count_t bio_thread_count;
++	thread_count_t thread_count;
++	thread_id_t admin_thread;
++	thread_id_t journal_thread;
++	thread_id_t packer_thread;
++	thread_id_t dedupe_thread;
++	thread_id_t bio_ack_thread;
++	thread_id_t cpu_thread;
++	thread_id_t *logical_threads;
++	thread_id_t *physical_threads;
++	thread_id_t *hash_zone_threads;
++	thread_id_t *bio_threads;
++};
++
++struct thread_count_config;
++
++struct vdo_super_block {
++	/* The vio for reading and writing the super block to disk */
++	struct vio vio;
++	/* A buffer to hold the super block */
++	u8 *buffer;
++	/* Whether this super block may not be written */
++	bool unwritable;
++};
++
++struct data_vio_pool;
++
++struct vdo_administrator {
++	struct vdo_completion completion;
++	struct admin_state state;
++	atomic_t busy;
++	u32 phase;
++	struct completion callback_sync;
++};
++
++struct vdo {
++	char thread_name_prefix[MAX_VDO_WORK_QUEUE_NAME_LEN];
++	struct vdo_thread *threads;
++	vdo_action *action;
++	struct vdo_completion *completion;
++	struct vio_tracer *vio_tracer;
++
++	/* The atomic version of the state of this vdo */
++	atomic_t state;
++	/* The full state of all components */
++	struct vdo_component_states states;
++	/*
++	 * A counter value to attach to thread names and log messages to identify the individual
++	 * device.
++	 */
++	unsigned int instance;
++	/* The read-only notifier */
++	struct read_only_notifier read_only_notifier;
++	/* The load-time configuration of this vdo */
++	struct device_config *device_config;
++	/* The thread mapping */
++	struct thread_config thread_config;
++
++	/* The super block */
++	struct vdo_super_block super_block;
++
++	/* The partitioning of the underlying storage */
++	struct layout layout;
++	struct layout next_layout;
++	struct dm_kcopyd_client *partition_copier;
++
++	/* The block map */
++	struct block_map *block_map;
++
++	/* The journal for block map recovery */
++	struct recovery_journal *recovery_journal;
++
++	/* The slab depot */
++	struct slab_depot *depot;
++
++	/* The compressed-block packer */
++	struct packer *packer;
++	/* Whether incoming data should be compressed */
++	bool compressing;
++
++	/* The handler for flush requests */
++	struct flusher *flusher;
++
++	/* The state the vdo was in when loaded (primarily for unit tests) */
++	enum vdo_state load_state;
++
++	/* The logical zones of this vdo */
++	struct logical_zones *logical_zones;
++
++	/* The physical zones of this vdo */
++	struct physical_zones *physical_zones;
++
++	/* The hash lock zones of this vdo */
++	struct hash_zones *hash_zones;
++
++	/* Bio submission manager used for sending bios to the storage device. */
++	struct io_submitter *io_submitter;
++
++	/* The pool of data_vios for servicing incoming bios */
++	struct data_vio_pool *data_vio_pool;
++
++	/* The manager for administrative operations */
++	struct vdo_administrator admin;
++
++	/* Flags controlling administrative operations */
++	const struct admin_state_code *suspend_type;
++	bool allocations_allowed;
++	bool dump_on_shutdown;
++	atomic_t processing_message;
++
++	/*
++	 * Statistics
++	 * Atomic stats counters
++	 */
++	struct atomic_statistics stats;
++	/* Used to gather statistics without allocating memory */
++	struct vdo_statistics stats_buffer;
++	/* Protects the stats_buffer */
++	struct mutex stats_mutex;
++	/* true if sysfs directory is set up */
++	bool sysfs_added;
++	/* Used when shutting down the sysfs statistics */
++	struct completion stats_shutdown;
++
++
++	/* A list of all device_configs referencing this vdo */
++	struct list_head device_config_list;
++
++	/* This VDO's list entry for the device registry */
++	struct list_head registration;
++
++	/* Underlying block device info. */
++	u64 starting_sector_offset;
++	struct volume_geometry geometry;
++
++	/* For sysfs */
++	struct kobject vdo_directory;
++	struct kobject stats_directory;
++
++	/* N blobs of context data for LZ4 code, one per CPU thread. */
++	char **compression_context;
++};
++
++
++/**
++ * vdo_uses_bio_ack_queue() - Indicate whether the vdo is configured to use a separate work queue
++ *                            for acknowledging received and processed bios.
++ * @vdo: The vdo.
++ *
++ * Note that this directly controls the handling of write operations, but the compile-time flag
++ * VDO_USE_BIO_ACK_QUEUE_FOR_READ is also checked for read operations.
++ *
++ * Return: Whether a bio-acknowledgement work queue is in use.
++ */
++static inline bool vdo_uses_bio_ack_queue(struct vdo *vdo)
++{
++	return vdo->device_config->thread_counts.bio_ack_threads > 0;
++}
++
++/**
++ * typedef vdo_filter_t - Method type for vdo matching methods.
++ *
++ * A filter function returns false if the vdo doesn't match.
++ */
++typedef bool vdo_filter_t(struct vdo *vdo, const void *context);
++
++void vdo_initialize_device_registry_once(void);
++struct vdo * __must_check vdo_find_matching(vdo_filter_t *filter, const void *context);
++
++int __must_check vdo_make_thread(struct vdo *vdo,
++				 thread_id_t thread_id,
++				 const struct vdo_work_queue_type *type,
++				 unsigned int queue_count,
++				 void *contexts[]);
++
++static inline int __must_check vdo_make_default_thread(struct vdo *vdo, thread_id_t thread_id)
++{
++	return vdo_make_thread(vdo, thread_id, NULL, 1, NULL);
++}
++
++int __must_check
++vdo_make(unsigned int instance, struct device_config *config, char **reason, struct vdo **vdo_ptr);
++
++void vdo_destroy(struct vdo *vdo);
++
++void vdo_load_super_block(struct vdo *vdo, struct vdo_completion *parent);
++
++int __must_check vdo_add_sysfs_stats_dir(struct vdo *vdo);
++
++struct block_device * __must_check vdo_get_backing_device(const struct vdo *vdo);
++
++const char * __must_check vdo_get_device_name(const struct dm_target *target);
++
++int __must_check vdo_synchronous_flush(struct vdo *vdo);
++
++const struct admin_state_code * __must_check vdo_get_admin_state(const struct vdo *vdo);
++
++bool vdo_set_compressing(struct vdo *vdo, bool enable);
++
++bool vdo_get_compressing(struct vdo *vdo);
++
++void vdo_fetch_statistics(struct vdo *vdo, struct vdo_statistics *stats);
++
++thread_id_t vdo_get_callback_thread_id(void);
++
++enum vdo_state __must_check vdo_get_state(const struct vdo *vdo);
++
++void vdo_set_state(struct vdo *vdo, enum vdo_state state);
++
++void vdo_save_components(struct vdo *vdo, struct vdo_completion *parent);
++
++int vdo_register_read_only_listener(struct vdo *vdo,
++				    void *listener,
++				    vdo_read_only_notification *notification,
++				    thread_id_t thread_id);
++
++int vdo_enable_read_only_entry(struct vdo *vdo);
++
++void vdo_wait_until_not_entering_read_only_mode(struct vdo_completion *parent);
++
++void vdo_allow_read_only_mode_entry(struct vdo_completion *parent);
++
++void vdo_enter_read_only_mode(struct vdo *vdo, int error_code);
++
++bool __must_check vdo_is_read_only(struct vdo *vdo);
++
++bool __must_check vdo_in_read_only_mode(const struct vdo *vdo);
++
++bool __must_check vdo_in_recovery_mode(const struct vdo *vdo);
++
++void vdo_enter_recovery_mode(struct vdo *vdo);
++
++void vdo_assert_on_admin_thread(const struct vdo *vdo, const char *name);
++
++void vdo_assert_on_logical_zone_thread(const struct vdo *vdo,
++				       zone_count_t logical_zone,
++				       const char *name);
++
++void vdo_assert_on_physical_zone_thread(const struct vdo *vdo,
++					zone_count_t physical_zone,
++					const char *name);
++
++int __must_check vdo_get_physical_zone(const struct vdo *vdo,
++				       physical_block_number_t pbn,
++				       struct physical_zone **zone_ptr);
++
++void vdo_dump_status(const struct vdo *vdo);
++
++#endif /* VDO_H */
 -- 
 2.40.0
 
