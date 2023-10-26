@@ -1,45 +1,45 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5C0493E465
-	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:44 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7A153E48E
+	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:46 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="jUxdPJkV"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bRYI/xMH"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698356503;
+	s=mimecast20190719; t=1698356505;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=HBaEgq/LYZ4zTrjjb/aTnzfT2sK+0iLUYph+Q6Fry+0=;
-	b=jUxdPJkVzhyuh+Xh3EDsDtNxXrkkRVTHJKjrQO0YbqGUz5RSK/eLtXNKCpr2nCV+CmliY1
-	MHmSiRNsXYmuF+UkJPhOy8vbi+95+8AO5dArHv5o+VrQejeuruT85E0v5a2aika/4X2vUi
-	rE4ELVK0iB1IRSYxXnkXnvh4RCpd84k=
+	bh=/iMXLHNntDucEEZtd8E1eBTpqdAdPA/fcEkpzCJcGeA=;
+	b=bRYI/xMHmPLC0ZXnkbe2eGFuYcFSPc6PjqCOUUN6+ieVMK7rog6hmaSqF9xRriRcIFAr7w
+	37ZzhEnsdpMHdPAj+R32UpEi8nzbgZcjTC/nRZg10gqcmRxgJcZ3YUf4lChJUFCT2Hjrf0
+	2A+ooCnfGeYAPA5JnBuuvaWGKxTTkgY=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-617-6F94N9rgNOCnKF2uOkwWxQ-1; Thu, 26 Oct 2023 17:41:39 -0400
-X-MC-Unique: 6F94N9rgNOCnKF2uOkwWxQ-1
+ us-mta-205-xrRbsqJvNFOZgZLD6KSZ4w-1; Thu, 26 Oct 2023 17:41:42 -0400
+X-MC-Unique: xrRbsqJvNFOZgZLD6KSZ4w-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2F54D185A784;
-	Thu, 26 Oct 2023 21:41:39 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1116880F923;
+	Thu, 26 Oct 2023 21:41:42 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1BE1E10751;
-	Thu, 26 Oct 2023 21:41:39 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id ECE1C2949;
+	Thu, 26 Oct 2023 21:41:41 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id D09FC3003C; Thu, 26 Oct 2023 17:41:38 -0400 (EDT)
+	id A22003003C; Thu, 26 Oct 2023 17:41:41 -0400 (EDT)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v4 12/39] dm vdo: implement the volume index
-Date: Thu, 26 Oct 2023 17:41:09 -0400
-Message-Id: <20231026214136.1067410-13-msakai@redhat.com>
+Subject: [PATCH v4 28/39] dm vdo: add the slab depot
+Date: Thu, 26 Oct 2023 17:41:25 -0400
+Message-Id: <20231026214136.1067410-29-msakai@redhat.com>
 In-Reply-To: <20231026214136.1067410-1-msakai@redhat.com>
 References: <20231026214136.1067410-1-msakai@redhat.com>
 Precedence: bulk
@@ -51,1512 +51,1180 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
 
-The volume index is a large delta index that maps each record name to the
-chapter which contains the newest record for that name. The volume index
-can contain several million records and is stored entirely in memory while
-the index is operating, accounting for the majority of the deduplication
-index's memory budget.
-
-The volume index is composed of two subindexes in order to handle sparse
-hook names separately from regular names. If sparse indexing is not
-enabled, the sparse hook portion of the volume index is not used or
-instantiated.
+Add the data and methods that implement the slab_depot that manages
+the allocation of slabs of blocks added by the preceding patches.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
-Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
-Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
+Co-developed-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
+Signed-off-by: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/volume-index.c | 1277 ++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/volume-index.h |  192 +++++
- 2 files changed, 1469 insertions(+)
- create mode 100644 drivers/md/dm-vdo/volume-index.c
- create mode 100644 drivers/md/dm-vdo/volume-index.h
+ drivers/md/dm-vdo/slab-depot.c | 965 +++++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/slab-depot.h | 121 +++++
+ 2 files changed, 1086 insertions(+)
 
-diff --git a/drivers/md/dm-vdo/volume-index.c b/drivers/md/dm-vdo/volume-index.c
-new file mode 100644
-index 000000000000..0c91a2765449
---- /dev/null
-+++ b/drivers/md/dm-vdo/volume-index.c
-@@ -0,0 +1,1277 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
+diff --git a/drivers/md/dm-vdo/slab-depot.c b/drivers/md/dm-vdo/slab-depot.c
+index dbed9c3c8a62..ba9cdb720506 100644
+--- a/drivers/md/dm-vdo/slab-depot.c
++++ b/drivers/md/dm-vdo/slab-depot.c
+@@ -3070,6 +3070,32 @@ static void register_slab_with_allocator(struct block_allocator *allocator, stru
+ 	allocator->last_slab = slab->slab_number;
+ }
+ 
++/**
++ * get_depot_slab_iterator() - Return a slab_iterator over the slabs in a slab_depot.
++ * @depot: The depot over which to iterate.
++ * @start: The number of the slab to start iterating from.
++ * @end: The number of the last slab which may be returned.
++ * @stride: The difference in slab number between successive slabs.
++ *
++ * Iteration always occurs from higher to lower numbered slabs.
++ *
++ * Return: An initialized iterator structure.
 + */
-+#include "volume-index.h"
++static struct slab_iterator get_depot_slab_iterator(struct slab_depot *depot,
++						    slab_count_t start,
++						    slab_count_t end,
++						    slab_count_t stride)
++{
++	struct vdo_slab **slabs = depot->slabs;
 +
-+#include <linux/bitops.h>
-+#include <linux/bits.h>
-+#include <linux/cache.h>
-+#include <linux/compiler.h>
-+#include <linux/log2.h>
++	return (struct slab_iterator) {
++		.slabs = slabs,
++		.next = (((slabs == NULL) || (start < end)) ? NULL : slabs[start]),
++		.end = end,
++		.stride = stride,
++	};
++}
 +
-+#include "config.h"
-+#include "errors.h"
-+#include "geometry.h"
-+#include "hash-utils.h"
-+#include "logger.h"
-+#include "memory-alloc.h"
-+#include "numeric.h"
-+#include "permassert.h"
-+#include "uds.h"
-+#include "uds-threads.h"
-+
-+/*
-+ * The volume index is a combination of two separate subindexes, one containing sparse hook entries
-+ * (retained for all chapters), and one containing the remaining entries (retained only for the
-+ * dense chapters). If there are no sparse chapters, only the non-hook sub index is used, and it
-+ * will contain all records for all chapters.
+ static struct slab_iterator get_slab_iterator(const struct block_allocator *allocator)
+ {
+ 	return get_depot_slab_iterator(allocator->depot,
+@@ -3806,6 +3832,171 @@ make_slab(physical_block_number_t slab_origin,
+ 	return VDO_SUCCESS;
+ }
+ 
++/**
++ * allocate_slabs() - Allocate a new slab pointer array.
++ * @depot: The depot.
++ * @slab_count: The number of slabs the depot should have in the new array.
 + *
-+ * The volume index is also divided into zones, with one thread operating on each zone. Each
-+ * incoming request is dispatched to the appropriate thread, and then to the appropriate subindex.
-+ * Each delta list is handled by a single zone. To ensure that the distribution of delta lists to
-+ * zones doesn't underflow (leaving some zone with no delta lists), the minimum number of delta
-+ * lists must be the square of the maximum zone count for both subindexes.
++ * Any existing slab pointers will be copied into the new array, and slabs will be allocated as
++ * needed. The newly allocated slabs will not be distributed for use by the block allocators.
 + *
-+ * Each subindex zone is a delta index where the payload is a chapter number. The volume index can
-+ * compute the delta list number, address, and zone number from the record name in order to
-+ * dispatch record handling to the correct structures.
-+ *
-+ * Most operations that use all the zones take place either before request processing is allowed,
-+ * or after all requests have been flushed in order to shut down. The only multi-threaded operation
-+ * supported during normal operation is the uds_lookup_volume_index_name() method, used to determine
-+ * whether a new chapter should be loaded into the sparse index cache. This operation only uses the
-+ * sparse hook subindex, and the zone mutexes are used to make this operation safe.
-+ *
-+ * There are three ways of expressing chapter numbers in the volume index: virtual, index, and
-+ * rolling. The interface to the volume index uses virtual chapter numbers, which are 64 bits long.
-+ * Internally the subindex stores only the minimal number of bits necessary by masking away the
-+ * high-order bits. When the index needs to deal with ordering of index chapter numbers, as when
-+ * flushing entries from older chapters, it rolls the index chapter number around so that the
-+ * smallest one in use is mapped to 0. See convert_index_to_virtual() or flush_invalid_entries()
-+ * for an example of this technique.
-+ *
-+ * For efficiency, when older chapter numbers become invalid, the index does not immediately remove
-+ * the invalidated entries. Instead it lazily removes them from a given delta list the next time it
-+ * walks that list during normal operation. Because of this, the index size must be increased
-+ * somewhat to accommodate all the invalid entries that have not yet been removed. For the standard
-+ * index sizes, this requires about 4 chapters of old entries per 1024 chapters of valid entries in
-+ * the index.
++ * Return: VDO_SUCCESS or an error code.
 + */
-+
-+struct sub_index_parameters {
-+	/* The number of bits in address mask */
-+	u8 address_bits;
-+	/* The number of bits in chapter number */
-+	u8 chapter_bits;
-+	/* The mean delta */
-+	u32 mean_delta;
-+	/* The number of delta lists */
-+	u64 list_count;
-+	/* The number of chapters used */
-+	u32 chapter_count;
-+	/* The number of bits per chapter */
-+	size_t chapter_size_in_bits;
-+	/* The number of bytes of delta list memory */
-+	size_t memory_size;
-+	/* The number of bytes the index should keep free at all times */
-+	size_t target_free_bytes;
-+};
-+
-+struct split_config {
-+	/* The hook subindex configuration */
-+	struct configuration hook_config;
-+	struct geometry hook_geometry;
-+
-+	/* The non-hook subindex configuration */
-+	struct configuration non_hook_config;
-+	struct geometry non_hook_geometry;
-+};
-+
-+struct chapter_range {
-+	u32 chapter_start;
-+	u32 chapter_count;
-+};
-+
-+enum { MAGIC_SIZE = 8 };
-+static const char MAGIC_START_5[] = "MI5-0005";
-+
-+struct sub_index_data {
-+	char magic[MAGIC_SIZE]; /* MAGIC_START_5 */
-+	u64 volume_nonce;
-+	u64 virtual_chapter_low;
-+	u64 virtual_chapter_high;
-+	u32 first_list;
-+	u32 list_count;
-+};
-+
-+static const char MAGIC_START_6[] = "MI6-0001";
-+
-+struct volume_index_data {
-+	char magic[MAGIC_SIZE]; /* MAGIC_START_6 */
-+	u32 sparse_sample_rate;
-+};
-+
-+static inline u32
-+extract_address(const struct volume_sub_index *sub_index, const struct uds_record_name *name)
++static int allocate_slabs(struct slab_depot *depot, slab_count_t slab_count)
 +{
-+	return uds_extract_volume_index_bytes(name) & sub_index->address_mask;
++	block_count_t slab_size;
++	bool resizing = false;
++	physical_block_number_t slab_origin;
++	int result;
++
++	result = UDS_ALLOCATE(slab_count,
++			      struct vdo_slab *,
++			      "slab pointer array",
++			      &depot->new_slabs);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	if (depot->slabs != NULL) {
++		memcpy(depot->new_slabs,
++		       depot->slabs,
++		       depot->slab_count * sizeof(struct vdo_slab *));
++		resizing = true;
++	}
++
++	slab_size = depot->slab_config.slab_blocks;
++	slab_origin = depot->first_block + (depot->slab_count * slab_size);
++
++	for (depot->new_slab_count = depot->slab_count;
++	     depot->new_slab_count < slab_count;
++	     depot->new_slab_count++, slab_origin += slab_size) {
++		struct block_allocator *allocator =
++			&depot->allocators[depot->new_slab_count % depot->zone_count];
++		struct vdo_slab **slab_ptr = &depot->new_slabs[depot->new_slab_count];
++
++		result = make_slab(slab_origin,
++				   allocator,
++				   depot->new_slab_count,
++				   resizing,
++				   slab_ptr);
++		if (result != VDO_SUCCESS)
++			return result;
++	}
++
++	return VDO_SUCCESS;
 +}
 +
-+static inline u32
-+extract_dlist_num(const struct volume_sub_index *sub_index, const struct uds_record_name *name)
++/**
++ * vdo_abandon_new_slabs() - Abandon any new slabs in this depot, freeing them as needed.
++ * @depot: The depot.
++ */
++void vdo_abandon_new_slabs(struct slab_depot *depot)
 +{
-+	u64 bits = uds_extract_volume_index_bytes(name);
++	slab_count_t i;
 +
-+	return (bits >> sub_index->address_bits) % sub_index->list_count;
++	if (depot->new_slabs == NULL)
++		return;
++
++	for (i = depot->slab_count; i < depot->new_slab_count; i++)
++		free_slab(UDS_FORGET(depot->new_slabs[i]));
++	depot->new_slab_count = 0;
++	depot->new_size = 0;
++	UDS_FREE(UDS_FORGET(depot->new_slabs));
 +}
 +
-+static inline const struct volume_sub_index_zone *
-+get_zone_for_record(const struct volume_index_record *record)
++/**
++ * get_allocator_thread_id() - Get the ID of the thread on which a given allocator operates.
++ *
++ * Implements vdo_zone_thread_getter.
++ */
++static thread_id_t get_allocator_thread_id(void *context, zone_count_t zone_number)
 +{
-+	return &record->sub_index->zones[record->zone_number];
++	return ((struct slab_depot *) context)->allocators[zone_number].thread_id;
 +}
 +
-+static inline u64
-+convert_index_to_virtual(const struct volume_index_record *record, u32 index_chapter)
++/**
++ * release_recovery_journal_lock() - Request the slab journal to release the recovery journal lock
++ *                                   it may hold on a specified recovery journal block.
++ * @journal: The slab journal.
++ * @recovery_lock: The sequence number of the recovery journal block whose locks should be
++ *                 released.
++ *
++ * Return: true if the journal does hold a lock on the specified block (which it will release).
++ */
++static bool __must_check
++release_recovery_journal_lock(struct slab_journal *journal, sequence_number_t recovery_lock)
 +{
-+	const struct volume_sub_index_zone *volume_index_zone = get_zone_for_record(record);
-+	u32 rolling_chapter = ((index_chapter - volume_index_zone->virtual_chapter_low) &
-+			       record->sub_index->chapter_mask);
++	if (recovery_lock > journal->recovery_lock) {
++		ASSERT_LOG_ONLY((recovery_lock < journal->recovery_lock),
++				"slab journal recovery lock is not older than the recovery journal head");
++		return false;
++	}
 +
-+	return volume_index_zone->virtual_chapter_low + rolling_chapter;
-+}
-+
-+static inline u32
-+convert_virtual_to_index(const struct volume_sub_index *sub_index, u64 virtual_chapter)
-+{
-+	return virtual_chapter & sub_index->chapter_mask;
-+}
-+
-+static inline bool
-+is_virtual_chapter_indexed(const struct volume_index_record *record, u64 virtual_chapter)
-+{
-+	const struct volume_sub_index_zone *volume_index_zone = get_zone_for_record(record);
-+
-+	return ((virtual_chapter >= volume_index_zone->virtual_chapter_low) &&
-+		(virtual_chapter <= volume_index_zone->virtual_chapter_high));
-+}
-+
-+static inline bool has_sparse(const struct volume_index *volume_index)
-+{
-+	return volume_index->sparse_sample_rate > 0;
-+}
-+
-+bool uds_is_volume_index_sample(const struct volume_index *volume_index,
-+				const struct uds_record_name *name)
-+{
-+	if (!has_sparse(volume_index))
++	if ((recovery_lock < journal->recovery_lock) ||
++	    vdo_is_read_only(journal->slab->allocator->depot->vdo))
 +		return false;
 +
-+	return (uds_extract_sampling_bytes(name) % volume_index->sparse_sample_rate) == 0;
++	/* All locks are held by the block which is in progress; write it. */
++	commit_tail(journal);
++	return true;
 +}
 +
-+static inline const struct volume_sub_index *
-+get_volume_sub_index(const struct volume_index *volume_index, const struct uds_record_name *name)
++/*
++ * Request a commit of all dirty tail blocks which are locking the recovery journal block the depot
++ * is seeking to release.
++ *
++ * Implements vdo_zone_action.
++ */
++static void release_tail_block_locks(void *context,
++				     zone_count_t zone_number,
++				     struct vdo_completion *parent)
 +{
-+	return (uds_is_volume_index_sample(volume_index, name) ?
-+		&volume_index->vi_hook :
-+		&volume_index->vi_non_hook);
-+}
++	struct slab_journal *journal, *tmp;
++	struct slab_depot *depot = context;
++	struct list_head *list = &depot->allocators[zone_number].dirty_slab_journals;
 +
-+static unsigned int get_volume_sub_index_zone(const struct volume_sub_index *sub_index,
-+					      const struct uds_record_name *name)
-+{
-+	return extract_dlist_num(sub_index, name) / sub_index->delta_index.lists_per_zone;
-+}
-+
-+unsigned int uds_get_volume_index_zone(const struct volume_index *volume_index,
-+				       const struct uds_record_name *name)
-+{
-+	return get_volume_sub_index_zone(get_volume_sub_index(volume_index, name), name);
-+}
-+
-+static int compute_volume_sub_index_parameters(const struct configuration *config,
-+					       struct sub_index_parameters *params)
-+{
-+	enum { DELTA_LIST_SIZE = 256 };
-+	u64 entries_in_volume_index, address_span;
-+	u32 chapters_in_volume_index, invalid_chapters;
-+	u32 rounded_chapters;
-+	u64 delta_list_records;
-+	u32 address_count;
-+	u64 index_size_in_bits;
-+	size_t expected_index_size;
-+	u64 min_delta_lists = MAX_ZONES * MAX_ZONES;
-+	struct geometry *geometry = config->geometry;
-+	u64 records_per_chapter = geometry->records_per_chapter;
-+
-+	params->chapter_count = geometry->chapters_per_volume;
-+	/*
-+	 * Make sure that the number of delta list records in the volume index does not change when
-+	 * the volume is reduced by one chapter. This preserves the mapping from name to volume
-+	 * index delta list.
-+	 */
-+	rounded_chapters = params->chapter_count;
-+	if (uds_is_reduced_geometry(geometry))
-+		rounded_chapters += 1;
-+	delta_list_records = records_per_chapter * rounded_chapters;
-+	address_count = config->volume_index_mean_delta * DELTA_LIST_SIZE;
-+	params->list_count = max(delta_list_records / DELTA_LIST_SIZE, min_delta_lists);
-+	params->address_bits = bits_per(address_count - 1);
-+	params->chapter_bits = bits_per(rounded_chapters - 1);
-+	if ((u32) params->list_count != params->list_count)
-+		return uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
-+						"cannot initialize volume index with %llu delta lists",
-+						(unsigned long long) params->list_count);
-+	if (params->address_bits > 31)
-+		return uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
-+						"cannot initialize volume index with %u address bits",
-+						params->address_bits);
-+
-+	/*
-+	 * The probability that a given delta list is not touched during the writing of an entire
-+	 * chapter is:
-+	 *
-+	 * double p_not_touched = pow((double) (params->list_count - 1) / params->list_count,
-+	 *                            records_per_chapter);
-+	 *
-+	 * For the standard index sizes, about 78% of the delta lists are not touched, and
-+	 * therefore contain old index entries that have not been eliminated by the lazy LRU
-+	 * processing. Then the number of old index entries that accumulate over the entire index,
-+	 * in terms of full chapters worth of entries, is:
-+	 *
-+	 * double invalid_chapters = p_not_touched / (1.0 - p_not_touched);
-+	 *
-+	 * For the standard index sizes, the index needs about 3.5 chapters of space for the old
-+	 * entries in a 1024 chapter index, so round this up to use 4 chapters per 1024 chapters in
-+	 * the index.
-+	 */
-+	invalid_chapters = max(rounded_chapters / 256, 2U);
-+	chapters_in_volume_index = rounded_chapters + invalid_chapters;
-+	entries_in_volume_index = records_per_chapter * chapters_in_volume_index;
-+
-+	address_span = params->list_count << params->address_bits;
-+	params->mean_delta = address_span / entries_in_volume_index;
-+
-+	/*
-+	 * Compute the expected size of a full index, then set the total memory to be 6% larger
-+	 * than that expected size. This number should be large enough that there are not many
-+	 * rebalances when the index is full.
-+	 */
-+	params->chapter_size_in_bits = uds_compute_delta_index_size(records_per_chapter,
-+								    params->mean_delta,
-+								    params->chapter_bits);
-+	index_size_in_bits = params->chapter_size_in_bits * chapters_in_volume_index;
-+	expected_index_size = index_size_in_bits / BITS_PER_BYTE;
-+	params->memory_size = expected_index_size * 106 / 100;
-+
-+	params->target_free_bytes = expected_index_size / 20;
-+	return UDS_SUCCESS;
-+}
-+
-+static void uninitialize_volume_sub_index(struct volume_sub_index *sub_index)
-+{
-+	UDS_FREE(UDS_FORGET(sub_index->flush_chapters));
-+	UDS_FREE(UDS_FORGET(sub_index->zones));
-+	uds_uninitialize_delta_index(&sub_index->delta_index);
-+}
-+
-+void uds_free_volume_index(struct volume_index *volume_index)
-+{
-+	if (volume_index == NULL)
-+		return;
-+
-+	if (volume_index->zones != NULL) {
-+		unsigned int zone;
-+
-+		for (zone = 0; zone < volume_index->zone_count; zone++)
-+			uds_destroy_mutex(&volume_index->zones[zone].hook_mutex);
-+		UDS_FREE(UDS_FORGET(volume_index->zones));
-+	}
-+
-+	uninitialize_volume_sub_index(&volume_index->vi_non_hook);
-+	uninitialize_volume_sub_index(&volume_index->vi_hook);
-+	UDS_FREE(volume_index);
-+}
-+
-+
-+static int
-+compute_volume_sub_index_save_bytes(const struct configuration *config, size_t *bytes)
-+{
-+	struct sub_index_parameters params = { .address_bits = 0 };
-+	int result;
-+
-+	result = compute_volume_sub_index_parameters(config, &params);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	*bytes = (sizeof(struct sub_index_data) + params.list_count * sizeof(u64) +
-+		  uds_compute_delta_index_save_bytes(params.list_count, params.memory_size));
-+	return UDS_SUCCESS;
-+}
-+
-+/* This function is only useful if the configuration includes sparse chapters. */
-+static void split_configuration(const struct configuration *config, struct split_config *split)
-+{
-+	u64 sample_rate, sample_records;
-+	u64 dense_chapters, sparse_chapters;
-+
-+	/* Start with copies of the base configuration. */
-+	split->hook_config = *config;
-+	split->hook_geometry = *config->geometry;
-+	split->hook_config.geometry = &split->hook_geometry;
-+	split->non_hook_config = *config;
-+	split->non_hook_geometry = *config->geometry;
-+	split->non_hook_config.geometry = &split->non_hook_geometry;
-+
-+	sample_rate = config->sparse_sample_rate;
-+	sparse_chapters = config->geometry->sparse_chapters_per_volume;
-+	dense_chapters = config->geometry->chapters_per_volume - sparse_chapters;
-+	sample_records = config->geometry->records_per_chapter / sample_rate;
-+
-+	/* Adjust the number of records indexed for each chapter. */
-+	split->hook_geometry.records_per_chapter = sample_records;
-+	split->non_hook_geometry.records_per_chapter -= sample_records;
-+
-+	/* Adjust the number of chapters indexed. */
-+	split->hook_geometry.sparse_chapters_per_volume = 0;
-+	split->non_hook_geometry.sparse_chapters_per_volume = 0;
-+	split->non_hook_geometry.chapters_per_volume = dense_chapters;
-+}
-+
-+static int compute_volume_index_save_bytes(const struct configuration *config, size_t *bytes)
-+{
-+	size_t hook_bytes, non_hook_bytes;
-+	struct split_config split;
-+	int result;
-+
-+	if (!uds_is_sparse_geometry(config->geometry))
-+		return compute_volume_sub_index_save_bytes(config, bytes);
-+
-+	split_configuration(config, &split);
-+	result = compute_volume_sub_index_save_bytes(&split.hook_config, &hook_bytes);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+	result = compute_volume_sub_index_save_bytes(&split.non_hook_config, &non_hook_bytes);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	*bytes = sizeof(struct volume_index_data) + hook_bytes + non_hook_bytes;
-+	return UDS_SUCCESS;
-+}
-+
-+int uds_compute_volume_index_save_blocks(const struct configuration *config,
-+					 size_t block_size,
-+					 u64 *block_count)
-+{
-+	size_t bytes;
-+	int result;
-+
-+	result = compute_volume_index_save_bytes(config, &bytes);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	bytes += sizeof(struct delta_list_save_info);
-+	*block_count = DIV_ROUND_UP(bytes, block_size) + MAX_ZONES;
-+	return UDS_SUCCESS;
-+}
-+
-+/* Flush invalid entries while walking the delta list. */
-+static inline int flush_invalid_entries(struct volume_index_record *record,
-+					struct chapter_range *flush_range,
-+					u32 *next_chapter_to_invalidate)
-+{
-+	int result;
-+
-+	result = uds_next_delta_index_entry(&record->delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+	while (!record->delta_entry.at_end) {
-+		u32 index_chapter = uds_get_delta_entry_value(&record->delta_entry);
-+		u32 relative_chapter = ((index_chapter - flush_range->chapter_start) &
-+					record->sub_index->chapter_mask);
-+
-+		if (likely(relative_chapter >= flush_range->chapter_count)) {
-+			if (relative_chapter < *next_chapter_to_invalidate)
-+				*next_chapter_to_invalidate = relative_chapter;
++	list_for_each_entry_safe(journal, tmp, list, dirty_entry) {
++		if (!release_recovery_journal_lock(journal, depot->active_release_request))
 +			break;
-+		}
-+		result = uds_remove_delta_index_entry(&record->delta_entry);
-+		if (result != UDS_SUCCESS)
-+			return result;
 +	}
-+	return UDS_SUCCESS;
++
++	vdo_finish_completion(parent);
 +}
 +
-+/* Find the matching record, or the list offset where the record would go. */
-+static int get_volume_index_entry(struct volume_index_record *record,
-+				  u32 list_number,
-+				  u32 key,
-+				  struct chapter_range *flush_range)
++/**
++ * prepare_for_tail_block_commit() - Prepare to commit oldest tail blocks.
++ *
++ * Implements vdo_action_preamble.
++ */
++static void prepare_for_tail_block_commit(void *context, struct vdo_completion *parent)
 +{
-+	struct volume_index_record other_record;
-+	const struct volume_sub_index *sub_index = record->sub_index;
-+	u32 next_chapter_to_invalidate = sub_index->chapter_mask;
-+	int result;
++	struct slab_depot *depot = context;
 +
-+	result = uds_start_delta_index_search(&sub_index->delta_index,
-+					      list_number,
-+					      0,
-+					      &record->delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+	do {
-+		result = flush_invalid_entries(record, flush_range, &next_chapter_to_invalidate);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	} while (!record->delta_entry.at_end && (key > record->delta_entry.key));
-+
-+	result = uds_remember_delta_index_offset(&record->delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	/* Check any collision records for a more precise match. */
-+	other_record = *record;
-+	if (!other_record.delta_entry.at_end && (key == other_record.delta_entry.key)) {
-+		for (;;) {
-+			u8 collision_name[UDS_RECORD_NAME_SIZE];
-+
-+			result = flush_invalid_entries(&other_record,
-+						       flush_range,
-+						       &next_chapter_to_invalidate);
-+			if (result != UDS_SUCCESS)
-+				return result;
-+			if (other_record.delta_entry.at_end ||
-+			    !other_record.delta_entry.is_collision)
-+				break;
-+			result = uds_get_delta_entry_collision(&other_record.delta_entry,
-+							       collision_name);
-+			if (result != UDS_SUCCESS)
-+				return result;
-+			if (memcmp(collision_name, record->name, UDS_RECORD_NAME_SIZE) == 0) {
-+				*record = other_record;
-+				break;
-+			}
-+		}
-+	}
-+	while (!other_record.delta_entry.at_end) {
-+		result = flush_invalid_entries(&other_record,
-+					       flush_range,
-+					       &next_chapter_to_invalidate);
-+		if (result != UDS_SUCCESS)
-+			return result;
-+	}
-+	next_chapter_to_invalidate += flush_range->chapter_start;
-+	next_chapter_to_invalidate &= sub_index->chapter_mask;
-+	flush_range->chapter_start = next_chapter_to_invalidate;
-+	flush_range->chapter_count = 0;
-+	return UDS_SUCCESS;
++	depot->active_release_request = depot->new_release_request;
++	vdo_finish_completion(parent);
 +}
 +
-+static int get_volume_sub_index_record(struct volume_sub_index *sub_index,
-+				       const struct uds_record_name *name,
-+				       struct volume_index_record *record)
++/**
++ * schedule_tail_block_commit() - Schedule a tail block commit if necessary.
++ *
++ * This method should not be called directly. Rather, call vdo_schedule_default_action() on the
++ * depot's action manager.
++ *
++ * Implements vdo_action_scheduler.
++ */
++static bool schedule_tail_block_commit(void *context)
 +{
-+	int result;
-+	const struct volume_sub_index_zone *volume_index_zone;
-+	u32 address = extract_address(sub_index, name);
-+	u32 delta_list_number = extract_dlist_num(sub_index, name);
-+	u64 flush_chapter = sub_index->flush_chapters[delta_list_number];
++	struct slab_depot *depot = context;
 +
-+	record->sub_index = sub_index;
-+	record->mutex = NULL;
-+	record->name = name;
-+	record->zone_number = delta_list_number / sub_index->delta_index.lists_per_zone;
-+	volume_index_zone = get_zone_for_record(record);
++	if (depot->new_release_request == depot->active_release_request)
++		return false;
 +
-+	if (flush_chapter < volume_index_zone->virtual_chapter_low) {
-+		struct chapter_range range;
-+		u64 flush_count = volume_index_zone->virtual_chapter_low - flush_chapter;
-+
-+		range.chapter_start = convert_virtual_to_index(sub_index, flush_chapter);
-+		range.chapter_count = (flush_count > sub_index->chapter_mask ?
-+				       sub_index->chapter_mask + 1 :
-+				       flush_count);
-+		result = get_volume_index_entry(record, delta_list_number, address, &range);
-+		flush_chapter = convert_index_to_virtual(record, range.chapter_start);
-+		if (flush_chapter > volume_index_zone->virtual_chapter_high)
-+			flush_chapter = volume_index_zone->virtual_chapter_high;
-+		sub_index->flush_chapters[delta_list_number] = flush_chapter;
-+	} else {
-+		result = uds_get_delta_index_entry(&sub_index->delta_index,
-+						   delta_list_number,
-+						   address,
-+						   name->name,
-+						   &record->delta_entry);
-+	}
-+	if (result != UDS_SUCCESS)
-+		return result;
-+	record->is_found = (!record->delta_entry.at_end && (record->delta_entry.key == address));
-+	if (record->is_found) {
-+		u32 index_chapter = uds_get_delta_entry_value(&record->delta_entry);
-+
-+		record->virtual_chapter = convert_index_to_virtual(record, index_chapter);
-+	}
-+	record->is_collision = record->delta_entry.is_collision;
-+	return UDS_SUCCESS;
++	return vdo_schedule_action(depot->action_manager,
++				   prepare_for_tail_block_commit,
++				   release_tail_block_locks,
++				   NULL,
++				   NULL);
 +}
 +
-+int uds_get_volume_index_record(struct volume_index *volume_index,
-+				const struct uds_record_name *name,
-+				struct volume_index_record *record)
+ /**
+  * initialize_slab_scrubber() - Initialize an allocator's slab scrubber.
+  * @allocator: The allocator being initialized
+@@ -3954,6 +4145,151 @@ static int __must_check initialize_block_allocator(struct slab_depot *depot, zon
+ 	return VDO_SUCCESS;
+ }
+ 
++static int allocate_components(struct slab_depot *depot,
++			       struct partition *summary_partition)
 +{
 +	int result;
++	zone_count_t zone;
++	slab_count_t slab_count;
++	u8 hint;
++	u32 i;
++	const struct thread_config *thread_config = &depot->vdo->thread_config;
 +
-+	if (uds_is_volume_index_sample(volume_index, name)) {
++	result = vdo_make_action_manager(depot->zone_count,
++					 get_allocator_thread_id,
++					 thread_config->journal_thread,
++					 depot,
++					 schedule_tail_block_commit,
++					 depot->vdo,
++					 &depot->action_manager);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	depot->origin = depot->first_block;
++
++	/* block size must be a multiple of entry size */
++	STATIC_ASSERT((VDO_BLOCK_SIZE % sizeof(struct slab_summary_entry)) == 0);
++
++	depot->summary_origin = summary_partition->offset;
++	depot->hint_shift = vdo_get_slab_summary_hint_shift(depot->slab_size_shift);
++	result = UDS_ALLOCATE(MAXIMUM_VDO_SLAB_SUMMARY_ENTRIES,
++			      struct slab_summary_entry,
++			      __func__,
++			      &depot->summary_entries);
++	if (result != VDO_SUCCESS)
++		return result;
++
++
++	/* Initialize all the entries. */
++	hint = compute_fullness_hint(depot, depot->slab_config.data_blocks);
++	for (i = 0; i < MAXIMUM_VDO_SLAB_SUMMARY_ENTRIES; i++) {
 +		/*
-+		 * Other threads cannot be allowed to call uds_lookup_volume_index_name() while
-+		 * this thread is finding the volume index record. Due to the lazy LRU flushing of
-+		 * the volume index, uds_get_volume_index_record() is not a read-only operation.
++		 * This default tail block offset must be reflected in
++		 * slabJournal.c::read_slab_journal_tail().
 +		 */
-+		unsigned int zone = get_volume_sub_index_zone(&volume_index->vi_hook, name);
-+		struct mutex *mutex = &volume_index->zones[zone].hook_mutex;
-+
-+		uds_lock_mutex(mutex);
-+		result = get_volume_sub_index_record(&volume_index->vi_hook, name, record);
-+		uds_unlock_mutex(mutex);
-+		/* Remember the mutex so that other operations on the index record can use it. */
-+		record->mutex = mutex;
-+	} else {
-+		result = get_volume_sub_index_record(&volume_index->vi_non_hook, name, record);
++		depot->summary_entries[i] = (struct slab_summary_entry) {
++			.tail_block_offset = 0,
++			.fullness_hint = hint,
++			.load_ref_counts = false,
++			.is_dirty = false,
++		};
 +	}
-+	return result;
++
++	if (result != VDO_SUCCESS)
++		return result;
++
++	slab_count = vdo_compute_slab_count(depot->first_block,
++					    depot->last_block,
++					    depot->slab_size_shift);
++	if (thread_config->physical_zone_count > slab_count)
++		return uds_log_error_strerror(VDO_BAD_CONFIGURATION,
++					      "%u physical zones exceeds slab count %u",
++					      thread_config->physical_zone_count,
++					      slab_count);
++
++	/* Initialize the block allocators. */
++	for (zone = 0; zone < depot->zone_count; zone++) {
++		result = initialize_block_allocator(depot, zone);
++		if (result != VDO_SUCCESS)
++			return result;
++	}
++
++	/* Allocate slabs. */
++	result = allocate_slabs(depot, slab_count);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	/* Use the new slabs. */
++	for (i = depot->slab_count; i < depot->new_slab_count; i++) {
++		struct vdo_slab *slab = depot->new_slabs[i];
++
++		register_slab_with_allocator(slab->allocator, slab);
++		WRITE_ONCE(depot->slab_count, depot->slab_count + 1);
++	}
++
++	depot->slabs = depot->new_slabs;
++	depot->new_slabs = NULL;
++	depot->new_slab_count = 0;
++
++	return VDO_SUCCESS;
 +}
 +
-+int uds_put_volume_index_record(struct volume_index_record *record, u64 virtual_chapter)
++/**
++ * vdo_decode_slab_depot() - Make a slab depot and configure it with the state read from the super
++ *                           block.
++ * @state: The slab depot state from the super block.
++ * @vdo: The VDO which will own the depot.
++ * @summary_partition: The partition which holds the slab summary.
++ * @depot_ptr: A pointer to hold the depot.
++ *
++ * Return: A success or error code.
++ */
++int vdo_decode_slab_depot(struct slab_depot_state_2_0 state,
++			  struct vdo *vdo,
++			  struct partition *summary_partition,
++			  struct slab_depot **depot_ptr)
 +{
++	unsigned int slab_size_shift;
++	struct slab_depot *depot;
 +	int result;
-+	u32 address;
-+	const struct volume_sub_index *sub_index = record->sub_index;
-+
-+	if (!is_virtual_chapter_indexed(record, virtual_chapter)) {
-+		u64 low = get_zone_for_record(record)->virtual_chapter_low;
-+		u64 high = get_zone_for_record(record)->virtual_chapter_high;
-+
-+		return uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
-+						"cannot put record into chapter number %llu that is out of the valid range %llu to %llu",
-+						(unsigned long long) virtual_chapter,
-+						(unsigned long long) low,
-+						(unsigned long long) high);
-+	}
-+	address = extract_address(sub_index, record->name);
-+	if (unlikely(record->mutex != NULL))
-+		uds_lock_mutex(record->mutex);
-+	result = uds_put_delta_index_entry(&record->delta_entry,
-+					   address,
-+					   convert_virtual_to_index(sub_index, virtual_chapter),
-+					   record->is_found ? record->name->name : NULL);
-+	if (unlikely(record->mutex != NULL))
-+		uds_unlock_mutex(record->mutex);
-+	switch (result) {
-+	case UDS_SUCCESS:
-+		record->virtual_chapter = virtual_chapter;
-+		record->is_collision = record->delta_entry.is_collision;
-+		record->is_found = true;
-+		break;
-+	case UDS_OVERFLOW:
-+		uds_log_ratelimit(uds_log_warning_strerror,
-+				  UDS_OVERFLOW,
-+				  "Volume index entry dropped due to overflow condition");
-+		uds_log_delta_index_entry(&record->delta_entry);
-+		break;
-+	default:
-+		break;
-+	}
-+	return result;
-+}
-+
-+int uds_remove_volume_index_record(struct volume_index_record *record)
-+{
-+	int result;
-+
-+	if (!record->is_found)
-+		return uds_log_warning_strerror(UDS_BAD_STATE, "illegal operation on new record");
-+	/* Mark the record so that it cannot be used again */
-+	record->is_found = false;
-+	if (unlikely(record->mutex != NULL))
-+		uds_lock_mutex(record->mutex);
-+	result = uds_remove_delta_index_entry(&record->delta_entry);
-+	if (unlikely(record->mutex != NULL))
-+		uds_unlock_mutex(record->mutex);
-+	return result;
-+}
-+
-+static void set_volume_sub_index_zone_open_chapter(struct volume_sub_index *sub_index,
-+						   unsigned int zone_number,
-+						   u64 virtual_chapter)
-+{
-+	u64 used_bits = 0;
-+	struct volume_sub_index_zone *zone = &sub_index->zones[zone_number];
-+	struct delta_zone *delta_zone;
-+	u32 i;
-+
-+	zone->virtual_chapter_low = (virtual_chapter >= sub_index->chapter_count ?
-+				     virtual_chapter - sub_index->chapter_count + 1 :
-+				     0);
-+	zone->virtual_chapter_high = virtual_chapter;
-+
-+	/* Check to see if the new zone data is too large. */
-+	delta_zone = &sub_index->delta_index.delta_zones[zone_number];
-+	for (i = 1; i <= delta_zone->list_count; i++)
-+		used_bits += delta_zone->delta_lists[i].size;
-+
-+	if (used_bits > sub_index->max_zone_bits) {
-+		/* Expire enough chapters to free the desired space. */
-+		u64 expire_count =
-+			1 + (used_bits - sub_index->max_zone_bits) / sub_index->chapter_zone_bits;
-+
-+		if (expire_count == 1) {
-+			uds_log_ratelimit(uds_log_info,
-+					  "zone %u:  At chapter %llu, expiring chapter %llu early",
-+					  zone_number,
-+					  (unsigned long long) virtual_chapter,
-+					  (unsigned long long) zone->virtual_chapter_low);
-+			zone->early_flushes++;
-+			zone->virtual_chapter_low++;
-+		} else {
-+			u64 first_expired = zone->virtual_chapter_low;
-+
-+			if (first_expired + expire_count < zone->virtual_chapter_high) {
-+				zone->early_flushes += expire_count;
-+				zone->virtual_chapter_low += expire_count;
-+			} else {
-+				zone->early_flushes +=
-+					zone->virtual_chapter_high - zone->virtual_chapter_low;
-+				zone->virtual_chapter_low = zone->virtual_chapter_high;
-+			}
-+			uds_log_ratelimit(uds_log_info,
-+					  "zone %u:  At chapter %llu, expiring chapters %llu to %llu early",
-+					  zone_number,
-+					  (unsigned long long) virtual_chapter,
-+					  (unsigned long long) first_expired,
-+					  (unsigned long long) zone->virtual_chapter_low - 1);
-+		}
-+	}
-+}
-+
-+void uds_set_volume_index_zone_open_chapter(struct volume_index *volume_index,
-+					    unsigned int zone_number,
-+					    u64 virtual_chapter)
-+{
-+	struct mutex *mutex = &volume_index->zones[zone_number].hook_mutex;
-+
-+	set_volume_sub_index_zone_open_chapter(&volume_index->vi_non_hook,
-+					       zone_number,
-+					       virtual_chapter);
 +
 +	/*
-+	 * Other threads cannot be allowed to call uds_lookup_volume_index_name() while the open
-+	 * chapter number is changing.
++	 * Calculate the bit shift for efficiently mapping block numbers to slabs. Using a shift
++	 * requires that the slab size be a power of two.
 +	 */
-+	if (has_sparse(volume_index)) {
-+		uds_lock_mutex(mutex);
-+		set_volume_sub_index_zone_open_chapter(&volume_index->vi_hook,
-+						       zone_number,
-+						       virtual_chapter);
-+		uds_unlock_mutex(mutex);
++	block_count_t slab_size = state.slab_config.slab_blocks;
++
++	if (!is_power_of_2(slab_size))
++		return uds_log_error_strerror(UDS_INVALID_ARGUMENT,
++					      "slab size must be a power of two");
++	slab_size_shift = ilog2(slab_size);
++
++	result = UDS_ALLOCATE_EXTENDED(struct slab_depot,
++				       vdo->thread_config.physical_zone_count,
++				       struct block_allocator,
++				       __func__,
++				       &depot);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	depot->vdo = vdo;
++	depot->old_zone_count = state.zone_count;
++	depot->zone_count = vdo->thread_config.physical_zone_count;
++	depot->slab_config = state.slab_config;
++	depot->first_block = state.first_block;
++	depot->last_block = state.last_block;
++	depot->slab_size_shift = slab_size_shift;
++
++	result = allocate_components(depot, summary_partition);
++	if (result != VDO_SUCCESS) {
++		vdo_free_slab_depot(depot);
++		return result;
 +	}
++
++	*depot_ptr = depot;
++	return VDO_SUCCESS;
 +}
 +
-+/*
-+ * Set the newest open chapter number for the index, while also advancing the oldest valid chapter
-+ * number.
+ static void uninitialize_allocator_summary(struct block_allocator *allocator)
+ {
+ 	block_count_t i;
+@@ -3969,6 +4305,229 @@ static void uninitialize_allocator_summary(struct block_allocator *allocator)
+ 	UDS_FREE(UDS_FORGET(allocator->summary_blocks));
+ }
+ 
++/**
++ * vdo_free_slab_depot() - Destroy a slab depot.
++ * @depot: The depot to destroy.
 + */
-+void uds_set_volume_index_open_chapter(struct volume_index *volume_index, u64 virtual_chapter)
++void vdo_free_slab_depot(struct slab_depot *depot)
 +{
-+	unsigned int zone;
++	zone_count_t zone = 0;
 +
-+	for (zone = 0; zone < volume_index->zone_count; zone++)
-+		uds_set_volume_index_zone_open_chapter(volume_index, zone, virtual_chapter);
-+}
-+
-+int uds_set_volume_index_record_chapter(struct volume_index_record *record, u64 virtual_chapter)
-+{
-+	const struct volume_sub_index *sub_index = record->sub_index;
-+	int result;
-+
-+	if (!record->is_found)
-+		return uds_log_warning_strerror(UDS_BAD_STATE, "illegal operation on new record");
-+	if (!is_virtual_chapter_indexed(record, virtual_chapter)) {
-+		u64 low = get_zone_for_record(record)->virtual_chapter_low;
-+		u64 high = get_zone_for_record(record)->virtual_chapter_high;
-+
-+		return uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
-+						"cannot set chapter number %llu that is out of the valid range %llu to %llu",
-+						(unsigned long long) virtual_chapter,
-+						(unsigned long long) low,
-+						(unsigned long long) high);
-+	}
-+	if (unlikely(record->mutex != NULL))
-+		uds_lock_mutex(record->mutex);
-+	result = uds_set_delta_entry_value(&record->delta_entry,
-+					   convert_virtual_to_index(sub_index, virtual_chapter));
-+	if (unlikely(record->mutex != NULL))
-+		uds_unlock_mutex(record->mutex);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+	record->virtual_chapter = virtual_chapter;
-+	return UDS_SUCCESS;
-+}
-+
-+static u64 lookup_volume_sub_index_name(const struct volume_sub_index *sub_index,
-+					const struct uds_record_name *name)
-+{
-+	int result;
-+	u32 address = extract_address(sub_index, name);
-+	u32 delta_list_number = extract_dlist_num(sub_index, name);
-+	unsigned int zone_number = get_volume_sub_index_zone(sub_index, name);
-+	const struct volume_sub_index_zone *zone = &sub_index->zones[zone_number];
-+	u64 virtual_chapter;
-+	u32 index_chapter;
-+	u32 rolling_chapter;
-+	struct delta_index_entry delta_entry;
-+
-+	result = uds_get_delta_index_entry(&sub_index->delta_index,
-+					   delta_list_number,
-+					   address,
-+					   name->name,
-+					   &delta_entry);
-+	if (result != UDS_SUCCESS)
-+		return NO_CHAPTER;
-+
-+	if (delta_entry.at_end || (delta_entry.key != address))
-+		return NO_CHAPTER;
-+
-+	index_chapter = uds_get_delta_entry_value(&delta_entry);
-+	rolling_chapter = (index_chapter - zone->virtual_chapter_low) & sub_index->chapter_mask;
-+
-+	virtual_chapter = zone->virtual_chapter_low + rolling_chapter;
-+	if (virtual_chapter > zone->virtual_chapter_high)
-+		return NO_CHAPTER;
-+
-+	return virtual_chapter;
-+}
-+
-+/* Do a read-only lookup of the record name for sparse cache management. */
-+u64 uds_lookup_volume_index_name(const struct volume_index *volume_index,
-+				 const struct uds_record_name *name)
-+{
-+	unsigned int zone_number = uds_get_volume_index_zone(volume_index, name);
-+	struct mutex *mutex = &volume_index->zones[zone_number].hook_mutex;
-+	u64 virtual_chapter;
-+
-+	if (!uds_is_volume_index_sample(volume_index, name))
-+		return NO_CHAPTER;
-+
-+	uds_lock_mutex(mutex);
-+	virtual_chapter = lookup_volume_sub_index_name(&volume_index->vi_hook, name);
-+	uds_unlock_mutex(mutex);
-+
-+	return virtual_chapter;
-+}
-+
-+static void abort_restoring_volume_sub_index(struct volume_sub_index *sub_index)
-+{
-+	uds_reset_delta_index(&sub_index->delta_index);
-+}
-+
-+static void abort_restoring_volume_index(struct volume_index *volume_index)
-+{
-+	abort_restoring_volume_sub_index(&volume_index->vi_non_hook);
-+	if (has_sparse(volume_index))
-+		abort_restoring_volume_sub_index(&volume_index->vi_hook);
-+}
-+
-+static int start_restoring_volume_sub_index(struct volume_sub_index *sub_index,
-+					    struct buffered_reader **readers,
-+					    unsigned int reader_count)
-+{
-+	unsigned int z;
-+	int result;
-+	u64 virtual_chapter_low = 0, virtual_chapter_high = 0;
-+	unsigned int i;
-+
-+	for (i = 0; i < reader_count; i++) {
-+		struct sub_index_data header;
-+		u8 buffer[sizeof(struct sub_index_data)];
-+		size_t offset = 0;
-+		u32 j;
-+
-+		result = uds_read_from_buffered_reader(readers[i], buffer, sizeof(buffer));
-+		if (result != UDS_SUCCESS)
-+			return uds_log_warning_strerror(result,
-+							"failed to read volume index header");
-+
-+		memcpy(&header.magic, buffer, MAGIC_SIZE);
-+		offset += MAGIC_SIZE;
-+		decode_u64_le(buffer, &offset, &header.volume_nonce);
-+		decode_u64_le(buffer, &offset, &header.virtual_chapter_low);
-+		decode_u64_le(buffer, &offset, &header.virtual_chapter_high);
-+		decode_u32_le(buffer, &offset, &header.first_list);
-+		decode_u32_le(buffer, &offset, &header.list_count);
-+
-+		result = ASSERT(offset = sizeof(buffer),
-+				"%zu bytes decoded of %zu expected",
-+				offset,
-+				sizeof(buffer));
-+		if (result != UDS_SUCCESS)
-+			result = UDS_CORRUPT_DATA;
-+
-+		if (memcmp(header.magic, MAGIC_START_5, MAGIC_SIZE) != 0)
-+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+							"volume index file had bad magic number");
-+
-+		if (sub_index->volume_nonce == 0)
-+			sub_index->volume_nonce = header.volume_nonce;
-+		else if (header.volume_nonce != sub_index->volume_nonce)
-+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+							"volume index volume nonce incorrect");
-+
-+		if (i == 0) {
-+			virtual_chapter_low = header.virtual_chapter_low;
-+			virtual_chapter_high = header.virtual_chapter_high;
-+		} else if (virtual_chapter_high != header.virtual_chapter_high) {
-+			u64 low = header.virtual_chapter_low;
-+			u64 high = header.virtual_chapter_high;
-+
-+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+							"Inconsistent volume index zone files: Chapter range is [%llu,%llu], chapter range %d is [%llu,%llu]",
-+							(unsigned long long) virtual_chapter_low,
-+							(unsigned long long) virtual_chapter_high,
-+							i,
-+							(unsigned long long) low,
-+							(unsigned long long) high);
-+		} else if (virtual_chapter_low < header.virtual_chapter_low) {
-+			virtual_chapter_low = header.virtual_chapter_low;
-+		}
-+
-+		for (j = 0; j < header.list_count; j++) {
-+			u8 decoded[sizeof(u64)];
-+
-+			result = uds_read_from_buffered_reader(readers[i], decoded, sizeof(u64));
-+			if (result != UDS_SUCCESS)
-+				return uds_log_warning_strerror(result,
-+								"failed to read volume index flush ranges");
-+
-+			sub_index->flush_chapters[header.first_list + j] =
-+				get_unaligned_le64(decoded);
-+		}
-+	}
-+
-+	for (z = 0; z < sub_index->zone_count; z++) {
-+		memset(&sub_index->zones[z], 0, sizeof(struct volume_sub_index_zone));
-+		sub_index->zones[z].virtual_chapter_low = virtual_chapter_low;
-+		sub_index->zones[z].virtual_chapter_high = virtual_chapter_high;
-+	}
-+
-+	result = uds_start_restoring_delta_index(&sub_index->delta_index, readers, reader_count);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_warning_strerror(result, "restoring delta index failed");
-+
-+	return UDS_SUCCESS;
-+}
-+
-+static int start_restoring_volume_index(struct volume_index *volume_index,
-+					struct buffered_reader **buffered_readers,
-+					unsigned int reader_count)
-+{
-+	unsigned int i;
-+	int result;
-+
-+	if (!has_sparse(volume_index))
-+		return start_restoring_volume_sub_index(&volume_index->vi_non_hook,
-+							buffered_readers,
-+							reader_count);
-+
-+	for (i = 0; i < reader_count; i++) {
-+		struct volume_index_data header;
-+		u8 buffer[sizeof(struct volume_index_data)];
-+		size_t offset = 0;
-+
-+		result = uds_read_from_buffered_reader(buffered_readers[i], buffer, sizeof(buffer));
-+		if (result != UDS_SUCCESS)
-+			return uds_log_warning_strerror(result,
-+							"failed to read volume index header");
-+
-+		memcpy(&header.magic, buffer, MAGIC_SIZE);
-+		offset += MAGIC_SIZE;
-+		decode_u32_le(buffer, &offset, &header.sparse_sample_rate);
-+
-+		result = ASSERT(offset == sizeof(buffer),
-+				"%zu bytes decoded of %zu expected",
-+				offset,
-+				sizeof(buffer));
-+		if (result != UDS_SUCCESS)
-+			result = UDS_CORRUPT_DATA;
-+
-+		if (memcmp(header.magic, MAGIC_START_6, MAGIC_SIZE) != 0)
-+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+							"volume index file had bad magic number");
-+
-+		if (i == 0) {
-+			volume_index->sparse_sample_rate = header.sparse_sample_rate;
-+		} else if (volume_index->sparse_sample_rate != header.sparse_sample_rate) {
-+			uds_log_warning_strerror(UDS_CORRUPT_DATA,
-+						 "Inconsistent sparse sample rate in delta index zone files: %u vs. %u",
-+						 volume_index->sparse_sample_rate,
-+						 header.sparse_sample_rate);
-+			return UDS_CORRUPT_DATA;
-+		}
-+	}
-+
-+	result = start_restoring_volume_sub_index(&volume_index->vi_non_hook,
-+						  buffered_readers,
-+						  reader_count);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+	return start_restoring_volume_sub_index(&volume_index->vi_hook,
-+						buffered_readers,
-+						reader_count);
-+}
-+
-+static int finish_restoring_volume_sub_index(struct volume_sub_index *sub_index,
-+					     struct buffered_reader **buffered_readers,
-+					     unsigned int reader_count)
-+{
-+	return uds_finish_restoring_delta_index(&sub_index->delta_index,
-+						buffered_readers,
-+						reader_count);
-+}
-+
-+static int finish_restoring_volume_index(struct volume_index *volume_index,
-+					 struct buffered_reader **buffered_readers,
-+					 unsigned int reader_count)
-+{
-+	int result;
-+
-+	result = finish_restoring_volume_sub_index(&volume_index->vi_non_hook,
-+						   buffered_readers,
-+						   reader_count);
-+	if ((result == UDS_SUCCESS) && has_sparse(volume_index))
-+		result = finish_restoring_volume_sub_index(&volume_index->vi_hook,
-+							   buffered_readers,
-+							   reader_count);
-+	return result;
-+}
-+
-+int uds_load_volume_index(struct volume_index *volume_index,
-+			  struct buffered_reader **readers,
-+			  unsigned int reader_count)
-+{
-+	int result;
-+
-+	/* Start by reading the header section of the stream. */
-+	result = start_restoring_volume_index(volume_index, readers, reader_count);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = finish_restoring_volume_index(volume_index, readers, reader_count);
-+	if (result != UDS_SUCCESS) {
-+		abort_restoring_volume_index(volume_index);
-+		return result;
-+	}
-+
-+	/* Check the final guard lists to make sure there is no extra data. */
-+	result = uds_check_guard_delta_lists(readers, reader_count);
-+	if (result != UDS_SUCCESS)
-+		abort_restoring_volume_index(volume_index);
-+
-+	return result;
-+}
-+
-+static int start_saving_volume_sub_index(const struct volume_sub_index *sub_index,
-+					 unsigned int zone_number,
-+					 struct buffered_writer *buffered_writer)
-+{
-+	int result;
-+	struct volume_sub_index_zone *volume_index_zone = &sub_index->zones[zone_number];
-+	u32 first_list = sub_index->delta_index.delta_zones[zone_number].first_list;
-+	u32 list_count = sub_index->delta_index.delta_zones[zone_number].list_count;
-+	u8 buffer[sizeof(struct sub_index_data)];
-+	size_t offset = 0;
-+	u32 i;
-+
-+	memcpy(buffer, MAGIC_START_5, MAGIC_SIZE);
-+	offset += MAGIC_SIZE;
-+	encode_u64_le(buffer, &offset, sub_index->volume_nonce);
-+	encode_u64_le(buffer, &offset, volume_index_zone->virtual_chapter_low);
-+	encode_u64_le(buffer, &offset, volume_index_zone->virtual_chapter_high);
-+	encode_u32_le(buffer, &offset, first_list);
-+	encode_u32_le(buffer, &offset, list_count);
-+
-+	result =  ASSERT(offset == sizeof(struct sub_index_data),
-+			 "%zu bytes of config written, of %zu expected",
-+			 offset,
-+			 sizeof(struct sub_index_data));
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_write_to_buffered_writer(buffered_writer, buffer, offset);
-+	if (result != UDS_SUCCESS)
-+		return uds_log_warning_strerror(result, "failed to write volume index header");
-+
-+	for (i = 0; i < list_count; i++) {
-+		u8 encoded[sizeof(u64)];
-+
-+		put_unaligned_le64(sub_index->flush_chapters[first_list + i], &encoded);
-+		result = uds_write_to_buffered_writer(buffered_writer, encoded, sizeof(u64));
-+		if (result != UDS_SUCCESS)
-+			return uds_log_warning_strerror(result,
-+							"failed to write volume index flush ranges");
-+	}
-+
-+	return uds_start_saving_delta_index(&sub_index->delta_index, zone_number, buffered_writer);
-+}
-+
-+static int start_saving_volume_index(const struct volume_index *volume_index,
-+				     unsigned int zone_number,
-+				     struct buffered_writer *writer)
-+{
-+	u8 buffer[sizeof(struct volume_index_data)];
-+	size_t offset = 0;
-+	int result;
-+
-+	if (!has_sparse(volume_index))
-+		return start_saving_volume_sub_index(&volume_index->vi_non_hook,
-+						     zone_number,
-+						     writer);
-+
-+	memcpy(buffer, MAGIC_START_6, MAGIC_SIZE);
-+	offset += MAGIC_SIZE;
-+	encode_u32_le(buffer, &offset, volume_index->sparse_sample_rate);
-+	result = ASSERT(offset == sizeof(struct volume_index_data),
-+			"%zu bytes of header written, of %zu expected",
-+			offset,
-+			sizeof(struct volume_index_data));
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	result = uds_write_to_buffered_writer(writer, buffer, offset);
-+	if (result != UDS_SUCCESS) {
-+		uds_log_warning_strerror(result, "failed to write volume index header");
-+		return result;
-+	}
-+
-+	result = start_saving_volume_sub_index(&volume_index->vi_non_hook, zone_number, writer);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return start_saving_volume_sub_index(&volume_index->vi_hook, zone_number, writer);
-+}
-+
-+static int
-+finish_saving_volume_sub_index(const struct volume_sub_index *sub_index, unsigned int zone_number)
-+{
-+	return uds_finish_saving_delta_index(&sub_index->delta_index, zone_number);
-+}
-+
-+static int
-+finish_saving_volume_index(const struct volume_index *volume_index, unsigned int zone_number)
-+{
-+	int result;
-+
-+	result = finish_saving_volume_sub_index(&volume_index->vi_non_hook, zone_number);
-+	if ((result == UDS_SUCCESS) && has_sparse(volume_index))
-+		result = finish_saving_volume_sub_index(&volume_index->vi_hook, zone_number);
-+	return result;
-+}
-+
-+int uds_save_volume_index(struct volume_index *volume_index,
-+			  struct buffered_writer **writers,
-+			  unsigned int writer_count)
-+{
-+	int result = UDS_SUCCESS;
-+	unsigned int zone;
-+
-+	for (zone = 0; zone < writer_count; ++zone) {
-+		result = start_saving_volume_index(volume_index, zone, writers[zone]);
-+		if (result != UDS_SUCCESS)
-+			break;
-+
-+		result = finish_saving_volume_index(volume_index, zone);
-+		if (result != UDS_SUCCESS)
-+			break;
-+
-+		result = uds_write_guard_delta_list(writers[zone]);
-+		if (result != UDS_SUCCESS)
-+			break;
-+
-+		result = uds_flush_buffered_writer(writers[zone]);
-+		if (result != UDS_SUCCESS)
-+			break;
-+	}
-+
-+	return result;
-+}
-+
-+static void get_volume_sub_index_stats(const struct volume_sub_index *sub_index,
-+				       struct volume_index_stats *stats)
-+{
-+	struct delta_index_stats dis;
-+	unsigned int z;
-+
-+	uds_get_delta_index_stats(&sub_index->delta_index, &dis);
-+	stats->rebalance_time = dis.rebalance_time;
-+	stats->rebalance_count = dis.rebalance_count;
-+	stats->record_count = dis.record_count;
-+	stats->collision_count = dis.collision_count;
-+	stats->discard_count = dis.discard_count;
-+	stats->overflow_count = dis.overflow_count;
-+	stats->delta_lists = dis.list_count;
-+	stats->early_flushes = 0;
-+	for (z = 0; z < sub_index->zone_count; z++)
-+		stats->early_flushes += sub_index->zones[z].early_flushes;
-+}
-+
-+void uds_get_volume_index_stats(const struct volume_index *volume_index,
-+				struct volume_index_stats *stats)
-+{
-+	struct volume_index_stats sparse_stats;
-+
-+	get_volume_sub_index_stats(&volume_index->vi_non_hook, stats);
-+	if (!has_sparse(volume_index))
++	if (depot == NULL)
 +		return;
 +
-+	get_volume_sub_index_stats(&volume_index->vi_hook, &sparse_stats);
-+	stats->rebalance_time += sparse_stats.rebalance_time;
-+	stats->rebalance_count += sparse_stats.rebalance_count;
-+	stats->record_count += sparse_stats.record_count;
-+	stats->collision_count += sparse_stats.collision_count;
-+	stats->discard_count += sparse_stats.discard_count;
-+	stats->overflow_count += sparse_stats.overflow_count;
-+	stats->delta_lists += sparse_stats.delta_lists;
-+	stats->early_flushes += sparse_stats.early_flushes;
++	vdo_abandon_new_slabs(depot);
++
++	for (zone = 0; zone < depot->zone_count; zone++) {
++		struct block_allocator *allocator = &depot->allocators[zone];
++
++		if (allocator->eraser != NULL)
++			dm_kcopyd_client_destroy(UDS_FORGET(allocator->eraser));
++
++		uninitialize_allocator_summary(allocator);
++		uninitialize_scrubber_vio(&allocator->scrubber);
++		free_vio_pool(UDS_FORGET(allocator->vio_pool));
++		vdo_free_priority_table(UDS_FORGET(allocator->prioritized_slabs));
++	}
++
++	if (depot->slabs != NULL) {
++		slab_count_t i;
++
++		for (i = 0; i < depot->slab_count; i++)
++			free_slab(UDS_FORGET(depot->slabs[i]));
++	}
++
++	UDS_FREE(UDS_FORGET(depot->slabs));
++	UDS_FREE(UDS_FORGET(depot->action_manager));
++	UDS_FREE(UDS_FORGET(depot->summary_entries));
++	UDS_FREE(depot);
 +}
 +
-+static int initialize_volume_sub_index(const struct configuration *config,
-+				       u64 volume_nonce,
-+				       u8 tag,
-+				       struct volume_sub_index *sub_index)
++/**
++ * vdo_record_slab_depot() - Record the state of a slab depot for encoding into the super block.
++ * @depot: The depot to encode.
++ *
++ * Return: The depot state.
++ */
++struct slab_depot_state_2_0 vdo_record_slab_depot(const struct slab_depot *depot)
 +{
-+	struct sub_index_parameters params = { .address_bits = 0 };
-+	unsigned int zone_count = config->zone_count;
-+	u64 available_bytes = 0;
-+	unsigned int z;
++	/*
++	 * If this depot is currently using 0 zones, it must have been synchronously loaded by a
++	 * tool and is now being saved. We did not load and combine the slab summary, so we still
++	 * need to do that next time we load with the old zone count rather than 0.
++	 */
++	struct slab_depot_state_2_0 state;
++	zone_count_t zones_to_record = depot->zone_count;
++
++	if (depot->zone_count == 0)
++		zones_to_record = depot->old_zone_count;
++
++	state = (struct slab_depot_state_2_0) {
++		.slab_config = depot->slab_config,
++		.first_block = depot->first_block,
++		.last_block = depot->last_block,
++		.zone_count = zones_to_record,
++	};
++
++	return state;
++}
++
++/**
++ * vdo_allocate_reference_counters() - Allocate the reference counters for all slabs in the depot.
++ *
++ * Context: This method may be called only before entering normal operation from the load thread.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++int vdo_allocate_reference_counters(struct slab_depot *depot)
++{
++	struct slab_iterator iterator =
++		get_depot_slab_iterator(depot, depot->slab_count - 1, 0, 1);
++
++	while (iterator.next != NULL) {
++		int result = allocate_slab_counters(next_slab(&iterator));
++
++		if (result != VDO_SUCCESS)
++			return result;
++	}
++
++	return VDO_SUCCESS;
++}
++
++/**
++ * get_slab_number() - Get the number of the slab that contains a specified block.
++ * @depot: The slab depot.
++ * @pbn: The physical block number.
++ * @slab_number_ptr: A pointer to hold the slab number.
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++static int __must_check get_slab_number(const struct slab_depot *depot,
++					physical_block_number_t pbn,
++					slab_count_t *slab_number_ptr)
++{
++	slab_count_t slab_number;
++
++	if (pbn < depot->first_block)
++		return VDO_OUT_OF_RANGE;
++
++	slab_number = (pbn - depot->first_block) >> depot->slab_size_shift;
++	if (slab_number >= depot->slab_count)
++		return VDO_OUT_OF_RANGE;
++
++	*slab_number_ptr = slab_number;
++	return VDO_SUCCESS;
++}
++
++/**
++ * vdo_get_slab() - Get the slab object for the slab that contains a specified block.
++ * @depot: The slab depot.
++ * @pbn: The physical block number.
++ *
++ * Will put the VDO in read-only mode if the PBN is not a valid data block nor the zero block.
++ *
++ * Return: The slab containing the block, or NULL if the block number is the zero block or
++ * otherwise out of range.
++ */
++struct vdo_slab *vdo_get_slab(const struct slab_depot *depot, physical_block_number_t pbn)
++{
++	slab_count_t slab_number;
 +	int result;
 +
-+	result = compute_volume_sub_index_parameters(config, &params);
-+	if (result != UDS_SUCCESS)
-+		return result;
++	if (pbn == VDO_ZERO_BLOCK)
++		return NULL;
 +
-+	sub_index->address_bits = params.address_bits;
-+	sub_index->address_mask = (1u << params.address_bits) - 1;
-+	sub_index->chapter_bits = params.chapter_bits;
-+	sub_index->chapter_mask = (1u << params.chapter_bits) - 1;
-+	sub_index->chapter_count = params.chapter_count;
-+	sub_index->list_count = params.list_count;
-+	sub_index->zone_count = zone_count;
-+	sub_index->chapter_zone_bits = params.chapter_size_in_bits / zone_count;
-+	sub_index->volume_nonce = volume_nonce;
++	result = get_slab_number(depot, pbn, &slab_number);
++	if (result != VDO_SUCCESS) {
++		vdo_enter_read_only_mode(depot->vdo, result);
++		return NULL;
++	}
 +
-+	result = uds_initialize_delta_index(&sub_index->delta_index,
-+					    zone_count,
-+					    params.list_count,
-+					    params.mean_delta,
-+					    params.chapter_bits,
-+					    params.memory_size,
-+					    tag);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	for (z = 0; z < sub_index->delta_index.zone_count; z++)
-+		available_bytes += sub_index->delta_index.delta_zones[z].size;
-+	available_bytes -= params.target_free_bytes;
-+	sub_index->max_zone_bits = (available_bytes * BITS_PER_BYTE) / zone_count;
-+	sub_index->memory_size = (sub_index->delta_index.memory_size +
-+				  sizeof(struct volume_sub_index) +
-+				  (params.list_count * sizeof(u64)) +
-+				  (zone_count * sizeof(struct volume_sub_index_zone)));
-+
-+	/* The following arrays are initialized to all zeros. */
-+	result = UDS_ALLOCATE(params.list_count,
-+			      u64,
-+			      "first chapter to flush",
-+			      &sub_index->flush_chapters);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return UDS_ALLOCATE(zone_count,
-+			    struct volume_sub_index_zone,
-+			    "volume index zones",
-+			    &sub_index->zones);
++	return depot->slabs[slab_number];
 +}
 +
-+int uds_make_volume_index(const struct configuration *config,
-+			  u64 volume_nonce,
-+			  struct volume_index **volume_index_ptr)
++/**
++ * vdo_get_increment_limit() - Determine how many new references a block can acquire.
++ * @depot: The slab depot.
++ * @pbn: The physical block number that is being queried.
++ *
++ * Context: This method must be called from the physical zone thread of the PBN.
++ *
++ * Return: The number of available references.
++ */
++u8 vdo_get_increment_limit(struct slab_depot *depot, physical_block_number_t pbn)
 +{
-+	struct split_config split;
-+	unsigned int zone;
-+	struct volume_index *volume_index;
++	struct vdo_slab *slab = vdo_get_slab(depot, pbn);
++	vdo_refcount_t *counter_ptr = NULL;
 +	int result;
 +
-+	result = UDS_ALLOCATE(1, struct volume_index, "volume index", &volume_index);
-+	if (result != UDS_SUCCESS)
-+		return result;
++	if ((slab == NULL) || (slab->status != VDO_SLAB_REBUILT))
++		return 0;
 +
-+	volume_index->zone_count = config->zone_count;
++	result = get_reference_counter(slab, pbn, &counter_ptr);
++	if (result != VDO_SUCCESS)
++		return 0;
 +
-+	if (!uds_is_sparse_geometry(config->geometry)) {
-+		result = initialize_volume_sub_index(config,
-+						     volume_nonce,
-+						     'm',
-+						     &volume_index->vi_non_hook);
-+		if (result != UDS_SUCCESS) {
-+			uds_free_volume_index(volume_index);
-+			return result;
-+		}
++	if (*counter_ptr == PROVISIONAL_REFERENCE_COUNT)
++		return (MAXIMUM_REFERENCE_COUNT - 1);
 +
-+		volume_index->memory_size = volume_index->vi_non_hook.memory_size;
-+		*volume_index_ptr = volume_index;
-+		return UDS_SUCCESS;
-+	}
-+
-+	volume_index->sparse_sample_rate = config->sparse_sample_rate;
-+
-+	result = UDS_ALLOCATE(config->zone_count,
-+			      struct volume_index_zone,
-+			      "volume index zones",
-+			      &volume_index->zones);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume_index(volume_index);
-+		return result;
-+	}
-+
-+	for (zone = 0; zone < config->zone_count; zone++) {
-+		result = uds_init_mutex(&volume_index->zones[zone].hook_mutex);
-+		if (result != UDS_SUCCESS) {
-+			uds_free_volume_index(volume_index);
-+			return result;
-+		}
-+	}
-+
-+	split_configuration(config, &split);
-+	result = initialize_volume_sub_index(&split.non_hook_config,
-+					     volume_nonce,
-+					     'd',
-+					     &volume_index->vi_non_hook);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume_index(volume_index);
-+		return uds_log_error_strerror(result, "Error creating non hook volume index");
-+	}
-+
-+	result = initialize_volume_sub_index(&split.hook_config,
-+					     volume_nonce,
-+					     's',
-+					     &volume_index->vi_hook);
-+	if (result != UDS_SUCCESS) {
-+		uds_free_volume_index(volume_index);
-+		return uds_log_error_strerror(result, "Error creating hook volume index");
-+	}
-+
-+	volume_index->memory_size =
-+		volume_index->vi_non_hook.memory_size + volume_index->vi_hook.memory_size;
-+	*volume_index_ptr = volume_index;
-+	return UDS_SUCCESS;
++	return (MAXIMUM_REFERENCE_COUNT - *counter_ptr);
 +}
-diff --git a/drivers/md/dm-vdo/volume-index.h b/drivers/md/dm-vdo/volume-index.h
-new file mode 100644
-index 000000000000..248f8ec86957
---- /dev/null
-+++ b/drivers/md/dm-vdo/volume-index.h
-@@ -0,0 +1,192 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
 +
-+#ifndef UDS_VOLUME_INDEX_H
-+#define UDS_VOLUME_INDEX_H
-+
-+#include <linux/limits.h>
-+
-+#include "config.h"
-+#include "delta-index.h"
-+#include "uds.h"
-+#include "uds-threads.h"
-+
-+/*
-+ * The volume index is the primary top-level index for UDS. It contains records which map a record
-+ * name to the chapter where a record with that name is stored. This mapping can definitively say
-+ * when no record exists. However, because we only use a subset of the name for this index, it
-+ * cannot definitively say that a record for the entry does exist. It can only say that if a record
-+ * exists, it will be in a particular chapter. The request can then be dispatched to that chapter
-+ * for further processing.
++/**
++ * vdo_is_physical_data_block() - Determine whether the given PBN refers to a data block.
++ * @depot: The depot.
++ * @pbn: The physical block number to ask about.
 + *
-+ * If the volume_index_record does not actually match the record name, the index can store a more
-+ * specific collision record to disambiguate the new entry from the existing one. Index entries are
-+ * managed with volume_index_record structures.
++ * Return: True if the PBN corresponds to a data block.
 + */
++bool vdo_is_physical_data_block(const struct slab_depot *depot, physical_block_number_t pbn)
++{
++	slab_count_t slab_number;
++	slab_block_number sbn;
 +
-+static const u64 NO_CHAPTER = U64_MAX;
++	return ((pbn == VDO_ZERO_BLOCK) ||
++		((get_slab_number(depot, pbn, &slab_number) == VDO_SUCCESS) &&
++		 (slab_block_number_from_pbn(depot->slabs[slab_number], pbn, &sbn) ==
++		  VDO_SUCCESS)));
++}
 +
-+struct volume_index_stats {
-+	/* Nanoseconds spent rebalancing */
-+	ktime_t rebalance_time;
-+	/* Number of memory rebalances */
-+	u32 rebalance_count;
-+	/* The number of records in the index */
-+	u64 record_count;
-+	/* The number of collision records */
-+	u64 collision_count;
-+	/* The number of records removed */
-+	u64 discard_count;
-+	/* The number of UDS_OVERFLOWs detected */
-+	u64 overflow_count;
-+	/* The number of delta lists */
-+	u32 delta_lists;
-+	/* Number of early flushes */
-+	u64 early_flushes;
-+};
-+
-+struct volume_sub_index_zone {
-+	u64 virtual_chapter_low;
-+	u64 virtual_chapter_high;
-+	u64 early_flushes;
-+} __aligned(L1_CACHE_BYTES);
-+
-+struct volume_sub_index {
-+	/* The delta index */
-+	struct delta_index delta_index;
-+	/* The first chapter to be flushed in each zone */
-+	u64 *flush_chapters;
-+	/* The zones */
-+	struct volume_sub_index_zone *zones;
-+	/* The volume nonce */
-+	u64 volume_nonce;
-+	/* Expected size of a chapter (per zone) */
-+	u64 chapter_zone_bits;
-+	/* Maximum size of the index (per zone) */
-+	u64 max_zone_bits;
-+	/* The number of bits in address mask */
-+	u8 address_bits;
-+	/* Mask to get address within delta list */
-+	u32 address_mask;
-+	/* The number of bits in chapter number */
-+	u8 chapter_bits;
-+	/* The largest storable chapter number */
-+	u32 chapter_mask;
-+	/* The number of chapters used */
-+	u32 chapter_count;
-+	/* The number of delta lists */
-+	u32 list_count;
-+	/* The number of zones */
-+	unsigned int zone_count;
-+	/* The amount of memory allocated */
-+	u64 memory_size;
-+};
-+
-+struct volume_index_zone {
-+	/* Protects the sampled index in this zone */
-+	struct mutex hook_mutex;
-+} __aligned(L1_CACHE_BYTES);
-+
-+struct volume_index {
-+	u32 sparse_sample_rate;
-+	unsigned int zone_count;
-+	u64 memory_size;
-+	struct volume_sub_index vi_non_hook;
-+	struct volume_sub_index vi_hook;
-+	struct volume_index_zone *zones;
-+};
-+
-+/*
-+ * The volume_index_record structure is used to facilitate processing of a record name. A client
-+ * first calls uds_get_volume_index_record() to find the volume index record for a record name. The
-+ * fields of the record can then be examined to determine the state of the record.
++/**
++ * vdo_get_slab_depot_allocated_blocks() - Get the total number of data blocks allocated across all
++ * the slabs in the depot.
++ * @depot: The slab depot.
 + *
-+ * If is_found is false, then the index did not find an entry for the record name. Calling
-+ * uds_put_volume_index_record() will insert a new entry for that name at the proper place.
++ * This is the total number of blocks with a non-zero reference count.
 + *
-+ * If is_found is true, then we did find an entry for the record name, and the virtual_chapter and
-+ * is_collision fields reflect the entry found. Subsequently, a call to
-+ * uds_remove_volume_index_record() will remove the entry, a call to
-+ * uds_set_volume_index_record_chapter() will update the existing entry, and a call to
-+ * uds_put_volume_index_record() will insert a new collision record after the existing entry.
++ * Context: This may be called from any thread.
++ *
++ * Return: The total number of blocks with a non-zero reference count.
 + */
-+struct volume_index_record {
-+	/* Public fields */
++block_count_t vdo_get_slab_depot_allocated_blocks(const struct slab_depot *depot)
++{
++	block_count_t total = 0;
++	zone_count_t zone;
 +
-+	/* Chapter where the record info is found */
-+	u64 virtual_chapter;
-+	/* This record is a collision */
-+	bool is_collision;
-+	/* This record is the requested record */
-+	bool is_found;
++	for (zone = 0; zone < depot->zone_count; zone++)
++		/* The allocators are responsible for thread safety. */
++		total += READ_ONCE(depot->allocators[zone].allocated_blocks);
++	return total;
++}
 +
-+	/* Private fields */
++/**
++ * vdo_get_slab_depot_data_blocks() - Get the total number of data blocks in all the slabs in the
++ *                                    depot.
++ * @depot: The slab depot.
++ *
++ * Context: This may be called from any thread.
++ *
++ * Return: The total number of data blocks in all slabs.
++ */
++block_count_t vdo_get_slab_depot_data_blocks(const struct slab_depot *depot)
++{
++	return (READ_ONCE(depot->slab_count) * depot->slab_config.data_blocks);
++}
 +
-+	/* Zone that contains this name */
-+	unsigned int zone_number;
-+	/* The volume index */
-+	struct volume_sub_index *sub_index;
-+	/* Mutex for accessing this delta index entry in the hook index */
-+	struct mutex *mutex;
-+	/* The record name to which this record refers */
-+	const struct uds_record_name *name;
-+	/* The delta index entry for this record */
-+	struct delta_index_entry delta_entry;
+ /**
+  * finish_combining_zones() - Clean up after saving out the combined slab summary.
+  * @completion: The vio which was used to write the summary data.
+@@ -4100,6 +4659,193 @@ static void load_slab_summary(void *context, struct vdo_completion *parent)
+ 			    REQ_OP_READ);
+ }
+ 
++/* Implements vdo_zone_action. */
++static void load_allocator(void *context, zone_count_t zone_number, struct vdo_completion *parent)
++{
++	struct slab_depot *depot = context;
++
++	vdo_start_loading(&depot->allocators[zone_number].state,
++			  vdo_get_current_manager_operation(depot->action_manager),
++			  parent,
++			  initiate_load);
++}
++
++/**
++ * vdo_load_slab_depot() - Asynchronously load any slab depot state that isn't included in the
++ *                         super_block component.
++ * @depot: The depot to load.
++ * @operation: The type of load to perform.
++ * @parent: The completion to notify when the load is complete.
++ * @context: Additional context for the load operation; may be NULL.
++ *
++ * This method may be called only before entering normal operation from the load thread.
++ */
++void vdo_load_slab_depot(struct slab_depot *depot,
++			 const struct admin_state_code *operation,
++			 struct vdo_completion *parent,
++			 void *context)
++{
++	if (vdo_assert_load_operation(operation, parent))
++		vdo_schedule_operation_with_context(depot->action_manager,
++						    operation,
++						    load_slab_summary,
++						    load_allocator,
++						    NULL,
++						    context,
++						    parent);
++}
++
++/* Implements vdo_zone_action. */
++static void prepare_to_allocate(void *context,
++				zone_count_t zone_number,
++				struct vdo_completion *parent)
++{
++	struct slab_depot *depot = context;
++	struct block_allocator *allocator = &depot->allocators[zone_number];
++	int result;
++
++	result = vdo_prepare_slabs_for_allocation(allocator);
++	if (result != VDO_SUCCESS) {
++		vdo_fail_completion(parent, result);
++		return;
++	}
++
++	scrub_slabs(allocator, parent);
++}
++
++/**
++ * vdo_prepare_slab_depot_to_allocate() - Prepare the slab depot to come online and start
++ *                                        allocating blocks.
++ * @depot: The depot to prepare.
++ * @load_type: The load type.
++ * @parent: The completion to notify when the operation is complete.
++ *
++ * This method may be called only before entering normal operation from the load thread. It must be
++ * called before allocation may proceed.
++ */
++void vdo_prepare_slab_depot_to_allocate(struct slab_depot *depot,
++					enum slab_depot_load_type load_type,
++					struct vdo_completion *parent)
++{
++	depot->load_type = load_type;
++	atomic_set(&depot->zones_to_scrub, depot->zone_count);
++	vdo_schedule_action(depot->action_manager, NULL, prepare_to_allocate, NULL, parent);
++}
++
++/**
++ * vdo_update_slab_depot_size() - Update the slab depot to reflect its new size in memory.
++ * @depot: The depot to update.
++ *
++ * This size is saved to disk as part of the super block.
++ */
++void vdo_update_slab_depot_size(struct slab_depot *depot)
++{
++	depot->last_block = depot->new_last_block;
++}
++
++/**
++ * vdo_prepare_to_grow_slab_depot() - Allocate new memory needed for a resize of a slab depot to
++ *                                    the given size.
++ * @depot: The depot to prepare to resize.
++ * @partition: The new depot partition
++ *
++ * Return: VDO_SUCCESS or an error.
++ */
++int vdo_prepare_to_grow_slab_depot(struct slab_depot *depot, const struct partition *partition)
++{
++	struct slab_depot_state_2_0 new_state;
++	int result;
++	slab_count_t new_slab_count;
++
++	if ((partition->count >> depot->slab_size_shift) <= depot->slab_count)
++		return VDO_INCREMENT_TOO_SMALL;
++
++	/* Generate the depot configuration for the new block count. */
++	ASSERT_LOG_ONLY(depot->first_block == partition->offset,
++			"New slab depot partition doesn't change origin");
++	result = vdo_configure_slab_depot(partition,
++					  depot->slab_config,
++					  depot->zone_count,
++					  &new_state);
++	if (result != VDO_SUCCESS)
++		return result;
++
++	new_slab_count = vdo_compute_slab_count(depot->first_block,
++						new_state.last_block,
++						depot->slab_size_shift);
++	if (new_slab_count <= depot->slab_count)
++		return uds_log_error_strerror(VDO_INCREMENT_TOO_SMALL, "Depot can only grow");
++	if (new_slab_count == depot->new_slab_count)
++		/* Check it out, we've already got all the new slabs allocated! */
++		return VDO_SUCCESS;
++
++	vdo_abandon_new_slabs(depot);
++	result = allocate_slabs(depot, new_slab_count);
++	if (result != VDO_SUCCESS) {
++		vdo_abandon_new_slabs(depot);
++		return result;
++	}
++
++	depot->new_size = partition->count;
++	depot->old_last_block = depot->last_block;
++	depot->new_last_block = new_state.last_block;
++
++	return VDO_SUCCESS;
++}
++
++/**
++ * finish_registration() - Finish registering new slabs now that all of the allocators have
++ *                         received their new slabs.
++ *
++ * Implements vdo_action_conclusion.
++ */
++static int finish_registration(void *context)
++{
++	struct slab_depot *depot = context;
++
++	WRITE_ONCE(depot->slab_count, depot->new_slab_count);
++	UDS_FREE(depot->slabs);
++	depot->slabs = depot->new_slabs;
++	depot->new_slabs = NULL;
++	depot->new_slab_count = 0;
++	return VDO_SUCCESS;
++}
++
++/* Implements vdo_zone_action. */
++static void register_new_slabs(void *context,
++			       zone_count_t zone_number,
++			       struct vdo_completion *parent)
++{
++	struct slab_depot *depot = context;
++	struct block_allocator *allocator = &depot->allocators[zone_number];
++	slab_count_t i;
++
++	for (i = depot->slab_count; i < depot->new_slab_count; i++) {
++		struct vdo_slab *slab = depot->new_slabs[i];
++
++		if (slab->allocator == allocator)
++			register_slab_with_allocator(allocator, slab);
++	}
++
++	vdo_finish_completion(parent);
++}
++
++/**
++ * vdo_use_new_slabs() - Use the new slabs allocated for resize.
++ * @depot: The depot.
++ * @parent: The object to notify when complete.
++ */
++void vdo_use_new_slabs(struct slab_depot *depot, struct vdo_completion *parent)
++{
++	ASSERT_LOG_ONLY(depot->new_slabs != NULL, "Must have new slabs to use");
++	vdo_schedule_operation(depot->action_manager,
++			       VDO_ADMIN_STATE_SUSPENDED_OPERATION,
++			       NULL,
++			       register_new_slabs,
++			       finish_registration,
++			       parent);
++}
++
+ /**
+  * stop_scrubbing() - Tell the scrubber to stop scrubbing after it finishes the slab it is
+  *                    currently working on.
+@@ -4169,6 +4915,43 @@ static void initiate_drain(struct admin_state *state)
+ 	do_drain_step(&allocator->completion);
+ }
+ 
++/*
++ * Drain all allocator I/O. Depending upon the type of drain, some or all dirty metadata may be
++ * written to disk. The type of drain will be determined from the state of the allocator's depot.
++ *
++ * Implements vdo_zone_action.
++ */
++static void drain_allocator(void *context, zone_count_t zone_number, struct vdo_completion *parent)
++{
++	struct slab_depot *depot = context;
++
++	vdo_start_draining(&depot->allocators[zone_number].state,
++			   vdo_get_current_manager_operation(depot->action_manager),
++			   parent,
++			   initiate_drain);
++}
++
++/**
++ * vdo_drain_slab_depot() - Drain all slab depot I/O.
++ * @depot: The depot to drain.
++ * @operation: The drain operation (flush, rebuild, suspend, or save).
++ * @parent: The completion to finish when the drain is complete.
++ *
++ * If saving, or flushing, all dirty depot metadata will be written out. If saving or suspending,
++ * the depot will be left in a suspended state.
++ */
++void vdo_drain_slab_depot(struct slab_depot *depot,
++			  const struct admin_state_code *operation,
++			  struct vdo_completion *parent)
++{
++	vdo_schedule_operation(depot->action_manager,
++			       operation,
++			       NULL,
++			       drain_allocator,
++			       NULL,
++			       parent);
++}
++
+ /**
+  * resume_scrubbing() - Tell the scrubber to resume scrubbing if it has been stopped.
+  * @allocator: The allocator being resumed.
+@@ -4246,3 +5029,185 @@ static void resume_allocator(void *context,
+ 			   parent,
+ 			   initiate_resume);
+ }
++
++/**
++ * vdo_resume_slab_depot() - Resume a suspended slab depot.
++ * @depot: The depot to resume.
++ * @parent: The completion to finish when the depot has resumed.
++ */
++void vdo_resume_slab_depot(struct slab_depot *depot, struct vdo_completion *parent)
++{
++	if (vdo_is_read_only(depot->vdo)) {
++		vdo_continue_completion(parent, VDO_READ_ONLY);
++		return;
++	}
++
++	vdo_schedule_operation(depot->action_manager,
++			       VDO_ADMIN_STATE_RESUMING,
++			       NULL,
++			       resume_allocator,
++			       NULL,
++			       parent);
++}
++
++/**
++ * vdo_commit_oldest_slab_journal_tail_blocks() - Commit all dirty tail blocks which are locking a
++ *                                                given recovery journal block.
++ * @depot: The depot.
++ * @recovery_block_number: The sequence number of the recovery journal block whose locks should be
++ *                         released.
++ *
++ * Context: This method must be called from the journal zone thread.
++ */
++void vdo_commit_oldest_slab_journal_tail_blocks(struct slab_depot *depot,
++						sequence_number_t recovery_block_number)
++{
++	if (depot == NULL)
++		return;
++
++	depot->new_release_request = recovery_block_number;
++	vdo_schedule_default_action(depot->action_manager);
++}
++
++/* Implements vdo_zone_action. */
++static void scrub_all_unrecovered_slabs(void *context,
++					zone_count_t zone_number,
++					struct vdo_completion *parent)
++{
++	struct slab_depot *depot = context;
++
++	scrub_slabs(&depot->allocators[zone_number], NULL);
++	vdo_launch_completion(parent);
++}
++
++/**
++ * vdo_scrub_all_unrecovered_slabs() - Scrub all unrecovered slabs.
++ * @depot: The depot to scrub.
++ * @parent: The object to notify when scrubbing has been launched for all zones.
++ */
++void vdo_scrub_all_unrecovered_slabs(struct slab_depot *depot, struct vdo_completion *parent)
++{
++	vdo_schedule_action(depot->action_manager,
++			    NULL,
++			    scrub_all_unrecovered_slabs,
++			    NULL,
++			    parent);
++}
++
++/**
++ * get_block_allocator_statistics() - Get the total of the statistics from all the block allocators
++ *                                    in the depot.
++ * @depot: The slab depot.
++ *
++ * Return: The statistics from all block allocators in the depot.
++ */
++static struct block_allocator_statistics __must_check
++get_block_allocator_statistics(const struct slab_depot *depot)
++{
++	struct block_allocator_statistics totals;
++	zone_count_t zone;
++
++	memset(&totals, 0, sizeof(totals));
++
++	for (zone = 0; zone < depot->zone_count; zone++) {
++		const struct block_allocator *allocator = &depot->allocators[zone];
++		const struct block_allocator_statistics *stats = &allocator->statistics;
++
++		totals.slab_count += allocator->slab_count;
++		totals.slabs_opened += READ_ONCE(stats->slabs_opened);
++		totals.slabs_reopened += READ_ONCE(stats->slabs_reopened);
++	}
++
++	return totals;
++}
++
++/**
++ * get_ref_counts_statistics() - Get the cumulative ref_counts statistics for the depot.
++ * @depot: The slab depot.
++ *
++ * Return: The cumulative statistics for all ref_counts in the depot.
++ */
++static struct ref_counts_statistics __must_check
++get_ref_counts_statistics(const struct slab_depot *depot)
++{
++	struct ref_counts_statistics totals;
++	zone_count_t zone;
++
++	memset(&totals, 0, sizeof(totals));
++
++	for (zone = 0; zone < depot->zone_count; zone++) {
++		totals.blocks_written +=
++			READ_ONCE(depot->allocators[zone].ref_counts_statistics.blocks_written);
++	}
++
++	return totals;
++}
++
++/**
++ * get_depot_slab_journal_statistics() - Get the aggregated slab journal statistics for the depot.
++ * @depot: The slab depot.
++ *
++ * Return: The aggregated statistics for all slab journals in the depot.
++ */
++static struct slab_journal_statistics __must_check
++get_slab_journal_statistics(const struct slab_depot *depot)
++{
++	struct slab_journal_statistics totals;
++	zone_count_t zone;
++
++	memset(&totals, 0, sizeof(totals));
++
++	for (zone = 0; zone < depot->zone_count; zone++) {
++		const struct slab_journal_statistics *stats =
++			&depot->allocators[zone].slab_journal_statistics;
++
++		totals.disk_full_count += READ_ONCE(stats->disk_full_count);
++		totals.flush_count += READ_ONCE(stats->flush_count);
++		totals.blocked_count += READ_ONCE(stats->blocked_count);
++		totals.blocks_written += READ_ONCE(stats->blocks_written);
++		totals.tail_busy_count += READ_ONCE(stats->tail_busy_count);
++	}
++
++	return totals;
++}
++
++/**
++ * vdo_get_slab_depot_statistics() - Get all the vdo_statistics fields that are properties of the
++ *                                   slab depot.
++ * @depot: The slab depot.
++ * @stats: The vdo statistics structure to partially fill.
++ */
++void vdo_get_slab_depot_statistics(const struct slab_depot *depot, struct vdo_statistics *stats)
++{
++	slab_count_t slab_count = READ_ONCE(depot->slab_count);
++	slab_count_t unrecovered = 0;
++	zone_count_t zone;
++
++	for (zone = 0; zone < depot->zone_count; zone++) {
++		/* The allocators are responsible for thread safety. */
++		unrecovered += READ_ONCE(depot->allocators[zone].scrubber.slab_count);
++	}
++
++	stats->recovery_percentage = (slab_count - unrecovered) * 100 / slab_count;
++	stats->allocator = get_block_allocator_statistics(depot);
++	stats->ref_counts = get_ref_counts_statistics(depot);
++	stats->slab_journal = get_slab_journal_statistics(depot);
++	stats->slab_summary = (struct slab_summary_statistics) {
++		.blocks_written = atomic64_read(&depot->summary_statistics.blocks_written),
++	};
++}
++
++/**
++ * vdo_dump_slab_depot() - Dump the slab depot, in a thread-unsafe fashion.
++ * @depot: The slab depot.
++ */
++void vdo_dump_slab_depot(const struct slab_depot *depot)
++{
++	uds_log_info("vdo slab depot");
++	uds_log_info("  zone_count=%u old_zone_count=%u slabCount=%u active_release_request=%llu new_release_request=%llu",
++		     (unsigned int) depot->zone_count,
++		     (unsigned int) depot->old_zone_count,
++		     READ_ONCE(depot->slab_count),
++		     (unsigned long long) depot->active_release_request,
++		     (unsigned long long) depot->new_release_request);
++}
+diff --git a/drivers/md/dm-vdo/slab-depot.h b/drivers/md/dm-vdo/slab-depot.h
+index 6ec4be7b5822..44655d697fa0 100644
+--- a/drivers/md/dm-vdo/slab-depot.h
++++ b/drivers/md/dm-vdo/slab-depot.h
+@@ -435,6 +435,66 @@ struct block_allocator {
+ 	struct slab_summary_block *summary_blocks;
+ };
+ 
++enum slab_depot_load_type {
++	VDO_SLAB_DEPOT_NORMAL_LOAD,
++	VDO_SLAB_DEPOT_RECOVERY_LOAD,
++	VDO_SLAB_DEPOT_REBUILD_LOAD
 +};
 +
-+int __must_check uds_make_volume_index(const struct configuration *config,
-+				       u64 volume_nonce,
-+				       struct volume_index **volume_index);
++struct slab_depot {
++	zone_count_t zone_count;
++	zone_count_t old_zone_count;
++	struct vdo *vdo;
++	struct slab_config slab_config;
++	struct action_manager *action_manager;
 +
-+void uds_free_volume_index(struct volume_index *volume_index);
++	physical_block_number_t first_block;
++	physical_block_number_t last_block;
++	physical_block_number_t origin;
 +
-+int __must_check uds_compute_volume_index_save_blocks(const struct configuration *config,
-+						      size_t block_size,
-+						      u64 *block_count);
++	/* slab_size == (1 << slab_size_shift) */
++	unsigned int slab_size_shift;
 +
-+unsigned int __must_check
-+uds_get_volume_index_zone(const struct volume_index *volume_index,
-+			  const struct uds_record_name *name);
++	/* Determines how slabs should be queued during load */
++	enum slab_depot_load_type load_type;
 +
-+bool __must_check uds_is_volume_index_sample(const struct volume_index *volume_index,
-+					     const struct uds_record_name *name);
++	/* The state for notifying slab journals to release recovery journal */
++	sequence_number_t active_release_request;
++	sequence_number_t new_release_request;
 +
-+/*
-+ * This function is only used to manage sparse cache membership. Most requests should use
-+ * uds_get_volume_index_record() to look up index records instead.
-+ */
-+u64 __must_check uds_lookup_volume_index_name(const struct volume_index *volume_index,
-+					      const struct uds_record_name *name);
++	/* State variables for scrubbing complete handling */
++	atomic_t zones_to_scrub;
 +
-+int __must_check uds_get_volume_index_record(struct volume_index *volume_index,
-+					     const struct uds_record_name *name,
-+					     struct volume_index_record *record);
++	/* Array of pointers to individually allocated slabs */
++	struct vdo_slab **slabs;
++	/* The number of slabs currently allocated and stored in 'slabs' */
++	slab_count_t slab_count;
++
++	/* Array of pointers to a larger set of slabs (used during resize) */
++	struct vdo_slab **new_slabs;
++	/* The number of slabs currently allocated and stored in 'new_slabs' */
++	slab_count_t new_slab_count;
++	/* The size that 'new_slabs' was allocated for */
++	block_count_t new_size;
++
++	/* The last block before resize, for rollback */
++	physical_block_number_t old_last_block;
++	/* The last block after resize, for resize */
++	physical_block_number_t new_last_block;
++
++	/* The statistics for the slab summary */
++	struct atomic_slab_summary_statistics summary_statistics;
++	/* The start of the slab summary partition */
++	physical_block_number_t summary_origin;
++	/* The number of bits to shift to get a 7-bit fullness hint */
++	unsigned int hint_shift;
++	/* The slab summary entries for all of the zones the partition can hold */
++	struct slab_summary_entry *summary_entries;
++
++	/* The block allocators for this depot */
++	struct block_allocator allocators[];
++};
++
+ struct reference_updater;
+ 
+ bool __must_check
+@@ -445,6 +505,11 @@ vdo_attempt_replay_into_slab(struct vdo_slab *slab,
+ 			     struct journal_point *recovery_point,
+ 			     struct vdo_completion *parent);
+ 
++int __must_check
++vdo_adjust_reference_count_for_rebuild(struct slab_depot *depot,
++				       physical_block_number_t pbn,
++				       enum journal_operation operation);
++
+ static inline struct block_allocator *vdo_as_block_allocator(struct vdo_completion *completion)
+ {
+ 	vdo_assert_completion_type(completion, VDO_BLOCK_ALLOCATOR_COMPLETION);
+@@ -470,4 +535,60 @@ void vdo_notify_slab_journals_are_recovered(struct vdo_completion *completion);
+ 
+ void vdo_dump_block_allocator(const struct block_allocator *allocator);
+ 
++int __must_check vdo_decode_slab_depot(struct slab_depot_state_2_0 state,
++				       struct vdo *vdo,
++				       struct partition *summary_partition,
++				       struct slab_depot **depot_ptr);
++
++void vdo_free_slab_depot(struct slab_depot *depot);
++
++struct slab_depot_state_2_0 __must_check vdo_record_slab_depot(const struct slab_depot *depot);
++
++int __must_check vdo_allocate_reference_counters(struct slab_depot *depot);
++
++struct vdo_slab * __must_check
++vdo_get_slab(const struct slab_depot *depot, physical_block_number_t pbn);
++
++u8 __must_check vdo_get_increment_limit(struct slab_depot *depot, physical_block_number_t pbn);
++
++bool __must_check
++vdo_is_physical_data_block(const struct slab_depot *depot, physical_block_number_t pbn);
++
++block_count_t __must_check vdo_get_slab_depot_allocated_blocks(const struct slab_depot *depot);
++
++block_count_t __must_check vdo_get_slab_depot_data_blocks(const struct slab_depot *depot);
++
++void vdo_get_slab_depot_statistics(const struct slab_depot *depot, struct vdo_statistics *stats);
++
++void vdo_load_slab_depot(struct slab_depot *depot,
++			 const struct admin_state_code *operation,
++			 struct vdo_completion *parent,
++			 void *context);
++
++void vdo_prepare_slab_depot_to_allocate(struct slab_depot *depot,
++					enum slab_depot_load_type load_type,
++					struct vdo_completion *parent);
++
++void vdo_update_slab_depot_size(struct slab_depot *depot);
 +
 +int __must_check
-+uds_put_volume_index_record(struct volume_index_record *record, u64 virtual_chapter);
++vdo_prepare_to_grow_slab_depot(struct slab_depot *depot, const struct partition *partition);
 +
-+int __must_check uds_remove_volume_index_record(struct volume_index_record *record);
++void vdo_use_new_slabs(struct slab_depot *depot, struct vdo_completion *parent);
 +
-+int __must_check
-+uds_set_volume_index_record_chapter(struct volume_index_record *record, u64 virtual_chapter);
++void vdo_abandon_new_slabs(struct slab_depot *depot);
 +
-+void uds_set_volume_index_open_chapter(struct volume_index *volume_index, u64 virtual_chapter);
++void vdo_drain_slab_depot(struct slab_depot *depot,
++			  const struct admin_state_code *operation,
++			  struct vdo_completion *parent);
 +
-+void uds_set_volume_index_zone_open_chapter(struct volume_index *volume_index,
-+					    unsigned int zone_number,
-+					    u64 virtual_chapter);
++void vdo_resume_slab_depot(struct slab_depot *depot, struct vdo_completion *parent);
 +
-+int __must_check uds_load_volume_index(struct volume_index *volume_index,
-+				       struct buffered_reader **readers,
-+				       unsigned int reader_count);
++void vdo_commit_oldest_slab_journal_tail_blocks(struct slab_depot *depot,
++						sequence_number_t recovery_block_number);
 +
-+int __must_check uds_save_volume_index(struct volume_index *volume_index,
-+				       struct buffered_writer **writers,
-+				       unsigned int writer_count);
++void vdo_scrub_all_unrecovered_slabs(struct slab_depot *depot, struct vdo_completion *parent);
 +
-+void uds_get_volume_index_stats(const struct volume_index *volume_index,
-+				struct volume_index_stats *stats);
++void vdo_dump_slab_depot(const struct slab_depot *depot);
 +
-+#endif /* UDS_VOLUME_INDEX_H */
+ #endif /* VDO_SLAB_DEPOT_H */
 -- 
 2.40.0
 
