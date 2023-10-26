@@ -1,45 +1,45 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 870553D978
-	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:40 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E29363D99B
+	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:42 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Uite1nD9"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Od7yxu6L"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698356499;
+	s=mimecast20190719; t=1698356501;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Ms1m0IJ5OOBEwdcY+WtZ9KiJuG2ySmUq4FFZSQjReY4=;
-	b=Uite1nD9183Y2dtVOgEA5WHUm3AKwedZBd9KBxzUsB+iNSBocOCNxmdVJI7WmEQiTB+X+9
-	WwDIb/rc9q0eePDhCNNSjpy8RmTo21Uf6Jw6LQ9lkVhAmfHdEwMhtVhSmdiMcdXV4V+vTs
-	02QY+OPwT02lR3PAUTeFCcefOaSyZJ4=
+	bh=chfx64uLJD/sf1u+eg1ZQv38Q/wef9blrTzhCFG3FOI=;
+	b=Od7yxu6Lc0Nmlpdv2yIehP5p5ITBwo7yKmXABt03HbIBFz4jY3BXcj7LjCm8kmnqxrhXoP
+	+re9k1BsI+Q5UPMzC9psqUSBPhcnPtw1TqJaBds4KPyGhMh+7e6/8nsFdqPKT9CZu2Dfow
+	Tw3JisgP13remPFg0k0hHZQGvyIVN94=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-633-DIYqi9fyP4eDMFH7oKusNQ-1; Thu, 26 Oct 2023 17:41:37 -0400
-X-MC-Unique: DIYqi9fyP4eDMFH7oKusNQ-1
+ us-mta-317-eNSyWPJAOiimmfsV-KT7dQ-1; Thu, 26 Oct 2023 17:41:38 -0400
+X-MC-Unique: eNSyWPJAOiimmfsV-KT7dQ-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9AA0681101F;
-	Thu, 26 Oct 2023 21:41:37 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 25CE2185A784;
+	Thu, 26 Oct 2023 21:41:38 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8C43A2949;
-	Thu, 26 Oct 2023 21:41:37 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 16D0A167AB;
+	Thu, 26 Oct 2023 21:41:38 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id 4D05E3003E; Thu, 26 Oct 2023 17:41:37 -0400 (EDT)
+	id CABB03003D; Thu, 26 Oct 2023 17:41:37 -0400 (EDT)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v4 03/39] dm vdo: add memory allocation utilities
-Date: Thu, 26 Oct 2023 17:41:00 -0400
-Message-Id: <20231026214136.1067410-4-msakai@redhat.com>
+Subject: [PATCH v4 06/39] dm vdo: add thread and synchronization utilities
+Date: Thu, 26 Oct 2023 17:41:03 -0400
+Message-Id: <20231026214136.1067410-7-msakai@redhat.com>
 In-Reply-To: <20231026214136.1067410-1-msakai@redhat.com>
 References: <20231026214136.1067410-1-msakai@redhat.com>
 Precedence: bulk
@@ -51,13 +51,9 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
 
-This patch adds standardized allocation macros and memory tracking tools to
-track and report any allocated memory that is not freed. This makes it
-easier to ensure that the vdo target does not leak memory.
-
-This patch also adds utilities for controlling whether certain threads are
-allowed to allocate memory, since memory allocation during certain critical
-code sections can cause the vdo target to deadlock.
+This patch adds utilities for managing and using named threads, as well as
+several locking and synchronization utilities. These utilities help dm-vdo
+minimize thread transitions and manage interactions between threads.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
@@ -65,646 +61,597 @@ Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
 Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
 Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
+Co-developed-by: Bruce Johnston <bjohnsto@redhat.com>
+Signed-off-by: Bruce Johnston <bjohnsto@redhat.com>
 Co-developed-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Ken Raeburn <raeburn@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/memory-alloc.c | 447 +++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/memory-alloc.h | 171 ++++++++++++
- 2 files changed, 618 insertions(+)
- create mode 100644 drivers/md/dm-vdo/memory-alloc.c
- create mode 100644 drivers/md/dm-vdo/memory-alloc.h
+ drivers/md/dm-vdo/thread-cond-var.c |  46 +++++++
+ drivers/md/dm-vdo/thread-device.c   |  35 ++++++
+ drivers/md/dm-vdo/thread-device.h   |  19 +++
+ drivers/md/dm-vdo/thread-registry.c |  93 ++++++++++++++
+ drivers/md/dm-vdo/thread-registry.h |  33 +++++
+ drivers/md/dm-vdo/uds-threads.c     | 186 ++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/uds-threads.h     | 115 +++++++++++++++++
+ 7 files changed, 527 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/thread-cond-var.c
+ create mode 100644 drivers/md/dm-vdo/thread-device.c
+ create mode 100644 drivers/md/dm-vdo/thread-device.h
+ create mode 100644 drivers/md/dm-vdo/thread-registry.c
+ create mode 100644 drivers/md/dm-vdo/thread-registry.h
+ create mode 100644 drivers/md/dm-vdo/uds-threads.c
+ create mode 100644 drivers/md/dm-vdo/uds-threads.h
 
-diff --git a/drivers/md/dm-vdo/memory-alloc.c b/drivers/md/dm-vdo/memory-alloc.c
+diff --git a/drivers/md/dm-vdo/thread-cond-var.c b/drivers/md/dm-vdo/thread-cond-var.c
 new file mode 100644
-index 000000000000..41b15f7a7ba6
+index 000000000000..ed7f0b79ca0a
 --- /dev/null
-+++ b/drivers/md/dm-vdo/memory-alloc.c
-@@ -0,0 +1,447 @@
++++ b/drivers/md/dm-vdo/thread-cond-var.c
+@@ -0,0 +1,46 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include <linux/delay.h>
-+#include <linux/mm.h>
-+#include <linux/sched/mm.h>
-+#include <linux/slab.h>
-+#include <linux/vmalloc.h>
++#include <linux/jiffies.h>
++#include <linux/minmax.h>
 +
-+#include "logger.h"
-+#include "memory-alloc.h"
-+#include "permassert.h"
++#include "errors.h"
++#include "time-utils.h"
++#include "uds-threads.h"
 +
-+/*
-+ * UDS and VDO keep track of which threads are allowed to allocate memory freely, and which threads
-+ * must be careful to not do a memory allocation that does an I/O request. The allocating_threads
-+ * threads_registry and its associated methods implement this tracking.
-+ */
-+static struct thread_registry allocating_threads;
-+
-+static bool allocations_allowed(void)
++int uds_init_cond(struct cond_var *cv)
 +{
-+	const bool *pointer = uds_lookup_thread(&allocating_threads);
-+
-+	return (pointer != NULL) ? *pointer : false;
-+}
-+
-+/*
-+ * Register the current thread as an allocating thread.
-+ *
-+ * An optional flag location can be supplied indicating whether, at any given point in time, the
-+ * threads associated with that flag should be allocating storage. If the flag is false, a message
-+ * will be logged.
-+ *
-+ * If no flag is supplied, the thread is always allowed to allocate storage without complaint.
-+ *
-+ * @new_thread: registered_thread structure to use for the current thread
-+ * @flag_ptr: Location of the allocation-allowed flag
-+ */
-+void uds_register_allocating_thread(struct registered_thread *new_thread, const bool *flag_ptr)
-+{
-+	if (flag_ptr == NULL) {
-+		static const bool allocation_always_allowed = true;
-+
-+		flag_ptr = &allocation_always_allowed;
-+	}
-+
-+	uds_register_thread(&allocating_threads, new_thread, flag_ptr);
-+}
-+
-+/* Unregister the current thread as an allocating thread. */
-+void uds_unregister_allocating_thread(void)
-+{
-+	uds_unregister_thread(&allocating_threads);
-+}
-+
-+/*
-+ * We track how much memory has been allocated and freed. When we unload the module, we log an
-+ * error if we have not freed all the memory that we allocated. Nearly all memory allocation and
-+ * freeing is done using this module.
-+ *
-+ * We do not use kernel functions like the kvasprintf() method, which allocate memory indirectly
-+ * using kmalloc.
-+ *
-+ * These data structures and methods are used to track the amount of memory used.
-+ */
-+
-+/*
-+ * We allocate very few large objects, and allocation/deallocation isn't done in a
-+ * performance-critical stage for us, so a linked list should be fine.
-+ */
-+struct vmalloc_block_info {
-+	void *ptr;
-+	size_t size;
-+	struct vmalloc_block_info *next;
-+};
-+
-+static struct {
-+	spinlock_t lock;
-+	size_t kmalloc_blocks;
-+	size_t kmalloc_bytes;
-+	size_t vmalloc_blocks;
-+	size_t vmalloc_bytes;
-+	size_t peak_bytes;
-+	struct vmalloc_block_info *vmalloc_list;
-+} memory_stats __cacheline_aligned;
-+
-+static void update_peak_usage(void)
-+{
-+	size_t total_bytes = memory_stats.kmalloc_bytes + memory_stats.vmalloc_bytes;
-+
-+	if (total_bytes > memory_stats.peak_bytes)
-+		memory_stats.peak_bytes = total_bytes;
-+}
-+
-+static void add_kmalloc_block(size_t size)
-+{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&memory_stats.lock, flags);
-+	memory_stats.kmalloc_blocks++;
-+	memory_stats.kmalloc_bytes += size;
-+	update_peak_usage();
-+	spin_unlock_irqrestore(&memory_stats.lock, flags);
-+}
-+
-+static void remove_kmalloc_block(size_t size)
-+{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&memory_stats.lock, flags);
-+	memory_stats.kmalloc_blocks--;
-+	memory_stats.kmalloc_bytes -= size;
-+	spin_unlock_irqrestore(&memory_stats.lock, flags);
-+}
-+
-+static void add_vmalloc_block(struct vmalloc_block_info *block)
-+{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&memory_stats.lock, flags);
-+	block->next = memory_stats.vmalloc_list;
-+	memory_stats.vmalloc_list = block;
-+	memory_stats.vmalloc_blocks++;
-+	memory_stats.vmalloc_bytes += block->size;
-+	update_peak_usage();
-+	spin_unlock_irqrestore(&memory_stats.lock, flags);
-+}
-+
-+static void remove_vmalloc_block(void *ptr)
-+{
-+	struct vmalloc_block_info *block;
-+	struct vmalloc_block_info **block_ptr;
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&memory_stats.lock, flags);
-+	for (block_ptr = &memory_stats.vmalloc_list;
-+	     (block = *block_ptr) != NULL;
-+	     block_ptr = &block->next) {
-+		if (block->ptr == ptr) {
-+			*block_ptr = block->next;
-+			memory_stats.vmalloc_blocks--;
-+			memory_stats.vmalloc_bytes -= block->size;
-+			break;
-+		}
-+	}
-+
-+	spin_unlock_irqrestore(&memory_stats.lock, flags);
-+	if (block != NULL)
-+		UDS_FREE(block);
-+	else
-+		uds_log_info("attempting to remove ptr %px not found in vmalloc list", ptr);
-+}
-+
-+/*
-+ * Determine whether allocating a memory block should use kmalloc or __vmalloc.
-+ *
-+ * vmalloc can allocate any integral number of pages.
-+ *
-+ * kmalloc can allocate any number of bytes up to a configured limit, which defaults to 8 megabytes
-+ * on some systems. kmalloc is especially good when memory is being both allocated and freed, and
-+ * it does this efficiently in a multi CPU environment.
-+ *
-+ * kmalloc usually rounds the size of the block up to the next power of two, so when the requested
-+ * block is bigger than PAGE_SIZE / 2 bytes, kmalloc will never give you less space than the
-+ * corresponding vmalloc allocation. Sometimes vmalloc will use less overhead than kmalloc.
-+ *
-+ * The advantages of kmalloc do not help out UDS or VDO, because we allocate all our memory up
-+ * front and do not free and reallocate it. Sometimes we have problems using kmalloc, because the
-+ * Linux memory page map can become so fragmented that kmalloc will not give us a 32KB chunk. We
-+ * have used vmalloc as a backup to kmalloc in the past, and a follow-up vmalloc of 32KB will work.
-+ * But there is no strong case to be made for using kmalloc over vmalloc for these size chunks.
-+ *
-+ * The kmalloc/vmalloc boundary is set at 4KB, and kmalloc gets the 4KB requests. There is no
-+ * strong reason for favoring either kmalloc or vmalloc for 4KB requests, except that tracking
-+ * vmalloc statistics uses a linked list implementation. Using a simple test, this choice of
-+ * boundary results in 132 vmalloc calls. Using vmalloc for requests of exactly 4KB results in an
-+ * additional 6374 vmalloc calls, which is much less efficient for tracking.
-+ *
-+ * @size: How many bytes to allocate
-+ */
-+static inline bool use_kmalloc(size_t size)
-+{
-+	return size <= PAGE_SIZE;
-+}
-+
-+/*
-+ * Allocate storage based on memory size and alignment, logging an error if the allocation fails.
-+ * The memory will be zeroed.
-+ *
-+ * @size: The size of an object
-+ * @align: The required alignment
-+ * @what: What is being allocated (for error logging)
-+ * @ptr: A pointer to hold the allocated memory
-+ *
-+ * Return: UDS_SUCCESS or an error code
-+ */
-+int uds_allocate_memory(size_t size, size_t align, const char *what, void *ptr)
-+{
-+	/*
-+	 * The __GFP_RETRY_MAYFAIL flag means the VM implementation will retry memory reclaim
-+	 * procedures that have previously failed if there is some indication that progress has
-+	 * been made elsewhere. It can wait for other tasks to attempt high level approaches to
-+	 * freeing memory such as compaction (which removes fragmentation) and page-out. There is
-+	 * still a definite limit to the number of retries, but it is a larger limit than with
-+	 * __GFP_NORETRY. Allocations with this flag may fail, but only when there is genuinely
-+	 * little unused memory. While these allocations do not directly trigger the OOM killer,
-+	 * their failure indicates that the system is likely to need to use the OOM killer soon.
-+	 * The caller must handle failure, but can reasonably do so by failing a higher-level
-+	 * request, or completing it only in a much less efficient manner.
-+	 */
-+	const gfp_t gfp_flags = GFP_KERNEL | __GFP_ZERO | __GFP_RETRY_MAYFAIL;
-+	unsigned int noio_flags;
-+	bool allocations_restricted = !allocations_allowed();
-+	unsigned long start_time;
-+	void *p = NULL;
-+
-+	if (ptr == NULL)
-+		return UDS_INVALID_ARGUMENT;
-+
-+	if (size == 0) {
-+		*((void **) ptr) = NULL;
-+		return UDS_SUCCESS;
-+	}
-+
-+	if (allocations_restricted)
-+		noio_flags = memalloc_noio_save();
-+
-+	start_time = jiffies;
-+	if (use_kmalloc(size) && (align < PAGE_SIZE)) {
-+		p = kmalloc(size, gfp_flags | __GFP_NOWARN);
-+		if (p == NULL) {
-+			/*
-+			 * It is possible for kmalloc to fail to allocate memory because there is
-+			 * no page available (see VDO-3688). A short sleep may allow the page
-+			 * reclaimer to free a page.
-+			 */
-+			fsleep(1000);
-+			p = kmalloc(size, gfp_flags);
-+		}
-+
-+		if (p != NULL)
-+			add_kmalloc_block(ksize(p));
-+	} else {
-+		struct vmalloc_block_info *block;
-+
-+		if (UDS_ALLOCATE(1, struct vmalloc_block_info, __func__, &block) ==
-+		    UDS_SUCCESS) {
-+			/*
-+			 * It is possible for __vmalloc to fail to allocate memory because there
-+			 * are no pages available (see VDO-3661). A short sleep may allow the page
-+			 * reclaimer to free enough pages for a small allocation.
-+			 *
-+			 * For larger allocations, the page_alloc code is racing against the page
-+			 * reclaimer. If the page reclaimer can stay ahead of page_alloc, the
-+			 * __vmalloc will succeed. But if page_alloc overtakes the page reclaimer,
-+			 * the allocation fails. It is possible that more retries will succeed.
-+			 */
-+			for (;;) {
-+				p = __vmalloc(size, gfp_flags | __GFP_NOWARN);
-+
-+				if (p != NULL)
-+					break;
-+
-+				if (jiffies_to_msecs(jiffies - start_time) > 1000) {
-+					/* Try one more time, logging a failure for this call. */
-+					p = __vmalloc(size, gfp_flags);
-+					break;
-+				}
-+
-+				fsleep(1000);
-+			}
-+
-+			if (p == NULL) {
-+				UDS_FREE(block);
-+			} else {
-+				block->ptr = p;
-+				block->size = PAGE_ALIGN(size);
-+				add_vmalloc_block(block);
-+			}
-+		}
-+	}
-+
-+	if (allocations_restricted)
-+		memalloc_noio_restore(noio_flags);
-+
-+	if (p == NULL) {
-+		unsigned int duration = jiffies_to_msecs(jiffies - start_time);
-+
-+		uds_log_error("Could not allocate %zu bytes for %s in %u msecs",
-+			      size,
-+			      what,
-+			      duration);
-+		return -ENOMEM;
-+	}
-+
-+	*((void **) ptr) = p;
++	init_waitqueue_head(&cv->wait_queue);
 +	return UDS_SUCCESS;
 +}
 +
-+/*
-+ * Allocate storage based on memory size, failing immediately if the required memory is not
-+ * available. The memory will be zeroed.
-+ *
-+ * @size: The size of an object.
-+ * @what: What is being allocated (for error logging)
-+ *
-+ * Return: pointer to the allocated memory, or NULL if the required space is not available.
-+ */
-+void *uds_allocate_memory_nowait(size_t size, const char *what __maybe_unused)
++int uds_signal_cond(struct cond_var *cv)
 +{
-+	void *p = kmalloc(size, GFP_NOWAIT | __GFP_ZERO);
-+
-+	if (p != NULL)
-+		add_kmalloc_block(ksize(p));
-+
-+	return p;
-+}
-+
-+void uds_free_memory(void *ptr)
-+{
-+	if (ptr != NULL) {
-+		if (is_vmalloc_addr(ptr)) {
-+			remove_vmalloc_block(ptr);
-+			vfree(ptr);
-+		} else {
-+			remove_kmalloc_block(ksize(ptr));
-+			kfree(ptr);
-+		}
-+	}
-+}
-+
-+/*
-+ * Reallocate dynamically allocated memory. There are no alignment guarantees for the reallocated
-+ * memory. If the new memory is larger than the old memory, the new space will be zeroed.
-+ *
-+ * @ptr: The memory to reallocate.
-+ * @old_size: The old size of the memory
-+ * @size: The new size to allocate
-+ * @what: What is being allocated (for error logging)
-+ * @new_ptr: A pointer to hold the reallocated pointer
-+ *
-+ * Return: UDS_SUCCESS or an error code
-+ */
-+int uds_reallocate_memory(void *ptr, size_t old_size, size_t size, const char *what, void *new_ptr)
-+{
-+	int result;
-+
-+	if (size == 0) {
-+		UDS_FREE(ptr);
-+		*(void **) new_ptr = NULL;
-+		return UDS_SUCCESS;
-+	}
-+
-+	result = UDS_ALLOCATE(size, char, what, new_ptr);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	if (ptr != NULL) {
-+		if (old_size < size)
-+			size = old_size;
-+
-+		memcpy(*((void **) new_ptr), ptr, size);
-+		UDS_FREE(ptr);
-+	}
-+
++	wake_up(&cv->wait_queue);
 +	return UDS_SUCCESS;
 +}
 +
-+int uds_duplicate_string(const char *string, const char *what, char **new_string)
++int uds_broadcast_cond(struct cond_var *cv)
 +{
-+	int result;
-+	u8 *dup;
-+
-+	result = UDS_ALLOCATE(strlen(string) + 1, u8, what, &dup);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	memcpy(dup, string, strlen(string) + 1);
-+	*new_string = dup;
++	wake_up_all(&cv->wait_queue);
 +	return UDS_SUCCESS;
 +}
 +
-+void uds_memory_init(void)
++int uds_wait_cond(struct cond_var *cv, struct mutex *mutex)
 +{
-+	spin_lock_init(&memory_stats.lock);
-+	uds_initialize_thread_registry(&allocating_threads);
++	DEFINE_WAIT(__wait);
++
++	prepare_to_wait(&cv->wait_queue, &__wait, TASK_IDLE);
++	uds_unlock_mutex(mutex);
++	schedule();
++	finish_wait(&cv->wait_queue, &__wait);
++	uds_lock_mutex(mutex);
++	return UDS_SUCCESS;
 +}
 +
-+void uds_memory_exit(void)
++int uds_destroy_cond(struct cond_var *cv)
 +{
-+	ASSERT_LOG_ONLY(memory_stats.kmalloc_bytes == 0,
-+			"kmalloc memory used (%zd bytes in %zd blocks) is returned to the kernel",
-+			memory_stats.kmalloc_bytes,
-+			memory_stats.kmalloc_blocks);
-+	ASSERT_LOG_ONLY(memory_stats.vmalloc_bytes == 0,
-+			"vmalloc memory used (%zd bytes in %zd blocks) is returned to the kernel",
-+			memory_stats.vmalloc_bytes,
-+			memory_stats.vmalloc_blocks);
-+	uds_log_debug("peak usage %zd bytes", memory_stats.peak_bytes);
++	return UDS_SUCCESS;
 +}
-+
-+void uds_get_memory_stats(u64 *bytes_used, u64 *peak_bytes_used)
-+{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&memory_stats.lock, flags);
-+	*bytes_used = memory_stats.kmalloc_bytes + memory_stats.vmalloc_bytes;
-+	*peak_bytes_used = memory_stats.peak_bytes;
-+	spin_unlock_irqrestore(&memory_stats.lock, flags);
-+}
-+
-+/*
-+ * Report stats on any allocated memory that we're tracking. Not all allocation types are
-+ * guaranteed to be tracked in bytes (e.g., bios).
-+ */
-+void uds_report_memory_usage(void)
-+{
-+	unsigned long flags;
-+	u64 kmalloc_blocks;
-+	u64 kmalloc_bytes;
-+	u64 vmalloc_blocks;
-+	u64 vmalloc_bytes;
-+	u64 peak_usage;
-+	u64 total_bytes;
-+
-+	spin_lock_irqsave(&memory_stats.lock, flags);
-+	kmalloc_blocks = memory_stats.kmalloc_blocks;
-+	kmalloc_bytes = memory_stats.kmalloc_bytes;
-+	vmalloc_blocks = memory_stats.vmalloc_blocks;
-+	vmalloc_bytes = memory_stats.vmalloc_bytes;
-+	peak_usage = memory_stats.peak_bytes;
-+	spin_unlock_irqrestore(&memory_stats.lock, flags);
-+	total_bytes = kmalloc_bytes + vmalloc_bytes;
-+	uds_log_info("current module memory tracking (actual allocation sizes, not requested):");
-+	uds_log_info("  %llu bytes in %llu kmalloc blocks",
-+		     (unsigned long long) kmalloc_bytes,
-+		     (unsigned long long) kmalloc_blocks);
-+	uds_log_info("  %llu bytes in %llu vmalloc blocks",
-+		     (unsigned long long) vmalloc_bytes,
-+		     (unsigned long long) vmalloc_blocks);
-+	uds_log_info("  total %llu bytes, peak usage %llu bytes",
-+		     (unsigned long long) total_bytes,
-+		     (unsigned long long) peak_usage);
-+}
-diff --git a/drivers/md/dm-vdo/memory-alloc.h b/drivers/md/dm-vdo/memory-alloc.h
+diff --git a/drivers/md/dm-vdo/thread-device.c b/drivers/md/dm-vdo/thread-device.c
 new file mode 100644
-index 000000000000..f02eadf08984
+index 000000000000..897d8490c3af
 --- /dev/null
-+++ b/drivers/md/dm-vdo/memory-alloc.h
-@@ -0,0 +1,171 @@
++++ b/drivers/md/dm-vdo/thread-device.c
+@@ -0,0 +1,35 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "thread-device.h"
++
++#include "thread-registry.h"
++
++/* A registry of threads associated with device id numbers. */
++static struct thread_registry device_id_thread_registry;
++
++/* Any registered thread must be unregistered. */
++void uds_register_thread_device_id(struct registered_thread *new_thread, unsigned int *id_ptr)
++{
++	uds_register_thread(&device_id_thread_registry, new_thread, id_ptr);
++}
++
++void uds_unregister_thread_device_id(void)
++{
++	uds_unregister_thread(&device_id_thread_registry);
++}
++
++int uds_get_thread_device_id(void)
++{
++	const unsigned int *pointer;
++
++	pointer = uds_lookup_thread(&device_id_thread_registry);
++	return (pointer != NULL) ? *pointer : -1;
++}
++
++void uds_initialize_thread_device_registry(void)
++{
++	uds_initialize_thread_registry(&device_id_thread_registry);
++}
+diff --git a/drivers/md/dm-vdo/thread-device.h b/drivers/md/dm-vdo/thread-device.h
+new file mode 100644
+index 000000000000..c1c189f0d248
+--- /dev/null
++++ b/drivers/md/dm-vdo/thread-device.h
+@@ -0,0 +1,19 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef UDS_MEMORY_ALLOC_H
-+#define UDS_MEMORY_ALLOC_H
++#ifndef UDS_THREAD_DEVICE_H
++#define UDS_THREAD_DEVICE_H
 +
-+#include <linux/cache.h>
-+#include <linux/io.h> /* for PAGE_SIZE */
-+
-+#include "permassert.h"
 +#include "thread-registry.h"
 +
-+/* Custom memory allocation functions for UDS that track memory usage */
++void uds_register_thread_device_id(struct registered_thread *new_thread, unsigned int *id_ptr);
 +
-+int __must_check uds_allocate_memory(size_t size, size_t align, const char *what, void *ptr);
++void uds_unregister_thread_device_id(void);
 +
-+void uds_free_memory(void *ptr);
++int uds_get_thread_device_id(void);
 +
-+/* Free memory allocated with UDS_ALLOCATE(). */
-+#define UDS_FREE(PTR) uds_free_memory(PTR)
++void uds_initialize_thread_device_registry(void);
 +
-+static inline void *uds_forget(void **ptr_ptr)
++#endif /* UDS_THREAD_DEVICE_H */
+diff --git a/drivers/md/dm-vdo/thread-registry.c b/drivers/md/dm-vdo/thread-registry.c
+new file mode 100644
+index 000000000000..6e76cf2a93b6
+--- /dev/null
++++ b/drivers/md/dm-vdo/thread-registry.c
+@@ -0,0 +1,93 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "thread-registry.h"
++
++#include <linux/rculist.h>
++
++#include "permassert.h"
++
++/*
++ * We need to be careful when using other facilities that may use thread registry functions in
++ * their normal operation. For example, we do not want to invoke the logger while holding a lock.
++ */
++
++void uds_initialize_thread_registry(struct thread_registry *registry)
 +{
-+	void *ptr = *ptr_ptr;
-+
-+	*ptr_ptr = NULL;
-+	return ptr;
++	INIT_LIST_HEAD(&registry->links);
++	spin_lock_init(&registry->lock);
 +}
 +
-+/*
-+ * Null out a pointer and return a copy to it. This macro should be used when passing a pointer to
-+ * a function for which it is not safe to access the pointer once the function returns.
-+ */
-+#define UDS_FORGET(ptr) uds_forget((void **) &(ptr))
-+
-+/*
-+ * Allocate storage based on element counts, sizes, and alignment.
-+ *
-+ * This is a generalized form of our allocation use case: It allocates an array of objects,
-+ * optionally preceded by one object of another type (i.e., a struct with trailing variable-length
-+ * array), with the alignment indicated.
-+ *
-+ * Why is this inline? The sizes and alignment will always be constant, when invoked through the
-+ * macros below, and often the count will be a compile-time constant 1 or the number of extra bytes
-+ * will be a compile-time constant 0. So at least some of the arithmetic can usually be optimized
-+ * away, and the run-time selection between allocation functions always can. In many cases, it'll
-+ * boil down to just a function call with a constant size.
-+ *
-+ * @count: The number of objects to allocate
-+ * @size: The size of an object
-+ * @extra: The number of additional bytes to allocate
-+ * @align: The required alignment
-+ * @what: What is being allocated (for error logging)
-+ * @ptr: A pointer to hold the allocated memory
-+ *
-+ * Return: UDS_SUCCESS or an error code
-+ */
-+static inline int uds_do_allocation(size_t count,
-+				    size_t size,
-+				    size_t extra,
-+				    size_t align,
-+				    const char *what,
-+				    void *ptr)
++/* Register the current thread and associate it with a data pointer. */
++void uds_register_thread(struct thread_registry *registry,
++			 struct registered_thread *new_thread,
++			 const void *pointer)
 +{
-+	size_t total_size = count * size + extra;
++	struct registered_thread *thread;
++	bool found_it = false;
 +
-+	/* Overflow check: */
-+	if ((size > 0) && (count > ((SIZE_MAX - extra) / size)))
++	INIT_LIST_HEAD(&new_thread->links);
++	new_thread->pointer = pointer;
++	new_thread->task = current;
++
++	spin_lock(&registry->lock);
++	list_for_each_entry(thread, &registry->links, links) {
++		if (thread->task == current) {
++			/* There should be no existing entry. */
++			list_del_rcu(&thread->links);
++			found_it = true;
++			break;
++		}
++	}
++	list_add_tail_rcu(&new_thread->links, &registry->links);
++	spin_unlock(&registry->lock);
++
++	ASSERT_LOG_ONLY(!found_it, "new thread not already in registry");
++	if (found_it) {
++		/* Ensure no RCU iterators see it before re-initializing. */
++		synchronize_rcu();
++		INIT_LIST_HEAD(&thread->links);
++	}
++}
++
++void uds_unregister_thread(struct thread_registry *registry)
++{
++	struct registered_thread *thread;
++	bool found_it = false;
++
++	spin_lock(&registry->lock);
++	list_for_each_entry(thread, &registry->links, links) {
++		if (thread->task == current) {
++			list_del_rcu(&thread->links);
++			found_it = true;
++			break;
++		}
++	}
++	spin_unlock(&registry->lock);
++
++	ASSERT_LOG_ONLY(found_it, "thread found in registry");
++	if (found_it) {
++		/* Ensure no RCU iterators see it before re-initializing. */
++		synchronize_rcu();
++		INIT_LIST_HEAD(&thread->links);
++	}
++}
++
++const void *uds_lookup_thread(struct thread_registry *registry)
++{
++	struct registered_thread *thread;
++	const void *result = NULL;
++
++	rcu_read_lock();
++	list_for_each_entry_rcu(thread, &registry->links, links) {
++		if (thread->task == current) {
++			result = thread->pointer;
++			break;
++		}
++	}
++	rcu_read_unlock();
++
++	return result;
++}
+diff --git a/drivers/md/dm-vdo/thread-registry.h b/drivers/md/dm-vdo/thread-registry.h
+new file mode 100644
+index 000000000000..05d82a8211fe
+--- /dev/null
++++ b/drivers/md/dm-vdo/thread-registry.h
+@@ -0,0 +1,33 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_THREAD_REGISTRY_H
++#define UDS_THREAD_REGISTRY_H
++
++#include <linux/list.h>
++#include <linux/spinlock.h>
++
++struct thread_registry {
++	struct list_head links;
++	spinlock_t lock;
++};
++
++struct registered_thread {
++	struct list_head links;
++	const void *pointer;
++	struct task_struct *task;
++};
++
++void uds_initialize_thread_registry(struct thread_registry *registry);
++
++void uds_register_thread(struct thread_registry *registry,
++			 struct registered_thread *new_thread,
++			 const void *pointer);
++
++void uds_unregister_thread(struct thread_registry *registry);
++
++const void *uds_lookup_thread(struct thread_registry *registry);
++
++#endif /* UDS_THREAD_REGISTRY_H */
+diff --git a/drivers/md/dm-vdo/uds-threads.c b/drivers/md/dm-vdo/uds-threads.c
+new file mode 100644
+index 000000000000..17737246d28c
+--- /dev/null
++++ b/drivers/md/dm-vdo/uds-threads.c
+@@ -0,0 +1,186 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "uds-threads.h"
++
++#include <linux/completion.h>
++#include <linux/err.h>
++#include <linux/kthread.h>
++#include <linux/sched.h>
++
++#include "errors.h"
++#include "logger.h"
++#include "memory-alloc.h"
++
++static struct hlist_head thread_list;
++static struct mutex thread_mutex;
++static atomic_t thread_once = ATOMIC_INIT(0);
++
++struct thread {
++	void (*thread_function)(void *thread_data);
++	void *thread_data;
++	struct hlist_node thread_links;
++	struct task_struct *thread_task;
++	struct completion thread_done;
++};
++
++enum {
++	ONCE_NOT_DONE = 0,
++	ONCE_IN_PROGRESS = 1,
++	ONCE_COMPLETE = 2,
++};
++
++/* Run a function once only, and record that fact in the atomic value. */
++void uds_perform_once(atomic_t *once, void (*function)(void))
++{
++	for (;;) {
++		switch (atomic_cmpxchg(once, ONCE_NOT_DONE, ONCE_IN_PROGRESS)) {
++		case ONCE_NOT_DONE:
++			function();
++			atomic_set_release(once, ONCE_COMPLETE);
++			return;
++		case ONCE_IN_PROGRESS:
++			cond_resched();
++			break;
++		case ONCE_COMPLETE:
++			return;
++		default:
++			return;
++		}
++	}
++}
++
++static void thread_init(void)
++{
++	mutex_init(&thread_mutex);
++}
++
++static int thread_starter(void *arg)
++{
++	struct registered_thread allocating_thread;
++	struct thread *thread = arg;
++
++	thread->thread_task = current;
++	uds_perform_once(&thread_once, thread_init);
++	mutex_lock(&thread_mutex);
++	hlist_add_head(&thread->thread_links, &thread_list);
++	mutex_unlock(&thread_mutex);
++	uds_register_allocating_thread(&allocating_thread, NULL);
++	thread->thread_function(thread->thread_data);
++	uds_unregister_allocating_thread();
++	complete(&thread->thread_done);
++	return 0;
++}
++
++int uds_create_thread(void (*thread_function)(void *),
++		      void *thread_data,
++		      const char *name,
++		      struct thread **new_thread)
++{
++	char *name_colon = strchr(name, ':');
++	char *my_name_colon = strchr(current->comm, ':');
++	struct task_struct *task;
++	struct thread *thread;
++	int result;
++
++	result = UDS_ALLOCATE(1, struct thread, __func__, &thread);
++	if (result != UDS_SUCCESS) {
++		uds_log_warning("Error allocating memory for %s", name);
++		return result;
++	}
++
++	thread->thread_function = thread_function;
++	thread->thread_data = thread_data;
++	init_completion(&thread->thread_done);
++	/*
++	 * Start the thread, with an appropriate thread name.
++	 *
++	 * If the name supplied contains a colon character, use that name. This causes uds module
++	 * threads to have names like "uds:callbackW" and the main test runner thread to be named
++	 * "zub:runtest".
++	 *
++	 * Otherwise if the current thread has a name containing a colon character, prefix the name
++	 * supplied with the name of the current thread up to (and including) the colon character.
++	 * Thus when the "kvdo0:dedupeQ" thread opens an index session, all the threads associated
++	 * with that index will have names like "kvdo0:foo".
++	 *
++	 * Otherwise just use the name supplied. This should be a rare occurrence.
++	 */
++	if ((name_colon == NULL) && (my_name_colon != NULL))
++		task = kthread_run(thread_starter,
++				   thread,
++				   "%.*s:%s",
++				   (int) (my_name_colon - current->comm),
++				   current->comm,
++				   name);
++	else
++		task = kthread_run(thread_starter, thread, "%s", name);
++
++	if (IS_ERR(task)) {
++		UDS_FREE(thread);
++		return PTR_ERR(task);
++	}
++
++	*new_thread = thread;
++	return UDS_SUCCESS;
++}
++
++int uds_join_threads(struct thread *thread)
++{
++	while (wait_for_completion_interruptible(&thread->thread_done) != 0)
++		/* empty loop */
++		;
++
++	mutex_lock(&thread_mutex);
++	hlist_del(&thread->thread_links);
++	mutex_unlock(&thread_mutex);
++	UDS_FREE(thread);
++	return UDS_SUCCESS;
++}
++
++int uds_initialize_barrier(struct barrier *barrier, unsigned int thread_count)
++{
++	int result;
++
++	result = uds_initialize_semaphore(&barrier->mutex, 1);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	barrier->arrived = 0;
++	barrier->thread_count = thread_count;
++	return uds_initialize_semaphore(&barrier->wait, 0);
++}
++
++int uds_destroy_barrier(struct barrier *barrier)
++{
++	int result;
++
++	result = uds_destroy_semaphore(&barrier->mutex);
++	if (result != UDS_SUCCESS)
++		return result;
++	return uds_destroy_semaphore(&barrier->wait);
++}
++
++int uds_enter_barrier(struct barrier *barrier)
++{
++	bool last_thread;
++
++	uds_acquire_semaphore(&barrier->mutex);
++	last_thread = (++barrier->arrived == barrier->thread_count);
++	if (last_thread) {
++		int i;
++
++		for (i = 1; i < barrier->thread_count; i++)
++			uds_release_semaphore(&barrier->wait);
++
++		barrier->arrived = 0;
++		uds_release_semaphore(&barrier->mutex);
++	} else {
++		uds_release_semaphore(&barrier->mutex);
++		uds_acquire_semaphore(&barrier->wait);
++	}
++
++	return UDS_SUCCESS;
++}
+diff --git a/drivers/md/dm-vdo/uds-threads.h b/drivers/md/dm-vdo/uds-threads.h
+new file mode 100644
+index 000000000000..9b65bf65c595
+--- /dev/null
++++ b/drivers/md/dm-vdo/uds-threads.h
+@@ -0,0 +1,115 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_THREADS_H
++#define UDS_THREADS_H
++
++#include <linux/atomic.h>
++#include <linux/delay.h>
++#include <linux/jiffies.h>
++#include <linux/mutex.h>
++#include <linux/semaphore.h>
++#include <linux/wait.h>
++
++#include "errors.h"
++#include "time-utils.h"
++
++/* Thread and synchronization utilities for UDS */
++
++struct cond_var {
++	wait_queue_head_t wait_queue;
++};
++
++struct thread;
++
++struct barrier {
++	/* Mutex for this barrier object */
++	struct semaphore mutex;
++	/* Semaphore for threads waiting at the barrier */
++	struct semaphore wait;
++	/* Number of threads which have arrived */
++	int arrived;
++	/* Total number of threads using this barrier */
++	int thread_count;
++};
++
++int __must_check uds_create_thread(void (*thread_function)(void *),
++				   void *thread_data,
++				   const char *name,
++				   struct thread **new_thread);
++
++void uds_perform_once(atomic_t *once_state, void (*function) (void));
++
++int uds_join_threads(struct thread *thread);
++
++int __must_check uds_initialize_barrier(struct barrier *barrier, unsigned int thread_count);
++int uds_destroy_barrier(struct barrier *barrier);
++int uds_enter_barrier(struct barrier *barrier);
++
++int __must_check uds_init_cond(struct cond_var *cond);
++int uds_signal_cond(struct cond_var *cond);
++int uds_broadcast_cond(struct cond_var *cond);
++int uds_wait_cond(struct cond_var *cond, struct mutex *mutex);
++int uds_destroy_cond(struct cond_var *cond);
++
++static inline int __must_check uds_init_mutex(struct mutex *mutex)
++{
++	mutex_init(mutex);
++	return UDS_SUCCESS;
++}
++
++static inline int uds_destroy_mutex(struct mutex *mutex)
++{
++	return UDS_SUCCESS;
++}
++
++static inline void uds_lock_mutex(struct mutex *mutex)
++{
++	mutex_lock(mutex);
++}
++
++static inline void uds_unlock_mutex(struct mutex *mutex)
++{
++	mutex_unlock(mutex);
++}
++
++static inline int __must_check
++uds_initialize_semaphore(struct semaphore *semaphore, unsigned int value)
++{
++	sema_init(semaphore, value);
++	return UDS_SUCCESS;
++}
++
++static inline int uds_destroy_semaphore(struct semaphore *semaphore)
++{
++	return UDS_SUCCESS;
++}
++
++static inline void uds_acquire_semaphore(struct semaphore *semaphore)
++{
++	/*
++	 * Do not use down(semaphore). Instead use down_interruptible so that
++	 * we do not get 120 second stall messages in kern.log.
++	 */
++	while (down_interruptible(semaphore) != 0)
 +		/*
-+		 * This is kind of a hack: We rely on the fact that SIZE_MAX would cover the entire
-+		 * address space (minus one byte) and thus the system can never allocate that much
-+		 * and the call will always fail. So we can report an overflow as "out of memory"
-+		 * by asking for "merely" SIZE_MAX bytes.
++		 * If we're called from a user-mode process (e.g., "dmsetup
++		 * remove") while waiting for an operation that may take a
++		 * while (e.g., UDS index save), and a signal is sent (SIGINT,
++		 * SIGUSR2), then down_interruptible will not block. If that
++		 * happens, sleep briefly to avoid keeping the CPU locked up in
++		 * this loop. We could just call cond_resched, but then we'd
++		 * still keep consuming CPU time slices and swamp other threads
++		 * trying to do computational work. [VDO-4980]
 +		 */
-+		total_size = SIZE_MAX;
-+
-+	return uds_allocate_memory(total_size, align, what, ptr);
++		fsleep(1000);
 +}
 +
-+int __must_check uds_reallocate_memory(void *ptr,
-+				       size_t old_size,
-+				       size_t size,
-+				       const char *what,
-+				       void *new_ptr);
-+
-+/*
-+ * Allocate one or more elements of the indicated type, logging an error if the allocation fails.
-+ * The memory will be zeroed.
-+ *
-+ * @COUNT: The number of objects to allocate
-+ * @TYPE: The type of objects to allocate. This type determines the alignment of the allocation.
-+ * @WHAT: What is being allocated (for error logging)
-+ * @PTR: A pointer to hold the allocated memory
-+ *
-+ * Return: UDS_SUCCESS or an error code
-+ */
-+#define UDS_ALLOCATE(COUNT, TYPE, WHAT, PTR) \
-+	uds_do_allocation(COUNT, sizeof(TYPE), 0, __alignof__(TYPE), WHAT, PTR)
-+
-+/*
-+ * Allocate one object of an indicated type, followed by one or more elements of a second type,
-+ * logging an error if the allocation fails. The memory will be zeroed.
-+ *
-+ * @TYPE1: The type of the primary object to allocate. This type determines the alignment of the
-+ *         allocated memory.
-+ * @COUNT: The number of objects to allocate
-+ * @TYPE2: The type of array objects to allocate
-+ * @WHAT: What is being allocated (for error logging)
-+ * @PTR: A pointer to hold the allocated memory
-+ *
-+ * Return: UDS_SUCCESS or an error code
-+ */
-+#define UDS_ALLOCATE_EXTENDED(TYPE1, COUNT, TYPE2, WHAT, PTR)            \
-+	__extension__({                                                  \
-+		int _result;						 \
-+		TYPE1 **_ptr = (PTR);                                    \
-+		STATIC_ASSERT(__alignof__(TYPE1) >= __alignof__(TYPE2)); \
-+		_result = uds_do_allocation(COUNT,                       \
-+					    sizeof(TYPE2),               \
-+					    sizeof(TYPE1),               \
-+					    __alignof__(TYPE1),          \
-+					    WHAT,                        \
-+					    _ptr);                       \
-+		_result;                                                 \
-+	})
-+
-+/*
-+ * Allocate memory starting on a cache line boundary, logging an error if the allocation fails. The
-+ * memory will be zeroed.
-+ *
-+ * @size: The number of bytes to allocate
-+ * @what: What is being allocated (for error logging)
-+ * @ptr: A pointer to hold the allocated memory
-+ *
-+ * Return: UDS_SUCCESS or an error code
-+ */
-+static inline int __must_check uds_allocate_cache_aligned(size_t size, const char *what, void *ptr)
++static inline void uds_release_semaphore(struct semaphore *semaphore)
 +{
-+	return uds_allocate_memory(size, L1_CACHE_BYTES, what, ptr);
++	up(semaphore);
 +}
 +
-+void *__must_check uds_allocate_memory_nowait(size_t size, const char *what);
-+
-+/*
-+ * Allocate one element of the indicated type immediately, failing if the required memory is not
-+ * immediately available.
-+ *
-+ * @TYPE: The type of objects to allocate
-+ * @WHAT: What is being allocated (for error logging)
-+ *
-+ * Return: pointer to the memory, or NULL if the memory is not available.
-+ */
-+#define UDS_ALLOCATE_NOWAIT(TYPE, WHAT) uds_allocate_memory_nowait(sizeof(TYPE), WHAT)
-+
-+int __must_check uds_duplicate_string(const char *string, const char *what, char **new_string);
-+
-+void uds_memory_exit(void);
-+
-+void uds_memory_init(void);
-+
-+void uds_register_allocating_thread(struct registered_thread *new_thread, const bool *flag_ptr);
-+
-+void uds_unregister_allocating_thread(void);
-+
-+void uds_get_memory_stats(u64 *bytes_used, u64 *peak_bytes_used);
-+
-+void uds_report_memory_usage(void);
-+
-+#endif /* UDS_MEMORY_ALLOC_H */
++#endif /* UDS_THREADS_H */
 -- 
 2.40.0
 
