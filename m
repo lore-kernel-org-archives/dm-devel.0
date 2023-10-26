@@ -1,322 +1,183 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qv1-f45.google.com (mail-qv1-f45.google.com [209.85.219.45])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9AA1033E3
-	for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 23:58:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 502DB163
+	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 00:12:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="huPaplkW"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698278309;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=663EeRew+0LTZfB+4SAmO4g8inceViRGln5/ydSE0DU=;
-	b=huPaplkWxBrwkU4OnwABSmT2lo+79fd3ZFV15QIBHYgRxbwV/BC5gtqRSTsE1PIh8cMYpK
-	xbx6vnFKcvAQA1a3H/3l4f4VGKXgLBgIjaPjaUhBCPXiu71GR6Ka7KWKrFO/hFoY+tO62Z
-	oI4o+jeC9mWeVFrsXHzq/8dbhDwqQ68=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-580-557pW1SJNeqJPDSdEmav2w-1; Wed,
- 25 Oct 2023 19:58:26 -0400
-X-MC-Unique: 557pW1SJNeqJPDSdEmav2w-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 878092806056;
-	Wed, 25 Oct 2023 23:58:25 +0000 (UTC)
-Received: from bmarzins-01.fast.rdu2.eng.redhat.com (bmarzins-01.fast.rdu2.eng.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6A7B7C1596D;
-	Wed, 25 Oct 2023 23:58:25 +0000 (UTC)
-Received: from bmarzins-01.fast.rdu2.eng.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1) with ESMTPS id 39PNwPxu032420
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 25 Oct 2023 19:58:25 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1/Submit) id 39PNwORu032419;
-	Wed, 25 Oct 2023 19:58:24 -0400
-Date: Wed, 25 Oct 2023 19:58:24 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: mwilck@suse.com
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev, Miao Guanqin <miaoguanqin@huawei.com>,
-        Li Xiao Keng <lixiaokeng@huawei.com>
-Subject: Re: [PATCH 6/6] libmpathutil: remove systemd_service_enabled()
-Message-ID: <ZTmroA3eU3vLgOLl@bmarzins-01.fast.rdu2.eng.redhat.com>
-References: <20231024164937.14684-1-mwilck@suse.com>
- <20231024164937.14684-7-mwilck@suse.com>
+Authentication-Results: smtp.subspace.kernel.org; dkim=none
+Received: by mail-qv1-f45.google.com with SMTP id 6a1803df08f44-66cfd0b2d58so2147736d6.2
+        for <dm-devel@lists.linux.dev>; Wed, 25 Oct 2023 17:12:08 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1698279127; x=1698883927;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=wM1CuLYSLgK5vRspdwUuj4+qi4lx2wTNFAv8LpnsP6U=;
+        b=r9s3C5Ff+31NkGYJmv+7Is3AP0wExJgSte9P/v9oSX7IkRfCATjdPdIn0/O0CwhJpa
+         udoXPHQHfs3fcsbUCTyp2N8oXob3QkkIeFFzybHEynV+Ljc4veZq+ujg6Lwbm3Nfejm/
+         u4lN9VZeYNKjtO4zTgh7KOQJUY9lj26Xhzj/Q4hgYd+Vd9zy8kmaNR/Tk17fu2sGn35z
+         oeeodqggVX98uVYW7Eo2ouoPcthr/wc7Bl1xI6OnlSUvgfB5ZG01KuyCCHPHQ03HCuyI
+         Gkd8NcORDs2CNYIArpBORxrq0ysIZbW8+5yiAMo631h2uxYswusKKM7jg9BCF1yHYaKX
+         FUMg==
+X-Gm-Message-State: AOJu0YzBGpWIt3l3PxCyOjK2jon2IDTOERHFccX6PjqxzjgAui1qEM9e
+	5/ONENQb7WoQ4NoJzR8YYLJ8
+X-Google-Smtp-Source: AGHT+IGpaNv543+vA9hjg88Wqz6YHfzDYTdd3puDcDZzuQGAnhETLGe5B/WQ21YpUSjN+oUDl4MQpQ==
+X-Received: by 2002:a05:6214:21a5:b0:66d:173a:aca7 with SMTP id t5-20020a05621421a500b0066d173aaca7mr17010829qvc.55.1698279127195;
+        Wed, 25 Oct 2023 17:12:07 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id f7-20020ad45587000000b0066d1b4ce863sm4795191qvx.31.2023.10.25.17.12.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Oct 2023 17:12:06 -0700 (PDT)
+Date: Wed, 25 Oct 2023 20:12:05 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Ming Lei <ming.lei@redhat.com>, dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org, axboe@kernel.dk
+Subject: [PATCH v3] dm: respect REQ_NOWAIT flag in normal bios issued to DM
+Message-ID: <ZTmu1T5mf3Xgf0tR@redhat.com>
+References: <15ca26cc-174a-d4e8-9780-d09f8e5a6ea5@redhat.com>
+ <ZTgFtseG3m3WPWn/@redhat.com>
+ <e796de8-bac1-8f7a-c6eb-74d39aad8a2b@redhat.com>
+ <ZTgb3lkNmEUIYpsl@redhat.com>
+ <ZTlt0HPbVZf0gYcI@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20231024164937.14684-7-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+In-Reply-To: <ZTlt0HPbVZf0gYcI@redhat.com>
 
-On Tue, Oct 24, 2023 at 06:49:37PM +0200, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
-> 
-> Since  c203929 ("multipathd.service: add dependency on
-> systemd-udevd-kernel.socket"), multipathd will start early during boot.
-> Moreover, we recommend using socket activation for multipathd,
-> and if multipathd.socket is enabled, the __mpath_connect()
-> check will succeed anyway.
-> 
-> The systemd_service_enabled() test was just "good enough" for
-> standard situations but never robust; it checked for multipathd.wants in
-> "some" directory, which might or might not be the current target,
-> and it would return true even of multipathd.service was masked.
-> 
-> Remove this test.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
+Update DM core's normal IO submission to allocate required memory
+using GFP_NOWAIT if REQ_NOWAIT is set.
 
-I'd be lying if I said I had no worries at all about this. Removing this
-check means that if someone isn't using socket activation, and
-multipathd is temporarily down, and a new device appears, it will always
-be marked as not claimed by multipath. This could cause the device to be
-grabbed by LVM, and not multipathed. This is probably just may paranoia
-talking, since the chance of this happening in the real world seems
-pretty low. So,
+Tested with simple test provided in commit a9ce385344f916 ("dm: don't
+attempt to queue IO under RCU protection") that was enhanced to check
+error codes.  Also tested using fio's pvsync2 with nowait=1.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+But testing with induced GFP_NOWAIT allocation failures wasn't
+performed (yet).
 
-> ---
->  libmpathutil/libmpathutil.version | 17 +++------
->  libmpathutil/util.c               | 58 -------------------------------
->  libmpathutil/util.h               |  1 -
->  libmultipath/valid.c              | 16 ++-------
->  tests/valid.c                     | 24 ++-----------
->  5 files changed, 9 insertions(+), 107 deletions(-)
-> 
-> diff --git a/libmpathutil/libmpathutil.version b/libmpathutil/libmpathutil.version
-> index 6ebb718..15ff467 100644
-> --- a/libmpathutil/libmpathutil.version
-> +++ b/libmpathutil/libmpathutil.version
-> @@ -93,12 +93,15 @@ local:
->  };
->  
->  /* symbols referenced internally by libmultipath */
-> -LIBMPATHUTIL_1.0 {
-> +LIBMPATHUTIL_2.0 {
->  	alloc_bitfield;
->  	__append_strbuf_str;
->  	append_strbuf_quoted;
->  	basenamecpy;
-> +	cleanup_fd_ptr;
->  	cleanup_free_ptr;
-> +	cleanup_vector_free;
-> +	cleanup_fclose;
->  	filepresent;
->  	find_keyword;
->  	free_keywords;
-> @@ -120,21 +123,9 @@ LIBMPATHUTIL_1.0 {
->  	snprint_keyword;
->  	steal_strbuf_str;
->  	strlcat;
-> -	systemd_service_enabled;
->  	validate_config_strvec;
->  	vector_find_or_add_slot;
->  	vector_insert_slot;
->  	vector_move_up;
->  	vector_sort;
->  };
-> -
-> -LIBMPATHUTIL_1.1 {
-> -global:
-> -	cleanup_fd_ptr;
-> -} LIBMPATHUTIL_1.0;
-> -
-> -LIBMPATHUTIL_1.2 {
-> -global:
-> -	cleanup_vector_free;
-> -	cleanup_fclose;
-> -} LIBMPATHUTIL_1.0;
-> diff --git a/libmpathutil/util.c b/libmpathutil/util.c
-> index 92f25a5..9d147fc 100644
-> --- a/libmpathutil/util.c
-> +++ b/libmpathutil/util.c
-> @@ -213,64 +213,6 @@ setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
->  	}
->  }
->  
-> -int systemd_service_enabled_in(const char *dev, const char *prefix)
-> -{
-> -	static const char service[] = "multipathd.service";
-> -	char path[PATH_MAX], file[PATH_MAX];
-> -	DIR *dirfd;
-> -	struct dirent *d;
-> -	int found = 0;
-> -
-> -	if (safe_sprintf(path, "%s/systemd/system", prefix))
-> -		return 0;
-> -
-> -	condlog(3, "%s: checking for %s in %s", dev, service, path);
-> -
-> -	dirfd = opendir(path);
-> -	if (dirfd == NULL)
-> -		return 0;
-> -
-> -	while ((d = readdir(dirfd)) != NULL) {
-> -		char *p;
-> -		struct stat stbuf;
-> -
-> -		if ((strcmp(d->d_name,".") == 0) ||
-> -		    (strcmp(d->d_name,"..") == 0))
-> -			continue;
-> -
-> -		if (strlen(d->d_name) < 6)
-> -			continue;
-> -
-> -		p = d->d_name + strlen(d->d_name) - 6;
-> -		if (strcmp(p, ".wants"))
-> -			continue;
-> -		if (!safe_sprintf(file, "%s/%s/%s",
-> -				  path, d->d_name, service)
-> -		    && stat(file, &stbuf) == 0) {
-> -			condlog(3, "%s: found %s", dev, file);
-> -			found++;
-> -			break;
-> -		}
-> -	}
-> -	closedir(dirfd);
-> -
-> -	return found;
-> -}
-> -
-> -int systemd_service_enabled(const char *dev)
-> -{
-> -	int found = 0;
-> -
-> -	found = systemd_service_enabled_in(dev, "/etc");
-> -	if (!found)
-> -		found = systemd_service_enabled_in(dev, "/usr/lib");
-> -	if (!found)
-> -		found = systemd_service_enabled_in(dev, "/lib");
-> -	if (!found)
-> -		found = systemd_service_enabled_in(dev, "/run");
-> -	return found;
-> -}
-> -
->  static int _linux_version_code;
->  static pthread_once_t _lvc_initialized = PTHREAD_ONCE_INIT;
->  
-> diff --git a/libmpathutil/util.h b/libmpathutil/util.h
-> index 99a471d..de9fcfd 100644
-> --- a/libmpathutil/util.h
-> +++ b/libmpathutil/util.h
-> @@ -21,7 +21,6 @@ size_t strlcat(char * restrict dst, const char * restrict src, size_t size);
->  dev_t parse_devt(const char *dev_t);
->  char *convert_dev(char *dev, int is_path_device);
->  void setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached);
-> -int systemd_service_enabled(const char *dev);
->  int get_linux_version_code(void);
->  int safe_write(int fd, const void *buf, size_t count);
->  void set_max_fds(rlim_t max_fds);
-> diff --git a/libmultipath/valid.c b/libmultipath/valid.c
-> index d4dae3e..f223778 100644
-> --- a/libmultipath/valid.c
-> +++ b/libmultipath/valid.c
-> @@ -314,23 +314,11 @@ is_path_valid(const char *name, struct config *conf, struct path *pp,
->  		return PATH_IS_VALID_NO_CHECK;
->  	}
->  
-> -	/*
-> -	 * "multipath -u" may be run before the daemon is started. In this
-> -	 * case, systemd might own the socket but might delay multipathd
-> -	 * startup until some other unit (udev settle!)  has finished
-> -	 * starting. With many LUNs, the listen backlog may be exceeded, which
-> -	 * would cause connect() to block. This causes udev workers calling
-> -	 * "multipath -u" to hang, and thus creates a deadlock, until "udev
-> -	 * settle" times out.  To avoid this, call connect() in non-blocking
-> -	 * mode here, and take EAGAIN as indication for a filled-up systemd
-> -	 * backlog.
-> -	 */
-> -
->  	if (check_multipathd) {
->  		fd = __mpath_connect(1);
->  		if (fd < 0) {
-> -			if (errno != EAGAIN && !systemd_service_enabled(name)) {
-> -				condlog(3, "multipathd not running or enabled");
-> +			if (errno != EAGAIN) {
-> +				condlog(3, "multipathd not running");
->  				return PATH_IS_NOT_VALID;
->  			}
->  		} else
-> diff --git a/tests/valid.c b/tests/valid.c
-> index 7032932..18a5a7b 100644
-> --- a/tests/valid.c
-> +++ b/tests/valid.c
-> @@ -62,11 +62,6 @@ int __wrap___mpath_connect(int nonblocking)
->  	return -1;
->  }
->  
-> -int __wrap_systemd_service_enabled(const char *dev)
-> -{
-> -	return (int)mock_type(bool);
-> -}
-> -
->  /* There's no point in checking the return value here */
->  int __wrap_mpath_disconnect(int fd)
->  {
-> @@ -216,7 +211,6 @@ enum {
->  enum {
->  	CHECK_MPATHD_RUNNING,
->  	CHECK_MPATHD_EAGAIN,
-> -	CHECK_MPATHD_ENABLED,
->  	CHECK_MPATHD_SKIP,
->  };
->  
-> @@ -232,11 +226,8 @@ static void setup_passing(char *name, char *wwid, unsigned int check_multipathd,
->  	else if (check_multipathd == CHECK_MPATHD_EAGAIN) {
->  		will_return(__wrap___mpath_connect, false);
->  		will_return(__wrap___mpath_connect, EAGAIN);
-> -	} else if (check_multipathd == CHECK_MPATHD_ENABLED) {
-> -		will_return(__wrap___mpath_connect, false);
-> -		will_return(__wrap___mpath_connect, ECONNREFUSED);
-> -		will_return(__wrap_systemd_service_enabled, true);
->  	}
-> +
->  	/* nothing for CHECK_MPATHD_SKIP */
->  	if (stage == STAGE_CHECK_MULTIPATHD)
->  		return;
-> @@ -342,19 +333,10 @@ static void test_check_multipathd(void **state)
->  	will_return(__wrap_sysfs_is_multipathed, false);
->  	will_return(__wrap___mpath_connect, false);
->  	will_return(__wrap___mpath_connect, ECONNREFUSED);
-> -	will_return(__wrap_systemd_service_enabled, false);
-> +
->  	assert_int_equal(is_path_valid(name, &conf, &pp, true),
->  			 PATH_IS_NOT_VALID);
->  	assert_string_equal(pp.dev, name);
-> -	/* test pass because service is enabled. fail getting udev */
-> -	memset(&pp, 0, sizeof(pp));
-> -	setup_passing(name, NULL, CHECK_MPATHD_ENABLED, STAGE_CHECK_MULTIPATHD);
-> -	will_return(__wrap_udev_device_new_from_subsystem_sysname, false);
-> -	will_return(__wrap_udev_device_new_from_subsystem_sysname,
-> -		    name);
-> -	assert_int_equal(is_path_valid(name, &conf, &pp, true),
-> -			 PATH_IS_ERROR);
-> -	assert_string_equal(pp.dev, name);
->  	/* test pass because connect returned EAGAIN. fail getting udev */
->  	setup_passing(name, NULL, CHECK_MPATHD_EAGAIN, STAGE_CHECK_MULTIPATHD);
->  	will_return(__wrap_udev_device_new_from_subsystem_sysname, false);
-> @@ -533,7 +515,7 @@ static void test_check_uuid_present(void **state)
->  
->  	memset(&pp, 0, sizeof(pp));
->  	conf.find_multipaths = FIND_MULTIPATHS_STRICT;
-> -	setup_passing(name, wwid, CHECK_MPATHD_ENABLED, STAGE_CHECK_WWIDS);
-> +	setup_passing(name, wwid, CHECK_MPATHD_RUNNING, STAGE_CHECK_WWIDS);
->  	will_return(__wrap_dm_map_present_by_uuid, 1);
->  	will_return(__wrap_dm_map_present_by_uuid, wwid);
->  	assert_int_equal(is_path_valid(name, &conf, &pp, true),
-> -- 
-> 2.42.0
+Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+---
+ drivers/md/dm.c | 50 ++++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 37 insertions(+), 13 deletions(-)
+
+v3:
+- followed Mikulas's suggestion of only supporting NOWAIT for normal IO
+- changed attribution to me since basically all the code was rewritten
+- removed dm_io_rewind() changes thanks to Ming's reminder that DM's
+  requeue won't block IO submission because it is called from worker
+  (so it using GFP_NOIO is fine).
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 1113a8da3c47..609c68287158 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -570,13 +570,15 @@ static void dm_end_io_acct(struct dm_io *io)
+ 	dm_io_acct(io, true);
+ }
+ 
+-static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
++static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio, gfp_t gfp_mask)
+ {
+ 	struct dm_io *io;
+ 	struct dm_target_io *tio;
+ 	struct bio *clone;
+ 
+-	clone = bio_alloc_clone(NULL, bio, GFP_NOIO, &md->mempools->io_bs);
++	clone = bio_alloc_clone(NULL, bio, gfp_mask, &md->mempools->io_bs);
++	if (unlikely(!clone))
++		return NULL;
+ 	tio = clone_to_tio(clone);
+ 	tio->flags = 0;
+ 	dm_tio_set_flag(tio, DM_TIO_INSIDE_DM_IO);
+@@ -1714,10 +1716,6 @@ static blk_status_t __split_and_process_bio(struct clone_info *ci)
+ 	if (unlikely(!ti))
+ 		return BLK_STS_IOERR;
+ 
+-	if (unlikely((ci->bio->bi_opf & REQ_NOWAIT) != 0) &&
+-	    unlikely(!dm_target_supports_nowait(ti->type)))
+-		return BLK_STS_NOTSUPP;
+-
+ 	if (unlikely(ci->is_abnormal_io))
+ 		return __process_abnormal_io(ci, ti);
+ 
+@@ -1729,7 +1727,17 @@ static blk_status_t __split_and_process_bio(struct clone_info *ci)
+ 
+ 	len = min_t(sector_t, max_io_len(ti, ci->sector), ci->sector_count);
+ 	setup_split_accounting(ci, len);
+-	clone = alloc_tio(ci, ti, 0, &len, GFP_NOIO);
++
++	if (unlikely(ci->bio->bi_opf & REQ_NOWAIT)) {
++		if (unlikely(!dm_target_supports_nowait(ti->type)))
++			return BLK_STS_NOTSUPP;
++
++		clone = alloc_tio(ci, ti, 0, &len, GFP_NOWAIT);
++		if (unlikely(!clone))
++			return BLK_STS_AGAIN;
++	} else {
++		clone = alloc_tio(ci, ti, 0, &len, GFP_NOIO);
++	}
+ 	__map_bio(clone);
+ 
+ 	ci->sector += len;
+@@ -1738,11 +1746,11 @@ static blk_status_t __split_and_process_bio(struct clone_info *ci)
+ 	return BLK_STS_OK;
+ }
+ 
+-static void init_clone_info(struct clone_info *ci, struct mapped_device *md,
++static void init_clone_info(struct clone_info *ci, struct dm_io *io,
+ 			    struct dm_table *map, struct bio *bio, bool is_abnormal)
+ {
+ 	ci->map = map;
+-	ci->io = alloc_io(md, bio);
++	ci->io = io;
+ 	ci->bio = bio;
+ 	ci->is_abnormal_io = is_abnormal;
+ 	ci->submit_as_polled = false;
+@@ -1764,7 +1772,7 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+ 	struct clone_info ci;
+ 	struct dm_io *io;
+ 	blk_status_t error = BLK_STS_OK;
+-	bool is_abnormal;
++	bool is_abnormal, is_preflush = !!(bio->bi_opf & REQ_PREFLUSH);
+ 
+ 	is_abnormal = is_abnormal_io(bio);
+ 	if (unlikely(is_abnormal)) {
+@@ -1777,10 +1785,26 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+ 			return;
+ 	}
+ 
+-	init_clone_info(&ci, md, map, bio, is_abnormal);
+-	io = ci.io;
++	if (unlikely(bio->bi_opf & REQ_NOWAIT)) {
++		/* Only support nowait for normal IO */
++		if (unlikely(is_preflush || is_abnormal)) {
++			bio->bi_status = BLK_STS_NOTSUPP;
++			bio_endio(bio);
++			return;
++		}
+ 
+-	if (bio->bi_opf & REQ_PREFLUSH) {
++		io = alloc_io(md, bio, GFP_NOWAIT);
++		if (unlikely(!io)) {
++			/* Unable to do anything without dm_io. */
++			bio_wouldblock_error(bio);
++			return;
++		}
++	} else {
++		io = alloc_io(md, bio, GFP_NOIO);
++	}
++	init_clone_info(&ci, io, map, bio, is_abnormal);
++
++	if (is_preflush) {
+ 		__send_empty_flush(&ci);
+ 		/* dm_io_complete submits any data associated with flush */
+ 		goto out;
+-- 
+2.40.0
 
