@@ -1,45 +1,45 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8192B3F4AB
-	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:56 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 595FA3E46E
+	for <dm-devel@lists.linux.dev>; Thu, 26 Oct 2023 21:41:45 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="dIhS2Dh5"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="K89bukQ/"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698356515;
+	s=mimecast20190719; t=1698356504;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Ywt0ygdGQrOnx0Eta6sJLehIkvu2r4ry7HSq0vOBPVw=;
-	b=dIhS2Dh50UkXtCf8k0lE0SyTwRlq667kdnNk+jy7d5uPNz1UtIaNtkfrrh8bECLqoTqy2B
-	z2dv8TpM85DcvYxshlRNLfPO6nrs+4A8uTK5Ou19yisDFfcS82uNIh2pnz1abYNW10Y5ZE
-	SfWQgwoFZUc/6dIUfeWKQVBWiSuQ82Q=
+	bh=6uwQsAPUU2XlcaXzxiM4B9xYonnTjsTiD+XSVq65RMI=;
+	b=K89bukQ/J5olycJFrFne366JCx62T+QMcTc/6XAfIAJ4/rVnxAG8Zeu6Nd4W85Jyxail+m
+	Op5LG3Vd8pVsD5LXO9MsEtIqXcPOey0117PcU2ZAzvFUdOU+t54gSUOp3RjCrosXKyg+Ps
+	kCthh+zX/WaEhCwT72pVp87s2PHFWZ0=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-368-yJWjIMGiMLmMVXLbbYBh-g-1; Thu, 26 Oct 2023 17:41:38 -0400
-X-MC-Unique: yJWjIMGiMLmMVXLbbYBh-g-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-488-KbOqpmT6PP29tb8GzaZCag-1; Thu, 26 Oct 2023 17:41:40 -0400
+X-MC-Unique: KbOqpmT6PP29tb8GzaZCag-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1436F811E7E;
-	Thu, 26 Oct 2023 21:41:38 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E6C5088D186;
+	Thu, 26 Oct 2023 21:41:39 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EB8E72026D4C;
-	Thu, 26 Oct 2023 21:41:37 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CEA5E40C6F79;
+	Thu, 26 Oct 2023 21:41:39 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id 9FDD13003B; Thu, 26 Oct 2023 17:41:37 -0400 (EDT)
+	id 846A13003D; Thu, 26 Oct 2023 17:41:39 -0400 (EDT)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v4 05/39] dm vdo: add vdo type declarations, constants, and simple data structures
-Date: Thu, 26 Oct 2023 17:41:02 -0400
-Message-Id: <20231026214136.1067410-6-msakai@redhat.com>
+Subject: [PATCH v4 16/39] dm vdo: implement external deduplication index interface
+Date: Thu, 26 Oct 2023 17:41:13 -0400
+Message-Id: <20231026214136.1067410-17-msakai@redhat.com>
 In-Reply-To: <20231026214136.1067410-1-msakai@redhat.com>
 References: <20231026214136.1067410-1-msakai@redhat.com>
 Precedence: bulk
@@ -49,1182 +49,1423 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
 
-Add definitions of constants defining the fixed parameters of a VDO
-volume, and the default and maximum values of configurable or dynamic
-parameters.
+The deduplication index interface for index clients includes the
+deduplication request and index session structures. This is the interface
+that the rest of the vdo target uses to make requests, receive responses,
+and collect statistics.
 
-Add definitions of internal status codes used for internal
-communication within the module and for logging.
-
-Add definitions of types and structs used to manage the processing of
-an I/O operation.
+This patch also adds sysfs nodes for inspecting various index properties at
+runtime.
 
 Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
 Co-developed-by: Michael Sclafani <vdo-devel@redhat.com>
 Signed-off-by: Michael Sclafani <vdo-devel@redhat.com>
+Co-developed-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
+Signed-off-by: Thomas Jaskiewicz <tom@jaskiewicz.us>
+Co-developed-by: John Wiele <jwiele@redhat.com>
+Signed-off-by: John Wiele <jwiele@redhat.com>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo/constants.c    |  15 ++
- drivers/md/dm-vdo/constants.h    | 102 ++++++++
- drivers/md/dm-vdo/status-codes.c | 126 ++++++++++
- drivers/md/dm-vdo/status-codes.h | 112 +++++++++
- drivers/md/dm-vdo/types.h        | 393 +++++++++++++++++++++++++++++++
- drivers/md/dm-vdo/wait-queue.c   | 223 ++++++++++++++++++
- drivers/md/dm-vdo/wait-queue.h   | 129 ++++++++++
- 7 files changed, 1100 insertions(+)
- create mode 100644 drivers/md/dm-vdo/constants.c
- create mode 100644 drivers/md/dm-vdo/constants.h
- create mode 100644 drivers/md/dm-vdo/status-codes.c
- create mode 100644 drivers/md/dm-vdo/status-codes.h
- create mode 100644 drivers/md/dm-vdo/types.h
- create mode 100644 drivers/md/dm-vdo/wait-queue.c
- create mode 100644 drivers/md/dm-vdo/wait-queue.h
+ drivers/md/dm-vdo/index-session.c | 746 ++++++++++++++++++++++++++++++
+ drivers/md/dm-vdo/index-session.h |  84 ++++
+ drivers/md/dm-vdo/uds-sysfs.c     | 185 ++++++++
+ drivers/md/dm-vdo/uds-sysfs.h     |  12 +
+ drivers/md/dm-vdo/uds.h           | 328 +++++++++++++
+ 5 files changed, 1355 insertions(+)
+ create mode 100644 drivers/md/dm-vdo/index-session.c
+ create mode 100644 drivers/md/dm-vdo/index-session.h
+ create mode 100644 drivers/md/dm-vdo/uds-sysfs.c
+ create mode 100644 drivers/md/dm-vdo/uds-sysfs.h
+ create mode 100644 drivers/md/dm-vdo/uds.h
 
-diff --git a/drivers/md/dm-vdo/constants.c b/drivers/md/dm-vdo/constants.c
+diff --git a/drivers/md/dm-vdo/index-session.c b/drivers/md/dm-vdo/index-session.c
 new file mode 100644
-index 000000000000..14ac047101f8
+index 000000000000..052ba093fbf1
 --- /dev/null
-+++ b/drivers/md/dm-vdo/constants.c
-@@ -0,0 +1,15 @@
++++ b/drivers/md/dm-vdo/index-session.c
+@@ -0,0 +1,746 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#include "types.h"
++#include "index-session.h"
 +
-+/* The maximum logical space is 4 petabytes, which is 1 terablock. */
-+const block_count_t MAXIMUM_VDO_LOGICAL_BLOCKS = 1024ULL * 1024 * 1024 * 1024;
++#include <linux/atomic.h>
 +
-+/* The maximum physical space is 256 terabytes, which is 64 gigablocks. */
-+const block_count_t MAXIMUM_VDO_PHYSICAL_BLOCKS = 1024ULL * 1024 * 1024 * 64;
-+
-+/* unit test minimum */
-+const block_count_t MINIMUM_VDO_SLAB_JOURNAL_BLOCKS = 2;
-diff --git a/drivers/md/dm-vdo/constants.h b/drivers/md/dm-vdo/constants.h
-new file mode 100644
-index 000000000000..9ae3917d00de
---- /dev/null
-+++ b/drivers/md/dm-vdo/constants.h
-@@ -0,0 +1,102 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#ifndef VDO_CONSTANTS_H
-+#define VDO_CONSTANTS_H
-+
-+#include <linux/blkdev.h>
-+
-+#include "types.h"
-+
-+enum {
-+	/*
-+	 * The maximum number of contiguous PBNs which will go to a single bio submission queue,
-+	 * assuming there is more than one queue.
-+	 */
-+	VDO_BIO_ROTATION_INTERVAL_LIMIT = 1024,
-+
-+	/** The number of entries on a block map page */
-+	VDO_BLOCK_MAP_ENTRIES_PER_PAGE = 812,
-+
-+	/** The origin of the flat portion of the block map */
-+	VDO_BLOCK_MAP_FLAT_PAGE_ORIGIN = 1,
-+
-+	/*
-+	 * The height of a block map tree. Assuming a root count of 60 and 812 entries per page,
-+	 * this is big enough to represent almost 95 PB of logical space.
-+	 */
-+	VDO_BLOCK_MAP_TREE_HEIGHT = 5,
-+
-+	/** The default number of bio submission queues. */
-+	DEFAULT_VDO_BIO_SUBMIT_QUEUE_COUNT = 4,
-+
-+	/** The number of contiguous PBNs to be submitted to a single bio queue. */
-+	DEFAULT_VDO_BIO_SUBMIT_QUEUE_ROTATE_INTERVAL = 64,
-+
-+	/** The number of trees in the arboreal block map */
-+	DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT = 60,
-+
-+	/** The default size of the recovery journal, in blocks */
-+	DEFAULT_VDO_RECOVERY_JOURNAL_SIZE = 32 * 1024,
-+
-+	/** The default size of each slab journal, in blocks */
-+	DEFAULT_VDO_SLAB_JOURNAL_SIZE = 224,
-+
-+	/*
-+	 * The initial size of lbn_operations and pbn_operations, which is based upon the expected
-+	 * maximum number of outstanding VIOs. This value was chosen to make it highly unlikely
-+	 * that the maps would need to be resized.
-+	 */
-+	VDO_LOCK_MAP_CAPACITY = 10000,
-+
-+	/** The maximum number of logical zones */
-+	MAX_VDO_LOGICAL_ZONES = 60,
-+
-+	/** The maximum number of physical zones */
-+	MAX_VDO_PHYSICAL_ZONES = 16,
-+
-+	/** The base-2 logarithm of the maximum blocks in one slab */
-+	MAX_VDO_SLAB_BITS = 23,
-+
-+	/** The maximum number of slabs the slab depot supports */
-+	MAX_VDO_SLABS = 8192,
-+
-+	/*
-+	 * The maximum number of block map pages to load simultaneously during recovery or rebuild.
-+	 */
-+	MAXIMUM_SIMULTANEOUS_VDO_BLOCK_MAP_RESTORATION_READS = 1024,
-+
-+	/** The maximum number of entries in the slab summary */
-+	MAXIMUM_VDO_SLAB_SUMMARY_ENTRIES = MAX_VDO_SLABS * MAX_VDO_PHYSICAL_ZONES,
-+
-+	/** The maximum number of total threads in a VDO thread configuration. */
-+	MAXIMUM_VDO_THREADS = 100,
-+
-+	/** The maximum number of VIOs in the system at once */
-+	MAXIMUM_VDO_USER_VIOS = 2048,
-+
-+	/** The only physical block size supported by VDO */
-+	VDO_BLOCK_SIZE = 4096,
-+
-+	/** The number of sectors per block */
-+	VDO_SECTORS_PER_BLOCK = (VDO_BLOCK_SIZE >> SECTOR_SHIFT),
-+
-+	/** The size of a sector that will not be torn */
-+	VDO_SECTOR_SIZE = 512,
-+
-+	/** The physical block number reserved for storing the zero block */
-+	VDO_ZERO_BLOCK = 0,
-+};
-+
-+/** The maximum logical space is 4 petabytes, which is 1 terablock. */
-+extern const block_count_t MAXIMUM_VDO_LOGICAL_BLOCKS;
-+
-+/** The maximum physical space is 256 terabytes, which is 64 gigablocks. */
-+extern const block_count_t MAXIMUM_VDO_PHYSICAL_BLOCKS;
-+
-+/** unit test minimum */
-+extern const block_count_t MINIMUM_VDO_SLAB_JOURNAL_BLOCKS;
-+
-+#endif /* VDO_CONSTANTS_H */
-diff --git a/drivers/md/dm-vdo/status-codes.c b/drivers/md/dm-vdo/status-codes.c
-new file mode 100644
-index 000000000000..2e886597e995
---- /dev/null
-+++ b/drivers/md/dm-vdo/status-codes.c
-@@ -0,0 +1,126 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright 2023 Red Hat
-+ */
-+
-+#include "status-codes.h"
-+
-+#include "errors.h"
++#include "index.h"
++#include "index-layout.h"
 +#include "logger.h"
-+#include "permassert.h"
-+#include "uds-threads.h"
++#include "memory-alloc.h"
++#include "request-queue.h"
++#include "time-utils.h"
 +
-+const struct error_info vdo_status_list[] = {
-+	{ "VDO_NOT_IMPLEMENTED", "Not implemented" },
-+	{ "VDO_OUT_OF_RANGE", "Out of range" },
-+	{ "VDO_REF_COUNT_INVALID", "Reference count would become invalid" },
-+	{ "VDO_NO_SPACE", "Out of space" },
-+	{ "VDO_UNEXPECTED_EOF", "Unexpected EOF on block read" },
-+	{ "VDO_BAD_CONFIGURATION", "Bad configuration option" },
-+	{ "VDO_SOCKET_ERROR", "Socket error" },
-+	{ "VDO_BAD_ALIGNMENT", "Mis-aligned block reference" },
-+	{ "VDO_COMPONENT_BUSY", "Prior operation still in progress" },
-+	{ "VDO_BAD_PAGE", "Corrupt or incorrect page" },
-+	{ "VDO_UNSUPPORTED_VERSION", "Unsupported component version" },
-+	{ "VDO_INCORRECT_COMPONENT", "Component id mismatch in decoder" },
-+	{ "VDO_PARAMETER_MISMATCH", "Parameters have conflicting values" },
-+	{ "VDO_BLOCK_SIZE_TOO_SMALL", "The block size is too small" },
-+	{ "VDO_UNKNOWN_PARTITION", "No partition exists with a given id" },
-+	{ "VDO_PARTITION_EXISTS", "A partition already exists with a given id" },
-+	{ "VDO_NOT_READ_ONLY", "The device is not in read-only mode" },
-+	{ "VDO_INCREMENT_TOO_SMALL", "Physical block growth of too few blocks" },
-+	{ "VDO_CHECKSUM_MISMATCH", "Incorrect checksum" },
-+	{ "VDO_RECOVERY_JOURNAL_FULL", "The recovery journal is full" },
-+	{ "VDO_LOCK_ERROR", "A lock is held incorrectly" },
-+	{ "VDO_READ_ONLY", "The device is in read-only mode" },
-+	{ "VDO_SHUTTING_DOWN", "The device is shutting down" },
-+	{ "VDO_CORRUPT_JOURNAL", "Recovery journal entries corrupted" },
-+	{ "VDO_TOO_MANY_SLABS", "Exceeds maximum number of slabs supported" },
-+	{ "VDO_INVALID_FRAGMENT", "Compressed block fragment is invalid" },
-+	{ "VDO_RETRY_AFTER_REBUILD", "Retry operation after rebuilding finishes" },
-+	{ "VDO_UNKNOWN_COMMAND", "The extended command is not known" },
-+	{ "VDO_COMMAND_ERROR", "Bad extended command parameters" },
-+	{ "VDO_CANNOT_DETERMINE_SIZE", "Cannot determine config sizes to fit" },
-+	{ "VDO_BAD_MAPPING", "Invalid page mapping" },
-+	{ "VDO_READ_CACHE_BUSY", "Read cache has no free slots" },
-+	{ "VDO_BIO_CREATION_FAILED", "Bio creation failed" },
-+	{ "VDO_BAD_MAGIC", "Bad magic number" },
-+	{ "VDO_BAD_NONCE", "Bad nonce" },
-+	{ "VDO_JOURNAL_OVERFLOW", "Journal sequence number overflow" },
-+	{ "VDO_INVALID_ADMIN_STATE", "Invalid operation for current state" },
-+	{ "VDO_CANT_ADD_SYSFS_NODE", "Failed to add sysfs node" },
++/*
++ * The index session contains a lock (the request_mutex) which ensures that only one thread can
++ * change the state of its index at a time. The state field indicates the current state of the
++ * index through a set of descriptive flags. The request_mutex must be notified whenever a
++ * non-transient state flag is cleared. The request_mutex is also used to count the number of
++ * requests currently in progress so that they can be drained when suspending or closing the index.
++ *
++ * If the index session is suspended shortly after opening an index, it may have to suspend during
++ * a rebuild. Depending on the size of the index, a rebuild may take a significant amount of time,
++ * so UDS allows the rebuild to be paused in order to suspend the session in a timely manner. When
++ * the index session is resumed, the rebuild can continue from where it left off. If the index
++ * session is shut down with a suspended rebuild, the rebuild progress is abandoned and the rebuild
++ * will start from the beginning the next time the index is loaded. The mutex and status fields in
++ * the index_load_context are used to record the state of any interrupted rebuild.
++ */
++
++enum index_session_flag_bit {
++	IS_FLAG_BIT_START = 8,
++	/* The session has started loading an index but not completed it. */
++	IS_FLAG_BIT_LOADING = IS_FLAG_BIT_START,
++	/* The session has loaded an index, which can handle requests. */
++	IS_FLAG_BIT_LOADED,
++	/* The session's index has been permanently disabled. */
++	IS_FLAG_BIT_DISABLED,
++	/* The session's index is suspended. */
++	IS_FLAG_BIT_SUSPENDED,
++	/* The session is handling some index state change. */
++	IS_FLAG_BIT_WAITING,
++	/* The session's index is closing and draining requests. */
++	IS_FLAG_BIT_CLOSING,
++	/* The session is being destroyed and is draining requests. */
++	IS_FLAG_BIT_DESTROYING,
 +};
 +
-+static atomic_t vdo_status_codes_registered = ATOMIC_INIT(0);
-+static int status_code_registration_result;
++enum index_session_flag {
++	IS_FLAG_LOADED = (1 << IS_FLAG_BIT_LOADED),
++	IS_FLAG_LOADING = (1 << IS_FLAG_BIT_LOADING),
++	IS_FLAG_DISABLED = (1 << IS_FLAG_BIT_DISABLED),
++	IS_FLAG_SUSPENDED = (1 << IS_FLAG_BIT_SUSPENDED),
++	IS_FLAG_WAITING = (1 << IS_FLAG_BIT_WAITING),
++	IS_FLAG_CLOSING = (1 << IS_FLAG_BIT_CLOSING),
++	IS_FLAG_DESTROYING = (1 << IS_FLAG_BIT_DESTROYING),
++};
 +
-+static void do_status_code_registration(void)
++/* Release a reference to an index session. */
++static void release_index_session(struct uds_index_session *index_session)
++{
++	uds_lock_mutex(&index_session->request_mutex);
++	if (--index_session->request_count == 0)
++		uds_broadcast_cond(&index_session->request_cond);
++	uds_unlock_mutex(&index_session->request_mutex);
++}
++
++/*
++ * Acquire a reference to the index session for an asynchronous index request. The reference must
++ * eventually be released with a corresponding call to release_index_session().
++ */
++static int get_index_session(struct uds_index_session *index_session)
++{
++	unsigned int state;
++	int result = UDS_SUCCESS;
++
++	uds_lock_mutex(&index_session->request_mutex);
++	index_session->request_count++;
++	state = index_session->state;
++	uds_unlock_mutex(&index_session->request_mutex);
++
++	if (state == IS_FLAG_LOADED) {
++		return UDS_SUCCESS;
++	} else if (state & IS_FLAG_DISABLED) {
++		result = UDS_DISABLED;
++	} else if ((state & IS_FLAG_LOADING) ||
++		   (state & IS_FLAG_SUSPENDED) ||
++		   (state & IS_FLAG_WAITING)) {
++		result = -EBUSY;
++	} else {
++		result = UDS_NO_INDEX;
++	}
++
++	release_index_session(index_session);
++	return result;
++}
++
++int uds_launch_request(struct uds_request *request)
++{
++	size_t internal_size;
++	int result;
++
++	if (request->callback == NULL) {
++		uds_log_error("missing required callback");
++		return -EINVAL;
++	}
++
++	switch (request->type) {
++	case UDS_DELETE:
++	case UDS_POST:
++	case UDS_QUERY:
++	case UDS_QUERY_NO_UPDATE:
++	case UDS_UPDATE:
++		break;
++	default:
++		uds_log_error("received invalid callback type");
++		return -EINVAL;
++	}
++
++	/* Reset all internal fields before processing. */
++	internal_size = sizeof(struct uds_request) - offsetof(struct uds_request, zone_number);
++	// FIXME should be using struct_group for this instead
++	memset((char *) request + sizeof(*request) - internal_size, 0, internal_size);
++
++	result = get_index_session(request->session);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	request->found = false;
++	request->unbatched = false;
++	request->index = request->session->index;
++
++	uds_enqueue_request(request, STAGE_TRIAGE);
++	return UDS_SUCCESS;
++}
++
++static void enter_callback_stage(struct uds_request *request)
++{
++	if (request->status != UDS_SUCCESS) {
++		/* All request errors are considered unrecoverable */
++		uds_lock_mutex(&request->session->request_mutex);
++		request->session->state |= IS_FLAG_DISABLED;
++		uds_unlock_mutex(&request->session->request_mutex);
++	}
++
++	uds_request_queue_enqueue(request->session->callback_queue, request);
++}
++
++static inline void count_once(u64 *count_ptr)
++{
++	WRITE_ONCE(*count_ptr, READ_ONCE(*count_ptr) + 1);
++}
++
++static void update_session_stats(struct uds_request *request)
++{
++	struct session_stats *session_stats = &request->session->stats;
++
++	count_once(&session_stats->requests);
++
++	switch (request->type) {
++	case UDS_POST:
++		if (request->found)
++			count_once(&session_stats->posts_found);
++		else
++			count_once(&session_stats->posts_not_found);
++
++		if (request->location == UDS_LOCATION_IN_OPEN_CHAPTER)
++			count_once(&session_stats->posts_found_open_chapter);
++		else if (request->location == UDS_LOCATION_IN_DENSE)
++			count_once(&session_stats->posts_found_dense);
++		else if (request->location == UDS_LOCATION_IN_SPARSE)
++			count_once(&session_stats->posts_found_sparse);
++		break;
++
++	case UDS_UPDATE:
++		if (request->found)
++			count_once(&session_stats->updates_found);
++		else
++			count_once(&session_stats->updates_not_found);
++		break;
++
++	case UDS_DELETE:
++		if (request->found)
++			count_once(&session_stats->deletions_found);
++		else
++			count_once(&session_stats->deletions_not_found);
++		break;
++
++	case UDS_QUERY:
++	case UDS_QUERY_NO_UPDATE:
++		if (request->found)
++			count_once(&session_stats->queries_found);
++		else
++			count_once(&session_stats->queries_not_found);
++		break;
++
++	default:
++		request->status = ASSERT(false, "unknown request type: %d", request->type);
++	}
++}
++
++static void handle_callbacks(struct uds_request *request)
++{
++	struct uds_index_session *index_session = request->session;
++
++	if (request->status == UDS_SUCCESS)
++		update_session_stats(request);
++
++	request->status = uds_map_to_system_error(request->status);
++	request->callback(request);
++	release_index_session(index_session);
++}
++
++static int __must_check make_empty_index_session(struct uds_index_session **index_session_ptr)
++{
++	int result;
++	struct uds_index_session *session;
++
++	result = UDS_ALLOCATE(1, struct uds_index_session, __func__, &session);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	result = uds_init_mutex(&session->request_mutex);
++	if (result != UDS_SUCCESS) {
++		UDS_FREE(session);
++		return result;
++	}
++
++	result = uds_init_cond(&session->request_cond);
++	if (result != UDS_SUCCESS) {
++		uds_destroy_mutex(&session->request_mutex);
++		UDS_FREE(session);
++		return result;
++	}
++
++	result = uds_init_mutex(&session->load_context.mutex);
++	if (result != UDS_SUCCESS) {
++		uds_destroy_cond(&session->request_cond);
++		uds_destroy_mutex(&session->request_mutex);
++		UDS_FREE(session);
++		return result;
++	}
++
++	result = uds_init_cond(&session->load_context.cond);
++	if (result != UDS_SUCCESS) {
++		uds_destroy_mutex(&session->load_context.mutex);
++		uds_destroy_cond(&session->request_cond);
++		uds_destroy_mutex(&session->request_mutex);
++		UDS_FREE(session);
++		return result;
++	}
++
++	result = uds_make_request_queue("callbackW", &handle_callbacks, &session->callback_queue);
++	if (result != UDS_SUCCESS) {
++		uds_destroy_cond(&session->load_context.cond);
++		uds_destroy_mutex(&session->load_context.mutex);
++		uds_destroy_cond(&session->request_cond);
++		uds_destroy_mutex(&session->request_mutex);
++		UDS_FREE(session);
++		return result;
++	}
++
++	*index_session_ptr = session;
++	return UDS_SUCCESS;
++}
++
++int uds_create_index_session(struct uds_index_session **session)
++{
++	if (session == NULL) {
++		uds_log_error("missing session pointer");
++		return -EINVAL;
++	}
++
++	return uds_map_to_system_error(make_empty_index_session(session));
++}
++
++static int __must_check start_loading_index_session(struct uds_index_session *index_session)
 +{
 +	int result;
 +
-+	STATIC_ASSERT((VDO_STATUS_CODE_LAST - VDO_STATUS_CODE_BASE) ==
-+		      ARRAY_SIZE(vdo_status_list));
-+
-+	result = uds_register_error_block("VDO Status",
-+					  VDO_STATUS_CODE_BASE,
-+					  VDO_STATUS_CODE_BLOCK_END,
-+					  vdo_status_list,
-+					  sizeof(vdo_status_list));
-+	/*
-+	 * The following test handles cases where libvdo is statically linked against both the test
-+	 * modules and the test driver (because multiple instances of this module call their own
-+	 * copy of this function once each, resulting in multiple calls to register_error_block
-+	 * which is shared in libuds).
-+	 */
-+	if (result == UDS_DUPLICATE_NAME)
++	uds_lock_mutex(&index_session->request_mutex);
++	if (index_session->state & IS_FLAG_SUSPENDED) {
++		uds_log_info("Index session is suspended");
++		result = -EBUSY;
++	} else if (index_session->state != 0) {
++		uds_log_info("Index is already loaded");
++		result = -EBUSY;
++	} else {
++		index_session->state |= IS_FLAG_LOADING;
 +		result = UDS_SUCCESS;
-+
-+	status_code_registration_result = (result == UDS_SUCCESS) ? VDO_SUCCESS : result;
++	}
++	uds_unlock_mutex(&index_session->request_mutex);
++	return result;
 +}
 +
-+/**
-+ * vdo_register_status_codes() - Register the VDO status codes if needed.
-+ * Return: A success or error code.
-+ */
-+int vdo_register_status_codes(void)
++static void finish_loading_index_session(struct uds_index_session *index_session, int result)
 +{
-+	uds_perform_once(&vdo_status_codes_registered, do_status_code_registration);
-+	return status_code_registration_result;
++	uds_lock_mutex(&index_session->request_mutex);
++	index_session->state &= ~IS_FLAG_LOADING;
++	if (result == UDS_SUCCESS)
++		index_session->state |= IS_FLAG_LOADED;
++
++	uds_broadcast_cond(&index_session->request_cond);
++	uds_unlock_mutex(&index_session->request_mutex);
 +}
 +
-+/**
-+ * vdo_map_to_system_error() - Given an error code, return a value we can return to the OS.
-+ * @error: The error code to convert.
-+ *
-+ * The input error code may be a system-generated value (such as -EIO), an errno macro used in our
-+ * code (such as EIO), or a UDS or VDO status code; the result must be something the rest of the OS
-+ * can consume (negative errno values such as -EIO, in the case of the kernel).
-+ *
-+ * Return: A system error code value.
-+ */
-+int vdo_map_to_system_error(int error)
++static int initialize_index_session(struct uds_index_session *index_session,
++				    enum uds_open_index_type open_type)
 +{
-+	char error_name[UDS_MAX_ERROR_NAME_SIZE];
-+	char error_message[UDS_MAX_ERROR_MESSAGE_SIZE];
++	int result;
++	struct configuration *config;
 +
-+	/* 0 is success, negative a system error code */
-+	if (likely(error <= 0))
-+		return error;
-+	if (error < 1024)
-+		return -error;
++	result = uds_make_configuration(&index_session->parameters, &config);
++	if (result != UDS_SUCCESS) {
++		uds_log_error_strerror(result, "Failed to allocate config");
++		return result;
++	}
 +
-+	/* VDO or UDS error */
-+	switch (error) {
-+	case VDO_NO_SPACE:
-+		return -ENOSPC;
-+	case VDO_READ_ONLY:
-+		return -EIO;
++	memset(&index_session->stats, 0, sizeof(index_session->stats));
++	result = uds_make_index(config,
++				open_type,
++				&index_session->load_context,
++				enter_callback_stage,
++				&index_session->index);
++	if (result != UDS_SUCCESS)
++		uds_log_error_strerror(result, "Failed to make index");
++	else
++		uds_log_configuration(config);
++
++	uds_free_configuration(config);
++	return result;
++}
++
++static const char *get_open_type_string(enum uds_open_index_type open_type)
++{
++	switch (open_type) {
++	case UDS_CREATE:
++		return "creating index";
++	case UDS_LOAD:
++		return "loading or rebuilding index";
++	case UDS_NO_REBUILD:
++		return "loading index";
 +	default:
-+		uds_log_info("%s: mapping internal status code %d (%s: %s) to EIO",
-+			     __func__,
-+			     error,
-+			     uds_string_error_name(error, error_name, sizeof(error_name)),
-+			     uds_string_error(error, error_message, sizeof(error_message)));
-+		return -EIO;
++		return "unknown open method";
 +	}
 +}
-diff --git a/drivers/md/dm-vdo/status-codes.h b/drivers/md/dm-vdo/status-codes.h
++
++/*
++ * Open an index under the given session. This operation will fail if the
++ * index session is suspended, or if there is already an open index.
++ */
++int uds_open_index(enum uds_open_index_type open_type,
++		   const struct uds_parameters *parameters,
++		   struct uds_index_session *session)
++{
++	int result;
++	char name[BDEVNAME_SIZE];
++
++	if (parameters == NULL) {
++		uds_log_error("missing required parameters");
++		return -EINVAL;
++	}
++	if (parameters->bdev == NULL) {
++		uds_log_error("missing required block device");
++		return -EINVAL;
++	}
++	if (session == NULL) {
++		uds_log_error("missing required session pointer");
++		return -EINVAL;
++	}
++
++	result = start_loading_index_session(session);
++	if (result != UDS_SUCCESS)
++		return uds_map_to_system_error(result);
++
++	session->parameters = *parameters;
++	format_dev_t(name, parameters->bdev->bd_dev);
++	uds_log_notice("%s: %s", get_open_type_string(open_type), name);
++
++	result = initialize_index_session(session, open_type);
++	if (result != UDS_SUCCESS)
++		uds_log_error_strerror(result, "Failed %s", get_open_type_string(open_type));
++
++	finish_loading_index_session(session, result);
++	return uds_map_to_system_error(result);
++}
++
++static void wait_for_no_requests_in_progress(struct uds_index_session *index_session)
++{
++	uds_lock_mutex(&index_session->request_mutex);
++	while (index_session->request_count > 0)
++		uds_wait_cond(&index_session->request_cond, &index_session->request_mutex);
++	uds_unlock_mutex(&index_session->request_mutex);
++}
++
++static int __must_check save_index(struct uds_index_session *index_session)
++{
++	wait_for_no_requests_in_progress(index_session);
++	return uds_save_index(index_session->index);
++}
++
++static void suspend_rebuild(struct uds_index_session *session)
++{
++	uds_lock_mutex(&session->load_context.mutex);
++	switch (session->load_context.status) {
++	case INDEX_OPENING:
++		session->load_context.status = INDEX_SUSPENDING;
++
++		/* Wait until the index indicates that it is not replaying. */
++		while ((session->load_context.status != INDEX_SUSPENDED) &&
++		       (session->load_context.status != INDEX_READY))
++			uds_wait_cond(&session->load_context.cond,
++				      &session->load_context.mutex);
++		break;
++
++	case INDEX_READY:
++		/* Index load does not need to be suspended. */
++		break;
++
++	case INDEX_SUSPENDED:
++	case INDEX_SUSPENDING:
++	case INDEX_FREEING:
++	default:
++		/* These cases should not happen. */
++		ASSERT_LOG_ONLY(false, "Bad load context state %u", session->load_context.status);
++		break;
++	}
++	uds_unlock_mutex(&session->load_context.mutex);
++}
++
++/*
++ * Suspend index operation, draining all current index requests and preventing new index requests
++ * from starting. Optionally saves all index data before returning.
++ */
++int uds_suspend_index_session(struct uds_index_session *session, bool save)
++{
++	int result = UDS_SUCCESS;
++	bool no_work = false;
++	bool rebuilding = false;
++
++	/* Wait for any current index state change to complete. */
++	uds_lock_mutex(&session->request_mutex);
++	while (session->state & IS_FLAG_CLOSING)
++		uds_wait_cond(&session->request_cond, &session->request_mutex);
++
++	if ((session->state & IS_FLAG_WAITING) || (session->state & IS_FLAG_DESTROYING)) {
++		no_work = true;
++		uds_log_info("Index session is already changing state");
++		result = -EBUSY;
++	} else if (session->state & IS_FLAG_SUSPENDED) {
++		no_work = true;
++	} else if (session->state & IS_FLAG_LOADING) {
++		session->state |= IS_FLAG_WAITING;
++		rebuilding = true;
++	} else if (session->state & IS_FLAG_LOADED) {
++		session->state |= IS_FLAG_WAITING;
++	} else {
++		no_work = true;
++		session->state |= IS_FLAG_SUSPENDED;
++		uds_broadcast_cond(&session->request_cond);
++	}
++	uds_unlock_mutex(&session->request_mutex);
++
++	if (no_work)
++		return uds_map_to_system_error(result);
++
++	if (rebuilding)
++		suspend_rebuild(session);
++	else if (save)
++		result = save_index(session);
++	else
++		result = uds_flush_index_session(session);
++
++	uds_lock_mutex(&session->request_mutex);
++	session->state &= ~IS_FLAG_WAITING;
++	session->state |= IS_FLAG_SUSPENDED;
++	uds_broadcast_cond(&session->request_cond);
++	uds_unlock_mutex(&session->request_mutex);
++	return uds_map_to_system_error(result);
++}
++
++static int replace_device(struct uds_index_session *session, struct block_device *bdev)
++{
++	int result;
++
++	result = uds_replace_index_storage(session->index, bdev);
++	if (result != UDS_SUCCESS)
++		return result;
++
++	session->parameters.bdev = bdev;
++	return UDS_SUCCESS;
++}
++
++/*
++ * Resume index operation after being suspended. If the index is suspended and the supplied block
++ * device differs from the current backing store, the index will start using the new backing store.
++ */
++int uds_resume_index_session(struct uds_index_session *session, struct block_device *bdev)
++{
++	int result = UDS_SUCCESS;
++	bool no_work = false;
++	bool resume_replay = false;
++
++	uds_lock_mutex(&session->request_mutex);
++	if (session->state & IS_FLAG_WAITING) {
++		uds_log_info("Index session is already changing state");
++		no_work = true;
++		result = -EBUSY;
++	} else if (!(session->state & IS_FLAG_SUSPENDED)) {
++		/* If not suspended, just succeed. */
++		no_work = true;
++		result = UDS_SUCCESS;
++	} else {
++		session->state |= IS_FLAG_WAITING;
++		if (session->state & IS_FLAG_LOADING)
++			resume_replay = true;
++	}
++	uds_unlock_mutex(&session->request_mutex);
++
++	if (no_work)
++		return result;
++
++	if ((session->index != NULL) && (bdev != session->parameters.bdev)) {
++		result = replace_device(session, bdev);
++		if (result != UDS_SUCCESS) {
++			uds_lock_mutex(&session->request_mutex);
++			session->state &= ~IS_FLAG_WAITING;
++			uds_broadcast_cond(&session->request_cond);
++			uds_unlock_mutex(&session->request_mutex);
++			return uds_map_to_system_error(result);
++		}
++	}
++
++	if (resume_replay) {
++		uds_lock_mutex(&session->load_context.mutex);
++		switch (session->load_context.status) {
++		case INDEX_SUSPENDED:
++			session->load_context.status = INDEX_OPENING;
++			/* Notify the index to start replaying again. */
++			uds_broadcast_cond(&session->load_context.cond);
++			break;
++
++		case INDEX_READY:
++			/* There is no index rebuild to resume. */
++			break;
++
++		case INDEX_OPENING:
++		case INDEX_SUSPENDING:
++		case INDEX_FREEING:
++		default:
++			/* These cases should not happen; do nothing. */
++			ASSERT_LOG_ONLY(false,
++					"Bad load context state %u",
++					session->load_context.status);
++			break;
++		}
++		uds_unlock_mutex(&session->load_context.mutex);
++	}
++
++	uds_lock_mutex(&session->request_mutex);
++	session->state &= ~IS_FLAG_WAITING;
++	session->state &= ~IS_FLAG_SUSPENDED;
++	uds_broadcast_cond(&session->request_cond);
++	uds_unlock_mutex(&session->request_mutex);
++	return UDS_SUCCESS;
++}
++
++static int save_and_free_index(struct uds_index_session *index_session)
++{
++	int result = UDS_SUCCESS;
++	bool suspended;
++	struct uds_index *index = index_session->index;
++
++	if (index == NULL)
++		return UDS_SUCCESS;
++
++	uds_lock_mutex(&index_session->request_mutex);
++	suspended = (index_session->state & IS_FLAG_SUSPENDED);
++	uds_unlock_mutex(&index_session->request_mutex);
++
++	if (!suspended) {
++		result = uds_save_index(index);
++		if (result != UDS_SUCCESS)
++			uds_log_warning_strerror(result, "ignoring error from save_index");
++	}
++	uds_free_index(index);
++	index_session->index = NULL;
++
++	/*
++	 * Reset all index state that happens to be in the index
++	 * session, so it doesn't affect any future index.
++	 */
++	uds_lock_mutex(&index_session->load_context.mutex);
++	index_session->load_context.status = INDEX_OPENING;
++	uds_unlock_mutex(&index_session->load_context.mutex);
++
++	uds_lock_mutex(&index_session->request_mutex);
++	/* Only the suspend bit will remain relevant. */
++	index_session->state &= IS_FLAG_SUSPENDED;
++	uds_unlock_mutex(&index_session->request_mutex);
++
++	return result;
++}
++
++/* Save and close the current index. */
++int uds_close_index(struct uds_index_session *index_session)
++{
++	int result = UDS_SUCCESS;
++
++	/* Wait for any current index state change to complete. */
++	uds_lock_mutex(&index_session->request_mutex);
++	while ((index_session->state & IS_FLAG_WAITING) ||
++	       (index_session->state & IS_FLAG_CLOSING))
++		uds_wait_cond(&index_session->request_cond, &index_session->request_mutex);
++
++	if (index_session->state & IS_FLAG_SUSPENDED) {
++		uds_log_info("Index session is suspended");
++		result = -EBUSY;
++	} else if ((index_session->state & IS_FLAG_DESTROYING) ||
++		   !(index_session->state & IS_FLAG_LOADED)) {
++		/* The index doesn't exist, hasn't finished loading, or is being destroyed. */
++		result = UDS_NO_INDEX;
++	} else {
++		index_session->state |= IS_FLAG_CLOSING;
++	}
++	uds_unlock_mutex(&index_session->request_mutex);
++	if (result != UDS_SUCCESS)
++		return uds_map_to_system_error(result);
++
++	uds_log_debug("Closing index");
++	wait_for_no_requests_in_progress(index_session);
++	result = save_and_free_index(index_session);
++	uds_log_debug("Closed index");
++
++	uds_lock_mutex(&index_session->request_mutex);
++	index_session->state &= ~IS_FLAG_CLOSING;
++	uds_broadcast_cond(&index_session->request_cond);
++	uds_unlock_mutex(&index_session->request_mutex);
++	return uds_map_to_system_error(result);
++}
++
++/* This will save and close an open index before destroying the session. */
++int uds_destroy_index_session(struct uds_index_session *index_session)
++{
++	int result;
++	bool load_pending = false;
++
++	uds_log_debug("Destroying index session");
++
++	/* Wait for any current index state change to complete. */
++	uds_lock_mutex(&index_session->request_mutex);
++	while ((index_session->state & IS_FLAG_WAITING) ||
++	       (index_session->state & IS_FLAG_CLOSING))
++		uds_wait_cond(&index_session->request_cond, &index_session->request_mutex);
++
++	if (index_session->state & IS_FLAG_DESTROYING) {
++		uds_unlock_mutex(&index_session->request_mutex);
++		uds_log_info("Index session is already closing");
++		return -EBUSY;
++	}
++
++	index_session->state |= IS_FLAG_DESTROYING;
++	load_pending = ((index_session->state & IS_FLAG_LOADING) &&
++			(index_session->state & IS_FLAG_SUSPENDED));
++	uds_unlock_mutex(&index_session->request_mutex);
++
++	if (load_pending) {
++		/* Tell the index to terminate the rebuild. */
++		uds_lock_mutex(&index_session->load_context.mutex);
++		if (index_session->load_context.status == INDEX_SUSPENDED) {
++			index_session->load_context.status = INDEX_FREEING;
++			uds_broadcast_cond(&index_session->load_context.cond);
++		}
++		uds_unlock_mutex(&index_session->load_context.mutex);
++
++		/* Wait until the load exits before proceeding. */
++		uds_lock_mutex(&index_session->request_mutex);
++		while (index_session->state & IS_FLAG_LOADING)
++			uds_wait_cond(&index_session->request_cond, &index_session->request_mutex);
++		uds_unlock_mutex(&index_session->request_mutex);
++	}
++
++	wait_for_no_requests_in_progress(index_session);
++	result = save_and_free_index(index_session);
++	uds_request_queue_finish(index_session->callback_queue);
++	index_session->callback_queue = NULL;
++	uds_destroy_cond(&index_session->load_context.cond);
++	uds_destroy_mutex(&index_session->load_context.mutex);
++	uds_destroy_cond(&index_session->request_cond);
++	uds_destroy_mutex(&index_session->request_mutex);
++	uds_log_debug("Destroyed index session");
++	UDS_FREE(index_session);
++	return uds_map_to_system_error(result);
++}
++
++/* Wait until all callbacks for index operations are complete. */
++int uds_flush_index_session(struct uds_index_session *index_session)
++{
++	wait_for_no_requests_in_progress(index_session);
++	uds_wait_for_idle_index(index_session->index);
++	return UDS_SUCCESS;
++}
++
++/* Statistics collection is intended to be thread-safe. */
++static void
++collect_stats(const struct uds_index_session *index_session, struct uds_index_stats *stats)
++{
++	const struct session_stats *session_stats = &index_session->stats;
++
++	stats->current_time = ktime_to_seconds(current_time_ns(CLOCK_REALTIME));
++	stats->posts_found = READ_ONCE(session_stats->posts_found);
++	stats->in_memory_posts_found = READ_ONCE(session_stats->posts_found_open_chapter);
++	stats->dense_posts_found = READ_ONCE(session_stats->posts_found_dense);
++	stats->sparse_posts_found = READ_ONCE(session_stats->posts_found_sparse);
++	stats->posts_not_found = READ_ONCE(session_stats->posts_not_found);
++	stats->updates_found = READ_ONCE(session_stats->updates_found);
++	stats->updates_not_found = READ_ONCE(session_stats->updates_not_found);
++	stats->deletions_found = READ_ONCE(session_stats->deletions_found);
++	stats->deletions_not_found = READ_ONCE(session_stats->deletions_not_found);
++	stats->queries_found = READ_ONCE(session_stats->queries_found);
++	stats->queries_not_found = READ_ONCE(session_stats->queries_not_found);
++	stats->requests = READ_ONCE(session_stats->requests);
++}
++
++int uds_get_index_session_stats(struct uds_index_session *index_session,
++				struct uds_index_stats *stats)
++{
++	if (stats == NULL) {
++		uds_log_error("received a NULL index stats pointer");
++		return -EINVAL;
++	}
++
++	collect_stats(index_session, stats);
++	if (index_session->index != NULL) {
++		uds_get_index_stats(index_session->index, stats);
++	} else {
++		stats->entries_indexed = 0;
++		stats->memory_used = 0;
++		stats->collisions = 0;
++		stats->entries_discarded = 0;
++	}
++
++	return UDS_SUCCESS;
++}
+diff --git a/drivers/md/dm-vdo/index-session.h b/drivers/md/dm-vdo/index-session.h
 new file mode 100644
-index 000000000000..c5da37ec8b55
+index 000000000000..c77ee021d510
 --- /dev/null
-+++ b/drivers/md/dm-vdo/status-codes.h
-@@ -0,0 +1,112 @@
++++ b/drivers/md/dm-vdo/index-session.h
+@@ -0,0 +1,84 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef VDO_STATUS_CODES_H
-+#define VDO_STATUS_CODES_H
++#ifndef UDS_INDEX_SESSION_H
++#define UDS_INDEX_SESSION_H
 +
-+#include "errors.h"
++#include <linux/atomic.h>
++#include <linux/cache.h>
 +
-+enum {
-+	UDS_BLOCK_SIZE = UDS_ERROR_CODE_BLOCK_END - UDS_ERROR_CODE_BASE,
-+	VDO_BLOCK_START = UDS_ERROR_CODE_BLOCK_END,
-+	VDO_BLOCK_END = VDO_BLOCK_START + UDS_BLOCK_SIZE,
-+	PRP_BLOCK_START = VDO_BLOCK_END,
-+	PRP_BLOCK_END = PRP_BLOCK_START + UDS_BLOCK_SIZE,
++#include "config.h"
++#include "uds-threads.h"
++#include "uds.h"
++
++/*
++ * The index session mediates all interactions with a UDS index. Once the index session is created,
++ * it can be used to open, close, suspend, or recreate an index. It implements the majority of the
++ * functions in the top-level UDS API.
++ *
++ * If any deduplication request fails due to an internal error, the index is marked disabled. It
++ * will not accept any further requests and can only be closed. Closing the index will clear the
++ * disabled flag, and the index can then be reopened and recovered using the same index session.
++ */
++
++struct __aligned(L1_CACHE_BYTES) session_stats {
++	/* Post requests that found an entry */
++	u64 posts_found;
++	/* Post requests found in the open chapter */
++	u64 posts_found_open_chapter;
++	/* Post requests found in the dense index */
++	u64 posts_found_dense;
++	/* Post requests found in the sparse index */
++	u64 posts_found_sparse;
++	/* Post requests that did not find an entry */
++	u64 posts_not_found;
++	/* Update requests that found an entry */
++	u64 updates_found;
++	/* Update requests that did not find an entry */
++	u64 updates_not_found;
++	/* Delete requests that found an entry */
++	u64 deletions_found;
++	/* Delete requests that did not find an entry */
++	u64 deletions_not_found;
++	/* Query requests that found an entry */
++	u64 queries_found;
++	/* Query requests that did not find an entry */
++	u64 queries_not_found;
++	/* Total number of requests */
++	u64 requests;
 +};
 +
-+/* VDO-specific status codes. */
-+enum vdo_status_codes {
-+	/* successful result */
-+	VDO_SUCCESS,
-+	/* base of all VDO errors */
-+	VDO_STATUS_CODE_BASE = VDO_BLOCK_START,
-+	/* we haven't written this yet */
-+	VDO_NOT_IMPLEMENTED = VDO_STATUS_CODE_BASE,
-+	/* input out of range */
-+	VDO_OUT_OF_RANGE,
-+	/* an invalid reference count would result */
-+	VDO_REF_COUNT_INVALID,
-+	/* a free block could not be allocated */
-+	VDO_NO_SPACE,
-+	/* unexpected EOF on block read */
-+	VDO_UNEXPECTED_EOF,
-+	/* improper or missing configuration option */
-+	VDO_BAD_CONFIGURATION,
-+	/* socket opening or binding problem */
-+	VDO_SOCKET_ERROR,
-+	/* read or write on non-aligned offset */
-+	VDO_BAD_ALIGNMENT,
-+	/* prior operation still in progress */
-+	VDO_COMPONENT_BUSY,
-+	/* page contents incorrect or corrupt data */
-+	VDO_BAD_PAGE,
-+	/* unsupported version of some component */
-+	VDO_UNSUPPORTED_VERSION,
-+	/* component id mismatch in decoder */
-+	VDO_INCORRECT_COMPONENT,
-+	/* parameters have conflicting values */
-+	VDO_PARAMETER_MISMATCH,
-+	/* the block size is too small */
-+	VDO_BLOCK_SIZE_TOO_SMALL,
-+	/* no partition exists with a given id */
-+	VDO_UNKNOWN_PARTITION,
-+	/* a partition already exists with a given id */
-+	VDO_PARTITION_EXISTS,
-+	/* the VDO is not in read-only mode */
-+	VDO_NOT_READ_ONLY,
-+	/* physical block growth of too few blocks */
-+	VDO_INCREMENT_TOO_SMALL,
-+	/* incorrect checksum */
-+	VDO_CHECKSUM_MISMATCH,
-+	/* the recovery journal is full */
-+	VDO_RECOVERY_JOURNAL_FULL,
-+	/* a lock is held incorrectly */
-+	VDO_LOCK_ERROR,
-+	/* the VDO is in read-only mode */
-+	VDO_READ_ONLY,
-+	/* the VDO is shutting down */
-+	VDO_SHUTTING_DOWN,
-+	/* the recovery journal has corrupt entries */
-+	VDO_CORRUPT_JOURNAL,
-+	/* exceeds maximum number of slabs supported */
-+	VDO_TOO_MANY_SLABS,
-+	/* a compressed block fragment is invalid */
-+	VDO_INVALID_FRAGMENT,
-+	/* action is unsupported while rebuilding */
-+	VDO_RETRY_AFTER_REBUILD,
-+	/* the extended command is not known */
-+	VDO_UNKNOWN_COMMAND,
-+	/* bad extended command parameters */
-+	VDO_COMMAND_ERROR,
-+	/* cannot determine sizes to fit */
-+	VDO_CANNOT_DETERMINE_SIZE,
-+	/* a block map entry is invalid */
-+	VDO_BAD_MAPPING,
-+	/* read cache has no free slots */
-+	VDO_READ_CACHE_BUSY,
-+	/* bio_add_page failed */
-+	VDO_BIO_CREATION_FAILED,
-+	/* bad magic number */
-+	VDO_BAD_MAGIC,
-+	/* bad nonce */
-+	VDO_BAD_NONCE,
-+	/* sequence number overflow */
-+	VDO_JOURNAL_OVERFLOW,
-+	/* the VDO is not in a state to perform an admin operation */
-+	VDO_INVALID_ADMIN_STATE,
-+	/* failure adding a sysfs node */
-+	VDO_CANT_ADD_SYSFS_NODE,
-+	/* one more than last error code */
-+	VDO_STATUS_CODE_LAST,
-+	VDO_STATUS_CODE_BLOCK_END = VDO_BLOCK_END
++enum index_suspend_status {
++	/* An index load has started but the index is not ready for use. */
++	INDEX_OPENING = 0,
++	/* The index is able to handle requests. */
++	INDEX_READY,
++	/* The index is attempting to suspend a rebuild. */
++	INDEX_SUSPENDING,
++	/* An index rebuild has been suspended. */
++	INDEX_SUSPENDED,
++	/* An index rebuild is being stopped in order to shut down. */
++	INDEX_FREEING,
 +};
 +
-+extern const struct error_info vdo_status_list[];
++struct index_load_context {
++	struct mutex mutex;
++	struct cond_var cond;
++	enum index_suspend_status status;
++};
 +
-+int vdo_register_status_codes(void);
++struct uds_index_session {
++	unsigned int state;
++	struct uds_index *index;
++	struct uds_request_queue *callback_queue;
++	struct uds_parameters parameters;
++	struct index_load_context load_context;
++	struct mutex request_mutex;
++	struct cond_var request_cond;
++	int request_count;
++	struct session_stats stats;
++};
 +
-+int vdo_map_to_system_error(int error);
-+
-+#endif /* VDO_STATUS_CODES_H */
-diff --git a/drivers/md/dm-vdo/types.h b/drivers/md/dm-vdo/types.h
++#endif /* UDS_INDEX_SESSION_H */
+diff --git a/drivers/md/dm-vdo/uds-sysfs.c b/drivers/md/dm-vdo/uds-sysfs.c
 new file mode 100644
-index 000000000000..f2dcce92c796
+index 000000000000..8700a028a11c
 --- /dev/null
-+++ b/drivers/md/dm-vdo/types.h
-@@ -0,0 +1,393 @@
++++ b/drivers/md/dm-vdo/uds-sysfs.c
+@@ -0,0 +1,185 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#include "uds-sysfs.h"
++
++#include <linux/kobject.h>
++#include <linux/module.h>
++#include <linux/slab.h>
++
++#include "logger.h"
++#include "memory-alloc.h"
++#include "string-utils.h"
++#include "uds.h"
++
++#define UDS_SYSFS_NAME "uds"
++
++static struct {
++	/* /sys/uds */
++	struct kobject kobj;
++	/* /sys/uds/parameter */
++	struct kobject parameter_kobj;
++
++	/* These flags are used to ensure a clean shutdown */
++
++	/* /sys/uds flag */
++	bool flag;
++	/* /sys/uds/parameter flag */
++	bool parameter_flag;
++} object_root;
++
++static char *buffer_to_string(const char *buf, size_t length)
++{
++	char *string;
++
++	if (UDS_ALLOCATE(length + 1, char, __func__, &string) != UDS_SUCCESS)
++		return NULL;
++
++	memcpy(string, buf, length);
++	string[length] = '\0';
++	if (string[length - 1] == '\n')
++		string[length - 1] = '\0';
++
++	return string;
++}
++
++/*
++ * This is the code for any directory in the /sys/<module_name> tree that contains no regular files
++ * (only subdirectories).
++ */
++
++static void empty_release(struct kobject *kobj)
++{
++}
++
++static ssize_t empty_show(struct kobject *kobj, struct attribute *attr, char *buf)
++{
++	return 0;
++}
++
++static ssize_t
++empty_store(struct kobject *kobj, struct attribute *attr, const char *buf, size_t length)
++{
++	return length;
++}
++
++static const struct sysfs_ops empty_ops = {
++	.show = empty_show,
++	.store = empty_store,
++};
++
++static struct attribute *empty_attrs[] = {
++	NULL,
++};
++ATTRIBUTE_GROUPS(empty);
++
++static const struct kobj_type empty_object_type = {
++	.release = empty_release,
++	.sysfs_ops = &empty_ops,
++	.default_groups = empty_groups,
++};
++
++/*
++ * This is the code for the /sys/<module_name>/parameter directory.
++ * <dir>/log_level                 UDS_LOG_LEVEL
++ */
++
++struct parameter_attribute {
++	struct attribute attr;
++	const char *(*show_string)(void);
++	void (*store_string)(const char *string);
++};
++
++static ssize_t parameter_show(struct kobject *kobj, struct attribute *attr, char *buf)
++{
++	struct parameter_attribute *pa;
++
++	pa = container_of(attr, struct parameter_attribute, attr);
++	if (pa->show_string != NULL)
++		return sprintf(buf, "%s\n", pa->show_string());
++	else
++		return -EINVAL;
++}
++
++static ssize_t
++parameter_store(struct kobject *kobj, struct attribute *attr, const char *buf, size_t length)
++{
++	char *string;
++	struct parameter_attribute *pa;
++
++	pa = container_of(attr, struct parameter_attribute, attr);
++	if (pa->store_string == NULL)
++		return -EINVAL;
++	string = buffer_to_string(buf, length);
++	if (string == NULL)
++		return -ENOMEM;
++
++	pa->store_string(string);
++	UDS_FREE(string);
++	return length;
++}
++
++static const char *parameter_show_log_level(void)
++{
++	return uds_log_priority_to_string(uds_get_log_level());
++}
++
++static void parameter_store_log_level(const char *string)
++{
++	uds_set_log_level(uds_log_string_to_priority(string));
++}
++
++static struct parameter_attribute log_level_attr = {
++	.attr = { .name = "log_level", .mode = 0600 },
++	.show_string = parameter_show_log_level,
++	.store_string = parameter_store_log_level,
++};
++
++static struct attribute *parameter_attrs[] = {
++	&log_level_attr.attr,
++	NULL,
++};
++ATTRIBUTE_GROUPS(parameter);
++
++static const struct sysfs_ops parameter_ops = {
++	.show = parameter_show,
++	.store = parameter_store,
++};
++
++static const struct kobj_type parameter_object_type = {
++	.release = empty_release,
++	.sysfs_ops = &parameter_ops,
++	.default_groups = parameter_groups,
++};
++
++int uds_init_sysfs(void)
++{
++	int result;
++
++	memset(&object_root, 0, sizeof(object_root));
++	kobject_init(&object_root.kobj, &empty_object_type);
++	result = kobject_add(&object_root.kobj, NULL, UDS_SYSFS_NAME);
++	if (result == 0) {
++		object_root.flag = true;
++		kobject_init(&object_root.parameter_kobj, &parameter_object_type);
++		result = kobject_add(&object_root.parameter_kobj, &object_root.kobj, "parameter");
++		if (result == 0)
++			object_root.parameter_flag = true;
++	}
++
++	if (result != 0)
++		uds_put_sysfs();
++
++	return result;
++}
++
++void uds_put_sysfs(void)
++{
++	if (object_root.parameter_flag)
++		kobject_put(&object_root.parameter_kobj);
++
++	if (object_root.flag)
++		kobject_put(&object_root.kobj);
++}
+diff --git a/drivers/md/dm-vdo/uds-sysfs.h b/drivers/md/dm-vdo/uds-sysfs.h
+new file mode 100644
+index 000000000000..c3d00a7187bd
+--- /dev/null
++++ b/drivers/md/dm-vdo/uds-sysfs.h
+@@ -0,0 +1,12 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright 2023 Red Hat
 + */
 +
-+#ifndef VDO_TYPES_H
-+#define VDO_TYPES_H
++#ifndef UDS_SYSFS_H
++#define UDS_SYSFS_H
 +
-+#include <linux/bio.h>
-+#include <linux/blkdev.h>
-+#include <linux/device-mapper.h>
-+#include <linux/list.h>
-+#include <linux/compiler_attributes.h>
++int uds_init_sysfs(void);
++void uds_put_sysfs(void);
++
++#endif  /* UDS_SYSFS_H */
+diff --git a/drivers/md/dm-vdo/uds.h b/drivers/md/dm-vdo/uds.h
+new file mode 100644
+index 000000000000..a02350165ab6
+--- /dev/null
++++ b/drivers/md/dm-vdo/uds.h
+@@ -0,0 +1,328 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright 2023 Red Hat
++ */
++
++#ifndef UDS_H
++#define UDS_H
++
 +#include <linux/types.h>
 +
 +#include "funnel-queue.h"
 +
-+/* A size type in blocks. */
-+typedef u64 block_count_t;
-+
-+/* The size of a block. */
-+typedef u16 block_size_t;
-+
-+/* A counter for data_vios */
-+typedef u16 data_vio_count_t;
-+
-+/* A height within a tree. */
-+typedef u8 height_t;
-+
-+/* The logical block number as used by the consumer. */
-+typedef u64 logical_block_number_t;
-+
-+/* The type of the nonce used to identify instances of VDO. */
-+typedef u64 nonce_t;
-+
-+/* A size in pages. */
-+typedef u32 page_count_t;
-+
-+/* A page number. */
-+typedef u32 page_number_t;
-+
 +/*
-+ * The physical (well, less logical) block number at which the block is found on the underlying
-+ * device.
++ * UDS public API
++ *
++ * The Universal Deduplication System (UDS) is an efficient name-value store. When used for
++ * deduplicating storage, the names are generally hashes of data blocks and the associated data is
++ * where that block is located on the underlying storage medium. The stored names are expected to
++ * be randomly distributed among the space of possible names. If this assumption is violated, the
++ * UDS index will store fewer names than normal but will otherwise continue to work. The data
++ * associated with each name can be any 16-byte value.
++ *
++ * A client must first create an index session to interact with an index. Once created, the session
++ * can be shared among multiple threads or users. When a session is destroyed, it will also close
++ * and save any associated index.
++ *
++ * To make a request, a client must allocate a uds_request structure and set the required fields
++ * before launching it. UDS will invoke the provided callback to complete the request. After the
++ * callback has been called, the uds_request structure can be freed or reused for a new request.
++ * There are five types of requests:
++ *
++ * A UDS_UPDATE request will associate the provided name with the provided data. Any previous data
++ * associated with that name will be discarded.
++ *
++ * A UDS_QUERY request will return the data associated with the provided name, if any. The entry
++ * for the name will also be marked as most recent, as if the data had been updated.
++ *
++ * A UDS_POST request is a combination of UDS_QUERY and UDS_UPDATE. If there is already data
++ * associated with the provided name, that data is returned. If there is no existing association,
++ * the name is associated with the newly provided data. This request is equivalent to a UDS_QUERY
++ * request followed by a UDS_UPDATE request if no data is found, but it is much more efficient.
++ *
++ * A UDS_QUERY_NO_UPDATE request will return the data associated with the provided name, but will
++ * not change the recency of the entry for the name. This request is primarily useful for testing,
++ * to determine whether an entry exists without changing the internal state of the index.
++ *
++ * A UDS_DELETE request removes any data associated with the provided name. This operation is
++ * generally not necessary, because the index will automatically discard its oldest entries once it
++ * becomes full.
 + */
-+typedef u64 physical_block_number_t;
 +
-+/* A count of tree roots. */
-+typedef u8 root_count_t;
++/* General UDS constants and structures */
 +
-+/* A number of sectors. */
-+typedef u8 sector_count_t;
++enum uds_request_type {
++	/* Create or update the mapping for a name, and make the name most recent. */
++	UDS_UPDATE,
 +
-+/* A sequence number. */
-+typedef u64 sequence_number_t;
++	/* Return any mapped data for a name, and make the name most recent. */
++	UDS_QUERY,
 +
-+/* The offset of a block within a slab. */
-+typedef u32 slab_block_number;
++	/*
++	 * Return any mapped data for a name, or map the provided data to the name if there is no
++	 * current data, and make the name most recent.
++	 */
++	UDS_POST,
 +
-+/* A size type in slabs. */
-+typedef u16 slab_count_t;
++	/* Return any mapped data for a name without updating its recency. */
++	UDS_QUERY_NO_UPDATE,
 +
-+/* A slot in a bin or block map page. */
-+typedef u16 slot_number_t;
++	/* Remove any mapping for a name. */
++	UDS_DELETE,
 +
-+/* typedef thread_count_t - A thread counter. */
-+typedef u8 thread_count_t;
-+
-+/* typedef thread_id_t - A thread ID, vdo threads are numbered sequentially from 0. */
-+typedef u8 thread_id_t;
-+
-+/* A zone counter */
-+typedef u8 zone_count_t;
-+
-+/* The following enums are persisted on storage, so the values must be preserved. */
-+
-+/* The current operating mode of the VDO. */
-+enum vdo_state {
-+	VDO_DIRTY = 0,
-+	VDO_NEW = 1,
-+	VDO_CLEAN = 2,
-+	VDO_READ_ONLY_MODE = 3,
-+	VDO_FORCE_REBUILD = 4,
-+	VDO_RECOVERING = 5,
-+	VDO_REPLAYING = 6, /* VDO_REPLAYING is never set anymore, but retained for upgrade */
-+	VDO_REBUILD_FOR_UPGRADE = 7,
-+
-+	/* Keep VDO_STATE_COUNT at the bottom. */
-+	VDO_STATE_COUNT
 +};
 +
-+/**
-+ * vdo_state_requires_read_only_rebuild() - Check whether a vdo_state indicates
-+ * that a read-only rebuild is required.
-+ * @state: The vdo_state to check.
-+ *
-+ * Return: true if the state indicates a rebuild is required
-+ */
-+static inline bool __must_check vdo_state_requires_read_only_rebuild(enum vdo_state state)
-+{
-+	return ((state == VDO_FORCE_REBUILD) || (state == VDO_REBUILD_FOR_UPGRADE));
-+}
++enum uds_open_index_type {
++	/* Create a new index. */
++	UDS_CREATE,
 +
-+/**
-+ * vdo_state_requires_recovery() - Check whether a vdo state indicates that recovery is needed.
-+ * @state: The state to check.
-+ *
-+ * Return: true if the state indicates a recovery is required
-+ */
-+static inline bool __must_check vdo_state_requires_recovery(enum vdo_state state)
-+{
-+	return ((state == VDO_DIRTY) || (state == VDO_REPLAYING) || (state == VDO_RECOVERING));
-+}
++	/* Load an existing index and try to recover if necessary. */
++	UDS_LOAD,
 +
-+/*
-+ * The current operation on a physical block (from the point of view of the recovery journal, slab
-+ * journals, and reference counts.
-+ */
-+enum journal_operation {
-+	VDO_JOURNAL_DATA_REMAPPING = 0,
-+	VDO_JOURNAL_BLOCK_MAP_REMAPPING = 1,
-+} __packed;
-+
-+/* Partition IDs encoded in the volume layout in the super block. */
-+enum partition_id {
-+	VDO_BLOCK_MAP_PARTITION = 0,
-+	VDO_SLAB_DEPOT_PARTITION = 1,
-+	VDO_RECOVERY_JOURNAL_PARTITION = 2,
-+	VDO_SLAB_SUMMARY_PARTITION = 3,
-+} __packed;
-+
-+/* Metadata types for the vdo. */
-+enum vdo_metadata_type {
-+	VDO_METADATA_RECOVERY_JOURNAL = 1,
-+	VDO_METADATA_SLAB_JOURNAL = 2,
-+	VDO_METADATA_RECOVERY_JOURNAL_2 = 3,
-+} __packed;
-+
-+/* A position in the block map where a block map entry is stored. */
-+struct block_map_slot {
-+	physical_block_number_t pbn;
-+	slot_number_t slot;
-+};
-+
-+/*
-+ * Four bits of each five-byte block map entry contain a mapping state value used to distinguish
-+ * unmapped or trimmed logical blocks (which are treated as mapped to the zero block) from entries
-+ * that have been mapped to a physical block, including the zero block.
-+ *
-+ * FIXME: these should maybe be defines.
-+ */
-+enum block_mapping_state {
-+	VDO_MAPPING_STATE_UNMAPPED = 0, /* Must be zero to be the default value */
-+	VDO_MAPPING_STATE_UNCOMPRESSED = 1, /* A normal (uncompressed) block */
-+	VDO_MAPPING_STATE_COMPRESSED_BASE = 2, /* Compressed in slot 0 */
-+	VDO_MAPPING_STATE_COMPRESSED_MAX = 15, /* Compressed in slot 13 */
++	/* Load an existing index, but only if it was saved cleanly. */
++	UDS_NO_REBUILD,
 +};
 +
 +enum {
-+	VDO_MAX_COMPRESSION_SLOTS =
-+		(VDO_MAPPING_STATE_COMPRESSED_MAX - VDO_MAPPING_STATE_COMPRESSED_BASE + 1),
++	/* The record name size in bytes */
++	UDS_RECORD_NAME_SIZE = 16,
++	/* The maximum record data size in bytes */
++	UDS_RECORD_DATA_SIZE = 16,
 +};
-+
-+
-+struct data_location {
-+	physical_block_number_t pbn;
-+	enum block_mapping_state state;
-+};
-+
-+/* The configuration of a single slab derived from the configured block size and slab size. */
-+struct slab_config {
-+	/* total number of blocks in the slab */
-+	block_count_t slab_blocks;
-+	/* number of blocks available for data */
-+	block_count_t data_blocks;
-+	/* number of blocks for reference counts */
-+	block_count_t reference_count_blocks;
-+	/* number of blocks for the slab journal */
-+	block_count_t slab_journal_blocks;
-+	/*
-+	 * Number of blocks after which the slab journal starts pushing out a reference_block for
-+	 * each new entry it receives.
-+	 */
-+	block_count_t slab_journal_flushing_threshold;
-+	/*
-+	 * Number of blocks after which the slab journal pushes out all reference_blocks and makes
-+	 * all vios wait.
-+	 */
-+	block_count_t slab_journal_blocking_threshold;
-+	/* Number of blocks after which the slab must be scrubbed before coming online. */
-+	block_count_t slab_journal_scrubbing_threshold;
-+} __packed;
 +
 +/*
-+ * This structure is memcmp'd for equality. Keep it packed and don't add any fields that are not
-+ * properly set in both extant and parsed configs.
++ * A type representing a UDS memory configuration which is either a positive integer number of
++ * gigabytes or one of the six special constants for configurations smaller than one gigabyte.
 + */
-+struct thread_count_config {
-+	unsigned int bio_ack_threads;
-+	unsigned int bio_threads;
-+	unsigned int bio_rotation_interval;
-+	unsigned int cpu_threads;
-+	unsigned int logical_zones;
-+	unsigned int physical_zones;
-+	unsigned int hash_zones;
-+} __packed;
++typedef int uds_memory_config_size_t;
 +
-+struct device_config {
-+	struct dm_target *owning_target;
-+	struct dm_dev *owned_device;
-+	struct vdo *vdo;
-+	/* All configs referencing a layer are kept on a list in the layer */
-+	struct list_head config_list;
-+	char *original_string;
-+	unsigned int version;
-+	char *parent_device_name;
-+	block_count_t physical_blocks;
-+	/*
-+	 * This is the number of logical blocks from VDO's internal point of view. It is the number
-+	 * of 4K blocks regardless of the value of the logical_block_size parameter below.
-+	 */
-+	block_count_t logical_blocks;
-+	unsigned int logical_block_size;
-+	unsigned int cache_size;
-+	unsigned int block_map_maximum_age;
-+	bool deduplication;
-+	bool compression;
-+	struct thread_count_config thread_counts;
-+	block_count_t max_discard_blocks;
++enum {
++	/* The maximum configurable amount of memory */
++	UDS_MEMORY_CONFIG_MAX = 1024,
++	/* Flag indicating that the index has one less chapter than usual */
++	UDS_MEMORY_CONFIG_REDUCED = 0x1000,
++	UDS_MEMORY_CONFIG_REDUCED_MAX = 1024 + UDS_MEMORY_CONFIG_REDUCED,
++	/* Special values indicating sizes less than 1 GB */
++	UDS_MEMORY_CONFIG_256MB = -256,
++	UDS_MEMORY_CONFIG_512MB = -512,
++	UDS_MEMORY_CONFIG_768MB = -768,
++	UDS_MEMORY_CONFIG_REDUCED_256MB = -1280,
++	UDS_MEMORY_CONFIG_REDUCED_512MB = -1536,
++	UDS_MEMORY_CONFIG_REDUCED_768MB = -1792,
 +};
 +
-+enum vdo_completion_type {
-+	/* Keep VDO_UNSET_COMPLETION_TYPE at the top. */
-+	VDO_UNSET_COMPLETION_TYPE,
-+	VDO_ACTION_COMPLETION,
-+	VDO_ADMIN_COMPLETION,
-+	VDO_BLOCK_ALLOCATOR_COMPLETION,
-+	VDO_DATA_VIO_POOL_COMPLETION,
-+	VDO_DECREMENT_COMPLETION,
-+	VDO_FLUSH_COMPLETION,
-+	VDO_FLUSH_NOTIFICATION_COMPLETION,
-+	VDO_GENERATION_FLUSHED_COMPLETION,
-+	VDO_HASH_ZONE_COMPLETION,
-+	VDO_HASH_ZONES_COMPLETION,
-+	VDO_LOCK_COUNTER_COMPLETION,
-+	VDO_PAGE_COMPLETION,
-+	VDO_READ_ONLY_MODE_COMPLETION,
-+	VDO_REPAIR_COMPLETION,
-+	VDO_SYNC_COMPLETION,
-+	VIO_COMPLETION,
-+} __packed;
-+
-+struct vdo_completion;
-+
-+/**
-+ * typedef vdo_action - An asynchronous VDO operation.
-+ * @completion: The completion of the operation.
-+ */
-+typedef void vdo_action(struct vdo_completion *completion);
-+
-+enum vdo_completion_priority {
-+	BIO_ACK_Q_ACK_PRIORITY = 0,
-+	BIO_ACK_Q_MAX_PRIORITY = 0,
-+	BIO_Q_COMPRESSED_DATA_PRIORITY = 0,
-+	BIO_Q_DATA_PRIORITY = 0,
-+	BIO_Q_FLUSH_PRIORITY = 2,
-+	BIO_Q_HIGH_PRIORITY = 2,
-+	BIO_Q_METADATA_PRIORITY = 1,
-+	BIO_Q_VERIFY_PRIORITY = 1,
-+	BIO_Q_MAX_PRIORITY = 2,
-+	CPU_Q_COMPLETE_VIO_PRIORITY = 0,
-+	CPU_Q_COMPLETE_READ_PRIORITY = 0,
-+	CPU_Q_COMPRESS_BLOCK_PRIORITY = 0,
-+	CPU_Q_EVENT_REPORTER_PRIORITY = 0,
-+	CPU_Q_HASH_BLOCK_PRIORITY = 0,
-+	CPU_Q_MAX_PRIORITY = 0,
-+	UDS_Q_PRIORITY = 0,
-+	UDS_Q_MAX_PRIORITY = 0,
-+	VDO_DEFAULT_Q_COMPLETION_PRIORITY = 1,
-+	VDO_DEFAULT_Q_FLUSH_PRIORITY = 2,
-+	VDO_DEFAULT_Q_MAP_BIO_PRIORITY = 0,
-+	VDO_DEFAULT_Q_SYNC_PRIORITY = 2,
-+	VDO_DEFAULT_Q_VIO_CALLBACK_PRIORITY = 1,
-+	VDO_DEFAULT_Q_MAX_PRIORITY = 2,
-+	/* The maximum allowable priority */
-+	VDO_WORK_Q_MAX_PRIORITY = 2,
-+	/* A value which must be out of range for a valid priority */
-+	VDO_WORK_Q_DEFAULT_PRIORITY = VDO_WORK_Q_MAX_PRIORITY + 1,
++struct uds_record_name {
++	unsigned char name[UDS_RECORD_NAME_SIZE];
 +};
 +
-+struct vdo_completion {
-+	/* The type of completion this is */
-+	enum vdo_completion_type type;
-+
-+	/*
-+	 * <code>true</code> once the processing of the operation is complete. This flag should not
-+	 * be used by waiters external to the VDO base as it is used to gate calling the callback.
-+	 */
-+	bool complete;
-+
-+	/*
-+	 * If true, queue this completion on the next callback invocation, even if it is already
-+	 * running on the correct thread.
-+	 */
-+	bool requeue;
-+
-+	/* The ID of the thread which should run the next callback */
-+	thread_id_t callback_thread_id;
-+
-+	/* The result of the operation */
-+	int result;
-+
-+	/* The VDO on which this completion operates */
-+	struct vdo *vdo;
-+
-+	/* The callback which will be called once the operation is complete */
-+	vdo_action *callback;
-+
-+	/* Callback which, if set, will be called if an error result is set */
-+	vdo_action *error_handler;
-+
-+	/* The parent object, if any, that spawned this completion */
-+	void *parent;
-+
-+	/* Entry link for lock-free work queue */
-+	struct funnel_queue_entry work_queue_entry_link;
-+	enum vdo_completion_priority priority;
-+	struct vdo_work_queue *my_queue;
++struct uds_record_data {
++	unsigned char data[UDS_RECORD_DATA_SIZE];
 +};
 +
-+struct block_allocator;
-+struct data_vio;
-+struct vdo;
-+struct vdo_config;
++struct uds_volume_record {
++	struct uds_record_name name;
++	struct uds_record_data data;
++};
 +
-+/* vio types for statistics and instrumentation. */
-+enum vio_type {
-+	VIO_TYPE_UNINITIALIZED = 0,
-+	VIO_TYPE_DATA,
-+	VIO_TYPE_BLOCK_ALLOCATOR,
-+	VIO_TYPE_BLOCK_MAP,
-+	VIO_TYPE_BLOCK_MAP_INTERIOR,
-+	VIO_TYPE_GEOMETRY,
-+	VIO_TYPE_PARTITION_COPY,
-+	VIO_TYPE_RECOVERY_JOURNAL,
-+	VIO_TYPE_SLAB_JOURNAL,
-+	VIO_TYPE_SLAB_SUMMARY,
-+	VIO_TYPE_SUPER_BLOCK,
-+} __packed;
-+
-+/* Priority levels for asynchronous I/O operations performed on a vio. */
-+enum vio_priority {
-+	VIO_PRIORITY_LOW = 0,
-+	VIO_PRIORITY_DATA = VIO_PRIORITY_LOW,
-+	VIO_PRIORITY_COMPRESSED_DATA = VIO_PRIORITY_DATA,
-+	VIO_PRIORITY_METADATA,
-+	VIO_PRIORITY_HIGH,
-+} __packed;
++struct uds_parameters {
++	/* The block_device used for storage */
++	struct block_device *bdev;
++	/* The maximum allowable size of the index on storage */
++	size_t size;
++	/* The offset where the index should start */
++	off_t offset;
++	/* The maximum memory allocation, in GB */
++	uds_memory_config_size_t memory_size;
++	/* Whether the index should include sparse chapters */
++	bool sparse;
++	/* A 64-bit nonce to validate the index */
++	u64 nonce;
++	/* The number of threads used to process index requests */
++	unsigned int zone_count;
++	/* The number of threads used to read volume pages */
++	unsigned int read_threads;
++};
 +
 +/*
-+ * A wrapper for a bio. All I/O to the storage below a vdo is conducted via vios.
++ * These statistics capture characteristics of the current index, including resource usage and
++ * requests processed since the index was opened.
 + */
-+struct vio {
-+	/* The completion for this vio */
-+	struct vdo_completion completion;
-+
-+	/* The bio zone in which I/O should be processed */
-+	zone_count_t bio_zone;
-+
-+	/* The queueing priority of the vio operation */
-+	enum vio_priority priority;
-+
-+	/* The vio type is used for statistics and instrumentation. */
-+	enum vio_type type;
-+
-+	/* The size of this vio in blocks */
-+	unsigned int block_count;
-+
-+	/* The data being read or written. */
-+	char *data;
-+
-+	/* The VDO-owned bio to use for all IO for this vio */
-+	struct bio *bio;
-+
++struct uds_index_stats {
++	/* The total number of records stored in the index */
++	u64 entries_indexed;
++	/* An estimate of the index's memory usage, in bytes */
++	u64 memory_used;
++	/* The number of collisions recorded in the volume index */
++	u64 collisions;
++	/* The number of entries discarded from the index since startup */
++	u64 entries_discarded;
++	/* The time at which these statistics were fetched */
++	s64 current_time;
++	/* The number of post calls that found an existing entry */
++	u64 posts_found;
++	/* The number of post calls that added an entry */
++	u64 posts_not_found;
 +	/*
-+	 * A list of enqueued bios with consecutive block numbers, stored by vdo_submit_bio() under
-+	 * the first-enqueued vio. The other vios are found via their bio entries in this list, and
-+	 * are not added to the work queue as separate completions.
++	 * The number of post calls that found an existing entry that is current enough to only
++	 * exist in memory and not have been committed to disk yet
 +	 */
-+	struct bio_list bios_merged;
++	u64 in_memory_posts_found;
++	/*
++	 * The number of post calls that found an existing entry in the dense portion of the index
++	 */
++	u64 dense_posts_found;
++	/*
++	 * The number of post calls that found an existing entry in the sparse portion of the index
++	 */
++	u64 sparse_posts_found;
++	/* The number of update calls that updated an existing entry */
++	u64 updates_found;
++	/* The number of update calls that added a new entry */
++	u64 updates_not_found;
++	/* The number of delete requests that deleted an existing entry */
++	u64 deletions_found;
++	/* The number of delete requests that did nothing */
++	u64 deletions_not_found;
++	/* The number of query calls that found existing entry */
++	u64 queries_found;
++	/* The number of query calls that did not find an entry */
++	u64 queries_not_found;
++	/* The total number of requests processed */
++	u64 requests;
 +};
 +
-+#endif /* VDO_TYPES_H */
-diff --git a/drivers/md/dm-vdo/wait-queue.c b/drivers/md/dm-vdo/wait-queue.c
-new file mode 100644
-index 000000000000..2f889bc32cd4
---- /dev/null
-+++ b/drivers/md/dm-vdo/wait-queue.c
-@@ -0,0 +1,223 @@
-+// SPDX-License-Identifier: GPL-2.0-only
++enum uds_index_region {
++	/* No location information has been determined */
++	UDS_LOCATION_UNKNOWN = 0,
++	/* The index page entry has been found */
++	UDS_LOCATION_INDEX_PAGE_LOOKUP,
++	/* The record page entry has been found */
++	UDS_LOCATION_RECORD_PAGE_LOOKUP,
++	/* The record is not in the index */
++	UDS_LOCATION_UNAVAILABLE,
++	/* The record was found in the open chapter */
++	UDS_LOCATION_IN_OPEN_CHAPTER,
++	/* The record was found in the dense part of the index */
++	UDS_LOCATION_IN_DENSE,
++	/* The record was found in the sparse part of the index */
++	UDS_LOCATION_IN_SPARSE,
++} __packed;
++
++/* Zone message requests are used to communicate between index zones. */
++enum uds_zone_message_type {
++	/* A standard request with no message */
++	UDS_MESSAGE_NONE = 0,
++	/* Add a chapter to the sparse chapter index cache */
++	UDS_MESSAGE_SPARSE_CACHE_BARRIER,
++	/* Close a chapter to keep the zone from falling behind */
++	UDS_MESSAGE_ANNOUNCE_CHAPTER_CLOSED,
++} __packed;
++
++struct uds_zone_message {
++	/* The type of message, determining how it will be processed */
++	enum uds_zone_message_type type;
++	/* The virtual chapter number to which the message applies */
++	u64 virtual_chapter;
++};
++
++struct uds_index_session;
++struct uds_index;
++struct uds_request;
++
++/* Once this callback has been invoked, the uds_request structure can be reused or freed. */
++typedef void uds_request_callback_t(struct uds_request *request);
++
++struct uds_request {
++	/* These input fields must be set before launching a request. */
++
++	/* The name of the record to look up or create */
++	struct uds_record_name record_name;
++	/* New data to associate with the record name, if applicable */
++	struct uds_record_data new_metadata;
++	/* A callback to invoke when the request is complete */
++	uds_request_callback_t *callback;
++	/* The index session that will manage this request */
++	struct uds_index_session *session;
++	/* The type of operation to perform, as describe above */
++	enum uds_request_type type;
++
++	/* These output fields are set when a request is complete. */
++
++	/* The existing data associated with the request name, if any */
++	struct uds_record_data old_metadata;
++	/* Either UDS_SUCCESS or an error code for the request */
++	int status;
++	/* True if the record name had an existing entry in the index */
++	bool found;
++
++	/*
++	 * The remaining fields are used internally and should not be altered by clients. The index
++	 * relies on zone_number being the first field in this section.
++	 */
++
++	/* The number of the zone which will process this request*/
++	unsigned int zone_number;
++	/* A link for adding a request to a lock-free queue */
++	struct funnel_queue_entry queue_link;
++	/* A link for adding a request to a standard linked list */
++	struct uds_request *next_request;
++	/* A pointer to the index processing this request */
++	struct uds_index *index;
++	/* Control message for coordinating between zones */
++	struct uds_zone_message zone_message;
++	/* If true, process request immediately by waking the worker thread */
++	bool unbatched;
++	/* If true, continue this request before processing newer requests */
++	bool requeued;
++	/* The virtual chapter containing the record name, if known */
++	u64 virtual_chapter;
++	/* The region of the index containing the record name */
++	enum uds_index_region location;
++};
++
++/* Compute the number of bytes needed to store an index. */
++int __must_check uds_compute_index_size(const struct uds_parameters *parameters, u64 *index_size);
++
++/* A session is required for most index operations. */
++int __must_check uds_create_index_session(struct uds_index_session **session);
++
++/* Destroying an index session also closes and saves the associated index. */
++int uds_destroy_index_session(struct uds_index_session *session);
++
 +/*
-+ * Copyright 2023 Red Hat
++ * Create or open an index with an existing session. This operation fails if the index session is
++ * suspended, or if there is already an open index.
 + */
++int __must_check uds_open_index(enum uds_open_index_type open_type,
++				const struct uds_parameters *parameters,
++				struct uds_index_session *session);
 +
-+#include "wait-queue.h"
-+
-+#include <linux/device-mapper.h>
-+
-+#include "permassert.h"
-+
-+#include "status-codes.h"
-+
-+/**
-+ * vdo_enqueue_waiter() - Add a waiter to the tail end of a wait queue.
-+ * @queue: The queue to which to add the waiter.
-+ * @waiter: The waiter to add to the queue.
-+ *
-+ * The waiter must not already be waiting in a queue.
-+ *
-+ * Return: VDO_SUCCESS or an error code.
-+ */
-+void vdo_enqueue_waiter(struct wait_queue *queue, struct waiter *waiter)
-+{
-+	BUG_ON(waiter->next_waiter != NULL);
-+
-+	if (queue->last_waiter == NULL) {
-+		/*
-+		 * The queue is empty, so form the initial circular list by self-linking the
-+		 * initial waiter.
-+		 */
-+		waiter->next_waiter = waiter;
-+	} else {
-+		/* Splice the new waiter in at the end of the queue. */
-+		waiter->next_waiter = queue->last_waiter->next_waiter;
-+		queue->last_waiter->next_waiter = waiter;
-+	}
-+
-+	/* In both cases, the waiter we added to the ring becomes the last waiter. */
-+	queue->last_waiter = waiter;
-+	queue->queue_length += 1;
-+}
-+
-+/**
-+ * vdo_transfer_all_waiters() - Transfer all waiters from one wait queue to a second queue,
-+ *                              emptying the first queue.
-+ * @from_queue: The queue containing the waiters to move.
-+ * @to_queue: The queue that will receive the waiters from the first queue.
-+ */
-+void vdo_transfer_all_waiters(struct wait_queue *from_queue, struct wait_queue *to_queue)
-+{
-+	/* If the source queue is empty, there's nothing to do. */
-+	if (!vdo_has_waiters(from_queue))
-+		return;
-+
-+	if (vdo_has_waiters(to_queue)) {
-+		/*
-+		 * Both queues are non-empty. Splice the two circular lists together by swapping
-+		 * the next (head) pointers in the list tails.
-+		 */
-+		struct waiter *from_head = from_queue->last_waiter->next_waiter;
-+		struct waiter *to_head = to_queue->last_waiter->next_waiter;
-+
-+		to_queue->last_waiter->next_waiter = from_head;
-+		from_queue->last_waiter->next_waiter = to_head;
-+	}
-+
-+	to_queue->last_waiter = from_queue->last_waiter;
-+	to_queue->queue_length += from_queue->queue_length;
-+	vdo_initialize_wait_queue(from_queue);
-+}
-+
-+/**
-+ * vdo_notify_all_waiters() - Notify all the entries waiting in a queue.
-+ * @queue: The wait queue containing the waiters to notify.
-+ * @callback: The function to call to notify each waiter, or NULL to invoke the callback field
-+ *            registered in each waiter.
-+ * @context: The context to pass to the callback function.
-+ *
-+ * Notifies all the entries waiting in a queue to continue execution by invoking a callback
-+ * function on each of them in turn. The queue is copied and emptied before invoking any callbacks,
-+ * and only the waiters that were in the queue at the start of the call will be notified.
-+ */
-+void vdo_notify_all_waiters(struct wait_queue *queue, waiter_callback *callback, void *context)
-+{
-+	/*
-+	 * Copy and empty the queue first, avoiding the possibility of an infinite loop if entries
-+	 * are returned to the queue by the callback function.
-+	 */
-+	struct wait_queue waiters;
-+
-+	vdo_initialize_wait_queue(&waiters);
-+	vdo_transfer_all_waiters(queue, &waiters);
-+
-+	/* Drain the copied queue, invoking the callback on every entry. */
-+	while (vdo_notify_next_waiter(&waiters, callback, context))
-+		/* All the work is done by the loop condition. */
-+		;
-+}
-+
-+/**
-+ * vdo_get_first_waiter() - Return the waiter that is at the head end of a wait queue.
-+ * @queue: The queue from which to get the first waiter.
-+ *
-+ * Return: The first (oldest) waiter in the queue, or NULL if the queue is empty.
-+ */
-+struct waiter *vdo_get_first_waiter(const struct wait_queue *queue)
-+{
-+	struct waiter *last_waiter = queue->last_waiter;
-+
-+	if (last_waiter == NULL)
-+		/* There are no waiters, so we're done. */
-+		return NULL;
-+
-+	/* The queue is circular, so the last entry links to the head of the queue. */
-+	return last_waiter->next_waiter;
-+}
-+
-+/**
-+ * vdo_dequeue_matching_waiters() - Remove all waiters that match based on the specified matching
-+ *                                  method and append them to a wait_queue.
-+ * @queue: The wait queue to process.
-+ * @match_method: The method to determine matching.
-+ * @match_context: Contextual info for the match method.
-+ * @matched_queue: A wait_queue to store matches.
-+ */
-+void vdo_dequeue_matching_waiters(struct wait_queue *queue,
-+				  waiter_match *match_method,
-+				  void *match_context,
-+				  struct wait_queue *matched_queue)
-+{
-+	struct wait_queue matched_waiters, iteration_queue;
-+
-+	vdo_initialize_wait_queue(&matched_waiters);
-+
-+	vdo_initialize_wait_queue(&iteration_queue);
-+	vdo_transfer_all_waiters(queue, &iteration_queue);
-+	while (vdo_has_waiters(&iteration_queue)) {
-+		struct waiter *waiter = vdo_dequeue_next_waiter(&iteration_queue);
-+
-+		vdo_enqueue_waiter((match_method(waiter, match_context) ?
-+				    &matched_waiters :
-+				    queue),
-+				   waiter);
-+	}
-+
-+	vdo_transfer_all_waiters(&matched_waiters, matched_queue);
-+}
-+
-+/**
-+ * vdo_dequeue_next_waiter() - Remove the first waiter from the head end of a wait queue.
-+ * @queue: The wait queue from which to remove the first entry.
-+ *
-+ * The caller will be responsible for waking the waiter by invoking the correct callback function
-+ * to resume its execution.
-+ *
-+ * Return: The first (oldest) waiter in the queue, or NULL if the queue is empty.
-+ */
-+struct waiter *vdo_dequeue_next_waiter(struct wait_queue *queue)
-+{
-+	struct waiter *first_waiter = vdo_get_first_waiter(queue);
-+	struct waiter *last_waiter = queue->last_waiter;
-+
-+	if (first_waiter == NULL)
-+		return NULL;
-+
-+	if (first_waiter == last_waiter)
-+		/* The queue has a single entry, so just empty it out by nulling the tail. */
-+		queue->last_waiter = NULL;
-+	else
-+		/*
-+		 * The queue has more than one entry, so splice the first waiter out of the
-+		 * circular queue.
-+		 */
-+		last_waiter->next_waiter = first_waiter->next_waiter;
-+
-+	/* The waiter is no longer in a wait queue. */
-+	first_waiter->next_waiter = NULL;
-+	queue->queue_length -= 1;
-+	return first_waiter;
-+}
-+
-+/**
-+ * vdo_notify_next_waiter() - Notify the next entry waiting in a queue.
-+ * @queue: The wait queue containing the waiter to notify.
-+ * @callback: The function to call to notify the waiter, or NULL to invoke the callback field
-+ *            registered in the waiter.
-+ * @context: The context to pass to the callback function.
-+ *
-+ * Notifies the next entry waiting in a queue to continue execution by invoking a callback function
-+ * on it after removing it from the queue.
-+ *
-+ * Return: true if there was a waiter in the queue.
-+ */
-+bool vdo_notify_next_waiter(struct wait_queue *queue, waiter_callback *callback, void *context)
-+{
-+	struct waiter *waiter = vdo_dequeue_next_waiter(queue);
-+
-+	if (waiter == NULL)
-+		return false;
-+
-+	if (callback == NULL)
-+		callback = waiter->callback;
-+	(*callback)(waiter, context);
-+	return true;
-+}
-+
-+/**
-+ * vdo_get_next_waiter() - Get the waiter after this one, for debug iteration.
-+ * @queue: The wait queue.
-+ * @waiter: A waiter.
-+ *
-+ * Return: The next waiter, or NULL.
-+ */
-+const struct waiter *
-+vdo_get_next_waiter(const struct wait_queue *queue, const struct waiter *waiter)
-+{
-+	struct waiter *first_waiter = vdo_get_first_waiter(queue);
-+
-+	if (waiter == NULL)
-+		return first_waiter;
-+	return ((waiter->next_waiter != first_waiter) ? waiter->next_waiter : NULL);
-+}
-diff --git a/drivers/md/dm-vdo/wait-queue.h b/drivers/md/dm-vdo/wait-queue.h
-new file mode 100644
-index 000000000000..8620fe9dd28a
---- /dev/null
-+++ b/drivers/md/dm-vdo/wait-queue.h
-@@ -0,0 +1,129 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
-+ * Copyright 2023 Red Hat
++ * Wait until all callbacks for index operations are complete, and prevent new index operations
++ * from starting. New index operations will fail with EBUSY until the session is resumed. Also
++ * optionally saves the index.
 + */
++int __must_check uds_suspend_index_session(struct uds_index_session *session, bool save);
 +
-+#ifndef VDO_WAIT_QUEUE_H
-+#define VDO_WAIT_QUEUE_H
-+
-+#include <linux/compiler.h>
-+#include <linux/types.h>
-+
-+/**
-+ * DOC: Wait queues.
-+ *
-+ * A wait queue is a circular list of entries waiting to be notified of a change in a condition.
-+ * Keeping a circular list allows the queue structure to simply be a pointer to the tail (newest)
-+ * entry in the queue, supporting constant-time enqueue and dequeue operations. A null pointer is
-+ * an empty queue.
-+ *
-+ *   An empty queue:
-+ *     queue0.last_waiter -> NULL
-+ *
-+ *   A singleton queue:
-+ *     queue1.last_waiter -> entry1 -> entry1 -> [...]
-+ *
-+ *   A three-element queue:
-+ *     queue2.last_waiter -> entry3 -> entry1 -> entry2 -> entry3 -> [...]
++/*
++ * Allow new index operations for an index, whether it was suspended or not. If the index is
++ * suspended and the supplied block device differs from the current backing store, the index will
++ * start using the new backing store instead.
 + */
++int __must_check uds_resume_index_session(struct uds_index_session *session,
++					  struct block_device *bdev);
 +
-+struct waiter;
++/* Wait until all outstanding index operations are complete. */
++int __must_check uds_flush_index_session(struct uds_index_session *session);
 +
-+struct wait_queue {
-+	/* The tail of the queue, the last (most recently added) entry */
-+	struct waiter *last_waiter;
-+	/* The number of waiters currently in the queue */
-+	size_t queue_length;
-+};
++/* Close an index. This operation fails if the index session is suspended. */
++int __must_check uds_close_index(struct uds_index_session *session);
 +
-+/**
-+ * typedef waiter_callback - Callback type for functions which will be called to resume processing
-+ *                           of a waiter after it has been removed from its wait queue.
-+ */
-+typedef void waiter_callback(struct waiter *waiter, void *context);
++/* Get index statistics since the last time the index was opened. */
++int __must_check
++uds_get_index_session_stats(struct uds_index_session *session, struct uds_index_stats *stats);
 +
-+/**
-+ * typedef waiter_match - Method type for waiter matching methods.
-+ *
-+ * A waiter_match method returns false if the waiter does not match.
-+ */
-+typedef bool waiter_match(struct waiter *waiter, void *context);
++/* This function will fail if any required field of the request is not set. */
++int __must_check uds_launch_request(struct uds_request *request);
 +
-+/* The queue entry structure for entries in a wait_queue. */
-+struct waiter {
-+	/*
-+	 * The next waiter in the queue. If this entry is the last waiter, then this is actually a
-+	 * pointer back to the head of the queue.
-+	 */
-+	struct waiter *next_waiter;
-+
-+	/* Optional waiter-specific callback to invoke when waking this waiter. */
-+	waiter_callback *callback;
-+};
-+
-+/**
-+ * is_waiting() - Check whether a waiter is waiting.
-+ * @waiter: The waiter to check.
-+ *
-+ * Return: true if the waiter is on some wait_queue.
-+ */
-+static inline bool vdo_is_waiting(struct waiter *waiter)
-+{
-+	return (waiter->next_waiter != NULL);
-+}
-+
-+/**
-+ * initialize_wait_queue() - Initialize a wait queue.
-+ * @queue: The queue to initialize.
-+ */
-+static inline void vdo_initialize_wait_queue(struct wait_queue *queue)
-+{
-+	*queue = (struct wait_queue) {
-+		.last_waiter = NULL,
-+		.queue_length = 0,
-+	};
-+}
-+
-+/**
-+ * has_waiters() - Check whether a wait queue has any entries waiting in it.
-+ * @queue: The queue to query.
-+ *
-+ * Return: true if there are any waiters in the queue.
-+ */
-+static inline bool __must_check vdo_has_waiters(const struct wait_queue *queue)
-+{
-+	return (queue->last_waiter != NULL);
-+}
-+
-+void vdo_enqueue_waiter(struct wait_queue *queue, struct waiter *waiter);
-+
-+void vdo_notify_all_waiters(struct wait_queue *queue, waiter_callback *callback, void *context);
-+
-+bool vdo_notify_next_waiter(struct wait_queue *queue, waiter_callback *callback, void *context);
-+
-+void vdo_transfer_all_waiters(struct wait_queue *from_queue, struct wait_queue *to_queue);
-+
-+struct waiter *vdo_get_first_waiter(const struct wait_queue *queue);
-+
-+void vdo_dequeue_matching_waiters(struct wait_queue *queue,
-+				  waiter_match *match_method,
-+				  void *match_context,
-+				  struct wait_queue *matched_queue);
-+
-+struct waiter *vdo_dequeue_next_waiter(struct wait_queue *queue);
-+
-+/**
-+ * count_waiters() - Count the number of waiters in a wait queue.
-+ * @queue: The wait queue to query.
-+ *
-+ * Return: The number of waiters in the queue.
-+ */
-+static inline size_t __must_check vdo_count_waiters(const struct wait_queue *queue)
-+{
-+	return queue->queue_length;
-+}
-+
-+const struct waiter * __must_check
-+vdo_get_next_waiter(const struct wait_queue *queue, const struct waiter *waiter);
-+
-+#endif /* VDO_WAIT_QUEUE_H */
++#endif /* UDS_H */
 -- 
 2.40.0
 
