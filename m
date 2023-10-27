@@ -1,116 +1,156 @@
-Received: from mail-qk1-f176.google.com (mail-qk1-f176.google.com [209.85.222.176])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 37DC53AC22
-	for <dm-devel@lists.linux.dev>; Fri, 27 Oct 2023 19:17:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 670C836AEA
+	for <dm-devel@lists.linux.dev>; Fri, 27 Oct 2023 19:27:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; dkim=none
-Received: by mail-qk1-f176.google.com with SMTP id af79cd13be357-779fb118fe4so173197885a.2
-        for <dm-devel@lists.linux.dev>; Fri, 27 Oct 2023 12:17:17 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1698434237; x=1699039037;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=NJT7fPV2gPr266dgHb6wRFTeUO0bh/e9lQXSKG8KwCw=;
-        b=Af30CLhNuAcfg1vXrMafjkaCPY6ecwM4GVpNgnFqDozgaqO177q0npMe11UkZLcvwy
-         bntUEBJNhecfhi4hkEM6vt2mXjkP2SZCgx3+0XN8f6efxiTnhVUs1kdZHloxzi5qSVvj
-         gYo5IDRSz2K4OBpds5EuL+LrYrm8o1iD6av00E1NnKq+ozHJz1j36g7C6LOby1zg/9wj
-         ytBddert5BYIO5MZcv6bP736j6QKS2Yv2bLD3gsL9C8s3Evq08Px8bN9hFlqJ0+9fXsL
-         n8niNANzdxlfXntMhb5XFdxRInpI7ya4uTp5KbDlEImF4E3/0oF8WGOect1jwp7id52a
-         usOA==
-X-Gm-Message-State: AOJu0Ywz82Lf/rUZQibgyZakd1pB7cZurl3+z6M0l52Y1PysCr6liwWa
-	U9DU3p3Doeo6ZLzhfMmf1ZKX
-X-Google-Smtp-Source: AGHT+IGLmN8n1FQeybzaJrhM20MOqQA9u1RvtdEKFrTtEQePlgVuP5hPnD3wvPLymT3W9A53TRS8SA==
-X-Received: by 2002:a05:620a:4514:b0:775:7d81:f8bb with SMTP id t20-20020a05620a451400b007757d81f8bbmr4690750qkp.11.1698434237078;
-        Fri, 27 Oct 2023 12:17:17 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id l21-20020a05620a28d500b007743446efd1sm806006qkp.35.2023.10.27.12.17.16
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 27 Oct 2023 12:17:16 -0700 (PDT)
-Date: Fri, 27 Oct 2023 15:17:15 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Christian Loehle <christian.loehle@arm.com>
-Cc: dm-devel@lists.linux.dev, agk@redhat.com, linux-kernel@vger.kernel.org
-Subject: Re: dm: delay: use kthread instead of timers and wq
-Message-ID: <ZTwMu5uHcKnShoKU@redhat.com>
-References: <7aab63e2-b133-49ec-ab8b-36ebec685de2@arm.com>
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="K4wOQXct"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1698434843;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=/T5TCgES1CQ+TQMzy6IqM1DNO8wVBHHUaK3x6YkLwO4=;
+	b=K4wOQXctrIAF3okF7JuOky16a1ucn77e/0C3ix8ZpfgeblymWVviUArOLpZbl90mdd8Lfb
+	Stk/+2v6STHN5x3cMMoF7x75DK1JSOPQmY40KJKMZHkKQmzne1xRQlZmwB34Xsiec40ZsV
+	FxGh00Q2j63DwAdFffjSumJx+fV74YA=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-686-F3K8S4q0OWOETP5M1UhqzQ-1; Fri,
+ 27 Oct 2023 15:27:20 -0400
+X-MC-Unique: F3K8S4q0OWOETP5M1UhqzQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9CA582810D63;
+	Fri, 27 Oct 2023 19:27:19 +0000 (UTC)
+Received: from bmarzins-01.fast.rdu2.eng.redhat.com (bmarzins-01.fast.rdu2.eng.redhat.com [10.6.23.12])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 954341C060AE;
+	Fri, 27 Oct 2023 19:27:19 +0000 (UTC)
+Received: from bmarzins-01.fast.rdu2.eng.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1) with ESMTPS id 39RJRJpv049738
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 27 Oct 2023 15:27:19 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1/Submit) id 39RJRJqK049737;
+	Fri, 27 Oct 2023 15:27:19 -0400
+Date: Fri, 27 Oct 2023 15:27:19 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [PATCH v2 11/14] Makefile.inc, README.md: fix docs for prefix in
+ split-usr case
+Message-ID: <ZTwPF2zsBVeUT6wV@bmarzins-01.fast.rdu2.eng.redhat.com>
+References: <20231026174153.1133-1-mwilck@suse.com>
+ <20231026174153.1133-12-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <20231026174153.1133-12-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <7aab63e2-b133-49ec-ab8b-36ebec685de2@arm.com>
 
-On Fri, Oct 20 2023 at  7:46P -0400,
-Christian Loehle <christian.loehle@arm.com> wrote:
-
-> The current design of timers and wq to realize the delays
-> is insufficient especially for delays below ~50ms.
-> The design is enhanced with a kthread to flush the expired delays,
-> trading some CPU time (in some cases) for better delay accuracy and
-> delays closer to what the user requested for smaller delays.
-> The new design is chosen as long as all the delays are below 50ms.
+On Thu, Oct 26, 2023 at 07:41:50PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
 > 
-> Since bios can't be completed in interrupt context using a kthread
-> is probably the most reasonable way to approach this.
+> systemd with "split-usr=true" uses rootprefixdir as prefix for
+> units and for udev libraries and rules ("udevlibexecdir" in
+> systemd). Fix the documentation for this case. Also, slightly
+> improve the paragraph about SCSI module loading.
 > 
-> Testing with
-> echo "0 2097152 zero" | dmsetup create dm-zeros
-> for i in $(seq 0 20);
-> do
->   echo "0 2097152 delay /dev/mapper/dm-zeros 0 $i" | dmsetup create dm-delay-${i}ms;
-> done
-> 
-> Some performance numbers for comparison
-> beaglebone black (single core) CONFIG_HZ_1000=y:
-> fio --name=1msread --rw=randread --bs=4k --runtime=60 --time_based --filename=/dev/mapper/dm-delay-1ms
-> Theoretical maximum: 1000 IOPS
-> Previous: 250 IOPS
-> Kthread: 500 IOPS
-> fio --name=10msread --rw=randread --bs=4k --runtime=60 --time_based --filename=/dev/mapper/dm-delay-10ms
-> Theoretical maximum: 100 IOPS
-> Previous: 45 IOPS
-> Kthread: 50 IOPS
-> fio --name=1mswrite --rw=randwrite --direct=1 --bs=4k --runtime=60 --time_based --filename=/dev/mapper/dm-delay-1ms
-> Theoretical maximum: 1000 IOPS
-> Previous: 498 IOPS
-> Kthread: 1000 IOPS
-> fio --name=10mswrite --rw=randwrite --direct=1 --bs=4k --runtime=60 --time_based --filename=/dev/mapper/dm-delay-10ms
-> Theoretical maximum: 100 IOPS
-> Previous: 90 IOPS
-> Kthread: 100 IOPS
-> fio --name=10mswriteasync --rw=randwrite --direct=1 --bs=4k --runtime=60 --time_based --filename=/dev/mapper/dm-delay-10ms --numjobs=32 --iodepth=64 --ioengine=libaio --group_reporting
-> Previous: 13.3k IOPS
-> Kthread: 13.3k IOPS
-> (This one is just to prove the new design isn't impacting throughput,
-> not really about delays)
-> 
-> Signed-off-by: Christian Loehle <christian.loehle@arm.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
 > ---
-> v2:
-> 	- Keep the timer wq and delay design for longer delays
-> 	- Address the rest of Mike's minor comments
+>  Makefile.inc |  6 ++++--
+>  README.md    | 25 ++++++++++++++++++-------
+>  2 files changed, 22 insertions(+), 9 deletions(-)
+> 
+> diff --git a/Makefile.inc b/Makefile.inc
+> index 8655cba..a20e2ce 100644
+> --- a/Makefile.inc
+> +++ b/Makefile.inc
+> @@ -40,8 +40,10 @@ usr_prefix	:= $(prefix)
+>  # Prefix for configfuration files (multipath.conf)
+>  etc_prefix	:= $(prefix)
+>  # Where to install systemd-related files. systemd is usually installed under /usr
+> -# Note: some systemd installations use separate "prefix" and "rootprefix".
+> -# In this case, override only unitdir to use systemd's "rootprefix" instead of $(systemd_prefix)
+> +# Note: systemd installations with "split-usr=true" use separate "prefixdir" and
+> +# "rootprefixdir". Our systemd_prefix corresponds to "prefixdir".
+> +# In this case, override only unitdir and libudevdir below to use
+> +# systemd's "rootprefixdir" instead of $(systemd_prefix)
+>  systemd_prefix  := /usr
+>  
+>  # Make sure all prefix variables end in "/"
+> diff --git a/README.md b/README.md
+> index 524c9fb..25ce963 100644
+> --- a/README.md
+> +++ b/README.md
+> @@ -111,6 +111,13 @@ The following variables can be passed to the `make` command line:
+>     polling API. For use with pre-5.0 kernels that don't support dmevent polling
+>     (but even if you don't use this option, multipath-tools will work with
+>     these kernels).
+> + * `SYSTEMD`: The version number of systemd (e.g. "244") to compile the code for.
+> +   The default is autodetected, assuming that the systemd version in the build
+> +   environment is the same as on the target system. Override the value to
+> +   build for a different systemd version, or set it to `""` to build for a
+> +   system without systemd.
+> +   **Caution:** multipathd without systemd has been largely untested by the
+> +   upstream maintainers since at least 2020.
+>   * `SCSI_DH_MODULES_PRELOAD="(list)"`: specify a space-separated list of SCSI
+>     device handler kernel modules to load early during boot. Some
+>     multipath-tools functionality depends on these modules being loaded
+> @@ -122,7 +129,9 @@ The following variables can be passed to the `make` command line:
+>     It's especially useful if `scsi_mod` is builtin but `scsi_dh_alua` and
+>     other device handler modules are built as modules. If `scsi_mod` itself is compiled
+>     as a module, it might make more sense to use a module softdep for the same
+> -   purpose.
+> +   purpose by creating a `modprobe.d` file like this:
+> +       
+> +        softdep scsi_mod post: scsi_dh_alua scsi_dh_rdac
+>  
+>  ### Installation Paths
+>  
+> @@ -133,9 +142,9 @@ The following variables can be passed to the `make` command line:
+>     for booting. Non-usr-merged distributions[^systemd] may want to set this to
+>     `/usr`. The default is `$(prefix)`.
+>   * `systemd_prefix`: Prefix for systemd-related files[^systemd]. The default is `/usr`.
+> - * `etc_prefix`: The prefix for configuration files. "Usr-merged"
+> + * `etc_prefix`: The prefix for configuration files. "usr-merged"
+>     distributions with immutable `/usr`[^systemd] may want to set this to
+> -   `/etc`. The default is `$(prefix)`.
+> +   `""`. The default is `$(prefix)`.
+>   * `LIB`: the subdirectory under `prefix` where shared libraries will be
+>     installed. By default, the makefile uses `/lib64` if this directory is
+>     found on the build system, and `/lib` otherwise.
+> @@ -144,10 +153,12 @@ The options `configdir`, `plugindir`, `configfile`, and `statedir` above can
+>  be used for setting individual paths where the `prefix` variables don't provide
+>  sufficient control. See `Makefile.inc` for even more fine-grained control.
+>  
+> -[^systemd]: Some systemd installations use separate `prefix` and `rootprefix`. 
+> -	On such a distribution, set `prefix`, and override `unitdir` to use systemd's
+> -   `rootprefix`. Recent systemd releases generally require everything to be
+> -	installed under `/usr` (so-called "usr-merged" distribution). On "usr-
+> +[^systemd]: systemd installations up to v254 which have been built with
+> +    `split-usr=true` may use separate `prefixdir` and `rootprefixdir`
+> +    directories, where `prefixdir` is a subdirectory of `rootprefixdir`.
+> +	multipath-tools' `systemd_prefix` corresponds to systemd's `prefixdir`.
+> +	On such distributions, override `unitdir` and `libudevdir` to use systemd's
+> +   `rootprefix`: `make libudevdir=/lib/udev unitdir=/lib/systemd/system`
+>  
+>  ### Compiler Options
+>  
+> -- 
+> 2.42.0
 
-
-Hi,
-
-I've picked this up.  But I fixed various issues along the way.
-
-Please see the staged commit here:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.7&id=c1fce71d29b2a48fd6788f9555561fda0f0c1863
-
-Issues ranged from whitespace, to removing needless forward
-declaration, to removing stray changes (restoring 'continue;' in
-flush_delayed_bios), actually using a bool for bool params, fixed
-missing mutex_init, and use max() rather than opencode comparisons in
-the ctr.  I might be forgetting some other code change. ;)
-
-I also tweaked the commit header for whitespace (line wrapping, etc).
-
-Thanks,
-Mike
