@@ -1,170 +1,99 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 95E6B6128
-	for <dm-devel@lists.linux.dev>; Fri, 27 Oct 2023 20:05:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 108FF441F;
+	Sat, 28 Oct 2023 09:40:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BMg8QkAA"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698437135;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=6dr2RKYVS53q6/CzhpRckCaugUEkeVdd/Jo2/0Ho3vU=;
-	b=BMg8QkAADA5rw7q9VMYtwtggnVuCUbQGrP3i+ZPNbTIr8qd9KHOsKrh7vcLXgLsey7+Rkf
-	czu68tMbDRM3s+L7FY4EBHPa65uTtK2QoXo27oJphFcHrsY5UzfXzQT2p3NzmrPzZ9uYyy
-	eLB0cUGC+BMvXlS3DkkZM1fR/PK+Pr8=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-473-VNTH_SUGOZKQR-bm1J259A-1; Fri,
- 27 Oct 2023 16:05:18 -0400
-X-MC-Unique: VNTH_SUGOZKQR-bm1J259A-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 09A1D3C16DCA;
-	Fri, 27 Oct 2023 20:05:18 +0000 (UTC)
-Received: from bmarzins-01.fast.rdu2.eng.redhat.com (bmarzins-01.fast.rdu2.eng.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EFE6240C6F79;
-	Fri, 27 Oct 2023 20:05:17 +0000 (UTC)
-Received: from bmarzins-01.fast.rdu2.eng.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1) with ESMTPS id 39RK5H0R049991
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 27 Oct 2023 16:05:17 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1/Submit) id 39RK5Hhd049990;
-	Fri, 27 Oct 2023 16:05:17 -0400
-Date: Fri, 27 Oct 2023 16:05:17 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: mwilck@suse.com
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev
-Subject: Re: [PATCH v2 08/14] multipathd.service: require
- modprobe@dm_multipath.service if available
-Message-ID: <ZTwX/XzciYqhEmQC@bmarzins-01.fast.rdu2.eng.redhat.com>
-References: <20231026174153.1133-1-mwilck@suse.com>
- <20231026174153.1133-9-mwilck@suse.com>
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="dO9JxZYp"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Transfer-Encoding:
+	Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:
+	Sender:Reply-To:Content-ID:Content-Description;
+	bh=W/g9f7l6jIflfVTO6azM776jOoL43h29jYipA4JfLSQ=; b=dO9JxZYpYH4BpOkhUAK66Nr8Ry
+	4JVEXtJAbmqTrioNKBRZIZgJYpfbgdrWm3K+Gnw7nnQyUcvQ3unkJYiLw5FY7HxXYHxkN4bN1IV21
+	Y/xqGBrSXx0EON+zFR2qTiIpZOwOqzF5Cfr3xCBHB0NIbkA2xv6/H5JTSjGifCTVGrsQvbTca5oet
+	gaMB7nDizXDxKncMTbzBsG0g+31Yc4Tw0swA5teDXHZvR39DEn2UxhX8i670tPhZ9/U0ttEQ8eJ5V
+	pjH8XpTxQ6l7mRIlLbbV7W4foiv+BdA0do3kqfswBAR7hqXQ2wiD3WpPWAWXe1O98meRLYnlWGvhK
+	NtJ5zSbQ==;
+Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
+	id 1qwfXJ-008dUX-ME; Sat, 28 Oct 2023 09:23:17 +0000
+Date: Sat, 28 Oct 2023 10:23:17 +0100
+From: Matthew Wilcox <willy@infradead.org>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <snitzer@kernel.org>,
+	Marek =?iso-8859-1?Q?Marczykowski-G=F3recki?= <marmarek@invisiblethingslab.com>,
+	stable@vger.kernel.org, regressions@lists.linux.dev,
+	Alasdair Kergon <agk@redhat.com>, dm-devel@lists.linux.dev,
+	linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>,
+	Michal Hocko <mhocko@suse.com>, Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: Intermittent storage (dm-crypt?) freeze - regression 6.4->6.5
+Message-ID: <ZTzTBUdaX1h8ivZZ@casper.infradead.org>
+References: <ZTNH0qtmint/zLJZ@mail-itl>
+ <e427823c-e869-86a2-3549-61b3fdf29537@redhat.com>
+ <ZTiHQDY54E7WAld+@mail-itl>
+ <ZTiJ3CO8w0jauOzW@mail-itl>
+ <a413efbf-7194-95ff-562b-f2eb766ca5c1@redhat.com>
+ <34f6678e-6460-f77-73f4-fc8d3652a8e5@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20231026174153.1133-9-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.2
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <34f6678e-6460-f77-73f4-fc8d3652a8e5@redhat.com>
 
-On Thu, Oct 26, 2023 at 07:41:47PM +0200, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
+On Fri, Oct 27, 2023 at 07:32:54PM +0200, Mikulas Patocka wrote:
+> So, we got no reponse from the MM maintainers. Marek - please try this 
+
+yes, how dare i go on holiday.  i'll look at this when i'm back.
+probably.
+
+> patch on all the machines where you hit the bug and if you still hit the 
+> bug with this patch, report it.
 > 
-> systemd v245 and newer provides the modprobe@.service unit, which
-> can be used to pull in modules via systemd. This is cleaner than
-> loading dm-multipath unconditionally via modules-load.d. Use it
-> if the detected systemd version support it.
+> Mikulas
 > 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-
-I just realized that this should also add multipathd.service to
-.gitignore
-
--Ben
-
+> 
+> 
+> From: Mikulas Patocka <mpatocka@redhat.com>
+> Subject: [PATCH] dm-crypt: don't allocate large compound pages
+> 
+> It was reported that the patch 5054e778fcd9cd29ddaa8109077cd235527e4f94
+> ("dm crypt: allocate compound pages if possible") causes intermittent
+> freezes [1].
+> 
+> So far, it is not clear what is the root cause. It was reported that with
+> the allocation order 3 or lower it works [1], so we restrict the order to
+> 3 (that is PAGE_ALLOC_COSTLY_ORDER).
+> 
+> [1] https://www.spinics.net/lists/dm-devel/msg56048.html
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Reported-by: Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>
+> Tested-by: Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>
+> Cc: stable@vger.kernel.org	# v6.5+
+> Fixes: 5054e778fcd9 ("dm crypt: allocate compound pages if possible")
+> 
 > ---
->  Makefile.inc                                             | 4 +++-
->  multipath/Makefile                                       | 6 ++++--
->  multipathd/Makefile                                      | 4 ++--
->  multipathd/{multipathd.service => multipathd.service.in} | 4 ++--
->  4 files changed, 11 insertions(+), 7 deletions(-)
->  rename multipathd/{multipathd.service => multipathd.service.in} (85%)
+>  drivers/md/dm-crypt.c |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> diff --git a/Makefile.inc b/Makefile.inc
-> index 04bfa56..8655cba 100644
-> --- a/Makefile.inc
-> +++ b/Makefile.inc
-> @@ -90,6 +90,8 @@ ORIG_LDFLAGS     := $(LDFLAGS)
+> Index: linux-2.6/drivers/md/dm-crypt.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-crypt.c
+> +++ linux-2.6/drivers/md/dm-crypt.c
+> @@ -1679,7 +1679,7 @@ static struct bio *crypt_alloc_buffer(st
+>  	unsigned int nr_iovecs = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
+>  	gfp_t gfp_mask = GFP_NOWAIT | __GFP_HIGHMEM;
+>  	unsigned int remaining_size;
+> -	unsigned int order = MAX_ORDER - 1;
+> +	unsigned int order = PAGE_ALLOC_COSTLY_ORDER;
 >  
->  SYSTEMD_CPPFLAGS := $(if $(SYSTEMD),-DUSE_SYSTEMD=$(SYSTEMD))
->  SYSTEMD_LIBDEPS := $(if $(SYSTEMD),$(if $(shell test $(SYSTEMD) -gt 209 && echo 1),-lsystemd,-lsystemd-daemon))
-> +MODPROBE_UNIT := $(shell test "0$(SYSTEMD)" -lt 245 2>/dev/null || \
-> +			echo "modprobe@dm_multipath.service")
->  
->  OPTFLAGS	:= -O2 -g $(STACKPROT) --param=ssp-buffer-size=4
->  WARNFLAGS	:= -Werror -Wall -Wextra -Wformat=2 $(WFORMATOVERFLOW) -Werror=implicit-int \
-> @@ -144,4 +146,4 @@ NV_VERSION_SCRIPT = $(DEVLIB:%.so=%-nv.version)
->  
->  %:	%.in
->  	@echo creating $@
-> -	$(Q)sed 's:@CONFIGFILE@:'$(configfile)':g;s:@CONFIGDIR@:'$(configdir)':g;s:@STATE_DIR@:'$(statedir)':g;s:@RUNTIME_DIR@:'$(runtimedir)':g' $< >$@
-> +	$(Q)sed 's:@CONFIGFILE@:'$(configfile)':g;s:@CONFIGDIR@:'$(configdir)':g;s:@STATE_DIR@:'$(statedir)':g;s:@RUNTIME_DIR@:'$(runtimedir)':g;s/@MODPROBE_UNIT@/'$(MODPROBE_UNIT)'/g' $< >$@
-> diff --git a/multipath/Makefile b/multipath/Makefile
-> index 68cb5ce..0efb9b2 100644
-> --- a/multipath/Makefile
-> +++ b/multipath/Makefile
-> @@ -27,14 +27,16 @@ install:
->  	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(udevrulesdir)
->  	$(Q)$(INSTALL_PROGRAM) -m 644 11-dm-mpath.rules $(DESTDIR)$(udevrulesdir)
->  	$(Q)$(INSTALL_PROGRAM) -m 644 multipath.rules $(DESTDIR)$(udevrulesdir)/56-multipath.rules
-> -	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(modulesloaddir)
-> -	$(Q)$(INSTALL_PROGRAM) -m 644 modules-load.conf $(DESTDIR)$(modulesloaddir)/multipath.conf
->  	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(tmpfilesdir)
->  	$(Q)$(INSTALL_PROGRAM) -m 644 tmpfiles.conf $(DESTDIR)$(tmpfilesdir)/multipath.conf
->  	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(mandir)/man8
->  	$(Q)$(INSTALL_PROGRAM) -m 644 $(EXEC).8 $(DESTDIR)$(mandir)/man8
->  	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(mandir)/man5
->  	$(Q)$(INSTALL_PROGRAM) -m 644 $(EXEC).conf.5 $(DESTDIR)$(mandir)/man5
-> +	$(Q)$(INSTALL_PROGRAM) -d $(DESTDIR)$(modulesloaddir)
-> +ifeq ($(MODPROBE_UNIT),)
-> +	$(Q)$(INSTALL_PROGRAM) -m 644 modules-load.conf $(DESTDIR)$(modulesloaddir)/multipath.conf
-> +endif
->  ifneq ($(SCSI_DH_MODULES_PRELOAD),)
->  	$(Q)$(INSTALL_PROGRAM) -m 644 scsi_dh.conf $(DESTDIR)$(modulesloaddir)/scsi_dh.conf
->  	$(Q)for _x in $(SCSI_DH_MODULES_PRELOAD); do echo "$$_x"; done \
-> diff --git a/multipathd/Makefile b/multipathd/Makefile
-> index 0ba6ecb..997b40c 100644
-> --- a/multipathd/Makefile
-> +++ b/multipathd/Makefile
-> @@ -41,7 +41,7 @@ ifeq ($(FPIN_SUPPORT),1)
->  OBJS += fpin_handlers.o
->  endif
->  
-> -all : $(EXEC) $(CLI) $(MANPAGES)
-> +all : $(EXEC) $(CLI) $(MANPAGES) $(EXEC).service
->  
->  $(EXEC): $(OBJS) $(multipathdir)/libmultipath.so $(mpathcmddir)/libmpathcmd.so
->  	@echo building $@ because of $?
-> @@ -78,7 +78,7 @@ uninstall:
->  	$(Q)$(RM) $(DESTDIR)$(unitdir)/$(EXEC).socket
->  
->  clean: dep_clean
-> -	$(Q)$(RM) core *.o $(EXEC) $(CLI) $(MANPAGES)
-> +	$(Q)$(RM) core *.o $(EXEC) $(CLI) $(MANPAGES) $(EXEC).service
->  
->  include $(wildcard $(OBJS:.o=.d) $(CLI_OBJS:.o=.d))
->  
-> diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service.in
-> similarity index 85%
-> rename from multipathd/multipathd.service
-> rename to multipathd/multipathd.service.in
-> index 5a9cde1..6d03ff7 100644
-> --- a/multipathd/multipathd.service
-> +++ b/multipathd/multipathd.service.in
-> @@ -2,8 +2,8 @@
->  Description=Device-Mapper Multipath Device Controller
->  Before=lvm2-activation-early.service
->  Before=local-fs-pre.target blk-availability.service shutdown.target
-> -Wants=systemd-udevd-kernel.socket
-> -After=systemd-udevd-kernel.socket
-> +Wants=systemd-udevd-kernel.socket @MODPROBE_UNIT@
-> +After=systemd-udevd-kernel.socket @MODPROBE_UNIT@
->  After=multipathd.socket systemd-remount-fs.service
->  Before=initrd-cleanup.service
->  DefaultDependencies=no
-> -- 
-> 2.42.0
+>  retry:
+>  	if (unlikely(gfp_mask & __GFP_DIRECT_RECLAIM))
 
