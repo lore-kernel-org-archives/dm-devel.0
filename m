@@ -1,73 +1,84 @@
-Received: from mail-qk1-f176.google.com (mail-qk1-f176.google.com [209.85.222.176])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ACBDA15AEB
-	for <dm-devel@lists.linux.dev>; Sat, 28 Oct 2023 15:14:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; dkim=none
-Received: by mail-qk1-f176.google.com with SMTP id af79cd13be357-778a92c06d6so220697485a.2
-        for <dm-devel@lists.linux.dev>; Sat, 28 Oct 2023 08:14:25 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1698506064; x=1699110864;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=edrT3wG/vlC5yAs6mr/X68CLECTGUmsWaJYhfyzukiY=;
-        b=HXQC6Q+eLnR3/WgaxMS6vSSUf7BwVW6MIA0ui0jrWz3vFYExpixRiIB/PN2S4nUMEZ
-         JqnRlM8wsEJ5FzomYo1qQiRwNNM66guAcZenqEJQPl7PD2mYTIeCPylKK9r14sAlz34I
-         i6DvvgpOx8MCqm4xzdrxELZTYdJdmx4VaZCji8Vvku44xRbWZQ9fvz+1f8oK7NC3Atzz
-         Q3jm2Yg7KINtqlx3utey8eVJxBC2t+WDMIeJFL0o8fOzX2P3FdHNH/Y01etqFf81KOyZ
-         q8/6U7iVjvbNyBSHrqEfoR76qBfuFUN9bJIs3dBbCWNjdsmKtVQoNzymdbP92KUsOREG
-         cb1Q==
-X-Gm-Message-State: AOJu0YxVkgiwg1opU6S8ESYB0uFTsg7Xt4J21o0g0m1WJi4poDtTtbRC
-	r6Qktxt9GwvrMV6dLR8LkxoW
-X-Google-Smtp-Source: AGHT+IFz3FFwOBGqOtVkA6xb2pksB7Wfy6+96bwsBbKM6DOuPkOrQvrErGnF7d2hQ1ocgDx6K+nVWA==
-X-Received: by 2002:a05:620a:45a3:b0:774:3235:4e6d with SMTP id bp35-20020a05620a45a300b0077432354e6dmr6608509qkb.21.1698506064506;
-        Sat, 28 Oct 2023 08:14:24 -0700 (PDT)
-Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
-        by smtp.gmail.com with ESMTPSA id x4-20020a05620a14a400b00775bb02893esm1617261qkj.96.2023.10.28.08.14.23
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 28 Oct 2023 08:14:24 -0700 (PDT)
-Date: Sat, 28 Oct 2023 11:14:22 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>,
-	Marek =?iso-8859-1?Q?Marczykowski-G=F3recki?= <marmarek@invisiblethingslab.com>,
-	stable@vger.kernel.org, regressions@lists.linux.dev,
-	Alasdair Kergon <agk@redhat.com>, dm-devel@lists.linux.dev,
-	linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>,
-	Michal Hocko <mhocko@suse.com>, Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: Intermittent storage (dm-crypt?) freeze - regression 6.4->6.5
-Message-ID: <ZT0lTposMdp/++IS@redhat.com>
-References: <ZTNH0qtmint/zLJZ@mail-itl>
- <e427823c-e869-86a2-3549-61b3fdf29537@redhat.com>
- <ZTiHQDY54E7WAld+@mail-itl>
- <ZTiJ3CO8w0jauOzW@mail-itl>
- <a413efbf-7194-95ff-562b-f2eb766ca5c1@redhat.com>
- <34f6678e-6460-f77-73f4-fc8d3652a8e5@redhat.com>
- <ZTzTBUdaX1h8ivZZ@casper.infradead.org>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 110C8137A
+	for <dm-devel@lists.linux.dev>; Sun, 29 Oct 2023 04:59:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Bdxb6Swo"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5F4B9C433C7;
+	Sun, 29 Oct 2023 04:59:31 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1698555571;
+	bh=LkQeiNTuvPcVoQXvfSZnCqLZzlPgsA+O7+t3nCIm834=;
+	h=From:To:Cc:Subject:Date:From;
+	b=Bdxb6Swo6AVFD7qiSkhlMp6C2H9ME79ArC8el1ELdKwKi0dHSgxGLSr+TlgFUJW3s
+	 /oahQMexiEBXcNQw0ouEuQIeOprODgDFekj/tiWTwS16nQu84wRFugtZJ6JFfesVEQ
+	 dcoa/IwRkDjdtwME5oQAbw35i4KHdJ+I23lNVbGngLGk1iFaqMg7+m0cubpQaA/sv+
+	 fpX0PJ4QZQ5FMxW3lM0g6KCIgkdNkOlK1YGHb5hXfb4aEmEoqc3X3fmWO4KiT8Ersk
+	 aLrSPAXHuds8Sz4zNNELJ8nI1NXv9HiT+vnHt9Ti0jRWSGzkIjv/lupyA6NLot9i61
+	 nz0BgoWWd7MAg==
+From: Eric Biggers <ebiggers@kernel.org>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	dm-devel@lists.linux.dev
+Cc: linux-crypto@vger.kernel.org
+Subject: [PATCH] dm-crypt: use crypto_shash_digest() in crypt_iv_tcw_whitening()
+Date: Sat, 28 Oct 2023 21:59:23 -0700
+Message-ID: <20231029045923.154267-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.42.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <ZTzTBUdaX1h8ivZZ@casper.infradead.org>
+Content-Transfer-Encoding: 8bit
 
-On Sat, Oct 28 2023 at  5:23P -0400,
-Matthew Wilcox <willy@infradead.org> wrote:
+From: Eric Biggers <ebiggers@google.com>
 
-> On Fri, Oct 27, 2023 at 07:32:54PM +0200, Mikulas Patocka wrote:
-> > So, we got no reponse from the MM maintainers. Marek - please try this 
-> 
-> yes, how dare i go on holiday.  i'll look at this when i'm back.
-> probably.
+Simplify crypt_iv_tcw_whitening() by using crypto_shash_digest() instead
+of an init+update+final sequence.  This should also improve performance.
 
-There was no malice or disrespect until you emerged from holiday.
-Hopefully you're at the start, if not you should extend it. Probably.
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ drivers/md/dm-crypt.c | 8 +-------
+ 1 file changed, 1 insertion(+), 7 deletions(-)
 
-I've staged this workaround until you or others can look closer:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-6.7&id=b3d87b87017d50cab1ea49fc6810c74584e00027
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 5315fd261c23..32d230e3180d 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -645,27 +645,21 @@ static int crypt_iv_tcw_whitening(struct crypt_config *cc,
+ 	SHASH_DESC_ON_STACK(desc, tcw->crc32_tfm);
+ 	int i, r;
+ 
+ 	/* xor whitening with sector number */
+ 	crypto_xor_cpy(buf, tcw->whitening, (u8 *)&sector, 8);
+ 	crypto_xor_cpy(&buf[8], tcw->whitening + 8, (u8 *)&sector, 8);
+ 
+ 	/* calculate crc32 for every 32bit part and xor it */
+ 	desc->tfm = tcw->crc32_tfm;
+ 	for (i = 0; i < 4; i++) {
+-		r = crypto_shash_init(desc);
+-		if (r)
+-			goto out;
+-		r = crypto_shash_update(desc, &buf[i * 4], 4);
+-		if (r)
+-			goto out;
+-		r = crypto_shash_final(desc, &buf[i * 4]);
++		r = crypto_shash_digest(desc, &buf[i * 4], 4, &buf[i * 4]);
+ 		if (r)
+ 			goto out;
+ 	}
+ 	crypto_xor(&buf[0], &buf[12], 4);
+ 	crypto_xor(&buf[4], &buf[8], 4);
+ 
+ 	/* apply whitening (8 bytes) to whole sector */
+ 	for (i = 0; i < ((1 << SECTOR_SHIFT) / 8); i++)
+ 		crypto_xor(data + i * 8, buf, 8);
+ out:
+
+base-commit: 2af9b20dbb39f6ebf9b9b6c090271594627d818e
+-- 
+2.42.0
+
