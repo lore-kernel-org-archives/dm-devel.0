@@ -1,49 +1,49 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29])
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 51FD31095F
-	for <dm-devel@lists.linux.dev>; Mon, 30 Oct 2023 11:41:37 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 70A8B13FE0
+	for <dm-devel@lists.linux.dev>; Mon, 30 Oct 2023 11:45:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Oc5bYFqQ"
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="I0QA8ArD"
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
 	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 969C51FEF0;
-	Mon, 30 Oct 2023 11:41:35 +0000 (UTC)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 08F0621D12;
+	Mon, 30 Oct 2023 11:45:15 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1698666095; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1698666315; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=UhItp19HRQmEvM1m83eAqHT/INDlWKc9Ck8WexWcJ4s=;
-	b=Oc5bYFqQBH8Ol3uXrDXZlcQhvzLWBYyYgrCIP+v1KmiGi0OVq3zJzhusccsrgLPU0f+NoE
-	eEmRHyMgUMRvcVxQoeikPOLxiU5vmBKSI+5ZeebN6LTHPFg3AiDYPB+5Cx0qbBrKiTpNR3
-	RlDgxhxMsr4Qty6iGYOPjZO6jCzybac=
+	bh=fa98k18K3NByy/KhGrfMXBYg35JKHEcovsuGimPul1A=;
+	b=I0QA8ArDbZ7vewZ+17qY6K5+mqeHOhr+S0ioQa8V3/Pm7GnF1EP0pPy7lV0iCrQtUm7VIW
+	xPDqNVAJVr343CAy85yqcgmaeBPHO+dcTJNLBOG8AJ7lMqQAsox9Op49CVK/BA+GxVsQUx
+	mrZnHYClFj4PCW3fUb2zsoj/Wf6ezBQ=
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
 	(No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 66692138F8;
-	Mon, 30 Oct 2023 11:41:35 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id D54B7138F8;
+	Mon, 30 Oct 2023 11:45:14 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
 	by imap2.suse-dmz.suse.de with ESMTPSA
-	id BGU/F2+WP2WYVQAAMHmgww
-	(envelope-from <mwilck@suse.com>); Mon, 30 Oct 2023 11:41:35 +0000
-Message-ID: <dde398a814cc2cdaa63931087cc97a0c88ba5120.camel@suse.com>
-Subject: Re: [PATCH v2 12/14] README.md: update mailing list and
- contributing information
+	id KSIlMkqXP2WAVwAAMHmgww
+	(envelope-from <mwilck@suse.com>); Mon, 30 Oct 2023 11:45:14 +0000
+Message-ID: <52059bbd3723b8485869d2ecd95a264e862a4dac.camel@suse.com>
+Subject: Re: [PATCH v2 08/14] multipathd.service: require
+ modprobe@dm_multipath.service if available
 From: Martin Wilck <mwilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
-	dm-devel@lists.linux.dev, Xose Vazquez Perez <xose.vazquez@gmail.com>
-Date: Mon, 30 Oct 2023 12:41:34 +0100
-In-Reply-To: <ZTwPnti1mnkGK19V@bmarzins-01.fast.rdu2.eng.redhat.com>
+	dm-devel@lists.linux.dev
+Date: Mon, 30 Oct 2023 12:45:14 +0100
+In-Reply-To: <ZTwX/XzciYqhEmQC@bmarzins-01.fast.rdu2.eng.redhat.com>
 References: <20231026174153.1133-1-mwilck@suse.com>
-	 <20231026174153.1133-13-mwilck@suse.com>
-	 <ZTwPnti1mnkGK19V@bmarzins-01.fast.rdu2.eng.redhat.com>
+	 <20231026174153.1133-9-mwilck@suse.com>
+	 <ZTwX/XzciYqhEmQC@bmarzins-01.fast.rdu2.eng.redhat.com>
 Autocrypt: addr=mwilck@suse.com; prefer-encrypt=mutual;
  keydata=mQINBF3mxsYBEACmOnQxWBCxCkTb3D4N8VAT8yNtIBZrmvomY7RLddBIT1yh2X7roOoJQ5KlmyjMmzrPr111poqmw8v4dUqc1SVqQoKHXv97BzlVIEKC5G2W29gse0oXhx3dhie0Z6ytkHVOY29VLsLhVXEz+p5xL71KYgIy3lmM/NaWvoqwwaXiv1TmLG96Uoitvj1vdXqqTv/R6/MBye+xQUacXpM8FA5k7OpmzCFjl4NVtGmo0VhIfXM/ldmyEJpg8a5LrZ4t5Qi32BWQjUHGmS8OXjUJ/n0QxLkymbcbY1KepP9UnLGPT+TmKJm1QlMDj69+WPKgMsif3iz4hZPoQ0Knp11ThYzBh7+AiRxE9FG2hTtZeKimkpjR12bytF4Y0aIM/HeLMHRvwykJuh5JxT9A68xF7hmqQZ7rsx/GoRBOA792kFgr5KdCZ1YoeVUkrohT1nfh/Y/Xfeq4E69mktE0R0Yxg/4CSiB7sLSzry8dyqk2sbGs+W/Ol7D7VOG45aZ5iTB08R2ji2xKArcH+Dmy48nwqIvdrppZG2tZEe+wtGPTzahE4OJdpZ3vS4ujdChynS47DVWa5JtBxfqopr0rPGoCyxmyvzJzHAUjlp7iSXpDZqfdu7F4HAC13mS41IVk/yHTXE28AKrZ4O+efZ6qgw5zJV9lAbWM7JjfdrTd+ofOc+GurQARAQABtCRNYXJ0aW4gV2lsY2sgPG1hcnRpbi53aWxja0BzdXNlLmNvbT6JAlEEEwEIADsCGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AWIQR1Dq1LLt6xpUXU9fRnxYbmhVaXVAUCXebHhgIZAQAKCRBnxYbmhVaXVJ6+EACa5mbuH1dy2bKldy+bybUe4jFpJxflAPSrdpIlwkIfD/SgQRWUUm+BLLJMGJFSKiVC6oAHH6/mo3gdWAqBJ0LAOQDDR2BW31ERYqQQ7m01INQIvMlg+PXQ8HbWd
 	CNF1SOgjxiIs04DlB+u+DD5pgPtxKFN/jaJSx9oZ+GZpSd+eJeull3a+U/1+QpYmLbH34bxYZ16+cXfarkH3QQC65DH/iIZwcpxp+v/zrQVXnsZ81XmmbLD1vMkFCIU0ircIcaJoqloNJOA46P4mj9ETwC5OiSTs7vlyHP4Ni/86kmjmr41d/baY1cAXpAbtOGYd5K72B6qSP5EJI+Ci6rSbWInQaYzKuAOrDDyhW7ODd+hOtBcmUIH5GpKvzRjdfxEP/zlyecBszxycz7lOYNx86QWsyyRWITKzHzhdqKVZ9kvjVozTtcpb1RSqsj43qqMEQjcp1uXhbmwVmbzsWaPqmCx4xsIQoXfIzzffvw+nOiPLkxzGczprwNJasDUM1hcyEPv+5VzZpE4YjlDw/mtTayehb2EGzt2RfZIuPCBr88KlWUh2+nu9RfBJNdJ2vZ13Aun8NbqPKR2vfsE+BUJY14Ak9ZIzcyruHBHQ78dxD0J+HSC1bm9e4UOnW0PBbZwuPTRwyO3aXoExPabGgig6gcY34bsXvW9SDwOu+pzXMnVvbQeTWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+iQJOBBMBCAA4FiEEdQ6tSy7esaVF1PX0Z8WG5oVWl1QFAl3mxz0CGwEFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQZ8WG5oVWl1TdsA/6A0DZmGwreygUic5csLSLUm2ahdat3rRKfQVdlOdl0aWa/vS90PqpuDNGzXVzS/s4YXRjWesnYEdwQGSc4PnBYCitLKUwenII39RCyZLU3J95luWG2eOagFaerK+HvuNEH6RpYkqPpaDEwpblfi30xNNYLIR4HK0GTYwhbmBTrYgaKATNiplU08ZUvC23s00t2i7SBGmOue/0dIPMhO3EDYPP0RaDnKvHAOAywkI1J9Ey0xEslG9AFylOihcdaq9/7MlMWU8oNHK7EVE5OOZ2NiJv1sWSgM
@@ -62,30 +62,44 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Authentication-Results: smtp-out1.suse.de;
+	none
+X-Spam-Level: 
+X-Spam-Score: -6.61
+X-Spamd-Result: default: False [-6.61 / 50.00];
+	 ARC_NA(0.00)[];
+	 RCVD_VIA_SMTP_AUTH(0.00)[];
+	 BAYES_HAM(-2.51)[97.81%];
+	 FROM_HAS_DN(0.00)[];
+	 RCPT_COUNT_THREE(0.00)[3];
+	 TO_DN_SOME(0.00)[];
+	 TO_MATCH_ENVRCPT_ALL(0.00)[];
+	 MIME_GOOD(-0.10)[text/plain];
+	 NEURAL_HAM_LONG(-3.00)[-1.000];
+	 DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	 NEURAL_HAM_SHORT(-1.00)[-1.000];
+	 FROM_EQ_ENVFROM(0.00)[];
+	 MIME_TRACE(0.00)[0:+];
+	 RCVD_COUNT_TWO(0.00)[2];
+	 RCVD_TLS_ALL(0.00)[];
+	 MID_RHS_MATCH_FROM(0.00)[]
+X-Spam-Flag: NO
 
-On Fri, 2023-10-27 at 15:29 -0400, Benjamin Marzinski wrote:
-> On Thu, Oct 26, 2023 at 07:41:51PM +0200, mwilck@suse.com=A0wrote:
-> > =A0
-> > +Mailing list
-> > +------------
-> > +
-> > +The mailing list for multipath-tools is
-> > `dm-devel@lists.linux.dev`.
-> > +To subscribe, send an email to
-> > `dm-devel+subscribe@lists.linux.dev`.
-> > +Mailing list archives are available on
-> > +[lore.kernel.org](https://lore.kernel.org/dm-devel/) and
-> > +[marc.info](https://marc.info/?l=3Ddm-devel). See also the
-> > +[lists.linux.dev home
-> > page](https://subspace.kernel.org/lists.linux.dev.html).
-> > +
-> > +When sending patches to the mailing list, lease add a `Signed-off-
-> > by:`
+On Fri, 2023-10-27 at 16:05 -0400, Benjamin Marzinski wrote:
+> On Thu, Oct 26, 2023 at 07:41:47PM +0200, mwilck@suse.com=A0wrote:
+> > From: Martin Wilck <mwilck@suse.com>
+> >=20
+> > systemd v245 and newer provides the modprobe@.service unit, which
+> > can be used to pull in modules via systemd. This is cleaner than
+> > loading dm-multipath unconditionally via modules-load.d. Use it
+> > if the detected systemd version support it.
+> >=20
+> > Signed-off-by: Martin Wilck <mwilck@suse.com>
 >=20
-> Missed the 'p' in please. Otherwise this looks fine.
+> I just realized that this should also add multipathd.service to
+> .gitignore
 
-I'll take the liberty to add the "p" and add your Acked-by.
-Let me know if you disagree.
+I'll fix this up and keep your Reviewed-by.
 
 Martin
 
