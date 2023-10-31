@@ -1,152 +1,150 @@
-Received: from wout2-smtp.messagingengine.com (wout2-smtp.messagingengine.com [64.147.123.25])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 484FE1DFD0;
-	Tue, 31 Oct 2023 15:42:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=invisiblethingslab.com
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=invisiblethingslab.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AE17010797
+	for <dm-devel@lists.linux.dev>; Tue, 31 Oct 2023 17:17:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=invisiblethingslab.com header.i=@invisiblethingslab.com header.b="BeyyQ7Ba";
-	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="nYOyPpfj"
-Received: from compute3.internal (compute3.nyi.internal [10.202.2.43])
-	by mailout.west.internal (Postfix) with ESMTP id 5976A32009DC;
-	Tue, 31 Oct 2023 11:42:23 -0400 (EDT)
-Received: from mailfrontend2 ([10.202.2.163])
-  by compute3.internal (MEProxy); Tue, 31 Oct 2023 11:42:24 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-	invisiblethingslab.com; h=cc:cc:content-type:content-type:date
-	:date:from:from:in-reply-to:in-reply-to:message-id:mime-version
-	:references:reply-to:sender:subject:subject:to:to; s=fm3; t=
-	1698766942; x=1698853342; bh=mb0gYnV0H7yJxOK1w9f/YAAaMqkDuUMTlzo
-	Ud82abGI=; b=BeyyQ7BaR/RTfnF3twpmruJUylTd2KwhIKx23X70HU3YCqspbzF
-	X6EO2K57TKbc7Mn25vORN7XhERC2lI7nOmpJKMeEwz5n0wjbPBMLg3s4PnwuS4oE
-	GNX43jlbcIMsVCwylSZtStBr05IYD1KDNN/cBYAszZF+iu3wYfKg/MS56zhIo3Wr
-	Euf10bzZMJDP0WiPo3/pj8+EfLhb5WZV+5xwHz990+Fa3hqO/KHp/v+K1vPRIB3d
-	PUIdXssOculZP1Xy52e6gRm775dRaeVuY0ID9JkfePdqqEp4Cd7W80TXWX3J4/45
-	sY2g6fjxWQ0dgzqObJfz1KNUT7Ip0KBM/9w==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-	messagingengine.com; h=cc:cc:content-type:content-type:date:date
-	:feedback-id:feedback-id:from:from:in-reply-to:in-reply-to
-	:message-id:mime-version:references:reply-to:sender:subject
-	:subject:to:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender
-	:x-sasl-enc; s=fm3; t=1698766942; x=1698853342; bh=mb0gYnV0H7yJx
-	OK1w9f/YAAaMqkDuUMTlzoUd82abGI=; b=nYOyPpfjVRmq9pCxHWrqyTLGx9rpA
-	GnCHemUTpulOxIjaEqeBtLvLo2+PPa50Bc+14ETaISQyFnIvTHmtVb3J7Ac2kfnq
-	+y4WewQfvMPiob7Bg1j1UTc6fO/DyO1wdA8NFZ10J8omUVproUWww+gHZDgSjEFI
-	YnqRJ8NF8uIWG+r15Lmq4wBaTnIIn9QLpJbfJIG+J6s3QNPoSnbkR0SKWVXze0xG
-	57itohLuUUuo6/nadLbx5t8gn57YUf+ODQbzpCoKCgPiT8lzMcUNHAAS3hYISYxU
-	VrZC3ut/SmXRrwB+ZRTDBqtpVeULJ+nk2KrVjIOLi3Ts4gXuoSSpj/7YQ==
-X-ME-Sender: <xms:XiBBZdMJNFaSuy5Lwwo1xH09ezt6TWxLho3FYHFjTMLV8l6ddoZ24g>
-    <xme:XiBBZf_cdcVd2m25pH1A9aMneVUeX-Z-fy2Gte_aU_1oRAuoPQXeMUtXHF_z5iG8M
-    fa-1QuXLVzA9A>
-X-ME-Received: <xmr:XiBBZcSKMMylrp4MuGKAp7KoycjircffxkYn7OZlYnhBD5pjItLIEnS-BQKp>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvkedruddtvddgjeekucetufdoteggodetrfdotf
-    fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
-    uceurghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmne
-    cujfgurhepfffhvfevuffkfhggtggujgesghdtreertddtjeenucfhrhhomhepofgrrhgv
-    khcuofgrrhgtiiihkhhofihskhhiqdfikphrvggtkhhiuceomhgrrhhmrghrvghksehinh
-    hvihhsihgslhgvthhhihhnghhslhgrsgdrtghomheqnecuggftrfgrthhtvghrnhepgfdu
-    leetfeevhfefheeiteeliefhjefhleduveetteekveettddvgeeuteefjedunecuvehluh
-    hsthgvrhfuihiivgeptdenucfrrghrrghmpehmrghilhhfrhhomhepmhgrrhhmrghrvghk
-    sehinhhvihhsihgslhgvthhhihhnghhslhgrsgdrtghomh
-X-ME-Proxy: <xmx:XiBBZZuZ6raSlIE2RbAev_Rd7bZerJYavYYIZwVC1fS6DP1uGgs25w>
-    <xmx:XiBBZVdtDOki9nEDoNl9sbkJsth3Ee99o383WXOFNwlVoSfx4AbvKw>
-    <xmx:XiBBZV1UoSO1HCwau2Bcj1beU1Li5PbYqwAYMsUT2KYpOFZn20RjvQ>
-    <xmx:XiBBZR5XFR6o0Cj40Z1Fpn0igWzSrYolxPyDCbjSo2ik6Wio1Q1Fxw>
-Feedback-ID: i1568416f:Fastmail
-Received: by mail.messagingengine.com (Postfix) with ESMTPA; Tue,
- 31 Oct 2023 11:42:19 -0400 (EDT)
-Date: Tue, 31 Oct 2023 16:42:15 +0100
-From: Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?= <marmarek@invisiblethingslab.com>
-To: Jan Kara <jack@suse.cz>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Vlastimil Babka <vbabka@suse.cz>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Matthew Wilcox <willy@infradead.org>,
-	Michal Hocko <mhocko@suse.com>, stable@vger.kernel.org,
-	regressions@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
-	linux-mm@kvack.org
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ab1bOIm+"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1698772651;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=KItUmro+eQMn3OtC7hcwqT1jD+OcEM3bVlAzhSK/rtQ=;
+	b=Ab1bOIm+GMqLbSo38T+oiGMjcVqQAcvKxzzBNVUIJ13yYUarozVSKVTamtKoCt1PzMZE+7
+	zktXS0hE7TVQikF3rP9jPrWCbAKFS6D/Ws6KcNjqvdCIt6AlHC1h6p0FNyP6Ec20Aqm10s
+	4JyQkjOL52CFaxu3m2zWWXndtNZz8Po=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-158-eScYHzCiPQ6pOZB5DxRIkw-1; Tue,
+ 31 Oct 2023 13:17:27 -0400
+X-MC-Unique: eScYHzCiPQ6pOZB5DxRIkw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E6A8F29ABA2C;
+	Tue, 31 Oct 2023 17:17:26 +0000 (UTC)
+Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D58F33D4;
+	Tue, 31 Oct 2023 17:17:26 +0000 (UTC)
+Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
+	id BE00830C2A86; Tue, 31 Oct 2023 17:17:26 +0000 (UTC)
+Received: from localhost (localhost [127.0.0.1])
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id B97CC3FB77;
+	Tue, 31 Oct 2023 18:17:26 +0100 (CET)
+Date: Tue, 31 Oct 2023 18:17:26 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: =?ISO-8859-15?Q?Marek_Marczykowski-G=F3recki?= <marmarek@invisiblethingslab.com>
+cc: Jan Kara <jack@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, 
+    Andrew Morton <akpm@linux-foundation.org>, 
+    Matthew Wilcox <willy@infradead.org>, Michal Hocko <mhocko@suse.com>, 
+    stable@vger.kernel.org, regressions@lists.linux.dev, 
+    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    dm-devel@lists.linux.dev, linux-mm@kvack.org
 Subject: Re: Intermittent storage (dm-crypt?) freeze - regression 6.4->6.5
-Message-ID: <ZUEgWA5P8MFbyeBN@mail-itl>
-References: <3514c87f-c87f-f91f-ca90-1616428f6317@redhat.com>
- <1a47fa28-3968-51df-5b0b-a19c675cc289@suse.cz>
- <20231030122513.6gds75hxd65gu747@quack3>
- <ZT+wDLwCBRB1O+vB@mail-itl>
- <a2a8dbf6-d22e-65d0-6fab-b9cdf9ec3320@redhat.com>
- <20231030155603.k3kejytq2e4vnp7z@quack3>
- <ZT/e/EaBIkJEgevQ@mail-itl>
- <98aefaa9-1ac-a0e4-fb9a-89ded456750@redhat.com>
- <ZUB5HFeK3eHeI8UH@mail-itl>
- <20231031140136.25bio5wajc5pmdtl@quack3>
+In-Reply-To: <ZUEgWA5P8MFbyeBN@mail-itl>
+Message-ID: <8a35cdea-3a1a-e859-1f7c-55d1c864a48@redhat.com>
+References: <3514c87f-c87f-f91f-ca90-1616428f6317@redhat.com> <1a47fa28-3968-51df-5b0b-a19c675cc289@suse.cz> <20231030122513.6gds75hxd65gu747@quack3> <ZT+wDLwCBRB1O+vB@mail-itl> <a2a8dbf6-d22e-65d0-6fab-b9cdf9ec3320@redhat.com> <20231030155603.k3kejytq2e4vnp7z@quack3>
+ <ZT/e/EaBIkJEgevQ@mail-itl> <98aefaa9-1ac-a0e4-fb9a-89ded456750@redhat.com> <ZUB5HFeK3eHeI8UH@mail-itl> <20231031140136.25bio5wajc5pmdtl@quack3> <ZUEgWA5P8MFbyeBN@mail-itl>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="T+T3sop+0bQ1u8dt"
-Content-Disposition: inline
-In-Reply-To: <20231031140136.25bio5wajc5pmdtl@quack3>
+Content-Type: multipart/mixed; boundary="185210117-713297632-1698772646=:87896"
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--185210117-713297632-1698772646=:87896
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 
 
---T+T3sop+0bQ1u8dt
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-Date: Tue, 31 Oct 2023 16:42:15 +0100
-From: Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?= <marmarek@invisiblethingslab.com>
-To: Jan Kara <jack@suse.cz>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Vlastimil Babka <vbabka@suse.cz>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Matthew Wilcox <willy@infradead.org>,
-	Michal Hocko <mhocko@suse.com>, stable@vger.kernel.org,
-	regressions@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
-	linux-mm@kvack.org
-Subject: Re: Intermittent storage (dm-crypt?) freeze - regression 6.4->6.5
 
-On Tue, Oct 31, 2023 at 03:01:36PM +0100, Jan Kara wrote:
-> On Tue 31-10-23 04:48:44, Marek Marczykowski-G=C3=B3recki wrote:
-> > Then tried:
-> >  - PAGE_ALLOC_COSTLY_ORDER=3D4, order=3D4 - cannot reproduce,
-> >  - PAGE_ALLOC_COSTLY_ORDER=3D4, order=3D5 - cannot reproduce,
-> >  - PAGE_ALLOC_COSTLY_ORDER=3D4, order=3D6 - freeze rather quickly
-> >=20
-> > I've retried the PAGE_ALLOC_COSTLY_ORDER=3D4,order=3D5 case several tim=
-es
-> > and I can't reproduce the issue there. I'm confused...
->=20
-> And this kind of confirms that allocations > PAGE_ALLOC_COSTLY_ORDER
-> causing hangs is most likely just a coincidence. Rather something either =
-in
-> the block layer or in the storage driver has problems with handling bios
-> with sufficiently high order pages attached. This is going to be a bit
-> painful to debug I'm afraid. How long does it take for you trigger the
-> hang? I'm asking to get rough estimate how heavy tracing we can afford so
-> that we don't overwhelm the system...
+On Tue, 31 Oct 2023, Marek Marczykowski-Górecki wrote:
 
-Sometimes it freezes just after logging in, but in worst case it takes
-me about 10min of more or less `tar xz` + `dd`.
+> On Tue, Oct 31, 2023 at 03:01:36PM +0100, Jan Kara wrote:
+> > On Tue 31-10-23 04:48:44, Marek Marczykowski-Górecki wrote:
+> > > Then tried:
+> > >  - PAGE_ALLOC_COSTLY_ORDER=4, order=4 - cannot reproduce,
+> > >  - PAGE_ALLOC_COSTLY_ORDER=4, order=5 - cannot reproduce,
+> > >  - PAGE_ALLOC_COSTLY_ORDER=4, order=6 - freeze rather quickly
+> > > 
+> > > I've retried the PAGE_ALLOC_COSTLY_ORDER=4,order=5 case several times
+> > > and I can't reproduce the issue there. I'm confused...
+> > 
+> > And this kind of confirms that allocations > PAGE_ALLOC_COSTLY_ORDER
+> > causing hangs is most likely just a coincidence. Rather something either in
+> > the block layer or in the storage driver has problems with handling bios
+> > with sufficiently high order pages attached. This is going to be a bit
+> > painful to debug I'm afraid. How long does it take for you trigger the
+> > hang? I'm asking to get rough estimate how heavy tracing we can afford so
+> > that we don't overwhelm the system...
+> 
+> Sometimes it freezes just after logging in, but in worst case it takes
+> me about 10min of more or less `tar xz` + `dd`.
 
---=20
-Best Regards,
-Marek Marczykowski-G=C3=B3recki
-Invisible Things Lab
+Hi
 
---T+T3sop+0bQ1u8dt
-Content-Type: application/pgp-signature; name="signature.asc"
+I would like to ask you to try this patch. Revert the changes to "order" 
+and "PAGE_ALLOC_COSTLY_ORDER" back to normal and apply this patch on a 
+clean upstream kernel.
 
------BEGIN PGP SIGNATURE-----
+Does it deadlock?
 
-iQEzBAEBCAAdFiEEhrpukzGPukRmQqkK24/THMrX1ywFAmVBIFgACgkQ24/THMrX
-1yxXiwf/STqQWBIoStONLIYTVENKHHERIECrbOJ3yP9Go8RfO3rJ23Ex6CAj0jvm
-eoItbb+4wfzvg6Cko+yvRa1jlK1Bau9YT17OhaJydq3WIbfUbxlMq8Rj8q43jKak
-PMzvgY2aHJ+P33UbnAweZTH9zVE2hOBi1WDs4tLpHXSqaiRxtRTLxkhEOR3+ESDz
-HJNb3lNtD6/8H6fIDdElrizvvpDmbbLoA2ulPJGzBHTz9gt55taD22b9GChRE9Bv
-pYSyINW8cN1jQzYG/eLtcJGrBpeI0F8LrlCfBnK3A9/QiV8NLBJmT2h+WEjv7Azp
-bUEnlyfGpodVuj6V5NGcWtAAkl6R2Q==
-=krBC
------END PGP SIGNATURE-----
+There is a bug in dm-crypt that it doesn't account large pages in 
+cc->n_allocated_pages, this patch fixes the bug.
 
---T+T3sop+0bQ1u8dt--
+Mikulas
+
+
+
+---
+ drivers/md/dm-crypt.c |   13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+Index: linux-stable/drivers/md/dm-crypt.c
+===================================================================
+--- linux-stable.orig/drivers/md/dm-crypt.c	2023-10-31 16:25:09.000000000 +0100
++++ linux-stable/drivers/md/dm-crypt.c	2023-10-31 16:53:14.000000000 +0100
+@@ -1700,11 +1700,16 @@ retry:
+ 		order = min(order, remaining_order);
+ 
+ 		while (order > 0) {
++			if (unlikely(percpu_counter_read_positive(&cc->n_allocated_pages) + (1 << order) > dm_crypt_pages_per_client))
++				goto decrease_order;
+ 			pages = alloc_pages(gfp_mask
+ 				| __GFP_NOMEMALLOC | __GFP_NORETRY | __GFP_NOWARN | __GFP_COMP,
+ 				order);
+-			if (likely(pages != NULL))
++			if (likely(pages != NULL)) {
++				percpu_counter_add(&cc->n_allocated_pages, 1 << order);
+ 				goto have_pages;
++			}
++decrease_order:
+ 			order--;
+ 		}
+ 
+@@ -1742,10 +1747,12 @@ static void crypt_free_buffer_pages(stru
+ 
+ 	if (clone->bi_vcnt > 0) { /* bio_for_each_folio_all crashes with an empty bio */
+ 		bio_for_each_folio_all(fi, clone) {
+-			if (folio_test_large(fi.folio))
++			if (folio_test_large(fi.folio)) {
++				percpu_counter_sub(&cc->n_allocated_pages, 1 << folio_order(fi.folio));
+ 				folio_put(fi.folio);
+-			else
++			} else {
+ 				mempool_free(&fi.folio->page, &cc->page_pool);
++			}
+ 		}
+ 	}
+ }
+--185210117-713297632-1698772646=:87896--
+
