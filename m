@@ -1,125 +1,145 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qk1-f174.google.com (mail-qk1-f174.google.com [209.85.222.174])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED323134A3
-	for <dm-devel@lists.linux.dev>; Wed,  1 Nov 2023 12:47:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 873256ABB
+	for <dm-devel@lists.linux.dev>; Wed,  1 Nov 2023 16:19:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Q5/DpKzq"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698842841;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:in-reply-to:in-reply-to:
-	 references:references:list-id:list-help:list-unsubscribe:
-	 list-subscribe:list-post; bh=L18jqjZ/YFC+R7qqPrcdbK+tbLtkdiO++O5gj8jOKcw=;
-	b=Q5/DpKzqUvAQSCgXT7Lm1yPpqEj5zgywOGdROAhCKy8VIlkZxa2VQcd048gU3Ux2fHJ1gk
-	RGIWRgKLnORGGrXTGLf2+HLOfnY5+ilwGdx0PZur6UrPrMZixDBUX+3bMvApFsFhB/iX6/
-	15GLXF3lEniwwOUFk8O1x1HTEQBC2cY=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-360-OeHLlkGpPwmop2Ikh9KR2g-1; Wed, 01 Nov 2023 08:47:21 -0400
-X-MC-Unique: OeHLlkGpPwmop2Ikh9KR2g-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CE6DA811001
-	for <dm-devel@lists.linux.dev>; Wed,  1 Nov 2023 12:47:20 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C7543492BE0
-	for <dm-devel@lists.linux.dev>; Wed,  1 Nov 2023 12:47:20 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 670E219465A0
-	for <dm-devel@lists.linux.dev>; Wed,  1 Nov 2023 12:47:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
- by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id CE89A194658F
- for <dm-devel@listman.corp.redhat.com>; Wed,  1 Nov 2023 12:47:19 +0000 (UTC)
-Received: by smtp.corp.redhat.com (Postfix)
- id 731EFC12912; Wed,  1 Nov 2023 12:47:19 +0000 (UTC)
-Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown
- [10.11.5.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D9A24C1290F;
- Wed,  1 Nov 2023 12:47:18 +0000 (UTC)
-Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix,
- from userid 12668)
- id C096130C2A86; Wed,  1 Nov 2023 12:47:18 +0000 (UTC)
-Received: from localhost (localhost [127.0.0.1])
- by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id
- BDD333FB77; Wed,  1 Nov 2023 13:47:18 +0100 (CET)
-Date: Wed, 1 Nov 2023 13:47:18 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Linux regressions mailing list <regressions@lists.linux.dev>
-Subject: Re: [REGRESSION] dm_crypt essiv ciphers do not use async driver
- mv-aes-cbc anymore
-In-Reply-To: <070dd167-9278-42fa-aef5-66621a602fd3@leemhuis.info>
-Message-ID: <518e373e-673e-82a-24ff-b9e8b3927c85@redhat.com>
-References: <53f57de2-ef58-4855-bb3c-f0d54472dc4d@yuka.dev>
- <20230929224327.GA11839@google.com>
- <070dd167-9278-42fa-aef5-66621a602fd3@leemhuis.info>
+Authentication-Results: smtp.subspace.kernel.org; dkim=none
+Received: by mail-qk1-f174.google.com with SMTP id af79cd13be357-778999c5ecfso479139985a.2
+        for <dm-devel@lists.linux.dev>; Wed, 01 Nov 2023 09:19:37 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1698855576; x=1699460376;
+        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=PQtTpppYeU9AiypuUG+j2PUMePFfB94rnMKwVfmVaMc=;
+        b=Ym9DZBIp+mx/094i4VyEvBDUP+wLaiO6Otwwbw+LYuMG2yDJDfS4RyxPD8X2V38L5g
+         gjIz4LTAaQOPR4o+9MMXULB3OqwtcEQdRIp0hQIZOC4X2tiX3VSn7aX70GtcgQ2QQ470
+         7Y+5nJekp5lzrEMhVUJ5K1HBauS/tVsyvpSeTMEtux2Q2x8sCM6f3ZEh9P+nPon6uG0g
+         3IuDHycJtihQV3+FjNKTORj0MdYO9P2Grsj3S9V7vk3E4u8O5fOYgxUXfRP33OOg8X24
+         LzdS2oDXZ57hCow4X4j3CEIdi51gjzfmVkTyuHs9AY0S6XyBaU3UObhvAb2v4JWdI1+A
+         ypTw==
+X-Gm-Message-State: AOJu0YyHyDm7gkCMi1buL5W6FS3YIirTV6hACzIvImtbA6iBG/8vgF7r
+	QoUdiEQrlnGBmiTDD1FWqyqe
+X-Google-Smtp-Source: AGHT+IHqr9/GGjbi2gSbzfcHIoxu0l/hcaUpr0DYzQPsXWnTrsUr+fnlf4uomSKcSePYC1EN9IIkQQ==
+X-Received: by 2002:ad4:596d:0:b0:655:d82d:2fd0 with SMTP id eq13-20020ad4596d000000b00655d82d2fd0mr15069845qvb.21.1698855576378;
+        Wed, 01 Nov 2023 09:19:36 -0700 (PDT)
+Received: from localhost (pool-68-160-141-91.bstnma.fios.verizon.net. [68.160.141.91])
+        by smtp.gmail.com with ESMTPSA id lg18-20020a056214549200b0065cfec43097sm1601112qvb.39.2023.11.01.09.19.35
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 01 Nov 2023 09:19:36 -0700 (PDT)
+Date: Wed, 1 Nov 2023 12:19:34 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	Alasdair G Kergon <agk@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christian Loehle <christian.loehle@arm.com>,
+	Damien Le Moal <dlemoal@kernel.org>,
+	Eric Biggers <ebiggers@google.com>,
+	Justin Stitt <justinstitt@google.com>
+Subject: [git pull] device mapper changes for 6.7
+Message-ID: <ZUJ6lh4bDU/KqKBc@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
-X-BeenThere: dm-devel@redhat.com
-X-Mailman-Version: 2.1.29
-Precedence: list
-List-Id: device-mapper development <dm-devel.redhat.com>
-List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
- <mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://listman.redhat.com/archives/dm-devel/>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
- <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Yureka <yuka@yuka.dev>, Herbert Xu <herbert@gondor.apana.org.au>,
- Boris Brezillon <bbrezillon@kernel.org>, Arnaud Ebalard <arno@natisbad.org>,
- Srujana Challa <schalla@marvell.com>, Eric Biggers <ebiggers@kernel.org>,
- dm-devel@redhat.com, linux-crypto@vger.kernel.org,
- "David S. Miller" <davem@davemloft.net>
-Errors-To: dm-devel-bounces@redhat.com
-Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.9
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
+Hi Linus,
 
+The following changes since commit 3da5d2de92387a8322965c7fb1365f7cae690e5a:
 
-On Wed, 1 Nov 2023, Linux regression tracking (Thorsten Leemhuis) wrote:
+  MAINTAINERS: update the dm-devel mailing list (2023-10-06 19:05:57 -0400)
 
-> > #regzbot introduced: b8aa7dc5c753
-> 
-> BTW: Eric, thx for this.
-> 
-> Boris, Arnaud, Srujana, and Mikulas, could you maybe comment on this? I
-> understand that this is not some everyday regression due to deadlock
-> risk, but it nevertheless would be good to get this resolved somehow to
-> stay in line with our "no regressions" rule.
-> 
-> Ciao, Thorsten (wearing his 'the Linux kernel's regression tracker' hat)
+are available in the Git repository at:
 
-Hi
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.7/dm-changes
 
-The driver drivers/crypto/marvell/cesa/cipher.c uses GFP_ATOMIC 
-allocations (see mv_cesa_skcipher_dma_req_init). So, it is not really safe 
-to use it for dm-crypt.
+for you to fetch changes up to 9793c269da6cd339757de6ba5b2c8681b54c99af:
 
-GFP_ATOMIC allocations may fail anytime (for example, they fill fail if 
-the machine receives too many network packets in a short timeframe and 
-runs temporarily out of memory). And when the GFP_ATOMIC allocation fails, 
-you get a write I/O error and data corruption.
+  dm crypt: account large pages in cc->n_allocated_pages (2023-10-31 14:25:06 -0400)
 
-It could be possible to change it to use GFP_NOIO allocations, then we 
-would risk deadlock instead of data corruption. The best thing would be to 
-convert the driver to use mempools.
+Please pull, thanks.
+Mike
 
-Mikulas
+----------------------------------------------------------------
+- Update DM core to directly call the map function for both the linear
+  and stripe targets; which are provided by DM core.
 
+- Various updates to use new safer string functions.
+
+- Update DM core to respect REQ_NOWAIT flag in normal bios so that
+  memory allocations are always attempted with GFP_NOWAIT.
+
+- Add Mikulas Patocka to MAINTAINERS as a DM maintainer!
+
+- Improve DM delay target's handling of short delays (< 50ms) by using
+  a kthread to check expiration of IOs rather than timers and a wq.
+
+- Update the DM error target so that it works with zoned storage. This
+  helps xfstests to provide proper IO error handling coverage when
+  testing a filesystem with native zoned storage support.
+
+- Update both DM crypt and integrity targets to improve performance by
+  using crypto_shash_digest() rather than init+update+final sequence.
+
+- Fix DM crypt target by backfilling missing memory allocation
+  accounting for compound pages.
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEJfWUX4UqZ4x1O2wixSPxCi2dA1oFAmVCeG8ACgkQxSPxCi2d
+A1oXAAgAnT0mb1psEwDhKiJG26bUeJDJHIaNTPPw4UpCvKEWU7lTxzJUmthnwLZI
+D+JnkrenAfGppdsFkHh1ogTBz8r60aeBTY31SUoCUVS/clwHxRstLCkSE2655an3
+WNgrGItta5BRtcgTMxU7bmqVOD4Xyw704L7BK5CM4zKBQuXJtkegylALhdXvYSjs
+mvHWoPczFW6Rv79CkF0uTkon7Ji041BvKVjbp+fYQf9Pul5d6S1v4Jrvlo2EqblU
+6OM75OosNgziQhdw7faVOgFCVkQfLkEeYsJ47dBOjpC3+sbyKENbC4r+ZmkCZGyI
+uJERswpmAkW7pp+Ab6sqG582DXvPvA==
+=PPwQ
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Christian Loehle (1):
+      dm delay: for short delays, use kthread instead of timers and wq
+
+Damien Le Moal (1):
+      dm error: Add support for zoned block devices
+
+Eric Biggers (2):
+      dm crypt: use crypto_shash_digest() in crypt_iv_tcw_whitening()
+      dm integrity: use crypto_shash_digest() in sb_mac()
+
+Justin Stitt (4):
+      dm cache metadata: replace deprecated strncpy with strscpy
+      dm crypt: replace open-coded kmemdup_nul
+      dm ioctl: replace deprecated strncpy with strscpy_pad
+      dm log userspace: replace deprecated strncpy with strscpy
+
+Mike Snitzer (3):
+      dm: enhance alloc_multiple_bios() to be more versatile
+      dm: respect REQ_NOWAIT flag in normal bios issued to DM
+      MAINTAINERS: add Mikulas Patocka as a DM maintainer
+
+Mikulas Patocka (3):
+      dm: shortcut the calls to linear_map and stripe_map
+      dm: make __send_duplicate_bios return unsigned int
+      dm crypt: account large pages in cc->n_allocated_pages
+
+ MAINTAINERS                        |   1 +
+ drivers/md/dm-cache-metadata.c     |   6 +-
+ drivers/md/dm-crypt.c              |  26 ++++----
+ drivers/md/dm-delay.c              | 103 ++++++++++++++++++++++++++-----
+ drivers/md/dm-integrity.c          |  30 +++------
+ drivers/md/dm-ioctl.c              |   4 +-
+ drivers/md/dm-linear.c             |   2 +-
+ drivers/md/dm-log-userspace-base.c |   2 +-
+ drivers/md/dm-stripe.c             |   2 +-
+ drivers/md/dm-table.c              |  23 ++++++-
+ drivers/md/dm-target.c             | 106 +++++++++++++++++++++++++++++++-
+ drivers/md/dm.c                    | 121 ++++++++++++++++++++++---------------
+ drivers/md/dm.h                    |   2 +
+ 13 files changed, 321 insertions(+), 107 deletions(-)
