@@ -1,54 +1,41 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFF161C10;
-	Wed,  1 Nov 2023 10:27:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 80C1E1096C
+	for <dm-devel@lists.linux.dev>; Wed,  1 Nov 2023 11:23:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="h8gvWhpv";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="Xos+WuMc"
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 518231F74D;
-	Wed,  1 Nov 2023 10:27:00 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1698834420; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZJ6Mr80b"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1698837804;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=uJoXUHYwYfb1qi04WanGMYggfSfr0/lYzD994xmjmAs=;
-	b=h8gvWhpvZB3n/xcDCcojT7LMB3QHifmTxGq7OrzobOd4AuXggtFQaPjc4pm0LJWrr2dYiG
-	aDgrXCV+KG+RQPta8qtu1wqiUhgi/HWIzHZCLkAhJrcxE2cA49R4ankBPiuJr/LhvB1dHU
-	OIobjkr9YGLh+Ra9FWzLSzoRnwpJJsQ=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1698834420;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=uJoXUHYwYfb1qi04WanGMYggfSfr0/lYzD994xmjmAs=;
-	b=Xos+WuMcJB4jSHMIJpla91EZ7FxYsdmIjrGTuYyTORMbWDoJ7KhGSfWLD0a3hb/V3fGYJK
-	DvmNwC3g9vEwYMBw==
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	bh=EeFxVPDwX8rUrPW3tfvqgv2hmUJKD8elj+/gexXEcLQ=;
+	b=ZJ6Mr80b1Wpee15bUpuhuvJEehAQ+LRkMCSo9nAlbTnYJ828flLwCeoYFbeaz5bktt32mQ
+	9FhP1H41CF7SqUH2DI2Q2emorsMe8/XwcTniyANOG/3ftI68VMxaOS556Sxxpw5NH1nCys
+	Y55Yltek1h1BK/WiV83ERA6X5N+igto=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-661-NeK5-0WEMAKRnchMuU24-g-1; Wed,
+ 01 Nov 2023 07:23:19 -0400
+X-MC-Unique: NeK5-0WEMAKRnchMuU24-g-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 3DC991348D;
-	Wed,  1 Nov 2023 10:27:00 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA
-	id hjMMD/QnQmViIAAAMHmgww
-	(envelope-from <jack@suse.cz>); Wed, 01 Nov 2023 10:27:00 +0000
-Received: by quack3.suse.cz (Postfix, from userid 1000)
-	id BA87DA06E3; Wed,  1 Nov 2023 11:26:59 +0100 (CET)
-Date: Wed, 1 Nov 2023 11:26:59 +0100
-From: Jan Kara <jack@suse.cz>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 20AD63811F2F;
+	Wed,  1 Nov 2023 11:23:18 +0000 (UTC)
+Received: from fedora (unknown [10.72.120.3])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 842BD10F4C;
+	Wed,  1 Nov 2023 11:23:09 +0000 (UTC)
+Date: Wed, 1 Nov 2023 19:23:05 +0800
+From: Ming Lei <ming.lei@redhat.com>
 To: Hannes Reinecke <hare@suse.de>
 Cc: Ming Lei <tom.leiming@gmail.com>,
-	Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?= <marmarek@invisiblethingslab.com>,
+	Marek =?iso-8859-1?Q?Marczykowski-G=F3recki?= <marmarek@invisiblethingslab.com>,
 	Jan Kara <jack@suse.cz>, Mikulas Patocka <mpatocka@redhat.com>,
 	Vlastimil Babka <vbabka@suse.cz>,
 	Andrew Morton <akpm@linux-foundation.org>,
@@ -57,9 +44,9 @@ Cc: Ming Lei <tom.leiming@gmail.com>,
 	regressions@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
 	linux-mm@kvack.org, linux-block@vger.kernel.org,
-	linux-nvme@lists.infradead.org, ming.lei@redhat.com
+	linux-nvme@lists.infradead.org
 Subject: Re: Intermittent storage (dm-crypt?) freeze - regression 6.4->6.5
-Message-ID: <20231101102659.mg5sb6kei5plapvo@quack3>
+Message-ID: <ZUI1GSSL4vdsFVHq@fedora>
 References: <20231030155603.k3kejytq2e4vnp7z@quack3>
  <ZT/e/EaBIkJEgevQ@mail-itl>
  <98aefaa9-1ac-a0e4-fb9a-89ded456750@redhat.com>
@@ -80,8 +67,9 @@ Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
 In-Reply-To: <ab02413f-4bf2-4d92-baf7-62fbd106f5df@suse.de>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
 
-On Wed 01-11-23 11:15:02, Hannes Reinecke wrote:
+On Wed, Nov 01, 2023 at 11:15:02AM +0100, Hannes Reinecke wrote:
 > On 11/1/23 04:24, Ming Lei wrote:
 > > On Wed, Nov 01, 2023 at 03:14:22AM +0100, Marek Marczykowski-Górecki wrote:
 > > > On Wed, Nov 01, 2023 at 09:27:24AM +0800, Ming Lei wrote:
@@ -166,19 +154,26 @@ On Wed 01-11-23 11:15:02, Hannes Reinecke wrote:
 > > 
 > And that is something I've been wondering (for quite some time now):
 > What _is_ the appropriate error handling for -ENOMEM?
+
+It is just my guess.
+
+Actually it shouldn't fail since the sgl allocation is backed with
+memory pool, but there is also dma pool allocation and dma mapping.
+
 > At this time, we assume it to be a retryable error and re-run the queue
 > in the hope that things will sort itself out.
+
+It should not be hard to figure out why nvme_queue_rq() can't move on.
+
 > But if they don't we're stuck.
 > Can we somehow figure out if we make progress during submission, and (at
 > least) issue a warning once we detect a stall?
 
-Well, but Marek has show [1] the machine is pretty far from being OOM when it
-is stuck. So it doesn't seem like a simple OOM situation...
+It needs counting on request retry, and people often hate to add something
+to request or bio in fast path. Also this kind of issue is easy to show
+in blk-mq debugfs or bpftrace.
 
-								Honza
 
-[1] https://lore.kernel.org/all/ZTiJ3CO8w0jauOzW@mail-itl/
+Thanks, 
+Ming
 
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
