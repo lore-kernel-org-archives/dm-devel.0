@@ -1,66 +1,54 @@
-Received: from out4-smtp.messagingengine.com (out4-smtp.messagingengine.com [66.111.4.28])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F63214AB3;
-	Thu,  2 Nov 2023 11:46:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=invisiblethingslab.com
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=invisiblethingslab.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A806314F6C;
+	Thu,  2 Nov 2023 12:22:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=invisiblethingslab.com header.i=@invisiblethingslab.com header.b="N5WuW9tF";
-	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="ToeFUeiA"
-Received: from compute1.internal (compute1.nyi.internal [10.202.2.41])
-	by mailout.nyi.internal (Postfix) with ESMTP id DEB8D5C0087;
-	Thu,  2 Nov 2023 07:46:01 -0400 (EDT)
-Received: from mailfrontend1 ([10.202.2.162])
-  by compute1.internal (MEProxy); Thu, 02 Nov 2023 07:46:01 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-	invisiblethingslab.com; h=cc:cc:content-type:content-type:date
-	:date:from:from:in-reply-to:in-reply-to:message-id:mime-version
-	:references:reply-to:sender:subject:subject:to:to; s=fm3; t=
-	1698925561; x=1699011961; bh=jyR214XHmiYuLiqo14R8R1Hmefqc34vJfyv
-	prJgyycI=; b=N5WuW9tFkWLqw8Pnijhdo7CtpshkwsARFGFqwVhaMG9EFkUyTdY
-	M2grn94+F+ckmaJLJg90vKyvfoRBEfxTOMMMECHpzzXPYeWafW3pLCo4t/ZtcC71
-	TmFFNMFBxd4UYfUNpO+j9tGRWq1y0GFJWUf6evWnQeEZAeDkNsW84Gt9RmZs1yMC
-	DVBGivL7HpbIAygmTAwUDC/7UaYnxzByVnkfmlSDPEPpiME3Ddnhmn0SP4cYv9VC
-	jumkuS/DhuPXv61wBgZ4u23tiyDoZEGWox8V8Wi7LOxfxju5FZhqUeR3qf9H+MFn
-	BQu/ARO/DzlFERK3Hv730B6+y5Z8VVhYxxQ==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-	messagingengine.com; h=cc:cc:content-type:content-type:date:date
-	:feedback-id:feedback-id:from:from:in-reply-to:in-reply-to
-	:message-id:mime-version:references:reply-to:sender:subject
-	:subject:to:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender
-	:x-sasl-enc; s=fm3; t=1698925561; x=1699011961; bh=jyR214XHmiYuL
-	iqo14R8R1Hmefqc34vJfyvprJgyycI=; b=ToeFUeiA/zZbb+OeBzfcmtZbAlV6O
-	G3Dv1dj+ZhtQLjkV+uEYn1t74MOxFs3MPvD3+yQHPoiS+Ip4ir6l27Bhidu1/fu9
-	eH/EA7ZdZT4QGXnPsZb55JNsNqajZednb4flvTpHtNyARMi6gIUWfF6+aoks8zmL
-	t91pGDKLGzs/KWPnU2cQ2+iKwQnq90frLX81QY3/B+e8CrWjx60qtFuR9eaTcHDr
-	YyPpBTon2oSW04OA72SKcyJ41VR3oHiHisYieYK0e4y4CQQ/TduOGqbAd2OMh1qy
-	2OJM9LayXUwOGJtukorW45iQcKfe95slF2JQdIueZOFugDEQDZrl7D/6Q==
-X-ME-Sender: <xms:-ItDZRMHktnmpFYetdJ1VgjimzgywAqvd8YLAZOy-qtyGo-fIRSENA>
-    <xme:-ItDZT8xAh2sYA_azHc_C55f-DX47iXF56LaMI5zWEMZPPgMOg__gFn65Ts0g7kWt
-    647d4kmEpPGNg>
-X-ME-Received: <xmr:-ItDZQTqoVGxon6gXacJDtpQLsG7aUI6vm-Dtpw3pfbrRUgGwhLNkgN_BixY>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvkedruddtiedgfedvucetufdoteggodetrfdotf
-    fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
-    uceurghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmne
-    cujfgurhepfffhvfevuffkfhggtggujgesghdtreertddtjeenucfhrhhomhepofgrrhgv
-    khcuofgrrhgtiiihkhhofihskhhiqdfikphrvggtkhhiuceomhgrrhhmrghrvghksehinh
-    hvihhsihgslhgvthhhihhnghhslhgrsgdrtghomheqnecuggftrfgrthhtvghrnhepieel
-    uddvkeejueekhfffteegfeeiffefjeejvdeijedvgfejheetuddvkeffudeinecuffhomh
-    grihhnpehkvghrnhgvlhdrohhrghenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgr
-    mhepmhgrihhlfhhrohhmpehmrghrmhgrrhgvkhesihhnvhhishhisghlvghthhhinhhgsh
-    hlrggsrdgtohhm
-X-ME-Proxy: <xmx:-ItDZdunw7LxYGH9cIinZ5fBBq2YxpMRcrfIXDwf6I9ghCVj3Pj9aQ>
-    <xmx:-ItDZZf-RMryPiSqznnH9HssE0SbKckQ4tX-GfojqhGw0UFEy7VBrg>
-    <xmx:-ItDZZ2sNkJiRt_Pvnco2TF6_lVyiytIJIjmZDbMJ3NBFsex12b3oQ>
-    <xmx:-YtDZc9iwYaCveHDyW5vCojBE3h2f0Mvs7o-Yl4b0onbKnCT7OUTfw>
-Feedback-ID: i1568416f:Fastmail
-Received: by mail.messagingengine.com (Postfix) with ESMTPA; Thu,
- 2 Nov 2023 07:45:56 -0400 (EDT)
-Date: Thu, 2 Nov 2023 12:45:54 +0100
-From: Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?= <marmarek@invisiblethingslab.com>
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="d/bJkBWz";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="7+I9n1AP"
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 7C5A121A04;
+	Thu,  2 Nov 2023 12:21:55 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1698927715; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5mAwtuufov9lTyy9sGroezcbI4J+0d92k5eAe06+d7k=;
+	b=d/bJkBWzLkto/7fGyqVLPb1234f6tUyvUNiGGAK7Qoa8qcSX2xy+GlFZUIjtizxRoIhTQw
+	a+VGgqPncn2LHxZGvcVnzn5XRAp9g4+PoYAslRKjrVPjc0vY9sdDyCr+iTruuzwCIYi1Kw
+	3VbDzjjOhoWdWqh6HVj4Noo1SIELCOw=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1698927715;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5mAwtuufov9lTyy9sGroezcbI4J+0d92k5eAe06+d7k=;
+	b=7+I9n1APdWA4llCvO7g/6lEagQD4M+yeaMcPW4WCfXzozzeg8KR3dU9aGgwa4GrCFmWM6c
+	u3lBNfzxJp1TuKDg==
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+	(No client certificate requested)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 6DCAF138EC;
+	Thu,  2 Nov 2023 12:21:55 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+	by imap2.suse-dmz.suse.de with ESMTPSA
+	id vJjEGmOUQ2VQRQAAMHmgww
+	(envelope-from <jack@suse.cz>); Thu, 02 Nov 2023 12:21:55 +0000
+Received: by quack3.suse.cz (Postfix, from userid 1000)
+	id E5402A06E3; Thu,  2 Nov 2023 13:21:54 +0100 (CET)
+Date: Thu, 2 Nov 2023 13:21:54 +0100
+From: Jan Kara <jack@suse.cz>
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Keith Busch <kbusch@kernel.org>, Jens Axboe <axboe@fb.com>,
+Cc: Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?= <marmarek@invisiblethingslab.com>,
+	Keith Busch <kbusch@kernel.org>, Jens Axboe <axboe@fb.com>,
 	Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
 	Jan Kara <jack@suse.cz>, Vlastimil Babka <vbabka@suse.cz>,
 	Andrew Morton <akpm@linux-foundation.org>,
@@ -70,7 +58,7 @@ Cc: Keith Busch <kbusch@kernel.org>, Jens Axboe <axboe@fb.com>,
 	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
 	linux-mm@kvack.org
 Subject: Re: Intermittent storage (dm-crypt?) freeze - regression 6.4->6.5
-Message-ID: <ZUOL8kXVTF1OngeN@mail-itl>
+Message-ID: <20231102122154.jtwcl6l4f4pebqqx@quack3>
 References: <20231030155603.k3kejytq2e4vnp7z@quack3>
  <ZT/e/EaBIkJEgevQ@mail-itl>
  <98aefaa9-1ac-a0e4-fb9a-89ded456750@redhat.com>
@@ -87,126 +75,59 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="ryHRs7NcQmS/qwTv"
+Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 In-Reply-To: <ac5b5ac0-9e8-c1b0-a26-62f832f845f0@redhat.com>
 
-
---ryHRs7NcQmS/qwTv
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-Date: Thu, 2 Nov 2023 12:45:54 +0100
-From: Marek =?utf-8?Q?Marczykowski-G=C3=B3recki?= <marmarek@invisiblethingslab.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Keith Busch <kbusch@kernel.org>, Jens Axboe <axboe@fb.com>,
-	Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
-	Jan Kara <jack@suse.cz>, Vlastimil Babka <vbabka@suse.cz>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Matthew Wilcox <willy@infradead.org>,
-	Michal Hocko <mhocko@suse.com>, stable@vger.kernel.org,
-	regressions@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
-	linux-mm@kvack.org
-Subject: Re: Intermittent storage (dm-crypt?) freeze - regression 6.4->6.5
-
-On Thu, Nov 02, 2023 at 10:28:57AM +0100, Mikulas Patocka wrote:
->=20
->=20
-> On Thu, 2 Nov 2023, Marek Marczykowski-G=C3=B3recki wrote:
->=20
+On Thu 02-11-23 10:28:57, Mikulas Patocka wrote:
+> On Thu, 2 Nov 2023, Marek Marczykowski-Górecki wrote:
 > > On Tue, Oct 31, 2023 at 06:24:19PM +0100, Mikulas Patocka wrote:
-> >=20
+> > 
 > > > > Hi
-> > > >=20
-> > > > I would like to ask you to try this patch. Revert the changes to "o=
-rder"=20
-> > > > and "PAGE_ALLOC_COSTLY_ORDER" back to normal and apply this patch o=
-n a=20
+> > > > 
+> > > > I would like to ask you to try this patch. Revert the changes to "order" 
+> > > > and "PAGE_ALLOC_COSTLY_ORDER" back to normal and apply this patch on a 
 > > > > clean upstream kernel.
-> > > >=20
+> > > > 
 > > > > Does it deadlock?
-> > > >=20
-> > > > There is a bug in dm-crypt that it doesn't account large pages in=
-=20
+> > > > 
+> > > > There is a bug in dm-crypt that it doesn't account large pages in 
 > > > > cc->n_allocated_pages, this patch fixes the bug.
-> >=20
+> > 
 > > This patch did not help.
-> >=20
-> > > If the previous patch didn't fix it, try this patch (on a clean upstr=
-eam=20
+> > 
+> > > If the previous patch didn't fix it, try this patch (on a clean upstream 
 > > > kernel).
 > > >
-> > > This patch allocates large pages, but it breaks them up into single-p=
-age=20
+> > > This patch allocates large pages, but it breaks them up into single-page 
 > > > entries when adding them to the bio.
-> >=20
+> > 
 > > But this does help.
->=20
-> Thanks. So we can stop blaming the memory allocator and start blaming the=
-=20
+> 
+> Thanks. So we can stop blaming the memory allocator and start blaming the 
 > NVMe subsystem.
->=20
->=20
-> I added NVMe maintainers to this thread - the summary of the problem is:=
-=20
-> In dm-crypt, we allocate a large compound page and add this compound page=
-=20
-> to the bio as a single big vector entry. Marek reports that on his system=
-=20
-> it causes deadlocks, the deadlocks look like a lost bio that was never=20
-> completed. When I chop the large compound page to individual pages in=20
-> dm-crypt and add bio vector for each of them, Marek reports that there ar=
-e=20
-> no longer any deadlocks. So, we have a problem (either hardware or=20
-> software) that the NVMe subsystem doesn't like bio vectors with large=20
-> bv_len. This is the original bug report:=20
+
+;-)
+
+> I added NVMe maintainers to this thread - the summary of the problem is: 
+> In dm-crypt, we allocate a large compound page and add this compound page 
+> to the bio as a single big vector entry. Marek reports that on his system 
+> it causes deadlocks, the deadlocks look like a lost bio that was never 
+> completed. When I chop the large compound page to individual pages in 
+> dm-crypt and add bio vector for each of them, Marek reports that there are 
+> no longer any deadlocks. So, we have a problem (either hardware or 
+> software) that the NVMe subsystem doesn't like bio vectors with large 
+> bv_len. This is the original bug report: 
 > https://lore.kernel.org/stable/ZTNH0qtmint%2FzLJZ@mail-itl/
->=20
->=20
-> Marek, what NVMe devices do you use? Do you use the same device on all 3=
-=20
-> machines where you hit this bug?
 
-This one is "Star Drive PCIe SSD", another one is "Samsung SSD 970 EVO
-Plus 1TB", I can't check the third one right now.
+Actually, Ming Lei has already identified [1] that we are apparently
+looping in an endless retry loop in nvme_queue_rq(), always ending up the
+attempt with BLK_STS_RESOURCE.
+								Honza
 
-> In the directory /sys/block/nvme0n1/queue: what is the value of=20
-> dma_alignment, max_hw_sectors_kb, max_sectors_kb, max_segment_size,=20
-> max_segments, virt_boundary_mask?
+[1] https://lore.kernel.org/all/ZUHE52SznRaZQxnG@fedora
 
-/sys/block/nvme0n1/queue/dma_alignment:3
-/sys/block/nvme0n1/queue/max_hw_sectors_kb:2048
-/sys/block/nvme0n1/queue/max_sectors_kb:1280
-/sys/block/nvme0n1/queue/max_segment_size:4294967295
-/sys/block/nvme0n1/queue/max_segments:128
-/sys/block/nvme0n1/queue/virt_boundary_mask:4095
-
-> Try lowring /sys/block/nvme0n1/queue/max_sectors_kb to some small value=
-=20
-> (for example 64) and test if it helps.
-
-Yes, this helps too.
-
---=20
-Best Regards,
-Marek Marczykowski-G=C3=B3recki
-Invisible Things Lab
-
---ryHRs7NcQmS/qwTv
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAEBCAAdFiEEhrpukzGPukRmQqkK24/THMrX1ywFAmVDi/IACgkQ24/THMrX
-1ywWiAgAi+onSGtXf8qh3OO8wNl5vwpa+xEkcDadwdJPa9ICy67uroUWHAhHQAGR
-BQf0lKlq3bFyzRqn8+Zc3CtF4oDTt5NOqymZwhmm3zFvfvBy924TpWe5IGdmqlz6
-06VcRIpTlX27WRMqlzYwPPUrUbW9gtQEoSEzZejU4E++YaEgzMkk9YFEYic2PcQ7
-XqOmFVswdWqAKliEaOqyqx0aj5BGEM/Hbca7NY1jSUds/YShs6mkXk1GpKrBtmJ+
-74TQiwr5nIyERqUvg7dOCE/NYTnyLEVPUtSXQdYVsyfg6Ok9Gg2mp4KDWZu26v4J
-9YX3BdqjNVHXhIPOxJ10aDJga0Y0fQ==
-=7y+j
------END PGP SIGNATURE-----
-
---ryHRs7NcQmS/qwTv--
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
