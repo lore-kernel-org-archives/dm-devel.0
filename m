@@ -1,401 +1,212 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mgamail.intel.com (mgamail.intel.com [134.134.136.20])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 43B9722314
-	for <dm-devel@lists.linux.dev>; Thu,  2 Nov 2023 22:15:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6DD1E1101;
+	Fri,  3 Nov 2023 01:56:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="R5Nhbprd"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1698963313;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=BpKgINVMTKy9vo4g+jpsOQB6JjueO19KLwPqwoXDtNw=;
-	b=R5NhbprdE5tdEh2UNgpfi/dhfrcOF5sc6zFOHT0KQg7T08FHc+LsRlgo+bPdkMVPpK1I+l
-	6i4HfE2o061RdKG1v/eipiKsZO04fcOueoesNxgZ1Uyw6nxEV4AWmkGKeZkbNwJlhgqbjC
-	5V5LYZ4DavM+B8/FrPS2dxhzUA3EM+Y=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-96-Wt7gP8boOgaNw9lpvHqZog-1; Thu,
- 02 Nov 2023 18:15:08 -0400
-X-MC-Unique: Wt7gP8boOgaNw9lpvHqZog-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F35D91C113F5;
-	Thu,  2 Nov 2023 22:15:07 +0000 (UTC)
-Received: from bmarzins-01.fast.rdu2.eng.redhat.com (bmarzins-01.fast.rdu2.eng.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EBF7F1C060BA;
-	Thu,  2 Nov 2023 22:15:07 +0000 (UTC)
-Received: from bmarzins-01.fast.rdu2.eng.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1) with ESMTPS id 3A2MF7Fv105381
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 2 Nov 2023 18:15:07 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1/Submit) id 3A2MF7aL105380;
-	Thu, 2 Nov 2023 18:15:07 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 1/7] libmultipath: Add max_retries config option
-Date: Thu,  2 Nov 2023 18:15:01 -0400
-Message-ID: <20231102221507.105371-2-bmarzins@redhat.com>
-In-Reply-To: <20231102221507.105371-1-bmarzins@redhat.com>
-References: <20231102221507.105371-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="g/DKvkWS"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1698976584; x=1730512584;
+  h=date:from:to:cc:subject:message-id:references:
+   in-reply-to:mime-version;
+  bh=IeyQw0YBzbeSaLgRYj/kpfQdq0M73Q2cDBSZh9K1ia8=;
+  b=g/DKvkWS7Mxm7gdxpsehqPWF4T4IZPIUAYKt7U3Whk7fYlyYq8Cv153A
+   uFrWj+iGv05YizXWRsAEVrPguL5HL6DyiCf+CAWI0rsuxtJ357ziyGaWR
+   aW63NusytNrdKM1YVeNZM1ssRqMfRe0EspdNvNk4rhT8+PB1gClb77Bx8
+   EzPRZfrBBixVuu/tPXaz4QfYTCai17KdDuO7ywfwCLoKGkymBse7UaFwO
+   UBNczx5o+j8EuDjDVqVzUtTlkzwRRc55YQK26iCzMwm+S4dFj7gTCdtw0
+   gq8QIdju7tGyTjP7Po/ZlICmTUDnhqzYWnlevTMvBsuiAqJaYzbNFwSMF
+   Q==;
+X-IronPort-AV: E=McAfee;i="6600,9927,10882"; a="379257827"
+X-IronPort-AV: E=Sophos;i="6.03,272,1694761200"; 
+   d="scan'208";a="379257827"
+Received: from fmsmga001.fm.intel.com ([10.253.24.23])
+  by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Nov 2023 18:56:22 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10882"; a="905183555"
+X-IronPort-AV: E=Sophos;i="6.03,272,1694761200"; 
+   d="scan'208";a="905183555"
+Received: from orsmsx603.amr.corp.intel.com ([10.22.229.16])
+  by fmsmga001.fm.intel.com with ESMTP/TLS/AES256-GCM-SHA384; 02 Nov 2023 18:56:22 -0700
+Received: from orsmsx610.amr.corp.intel.com (10.22.229.23) by
+ ORSMSX603.amr.corp.intel.com (10.22.229.16) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2507.34; Thu, 2 Nov 2023 18:56:21 -0700
+Received: from orsmsx610.amr.corp.intel.com (10.22.229.23) by
+ ORSMSX610.amr.corp.intel.com (10.22.229.23) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2507.34; Thu, 2 Nov 2023 18:56:21 -0700
+Received: from orsedg603.ED.cps.intel.com (10.7.248.4) by
+ orsmsx610.amr.corp.intel.com (10.22.229.23) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2507.34 via Frontend Transport; Thu, 2 Nov 2023 18:56:21 -0700
+Received: from NAM12-MW2-obe.outbound.protection.outlook.com (104.47.66.40) by
+ edgegateway.intel.com (134.134.137.100) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.1.2507.34; Thu, 2 Nov 2023 18:56:21 -0700
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=iB15X2TvYQSWAFYfEQRU9wioAQDavRuNqzHLjp2fZbNWDIfwpCs4yFCaBfC2GrTo0ZxgQKsvrO7mo7lCnHfttr3E8/TB+xbmxAywE+J0m/AOQvGSloHhYGcIHu3fTfFzlOppqLX7j7gxq/Qpv0Xrd61sF3uva1bPZ0mMBXyRXmDzB8EKJBuY4GP6VkdN7rzObyJ11LxAwOGeF/YBaKqC44UuBx8UtWQJIz7Q4sg6+3pEMACnU4Slw5oawp8iGhmwmjRxlOPLzK242urua6VlNqiBR0/maZhBo5RsDmNFJeR6uFdomnf8Kh4quLXSdVmDizG3tATXjA27TRIQMRQF8g==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=wmqJCr7CFLDrH4mBgWhLdP8Ce/zqrhHtQ/3ZWwcBsXo=;
+ b=OMx3kGtsKYLiLHN9Tl7eUUCZR3wSjjzosaHe31gfgvxsRK2FgxsRPALDnhVNAuQTMmFCBa3J0mwGvN3Z/ld82FJaSSUK0yz6SGiDRlmss9XTfsP3MlkLy5MpCFkJAMZWUMghbP4CqeACZkA5/f3ib8gESzUWbcRgoWGzZZrp4GezatnDhb/U5ziv3as7QBDPb1JeFhgbx7/Fc8Bs6ZpgG8hbzDeXrJwXAlX/wwRLkkwYle+KQE5PhHYr1t9UughgvK9XdAWPKKa5ZVW1ko8p4LAo8Bsw0q13BTfJEyiS0w7WOcJ08Qy8nHwOBt1XAUMDVzu3uFlf28JLQJeNZFClzg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=intel.com; dmarc=pass action=none header.from=intel.com;
+ dkim=pass header.d=intel.com; arc=none
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=intel.com;
+Received: from CY5PR11MB6392.namprd11.prod.outlook.com (2603:10b6:930:37::15)
+ by IA1PR11MB6172.namprd11.prod.outlook.com (2603:10b6:208:3e8::5) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6933.29; Fri, 3 Nov
+ 2023 01:56:19 +0000
+Received: from CY5PR11MB6392.namprd11.prod.outlook.com
+ ([fe80::15d3:7425:a09e:1c86]) by CY5PR11MB6392.namprd11.prod.outlook.com
+ ([fe80::15d3:7425:a09e:1c86%4]) with mapi id 15.20.6933.028; Fri, 3 Nov 2023
+ 01:56:18 +0000
+Date: Fri, 3 Nov 2023 09:51:34 +0800
+From: Yujie Liu <yujie.liu@intel.com>
+To: Mike Snitzer <snitzer@kernel.org>
+CC: Matthew Sakai <msakai@redhat.com>, <oe-kbuild-all@lists.linux.dev>,
+	<dm-devel@lists.linux.dev>, "J. corwin Coburn" <corwin@hurlbutnet.net>, "John
+ Wiele" <jwiele@redhat.com>, kernel test robot <lkp@intel.com>
+Subject: Re: [device-mapper-dm:dm-vdo-wip 55/90]
+ drivers/md/dm-vdo/block-map.h:35:37: warning: 'UNMAPPED_BLOCK_MAP_ENTRY'
+ defined but not used
+Message-ID: <ZURSJr+q462oRC4y@yujie-X299>
+References: <202311021353.WMMPQspU-lkp@intel.com>
+ <ZUO8OiRFhUNlC2rR@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Disposition: inline
+In-Reply-To: <ZUO8OiRFhUNlC2rR@redhat.com>
+X-ClientProxiedBy: SI2PR01CA0018.apcprd01.prod.exchangelabs.com
+ (2603:1096:4:191::7) To CY5PR11MB6392.namprd11.prod.outlook.com
+ (2603:10b6:930:37::15)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain; charset="US-ASCII"; x-default=true
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: CY5PR11MB6392:EE_|IA1PR11MB6172:EE_
+X-MS-Office365-Filtering-Correlation-Id: ea7fa635-9443-43d0-fd27-08dbdc101235
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0;
+X-Microsoft-Antispam-Message-Info: 1kAeXUmA/LzCVYBG5TzYNMpN/wM9wLS1WbfosgeFeQRpMiFcbE9Lj5TqpL+rX3GapiXcUomhg5JJYmfDeA3YAOaeAUahaakQ0huctsrWmS8+70RX+dCtZ880h3emIKHIM6TDAI+6e6ddvRzZNBv8UrXPBDRCcbqedF5Mo+lPrLnoh3Ky/wVvdT9iYnbSeXoKIbrVQv5A1El0YmRIyGHAoEDHFZIzoVl9ohcmyGPe2g1rAR8WT7kTSZsNxSKdzmiVNSYsfcju1RVCtcgIg4XlcsNbzaK5FAzREiaf5D9iIKbdSWWtkgavcEp7iML6WdLrsqhuJnblBRFFVDBiQC7HoRdH29t9sVk4/IyvC8b8i3DF2KPwXzXmaU+wCxbJEpOwQQLgAvtbSah256KvSfCPwp/RkvhOuccldSPcDS5RRWYMChDd0VlKT8YJOkMX7Qhm3r/uCRQPaWFLRQI4q+j/O40rqYxlaolxrs6JlSprwK2yCWRD41ZK/6eSDiQ4aUY+yT3yIBsZ0CSmsUPZCVASp8XpJVSzfHPNu5XQZmTR6VuyYXmPmOAbMlyXzzdz9x6Usz1qKUTFPT8WaajIKGMrAIO84v74NKQB0MD+xA+OpBFcdF2zfRAilZpYn+pMSenwlCLpuB+DsmmoBw8krPQkN0hKRTUYayHrwZC4cn6tTP4=
+X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:CY5PR11MB6392.namprd11.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(7916004)(396003)(39860400002)(376002)(366004)(346002)(136003)(230273577357003)(230922051799003)(230173577357003)(186009)(1800799009)(451199024)(64100799003)(8936002)(8676002)(44832011)(4326008)(107886003)(54906003)(316002)(6916009)(26005)(41300700001)(2906002)(6486002)(6512007)(5660300002)(6506007)(9686003)(478600001)(66946007)(83380400001)(66556008)(38100700002)(966005)(82960400001)(66476007)(6666004)(86362001)(33716001)(4001150100001)(67856001);DIR:OUT;SFP:1102;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?Qi/9HCashoFB1wKHcuMu+BlDPL+vUSCmSuph+d7TIIyVQsxKG8v7IfyhHcOi?=
+ =?us-ascii?Q?HCxz1WroLtcY+F37rxQf/mB7FTFm1RmC8OR68O1+WmBSCZ29YNIWFewlBshx?=
+ =?us-ascii?Q?UJenUe6M9MW3iOfzYzn6zTXgUmMWDD7VkezGnQLRrzk+8w/qgfeLGHGRU/Rm?=
+ =?us-ascii?Q?45MJSy9j62mMm12uOGMsT9dij6Wl4uQuU4jaBZoIYHG02UI4d7T8aZEiu6tU?=
+ =?us-ascii?Q?FDgazTED6J1v15T2Be1B6MyU/N94jnNvjMxJqLdN5o0tx/Klc/Gu59FIZXhU?=
+ =?us-ascii?Q?Zk8UMq+py+Lp4SnAA8FK0NfnpUggWECs9mKwUlrvHCV43yEqMxE2t+l+kgSf?=
+ =?us-ascii?Q?1aRyn+5T4/6ikl39FgbtDiA9O7qFGMS4hvFl4bzFu0rLIFMHwnoqbPWVPcy5?=
+ =?us-ascii?Q?J8Dky/rnEgDVAPYoDquIgJ1XSVEUYF5KqT4+uxUjKsXTbFmxJodpwWwFZ7SR?=
+ =?us-ascii?Q?MyJjdBAZdLa+LlYyQs7bBNWJuRzuMcPOiMssaWtWjvjAxgnW1mneOSCw0Qrg?=
+ =?us-ascii?Q?sgxTXepAc+2i7BtPQzPT8Ll7T7HJwxH+EAmY/iyvXaIQjmy7oHtmL7Nn43Fq?=
+ =?us-ascii?Q?OOrypJ88WQVQJ+yn1tyr4iGKlAkr9Cwb5T/sxRltIRuz8X7nenPwmjYfzrlW?=
+ =?us-ascii?Q?043RFjsjfpmuAew8wAn9T8hoNMe1GnyL8IUduKkvqLoVfevL1KKXspe2R4Fb?=
+ =?us-ascii?Q?FxYvdfGv4E2zLx6SsfafLfVRfsCI8KuX3NjMIhbN3BSTGQBS8Hm/b9BsQGLJ?=
+ =?us-ascii?Q?0cIKPiizKfBRwbuhMSwnoW4cz+Hzue7odcsWTQQy/GvAxKi/FJJOI+1HQMPA?=
+ =?us-ascii?Q?g/tEa9p19gYX5/qsa9C/QY9s8BAzbNhCWSWqgI3QperjDercKj+TVF3kRf5W?=
+ =?us-ascii?Q?9GTzt2GoQ/RovP6HgxNq3lzfOpO7eOovGTgdWgku7gLED4vcLk0YQLPfzRyX?=
+ =?us-ascii?Q?F1cEnVaNQcySBPmBCh9RhG7bswwRbA1VoER4/6v/jYhVHMwWs4zU2stviBen?=
+ =?us-ascii?Q?f3dhIFNrlpLx0wzhy5Pnb9iKLqxgTxh1qckqzE49bIlWrV1LM5sFyTnPpi3D?=
+ =?us-ascii?Q?JGlJ0/0U7/mDnaU07/audHowXsORcXEd97K9IOhk8RIzjDNKAfOussCm9PZi?=
+ =?us-ascii?Q?1PrcP6fGsHvFTuMcoNAkZVfTy7PkrtCS+JTWJtjpV58tdeZTfmM5c5wxtef0?=
+ =?us-ascii?Q?lNZVYhoyGjKQhteAb+coKkXfhbj/2MZugkjw9IM0Y70RbEUTYwY+sNHC7u56?=
+ =?us-ascii?Q?W3D1cMHEBDNDyT5dnmIanEFAw0U2rQcru3gQtvue9FMXPUmHVMT+ki0c95To?=
+ =?us-ascii?Q?lqX3L6uv4cdX5DXAnEWEMyMy0ZEe1LjAzXnBzSRSXGFp4DIY8VmgVx3i+SCL?=
+ =?us-ascii?Q?sv6/Xin/JxXp82NV6WtQMvIv7ankbXR5yZyt6ZEz4ol02ZvLvTqBFKnAOj4q?=
+ =?us-ascii?Q?4RKA13xmUTlRRY9cdtzCd8YSMf8HG/GD+NXT0JPqt9hyLDHDHAgWMBfxutHT?=
+ =?us-ascii?Q?+NKxgzRGDHmkq/gyhjhQggnGAOqxYmjsjyGJZabh70RixTvXe52CWhRN7R7/?=
+ =?us-ascii?Q?hU9KylU63VfAlel8QztFhQghphd8/uPqdcMw6JEM?=
+X-MS-Exchange-CrossTenant-Network-Message-Id: ea7fa635-9443-43d0-fd27-08dbdc101235
+X-MS-Exchange-CrossTenant-AuthSource: CY5PR11MB6392.namprd11.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 03 Nov 2023 01:56:18.9134
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 46c98d88-e344-4ed4-8496-4ed7712e255d
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: PBiS178zCUrMLOXiMbZQiKHce8Apmax+pJRChOIU8AwWjGSvqoLbc+tWEV0qrZ3bxtWatRO08nAHQbVgPdUeZQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: IA1PR11MB6172
+X-OriginatorOrg: intel.com
 
-This option lets multipath set a scsi disk's max_retries sysfs value.
-Setting this can be helpful for cases where the path checker succeeds,
-but IO commands hang and timeout. By default, the SCSI layer will retry
-IOs 5 times. Reducing this value will allow multipath to retry the IO
-down another path sooner.
+On Thu, Nov 02, 2023 at 11:11:54AM -0400, Mike Snitzer wrote:
+> [lkp: please update your scripts to use the new
+> dm-devel@lists.linux.dev when emailing dm-devel. The MAINTAINERS file
+> was updated so I don't know why you'd still be using the old
+> dm-devel@redhat.com address]
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/config.c         |  3 +++
- libmultipath/config.h         |  3 +++
- libmultipath/dict.c           | 34 ++++++++++++++++++++++++++++
- libmultipath/discovery.c      | 42 ++++++++++++++++++++++++++++++++++-
- libmultipath/propsel.c        | 18 +++++++++++++++
- libmultipath/propsel.h        |  1 +
- libmultipath/structs.h        |  7 ++++++
- multipath/multipath.conf.5.in | 22 ++++++++++++++++++
- 8 files changed, 129 insertions(+), 1 deletion(-)
+Hi Mike, thanks a lot for this information. We've updated the
+configuration of the bot to use the new mailing list address.
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index b7dbc6f5..9d90f512 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -420,6 +420,7 @@ merge_pce(struct pcentry *dst, struct pcentry *src)
- 	merge_num(fast_io_fail);
- 	merge_num(dev_loss);
- 	merge_num(eh_deadline);
-+	merge_num(max_retries);
- }
- 
- static void
-@@ -448,6 +449,7 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
- 	merge_num(fast_io_fail);
- 	merge_num(dev_loss);
- 	merge_num(eh_deadline);
-+	merge_num(max_retries);
- 	merge_num(user_friendly_names);
- 	merge_num(retain_hwhandler);
- 	merge_num(detect_prio);
-@@ -615,6 +617,7 @@ store_hwe (vector hwtable, struct hwentry * dhwe)
- 	hwe->fast_io_fail = dhwe->fast_io_fail;
- 	hwe->dev_loss = dhwe->dev_loss;
- 	hwe->eh_deadline = dhwe->eh_deadline;
-+	hwe->max_retries = dhwe->max_retries;
- 	hwe->user_friendly_names = dhwe->user_friendly_names;
- 	hwe->retain_hwhandler = dhwe->retain_hwhandler;
- 	hwe->detect_prio = dhwe->detect_prio;
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 8c22ce75..197a567f 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -47,6 +47,7 @@ struct pcentry {
- 	int fast_io_fail;
- 	unsigned int dev_loss;
- 	int eh_deadline;
-+	int max_retries;
- };
- 
- struct hwentry {
-@@ -72,6 +73,7 @@ struct hwentry {
- 	int fast_io_fail;
- 	unsigned int dev_loss;
- 	int eh_deadline;
-+	int max_retries;
- 	int user_friendly_names;
- 	int retain_hwhandler;
- 	int detect_prio;
-@@ -162,6 +164,7 @@ struct config {
- 	int fast_io_fail;
- 	unsigned int dev_loss;
- 	int eh_deadline;
-+	int max_retries;
- 	int log_checker_err;
- 	int allow_queueing;
- 	int allow_usb_devices;
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 044067af..fc438947 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -1152,6 +1152,36 @@ declare_hw_snprint(eh_deadline, print_undef_off_zero)
- declare_pc_handler(eh_deadline, set_undef_off_zero)
- declare_pc_snprint(eh_deadline, print_undef_off_zero)
- 
-+static int
-+set_max_retries(vector strvec, void *ptr, const char *file, int line_nr)
-+{
-+	char * buff;
-+	int *int_ptr = (int *)ptr;
-+
-+	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
-+
-+	if (strcmp(buff, "off") == 0)
-+		*int_ptr = UOZ_OFF;
-+	else if (strcmp(buff, "0") == 0)
-+		*int_ptr = UOZ_ZERO;
-+	else
-+		do_set_int(strvec, int_ptr, 1, 5, file, line_nr, buff);
-+
-+	free(buff);
-+	return 0;
-+}
-+
-+declare_def_handler(max_retries, set_max_retries)
-+declare_def_snprint(max_retries, print_undef_off_zero)
-+declare_ovr_handler(max_retries, set_max_retries)
-+declare_ovr_snprint(max_retries, print_undef_off_zero)
-+declare_hw_handler(max_retries, set_max_retries)
-+declare_hw_snprint(max_retries, print_undef_off_zero)
-+declare_pc_handler(max_retries, set_max_retries)
-+declare_pc_snprint(max_retries, print_undef_off_zero)
-+
- static int
- set_pgpolicy(vector strvec, void *ptr, const char *file, int line_nr)
- {
-@@ -2079,6 +2109,7 @@ init_keywords(vector keywords)
- 	install_keyword("fast_io_fail_tmo", &def_fast_io_fail_handler, &snprint_def_fast_io_fail);
- 	install_keyword("dev_loss_tmo", &def_dev_loss_handler, &snprint_def_dev_loss);
- 	install_keyword("eh_deadline", &def_eh_deadline_handler, &snprint_def_eh_deadline);
-+	install_keyword("max_retries", &def_max_retries_handler, &snprint_def_max_retries);
- 	install_keyword("bindings_file", &deprecated_bindings_file_handler, &snprint_deprecated);
- 	install_keyword("wwids_file", &deprecated_wwids_file_handler, &snprint_deprecated);
- 	install_keyword("prkeys_file", &deprecated_prkeys_file_handler, &snprint_deprecated);
-@@ -2176,6 +2207,7 @@ init_keywords(vector keywords)
- 	install_keyword("fast_io_fail_tmo", &hw_fast_io_fail_handler, &snprint_hw_fast_io_fail);
- 	install_keyword("dev_loss_tmo", &hw_dev_loss_handler, &snprint_hw_dev_loss);
- 	install_keyword("eh_deadline", &hw_eh_deadline_handler, &snprint_hw_eh_deadline);
-+	install_keyword("max_retries", &hw_max_retries_handler, &snprint_hw_max_retries);
- 	install_keyword("user_friendly_names", &hw_user_friendly_names_handler, &snprint_hw_user_friendly_names);
- 	install_keyword("retain_attached_hw_handler", &hw_retain_hwhandler_handler, &snprint_hw_retain_hwhandler);
- 	install_keyword("detect_prio", &hw_detect_prio_handler, &snprint_hw_detect_prio);
-@@ -2220,6 +2252,7 @@ init_keywords(vector keywords)
- 	install_keyword("fast_io_fail_tmo", &ovr_fast_io_fail_handler, &snprint_ovr_fast_io_fail);
- 	install_keyword("dev_loss_tmo", &ovr_dev_loss_handler, &snprint_ovr_dev_loss);
- 	install_keyword("eh_deadline", &ovr_eh_deadline_handler, &snprint_ovr_eh_deadline);
-+	install_keyword("max_retries", &ovr_max_retries_handler, &snprint_ovr_max_retries);
- 	install_keyword("user_friendly_names", &ovr_user_friendly_names_handler, &snprint_ovr_user_friendly_names);
- 	install_keyword("retain_attached_hw_handler", &ovr_retain_hwhandler_handler, &snprint_ovr_retain_hwhandler);
- 	install_keyword("detect_prio", &ovr_detect_prio_handler, &snprint_ovr_detect_prio);
-@@ -2248,6 +2281,7 @@ init_keywords(vector keywords)
- 	install_keyword("fast_io_fail_tmo", &pc_fast_io_fail_handler, &snprint_pc_fast_io_fail);
- 	install_keyword("dev_loss_tmo", &pc_dev_loss_handler, &snprint_pc_dev_loss);
- 	install_keyword("eh_deadline", &pc_eh_deadline_handler, &snprint_pc_eh_deadline);
-+	install_keyword("max_retries", &pc_max_retries_handler, &snprint_pc_max_retries);
- 	install_sublevel_end();
- 
- 	install_keyword_root("multipaths", &multipaths_handler);
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 84ce5fe7..ee261d90 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -614,6 +614,43 @@ sysfs_set_eh_deadline(struct path *pp)
- 	return (ret <= 0);
- }
- 
-+static int
-+sysfs_set_max_retries(struct path *pp)
-+{
-+	struct udev_device *parent;
-+	char value[16];
-+	STRBUF_ON_STACK(buf);
-+	int ret, len;
-+
-+	if (pp->max_retries == MAX_RETRIES_UNSET)
-+		return 0;
-+
-+	if (!pp->udev || pp->sg_id.host_no < 0)
-+		return 1;
-+
-+	len = sprintf(value, "%d", (pp->max_retries == MAX_RETRIES_OFF)? -1 :
-+				   (pp->max_retries == MAX_RETRIES_ZERO)? 0 :
-+				   pp->max_retries);
-+
-+	parent = udev_device_get_parent_with_subsystem_devtype(pp->udev,
-+			"scsi", "scsi_device");
-+	if (!parent)
-+		return 1;
-+
-+	if (print_strbuf(&buf, "scsi_disk/%i:%i:%i:%" PRIu64 "/max_retries",
-+			 pp->sg_id.host_no, pp->sg_id.channel,
-+			 pp->sg_id.scsi_id, pp->sg_id.lun) < 0)
-+		return 1;
-+
-+	ret = sysfs_attr_set_value(parent, get_strbuf_str(&buf), value, len);
-+	if (len != ret)
-+		log_sysfs_attr_set_value(3, ret,
-+					 "%s/%s: failed to set value to %s",
-+					 udev_device_get_sysname(parent),
-+					 get_strbuf_str(&buf), value);
-+	return (len != ret);
-+}
-+
- static void
- sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- {
-@@ -875,10 +912,12 @@ sysfs_set_scsi_tmo (struct config *conf, struct multipath *mpp)
- 		select_fast_io_fail(conf, pp);
- 		select_dev_loss(conf, pp);
- 		select_eh_deadline(conf, pp);
-+		select_max_retries(conf, pp);
- 
- 		if (pp->dev_loss == DEV_LOSS_TMO_UNSET &&
- 		    pp->fast_io_fail == MP_FAST_IO_FAIL_UNSET &&
--		    pp->eh_deadline == EH_DEADLINE_UNSET)
-+		    pp->eh_deadline == EH_DEADLINE_UNSET &&
-+		    pp->max_retries == MAX_RETRIES_UNSET)
- 			continue;
- 
- 		if (pp->bus != SYSFS_BUS_SCSI) {
-@@ -886,6 +925,7 @@ sysfs_set_scsi_tmo (struct config *conf, struct multipath *mpp)
- 			continue;
- 		}
- 		sysfs_set_eh_deadline(pp);
-+		sysfs_set_max_retries(pp);
- 
- 		if (pp->dev_loss == DEV_LOSS_TMO_UNSET &&
- 		    pp->fast_io_fail == MP_FAST_IO_FAIL_UNSET)
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 44241e2a..15abb9e5 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -960,6 +960,24 @@ out:
- 	return 0;
- }
- 
-+int select_max_retries(struct config *conf, struct path *pp)
-+{
-+	const char *origin;
-+	STRBUF_ON_STACK(buff);
-+
-+	pp_set_ovr_pce(max_retries);
-+	pp_set_hwe(max_retries);
-+	pp_set_conf(max_retries);
-+	pp->max_retries = MAX_RETRIES_UNSET;
-+	/* not changing sysfs in default cause, so don't print anything */
-+	return 0;
-+out:
-+	print_undef_off_zero(&buff, pp->max_retries);
-+	condlog(3, "%s: max_retries = %s %s", pp->dev,
-+		get_strbuf_str(&buff), origin);
-+	return 0;
-+}
-+
- int select_flush_on_last_del(struct config *conf, struct multipath *mp)
- {
- 	const char *origin;
-diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
-index 73615c2f..7203509e 100644
---- a/libmultipath/propsel.h
-+++ b/libmultipath/propsel.h
-@@ -21,6 +21,7 @@ int select_gid(struct config *conf, struct multipath *mp);
- int select_fast_io_fail(struct config *conf, struct path *pp);
- int select_dev_loss(struct config *conf, struct path *pp);
- int select_eh_deadline(struct config *conf, struct path *pp);
-+int select_max_retries(struct config *conf, struct path *pp);
- int select_reservation_key(struct config *conf, struct multipath *mp);
- int select_retain_hwhandler (struct config *conf, struct multipath * mp);
- int select_detect_prio(struct config *conf, struct path * pp);
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 17e13ee7..c20e99ce 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -295,6 +295,12 @@ enum eh_deadline_states {
- 	EH_DEADLINE_ZERO = UOZ_ZERO,
- };
- 
-+enum max_retries_states {
-+	MAX_RETRIES_UNSET = UOZ_UNDEF,
-+	MAX_RETRIES_OFF = UOZ_OFF,
-+	MAX_RETRIES_ZERO = UOZ_ZERO,
-+};
-+
- enum recheck_wwid_states {
- 	RECHECK_WWID_UNDEF = YNU_UNDEF,
- 	RECHECK_WWID_OFF = YNU_NO,
-@@ -381,6 +387,7 @@ struct path {
- 	int fast_io_fail;
- 	unsigned int dev_loss;
- 	int eh_deadline;
-+	int max_retries;
- 	bool is_checked;
- 	bool can_use_env_uid;
- 	unsigned int checker_timeout;
-diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-index 226d0019..41f3927e 100644
---- a/multipath/multipath.conf.5.in
-+++ b/multipath/multipath.conf.5.in
-@@ -793,6 +793,22 @@ The default is: \fB<unset>\fR
- .
- .
- .TP
-+.B max_retries
-+Specify the maximum number of times the SCSI layer will retry IO commands
-+before returning failure. Setting this can be helpful for cases where the path
-+checker succeeds, but IO commands hang and timeout. By default, the SCSI layer
-+will retry IOs 5 times. Reducing this value will allow multipath to retry the IO
-+down another path sooner. \fBNote:\fR If it is necessary to set this value, it
-+is also recommended to set up shaky paths detection. See "Shaky paths detection"
-+below. Valid values are
-+\fB0\fR through \fB5\fR.
-+.RS
-+.TP
-+The default is: \fB<unset>\fR
-+.RE
-+.
-+.
-+.TP
- .B bindings_file
- (Deprecated) This option is not supported any more, and will be ignored.
- .RS
-@@ -1687,6 +1703,8 @@ section:
- .TP
- .B eh_deadline
- .TP
-+.B max_retries
-+.TP
- .B flush_on_last_del
- .TP
- .B user_friendly_names
-@@ -1773,6 +1791,8 @@ the values are taken from the \fIdevices\fR or \fIdefaults\fR sections:
- .TP
- .B eh_deadline
- .TP
-+.B max_retries
-+.TP
- .B user_friendly_names
- .TP
- .B retain_attached_hw_handler
-@@ -1844,6 +1864,8 @@ from the \fIoverrides\fR, \fIdevices\fR, or \fIdefaults\fR section:
- .B dev_loss_tmo
- .TP
- .B eh_deadline
-+.TP
-+.B max_retries
- .PD
- .
- .
--- 
-2.41.0
+Best Regards,
+Yujie
 
+> On Thu, Nov 02 2023 at  1:43P -0400,
+> kernel test robot <lkp@intel.com> wrote:
+> 
+> > tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git dm-vdo-wip
+> > head:   d4e7d305aaa9738d9606f986ad8f2f01edbb14b3
+> > commit: 5a6d19abe1dc27648b64418df24ea0acef0f38d6 [55/90] dm vdo: enable configuration and building of dm-vdo
+> > config: alpha-allyesconfig (https://download.01.org/0day-ci/archive/20231102/202311021353.WMMPQspU-lkp@intel.com/config)
+> > compiler: alpha-linux-gcc (GCC) 13.2.0
+> > reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20231102/202311021353.WMMPQspU-lkp@intel.com/reproduce)
+> > 
+> > If you fix the issue in a separate patch/commit (i.e. not just a new version of
+> > the same patch/commit), kindly add following tags
+> > | Reported-by: kernel test robot <lkp@intel.com>
+> > | Closes: https://lore.kernel.org/oe-kbuild-all/202311021353.WMMPQspU-lkp@intel.com/
+> > 
+> > All warnings (new ones prefixed by >>):
+> > 
+> >    In file included from drivers/md/dm-vdo-target.c:16:
+> > >> drivers/md/dm-vdo/block-map.h:35:37: warning: 'UNMAPPED_BLOCK_MAP_ENTRY' defined but not used [-Wunused-const-variable=]
+> >       35 | static const struct block_map_entry UNMAPPED_BLOCK_MAP_ENTRY = {
+> >          |                                     ^~~~~~~~~~~~~~~~~~~~~~~~
+> > >> drivers/md/dm-vdo/block-map.h:34:38: warning: 'NO_PAGE' defined but not used [-Wunused-const-variable=]
+> >       34 | static const physical_block_number_t NO_PAGE = 0xFFFFFFFFFFFFFFFF;
+> >          |                                      ^~~~~~~
+> > 
+> > 
+> > vim +/UNMAPPED_BLOCK_MAP_ENTRY +35 drivers/md/dm-vdo/block-map.h
+> > 
+> > fd98f3e3ccc645 Matthew Sakai 2023-10-26  33  
+> > 15deeca3859a19 Matthew Sakai 2023-10-26 @34  static const physical_block_number_t NO_PAGE = 0xFFFFFFFFFFFFFFFF;
+> > 15deeca3859a19 Matthew Sakai 2023-10-26 @35  static const struct block_map_entry UNMAPPED_BLOCK_MAP_ENTRY = {
+> > 15deeca3859a19 Matthew Sakai 2023-10-26  36  	.mapping_state = VDO_MAPPING_STATE_UNMAPPED & 0x0F,
+> > 15deeca3859a19 Matthew Sakai 2023-10-26  37  	.pbn_high_nibble = 0,
+> > 15deeca3859a19 Matthew Sakai 2023-10-26  38  	.pbn_low_word = __cpu_to_le32(VDO_ZERO_BLOCK & UINT_MAX),
+> > 15deeca3859a19 Matthew Sakai 2023-10-26  39  };
+> > 15deeca3859a19 Matthew Sakai 2023-10-26  40  
+> > 
+> > :::::: The code at line 35 was first introduced by commit
+> > :::::: 15deeca3859a19abfaadd333fb3df7a45087ab3e dm vdo: implement the block map page cache
+> > 
+> > :::::: TO: Matthew Sakai <msakai@redhat.com>
+> > :::::: CC: Mike Snitzer <snitzer@kernel.org>
+> > 
+> > -- 
+> > 0-DAY CI Kernel Test Service
+> > https://github.com/intel/lkp-tests/wiki
+> > 
+> 
+> UNMAPPED_BLOCK_MAP_ENTRY isn't defined until commit 15deeca3859a1 but
+> it is used by the earlier commit fd98f3e3ccc645.  So it needs moving
+> to that earlier commit.
+> 
+> But that aside, the above warning is correctly complaining about the
+> definition of static variables that aren't ever used.  We need to
+> define in block-map.c but declare them as extern in block-map.h
+> 
+> I've fixed this up in linux-dm.git's dm-vdo (and rebased dm-vdo-wip)
+> 
