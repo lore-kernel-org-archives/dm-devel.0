@@ -1,46 +1,50 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from mgamail.intel.com (mgamail.intel.com [134.134.136.65])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3B55822338;
-	Fri,  3 Nov 2023 22:42:23 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 007167FF;
+	Sat,  4 Nov 2023 01:35:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="qfmzVrQX"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 96C91C433C8;
-	Fri,  3 Nov 2023 22:42:22 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1699051343;
-	bh=M+ptlKAOA+sEX04/48lagPpY5EWZpkTUmUL2k+ef/pE=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=qfmzVrQXas81SSCB36xz6q8EtGP9twOOIhmsKM+uoZfMsW+0wM/d/2SasJdjn2WwE
-	 fl/yMQXNLZ0NuKwY/i9K7SiBWM+pukZzeYlx6ZpnS8SMfWzQnDrxKXtxqJ+kLhDfA7
-	 sXk24jYSI/be0ykfa1mka/drdfyx724vCRMX/uaYshRasQkMCBroWscqqQv+X3HJ/R
-	 jyJacUYfBNZ0XqBztWabkaMXJr8qfcfcNxCJJ2Kxcstq0rnTNwgE2ArwLfNnbHRJet
-	 VOxYUE1gAB/nWF/jIy0KoHFAQVGPLJTenAKFF86kL4jbLv09qscuDGu8v7dQlZn83S
-	 WkSaQZTeGvgig==
-Date: Fri, 3 Nov 2023 16:42:20 -0600
-From: Keith Busch <kbusch@kernel.org>
-To: Marek Marczykowski-G'orecki <marmarek@invisiblethingslab.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@fb.com>,
-	Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
-	Jan Kara <jack@suse.cz>, Vlastimil Babka <vbabka@suse.cz>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Matthew Wilcox <willy@infradead.org>,
-	Michal Hocko <mhocko@suse.com>, stable@vger.kernel.org,
-	regressions@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
-	linux-mm@kvack.org
-Subject: Re: Intermittent storage (dm-crypt?) freeze - regression 6.4->6.5
-Message-ID: <ZUV3TApYYoh_oiRR@kbusch-mbp.dhcp.thefacebook.com>
-References: <ZUEgWA5P8MFbyeBN@mail-itl>
- <8a35cdea-3a1a-e859-1f7c-55d1c864a48@redhat.com>
- <ebbc7ca7-5169-dbdc-9ea8-c6d8c3ae31e2@redhat.com>
- <ZULvkPhcpgAVyI8w@mail-itl>
- <ac5b5ac0-9e8-c1b0-a26-62f832f845f0@redhat.com>
- <ZUOL8kXVTF1OngeN@mail-itl>
- <3cb4133c-b6db-9187-a678-11ed8c9456e@redhat.com>
- <ZUUctamEFtAlSnSV@mail-itl>
- <ZUUlqJoS6_1IznzT@kbusch-mbp.dhcp.thefacebook.com>
- <ZUVYT1Xp4+hFT27W@mail-itl>
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="ddxa9QFh"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1699061720; x=1730597720;
+  h=date:from:to:cc:subject:message-id:mime-version;
+  bh=HO9ri4RNcBoGPK0I002fM1jI9+holzkbb4AZZWxaZwE=;
+  b=ddxa9QFhZZKq4X4+DfO4DRyrci++qHNsHKLhzNhka2NxZlPAYs23FCsj
+   r5pvXZdvTRd6cDHm6/KnCQobzlh3au3bWS/lvsmZl6GhOJzFX5WHEgJA8
+   7dPvL1JqFbSWKCxv031dZouHi8pbTAzZMmzejuzf2Z0N3LLsUazDtbEdm
+   H6qu4Y0mcGRVHFcnkssNSWd9Xr6qBsWeNLspwIRKtz6qXluS0EhYysV6d
+   Y65F5dPY09YrquCk0xUXSNcdDIlm8nuNS1qgZeBsP0/iyzbp3ufN+/fCS
+   +MlqtCIl3DvsFyx/s7jmqy/8Sdecq6PEJ3yDiMLaDEP8WCNMktRi3o9oq
+   w==;
+X-IronPort-AV: E=McAfee;i="6600,9927,10883"; a="392941136"
+X-IronPort-AV: E=Sophos;i="6.03,275,1694761200"; 
+   d="scan'208";a="392941136"
+Received: from orsmga003.jf.intel.com ([10.7.209.27])
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Nov 2023 18:35:19 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10883"; a="711683498"
+X-IronPort-AV: E=Sophos;i="6.03,275,1694761200"; 
+   d="scan'208";a="711683498"
+Received: from lkp-server01.sh.intel.com (HELO 17d9e85e5079) ([10.239.97.150])
+  by orsmga003.jf.intel.com with ESMTP; 03 Nov 2023 18:35:17 -0700
+Received: from kbuild by 17d9e85e5079 with local (Exim 4.96)
+	(envelope-from <lkp@intel.com>)
+	id 1qz5ZC-0003Bo-3C;
+	Sat, 04 Nov 2023 01:35:14 +0000
+Date: Sat, 4 Nov 2023 09:34:55 +0800
+From: kernel test robot <lkp@intel.com>
+To: Matthew Sakai <msakai@redhat.com>
+Cc: oe-kbuild-all@lists.linux.dev, dm-devel@lists.linux.dev,
+	Mike Snitzer <snitzer@kernel.org>,
+	"J. corwin Coburn" <corwin@hurlbutnet.net>,
+	linux-doc@vger.kernel.org
+Subject: [device-mapper-dm:dm-vdo-wip 17/90] htmldocs:
+ Documentation/admin-guide/device-mapper/vdo.rst: WARNING: document isn't
+ included in any toctree
+Message-ID: <202311040953.rWGbDuls-lkp@intel.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -49,29 +53,22 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ZUVYT1Xp4+hFT27W@mail-itl>
 
-On Fri, Nov 03, 2023 at 09:30:07PM +0100, Marek Marczykowski-G'orecki wrote:
-> On Fri, Nov 03, 2023 at 10:54:00AM -0600, Keith Busch wrote:
-> > On Fri, Nov 03, 2023 at 05:15:49PM +0100, Marek Marczykowski-G'orecki wrote:
-> > > On Thu, Nov 02, 2023 at 06:06:33PM +0100, Mikulas Patocka wrote:
-> > > > Then, try this patch (without "iommu=panic"), reproduce the deadlock and 
-> > > > tell us which one of the "printk" statements is triggered during the 
-> > > > deadlock.
-> > > 
-> > > The "821" one - see below.
-> > 
-> > Thanks for confirming!
-> > 
-> > Could you try this patch?
-> 
-> Besides min3() being unhappy about types, it works.
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git dm-vdo-wip
+head:   295f5e2cde5fe5db8cfcf2eef7674a7b5e85c279
+commit: 31d6568e294e51ef7c3338bb773b1aef0d050682 [17/90] dm: add documentation for dm-vdo target
+reproduce: (https://download.01.org/0day-ci/archive/20231104/202311040953.rWGbDuls-lkp@intel.com/reproduce)
 
-Oops, should have changed the constant to "ul" instead of just "u".
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Reported-by: kernel test robot <lkp@intel.com>
+| Closes: https://lore.kernel.org/oe-kbuild-all/202311040953.rWGbDuls-lkp@intel.com/
 
-Anyway, the overall idea makes sense to me, but I don't know the swiotlb
-stuff well.
+All warnings (new ones prefixed by >>):
 
-Christoph, does that patch make sense? For reference:
+>> Documentation/admin-guide/device-mapper/vdo.rst: WARNING: document isn't included in any toctree
+>> Documentation/admin-guide/device-mapper/vdo-design.rst: WARNING: document isn't included in any toctree
 
-   https://lore.kernel.org/linux-mm/ZUOr-vp0yRkLyvyi@kbusch-mbp.dhcp.thefacebook.com/T/#m8d34245e0eef43f8e9fe6cba6038d77ed2a93ad6
+-- 
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
