@@ -1,49 +1,49 @@
-Received: from EUR05-VI1-obe.outbound.protection.outlook.com (mail-vi1eur05on2067.outbound.protection.outlook.com [40.107.21.67])
+Received: from EUR05-VI1-obe.outbound.protection.outlook.com (mail-vi1eur05on2063.outbound.protection.outlook.com [40.107.21.63])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0126C19474
-	for <dm-devel@lists.linux.dev>; Wed,  8 Nov 2023 17:56:46 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3CF1732C75
+	for <dm-devel@lists.linux.dev>; Wed,  8 Nov 2023 17:58:25 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="nyVGVhdJ"
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="DSFN2MiU"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=ARasbIQ0RMy9wsNWsSL2A9P0XBIIf0+L1ty9jCU58/UmnbQaPRNXBR1u08a72CDj0aYd+JvewdCgvbBLngqcmfkVE6RncrhpBUkNiUlCLrePLgon5sfy409fK9yOnTI7A4AnM09I255fH2NN4KrVUWOGejrFyqLKHmPjuaiVQoOjuwrd1J7uWqx478lsHOcJSOZYXwrU+xsJZdZAEzSDHxObn/A8JL73m8kLLMHRO0CBop5eI3/lof0ELLEBo+iCtu1PC52QQ0mClvzNO4A6mXOsnVXm7+7aDnyYGT8Fald3MUk/qaXb2oxpyshVR5YbWHsYo/XcXflKX15KWuxPTA==
+ b=EJRjGJjQeDQ7PoCzRSX/nRDK/vGhdF4MQVt9QPeOE5oiwBWPS0/mlGS71tsiu2Ha2avemTx+6O47OzkmALMi1hUfIxyiyagd4LHWSpIBI5hIpUFledTVj5lq2FqPbTSIv0I9tT5NBwWW3W5wfxEYN2F6N2JhHZz6Fl9h49jiyoBqjGPs9Led+kV94GywlXdhPkgsDYWSnzf9iOGBHBfVi3+WpuKBaXoTXS+KlScYa3EpiNx0mc4pFF6SRzfGYdWAuKFpw1NUJPu/sAwJ1sLk/BZ718bvgpXGrFPID/CQXFmwK2Ukm1GzAlvCfrYKxAzM/CnccrGn9Ay4qHSXAxGHCw==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector9901;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=mKBOtwFo7rIbsEGcmLT/w8lfbMuajcOJU6MsB9Id1rA=;
- b=SxvAoyfiVjKZPhY5fUVVnsPHn2rxRWHtNx1tKdWkZk8An69wtlR51fpZXUvAR66Mmk6iqBq1IYq54oue7wR1Ep+Wt57pljYKdt1sM8TReR20GDvASH97+NKiMCZVE5MImu3oJtJ+DaVwdWWqUvetlMONRN/4d67kPjxed+UQgisC8qhGrZ2ASGMFpbYZmQ3hcwaWks5cJm4+3G9urTuXbOqYehcaZlP2Jd4EyQJ0mqtD3/q2Ats9yJG4Amm+Hp2cU7Gf4a2N6Z/N26Fj2soN9ogYrRH5rEDdTk2I7PvWF+J+wegZ8rKVsKZeton2ykKUxe2g6HGfZCmmC0ZX2LbXgQ==
+ bh=8Gkye4pBbDKDx+70L8sIe6pSuf8/BI7hAjxQaNoPKS4=;
+ b=e5bq5OLBu6pRTwUp0nXfOVfAHiWpvFO5XHwosDJG6607NaVJepDnVZOJOjH6l7n2wngzdMan5Mkew9f2r61JWO60985y+PBgqfnp+d2a3yoy+od46p4QdS2bBWAgFz9UbETDIODCFuUxV99gTPDIHTXLWM+IBBQyT+LX+yka6mQ3JR7MbEljigvxnKskbrJmf4yMaMWL7wxbxeIWcgZS8c+6fpFCe1ugdwo/UQ124SP7N0T5zzymVxdhxhDT0oWd47A8eCX15T/YHIrC9LvbqwX3mGCOchTIxm3+n8u/vmtmBkwk1yz5B+endYMdUCuwPHod1lGkNjiFzlhvmCq77Q==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
  smtp.mailfrom=suse.com; dmarc=pass action=none header.from=suse.com;
  dkim=pass header.d=suse.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=mKBOtwFo7rIbsEGcmLT/w8lfbMuajcOJU6MsB9Id1rA=;
- b=nyVGVhdJrOUAedlBg0FHOolrVrVEuWw5jNGFEX8WLSXU1tvDDFF7uezFNm2s2bT2dV0PhKAMuGVrs53+FhEy6YMAPzY0j0O2rLvzBTPgHhRmw5H54OQBo9Q+b0OkwJ9FTl238oDAC6D1JAO5jGnJ78O+BkOkj44YPTdAsY0Xr1RnNKB+TS+AcyqlFjIbODOSQm8PIqHT197RW8fhVlMTr7vMt8eaDq0Y/06uwk1vz8/m4OJkVRKEc0RJAr1PEVS7qwJSFjDty6D65FiPjoqbB/Z8IiQbMDa5IPj1RLmHMtzUAfQhIzAT+EVHstjO2qR5x20ofTlptcLH0qN+0P9QLw==
+ bh=8Gkye4pBbDKDx+70L8sIe6pSuf8/BI7hAjxQaNoPKS4=;
+ b=DSFN2MiUNCGvYuSkAzJPnlruYq/vT1aSDOrSDYntpo+yn/bzh04kCrG5XHHbQkx02np+xJaSi+NAtc/lXHg+rCuXYpQT8xWqOihrvGAy3VGoGBkfwHFX1w2Y0wNmJIlNGnIOjXiFhl745NLJxyYS77gZlzd082QjQTlLfGdLhU+6eA1bgEwYBZjNQPi6k4x/tsztzgBRCZJcpNSYP1zOo72Jhs+7R6LH+qzRWxknrBaOW4zYoWcOBerWVLUxWDNRIGem/He2byNvp1VNL9P0/MQGUuC/T10GNGGHerXNmkrpazvQe2ZMdT7bSC8lTw+pE5qzL/DDsxyaHak6O4Q4fQ==
 Received: from AM0PR04MB6324.eurprd04.prod.outlook.com (2603:10a6:208:13f::12)
  by AM9PR04MB8180.eurprd04.prod.outlook.com (2603:10a6:20b:3e2::24) with
  Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6977.18; Wed, 8 Nov
- 2023 17:56:43 +0000
+ 2023 17:58:22 +0000
 Received: from AM0PR04MB6324.eurprd04.prod.outlook.com
  ([fe80::a371:c087:fe5a:1e77]) by AM0PR04MB6324.eurprd04.prod.outlook.com
  ([fe80::a371:c087:fe5a:1e77%4]) with mapi id 15.20.6977.017; Wed, 8 Nov 2023
- 17:56:42 +0000
+ 17:58:22 +0000
 From: Martin Wilck <martin.wilck@suse.com>
 To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
 	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
 CC: "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH 3/7] multipathd: check and update all paths when in
- cli_resize
-Thread-Topic: [PATCH 3/7] multipathd: check and update all paths when in
- cli_resize
-Thread-Index: AQHaDdoNBNfMjGMwbky3Jzohwo26w7BwviaA
-Date: Wed, 8 Nov 2023 17:56:42 +0000
-Message-ID: <e679c9cc5fba535167551e54cf37347b215d44c3.camel@suse.com>
+Subject: Re: [PATCH 4/7] multipathd: move post-reloading commands into
+ resize_map()
+Thread-Topic: [PATCH 4/7] multipathd: move post-reloading commands into
+ resize_map()
+Thread-Index: AQHaDdoMI/+CucGeC0qXCqbPv0E2qbBwvp2A
+Date: Wed, 8 Nov 2023 17:58:22 +0000
+Message-ID: <4104cfcbff93136cc58781211b40b140c09ee724.camel@suse.com>
 References: <20231102221507.105371-1-bmarzins@redhat.com>
-	 <20231102221507.105371-4-bmarzins@redhat.com>
-In-Reply-To: <20231102221507.105371-4-bmarzins@redhat.com>
+	 <20231102221507.105371-5-bmarzins@redhat.com>
+In-Reply-To: <20231102221507.105371-5-bmarzins@redhat.com>
 Accept-Language: en-US
 Content-Language: en-US
 X-MS-Has-Attach:
@@ -53,47 +53,47 @@ authentication-results: dkim=none (message not signed)
  header.d=none;dmarc=none action=none header.from=suse.com;
 x-ms-publictraffictype: Email
 x-ms-traffictypediagnostic: AM0PR04MB6324:EE_|AM9PR04MB8180:EE_
-x-ms-office365-filtering-correlation-id: 8dee107c-7aa2-47b2-8a70-08dbe084110f
+x-ms-office365-filtering-correlation-id: 21065e31-3fff-4f48-6818-08dbe0844c9e
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0;
 x-microsoft-antispam-message-info:
- X2IjUmyBrzRSXlKjBv3Tc1l3fgKFRqUoabOExwQTbQF/7VPlm0dldWuchwDj6Sc0WxWX6I06scgxodRU98V9d+xugE+613E0Uzne8fWDAVFb071eNZrDcLGzA/X9SimFm66r2bjvyHBjCvYNx4DFMD0V65TM9sfQDc4fMER26El7OidSJ82OgvjASfZ1E5dUc8vb1vcpvzBQPXeUznNXps1aK35K4oAJaraTUyyVsnEgDvOdzPDSLXDssojUAIhf4DANN6EvhjLS74goqf3fEbKEHH6/SRbEL0bDQLkdyMZbO5LAmjATF0vRwUDNMdJCxdmzUBZ41Kv60SVDs8Mb4IxE7NqFkNSPr5ca0YffGrHooy8GeXJ2JNH4luKpMNIBaZKgXTncRbXFX33WBok25jsfrfLE9VrZz+FdPrp02dJFVoClHe8BQiy9a/21w3S1w/eCOC95UmI3POag2cLzd8yNOolF7Xm3WPVxCSSasUE7uk//mbKfv/WGyCWaNizDVDm02ItsGYAUxoBw89x9FforUh8OIpTLp5wm+xODUArajKKG+1Ypi0abhoEUI3pZLWacqOwr9wU1ubuTQFQFUk/rL3B7GJ1Msg4n2+yKZBIemzhubVWrMvbo8iSzQEJs
+ duw2G6kJ2ypZB7421fcxsiFPqztIocV4wd0EyDOdNMuqyQCPoENadyysZBKk6fhq2tthe7WvC/VXTSjc5JZznXeOc1CwLs12pfws2yzw9eUdlS6NoZ5wFrwEN2zHiC3lYk5ceXDkAmr3DUeeOdb2cNCIuvdUrcA0EPylDhH/gKqDLWgZ+fZkbNK4+5r+QBltN35s7GS8r4sNElXQ1Ddp5VxPjnnzsh7HtryhDm5FArmQKzN12vRUJZ4SCiU31Q4LUJSRQe8f025LJkDcG10XLquvH2fHjzF8LhaMHWX/V7DnUu74d/nY/auEHjSd8Ayqkd3yB9aD8jej8I4zLAdQbTvCrxy8N06YCBQc7nyCvkG6yrTmgvb29QioD4+gbzE8E0QK9nTx4VbMW27LmhZBTXMcp8cKMVDML5adxRFB0GuK5PFN858WogP88nDMary2S3cG1ZyucZqqpojp2muCPYhegkTjavKHhCyB+2D505RwmOrD/hLO6WQBryzdRBRARrxgQ8VzcdLkwkxJHvzVeiaoU53ARnN7SvQEe924VSCVHQ6wdQ1rdL1+AIiY23f2xDyJK7aFHrI5eVIAT3b9wYsdhHHgsX62a5tj3h08e8KgboocQYRIOrTmcsaPAtfo
 x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM0PR04MB6324.eurprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(376002)(346002)(39860400002)(136003)(366004)(396003)(230922051799003)(186009)(1800799009)(451199024)(64100799003)(2616005)(6512007)(478600001)(6486002)(71200400001)(83380400001)(26005)(2906002)(15650500001)(110136005)(44832011)(316002)(41300700001)(66556008)(5660300002)(66946007)(76116006)(66476007)(66446008)(4326008)(8936002)(64756008)(8676002)(38070700009)(38100700002)(36756003)(86362001)(122000001)(6506007);DIR:OUT;SFP:1101;
+ CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM0PR04MB6324.eurprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(376002)(346002)(39860400002)(136003)(366004)(396003)(230922051799003)(186009)(1800799009)(451199024)(64100799003)(2616005)(6512007)(478600001)(6486002)(71200400001)(26005)(2906002)(4744005)(110136005)(44832011)(316002)(41300700001)(66556008)(5660300002)(66946007)(76116006)(66476007)(66446008)(4326008)(8936002)(64756008)(8676002)(38070700009)(38100700002)(36756003)(86362001)(122000001)(6506007);DIR:OUT;SFP:1101;
 x-ms-exchange-antispam-messagedata-chunkcount: 1
 x-ms-exchange-antispam-messagedata-0:
- =?iso-8859-15?Q?M0nLxpV9YVU7T8x3uIz+DlZjWG1wx+VyH/KzrtC3MPG2Or3JIIwGJ4J6Y?=
- =?iso-8859-15?Q?91epc+6Et1q6fwkdA4uIo4+trtxlwhd7HNyR0ErNOUNfpvJJKuPSUcrJc?=
- =?iso-8859-15?Q?LLCynZiJAf/PYd4lYbLxhceskv3zx5IXKgwEftofykFSGwpKvAsSMVj+h?=
- =?iso-8859-15?Q?d+CHZQ10TEH2rXjYCjESUkplH/DshAFljPce7z9PddKOt2JvDEI9bvUG8?=
- =?iso-8859-15?Q?Uu4as6ruSMUTdSpr4IWZ5eaXiUrw83/beC4EQmvPlxKNF54WDAJkjqn5V?=
- =?iso-8859-15?Q?Tg+2p+IX9gRwCEzCesgtyw/tsPBRfPA57OAcH1LscowUkH2sQDa9b6Usl?=
- =?iso-8859-15?Q?vrUw+t7udwSV9JkzIVP8Q4bfcK/5Ne2C+u5zmiRq8LBY0CwSf4WLX4KdO?=
- =?iso-8859-15?Q?uXT60eBQ1gZ8cxortCT6Y3gdJIXfO7HxuCEpXsW+nEiR2NB6PDQjCpF14?=
- =?iso-8859-15?Q?9VHiISr9K83k3MV6SV9cDTfmD1ABHfoyxSCwZqfGZMDUHe5W7SBen+maJ?=
- =?iso-8859-15?Q?HyqwamR4UPN8ngmDWQBSsIqTXc9/wosKxlBCdc3aL0dXAJjnEE9h9DVQV?=
- =?iso-8859-15?Q?3TFJ7JeWR1Y/9FaEZuychoDltqqrsSj3Z05aaM34n0nURMeIYTaoIEKVb?=
- =?iso-8859-15?Q?x2802X5H6iy/BPiZbugcpFOJEeD9C0dTtY0oMY4H7SnN+xUFr7+og7PcT?=
- =?iso-8859-15?Q?4jB/3ssZ23y7RgTkUwe60AwkwCScfdwpDVt8MiWZolIuypyLZEtWnHerf?=
- =?iso-8859-15?Q?tvt1nVi2WN+fIN0++vjE/levPuPpW5DjU2oayt3kE0vukf0Or6zqztwF0?=
- =?iso-8859-15?Q?ZOa4qnvBIPTH4Wbgt8UagJ3+0A0YxHDAyQAN/FHxZIGGurxzUtB1GOUBM?=
- =?iso-8859-15?Q?NETWQ5LffScJoUUvibFidM7PpBKGo20JNGeegFppHTHnHwVJp1G5LEHTI?=
- =?iso-8859-15?Q?GrffZk8oAsdT+CNLOiEYhI2qVy/PD4LcAEd6F/N1r6WUsWIckmNWtGUWR?=
- =?iso-8859-15?Q?KIg7ZAqcBfAgNqk/tPGUT36T/kkUiGb+SpSAlUdxz7EARyOswTOEzKQ+5?=
- =?iso-8859-15?Q?TFjTzDrXUxEi4xsUh1shWq9XdNK4wiRjIYC3yrYcvdE6aB1W0UeC/Y4Pt?=
- =?iso-8859-15?Q?HaEMKy+ilBkLVLVX6Y4sgTqqf8k8NxIXEAQPQVZdYAKSQblT0a6d+X4H6?=
- =?iso-8859-15?Q?olrpix6nJzxX52xUy97f5rmjYm2wMdQAnQyVl8FeBzGSjxod94EPnTB/8?=
- =?iso-8859-15?Q?R+lPP7xIMTZVUcLEZhKKp5MzCDRAdZr01HyFy7eL7HkYCk/Z33+ngYZdc?=
- =?iso-8859-15?Q?mu0db7B5tOfTnyO3pfN3rwCIEdZQy+IzanrRxS/UYdqEaYK7+hSEQyas9?=
- =?iso-8859-15?Q?hqG/qvWKMVRzviFffgio4UWHgi5vciTwxWt1qg0ouEoQowFb/mq1dBPeD?=
- =?iso-8859-15?Q?pj0v/8ajBKEsRt04ouLHHfOAurMnHIrgb1gVoOnno4JziDdLkfT0BAuQx?=
- =?iso-8859-15?Q?YlfopBKIdWlpDFSodXrhjw6VM2b8/GnDBnvzcpblHEYDJnvf7JBuzjTAd?=
- =?iso-8859-15?Q?AUelfqou848eHHLQAMp68nB/FlhuMZ/HVi4J22hQzlecLb95khIUpzKZa?=
- =?iso-8859-15?Q?e00rl3vQQnOkbngr8EZn/+GU1EFFWnE2q6CXncKjaHDquohtbms/QI2jq?=
- =?iso-8859-15?Q?A0xbKOGZFGzZ8z/YdKjoIL1nUQ=3D=3D?=
+ =?iso-8859-15?Q?pjo8EG/py1lOIbiRMBwsRlPtfSKiFwFbzlkwAGNMdOmbsxPBpztxMr+7g?=
+ =?iso-8859-15?Q?Y5bGSgvnLrH5HnCkaBY6CfGuLO9lqiAMEGwdTpzSIATI+sOpoGhprIE0z?=
+ =?iso-8859-15?Q?+hbgV+nd00IoOj9DGBJ8SwV82Znq/+KAvaT7+ny0p+6tMDyvaYnMFRoi3?=
+ =?iso-8859-15?Q?UL2+vi0OtPGPVweMjNL9ufEMYE/gLyCnI5zzfkMLC2ZSUg3SUF6sRFNyi?=
+ =?iso-8859-15?Q?yPWaLbQ9KQPXm02Vqcoubo85WtY7pTgpCsW5wQ9ezY5lVYh8tzYY5xgf/?=
+ =?iso-8859-15?Q?Df+Qr3kSdpaH2iKDBiV6X9A/yMalfWR5J+kNMxXClxQYqa95vhVLjioQa?=
+ =?iso-8859-15?Q?Cavy8Evyk2SEI6+VX1jZfwNTCWPIwHS0O6X/sf7xPDnC4LqYnK8LCIpIq?=
+ =?iso-8859-15?Q?dNNhXIQp7OE1Be30Lj7E95k06h96P0I+3AI6g2TCO5XR8svyK54IxCbye?=
+ =?iso-8859-15?Q?3ed5bCgadGVMZZQGtIOYKjoIf9txZijENj7S9PIQaFrtNQwRN+YATS9iz?=
+ =?iso-8859-15?Q?3mJCRn16u0mwlE9UyQIEeiSSKtfpMDXiYDgCz2Dq3dIH8Tj3i9cR5Sb9G?=
+ =?iso-8859-15?Q?1vjQBt0tX4E3YKyV2YB80OJFVkHCuR8bqE5w31hiITtkoUfXjmULcGp9+?=
+ =?iso-8859-15?Q?Cbj6o2+IjNG1lge5vDtmz/p4JE54hKKgro2L2SXyimfD6Nz44pZ/VQrnN?=
+ =?iso-8859-15?Q?4DAAkJgM/XHgIFsOqrpQ1FYiM/w07EyjbzP7lIr7tYfBCo2meS8Y2br/s?=
+ =?iso-8859-15?Q?dxTeV7+UmbQT423SEj2v4bemPNXwk2TuxHtr8jcwi79sXl+5qagjYYTjd?=
+ =?iso-8859-15?Q?5q2O7Epf6hpsUYAso0K9Ud6FwPhl958+MoGHnybFRa7OVV7AvF8zRKl5z?=
+ =?iso-8859-15?Q?Rj8x2DMlHGb2aG9PgGlri9GQYJrVzEJwG3kGR97+cwDVuDgdZ8N3Uedkv?=
+ =?iso-8859-15?Q?hufcWoKNFV91VfYC7MfhhV+vvYT4iH7P36R1QjE/z5bEepEFG0UlTuBBW?=
+ =?iso-8859-15?Q?vPAG8lpDZTRID/I8msdxw2a/uB6fgZ3S4XLoa/tjWOKWsZnTUrXKh2BSs?=
+ =?iso-8859-15?Q?+sO1678GMY1NI8x7WA+4jDJIKjBof5IH6C1gq1d7MI4bjZSqfSbN140e5?=
+ =?iso-8859-15?Q?GPpW8hJ8U1Hf/KaATPX4hVcvQeOHTk1r9Y9AS6/03ASBjlnd1le2d+2T1?=
+ =?iso-8859-15?Q?NJWSu9aNfdxI0KqlmUzPGihPCBMQnXJ9MYUfmJ5EF17bOB2WIV2j4YEeI?=
+ =?iso-8859-15?Q?Lv7Dl77ZhyDrspgaxCREsCmKqQMwdEGZvzlEr02P0cGd3WR4JyU3RCMMT?=
+ =?iso-8859-15?Q?H30lfstNeYVCWCCeVL/t9IUel6m76hvGQJLz7X74EBZRtvMVzE/CJ4A0m?=
+ =?iso-8859-15?Q?NGpeNE4B0Fh/9YgMwrYNILMrXB12aTbq82f43Q4pTwvBGxZJtDLmt5K2p?=
+ =?iso-8859-15?Q?mFOXrzvGbzEU46IVisIOz9pEcXCdAAG3i7C1gN3CDHslPPloEt1fw57od?=
+ =?iso-8859-15?Q?ymjfxo1TFVtmNFyjuAtR/xK/3PuaneyBMFFT7pB0vsxOcrO5BhQqbv8Lv?=
+ =?iso-8859-15?Q?g38elgPGVx7M+FdVQJ0NxKRzYd/m3ajxzXrpa9FnRvGy2ghYRgZ+OR8yD?=
+ =?iso-8859-15?Q?b02vW6YgZEjfi+g+vSlqXAKmbYuFQDVANyBCQJgG8QKlT2VxJjoZnjPrG?=
+ =?iso-8859-15?Q?T6I1+6Yszu3E6PtSCVDPyAkMLA=3D=3D?=
 Content-Type: text/plain; charset="iso-8859-15"
-Content-ID: <2C2281062270B542AA01CF0DD4F5F9B4@eurprd04.prod.outlook.com>
+Content-ID: <0699E36D2340AF41B0492A8C856E7D16@eurprd04.prod.outlook.com>
 Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -104,94 +104,22 @@ MIME-Version: 1.0
 X-OriginatorOrg: suse.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: AM0PR04MB6324.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 8dee107c-7aa2-47b2-8a70-08dbe084110f
-X-MS-Exchange-CrossTenant-originalarrivaltime: 08 Nov 2023 17:56:42.9193
+X-MS-Exchange-CrossTenant-Network-Message-Id: 21065e31-3fff-4f48-6818-08dbe0844c9e
+X-MS-Exchange-CrossTenant-originalarrivaltime: 08 Nov 2023 17:58:22.8282
  (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: cHF3m6WtSFjwVna02JPd6UpIjTkaiNOxnZd47HUF/ISDP2L+LC/0eVRYxyc0794psQyx4kZ965M2oA9Qyl5R6A==
+X-MS-Exchange-CrossTenant-userprincipalname: Z4zfaI4w7iDnjSzy0KyZzXuJpteAOhajLZN38o2QI/m2ZpAQsy35HtmCUabY/VTlqIUeK21i4Mil7/co8Ecy7A==
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM9PR04MB8180
 
 On Thu, 2023-11-02 at 18:15 -0400, Benjamin Marzinski wrote:
-> When resizing a multipath device, make sure that all the paths have
-> been updated to the new size first.
+> In preparation for reusing resize_map() in other code, move all code
+> necessary to resize the map to the resize_map() function. Also track
+> if
+> map was removed in the function.
 >=20
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
-> =A0multipathd/cli_handlers.c | 30 +++++++++++++++++-------------
-> =A01 file changed, 17 insertions(+), 13 deletions(-)
->=20
-> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-> index c9addfbb..ffea193d 100644
-> --- a/multipathd/cli_handlers.c
-> +++ b/multipathd/cli_handlers.c
-> @@ -845,9 +845,11 @@ cli_resize(void *v, struct strbuf *reply, void
-> *data)
-> =A0	char * mapname =3D get_keyparam(v, KEY_MAP);
-> =A0	struct multipath *mpp;
-> =A0	int minor;
-> -	unsigned long long size;
-> +	unsigned long long size =3D 0;
-> =A0	struct pathgroup *pgp;
-> =A0	struct path *pp;
-> +	unsigned int i, j;
-> +	bool mismatch =3D false;
-> =A0
-> =A0	mapname =3D convert_dev(mapname, 0);
-> =A0	condlog(2, "%s: resize map (operator)", mapname);
-> @@ -867,21 +869,23 @@ cli_resize(void *v, struct strbuf *reply, void
-> *data)
-> =A0		return 1;
-> =A0	}
-> =A0
-> -	pgp =3D VECTOR_SLOT(mpp->pg, 0);
-> -
-> -	if (!pgp){
-> -		condlog(0, "%s: couldn't get path group. cannot
-> resize",
-> -			mapname);
-> -		return 1;
-> +	vector_foreach_slot(mpp->pg, pgp, i) {
-> +		vector_foreach_slot (pgp->paths, pp, j) {
-> +			if (sysfs_get_size(pp, &pp->size) !=3D 0)
-> +				continue;
-> +			if (!size)
-> +				size =3D pp->size;
 
-In the previous patch, you assume that if sysfs_get_size() fails, the
-size is unchanged. The "continue" doesn't make much sense to me: you
-should make the same assumption here, i.e. set size =3D pp->size even in
-the failure case. Otherwise you might miss a size mismatch.
-
-Altenatively, you could error out immediately if sysfs_get_size() fails
-for any path.
-
-Martin
-
-
-> +			else if (pp->size !=3D size)
-> +				mismatch =3D true;
-> +		}
-> =A0	}
-> -	pp =3D VECTOR_SLOT(pgp->paths, 0);
-> -
-> -	if (!pp){
-> -		condlog(0, "%s: couldn't get path. cannot resize",
-> mapname);
-> +	if (!size) {
-> +		condlog(0, "%s: couldn't get size from sysfs. cannot
-> resize",
-> +			mapname);
-> =A0		return 1;
-> =A0	}
-> -	if (!pp->udev || sysfs_get_size(pp, &size)) {
-> -		condlog(0, "%s: couldn't get size for sysfs. cannot
-> resize",
-> +	if (mismatch) {
-> +		condlog(0, "%s: path size not consistent. cannot
-> resize",
-> =A0			mapname);
-> =A0		return 1;
-> =A0	}
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
