@@ -1,105 +1,42 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C49608F40;
-	Tue,  7 Nov 2023 04:18:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Bp79TRjy"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id CD399C433C7;
-	Tue,  7 Nov 2023 04:18:35 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1699330718;
-	bh=5PvihFHBU7SqgdRwrtVBo1+6I/pEiB/RH5ISX/VMPpA=;
-	h=Date:From:To:cc:Subject:In-Reply-To:References:From;
-	b=Bp79TRjy24dSDD/qE6n8ck8XIFc1iINY8FONEu+yGlfyIKf7sAGTIkE76bM888oZi
-	 t/diEaICWenT4mb89FLqqlQdr/kMR8ohF/pvt10vL2t3MlUQZ7W5Ej0iBA4Ey2oOkN
-	 piKy8MQFGWSR8jbtWOGfriFcQA+cCu5jAMkoeQ0AKDSBphqAXqQgoJX2EBGq7AUs9m
-	 ioOn9opMSHLLz4obHlrt6gDID/c0CNS2W8XpnuwKZL3U7uIcedn3ZGSugjsSZyBJeb
-	 8rD6UJHi0B64OlMSCYXWFRgCRWeUB583TG1QBgNuSaaCB5p2ZG8ANgU7du4WCoaekW
-	 pOdtrknRPGb8A==
-Date: Mon, 6 Nov 2023 20:18:31 -0800 (PST)
-From: Stefano Stabellini <sstabellini@kernel.org>
-X-X-Sender: sstabellini@ubuntu-linux-20-04-desktop
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F025CD278;
+	Wed,  8 Nov 2023 07:32:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Authentication-Results: smtp.subspace.kernel.org; dkim=none
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id A3BAD6732D; Wed,  8 Nov 2023 08:31:57 +0100 (CET)
+Date: Wed, 8 Nov 2023 08:31:57 +0100
+From: Christoph Hellwig <hch@lst.de>
 To: Mikulas Patocka <mpatocka@redhat.com>
-cc: Mike Snitzer <snitzer@kernel.org>, Keith Busch <kbusch@kernel.org>, 
-    Christoph Hellwig <hch@lst.de>, Juergen Gross <jgross@suse.com>, 
-    Stefano Stabellini <sstabellini@kernel.org>, 
-    xen-devel@lists.xenproject.org, iommu@lists.linux.dev, 
-    Marek Marczykowski-G'orecki <marmarek@invisiblethingslab.com>, 
-    Jens Axboe <axboe@fb.com>, Sagi Grimberg <sagi@grimberg.me>, 
-    Jan Kara <jack@suse.cz>, Vlastimil Babka <vbabka@suse.cz>, 
-    Andrew Morton <akpm@linux-foundation.org>, 
-    Matthew Wilcox <willy@infradead.org>, Michal Hocko <mhocko@suse.com>, 
-    stable@vger.kernel.org, regressions@lists.linux.dev, 
-    Alasdair Kergon <agk@redhat.com>, dm-devel@lists.linux.dev, 
-    linux-mm@kvack.org
+Cc: Mike Snitzer <snitzer@kernel.org>, Keith Busch <kbusch@kernel.org>,
+	Christoph Hellwig <hch@lst.de>, Juergen Gross <jgross@suse.com>,
+	Stefano Stabellini <sstabellini@kernel.org>,
+	xen-devel@lists.xenproject.org, iommu@lists.linux.dev,
+	Marek Marczykowski-G'orecki <marmarek@invisiblethingslab.com>,
+	Jens Axboe <axboe@fb.com>, Sagi Grimberg <sagi@grimberg.me>,
+	Jan Kara <jack@suse.cz>, Vlastimil Babka <vbabka@suse.cz>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Matthew Wilcox <willy@infradead.org>,
+	Michal Hocko <mhocko@suse.com>, stable@vger.kernel.org,
+	regressions@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
+	dm-devel@lists.linux.dev, linux-mm@kvack.org
 Subject: Re: [PATCH v2] swiotlb-xen: provide the "max_mapping_size" method
-In-Reply-To: <151bef41-e817-aea9-675-a35fdac4ed@redhat.com>
-Message-ID: <alpine.DEB.2.22.394.2311061211080.3478774@ubuntu-linux-20-04-desktop>
-References: <3cb4133c-b6db-9187-a678-11ed8c9456e@redhat.com> <ZUUctamEFtAlSnSV@mail-itl> <ZUUlqJoS6_1IznzT@kbusch-mbp.dhcp.thefacebook.com> <ZUVYT1Xp4+hFT27W@mail-itl> <ZUV3TApYYoh_oiRR@kbusch-mbp.dhcp.thefacebook.com> <11a9886d-316c-edcd-d6da-24ad0b9a2b4@redhat.com>
- <ZUZOKitOAqqKiJ4n@kbusch-mbp.dhcp.thefacebook.com> <20231106071008.GB17022@lst.de> <928b5df7-fada-cf2f-6f6a-257a84547c3@redhat.com> <ZUkDUXDF6g4P86F3@kbusch-mbp.dhcp.thefacebook.com> <ZUkGpblDX637QV9y@redhat.com>
- <151bef41-e817-aea9-675-a35fdac4ed@redhat.com>
-User-Agent: Alpine 2.22 (DEB 394 2020-01-19)
+Message-ID: <20231108073157.GB5277@lst.de>
+References: <ZUUlqJoS6_1IznzT@kbusch-mbp.dhcp.thefacebook.com> <ZUVYT1Xp4+hFT27W@mail-itl> <ZUV3TApYYoh_oiRR@kbusch-mbp.dhcp.thefacebook.com> <11a9886d-316c-edcd-d6da-24ad0b9a2b4@redhat.com> <ZUZOKitOAqqKiJ4n@kbusch-mbp.dhcp.thefacebook.com> <20231106071008.GB17022@lst.de> <928b5df7-fada-cf2f-6f6a-257a84547c3@redhat.com> <ZUkDUXDF6g4P86F3@kbusch-mbp.dhcp.thefacebook.com> <ZUkGpblDX637QV9y@redhat.com> <151bef41-e817-aea9-675-a35fdac4ed@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="8323329-46487316-1699301481=:3478774"
-Content-ID: <alpine.DEB.2.22.394.2311062018170.3478774@ubuntu-linux-20-04-desktop>
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <151bef41-e817-aea9-675-a35fdac4ed@redhat.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Looks good:
 
---8323329-46487316-1699301481=:3478774
-Content-Type: text/plain; CHARSET=UTF-8
-Content-Transfer-Encoding: 8BIT
-Content-ID: <alpine.DEB.2.22.394.2311062018171.3478774@ubuntu-linux-20-04-desktop>
-
-On Mon, 6 Nov 2023, Mikulas Patocka wrote:
-> From: Keith Busch <kbusch@kernel.org>
-> 
-> There's a bug that when using the XEN hypervisor with bios with large
-> multi-page bio vectors on NVMe, the kernel deadlocks [1].
-> 
-> The deadlocks are caused by inability to map a large bio vector -
-> dma_map_sgtable always returns an error, this gets propagated to the block
-> layer as BLK_STS_RESOURCE and the block layer retries the request
-> indefinitely.
-> 
-> XEN uses the swiotlb framework to map discontiguous pages into contiguous
-> runs that are submitted to the PCIe device. The swiotlb framework has a
-> limitation on the length of a mapping - this needs to be announced with
-> the max_mapping_size method to make sure that the hardware drivers do not
-> create larger mappings.
-> 
-> Without max_mapping_size, the NVMe block driver would create large
-> mappings that overrun the maximum mapping size.
-> 
-> Reported-by: Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>
-> Link: https://lore.kernel.org/stable/ZTNH0qtmint%2FzLJZ@mail-itl/ [1]
-> Tested-by: Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>
-> Suggested-by: Christoph Hellwig <hch@lst.de>
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Keith Busch <kbusch@kernel.org>
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
-Acked-by: Stefano Stabellini <sstabellini@kernel.org>
-
-
-> ---
->  drivers/xen/swiotlb-xen.c |    1 +
->  1 file changed, 1 insertion(+)
-> 
-> Index: linux-stable/drivers/xen/swiotlb-xen.c
-> ===================================================================
-> --- linux-stable.orig/drivers/xen/swiotlb-xen.c	2023-11-03 17:57:18.000000000 +0100
-> +++ linux-stable/drivers/xen/swiotlb-xen.c	2023-11-06 15:30:59.000000000 +0100
-> @@ -405,4 +405,5 @@ const struct dma_map_ops xen_swiotlb_dma
->  	.get_sgtable = dma_common_get_sgtable,
->  	.alloc_pages = dma_common_alloc_pages,
->  	.free_pages = dma_common_free_pages,
-> +	.max_mapping_size = swiotlb_max_mapping_size,
->  };
---8323329-46487316-1699301481=:3478774--
+Reviewed-by: Christoph Hellwig <hch@lst.de>
