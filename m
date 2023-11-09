@@ -1,176 +1,177 @@
-Received: from EUR05-AM6-obe.outbound.protection.outlook.com (mail-am6eur05on2081.outbound.protection.outlook.com [40.107.22.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ej1-f53.google.com (mail-ej1-f53.google.com [209.85.218.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 84D5610A1A
-	for <dm-devel@lists.linux.dev>; Thu,  9 Nov 2023 09:07:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8E49E1DFD2
+	for <dm-devel@lists.linux.dev>; Thu,  9 Nov 2023 13:48:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="mh9h5WlN"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=RNqu5M7YjkbAIjorf8Gx159UM6qY6ad3P4djtNy0IpldUX/I+55Ke8u4XLtx3v42lFtoj/4NoUisFhHagnfJSEbh6sSsEe/75fOIZ9paDPCk45WKMiSA+RtQ5As+h0JAPE+ZXdHTBe2ldcCRQw+r62pw0XU0o3vt5afuSpyOI+0ci02YbPiebJzT+iC/WZ8NXtgH6JiCdFLWT3L+9OZkjwRDiiCFjpacAcOWlq6TO8sjFCuzkcWY3UtCEf5E9IxM1Er4Qi4dj6Qd9d/Qh9cpXJQrU/M6ux2biI4yZSqaduVzeybQ/3BIrUbIo+eOhAk3CR+1TQw+HjgoAm5wsgNKbA==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=pShKE0W5tayUwpzh7FfAEdPyyqF8fzv1vbbAx/w6rXs=;
- b=dA3BvcgEWQOHtV4zaB1XwpdeJGlKdCTVCOIGjmh5NYpZcnbykwoWpqWmhGGKTm79tbFGNJVv2tkvnj27iupGOmk7akBnv9GfT3r86Rr0vDUOHUYsXsw3QTNQ59KLjXlqX6F1oPy/+jtKsCCGk8pzk19adFFQJnumXCaIVXS1XEj4ou7B5xNR3Xv+SOjNvKfATlZil27FZn5deYLigFCvMN/Wi6RXjjnehjEh1az6D/TQ+5O3jJ2+hObLVKa7D6IQZVRGtOKPQHmoQbxGlFUaOLyo4+7D9Ga6xbZesTLCBHCFGyV1Pg26QWRbi6CGWD6gAi5cZxBkoEJQdC3gBVYbrg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=suse.com; dmarc=pass action=none header.from=suse.com;
- dkim=pass header.d=suse.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=pShKE0W5tayUwpzh7FfAEdPyyqF8fzv1vbbAx/w6rXs=;
- b=mh9h5WlNvLvNtizWD02FurtTusojD5IbJrnfyNT74dHRRnHneMh16o4k7Rryb0L9jS2GHZWaC+gMgQ5JeT55gp68qJpkD6wSTmqXSEJPg+f2qlujTOJeazorReSVe7XCxR0fBFcZpSp3qo8qcGJZlyx8Kcouk21yx6q/wT+c7btC71wIhpzJvtp6nKhUk3e3xWz/YV5dKZt0/HCQDhncVjVX1TIIzWKd0ysCUgogK5pehaAUlq/9liKHa7InKiIYwC9lwVO/HKB0i6K66o4Sbqmuq6uH/FxE/+sgEFugn2T/IfzZAI3ls4vmPizcLQln2BgeRZPrLq+ja8mAgbb0QQ==
-Received: from AM0PR04MB6324.eurprd04.prod.outlook.com (2603:10a6:208:13f::12)
- by AS8PR04MB7576.eurprd04.prod.outlook.com (2603:10a6:20b:29b::8) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6977.15; Thu, 9 Nov
- 2023 09:07:24 +0000
-Received: from AM0PR04MB6324.eurprd04.prod.outlook.com
- ([fe80::a371:c087:fe5a:1e77]) by AM0PR04MB6324.eurprd04.prod.outlook.com
- ([fe80::a371:c087:fe5a:1e77%4]) with mapi id 15.20.6977.017; Thu, 9 Nov 2023
- 09:07:24 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>
-CC: "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
-	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 1/7] libmultipath: Add max_retries config option
-Thread-Topic: [PATCH 1/7] libmultipath: Add max_retries config option
-Thread-Index: AQHaDdoOZRSHWsemRkaW+Xn4xoVS/7BwlueAgABtqQCAALgJgA==
-Date: Thu, 9 Nov 2023 09:07:23 +0000
-Message-ID: <4eb3625118838c31b4348c24f0712665b9a05109.camel@suse.com>
-References: <20231102221507.105371-1-bmarzins@redhat.com>
-	 <20231102221507.105371-2-bmarzins@redhat.com>
-	 <e704003e124116e72771d2b7ef90ca66ef242e1c.camel@suse.com>
-	 <ZUwG6iJU1xZ/S8WS@bmarzins-01.fast.rdu2.eng.redhat.com>
-In-Reply-To: <ZUwG6iJU1xZ/S8WS@bmarzins-01.fast.rdu2.eng.redhat.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-user-agent: Evolution 3.50.1 
-authentication-results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=suse.com;
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: AM0PR04MB6324:EE_|AS8PR04MB7576:EE_
-x-ms-office365-filtering-correlation-id: f14137b8-f065-4e00-4d85-08dbe10349a4
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info:
- qEEpbOP8G1/5dXoRIx+2V/PdxftysDnY+Dp//FN6AiwGB0hcDmjqehsuetitvRIyhWXbGqhFiXUoxSfND1ro8gl2VwN3Q/TwObNcXOdkpqOyU/DPv7wG+Ja5DRA8hkXUyy8IYJo3WL+jvrq8DBv1Bj0J0P3HjLl5zhkBQ3EaWQIRVK3TOObYrOKFjrYdp8YJzWl/UM+n95oH1brmSVkTl4dFWXGGPeMZecU52yZMP9+b/ULVlyKBEP8BuNlVC7rgJoOyXXwZ558p+y5ld8eF63oWibTsOFclzrfOgxJvegXH9rq/RZfuTTImjcvZ1+kByGYnQQRnZT36zxWIXYiyi7nZnF6uuD0XxpxA0EV/K9ZxQ7SInUamH9rQYmNtCx7+MztMG7fN1AcgUHR1u8xMd4jTzyhBAP0E95tlARXzfwYkCCwIiTuoLfZXiEvnteqRf2Rqk1p83A05H61YpIdRUQSjaoYsDdV894cp8HqdiTJq+yvlqgEVGDIo3zUSzLn7mst7FB/S4go2530OtvdIR9nv2gkd+VXeAu67m/r5D6sbL418ofZ04eGShZK46uPG5JuZQg5jFt9qqFEsKLRZyrF4qwIXijrUc9X4yX7/e5RWUEjU2/XMk0UnEaLrcT1J
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM0PR04MB6324.eurprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(346002)(396003)(376002)(136003)(39860400002)(366004)(230922051799003)(451199024)(64100799003)(1800799009)(186009)(316002)(478600001)(2616005)(6512007)(6486002)(71200400001)(6506007)(38100700002)(36756003)(122000001)(2906002)(86362001)(76116006)(66556008)(5660300002)(44832011)(64756008)(54906003)(41300700001)(66476007)(83380400001)(66446008)(66946007)(6916009)(26005)(8676002)(4326008)(38070700009)(8936002);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?iso-8859-15?Q?YrpPzipS7k0w2hv7evE9hwIloqoEVHbKXxJOcTKMiYjQpf3nehzYPnhh+?=
- =?iso-8859-15?Q?Umq5Aj4KiOxRJi+Twq8dyDKxeL6ewpecrjAScDJqpanPZSQEpI9hhN0nY?=
- =?iso-8859-15?Q?itw6rpEZaovfLbkbSrFS4VmdfaMAPv5y0BK/fswicm3Rz/gi4kYtaCECf?=
- =?iso-8859-15?Q?H2+yCozAwe69d/pmeoKymQC2zCvdxneLd50BJRfnTKA0Fkj9+zE6vcTW+?=
- =?iso-8859-15?Q?K3ot/0U2N6VHLypJhQA7/XJKXtl5CEBdp9K/cYFQahZVTAU1FaWulXgww?=
- =?iso-8859-15?Q?5nYEnBuAS9E+nyv53h5JRYbaHLZ2BFaVP62iJ9yt428fDCs8Epv/ngH/b?=
- =?iso-8859-15?Q?Gqa7zGS2337qRqZcqHFlDMobNLwF6t4XCZY6mcQfJzr4p5OUUECmFxg5r?=
- =?iso-8859-15?Q?EkvDLaC0yZ8zQZiHto22wpSaWlWUf6mHYuH6P5FwVYqHvQSwhJjm6a7L7?=
- =?iso-8859-15?Q?tblEMn063F5RYGCo6lr/eSCHp+YxAGHuwdWs4lhPIKXMXsYyHoQm+YU8i?=
- =?iso-8859-15?Q?13oHbfhknlGImrXotLYct+gg83wPInuZNm/W9Uo7dqD717XsGzlPTRffa?=
- =?iso-8859-15?Q?kKQrIdldRkVWoSJoa87ohFP3apnQi5yzCFuL/V368zlfO6PG8Iz22SGxZ?=
- =?iso-8859-15?Q?BNF3RC7S3l20P46L7aDfpE0aU0O3C0KIQ5MHWkHwvcfLvzJJpGa06WG6M?=
- =?iso-8859-15?Q?JpKpcHon314AN2V3JB02Tdgx+oOzqoYdsbrVKF1XpraPaKpsc5gJfkpV3?=
- =?iso-8859-15?Q?mfGuSBqovGJcjTALHHT0cOWNS6dTfdG0jIs9XOTRG7AXZ0PODlkvMKQz9?=
- =?iso-8859-15?Q?pxQctsWbTsgSRJGCXY64RSLGFtom5WK7m1plDlz1FWE0OM2p/4InwqOjN?=
- =?iso-8859-15?Q?U1I696KU9xUDBvH5zxXgC6RPlBtKoC5AEa//0OV7yCUyw3qG8fKD4GJzl?=
- =?iso-8859-15?Q?sdlwQjOKPnq8XYjsPAU0Y3yh21cA4yhC9udZmcHjGqPRFhjI10UBUVx1D?=
- =?iso-8859-15?Q?qtW8iHZ8/5lTbHKpD0uJcp3jRUXhiw+SpzBMx4uP7FUF1TSO+n/XKMlbb?=
- =?iso-8859-15?Q?hwnwMx+o6OKY5JSOjIcCgzwdjta9Zm/ECC1U3GcBeSCgQUV3u1TV57In4?=
- =?iso-8859-15?Q?s8p3SM8S92a4E1aiMSwoBV6QLBLSRn5Ni2uo9PU4jWMXSyvpEzTN465kD?=
- =?iso-8859-15?Q?zPz+RIjqYY83nPYbgs3ARkiMTFeqxvBXGVAgl1KH4oA8tvWKCZL4YN+eU?=
- =?iso-8859-15?Q?apKrlh1oR9lCiHi+bklBSgd7a+RgDQYvBFR1+yCaZEp9wHB32sezBGV9r?=
- =?iso-8859-15?Q?lYQx1RT0TQUaXiwvoabtdj8osXboBvxf43MuS/CTruAClvWJ/4H1V9Mv9?=
- =?iso-8859-15?Q?Zpd8Q6KIdfLQW1l6U+fXWrg7nDVS5fwoEeJt7w1IGt0WkWBjZFm/MRYHg?=
- =?iso-8859-15?Q?Or8A7UvxNkVKiLfNOlIiepb24tvoxqMl9FT1FZDSgaas7vU6MUm0HphnU?=
- =?iso-8859-15?Q?i4QOt/62UZjF9w2AJXgKGmxEEpG0MnzP8MruY4OiiyYv19uRMqpKf/GNw?=
- =?iso-8859-15?Q?1SMlTrwSriU8I5DqLbgENA9VTPnhcfDUXuUN3yWaGFdO7xt7BlzXiqrLO?=
- =?iso-8859-15?Q?2uHtmXNuyfBlwAfQKcSOBsozE2JzB/H1dyV2ovvAz5lMQHJII+pzY+R8v?=
- =?iso-8859-15?Q?nv+K8jzYgBQFuLP7bKgDrYyLTQ=3D=3D?=
-Content-Type: text/plain; charset="iso-8859-15"
-Content-ID: <758B912701AE724DBE76F527CB1463D7@eurprd04.prod.outlook.com>
-Content-Transfer-Encoding: quoted-printable
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jDhZwbK0"
+Received: by mail-ej1-f53.google.com with SMTP id a640c23a62f3a-9c53e8b7cf4so148238666b.1
+        for <dm-devel@lists.linux.dev>; Thu, 09 Nov 2023 05:48:54 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1699537733; x=1700142533; darn=lists.linux.dev;
+        h=content-transfer-encoding:autocrypt:subject:from:cc:to
+         :content-language:user-agent:mime-version:date:message-id:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=ghat72vdrQFnEjXwocXdY/0imJRu6o97KQo7WO3Sfi0=;
+        b=jDhZwbK0rjlJGn5FHYLEfi0Nn/Y7KTcxGL8qixc5McIReO712tF8CswNkUjDBiOCL9
+         2B9XG78FfpcbexH1PMmLKi6v4d+DQ9Wgudb+AqdqzqgSiocusiw3EXqDdCdlxfEDP5kQ
+         ji1Yqm6SDWDPrUsbL5HPg9+cgEGJcewiS1UrpKi4n7rZqK2aUl96ESb7SYgu98UIqlzH
+         98zBQTRLmIjJtPcGDn8TcQJHhvwbgvb/aD36t/UfnV+vShN1pvuSwZ5oCvTeO1vNsEyA
+         eKA1MIiQgdv7xOSTa4QAvOcBqEdRGJEe4ue/XbQvJ1fXJF45L0xNDV1SCYsJ6+908dx3
+         OYQg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1699537733; x=1700142533;
+        h=content-transfer-encoding:autocrypt:subject:from:cc:to
+         :content-language:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=ghat72vdrQFnEjXwocXdY/0imJRu6o97KQo7WO3Sfi0=;
+        b=XU8ytdW87vniRM8QjXONDLFDP6f47lAYRpO58Dtt2UOScwg+OApTYyXPUf6y6zrjND
+         I5Sj8cak6lMbhaOx03KVLu+9cQIZKByhOg/zZwNAm5ooAbmO2iJLyiA9VPhiLw2JOVKc
+         KNOgJQVw0Uo5aZ7Pb70gmByINQuEjxX5BaT/UjxHQNvD16q234KAWkmZ4OfYAazT6C5v
+         imGMAnfERJNbqCHk5ZsZ1VT5BbXM11PXivvpT1KCFicmuIEagCORV6vLOnRCSRovJUVa
+         ULIZQATVYtG+ICpPJXcOSse75vnzPhR56rBNsLkaTTIBCoGvo7Qqdjvn2F6uUuQCOOro
+         1yLg==
+X-Gm-Message-State: AOJu0YxoLQjH3+ztvR7Y+c1aKvpsgPPKy01XEiTKM0XfD9swi3k/BoN7
+	+3wlLBuGMNYnZou45CfWjifxC7btqxA=
+X-Google-Smtp-Source: AGHT+IGMj26uddgefCjbTnYshrjXsyFPDJgmQGPbmhe3ttTU6WugUP95lxzkBAZxKghopJLby4jlhg==
+X-Received: by 2002:a17:907:2da9:b0:9da:ef1a:958c with SMTP id gt41-20020a1709072da900b009daef1a958cmr4238272ejc.40.1699537732472;
+        Thu, 09 Nov 2023 05:48:52 -0800 (PST)
+Received: from [147.251.42.107] (laomedon.fi.muni.cz. [147.251.42.107])
+        by smtp.gmail.com with ESMTPSA id f4-20020a170906c08400b0098ce63e36e9sm2615798ejz.16.2023.11.09.05.48.51
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 09 Nov 2023 05:48:51 -0800 (PST)
+Message-ID: <fa17b8d8-2d84-45c8-ac6a-1876f1f55a52@gmail.com>
+Date: Thu, 9 Nov 2023 14:48:51 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: AM0PR04MB6324.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: f14137b8-f065-4e00-4d85-08dbe10349a4
-X-MS-Exchange-CrossTenant-originalarrivaltime: 09 Nov 2023 09:07:23.9440
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: MkvUKt3NU9WTU9zdH6Ol4IN9OyZZ2pGce4ymRmXh/CPgX3La80qfhZ/pDtZAF4mRqQbNtBI2fdwmkuQjZyDi5Q==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AS8PR04MB7576
+User-Agent: Mozilla Thunderbird
+Content-Language: en-US
+To: dm-devel@lists.linux.dev
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Subject: Crash in dm-verity/bufio if use with tasklets
+Autocrypt: addr=gmazyland@gmail.com; keydata=
+ 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
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Hi Ben,
+Hi,
 
-On Wed, 2023-11-08 at 17:08 -0500, Benjamin Marzinski wrote:
-> On Wed, Nov 08, 2023 at 03:36:14PM +0000, Martin Wilck wrote:
-> > On Thu, 2023-11-02 at 18:15 -0400, Benjamin Marzinski wrote:
-> > > This option lets multipath set a scsi disk's max_retries sysfs
-> > > value.
-> > > Setting this can be helpful for cases where the path checker
-> > > succeeds,
-> > > but IO commands hang and timeout. By default, the SCSI layer will
-> > > retry
-> > > IOs 5 times. Reducing this value will allow multipath to retry
-> > > the IO
-> > > down another path sooner.
-> > >=20
-> > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> >=20
-> > 2 nitpicks below. Please explain to me again why we recommend to
-> > activate shaky paths detection with this. What will go wrong if the
-> > user uses max_retries without shaky path detection?
->=20
+there is a kernel crash during when running our cryptsetup testsuite
+if using veritysetup with  --use-tasklets option (try_verify_in_tasklet table option).
 
-I've thought about this some more after my review. Similar to the auto-
-resize, do we need to make this parameter a hardware property? AFAICS
-it would be sufficient to have it as setting in the "defaults" section,
-which would make the patch much simpler.
+With
+  # veritysetup format /dev/sdb /dev/sdc
+  # veritysetup open /dev/sdb test /dev/sdc --use-tasklets <root_hash>
 
-> In the case were the path_checker keeps succeeding, but the IOs keep
-> hanging, multipathd will just keep restoring this path over and over
-> again. That's the sort of path ping-ponging that shaky path detection
-> should be able to stop. I guess this is can speed up other cases for
-> failover as well, so I can leave that off.=A0 Hopefully people know
-> that
-> if they are seeing ping-ponging, shaky path detection can help with
-> it.
+it generates BUG below, bisect point to
 
-This is a general argument for enabling shaky paths detection. But I
-don't see how it relates to max_retries. Decreasing max_retries should=20
-make it less likely that regular IOs are hanging while the path checker
-succeeds, whether or not shaky path detection is enabled. By decreasing
-max_retries, we force the kernel to treat regular IO more like
-passthrough IO. AFAIU that should decrease the difference of failure
-probability between the path checker and regular IO.
+450e8dee51aa6fa1dd0f64073e88235f1a77b035 is the first bad commit
+commit 450e8dee51aa6fa1dd0f64073e88235f1a77b035
+Author: Joe Thornber <ejt@redhat.com>
+Date:   Fri Mar 10 16:02:29 2023 +0000
 
-I have another question; as pointed out in my previous post about this
-patch, max_retries only affects the kernel's "maybe_retry" case, IOW
-mostly DID_TRANSPORT_DISRUPTED. This is a condition that can happen
-with shaky paths. But SCSI command timeouts are also likely, and for
-that case, reducing max_retries isn't going to help, as timed out
-commands won't be retried but passed to the error handler.
-DID_TRANSPORT_DISRUPTED errors will happen quickly most of the time.
-IOW, I don't quite understand how decreasing max_retries substantially
-decreases the time regular I/O=A0would be hanging [1]. I associate
-hanging IO mostly with command timeouts. Am I missing something here?
+     dm bufio: improve concurrent IO performance
 
-Regards
-Martin
+So, it is broken since kernel 6.4 ... !
 
-[1] Note that SAM_STAT_BUSY is treated by the kernel with
-ADD_TO_MLQUEUE, which means max_retries is ignored.
+(I wonder why we added dm-verity tasklet option when nobody apparently use it...)
 
+: =============================
+: [ BUG: Invalid wait context ]
+: 6.6.0+ #170 Not tainted
+: -----------------------------
+: ksoftirqd/2/25 is trying to lock:
+: ffff88810f57c6f8 (&bc->trees[i].lock){.+.+}-{3:3}, at: cache_get+0x46/0xc0 [dm_bufio]
+: other info that might help us debug this:
+: context-{2:2}
+: no locks held by ksoftirqd/2/25.
+: stack backtrace:
+: CPU: 2 PID: 25 Comm: ksoftirqd/2 Not tainted 6.6.0+ #170
+: Hardware name: VMware, Inc. VMware Virtual Platform/440BX Desktop Reference Platform, BIOS 6.00 11/12/2020
+: Call Trace:
+:  <TASK>
+:  dump_stack_lvl+0x5c/0xc0
+:  dump_stack+0x10/0x20
+:  __lock_acquire+0xa3f/0x2800
+:  lock_acquire+0xd8/0x2d0
+:  ? cache_get+0x46/0xc0 [dm_bufio]
+:  ? __this_cpu_preempt_check+0x13/0x20
+:  down_read+0x30/0x270
+:  ? cache_get+0x46/0xc0 [dm_bufio]
+:  cache_get+0x46/0xc0 [dm_bufio]
+:  new_read+0x53/0x1d0 [dm_bufio]
+:  dm_bufio_get+0x11/0x20 [dm_bufio]
+:  verity_verify_level+0x17d/0x230 [dm_verity]
+:  verity_hash_for_block+0x37/0xe0 [dm_verity]
+:  verity_verify_io+0x124/0x5d0 [dm_verity]
+:  ? find_held_lock+0x31/0x80
+:  ? __this_cpu_preempt_check+0x13/0x20
+:  ? percpu_ref_put_many.constprop.0+0x6a/0x110
+:  ? blk_queue_exit+0xd/0x10
+:  ? __blk_mq_free_request+0x65/0xc0
+:  ? tasklet_action_common.isra.0+0x34/0x250
+:  verity_tasklet+0x11/0x90 [dm_verity]
+:  tasklet_action_common.isra.0+0xdf/0x250
+:  tasklet_action+0x28/0x30
+:  __do_softirq+0xcf/0x459
+:  run_ksoftirqd+0x32/0x50
+:  smpboot_thread_fn+0x17c/0x220
+:  ? sort_range+0x20/0x20
+:  kthread+0xfc/0x130
+:  ? kthread_complete_and_exit+0x20/0x20
+:  ret_from_fork+0x31/0x50
+:  ? kthread_complete_and_exit+0x20/0x20
+:  ret_from_fork_asm+0x11/0x20
+:  </TASK>
+
+
+Thanks,
+Milan
