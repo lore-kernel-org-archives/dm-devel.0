@@ -1,50 +1,50 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C0B1C39843
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0052239845
 	for <dm-devel@lists.linux.dev>; Thu,  9 Nov 2023 23:46:24 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JeTpeT5e"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="O/7Ok4lM"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1699573583;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=P9yxJUsxYzIA3gBaMVy4bLQkYuosfvBl/tWdXAcYhpo=;
-	b=JeTpeT5eevDpiXe/31FgRTPl98UOoAskocnysMowoiuphFVVAdT3FGc2R+yS5YVwgrYUyG
-	75yJKTXwpaUGbaWkr+9WRk/xmSTDC6ErkynwXs4qNYM9sZHjudLFyBluCpIg/oe/2HXCs0
-	emasi4vdVmu/RoXOKPGYigI/tM02sZk=
+	bh=tC1a4dUUdVaiuc7gPDnLmspR9xV+W18nhoUKn2XnYB0=;
+	b=O/7Ok4lMCLpXwlER4UZZKQPPH7025MEzNpgn/923lPZE3VwVpxS7Pw8w6ecfCqrFEY5r5J
+	1d/DtZrp07BaRjJ4kZfAK85eLeL2Y0kOCz5Za67N5B/VYaezdbbeL9MEDAY+yW6UhSU/WF
+	nUA0DTOA3GAr+wXtkeJMpsf1OHTueyg=
 Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-35-BPdIXfY_OOym_tL2Gom7cQ-1; Thu,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-587-ayxZ8TEsMgqO0CpPHs5jFQ-1; Thu,
  09 Nov 2023 18:46:18 -0500
-X-MC-Unique: BPdIXfY_OOym_tL2Gom7cQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+X-MC-Unique: ayxZ8TEsMgqO0CpPHs5jFQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1BDE21C04B58;
-	Thu,  9 Nov 2023 23:46:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C483B380662D;
+	Thu,  9 Nov 2023 23:46:17 +0000 (UTC)
 Received: from bmarzins-01.fast.rdu2.eng.redhat.com (bmarzins-01.fast.rdu2.eng.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 160842026D68;
-	Thu,  9 Nov 2023 23:46:18 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BE93F492A;
+	Thu,  9 Nov 2023 23:46:17 +0000 (UTC)
 Received: from bmarzins-01.fast.rdu2.eng.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1) with ESMTPS id 3A9NkH9a100151
+	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1) with ESMTPS id 3A9NkHhf100143
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
 	Thu, 9 Nov 2023 18:46:17 -0500
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1/Submit) id 3A9NkHCS100150;
+	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1/Submit) id 3A9NkHBJ100142;
 	Thu, 9 Nov 2023 18:46:17 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>, Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 5/6] multipathd: move resize_map() to multipathd/main.c
-Date: Thu,  9 Nov 2023 18:46:15 -0500
-Message-ID: <20231109234616.100125-6-bmarzins@redhat.com>
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH v2 3/6] multipathd: check and update all paths when in cli_resize
+Date: Thu,  9 Nov 2023 18:46:13 -0500
+Message-ID: <20231109234616.100125-4-bmarzins@redhat.com>
 In-Reply-To: <20231109234616.100125-1-bmarzins@redhat.com>
 References: <20231109234616.100125-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -53,113 +53,74 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.1
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-No functional changes.
+When resizing a multipath device, make sure that all the paths have
+been updated to the new size first.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/cli_handlers.c | 29 -----------------------------
- multipathd/main.c         | 29 +++++++++++++++++++++++++++++
- multipathd/main.h         |  2 ++
- 3 files changed, 31 insertions(+), 29 deletions(-)
+ multipathd/cli_handlers.c | 31 ++++++++++++++++++-------------
+ 1 file changed, 18 insertions(+), 13 deletions(-)
 
 diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index cf75b45f..420d75df 100644
+index c9addfbb..37a999ac 100644
 --- a/multipathd/cli_handlers.c
 +++ b/multipathd/cli_handlers.c
-@@ -813,35 +813,6 @@ cli_reload(void *v, struct strbuf *reply, void *data)
- 	return reload_and_sync_map(mpp, vecs);
- }
+@@ -845,9 +845,11 @@ cli_resize(void *v, struct strbuf *reply, void *data)
+ 	char * mapname = get_keyparam(v, KEY_MAP);
+ 	struct multipath *mpp;
+ 	int minor;
+-	unsigned long long size;
++	unsigned long long size = 0;
+ 	struct pathgroup *pgp;
+ 	struct path *pp;
++	unsigned int i, j;
++	bool mismatch = false;
  
--static int resize_map(struct multipath *mpp, unsigned long long size,
--	       struct vectors * vecs)
--{
--	char *params __attribute__((cleanup(cleanup_charp))) = NULL;
--	unsigned long long orig_size = mpp->size;
--
--	mpp->size = size;
--	update_mpp_paths(mpp, vecs->pathvec);
--	if (setup_map(mpp, &params, vecs) != 0) {
--		condlog(0, "%s: failed to setup map for resize : %s",
--			mpp->alias, strerror(errno));
--		mpp->size = orig_size;
--		return 1;
--	}
--	mpp->action = ACT_RESIZE;
--	mpp->force_udev_reload = 1;
--	if (domap(mpp, params, 1) == DOMAP_FAIL) {
--		condlog(0, "%s: failed to resize map : %s", mpp->alias,
--			strerror(errno));
--		mpp->size = orig_size;
--		return 1;
--	}
--	if (setup_multipath(vecs, mpp) != 0)
--		return 2;
--	sync_map_state(mpp);
--
--	return 0;
--}
--
- static int
- cli_resize(void *v, struct strbuf *reply, void *data)
- {
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 214ed4ae..3b4c5b09 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1530,6 +1530,35 @@ needs_ro_update(struct multipath *mpp, int ro)
- 	return true;
- }
+ 	mapname = convert_dev(mapname, 0);
+ 	condlog(2, "%s: resize map (operator)", mapname);
+@@ -867,21 +869,24 @@ cli_resize(void *v, struct strbuf *reply, void *data)
+ 		return 1;
+ 	}
  
-+int resize_map(struct multipath *mpp, unsigned long long size,
-+	       struct vectors * vecs)
-+{
-+	char *params __attribute__((cleanup(cleanup_charp))) = NULL;
-+	unsigned long long orig_size = mpp->size;
-+
-+	mpp->size = size;
-+	update_mpp_paths(mpp, vecs->pathvec);
-+	if (setup_map(mpp, &params, vecs) != 0) {
-+		condlog(0, "%s: failed to setup map for resize : %s",
-+			mpp->alias, strerror(errno));
-+		mpp->size = orig_size;
-+		return 1;
-+	}
-+	mpp->action = ACT_RESIZE;
-+	mpp->force_udev_reload = 1;
-+	if (domap(mpp, params, 1) == DOMAP_FAIL) {
-+		condlog(0, "%s: failed to resize map : %s", mpp->alias,
-+			strerror(errno));
-+		mpp->size = orig_size;
-+		return 1;
-+	}
-+	if (setup_multipath(vecs, mpp) != 0)
-+		return 2;
-+	sync_map_state(mpp);
-+
-+	return 0;
-+}
-+
- static int
- uev_update_path (struct uevent *uev, struct vectors * vecs)
- {
-diff --git a/multipathd/main.h b/multipathd/main.h
-index a253d186..8a178c0b 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -52,4 +52,6 @@ int reload_and_sync_map(struct multipath *mpp, struct vectors *vecs);
- void handle_path_wwid_change(struct path *pp, struct vectors *vecs);
- bool check_path_wwid_change(struct path *pp);
- int finish_path_init(struct path *pp, struct vectors * vecs);
-+int resize_map(struct multipath *mpp, unsigned long long size,
-+	       struct vectors *vecs);
- #endif /* MAIN_H */
+-	pgp = VECTOR_SLOT(mpp->pg, 0);
+-
+-	if (!pgp){
+-		condlog(0, "%s: couldn't get path group. cannot resize",
+-			mapname);
+-		return 1;
++	vector_foreach_slot(mpp->pg, pgp, i) {
++		vector_foreach_slot (pgp->paths, pp, j) {
++			sysfs_get_size(pp, &pp->size);
++			if (!pp->size)
++				continue;
++			if (!size)
++				size = pp->size;
++			else if (pp->size != size)
++				mismatch = true;
++		}
+ 	}
+-	pp = VECTOR_SLOT(pgp->paths, 0);
+-
+-	if (!pp){
+-		condlog(0, "%s: couldn't get path. cannot resize", mapname);
++	if (!size) {
++		condlog(0, "%s: couldn't get size from sysfs. cannot resize",
++			mapname);
+ 		return 1;
+ 	}
+-	if (!pp->udev || sysfs_get_size(pp, &size)) {
+-		condlog(0, "%s: couldn't get size for sysfs. cannot resize",
++	if (mismatch) {
++		condlog(0, "%s: path size not consistent. cannot resize",
+ 			mapname);
+ 		return 1;
+ 	}
 -- 
 2.41.0
 
