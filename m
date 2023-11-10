@@ -1,242 +1,122 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pf1-f175.google.com (mail-pf1-f175.google.com [209.85.210.175])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E6A8A39850
-	for <dm-devel@lists.linux.dev>; Thu,  9 Nov 2023 23:46:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B578A47
+	for <dm-devel@lists.linux.dev>; Fri, 10 Nov 2023 01:01:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=chromium.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=chromium.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EVCpBEhI"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1699573584;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=o6MtGi1rYqYhZoM5H4620s3hEm9xPzPVp4kylBbrVUE=;
-	b=EVCpBEhI9mDa8SEzSUzaYQqstcEYbB7/TpDBpzppnyTi3gAtLTZKqY85Ocppb6PfbzHP2e
-	yBKZkn7yA+cdPX9SQNw/buPGdQl8tOZu4m/dNoarTPqOJKII0rmkel1b7Dltn/sIToDfVH
-	cDB7jNDp/RE7kA/JKlMV/zo/0FpwFZQ=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-220-9uxTOOBwMMWEnX1APoQwaA-1; Thu, 09 Nov 2023 18:46:19 -0500
-X-MC-Unique: 9uxTOOBwMMWEnX1APoQwaA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 85AC5101A54C;
-	Thu,  9 Nov 2023 23:46:17 +0000 (UTC)
-Received: from bmarzins-01.fast.rdu2.eng.redhat.com (bmarzins-01.fast.rdu2.eng.redhat.com [10.6.23.12])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 770D11C060AE;
-	Thu,  9 Nov 2023 23:46:17 +0000 (UTC)
-Received: from bmarzins-01.fast.rdu2.eng.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1) with ESMTPS id 3A9NkHGq100135
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 9 Nov 2023 18:46:17 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.rdu2.eng.redhat.com (8.17.1/8.17.1/Submit) id 3A9NkHIk100134;
-	Thu, 9 Nov 2023 18:46:17 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v2 1/6] libmultipath: Add max_retries config option
-Date: Thu,  9 Nov 2023 18:46:11 -0500
-Message-ID: <20231109234616.100125-2-bmarzins@redhat.com>
-In-Reply-To: <20231109234616.100125-1-bmarzins@redhat.com>
-References: <20231109234616.100125-1-bmarzins@redhat.com>
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="kZUQS5u2"
+Received: by mail-pf1-f175.google.com with SMTP id d2e1a72fcca58-6be1bc5aa1cso1574447b3a.3
+        for <dm-devel@lists.linux.dev>; Thu, 09 Nov 2023 17:01:45 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=chromium.org; s=google; t=1699578104; x=1700182904; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=stZ19W6CJSbCLcY9VmpuxNK8sKYrFkpIrrgdntoQjIs=;
+        b=kZUQS5u2HAiUyAjMISTNT51yVbfFf7VkYx/jYnWzRYcuwkxSXuf7y1l2b/JXShP2rY
+         yfdDcOYz7T+O4GSpnKwWhC8WQauvNqLGcgEwmJ1K7ffkAi5HL3LHzPfDp6M3I9JM8xHu
+         exY4EnBdqyh+dOHN67MBJBcrxtrmZPKoFPpQU=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1699578104; x=1700182904;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=stZ19W6CJSbCLcY9VmpuxNK8sKYrFkpIrrgdntoQjIs=;
+        b=V5MpNEPh68cpEcH9Lm5vRUHOgQ53qhPYYcItiFf0ZCJOo1RHlKJ22aVSN4eX3CKOIZ
+         H9RobuIcAPYFkSawP7j/4HsNLSYv36UQ3UwlLUkhxrQZVau2Sts7UgTl1Wr5Ol9iV1aG
+         Rz7QboCWmWBFitOI1F+AbLXPNo2UAUNlGhDzxjWbP7guKfZbzZpF5sU+9kpAQVmGlNOV
+         +Nm3gC014gVVfo6LtaRgJYpyQAF4gYWzvnBp7wXwnAjnUA0ukkSup6M1SMFkkSaq4CxY
+         6JDPE4CIIhOeRBqPyTKkidOkOSJOecYY+gF1vvtEwySodYNAhkiPLkRe/3i7z9g1AYlg
+         mVvQ==
+X-Gm-Message-State: AOJu0YyndS/mv/iB2C88lVsWRDM9Y2SaTjRAME1b/q54b8U8ET08g3uZ
+	nmbEaQN+6NjDmFgPx7p/pIzDUIP7gLEkTjG2/fw=
+X-Google-Smtp-Source: AGHT+IEg994sPolTlXgtVmMaxyLSJhNiIosQ5Sy2AaGuC5XZ3trJ7jZHBLbJ4oVxmrGK7yjkIopj4A==
+X-Received: by 2002:a05:6a21:18d:b0:17e:2afd:407b with SMTP id le13-20020a056a21018d00b0017e2afd407bmr8802325pzb.9.1699578104522;
+        Thu, 09 Nov 2023 17:01:44 -0800 (PST)
+Received: from localhost ([2620:15c:9d:2:e584:25c0:d29c:54c])
+        by smtp.gmail.com with UTF8SMTPSA id y25-20020a634959000000b0059b2316be86sm5324028pgk.46.2023.11.09.17.01.43
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 09 Nov 2023 17:01:44 -0800 (PST)
+From: Sarthak Kukreti <sarthakkukreti@chromium.org>
+To: dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org
+Cc: Jens Axboe <axboe@kernel.dk>,
+	Mike Snitzer <snitzer@kernel.org>,
+	"Darrick J . Wong" <djwong@kernel.org>,
+	Christoph Hellwig <hch@lst.de>,
+	Dave Chinner <david@fromorbit.com>,
+	Brian Foster <bfoster@redhat.com>,
+	Sarthak Kukreti <sarthakkukreti@chromium.org>
+Subject: [PATCH v9 0/3] [PATCH v9 0/3] Introduce provisioning primitives
+Date: Thu,  9 Nov 2023 17:01:35 -0800
+Message-ID: <20231110010139.3901150-1-sarthakkukreti@chromium.org>
+X-Mailer: git-send-email 2.42.0.869.gea05f2083d-goog
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
-Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-This option lets multipath set a scsi disk's max_retries sysfs value.
-Setting this can be helpful for cases where the path checker succeeds,
-but IO commands hang and timeout. By default, the SCSI layer will retry
-IOs 5 times. Reducing this value will allow multipath to retry the IO
-down another path sooner.
+Hi,
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/config.h         |  1 +
- libmultipath/dict.c           | 25 +++++++++++++++++++++
- libmultipath/discovery.c      | 41 ++++++++++++++++++++++++++++++++++-
- libmultipath/structs.h        |  6 +++++
- multipath/multipath.conf.5.in | 14 ++++++++++++
- 5 files changed, 86 insertions(+), 1 deletion(-)
+This patch series is version 9 of the patch series to introduce
+block-level provisioning mechanism (original [1]), which is useful for
+provisioning space across thinly provisioned storage architectures (loop
+devices backed by sparse files, dm-thin devices, virtio-blk). This
+series has minimal changes over v8[2], with a couple of patches dropped
+(suggested by Dave).
 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 8c22ce75..417e5834 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -162,6 +162,7 @@ struct config {
- 	int fast_io_fail;
- 	unsigned int dev_loss;
- 	int eh_deadline;
-+	int max_retries;
- 	int log_checker_err;
- 	int allow_queueing;
- 	int allow_usb_devices;
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 044067af..e268673f 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -1152,6 +1152,30 @@ declare_hw_snprint(eh_deadline, print_undef_off_zero)
- declare_pc_handler(eh_deadline, set_undef_off_zero)
- declare_pc_snprint(eh_deadline, print_undef_off_zero)
- 
-+static int
-+def_max_retries_handler(struct config *conf, vector strvec, const char *file,
-+			int line_nr)
-+{
-+	char * buff;
-+
-+	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
-+
-+	if (strcmp(buff, "off") == 0)
-+		conf->max_retries = MAX_RETRIES_OFF;
-+	else if (strcmp(buff, "0") == 0)
-+		conf->max_retries = MAX_RETRIES_ZERO;
-+	else
-+		do_set_int(strvec, &conf->max_retries, 1, 5, file, line_nr,
-+			   buff);
-+
-+	free(buff);
-+	return 0;
-+}
-+
-+declare_def_snprint(max_retries, print_undef_off_zero)
-+
- static int
- set_pgpolicy(vector strvec, void *ptr, const char *file, int line_nr)
- {
-@@ -2079,6 +2103,7 @@ init_keywords(vector keywords)
- 	install_keyword("fast_io_fail_tmo", &def_fast_io_fail_handler, &snprint_def_fast_io_fail);
- 	install_keyword("dev_loss_tmo", &def_dev_loss_handler, &snprint_def_dev_loss);
- 	install_keyword("eh_deadline", &def_eh_deadline_handler, &snprint_def_eh_deadline);
-+	install_keyword("max_retries", &def_max_retries_handler, &snprint_def_max_retries);
- 	install_keyword("bindings_file", &deprecated_bindings_file_handler, &snprint_deprecated);
- 	install_keyword("wwids_file", &deprecated_wwids_file_handler, &snprint_deprecated);
- 	install_keyword("prkeys_file", &deprecated_prkeys_file_handler, &snprint_deprecated);
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 84ce5fe7..6fd4dabb 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -614,6 +614,43 @@ sysfs_set_eh_deadline(struct path *pp)
- 	return (ret <= 0);
- }
- 
-+static int
-+sysfs_set_max_retries(struct config *conf, struct path *pp)
-+{
-+	struct udev_device *parent;
-+	char value[16];
-+	STRBUF_ON_STACK(buf);
-+	int ret, len;
-+
-+	if (conf->max_retries == MAX_RETRIES_UNSET)
-+		return 0;
-+
-+	if (!pp->udev || pp->sg_id.host_no < 0)
-+		return 1;
-+
-+	len = sprintf(value, "%d", (conf->max_retries == MAX_RETRIES_OFF)? -1 :
-+				   (conf->max_retries == MAX_RETRIES_ZERO)? 0 :
-+				   conf->max_retries);
-+
-+	parent = udev_device_get_parent_with_subsystem_devtype(pp->udev,
-+			"scsi", "scsi_device");
-+	if (!parent)
-+		return 1;
-+
-+	if (print_strbuf(&buf, "scsi_disk/%i:%i:%i:%" PRIu64 "/max_retries",
-+			 pp->sg_id.host_no, pp->sg_id.channel,
-+			 pp->sg_id.scsi_id, pp->sg_id.lun) < 0)
-+		return 1;
-+
-+	ret = sysfs_attr_set_value(parent, get_strbuf_str(&buf), value, len);
-+	if (len != ret)
-+		log_sysfs_attr_set_value(3, ret,
-+					 "%s/%s: failed to set value to %s",
-+					 udev_device_get_sysname(parent),
-+					 get_strbuf_str(&buf), value);
-+	return (len != ret);
-+}
-+
- static void
- sysfs_set_rport_tmo(struct multipath *mpp, struct path *pp)
- {
-@@ -878,7 +915,8 @@ sysfs_set_scsi_tmo (struct config *conf, struct multipath *mpp)
- 
- 		if (pp->dev_loss == DEV_LOSS_TMO_UNSET &&
- 		    pp->fast_io_fail == MP_FAST_IO_FAIL_UNSET &&
--		    pp->eh_deadline == EH_DEADLINE_UNSET)
-+		    pp->eh_deadline == EH_DEADLINE_UNSET &&
-+		    conf->max_retries == MAX_RETRIES_UNSET)
- 			continue;
- 
- 		if (pp->bus != SYSFS_BUS_SCSI) {
-@@ -886,6 +924,7 @@ sysfs_set_scsi_tmo (struct config *conf, struct multipath *mpp)
- 			continue;
- 		}
- 		sysfs_set_eh_deadline(pp);
-+		sysfs_set_max_retries(conf, pp);
- 
- 		if (pp->dev_loss == DEV_LOSS_TMO_UNSET &&
- 		    pp->fast_io_fail == MP_FAST_IO_FAIL_UNSET)
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 17e13ee7..63551b80 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -295,6 +295,12 @@ enum eh_deadline_states {
- 	EH_DEADLINE_ZERO = UOZ_ZERO,
- };
- 
-+enum max_retries_states {
-+	MAX_RETRIES_UNSET = UOZ_UNDEF,
-+	MAX_RETRIES_OFF = UOZ_OFF,
-+	MAX_RETRIES_ZERO = UOZ_ZERO,
-+};
-+
- enum recheck_wwid_states {
- 	RECHECK_WWID_UNDEF = YNU_UNDEF,
- 	RECHECK_WWID_OFF = YNU_NO,
-diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-index 226d0019..014d6dd1 100644
---- a/multipath/multipath.conf.5.in
-+++ b/multipath/multipath.conf.5.in
-@@ -793,6 +793,20 @@ The default is: \fB<unset>\fR
- .
- .
- .TP
-+.B max_retries
-+Specify the maximum number of times the SCSI layer will retry IO commands for
-+some types of SCSI errors before returning failure. Setting this can be helpful
-+for cases where IO commands hang and timeout. By default, the SCSI layer will
-+retry IOs 5 times. Reducing this value will allow multipath to retry the IO
-+down another path sooner. Valid values are
-+\fB0\fR through \fB5\fR.
-+.RS
-+.TP
-+The default is: \fB<unset>\fR
-+.RE
-+.
-+.
-+.TP
- .B bindings_file
- (Deprecated) This option is not supported any more, and will be ignored.
- .RS
+This patch series is rebased from the linux-dm/dm-6.5-provision-support
+[3] on to (a12deb44f973 Merge tag 'input-for-v6.7-rc0' ...). The final 
+patch in the series is a blktest (suggested by Dave in 4) which was used
+to test out the provisioning flow for loop devices on sparse files on an
+ext4 filesystem.
+
+[1] Original: https://lore.kernel.org/lkml/20220915164826.1396245-1-sarthakkukreti@google.com/
+[2] v8 (last series): https://lore.kernel.org/lkml/20231007012817.3052558-1-sarthakkukreti@chromium.org/
+[3] linux-dm/dm-6.5-provision-suppport tree:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-6.5-provision-support
+(with the last two WIP patches for dm-thinpool dropped as per discussion with
+maintainers).
+[4] https://lore.kernel.org/lkml/ZSXono3GkXhgrZ1T@dread.disaster.area/
+
+Changes from v8:
+- Dropped fallocate() bugfix: merged separately.
+- Dropped patch for unshare intent (suggested by Dave).
+- More comments in loop device patch to point out the implementation
+  constraint and how it affects filesystems with copy-on-write
+  semantics.
+- Added blktest "loop/010" (rebased on top of ) for testing.
+
+Sarthak Kukreti (4):
+  block: Introduce provisioning primitives
+  dm: Add block provisioning support
+  loop: Add support for provision requests
+  loop/010: Add test for mode 0 fallocate on loop devices
+
+ block/blk-core.c              |  5 ++++
+ block/blk-lib.c               | 51 +++++++++++++++++++++++++++++++++++
+ block/blk-merge.c             | 18 +++++++++++++
+ block/blk-settings.c          | 19 +++++++++++++
+ block/blk-sysfs.c             |  9 +++++++
+ block/bounce.c                |  1 +
+ block/fops.c                  |  5 ++++
+ drivers/block/loop.c          | 39 ++++++++++++++++++++++++---
+ drivers/md/dm-crypt.c         |  4 ++-
+ drivers/md/dm-linear.c        |  1 +
+ drivers/md/dm-table.c         | 23 ++++++++++++++++
+ drivers/md/dm.c               |  7 +++++
+ include/linux/bio.h           |  6 +++--
+ include/linux/blk_types.h     |  5 +++-
+ include/linux/blkdev.h        | 16 +++++++++++
+ include/linux/device-mapper.h | 17 ++++++++++++
+ 16 files changed, 219 insertions(+), 7 deletions(-)
+
 -- 
-2.41.0
+2.39.2
 
