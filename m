@@ -1,46 +1,46 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5441A6FD5
-	for <dm-devel@lists.linux.dev>; Sat, 11 Nov 2023 04:30:51 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D9E4C6FA8
+	for <dm-devel@lists.linux.dev>; Sat, 11 Nov 2023 04:30:50 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="LEKnJGHn"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eGt5Mk+2"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1699677050;
+	s=mimecast20190719; t=1699677049;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=6H6FIGgFMHPsIyngwYwGaXB2kn9KSKKBEylo9WnJje0=;
-	b=LEKnJGHn4K2abXHDAvpOpHC2lTaCbgLyRZNvagJNm4F+ms8mA8t4wa6eA3q2/H50Mf68mM
-	67l52e+fkfzVvOHvE+/HSL5Gfp8yGwUX/zOI1ULN8pXWxBJJo78kVQhL8Eyb+GHZPG7yg1
-	lm9xAv3Buavpeea7TlZ1w8JpoTO3IGs=
+	bh=N7Q6mHD6ZLWMUiWdPJc6Mvo+Nsk51jujm2iZ8kTGJu8=;
+	b=eGt5Mk+2jd7snT5I04ic1FmC9LnlS2hlC0KsKX6xNahjY9zsVbIqfjRhibz/uYZwZRXXEc
+	6cAju7X08phyRk4WuNzTDtoPS/Mi5w4Q4dXYYCaJiNq5Nvl4FsjZ7GtbyPLKUvQZoGjP12
+	4R/RlXQe4tkEmkjVUQAcgnoUna/CufM=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-612-bztvXMqZP8GFUJ-owa8C2w-1; Fri, 10 Nov 2023 23:30:46 -0500
-X-MC-Unique: bztvXMqZP8GFUJ-owa8C2w-1
+ us-mta-148-X1Ms7SbBMo-3Hwvm4zUxgw-1; Fri, 10 Nov 2023 23:30:46 -0500
+X-MC-Unique: X1Ms7SbBMo-3Hwvm4zUxgw-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D20A3811E82;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D1C96811000;
 	Sat, 11 Nov 2023 04:30:45 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C2D8940C6EBB;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B875240C6EB9;
 	Sat, 11 Nov 2023 04:30:45 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id 9730D3003C; Fri, 10 Nov 2023 23:30:45 -0500 (EST)
+	id 823953003F; Fri, 10 Nov 2023 23:30:45 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org
 Cc: Mike Snitzer <snitzer@kernel.org>,
 	Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH 4/8] dm vdo memory-alloc: rename UDS_ALLOCATE to uds_allocate
-Date: Fri, 10 Nov 2023 23:30:40 -0500
-Message-Id: <ac5261d89ffdbe66bf19880431cc8127d39b86c9.1699675570.git.msakai@redhat.com>
+Subject: [PATCH 3/8] dm vdo memory-alloc: rename UDS_FREE to uds_free
+Date: Fri, 10 Nov 2023 23:30:39 -0500
+Message-Id: <239b922426e8d73a30ff43e8f99d750e087f5d3e.1699675570.git.msakai@redhat.com>
 In-Reply-To: <ccd28d21aede15fc56f1ff25b3582ddad5260883.1699675570.git.msakai@redhat.com>
 References: <ccd28d21aede15fc56f1ff25b3582ddad5260883.1699675570.git.msakai@redhat.com>
 Precedence: bulk
@@ -58,1114 +58,1512 @@ Reviewed-by: Susan LeGendre-McGhee <slegendr@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-vdo-target.c              | 10 +++++-----
- drivers/md/dm-vdo/action-manager.c      |  2 +-
- drivers/md/dm-vdo/block-map.c           | 10 +++++-----
- drivers/md/dm-vdo/chapter-index.c       |  2 +-
+ drivers/md/dm-vdo-target.c              | 14 ++++-----
+ drivers/md/dm-vdo/block-map.c           | 22 +++++++-------
+ drivers/md/dm-vdo/chapter-index.c       |  4 +--
  drivers/md/dm-vdo/config.c              |  2 +-
- drivers/md/dm-vdo/dedupe.c              |  2 +-
- drivers/md/dm-vdo/delta-index.c         | 10 +++++-----
+ drivers/md/dm-vdo/data-vio.c            |  8 ++---
+ drivers/md/dm-vdo/dedupe.c              | 10 +++----
+ drivers/md/dm-vdo/delta-index.c         | 10 +++----
  drivers/md/dm-vdo/encodings.c           |  2 +-
- drivers/md/dm-vdo/flush.c               |  4 ++--
+ drivers/md/dm-vdo/flush.c               |  4 +--
  drivers/md/dm-vdo/funnel-queue.c        |  2 +-
  drivers/md/dm-vdo/funnel-requestqueue.c |  2 +-
- drivers/md/dm-vdo/funnel-workqueue.c    |  6 +++---
+ drivers/md/dm-vdo/funnel-workqueue.c    | 18 +++++------
  drivers/md/dm-vdo/geometry.c            |  2 +-
- drivers/md/dm-vdo/index-layout.c        | 12 ++++++------
- drivers/md/dm-vdo/index-page-map.c      |  8 ++++----
- drivers/md/dm-vdo/index-session.c       |  2 +-
- drivers/md/dm-vdo/index.c               |  6 +++---
- drivers/md/dm-vdo/int-map.c             |  4 ++--
- drivers/md/dm-vdo/io-factory.c          |  6 +++---
- drivers/md/dm-vdo/memory-alloc.c        |  6 +++---
- drivers/md/dm-vdo/memory-alloc.h        |  4 ++--
+ drivers/md/dm-vdo/index-layout.c        | 40 ++++++++++++-------------
+ drivers/md/dm-vdo/index-page-map.c      | 12 ++++----
+ drivers/md/dm-vdo/index-session.c       | 12 ++++----
+ drivers/md/dm-vdo/index.c               | 16 +++++-----
+ drivers/md/dm-vdo/int-map.c             |  8 ++---
+ drivers/md/dm-vdo/io-factory.c          |  6 ++--
+ drivers/md/dm-vdo/io-submitter.c        |  2 +-
+ drivers/md/dm-vdo/logical-zone.c        |  4 +--
+ drivers/md/dm-vdo/memory-alloc.c        |  8 ++---
+ drivers/md/dm-vdo/memory-alloc.h        |  2 +-
  drivers/md/dm-vdo/message-stats.c       |  2 +-
- drivers/md/dm-vdo/packer.c              |  2 +-
- drivers/md/dm-vdo/pointer-map.c         |  4 ++--
- drivers/md/dm-vdo/recovery-journal.c    | 14 +++++++-------
- drivers/md/dm-vdo/repair.c              |  8 ++++----
- drivers/md/dm-vdo/slab-depot.c          | 22 +++++++++++-----------
- drivers/md/dm-vdo/slab-depot.h          |  2 +-
- drivers/md/dm-vdo/sparse-cache.c        |  6 +++---
+ drivers/md/dm-vdo/open-chapter.c        |  4 +--
+ drivers/md/dm-vdo/packer.c              |  6 ++--
+ drivers/md/dm-vdo/physical-zone.c       |  4 +--
+ drivers/md/dm-vdo/pointer-map.c         |  8 ++---
+ drivers/md/dm-vdo/pool-sysfs.c          |  2 +-
+ drivers/md/dm-vdo/priority-table.c      |  2 +-
+ drivers/md/dm-vdo/radix-sort.c          |  2 +-
+ drivers/md/dm-vdo/recovery-journal.c    | 18 +++++------
+ drivers/md/dm-vdo/repair.c              | 10 +++----
+ drivers/md/dm-vdo/slab-depot.c          | 34 ++++++++++-----------
+ drivers/md/dm-vdo/sparse-cache.c        | 10 +++----
  drivers/md/dm-vdo/uds-sysfs.c           |  2 +-
- drivers/md/dm-vdo/uds-threads.c         |  2 +-
- drivers/md/dm-vdo/vdo.c                 | 22 +++++++++++-----------
- drivers/md/dm-vdo/vio.c                 |  4 ++--
- drivers/md/dm-vdo/volume-index.c        |  8 ++++----
- drivers/md/dm-vdo/volume.c              | 14 +++++++-------
- 35 files changed, 108 insertions(+), 108 deletions(-)
+ drivers/md/dm-vdo/uds-threads.c         |  4 +--
+ drivers/md/dm-vdo/vdo.c                 | 28 ++++++++---------
+ drivers/md/dm-vdo/vio.c                 | 10 +++----
+ drivers/md/dm-vdo/volume-index.c        |  8 ++---
+ drivers/md/dm-vdo/volume.c              | 16 +++++-----
+ 41 files changed, 190 insertions(+), 190 deletions(-)
 
 diff --git a/drivers/md/dm-vdo-target.c b/drivers/md/dm-vdo-target.c
-index f2455895d8ae..efc02c665fa8 100644
+index e54fc3a92fc0..f2455895d8ae 100644
 --- a/drivers/md/dm-vdo-target.c
 +++ b/drivers/md/dm-vdo-target.c
-@@ -280,7 +280,7 @@ static int split_string(const char *string, char separator, char ***substring_ar
- 		if (*s == separator)
- 			substring_count++;
+@@ -192,12 +192,12 @@ static void free_device_config(struct device_config *config)
+ 	if (config->owned_device != NULL)
+ 		dm_put_device(config->owning_target, config->owned_device);
  
--	result = UDS_ALLOCATE(substring_count + 1, char *, "string-splitting array", &substrings);
-+	result = uds_allocate(substring_count + 1, char *, "string-splitting array", &substrings);
- 	if (result != UDS_SUCCESS)
- 		return result;
+-	UDS_FREE(config->parent_device_name);
+-	UDS_FREE(config->original_string);
++	uds_free(config->parent_device_name);
++	uds_free(config->original_string);
  
-@@ -288,7 +288,7 @@ static int split_string(const char *string, char separator, char ***substring_ar
- 		if (*s == separator) {
- 			ptrdiff_t length = s - string;
- 
--			result = UDS_ALLOCATE(length + 1,
-+			result = uds_allocate(length + 1,
- 					      char,
- 					      "split string",
- 					      &substrings[current_substring]);
-@@ -311,7 +311,7 @@ static int split_string(const char *string, char separator, char ***substring_ar
- 	BUG_ON(current_substring != (substring_count - 1));
- 	length = strlen(string);
- 
--	result = UDS_ALLOCATE(length + 1, char, "split string", &substrings[current_substring]);
-+	result = uds_allocate(length + 1, char, "split string", &substrings[current_substring]);
- 	if (result != UDS_SUCCESS) {
- 		free_string_array(substrings);
- 		return result;
-@@ -339,7 +339,7 @@ join_strings(char **substring_array, size_t array_length, char separator, char *
- 	for (i = 0; (i < array_length) && (substring_array[i] != NULL); i++)
- 		string_length += strlen(substring_array[i]) + 1;
- 
--	result = UDS_ALLOCATE(string_length, char, __func__, &output);
-+	result = uds_allocate(string_length, char, __func__, &output);
- 	if (result != VDO_SUCCESS)
- 		return result;
- 
-@@ -733,7 +733,7 @@ static int parse_device_config(int argc,
- 		return VDO_BAD_CONFIGURATION;
- 	}
- 
--	result = UDS_ALLOCATE(1, struct device_config, "device_config", &config);
-+	result = uds_allocate(1, struct device_config, "device_config", &config);
- 	if (result != VDO_SUCCESS) {
- 		handle_parse_error(config, error_ptr, "Could not allocate config structure");
- 		return VDO_BAD_CONFIGURATION;
-diff --git a/drivers/md/dm-vdo/action-manager.c b/drivers/md/dm-vdo/action-manager.c
-index fb3586a4140c..29bdf7df7d75 100644
---- a/drivers/md/dm-vdo/action-manager.c
-+++ b/drivers/md/dm-vdo/action-manager.c
-@@ -110,7 +110,7 @@ int vdo_make_action_manager(zone_count_t zones,
- 			    struct action_manager **manager_ptr)
- {
- 	struct action_manager *manager;
--	int result = UDS_ALLOCATE(1, struct action_manager, __func__, &manager);
-+	int result = uds_allocate(1, struct action_manager, __func__, &manager);
- 
- 	if (result != VDO_SUCCESS)
- 		return result;
-diff --git a/drivers/md/dm-vdo/block-map.c b/drivers/md/dm-vdo/block-map.c
-index 3ef0f1469ec0..345a9bb32ed9 100644
---- a/drivers/md/dm-vdo/block-map.c
-+++ b/drivers/md/dm-vdo/block-map.c
-@@ -225,7 +225,7 @@ static int __must_check allocate_cache_components(struct vdo_page_cache *cache)
- 	u64 size = cache->page_count * (u64) VDO_BLOCK_SIZE;
- 	int result;
- 
--	result = UDS_ALLOCATE(cache->page_count, struct page_info, "page infos", &cache->infos);
-+	result = uds_allocate(cache->page_count, struct page_info, "page infos", &cache->infos);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-@@ -2363,19 +2363,19 @@ static int make_segment(struct forest *old_forest,
- 
- 	forest->segments = index + 1;
- 
--	result = UDS_ALLOCATE(forest->segments, struct boundary,
-+	result = uds_allocate(forest->segments, struct boundary,
- 			      "forest boundary array", &forest->boundaries);
- 	if (result != VDO_SUCCESS)
- 		return result;
- 
--	result = UDS_ALLOCATE(forest->segments,
-+	result = uds_allocate(forest->segments,
- 			      struct tree_page *,
- 			      "forest page pointers",
- 			      &forest->pages);
- 	if (result != VDO_SUCCESS)
- 		return result;
- 
--	result = UDS_ALLOCATE(new_pages,
-+	result = uds_allocate(new_pages,
- 			      struct tree_page,
- 			      "new forest pages",
- 			      &forest->pages[index]);
-@@ -2403,7 +2403,7 @@ static int make_segment(struct forest *old_forest,
- 		struct block_map_tree *tree = &(forest->trees[root]);
- 		height_t height;
- 
--		int result = UDS_ALLOCATE(forest->segments,
-+		int result = uds_allocate(forest->segments,
- 					  struct block_map_tree_segment,
- 					  "tree root segments",
- 					  &tree->segments);
-diff --git a/drivers/md/dm-vdo/chapter-index.c b/drivers/md/dm-vdo/chapter-index.c
-index 117a3e041fea..7b52c2de4e48 100644
---- a/drivers/md/dm-vdo/chapter-index.c
-+++ b/drivers/md/dm-vdo/chapter-index.c
-@@ -20,7 +20,7 @@ int uds_make_open_chapter_index(struct open_chapter_index **chapter_index,
- 	size_t memory_size;
- 	struct open_chapter_index *index;
- 
--	result = UDS_ALLOCATE(1, struct open_chapter_index, "open chapter index", &index);
-+	result = uds_allocate(1, struct open_chapter_index, "open chapter index", &index);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-diff --git a/drivers/md/dm-vdo/config.c b/drivers/md/dm-vdo/config.c
-index 09a2d9891099..89b1eef486b3 100644
---- a/drivers/md/dm-vdo/config.c
-+++ b/drivers/md/dm-vdo/config.c
-@@ -334,7 +334,7 @@ int uds_make_configuration(const struct uds_parameters *params, struct configura
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
--	result = UDS_ALLOCATE(1, struct configuration, __func__, &config);
-+	result = uds_allocate(1, struct configuration, __func__, &config);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
-index 844d0f3ab3ca..1792cebf9529 100644
---- a/drivers/md/dm-vdo/dedupe.c
-+++ b/drivers/md/dm-vdo/dedupe.c
-@@ -2407,7 +2407,7 @@ initialize_zone(struct vdo *vdo, struct hash_zones *zones, zone_count_t zone_num
- 				    timeout_index_operations_callback,
- 				    zone->thread_id);
- 	INIT_LIST_HEAD(&zone->lock_pool);
--	result = UDS_ALLOCATE(LOCK_POOL_CAPACITY,
-+	result = uds_allocate(LOCK_POOL_CAPACITY,
- 			      struct hash_lock,
- 			      "hash_lock array",
- 			      &zone->lock_array);
-diff --git a/drivers/md/dm-vdo/delta-index.c b/drivers/md/dm-vdo/delta-index.c
-index c639b0c8bf8d..08504535817c 100644
---- a/drivers/md/dm-vdo/delta-index.c
-+++ b/drivers/md/dm-vdo/delta-index.c
-@@ -329,16 +329,16 @@ static int initialize_delta_zone(struct delta_zone *delta_zone,
- {
- 	int result;
- 
--	result = UDS_ALLOCATE(size, u8, "delta list", &delta_zone->memory);
-+	result = uds_allocate(size, u8, "delta list", &delta_zone->memory);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
--	result = UDS_ALLOCATE(list_count + 2, u64, "delta list temp", &delta_zone->new_offsets);
-+	result = uds_allocate(list_count + 2, u64, "delta list temp", &delta_zone->new_offsets);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
- 	/* Allocate the delta lists. */
--	result = UDS_ALLOCATE(list_count + 2,
-+	result = uds_allocate(list_count + 2,
- 			      struct delta_list,
- 			      "delta lists",
- 			      &delta_zone->delta_lists);
-@@ -377,7 +377,7 @@ int uds_initialize_delta_index(struct delta_index *delta_index,
- 	unsigned int z;
- 	size_t zone_memory;
- 
--	result = UDS_ALLOCATE(zone_count,
-+	result = uds_allocate(zone_count,
- 			      struct delta_zone,
- 			      "Delta Index Zones",
- 			      &delta_index->delta_zones);
-@@ -1084,7 +1084,7 @@ int uds_finish_restoring_delta_index(struct delta_index *delta_index,
- 	unsigned int z;
- 	u8 *data;
- 
--	result = UDS_ALLOCATE(DELTA_LIST_MAX_BYTE_COUNT, u8, __func__, &data);
-+	result = uds_allocate(DELTA_LIST_MAX_BYTE_COUNT, u8, __func__, &data);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-diff --git a/drivers/md/dm-vdo/encodings.c b/drivers/md/dm-vdo/encodings.c
-index d4abb7e2829e..b1d78e025423 100644
---- a/drivers/md/dm-vdo/encodings.c
-+++ b/drivers/md/dm-vdo/encodings.c
-@@ -800,7 +800,7 @@ static int allocate_partition(struct layout *layout,
- 	struct partition *partition;
- 	int result;
- 
--	result = UDS_ALLOCATE(1, struct partition, __func__, &partition);
-+	result = uds_allocate(1, struct partition, __func__, &partition);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-diff --git a/drivers/md/dm-vdo/flush.c b/drivers/md/dm-vdo/flush.c
-index 5bcbcb01703b..54b9ed80ca47 100644
---- a/drivers/md/dm-vdo/flush.c
-+++ b/drivers/md/dm-vdo/flush.c
-@@ -106,7 +106,7 @@ static void *allocate_flush(gfp_t gfp_mask, void *pool_data)
- 	if ((gfp_mask & GFP_NOWAIT) == GFP_NOWAIT) {
- 		flush = uds_allocate_memory_nowait(sizeof(struct vdo_flush), __func__);
- 	} else {
--		int result = UDS_ALLOCATE(1, struct vdo_flush, __func__, &flush);
-+		int result = uds_allocate(1, struct vdo_flush, __func__, &flush);
- 
- 		if (result != VDO_SUCCESS)
- 			uds_log_error_strerror(result, "failed to allocate spare flush");
-@@ -134,7 +134,7 @@ static void free_flush(void *element, void *pool_data __always_unused)
-  */
- int vdo_make_flusher(struct vdo *vdo)
- {
--	int result = UDS_ALLOCATE(1, struct flusher, __func__, &vdo->flusher);
-+	int result = uds_allocate(1, struct flusher, __func__, &vdo->flusher);
- 
- 	if (result != VDO_SUCCESS)
- 		return result;
-diff --git a/drivers/md/dm-vdo/funnel-queue.c b/drivers/md/dm-vdo/funnel-queue.c
-index 92809607e4d6..c5997750820c 100644
---- a/drivers/md/dm-vdo/funnel-queue.c
-+++ b/drivers/md/dm-vdo/funnel-queue.c
-@@ -15,7 +15,7 @@ int uds_make_funnel_queue(struct funnel_queue **queue_ptr)
- 	int result;
- 	struct funnel_queue *queue;
- 
--	result = UDS_ALLOCATE(1, struct funnel_queue, "funnel queue", &queue);
-+	result = uds_allocate(1, struct funnel_queue, "funnel queue", &queue);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-diff --git a/drivers/md/dm-vdo/funnel-requestqueue.c b/drivers/md/dm-vdo/funnel-requestqueue.c
-index b90982393843..8d12feb035b3 100644
---- a/drivers/md/dm-vdo/funnel-requestqueue.c
-+++ b/drivers/md/dm-vdo/funnel-requestqueue.c
-@@ -201,7 +201,7 @@ int uds_make_request_queue(const char *queue_name,
- 	int result;
- 	struct uds_request_queue *queue;
- 
--	result = UDS_ALLOCATE(1, struct uds_request_queue, __func__, &queue);
-+	result = uds_allocate(1, struct uds_request_queue, __func__, &queue);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-diff --git a/drivers/md/dm-vdo/funnel-workqueue.c b/drivers/md/dm-vdo/funnel-workqueue.c
-index ff86a4cfb323..7f5cc0114329 100644
---- a/drivers/md/dm-vdo/funnel-workqueue.c
-+++ b/drivers/md/dm-vdo/funnel-workqueue.c
-@@ -328,7 +328,7 @@ static int make_simple_work_queue(const char *thread_name_prefix,
- 			type->max_priority,
- 			VDO_WORK_Q_MAX_PRIORITY);
- 
--	result = UDS_ALLOCATE(1, struct simple_work_queue, "simple work queue", &queue);
-+	result = uds_allocate(1, struct simple_work_queue, "simple work queue", &queue);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-@@ -414,11 +414,11 @@ int vdo_make_work_queue(const char *thread_name_prefix,
- 		return result;
- 	}
- 
--	result = UDS_ALLOCATE(1, struct round_robin_work_queue, "round-robin work queue", &queue);
-+	result = uds_allocate(1, struct round_robin_work_queue, "round-robin work queue", &queue);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
--	result = UDS_ALLOCATE(thread_count,
-+	result = uds_allocate(thread_count,
- 			      struct simple_work_queue *,
- 			      "subordinate work queues",
- 			      &queue->service_queues);
-diff --git a/drivers/md/dm-vdo/geometry.c b/drivers/md/dm-vdo/geometry.c
-index 0ff717cb72f6..ceed4928dca1 100644
---- a/drivers/md/dm-vdo/geometry.c
-+++ b/drivers/md/dm-vdo/geometry.c
-@@ -63,7 +63,7 @@ int uds_make_geometry(size_t bytes_per_page,
- 	int result;
- 	struct geometry *geometry;
- 
--	result = UDS_ALLOCATE(1, struct geometry, "geometry", &geometry);
-+	result = uds_allocate(1, struct geometry, "geometry", &geometry);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-diff --git a/drivers/md/dm-vdo/index-layout.c b/drivers/md/dm-vdo/index-layout.c
-index 3e9fa7028358..cfeeeced35a0 100644
---- a/drivers/md/dm-vdo/index-layout.c
-+++ b/drivers/md/dm-vdo/index-layout.c
-@@ -554,7 +554,7 @@ static int __must_check write_index_save_header(struct index_save_layout *isl,
- 	u8 *buffer;
- 	size_t offset = 0;
- 
--	result = UDS_ALLOCATE(table->encoded_size, u8, "index save data", &buffer);
-+	result = uds_allocate(table->encoded_size, u8, "index save data", &buffer);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-@@ -723,7 +723,7 @@ static int __must_check write_layout_header(struct index_layout *layout,
- 	u8 *buffer;
- 	size_t offset = 0;
- 
--	result = UDS_ALLOCATE(table->encoded_size, u8, "layout data", &buffer);
-+	result = uds_allocate(table->encoded_size, u8, "layout data", &buffer);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-@@ -813,7 +813,7 @@ static int create_index_layout(struct index_layout *layout, struct configuration
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
--	result = UDS_ALLOCATE(sizes.save_count,
-+	result = uds_allocate(sizes.save_count,
- 			      struct index_save_layout,
- 			      __func__,
- 			      &layout->index.saves);
-@@ -1217,7 +1217,7 @@ static int __must_check read_super_block_data(struct buffered_reader *reader,
- 	u8 *buffer;
- 	size_t offset = 0;
- 
--	result = UDS_ALLOCATE(saved_size, u8, "super block data", &buffer);
-+	result = uds_allocate(saved_size, u8, "super block data", &buffer);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-@@ -1344,7 +1344,7 @@ reconstitute_layout(struct index_layout *layout, struct region_table *table, u64
- 	int result;
- 	u64 next_block = first_block;
- 
--	result = UDS_ALLOCATE(layout->super.max_saves,
-+	result = uds_allocate(layout->super.max_saves,
- 			      struct index_save_layout,
- 			      __func__,
- 			      &layout->index.saves);
-@@ -1708,7 +1708,7 @@ int uds_make_index_layout(struct configuration *config,
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
--	result = UDS_ALLOCATE(1, struct index_layout, __func__, &layout);
-+	result = uds_allocate(1, struct index_layout, __func__, &layout);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-diff --git a/drivers/md/dm-vdo/index-page-map.c b/drivers/md/dm-vdo/index-page-map.c
-index 93c6a2235682..b8e0885ac9cd 100644
---- a/drivers/md/dm-vdo/index-page-map.c
-+++ b/drivers/md/dm-vdo/index-page-map.c
-@@ -38,13 +38,13 @@ int uds_make_index_page_map(const struct geometry *geometry, struct index_page_m
- 	int result;
- 	struct index_page_map *map;
- 
--	result = UDS_ALLOCATE(1, struct index_page_map, "page map", &map);
-+	result = uds_allocate(1, struct index_page_map, "page map", &map);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
- 	map->geometry = geometry;
- 	map->entries_per_chapter = geometry->index_pages_per_chapter - 1;
--	result = UDS_ALLOCATE(get_entry_count(geometry),
-+	result = uds_allocate(get_entry_count(geometry),
- 			      u16,
- 			      "Index Page Map Entries",
- 			      &map->entries);
-@@ -126,7 +126,7 @@ int uds_write_index_page_map(struct index_page_map *map, struct buffered_writer
- 	u64 saved_size = uds_compute_index_page_map_save_size(map->geometry);
- 	u32 i;
- 
--	result = UDS_ALLOCATE(saved_size, u8, "page map data", &buffer);
-+	result = uds_allocate(saved_size, u8, "page map data", &buffer);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-@@ -153,7 +153,7 @@ int uds_read_index_page_map(struct index_page_map *map, struct buffered_reader *
- 	u64 saved_size = uds_compute_index_page_map_save_size(map->geometry);
- 	u32 i;
- 
--	result = UDS_ALLOCATE(saved_size, u8, "page map data", &buffer);
-+	result = uds_allocate(saved_size, u8, "page map data", &buffer);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-diff --git a/drivers/md/dm-vdo/index-session.c b/drivers/md/dm-vdo/index-session.c
-index d15ec2b339ef..78dd9616a9d5 100644
---- a/drivers/md/dm-vdo/index-session.c
-+++ b/drivers/md/dm-vdo/index-session.c
-@@ -218,7 +218,7 @@ static int __must_check make_empty_index_session(struct uds_index_session **inde
- 	int result;
- 	struct uds_index_session *session;
- 
--	result = UDS_ALLOCATE(1, struct uds_index_session, __func__, &session);
-+	result = uds_allocate(1, struct uds_index_session, __func__, &session);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-diff --git a/drivers/md/dm-vdo/index.c b/drivers/md/dm-vdo/index.c
-index ff0239c361a8..410c0eedb01b 100644
---- a/drivers/md/dm-vdo/index.c
-+++ b/drivers/md/dm-vdo/index.c
-@@ -88,7 +88,7 @@ launch_zone_message(struct uds_zone_message message, unsigned int zone, struct u
- 	int result;
- 	struct uds_request *request;
- 
--	result = UDS_ALLOCATE(1, struct uds_request, __func__, &request);
-+	result = uds_allocate(1, struct uds_request, __func__, &request);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-@@ -1137,7 +1137,7 @@ static int make_index_zone(struct uds_index *index, unsigned int zone_number)
- 	int result;
- 	struct index_zone *zone;
- 
--	result = UDS_ALLOCATE(1, struct index_zone, "index zone", &zone);
-+	result = uds_allocate(1, struct index_zone, "index zone", &zone);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-@@ -1194,7 +1194,7 @@ int uds_make_index(struct configuration *config,
- 		return result;
- 	}
- 
--	result = UDS_ALLOCATE(index->zone_count, struct index_zone *, "zones", &index->zones);
-+	result = uds_allocate(index->zone_count, struct index_zone *, "zones", &index->zones);
- 	if (result != UDS_SUCCESS) {
- 		uds_free_index(index);
- 		return result;
-diff --git a/drivers/md/dm-vdo/int-map.c b/drivers/md/dm-vdo/int-map.c
-index 1c1195451d05..323e5c1ac346 100644
---- a/drivers/md/dm-vdo/int-map.c
-+++ b/drivers/md/dm-vdo/int-map.c
-@@ -166,7 +166,7 @@ static int allocate_buckets(struct int_map *map, size_t capacity)
- 	 * without have to wrap back around to element zero.
- 	 */
- 	map->bucket_count = capacity + (NEIGHBORHOOD - 1);
--	return UDS_ALLOCATE(map->bucket_count, struct bucket,
-+	return uds_allocate(map->bucket_count, struct bucket,
- 			    "struct int_map buckets", &map->buckets);
+ 	/* Reduce the chance a use-after-free (as in BZ 1669960) happens to work. */
+ 	memset(config, 0, sizeof(*config));
+-	UDS_FREE(config);
++	uds_free(config);
  }
  
-@@ -192,7 +192,7 @@ int vdo_make_int_map(size_t initial_capacity, unsigned int initial_load, struct
- 	if (initial_load > 100)
- 		return UDS_INVALID_ARGUMENT;
+ /**
+@@ -252,15 +252,15 @@ static void free_string_array(char **string_array)
+ 	unsigned int offset;
  
--	result = UDS_ALLOCATE(1, struct int_map, "struct int_map", &map);
-+	result = uds_allocate(1, struct int_map, "struct int_map", &map);
- 	if (result != UDS_SUCCESS)
- 		return result;
+ 	for (offset = 0; string_array[offset] != NULL; offset++)
+-		UDS_FREE(string_array[offset]);
+-	UDS_FREE(string_array);
++		uds_free(string_array[offset]);
++	uds_free(string_array);
+ }
  
-diff --git a/drivers/md/dm-vdo/io-factory.c b/drivers/md/dm-vdo/io-factory.c
-index 90159fb5eaa7..d929e556f330 100644
---- a/drivers/md/dm-vdo/io-factory.c
-+++ b/drivers/md/dm-vdo/io-factory.c
-@@ -64,7 +64,7 @@ int uds_make_io_factory(struct block_device *bdev, struct io_factory **factory_p
- 	int result;
- 	struct io_factory *factory;
+ /*
+  * Split the input string into substrings, separated at occurrences of the indicated character,
+  * returning a null-terminated list of string pointers.
+  *
+- * The string pointers and the pointer array itself should both be freed with UDS_FREE() when no
++ * The string pointers and the pointer array itself should both be freed with uds_free() when no
+  * longer needed. This can be done with vdo_free_string_array (below) if the pointers in the array
+  * are not changed. Since the array and copied strings are allocated by this function, it may only
+  * be used in contexts where allocation is permitted.
+@@ -2924,7 +2924,7 @@ static void vdo_module_destroy(void)
+ 	ASSERT_LOG_ONLY(instances.count == 0,
+ 			"should have no instance numbers still in use, but have %u",
+ 			instances.count);
+-	UDS_FREE(instances.words);
++	uds_free(instances.words);
+ 	memset(&instances, 0, sizeof(struct instance_tracker));
  
--	result = UDS_ALLOCATE(1, struct io_factory, __func__, &factory);
-+	result = uds_allocate(1, struct io_factory, __func__, &factory);
- 	if (result != UDS_SUCCESS)
- 		return result;
+ 	uds_log_info("unloaded version %s", CURRENT_VERSION);
+diff --git a/drivers/md/dm-vdo/block-map.c b/drivers/md/dm-vdo/block-map.c
+index ad03109db716..3ef0f1469ec0 100644
+--- a/drivers/md/dm-vdo/block-map.c
++++ b/drivers/md/dm-vdo/block-map.c
+@@ -2447,15 +2447,15 @@ static void deforest(struct forest *forest, size_t first_page_segment)
+ 		size_t segment;
  
-@@ -154,7 +154,7 @@ int uds_make_buffered_reader(struct io_factory *factory,
- 	if (result != UDS_SUCCESS)
- 		return result;
+ 		for (segment = first_page_segment; segment < forest->segments; segment++)
+-			UDS_FREE(forest->pages[segment]);
+-		UDS_FREE(forest->pages);
++			uds_free(forest->pages[segment]);
++		uds_free(forest->pages);
+ 	}
  
--	result = UDS_ALLOCATE(1, struct buffered_reader, "buffered reader", &reader);
-+	result = uds_allocate(1, struct buffered_reader, "buffered reader", &reader);
+ 	for (root = 0; root < forest->map->root_count; root++)
+-		UDS_FREE(forest->trees[root].segments);
++		uds_free(forest->trees[root].segments);
+ 
+-	UDS_FREE(forest->boundaries);
+-	UDS_FREE(forest);
++	uds_free(forest->boundaries);
++	uds_free(forest);
+ }
+ 
+ /**
+@@ -2528,7 +2528,7 @@ static void finish_cursor(struct cursor *cursor)
+ 	if (--cursors->active_roots > 0)
+ 		return;
+ 
+-	UDS_FREE(cursors);
++	uds_free(cursors);
+ 
+ 	vdo_finish_completion(parent);
+ }
+@@ -2863,7 +2863,7 @@ static void uninitialize_block_map_zone(struct block_map_zone *zone)
+ {
+ 	struct vdo_page_cache *cache = &zone->page_cache;
+ 
+-	UDS_FREE(uds_forget(zone->dirty_lists));
++	uds_free(uds_forget(zone->dirty_lists));
+ 	free_vio_pool(uds_forget(zone->vio_pool));
+ 	vdo_free_int_map(uds_forget(zone->loading_pages));
+ 	if (cache->infos != NULL) {
+@@ -2874,8 +2874,8 @@ static void uninitialize_block_map_zone(struct block_map_zone *zone)
+ 	}
+ 
+ 	vdo_free_int_map(uds_forget(cache->page_map));
+-	UDS_FREE(uds_forget(cache->infos));
+-	UDS_FREE(uds_forget(cache->pages));
++	uds_free(uds_forget(cache->infos));
++	uds_free(uds_forget(cache->pages));
+ }
+ 
+ void vdo_free_block_map(struct block_map *map)
+@@ -2891,8 +2891,8 @@ void vdo_free_block_map(struct block_map *map)
+ 	vdo_abandon_block_map_growth(map);
+ 	if (map->forest != NULL)
+ 		deforest(uds_forget(map->forest), 0);
+-	UDS_FREE(uds_forget(map->action_manager));
+-	UDS_FREE(map);
++	uds_free(uds_forget(map->action_manager));
++	uds_free(map);
+ }
+ 
+ /* @journal may be NULL. */
+diff --git a/drivers/md/dm-vdo/chapter-index.c b/drivers/md/dm-vdo/chapter-index.c
+index 29eb7fb8b4fe..117a3e041fea 100644
+--- a/drivers/md/dm-vdo/chapter-index.c
++++ b/drivers/md/dm-vdo/chapter-index.c
+@@ -39,7 +39,7 @@ int uds_make_open_chapter_index(struct open_chapter_index **chapter_index,
+ 					    memory_size,
+ 					    'm');
  	if (result != UDS_SUCCESS) {
- 		dm_bufio_client_destroy(client);
+-		UDS_FREE(index);
++		uds_free(index);
  		return result;
-@@ -291,7 +291,7 @@ int uds_make_buffered_writer(struct io_factory *factory,
+ 	}
+ 
+@@ -54,7 +54,7 @@ void uds_free_open_chapter_index(struct open_chapter_index *chapter_index)
+ 		return;
+ 
+ 	uds_uninitialize_delta_index(&chapter_index->delta_index);
+-	UDS_FREE(chapter_index);
++	uds_free(chapter_index);
+ }
+ 
+ /* Re-initialize an open chapter index for a new chapter. */
+diff --git a/drivers/md/dm-vdo/config.c b/drivers/md/dm-vdo/config.c
+index 6a89f029dc21..09a2d9891099 100644
+--- a/drivers/md/dm-vdo/config.c
++++ b/drivers/md/dm-vdo/config.c
+@@ -369,7 +369,7 @@ void uds_free_configuration(struct configuration *config)
+ {
+ 	if (config != NULL) {
+ 		uds_free_geometry(config->geometry);
+-		UDS_FREE(config);
++		uds_free(config);
+ 	}
+ }
+ 
+diff --git a/drivers/md/dm-vdo/data-vio.c b/drivers/md/dm-vdo/data-vio.c
+index 7b10926131a9..3af963becbdf 100644
+--- a/drivers/md/dm-vdo/data-vio.c
++++ b/drivers/md/dm-vdo/data-vio.c
+@@ -823,9 +823,9 @@ static void destroy_data_vio(struct data_vio *data_vio)
+ 		return;
+ 
+ 	vdo_free_bio(uds_forget(data_vio->vio.bio));
+-	UDS_FREE(uds_forget(data_vio->vio.data));
+-	UDS_FREE(uds_forget(data_vio->compression.block));
+-	UDS_FREE(uds_forget(data_vio->scratch_block));
++	uds_free(uds_forget(data_vio->vio.data));
++	uds_free(uds_forget(data_vio->compression.block));
++	uds_free(uds_forget(data_vio->scratch_block));
+ }
+ 
+ /**
+@@ -927,7 +927,7 @@ void free_data_vio_pool(struct data_vio_pool *pool)
+ 	}
+ 
+ 	uds_free_funnel_queue(uds_forget(pool->queue));
+-	UDS_FREE(pool);
++	uds_free(pool);
+ }
+ 
+ static bool acquire_permit(struct limiter *limiter, struct bio *bio)
+diff --git a/drivers/md/dm-vdo/dedupe.c b/drivers/md/dm-vdo/dedupe.c
+index daaeeb29ad0f..844d0f3ab3ca 100644
+--- a/drivers/md/dm-vdo/dedupe.c
++++ b/drivers/md/dm-vdo/dedupe.c
+@@ -2016,7 +2016,7 @@ static u32 hash_key(const void *key)
+ 
+ static void dedupe_kobj_release(struct kobject *directory)
+ {
+-	UDS_FREE(container_of(directory, struct hash_zones, dedupe_directory));
++	uds_free(container_of(directory, struct hash_zones, dedupe_directory));
+ }
+ 
+ static ssize_t dedupe_status_show(struct kobject *directory, struct attribute *attr, char *buf)
+@@ -2473,7 +2473,7 @@ int vdo_make_hash_zones(struct vdo *vdo, struct hash_zones **zones_ptr)
+ 
+ 	result = initialize_index(vdo, zones);
+ 	if (result != VDO_SUCCESS) {
+-		UDS_FREE(zones);
++		uds_free(zones);
+ 		return result;
+ 	}
+ 
+@@ -2523,14 +2523,14 @@ void vdo_free_hash_zones(struct hash_zones *zones)
+ 	if (zones == NULL)
+ 		return;
+ 
+-	UDS_FREE(uds_forget(zones->manager));
++	uds_free(uds_forget(zones->manager));
+ 
+ 	for (i = 0; i < zones->zone_count; i++) {
+ 		struct hash_zone *zone = &zones->zones[i];
+ 
+ 		uds_free_funnel_queue(uds_forget(zone->timed_out_complete));
+ 		vdo_free_pointer_map(uds_forget(zone->hash_lock_map));
+-		UDS_FREE(uds_forget(zone->lock_array));
++		uds_free(uds_forget(zone->lock_array));
+ 	}
+ 
+ 	if (zones->index_session != NULL)
+@@ -2538,7 +2538,7 @@ void vdo_free_hash_zones(struct hash_zones *zones)
+ 
+ 	ratelimit_state_exit(&zones->ratelimiter);
+ 	if (vdo_get_admin_state_code(&zones->state) == VDO_ADMIN_STATE_NEW)
+-		UDS_FREE(zones);
++		uds_free(zones);
+ 	else
+ 		kobject_put(&zones->dedupe_directory);
+ }
+diff --git a/drivers/md/dm-vdo/delta-index.c b/drivers/md/dm-vdo/delta-index.c
+index a16e81f41c2e..c639b0c8bf8d 100644
+--- a/drivers/md/dm-vdo/delta-index.c
++++ b/drivers/md/dm-vdo/delta-index.c
+@@ -310,12 +310,12 @@ void uds_uninitialize_delta_index(struct delta_index *delta_index)
+ 		return;
+ 
+ 	for (z = 0; z < delta_index->zone_count; z++) {
+-		UDS_FREE(uds_forget(delta_index->delta_zones[z].new_offsets));
+-		UDS_FREE(uds_forget(delta_index->delta_zones[z].delta_lists));
+-		UDS_FREE(uds_forget(delta_index->delta_zones[z].memory));
++		uds_free(uds_forget(delta_index->delta_zones[z].new_offsets));
++		uds_free(uds_forget(delta_index->delta_zones[z].delta_lists));
++		uds_free(uds_forget(delta_index->delta_zones[z].memory));
+ 	}
+ 
+-	UDS_FREE(delta_index->delta_zones);
++	uds_free(delta_index->delta_zones);
+ 	memset(delta_index, 0, sizeof(struct delta_index));
+ }
+ 
+@@ -1101,7 +1101,7 @@ int uds_finish_restoring_delta_index(struct delta_index *delta_index,
+ 		}
+ 	}
+ 
+-	UDS_FREE(data);
++	uds_free(data);
+ 	return saved_result;
+ }
+ 
+diff --git a/drivers/md/dm-vdo/encodings.c b/drivers/md/dm-vdo/encodings.c
+index abe7fe55e8fb..d4abb7e2829e 100644
+--- a/drivers/md/dm-vdo/encodings.c
++++ b/drivers/md/dm-vdo/encodings.c
+@@ -932,7 +932,7 @@ void vdo_uninitialize_layout(struct layout *layout)
+ 		struct partition *part = layout->head;
+ 
+ 		layout->head = part->next;
+-		UDS_FREE(part);
++		uds_free(part);
+ 	}
+ 
+ 	memset(layout, 0, sizeof(struct layout));
+diff --git a/drivers/md/dm-vdo/flush.c b/drivers/md/dm-vdo/flush.c
+index 7de201886f55..5bcbcb01703b 100644
+--- a/drivers/md/dm-vdo/flush.c
++++ b/drivers/md/dm-vdo/flush.c
+@@ -123,7 +123,7 @@ static void *allocate_flush(gfp_t gfp_mask, void *pool_data)
+ 
+ static void free_flush(void *element, void *pool_data __always_unused)
+ {
+-	UDS_FREE(element);
++	uds_free(element);
+ }
+ 
+ /**
+@@ -162,7 +162,7 @@ void vdo_free_flusher(struct flusher *flusher)
+ 
+ 	if (flusher->flush_pool != NULL)
+ 		mempool_destroy(uds_forget(flusher->flush_pool));
+-	UDS_FREE(flusher);
++	uds_free(flusher);
+ }
+ 
+ /**
+diff --git a/drivers/md/dm-vdo/funnel-queue.c b/drivers/md/dm-vdo/funnel-queue.c
+index bf7f0d8bc04d..92809607e4d6 100644
+--- a/drivers/md/dm-vdo/funnel-queue.c
++++ b/drivers/md/dm-vdo/funnel-queue.c
+@@ -33,7 +33,7 @@ int uds_make_funnel_queue(struct funnel_queue **queue_ptr)
+ 
+ void uds_free_funnel_queue(struct funnel_queue *queue)
+ {
+-	UDS_FREE(queue);
++	uds_free(queue);
+ }
+ 
+ static struct funnel_queue_entry *get_oldest(struct funnel_queue *queue)
+diff --git a/drivers/md/dm-vdo/funnel-requestqueue.c b/drivers/md/dm-vdo/funnel-requestqueue.c
+index 18ac5ee6cded..b90982393843 100644
+--- a/drivers/md/dm-vdo/funnel-requestqueue.c
++++ b/drivers/md/dm-vdo/funnel-requestqueue.c
+@@ -280,5 +280,5 @@ void uds_request_queue_finish(struct uds_request_queue *queue)
+ 
+ 	uds_free_funnel_queue(queue->main_queue);
+ 	uds_free_funnel_queue(queue->retry_queue);
+-	UDS_FREE(queue);
++	uds_free(queue);
+ }
+diff --git a/drivers/md/dm-vdo/funnel-workqueue.c b/drivers/md/dm-vdo/funnel-workqueue.c
+index d3b94a8b7b4e..ff86a4cfb323 100644
+--- a/drivers/md/dm-vdo/funnel-workqueue.c
++++ b/drivers/md/dm-vdo/funnel-workqueue.c
+@@ -278,8 +278,8 @@ static void free_simple_work_queue(struct simple_work_queue *queue)
+ 
+ 	for (i = 0; i <= VDO_WORK_Q_MAX_PRIORITY; i++)
+ 		uds_free_funnel_queue(queue->priority_lists[i]);
+-	UDS_FREE(queue->common.name);
+-	UDS_FREE(queue);
++	uds_free(queue->common.name);
++	uds_free(queue);
+ }
+ 
+ static void free_round_robin_work_queue(struct round_robin_work_queue *queue)
+@@ -292,9 +292,9 @@ static void free_round_robin_work_queue(struct round_robin_work_queue *queue)
+ 
+ 	for (i = 0; i < count; i++)
+ 		free_simple_work_queue(queue_table[i]);
+-	UDS_FREE(queue_table);
+-	UDS_FREE(queue->common.name);
+-	UDS_FREE(queue);
++	uds_free(queue_table);
++	uds_free(queue->common.name);
++	uds_free(queue);
+ }
+ 
+ void vdo_free_work_queue(struct vdo_work_queue *queue)
+@@ -340,7 +340,7 @@ static int make_simple_work_queue(const char *thread_name_prefix,
+ 
+ 	result = uds_duplicate_string(name, "queue name", &queue->common.name);
+ 	if (result != VDO_SUCCESS) {
+-		UDS_FREE(queue);
++		uds_free(queue);
+ 		return -ENOMEM;
+ 	}
+ 
+@@ -423,7 +423,7 @@ int vdo_make_work_queue(const char *thread_name_prefix,
+ 			      "subordinate work queues",
+ 			      &queue->service_queues);
+ 	if (result != UDS_SUCCESS) {
+-		UDS_FREE(queue);
++		uds_free(queue);
+ 		return result;
+ 	}
+ 
+@@ -433,8 +433,8 @@ int vdo_make_work_queue(const char *thread_name_prefix,
+ 
+ 	result = uds_duplicate_string(name, "queue name", &queue->common.name);
+ 	if (result != VDO_SUCCESS) {
+-		UDS_FREE(queue->service_queues);
+-		UDS_FREE(queue);
++		uds_free(queue->service_queues);
++		uds_free(queue);
+ 		return -ENOMEM;
+ 	}
+ 
+diff --git a/drivers/md/dm-vdo/geometry.c b/drivers/md/dm-vdo/geometry.c
+index f4a4bcee5b73..0ff717cb72f6 100644
+--- a/drivers/md/dm-vdo/geometry.c
++++ b/drivers/md/dm-vdo/geometry.c
+@@ -123,7 +123,7 @@ int uds_copy_geometry(struct geometry *source, struct geometry **geometry_ptr)
+ 
+ void uds_free_geometry(struct geometry *geometry)
+ {
+-	UDS_FREE(geometry);
++	uds_free(geometry);
+ }
+ 
+ u32 __must_check uds_map_to_physical_chapter(const struct geometry *geometry, u64 virtual_chapter)
+diff --git a/drivers/md/dm-vdo/index-layout.c b/drivers/md/dm-vdo/index-layout.c
+index a3bd56e3ef2d..3e9fa7028358 100644
+--- a/drivers/md/dm-vdo/index-layout.c
++++ b/drivers/md/dm-vdo/index-layout.c
+@@ -573,7 +573,7 @@ static int __must_check write_index_save_header(struct index_save_layout *isl,
+ 	}
+ 
+ 	result = uds_write_to_buffered_writer(writer, buffer, offset);
+-	UDS_FREE(buffer);
++	uds_free(buffer);
  	if (result != UDS_SUCCESS)
  		return result;
  
--	result = UDS_ALLOCATE(1, struct buffered_writer, "buffered writer", &writer);
-+	result = uds_allocate(1, struct buffered_writer, "buffered writer", &writer);
- 	if (result != UDS_SUCCESS) {
- 		dm_bufio_client_destroy(client);
- 		return result;
-diff --git a/drivers/md/dm-vdo/memory-alloc.c b/drivers/md/dm-vdo/memory-alloc.c
-index 73f841289f9e..81069698dd5a 100644
---- a/drivers/md/dm-vdo/memory-alloc.c
-+++ b/drivers/md/dm-vdo/memory-alloc.c
-@@ -246,7 +246,7 @@ int uds_allocate_memory(size_t size, size_t align, const char *what, void *ptr)
- 	} else {
- 		struct vmalloc_block_info *block;
+@@ -592,12 +592,12 @@ static int write_index_save_layout(struct index_layout *layout, struct index_sav
  
--		if (UDS_ALLOCATE(1, struct vmalloc_block_info, __func__, &block) ==
-+		if (uds_allocate(1, struct vmalloc_block_info, __func__, &block) ==
- 		    UDS_SUCCESS) {
- 			/*
- 			 * It is possible for __vmalloc to fail to allocate memory because there
-@@ -354,7 +354,7 @@ int uds_reallocate_memory(void *ptr, size_t old_size, size_t size, const char *w
+ 	result = open_region_writer(layout, &isl->header, &writer);
+ 	if (result != UDS_SUCCESS) {
+-		UDS_FREE(table);
++		uds_free(table);
+ 		return result;
+ 	}
+ 
+ 	result = write_index_save_header(isl, table, writer);
+-	UDS_FREE(table);
++	uds_free(table);
+ 	uds_free_buffered_writer(writer);
+ 
+ 	return result;
+@@ -747,7 +747,7 @@ static int __must_check write_layout_header(struct index_layout *layout,
+ 	}
+ 
+ 	result = uds_write_to_buffered_writer(writer, buffer, offset);
+-	UDS_FREE(buffer);
++	uds_free(buffer);
+ 	if (result != UDS_SUCCESS)
+ 		return result;
+ 
+@@ -793,12 +793,12 @@ static int __must_check save_layout(struct index_layout *layout, off_t offset)
+ 
+ 	result = open_layout_writer(layout, &layout->header, offset, &writer);
+ 	if (result != UDS_SUCCESS) {
+-		UDS_FREE(table);
++		uds_free(table);
+ 		return result;
+ 	}
+ 
+ 	result = write_layout_header(layout, table, writer);
+-	UDS_FREE(table);
++	uds_free(table);
+ 	uds_free_buffered_writer(writer);
+ 
+ 	return result;
+@@ -1192,7 +1192,7 @@ load_region_table(struct buffered_reader *reader, struct region_table **table_pt
+ 						       region_buffer,
+ 						       sizeof(region_buffer));
+ 		if (result != UDS_SUCCESS) {
+-			UDS_FREE(table);
++			uds_free(table);
+ 			return uds_log_error_strerror(UDS_CORRUPT_DATA,
+ 						      "cannot read region table layouts");
+ 		}
+@@ -1223,7 +1223,7 @@ static int __must_check read_super_block_data(struct buffered_reader *reader,
+ 
+ 	result = uds_read_from_buffered_reader(reader, buffer, saved_size);
+ 	if (result != UDS_SUCCESS) {
+-		UDS_FREE(buffer);
++		uds_free(buffer);
+ 		return uds_log_error_strerror(result, "cannot read region table header");
+ 	}
+ 
+@@ -1248,7 +1248,7 @@ static int __must_check read_super_block_data(struct buffered_reader *reader,
+ 		super->start_offset = 0;
+ 	}
+ 
+-	UDS_FREE(buffer);
++	uds_free(buffer);
+ 
+ 	if (memcmp(super->magic_label, LAYOUT_MAGIC, MAGIC_SIZE) != 0)
+ 		return uds_log_error_strerror(UDS_CORRUPT_DATA, "unknown superblock magic label");
+@@ -1398,18 +1398,18 @@ static int __must_check load_super_block(struct index_layout *layout,
+ 		return result;
+ 
+ 	if (table->header.type != RH_TYPE_SUPER) {
+-		UDS_FREE(table);
++		uds_free(table);
+ 		return uds_log_error_strerror(UDS_CORRUPT_DATA, "not a superblock region table");
+ 	}
+ 
+ 	result = read_super_block_data(reader, layout, table->header.payload);
+ 	if (result != UDS_SUCCESS) {
+-		UDS_FREE(table);
++		uds_free(table);
+ 		return uds_log_error_strerror(result, "unknown superblock format");
+ 	}
+ 
+ 	if (super->block_size != block_size) {
+-		UDS_FREE(table);
++		uds_free(table);
+ 		return uds_log_error_strerror(UDS_CORRUPT_DATA,
+ 					      "superblock saved block_size %u differs from supplied block_size %zu",
+ 					      super->block_size,
+@@ -1418,7 +1418,7 @@ static int __must_check load_super_block(struct index_layout *layout,
+ 
+ 	first_block -= (super->volume_offset - super->start_offset);
+ 	result = reconstitute_layout(layout, table, first_block);
+-	UDS_FREE(table);
++	uds_free(table);
+ 	return result;
+ }
+ 
+@@ -1557,7 +1557,7 @@ static int __must_check load_index_save(struct index_save_layout *isl,
+ 	if (table->header.region_blocks != isl->index_save.block_count) {
+ 		u64 region_blocks = table->header.region_blocks;
+ 
+-		UDS_FREE(table);
++		uds_free(table);
+ 		return uds_log_error_strerror(UDS_CORRUPT_DATA,
+ 					      "unexpected index save %u region block count %llu",
+ 					      instance,
+@@ -1565,14 +1565,14 @@ static int __must_check load_index_save(struct index_save_layout *isl,
+ 	}
+ 
+ 	if (table->header.type == RH_TYPE_UNSAVED) {
+-		UDS_FREE(table);
++		uds_free(table);
+ 		reset_index_save_layout(isl, 0);
  		return UDS_SUCCESS;
  	}
  
--	result = UDS_ALLOCATE(size, char, what, new_ptr);
-+	result = uds_allocate(size, char, what, new_ptr);
+ 
+ 	if (table->header.type != RH_TYPE_SAVE) {
+-		UDS_FREE(table);
++		uds_free(table);
+ 		return uds_log_error_strerror(UDS_CORRUPT_DATA,
+ 					      "unexpected index save %u header type %u",
+ 					      instance,
+@@ -1581,14 +1581,14 @@ static int __must_check load_index_save(struct index_save_layout *isl,
+ 
+ 	result = read_index_save_data(reader, isl, table->header.payload);
+ 	if (result != UDS_SUCCESS) {
+-		UDS_FREE(table);
++		uds_free(table);
+ 		return uds_log_error_strerror(result,
+ 					      "unknown index save %u data format",
+ 					      instance);
+ 	}
+ 
+ 	result = reconstruct_index_save(isl, table);
+-	UDS_FREE(table);
++	uds_free(table);
+ 	if (result != UDS_SUCCESS)
+ 		return uds_log_error_strerror(result,
+ 					      "cannot reconstruct index save %u",
+@@ -1744,11 +1744,11 @@ void uds_free_index_layout(struct index_layout *layout)
+ 	if (layout == NULL)
+ 		return;
+ 
+-	UDS_FREE(layout->index.saves);
++	uds_free(layout->index.saves);
+ 	if (layout->factory != NULL)
+ 		uds_put_io_factory(layout->factory);
+ 
+-	UDS_FREE(layout);
++	uds_free(layout);
+ }
+ 
+ int uds_replace_index_layout_storage(struct index_layout *layout, struct block_device *bdev)
+diff --git a/drivers/md/dm-vdo/index-page-map.c b/drivers/md/dm-vdo/index-page-map.c
+index 592d5aff7c77..93c6a2235682 100644
+--- a/drivers/md/dm-vdo/index-page-map.c
++++ b/drivers/md/dm-vdo/index-page-map.c
+@@ -60,8 +60,8 @@ int uds_make_index_page_map(const struct geometry *geometry, struct index_page_m
+ void uds_free_index_page_map(struct index_page_map *map)
+ {
+ 	if (map != NULL) {
+-		UDS_FREE(map->entries);
+-		UDS_FREE(map);
++		uds_free(map->entries);
++		uds_free(map);
+ 	}
+ }
+ 
+@@ -137,7 +137,7 @@ int uds_write_index_page_map(struct index_page_map *map, struct buffered_writer
+ 		encode_u16_le(buffer, &offset, map->entries[i]);
+ 
+ 	result = uds_write_to_buffered_writer(writer, buffer, offset);
+-	UDS_FREE(buffer);
++	uds_free(buffer);
  	if (result != UDS_SUCCESS)
  		return result;
  
-@@ -374,7 +374,7 @@ int uds_duplicate_string(const char *string, const char *what, char **new_string
- 	int result;
- 	u8 *dup;
+@@ -159,14 +159,14 @@ int uds_read_index_page_map(struct index_page_map *map, struct buffered_reader *
  
--	result = UDS_ALLOCATE(strlen(string) + 1, u8, what, &dup);
-+	result = uds_allocate(strlen(string) + 1, u8, what, &dup);
- 	if (result != UDS_SUCCESS)
+ 	result = uds_read_from_buffered_reader(reader, buffer, saved_size);
+ 	if (result != UDS_SUCCESS) {
+-		UDS_FREE(buffer);
++		uds_free(buffer);
  		return result;
+ 	}
  
-diff --git a/drivers/md/dm-vdo/memory-alloc.h b/drivers/md/dm-vdo/memory-alloc.h
-index 03d8f69f6cdc..8b750b4751e9 100644
---- a/drivers/md/dm-vdo/memory-alloc.h
-+++ b/drivers/md/dm-vdo/memory-alloc.h
-@@ -18,7 +18,7 @@ int __must_check uds_allocate_memory(size_t size, size_t align, const char *what
+ 	memcpy(&magic, buffer, PAGE_MAP_MAGIC_LENGTH);
+ 	offset += PAGE_MAP_MAGIC_LENGTH;
+ 	if (memcmp(magic, PAGE_MAP_MAGIC, PAGE_MAP_MAGIC_LENGTH) != 0) {
+-		UDS_FREE(buffer);
++		uds_free(buffer);
+ 		return UDS_CORRUPT_DATA;
+ 	}
  
- void uds_free_memory(void *ptr);
+@@ -174,7 +174,7 @@ int uds_read_index_page_map(struct index_page_map *map, struct buffered_reader *
+ 	for (i = 0; i < get_entry_count(map->geometry); i++)
+ 		decode_u16_le(buffer, &offset, &map->entries[i]);
  
--/* Free memory allocated with UDS_ALLOCATE(). */
-+/* Free memory allocated with uds_allocate(). */
- #define uds_free(PTR) uds_free_memory(PTR)
+-	UDS_FREE(buffer);
++	uds_free(buffer);
+ 	uds_log_debug("read index page map, last update %llu",
+ 		      (unsigned long long) map->last_update);
+ 	return UDS_SUCCESS;
+diff --git a/drivers/md/dm-vdo/index-session.c b/drivers/md/dm-vdo/index-session.c
+index 5c14b0917c4d..d15ec2b339ef 100644
+--- a/drivers/md/dm-vdo/index-session.c
++++ b/drivers/md/dm-vdo/index-session.c
+@@ -224,14 +224,14 @@ static int __must_check make_empty_index_session(struct uds_index_session **inde
  
- static inline void *__uds_forget(void **ptr_ptr)
-@@ -96,7 +96,7 @@ int __must_check uds_reallocate_memory(void *ptr,
-  *
-  * Return: UDS_SUCCESS or an error code
-  */
--#define UDS_ALLOCATE(COUNT, TYPE, WHAT, PTR) \
-+#define uds_allocate(COUNT, TYPE, WHAT, PTR) \
- 	uds_do_allocation(COUNT, sizeof(TYPE), 0, __alignof__(TYPE), WHAT, PTR)
+ 	result = uds_init_mutex(&session->request_mutex);
+ 	if (result != UDS_SUCCESS) {
+-		UDS_FREE(session);
++		uds_free(session);
+ 		return result;
+ 	}
+ 
+ 	result = uds_init_cond(&session->request_cond);
+ 	if (result != UDS_SUCCESS) {
+ 		uds_destroy_mutex(&session->request_mutex);
+-		UDS_FREE(session);
++		uds_free(session);
+ 		return result;
+ 	}
+ 
+@@ -239,7 +239,7 @@ static int __must_check make_empty_index_session(struct uds_index_session **inde
+ 	if (result != UDS_SUCCESS) {
+ 		uds_destroy_cond(&session->request_cond);
+ 		uds_destroy_mutex(&session->request_mutex);
+-		UDS_FREE(session);
++		uds_free(session);
+ 		return result;
+ 	}
+ 
+@@ -248,7 +248,7 @@ static int __must_check make_empty_index_session(struct uds_index_session **inde
+ 		uds_destroy_mutex(&session->load_context.mutex);
+ 		uds_destroy_cond(&session->request_cond);
+ 		uds_destroy_mutex(&session->request_mutex);
+-		UDS_FREE(session);
++		uds_free(session);
+ 		return result;
+ 	}
+ 
+@@ -258,7 +258,7 @@ static int __must_check make_empty_index_session(struct uds_index_session **inde
+ 		uds_destroy_mutex(&session->load_context.mutex);
+ 		uds_destroy_cond(&session->request_cond);
+ 		uds_destroy_mutex(&session->request_mutex);
+-		UDS_FREE(session);
++		uds_free(session);
+ 		return result;
+ 	}
+ 
+@@ -691,7 +691,7 @@ int uds_destroy_index_session(struct uds_index_session *index_session)
+ 	uds_destroy_cond(&index_session->request_cond);
+ 	uds_destroy_mutex(&index_session->request_mutex);
+ 	uds_log_debug("Destroyed index session");
+-	UDS_FREE(index_session);
++	uds_free(index_session);
+ 	return uds_map_to_system_error(result);
+ }
+ 
+diff --git a/drivers/md/dm-vdo/index.c b/drivers/md/dm-vdo/index.c
+index e118755c5f60..ff0239c361a8 100644
+--- a/drivers/md/dm-vdo/index.c
++++ b/drivers/md/dm-vdo/index.c
+@@ -623,7 +623,7 @@ static void execute_zone_request(struct uds_request *request)
+ 					       request->zone_message.type);
+ 
+ 		/* Once the message is processed it can be freed. */
+-		UDS_FREE(uds_forget(request));
++		uds_free(uds_forget(request));
+ 		return;
+ 	}
+ 
+@@ -756,8 +756,8 @@ static void free_chapter_writer(struct chapter_writer *writer)
+ 	uds_destroy_mutex(&writer->mutex);
+ 	uds_destroy_cond(&writer->cond);
+ 	uds_free_open_chapter_index(writer->open_chapter_index);
+-	UDS_FREE(writer->collated_records);
+-	UDS_FREE(writer);
++	uds_free(writer->collated_records);
++	uds_free(writer);
+ }
+ 
+ static int make_chapter_writer(struct uds_index *index, struct chapter_writer **writer_ptr)
+@@ -778,14 +778,14 @@ static int make_chapter_writer(struct uds_index *index, struct chapter_writer **
+ 	writer->index = index;
+ 	result = uds_init_mutex(&writer->mutex);
+ 	if (result != UDS_SUCCESS) {
+-		UDS_FREE(writer);
++		uds_free(writer);
+ 		return result;
+ 	}
+ 
+ 	result = uds_init_cond(&writer->cond);
+ 	if (result != UDS_SUCCESS) {
+ 		uds_destroy_mutex(&writer->mutex);
+-		UDS_FREE(writer);
++		uds_free(writer);
+ 		return result;
+ 	}
+ 
+@@ -1129,7 +1129,7 @@ static void free_index_zone(struct index_zone *zone)
+ 
+ 	uds_free_open_chapter(zone->open_chapter);
+ 	uds_free_open_chapter(zone->writing_chapter);
+-	UDS_FREE(zone);
++	uds_free(zone);
+ }
+ 
+ static int make_index_zone(struct uds_index *index, unsigned int zone_number)
+@@ -1304,12 +1304,12 @@ void uds_free_index(struct uds_index *index)
+ 	if (index->zones != NULL) {
+ 		for (i = 0; i < index->zone_count; i++)
+ 			free_index_zone(index->zones[i]);
+-		UDS_FREE(index->zones);
++		uds_free(index->zones);
+ 	}
+ 
+ 	uds_free_volume(index->volume);
+ 	uds_free_index_layout(uds_forget(index->layout));
+-	UDS_FREE(index);
++	uds_free(index);
+ }
+ 
+ /* Wait for the chapter writer to complete any outstanding writes. */
+diff --git a/drivers/md/dm-vdo/int-map.c b/drivers/md/dm-vdo/int-map.c
+index 86fa5abdb6fe..1c1195451d05 100644
+--- a/drivers/md/dm-vdo/int-map.c
++++ b/drivers/md/dm-vdo/int-map.c
+@@ -227,8 +227,8 @@ void vdo_free_int_map(struct int_map *map)
+ 	if (map == NULL)
+ 		return;
+ 
+-	UDS_FREE(uds_forget(map->buckets));
+-	UDS_FREE(uds_forget(map));
++	uds_free(uds_forget(map->buckets));
++	uds_free(uds_forget(map));
+ }
+ 
+ /**
+@@ -408,14 +408,14 @@ static int resize_buckets(struct int_map *map)
+ 		result = vdo_int_map_put(map, entry->key, entry->value, true, NULL);
+ 		if (result != UDS_SUCCESS) {
+ 			/* Destroy the new partial map and restore the map from the stack. */
+-			UDS_FREE(uds_forget(map->buckets));
++			uds_free(uds_forget(map->buckets));
+ 			*map = old_map;
+ 			return result;
+ 		}
+ 	}
+ 
+ 	/* Destroy the old bucket array. */
+-	UDS_FREE(uds_forget(old_map.buckets));
++	uds_free(uds_forget(old_map.buckets));
+ 	return UDS_SUCCESS;
+ }
+ 
+diff --git a/drivers/md/dm-vdo/io-factory.c b/drivers/md/dm-vdo/io-factory.c
+index 69708eb87786..90159fb5eaa7 100644
+--- a/drivers/md/dm-vdo/io-factory.c
++++ b/drivers/md/dm-vdo/io-factory.c
+@@ -85,7 +85,7 @@ int uds_replace_storage(struct io_factory *factory, struct block_device *bdev)
+ void uds_put_io_factory(struct io_factory *factory)
+ {
+ 	if (atomic_add_return(-1, &factory->ref_count) <= 0)
+-		UDS_FREE(factory);
++		uds_free(factory);
+ }
+ 
+ size_t uds_get_writable_size(struct io_factory *factory)
+@@ -137,7 +137,7 @@ void uds_free_buffered_reader(struct buffered_reader *reader)
+ 
+ 	dm_bufio_client_destroy(reader->client);
+ 	uds_put_io_factory(reader->factory);
+-	UDS_FREE(reader);
++	uds_free(reader);
+ }
+ 
+ /* Create a buffered reader for an index region starting at offset. */
+@@ -378,7 +378,7 @@ void uds_free_buffered_writer(struct buffered_writer *writer)
+ 
+ 	dm_bufio_client_destroy(writer->client);
+ 	uds_put_io_factory(writer->factory);
+-	UDS_FREE(writer);
++	uds_free(writer);
+ }
  
  /*
+diff --git a/drivers/md/dm-vdo/io-submitter.c b/drivers/md/dm-vdo/io-submitter.c
+index 8f1c5380e729..68370dea7067 100644
+--- a/drivers/md/dm-vdo/io-submitter.c
++++ b/drivers/md/dm-vdo/io-submitter.c
+@@ -479,5 +479,5 @@ void vdo_free_io_submitter(struct io_submitter *io_submitter)
+ 		uds_forget(io_submitter->bio_queue_data[i].queue);
+ 		vdo_free_int_map(uds_forget(io_submitter->bio_queue_data[i].map));
+ 	}
+-	UDS_FREE(io_submitter);
++	uds_free(io_submitter);
+ }
+diff --git a/drivers/md/dm-vdo/logical-zone.c b/drivers/md/dm-vdo/logical-zone.c
+index 9c924368e027..61cc55ebfe5b 100644
+--- a/drivers/md/dm-vdo/logical-zone.c
++++ b/drivers/md/dm-vdo/logical-zone.c
+@@ -137,12 +137,12 @@ void vdo_free_logical_zones(struct logical_zones *zones)
+ 	if (zones == NULL)
+ 		return;
+ 
+-	UDS_FREE(uds_forget(zones->manager));
++	uds_free(uds_forget(zones->manager));
+ 
+ 	for (index = 0; index < zones->zone_count; index++)
+ 		vdo_free_int_map(uds_forget(zones->zones[index].lbn_operations));
+ 
+-	UDS_FREE(zones);
++	uds_free(zones);
+ }
+ 
+ static inline void assert_on_zone_thread(struct logical_zone *zone, const char *what)
+diff --git a/drivers/md/dm-vdo/memory-alloc.c b/drivers/md/dm-vdo/memory-alloc.c
+index 41b15f7a7ba6..73f841289f9e 100644
+--- a/drivers/md/dm-vdo/memory-alloc.c
++++ b/drivers/md/dm-vdo/memory-alloc.c
+@@ -149,7 +149,7 @@ static void remove_vmalloc_block(void *ptr)
+ 
+ 	spin_unlock_irqrestore(&memory_stats.lock, flags);
+ 	if (block != NULL)
+-		UDS_FREE(block);
++		uds_free(block);
+ 	else
+ 		uds_log_info("attempting to remove ptr %px not found in vmalloc list", ptr);
+ }
+@@ -274,7 +274,7 @@ int uds_allocate_memory(size_t size, size_t align, const char *what, void *ptr)
+ 			}
+ 
+ 			if (p == NULL) {
+-				UDS_FREE(block);
++				uds_free(block);
+ 			} else {
+ 				block->ptr = p;
+ 				block->size = PAGE_ALIGN(size);
+@@ -349,7 +349,7 @@ int uds_reallocate_memory(void *ptr, size_t old_size, size_t size, const char *w
+ 	int result;
+ 
+ 	if (size == 0) {
+-		UDS_FREE(ptr);
++		uds_free(ptr);
+ 		*(void **) new_ptr = NULL;
+ 		return UDS_SUCCESS;
+ 	}
+@@ -363,7 +363,7 @@ int uds_reallocate_memory(void *ptr, size_t old_size, size_t size, const char *w
+ 			size = old_size;
+ 
+ 		memcpy(*((void **) new_ptr), ptr, size);
+-		UDS_FREE(ptr);
++		uds_free(ptr);
+ 	}
+ 
+ 	return UDS_SUCCESS;
+diff --git a/drivers/md/dm-vdo/memory-alloc.h b/drivers/md/dm-vdo/memory-alloc.h
+index 251816897081..03d8f69f6cdc 100644
+--- a/drivers/md/dm-vdo/memory-alloc.h
++++ b/drivers/md/dm-vdo/memory-alloc.h
+@@ -19,7 +19,7 @@ int __must_check uds_allocate_memory(size_t size, size_t align, const char *what
+ void uds_free_memory(void *ptr);
+ 
+ /* Free memory allocated with UDS_ALLOCATE(). */
+-#define UDS_FREE(PTR) uds_free_memory(PTR)
++#define uds_free(PTR) uds_free_memory(PTR)
+ 
+ static inline void *__uds_forget(void **ptr_ptr)
+ {
 diff --git a/drivers/md/dm-vdo/message-stats.c b/drivers/md/dm-vdo/message-stats.c
-index 7910576f8b57..5be8503ed96e 100644
+index b91a841043eb..7910576f8b57 100644
 --- a/drivers/md/dm-vdo/message-stats.c
 +++ b/drivers/md/dm-vdo/message-stats.c
-@@ -1204,7 +1204,7 @@ int vdo_write_stats(struct vdo *vdo,
- 	struct vdo_statistics *stats;
- 	int result;
+@@ -1210,6 +1210,6 @@ int vdo_write_stats(struct vdo *vdo,
  
--	result = UDS_ALLOCATE(1, struct vdo_statistics, __func__, &stats);
-+	result = uds_allocate(1, struct vdo_statistics, __func__, &stats);
- 	if (result != VDO_SUCCESS)
- 		return result;
+ 	vdo_fetch_statistics(vdo, stats);
+ 	result = write_vdo_statistics(NULL, stats, NULL, &buf, &maxlen);
+-	UDS_FREE(stats);
++	uds_free(stats);
+ 	return result;
+ }
+diff --git a/drivers/md/dm-vdo/open-chapter.c b/drivers/md/dm-vdo/open-chapter.c
+index d54c8fb6f118..0cbbbbc6602a 100644
+--- a/drivers/md/dm-vdo/open-chapter.c
++++ b/drivers/md/dm-vdo/open-chapter.c
+@@ -200,8 +200,8 @@ void uds_remove_from_open_chapter(struct open_chapter_zone *open_chapter,
+ void uds_free_open_chapter(struct open_chapter_zone *open_chapter)
+ {
+ 	if (open_chapter != NULL) {
+-		UDS_FREE(open_chapter->records);
+-		UDS_FREE(open_chapter);
++		uds_free(open_chapter->records);
++		uds_free(open_chapter);
+ 	}
+ }
  
 diff --git a/drivers/md/dm-vdo/packer.c b/drivers/md/dm-vdo/packer.c
-index d06e654fc9e5..4d689d4c6a41 100644
+index 7641318b3007..d06e654fc9e5 100644
 --- a/drivers/md/dm-vdo/packer.c
 +++ b/drivers/md/dm-vdo/packer.c
-@@ -152,7 +152,7 @@ int vdo_make_packer(struct vdo *vdo, block_count_t bin_count, struct packer **pa
- 	block_count_t i;
- 	int result;
+@@ -206,11 +206,11 @@ void vdo_free_packer(struct packer *packer)
  
--	result = UDS_ALLOCATE(1, struct packer, __func__, &packer);
-+	result = uds_allocate(1, struct packer, __func__, &packer);
- 	if (result != VDO_SUCCESS)
- 		return result;
+ 	list_for_each_entry_safe(bin, tmp, &packer->bins, list) {
+ 		list_del_init(&bin->list);
+-		UDS_FREE(bin);
++		uds_free(bin);
+ 	}
  
+-	UDS_FREE(uds_forget(packer->canceled_bin));
+-	UDS_FREE(packer);
++	uds_free(uds_forget(packer->canceled_bin));
++	uds_free(packer);
+ }
+ 
+ /**
+diff --git a/drivers/md/dm-vdo/physical-zone.c b/drivers/md/dm-vdo/physical-zone.c
+index 08c1c7a1b366..f32fe7ef0d0d 100644
+--- a/drivers/md/dm-vdo/physical-zone.c
++++ b/drivers/md/dm-vdo/physical-zone.c
+@@ -275,7 +275,7 @@ static void free_pbn_lock_pool(struct pbn_lock_pool *pool)
+ 	ASSERT_LOG_ONLY(pool->borrowed == 0,
+ 			"All PBN locks must be returned to the pool before it is freed, but %zu locks are still on loan",
+ 			pool->borrowed);
+-	UDS_FREE(pool);
++	uds_free(pool);
+ }
+ 
+ /**
+@@ -410,7 +410,7 @@ void vdo_free_physical_zones(struct physical_zones *zones)
+ 		vdo_free_int_map(uds_forget(zone->pbn_operations));
+ 	}
+ 
+-	UDS_FREE(zones);
++	uds_free(zones);
+ }
+ 
+ /**
 diff --git a/drivers/md/dm-vdo/pointer-map.c b/drivers/md/dm-vdo/pointer-map.c
-index 64e6f8ef4541..87f7e6614ba3 100644
+index 1b22c42b5d5d..64e6f8ef4541 100644
 --- a/drivers/md/dm-vdo/pointer-map.c
 +++ b/drivers/md/dm-vdo/pointer-map.c
-@@ -125,7 +125,7 @@ static int allocate_buckets(struct pointer_map *map, size_t capacity)
- 	 * without have to wrap back around to element zero.
+@@ -197,8 +197,8 @@ void vdo_free_pointer_map(struct pointer_map *map)
+ 	if (map == NULL)
+ 		return;
+ 
+-	UDS_FREE(uds_forget(map->buckets));
+-	UDS_FREE(uds_forget(map));
++	uds_free(uds_forget(map->buckets));
++	uds_free(uds_forget(map));
+ }
+ 
+ /**
+@@ -369,14 +369,14 @@ static int resize_buckets(struct pointer_map *map)
+ 		result = vdo_pointer_map_put(map, entry->key, entry->value, true, NULL);
+ 		if (result != UDS_SUCCESS) {
+ 			/* Destroy the new partial map and restore the map from the stack. */
+-			UDS_FREE(uds_forget(map->buckets));
++			uds_free(uds_forget(map->buckets));
+ 			*map = old_map;
+ 			return result;
+ 		}
+ 	}
+ 
+ 	/* Destroy the old bucket array. */
+-	UDS_FREE(uds_forget(old_map.buckets));
++	uds_free(uds_forget(old_map.buckets));
+ 	return UDS_SUCCESS;
+ }
+ 
+diff --git a/drivers/md/dm-vdo/pool-sysfs.c b/drivers/md/dm-vdo/pool-sysfs.c
+index 413a5194586e..573fdde3fad0 100644
+--- a/drivers/md/dm-vdo/pool-sysfs.c
++++ b/drivers/md/dm-vdo/pool-sysfs.c
+@@ -105,7 +105,7 @@ static ssize_t pool_requests_maximum_show(struct vdo *vdo, char *buf)
+ 
+ static void vdo_pool_release(struct kobject *directory)
+ {
+-	UDS_FREE(container_of(directory, struct vdo, vdo_directory));
++	uds_free(container_of(directory, struct vdo, vdo_directory));
+ }
+ 
+ static struct pool_attribute vdo_pool_compressing_attr = {
+diff --git a/drivers/md/dm-vdo/priority-table.c b/drivers/md/dm-vdo/priority-table.c
+index f8b81d6410c7..7956ed7dd684 100644
+--- a/drivers/md/dm-vdo/priority-table.c
++++ b/drivers/md/dm-vdo/priority-table.c
+@@ -98,7 +98,7 @@ void vdo_free_priority_table(struct priority_table *table)
  	 */
- 	map->bucket_count = capacity + (NEIGHBORHOOD - 1);
--	return UDS_ALLOCATE(map->bucket_count,
-+	return uds_allocate(map->bucket_count,
- 			    struct bucket,
- 			    "pointer_map buckets",
- 			    &map->buckets);
-@@ -159,7 +159,7 @@ int vdo_make_pointer_map(size_t initial_capacity,
- 	if (initial_load > 100)
- 		return UDS_INVALID_ARGUMENT;
+ 	vdo_reset_priority_table(table);
  
--	result = UDS_ALLOCATE(1, struct pointer_map, "pointer_map", &map);
-+	result = uds_allocate(1, struct pointer_map, "pointer_map", &map);
- 	if (result != UDS_SUCCESS)
- 		return result;
+-	UDS_FREE(table);
++	uds_free(table);
+ }
  
+ /**
+diff --git a/drivers/md/dm-vdo/radix-sort.c b/drivers/md/dm-vdo/radix-sort.c
+index 7eeb81a6deb6..2b9b31177d03 100644
+--- a/drivers/md/dm-vdo/radix-sort.c
++++ b/drivers/md/dm-vdo/radix-sort.c
+@@ -236,7 +236,7 @@ int uds_make_radix_sorter(unsigned int count, struct radix_sorter **sorter)
+ 
+ void uds_free_radix_sorter(struct radix_sorter *sorter)
+ {
+-	UDS_FREE(sorter);
++	uds_free(sorter);
+ }
+ 
+ /*
 diff --git a/drivers/md/dm-vdo/recovery-journal.c b/drivers/md/dm-vdo/recovery-journal.c
-index 157a6f3c5131..6b96a6ccece7 100644
+index 02fc4cb812f4..157a6f3c5131 100644
 --- a/drivers/md/dm-vdo/recovery-journal.c
 +++ b/drivers/md/dm-vdo/recovery-journal.c
-@@ -592,36 +592,36 @@ static int __must_check initialize_lock_counter(struct recovery_journal *journal
- 	struct thread_config *config = &vdo->thread_config;
- 	struct lock_counter *counter = &journal->lock_counter;
- 
--	result = UDS_ALLOCATE(journal->size, u16, __func__, &counter->journal_counters);
-+	result = uds_allocate(journal->size, u16, __func__, &counter->journal_counters);
- 	if (result != VDO_SUCCESS)
+@@ -689,7 +689,7 @@ static int initialize_recovery_block(struct vdo *vdo,
+ 					 data,
+ 					 &block->vio);
+ 	if (result != VDO_SUCCESS) {
+-		UDS_FREE(data);
++		uds_free(data);
  		return result;
+ 	}
  
--	result = UDS_ALLOCATE(journal->size,
-+	result = uds_allocate(journal->size,
- 			      atomic_t,
- 			      __func__,
- 			      &counter->journal_decrement_counts);
- 	if (result != VDO_SUCCESS)
- 		return result;
+@@ -808,12 +808,12 @@ void vdo_free_recovery_journal(struct recovery_journal *journal)
+ 	if (journal == NULL)
+ 		return;
  
--	result = UDS_ALLOCATE(journal->size * config->logical_zone_count,
-+	result = uds_allocate(journal->size * config->logical_zone_count,
- 			      u16,
- 			      __func__,
- 			      &counter->logical_counters);
- 	if (result != VDO_SUCCESS)
- 		return result;
+-	UDS_FREE(uds_forget(journal->lock_counter.logical_zone_counts));
+-	UDS_FREE(uds_forget(journal->lock_counter.physical_zone_counts));
+-	UDS_FREE(uds_forget(journal->lock_counter.journal_counters));
+-	UDS_FREE(uds_forget(journal->lock_counter.journal_decrement_counts));
+-	UDS_FREE(uds_forget(journal->lock_counter.logical_counters));
+-	UDS_FREE(uds_forget(journal->lock_counter.physical_counters));
++	uds_free(uds_forget(journal->lock_counter.logical_zone_counts));
++	uds_free(uds_forget(journal->lock_counter.physical_zone_counts));
++	uds_free(uds_forget(journal->lock_counter.journal_counters));
++	uds_free(uds_forget(journal->lock_counter.journal_decrement_counts));
++	uds_free(uds_forget(journal->lock_counter.logical_counters));
++	uds_free(uds_forget(journal->lock_counter.physical_counters));
+ 	free_vio(uds_forget(journal->flush_vio));
  
--	result = UDS_ALLOCATE(journal->size, atomic_t, __func__, &counter->logical_zone_counts);
-+	result = uds_allocate(journal->size, atomic_t, __func__, &counter->logical_zone_counts);
- 	if (result != VDO_SUCCESS)
- 		return result;
+ 	/*
+@@ -829,11 +829,11 @@ void vdo_free_recovery_journal(struct recovery_journal *journal)
+ 	for (i = 0; i < RECOVERY_JOURNAL_RESERVED_BLOCKS; i++) {
+ 		struct recovery_journal_block *block = &journal->blocks[i];
  
--	result = UDS_ALLOCATE(journal->size * config->physical_zone_count,
-+	result = uds_allocate(journal->size * config->physical_zone_count,
- 			      u16,
- 			      __func__,
- 			      &counter->physical_counters);
- 	if (result != VDO_SUCCESS)
- 		return result;
+-		UDS_FREE(uds_forget(block->vio.data));
++		uds_free(uds_forget(block->vio.data));
+ 		free_vio_components(&block->vio);
+ 	}
  
--	result = UDS_ALLOCATE(journal->size, atomic_t, __func__, &counter->physical_zone_counts);
-+	result = uds_allocate(journal->size, atomic_t, __func__, &counter->physical_zone_counts);
- 	if (result != VDO_SUCCESS)
- 		return result;
+-	UDS_FREE(journal);
++	uds_free(journal);
+ }
  
-@@ -677,7 +677,7 @@ static int initialize_recovery_block(struct vdo *vdo,
- 	 * Allocate a full block for the journal block even though not all of the space is used
- 	 * since the VIO needs to write a full disk block.
- 	 */
--	result = UDS_ALLOCATE(VDO_BLOCK_SIZE, char, __func__, &data);
-+	result = uds_allocate(VDO_BLOCK_SIZE, char, __func__, &data);
- 	if (result != VDO_SUCCESS)
- 		return result;
- 
+ /**
 diff --git a/drivers/md/dm-vdo/repair.c b/drivers/md/dm-vdo/repair.c
-index 956a98166cf5..d9613e7b7e9e 100644
+index c3e9a67986db..956a98166cf5 100644
 --- a/drivers/md/dm-vdo/repair.c
 +++ b/drivers/md/dm-vdo/repair.c
-@@ -1432,7 +1432,7 @@ static int parse_journal_for_rebuild(struct repair_completion *repair)
- 	 * packed_recovery_journal_entry from every valid journal block.
- 	 */
- 	count = ((repair->highest_tail - repair->block_map_head + 1) * entries_per_block);
--	result = UDS_ALLOCATE(count, struct numbered_block_mapping, __func__, &repair->entries);
-+	result = uds_allocate(count, struct numbered_block_mapping, __func__, &repair->entries);
- 	if (result != VDO_SUCCESS)
- 		return result;
+@@ -229,7 +229,7 @@ static void uninitialize_vios(struct repair_completion *repair)
+ 	while (repair->vio_count > 0)
+ 		free_vio_components(&repair->vios[--repair->vio_count]);
  
-@@ -1477,7 +1477,7 @@ static int extract_new_mappings(struct repair_completion *repair)
- 	 * Allocate an array of numbered_block_mapping structs just large enough to transcribe
- 	 * every packed_recovery_journal_entry from every valid journal block.
- 	 */
--	result = UDS_ALLOCATE(repair->entry_count,
-+	result = uds_allocate(repair->entry_count,
- 			      struct numbered_block_mapping,
- 			      __func__,
- 			      &repair->entries);
-@@ -1738,11 +1738,11 @@ void vdo_repair(struct vdo_completion *parent)
- 	prepare_repair_completion(repair, finish_repair, VDO_ZONE_TYPE_ADMIN);
- 	repair->page_count = page_count;
+-	UDS_FREE(uds_forget(repair->vios));
++	uds_free(uds_forget(repair->vios));
+ }
  
--	result = UDS_ALLOCATE(remaining * VDO_BLOCK_SIZE, char, __func__, &repair->journal_data);
-+	result = uds_allocate(remaining * VDO_BLOCK_SIZE, char, __func__, &repair->journal_data);
- 	if (abort_on_error(result, repair))
+ static void free_repair_completion(struct repair_completion *repair)
+@@ -244,9 +244,9 @@ static void free_repair_completion(struct repair_completion *repair)
+ 	repair->completion.vdo->block_map->zones[0].page_cache.rebuilding = false;
+ 
+ 	uninitialize_vios(repair);
+-	UDS_FREE(uds_forget(repair->journal_data));
+-	UDS_FREE(uds_forget(repair->entries));
+-	UDS_FREE(repair);
++	uds_free(uds_forget(repair->journal_data));
++	uds_free(uds_forget(repair->entries));
++	uds_free(repair);
+ }
+ 
+ static void finish_repair(struct vdo_completion *completion)
+@@ -1120,7 +1120,7 @@ static void recover_block_map(struct vdo_completion *completion)
+ 
+ 	if (repair->block_map_entry_count == 0) {
+ 		uds_log_info("Replaying 0 recovery entries into block map");
+-		UDS_FREE(uds_forget(repair->journal_data));
++		uds_free(uds_forget(repair->journal_data));
+ 		launch_repair_completion(repair, load_slab_depot, VDO_ZONE_TYPE_ADMIN);
  		return;
- 
--	result = UDS_ALLOCATE(vio_count, struct vio, __func__, &repair->vios);
-+	result = uds_allocate(vio_count, struct vio, __func__, &repair->vios);
- 	if (abort_on_error(result, repair))
- 		return;
- 
+ 	}
 diff --git a/drivers/md/dm-vdo/slab-depot.c b/drivers/md/dm-vdo/slab-depot.c
-index 15df2a6bb14a..53df3fac82bd 100644
+index b38b0ce4b35d..15df2a6bb14a 100644
 --- a/drivers/md/dm-vdo/slab-depot.c
 +++ b/drivers/md/dm-vdo/slab-depot.c
-@@ -2425,7 +2425,7 @@ static int allocate_slab_counters(struct vdo_slab *slab)
- 	if (result != VDO_SUCCESS)
- 		return result;
- 
--	result = UDS_ALLOCATE(slab->reference_block_count,
-+	result = uds_allocate(slab->reference_block_count,
- 			      struct reference_block,
- 			      __func__,
- 			      &slab->reference_blocks);
-@@ -2437,7 +2437,7 @@ static int allocate_slab_counters(struct vdo_slab *slab)
- 	 * so we can word-search even at the very end.
- 	 */
+@@ -2439,7 +2439,7 @@ static int allocate_slab_counters(struct vdo_slab *slab)
  	bytes = (slab->reference_block_count * COUNTS_PER_BLOCK) + (2 * BYTES_PER_WORD);
--	result = UDS_ALLOCATE(bytes, vdo_refcount_t, "ref counts array", &slab->counters);
-+	result = uds_allocate(bytes, vdo_refcount_t, "ref counts array", &slab->counters);
+ 	result = UDS_ALLOCATE(bytes, vdo_refcount_t, "ref counts array", &slab->counters);
  	if (result != UDS_SUCCESS) {
- 		uds_free(uds_forget(slab->reference_blocks));
+-		UDS_FREE(uds_forget(slab->reference_blocks));
++		uds_free(uds_forget(slab->reference_blocks));
  		return result;
-@@ -3549,7 +3549,7 @@ get_slab_statuses(struct block_allocator *allocator, struct slab_status **status
- 	struct slab_status *statuses;
- 	struct slab_iterator iterator = get_slab_iterator(allocator);
+ 	}
  
--	result = UDS_ALLOCATE(allocator->slab_count, struct slab_status, __func__, &statuses);
-+	result = uds_allocate(allocator->slab_count, struct slab_status, __func__, &statuses);
- 	if (result != VDO_SUCCESS)
+@@ -2715,7 +2715,7 @@ static bool __must_check has_slabs_to_scrub(struct slab_scrubber *scrubber)
+  */
+ static void uninitialize_scrubber_vio(struct slab_scrubber *scrubber)
+ {
+-	UDS_FREE(uds_forget(scrubber->vio.data));
++	uds_free(uds_forget(scrubber->vio.data));
+ 	free_vio_components(&scrubber->vio);
+ }
+ 
+@@ -3616,7 +3616,7 @@ vdo_prepare_slabs_for_allocation(struct block_allocator *allocator)
+ 		register_slab_for_scrubbing(slab, high_priority);
+ 	}
+ 
+-	UDS_FREE(slab_statuses);
++	uds_free(slab_statuses);
+ 	return VDO_SUCCESS;
+ }
+ 
+@@ -3713,11 +3713,11 @@ static void free_slab(struct vdo_slab *slab)
+ 		return;
+ 
+ 	list_del(&slab->allocq_entry);
+-	UDS_FREE(uds_forget(slab->journal.block));
+-	UDS_FREE(uds_forget(slab->journal.locks));
+-	UDS_FREE(uds_forget(slab->counters));
+-	UDS_FREE(uds_forget(slab->reference_blocks));
+-	UDS_FREE(slab);
++	uds_free(uds_forget(slab->journal.block));
++	uds_free(uds_forget(slab->journal.locks));
++	uds_free(uds_forget(slab->counters));
++	uds_free(uds_forget(slab->reference_blocks));
++	uds_free(slab);
+ }
+ 
+ static int initialize_slab_journal(struct vdo_slab *slab)
+@@ -3900,7 +3900,7 @@ void vdo_abandon_new_slabs(struct slab_depot *depot)
+ 		free_slab(uds_forget(depot->new_slabs[i]));
+ 	depot->new_slab_count = 0;
+ 	depot->new_size = 0;
+-	UDS_FREE(uds_forget(depot->new_slabs));
++	uds_free(uds_forget(depot->new_slabs));
+ }
+ 
+ /**
+@@ -4022,7 +4022,7 @@ static int initialize_slab_scrubber(struct block_allocator *allocator)
+ 					 journal_data,
+ 					 &scrubber->vio);
+ 	if (result != VDO_SUCCESS) {
+-		UDS_FREE(journal_data);
++		uds_free(journal_data);
  		return result;
+ 	}
  
-@@ -3726,14 +3726,14 @@ static int initialize_slab_journal(struct vdo_slab *slab)
- 	const struct slab_config *slab_config = &slab->allocator->depot->slab_config;
- 	int result;
+@@ -4299,10 +4299,10 @@ static void uninitialize_allocator_summary(struct block_allocator *allocator)
  
--	result = UDS_ALLOCATE(slab_config->slab_journal_blocks,
-+	result = uds_allocate(slab_config->slab_journal_blocks,
- 			      struct journal_lock,
- 			      __func__,
- 			      &journal->locks);
- 	if (result != VDO_SUCCESS)
- 		return result;
+ 	for (i = 0; i < VDO_SLAB_SUMMARY_BLOCKS_PER_ZONE; i++) {
+ 		free_vio_components(&allocator->summary_blocks[i].vio);
+-		UDS_FREE(uds_forget(allocator->summary_blocks[i].outgoing_entries));
++		uds_free(uds_forget(allocator->summary_blocks[i].outgoing_entries));
+ 	}
  
--	result = UDS_ALLOCATE(VDO_BLOCK_SIZE,
-+	result = uds_allocate(VDO_BLOCK_SIZE,
- 			      char,
- 			      "struct packed_slab_journal_block",
- 			      (char **) &journal->block);
-@@ -3793,7 +3793,7 @@ make_slab(physical_block_number_t slab_origin,
- 	struct vdo_slab *slab;
- 	int result;
+-	UDS_FREE(uds_forget(allocator->summary_blocks));
++	uds_free(uds_forget(allocator->summary_blocks));
+ }
  
--	result = UDS_ALLOCATE(1, struct vdo_slab, __func__, &slab);
-+	result = uds_allocate(1, struct vdo_slab, __func__, &slab);
- 	if (result != VDO_SUCCESS)
- 		return result;
+ /**
+@@ -4337,10 +4337,10 @@ void vdo_free_slab_depot(struct slab_depot *depot)
+ 			free_slab(uds_forget(depot->slabs[i]));
+ 	}
  
-@@ -3849,7 +3849,7 @@ static int allocate_slabs(struct slab_depot *depot, slab_count_t slab_count)
- 	physical_block_number_t slab_origin;
- 	int result;
+-	UDS_FREE(uds_forget(depot->slabs));
+-	UDS_FREE(uds_forget(depot->action_manager));
+-	UDS_FREE(uds_forget(depot->summary_entries));
+-	UDS_FREE(depot);
++	uds_free(uds_forget(depot->slabs));
++	uds_free(uds_forget(depot->action_manager));
++	uds_free(uds_forget(depot->summary_entries));
++	uds_free(depot);
+ }
  
--	result = UDS_ALLOCATE(slab_count,
-+	result = uds_allocate(slab_count,
- 			      struct vdo_slab *,
- 			      "slab pointer array",
- 			      &depot->new_slabs);
-@@ -4010,7 +4010,7 @@ static int initialize_slab_scrubber(struct block_allocator *allocator)
- 	char *journal_data;
- 	int result;
+ /**
+@@ -4804,7 +4804,7 @@ static int finish_registration(void *context)
+ 	struct slab_depot *depot = context;
  
--	result = UDS_ALLOCATE(VDO_BLOCK_SIZE * slab_journal_size, char, __func__, &journal_data);
-+	result = uds_allocate(VDO_BLOCK_SIZE * slab_journal_size, char, __func__, &journal_data);
- 	if (result != VDO_SUCCESS)
- 		return result;
- 
-@@ -4045,7 +4045,7 @@ initialize_slab_summary_block(struct block_allocator *allocator, block_count_t i
- 	struct slab_summary_block *block = &allocator->summary_blocks[index];
- 	int result;
- 
--	result = UDS_ALLOCATE(VDO_BLOCK_SIZE, char, __func__, &block->outgoing_entries);
-+	result = uds_allocate(VDO_BLOCK_SIZE, char, __func__, &block->outgoing_entries);
- 	if (result != VDO_SUCCESS)
- 		return result;
- 
-@@ -4109,7 +4109,7 @@ static int __must_check initialize_block_allocator(struct slab_depot *depot, zon
- 	if (result != VDO_SUCCESS)
- 		return result;
- 
--	result = UDS_ALLOCATE(VDO_SLAB_SUMMARY_BLOCKS_PER_ZONE,
-+	result = uds_allocate(VDO_SLAB_SUMMARY_BLOCKS_PER_ZONE,
- 			      struct slab_summary_block,
- 			      __func__,
- 			      &allocator->summary_blocks);
-@@ -4172,7 +4172,7 @@ static int allocate_components(struct slab_depot *depot,
- 
- 	depot->summary_origin = summary_partition->offset;
- 	depot->hint_shift = vdo_get_slab_summary_hint_shift(depot->slab_size_shift);
--	result = UDS_ALLOCATE(MAXIMUM_VDO_SLAB_SUMMARY_ENTRIES,
-+	result = uds_allocate(MAXIMUM_VDO_SLAB_SUMMARY_ENTRIES,
- 			      struct slab_summary_entry,
- 			      __func__,
- 			      &depot->summary_entries);
-diff --git a/drivers/md/dm-vdo/slab-depot.h b/drivers/md/dm-vdo/slab-depot.h
-index 44655d697fa0..01bc9b60de4f 100644
---- a/drivers/md/dm-vdo/slab-depot.h
-+++ b/drivers/md/dm-vdo/slab-depot.h
-@@ -235,7 +235,7 @@ struct vdo_slab {
- 	/* The number of free blocks */
- 	u32 free_blocks;
- 	/* The array of reference counts */
--	vdo_refcount_t *counters; /* use UDS_ALLOCATE to align data ptr */
-+	vdo_refcount_t *counters; /* use uds_allocate() to align data ptr */
- 
- 	/* The saved block pointer and array indexes for the free block search */
- 	struct search_cursor search_cursor;
+ 	WRITE_ONCE(depot->slab_count, depot->new_slab_count);
+-	UDS_FREE(depot->slabs);
++	uds_free(depot->slabs);
+ 	depot->slabs = depot->new_slabs;
+ 	depot->new_slabs = NULL;
+ 	depot->new_slab_count = 0;
 diff --git a/drivers/md/dm-vdo/sparse-cache.c b/drivers/md/dm-vdo/sparse-cache.c
-index 5895b283c8e6..fa8ed2073d82 100644
+index d4ae28b89b5b..5895b283c8e6 100644
 --- a/drivers/md/dm-vdo/sparse-cache.c
 +++ b/drivers/md/dm-vdo/sparse-cache.c
-@@ -165,14 +165,14 @@ initialize_cached_chapter_index(struct cached_chapter_index *chapter,
- 	chapter->virtual_chapter = NO_CHAPTER;
- 	chapter->index_pages_count = geometry->index_pages_per_chapter;
+@@ -308,20 +308,20 @@ void uds_free_sparse_cache(struct sparse_cache *cache)
+ 	if (cache == NULL)
+ 		return;
  
--	result = UDS_ALLOCATE(chapter->index_pages_count,
-+	result = uds_allocate(chapter->index_pages_count,
- 			      struct delta_index_page,
- 			      __func__,
- 			      &chapter->index_pages);
- 	if (result != UDS_SUCCESS)
- 		return result;
+-	UDS_FREE(cache->scratch_entries);
++	uds_free(cache->scratch_entries);
  
--	return UDS_ALLOCATE(chapter->index_pages_count,
-+	return uds_allocate(chapter->index_pages_count,
- 			    struct dm_buffer *,
- 			    "sparse index volume pages",
- 			    &chapter->page_buffers);
-@@ -255,7 +255,7 @@ int uds_make_sparse_cache(const struct geometry *geometry,
+ 	for (i = 0; i < cache->zone_count; i++)
+-		UDS_FREE(cache->search_lists[i]);
++		uds_free(cache->search_lists[i]);
+ 
+ 	for (i = 0; i < cache->capacity; i++) {
+ 		release_cached_chapter_index(&cache->chapters[i]);
+-		UDS_FREE(cache->chapters[i].index_pages);
+-		UDS_FREE(cache->chapters[i].page_buffers);
++		uds_free(cache->chapters[i].index_pages);
++		uds_free(cache->chapters[i].page_buffers);
  	}
  
- 	/* purge_search_list() needs some temporary lists for sorting. */
--	result = UDS_ALLOCATE(capacity * 2,
-+	result = uds_allocate(capacity * 2,
- 			      struct cached_chapter_index *,
- 			      "scratch entries",
- 			      &cache->scratch_entries);
+ 	uds_destroy_barrier(&cache->begin_update_barrier);
+ 	uds_destroy_barrier(&cache->end_update_barrier);
+-	UDS_FREE(cache);
++	uds_free(cache);
+ }
+ 
+ /*
 diff --git a/drivers/md/dm-vdo/uds-sysfs.c b/drivers/md/dm-vdo/uds-sysfs.c
-index 71dfaf49780d..2657fa8c20b4 100644
+index 8700a028a11c..71dfaf49780d 100644
 --- a/drivers/md/dm-vdo/uds-sysfs.c
 +++ b/drivers/md/dm-vdo/uds-sysfs.c
-@@ -34,7 +34,7 @@ static char *buffer_to_string(const char *buf, size_t length)
- {
- 	char *string;
+@@ -117,7 +117,7 @@ parameter_store(struct kobject *kobj, struct attribute *attr, const char *buf, s
+ 		return -ENOMEM;
  
--	if (UDS_ALLOCATE(length + 1, char, __func__, &string) != UDS_SUCCESS)
-+	if (uds_allocate(length + 1, char, __func__, &string) != UDS_SUCCESS)
- 		return NULL;
+ 	pa->store_string(string);
+-	UDS_FREE(string);
++	uds_free(string);
+ 	return length;
+ }
  
- 	memcpy(string, buf, length);
 diff --git a/drivers/md/dm-vdo/uds-threads.c b/drivers/md/dm-vdo/uds-threads.c
-index 2552263f1b3d..a8c073cfa790 100644
+index 17737246d28c..2552263f1b3d 100644
 --- a/drivers/md/dm-vdo/uds-threads.c
 +++ b/drivers/md/dm-vdo/uds-threads.c
-@@ -85,7 +85,7 @@ int uds_create_thread(void (*thread_function)(void *),
- 	struct thread *thread;
- 	int result;
+@@ -119,7 +119,7 @@ int uds_create_thread(void (*thread_function)(void *),
+ 		task = kthread_run(thread_starter, thread, "%s", name);
  
--	result = UDS_ALLOCATE(1, struct thread, __func__, &thread);
-+	result = uds_allocate(1, struct thread, __func__, &thread);
- 	if (result != UDS_SUCCESS) {
- 		uds_log_warning("Error allocating memory for %s", name);
- 		return result;
+ 	if (IS_ERR(task)) {
+-		UDS_FREE(thread);
++		uds_free(thread);
+ 		return PTR_ERR(task);
+ 	}
+ 
+@@ -136,7 +136,7 @@ int uds_join_threads(struct thread *thread)
+ 	mutex_lock(&thread_mutex);
+ 	hlist_del(&thread->thread_links);
+ 	mutex_unlock(&thread_mutex);
+-	UDS_FREE(thread);
++	uds_free(thread);
+ 	return UDS_SUCCESS;
+ }
+ 
 diff --git a/drivers/md/dm-vdo/vdo.c b/drivers/md/dm-vdo/vdo.c
-index 6c9d62f899b3..29234c509664 100644
+index 3d3909172ba1..6c9d62f899b3 100644
 --- a/drivers/md/dm-vdo/vdo.c
 +++ b/drivers/md/dm-vdo/vdo.c
-@@ -215,7 +215,7 @@ initialize_thread_config(struct thread_count_config counts, struct thread_config
- 		config->hash_zone_count = counts.hash_zones;
- 	}
+@@ -173,10 +173,10 @@ static const struct vdo_work_queue_type cpu_q_type = {
  
--	result = UDS_ALLOCATE(config->logical_zone_count,
-+	result = uds_allocate(config->logical_zone_count,
- 			      thread_id_t,
- 			      "logical thread array",
- 			      &config->logical_threads);
-@@ -224,7 +224,7 @@ initialize_thread_config(struct thread_count_config counts, struct thread_config
- 		return result;
- 	}
- 
--	result = UDS_ALLOCATE(config->physical_zone_count,
-+	result = uds_allocate(config->physical_zone_count,
- 			      thread_id_t,
- 			      "physical thread array",
- 			      &config->physical_threads);
-@@ -233,7 +233,7 @@ initialize_thread_config(struct thread_count_config counts, struct thread_config
- 		return result;
- 	}
- 
--	result = UDS_ALLOCATE(config->hash_zone_count,
-+	result = uds_allocate(config->hash_zone_count,
- 			      thread_id_t,
- 			      "hash thread array",
- 			      &config->hash_zone_threads);
-@@ -242,7 +242,7 @@ initialize_thread_config(struct thread_count_config counts, struct thread_config
- 		return result;
- 	}
- 
--	result = UDS_ALLOCATE(config->bio_thread_count,
-+	result = uds_allocate(config->bio_thread_count,
- 			      thread_id_t,
- 			      "bio thread array",
- 			      &config->bio_threads);
-@@ -285,7 +285,7 @@ static int __must_check read_geometry_block(struct vdo *vdo)
- 	char *block;
- 	int result;
- 
--	result = UDS_ALLOCATE(VDO_BLOCK_SIZE, u8, __func__, &block);
-+	result = uds_allocate(VDO_BLOCK_SIZE, u8, __func__, &block);
- 	if (result != VDO_SUCCESS)
- 		return result;
- 
-@@ -531,7 +531,7 @@ initialize_vdo(struct vdo *vdo, struct device_config *config, unsigned int insta
- 		     vdo->thread_config.thread_count);
- 
- 	/* Compression context storage */
--	result = UDS_ALLOCATE(config->thread_counts.cpu_threads,
-+	result = uds_allocate(config->thread_counts.cpu_threads,
- 			      char *,
- 			      "LZ4 context",
- 			      &vdo->compression_context);
-@@ -541,7 +541,7 @@ initialize_vdo(struct vdo *vdo, struct device_config *config, unsigned int insta
- 	}
- 
- 	for (i = 0; i < config->thread_counts.cpu_threads; i++) {
--		result = UDS_ALLOCATE(LZ4_MEM_COMPRESS,
-+		result = uds_allocate(LZ4_MEM_COMPRESS,
- 				      char,
- 				      "LZ4 context",
- 				      &vdo->compression_context[i]);
-@@ -581,7 +581,7 @@ int vdo_make(unsigned int instance,
- 	/* VDO-3769 - Set a generic reason so we don't ever return garbage. */
- 	*reason = "Unspecified error";
- 
--	result = UDS_ALLOCATE(1, struct vdo, __func__, &vdo);
-+	result = uds_allocate(1, struct vdo, __func__, &vdo);
- 	if (result != UDS_SUCCESS) {
- 		*reason = "Cannot allocate VDO";
- 		return result;
-@@ -602,7 +602,7 @@ int vdo_make(unsigned int instance,
- 		 MODULE_NAME,
- 		 instance);
- 	BUG_ON(vdo->thread_name_prefix[0] == '\0');
--	result = UDS_ALLOCATE(vdo->thread_config.thread_count,
-+	result = uds_allocate(vdo->thread_config.thread_count,
- 			      struct vdo_thread,
- 			      __func__,
- 			      &vdo->threads);
-@@ -798,7 +798,7 @@ static int initialize_super_block(struct vdo *vdo, struct vdo_super_block *super
+ static void uninitialize_thread_config(struct thread_config *config)
  {
- 	int result;
+-	UDS_FREE(uds_forget(config->logical_threads));
+-	UDS_FREE(uds_forget(config->physical_threads));
+-	UDS_FREE(uds_forget(config->hash_zone_threads));
+-	UDS_FREE(uds_forget(config->bio_threads));
++	uds_free(uds_forget(config->logical_threads));
++	uds_free(uds_forget(config->physical_threads));
++	uds_free(uds_forget(config->hash_zone_threads));
++	uds_free(uds_forget(config->bio_threads));
+ 	memset(config, 0, sizeof(struct thread_config));
+ }
  
--	result = UDS_ALLOCATE(VDO_BLOCK_SIZE,
-+	result = uds_allocate(VDO_BLOCK_SIZE,
- 			      char,
- 			      "encoded super block",
- 			      (char **) &vdo->super_block.buffer);
-@@ -1111,7 +1111,7 @@ int vdo_register_read_only_listener(struct vdo *vdo,
- 	if (result != VDO_SUCCESS)
+@@ -291,7 +291,7 @@ static int __must_check read_geometry_block(struct vdo *vdo)
+ 
+ 	result = create_metadata_vio(vdo, VIO_TYPE_GEOMETRY, VIO_PRIORITY_HIGH, NULL, block, &vio);
+ 	if (result != VDO_SUCCESS) {
+-		UDS_FREE(block);
++		uds_free(block);
  		return result;
+ 	}
  
--	result = UDS_ALLOCATE(1, struct read_only_listener, __func__, &read_only_listener);
-+	result = uds_allocate(1, struct read_only_listener, __func__, &read_only_listener);
- 	if (result != VDO_SUCCESS)
+@@ -303,7 +303,7 @@ static int __must_check read_geometry_block(struct vdo *vdo)
+ 	result = vio_reset_bio(vio, block, NULL, REQ_OP_READ, VDO_GEOMETRY_BLOCK_LOCATION);
+ 	if (result != VDO_SUCCESS) {
+ 		free_vio(uds_forget(vio));
+-		UDS_FREE(block);
++		uds_free(block);
  		return result;
+ 	}
  
+@@ -313,12 +313,12 @@ static int __must_check read_geometry_block(struct vdo *vdo)
+ 	free_vio(uds_forget(vio));
+ 	if (result != 0) {
+ 		uds_log_error_strerror(result, "synchronous read failed");
+-		UDS_FREE(block);
++		uds_free(block);
+ 		return -EIO;
+ 	}
+ 
+ 	result = vdo_parse_geometry_block((u8 *) block, &vdo->geometry);
+-	UDS_FREE(block);
++	uds_free(block);
+ 	return result;
+ }
+ 
+@@ -703,14 +703,14 @@ static void free_listeners(struct vdo_thread *thread)
+ 
+ 	for (listener = uds_forget(thread->listeners); listener != NULL; listener = next) {
+ 		next = uds_forget(listener->next);
+-		UDS_FREE(listener);
++		uds_free(listener);
+ 	}
+ }
+ 
+ static void uninitialize_super_block(struct vdo_super_block *super_block)
+ {
+ 	free_vio_components(&super_block->vio);
+-	UDS_FREE(super_block->buffer);
++	uds_free(super_block->buffer);
+ }
+ 
+ /**
+@@ -772,16 +772,16 @@ void vdo_destroy(struct vdo *vdo)
+ 			free_listeners(&vdo->threads[i]);
+ 			vdo_free_work_queue(uds_forget(vdo->threads[i].queue));
+ 		}
+-		UDS_FREE(uds_forget(vdo->threads));
++		uds_free(uds_forget(vdo->threads));
+ 	}
+ 
+ 	uninitialize_thread_config(&vdo->thread_config);
+ 
+ 	if (vdo->compression_context != NULL) {
+ 		for (i = 0; i < vdo->device_config->thread_counts.cpu_threads; i++)
+-			UDS_FREE(uds_forget(vdo->compression_context[i]));
++			uds_free(uds_forget(vdo->compression_context[i]));
+ 
+-		UDS_FREE(uds_forget(vdo->compression_context));
++		uds_free(uds_forget(vdo->compression_context));
+ 	}
+ 
+ 	/*
+@@ -789,7 +789,7 @@ void vdo_destroy(struct vdo *vdo)
+ 	 * the count goes to zero the VDO object will be freed as a side effect.
+ 	 */
+ 	if (!vdo->sysfs_added)
+-		UDS_FREE(vdo);
++		uds_free(vdo);
+ 	else
+ 		kobject_put(&vdo->vdo_directory);
+ }
 diff --git a/drivers/md/dm-vdo/vio.c b/drivers/md/dm-vdo/vio.c
-index 4cc27c3ddb58..10fcfd93e782 100644
+index 7fe9b2fbd105..4cc27c3ddb58 100644
 --- a/drivers/md/dm-vdo/vio.c
 +++ b/drivers/md/dm-vdo/vio.c
-@@ -138,7 +138,7 @@ int create_multi_block_metadata_vio(struct vdo *vdo,
- 	 * Metadata vios should use direct allocation and not use the buffer pool, which is
- 	 * reserved for submissions from the linux block layer.
- 	 */
--	result = UDS_ALLOCATE(1, struct vio, __func__, &vio);
-+	result = uds_allocate(1, struct vio, __func__, &vio);
- 	if (result != VDO_SUCCESS) {
- 		uds_log_error("metadata vio allocation failure %d", result);
- 		return result;
-@@ -346,7 +346,7 @@ int make_vio_pool(struct vdo *vdo,
- 	INIT_LIST_HEAD(&pool->available);
- 	INIT_LIST_HEAD(&pool->busy);
+@@ -71,7 +71,7 @@ void vdo_free_bio(struct bio *bio)
+ 		return;
  
--	result = UDS_ALLOCATE(pool_size * VDO_BLOCK_SIZE, char, "VIO pool buffer", &pool->buffer);
-+	result = uds_allocate(pool_size * VDO_BLOCK_SIZE, char, "VIO pool buffer", &pool->buffer);
+ 	bio_uninit(bio);
+-	UDS_FREE(uds_forget(bio));
++	uds_free(uds_forget(bio));
+ }
+ 
+ int allocate_vio_components(struct vdo *vdo,
+@@ -146,7 +146,7 @@ int create_multi_block_metadata_vio(struct vdo *vdo,
+ 
+ 	result = allocate_vio_components(vdo, vio_type, priority, parent, block_count, data, vio);
  	if (result != VDO_SUCCESS) {
- 		free_vio_pool(pool);
+-		UDS_FREE(vio);
++		uds_free(vio);
  		return result;
+ 	}
+ 
+@@ -174,7 +174,7 @@ void free_vio_components(struct vio *vio)
+ void free_vio(struct vio *vio)
+ {
+ 	free_vio_components(vio);
+-	UDS_FREE(vio);
++	uds_free(vio);
+ }
+ 
+ /* Set bio properties for a VDO read or write. */
+@@ -405,8 +405,8 @@ void free_vio_pool(struct vio_pool *pool)
+ 	ASSERT_LOG_ONLY(pool->size == 0,
+ 			"VIO pool must not have missing entries when being freed");
+ 
+-	UDS_FREE(uds_forget(pool->buffer));
+-	UDS_FREE(pool);
++	uds_free(uds_forget(pool->buffer));
++	uds_free(pool);
+ }
+ 
+ /**
 diff --git a/drivers/md/dm-vdo/volume-index.c b/drivers/md/dm-vdo/volume-index.c
-index 93f64fd7c09f..150bb4ad7aa4 100644
+index ce1dfe4deeca..93f64fd7c09f 100644
 --- a/drivers/md/dm-vdo/volume-index.c
 +++ b/drivers/md/dm-vdo/volume-index.c
-@@ -1189,14 +1189,14 @@ static int initialize_volume_sub_index(const struct configuration *config,
- 				  (zone_count * sizeof(struct volume_sub_index_zone)));
+@@ -272,8 +272,8 @@ static int compute_volume_sub_index_parameters(const struct configuration *confi
  
- 	/* The following arrays are initialized to all zeros. */
--	result = UDS_ALLOCATE(params.list_count,
-+	result = uds_allocate(params.list_count,
- 			      u64,
- 			      "first chapter to flush",
- 			      &sub_index->flush_chapters);
- 	if (result != UDS_SUCCESS)
- 		return result;
+ static void uninitialize_volume_sub_index(struct volume_sub_index *sub_index)
+ {
+-	UDS_FREE(uds_forget(sub_index->flush_chapters));
+-	UDS_FREE(uds_forget(sub_index->zones));
++	uds_free(uds_forget(sub_index->flush_chapters));
++	uds_free(uds_forget(sub_index->zones));
+ 	uds_uninitialize_delta_index(&sub_index->delta_index);
+ }
  
--	return UDS_ALLOCATE(zone_count,
-+	return uds_allocate(zone_count,
- 			    struct volume_sub_index_zone,
- 			    "volume index zones",
- 			    &sub_index->zones);
-@@ -1211,7 +1211,7 @@ int uds_make_volume_index(const struct configuration *config,
- 	struct volume_index *volume_index;
- 	int result;
+@@ -287,12 +287,12 @@ void uds_free_volume_index(struct volume_index *volume_index)
  
--	result = UDS_ALLOCATE(1, struct volume_index, "volume index", &volume_index);
-+	result = uds_allocate(1, struct volume_index, "volume index", &volume_index);
- 	if (result != UDS_SUCCESS)
- 		return result;
+ 		for (zone = 0; zone < volume_index->zone_count; zone++)
+ 			uds_destroy_mutex(&volume_index->zones[zone].hook_mutex);
+-		UDS_FREE(uds_forget(volume_index->zones));
++		uds_free(uds_forget(volume_index->zones));
+ 	}
  
-@@ -1234,7 +1234,7 @@ int uds_make_volume_index(const struct configuration *config,
+ 	uninitialize_volume_sub_index(&volume_index->vi_non_hook);
+ 	uninitialize_volume_sub_index(&volume_index->vi_hook);
+-	UDS_FREE(volume_index);
++	uds_free(volume_index);
+ }
  
- 	volume_index->sparse_sample_rate = config->sparse_sample_rate;
  
--	result = UDS_ALLOCATE(config->zone_count,
-+	result = uds_allocate(config->zone_count,
- 			      struct volume_index_zone,
- 			      "volume index zones",
- 			      &volume_index->zones);
 diff --git a/drivers/md/dm-vdo/volume.c b/drivers/md/dm-vdo/volume.c
-index b43ce9814216..874dc2ec7ca7 100644
+index 55cf1f68481d..b43ce9814216 100644
 --- a/drivers/md/dm-vdo/volume.c
 +++ b/drivers/md/dm-vdo/volume.c
-@@ -1576,25 +1576,25 @@ initialize_page_cache(struct page_cache *cache,
- 	if (result != UDS_SUCCESS)
- 		return result;
+@@ -1751,10 +1751,10 @@ static void uninitialize_page_cache(struct page_cache *cache)
+ 		for (i = 0; i < cache->cache_slots; i++)
+ 			release_page_buffer(&cache->cache[i]);
+ 	}
+-	UDS_FREE(cache->index);
+-	UDS_FREE(cache->cache);
+-	UDS_FREE(cache->search_pending_counters);
+-	UDS_FREE(cache->read_queue);
++	uds_free(cache->index);
++	uds_free(cache->cache);
++	uds_free(cache->search_pending_counters);
++	uds_free(cache->read_queue);
+ }
  
--	result = UDS_ALLOCATE(VOLUME_CACHE_MAX_QUEUED_READS,
-+	result = uds_allocate(VOLUME_CACHE_MAX_QUEUED_READS,
- 			      struct queued_read,
- 			      "volume read queue",
- 			      &cache->read_queue);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
--	result = UDS_ALLOCATE(cache->zone_count,
-+	result = uds_allocate(cache->zone_count,
- 			      struct search_pending_counter,
- 			      "Volume Cache Zones",
- 			      &cache->search_pending_counters);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
--	result = UDS_ALLOCATE(cache->indexable_pages, u16, "page cache index", &cache->index);
-+	result = uds_allocate(cache->indexable_pages, u16, "page cache index", &cache->index);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
--	result = UDS_ALLOCATE(cache->cache_slots,
-+	result = uds_allocate(cache->cache_slots,
- 			      struct cached_page,
- 			      "page cache cache",
- 			      &cache->cache);
-@@ -1621,7 +1621,7 @@ int uds_make_volume(const struct configuration *config,
- 	unsigned int reserved_buffers;
- 	int result;
- 
--	result = UDS_ALLOCATE(1, struct volume, "volume", &volume);
-+	result = uds_allocate(1, struct volume, "volume", &volume);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
-@@ -1658,7 +1658,7 @@ int uds_make_volume(const struct configuration *config,
- 		return result;
+ void uds_free_volume(struct volume *volume)
+@@ -1772,7 +1772,7 @@ void uds_free_volume(struct volume *volume)
+ 		uds_unlock_mutex(&volume->read_threads_mutex);
+ 		for (i = 0; i < volume->read_thread_count; i++)
+ 			uds_join_threads(volume->reader_threads[i]);
+-		UDS_FREE(volume->reader_threads);
++		uds_free(volume->reader_threads);
+ 		volume->reader_threads = NULL;
  	}
  
--	result = UDS_ALLOCATE(geometry->records_per_page,
-+	result = uds_allocate(geometry->records_per_page,
- 			      const struct uds_volume_record *,
- 			      "record pointers",
- 			      &volume->record_pointers);
-@@ -1717,7 +1717,7 @@ int uds_make_volume(const struct configuration *config,
- 		return result;
- 	}
- 
--	result = UDS_ALLOCATE(config->read_threads,
-+	result = uds_allocate(config->read_threads,
- 			      struct thread *,
- 			      "reader threads",
- 			      &volume->reader_threads);
+@@ -1787,7 +1787,7 @@ void uds_free_volume(struct volume *volume)
+ 	uds_destroy_mutex(&volume->read_threads_mutex);
+ 	uds_free_index_page_map(volume->index_page_map);
+ 	uds_free_radix_sorter(volume->radix_sorter);
+-	UDS_FREE(volume->geometry);
+-	UDS_FREE(volume->record_pointers);
+-	UDS_FREE(volume);
++	uds_free(volume->geometry);
++	uds_free(volume->record_pointers);
++	uds_free(volume);
+ }
 -- 
 2.40.0
 
