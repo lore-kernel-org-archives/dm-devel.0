@@ -1,98 +1,101 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28])
+Received: from mail-ej1-f50.google.com (mail-ej1-f50.google.com [209.85.218.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 965AB15AE1
-	for <dm-devel@lists.linux.dev>; Mon, 13 Nov 2023 14:08:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC0DB2510C
+	for <dm-devel@lists.linux.dev>; Mon, 13 Nov 2023 21:27:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=chromium.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=chromium.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="ob4M0+h8"
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id B98DC218F6;
-	Mon, 13 Nov 2023 14:08:36 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1699884516; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:  content-transfer-encoding:content-transfer-encoding;
-	bh=uczpq09DJbHGv1Yscq3ZSH3BO4ciRZDDAtMGFqYdE60=;
-	b=ob4M0+h8apb0ucbl2bSBEsazH/MHDBR1rIlIo4bd5cPn6RId8KQOJkL7PihioRNjuxYODz
-	Y8roQvi30zyEGZzGP+j40A/nfzGCwVcW9UkqwE78zIZ5U9NbGRKJQXUDKa5HDQbO60F3mQ
-	rvcjy4SZL0uqLWGQLTrtGzGhp30ck5U=
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-	(No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 86E7E13398;
-	Mon, 13 Nov 2023 14:08:36 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA
-	id eepEH+QtUmV/HwAAMHmgww
-	(envelope-from <mwilck@suse.com>); Mon, 13 Nov 2023 14:08:36 +0000
-From: mwilck@suse.com
-To: Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@lists.linux.dev,
-	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] multipath-tools: set usr_prefix to /usr in default configuration
-Date: Mon, 13 Nov 2023 15:08:26 +0100
-Message-ID: <20231113140826.15399-1-mwilck@suse.com>
-X-Mailer: git-send-email 2.42.1
+	dkim=pass (1024-bit key) header.d=chromium.org header.i=@chromium.org header.b="ABY9q5cn"
+Received: by mail-ej1-f50.google.com with SMTP id a640c23a62f3a-9d2e7726d5bso747099366b.0
+        for <dm-devel@lists.linux.dev>; Mon, 13 Nov 2023 13:27:03 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=chromium.org; s=google; t=1699910822; x=1700515622; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=mttVMjujBnJtfA9qmPOIHfeRm+JAOLtRVgarlviBSVY=;
+        b=ABY9q5cndxweGXQp0xJIpfE1iJfwSYbhbMRLlIRTzQnPOrTorCSnQDXvX3Jlqv11g3
+         yvsQYvFX1w36YePReE3yHbK3aILNfJmCEEEgU5TKzjn9hc41HWDmBWqWXAxbZrRznvFr
+         IwnyRwwEYHY6ZYVzO5TXSNSQ/bLsIXENfsXig=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1699910822; x=1700515622;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=mttVMjujBnJtfA9qmPOIHfeRm+JAOLtRVgarlviBSVY=;
+        b=XtIpuzRUZ9GSHSkehT+wCN3+E+h6z84zUkmcq0QuvU1HQmKhyXB7KcNQ97ikHaeyeD
+         5+E9174vgoT/N6L3u8gGOQrfxzodu9pw4NNvTI2PYHZ2Ru1Nb38wTSIYkvHvxsQEM7ZR
+         AZCZZRBebLdZE4h1y57K0LS6jmsvhf0W6hKqcOH466U5/RWgfddq/J/3/jSxqikL8ube
+         E7WFA8eYnD5TNwRZt/YWrWjrodfZcz8wWhBRguMb3HosFOcUERppToTCCJuzh6KfbznY
+         Ty1aajv21IrCxcIqiDuWJp6QPDX2br/5Wxg+R0uZDBeQvq+DdbjMguGbTAYs1tEUeICU
+         FaIQ==
+X-Gm-Message-State: AOJu0YwMRsizuMy2u4IFo6IH7Hlyp32o2L2HBgeymcQvdDu2czLs9M3l
+	R5yL0ED8QAjG+JO4TnJYApYYbymwTbnOgWsDB/w7ag==
+X-Google-Smtp-Source: AGHT+IGoL4C64VRkqMMt2Ko2g8gaFMw8YCcpuwoNcjFqFlvPZKJTDjJL2Bgl7LbSUmzZ0cB+I9TezFzC6HBD0IZ7Sjs=
+X-Received: by 2002:a17:906:dfca:b0:9e4:67d9:438 with SMTP id
+ jt10-20020a170906dfca00b009e467d90438mr5397879ejc.56.1699910821965; Mon, 13
+ Nov 2023 13:27:01 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20231110010139.3901150-1-sarthakkukreti@chromium.org> <ZU7RVKJIzm8ExGGH@dread.disaster.area>
+In-Reply-To: <ZU7RVKJIzm8ExGGH@dread.disaster.area>
+From: Sarthak Kukreti <sarthakkukreti@chromium.org>
+Date: Mon, 13 Nov 2023 13:26:51 -0800
+Message-ID: <CAG9=OMPFEV9He+ggq2mcLULnUZ2jm8fGU=4ca8kBoWtvqYcGVg@mail.gmail.com>
+Subject: Re: [PATCH v9 0/3] [PATCH v9 0/3] Introduce provisioning primitives
+To: Dave Chinner <david@fromorbit.com>
+Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
+	Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@kernel.org>, 
+	"Darrick J . Wong" <djwong@kernel.org>, Christoph Hellwig <hch@lst.de>, Brian Foster <bfoster@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-From: Martin Wilck <mwilck@suse.com>
+On Fri, Nov 10, 2023 at 4:56=E2=80=AFPM Dave Chinner <david@fromorbit.com> =
+wrote:
+>
+> On Thu, Nov 09, 2023 at 05:01:35PM -0800, Sarthak Kukreti wrote:
+> > Hi,
+> >
+> > This patch series is version 9 of the patch series to introduce
+> > block-level provisioning mechanism (original [1]), which is useful for
+> > provisioning space across thinly provisioned storage architectures (loo=
+p
+> > devices backed by sparse files, dm-thin devices, virtio-blk). This
+> > series has minimal changes over v8[2], with a couple of patches dropped
+> > (suggested by Dave).
+> >
+> > This patch series is rebased from the linux-dm/dm-6.5-provision-support
+> > [3] on to (a12deb44f973 Merge tag 'input-for-v6.7-rc0' ...). The final
+> > patch in the series is a blktest (suggested by Dave in 4) which was use=
+d
+> > to test out the provisioning flow for loop devices on sparse files on a=
+n
+> > ext4 filesystem.
+>
+> What happened to the XFS patch I sent to support provisioning for
+> fallocate() operations through XFS?
+>
+Apologies, I missed out on mentioning that the XFS patches work well
+with loop devices.
 
-In the default configuration (both prefix and usr_prefix unset),
-we'd install man pages and headers under /share/man and /include,
-respectively, which is very unusual. Have usr_prefix default to
-/usr in (the default) case where prefix is empty, and set it equal
-to /prefix otherwise.
+I might have misunderstood: were those patches only for sanity testing
+or would you prefer that I send those out as a part of this series? I
+can whip up a quick v10 if so!
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
+Cheers
 
-This is submitted as an alternative approach to Ben Marzinski's
-late patch set "Makefile cleanups."
+Sarthak
 
----
- Makefile.inc | 2 +-
- README.md    | 3 +--
- 2 files changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index a20e2ce..6b45430 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -36,7 +36,7 @@ prefix		:=
- # Prefix for binaries
- exec_prefix	:= $(prefix)
- # Prefix for non-essential libraries (libdmmp)
--usr_prefix	:= $(prefix)
-+usr_prefix	:= $(if $(prefix),$(prefix),/usr)
- # Prefix for configfuration files (multipath.conf)
- etc_prefix	:= $(prefix)
- # Where to install systemd-related files. systemd is usually installed under /usr
-diff --git a/README.md b/README.md
-index db03a33..d4f35f5 100644
---- a/README.md
-+++ b/README.md
-@@ -131,8 +131,7 @@ The following variables can be passed to the `make` command line:
-    "Usr-merged" distributions[^systemd] may want to set this to `/usr`. The
-    default is empty (`""`).
-  * `usr_prefix`: where to install those parts of the code that aren't necessary
--   for booting. Non-usr-merged distributions[^systemd] may want to set this to
--   `/usr`. The default is `$(prefix)`.
-+   for booting. The default is `/usr` if `$(prefix)` is empty, and `$(prefix)` otherwise.
-  * `systemd_prefix`: Prefix for systemd-related files[^systemd]. The default is `/usr`.
-  * `etc_prefix`: The prefix for configuration files. "usr-merged"
-    distributions with immutable `/usr`[^systemd] may want to set this to
--- 
-2.42.1
-
+> Cheers,
+>
+> Dave.
+> --
+> Dave Chinner
+> david@fromorbit.com
