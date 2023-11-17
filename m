@@ -1,502 +1,888 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D1C0045036
-	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:01 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 02A054500A
+	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 21:00:00 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XyKLZbsl"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Nw+aAApK"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1700254800;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=EIyzb5spTTCRCuUd8wFdLr0dIJkzRu04gqNSxbqMl34=;
-	b=XyKLZbsl/N9pBxqdllIh84oK8TaaxjTiRajD/x1/LMFoJk8dOm7+YVpLUwoBNYieGz+Blr
-	Vj/J+5aPXuIgF13ZqpiQKoJHqGKZLilNULk7k8cO4TGDM6eIvVbOguzw0oAk1qyCDB0UkD
-	O1B5X3cXRC9Qnt9NY4QsMpXSR1tYeoc=
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Q32bIJxOzxM4+A0HUaZyMgM37wJzKP1N2rWA87/QPvM=;
+	b=Nw+aAApKo+l4AJFYhzR0JvhTdi43lyGOtk+esHAZkZAJSmzqERyjwv3LKOpuujogASz45q
+	tmO1EK48dC85lYJ9qdy4i/fpfQP5O31E033hGSrONdX4E7kREyNZsi5tXcej7PTnKcOmY/
+	ASmKlQ2MVlJoXvYeFPcKgw4SC+ESXSk=
 Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-94-rgE1yRJkMcmzSdLJUjyySw-1; Fri,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-610--AmLYd35NYOdiXfhiVDRCg-1; Fri,
  17 Nov 2023 15:59:58 -0500
-X-MC-Unique: rgE1yRJkMcmzSdLJUjyySw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+X-MC-Unique: -AmLYd35NYOdiXfhiVDRCg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 772C63C00207
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4D6823813BC7
 	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 20:59:58 +0000 (UTC)
 Received: from pbitcolo-build-10.permabit.com (pbitcolo-build-10.permabit.lab.eng.bos.redhat.com [10.19.117.76])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 207A5C15881;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 31FA41121306;
 	Fri, 17 Nov 2023 20:59:58 +0000 (UTC)
 Received: by pbitcolo-build-10.permabit.com (Postfix, from userid 1138)
-	id C4C2D3003C; Fri, 17 Nov 2023 15:59:57 -0500 (EST)
+	id EE2053003B; Fri, 17 Nov 2023 15:59:57 -0500 (EST)
 From: Matthew Sakai <msakai@redhat.com>
 To: dm-devel@lists.linux.dev
 Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v5 00/40] dm vdo: add the dm-vdo deduplication and compression DM target
-Date: Fri, 17 Nov 2023 15:59:17 -0500
-Message-Id: <cover.1700250814.git.msakai@redhat.com>
+Subject: [PATCH v5 01/40] dm: add documentation for dm-vdo target
+Date: Fri, 17 Nov 2023 15:59:18 -0500
+Message-Id: <b89e2912cb24b311b4196bb5cc92f10efc396886.1700250814.git.msakai@redhat.com>
+In-Reply-To: <cover.1700250814.git.msakai@redhat.com>
+References: <cover.1700250814.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.8
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.3
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain; charset="US-ASCII"; x-default=true
 
-The dm-vdo target provides inline deduplication, compression, zero-block
-elimination, and thin provisioning. A dm-vdo target can be backed by up to
-256TB of storage, and can present a logical size of up to 4PB. This target
-was originally developed at Permabit Technology Corp. starting in 2009. It
-was first released in 2013 and has been used in production environments
-ever since. It was made open-source in 2017 after Permabit was acquired by
-Red Hat.
+This adds the admin-guide documentation for dm-vdo.
 
-Because deduplication rates fall drastically as the block size increases, a
-vdo target has a maximum block size of 4KB. However, it can achieve
-deduplication rates of 254:1, i.e. up to 254 copies of a given 4KB block
-can reference a single 4KB of actual storage. It can achieve compression
-rates of 14:1. All zero blocks consume no storage at all.
+vdo.rst is the guide to using dm-vdo. vdo-design is an overview of the
+design of dm-vdo.
 
-https://github.com/dm-vdo/dm-linux contains the most recent dm-vdo updates.
-
-Design Summary
---------------
-
-This is a high-level summary of the ideas behind dm-vdo. For details about
-the implementation and various design choices, refer to vdo-design.rst
-included in this patch set.
-
-Deduplication is a two-part problem. The first part is recognizing
-duplicate data; the second part is avoiding multiple copies of the
-duplicated data. Therefore, vdo has two main sections: a deduplication
-index that is used to discover potential duplicate data, and a data store
-with a reference counted block map that maps from logical block addresses
-to the actual storage location of the data.
-
-Hashing:
-
-In order to identify blocks, vdo hashes each 4KB block to produce a 128-bit
-block name. Since vdo only requires these names to be evenly distributed,
-it uses MurmurHash3, a non-cryptographic hash algorithm which is faster
-than cryptographic hashes.
-
-The Deduplication Index:
-
-The index is a set of mappings between a block name (the hash of its
-contents) and a hint indicating where the block might be stored. These
-mappings are stored in temporal order because groups of blocks that are
-written together (such as a large file) tend to be rewritten together as
-well. The index uses a least-recently-used (LRU) scheme to keep frequently
-used names in the index while older names are discarded.
-
-The index uses a structure called a delta-index to store its mappings,
-which is more space-efficient than using a hashtable. It uses a variable
-length encoding with the property that the average size of an entry
-decreases as the number of entries increases, resulting in a roughly
-constant size as the index fills.
-
-Because storing hashes along with the data, or rehashing blocks on
-overwrite is expensive, entries are never explicitly deleted from the
-index. Instead, the vdo must always check the data at the physical location
-provided by the index to ensure that the hint is still valid.
-
-The Data Store:
-
-The data store is implemented by three main data structures: the block map,
-the slab depot, and the recovery journal. These structures work in concert
-to amortize metadata updates across as many data writes as possible.
-
-The block map contains the mapping from logical addresses to physical
-locations. For each logical address it indicates whether that address is
-unused, all zeros, or which physical block holds its contents and whether
-or not it is compressed. The array of mappings is represented as a tree,
-with nodes that are allocated as needed from the available physical space.
-
-The slab depot tracks the physical space available for storing user data.
-The depot also maintains a reference count for each physical block. Each
-block can have up to 254 logical references.
-
-The recovery journal is a transaction log of the logical-to-physical
-mappings made by data writes. Committing this journal regularly allows a
-vdo to reduce the frequency of other metadata writes and allows it to
-reconstruct its metadata in the event of a crash.
-
-Zones and Threading:
-
-Due to the complexity of deduplication, the number of metadata structures
-involved in a single write operation to a vdo target is larger than most
-other targets. Furthermore, because vdo operates on small block sizes in
-order to achieve good deduplication rates, parallelism is key to good
-performance. The deduplication index, the block map, and the slab depot are
-all designed to be easily divided into disjoint zones such that any piece
-of metadata is handled by a single zone. Each zone is then assigned to a
-single thread so that all metadata operations in that zone can proceed
-without locking. Each bio is associated with a request object which can be
-enqueued on each zone thread it needs to access. The zone divisions are not
-reflected in the on-disk representation of the data structures, so the
-number of zones, and hence the number of threads, can be configured each
-time a vdo target is started.
-
-Existing facilities
--------------------
-
-In a few cases, we found that existing kernel facilities did not meet vdo's
-needs, either because of performance or due to a mismatch of semantics.
-These are detailed here:
-
-Work Queues:
-
-Handling a single bio requires a number of small operations across a number
-of zones. The per-zone worker threads can be very busy, often using upwards
-of 30% CPU time. Kernel work queues seem targeted for lighter work loads.
-They do not let us easily prioritize individual tasks within a zone, and
-make CPU affinity control at a per-thread level more difficult.
-
-The threads scanning and updating the in-memory portion of the
-deduplication index process a large number of queries through a single
-function. It uses its own "request queue" mechanism to process these
-efficiently in dedicated threads. In experiments using kernel work queues
-for the index lookups, we observed an overall throughput drop of up to
-almost 10%. In the following table, randwrite% and write% represent the
-change in throughput when switching to kernel work queues for random and
-sequential write workloads, respectively.
-
-| compression% | deduplication% | randwrite% | write% |
-|--------------+----------------+------------+--------|
-|            0 |              0 |       -8.3 |   -6.4 |
-|           55 |              0 |       -7.9 |   -8.5 |
-|           90 |              0 |       -9.3 |   -8.9 |
-|            0 |             50 |       -4.9 |   -4.5 |
-|           55 |             50 |       -4.4 |   -4.4 |
-|           90 |             50 |       -4.2 |   -4.7 |
-|            0 |             90 |       -1.0 |    0.7 |
-|           55 |             90 |        0.2 |   -0.4 |
-|           90 |             90 |       -0.5 |    0.2 |
-
-Mempools:
-
-There are two types of object pools in the vdo implementation for which the
-existing mempool structure was not appropriate. The first of these are
-pools of structures wrapping the bios used for vdo's metadata I/O. Since
-each of these pools is only accessed from a single thread, the locking done
-by mempool is a needless cost. The second of these, the single pool of the
-wrappers for incoming bios, has more complicated locking semantics than
-mempool provides. When a thread attempts to submit a bio to vdo, but the
-pool is exhausted, the thread is put to sleep. The pool is designed to only
-wake that thread once, when it is certain that the bio submitted by that
-thread will be processed. It is not desirable to merely allocate more
-wrappers as a number of other vdo structures are designed to handle only a
-fixed number of concurrent requests. This limit is also necessary to bound
-the amount of work needed when recovering after a crash.
-
-MurmurHash:
-
-MurmurHash3 was selected for its hash quality, performance on 4KB blocks,
-and its 128-bit output size (vdo needs significantly more than 64 uniformly
-distributed bits for its in-memory and on-disk indexing). For
-cross-platform compatibility, vdo uses a modified version which always
-produces the same output as the original x64 variant, rather than being
-optimized per platform.
-
-For newly created devices, vdo could potentially use another hash algorithm
-with similar qualities such as xxhash. For existing devices, however,
-changing the hash algorithm means losing all previous deduplication
-information. So for existing installations it is highly desirable to retain
-support for MurmurHash3.
-
-Matthew Sakai (40):
-  dm: add documentation for dm-vdo target
-  dm vdo: add the MurmurHash3 fast hashing algorithm
-  dm vdo: add memory allocation utilities
-  dm vdo: add basic logging and support utilities
-  dm vdo: add vdo type declarations, constants, and simple data
-    structures
-  dm vdo: add thread and synchronization utilities
-  dm vdo: add specialized request queueing functionality
-  dm vdo: add basic hash map data structures
-  dm vdo: add deduplication configuration structures
-  dm vdo: add deduplication index storage interface
-  dm vdo: implement the delta index
-  dm vdo: implement the volume index
-  dm vdo: implement the open chapter and chapter indexes
-  dm vdo: implement the chapter volume store
-  dm vdo: implement top-level deduplication index
-  dm vdo: implement external deduplication index interface
-  dm vdo: add administrative state and action manager
-  dm vdo: add vio, the request object for vdo metadata
-  dm vdo: add data_vio, the request object which services incoming bios
-  dm vdo: add flush support
-  dm vdo: add the vdo io_submitter
-  dm vdo: add hash locks and hash zones
-  dm vdo: add use of deduplication index in hash zones
-  dm vdo: add the compressed block bin packer
-  dm vdo: add slab structure, slab journal and reference counters
-  dm vdo: add the slab summary
-  dm vdo: add the block allocators and physical zones
-  dm vdo: add the slab depot
-  dm vdo: add the block map
-  dm vdo: implement the block map page cache
-  dm vdo: add the recovery journal
-  dm vdo: add repair of damaged vdo volumes
-  dm vdo: add the primary vdo structure
-  dm vdo: add the on-disk formats and marshalling of vdo structures
-  dm vdo: add statistics reporting
-  dm vdo: add sysfs support for setting parameters and fetching stats
-  dm vdo: add debugging support
-  dm vdo: add the top-level DM target
-  dm vdo: enable configuration and building of dm-vdo
-  dm vdo: add MAINTAINERS file entry
-
- .../admin-guide/device-mapper/vdo-design.rst  |  415 ++
- .../admin-guide/device-mapper/vdo.rst         |  388 ++
- MAINTAINERS                                   |    9 +
- drivers/md/Kconfig                            |   16 +
- drivers/md/Makefile                           |    2 +
- drivers/md/dm-vdo-target.c                    | 2952 ++++++++++
- drivers/md/dm-vdo/action-manager.c            |  388 ++
- drivers/md/dm-vdo/action-manager.h            |  110 +
- drivers/md/dm-vdo/admin-state.c               |  506 ++
- drivers/md/dm-vdo/admin-state.h               |  178 +
- drivers/md/dm-vdo/block-map.c                 | 3323 +++++++++++
- drivers/md/dm-vdo/block-map.h                 |  379 ++
- drivers/md/dm-vdo/chapter-index.c             |  291 +
- drivers/md/dm-vdo/chapter-index.h             |   63 +
- drivers/md/dm-vdo/completion.c                |  140 +
- drivers/md/dm-vdo/completion.h                |  152 +
- drivers/md/dm-vdo/config.c                    |  378 ++
- drivers/md/dm-vdo/config.h                    |  124 +
- drivers/md/dm-vdo/constants.c                 |   15 +
- drivers/md/dm-vdo/constants.h                 |  102 +
- drivers/md/dm-vdo/cpu.h                       |   59 +
- drivers/md/dm-vdo/data-vio.c                  | 2057 +++++++
- drivers/md/dm-vdo/data-vio.h                  |  669 +++
- drivers/md/dm-vdo/dedupe.c                    | 3068 ++++++++++
- drivers/md/dm-vdo/dedupe.h                    |  120 +
- drivers/md/dm-vdo/delta-index.c               | 1990 +++++++
- drivers/md/dm-vdo/delta-index.h               |  278 +
- drivers/md/dm-vdo/dump.c                      |  278 +
- drivers/md/dm-vdo/dump.h                      |   17 +
- drivers/md/dm-vdo/encodings.c                 | 1481 +++++
- drivers/md/dm-vdo/encodings.h                 | 1299 +++++
- drivers/md/dm-vdo/errors.c                    |  312 +
- drivers/md/dm-vdo/errors.h                    |   81 +
- drivers/md/dm-vdo/flush.c                     |  558 ++
- drivers/md/dm-vdo/flush.h                     |   44 +
- drivers/md/dm-vdo/funnel-queue.c              |  171 +
- drivers/md/dm-vdo/funnel-queue.h              |  110 +
- drivers/md/dm-vdo/funnel-requestqueue.c       |  283 +
- drivers/md/dm-vdo/funnel-requestqueue.h       |   31 +
- drivers/md/dm-vdo/funnel-workqueue.c          |  638 +++
- drivers/md/dm-vdo/funnel-workqueue.h          |   51 +
- drivers/md/dm-vdo/geometry.c                  |  201 +
- drivers/md/dm-vdo/geometry.h                  |  138 +
- drivers/md/dm-vdo/hash-utils.h                |   65 +
- drivers/md/dm-vdo/index-layout.c              | 1768 ++++++
- drivers/md/dm-vdo/index-layout.h              |   43 +
- drivers/md/dm-vdo/index-page-map.c            |  175 +
- drivers/md/dm-vdo/index-page-map.h            |   50 +
- drivers/md/dm-vdo/index-session.c             |  756 +++
- drivers/md/dm-vdo/index-session.h             |   84 +
- drivers/md/dm-vdo/index.c                     | 1400 +++++
- drivers/md/dm-vdo/index.h                     |   83 +
- drivers/md/dm-vdo/int-map.c                   |  718 +++
- drivers/md/dm-vdo/int-map.h                   |   40 +
- drivers/md/dm-vdo/io-factory.c                |  415 ++
- drivers/md/dm-vdo/io-factory.h                |   64 +
- drivers/md/dm-vdo/io-submitter.c              |  480 ++
- drivers/md/dm-vdo/io-submitter.h              |   47 +
- drivers/md/dm-vdo/logger.c                    |  291 +
- drivers/md/dm-vdo/logger.h                    |  105 +
- drivers/md/dm-vdo/logical-zone.c              |  375 ++
- drivers/md/dm-vdo/logical-zone.h              |   89 +
- drivers/md/dm-vdo/memory-alloc.c              |  442 ++
- drivers/md/dm-vdo/memory-alloc.h              |  162 +
- drivers/md/dm-vdo/message-stats.c             | 1215 ++++
- drivers/md/dm-vdo/message-stats.h             |   13 +
- drivers/md/dm-vdo/murmurhash3.c               |  175 +
- drivers/md/dm-vdo/murmurhash3.h               |   15 +
- drivers/md/dm-vdo/numeric.h                   |   78 +
- drivers/md/dm-vdo/open-chapter.c              |  427 ++
- drivers/md/dm-vdo/open-chapter.h              |   79 +
- drivers/md/dm-vdo/packer.c                    |  784 +++
- drivers/md/dm-vdo/packer.h                    |  122 +
- drivers/md/dm-vdo/permassert.c                |   26 +
- drivers/md/dm-vdo/permassert.h                |   46 +
- drivers/md/dm-vdo/physical-zone.c             |  646 +++
- drivers/md/dm-vdo/physical-zone.h             |  115 +
- drivers/md/dm-vdo/pointer-map.c               |  696 +++
- drivers/md/dm-vdo/pointer-map.h               |   81 +
- drivers/md/dm-vdo/pool-sysfs-stats.c          | 2063 +++++++
- drivers/md/dm-vdo/pool-sysfs.c                |  198 +
- drivers/md/dm-vdo/pool-sysfs.h                |   19 +
- drivers/md/dm-vdo/priority-table.c            |  226 +
- drivers/md/dm-vdo/priority-table.h            |   47 +
- drivers/md/dm-vdo/radix-sort.c                |  332 ++
- drivers/md/dm-vdo/radix-sort.h                |   26 +
- drivers/md/dm-vdo/recovery-journal.c          | 1761 ++++++
- drivers/md/dm-vdo/recovery-journal.h          |  312 +
- drivers/md/dm-vdo/repair.c                    | 1757 ++++++
- drivers/md/dm-vdo/repair.h                    |   14 +
- drivers/md/dm-vdo/slab-depot.c                | 5095 +++++++++++++++++
- drivers/md/dm-vdo/slab-depot.h                |  595 ++
- drivers/md/dm-vdo/sparse-cache.c              |  580 ++
- drivers/md/dm-vdo/sparse-cache.h              |   46 +
- drivers/md/dm-vdo/statistics.h                |  278 +
- drivers/md/dm-vdo/status-codes.c              |  123 +
- drivers/md/dm-vdo/status-codes.h              |  112 +
- drivers/md/dm-vdo/string-utils.c              |   28 +
- drivers/md/dm-vdo/string-utils.h              |   23 +
- drivers/md/dm-vdo/sysfs.c                     |   82 +
- drivers/md/dm-vdo/thread-cond-var.c           |   46 +
- drivers/md/dm-vdo/thread-device.c             |   36 +
- drivers/md/dm-vdo/thread-device.h             |   20 +
- drivers/md/dm-vdo/thread-registry.c           |   92 +
- drivers/md/dm-vdo/thread-registry.h           |   32 +
- drivers/md/dm-vdo/time-utils.h                |   28 +
- drivers/md/dm-vdo/types.h                     |  393 ++
- drivers/md/dm-vdo/uds-sysfs.c                 |  186 +
- drivers/md/dm-vdo/uds-sysfs.h                 |   12 +
- drivers/md/dm-vdo/uds-threads.c               |  183 +
- drivers/md/dm-vdo/uds-threads.h               |  115 +
- drivers/md/dm-vdo/uds.h                       |  329 ++
- drivers/md/dm-vdo/vdo.c                       | 1784 ++++++
- drivers/md/dm-vdo/vdo.h                       |  376 ++
- drivers/md/dm-vdo/vio.c                       |  501 ++
- drivers/md/dm-vdo/vio.h                       |  199 +
- drivers/md/dm-vdo/volume-index.c              | 1290 +++++
- drivers/md/dm-vdo/volume-index.h              |  192 +
- drivers/md/dm-vdo/volume.c                    | 1711 ++++++
- drivers/md/dm-vdo/volume.h                    |  171 +
- drivers/md/dm-vdo/wait-queue.c                |  225 +
- drivers/md/dm-vdo/wait-queue.h                |  131 +
- 122 files changed, 57804 insertions(+)
+Co-developed-by: J. corwin Coburn <corwin@hurlbutnet.net>
+Signed-off-by: J. corwin Coburn <corwin@hurlbutnet.net>
+Signed-off-by: Matthew Sakai <msakai@redhat.com>
+---
+ .../admin-guide/device-mapper/vdo-design.rst  | 415 ++++++++++++++++++
+ .../admin-guide/device-mapper/vdo.rst         | 388 ++++++++++++++++
+ 2 files changed, 803 insertions(+)
  create mode 100644 Documentation/admin-guide/device-mapper/vdo-design.rst
  create mode 100644 Documentation/admin-guide/device-mapper/vdo.rst
- create mode 100644 drivers/md/dm-vdo-target.c
- create mode 100644 drivers/md/dm-vdo/action-manager.c
- create mode 100644 drivers/md/dm-vdo/action-manager.h
- create mode 100644 drivers/md/dm-vdo/admin-state.c
- create mode 100644 drivers/md/dm-vdo/admin-state.h
- create mode 100644 drivers/md/dm-vdo/block-map.c
- create mode 100644 drivers/md/dm-vdo/block-map.h
- create mode 100644 drivers/md/dm-vdo/chapter-index.c
- create mode 100644 drivers/md/dm-vdo/chapter-index.h
- create mode 100644 drivers/md/dm-vdo/completion.c
- create mode 100644 drivers/md/dm-vdo/completion.h
- create mode 100644 drivers/md/dm-vdo/config.c
- create mode 100644 drivers/md/dm-vdo/config.h
- create mode 100644 drivers/md/dm-vdo/constants.c
- create mode 100644 drivers/md/dm-vdo/constants.h
- create mode 100644 drivers/md/dm-vdo/cpu.h
- create mode 100644 drivers/md/dm-vdo/data-vio.c
- create mode 100644 drivers/md/dm-vdo/data-vio.h
- create mode 100644 drivers/md/dm-vdo/dedupe.c
- create mode 100644 drivers/md/dm-vdo/dedupe.h
- create mode 100644 drivers/md/dm-vdo/delta-index.c
- create mode 100644 drivers/md/dm-vdo/delta-index.h
- create mode 100644 drivers/md/dm-vdo/dump.c
- create mode 100644 drivers/md/dm-vdo/dump.h
- create mode 100644 drivers/md/dm-vdo/encodings.c
- create mode 100644 drivers/md/dm-vdo/encodings.h
- create mode 100644 drivers/md/dm-vdo/errors.c
- create mode 100644 drivers/md/dm-vdo/errors.h
- create mode 100644 drivers/md/dm-vdo/flush.c
- create mode 100644 drivers/md/dm-vdo/flush.h
- create mode 100644 drivers/md/dm-vdo/funnel-queue.c
- create mode 100644 drivers/md/dm-vdo/funnel-queue.h
- create mode 100644 drivers/md/dm-vdo/funnel-requestqueue.c
- create mode 100644 drivers/md/dm-vdo/funnel-requestqueue.h
- create mode 100644 drivers/md/dm-vdo/funnel-workqueue.c
- create mode 100644 drivers/md/dm-vdo/funnel-workqueue.h
- create mode 100644 drivers/md/dm-vdo/geometry.c
- create mode 100644 drivers/md/dm-vdo/geometry.h
- create mode 100644 drivers/md/dm-vdo/hash-utils.h
- create mode 100644 drivers/md/dm-vdo/index-layout.c
- create mode 100644 drivers/md/dm-vdo/index-layout.h
- create mode 100644 drivers/md/dm-vdo/index-page-map.c
- create mode 100644 drivers/md/dm-vdo/index-page-map.h
- create mode 100644 drivers/md/dm-vdo/index-session.c
- create mode 100644 drivers/md/dm-vdo/index-session.h
- create mode 100644 drivers/md/dm-vdo/index.c
- create mode 100644 drivers/md/dm-vdo/index.h
- create mode 100644 drivers/md/dm-vdo/int-map.c
- create mode 100644 drivers/md/dm-vdo/int-map.h
- create mode 100644 drivers/md/dm-vdo/io-factory.c
- create mode 100644 drivers/md/dm-vdo/io-factory.h
- create mode 100644 drivers/md/dm-vdo/io-submitter.c
- create mode 100644 drivers/md/dm-vdo/io-submitter.h
- create mode 100644 drivers/md/dm-vdo/logger.c
- create mode 100644 drivers/md/dm-vdo/logger.h
- create mode 100644 drivers/md/dm-vdo/logical-zone.c
- create mode 100644 drivers/md/dm-vdo/logical-zone.h
- create mode 100644 drivers/md/dm-vdo/memory-alloc.c
- create mode 100644 drivers/md/dm-vdo/memory-alloc.h
- create mode 100644 drivers/md/dm-vdo/message-stats.c
- create mode 100644 drivers/md/dm-vdo/message-stats.h
- create mode 100644 drivers/md/dm-vdo/murmurhash3.c
- create mode 100644 drivers/md/dm-vdo/murmurhash3.h
- create mode 100644 drivers/md/dm-vdo/numeric.h
- create mode 100644 drivers/md/dm-vdo/open-chapter.c
- create mode 100644 drivers/md/dm-vdo/open-chapter.h
- create mode 100644 drivers/md/dm-vdo/packer.c
- create mode 100644 drivers/md/dm-vdo/packer.h
- create mode 100644 drivers/md/dm-vdo/permassert.c
- create mode 100644 drivers/md/dm-vdo/permassert.h
- create mode 100644 drivers/md/dm-vdo/physical-zone.c
- create mode 100644 drivers/md/dm-vdo/physical-zone.h
- create mode 100644 drivers/md/dm-vdo/pointer-map.c
- create mode 100644 drivers/md/dm-vdo/pointer-map.h
- create mode 100644 drivers/md/dm-vdo/pool-sysfs-stats.c
- create mode 100644 drivers/md/dm-vdo/pool-sysfs.c
- create mode 100644 drivers/md/dm-vdo/pool-sysfs.h
- create mode 100644 drivers/md/dm-vdo/priority-table.c
- create mode 100644 drivers/md/dm-vdo/priority-table.h
- create mode 100644 drivers/md/dm-vdo/radix-sort.c
- create mode 100644 drivers/md/dm-vdo/radix-sort.h
- create mode 100644 drivers/md/dm-vdo/recovery-journal.c
- create mode 100644 drivers/md/dm-vdo/recovery-journal.h
- create mode 100644 drivers/md/dm-vdo/repair.c
- create mode 100644 drivers/md/dm-vdo/repair.h
- create mode 100644 drivers/md/dm-vdo/slab-depot.c
- create mode 100644 drivers/md/dm-vdo/slab-depot.h
- create mode 100644 drivers/md/dm-vdo/sparse-cache.c
- create mode 100644 drivers/md/dm-vdo/sparse-cache.h
- create mode 100644 drivers/md/dm-vdo/statistics.h
- create mode 100644 drivers/md/dm-vdo/status-codes.c
- create mode 100644 drivers/md/dm-vdo/status-codes.h
- create mode 100644 drivers/md/dm-vdo/string-utils.c
- create mode 100644 drivers/md/dm-vdo/string-utils.h
- create mode 100644 drivers/md/dm-vdo/sysfs.c
- create mode 100644 drivers/md/dm-vdo/thread-cond-var.c
- create mode 100644 drivers/md/dm-vdo/thread-device.c
- create mode 100644 drivers/md/dm-vdo/thread-device.h
- create mode 100644 drivers/md/dm-vdo/thread-registry.c
- create mode 100644 drivers/md/dm-vdo/thread-registry.h
- create mode 100644 drivers/md/dm-vdo/time-utils.h
- create mode 100644 drivers/md/dm-vdo/types.h
- create mode 100644 drivers/md/dm-vdo/uds-sysfs.c
- create mode 100644 drivers/md/dm-vdo/uds-sysfs.h
- create mode 100644 drivers/md/dm-vdo/uds-threads.c
- create mode 100644 drivers/md/dm-vdo/uds-threads.h
- create mode 100644 drivers/md/dm-vdo/uds.h
- create mode 100644 drivers/md/dm-vdo/vdo.c
- create mode 100644 drivers/md/dm-vdo/vdo.h
- create mode 100644 drivers/md/dm-vdo/vio.c
- create mode 100644 drivers/md/dm-vdo/vio.h
- create mode 100644 drivers/md/dm-vdo/volume-index.c
- create mode 100644 drivers/md/dm-vdo/volume-index.h
- create mode 100644 drivers/md/dm-vdo/volume.c
- create mode 100644 drivers/md/dm-vdo/volume.h
- create mode 100644 drivers/md/dm-vdo/wait-queue.c
- create mode 100644 drivers/md/dm-vdo/wait-queue.h
 
+diff --git a/Documentation/admin-guide/device-mapper/vdo-design.rst b/Documentation/admin-guide/device-mapper/vdo-design.rst
+new file mode 100644
+index 000000000000..c82d51071c7d
+--- /dev/null
++++ b/Documentation/admin-guide/device-mapper/vdo-design.rst
+@@ -0,0 +1,415 @@
++.. SPDX-License-Identifier: GPL-2.0-only
++
++================
++Design of dm-vdo
++================
++
++The dm-vdo (virtual data optimizer) target provides inline deduplication,
++compression, zero-block elimination, and thin provisioning. A dm-vdo target
++can be backed by up to 256TB of storage, and can present a logical size of
++up to 4PB. This target was originally developed at Permabit Technology
++Corp. starting in 2009. It was first released in 2013 and has been used in
++production environments ever since. It was made open-source in 2017 after
++Permabit was acquired by Red Hat. This document describes the design of
++dm-vdo. For usage, see vdo.rst in the same directory as this file.
++
++Because deduplication rates fall drastically as the block size increases, a
++vdo target has a maximum block size of 4K. However, it can achieve
++deduplication rates of 254:1, i.e. up to 254 copies of a given 4K block can
++reference a single 4K of actual storage. It can achieve compression rates
++of 14:1. All zero blocks consume no storage at all.
++
++Theory of Operation
++===================
++
++The design of dm-vdo is based on the idea that deduplication is a two-part
++problem. The first is to recognize duplicate data. The second is to avoid
++storing multiple copies of those duplicates. Therefore, dm-vdo has two main
++parts: a deduplication index (called UDS) that is used to discover
++duplicate data, and a data store with a reference counted block map that
++maps from logical block addresses to the actual storage location of the
++data.
++
++Zones and Threading
++-------------------
++
++Due to the complexity of data optimization, the number of metadata
++structures involved in a single write operation to a vdo target is larger
++than most other targets. Furthermore, because vdo must operate on small
++block sizes in order to achieve good deduplication rates, acceptable
++performance can only be achieved through parallelism. Therefore, vdo's
++design attempts to be lock-free. Most of a vdo's main data structures are
++designed to be easily divided into "zones" such that any given bio must
++only access a single zone of any zoned structure. Safety with minimal
++locking is achieved by ensuring that during normal operation, each zone is
++assigned to a specific thread, and only that thread will access the portion
++of that data structure in that zone. Associated with each thread is a work
++queue. Each bio is associated with a request object which can be added to a
++work queue when the next phase of its operation requires access to the
++structures in the zone associated with that queue. Although each structure
++may be divided into zones, this division is not reflected in the on-disk
++representation of each data structure. Therefore, the number of zones for
++each structure, and hence the number of threads, is configured each time a
++vdo target is started.
++
++The Deduplication Index
++-----------------------
++
++In order to identify duplicate data efficiently, vdo was designed to
++leverage some common characteristics of duplicate data. From empirical
++observations, we gathered two key insights. The first is that in most data
++sets with significant amounts of duplicate data, the duplicates tend to
++have temporal locality. When a duplicate appears, it is more likely that
++other duplicates will be detected, and that those duplicates will have been
++written at about the same time. This is why the index keeps records in
++temporal order. The second insight is that new data is more likely to
++duplicate recent data than it is to duplicate older data and in general,
++there are diminishing returns to looking further back in time. Therefore,
++when the index is full, it should cull its oldest records to make space for
++new ones. Another important idea behind the design of the index is that the
++ultimate goal of deduplication is to reduce storage costs. Since there is a
++trade-off between the storage saved and the resources expended to achieve
++those savings, vdo does not attempt to find every last duplicate block. It
++is sufficient to find and eliminate most of the redundancy.
++
++Each block of data is hashed to produce a 16-byte block name. An index
++record consists of this block name paired with the presumed location of
++that data on the underlying storage. However, it is not possible to
++guarantee that the index is accurate. Most often, this occurs because it is
++too costly to update the index when a block is over-written or discarded.
++Doing so would require either storing the block name along with the blocks,
++which is difficult to do efficiently in block-based storage, or reading and
++rehashing each block before overwriting it. Inaccuracy can also result from
++a hash collision where two different blocks have the same name. In
++practice, this is extremely unlikely, but because vdo does not use a
++cryptographic hash, a malicious workload can be constructed. Because of
++these inaccuracies, vdo treats the locations in the index as hints, and
++reads each indicated block to verify that it is indeed a duplicate before
++sharing the existing block with a new one.
++
++Records are collected into groups called chapters. New records are added to
++the newest chapter, called the open chapter. This chapter is stored in a
++format optimized for adding and modifying records, and the content of the
++open chapter is not finalized until it runs out of space for new records.
++When the open chapter fills up, it is closed and a new open chapter is
++created to collect new records.
++
++Closing a chapter converts it to a different format which is optimized for
++writing. The records are written to a series of record pages based on the
++order in which they were received. This means that records with temporal
++locality should be on a small number of pages, reducing the I/O required to
++retrieve them. The chapter also compiles an index that indicates which
++record page contains any given name. This index means that a request for a
++name can determine exactly which record page may contain that record,
++without having to load the entire chapter from storage. This index uses
++only a subset of the block name as its key, so it cannot guarantee that an
++index entry refers to the desired block name. It can only guarantee that if
++there is a record for this name, it will be on the indicated page. The
++contents of a closed chapter are never altered in any way; these chapters
++are read-only structures.
++
++Once enough records have been written to fill up all the available index
++space, the oldest chapter gets removed to make space for new chapters. Any
++time a request finds a matching record in the index, that record is copied
++to the open chapter. This ensures that useful block names remain available
++in the index, while unreferenced block names are forgotten.
++
++In order to find records in older chapters, the index also maintains a
++higher level structure called the volume index, which contains entries
++mapping a block name to the chapter containing its newest record. This
++mapping is updated as records for the block name are copied or updated,
++ensuring that only the newer record for a given block name is findable.
++Older records for a block name can no longer be found even though they have
++not been deleted. Like the chapter index, the volume index uses only a
++subset of the block name as its key and can not definitively say that a
++record exists for a name. It can only say which chapter would contain the
++record if a record exists. The volume index is stored entirely in memory
++and is saved to storage only when the vdo target is shut down.
++
++From the viewpoint of a request for a particular block name, first it will
++look up the name in the volume index which will indicate either that the
++record is new, or which chapter to search. If the latter, the request looks
++up its name in the chapter index to determine if the record is new, or
++which record page to search. Finally, if not new, the request will look for
++its record on the indicated record page. This process may require up to two
++page reads per request (one for the chapter index page and one for the
++request page). However, recently accessed pages are cached so that these
++page reads can be amortized across many block name requests.
++
++The volume index and the chapter indexes are implemented using a
++memory-efficient structure called a delta index. Instead of storing the
++entire key (the block name) for each entry, the entries are sorted by name
++and only the difference between adjacent keys (the delta) is stored.
++Because we expect the hashes to be evenly distributed, the size of the
++deltas follows an exponential distribution. Because of this distribution,
++the deltas are expressed in a Huffman code to take up even less space. The
++entire sorted list of keys is called a delta list. This structure allows
++the index to use many fewer bytes per entry than a traditional hash table,
++but it is slightly more expensive to look up entries, because a request
++must read every entry in a delta list to add up the deltas in order to find
++the record it needs. The delta index reduces this lookup cost by splitting
++its key space into many sub-lists, each starting at a fixed key value, so
++that each individual list is short.
++
++The default index size can hold 64 million records, corresponding to about
++256GB. This means that the index can identify duplicate data if the
++original data was written within the last 256GB of writes. This range is
++called the deduplication window. If new writes duplicate data that is older
++than that, the index will not be able to find it because the records of the
++older data have been removed. So when writing a 200 GB file to a vdo
++target, and then immediately writing it again, the two copies will
++deduplicate perfectly. Doing the same with a 500 GB file will result in no
++deduplication, because the beginning of the file will no longer be in the
++index by the time the second write begins (assuming there is no duplication
++within the file itself).
++
++If you anticipate a data workload that will see useful deduplication beyond
++the 256GB threshold, vdo can be configured to use a larger index with a
++correspondingly larger deduplication window. (This configuration can only
++be set when the target is created, not altered later. It is important to
++consider the expected workload for a vdo target before configuring it.)
++There are two ways to do this.
++
++One way is to increase the memory size of the index, which also increases
++the amount of backing storage required. Doubling the size of the index will
++double the length of the deduplication window at the expense of doubling
++the storage size and the memory requirements.
++
++The other way is to enable sparse indexing. Sparse indexing increases the
++deduplication window by a factor of 10, at the expense of also increasing
++the storage size by a factor of 10. However with sparse indexing, the
++memory requirements do not increase; the trade-off is slightly more
++computation per request, and a slight decrease in the amount of
++deduplication detected. (For workloads with significant amounts of
++duplicate data, sparse indexing will detect 97-99% of the deduplication
++that a standard, or "dense", index will detect.)
++
++The Data Store
++--------------
++
++The data store is implemented by three main data structures, all of which
++work in concert to reduce or amortize metadata updates across as many data
++writes as possible.
++
++*The Slab Depot*
++
++Most of the vdo volume belongs to the slab depot. The depot contains a
++collection of slabs. The slabs can be up to 32GB, and are divided into
++three sections. Most of a slab consists of a linear sequence of 4K blocks.
++These blocks are used either to store data, or to hold portions of the
++block map (see below). In addition to the data blocks, each slab has a set
++of reference counters, using 1 byte for each data block. Finally each slab
++has a journal. Reference updates are written to the slab journal, which is
++written out one block at a time as each block fills. A copy of the
++reference counters are kept in memory, and are written out a block at a
++time, in oldest-dirtied-order whenever there is a need to reclaim slab
++journal space. The journal is used both to ensure that the main recovery
++journal (see below) can regularly free up space, and also to amortize the
++cost of updating individual reference blocks.
++
++Each slab is independent of every other. They are assigned to "physical
++zones" in round-robin fashion. If there are P physical zones, then slab n
++is assigned to zone n mod P.
++
++The slab depot maintains an additional small data structure, the "slab
++summary," which is used to reduce the amount of work needed to come back
++online after a crash. The slab summary maintains an entry for each slab
++indicating whether or not the slab has ever been used, whether it is clean
++(i.e. all of its reference count updates have been persisted to storage),
++and approximately how full it is. During recovery, each physical zone will
++attempt to recover at least one slab, stopping whenever it has recovered a
++slab which has some free blocks. Once each zone has some space (or has
++determined that none is available), the target can resume normal operation
++in a degraded mode. Read and write requests can be serviced, perhaps with
++degraded performance, while the remainder of the dirty slabs are recovered.
++
++*The Block Map*
++
++The block map contains the logical to physical mapping. It can be thought
++of as an array with one entry per logical address. Each entry is 5 bytes,
++36 bits of which contain the physical block number which holds the data for
++the given logical address. The other 4 bits are used to indicate the nature
++of the mapping. Of the 16 possible states, one represents a logical address
++which is unmapped (i.e. it has never been written, or has been discarded),
++one represents an uncompressed block, and the other 14 states are used to
++indicate that the mapped data is compressed, and which of the compression
++slots in the compressed block this logical address maps to (see below).
++
++In practice, the array of mapping entries is divided into "block map
++pages," each of which fits in a single 4K block. Each block map page
++consists of a header, and 812 mapping entries (812 being the number that
++fit). Each mapping page is actually a leaf of a radix tree which consists
++of block map pages at each level. There are 60 radix trees which are
++assigned to "logical zones" in round robin fashion (if there are L logical
++zones, tree n will belong to zone n mod L). At each level, the trees are
++interleaved, so logical addresses 0-811 belong to tree 0, logical addresses
++812-1623 belong to tree 1, and so on. The interleaving is maintained all
++the way up the forest. 60 was chosen as the number of trees because it is
++highly composite and hence results in an evenly distributed number of trees
++per zone for a large number of possible logical zone counts. The storage
++for the 60 tree roots is allocated at format time. All other block map
++pages are allocated out of the slabs as needed. This flexible allocation
++avoids the need to pre-allocate space for the entire set of logical
++mappings and also makes growing the logical size of a vdo easy to
++implement.
++
++In operation, the block map maintains two caches. It is prohibitive to keep
++the entire leaf level of the trees in memory, so each logical zone
++maintains its own cache of leaf pages. The size of this cache is
++configurable at target start time. The second cache is allocated at start
++time, and is large enough to hold all the non-leaf pages of the entire
++block map. This cache is populated as needed.
++
++*The Recovery Journal*
++
++The recovery journal is used to amortize updates across the block map and
++slab depot. Each write request causes an entry to be made in the journal.
++Entries are either "data remappings" or "block map remappings." For a data
++remapping, the journal records the logical address affected and its old and
++new physical mappings. For a block map remapping, the journal records the
++block map page number and the physical block allocated for it (block map
++pages are never reclaimed, so the old mapping is always 0). Each journal
++entry and the data write it represents must be stable on disk before the
++other metadata structures may be updated to reflect the operation.
++
++*Write Path*
++
++A write bio is first assigned a "data_vio," the request object which will
++operate on behalf of the bio. (A "vio," from Vdo I/O, is vdo's wrapper for
++bios; metadata operations use a vio, whereas submitted bios require the
++much larger data_vio.) There is a fixed pool of 2048 data_vios. This number
++was chosen both to bound the amount of work that is required to recover
++from a crash, and because measurements indicate that increasing it consumes
++more resources, but does not improve performance. These measurements have
++been, and should continue to be, revisited over time.
++
++Once a data_vio is assigned, the following steps are performed:
++
++1.  The bio's data is checked to see if it is all zeros, and copied if not.
++
++2.  A lock is obtained on the logical address of the bio. Because
++    deduplication involves sharing blocks, it is vital to prevent
++    simultaneous modifications of the same block.
++
++3.  The block map tree is traversed, loading any non-leaf pages which cover
++    the logical address and are not already in memory. If any of these
++    pages, or the leaf page which covers the logical address have not been
++    allocated, and the block is not all zeros, they are allocated at this
++    time.
++
++4.  If the block is a zero block, skip to step 9. Otherwise, an attempt is
++    made to allocate a free data block.
++
++5.  If an allocation was obtained, the bio is acknowledged.
++
++6.  The bio's data is hashed.
++
++7.  The data_vio obtains or joins a "hash lock," which represents all of
++    the bios currently writing the same data.
++
++8.  If the hash lock does not already have a data_vio acting as its agent,
++    the current one assumes that role. As the agent:
++
++        a) The index is queried.
++
++        b) If an entry is found, the indicated block is read and compared
++           to the data being written.
++
++        c) If the data matches, we have identified duplicate data. As many
++           of the data_vios as there are references available for that
++           block (including the agent) are shared. If there are more
++           data_vios in the hash lock than there are references available,
++           one of them becomes the new agent and continues as if there was
++           no duplicate found.
++
++        d) If no duplicate was found, and the agent in the hash lock does
++           not have an allocation (fron step 3), another data_vio in the
++           hash lock will become the agent and write the data. If no
++           data_vio in the hash lock has an allocation, the data_vios will
++           be marked out of space and go to step 13 for cleanup.
++
++           If there is an allocation, the data being written will be
++           compressed. If the compressed size is sufficiently small, the
++           data_vio will go to the packer where it may be placed in a bin
++           along with other data_vios.
++
++        e) Once a bin is full, either because it is out of space, or
++           because all 14 of its slots are in use, it is written out.
++
++        f) Each data_vio from the bin just written is the agent of some
++           hash lock, it will now proceed to treat the just written
++           compressed block as if it were a duplicate and share it with as
++           many other data_vios in its hash lock as possible.
++
++        g) If the agent's data is not compressed, it will attempt to write
++           its data to the block it has allocated.
++
++        h) If the data was written, this new block is treated as a
++           duplicate and shared as much as possible with any other
++           data_vios in the hash lock.
++
++        i) If the agent wrote new data (whether compressed or not), the
++           index is updated to reflect the new entry.
++
++9.  The block map is queried to determine the previous mapping of the
++    logical address.
++
++10. An entry is made in the recovery journal. The data_vio will block in
++    the journal until a flush has completed to ensure the data it may have
++    written is stable. It must also wait until its journal entry is stable
++    on disk. (Journal writes are all issued with the FUA bit set.)
++
++11. Once the recovery journal entry is stable, the data_vio makes two slab
++    journal entries: an increment entry for the new mapping, and a
++    decrement entry for the old mapping, if that mapping was non-zero. For
++    correctness during recovery, the slab journal entries in any given slab
++    journal must be in the same order as the corresponding recovery journal
++    entries. Therefore, if the two entries are in different zones, they are
++    made concurrently, and if they are in the same zone, the increment is
++    always made before the decrement in order to avoid underflow. After
++    each slab journal entry is made in memory, the associated reference
++    count is also updated in memory. Each of these updates will get written
++    out as needed. (Slab journal blocks are written out either when they
++    are full, or when the recovery journal requests they do so in order to
++    allow the recovery journal to free up space; reference count blocks are
++    written out whenever the associated slab journal requests they do so in
++    order to free up slab journal space.)
++
++12. Once all the reference count updates are done, the block map is updated
++    and the write is complete.
++
++13. If the data_vio did not use its allocation, it releases the allocated
++    block, the hash lock (if it has one), and its logical lock. The
++    data_vio then returns to the pool.
++
++*Read Path*
++
++Reads are much simpler than writes. After a data_vio is assigned to the
++bio, and the logical lock is obtained, the block map is queried. If the
++block is mapped, the appropriate physical block is read, and if necessary,
++decompressed.
++
++*Recovery*
++
++When a vdo is restarted after a crash, it will attempt to recover from the
++recovery journal. During the pre-resume phase of the next start, the
++recovery journal is read. The increment portion of valid entries are played
++into the block map. Next, valid entries are played, in order as required,
++into the slab journals. Finally, each physical zone attempts to replay at
++least one slab journal to reconstruct the reference counts of one slab.
++Once each zone has some free space (or has determined that it has none),
++the vdo comes back online, while the remainder of the slab journals are
++used to reconstruct the rest of the reference counts.
++
++*Read-only Rebuild*
++
++If a vdo encounters an unrecoverable error, it will enter read-only mode.
++This mode indicates that some previously acknowledged data may have been
++lost. The vdo may be instructed to rebuild as best it can in order to
++return to a writable state. However, this is never done automatically due
++to the likelihood that data has been lost. During a read-only rebuild, the
++block map is recovered from the recovery journal as before. However, the
++reference counts are not rebuilt from the slab journals. Rather, the
++reference counts are zeroed, and then the entire block map is traversed,
++and the reference counts are updated from it. While this may lose some
++data, it ensures that the block map and reference counts are consistent.
+diff --git a/Documentation/admin-guide/device-mapper/vdo.rst b/Documentation/admin-guide/device-mapper/vdo.rst
+new file mode 100644
+index 000000000000..a199009979d9
+--- /dev/null
++++ b/Documentation/admin-guide/device-mapper/vdo.rst
+@@ -0,0 +1,388 @@
++.. SPDX-License-Identifier: GPL-2.0-only
++
++dm-vdo
++======
++
++The dm-vdo (virtual data optimizer) device mapper target provides
++block-level deduplication, compression, and thin provisioning. As a device
++mapper target, it can add these features to the storage stack, compatible
++with any file system. The vdo target does not protect against data
++corruption, relying instead on integrity protection of the storage below
++it. It is strongly recommended that lvm be used to manage vdo volumes. See
++lvmvdo(7).
++
++Userspace component
++===================
++
++Formatting a vdo volume requires the use of the 'vdoformat' tool, available
++at:
++
++https://github.com/dm-vdo/vdo/
++
++In most cases, a vdo target will recover from a crash automatically the
++next time it is started. In cases where it encountered an unrecoverable
++error (either during normal operation or crash recovery) the target will
++enter or come up in read-only mode. Because read-only mode is indicative of
++data-loss, a positive action must be taken to bring vdo out of read-only
++mode. The 'vdoforcerebuild' tool, available from the same repo, is used to
++prepare a read-only vdo to exit read-only mode. After running this tool,
++the vdo target will rebuild its metadata the next time it is
++started. Although some data may be lost, the rebuilt vdo's metadata will be
++internally consistent and the target will be writable again.
++
++The repo also contains additional userspace tools which can be used to
++inspect a vdo target's on-disk metadata. Fortunately, these tools are
++rarely needed except by dm-vdo developers.
++
++Target interface
++================
++
++Table line
++----------
++
++::
++
++	<offset> <logical device size> vdo V4 <storage device>
++	<storage device size> <minimum I/O size> <block map cache size>
++	<block map era length> [optional arguments]
++
++
++Required parameters:
++
++	offset:
++		The offset, in sectors, at which the vdo volume's logical
++		space begins.
++
++	logical device size:
++		The size of the device which the vdo volume will service,
++		in sectors. Must match the current logical size of the vdo
++		volume.
++
++	storage device:
++		The device holding the vdo volume's data and metadata.
++
++	storage device size:
++		The size of the device holding the vdo volume, as a number
++		of 4096-byte blocks. Must match the current size of the vdo
++		volume.
++
++	minimum I/O size:
++		The minimum I/O size for this vdo volume to accept, in
++		bytes. Valid values are 512 or 4096. The recommended value
++		is 4096.
++
++	block map cache size:
++		The size of the block map cache, as a number of 4096-byte
++		blocks. The minimum and recommended value is 32768 blocks.
++		If the logical thread count is non-zero, the cache size
++		must be at least 4096 blocks per logical thread.
++
++	block map era length:
++		The speed with which the block map cache writes out
++		modified block map pages. A smaller era length is likely to
++		reduce the amount of time spent rebuilding, at the cost of
++		increased block map writes during normal operation. The
++		maximum and recommended value is 16380; the minimum value
++		is 1.
++
++Optional parameters:
++--------------------
++Some or all of these parameters may be specified as <key> <value> pairs.
++
++Thread related parameters:
++
++Different categories of work are assigned to separate thread groups, and
++the number of threads in each group can be configured separately.
++
++If <hash>, <logical>, and <physical> are all set to 0, the work handled by
++all three thread types will be handled by a single thread. If any of these
++values are non-zero, all of them must be non-zero.
++
++	ack:
++		The number of threads used to complete bios. Since
++		completing a bio calls an arbitrary completion function
++		outside the vdo volume, threads of this type allow the vdo
++		volume to continue processing requests even when bio
++		completion is slow. The default is 1.
++
++	bio:
++		The number of threads used to issue bios to the underlying
++		storage. Threads of this type allow the vdo volume to
++		continue processing requests even when bio submission is
++		slow. The default is 4.
++
++	bioRotationInterval:
++		The number of bios to enqueue on each bio thread before
++		switching to the next thread. The value must be greater
++		than 0 and not more than 1024; the default is 64.
++
++	cpu:
++		The number of threads used to do CPU-intensive work, such
++		as hashing and compression. The default is 1.
++
++	hash:
++		The number of threads used to manage data comparisons for
++		deduplication based on the hash value of data blocks. The
++		default is 0.
++
++	logical:
++		The number of threads used to manage caching and locking
++		based on the logical address of incoming bios. The default
++		is 0; the maximum is 60.
++
++	physical:
++		The number of threads used to manage administration of the
++		underlying storage device. At format time, a slab size for
++		the vdo is chosen; the vdo storage device must be large
++		enough to have at least 1 slab per physical thread. The
++		default is 0; the maximum is 16.
++
++Miscellaneous parameters:
++
++	maxDiscard:
++		The maximum size of discard bio accepted, in 4096-byte
++		blocks. I/O requests to a vdo volume are normally split
++		into 4096-byte blocks, and processed up to 2048 at a time.
++		However, discard requests to a vdo volume can be
++		automatically split to a larger size, up to <maxDiscard>
++		4096-byte blocks in a single bio, and are limited to 1500
++		at a time. Increasing this value may provide better overall
++		performance, at the cost of increased latency for the
++		individual discard requests. The default and minimum is 1;
++		the maximum is UINT_MAX / 4096.
++
++	deduplication:
++		Whether deduplication is enabled. The default is 'on'; the
++		acceptable values are 'on' and 'off'.
++
++	compression:
++		Whether compression is enabled. The default is 'off'; the
++		acceptable values are 'on' and 'off'.
++
++Device modification
++-------------------
++
++A modified table may be loaded into a running, non-suspended vdo volume.
++The modifications will take effect when the device is next resumed. The
++modifiable parameters are <logical device size>, <physical device size>,
++<maxDiscard>, <compression>, and <deduplication>.
++
++If the logical device size or physical device size are changed, upon
++successful resume vdo will store the new values and require them on future
++startups. These two parameters may not be decreased. The logical device
++size may not exceed 4 PB. The physical device size must increase by at
++least 32832 4096-byte blocks if at all, and must not exceed the size of the
++underlying storage device. Additionally, when formatting the vdo device, a
++slab size is chosen: the physical device size may never increase above the
++size which provides 8192 slabs, and each increase must be large enough to
++add at least one new slab.
++
++Examples:
++
++Start a previously-formatted vdo volume with 1 GB logical space and 1 GB
++physical space, storing to /dev/dm-1 which has more than 1 GB of space.
++
++::
++
++	dmsetup create vdo0 --table \
++	"0 2097152 vdo V4 /dev/dm-1 262144 4096 32768 16380"
++
++Grow the logical size to 4 GB.
++
++::
++
++	dmsetup reload vdo0 --table \
++	"0 8388608 vdo V4 /dev/dm-1 262144 4096 32768 16380"
++	dmsetup resume vdo0
++
++Grow the physical size to 2 GB.
++
++::
++
++	dmsetup reload vdo0 --table \
++	"0 8388608 vdo V4 /dev/dm-1 524288 4096 32768 16380"
++	dmsetup resume vdo0
++
++Grow the physical size by 1 GB more and increase max discard sectors.
++
++::
++
++	dmsetup reload vdo0 --table \
++	"0 10485760 vdo V4 /dev/dm-1 786432 4096 32768 16380 maxDiscard 8"
++	dmsetup resume vdo0
++
++Stop the vdo volume.
++
++::
++
++	dmsetup remove vdo0
++
++Start the vdo volume again. Note that the logical and physical device sizes
++must still match, but other parameters can change.
++
++::
++
++	dmsetup create vdo1 --table \
++	"0 10485760 vdo V4 /dev/dm-1 786432 512 65550 5000 hash 1 logical 3 physical 2"
++
++Messages
++--------
++All vdo devices accept messages in the form:
++
++::
++        dmsetup message <target-name> 0 <message-name> <message-parameters>
++
++The messages are:
++
++        stats:
++		Outputs the current view of the vdo statistics. Mostly used
++		by the vdostats userspace program to interpret the output
++		buffer.
++
++        dump:
++		Dumps many internal structures to the system log. This is
++		not always safe to run, so it should only be used to debug
++		a hung vdo. Optional parameters to specify structures to
++		dump are:
++
++			viopool: The pool of I/O requests incoming bios
++			pools: A synonym of 'viopool'
++			vdo: Most of the structures managing on-disk data
++			queues: Basic information about each vdo thread
++			threads: A synonym of 'queues'
++			default: Equivalent to 'queues vdo'
++			all: All of the above.
++
++        dump-on-shutdown:
++		Perform a default dump next time vdo shuts down.
++
++
++Status
++------
++
++::
++
++    <device> <operating mode> <in recovery> <index state>
++    <compression state> <physical blocks used> <total physical blocks>
++
++	device:
++		The name of the vdo volume.
++
++	operating mode:
++		The current operating mode of the vdo volume; values may be
++		'normal', 'recovering' (the volume has detected an issue
++		with its metadata and is attempting to repair itself), and
++		'read-only' (an error has occurred that forces the vdo
++		volume to only support read operations and not writes).
++
++	in recovery:
++		Whether the vdo volume is currently in recovery mode;
++		values may be 'recovering' or '-' which indicates not
++		recovering.
++
++	index state:
++		The current state of the deduplication index in the vdo
++		volume; values may be 'closed', 'closing', 'error',
++		'offline', 'online', 'opening', and 'unknown'.
++
++	compression state:
++		The current state of compression in the vdo volume; values
++		may be 'offline' and 'online'.
++
++	used physical blocks:
++		The number of physical blocks in use by the vdo volume.
++
++	total physical blocks:
++		The total number of physical blocks the vdo volume may use;
++		the difference between this value and the
++		<used physical blocks> is the number of blocks the vdo
++		volume has left before being full.
++
++Memory Requirements
++===================
++
++A vdo target requires a fixed 38 MB of RAM along with the following amounts
++that scale with the target:
++
++- 1.15 MB of RAM for each 1 MB of configured block map cache size. The
++  block map cache requires a minimum of 150 MB.
++- 1.6 MB of RAM for each 1 TB of logical space.
++- 268 MB of RAM for each 1 TB of physical storage managed by the volume.
++
++The deduplication index requires additional memory which scales with the
++size of the deduplication window. For dense indexes, the index requires 1
++GB of RAM per 1 TB of window. For sparse indexes, the index requires 1 GB
++of RAM per 10 TB of window. The index configuration is set when the target
++is formatted and may not be modified.
++
++Run-time Usage
++==============
++
++When using dm-vdo, it is important to be aware of the ways in which its
++behavior differs from other storage targets.
++
++- There is no guarantee that over-writes of existing blocks will succeed.
++  Because the underlying storage may be multiply referenced, over-writing
++  an existing block generally requires a vdo to have a free block
++  available.
++
++- When blocks are no longer in use, sending a discard request for those
++  blocks lets the vdo release references for those blocks. If the vdo is
++  thinly provisioned, discarding unused blocks is essential to prevent the
++  target from running out of space. However, due to the sharing of
++  duplicate blocks, no discard request for any given logical block is
++  guaranteed to reclaim space.
++
++- Assuming the underlying storage properly implements flush requests, vdo
++  is resilient against crashes, however, unflushed writes may or may not
++  persist after a crash.
++
++- Each write to a vdo target entails a significant amount of processing.
++  However, much of the work is paralellizable. Therefore, vdo targets
++  achieve better throughput at higher I/O depths, and can support up 2048
++  requests in parallel.
++
++Tuning
++======
++
++The vdo device has many options, and it can be difficult to make optimal
++choices without perfect knowledge of the workload. Additionally, most
++configuration options must be set when a vdo target is started, and cannot
++be changed without shutting it down completely; the configuration cannot be
++changed while the target is active. Ideally, tuning with simulated
++workloads should be performed before deploying vdo in production
++environments.
++
++The most important value to adjust is the block map cache size. In order to
++service a request for any logical address, a vdo must load the portion of
++the block map which holds the relevant mapping. These mappings are cached.
++Performance will suffer when the working set does not fit in the cache. By
++default, a vdo allocates 128 MB of metadata cache in RAM to support
++efficient access to 100 GB of logical space at a time. It should be scaled
++up proportionally for larger working sets.
++
++The logical and physical thread counts should also be adjusted. A logical
++thread controls a disjoint section of the block map, so additional logical
++threads increase parallelism and can increase throughput. Physical threads
++control a disjoint section of the data blocks, so additional physical
++threads can also increase throughput. However, excess threads can waste
++resources and increase contention.
++
++Bio submission threads control the parallelism involved in sending I/O to
++the underlying storage; fewer threads mean there is more opportunity to
++reorder I/O requests for performance benefit, but also that each I/O
++request has to wait longer before being submitted.
++
++Bio acknowledgment threads are used for finishing I/O requests. This is
++done on dedicated threads since the amount of work required to execute a
++bio's callback can not be controlled by the vdo itself. Usually one thread
++is sufficient but additional threads may be beneficial, particularly when
++bios have CPU-heavy callbacks.
++
++CPU threads are used for hashing and for compression; in workloads with
++compression enabled, more threads may result in higher throughput.
++
++Hash threads are used to sort active requests by hash and determine whether
++they should deduplicate; the most CPU intensive actions done by these
++threads are comparison of 4096-byte data blocks. In most cases, a single
++hash thread is sufficient.
 -- 
 2.40.0
 
