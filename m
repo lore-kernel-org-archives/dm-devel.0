@@ -1,50 +1,49 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2A62E3064B
-	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 17:21:17 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 526EC37156
+	for <dm-devel@lists.linux.dev>; Fri, 17 Nov 2023 17:22:52 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WjCNoQTu"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YR6rlV24"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1700241677;
+	s=mimecast20190719; t=1700241771;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=/svBxIG5pwZVgNOLV2M1jD8LhDYxTwLlFhJEi66yFmE=;
-	b=WjCNoQTudlSwuAGviWKbq+rdeUsYXObKClkwsruj4Pdnam2mec+dn4N1x6w6VNQ+JenCRM
-	y8plz46WvQ0lq+QgQDdzZR4hfRLv07dFP2rkRQ191EJ7OP5OaqXtCFbVGIj5ME+CtyWzz+
-	e/4KoboMNGCOWCpw5lsh+eA5GBlLW0w=
-Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-659-NfJvQNPYPvChRG5L-Z7lNQ-1; Fri,
- 17 Nov 2023 12:21:14 -0500
-X-MC-Unique: NfJvQNPYPvChRG5L-Z7lNQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+	bh=akSitNKLbWt9+Ota8avJH6qbNCjA5IDrL/Ubpvqmkf0=;
+	b=YR6rlV24MPJRh0qeCqsZrIaGngCRx77NNK/9gKRQt7LrhsebvRu7DKVi64KEJzAoNiofej
+	8XC8ANf7LspOTaeVzw4Nz0nkeRr1R+UWFi6MN9241i0asdo56sametB7lfwCd16DbDEl0Q
+	BBQmpwBga/AImWcQs5Yg55kBjiSkn74=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-659-xKXKar40PXmRiMAdffv2vQ-1; Fri, 17 Nov 2023 12:22:48 -0500
+X-MC-Unique: xKXKar40PXmRiMAdffv2vQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4DDBD1C07550;
-	Fri, 17 Nov 2023 17:21:14 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A242A8007B3;
+	Fri, 17 Nov 2023 17:22:47 +0000 (UTC)
 Received: from file1-rdu.file-001.prod.rdu2.dc.redhat.com (unknown [10.11.5.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4838B492BFD;
-	Fri, 17 Nov 2023 17:21:14 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9C85B5028;
+	Fri, 17 Nov 2023 17:22:47 +0000 (UTC)
 Received: by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix, from userid 12668)
-	id 4028B30C1A8C; Fri, 17 Nov 2023 17:21:14 +0000 (UTC)
+	id 964A630C1A8C; Fri, 17 Nov 2023 17:22:47 +0000 (UTC)
 Received: from localhost (localhost [127.0.0.1])
-	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 3F6CE3FB76;
-	Fri, 17 Nov 2023 18:21:14 +0100 (CET)
-Date: Fri, 17 Nov 2023 18:21:14 +0100 (CET)
+	by file1-rdu.file-001.prod.rdu2.dc.redhat.com (Postfix) with ESMTP id 954CB3FB76;
+	Fri, 17 Nov 2023 18:22:47 +0100 (CET)
+Date: Fri, 17 Nov 2023 18:22:47 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: Mike Snitzer <msnitzer@redhat.com>
 cc: Christian Loehle <christian.loehle@arm.com>, 
     Harshit Mogalapalli <harshit.m.mogalapalli@oracle.com>, 
     Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@lists.linux.dev
-Subject: [PATCH 1/3] dm-delay: fix a race between delay_presuspend and
- delay_bio
+Subject: [PATCH 2/3] dm-delay: fix bugs in kthread mode
 In-Reply-To: <1b597cf-499b-a84c-fa5a-87a630987dff@redhat.com>
-Message-ID: <59bf73d6-bee6-b734-b030-6872fea5b8d@redhat.com>
+Message-ID: <c7b866fc-c18-8ae7-7149-5a48740ff3c@redhat.com>
 References: <1b597cf-499b-a84c-fa5a-87a630987dff@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -52,93 +51,199 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.10
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.5
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
-In delay_presuspend, we set the atomic variable may_delay and then stop
-the timer and flush pending bios. The intention here is to prevent the
-delay target from re-arming the timer again.
+The patch 70bbeb29fab0 broke dm-delay seriously. It introduced the
+following bugs:
 
-However, this test is racy. Suppose that one thread goes to delay_bio,
-sees that dc->may_delay is one and proceeds; now, another theread executes
-delay_presuspend, it sets, dc->may_delay to zero, deletes the timer and
-flushes pending bios. Now, the first thread continues and adds the bio to
-delayed->list despite the fact that dc->may_delay is false.
+* the function flush_worker_fn has no exit path - on unload, this function
+  will just loop and consume 100% CPU without any progress
 
-In order to fix this bug, we change may_delay's type from atomic_t to bool
-and we read and write it only while holding the delayed_bios_lock mutex.
-Note that we don't have to grab the mutex in delay_resume because there
-are no bios in flight at this point.
+* the wake-up mechanism in flush_worker_fn is racy - a wake up will be
+  missed if the process adds entries to the delayed_bios list just before
+  set_current_state(TASK_INTERRUPTIBLE)
 
+* flush_delayed_bios_fast submits a bio while holding a global mutex; this
+  may deadlock if we have multiple stacked dm-delay devices and the
+  underlying device attempts to acquire the mutex too
+
+* if the target constructor fails, it will call delay_dtr. delay_dtr would
+  attempt to free dc->timer_lock without it being initialized by the
+  constructor; if kthread allocation fails, delay_dtr would crash trying
+  to dereference dc->worker because it would ontain error code
+
+This commit fixes these bugs.
+
+Fixes: 70bbeb29fab0 ("dm delay: for short delays, use kthread instead of timers and wq")
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
 
 ---
- drivers/md/dm-delay.c |   16 +++++++++++-----
- 1 file changed, 11 insertions(+), 5 deletions(-)
+ drivers/md/dm-delay.c |   61 ++++++++++++++++++++++++++++----------------------
+ 1 file changed, 35 insertions(+), 26 deletions(-)
 
 Index: linux-2.6/drivers/md/dm-delay.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-delay.c	2023-11-17 14:31:29.000000000 +0100
-+++ linux-2.6/drivers/md/dm-delay.c	2023-11-17 14:55:10.000000000 +0100
-@@ -33,7 +33,7 @@ struct delay_c {
- 	struct work_struct flush_expired_bios;
- 	struct list_head delayed_bios;
- 	struct task_struct *worker;
--	atomic_t may_delay;
-+	bool may_delay;
+--- linux-2.6.orig/drivers/md/dm-delay.c	2023-11-17 14:57:26.000000000 +0100
++++ linux-2.6/drivers/md/dm-delay.c	2023-11-17 14:58:44.000000000 +0100
+@@ -73,9 +73,23 @@ static inline bool delay_is_fast(struct
+ 	return !!dc->worker;
+ }
  
- 	struct delay_class read;
- 	struct delay_class write;
-@@ -236,7 +236,7 @@ static int delay_ctr(struct dm_target *t
++static void flush_bios(struct bio *bio)
++{
++	struct bio *n;
++
++	while (bio) {
++		n = bio->bi_next;
++		bio->bi_next = NULL;
++		dm_submit_bio_remap(bio, NULL);
++		bio = n;
++	}
++}
++
+ static void flush_delayed_bios_fast(struct delay_c *dc, bool flush_all)
+ {
+ 	struct dm_delay_info *delayed, *next;
++	struct bio_list flush_bio_list;
++	bio_list_init(&flush_bio_list);
+ 
+ 	mutex_lock(&delayed_bios_lock);
+ 	list_for_each_entry_safe(delayed, next, &dc->delayed_bios, list) {
+@@ -83,47 +97,42 @@ static void flush_delayed_bios_fast(stru
+ 			struct bio *bio = dm_bio_from_per_bio_data(delayed,
+ 						sizeof(struct dm_delay_info));
+ 			list_del(&delayed->list);
+-			dm_submit_bio_remap(bio, NULL);
++			bio_list_add(&flush_bio_list, bio);
+ 			delayed->class->ops--;
+ 		}
+ 	}
+ 	mutex_unlock(&delayed_bios_lock);
++
++	flush_bios(bio_list_get(&flush_bio_list));
+ }
+ 
+ static int flush_worker_fn(void *data)
+ {
+ 	struct delay_c *dc = data;
+ 
+-	while (1) {
++	while (!kthread_should_stop()) {
+ 		flush_delayed_bios_fast(dc, false);
++		mutex_lock(&delayed_bios_lock);
+ 		if (unlikely(list_empty(&dc->delayed_bios))) {
+ 			set_current_state(TASK_INTERRUPTIBLE);
++			mutex_unlock(&delayed_bios_lock);
+ 			schedule();
+-		} else
++		} else {
++			mutex_unlock(&delayed_bios_lock);
+ 			cond_resched();
++		}
+ 	}
+ 
+ 	return 0;
+ }
+ 
+-static void flush_bios(struct bio *bio)
+-{
+-	struct bio *n;
+-
+-	while (bio) {
+-		n = bio->bi_next;
+-		bio->bi_next = NULL;
+-		dm_submit_bio_remap(bio, NULL);
+-		bio = n;
+-	}
+-}
+-
+-static struct bio *flush_delayed_bios(struct delay_c *dc, bool flush_all)
++static void flush_delayed_bios(struct delay_c *dc, bool flush_all)
+ {
+ 	struct dm_delay_info *delayed, *next;
+ 	unsigned long next_expires = 0;
+ 	unsigned long start_timer = 0;
+-	struct bio_list flush_bios = { };
++	struct bio_list flush_bio_list;
++	bio_list_init(&flush_bio_list);
+ 
+ 	mutex_lock(&delayed_bios_lock);
+ 	list_for_each_entry_safe(delayed, next, &dc->delayed_bios, list) {
+@@ -131,7 +140,7 @@ static struct bio *flush_delayed_bios(st
+ 			struct bio *bio = dm_bio_from_per_bio_data(delayed,
+ 						sizeof(struct dm_delay_info));
+ 			list_del(&delayed->list);
+-			bio_list_add(&flush_bios, bio);
++			bio_list_add(&flush_bio_list, bio);
+ 			delayed->class->ops--;
+ 			continue;
+ 		}
+@@ -147,7 +156,7 @@ static struct bio *flush_delayed_bios(st
+ 	if (start_timer)
+ 		queue_timeout(dc, next_expires);
+ 
+-	return bio_list_get(&flush_bios);
++	flush_bios(bio_list_get(&flush_bio_list));
+ }
+ 
+ static void flush_expired_bios(struct work_struct *work)
+@@ -158,7 +167,7 @@ static void flush_expired_bios(struct wo
+ 	if (delay_is_fast(dc))
+ 		flush_delayed_bios_fast(dc, false);
+ 	else
+-		flush_bios(flush_delayed_bios(dc, false));
++		flush_delayed_bios(dc, false);
+ }
+ 
+ static void delay_dtr(struct dm_target *ti)
+@@ -177,8 +186,7 @@ static void delay_dtr(struct dm_target *
+ 	if (dc->worker)
+ 		kthread_stop(dc->worker);
+ 
+-	if (!delay_is_fast(dc))
+-		mutex_destroy(&dc->timer_lock);
++	mutex_destroy(&dc->timer_lock);
+ 
+ 	kfree(dc);
+ }
+@@ -236,6 +244,7 @@ static int delay_ctr(struct dm_target *t
  
  	ti->private = dc;
  	INIT_LIST_HEAD(&dc->delayed_bios);
--	atomic_set(&dc->may_delay, 1);
-+	dc->may_delay = true;
++	mutex_init(&dc->timer_lock);
+ 	dc->may_delay = true;
  	dc->argc = argc;
  
- 	ret = delay_class_ctr(ti, &dc->read, argv);
-@@ -312,7 +312,7 @@ static int delay_bio(struct delay_c *dc,
- 	struct dm_delay_info *delayed;
- 	unsigned long expires = 0;
- 
--	if (!c->delay || !atomic_read(&dc->may_delay))
-+	if (!c->delay)
- 		return DM_MAPIO_REMAPPED;
- 
- 	delayed = dm_per_bio_data(bio, sizeof(struct dm_delay_info));
-@@ -321,6 +321,10 @@ static int delay_bio(struct delay_c *dc,
- 	delayed->expires = expires = jiffies + msecs_to_jiffies(c->delay);
- 
- 	mutex_lock(&delayed_bios_lock);
-+	if (unlikely(!dc->may_delay)) {
-+		mutex_unlock(&delayed_bios_lock);
-+		return DM_MAPIO_REMAPPED;
-+	}
- 	c->ops++;
- 	list_add_tail(&delayed->list, &dc->delayed_bios);
+@@ -282,12 +291,12 @@ out:
+ 					    "dm-delay-flush-worker");
+ 		if (IS_ERR(dc->worker)) {
+ 			ret = PTR_ERR(dc->worker);
++			dc->worker = NULL;
+ 			goto bad;
+ 		}
+ 	} else {
+ 		timer_setup(&dc->delay_timer, handle_delayed_timer, 0);
+ 		INIT_WORK(&dc->flush_expired_bios, flush_expired_bios);
+-		mutex_init(&dc->timer_lock);
+ 		dc->kdelayd_wq = alloc_workqueue("kdelayd", WQ_MEM_RECLAIM, 0);
+ 		if (!dc->kdelayd_wq) {
+ 			ret = -EINVAL;
+@@ -345,11 +354,11 @@ static void delay_presuspend(struct dm_t
+ 	dc->may_delay = false;
  	mutex_unlock(&delayed_bios_lock);
-@@ -337,7 +341,9 @@ static void delay_presuspend(struct dm_t
- {
- 	struct delay_c *dc = ti->private;
  
--	atomic_set(&dc->may_delay, 0);
-+	mutex_lock(&delayed_bios_lock);
-+	dc->may_delay = false;
-+	mutex_unlock(&delayed_bios_lock);
- 
- 	if (delay_is_fast(dc))
+-	if (delay_is_fast(dc))
++	if (delay_is_fast(dc)) {
  		flush_delayed_bios_fast(dc, true);
-@@ -351,7 +357,7 @@ static void delay_resume(struct dm_targe
- {
- 	struct delay_c *dc = ti->private;
- 
--	atomic_set(&dc->may_delay, 1);
-+	dc->may_delay = true;
+-	else {
++	} else {
+ 		del_timer_sync(&dc->delay_timer);
+-		flush_bios(flush_delayed_bios(dc, true));
++		flush_delayed_bios(dc, true);
+ 	}
  }
  
- static int delay_map(struct dm_target *ti, struct bio *bio)
 
